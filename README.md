@@ -1,4 +1,12 @@
 # wolfram2desmos
 Convert WolframAlpha (ASCIImath) into Desmos LaTeX. Pretty much built from scratch and is not dependent on preexisting libraries or packages.
 
-Open up wolfram2desmos/code.js and change <input> to the string you want. Execute the code and the terminal will spit out the LaTeX version of it.
+Open up code.js and change input to whatever string you want.
+
+```javascript
+input = "1/sqrt((23452 x) c (x c) + π + sqrt(135/1351235123))^5"
+```
+
+Execute the code and the terminal will spit out the LaTeX version of it.
+
+I also recommend https://www.intmath.com/help/asciimath-input-latex-katex-output.php who has done a way better job than me at this task.
