@@ -5,7 +5,7 @@
 //input = "1/sqrt(23452xcxc+pi+(sqrt(135/1351235123)))^5";
 //input = "integral_1^y(x) (1/sqrt(2 log(x^2 + (3 - 2 ζ) x + (ζ - 3) ζ) + 2 c_1 + 1) - integral_1^x (2 ζ - 2 ξ - 3)/((ξ^2 + (3 - 2 ζ) ξ + (ζ - 3) ζ) (2 log(ξ^2 + (3 - 2 ζ) ξ + (ζ - 3) ζ) + 2 c_1 + 1)^(3/2)) dξ) dζ + integral_1^x (1 - 1/sqrt(2 log(ξ^2 - 2 y(x) ξ + 3 ξ + y(x)^2 - 3 y(x)) + 2 c_1 + 1)) dξ = c_2";
 
-let input = "x^(x^(x^(x^x)))";
+let input = "integral_1^y(x) (1/sqrt(2 log(x^2 + (3 - 2 ζ) x + (ζ - 3) ζ) + 2 c_1 + 1) - integral_1^x (2 ζ - 2 ξ - 3)/((ξ^2 + (3 - 2 ζ) ξ + (ζ - 3) ζ) (2 log(ξ^2 + (3 - 2 ζ) ξ + (ζ - 3) ζ) + 2 c_1 + 1)^(3/2)) dξ) dζ + integral_1^x (1 - 1/sqrt(2 log(ξ^2 - 2 y(x) ξ + 3 ξ + y(x)^2 - 3 y(x)) + 2 c_1 + 1)) dξ = c_2";
 
 
 // returns the first match's index
@@ -13,17 +13,17 @@ function find(expr) {
 	return input.search(expr);
 }
 
-// replaces all matches with replacement
+// replaces all matches with the replacement
 function replace(expr,replacement) {
 	input = input.replace(expr,replacement);
 }
 
-// inserts replacement at given index
+// inserts the replacement at a given index
 function insert(index,replacement) {
 	input = input.slice(0,index) + replacement + input.slice(index,input.length);
 }
 
-// overwrites current index with replacement
+// overwrites the current index with the replacement
 function overwrite(index,replacement) {
 	input = input.slice(0,index) + replacement + input.slice(index + 1,input.length);
 }
@@ -43,18 +43,26 @@ function isOperator(index) {
 	return !(/[A-Z]|[a-z]|[0-9]|[Α-ω]|∞|\_|\\/g).test(input[index]);
 }
 
+function bracketEval() {
+	i++;
+	if (input[i] == ")" || input[i] == "}") {
+		bracket += 1;
+	}
+	else if (input[i] == "(" || input[i] == "}") {
+		bracket -= 1;
+	}
+}
+
 // predefining some variables.
-let i;
-let bracket;
-let startingIndex;
+let i, bracket, startingIndex;
 
-
+// appending spaces allows for fraction breathing room
 input = " " + input + " ";
 
 
 // check if there is an equal number of brackets
 if (count(/\(/g) != count(/\)/g)) {
-	throw new Error('Input has uneven brackets');
+	throw new Error("Input has uneven brackets");
 }
 
 
@@ -74,13 +82,7 @@ while (find(/√\(/g) != -1) {
 	overwrite(i,"{");
 	bracket = 0;
 	while (i < input.length) {
-		i++;
-		if (input[i] == ")") {
-			bracket += 1;
-		}
-		else if (input[i] == "(") {
-			bracket -= 1;
-		}
+		bracketEval();
 		if (bracket == 1) {
 			overwrite(i,"}");
 			i = input.length;
@@ -93,19 +95,13 @@ while (find(/√\(/g) != -1) {
 // implement exponents
 while (find(/\^/g) != -1) {
 	i = find(/\^/g);
-	overwrite(i, "@")
+	overwrite(i, "@");
 	i++;
 	if (input[i] == "(") {
 		overwrite(i,"{");
 		bracket = -1;
 		while (i < input.length) {
-			i++;
-			if (input[i] == ")") {
-				bracket += 1;
-			}
-			else if (input[i] == "(") {
-				bracket -= 1;
-			}
+			bracketEval();
 			if (bracket == 0) {
 				overwrite(i,"}");
 				i = input.length;
@@ -123,7 +119,7 @@ while (find(/\^/g) != -1) {
 		}
 	}
 }
-replace(/\@/g,"^")
+replace(/\@/g,"^");
 
 
 
@@ -137,15 +133,10 @@ while (find(/\//g) != -1) {
 		overwrite(i - 1, "}");
 		bracket = 1;
 		while (i > 0) {
-			i -= 1;
-			if (input[i] == ")") {
-				bracket += 1;
-			}
-			else if (input[i] == "(") {
-				bracket -= 1;
-			}
+			i -= 2;
+			bracketEval();
 			if (bracket == 0) {
-				overwrite(i, "\\frac{")
+				overwrite(i, "\\frac{");
 				startingIndex += 5;
 				i = 0;
 			}
@@ -169,34 +160,20 @@ while (find(/\//g) != -1) {
 
 	i = startingIndex + 1;
 	
-	// inverse root scenario
-	// this happens when there is a function in the denominator
-	let isDenominatorFunction = (startingIndex == find(/\/((\-)|([A-Z]|[a-z]|[Α-ω]|√|∞|\_)|(\-([A-Z]|[a-z]|[Α-ω]|√|∞|\_)))(\(|\{)/g));
-	if (isDenominatorFunction) {
-		insert(i, "{(")
+	// inverse function scenario. this happens when there is a function in the denominator
+	if (startingIndex == find(/\/((\-)|([A-Z]|[a-z]|[Α-ω]|√|∞|\_)|(\-([A-Z]|[a-z]|[Α-ω]|√|∞|\_)))(\(|\{)/g)) {
+		insert(i, "{(");
 		i += 3;
 		bracket = -2;
 		while (i < input.length) {
-			i++;
-			if (input[i] == ")" || input[i] == "}") {
-				bracket += 1;
-			}
-			else if (input[i] == "(" || input[i] == "{") {
-				bracket -= 1;
-			}
+			bracketEval();
 			if (bracket == -1) {
 				if (input[i + 1] == "^") {
 					// in this situation, as pointed by SlimRunner, there is an exponent at the end of the fraction. we need to correct this by including it in the denominator
 					bracket = -1;
 					i++;
 					while (i < input.length) {
-						i++;
-						if (input[i] == ")" || input[i] == "}") {
-							bracket += 1;
-						}
-						else if (input[i] == "(" || input[i] == "}") {
-							bracket -= 1;
-						}
+						bracketEval();
 						if (bracket == 0) {
 							break;
 						}
@@ -211,30 +188,18 @@ while (find(/\//g) != -1) {
 		overwrite(i, "{");
 		bracket = -1;
 		while (i < input.length) {
-			i++;
-			if (input[i] == ")") {
-				bracket += 1;
-			}
-			else if (input[i] == "(") {
-				bracket -= 1;
-			}
+			bracketEval();
 			if (bracket == 0) {
 				if (input[i + 1] == "^") {
 					// in this situation, as pointed by SlimRunner, there is an exponent at the end of the fraction. we need to correct this by including it in the denominator
 					bracket = -1;
 					i++;
 					while (i < input.length) {
-						i++;
-						if (input[i] == ")" || input[i] == "}") {
-							bracket += 1;
-						}
-						else if (input[i] == "(" || input[i] == "}") {
-							bracket -= 1;
-						}
+						bracketEval();
 						if (bracket == 0) {
 							insert(startingIndex + 2, "(");
 							insert(i + 1, "}");
-							i = input.length
+							i = input.length;
 						}
 					}
 				}
@@ -254,16 +219,10 @@ while (find(/\//g) != -1) {
 				bracket = -1;
 				i++;
 				while (i < input.length) {
-					i++;
-					if (input[i] == ")" || input[i] == "}") {
-						bracket += 1;
-					}
-					else if (input[i] == "(" || input[i] == "}") {
-						bracket -= 1;
-					}
+					bracketEval();
 					if (bracket == 0) {
 						insert(i + 1, "}");
-						i = input.length
+						i = input.length;
 					}
 				}
 			}
@@ -280,16 +239,10 @@ while (find(/\//g) != -1) {
 // implement summation and products
 while (find(/(sum|prod)_\(\S+=\d+\)/g) != -1) {
 	i = find(/(sum|prod)_\(\S+=\d+\)/g) + 4;
-	overwrite(i, "{")
+	overwrite(i, "{");
 	bracket = -1;
 	while (i < input.length) {
-		i++;
-		if (input[i] == "(") {
-			bracket -= 1;
-		}
-		else if (input[i] == ")") {
-			bracket += 1;
-		}
+		bracketEval();
 		if (bracket == 0) {
 			overwrite(i, "}");
 			break;
@@ -299,15 +252,9 @@ while (find(/(sum|prod)_\(\S+=\d+\)/g) != -1) {
 	overwrite(i, "");
 	bracket = -1;
 	while (i < input.length) {
-		i++;
-		if (input[i] == "(") {
-			bracket -= 1;
-		}
-		else if (input[i] == ")") {
-			bracket += 1;
-		}
+		bracketEval();
 		if (bracket == 0) {
-			insert(i,"}")
+			insert(i,"}");
 			i = input.length;
 		}
 	}
@@ -355,7 +302,7 @@ replace(/\\frac\{\}/g, "\\frac{1}");
 
 // rounding up any semi-final replacements
 replace(/√/g, "\\sqrt");
-replace(/\*/g, "\\times");
+replace(/\*/g, "\\times ");
 replace(/≠/g, "\\ne");
 replace(/∞/g,"\\infty");
 replace(/±/g,"\\pm");
@@ -397,20 +344,8 @@ replace(/χ/g, "\\chi");
 replace(/Ψ/g, "\\Psi");
 replace(/ψ/g, "\\psi");
 replace(/Ω/g, "\\Omega");
-replace(/ω/g, "\\omega")
-
-
-
-print();
-
-
-
-
-
-
+replace(/ω/g, "\\omega");
 
 
 
 console.log(input);
-
-alert("THIS IS A NEW ChannelMergerNode");
