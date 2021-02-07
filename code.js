@@ -4,7 +4,7 @@
 //input = "1/19 (5^(1/3) (19 sqrt(361 x^2 - 1642 x + 841) + 361 x - 821)^(1/3) + (42 5^(2/3))/(19 sqrt(361 x^2 - 1642 x + 841) + 361 x - 821)^(1/3) - 1)";
 //input = "1/sqrt(23452xcxc+pi+(sqrt(135/1351235123)))^5";
 //input = "integral_1^y(x) (1/sqrt(2 log(x^2 + (3 - 2 ζ) x + (ζ - 3) ζ) + 2 c_1 + 1) - integral_1^x (2 ζ - 2 ξ - 3)/((ξ^2 + (3 - 2 ζ) ξ + (ζ - 3) ζ) (2 log(ξ^2 + (3 - 2 ζ) ξ + (ζ - 3) ζ) + 2 c_1 + 1)^(3/2)) dξ) dζ + integral_1^x (1 - 1/sqrt(2 log(ξ^2 - 2 y(x) ξ + 3 ξ + y(x)^2 - 3 y(x)) + 2 c_1 + 1)) dξ = c_2";
-input = "π = sum_(k=0)^∞ (50 k - 6)/(2^k binomial(3 k, k))";
+input = "e = ( sum_(k=0)^∞ (z - 1 + k)/(k!))/z";
 
 
 function replace(expr,replacement) {
@@ -301,7 +301,6 @@ while (find(/(sum|prod)_\(\S+=\d+\)/g) != -1) {
 			i = input.length;
 		}
 	}
-	alert(input[i])
 }
 
 
@@ -397,4 +396,4 @@ replace(/ω/g, "\\omega")
 
 
 
-alert(input);
+console.log(input);
