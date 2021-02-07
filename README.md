@@ -1,7 +1,7 @@
 # wolfram2desmos
 Convert WolframAlpha (ASCIImath) into Desmos LaTeX. Pretty much built from scratch and is not dependent on preexisting libraries or packages.
 
-Open up code.js and change input to whatever string you want.
+Open up code.js and change input to whatever string you want. ie:
 
 ```javascript
 input = "1/sqrt((23452 x) c (x c) + π + sqrt(135/1351235123))^5"
