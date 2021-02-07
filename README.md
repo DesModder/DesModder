@@ -1,2 +1,2 @@
 # wolfram2desmos
-Convert WolframAlpha (ASCIImath) into Desmos LaTeX.
+Converts WolframAlpha (ASCIImath) into Desmos LaTeX.
