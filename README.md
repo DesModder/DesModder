@@ -7,6 +7,4 @@ Open up code.js and change input to whatever string you want. ie:
 input = "1/sqrt((23452 x) c (x c) + π + sqrt(135/1351235123))^5"
 ```
 
-Execute the code and the terminal will spit out the LaTeX version of it.
-
-I also recommend https://www.intmath.com/help/asciimath-input-latex-katex-output.php who has done a way better job than me at this task.
+Execute the code and the terminal will spit out the LaTeX version of it. I also recommend using https://www.intmath.com/help/asciimath-input-latex-katex-output.php who has done a way better job than me at this task. Cheers.
