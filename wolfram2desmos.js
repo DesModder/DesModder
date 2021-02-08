@@ -310,7 +310,7 @@ replace(/binomial/g, "\\operatorname{nCr}");
 replace(/^\s/g, "");
 replace(/\s$/g, "");
 
-// throw in the latin letters in for the hell of it
+// throw the latin letters in for the hell of it
 replace(/α/g, "\\alpha");
 replace(/β/g, "\\beta");
 replace(/Γ/g, "\\Gamma");
