@@ -3,9 +3,12 @@
 //input = "a!=0, x = (sqrt((-27 a^2 d + 9 a b c - 2 b^3)^2 + 4 (3 a c - b^2)^3) - 27 a^2 d + 9 a b c - 2 b^3)^(1/3)/(3 2^(1/3) a) - (2^(1/3) (3 a c - b^2))/(3 a (sqrt((-27 a^2 d + 9 a b c - 2 b^3)^2 + 4 (3 a c - b^2)^3) - 27 a^2 d + 9 a b c - 2 b^3)^(1/3)) - b/(3 a)";
 //input = "1/19 (5^(1/3) (19 sqrt(361 x^2 - 1642 x + 841) + 361 x - 821)^(1/3) + (42 5^(2/3))/(19 sqrt(361 x^2 - 1642 x + 841) + 361 x - 821)^(1/3) - 1)";
 //input = "1/sqrt(23452xcxc+pi+(sqrt(135/1351235123)))^5";
+//let input = "integral_1^y(x) (1/sqrt(2 log(x^2 + (3 - 2 ζ) x + (ζ - 3) ζ) + 2 c_1 + 1) - integral_1^x (2 ζ - 2 ξ - 3)/((ξ^2 + (3 - 2 ζ) ξ + (ζ - 3) ζ) (2 log(ξ^2 + (3 - 2 ζ) ξ + (ζ - 3) ζ) + 2 c_1 + 1)^(3/2)) dξ) dζ + integral_1^x (1 - 1/sqrt(2 log(ξ^2 - 2 y(x) ξ + 3 ξ + y(x)^2 - 3 y(x)) + 2 c_1 + 1)) dξ = c_2";
+//let input = "1 - gamma (x - 1) + 1/12 (6 gamma ^2 + π^2) (x - 1)^2 + 1/6 (x - 1)^3 (- gamma ^3 - ( gamma π^2)/2 + polygamma(2, 1)) + 1/24 (x - 1)^4 ( gamma ^4 + gamma ^2 π^2 + (3 π^4)/20 - 4 gamma polygamma(2, 1)) + 1/120 (x - 1)^5 (- gamma ^5 - (5 gamma ^3 π^2)/3 - (3 gamma π^4)/4 + 10 gamma ^2 polygamma(2, 1) + (5 π^2 polygamma(2, 1))/3 + polygamma(4, 1)) + O((x - 1)^6)";
+//let input = "π = -3 sqrt(3) + 1/2 (sqrt(3) sum_(k=1)^∞ k/binomial(2 k, k)) 9";
 
-let input = "integral_1^y(x) (1/sqrt(2 log(x^2 + (3 - 2 ζ) x + (ζ - 3) ζ) + 2 c_1 + 1) - integral_1^x (2 ζ - 2 ξ - 3)/((ξ^2 + (3 - 2 ζ) ξ + (ζ - 3) ζ) (2 log(ξ^2 + (3 - 2 ζ) ξ + (ζ - 3) ζ) + 2 c_1 + 1)^(3/2)) dξ) dζ + integral_1^x (1 - 1/sqrt(2 log(ξ^2 - 2 y(x) ξ + 3 ξ + y(x)^2 - 3 y(x)) + 2 c_1 + 1)) dξ = c_2";
-//let input = "x^(x^(x^(x^x)))";
+let input = "binomial(sum_(n=0)^∞(a_nx^n)/(n!) = (2 e^(x/2) sinh((sqrt(5) x)/2))/sqrt(5),54)";
+
 // returns the first match's index
 function find(expr) {
 	return input.search(expr);
@@ -55,7 +58,7 @@ function bracketEval2() {
 
 // returns if the specified index is a "non-variable"
 function isOperator(index) {
-	return !(/[A-Z]|[a-z]|[0-9]|[Α-ω]|∞|\_|\\/g).test(input[index]);
+	return !(/[A-Z|a-z|\d|Α-ω|∞|א|\_|\\]/g).test(input[index]);
 }
 // predefining some variables.
 let i;
@@ -75,6 +78,45 @@ replace(/\/\s*/g,  "/");
 replace(/\s*\//g, "/");
 replace(/\^\s*/g, "^");
 replace(/\s*\^/g, "^");
+
+// latin replacements
+replace(/(?<![A-Z|a-z|Α-ω])alpha/g, "α");
+replace(/(?<![A-Z|a-z|Α-ω])beta/g, "β"); 
+replace(/(?<![A-Z|a-z|Α-ω])Gamma/g, "Γ");
+replace(/(?<![A-Z|a-z|Α-ω])gamma/g, "γ");
+replace(/(?<![A-Z|a-z|Α-ω])Delta/g, "Δ");
+replace(/(?<![A-Z|a-z|Α-ω])delta/g, "δ");
+replace(/(?<![A-Z|a-z|Α-ω])epsilon/g, "ε");
+replace(/(?<![A-Z|a-z|Α-ω])zeta/g, "ζ");
+replace(/(?<![A-Z|a-z|Α-ω])eta/g, "η");
+replace(/(?<![A-Z|a-z|Α-ω])Theta/g, "Θ");
+replace(/(?<![A-Z|a-z|Α-ω])theta/g, "θ");
+replace(/(?<![A-Z|a-z|Α-ω])iota/g, "ι"); 
+replace(/(?<![A-Z|a-z|Α-ω])kappa/g, "κ");
+replace(/(?<![A-Z|a-z|Α-ω])Lambda/g, "Λ");
+replace(/(?<![A-Z|a-z|Α-ω])lambda/g, "λ");
+replace(/(?<![A-Z|a-z|Α-ω])mu/g, "μ");
+replace(/(?<![A-Z|a-z|Α-ω])nu/g, "ν");
+replace(/(?<![A-Z|a-z|Α-ω])Xi/g, "Ξ");
+replace(/(?<![A-Z|a-z|Α-ω])xi/g, "ξ");
+replace(/(?<![A-Z|a-z|Α-ω])Pi/g, "Π");
+replace(/(?<![A-Z|a-z|Α-ω])pi/g, "π");
+replace(/(?<![A-Z|a-z|Α-ω])rho/g, "ρ");
+replace(/(?<![A-Z|a-z|Α-ω])Sigma/g, "Σ");
+replace(/(?<![A-Z|a-z|Α-ω])sigma/g, "σ");
+replace(/(?<![A-Z|a-z|Α-ω])tau/g, "τ");
+replace(/(?<![A-Z|a-z|Α-ω])Upsilon/g, "Τ");
+replace(/(?<![A-Z|a-z|Α-ω])upsilon/g, "υ");
+replace(/(?<![A-Z|a-z|Α-ω])Phi/g, "Φ");
+replace(/(?<![A-Z|a-z|Α-ω])phi/g, "φ");
+replace(/(?<![A-Z|a-z|Α-ω])chi/g, "χ");
+replace(/(?<![A-Z|a-z|Α-ω])Psi/g, "Ψ");
+replace(/(?<![A-Z|a-z|Α-ω])psi/g, "ψ");
+replace(/(?<![A-Z|a-z|Α-ω])Omega/g, "Ω");
+replace(/(?<![A-Z|a-z|Α-ω])omega/g, "ω");
+
+replace(/(?<![A-Z|a-z|Α-ω])binomial/g, "א");
+
 // implement square roots
 while (find(/√\(/g) != -1) {
 	i = find(/√\(/g) + 1;
@@ -106,9 +148,11 @@ while (find(/\^/g) != -1) {
 	}
 	else {
 		insert(i,"{");
+		console.log("hi");
 		while (i < input.length) {
 			i++;
 			if (isOperator(i)) {
+				console.log(input[i]);
 				insert(i, "}");
 				i = input.length;
 			}
@@ -152,7 +196,7 @@ while (find(/\//g) != -1) {
 	
 	// inverse root scenario
 	// this happens when there is a function in the denominator
-	let isDenominatorFunction = (startingIndex == find(/\/((\-)|([A-Z]|[a-z]|[Α-ω]|√|∞|\_)|(\-([A-Z]|[a-z]|[Α-ω]|√|∞|\_)))(\(|\{)/g));
+	let isDenominatorFunction = (startingIndex == find(/\/((\-)|([A-Z|a-z|Α-ω|א-ת|√|∞|\_])|(\-([A-Z|a-z|Α-ω|א-ת|√|∞|\_])))(\(|\{)/g));
 	if (isDenominatorFunction) {
 		insert(i, "{(");
 		i += 3;
@@ -244,16 +288,6 @@ while (find(/(sum|prod)_\(\S+=\d+\)/g) != -1) {
 			break;
 		}
 	}
-	i += 3;
-	overwrite(i, "");
-	bracket = -1;
-	while (i < input.length) {
-		bracketEval1();
-		if (bracket == 0) {
-			insert(i,"}");
-			i = input.length;
-		}
-	}
 }
 // implement subscripts
 while (find(/_\d/g) != -1) {
@@ -287,10 +321,11 @@ replace(/\*/g, "\\times");
 replace(/≠/g, "\\ne");
 replace(/∞/g,"\\infty");
 replace(/±/g,"\\pm");
-replace(/binomial/g, "\\operatorname{nCr}");
+replace(/א/g, "\\operatorname{nCr}");
 replace(/^\s/g, "");
 replace(/\s$/g, "");
 // throw in the latin letters in for the hell of it
+
 replace(/α/g, "\\alpha");
 replace(/β/g, "\\beta");
 replace(/Γ/g, "\\Gamma");
@@ -325,6 +360,8 @@ replace(/Ψ/g, "\\Psi");
 replace(/ψ/g, "\\psi");
 replace(/Ω/g, "\\Omega");
 replace(/ω/g, "\\omega");
+replace(/polygamma/g, "\\psi_{poly}");
+
 
 
 console.log(input);
