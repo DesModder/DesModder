@@ -6,25 +6,39 @@
 //let input = "integral_1^y(x) (1/sqrt(2 log(x^2 + (3 - 2 ζ) x + (ζ - 3) ζ) + 2 c_1 + 1) - integral_1^x (2 ζ - 2 ξ - 3)/((ξ^2 + (3 - 2 ζ) ξ + (ζ - 3) ζ) (2 log(ξ^2 + (3 - 2 ζ) ξ + (ζ - 3) ζ) + 2 c_1 + 1)^(3/2)) dξ) dζ + integral_1^x (1 - 1/sqrt(2 log(ξ^2 - 2 y(x) ξ + 3 ξ + y(x)^2 - 3 y(x)) + 2 c_1 + 1)) dξ = c_2";
 //let input = "1 - gamma (x - 1) + 1/12 (6 gamma ^2 + π^2) (x - 1)^2 + 1/6 (x - 1)^3 (- gamma ^3 - ( gamma π^2)/2 + polygamma(2, 1)) + 1/24 (x - 1)^4 ( gamma ^4 + gamma ^2 π^2 + (3 π^4)/20 - 4 gamma polygamma(2, 1)) + 1/120 (x - 1)^5 (- gamma ^5 - (5 gamma ^3 π^2)/3 - (3 gamma π^4)/4 + 10 gamma ^2 polygamma(2, 1) + (5 π^2 polygamma(2, 1))/3 + polygamma(4, 1)) + O((x - 1)^6)";
 //let input = "π = -3 sqrt(3) + 1/2 (sqrt(3) sum_(k=1)^∞ k/binomial(2 k, k)) 9";
+//let input = "binomial(sum_(n=0)^∞(a_nx^n)/(n!) = (2 e^(x/2) sinh((sqrt(5) x)/2))/sqrt(5),54)";
+//let input = "sum_(n = 1)^∞a_n/(n^s) = (Li_s(ϕ) - Li_s(-1/ϕ))/sqrt(5)";
+//let input = "abs(f_n(tx)/f_n(sx)-f(tx)/f(sx))"; // this one is problematic, but it matches WolframAlpha, so who cares!! :)
 
-let input = "binomial(sum_(n=0)^∞(a_nx^n)/(n!) = (2 e^(x/2) sinh((sqrt(5) x)/2))/sqrt(5),54)";
+let input = "log_10 (4)";
+
 
 // returns the first match's index
 function find(expr) {
 	return input.search(expr);
 }
+
+
 // replaces all matches with replacement
 function replace(expr,replacement) {
 	input = input.replace(expr,replacement);
 }
+
+
 // inserts replacement at given index
 function insert(index,replacement) {
-	input = input.slice(0,index) + replacement + input.slice(index,input.length);
+	if (index >= 0) {
+		input = input.slice(0,index) + replacement + input.slice(index,input.length);
+	}
 }
+
+
 // overwrites current index with replacement
 function overwrite(index,replacement) {
 	input = input.slice(0,index) + replacement + input.slice(index + 1,input.length);
 }
+
+
 // returns the number of matches
 function count(expr) {
 	if (input.match(expr) != null) {
@@ -35,6 +49,8 @@ function count(expr) {
 	}
 }
 
+
+// iterates the bracket parser for ()
 function bracketEval1() {
 	i++;
 	if (input[i] == ")") {
@@ -45,6 +61,8 @@ function bracketEval1() {
 	}
 }
 
+
+// iterates the bracket parser for {} and ()
 function bracketEval2() {
 	i++;
 	if (input[i] == ")" || input[i] == "}") {
@@ -58,64 +76,71 @@ function bracketEval2() {
 
 // returns if the specified index is a "non-variable"
 function isOperator(index) {
-	return !(/[A-Z|a-z|\d|Α-ω|∞|א|\_|\\]/g).test(input[index]);
+	return !(/[A-Z|\d|Α-ω|∞|א-ת|\_|\\]/gi).test(input[index]);
 }
-// predefining some variables.
-let i;
-let bracket;
-let startingIndex;
-input = " " + input + " ";
-// check if there is an equal number of brackets
+
+
+// checks if there is an equal number of brackets
 if (count(/\(/g) != count(/\)/g)) {
 	throw new Error('Input has uneven brackets');
 }
-replace(/sqrt/g, "√");
-replace(/\\infty|infinity|infty/g, "∞");
-replace(/\\pm|pm/g, "±");
-replace(/\\pi|pi/g, "π");
-replace(/\!\=/g, "≠");
-replace(/\/\s*/g,  "/");
-replace(/\s*\//g, "/");
-replace(/\^\s*/g, "^");
-replace(/\s*\^/g, "^");
 
-// latin replacements
-replace(/(?<![A-Z|a-z|Α-ω])alpha/g, "α");
-replace(/(?<![A-Z|a-z|Α-ω])beta/g, "β"); 
-replace(/(?<![A-Z|a-z|Α-ω])Gamma/g, "Γ");
-replace(/(?<![A-Z|a-z|Α-ω])gamma/g, "γ");
-replace(/(?<![A-Z|a-z|Α-ω])Delta/g, "Δ");
-replace(/(?<![A-Z|a-z|Α-ω])delta/g, "δ");
-replace(/(?<![A-Z|a-z|Α-ω])epsilon/g, "ε");
-replace(/(?<![A-Z|a-z|Α-ω])zeta/g, "ζ");
-replace(/(?<![A-Z|a-z|Α-ω])eta/g, "η");
-replace(/(?<![A-Z|a-z|Α-ω])Theta/g, "Θ");
-replace(/(?<![A-Z|a-z|Α-ω])theta/g, "θ");
-replace(/(?<![A-Z|a-z|Α-ω])iota/g, "ι"); 
-replace(/(?<![A-Z|a-z|Α-ω])kappa/g, "κ");
-replace(/(?<![A-Z|a-z|Α-ω])Lambda/g, "Λ");
-replace(/(?<![A-Z|a-z|Α-ω])lambda/g, "λ");
-replace(/(?<![A-Z|a-z|Α-ω])mu/g, "μ");
-replace(/(?<![A-Z|a-z|Α-ω])nu/g, "ν");
-replace(/(?<![A-Z|a-z|Α-ω])Xi/g, "Ξ");
-replace(/(?<![A-Z|a-z|Α-ω])xi/g, "ξ");
-replace(/(?<![A-Z|a-z|Α-ω])Pi/g, "Π");
-replace(/(?<![A-Z|a-z|Α-ω])pi/g, "π");
-replace(/(?<![A-Z|a-z|Α-ω])rho/g, "ρ");
-replace(/(?<![A-Z|a-z|Α-ω])Sigma/g, "Σ");
-replace(/(?<![A-Z|a-z|Α-ω])sigma/g, "σ");
-replace(/(?<![A-Z|a-z|Α-ω])tau/g, "τ");
-replace(/(?<![A-Z|a-z|Α-ω])Upsilon/g, "Τ");
-replace(/(?<![A-Z|a-z|Α-ω])upsilon/g, "υ");
-replace(/(?<![A-Z|a-z|Α-ω])Phi/g, "Φ");
-replace(/(?<![A-Z|a-z|Α-ω])phi/g, "φ");
-replace(/(?<![A-Z|a-z|Α-ω])chi/g, "χ");
-replace(/(?<![A-Z|a-z|Α-ω])Psi/g, "Ψ");
-replace(/(?<![A-Z|a-z|Α-ω])psi/g, "ψ");
-replace(/(?<![A-Z|a-z|Α-ω])Omega/g, "Ω");
-replace(/(?<![A-Z|a-z|Α-ω])omega/g, "ω");
 
-replace(/(?<![A-Z|a-z|Α-ω])binomial/g, "א");
+// predefine some variables.
+let i, bracket, startingIndex;
+input = " " + input + " "; // this gives some breathing space
+
+
+// preform prelimenary replacements
+{
+	// symbolic replacements
+	replace(/sqrt/g, "√");
+	replace(/\\infty|infinity|infty/g, "∞");
+	replace(/\\pm|pm/g, "±");
+	replace(/\\pi|pi/g, "π");
+	replace(/\!\=/g, "≠");
+	replace(/\s*\/\s*/g,  "/");
+	replace(/\s*\^\s*/g,  "^");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])binomial/g, "א"); // aleph will be my function placeholder
+
+	// latin replacements
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])alpha/g, "α");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])beta/g, "β"); 
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])Gamma/g, "Γ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])gamma/g, "γ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])Delta/g, "Δ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])delta/g, "δ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])epsilon/g, "ε");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])zeta/g, "ζ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])eta/g, "η");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])Theta/g, "Θ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])theta/g, "θ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])iota/g, "ι"); 
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])kappa/g, "κ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])Lambda/g, "Λ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])lambda/g, "λ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])mu/g, "μ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])nu/g, "ν");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])Xi/g, "Ξ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])xi/g, "ξ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])Pi/g, "Π");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])pi/g, "π");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])rho/g, "ρ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])Sigma/g, "Σ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])sigma/g, "σ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])tau/g, "τ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])Upsilon/g, "Τ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])upsilon/g, "υ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])Phi/g, "Φ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])phi/g, "φ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])chi/g, "χ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])Psi/g, "Ψ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])psi/g, "ψ");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])Omega/g, "Ω");
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])omega/g, "ω");
+	replace(/ϕ/g,"φ");
+}
+
 
 // implement square roots
 while (find(/√\(/g) != -1) {
@@ -130,6 +155,8 @@ while (find(/√\(/g) != -1) {
 		}
 	}
 }
+
+
 // implement exponents
 while (find(/\^/g) != -1) {
 	i = find(/\^/g);
@@ -148,11 +175,9 @@ while (find(/\^/g) != -1) {
 	}
 	else {
 		insert(i,"{");
-		console.log("hi");
 		while (i < input.length) {
 			i++;
 			if (isOperator(i)) {
-				console.log(input[i]);
 				insert(i, "}");
 				i = input.length;
 			}
@@ -160,11 +185,12 @@ while (find(/\^/g) != -1) {
 	}
 }
 replace(/\@/g,"^");
+
+
 // implement fractions
 while (find(/\//g) != -1) {
 	startingIndex = find(/\//g);
-	i = startingIndex - 0;
-	
+	i = startingIndex;
 	// prior to the slash
 	if (input[i - 1] == ")") {
 		overwrite(i - 1, "}");
@@ -196,7 +222,7 @@ while (find(/\//g) != -1) {
 	
 	// inverse root scenario
 	// this happens when there is a function in the denominator
-	let isDenominatorFunction = (startingIndex == find(/\/((\-)|([A-Z|a-z|Α-ω|א-ת|√|∞|\_])|(\-([A-Z|a-z|Α-ω|א-ת|√|∞|\_])))(\(|\{)/g));
+	let isDenominatorFunction = (startingIndex == find(/\/((\-)|([A-Z|Α-ω|ϕ|א-ת|√|∞|\_])|(\-([A-Z|Α-ω|ϕ|א-ת|√|∞|\_])))(\(|\{)/gi));
 	if (isDenominatorFunction) {
 		insert(i, "{(");
 		i += 3;
@@ -276,9 +302,11 @@ while (find(/\//g) != -1) {
 	}
 	overwrite(startingIndex, "");
 }
+
+
 // implement summation and products
-while (find(/(sum|prod)_\(\S+=\d+\)/g) != -1) {
-	i = find(/(sum|prod)_\(\S+=\d+\)/g) + 4;
+while (find(/(sum|prod)_\([A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\s*=\s*[A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\)/g) != -1) {
+	i = find(/(sum|prod)_\([A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\s*=\s*[A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\)/g) + 4;
 	overwrite(i, "{");
 	bracket = -1;
 	while (i < input.length) {
@@ -289,6 +317,8 @@ while (find(/(sum|prod)_\(\S+=\d+\)/g) != -1) {
 		}
 	}
 }
+
+
 // implement subscripts
 while (find(/_\d/g) != -1) {
 	i = find(/_\d/g) + 1;
@@ -302,66 +332,91 @@ while (find(/_\d/g) != -1) {
 	}
 }
 
+
 // implment proper brackets when all the operator brackets are gone
 replace(/\(/g,"\\left\(");
 replace(/\)/g,"\\right\)");
+
+
 // replace blank spaces between numbers with cross products
 while (find(/\d\s\d/g) != -1) {
 	i = find(/\d\s\d/g) + 1;
 	overwrite(i, "\\times");
 }
-replace(/log\(/g, "\\ln\(");
-replace(/integral/g, "\\int_{}");
-replace(/sum_/g, "\\sum_");
-replace(/prod_/g, "\\prod_");
-replace(/\\frac\{\}/g, "\\frac{1}");
-// rounding up any semi-final replacements
-replace(/√/g, "\\sqrt");
-replace(/\*/g, "\\times");
-replace(/≠/g, "\\ne");
-replace(/∞/g,"\\infty");
-replace(/±/g,"\\pm");
-replace(/א/g, "\\operatorname{nCr}");
-replace(/^\s/g, "");
-replace(/\s$/g, "");
-// throw in the latin letters in for the hell of it
 
-replace(/α/g, "\\alpha");
-replace(/β/g, "\\beta");
-replace(/Γ/g, "\\Gamma");
-replace(/γ/g, "\\gamma");
-replace(/Δ/g, "\\Delta");
-replace(/δ/g, "\\delta");
-replace(/ε/g, "\\epsilon");
-replace(/ζ/g, "\\zeta");
-replace(/η/g, "\\eta");
-replace(/Θ/g, "\\Theta");
-replace(/θ/g, "\\theta");
-replace(/ι/g, "\\iota");
-replace(/κ/g, "\\kappa");
-replace(/Λ/g, "\\Lambda");
-replace(/λ/g, "\\lambda");
-replace(/μ/g, "\\mu");
-replace(/ν/g, "\\nu");
-replace(/Ξ/g, "\\Xi");
-replace(/ξ/g, "\\xi");
-replace(/Π/g, "\\Pi");
-replace(/π/g, "\\pi");
-replace(/ρ/g, "\\rho");
-replace(/Σ/g, "\\Sigma");
-replace(/σ/g, "\\sigma");
-replace(/τ/g, "\\tau");
-replace(/Τ/g, "\\Upsilon");
-replace(/υ/g, "\\upsilon");
-replace(/Φ/g, "\\Phi");
-replace(/φ/g, "\\phi");
-replace(/χ/g, "\\chi");
-replace(/Ψ/g, "\\Psi");
-replace(/ψ/g, "\\psi");
-replace(/Ω/g, "\\Omega");
-replace(/ω/g, "\\omega");
-replace(/polygamma/g, "\\psi_{poly}");
 
+// perform concluding replacements
+{
+	// trigonometry replacements
+	insert(find(/(arc|)sin/g), "\\");
+	insert(find(/(arc|)cos/g), "\\");
+	insert(find(/(arc|)tan/g), "\\");
+	insert(find(/(arc|)csc/g), "\\");
+	insert(find(/(arc|)sec/g), "\\");
+	insert(find(/(arc|)cot/g), "\\");
+
+	// function replacements
+	replace(/log(?!_)/g, "\\ln");
+	replace(/log/g, "\\log");
+	replace(/floor/g, "\floor");
+	replace(/ceil/g, "\ceil");
+	replace(/round/g, "\round");
+	replace(/integral/g, "\\int_{}");
+	replace(/sum_/g, "\\sum_");
+	replace(/prod_/g, "\\prod_");
+	replace(/\\frac\{\}/g, "\\frac{1}");
+
+	// symbolic replacements
+	replace(/√/g, "\\sqrt");
+	replace(/\*/g, "\\times ");
+	replace(/≠/g, "\\ne");
+	replace(/∞[A-Z|a-z]/g, "\\infty");
+	replace(/∞/g, "\\infty");
+	replace(/±/g, "\\pm");
+	replace(/א/g, "\\operatorname{nCr}");
+	replace(/^\s/g, "");
+	replace(/\s$/g, "");
+
+
+	// throw in the latin letters in for the hell of it
+	replace(/α/g, "\\alpha");
+	replace(/β/g, "\\beta");
+	replace(/Γ/g, "\\Gamma");
+	replace(/γ/g, "\\gamma");
+	replace(/Δ/g, "\\Delta");
+	replace(/δ/g, "\\delta");
+	replace(/ε/g, "\\epsilon");
+	replace(/ζ/g, "\\zeta");
+	replace(/η/g, "\\eta");
+	replace(/Θ/g, "\\Theta");
+	replace(/θ/g, "\\theta");
+	replace(/ι/g, "\\iota");
+	replace(/κ/g, "\\kappa");
+	replace(/Λ/g, "\\Lambda");
+	replace(/λ/g, "\\lambda");
+	replace(/μ/g, "\\mu");
+	replace(/ν/g, "\\nu");
+	replace(/Ξ/g, "\\Xi");
+	replace(/ξ/g, "\\xi");
+	replace(/Π/g, "\\Pi");
+	replace(/π/g, "\\pi");
+	replace(/ρ/g, "\\rho");
+	replace(/Σ/g, "\\Sigma");
+	replace(/σ/g, "\\sigma");
+	replace(/τ/g, "\\tau");
+	replace(/Τ/g, "\\Upsilon");
+	replace(/υ/g, "\\upsilon");
+	replace(/Φ/g, "\\Phi");
+	replace(/φ/g, "\\phi");
+	replace(/ϕ/g, "\\phi");
+	replace(/χ/g, "\\chi");
+	replace(/Ψ/g, "\\Psi");
+	replace(/ψ/g, "\\psi");
+	replace(/Ω/g, "\\Omega");
+	replace(/ω/g, "\\omega");
+
+	replace(/polygamma/g, "\\psi_{poly}");
+}
 
 
 console.log(input);
