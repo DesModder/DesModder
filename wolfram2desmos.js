@@ -31,6 +31,28 @@ function count(expr) {
 		return 0;
 	}
 }
+
+function bracketEval1() {
+	i++;
+	if (input[i] == ")") {
+		bracket += 1;
+	}
+	else if (input[i] == "(") {
+		bracket -= 1;
+	}
+}
+
+function bracketEval2() {
+	i++;
+	if (input[i] == ")" || input[i] == "}") {
+		bracket += 1;
+	}
+	else if (input[i] == "(" || input[i] == "{") {
+		bracket -= 1;
+	}
+}
+
+
 // returns if the specified index is a "non-variable"
 function isOperator(index) {
 	return !(/[A-Z]|[a-z]|[0-9]|[Α-ω]|∞|\_|\\/g).test(input[index]);
@@ -59,13 +81,7 @@ while (find(/√\(/g) != -1) {
 	overwrite(i,"{");
 	bracket = 0;
 	while (i < input.length) {
-		i++;
-		if (input[i] == ")") {
-			bracket += 1;
-		}
-		else if (input[i] == "(") {
-			bracket -= 1;
-		}
+		bracketEval1();
 		if (bracket == 1) {
 			overwrite(i,"}");
 			i = input.length;
@@ -81,13 +97,7 @@ while (find(/\^/g) != -1) {
 		overwrite(i,"{");
 		bracket = -1;
 		while (i < input.length) {
-			i++;
-			if (input[i] == ")") {
-				bracket += 1;
-			}
-			else if (input[i] == "(") {
-				bracket -= 1;
-			}
+			bracketEval1();
 			if (bracket == 0) {
 				overwrite(i,"}");
 				i = input.length;
@@ -116,13 +126,8 @@ while (find(/\//g) != -1) {
 		overwrite(i - 1, "}");
 		bracket = 1;
 		while (i > 0) {
-			i -= 1;
-			if (input[i] == ")") {
-				bracket += 1;
-			}
-			else if (input[i] == "(") {
-				bracket -= 1;
-			}
+			i -= 2;
+			bracketEval1();
 			if (bracket == 0) {
 				overwrite(i, "\\frac{");
 				startingIndex += 5;
@@ -153,13 +158,7 @@ while (find(/\//g) != -1) {
 		i += 3;
 		bracket = -2;
 		while (i < input.length) {
-			i++;
-			if (input[i] == ")" || input[i] == "}") {
-				bracket += 1;
-			}
-			else if (input[i] == "(" || input[i] == "{") {
-				bracket -= 1;
-			}
+			bracketEval2();
 			if (bracket == -1) {
 				if (input[i + 1] == "^") {
 					// in this situation, as pointed by SlimRunner, there is an exponent at the end of the fraction. we need to correct this by including it in the denominator
@@ -187,26 +186,14 @@ while (find(/\//g) != -1) {
 		overwrite(i, "{");
 		bracket = -1;
 		while (i < input.length) {
-			i++;
-			if (input[i] == ")") {
-				bracket += 1;
-			}
-			else if (input[i] == "(") {
-				bracket -= 1;
-			}
+			bracketEval1();
 			if (bracket == 0) {
 				if (input[i + 1] == "^") {
 					// in this situation, as pointed by SlimRunner, there is an exponent at the end of the fraction. we need to correct this by including it in the denominator
 					bracket = -1;
 					i++;
 					while (i < input.length) {
-						i++;
-						if (input[i] == ")" || input[i] == "}") {
-							bracket += 1;
-						}
-						else if (input[i] == "(" || input[i] == "}") {
-							bracket -= 1;
-						}
+						bracketEval2();
 						if (bracket == 0) {
 							insert(startingIndex + 2, "(");
 							insert(i + 1, "}");
@@ -230,13 +217,7 @@ while (find(/\//g) != -1) {
 				bracket = -1;
 				i++;
 				while (i < input.length) {
-					i++;
-					if (input[i] == ")" || input[i] == "}") {
-						bracket += 1;
-					}
-					else if (input[i] == "(" || input[i] == "}") {
-						bracket -= 1;
-					}
+					bracketEval2();
 					if (bracket == 0) {
 						insert(i + 1, "}");
 						i = input.length;
@@ -257,13 +238,7 @@ while (find(/(sum|prod)_\(\S+=\d+\)/g) != -1) {
 	overwrite(i, "{");
 	bracket = -1;
 	while (i < input.length) {
-		i++;
-		if (input[i] == "(") {
-			bracket -= 1;
-		}
-		else if (input[i] == ")") {
-			bracket += 1;
-		}
+		bracketEval1();
 		if (bracket == 0) {
 			overwrite(i, "}");
 			break;
@@ -273,13 +248,7 @@ while (find(/(sum|prod)_\(\S+=\d+\)/g) != -1) {
 	overwrite(i, "");
 	bracket = -1;
 	while (i < input.length) {
-		i++;
-		if (input[i] == "(") {
-			bracket -= 1;
-		}
-		else if (input[i] == ")") {
-			bracket += 1;
-		}
+		bracketEval1();
 		if (bracket == 0) {
 			insert(i,"}");
 			i = input.length;
@@ -298,7 +267,7 @@ while (find(/_\d/g) != -1) {
 		}
 	}
 }
-replace(/log\(/g, "\\ln\(");
+
 // implment proper brackets when all the operator brackets are gone
 replace(/\(/g,"\\left\(");
 replace(/\)/g,"\\right\)");
@@ -307,6 +276,7 @@ while (find(/\d\s\d/g) != -1) {
 	i = find(/\d\s\d/g) + 1;
 	overwrite(i, "\\times");
 }
+replace(/log\(/g, "\\ln\(");
 replace(/integral/g, "\\int_{}");
 replace(/sum_/g, "\\sum_");
 replace(/prod_/g, "\\prod_");
