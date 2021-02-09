@@ -1,4 +1,4 @@
-let input = "(sin1/abs(x) + |x| + 3 % 4^5 - mod(7, 4) + log(e))/pi";
+let input = "((sin gamma)/abs(x) + |x| + 3 % 4^5 - mod(7, 4) + log(e))/pi";
 
 
 // FUNCTIONS
@@ -66,15 +66,18 @@ function isOperator(index) {
 // PREPARATIONS
 
 // checks if there is an equal number of brackets
-if (count(/\(/g) > count(/\)/g)) {
-	throw new Error("Input has " + (count(/\(/g) - count(/\)/g)) + " more '(' characters than ')' characters");
+{
+	if (count(/\(/g) > count(/\)/g)) {
+		throw new Error("Input has " + (count(/\(/g) - count(/\)/g)) + " more '(' characters than ')' characters");
+	}
+	if (count(/\(/g) < count(/\)/g)) {
+		throw new Error("Input has " + (count(/\)/g) - count(/\(/g)) + " more ')' characters than '(' characters");
+	}
+	if (count(/\|/g) % 2 == 1) {
+		throw new Error("Input has uneven '|' brackets");
+	}
 }
-if (count(/\(/g) < count(/\)/g)) {
-	throw new Error("Input has " + (count(/\)/g) - count(/\(/g)) + " more ')' characters than '(' characters");
-}
-if (count(/\|/g) % 2 == 1) {
-	throw new Error("Input has uneven '|' brackets");
-}
+
 
 // predefine some variables.
 let i, bracket, startingIndex, isOneArgument;
@@ -116,6 +119,7 @@ input = " " + input + " "; // this gives some breathing space
 	replace(/csc/g, "ק");
 	replace(/sec/g, "ר");
 	replace(/cot/g, "ש");
+	replace(/log|ln/g, "ת");
 
 	// latin replacements
 	replace(/(?<![A-Z|a-z|Α-ω|ϕ])alpha/g, "α");
@@ -521,9 +525,6 @@ while (find(/\d\s\d/g) != -1) {
 	insert(find(/(arc|)cot/g), "\\");
 
 	// function replacements
-	replace(/log(?!_)/g, "\\ln");
-	replace(/log/g, "\\log");
-	replace(/(?<!\\)ln/g, "\\ln");
 	replace(/integral/g, "\\int_{}");
 	replace(/sum_/g, "\\sum_");
 	replace(/prod_/g, "\\prod_");
@@ -562,6 +563,9 @@ while (find(/\d\s\d/g) != -1) {
 	replace(/ק/g, "\\csc");
 	replace(/ר/g, "\\sec");
 	replace(/ש/g, "\\cot");
+	replace(/ת(?!_)/g, "\\ln");
+	replace(/ת/g, "\\log");
+	replace(/(?<!\\)ת/g, "\\ln");
 
 
 	// latin replacements
