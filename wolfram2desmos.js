@@ -10,8 +10,8 @@
 //let input = "sum_(n = 1)^∞a_n/(n^s) = (Li_s(ϕ) - Li_s(-1/ϕ))/sqrt(5)";
 //let input = "abs(f_n(tx)/f_n(sx)-f(tx)/f(sx))"; // this one is problematic, but it matches WolframAlpha, so who cares!! :)
 console.time("rendertime");
-let input = "abs(x)";
-
+//let input = "2 (1 + (pi*2 mod 5 + 1)×4)";
+let input = "2 (1 + (1/x π mod 3 6 f(x) + 1)×4)";
 
 // returns the first match's index
 function find(expr) {
@@ -101,6 +101,7 @@ input = " " + input + " "; // this gives some breathing space
 	replace(/\!\=/g, "≠");
 	replace(/\s*\/\s*/g,  "/");
 	replace(/\s*\^\s*/g,  "^");
+	replace(/\s*(mod|\%)\s*/g, "mod");
 	replace(/\|/g, " | ");
 
 	// function replacements
@@ -110,7 +111,6 @@ input = " " + input + " "; // this gives some breathing space
 	replace(/round/g, "ד");
 	replace(/gcd|gcf/g, "ה");
 	replace(/lcm/g, "ו");
-	replace(/mod/g, "ז");
 
 	// latin replacements
 	replace(/(?<![A-Z|a-z|Α-ω|ϕ])alpha/g, "α");
@@ -240,8 +240,8 @@ while (find(/\//g) != -1) {
 	
 		// reciprocal function scenario
 		// this happens when a function begins the denominator
-		let isDenominatorFunction = (startingIndex == find(/\/((\-)|([A-Z|Α-ω|ϕ|א-ת|√|∞|\_])|(\-([A-Z|Α-ω|ϕ|א-ת|√|∞|\_])))(\(|\{)/gi));
-		if (isDenominatorFunction) {
+		let isFunction = (startingIndex == find(/\/((\-)|([A-Z|Α-ω|ϕ|א-ת|√|∞|\_])|(\-([A-Z|Α-ω|ϕ|א-ת|√|∞|\_])))(\(|\{)/gi));
+		if (isFunction) {
 			insert(i, "{(");
 			i += 3;
 			bracket = -2;
@@ -351,6 +351,131 @@ while (find(/_\d/g) != -1) {
 }
 
 
+
+// implement modulos
+// THIS USES THE SAME CODE AS THE FRACTION PARSER
+
+
+while (find(/mod/g) != -1) {
+	startingIndex = find(/mod/g);
+	let isOneArgument = true;
+
+	// first check if the modulus is using 2-arguments instead of 1. if this is the case, we don't have to worry further.
+	i = startingIndex + 3;
+	if (input[i] == "(") {
+		bracket = -1;
+		while (i < input.length) {
+			bracketEval1();
+			if (bracket == -1 && input[i] == ",") {
+				isOneArgument = false;
+				break;
+			}
+			if (bracket == 0) {
+				break;
+			}
+		}
+	}
+	console.log(isOneArgument);
+
+	if (isOneArgument) {
+		// before the modulus
+		{
+			i = startingIndex;
+			// preceded with a ")" scenario
+			if (input[i - 1] == ")") {
+				overwrite(i - 1, "");
+				bracket = 1;
+				while (i > 0) {
+					i -= 2;
+					bracketEval1();
+					if (bracket == 0) {
+						overwrite(i, "ז(");
+						startingIndex += 1;
+						break;
+					}
+				}
+			}
+
+			// preceded WITHOUT a ")" scenario
+			else {
+				while (i > 0) {
+					i -= 1;
+					if (isOperator(i)) {
+						insert(i + 1, "ז(");
+						startingIndex += 2;
+						break;
+					}
+				}
+			}
+		}
+	
+		// after the modulus 
+		{
+			i = startingIndex + 3;
+	
+			// this happens when a function begins the modulus
+			let isFunction = (startingIndex == find(/mod((\-)|([A-Z|Α-ω|ϕ|א-ת|√|∞|\_])|(\-([A-Z|Α-ω|ϕ|א-ת|√|∞|\_])))(\(|\{)/gi));
+			if (isFunction) {
+				insert(i, "(");
+				i += 2;
+				bracket = -1;
+				while (i < input.length) {
+					bracketEval2();
+					if (bracket == 0) { // bracket == -1
+						if (input[i + 1] == "^") {
+						// in this situation, as pointed by SlimRunner, there is an exponent at the end of the fraction. we need to correct this by including it in the denominator
+							bracket = -1;
+							i++;
+							while (i < input.length) {
+								bracketEval2();
+								if (bracket == 0) {
+									break;
+								}
+							}
+						}
+						insert(i + 1, ")");
+						i = input.length;
+					}
+				}
+			}
+
+
+			// following WITHOUT a "(" scenario
+			else {
+				insert(i, "(");
+				while (i < input.length) {
+					i++;
+					if (input[i] == "^") {
+					// in this situation, as pointed by SlimRunner, there is an exponent at the end of the fraction. we need to correct this by including it in the denominator
+						bracket = -1;
+						i++;
+						while (i < input.length) {
+							bracketEval2();
+							if (bracket == 0) {
+								insert(i + 1, ")");
+								i = input.length;
+							}
+						}
+					}
+					else if (isOperator(i)) {
+						insert(i, ")");
+						i = input.length;
+					}
+				}
+			}
+		}
+		replace(/mod\(/,",");
+	}
+	else {
+		replace(/mod\(/,"ז(");
+	}
+
+}
+
+
+
+
+
 // implement absolutes
 while (find(/abs\(/g) != -1) {
 	i = find(/abs\(/g);
@@ -377,8 +502,6 @@ while (find(/\|/g) != -1) {
 	}
 }
 
-
-// implement modulos
 
 
 // implment proper brackets when all the operator brackets are gone
