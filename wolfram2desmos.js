@@ -9,9 +9,11 @@
 //let input = "binomial(sum_(n=0)^∞(a_nx^n)/(n!) = (2 e^(x/2) sinh((sqrt(5) x)/2))/sqrt(5),54)";
 //let input = "sum_(n = 1)^∞a_n/(n^s) = (Li_s(ϕ) - Li_s(-1/ϕ))/sqrt(5)";
 //let input = "abs(f_n(tx)/f_n(sx)-f(tx)/f(sx))"; // this one is problematic, but it matches WolframAlpha, so who cares!! :)
-console.time("rendertime");
 //let input = "2 (1 + (pi*2 mod 5 + 1)×4)";
-let input = "2 (1 + (1/x π mod 3 6 f(x) + 1)×4)";
+//let input = "2 (1 + (1/x π mod 3 6 f(x) + 1)×4)"; // this one is really intellegent. try all sorts of mod() combinations
+//let input = "B_n = ( sum_(k=1)^n sum_(j=1)^k ((-1)^j j^n binomial(1 + n, -j + k))/binomial(n, k))/(1 + n)"; // LOVE THIS ONE
+let input = "B_n = sum_(m=0)^n ((-1)^m sum_(i=0)^(-1 + m) (-1)^i (-i + m)^n binomial(m, i))/(1 + m) for (n element Z and n>=0)";
+
 
 // returns the first match's index
 function find(expr) {
@@ -87,7 +89,7 @@ if (count(/\(/g) != count(/\)/g)) {
 
 
 // predefine some variables.
-let i, bracket, startingIndex;
+let i, bracket, startingIndex, isOneArgument;
 input = " " + input + " "; // this gives some breathing space
 
 
@@ -98,6 +100,8 @@ input = " " + input + " "; // this gives some breathing space
 	replace(/\\infty|infinity|infty/g, "∞");
 	replace(/\\pm|pm/g, "±");
 	replace(/\\pi|pi/g, "π");
+	replace(/\>\=/g, "≥");
+	replace(/\<\=/g, "≤");
 	replace(/\!\=/g, "≠");
 	replace(/\s*\/\s*/g,  "/");
 	replace(/\s*\^\s*/g,  "^");
@@ -358,9 +362,9 @@ while (find(/_\d/g) != -1) {
 
 while (find(/mod/g) != -1) {
 	startingIndex = find(/mod/g);
-	let isOneArgument = true;
+	isOneArgument = true;
 
-	// first check if the modulus is using 2-arguments instead of 1. if this is the case, we don't have to worry further.
+	// first check if the modulus is using 2-arguments instead of 1. if this is the case, we don't have to worry any further.
 	i = startingIndex + 3;
 	if (input[i] == "(") {
 		bracket = -1;
@@ -371,11 +375,12 @@ while (find(/mod/g) != -1) {
 				break;
 			}
 			if (bracket == 0) {
+				overwrite(i, "");
+				overwrite(startingIndex + 3, "");
 				break;
 			}
 		}
 	}
-	console.log(isOneArgument);
 
 	if (isOneArgument) {
 		// before the modulus
@@ -547,6 +552,8 @@ while (find(/\d\s\d/g) != -1) {
 	replace(/±/g, "\\pm");
 	replace(/^\s/g, "");
 	replace(/\s$/g, "");
+	replace(/and/g, "&");
+	replace(/element/g, "ε");
 
 	replace(/א/g, "\\operatorname{nCr}");
 	replace(/ב/g, "\\operatorname{floor}");
