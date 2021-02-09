@@ -1,4 +1,4 @@
-let input = "abs(x) + |x| + 3 % 4 - mod(7, 4)";
+let input = "(sin1/abs(x) + |x| + 3 % 4^5 - mod(7, 4) + log(e))/pi";
 
 
 // FUNCTIONS
@@ -102,6 +102,7 @@ input = " " + input + " "; // this gives some breathing space
 	replace(/round/g, "ד");
 	replace(/gcd|gcf/g, "ה");
 	replace(/lcm/g, "ו");
+	replace(/abs/g, "ח");
 
 	// latin replacements
 	replace(/(?<![A-Z|a-z|Α-ω|ϕ])alpha/g, "α");
@@ -459,9 +460,9 @@ while (find(/mod/g) != -1) {
 }
 
 // implement absolutes
-while (find(/abs\(/g) != -1) {
-	i = find(/abs\(/g);
-	replace(/abs\(/, "⟨");
+while (find(/ח\(/g) != -1) {
+	i = find(/ח\(/g);
+	replace(/ח\(/, "⟨");
 	bracket = -1;
 	while (i < input.length) {
 		bracketEval2();
@@ -509,7 +510,7 @@ while (find(/\d\s\d/g) != -1) {
 	// function replacements
 	replace(/log(?!_)/g, "\\ln");
 	replace(/log/g, "\\log");
-	replace(/ln/g, "\\ln");
+	replace(/(?<!\\)ln/g, "\\ln");
 	replace(/integral/g, "\\int_{}");
 	replace(/sum_/g, "\\sum_");
 	replace(/prod_/g, "\\prod_");
@@ -537,7 +538,7 @@ while (find(/\d\s\d/g) != -1) {
 	replace(/ז/g, "\\operatorname{mod}");
 
 
-	// throw in the latin letters in for the hell of it
+	// latin replacements
 	replace(/α/g, "\\alpha");
 	replace(/β/g, "\\beta");
 	replace(/Γ/g, "\\Gamma");
