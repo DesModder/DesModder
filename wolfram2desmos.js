@@ -103,6 +103,18 @@ input = " " + input + " "; // this gives some breathing space
 	replace(/gcd|gcf/g, "ה");
 	replace(/lcm/g, "ו");
 	replace(/abs/g, "ח");
+	replace(/arcsin/g, "ט");
+	replace(/arccos/g, "י");
+	replace(/arctan/g, "כ");
+	replace(/arccsc/g, "ל");
+	replace(/arcsec/g, "מ");
+	replace(/arccot/g, "נ");
+	replace(/sin/g, "ס");
+	replace(/cos/g, "ע");
+	replace(/tan/g, "פ");
+	replace(/csc/g, "ק");
+	replace(/sec/g, "ר");
+	replace(/cot/g, "ש");
 
 	// latin replacements
 	replace(/(?<![A-Z|a-z|Α-ω|ϕ])alpha/g, "α");
@@ -536,6 +548,19 @@ while (find(/\d\s\d/g) != -1) {
 	replace(/ה/g, "\\operatorname{gcd}");
 	replace(/ו/g, "\\operatorname{lcm}");
 	replace(/ז/g, "\\operatorname{mod}");
+	replace(/ח/g, "\\operatorname{abs}");
+	replace(/ט/g, "\\arcsin");
+	replace(/י/g, "\\arccos");
+	replace(/כ/g, "\\arctan");
+	replace(/ל/g, "\\arccsc");
+	replace(/מ/g, "\\arcsec");
+	replace(/נ/g, "\\arccot");
+	replace(/ס/g, "\\sin");
+	replace(/ע/g, "\\cos");
+	replace(/פ/g, "\\tan");
+	replace(/ק/g, "\\csc");
+	replace(/ר/g, "\\sec");
+	replace(/ש/g, "\\cot");
 
 
 	// latin replacements
