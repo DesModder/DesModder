@@ -9,8 +9,8 @@
 //let input = "binomial(sum_(n=0)^∞(a_nx^n)/(n!) = (2 e^(x/2) sinh((sqrt(5) x)/2))/sqrt(5),54)";
 //let input = "sum_(n = 1)^∞a_n/(n^s) = (Li_s(ϕ) - Li_s(-1/ϕ))/sqrt(5)";
 //let input = "abs(f_n(tx)/f_n(sx)-f(tx)/f(sx))"; // this one is problematic, but it matches WolframAlpha, so who cares!! :)
-
-let input = "log_10 (4)";
+console.time("rendertime");
+let input = "abs(x)";
 
 
 // returns the first match's index
@@ -101,7 +101,16 @@ input = " " + input + " "; // this gives some breathing space
 	replace(/\!\=/g, "≠");
 	replace(/\s*\/\s*/g,  "/");
 	replace(/\s*\^\s*/g,  "^");
-	replace(/(?<![A-Z|a-z|Α-ω|ϕ])binomial/g, "א"); // aleph will be my function placeholder
+	replace(/\|/g, " | ");
+
+	// function replacements
+	replace(/(?<![A-Z|a-z|Α-ω|ϕ])binomial/g, "א"); // hebrew will be my function placeholders
+	replace(/floor/g, "ב");
+	replace(/ceiling/g, "ג");
+	replace(/round/g, "ד");
+	replace(/gcd|gcf/g, "ה");
+	replace(/lcm/g, "ו");
+	replace(/mod/g, "ז");
 
 	// latin replacements
 	replace(/(?<![A-Z|a-z|Α-ω|ϕ])alpha/g, "α");
@@ -190,116 +199,125 @@ replace(/\@/g,"^");
 // implement fractions
 while (find(/\//g) != -1) {
 	startingIndex = find(/\//g);
-	i = startingIndex;
-	// prior to the slash
-	if (input[i - 1] == ")") {
-		overwrite(i - 1, "}");
-		bracket = 1;
-		while (i > 0) {
-			i -= 2;
-			bracketEval1();
-			if (bracket == 0) {
-				overwrite(i, "\\frac{");
-				startingIndex += 5;
-				i = 0;
+
+	// implement the numerator; prior to the slash
+	{
+		i = startingIndex;
+		
+		// preceded by a ")" scenario
+		if (input[i - 1] == ")") {
+			overwrite(i - 1, "}");
+			bracket = 1;
+			while (i > 0) {
+				i -= 2;
+				bracketEval1();
+				if (bracket == 0) {
+					overwrite(i, "\\frac{");
+					startingIndex += 5;
+					i = 0;
+				}
+			}
+		}
+
+		// preceded WITHOUT a ")" scenario
+		else {
+			insert(i, "}");
+			startingIndex += 1;
+			while (i > 0) {
+				i -= 1;
+				if (isOperator(i)) {
+					insert(i + 1, "\\frac{");
+					startingIndex += 6;
+					i = 0;
+				}
 			}
 		}
 	}
-	else {
-		insert(i, "}");
-		startingIndex += 1;
-		while (i > 0) {
-			i -= 1;
-			if (isOperator(i)) {
-				insert(i + 1, "\\frac{");
-				startingIndex += 6;
-				i = 0;
-			}
-		}
-	}
-	// after the slash
-	i = startingIndex + 1;
+
+	// implement the denominator; after the slash 
+	{
+		i = startingIndex + 1;
 	
-	// inverse root scenario
-	// this happens when there is a function in the denominator
-	let isDenominatorFunction = (startingIndex == find(/\/((\-)|([A-Z|Α-ω|ϕ|א-ת|√|∞|\_])|(\-([A-Z|Α-ω|ϕ|א-ת|√|∞|\_])))(\(|\{)/gi));
-	if (isDenominatorFunction) {
-		insert(i, "{(");
-		i += 3;
-		bracket = -2;
-		while (i < input.length) {
-			bracketEval2();
-			if (bracket == -1) {
-				if (input[i + 1] == "^") {
-					// in this situation, as pointed by SlimRunner, there is an exponent at the end of the fraction. we need to correct this by including it in the denominator
-					bracket = -1;
-					i++;
-					while (i < input.length) {
+		// reciprocal function scenario
+		// this happens when a function begins the denominator
+		let isDenominatorFunction = (startingIndex == find(/\/((\-)|([A-Z|Α-ω|ϕ|א-ת|√|∞|\_])|(\-([A-Z|Α-ω|ϕ|א-ת|√|∞|\_])))(\(|\{)/gi));
+		if (isDenominatorFunction) {
+			insert(i, "{(");
+			i += 3;
+			bracket = -2;
+			while (i < input.length) {
+				bracketEval2();
+				if (bracket == -1) {
+					if (input[i + 1] == "^") {
+						// in this situation, as pointed by SlimRunner, there is an exponent at the end of the fraction. we need to correct this by including it in the denominator
+						bracket = -1;
 						i++;
-						if (input[i] == ")" || input[i] == "}") {
-							bracket += 1;
-						}
-						else if (input[i] == "(" || input[i] == "}") {
-							bracket -= 1;
-						}
-						if (bracket == 0) {
-							break;
+						while (i < input.length) {
+							bracketEval2();
+							if (bracket == 0) {
+								break;
+							}
 						}
 					}
+					insert(i + 1, ")}");
+					i = input.length;
 				}
-				insert(i + 1, ")}");
-				i = input.length;
 			}
 		}
-	}
-	else if (input[i] == "(") {
-		overwrite(i, "{");
-		bracket = -1;
-		while (i < input.length) {
-			bracketEval1();
-			if (bracket == 0) {
-				if (input[i + 1] == "^") {
+
+		// following a "(" scenario
+		else if (input[i] == "(") {
+			overwrite(i, "{");
+			bracket = -1;
+			while (i < input.length) {
+				bracketEval1();
+				if (bracket == 0) {
+					if (input[i + 1] == "^") {
+						// in this situation, as pointed by SlimRunner, there is an exponent at the end of the fraction. we need to correct this by including it in the denominator
+						bracket = -1;
+						i++;
+						while (i < input.length) {
+							bracketEval2();
+							if (bracket == 0) {
+								insert(startingIndex + 2, "(");
+								insert(i + 1, "}");
+								i = input.length;
+							}
+						}
+					}
+					else {
+						overwrite(i, "}");
+					}
+					i = input.length;
+				}
+			}
+		}
+
+		// following WITHOUT a "(" scenario
+		else {
+			insert(i, "{");
+			while (i < input.length) {
+				i++;
+				if (input[i] == "^") {
 					// in this situation, as pointed by SlimRunner, there is an exponent at the end of the fraction. we need to correct this by including it in the denominator
 					bracket = -1;
 					i++;
 					while (i < input.length) {
 						bracketEval2();
 						if (bracket == 0) {
-							insert(startingIndex + 2, "(");
 							insert(i + 1, "}");
 							i = input.length;
 						}
 					}
 				}
-				else {
-					overwrite(i, "}");
+				else if (isOperator(i)) {
+					insert(i, "}");
+					i = input.length;
 				}
-				i = input.length;
 			}
 		}
 	}
-	else {
-		insert(i, "{");
-		while (i < input.length) {
-			i++;
-			if (input[i] == "^") {
-				// in this situation, as pointed by SlimRunner, there is an exponent at the end of the fraction. we need to correct this by including it in the denominator
-				bracket = -1;
-				i++;
-				while (i < input.length) {
-					bracketEval2();
-					if (bracket == 0) {
-						insert(i + 1, "}");
-						i = input.length;
-					}
-				}
-			}
-			else if (isOperator(i)) {
-				insert(i, "}");
-				i = input.length;
-			}
-		}
-	}
+	
 	overwrite(startingIndex, "");
 }
 
@@ -333,9 +351,42 @@ while (find(/_\d/g) != -1) {
 }
 
 
+// implement absolutes
+while (find(/abs\(/g) != -1) {
+	i = find(/abs\(/g);
+	replace(/abs\(/, "⟨");
+	bracket = -1;
+	while (i < input.length) {
+		bracketEval2();
+		if (bracket == 0) {
+			overwrite(i, "⟩");
+			i = input.length;
+		}
+	}
+}
+while (find(/\|/g) != -1) {
+	i = find(/\|/g);
+	overwrite(i, "⟨");
+	bracket = -1;
+	while (i < input.length) {
+		bracketEval2();
+		if (bracket == -1 && input[i] == "|") {
+			overwrite(i, "⟩");
+			i = input.length;
+		}
+	}
+}
+
+
+// implement modulos
+
+
 // implment proper brackets when all the operator brackets are gone
 replace(/\(/g,"\\left\(");
 replace(/\)/g,"\\right\)");
+replace(/\⟨/g,"\\left\|");
+replace(/\⟩/g,"\\right\|");
+
 
 
 // replace blank spaces between numbers with cross products
@@ -358,9 +409,7 @@ while (find(/\d\s\d/g) != -1) {
 	// function replacements
 	replace(/log(?!_)/g, "\\ln");
 	replace(/log/g, "\\log");
-	replace(/floor/g, "\floor");
-	replace(/ceil/g, "\ceil");
-	replace(/round/g, "\round");
+	replace(/ln/g, "\\ln");
 	replace(/integral/g, "\\int_{}");
 	replace(/sum_/g, "\\sum_");
 	replace(/prod_/g, "\\prod_");
@@ -373,9 +422,16 @@ while (find(/\d\s\d/g) != -1) {
 	replace(/∞[A-Z|a-z]/g, "\\infty");
 	replace(/∞/g, "\\infty");
 	replace(/±/g, "\\pm");
-	replace(/א/g, "\\operatorname{nCr}");
 	replace(/^\s/g, "");
 	replace(/\s$/g, "");
+
+	replace(/א/g, "\\operatorname{nCr}");
+	replace(/ב/g, "\\operatorname{floor}");
+	replace(/ג/g, "\\operatorname{ceil}");
+	replace(/ד/g, "\\operatorname{round}");
+	replace(/ה/g, "\\operatorname{gcd}");
+	replace(/ו/g, "\\operatorname{lcm}");
+	replace(/ז/g, "\\operatorname{mod}");
 
 
 	// throw in the latin letters in for the hell of it
@@ -420,3 +476,4 @@ while (find(/\d\s\d/g) != -1) {
 
 
 console.log(input);
+console.timeEnd("rendertime");
