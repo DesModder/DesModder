@@ -59,7 +59,7 @@ function bracketEval2() {
 
 // returns if the specified index is a "non-variable"
 function isOperator(index) {
-	return !(/[A-Z|\d|Α-ω|∞|א-ת|\_|\\]/gi).test(input[index]);
+	return !(/[A-Z|\d|Α-ω|ϕ|∞|א-ת|ッ|\_|\\]/gi).test(input[index]);
 }
 
 
@@ -92,7 +92,7 @@ input = " " + input + " "; // this gives some breathing space
 	replace(/\!\=/g, "≠");
 	replace(/\s*\/\s*/g,  "/");
 	replace(/\s*\^\s*/g,  "^");
-	replace(/\s*(mod|\%)\s*/g, "mod");
+	replace(/\s*(mod|\%)\s*/g, "ッ");
 	replace(/\|/g, " | ");
 
 	// misc function replacements
@@ -103,6 +103,20 @@ input = " " + input + " "; // this gives some breathing space
 	replace(/gcd|gcf/g, "ה");
 	replace(/lcm/g, "ו");
 	replace(/abs/g, "ח");
+
+	replace(/arcsin/g, "ט");
+	replace(/arccos/g, "י");
+	replace(/arctan/g, "כ");
+	replace(/arccsc/g, "ל");
+	replace(/arcsec/g, "מ");
+	replace(/arccot/g, "נ");
+	replace(/sin/g, "ס");
+	replace(/cos/g, "ע");
+	replace(/tan/g, "פ");
+	replace(/csc/g, "ק");
+	replace(/sec/g, "ר");
+	replace(/cot/g, "ש");
+	
 
 	// latin replacements
 	replace(/(?<![A-Z|a-z|Α-ω|ϕ])alpha/g, "α");
@@ -342,8 +356,8 @@ while (find(/_\d/g) != -1) {
 
 // implement modulos
 // THIS USES THE SAME CODE AS THE FRACTION PARSER
-while (find(/mod/g) != -1) {
-	startingIndex = find(/mod/g);
+while (find(/ッ/g) != -1) {
+	startingIndex = find(/ッ/g);
 	isOneArgument = true;
 
 	// first check if the modulus is using 2-arguments instead of 1. if this is the case, we don't have to worry any further.
@@ -401,7 +415,7 @@ while (find(/mod/g) != -1) {
 			i = startingIndex + 3;
 	
 			// this happens when a function begins the modulus
-			let isFunction = (startingIndex == find(/mod((\-)|([A-Z|Α-ω|ϕ|א-ת|√|∞|\_])|(\-([A-Z|Α-ω|ϕ|א-ת|√|∞|\_])))(\(|\{)/gi));
+			let isFunction = (startingIndex == find(/ッ((\-)|([A-Z|Α-ω|ϕ|ッ|א-ת|√|∞|\_])|(\-([A-Z|Α-ω|ϕ|ッ|א-ת|√|∞|\_])))(\(|\{)/gi));
 			if (isFunction) {
 				insert(i, "(");
 				i += 2;
@@ -451,10 +465,10 @@ while (find(/mod/g) != -1) {
 				}
 			}
 		}
-		replace(/mod\(/,",");
+		replace(/ッ\(/,",");
 	}
 	else {
-		replace(/mod\(/,"ז(");
+		replace(/ッ\(/,"ז(");
 	}
 
 }
@@ -536,6 +550,19 @@ while (find(/\d\s\d/g) != -1) {
 	replace(/ה/g, "\\operatorname{gcd}");
 	replace(/ו/g, "\\operatorname{lcm}");
 	replace(/ז/g, "\\operatorname{mod}");
+	replace(/ח/g, "\\operatorname{abs}");
+	replace(/ט/g, "\\arcsin");
+	replace(/י/g, "\\arccos");
+	replace(/כ/g, "\\arctan");
+	replace(/ל/g, "\\arccsc");
+	replace(/מ/g, "\\arcsec");
+	replace(/נ/g, "\\arccot");
+	replace(/ס/g, "\\sin");
+	replace(/ע/g, "\\cos");
+	replace(/פ/g, "\\tan");
+	replace(/ק/g, "\\csc");
+	replace(/ר/g, "\\sec");
+	replace(/ש/g, "\\cot");
 
 
 	// latin replacements
