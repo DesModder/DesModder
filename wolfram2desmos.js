@@ -1,31 +1,17 @@
-//input = "(3 + 1 )/ (3 + 3) + 767 + 1/(15 + 1/(1 + 1/(292 + 81/(1 + 1/(1 + 1/(1 + 1/(2 + 1/(1 + 1/(3 + 1/(1 + 1/(14 + 1/(2 + 1/(1 + 1/(1 + 1/(2 + 1/(2 + 1/(2 + 1)))))))))))))))))";
-//input = "x = -(-1478412 π a^2 f_57 + sqrt((-1478412 π a^2 f_57 - 54)^2 - 2916) - 54)^(1/3)/(702 2^(1/3) a) - 1/(39 2^(2/3) a (-1478412 π a^2 f_57 + sqrt((-1478412 π a^2 f_57 - 54)^2 - 2916) - 54)^(1/3)) + 1/(234 a)";
-//input = "a!=0, x = (sqrt((-27 a^2 d + 9 a b c - 2 b^3)^2 + 4 (3 a c - b^2)^3) - 27 a^2 d + 9 a b c - 2 b^3)^(1/3)/(3 2^(1/3) a) - (2^(1/3) (3 a c - b^2))/(3 a (sqrt((-27 a^2 d + 9 a b c - 2 b^3)^2 + 4 (3 a c - b^2)^3) - 27 a^2 d + 9 a b c - 2 b^3)^(1/3)) - b/(3 a)";
-//input = "1/19 (5^(1/3) (19 sqrt(361 x^2 - 1642 x + 841) + 361 x - 821)^(1/3) + (42 5^(2/3))/(19 sqrt(361 x^2 - 1642 x + 841) + 361 x - 821)^(1/3) - 1)";
-//input = "1/sqrt(23452xcxc+pi+(sqrt(135/1351235123)))^5";
-//let input = "integral_1^y(x) (1/sqrt(2 log(x^2 + (3 - 2 ζ) x + (ζ - 3) ζ) + 2 c_1 + 1) - integral_1^x (2 ζ - 2 ξ - 3)/((ξ^2 + (3 - 2 ζ) ξ + (ζ - 3) ζ) (2 log(ξ^2 + (3 - 2 ζ) ξ + (ζ - 3) ζ) + 2 c_1 + 1)^(3/2)) dξ) dζ + integral_1^x (1 - 1/sqrt(2 log(ξ^2 - 2 y(x) ξ + 3 ξ + y(x)^2 - 3 y(x)) + 2 c_1 + 1)) dξ = c_2";
-//let input = "1 - gamma (x - 1) + 1/12 (6 gamma ^2 + π^2) (x - 1)^2 + 1/6 (x - 1)^3 (- gamma ^3 - ( gamma π^2)/2 + polygamma(2, 1)) + 1/24 (x - 1)^4 ( gamma ^4 + gamma ^2 π^2 + (3 π^4)/20 - 4 gamma polygamma(2, 1)) + 1/120 (x - 1)^5 (- gamma ^5 - (5 gamma ^3 π^2)/3 - (3 gamma π^4)/4 + 10 gamma ^2 polygamma(2, 1) + (5 π^2 polygamma(2, 1))/3 + polygamma(4, 1)) + O((x - 1)^6)";
-//let input = "π = -3 sqrt(3) + 1/2 (sqrt(3) sum_(k=1)^∞ k/binomial(2 k, k)) 9";
-//let input = "binomial(sum_(n=0)^∞(a_nx^n)/(n!) = (2 e^(x/2) sinh((sqrt(5) x)/2))/sqrt(5),54)";
-//let input = "sum_(n = 1)^∞a_n/(n^s) = (Li_s(ϕ) - Li_s(-1/ϕ))/sqrt(5)";
-//let input = "abs(f_n(tx)/f_n(sx)-f(tx)/f(sx))"; // this one is problematic, but it matches WolframAlpha, so who cares!! :)
-//let input = "2 (1 + (pi*2 mod 5 + 1)×4)";
-//let input = "2 (1 + (1/x π mod 3 6 f(x) + 1)×4)"; // this one is really intellegent. try all sorts of mod() combinations
-//let input = "B_n = ( sum_(k=1)^n sum_(j=1)^k ((-1)^j j^n binomial(1 + n, -j + k))/binomial(n, k))/(1 + n)"; // LOVE THIS ONE
-let input = "B_n = sum_(m=0)^n ((-1)^m sum_(i=0)^(-1 + m) (-1)^i (-i + m)^n binomial(m, i))/(1 + m) for (n element Z and n>=0)";
+let input = "abs(x) + |x| + 3 % 4 - mod(7, 4)";
 
+
+// FUNCTIONS
 
 // returns the first match's index
 function find(expr) {
 	return input.search(expr);
 }
 
-
 // replaces all matches with replacement
 function replace(expr,replacement) {
 	input = input.replace(expr,replacement);
 }
-
 
 // inserts replacement at given index
 function insert(index,replacement) {
@@ -34,12 +20,10 @@ function insert(index,replacement) {
 	}
 }
 
-
 // overwrites current index with replacement
 function overwrite(index,replacement) {
 	input = input.slice(0,index) + replacement + input.slice(index + 1,input.length);
 }
-
 
 // returns the number of matches
 function count(expr) {
@@ -50,7 +34,6 @@ function count(expr) {
 		return 0;
 	}
 }
-
 
 // iterates the bracket parser for ()
 function bracketEval1() {
@@ -63,7 +46,6 @@ function bracketEval1() {
 	}
 }
 
-
 // iterates the bracket parser for {} and ()
 function bracketEval2() {
 	i++;
@@ -75,23 +57,28 @@ function bracketEval2() {
 	}
 }
 
-
 // returns if the specified index is a "non-variable"
 function isOperator(index) {
 	return !(/[A-Z|\d|Α-ω|∞|א-ת|\_|\\]/gi).test(input[index]);
 }
 
 
-// checks if there is an equal number of brackets
-if (count(/\(/g) != count(/\)/g)) {
-	throw new Error('Input has uneven brackets');
-}
+// PREPARATIONS
 
+// checks if there is an equal number of brackets
+if (count(/\(/g) > count(/\)/g)) {
+	throw new Error("Input has " + (count(/\(/g) - count(/\)/g)) + " more '(' characters than ')' characters");
+}
+if (count(/\(/g) < count(/\)/g)) {
+	throw new Error("Input has " + (count(/\)/g) - count(/\(/g)) + " more ')' characters than '(' characters");
+}
+if (count(/\|/g) % 2 == 1) {
+	throw new Error("Input has uneven '|' brackets");
+}
 
 // predefine some variables.
 let i, bracket, startingIndex, isOneArgument;
 input = " " + input + " "; // this gives some breathing space
-
 
 // preform prelimenary replacements
 {
@@ -108,7 +95,7 @@ input = " " + input + " "; // this gives some breathing space
 	replace(/\s*(mod|\%)\s*/g, "mod");
 	replace(/\|/g, " | ");
 
-	// function replacements
+	// misc function replacements
 	replace(/(?<![A-Z|a-z|Α-ω|ϕ])binomial/g, "א"); // hebrew will be my function placeholders
 	replace(/floor/g, "ב");
 	replace(/ceiling/g, "ג");
@@ -155,6 +142,8 @@ input = " " + input + " "; // this gives some breathing space
 }
 
 
+// PARSING
+
 // implement square roots
 while (find(/√\(/g) != -1) {
 	i = find(/√\(/g) + 1;
@@ -168,7 +157,6 @@ while (find(/√\(/g) != -1) {
 		}
 	}
 }
-
 
 // implement exponents
 while (find(/\^/g) != -1) {
@@ -198,7 +186,6 @@ while (find(/\^/g) != -1) {
 	}
 }
 replace(/\@/g,"^");
-
 
 // implement fractions
 while (find(/\//g) != -1) {
@@ -321,10 +308,9 @@ while (find(/\//g) != -1) {
 			}
 		}
 	}
-	
+
 	overwrite(startingIndex, "");
 }
-
 
 // implement summation and products
 while (find(/(sum|prod)_\([A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\s*=\s*[A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\)/g) != -1) {
@@ -340,7 +326,6 @@ while (find(/(sum|prod)_\([A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\s*=\s*[A-Z|a-z|\d|
 	}
 }
 
-
 // implement subscripts
 while (find(/_\d/g) != -1) {
 	i = find(/_\d/g) + 1;
@@ -354,12 +339,8 @@ while (find(/_\d/g) != -1) {
 	}
 }
 
-
-
 // implement modulos
 // THIS USES THE SAME CODE AS THE FRACTION PARSER
-
-
 while (find(/mod/g) != -1) {
 	startingIndex = find(/mod/g);
 	isOneArgument = true;
@@ -477,10 +458,6 @@ while (find(/mod/g) != -1) {
 
 }
 
-
-
-
-
 // implement absolutes
 while (find(/abs\(/g) != -1) {
 	i = find(/abs\(/g);
@@ -507,22 +484,17 @@ while (find(/\|/g) != -1) {
 	}
 }
 
-
-
 // implment proper brackets when all the operator brackets are gone
 replace(/\(/g,"\\left\(");
 replace(/\)/g,"\\right\)");
 replace(/\⟨/g,"\\left\|");
 replace(/\⟩/g,"\\right\|");
 
-
-
 // replace blank spaces between numbers with cross products
 while (find(/\d\s\d/g) != -1) {
 	i = find(/\d\s\d/g) + 1;
 	overwrite(i, "\\times");
 }
-
 
 // perform concluding replacements
 {
@@ -552,6 +524,7 @@ while (find(/\d\s\d/g) != -1) {
 	replace(/±/g, "\\pm");
 	replace(/^\s/g, "");
 	replace(/\s$/g, "");
+	replace(/\s\s/g, "");
 	replace(/and/g, "&");
 	replace(/element/g, "ε");
 
@@ -600,10 +573,7 @@ while (find(/\d\s\d/g) != -1) {
 	replace(/ψ/g, "\\psi");
 	replace(/Ω/g, "\\Omega");
 	replace(/ω/g, "\\omega");
-
 	replace(/polygamma/g, "\\psi_{poly}");
 }
 
-
 console.log(input);
-console.timeEnd("rendertime");
