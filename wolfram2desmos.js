@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      1.0
+// @version      2.0
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
+// @website      https://ezra.jackz.me/
 // @match        https://*.desmos.com/calculator*
 // @grant        none
-// @downloadURL	https://github.com/Heavenira/wolfram2desmos/raw/main/wolfram2desmos.js
-// @updateURL	https://github.com/Heavenira/wolfram2desmos/raw/main/wolfram2desmos.js
+// @downloadURL	 https://github.com/Heavenira/wolfram2desmos/raw/main/wolfram2desmos.js
+// @updateURL	 https://github.com/Heavenira/wolfram2desmos/raw/main/wolfram2desmos.js
 // ==/UserScript==
 
 
