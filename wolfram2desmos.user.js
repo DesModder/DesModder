@@ -31,7 +31,6 @@
 		{
 			// determines if the input IS ALREADY latex
 			if (count(/(\\)|((\^|\_){)/g) > 0) {
-				console.warn("Input is already LaTeX");
 				return input;
 			}
 	
