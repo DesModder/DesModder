@@ -12,6 +12,12 @@ function wolfram2desmos(input) {
 
 	// calculating any errors
 	{
+		// determines if the input IS ALREADY latex
+		if (count(/(\\)|((\^|\_){)/g) > 0) {
+			console.warn("Input is already LaTeX");
+			return input;
+		}
+
 		// determines if the brackets are correct
 		if (count(/\(/g) > count(/\)/g)) {
 			console.warn("Input has " + (count(/\(/g) - count(/\)/g)) + " more '(' characters than ')' characters");
@@ -23,12 +29,6 @@ function wolfram2desmos(input) {
 		}
 		if (count(/\|/g) % 2 == 1) {
 			console.warn("Input has uneven '|' brackets");
-			return input;
-		}
-
-		// determines if the input IS ALREADY latex
-		if (count(/(\\)|((\^|\_){)/g) > 0) {
-			console.warn("Input is already LaTeX");
 			return input;
 		}
 	}
@@ -675,30 +675,32 @@ function wolfram2desmos(input) {
 
 
 function pasteHandler(e) {
-	let clipboardData, temp;
+	let clipboardData, pasteData, temp;
 	clipboardData = e.clipboardData || window.clipboardData;
-	window.pasteValue = clipboardData.getData('Text');
+	pasteData = clipboardData.getData('Text');
 
-	if(window.pasteValue) {
-
+	if (pasteData) {
+		console.log(Calc.getExpressions().find(item => item.id == Calc.selectedExpressionId).type);
 		// Stop data actually being pasted
 		e.stopPropagation();
 		e.preventDefault();
 
 		console.log(window.pasteValue);
 
-		window.pasteValue = wolfram2desmos(window.pasteValue);
+		if (Calc.getExpressions().find(item => item.id == Calc.selectedExpressionId).type == "expression") {
+			pasteData = wolfram2desmos(pasteData);
+		}
 
-		// Pastes data into document
 		temp = document.createElement("div");
-		temp.innerHTML = window.pasteValue;
+		temp.innerHTML = pasteData;
 		document.execCommand("insertHTML", false, temp.textContent);
 
 	}else {
-		console.warn('No value for pasteValue, ignoring.');
+		console.warn('No value for pasteData, ignoring.');
 	}
 }
 
+// listener; checks when the user presses CTRL+V and activates the script
 xpn = document.querySelector('.dcg-exppanel-outer');
 xpn.addEventListener('focusin', (e) => {
 	let txa = e.target.parentElement.parentElement;
