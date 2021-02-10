@@ -7,8 +7,8 @@
 // @website      https://ezra.jackz.me/
 // @match        https://*.desmos.com/calculator*
 // @grant        none
-// @downloadURL	 https://github.com/Heavenira/wolfram2desmos/raw/main/wolfram2desmos.js
-// @updateURL	 https://github.com/Heavenira/wolfram2desmos/raw/main/wolfram2desmos.js
+// @downloadURL	 https://github.com/Heavenira/wolfram2desmos/raw/main/wolfram2desmos.user.js
+// @updateURL	 https://github.com/Heavenira/wolfram2desmos/raw/main/wolfram2desmos.user.js
 // ==/UserScript==
 
 
