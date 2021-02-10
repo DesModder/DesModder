@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      2.0
+// @version      v2.0
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @website      https://ezra.jackz.me/
@@ -710,8 +710,6 @@
 			temp.innerHTML = pasteData;
 			document.execCommand("insertHTML", false, temp.textContent);
 	
-		}else {
-			console.warn('No value for pasteData, ignoring.');
 		}
 	}
 	
