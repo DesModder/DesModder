@@ -1,5 +1,4 @@
-//let input = "B_n = 2^(1 - n) (-1 + n) n (i/π)^n integral_0^1 (log(1 - t) log^(-2 + n)(t))/t dt for (n/2 element Z and n>0)";
-let input = "sin(z) = z product_(k=1)^∞(1 - z^2/(k^2 π^2))";
+let input = "sin^2(z) = z product_(k=1)^∞(1 - z^2/(k^2 π^2))";
 
 // FUNCTIONS
 
@@ -178,7 +177,7 @@ while (find(/√\(/g) != -1) {
 // implement exponents
 while (find(/\^/g) != -1) {
 	i = find(/\^/g);
-	overwrite(i, "@");
+	overwrite(i, "↑");
 	i++;
 	if (input[i] == "(") {
 		overwrite(i,"{");
@@ -202,7 +201,7 @@ while (find(/\^/g) != -1) {
 		}
 	}
 }
-replace(/\@/g,"^");
+replace(/↑/g,"^");
 
 // implement fractions
 while (find(/\//g) != -1) {
