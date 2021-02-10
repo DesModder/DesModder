@@ -1,5 +1,5 @@
-let input = "((sin gamma)/abs(x) + |x| + 3 % 4^5 - mod(7, 4) + log(e))/pi";
-
+//let input = "B_n = 2^(1 - n) (-1 + n) n (i/π)^n integral_0^1 (log(1 - t) log^(-2 + n)(t))/t dt for (n/2 element Z and n>0)";
+let input = "sin(z) = z product_(k=1)^∞(1 - z^2/(k^2 π^2))";
 
 // FUNCTIONS
 
@@ -93,8 +93,7 @@ input = " " + input + " "; // this gives some breathing space
 	replace(/\>\=/g, "≥");
 	replace(/\<\=/g, "≤");
 	replace(/\!\=/g, "≠");
-	replace(/\s*\/\s*/g,  "/");
-	replace(/\s*\^\s*/g,  "^");
+	replace(/(\s*(?=(\/|\^)))|((?<=(\/|\^))\s*)/g, "");
 	replace(/\s*(mod|\%)\s*/g, "mod");
 	replace(/\|/g, " | ");
 
@@ -116,9 +115,9 @@ input = " " + input + " "; // this gives some breathing space
 	replace(/sin/g, "ס");
 	replace(/cos/g, "ע");
 	replace(/tan/g, "פ");
-	replace(/csc/g, "ק");
-	replace(/sec/g, "ר");
-	replace(/cot/g, "ש");
+	replace(/csc/g, "צ");
+	replace(/sec/g, "ק");
+	replace(/cot/g, "ר");
 	replace(/log|ln/g, "ת");
 
 	// latin replacements
@@ -331,8 +330,14 @@ while (find(/\//g) != -1) {
 }
 
 // implement summation and products
-while (find(/(sum|prod)_\([A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\s*=\s*[A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\)/g) != -1) {
-	i = find(/(sum|prod)_\([A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\s*=\s*[A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\)/g) + 4;
+while (find(/(sum|prod(uct|))_\([A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\s*=\s*[A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\)/g) != -1) {
+	i = find(/(sum|prod(uct|))_\([A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\s*=\s*[A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\)/g) + 4;
+	if (input[i] == "u") {
+		i += 4;
+	}
+	else if (input[i] == "_") {
+		i ++;
+	}
 	overwrite(i, "{");
 	bracket = -1;
 	while (i < input.length) {
@@ -502,37 +507,54 @@ while (find(/\|/g) != -1) {
 	}
 }
 
+// correct "use parens" scenario
+while(find(/[א-ת]\^\{/g) != -1) {
+	startingIndex = find(/[א-ת]\^\{/g);
+	i = startingIndex  + 2;
+	bracket = -1;
+	while (i < input.length) {
+		bracketEval2();
+		if (bracket == 0) {
+			let slicedPortion = input.slice(startingIndex + 2, i + 1);
+
+			// if there is no "(" after the exponent || it's trig^{-1|2}, then drop this.
+			if (input[i + 1] != "(" || (input[startingIndex].match(/[ס-ר]/g) != null && (slicedPortion == "{-1}" || slicedPortion == "{2}"))) {
+				overwrite(startingIndex + 1, "↑");
+				i = input.length;
+			}
+			else {
+				input = input.slice(0, startingIndex + 1) + input.slice(i + 1, input.length);
+				i -= slicedPortion.length + 1;
+				while (i < input.length) {
+					bracketEval2();
+					if (bracket == 0) {
+						insert(i + 1, "↑" + slicedPortion);
+						i = input.length;
+					}
+				}
+			}
+		}
+	}
+}
+replace(/↑/g,"^");
+
 // implment proper brackets when all the operator brackets are gone
 replace(/\(/g,"\\left\(");
 replace(/\)/g,"\\right\)");
 replace(/\⟨/g,"\\left\|");
 replace(/\⟩/g,"\\right\|");
 
-// replace blank spaces between numbers with cross products
-while (find(/\d\s\d/g) != -1) {
-	i = find(/\d\s\d/g) + 1;
-	overwrite(i, "\\times");
-}
-
 // perform concluding replacements
 {
-	// trigonometry replacements
-	insert(find(/(arc|)sin/g), "\\");
-	insert(find(/(arc|)cos/g), "\\");
-	insert(find(/(arc|)tan/g), "\\");
-	insert(find(/(arc|)csc/g), "\\");
-	insert(find(/(arc|)sec/g), "\\");
-	insert(find(/(arc|)cot/g), "\\");
-
 	// function replacements
-	replace(/integral/g, "\\int_{}");
+	replace(/int(egral|)/g, "\\int_{}");
 	replace(/sum_/g, "\\sum_");
-	replace(/prod_/g, "\\prod_");
+	replace(/prod(uct|)_/g, "\\prod_");
 	replace(/\\frac\{\}/g, "\\frac{1}");
 
 	// symbolic replacements
 	replace(/√/g, "\\sqrt");
-	replace(/\*/g, "\\times ");
+	replace(/(\*)|((?<=\d)\s*(?=\d))/g, "\\times ");
 	replace(/≠/g, "\\ne");
 	replace(/∞[A-Z|a-z]/g, "\\infty");
 	replace(/∞/g, "\\infty");
@@ -560,13 +582,12 @@ while (find(/\d\s\d/g) != -1) {
 	replace(/ס/g, "\\sin");
 	replace(/ע/g, "\\cos");
 	replace(/פ/g, "\\tan");
-	replace(/ק/g, "\\csc");
-	replace(/ר/g, "\\sec");
-	replace(/ש/g, "\\cot");
+	replace(/צ/g, "\\csc");
+	replace(/ק/g, "\\sec");
+	replace(/ר/g, "\\cot");
 	replace(/ת(?!_)/g, "\\ln");
 	replace(/ת/g, "\\log");
 	replace(/(?<!\\)ת/g, "\\ln");
-
 
 	// latin replacements
 	replace(/α/g, "\\alpha");
