@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      1.0
+// @version      1.1
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @website      https://ezra.jackz.me/
@@ -30,7 +30,8 @@
 		// calculating any errors
 		{
 			// determines if the input IS ALREADY latex
-			if (count(/(\\)|((\^|\_){)/g) > 0) {
+			if (count(/((?<=\\left)\|)|(\\)|((\^|\_){)/g) > 0) {
+				console.warn();
 				return input;
 			}
 	
@@ -688,7 +689,17 @@
 	
 		return input;
 	}
-	
+
+	function typeInTextarea(newText, el = document.activeElement) {
+		const start = el.selectionStart;
+		const end = el.selectionEnd;
+		const text = el.value;
+		const before = text.substring(0, start);
+		const after  = text.substring(end, text.length);
+		el.value = (before + newText + after);
+		el.selectionStart = el.selectionEnd = start + newText.length;
+		el.focus();
+	}
 	
 	function pasteHandler(e) {
 		let clipboardData, pasteData, temp;
@@ -705,9 +716,7 @@
 				pasteData = wolfram2desmos(pasteData);
 			}
 	
-			temp = document.createElement("div");
-			temp.innerHTML = pasteData;
-			document.execCommand("insertHTML", false, temp.textContent);
+			typeInTextarea(pasteData);
 	
 		}
 	}
