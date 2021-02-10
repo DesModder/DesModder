@@ -1,3 +1,15 @@
+// ==UserScript==
+// @name         wolfram2desmos
+// @namespace    http://tampermonkey.net/
+// @version      2.0
+// @description  Converts ASCIImath into Desmos LaTeX.
+// @author       Heavenira (Ezra Oppenheimer)
+// @match        https://*.desmos.com/calculator*
+// @grant        none
+// @downloadURL	https://github.com/Heavenira/wolfram2desmos/raw/main/wolfram2desmos.js
+// @updateURL	https://github.com/Heavenira/wolfram2desmos/raw/main/wolfram2desmos.js
+// ==/UserScript==
+
 function wolfram2desmos(input) {
 
 	// returns the number of matches
@@ -680,13 +692,11 @@ function pasteHandler(e) {
 	pasteData = clipboardData.getData('Text');
 
 	if (pasteData) {
-		console.log(Calc.getExpressions().find(item => item.id == Calc.selectedExpressionId).type);
-		// Stop data actually being pasted
+		// stop data actually being pasted
 		e.stopPropagation();
 		e.preventDefault();
 
-		console.log(window.pasteValue);
-
+		// checks if line type is expression
 		if (Calc.getExpressions().find(item => item.id == Calc.selectedExpressionId).type == "expression") {
 			pasteData = wolfram2desmos(pasteData);
 		}
@@ -710,3 +720,5 @@ xpn.addEventListener('focusout', (e) => {
 	let txa = e.target.parentElement.parentElement;
 	txa.removeEventListener('paste', pasteHandler, false);
 }, false);
+
+console.log("wolfram2desmos loaded properly");
