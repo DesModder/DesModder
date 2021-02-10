@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         wolfram2desmos
-// @namespace    http://tampermonkey.net/
+// @namespace    ezropp.Desmos
 // @version      1.0
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
