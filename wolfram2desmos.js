@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      1.0
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @match        https://*.desmos.com/calculator*
@@ -715,7 +715,7 @@
 	}
 	
 	// listener; checks when the user presses CTRL+V and activates the script
-	xpn = document.querySelector('.dcg-exppanel-outer');
+	let xpn = document.querySelector('.dcg-exppanel-outer');
 	xpn.addEventListener('focusin', (e) => {
 		let txa = e.target.parentElement.parentElement;
 		txa.addEventListener('paste', pasteHandler, false);
