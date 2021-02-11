@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      1.2
+// @version      1.25
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @website      https://ezra.jackz.me/
@@ -125,41 +125,41 @@
 			replace(/\|/g, " | ");
 	
 			// misc function replacements
-			replace(/arcsinh/g, "Ⓐ"); // circled letters will be my function placeholders
-			replace(/arccosh/g, "Ⓑ");
-			replace(/arctanh/g, "Ⓒ");
-			replace(/arccsch/g, "Ⓓ");
-			replace(/arcsech/g, "Ⓔ");
-			replace(/arccoth/g, "Ⓕ");
-			replace(/sinh/g, "Ⓖ");
-			replace(/cosh/g, "Ⓗ");
-			replace(/tanh/g, "Ⓘ");
-			replace(/csch/g, "Ⓙ");
-			replace(/sech/g, "Ⓚ");
-			replace(/coth/g, "Ⓛ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arcsinh/g, "Ⓐ"); // circled letters will be my function placeholders
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arccosh/g, "Ⓑ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arctanh/g, "Ⓒ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arccsch/g, "Ⓓ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arcsech/g, "Ⓔ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arccoth/g, "Ⓕ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])sinh/g, "Ⓖ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])cosh/g, "Ⓗ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])tanh/g, "Ⓘ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])csch/g, "Ⓙ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])sech/g, "Ⓚ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])coth/g, "Ⓛ");
 	
 	
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])binomial/g, "א"); // hebrew will be my function placeholders
-			replace(/floor/g, "ב");
-			replace(/ceiling/g, "ג");
-			replace(/round/g, "ד");
-			replace(/gcd|gcf/g, "ה");
-			replace(/lcm/g, "ו");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])floor/g, "ב");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])ceiling/g, "ג");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])round/g, "ד");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])gcd|gcf/g, "ה");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])lcm/g, "ו");
 			// "ז" is for mod final
-			replace(/abs/g, "ח");
-			replace(/arcsin/g, "ט");
-			replace(/arccos/g, "י");
-			replace(/arctan/g, "כ");
-			replace(/arccsc/g, "ל");
-			replace(/arcsec/g, "מ");
-			replace(/arccot/g, "נ");
-			replace(/sin/g, "ס");
-			replace(/cos/g, "ע");
-			replace(/tan/g, "פ");
-			replace(/csc/g, "צ");
-			replace(/sec/g, "ק");
-			replace(/cot/g, "ר");
-			replace(/log|ln/g, "ת");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])abs/g, "ח");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arcsin/g, "ט");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arccos/g, "י");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arctan/g, "כ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arccsc/g, "ל");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arcsec/g, "מ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arccot/g, "נ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])sin/g, "ס");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])cos/g, "ע");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])tan/g, "פ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])csc/g, "צ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])sec/g, "ק");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])cot/g, "ר");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])log|ln/g, "ת");
 	
 			// latin replacements
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])alpha/g, "α");
@@ -196,7 +196,9 @@
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])psi/g, "ψ");
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])Omega/g, "Ω");
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])omega/g, "ω");
-			replace(/ϕ/g,"φ");
+			replace(/ϕ/g, "φ");
+
+			replace(/constant/g, "c_{onstant}");
 		}
 	
 		
@@ -594,7 +596,7 @@
 		{
 		// function replacements
 			replace(/int(egral|)\s*_\s*\(/g, "\\int_{");
-			replace(/int(egral|)/g, "\\int_{0}^{x}");
+			replace(/int(egral|)(?!_{)/g, "\\int_{0}^{x}");
 			replace(/sum_/g, "\\sum_");
 			replace(/prod(uct|)_/g, "\\prod_");
 			replace(/\\frac\{\}/g, "\\frac{1}");
