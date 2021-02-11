@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      1.1
+// @version      1.2
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @website      https://ezra.jackz.me/
@@ -593,7 +593,8 @@
 		// perform concluding replacements
 		{
 		// function replacements
-			replace(/int(egral|)/g, "\\int_{}");
+			replace(/int(egral|)\s*_\s*\(/g, "\\int_{");
+			replace(/int(egral|)/g, "\\int_{0}^{x}");
 			replace(/sum_/g, "\\sum_");
 			replace(/prod(uct|)_/g, "\\prod_");
 			replace(/\\frac\{\}/g, "\\frac{1}");
@@ -690,7 +691,7 @@
 		return input;
 	}
 
-	function typeInTextarea(newText, el = document.activeElement) {
+	function typeInTextArea(newText, el = document.activeElement) {
 		const start = el.selectionStart;
 		const end = el.selectionEnd;
 		const text = el.value;
@@ -702,12 +703,10 @@
 	}
 	
 	function pasteHandler(e) {
-		let clipboardData, pasteData, temp;
-		clipboardData = e.clipboardData || window.clipboardData;
-		pasteData = clipboardData.getData('Text');
+		let pasteData =  (e.clipboardData || window.clipboardData).getData('Text');
 	
 		if (pasteData) {
-			// stop data actually being pasted
+			// stop data from actually being pasted
 			e.stopPropagation();
 			e.preventDefault();
 	
@@ -716,7 +715,7 @@
 				pasteData = wolfram2desmos(pasteData);
 			}
 	
-			typeInTextarea(pasteData);
+			typeInTextArea(pasteData);
 	
 		}
 	}
