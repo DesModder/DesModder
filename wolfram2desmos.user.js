@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      1.29
+// @version      1.30
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @website      https://ezra.jackz.me/
@@ -732,5 +732,5 @@
 		txa.removeEventListener('paste', pasteHandler, false);
 	}, false);
 	
-	console.log("wolfram2desmos loaded properly");
+	console.log("wolfram2desmos loaded properly ✔️\n|_| _  _     _ __  o  __ _\n| |(/_(_|\_/(/_| | |  | (_|");
 })();
