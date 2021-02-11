@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      1.39
+// @version      1.40
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @website      https://ezra.jackz.me/
@@ -295,7 +295,7 @@
 		
 				// reciprocal function scenario
 				// this happens when a function begins the denominator
-				let isFunction = (startingIndex == find(/\/((\-)|([A-Z|Α-ω|ϕ|א-ת|√|∞|\_])|(\-([A-Z|Α-ω|ϕ|א-ת|√|∞|\_])))(\(|\{)/gi));
+				let isFunction = (startingIndex == find(/\/((\-)|([A-Z|Α-ω|ϕ|א-ת|Ⓐ-Ⓩ|√|∞|\_])|(\-([A-Z|Α-ω|ϕ|א-ת|Ⓐ-Ⓩ|√|∞|\_])))(\(|\{)/gi));
 				if (isFunction) {
 					insert(i, "{(");
 					i += 3;
@@ -329,7 +329,7 @@
 						if (bracket == 0) {
 							if (input[i + 1] == "^") {
 							// in this situation, as pointed by SlimRunner, there is an exponent at the end of the fraction. we need to correct this by including it in the denominator
-								bracket = -1;
+								bracket = 0;
 								i++;
 								while (i < input.length) {
 									bracketEval2();
@@ -374,7 +374,7 @@
 			}
 			overwrite(startingIndex, "");
 		}
-		
+
 		// implement summation and products
 		while (find(/(sum|prod(uct|))_\([A-Z|a-z|\d|Α-ω|∞|א-ת|Ⓐ-Ⓩ|\_|\\]+\s*=\s*[A-Z|a-z|\d|Α-ω|∞|א-ת|Ⓐ-Ⓩ|\_|\\]+\)/g) != -1) {
 			i = find(/(sum|prod(uct|))_\([A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\s*=\s*[A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\)/g) + 4;
@@ -691,7 +691,6 @@
 			replace(/ω/g, "\\omega");
 			replace(/polygamma/g, "\\psi_{poly}");
 		}
-	
 		return input;
 	}
 
@@ -705,7 +704,7 @@
 		el.selectionStart = el.selectionEnd = start + newText.length;
 		el.focus();
 	}
-	wolfram2desmos("Γ(x) = ( sum_(k=0)^∞ (x^k Γ^(k)(1))/(k!))/x for abs(x)<1")
+
 	function pasteHandler(e) {
 		let pasteData =  (e.clipboardData || window.clipboardData).getData('Text');
 	
