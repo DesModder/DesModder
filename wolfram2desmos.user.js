@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      1.30
+// @version      1.31
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @website      https://ezra.jackz.me/
@@ -597,7 +597,7 @@
 		{
 		// function replacements
 			replace(/int(egral|)\s*_\s*\(/g, "\\int_{");
-			replace(/int(egral|)(?!_{)/g, "\\int_{0}^{t}");
+			replace(/int(egral|)(?!\s*(_|e))/g, "\\int_{0}^{t}");
 			replace(/sum_/g, "\\sum_");
 			replace(/prod(uct|)_/g, "\\prod_");
 			replace(/\\frac\{\}/g, "\\frac{1}");
@@ -732,5 +732,5 @@
 		txa.removeEventListener('paste', pasteHandler, false);
 	}, false);
 	
-	console.log("wolfram2desmos loaded properly ✔️\n|_| _  _     _ __  o  __ _\n| |(/_(_|\_/(/_| | |  | (_|");
+	console.log("wolfram2desmos loaded properly ✔️\n_   _ _____ ___  _   _ _____ _   _ ___________  ___  \n| | | |  ___/ _ \\| | | |  ___| \\ | |_   _| ___ \\/ _ \\ \n| |_| | |__/ /_\\ | | | | |__ |  \\| | | | | |_/ / /_\\ \\\n|  _  |  __|  _  | | | |  __|| . ` | | | |    /|  _  |\n| | | | |__| | | \\ \\_/ | |___| |\\  |_| |_| |\\ \\| | | |\n\\_| |_\\____\\_| |_/\\___/\\____/\\_| \\_/\\___/\\_| \\_\\_| |_/");
 })();
