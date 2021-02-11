@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      1.26
+// @version      1.27
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @website      https://ezra.jackz.me/
@@ -113,16 +113,16 @@
 		// preform prelimenary replacements
 		{
 		// symbolic replacements
-			replace(/sqrt/g, "√");
-			replace(/\\infty|infinity|infty/g, "∞");
-			replace(/\\pm|pm/g, "±");
-			replace(/\\pi|pi/g, "π");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])sqrt/g, "√");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])[infinity|infty]/g, "∞");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])pm/g, "±");
 			replace(/\>\=/g, "≥");
 			replace(/\<\=/g, "≤");
 			replace(/\!\=/g, "≠");
 			replace(/(\s*(?=(\/|\^)))|((?<=(\/|\^))\s*)/g, "");
 			replace(/\s*(mod|\%)\s*/g, "mod");
 			replace(/\|/g, " | ");
+			replace(/and/g, "&");
 	
 			// misc function replacements
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arcsinh/g, "Ⓐ"); // circled letters will be my function placeholders
@@ -198,7 +198,7 @@
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])omega/g, "ω");
 			replace(/ϕ/g, "φ");
 
-			replace(/constant/g, "c_{onstant}");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])constant/g, "C");
 		}
 	
 		
@@ -611,8 +611,6 @@
 			replace(/^\s/g, "");
 			replace(/\s$/g, "");
 			replace(/\s\s/g, "");
-			replace(/and/g, "&");
-			replace(/element/g, "ε");
 	
 			replace(/Ⓐ/g,"arcsinh");
 			replace(/Ⓑ/g,"arccosh");
