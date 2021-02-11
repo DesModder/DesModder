@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      1.34
+// @version      1.35
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @website      https://ezra.jackz.me/
@@ -596,7 +596,8 @@
 		// perform concluding replacements
 		{
 		// function replacements
-			replace(/int(egral|)\s*_\s*\(/g, "\\int_{");
+			console.log(input);
+			replace(/int(egral|)\s*_\s*\{/g, "\\int_{");
 			replace(/int(egral|)(?!\s*(_|e))/g, "\\int_{0}^{t}");
 			replace(/sum_/g, "\\sum_");
 			replace(/prod(uct|)_/g, "\\prod_");
@@ -691,6 +692,8 @@
 	
 		return input;
 	}
+
+	wolfram2desmos("B_n = 2^(1 - n) (-1 + n) n (i/π)^n integral_0^1 (log(1 - t) log^(-2 + n)(t))/t dt for (n/2 element Z and n>0)")
 
 	function typeInTextArea(newText, el = document.activeElement) {
 		const start = el.selectionStart;
