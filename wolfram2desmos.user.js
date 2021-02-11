@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      1.37
+// @version      1.38
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @website      https://ezra.jackz.me/
@@ -99,6 +99,9 @@
 	
 		// returns if the specified index is a "non-variable"
 		function isOperator(index) {
+			if (input[index] == undefined) {
+				return true;
+			}
 			return !(/[A-Z|\d|Α-ω|ϕ|∞|א-ת|Ⓐ-Ⓩ|\_|\\]/gi).test(input[index]);
 		}
 	
@@ -247,11 +250,11 @@
 			}
 		}
 		replace(/↑/g,"^");
-	
+		
 		// implement fractions
 		while (find(/\//g) != -1) {
 			startingIndex = find(/\//g);
-	
+
 			// implement the numerator; prior to the slash
 			{
 				i = startingIndex;
@@ -369,10 +372,9 @@
 					}
 				}
 			}
-	
 			overwrite(startingIndex, "");
 		}
-	
+		
 		// implement summation and products
 		while (find(/(sum|prod(uct|))_\([A-Z|a-z|\d|Α-ω|∞|א-ת|Ⓐ-Ⓩ|\_|\\]+\s*=\s*[A-Z|a-z|\d|Α-ω|∞|א-ת|Ⓐ-Ⓩ|\_|\\]+\)/g) != -1) {
 			i = find(/(sum|prod(uct|))_\([A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\s*=\s*[A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\)/g) + 4;
@@ -586,7 +588,7 @@
 			}
 		}
 		replace(/↑/g,"^");
-	
+
 		// implment proper brackets when all the operator brackets are gone
 		replace(/\(/g,"\\left\(");
 		replace(/\)/g,"\\right\)");
@@ -702,7 +704,7 @@
 		el.selectionStart = el.selectionEnd = start + newText.length;
 		el.focus();
 	}
-	
+	wolfram2desmos("Γ(x) = ( sum_(k=0)^∞ (x^k Γ^(k)(1))/(k!))/x for abs(x)<1")
 	function pasteHandler(e) {
 		let pasteData =  (e.clipboardData || window.clipboardData).getData('Text');
 	
