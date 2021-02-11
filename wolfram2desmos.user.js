@@ -601,7 +601,7 @@
 		// function replacements
 			replace(/Ⓜ_/g, "\\sum_");
 			replace(/Ⓝ_/g, "\\prod_");
-			replace(/Ⓞ\s*_\s*\{/g, "\\int_{");
+			replace(/Ⓞ\s*_\s*(?=({|\\left\())/g, "\\int_");
 			replace(/Ⓞ(?!\s*_)/g, "\\int_{0}^{t}");
 			replace(/\\frac\{\}/g, "\\frac{1}");
 			
@@ -694,6 +694,8 @@
 	
 		return input;
 	}
+
+	console.log(wolfram2desmos("1/(int_(0)^2 x)"));
 
 	function typeInTextArea(newText, el = document.activeElement) {
 		const start = el.selectionStart;
