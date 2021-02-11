@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      1.31
+// @version      1.32
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @website      https://ezra.jackz.me/
@@ -126,7 +126,7 @@
 			replace(/\sfor(?!.*\sfor).*/g, "");
 	
 			// misc function replacements
-			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arcsinh/g, "Ⓐ"); // circled letters will be my function placeholders
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arcsinh/g, "Ⓐ"); // https://qaz.wtf/u/convert.cgi
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arccosh/g, "Ⓑ");
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arctanh/g, "Ⓒ");
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arccsch/g, "Ⓓ");
@@ -138,6 +138,9 @@
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])csch/g, "Ⓙ");
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])sech/g, "Ⓚ");
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])coth/g, "Ⓛ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])sum(?=\s*_)/g, "Ⓜ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])prod(uct|)(?=\s*_)/g, "Ⓝ");
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])int(egral|)(?=\s*_)/g, "Ⓞ");
 	
 	
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])binomial/g, "א"); // hebrew will be my function placeholders
@@ -374,8 +377,8 @@
 		}
 	
 		// implement summation and products
-		while (find(/(sum|prod(uct|))_\([A-Z|a-z|\d|Α-ω|∞|א-ת|Ⓐ-Ⓩ|\_|\\]+\s*=\s*[A-Z|a-z|\d|Α-ω|∞|א-ת|Ⓐ-Ⓩ|\_|\\]+\)/g) != -1) {
-			i = find(/(sum|prod(uct|))_\([A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\s*=\s*[A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\)/g) + 4;
+		while (find(/(Ⓜ|Ⓝ)_\([A-Z|a-z|\d|Α-ω|∞|א-ת|Ⓐ-Ⓩ|\_|\\]+\s*=\s*[A-Z|a-z|\d|Α-ω|∞|א-ת|Ⓐ-Ⓩ|\_|\\]+\)/g) != -1) {
+			i = find(/(Ⓜ|Ⓝ)_\([A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\s*=\s*[A-Z|a-z|\d|Α-ω|∞|א-ת|\_|\\]+\)/g) + 4;
 			if (input[i] == "u") {
 				i += 4;
 			}
@@ -596,11 +599,12 @@
 		// perform concluding replacements
 		{
 		// function replacements
-			replace(/int(egral|)\s*_\s*\(/g, "\\int_{");
-			replace(/int(egral|)(?!\s*(_|e))/g, "\\int_{0}^{t}");
-			replace(/sum_/g, "\\sum_");
-			replace(/prod(uct|)_/g, "\\prod_");
+			replace(/Ⓜ_/g, "\\sum_");
+			replace(/Ⓝ_/g, "\\prod_");
+			replace(/Ⓞ\s*_\s*\{/g, "\\int_{");
+			replace(/Ⓞ(?!\s*_)/g, "\\int_{0}^{t}");
 			replace(/\\frac\{\}/g, "\\frac{1}");
+			
 	
 			// symbolic replacements
 			replace(/√/g, "\\sqrt");
@@ -613,18 +617,18 @@
 			replace(/\s$/g, "");
 			replace(/\s\s/g, "");
 	
-			replace(/Ⓐ/g,"arcsinh");
-			replace(/Ⓑ/g,"arccosh");
-			replace(/Ⓒ/g,"arctanh");
-			replace(/Ⓓ/g,"arccsch");
-			replace(/Ⓔ/g,"arcsech");
-			replace(/Ⓕ/g,"arccoth");
-			replace(/Ⓖ/g,"sinh");
-			replace(/Ⓗ/g,"cosh");
-			replace(/Ⓘ/g,"tanh");
-			replace(/Ⓙ/g,"csch");
-			replace(/Ⓚ/g,"sech");
-			replace(/Ⓛ/g,"coth");
+			replace(/Ⓐ/g,"\\arcsinh");
+			replace(/Ⓑ/g,"\\arccosh");
+			replace(/Ⓒ/g,"\\arctanh");
+			replace(/Ⓓ/g,"\\arccsch");
+			replace(/Ⓔ/g,"\\arcsech");
+			replace(/Ⓕ/g,"\\arccoth");
+			replace(/Ⓖ/g,"\\sinh");
+			replace(/Ⓗ/g,"\\cosh");
+			replace(/Ⓘ/g,"\\tanh");
+			replace(/Ⓙ/g,"\\csch");
+			replace(/Ⓚ/g,"\\sech");
+			replace(/Ⓛ/g,"\\coth");
 	
 			replace(/א/g, "\\operatorname{nCr}");
 			replace(/ב/g, "\\operatorname{floor}");
@@ -691,6 +695,8 @@
 	
 		return input;
 	}
+
+	//console.log(wolfram2desmos("B_n = 2^(1 - n) (-1 + n) n (i/π)^n integral_0^1 (log(1 - t) log^(-2 + n)(t))/t dt for (n/2 element Z and n>0)"));
 
 	function typeInTextArea(newText, el = document.activeElement) {
 		const start = el.selectionStart;

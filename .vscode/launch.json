@@ -11,7 +11,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\wolfram2desmos.js"
+            "program": "${workspaceFolder}\\wolfram2desmos.user.js"
         }
     ]
 }
