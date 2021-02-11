@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      1.25
+// @version      1.26
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @website      https://ezra.jackz.me/
@@ -596,7 +596,7 @@
 		{
 		// function replacements
 			replace(/int(egral|)\s*_\s*\(/g, "\\int_{");
-			replace(/int(egral|)(?!_{)/g, "\\int_{0}^{x}");
+			replace(/int(egral|)(?!_{)/g, "\\int_{0}^{t}");
 			replace(/sum_/g, "\\sum_");
 			replace(/prod(uct|)_/g, "\\prod_");
 			replace(/\\frac\{\}/g, "\\frac{1}");
