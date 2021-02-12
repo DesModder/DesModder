@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      1.41
+// @version      1.42
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @website      https://ezra.jackz.me/
@@ -31,7 +31,6 @@
 		{
 			// determines if the input IS ALREADY latex
 			if (count(/((?<=\\left)\|)|(\\)|((\^|\_){)/g) > 0) {
-				console.warn();
 				return input;
 			}
 	
@@ -129,7 +128,7 @@
 			replace(/\sfor(?!.*\sfor).*/g, "");
 	
 			// misc function replacements
-			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arcsinh/g, "Ⓐ"); // circled letters will be my function placeholders
+			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arcsinh/g, "Ⓐ"); // https://qaz.wtf/u/convert.cgi?
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arccosh/g, "Ⓑ");
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arctanh/g, "Ⓒ");
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arccsch/g, "Ⓓ");
@@ -589,6 +588,27 @@
 		}
 		replace(/↑/g,"^");
 
+		// remove excess brackets
+		while (find(/{\(/g) != -1) {
+			startingIndex = find(/{\(/g);
+			i = startingIndex + 1;
+			bracket = -1;
+			while (i < input.length) {
+				bracketEval2();
+				if (bracket == 0) {
+					if (input[i + 1] == "}") {
+						overwrite(i, "");
+						overwrite(startingIndex + 1, "");
+					}
+					else {
+						overwrite(startingIndex, "⟦");
+					}
+					i = input.length;
+				}
+			}
+		}
+		replace(/⟦/g, "{");
+
 		// implment proper brackets when all the operator brackets are gone
 		replace(/\(/g,"\\left\(");
 		replace(/\)/g,"\\right\)");
@@ -691,8 +711,10 @@
 			replace(/ω/g, "\\omega");
 			replace(/polygamma/g, "\\psi_{poly}");
 		}
+
 		return input;
 	}
+
 
 	function typeInTextArea(newText, el = document.activeElement) {
 		const start = el.selectionStart;
@@ -708,15 +730,12 @@
 	function pasteHandler(e) {
 		let pasteData =  (e.clipboardData || window.clipboardData).getData('Text');
 	
-		if (pasteData) {
+		if (pasteData && Calc.getExpressions().find(item => item.id == Calc.selectedExpressionId).type == "expression") {
 			// stop data from actually being pasted
 			e.stopPropagation();
 			e.preventDefault();
 	
-			// checks if line type is expression
-			if (Calc.getExpressions().find(item => item.id == Calc.selectedExpressionId).type == "expression") {
-				pasteData = wolfram2desmos(pasteData);
-			}
+			pasteData = wolfram2desmos(pasteData);
 	
 			typeInTextArea(pasteData);
 	
