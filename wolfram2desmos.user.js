@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      1.42
+// @version      1.43
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @website      https://ezra.jackz.me/
@@ -121,6 +121,7 @@
 			replace(/\>\=/g, "≥");
 			replace(/\<\=/g, "≤");
 			replace(/\!\=/g, "≠");
+			replace(/\-\>/g, "→");
 			replace(/(\s*(?=(\/|\^)))|((?<=(\/|\^))\s*)/g, "");
 			replace(/\s*(mod|\%)\s*/g, "mod");
 			replace(/\|/g, " | ");
@@ -393,8 +394,8 @@
 				}
 			}
 		}
-	
-		// implement subscripts
+		
+		// implement subscripts (digit scenario)
 		while (find(/_\d/g) != -1) {
 			i = find(/_\d/g) + 1;
 			insert(i, "{");
@@ -402,6 +403,20 @@
 				i++;
 				if (isOperator(i)) {
 					insert(i,"}");
+					i = input.length;
+				}
+			}
+		}
+
+		// implement subscripts (bracket scenario)
+		while (find(/\_\(/g) != -1) {
+			i = find(/\_\(/g) + 1;
+			bracket = -1;
+			overwrite(i, "{");
+			while (i < input.length) {
+				bracketEval2();
+				if (bracket == 0) {
+					overwrite(i, "}");
 					i = input.length;
 				}
 			}
@@ -624,6 +639,7 @@
 			replace(/sum_/g, "\\sum_");
 			replace(/prod(uct|)_/g, "\\prod_");
 			replace(/\\frac\{\}/g, "\\frac{1}");
+			replace(/lim_/g, "\\mathrm{lim}_");
 	
 			// symbolic replacements
 			replace(/√/g, "\\sqrt");
@@ -714,7 +730,6 @@
 
 		return input;
 	}
-
 
 	function typeInTextArea(newText, el = document.activeElement) {
 		const start = el.selectionStart;
