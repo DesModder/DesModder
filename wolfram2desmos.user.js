@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      1.44
+// @version      1.45
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @website      https://ezra.jackz.me/
@@ -115,6 +115,7 @@
 		// preform prelimenary replacements
 		{
 		// symbolic replacements
+			replace(/\n/g, "");
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])sqrt/g, "√");
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])infinity|infty/g, "∞");
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])pm/g, "±");
