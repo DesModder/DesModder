@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wolfram2desmos
 // @namespace    ezropp.Desmos
-// @version      1.43
+// @version      1.44
 // @description  Converts ASCIImath into Desmos LaTeX.
 // @author       Heavenira (Ezra Oppenheimer)
 // @website      https://ezra.jackz.me/
@@ -101,7 +101,7 @@
 			if (input[index] == undefined) {
 				return true;
 			}
-			return !(/[A-Z|\d|Α-ω|ϕ|∞|א-ת|Ⓐ-Ⓩ|\.|\_\\]/gi).test(input[index]);
+			return !(/[A-Z|\d|Α-ω|ϕ|∞|√|א-ת|Ⓐ-Ⓩ|\.|'|_|\\]/gi).test(input[index]);
 		}
 	
 	
@@ -125,8 +125,9 @@
 			replace(/(\s*(?=(\/|\^)))|((?<=(\/|\^))\s*)/g, "");
 			replace(/\s*(mod|\%)\s*/g, "mod");
 			replace(/\|/g, " | ");
-			//replace(/(?<![A-Z|a-z|Α-ω|ϕ])and(?=[A-Z|a-z|Α-ω|ϕ])/g, "&");
 			replace(/\sfor(?!.*\sfor).*/g, "");
+			replace(/(\+|\-)\s*O\(x\^\d*\)/g, "");
+			replace(/\(Taylor series\)/g, "");
 	
 			// misc function replacements
 			replace(/(?<![A-Z|a-z|Α-ω|ϕ])arcsinh/g, "Ⓐ"); // https://qaz.wtf/u/convert.cgi?
@@ -267,13 +268,20 @@
 						i -= 2;
 						bracketEval1();
 						if (bracket == 0) {
-							overwrite(i, "\\frac{");
-							startingIndex += 5;
+							if (input[i - 1].match(/[A-Z|Α-ω|ϕ|א-ת|Ⓐ-Ⓩ|√|]/gi) != null) {
+								insert(startingIndex - 1, ")");
+								insert(i - 1, "\\frac{");
+								startingIndex += 7;
+							}
+							else {
+								overwrite(i, "\\frac{");
+								startingIndex += 5;
+							}
 							i = 0;
 						}
 					}
 				}
-	
+
 				// preceded WITHOUT a ")" scenario
 				else {
 					insert(i, "}");
@@ -288,7 +296,7 @@
 					}
 				}
 			}
-	
+			
 			// implement the denominator; after the slash 
 			{
 				i = startingIndex + 1;
@@ -730,6 +738,9 @@
 
 		return input;
 	}
+
+	wolfram2desmos("d/dx(cos(x + 1)/(x^2 + 3)) = -((x^2 + 3) sin(x + 1) + 2 x cos(x + 1))/(x^2 + 3)^2");
+	wolfram2desmos("ζ(x) = (-1)^x/(x (-2 + x)!) integral_0^1 (log(1 - t^(-1 + x))/t)^x dt for (x element Z and x>=2)");
 
 	function typeInTextArea(newText, el = document.activeElement) {
 		const start = el.selectionStart;
