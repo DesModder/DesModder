@@ -7,3 +7,4 @@ export const {
 
 export const StaticMathquillView = window.require('dcgview-helpers/static-mathquill-view').default
 export const Tooltip = window.require('shared-components/tooltip').Tooltip
+export const Toggle = window.require('expressions/toggle-view').ToggleView

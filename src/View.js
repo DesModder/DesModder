@@ -1,5 +1,5 @@
 import DCGView from 'DCGView'
-import MenuView from 'components/MenuView'
+import MenuContainer from 'components/MenuContainer'
 import { pollForValue } from './utils'
 
 export default class View {
@@ -12,7 +12,7 @@ export default class View {
     const rootNode = document.createElement('div')
     pillbox.insertBefore(rootNode, pillbox.querySelector('.dcg-zoom-container'))
     this.menuView = DCGView.mountToNode(
-      MenuView,
+      MenuContainer,
       rootNode,
       {
         controller: () => controller

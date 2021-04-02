@@ -1,13 +1,17 @@
+import plugins from './plugins'
+
 export default class Controller {
   constructor () {
     this.menuViewModel = {
       isOpen: false
     }
+    this.pluginsEnabled = {}
+    plugins.forEach((e, i) => { this.pluginsEnabled[i] = false })
   }
 
   init (view) {
     this.view = view
-    // here will load menu settings from local storage + header
+    // here will load enabled plugins from local storage + header
   }
 
   getMenuViewModel () {
@@ -26,5 +30,38 @@ export default class Controller {
   closeMenu () {
     this.menuViewModel.isOpen = false
     this.updateMenuView()
+  }
+
+  getPlugins () {
+    // This is constant between page loads
+    return plugins
+  }
+
+  disablePlugin (i) {
+    if (this.pluginsEnabled[i]) {
+      plugins[i].onDisable()
+      this.pluginsEnabled[i] = false
+      this.updateMenuView()
+    }
+  }
+
+  enablePlugin (i) {
+    if (!this.pluginsEnabled[i]) {
+      plugins[i].onEnable()
+      this.pluginsEnabled[i] = true
+      this.updateMenuView()
+    }
+  }
+
+  togglePlugin (i) {
+    if (this.pluginsEnabled[i]) {
+      this.disablePlugin(i)
+    } else {
+      this.enablePlugin(i)
+    }
+  }
+
+  isPluginEnabled (i) {
+    return this.pluginsEnabled[i]
   }
 }

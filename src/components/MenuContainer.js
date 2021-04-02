@@ -1,8 +1,9 @@
 import DCGView from 'DCGView'
 import { If, Tooltip } from './desmosComponents'
+import Menu from './Menu'
 import { jquery, keys } from 'utils'
 
-export default class MenuView extends DCGView.Class {
+export default class MenuContainer extends DCGView.Class {
   init () {
     this.controller = this.props.controller()
   }
@@ -43,9 +44,7 @@ export default class MenuView extends DCGView.Class {
                 didUnmount={() => this.didUnmountContainer()}
                 // TODO: didMount and didUnmount to register escape key → close
               >
-                <div class='dcg-popover-interior'>
-                  Actual menu TODO.
-                </div>
+                <Menu controller={this.controller} />
                 <div class='dcg-arrow' />
               </div>
             )
@@ -88,7 +87,7 @@ export default class MenuView extends DCGView.Class {
   eventShouldCloseMenu (e) {
     // this.node refers to the generated node from DCGView
     const el = jquery(e.target)
-    return !el.closest(this.node).length &&
+    return !el.closest(this._element._domNode).length &&
       !el.closest('.desmodder-action-menu').length
   }
 }
