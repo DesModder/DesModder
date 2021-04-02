@@ -21,6 +21,9 @@
     "url": "https://github.com/jared-hughes/DesModder"
   },
   "devDependencies": {
+    "@babel/core": "^7.13.10",
+    "@babel/plugin-transform-react-jsx": "^7.13.12",
+    "babel-loader": "^8.2.2",
     "standard": "^16.0.3",
     "userscript-metadata-webpack-plugin": "^0.1.0",
     "webpack": "^5.26.2",
