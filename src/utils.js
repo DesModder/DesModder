@@ -13,3 +13,6 @@ function _pollForValue (func) {
 export async function pollForValue (func) {
   return await _pollForValue(func)
 }
+
+export const jquery = window.require('jquery')
+export const keys = window.require('keys')

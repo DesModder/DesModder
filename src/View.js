@@ -1,28 +1,26 @@
 import DCGView from 'DCGView'
-import TogglesView from 'components/TogglesView'
+import MenuView from 'components/MenuView'
 import { pollForValue } from './utils'
 
 export default class View {
-  constructor () {
-    this.state = {
-      menuVisible: false
-    }
+  async init (controller) {
+    await this.mountToggles(controller)
   }
 
-  async init () {
-    await this.mountToggles()
-  }
-
-  async mountToggles () {
+  async mountToggles (controller) {
     const pillbox = await pollForValue(() => document.querySelector('.dcg-overgraph-pillbox-elements'))
     const rootNode = document.createElement('div')
-    pillbox.appendChild(rootNode)
-    this.togglesView = DCGView.mountToNode(
-      TogglesView,
+    pillbox.insertBefore(rootNode, pillbox.querySelector('.dcg-zoom-container'))
+    this.menuView = DCGView.mountToNode(
+      MenuView,
       rootNode,
       {
-        menuVisible: () => this.state.menuVisible
+        controller: () => controller
       }
     )
+  }
+
+  updateMenuView () {
+    this.menuView?.update()
   }
 }

@@ -1,4 +1,7 @@
+import Controller from 'Controller'
 import View from 'View'
 
+const controller = new Controller()
 const view = new View()
-view.init() // .then(...) <- init is async
+controller.init(view)
+view.init(controller) // .then(...) <- init is async
