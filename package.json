@@ -1,0 +1,32 @@
+{
+  "name": "DesModder",
+  "description": "Unified location for various Desmos plugins",
+  "version": "0.1.0",
+  "author": {
+    "name": "Jared Hughes (fireflame241)"
+  },
+  "browserslist": "defaults",
+  "eslintIgnore": [
+    "dist/*.js"
+  ],
+  "scripts": {
+    "lint": "standard",
+    "lint-fix": "standard --fix",
+    "analyze": "npm_config_report=true npm run build",
+    "build": "webpack --mode production --config config/webpack.config.production.js",
+    "dev": "webpack --mode development --config config/webpack.config.dev.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jared-hughes/DesModder"
+  },
+  "devDependencies": {
+    "standard": "^16.0.3",
+    "userscript-metadata-webpack-plugin": "^0.1.0",
+    "webpack": "^5.26.2",
+    "webpack-bundle-analyzer": "^4.4.0",
+    "webpack-cli": "^4.5.0",
+    "webpack-livereload-plugin": "^3.0.1",
+    "webpack-merge": "^5.7.3"
+  }
+}
