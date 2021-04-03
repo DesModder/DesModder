@@ -12,7 +12,8 @@ const webpackConfig = {
   entry: './src/index.js',
   output: {
     filename: '[name].user.js',
-    path: path.resolve(__dirname, '../dist')
+    path: path.resolve(__dirname, '../dist'),
+    publicPath: ''
   },
   module: {
     rules: [
@@ -24,6 +25,9 @@ const webpackConfig = {
     ]
   },
   plugins: [
+    new webpack.optimize.LimitChunkCountPlugin({
+      maxChunks: 1
+    }),
     new webpack.ids.HashedModuleIdsPlugin({
       context: __dirname
     })

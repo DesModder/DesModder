@@ -1,5 +1,6 @@
 import DCGView from 'DCGView'
-import { Tooltip, Toggle } from './desmosComponents'
+import { Tooltip } from './desmosComponents'
+import Toggle from './Toggle'
 
 export default class MenuContainer extends DCGView.Class {
   init () {
@@ -37,7 +38,7 @@ export default class MenuContainer extends DCGView.Class {
                 </Tooltip>
                 <Toggle
                   toggled={() => this.controller.isPluginEnabled(pluginIndex)}
-                  ariaLabel={`Toggle ${plugin.name}`}
+                  disabled={() => !this.controller.canTogglePlugin(pluginIndex)}
                   onChange={() => this.controller.togglePlugin(pluginIndex)}
                 />
               </div>

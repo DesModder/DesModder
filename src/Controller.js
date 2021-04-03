@@ -38,7 +38,7 @@ export default class Controller {
   }
 
   disablePlugin (i) {
-    if (this.pluginsEnabled[i]) {
+    if (this.pluginsEnabled[i] && plugins[i].onDisable) {
       plugins[i].onDisable()
       this.pluginsEnabled[i] = false
       this.updateMenuView()
@@ -63,5 +63,9 @@ export default class Controller {
 
   isPluginEnabled (i) {
     return this.pluginsEnabled[i]
+  }
+
+  canTogglePlugin (i) {
+    return !(this.pluginsEnabled[i] && !plugins[i].onDisable)
   }
 }

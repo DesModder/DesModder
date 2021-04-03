@@ -5,6 +5,26 @@ Think of it like an unofficial plugin/modding API, like Forge does for Minecraft
 
 Build system forked from https://github.com/jared-hughes/DesThree.
 
+## Development
+
+To clone the repository, use:
+
+```
+git clone --recurse-submodules https://github.com/jared-hughes/DesModder
+```
+
+This clones the repository and downloads the submodules.
+
+To update submodules to the most recent commit, run:
+
+```
+git submodule update --remote wolfram2desmos
+```
+
+or equivalent for other module names. This should only be done when submodules changed.
+
+More information at https://git-scm.com/book/en/v2/Git-Tools-Submodules.
+
 ## The plan
 
 Each plugin would consist of a `onEnable` and `onDisable` hook.
