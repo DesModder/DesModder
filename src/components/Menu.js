@@ -7,21 +7,43 @@ export default class MenuContainer extends DCGView.Class {
   }
 
   template () {
-    const plugins = this.controller.getPlugins()
     return (
+      // TODO: add a style loader instead of repeated inline CSS
       <div class='dcg-popover-interior'>
-        <div>
-          <Tooltip
-            tooltip={plugins[0].description}
-          >
-            {plugins[0].name}
-          </Tooltip>
-          <Toggle
-            toggled={() => this.controller.isPluginEnabled(0)}
-            ariaLabel={`Toggle ${plugins[0].name}`}
-            onChange={() => this.controller.togglePlugin(0)}
-          />
+        <div class='dcg-group-title'>
+          DesModder plugins
         </div>
+        {
+          this.controller.getPlugins().map((plugin, pluginIndex) => (
+            <div
+              class='dcg-options-menu-section'
+              style={{
+                'border-top': '1px solid #e2e2e2',
+                'margin-top': '10px',
+                'padding-top': '10px'
+              }}
+              key={pluginIndex}
+            >
+              <div
+                class='dcg-options-menu-section-title'
+                style={{
+                  color: '#666'
+                }}
+              >
+                <Tooltip
+                  tooltip={plugin.description}
+                >
+                  {plugin.name}
+                </Tooltip>
+                <Toggle
+                  toggled={() => this.controller.isPluginEnabled(pluginIndex)}
+                  ariaLabel={`Toggle ${plugin.name}`}
+                  onChange={() => this.controller.togglePlugin(pluginIndex)}
+                />
+              </div>
+            </div>
+          ))
+        }
       </div>
     )
   }
