@@ -24,5 +24,6 @@ export default {
   name: 'Duplicate Expression Hotkey',
   description: 'Press Ctrl+Q to duplicate the currently-selected expression',
   onEnable: onEnable,
-  onDisable: onDisable
+  onDisable: onDisable,
+  enabledByDefault: true
 }

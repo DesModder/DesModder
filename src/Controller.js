@@ -12,6 +12,11 @@ export default class Controller {
   init (view) {
     this.view = view
     // here will load enabled plugins from local storage + header
+    plugins.forEach((plugin, i) => {
+      if (plugin.enabledByDefault) {
+        this.enablePlugin(i)
+      }
+    })
   }
 
   getMenuViewModel () {

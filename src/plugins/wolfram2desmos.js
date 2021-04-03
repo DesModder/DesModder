@@ -5,5 +5,6 @@ function onEnable () {
 export default {
   name: 'wolfram2desmos',
   description: 'Convert ASCIImath into Desmos LaTeX on paste.',
-  onEnable: onEnable
+  onEnable: onEnable,
+  enabledByDefault: true
 }
