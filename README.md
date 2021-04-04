@@ -14,8 +14,15 @@ git clone --recurse-submodules https://github.com/jared-hughes/DesModder
 ```
 
 This clones the repository and downloads the submodules.
+Install packages with `npm install`.
 
-To update submodules to the most recent commit, run:
+To add a new submodule, run:
+
+```
+git submodule add https://github.com/jared-hughes/desmodder-find-replace src/plugins/find-replace
+```
+
+To update a submodule to the most recent commit, run:
 
 ```
 git submodule update --remote wolfram2desmos

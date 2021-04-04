@@ -1,3 +1,6 @@
 [submodule "src/plugins/wolfram2desmos"]
 	path = src/plugins/wolfram2desmos
 	url = https://github.com/Heavenira/wolfram2desmos
+[submodule "src/plugins/find-replace"]
+	path = src/plugins/find-replace
+	url = https://github.com/jared-hughes/desmodder-find-replace
