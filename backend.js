@@ -13,14 +13,16 @@ function replace (from, to) {
   const simpleKeys = ['latex', 'colorLatex', 'pointOpacity', 'lineOpacity', 'pointSize', 'lineWidth']
   const rootKeys = simpleKeys.concat(['labelSize', 'labelAngle', 'center', 'opacity', 'width', 'height', 'angle', 'fillOpacity', 'residualVariable', 'fps'])
   const state = window.Calc.getState()
-  state.expressions.list = state.expressions.list.forEach(expr => {
+  state.expressions.list.forEach(expr => {
     Object.assign(expr, R(expr, rootKeys))
-    Object.assign(expr.slider ?? {}, R(expr.slider, ['max', 'min', 'step']))
+    if (expr.slider) {
+      Object.assign(expr.slider, R(expr.slider, ['max', 'min', 'step']))
+    }
     if (expr.label) {
       expr.label = replaceString(expr.label)
     }
     if (expr.columns) {
-      expr.colums = expr.columns.map(col => ({
+      expr.columns = expr.columns.map(col => ({
         ...col,
         ...R(col, simpleKeys),
         values: col.values.map(e => e.replaceAll(from, to))

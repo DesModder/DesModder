@@ -1,4 +1,11 @@
-import { initView, destroyView } from './view'
+import Controller from './Controller'
+import View from './View'
+
+const controller = new Controller()
+const view = new View()
+
+controller.init(view)
+view.init(controller)
 
 let dispatchListenerID
 
@@ -6,9 +13,9 @@ function onEnable () {
   dispatchListenerID = window.Calc.controller.dispatcher.register(
     ({ type }) => {
       if (type === 'open-expression-search') {
-        initView()
+        view.initView()
       } else if (type === 'close-expression-search') {
-        destroyView()
+        view.destroyView()
       }
       // may want to listen to update-expression-search-str
     }
@@ -17,7 +24,7 @@ function onEnable () {
 
 function onDisable () {
   window.Calc.controller.dispatcher.unregister(dispatchListenerID)
-  destroyView()
+  view.destroyView()
 }
 
 export default {
