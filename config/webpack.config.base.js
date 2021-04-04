@@ -4,7 +4,7 @@ const webpack = require('webpack')
 const webpackConfig = {
   resolve: {
     modules: ['node_modules', 'src'],
-    extensions: ['.js']
+    extensions: ['.ts', '.tsx', '.js', '.jsx']
   },
   optimization: {
     minimize: false
@@ -18,9 +18,18 @@ const webpackConfig = {
   module: {
     rules: [
       {
+        test: /\.[tj]sx?$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'ts-loader'
+        }
+      },
+      // add source-map support
+      {
+        enforce: 'pre',
         test: /\.js$/,
         exclude: /node_modules/,
-        use: ['babel-loader']
+        loader: 'source-map-loader'
       }
     ]
   },

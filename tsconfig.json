@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist/",
+        "sourceMap": true,
+        "strictNullChecks": true,
+        "module": "es6",
+        "jsx": "react",
+        "jsxFactory": "DCGView.jsx",
+        "target": "es6",
+        "allowJs": true,
+        "noImplicitAny": false
+    },
+    "include": [
+        "./src/"
+    ]
+}
