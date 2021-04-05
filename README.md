@@ -1,6 +1,6 @@
 # Desmodder Find & Replace Plugin
 
-Try it in action at https://www.desmos.com/calculator/7sbvh1ajqq
+Try it in action at https://www.desmos.com/calculator/t4klzrmngs
 
 Requires loading through [DesModder](https://github.com/jared-hughes/DesModder)
 

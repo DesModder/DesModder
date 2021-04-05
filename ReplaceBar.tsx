@@ -1,9 +1,13 @@
 import DCGView from 'DCGView'
 import { MathQuillView } from 'components/desmosComponents'
+import window from 'globals/window'
+import Controller from './Controller'
 
 const autoOperatorNames = window.require('main/mathquill-operators').getAutoOperators()
 
 export default class ReplaceBar extends DCGView.Class {
+  controller!: Controller
+
   init () {
     this.controller = this.props.controller()
   }
@@ -21,15 +25,15 @@ export default class ReplaceBar extends DCGView.Class {
             isFocused={false}
             getAriaLabel='expression replace'
             getAriaPostLabel=''
-            onUserChangedLatex={e => this.controller.setReplaceLatex(e)}
-            onUserPressedKey={(key, s) => {
+            onUserChangedLatex={(e: string) => this.controller.setReplaceLatex(e)}
+            onUserPressedKey={(key: string, e: KeyboardEvent) => {
               if (key === 'Enter') {
                 this.controller.refactorAll()
               } else if (key === 'Esc') {
                 this.closeReplace()
               } else {
                 const focusedMQ = MathQuillView.getFocusedMathquill()
-                focusedMQ.keystroke(key, s)
+                focusedMQ.keystroke(key, e)
                 this.controller.setReplaceLatex(focusedMQ.latex())
               }
             }}

@@ -1,21 +1,27 @@
-import DCGView from 'DCGView'
+import DCGView, { MountedComponent } from 'DCGView'
 import ReplaceBar from './ReplaceBar'
+import Controller from './Controller'
 
 export default class View {
-  constructor () {
-    this.mountNode = null
-    this.replaceView = null
-  }
+  controller!: Controller
+  mountNode: HTMLElement | null = null
+  replaceView: MountedComponent | null = null
 
-  init (controller) {
+  init (controller: Controller) {
     this.controller = controller
   }
 
   initView () {
     const searchBar = document.querySelector('.dcg-expression-search-bar')
+    if (searchBar === null) {
+      throw new Error('Search bar not found')
+    }
     const searchContainer = document.createElement('div')
     searchContainer.style.display = 'flex'
     searchContainer.style.flexDirection = 'column'
+    if (searchBar.parentNode === null) {
+      throw new Error('Search bar parent node not found')
+    }
     searchBar.parentNode.insertBefore(searchContainer, searchBar)
     searchContainer.appendChild(searchBar)
     this.mountNode = document.createElement('div')
@@ -31,10 +37,14 @@ export default class View {
   }
 
   destroyView () {
+    if (this.mountNode === null) {
+      // the view is already destroyed, so no need to throw an error
+      return
+    }
     DCGView.unmountFromNode(this.mountNode)
   }
 
   updateReplaceView () {
-    this.replaceView.update()
+    this.replaceView && this.replaceView.update()
   }
 }

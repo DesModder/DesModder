@@ -1,5 +1,6 @@
 import Controller from './Controller'
 import View from './View'
+import window from 'globals/window'
 
 const controller = new Controller()
 const view = new View()
@@ -7,13 +8,17 @@ const view = new View()
 controller.init(view)
 view.init(controller)
 
-let dispatchListenerID
+let dispatchListenerID: string
 
 function onEnable () {
   dispatchListenerID = window.Calc.controller.dispatcher.register(
     ({ type }) => {
       if (type === 'open-expression-search') {
-        view.initView()
+        try {
+          view.initView()
+        } catch {
+          console.warn('Failed to initialize find-replace view')
+        }
       } else if (type === 'close-expression-search') {
         view.destroyView()
       }
