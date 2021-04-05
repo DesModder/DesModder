@@ -23,7 +23,7 @@ interface GraphState {
 interface windowConfig extends Window {
   require(s: string): any,
   Calc: {
-    // undocumented, may break
+    //// undocumented, may break
     controller: {
       getPillboxBackgroundColor(): string,
       isGraphSettingsOpen(): boolean,
@@ -34,7 +34,8 @@ interface windowConfig extends Window {
         unregister(id: DispatchListenerID): void
       }
     },
-    // public
+    selectedExpressionId: string,
+    //// public
     getState(): GraphState,
     // "Warning: Calculator states should be treated as opaque values.
     // Manipulating states directly may produce a result that cannot be loaded
