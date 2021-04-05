@@ -11,11 +11,11 @@ export abstract class ClassComponent {
 
 type Component = ClassComponent | (() => string)
 
-interface LooseProps {
+export interface LooseProps {
   [key: string]: any
 }
 
-interface Props {
+export interface Props {
   [key: string]: Function
 }
 
@@ -27,7 +27,8 @@ interface DCGViewModule {
   Class: typeof ClassComponent,
   const<T>(v: T): () => T,
   createElement(el: Component, props: Props, ...children: Component[]): unknown,
-  mountToNode(comp: typeof ClassComponent, el: HTMLElement, props: Props): MountedComponent
+  mountToNode(comp: typeof ClassComponent, el: HTMLElement, props: Props): MountedComponent,
+  unmountFromNode(el: HTMLElement): void
 }
 
 const DCGView = window.require('dcgview') as DCGViewModule
