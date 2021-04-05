@@ -9,7 +9,7 @@ const webpackConfig = {
   optimization: {
     minimize: false
   },
-  entry: './src/index.js',
+  entry: './src/index.ts',
   output: {
     filename: '[name].user.js',
     path: path.resolve(__dirname, '../dist'),

@@ -1,5 +1,11 @@
-function _pollForValue (func) {
-  return new Promise((resolve, reject) => {
+import window from 'globals/window'
+
+interface FuncAny {
+  (): any
+}
+
+function _pollForValue<T> (func: () => T) {
+  return new Promise<T>((resolve) => {
     const interval = setInterval(() => {
       const val = func()
       if (val !== null && val !== undefined) {
@@ -10,7 +16,7 @@ function _pollForValue (func) {
   })
 }
 
-export async function pollForValue (func) {
+export async function pollForValue (func: FuncAny) {
   return await _pollForValue(func)
 }
 

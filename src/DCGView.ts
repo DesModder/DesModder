@@ -1,8 +1,52 @@
-const DCGView = window.require('dcgview')
+import window from 'globals/window'
+
+export abstract class ClassComponent {
+  constructor(protected props: LooseProps) {}
+  init(): void {}
+  abstract template(): unknown
+  _element!: {
+    _domNode: any
+  }
+}
+
+type Component = ClassComponent | (() => string)
+
+interface LooseProps {
+  [key: string]: any
+}
+
+interface Props {
+  [key: string]: Function
+}
+
+export interface MountedComponent {
+  update(): void
+}
+
+interface DCGViewModule {
+  Class: typeof ClassComponent,
+  const<T>(v: T): () => T,
+  createElement(el: Component, props: Props, ...children: Component[]): unknown,
+  mountToNode(comp: typeof ClassComponent, el: HTMLElement, props: Props): MountedComponent
+}
+
+const DCGView = window.require('dcgview') as DCGViewModule
 
 export default {
   ...DCGView,
   jsx: jsx
+}
+
+declare global {
+  namespace JSX {
+    interface IntrinsicAttributes {
+
+    }
+    interface IntrinsicElements {
+      div: any,
+      i: any,
+    }
+  }
 }
 
 /**
@@ -26,17 +70,17 @@ export default {
  * stateless anyway (state control in Model.js)
  */
 
-function jsx (el, props, ...children) {
+function jsx (el: Component, props: LooseProps, ...children: Component[]) {
   /* Handle differences between typescript's expectation and DCGView */
   if (!Array.isArray(children)) {
     children = [children]
   }
   // "Text should be a const or a getter:"
   children = children.map(e => typeof e === 'string' ? DCGView.const(e) : e)
-  for (const [k, v] of Object.entries(props)) {
+  for (const k in props) {
     // DCGView.createElement also expects 0-argument functions
-    if (typeof v !== 'function') {
-      props[k] = DCGView.const(v)
+    if (typeof props[k] !== 'function') {
+      props[k] = DCGView.const(props[k])
     }
   }
   return DCGView.createElement(el, props, ...children)
