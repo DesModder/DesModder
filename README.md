@@ -1,7 +1,7 @@
 # DesModder
 Unified location for various Desmos plugins instead of an unorganized system of userscripts in the form of gists and repos that need to be toggled manually in Tampermonkey.
 
-Think of it like an unofficial plugin/modding API, like Forge does for Minecraft.
+Think of it like an unofficial plugin/modding API, like Forge does for Minecraft. (DesModder is not affiliated with Desmos).
 
 Build system forked from https://github.com/jared-hughes/DesThree.
 
