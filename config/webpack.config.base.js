@@ -1,46 +1,60 @@
-const path = require('path')
-const webpack = require('webpack')
+const path = require('path');
+const CopyPlugin = require('copy-webpack-plugin');
 
-const webpackConfig = {
+const config = {
   resolve: {
     modules: ['node_modules', 'src'],
     extensions: ['.ts', '.tsx', '.js', '.jsx']
   },
-  optimization: {
-    minimize: false
+  entry: {
+    content: './src/content.ts',
+    script: './src/script.ts'
   },
-  entry: './src/index.ts',
   output: {
-    filename: '[name].user.js',
     path: path.resolve(__dirname, '../dist'),
-    publicPath: ''
+    filename: '[name].js',
+    publicPath: '',
   },
   module: {
     rules: [
       {
-        test: /\.[tj]sx?$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'ts-loader'
-        }
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader'],
+        exclude: /\.module\.css$/,
       },
-      // add source-map support
       {
-        enforce: 'pre',
-        test: /\.js$/,
+        test: /\.[tj]sx?$/,
+        loader: 'ts-loader',
         exclude: /node_modules/,
-        loader: 'source-map-loader'
+      },
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              importLoaders: 1,
+              modules: true,
+            },
+          },
+        ],
+        include: /\.module\.css$/,
       }
-    ]
+    ],
+  },
+  devServer: {
+    contentBase: '../dist',
   },
   plugins: [
-    new webpack.optimize.LimitChunkCountPlugin({
-      maxChunks: 1
+    new CopyPlugin({
+      patterns: [{ from: 'public', to: '.' }],
     }),
-    new webpack.ids.HashedModuleIdsPlugin({
-      context: __dirname
-    })
-  ]
-}
+  ],
+  optimization: {
+    // extension stores don't like minimized code? Faster approval?
+    minimize: false
+  }
+};
 
-module.exports = webpackConfig
+module.exports = config;

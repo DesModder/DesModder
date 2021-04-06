@@ -1,0 +1,21 @@
+{
+  "name": "DesModder",
+  "description": "Unified location for various Desmos plugins",
+  "manifest_version": 2,
+  "version": "0.1.0",
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.desmos.com/calculator*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": ["script.js"]
+}

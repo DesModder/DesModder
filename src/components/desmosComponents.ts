@@ -1,10 +1,10 @@
 import { ClassComponent, LooseProps } from 'DCGView'
-import window from 'globals/window'
+import { desmosRequire } from 'globals/window'
 
 type TCC = typeof ClassComponent
 
-export const Pillbox: TCC = window.require('main/pillbox-view').default
-export const Checkbox: TCC = window.require('dcgview-helpers/checkbox').Checkbox
+export const Pillbox: TCC = desmosRequire('main/pillbox-view').default
+export const Checkbox: TCC = desmosRequire('dcgview-helpers/checkbox').Checkbox
 
 type MaybeFunc<T> = (() => T) | T
 
@@ -30,11 +30,11 @@ interface MathQuillViewType extends ClassComponent {
 }
 
 export const MathQuillView: MathQuillViewType =
-  window.require('dcgview-helpers/mathquill-view').default
+  desmosRequire('dcgview-helpers/mathquill-view').default
 
 export const {
   If, For, IfDefined, IfElse, Input, Switch, SwitchUnion, Textarea
-} = window.require('dcgview').Components as {[key: string]: TCC}
+} = desmosRequire('dcgview').Components as {[key: string]: TCC}
 
-export const StaticMathquillView: TCC = window.require('dcgview-helpers/static-mathquill-view').default
-export const Tooltip: TCC = window.require('shared-components/tooltip').Tooltip
+export const StaticMathquillView: TCC = desmosRequire('dcgview-helpers/static-mathquill-view').default
+export const Tooltip: TCC = desmosRequire('shared-components/tooltip').Tooltip

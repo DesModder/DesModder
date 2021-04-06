@@ -1,4 +1,6 @@
-import window from 'globals/window'
+import { desmosRequire } from 'globals/window'
+export const jquery = desmosRequire('jquery')
+export const keys = desmosRequire('keys')
 
 interface FuncAny {
   (): any
@@ -19,6 +21,3 @@ function _pollForValue<T> (func: () => T) {
 export async function pollForValue (func: FuncAny) {
   return await _pollForValue(func)
 }
-
-export const jquery = window.require('jquery')
-export const keys = window.require('keys')

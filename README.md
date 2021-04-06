@@ -14,7 +14,24 @@ git clone --recurse-submodules https://github.com/jared-hughes/DesModder
 ```
 
 This clones the repository and downloads the submodules.
+
 Install packages with `npm install`.
+
+Use command `npm run dev` to start the dev server, and `npm run build` to build production files (clear the dist folder first)
+
+Load the unpacked extension through directions at https://developer.chrome.com/docs/extensions/mv2/getstarted/#manifest (see "load unpacked"). Load the `dist/` folder
+
+### Testing extension in the browser
+
+Suggested setup for convenience: three workspaces (virtual desktops)
+
+1. Code editor, documentation, etc.
+2. Terminal and chrome://extensions page
+3. Test page
+
+Setting it up this way forces you to remember to reload the extension every time (as you transition from workspace 1 to 3 through workspace 2), and it let you see any errors in the terminal during the same transition.
+
+### Changing submodules
 
 To add a new submodule, run:
 

@@ -2,7 +2,7 @@
 // to not compile at all. Leaving as js for now :)
 
 function onEnable () {
-  import('plugins/wolfram2desmos/wolfram2desmos.user.js')
+  // import('plugins/wolfram2desmos/wolfram2desmos.user.js')
 }
 
 export default {
