@@ -1,4 +1,4 @@
-import DCGView, { MountedComponent } from 'DCGView'
+import { DCGView,  MountedComponent } from 'desmodder'
 import ReplaceBar from './ReplaceBar'
 import Controller from './Controller'
 

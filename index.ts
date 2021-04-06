@@ -1,6 +1,6 @@
 import Controller from './Controller'
 import View from './View'
-import window from 'globals/window'
+import { Calc } from 'desmodder'
 
 const controller = new Controller()
 const view = new View()
@@ -11,7 +11,7 @@ view.init(controller)
 let dispatchListenerID: string
 
 function onEnable () {
-  dispatchListenerID = window.Calc.controller.dispatcher.register(
+  dispatchListenerID = Calc.controller.dispatcher.register(
     ({ type }) => {
       if (type === 'open-expression-search') {
         try {
@@ -28,7 +28,7 @@ function onEnable () {
 }
 
 function onDisable () {
-  window.Calc.controller.dispatcher.unregister(dispatchListenerID)
+  Calc.controller.dispatcher.unregister(dispatchListenerID)
   view.destroyView()
 }
 

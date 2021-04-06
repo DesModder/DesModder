@@ -1,4 +1,4 @@
-import window from 'globals/window'
+import { Calc } from 'desmodder'
 
 function replace (from: RegExp, to: string) {
   // replaceString is applied to stuff like labels
@@ -11,7 +11,7 @@ function replace (from: RegExp, to: string) {
   }
   const simpleKeys = ['latex', 'colorLatex', 'pointOpacity', 'lineOpacity', 'pointSize', 'lineWidth']
   const rootKeys = simpleKeys.concat(['labelSize', 'labelAngle', 'center', 'opacity', 'width', 'height', 'angle', 'fillOpacity', 'residualVariable', 'fps'])
-  const state = window.Calc.getState()
+  const state = Calc.getState()
   state.expressions.list.forEach(expr => {
     rootKeys.forEach(k => {
       if (k in expr) {
@@ -53,7 +53,7 @@ function replace (from: RegExp, to: string) {
       }
     }
   })
-  window.Calc.setState(state, {
+  Calc.setState(state, {
     allowUndo: true
   })
 }

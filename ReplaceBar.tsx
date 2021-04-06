@@ -1,9 +1,9 @@
-import DCGView from 'DCGView'
-import { MathQuillView } from 'components/desmosComponents'
-import window from 'globals/window'
+import {
+  DCGView, MathQuillView, Calc, desmosRequire
+} from 'desmodder'
 import Controller from './Controller'
 
-const autoOperatorNames = window.require('main/mathquill-operators').getAutoOperators()
+const autoOperatorNames = desmosRequire('main/mathquill-operators').getAutoOperators()
 
 export default class ReplaceBar extends DCGView.Class {
   controller!: Controller
@@ -61,7 +61,7 @@ export default class ReplaceBar extends DCGView.Class {
   }
 
   closeReplace () {
-    window.Calc.controller.dispatch({
+    Calc.controller.dispatch({
       type: 'close-expression-search'
     })
   }

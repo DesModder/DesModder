@@ -1,6 +1,6 @@
 import { refactor } from './backend'
 import View from './View'
-import window from 'globals/window'
+import { Calc } from 'desmodder'
 
 export default class Controller {
   replaceLatex = ''
@@ -20,7 +20,7 @@ export default class Controller {
 
   refactorAll () {
     refactor(
-      window.Calc.controller.getExpressionSearchStr(),
+      Calc.controller.getExpressionSearchStr(),
       this.replaceLatex
     )
   }
