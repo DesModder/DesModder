@@ -2,8 +2,12 @@ import DCGView from 'DCGView'
 import { If, Tooltip } from './desmosComponents'
 import Menu from './Menu'
 import { jquery, keys } from 'utils'
+import Controller from 'Controller'
+import window from 'globals/window'
 
 export default class MenuContainer extends DCGView.Class {
+  controller!: Controller
+
   init () {
     this.controller = this.props.controller()
   }
@@ -68,12 +72,12 @@ export default class MenuContainer extends DCGView.Class {
         type: 'close-graph-settings'
       })
     }
-    jquery(document).on('dcg-tapstart.menu-view wheel.menu-view', (e) => {
+    jquery(document).on('dcg-tapstart.menu-view wheel.menu-view', (e: Event) => {
       if (this.eventShouldCloseMenu(e)) {
         this.controller.closeMenu()
       }
     })
-    jquery(document).on('keydown.menu-view', (e) => {
+    jquery(document).on('keydown.menu-view', (e: KeyboardEvent) => {
       if (keys.lookup(e) === 'Esc') {
         this.controller.closeMenu()
       }
@@ -84,7 +88,7 @@ export default class MenuContainer extends DCGView.Class {
     jquery(document).off('.menu-view')
   }
 
-  eventShouldCloseMenu (e) {
+  eventShouldCloseMenu (e: Event) {
     // this.node refers to the generated node from DCGView
     const el = jquery(e.target)
     return !el.closest(this._element._domNode).length &&

@@ -1,15 +1,20 @@
 import plugins from './plugins'
+import View from './View'
 
 export default class Controller {
+  menuViewModel = {
+    isOpen: false
+  }
+  pluginsEnabled: {[key: number]: boolean} = {}
+  view: View | null = null
+
   constructor () {
-    this.menuViewModel = {
-      isOpen: false
+    for (let i=0; i<plugins.length; i++) {
+      this.pluginsEnabled[i] = false
     }
-    this.pluginsEnabled = {}
-    plugins.forEach((e, i) => { this.pluginsEnabled[i] = false })
   }
 
-  init (view) {
+  init (view: View) {
     this.view = view
     // here will load enabled plugins from local storage + header
     plugins.forEach((plugin, i) => {
@@ -24,7 +29,7 @@ export default class Controller {
   }
 
   updateMenuView () {
-    this.view.updateMenuView()
+    this.view!.updateMenuView()
   }
 
   toggleMenu () {
@@ -42,15 +47,16 @@ export default class Controller {
     return plugins
   }
 
-  disablePlugin (i) {
-    if (this.pluginsEnabled[i] && plugins[i].onDisable) {
-      plugins[i].onDisable()
+  disablePlugin (i: number) {
+    const plugin = plugins[i]
+    if (this.pluginsEnabled[i] && plugin.onDisable) {
+      plugin.onDisable()
       this.pluginsEnabled[i] = false
       this.updateMenuView()
     }
   }
 
-  enablePlugin (i) {
+  enablePlugin (i: number) {
     if (!this.pluginsEnabled[i]) {
       plugins[i].onEnable()
       this.pluginsEnabled[i] = true
@@ -58,7 +64,7 @@ export default class Controller {
     }
   }
 
-  togglePlugin (i) {
+  togglePlugin (i: number) {
     if (this.pluginsEnabled[i]) {
       this.disablePlugin(i)
     } else {
@@ -66,11 +72,11 @@ export default class Controller {
     }
   }
 
-  isPluginEnabled (i) {
+  isPluginEnabled (i: number) {
     return this.pluginsEnabled[i]
   }
 
-  canTogglePlugin (i) {
-    return !(this.pluginsEnabled[i] && !plugins[i].onDisable)
+  canTogglePlugin (i: number) {
+    return !(this.pluginsEnabled[i] && !('onDisable' in plugins[i]))
   }
 }

@@ -1,6 +1,14 @@
 import DCGView from 'DCGView'
 
 export default class Toggle extends DCGView.Class {
+  constructor (props: {
+    toggled (): boolean,
+    disabled (): boolean,
+    onChange (): void
+  }) {
+    super(props)
+  }
+
   template () {
     return (
       <div

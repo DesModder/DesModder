@@ -1,7 +1,54 @@
-/**
- * This file serves only to wrap the `jsx` function for babel-transform-react-jsx
- * It cannot be renamed or moved.
- */
+import window from 'globals/window'
+
+export abstract class ClassComponent {
+  constructor(protected props: LooseProps) {}
+  init(): void {}
+  abstract template(): unknown
+  _element!: {
+    _domNode: any
+  }
+}
+
+type Component = ClassComponent | (() => string)
+
+export interface LooseProps {
+  [key: string]: any
+}
+
+export interface Props {
+  [key: string]: Function
+}
+
+export interface MountedComponent {
+  update(): void
+}
+
+interface DCGViewModule {
+  Class: typeof ClassComponent,
+  const<T>(v: T): () => T,
+  createElement(el: Component, props: Props, ...children: Component[]): unknown,
+  mountToNode(comp: typeof ClassComponent, el: HTMLElement, props: Props): MountedComponent,
+  unmountFromNode(el: HTMLElement): void
+}
+
+const DCGView = window.require('dcgview') as DCGViewModule
+
+export default {
+  ...DCGView,
+  jsx: jsx
+}
+
+declare global {
+  namespace JSX {
+    interface IntrinsicAttributes {
+
+    }
+    interface IntrinsicElements {
+      div: any,
+      i: any,
+    }
+  }
+}
 
 /**
  * If you know React, then you know DCGView.
@@ -24,34 +71,18 @@
  * stateless anyway (state control in Model.js)
  */
 
-import DCGView from 'DCGView'
-
-export function jsx (el, props) {
-  /**
-   * babel-transform-react-jsx calls:
-   *   jsx(el, {...props, children: child})
-   * or jsxs(el, {...props, children: [child1, child2, ...]})
-   * but we want
-   *   DCGView.createElement(el, props, ...children)
-   * see change info at https://github.com/reactjs/rfcs/blob/createlement-rfc/text/0000-create-element-changes.md
-   */
-  let children = props.children
+function jsx (el: Component, props: LooseProps, ...children: Component[]) {
+  /* Handle differences between typescript's expectation and DCGView */
   if (!Array.isArray(children)) {
-    // occurs for jsx but not jsxs
     children = [children]
   }
   // "Text should be a const or a getter:"
   children = children.map(e => typeof e === 'string' ? DCGView.const(e) : e)
-  delete props.children
-  for (const [k, v] of Object.entries(props)) {
+  for (const k in props) {
     // DCGView.createElement also expects 0-argument functions
-    if (typeof v !== 'function') {
-      props[k] = DCGView.const(v)
+    if (typeof props[k] !== 'function') {
+      props[k] = DCGView.const(props[k])
     }
   }
   return DCGView.createElement(el, props, ...children)
 }
-
-// jsxs is for a list of children like <Component><A/><B/></Component>
-// differences get handled in jsx
-export const jsxs = jsx

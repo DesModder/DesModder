@@ -1,13 +1,11 @@
 // this is pretty much a template plugin
 // based on userscript https://gist.github.com/jared-hughes/a21dbeead4c6d0969334707cc1a735bd
 
-const jquery = window.require('jquery')
-const keys = window.require('keys')
+import { Calc, jquery, keys } from 'desmodder'
 
 function onEnable () {
-  jquery('.dcg-exppanel-outer').on('keydown.duplicateHotkey', e => {
+  jquery('.dcg-exppanel-outer').on('keydown.duplicateHotkey', (e: KeyboardEvent) => {
     if (e.ctrlKey && keys.lookupChar(e) === 'Q') {
-      const Calc = window.Calc
       Calc.controller.dispatch({
         type: 'duplicate-expression',
         id: Calc.selectedExpressionId
