@@ -1,4 +1,4 @@
-import plugins from './plugins'
+import { isPlugin, Plugin, PluginID } from './plugins'
 import View from './View'
 
 export default class Controller {
@@ -7,21 +7,33 @@ export default class Controller {
   }
   pluginsEnabled: {[key: number]: boolean} = {}
   view: View | null = null
+  plugins: Plugin[] = []
 
   constructor () {
-    for (let i=0; i<plugins.length; i++) {
+    for (let i=0; i < this.plugins.length; i++) {
       this.pluginsEnabled[i] = false
+    }
+  }
+
+  _registerPlugin(plugin: Plugin) {
+    this.plugins.push(plugin)
+    const pluginID: PluginID = this.plugins.length - 1
+    if (plugin.enabledByDefault) {
+      this.enablePlugin(pluginID)
+    }
+    this.view && this.view.updateMenuView()
+    return pluginID
+  }
+
+  registerPlugin(plugin: any): (PluginID | undefined) {
+    if (isPlugin(plugin)) {
+      return this._registerPlugin(plugin)
     }
   }
 
   init (view: View) {
     this.view = view
-    // here will load enabled plugins from local storage + header
-    plugins.forEach((plugin, i) => {
-      if (plugin.enabledByDefault) {
-        this.enablePlugin(i)
-      }
-    })
+    // here want to load config + enabled plugins from local storage + header
   }
 
   getMenuViewModel () {
@@ -43,12 +55,11 @@ export default class Controller {
   }
 
   getPlugins () {
-    // This is constant between page loads
-    return plugins
+    return this.plugins
   }
 
   disablePlugin (i: number) {
-    const plugin = plugins[i]
+    const plugin = this.plugins[i]
     if (this.pluginsEnabled[i] && plugin.onDisable) {
       plugin.onDisable()
       this.pluginsEnabled[i] = false
@@ -56,15 +67,15 @@ export default class Controller {
     }
   }
 
-  enablePlugin (i: number) {
+  enablePlugin (i: PluginID) {
     if (!this.pluginsEnabled[i]) {
-      plugins[i].onEnable()
+      this.plugins[i].onEnable()
       this.pluginsEnabled[i] = true
       this.updateMenuView()
     }
   }
 
-  togglePlugin (i: number) {
+  togglePlugin (i: PluginID) {
     if (this.pluginsEnabled[i]) {
       this.disablePlugin(i)
     } else {
@@ -72,11 +83,11 @@ export default class Controller {
     }
   }
 
-  isPluginEnabled (i: number) {
+  isPluginEnabled (i: PluginID) {
     return this.pluginsEnabled[i]
   }
 
-  canTogglePlugin (i: number) {
-    return !(this.pluginsEnabled[i] && !('onDisable' in plugins[i]))
+  canTogglePlugin (i: PluginID) {
+    return !(this.pluginsEnabled[i] && !('onDisable' in this.plugins[i]))
   }
 }
