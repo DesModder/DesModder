@@ -1,5 +1,5 @@
 Asset sources:
-- desmodder.{png, svg}: https://www.desmos.com/calculator/rp96rtpk7t
+- desmodder.{png, svg}: https://www.desmos.com/calculator/omdntr8ndb
 
 
 In /public:
