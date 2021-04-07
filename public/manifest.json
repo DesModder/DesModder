@@ -21,10 +21,7 @@
     "resources": ["script.js", "wolfram2desmos.js"],
     "matches": ["https://www.desmos.com/*"]
   }],
-  "permissions": [
-    "scripting",
-    "tabs"
-  ],
+  "permissions": [],
   "host_permissions": [
     "https://www.desmos.com/*"
   ],
