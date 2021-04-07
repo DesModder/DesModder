@@ -3,7 +3,7 @@ import { If, Tooltip } from './desmosComponents'
 import Menu from './Menu'
 import { jquery, keys } from 'utils'
 import Controller from 'Controller'
-import window from 'globals/window'
+import { Calc } from 'globals/window'
 
 export default class MenuContainer extends DCGView.Class {
   controller!: Controller
@@ -25,7 +25,7 @@ export default class MenuContainer extends DCGView.Class {
             onTap={() => this.onTapMenuButton()}
             // TODO: manageFocus?
             style={{
-              background: window.Calc.controller.getPillboxBackgroundColor()
+              background: Calc.controller.getPillboxBackgroundColor()
             }}
           >
             <i class='dcg-icon-settings' />
@@ -67,8 +67,8 @@ export default class MenuContainer extends DCGView.Class {
   }
 
   didMountContainer () {
-    if (window.Calc.controller.isGraphSettingsOpen()) {
-      window.Calc.controller.dispatch({
+    if (Calc.controller.isGraphSettingsOpen()) {
+      Calc.controller.dispatch({
         type: 'close-graph-settings'
       })
     }

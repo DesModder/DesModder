@@ -1,4 +1,5 @@
-import window from 'globals/window'
+import { desmosRequire } from 'globals/window'
+const DCGView = desmosRequire('dcgview') as DCGViewModule
 
 export abstract class ClassComponent {
   constructor(protected props: LooseProps) {}
@@ -31,7 +32,6 @@ interface DCGViewModule {
   unmountFromNode(el: HTMLElement): void
 }
 
-const DCGView = window.require('dcgview') as DCGViewModule
 
 export default {
   ...DCGView,

@@ -1,0 +1,34 @@
+{
+  "name": "DesModder",
+  "description": "Unified location for various Desmos plugins",
+  "manifest_version": 3,
+  "version": "0.1.0",
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.desmos.com/calculator*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [{
+    "resources": ["script.js", "wolfram2desmos.js"],
+    "matches": ["https://www.desmos.com/*"]
+  }],
+  "permissions": [
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://www.desmos.com/*"
+  ],
+  "externally_connectable": {
+    "matches": ["https://www.desmos.com/*"]
+  }
+}
