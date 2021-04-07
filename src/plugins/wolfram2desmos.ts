@@ -1,8 +1,9 @@
-// Changing to a typescript file causes this dynamic import
-// to not compile at all. Leaving as js for now :)
-
 function onEnable () {
-  // import('plugins/wolfram2desmos/wolfram2desmos.user.js')
+  // https://stackoverflow.com/a/11431812/7481517
+  window.postMessage({
+    type: 'enable-script',
+    scriptName: 'wolfram2desmos'
+  }, '*')
 }
 
 export default {

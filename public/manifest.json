@@ -18,7 +18,7 @@
     }
   ],
   "web_accessible_resources": [{
-    "resources": ["script.js"],
+    "resources": ["script.js", "wolfram2desmos.js"],
     "matches": ["https://www.desmos.com/*"]
   }],
   "permissions": [
@@ -27,5 +27,8 @@
   ],
   "host_permissions": [
     "https://www.desmos.com/*"
-  ]
+  ],
+  "externally_connectable": {
+    "matches": ["https://www.desmos.com/*"]
+  }
 }
