@@ -1,7 +1,7 @@
 import {
   DCGView, MountedComponent, pollForValue
 } from 'desmodder'
-import MainView from './MainView'
+import MainView from './components/MainView'
 import Controller from './Controller'
 
 export default class View {

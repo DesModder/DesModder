@@ -1,7 +1,9 @@
 import {
   DCGView, If, Tooltip, Calc, jquery, keys
 } from 'desmodder'
-import Controller from './Controller'
+import Controller from '../Controller'
+import MainPopup from './MainPopup'
+import './MainView.css'
 
 /*
   Much of the code is copied from Desmodder/src/components/MenuContainer.tsx.
@@ -40,20 +42,12 @@ export default class MainView extends DCGView.Class {
           {
             () => (
               <div
-                class='desmodder-view-container dcg-settings-container desmodder-menu-container dcg-left dcg-popover dcg-constrained-height-popover'
-                style={{
-                  position: 'absolute',
-                  top: '46px',
-                  right: '38px',
-                  'line-height': '1em'
-                }}
+                class='gif-creator-view-container dcg-settings-container dcg-left dcg-popover dcg-constrained-height-popover'
                 didMount={() => this.didMountContainer()}
                 didUnmount={() => this.didUnmountContainer()}
                 // TODO: didMount and didUnmount to register escape key → close
               >
-                <div>
-                  Hi
-                </div>
+                <MainPopup controller={this.controller} />
                 <div class='dcg-arrow' />
               </div>
             )
