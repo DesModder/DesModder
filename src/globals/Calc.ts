@@ -20,6 +20,25 @@ interface GraphState {
   }
 }
 
+interface ScreenshotOptions {
+  width?: number,
+  height?: number,
+  targetPixelRatio?: number,
+  preserveAxisLabels?: boolean
+}
+
+interface AsyncScreenshotOptions extends ScreenshotOptions {
+  format?: 'png' | 'svg',
+  mode?: 'contain' | 'stretch' | 'preserveX' | 'preserveY',
+  mathBounds?: {
+    top?: number,
+    left?: number,
+    bottom?: number,
+    right?: number
+  },
+  showLabels: boolean
+}
+
 export default interface Calc {
   //// undocumented, may break
   controller: {
@@ -41,5 +60,10 @@ export default interface Calc {
   setState(state: GraphState, opts?: {
     allowUndo?: boolean,
     remapColors?: boolean
-  }): void
+  }): void,
+  screenshot(opts: ScreenshotOptions): string,
+  asyncScreenshot(
+    opts: AsyncScreenshotOptions,
+    callback: (data: string) => void
+  ): void
 }
