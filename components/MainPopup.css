@@ -1,4 +1,5 @@
-.dcg-popover-interior .gif-creator-capture-frame-button {
+.dcg-popover-interior .gif-creator-capture-frame-button,
+.dcg-popover-interior .gif-creator-export-frames-button {
   display: inline-block;
   line-height: 28px;
   height: 28px;
