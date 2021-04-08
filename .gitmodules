@@ -6,4 +6,4 @@
 	url = https://github.com/jared-hughes/desmodder-find-replace
 [submodule "src/plugins/gif-creator"]
 	path = src/plugins/gif-creator
-	url = https://github.com/jared-hughes/desmodder-gif-creator.git
+	url = https://github.com/jared-hughes/desmodder-gif-creator

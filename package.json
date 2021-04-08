@@ -10,6 +10,7 @@
     "dist/*.js"
   ],
   "scripts": {
+    "postinstall": "(cd src/plugins/gif-creator && npm install)",
     "build": "webpack --mode production --config config/webpack.config.base.js",
     "dev": "webpack --mode development --config config/webpack.config.dev.js"
   },

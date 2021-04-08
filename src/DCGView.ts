@@ -46,6 +46,7 @@ declare global {
     interface IntrinsicElements {
       div: any,
       i: any,
+      span: any,
     }
   }
 }
