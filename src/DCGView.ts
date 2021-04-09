@@ -1,8 +1,23 @@
 import { desmosRequire } from 'globals/window'
 const DCGView = desmosRequire('dcgview') as DCGViewModule
 
-export abstract class ClassComponent {
-  constructor(protected props: LooseProps) {}
+type OrConst<T> = {
+  [K in keyof T]:
+    T[K] extends Function
+      ? T[K]
+      : T[K] | (() => T[K])
+}
+
+type ToFunc<T> = {
+  [K in keyof T]:
+    T[K] extends Function
+      ? T[K]
+      : () => T[K]
+}
+
+export abstract class ClassComponent<PropsType=Props> {
+  props!: ToFunc<PropsType>
+  constructor(_props: OrConst<PropsType>) {}
   init(): void {}
   abstract template(): unknown
   _element!: {
@@ -28,7 +43,8 @@ interface DCGViewModule {
   Class: typeof ClassComponent,
   const<T>(v: T): () => T,
   createElement(el: Component, props: Props, ...children: Component[]): unknown,
-  mountToNode(comp: typeof ClassComponent, el: HTMLElement, props: Props): MountedComponent,
+  // couldn't figure out type for `comp`, so I just put | any
+  mountToNode(comp: ClassComponent | any, el: HTMLElement, props: Props): MountedComponent,
   unmountFromNode(el: HTMLElement): void
 }
 

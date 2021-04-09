@@ -5,7 +5,9 @@ import { jquery, keys } from 'utils'
 import Controller from 'Controller'
 import { Calc } from 'globals/window'
 
-export default class MenuContainer extends DCGView.Class {
+export default class MenuContainer extends DCGView.Class<{
+  controller: Controller
+}> {
   controller!: Controller
 
   init () {
