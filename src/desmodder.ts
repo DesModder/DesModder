@@ -18,6 +18,7 @@ export {
 } from 'globals/window'
 export { default as Toggle } from 'components/Toggle'
 export { default as SmallMathQuillInput } from 'components/SmallMathQuillInput'
+export { default as SegmentedControl } from 'components/SegmentedControl'
 export {
   LooseProps,
   Props,
