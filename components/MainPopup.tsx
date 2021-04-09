@@ -4,7 +4,7 @@ import {
 import Controller, { OutFileType } from '../Controller'
 import './MainPopup.css'
 
-const fileTypeNames: OutFileType[] = ['mp4', 'webm']
+const fileTypeNames: OutFileType[] = ['gif', 'mp4', 'webm']
 
 export default class MainPopup extends DCGView.Class<{
   controller: Controller

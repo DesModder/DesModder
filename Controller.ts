@@ -6,7 +6,7 @@ import { Calc } from 'desmodder'
 import { createFFmpeg, fetchFile } from './node_modules/@ffmpeg/ffmpeg/src/index.js'
 
 type PNGDataURI = string
-export type OutFileType = 'mp4' | 'webm'
+export type OutFileType = 'gif' | 'mp4' | 'webm'
 type FFmpeg = ReturnType<typeof createFFmpeg>
 
 export default class Controller {
@@ -18,7 +18,7 @@ export default class Controller {
   isExporting: boolean = false
   fpsHasError: boolean = false
   fps: number = 30
-  fileType: OutFileType = 'mp4'
+  fileType: OutFileType = 'gif'
 
   init (view: View) {
     this.view = view
@@ -65,17 +65,20 @@ export default class Controller {
   async transcode (ffmpeg: FFmpeg) {
     const outFilename = 'out.' + this.fileType
 
-    const codec = {
-      mp4: 'libx264',
-      webm: 'libvpx-vp9'
+    const moreFlags = {
+      mp4: ['-vcodec', 'libx264'],
+      webm: ['-vcodec', 'libvpx-vp9'],
+      // generate fresh palette on every frame (higher quality)
+      // https://superuser.com/a/1239082
+      gif: ['-lavfi', 'palettegen=stats_mode=single[pal],[0:v][pal]paletteuse=new=1']
     }[this.fileType]
 
     await ffmpeg.run(
       '-r', this.fps.toString(),
       '-pattern_type', 'glob', '-i', '*.png',
-      '-vcodec', codec,
-      // average video bitrate
+      // average video bitrate. May have room for improvements
       '-b:v', '2M',
+      ...moreFlags,
       outFilename
     );
 
