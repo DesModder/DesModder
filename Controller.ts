@@ -10,9 +10,12 @@ type PNGDataURI = string
 export default class Controller {
   view: View | null = null
   frames: PNGDataURI[] = []
+  _pendingUpdateView = false
   isMainViewOpen: boolean = false
   isCapturing: boolean = false
   isExporting: boolean = false
+  fpsHasError: boolean = false
+  fps: number = 30
 
   init (view: View) {
     this.view = view
@@ -75,7 +78,13 @@ export default class Controller {
 
     const outFilename = 'out.mp4'
 
-    await ffmpeg.run('-r', '60', '-pattern_type', 'glob', '-i', '*.png', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', outFilename);
+    await ffmpeg.run(
+      '-r', this.fps.toString(),
+      '-pattern_type', 'glob', '-i', '*.png',
+      '-vcodec', 'libx264',
+      '-pix_fmt', 'yuv420p',
+      outFilename
+    )
     const data = ffmpeg.FS('readFile', outFilename)
     filenames.forEach(filename => {
       ffmpeg.FS('unlink', filename)
@@ -90,7 +99,7 @@ export default class Controller {
     this.updateView()
   }
 
-  download(url: string, filename: string) {
+  download (url: string, filename: string) {
     // https://gist.github.com/SlimRunner/3b0a7571f04d3a03bff6dbd9de6ad729#file-desmovie-user-js-L325
     // no point supporting anything besides Chrome (no SharedArrayBuffer support)
     var a = document.createElement("a");
@@ -102,5 +111,23 @@ export default class Controller {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     }, 0);
+  }
+
+  updatePendingView() {
+    if (this._pendingUpdateView) {
+      this._pendingUpdateView = false
+      this.updateView()
+    }
+  }
+
+  setFPSLatex (latex: string) {
+    const pruned = latex.replace(/\s/g, '')
+    if (/^\d+$/.test(pruned)) {
+      this.fps = parseInt(pruned)
+      this.fpsHasError = false
+    } else {
+      this.fpsHasError = true
+    }
+    this._pendingUpdateView = true
   }
 }

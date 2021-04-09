@@ -10,7 +10,9 @@ import './MainView.css'
   May want to modify into a component of some sort.
   Also see https://github.com/jared-hughes/DesModder/issues/11.
 */
-export default class MainView extends DCGView.Class {
+export default class MainView extends DCGView.Class<{
+  controller: Controller
+}> {
   controller!: Controller
 
   init () {
@@ -19,7 +21,10 @@ export default class MainView extends DCGView.Class {
 
   template () {
     return (
-      <div class='gif-creator-main-view-container'>
+      <div
+        class='gif-creator-main-view-container'
+        onfocusout={() => this.controller.updatePendingView()}
+      >
         <Tooltip
           tooltip='GIF Creator menu'
           gravity='w'
