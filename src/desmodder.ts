@@ -16,9 +16,8 @@ export {
   desmosRequire,
   default as window
 } from 'globals/window'
-export {
-  default as Toggle
-} from 'components/Toggle'
+export { default as Toggle } from 'components/Toggle'
+export { default as SmallMathQuillInput } from 'components/SmallMathQuillInput'
 export {
   LooseProps,
   Props,
