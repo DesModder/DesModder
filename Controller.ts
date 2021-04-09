@@ -6,6 +6,8 @@ import { Calc } from 'desmodder'
 import { createFFmpeg, fetchFile } from './node_modules/@ffmpeg/ffmpeg/src/index.js'
 
 type PNGDataURI = string
+export type OutFileType = 'mp4' | 'webm'
+type FFmpeg = ReturnType<typeof createFFmpeg>
 
 export default class Controller {
   view: View | null = null
@@ -16,6 +18,7 @@ export default class Controller {
   isExporting: boolean = false
   fpsHasError: boolean = false
   fps: number = 30
+  fileType: OutFileType = 'mp4'
 
   init (view: View) {
     this.view = view
@@ -59,6 +62,26 @@ export default class Controller {
     this.updateView()
   }
 
+  async transcode (ffmpeg: FFmpeg) {
+    const outFilename = 'out.' + this.fileType
+
+    const codec = {
+      mp4: 'libx264',
+      webm: 'libvpx-vp9'
+    }[this.fileType]
+
+    await ffmpeg.run(
+      '-r', this.fps.toString(),
+      '-pattern_type', 'glob', '-i', '*.png',
+      '-vcodec', codec,
+      // average video bitrate
+      '-b:v', '2M',
+      outFilename
+    );
+
+    return outFilename
+  }
+
   async exportFrames () {
     // reference https://gist.github.com/SlimRunner/3b0a7571f04d3a03bff6dbd9de6ad729#file-desmovie-user-js-L278
     const ffmpeg = createFFmpeg({ log: true });
@@ -76,15 +99,8 @@ export default class Controller {
     this.isExporting = true
     this.updateView()
 
-    const outFilename = 'out.mp4'
+    const outFilename = await this.transcode(ffmpeg)
 
-    await ffmpeg.run(
-      '-r', this.fps.toString(),
-      '-pattern_type', 'glob', '-i', '*.png',
-      '-vcodec', 'libx264',
-      '-pix_fmt', 'yuv420p',
-      outFilename
-    )
     const data = ffmpeg.FS('readFile', outFilename)
     filenames.forEach(filename => {
       ffmpeg.FS('unlink', filename)
@@ -92,7 +108,7 @@ export default class Controller {
     ffmpeg.FS('unlink', outFilename)
     const url = URL.createObjectURL(new Blob([data.buffer as ArrayBuffer], { type: 'video/mp4' }))
 
-    const humanOutFilename = 'DesModder\ Video\ Creator.mp4'
+    const humanOutFilename = 'DesModder\ Video\ Creator.' + this.fileType
     this.download(url, humanOutFilename)
 
     this.isExporting = false
@@ -129,5 +145,10 @@ export default class Controller {
       this.fpsHasError = true
     }
     this._pendingUpdateView = true
+  }
+
+  setOutputFiletype (type: OutFileType) {
+    this.fileType = type
+    this.updateView()
   }
 }

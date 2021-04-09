@@ -1,6 +1,10 @@
-import { DCGView, SmallMathQuillInput } from 'desmodder'
-import Controller from '../Controller'
+import {
+  DCGView, SmallMathQuillInput, SegmentedControl
+} from 'desmodder'
+import Controller, { OutFileType } from '../Controller'
 import './MainPopup.css'
+
+const fileTypeNames: OutFileType[] = ['mp4', 'webm']
 
 export default class MainPopup extends DCGView.Class<{
   controller: Controller
@@ -30,14 +34,22 @@ export default class MainPopup extends DCGView.Class<{
           </span>
         </div>
         <div>
-          FPS: <SmallMathQuillInput
+          FPS:
+          <SmallMathQuillInput
             ariaLabel='fps'
             onUserChangedLatex={s => this.controller.setFPSLatex(s)}
             hasError={() => this.controller.fpsHasError}
             latex={() => this.controller.fps.toString()}
           />
         </div>
-        {/* TODO: segmented select with file type gif/mp4/webm */}
+        <div>
+          Format:
+          <SegmentedControl
+            names={fileTypeNames}
+            selectedIndex={() => this.getSelectedFileTypeIndex()}
+            setSelectedIndex={i => this.setSelectedFileTypeIndex(i)}
+          />
+        </div>
         <div>
           <span
             role='button'
@@ -47,10 +59,18 @@ export default class MainPopup extends DCGView.Class<{
             })}
             onTap={() => this.controller.exportFrames()}
           >
-            Export as mp4
+            Export as { () => this.controller.fileType }
           </span>
         </div>
       </div>
     )
+  }
+
+  getSelectedFileTypeIndex () {
+    return fileTypeNames.indexOf(this.controller.fileType)
+  }
+
+  setSelectedFileTypeIndex (i: number) {
+    this.controller.setOutputFiletype(fileTypeNames[i])
   }
 }
