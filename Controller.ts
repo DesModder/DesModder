@@ -8,6 +8,17 @@ import { createFFmpeg, fetchFile } from './node_modules/@ffmpeg/ffmpeg/src/index
 type PNGDataURI = string
 export type OutFileType = 'gif' | 'mp4' | 'webm'
 type FFmpeg = ReturnType<typeof createFFmpeg>
+export type PollingMethod = 'simulation' | 'slider'
+interface SliderSettings {
+  variable: string,
+  min: number,
+  max: number,
+  step: number
+}
+
+function isValidNumber (latex: string) {
+  return /^\s*\-?\d+(\.\d*)?\s*$/.test(latex)
+}
 
 export default class Controller {
   view: View | null = null
@@ -19,6 +30,13 @@ export default class Controller {
   fpsHasError: boolean = false
   fps: number = 30
   fileType: OutFileType = 'gif'
+  pollingMethod: PollingMethod = 'slider'
+  sliderSettings: SliderSettings = {
+    variable: 'a',
+    min: 0,
+    max: 10,
+    step: 1
+  }
 
   init (view: View) {
     this.view = view
@@ -92,8 +110,12 @@ export default class Controller {
 
     const filenames: string[] = []
 
+    const len = (this.frames.length - 1).toString().length
     this.frames.forEach(async (frame, i) => {
-      const filename = `desmos.${i}.png`
+      const raw = i.toString()
+      // glob orders lexicographically, but we want numerically
+      const padded = '0'.repeat(len - raw.length) + raw
+      const filename = `desmos.${padded}.png`
       // filenames may be pushed out of order because async, but doesn't matter
       filenames.push(filename)
       ffmpeg.FS('writeFile', filename, await fetchFile(frame))
@@ -140,18 +162,61 @@ export default class Controller {
   }
 
   setFPSLatex (latex: string) {
-    const pruned = latex.replace(/\s/g, '')
-    if (/^\d+$/.test(pruned)) {
-      this.fps = parseInt(pruned)
+    if (isValidNumber(latex)) {
+      this.fps = parseInt(latex)
       this.fpsHasError = false
     } else {
       this.fpsHasError = true
     }
     this._pendingUpdateView = true
+    this.updateView()
   }
 
   setOutputFiletype (type: OutFileType) {
     this.fileType = type
+    this.updateView()
+  }
+
+  setPollingMethod (method: PollingMethod) {
+    this.pollingMethod = method
+    this.updateView()
+  }
+
+  setSliderSetting<T extends keyof SliderSettings>(
+    key: T,
+    value: SliderSettings[T]
+  ) {
+    this.sliderSettings[key] = value
+  }
+
+  async captureSlider () {
+    this.isCapturing = true
+    this.updateView()
+
+    const { variable, min, max, step } = this.sliderSettings
+    const regex = new RegExp(`^(\\?\s)*${variable}(\\?\s)*=`)
+    const matchingSliders = Calc.getState().expressions.list
+      .filter(e => e.type === 'expression' && regex.test(e.latex))
+    // TODO: this verification should be reflected in the UI
+    if (matchingSliders.length > 0) {
+      const slider = matchingSliders[0]
+      const maybeNegativeNumSteps = (max - min) / step
+      const m = maybeNegativeNumSteps > 0 ? 1 : -1
+      const numSteps = m * maybeNegativeNumSteps
+      const correctDirectionStep = m * step
+      // `<= numSteps` to include the endpoints for stuff like 0 to 10, step 1
+      // rarely hurts to have an extra frame
+      for (let i = 0; i <= numSteps; i++) {
+        const value = min + correctDirectionStep * i
+        Calc.setExpression({
+          id: slider.id,
+          latex: `${variable}=${value}`
+        })
+        await this._captureFrame()
+      }
+    }
+
+    this.isCapturing = false
     this.updateView()
   }
 }

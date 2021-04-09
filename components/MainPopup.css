@@ -1,8 +1,12 @@
-.dcg-popover-interior .gif-creator-capture-frame-button,
-.dcg-popover-interior .gif-creator-export-frames-button {
+.dcg-popover-interior .dcg-btn-green {
   display: inline-block;
   line-height: 28px;
   height: 28px;
   padding: 0 15px;
   font-size: 80%;
+}
+
+.gif-creator-capture-menu {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
 }
