@@ -39,6 +39,58 @@ interface AsyncScreenshotOptions extends ScreenshotOptions {
   showLabels: boolean
 }
 
+interface BasicSetExpression {
+  latex?: string,
+  color?: string,
+  lineStyle?: 'SOLID' | 'DASHED' | 'DOTTED',
+  lineWidth?: number | string,
+  lineOpacity?: number | string,
+  pointStyle?: 'POINT' | 'OPEN' | 'CROSS',
+  pointSize?: number | string,
+  pointOpacity?: number | string,
+  fillOpacity?: number | string,
+  points?: boolean,
+  lines?: boolean,
+  hidden?: boolean,
+  dragMode?: 'X' | 'Y' | 'XY' | 'NONE' | 'AUTO'
+}
+
+interface ExpressionForSet extends BasicSetExpression {
+  type?: 'expression',
+  fill?: boolean,
+  secret?: boolean,
+  sliderBounds?: {
+    min: string,
+    max: string,
+    step?: string | undefined
+  },
+  parametricDomain?: {
+    min: string,
+    max: string
+  },
+  polarDomain?: {
+    min: string,
+    max: string
+  },
+  id?: string,
+  label?: string,
+  showLabel?: boolean,
+  labelSize?: 'small' | 'medium' | 'large',
+  labelOrientation?: 'above' | 'below' | 'left' | 'right' | 'default'
+}
+
+interface TableColumn extends BasicSetExpression {
+  values?: string[],
+}
+
+interface TableForSet {
+  type: 'table',
+  columns: TableColumn[],
+  id?: string
+}
+
+type SetExpressionObject  = ExpressionForSet | TableForSet
+
 export default interface Calc {
   //// undocumented, may break
   controller: {
@@ -61,6 +113,7 @@ export default interface Calc {
     allowUndo?: boolean,
     remapColors?: boolean
   }): void,
+  setExpression(obj: SetExpressionObject): void,
   screenshot(opts: ScreenshotOptions): string,
   asyncScreenshot(
     opts: AsyncScreenshotOptions,

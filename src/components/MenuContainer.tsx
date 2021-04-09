@@ -93,7 +93,9 @@ export default class MenuContainer extends DCGView.Class<{
   eventShouldCloseMenu (e: Event) {
     // this.node refers to the generated node from DCGView
     const el = jquery(e.target)
-    return !el.closest(this._element._domNode).length &&
-      !el.closest('.desmodder-action-menu').length
+    return !el.closest('_domNode' in this._element
+      ? this._element._domNode
+      : this._element._element._domNode
+    ).length && !el.closest('.desmodder-action-menu').length
   }
 }

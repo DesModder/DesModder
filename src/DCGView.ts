@@ -20,9 +20,16 @@ export abstract class ClassComponent<PropsType=Props> {
   constructor(_props: OrConst<PropsType>) {}
   init(): void {}
   abstract template(): unknown
-  _element!: {
-    _domNode: any
-  }
+  _element!: (
+    {
+      _domNode: HTMLElement
+    } |
+    {
+      _element: {
+        _domNode: HTMLElement
+      }
+    }
+  )
 }
 
 type Component = ClassComponent | (() => string)

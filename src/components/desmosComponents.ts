@@ -33,7 +33,13 @@ export const {
   If, For, IfDefined, IfElse, Input, Switch, SwitchUnion, Textarea
 } = desmosRequire('dcgview').Components as {[key: string]: typeof ClassComponent}
 
-export const StaticMathquillView: ClassComponent = desmosRequire('dcgview-helpers/static-mathquill-view').default
+abstract class DStaticMathquillViewComponent extends ClassComponent<{
+  latex: string,
+  config: any
+}> {}
+
+export const DStaticMathquillView: typeof DStaticMathquillViewComponent
+  = desmosRequire('dcgview-helpers/static-mathquill-view').default
 
 abstract class TooltipComponent extends ClassComponent<{
   tooltip: string,
