@@ -82,7 +82,7 @@ export default class MainView extends DCGView.Class<{
       }
     })
     jquery(document).on('keydown.gif-creator-main-view', (e: KeyboardEvent) => {
-      if (keys.lookup(e) === 'Esc') {
+      if (keys.lookup(e) === 'Esc' && !this.controller.isPlayPreviewExpanded) {
         this.controller.closeMainView()
       }
     })

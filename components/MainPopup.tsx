@@ -1,7 +1,8 @@
 import {
-  DCGView, SmallMathQuillInput, SegmentedControl
+  DCGView, SmallMathQuillInput, SegmentedControl, If, jquery
 } from 'desmodder'
 import SelectPolling from './SelectPolling'
+import PreviewCarousel from './PreviewCarousel'
 import Controller, { OutFileType } from '../Controller'
 import './MainPopup.css'
 
@@ -27,6 +28,62 @@ export default class MainPopup extends DCGView.Class<{
             controller={this.controller}
           />
         </div>
+        <If
+          predicate={() => this.controller.frames.length > 0}
+        >
+          {
+            () => (
+              <div class='gif-creator-preview-menu'>
+                <div class='dcg-group-title'>
+                  Preview
+                </div>
+                <div
+                  class={() => ({
+                    'gif-creator-preview-expanded': this.controller.isPlayPreviewExpanded
+                  })}
+                  onTapEnd={
+                    (e: Event) => (
+                      this.controller.isPlayPreviewExpanded &&
+                      this.eventShouldCloseExpanded(e) &&
+                      this.controller.togglePreviewExpanded()
+                    )
+                  }
+                >
+                  <div class='gif-creator-preview-inner'>
+                    <PreviewCarousel
+                      controller={this.controller}
+                    />
+                    <If
+                      predicate={() => this.controller.frames.length > 1}
+                    >
+                      {
+                        () => (
+                          <div class='gif-creator-preview-play'>
+                            <span
+                              role='button'
+                              class={() => ({
+                                'gif-creator-export-frames-button': true,
+                                'dcg-btn-green': true
+                              })}
+                              onTap={() => this.controller.togglePlayingPreview()}
+                            >
+                              {
+                                () =>
+                                  this.controller.isPlayingPreview
+                                    ? 'Stop'
+                                    : 'Play'
+                              }
+                            </span>
+                          </div>
+                        )
+                      }
+                    </If>
+                  </div>
+                </div>
+              </div>
+            )
+          }
+        </If>
         <div class='gif-creator-export-menu'>
           <div class='dcg-group-title'>
             Export
@@ -70,5 +127,10 @@ export default class MainPopup extends DCGView.Class<{
 
   setSelectedFileTypeIndex (i: number) {
     this.controller.setOutputFiletype(fileTypeNames[i])
+  }
+
+  eventShouldCloseExpanded (e: Event) {
+    const el = jquery(e.target)
+    return !el.closest('.gif-creator-preview-inner').length
   }
 }

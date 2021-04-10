@@ -1,5 +1,5 @@
 import View from './View'
-import { Calc, SimulationModel } from 'desmodder'
+import { Calc, SimulationModel, jquery, keys } from 'desmodder'
 
 // kinda jank, but switching to moduleResolution: 'node' messes up
 // existing non-relative imports
@@ -24,11 +24,11 @@ export default class Controller {
   view: View | null = null
   frames: PNGDataURI[] = []
   _pendingUpdateView = false
-  isMainViewOpen: boolean = false
-  isCapturing: boolean = false
-  isExporting: boolean = false
-  fpsHasError: boolean = false
-  fps: number = 30
+  isMainViewOpen = false
+  isCapturing = false
+  isExporting = false
+  fpsHasError = false
+  fps = 30
   fileType: OutFileType = 'gif'
   pollingMethod: PollingMethod = 'once'
   sliderSettings: SliderSettings = {
@@ -38,7 +38,11 @@ export default class Controller {
     step: 1
   }
   currentSimulationID: string | null = null
-  simulationWhileLatex: string = ''
+  simulationWhileLatex = ''
+  previewIndex = 0
+  isPlayingPreview = false
+  playPreviewInterval: number | null = null
+  isPlayPreviewExpanded = false
 
   init (view: View) {
     this.view = view
@@ -68,6 +72,7 @@ export default class Controller {
         },
         data => {
           this.frames.push(data)
+          this.updateView()
           resolve()
         }
       )
@@ -214,8 +219,14 @@ export default class Controller {
 
   captureSimulation () {
     const simulationID = this.currentSimulationID
-    // TODO: add stop condition. `while` latex via HelperExpression
-    // user gives 'a < 30'
+    if (/^(\\?\s)*$/.test(this.simulationWhileLatex)) {
+      // would give an infinite loop, probably unintended
+      // use 1 > 0 for intentional infinite loop
+      this.isCapturing = false
+      this.updateView()
+      return
+    }
+
     const helper = Calc.HelperExpression({
       latex: `\\left\\{${this.simulationWhileLatex}\\right\\}`
     })
@@ -297,6 +308,41 @@ export default class Controller {
     this.currentSimulationID = sims[
       (this.currentSimulationIndex() + sims.length + dx) % sims.length
     ].id
+    this.updateView()
+  }
+
+  addToPreviewIndex (dx: number) {
+    this.previewIndex += dx;
+    this.previewIndex %= this.frames.length
+    this.updateView()
+  }
+
+  togglePlayingPreview () {
+    this.isPlayingPreview = !this.isPlayingPreview
+    this.updateView()
+
+    if (this.isPlayingPreview) {
+      this.playPreviewInterval = window.setInterval(() => {
+        this.addToPreviewIndex(1)
+      }, 1000/this.fps)
+    } else {
+      if (this.playPreviewInterval !== null) {
+        clearInterval(this.playPreviewInterval)
+      }
+    }
+  }
+
+  togglePreviewExpanded () {
+    this.isPlayPreviewExpanded = !this.isPlayPreviewExpanded
+    if (this.isPlayPreviewExpanded) {
+      jquery(document).on('keydown.gif-creator-preview-expanded', (e: KeyboardEvent) => {
+        if (keys.lookup(e) === 'Esc') {
+          this.togglePreviewExpanded()
+        }
+      })
+    } else {
+      jquery(document).off('keydown.gif-creator-preview-expanded')
+    }
     this.updateView()
   }
 }
