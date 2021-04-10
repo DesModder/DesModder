@@ -8,7 +8,7 @@ import { createFFmpeg, fetchFile } from './node_modules/@ffmpeg/ffmpeg/src/index
 type PNGDataURI = string
 export type OutFileType = 'gif' | 'mp4' | 'webm'
 type FFmpeg = ReturnType<typeof createFFmpeg>
-export type PollingMethod = 'simulation' | 'slider'
+export type PollingMethod = 'once' | 'simulation' | 'slider'
 interface SliderSettings {
   variable: string,
   min: number,
@@ -30,7 +30,7 @@ export default class Controller {
   fpsHasError: boolean = false
   fps: number = 30
   fileType: OutFileType = 'gif'
-  pollingMethod: PollingMethod = 'slider'
+  pollingMethod: PollingMethod = 'once'
   sliderSettings: SliderSettings = {
     variable: 'a',
     min: 0,
@@ -58,7 +58,7 @@ export default class Controller {
     this.updateView()
   }
 
-  async _captureFrame () {
+  async captureFrame () {
     return new Promise<void>((resolve) => {
       Calc.asyncScreenshot(
         {
@@ -72,14 +72,6 @@ export default class Controller {
         }
       )
     })
-  }
-
-  async captureOneFrame () {
-    this.isCapturing = true
-    this.updateView()
-    await this._captureFrame()
-    this.isCapturing = false
-    this.updateView()
   }
 
   async transcode (ffmpeg: FFmpeg) {
@@ -165,7 +157,7 @@ export default class Controller {
 
   setFPSLatex (latex: string) {
     if (isValidNumber(latex)) {
-      this.fps = parseInt(latex)
+      this.fps = parseFloat(latex)
       this.fpsHasError = false
     } else {
       this.fpsHasError = true
@@ -192,9 +184,6 @@ export default class Controller {
   }
 
   async captureSlider () {
-    this.isCapturing = true
-    this.updateView()
-
     const { variable, min, max, step } = this.sliderSettings
     const regex = new RegExp(`^(\\?\s)*${variable}(\\?\s)*=`)
     const matchingSliders = Calc.getState().expressions.list
@@ -218,18 +207,12 @@ export default class Controller {
           id: slider.id,
           latex: `${variable}=${value}`
         })
-        await this._captureFrame()
+        await this.captureFrame()
       }
     }
-
-    this.isCapturing = false
-    this.updateView()
   }
 
   captureSimulation () {
-    this.isCapturing = true
-    this.updateView()
-
     const simulationID = this.currentSimulationID
     // TODO: add stop condition. `while` latex via HelperExpression
     // user gives 'a < 30'
@@ -250,12 +233,29 @@ export default class Controller {
           type: 'simulation-single-step',
           id: simulationID
         })
-        await this._captureFrame()
+        await this.captureFrame()
       }
 
       this.isCapturing = false
       this.updateView()
     })
+  }
+
+  capture () {
+    this.isCapturing = true
+    this.updateView()
+    if (this.pollingMethod === 'simulation') {
+      this.captureSimulation()
+      // captureSimulation handles settings isCapturing to false
+    } else {
+      if (this.pollingMethod === 'once') {
+        this.captureFrame()
+      } else if (this.pollingMethod === 'slider') {
+        this.captureSlider()
+      }
+      this.isCapturing = false
+      this.updateView()
+    }
   }
 
   setSimulationWhileLatex (s: string) {

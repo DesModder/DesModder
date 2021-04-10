@@ -23,18 +23,6 @@ export default class MainPopup extends DCGView.Class<{
           <div class='dcg-group-title'>
             Capture
           </div>
-          <div>
-            <span
-              role='button'
-              class={() => ({
-                'gif-creator-capture-frame-button': true,
-                'dcg-btn-green': !this.controller.isCapturing && !this.controller.isExporting
-              })}
-              onTap={() => this.controller.captureOneFrame()}
-            >
-              One frame
-            </span>
-          </div>
           <SelectPolling
             controller={this.controller}
           />
@@ -43,24 +31,14 @@ export default class MainPopup extends DCGView.Class<{
           <div class='dcg-group-title'>
             Export
           </div>
-          <div>
-            FPS:
-            <SmallMathQuillInput
-              ariaLabel='fps'
-              onUserChangedLatex={s => this.controller.setFPSLatex(s)}
-              hasError={() => this.controller.fpsHasError}
-              latex={() => this.controller.fps.toString()}
-            />
-          </div>
-          <div>
-            Format:
+          <div class='gif-creator-select-export-type'>
             <SegmentedControl
               names={fileTypeNames}
               selectedIndex={() => this.getSelectedFileTypeIndex()}
               setSelectedIndex={i => this.setSelectedFileTypeIndex(i)}
             />
           </div>
-          <div>
+          <div class='gif-creator-export'>
             <span
               role='button'
               class={() => ({
@@ -71,6 +49,15 @@ export default class MainPopup extends DCGView.Class<{
             >
               Export as { () => this.controller.fileType }
             </span>
+            <div class='gif-creator-fps-settings'>
+              FPS:
+              <SmallMathQuillInput
+                ariaLabel='fps'
+                onUserChangedLatex={s => this.controller.setFPSLatex(s)}
+                hasError={() => this.controller.fpsHasError}
+                latex={() => this.controller.fps.toString()}
+              />
+            </div>
           </div>
         </div>
       </div>

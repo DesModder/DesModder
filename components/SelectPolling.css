@@ -1,4 +1,33 @@
 .gif-creator-simulation-navigate-container {
   display: flex;
   justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.gif-creator-select-polling-method {
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
+
+.gif-creator-slider-settings {
+  margin-bottom: 10px;
+}
+
+.gif-creator-end-condition-settings {
+  margin: 0 5px 10px;
+}
+
+.gif-creator-simulation-rules .dcg-clickable-property-row {
+  margin-bottom: 6px;
+}
+
+.gif-creator-capture {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+}
+
+.gif-creator-capture .gif-creator-end-condition-settings span.dcg-mq-editable-field.dcg-math-input {
+  max-width: 100px;
+  margin-left: 8px;
 }

@@ -47,7 +47,7 @@ export default class MainView extends DCGView.Class<{
           {
             () => (
               <div
-                class='gif-creator-view-container dcg-settings-container dcg-left dcg-popover dcg-constrained-height-popover'
+                class='gif-creator-view-container dcg-settings-container dcg-left dcg-popover'
                 didMount={() => this.didMountContainer()}
                 didUnmount={() => this.didUnmountContainer()}
                 // TODO: didMount and didUnmount to register escape key → close
