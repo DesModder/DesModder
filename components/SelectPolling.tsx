@@ -3,6 +3,8 @@ import {
 } from 'desmodder'
 import Controller, { PollingMethod } from '../Controller'
 import './MainPopup.css'
+import SimulationPicker from './SimulationPicker'
+import './SelectPolling.css'
 
 const pollingMethodNames: PollingMethod[] = ['slider', 'simulation']
 
@@ -63,16 +65,57 @@ export default class SelectPolling extends DCGView.Class<{
                 >
                   Capture
                 </span>
-                {
-                  /*
-                    Slider variable
-                    Number inputs (new component?):
-                      Slider start
-                      Slider end
-                      Slider step
-                    Show computed number of frames
-                  */
-                }
+              </div>
+            )
+          }
+        </If>
+        <If
+          predicate={
+            () => (
+              this.controller.pollingMethod === 'simulation' &&
+              this.controller.hasSimulation()
+            )
+          }
+        >
+          {
+            () => (void console.log('dd')) || (
+              <div>
+                <div class='gif-creator-simulation-navigate-container'>
+                  <span
+                    role='button'
+                    class='dcg-btn-green'
+                    onTap={() => this.controller.addToSimulationIndex(-1)}
+                  >
+                    Prev
+                  </span>
+                  <span
+                    role='button'
+                    class='dcg-btn-green'
+                    onTap={() => this.controller.addToSimulationIndex(+1)}
+                  >
+                    Next
+                  </span>
+                </div>
+                <SimulationPicker
+                  controller={this.controller}
+                />
+                <div>
+                  While:
+                  <SmallMathQuillInput
+                    ariaLabel='simulation while'
+                    onUserChangedLatex={v => this.controller.setSimulationWhileLatex(v)}
+                    latex={() => this.controller.simulationWhileLatex}
+                  />
+                </div>
+                <span
+                  role='button'
+                  class={() => ({
+                    'dcg-btn-green': !this.controller.isCapturing
+                  })}
+                  onTap={() => this.controller.captureSimulation()}
+                >
+                  Capture
+                </span>
               </div>
             )
           }

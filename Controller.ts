@@ -1,5 +1,5 @@
 import View from './View'
-import { Calc } from 'desmodder'
+import { Calc, SimulationModel } from 'desmodder'
 
 // kinda jank, but switching to moduleResolution: 'node' messes up
 // existing non-relative imports
@@ -37,6 +37,8 @@ export default class Controller {
     max: 10,
     step: 1
   }
+  currentSimulationID: string | null = null
+  simulationWhileLatex: string = ''
 
   init (view: View) {
     this.view = view
@@ -196,7 +198,11 @@ export default class Controller {
     const { variable, min, max, step } = this.sliderSettings
     const regex = new RegExp(`^(\\?\s)*${variable}(\\?\s)*=`)
     const matchingSliders = Calc.getState().expressions.list
-      .filter(e => e.type === 'expression' && regex.test(e.latex))
+      .filter(e => (
+        e.type === 'expression' &&
+        typeof e.latex === 'string' &&
+        regex.test(e.latex)
+      ))
     // TODO: this verification should be reflected in the UI
     if (matchingSliders.length > 0) {
       const slider = matchingSliders[0]
@@ -217,6 +223,80 @@ export default class Controller {
     }
 
     this.isCapturing = false
+    this.updateView()
+  }
+
+  captureSimulation () {
+    this.isCapturing = true
+    this.updateView()
+
+    const simulationID = this.currentSimulationID
+    // TODO: add stop condition. `while` latex via HelperExpression
+    // user gives 'a < 30'
+    const helper = Calc.HelperExpression({
+      latex: `\\left\\{${this.simulationWhileLatex}\\right\\}`
+    })
+
+    helper.observe('numericValue', async () => {
+      helper.unobserve('numericValue')
+      // WARNING: helper.numericValue is evaluated asynchronously,
+      // so the stop condition may be missed in rare situations.
+      // But it should be evaluated faster than the captureFrame in practice
+
+      // syntax errors and false gives helper.numericValue === NaN
+      // true gives helper.numericValue === 1
+      while (helper.numericValue === 1) {
+        Calc.controller.dispatch({
+          type: 'simulation-single-step',
+          id: simulationID
+        })
+        await this._captureFrame()
+      }
+
+      this.isCapturing = false
+      this.updateView()
+    })
+  }
+
+  setSimulationWhileLatex (s: string) {
+    this.simulationWhileLatex = s
+  }
+
+  getSimulations () {
+    return Calc.getState().expressions.list
+      .filter(
+        e => e.type === 'simulation'
+      ) as SimulationModel[]
+  }
+
+  getCurrentSimulation () {
+    const model = Calc.controller.getItemModel(this.currentSimulationID)
+    if (model === undefined) {
+      // default simulation
+      const sim = this.getSimulations()[0]
+      this.currentSimulationID = sim.id
+      return sim
+    } else {
+      return model as SimulationModel
+    }
+  }
+
+  currentSimulationIndex () {
+    return this.getSimulations().findIndex(
+      e => e.id === this.currentSimulationID
+    )
+  }
+
+  hasSimulation () {
+    return this.getSimulations().length > 0
+  }
+
+  addToSimulationIndex (dx: number) {
+    const sims = this.getSimulations()
+    // add sims.length to handle (-1) % n = -1
+    this.currentSimulationID = sims[
+      (this.currentSimulationIndex() + sims.length + dx) % sims.length
+    ].id
     this.updateView()
   }
 }
