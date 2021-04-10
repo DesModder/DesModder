@@ -64,7 +64,7 @@ export default {
 declare global {
   namespace JSX {
     interface IntrinsicAttributes {
-
+      class?: string | {[key: string]: boolean}
     }
     interface IntrinsicElements {
       div: any,

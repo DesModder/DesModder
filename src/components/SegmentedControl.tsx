@@ -3,12 +3,15 @@ import DCGView from 'DCGView'
 export default class SegmentedControl extends DCGView.Class<{
   names: string[],
   selectedIndex: number,
-  setSelectedIndex (i: number): void
+  setSelectedIndex (i: number): void,
+  class?: string
 }> {
   template () {
     return (
       <div
-        class='dcg-segmented-control-container'
+        class={
+          'dcg-segmented-control-container'
+          + (this.props.class && this.props.class() ? ' ' + this.props.class() : '')}
         role='group'
       >
         {
