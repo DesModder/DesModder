@@ -5,21 +5,6 @@ interface DispatchedEvent {
 
 type DispatchListenerID = string
 
-interface GraphState {
-  expressions: {
-    list: Array<{
-      slider: any,
-      label?: string,
-      columns: any[],
-      clickableInfo: {
-        description?: string,
-        rules: any[]
-      },
-      [k: string]: any
-    }>
-  }
-}
-
 interface ScreenshotOptions {
   width?: number,
   height?: number,
@@ -55,7 +40,7 @@ interface BasicSetExpression {
   dragMode?: 'X' | 'Y' | 'XY' | 'NONE' | 'AUTO'
 }
 
-interface ExpressionForSet extends BasicSetExpression {
+export interface ExpressionModel extends BasicSetExpression {
   type?: 'expression',
   fill?: boolean,
   secret?: boolean,
@@ -83,13 +68,43 @@ interface TableColumn extends BasicSetExpression {
   values?: string[],
 }
 
-interface TableForSet {
+export interface TableModel {
   type: 'table',
   columns: TableColumn[],
   id?: string
 }
 
-type SetExpressionObject  = ExpressionForSet | TableForSet
+export interface SimulationModel {
+  id: string,
+  type: 'simulation',
+  clickableInfo: {
+    description?: string,
+    rules: Array<{
+      id: string,
+      expression: string,
+      assignment: string
+    }>
+  }
+}
+
+type ItemModel = SimulationModel | ExpressionModel | TableModel
+
+interface GraphState {
+  expressions: {
+    list: ItemModel[]
+  }
+}
+
+type SetExpressionObject = ExpressionModel | TableModel
+
+type HelperType = 'numericValue' | 'listValue'
+
+interface HelperExpression {
+  numericValue: number | typeof NaN,
+  listValue: number[] | undefined,
+  observe (v: HelperType, callback: () => void): void,
+  unobserve (v: HelperType): void
+}
 
 export default interface Calc {
   //// undocumented, may break
@@ -101,7 +116,8 @@ export default interface Calc {
     dispatcher: {
       register(func: (e: DispatchedEvent) => void): DispatchListenerID,
       unregister(id: DispatchListenerID): void
-    }
+    },
+    getItemModel(id: any): ItemModel
   },
   selectedExpressionId: string,
   //// public
@@ -118,5 +134,6 @@ export default interface Calc {
   asyncScreenshot(
     opts: AsyncScreenshotOptions,
     callback: (data: string) => void
-  ): void
+  ): void,
+  HelperExpression(obj: { latex: string }): HelperExpression
 }

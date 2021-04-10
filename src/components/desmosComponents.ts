@@ -29,9 +29,24 @@ export const MathQuillView: typeof MathQuillViewComponent & {
   getFocusedMathquill (): MathQuillField
 } = desmosRequire('dcgview-helpers/mathquill-view').default
 
+abstract class ForComponent<T> extends ClassComponent<{
+  each: Array<T>,
+  key(t: T): (string | number)
+}> {}
+
 export const {
   If, For, IfDefined, IfElse, Input, Switch, SwitchUnion, Textarea
-} = desmosRequire('dcgview').Components as {[key: string]: typeof ClassComponent}
+} = desmosRequire('dcgview').Components as {
+  For: typeof ForComponent,
+  If: typeof ClassComponent,
+  // I don't know how to use the rest of these
+  IfDefined: typeof ClassComponent,
+  IfElse: typeof ClassComponent,
+  Input: typeof ClassComponent,
+  Switch: typeof ClassComponent,
+  SwitchUnion: typeof ClassComponent,
+  Textarea: typeof ClassComponent,
+}
 
 abstract class DStaticMathquillViewComponent extends ClassComponent<{
   latex: string,

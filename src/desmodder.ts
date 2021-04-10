@@ -9,6 +9,11 @@
 
 export * from 'components/desmosComponents'
 export {
+  ExpressionModel,
+  SimulationModel,
+  TableModel
+} from 'globals/Calc'
+export {
   Calc,
   // Try to avoid using desmosRequire in plugin code
   // (especially for modules that are likely to be used in other plugins)
