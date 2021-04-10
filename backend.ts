@@ -12,7 +12,7 @@ function replace (from: RegExp, to: string) {
   const simpleKeys = ['latex', 'colorLatex', 'pointOpacity', 'lineOpacity', 'pointSize', 'lineWidth']
   const rootKeys = simpleKeys.concat(['labelSize', 'labelAngle', 'center', 'opacity', 'width', 'height', 'angle', 'fillOpacity', 'residualVariable', 'fps'])
   const state = Calc.getState()
-  state.expressions.list.forEach(expr => {
+  state.expressions.list.forEach((expr: any) => {
     rootKeys.forEach(k => {
       if (k in expr) {
         expr[k] = expr[k].replace(from, to)
@@ -29,7 +29,7 @@ function replace (from: RegExp, to: string) {
       expr.label = replaceString(expr.label)
     }
     if (expr.columns) {
-      expr.columns.forEach(col => {
+      expr.columns.forEach((col: any) => {
         simpleKeys.forEach(k => {
           if (k in col) {
             col[k] = col[k].replace(from, to)
@@ -43,7 +43,7 @@ function replace (from: RegExp, to: string) {
         expr.clickableInfo.description = replaceString(expr.clickableInfo.description)
       }
       if (expr.clickableInfo.rules) {
-        expr.clickableInfo.rules.forEach(rule => {
+        expr.clickableInfo.rules.forEach((rule: any) => {
           ['assignment', 'expression'].forEach(k => {
             if (k in rule) {
               rule[k] = rule[k].replace(from, to)
