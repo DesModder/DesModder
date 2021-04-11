@@ -117,7 +117,9 @@ export default interface Calc {
       register(func: (e: DispatchedEvent) => void): DispatchListenerID,
       unregister(id: DispatchListenerID): void
     },
-    getItemModel(id: any): ItemModel
+    getItemModel(id: any): ItemModel,
+    stopPlayingSimulation(): void,
+    stopAllSliders(): void
   },
   selectedExpressionId: string,
   //// public
