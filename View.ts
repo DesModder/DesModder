@@ -14,11 +14,11 @@ export default class View {
 
   async initView () {
     const pillbox = await pollForValue(() => document.querySelector('.dcg-overgraph-pillbox-elements'))
-    const rootNode = document.createElement('div')
-    pillbox.insertBefore(rootNode, pillbox.querySelector('.dcg-zoom-container'))
+    this.mountNode = document.createElement('div')
+    pillbox.insertBefore(this.mountNode, pillbox.querySelector('.dcg-zoom-container'))
     this.mountedView = DCGView.mountToNode(
       MainView,
-      rootNode,
+      this.mountNode,
       {
         controller: () => this.controller
       }
