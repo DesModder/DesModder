@@ -54,26 +54,15 @@ export default class MainPopup extends DCGView.Class<{
                       controller={this.controller}
                     />
                     <If
-                      predicate={() => this.controller.frames.length > 1}
+                      predicate={() => this.controller.isPlayPreviewExpanded}
                     >
                       {
                         () => (
-                          <div class='gif-creator-preview-play'>
-                            <span
-                              role='button'
-                              class={() => ({
-                                'gif-creator-export-frames-button': true,
-                                'dcg-btn-green': true
-                              })}
-                              onTap={() => this.controller.togglePlayingPreview()}
-                            >
-                              {
-                                () =>
-                                  this.controller.isPlayingPreview
-                                    ? 'Stop'
-                                    : 'Play'
-                              }
-                            </span>
+                          <div
+                            class='gif-creator-exit-expanded'
+                            onTap={() => this.controller.togglePreviewExpanded()}
+                          >
+                            <i class='dcg-icon-remove' />
                           </div>
                         )
                       }

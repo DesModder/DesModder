@@ -1,5 +1,5 @@
-import { DCGView } from 'desmodder'
-import './PreviewCarousel.css'
+import { DCGView, If } from 'desmodder'
+import './PreviewCarousel.less'
 import Controller from '../Controller'
 
 export default class PreviewCarousel extends DCGView.Class<{
@@ -48,17 +48,67 @@ export default class PreviewCarousel extends DCGView.Class<{
         </div>
         <div
           class='gif-creator-preview-current-frame'
-          onTap={() => this.controller.togglePreviewExpanded()}
+          onTap={
+            () => (
+              this.controller.isPlayPreviewExpanded
+                ? this.controller.togglePlayingPreview()
+                : this.controller.togglePreviewExpanded()
+            )
+          }
         >
           <img
             src={() => this.getFrame(0)}
             draggable={false}
           />
-          <div class='gif-creator-preview-index'>
-            { () => this.getFrameIndex(0) + 1 }
-            /
-            { () => this.controller.frames.length }
+          <If
+            predicate={() => !this.controller.isPlayPreviewExpanded}
+          >
+            {
+              () => (
+                <div
+                  class='gif-creator-preview-expand'
+                  onTap={
+                    (e: Event) => {
+                      if (e.target && (e.target as HTMLElement).classList.contains('gif-creator-preview-expand')) {
+                        this.controller.togglePreviewExpanded()
+                        e.stopPropagation()
+                      }
+                    }
+                  }
+                >
+                  <i class='dcg-icon-zoom-fit' />
+                </div>
+              )
+            }
+          </If>
+          <div
+            class='gif-creator-remove-frame'
+            onTap={
+              (e: Event) => {
+                this.controller.removeSelectedFrame()
+                e.stopPropagation()
+              }
+            }
+          >
+            <i class='dcg-icon-delete' />
           </div>
+          <div class='gif-creator-preview-index'>
+            { () => `${this.getFrameIndex(0) + 1} / ${this.controller.frames.length}` }
+          </div>
+          <If
+            predicate={() => this.controller.frames.length > 1}
+          >
+            {
+              () => (
+                <div class='gif-creator-preview-play-pause'>
+                  <i class={() => ({
+                     'dcg-icon-play': !this.controller.isPlayingPreview,
+                     'dcg-icon-pause': this.controller.isPlayingPreview
+                  })} />
+                </div>
+              )
+            }
+          </If>
         </div>
       </div>
     )

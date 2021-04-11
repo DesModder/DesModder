@@ -319,6 +319,9 @@ export default class Controller {
 
   togglePlayingPreview () {
     this.isPlayingPreview = !this.isPlayingPreview
+    if (this.frames.length <= 1) {
+      this.isPlayingPreview = false
+    }
     this.updateView()
 
     if (this.isPlayingPreview) {
@@ -342,6 +345,20 @@ export default class Controller {
       })
     } else {
       jquery(document).off('keydown.gif-creator-preview-expanded')
+    }
+    this.updateView()
+  }
+
+  removeSelectedFrame () {
+    this.frames.splice(this.previewIndex, 1)
+    if (this.previewIndex >= this.frames.length) {
+      this.previewIndex = this.frames.length - 1
+    }
+    if (this.frames.length == 0 && this.isPlayPreviewExpanded) {
+      this.togglePreviewExpanded()
+    }
+    if (this.frames.length <= 1 && this.isPlayingPreview) {
+      this.togglePlayingPreview()
     }
     this.updateView()
   }
