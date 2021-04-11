@@ -70,6 +70,7 @@ declare global {
       div: any,
       i: any,
       span: any,
+      img: any
     }
   }
 }
