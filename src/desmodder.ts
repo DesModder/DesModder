@@ -25,6 +25,7 @@ export { default as Toggle } from 'components/Toggle'
 export { default as SmallMathQuillInput } from 'components/SmallMathQuillInput'
 export { default as SegmentedControl } from 'components/SegmentedControl'
 export { default as StaticMathQuillView } from 'components/StaticMathQuillView'
+export { default as Button } from 'components/Button'
 export {
   LooseProps,
   Props,
@@ -33,6 +34,7 @@ export {
 } from 'DCGView'
 export {
   pollForValue,
+  mergeClass, MaybeClassDict,
   jquery,
   keys
 } from 'utils'

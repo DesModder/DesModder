@@ -17,6 +17,7 @@ type ToFunc<T> = {
 
 export abstract class ClassComponent<PropsType=Props> {
   props!: ToFunc<PropsType>
+  children!: unknown
   constructor(_props: OrConst<PropsType>) {}
   init(): void {}
   abstract template(): unknown

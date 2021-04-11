@@ -1,17 +1,16 @@
 import DCGView from 'DCGView'
+import { mergeClass, MaybeClassDict } from 'utils'
 
 export default class SegmentedControl extends DCGView.Class<{
   names: string[],
   selectedIndex: number,
   setSelectedIndex (i: number): void,
-  class?: string
+  class?: MaybeClassDict
 }> {
   template () {
     return (
       <div
-        class={
-          'dcg-segmented-control-container'
-          + (this.props.class && this.props.class() ? ' ' + this.props.class() : '')}
+        class={() => mergeClass('dcg-segmented-control-container', this.props.class && this.props.class())}
         role='group'
       >
         {

@@ -21,3 +21,29 @@ function _pollForValue<T> (func: () => T) {
 export async function pollForValue (func: FuncAny) {
   return await _pollForValue(func)
 }
+
+interface ClassDict {
+  [key: string]: boolean
+}
+
+export type MaybeClassDict = string | ClassDict | undefined | null
+
+function updateClass (out: ClassDict, c: MaybeClassDict) {
+  // mutates `out`, returns nothing
+  if (c == null) {
+    // no change
+  } else if (typeof c === 'string') {
+    for (const cls of c.split(' ')) {
+      out[cls] = true
+    }
+  } else {
+    Object.assign(out, c)
+  }
+}
+
+export function mergeClass (c1: MaybeClassDict, c2: MaybeClassDict) {
+  const out: ClassDict = {}
+  updateClass(out, c1)
+  updateClass(out, c2)
+  return out
+}
