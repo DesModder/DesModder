@@ -255,6 +255,10 @@ export default class Controller {
   capture () {
     this.isCapturing = true
     this.updateView()
+    if (this.pollingMethod !== 'once') {
+      Calc.controller.stopPlayingSimulation()
+      Calc.controller.stopAllSliders()
+    }
     if (this.pollingMethod === 'simulation') {
       this.captureSimulation()
       // captureSimulation handles settings isCapturing to false
