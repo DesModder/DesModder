@@ -100,7 +100,15 @@ export default class PreviewCarousel extends DCGView.Class<{
           >
             {
               () => (
-                <div class='gif-creator-preview-play-pause'>
+                <div
+                  class='gif-creator-preview-play-pause'
+                  onTap={
+                    (e: Event) => {
+                      this.controller.togglePlayingPreview()
+                      e.stopPropagation()
+                    }
+                  }
+                >
                   <i class={() => ({
                      'dcg-icon-play': !this.controller.isPlayingPreview,
                      'dcg-icon-pause': this.controller.isPlayingPreview
