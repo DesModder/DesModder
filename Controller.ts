@@ -11,9 +11,9 @@ type FFmpeg = ReturnType<typeof createFFmpeg>
 export type PollingMethod = 'once' | 'simulation' | 'slider'
 interface SliderSettings {
   variable: string,
-  min: number,
-  max: number,
-  step: number
+  minLatex: string,
+  maxLatex: string,
+  stepLatex: string
 }
 
 function isValidNumber (latex: string) {
@@ -23,19 +23,17 @@ function isValidNumber (latex: string) {
 export default class Controller {
   view: View | null = null
   frames: PNGDataURI[] = []
-  _pendingUpdateView = false
   isMainViewOpen = false
   isCapturing = false
   isExporting = false
-  fpsHasError = false
-  fps = 30
+  fpsLatex = '30'
   fileType: OutFileType = 'gif'
   pollingMethod: PollingMethod = 'once'
   sliderSettings: SliderSettings = {
     variable: 'a',
-    min: 0,
-    max: 10,
-    step: 1
+    minLatex: '0',
+    maxLatex: '10',
+    stepLatex: '1'
   }
   currentSimulationID: string | null = null
   simulationWhileLatex = ''
@@ -90,8 +88,10 @@ export default class Controller {
       gif: ['-lavfi', 'palettegen=stats_mode=single[pal],[0:v][pal]paletteuse=new=1']
     }[this.fileType]
 
+    const fps = parseFloat(this.fpsLatex)
+
     await ffmpeg.run(
-      '-r', this.fps.toString(),
+      '-r', fps.toString(),
       '-pattern_type', 'glob', '-i', '*.png',
       // average video bitrate. May have room for improvements
       '-b:v', '2M',
@@ -153,21 +153,12 @@ export default class Controller {
     }, 0);
   }
 
-  updatePendingView() {
-    if (this._pendingUpdateView) {
-      this._pendingUpdateView = false
-      this.updateView()
-    }
+  isFPSValid () {
+    return isValidNumber(this.fpsLatex)
   }
 
   setFPSLatex (latex: string) {
-    if (isValidNumber(latex)) {
-      this.fps = parseFloat(latex)
-      this.fpsHasError = false
-    } else {
-      this.fpsHasError = true
-    }
-    this._pendingUpdateView = true
+    this.fpsLatex = latex
     this.updateView()
   }
 
@@ -186,35 +177,60 @@ export default class Controller {
     value: SliderSettings[T]
   ) {
     this.sliderSettings[key] = value
+    this.updateView()
   }
 
-  async captureSlider () {
-    const { variable, min, max, step } = this.sliderSettings
-    const regex = new RegExp(`^(\\?\s)*${variable}(\\?\s)*=`)
-    const matchingSliders = Calc.getState().expressions.list
+  isSliderSettingValid<T extends keyof SliderSettings>(
+    key: T
+  ) {
+    if (key === 'variable') {
+      return this.getMatchingSlider() !== undefined
+    } else {
+      return isValidNumber(this.sliderSettings[key])
+    }
+  }
+
+  getMatchingSlider () {
+    const regex = new RegExp(`^(\\?\s)*${this.sliderSettings.variable}(\\?\s)*=`)
+    return Calc.getState().expressions.list
       .filter(e => (
         e.type === 'expression' &&
         typeof e.latex === 'string' &&
         regex.test(e.latex)
-      ))
-    // TODO: this verification should be reflected in the UI
-    if (matchingSliders.length > 0) {
-      const slider = matchingSliders[0]
-      const maybeNegativeNumSteps = (max - min) / step
-      const m = maybeNegativeNumSteps > 0 ? 1 : -1
-      const numSteps = m * maybeNegativeNumSteps
-      const correctDirectionStep = m * step
-      // `<= numSteps` to include the endpoints for stuff like 0 to 10, step 1
-      // rarely hurts to have an extra frame
-      for (let i = 0; i <= numSteps; i++) {
-        const value = min + correctDirectionStep * i
-        Calc.setExpression({
-          id: slider.id,
-          latex: `${variable}=${value}`
-        })
-        await this.captureFrame()
-      }
+      ))[0]
+  }
+
+  async captureSlider () {
+    const variable = this.sliderSettings.variable
+    const min = parseFloat(this.sliderSettings.minLatex)
+    const max = parseFloat(this.sliderSettings.maxLatex)
+    const step = parseFloat(this.sliderSettings.stepLatex)
+    const slider = this.getMatchingSlider()
+    if (slider === undefined) {
+      return
     }
+    const maybeNegativeNumSteps = (max - min) / step
+    const m = maybeNegativeNumSteps > 0 ? 1 : -1
+    const numSteps = m * maybeNegativeNumSteps
+    const correctDirectionStep = m * step
+    // `<= numSteps` to include the endpoints for stuff like 0 to 10, step 1
+    // rarely hurts to have an extra frame
+    for (let i = 0; i <= numSteps; i++) {
+      const value = min + correctDirectionStep * i
+      Calc.setExpression({
+        id: slider.id,
+        latex: `${variable}=${value}`
+      })
+      await this.captureFrame()
+    }
+  }
+
+  isWhileLatexValid () {
+    // not a perfect solution. See notes for improvement
+    // (section titled "improve handling of whileLatex")
+    return '\\geq \\leq = > <'
+      .split(' ')
+      .some(s => this.simulationWhileLatex.includes(s))
   }
 
   captureSimulation () {
@@ -273,8 +289,24 @@ export default class Controller {
     }
   }
 
+  areCaptureSettingsValid () {
+    if (this.pollingMethod === 'once') {
+      return true
+    } else if (this.pollingMethod === 'slider') {
+      return (
+        this.isSliderSettingValid('variable') &&
+        this.isSliderSettingValid('minLatex') &&
+        this.isSliderSettingValid('maxLatex') &&
+        this.isSliderSettingValid('stepLatex')
+      )
+    } else if (this.pollingMethod === 'simulation') {
+      return this.isWhileLatexValid()
+    }
+  }
+
   setSimulationWhileLatex (s: string) {
     this.simulationWhileLatex = s
+    this.updateView()
   }
 
   getSimulations () {
@@ -289,7 +321,9 @@ export default class Controller {
     if (model === undefined) {
       // default simulation
       const sim = this.getSimulations()[0]
-      this.currentSimulationID = sim.id
+      if (sim !== undefined) {
+        this.currentSimulationID = sim.id
+      }
       return sim
     } else {
       return model as SimulationModel
@@ -309,9 +343,12 @@ export default class Controller {
   addToSimulationIndex (dx: number) {
     const sims = this.getSimulations()
     // add sims.length to handle (-1) % n = -1
-    this.currentSimulationID = sims[
+    const sim = sims[
       (this.currentSimulationIndex() + sims.length + dx) % sims.length
-    ].id
+    ]
+    if (sim !== undefined) {
+      this.currentSimulationID = sim.id
+    }
     this.updateView()
   }
 
@@ -328,10 +365,11 @@ export default class Controller {
     }
     this.updateView()
 
+    const fps = parseFloat(this.fpsLatex)
     if (this.isPlayingPreview) {
       this.playPreviewInterval = window.setInterval(() => {
         this.addToPreviewIndex(1)
-      }, 1000/this.fps)
+      }, 1000/fps)
     } else {
       if (this.playPreviewInterval !== null) {
         clearInterval(this.playPreviewInterval)

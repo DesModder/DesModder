@@ -93,11 +93,11 @@ export default class MainPopup extends DCGView.Class<{
                 () => (
                   this.controller.frames.length === 0 ||
                   this.controller.isCapturing ||
-                  this.controller.isExporting
+                  this.controller.isExporting ||
+                  !this.controller.isFPSValid()
                 )
               }
             >
-              {/* enabled:   */}
               Export as { () => this.controller.fileType }
             </Button>
             <div class='gif-creator-fps-settings'>
@@ -105,8 +105,8 @@ export default class MainPopup extends DCGView.Class<{
               <SmallMathQuillInput
                 ariaLabel='fps'
                 onUserChangedLatex={s => this.controller.setFPSLatex(s)}
-                hasError={() => this.controller.fpsHasError}
-                latex={() => this.controller.fps.toString()}
+                hasError={() => !this.controller.isFPSValid()}
+                latex={() => this.controller.fpsLatex}
               />
             </div>
           </div>
@@ -120,7 +120,10 @@ export default class MainPopup extends DCGView.Class<{
   }
 
   setSelectedFileTypeIndex (i: number) {
-    this.controller.setOutputFiletype(fileTypeNames[i])
+    const name = fileTypeNames[i]
+    if (name !== undefined) {
+      this.controller.setOutputFiletype(name)
+    }
   }
 
   eventShouldCloseExpanded (e: Event) {

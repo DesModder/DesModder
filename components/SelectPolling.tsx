@@ -43,7 +43,8 @@ export default class SelectPolling extends DCGView.Class<{
                   <div class='gif-creator-slider-settings'>
                     <SmallMathQuillInput
                       ariaLabel='slider variable'
-                      onUserChangedLatex={v => this.controller.setSliderSetting('variable', v)}
+                      onUserChangedLatex={v => (void console.log(v)) || this.controller.setSliderSetting('variable', v)}
+                      hasError={() => !this.controller.isSliderSettingValid('variable')}
                       latex={() => this.controller.sliderSettings.variable}
                     />
                     <StaticMathQuillView
@@ -51,20 +52,23 @@ export default class SelectPolling extends DCGView.Class<{
                     />
                     <SmallMathQuillInput
                       ariaLabel='slider min'
-                      onUserChangedLatex={v => this.controller.setSliderSetting('min', parseFloat(v))}
-                      latex={() => this.controller.sliderSettings.min.toString()}
+                      onUserChangedLatex={v => this.controller.setSliderSetting('minLatex', v)}
+                      hasError={() => !this.controller.isSliderSettingValid('minLatex')}
+                      latex={() => this.controller.sliderSettings.minLatex}
                     />
                     to
                     <SmallMathQuillInput
                       ariaLabel='slider max'
-                      onUserChangedLatex={v => this.controller.setSliderSetting('max', parseFloat(v))}
-                      latex={() => this.controller.sliderSettings.max.toString()}
+                      onUserChangedLatex={v => this.controller.setSliderSetting('maxLatex', v)}
+                      hasError={() => !this.controller.isSliderSettingValid('maxLatex')}
+                      latex={() => this.controller.sliderSettings.maxLatex}
                     />
                     , step
                     <SmallMathQuillInput
                       ariaLabel='slider step'
-                      onUserChangedLatex={v => this.controller.setSliderSetting('step', parseFloat(v))}
-                      latex={() => this.controller.sliderSettings.step.toString()}
+                      onUserChangedLatex={v => this.controller.setSliderSetting('stepLatex', v)}
+                      hasError={() => !this.controller.isSliderSettingValid('stepLatex')}
+                      latex={() => this.controller.sliderSettings.stepLatex}
                     />
                   </div>
                 </div>
@@ -114,7 +118,11 @@ export default class SelectPolling extends DCGView.Class<{
           <Button
             color='green'
             class='gif-creator-capture-frame-button'
-            disabled={() => this.controller.isCapturing || this.controller.isExporting}
+            disabled={() => (
+              this.controller.isCapturing ||
+              this.controller.isExporting ||
+              !this.controller.areCaptureSettingsValid()
+            )}
             onTap={() => this.controller.capture()}
           >
             Capture
@@ -129,6 +137,7 @@ export default class SelectPolling extends DCGView.Class<{
                   <SmallMathQuillInput
                     ariaLabel='simulation while'
                     onUserChangedLatex={v => this.controller.setSimulationWhileLatex(v)}
+                    hasError={() => !this.controller.isWhileLatexValid()}
                     latex={() => this.controller.simulationWhileLatex}
                   />
                 </div>
@@ -153,6 +162,9 @@ export default class SelectPolling extends DCGView.Class<{
   }
 
   setSelectedPollingMethodIndex (i: number) {
-    this.controller.setPollingMethod(pollingMethodNames[i])
+    const name = pollingMethodNames[i]
+    if (name !== undefined) {
+      this.controller.setPollingMethod(name)
+    }
   }
 }

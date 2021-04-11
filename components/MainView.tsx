@@ -21,10 +21,7 @@ export default class MainView extends DCGView.Class<{
 
   template () {
     return (
-      <div
-        class='gif-creator-main-view-container'
-        onfocusout={() => this.controller.updatePendingView()}
-      >
+      <div class='gif-creator-main-view-container'>
         <Tooltip
           tooltip='GIF Creator menu'
           gravity='w'
