@@ -1,5 +1,6 @@
 import {
-  DCGView, SmallMathQuillInput, SegmentedControl, If, Switch, StaticMathQuillView
+  DCGView, SmallMathQuillInput, SegmentedControl, If, Switch,
+  StaticMathQuillView, Button
 } from 'desmodder'
 import Controller, { PollingMethod } from '../Controller'
 import './MainPopup.css'
@@ -22,12 +23,18 @@ export default class SelectPolling extends DCGView.Class<{
       <div>
         <SegmentedControl
           class='gif-creator-select-polling-method'
-          names={pollingMethodNames}
+          names={
+            () => (
+              this.controller.hasSimulation()
+                ? pollingMethodNames
+                : pollingMethodNames.slice(0, -1)
+            )
+          }
           selectedIndex={() => this.getSelectedPollingMethodIndex()}
           setSelectedIndex={i => this.setSelectedPollingMethodIndex(i)}
         />
         <Switch
-          key={() => this.controller.pollingMethod}
+          key={() => this.getSelectedPollingMethod()}
         >
           {
             () => ({
@@ -64,44 +71,56 @@ export default class SelectPolling extends DCGView.Class<{
               ),
               'simulation': () => (
                 <div>
-                  <div class='gif-creator-simulation-navigate-container'>
-                    <span
-                      role='button'
-                      class='dcg-btn-green'
-                      onTap={() => this.controller.addToSimulationIndex(-1)}
-                    >
-                      Prev
-                    </span>
-                    <span
-                      role='button'
-                      class='dcg-btn-green'
-                      onTap={() => this.controller.addToSimulationIndex(+1)}
-                    >
-                      Next
-                    </span>
-                  </div>
-                  <SimulationPicker
-                    controller={this.controller}
-                  />
+                  <If
+                    predicate={() => this.controller.getSimulations().length > 1}
+                  >
+                    {
+                      () => (
+                        <div class='gif-creator-simulation-navigate-container'>
+                          <Button
+                            color='green'
+                            onTap={() => this.controller.addToSimulationIndex(-1)}
+                          >
+                            Prev
+                          </Button>
+                          <Button
+                            color='green'
+                            onTap={() => this.controller.addToSimulationIndex(+1)}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      )
+                    }
+                  </If>
+                  <If
+                    predicate={() => this.controller.getSimulations().length > 0}
+                  >
+                    {
+                      () => (
+                        <SimulationPicker
+                          controller={this.controller}
+                        />
+                      )
+                    }
+                  </If>
                 </div>
               ),
               'once': () => null
-            }[this.controller.pollingMethod]())
+            }[this.getSelectedPollingMethod()]())
           }
         </Switch>
         <div class='gif-creator-capture'>
-          <span
-            role='button'
-            class={() => ({
-              'gif-creator-capture-frame-button': true,
-              'dcg-btn-green': !this.controller.isCapturing && !this.controller.isExporting
-            })}
+          <Button
+            color='green'
+            class='gif-creator-capture-frame-button'
+            disabled={() => this.controller.isCapturing || this.controller.isExporting}
             onTap={() => this.controller.capture()}
           >
             Capture
-          </span>
+          </Button>
           <If
-            predicate={() => this.controller.pollingMethod === 'simulation'}
+            predicate={() => this.getSelectedPollingMethod() === 'simulation'}
           >
             {
               () => (
@@ -121,8 +140,16 @@ export default class SelectPolling extends DCGView.Class<{
     )
   }
 
+  getSelectedPollingMethod () {
+    return (
+      this.controller.pollingMethod === 'simulation' && !this.controller.hasSimulation()
+        ? 'once'
+        : this.controller.pollingMethod
+    )
+  }
+
   getSelectedPollingMethodIndex () {
-    return pollingMethodNames.indexOf(this.controller.pollingMethod)
+    return pollingMethodNames.indexOf(this.getSelectedPollingMethod())
   }
 
   setSelectedPollingMethodIndex (i: number) {

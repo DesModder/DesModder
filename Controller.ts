@@ -79,7 +79,7 @@ export default class Controller {
     })
   }
 
-  async transcode (ffmpeg: FFmpeg) {
+  async export (ffmpeg: FFmpeg) {
     const outFilename = 'out.' + this.fileType
 
     const moreFlags = {
@@ -123,7 +123,7 @@ export default class Controller {
     this.isExporting = true
     this.updateView()
 
-    const outFilename = await this.transcode(ffmpeg)
+    const outFilename = await this.export(ffmpeg)
 
     const data = ffmpeg.FS('readFile', outFilename)
     filenames.forEach(filename => {
@@ -252,7 +252,7 @@ export default class Controller {
     })
   }
 
-  capture () {
+  async capture () {
     this.isCapturing = true
     this.updateView()
     if (this.pollingMethod !== 'once') {
@@ -264,9 +264,9 @@ export default class Controller {
       // captureSimulation handles settings isCapturing to false
     } else {
       if (this.pollingMethod === 'once') {
-        this.captureFrame()
+        await this.captureFrame()
       } else if (this.pollingMethod === 'slider') {
-        this.captureSlider()
+        await this.captureSlider()
       }
       this.isCapturing = false
       this.updateView()

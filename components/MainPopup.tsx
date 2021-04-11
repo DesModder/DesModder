@@ -1,5 +1,5 @@
 import {
-  DCGView, SmallMathQuillInput, SegmentedControl, If, jquery
+  DCGView, SmallMathQuillInput, SegmentedControl, If, jquery, Button
 } from 'desmodder'
 import SelectPolling from './SelectPolling'
 import PreviewCarousel from './PreviewCarousel'
@@ -85,16 +85,21 @@ export default class MainPopup extends DCGView.Class<{
             />
           </div>
           <div class='gif-creator-export'>
-            <span
-              role='button'
-              class={() => ({
-                'gif-creator-export-frames-button': true,
-                'dcg-btn-green': this.controller.frames.length > 0 && !this.controller.isCapturing && !this.controller.isExporting
-              })}
+            <Button
+              color='green'
+              class='gif-creator-export-frames-button'
               onTap={() => this.controller.exportFrames()}
+              disabled={
+                () => (
+                  this.controller.frames.length === 0 ||
+                  this.controller.isCapturing ||
+                  this.controller.isExporting
+                )
+              }
             >
+              {/* enabled:   */}
               Export as { () => this.controller.fileType }
-            </span>
+            </Button>
             <div class='gif-creator-fps-settings'>
               FPS:
               <SmallMathQuillInput
