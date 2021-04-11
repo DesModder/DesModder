@@ -39,7 +39,7 @@ export default class MenuContainer extends DCGView.Class<{
           {
             () => (
               <div
-                class='desmodder-view-container dcg-settings-container desmodder-menu-container dcg-left dcg-popover dcg-constrained-height-popover'
+                class='desmodder-view-container dcg-settings-container desmodder-menu-container dcg-left dcg-popover'
                 style={{
                   position: 'absolute',
                   top: '46px',
@@ -48,7 +48,6 @@ export default class MenuContainer extends DCGView.Class<{
                 }}
                 didMount={() => this.didMountContainer()}
                 didUnmount={() => this.didUnmountContainer()}
-                // TODO: didMount and didUnmount to register escape key → close
               >
                 <Menu controller={this.controller} />
                 <div class='dcg-arrow' />
