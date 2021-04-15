@@ -5,7 +5,9 @@ import Controller from './Controller'
 
 const autoOperatorNames = desmosRequire('main/mathquill-operators').getAutoOperators()
 
-export default class ReplaceBar extends DCGView.Class {
+export default class ReplaceBar extends DCGView.Class<{
+  controller: Controller
+}> {
   controller!: Controller
 
   init () {
