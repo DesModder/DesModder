@@ -106,6 +106,18 @@ interface HelperExpression {
   unobserve (v: HelperType): void
 }
 
+export interface Bounds {
+  left: number,
+  right: number,
+  top: number,
+  bottom: number
+}
+
+interface AugmentedBounds extends Bounds {
+  width: number,
+  height: number
+}
+
 export default interface Calc {
   //// undocumented, may break
   controller: {
@@ -123,6 +135,8 @@ export default interface Calc {
   },
   selectedExpressionId: string,
   //// public
+
+  // ** state manipulation
   getState(): GraphState,
   // "Warning: Calculator states should be treated as opaque values.
   // Manipulating states directly may produce a result that cannot be loaded
@@ -132,10 +146,20 @@ export default interface Calc {
     remapColors?: boolean
   }): void,
   setExpression(obj: SetExpressionObject): void,
+
+  // ** screenshots
   screenshot(opts: ScreenshotOptions): string,
   asyncScreenshot(
     opts: AsyncScreenshotOptions,
     callback: (data: string) => void
   ): void,
-  HelperExpression(obj: { latex: string }): HelperExpression
+  HelperExpression(obj: { latex: string }): HelperExpression,
+
+  // ** bounds
+  graphpaperBounds: {
+    pixelCoordinates: AugmentedBounds,
+    mathCoordinates: AugmentedBounds
+  },
+  setMathBounds(bounds: Bounds): void,
+  observe(v: 'graphpaperBounds', callback: () => void): void
 }

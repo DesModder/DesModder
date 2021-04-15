@@ -11,7 +11,8 @@ export * from 'components/desmosComponents'
 export {
   ExpressionModel,
   SimulationModel,
-  TableModel
+  TableModel,
+  Bounds
 } from 'globals/Calc'
 export {
   Calc,
