@@ -21,6 +21,12 @@
   margin-bottom: 6px;
 }
 
+.gif-creator-reset-bounds-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
 .gif-creator-capture {
   display: flex;
   flex-direction: row-reverse;

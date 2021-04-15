@@ -1,5 +1,5 @@
 import View from './View'
-import { Calc, SimulationModel, jquery, keys } from 'desmodder'
+import { Calc, SimulationModel, jquery, keys, Bounds } from 'desmodder'
 
 // kinda jank, but switching to moduleResolution: 'node' messes up
 // existing non-relative imports
@@ -20,6 +20,24 @@ function isValidNumber (latex: string) {
   return /^\s*\-?\d+(\.\d*)?\s*$/.test(latex)
 }
 
+function boundsEqual (a: Bounds, b:Bounds) {
+  return (
+    a.left === b.left &&
+    a.right === b.right &&
+    a.top === b.top &&
+    a.bottom === b.bottom
+  )
+}
+
+interface CaptureSize {
+  width: number,
+  height: number
+}
+
+function captureSizesEqual(a: CaptureSize, b: CaptureSize) {
+  return a.width === b.width && a.height === b.height
+}
+
 export default class Controller {
   view: View | null = null
   frames: PNGDataURI[] = []
@@ -28,6 +46,8 @@ export default class Controller {
   isExporting = false
   fpsLatex = '30'
   fileType: OutFileType = 'gif'
+
+  // ** capture methods
   captureMethod: CaptureMethod = 'once'
   sliderSettings: SliderSettings = {
     variable: 'a',
@@ -37,13 +57,22 @@ export default class Controller {
   }
   currentSimulationID: string | null = null
   simulationWhileLatex = ''
+
+  // ** play preview
   previewIndex = 0
   isPlayingPreview = false
   playPreviewInterval: number | null = null
   isPlayPreviewExpanded = false
 
+  // ** bounds
+  expectedBounds: Bounds | null = null
+  areMathBoundsDifferent = false
+  expectedSize: CaptureSize | null = null
+  isCaptureSizeDifferent = false
+
   init (view: View) {
     this.view = view
+    Calc.observe('graphpaperBounds', () => this.graphpaperBoundsChanged())
   }
 
   updateView () {
@@ -60,18 +89,87 @@ export default class Controller {
     this.updateView()
   }
 
-  async captureFrame () {
-    return new Promise<void>((resolve) => {
+  checkCaptureSize () {
+    const size = Calc.graphpaperBounds.pixelCoordinates
+    if (this.expectedSize !== null) {
+      const diff = !captureSizesEqual(this.expectedSize, size)
+      if (diff !== this.isCaptureSizeDifferent) {
+        this.isCaptureSizeDifferent = diff
+        this.updateView()
+      }
+    } else {
+      this.expectedSize = size
+    }
+  }
+
+  graphpaperBoundsChanged () {
+    // if expectedBounds has not been initialized yet, then
+    // there are no constraints on the bounds, so we
+    // do not have to worry about fixing or mismatch
+    if (this.expectedBounds !== null) {
+      if (boundsEqual(Calc.graphpaperBounds.mathCoordinates, this.expectedBounds)) {
+          if (this.areMathBoundsDifferent) {
+            this.mathBoundsFixed()
+          }
+      } else {
+        this.mathBoundsMismatch()
+      }
+    }
+  }
+
+  mathBoundsMismatch () {
+    this.areMathBoundsDifferent = true
+    this.updateView()
+  }
+
+  mathBoundsFixed () {
+    this.areMathBoundsDifferent = false
+    this.updateView()
+  }
+
+  resetMathBounds () {
+    if (this.expectedBounds !== null) {
+      // setMathBounds calls graphpaperBoundsChanged via the observed
+      // graphpaperBounds property
+      Calc.setMathBounds(this.expectedBounds)
+    }
+  }
+
+  async captureFrame (isFirst: boolean) {
+    return new Promise<void>((resolve, reject) => {
+      // we will allow different bounds
+      // if (this.areMathBoundsDifferent) {
+      //   reject('bounds invalid from earlier')
+      // }
       Calc.asyncScreenshot(
         {
           showLabels: true,
           mode: 'contain',
-          preserveAxisLabels: true
+          preserveAxisLabels: true,
+          // YOOO.... control `width` and `height` to be the same as start.
+          // Still need to check & revert mathBounds bc people could have unintended
+          // squish. But you just need to check graphpaper WIDTH and HEIGHT
+          // in pixel coordinates
+          mathBounds: this.expectedBounds ?? undefined,
+          width: this.expectedSize ? this.expectedSize.width : undefined,
+          height: this.expectedSize ? this.expectedSize.height : undefined,
         },
         data => {
+          this.checkCaptureSize()
+          // handle correct math bounds (which gets updated asynchronously) here;
+          // probably is the same as the bounds used for the screenshot
           this.frames.push(data)
           this.updateView()
-          resolve()
+          const bounds = Calc.graphpaperBounds.mathCoordinates
+          if (isFirst) {
+            this.expectedBounds = bounds
+          }
+          if (this.expectedBounds === null || boundsEqual(bounds, this.expectedBounds)) {
+            resolve()
+          } else {
+            this.mathBoundsMismatch()
+            reject('bounds changed during capture')
+          }
         }
       )
     })
@@ -221,7 +319,12 @@ export default class Controller {
         id: slider.id,
         latex: `${variable}=${value}`
       })
-      await this.captureFrame()
+      try {
+        await this.captureFrame(i == 0)
+      } catch {
+        // should be paused due to mathBoundsMismatch
+        break
+      }
     }
   }
 
@@ -255,12 +358,19 @@ export default class Controller {
 
       // syntax errors and false gives helper.numericValue === NaN
       // true gives helper.numericValue === 1
+      let first = true
       while (helper.numericValue === 1) {
         Calc.controller.dispatch({
           type: 'simulation-single-step',
           id: simulationID
         })
-        await this.captureFrame()
+        try {
+          await this.captureFrame(first)
+          first = false
+        } catch {
+          // should be paused due to mathBoundsMismatch
+          break
+        }
       }
 
       this.isCapturing = false
@@ -280,7 +390,11 @@ export default class Controller {
       // captureSimulation handles settings isCapturing to false
     } else {
       if (this.captureMethod === 'once') {
-        await this.captureFrame()
+        try {
+          await this.captureFrame(true)
+        } catch {
+          // math bounds mismatch, irrelevant
+        }
       } else if (this.captureMethod === 'slider') {
         await this.captureSlider()
       }
@@ -396,8 +510,16 @@ export default class Controller {
     if (this.previewIndex >= this.frames.length) {
       this.previewIndex = this.frames.length - 1
     }
-    if (this.frames.length == 0 && this.isPlayPreviewExpanded) {
-      this.togglePreviewExpanded()
+    if (this.frames.length === 0) {
+      this.expectedSize = null
+      this.expectedBounds = null
+      this.isCaptureSizeDifferent = false
+      if (this.areMathBoundsDifferent) {
+        this.mathBoundsFixed()
+      }
+      if (this.isPlayPreviewExpanded) {
+        this.togglePreviewExpanded()
+      }
     }
     if (this.frames.length <= 1 && this.isPlayingPreview) {
       this.togglePlayingPreview()

@@ -1,6 +1,6 @@
 import {
   DCGView, SmallMathQuillInput, SegmentedControl, If, Switch,
-  StaticMathQuillView, Button
+  StaticMathQuillView, Button, Tooltip
 } from 'desmodder'
 import Controller, { CaptureMethod } from '../Controller'
 import './MainPopup.css'
@@ -114,19 +114,41 @@ export default class SelectCapture extends DCGView.Class<{
             }[this.getSelectedCaptureMethod()]())
           }
         </Switch>
+        <If
+        predicate={() => this.controller.areMathBoundsDifferent}
+        >
+          {
+            () => (
+              <div class='gif-creator-reset-bounds-wrapper'>
+                <Button
+                  color='light-gray'
+                  class='gif-creator-reset-bounds-button'
+                  onTap={() => this.controller.resetMathBounds()}
+                >
+                  Revert Viewport
+                </Button>
+              </div>
+            )
+          }
+        </If>
         <div class='gif-creator-capture'>
-          <Button
-            color='green'
-            class='gif-creator-capture-frame-button'
-            disabled={() => (
-              this.controller.isCapturing ||
-              this.controller.isExporting ||
-              !this.controller.areCaptureSettingsValid()
-            )}
-            onTap={() => this.controller.capture()}
+          <Tooltip
+            tooltip={() => this.controller.isCaptureSizeDifferent ? 'Aspect ratio different' : ''}
+            gravity='n'
           >
-            Capture
-          </Button>
+            <Button
+              color='green'
+              class='gif-creator-capture-frame-button'
+              disabled={() => (
+                this.controller.isCapturing ||
+                this.controller.isExporting ||
+                !this.controller.areCaptureSettingsValid()
+              )}
+              onTap={() => this.controller.capture()}
+            >
+              Capture
+            </Button>
+          </Tooltip>
           <If
             predicate={() => this.getSelectedCaptureMethod() === 'simulation'}
           >
