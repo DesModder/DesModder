@@ -1,5 +1,5 @@
 import {
-  DCGView, MountedComponent, pollForValue
+  DCGView, MountedComponent, pollForValue, Calc
 } from 'desmodder'
 import MainView from './components/MainView'
 import Controller from './Controller'
@@ -23,6 +23,22 @@ export default class View {
         controller: () => this.controller
       }
     )
+    Calc.controller.dispatcher.register((e) => {
+      if (e.type === 'keypad/set-minimized') {
+        this.updatePillboxHeight()
+      }
+    })
+  }
+
+  updatePillboxHeight () {
+    const pillboxContainer = document.querySelector('.dcg-overgraph-pillbox-elements') as HTMLElement | null
+    if (pillboxContainer !== null) {
+      // accounting for future contingency where keypad is actually allowed
+      // to be open (maybe when popover integreated into main Desmodder components)
+      const t = Calc.controller.isKeypadOpen() ? Calc.controller.getKeypadHeight() : 0
+      const bottom = this.controller.isMainViewOpen ? t + 'px' : 'auto'
+      pillboxContainer.style.bottom = bottom
+    }
   }
 
   destroyView () {
@@ -33,6 +49,7 @@ export default class View {
   }
 
   update () {
+    this.updatePillboxHeight()
     this.mountedView && this.mountedView.update()
 
     const showKeypadButton: HTMLElement | null = document.querySelector('.dcg-show-keypad')
