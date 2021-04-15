@@ -131,7 +131,9 @@ export default interface Calc {
     },
     getItemModel(id: any): ItemModel,
     stopPlayingSimulation(): void,
-    stopAllSliders(): void
+    stopAllSliders(): void,
+    isKeypadOpen(): boolean,
+    getKeypadHeight(): number
   },
   selectedExpressionId: string,
   //// public
