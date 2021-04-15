@@ -1,7 +1,7 @@
 import {
   DCGView, SmallMathQuillInput, SegmentedControl, If, jquery, Button
 } from 'desmodder'
-import SelectPolling from './SelectPolling'
+import CaptureMethod from './CaptureMethod'
 import PreviewCarousel from './PreviewCarousel'
 import Controller, { OutFileType } from '../Controller'
 import './MainPopup.css'
@@ -24,7 +24,7 @@ export default class MainPopup extends DCGView.Class<{
           <div class='dcg-group-title'>
             Capture
           </div>
-          <SelectPolling
+          <CaptureMethod
             controller={this.controller}
           />
         </div>

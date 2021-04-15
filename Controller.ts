@@ -8,7 +8,7 @@ import { createFFmpeg, fetchFile } from './node_modules/@ffmpeg/ffmpeg/src/index
 type PNGDataURI = string
 export type OutFileType = 'gif' | 'mp4' | 'webm'
 type FFmpeg = ReturnType<typeof createFFmpeg>
-export type PollingMethod = 'once' | 'simulation' | 'slider'
+export type CaptureMethod = 'once' | 'simulation' | 'slider'
 interface SliderSettings {
   variable: string,
   minLatex: string,
@@ -28,7 +28,7 @@ export default class Controller {
   isExporting = false
   fpsLatex = '30'
   fileType: OutFileType = 'gif'
-  pollingMethod: PollingMethod = 'once'
+  captureMethod: CaptureMethod = 'once'
   sliderSettings: SliderSettings = {
     variable: 'a',
     minLatex: '0',
@@ -167,8 +167,8 @@ export default class Controller {
     this.updateView()
   }
 
-  setPollingMethod (method: PollingMethod) {
-    this.pollingMethod = method
+  setCaptureMethod (method: CaptureMethod) {
+    this.captureMethod = method
     this.updateView()
   }
 
@@ -271,17 +271,17 @@ export default class Controller {
   async capture () {
     this.isCapturing = true
     this.updateView()
-    if (this.pollingMethod !== 'once') {
+    if (this.captureMethod !== 'once') {
       Calc.controller.stopPlayingSimulation()
       Calc.controller.stopAllSliders()
     }
-    if (this.pollingMethod === 'simulation') {
+    if (this.captureMethod === 'simulation') {
       this.captureSimulation()
       // captureSimulation handles settings isCapturing to false
     } else {
-      if (this.pollingMethod === 'once') {
+      if (this.captureMethod === 'once') {
         await this.captureFrame()
-      } else if (this.pollingMethod === 'slider') {
+      } else if (this.captureMethod === 'slider') {
         await this.captureSlider()
       }
       this.isCapturing = false
@@ -290,16 +290,16 @@ export default class Controller {
   }
 
   areCaptureSettingsValid () {
-    if (this.pollingMethod === 'once') {
+    if (this.captureMethod === 'once') {
       return true
-    } else if (this.pollingMethod === 'slider') {
+    } else if (this.captureMethod === 'slider') {
       return (
         this.isSliderSettingValid('variable') &&
         this.isSliderSettingValid('minLatex') &&
         this.isSliderSettingValid('maxLatex') &&
         this.isSliderSettingValid('stepLatex')
       )
-    } else if (this.pollingMethod === 'simulation') {
+    } else if (this.captureMethod === 'simulation') {
       return this.isWhileLatexValid()
     }
   }

@@ -2,14 +2,14 @@ import {
   DCGView, SmallMathQuillInput, SegmentedControl, If, Switch,
   StaticMathQuillView, Button
 } from 'desmodder'
-import Controller, { PollingMethod } from '../Controller'
+import Controller, { CaptureMethod } from '../Controller'
 import './MainPopup.css'
 import SimulationPicker from './SimulationPicker'
-import './SelectPolling.css'
+import './CaptureMethod.css'
 
-const pollingMethodNames: PollingMethod[] = ['once', 'slider', 'simulation']
+const captureMethodNames: CaptureMethod[] = ['once', 'slider', 'simulation']
 
-export default class SelectPolling extends DCGView.Class<{
+export default class SelectCapture extends DCGView.Class<{
   controller: Controller
 }> {
   controller!: Controller
@@ -22,19 +22,19 @@ export default class SelectPolling extends DCGView.Class<{
     return (
       <div>
         <SegmentedControl
-          class='gif-creator-select-polling-method'
+          class='gif-creator-select-capture-method'
           names={
             () => (
               this.controller.hasSimulation()
-                ? pollingMethodNames
-                : pollingMethodNames.slice(0, -1)
+                ? captureMethodNames
+                : captureMethodNames.slice(0, -1)
             )
           }
-          selectedIndex={() => this.getSelectedPollingMethodIndex()}
-          setSelectedIndex={i => this.setSelectedPollingMethodIndex(i)}
+          selectedIndex={() => this.getSelectedCaptureMethodIndex()}
+          setSelectedIndex={i => this.setSelectedCaptureMethodIndex(i)}
         />
         <Switch
-          key={() => this.getSelectedPollingMethod()}
+          key={() => this.getSelectedCaptureMethod()}
         >
           {
             () => ({
@@ -111,7 +111,7 @@ export default class SelectPolling extends DCGView.Class<{
                 </div>
               ),
               'once': () => null
-            }[this.getSelectedPollingMethod()]())
+            }[this.getSelectedCaptureMethod()]())
           }
         </Switch>
         <div class='gif-creator-capture'>
@@ -128,7 +128,7 @@ export default class SelectPolling extends DCGView.Class<{
             Capture
           </Button>
           <If
-            predicate={() => this.getSelectedPollingMethod() === 'simulation'}
+            predicate={() => this.getSelectedCaptureMethod() === 'simulation'}
           >
             {
               () => (
@@ -149,22 +149,22 @@ export default class SelectPolling extends DCGView.Class<{
     )
   }
 
-  getSelectedPollingMethod () {
+  getSelectedCaptureMethod () {
     return (
-      this.controller.pollingMethod === 'simulation' && !this.controller.hasSimulation()
+      this.controller.captureMethod === 'simulation' && !this.controller.hasSimulation()
         ? 'once'
-        : this.controller.pollingMethod
+        : this.controller.captureMethod
     )
   }
 
-  getSelectedPollingMethodIndex () {
-    return pollingMethodNames.indexOf(this.getSelectedPollingMethod())
+  getSelectedCaptureMethodIndex () {
+    return captureMethodNames.indexOf(this.getSelectedCaptureMethod())
   }
 
-  setSelectedPollingMethodIndex (i: number) {
-    const name = pollingMethodNames[i]
+  setSelectedCaptureMethodIndex (i: number) {
+    const name = captureMethodNames[i]
     if (name !== undefined) {
-      this.controller.setPollingMethod(name)
+      this.controller.setCaptureMethod(name)
     }
   }
 }
