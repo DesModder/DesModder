@@ -16,7 +16,7 @@ export default class SimulationPicker extends DCGView.Class<{
   template () {
     return (
       <For
-        each={() => this.props.controller().getCurrentSimulation().clickableInfo.rules}
+        each={() => this.getRules()}
         key={rule => this.props.controller().currentSimulationID + ',' + rule.id}
       >
         <div class='gif-creator-simulation-rules'>
@@ -37,5 +37,14 @@ export default class SimulationPicker extends DCGView.Class<{
         </div>
       </For>
     )
+  }
+
+  getRules() {
+    const currentSimulation = this.props.controller().getCurrentSimulation()
+    if (currentSimulation !== undefined) {
+      return currentSimulation.clickableInfo.rules
+    } else {
+      return []
+    }
   }
 }
