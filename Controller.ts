@@ -43,9 +43,14 @@ export default class Controller {
   frames: PNGDataURI[] = []
   isMainViewOpen = false
   isCapturing = false
-  isExporting = false
   fpsLatex = '30'
   fileType: OutFileType = 'gif'
+
+  // ** export status
+  isExporting = false
+  // -1 while pending/waiting
+  // 0 to 1 during encoding
+  exportProgress = 0
 
   // ** capture methods
   captureMethod: CaptureMethod = 'once'
@@ -175,6 +180,11 @@ export default class Controller {
     })
   }
 
+  setExportProgress (ratio: number) {
+    this.exportProgress = ratio
+    this.updateView()
+  }
+
   async export (ffmpeg: FFmpeg) {
     const outFilename = 'out.' + this.fileType
 
@@ -187,6 +197,19 @@ export default class Controller {
     }[this.fileType]
 
     const fps = parseFloat(this.fpsLatex)
+
+    ffmpeg.setLogger(({ type, message }) => {
+      if (type === 'fferr') {
+        const match = message.match(/frame=\s*(?<frame>\d+)/)
+        if (match === null) {
+          return
+        } else {
+          const frame = (match.groups as {frame: string}).frame
+          const ratio = parseInt(frame)/this.frames.length
+          this.setExportProgress(ratio)
+        }
+      }
+    })
 
     await ffmpeg.run(
       '-r', fps.toString(),
@@ -201,6 +224,8 @@ export default class Controller {
   }
 
   async exportFrames () {
+    this.setExportProgress(-1)
+
     // reference https://gist.github.com/SlimRunner/3b0a7571f04d3a03bff6dbd9de6ad729#file-desmovie-user-js-L278
     const ffmpeg = createFFmpeg({ log: true });
     await ffmpeg.load()

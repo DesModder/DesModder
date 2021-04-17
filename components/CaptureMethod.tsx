@@ -3,7 +3,6 @@ import {
   StaticMathQuillView, Button, Tooltip
 } from 'desmodder'
 import Controller, { CaptureMethod } from '../Controller'
-import './MainPopup.css'
 import SimulationPicker from './SimulationPicker'
 import './CaptureMethod.css'
 

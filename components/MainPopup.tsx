@@ -1,8 +1,9 @@
 import {
-  DCGView, SmallMathQuillInput, SegmentedControl, If, jquery, Button
+  DCGView, SmallMathQuillInput, SegmentedControl, If, jquery, Button, IfElse
 } from 'desmodder'
 import CaptureMethod from './CaptureMethod'
 import PreviewCarousel from './PreviewCarousel'
+import LoadingPie from './LoadingPie'
 import Controller, { OutFileType } from '../Controller'
 import './MainPopup.css'
 
@@ -18,6 +19,26 @@ export default class MainPopup extends DCGView.Class<{
   }
 
   template () {
+    return IfElse(
+      () => this.controller.isExporting,
+      {
+        false: () => this.templateNormal(),
+        true: () => (
+          <div class='dcg-popover-interior'>
+            <div class='gif-creator-export-in-progress'>
+              Exporting ...
+              <LoadingPie
+                progress={() => this.controller.exportProgress}
+                isPending={() => this.controller.exportProgress < 0}
+              />
+            </div>
+          </div>
+        )
+      }
+    )
+  }
+
+  templateNormal () {
     return (
       <div class='dcg-popover-interior'>
         <div class='gif-creator-capture-menu'>
