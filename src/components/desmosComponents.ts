@@ -34,14 +34,19 @@ abstract class ForComponent<T> extends ClassComponent<{
   key(t: T): (string | number)
 }> {}
 
+interface IfElseSecondParam {
+  true(): typeof ClassComponent,
+  false(): typeof ClassComponent
+}
+
 export const {
   If, For, IfDefined, IfElse, Input, Switch, SwitchUnion, Textarea
 } = desmosRequire('dcgview').Components as {
   For: typeof ForComponent,
   If: typeof ClassComponent,
+  IfElse(p: () => boolean, v: IfElseSecondParam): typeof ClassComponent,
   // I don't know how to use the rest of these
   IfDefined: typeof ClassComponent,
-  IfElse: typeof ClassComponent,
   Input: typeof ClassComponent,
   Switch: typeof ClassComponent,
   SwitchUnion: typeof ClassComponent,
