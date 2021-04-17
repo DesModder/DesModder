@@ -223,7 +223,9 @@ export default class Controller {
           return
         } else {
           const frame = (match.groups as {frame: string}).frame
-          const ratio = parseInt(frame)/this.frames.length
+          let denom = this.frames.length - 1
+          if (denom === 0) denom = 1
+          const ratio = parseInt(frame)/denom
           this.setExportProgress(ratio)
         }
       }

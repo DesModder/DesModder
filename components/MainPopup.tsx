@@ -29,7 +29,7 @@ export default class MainPopup extends DCGView.Class<{
               Exporting ...
               <LoadingPie
                 progress={() => this.controller.exportProgress}
-                isPending={() => this.controller.exportProgress < 0}
+                isPending={() => this.controller.exportProgress < 0 || this.controller.exportProgress > 0.99}
               />
             </div>
           </div>
