@@ -3,10 +3,10 @@
   margin-bottom: 10px;
 }
 
-.gif-creator-capture-menu, .gif-creator-preview-menu {
-  padding-bottom: 10px;
-  border-bottom: 1px solid #ddd;
-  margin-bottom: 10px;
+.gif-creator-preview-menu, .gif-creator-export-menu {
+  padding-top: 10px;
+  border-top: 1px solid #ddd;
+  margin-top: 10px;
 }
 
 .gif-creator-export {

@@ -94,44 +94,52 @@ export default class MainPopup extends DCGView.Class<{
             )
           }
         </If>
-        <div class='gif-creator-export-menu'>
-          <div class='dcg-group-title'>
-            Export
-          </div>
-          <div class='gif-creator-select-export-type'>
-            <SegmentedControl
-              names={fileTypeNames}
-              selectedIndex={() => this.getSelectedFileTypeIndex()}
-              setSelectedIndex={i => this.setSelectedFileTypeIndex(i)}
-            />
-          </div>
-          <div class='gif-creator-export'>
-            <Button
-              color='green'
-              class='gif-creator-export-frames-button'
-              onTap={() => this.controller.exportFrames()}
-              disabled={
-                () => (
-                  this.controller.frames.length === 0 ||
-                  this.controller.isCapturing ||
-                  this.controller.isExporting ||
-                  !this.controller.isFPSValid()
-                )
-              }
-            >
-              Export as { () => this.controller.fileType }
-            </Button>
-            <div class='gif-creator-fps-settings'>
-              FPS:
-              <SmallMathQuillInput
-                ariaLabel='fps'
-                onUserChangedLatex={s => this.controller.setFPSLatex(s)}
-                hasError={() => !this.controller.isFPSValid()}
-                latex={() => this.controller.fpsLatex}
-              />
-            </div>
-          </div>
-        </div>
+        <If
+          predicate={() => this.controller.frames.length > 0}
+        >
+          {
+            () => (
+              <div class='gif-creator-export-menu'>
+                <div class='dcg-group-title'>
+                  Export
+                </div>
+                <div class='gif-creator-select-export-type'>
+                  <SegmentedControl
+                    names={fileTypeNames}
+                    selectedIndex={() => this.getSelectedFileTypeIndex()}
+                    setSelectedIndex={i => this.setSelectedFileTypeIndex(i)}
+                  />
+                </div>
+                <div class='gif-creator-export'>
+                  <Button
+                    color='green'
+                    class='gif-creator-export-frames-button'
+                    onTap={() => this.controller.exportFrames()}
+                    disabled={
+                      () => (
+                        this.controller.frames.length === 0 ||
+                        this.controller.isCapturing ||
+                        this.controller.isExporting ||
+                        !this.controller.isFPSValid()
+                      )
+                    }
+                  >
+                    Export as { () => this.controller.fileType }
+                  </Button>
+                  <div class='gif-creator-fps-settings'>
+                    FPS:
+                    <SmallMathQuillInput
+                      ariaLabel='fps'
+                      onUserChangedLatex={s => this.controller.setFPSLatex(s)}
+                      hasError={() => !this.controller.isFPSValid()}
+                      latex={() => this.controller.fpsLatex}
+                    />
+                  </div>
+                </div>
+              </div>
+            )
+          }
+        </If>
       </div>
     )
   }
