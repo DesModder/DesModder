@@ -31,6 +31,9 @@ export default class View {
   }
 
   updatePillboxHeight () {
+    if (Calc.controller.isGraphSettingsOpen()) {
+      return
+    }
     const pillboxContainer = document.querySelector('.dcg-overgraph-pillbox-elements') as HTMLElement | null
     if (pillboxContainer !== null) {
       // accounting for future contingency where keypad is actually allowed
