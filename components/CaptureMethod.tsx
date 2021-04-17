@@ -31,6 +31,7 @@ export default class SelectCapture extends DCGView.Class<{
           }
           selectedIndex={() => this.getSelectedCaptureMethodIndex()}
           setSelectedIndex={i => this.setSelectedCaptureMethodIndex(i)}
+          allowChange={() => !this.controller.isCapturing}
         />
         <Switch
           key={() => this.getSelectedCaptureMethod()}
