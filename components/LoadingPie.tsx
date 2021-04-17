@@ -43,7 +43,6 @@ export default class LoadingPie extends DCGView.Class<{
     const largeArcFlag = progress >= 0.5 ? '1' : '0'
     // multiply by (1-ε) to make it look like a circle at progress=1
     const angle = 0.9999999 * progress * 2 * Math.PI
-    console.log('ANGLE', angle)
     return [
       'M', 0, 0,
       'L', 0, -1,

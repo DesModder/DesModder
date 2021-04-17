@@ -198,19 +198,6 @@ export default class Controller {
 
     const fps = parseFloat(this.fpsLatex)
 
-    ffmpeg.setLogger(({ type, message }) => {
-      if (type === 'fferr') {
-        const match = message.match(/frame=\s*(?<frame>\d+)/)
-        if (match === null) {
-          return
-        } else {
-          const frame = (match.groups as {frame: string}).frame
-          const ratio = parseInt(frame)/this.frames.length
-          this.setExportProgress(ratio)
-        }
-      }
-    })
-
     await ffmpeg.run(
       '-r', fps.toString(),
       '-pattern_type', 'glob', '-i', '*.png',
@@ -228,6 +215,19 @@ export default class Controller {
 
     // reference https://gist.github.com/SlimRunner/3b0a7571f04d3a03bff6dbd9de6ad729#file-desmovie-user-js-L278
     const ffmpeg = createFFmpeg({ log: true });
+    ffmpeg.setLogging(false)
+    ffmpeg.setLogger(({ type, message }) => {
+      if (type === 'fferr') {
+        const match = message.match(/frame=\s*(?<frame>\d+)/)
+        if (match === null) {
+          return
+        } else {
+          const frame = (match.groups as {frame: string}).frame
+          const ratio = parseInt(frame)/this.frames.length
+          this.setExportProgress(ratio)
+        }
+      }
+    })
     await ffmpeg.load()
 
     const filenames: string[] = []

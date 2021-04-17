@@ -42,7 +42,7 @@ export default class SelectCapture extends DCGView.Class<{
                   <div class='gif-creator-slider-settings'>
                     <SmallMathQuillInput
                       ariaLabel='slider variable'
-                      onUserChangedLatex={v => (void console.log(v)) || this.controller.setSliderSetting('variable', v)}
+                      onUserChangedLatex={v => this.controller.setSliderSetting('variable', v)}
                       hasError={() => !this.controller.isSliderSettingValid('variable')}
                       latex={() => this.controller.sliderSettings.variable}
                     />
