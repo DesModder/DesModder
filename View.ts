@@ -24,7 +24,7 @@ export default class View {
       }
     )
     Calc.controller.dispatcher.register((e) => {
-      if (e.type === 'keypad/set-minimized') {
+      if (e.type === 'keypad/set-minimized' || e.type === 'close-graph-settings') {
         this.updatePillboxHeight()
       }
     })
