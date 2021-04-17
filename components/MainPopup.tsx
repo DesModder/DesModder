@@ -5,7 +5,7 @@ import CaptureMethod from './CaptureMethod'
 import PreviewCarousel from './PreviewCarousel'
 import LoadingPie from './LoadingPie'
 import Controller, { OutFileType } from '../Controller'
-import './MainPopup.css'
+import './MainPopup.less'
 
 const fileTypeNames: OutFileType[] = ['gif', 'mp4', 'webm']
 
@@ -60,6 +60,7 @@ export default class MainPopup extends DCGView.Class<{
                 </div>
                 <div
                   class={() => ({
+                    'gif-creator-preview-outer': true,
                     'gif-creator-preview-expanded': this.controller.isPlayPreviewExpanded
                   })}
                   onTapEnd={

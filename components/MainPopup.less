@@ -9,6 +9,17 @@
   margin-top: 10px;
 }
 
+.gif-creator-preview-outer:not(.gif-creator-preview-expanded) {
+  // avoid scrollbar jiggle
+  @scrollbar-width: 15px;
+  @mw: (250px - @scrollbar-width);
+  transform: translateX(calc((100% - @mw) / 2));
+
+  .gif-creator-preview-inner {
+    max-width: @mw;
+  }
+}
+
 .gif-creator-export {
   display: flex;
   flex-direction: row-reverse;
