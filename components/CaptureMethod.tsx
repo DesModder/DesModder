@@ -84,12 +84,14 @@ export default class SelectCapture extends DCGView.Class<{
                           <Button
                             color='green'
                             onTap={() => this.controller.addToSimulationIndex(-1)}
+                            disabled={() => this.controller.isCapturing}
                           >
                             Prev
                           </Button>
                           <Button
                             color='green'
                             onTap={() => this.controller.addToSimulationIndex(+1)}
+                            disabled={() => this.controller.isCapturing}
                           >
                             Next
                           </Button>
