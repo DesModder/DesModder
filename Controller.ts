@@ -190,7 +190,7 @@ export default class Controller {
 
     const moreFlags = {
       mp4: ['-vcodec', 'libx264'],
-      webm: ['-vcodec', 'libvpx-vp9'],
+      webm: ['-vcodec', 'libvpx-vp9', '-quality', 'realtime', '-speed', '8'],
       // generate fresh palette on every frame (higher quality)
       // https://superuser.com/a/1239082
       gif: ['-lavfi', 'palettegen=stats_mode=single[pal],[0:v][pal]paletteuse=new=1']
