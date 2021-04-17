@@ -1,6 +1,6 @@
 import {
   DCGView, SmallMathQuillInput, SegmentedControl, If, Switch,
-  StaticMathQuillView, Button, Tooltip
+  StaticMathQuillView, Button, Tooltip, IfElse
 } from 'desmodder'
 import Controller, { CaptureMethod } from '../Controller'
 import SimulationPicker from './SimulationPicker'
@@ -135,18 +135,36 @@ export default class SelectCapture extends DCGView.Class<{
             tooltip={() => this.controller.isCaptureSizeDifferent ? 'Aspect ratio different' : ''}
             gravity='n'
           >
-            <Button
-              color='green'
-              class='gif-creator-capture-frame-button'
-              disabled={() => (
-                this.controller.isCapturing ||
-                this.controller.isExporting ||
-                !this.controller.areCaptureSettingsValid()
-              )}
-              onTap={() => this.controller.capture()}
-            >
-              Capture
-            </Button>
+            {
+              IfElse(
+                () => !this.controller.isCapturing || this.controller.captureMethod === 'once',
+                {
+                  true: () => (
+                    <Button
+                      color='green'
+                      class='gif-creator-capture-frame-button'
+                      disabled={() => (
+                        this.controller.isCapturing ||
+                        this.controller.isExporting ||
+                        !this.controller.areCaptureSettingsValid()
+                      )}
+                      onTap={() => this.controller.capture()}
+                    >
+                      Capture
+                    </Button>
+                  ),
+                  false: () => (
+                    <Button
+                      color='blue'
+                      class='gif-creator-cancel-capture-button'
+                      onTap={() => this.controller.cancelCapture()}
+                    >
+                      Cancel
+                    </Button>
+                  )
+                }
+              )
+            }
           </Tooltip>
           <If
             predicate={() => this.getSelectedCaptureMethod() === 'simulation'}

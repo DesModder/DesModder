@@ -62,6 +62,7 @@ export default class Controller {
   }
   currentSimulationID: string | null = null
   simulationWhileLatex = ''
+  captureCancelled: boolean = false
 
   // ** play preview
   previewIndex = 0
@@ -140,12 +141,26 @@ export default class Controller {
     }
   }
 
+  cancelCapture () {
+    this.captureCancelled = true
+  }
+
   async captureFrame (isFirst: boolean) {
     return new Promise<void>((resolve, reject) => {
-      // we will allow different bounds
+      // we will allow different math bounds
       // if (this.areMathBoundsDifferent) {
       //   reject('bounds invalid from earlier')
       // }
+
+      const tryCancel = () => {
+        if (this.captureCancelled) {
+          this.captureCancelled = false
+          reject('cancelled')
+        }
+      }
+      tryCancel()
+      // poll for mid-screenshot cancellation (only affects UI)
+      const interval = window.setInterval(tryCancel, 50)
       Calc.asyncScreenshot(
         {
           showLabels: true,
@@ -160,6 +175,7 @@ export default class Controller {
           height: this.expectedSize ? this.expectedSize.height : undefined,
         },
         data => {
+          clearInterval(interval)
           this.checkCaptureSize()
           // handle correct math bounds (which gets updated asynchronously) here;
           // probably is the same as the bounds used for the screenshot
@@ -347,9 +363,9 @@ export default class Controller {
         latex: `${variable}=${value}`
       })
       try {
-        await this.captureFrame(i == 0)
+        await this.captureFrame(i === 0)
       } catch {
-        // should be paused due to mathBoundsMismatch
+        // should be paused due to mathBoundsMismatch or cancellation
         break
       }
     }
@@ -369,6 +385,7 @@ export default class Controller {
       // would give an infinite loop, probably unintended
       // use 1 > 0 for intentional infinite loop
       this.isCapturing = false
+      this.captureCancelled = false
       this.updateView()
       return
     }
@@ -395,11 +412,12 @@ export default class Controller {
           await this.captureFrame(first)
           first = false
         } catch {
-          // should be paused due to mathBoundsMismatch
+          // should be paused due to mathBoundsMismatch or cancellation
           break
         }
       }
 
+      this.captureCancelled = false
       this.isCapturing = false
       this.updateView()
     })
@@ -428,6 +446,8 @@ export default class Controller {
       this.isCapturing = false
       this.updateView()
     }
+    // no need to retain the pending cancellation; capture is already finished
+    this.captureCancelled = false
   }
 
   areCaptureSettingsValid () {
