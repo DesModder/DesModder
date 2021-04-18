@@ -12,6 +12,10 @@ export default class View {
   }
 
   initView () {
+    if (this.mountNode !== null) {
+      // already open
+      return
+    }
     const searchBar = document.querySelector('.dcg-expression-search-bar')
     if (searchBar === null) {
       throw new Error('Search bar not found')
@@ -42,6 +46,8 @@ export default class View {
       return
     }
     DCGView.unmountFromNode(this.mountNode)
+    this.mountNode = null
+    this.replaceView = null
   }
 
   updateReplaceView () {
