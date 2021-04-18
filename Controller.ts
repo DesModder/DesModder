@@ -24,4 +24,11 @@ export default class Controller {
       this.replaceLatex
     )
   }
+
+  focusSearch () {
+    Calc.controller.dispatch({
+      type: 'set-focus-location',
+      location: {type: 'search-expressions'}
+    })
+  }
 }

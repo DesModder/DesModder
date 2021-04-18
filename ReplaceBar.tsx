@@ -34,6 +34,8 @@ export default class ReplaceBar extends DCGView.Class<{
                 this.controller.refactorAll()
               } else if (key === 'Esc') {
                 this.closeReplace()
+              } else if (key === 'Ctrl-F') {
+                this.controller.focusSearch()
               } else {
                 const focusedMQ = MathQuillView.getFocusedMathquill()
                 focusedMQ.keystroke(key, e)
@@ -65,5 +67,9 @@ export default class ReplaceBar extends DCGView.Class<{
     Calc.controller.dispatch({
       type: 'close-expression-search'
     })
+  }
+
+  didMount () {
+    this.controller.focusSearch()
   }
 }
