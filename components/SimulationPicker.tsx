@@ -19,7 +19,7 @@ export default class SimulationPicker extends DCGView.Class<{
         each={() => this.getRules()}
         key={rule => this.props.controller().currentSimulationID + ',' + rule.id}
       >
-        <div class='gif-creator-simulation-rules'>
+        <div class='video-creator-simulation-rules'>
           {
             (rule: Rule) => (
               <div class='dcg-clickable-property-row'>

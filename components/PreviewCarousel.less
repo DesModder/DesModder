@@ -4,7 +4,7 @@
   transform: translate(-50%, -50%);
 }
 
-.gif-creator-preview-expanded {
+.video-creator-preview-expanded {
   position: fixed;
   .center-xy();
   z-index: 999;
@@ -14,12 +14,12 @@
   font-size: 160%;
 }
 
-.gif-creator-preview-inner {
+.video-creator-preview-inner {
   margin-top: 5px;
-  // display: flex used to vertically stretch + center .gif-creator-preview-carousel
+  // display: flex used to vertically stretch + center .video-creator-preview-carousel
   display: flex;
 
-  .gif-creator-preview-expanded & {
+  .video-creator-preview-expanded & {
     position: absolute;
     .center-xy();
     width: 80%;
@@ -30,13 +30,13 @@
   }
 }
 
-.gif-creator-preview-carousel {
+.video-creator-preview-carousel {
   display: grid;
   gap: 10px;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto;
 
-  .gif-creator-preview-expanded & {
+  .video-creator-preview-expanded & {
     display: flex;
     align-items: center;
     // @width-center: 10fr;
@@ -59,41 +59,41 @@
   }
 }
 
-.gif-creator-preview-prev-frame {
+.video-creator-preview-prev-frame {
   grid-column: 1;
   grid-row: 1;
 
-  .gif-creator-preview-expanded & {
+  .video-creator-preview-expanded & {
     order: 1;
     flex: 1;
   }
 }
 
-.gif-creator-preview-next-frame {
+.video-creator-preview-next-frame {
   grid-column: 2;
   grid-row: 1;
 
-  .gif-creator-preview-expanded & {
+  .video-creator-preview-expanded & {
     order: 3;
     flex: 1;
   }
 }
 
-.gif-creator-preview-current-frame {
+.video-creator-preview-current-frame {
   grid-column: 1 / span 2;
   grid-row: 2;
 
-  .gif-creator-preview-expanded & {
+  .video-creator-preview-expanded & {
     order: 2;
     flex: 3;
   }
 }
 
-.gif-creator-preview-wrapped-frame {
+.video-creator-preview-wrapped-frame {
   filter: brightness(75%);
 }
 
-.gif-creator-preview-index {
+.video-creator-preview-index {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -114,25 +114,25 @@
   font-size: 160%;
 }
 
-.gif-creator-preview-expand {
+.video-creator-preview-expand {
   .oversetbutton();
   top: 0;
   left: 0;
 }
 
-.gif-creator-preview-play-pause {
+.video-creator-preview-play-pause {
   .oversetbutton();
   bottom: 0;
   right: 0;
 }
 
-.gif-creator-remove-frame {
+.video-creator-remove-frame {
   .oversetbutton();
   top: 0;
   right: 0;
 }
 
-.gif-creator-exit-expanded {
+.video-creator-exit-expanded {
   position: absolute;
   color: rgb(0 0 0 / 20%);
   font-size: 160%;

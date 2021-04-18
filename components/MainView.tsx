@@ -21,13 +21,13 @@ export default class MainView extends DCGView.Class<{
 
   template () {
     return (
-      <div class='gif-creator-main-view-container'>
+      <div class='video-creator-main-view-container'>
         <Tooltip
-          tooltip='GIF Creator menu'
+          tooltip='Video Creator menu'
           gravity='w'
         >
           <div
-            class='dcg-btn-flat-gray dcg-settings-pillbox dcg-action-settings gif-creator-action-menu'
+            class='dcg-btn-flat-gray dcg-settings-pillbox dcg-action-settings video-creator-action-menu'
             role='button'
             onTap={() => this.onTapMenuButton()}
             // TODO: manageFocus?
@@ -44,7 +44,7 @@ export default class MainView extends DCGView.Class<{
           {
             () => (
               <div
-                class='gif-creator-view-container dcg-settings-container dcg-left dcg-popover dcg-constrained-height-popover'
+                class='video-creator-view-container dcg-settings-container dcg-left dcg-popover dcg-constrained-height-popover'
                 didMount={() => this.didMountContainer()}
                 didUnmount={() => this.didUnmountContainer()}
                 // TODO: didMount and didUnmount to register escape key → close
@@ -73,12 +73,12 @@ export default class MainView extends DCGView.Class<{
         type: 'close-graph-settings'
       })
     }
-    jquery(document).on('dcg-tapstart.gif-creator-main-view wheel.gif-creator-main-view', (e: Event) => {
+    jquery(document).on('dcg-tapstart.video-creator-main-view wheel.video-creator-main-view', (e: Event) => {
       if (this.eventShouldCloseMenu(e)) {
         this.controller.closeMainView()
       }
     })
-    jquery(document).on('keydown.gif-creator-main-view', (e: KeyboardEvent) => {
+    jquery(document).on('keydown.video-creator-main-view', (e: KeyboardEvent) => {
       if (keys.lookup(e) === 'Esc' && !this.controller.isPlayPreviewExpanded) {
         this.controller.closeMainView()
       }
@@ -96,6 +96,6 @@ export default class MainView extends DCGView.Class<{
       '_domNode' in this._element
         ? this._element._domNode
         : this._element._element._domNode
-    ).length && !el.closest('.gif-creator-action-menu').length
+    ).length && !el.closest('.video-creator-action-menu').length
   }
 }

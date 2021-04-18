@@ -16,8 +16,8 @@ function onDisable () {
 }
 
 export default {
-  name: 'GIF Creator',
-  description: 'Easily export GIFs',
+  name: 'Video Creator',
+  description: 'Easily export videos',
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true

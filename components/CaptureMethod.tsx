@@ -21,7 +21,7 @@ export default class SelectCapture extends DCGView.Class<{
     return (
       <div>
         <SegmentedControl
-          class='gif-creator-select-capture-method'
+          class='video-creator-select-capture-method'
           names={
             () => (
               this.controller.hasSimulation()
@@ -40,7 +40,7 @@ export default class SelectCapture extends DCGView.Class<{
             () => ({
               'slider': () => (
                 <div>
-                  <div class='gif-creator-slider-settings'>
+                  <div class='video-creator-slider-settings'>
                     <SmallMathQuillInput
                       ariaLabel='slider variable'
                       onUserChangedLatex={v => this.controller.setSliderSetting('variable', v)}
@@ -88,7 +88,7 @@ export default class SelectCapture extends DCGView.Class<{
                   >
                     {
                       () => (
-                        <div class='gif-creator-simulation-navigate-container'>
+                        <div class='video-creator-simulation-navigate-container'>
                           <Button
                             color='green'
                             onTap={() => this.controller.addToSimulationIndex(-1)}
@@ -129,10 +129,10 @@ export default class SelectCapture extends DCGView.Class<{
         >
           {
             () => (
-              <div class='gif-creator-reset-bounds-wrapper'>
+              <div class='video-creator-reset-bounds-wrapper'>
                 <Button
                   color='light-gray'
-                  class='gif-creator-reset-bounds-button'
+                  class='video-creator-reset-bounds-button'
                   onTap={() => this.controller.resetMathBounds()}
                 >
                   Revert Viewport
@@ -141,7 +141,7 @@ export default class SelectCapture extends DCGView.Class<{
             )
           }
         </If>
-        <div class='gif-creator-capture'>
+        <div class='video-creator-capture'>
           <Tooltip
             tooltip={() => this.controller.isCaptureSizeDifferent ? 'Aspect ratio different' : ''}
             gravity='n'
@@ -153,7 +153,7 @@ export default class SelectCapture extends DCGView.Class<{
                   true: () => (
                     <Button
                       color='green'
-                      class='gif-creator-capture-frame-button'
+                      class='video-creator-capture-frame-button'
                       disabled={() => (
                         this.controller.isCapturing ||
                         this.controller.isExporting ||
@@ -167,7 +167,7 @@ export default class SelectCapture extends DCGView.Class<{
                   false: () => (
                     <Button
                       color='blue'
-                      class='gif-creator-cancel-capture-button'
+                      class='video-creator-cancel-capture-button'
                       onTap={() => this.controller.cancelCapture()}
                     >
                       Cancel
@@ -182,7 +182,7 @@ export default class SelectCapture extends DCGView.Class<{
           >
             {
               () => (
-                <div class='gif-creator-end-condition-settings'>
+                <div class='video-creator-end-condition-settings'>
                   While:
                   <SmallMathQuillInput
                     ariaLabel='simulation while'

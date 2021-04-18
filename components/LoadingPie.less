@@ -1,4 +1,4 @@
-.gif-creator-pie-container {
+.video-creator-pie-container {
   @full-width: 120px;
   @max-scale: 1.5;
 
@@ -6,26 +6,26 @@
   display: flex;
   justify-content: center;
 
-  .gif-creator-centered-pie {
+  .video-creator-centered-pie {
     width: @full-width;
     height: @full-width;
     position: relative;
   }
 
-  .gif-creator-pending {
+  .video-creator-pending {
     animation: dcg-loading-pulse 2.2s infinite;
 
-    .gif-creator-base-circle, .gif-creator-pie-overlay {
+    .video-creator-base-circle, .video-creator-pie-overlay {
       transform: scale(1);
     }
 
-    .gif-creator-pie-overlay {
+    .video-creator-pie-overlay {
       // a bit darker, to compensate for opacity set in dcg-loading-pulse animation
       filter: brightness(70%)
     }
   }
 
-  .gif-creator-base-circle, .gif-creator-pie-overlay {
+  .video-creator-base-circle, .video-creator-pie-overlay {
     position: absolute;
     left: 0;
     top: 0;
@@ -34,13 +34,13 @@
     height: 100%;
   }
 
-  .gif-creator-base-circle {
+  .video-creator-base-circle {
     transition: transform 200ms;
     background: hsv(0, 0, 90%);
     border-radius: 50%;
   }
 
-  .gif-creator-pie-overlay {
+  .video-creator-pie-overlay {
     path {
       fill: hsv(0, 0, 60%);
     }

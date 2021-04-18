@@ -1,6 +1,6 @@
-# Desmodder GIF Creator Plugin
+# Desmodder Video Creator Plugin
 
-Easily export GIFs directly in http://desmos.com/calculator, without needing GIFSmos.
+Easily export Videos and GIFs directly in http://desmos.com/calculator, without needing GIFsmos.
 
 Will support:
 

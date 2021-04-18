@@ -25,7 +25,7 @@ export default class MainPopup extends DCGView.Class<{
         false: () => this.templateNormal(),
         true: () => (
           <div class='dcg-popover-interior'>
-            <div class='gif-creator-export-in-progress'>
+            <div class='video-creator-export-in-progress'>
               Exporting ...
               <LoadingPie
                 progress={() => this.controller.exportProgress}
@@ -41,7 +41,7 @@ export default class MainPopup extends DCGView.Class<{
   templateNormal () {
     return (
       <div class='dcg-popover-interior'>
-        <div class='gif-creator-capture-menu'>
+        <div class='video-creator-capture-menu'>
           <div class='dcg-group-title'>
             Capture
           </div>
@@ -54,14 +54,14 @@ export default class MainPopup extends DCGView.Class<{
         >
           {
             () => (
-              <div class='gif-creator-preview-menu'>
+              <div class='video-creator-preview-menu'>
                 <div class='dcg-group-title'>
                   Preview
                 </div>
                 <div
                   class={() => ({
-                    'gif-creator-preview-outer': true,
-                    'gif-creator-preview-expanded': this.controller.isPlayPreviewExpanded
+                    'video-creator-preview-outer': true,
+                    'video-creator-preview-expanded': this.controller.isPlayPreviewExpanded
                   })}
                   onTapEnd={
                     (e: Event) => (
@@ -71,7 +71,7 @@ export default class MainPopup extends DCGView.Class<{
                     )
                   }
                 >
-                  <div class='gif-creator-preview-inner'>
+                  <div class='video-creator-preview-inner'>
                     <PreviewCarousel
                       controller={this.controller}
                     />
@@ -81,7 +81,7 @@ export default class MainPopup extends DCGView.Class<{
                       {
                         () => (
                           <div
-                            class='gif-creator-exit-expanded'
+                            class='video-creator-exit-expanded'
                             onTap={() => this.controller.togglePreviewExpanded()}
                           >
                             <i class='dcg-icon-remove' />
@@ -100,21 +100,21 @@ export default class MainPopup extends DCGView.Class<{
         >
           {
             () => (
-              <div class='gif-creator-export-menu'>
+              <div class='video-creator-export-menu'>
                 <div class='dcg-group-title'>
                   Export
                 </div>
-                <div class='gif-creator-select-export-type'>
+                <div class='video-creator-select-export-type'>
                   <SegmentedControl
                     names={fileTypeNames}
                     selectedIndex={() => this.getSelectedFileTypeIndex()}
                     setSelectedIndex={i => this.setSelectedFileTypeIndex(i)}
                   />
                 </div>
-                <div class='gif-creator-export'>
+                <div class='video-creator-export'>
                   <Button
                     color='green'
-                    class='gif-creator-export-frames-button'
+                    class='video-creator-export-frames-button'
                     onTap={() => this.controller.exportFrames()}
                     disabled={
                       () => (
@@ -127,7 +127,7 @@ export default class MainPopup extends DCGView.Class<{
                   >
                     Export as { () => this.controller.fileType }
                   </Button>
-                  <div class='gif-creator-fps-settings'>
+                  <div class='video-creator-fps-settings'>
                     FPS:
                     <SmallMathQuillInput
                       ariaLabel='fps'
@@ -160,6 +160,6 @@ export default class MainPopup extends DCGView.Class<{
 
   eventShouldCloseExpanded (e: Event) {
     const el = jquery(e.target)
-    return !el.closest('.gif-creator-preview-inner').length
+    return !el.closest('.video-creator-preview-inner').length
   }
 }

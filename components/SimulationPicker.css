@@ -1,11 +1,11 @@
-.gif-creator-simulation-rules .dcg-clickable-property-row {
+.video-creator-simulation-rules .dcg-clickable-property-row {
   padding: 6px 10px 8px;
   font-size: 85%;
   border: 1px solid rgb(0 0 0 / 20%);
   border-radius: 5px;
 }
 
-.gif-creator-simulation-rules .dcg-clickable-property-row .dcg-mq-math-mode {
+.video-creator-simulation-rules .dcg-clickable-property-row .dcg-mq-math-mode {
   padding: 0 8px;
   transform: translateY(1px);
 }

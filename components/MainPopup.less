@@ -1,36 +1,36 @@
-.gif-creator-select-export-type {
+.video-creator-select-export-type {
   margin-top: 5px;
   margin-bottom: 10px;
 }
 
-.gif-creator-preview-menu, .gif-creator-export-menu {
+.video-creator-preview-menu, .video-creator-export-menu {
   padding-top: 10px;
   border-top: 1px solid #ddd;
   margin-top: 10px;
 }
 
-.gif-creator-preview-outer:not(.gif-creator-preview-expanded) {
+.video-creator-preview-outer:not(.video-creator-preview-expanded) {
   // avoid scrollbar jiggle
   @scrollbar-width: 15px;
   @mw: (250px - @scrollbar-width);
   transform: translateX(calc((100% - @mw) / 2));
 
-  .gif-creator-preview-inner {
+  .video-creator-preview-inner {
     max-width: @mw;
   }
 }
 
-.gif-creator-export {
+.video-creator-export {
   display: flex;
   flex-direction: row-reverse;
   justify-content: space-between;
 }
 
-.gif-creator-export .gif-creator-fps-settings span.dcg-mq-editable-field.dcg-math-input {
+.video-creator-export .video-creator-fps-settings span.dcg-mq-editable-field.dcg-math-input {
   margin-left: 8px;
 }
 
-.gif-creator-preview-play {
+.video-creator-preview-play {
   display: flex;
   flex-direction: row-reverse;
 }

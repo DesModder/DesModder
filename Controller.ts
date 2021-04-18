@@ -565,13 +565,13 @@ export default class Controller {
   togglePreviewExpanded () {
     this.isPlayPreviewExpanded = !this.isPlayPreviewExpanded
     if (this.isPlayPreviewExpanded) {
-      jquery(document).on('keydown.gif-creator-preview-expanded', (e: KeyboardEvent) => {
+      jquery(document).on('keydown.video-creator-preview-expanded', (e: KeyboardEvent) => {
         if (keys.lookup(e) === 'Esc') {
           this.togglePreviewExpanded()
         }
       })
     } else {
-      jquery(document).off('keydown.gif-creator-preview-expanded')
+      jquery(document).off('keydown.video-creator-preview-expanded')
     }
     this.updateView()
   }

@@ -9,12 +9,12 @@ export default class LoadingPie extends DCGView.Class<{
 }> {
   template () {
     return (
-      <div class='gif-creator-pie-container'>
+      <div class='video-creator-pie-container'>
         <div class={() => ({
-          'gif-creator-centered-pie': true,
-          'gif-creator-pending': this.props.isPending()
+          'video-creator-centered-pie': true,
+          'video-creator-pending': this.props.isPending()
         })}>
-          <div class='gif-creator-base-circle'/>
+          <div class='video-creator-base-circle'/>
           {/*
             SVG can't be used directly as DCGView element because of SVG namespace
             reasons, and treating it as an HTMLElement causes it to be ignored
@@ -33,7 +33,7 @@ export default class LoadingPie extends DCGView.Class<{
     const progress = this.props.progress()
     // similar to React's dangerouslySetInnerHTML
     e.innerHTML = (0 <= progress && progress <= 1)
-      ? `<svg class='gif-creator-pie-overlay' viewBox='-1 -1 2 2'>
+      ? `<svg class='video-creator-pie-overlay' viewBox='-1 -1 2 2'>
           <path d='${this.getPiePath()}' />
         </svg>`
       : ''

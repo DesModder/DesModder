@@ -13,11 +13,11 @@ export default class PreviewCarousel extends DCGView.Class<{
 
   template () {
     return (
-      <div class='gif-creator-preview-carousel'>
+      <div class='video-creator-preview-carousel'>
         <div
           class={() => ({
-            'gif-creator-preview-prev-frame': true,
-            'gif-creator-preview-wrapped-frame':
+            'video-creator-preview-prev-frame': true,
+            'video-creator-preview-wrapped-frame':
               this.getFrameIndex(-1) > this.getFrameIndex(0)
           })}
           onTap={() => this.controller.addToPreviewIndex(-1)}
@@ -26,14 +26,14 @@ export default class PreviewCarousel extends DCGView.Class<{
             src={() => this.getFrame(-1)}
             draggable={false}
           />
-          <div class='gif-creator-preview-index'>
+          <div class='video-creator-preview-index'>
             { () => this.getFrameIndex(-1) + 1 }
           </div>
         </div>
         <div
           class={() => ({
-            'gif-creator-preview-next-frame': true,
-            'gif-creator-preview-wrapped-frame':
+            'video-creator-preview-next-frame': true,
+            'video-creator-preview-wrapped-frame':
               this.getFrameIndex(1) < this.getFrameIndex(0)
           })}
           onTap={() => this.controller.addToPreviewIndex(1)}
@@ -42,12 +42,12 @@ export default class PreviewCarousel extends DCGView.Class<{
             src={() => this.getFrame(1)}
             draggable={false}
           />
-          <div class='gif-creator-preview-index'>
+          <div class='video-creator-preview-index'>
             { () => this.getFrameIndex(1) + 1 }
           </div>
         </div>
         <div
-          class='gif-creator-preview-current-frame'
+          class='video-creator-preview-current-frame'
           onTap={
             () => (
               this.controller.isPlayPreviewExpanded
@@ -66,10 +66,10 @@ export default class PreviewCarousel extends DCGView.Class<{
             {
               () => (
                 <div
-                  class='gif-creator-preview-expand'
+                  class='video-creator-preview-expand'
                   onTap={
                     (e: Event) => {
-                      if (e.target && (e.target as HTMLElement).classList.contains('gif-creator-preview-expand')) {
+                      if (e.target && (e.target as HTMLElement).classList.contains('video-creator-preview-expand')) {
                         this.controller.togglePreviewExpanded()
                         e.stopPropagation()
                       }
@@ -82,7 +82,7 @@ export default class PreviewCarousel extends DCGView.Class<{
             }
           </If>
           <div
-            class='gif-creator-remove-frame'
+            class='video-creator-remove-frame'
             onTap={
               (e: Event) => {
                 this.controller.removeSelectedFrame()
@@ -92,7 +92,7 @@ export default class PreviewCarousel extends DCGView.Class<{
           >
             <i class='dcg-icon-delete' />
           </div>
-          <div class='gif-creator-preview-index'>
+          <div class='video-creator-preview-index'>
             { () => `${this.getFrameIndex(0) + 1} / ${this.controller.frames.length}` }
           </div>
           <If
@@ -101,7 +101,7 @@ export default class PreviewCarousel extends DCGView.Class<{
             {
               () => (
                 <div
-                  class='gif-creator-preview-play-pause'
+                  class='video-creator-preview-play-pause'
                   onTap={
                     (e: Event) => {
                       this.controller.togglePlayingPreview()
