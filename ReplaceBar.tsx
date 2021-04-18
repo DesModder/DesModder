@@ -2,6 +2,7 @@ import {
   DCGView, MathQuillView, Calc, desmosRequire
 } from 'desmodder'
 import Controller from './Controller'
+import './ReplaceBar.less'
 
 const autoOperatorNames = desmosRequire('main/mathquill-operators').getAutoOperators()
 
@@ -47,13 +48,11 @@ export default class ReplaceBar extends DCGView.Class<{
           {/* dcg-icon-search applies placement + icon, and
             dcg-icon-caret-right overrides icon to be the caret */}
           <i class='dcg-icon-search dcg-icon-caret-right' />
-          <i
-            class='dcg-icon-remove dcg-do-not-blur'
-            onTap={() => this.closeReplace()}
-          />
         </div>
+        {/* Using a standard Button looks horrible on the gray background */}
         <div
-          class='dcg-search-clear'
+          class='find-replace-replace-all'
+          role='button'
           onTap={() => this.controller.refactorAll()}
         >
           replace all

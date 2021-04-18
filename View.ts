@@ -25,7 +25,7 @@ export default class View {
     searchBar.parentNode.insertBefore(searchContainer, searchBar)
     searchContainer.appendChild(searchBar)
     this.mountNode = document.createElement('div')
-    this.mountNode.className = 'findandreplace-expression-replace-bar'
+    this.mountNode.className = 'find-replace-expression-replace-bar'
     searchContainer.appendChild(this.mountNode)
     this.replaceView = DCGView.mountToNode(
       ReplaceBar,
