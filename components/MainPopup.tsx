@@ -134,6 +134,8 @@ export default class MainPopup extends DCGView.Class<{
                       onUserChangedLatex={s => this.controller.setFPSLatex(s)}
                       hasError={() => !this.controller.isFPSValid()}
                       latex={() => this.controller.fpsLatex}
+                      isFocused={() => this.controller.isFocused('export-fps')}
+                      onFocusedChanged={b => this.controller.updateFocus('export-fps', b)}
                     />
                   </div>
                 </div>

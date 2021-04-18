@@ -38,6 +38,10 @@ function captureSizesEqual(a: CaptureSize, b: CaptureSize) {
   return a.width === b.width && a.height === b.height
 }
 
+type FocusedMQ = 'none' | 'capture-slider-var' | 'capture-slider-min' |
+  'capture-slider-max' | 'capture-slider-step' | 'capture-simulation-while' |
+  'export-fps'
+
 export default class Controller {
   view: View | null = null
   frames: PNGDataURI[] = []
@@ -45,6 +49,8 @@ export default class Controller {
   isCapturing = false
   fpsLatex = '30'
   fileType: OutFileType = 'gif'
+
+  focusedMQ: FocusedMQ = 'none'
 
   // ** export status
   isExporting = false
@@ -572,5 +578,18 @@ export default class Controller {
       this.togglePlayingPreview()
     }
     this.updateView()
+  }
+
+  updateFocus (location: FocusedMQ, isFocused: boolean) {
+    if (isFocused) {
+      this.focusedMQ = location
+    } else if (location === this.focusedMQ) {
+      this.focusedMQ = 'none'
+    }
+    this.updateView()
+  }
+
+  isFocused (location: FocusedMQ) {
+    return this.focusedMQ === location
   }
 }

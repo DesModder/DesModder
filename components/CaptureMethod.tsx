@@ -46,6 +46,8 @@ export default class SelectCapture extends DCGView.Class<{
                       onUserChangedLatex={v => this.controller.setSliderSetting('variable', v)}
                       hasError={() => !this.controller.isSliderSettingValid('variable')}
                       latex={() => this.controller.sliderSettings.variable}
+                      isFocused={() => this.controller.isFocused('capture-slider-var')}
+                      onFocusedChanged={b => this.controller.updateFocus('capture-slider-var', b)}
                     />
                     <StaticMathQuillView
                       latex='='
@@ -55,6 +57,8 @@ export default class SelectCapture extends DCGView.Class<{
                       onUserChangedLatex={v => this.controller.setSliderSetting('minLatex', v)}
                       hasError={() => !this.controller.isSliderSettingValid('minLatex')}
                       latex={() => this.controller.sliderSettings.minLatex}
+                      isFocused={() => this.controller.isFocused('capture-slider-min')}
+                      onFocusedChanged={b => this.controller.updateFocus('capture-slider-min', b)}
                     />
                     to
                     <SmallMathQuillInput
@@ -62,6 +66,8 @@ export default class SelectCapture extends DCGView.Class<{
                       onUserChangedLatex={v => this.controller.setSliderSetting('maxLatex', v)}
                       hasError={() => !this.controller.isSliderSettingValid('maxLatex')}
                       latex={() => this.controller.sliderSettings.maxLatex}
+                      isFocused={() => this.controller.isFocused('capture-slider-max')}
+                      onFocusedChanged={b => this.controller.updateFocus('capture-slider-max', b)}
                     />
                     , step
                     <SmallMathQuillInput
@@ -69,6 +75,8 @@ export default class SelectCapture extends DCGView.Class<{
                       onUserChangedLatex={v => this.controller.setSliderSetting('stepLatex', v)}
                       hasError={() => !this.controller.isSliderSettingValid('stepLatex')}
                       latex={() => this.controller.sliderSettings.stepLatex}
+                      isFocused={() => this.controller.isFocused('capture-slider-step')}
+                      onFocusedChanged={b => this.controller.updateFocus('capture-slider-step', b)}
                     />
                   </div>
                 </div>
@@ -181,6 +189,8 @@ export default class SelectCapture extends DCGView.Class<{
                     onUserChangedLatex={v => this.controller.setSimulationWhileLatex(v)}
                     hasError={() => !this.controller.isWhileLatexValid()}
                     latex={() => this.controller.simulationWhileLatex}
+                    isFocused={() => this.controller.isFocused('capture-simulation-while')}
+                    onFocusedChanged={b => this.controller.updateFocus('capture-simulation-while', b)}
                   />
                 </div>
               )
