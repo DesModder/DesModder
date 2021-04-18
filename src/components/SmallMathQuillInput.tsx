@@ -32,7 +32,8 @@ export default class SmallMathQuillInput extends DCGView.Class<{
             'dcg-math-field': true,
             'dcg-math-input': true,
             'dcg-invalid': this.hasError(),
-            'dcg-focus': false
+            'dcg-focus': this.props.isFocused(),
+            'dcg-mq-focused': this.props.isFocused()
           })}
           dcgDataLimit={40}
         />
