@@ -1,5 +1,7 @@
 import View from './View'
-import { Calc, SimulationModel, jquery, keys, Bounds } from 'desmodder'
+import {
+  Calc, SimulationModel, jquery, keys, Bounds, EvaluateSingleExpression
+} from 'desmodder'
 
 // kinda jank, but switching to moduleResolution: 'node' messes up
 // existing non-relative imports
@@ -16,8 +18,8 @@ interface SliderSettings {
   stepLatex: string
 }
 
-function isValidNumber (latex: string) {
-  return /^\s*\-?\d+(\.\d*)?\s*$/.test(latex)
+function isValidNumber(s: string) {
+  return !isNaN(EvaluateSingleExpression(s))
 }
 
 function boundsEqual (a: Bounds, b:Bounds) {
@@ -218,7 +220,7 @@ export default class Controller {
       gif: ['-lavfi', 'palettegen=stats_mode=single[pal],[0:v][pal]paletteuse=new=1']
     }[this.fileType]
 
-    const fps = parseFloat(this.fpsLatex)
+    const fps = EvaluateSingleExpression(this.fpsLatex)
 
     await ffmpeg.run(
       '-r', fps.toString(),
@@ -349,9 +351,9 @@ export default class Controller {
 
   async captureSlider () {
     const variable = this.sliderSettings.variable
-    const min = parseFloat(this.sliderSettings.minLatex)
-    const max = parseFloat(this.sliderSettings.maxLatex)
-    const step = parseFloat(this.sliderSettings.stepLatex)
+    const min = EvaluateSingleExpression(this.sliderSettings.minLatex)
+    const max = EvaluateSingleExpression(this.sliderSettings.maxLatex)
+    const step = EvaluateSingleExpression(this.sliderSettings.stepLatex)
     const slider = this.getMatchingSlider()
     if (slider === undefined) {
       return
@@ -532,7 +534,7 @@ export default class Controller {
     }
     this.updateView()
 
-    const fps = parseFloat(this.fpsLatex)
+    const fps = EvaluateSingleExpression(this.fpsLatex)
     if (this.isPlayingPreview) {
       this.playPreviewInterval = window.setInterval(() => {
         this.addToPreviewIndex(1)
