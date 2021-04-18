@@ -133,7 +133,8 @@ export default interface Calc {
     stopPlayingSimulation(): void,
     stopAllSliders(): void,
     isKeypadOpen(): boolean,
-    getKeypadHeight(): number
+    getKeypadHeight(): number,
+    isDegreeMode(): boolean
   },
   selectedExpressionId: string,
   //// public

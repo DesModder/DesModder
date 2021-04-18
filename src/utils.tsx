@@ -1,6 +1,12 @@
-import { desmosRequire } from 'globals/window'
+import { desmosRequire, Calc } from 'globals/window'
 export const jquery = desmosRequire('jquery')
 export const keys = desmosRequire('keys')
+const _EvaluateSingleExpression = desmosRequire('core/math/evaluate-single-expression').default
+
+export function EvaluateSingleExpression(s: string): number {
+  // may also return NaN (which is a number)
+  return _EvaluateSingleExpression(s, Calc.controller.isDegreeMode())
+}
 
 interface FuncAny {
   (): any

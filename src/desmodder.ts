@@ -34,6 +34,7 @@ export {
   default as DCGView
 } from 'DCGView'
 export {
+  EvaluateSingleExpression,
   pollForValue,
   mergeClass, MaybeClassDict,
   jquery,
