@@ -6,12 +6,14 @@ export default class SmallMathQuillInput extends DCGView.Class<{
   ariaLabel: string,
   onUserChangedLatex: (s: string) => void,
   latex: string,
-  hasError?: boolean
+  hasError?: boolean,
+  onFocusedChanged: ((isFocused: boolean) => void),
+  isFocused: boolean
 }> {
   template () {
     return (
       <MathQuillView
-        isFocused={false}
+        isFocused={() => this.props.isFocused()}
         latex={this.props.latex()}
         capExpressionSize={80}
         config={{
@@ -20,7 +22,7 @@ export default class SmallMathQuillInput extends DCGView.Class<{
         getAriaLabel={() => this.props.ariaLabel()}
         getAriaPostLabel=''
         onUserChangedLatex={s => this.props.onUserChangedLatex(s)}
-        onFocusedChanged={() => {}}
+        onFocusedChanged={(isFocused) => this.props.onFocusedChanged(isFocused)}
         onUserPressedKey={(key: string, e: KeyboardEvent) => {
           const focusedMQ = MathQuillView.getFocusedMathquill()
           focusedMQ.keystroke(key, e)

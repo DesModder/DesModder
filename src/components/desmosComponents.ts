@@ -21,7 +21,7 @@ abstract class MathQuillViewComponent extends ClassComponent<{
   hasError?: boolean,
   selectOnFocus?: boolean,
   needsSystemKeypad?: boolean,
-  onFocusedChanged?: () => void,
+  onFocusedChanged?: (isFocused: boolean) => void,
   noFadeout?: boolean
 }> {}
 
