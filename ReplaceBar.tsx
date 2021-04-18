@@ -51,7 +51,8 @@ export default class ReplaceBar extends DCGView.Class<{
         </div>
         {/* Using a standard Button looks horrible on the gray background */}
         <div
-          class='find-replace-all'
+          class='find-replace-replace-all'
+          role='button'
           onTap={() => this.controller.refactorAll()}
         >
           replace all
