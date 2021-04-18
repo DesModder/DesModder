@@ -10,15 +10,22 @@ view.init(controller)
 
 let dispatchListenerID: string
 
+function tryInitView () {
+  try {
+    view.initView()
+  } catch {
+    console.warn('Failed to initialize find-replace view')
+  }
+}
+
 function onEnable () {
+  if (Calc.controller.getExpressionSearchOpen()) {
+    tryInitView()
+  }
   dispatchListenerID = Calc.controller.dispatcher.register(
     ({ type }) => {
       if (type === 'open-expression-search') {
-        try {
-          view.initView()
-        } catch {
-          console.warn('Failed to initialize find-replace view')
-        }
+        tryInitView()
       } else if (type === 'close-expression-search') {
         view.destroyView()
       }
