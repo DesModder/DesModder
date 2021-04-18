@@ -70,6 +70,8 @@ export default class Controller {
   }
   currentSimulationID: string | null = null
   simulationWhileLatex = ''
+  _isWhileLatexValid = false
+  whileLatexHelper: ReturnType<typeof Calc.HelperExpression> | null = null
   captureCancelled: boolean = false
 
   // ** play preview
@@ -380,11 +382,13 @@ export default class Controller {
   }
 
   isWhileLatexValid () {
-    // not a perfect solution. See notes for improvement
-    // (section titled "improve handling of whileLatex")
-    return '\\geq \\leq = > <'
-      .split(' ')
-      .some(s => this.simulationWhileLatex.includes(s))
+    return this._isWhileLatexValid
+  }
+
+  getNewWhileLatexHelper () {
+    return Calc.HelperExpression({
+      latex: `\\left\\{${this.simulationWhileLatex}:1, 0\\right\\}`
+    })
   }
 
   captureSimulation () {
@@ -398,9 +402,7 @@ export default class Controller {
       return
     }
 
-    const helper = Calc.HelperExpression({
-      latex: `\\left\\{${this.simulationWhileLatex}\\right\\}`
-    })
+    const helper = this.getNewWhileLatexHelper()
 
     helper.observe('numericValue', async () => {
       helper.unobserve('numericValue')
@@ -475,6 +477,20 @@ export default class Controller {
 
   setSimulationWhileLatex (s: string) {
     this.simulationWhileLatex = s
+    if (this.whileLatexHelper !== null) {
+      this.whileLatexHelper.unobserve('numericValue')
+    }
+    const helper = this.getNewWhileLatexHelper()
+    // stored for the purpose of unobserving
+    this.whileLatexHelper = helper
+    helper.observe('numericValue', () => {
+      // must start with 'true'
+      const newIsWhileLatexValid = helper.numericValue === 1
+      if (newIsWhileLatexValid !== this._isWhileLatexValid) {
+        this._isWhileLatexValid = newIsWhileLatexValid
+        this.updateView()
+      }
+    })
     this.updateView()
   }
 
