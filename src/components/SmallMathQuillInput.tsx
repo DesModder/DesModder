@@ -23,10 +23,6 @@ export default class SmallMathQuillInput extends DCGView.Class<{
         getAriaPostLabel=''
         onUserChangedLatex={s => this.props.onUserChangedLatex(s)}
         onFocusedChanged={(isFocused) => this.props.onFocusedChanged(isFocused)}
-        onUserPressedKey={(key: string, e: KeyboardEvent) => {
-          const focusedMQ = MathQuillView.getFocusedMathquill()
-          focusedMQ.keystroke(key, e)
-        }}
         hasError={this.hasError()}
         selectOnFocus
         needsSystemKeypad={false}
