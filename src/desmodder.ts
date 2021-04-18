@@ -9,6 +9,12 @@
 
 export * from 'components/desmosComponents'
 export {
+  ExpressionModel,
+  SimulationModel,
+  TableModel,
+  Bounds
+} from 'globals/Calc'
+export {
   Calc,
   // Try to avoid using desmosRequire in plugin code
   // (especially for modules that are likely to be used in other plugins)
@@ -16,9 +22,11 @@ export {
   desmosRequire,
   default as window
 } from 'globals/window'
-export {
-  default as Toggle
-} from 'components/Toggle'
+export { default as Toggle } from 'components/Toggle'
+export { default as SmallMathQuillInput } from 'components/SmallMathQuillInput'
+export { default as SegmentedControl } from 'components/SegmentedControl'
+export { default as StaticMathQuillView } from 'components/StaticMathQuillView'
+export { default as Button } from 'components/Button'
 export {
   LooseProps,
   Props,
@@ -26,7 +34,9 @@ export {
   default as DCGView
 } from 'DCGView'
 export {
+  EvaluateSingleExpression,
   pollForValue,
+  mergeClass, MaybeClassDict,
   jquery,
   keys
 } from 'utils'

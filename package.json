@@ -10,6 +10,7 @@
     "dist/*.js"
   ],
   "scripts": {
+    "postinstall": "(cd src/plugins/video-creator && npm install)",
     "build": "webpack --mode production --config config/webpack.config.base.js",
     "dev": "webpack --mode development --config config/webpack.config.dev.js"
   },
@@ -21,6 +22,8 @@
     "@types/chrome": "0.0.134",
     "copy-webpack-plugin": "^8.1.0",
     "css-loader": "^5.2.0",
+    "less": "^4.1.1",
+    "less-loader": "^8.1.0",
     "style-loader": "^2.0.0",
     "ts-loader": "^8.1.0",
     "typescript": "^4.2.3",

@@ -60,16 +60,19 @@ export default class Controller {
 
   disablePlugin (i: number) {
     const plugin = this.plugins[i]
-    if (this.pluginsEnabled[i] && plugin.onDisable) {
-      plugin.onDisable()
-      this.pluginsEnabled[i] = false
-      this.updateMenuView()
+    if (plugin !== undefined) {
+      if (this.pluginsEnabled[i] && plugin.onDisable) {
+        plugin.onDisable()
+        this.pluginsEnabled[i] = false
+        this.updateMenuView()
+      }
     }
   }
 
   enablePlugin (i: PluginID) {
-    if (!this.pluginsEnabled[i]) {
-      this.plugins[i].onEnable()
+    const plugin = this.plugins[i]
+    if (!this.pluginsEnabled[i] && plugin !== undefined) {
+      plugin.onEnable()
       this.pluginsEnabled[i] = true
       this.updateMenuView()
     }
@@ -84,10 +87,11 @@ export default class Controller {
   }
 
   isPluginEnabled (i: PluginID) {
-    return this.pluginsEnabled[i]
+    return this.pluginsEnabled[i] ?? false
   }
 
   canTogglePlugin (i: PluginID) {
-    return !(this.pluginsEnabled[i] && !('onDisable' in this.plugins[i]))
+    const plugin = this.plugins[i]
+    return !(plugin !== undefined && this.pluginsEnabled[i] && !('onDisable' in plugin))
   }
 }

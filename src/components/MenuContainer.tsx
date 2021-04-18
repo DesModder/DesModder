@@ -5,7 +5,9 @@ import { jquery, keys } from 'utils'
 import Controller from 'Controller'
 import { Calc } from 'globals/window'
 
-export default class MenuContainer extends DCGView.Class {
+export default class MenuContainer extends DCGView.Class<{
+  controller: Controller
+}> {
   controller!: Controller
 
   init () {
@@ -37,7 +39,7 @@ export default class MenuContainer extends DCGView.Class {
           {
             () => (
               <div
-                class='desmodder-view-container dcg-settings-container desmodder-menu-container dcg-left dcg-popover dcg-constrained-height-popover'
+                class='desmodder-view-container dcg-settings-container desmodder-menu-container dcg-left dcg-popover'
                 style={{
                   position: 'absolute',
                   top: '46px',
@@ -46,7 +48,6 @@ export default class MenuContainer extends DCGView.Class {
                 }}
                 didMount={() => this.didMountContainer()}
                 didUnmount={() => this.didUnmountContainer()}
-                // TODO: didMount and didUnmount to register escape key → close
               >
                 <Menu controller={this.controller} />
                 <div class='dcg-arrow' />
@@ -91,7 +92,9 @@ export default class MenuContainer extends DCGView.Class {
   eventShouldCloseMenu (e: Event) {
     // this.node refers to the generated node from DCGView
     const el = jquery(e.target)
-    return !el.closest(this._element._domNode).length &&
-      !el.closest('.desmodder-action-menu').length
+    return !el.closest('_domNode' in this._element
+      ? this._element._domNode
+      : this._element._element._domNode
+    ).length && !el.closest('.desmodder-action-menu').length
   }
 }

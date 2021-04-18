@@ -3,7 +3,9 @@ import { Tooltip } from './desmosComponents'
 import Toggle from './Toggle'
 import Controller from 'Controller'
 
-export default class Menu extends DCGView.Class {
+export default class Menu extends DCGView.Class<{
+  controller: Controller
+}> {
   controller!: Controller
 
   init () {
