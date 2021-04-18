@@ -14,7 +14,7 @@ window.DesModder = {
   registerPlugin: controller.registerPlugin
 }
 
-pollForValue(() => window.Calc).then(() => {
+pollForValue(() => window.Calc && window.Calc.controller).then(() => {
   controller.init(view)
   view.init(controller)
 
