@@ -5,5 +5,5 @@
 	path = src/plugins/find-replace
 	url = https://github.com/jared-hughes/desmodder-find-replace
 [submodule "src/plugins/gif-creator"]
-	path = src/plugins/gif-creator
-	url = https://github.com/jared-hughes/desmodder-gif-creator
+	path = src/plugins/video-creator
+	url = https://github.com/jared-hughes/desmodder-video-creator.git

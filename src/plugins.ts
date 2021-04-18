@@ -1,7 +1,7 @@
 import duplicateHotkey from 'plugins/duplicateHotkey'
 import findReplace from 'plugins/find-replace/index'
 import wolfram2desmos from 'plugins/wolfram2desmos'
-import gifCreator from 'plugins/gif-creator/index'
+import videoCreator from 'plugins/video-creator/index'
 
 export interface Plugin {
   name: string,
@@ -26,7 +26,7 @@ export type PluginID = number
 // these plugins will be listed in list order in the menu
 // place closer to the top: plugins that people are more likely to adjust
 export default [
-  gifCreator,
+  videoCreator,
   duplicateHotkey,
   findReplace,
   wolfram2desmos
