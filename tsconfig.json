@@ -11,7 +11,5 @@
     "strict": true,
     "noUncheckedIndexedAccess": true
   },
-  "include": [
-    "./src/"
-  ]
+  "include": ["./src/"]
 }

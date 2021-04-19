@@ -1,77 +1,73 @@
-import { desmosRequire } from 'globals/window'
-const DCGView = desmosRequire('dcgview') as DCGViewModule
+import { desmosRequire } from "globals/window";
+const DCGView = desmosRequire("dcgview") as DCGViewModule;
 
 type OrConst<T> = {
-  [K in keyof T]:
-    T[K] extends Function
-      ? T[K]
-      : T[K] | (() => T[K])
-}
+  [K in keyof T]: T[K] extends Function ? T[K] : T[K] | (() => T[K]);
+};
 
 type ToFunc<T> = {
-  [K in keyof T]:
-    T[K] extends Function
-      ? T[K]
-      : () => T[K]
-}
+  [K in keyof T]: T[K] extends Function ? T[K] : () => T[K];
+};
 
-export abstract class ClassComponent<PropsType=Props> {
-  props!: ToFunc<PropsType>
-  children!: unknown
+export abstract class ClassComponent<PropsType = Props> {
+  props!: ToFunc<PropsType>;
+  children!: unknown;
   constructor(_props: OrConst<PropsType>) {}
   init(): void {}
-  abstract template(): unknown
-  _element!: (
-    {
-      _domNode: HTMLElement
-    } |
-    {
-      _element: {
-        _domNode: HTMLElement
+  abstract template(): unknown;
+  _element!:
+    | {
+        _domNode: HTMLElement;
       }
-    }
-  )
+    | {
+        _element: {
+          _domNode: HTMLElement;
+        };
+      };
 }
 
-type Component = ClassComponent | (() => string)
+type Component = ClassComponent | (() => string);
 
 export interface LooseProps {
-  [key: string]: any
+  [key: string]: any;
 }
 
 export interface Props {
-  [key: string]: Function
+  [key: string]: Function;
 }
 
 export interface MountedComponent {
-  update(): void
+  update(): void;
 }
 
 interface DCGViewModule {
-  Class: typeof ClassComponent,
-  const<T>(v: T): () => T,
-  createElement(el: Component, props: Props, ...children: Component[]): unknown,
+  Class: typeof ClassComponent;
+  const<T>(v: T): () => T;
+  createElement(el: Component, props: Props, ...children: Component[]): unknown;
   // couldn't figure out type for `comp`, so I just put | any
-  mountToNode(comp: ClassComponent | any, el: HTMLElement, props: Props): MountedComponent,
-  unmountFromNode(el: HTMLElement): void
+  mountToNode(
+    comp: ClassComponent | any,
+    el: HTMLElement,
+    props: Props
+  ): MountedComponent;
+  unmountFromNode(el: HTMLElement): void;
 }
-
 
 export default {
   ...DCGView,
-  jsx: jsx
-}
+  jsx: jsx,
+};
 
 declare global {
   namespace JSX {
     interface IntrinsicAttributes {
-      class?: string | {[key: string]: boolean}
+      class?: string | { [key: string]: boolean };
     }
     interface IntrinsicElements {
-      div: any,
-      i: any,
-      span: any,
-      img: any
+      div: any;
+      i: any;
+      span: any;
+      img: any;
     }
   }
 }
@@ -97,18 +93,20 @@ declare global {
  * stateless anyway (state control in Model.js)
  */
 
-function jsx (el: Component, props: LooseProps, ...children: Component[]) {
+function jsx(el: Component, props: LooseProps, ...children: Component[]) {
   /* Handle differences between typescript's expectation and DCGView */
   if (!Array.isArray(children)) {
-    children = [children]
+    children = [children];
   }
   // "Text should be a const or a getter:"
-  children = children.map(e => typeof e === 'string' ? DCGView.const(e) : e)
+  children = children.map((e) =>
+    typeof e === "string" ? DCGView.const(e) : e
+  );
   for (const k in props) {
     // DCGView.createElement also expects 0-argument functions
-    if (typeof props[k] !== 'function') {
-      props[k] = DCGView.const(props[k])
+    if (typeof props[k] !== "function") {
+      props[k] = DCGView.const(props[k]);
     }
   }
-  return DCGView.createElement(el, props, ...children)
+  return DCGView.createElement(el, props, ...children);
 }

@@ -2,10 +2,10 @@
 
 Several plugins for the Desmos graphing calculator, bundled into a single extension:
 
- - Find and replace expressions
- - Paste ASCIIMath (such as the results of Wolfram Alpha queries) into Desmos
- - Press Ctrl+Q to duplicate an expression
- - More to come, including GIF exports via sliders and simulations!
+- Find and replace expressions
+- Paste ASCIIMath (such as the results of Wolfram Alpha queries) into Desmos
+- Press Ctrl+Q to duplicate an expression
+- More to come, including GIF exports via sliders and simulations!
 
 Keep in mind that many features of this extension rely on unofficial, undocumented, or unstable components of Desmos. When something stops working, report it on http://github.com/jared-hughes/DesModder/issues with a description of the issue.
 
@@ -73,7 +73,6 @@ There are two types of plugins:
 - graph dependencies
   - these are needed for the graph to run
   - example: DesThree or Expressions Nested Too Deeply Bypass which add actual visual features.
-
 
 ## The name
 

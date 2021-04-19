@@ -1,15 +1,15 @@
-import Calc from './Calc'
+import Calc from "./Calc";
 
 interface windowConfig extends Window {
-  require(s: string): any,
-  Calc: Calc,
-  DesModder: any
+  require(s: string): any;
+  Calc: Calc;
+  DesModder: any;
 }
 
-declare var window: windowConfig
+declare var window: windowConfig;
 
-export default window
+export default window;
 
-export const Calc = window.Calc
+export const Calc = window.Calc;
 
-export const desmosRequire = window.require
+export const desmosRequire = window.require;
