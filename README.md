@@ -2,7 +2,7 @@
 
 Easily export Videos and GIFs directly in http://desmos.com/calculator, without needing GIFsmos.
 
-Current supports:
+Currently supports:
 
 - taking a frame on button press
 - taking a frame on each step of a slider
