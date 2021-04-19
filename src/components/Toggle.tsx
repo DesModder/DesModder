@@ -1,29 +1,29 @@
-import DCGView from 'DCGView'
+import DCGView from "DCGView";
 
 export default class Toggle extends DCGView.Class<{
   toggled(): boolean;
   disabled(): boolean;
   onChange(): void;
 }> {
-  template () {
+  template() {
     return (
       <div
         class={() => ({
-          'dcg-toggle-view': true,
-          'dcg-toggled': this.props.toggled()
+          "dcg-toggle-view": true,
+          "dcg-toggled": this.props.toggled(),
         })}
-        style={() => (
+        style={() =>
           this.props.disabled()
             ? {
                 opacity: 0.3,
-                cursor: 'not-allowed'
+                cursor: "not-allowed",
               }
             : {}
-        )}
+        }
         onTap={() => this.props.onChange()}
       >
-        <div class='dcg-toggle-switch' />
+        <div class="dcg-toggle-switch" />
       </div>
-    )
+    );
   }
 }

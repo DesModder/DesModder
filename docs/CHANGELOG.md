@@ -8,20 +8,20 @@ Regarding version numbers: The `1.0` release will be when the plugin API is much
 
 Adds dev plugins:
 
- - Video Creator
+- Video Creator
 
 No graph-dependency plugins are included.
 
 Bug fixes:
 
- - Load correctly even if `Calc.controller` takes longer to be defined (#12)
- - Rework of find-replace UI to deal with breaking change introduced by Desmos modifying that interface (looks cleaner now)
- - Many minor UI changes
+- Load correctly even if `Calc.controller` takes longer to be defined (#12)
+- Rework of find-replace UI to deal with breaking change introduced by Desmos modifying that interface (looks cleaner now)
+- Many minor UI changes
 
 Plugin API:
 
- - Broaden `Calc` interface
- - Add a few components including `Button`, `SegmentedControl`, and `SmallMathQuillInput`
+- Broaden `Calc` interface
+- Add a few components including `Button`, `SegmentedControl`, and `SmallMathQuillInput`
 
 ## 0.1.0
 
@@ -29,12 +29,13 @@ First release. As this is an `0.*` release, expect features to change drasticall
 
 Includes dev plugins:
 
- - Duplicate Expression Hotkey
- - Wolfram2Desmos
- - Find and Replace
+- Duplicate Expression Hotkey
+- Wolfram2Desmos
+- Find and Replace
 
 No graph-dependency plugins are included.
 
 API:
- - `window.DesModder.registerPlugin` is exposed to allow plugins to be registered in Tampermonkey userscripts, but consider it unstable for now.
- - other properties of `window.DesModder` should not be accessed.
+
+- `window.DesModder.registerPlugin` is exposed to allow plugins to be registered in Tampermonkey userscripts, but consider it unstable for now.
+- other properties of `window.DesModder` should not be accessed.
