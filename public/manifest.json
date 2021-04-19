@@ -1,8 +1,8 @@
 {
-  "name": "DesModder",
-  "description": "Unified location for various Desmos plugins",
+  "name": "DesModder for Desmos",
+  "description": "Unofficial plugins for Desmos, bundled together",
   "manifest_version": 3,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "icons": {
     "48": "icon48.png",
     "128": "icon128.png"
