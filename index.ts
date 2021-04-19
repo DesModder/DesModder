@@ -1,15 +1,26 @@
+import { Calc } from "desmodder";
+
+let initialSettings: null | typeof Calc.settings = null;
+
 function onEnable() {
-  // template
+  initialSettings = Calc.settings;
+  Calc.updateSettings({
+    clickableObjects: true,
+    advancedStyling: true,
+    administerSecretFolders: true,
+  });
 }
 
 function onDisable() {
-  // template
+  if (initialSettings !== null) {
+    Calc.updateSettings(initialSettings);
+  }
 }
 
 export default {
-  name: "Template plugin name",
-  description: "Template plugin description",
+  name: "Desmos settings",
+  description: "Modify settings built-in to Desmos, including clickableObjects",
   onEnable: onEnable,
   onDisable: onDisable,
-  enabledByDefault: true,
+  enabledByDefault: false,
 };
