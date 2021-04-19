@@ -1,4 +1,5 @@
 import DCGView from "DCGView";
+import "./Toggle.less";
 
 export default class Toggle extends DCGView.Class<{
   toggled(): boolean;
@@ -11,15 +12,8 @@ export default class Toggle extends DCGView.Class<{
         class={() => ({
           "dcg-toggle-view": true,
           "dcg-toggled": this.props.toggled(),
+          "desmodder-disabled-toggle": this.props.disabled(),
         })}
-        style={() =>
-          this.props.disabled()
-            ? {
-                opacity: 0.3,
-                cursor: "not-allowed",
-              }
-            : {}
-        }
         onTap={() => this.props.onChange()}
       >
         <div class="dcg-toggle-switch" />

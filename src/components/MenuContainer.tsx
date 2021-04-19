@@ -4,6 +4,7 @@ import Menu from "./Menu";
 import { jquery, keys } from "utils";
 import Controller from "Controller";
 import { Calc } from "globals/window";
+import "./MenuContainer.less";
 
 export default class MenuContainer extends DCGView.Class<{
   controller: Controller;
@@ -34,12 +35,6 @@ export default class MenuContainer extends DCGView.Class<{
           {() => (
             <div
               class="desmodder-view-container dcg-settings-container desmodder-menu-container dcg-left dcg-popover"
-              style={{
-                position: "absolute",
-                top: "46px",
-                right: "38px",
-                "line-height": "1em",
-              }}
               didMount={() => this.didMountContainer()}
               didUnmount={() => this.didUnmountContainer()}
             >

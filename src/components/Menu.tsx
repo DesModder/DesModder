@@ -2,6 +2,7 @@ import DCGView from "DCGView";
 import { Tooltip } from "./desmosComponents";
 import Toggle from "./Toggle";
 import Controller from "Controller";
+import "./Menu.less";
 
 export default class Menu extends DCGView.Class<{
   controller: Controller;
@@ -19,20 +20,10 @@ export default class Menu extends DCGView.Class<{
         <div class="dcg-group-title">DesModder plugins</div>
         {this.controller.getPlugins().map((plugin, pluginIndex) => (
           <div
-            class="dcg-options-menu-section"
-            style={{
-              "border-top": "1px solid #e2e2e2",
-              "margin-top": "10px",
-              "padding-top": "10px",
-            }}
+            class="dcg-options-menu-section desmodder-plugin-section"
             key={pluginIndex}
           >
-            <div
-              class="dcg-options-menu-section-title"
-              style={{
-                color: "#666",
-              }}
-            >
+            <div class="dcg-options-menu-section-title desmodder-plugin-title">
               <Tooltip tooltip={plugin.description}>{plugin.name}</Tooltip>
               <Toggle
                 toggled={() => this.controller.isPluginEnabled(pluginIndex)}
