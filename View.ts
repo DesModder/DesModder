@@ -1,56 +1,52 @@
-import { DCGView,  MountedComponent } from 'desmodder'
-import ReplaceBar from './ReplaceBar'
-import Controller from './Controller'
+import { DCGView, MountedComponent } from "desmodder";
+import ReplaceBar from "./ReplaceBar";
+import Controller from "./Controller";
 
 export default class View {
-  controller!: Controller
-  mountNode: HTMLElement | null = null
-  replaceView: MountedComponent | null = null
+  controller!: Controller;
+  mountNode: HTMLElement | null = null;
+  replaceView: MountedComponent | null = null;
 
-  init (controller: Controller) {
-    this.controller = controller
+  init(controller: Controller) {
+    this.controller = controller;
   }
 
-  initView () {
+  initView() {
     if (this.mountNode !== null) {
       // already open
-      return
+      return;
     }
-    const searchBar = document.querySelector('.dcg-expression-search-bar')
+    const searchBar = document.querySelector(".dcg-expression-search-bar");
     if (searchBar === null) {
-      throw new Error('Search bar not found')
+      throw new Error("Search bar not found");
     }
-    const searchContainer = document.createElement('div')
-    searchContainer.style.display = 'flex'
-    searchContainer.style.flexDirection = 'column'
+    const searchContainer = document.createElement("div");
+    searchContainer.style.display = "flex";
+    searchContainer.style.flexDirection = "column";
     if (searchBar.parentNode === null) {
-      throw new Error('Search bar parent node not found')
+      throw new Error("Search bar parent node not found");
     }
-    searchBar.parentNode.insertBefore(searchContainer, searchBar)
-    searchContainer.appendChild(searchBar)
-    this.mountNode = document.createElement('div')
-    this.mountNode.className = 'find-replace-expression-replace-bar'
-    searchContainer.appendChild(this.mountNode)
-    this.replaceView = DCGView.mountToNode(
-      ReplaceBar,
-      this.mountNode,
-      {
-        controller: DCGView.const(this.controller)
-      }
-    )
+    searchBar.parentNode.insertBefore(searchContainer, searchBar);
+    searchContainer.appendChild(searchBar);
+    this.mountNode = document.createElement("div");
+    this.mountNode.className = "find-replace-expression-replace-bar";
+    searchContainer.appendChild(this.mountNode);
+    this.replaceView = DCGView.mountToNode(ReplaceBar, this.mountNode, {
+      controller: DCGView.const(this.controller),
+    });
   }
 
-  destroyView () {
+  destroyView() {
     if (this.mountNode === null) {
       // the view is already destroyed, so no need to throw an error
-      return
+      return;
     }
-    DCGView.unmountFromNode(this.mountNode)
-    this.mountNode = null
-    this.replaceView = null
+    DCGView.unmountFromNode(this.mountNode);
+    this.mountNode = null;
+    this.replaceView = null;
   }
 
-  updateReplaceView () {
-    this.replaceView && this.replaceView.update()
+  updateReplaceView() {
+    this.replaceView && this.replaceView.update();
   }
 }

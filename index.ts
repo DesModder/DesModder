@@ -1,48 +1,46 @@
-import Controller from './Controller'
-import View from './View'
-import { Calc } from 'desmodder'
+import Controller from "./Controller";
+import View from "./View";
+import { Calc } from "desmodder";
 
-const controller = new Controller()
-const view = new View()
+const controller = new Controller();
+const view = new View();
 
-controller.init(view)
-view.init(controller)
+controller.init(view);
+view.init(controller);
 
-let dispatchListenerID: string
+let dispatchListenerID: string;
 
-function tryInitView () {
+function tryInitView() {
   try {
-    view.initView()
+    view.initView();
   } catch {
-    console.warn('Failed to initialize find-replace view')
+    console.warn("Failed to initialize find-replace view");
   }
 }
 
-function onEnable () {
+function onEnable() {
   if (Calc.controller.getExpressionSearchOpen()) {
-    tryInitView()
+    tryInitView();
   }
-  dispatchListenerID = Calc.controller.dispatcher.register(
-    ({ type }) => {
-      if (type === 'open-expression-search') {
-        tryInitView()
-      } else if (type === 'close-expression-search') {
-        view.destroyView()
-      }
-      // may want to listen to update-expression-search-str
+  dispatchListenerID = Calc.controller.dispatcher.register(({ type }) => {
+    if (type === "open-expression-search") {
+      tryInitView();
+    } else if (type === "close-expression-search") {
+      view.destroyView();
     }
-  )
+    // may want to listen to update-expression-search-str
+  });
 }
 
-function onDisable () {
-  Calc.controller.dispatcher.unregister(dispatchListenerID)
-  view.destroyView()
+function onDisable() {
+  Calc.controller.dispatcher.unregister(dispatchListenerID);
+  view.destroyView();
 }
 
 export default {
-  name: 'Find and Replace',
-  description: 'Easily refactor variable names in Ctrl+F Menu',
+  name: "Find and Replace",
+  description: "Easily refactor variable names in Ctrl+F Menu",
   onEnable: onEnable,
   onDisable: onDisable,
-  enabledByDefault: true
-}
+  enabledByDefault: true,
+};
