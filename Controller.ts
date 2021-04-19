@@ -72,6 +72,7 @@ export default class Controller {
   // -1 while pending/waiting
   // 0 to 1 during encoding
   exportProgress = 0;
+  ffmpeg: null | FFmpeg = null;
 
   // ** capture methods
   captureMethod: CaptureMethod = "once";
@@ -266,23 +267,24 @@ export default class Controller {
     this.setExportProgress(-1);
 
     // reference https://gist.github.com/SlimRunner/3b0a7571f04d3a03bff6dbd9de6ad729#file-desmovie-user-js-L278
-    const ffmpeg = createFFmpeg({ log: true });
-    ffmpeg.setLogging(false);
-    ffmpeg.setLogger(({ type, message }) => {
-      if (type === "fferr") {
-        const match = message.match(/frame=\s*(?<frame>\d+)/);
-        if (match === null) {
-          return;
-        } else {
-          const frame = (match.groups as { frame: string }).frame;
-          let denom = this.frames.length - 1;
-          if (denom === 0) denom = 1;
-          const ratio = parseInt(frame) / denom;
-          this.setExportProgress(ratio);
+    if (this.ffmpeg === null) {
+      this.ffmpeg = createFFmpeg({ log: false });
+      this.ffmpeg.setLogger(({ type, message }) => {
+        if (type === "fferr") {
+          const match = message.match(/frame=\s*(?<frame>\d+)/);
+          if (match === null) {
+            return;
+          } else {
+            const frame = (match.groups as { frame: string }).frame;
+            let denom = this.frames.length - 1;
+            if (denom === 0) denom = 1;
+            const ratio = parseInt(frame) / denom;
+            this.setExportProgress(ratio);
+          }
         }
-      }
-    });
-    await ffmpeg.load();
+      });
+      await this.ffmpeg.load();
+    }
 
     const filenames: string[] = [];
 
@@ -294,19 +296,21 @@ export default class Controller {
       const filename = `desmos.${padded}.png`;
       // filenames may be pushed out of order because async, but doesn't matter
       filenames.push(filename);
-      ffmpeg.FS("writeFile", filename, await fetchFile(frame));
+      if (this.ffmpeg !== null) {
+        this.ffmpeg.FS("writeFile", filename, await fetchFile(frame));
+      }
     });
 
     this.isExporting = true;
     this.updateView();
 
-    const outFilename = await this.export(ffmpeg);
+    const outFilename = await this.export(this.ffmpeg);
 
-    const data = ffmpeg.FS("readFile", outFilename);
-    filenames.forEach((filename) => {
-      ffmpeg.FS("unlink", filename);
-    });
-    ffmpeg.FS("unlink", outFilename);
+    const data = this.ffmpeg.FS("readFile", outFilename);
+    for (const filename of filenames) {
+      this.ffmpeg.FS("unlink", filename);
+    }
+    this.ffmpeg.FS("unlink", outFilename);
     const url = URL.createObjectURL(
       new Blob([data.buffer as ArrayBuffer], { type: "video/mp4" })
     );
