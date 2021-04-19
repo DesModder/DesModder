@@ -1,14 +1,23 @@
 import { Calc } from "desmodder";
 
-let initialSettings: null | typeof Calc.settings = null;
+const defaultSettings = {
+  clickableObjects: true,
+  advancedStyling: true,
+  administerSecretFolders: true,
+};
+
+const managedKeys = Object.keys(defaultSettings) as [
+  keyof typeof defaultSettings
+];
+
+let initialSettings: null | typeof defaultSettings = null;
 
 function onEnable() {
-  initialSettings = Calc.settings;
-  Calc.updateSettings({
-    clickableObjects: true,
-    advancedStyling: true,
-    administerSecretFolders: true,
-  });
+  initialSettings = { ...defaultSettings };
+  for (const key of managedKeys) {
+    initialSettings[key] = Calc.settings[key];
+  }
+  Calc.updateSettings(defaultSettings);
 }
 
 function onDisable() {
