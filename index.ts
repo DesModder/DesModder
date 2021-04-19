@@ -1,24 +1,24 @@
-import Controller from './Controller'
-import View from './View'
+import Controller from "./Controller";
+import View from "./View";
 
-let view: View
-let controller: Controller
+let view: View;
+let controller: Controller;
 
-function onEnable () {
-  controller = new Controller()
-  view = new View(controller)
-  controller.init(view)
-  view.initView() // async
+function onEnable() {
+  controller = new Controller();
+  view = new View(controller);
+  controller.init(view);
+  view.initView(); // async
 }
 
-function onDisable () {
-  view.destroyView()
+function onDisable() {
+  view.destroyView();
 }
 
 export default {
-  name: 'Video Creator',
-  description: 'Easily export videos',
+  name: "Video Creator",
+  description: "Easily export videos",
   onEnable: onEnable,
   onDisable: onDisable,
-  enabledByDefault: true
-}
+  enabledByDefault: true,
+};

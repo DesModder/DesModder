@@ -33,7 +33,9 @@
   justify-content: space-between;
 }
 
-.video-creator-capture .video-creator-end-condition-settings span.dcg-mq-editable-field.dcg-math-input {
+.video-creator-capture
+  .video-creator-end-condition-settings
+  span.dcg-mq-editable-field.dcg-math-input {
   max-width: 100px;
   margin-left: 8px;
 }
