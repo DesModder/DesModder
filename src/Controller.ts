@@ -117,14 +117,27 @@ export default class Controller {
     this.updateMenuView();
   }
 
-  setPluginSetting(pluginID: PluginID, key: string, value: boolean) {
+  setPluginSetting(
+    pluginID: PluginID,
+    key: string,
+    value: boolean,
+    doCallback: boolean = true
+  ) {
     const pluginSettings = this.pluginSettings.get(pluginID);
     if (pluginSettings === undefined) return;
-    pluginSettings[key] = value;
-    if (this.pluginsEnabled[pluginID]) {
+    const proposedChanges = {
+      [key]: value,
+    };
+    const manageConfigChange = this.plugins[pluginID]?.manageConfigChange;
+    const changes =
+      manageConfigChange !== undefined
+        ? manageConfigChange(pluginSettings, proposedChanges)
+        : proposedChanges;
+    Object.assign(pluginSettings, changes);
+    if (doCallback && this.pluginsEnabled[pluginID]) {
       const onConfigChange = this.plugins[pluginID]?.onConfigChange;
       if (onConfigChange !== undefined) {
-        onConfigChange(key, value);
+        onConfigChange(changes);
       }
     }
     this.updateMenuView();

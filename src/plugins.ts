@@ -17,6 +17,8 @@ interface ConfigItemBoolean extends ConfigItemGeneric {
 
 type ConfigItem = ConfigItemBoolean;
 
+type GenericBooleanObject = { [key: string]: boolean };
+
 export interface Plugin {
   name: string;
   description: string;
@@ -24,7 +26,11 @@ export interface Plugin {
   onDisable?(): void;
   enabledByDefault: boolean;
   config?: ConfigItem[];
-  onConfigChange?(key: string, value: boolean): void;
+  onConfigChange?(changes: GenericBooleanObject): void;
+  manageConfigChange?(
+    current: GenericBooleanObject,
+    next: GenericBooleanObject
+  ): GenericBooleanObject;
 }
 
 export function isPlugin(obj: any): obj is Plugin {
