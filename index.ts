@@ -1,23 +1,16 @@
 import { Calc } from "desmodder";
+import { Config, configList } from "./config";
 
-const defaultSettings = {
-  clickableObjects: true,
-  advancedStyling: true,
-  administerSecretFolders: true,
-};
+const managedKeys = configList.map((e) => e.key);
 
-const managedKeys = Object.keys(defaultSettings) as [
-  keyof typeof defaultSettings
-];
+let initialSettings: null | Config = null;
 
-let initialSettings: null | typeof defaultSettings = null;
-
-function onEnable() {
-  initialSettings = { ...defaultSettings };
+function onEnable(config: Config) {
+  initialSettings = { ...config };
   for (const key of managedKeys) {
     initialSettings[key] = Calc.settings[key];
   }
-  Calc.updateSettings(defaultSettings);
+  Calc.updateSettings(config);
 }
 
 function onDisable() {
@@ -32,4 +25,10 @@ export default {
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: false,
+  config: configList,
+  onConfigChange<K extends keyof Config>(key: K, value: Config[K]) {
+    Calc.updateSettings({
+      [key]: value,
+    });
+  },
 };
