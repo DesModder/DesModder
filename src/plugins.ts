@@ -4,12 +4,27 @@ import wolfram2desmos from "plugins/wolfram2desmos";
 import videoCreator from "plugins/video-creator/index";
 import builtinSettings from "plugins/builtin-settings/index";
 
+interface ConfigItemGeneric {
+  key: string;
+  name: string;
+  description?: string;
+}
+
+interface ConfigItemBoolean extends ConfigItemGeneric {
+  type: "boolean";
+  default: boolean;
+}
+
+type ConfigItem = ConfigItemBoolean;
+
 export interface Plugin {
   name: string;
   description: string;
-  onEnable(): void;
+  onEnable(config?: unknown): void;
   onDisable?(): void;
   enabledByDefault: boolean;
+  config?: ConfigItem[];
+  onConfigChange?(key: string, value: boolean): void;
 }
 
 export function isPlugin(obj: any): obj is Plugin {
@@ -27,9 +42,9 @@ export type PluginID = number;
 // these plugins will be listed in list order in the menu
 // place closer to the top: plugins that people are more likely to adjust
 export default [
+  builtinSettings,
   videoCreator,
   duplicateHotkey,
   findReplace,
   wolfram2desmos,
-  builtinSettings,
 ] as ReadonlyArray<Plugin>;

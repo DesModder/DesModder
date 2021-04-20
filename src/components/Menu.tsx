@@ -1,7 +1,7 @@
 import DCGView from "DCGView";
 import Toggle from "./Toggle";
 import Controller from "Controller";
-import { If } from "./desmosComponents";
+import { If, Switch, Checkbox, Tooltip } from "./desmosComponents";
 import "./Menu.less";
 
 export default class Menu extends DCGView.Class<{
@@ -55,6 +55,7 @@ export default class Menu extends DCGView.Class<{
                     <div class="desmodder-plugin-description">
                       {plugin.description}
                     </div>
+                    {this.getExpandedSettings()}
                   </div>
                 )}
               </If>
@@ -63,5 +64,54 @@ export default class Menu extends DCGView.Class<{
         ))}
       </div>
     );
+  }
+  getExpandedSettings() {
+    if (this.controller.expandedPlugin === null) return null;
+    const plugin = this.controller.plugins[this.controller.expandedPlugin];
+    if (plugin === undefined) return null;
+    const config = plugin.config;
+    if (config !== undefined) {
+      const pluginSettings = this.controller.pluginSettings.get(
+        this.controller.expandedPlugin
+      );
+      if (pluginSettings === undefined) return null;
+      return (
+        <div>
+          {config.map((item) => (
+            <Switch key={() => item.type}>
+              {() =>
+                ({
+                  boolean: () => (
+                    <div class="desmodder-settings-item desmodder-settings-boolean">
+                      <Checkbox
+                        onChange={(checked) =>
+                          this.controller.setPluginSetting(
+                            this.controller.expandedPlugin ?? -1,
+                            item.key,
+                            checked
+                          )
+                        }
+                        checked={() => pluginSettings[item.key] ?? false}
+                        ariaLabel={() => item.key}
+                        green
+                      >
+                        <Tooltip tooltip={item.description ?? ""} gravity="n">
+                          <div class="desmodder-settings-label">
+                            {item.name}
+                          </div>
+                        </Tooltip>
+                      </Checkbox>
+                    </div>
+                  ),
+                }[item.type]())
+              }
+            </Switch>
+          ))}
+        </div>
+      );
+    } else {
+      // should never happen
+      return null;
+    }
   }
 }

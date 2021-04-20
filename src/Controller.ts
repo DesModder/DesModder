@@ -5,20 +5,28 @@ export default class Controller {
   menuViewModel = {
     isOpen: false,
   };
+  // pluginsEnabled should be a Map
   pluginsEnabled: { [key: number]: boolean } = {};
   view: View | null = null;
   plugins: Plugin[] = [];
   expandedPlugin: PluginID | null = null;
+  pluginSettings: Map<PluginID, { [key: string]: boolean }> = new Map();
 
-  constructor() {
-    for (let i = 0; i < this.plugins.length; i++) {
-      this.pluginsEnabled[i] = false;
+  applyDefaultConfig(i: PluginID) {
+    const config = (this.plugins[i] as Plugin).config;
+    if (config !== undefined) {
+      const defaultSettings: { [key: string]: boolean } = {};
+      for (const configItem of config) {
+        defaultSettings[configItem.key] = configItem.default;
+      }
+      this.pluginSettings.set(i, defaultSettings);
     }
   }
 
   _registerPlugin(plugin: Plugin) {
     this.plugins.push(plugin);
     const pluginID: PluginID = this.plugins.length - 1;
+    this.applyDefaultConfig(pluginID);
     if (plugin.enabledByDefault) {
       this.enablePlugin(pluginID);
     }
@@ -73,7 +81,7 @@ export default class Controller {
   enablePlugin(i: PluginID) {
     const plugin = this.plugins[i];
     if (!this.pluginsEnabled[i] && plugin !== undefined) {
-      plugin.onEnable();
+      plugin.onEnable(this.pluginSettings.get(i));
       this.pluginsEnabled[i] = true;
       this.updateMenuView();
     }
@@ -105,6 +113,19 @@ export default class Controller {
       this.expandedPlugin = null;
     } else {
       this.expandedPlugin = i;
+    }
+    this.updateMenuView();
+  }
+
+  setPluginSetting(pluginID: PluginID, key: string, value: boolean) {
+    const pluginSettings = this.pluginSettings.get(pluginID);
+    if (pluginSettings === undefined) return;
+    pluginSettings[key] = value;
+    if (this.pluginsEnabled[pluginID]) {
+      const onConfigChange = this.plugins[pluginID]?.onConfigChange;
+      if (onConfigChange !== undefined) {
+        onConfigChange(key, value);
+      }
     }
     this.updateMenuView();
   }
