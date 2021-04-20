@@ -31,7 +31,7 @@ Install packages with `npm install`.
 
 Use command `npm run dev` to start the dev server, and `npm run build` to build production files (clear the dist folder first)
 
-Load the unpacked extension through directions at https://developer.chrome.com/docs/extensions/mv2/getstarted/#manifest (see "load unpacked"). Load the `dist/` folder
+Load the unpacked extension through directions at https://developer.chrome.com/docs/extensions/mv2/getstarted/#manifest (see "load unpacked" — Load the `dist/` folder).
 
 ### Testing extension in the browser
 
@@ -76,7 +76,7 @@ There are two types of plugins:
 
 ## The name
 
-CyanidesDuality came up with the name "DesThree," but he abandoned his project early-on. He's letting me use the name under one condition:
+CyanidesDuality came up with the name "DesModder," but he abandoned his project early-on. He's letting me use the name under one condition:
 
 > if you take the name you gotta include my features then
 >
