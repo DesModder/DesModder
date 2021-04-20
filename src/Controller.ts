@@ -8,6 +8,7 @@ export default class Controller {
   pluginsEnabled: { [key: number]: boolean } = {};
   view: View | null = null;
   plugins: Plugin[] = [];
+  expandedPlugin: PluginID | null = null;
 
   constructor() {
     for (let i = 0; i < this.plugins.length; i++) {
@@ -97,5 +98,14 @@ export default class Controller {
       this.pluginsEnabled[i] &&
       !("onDisable" in plugin)
     );
+  }
+
+  togglePluginExpanded(i: PluginID) {
+    if (this.expandedPlugin === i) {
+      this.expandedPlugin = null;
+    } else {
+      this.expandedPlugin = i;
+    }
+    this.updateMenuView();
   }
 }
