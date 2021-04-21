@@ -1,15 +1,20 @@
+import { DesmosRightClick } from "./backend";
+
+const ENABLE_DEF = true;
+const desmosRightClick = new DesmosRightClick(ENABLE_DEF);
+
 function onEnable() {
-  // template
+  desmosRightClick.enable();
 }
 
 function onDisable() {
-  // template
+  desmosRightClick.disable();
 }
 
 export default {
-  name: "Template plugin name",
-  description: "Template plugin description",
+  name: "Right Click Tray",
+  description: "Open the expression menu with right click",
   onEnable: onEnable,
   onDisable: onDisable,
-  enabledByDefault: true,
+  enabledByDefault: ENABLE_DEF,
 };
