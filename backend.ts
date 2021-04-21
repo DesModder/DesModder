@@ -1,4 +1,4 @@
-import { Desmos } from "desmodder";
+import { jquery } from 'desmodder';
 
 export default class DesmosRightClick {
 	constructor(enabled = true) {
@@ -65,27 +65,27 @@ function onMouseDown (e: any) {
 			hasLongHoldButton(1)
 		) {
 			showContextMenu = false;
-			Desmos.$(seekParent(e.target, 1)).trigger('dcg-longhold');
+			$(seekParent(e.target, 1)).trigger('dcg-longhold');
 			
 		} else if ( // shown color bubble of expressions
 			isIconContainer('i', 3, 'expression') &&
 			hasLongHoldButton(2)
 		) {
 			showContextMenu = false;
-			Desmos.$(seekParent(e.target, 2)).trigger('dcg-longhold');
+			$(seekParent(e.target, 2)).trigger('dcg-longhold');
 			
 		} else if ( // hidden color bubble of table columns
 			isIconContainer('span', 2, 'table')
 		) {
 			showContextMenu = false;
-			Desmos.$(seekParent(e.target, 1)).trigger('dcg-longhold');
+			$(seekParent(e.target, 1)).trigger('dcg-longhold');
 			
 			
 		} else if ( // shown color bubble of table columns
 			isIconContainer('i', 3, 'table')
 		) {
 			showContextMenu = false;
-			Desmos.$(seekParent(e.target, 2)).trigger('dcg-longhold');
+			$(seekParent(e.target, 2)).trigger('dcg-longhold');
 			
 		}
 	}
