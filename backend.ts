@@ -45,7 +45,11 @@ function onMouseDown (e: any) {
 		let tag : any = e.target.tagName.toLowerCase();
 		
 		// determines if clicked target is an icon container
-		let isIconContainer : any = (tagName, lvl, type) => {
+		let isIconContainer : any = (
+			tagName: string,
+			lvl: number,
+			type:string
+		) => {
 			let container : any = seekParent(e.target, lvl);
 			if (container === null) return false;
 			return (
@@ -56,7 +60,7 @@ function onMouseDown (e: any) {
 		};
 		
 		// determines if container is part of an expression or image
-		let hasLongHoldButton : any = (lvl) => {
+		let hasLongHoldButton : any = (lvl: number) => {
 			let wrapper : any = seekParent(e.target, lvl + 1);
 			if (wrapper === null) return false;
 			if (typeof wrapper.classList === 'undefined') return false;
@@ -96,7 +100,7 @@ function onMouseDown (e: any) {
 	}
 }
 
-function seekParent(src, level) {
+function seekParent(src: any, level: number) {
 	if (level <= 0) return src;
 	
 	for (var i = 0; i < level; ++i) {
