@@ -90,3 +90,17 @@ function onMouseDown (e: any) {
 		}
 	}
 }
+
+function seekParent(src, level) {
+	if (level <= 0) return src;
+	
+	for (var i = 0; i < level; ++i) {
+		if (src != null) {
+			src = src.parentElement;
+		} else {
+			return null;
+		}
+	}
+	
+	return src;
+}
