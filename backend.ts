@@ -1,35 +1,25 @@
 import { jquery } from "desmodder";
 
-// this has to be moved somewhere else
+// these are effectively private because they are not exported;
 let showContextMenu = true;
+let enabled = true;
 
-export default class DesmosRightClick {
-  _enabled: boolean;
-
-  constructor(enabled = true) {
-    this._enabled = enabled;
-    if (this._enabled) {
-      document.addEventListener("contextmenu", onContextMenu);
-      window.addEventListener("mousedown", onMouseDown);
-    }
+// onEnable is automatically called when enabled by default
+export function onEnable() {
+  // prevent enabling it twice
+  if (!enabled) {
+    enabled = true;
+    document.addEventListener("contextmenu", onContextMenu);
+    window.addEventListener("mousedown", onMouseDown);
   }
+}
 
-  enable() {
-    // prevent enabling it twice
-    if (!this._enabled) {
-      this._enabled = true;
-      document.addEventListener("contextmenu", onContextMenu);
-      window.addEventListener("mousedown", onMouseDown);
-    }
-  }
-
-  disable() {
-    // prevent disabling it twice
-    if (this._enabled) {
-      this._enabled = false;
-      document.removeEventListener("contextmenu", onContextMenu);
-      window.removeEventListener("mousedown", onMouseDown);
-    }
+export function onDisable() {
+  // prevent disabling it twice
+  if (enabled) {
+    enabled = false;
+    document.removeEventListener("contextmenu", onContextMenu);
+    window.removeEventListener("mousedown", onMouseDown);
   }
 }
 
