@@ -33,7 +33,7 @@ export default class DesmosRightClick {
 	}
 }
 
-function onContextMenu(params: any) {
+function onContextMenu(e: any) {
 	if (!showContextMenu) {
 		showContextMenu = true;
 		e.preventDefault();
