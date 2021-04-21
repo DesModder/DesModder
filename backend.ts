@@ -70,27 +70,27 @@ function onMouseDown (e: any) {
 			hasLongHoldButton(1)
 		) {
 			showContextMenu = false;
-			$(seekParent(e.target, 1)).trigger('dcg-longhold');
+			jquery(seekParent(e.target, 1)).trigger('dcg-longhold');
 			
 		} else if ( // shown color bubble of expressions
 			isIconContainer('i', 3, 'expression') &&
 			hasLongHoldButton(2)
 		) {
 			showContextMenu = false;
-			$(seekParent(e.target, 2)).trigger('dcg-longhold');
+			jquery(seekParent(e.target, 2)).trigger('dcg-longhold');
 			
 		} else if ( // hidden color bubble of table columns
 			isIconContainer('span', 2, 'table')
 		) {
 			showContextMenu = false;
-			$(seekParent(e.target, 1)).trigger('dcg-longhold');
+			jquery(seekParent(e.target, 1)).trigger('dcg-longhold');
 			
 			
 		} else if ( // shown color bubble of table columns
 			isIconContainer('i', 3, 'table')
 		) {
 			showContextMenu = false;
-			$(seekParent(e.target, 2)).trigger('dcg-longhold');
+			jquery(seekParent(e.target, 2)).trigger('dcg-longhold');
 			
 		}
 	}

@@ -1,6 +1,6 @@
-import { DesmosRightClick } from "./backend";
+import DesmosRightClick from "./backend";
 
-const ENABLE_DEF = true;
+const ENABLE_DEF: boolean = true;
 const desmosRightClick = new DesmosRightClick(ENABLE_DEF);
 
 function onEnable() {
