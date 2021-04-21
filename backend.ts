@@ -1,5 +1,8 @@
 import { jquery } from 'desmodder';
 
+// this has to be moved somewhere else
+let showContextMenu = true;
+
 export default class DesmosRightClick {
 	_enabled: boolean;
 	
