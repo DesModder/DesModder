@@ -7,3 +7,6 @@
 [submodule "src/plugins/gif-creator"]
 	path = src/plugins/video-creator
 	url = https://github.com/jared-hughes/desmodder-video-creator.git
+[submodule "src/plugins/right-click-tray"]
+	path = src/plugins/right-click-tray
+	url = https://github.com/SlimRunner/right-click-tray.git
