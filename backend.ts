@@ -23,20 +23,25 @@ export function onDisable() {
   }
 }
 
-function onContextMenu(e: any) {
+function onContextMenu(e: MouseEvent) {
   if (!showContextMenu) {
     showContextMenu = true;
     e.preventDefault();
   }
 }
 
-function onMouseDown(e: any) {
+function onMouseDown(e: MouseEvent) {
   if (e.button === 2) {
-    let tag: any = e.target.tagName.toLowerCase();
+    if (e.target === null) {
+      return;
+    }
+    // assume the target is an HTMLElement
+    const target = e.target as HTMLElement;
+    let tag = target.tagName.toLowerCase();
 
     // determines if clicked target is an icon container
-    let isIconContainer: any = (tagName: string, lvl: number, type: string) => {
-      let container: any = seekParent(e.target, lvl);
+    let isIconContainer = (tagName: string, lvl: number, type: string) => {
+      let container = seekParent(target, lvl);
       if (container === null) return false;
       return (
         tag === tagName &&
@@ -46,11 +51,11 @@ function onMouseDown(e: any) {
     };
 
     // determines if container is part of an expression or image
-    let hasLongHoldButton: any = (lvl: number) => {
-      let wrapper: any = seekParent(e.target, lvl + 1);
+    let hasLongHoldButton = (lvl: number) => {
+      let wrapper = seekParent(target, lvl + 1);
       if (wrapper === null) return false;
       if (typeof wrapper.classList === "undefined") return false;
-      return wrapper.classList.contains("dcg-expression-icon-container") !== -1;
+      return wrapper.classList.contains("dcg-expression-icon-container");
     };
 
     if (
@@ -59,31 +64,31 @@ function onMouseDown(e: any) {
       hasLongHoldButton(1)
     ) {
       showContextMenu = false;
-      jquery(seekParent(e.target, 1)).trigger("dcg-longhold");
+      jquery(seekParent(target, 1)).trigger("dcg-longhold");
     } else if (
       // shown color bubble of expressions
       isIconContainer("i", 3, "expression") &&
       hasLongHoldButton(2)
     ) {
       showContextMenu = false;
-      jquery(seekParent(e.target, 2)).trigger("dcg-longhold");
+      jquery(seekParent(target, 2)).trigger("dcg-longhold");
     } else if (
       // hidden color bubble of table columns
       isIconContainer("span", 2, "table")
     ) {
       showContextMenu = false;
-      jquery(seekParent(e.target, 1)).trigger("dcg-longhold");
+      jquery(seekParent(target, 1)).trigger("dcg-longhold");
     } else if (
       // shown color bubble of table columns
       isIconContainer("i", 3, "table")
     ) {
       showContextMenu = false;
-      jquery(seekParent(e.target, 2)).trigger("dcg-longhold");
+      jquery(seekParent(target, 2)).trigger("dcg-longhold");
     }
   }
 }
 
-function seekParent(src: any, level: number) {
+function seekParent(src: HTMLElement | null, level: number) {
   if (level <= 0) return src;
 
   for (var i = 0; i < level; ++i) {
