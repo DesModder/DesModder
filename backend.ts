@@ -42,11 +42,11 @@ function onContextMenu(params: any) {
 
 function onMouseDown (e: any) {
 	if (e.button === 2) {
-		let tag = e.target.tagName.toLowerCase();
+		let tag : any = e.target.tagName.toLowerCase();
 		
 		// determines if clicked target is an icon container
-		let isIconContainer = (tagName, lvl, type) => {
-			let container = seekParent(e.target, lvl);
+		let isIconContainer : any = (tagName, lvl, type) => {
+			let container : any = seekParent(e.target, lvl);
 			if (container === null) return false;
 			return (
 				tag === tagName &&
@@ -56,8 +56,8 @@ function onMouseDown (e: any) {
 		};
 		
 		// determines if container is part of an expression or image
-		let hasLongHoldButton = (lvl) => {
-			let wrapper = seekParent(e.target, lvl + 1);
+		let hasLongHoldButton : any = (lvl) => {
+			let wrapper : any = seekParent(e.target, lvl + 1);
 			if (wrapper === null) return false;
 			if (typeof wrapper.classList === 'undefined') return false;
 			return (
