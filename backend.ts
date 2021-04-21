@@ -1,6 +1,8 @@
 import { jquery } from 'desmodder';
 
 export default class DesmosRightClick {
+	_enabled: boolean;
+	
 	constructor(enabled = true) {
 		this._enabled = enabled;
 		if (this._enabled) {
