@@ -2,7 +2,7 @@ import { jquery } from "desmodder";
 
 // these are effectively private because they are not exported;
 let showContextMenu = true;
-let enabled = true;
+let enabled = false;
 
 // onEnable is automatically called when enabled by default
 export function onEnable() {
