@@ -2,6 +2,7 @@ import duplicateHotkey from "plugins/duplicateHotkey";
 import findReplace from "plugins/find-replace/index";
 import wolfram2desmos from "plugins/wolfram2desmos";
 import videoCreator from "plugins/video-creator/index";
+import rightClickTray from "plugins/right-click-tray/index";
 
 export interface Plugin {
   name: string;
@@ -30,4 +31,5 @@ export default [
   duplicateHotkey,
   findReplace,
   wolfram2desmos,
+	rightClickTray,
 ] as ReadonlyArray<Plugin>;
