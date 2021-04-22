@@ -1,20 +1,9 @@
-import DesmosRightClick from "./backend";
-
-const ENABLE_DEF: boolean = true;
-const desmosRightClick = new DesmosRightClick(ENABLE_DEF);
-
-function onEnable() {
-  desmosRightClick.enable();
-}
-
-function onDisable() {
-  desmosRightClick.disable();
-}
+import { onEnable, onDisable } from "./backend";
 
 export default {
   name: "Right Click Tray",
   description: "Open the expression menu with right click",
   onEnable: onEnable,
   onDisable: onDisable,
-  enabledByDefault: ENABLE_DEF,
+  enabledByDefault: true,
 };
