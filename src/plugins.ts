@@ -17,20 +17,21 @@ interface ConfigItemBoolean extends ConfigItemGeneric {
 
 type ConfigItem = ConfigItemBoolean;
 
-type GenericBooleanObject = { [key: string]: boolean };
+type GenericBooleanSettings = { [key: string]: boolean };
 
-export interface Plugin {
+export interface Plugin<Settings extends GenericBooleanSettings = {}> {
+  // the id is fixed permanently, even for future releases
+  // where you might change the plugin's name
+  // and can help handle migrating save state if the display name changes
+  id: string;
   name: string;
   description: string;
   onEnable(config?: unknown): void;
   onDisable?(): void;
   enabledByDefault: boolean;
-  config?: ConfigItem[];
-  onConfigChange?(changes: GenericBooleanObject): void;
-  manageConfigChange?(
-    current: GenericBooleanObject,
-    next: GenericBooleanObject
-  ): GenericBooleanObject;
+  config?: readonly ConfigItem[];
+  onConfigChange?(changes: Settings): void;
+  manageConfigChange?(current: Settings, next: Settings): Settings;
 }
 
 export function isPlugin(obj: any): obj is Plugin {
@@ -43,14 +44,19 @@ export function isPlugin(obj: any): obj is Plugin {
   );
 }
 
-export type PluginID = number;
-
 // these plugins will be listed in list order in the menu
 // place closer to the top: plugins that people are more likely to adjust
-export default [
-  builtinSettings,
-  videoCreator,
-  duplicateHotkey,
-  findReplace,
-  wolfram2desmos,
-] as ReadonlyArray<Plugin>;
+
+const _plugins = {
+  [builtinSettings.id]: builtinSettings,
+  [videoCreator.id]: videoCreator,
+  [duplicateHotkey.id]: duplicateHotkey,
+  [findReplace.id]: findReplace,
+  [wolfram2desmos.id]: wolfram2desmos,
+} as const;
+
+export const pluginList = Object.values(_plugins);
+
+export type PluginID = keyof typeof _plugins;
+
+export const plugins = _plugins as { [key in PluginID]: Plugin };

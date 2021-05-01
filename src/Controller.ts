@@ -1,42 +1,39 @@
-import { isPlugin, Plugin, PluginID } from "./plugins";
+import { plugins, pluginList, PluginID } from "./plugins";
 import View from "./View";
 
 export default class Controller {
   menuViewModel = {
     isOpen: false,
   };
-  // pluginsEnabled should be a Map
-  pluginsEnabled: { [key: number]: boolean } = {};
+  pluginsEnabled: { [key in PluginID]: boolean };
   view: View | null = null;
-  plugins: Plugin[] = [];
   expandedPlugin: PluginID | null = null;
-  pluginSettings: Map<PluginID, { [key: string]: boolean }> = new Map();
+  pluginSettings: {
+    [plugin in PluginID]: { [key: string]: boolean };
+  };
 
-  applyDefaultConfig(i: PluginID) {
-    const config = (this.plugins[i] as Plugin).config;
-    if (config !== undefined) {
-      const defaultSettings: { [key: string]: boolean } = {};
-      for (const configItem of config) {
-        defaultSettings[configItem.key] = configItem.default;
+  constructor() {
+    this.pluginSettings = Object.fromEntries(
+      pluginList.map((plugin) => [plugin.id, {}] as const)
+    );
+    this.pluginsEnabled = Object.fromEntries(
+      pluginList.map((plugin) => [plugin.id, false] as const)
+    );
+    for (const plugin of pluginList) {
+      this.applyDefaultConfig(plugin.id);
+      if (plugin.enabledByDefault) {
+        this.enablePlugin(plugin.id);
       }
-      this.pluginSettings.set(i, defaultSettings);
+      this.view && this.view.updateMenuView();
     }
   }
 
-  _registerPlugin(plugin: Plugin) {
-    this.plugins.push(plugin);
-    const pluginID: PluginID = this.plugins.length - 1;
-    this.applyDefaultConfig(pluginID);
-    if (plugin.enabledByDefault) {
-      this.enablePlugin(pluginID);
-    }
-    this.view && this.view.updateMenuView();
-    return pluginID;
-  }
-
-  registerPlugin(plugin: any): PluginID | undefined {
-    if (isPlugin(plugin)) {
-      return this._registerPlugin(plugin);
+  applyDefaultConfig(id: PluginID) {
+    const config = plugins[id].config;
+    if (config !== undefined) {
+      for (const configItem of config) {
+        this.pluginSettings[id][configItem.key] = configItem.default;
+      }
     }
   }
 
@@ -50,7 +47,7 @@ export default class Controller {
   }
 
   updateMenuView() {
-    this.view!.updateMenuView();
+    this.view?.updateMenuView();
   }
 
   toggleMenu() {
@@ -63,12 +60,16 @@ export default class Controller {
     this.updateMenuView();
   }
 
-  getPlugins() {
-    return this.plugins;
+  getPlugin(id: PluginID) {
+    return plugins[id];
   }
 
-  disablePlugin(i: number) {
-    const plugin = this.plugins[i];
+  getPluginsList() {
+    return pluginList;
+  }
+
+  disablePlugin(i: PluginID) {
+    const plugin = plugins[i];
     if (plugin !== undefined) {
       if (this.pluginsEnabled[i] && plugin.onDisable) {
         plugin.onDisable();
@@ -79,9 +80,9 @@ export default class Controller {
   }
 
   enablePlugin(i: PluginID) {
-    const plugin = this.plugins[i];
+    const plugin = plugins[i];
     if (!this.pluginsEnabled[i] && plugin !== undefined) {
-      plugin.onEnable(this.pluginSettings.get(i));
+      plugin.onEnable(this.pluginSettings[i]);
       this.pluginsEnabled[i] = true;
       this.updateMenuView();
     }
@@ -100,7 +101,7 @@ export default class Controller {
   }
 
   canTogglePlugin(i: PluginID) {
-    const plugin = this.plugins[i];
+    const plugin = plugins[i];
     return !(
       plugin !== undefined &&
       this.pluginsEnabled[i] &&
@@ -123,19 +124,19 @@ export default class Controller {
     value: boolean,
     doCallback: boolean = true
   ) {
-    const pluginSettings = this.pluginSettings.get(pluginID);
+    const pluginSettings = this.pluginSettings[pluginID];
     if (pluginSettings === undefined) return;
     const proposedChanges = {
       [key]: value,
     };
-    const manageConfigChange = this.plugins[pluginID]?.manageConfigChange;
+    const manageConfigChange = plugins[pluginID]?.manageConfigChange;
     const changes =
       manageConfigChange !== undefined
         ? manageConfigChange(pluginSettings, proposedChanges)
         : proposedChanges;
     Object.assign(pluginSettings, changes);
     if (doCallback && this.pluginsEnabled[pluginID]) {
-      const onConfigChange = this.plugins[pluginID]?.onConfigChange;
+      const onConfigChange = plugins[pluginID]?.onConfigChange;
       if (onConfigChange !== undefined) {
         onConfigChange(changes);
       }

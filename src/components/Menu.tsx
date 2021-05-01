@@ -17,23 +17,21 @@ export default class Menu extends DCGView.Class<{
     return (
       <div class="dcg-popover-interior">
         <div class="dcg-group-title">DesModder plugins</div>
-        {this.controller.getPlugins().map((plugin, pluginIndex) => (
+        {this.controller.getPluginsList().map((plugin) => (
           <div
             class="dcg-options-menu-section desmodder-plugin-section"
-            key={pluginIndex}
+            key={plugin.id}
           >
             <div class="dcg-options-menu-section-title desmodder-plugin-title-bar">
               <div
                 class="desmodder-plugin-header"
-                onClick={() =>
-                  this.controller.togglePluginExpanded(pluginIndex)
-                }
+                onClick={() => this.controller.togglePluginExpanded(plugin.id)}
               >
                 <div
                   class={() => ({
                     "desmodder-caret-container": true,
                     "desmodder-caret-expanded":
-                      pluginIndex === this.controller.expandedPlugin,
+                      plugin.id === this.controller.expandedPlugin,
                   })}
                 >
                   <i class="dcg-icon-chevron-down" />
@@ -41,14 +39,14 @@ export default class Menu extends DCGView.Class<{
                 <div class="desmodder-plugin-name"> {plugin.name} </div>
               </div>
               <Toggle
-                toggled={() => this.controller.isPluginEnabled(pluginIndex)}
-                disabled={() => !this.controller.canTogglePlugin(pluginIndex)}
-                onChange={() => this.controller.togglePlugin(pluginIndex)}
+                toggled={() => this.controller.isPluginEnabled(plugin.id)}
+                disabled={() => !this.controller.canTogglePlugin(plugin.id)}
+                onChange={() => this.controller.togglePlugin(plugin.id)}
               />
             </div>
             {
               <If
-                predicate={() => pluginIndex === this.controller.expandedPlugin}
+                predicate={() => plugin.id === this.controller.expandedPlugin}
               >
                 {() => (
                   <div class="desmodder-plugin-info-body">
@@ -67,13 +65,13 @@ export default class Menu extends DCGView.Class<{
   }
   getExpandedSettings() {
     if (this.controller.expandedPlugin === null) return null;
-    const plugin = this.controller.plugins[this.controller.expandedPlugin];
+    const plugin = this.controller.getPlugin(this.controller.expandedPlugin);
     if (plugin === undefined) return null;
     const config = plugin.config;
     if (config !== undefined) {
-      const pluginSettings = this.controller.pluginSettings.get(
+      const pluginSettings = this.controller.pluginSettings[
         this.controller.expandedPlugin
-      );
+      ];
       if (pluginSettings === undefined) return null;
       return (
         <div>
@@ -85,8 +83,9 @@ export default class Menu extends DCGView.Class<{
                     <div class="desmodder-settings-item desmodder-settings-boolean">
                       <Checkbox
                         onChange={(checked) =>
+                          this.controller.expandedPlugin &&
                           this.controller.setPluginSetting(
-                            this.controller.expandedPlugin ?? -1,
+                            this.controller.expandedPlugin,
                             item.key,
                             checked
                           )
