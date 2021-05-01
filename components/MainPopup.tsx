@@ -56,8 +56,12 @@ export default class MainPopup extends DCGView.Class<{
             <div class="video-creator-preview-menu">
               <div class="dcg-group-title video-creator-delete-all-row">
                 Preview
-                <Button color="red" onTap={() => this.controller.deleteAll()}>
-                  Clear
+                <Button
+                  color="red"
+                  onTap={() => this.controller.deleteAll()}
+                  class="video-creator-delete-all-button"
+                >
+                  <i class="dcg-icon-remove" />
                 </Button>
               </div>
               <div
