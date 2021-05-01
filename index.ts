@@ -24,6 +24,7 @@ function onDisable() {
 }
 
 export default {
+  id: "builtin-settings",
   name: "Desmos settings",
   description: "Modify settings built-in to Desmos, including clickableObjects",
   onEnable: onEnable,
@@ -58,4 +59,4 @@ export default {
     }
     return newChanges;
   },
-};
+} as const;
