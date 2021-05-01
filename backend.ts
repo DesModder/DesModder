@@ -36,12 +36,14 @@ function replace(from: RegExp, to: string) {
         expr[k] = expr[k].replace(from, to);
       }
     });
-    if (expr.slider) {
-      ["max", "min", "step"].forEach((k) => {
-        if (k in expr.slider) {
-          expr.slider[k] = expr.slider[k].replace(from, to);
-        }
-      });
+    for (const sub of ["slider", "parametricDomain", "polarDomain"]) {
+      if (expr[sub]) {
+        ["max", "min", "step"].forEach((k) => {
+          if (k in expr[sub]) {
+            expr[sub][k] = expr[sub][k].replace(from, to);
+          }
+        });
+      }
     }
     if (expr.label) {
       expr.label = replaceString(expr.label);
