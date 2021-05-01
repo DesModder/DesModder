@@ -57,6 +57,11 @@ type FocusedMQ =
   | "capture-simulation-while"
   | "export-fps";
 
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
+function escapeRegex(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export default class Controller {
   view: View | null = null;
   frames: PNGDataURI[] = [];
@@ -373,14 +378,14 @@ export default class Controller {
 
   getMatchingSlider() {
     const regex = new RegExp(
-      `^(\\?\s)*${this.sliderSettings.variable}(\\?\s)*=`
+      `^(\\?\s)*${escapeRegex(this.sliderSettings.variable)}(\\?\s)*=`
     );
-    return Calc.getState().expressions.list.filter(
+    return Calc.getState().expressions.list.find(
       (e) =>
         e.type === "expression" &&
         typeof e.latex === "string" &&
         regex.test(e.latex)
-    )[0];
+    );
   }
 
   async captureSlider() {
