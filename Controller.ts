@@ -176,6 +176,11 @@ export default class Controller {
     this.captureCancelled = true;
   }
 
+  deleteAll() {
+    this.frames = [];
+    this.updateView();
+  }
+
   async captureFrame(isFirst: boolean) {
     return new Promise<void>((resolve, reject) => {
       // we will allow different math bounds

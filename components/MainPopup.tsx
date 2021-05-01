@@ -6,6 +6,7 @@ import {
   jquery,
   Button,
   IfElse,
+  Tooltip,
 } from "desmodder";
 import CaptureMethod from "./CaptureMethod";
 import PreviewCarousel from "./PreviewCarousel";
@@ -54,7 +55,18 @@ export default class MainPopup extends DCGView.Class<{
         <If predicate={() => this.controller.frames.length > 0}>
           {() => (
             <div class="video-creator-preview-menu">
-              <div class="dcg-group-title">Preview</div>
+              <div class="dcg-group-title video-creator-delete-all-row">
+                Preview
+                <Tooltip tooltip="Delete all" gravity="n">
+                  <Button
+                    color="red"
+                    onTap={() => this.controller.deleteAll()}
+                    class="video-creator-delete-all-button"
+                  >
+                    <i class="dcg-icon-remove" />
+                  </Button>
+                </Tooltip>
+              </div>
               <div
                 class={() => ({
                   "video-creator-preview-outer": true,
