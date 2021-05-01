@@ -38,9 +38,10 @@ function onDisable() {
 }
 
 export default {
+  id: "find-and-replace",
   name: "Find and Replace",
   description: "Easily refactor variable names in Ctrl+F Menu",
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true,
-};
+} as const;
