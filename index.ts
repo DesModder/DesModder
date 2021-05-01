@@ -16,9 +16,10 @@ function onDisable() {
 }
 
 export default {
+  id: "video-creator",
   name: "Video Creator",
   description: "Easily export videos",
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true,
-};
+} as const;
