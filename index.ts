@@ -25,11 +25,11 @@ function onDisable() {
 
 export default {
   id: "builtin-settings",
-  name: "Desmos settings",
-  description: "Modify settings built-in to Desmos, including clickableObjects",
+  name: "Calculator Settings",
+  description: "Modify settings built-in to Desmos",
   onEnable: onEnable,
   onDisable: onDisable,
-  enabledByDefault: false,
+  enabledByDefault: true,
   config: configList,
   onConfigChange(changes: ConfigOptional) {
     // called only when plugin is active
