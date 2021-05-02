@@ -3,6 +3,7 @@ import findReplace from "plugins/find-replace/index";
 import wolfram2desmos from "plugins/wolfram2desmos";
 import videoCreator from "plugins/video-creator/index";
 import builtinSettings from "plugins/builtin-settings/index";
+import rightClickTray from "plugins/right-click-tray/index";
 
 interface ConfigItemGeneric {
   key: string;
@@ -52,6 +53,7 @@ const _plugins = {
   [videoCreator.id]: videoCreator,
   [duplicateHotkey.id]: duplicateHotkey,
   [findReplace.id]: findReplace,
+  [rightClickTray.id]: rightClickTray,
   [wolfram2desmos.id]: wolfram2desmos,
 } as const;
 

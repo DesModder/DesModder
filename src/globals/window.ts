@@ -10,9 +10,27 @@ declare var window: windowConfig;
 
 export default window;
 
-export const Calc = window.Calc;
+// defer access of Calc.controller, Calc.observe, etc. to when they are called
+// avoid Calc === undefined but window.Calc !== undefined
+export const Calc = new Proxy(
+  {},
+  {
+    get(_target, prop) {
+      if (window.Calc === undefined) return undefined;
+      if (prop in window.Calc) {
+        return window.Calc[prop as keyof typeof window.Calc];
+      }
+    },
+  }
+) as Calc;
 
-export const desmosRequire = window.require;
+// defer access of window.require to when it is used
+export const desmosRequire = new Proxy(() => {}, {
+  apply: function (_target, _that, args) {
+    if (window.require === undefined) return undefined;
+    return (window.require as any)(...args);
+  },
+}) as typeof window.require;
 
 /* Object.fromEntries based on https://dev.to/svehla/typescript-object-fromentries-389c */
 type DeepWriteable<T> = { -readonly [P in keyof T]: DeepWriteable<T[P]> };
