@@ -118,6 +118,81 @@ interface AugmentedBounds extends Bounds {
   height: number;
 }
 
+interface PublicCalculatorOptions {
+  // https://www.desmos.com/api/v1.7/docs/index.html#document-graphing-calculator-constructor
+  keypad: boolean;
+  graphpaper: boolean;
+  expressions: boolean;
+  settingsMenu: boolean;
+  zoomButtons: boolean;
+  showResetButtonOnGraphpaper: boolean;
+  expressionsTopbar: boolean;
+  capExpressionSize: boolean;
+  pointsOfInterest: boolean;
+  trace: boolean;
+  border: boolean;
+  lockViewport: boolean;
+  expressionsCollapsed: boolean;
+  administerSecretFolders: boolean;
+  advancedStyling: boolean;
+  clickableObjects: boolean;
+  images: boolean;
+  // imageUploadCallback: omitted
+  folders: boolean;
+  notes: boolean;
+  sliders: boolean;
+  links: boolean;
+  qwertyKeyboard: boolean;
+  restrictedFunctions: boolean;
+  forceEnableGeometryFunctions: boolean;
+  pasteGraphLink: boolean;
+  pasteTableData: boolean;
+  degreeMode: boolean;
+  clearIntoDegreeMode: boolean;
+  autosize: boolean;
+  plotSingleVariableImplicitEquations: boolean;
+  plotImplicits: boolean;
+  plotInequalities: boolean;
+  // colors: omitted
+  invertedColors: boolean;
+  functionDefinition: boolean;
+  projectorMode: boolean;
+  decimalToFraction: boolean;
+  fontSize: number;
+  language: string; // over-generic
+  backgroundColor: string;
+  textColor: string;
+  distributions: boolean;
+  brailleMode: "none" | "nemeth" | "ueb";
+  sixKeyInput: boolean;
+  brailleControls: boolean;
+  zoomFit: boolean;
+  forceLogModeRegressions: boolean;
+}
+
+interface PrivateCalculatorOptions {
+  showHamburger: boolean;
+  disableScrollFix: boolean;
+  branding: boolean;
+  redrawSlowly: boolean;
+  onlyTraceSelected: boolean;
+  disableMouseInteractions: boolean;
+  nativeOnscreenKeypad: boolean;
+  plaidMode: boolean;
+  // pasteGraphLinkCallback: omitted,
+  editOnWeb: boolean;
+  crossOriginSaveTest: boolean;
+  enableTabindex: boolean;
+  audioTraceReverseExpressions: boolean;
+  transparentBackground: boolean;
+}
+
+type CalculatorOptions = PrivateCalculatorOptions & PublicCalculatorOptions;
+
+type CalculatorOptionsAssign = {
+  [Prop in keyof CalculatorOptions]?: CalculatorOptions[Prop];
+};
+
 export default interface Calc {
   //// undocumented, may break
   controller: {
@@ -169,4 +244,8 @@ export default interface Calc {
   };
   setMathBounds(bounds: Bounds): void;
   observe(v: "graphpaperBounds", callback: () => void): void;
+
+  // ** graph settings
+  settings: CalculatorOptions;
+  updateSettings(s: CalculatorOptionsAssign): void;
 }

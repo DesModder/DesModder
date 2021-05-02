@@ -1,9 +1,50 @@
 .desmodder-plugin-section {
   border-top: 1px solid #e2e2e2;
-  margin-top: 10px;
-  padding-top: 10px;
+  margin-top: 5px;
+  padding-top: 5px;
 }
 
-.desmodder-plugin-title {
-  color: #666;
+.desmodder-plugin-title-bar {
+  color: #222;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .dcg-toggle-view {
+    margin-top: 0;
+  }
+}
+
+.desmodder-plugin-header {
+  cursor: pointer;
+  display: flex;
+  padding: 5px 0;
+  margin-right: 10px;
+  align-items: center;
+  flex-grow: 1;
+
+  .desmodder-caret-container {
+    transform: rotate(-90deg);
+    transition: transform 200ms;
+    color: #888;
+    margin-right: 10px;
+
+    &.desmodder-caret-expanded {
+      transform: rotate(0deg);
+    }
+  }
+}
+
+.desmodder-plugin-info-body {
+  padding: 5px 0;
+  color: #444;
+}
+
+.desmodder-settings-item {
+  padding-top: 10px;
+
+  .dcg-tooltip-hit-area-container {
+    // Desmos uses important, so we must use important to override it
+    cursor: pointer !important;
+  }
 }

@@ -1,9 +1,16 @@
 import { ClassComponent } from "DCGView";
 import { desmosRequire } from "globals/window";
 
-export const Pillbox: ClassComponent = desmosRequire("main/pillbox-view")
-  .default;
-export const Checkbox: ClassComponent = desmosRequire(
+abstract class CheckboxComponent extends ClassComponent<{
+  checked: boolean;
+  disabled?: boolean;
+  small?: boolean;
+  green?: boolean;
+  ariaLabel: string;
+  onChange: (checked: boolean) => void;
+}> {}
+
+export const Checkbox: typeof CheckboxComponent = desmosRequire(
   "dcgview-helpers/checkbox"
 ).Checkbox;
 

@@ -10,8 +10,9 @@ function onEnable() {
 }
 
 export default {
-  name: "wolfram2desmos",
+  id: "wolfram2desmos",
+  name: "Wolfram To Desmos",
   description: "Convert ASCIImath into Desmos LaTeX on paste.",
   onEnable: onEnable,
   enabledByDefault: true,
-};
+} as const;
