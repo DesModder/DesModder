@@ -47,7 +47,7 @@ export default class PillboxContainer extends DCGView.Class<{
         <If predicate={() => this.controller.pillboxMenuOpen !== null}>
           {() => (
             <div
-              class="dcg-settings-container desmodder-menu-container dcg-left dcg-popover"
+              class="dcg-settings-container desmodder-menu-container dcg-left dcg-popover dcg-constrained-height-popover"
               didMount={() => this.didMountContainer()}
               didUnmount={() => this.didUnmountContainer()}
               style={() => ({
