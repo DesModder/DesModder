@@ -1,4 +1,4 @@
-import View from "./View";
+import { updateView } from "./View";
 import {
   Calc,
   SimulationModel,
@@ -63,7 +63,6 @@ function escapeRegex(s: string) {
 }
 
 export default class Controller {
-  view: View | null = null;
   frames: PNGDataURI[] = [];
   isMainViewOpen = false;
   isCapturing = false;
@@ -105,13 +104,12 @@ export default class Controller {
   expectedSize: CaptureSize | null = null;
   isCaptureSizeDifferent = false;
 
-  init(view: View) {
-    this.view = view;
+  constructor() {
     Calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
   }
 
   updateView() {
-    this.view && this.view.update();
+    updateView();
   }
 
   toggleMainView() {

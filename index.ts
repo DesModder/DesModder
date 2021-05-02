@@ -1,18 +1,15 @@
 import Controller from "./Controller";
-import View from "./View";
+import { initView, destroyView } from "./View";
 
-let view: View;
-let controller: Controller;
+export let controller: Controller;
 
 function onEnable() {
   controller = new Controller();
-  view = new View(controller);
-  controller.init(view);
-  view.initView(); // async
+  initView(); // async
 }
 
 function onDisable() {
-  view.destroyView();
+  destroyView();
 }
 
 export default {
