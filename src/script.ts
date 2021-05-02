@@ -3,7 +3,7 @@ import View from "View";
 import { pollForValue } from "utils";
 import window from "globals/window";
 
-const controller = new Controller();
+export const controller = new Controller();
 const view = new View();
 
 window.DesModder = {

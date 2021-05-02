@@ -53,7 +53,6 @@ export default class View {
       const t = Calc.controller.isKeypadOpen()
         ? Calc.controller.getKeypadHeight()
         : 0;
-      console.log("EF", this.controller?.pillboxMenuOpen);
       const bottom =
         this.controller && this.controller.pillboxMenuOpen !== null
           ? t + "px"

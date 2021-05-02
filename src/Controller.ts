@@ -41,13 +41,6 @@ export default class Controller {
     this.pluginsEnabled = Object.fromEntries(
       pluginList.map((plugin) => [plugin.id, false] as const)
     );
-    for (const plugin of pluginList) {
-      this.applyDefaultConfig(plugin.id);
-      if (plugin.enabledByDefault) {
-        this.enablePlugin(plugin.id);
-      }
-      this.view && this.view.updateMenuView();
-    }
   }
 
   applyDefaultConfig(id: PluginID) {
@@ -61,6 +54,13 @@ export default class Controller {
 
   init(view: View) {
     this.view = view;
+    for (const plugin of pluginList) {
+      this.applyDefaultConfig(plugin.id);
+      if (plugin.enabledByDefault) {
+        this.enablePlugin(plugin.id);
+      }
+      this.view && this.view.updateMenuView();
+    }
     // here want to load config + enabled plugins from local storage + header
   }
 
@@ -70,6 +70,17 @@ export default class Controller {
 
   addPillboxButton(info: PillboxButton) {
     this.pillboxButtons[info.id] = info;
+    this.pillboxButtonsOrder.push(info.id);
+    this.updateMenuView();
+  }
+
+  removePillboxButton(id: string) {
+    this.pillboxButtonsOrder.splice(this.pillboxButtonsOrder.indexOf(id), 1);
+    delete this.pillboxButtons[id];
+    if (this.pillboxMenuOpen === id) {
+      this.pillboxMenuOpen = null;
+    }
+    this.updateMenuView();
   }
 
   toggleMenu(id: string) {
