@@ -4,6 +4,10 @@ import Controller from "Controller";
 import { If, Switch, Checkbox, Tooltip } from "./desmosComponents";
 import "./Menu.less";
 
+export function MenuFunc(controller: Controller) {
+  return <Menu controller={controller} />;
+}
+
 export default class Menu extends DCGView.Class<{
   controller: Controller;
 }> {

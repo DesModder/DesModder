@@ -1,5 +1,5 @@
 import DCGView, { MountedComponent } from "DCGView";
-import MenuContainer from "components/MenuContainer";
+import PillboxContainer from "components/PillboxContainer";
 import { pollForValue } from "./utils";
 import Controller from "./Controller";
 
@@ -19,7 +19,7 @@ export default class View {
       rootNode,
       pillbox.querySelector(".dcg-zoom-container")
     );
-    this.menuView = DCGView.mountToNode(MenuContainer, rootNode, {
+    this.menuView = DCGView.mountToNode(PillboxContainer, rootNode, {
       controller: () => controller,
     });
   }
