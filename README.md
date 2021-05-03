@@ -2,16 +2,21 @@
 
 Several plugins for the Desmos graphing calculator, bundled into a single extension:
 
+- Export videos and GIFs of your graphs based on simulations or sliders
 - Find and replace expressions
+- Enable features including simulations, clickable objects, and more
 - Paste ASCIIMath (such as the results of Wolfram Alpha queries) into Desmos
 - Press Ctrl+Q to duplicate an expression
-- More to come, including GIF exports via sliders and simulations!
+- Right-click on expressions to style them
+- More to come!
 
-Keep in mind that many features of this extension rely on unofficial, undocumented, or unstable components of Desmos. When something stops working, report it on http://github.com/jared-hughes/DesModder/issues with a description of the issue.
+Keep in mind that many features of this extension rely on unofficial, undocumented, or unstable parts of Desmos. When something stops working, report it on http://github.com/jared-hughes/DesModder/issues with a description of the issue.
 
 Currently only works on the public-facing calculator at https://desmos.com/calculator.
 
-This extension is intended to be more organized than the previous system of userscripts in the form of gists and repos that need to be toggled manually in Tampermonkey.
+Changelog: https://github.com/jared-hughes/DesModder/blob/main/docs/CHANGELOG.md
+
+This extension is intended to be more organized than the existing system of userscripts in the form of gists and repos that need to be toggled manually in Tampermonkey.
 
 Think of it like an unofficial plugin/modding API, like Forge does for Minecraft. (DesModder is not affiliated with Desmos).
 
