@@ -94,7 +94,7 @@ export default class Controller {
   // ** play preview
   previewIndex = 0;
   isPlayingPreview = false;
-  playPreviewInterval: number | null = null;
+  playPreviewTimeout: number | null = null;
   isPlayPreviewExpanded = false;
 
   // ** bounds
@@ -339,6 +339,9 @@ export default class Controller {
 
   setFPSLatex(latex: string) {
     this.fpsLatex = latex;
+    // advancing here resets the timeout
+    // in case someone uses a low fps like 0.0001
+    this.advancePlayPreviewFrame(false);
     this.updateView();
   }
 
@@ -570,6 +573,16 @@ export default class Controller {
     this.updateView();
   }
 
+  advancePlayPreviewFrame(advance = true) {
+    this.addToPreviewIndex(advance ? 1 : 0);
+    const fps = EvaluateSingleExpression(this.fpsLatex);
+    if (this.isPlayingPreview) {
+      this.playPreviewTimeout = window.setTimeout(() => {
+        this.advancePlayPreviewFrame();
+      }, 1000 / fps);
+    }
+  }
+
   togglePlayingPreview() {
     this.isPlayingPreview = !this.isPlayingPreview;
     if (this.frames.length <= 1) {
@@ -577,14 +590,11 @@ export default class Controller {
     }
     this.updateView();
 
-    const fps = EvaluateSingleExpression(this.fpsLatex);
     if (this.isPlayingPreview) {
-      this.playPreviewInterval = window.setInterval(() => {
-        this.addToPreviewIndex(1);
-      }, 1000 / fps);
+      this.advancePlayPreviewFrame();
     } else {
-      if (this.playPreviewInterval !== null) {
-        clearInterval(this.playPreviewInterval);
+      if (this.playPreviewTimeout !== null) {
+        clearInterval(this.playPreviewTimeout);
       }
     }
   }
