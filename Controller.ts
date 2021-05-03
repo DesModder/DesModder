@@ -1,4 +1,4 @@
-import View from "./View";
+import { updateView } from "./View";
 import {
   Calc,
   SimulationModel,
@@ -63,9 +63,7 @@ function escapeRegex(s: string) {
 }
 
 export default class Controller {
-  view: View | null = null;
   frames: PNGDataURI[] = [];
-  isMainViewOpen = false;
   isCapturing = false;
   fpsLatex = "30";
   fileType: OutFileType = "gif";
@@ -105,23 +103,12 @@ export default class Controller {
   expectedSize: CaptureSize | null = null;
   isCaptureSizeDifferent = false;
 
-  init(view: View) {
-    this.view = view;
+  constructor() {
     Calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
   }
 
   updateView() {
-    this.view && this.view.update();
-  }
-
-  toggleMainView() {
-    this.isMainViewOpen = !this.isMainViewOpen;
-    this.updateView();
-  }
-
-  closeMainView() {
-    this.isMainViewOpen = false;
-    this.updateView();
+    updateView();
   }
 
   checkCaptureSize() {

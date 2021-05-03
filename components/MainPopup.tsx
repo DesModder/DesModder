@@ -16,6 +16,10 @@ import "./MainPopup.less";
 
 const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm"];
 
+export function MainPopupFunc(videoCreatorController: Controller) {
+  return <MainPopup controller={videoCreatorController} />;
+}
+
 export default class MainPopup extends DCGView.Class<{
   controller: Controller;
 }> {
