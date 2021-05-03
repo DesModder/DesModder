@@ -1,16 +1,38 @@
 import { plugins, pluginList, PluginID } from "./plugins";
 import View from "./View";
+import { MenuFunc } from "./components/Menu";
+
+interface PillboxButton {
+  id: string;
+  tooltip: string;
+  iconClass: string;
+  // popup should return a JSX element. Not sure of type
+  popup: (desmodderController: Controller) => unknown;
+}
 
 export default class Controller {
-  menuViewModel = {
-    isOpen: false,
-  };
   pluginsEnabled: { [key in PluginID]: boolean };
   view: View | null = null;
   expandedPlugin: PluginID | null = null;
   pluginSettings: {
     [plugin in PluginID]: { [key: string]: boolean };
   };
+
+  // array of IDs
+  pillboxButtonsOrder: string[] = ["main-menu"];
+  // map button ID to setup
+  pillboxButtons: {
+    [id: string]: PillboxButton;
+  } = {
+    "main-menu": {
+      id: "main-menu",
+      tooltip: "DesModder Menu",
+      iconClass: "dcg-icon-settings",
+      popup: MenuFunc,
+    },
+  };
+  // string if open, null if none are open
+  pillboxMenuOpen: string | null = null;
 
   constructor() {
     this.pluginSettings = Object.fromEntries(
@@ -19,13 +41,6 @@ export default class Controller {
     this.pluginsEnabled = Object.fromEntries(
       pluginList.map((plugin) => [plugin.id, false] as const)
     );
-    for (const plugin of pluginList) {
-      this.applyDefaultConfig(plugin.id);
-      if (plugin.enabledByDefault) {
-        this.enablePlugin(plugin.id);
-      }
-      this.view && this.view.updateMenuView();
-    }
   }
 
   applyDefaultConfig(id: PluginID) {
@@ -39,24 +54,42 @@ export default class Controller {
 
   init(view: View) {
     this.view = view;
+    for (const plugin of pluginList) {
+      this.applyDefaultConfig(plugin.id);
+      if (plugin.enabledByDefault) {
+        this.enablePlugin(plugin.id);
+      }
+      this.view && this.view.updateMenuView();
+    }
     // here want to load config + enabled plugins from local storage + header
-  }
-
-  getMenuViewModel() {
-    return this.menuViewModel;
   }
 
   updateMenuView() {
     this.view?.updateMenuView();
   }
 
-  toggleMenu() {
-    this.menuViewModel.isOpen = !this.menuViewModel.isOpen;
+  addPillboxButton(info: PillboxButton) {
+    this.pillboxButtons[info.id] = info;
+    this.pillboxButtonsOrder.push(info.id);
+    this.updateMenuView();
+  }
+
+  removePillboxButton(id: string) {
+    this.pillboxButtonsOrder.splice(this.pillboxButtonsOrder.indexOf(id), 1);
+    delete this.pillboxButtons[id];
+    if (this.pillboxMenuOpen === id) {
+      this.pillboxMenuOpen = null;
+    }
+    this.updateMenuView();
+  }
+
+  toggleMenu(id: string) {
+    this.pillboxMenuOpen = this.pillboxMenuOpen === id ? null : id;
     this.updateMenuView();
   }
 
   closeMenu() {
-    this.menuViewModel.isOpen = false;
+    this.pillboxMenuOpen = null;
     this.updateMenuView();
   }
 

@@ -41,3 +41,4 @@ export {
   jquery,
   keys,
 } from "utils";
+export { controller as desModderController } from "./script";
