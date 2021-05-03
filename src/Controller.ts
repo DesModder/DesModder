@@ -84,7 +84,7 @@ export default class Controller {
   }
 
   toggleMenu(id: string) {
-    this.pillboxMenuOpen = this.pillboxMenuOpen === null ? id : null;
+    this.pillboxMenuOpen = this.pillboxMenuOpen === id ? null : id;
     this.updateMenuView();
   }
 
