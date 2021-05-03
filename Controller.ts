@@ -64,7 +64,6 @@ function escapeRegex(s: string) {
 
 export default class Controller {
   frames: PNGDataURI[] = [];
-  isMainViewOpen = false;
   isCapturing = false;
   fpsLatex = "30";
   fileType: OutFileType = "gif";
@@ -110,16 +109,6 @@ export default class Controller {
 
   updateView() {
     updateView();
-  }
-
-  toggleMainView() {
-    this.isMainViewOpen = !this.isMainViewOpen;
-    this.updateView();
-  }
-
-  closeMainView() {
-    this.isMainViewOpen = false;
-    this.updateView();
   }
 
   checkCaptureSize() {
