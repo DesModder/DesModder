@@ -52,7 +52,13 @@ export default class PillboxContainer extends DCGView.Class<{
               didUnmount={() => this.didUnmountContainer()}
               style={() => ({
                 position: "absolute",
-                top: `46px`,
+                top: `${
+                  46 *
+                  (1 +
+                    this.controller.pillboxButtonsOrder.indexOf(
+                      this.controller.pillboxMenuOpen as string
+                    ))
+                }px`,
                 right: "38px",
                 "line-height": "1em",
               })}
