@@ -1,5 +1,5 @@
 import DCGView from "DCGView";
-import { If, Tooltip, For } from "./desmosComponents";
+import { If, Tooltip, For, Switch } from "./desmosComponents";
 import { jquery, keys } from "utils";
 import Controller from "Controller";
 import { Calc } from "globals/window";
@@ -63,9 +63,13 @@ export default class PillboxContainer extends DCGView.Class<{
                 "line-height": "1em",
               })}
             >
-              {this.controller.pillboxButtons[
-                this.controller.pillboxMenuOpen as string
-              ]?.popup?.(this.controller)}
+              <Switch key={() => this.controller.pillboxMenuOpen}>
+                {() =>
+                  this.controller.pillboxButtons[
+                    this.controller.pillboxMenuOpen as string
+                  ]?.popup?.(this.controller)
+                }
+              </Switch>
               <div class="dcg-arrow" />
             </div>
           )}
