@@ -58,8 +58,8 @@ export default class Controller {
     return out;
   }
 
-  applyStoredEnabled(storedEnabled: { [key: string]: boolean }) {
-    for (let { id } of pluginList) {
+  applyStoredEnabled(storedEnabled: { [id: string]: boolean }) {
+    for (const { id } of pluginList) {
       const stored = storedEnabled[id];
       if (stored !== undefined) {
         this.pluginsEnabled[id] = stored;
@@ -67,17 +67,41 @@ export default class Controller {
     }
   }
 
+  applyStoredSettings(storedSettings: {
+    [id: string]: { [key: string]: boolean };
+  }) {
+    for (const { id } of pluginList) {
+      const stored = storedSettings[id];
+      if (stored !== undefined) {
+        for (const key in this.pluginSettings[id]) {
+          const storedValue = stored[key];
+          if (storedValue !== undefined) {
+            this.pluginSettings[id][key] = storedValue;
+          }
+        }
+      }
+    }
+  }
+
   init(view: View) {
     // async
+    let numFulfilled = 0;
     listenToMessageDown((message) => {
-      if (message.type === "apply-plugins-enabled") {
-        console.log("got plugins enabled", message.value);
+      if (message.type === "apply-plugin-settings") {
+        this.applyStoredSettings(message.value);
+      } else if (message.type === "apply-plugins-enabled") {
         this.applyStoredEnabled(message.value);
+      } else {
+        return;
+      }
+      // I'm not sure if the messages are guaranteed to be in the expected
+      // order. Doesn't matter except for making sure we only
+      // enable once
+      numFulfilled += 1;
+      if (numFulfilled === 2) {
         this.view = view;
-        console.log("pluginsEnabled", this.pluginsEnabled);
         for (const { id } of pluginList) {
           if (this.pluginsEnabled[id]) {
-            console.log("enabling plugin", id);
             this._enablePlugin(id);
           }
         }
@@ -88,7 +112,7 @@ export default class Controller {
     });
     // fire GET after starting listener in case it gets resolved before the listener begins
     postMessageUp({
-      type: "get-plugins-enabled",
+      type: "get-initial-data",
     });
   }
 
@@ -159,6 +183,7 @@ export default class Controller {
 
   enablePlugin(id: PluginID) {
     if (!this.pluginsEnabled[id]) {
+      this.setPluginEnabled(id, true);
       this._enablePlugin(id);
     }
   }
@@ -210,6 +235,10 @@ export default class Controller {
         ? manageConfigChange(pluginSettings, proposedChanges)
         : proposedChanges;
     Object.assign(pluginSettings, changes);
+    postMessageUp({
+      type: "set-plugin-settings",
+      value: this.pluginSettings,
+    });
     if (doCallback && this.pluginsEnabled[pluginID]) {
       const onConfigChange = plugins[pluginID]?.onConfigChange;
       if (onConfigChange !== undefined) {

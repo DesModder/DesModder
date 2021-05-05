@@ -15,23 +15,31 @@ type MessageWindowToContent =
     }
   | {
       type: "set-plugins-enabled";
+      value: { [id: string]: boolean };
+    }
+  | {
+      type: "set-plugin-settings";
+      value: { [id: string]: { [key: string]: boolean } };
+    }
+  | {
+      type: "get-initial-data";
+    };
+
+type MessageContentToWindow =
+  | {
+      type: "apply-plugins-enabled";
       value: { [key: string]: boolean };
     }
   | {
-      type: "get-plugins-enabled";
+      type: "apply-plugin-settings";
+      value: { [id: string]: { [key: string]: boolean } };
     };
-
-type MessageContentToWindow = {
-  type: "apply-plugins-enabled";
-  value: { [key: string]: boolean };
-};
 
 function postMessage<T extends { type: string }>(message: T) {
   window.postMessage(message, "*");
 }
 
 export function postMessageUp(message: MessageWindowToContent) {
-  console.log("posting message up, but chrome is", chrome);
   postMessage(message);
 }
 
@@ -49,11 +57,9 @@ function listenToMessage<T>(callback: (message: T) => ShouldCancel) {
     }
     const cancel = callback(event.data);
     if (cancel) {
-      console.log("-1 removed listener", callback);
       window.removeEventListener("message", wrappedCallback, false);
     }
   };
-  console.log("+1 added listener", callback);
   window.addEventListener("message", wrappedCallback, false);
   return wrappedCallback;
 }

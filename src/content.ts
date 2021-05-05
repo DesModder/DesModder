@@ -4,15 +4,28 @@ import { postMessageDown, listenToMessageUp } from "messages";
 
 const StorageKeys = {
   pluginsEnabled: "_plugins-enabled",
+  pluginSettings: "_plugin-settings",
 } as const;
 
-function getPluginsEnabled() {
-  chrome.storage.sync.get(StorageKeys.pluginsEnabled, (items) => {
-    postMessageDown({
-      type: "apply-plugins-enabled",
-      value: items[StorageKeys.pluginsEnabled] as { [key: string]: boolean },
-    });
-  });
+function getInitialData() {
+  chrome.storage.sync.get(
+    {
+      [StorageKeys.pluginsEnabled]: {}, // default: do not know which are enabled
+      [StorageKeys.pluginSettings]: {}, // default: no settings known
+    },
+    (items) => {
+      postMessageDown({
+        type: "apply-plugin-settings",
+        value: items[StorageKeys.pluginSettings] as {
+          [id: string]: { [key: string]: boolean };
+        },
+      });
+      postMessageDown({
+        type: "apply-plugins-enabled",
+        value: items[StorageKeys.pluginsEnabled] as { [id: string]: boolean },
+      });
+    }
+  );
 }
 
 listenToMessageUp((message) => {
@@ -22,8 +35,8 @@ listenToMessageUp((message) => {
         injectScript("wolfram2desmos.js");
       }
       break;
-    case "get-plugins-enabled":
-      getPluginsEnabled();
+    case "get-initial-data":
+      getInitialData();
       break;
     case "set-plugins-enabled":
       chrome.storage.sync.set({
