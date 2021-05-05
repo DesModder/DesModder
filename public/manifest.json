@@ -19,7 +19,7 @@
       "matches": ["https://www.desmos.com/*"]
     }
   ],
-  "permissions": [],
+  "permissions": ["storage"],
   "host_permissions": ["https://www.desmos.com/*"],
   "externally_connectable": {
     "matches": ["https://www.desmos.com/*"]

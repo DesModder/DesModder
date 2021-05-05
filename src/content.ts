@@ -1,3 +1,40 @@
+import { postMessageDown, listenToMessageUp } from "messages";
+
+// *** Messages
+
+const StorageKeys = {
+  pluginsEnabled: "_plugins-enabled",
+} as const;
+
+function getPluginsEnabled() {
+  chrome.storage.sync.get(StorageKeys.pluginsEnabled, (items) => {
+    postMessageDown({
+      type: "apply-plugins-enabled",
+      value: items[StorageKeys.pluginsEnabled] as { [key: string]: boolean },
+    });
+  });
+}
+
+listenToMessageUp((message) => {
+  switch (message.type) {
+    case "enable-script":
+      if (message.scriptName === "wolfram2desmos") {
+        injectScript("wolfram2desmos.js");
+      }
+      break;
+    case "get-plugins-enabled":
+      getPluginsEnabled();
+      break;
+    case "set-plugins-enabled":
+      chrome.storage.sync.set({
+        [StorageKeys.pluginsEnabled]: message.value,
+      });
+      break;
+  }
+});
+
+// *** Script Injection
+
 // https://stackoverflow.com/a/9517879
 // injects script.ts into the correct window context
 function injectScript(url: string) {
@@ -14,16 +51,3 @@ function injectScript(url: string) {
 }
 
 injectScript("script.js");
-
-// https://stackoverflow.com/a/11431812/7481517
-window.addEventListener("message", (event) => {
-  if (event.source !== window) {
-    return;
-  }
-  const message = event.data;
-  if (message.type === "enable-script") {
-    if (message.scriptName === "wolfram2desmos") {
-      injectScript("wolfram2desmos.js");
-    }
-  }
-});

@@ -1,6 +1,7 @@
 import { plugins, pluginList, PluginID } from "./plugins";
 import View from "./View";
 import { MenuFunc } from "./components/Menu";
+import { listenToMessageDown, postMessageUp } from "messages";
 
 interface PillboxButton {
   id: string;
@@ -35,33 +36,60 @@ export default class Controller {
   pillboxMenuOpen: string | null = null;
 
   constructor() {
+    // default values
     this.pluginSettings = Object.fromEntries(
-      pluginList.map((plugin) => [plugin.id, {}] as const)
+      pluginList.map(
+        (plugin) => [plugin.id, this.getDefaultConfig(plugin.id)] as const
+      )
     );
     this.pluginsEnabled = Object.fromEntries(
-      pluginList.map((plugin) => [plugin.id, false] as const)
+      pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
     );
   }
 
-  applyDefaultConfig(id: PluginID) {
+  getDefaultConfig(id: PluginID) {
+    const out: { [key: string]: boolean } = {};
     const config = plugins[id].config;
     if (config !== undefined) {
       for (const configItem of config) {
-        this.pluginSettings[id][configItem.key] = configItem.default;
+        out[configItem.key] = configItem.default;
+      }
+    }
+    return out;
+  }
+
+  applyStoredEnabled(storedEnabled: { [key: string]: boolean }) {
+    for (let { id } of pluginList) {
+      const stored = storedEnabled[id];
+      if (stored !== undefined) {
+        this.pluginsEnabled[id] = stored;
       }
     }
   }
 
   init(view: View) {
-    this.view = view;
-    for (const plugin of pluginList) {
-      this.applyDefaultConfig(plugin.id);
-      if (plugin.enabledByDefault) {
-        this.enablePlugin(plugin.id);
+    // async
+    listenToMessageDown((message) => {
+      if (message.type === "apply-plugins-enabled") {
+        console.log("got plugins enabled", message.value);
+        this.applyStoredEnabled(message.value);
+        this.view = view;
+        console.log("pluginsEnabled", this.pluginsEnabled);
+        for (const { id } of pluginList) {
+          if (this.pluginsEnabled[id]) {
+            console.log("enabling plugin", id);
+            this._enablePlugin(id);
+          }
+        }
+        this.view.updateMenuView();
+        // cancel listener
+        return true;
       }
-      this.view && this.view.updateMenuView();
-    }
-    // here want to load config + enabled plugins from local storage + header
+    });
+    // fire GET after starting listener in case it gets resolved before the listener begins
+    postMessageUp({
+      type: "get-plugins-enabled",
+    });
   }
 
   updateMenuView() {
@@ -101,23 +129,37 @@ export default class Controller {
     return pluginList;
   }
 
+  setPluginEnabled(i: PluginID, isEnabled: boolean) {
+    this.pluginsEnabled[i] = isEnabled;
+    postMessageUp({
+      type: "set-plugins-enabled",
+      value: this.pluginsEnabled,
+    });
+  }
+
   disablePlugin(i: PluginID) {
     const plugin = plugins[i];
     if (plugin !== undefined) {
       if (this.pluginsEnabled[i] && plugin.onDisable) {
         plugin.onDisable();
-        this.pluginsEnabled[i] = false;
+        this.setPluginEnabled(i, false);
         this.updateMenuView();
       }
     }
   }
 
-  enablePlugin(i: PluginID) {
-    const plugin = plugins[i];
-    if (!this.pluginsEnabled[i] && plugin !== undefined) {
-      plugin.onEnable(this.pluginSettings[i]);
-      this.pluginsEnabled[i] = true;
+  _enablePlugin(id: PluginID) {
+    const plugin = plugins[id];
+    if (plugin !== undefined) {
+      plugin.onEnable(this.pluginSettings[id]);
+      this.setPluginEnabled(id, true);
       this.updateMenuView();
+    }
+  }
+
+  enablePlugin(id: PluginID) {
+    if (!this.pluginsEnabled[id]) {
+      this._enablePlugin(id);
     }
   }
 
