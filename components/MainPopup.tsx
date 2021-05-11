@@ -14,7 +14,7 @@ import LoadingPie from "./LoadingPie";
 import Controller, { OutFileType } from "../Controller";
 import "./MainPopup.less";
 
-const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm"];
+const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng"];
 
 export function MainPopupFunc(videoCreatorController: Controller) {
   return <MainPopup controller={videoCreatorController} />;
