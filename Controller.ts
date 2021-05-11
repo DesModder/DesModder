@@ -313,7 +313,7 @@ export default class Controller {
       new Blob([data.buffer as ArrayBuffer], { type: "video/mp4" })
     );
 
-    const humanOutFilename = "DesModder Video Creator." + this.fileType;
+    const humanOutFilename = "DesModder Video Creator." + (this.fileType === 'apng' ? 'png' : this.fileType);
     this.download(url, humanOutFilename);
 
     this.isExporting = false;
