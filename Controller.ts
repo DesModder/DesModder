@@ -16,7 +16,7 @@ import {
 } from "./node_modules/@ffmpeg/ffmpeg/src/index.js";
 
 type PNGDataURI = string;
-export type OutFileType = "gif" | "mp4" | "webm";
+export type OutFileType = "gif" | "mp4" | "webm" | "apng";
 type FFmpeg = ReturnType<typeof createFFmpeg>;
 export type CaptureMethod = "once" | "simulation" | "slider";
 interface SliderSettings {
@@ -239,6 +239,7 @@ export default class Controller {
         "-lavfi",
         "palettegen=stats_mode=single[pal],[0:v][pal]paletteuse=new=1",
       ],
+      apng: ["-plays", "0", "-f", "apng"],
     }[this.fileType];
 
     const fps = EvaluateSingleExpression(this.fpsLatex);
@@ -312,7 +313,7 @@ export default class Controller {
       new Blob([data.buffer as ArrayBuffer], { type: "video/mp4" })
     );
 
-    const humanOutFilename = "DesModder Video Creator." + this.fileType;
+    const humanOutFilename = "DesModder Video Creator." + (this.fileType === 'apng' ? 'png' : this.fileType);
     this.download(url, humanOutFilename);
 
     this.isExporting = false;
