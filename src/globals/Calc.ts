@@ -77,7 +77,7 @@ export interface TableModel {
 export interface SimulationModel {
   id: string;
   type: "simulation";
-  clickableInfo: {
+  clickableInfo?: {
     description?: string;
     rules: Array<{
       id: string;
