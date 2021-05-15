@@ -23,7 +23,7 @@ export const configList = [
     key: "administerSecretFolders",
     name: "Create hidden folders",
     type: "boolean",
-    default: true,
+    default: false,
   },
   {
     key: "pointsOfInterest",
