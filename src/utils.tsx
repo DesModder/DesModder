@@ -55,3 +55,13 @@ export function mergeClass(c1: MaybeClassDict, c2: MaybeClassDict) {
   updateClass(out, c2);
   return out;
 }
+
+// https://dev.to/_gdelgado/implement-a-type-safe-version-of-node-s-promisify-in-7-lines-of-code-in-typescript-2j34
+export const promisify = <T, A>(
+  fn: (args: T, cb: (args: A) => void) => void
+): ((args: T) => Promise<A>) => (args: T) =>
+  new Promise((resolve) => {
+    fn(args, (callbackArgs) => {
+      resolve(callbackArgs);
+    });
+  });

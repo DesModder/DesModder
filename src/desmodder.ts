@@ -40,5 +40,6 @@ export {
   MaybeClassDict,
   jquery,
   keys,
+  promisify,
 } from "utils";
 export { controller as desModderController } from "./script";
