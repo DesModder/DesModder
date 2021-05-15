@@ -578,6 +578,9 @@ export default class Controller {
     this.addToPreviewIndex(advance ? 1 : 0);
     const fps = EvaluateSingleExpression(this.fpsLatex);
     if (this.isPlayingPreview) {
+      if (this.playPreviewTimeout !== null) {
+        window.clearTimeout(this.playPreviewTimeout);
+      }
       this.playPreviewTimeout = window.setTimeout(() => {
         this.advancePlayPreviewFrame();
       }, 1000 / fps);
