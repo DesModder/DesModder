@@ -35,10 +35,7 @@ export default class SimulationPicker extends DCGView.Class<{
 
   getRules() {
     const currentSimulation = this.props.controller().getCurrentSimulation();
-    if (currentSimulation !== undefined) {
-      return currentSimulation.clickableInfo.rules;
-    } else {
-      return [];
-    }
+    // no clickable info or no simulation = empty simulation (no rules)
+    return currentSimulation?.clickableInfo?.rules || [];
   }
 }
