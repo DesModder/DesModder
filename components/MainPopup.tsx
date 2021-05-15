@@ -11,7 +11,8 @@ import {
 import CaptureMethod from "./CaptureMethod";
 import PreviewCarousel from "./PreviewCarousel";
 import LoadingPie from "./LoadingPie";
-import Controller, { OutFileType } from "../Controller";
+import Controller from "../Controller";
+import { OutFileType } from "../backend/export";
 import "./MainPopup.less";
 
 const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng"];

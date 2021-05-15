@@ -9,7 +9,8 @@ import {
   Tooltip,
   IfElse,
 } from "desmodder";
-import Controller, { CaptureMethod } from "../Controller";
+import Controller from "../Controller";
+import { cancelCapture, CaptureMethod } from "../backend/capture";
 import SimulationPicker from "./SimulationPicker";
 import "./CaptureMethod.css";
 
@@ -198,7 +199,7 @@ export default class SelectCapture extends DCGView.Class<{
                   <Button
                     color="blue"
                     class="video-creator-cancel-capture-button"
-                    onTap={() => this.controller.cancelCapture()}
+                    onTap={() => cancelCapture()}
                   >
                     Cancel
                   </Button>
