@@ -43,6 +43,11 @@ listenToMessageUp((message) => {
         [StorageKeys.pluginsEnabled]: message.value,
       });
       break;
+    case "set-plugin-settings":
+      chrome.storage.sync.set({
+        [StorageKeys.pluginSettings]: message.value,
+      });
+      break;
   }
 });
 
