@@ -14,16 +14,3 @@ function injectScript(url: string) {
 }
 
 injectScript("script.js");
-
-// https://stackoverflow.com/a/11431812/7481517
-window.addEventListener("message", (event) => {
-  if (event.source !== window) {
-    return;
-  }
-  const message = event.data;
-  if (message.type === "enable-script") {
-    if (message.scriptName === "wolfram2desmos") {
-      injectScript("wolfram2desmos.js");
-    }
-  }
-});
