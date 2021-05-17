@@ -1,13 +1,6 @@
-import { jquery } from "desmodder";
-
-interface CBFocus {
-	type: string,
-	target: FocusEvent
-};
-
 export default class Controller {
 	// I was going to use jquery but for now I'm going to use vanilla js
-	readonly panel: null | HTMLElement;
+	readonly panel: HTMLElement | null;
 	readonly onFocus: (evtInfo: FocusEvent) => void;
 	
 	filterTag: string[];
@@ -26,8 +19,6 @@ export default class Controller {
 			if (isTarget && this.enabled) {
 				callback(e);
 			}
-			// let txa = e.target.parentElement.parentElement;
-			// txa.addEventListener('paste', pasteHandler, false);
 		}
 		
 		this.panel?.addEventListener('focusin', evtPred, false);
