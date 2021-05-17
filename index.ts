@@ -39,9 +39,11 @@ function typeInTextArea(
 }
 
 function pasteHandler(e:ClipboardEvent) {
+	let elem = e.target as HTMLElement;
 	let pasteData =  e.clipboardData?.getData('Text');
 	
 	if (
+		!(elem?.classList.contains('dcg-label-input') ?? true) &&
 		pasteData !== '' && Calc.controller.getItemModel(Calc.selectedExpressionId).type === "expression"
 	) {
 		e.stopPropagation();
