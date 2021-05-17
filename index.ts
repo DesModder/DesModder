@@ -2,6 +2,7 @@ import { Calc } from "desmodder";
 import Controller from "./Controller";
 import { wolfram2desmos } from "./wolfram2desmos"
 
+// initialize controller and observe textarea and input tags
 let controller: Controller = new Controller(
 	['textarea', 'input'],
 	function (e:FocusEvent) {
@@ -21,6 +22,7 @@ let controller: Controller = new Controller(
 	}
 );
 
+// https://stackoverflow.com/a/34278578
 function typeInTextArea(
 	newText: string | undefined,
 	elm: Element | null = document.activeElement

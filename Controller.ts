@@ -1,3 +1,7 @@
+/*
+ This controller manages the focus events of Expression panel
+*/
+
 export default class Controller {
 	// I was going to use jquery but for now I'm going to use vanilla js
 	readonly panel: HTMLElement | null;
@@ -13,7 +17,8 @@ export default class Controller {
 		this.panel = document.querySelector(".dcg-exppanel-outer");
 		this.onFocus = callback;
 		this.filterTag = filterTag;
-		let evtPred = (e: FocusEvent) => {
+		let focusHandler = (e: FocusEvent) => {
+			// used arrow function to allow "this" to point to the class instance
 			let elem: HTMLElement = e.target as HTMLElement;
 			let isTarget: boolean = this.filterTag.includes(elem.tagName.toLowerCase());
 			if (isTarget && this.enabled) {
@@ -21,8 +26,8 @@ export default class Controller {
 			}
 		}
 		
-		this.panel?.addEventListener('focusin', evtPred, false);
-		this.panel?.addEventListener('focusout', evtPred, false);
+		this.panel?.addEventListener('focusin', focusHandler, false);
+		this.panel?.addEventListener('focusout', focusHandler, false);
 		
 	}
 	
