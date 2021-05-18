@@ -9,7 +9,6 @@ const config = {
   entry: {
     content: "./src/content.ts",
     script: "./src/script.ts",
-    wolfram2desmos: "./src/plugins/wolfram2desmos/wolfram2desmos.user.js",
   },
   output: {
     path: path.resolve(__dirname, "../dist"),
