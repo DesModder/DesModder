@@ -54,7 +54,7 @@ export default class PillboxContainer extends DCGView.Class<{
                 position: "absolute",
                 top: `${
                   46 *
-                  (1 +
+                  ((Calc.settings.settingsMenu ? 1 : 0) +
                     this.controller.pillboxButtonsOrder.indexOf(
                       this.controller.pillboxMenuOpen as string
                     ))
