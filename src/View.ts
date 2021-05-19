@@ -23,13 +23,30 @@ export default class View {
   }
 
   async mountPillbox(controller: Controller) {
-    const pillbox = await pollForValue(() =>
+    const pillbox = (await pollForValue(() =>
       document.querySelector(".dcg-overgraph-pillbox-elements")
-    );
+    )) as HTMLElement;
+    /*
+     * pillbox is shaped like:
+     * <div class="dcg-overgraph-pillbox-elements">
+     *   <div /> <!-- may be empty (stand-in for the wrench settings) -->
+     *   <div /> <!-- may be empty (stand-in for the reset button) -->
+     *   <div /> <!-- may be empty (stand-in for the zoom & home buttons) -->
+     * </div>
+     *
+     * If Calc.settings.settingsMenu === false and Calc.settings.zoomButtons === false,
+     * and there is no saved state to warrant a reset button,
+     * then the ENTIRE pillbox is hidden, so pillbox would be null,
+     * and pollForValue would not resolve until the element is inserted.
+     *
+     * So, pillbox should not be null.
+     */
     this.pillboxMountNode = document.createElement("div");
+    // we want to insert pillboxMountNode after the wrench settings and
+    // before the reset/zoom button
     pillbox.insertBefore(
       this.pillboxMountNode,
-      pillbox.querySelector(".dcg-zoom-container")
+      pillbox.firstElementChild!.nextElementSibling
     );
     this.menuView = DCGView.mountToNode(
       PillboxContainer,
