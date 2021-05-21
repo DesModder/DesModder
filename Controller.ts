@@ -4,18 +4,11 @@ import {
   SimulationModel,
   jquery,
   keys,
-  Bounds,
   EvaluateSingleExpression,
 } from "desmodder";
-import { boundsEqual, isValidNumber, escapeRegex } from "./backend/utils";
+import { isValidNumber, escapeRegex } from "./backend/utils";
 import { OutFileType, exportFrames } from "./backend/export";
-import {
-  CaptureMethod,
-  SliderSettings,
-  capture,
-  captureSizesEqual,
-  CaptureSize,
-} from "./backend/capture";
+import { CaptureMethod, SliderSettings, capture } from "./backend/capture";
 
 type FocusedMQ =
   | "none"
@@ -59,66 +52,8 @@ export default class Controller {
   playPreviewTimeout: number | null = null;
   isPlayPreviewExpanded = false;
 
-  // ** bounds
-  expectedBounds: Bounds | null = null;
-  areMathBoundsDifferent = false;
-  expectedSize: CaptureSize | null = null;
-  isCaptureSizeDifferent = false;
-
-  constructor() {
-    Calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
-  }
-
   updateView() {
     updateView();
-  }
-
-  checkCaptureSize() {
-    const size = Calc.graphpaperBounds.pixelCoordinates;
-    if (this.expectedSize !== null) {
-      const diff = !captureSizesEqual(this.expectedSize, size);
-      if (diff !== this.isCaptureSizeDifferent) {
-        this.isCaptureSizeDifferent = diff;
-        this.updateView();
-      }
-    } else {
-      this.expectedSize = size;
-    }
-  }
-
-  graphpaperBoundsChanged() {
-    // if expectedBounds has not been initialized yet, then
-    // there are no constraints on the bounds, so we
-    // do not have to worry about fixing or mismatch
-    if (this.expectedBounds !== null) {
-      if (
-        boundsEqual(Calc.graphpaperBounds.mathCoordinates, this.expectedBounds)
-      ) {
-        if (this.areMathBoundsDifferent) {
-          this.mathBoundsFixed();
-        }
-      } else {
-        this.mathBoundsMismatch();
-      }
-    }
-  }
-
-  mathBoundsMismatch() {
-    this.areMathBoundsDifferent = true;
-    this.updateView();
-  }
-
-  mathBoundsFixed() {
-    this.areMathBoundsDifferent = false;
-    this.updateView();
-  }
-
-  resetMathBounds() {
-    if (this.expectedBounds !== null) {
-      // setMathBounds calls graphpaperBoundsChanged via the observed
-      // graphpaperBounds property
-      Calc.setMathBounds(this.expectedBounds);
-    }
   }
 
   deleteAll() {
@@ -336,12 +271,6 @@ export default class Controller {
       this.previewIndex = this.frames.length - 1;
     }
     if (this.frames.length === 0) {
-      this.expectedSize = null;
-      this.expectedBounds = null;
-      this.isCaptureSizeDifferent = false;
-      if (this.areMathBoundsDifferent) {
-        this.mathBoundsFixed();
-      }
       if (this.isPlayPreviewExpanded) {
         this.togglePreviewExpanded();
       }

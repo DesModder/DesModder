@@ -6,7 +6,6 @@ import {
   Switch,
   StaticMathQuillView,
   Button,
-  Tooltip,
   IfElse,
 } from "desmodder";
 import Controller from "../Controller";
@@ -154,59 +153,37 @@ export default class SelectCapture extends DCGView.Class<{
             }[this.getSelectedCaptureMethod()]())
           }
         </Switch>
-        <If predicate={() => this.controller.areMathBoundsDifferent}>
-          {() => (
-            <div class="video-creator-reset-bounds-wrapper">
-              <Button
-                color="light-gray"
-                class="video-creator-reset-bounds-button"
-                onTap={() => this.controller.resetMathBounds()}
-              >
-                Revert Viewport
-              </Button>
-            </div>
-          )}
-        </If>
         <div class="video-creator-capture">
-          <Tooltip
-            tooltip={() =>
-              this.controller.isCaptureSizeDifferent
-                ? "Aspect ratio different"
-                : ""
+          {IfElse(
+            () =>
+              !this.controller.isCapturing ||
+              this.controller.captureMethod === "once",
+            {
+              true: () => (
+                <Button
+                  color="green"
+                  class="video-creator-capture-frame-button"
+                  disabled={() =>
+                    this.controller.isCapturing ||
+                    this.controller.isExporting ||
+                    !this.controller.areCaptureSettingsValid()
+                  }
+                  onTap={() => this.controller.capture()}
+                >
+                  Capture
+                </Button>
+              ),
+              false: () => (
+                <Button
+                  color="blue"
+                  class="video-creator-cancel-capture-button"
+                  onTap={() => cancelCapture()}
+                >
+                  Cancel
+                </Button>
+              ),
             }
-            gravity="n"
-          >
-            {IfElse(
-              () =>
-                !this.controller.isCapturing ||
-                this.controller.captureMethod === "once",
-              {
-                true: () => (
-                  <Button
-                    color="green"
-                    class="video-creator-capture-frame-button"
-                    disabled={() =>
-                      this.controller.isCapturing ||
-                      this.controller.isExporting ||
-                      !this.controller.areCaptureSettingsValid()
-                    }
-                    onTap={() => this.controller.capture()}
-                  >
-                    Capture
-                  </Button>
-                ),
-                false: () => (
-                  <Button
-                    color="blue"
-                    class="video-creator-cancel-capture-button"
-                    onTap={() => cancelCapture()}
-                  >
-                    Cancel
-                  </Button>
-                ),
-              }
-            )}
-          </Tooltip>
+          )}
           <If
             predicate={() => this.getSelectedCaptureMethod() === "simulation"}
           >
