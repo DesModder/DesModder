@@ -180,6 +180,16 @@ export default class SelectCapture extends DCGView.Class<{
             }
             isFocused={() => this.controller.isFocused("capture-height")}
           />
+          <If predicate={() => this.controller.isDefaultCaptureSizeDifferent()}>
+            {() => (
+              <Button
+                color="light-gray"
+                onTap={() => this.controller.applyDefaultCaptureSize()}
+              >
+                <i class="dcg-icon-magic" />
+              </Button>
+            )}
+          </If>
         </div>
         <div class="video-creator-capture">
           {IfElse(

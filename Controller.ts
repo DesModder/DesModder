@@ -56,6 +56,15 @@ export default class Controller {
   playPreviewTimeout: number | null = null;
   isPlayPreviewExpanded = false;
 
+  constructor() {
+    Calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
+    this._applyDefaultCaptureSize();
+  }
+
+  graphpaperBoundsChanged() {
+    this.updateView();
+  }
+
   updateView() {
     updateView();
   }
@@ -111,6 +120,25 @@ export default class Controller {
 
   isCaptureHeightValid() {
     return isValidLength(this.captureHeightLatex);
+  }
+
+  _applyDefaultCaptureSize() {
+    const size = Calc.graphpaperBounds.pixelCoordinates;
+    this.captureWidthLatex = size.width.toFixed(0);
+    this.captureHeightLatex = size.height.toFixed(0);
+  }
+
+  applyDefaultCaptureSize() {
+    this._applyDefaultCaptureSize();
+    this.updateView();
+  }
+
+  isDefaultCaptureSizeDifferent() {
+    const size = Calc.graphpaperBounds.pixelCoordinates;
+    return (
+      this.captureWidthLatex !== size.width.toFixed(0) ||
+      this.captureHeightLatex !== size.height.toFixed(0)
+    );
   }
 
   setCaptureHeightLatex(latex: string) {
