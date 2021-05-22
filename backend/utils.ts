@@ -9,6 +9,11 @@ export function isValidNumber(s: string) {
   return !isNaN(EvaluateSingleExpression(s));
 }
 
+export function isValidLength(s: string) {
+  const evaluated = EvaluateSingleExpression(s);
+  return !isNaN(evaluated) && evaluated > 0;
+}
+
 export function boundsEqual(a: Bounds, b: Bounds) {
   return (
     a.left === b.left &&

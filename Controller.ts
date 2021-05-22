@@ -6,7 +6,7 @@ import {
   keys,
   EvaluateSingleExpression,
 } from "desmodder";
-import { isValidNumber, escapeRegex } from "./backend/utils";
+import { isValidNumber, isValidLength, escapeRegex } from "./backend/utils";
 import { OutFileType, exportFrames } from "./backend/export";
 import { CaptureMethod, SliderSettings, capture } from "./backend/capture";
 
@@ -17,6 +17,8 @@ type FocusedMQ =
   | "capture-slider-max"
   | "capture-slider-step"
   | "capture-simulation-while"
+  | "capture-width"
+  | "capture-height"
   | "export-fps";
 
 export default class Controller {
@@ -45,6 +47,8 @@ export default class Controller {
   simulationWhileLatex = "";
   _isWhileLatexValid = false;
   whileLatexHelper: ReturnType<typeof Calc.HelperExpression> | null = null;
+  captureHeightLatex = "";
+  captureWidthLatex = "";
 
   // ** play preview
   previewIndex = 0;
@@ -96,6 +100,24 @@ export default class Controller {
     this.updateView();
   }
 
+  isCaptureWidthValid() {
+    return isValidLength(this.captureWidthLatex);
+  }
+
+  setCaptureWidthLatex(latex: string) {
+    this.captureWidthLatex = latex;
+    this.updateView();
+  }
+
+  isCaptureHeightValid() {
+    return isValidLength(this.captureHeightLatex);
+  }
+
+  setCaptureHeightLatex(latex: string) {
+    this.captureHeightLatex = latex;
+    this.updateView();
+  }
+
   setSliderSetting<T extends keyof SliderSettings>(
     key: T,
     value: SliderSettings[T]
@@ -133,6 +155,9 @@ export default class Controller {
   }
 
   areCaptureSettingsValid() {
+    if (!this.isCaptureWidthValid() || !this.isCaptureHeightValid()) {
+      return false;
+    }
     if (this.captureMethod === "once") {
       return true;
     } else if (this.captureMethod === "slider") {

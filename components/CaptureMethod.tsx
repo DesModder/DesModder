@@ -153,6 +153,34 @@ export default class SelectCapture extends DCGView.Class<{
             }[this.getSelectedCaptureMethod()]())
           }
         </Switch>
+        <div class="video-creator-capture-size">
+          Width:
+          <SmallMathQuillInput
+            ariaLabel="capture width"
+            onUserChangedLatex={(latex) =>
+              this.controller.setCaptureWidthLatex(latex)
+            }
+            latex={() => this.controller.captureWidthLatex}
+            hasError={() => !this.controller.isCaptureWidthValid()}
+            onFocusedChanged={(b) =>
+              this.controller.updateFocus("capture-width", b)
+            }
+            isFocused={() => this.controller.isFocused("capture-width")}
+          />
+          Height:
+          <SmallMathQuillInput
+            ariaLabel="capture height"
+            onUserChangedLatex={(latex) =>
+              this.controller.setCaptureHeightLatex(latex)
+            }
+            latex={() => this.controller.captureHeightLatex}
+            hasError={() => !this.controller.isCaptureHeightValid()}
+            onFocusedChanged={(b) =>
+              this.controller.updateFocus("capture-height", b)
+            }
+            isFocused={() => this.controller.isFocused("capture-height")}
+          />
+        </div>
         <div class="video-creator-capture">
           {IfElse(
             () =>

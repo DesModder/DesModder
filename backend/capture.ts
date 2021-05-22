@@ -3,15 +3,6 @@ import Controller from "../Controller";
 
 export type CaptureMethod = "once" | "simulation" | "slider";
 
-export interface CaptureSize {
-  width: number;
-  height: number;
-}
-
-export function captureSizesEqual(a: CaptureSize, b: CaptureSize) {
-  return a.width === b.width && a.height === b.height;
-}
-
 export let captureCancelled = false;
 
 export function cancelCapture() {
@@ -19,13 +10,16 @@ export function cancelCapture() {
 }
 
 async function captureAndApplyFrame(controller: Controller) {
-  const frame = await captureFrame();
+  const frame = await captureFrame(
+    EvaluateSingleExpression(controller.captureWidthLatex),
+    EvaluateSingleExpression(controller.captureHeightLatex)
+  );
   controller.frames.push(frame);
 
   controller.updateView();
 }
 
-export async function captureFrame() {
+export async function captureFrame(width: number, height: number) {
   // resolves the screenshot as a data URI
   return new Promise<string>((resolve, reject) => {
     const tryCancel = () => {
@@ -39,6 +33,8 @@ export async function captureFrame() {
     const interval = window.setInterval(tryCancel, 50);
     Calc.asyncScreenshot(
       {
+        width: width,
+        height: height,
         showLabels: true,
         mode: "contain",
         preserveAxisLabels: true,
