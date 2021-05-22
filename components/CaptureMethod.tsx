@@ -154,7 +154,7 @@ export default class SelectCapture extends DCGView.Class<{
           }
         </Switch>
         <div class="video-creator-capture-size">
-          Width:
+          Size:
           <SmallMathQuillInput
             ariaLabel="capture width"
             onUserChangedLatex={(latex) =>
@@ -167,7 +167,7 @@ export default class SelectCapture extends DCGView.Class<{
             }
             isFocused={() => this.controller.isFocused("capture-width")}
           />
-          Height:
+          ×
           <SmallMathQuillInput
             ariaLabel="capture height"
             onUserChangedLatex={(latex) =>
