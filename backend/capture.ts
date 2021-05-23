@@ -1,4 +1,5 @@
 import { Calc, EvaluateSingleExpression } from "desmodder";
+import { scaleBoundsAboutCenter } from "./utils";
 import Controller from "../Controller";
 
 export type CaptureMethod = "once" | "simulation" | "slider";
@@ -11,8 +12,8 @@ export function cancelCapture() {
 
 async function captureAndApplyFrame(controller: Controller) {
   const frame = await captureFrame(
-    EvaluateSingleExpression(controller.captureWidthLatex),
-    EvaluateSingleExpression(controller.captureHeightLatex)
+    controller.getCaptureWidthNumber(),
+    controller.getCaptureHeightNumber()
   );
   controller.frames.push(frame);
 
@@ -31,13 +32,20 @@ export async function captureFrame(width: number, height: number) {
     tryCancel();
     // poll for mid-screenshot cancellation (only affects UI)
     const interval = window.setInterval(tryCancel, 50);
+    const mathBounds = Calc.graphpaperBounds.mathCoordinates;
+    const ratio = height / width / (mathBounds.height / mathBounds.width);
+    // make the captured region entirely visible
+    const clampedMathBounds = scaleBoundsAboutCenter(
+      mathBounds,
+      Math.min(ratio, 1 / ratio)
+    );
     Calc.asyncScreenshot(
       {
         width: width,
         height: height,
         showLabels: true,
-        mode: "contain",
         preserveAxisLabels: true,
+        mathBounds: clampedMathBounds,
       },
       (data) => {
         clearInterval(interval);

@@ -146,6 +146,14 @@ export default class Controller {
     this.updateView();
   }
 
+  getCaptureWidthNumber() {
+    return EvaluateSingleExpression(this.captureWidthLatex);
+  }
+
+  getCaptureHeightNumber() {
+    return EvaluateSingleExpression(this.captureHeightLatex);
+  }
+
   setSliderSetting<T extends keyof SliderSettings>(
     key: T,
     value: SliderSettings[T]
