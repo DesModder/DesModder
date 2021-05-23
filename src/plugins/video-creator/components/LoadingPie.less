@@ -1,0 +1,50 @@
+.video-creator-pie-container {
+  @full-width: 120px;
+  @max-scale: 1.5;
+
+  margin: (1.5 * (@max-scale - 1) * @full-width / 2);
+  display: flex;
+  justify-content: center;
+
+  .video-creator-centered-pie {
+    width: @full-width;
+    height: @full-width;
+    position: relative;
+  }
+
+  .video-creator-pending {
+    animation: dcg-loading-pulse 2.2s infinite;
+
+    .video-creator-base-circle,
+    .video-creator-pie-overlay {
+      transform: scale(1);
+    }
+
+    .video-creator-pie-overlay {
+      // a bit darker, to compensate for opacity set in dcg-loading-pulse animation
+      filter: brightness(70%);
+    }
+  }
+
+  .video-creator-base-circle,
+  .video-creator-pie-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform: scale(@max-scale);
+    width: 100%;
+    height: 100%;
+  }
+
+  .video-creator-base-circle {
+    transition: transform 200ms;
+    background: hsv(0, 0, 90%);
+    border-radius: 50%;
+  }
+
+  .video-creator-pie-overlay {
+    path {
+      fill: hsv(0, 0, 60%);
+    }
+  }
+}
