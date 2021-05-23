@@ -143,7 +143,6 @@ export async function capture(controller: Controller) {
     if (controller.currentSimulationID) {
       await captureSimulation(controller);
     }
-    // captureSimulation handles settings isCapturing to false
   } else {
     if (controller.captureMethod === "once") {
       try {
@@ -154,9 +153,9 @@ export async function capture(controller: Controller) {
     } else if (controller.captureMethod === "slider") {
       await captureSlider(controller);
     }
-    controller.isCapturing = false;
-    controller.updateView();
   }
-  // no need to retain the pending cancellation; capture is already finished
+  controller.isCapturing = false;
+  controller.updateView();
+  // no need to retain a pending cancellation, if any; capture is already finished
   captureCancelled = false;
 }
