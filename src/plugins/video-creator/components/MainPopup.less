@@ -1,0 +1,58 @@
+.dcg-calculator-api-container .dcg-pillbox-container {
+  // don't limit z-index of children to 41
+  // we want to show on top of elements such as the
+  // .dcg-show-keypad-container
+  z-index: 100;
+}
+
+.video-creator-select-export-type {
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
+
+.video-creator-preview-menu,
+.video-creator-export-menu {
+  padding-top: 10px;
+  border-top: 1px solid #ddd;
+  margin-top: 10px;
+}
+
+.video-creator-delete-all-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin: -5px 0 5px;
+
+  .video-creator-delete-all-button {
+    // 2 pixels shorter to support icon
+    height: 26px;
+  }
+}
+
+.video-creator-preview-outer:not(.video-creator-preview-expanded) {
+  // avoid scrollbar jiggle
+  @scrollbar-width: 15px;
+  @mw: (250px - @scrollbar-width);
+  transform: translateX(calc((100% - @mw) / 2));
+
+  .video-creator-preview-inner {
+    max-width: @mw;
+  }
+}
+
+.video-creator-export {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+}
+
+.video-creator-export
+  .video-creator-fps-settings
+  span.dcg-mq-editable-field.dcg-math-input {
+  margin-left: 8px;
+}
+
+.video-creator-preview-play {
+  display: flex;
+  flex-direction: row-reverse;
+}
