@@ -6,8 +6,9 @@ import {
   Switch,
   StaticMathQuillView,
   Button,
-  Tooltip,
   IfElse,
+  Checkbox,
+  Tooltip,
 } from "desmodder";
 import Controller from "../Controller";
 import { cancelCapture, CaptureMethod } from "../backend/capture";
@@ -154,59 +155,102 @@ export default class SelectCapture extends DCGView.Class<{
             }[this.getSelectedCaptureMethod()]())
           }
         </Switch>
-        <If predicate={() => this.controller.areMathBoundsDifferent}>
-          {() => (
-            <div class="video-creator-reset-bounds-wrapper">
+        <div class="video-creator-capture-size">
+          Size:
+          <SmallMathQuillInput
+            ariaLabel="capture width"
+            onUserChangedLatex={(latex) =>
+              this.controller.setCaptureWidthLatex(latex)
+            }
+            latex={() => this.controller.captureWidthLatex}
+            hasError={() => !this.controller.isCaptureWidthValid()}
+            onFocusedChanged={(b) =>
+              this.controller.updateFocus("capture-width", b)
+            }
+            isFocused={() => this.controller.isFocused("capture-width")}
+          />
+          ×
+          <SmallMathQuillInput
+            ariaLabel="capture height"
+            onUserChangedLatex={(latex) =>
+              this.controller.setCaptureHeightLatex(latex)
+            }
+            latex={() => this.controller.captureHeightLatex}
+            hasError={() => !this.controller.isCaptureHeightValid()}
+            onFocusedChanged={(b) =>
+              this.controller.updateFocus("capture-height", b)
+            }
+            isFocused={() => this.controller.isFocused("capture-height")}
+          />
+          <If predicate={() => this.controller.isDefaultCaptureSizeDifferent()}>
+            {() => (
               <Button
                 color="light-gray"
-                class="video-creator-reset-bounds-button"
-                onTap={() => this.controller.resetMathBounds()}
+                onTap={() => this.controller.applyDefaultCaptureSize()}
               >
-                Revert Viewport
+                <i class="dcg-icon-magic" />
               </Button>
+            )}
+          </If>
+        </div>
+        <If
+          predicate={() =>
+            Math.abs(this.controller._getTargetPixelRatio() - 1) > 0.001
+          }
+        >
+          {() => (
+            <div class="video-creator-pixel-ratio">
+              <Checkbox
+                checked={() => this.controller.samePixelRatio}
+                onChange={(checked: boolean) =>
+                  this.controller.setSamePixelRatio(checked)
+                }
+                ariaLabel="Target same pixel ratio"
+                green
+              >
+                <Tooltip
+                  tooltip="Adjusts scaling of line width, point size, label size, etc."
+                  gravity="n"
+                >
+                  <div class="video-creator-pixel-ratio-inner">
+                    Target same pixel ratio
+                  </div>
+                </Tooltip>
+              </Checkbox>
             </div>
           )}
         </If>
         <div class="video-creator-capture">
-          <Tooltip
-            tooltip={() =>
-              this.controller.isCaptureSizeDifferent
-                ? "Aspect ratio different"
-                : ""
+          {IfElse(
+            () =>
+              !this.controller.isCapturing ||
+              this.controller.captureMethod === "once",
+            {
+              true: () => (
+                <Button
+                  color="green"
+                  class="video-creator-capture-frame-button"
+                  disabled={() =>
+                    this.controller.isCapturing ||
+                    this.controller.isExporting ||
+                    !this.controller.areCaptureSettingsValid()
+                  }
+                  onTap={() => this.controller.capture()}
+                >
+                  Capture
+                </Button>
+              ),
+              false: () => (
+                <Button
+                  color="blue"
+                  class="video-creator-cancel-capture-button"
+                  onTap={() => cancelCapture()}
+                >
+                  Cancel
+                </Button>
+              ),
             }
-            gravity="n"
-          >
-            {IfElse(
-              () =>
-                !this.controller.isCapturing ||
-                this.controller.captureMethod === "once",
-              {
-                true: () => (
-                  <Button
-                    color="green"
-                    class="video-creator-capture-frame-button"
-                    disabled={() =>
-                      this.controller.isCapturing ||
-                      this.controller.isExporting ||
-                      !this.controller.areCaptureSettingsValid()
-                    }
-                    onTap={() => this.controller.capture()}
-                  >
-                    Capture
-                  </Button>
-                ),
-                false: () => (
-                  <Button
-                    color="blue"
-                    class="video-creator-cancel-capture-button"
-                    onTap={() => cancelCapture()}
-                  >
-                    Cancel
-                  </Button>
-                ),
-              }
-            )}
-          </Tooltip>
+          )}
           <If
             predicate={() => this.getSelectedCaptureMethod() === "simulation"}
           >

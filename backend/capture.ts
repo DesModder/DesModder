@@ -1,17 +1,8 @@
-import { Calc, Bounds, EvaluateSingleExpression } from "desmodder";
-import { boundsEqual } from "./utils";
+import { Calc, EvaluateSingleExpression } from "desmodder";
+import { scaleBoundsAboutCenter } from "./utils";
 import Controller from "../Controller";
 
 export type CaptureMethod = "once" | "simulation" | "slider";
-
-export interface CaptureSize {
-  width: number;
-  height: number;
-}
-
-export function captureSizesEqual(a: CaptureSize, b: CaptureSize) {
-  return a.width === b.width && a.height === b.height;
-}
 
 export let captureCancelled = false;
 
@@ -19,34 +10,21 @@ export function cancelCapture() {
   captureCancelled = true;
 }
 
-async function captureAndApplyFrame(controller: Controller, isFirst: boolean) {
+async function captureAndApplyFrame(controller: Controller) {
   const frame = await captureFrame(
-    controller.expectedBounds ?? undefined,
-    controller.expectedSize ?? undefined
+    controller.getCaptureWidthNumber(),
+    controller.getCaptureHeightNumber(),
+    controller.getTargetPixelRatio()
   );
-  controller.checkCaptureSize();
-  // handle correct math bounds (which gets updated asynchronously) here;
-  // probably is the same as the bounds used for the screenshot
-  const bounds = Calc.graphpaperBounds.mathCoordinates;
-  if (isFirst) {
-    controller.expectedBounds = bounds;
-  }
-  if (
-    controller.expectedBounds === null ||
-    boundsEqual(bounds, controller.expectedBounds)
-  ) {
-    controller.frames.push(frame);
-  } else {
-    controller.mathBoundsMismatch();
-    throw "Bounds changed during capture";
-  }
+  controller.frames.push(frame);
 
   controller.updateView();
 }
 
 export async function captureFrame(
-  expectedBounds: Bounds | undefined,
-  expectedSize: CaptureSize | undefined
+  width: number,
+  height: number,
+  targetPixelRatio: number
 ) {
   // resolves the screenshot as a data URI
   return new Promise<string>((resolve, reject) => {
@@ -59,18 +37,21 @@ export async function captureFrame(
     tryCancel();
     // poll for mid-screenshot cancellation (only affects UI)
     const interval = window.setInterval(tryCancel, 50);
+    const mathBounds = Calc.graphpaperBounds.mathCoordinates;
+    const ratio = height / width / (mathBounds.height / mathBounds.width);
+    // make the captured region entirely visible
+    const clampedMathBounds = scaleBoundsAboutCenter(
+      mathBounds,
+      Math.min(ratio, 1 / ratio)
+    );
     Calc.asyncScreenshot(
       {
+        width: width / targetPixelRatio,
+        targetPixelRatio: targetPixelRatio,
+        height: height / targetPixelRatio,
         showLabels: true,
-        mode: "contain",
         preserveAxisLabels: true,
-        // YOOO.... control `width` and `height` to be the same as start.
-        // Still need to check & revert mathBounds bc people could have unintended
-        // squish. But you just need to check graphpaper WIDTH and HEIGHT
-        // in pixel coordinates
-        mathBounds: expectedBounds,
-        width: expectedSize ? expectedSize.width : undefined,
-        height: expectedSize ? expectedSize.height : undefined,
+        mathBounds: clampedMathBounds,
       },
       (data) => {
         clearInterval(interval);
@@ -110,7 +91,7 @@ export async function captureSlider(controller: Controller) {
       latex: `${variable}=${value}`,
     });
     try {
-      await captureAndApplyFrame(controller, i === 0);
+      await captureAndApplyFrame(controller);
     } catch {
       // should be paused due to mathBoundsMismatch or cancellation
       break;
@@ -136,15 +117,13 @@ async function captureSimulation(controller: Controller) {
 
     // syntax errors and false gives helper.numericValue === NaN
     // true gives helper.numericValue === 1
-    let first = true;
     while (helper.numericValue === 1) {
       Calc.controller.dispatch({
         type: "simulation-single-step",
         id: controller.currentSimulationID,
       });
       try {
-        await captureAndApplyFrame(controller, first);
-        first = false;
+        await captureAndApplyFrame(controller);
       } catch {
         // should be paused due to mathBoundsMismatch or cancellation
         break;
@@ -168,7 +147,7 @@ export async function capture(controller: Controller) {
   } else {
     if (controller.captureMethod === "once") {
       try {
-        await captureAndApplyFrame(controller, true);
+        await captureAndApplyFrame(controller);
       } catch {
         // math bounds mismatch, irrelevant
       }

@@ -4,18 +4,11 @@ import {
   SimulationModel,
   jquery,
   keys,
-  Bounds,
   EvaluateSingleExpression,
 } from "desmodder";
-import { boundsEqual, isValidNumber, escapeRegex } from "./backend/utils";
+import { isValidNumber, isValidLength, escapeRegex } from "./backend/utils";
 import { OutFileType, exportFrames } from "./backend/export";
-import {
-  CaptureMethod,
-  SliderSettings,
-  capture,
-  captureSizesEqual,
-  CaptureSize,
-} from "./backend/capture";
+import { CaptureMethod, SliderSettings, capture } from "./backend/capture";
 
 type FocusedMQ =
   | "none"
@@ -24,6 +17,8 @@ type FocusedMQ =
   | "capture-slider-max"
   | "capture-slider-step"
   | "capture-simulation-while"
+  | "capture-width"
+  | "capture-height"
   | "export-fps";
 
 export default class Controller {
@@ -53,72 +48,28 @@ export default class Controller {
   _isWhileLatexValid = false;
   whileLatexHelper: ReturnType<typeof Calc.HelperExpression> | null = null;
 
+  // ** capture sizing
+  captureHeightLatex = "";
+  captureWidthLatex = "";
+  samePixelRatio = false;
+
   // ** play preview
   previewIndex = 0;
   isPlayingPreview = false;
   playPreviewTimeout: number | null = null;
   isPlayPreviewExpanded = false;
 
-  // ** bounds
-  expectedBounds: Bounds | null = null;
-  areMathBoundsDifferent = false;
-  expectedSize: CaptureSize | null = null;
-  isCaptureSizeDifferent = false;
-
   constructor() {
     Calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
+    this._applyDefaultCaptureSize();
+  }
+
+  graphpaperBoundsChanged() {
+    this.updateView();
   }
 
   updateView() {
     updateView();
-  }
-
-  checkCaptureSize() {
-    const size = Calc.graphpaperBounds.pixelCoordinates;
-    if (this.expectedSize !== null) {
-      const diff = !captureSizesEqual(this.expectedSize, size);
-      if (diff !== this.isCaptureSizeDifferent) {
-        this.isCaptureSizeDifferent = diff;
-        this.updateView();
-      }
-    } else {
-      this.expectedSize = size;
-    }
-  }
-
-  graphpaperBoundsChanged() {
-    // if expectedBounds has not been initialized yet, then
-    // there are no constraints on the bounds, so we
-    // do not have to worry about fixing or mismatch
-    if (this.expectedBounds !== null) {
-      if (
-        boundsEqual(Calc.graphpaperBounds.mathCoordinates, this.expectedBounds)
-      ) {
-        if (this.areMathBoundsDifferent) {
-          this.mathBoundsFixed();
-        }
-      } else {
-        this.mathBoundsMismatch();
-      }
-    }
-  }
-
-  mathBoundsMismatch() {
-    this.areMathBoundsDifferent = true;
-    this.updateView();
-  }
-
-  mathBoundsFixed() {
-    this.areMathBoundsDifferent = false;
-    this.updateView();
-  }
-
-  resetMathBounds() {
-    if (this.expectedBounds !== null) {
-      // setMathBounds calls graphpaperBoundsChanged via the observed
-      // graphpaperBounds property
-      Calc.setMathBounds(this.expectedBounds);
-    }
   }
 
   deleteAll() {
@@ -161,6 +112,67 @@ export default class Controller {
     this.updateView();
   }
 
+  isCaptureWidthValid() {
+    return isValidLength(this.captureWidthLatex);
+  }
+
+  setCaptureWidthLatex(latex: string) {
+    this.captureWidthLatex = latex;
+    this.updateView();
+  }
+
+  isCaptureHeightValid() {
+    return isValidLength(this.captureHeightLatex);
+  }
+
+  _applyDefaultCaptureSize() {
+    const size = Calc.graphpaperBounds.pixelCoordinates;
+    this.captureWidthLatex = size.width.toFixed(0);
+    this.captureHeightLatex = size.height.toFixed(0);
+  }
+
+  applyDefaultCaptureSize() {
+    this._applyDefaultCaptureSize();
+    this.updateView();
+  }
+
+  isDefaultCaptureSizeDifferent() {
+    const size = Calc.graphpaperBounds.pixelCoordinates;
+    return (
+      this.captureWidthLatex !== size.width.toFixed(0) ||
+      this.captureHeightLatex !== size.height.toFixed(0)
+    );
+  }
+
+  setCaptureHeightLatex(latex: string) {
+    this.captureHeightLatex = latex;
+    this.updateView();
+  }
+
+  getCaptureWidthNumber() {
+    return EvaluateSingleExpression(this.captureWidthLatex);
+  }
+
+  getCaptureHeightNumber() {
+    return EvaluateSingleExpression(this.captureHeightLatex);
+  }
+
+  setSamePixelRatio(samePixelRatio: boolean) {
+    this.samePixelRatio = samePixelRatio;
+    this.updateView();
+  }
+
+  _getTargetPixelRatio() {
+    return (
+      this.getCaptureWidthNumber() /
+      Calc.graphpaperBounds.pixelCoordinates.width
+    );
+  }
+
+  getTargetPixelRatio() {
+    return this.samePixelRatio ? 1 : this._getTargetPixelRatio();
+  }
+
   setSliderSetting<T extends keyof SliderSettings>(
     key: T,
     value: SliderSettings[T]
@@ -198,6 +210,9 @@ export default class Controller {
   }
 
   areCaptureSettingsValid() {
+    if (!this.isCaptureWidthValid() || !this.isCaptureHeightValid()) {
+      return false;
+    }
     if (this.captureMethod === "once") {
       return true;
     } else if (this.captureMethod === "slider") {
@@ -279,8 +294,12 @@ export default class Controller {
   }
 
   addToPreviewIndex(dx: number) {
-    this.previewIndex += dx;
-    this.previewIndex %= this.frames.length;
+    if (this.frames.length > 0) {
+      this.previewIndex += dx;
+      this.previewIndex %= this.frames.length;
+    } else {
+      this.previewIndex = 0;
+    }
     this.updateView();
   }
 
@@ -336,12 +355,6 @@ export default class Controller {
       this.previewIndex = this.frames.length - 1;
     }
     if (this.frames.length === 0) {
-      this.expectedSize = null;
-      this.expectedBounds = null;
-      this.isCaptureSizeDifferent = false;
-      if (this.areMathBoundsDifferent) {
-        this.mathBoundsFixed();
-      }
       if (this.isPlayPreviewExpanded) {
         this.togglePreviewExpanded();
       }
