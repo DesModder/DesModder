@@ -14,7 +14,7 @@ export default class SmallMathQuillInput extends DCGView.Class<{
     return (
       <MathQuillView
         isFocused={() => this.props.isFocused()}
-        latex={this.props.latex()}
+        latex={() => this.props.latex()}
         capExpressionSize={80}
         config={{
           autoOperatorNames: this.getAutoOperatorNames(),
