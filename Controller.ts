@@ -275,8 +275,12 @@ export default class Controller {
   }
 
   addToPreviewIndex(dx: number) {
-    this.previewIndex += dx;
-    this.previewIndex %= this.frames.length;
+    if (this.frames.length > 0) {
+      this.previewIndex += dx;
+      this.previewIndex %= this.frames.length;
+    } else {
+      this.previewIndex = 0;
+    }
     this.updateView();
   }
 
