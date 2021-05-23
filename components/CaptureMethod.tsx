@@ -7,6 +7,8 @@ import {
   StaticMathQuillView,
   Button,
   IfElse,
+  Checkbox,
+  Tooltip,
 } from "desmodder";
 import Controller from "../Controller";
 import { cancelCapture, CaptureMethod } from "../backend/capture";
@@ -191,6 +193,33 @@ export default class SelectCapture extends DCGView.Class<{
             )}
           </If>
         </div>
+        <If
+          predicate={() =>
+            Math.abs(this.controller._getTargetPixelRatio() - 1) > 0.001
+          }
+        >
+          {() => (
+            <div class="video-creator-pixel-ratio">
+              <Checkbox
+                checked={() => this.controller.samePixelRatio}
+                onChange={(checked: boolean) =>
+                  this.controller.setSamePixelRatio(checked)
+                }
+                ariaLabel="Target same pixel ratio"
+                green
+              >
+                <Tooltip
+                  tooltip="Adjusts scaling of line width, point size, label size, etc."
+                  gravity="n"
+                >
+                  <div class="video-creator-pixel-ratio-inner">
+                    Target same pixel ratio
+                  </div>
+                </Tooltip>
+              </Checkbox>
+            </div>
+          )}
+        </If>
         <div class="video-creator-capture">
           {IfElse(
             () =>

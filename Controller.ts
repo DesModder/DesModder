@@ -47,8 +47,11 @@ export default class Controller {
   simulationWhileLatex = "";
   _isWhileLatexValid = false;
   whileLatexHelper: ReturnType<typeof Calc.HelperExpression> | null = null;
+
+  // ** capture sizing
   captureHeightLatex = "";
   captureWidthLatex = "";
+  samePixelRatio = false;
 
   // ** play preview
   previewIndex = 0;
@@ -152,6 +155,22 @@ export default class Controller {
 
   getCaptureHeightNumber() {
     return EvaluateSingleExpression(this.captureHeightLatex);
+  }
+
+  setSamePixelRatio(samePixelRatio: boolean) {
+    this.samePixelRatio = samePixelRatio;
+    this.updateView();
+  }
+
+  _getTargetPixelRatio() {
+    return (
+      this.getCaptureWidthNumber() /
+      Calc.graphpaperBounds.pixelCoordinates.width
+    );
+  }
+
+  getTargetPixelRatio() {
+    return this.samePixelRatio ? 1 : this._getTargetPixelRatio();
   }
 
   setSliderSetting<T extends keyof SliderSettings>(

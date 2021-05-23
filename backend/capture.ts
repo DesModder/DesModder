@@ -13,14 +13,19 @@ export function cancelCapture() {
 async function captureAndApplyFrame(controller: Controller) {
   const frame = await captureFrame(
     controller.getCaptureWidthNumber(),
-    controller.getCaptureHeightNumber()
+    controller.getCaptureHeightNumber(),
+    controller.getTargetPixelRatio()
   );
   controller.frames.push(frame);
 
   controller.updateView();
 }
 
-export async function captureFrame(width: number, height: number) {
+export async function captureFrame(
+  width: number,
+  height: number,
+  targetPixelRatio: number
+) {
   // resolves the screenshot as a data URI
   return new Promise<string>((resolve, reject) => {
     const tryCancel = () => {
@@ -41,8 +46,9 @@ export async function captureFrame(width: number, height: number) {
     );
     Calc.asyncScreenshot(
       {
-        width: width,
-        height: height,
+        width: width / targetPixelRatio,
+        targetPixelRatio: targetPixelRatio,
+        height: height / targetPixelRatio,
         showLabels: true,
         preserveAxisLabels: true,
         mathBounds: clampedMathBounds,

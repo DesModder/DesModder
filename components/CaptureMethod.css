@@ -40,7 +40,12 @@
   margin-left: 8px;
 }
 
-.video-creator-capture-size {
+.video-creator-capture-size,
+.video-creator-pixel-ratio {
   margin-bottom: 10px;
   margin-left: 5px;
+}
+
+.video-creator-pixel-ratio-inner {
+  cursor: pointer;
 }
