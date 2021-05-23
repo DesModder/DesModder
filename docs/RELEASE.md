@@ -5,6 +5,7 @@ Documentation for the release process of DesModder:
 - [ ] Bump version number in both the `package.json` and `manifest.json` following semver.
   - then run `npm install` to bump the version in `package-lock.json`
 - [ ] Update [the changelog](https://github.com/jared-hughes/DesModder/blob/main/docs/CHANGELOG.md) with migration directions and other changes based on commits
+  - Helpful: https://github.com/jared-hughes/DesModder/compare/v0.3.0...main
 - [ ] Update any outdated webstore images, and add new ones for new features.
 - [ ] Clear `dist/` then run `npm run build` to rebuild the extension into `dist/` with the new version number and changes.
 - [ ] Assemble the zip file from `dist/` and release through the Chrome developer console.

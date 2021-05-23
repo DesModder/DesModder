@@ -4,6 +4,17 @@ The following guide describes changes in each version, including how to migrate 
 
 Regarding version numbers: The `1.0` release will be when the plugin API is much more stable than it is now. While in `0.*` releases, I increment the minor number if a new plugin is added and the patch number if a release consists only of bug fixes and enhancements.
 
+## 0.3.1
+
+Improvements and Bug Fixes:
+
+- Save plugin settings in chrome storage
+- Fix two bugs related to the placement of pillbox buttons and popover
+- (Wolfram2Desmos) Initialize immediately, and allow disabling the plugin
+- (Bultin Settings) disable administerSecretFolders by default
+- (Video Creator) Add APNG export support
+- (Video Creator) Allow custom screenshot sizes
+
 ## 0.3.0
 
 Adds dev plugins:
