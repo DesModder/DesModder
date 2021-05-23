@@ -1,7 +1,7 @@
 {
   "name": "DesModder",
   "description": "Unified location for various Desmos plugins",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": {
     "name": "Jared Hughes (fireflame241)"
   },
