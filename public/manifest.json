@@ -1,6 +1,6 @@
 {
   "name": "DesModder for Desmos",
-  "description": "Unofficial plugins for Desmos, bundled together",
+  "description": "Supercharge your Desmos graph creation and sharing experience with many convenient features",
   "manifest_version": 3,
   "version": "0.3.1",
   "icons": {
@@ -15,7 +15,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["script.js", "wolfram2desmos.js"],
+      "resources": ["script.js"],
       "matches": ["https://www.desmos.com/*"]
     }
   ],
