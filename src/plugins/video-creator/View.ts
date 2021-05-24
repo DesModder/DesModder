@@ -39,6 +39,7 @@ function applyCaptureFrame() {
       frame.id = captureFrameID;
       frame.style.outline = "9999px solid rgba(0, 0, 0, 0.6)";
       frame.style.position = "absolute";
+      frame.style.boxShadow = "inset 0 0 5px 0px rgba(255,255,255,0.8)";
       const canvas = document.querySelector("canvas.dcg-graph-inner");
       canvas?.parentNode?.appendChild(frame);
     }
