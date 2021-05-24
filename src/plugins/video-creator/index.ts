@@ -15,7 +15,8 @@ function onDisable() {
 export default {
   id: "video-creator",
   name: "Video Creator",
-  description: "Easily export videos",
+  description:
+    "Lets you export videos and GIFs of your graphs based on simulations or sliders.",
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true,

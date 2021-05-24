@@ -26,7 +26,8 @@ function onDisable() {
 export default {
   id: "builtin-settings",
   name: "Calculator Settings",
-  description: "Modify settings built-in to Desmos",
+  description:
+    "Lets you toggle features built-in to Desmos including simulations, clickable objects, and more.",
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true,

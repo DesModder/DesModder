@@ -65,7 +65,8 @@ export function onDisable() {
 export default {
   id: "wolfram2desmos",
   name: "Wolfram To Desmos",
-  description: "Convert ASCIImath into Desmos LaTeX on paste.",
+  description:
+    "Lets you paste ASCIIMath (such as the results of Wolfram Alpha queries) into Desmos.",
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true,

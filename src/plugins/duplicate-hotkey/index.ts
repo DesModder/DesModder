@@ -24,7 +24,8 @@ function onDisable() {
 export default {
   id: "duplicate-expression-hotkey",
   name: "Duplicate Expression Hotkey",
-  description: "Press Ctrl+Q to duplicate the currently-selected expression",
+  description:
+    "Lets you press Ctrl+Q to duplicate the currently-selected expression.",
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true,
