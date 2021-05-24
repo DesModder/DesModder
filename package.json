@@ -1,6 +1,6 @@
 {
-  "name": "DesModder",
-  "description": "Unified location for various Desmos plugins",
+  "name": "desmodder",
+  "description": "Supercharge your Desmos graph creation and sharing experience with many convenient features",
   "version": "0.3.1",
   "author": {
     "name": "Jared Hughes (fireflame241)"
@@ -11,7 +11,6 @@
   ],
   "scripts": {
     "prettier": "prettier --write .",
-    "postinstall": "(cd src/plugins/video-creator && npm install)",
     "build": "webpack --mode production --config config/webpack.config.base.js",
     "dev": "webpack --mode development --config config/webpack.config.dev.js"
   },
@@ -32,5 +31,9 @@
     "webpack": "^5.26.2",
     "webpack-cli": "^4.5.0",
     "webpack-merge": "^5.7.3"
+  },
+  "dependencies": {
+    "@ffmpeg/core": "^0.10.0",
+    "@ffmpeg/ffmpeg": "^0.10.0"
   }
 }

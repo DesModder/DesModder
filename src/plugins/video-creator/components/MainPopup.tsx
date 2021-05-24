@@ -75,8 +75,8 @@ export default class MainPopup extends DCGView.Class<{
               <div
                 class={() => ({
                   "video-creator-preview-outer": true,
-                  "video-creator-preview-expanded": this.controller
-                    .isPlayPreviewExpanded,
+                  "video-creator-preview-expanded":
+                    this.controller.isPlayPreviewExpanded,
                 })}
                 onTapEnd={(e: Event) =>
                   this.controller.isPlayPreviewExpanded &&

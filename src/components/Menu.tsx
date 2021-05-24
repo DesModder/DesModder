@@ -73,9 +73,8 @@ export default class Menu extends DCGView.Class<{
     if (plugin === undefined) return null;
     const config = plugin.config;
     if (config !== undefined) {
-      const pluginSettings = this.controller.pluginSettings[
-        this.controller.expandedPlugin
-      ];
+      const pluginSettings =
+        this.controller.pluginSettings[this.controller.expandedPlugin];
       if (pluginSettings === undefined) return null;
       return (
         <div>

@@ -3,7 +3,7 @@
 import {
   createFFmpeg,
   fetchFile,
-} from "../node_modules/@ffmpeg/ffmpeg/src/index.js";
+} from "../../../../node_modules/@ffmpeg/ffmpeg/src/index.js";
 import Controller from "../Controller";
 
 type FFmpeg = ReturnType<typeof createFFmpeg>;

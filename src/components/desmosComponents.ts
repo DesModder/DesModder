@@ -75,9 +75,8 @@ abstract class DStaticMathquillViewComponent extends ClassComponent<{
   config: any;
 }> {}
 
-export const DStaticMathquillView: typeof DStaticMathquillViewComponent = desmosRequire(
-  "dcgview-helpers/static-mathquill-view"
-).default;
+export const DStaticMathquillView: typeof DStaticMathquillViewComponent =
+  desmosRequire("dcgview-helpers/static-mathquill-view").default;
 
 abstract class TooltipComponent extends ClassComponent<{
   tooltip: string;
