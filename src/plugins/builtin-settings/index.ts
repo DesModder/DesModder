@@ -27,7 +27,8 @@ export default {
   id: "builtin-settings",
   name: "Calculator Settings",
   description:
-    "Lets you toggle features built-in to Desmos including simulations, clickable objects, and more.",
+    "Lets you toggle features built-in to Desmos including simulations, clickable objects, and more." +
+    " Most options apply only to your own browser and are ignored when you share graphs with others.",
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true,

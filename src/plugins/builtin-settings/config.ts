@@ -9,7 +9,8 @@ export const configList = [
   {
     key: "advancedStyling",
     name: "Advanced styling",
-    description: "Enable label editing, text outline, and show-on-hover",
+    description:
+      "Enable label editing, show-on-hover, text outline, and one-quadrant grid",
     type: "boolean",
     default: true,
   },
