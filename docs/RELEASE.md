@@ -1,7 +1,6 @@
 Documentation for the release process of DesModder:
 
 - [ ] Make a new release branch named `prepare-X.Y.Z`
-- [ ] Update any plugins to latest compatible versions
 - [ ] Bump version number in both the `package.json` and `manifest.json` following semver.
   - then run `npm install` to bump the version in `package-lock.json`
 - [ ] Update [the changelog](https://github.com//DesModderDesModder/blob/main/docs/CHANGELOG.md) with migration directions and other changes based on commits
