@@ -4,6 +4,14 @@ The following guide describes changes in each version, including how to migrate 
 
 Regarding version numbers: The `1.0` release will be when the plugin API is much more stable than it is now. While in `0.*` releases, I increment the minor number if a new plugin is added and the patch number if a release consists only of bug fixes and enhancements.
 
+## 0.3.2
+
+Improvements and Bug Fixes:
+
+- Narrow scope of the COEB override, which previously broke sites like teacher.desmos.com under the same domain name but which are not the calculator
+- Clarify descriptions of the builtin-settings plugin
+- Remove git submodules, which should make development easier
+
 ## 0.3.1
 
 Improvements and Bug Fixes:
