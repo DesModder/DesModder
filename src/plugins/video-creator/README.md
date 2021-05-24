@@ -8,4 +8,4 @@ Currently supports:
 - taking a frame on each step of a slider
 - taking a frame on simulation step
 
-Requires loading through [DesModder](https://github.com/jared-hughes/DesModder)
+Requires loading through [DesModder](https://github.com/DesModder/DesModder)
