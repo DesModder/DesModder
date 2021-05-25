@@ -33,7 +33,7 @@ export default class Controller {
   isExporting = false;
   // -1 while pending/waiting
   // 0 to 1 during encoding
-  exportProgress = 0;
+  exportProgress = -1;
 
   // ** capture methods
   captureMethod: CaptureMethod = "once";
@@ -77,8 +77,10 @@ export default class Controller {
     this.updateView();
   }
 
-  exportFrames() {
-    exportFrames(this);
+  async exportFrames() {
+    if (!this.isExporting) {
+      await exportFrames(this);
+    }
   }
 
   setExportProgress(ratio: number) {
