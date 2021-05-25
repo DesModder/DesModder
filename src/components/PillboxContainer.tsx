@@ -3,6 +3,7 @@ import { If, Tooltip, For, Switch } from "./desmosComponents";
 import { jquery, keys } from "utils";
 import Controller from "Controller";
 import { Calc } from "globals/window";
+import "./PillboxContainer.less"
 
 export default class PillboxContainer extends DCGView.Class<{
   controller: Controller;
@@ -17,7 +18,7 @@ export default class PillboxContainer extends DCGView.Class<{
     return (
       <div>
         <For each={() => this.controller.pillboxButtonsOrder} key={(id) => id}>
-          <div>
+          <div class="desmodder-pillbox-buttons">
             {(id: string) => (
               <Tooltip
                 tooltip={() =>
