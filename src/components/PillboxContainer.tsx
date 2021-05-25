@@ -3,7 +3,7 @@ import { If, Tooltip, For, Switch } from "./desmosComponents";
 import { jquery, keys } from "utils";
 import Controller from "Controller";
 import { Calc } from "globals/window";
-import "./PillboxContainer.less"
+import "./PillboxContainer.less";
 
 export default class PillboxContainer extends DCGView.Class<{
   controller: Controller;
@@ -53,14 +53,7 @@ export default class PillboxContainer extends DCGView.Class<{
               didUnmount={() => this.didUnmountContainer()}
               style={() => ({
                 position: "absolute",
-                top: `${
-                  46 *
-                  ((Calc.settings.settingsMenu ? 1 : 0) +
-                    this.controller.pillboxButtonsOrder.indexOf(
-                      this.controller.pillboxMenuOpen as string
-                    ))
-                }px`,
-                right: "38px",
+                ...this.getPopoverPosition(),
                 "line-height": "1em",
               })}
             >
@@ -77,6 +70,29 @@ export default class PillboxContainer extends DCGView.Class<{
         </If>
       </div>
     );
+  }
+
+  getPopoverPosition() {
+    let index = this.controller.pillboxButtonsOrder.indexOf(
+      this.controller.pillboxMenuOpen as string
+    );
+    if (Calc.settings.settingsMenu) {
+      index += 1;
+    }
+    // for index=0, this would correspond to the wrench menu,
+    // which is positioned at top=2, right=38.
+    let top = 2;
+    let right = 38;
+    // scale linearly past index=0
+    if (Calc.settings.graphpaper) {
+      top += 43 * index;
+    } else {
+      right += 43 * index;
+    }
+    return {
+      top: top + "px",
+      right: right + "px",
+    };
   }
 
   onTapMenuButton(id: string) {
