@@ -99,7 +99,7 @@ type SetExpressionObject = ExpressionModel | TableModel;
 
 type HelperType = "numericValue" | "listValue";
 
-interface HelperExpression {
+export interface HelperExpression {
   numericValue: number | typeof NaN;
   listValue: number[] | undefined;
   observe(v: HelperType, callback: () => void): void;
@@ -243,7 +243,12 @@ export default interface Calc {
     mathCoordinates: AugmentedBounds;
   };
   setMathBounds(bounds: Bounds): void;
+
+  // ** events
   observe(v: "graphpaperBounds", callback: () => void): void;
+  // should be observeEvent("change.namespace", callback) or similar
+  observeEvent(v: string, callback: () => void): void;
+  unobserveEvent(v: string): void;
 
   // ** graph settings
   settings: CalculatorOptions;

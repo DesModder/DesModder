@@ -1,10 +1,15 @@
-import { Calc, EvaluateSingleExpression } from "desmodder";
+import { Calc, EvaluateSingleExpression, HelperExpression } from "desmodder";
 import { scaleBoundsAboutCenter } from "./utils";
 import Controller from "../Controller";
 
 export type CaptureMethod = "once" | "simulation" | "slider";
 
 export let captureCancelled = false;
+
+let simulationCaptureState:
+  | "none"
+  | "waiting-for-update"
+  | "waiting-for-screenshot" = "none";
 
 export function cancelCapture() {
   captureCancelled = true;
@@ -99,6 +104,35 @@ export async function captureSlider(controller: Controller) {
   }
 }
 
+function cancelSimulationCapture() {
+  simulationCaptureState = "none";
+  Calc.unobserveEvent("change.dsm-simulation-change");
+}
+
+async function captureSimulationFrame(
+  controller: Controller,
+  helper: HelperExpression
+) {
+  try {
+    if (helper.numericValue === 1) {
+      simulationCaptureState = "waiting-for-screenshot";
+      await captureAndApplyFrame(controller);
+      simulationCaptureState = "waiting-for-update";
+      Calc.controller.dispatch({
+        type: "simulation-single-step",
+        id: controller.currentSimulationID,
+      });
+    } else {
+      // stop due to the helper returning false
+      cancelSimulationCapture();
+    }
+  } catch {
+    // should be paused due to mathBoundsMismatch or cancellation
+    // this is effectively a break
+    cancelSimulationCapture();
+  }
+}
+
 async function captureSimulation(controller: Controller) {
   const whileLatex = controller.simulationWhileLatex;
   if (/^(\\?\s)*$/.test(whileLatex)) {
@@ -106,29 +140,23 @@ async function captureSimulation(controller: Controller) {
     // use 1 > 0 for an intentional infinite loop
     return;
   }
-
+  // syntax errors and false gives helper.numericValue === NaN
+  // true gives helper.numericValue === 1
   const helper = controller.getWhileLatexHelper();
 
   helper.observe("numericValue", async () => {
     helper.unobserve("numericValue");
-    // WARNING: helper.numericValue is evaluated asynchronously,
-    // so the stop condition may be missed in rare situations.
-    // But it should be evaluated faster than the captureFrame in practice
 
-    // syntax errors and false gives helper.numericValue === NaN
-    // true gives helper.numericValue === 1
-    while (helper.numericValue === 1) {
-      Calc.controller.dispatch({
-        type: "simulation-single-step",
-        id: controller.currentSimulationID,
-      });
-      try {
-        await captureAndApplyFrame(controller);
-      } catch {
-        // should be paused due to mathBoundsMismatch or cancellation
-        break;
+    simulationCaptureState = "waiting-for-update";
+
+    Calc.observeEvent("change.dsm-simulation-change", async () => {
+      // check in case there is more than one update before the screenshot finishes
+      if (simulationCaptureState === "waiting-for-update") {
+        captureSimulationFrame(controller, helper);
       }
-    }
+    });
+
+    captureSimulationFrame(controller, helper);
   });
 }
 

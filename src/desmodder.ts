@@ -13,6 +13,7 @@ export {
   SimulationModel,
   TableModel,
   Bounds,
+  HelperExpression,
 } from "globals/Calc";
 export {
   Calc,
