@@ -25,6 +25,7 @@ interface AsyncScreenshotOptions extends ScreenshotOptions {
 }
 
 interface BasicSetExpression {
+  id: string;
   latex?: string;
   color?: string;
   lineStyle?: "SOLID" | "DASHED" | "DOTTED";
@@ -40,7 +41,12 @@ interface BasicSetExpression {
   dragMode?: "X" | "Y" | "XY" | "NONE" | "AUTO";
 }
 
-export interface ExpressionModel extends BasicSetExpression {
+interface ItemModelBase {
+  id: string;
+  folderId?: string;
+}
+
+export interface ExpressionModel extends BasicSetExpression, ItemModelBase {
   type?: "expression";
   fill?: boolean;
   secret?: boolean;
@@ -57,7 +63,6 @@ export interface ExpressionModel extends BasicSetExpression {
     min: string;
     max: string;
   };
-  id?: string;
   label?: string;
   showLabel?: boolean;
   labelSize?: "small" | "medium" | "large";
@@ -68,14 +73,12 @@ interface TableColumn extends BasicSetExpression {
   values?: string[];
 }
 
-export interface TableModel {
+export interface TableModel extends ItemModelBase {
   type: "table";
   columns: TableColumn[];
-  id?: string;
 }
 
-export interface SimulationModel {
-  id: string;
+export interface SimulationModel extends ItemModelBase {
   type: "simulation";
   clickableInfo?: {
     description?: string;
@@ -211,6 +214,9 @@ export default interface Calc {
     getKeypadHeight(): number;
     isDegreeMode(): boolean;
     getExpressionSearchOpen(): boolean;
+    generateId(): string;
+    // returns a subscript that occurs nowhere else in the graph
+    generateTableXSubscript(): number;
   };
   selectedExpressionId: string;
   //// public
