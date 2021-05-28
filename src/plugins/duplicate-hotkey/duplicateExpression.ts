@@ -1,5 +1,11 @@
 import { Calc, desmosRequire } from "desmodder";
-import { ItemModel, TableModel, TextModel } from "../../globals/Calc";
+import {
+  ItemModel,
+  TableModel,
+  TextModel,
+  ImageModel,
+  SimulationModel,
+} from "../../globals/Calc";
 
 type Indexed<T> = T & { index: number };
 
@@ -17,7 +23,11 @@ export default function duplicateExpression(id: string) {
       duplicateTable(model);
       break;
     case "text":
-      duplicateText(model);
+    case "image":
+    case "simulation":
+      // While simulations *do* have IDs in the inner rules
+      // (like column tables), these are not unique across simulations
+      duplicateSimple(model);
       break;
   }
 }
@@ -53,7 +63,9 @@ function duplicateTable(model: Indexed<TableModel>) {
   });
 }
 
-function duplicateText(model: Indexed<TextModel>) {
+function duplicateSimple(
+  model: Indexed<TextModel | ImageModel | SimulationModel>
+) {
   const state = desmosRequire("graphing-calc/models/text").getState(model, {
     stripDefaults: false,
   });

@@ -95,11 +95,23 @@ export interface TextModel extends ItemModelBase {
   text?: string;
 }
 
+export interface ImageModel extends ItemModelBase {
+  type: "image";
+  image_url: string;
+  angle?: string;
+  center?: string;
+  height?: string;
+  width?: string;
+  name?: string;
+  opacity?: string;
+}
+
 export type ItemModel =
   | SimulationModel
   | ExpressionModel
   | TableModel
-  | TextModel;
+  | TextModel
+  | ImageModel;
 
 interface GraphState {
   expressions: {
