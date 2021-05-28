@@ -7,6 +7,7 @@ const config = {
     extensions: [".ts", ".tsx", ".js", ".jsx"],
   },
   entry: {
+    background: "./src/background.ts",
     content: "./src/content.ts",
     script: "./src/script.ts",
   },
