@@ -106,12 +106,20 @@ export interface ImageModel extends ItemModelBase {
   opacity?: string;
 }
 
+export interface FolderModel {
+  type: "folder";
+  // cannot have a folderId
+  id: string;
+  title?: string;
+}
+
 export type ItemModel =
   | SimulationModel
   | ExpressionModel
   | TableModel
   | TextModel
-  | ImageModel;
+  | ImageModel
+  | FolderModel;
 
 interface GraphState {
   expressions: {

@@ -5,43 +5,103 @@ import {
   TextModel,
   ImageModel,
   SimulationModel,
+  FolderModel,
+  ExpressionModel,
 } from "../../globals/Calc";
 
 type Indexed<T> = T & { index: number };
 
+function insertItemAtIndex(
+  index: number,
+  // lazy type for the state
+  state: any,
+  focus: boolean,
+  folderId?: string
+) {
+  Calc.controller.dispatch({
+    type: "insert-item-at-index",
+    index,
+    state,
+    focus,
+    folderId,
+  });
+}
+
+const getStates = {
+  expression: desmosRequire("graphing-calc/models/expression"),
+  table: desmosRequire("graphing-calc/models/table"),
+  text: desmosRequire("graphing-calc/models/text"),
+  simulation: desmosRequire("graphing-calc/models/simulation"),
+  image: desmosRequire("graphing-calc/models/image"),
+  folder: desmosRequire("graphing-calc/models/folder"),
+};
+
 export default function duplicateExpression(id: string) {
   const model = Calc.controller.getItemModel(id) as Indexed<ItemModel>;
   if (!model) return;
-  switch (model.type) {
-    case "expression":
-      Calc.controller.dispatch({
-        type: "duplicate-expression",
-        id: id,
-      });
+  if (model.type === "folder") {
+    duplicateFolder(model);
+  } else {
+    const state = getStates[model.type ?? "expression"].getState(model, {
+      stripDefaults: false,
+    });
+    const newState = duplicatedNonFolder(state);
+    // perform the actual insertion
+    insertItemAtIndex(model.index + 1, newState, true, model.folderId);
+  }
+}
+
+function duplicateFolder(model: Indexed<FolderModel>) {
+  const newFolderId = Calc.controller.generateId();
+  // the duplicated folder will go before the existing folder
+  insertItemAtIndex(
+    model.index,
+    {
+      ...getStates.folder.getState(model, { stripDefaults: false }),
+      id: newFolderId,
+    },
+    true
+  );
+  // assumes all child folders are consecutively after to parent folder
+  const oldExpressions = Calc.getState().expressions.list;
+  for (let i = model.index + 1; ; i++) {
+    const expr = oldExpressions[i];
+    if (!expr || expr.type === "folder" || expr.folderId !== model.id) {
       break;
+    }
+    insertItemAtIndex(
+      i - 1,
+      {
+        ...duplicatedNonFolder(expr),
+        folderId: newFolderId,
+      },
+      false,
+      newFolderId
+    );
+  }
+}
+
+function duplicatedNonFolder(state: ItemModel) {
+  switch (state.type) {
     case "table":
-      duplicateTable(model);
-      break;
+      return duplicatedTable(state);
+    case "expression":
     case "text":
     case "image":
     case "simulation":
       // While simulations *do* have IDs in the inner rules
       // (like column tables), these are not unique across simulations
-      duplicateSimple(model);
-      break;
+      return duplicatedSimple(state);
   }
 }
 
-function duplicateTable(model: Indexed<TableModel>) {
-  const state = desmosRequire("graphing-calc/models/table").getState(model, {
-    stripDefaults: false,
-  }) as TableModel;
+function duplicatedTable(state: TableModel) {
   // Since this is a table, need to change column headers if they are variables
   const subscript = Calc.controller.generateTableXSubscript();
   let letterIndex = 0;
   // assume that there are 26 or fewer variables defined in the table
   const letters = "xyzwabcdefghijklmnopqrstuv";
-  const newState = {
+  return {
     ...state,
     columns: state.columns.map((column) => ({
       ...column,
@@ -53,30 +113,13 @@ function duplicateTable(model: Indexed<TableModel>) {
     })),
     id: Calc.controller.generateId(),
   };
-  // perform the actual insertion
-  Calc.controller.dispatch({
-    type: "insert-item-at-index",
-    index: model.index + 1,
-    state: newState,
-    focus: true,
-    folderId: state.folderId,
-  });
 }
 
-function duplicateSimple(
-  model: Indexed<TextModel | ImageModel | SimulationModel>
+function duplicatedSimple(
+  state: ExpressionModel | TextModel | ImageModel | SimulationModel
 ) {
-  const state = desmosRequire("graphing-calc/models/text").getState(model, {
-    stripDefaults: false,
-  });
-  Calc.controller.dispatch({
-    type: "insert-item-at-index",
-    index: model.index + 1,
-    state: {
-      ...state,
-      id: Calc.controller.generateId(),
-    },
-    focus: true,
-    folderId: state.folderId,
-  });
+  return {
+    ...state,
+    id: Calc.controller.generateId(),
+  };
 }
