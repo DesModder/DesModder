@@ -12,6 +12,8 @@ export {
   ExpressionModel,
   SimulationModel,
   TableModel,
+  TextModel,
+  ItemModel,
   Bounds,
   HelperExpression,
 } from "globals/Calc";

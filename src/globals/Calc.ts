@@ -90,7 +90,16 @@ export interface SimulationModel extends ItemModelBase {
   };
 }
 
-type ItemModel = SimulationModel | ExpressionModel | TableModel;
+export interface TextModel extends ItemModelBase {
+  type: "text";
+  text?: string;
+}
+
+export type ItemModel =
+  | SimulationModel
+  | ExpressionModel
+  | TableModel
+  | TextModel;
 
 interface GraphState {
   expressions: {
