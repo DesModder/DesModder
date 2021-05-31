@@ -9,3 +9,30 @@
   padding: 0 8px;
   transform: translateY(1px);
 }
+
+.video-creator-simulation-rules
+  .dcg-clickable-property-row
+  .dcg-mq-math-mode:first-child {
+  min-width: 30px;
+  max-width: 70px;
+}
+
+.video-creator-simulation-rules
+  .dcg-clickable-property-row
+  .dcg-mq-math-mode:last-child {
+  min-width: 30px;
+  max-width: 120px;
+}
+
+.video-creator-simulation-rules
+  .dcg-clickable-property-row
+  .dcg-mq-math-mode::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 8px;
+  bottom: 0;
+  width: 14px;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0), #fff);
+  pointer-events: none;
+}
