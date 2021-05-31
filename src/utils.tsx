@@ -14,7 +14,7 @@ export function EvaluateSingleExpression(s: string): number {
 }
 
 export function TableParse(s: string): Array<string> | undefined{
-  return _DataHelpers(s);
+  return _DataHelpers.parse(s);
 }
 
 interface FuncAny {

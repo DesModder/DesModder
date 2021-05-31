@@ -15,7 +15,8 @@ export function wolfram2desmos(input) {
       return null;
     }
     
-    if (count(/^(.+\n?)+$/) > 0) {
+    // determines if the input is a single row table
+    if (count(/^.+(?:\r\n|\r|\n)(?:.+(?:\r\n|\r|\n)?)+$/) > 0) {
       return null;
     }
     
