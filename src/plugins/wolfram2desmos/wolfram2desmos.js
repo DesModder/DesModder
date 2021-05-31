@@ -12,9 +12,13 @@ export function wolfram2desmos(input) {
   {
     // determines if the input IS ALREADY latex
     if (count(/((?<=\\left)\|)|(\\)|((\^|\_){)/g) > 0) {
-      return input;
+      return null;
     }
-
+    
+    if (count(/^(.+\n?)+$/) > 0) {
+      return null;
+    }
+    
     // determines if the brackets are correct
     if (count(/\(/g) > count(/\)/g)) {
       console.warn(
@@ -22,7 +26,7 @@ export function wolfram2desmos(input) {
           (count(/\(/g) - count(/\)/g)) +
           " more '(' characters than ')' characters"
       );
-      return input;
+      return null;
     }
     if (count(/\(/g) < count(/\)/g)) {
       console.warn(
@@ -30,11 +34,11 @@ export function wolfram2desmos(input) {
           (count(/\)/g) - count(/\(/g)) +
           " more ')' characters than '(' characters"
       );
-      return input;
+      return null;
     }
     if (count(/\|/g) % 2 == 1) {
       console.warn("Input has uneven '|' brackets");
-      return input;
+      return null;
     }
   }
 

@@ -4,10 +4,17 @@ export const keys = desmosRequire("keys");
 const _EvaluateSingleExpression = desmosRequire(
   "core/math/evaluate-single-expression"
 ).default;
+const _DataHelpers = desmosRequire(
+  "main/data_helpers"
+);
 
 export function EvaluateSingleExpression(s: string): number {
   // may also return NaN (which is a number)
   return _EvaluateSingleExpression(s, Calc.controller.isDegreeMode());
+}
+
+export function TableParse(s: string): Array<string> | undefined{
+  return _DataHelpers(s);
 }
 
 interface FuncAny {

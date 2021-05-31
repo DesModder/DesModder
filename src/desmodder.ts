@@ -39,6 +39,7 @@ export {
 } from "DCGView";
 export {
   EvaluateSingleExpression,
+	TableParse,
   pollForValue,
   mergeClass,
   MaybeClassDict,

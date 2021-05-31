@@ -1,4 +1,4 @@
-import { Calc } from "desmodder";
+import { Calc, TableParse } from "desmodder";
 import Controller from "./Controller";
 import { wolfram2desmos } from "./wolfram2desmos";
 
@@ -43,13 +43,12 @@ function pasteHandler(e: ClipboardEvent) {
   if (
     !(elem?.classList.contains("dcg-label-input") ?? true) &&
     pasteData !== "" &&
-    Calc.controller.getItemModel(Calc.selectedExpressionId).type ===
-      "expression"
+    Calc.controller.getItemModel(Calc.selectedExpressionId).type === "expression" &&
+    TableParse(pasteData??'') === undefined && 
+    (pasteData = wolfram2desmos(pasteData)) !== null
   ) {
     e.stopPropagation();
     e.preventDefault();
-
-    pasteData = wolfram2desmos(pasteData);
     typeInTextArea(pasteData);
   }
 }
