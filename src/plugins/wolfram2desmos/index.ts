@@ -1,9 +1,10 @@
-import { Calc } from "desmodder";
+import { Calc, OptionalProperties } from "desmodder";
 import Controller from "./Controller";
-import { wolfram2desmos } from "./wolfram2desmos";
+import { Config, configList } from "./config";
+import { wolfram2desmos, isIllegalASCIIMath } from "./wolfram2desmos";
 
 // initialize controller and observe textarea and input tags
-let controller: Controller = new Controller(["textarea", "input"], function (
+export let controller = new Controller(["textarea", "input"], function (
   e: FocusEvent
 ) {
   let elem: HTMLElement | null | undefined = (e.target as HTMLElement)
@@ -42,19 +43,20 @@ function pasteHandler(e: ClipboardEvent) {
 
   if (
     !(elem?.classList.contains("dcg-label-input") ?? true) &&
+    pasteData !== undefined &&
     pasteData !== "" &&
     Calc.controller.getItemModel(Calc.selectedExpressionId).type ===
-      "expression"
+      "expression" &&
+    isIllegalASCIIMath(pasteData)
   ) {
     e.stopPropagation();
     e.preventDefault();
-
-    pasteData = wolfram2desmos(pasteData);
-    typeInTextArea(pasteData);
+    typeInTextArea(wolfram2desmos(pasteData));
   }
 }
 
-export function onEnable() {
+export function onEnable(config: Config) {
+  controller.applyConfigFlags(config);
   controller.enable();
 }
 
@@ -70,4 +72,8 @@ export default {
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true,
+  config: configList,
+  onConfigChange(changes: OptionalProperties<Config>) {
+    controller.applyConfigFlags(changes);
+  },
 } as const;

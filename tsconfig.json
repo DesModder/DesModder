@@ -6,10 +6,9 @@
     "module": "es6",
     "jsx": "react",
     "jsxFactory": "DCGView.jsx",
-    "target": "es6",
+    "target": "es2020",
     "allowJs": true,
-    "strict": true,
-    "noUncheckedIndexedAccess": true
+    "strict": true
   },
   "include": ["./src/"]
 }
