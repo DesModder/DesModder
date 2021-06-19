@@ -1,6 +1,14 @@
 import { Calc } from "desmodder";
 import Controller from "./Controller";
-import { wolfram2desmos } from "./wolfram2desmos";
+import { Config, configList } from "./config";
+import { wolfram2desmos, isIllegalASCIIMath, configFlags } from "./wolfram2desmos";
+
+type ConfigOptional = {
+  [K in keyof Config]?: Config[K];
+};
+export interface IIndexable {
+  [key: string]: any;
+}
 
 // initialize controller and observe textarea and input tags
 let controller: Controller = new Controller(["textarea", "input"], function (
@@ -44,17 +52,19 @@ function pasteHandler(e: ClipboardEvent) {
     !(elem?.classList.contains("dcg-label-input") ?? true) &&
     pasteData !== "" &&
     Calc.controller.getItemModel(Calc.selectedExpressionId).type ===
-      "expression"
+      "expression" && 
+    isIllegalASCIIMath(pasteData)
   ) {
     e.stopPropagation();
     e.preventDefault();
-
-    pasteData = wolfram2desmos(pasteData);
-    typeInTextArea(pasteData);
+    typeInTextArea(wolfram2desmos(pasteData));
   }
 }
 
-export function onEnable() {
+export function onEnable(config: Config) {
+  for (const key in config) {
+    (configFlags as IIndexable)[key] = (config as IIndexable)[key];
+  }
   controller.enable();
 }
 
@@ -70,4 +80,10 @@ export default {
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true,
+  config: configList,
+  onConfigChange(changes: ConfigOptional) {
+    for (const key in changes) {
+      (configFlags as IIndexable)[key] = (changes as IIndexable)[key];
+    }
+  }
 } as const;
