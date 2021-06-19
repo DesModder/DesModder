@@ -1,7 +1,11 @@
 import { Calc } from "desmodder";
 import Controller from "./Controller";
 import { Config, configList } from "./config";
-import { wolfram2desmos, isIllegalASCIIMath, configFlags } from "./wolfram2desmos";
+import {
+  wolfram2desmos,
+  isIllegalASCIIMath,
+  configFlags,
+} from "./wolfram2desmos";
 
 type ConfigOptional = {
   [K in keyof Config]?: Config[K];
@@ -52,7 +56,7 @@ function pasteHandler(e: ClipboardEvent) {
     !(elem?.classList.contains("dcg-label-input") ?? true) &&
     pasteData !== "" &&
     Calc.controller.getItemModel(Calc.selectedExpressionId).type ===
-      "expression" && 
+      "expression" &&
     isIllegalASCIIMath(pasteData)
   ) {
     e.stopPropagation();
@@ -85,5 +89,5 @@ export default {
     for (const key in changes) {
       (configFlags as IIndexable)[key] = (changes as IIndexable)[key];
     }
-  }
+  },
 } as const;
