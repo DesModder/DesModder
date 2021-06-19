@@ -1,9 +1,7 @@
-import { Calc } from "desmodder";
+import { Calc, OptionalProperties } from "desmodder";
 import { Config, configList } from "./config";
 
-type ConfigOptional = {
-  [K in keyof Config]?: Config[K];
-};
+type ConfigOptional = OptionalProperties<Config>;
 
 const managedKeys = configList.map((e) => e.key);
 
