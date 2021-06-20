@@ -71,3 +71,6 @@ export const promisify =
 export type OptionalProperties<T> = {
   [K in keyof T]?: T[K];
 };
+
+export const getQueryParams: () => { [key: string]: string | true } =
+  desmosRequire("lib/parse-query-params").getQueryParams;
