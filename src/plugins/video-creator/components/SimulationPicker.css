@@ -8,4 +8,5 @@
 .video-creator-simulation-rules .dcg-clickable-property-row .dcg-mq-math-mode {
   padding: 0 8px;
   transform: translateY(1px);
+  max-width: 120px;
 }
