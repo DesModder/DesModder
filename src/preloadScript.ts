@@ -1,44 +1,13 @@
 import window from "globals/window";
 
+import pinExpressions from "moduleOverrides/pinExpressions";
+
 /* This script is loaded at document_start, before the page's scripts, to give it 
 time to set ALMOND_OVERRIDES and replace module definitions */
 
-/* As an example, we override the definition of sin(x) in core/math/builtin */
-const workerInject = `
-const defineOverrides = {
-  "core/math/builtin": (definition) =>
-    eval(
-      "_makeFunctionStatement=" +
-        definition.toString().replace(/\.sin=.,/, ".sin=(x)=>x*x,")
-    ),
-};
-
-const oldDefine = define;
-
-function newDefine(moduleName, dependencies, definition) {
-  if (moduleName in defineOverrides) {
-    const override = defineOverrides[moduleName](definition, dependencies);
-    definition = override.definition ?? override;
-    dependencies = override.dependencies ?? dependencies;
-  }
-  return oldDefine(moduleName, dependencies, definition);
-}
-newDefine.amd = {
-  jQuery: true,
-};
-
-define = newDefine;`;
-
 /* As an example, we inject the above worker code and replace "A" with "B" in the settings view*/
 const defineOverrides = {
-  // replace the first newline (which should be immediately after the definition of define and require
-  "text!worker_src_underlying": (definition: () => string) => () =>
-    definition().replace("\n", `${workerInject}\n`),
-  "main/settings-view": (definition: Function) =>
-    Function(
-      "return " +
-        definition.toString().replace(/\.const\("A"\)/g, '.const("C")')
-    )(),
+  ...pinExpressions,
 } as {
   [key: string]: (definition: any, dependencies: string[]) => Function;
 };
@@ -53,6 +22,7 @@ function newDefine(
 ) {
   if (moduleName in defineOverrides) {
     // override should either be `{dependencies, definition}` or just `definition`
+    console.debug("transforming", moduleName);
     const override = defineOverrides[moduleName](definition, dependencies);
     definition = override;
   }

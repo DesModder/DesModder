@@ -1,3 +1,4 @@
+const webpack = require("webpack");
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
 
@@ -5,6 +6,11 @@ const config = {
   resolve: {
     modules: ["node_modules", "src"],
     extensions: [".ts", ".tsx", ".js", ".jsx"],
+    fallback: {
+      buffer: false,
+      path: false,
+      fs: false,
+    },
   },
   entry: {
     background: "./src/background.ts",
@@ -42,6 +48,9 @@ const config = {
   plugins: [
     new CopyPlugin({
       patterns: [{ from: "public", to: "." }],
+    }),
+    new webpack.ProvidePlugin({
+      process: "process/browser",
     }),
   ],
   optimization: {

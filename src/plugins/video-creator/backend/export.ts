@@ -1,5 +1,3 @@
-// kinda jank, but switching to moduleResolution: 'node' messes up
-// existing non-relative imports
 import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg/src/index.js";
 import Controller from "../Controller";
 
