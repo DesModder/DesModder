@@ -7,7 +7,7 @@ import {
   SimulationModel,
   FolderModel,
   ExpressionModel,
-} from "../../globals/Calc";
+} from "globals/Calc";
 
 type Indexed<T> = T & { index: number };
 

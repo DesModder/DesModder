@@ -37,7 +37,7 @@ const defineOverrides = {
   "main/settings-view": (definition: Function) =>
     Function(
       "return " +
-        definition.toString().replace(/\.const\("A"\)/g, '.const("B")')
+        definition.toString().replace(/\.const\("A"\)/g, '.const("C")')
     )(),
 } as {
   [key: string]: (definition: any, dependencies: string[]) => Function;

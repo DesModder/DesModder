@@ -4,11 +4,13 @@
     "sourceMap": true,
     "strictNullChecks": true,
     "module": "es6",
+    "moduleResolution": "node",
     "jsx": "react",
     "jsxFactory": "DCGView.jsx",
     "target": "es2020",
     "allowJs": true,
-    "strict": true
+    "strict": true,
+    "baseUrl": "src"
   },
   "include": ["./src/"]
 }
