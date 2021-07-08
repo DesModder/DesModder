@@ -21,6 +21,7 @@ const pinExpressions = {
                 path.node.property.name == "makeViewForModel"
               ) {
                 identifierThis = path.node.object;
+                path.stop();
               }
             },
           });
@@ -83,6 +84,19 @@ const pinExpressions = {
               ? "shell"
               : "render";
           }`;
+        }
+      },
+    })
+  ),
+  "main/controller": withDependencyMap(
+    (dependencyNameMap: DependencyNameMap) => ({
+      SwitchCase(path: babel.NodePath<t.SwitchCase>) {
+        if (t.isStringLiteral(path.node.test, { value: "start-dragdrop" })) {
+          path.node.consequent.unshift(
+            template.statement.ast`
+            if (this.getItemModel(e.id).index < 2) return;
+          `
+          );
         }
       },
     })

@@ -5,3 +5,10 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   // background-color: inserted via javascript
 }
+
+.dcg-calculator-api-container .dcg-exppanel .dsm-pinned-expressions {
+  // need to override with higher precedence, and dcg uses a bunch of classes
+  .dcg-expressionitem .dcg-tab {
+    cursor: default;
+  }
+}
