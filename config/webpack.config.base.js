@@ -10,6 +10,8 @@ const config = {
     background: "./src/background.ts",
     content: "./src/content.ts",
     script: "./src/script.ts",
+    preloadContent: "./src/preloadContent.ts",
+    preloadScript: "./src/preloadScript.ts",
   },
   output: {
     path: path.resolve(__dirname, "../dist"),
