@@ -44,7 +44,7 @@ export default class Menu extends DCGView.Class<{
               </div>
               <Toggle
                 toggled={() => this.controller.isPluginEnabled(plugin.id)}
-                disabled={() => !this.controller.canTogglePlugin(plugin.id)}
+                disabled={() => false}
                 onChange={() => this.controller.togglePlugin(plugin.id)}
               />
             </div>

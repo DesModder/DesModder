@@ -34,6 +34,7 @@ export interface Plugin<Settings extends GenericBooleanSettings = {}> {
   config?: readonly ConfigItem[];
   onConfigChange?(changes: Settings): void;
   manageConfigChange?(current: Settings, next: Settings): Settings;
+  enableRequiresReload?: boolean;
 }
 
 export function isPlugin(obj: any): obj is Plugin {

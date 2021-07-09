@@ -1,4 +1,4 @@
-import { onEnable, onDisable } from "./backend";
+import { onEnable } from "./backend";
 
 import "./pinExpressions.less";
 
@@ -7,7 +7,6 @@ export default {
   name: "Pin Expressions",
   description: "Pin expressions from Edit List mode",
   onEnable: onEnable,
-  onDisable: onDisable,
   enabledByDefault: true,
-  // requiresReload: true // TODO
+  enableRequiresReload: true,
 } as const;

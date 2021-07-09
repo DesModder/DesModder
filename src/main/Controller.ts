@@ -103,7 +103,7 @@ export default class Controller {
         this.view = view;
         for (const { id } of pluginList) {
           if (this.pluginsEnabled[id]) {
-            this._enablePlugin(id);
+            this._enablePlugin(id, true);
           }
         }
         this.view.updateMenuView();
@@ -162,21 +162,36 @@ export default class Controller {
     });
   }
 
+  warnReload() {
+    // TODO: proper UI, maybe similar to the "Opened graph '...'. Press Ctrl+Z to undo. <a>Undo</a>"
+    // or equivalently (but within the calculator-api): "New graph created. Press Ctrl+Z to undo. <a>Undo</a>"
+    // `location.reload()` allows reload directly from page JS
+    alert("You must reload the page (Ctrl+R) for that change to take effect.");
+  }
+
   disablePlugin(i: PluginID) {
     const plugin = plugins[i];
     if (plugin !== undefined) {
-      if (this.pluginsEnabled[i] && plugin.onDisable) {
-        plugin.onDisable();
+      if (this.pluginsEnabled[i]) {
+        if (plugin.onDisable) {
+          plugin.onDisable();
+        } else {
+          this.warnReload();
+        }
         this.setPluginEnabled(i, false);
         this.updateMenuView();
       }
     }
   }
 
-  _enablePlugin(id: PluginID) {
+  _enablePlugin(id: PluginID, isReload: boolean) {
     const plugin = plugins[id];
     if (plugin !== undefined) {
-      plugin.onEnable(this.pluginSettings[id]);
+      if (plugin.enableRequiresReload && !isReload) {
+        this.warnReload();
+      } else {
+        plugin.onEnable(this.pluginSettings[id]);
+      }
       this.setPluginEnabled(id, true);
       this.updateMenuView();
     }
@@ -185,7 +200,7 @@ export default class Controller {
   enablePlugin(id: PluginID) {
     if (!this.pluginsEnabled[id]) {
       this.setPluginEnabled(id, true);
-      this._enablePlugin(id);
+      this._enablePlugin(id, false);
     }
   }
 
@@ -199,15 +214,6 @@ export default class Controller {
 
   isPluginEnabled(i: PluginID) {
     return this.pluginsEnabled[i] ?? false;
-  }
-
-  canTogglePlugin(i: PluginID) {
-    const plugin = plugins[i];
-    return !(
-      plugin !== undefined &&
-      this.pluginsEnabled[i] &&
-      !("onDisable" in plugin)
-    );
   }
 
   togglePluginExpanded(i: PluginID) {
