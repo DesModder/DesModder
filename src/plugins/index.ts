@@ -35,16 +35,7 @@ export interface Plugin<Settings extends GenericBooleanSettings = {}> {
   onConfigChange?(changes: Settings): void;
   manageConfigChange?(current: Settings, next: Settings): Settings;
   enableRequiresReload?: boolean;
-}
-
-export function isPlugin(obj: any): obj is Plugin {
-  return (
-    typeof obj.name === "string" &&
-    typeof obj.description === "string" &&
-    typeof obj.onEnable === "function" &&
-    (!obj.onDisable || typeof obj.onDisable === "function") &&
-    typeof obj.enabledByDefault === "boolean"
-  );
+  moduleOverrides?: unknown; // should be used only in preload coad, not in main code
 }
 
 // these plugins will be listed in list order in the menu

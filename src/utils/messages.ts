@@ -23,9 +23,16 @@ type MessageWindowToContent =
     }
   | {
       type: "get-initial-data";
+    }
+  | {
+      type: "get-preload-enabled";
     };
 
 type MessageContentToWindow =
+  | {
+      type: "apply-preload-enabled";
+      value: { [key: string]: boolean };
+    }
   | {
       type: "apply-plugins-enabled";
       value: { [key: string]: boolean };

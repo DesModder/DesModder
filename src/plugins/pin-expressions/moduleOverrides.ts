@@ -159,10 +159,7 @@ const moduleOverrides = {
                           handleEvent: %%DCGView%%.const("true"),
                           role: %%DCGView%%.const("button"),
                           tabindex: %%DCGView%%.const("0"),
-                          onTap: (event) => {
-                            console.log("e", event)
-                            window.DesModder.controller.pinExpression(e.model().id)
-                          }
+                          onTap: () => window.DesModder.controller.pinExpression(e.model().id)
                         },
                         %%DCGView%%.createElement("i", {
                           class: %%DCGView%%.const("dcg-icon-open"),
