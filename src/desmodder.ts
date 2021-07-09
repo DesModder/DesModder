@@ -47,5 +47,5 @@ export {
   promisify,
   OptionalProperties,
   getQueryParams,
-} from "utils";
+} from "utils/utils";
 export { controller as desModderController } from "./script";

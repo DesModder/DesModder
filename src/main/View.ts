@@ -1,6 +1,6 @@
 import DCGView, { MountedComponent } from "DCGView";
 import PillboxContainer from "components/PillboxContainer";
-import { pollForValue } from "./utils";
+import { pollForValue } from "utils/utils";
 import Controller from "./Controller";
 import { Calc } from "globals/window";
 

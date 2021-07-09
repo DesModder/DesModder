@@ -1,6 +1,6 @@
-import Controller from "Controller";
-import View from "View";
-import { pollForValue } from "utils";
+import Controller from "main/Controller";
+import View from "main/View";
+import { pollForValue } from "utils/utils";
 import window from "globals/window";
 
 export const controller = new Controller();

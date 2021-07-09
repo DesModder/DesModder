@@ -1,7 +1,7 @@
-import { plugins, pluginList, PluginID } from "./plugins";
+import { plugins, pluginList, PluginID } from "plugins";
 import View from "./View";
-import { MenuFunc } from "./components/Menu";
-import { listenToMessageDown, postMessageUp } from "messages";
+import { MenuFunc } from "components/Menu";
+import { listenToMessageDown, postMessageUp } from "utils/messages";
 import { Calc } from "globals/window";
 
 interface PillboxButton {

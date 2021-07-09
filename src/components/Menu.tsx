@@ -1,6 +1,6 @@
 import DCGView from "DCGView";
 import Toggle from "./Toggle";
-import Controller from "Controller";
+import Controller from "main/Controller";
 import { If, Switch, Checkbox, Tooltip } from "./desmosComponents";
 import "./Menu.less";
 

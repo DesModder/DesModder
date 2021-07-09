@@ -1,6 +1,6 @@
 import window from "globals/window";
 
-import pinExpressions from "moduleOverrides/pinExpressions";
+import pinExpressions from "plugins/pin-expressions/moduleOverrides";
 
 /* This script is loaded at document_start, before the page's scripts, to give it 
 time to set ALMOND_OVERRIDES and replace module definitions */

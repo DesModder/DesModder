@@ -1,10 +1,10 @@
 import * as t from "@babel/types";
 import template from "@babel/template";
-import withDependencyMap, { DependencyNameMap } from "./withDependencyMap";
+import withDependencyMap, {
+  DependencyNameMap,
+} from "preload/withDependencyMap";
 
-import "./pinExpressions.less";
-
-const pinExpressions = {
+const moduleOverrides = {
   "expressions/list-view": withDependencyMap(
     (dependencyNameMap: DependencyNameMap) => ({
       StringLiteral(path: babel.NodePath<t.StringLiteral>) {
@@ -131,7 +131,6 @@ const pinExpressions = {
             <If predicate> delete expression </If>
           </span>
           */
-          console.log("dependencyNameMap", dependencyNameMap);
           createElementCall.node.arguments.splice(
             5, // (1 for the "span") + (1 for the HTML attributes) + (3 for the three <If>s it comes after)
             0,
@@ -206,4 +205,4 @@ const pinExpressions = {
     })
   ),
 };
-export default pinExpressions;
+export default moduleOverrides;

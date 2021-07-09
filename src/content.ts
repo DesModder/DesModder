@@ -1,7 +1,5 @@
-import { postMessageDown, listenToMessageUp } from "messages";
-import injectScript from "./injectScript";
-
-// *** Messages
+import { postMessageDown, listenToMessageUp } from "utils/messages";
+import injectScript from "./utils/injectScript";
 
 const StorageKeys = {
   pluginsEnabled: "_plugins-enabled",

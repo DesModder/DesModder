@@ -1,9 +1,10 @@
-import duplicateHotkey from "plugins/duplicate-hotkey/index";
-import findReplace from "plugins/find-replace/index";
-import wolfram2desmos from "plugins/wolfram2desmos/index";
-import videoCreator from "plugins/video-creator/index";
-import builtinSettings from "plugins/builtin-settings/index";
-import rightClickTray from "plugins/right-click-tray/index";
+import duplicateHotkey from "plugins/duplicate-hotkey";
+import findReplace from "plugins/find-replace";
+import wolfram2desmos from "plugins/wolfram2desmos";
+import videoCreator from "plugins/video-creator";
+import builtinSettings from "plugins/builtin-settings";
+import rightClickTray from "plugins/right-click-tray";
+import pinExpressions from "plugins/pin-expressions";
 
 interface ConfigItemGeneric {
   key: string;
@@ -55,6 +56,7 @@ const _plugins = {
   [findReplace.id]: findReplace,
   [rightClickTray.id]: rightClickTray,
   [wolfram2desmos.id]: wolfram2desmos,
+  [pinExpressions.id]: pinExpressions,
 } as const;
 
 export const pluginList = Object.values(_plugins);
