@@ -8,8 +8,8 @@ const pinExpressions = {
   "expressions/list-view": withDependencyMap(
     (dependencyNameMap: DependencyNameMap) => ({
       StringLiteral(path: babel.NodePath<t.StringLiteral>) {
-        /* Add an extra child to the DCGView.createElement class="dcg-exppanel-container" */
         if (path.node.value == "dcg-exppanel-container") {
+          /* Insert div.dcg-exppanel.dsm-pinned-expressions to show the pinned expressions */
           const createElementCall = path.findParent((path) =>
             path.isCallExpression()
           ) as babel.NodePath<t.CallExpression>;
@@ -26,7 +26,7 @@ const pinExpressions = {
             },
           });
           /*
-          We want to insert at the end to make the first .dcg-exppanel the one selected by Desmos's JS.
+          We want to insert the extra child at the end to make the first .dcg-exppanel the one selected by Desmos's JS.
           The CSS will move it to the beginning
           <div class="dcg-exppanel-container">
             <If predicate> <ExpressionsHeader/> </If>
@@ -76,8 +76,8 @@ const pinExpressions = {
   "graphing-calc/models/abstract-item": withDependencyMap(
     (dependencyNameMap: DependencyNameMap) => ({
       AssignmentExpression(path: babel.NodePath<t.AssignmentExpression>) {
-        /* replace the RHS of exports.getDisplayState = __ */
         const lhs = path.node.left;
+        /* Disable pinned expressions from appearing in the unpinned section */
         if (
           t.isMemberExpression(lhs) &&
           t.isIdentifier(lhs.object, {
@@ -87,6 +87,7 @@ const pinExpressions = {
           // want to avoid replacing within the exports.exp1 = exports.exp2 = ... = void 0
           t.isFunctionExpression(path.node.right)
         ) {
+          /* replace the RHS of exports.getDisplayState = __ */
           // might break tours/base_tour or expressions hidden inside folders
           path.node.right = template.expression.ast`function (e) {
             return e.isHiddenFromUI || e.filteredBySearch || e.index < 2
@@ -103,10 +104,102 @@ const pinExpressions = {
     (dependencyNameMap: DependencyNameMap) => ({
       SwitchCase(path: babel.NodePath<t.SwitchCase>) {
         if (t.isStringLiteral(path.node.test, { value: "start-dragdrop" })) {
+          /* Disable dragging from pinned expressions */
           path.node.consequent.unshift(
             template.statement.ast`
             if (this.getItemModel(e.id).index < 2) return;
           `
+          );
+        }
+      },
+    })
+  ),
+  "expressions/expression-edit-actions": withDependencyMap(
+    (dependencyNameMap: DependencyNameMap) => ({
+      StringLiteral(path: babel.NodePath<t.StringLiteral>) {
+        if (path.node.value == "dcg-expression-edit-actions") {
+          /* Add pin/unpin buttons */
+          const createElementCall = path.findParent((path) =>
+            path.isCallExpression()
+          ) as babel.NodePath<t.CallExpression>;
+          /*
+          We want to insert after "duplicate expression" and before "delete expression"
+          <span class="dcg-expression-edit-actions">
+            <If predicate> dcg-graphic idk </If>
+            <If predicate> convert to table </If>
+            <If predicate> duplicate expression </If>
+            <If predicate> delete expression </If>
+          </span>
+          */
+          console.log("dependencyNameMap", dependencyNameMap);
+          createElementCall.node.arguments.splice(
+            5, // (1 for the "span") + (1 for the HTML attributes) + (3 for the three <If>s it comes after)
+            0,
+            template.expression(
+              `
+              %%DCGView%%.createElement(
+                %%DCGView%%.Components.If,
+                {
+                  predicate: () => e.model().type !== "folder"
+                },
+                () => %%DCGView%%.Components.IfElse(
+                  () => e.model().index < 2,
+                  {
+                    false: () => %%DCGView%%.createElement(
+                      %%Tooltip%%.Tooltip,
+                      {
+                        tooltip: %%DCGView%%.const("Pin"),
+                        gravity: %%DCGView%%.const("s")
+                      },
+                      %%DCGView%%.createElement(
+                        "span",
+                        {
+                          class: %%DCGView%%.const(
+                            "dsm-pin-button dcg-exp-action-button"
+                          ),
+                          handleEvent: %%DCGView%%.const("true"),
+                          role: %%DCGView%%.const("button"),
+                          tabindex: %%DCGView%%.const("0"),
+                          onTap: (event) => {
+                            console.log("e", event)
+                            window.DesModder.controller.pinExpression(e.model().id)
+                          }
+                        },
+                        %%DCGView%%.createElement("i", {
+                          class: %%DCGView%%.const("dcg-icon-open"),
+                        })
+                      )
+                    ),
+                    true: () => %%DCGView%%.createElement(
+                      %%Tooltip%%.Tooltip,
+                      {
+                        tooltip: %%DCGView%%.const("Unpin"),
+                        gravity: %%DCGView%%.const("s")
+                      },
+                      %%DCGView%%.createElement(
+                        "span",
+                        {
+                          class: %%DCGView%%.const(
+                            "dsm-unpin-button dcg-exp-action-button"
+                          ),
+                          handleEvent: %%DCGView%%.const("true"),
+                          role: %%DCGView%%.const("button"),
+                          tabindex: %%DCGView%%.const("0"),
+                          onTap: () => window.DesModder.controller.unpinExpression(e.model().id)
+                        },
+                        %%DCGView%%.createElement("i", {
+                          class: %%DCGView%%.const("dcg-icon-point"),
+                        })
+                      )
+                    )
+                  }
+                )
+              )
+              `
+            )({
+              DCGView: dependencyNameMap.dcgview,
+              Tooltip: dependencyNameMap["../shared-components/tooltip"],
+            })
           );
         }
       },

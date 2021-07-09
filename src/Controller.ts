@@ -2,6 +2,7 @@ import { plugins, pluginList, PluginID } from "./plugins";
 import View from "./View";
 import { MenuFunc } from "./components/Menu";
 import { listenToMessageDown, postMessageUp } from "messages";
+import { Calc } from "globals/window";
 
 interface PillboxButton {
   id: string;
@@ -246,5 +247,13 @@ export default class Controller {
       }
     }
     this.updateMenuView();
+  }
+
+  pinExpression(id: string) {
+    console.log("pin", id, Calc.controller.getItemModel(id));
+  }
+
+  unpinExpression(id: string) {
+    console.log("unpin", id, Calc.controller.getItemModel(id));
   }
 }
