@@ -8,8 +8,8 @@ const pinExpressions = {
   "expressions/list-view": withDependencyMap(
     (dependencyNameMap: DependencyNameMap) => ({
       StringLiteral(path: babel.NodePath<t.StringLiteral>) {
-        /* Add an extra child to the DCGView.createElement class="dcg-exppanel" */
-        if (path.node.value == "dcg-exppanel") {
+        /* Add an extra child to the DCGView.createElement class="dcg-exppanel-container" */
+        if (path.node.value == "dcg-exppanel-container") {
           const createElementCall = path.findParent((path) =>
             path.isCallExpression()
           ) as babel.NodePath<t.CallExpression>;
@@ -25,11 +25,21 @@ const pinExpressions = {
               }
             },
           });
+          /*
+          We want to insert at the end to make the first .dcg-exppanel the one selected by Desmos's JS.
+          The CSS will move it to the beginning
+          <div class="dcg-exppanel-container">
+            <If predicate> <ExpressionsHeader/> </If>
+            <If predicate> <ExpressionSearchBar/> </If>
+            <If predicate> <div class="dcg-exppanel"> ... </div> </If.
+          </div>
+          */
           createElementCall.node.arguments.splice(
-            2,
+            5, // (1 for the "div") + (1 for the HTML attributes) + (3 for being after the last <If>)
             0,
             template.expression(
-              `%%DCGView%%.createElement(
+              `
+              %%DCGView%%.createElement(
                 %%DCGView%%.Components.For,
                 {
                   each: function () {
@@ -43,7 +53,7 @@ const pinExpressions = {
                 %%DCGView%%.createElement(
                   "div",
                   {
-                    class: %%DCGView%%.const("dsm-pinned-expressions"),
+                    class: %%DCGView%%.const("dsm-pinned-expressions dcg-exppanel"),
                     style: () => ({
                       background: %%this%%.controller.getBackgroundColor()
                     })
@@ -52,7 +62,8 @@ const pinExpressions = {
                     return %%this%%.makeViewForModel(t)
                   }
                 )
-              )`
+              )
+              `
             )({
               DCGView: dependencyNameMap.dcgview,
               this: identifierThis,
