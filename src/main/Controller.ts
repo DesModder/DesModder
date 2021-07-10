@@ -295,6 +295,9 @@ export default class Controller {
   }
 
   isPinned(id: string) {
-    return (this.graphMetadata.pinnedExpressions ?? []).includes(id);
+    return (
+      !Calc.controller.getExpressionSearchOpen() &&
+      (this.graphMetadata.pinnedExpressions ?? []).includes(id)
+    );
   }
 }
