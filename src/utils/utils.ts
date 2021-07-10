@@ -74,3 +74,10 @@ export type OptionalProperties<T> = {
 
 export const getQueryParams: () => { [key: string]: string | true } =
   desmosRequire("lib/parse-query-params").getQueryParams;
+
+export function arraysEqual(arr1: unknown[], arr2: unknown[]) {
+  return (
+    arr1.length === arr2.length &&
+    arr1.every((value, index) => arr2[index] === value)
+  );
+}

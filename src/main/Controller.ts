@@ -2,7 +2,10 @@ import { plugins, pluginList, PluginID } from "plugins";
 import View from "./View";
 import { MenuFunc } from "components/Menu";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
+import { arraysEqual, OptionalProperties } from "utils/utils";
 import { Calc } from "globals/window";
+import GraphMetadata from "./metadata/interface";
+import { getMetadata, setMetadata } from "./metadata/manage";
 
 interface PillboxButton {
   id: string;
@@ -19,6 +22,8 @@ export default class Controller {
   pluginSettings: {
     [plugin in PluginID]: { [key: string]: boolean };
   };
+  graphMetadata: GraphMetadata = {};
+  metadataChangeSuppressed: boolean = false;
 
   // array of IDs
   pillboxButtonsOrder: string[] = ["main-menu"];
@@ -45,6 +50,9 @@ export default class Controller {
     );
     this.pluginsEnabled = Object.fromEntries(
       pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
+    );
+    Calc.observeEvent("change.dsm-main-controller", () =>
+      this.checkForMetadataChange()
     );
   }
 
@@ -255,11 +263,45 @@ export default class Controller {
     this.updateMenuView();
   }
 
+  checkForMetadataChange() {
+    if (this.metadataChangeSuppressed) return;
+    const metadata = getMetadata();
+    if (
+      !arraysEqual(
+        metadata.pinnedExpressions ?? [],
+        this.graphMetadata.pinnedExpressions ?? []
+      )
+    ) {
+      console.log(
+        "Pinned expressions changed to",
+        metadata.pinnedExpressions ?? []
+      );
+    }
+    this.graphMetadata = metadata;
+  }
+
+  updateMetadata(obj: OptionalProperties<GraphMetadata>) {
+    setMetadata({
+      ...this.graphMetadata,
+      ...obj,
+    });
+  }
+
   pinExpression(id: string) {
-    console.log("pin", id, Calc.controller.getItemModel(id));
+    const pinnedExpressions = this.graphMetadata.pinnedExpressions ?? [];
+    const newPinnedExpressions = pinnedExpressions.concat(
+      pinnedExpressions.includes(id) ? [] : [id]
+    );
+    this.updateMetadata({
+      pinnedExpressions: newPinnedExpressions,
+    });
   }
 
   unpinExpression(id: string) {
-    console.log("unpin", id, Calc.controller.getItemModel(id));
+    this.updateMetadata({
+      pinnedExpressions: (this.graphMetadata.pinnedExpressions ?? []).filter(
+        (e) => e !== id
+      ),
+    });
   }
 }

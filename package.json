@@ -11,6 +11,7 @@
   ],
   "scripts": {
     "prettier": "prettier --write .",
+    "build-metadata-schema": "ts-to-json --path src/main/metadata/interface.ts --type Metadata > src/main/metadata/metadata_schema.json",
     "build": "webpack --mode production --config config/webpack.config.base.js",
     "dev": "webpack --mode development --config config/webpack.config.dev.js"
   },
@@ -41,6 +42,8 @@
     "@babel/template": "^7.14.5",
     "@ffmpeg/core": "^0.10.0",
     "@ffmpeg/ffmpeg": "^0.10.0",
-    "process": "^0.11.10"
+    "ajv": "^8.6.1",
+    "process": "^0.11.10",
+    "ts-to-json": "^1.4.1"
   }
 }
