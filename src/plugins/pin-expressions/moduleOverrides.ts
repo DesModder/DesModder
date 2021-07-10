@@ -43,12 +43,11 @@ const moduleOverrides = {
                 %%DCGView%%.Components.For,
                 {
                   each: function () {
-                    // for now, just pin the first two item models
-                    return %%this%%.controller.getAllItemModels().slice(0,2);
+                    return %%this%%.controller.getAllItemModels();
                   },
                   key: function (e) {
                     return e.guid;
-                  },
+                  }
                 },
                 %%DCGView%%.createElement(
                   "div",
@@ -59,7 +58,13 @@ const moduleOverrides = {
                     })
                   },
                   function (t) {
-                    return %%this%%.makeViewForModel(t)
+                    return %%DCGView%%.createElement(
+                      %%DCGView%%.Components.If,
+                      {
+                        predicate: () => window.DesModder?.controller?.isPinned(t.id)
+                      },
+                      () => %%this%%.makeViewForModel(t)
+                    )
                   }
                 )
               )
@@ -90,7 +95,7 @@ const moduleOverrides = {
           /* replace the RHS of exports.getDisplayState = __ */
           // might break tours/base_tour or expressions hidden inside folders
           path.node.right = template.expression.ast`function (e) {
-            return e.isHiddenFromUI || e.filteredBySearch || e.index < 2
+            return e.isHiddenFromUI || e.filteredBySearch || window.DesModder?.controller?.isPinned(e.id)
               ? "none"
               : e.renderShell
               ? "shell"
@@ -107,7 +112,7 @@ const moduleOverrides = {
           /* Disable dragging from pinned expressions */
           path.node.consequent.unshift(
             template.statement.ast`
-            if (this.getItemModel(e.id).index < 2) return;
+            if (window.DesModder?.controller?.isPinned(e.id)) return;
           `
           );
         }
@@ -142,7 +147,7 @@ const moduleOverrides = {
                   predicate: () => e.model().type !== "folder"
                 },
                 () => %%DCGView%%.Components.IfElse(
-                  () => e.model().index < 2,
+                  () => window.DesModder?.controller?.isPinned(e.model().id),
                   {
                     false: () => %%DCGView%%.createElement(
                       %%Tooltip%%.Tooltip,

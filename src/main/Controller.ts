@@ -265,19 +265,7 @@ export default class Controller {
 
   checkForMetadataChange() {
     if (this.metadataChangeSuppressed) return;
-    const metadata = getMetadata();
-    if (
-      !arraysEqual(
-        metadata.pinnedExpressions ?? [],
-        this.graphMetadata.pinnedExpressions ?? []
-      )
-    ) {
-      console.log(
-        "Pinned expressions changed to",
-        metadata.pinnedExpressions ?? []
-      );
-    }
-    this.graphMetadata = metadata;
+    this.graphMetadata = getMetadata();
   }
 
   updateMetadata(obj: OptionalProperties<GraphMetadata>) {
@@ -285,6 +273,7 @@ export default class Controller {
       ...this.graphMetadata,
       ...obj,
     });
+    Calc.controller.updateViews();
   }
 
   pinExpression(id: string) {
@@ -303,5 +292,9 @@ export default class Controller {
         (e) => e !== id
       ),
     });
+  }
+
+  isPinned(id: string) {
+    return (this.graphMetadata.pinnedExpressions ?? []).includes(id);
   }
 }

@@ -248,6 +248,7 @@ export default interface Calc {
     generateId(): string;
     // returns a subscript that occurs nowhere else in the graph
     generateTableXSubscript(): number;
+    updateViews(): void;
   };
   selectedExpressionId: string;
   //// public
