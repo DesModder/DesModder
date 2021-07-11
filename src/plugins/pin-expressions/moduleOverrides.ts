@@ -3,6 +3,7 @@ import template from "@babel/template";
 import withDependencyMap, {
   DependencyNameMap,
 } from "preload/withDependencyMap";
+import withinExport from "preload/withinExport";
 
 const moduleOverrides = {
   "expressions/list-view": withDependencyMap(
@@ -79,31 +80,20 @@ const moduleOverrides = {
     })
   ),
   "graphing-calc/models/abstract-item": withDependencyMap(
-    (dependencyNameMap: DependencyNameMap) => ({
-      AssignmentExpression(path: babel.NodePath<t.AssignmentExpression>) {
-        const lhs = path.node.left;
-        /* Disable pinned expressions from appearing in the unpinned section */
-        if (
-          t.isMemberExpression(lhs) &&
-          t.isIdentifier(lhs.object, {
-            name: dependencyNameMap["exports"].name,
-          }) &&
-          t.isIdentifier(lhs.property, { name: "getDisplayState" }) &&
-          // want to avoid replacing within the exports.exp1 = exports.exp2 = ... = void 0
-          t.isFunctionExpression(path.node.right)
-        ) {
-          /* replace the RHS of exports.getDisplayState = __ */
-          // might break tours/base_tour or expressions hidden inside folders
-          path.node.right = template.expression.ast`function (e) {
+    (dependencyNameMap: DependencyNameMap) =>
+      /* Disable pinned expressions from appearing in the unpinned section */
+      // might break tours/base_tour or expressions hidden inside folders
+      withinExport(
+        "getDisplayState",
+        dependencyNameMap,
+        () => template.expression.ast`function (e) {
             return e.isHiddenFromUI || e.filteredBySearch || window.DesModder?.controller?.isPinned(e.id)
               ? "none"
               : e.renderShell
               ? "shell"
               : "render";
-          }`;
-        }
-      },
-    })
+          }`
+      )
   ),
   "main/controller": withDependencyMap(
     (dependencyNameMap: DependencyNameMap) => ({
@@ -202,6 +192,30 @@ const moduleOverrides = {
               Tooltip: dependencyNameMap["../shared-components/tooltip"],
             })
           );
+        }
+      },
+    })
+  ),
+  "expressions/measure-expressions": withDependencyMap(
+    (dependencyNameMap: DependencyNameMap) => ({
+      CallExpression(path: babel.NodePath<t.CallExpression>) {
+        // replace 2 instances of t.getAllItemModels() with a version that
+        // filters for unpinned expressions
+        if (
+          t.isMemberExpression(path.node.callee) &&
+          t.isIdentifier(path.node.callee.property, {
+            name: "getAllItemModels",
+          })
+        ) {
+          path.replaceWith(
+            template.expression.ast`
+              t.getAllItemModels().filter(
+                ({ id }) => !window.DesModder?.controller?.isPinned(id)
+              )
+            `
+          );
+          // avoid recursing on the inserted t.getAllItemModels()
+          path.skip();
         }
       },
     })
