@@ -98,6 +98,27 @@ const moduleOverrides = {
           }`
       )
   ),
+  "expressions/abstract-item-view": withDependencyMap(() => ({
+    CallExpression(path: babel.NodePath<t.CallExpression>) {
+      /* Allows clicking on the pin/unpin button for simulations, notes, and tables */
+      if (
+        t.isMemberExpression(path.node.callee) &&
+        t.isIdentifier(path.node.callee.property, {
+          name: "exitEditListMode",
+        })
+      ) {
+        path.replaceWith(
+          template.expression(
+            `t.target.classList?.contains("dsm-stay-edit-list-mode") || %%callExit%%`
+          )({
+            callExit: path.node,
+          })
+        );
+        // don't want to recurse on the inner copy of path.node
+        path.skip();
+      }
+    },
+  })),
   "expressions/expression-edit-actions": withDependencyMap(
     (dependencyNameMap: DependencyNameMap) => ({
       StringLiteral(path: babel.NodePath<t.StringLiteral>) {
@@ -138,7 +159,7 @@ const moduleOverrides = {
                         "span",
                         {
                           class: %%DCGView%%.const(
-                            "dsm-pin-button dcg-exp-action-button"
+                            "dsm-pin-button dsm-stay-edit-list-mode dcg-exp-action-button"
                           ),
                           handleEvent: %%DCGView%%.const("true"),
                           role: %%DCGView%%.const("button"),
@@ -146,7 +167,7 @@ const moduleOverrides = {
                           onTap: () => window.DesModder.controller.pinExpression(e.model().id)
                         },
                         %%DCGView%%.createElement("i", {
-                          class: %%DCGView%%.const("dcg-icon-open"),
+                          class: %%DCGView%%.const("dcg-icon-open dsm-stay-edit-list-mode"),
                         })
                       )
                     ),
@@ -160,7 +181,7 @@ const moduleOverrides = {
                         "span",
                         {
                           class: %%DCGView%%.const(
-                            "dsm-unpin-button dcg-exp-action-button"
+                            "dsm-unpin-button dcg-exp-action-button dsm-stay-edit-list-mode"
                           ),
                           handleEvent: %%DCGView%%.const("true"),
                           role: %%DCGView%%.const("button"),
@@ -168,7 +189,7 @@ const moduleOverrides = {
                           onTap: () => window.DesModder.controller.unpinExpression(e.model().id)
                         },
                         %%DCGView%%.createElement("i", {
-                          class: %%DCGView%%.const("dcg-icon-point"),
+                          class: %%DCGView%%.const("dcg-icon-point dsm-stay-edit-list-mode"),
                         })
                       )
                     )
