@@ -54,6 +54,7 @@ export default class Controller {
     Calc.observeEvent("change.dsm-main-controller", () =>
       this.checkForMetadataChange()
     );
+    this.checkForMetadataChange();
   }
 
   getDefaultConfig(id: PluginID) {
