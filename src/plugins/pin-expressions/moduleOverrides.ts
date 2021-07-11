@@ -64,7 +64,10 @@ const moduleOverrides = {
                       {
                         predicate: () => window.DesModder?.controller?.isPinned(t.id)
                       },
-                      () => %%this%%.makeViewForModel(t)
+                      // marking as a drag copy causes it not to affect the render shells calcuations
+                      // (all the logic is present already because if the top expression is dragged
+                      // to the bottom, it shouldn't cause all expressions to render from the top)
+                      () => %%this%%.makeDragCopyViewForModel(t)
                     )
                   }
                 )
@@ -192,30 +195,6 @@ const moduleOverrides = {
               Tooltip: dependencyNameMap["../shared-components/tooltip"],
             })
           );
-        }
-      },
-    })
-  ),
-  "expressions/measure-expressions": withDependencyMap(
-    (dependencyNameMap: DependencyNameMap) => ({
-      CallExpression(path: babel.NodePath<t.CallExpression>) {
-        // replace 2 instances of t.getAllItemModels() with a version that
-        // filters for unpinned expressions
-        if (
-          t.isMemberExpression(path.node.callee) &&
-          t.isIdentifier(path.node.callee.property, {
-            name: "getAllItemModels",
-          })
-        ) {
-          path.replaceWith(
-            template.expression.ast`
-              t.getAllItemModels().filter(
-                ({ id }) => !window.DesModder?.controller?.isPinned(id)
-              )
-            `
-          );
-          // avoid recursing on the inserted t.getAllItemModels()
-          path.skip();
         }
       },
     })
