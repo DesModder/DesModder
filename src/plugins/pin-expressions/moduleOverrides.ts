@@ -98,20 +98,6 @@ const moduleOverrides = {
           }`
       )
   ),
-  "main/controller": withDependencyMap(
-    (dependencyNameMap: DependencyNameMap) => ({
-      SwitchCase(path: babel.NodePath<t.SwitchCase>) {
-        if (t.isStringLiteral(path.node.test, { value: "start-dragdrop" })) {
-          /* Disable dragging from pinned expressions */
-          path.node.consequent.unshift(
-            template.statement.ast`
-            if (window.DesModder?.controller?.isPinned(e.id)) return;
-          `
-          );
-        }
-      },
-    })
-  ),
   "expressions/expression-edit-actions": withDependencyMap(
     (dependencyNameMap: DependencyNameMap) => ({
       StringLiteral(path: babel.NodePath<t.StringLiteral>) {
