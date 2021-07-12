@@ -1,5 +1,4 @@
 import window from "globals/window";
-import { listenToMessageDown, postMessageUp } from "utils/messages";
 import {
   pluginModuleOverrides,
   moduleOverridePluginList,
@@ -9,24 +8,14 @@ import {
 /* This script is loaded at document_start, before the page's scripts, to give it 
 time to set ALMOND_OVERRIDES and replace module definitions */
 
-listenToMessageDown((message) => {
-  if (message.type === "apply-preload-enabled") {
-    const pluginsEnabled = message.value;
-    let defineOverrides = {} as ModuleOverrides;
-    for (let pluginID of moduleOverridePluginList.filter(
-      (id) => pluginsEnabled[id]
-    )) {
-      defineOverrides = {
-        ...defineOverrides,
-        ...(pluginModuleOverrides[pluginID] ?? {}),
-      };
-    }
-    applyDefineOverrides(defineOverrides);
-  }
-});
-postMessageUp({
-  type: "get-preload-enabled",
-});
+let defineOverrides = {} as ModuleOverrides;
+for (let pluginID of moduleOverridePluginList) {
+  defineOverrides = {
+    ...defineOverrides,
+    ...(pluginModuleOverrides[pluginID] ?? {}),
+  };
+}
+applyDefineOverrides(defineOverrides);
 
 function applyDefineOverrides(defineOverrides: ModuleOverrides) {
   // assumes `oldDefine` gets defined before `newDefine` is needed

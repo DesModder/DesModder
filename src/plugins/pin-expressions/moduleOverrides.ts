@@ -144,7 +144,7 @@ const moduleOverrides = {
               %%DCGView%%.createElement(
                 %%DCGView%%.Components.If,
                 {
-                  predicate: () => e.model().type !== "folder"
+                  predicate: () => window.DesModder.controller.pluginsEnabled["pin-expressions"] && e.model().type !== "folder"
                 },
                 () => %%DCGView%%.Components.IfElse(
                   () => window.DesModder?.controller?.isPinned(e.model().id),

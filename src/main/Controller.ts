@@ -297,6 +297,7 @@ export default class Controller {
 
   isPinned(id: string) {
     return (
+      this.pluginsEnabled["pin-expressions"] &&
       !Calc.controller.getExpressionSearchOpen() &&
       (this.graphMetadata.pinnedExpressions ?? []).includes(id)
     );
