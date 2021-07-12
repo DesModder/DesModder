@@ -24,6 +24,7 @@
     "@types/babel__standalone": "^7.1.3",
     "@types/babel__template": "^7.4.1",
     "@types/chrome": "0.0.134",
+    "base64-inline-loader": "^1.1.1",
     "copy-webpack-plugin": "^8.1.0",
     "css-loader": "^5.2.0",
     "less": "^4.1.1",

@@ -167,7 +167,7 @@ const moduleOverrides = {
                           onTap: () => window.DesModder.controller.pinExpression(e.model().id)
                         },
                         %%DCGView%%.createElement("i", {
-                          class: %%DCGView%%.const("dcg-icon-open dsm-stay-edit-list-mode"),
+                          class: %%DCGView%%.const("dsm-icon-bookmark-outline-add dsm-stay-edit-list-mode"),
                         })
                       )
                     ),
@@ -189,7 +189,7 @@ const moduleOverrides = {
                           onTap: () => window.DesModder.controller.unpinExpression(e.model().id)
                         },
                         %%DCGView%%.createElement("i", {
-                          class: %%DCGView%%.const("dcg-icon-point dsm-stay-edit-list-mode"),
+                          class: %%DCGView%%.const("dsm-icon-bookmark dsm-stay-edit-list-mode"),
                         })
                       )
                     )
