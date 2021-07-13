@@ -51,10 +51,6 @@ export default class Controller {
     this.pluginsEnabled = Object.fromEntries(
       pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
     );
-    Calc.observeEvent("change.dsm-main-controller", () =>
-      this.checkForMetadataChange()
-    );
-    this.checkForMetadataChange();
   }
 
   getDefaultConfig(id: PluginID) {
@@ -124,6 +120,11 @@ export default class Controller {
     postMessageUp({
       type: "get-initial-data",
     });
+    // metadata stuff
+    Calc.observeEvent("change.dsm-main-controller", () =>
+      this.checkForMetadataChange()
+    );
+    this.checkForMetadataChange();
   }
 
   updateMenuView() {

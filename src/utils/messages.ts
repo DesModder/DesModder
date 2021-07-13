@@ -26,6 +26,9 @@ type MessageWindowToContent =
     }
   | {
       type: "get-preload-enabled";
+    }
+  | {
+      type: "get-script-url";
     };
 
 type MessageContentToWindow =
@@ -40,6 +43,10 @@ type MessageContentToWindow =
   | {
       type: "apply-plugin-settings";
       value: { [id: string]: { [key: string]: boolean } };
+    }
+  | {
+      type: "set-script-url";
+      value: string;
     };
 
 function postMessage<T extends { type: string }>(message: T) {

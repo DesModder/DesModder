@@ -38,14 +38,16 @@ export {
   default as DCGView,
 } from "DCGView";
 export {
-  EvaluateSingleExpression,
   pollForValue,
   mergeClass,
   MaybeClassDict,
-  jquery,
-  keys,
   promisify,
   OptionalProperties,
-  getQueryParams,
 } from "utils/utils";
+export {
+  EvaluateSingleExpression,
+  jquery,
+  keys,
+  getQueryParams,
+} from "utils/depUtils";
 export { controller as desModderController } from "./script";

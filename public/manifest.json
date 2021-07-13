@@ -14,22 +14,13 @@
   "content_scripts": [
     {
       "matches": ["https://www.desmos.com/calculator*"],
-      "run_at": "document_idle",
-      "js": ["content.js"]
-    },
-    {
-      "matches": ["https://www.desmos.com/calculator*"],
       "run_at": "document_start",
       "js": ["preloadContent.js"]
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["script.js"],
-      "matches": ["https://www.desmos.com/*"]
-    },
-    {
-      "resources": ["preloadScript.js"],
+      "resources": ["script.js", "preloadScript.js"],
       "matches": ["https://www.desmos.com/*"]
     }
   ],

@@ -14,7 +14,6 @@ const config = {
   },
   entry: {
     background: "./src/background.ts",
-    content: "./src/content.ts",
     script: "./src/script.ts",
     preloadContent: "./src/preload/content.ts",
     preloadScript: "./src/preload/script.ts",

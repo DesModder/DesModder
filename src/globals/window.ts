@@ -1,6 +1,7 @@
 import Calc from "./Calc";
 
 interface windowConfig extends Window {
+  require(s: string[], callback: Function): void;
   require(s: string): any;
   Calc: Calc;
   DesModder: any;

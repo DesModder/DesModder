@@ -1,6 +1,5 @@
 import Controller from "main/Controller";
 import View from "main/View";
-import { pollForValue } from "utils/utils";
 import window from "globals/window";
 import "fonts/style.css";
 
@@ -12,7 +11,5 @@ window.DesModder = {
   controller,
 };
 
-pollForValue(() => window.Calc && window.Calc.controller).then(() => {
-  controller.init(view);
-  view.init(controller);
-});
+controller.init(view);
+view.init(controller);
