@@ -1,9 +1,16 @@
 import Calc from "./Calc";
 
 interface windowConfig extends Window {
+  require(s: string[], callback: Function): void;
   require(s: string): any;
   Calc: Calc;
   DesModder: any;
+  define(
+    moduleName: string,
+    dependencies: string[],
+    definition: Function
+  ): void;
+  ALMOND_OVERRIDES: { [key: string]: Function };
 }
 
 declare var window: windowConfig;

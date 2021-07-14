@@ -1,6 +1,6 @@
 import DCGView from "DCGView";
 import Toggle from "./Toggle";
-import Controller from "Controller";
+import Controller from "main/Controller";
 import { If, Switch, Checkbox, Tooltip } from "./desmosComponents";
 import "./Menu.less";
 
@@ -44,7 +44,7 @@ export default class Menu extends DCGView.Class<{
               </div>
               <Toggle
                 toggled={() => this.controller.isPluginEnabled(plugin.id)}
-                disabled={() => !this.controller.canTogglePlugin(plugin.id)}
+                disabled={() => false}
                 onChange={() => this.controller.togglePlugin(plugin.id)}
               />
             </div>

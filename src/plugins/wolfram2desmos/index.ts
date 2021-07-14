@@ -45,7 +45,7 @@ function pasteHandler(e: ClipboardEvent) {
     !(elem?.classList.contains("dcg-label-input") ?? true) &&
     pasteData !== undefined &&
     pasteData !== "" &&
-    Calc.controller.getItemModel(Calc.selectedExpressionId).type ===
+    Calc.controller.getItemModel(Calc.selectedExpressionId)?.type ===
       "expression" &&
     isIllegalASCIIMath(pasteData)
   ) {

@@ -1,15 +1,3 @@
-import { desmosRequire, Calc } from "globals/window";
-export const jquery = desmosRequire("jquery");
-export const keys = desmosRequire("keys");
-const _EvaluateSingleExpression = desmosRequire(
-  "core/math/evaluate-single-expression"
-).default;
-
-export function EvaluateSingleExpression(s: string): number {
-  // may also return NaN (which is a number)
-  return _EvaluateSingleExpression(s, Calc.controller.isDegreeMode());
-}
-
 interface FuncAny {
   (): any;
 }
@@ -72,5 +60,9 @@ export type OptionalProperties<T> = {
   [K in keyof T]?: T[K];
 };
 
-export const getQueryParams: () => { [key: string]: string | true } =
-  desmosRequire("lib/parse-query-params").getQueryParams;
+export function arraysEqual(arr1: unknown[], arr2: unknown[]) {
+  return (
+    arr1.length === arr2.length &&
+    arr1.every((value, index) => arr2[index] === value)
+  );
+}

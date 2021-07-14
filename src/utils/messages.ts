@@ -23,9 +23,19 @@ type MessageWindowToContent =
     }
   | {
       type: "get-initial-data";
+    }
+  | {
+      type: "get-preload-enabled";
+    }
+  | {
+      type: "get-script-url";
     };
 
 type MessageContentToWindow =
+  | {
+      type: "apply-preload-enabled";
+      value: { [key: string]: boolean };
+    }
   | {
       type: "apply-plugins-enabled";
       value: { [key: string]: boolean };
@@ -33,6 +43,10 @@ type MessageContentToWindow =
   | {
       type: "apply-plugin-settings";
       value: { [id: string]: { [key: string]: boolean } };
+    }
+  | {
+      type: "set-script-url";
+      value: string;
     };
 
 function postMessage<T extends { type: string }>(message: T) {

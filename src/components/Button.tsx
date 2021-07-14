@@ -1,5 +1,5 @@
 import DCGView from "DCGView";
-import { mergeClass, MaybeClassDict } from "utils";
+import { mergeClass, MaybeClassDict } from "utils/utils";
 import "./Button.less";
 
 export default class Button extends DCGView.Class<{

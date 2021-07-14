@@ -1,6 +1,5 @@
-import { postMessageDown, listenToMessageUp } from "messages";
-
-// *** Messages
+import injectScript from "utils/injectScript";
+import { postMessageDown, listenToMessageUp } from "utils/messages";
 
 const StorageKeys = {
   pluginsEnabled: "_plugins-enabled",
@@ -32,7 +31,7 @@ listenToMessageUp((message) => {
   switch (message.type) {
     case "enable-script":
       if (message.scriptName === "wolfram2desmos") {
-        injectScript("wolfram2desmos.js");
+        injectScript(chrome.runtime.getURL("wolfram2desmos.js"));
       }
       break;
     case "get-initial-data":
@@ -48,24 +47,12 @@ listenToMessageUp((message) => {
         [StorageKeys.pluginSettings]: message.value,
       });
       break;
+    case "get-script-url":
+      postMessageDown({
+        type: "set-script-url",
+        value: chrome.runtime.getURL("script.js"),
+      });
   }
 });
 
-// *** Script Injection
-
-// https://stackoverflow.com/a/9517879
-// injects script.ts into the correct window context
-function injectScript(url: string) {
-  let s = document.createElement("script");
-  s.src = chrome.runtime.getURL(url);
-  s.onload = function () {
-    // remove the script so it doesn't appear in the DOM tree
-    s.remove();
-  };
-  const head = document.head || document.documentElement;
-  if (head !== null) {
-    head.appendChild(s);
-  }
-}
-
-injectScript("script.js");
+injectScript(chrome.runtime.getURL("preloadScript.js"));

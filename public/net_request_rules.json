@@ -39,5 +39,15 @@
       "urlFilter": "https://saved-work.desmos.com/calc_thumbs*",
       "resourceTypes": ["image"]
     }
+  },
+  {
+    "id": 3,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "https://www.desmos.com/assets/build/calculator_desktop-bb1e1e42bc2898aa12054692ac9b380c546ef28f.js|"
+    }
   }
 ]

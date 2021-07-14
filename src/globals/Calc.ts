@@ -44,6 +44,7 @@ interface BasicSetExpression {
 interface ItemModelBase {
   id: string;
   folderId?: string;
+  secret?: boolean;
 }
 
 export interface ExpressionModel extends BasicSetExpression, ItemModelBase {
@@ -111,6 +112,7 @@ export interface FolderModel {
   // cannot have a folderId
   id: string;
   title?: string;
+  secret?: boolean;
 }
 
 export type ItemModel =
@@ -236,7 +238,7 @@ export default interface Calc {
       register(func: (e: DispatchedEvent) => void): DispatchListenerID;
       unregister(id: DispatchListenerID): void;
     };
-    getItemModel(id: any): ItemModel;
+    getItemModel(id: any): ItemModel | undefined;
     stopPlayingSimulation(): void;
     stopAllSliders(): void;
     isKeypadOpen(): boolean;
@@ -246,6 +248,7 @@ export default interface Calc {
     generateId(): string;
     // returns a subscript that occurs nowhere else in the graph
     generateTableXSubscript(): number;
+    updateViews(): void;
   };
   selectedExpressionId: string;
   //// public
@@ -263,6 +266,9 @@ export default interface Calc {
     }
   ): void;
   setExpression(obj: SetExpressionObject): void;
+  setExpressions(objs: SetExpressionObject[]): void;
+  removeExpression(obj: SetExpressionObject): void;
+  removeExpressions(objs: SetExpressionObject[]): void;
 
   // ** screenshots
   screenshot(opts: ScreenshotOptions): string;
