@@ -1,23 +1,11 @@
 import window from "globals/window";
-import {
-  pluginModuleOverrides,
-  moduleOverridePluginList,
-  ModuleOverrides,
-} from "plugins/moduleOverridePlugins";
+import { pluginModuleOverrides } from "plugins/moduleOverridePlugins";
 import { postMessageUp, listenToMessageDown } from "utils/messages";
 import injectScript from "utils/injectScript";
 import { pollForValue } from "utils/utils";
 
 /* This script is loaded at document_start, before the page's scripts, to give it 
 time to set ALMOND_OVERRIDES and replace module definitions */
-
-let defineOverrides = {} as ModuleOverrides;
-for (let pluginID of moduleOverridePluginList) {
-  defineOverrides = {
-    ...defineOverrides,
-    ...(pluginModuleOverrides[pluginID] ?? {}),
-  };
-}
 
 // assumes `oldDefine` gets defined before `newDefine` is needed
 let oldDefine!: typeof window["define"];
@@ -26,10 +14,13 @@ function newDefine(
   dependencies: string[],
   definition: Function
 ) {
-  if (moduleName in defineOverrides) {
+  if (moduleName in pluginModuleOverrides) {
     // override should either be `{dependencies, definition}` or just `definition`
     console.debug("transforming", moduleName);
-    const override = defineOverrides[moduleName](definition, dependencies);
+    const override = pluginModuleOverrides[moduleName](
+      definition,
+      dependencies
+    );
     definition = override;
   }
   return oldDefine(moduleName, dependencies, definition);
