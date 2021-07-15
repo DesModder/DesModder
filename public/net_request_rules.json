@@ -47,7 +47,7 @@
       "type": "block"
     },
     "condition": {
-      "urlFilter": "https://www.desmos.com/assets/build/calculator_desktop-bb1e1e42bc2898aa12054692ac9b380c546ef28f.js|"
+      "urlFilter": "https://www.desmos.com/assets/build/calculator_desktop-*.js|"
     }
   }
 ]
