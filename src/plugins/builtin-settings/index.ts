@@ -47,7 +47,11 @@ function onEnable(config: Config) {
       queryConfig[key] = false;
     }
   }
-  Calc.updateSettings(manageConfigChange(config, queryConfig));
+  const newChanges = manageConfigChange(config, queryConfig);
+  Calc.updateSettings({
+    ...config,
+    ...newChanges,
+  });
 }
 
 function onDisable() {
