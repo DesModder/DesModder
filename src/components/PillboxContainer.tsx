@@ -18,7 +18,7 @@ export default class PillboxContainer extends DCGView.Class<{
     return (
       <div>
         <For each={() => this.controller.pillboxButtonsOrder} key={(id) => id}>
-          <div class="desmodder-pillbox-buttons">
+          <div class="dsm-pillbox-buttons">
             {(id: string) => (
               <Tooltip
                 tooltip={() =>
@@ -27,7 +27,7 @@ export default class PillboxContainer extends DCGView.Class<{
                 gravity="w"
               >
                 <div
-                  class="dcg-btn-flat-gray dcg-settings-pillbox dcg-action-settings desmodder-action-menu"
+                  class="dcg-btn-flat-gray dcg-settings-pillbox dcg-action-settings dsm-action-menu"
                   role="button"
                   onTap={() => this.onTapMenuButton(id)}
                   // TODO: manageFocus?
@@ -48,7 +48,7 @@ export default class PillboxContainer extends DCGView.Class<{
         <If predicate={() => this.controller.pillboxMenuOpen !== null}>
           {() => (
             <div
-              class="dcg-settings-container desmodder-menu-container dcg-left dcg-popover dcg-constrained-height-popover"
+              class="dcg-settings-container dsm-menu-container dcg-left dcg-popover dcg-constrained-height-popover"
               didMount={() => this.didMountContainer()}
               didUnmount={() => this.didUnmountContainer()}
               style={() => ({
@@ -132,7 +132,7 @@ export default class PillboxContainer extends DCGView.Class<{
         "_domNode" in this._element
           ? this._element._domNode
           : this._element._element._domNode
-      ).length && !el.closest(".desmodder-action-menu").length
+      ).length && !el.closest(".dsm-action-menu").length
     );
   }
 }

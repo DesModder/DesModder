@@ -27,7 +27,7 @@ export default class SegmentedControl extends DCGView.Class<{
               "dcg-segmented-control-btn": true,
               "dcg-dark-gray-segmented-control-btn": true,
               "dcg-selected dcg-active": i === this.props.selectedIndex(),
-              "desmodder-disallow-change": !this.getChangeAllowed(i),
+              "dsm-disallow-change": !this.getChangeAllowed(i),
             })}
             role="button"
             ariaLabel={name}

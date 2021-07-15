@@ -16,9 +16,9 @@ export default class Button extends DCGView.Class<{
           mergeClass(
             {
               ["dcg-btn-" + this.props.color()]: true,
-              "desmodder-btn-disabled":
+              "dsm-btn-disabled":
                 (this.props.disabled && this.props.disabled()) || false,
-              "desmodder-btn": true,
+              "dsm-btn": true,
             },
             this.props.class && this.props.class()
           )

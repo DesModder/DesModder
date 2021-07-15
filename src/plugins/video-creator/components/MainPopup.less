@@ -5,54 +5,52 @@
   z-index: 100;
 }
 
-.video-creator-select-export-type {
+.dsm-vc-select-export-type {
   margin-top: 5px;
   margin-bottom: 10px;
 }
 
-.video-creator-preview-menu,
-.video-creator-export-menu {
+.dsm-vc-preview-menu,
+.dsm-vc-export-menu {
   padding-top: 10px;
   border-top: 1px solid #ddd;
   margin-top: 10px;
 }
 
-.video-creator-delete-all-row {
+.dsm-vc-delete-all-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
   margin: -5px 0 5px;
 
-  .video-creator-delete-all-button {
+  .dsm-vc-delete-all-button {
     // 2 pixels shorter to support icon
     height: 26px;
   }
 }
 
-.video-creator-preview-outer:not(.video-creator-preview-expanded) {
+.dsm-vc-preview-outer:not(.dsm-vc-preview-expanded) {
   // avoid scrollbar jiggle
   @scrollbar-width: 15px;
   @mw: (250px - @scrollbar-width);
   transform: translateX(calc((100% - @mw) / 2));
 
-  .video-creator-preview-inner {
+  .dsm-vc-preview-inner {
     max-width: @mw;
   }
 }
 
-.video-creator-export {
+.dsm-vc-export {
   display: flex;
   flex-direction: row-reverse;
   justify-content: space-between;
 }
 
-.video-creator-export
-  .video-creator-fps-settings
-  span.dcg-mq-editable-field.dcg-math-input {
+.dsm-vc-export .dsm-vc-fps-settings span.dcg-mq-editable-field.dcg-math-input {
   margin-left: 8px;
 }
 
-.video-creator-preview-play {
+.dsm-vc-preview-play {
   display: flex;
   flex-direction: row-reverse;
 }

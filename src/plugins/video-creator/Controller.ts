@@ -338,7 +338,7 @@ export default class Controller {
     this.isPlayPreviewExpanded = !this.isPlayPreviewExpanded;
     if (this.isPlayPreviewExpanded) {
       jquery(document).on(
-        "keydown.video-creator-preview-expanded",
+        "keydown.dsm-vc-preview-expanded",
         (e: KeyboardEvent) => {
           if (keys.lookup(e) === "Esc") {
             this.togglePreviewExpanded();
@@ -346,7 +346,7 @@ export default class Controller {
         }
       );
     } else {
-      jquery(document).off("keydown.video-creator-preview-expanded");
+      jquery(document).off("keydown.dsm-vc-preview-expanded");
     }
     this.updateView();
   }

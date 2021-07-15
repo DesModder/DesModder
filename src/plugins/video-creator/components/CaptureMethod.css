@@ -1,51 +1,51 @@
-.video-creator-simulation-navigate-container {
+.dsm-vc-simulation-navigate-container {
   display: flex;
   justify-content: space-between;
   margin-bottom: 5px;
 }
 
-.video-creator-select-capture-method {
+.dsm-vc-select-capture-method {
   margin-top: 5px;
   margin-bottom: 10px;
 }
 
-.video-creator-slider-settings {
+.dsm-vc-slider-settings {
   margin-bottom: 10px;
 }
 
-.video-creator-end-condition-settings {
+.dsm-vc-end-condition-settings {
   margin: 0 5px 10px;
 }
 
-.video-creator-simulation-rules .dcg-clickable-property-row {
+.dsm-vc-simulation-rules .dcg-clickable-property-row {
   margin-bottom: 6px;
 }
 
-.video-creator-reset-bounds-wrapper {
+.dsm-vc-reset-bounds-wrapper {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 10px;
 }
 
-.video-creator-capture {
+.dsm-vc-capture {
   display: flex;
   flex-direction: row-reverse;
   justify-content: space-between;
 }
 
-.video-creator-capture
-  .video-creator-end-condition-settings
+.dsm-vc-capture
+  .dsm-vc-end-condition-settings
   span.dcg-mq-editable-field.dcg-math-input {
   max-width: 100px;
   margin-left: 8px;
 }
 
-.video-creator-capture-size,
-.video-creator-pixel-ratio {
+.dsm-vc-capture-size,
+.dsm-vc-pixel-ratio {
   margin-bottom: 10px;
   margin-left: 5px;
 }
 
-.video-creator-pixel-ratio-inner {
+.dsm-vc-pixel-ratio-inner {
   cursor: pointer;
 }

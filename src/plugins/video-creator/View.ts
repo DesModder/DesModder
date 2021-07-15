@@ -4,7 +4,7 @@ import { controller } from "./index";
 
 export function initView() {
   desModderController.addPillboxButton({
-    id: "video-creator-menu",
+    id: "dsm-vc-menu",
     tooltip: "Video Creator Menu",
     iconClass: "dcg-icon-film",
     popup: () => MainPopupFunc(controller),
@@ -18,11 +18,11 @@ export function initView() {
 }
 
 export function destroyView() {
-  desModderController.removePillboxButton("video-creator-menu");
+  desModderController.removePillboxButton("dsm-vc-menu");
   jquery(document).off(".expanded-menu-view");
 }
 
-const captureFrameID = "video-creator-capture-frame";
+const captureFrameID = "dsm-vc-capture-frame";
 
 function percentage(x: number) {
   return 100 * x + "%";

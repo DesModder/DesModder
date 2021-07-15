@@ -35,7 +35,7 @@ export default class MainPopup extends DCGView.Class<{
       false: () => this.templateNormal(),
       true: () => (
         <div class="dcg-popover-interior">
-          <div class="video-creator-export-in-progress">
+          <div class="dsm-vc-export-in-progress">
             Exporting ...
             <LoadingPie
               progress={() => this.controller.exportProgress}
@@ -53,20 +53,20 @@ export default class MainPopup extends DCGView.Class<{
   templateNormal() {
     return (
       <div class="dcg-popover-interior">
-        <div class="video-creator-capture-menu">
+        <div class="dsm-vc-capture-menu">
           <div class="dcg-group-title">Capture</div>
           <CaptureMethod controller={this.controller} />
         </div>
         <If predicate={() => this.controller.frames.length > 0}>
           {() => (
-            <div class="video-creator-preview-menu">
-              <div class="dcg-group-title video-creator-delete-all-row">
+            <div class="dsm-vc-preview-menu">
+              <div class="dcg-group-title dsm-vc-delete-all-row">
                 Preview
                 <Tooltip tooltip="Delete all" gravity="n">
                   <Button
                     color="red"
                     onTap={() => this.controller.deleteAll()}
-                    class="video-creator-delete-all-button"
+                    class="dsm-vc-delete-all-button"
                   >
                     <i class="dcg-icon-remove" />
                   </Button>
@@ -74,8 +74,8 @@ export default class MainPopup extends DCGView.Class<{
               </div>
               <div
                 class={() => ({
-                  "video-creator-preview-outer": true,
-                  "video-creator-preview-expanded":
+                  "dsm-vc-preview-outer": true,
+                  "dsm-vc-preview-expanded":
                     this.controller.isPlayPreviewExpanded,
                 })}
                 onTapEnd={(e: Event) =>
@@ -84,12 +84,12 @@ export default class MainPopup extends DCGView.Class<{
                   this.controller.togglePreviewExpanded()
                 }
               >
-                <div class="video-creator-preview-inner">
+                <div class="dsm-vc-preview-inner">
                   <PreviewCarousel controller={this.controller} />
                   <If predicate={() => this.controller.isPlayPreviewExpanded}>
                     {() => (
                       <div
-                        class="video-creator-exit-expanded"
+                        class="dsm-vc-exit-expanded"
                         onTap={() => this.controller.togglePreviewExpanded()}
                       >
                         <i class="dcg-icon-remove" />
@@ -103,19 +103,19 @@ export default class MainPopup extends DCGView.Class<{
         </If>
         <If predicate={() => this.controller.frames.length > 0}>
           {() => (
-            <div class="video-creator-export-menu">
+            <div class="dsm-vc-export-menu">
               <div class="dcg-group-title">Export</div>
-              <div class="video-creator-select-export-type">
+              <div class="dsm-vc-select-export-type">
                 <SegmentedControl
                   names={fileTypeNames}
                   selectedIndex={() => this.getSelectedFileTypeIndex()}
                   setSelectedIndex={(i) => this.setSelectedFileTypeIndex(i)}
                 />
               </div>
-              <div class="video-creator-export">
+              <div class="dsm-vc-export">
                 <Button
                   color="green"
-                  class="video-creator-export-frames-button"
+                  class="dsm-vc-export-frames-button"
                   onTap={() => this.controller.exportFrames()}
                   disabled={() =>
                     this.controller.frames.length === 0 ||
@@ -126,7 +126,7 @@ export default class MainPopup extends DCGView.Class<{
                 >
                   Export as {() => this.controller.fileType}
                 </Button>
-                <div class="video-creator-fps-settings">
+                <div class="dsm-vc-fps-settings">
                   FPS:
                   <SmallMathQuillInput
                     ariaLabel="fps"
@@ -160,6 +160,6 @@ export default class MainPopup extends DCGView.Class<{
 
   eventShouldCloseExpanded(e: Event) {
     const el = jquery(e.target);
-    return !el.closest(".video-creator-preview-inner").length;
+    return !el.closest(".dsm-vc-preview-inner").length;
   }
 }

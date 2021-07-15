@@ -23,24 +23,24 @@ export default class Menu extends DCGView.Class<{
         <div class="dcg-group-title">DesModder plugins</div>
         {this.controller.getPluginsList().map((plugin) => (
           <div
-            class="dcg-options-menu-section desmodder-plugin-section"
+            class="dcg-options-menu-section dsm-plugin-section"
             key={plugin.id}
           >
-            <div class="dcg-options-menu-section-title desmodder-plugin-title-bar">
+            <div class="dcg-options-menu-section-title dsm-plugin-title-bar">
               <div
-                class="desmodder-plugin-header"
+                class="dsm-plugin-header"
                 onClick={() => this.controller.togglePluginExpanded(plugin.id)}
               >
                 <div
                   class={() => ({
-                    "desmodder-caret-container": true,
-                    "desmodder-caret-expanded":
+                    "dsm-caret-container": true,
+                    "dsm-caret-expanded":
                       plugin.id === this.controller.expandedPlugin,
                   })}
                 >
                   <i class="dcg-icon-chevron-down" />
                 </div>
-                <div class="desmodder-plugin-name"> {plugin.name} </div>
+                <div class="dsm-plugin-name"> {plugin.name} </div>
               </div>
               <Toggle
                 toggled={() => this.controller.isPluginEnabled(plugin.id)}
@@ -53,8 +53,8 @@ export default class Menu extends DCGView.Class<{
                 predicate={() => plugin.id === this.controller.expandedPlugin}
               >
                 {() => (
-                  <div class="desmodder-plugin-info-body">
-                    <div class="desmodder-plugin-description">
+                  <div class="dsm-plugin-info-body">
+                    <div class="dsm-plugin-description">
                       {plugin.description}
                     </div>
                     {this.getExpandedSettings()}
@@ -83,7 +83,7 @@ export default class Menu extends DCGView.Class<{
               {() =>
                 ({
                   boolean: () => (
-                    <div class="desmodder-settings-item desmodder-settings-boolean">
+                    <div class="dsm-settings-item dsm-settings-boolean">
                       <Checkbox
                         onChange={(checked) =>
                           this.controller.expandedPlugin &&
@@ -98,9 +98,7 @@ export default class Menu extends DCGView.Class<{
                         green
                       >
                         <Tooltip tooltip={item.description ?? ""} gravity="n">
-                          <div class="desmodder-settings-label">
-                            {item.name}
-                          </div>
+                          <div class="dsm-settings-label">{item.name}</div>
                         </Tooltip>
                       </Checkbox>
                     </div>

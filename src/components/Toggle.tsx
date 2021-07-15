@@ -12,7 +12,7 @@ export default class Toggle extends DCGView.Class<{
         class={() => ({
           "dcg-toggle-view": true,
           "dcg-toggled": this.props.toggled(),
-          "desmodder-disabled-toggle": this.props.disabled(),
+          "dsm-disabled-toggle": this.props.disabled(),
         })}
         onTap={() => this.props.onChange()}
       >

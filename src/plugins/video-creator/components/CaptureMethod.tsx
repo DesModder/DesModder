@@ -30,7 +30,7 @@ export default class SelectCapture extends DCGView.Class<{
     return (
       <div>
         <SegmentedControl
-          class="video-creator-select-capture-method"
+          class="dsm-vc-select-capture-method"
           names={() =>
             this.controller.hasSimulation()
               ? captureMethodNames
@@ -45,7 +45,7 @@ export default class SelectCapture extends DCGView.Class<{
             ({
               slider: () => (
                 <div>
-                  <div class="video-creator-slider-settings">
+                  <div class="dsm-vc-slider-settings">
                     <SmallMathQuillInput
                       ariaLabel="slider variable"
                       onUserChangedLatex={(v) =>
@@ -124,7 +124,7 @@ export default class SelectCapture extends DCGView.Class<{
                     }
                   >
                     {() => (
-                      <div class="video-creator-simulation-navigate-container">
+                      <div class="dsm-vc-simulation-navigate-container">
                         <Button
                           color="green"
                           onTap={() => this.controller.addToSimulationIndex(-1)}
@@ -155,7 +155,7 @@ export default class SelectCapture extends DCGView.Class<{
             }[this.getSelectedCaptureMethod()]())
           }
         </Switch>
-        <div class="video-creator-capture-size">
+        <div class="dsm-vc-capture-size">
           Size:
           <SmallMathQuillInput
             ariaLabel="capture width"
@@ -199,7 +199,7 @@ export default class SelectCapture extends DCGView.Class<{
           }
         >
           {() => (
-            <div class="video-creator-pixel-ratio">
+            <div class="dsm-vc-pixel-ratio">
               <Checkbox
                 checked={() => this.controller.samePixelRatio}
                 onChange={(checked: boolean) =>
@@ -212,7 +212,7 @@ export default class SelectCapture extends DCGView.Class<{
                   tooltip="Adjusts scaling of line width, point size, label size, etc."
                   gravity="n"
                 >
-                  <div class="video-creator-pixel-ratio-inner">
+                  <div class="dsm-vc-pixel-ratio-inner">
                     Target same pixel ratio
                   </div>
                 </Tooltip>
@@ -220,7 +220,7 @@ export default class SelectCapture extends DCGView.Class<{
             </div>
           )}
         </If>
-        <div class="video-creator-capture">
+        <div class="dsm-vc-capture">
           {IfElse(
             () =>
               !this.controller.isCapturing ||
@@ -229,7 +229,7 @@ export default class SelectCapture extends DCGView.Class<{
               true: () => (
                 <Button
                   color="green"
-                  class="video-creator-capture-frame-button"
+                  class="dsm-vc-capture-frame-button"
                   disabled={() =>
                     this.controller.isCapturing ||
                     this.controller.isExporting ||
@@ -243,7 +243,7 @@ export default class SelectCapture extends DCGView.Class<{
               false: () => (
                 <Button
                   color="blue"
-                  class="video-creator-cancel-capture-button"
+                  class="dsm-vc-cancel-capture-button"
                   onTap={() => cancelCapture()}
                 >
                   Cancel
@@ -255,7 +255,7 @@ export default class SelectCapture extends DCGView.Class<{
             predicate={() => this.getSelectedCaptureMethod() === "simulation"}
           >
             {() => (
-              <div class="video-creator-end-condition-settings">
+              <div class="dsm-vc-end-condition-settings">
                 While:
                 <SmallMathQuillInput
                   ariaLabel="simulation while"

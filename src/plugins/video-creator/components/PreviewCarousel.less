@@ -4,7 +4,7 @@
   transform: translate(-50%, -50%);
 }
 
-.video-creator-preview-expanded {
+.dsm-vc-preview-expanded {
   position: fixed;
   .center-xy();
   z-index: 999;
@@ -14,12 +14,12 @@
   font-size: 160%;
 }
 
-.video-creator-preview-inner {
+.dsm-vc-preview-inner {
   margin-top: 5px;
-  // display: flex used to vertically stretch + center .video-creator-preview-carousel
+  // display: flex used to vertically stretch + center .dsm-vc-preview-carousel
   display: flex;
 
-  .video-creator-preview-expanded & {
+  .dsm-vc-preview-expanded & {
     position: absolute;
     .center-xy();
     width: 80%;
@@ -30,13 +30,13 @@
   }
 }
 
-.video-creator-preview-carousel {
+.dsm-vc-preview-carousel {
   display: grid;
   gap: 10px;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto;
 
-  .video-creator-preview-expanded & {
+  .dsm-vc-preview-expanded & {
     display: flex;
     align-items: center;
     // @width-center: 10fr;
@@ -58,41 +58,41 @@
   }
 }
 
-.video-creator-preview-prev-frame {
+.dsm-vc-preview-prev-frame {
   grid-column: 1;
   grid-row: 2;
 
-  .video-creator-preview-expanded & {
+  .dsm-vc-preview-expanded & {
     order: 1;
     flex: 1;
   }
 }
 
-.video-creator-preview-next-frame {
+.dsm-vc-preview-next-frame {
   grid-column: 2;
   grid-row: 2;
 
-  .video-creator-preview-expanded & {
+  .dsm-vc-preview-expanded & {
     order: 3;
     flex: 1;
   }
 }
 
-.video-creator-preview-current-frame {
+.dsm-vc-preview-current-frame {
   grid-column: 1 / span 2;
   grid-row: 1;
 
-  .video-creator-preview-expanded & {
+  .dsm-vc-preview-expanded & {
     order: 2;
     flex: 3;
   }
 }
 
-.video-creator-preview-wrapped-frame {
+.dsm-vc-preview-wrapped-frame {
   filter: brightness(75%);
 }
 
-.video-creator-preview-index {
+.dsm-vc-preview-index {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -110,25 +110,25 @@
   font-size: 160%;
 }
 
-.video-creator-preview-expand {
+.dsm-vc-preview-expand {
   .oversetbutton();
   top: 0;
   left: 0;
 }
 
-.video-creator-preview-play-pause {
+.dsm-vc-preview-play-pause {
   .oversetbutton();
   bottom: 0;
   right: 0;
 }
 
-.video-creator-remove-frame {
+.dsm-vc-remove-frame {
   .oversetbutton();
   top: 0;
   right: 0;
 }
 
-.video-creator-exit-expanded {
+.dsm-vc-exit-expanded {
   position: absolute;
   color: rgb(0 0 0 / 20%);
   font-size: 160%;
