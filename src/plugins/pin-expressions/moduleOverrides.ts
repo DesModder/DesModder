@@ -4,6 +4,7 @@ import withDependencyMap, {
   DependencyNameMap,
 } from "preload/withDependencyMap";
 import withinExport from "preload/withinExport";
+import withinFunctionAssignment from "preload/withinFunctionAssignment";
 
 const moduleOverrides = {
   "expressions/list-view": withDependencyMap(
@@ -258,6 +259,22 @@ const moduleOverrides = {
         path.skip();
       }
     },
+  })),
+  "main/controller": withDependencyMap(() => ({
+    ...withinFunctionAssignment(
+      /* Allow deleting pinned expressions;
+      Since pinned expressions have isDragDrop=true, they have
+      model.dcgView = undefined, which prevents the delete animation 
+      from occurring */
+      "_deleteItemAndAnimateOut",
+      (func: t.FunctionExpression) => {
+        func.body.body.push(
+          template.statement.ast(
+            `s || this._finishDeletingItemAfterAnimation(e, t)`
+          )
+        );
+      }
+    ),
   })),
 };
 export default moduleOverrides;
