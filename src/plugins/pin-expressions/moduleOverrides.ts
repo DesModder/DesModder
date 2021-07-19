@@ -3,7 +3,6 @@ import template from "@babel/template";
 import withDependencyMap, {
   DependencyNameMap,
 } from "preload/withDependencyMap";
-import withinExport from "preload/withinExport";
 import withinFunctionAssignment from "preload/withinFunctionAssignment";
 
 const moduleOverrides = {
@@ -87,9 +86,8 @@ const moduleOverrides = {
     (dependencyNameMap: DependencyNameMap) =>
       /* Disable pinned expressions from appearing in the unpinned section */
       // might break tours/base_tour or expressions hidden inside folders
-      withinExport(
+      withinFunctionAssignment(
         "getDisplayState",
-        dependencyNameMap,
         () => template.expression.ast`function (e) {
             return e.isHiddenFromUI || e.filteredBySearch || window.DesModder?.controller?.isPinned(e.id)
               ? "none"
