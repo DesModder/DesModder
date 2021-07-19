@@ -206,5 +206,58 @@ const moduleOverrides = {
       },
     })
   ),
+  "graphing-calc/models/list": withDependencyMap(() => ({
+    FunctionDeclaration(path: babel.NodePath<t.FunctionDeclaration>) {
+      if (
+        t.isIdentifier(path.node.id) &&
+        ["y", "g"].includes(path.node.id.name)
+      ) {
+        /* Prevent arrow keys from moving between pinned and unpinned expressions */
+        /* y = findPrevSelectableItem and g = findNextSelectableItem, we replace r && !isItemSelectable(r)
+        with r && !isItemSelectable(r) && (same pinned status as starting item) */
+        path.node.body.body.unshift(
+          template.statement.ast(
+            `var isPinned = window.DesModder?.controller?.isPinned(_(e, t).id)`
+          )
+        );
+        path.traverse({
+          UnaryExpression(path1: babel.NodePath<t.UnaryExpression>) {
+            if (
+              path1.node.operator === "!" &&
+              t.isCallExpression(path1.node.argument) &&
+              t.isIdentifier(path1.node.argument.callee, { name: "h" })
+            ) {
+              path1.replaceWith(
+                template.expression.ast(
+                  `!h(r) || isPinned !== window.DesModder?.controller?.isPinned(r.id)`
+                )
+              );
+              path1.skip();
+            }
+          },
+        });
+      }
+    },
+  })),
+  "graphing-calc/actions/keyboard": withDependencyMap(() => ({
+    CallExpression(path: babel.NodePath<t.CallExpression>) {
+      if (
+        t.isMemberExpression(path.node.callee) &&
+        t.isIdentifier(path.node.callee.property, { name: "selectNextItem" })
+      ) {
+        /* Prevent the down arrow from creating a new last item when pressing down from the bottom-most pinned expression */
+        /* Change `!List.selectNextItem(e.getListModel())`
+        to !(window.DesModder?.controller?.isPinned(e.getSelectedItem().id) + List.selectNextItem(e.getListModel())) */
+        path.replaceWith(
+          template.expression(
+            `window.DesModder?.controller?.isPinned(e.getSelectedItem().id) + %%callSelectNextItem%%`
+          )({
+            callSelectNextItem: path.node,
+          })
+        );
+        path.skip();
+      }
+    },
+  })),
 };
 export default moduleOverrides;
