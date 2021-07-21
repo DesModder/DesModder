@@ -1,4 +1,4 @@
-import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg/src/index.js";
+import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 import Controller from "../Controller";
 
 type FFmpeg = ReturnType<typeof createFFmpeg>;
@@ -45,7 +45,10 @@ export async function exportFrames(controller: Controller) {
 
   // reference https://gist.github.com/SlimRunner/3b0a7571f04d3a03bff6dbd9de6ad729#file-desmovie-user-js-L278
   if (ffmpeg === null) {
-    ffmpeg = createFFmpeg({ log: false });
+    ffmpeg = createFFmpeg({
+      log: false,
+      corePath: "https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js",
+    });
     ffmpeg.setLogger(({ type, message }) => {
       if (type === "fferr") {
         const match = message.match(/frame=\s*(?<frame>\d+)/);
