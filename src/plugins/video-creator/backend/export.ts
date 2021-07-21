@@ -14,10 +14,7 @@ async function exportAll(ffmpeg: FFmpeg, fileType: OutFileType, fps: number) {
     webm: ["-vcodec", "libvpx-vp9", "-quality", "realtime", "-speed", "8"],
     // generate fresh palette on every frame (higher quality)
     // https://superuser.com/a/1239082
-    gif: [
-      "-lavfi",
-      "palettegen=stats_mode=single[pal],[0:v][pal]paletteuse=new=1",
-    ],
+    gif: ["-lavfi", "palettegen=stats_mode=diff[pal],[0:v][pal]paletteuse"],
     apng: ["-plays", "0", "-f", "apng"],
   }[fileType];
 
@@ -28,9 +25,6 @@ async function exportAll(ffmpeg: FFmpeg, fileType: OutFileType, fps: number) {
     "glob",
     "-i",
     "*.png",
-    // average video bitrate. May have room for improvements
-    "-b:v",
-    "2M",
     ...moreFlags,
     outFilename
   );

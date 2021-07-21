@@ -25,7 +25,7 @@ export default class Controller {
   frames: string[] = [];
   isCapturing = false;
   fpsLatex = "30";
-  fileType: OutFileType = "gif";
+  fileType: OutFileType = "mp4";
 
   focusedMQ: FocusedMQ = "none";
 
