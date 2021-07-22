@@ -5,6 +5,29 @@ import withDependencyMap, {
 } from "preload/withDependencyMap";
 import withinFunctionAssignment from "preload/withinFunctionAssignment";
 
+function findIdentifierThis(path: babel.NodePath) {
+  // Didn't figure out path.scope, so ...
+  // Hopes that something like `var e = this` is the start of a function parent of `path`
+  // Returns the identifier `e`
+  let func = path.getFunctionParent();
+  while (func !== null) {
+    let body = func.node.body;
+    if (t.isBlockStatement(body)) {
+      for (let statement of body.body) {
+        if (t.isVariableDeclaration(statement)) {
+          for (let decl of statement.declarations) {
+            if (t.isThisExpression(decl.init) && t.isIdentifier(decl.id)) {
+              return decl.id;
+            }
+          }
+        }
+      }
+    }
+    func = func.getFunctionParent();
+  }
+  return null;
+}
+
 const moduleOverrides = {
   "expressions/list-view": withDependencyMap(
     (dependencyNameMap: DependencyNameMap) => ({
@@ -14,18 +37,6 @@ const moduleOverrides = {
           const createElementCall = path.findParent((path) =>
             path.isCallExpression()
           ) as babel.NodePath<t.CallExpression>;
-          let identifierThis = null;
-          createElementCall.traverse({
-            MemberExpression(path) {
-              if (
-                t.isIdentifier(path.node.property) &&
-                path.node.property.name == "makeViewForModel"
-              ) {
-                identifierThis = path.node.object;
-                path.stop();
-              }
-            },
-          });
           /*
           We want to insert the extra child at the end to make the first .dcg-exppanel the one selected by Desmos's JS.
           The CSS will move it to the beginning
@@ -75,7 +86,7 @@ const moduleOverrides = {
               `
             )({
               DCGView: dependencyNameMap.dcgview,
-              this: identifierThis,
+              this: findIdentifierThis(path),
             })
           );
         }
@@ -108,9 +119,10 @@ const moduleOverrides = {
       ) {
         path.replaceWith(
           template.expression(
-            `t.target.classList?.contains("dsm-stay-edit-list-mode") || %%callExit%%`
+            `%%t%%.target.classList?.contains("dsm-stay-edit-list-mode") || %%callExit%%`
           )({
             callExit: path.node,
+            t: path.getFunctionParent()?.node.params[0],
           })
         );
         // don't want to recurse on the inner copy of path.node
@@ -143,10 +155,10 @@ const moduleOverrides = {
               %%DCGView%%.createElement(
                 %%DCGView%%.Components.If,
                 {
-                  predicate: () => window.DesModder.controller.pluginsEnabled["pin-expressions"] && e.model().type !== "folder"
+                  predicate: () => window.DesModder.controller.pluginsEnabled["pin-expressions"] && %%this%%.model().type !== "folder"
                 },
                 () => %%DCGView%%.Components.IfElse(
-                  () => window.DesModder?.controller?.isPinned(e.model().id),
+                  () => window.DesModder?.controller?.isPinned(%%this%%.model().id),
                   {
                     false: () => %%DCGView%%.createElement(
                       %%Tooltip%%.Tooltip,
@@ -163,7 +175,7 @@ const moduleOverrides = {
                           handleEvent: %%DCGView%%.const("true"),
                           role: %%DCGView%%.const("button"),
                           tabindex: %%DCGView%%.const("0"),
-                          onTap: () => window.DesModder.controller.pinExpression(e.model().id)
+                          onTap: () => window.DesModder.controller.pinExpression(%%this%%.model().id)
                         },
                         %%DCGView%%.createElement("i", {
                           class: %%DCGView%%.const("dsm-icon-bookmark-outline-add dsm-stay-edit-list-mode"),
@@ -185,7 +197,7 @@ const moduleOverrides = {
                           handleEvent: %%DCGView%%.const("true"),
                           role: %%DCGView%%.const("button"),
                           tabindex: %%DCGView%%.const("0"),
-                          onTap: () => window.DesModder.controller.unpinExpression(e.model().id)
+                          onTap: () => window.DesModder.controller.unpinExpression(%%this%%.model().id)
                         },
                         %%DCGView%%.createElement("i", {
                           class: %%DCGView%%.const("dsm-icon-bookmark dsm-stay-edit-list-mode"),
@@ -199,6 +211,7 @@ const moduleOverrides = {
             )({
               DCGView: dependencyNameMap.dcgview,
               Tooltip: dependencyNameMap["../shared-components/tooltip"],
+              this: findIdentifierThis(path),
             })
           );
         }
@@ -207,6 +220,7 @@ const moduleOverrides = {
   ),
   "graphing-calc/models/list": withDependencyMap(() => ({
     FunctionDeclaration(path: babel.NodePath<t.FunctionDeclaration>) {
+      /* Warning: not resiliant to variable name change (`y`, `g`, `v`, `r`, `e`, `t`) */
       if (
         t.isIdentifier(path.node.id) &&
         ["y", "g"].includes(path.node.id.name)
@@ -224,14 +238,14 @@ const moduleOverrides = {
             if (
               path1.node.operator === "!" &&
               t.isCallExpression(path1.node.argument) &&
-              t.isIdentifier(path1.node.argument.callee, { name: "h" })
+              t.isIdentifier(path1.node.argument.callee, { name: "v" })
             ) {
               path1.replaceWith(
                 template.expression.ast(
-                  `!h(r) || isPinned !== window.DesModder?.controller?.isPinned(r.id)`
+                  `!v(r) || isPinned !== window.DesModder?.controller?.isPinned(r.id)`
                 )
               );
-              path1.skip();
+              path1.stop();
             }
           },
         });
@@ -249,9 +263,10 @@ const moduleOverrides = {
         to !(window.DesModder?.controller?.isPinned(e.getSelectedItem().id) + List.selectNextItem(e.getListModel())) */
         path.replaceWith(
           template.expression(
-            `window.DesModder?.controller?.isPinned(e.getSelectedItem().id) + %%callSelectNextItem%%`
+            `window.DesModder?.controller?.isPinned(%%e%%.getSelectedItem().id) + %%callSelectNextItem%%`
           )({
             callSelectNextItem: path.node,
+            e: path.getFunctionParent()?.node.params[0],
           })
         );
         path.skip();
@@ -259,6 +274,7 @@ const moduleOverrides = {
     },
   })),
   "main/controller": withDependencyMap(() => ({
+    /* Warning: not resiliant to variable name change (`s`, `e`, `t`) */
     ...withinFunctionAssignment(
       /* Allow deleting pinned expressions;
       Since pinned expressions have isDragDrop=true, they have
