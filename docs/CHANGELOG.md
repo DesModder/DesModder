@@ -4,6 +4,26 @@ The following guide describes changes in each version, including how to migrate 
 
 Regarding version numbers: The `1.0` release will be when the plugin API is much more stable than it is now. While in `0.*` releases, I increment the minor number if a new plugin is added and the patch number if a release consists only of bug fixes and enhancements.
 
+## 0.4.0
+
+New features:
+
+- Pin expressions (only visible for DesModder users)
+- Click on the DesModder extension icon to open a new graph
+- Shift-Enter for newlines in notes and titles of images/folders
+
+Improvements and Bug Fixes:
+
+- Pillbox buttons no longer cover up the expressions when graphpaper is disabled
+- (Duplicate Hotkey) You can duplicate folders, images, and more using Ctrl+Q while selecting them
+- (Wolfram To Desmos) Improvements in handling pasted tables and more
+- (Video Creator) Prevent screenshot from capturing before simulation tick
+- (Video Creator) Prevent starting a new export while exporting
+- (Video Creator) Avoid long simulations extending off the right of the screen
+- (Video Creator) Default export type to mp4 because GIF is bad
+- (Video Creator) Improve GIF palette generation
+- Many under-the-hood improvements
+
 ## 0.3.2
 
 Improvements and Bug Fixes:
