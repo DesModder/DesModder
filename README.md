@@ -4,9 +4,11 @@ Supercharge your Desmos graph creation and sharing experience with many convenie
 
 - Export videos and GIFs of your graphs based on simulations or sliders
 - Find and replace expressions
+- Pin expressions to the top
 - Enable features including simulations, clickable objects, and more
 - Paste ASCIIMath (such as the results of Wolfram Alpha queries) into Desmos
 - Press Ctrl+Q to duplicate an expression
+- Use Shift+Enter to write newlines in notes
 - Right-click on expressions to style them
 - More to come!
 
