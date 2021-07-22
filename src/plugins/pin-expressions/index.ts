@@ -13,5 +13,5 @@ export default {
   onDisable: () => {
     Calc.controller.updateViews();
   },
-  enabledByDefault: false,
+  enabledByDefault: true,
 } as const;

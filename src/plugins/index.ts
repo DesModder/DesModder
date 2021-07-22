@@ -5,6 +5,7 @@ import videoCreator from "plugins/video-creator";
 import builtinSettings from "plugins/builtin-settings";
 import rightClickTray from "plugins/right-click-tray";
 import pinExpressions from "plugins/pin-expressions";
+import shiftEnterNewline from "plugins/shift-enter-newline";
 
 interface ConfigItemGeneric {
   key: string;
@@ -30,7 +31,8 @@ export interface Plugin<Settings extends GenericBooleanSettings = {}> {
   description: string;
   onEnable(config?: unknown): void;
   onDisable?(): void;
-  enabledByDefault: boolean;
+  enabledByDefault?: boolean;
+  alwaysEnabled?: boolean;
   config?: readonly ConfigItem[];
   onConfigChange?(changes: Settings): void;
   manageConfigChange?(current: Settings, next: Settings): Settings;
@@ -43,12 +45,13 @@ export interface Plugin<Settings extends GenericBooleanSettings = {}> {
 
 const _plugins = {
   [builtinSettings.id]: builtinSettings,
-  [videoCreator.id]: videoCreator,
-  [duplicateHotkey.id]: duplicateHotkey,
-  [findReplace.id]: findReplace,
-  [rightClickTray.id]: rightClickTray,
   [wolfram2desmos.id]: wolfram2desmos,
   [pinExpressions.id]: pinExpressions,
+  [videoCreator.id]: videoCreator,
+  [findReplace.id]: findReplace,
+  [rightClickTray.id]: rightClickTray,
+  [duplicateHotkey.id]: duplicateHotkey,
+  [shiftEnterNewline.id]: shiftEnterNewline,
 } as const;
 
 export const pluginList = Object.values(_plugins);

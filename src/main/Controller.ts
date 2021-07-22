@@ -2,7 +2,7 @@ import { plugins, pluginList, PluginID } from "plugins";
 import View from "./View";
 import { MenuFunc } from "components/Menu";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
-import { arraysEqual, OptionalProperties } from "utils/utils";
+import { OptionalProperties } from "utils/utils";
 import { Calc } from "globals/window";
 import GraphMetadata from "./metadata/interface";
 import { getMetadata, setMetadata } from "./metadata/manage";
@@ -181,7 +181,7 @@ export default class Controller {
 
   disablePlugin(i: PluginID) {
     const plugin = plugins[i];
-    if (plugin !== undefined) {
+    if (this.isPluginToggleable(i)) {
       if (this.pluginsEnabled[i]) {
         if (plugin.onDisable) {
           plugin.onDisable();
@@ -208,7 +208,7 @@ export default class Controller {
   }
 
   enablePlugin(id: PluginID) {
-    if (!this.pluginsEnabled[id]) {
+    if (this.isPluginToggleable(id) && !this.pluginsEnabled[id]) {
       this.setPluginEnabled(id, true);
       this._enablePlugin(id, false);
     }
@@ -224,6 +224,10 @@ export default class Controller {
 
   isPluginEnabled(i: PluginID) {
     return this.pluginsEnabled[i] ?? false;
+  }
+
+  isPluginToggleable(i: PluginID) {
+    return !plugins[i].alwaysEnabled;
   }
 
   togglePluginExpanded(i: PluginID) {
