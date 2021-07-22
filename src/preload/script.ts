@@ -15,13 +15,17 @@ function newDefine(
   definition: Function
 ) {
   if (moduleName in pluginModuleOverrides) {
-    // override should either be `{dependencies, definition}` or just `definition`
-    console.debug("transforming", moduleName);
-    const override = pluginModuleOverrides[moduleName](
-      definition,
-      dependencies
-    );
-    definition = override;
+    try {
+      // override should either be `{dependencies, definition}` or just `definition`
+      console.debug("transforming", moduleName);
+      const override = pluginModuleOverrides[moduleName](
+        definition,
+        dependencies
+      );
+      definition = override;
+    } catch {
+      alertFailure();
+    }
   }
   return oldDefine(moduleName, dependencies, definition);
 }
@@ -53,6 +57,44 @@ window.ALMOND_OVERRIDES = new Proxy(
   }
 );
 
+function alertFailure() {
+  /* Assuming only the DOM API is available */
+  const outerFailure = document.createElement("div");
+  outerFailure.style.cssText = `
+    position: absolute;
+    inset: 0;
+    z-index: 9999;
+    background: white;
+    padding: 2em;
+  `;
+  outerFailure.innerHTML = `
+    <h2> Oh no! Desmos+DesModder failed to load properly. </h2>
+    <p> Troubleshooting tips: </p>
+    <ol>
+      <li>
+        Reload the page:
+        <a onclick="window.location.reload();" href="">Reload</a>
+      </li>
+      <li>
+        Open a new, blank graph:
+        <a href="https://www.desmos.com/calculator" target="_blank">Open</a>
+      </li>
+      <li>
+        Disable DesModder in chrome://extensions.
+      </li>
+      <li>
+        If #3 worked, DO NOT report this to Desmos. This is an issue with DesModder.
+        Please report this to the DesModder devs on
+        <a href="https://github.com/DesModder/DesModder/issues/new">GitHub</a>
+        or
+        <a href="https://discord.gg/SdFsURWKvF">Discord</a>
+        so we can fix it prompty.
+      </li>
+    </ol>
+  `;
+  document.body.appendChild(outerFailure);
+}
+
 function runCalculator() {
   /* The following script should have failed earlier because we blocked calculator_desktop.js.
   We copy it verbatim here to actually load the calculator. */
@@ -61,7 +103,13 @@ function runCalculator() {
     ["toplevel/calculator_desktop", "testbridge", "jquery"],
     function (calcPromise: any, TestBridge: any, $: any) {
       $(".dcg-loading-div-container").hide();
+      if (calcPromise === undefined) {
+        alertFailure();
+      }
       calcPromise.then(function (calc: any) {
+        if (calc === undefined) {
+          alertFailure();
+        }
         window.Calc = calc;
         TestBridge.ready();
         // following lines added
@@ -97,6 +145,9 @@ pollForValue(
     // remove from DOM
     script.remove();
     runCalculator();
+  };
+  script.onerror = () => {
+    alertFailure();
   };
   document.body.appendChild(script);
 });
