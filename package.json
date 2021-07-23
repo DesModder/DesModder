@@ -12,7 +12,7 @@
   "scripts": {
     "prettier": "prettier --write .",
     "build-metadata-schema": "ts-to-json --path src/main/metadata/interface.ts --type Metadata > src/main/metadata/metadata_schema.json",
-    "build": "webpack --mode production --config config/webpack.config.base.js",
+    "build": "npm run build-metadata-schema; webpack --mode production --config config/webpack.config.base.js",
     "dev": "webpack --mode development --config config/webpack.config.dev.js"
   },
   "repository": {
