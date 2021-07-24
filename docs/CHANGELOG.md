@@ -15,6 +15,7 @@ New features:
 Improvements and Bug Fixes:
 
 - Pillbox buttons no longer cover up the expressions when graphpaper is disabled
+- (Builtin Settings) Extension no longer overrides query parameters such as [?nographpaper](https://www.desmos.com/calculator?nographpaper)
 - (Duplicate Hotkey) You can duplicate folders, images, and more using Ctrl+Q while selecting them
 - (Wolfram To Desmos) Improvements in handling pasted tables and more
 - (Video Creator) Prevent screenshot from capturing before simulation tick
