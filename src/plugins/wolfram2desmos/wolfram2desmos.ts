@@ -23,6 +23,14 @@ export function isIllegalASCIIMath(input: string) {
     //console.warn("Newline detected");
     return false;
   }
+  if (input.search(/\{|\}/) != -1) {
+    //console.warn("Curly brackets detected");
+    return false;
+  }
+  if (input.search(/\/\//) != -1) {
+    //console.warn("URL detected");
+    return false;
+  }
 
   // determines if the brackets are correct
   if (count(/\(/g) > count(/\)/g)) {
