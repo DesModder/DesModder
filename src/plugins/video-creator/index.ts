@@ -6,6 +6,7 @@ export let controller: Controller;
 function onEnable() {
   controller = new Controller();
   initView(); // async
+  return controller;
 }
 
 function onDisable() {

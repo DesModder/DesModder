@@ -30,6 +30,7 @@ function onEnable() {
     }
     // may want to listen to update-expression-search-str
   });
+  return controller;
 }
 
 function onDisable() {

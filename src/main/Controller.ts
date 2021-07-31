@@ -22,6 +22,9 @@ export default class Controller {
   pluginSettings: {
     [plugin in PluginID]: { [key: string]: boolean };
   };
+  exposedPlugins: {
+    [plugin in PluginID]?: any;
+  } = {};
   graphMetadata: GraphMetadata = {};
   metadataChangeSuppressed: boolean = false;
 
@@ -185,6 +188,7 @@ export default class Controller {
       if (this.pluginsEnabled[i]) {
         if (plugin.onDisable) {
           plugin.onDisable();
+          delete this.pluginsEnabled[i];
         } else {
           this.warnReload();
         }
@@ -200,7 +204,10 @@ export default class Controller {
       if (plugin.enableRequiresReload && !isReload) {
         this.warnReload();
       } else {
-        plugin.onEnable(this.pluginSettings[id]);
+        const res = plugin.onEnable(this.pluginSettings[id]);
+        if (res !== undefined) {
+          this.exposedPlugins[id] = res;
+        }
       }
       this.setPluginEnabled(id, true);
       this.updateMenuView();

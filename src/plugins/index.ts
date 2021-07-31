@@ -29,7 +29,7 @@ export interface Plugin<Settings extends GenericBooleanSettings = {}> {
   id: string;
   name: string;
   description: string;
-  onEnable(config?: unknown): void;
+  onEnable(config?: unknown): any;
   onDisable?(): void;
   enabledByDefault?: boolean;
   alwaysEnabled?: boolean;

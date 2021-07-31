@@ -58,6 +58,7 @@ function pasteHandler(e: ClipboardEvent) {
 export function onEnable(config: Config) {
   controller.applyConfigFlags(config);
   controller.enable();
+  return controller;
 }
 
 export function onDisable() {

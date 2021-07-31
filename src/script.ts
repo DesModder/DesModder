@@ -9,6 +9,7 @@ const view = new View();
 window.DesModder = {
   view,
   controller,
+  exposedPlugins: controller.exposedPlugins,
 };
 
 controller.init(view);
