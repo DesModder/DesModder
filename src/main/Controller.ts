@@ -279,6 +279,7 @@ export default class Controller {
   checkForMetadataChange() {
     if (this.metadataChangeSuppressed) return;
     this.graphMetadata = getMetadata();
+    applyPinnedStyle(this.graphMetadata);
   }
 
   updateMetadata(obj: OptionalProperties<GraphMetadata>) {
@@ -286,6 +287,7 @@ export default class Controller {
       ...this.graphMetadata,
       ...obj,
     });
+    applyPinnedStyle(obj);
     Calc.controller.updateViews();
   }
 
@@ -312,6 +314,16 @@ export default class Controller {
       this.pluginsEnabled["pin-expressions"] &&
       !Calc.controller.getExpressionSearchOpen() &&
       (this.graphMetadata.pinnedExpressions ?? []).includes(id)
+    );
+  }
+}
+
+function applyPinnedStyle(metadata: GraphMetadata) {
+  if (metadata.pinnedExpressions !== undefined) {
+    const el = document.querySelector(".dcg-exppanel-container");
+    el?.classList.toggle(
+      "dsm-has-pinned-expressions",
+      metadata.pinnedExpressions.length > 0
     );
   }
 }
