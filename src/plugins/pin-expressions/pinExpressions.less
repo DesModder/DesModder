@@ -2,11 +2,19 @@
   position: sticky;
   top: 0;
   z-index: 99;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   // background-color: inserted via javascript
+
+  .dsm-has-pinned-expressions & {
+    box-shadow: -2px 2px 4px rgba(0 0 0 / 15%);
+    border-bottom: 1px solid rgba(0 0 0 / 20%);
+  }
 }
 
 body .dcg-calculator-api-container {
+  .dsm-has-pinned-expressions .dcg-expression-top-bar.dcg-expressions-scrolled {
+    box-shadow: none;
+  }
+
   .dcg-exppanel-outer .dcg-exppanel-container {
     // Using grid & grid-row to place .dcg-exppanel.dsm-pinned-expressions after the default .dcg-exppanel
     // in the DOM (so the default .dcg-exppanel gets selected in calculations)
