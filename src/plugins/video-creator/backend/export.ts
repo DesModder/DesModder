@@ -32,12 +32,7 @@ async function exportAll(ffmpeg: FFmpeg, fileType: OutFileType, fps: number) {
   return outFilename;
 }
 
-export async function exportFrames(controller: Controller) {
-  controller.isExporting = true;
-  controller.setExportProgress(-1);
-  controller.updateView();
-
-  // reference https://gist.github.com/SlimRunner/3b0a7571f04d3a03bff6dbd9de6ad729#file-desmovie-user-js-L278
+export async function initFFmpeg(controller: Controller) {
   if (ffmpeg === null) {
     ffmpeg = createFFmpeg({
       log: false,
@@ -59,6 +54,15 @@ export async function exportFrames(controller: Controller) {
     });
     await ffmpeg.load();
   }
+  return ffmpeg;
+}
+
+export async function exportFrames(controller: Controller) {
+  controller.isExporting = true;
+  controller.setExportProgress(-1);
+  controller.updateView();
+
+  const ffmpeg = await initFFmpeg(controller);
 
   const filenames: string[] = [];
 

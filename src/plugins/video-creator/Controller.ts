@@ -7,7 +7,7 @@ import {
   EvaluateSingleExpression,
 } from "desmodder";
 import { isValidNumber, isValidLength, escapeRegex } from "./backend/utils";
-import { OutFileType, exportFrames } from "./backend/export";
+import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
 import { CaptureMethod, SliderSettings, capture } from "./backend/capture";
 
 type FocusedMQ =
@@ -22,6 +22,7 @@ type FocusedMQ =
   | "export-fps";
 
 export default class Controller {
+  ffmpegLoaded = false;
   frames: string[] = [];
   isCapturing = false;
   fpsLatex = "30";
@@ -70,6 +71,13 @@ export default class Controller {
 
   updateView() {
     updateView();
+  }
+
+  tryInitFFmpeg() {
+    initFFmpeg(this).then(() => {
+      this.ffmpegLoaded = true;
+      this.updateView();
+    });
   }
 
   deleteAll() {

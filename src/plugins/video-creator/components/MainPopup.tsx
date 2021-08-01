@@ -28,9 +28,25 @@ export default class MainPopup extends DCGView.Class<{
 
   init() {
     this.controller = this.props.controller();
+    this.controller.tryInitFFmpeg();
   }
 
   template() {
+    return IfElse(() => this.controller.ffmpegLoaded, {
+      true: () => this.templateFFmpegLoaded(),
+      false: () => (
+        <div class="dcg-popover-interior">
+          <p>FFmpeg loading...</p>
+          <p class="dsm-delayed-reveal">
+            If this doesn't work in the next few seconds, try reloading the page
+            or reporting this bug to DesModder devs.
+          </p>
+        </div>
+      ),
+    });
+  }
+
+  templateFFmpegLoaded() {
     return IfElse(() => this.controller.isExporting, {
       false: () => this.templateNormal(),
       true: () => (
