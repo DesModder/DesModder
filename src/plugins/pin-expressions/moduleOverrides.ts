@@ -118,8 +118,9 @@ const moduleOverrides = {
         })
       ) {
         path.replaceWith(
+          // using .closest handles the case where the user clicks directly on the (child/::before) icon instead of the padding
           template.expression(
-            `%%t%%.target.classList?.contains("dsm-stay-edit-list-mode") || %%callExit%%`
+            `%%t%%.target.closest(".dsm-stay-edit-list-mode") || %%callExit%%`
           )({
             callExit: path.node,
             t: path.getFunctionParent()?.node.params[0],
@@ -215,6 +216,47 @@ const moduleOverrides = {
             })
           );
         }
+
+        /* Following belongs in duplicate-hotkey, but can't duplicate module overrides in the current system */
+        /* Prevent exiting edit-list-mode, to allow duplicating non-expressions */
+        if (
+          path.node.value.includes("dcg-duplicate-btn") ||
+          // Also prevent exiting ELM for the delete button, fixing Desmos request # 81806 early
+          path.node.value.includes("dcg-delete-btn")
+        ) {
+          path.node.value = path.node.value + " dsm-stay-edit-list-mode";
+        }
+      },
+      /* Following belongs in duplicate-hotkey, but can't duplicate module overrides in the current system */
+      enter(path: babel.NodePath) {
+        withinFunctionAssignment(
+          "canDuplicate",
+          (func: t.FunctionExpression) => {
+            /* Include the duplicate button even for non-expressions */
+            func.body.body = [
+              template.statement.ast(`return !this.isSlider()`),
+            ];
+          }
+        ).enter(path);
+        withinFunctionAssignment(
+          "onDuplicateWithoutFocus",
+          (func: t.FunctionExpression) => {
+            /* Call DesModder's duplicate if available */
+            func.body.body = [
+              template.statement.ast(
+                `const duplicate = window.DesModder.exposedPlugins?.["duplicate-expression-hotkey"]?.duplicateExpression`
+              ),
+              template.statement.ast(
+                `duplicate
+                  ? duplicate(this.props.id())
+                  : this.controller.dispatch({
+                      type: "duplicate-expression",
+                      id: this.props.id(),
+                    })`
+              ),
+            ];
+          }
+        ).enter(path);
       },
     })
   ),

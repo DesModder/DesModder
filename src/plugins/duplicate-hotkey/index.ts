@@ -13,6 +13,7 @@ function onEnable() {
       }
     }
   );
+  return { duplicateExpression };
 }
 
 function onDisable() {
