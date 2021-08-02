@@ -8,7 +8,8 @@ export default function withinFunctionAssignment(
   and calls `atFunctionDefinition` on the RHS function. If `atFunctionDefinition`
   returns a node, then it is assigned to replace the RHS function*/
   return {
-    AssignmentExpression(path: babel.NodePath<t.AssignmentExpression>) {
+    enter(path: babel.NodePath) {
+      if (path.node.type !== "AssignmentExpression") return;
       const lhs = path.node.left;
       if (
         t.isMemberExpression(lhs) &&
