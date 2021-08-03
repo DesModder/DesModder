@@ -28,15 +28,51 @@ function findIdentifierThis(path: babel.NodePath) {
   return null;
 }
 
+function containingCreateElementCall(path: babel.NodePath) {
+  return path.findParent(
+    (path) =>
+      path.isCallExpression() &&
+      t.isMemberExpression(path.node.callee) &&
+      t.isIdentifier(path.node.callee.property, { name: "createElement" })
+  ) as babel.NodePath<t.CallExpression>;
+}
+
+const replaceTopLevelDelete = withDependencyMap((dependencyNameMap) => ({
+  StringLiteral(path: babel.NodePath<t.StringLiteral>) {
+    const classes = path.node.value.split(" ");
+    if (classes.includes("dcg-top-level-delete")) {
+      const createElementCall = containingCreateElementCall(path);
+      createElementCall.replaceWith(
+        template.expression(`
+          %%DCGView%%.Components.IfElse(
+            () => window.DesModder?.controller?.isPinned(%%this%%.model.id),
+            {
+              false: () => %%cec%%,
+              true: () => %%DCGView%%.createElement("i", {
+                class: %%DCGView%%.const("dsm-icon-bookmark dcg-top-level-delete"),
+                handleEvent: %%DCGView%%.const("true"),
+                onTap: () => window.DesModder.controller.unpinExpression(%%this%%.model.id),
+              })
+            }
+          )
+        `)({
+          cec: createElementCall.node,
+          DCGView: dependencyNameMap.dcgview,
+          this: findIdentifierThis(path),
+        })
+      );
+      createElementCall.skip();
+    }
+  },
+}));
+
 const moduleOverrides = {
   "expressions/list-view": withDependencyMap(
     (dependencyNameMap: DependencyNameMap) => ({
       StringLiteral(path: babel.NodePath<t.StringLiteral>) {
         if (path.node.value == "dcg-exppanel-container") {
           /* Insert div.dcg-exppanel.dsm-pinned-expressions to show the pinned expressions */
-          const createElementCall = path.findParent((path) =>
-            path.isCallExpression()
-          ) as babel.NodePath<t.CallExpression>;
+          const createElementCall = containingCreateElementCall(path);
           /*
           We want to insert the extra child at the end to make the first .dcg-exppanel the one selected by Desmos's JS.
           The CSS will move it to the beginning
@@ -136,9 +172,7 @@ const moduleOverrides = {
       StringLiteral(path: babel.NodePath<t.StringLiteral>) {
         if (path.node.value == "dcg-expression-edit-actions") {
           /* Add pin/unpin buttons */
-          const createElementCall = path.findParent((path) =>
-            path.isCallExpression()
-          ) as babel.NodePath<t.CallExpression>;
+          const createElementCall = containingCreateElementCall(path);
           /*
           We want to insert after "duplicate expression" and before "delete expression"
           <span class="dcg-expression-edit-actions">
@@ -219,10 +253,11 @@ const moduleOverrides = {
 
         /* Following belongs in duplicate-hotkey, but can't duplicate module overrides in the current system */
         /* Prevent exiting edit-list-mode, to allow duplicating non-expressions */
+        const classes = path.node.value.split(" ");
         if (
-          path.node.value.includes("dcg-duplicate-btn") ||
+          classes.includes("dcg-duplicate-btn") ||
           // Also prevent exiting ELM for the delete button, fixing Desmos request # 81806 early
-          path.node.value.includes("dcg-delete-btn")
+          classes.includes("dcg-delete-btn")
         ) {
           path.node.value = path.node.value + " dsm-stay-edit-list-mode";
         }
@@ -332,5 +367,12 @@ const moduleOverrides = {
       }
     ),
   })),
+  /* Change the top level delete button to the unpin button for pinned expressions */
+  // Yes, some of these are underscores, and some are hyphens. What are you going to do about it?
+  "expressions/expression_view": replaceTopLevelDelete,
+  "expressions/image-view": replaceTopLevelDelete,
+  "expressions/simulation-view": replaceTopLevelDelete,
+  "expressions/table-view": replaceTopLevelDelete,
+  "expressions/text_view": replaceTopLevelDelete,
 };
 export default moduleOverrides;
