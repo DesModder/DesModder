@@ -283,10 +283,9 @@ export function wolfram2desmos(input: string) {
     }
     if (
       selection.search(functionSymbols) == 0 &&
-      input[selection.search(functionSymbols) + 1] == "("
+      selection[1] == "("
     ) {
       i += 1;
-      bracket -= 1;
     } else if (selection.search(/([0-9]*[.])?[0-9]+/) == 0) {
       i += selection.match(/([0-9]*[.])?[0-9]+/)?.[0]?.length ?? 0;
       if (input[i + 1] == "(") {
