@@ -44,11 +44,11 @@ function applyCaptureFrame() {
       canvas?.parentNode?.appendChild(frame);
     }
 
-    const mathBounds = Calc.graphpaperBounds.mathCoordinates;
+    const pixelBounds = Calc.graphpaperBounds.pixelCoordinates;
     const ratio =
       controller.getCaptureHeightNumber() /
       controller.getCaptureWidthNumber() /
-      (mathBounds.height / mathBounds.width);
+      (pixelBounds.height / pixelBounds.width);
     let width = 1;
     let height = 1;
     if (ratio > 1) {

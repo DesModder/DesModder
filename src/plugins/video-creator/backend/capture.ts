@@ -42,8 +42,9 @@ export async function captureFrame(
     tryCancel();
     // poll for mid-screenshot cancellation (only affects UI)
     const interval = window.setInterval(tryCancel, 50);
-    const mathBounds = Calc.graphpaperBounds.mathCoordinates;
-    const ratio = height / width / (mathBounds.height / mathBounds.width);
+    const pixelBounds = Calc.graphpaperBounds.pixelCoordinates;
+    const ratio = height / width / (pixelBounds.height / pixelBounds.width);
+    const mathBounds = Calc.graphpaperBounds.pixelCoordinates;
     // make the captured region entirely visible
     const clampedMathBounds = scaleBoundsAboutCenter(
       mathBounds,
