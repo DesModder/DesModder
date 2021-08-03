@@ -23,8 +23,9 @@ function newDefine(
         dependencies
       );
       definition = override;
-    } catch {
+    } catch (e) {
       alertFailure();
+      throw e;
     }
   }
   return oldDefine(moduleName, dependencies, definition);
@@ -59,13 +60,18 @@ window.ALMOND_OVERRIDES = new Proxy(
 
 function alertFailure() {
   /* Assuming only the DOM API is available */
+  if (document.getElementById("dsm-load-failure") !== null) {
+    return;
+  }
   const outerFailure = document.createElement("div");
+  outerFailure.id = "dsm-load-failure";
   outerFailure.style.cssText = `
     position: absolute;
     inset: 0;
     z-index: 9999;
     background: white;
     padding: 2em;
+    user-select: text;
   `;
   outerFailure.innerHTML = `
     <h2> Oh no! Desmos+DesModder failed to load properly. </h2>
@@ -104,10 +110,12 @@ function runCalculator() {
     function (calcPromise: any, TestBridge: any, $: any) {
       $(".dcg-loading-div-container").hide();
       if (calcPromise === undefined) {
+        console.error("No calc promise");
         alertFailure();
       }
       calcPromise.then(function (calc: any) {
         if (calc === undefined) {
+          console.error("No calc");
           alertFailure();
         }
         window.Calc = calc;
@@ -147,6 +155,7 @@ pollForValue(
     runCalculator();
   };
   script.onerror = () => {
+    console.error("Injected script onerror");
     alertFailure();
   };
   document.body.appendChild(script);
