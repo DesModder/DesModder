@@ -4,6 +4,7 @@ import withDependencyMap, {
   DependencyNameMap,
 } from "preload/withDependencyMap";
 import withinFunctionAssignment from "preload/withinFunctionAssignment";
+import { extendErrors } from "ajv/dist/compile/errors";
 
 function findIdentifierThis(path: babel.NodePath) {
   // Didn't figure out path.scope, so ...
@@ -374,5 +375,17 @@ const moduleOverrides = {
   "expressions/simulation-view": replaceTopLevelDelete,
   "expressions/table-view": replaceTopLevelDelete,
   "expressions/text_view": replaceTopLevelDelete,
+
+  "main/instancehotkeys": withDependencyMap(() => ({
+    Identifier(path: babel.NodePath<t.Identifier>) {
+      /* Allow find-replace to appear, even if the expression list is not focused */
+      if (path.node.name === "isExpressionListFocused") {
+        const andPath = path.findParent((p) =>
+          p.isLogicalExpression()
+        ) as babel.NodePath<t.LogicalExpression> | null;
+        andPath?.replaceWith(andPath.node.right);
+      }
+    },
+  })),
 };
 export default moduleOverrides;
