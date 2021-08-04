@@ -44,7 +44,7 @@ export async function captureFrame(
     const interval = window.setInterval(tryCancel, 50);
     const pixelBounds = Calc.graphpaperBounds.pixelCoordinates;
     const ratio = height / width / (pixelBounds.height / pixelBounds.width);
-    const mathBounds = Calc.graphpaperBounds.pixelCoordinates;
+    const mathBounds = Calc.graphpaperBounds.mathCoordinates;
     // make the captured region entirely visible
     const clampedMathBounds = scaleBoundsAboutCenter(
       mathBounds,
