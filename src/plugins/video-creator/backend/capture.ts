@@ -112,7 +112,8 @@ function cancelSimulationCapture() {
 
 async function captureSimulationFrame(
   controller: Controller,
-  helper: HelperExpression
+  helper: HelperExpression,
+  callbackIfCancel: () => void
 ) {
   try {
     if (helper.numericValue === 1) {
@@ -126,11 +127,13 @@ async function captureSimulationFrame(
     } else {
       // stop due to the helper returning false
       cancelSimulationCapture();
+      callbackIfCancel();
     }
   } catch {
     // should be paused due to mathBoundsMismatch or cancellation
     // this is effectively a break
     cancelSimulationCapture();
+    callbackIfCancel();
   }
 }
 
@@ -141,23 +144,26 @@ async function captureSimulation(controller: Controller) {
     // use 1 > 0 for an intentional infinite loop
     return;
   }
-  // syntax errors and false gives helper.numericValue === NaN
-  // true gives helper.numericValue === 1
-  const helper = controller.getWhileLatexHelper();
+  // Now we enter callback hell
+  return new Promise<void>((resolve) => {
+    // syntax errors and false gives helper.numericValue === NaN
+    // true gives helper.numericValue === 1
+    const helper = controller.getWhileLatexHelper();
 
-  helper.observe("numericValue", async () => {
-    helper.unobserve("numericValue");
+    helper.observe("numericValue", () => {
+      helper.unobserve("numericValue");
 
-    simulationCaptureState = "waiting-for-update";
+      simulationCaptureState = "waiting-for-update";
 
-    Calc.observeEvent("change.dsm-simulation-change", async () => {
-      // check in case there is more than one update before the screenshot finishes
-      if (simulationCaptureState === "waiting-for-update") {
-        captureSimulationFrame(controller, helper);
-      }
+      Calc.observeEvent("change.dsm-simulation-change", () => {
+        // check in case there is more than one update before the screenshot finishes
+        if (simulationCaptureState === "waiting-for-update") {
+          captureSimulationFrame(controller, helper, resolve);
+        }
+      });
+
+      captureSimulationFrame(controller, helper, resolve);
     });
-
-    captureSimulationFrame(controller, helper);
   });
 }
 
