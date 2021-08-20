@@ -2,7 +2,20 @@
 
 The following guide describes changes in each version, including how to migrate graphs from earlier versions to later versions if necessary.
 
-Regarding version numbers: The `1.0` release will be when the plugin API is much more stable than it is now. While in `0.*` releases, I increment the minor number if a new plugin is added and the patch number if a release consists only of bug fixes and enhancements.
+Regarding version numbers: The `1.0` release will be when the plugin API is a bit more stable. While in `0.*` releases, I increment the minor number if a new plugin is added and the patch number if a release consists only of bug fixes and enhancements.
+
+## 0.4.1
+
+Improvements and Bug Fixes:
+
+- (Video Creator) Fix bug where screenshot capture is distorted when the x and y axes have different scales
+- (Video Creator) Fix bug where simulations did not capture for more than a few frames
+- (Video Creator) Warning if FFMpeg cannot load, preventing someone from wasting time in capturing only for ffmpeg not to load
+- (Pin Expressions) Pinned expressions are now visible, even when a parent folder is collapsed
+- (Pin Expressions) Styling of pinned expressions tweaked to align with existing elements
+- (Wolfram To Desmos) Pasting URLS and subscript braces such as `a_{0}.x` no longer breaks the output
+- (Wolfram To Desmos) Fix rare condition where Wolfram To Desmos would enter an infinite loop
+- (Improved Duplication) Add the duplicate icon for non-expressions such as folders
 
 ## 0.4.0
 
