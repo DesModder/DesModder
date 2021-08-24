@@ -85,7 +85,7 @@ function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 }
 
-export function refactor(from: string, replacement: string) {
+export function refactor(from: string, to: string) {
   const fromParsed = parseDesmosLatex(from);
   if (fromParsed.type === "Identifier") {
     replace((s: string) => {
@@ -96,7 +96,7 @@ export function refactor(from: string, replacement: string) {
       const idPositions: {
         start: number;
         end: number;
-        isDifferential: boolean;
+        replacement: string;
       }[] = [];
       traverse(node, {
         exit(path: Path) {
@@ -107,27 +107,38 @@ export function refactor(from: string, replacement: string) {
             // A normal identifier
             idPositions.push({
               ...path.node.getInputSpan(),
-              // It's actually a differential like dx
+              // If True → it's actually a differential like dx
               // path.parent?.node.type === "Integral" && path.index === 0
-              isDifferential:
-                path.node._errorSymbol === "d" + path.node._symbol,
+              replacement:
+                path.node._errorSymbol === "d" + path.node._symbol
+                  ? "d" + to
+                  : to,
             });
           } else if (
-            (path.node.type === "Assignment" ||
-              path.node.type === "FunctionDefinition") &&
-            path.node._symbol === fromParsed._symbol
+            path.node.type === "Assignment" ||
+            path.node.type === "FunctionDefinition"
           ) {
             // An assignment like a=5
             // LHS is an identifier, but it doesn't become an arg
             const span = path.node.getInputSpan();
+            const line = path.node.getInputString();
+            const eqIndex = line.indexOf("=");
             idPositions.push({
               // Need this code (imperfect) to handle funky input like
               // replacing "a_{0}" in "  a_{0}    =    72 "
-              // TODO: better handling, and handle argSymbols in FunctionDefinition
-              //    Maybe .asEquation() can help
               start: span.start,
-              end: span.start + fromParsed._symbol.length,
-              isDifferential: false,
+              end: span.start + eqIndex,
+              replacement: line
+                .slice(0, eqIndex)
+                .replace(
+                  RegExp(
+                    String.raw`(?<=([,(]|^)(\s|\\ )*)` +
+                      escapeRegExp(from) +
+                      String.raw`(?=(\s|\\ )*((\\left)?\(|(\\right)?\)|,|$))`,
+                    "g"
+                  ),
+                  to
+                ),
             });
           }
         },
@@ -136,11 +147,8 @@ export function refactor(from: string, replacement: string) {
       const sorted = idPositions.sort((a, b) => a.start - b.start);
       let acc = "";
       let endIndex = 0;
-      for (let { start, end, isDifferential } of sorted) {
+      for (let { start, end, replacement } of sorted) {
         acc += s.slice(endIndex, start);
-        if (isDifferential) {
-          acc += "d";
-        }
         acc += replacement;
         endIndex = end;
       }
@@ -149,6 +157,6 @@ export function refactor(from: string, replacement: string) {
     });
   } else {
     const regex = RegExp(escapeRegExp(from), "g");
-    replace((s: string) => s.replace(regex, replacement));
+    replace((s: string) => s.replace(regex, to));
   }
 }
