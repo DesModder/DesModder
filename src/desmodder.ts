@@ -48,7 +48,7 @@ export {
   EvaluateSingleExpression,
   jquery,
   keys,
+  parseDesmosLatex,
   getQueryParams,
 } from "utils/depUtils";
 export { controller as desModderController } from "./script";
-export { default as traverse } from "./parsing/traverse";

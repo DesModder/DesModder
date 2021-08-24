@@ -1,4 +1,5 @@
 import { desmosRequire, Calc } from "globals/window";
+import Node from "../parsing/parsenode";
 
 const _EvaluateSingleExpression = desmosRequire(
   "core/math/evaluate-single-expression"
@@ -6,6 +7,9 @@ const _EvaluateSingleExpression = desmosRequire(
 
 export const jquery = desmosRequire("jquery");
 export const keys = desmosRequire("keys");
+export const parseDesmosLatex = desmosRequire("parser").parse as (
+  s: string
+) => Node;
 
 export function EvaluateSingleExpression(s: string): number {
   // may also return NaN (which is a number)

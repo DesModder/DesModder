@@ -34,7 +34,7 @@ interface Base {
 
 type EvaluationInfo = false | undefined | { val: unknown }[];
 
-interface Error {
+export interface Error {
   // "1 ("
   type: "Error";
   _msg: {
@@ -50,7 +50,7 @@ interface Error {
   allowExport(): Error;
 }
 
-interface Span {
+export interface Span {
   input: string;
   start: number;
   end: number;
@@ -75,24 +75,24 @@ interface UpperConstant extends Expression {
   isNaN(): boolean;
 }
 
-interface Constant extends UpperConstant {
+export interface Constant extends UpperConstant {
   // "1.5"
   type: "Constant";
 }
 
-interface MixedNumber extends UpperConstant {
+export interface MixedNumber extends UpperConstant {
   // "1\\frac{3}{2}"
   type: "MixedNumber";
   is_mixed_number: true;
 }
 
-interface DotAccess extends Expression {
+export interface DotAccess extends Expression {
   // "a.w"
   type: "DotAccess";
   args: [ChildExprNode, Identifier];
 }
 
-interface OrderedPairAccess extends Expression {
+export interface OrderedPairAccess extends Expression {
   // "a.x"
   type: "OrderedPairAccess";
   args: [ChildExprNode, Constant];
@@ -106,25 +106,25 @@ interface UpperFunctionCall extends Expression {
   _symbol: string;
 }
 
-interface FunctionCall extends UpperFunctionCall {
+export interface FunctionCall extends UpperFunctionCall {
   // "f(x)"
   type: "FunctionCall";
 }
 
-interface SeededFunctionCall extends UpperFunctionCall {
+export interface SeededFunctionCall extends UpperFunctionCall {
   // "\\operatorname{random}(3)"
   type: "SeededFunctionCall";
   args: [ExtendSeed, ...ChildExprNode[]];
   seed: unknown;
 }
 
-interface Seed extends Expression {
+export interface Seed extends Expression {
   type: "Seed";
   _stringValue: string;
   isString: true;
 }
 
-interface ExtendSeed extends Expression {
+export interface ExtendSeed extends Expression {
   type: "ExtendSeed";
   seed: Expression;
   userSeed: Expression;
@@ -132,14 +132,14 @@ interface ExtendSeed extends Expression {
   asValue(): string;
 }
 
-interface FunctionExponent extends Expression {
+export interface FunctionExponent extends Expression {
   // "f(x)^2"
   args: [Identifier, ChildExprNode, ChildExprNode];
   type: "FunctionExponent";
 }
 
 // FunctionFactorial is for stuff like f(x)! ≡ (f(x))!
-interface FunctionFactorial extends Expression {
+export interface FunctionFactorial extends Expression {
   // "f(x)!"
   args: [Identifier, ChildExprNode];
   type: "FunctionFactorial";
@@ -152,17 +152,17 @@ interface UpperIdentifier extends Expression {
   _errorSymbol: string;
 }
 
-interface Identifier extends UpperIdentifier {
+export interface Identifier extends UpperIdentifier {
   // "a"
   type: "Identifier";
 }
 
-interface Ans extends UpperIdentifier {
+export interface Ans extends UpperIdentifier {
   // Not sure how to get Ans
-  type: "Identifier";
+  type: "Ans";
 }
 
-interface Integral extends Expression {
+export interface Integral extends Expression {
   // "\\int_{0}^{1}tdt"
   type: "Integral";
   // differential, bottom, top, integrant
@@ -170,21 +170,21 @@ interface Integral extends Expression {
   _differential: Identifier;
 }
 
-interface Derivative extends Expression {
+export interface Derivative extends Expression {
   // "\\frac{d}{dx}x";
   type: "Derivative";
   args: [ChildExprNode];
   _symbol: string;
 }
 
-interface Prime extends Expression {
+export interface Prime extends Expression {
   // "f''(x)"
   type: "Prime";
   args: [ChildExprNode];
   order: number;
 }
 
-interface List extends Expression {
+export interface List extends Expression {
   // "[1,2,3]"
   type: "List";
   args: ChildExprNode[];
@@ -195,7 +195,7 @@ interface List extends Expression {
   wrap(): unknown;
 }
 
-interface Range extends Expression {
+export interface Range extends Expression {
   // "[1...5]"
   type: "Range";
   /*
@@ -208,7 +208,7 @@ interface Range extends Expression {
   isHalfEmpty(): boolean;
 }
 
-interface ListAccess extends Expression {
+export interface ListAccess extends Expression {
   // "L[1]"
   type: "ListAccess";
   args: [ChildExprNode, ChildExprNode];
@@ -216,7 +216,7 @@ interface ListAccess extends Expression {
   index: ChildExprNode;
 }
 
-interface OrderedPair extends Expression {
+export interface OrderedPair extends Expression {
   // "(1,2)"
   type: "OrderedPair";
   // (1,2,3) also turns into an OrderedPair, even though it's more of a triplet
@@ -230,7 +230,7 @@ interface MovablePoint extends OrderedPair {
   isMovablePoint: true;
 }
 
-interface Piecewise extends Expression {
+export interface Piecewise extends Expression {
   // "\\{x<1:3, x<2, 5\\}"
   type: "Piecewise";
   // args[0] ? args[1] : args[2]
@@ -253,14 +253,14 @@ interface RepeatedOperator extends Expression {
   update(acc: number, el: number): number;
 }
 
-interface Product extends RepeatedOperator {
+export interface Product extends RepeatedOperator {
   // "\\prod_{i=1}^{9}i"
   type: "Product";
   in_place_operator: "*=";
   starting_value: 1;
 }
 
-interface Sum extends RepeatedOperator {
+export interface Sum extends RepeatedOperator {
   // "\\sum_{i=1}^{9}i"
   type: "Sum";
   in_place_operator: "+=";
@@ -268,37 +268,37 @@ interface Sum extends RepeatedOperator {
 }
 
 /* Arithmetic operators (expressionTypes) */
-interface Add extends Expression {
+export interface Add extends Expression {
   // "1+2"
   args: [ChildExprNode, ChildExprNode];
   type: "Add";
 }
-interface Subtract extends Expression {
+export interface Subtract extends Expression {
   // "1-2"
   args: [ChildExprNode, ChildExprNode];
   type: "Subtract";
 }
-interface Multiply extends Expression {
+export interface Multiply extends Expression {
   // "1\\cdot 2"
   args: [ChildExprNode, ChildExprNode];
   type: "Multiply";
 }
-interface Divide extends Expression {
+export interface Divide extends Expression {
   // "\\frac{1}{2}"
   args: [ChildExprNode, ChildExprNode];
   type: "Divide";
 }
-interface Exponent extends Expression {
+export interface Exponent extends Expression {
   // "2^3"
   args: [ChildExprNode, ChildExprNode];
   type: "Exponent";
 }
-interface Negative extends Expression {
+export interface Negative extends Expression {
   // "-2"
   args: [ChildExprNode];
   type: "Negative";
 }
-interface And extends Expression {
+export interface And extends Expression {
   // "1<2<3"
   args: [Comparator, Comparator];
   type: "And";
@@ -317,7 +317,7 @@ interface BaseComparator extends Expression {
   _difference(): Subtract;
 }
 
-interface Comparator extends BaseComparator {
+export interface Comparator extends BaseComparator {
   // "1<3"
   // "1<=3"
   // "1>3"
@@ -355,7 +355,7 @@ interface UpperEquation extends Base {
   asComparator: Comparator;
 }
 
-interface Equation extends UpperEquation {
+export interface Equation extends UpperEquation {
   // "1=3"
   type: "Equation";
 }
@@ -371,12 +371,12 @@ interface UpperAssignment extends UpperEquation {
   shouldPromoteToSlider(): boolean;
 }
 
-interface Assignment extends UpperAssignment {
+export interface Assignment extends UpperAssignment {
   // "a=3"
   type: "Assignment";
 }
 
-interface Slider extends UpperAssignment {
+export interface Slider extends UpperAssignment {
   type: "Slider";
   sliderAssignment: Expression;
   sliderMin: ChildExprNode;
@@ -389,11 +389,12 @@ interface Slider extends UpperAssignment {
   asAssignment(): Assignment;
 }
 
-interface FunctionDefinition extends UpperEquation {
+export interface FunctionDefinition extends UpperEquation {
   // "f(x)=x^2"
   type: "FunctionDefinition";
   // _exports are _symbol but wrapped
   _exports: [string];
+  _symbol: string;
   _argSymbols: string[];
   _expression: ChildExprNode;
   asEquation(): Equation;
@@ -405,37 +406,37 @@ interface FullExprFunc extends Expression {
   args: ChildExprNode[];
 }
 
-interface Stats extends FullExprFunc {
+export interface Stats extends FullExprFunc {
   // "\\operatorname{stats}(L)"
   type: "Stats";
   _symbol: "stats";
 }
-interface Boxplot extends FullExprFunc {
+export interface Boxplot extends FullExprFunc {
   // "\\operatorname{boxplot}(L)"
   type: "Boxplot";
   _symbol: "boxplot";
 }
-interface Dotplot extends FullExprFunc {
+export interface Dotplot extends FullExprFunc {
   // "\\operatorname{dotplot}(L)"
   type: "Dotplot";
   _symbol: "dotplot";
 }
-interface Histogram extends FullExprFunc {
+export interface Histogram extends FullExprFunc {
   // "\\operatorname{histogram}(L)"
   type: "Histogram";
   _symbol: "histogram";
 }
-interface IndependentTTest extends FullExprFunc {
+export interface IndependentTTest extends FullExprFunc {
   // "\\operatorname{ittest}(L,M)"
   type: "IndependentTTest";
   _symbol: "ittest";
 }
-interface TTest extends FullExprFunc {
+export interface TTest extends FullExprFunc {
   // "\\operatorname{ttest}(L)"
   type: "TTest";
   _symbol: "ttest";
 }
-interface Polygon extends FullExprFunc {
+export interface Polygon extends FullExprFunc {
   // "\\operatorname{polygon}(P)"
   type: "Polygon";
   _symbol: "polygon";
@@ -443,7 +444,7 @@ interface Polygon extends FullExprFunc {
 
 /* Image */
 
-interface Image extends Base {
+export interface Image extends Base {
   type: "Image";
   isImage: true;
   center: ChildExprNode;
@@ -456,7 +457,7 @@ interface Image extends Base {
 
 /* Regression */
 
-interface Regression extends Base {
+export interface Regression extends Base {
   type: "Regression";
   _lhs: ChildExprNode;
   isLhsSimple: boolean; // just an identifier
@@ -469,7 +470,7 @@ interface Regression extends Base {
   getSliderVariables(): [];
 }
 
-interface OptimizedRegression extends Base {
+export interface OptimizedRegression extends Base {
   type: "OptimizedRegression";
   parameters: unknown;
   residuals: unknown;
@@ -487,14 +488,14 @@ interface OptimizedRegression extends Base {
 }
 
 /* Simulation */
-interface Simulation extends Base {
+export interface Simulation extends Base {
   type: "Simulation";
   isSimulation: true;
   fps: ChildExprNode;
 }
 
 /* Intermediate Representation */
-interface IRExpression extends Base {
+export interface IRExpression extends Base {
   type: "IRExpression";
   _chunk: unknown;
   valueType: unknown;
@@ -521,7 +522,7 @@ interface IRExpression extends Base {
 
 /* Table */
 
-interface TableColumn extends Base {
+export interface TableColumn extends Base {
   type: "TableColumn";
   header: ChildExprNode;
   length: unknown;
@@ -534,7 +535,7 @@ interface TableColumn extends Base {
   exportToLocal: unknown;
 }
 
-interface Table extends Base {
+export interface Table extends Base {
   type: "Table";
   columns: TableColumn[];
   _exports: string[];
