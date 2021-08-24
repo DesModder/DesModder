@@ -48,6 +48,7 @@ export {
   EvaluateSingleExpression,
   jquery,
   keys,
+  parseDesmosLatex,
   getQueryParams,
 } from "utils/depUtils";
 export { controller as desModderController } from "./script";
