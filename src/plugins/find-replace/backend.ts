@@ -85,9 +85,89 @@ function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 }
 
+function getReplacements(
+  path: Path,
+  fromParsed: Identifier,
+  from: string,
+  to: string
+) {
+  let span, line;
+  switch (path.node.type) {
+    case "Identifier":
+      if (path.node._symbol === fromParsed._symbol) {
+        // A normal identifier
+        return [
+          {
+            ...path.node.getInputSpan(),
+            // If True → it's actually a differential like dx
+            // path.parent?.node.type === "Integral" && path.index === 0
+            replacement:
+              path.node._errorSymbol === "d" + path.node._symbol
+                ? "d" + to
+                : to,
+          },
+        ];
+      }
+      break;
+    case "FunctionCall":
+      if (path.node._symbol === fromParsed._symbol) {
+        span = path.node.getInputSpan();
+        return [
+          {
+            start: span.start,
+            end: span.start + from.length,
+            replacement: to,
+          },
+        ];
+      }
+      break;
+    case "Assignment":
+    case "FunctionDefinition":
+      span = path.node.getInputSpan();
+      line = path.node.getInputString();
+      const eqIndex = line.indexOf("=");
+      return [
+        {
+          // Need this code (imperfect) to handle funky input like
+          // replacing "a_{0}" in "  a_{0}    =    72 "
+          start: span.start,
+          end: span.start + eqIndex,
+          replacement: line
+            .slice(0, eqIndex)
+            .replace(
+              RegExp(
+                String.raw`(?<=([,(]|^)(\s|\\ )*)` +
+                  escapeRegExp(from) +
+                  String.raw`(?=(\s|\\ )*((\\left)?\(|(\\right)?\)|,|$))`,
+                "g"
+              ),
+              to
+            ),
+        },
+      ];
+      break;
+    case "Derivative":
+      span = path.node.getInputSpan();
+      line = path.node.getInputString();
+      const diffBottomStr = `{d${from}}`;
+      const diffBottomStart = line.indexOf(diffBottomStr);
+      return [
+        {
+          start: span.start + diffBottomStart,
+          end: span.start + diffBottomStart + diffBottomStr.length,
+          replacement: `{d${to}}`,
+        },
+      ];
+      break;
+  }
+  return [];
+}
+
 export function refactor(from: string, to: string) {
-  const fromParsed = parseDesmosLatex(from);
+  const fromParsed = parseDesmosLatex(from.trim());
   if (fromParsed.type === "Identifier") {
+    // trim `from` to prevent inputs such as "  a" messing up matches that depend on `from` itself.
+    from = from.trim();
     replace((s: string) => {
       const node = parseDesmosLatex(s);
       if (node.type === "Error") {
@@ -100,47 +180,7 @@ export function refactor(from: string, to: string) {
       }[] = [];
       traverse(node, {
         exit(path: Path) {
-          if (
-            path.node.type === "Identifier" &&
-            path.node._symbol === fromParsed._symbol
-          ) {
-            // A normal identifier
-            idPositions.push({
-              ...path.node.getInputSpan(),
-              // If True → it's actually a differential like dx
-              // path.parent?.node.type === "Integral" && path.index === 0
-              replacement:
-                path.node._errorSymbol === "d" + path.node._symbol
-                  ? "d" + to
-                  : to,
-            });
-          } else if (
-            path.node.type === "Assignment" ||
-            path.node.type === "FunctionDefinition"
-          ) {
-            // An assignment like a=5
-            // LHS is an identifier, but it doesn't become an arg
-            const span = path.node.getInputSpan();
-            const line = path.node.getInputString();
-            const eqIndex = line.indexOf("=");
-            idPositions.push({
-              // Need this code (imperfect) to handle funky input like
-              // replacing "a_{0}" in "  a_{0}    =    72 "
-              start: span.start,
-              end: span.start + eqIndex,
-              replacement: line
-                .slice(0, eqIndex)
-                .replace(
-                  RegExp(
-                    String.raw`(?<=([,(]|^)(\s|\\ )*)` +
-                      escapeRegExp(from) +
-                      String.raw`(?=(\s|\\ )*((\\left)?\(|(\\right)?\)|,|$))`,
-                    "g"
-                  ),
-                  to
-                ),
-            });
-          }
+          idPositions.push(...getReplacements(path, fromParsed, from, to));
         },
       });
       // args don't necessarily go in latex order
