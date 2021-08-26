@@ -1,10 +1,15 @@
+/* EMERGENCY FIX
 import duplicateHotkey from "plugins/duplicate-hotkey";
+*/
 import findReplace from "plugins/find-replace";
 import wolfram2desmos from "plugins/wolfram2desmos";
 import videoCreator from "plugins/video-creator";
 import builtinSettings from "plugins/builtin-settings";
 import rightClickTray from "plugins/right-click-tray";
+
+/* EMERGENCY FIX
 import pinExpressions from "plugins/pin-expressions";
+*/
 import shiftEnterNewline from "plugins/shift-enter-newline";
 
 interface ConfigItemGeneric {
@@ -46,11 +51,11 @@ export interface Plugin<Settings extends GenericBooleanSettings = {}> {
 const _plugins = {
   [builtinSettings.id]: builtinSettings,
   [wolfram2desmos.id]: wolfram2desmos,
-  [pinExpressions.id]: pinExpressions,
+  // [pinExpressions.id]: pinExpressions,
   [videoCreator.id]: videoCreator,
   [findReplace.id]: findReplace,
   [rightClickTray.id]: rightClickTray,
-  [duplicateHotkey.id]: duplicateHotkey,
+  // [duplicateHotkey.id]: duplicateHotkey,
   [shiftEnterNewline.id]: shiftEnterNewline,
 } as const;
 
