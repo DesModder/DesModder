@@ -34,7 +34,7 @@ interface Base {
 
 type EvaluationInfo = false | undefined | { val: unknown }[];
 
-type MaybeRational = number | { n: number; d: number };
+export type MaybeRational = number | { n: number; d: number };
 
 export interface Error {
   // "1 ("

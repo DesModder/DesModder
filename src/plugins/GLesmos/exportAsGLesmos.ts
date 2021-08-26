@@ -1,5 +1,5 @@
 import { Calc, ItemModel, parseDesmosLatex } from "desmodder";
-import Expression, { ChildExprNode } from "parsing/parsenode";
+import Expression, { ChildExprNode, MaybeRational } from "parsing/parsenode";
 
 type GLesmosExprCategory = "function" | "expression" | "unimplemented";
 
@@ -90,10 +90,8 @@ function childExprToGL(expr: ChildExprNode): string {
       const num = expr.asCompilerValue();
       if (typeof num === "boolean") {
         return num ? "true" : "false";
-      } else if (typeof num === "number") {
-        return glslFloatify(num);
       } else {
-        return glslFloatify(num.n / num.d);
+        return glslFloatify(evalMaybeRational(num));
       }
     case "Add":
     case "Multiply":
@@ -131,7 +129,28 @@ function childExprToGL(expr: ChildExprNode): string {
       a = childExprToGL(expr.args[0]);
       b = childExprToGL(expr.args[1]);
       return `(${a}) && (${b})`;
+    case "OrderedPair":
+      a = childExprToGL(expr.args[0]);
+      b = childExprToGL(expr.args[1]);
+      return `vec2(${a}, ${b})`;
+    case "OrderedPairAccess":
+      const index = expr.index.asCompilerValue();
+      if (typeof index === "boolean") {
+        throw "Programming error: expected OrderedPairAccess index to be a number";
+      }
+      const indexSuffix = "xy"[evalMaybeRational(index) - 1];
+      return `(${childExprToGL(expr.point)}).${indexSuffix}`;
+    case "DotAccess":
+      return `(${childExprToGL(expr.args[0])}).${expr.args[1]._symbol}`;
     default:
       throw `Unimplemented subexpression type: ${expr.type}`;
+  }
+}
+
+function evalMaybeRational(x: MaybeRational) {
+  if (typeof x === "number") {
+    return x;
+  } else {
+    return x.n / x.d;
   }
 }
