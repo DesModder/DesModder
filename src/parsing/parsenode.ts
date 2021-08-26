@@ -34,6 +34,8 @@ interface Base {
 
 type EvaluationInfo = false | undefined | { val: unknown }[];
 
+type MaybeRational = number | { n: number; d: number };
+
 export interface Error {
   // "1 ("
   type: "Error";
@@ -69,8 +71,8 @@ interface Expression extends Base {
 
 interface UpperConstant extends Expression {
   args: [];
-  _constantValue: boolean | number;
-  asCompilerValue(): boolean | number;
+  _constantValue: boolean | MaybeRational;
+  asCompilerValue(): boolean | MaybeRational;
   scalarExprString(): string;
   isNaN(): boolean;
 }
@@ -190,7 +192,7 @@ export interface List extends Expression {
   args: ChildExprNode[];
   length: number;
   isList: true;
-  asCompilerValue(): (boolean | number)[];
+  asCompilerValue(): (boolean | MaybeRational)[];
   // eachArgs(): void // TODO
   wrap(): unknown;
 }
@@ -510,7 +512,7 @@ export interface IRExpression extends Base {
   takeDerivative(): IRExpression;
   boundDomain(): unknown;
   asValue(): unknown;
-  asCompilerValue(): boolean | number | boolean[] | number[];
+  asCompilerValue(): boolean | MaybeRational | boolean[] | MaybeRational[];
   isNaN(): boolean;
   getEvaluationInfo(): EvaluationInfo;
   elementAt(): unknown;
