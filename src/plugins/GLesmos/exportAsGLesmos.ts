@@ -1,5 +1,5 @@
 import { Calc, ItemModel, parseDesmosLatex } from "desmodder";
-import Expression, { ChildExprNode } from "parsing/parsenode";
+import Expression, { ChildExprNode, MaybeRational } from "parsing/parsenode";
 
 type GLesmosExprCategory = "function" | "expression" | "unimplemented";
 
@@ -51,15 +51,16 @@ function exprToGL(expr: ItemModel): [string, GLesmosExprCategory] {
             "expression",
           ];
         case "Comparator['<']":
+        case "Comparator['>']":
+        case "Comparator['>=']":
+        case "Comparator['<=']":
           let col = expr.color ? expr.color : "#00FF00";
           let r = glslFloatify(parseInt(col.slice(1, 3), 16) / 256);
           let g = glslFloatify(parseInt(col.slice(3, 5), 16) / 256);
           let b = glslFloatify(parseInt(col.slice(5, 7), 16) / 256);
           let a = expr.fillOpacity === undefined ? 0.4 : expr.fillOpacity;
           return [
-            `if (${childExprToGL(
-              parsed.args[0] as ChildExprNode
-            )} - ${childExprToGL(parsed.args[1] as ChildExprNode)} < 0.0) {\n` +
+            `if (${childExprToGL(parsed._difference)} > 0.0) {\n` +
               `    outColor.rgb = mix(outColor.rgb, vec3(${r}, ${g}, ${b}), ${a});\n` +
               `}`,
             "expression",
@@ -85,13 +86,12 @@ function childExprToGL(expr: ChildExprNode): string {
     case "Identifier":
       return expr._symbol;
     case "Constant":
+    case "MixedNumber":
       const num = expr.asCompilerValue();
       if (typeof num === "boolean") {
         return num ? "true" : "false";
-      } else if (typeof num === "number") {
-        return glslFloatify(num);
       } else {
-        return glslFloatify(num.n / num.d);
+        return glslFloatify(evalMaybeRational(num));
       }
     case "Add":
     case "Multiply":
@@ -115,8 +115,42 @@ function childExprToGL(expr: ChildExprNode): string {
     case "FunctionCall":
       return `${expr._symbol}(${expr.args.map(childExprToGL).join(", ")})`;
     case "Comparator['<']":
-      return `${childExprToGL(expr._difference())} < 0.0`;
+    case "Comparator['>']":
+    case "Comparator['>=']":
+    case "Comparator['<=']":
+      return `${childExprToGL(expr._difference)} > 0.0`;
+    case "Piecewise":
+      // Long piecewises actually just nest into args[2]
+      const pred = childExprToGL(expr.args[0]);
+      a = childExprToGL(expr.args[1]);
+      b = childExprToGL(expr.args[2]);
+      return `(${pred}) ? ${a} : ${b}`;
+    case "And":
+      a = childExprToGL(expr.args[0]);
+      b = childExprToGL(expr.args[1]);
+      return `(${a}) && (${b})`;
+    case "OrderedPair":
+      a = childExprToGL(expr.args[0]);
+      b = childExprToGL(expr.args[1]);
+      return `vec2(${a}, ${b})`;
+    case "OrderedPairAccess":
+      const index = expr.index.asCompilerValue();
+      if (typeof index === "boolean") {
+        throw "Programming error: expected OrderedPairAccess index to be a number";
+      }
+      const indexSuffix = "xy"[evalMaybeRational(index) - 1];
+      return `(${childExprToGL(expr.point)}).${indexSuffix}`;
+    case "DotAccess":
+      return `(${childExprToGL(expr.args[0])}).${expr.args[1]._symbol}`;
     default:
       throw `Unimplemented subexpression type: ${expr.type}`;
+  }
+}
+
+function evalMaybeRational(x: MaybeRational) {
+  if (typeof x === "number") {
+    return x;
+  } else {
+    return x.n / x.d;
   }
 }
