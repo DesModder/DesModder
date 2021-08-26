@@ -86,6 +86,7 @@ function childExprToGL(expr: ChildExprNode): string {
     case "Identifier":
       return expr._symbol;
     case "Constant":
+    case "MixedNumber":
       const num = expr.asCompilerValue();
       if (typeof num === "boolean") {
         return num ? "true" : "false";
@@ -126,6 +127,10 @@ function childExprToGL(expr: ChildExprNode): string {
       a = childExprToGL(expr.args[1]);
       b = childExprToGL(expr.args[2]);
       return `(${pred}) ? ${a} : ${b}`;
+    case "And":
+      a = childExprToGL(expr.args[0]);
+      b = childExprToGL(expr.args[1]);
+      return `(${a}) && (${b})`;
     default:
       throw `Unimplemented subexpression type: ${expr.type}`;
   }
