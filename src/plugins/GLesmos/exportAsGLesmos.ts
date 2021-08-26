@@ -51,15 +51,16 @@ function exprToGL(expr: ItemModel): [string, GLesmosExprCategory] {
             "expression",
           ];
         case "Comparator['<']":
+        case "Comparator['>']":
+        case "Comparator['>=']":
+        case "Comparator['<=']":
           let col = expr.color ? expr.color : "#00FF00";
           let r = glslFloatify(parseInt(col.slice(1, 3), 16) / 256);
           let g = glslFloatify(parseInt(col.slice(3, 5), 16) / 256);
           let b = glslFloatify(parseInt(col.slice(5, 7), 16) / 256);
           let a = expr.fillOpacity === undefined ? 0.4 : expr.fillOpacity;
           return [
-            `if (${childExprToGL(
-              parsed.args[0] as ChildExprNode
-            )} - ${childExprToGL(parsed.args[1] as ChildExprNode)} < 0.0) {\n` +
+            `if (${childExprToGL(parsed._difference)} > 0.0) {\n` +
               `    outColor.rgb = mix(outColor.rgb, vec3(${r}, ${g}, ${b}), ${a});\n` +
               `}`,
             "expression",
@@ -115,7 +116,16 @@ function childExprToGL(expr: ChildExprNode): string {
     case "FunctionCall":
       return `${expr._symbol}(${expr.args.map(childExprToGL).join(", ")})`;
     case "Comparator['<']":
-      return `${childExprToGL(expr._difference())} < 0.0`;
+    case "Comparator['>']":
+    case "Comparator['>=']":
+    case "Comparator['<=']":
+      return `${childExprToGL(expr._difference)} > 0.0`;
+    case "Piecewise":
+      // Long piecewises actually just nest into args[2]
+      const pred = childExprToGL(expr.args[0]);
+      a = childExprToGL(expr.args[1]);
+      b = childExprToGL(expr.args[2]);
+      return `(${pred}) ? ${a} : ${b}`;
     default:
       throw `Unimplemented subexpression type: ${expr.type}`;
   }

@@ -316,7 +316,9 @@ interface BaseComparator extends Expression {
   // .create is called with "<", ">", "<=", ">=", and "="
   create(): BaseComparator;
   asComparator(): BaseComparator;
-  _difference(): Subtract;
+
+  // The _difference reverses direction for '<' and '<=' to satisfy the same order as '>'
+  _difference: Subtract;
 }
 
 export interface Comparator extends BaseComparator {
@@ -331,6 +333,7 @@ export interface Comparator extends BaseComparator {
     | "Comparator['<=']"
     | "Comparator['>=']"
     | "Comparator['=']";
+  args: [ChildExprNode, ChildExprNode];
 }
 
 interface DoubleInequality extends Base {
