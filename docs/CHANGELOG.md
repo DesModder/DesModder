@@ -4,6 +4,10 @@ The following guide describes changes in each version, including how to migrate 
 
 Regarding version numbers: The `1.0` release will be when the plugin API is a bit more stable. While in `0.*` releases, I increment the minor number if a new plugin is added and the patch number if a release consists only of bug fixes and enhancements.
 
+## 0.5.0
+
+Emergency bug fix because tickers got released, breaking some DesModder features because simulations were removed. Do not expect all features to work.
+
 ## 0.4.1
 
 Improvements and Bug Fixes:
