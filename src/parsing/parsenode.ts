@@ -487,13 +487,6 @@ export interface OptimizedRegression extends Base {
   getCompiledDerivative(): Function;
 }
 
-/* Simulation */
-export interface Simulation extends Base {
-  type: "Simulation";
-  isSimulation: true;
-  fps: ChildExprNode;
-}
-
 /* Intermediate Representation */
 export interface IRExpression extends Base {
   type: "IRExpression";
@@ -605,7 +598,6 @@ type IrrelevantExprNode =
   | Slider
   | Image
   | OptimizedRegression
-  | Simulation
   | IRExpression
   | TableColumn
   | Table;

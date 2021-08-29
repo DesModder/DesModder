@@ -86,8 +86,6 @@ function duplicatedNonFolder(state: ItemModel) {
     case "expression":
     case "text":
     case "image":
-      // While simulations *do* have IDs in the inner rules
-      // (like column tables), these are not unique across simulations
       return duplicatedSimple(state);
   }
 }

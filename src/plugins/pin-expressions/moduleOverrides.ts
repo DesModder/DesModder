@@ -147,7 +147,7 @@ const moduleOverrides = {
   ),
   "expressions/abstract-item-view": withDependencyMap(() => ({
     CallExpression(path: babel.NodePath<t.CallExpression>) {
-      /* Allows clicking on the pin/unpin button for simulations, notes, and tables */
+      /* Allows clicking on the pin/unpin button for notes and tables */
       if (
         t.isMemberExpression(path.node.callee) &&
         t.isIdentifier(path.node.callee.property, {
@@ -372,7 +372,6 @@ const moduleOverrides = {
   // Yes, some of these are underscores, and some are hyphens. What are you going to do about it?
   "expressions/expression_view": replaceTopLevelDelete,
   "expressions/image-view": replaceTopLevelDelete,
-  "expressions/simulation-view": replaceTopLevelDelete,
   "expressions/table-view": replaceTopLevelDelete,
   "expressions/text_view": replaceTopLevelDelete,
 

@@ -1,12 +1,5 @@
 export const configList = [
   {
-    key: "clickableObjects",
-    name: "Clickable Objects",
-    description: "Enable simulations and clickable objects (buttons)",
-    type: "boolean",
-    default: true,
-  },
-  {
     key: "advancedStyling",
     name: "Advanced styling",
     description:
