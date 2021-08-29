@@ -12,10 +12,10 @@ import {
 } from "desmodder";
 import Controller from "../Controller";
 import { cancelCapture, CaptureMethod } from "../backend/capture";
-import SimulationPicker from "./SimulationPicker";
 import "./CaptureMethod.css";
+import { For } from "components/desmosComponents";
 
-const captureMethodNames: CaptureMethod[] = ["once", "slider", "simulation"];
+const captureMethodNames: CaptureMethod[] = ["once", "slider", "action"];
 
 export default class SelectCapture extends DCGView.Class<{
   controller: Controller;
@@ -32,7 +32,7 @@ export default class SelectCapture extends DCGView.Class<{
         <SegmentedControl
           class="dsm-vc-select-capture-method"
           names={() =>
-            this.controller.hasSimulation()
+            this.controller.hasAction()
               ? captureMethodNames
               : captureMethodNames.slice(0, -1)
           }
@@ -116,25 +116,21 @@ export default class SelectCapture extends DCGView.Class<{
                   </div>
                 </div>
               ),
-              simulation: () => (
+              action: () => (
                 <div>
-                  <If
-                    predicate={() =>
-                      this.controller.getSimulations().length > 1
-                    }
-                  >
+                  <If predicate={() => this.controller.getActions().length > 1}>
                     {() => (
-                      <div class="dsm-vc-simulation-navigate-container">
+                      <div class="dsm-vc-action-navigate-container">
                         <Button
                           color="green"
-                          onTap={() => this.controller.addToSimulationIndex(-1)}
+                          onTap={() => this.controller.addToActionIndex(-1)}
                           disabled={() => this.controller.isCapturing}
                         >
                           Prev
                         </Button>
                         <Button
                           color="green"
-                          onTap={() => this.controller.addToSimulationIndex(+1)}
+                          onTap={() => this.controller.addToActionIndex(+1)}
                           disabled={() => this.controller.isCapturing}
                         >
                           Next
@@ -142,13 +138,26 @@ export default class SelectCapture extends DCGView.Class<{
                       </div>
                     )}
                   </If>
-                  <If
-                    predicate={() =>
-                      this.controller.getSimulations().length > 0
+                  <For
+                    each={
+                      // using an <If> here doesn't work becaus it doesn't update the StaticMathQuillView
+                      () =>
+                        this.controller.getCurrentAction()?.latex !== undefined
+                          ? [this.controller.getCurrentAction()]
+                          : []
                     }
+                    key={(action) => action.id}
                   >
-                    {() => <SimulationPicker controller={this.controller} />}
-                  </If>
+                    <div>
+                      {() => (
+                        <StaticMathQuillView
+                          latex={() =>
+                            this.controller.getCurrentAction()?.latex as string
+                          }
+                        />
+                      )}
+                    </div>
+                  </For>
                 </div>
               ),
               once: () => null,
@@ -244,31 +253,29 @@ export default class SelectCapture extends DCGView.Class<{
                 <Button
                   color="blue"
                   class="dsm-vc-cancel-capture-button"
-                  onTap={() => cancelCapture()}
+                  onTap={() => cancelCapture(this.controller)}
                 >
                   Cancel
                 </Button>
               ),
             }
           )}
-          <If
-            predicate={() => this.getSelectedCaptureMethod() === "simulation"}
-          >
+          <If predicate={() => this.getSelectedCaptureMethod() === "action"}>
             {() => (
               <div class="dsm-vc-end-condition-settings">
-                While:
+                Step count:
                 <SmallMathQuillInput
-                  ariaLabel="simulation while"
+                  ariaLabel="ticker while"
                   onUserChangedLatex={(v) =>
-                    this.controller.setSimulationWhileLatex(v)
+                    this.controller.setTickCountLatex(v)
                   }
-                  hasError={() => !this.controller.isWhileLatexValid()}
-                  latex={() => this.controller.simulationWhileLatex}
+                  hasError={() => !this.controller.isTickCountValid()}
+                  latex={() => this.controller.tickCountLatex}
                   isFocused={() =>
-                    this.controller.isFocused("capture-simulation-while")
+                    this.controller.isFocused("capture-tick-count")
                   }
                   onFocusedChanged={(b) =>
-                    this.controller.updateFocus("capture-simulation-while", b)
+                    this.controller.updateFocus("capture-tick-count", b)
                   }
                 />
               </div>
@@ -280,8 +287,8 @@ export default class SelectCapture extends DCGView.Class<{
   }
 
   getSelectedCaptureMethod() {
-    return this.controller.captureMethod === "simulation" &&
-      !this.controller.hasSimulation()
+    return this.controller.captureMethod === "action" &&
+      !this.controller.hasAction()
       ? "once"
       : this.controller.captureMethod;
   }

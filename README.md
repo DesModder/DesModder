@@ -2,14 +2,14 @@
 
 Supercharge your Desmos graph creation and sharing experience with many convenient features:
 
-- Export videos and GIFs of your graphs based on simulations or sliders
+- Export videos and GIFs of your graphs based on actions or sliders
 - Find and replace expressions
 - Pin expressions to the top
-- Enable features including simulations, clickable objects, and more
 - Paste ASCIIMath (such as the results of Wolfram Alpha queries) into Desmos
 - Duplicate folders and more with a button or Ctrl+Q
 - Use Shift+Enter to write newlines in notes
-- Right-click on expressions to style them
+- Right-click (instead of long press) expressions to style them
+- Adjust settings that can let you hide the keypad, lock the viewport, and more
 - More to come!
 
 All graphs created using this extension are compatible with vanilla Desmos. This means your graphs are always safe to share with others, regardless of whether or not they have DesModder.

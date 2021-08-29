@@ -67,7 +67,28 @@ export interface ExpressionModel extends BasicSetExpression, ItemModelBase {
   label?: string;
   showLabel?: boolean;
   labelSize?: "small" | "medium" | "large";
-  labelOrientation?: "above" | "below" | "left" | "right" | "default";
+  labelOrientation?:
+    | "default"
+    | "center"
+    | "center_auto"
+    | "auto_center"
+    | "above"
+    | "above_left"
+    | "above_right"
+    | "above_auto"
+    | "below"
+    | "below_left"
+    | "below_right"
+    | "below_auto"
+    | "left"
+    | "auto_left"
+    | "right"
+    | "auto_right";
+  formula?: {
+    action_value?: {
+      [K: string]: string;
+    };
+  };
 }
 
 interface TableColumn extends BasicSetExpression {
@@ -77,18 +98,6 @@ interface TableColumn extends BasicSetExpression {
 export interface TableModel extends ItemModelBase {
   type: "table";
   columns: TableColumn[];
-}
-
-export interface SimulationModel extends ItemModelBase {
-  type: "simulation";
-  clickableInfo?: {
-    description?: string;
-    rules: Array<{
-      id: string;
-      expression: string;
-      assignment: string;
-    }>;
-  };
 }
 
 export interface TextModel extends ItemModelBase {
@@ -116,7 +125,6 @@ export interface FolderModel {
 }
 
 export type ItemModel =
-  | SimulationModel
   | ExpressionModel
   | TableModel
   | TextModel
@@ -124,9 +132,18 @@ export type ItemModel =
   | FolderModel;
 
 interface GraphState {
+  version: 9;
   expressions: {
     list: ItemModel[];
+    ticker?: Ticker;
   };
+}
+
+interface Ticker {
+  handlerLatex?: string;
+  minStepLatex?: string;
+  open?: boolean;
+  playing?: boolean;
 }
 
 type SetExpressionObject = ExpressionModel | TableModel;
@@ -238,8 +255,10 @@ export default interface Calc {
       register(func: (e: DispatchedEvent) => void): DispatchListenerID;
       unregister(id: DispatchListenerID): void;
     };
+    getTickerPlaying?(): boolean;
+    // The item models returned are actually much more detailed
     getItemModel(id: any): ItemModel | undefined;
-    stopPlayingSimulation(): void;
+    getAllItemModels(): ItemModel[];
     stopAllSliders(): void;
     isKeypadOpen(): boolean;
     getKeypadHeight(): number;

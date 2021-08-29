@@ -4,7 +4,6 @@ import {
   TableModel,
   TextModel,
   ImageModel,
-  SimulationModel,
   FolderModel,
   ExpressionModel,
 } from "globals/Calc";
@@ -31,7 +30,6 @@ const getStates = {
   expression: desmosRequire("graphing-calc/models/expression"),
   table: desmosRequire("graphing-calc/models/table"),
   text: desmosRequire("graphing-calc/models/text"),
-  simulation: desmosRequire("graphing-calc/models/simulation"),
   image: desmosRequire("graphing-calc/models/image"),
   folder: desmosRequire("graphing-calc/models/folder"),
 };
@@ -88,7 +86,6 @@ function duplicatedNonFolder(state: ItemModel) {
     case "expression":
     case "text":
     case "image":
-    case "simulation":
       // While simulations *do* have IDs in the inner rules
       // (like column tables), these are not unique across simulations
       return duplicatedSimple(state);
@@ -115,9 +112,7 @@ function duplicatedTable(state: TableModel) {
   };
 }
 
-function duplicatedSimple(
-  state: ExpressionModel | TextModel | ImageModel | SimulationModel
-) {
+function duplicatedSimple(state: ExpressionModel | TextModel | ImageModel) {
   return {
     ...state,
     id: Calc.controller.generateId(),
