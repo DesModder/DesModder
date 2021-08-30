@@ -1,10 +1,10 @@
 import { updateView } from "./View";
 import {
   Calc,
-  SimulationModel,
   jquery,
   keys,
   EvaluateSingleExpression,
+  ExpressionModel,
 } from "desmodder";
 import { isValidNumber, isValidLength, escapeRegex } from "./backend/utils";
 import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
@@ -16,7 +16,7 @@ type FocusedMQ =
   | "capture-slider-min"
   | "capture-slider-max"
   | "capture-slider-step"
-  | "capture-simulation-while"
+  | "capture-tick-count"
   | "capture-width"
   | "capture-height"
   | "export-fps";
@@ -25,6 +25,7 @@ export default class Controller {
   ffmpegLoaded = false;
   frames: string[] = [];
   isCapturing = false;
+  captureCancelled = false;
   fpsLatex = "30";
   fileType: OutFileType = "mp4";
 
@@ -44,10 +45,10 @@ export default class Controller {
     maxLatex: "10",
     stepLatex: "1",
   };
-  currentSimulationID: string | null = null;
-  simulationWhileLatex = "";
-  _isWhileLatexValid = false;
-  whileLatexHelper: ReturnType<typeof Calc.HelperExpression> | null = null;
+  actionCaptureState: "none" | "waiting-for-update" | "waiting-for-screenshot" =
+    "none";
+  currentActionID: string | null = null;
+  tickCountLatex: string = "10";
 
   // ** capture sizing
   captureHeightLatex = "";
@@ -191,6 +192,11 @@ export default class Controller {
     this.updateView();
   }
 
+  setTickCountLatex(value: string) {
+    this.tickCountLatex = value;
+    this.updateView();
+  }
+
   getMatchingSlider() {
     const regex = new RegExp(
       `^(\\?\s)*${escapeRegex(this.sliderSettings.variable)}(\\?\s)*=`
@@ -211,8 +217,11 @@ export default class Controller {
     }
   }
 
-  isWhileLatexValid() {
-    return this._isWhileLatexValid;
+  isTickCountValid() {
+    return (
+      isValidNumber(this.tickCountLatex) &&
+      EvaluateSingleExpression(this.tickCountLatex) > 0
+    );
   }
 
   async capture() {
@@ -232,73 +241,46 @@ export default class Controller {
         this.isSliderSettingValid("maxLatex") &&
         this.isSliderSettingValid("stepLatex")
       );
-    } else if (this.captureMethod === "simulation") {
-      return this.isWhileLatexValid();
+    } else if (this.captureMethod === "action") {
+      return this.isTickCountValid();
     }
   }
 
-  getWhileLatexHelper() {
-    return Calc.HelperExpression({
-      latex: `\\left\\{${this.simulationWhileLatex}:1, 0\\right\\}`,
-    });
+  getActions() {
+    return Calc.controller
+      .getAllItemModels()
+      .filter(
+        (e) => e.type === "expression" && e.formula?.action_value !== undefined
+      ) as ExpressionModel[];
   }
 
-  setSimulationWhileLatex(s: string) {
-    this.simulationWhileLatex = s;
-    if (this.whileLatexHelper !== null) {
-      this.whileLatexHelper.unobserve("numericValue");
-    }
-    const helper = this.getWhileLatexHelper();
-    // stored for the purpose of unobserving
-    this.whileLatexHelper = helper;
-    helper.observe("numericValue", () => {
-      // must start with 'true'
-      const newIsWhileLatexValid = helper.numericValue === 1;
-      if (newIsWhileLatexValid !== this._isWhileLatexValid) {
-        this._isWhileLatexValid = newIsWhileLatexValid;
-        this.updateView();
-      }
-    });
-    this.updateView();
+  hasAction() {
+    return this.getActions().length > 0;
   }
 
-  getSimulations() {
-    return Calc.getState().expressions.list.filter(
-      (e) => e.type === "simulation"
-    ) as SimulationModel[];
-  }
-
-  getCurrentSimulation() {
-    const model = Calc.controller.getItemModel(this.currentSimulationID);
+  getCurrentAction() {
+    const model = Calc.controller.getItemModel(this.currentActionID);
     if (model === undefined) {
-      // default simulation
-      const sim = this.getSimulations()[0];
-      if (sim !== undefined) {
-        this.currentSimulationID = sim.id;
+      const action = this.getActions()[0];
+      if (action !== undefined) {
+        this.currentActionID = action.id;
       }
-      return sim;
+      return action;
     } else {
-      return model as SimulationModel;
+      return model as ExpressionModel;
     }
   }
 
-  currentSimulationIndex() {
-    return this.getSimulations().findIndex(
-      (e) => e.id === this.currentSimulationID
+  addToActionIndex(dx: number) {
+    const actions = this.getActions();
+    const currentActionIndex = actions.findIndex(
+      (e) => e.id === this.currentActionID
     );
-  }
-
-  hasSimulation() {
-    return this.getSimulations().length > 0;
-  }
-
-  addToSimulationIndex(dx: number) {
-    const sims = this.getSimulations();
-    // add sims.length to handle (-1) % n = -1
-    const sim =
-      sims[(this.currentSimulationIndex() + sims.length + dx) % sims.length];
-    if (sim !== undefined) {
-      this.currentSimulationID = sim.id;
+    // add actions.length to handle (-1) % n = -1
+    const action =
+      actions[(currentActionIndex + actions.length + dx) % actions.length];
+    if (action !== undefined) {
+      this.currentActionID = action.id;
     }
     this.updateView();
   }

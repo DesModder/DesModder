@@ -279,6 +279,7 @@ export default class Controller {
   checkForMetadataChange() {
     if (this.metadataChangeSuppressed) return;
     this.graphMetadata = getMetadata();
+
     applyPinnedStyle(this.graphMetadata);
   }
 
@@ -287,6 +288,7 @@ export default class Controller {
       ...this.graphMetadata,
       ...obj,
     });
+
     applyPinnedStyle(obj);
     Calc.controller.updateViews();
   }

@@ -10,7 +10,6 @@
 export * from "components/desmosComponents";
 export {
   ExpressionModel,
-  SimulationModel,
   TableModel,
   TextModel,
   ItemModel,

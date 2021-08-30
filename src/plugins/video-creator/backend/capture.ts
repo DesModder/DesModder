@@ -1,41 +1,32 @@
-import { Calc, EvaluateSingleExpression, HelperExpression } from "desmodder";
+import { Calc, EvaluateSingleExpression } from "desmodder";
 import { scaleBoundsAboutCenter } from "./utils";
 import Controller from "../Controller";
 
-export type CaptureMethod = "once" | "simulation" | "slider";
+export type CaptureMethod = "once" | "action" | "slider";
 
-export let captureCancelled = false;
+export function cancelCapture(controller: Controller) {
+  controller.captureCancelled = true;
 
-let simulationCaptureState:
-  | "none"
-  | "waiting-for-update"
-  | "waiting-for-screenshot" = "none";
-
-export function cancelCapture() {
-  captureCancelled = true;
+  if (controller.actionCaptureState !== "none") {
+    cancelActionCapture(controller);
+  }
 }
 
 async function captureAndApplyFrame(controller: Controller) {
-  const frame = await captureFrame(
-    controller.getCaptureWidthNumber(),
-    controller.getCaptureHeightNumber(),
-    controller.getTargetPixelRatio()
-  );
+  const frame = await captureFrame(controller);
   controller.frames.push(frame);
-
   controller.updateView();
 }
 
-export async function captureFrame(
-  width: number,
-  height: number,
-  targetPixelRatio: number
-) {
+export async function captureFrame(controller: Controller) {
+  const width = controller.getCaptureWidthNumber();
+  const height = controller.getCaptureHeightNumber();
+  const targetPixelRatio = controller.getTargetPixelRatio();
   // resolves the screenshot as a data URI
   return new Promise<string>((resolve, reject) => {
     const tryCancel = () => {
-      if (captureCancelled) {
-        captureCancelled = false;
+      if (controller.captureCancelled) {
+        controller.captureCancelled = false;
         reject("cancelled");
       }
     };
@@ -99,71 +90,62 @@ export async function captureSlider(controller: Controller) {
     try {
       await captureAndApplyFrame(controller);
     } catch {
-      // should be paused due to mathBoundsMismatch or cancellation
+      // should be paused due to cancellation
       break;
     }
   }
 }
 
-function cancelSimulationCapture() {
-  simulationCaptureState = "none";
-  Calc.unobserveEvent("change.dsm-simulation-change");
+function cancelActionCapture(controller: Controller) {
+  controller.isCapturing = false;
+  controller.actionCaptureState = "none";
+  controller.updateView();
+  Calc.unobserveEvent("change.dsm-action-change");
 }
 
-async function captureSimulationFrame(
+async function captureActionFrame(
   controller: Controller,
-  helper: HelperExpression,
   callbackIfCancel: () => void
 ) {
+  let stepped = false;
   try {
-    if (helper.numericValue === 1) {
-      simulationCaptureState = "waiting-for-screenshot";
+    const tickCountRemaining = EvaluateSingleExpression(
+      controller.tickCountLatex
+    );
+    if (tickCountRemaining > 0) {
+      controller.actionCaptureState = "waiting-for-screenshot";
       await captureAndApplyFrame(controller);
-      simulationCaptureState = "waiting-for-update";
-      Calc.controller.dispatch({
-        type: "simulation-single-step",
-        id: controller.currentSimulationID,
-      });
-    } else {
-      // stop due to the helper returning false
-      cancelSimulationCapture();
-      callbackIfCancel();
+      controller.setTickCountLatex(String(tickCountRemaining - 1));
+      controller.actionCaptureState = "waiting-for-update";
+      if (tickCountRemaining - 1 > 0) {
+        Calc.controller.dispatch({
+          type: "action-single-step",
+          id: controller.currentActionID,
+        });
+        stepped = true;
+      }
     }
   } catch {
-    // should be paused due to mathBoundsMismatch or cancellation
-    // this is effectively a break
-    cancelSimulationCapture();
-    callbackIfCancel();
+  } finally {
+    if (!stepped) {
+      // should be paused due to cancellation or tickCountRemaining ≤ 0
+      // this is effectively a break
+      cancelActionCapture(controller);
+      callbackIfCancel();
+    }
   }
 }
 
-async function captureSimulation(controller: Controller) {
-  const whileLatex = controller.simulationWhileLatex;
-  if (/^(\\?\s)*$/.test(whileLatex)) {
-    // would give an infinite loop, probably unintended
-    // use 1 > 0 for an intentional infinite loop
-    return;
-  }
-  // Now we enter callback hell
+async function captureAction(controller: Controller) {
   return new Promise<void>((resolve) => {
-    // syntax errors and false gives helper.numericValue === NaN
-    // true gives helper.numericValue === 1
-    const helper = controller.getWhileLatexHelper();
-
-    helper.observe("numericValue", () => {
-      helper.unobserve("numericValue");
-
-      simulationCaptureState = "waiting-for-update";
-
-      Calc.observeEvent("change.dsm-simulation-change", () => {
-        // check in case there is more than one update before the screenshot finishes
-        if (simulationCaptureState === "waiting-for-update") {
-          captureSimulationFrame(controller, helper, resolve);
-        }
-      });
-
-      captureSimulationFrame(controller, helper, resolve);
+    Calc.observeEvent("change.dsm-action-change", () => {
+      // check in case there is more than one update before the screenshot finishes
+      if (controller.actionCaptureState === "waiting-for-update") {
+        captureActionFrame(controller, resolve);
+      }
     });
+
+    captureActionFrame(controller, resolve);
   });
 }
 
@@ -171,13 +153,13 @@ export async function capture(controller: Controller) {
   controller.isCapturing = true;
   controller.updateView();
   if (controller.captureMethod !== "once") {
-    Calc.controller.stopPlayingSimulation();
+    if (Calc.controller.getTickerPlaying?.()) {
+      Calc.controller.dispatch({ type: "toggle-ticker" });
+    }
     Calc.controller.stopAllSliders();
   }
-  if (controller.captureMethod === "simulation") {
-    if (controller.currentSimulationID) {
-      await captureSimulation(controller);
-    }
+  if (controller.captureMethod === "action") {
+    await captureAction(controller);
   } else {
     if (controller.captureMethod === "once") {
       try {
@@ -192,5 +174,5 @@ export async function capture(controller: Controller) {
   controller.isCapturing = false;
   controller.updateView();
   // no need to retain a pending cancellation, if any; capture is already finished
-  captureCancelled = false;
+  controller.captureCancelled = false;
 }

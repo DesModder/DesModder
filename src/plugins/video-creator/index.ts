@@ -17,7 +17,7 @@ export default {
   id: "video-creator",
   name: "Video Creator",
   description:
-    "Lets you export videos and GIFs of your graphs based on simulations or sliders.",
+    "Lets you export videos and GIFs of your graphs based on actions or sliders.",
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true,

@@ -1,4 +1,4 @@
-.dsm-vc-simulation-navigate-container {
+.dsm-vc-action-navigate-container {
   display: flex;
   justify-content: space-between;
   margin-bottom: 5px;
@@ -15,10 +15,6 @@
 
 .dsm-vc-end-condition-settings {
   margin: 0 5px 10px;
-}
-
-.dsm-vc-simulation-rules .dcg-clickable-property-row {
-  margin-bottom: 6px;
 }
 
 .dsm-vc-reset-bounds-wrapper {
