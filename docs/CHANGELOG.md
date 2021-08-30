@@ -4,6 +4,25 @@ The following guide describes changes in each version, including how to migrate 
 
 Regarding version numbers: The `1.0` release will be when the plugin API is a bit more stable. While in `0.*` releases, I increment the minor number if a new plugin is added and the patch number if a release consists only of bug fixes and enhancements.
 
+## 0.5.1
+
+Adds back the pin-expressions and duplicate-expression-hotkey plugins
+
+Other improvements:
+
+- (Video Creator) Action capture added (including a step count latex)
+  - The old "while" latex from simulations can be replicated using action capture, which will pause if the action variable is undefined: [example](https://www.desmos.com/calculator/zsz8dwcp3j).
+
+Fixes bugs introduced by 0.5.0 and the action release:
+
+- (Find Replace) Now works inside tickers
+- (Builtin Settings) No longer lets you toggle clickableObjects (simulations)
+- (Video Creator) Slider capture no longer crashes immediately
+
+Intentionally adds back the following issue because its previous fix is unmaintainable:
+
+- (Pin Expressions) Using up/down arrows when expressions are pinned can cause some jumping around ([#149](https://github.com/DesModder/DesModder/issues/149))
+
 ## 0.5.0
 
 Emergency bug fix because tickers got released, breaking some DesModder features because simulations were removed. Do not expect all features to work.
