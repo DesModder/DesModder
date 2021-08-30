@@ -80,11 +80,12 @@ const moduleOverrides = {
           <div class="dcg-exppanel-container">
             <If predicate> <ExpressionsHeader/> </If>
             <If predicate> <ExpressionSearchBar/> </If>
-            <If predicate> <div class="dcg-exppanel"> ... </div> </If.
+            <If predicate> <Ticker/> </If>
+            <If predicate> <div class="dcg-exppanel"> ... </div> </If>
           </div>
           */
           createElementCall.node.arguments.splice(
-            5, // (1 for the "div") + (1 for the HTML attributes) + (3 for being after the last <If>)
+            6, // (1 for the "div") + (1 for the HTML attributes) + (4 for being after the last <If>)
             0,
             template.expression(
               `
@@ -296,40 +297,6 @@ const moduleOverrides = {
       },
     })
   ),
-  "graphing-calc/models/list": withDependencyMap(() => ({
-    FunctionDeclaration(path: babel.NodePath<t.FunctionDeclaration>) {
-      /* Warning: not resiliant to variable name change (`y`, `g`, `v`, `r`, `e`, `t`) */
-      if (
-        t.isIdentifier(path.node.id) &&
-        ["y", "g"].includes(path.node.id.name)
-      ) {
-        /* Prevent arrow keys from moving between pinned and unpinned expressions */
-        /* y = findPrevSelectableItem and g = findNextSelectableItem, we replace r && !isItemSelectable(r)
-        with r && !isItemSelectable(r) && (same pinned status as starting item) */
-        path.node.body.body.unshift(
-          template.statement.ast(
-            `var isPinned = window.DesModder?.controller?.isPinned(_(e, t).id)`
-          )
-        );
-        path.traverse({
-          UnaryExpression(path1: babel.NodePath<t.UnaryExpression>) {
-            if (
-              path1.node.operator === "!" &&
-              t.isCallExpression(path1.node.argument) &&
-              t.isIdentifier(path1.node.argument.callee, { name: "v" })
-            ) {
-              path1.replaceWith(
-                template.expression.ast(
-                  `!v(r) || isPinned !== window.DesModder?.controller?.isPinned(r.id)`
-                )
-              );
-              path1.stop();
-            }
-          },
-        });
-      }
-    },
-  })),
   "graphing-calc/actions/keyboard": withDependencyMap(() => ({
     CallExpression(path: babel.NodePath<t.CallExpression>) {
       if (

@@ -16,21 +16,24 @@ body .dcg-calculator-api-container {
   }
 
   .dcg-exppanel-outer .dcg-exppanel-container {
+    // see the override for "expressions/list-view" for the list of existing elements
+
     // Using grid & grid-row to place .dcg-exppanel.dsm-pinned-expressions after the default .dcg-exppanel
     // in the DOM (so the default .dcg-exppanel gets selected in calculations)
     // but above the default .dcg-exppanel in the page, so it appears pinned above
     display: grid;
     // 1fr wins out, so only the default .dcg-exppanel expands
-    grid-template-rows: auto auto auto 1fr;
+    grid-template-rows: auto auto auto auto 1fr;
 
     .dcg-exppanel {
       // placed after the expression search bar
-      grid-row: 4 / 5;
+      grid-row: 5 / 6;
     }
 
     .dcg-exppanel.dsm-pinned-expressions {
       // placed before the expression search bar
-      grid-row: 2 / 3;
+      // but after Ticker
+      grid-row: 3 / 4;
       overflow-y: hidden;
 
       // need to override with higher precedence, and dcg uses a bunch of classes
