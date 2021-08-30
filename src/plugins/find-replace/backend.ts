@@ -30,6 +30,13 @@ function replace(replaceLatex: (s: string) => string) {
     "fps",
   ]);
   const state = Calc.getState();
+  const ticker = state.expressions.ticker;
+  if (ticker?.handlerLatex !== undefined) {
+    ticker.handlerLatex = replaceLatex(ticker.handlerLatex);
+  }
+  if (ticker?.minStepLatex !== undefined) {
+    ticker.minStepLatex = replaceLatex(ticker.minStepLatex);
+  }
   state.expressions.list.forEach((expr: any) => {
     rootKeys.forEach((k) => {
       if (k in expr) {
@@ -58,21 +65,8 @@ function replace(replaceLatex: (s: string) => string) {
         col.values = col.values.map(replaceLatex);
       });
     }
-    if (expr.clickableInfo) {
-      if (expr.clickableInfo.description) {
-        expr.clickableInfo.description = replaceString(
-          expr.clickableInfo.description
-        );
-      }
-      if (expr.clickableInfo.rules) {
-        expr.clickableInfo.rules.forEach((rule: any) => {
-          ["assignment", "expression"].forEach((k) => {
-            if (k in rule) {
-              rule[k] = replaceLatex(rule[k]);
-            }
-          });
-        });
-      }
+    if (expr.clickableInfo?.latex) {
+      expr.clickableInfo.latex = replaceLatex(expr.clickableInfo.latex);
     }
   });
   Calc.setState(state, {

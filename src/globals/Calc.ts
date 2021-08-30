@@ -47,6 +47,13 @@ interface ItemModelBase {
   secret?: boolean;
 }
 
+interface BaseClickable {
+  enabled?: boolean;
+  // description is the screen reader label
+  description?: string;
+  latex?: string;
+}
+
 export interface ExpressionModel extends BasicSetExpression, ItemModelBase {
   type?: "expression";
   fill?: boolean;
@@ -89,6 +96,7 @@ export interface ExpressionModel extends BasicSetExpression, ItemModelBase {
       [K: string]: string;
     };
   };
+  clickableInfo?: BaseClickable;
 }
 
 interface TableColumn extends BasicSetExpression {
@@ -114,6 +122,10 @@ export interface ImageModel extends ItemModelBase {
   width?: string;
   name?: string;
   opacity?: string;
+  clickableInfo?: BaseClickable & {
+    hoveredImage?: string;
+    depressedImage?: string;
+  };
 }
 
 export interface FolderModel {
