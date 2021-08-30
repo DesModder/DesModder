@@ -61,6 +61,9 @@ type Scope = unknown; // TODO
 interface Expression extends Base {
   args: unknown[];
   treeSize: number;
+  _updateSymbols: string[];
+  addUpdateSymbol(s: string): void;
+  getUpdateSymbols(): string[];
   // called within init():
   registerDependencies(): void;
   computeTreeSize(): void;
@@ -216,14 +219,27 @@ export interface ListAccess extends Expression {
   index: ChildExprNode;
 }
 
-export interface OrderedPair extends Expression {
-  // "(1,2)"
-  type: "OrderedPair";
-  // (1,2,3) also turns into an OrderedPair, even though it's more of a triplet
+export interface BareSeq extends Expression {
+  // "1,2"
+  type: "BareSeq";
   args: ChildExprNode[];
 }
 
-interface MovablePoint extends OrderedPair {
+export interface UpdateRule extends Expression {
+  // "a\\to a+1"
+  type: "UpdateRule";
+  args: [Identifier, ChildExprNode];
+  _symbol: string;
+  _expression: ChildExprNode;
+}
+
+export interface ParenSeq extends Expression {
+  // "(1,2)"
+  type: "ParenSeq";
+  args: ChildExprNode[];
+}
+
+interface MovablePoint extends ParenSeq {
   moveStrategy: unknown;
   defaultDragMode: unknown;
   valueType: unknown; // types.Point
@@ -538,6 +554,12 @@ export interface Table extends Base {
   getAllIds(): string[];
 }
 
+export interface Ticker extends Base {
+  type: "Ticker";
+  minStep: unknown;
+  handler: unknown;
+}
+
 export type RootOnlyExprNode =
   | Equation
   | Assignment
@@ -566,7 +588,9 @@ export type ChildExprNode =
   | List
   | Range
   | ListAccess
-  | OrderedPair
+  | BareSeq
+  | ParenSeq
+  | UpdateRule
   | OrderedPairAccess
   | Piecewise
   | Product
@@ -600,7 +624,8 @@ type IrrelevantExprNode =
   | OptimizedRegression
   | IRExpression
   | TableColumn
-  | Table;
+  | Table
+  | Ticker;
 
 type Node = RootOnlyExprNode | ChildExprNode;
 export default Node;
