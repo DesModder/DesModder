@@ -90,7 +90,6 @@ function functionDefinitionToGL(expr: FunctionDefinition) {
     `}`
   );
 }
-
 function implicitToGL(statement: Statement) {
   // assumes statement is an implicit
   // currently just ignores line/border
