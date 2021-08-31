@@ -29,7 +29,8 @@ function getImplicits(context: ComputedContext) {
     if (
       analysis.evaluationState.expression_type === "IMPLICIT" &&
       analysis.evaluationState.is_graphable &&
-      analysis.rawTree.type !== "Error"
+      analysis.rawTree.type !== "Error" &&
+      satisfiesType(analysis.rawTree, "BaseComparator")
     ) {
       implicits.push(id);
     }
