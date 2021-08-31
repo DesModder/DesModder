@@ -1,5 +1,6 @@
-import { Assignment, FunctionDefinition } from "parsing/parsenode";
+import { Assignment, Constant, FunctionDefinition } from "parsing/parsenode";
 import { satisfiesType } from "parsing/nodeTypes";
+import { builtins, getDependencies, getDefinition } from "./builtins";
 import { ComputedContext } from "./computeContext";
 
 export function orderDeps(context: ComputedContext, implicitIDs: string[]) {
@@ -20,6 +21,8 @@ export function orderDeps(context: ComputedContext, implicitIDs: string[]) {
   We output in reversed order, with duplicates removed: g,h,f
   */
 
+  let builtinFuncs = [];
+  let builtinConsts = [];
   let funcsWithDuplicates = [];
   let varsWithDuplicates = [];
   for (let id of implicitIDs) {
@@ -31,13 +34,14 @@ export function orderDeps(context: ComputedContext, implicitIDs: string[]) {
     let d;
     while ((d = deps.pop()) !== undefined) {
       let frameDep = context.frame[d];
-      if (frameDep === undefined) {
-        // d is probably a free variable like "x" or "y"
-        // ignore
-      } else if (!("type" in frameDep)) {
-        // frameDep is {isFunction: true}
+      if (frameDep === undefined || d in builtins || !("type" in frameDep)) {
+        if (d === "x" || d === "y") {
+          continue;
+        }
+        // frameDep is {isFunction: true} or it's a function
         // this is a built-in like sin or abs
-        // ignore
+        builtinFuncs.push(d);
+        deps.push(...getDependencies(d));
       } else {
         if (satisfiesType(frameDep, "FunctionDefinition")) {
           funcsWithDuplicates.push(d);
@@ -47,7 +51,7 @@ export function orderDeps(context: ComputedContext, implicitIDs: string[]) {
           deps.push(...frameDep.getDependencies());
         } else if (satisfiesType(frameDep, "Constant")) {
           // this is e, pi, tau, infty, or trigAngleMultiplier
-          // ignore
+          builtinConsts.push(d);
         } else {
           throw `Dependency is of type ${frameDep.type}, but it is expected to be FunctionDefinition or Assignment`;
         }
@@ -62,6 +66,11 @@ export function orderDeps(context: ComputedContext, implicitIDs: string[]) {
     vars: reverseUnique(varsWithDuplicates).map(
       (c) => context.frame[c] as Assignment
     ),
+    builtinFuncs: reverseUnique(builtinFuncs).map(getDefinition),
+    builtinConsts: reverseUnique(builtinConsts).map((c) => ({
+      name: c,
+      value: context.frame[c] as Constant,
+    })),
   };
 }
 
