@@ -1,11 +1,13 @@
-import { ExpressionModel, ItemModel, parseDesmosLatex } from "desmodder";
+import { satisfiesType } from "parsing/nodeTypes";
 import {
   Assignment,
   ChildExprNode,
   Comparator,
+  Constant,
   FunctionDefinition,
   MaybeRational,
 } from "parsing/parsenode";
+import { getFunctionName } from "./builtins";
 import computeContext, { ComputedContext, Statement } from "./computeContext";
 import { orderDeps } from "./depOrder";
 
@@ -13,22 +15,20 @@ function glslFloatify(x: number) {
   return Number.isInteger(x) ? x.toString() + ".0" : x.toString();
 }
 
-interface GLItemImplemented {
-  glCode: string;
-  type: "function" | "expression";
-}
-
-type GLItem = GLItemImplemented | { type: "unimplemented" };
-
 function getImplicits(context: ComputedContext) {
   const implicits = [];
 
   for (let id in context.analysis) {
     const analysis = context.analysis[id];
+    const statement = context.statements[id];
+    const userData = statement.userData;
     if (
-      analysis.evaluationState.expression_type === "IMPLICIT" &&
+      analysis.evaluationState.is_inequality &&
       analysis.evaluationState.is_graphable &&
-      analysis.rawTree.type !== "Error"
+      analysis.rawTree.type !== "Error" &&
+      satisfiesType(analysis.rawTree, "BaseComparator") &&
+      userData.type === "expression" &&
+      userData.shouldGraph
     ) {
       implicits.push(id);
     }
@@ -39,25 +39,37 @@ function getImplicits(context: ComputedContext) {
 export default function exportAsGLesmos() {
   const context = computeContext();
   const implicitIDs = getImplicits(context);
-  const { funcs: orderedFuncs, vars: orderedVars } = orderDeps(
-    context,
-    implicitIDs
-  );
+  const {
+    funcs: orderedFuncs,
+    vars: orderedVars,
+    builtinConsts,
+    builtinFuncs,
+  } = orderDeps(context, implicitIDs);
   let body = implicitIDs
     .map((id) => implicitToGL(context.statements[id]))
+    .filter((e) => e != "")
     .join("\n\n");
 
-  return (
-    orderedVars.map(assignmentToDeclaration).join("\n") +
-    "\n\n" +
-    orderedFuncs.map(functionDefinitionToGL).join("\n") +
-    `\n\nvec4 outColor = vec4(1.0);\n\n` +
-    `void glesmosMain(vec2 coords) { float x = coords.x; float y = coords.y;\n\n    ` +
-    orderedVars.map(assignmentToGL).join("\n") +
-    "\n\n" +
-    body +
-    "\n\n}\n\n"
-  );
+  return [
+    builtinConsts.map(constToDefinition),
+    builtinFuncs.join("\n"),
+    orderedVars.map(assignmentToDeclaration).join("\n"),
+    orderedFuncs.map(functionDefinitionToGL).join("\n"),
+    "vec4 outColor = vec4(1.0);",
+    "void glesmosMain(vec2 coords) {",
+    "  float x = coords.x; float y = coords.y;",
+    orderedVars.map(assignmentToGL).join("\n"),
+    body,
+    "}",
+  ].join("\n");
+}
+
+function constToDefinition(c: { name: string; value: Constant }) {
+  const val = c.value.asCompilerValue();
+  if (typeof val === "boolean") {
+    throw "All consts should be numbers";
+  }
+  return `float ${c.name} = ${glslFloatify(evalMaybeRational(val))};`;
 }
 
 function assignmentToDeclaration(expr: Assignment) {
@@ -78,14 +90,6 @@ function functionDefinitionToGL(expr: FunctionDefinition) {
     `}`
   );
 }
-
-const INEQUALITY_TYPES = [
-  "Comparator['<']",
-  "Comparator['>']",
-  "Comparator['>=']",
-  "Comparator['<=']",
-];
-
 function implicitToGL(statement: Statement) {
   // assumes statement is an implicit
   // currently just ignores line/border
@@ -93,22 +97,24 @@ function implicitToGL(statement: Statement) {
   const metaData = statement.metaData;
   if (
     userData.type !== "expression" ||
-    !INEQUALITY_TYPES.includes(statement.type)
+    !satisfiesType(statement, "BaseComparator")
   ) {
     throw "Expected implicit";
   }
   let stmt = statement as Comparator;
   const color = metaData.colorLatexValue ?? userData.color ?? "#00FF00";
-  const fillOpacity = metaData.computedFillOpacity ?? 0.4;
+  // metaData.computedFillOpacity could be a number, number[], NaN, or undefined
+  let fillOpacity = metaData.computedFillOpacity ?? NaN;
   if (Array.isArray(color) || Array.isArray(fillOpacity)) {
     throw "Lists of implicits not yet implemented";
   }
+  fillOpacity = isNaN(fillOpacity) ? 0.4 : fillOpacity;
   const colorStr = colorToVec3(color);
   const opacityStr = glslFloatify(fillOpacity);
   return (
-    `if (${childExprToGL(stmt._difference)} > 0.0) {\n` +
-    `        outColor.rgb = mix(outColor.rgb, ${colorStr}, ${opacityStr});\n` +
-    `}`
+    `  if (${childExprToGL(stmt._difference)} > 0.0) {\n` +
+    `    outColor.rgb = mix(outColor.rgb, ${colorStr}, ${opacityStr});\n` +
+    `  }`
   );
 }
 
@@ -154,7 +160,8 @@ function childExprToGL(expr: ChildExprNode): string {
     case "Negative":
       return `-(${childExprToGL(expr.args[0])})`;
     case "FunctionCall":
-      return `${expr._symbol}(${expr.args.map(childExprToGL).join(", ")})`;
+      const name = getFunctionName(expr._symbol);
+      return `${name}(${expr.args.map(childExprToGL).join(", ")})`;
     case "Comparator['<']":
     case "Comparator['>']":
     case "Comparator['>=']":

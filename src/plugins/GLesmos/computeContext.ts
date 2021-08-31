@@ -31,6 +31,7 @@ interface EvalStatus {
   // incomplete
   assignment?: string;
   is_single_identifier?: boolean;
+  is_inequality?: boolean;
   is_graphable?: boolean;
   color_latex_valid?: boolean;
   label_angle_valid?: boolean;
@@ -108,6 +109,7 @@ export default function computeContext() {
     statements: {} as { [K: string]: ItemModel },
   };
   for (let stmt of Calc.controller.getAllItemModels()) {
+    if (stmt.type === "folder") continue;
     // stmt should be cloned, but core/lib/deepCopy threw an error
     changeSet.statements[stmt.id] = stmt;
   }
