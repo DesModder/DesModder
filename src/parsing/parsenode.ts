@@ -433,14 +433,14 @@ export interface Stats extends FullExprFunc {
   type: "Stats";
   _symbol: "stats";
 }
-export interface Boxplot extends FullExprFunc {
+export interface BoxPlot extends FullExprFunc {
   // "\\operatorname{boxplot}(L)"
-  type: "Boxplot";
+  type: "BoxPlot";
   _symbol: "boxplot";
 }
-export interface Dotplot extends FullExprFunc {
+export interface DotPlot extends FullExprFunc {
   // "\\operatorname{dotplot}(L)"
-  type: "Dotplot";
+  type: "DotPlot";
   _symbol: "dotplot";
 }
 export interface Histogram extends FullExprFunc {
@@ -463,6 +463,8 @@ export interface Polygon extends FullExprFunc {
   type: "Polygon";
   _symbol: "polygon";
 }
+
+export type Object3D = unknown;
 
 /* Image */
 
@@ -571,8 +573,8 @@ export type RootOnlyExprNode =
   | Assignment
   | FunctionDefinition
   | Stats
-  | Boxplot
-  | Dotplot
+  | BoxPlot
+  | DotPlot
   | Histogram
   | IndependentTTest
   | TTest

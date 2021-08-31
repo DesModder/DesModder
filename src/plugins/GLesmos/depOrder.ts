@@ -1,10 +1,11 @@
 import { Assignment, FunctionDefinition } from "parsing/parsenode";
+import { satisfiesType } from "parsing/nodeTypes";
 import { ComputedContext } from "./computeContext";
 
 export function orderDeps(context: ComputedContext, implicitIDs: string[]) {
   // topological order
   // assumes no cyclic dependencies (Desmos deal with this for us
-  // by setting context.frame[id].type === "Error" instead of "FunctionDefinition")
+  // by setting context.frame[id].type = "Error" instead of "FunctionDefinition")
 
   /*
   Suppose we have
@@ -24,7 +25,7 @@ export function orderDeps(context: ComputedContext, implicitIDs: string[]) {
   for (let id of implicitIDs) {
     const analysis = context.analysis[id];
     // appease type checker; getImplicits() already excludes errors
-    if (analysis.rawTree.type === "Error") continue;
+    if (satisfiesType(analysis.rawTree, "Error")) continue;
 
     let deps = analysis.rawTree.getDependencies();
     let d;
@@ -38,13 +39,13 @@ export function orderDeps(context: ComputedContext, implicitIDs: string[]) {
         // this is a built-in like sin or abs
         // ignore
       } else {
-        if (frameDep?.type === "FunctionDefinition") {
+        if (satisfiesType(frameDep, "FunctionDefinition")) {
           funcsWithDuplicates.push(d);
           deps.push(...frameDep.getDependencies());
-        } else if (frameDep?.type === "Assignment") {
+        } else if (satisfiesType(frameDep, "Assignment")) {
           varsWithDuplicates.push(d);
           deps.push(...frameDep.getDependencies());
-        } else if (frameDep?.type === "Constant") {
+        } else if (satisfiesType(frameDep, "Constant")) {
           // this is e, pi, tau, infty, or trigAngleMultiplier
           // ignore
         } else {

@@ -1,4 +1,5 @@
 import { ExpressionModel, ItemModel, parseDesmosLatex } from "desmodder";
+import { satisfiesType } from "parsing/nodeTypes";
 import {
   Assignment,
   ChildExprNode,
@@ -79,13 +80,6 @@ function functionDefinitionToGL(expr: FunctionDefinition) {
   );
 }
 
-const INEQUALITY_TYPES = [
-  "Comparator['<']",
-  "Comparator['>']",
-  "Comparator['>=']",
-  "Comparator['<=']",
-];
-
 function implicitToGL(statement: Statement) {
   // assumes statement is an implicit
   // currently just ignores line/border
@@ -93,7 +87,7 @@ function implicitToGL(statement: Statement) {
   const metaData = statement.metaData;
   if (
     userData.type !== "expression" ||
-    !INEQUALITY_TYPES.includes(statement.type)
+    !satisfiesType(statement, "BaseComparator")
   ) {
     throw "Expected implicit";
   }
