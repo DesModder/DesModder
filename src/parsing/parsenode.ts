@@ -12,8 +12,8 @@ interface Base {
   addDummyDependencies(deps: string[]): void;
   mergeDependencies(): void;
   mergeDependenciesInScope(): void;
-  getDependencies(): void;
-  getDummyDependencies(): void;
+  getDependencies(): string[];
+  getDummyDependencies(): string[];
   getScope(): Scope;
   dependsOn(v: string): boolean;
   getExports(): string[];
@@ -258,7 +258,8 @@ export interface Piecewise extends Expression {
 }
 
 interface RGBColor extends Expression {
-  // Not sure how to get RGBColor
+  // No idea how to get RGBColor
+  type: "RGBColor";
 }
 
 /* Repeated Operators */
@@ -619,9 +620,7 @@ type IrrelevantExprNode =
   | Ans
   | MovablePoint
   | RGBColor
-  | RepeatedOperator
   | RawExponent
-  | BaseComparator
   | DoubleInequality
   | SolvedEquation
   | Slider
@@ -632,5 +631,9 @@ type IrrelevantExprNode =
   | Table
   | Ticker;
 
+type SubclassedOnly = RepeatedOperator | BaseComparator;
+
 type Node = RootOnlyExprNode | ChildExprNode;
 export default Node;
+
+export type AnyNode = Node | IrrelevantExprNode;

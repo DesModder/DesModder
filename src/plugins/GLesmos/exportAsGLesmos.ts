@@ -1,82 +1,123 @@
-import { Calc, ItemModel, parseDesmosLatex } from "desmodder";
-import Expression, { ChildExprNode, MaybeRational } from "parsing/parsenode";
-
-type GLesmosExprCategory = "function" | "expression" | "unimplemented";
+import { ExpressionModel, ItemModel, parseDesmosLatex } from "desmodder";
+import {
+  Assignment,
+  ChildExprNode,
+  Comparator,
+  FunctionDefinition,
+  MaybeRational,
+} from "parsing/parsenode";
+import computeContext, { ComputedContext, Statement } from "./computeContext";
+import { orderDeps } from "./depOrder";
 
 function glslFloatify(x: number) {
   return Number.isInteger(x) ? x.toString() + ".0" : x.toString();
 }
 
+interface GLItemImplemented {
+  glCode: string;
+  type: "function" | "expression";
+}
+
+type GLItem = GLItemImplemented | { type: "unimplemented" };
+
+function getImplicits(context: ComputedContext) {
+  const implicits = [];
+
+  for (let id in context.analysis) {
+    const analysis = context.analysis[id];
+    if (
+      analysis.evaluationState.expression_type === "IMPLICIT" &&
+      analysis.evaluationState.is_graphable &&
+      analysis.rawTree.type !== "Error"
+    ) {
+      implicits.push(id);
+    }
+  }
+  return implicits;
+}
+
 export default function exportAsGLesmos() {
-  const state = Calc.getState();
-  const glSnippets = state.expressions.list.map(exprToGL);
+  const context = computeContext();
+  const implicitIDs = getImplicits(context);
+  const { funcs: orderedFuncs, vars: orderedVars } = orderDeps(
+    context,
+    implicitIDs
+  );
+  let body = implicitIDs
+    .map((id) => implicitToGL(context.statements[id]))
+    .join("\n\n");
+
   return (
-    glSnippets
-      .filter((s) => s[1] == "function")
-      .map((s) => s[0])
-      .join("\n\n") +
+    orderedVars.map(assignmentToDeclaration).join("\n") +
+    "\n\n" +
+    orderedFuncs.map(functionDefinitionToGL).join("\n") +
     `\n\nvec4 outColor = vec4(1.0);\n\n` +
     `void glesmosMain(vec2 coords) { float x = coords.x; float y = coords.y;\n\n    ` +
-    glSnippets
-      .filter((s) => s[1] == "expression")
-      .map((s) => s[0])
-      .join("\n    ") +
-    "\n\n}\n\n" +
-    glSnippets
-      .filter((s) => s[1] == "unimplemented")
-      .map((s) => s[0])
-      .join("\n\n")
+    orderedVars.map(assignmentToGL).join("\n") +
+    "\n\n" +
+    body +
+    "\n\n}\n\n"
   );
 }
 
-function exprToGL(expr: ItemModel): [string, GLesmosExprCategory] {
-  switch (expr.type) {
-    case "expression":
-      const latex = expr.latex;
-      if (latex === undefined) return ["", "unimplemented"];
-      const parsed = parseDesmosLatex(latex);
-      switch (parsed.type) {
-        case "FunctionDefinition":
-          return [
-            `float ${parsed._symbol}(${parsed._argSymbols
-              .map((s) => "float " + s)
-              .join(", ")}) {\n` +
-              `  return ${childExprToGL(parsed._expression)};\n` +
-              `}`,
-            "function",
-          ];
-        case "Assignment":
-          return [
-            `float ${parsed._symbol} = ${childExprToGL(parsed._expression)};`,
-            "expression",
-          ];
-        case "Comparator['<']":
-        case "Comparator['>']":
-        case "Comparator['>=']":
-        case "Comparator['<=']":
-          let col = expr.color ? expr.color : "#00FF00";
-          let r = glslFloatify(parseInt(col.slice(1, 3), 16) / 256);
-          let g = glslFloatify(parseInt(col.slice(3, 5), 16) / 256);
-          let b = glslFloatify(parseInt(col.slice(5, 7), 16) / 256);
-          let a = expr.fillOpacity === undefined ? 0.4 : expr.fillOpacity;
-          return [
-            `if (${childExprToGL(parsed._difference)} > 0.0) {\n` +
-              `    outColor.rgb = mix(outColor.rgb, vec3(${r}, ${g}, ${b}), ${a});\n` +
-              `}`,
-            "expression",
-          ];
-        default:
-          return [
-            `// Unimplemented root level type: ${parsed.type}`,
-            "unimplemented",
-          ];
-      }
-    default:
-      return [
-        `// Unimplemented item model type: ${expr.type}`,
-        "unimplemented",
-      ];
+function assignmentToDeclaration(expr: Assignment) {
+  return `float ${expr._symbol};`;
+}
+
+function assignmentToGL(expr: Assignment) {
+  const exprString = childExprToGL(expr._expression);
+  return `${expr._symbol} = ${exprString};`;
+}
+
+function functionDefinitionToGL(expr: FunctionDefinition) {
+  return (
+    `float ${expr._symbol}(${expr._argSymbols
+      .map((s) => "float " + s)
+      .join(", ")}) {\n` +
+    `  return ${childExprToGL(expr._expression)};\n` +
+    `}`
+  );
+}
+
+const INEQUALITY_TYPES = [
+  "Comparator['<']",
+  "Comparator['>']",
+  "Comparator['>=']",
+  "Comparator['<=']",
+];
+
+function implicitToGL(statement: Statement) {
+  // assumes statement is an implicit
+  // currently just ignores line/border
+  const userData = statement.userData;
+  const metaData = statement.metaData;
+  if (
+    userData.type !== "expression" ||
+    !INEQUALITY_TYPES.includes(statement.type)
+  ) {
+    throw "Expected implicit";
   }
+  let stmt = statement as Comparator;
+  const color = metaData.colorLatexValue ?? userData.color ?? "#00FF00";
+  const fillOpacity = metaData.computedFillOpacity ?? 0.4;
+  if (Array.isArray(color) || Array.isArray(fillOpacity)) {
+    throw "Lists of implicits not yet implemented";
+  }
+  const colorStr = colorToVec3(color);
+  const opacityStr = glslFloatify(fillOpacity);
+  return (
+    `if (${childExprToGL(stmt._difference)} > 0.0) {\n` +
+    `        outColor.rgb = mix(outColor.rgb, ${colorStr}, ${opacityStr});\n` +
+    `}`
+  );
+}
+
+function colorToVec3(color: string) {
+  // assumes col is a string of the form "#FF2200"
+  let r = glslFloatify(parseInt(color.slice(1, 3), 16) / 256);
+  let g = glslFloatify(parseInt(color.slice(3, 5), 16) / 256);
+  let b = glslFloatify(parseInt(color.slice(5, 7), 16) / 256);
+  return `vec3(${r}, ${g}, ${b})`;
 }
 
 function childExprToGL(expr: ChildExprNode): string {
@@ -129,9 +170,14 @@ function childExprToGL(expr: ChildExprNode): string {
       a = childExprToGL(expr.args[0]);
       b = childExprToGL(expr.args[1]);
       return `(${a}) && (${b})`;
-    case "OrderedPair":
-      a = childExprToGL(expr.args[0]);
-      b = childExprToGL(expr.args[1]);
+    case "ParenSeq":
+      if (expr.args.length === 2) {
+        a = childExprToGL(expr.args[0]);
+        b = childExprToGL(expr.args[1]);
+        return `vec2(${a}, ${b})`;
+      } else {
+        throw `Unimplemented ParenSeq length: ${expr.args.length}`;
+      }
       return `vec2(${a}, ${b})`;
     case "OrderedPairAccess":
       const index = expr.index.asCompilerValue();
