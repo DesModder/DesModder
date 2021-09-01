@@ -73,7 +73,8 @@ function constToDefinition(c: { name: string; value: Constant }) {
 }
 
 function assignmentToDeclaration(expr: Assignment) {
-  return `float ${expr._symbol};`;
+  return `${(expr._expression?.type == "ParenSeq") ? "vec2" : "float"} ${expr._symbol};`;
+  //return `float ${expr._symbol};`;
 }
 
 function assignmentToGL(expr: Assignment) {
