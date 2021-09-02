@@ -1,3 +1,5 @@
+import { IRChunk, ValueType } from "./IR";
+
 interface Base {
   init(): void;
   exportPenalty: number;
@@ -512,10 +514,11 @@ export interface OptimizedRegression extends Base {
 }
 
 /* Intermediate Representation */
+
 export interface IRExpression extends Base {
   type: "IRExpression";
-  _chunk: unknown;
-  valueType: unknown;
+  _chunk: IRChunk;
+  valueType: ValueType;
   isList: boolean;
   // length is for isList only
   length: number;

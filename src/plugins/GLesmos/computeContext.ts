@@ -5,6 +5,7 @@ import {
   ChildExprNode,
   Constant,
   Seed,
+  IRExpression,
 } from "parsing/parsenode";
 const Context = desmosRequire("core/math/context").Context;
 
@@ -45,16 +46,22 @@ interface EvalStatus {
   expression_type?: ExprType;
 }
 
+export interface Analysis {
+  concreteTree:
+    | IRExpression
+    | {
+        type: "error" | "SolvedEquation";
+      };
+  evaluationState: EvalStatus;
+  policy: unknown;
+  rawTree: AnyNode;
+}
+
 export interface ComputedContext {
   // incomplete
   evaluationMode: "graphing";
   analysis: {
-    [K: string]: {
-      concreteTree: unknown;
-      evaluationState: EvalStatus;
-      policy: unknown;
-      rawTree: AnyNode;
-    };
+    [K: string]: Analysis;
   };
   currentStatus: {
     [K: string]: EvalStatus;
@@ -109,7 +116,7 @@ export default function computeContext() {
     statements: {} as { [K: string]: ItemModel },
   };
   for (let stmt of Calc.controller.getAllItemModels()) {
-    if (stmt.type === "folder") continue;
+    if (stmt.type !== "expression") continue;
     // stmt should be cloned, but core/lib/deepCopy threw an error
     changeSet.statements[stmt.id] = stmt;
   }

@@ -97,6 +97,11 @@ export const builtins: {
   sqrt: {},
   // TODO: use toFraction handling to define x^(1/3) for x < 0
   // Or maybe wrap pow using `x < 0 ? -pow(-x,n) : pow(x,n)`
+  pow: {
+    // rational pow
+    alias: "rpow",
+    def: "float rpow(float x, float y) { return pow(x, y); }",
+  },
   nthroot: {
     def: "float nthroot(float x, float n) { return pow(x,1.0/n); }",
   },
@@ -117,7 +122,7 @@ export const builtins: {
   floor: {},
   ceil: {},
   round: {
-    body: "floor(x+0.5)",
+    def: "float round(float x, float n) { float p=pow(10.0, n); return floor(0.5+x*p)/p; }",
   },
   abs: {},
   sign: {},
