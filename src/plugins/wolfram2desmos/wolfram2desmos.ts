@@ -106,6 +106,7 @@ export function wolfram2desmos(input: string) {
 		} else if (input[i] == "(" || input[i] == "{" || input[i] == "〔") {
 			bracket -= 1;
 		}
+  }
 
   // checks if its an operator
   function isOperator0(x: number) {
