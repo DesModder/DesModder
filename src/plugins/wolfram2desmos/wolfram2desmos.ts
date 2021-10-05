@@ -343,7 +343,7 @@ export function wolfram2desmos(input: string) {
           bracket -= 1;
           continue;
         }
-        if (input[i] == " ") {
+        if (input[i] == " " || input[i] == ",") {
           // eg: "a/(a 2" → "a/(a) (2)"
           insert(i, ")");
           break;
