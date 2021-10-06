@@ -151,6 +151,7 @@ export function wolfram2desmos(input: string) {
   replace(/\!\=/g, "≠");
   replace(/\-\>/g, "→");
   
+  // replace piecewise {} brackets with special character
   while (find(/(?<!_|\^|\\\w+|\S]|}){/) != -1) {
 		startingIndex = find(/(?<!_|\^|\\\w+|\S]|}){/);
 		i = startingIndex;
@@ -223,7 +224,7 @@ export function wolfram2desmos(input: string) {
     bracket = -1;
     while (i < input.length) {
       i++;
-      bracketEval();
+      bracketEvalFinal();
       if (bracket == -1 && input[i] == "|") {
         overwrite(i, ")");
         break;
@@ -553,8 +554,8 @@ export function wolfram2desmos(input: string) {
   // implement absolutes
   replace(/(?<=Ｆ)\s*/g, "");
   while (find(/Ｆ\(/) != -1) {
+    i = find(/Ｆ\(/);
     replace(/Ｆ\(/, "«");
-    i = find(/«/);
     bracket = -1;
     while (i < input.length) {
       i++;
