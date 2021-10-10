@@ -6,6 +6,7 @@ import builtinSettings from "plugins/builtin-settings";
 import rightClickTray from "plugins/right-click-tray";
 import pinExpressions from "plugins/pin-expressions";
 import shiftEnterNewline from "plugins/shift-enter-newline";
+import hideErrors from "plugins/hide-errors";
 
 interface ConfigItemGeneric {
   key: string;
@@ -52,6 +53,7 @@ const _plugins = {
   [rightClickTray.id]: rightClickTray,
   [duplicateHotkey.id]: duplicateHotkey,
   [shiftEnterNewline.id]: shiftEnterNewline,
+  [hideErrors.id]: hideErrors
 } as const;
 
 export const pluginList = Object.values(_plugins);

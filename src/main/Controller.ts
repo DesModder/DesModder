@@ -318,6 +318,20 @@ export default class Controller {
       (this.graphMetadata.pinnedExpressions ?? []).includes(id)
     );
   }
+
+  toggleErrorHidden(id: string) {
+    const hiddenErrors = this.graphMetadata.hiddenErrors ?? [];
+    const newHiddenErrors = hiddenErrors.includes(id)
+      ? hiddenErrors.filter((e) => e != id)
+      : hiddenErrors.concat([id]);
+    this.updateMetadata({
+      hiddenErrors: newHiddenErrors,
+    });
+  }
+
+  isErrorHidden(id: string) {
+    return (this.graphMetadata.hiddenErrors ?? []).includes(id);
+  }
 }
 
 function applyPinnedStyle(metadata: GraphMetadata) {
