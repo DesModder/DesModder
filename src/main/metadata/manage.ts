@@ -4,6 +4,7 @@ import Metadata from "./interface";
 import metadataSchema from "./metadata_schema.json";
 import Ajv, { ValidateFunction } from "ajv";
 import { desModderController } from "desmodder";
+import migrateToLatest from "./migrate";
 
 const ajv = new Ajv();
 const validateMetadata = ajv.compile(
@@ -39,15 +40,13 @@ function getMetadataExpr() {
 
 export function getMetadata() {
   const expr = getMetadataExpr();
-  if (expr === undefined) return {};
+  if (expr === undefined) return getBlankMetadata();
   if (expr.type === "text" && expr.text !== undefined) {
     const parsed = JSON.parse(expr.text);
-    if (validateMetadata(parsed)) {
-      return parsed;
-    }
+    return migrateToLatest(parsed);
   }
   console.warn("Invalid dsm-metadata. Ignoring");
-  return {};
+  return getBlankMetadata();
 }
 
 function addItemToEnd(state: ItemModel) {
@@ -60,22 +59,26 @@ function addItemToEnd(state: ItemModel) {
 export function setMetadata(metadata: Metadata) {
   desModderController.metadataChangeSuppressed = true;
   Calc.removeExpressions([{ id: ID_METADATA }, { id: ID_METADATA_FOLDER }]);
-  if (Object.keys(metadata).length > 0) {
-    // nonempty metadata, so include it in graph state
-    // Calc.setExpression and Calc.setExpressions limit to expressions and tables only,
-    // so we bypass them using a dispatch
-    addItemToEnd({
-      type: "folder",
-      id: ID_METADATA_FOLDER,
-      secret: true,
-      title: "DesModder Metadata",
-    });
-    desModderController.metadataChangeSuppressed = false;
-    addItemToEnd({
-      type: "text",
-      id: ID_METADATA,
-      folderId: ID_METADATA_FOLDER,
-      text: JSON.stringify(metadata),
-    });
-  }
+  // Calc.setExpression and Calc.setExpressions limit to expressions and tables only,
+  // so we bypass them using a dispatch
+  addItemToEnd({
+    type: "folder",
+    id: ID_METADATA_FOLDER,
+    secret: true,
+    title: "DesModder Metadata",
+  });
+  desModderController.metadataChangeSuppressed = false;
+  addItemToEnd({
+    type: "text",
+    id: ID_METADATA,
+    folderId: ID_METADATA_FOLDER,
+    text: JSON.stringify(metadata),
+  });
+}
+
+export function getBlankMetadata(): Metadata {
+  return {
+    version: 2,
+    expressions: {},
+  };
 }

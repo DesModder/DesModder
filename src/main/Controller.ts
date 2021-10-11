@@ -4,8 +4,10 @@ import { MenuFunc } from "components/Menu";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
 import { OptionalProperties } from "utils/utils";
 import { Calc } from "globals/window";
-import GraphMetadata from "./metadata/interface";
-import { getMetadata, setMetadata } from "./metadata/manage";
+import GraphMetadata, {
+  Expression as MetadataExpression,
+} from "./metadata/interface";
+import { getMetadata, setMetadata, getBlankMetadata } from "./metadata/manage";
 
 interface PillboxButton {
   id: string;
@@ -25,7 +27,7 @@ export default class Controller {
   exposedPlugins: {
     [plugin in PluginID]?: any;
   } = {};
-  graphMetadata: GraphMetadata = {};
+  graphMetadata: GraphMetadata = getBlankMetadata();
   metadataChangeSuppressed: boolean = false;
 
   // array of IDs
@@ -283,31 +285,31 @@ export default class Controller {
     applyPinnedStyle(this.graphMetadata);
   }
 
-  updateMetadata(obj: OptionalProperties<GraphMetadata>) {
-    setMetadata({
-      ...this.graphMetadata,
+  updateExprMetadata(id: string, obj: OptionalProperties<MetadataExpression>) {
+    const exprs = this.graphMetadata.expressions;
+    exprs[id] ??= {};
+    exprs[id] = {
+      ...exprs[id],
       ...obj,
-    });
+    };
 
-    applyPinnedStyle(obj);
     Calc.controller.updateViews();
+    setMetadata(this.graphMetadata);
+  }
+
+  getDsmItemModel(id: string) {
+    return this.graphMetadata.expressions[id];
   }
 
   pinExpression(id: string) {
-    const pinnedExpressions = this.graphMetadata.pinnedExpressions ?? [];
-    const newPinnedExpressions = pinnedExpressions.concat(
-      pinnedExpressions.includes(id) ? [] : [id]
-    );
-    this.updateMetadata({
-      pinnedExpressions: newPinnedExpressions,
+    this.updateExprMetadata(id, {
+      pinned: true,
     });
   }
 
   unpinExpression(id: string) {
-    this.updateMetadata({
-      pinnedExpressions: (this.graphMetadata.pinnedExpressions ?? []).filter(
-        (e) => e !== id
-      ),
+    this.updateExprMetadata(id, {
+      pinned: false,
     });
   }
 
@@ -315,41 +317,31 @@ export default class Controller {
     return (
       this.pluginsEnabled["pin-expressions"] &&
       !Calc.controller.getExpressionSearchOpen() &&
-      (this.graphMetadata.pinnedExpressions ?? []).includes(id)
+      this.graphMetadata.expressions[id]?.pinned
     );
   }
 
   hideError(id: string) {
-    const hiddenErrors = this.graphMetadata.hiddenErrors ?? [];
-    if (!hiddenErrors.includes(id)) {
-      this.updateMetadata({
-        hiddenErrors: hiddenErrors.concat([id]),
-      });
-    }
+    this.updateExprMetadata(id, {
+      errorHidden: true,
+    });
   }
 
   toggleErrorHidden(id: string) {
-    const hiddenErrors = this.graphMetadata.hiddenErrors ?? [];
-    if (hiddenErrors.includes(id)) {
-      this.updateMetadata({
-        hiddenErrors: hiddenErrors.filter((e) => e != id),
-      });
-    } else {
-      this.hideError(id);
-    }
+    this.updateExprMetadata(id, {
+      errorHidden: !this.isErrorHidden(id),
+    });
   }
 
   isErrorHidden(id: string) {
-    return (this.graphMetadata.hiddenErrors ?? []).includes(id);
+    return this.graphMetadata.expressions[id]?.errorHidden;
   }
 }
 
 function applyPinnedStyle(metadata: GraphMetadata) {
-  if (metadata.pinnedExpressions !== undefined) {
-    const el = document.querySelector(".dcg-exppanel-container");
-    el?.classList.toggle(
-      "dsm-has-pinned-expressions",
-      metadata.pinnedExpressions.length > 0
-    );
-  }
+  const el = document.querySelector(".dcg-exppanel-container");
+  const hasPinnedExpressions = Object.keys(metadata.expressions).some(
+    (id) => metadata.expressions[id].pinned
+  );
+  el?.classList.toggle("dsm-has-pinned-expressions", hasPinnedExpressions);
 }
