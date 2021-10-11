@@ -286,13 +286,13 @@ export default class Controller {
   checkForMetadataChange() {
     if (this.metadataChangeSuppressed) return;
     this.graphMetadata = getMetadata();
-
-    applyPinnedStyle(this.graphMetadata);
+    this.applyPinnedStyle();
   }
 
   updateExprMetadata(id: string, obj: OptionalProperties<MetadataExpression>) {
     changeExprInMetadata(this.graphMetadata, id, obj);
     setMetadata(this.graphMetadata);
+    this.applyPinnedStyle();
     Calc.controller.updateViews();
   }
 
@@ -335,12 +335,12 @@ export default class Controller {
   isErrorHidden(id: string) {
     return this.graphMetadata.expressions[id]?.errorHidden;
   }
-}
 
-function applyPinnedStyle(metadata: GraphMetadata) {
-  const el = document.querySelector(".dcg-exppanel-container");
-  const hasPinnedExpressions = Object.keys(metadata.expressions).some(
-    (id) => metadata.expressions[id].pinned
-  );
-  el?.classList.toggle("dsm-has-pinned-expressions", hasPinnedExpressions);
+  applyPinnedStyle() {
+    const el = document.querySelector(".dcg-exppanel-container");
+    const hasPinnedExpressions = Object.keys(
+      this.graphMetadata.expressions
+    ).some((id) => this.graphMetadata.expressions[id].pinned);
+    el?.classList.toggle("dsm-has-pinned-expressions", hasPinnedExpressions);
+  }
 }
