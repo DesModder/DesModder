@@ -7,4 +7,5 @@ export default {
   onDisable: () => {},
   alwaysEnabled: true,
   enabledByDefault: true,
+  /* Has module overrides */
 } as const;

@@ -1,8 +1,9 @@
 import window from "globals/window";
-import { pluginModuleOverrides } from "plugins/moduleOverridePlugins";
+import moduleOverrides from "./moduleOverrides";
 import { postMessageUp, listenToMessageDown } from "utils/messages";
 import injectScript from "utils/injectScript";
 import { pollForValue } from "utils/utils";
+import withDependencyMap from "./withDependencyMap";
 
 /* This script is loaded at document_start, before the page's scripts, to give it 
 time to set ALMOND_OVERRIDES and replace module definitions */
@@ -14,11 +15,11 @@ function newDefine(
   dependencies: string[],
   definition: Function
 ) {
-  if (moduleName in pluginModuleOverrides) {
+  if (moduleName in moduleOverrides) {
     try {
       // override should either be `{dependencies, definition}` or just `definition`
       console.debug("transforming", moduleName);
-      const override = pluginModuleOverrides[moduleName](
+      const override = withDependencyMap(moduleOverrides[moduleName])(
         definition,
         dependencies
       );
