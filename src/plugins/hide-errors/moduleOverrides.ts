@@ -46,5 +46,27 @@ const moduleOverrides = {
       },
     })
   ),
+  "expressions/expression_view": withDependencyMap(() => ({
+    AssignmentExpression(path: babel.NodePath<t.AssignmentExpression>) {
+      /* Disable slider creation prompt if error is hidden */
+      if (
+        t.isMemberExpression(path.node.left) &&
+        t.isIdentifier(path.node.left.property, {
+          name: "shouldShowSliderPrompt",
+        }) &&
+        t.isFunctionExpression(path.node.right) &&
+        t.isBlockStatement(path.node.right.body)
+      ) {
+        const oldReturnStatement = path.node.right.body.body[0];
+        if (t.isReturnStatement(oldReturnStatement)) {
+          path.node.right = template.expression(`function () {
+            return (%%oldReturn%%) && !window.DesModder.controller.isErrorHidden(this.model?.id)
+          }`)({
+            oldReturn: oldReturnStatement.argument,
+          });
+        }
+      }
+    },
+  })),
 };
 export default moduleOverrides;
