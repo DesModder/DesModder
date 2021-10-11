@@ -8,8 +8,21 @@ import {
 
 export default (dependencyNameMap: DependencyNameMap) => ({
   /* @plugin pin-expressions
-  Replace the delete button with unpin button when an expression is pinned.
-  This gets applied to expression_view, image-view, table-view, and text_view
+
+  @what Replace the delete button with unpin button when an expression is pinned.
+    This gets applied to expression_view, image-view, table-view, and text_view
+
+  @how
+    Replaces
+        createElement("i", { class: "dcg-icon-remove dcg-top-level-delete", ... })
+    with
+        DCGView.Components.IfElse(
+          isPinned,
+          {
+            false: createElement("i", { class: "dcg-icon-remove dcg-top-level-delete", ... }),
+            true: createElement("i", { class: "dcg-icon-bookmark dcg-top-level-delete", onTap... })
+          }
+        )
   */
   StringLiteral(path: babel.NodePath<t.StringLiteral>) {
     const classes = path.node.value.split(" ");

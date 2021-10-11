@@ -4,8 +4,17 @@ import template from "@babel/template";
 export default () => ({
   CallExpression(path: babel.NodePath<t.CallExpression>) {
     /* @plugin pin-expressions
+    @plugin duplicate-hotkey
     
-    Allows clicking on the pin/unpin button for notes and tables */
+    @what Allows clicking on the pin/unpin button for notes and tables, without exiting edit-list-mode.
+      This also allows clicking on the duplicate and delete button for non-expressions
+      The class "dsm-stay-edit-list-mode" is added in expression-edit-actions.ts
+    
+    @how
+      Replaces
+          this.exitEditListMode()
+      with
+          (event.target.closest(".dsm-stay-edit-list-mode") || this.exitEditListMode())*/
     if (
       t.isMemberExpression(path.node.callee) &&
       t.isIdentifier(path.node.callee.property, {
@@ -15,10 +24,10 @@ export default () => ({
       path.replaceWith(
         // using .closest handles the case where the user clicks directly on the (child/::before) icon instead of the padding
         template.expression(
-          `%%t%%.target.closest(".dsm-stay-edit-list-mode") || %%callExit%%`
+          `%%event%%.target.closest(".dsm-stay-edit-list-mode") || %%callExit%%`
         )({
           callExit: path.node,
-          t: path.getFunctionParent()?.node.params[0],
+          event: path.getFunctionParent()?.node.params[0],
         })
       );
       // don't want to recurse on the inner copy of path.node

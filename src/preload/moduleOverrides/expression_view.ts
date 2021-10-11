@@ -8,10 +8,21 @@ export default (dependencyNameMap: DependencyNameMap) => ({
   ...replaceTopLevelDelete(dependencyNameMap),
   ...replaceDisplayIndex(),
 
-  /* AssignmentExpression and IfStatement are from hide-errors/moduleOverrides.
-    This needs to be refactored, see #227 */
   AssignmentExpression(path: babel.NodePath<t.AssignmentExpression>) {
-    /* Disable slider creation prompt if error is hidden */
+    /* @plugin hide-errors
+    
+    @what Disable slider creation prompt if error is hidden
+    
+    @how 
+      Replaces
+        shouldShowSliderPrompt = function() {
+          return condition
+        }
+      with
+        shouldShowSliderPrompt = function() {
+          return condition && !windowDesModder.controller.isErrorHidden(this.model?.id)
+        }
+    */
     if (
       t.isMemberExpression(path.node.left) &&
       t.isIdentifier(path.node.left.property, {
@@ -31,7 +42,29 @@ export default (dependencyNameMap: DependencyNameMap) => ({
     }
   },
   IfStatement(path: babel.NodePath<t.IfStatement>) {
-    /* Allow shift-enter to create a new expression and hide errors on the old expression */
+    /* @plugin hide-errors
+    
+    @what Allow shift-enter to create a new expression and hide errors on the old expression
+    
+    @how
+      Adds an else clause to
+        if ("Enter" === e) {
+          t && (t.preventDefault(), t.stopPropagation()),
+          return this.controller.dispatch({
+            type: "on-special-key-pressed",
+            key: "Enter",
+          })
+        }
+      specifically
+        else if ("Shift-Enter" === e) {
+          window.DesModder.controller.hideError(this.model.id);
+          this.controller.dispatch({
+            type: "on-special-key-pressed",
+            key: "Enter"
+          })
+          return;
+        }
+    */
     if (
       t.isBinaryExpression(path.node.test, { operator: "===" }) &&
       t.isStringLiteral(path.node.test.left, { value: "Enter" })
@@ -39,7 +72,7 @@ export default (dependencyNameMap: DependencyNameMap) => ({
       /* There was previously no alternate */
       path.node.alternate = template.statement(`if ("Shift-Enter" === e) {
           window.DesModder.controller.hideError(this.model.id);
-           this.controller.dispatch({
+          this.controller.dispatch({
             type: "on-special-key-pressed",
             key: "Enter"
           })

@@ -1,12 +1,22 @@
 import * as t from "@babel/types";
-import { DependencyNameMap } from "preload/withDependencyMap";
 
-export default (dependencyNameMap: DependencyNameMap) => ({
+export default () => ({
   ObjectExpression(path: babel.NodePath<t.ObjectExpression>) {
     /* @plugin hide-errors
-      Remove `targetClickBehavior: this.const('stick')` because we will override click.
-      The default targetClickBehavior is to show the entire tooltip on hover, with no
-      difference on click. */
+      
+    @what Remove `targetClickBehavior: this.const('stick')`
+    
+    @why We override click in hide-errors. The default targetClickBehavior is to show the
+      entire tooltip on hover, with no difference on click, which is what we want.
+      
+    @how
+      Remove the "targetClickBehavior" property from the attr object in
+        Dcgview.createElement(Tooltip1.Tooltip, {
+          tooltip: this.props.error,
+          targetClickBehavior: this.const('stick'),
+          gravity: this.props.gravity
+        }, ...)
+    */
     path.node.properties = path.node.properties.filter(
       (prop) =>
         !t.isObjectProperty(prop) ||

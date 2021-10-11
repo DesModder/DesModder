@@ -6,8 +6,30 @@ import { DependencyNameMap } from "preload/withDependencyMap";
 export default (dependencyNameMap: DependencyNameMap) => ({
   ObjectProperty(path: babel.NodePath<t.ObjectProperty>) {
     /* @plugin hide-errors
-      Wrap the error message tooltipped-error with a div, using
-      onTap to trigger hiding/showing the error. */
+    
+    @what Wrap the error message tooltipped-error with a div, using
+      onTap to trigger hiding/showing the error.
+      
+    @how
+      Replaces
+        {
+          error: function () {
+            return DCGView.createElement(...) // original
+          }
+        }
+      with
+        {
+          error: DCGView.createElement(
+            "div",
+            { onTap, ... },
+            (
+              function () {
+                return DCGView.createElement(...) // original
+              }
+            )()
+          )
+        }
+      */
     if (
       t.isIdentifier(path.node.key, { name: "error" }) &&
       path.node.value.type === "FunctionExpression"

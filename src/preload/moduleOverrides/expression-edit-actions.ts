@@ -10,18 +10,21 @@ import withinFunctionAssignment from "preload/withinFunctionAssignment";
 export default (dependencyNameMap: DependencyNameMap) => ({
   StringLiteral(path: babel.NodePath<t.StringLiteral>) {
     if (path.node.value == "dcg-expression-edit-actions") {
-      /* Add pin/unpin buttons */
+      /* @plugin pin-expressions
+      
+      @what Add pin/unpin buttons 
+      
+      @how
+        Splices in a new <If predicate></If> after "duplicate expression" and before "delete expression" in
+          <span class="dcg-expression-edit-actions">
+            <If predicate> dcg-graphic idk </If>
+            <If predicate> convert to table </If>
+            <If predicate> duplicate expression </If>
+            // here
+            <If predicate> delete expression </If>
+          </span>*/
       const createElementCall = containingCreateElementCall(path);
       if (createElementCall === null) return;
-      /*
-        We want to insert after "duplicate expression" and before "delete expression"
-        <span class="dcg-expression-edit-actions">
-          <If predicate> dcg-graphic idk </If>
-          <If predicate> convert to table </If>
-          <If predicate> duplicate expression </If>
-          <If predicate> delete expression </If>
-        </span>
-        */
       createElementCall.node.arguments.splice(
         5, // (1 for the "span") + (1 for the HTML attributes) + (3 for the three <If>s it comes after)
         0,
@@ -91,8 +94,14 @@ export default (dependencyNameMap: DependencyNameMap) => ({
       );
     }
 
-    /* Following belongs in duplicate-hotkey, but can't duplicate module overrides in the current system */
-    /* Prevent exiting edit-list-mode, to allow duplicating non-expressions */
+    /* @plugin duplicate-hotkey
+
+    @what Prevent exiting edit-list-mode when the duplicate button is clicked,
+      to allow duplicating non-expressions
+
+    @how Appends " dsm-stay-edit-list-mode" to the class names of the duplicate button.
+      The fresh class name is used in abstract-item-view.ts.
+    */
     const classes = path.node.value.split(" ");
     if (
       classes.includes("dcg-duplicate-btn") ||
@@ -102,16 +111,44 @@ export default (dependencyNameMap: DependencyNameMap) => ({
       path.node.value = path.node.value + " dsm-stay-edit-list-mode";
     }
   },
-  /* Following belongs in duplicate-hotkey, but can't duplicate module overrides in the current system */
   enter(path: babel.NodePath) {
     withinFunctionAssignment("canDuplicate", (func: t.FunctionExpression) => {
-      /* Include the duplicate button even for non-expressions */
+      /* @plugin duplicate-hotkey
+      
+      @what Include the duplicate button even for non-expressions
+      
+      @how
+        Replace
+          canDuplicate = function () {
+            var e = this.model();
+            return e && "expression" === e.type && !this.isSlider();
+          }
+        with
+          canDuplicate = function () {
+            var e = this.model();
+            return !this.isSlider();
+          }
+      */
       func.body.body = [template.statement.ast(`return !this.isSlider()`)];
     }).enter(path);
     withinFunctionAssignment(
       "onDuplicateWithoutFocus",
       (func: t.FunctionExpression) => {
-        /* Call DesModder's duplicate if available */
+        /* @plugin duplicate-hotkey
+
+        @what Call DesModder's duplicate, instead of the default, if available
+
+        @how
+          Replace
+            onDuplicateWithoutFocus = function () {
+              this.controller.dispatch({
+                type: "duplicate-expression",
+                id: this.props.id(),
+              });
+            })
+          with a variant that calls DesModder's duplicate if it loaded correctly;
+            otherwise it dispatches a duplicate-expression event in the same way as before.
+        */
         func.body.body = [
           template.statement.ast(
             `const duplicate = window.DesModder.exposedPlugins?.["duplicate-expression-hotkey"]?.duplicateExpression`

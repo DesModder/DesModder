@@ -3,14 +3,20 @@ import template from "@babel/template";
 
 export default () => ({
   CallExpression(path: babel.NodePath<t.CallExpression>) {
-    /* @plugin pin-expressions */
+    /* @plugin pin-expressions
+    
+    @what Prevent the down arrow from creating a new last item when pressing down from the bottom-most pinned expression
+    
+    @how
+      Replaces
+          !List.selectNextItem(e.getListModel())
+      with
+        !(window.DesModder?.controller?.isPinned(e.getSelectedItem().id) + List.selectNextItem(e.getListModel()))
+    */
     if (
       t.isMemberExpression(path.node.callee) &&
       t.isIdentifier(path.node.callee.property, { name: "selectNextItem" })
     ) {
-      /* Prevent the down arrow from creating a new last item when pressing down from the bottom-most pinned expression */
-      /* Change `!List.selectNextItem(e.getListModel())`
-        to !(window.DesModder?.controller?.isPinned(e.getSelectedItem().id) + List.selectNextItem(e.getListModel())) */
       path.replaceWith(
         template.expression(
           `window.DesModder?.controller?.isPinned(%%e%%.getSelectedItem().id) + %%callSelectNextItem%%`
@@ -24,7 +30,15 @@ export default () => ({
   },
   ReturnStatement(path: babel.NodePath<t.ReturnStatement>) {
     /* @plugin hide-errors
-    Prevent enter/shift-enter from creating sliders */
+
+    @what Prevent enter/shift-enter from creating sliders
+    
+    @how
+      Replaces
+          if (cond) { e.createSlidersForItem(...) }
+      with
+          if (cond && !window.Desmodder.controller.isErrorHidden(l.id)) { e.createSlidersForItem(...) }
+    */
     const returned = path.node.argument;
     if (
       returned &&

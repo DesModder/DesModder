@@ -10,19 +10,23 @@ export default (dependencyNameMap: DependencyNameMap) => ({
   StringLiteral(path: babel.NodePath<t.StringLiteral>) {
     if (path.node.value == "dcg-exppanel-container") {
       /* @plugin pin-expressions
-       Insert div.dcg-exppanel.dsm-pinned-expressions to show the pinned expressions */
+      
+      @what Insert div.dcg-exppanel.dsm-pinned-expressions to show the pinned expressions
+      
+      @how
+        Splices in a new <For></For> (to show all the pinned expressions) at the end of
+          <div class="dcg-exppanel-container">
+            <If predicate> <ExpressionsHeader/> </If>
+            <If predicate> <ExpressionSearchBar/> </If>
+            <If predicate> <Ticker/> </If>
+            <If predicate> <div class="dcg-exppanel"> ... </div> </If>
+            // here
+          </div>
+          We want to insert the extra child at the end to make the first .dcg-exppanel the one selected by Desmos's JS.
+          The CSS will move it to the beginning
+      */
       const createElementCall = containingCreateElementCall(path);
       if (createElementCall === null) return;
-      /*
-        We want to insert the extra child at the end to make the first .dcg-exppanel the one selected by Desmos's JS.
-        The CSS will move it to the beginning
-        <div class="dcg-exppanel-container">
-          <If predicate> <ExpressionsHeader/> </If>
-          <If predicate> <ExpressionSearchBar/> </If>
-          <If predicate> <Ticker/> </If>
-          <If predicate> <div class="dcg-exppanel"> ... </div> </If>
-        </div>
-        */
       createElementCall.node.arguments.splice(
         6, // (1 for the "div") + (1 for the HTML attributes) + (4 for being after the last <If>)
         0,
