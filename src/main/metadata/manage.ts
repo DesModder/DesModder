@@ -1,15 +1,8 @@
 import { Calc } from "globals/window";
 import { ItemModel } from "globals/Calc";
 import Metadata from "./interface";
-import metadataSchema from "./metadata_schema.json";
-import Ajv, { ValidateFunction } from "ajv";
 import { desModderController } from "desmodder";
 import migrateToLatest from "./migrate";
-
-const ajv = new Ajv();
-const validateMetadata = ajv.compile(
-  metadataSchema
-) as ValidateFunction<Metadata>;
 
 /*
 This file manages the metadata expressions. These are stored on the graph state as expressions and consist of:
