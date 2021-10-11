@@ -7,7 +7,12 @@ import { Calc } from "globals/window";
 import GraphMetadata, {
   Expression as MetadataExpression,
 } from "./metadata/interface";
-import { getMetadata, setMetadata, getBlankMetadata } from "./metadata/manage";
+import {
+  getMetadata,
+  setMetadata,
+  getBlankMetadata,
+  changeExprInMetadata,
+} from "./metadata/manage";
 
 interface PillboxButton {
   id: string;
@@ -286,15 +291,9 @@ export default class Controller {
   }
 
   updateExprMetadata(id: string, obj: OptionalProperties<MetadataExpression>) {
-    const exprs = this.graphMetadata.expressions;
-    exprs[id] ??= {};
-    exprs[id] = {
-      ...exprs[id],
-      ...obj,
-    };
-
-    Calc.controller.updateViews();
+    changeExprInMetadata(this.graphMetadata, id, obj);
     setMetadata(this.graphMetadata);
+    Calc.controller.updateViews();
   }
 
   getDsmItemModel(id: string) {
