@@ -46,46 +46,8 @@ const moduleOverrides = {
       },
     })
   ),
-  "expressions/expression_view": withDependencyMap(() => ({
-    AssignmentExpression(path: babel.NodePath<t.AssignmentExpression>) {
-      /* Disable slider creation prompt if error is hidden */
-      if (
-        t.isMemberExpression(path.node.left) &&
-        t.isIdentifier(path.node.left.property, {
-          name: "shouldShowSliderPrompt",
-        }) &&
-        t.isFunctionExpression(path.node.right) &&
-        t.isBlockStatement(path.node.right.body)
-      ) {
-        const oldReturnStatement = path.node.right.body.body[0];
-        if (t.isReturnStatement(oldReturnStatement)) {
-          path.node.right = template.expression(`function () {
-            return (%%oldReturn%%) && !window.DesModder.controller.isErrorHidden(this.model?.id)
-          }`)({
-            oldReturn: oldReturnStatement.argument,
-          });
-        }
-      }
-    },
-    IfStatement(path: babel.NodePath<t.IfStatement>) {
-      /* Allow shift-enter to create a new expression and hide errors on the old expression */
-      if (
-        t.isBinaryExpression(path.node.test, { operator: "===" }) &&
-        t.isStringLiteral(path.node.test.left, { value: "Enter" })
-      ) {
-        /* There was previously no alternate */
-        path.node.alternate = template.statement(`if ("Shift-Enter" === e) {
-          window.DesModder.controller.hideError(this.model.id);
-           this.controller.dispatch({
-            type: "on-special-key-pressed",
-            key: "Enter"
-          })
-          return;
-        }`)();
-      }
-    },
-    /* Also modified "graphing-calc/actions/keyboard" in pin-expressions/moduleOverrides 
-    to prevent shift-enter from adding sliders */
-  })),
+  /* Also modified expressions/expression_view" in pin-expressions/moduleOverrides */
+  /* Also modified "graphing-calc/actions/keyboard" in pin-expressions/moduleOverrides 
+  to prevent shift-enter from adding sliders */
 };
 export default moduleOverrides;
