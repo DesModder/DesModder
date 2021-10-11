@@ -7,6 +7,7 @@ import rightClickTray from "plugins/right-click-tray";
 import pinExpressions from "plugins/pin-expressions";
 import shiftEnterNewline from "plugins/shift-enter-newline";
 import hideErrors from "plugins/hide-errors";
+import debugMode from "plugins/debug-mode";
 
 interface ConfigItemGeneric {
   key: string;
@@ -32,6 +33,7 @@ export interface Plugin<Settings extends GenericBooleanSettings = {}> {
   description: string;
   onEnable(config?: unknown): any;
   onDisable?(): void;
+  afterDisable?(): void;
   enabledByDefault?: boolean;
   alwaysEnabled?: boolean;
   config?: readonly ConfigItem[];
@@ -50,10 +52,11 @@ const _plugins = {
   [pinExpressions.id]: pinExpressions,
   [videoCreator.id]: videoCreator,
   [findReplace.id]: findReplace,
+  [debugMode.id]: debugMode,
   [rightClickTray.id]: rightClickTray,
   [duplicateHotkey.id]: duplicateHotkey,
   [shiftEnterNewline.id]: shiftEnterNewline,
-  [hideErrors.id]: hideErrors
+  [hideErrors.id]: hideErrors,
 } as const;
 
 export const pluginList = Object.values(_plugins);
