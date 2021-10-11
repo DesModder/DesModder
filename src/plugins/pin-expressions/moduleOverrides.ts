@@ -4,45 +4,17 @@ import withDependencyMap, {
   DependencyNameMap,
 } from "preload/withDependencyMap";
 import withinFunctionAssignment from "preload/withinFunctionAssignment";
-import { extendErrors } from "ajv/dist/compile/errors";
-
-function findIdentifierThis(path: babel.NodePath) {
-  // Didn't figure out path.scope, so ...
-  // Hopes that something like `var e = this` is the start of a function parent of `path`
-  // Returns the identifier `e`
-  let func = path.getFunctionParent();
-  while (func !== null) {
-    let body = func.node.body;
-    if (t.isBlockStatement(body)) {
-      for (let statement of body.body) {
-        if (t.isVariableDeclaration(statement)) {
-          for (let decl of statement.declarations) {
-            if (t.isThisExpression(decl.init) && t.isIdentifier(decl.id)) {
-              return decl.id;
-            }
-          }
-        }
-      }
-    }
-    func = func.getFunctionParent();
-  }
-  return null;
-}
-
-function containingCreateElementCall(path: babel.NodePath) {
-  return path.findParent(
-    (path) =>
-      path.isCallExpression() &&
-      t.isMemberExpression(path.node.callee) &&
-      t.isIdentifier(path.node.callee.property, { name: "createElement" })
-  ) as babel.NodePath<t.CallExpression>;
-}
+import {
+  containingCreateElementCall,
+  findIdentifierThis,
+} from "preload/moduleUtils";
 
 const replaceTopLevelDelete = withDependencyMap((dependencyNameMap) => ({
   StringLiteral(path: babel.NodePath<t.StringLiteral>) {
     const classes = path.node.value.split(" ");
     if (classes.includes("dcg-top-level-delete")) {
       const createElementCall = containingCreateElementCall(path);
+      if (createElementCall === null) return;
       createElementCall.replaceWith(
         template.expression(`
           %%DCGView%%.Components.IfElse(
@@ -74,6 +46,7 @@ const moduleOverrides = {
         if (path.node.value == "dcg-exppanel-container") {
           /* Insert div.dcg-exppanel.dsm-pinned-expressions to show the pinned expressions */
           const createElementCall = containingCreateElementCall(path);
+          if (createElementCall === null) return;
           /*
           We want to insert the extra child at the end to make the first .dcg-exppanel the one selected by Desmos's JS.
           The CSS will move it to the beginning
@@ -175,6 +148,7 @@ const moduleOverrides = {
         if (path.node.value == "dcg-expression-edit-actions") {
           /* Add pin/unpin buttons */
           const createElementCall = containingCreateElementCall(path);
+          if (createElementCall === null) return;
           /*
           We want to insert after "duplicate expression" and before "delete expression"
           <span class="dcg-expression-edit-actions">
@@ -315,6 +289,29 @@ const moduleOverrides = {
           })
         );
         path.skip();
+      }
+    },
+    ReturnStatement(path: babel.NodePath<t.ReturnStatement>) {
+      /* For hide-errors: prevent enter/shift-enter from creating sliders */
+      const returned = path.node.argument;
+      if (
+        returned &&
+        t.isCallExpression(returned) &&
+        t.isMemberExpression(returned.callee) &&
+        t.isIdentifier(returned.callee.property, {
+          name: "createSlidersForItem",
+        })
+      ) {
+        const ifStatement = path.parentPath;
+        const itemModelIf = ifStatement.parentPath?.parentPath?.node;
+        if (t.isIfStatement(ifStatement.node) && t.isIfStatement(itemModelIf)) {
+          ifStatement.node.test = template.expression(
+            `%%oldCondition%% && !window.DesModder.controller.isErrorHidden(%%itemModel%%.id)`
+          )({
+            oldCondition: ifStatement.node.test,
+            itemModel: itemModelIf.test,
+          });
+        }
       }
     },
   })),

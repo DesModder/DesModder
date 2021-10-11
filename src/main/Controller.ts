@@ -318,6 +318,30 @@ export default class Controller {
       (this.graphMetadata.pinnedExpressions ?? []).includes(id)
     );
   }
+
+  hideError(id: string) {
+    const hiddenErrors = this.graphMetadata.hiddenErrors ?? [];
+    if (!hiddenErrors.includes(id)) {
+      this.updateMetadata({
+        hiddenErrors: hiddenErrors.concat([id]),
+      });
+    }
+  }
+
+  toggleErrorHidden(id: string) {
+    const hiddenErrors = this.graphMetadata.hiddenErrors ?? [];
+    if (hiddenErrors.includes(id)) {
+      this.updateMetadata({
+        hiddenErrors: hiddenErrors.filter((e) => e != id),
+      });
+    } else {
+      this.hideError(id);
+    }
+  }
+
+  isErrorHidden(id: string) {
+    return (this.graphMetadata.hiddenErrors ?? []).includes(id);
+  }
 }
 
 function applyPinnedStyle(metadata: GraphMetadata) {
