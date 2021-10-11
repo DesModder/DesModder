@@ -15,7 +15,9 @@ const replaceDisplayIndex = (dependencyNameMap: DependencyNameMap) => ({
       path.replaceWith(
         template.expression(
           `window.DesModder?.controller?.isPluginEnabled("debug-mode")
-            ? %%model%%.id
+            ? %%model%%.id.length <= 6
+              ? %%model%%.id
+              : %%model%%.id.substring(0, 4) + "…"
             : %%model%%.displayIndex`
         )({
           model: path.node.object,
