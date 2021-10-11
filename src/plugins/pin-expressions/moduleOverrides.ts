@@ -9,7 +9,25 @@ import {
   findIdentifierThis,
 } from "preload/moduleUtils";
 
+const replaceDisplayIndex = (dependencyNameMap: DependencyNameMap) => ({
+  MemberExpression(path: babel.NodePath<t.MemberExpression>) {
+    if (t.isIdentifier(path.node.property, { name: "displayIndex" })) {
+      path.replaceWith(
+        template.expression(
+          `window.DesModder?.controller?.isPluginEnabled("debug-mode")
+            ? %%model%%.id
+            : %%model%%.displayIndex`
+        )({
+          model: path.node.object,
+        })
+      );
+      path.skip();
+    }
+  },
+});
+
 const replaceTopLevelDelete = (dependencyNameMap: DependencyNameMap) => ({
+  ...replaceDisplayIndex(dependencyNameMap),
   StringLiteral(path: babel.NodePath<t.StringLiteral>) {
     const classes = path.node.value.split(" ");
     if (classes.includes("dcg-top-level-delete")) {
@@ -380,6 +398,7 @@ const moduleOverrides = {
   "expressions/image-view": withDependencyMap(replaceTopLevelDelete),
   "expressions/table-view": withDependencyMap(replaceTopLevelDelete),
   "expressions/text_view": withDependencyMap(replaceTopLevelDelete),
+  "expressions/folder-view": withDependencyMap(replaceDisplayIndex),
 
   "main/instancehotkeys": withDependencyMap(() => ({
     Identifier(path: babel.NodePath<t.Identifier>) {

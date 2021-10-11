@@ -201,6 +201,7 @@ export default class Controller {
         }
         this.setPluginEnabled(i, false);
         this.updateMenuView();
+        plugin.afterDisable?.();
       }
     }
   }
