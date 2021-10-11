@@ -103,7 +103,7 @@ function duplicatedTable(state: TableModel) {
       id: Calc.controller.generateId(),
       latex: column?.values?.some((e) => e !== "")
         ? // assume, since some value is filled in, this is a definition
-          `${letters[letterIndex++]}_${subscript}`
+          `${letters[letterIndex++]}_{${subscript}}`
         : column.latex,
     })),
     id: Calc.controller.generateId(),
