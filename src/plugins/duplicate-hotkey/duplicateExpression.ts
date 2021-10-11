@@ -51,9 +51,13 @@ export default function duplicateExpression(id: string) {
 
 function duplicateFolder(model: Indexed<FolderModel>) {
   const newFolderId = Calc.controller.generateId();
-  // the duplicated folder will go before the existing folder
+  const oldExpressions = Calc.getState().expressions.list;
+  const numChildren = oldExpressions.filter(
+    (e) => e.type !== "folder" && e.folderId === model.id
+  ).length;
+  // the duplicated folder will go after the existing folder
   insertItemAtIndex(
-    model.index,
+    model.index + numChildren + 1,
     {
       ...getStates.folder.getState(model, { stripDefaults: false }),
       id: newFolderId,
@@ -61,14 +65,10 @@ function duplicateFolder(model: Indexed<FolderModel>) {
     true
   );
   // assumes all child folders are consecutively after to parent folder
-  const oldExpressions = Calc.getState().expressions.list;
-  for (let i = model.index + 1; ; i++) {
+  for (let i = model.index + 1; i <= model.index + numChildren; i++) {
     const expr = oldExpressions[i];
-    if (!expr || expr.type === "folder" || expr.folderId !== model.id) {
-      break;
-    }
     insertItemAtIndex(
-      i - 1,
+      i + numChildren + 1,
       {
         ...duplicatedNonFolder(expr),
         folderId: newFolderId,
