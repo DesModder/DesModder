@@ -291,6 +291,29 @@ const moduleOverrides = {
         path.skip();
       }
     },
+    ReturnStatement(path: babel.NodePath<t.ReturnStatement>) {
+      /* For hide-errors: prevent enter/shift-enter from creating sliders */
+      const returned = path.node.argument;
+      if (
+        returned &&
+        t.isCallExpression(returned) &&
+        t.isMemberExpression(returned.callee) &&
+        t.isIdentifier(returned.callee.property, {
+          name: "createSlidersForItem",
+        })
+      ) {
+        const ifStatement = path.parentPath;
+        const itemModelIf = ifStatement.parentPath?.parentPath?.node;
+        if (t.isIfStatement(ifStatement.node) && t.isIfStatement(itemModelIf)) {
+          ifStatement.node.test = template.expression(
+            `%%oldCondition%% && !window.DesModder.controller.isErrorHidden(%%itemModel%%.id)`
+          )({
+            oldCondition: ifStatement.node.test,
+            itemModel: itemModelIf.test,
+          });
+        }
+      }
+    },
   })),
   "main/controller": withDependencyMap(() => ({
     /* Warning: not resiliant to variable name change (`s`, `e`, `t`) */

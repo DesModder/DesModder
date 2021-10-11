@@ -67,6 +67,25 @@ const moduleOverrides = {
         }
       }
     },
+    IfStatement(path: babel.NodePath<t.IfStatement>) {
+      /* Allow shift-enter to create a new expression and hide errors on the old expression */
+      if (
+        t.isBinaryExpression(path.node.test, { operator: "===" }) &&
+        t.isStringLiteral(path.node.test.left, { value: "Enter" })
+      ) {
+        /* There was previously no alternate */
+        path.node.alternate = template.statement(`if ("Shift-Enter" === e) {
+          window.DesModder.controller.hideError(this.model.id);
+           this.controller.dispatch({
+            type: "on-special-key-pressed",
+            key: "Enter"
+          })
+          return;
+        }`)();
+      }
+    },
+    /* Also modified "graphing-calc/actions/keyboard" in pin-expressions/moduleOverrides 
+    to prevent shift-enter from adding sliders */
   })),
 };
 export default moduleOverrides;
