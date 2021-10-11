@@ -92,20 +92,26 @@ function duplicatedNonFolder(state: ItemModel) {
 
 function duplicatedTable(state: TableModel) {
   // Since this is a table, need to change column headers if they are variables
-  const subscript = Calc.controller.generateTableXSubscript();
-  let letterIndex = 0;
-  // assume that there are 26 or fewer variables defined in the table
-  const letters = "xyzwabcdefghijklmnopqrstuv";
+  // The subscript can overlap with an existing subscript that occurs at the end
+  //   of a subscript that is not purely a number,'
+  //   e.g. A_{cat3} in https://www.desmos.com/calculator/k4g5fwbxfj
+  // Don't worry about this though
+  const subscriptNumber = Calc.controller.generateTableXSubscript();
   return {
     ...state,
-    columns: state.columns.map((column) => ({
-      ...column,
-      id: Calc.controller.generateId(),
-      latex: column?.values?.some((e) => e !== "")
-        ? // assume, since some value is filled in, this is a definition
-          `${letters[letterIndex++]}_{${subscript}}`
-        : column.latex,
-    })),
+    columns: state.columns.map((column) => {
+      let col = {
+        ...column,
+        id: Calc.controller.generateId(),
+      };
+      if (column.latex) {
+        col.latex = column.values?.some((e) => e !== "")
+          ? // assume, since some value is filled in, this is a definition
+            renumberedIdentifier(column.latex, subscriptNumber)
+          : column.latex;
+      }
+      return col;
+    }),
     id: Calc.controller.generateId(),
   };
 }
@@ -115,4 +121,17 @@ function duplicatedSimple(state: ExpressionModel | TextModel | ImageModel) {
     ...state,
     id: Calc.controller.generateId(),
   };
+}
+
+function renumberedIdentifier(id: string, num: number) {
+  /* Renumber an identifier, e.g.
+    ("A", 5) => "A_{5}"
+    ("A_{3}", 5) => "A_{5}"
+    ("A_{longName32}", 50) => "A_{longName50}" */
+  const parts = id.split("_");
+  const main = parts[0];
+  let subscript = parts[1] ?? "";
+  if (subscript.startsWith("{")) subscript = subscript.slice(1, -1);
+  subscript = subscript.replace(/\d*$/, String(num));
+  return `${main}_{${subscript}}`;
 }
