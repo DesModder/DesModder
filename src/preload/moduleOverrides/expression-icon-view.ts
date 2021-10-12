@@ -1,7 +1,7 @@
 import * as t from "@babel/types";
 import template from "@babel/template";
-import { findIdentifierThis } from "preload/moduleUtils";
-import { DependencyNameMap } from "preload/withDependencyMap";
+import { findIdentifierThis } from "../overrideHelpers/moduleUtils";
+import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
 
 export default (dependencyNameMap: DependencyNameMap) => ({
   ObjectProperty(path: babel.NodePath<t.ObjectProperty>) {

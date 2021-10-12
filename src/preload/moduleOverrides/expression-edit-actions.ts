@@ -1,11 +1,11 @@
 import * as t from "@babel/types";
 import template from "@babel/template";
-import { DependencyNameMap } from "preload/withDependencyMap";
+import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
 import {
   containingCreateElementCall,
   findIdentifierThis,
-} from "preload/moduleUtils";
-import withinFunctionAssignment from "preload/withinFunctionAssignment";
+} from "../overrideHelpers/moduleUtils";
+import withinFunctionAssignment from "../overrideHelpers/withinFunctionAssignment";
 
 export default (dependencyNameMap: DependencyNameMap) => ({
   StringLiteral(path: babel.NodePath<t.StringLiteral>) {

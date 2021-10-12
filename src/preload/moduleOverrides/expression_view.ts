@@ -2,7 +2,7 @@ import * as t from "@babel/types";
 import template from "@babel/template";
 import replaceTopLevelDelete from "./partials/replaceTopLevelDelete";
 import replaceDisplayIndex from "./partials/replaceDisplayIndex";
-import { DependencyNameMap } from "preload/withDependencyMap";
+import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
 
 export default (dependencyNameMap: DependencyNameMap) => ({
   ...replaceTopLevelDelete(dependencyNameMap),

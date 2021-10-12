@@ -1,5 +1,5 @@
 import template from "@babel/template";
-import withinFunctionAssignment from "preload/withinFunctionAssignment";
+import withinFunctionAssignment from "../overrideHelpers/withinFunctionAssignment";
 
 export default () =>
   /* @plugin pinned-expressions
@@ -7,7 +7,8 @@ export default () =>
   @what Disable pinned expressions from appearing in the unpinned section
   Might break tours/base_tour or expressions hidden inside folders
   
-  @how Completely rewrites getDisplayState(e) to also set an item as hidden if it is pinned */
+  @how Completely rewrites getDisplayState(e) to also set an item as hidden if it is pinned
+  */
   withinFunctionAssignment(
     "getDisplayState",
     () => template.expression.ast`function (e) {

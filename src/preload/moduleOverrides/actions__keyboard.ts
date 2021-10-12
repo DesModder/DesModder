@@ -35,9 +35,9 @@ export default () => ({
     
     @how
       Replaces
-          if (cond) { e.createSlidersForItem(...) }
+        if (cond) { e.createSlidersForItem(...) }
       with
-          if (cond && !window.Desmodder.controller.isErrorHidden(l.id)) { e.createSlidersForItem(...) }
+        if (cond && !window.Desmodder.controller.isErrorHidden(l.id)) { e.createSlidersForItem(...) }
     */
     const returned = path.node.argument;
     if (

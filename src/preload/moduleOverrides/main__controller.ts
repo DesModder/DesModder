@@ -1,6 +1,6 @@
 import * as t from "@babel/types";
 import template from "@babel/template";
-import withinFunctionAssignment from "preload/withinFunctionAssignment";
+import withinFunctionAssignment from "../overrideHelpers/withinFunctionAssignment";
 
 export default () => ({
   /* Warning: not resiliant to variable name change (`s`, `e`, `t`) */

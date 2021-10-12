@@ -12,9 +12,10 @@ export default () => ({
     
     @how
       Replaces
-          this.exitEditListMode()
+        this.exitEditListMode()
       with
-          (event.target.closest(".dsm-stay-edit-list-mode") || this.exitEditListMode())*/
+        (event.target.closest(".dsm-stay-edit-list-mode") || this.exitEditListMode())
+    */
     if (
       t.isMemberExpression(path.node.callee) &&
       t.isIdentifier(path.node.callee.property, {
@@ -22,7 +23,8 @@ export default () => ({
       })
     ) {
       path.replaceWith(
-        // using .closest handles the case where the user clicks directly on the (child/::before) icon instead of the padding
+        // using .closest handles the case where the user clicks directly on the (child/::before)
+        // icon instead of the padding
         template.expression(
           `%%event%%.target.closest(".dsm-stay-edit-list-mode") || %%callExit%%`
         )({

@@ -1,4 +1,4 @@
-import { DependencyNameMap } from "./withDependencyMap";
+import { DependencyNameMap } from "./overrideHelpers/withDependencyMap";
 import { Visitor } from "@babel/traverse";
 import tooltippedError from "./moduleOverrides/tooltipped-error";
 import expressionIconView from "./moduleOverrides/expression-icon-view";
