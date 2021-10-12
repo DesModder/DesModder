@@ -3,7 +3,7 @@ import View from "./View";
 import { MenuFunc } from "components/Menu";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
 import { OptionalProperties } from "utils/utils";
-import { Calc } from "globals/window";
+import { Calc, desmosRequire } from "globals/window";
 import GraphMetadata, {
   Expression as MetadataExpression,
 } from "./metadata/interface";
@@ -13,6 +13,7 @@ import {
   getBlankMetadata,
   changeExprInMetadata,
 } from "./metadata/manage";
+const AbstractItem = desmosRequire("graphing-calc/models/abstract-item");
 
 interface PillboxButton {
   id: string;
@@ -346,39 +347,40 @@ export default class Controller {
   }
 
   folderEmpty(folderIndex: number) {
-    const state = Calc.getState();
-    const folderId = state.expressions.list[folderIndex].id;
+    const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
+    if (!folderModel) return;
+    const folderId = folderModel?.id;
 
     // Remove folderId on all of the contents of the folder
     for (
       let currIndex = folderIndex + 1,
-        currExpr = state.expressions.list[currIndex];
+        currExpr = Calc.controller.getItemModelByIndex(currIndex);
       currExpr && currExpr.type !== "folder" && currExpr?.folderId === folderId;
-      currIndex++, currExpr = state.expressions.list[currIndex]
+      currIndex++, currExpr = Calc.controller.getItemModelByIndex(currIndex)
     ) {
-      delete currExpr.folderId;
+      AbstractItem.setFolderId(currExpr, undefined);
     }
 
     // Remove folder
-    state.expressions.list.splice(folderIndex, 1);
+    Calc.controller._removeExpressionSynchronously(folderModel);
 
-    Calc.setState(state, { allowUndo: true });
+    Calc.controller.updateViews();
   }
 
   folderConsume(folderIndex: number) {
-    const state = Calc.getState();
-    const folderId = state.expressions.list[folderIndex].id;
+    const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
+    const folderId = folderModel?.id;
 
     // Place all expressions until the next folder into this folder
     for (
       let currIndex = folderIndex + 1,
-        currExpr = state.expressions.list[currIndex];
+        currExpr = Calc.controller.getItemModelByIndex(currIndex);
       currExpr && currExpr.type !== "folder";
-      currIndex++, currExpr = state.expressions.list[currIndex]
+      currIndex++, currExpr = Calc.controller.getItemModelByIndex(currIndex)
     ) {
-      currExpr.folderId = folderId;
+      AbstractItem.setFolderId(currExpr, folderId);
     }
 
-    Calc.setState(state, { allowUndo: true });
+    Calc.controller.updateViews();
   }
 }

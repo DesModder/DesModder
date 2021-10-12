@@ -259,6 +259,7 @@ type CalculatorOptionsAssign = {
 export default interface Calc {
   //// undocumented, may break
   controller: {
+    _removeExpressionSynchronously(model: ItemModel): void;
     getPillboxBackgroundColor(): string;
     isGraphSettingsOpen(): boolean;
     dispatch(e: DispatchedEvent): void;
@@ -270,6 +271,7 @@ export default interface Calc {
     getTickerPlaying?(): boolean;
     // The item models returned are actually much more detailed
     getItemModel(id: any): ItemModel | undefined;
+    getItemModelByIndex(index: number): ItemModel | undefined;
     getAllItemModels(): ItemModel[];
     stopAllSliders(): void;
     isKeypadOpen(): boolean;
