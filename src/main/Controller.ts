@@ -344,4 +344,41 @@ export default class Controller {
     ).some((id) => this.graphMetadata.expressions[id].pinned);
     el?.classList.toggle("dsm-has-pinned-expressions", hasPinnedExpressions);
   }
+
+  folderEmpty(folderIndex: number) {
+    const state = Calc.getState();
+    const folderId = state.expressions.list[folderIndex].id;
+
+    // Remove folderId on all of the contents of the folder
+    for (
+      let currIndex = folderIndex + 1,
+        currExpr = state.expressions.list[currIndex];
+      currExpr && currExpr.type !== "folder" && currExpr?.folderId === folderId;
+      currIndex++, currExpr = state.expressions.list[currIndex]
+    ) {
+      delete currExpr.folderId;
+    }
+
+    // Remove folder
+    state.expressions.list.splice(folderIndex, 1);
+
+    Calc.setState(state, { allowUndo: true });
+  }
+
+  folderConsume(folderIndex: number) {
+    const state = Calc.getState();
+    const folderId = state.expressions.list[folderIndex].id;
+
+    // Place all expressions until the next folder into this folder
+    for (
+      let currIndex = folderIndex + 1,
+        currExpr = state.expressions.list[currIndex];
+      currExpr && currExpr.type !== "folder";
+      currIndex++, currExpr = state.expressions.list[currIndex]
+    ) {
+      currExpr.folderId = folderId;
+    }
+
+    Calc.setState(state, { allowUndo: true });
+  }
 }

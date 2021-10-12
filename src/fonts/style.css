@@ -1,6 +1,6 @@
 @font-face {
   font-family: "dsm-icons";
-  src: url("dsm-icons.woff?jzd2tg") format("woff");
+  src: url("fonts/dsm-icons.woff?buli65") format("woff");
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -27,4 +27,10 @@
 }
 .dsm-icon-bookmark:before {
   content: "\e901";
+}
+.dsm-icon-folder-minus:before {
+  content: "\e902";
+}
+.dsm-icon-folder-plus:before {
+  content: "\e903";
 }
