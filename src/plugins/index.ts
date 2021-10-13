@@ -8,6 +8,7 @@ import pinExpressions from "plugins/pin-expressions";
 import shiftEnterNewline from "plugins/shift-enter-newline";
 import hideErrors from "plugins/hide-errors";
 import debugMode from "plugins/debug-mode";
+import showTips from "plugins/show-tips";
 
 interface ConfigItemGeneric {
   key: string;
@@ -53,6 +54,7 @@ const _plugins = {
   [videoCreator.id]: videoCreator,
   [findReplace.id]: findReplace,
   [debugMode.id]: debugMode,
+  [showTips.id]: showTips,
   [rightClickTray.id]: rightClickTray,
   [duplicateHotkey.id]: duplicateHotkey,
   [shiftEnterNewline.id]: shiftEnterNewline,

@@ -3,6 +3,8 @@ import PillboxContainer from "components/PillboxContainer";
 import { pollForValue } from "utils/utils";
 import Controller from "./Controller";
 import { Calc } from "globals/window";
+// Not good to have a specific workaround for this single plugin
+import { createTipElement } from "plugins/show-tips/Tip";
 
 export default class View {
   pillboxMountNode: HTMLElement | null = null;
@@ -81,5 +83,9 @@ export default class View {
   updateMenuView() {
     this.menuView && this.menuView.update();
     this.updatePillboxHeight();
+  }
+
+  createTipElement() {
+    return createTipElement();
   }
 }
