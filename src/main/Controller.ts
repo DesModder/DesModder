@@ -346,7 +346,7 @@ export default class Controller {
     el?.classList.toggle("dsm-has-pinned-expressions", hasPinnedExpressions);
   }
 
-  folderEmpty(folderIndex: number) {
+  folderDump(folderIndex: number) {
     const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
     if (!folderModel || folderModel.type !== "folder") return;
     const folderId = folderModel?.id;
@@ -372,7 +372,7 @@ export default class Controller {
     Calc.controller.updateViews();
   }
 
-  folderConsume(folderIndex: number) {
+  folderMerge(folderIndex: number) {
     const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
     const folderId = folderModel?.id;
 

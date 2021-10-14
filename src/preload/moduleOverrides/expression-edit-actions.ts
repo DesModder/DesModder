@@ -62,7 +62,7 @@ const pinUnpinAction = `
     )
   )`;
 
-const folderEmptyAction = `
+const folderDumpAction = `
   %%DCGView%%.createElement(
     %%DCGView%%.Components.If,
     {
@@ -70,25 +70,25 @@ const folderEmptyAction = `
         && window.Calc.controller.getItemModelByIndex(%%this%%.model().index + 1)?.folderId === %%this%%.model().id
     },
     ${actionCreate(
-      "Empty",
-      "dsm-folder-empty-button",
+      "Dump",
+      "dsm-folder-dump-button",
       "dsm-icon-folder-minus",
-      "() => window.DesModder.controller.folderEmpty(%%this%%.model().index)"
+      "() => window.DesModder.controller.folderDump(%%this%%.model().index)"
     )}
   )
   `;
 
-const folderConsumeAction = `
+const folderMergeAction = `
   %%DCGView%%.createElement(
     %%DCGView%%.Components.If,
     {
       predicate: () => window.DesModder.controller.pluginsEnabled["folder-tools"] && %%this%%.model().type === "folder"
     },
     ${actionCreate(
-      "Consume",
-      "dsm-folder-consume-button",
+      "Merge",
+      "dsm-folder-merge-button",
       "dsm-icon-folder-plus",
-      "() => window.DesModder.controller.folderConsume(%%this%%.model().index)"
+      "() => window.DesModder.controller.folderMerge(%%this%%.model().index)"
     )}
   )
   `;
@@ -99,7 +99,7 @@ export default (dependencyNameMap: DependencyNameMap) => ({
       /* @plugin pin-expressions
       @plugin folder-tools
       
-      @what Add pin/unpin buttons, and add folder-consume and folder-empty buttons
+      @what Add pin/unpin buttons, and add folder-merge and folder-dump buttons
       
       @how
         Splices in a new <If predicate></If> after "duplicate expression" and before "delete expression" in
@@ -115,13 +115,12 @@ export default (dependencyNameMap: DependencyNameMap) => ({
       createElementCall.node.arguments.splice(
         5, // (1 for the "span") + (1 for the HTML attributes) + (3 for the three <If>s it comes after)
         0,
-        ...[pinUnpinAction, folderEmptyAction, folderConsumeAction].map(
-          (action) =>
-            template.expression(action)({
-              DCGView: dependencyNameMap.dcgview,
-              Tooltip: dependencyNameMap["../shared-components/tooltip"],
-              this: findIdentifierThis(path),
-            })
+        ...[pinUnpinAction, folderDumpAction, folderMergeAction].map((action) =>
+          template.expression(action)({
+            DCGView: dependencyNameMap.dcgview,
+            Tooltip: dependencyNameMap["../shared-components/tooltip"],
+            this: findIdentifierThis(path),
+          })
         )
       );
     }
