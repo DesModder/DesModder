@@ -350,6 +350,7 @@ export interface Comparator extends BaseComparator {
 interface DoubleInequality extends Base {
   // Not sure how to get DoubleInequality
   type: "DoubleInequality";
+  args: [ChildExprNode, string, ChildExprNode, string, ChildExprNode];
   _operators: [Expression, Expression];
   _expressions: [Expression, Expression];
   _indicator: unknown;
@@ -607,7 +608,8 @@ export type ChildExprNode =
   | Assignment
   // Seed + ExtendSeed only used in SeededFunctionCalls?
   | Seed
-  | ExtendSeed;
+  | ExtendSeed
+  | DoubleInequality;
 
 // These can only occur after further transformation or something
 type IrrelevantExprNode =
@@ -617,7 +619,6 @@ type IrrelevantExprNode =
   | RepeatedOperator
   | RawExponent
   | BaseComparator
-  | DoubleInequality
   | SolvedEquation
   | Slider
   | Image
