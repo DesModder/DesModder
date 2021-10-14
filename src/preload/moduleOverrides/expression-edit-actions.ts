@@ -93,6 +93,21 @@ const folderMergeAction = `
   )
   `;
 
+const noteEncloseAction = `
+  %%DCGView%%.createElement(
+    %%DCGView%%.Components.If,
+    {
+      predicate: () => window.DesModder.controller.pluginsEnabled["folder-tools"] && %%this%%.model().type === "text"
+    },
+    ${actionCreate(
+      "Enclose",
+      "dsm-note-enclose-button",
+      "dsm-icon-folder-plus",
+      "() => window.DesModder.controller.noteEnclose(%%this%%.model().index)"
+    )}
+  )
+  `;
+
 export default (dependencyNameMap: DependencyNameMap) => ({
   StringLiteral(path: babel.NodePath<t.StringLiteral>) {
     if (path.node.value == "dcg-expression-edit-actions") {
@@ -115,7 +130,12 @@ export default (dependencyNameMap: DependencyNameMap) => ({
       createElementCall.node.arguments.splice(
         5, // (1 for the "span") + (1 for the HTML attributes) + (3 for the three <If>s it comes after)
         0,
-        ...[pinUnpinAction, folderDumpAction, folderMergeAction].map((action) =>
+        ...[
+          pinUnpinAction,
+          noteEncloseAction,
+          folderDumpAction,
+          folderMergeAction,
+        ].map((action) =>
           template.expression(action)({
             DCGView: dependencyNameMap.dcgview,
             Tooltip: dependencyNameMap["../shared-components/tooltip"],

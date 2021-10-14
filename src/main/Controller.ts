@@ -362,7 +362,7 @@ export default class Controller {
     }
 
     // Replace the folder with text that has the same title
-    var T = Calc.controller.createItemModel({
+    const T = Calc.controller.createItemModel({
       id: Calc.controller.generateId(),
       type: "text",
       text: folderModel.title,
@@ -387,5 +387,19 @@ export default class Controller {
     }
 
     Calc.controller.updateViews();
+  }
+
+  noteEnclose(noteIndex: number) {
+    // Replace this note with a folder, then folderMerge
+    const noteModel = Calc.controller.getItemModelByIndex(noteIndex);
+    if (!noteModel || noteModel.type !== "text") return;
+
+    const T = Calc.controller.createItemModel({
+      id: Calc.controller.generateId(),
+      type: "folder",
+      title: noteModel.text,
+    });
+    Calc.controller._toplevelReplaceItemAt(noteIndex, T, true);
+    this.folderMerge(noteIndex);
   }
 }
