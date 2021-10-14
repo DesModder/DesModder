@@ -148,7 +148,7 @@ export default class SelectCapture extends DCGView.Class<{
                     }
                     key={(action) => action.id}
                   >
-                    <div>
+                    <div class="dsm-vc-current-action">
                       {() => (
                         <StaticMathQuillView
                           latex={() =>
