@@ -3,7 +3,7 @@ import View from "./View";
 import { MenuFunc } from "components/Menu";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
 import { OptionalProperties } from "utils/utils";
-import { Calc } from "globals/window";
+import { Calc, desmosRequire } from "globals/window";
 import GraphMetadata, {
   Expression as MetadataExpression,
 } from "./metadata/interface";
@@ -13,6 +13,7 @@ import {
   getBlankMetadata,
   changeExprInMetadata,
 } from "./metadata/manage";
+const AbstractItem = desmosRequire("graphing-calc/models/abstract-item");
 
 interface PillboxButton {
   id: string;
@@ -343,5 +344,62 @@ export default class Controller {
       this.graphMetadata.expressions
     ).some((id) => this.graphMetadata.expressions[id].pinned);
     el?.classList.toggle("dsm-has-pinned-expressions", hasPinnedExpressions);
+  }
+
+  folderDump(folderIndex: number) {
+    const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
+    if (!folderModel || folderModel.type !== "folder") return;
+    const folderId = folderModel?.id;
+
+    // Remove folderId on all of the contents of the folder
+    for (
+      let currIndex = folderIndex + 1,
+        currExpr = Calc.controller.getItemModelByIndex(currIndex);
+      currExpr && currExpr.type !== "folder" && currExpr?.folderId === folderId;
+      currIndex++, currExpr = Calc.controller.getItemModelByIndex(currIndex)
+    ) {
+      AbstractItem.setFolderId(currExpr, undefined);
+    }
+
+    // Replace the folder with text that has the same title
+    const T = Calc.controller.createItemModel({
+      id: Calc.controller.generateId(),
+      type: "text",
+      text: folderModel.title,
+    });
+    Calc.controller._toplevelReplaceItemAt(folderIndex, T, true);
+
+    Calc.controller.updateViews();
+  }
+
+  folderMerge(folderIndex: number) {
+    const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
+    const folderId = folderModel?.id;
+
+    // Place all expressions until the next folder into this folder
+    for (
+      let currIndex = folderIndex + 1,
+        currExpr = Calc.controller.getItemModelByIndex(currIndex);
+      currExpr && currExpr.type !== "folder";
+      currIndex++, currExpr = Calc.controller.getItemModelByIndex(currIndex)
+    ) {
+      AbstractItem.setFolderId(currExpr, folderId);
+    }
+
+    Calc.controller.updateViews();
+  }
+
+  noteEnclose(noteIndex: number) {
+    // Replace this note with a folder, then folderMerge
+    const noteModel = Calc.controller.getItemModelByIndex(noteIndex);
+    if (!noteModel || noteModel.type !== "text") return;
+
+    const T = Calc.controller.createItemModel({
+      id: Calc.controller.generateId(),
+      type: "folder",
+      title: noteModel.text,
+    });
+    Calc.controller._toplevelReplaceItemAt(noteIndex, T, true);
+    this.folderMerge(noteIndex);
   }
 }
