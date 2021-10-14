@@ -348,7 +348,7 @@ export default class Controller {
 
   folderEmpty(folderIndex: number) {
     const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
-    if (!folderModel) return;
+    if (!folderModel || folderModel.type !== "folder") return;
     const folderId = folderModel?.id;
 
     // Remove folderId on all of the contents of the folder
@@ -361,8 +361,13 @@ export default class Controller {
       AbstractItem.setFolderId(currExpr, undefined);
     }
 
-    // Remove folder
-    Calc.controller._removeExpressionSynchronously(folderModel);
+    // Replace the folder with text that has the same title
+    var T = Calc.controller.createItemModel({
+      id: Calc.controller.generateId(),
+      type: "text",
+      text: folderModel.title,
+    });
+    Calc.controller._toplevelReplaceItemAt(folderIndex, T, true);
 
     Calc.controller.updateViews();
   }

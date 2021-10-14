@@ -259,7 +259,13 @@ type CalculatorOptionsAssign = {
 export default interface Calc {
   //// undocumented, may break
   controller: {
-    _removeExpressionSynchronously(model: ItemModel): void;
+    // _removeExpressionSynchronously(model: ItemModel): void;
+    _toplevelReplaceItemAt(
+      index: number,
+      model: ItemModel,
+      shouldFocus: boolean
+    ): void;
+    createItemModel(modelTemplate: any): ItemModel;
     getPillboxBackgroundColor(): string;
     isGraphSettingsOpen(): boolean;
     dispatch(e: DispatchedEvent): void;
