@@ -70,6 +70,45 @@ export default (dependencyNameMap: DependencyNameMap) => ({
           this: findIdentifierThis(path),
         })
       );
+    } else if (path.node.value === "dcg-noedit-branding") {
+      /* @plugin show-tips
+
+      @what Replace "powered by Desmos" branding with tips when tips are enabled
+
+      @how
+        Replaces
+          // The original:
+          DCGView.createElement(
+            "span",
+            { class: Dcgview.const("dcg-noedit-branding") },
+            ...
+          )
+        with
+          IfElse(
+            () => DesModder.controller.isPluginEnabled("show-tips"),
+            {
+              false: () => // (The original) //,
+              true: DesModder.view.createTipElement()
+            }
+          )
+      */
+      const createElementCall = containingCreateElementCall(path);
+      if (createElementCall === null) return;
+      createElementCall.replaceWith(
+        template.expression(`
+          %%DCGView%%.Components.IfElse(
+            () => window.DesModder?.controller?.isPluginEnabled?.("show-tips"),
+            {
+              false: () => %%oldCEC%%,
+              true: () => window.DesModder?.view?.createTipElement()
+            }
+          )
+        `)({
+          DCGView: dependencyNameMap.dcgview,
+          oldCEC: createElementCall.node,
+        })
+      );
+      createElementCall.skip();
     }
   },
 });
