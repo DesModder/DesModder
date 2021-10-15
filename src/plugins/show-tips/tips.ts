@@ -15,10 +15,10 @@ const tips: TipData[] = [
     desc: "Paste ASCII Math directly into Desmos",
   },
   {
-    desc: "Pin (bookmark) commonly-used sliders and actions for easy access",
+    desc: "Pin (bookmark) commonly-used expressions for easy access",
   },
   {
-    desc: "Before starting a long capture, it's safest to test the beginning of an export",
+    desc: "Before starting a long video capture, it's safest to test the beginning of an export",
   },
   {
     desc: "Find and Replace is great for renaming variables",
@@ -34,7 +34,7 @@ const tips: TipData[] = [
   },
   /* Desmos tips */
   {
-    desc: 'Type `"` to quickly make a note or "folder" for a folder',
+    desc: 'Type " to quickly make a note or "folder" for a folder',
   },
   {
     desc: "Use arctan(y,x) instead of arctan(y/x) to get the angle of a point",
@@ -76,7 +76,12 @@ const tips: TipData[] = [
     learnMore: "https://www.desmos.com/calculator/4z0wllsipm",
   },
   {
-    desc: "To view a summmary of data, use the `histogram` or `stats` functions",
+    desc: "To visualize data, you can use a histogram, boxplot, and more",
+    learnMore:
+      "https://help.desmos.com/hc/en-us/articles/360022405991-Data-Visualizations",
+  },
+  {
+    desc: "Desmos has many built-in statistics functions",
     learnMore:
       "https://help.desmos.com/hc/en-us/articles/4405633253389-Statistics",
   },
@@ -100,6 +105,27 @@ const tips: TipData[] = [
   },
   {
     desc: "The math from Desmos can be directly copy-pasted into LaTeX editors",
+  },
+  {
+    desc: "To test how fast your graph runs, use ?timeInWorker",
+    learnMore: "https://www.desmos.com/calculator/n37jppmozc?timeInWorker",
+  },
+  {
+    desc: "Use backticks to math-format point labels",
+    learnMore: "https://help.desmos.com/hc/en-us/articles/4405487300877-Labels",
+  },
+  {
+    desc: "Use ${ } for dynamic point labels based on a variable",
+    learnMore: "https://help.desmos.com/hc/en-us/articles/4405487300877-Labels",
+  },
+  {
+    desc: "Disabling text outline can sometimes make labels more readable",
+    learnMore: "https://www.desmos.com/calculator/l8wm22nwkr",
+  },
+  {
+    // From SlimRunner
+    desc: "Regressions are more powerful than you can imagine",
+    learnMore: "https://www.desmos.com/calculator/vof10zrr5i",
   },
   /* Motivation */
   {
