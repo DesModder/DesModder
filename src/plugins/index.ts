@@ -9,6 +9,7 @@ import shiftEnterNewline from "plugins/shift-enter-newline";
 import hideErrors from "plugins/hide-errors";
 import debugMode from "plugins/debug-mode";
 import showTips from "plugins/show-tips";
+import folderTools from "plugins/folder-tools";
 
 interface ConfigItemGeneric {
   key: string;
@@ -59,6 +60,7 @@ const _plugins = {
   [duplicateHotkey.id]: duplicateHotkey,
   [shiftEnterNewline.id]: shiftEnterNewline,
   [hideErrors.id]: hideErrors,
+  [folderTools.id]: folderTools,
 } as const;
 
 export const pluginList = Object.values(_plugins);

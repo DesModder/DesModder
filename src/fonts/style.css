@@ -1,6 +1,6 @@
 @font-face {
   font-family: "dsm-icons";
-  src: url("dsm-icons.woff?jzd2tg") format("woff");
+  src: url("fonts/dsm-icons.woff?mqvmaq") format("woff");
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -22,6 +22,15 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.dsm-icon-folder-minus:before {
+  content: "\e902";
+}
+.dsm-icon-folder-plus:before {
+  content: "\e903";
+}
+.dsm-icon-desmodder:before {
+  content: "\e904";
+}
 .dsm-icon-bookmark-outline-add:before {
   content: "\e900";
 }
