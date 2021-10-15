@@ -45,7 +45,7 @@ export default class Controller {
     "main-menu": {
       id: "main-menu",
       tooltip: "DesModder Menu",
-      iconClass: "dcg-icon-settings",
+      iconClass: "dsm-icon-desmodder",
       popup: MenuFunc,
     },
   };
