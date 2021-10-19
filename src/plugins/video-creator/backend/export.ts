@@ -32,6 +32,19 @@ async function exportAll(ffmpeg: FFmpeg, fileType: OutFileType, fps: number) {
   return outFilename;
 }
 
+export async function cancelExport(controller: Controller) {
+  try {
+    // ffmpeg.exit() always throws an error `exit(1)`,
+    // which is reasonable behavior because ffmpeg would throw an error when sigkilled
+    ffmpeg?.exit();
+  } catch {
+    ffmpeg = null;
+    await initFFmpeg(controller);
+    controller.isExporting = false;
+    controller.updateView();
+  }
+}
+
 export async function initFFmpeg(controller: Controller) {
   if (ffmpeg === null) {
     ffmpeg = createFFmpeg({

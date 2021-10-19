@@ -12,7 +12,7 @@ import CaptureMethod from "./CaptureMethod";
 import PreviewCarousel from "./PreviewCarousel";
 import LoadingPie from "./LoadingPie";
 import Controller from "../Controller";
-import { OutFileType } from "../backend/export";
+import { OutFileType, cancelExport } from "../backend/export";
 import "./MainPopup.less";
 
 const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng"];
@@ -60,6 +60,11 @@ export default class MainPopup extends DCGView.Class<{
                 this.controller.exportProgress > 0.99
               }
             />
+          </div>
+          <div class="dsm-vc-cancel-export-button">
+            <Button color="blue" onTap={() => cancelExport(this.controller)}>
+              Cancel
+            </Button>
           </div>
         </div>
       ),

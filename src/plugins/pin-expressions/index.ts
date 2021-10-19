@@ -14,4 +14,5 @@ export default {
     Calc.controller.updateViews();
   },
   enabledByDefault: true,
+  /* Has module overrides */
 } as const;

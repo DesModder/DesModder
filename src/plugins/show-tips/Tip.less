@@ -1,0 +1,48 @@
+.dcg-calculator-api-container {
+  .dcg-expressions-branding {
+    // Usage tip will be above the normal bounding box
+    overflow: visible;
+  }
+
+  .dcg-expressionlist {
+    // Need to hide overflow underneath the expressions
+    overflow: hidden;
+  }
+
+  .dsm-usage-tip {
+    position: relative;
+    transition: bottom 0.4s, height 0.4s;
+    bottom: 0px;
+
+    // Color and font-size matching unresolved detail warning
+    color: #666;
+    font-size: 12.8;
+
+    opacity: 0.3;
+    line-height: 1.25;
+    overflow: hidden;
+
+    height: 46px;
+
+    &:hover {
+      opacity: 1;
+      bottom: 55px;
+      // extra pixel to prevent hover-jiggle from a mouse at the bottom of the screen
+      height: 101px;
+    }
+
+    a {
+      // Color and text-decoration matching unresolved detail warning
+      color: #666;
+      text-decoration: underline;
+
+      &:hover {
+        color: #000;
+        text-decoration: underline;
+      }
+
+      // Overrides height: 50px
+      height: unset;
+    }
+  }
+}

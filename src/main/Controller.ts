@@ -3,9 +3,17 @@ import View from "./View";
 import { MenuFunc } from "components/Menu";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
 import { OptionalProperties } from "utils/utils";
-import { Calc } from "globals/window";
-import GraphMetadata from "./metadata/interface";
-import { getMetadata, setMetadata } from "./metadata/manage";
+import { Calc, desmosRequire } from "globals/window";
+import GraphMetadata, {
+  Expression as MetadataExpression,
+} from "./metadata/interface";
+import {
+  getMetadata,
+  setMetadata,
+  getBlankMetadata,
+  changeExprInMetadata,
+} from "./metadata/manage";
+const AbstractItem = desmosRequire("graphing-calc/models/abstract-item");
 
 interface PillboxButton {
   id: string;
@@ -25,7 +33,7 @@ export default class Controller {
   exposedPlugins: {
     [plugin in PluginID]?: any;
   } = {};
-  graphMetadata: GraphMetadata = {};
+  graphMetadata: GraphMetadata = getBlankMetadata();
   metadataChangeSuppressed: boolean = false;
 
   // array of IDs
@@ -37,7 +45,7 @@ export default class Controller {
     "main-menu": {
       id: "main-menu",
       tooltip: "DesModder Menu",
-      iconClass: "dcg-icon-settings",
+      iconClass: "dsm-icon-desmodder",
       popup: MenuFunc,
     },
   };
@@ -194,6 +202,7 @@ export default class Controller {
         }
         this.setPluginEnabled(i, false);
         this.updateMenuView();
+        plugin.afterDisable?.();
       }
     }
   }
@@ -279,35 +288,37 @@ export default class Controller {
   checkForMetadataChange() {
     if (this.metadataChangeSuppressed) return;
     this.graphMetadata = getMetadata();
-
-    applyPinnedStyle(this.graphMetadata);
+    this.applyPinnedStyle();
   }
 
-  updateMetadata(obj: OptionalProperties<GraphMetadata>) {
-    setMetadata({
-      ...this.graphMetadata,
-      ...obj,
-    });
+  _updateExprMetadata(id: string, obj: OptionalProperties<MetadataExpression>) {
+    changeExprInMetadata(this.graphMetadata, id, obj);
+  }
 
-    applyPinnedStyle(obj);
+  updateExprMetadata(id: string, obj: OptionalProperties<MetadataExpression>) {
+    this._updateExprMetadata(id, obj);
+    this.finishUpdateMetadata();
+  }
+
+  finishUpdateMetadata() {
+    setMetadata(this.graphMetadata);
+    this.applyPinnedStyle();
     Calc.controller.updateViews();
   }
 
+  getDsmItemModel(id: string) {
+    return this.graphMetadata.expressions[id];
+  }
+
   pinExpression(id: string) {
-    const pinnedExpressions = this.graphMetadata.pinnedExpressions ?? [];
-    const newPinnedExpressions = pinnedExpressions.concat(
-      pinnedExpressions.includes(id) ? [] : [id]
-    );
-    this.updateMetadata({
-      pinnedExpressions: newPinnedExpressions,
+    this.updateExprMetadata(id, {
+      pinned: true,
     });
   }
 
   unpinExpression(id: string) {
-    this.updateMetadata({
-      pinnedExpressions: (this.graphMetadata.pinnedExpressions ?? []).filter(
-        (e) => e !== id
-      ),
+    this.updateExprMetadata(id, {
+      pinned: false,
     });
   }
 
@@ -315,17 +326,88 @@ export default class Controller {
     return (
       this.pluginsEnabled["pin-expressions"] &&
       !Calc.controller.getExpressionSearchOpen() &&
-      (this.graphMetadata.pinnedExpressions ?? []).includes(id)
+      this.graphMetadata.expressions[id]?.pinned
     );
   }
-}
 
-function applyPinnedStyle(metadata: GraphMetadata) {
-  if (metadata.pinnedExpressions !== undefined) {
+  hideError(id: string) {
+    this.updateExprMetadata(id, {
+      errorHidden: true,
+    });
+  }
+
+  toggleErrorHidden(id: string) {
+    this.updateExprMetadata(id, {
+      errorHidden: !this.isErrorHidden(id),
+    });
+  }
+
+  isErrorHidden(id: string) {
+    return this.graphMetadata.expressions[id]?.errorHidden;
+  }
+
+  applyPinnedStyle() {
     const el = document.querySelector(".dcg-exppanel-container");
-    el?.classList.toggle(
-      "dsm-has-pinned-expressions",
-      metadata.pinnedExpressions.length > 0
-    );
+    const hasPinnedExpressions = Object.keys(
+      this.graphMetadata.expressions
+    ).some((id) => this.graphMetadata.expressions[id].pinned);
+    el?.classList.toggle("dsm-has-pinned-expressions", hasPinnedExpressions);
+  }
+
+  folderDump(folderIndex: number) {
+    const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
+    if (!folderModel || folderModel.type !== "folder") return;
+    const folderId = folderModel?.id;
+
+    // Remove folderId on all of the contents of the folder
+    for (
+      let currIndex = folderIndex + 1,
+        currExpr = Calc.controller.getItemModelByIndex(currIndex);
+      currExpr && currExpr.type !== "folder" && currExpr?.folderId === folderId;
+      currIndex++, currExpr = Calc.controller.getItemModelByIndex(currIndex)
+    ) {
+      AbstractItem.setFolderId(currExpr, undefined);
+    }
+
+    // Replace the folder with text that has the same title
+    const T = Calc.controller.createItemModel({
+      id: Calc.controller.generateId(),
+      type: "text",
+      text: folderModel.title,
+    });
+    Calc.controller._toplevelReplaceItemAt(folderIndex, T, true);
+
+    Calc.controller.updateViews();
+  }
+
+  folderMerge(folderIndex: number) {
+    const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
+    const folderId = folderModel?.id;
+
+    // Place all expressions until the next folder into this folder
+    for (
+      let currIndex = folderIndex + 1,
+        currExpr = Calc.controller.getItemModelByIndex(currIndex);
+      currExpr && currExpr.type !== "folder";
+      currIndex++, currExpr = Calc.controller.getItemModelByIndex(currIndex)
+    ) {
+      AbstractItem.setFolderId(currExpr, folderId);
+    }
+
+    Calc.controller.updateViews();
+  }
+
+  noteEnclose(noteIndex: number) {
+    // Replace this note with a folder, then folderMerge
+    const noteModel = Calc.controller.getItemModelByIndex(noteIndex);
+    if (!noteModel || noteModel.type !== "text") return;
+
+    const T = Calc.controller.createItemModel({
+      id: Calc.controller.generateId(),
+      type: "folder",
+      title: noteModel.text,
+    });
+    Calc.controller._toplevelReplaceItemAt(noteIndex, T, true);
+    this.folderMerge(noteIndex);
   }
 }

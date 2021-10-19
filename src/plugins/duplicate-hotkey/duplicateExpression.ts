@@ -1,4 +1,4 @@
-import { Calc, desmosRequire } from "desmodder";
+import { Calc, desmosRequire, desModderController } from "desmodder";
 import {
   ItemModel,
   TableModel,
@@ -35,6 +35,7 @@ const getStates = {
 };
 
 export default function duplicateExpression(id: string) {
+  desModderController.metadataChangeSuppressed = true;
   const model = Calc.controller.getItemModel(id) as Indexed<ItemModel>;
   if (!model) return;
   if (model.type === "folder") {
@@ -46,14 +47,21 @@ export default function duplicateExpression(id: string) {
     const newState = duplicatedNonFolder(state);
     // perform the actual insertion
     insertItemAtIndex(model.index + 1, newState, true, model.folderId);
+    duplicateMetadata(newState.id, id);
   }
+  desModderController.metadataChangeSuppressed = false;
+  desModderController.finishUpdateMetadata();
 }
 
 function duplicateFolder(model: Indexed<FolderModel>) {
   const newFolderId = Calc.controller.generateId();
-  // the duplicated folder will go before the existing folder
+  const oldExpressions = Calc.getState().expressions.list;
+  const numChildren = oldExpressions.filter(
+    (e) => e.type !== "folder" && e.folderId === model.id
+  ).length;
+  // the duplicated folder will go after the existing folder
   insertItemAtIndex(
-    model.index,
+    model.index + numChildren + 1,
     {
       ...getStates.folder.getState(model, { stripDefaults: false }),
       id: newFolderId,
@@ -61,25 +69,31 @@ function duplicateFolder(model: Indexed<FolderModel>) {
     true
   );
   // assumes all child folders are consecutively after to parent folder
-  const oldExpressions = Calc.getState().expressions.list;
-  for (let i = model.index + 1; ; i++) {
+  for (let i = model.index + 1; i <= model.index + numChildren; i++) {
     const expr = oldExpressions[i];
-    if (!expr || expr.type === "folder" || expr.folderId !== model.id) {
-      break;
-    }
+    const duped = duplicatedNonFolder(expr);
     insertItemAtIndex(
-      i - 1,
+      i + numChildren + 1,
       {
-        ...duplicatedNonFolder(expr),
+        ...duped,
         folderId: newFolderId,
       },
       false,
       newFolderId
     );
+    duplicateMetadata(duped.id, expr.id);
   }
+  duplicateMetadata(newFolderId, model.id);
 }
 
-function duplicatedNonFolder(state: ItemModel) {
+function duplicateMetadata(toID: string, fromID: string) {
+  desModderController._updateExprMetadata(
+    toID,
+    desModderController.getDsmItemModel(fromID)
+  );
+}
+
+function duplicatedNonFolder(state: ItemModel): ItemModel {
   switch (state.type) {
     case "table":
       return duplicatedTable(state);
@@ -87,25 +101,33 @@ function duplicatedNonFolder(state: ItemModel) {
     case "text":
     case "image":
       return duplicatedSimple(state);
+    default:
+      throw "Unexpected folder";
   }
 }
 
 function duplicatedTable(state: TableModel) {
   // Since this is a table, need to change column headers if they are variables
-  const subscript = Calc.controller.generateTableXSubscript();
-  let letterIndex = 0;
-  // assume that there are 26 or fewer variables defined in the table
-  const letters = "xyzwabcdefghijklmnopqrstuv";
+  // The subscript can overlap with an existing subscript that occurs at the end
+  //   of a subscript that is not purely a number,'
+  //   e.g. A_{cat3} in https://www.desmos.com/calculator/k4g5fwbxfj
+  // Don't worry about this though
+  const subscriptNumber = Calc.controller.generateTableXSubscript();
   return {
     ...state,
-    columns: state.columns.map((column) => ({
-      ...column,
-      id: Calc.controller.generateId(),
-      latex: column?.values?.some((e) => e !== "")
-        ? // assume, since some value is filled in, this is a definition
-          `${letters[letterIndex++]}_${subscript}`
-        : column.latex,
-    })),
+    columns: state.columns.map((column) => {
+      let col = {
+        ...column,
+        id: Calc.controller.generateId(),
+      };
+      if (column.latex) {
+        col.latex = column.values?.some((e) => e !== "")
+          ? // assume, since some value is filled in, this is a definition
+            renumberedIdentifier(column.latex, subscriptNumber)
+          : column.latex;
+      }
+      return col;
+    }),
     id: Calc.controller.generateId(),
   };
 }
@@ -115,4 +137,17 @@ function duplicatedSimple(state: ExpressionModel | TextModel | ImageModel) {
     ...state,
     id: Calc.controller.generateId(),
   };
+}
+
+function renumberedIdentifier(id: string, num: number) {
+  /* Renumber an identifier, e.g.
+    ("A", 5) => "A_{5}"
+    ("A_{3}", 5) => "A_{5}"
+    ("A_{longName32}", 50) => "A_{longName50}" */
+  const parts = id.split("_");
+  const main = parts[0];
+  let subscript = parts[1] ?? "";
+  if (subscript.startsWith("{")) subscript = subscript.slice(1, -1);
+  subscript = subscript.replace(/\d*$/, String(num));
+  return `${main}_{${subscript}}`;
 }

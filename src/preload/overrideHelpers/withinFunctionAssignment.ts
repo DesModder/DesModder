@@ -17,7 +17,7 @@ export default function withinFunctionAssignment(
         t.isFunctionExpression(path.node.right)
       ) {
         const result = atFunctionDefinition(path.node.right);
-        if (result !== undefined) {
+        if (result) {
           path.node.right = result;
         }
       }

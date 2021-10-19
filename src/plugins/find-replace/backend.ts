@@ -183,8 +183,12 @@ export function refactor(from: string, to: string) {
       let acc = "";
       let endIndex = 0;
       for (let { start, end, replacement } of sorted) {
-        acc += s.slice(endIndex, start);
-        acc += replacement;
+        // Conditional start >= endIndex to avoid double-replacement of the middle value
+        // in And(Inequality, Inequality) which were not transformed to DoubleInequality.
+        if (start >= endIndex) {
+          acc += s.slice(endIndex, start);
+          acc += replacement;
+        }
         endIndex = end;
       }
       acc += s.slice(endIndex);

@@ -8,9 +8,6 @@ export class Path<n extends Node = Node> {
   ) {}
 
   getChildren() {
-    if ("args" in this.node) {
-      return this.node.args as ChildExprNode[];
-    }
     switch (this.node.type) {
       case "Assignment":
       case "FunctionDefinition":
@@ -20,7 +17,14 @@ export class Path<n extends Node = Node> {
         return [this.node._lhs, this.node._rhs];
       case "Error":
         return [];
+      case "DoubleInequality":
+        if ("args" in this.node) {
+          return [this.node.args[0], this.node.args[2], this.node.args[4]];
+        }
       default:
+        if ("args" in this.node) {
+          return this.node.args as ChildExprNode[];
+        }
         const type = (this.node as any).type;
         throw `Unexpected node type: ${type}. How did you obtain it?`;
     }

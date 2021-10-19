@@ -69,6 +69,7 @@ declare global {
       span: any;
       img: any;
       p: any;
+      a: any;
     }
   }
 }

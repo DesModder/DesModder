@@ -1,8 +1,36 @@
 # DesModder Changelog
 
-The following guide describes changes in each version, including how to migrate graphs from earlier versions to later versions if necessary.
-
 Regarding version numbers: The `1.0` release will be when the plugin API is a bit more stable. While in `0.*` releases, I increment the minor number if a new plugin is added and the patch number if a release consists only of bug fixes and enhancements.
+
+## 0.6.1
+
+Bug fixes and improvements:
+
+- Pressing down arrow no longer moves the cursor to the bottom of the expressions list
+- Duplicating an expression now duplicates the associated metadata, such as pinned status or whether errors/sliders are hidden
+- (Wolfram To Desmos) Fix pasting of piecewises that contain division at the end of the condition
+
+## 0.6.0
+
+New features
+
+- Folder tools: dump a folder, merge a folder with subsequent unfoldered expressions, and convert a note into a table
+- Click on a warning triangle (or press shift+enter) to fade the warning and hide sliders
+- Show tips at the bottom of the expressions list. Hover to reveal more detail, and click for a new tip.
+- Debug mode: Replace expression indices with their internal IDs
+
+Bug fixes and improvements:
+
+- The DesModder settings icon now uses the DesModder logo instead of a generic cogwheel. This change was made to avoid confusion with the edit-list-mode cogwheel settings icon
+  - This change is more important in nographpaper mode
+- (Video Creator) Allow cancelling video export
+- (Video Creator) Let long action preview scroll horizontally instead of overflowing the popover
+- (Wolfram to Desmos) Fix pasting of piecewises, `mod`, and `abs` under certain conditions
+- (Improved Duplication) Headers in duplicated tables now keep the same root as the original table
+- (Improved Duplication) Duplicated folders are now placed after the original folder
+- (Improved Duplication) Table header subscripts are now correctly enclosed when longer than one digit
+- (Find and Replace) Fix error when a double inequality is present during a find-and-replace
+- (Pin expressions) Deleting the last pinned expressions now correctly removes the pinned expressions style
 
 ## 0.5.1
 

@@ -1,3 +1,11 @@
 export default interface Metadata {
-  pinnedExpressions?: string[];
+  version: 2;
+  expressions: {
+    [key: string]: Expression;
+  };
+}
+
+export interface Expression {
+  pinned?: boolean;
+  errorHidden?: boolean;
 }

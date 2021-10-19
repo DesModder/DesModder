@@ -7,9 +7,13 @@ Supercharge your Desmos graph creation and sharing experience with many convenie
 - Pin expressions to the top
 - Paste ASCIIMath (such as the results of Wolfram Alpha queries) into Desmos
 - Duplicate folders and more with a button or Ctrl+Q
+- Quickly dump a folder's entire contents, and merge expressions into a folder
 - Use Shift+Enter to write newlines in notes
+- Hide and ignore unwanted slider suggestions
+- View tips for lesser-known features of Desmos
 - Right-click (instead of long press) expressions to style them
 - Adjust settings that can let you hide the keypad, lock the viewport, and more
+- Toggle display of expression IDs
 - More to come!
 
 All graphs created using this extension are compatible with vanilla Desmos. This means your graphs are always safe to share with others, regardless of whether or not they have DesModder.
@@ -22,8 +26,4 @@ Currently only works on the public-facing calculator at https://desmos.com/calcu
 
 Changelog: https://github.com/DesModder/DesModder/blob/main/docs/CHANGELOG.md.
 
----
-
-This extension is intended to be more organized than the existing system of userscripts in the form of gists and repos that need to be toggled manually in Tampermonkey.
-
-Think of it like an unofficial plugin/modding API, like Forge does for Minecraft. (DesModder is not affiliated with Desmos).
+Not affiliated with Desmos.
