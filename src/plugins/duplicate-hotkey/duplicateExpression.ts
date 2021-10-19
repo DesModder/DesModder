@@ -1,4 +1,4 @@
-import { Calc, desmosRequire } from "desmodder";
+import { Calc, desmosRequire, desModderController } from "desmodder";
 import {
   ItemModel,
   TableModel,
@@ -35,6 +35,7 @@ const getStates = {
 };
 
 export default function duplicateExpression(id: string) {
+  desModderController.metadataChangeSuppressed = true;
   const model = Calc.controller.getItemModel(id) as Indexed<ItemModel>;
   if (!model) return;
   if (model.type === "folder") {
@@ -46,7 +47,10 @@ export default function duplicateExpression(id: string) {
     const newState = duplicatedNonFolder(state);
     // perform the actual insertion
     insertItemAtIndex(model.index + 1, newState, true, model.folderId);
+    duplicateMetadata(newState.id, id);
   }
+  desModderController.metadataChangeSuppressed = false;
+  desModderController.finishUpdateMetadata();
 }
 
 function duplicateFolder(model: Indexed<FolderModel>) {
@@ -67,19 +71,29 @@ function duplicateFolder(model: Indexed<FolderModel>) {
   // assumes all child folders are consecutively after to parent folder
   for (let i = model.index + 1; i <= model.index + numChildren; i++) {
     const expr = oldExpressions[i];
+    const duped = duplicatedNonFolder(expr);
     insertItemAtIndex(
       i + numChildren + 1,
       {
-        ...duplicatedNonFolder(expr),
+        ...duped,
         folderId: newFolderId,
       },
       false,
       newFolderId
     );
+    duplicateMetadata(duped.id, expr.id);
   }
+  duplicateMetadata(newFolderId, model.id);
 }
 
-function duplicatedNonFolder(state: ItemModel) {
+function duplicateMetadata(toID: string, fromID: string) {
+  desModderController._updateExprMetadata(
+    toID,
+    desModderController.getDsmItemModel(fromID)
+  );
+}
+
+function duplicatedNonFolder(state: ItemModel): ItemModel {
   switch (state.type) {
     case "table":
       return duplicatedTable(state);
@@ -87,6 +101,8 @@ function duplicatedNonFolder(state: ItemModel) {
     case "text":
     case "image":
       return duplicatedSimple(state);
+    default:
+      throw "Unexpected folder";
   }
 }
 

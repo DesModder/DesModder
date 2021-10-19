@@ -291,8 +291,16 @@ export default class Controller {
     this.applyPinnedStyle();
   }
 
-  updateExprMetadata(id: string, obj: OptionalProperties<MetadataExpression>) {
+  _updateExprMetadata(id: string, obj: OptionalProperties<MetadataExpression>) {
     changeExprInMetadata(this.graphMetadata, id, obj);
+  }
+
+  updateExprMetadata(id: string, obj: OptionalProperties<MetadataExpression>) {
+    this._updateExprMetadata(id, obj);
+    this.finishUpdateMetadata();
+  }
+
+  finishUpdateMetadata() {
     setMetadata(this.graphMetadata);
     this.applyPinnedStyle();
     Calc.controller.updateViews();
