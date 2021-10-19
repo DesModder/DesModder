@@ -1,3 +1,5 @@
+import { IRChunk, ValueType } from "./IR";
+
 interface Base {
   init(): void;
   exportPenalty: number;
@@ -12,8 +14,8 @@ interface Base {
   addDummyDependencies(deps: string[]): void;
   mergeDependencies(): void;
   mergeDependenciesInScope(): void;
-  getDependencies(): void;
-  getDummyDependencies(): void;
+  getDependencies(): string[];
+  getDummyDependencies(): string[];
   getScope(): Scope;
   dependsOn(v: string): boolean;
   getExports(): string[];
@@ -33,6 +35,8 @@ interface Base {
 }
 
 type EvaluationInfo = false | undefined | { val: unknown }[];
+
+export type MaybeRational = number | { n: number; d: number };
 
 export interface Error {
   // "1 ("
@@ -72,8 +76,8 @@ interface Expression extends Base {
 
 interface UpperConstant extends Expression {
   args: [];
-  _constantValue: boolean | number;
-  asCompilerValue(): boolean | number;
+  _constantValue: boolean | MaybeRational;
+  asCompilerValue(): boolean | MaybeRational;
   scalarExprString(): string;
   isNaN(): boolean;
 }
@@ -193,7 +197,7 @@ export interface List extends Expression {
   args: ChildExprNode[];
   length: number;
   isList: true;
-  asCompilerValue(): (boolean | number)[];
+  asCompilerValue(): (boolean | MaybeRational)[];
   // eachArgs(): void // TODO
   wrap(): unknown;
 }
@@ -256,7 +260,8 @@ export interface Piecewise extends Expression {
 }
 
 interface RGBColor extends Expression {
-  // Not sure how to get RGBColor
+  // No idea how to get RGBColor
+  type: "RGBColor";
 }
 
 /* Repeated Operators */
@@ -330,7 +335,9 @@ interface BaseComparator extends Expression {
   // .create is called with "<", ">", "<=", ">=", and "="
   create(): BaseComparator;
   asComparator(): BaseComparator;
-  _difference(): Subtract;
+
+  // The _difference reverses direction for '<' and '<=' to satisfy the same order as '>'
+  _difference: Subtract;
 }
 
 export interface Comparator extends BaseComparator {
@@ -345,6 +352,7 @@ export interface Comparator extends BaseComparator {
     | "Comparator['<=']"
     | "Comparator['>=']"
     | "Comparator['=']";
+  args: [ChildExprNode, ChildExprNode];
 }
 
 interface DoubleInequality extends Base {
@@ -428,14 +436,14 @@ export interface Stats extends FullExprFunc {
   type: "Stats";
   _symbol: "stats";
 }
-export interface Boxplot extends FullExprFunc {
+export interface BoxPlot extends FullExprFunc {
   // "\\operatorname{boxplot}(L)"
-  type: "Boxplot";
+  type: "BoxPlot";
   _symbol: "boxplot";
 }
-export interface Dotplot extends FullExprFunc {
+export interface DotPlot extends FullExprFunc {
   // "\\operatorname{dotplot}(L)"
-  type: "Dotplot";
+  type: "DotPlot";
   _symbol: "dotplot";
 }
 export interface Histogram extends FullExprFunc {
@@ -458,6 +466,8 @@ export interface Polygon extends FullExprFunc {
   type: "Polygon";
   _symbol: "polygon";
 }
+
+export type Object3D = unknown;
 
 /* Image */
 
@@ -505,10 +515,11 @@ export interface OptimizedRegression extends Base {
 }
 
 /* Intermediate Representation */
+
 export interface IRExpression extends Base {
   type: "IRExpression";
-  _chunk: unknown;
-  valueType: unknown;
+  _chunk: IRChunk;
+  valueType: ValueType;
   isList: boolean;
   // length is for isList only
   length: number;
@@ -520,7 +531,7 @@ export interface IRExpression extends Base {
   takeDerivative(): IRExpression;
   boundDomain(): unknown;
   asValue(): unknown;
-  asCompilerValue(): boolean | number | boolean[] | number[];
+  asCompilerValue(): boolean | MaybeRational | boolean[] | MaybeRational[];
   isNaN(): boolean;
   getEvaluationInfo(): EvaluationInfo;
   elementAt(): unknown;
@@ -566,8 +577,8 @@ export type RootOnlyExprNode =
   | Assignment
   | FunctionDefinition
   | Stats
-  | Boxplot
-  | Dotplot
+  | BoxPlot
+  | DotPlot
   | Histogram
   | IndependentTTest
   | TTest
@@ -616,9 +627,8 @@ type IrrelevantExprNode =
   | Ans
   | MovablePoint
   | RGBColor
-  | RepeatedOperator
   | RawExponent
-  | BaseComparator
+  | DoubleInequality
   | SolvedEquation
   | Slider
   | Image
@@ -628,5 +638,9 @@ type IrrelevantExprNode =
   | Table
   | Ticker;
 
+type SubclassedOnly = RepeatedOperator | BaseComparator;
+
 type Node = RootOnlyExprNode | ChildExprNode;
 export default Node;
+
+export type AnyNode = Node | IrrelevantExprNode;

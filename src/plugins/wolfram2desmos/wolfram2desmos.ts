@@ -305,10 +305,7 @@ export function wolfram2desmos(input: string) {
     if (selection[0] == "+" || selection[0] == "-" || selection[0] == "±") {
       i += 1;
     }
-    if (
-      selection.search(functionSymbols) == 0 &&
-      selection[1] == "("
-    ) {
+    if (selection.search(functionSymbols) == 0 && selection[1] == "(") {
       i += 1;
     } else if (selection.search(/([0-9]*[.])?[0-9]+/) == 0) {
       i += selection.match(/([0-9]*[.])?[0-9]+/)?.[0]?.length ?? 0;

@@ -1,6 +1,7 @@
 import { Calc, parseDesmosLatex } from "desmodder";
 import traverse, { Path } from "parsing/traverse";
 import { Identifier } from "parsing/parsenode";
+import { satisfiesType } from "parsing/nodeTypes";
 
 function replace(replaceLatex: (s: string) => string) {
   // replaceString is applied to stuff like labels
@@ -159,12 +160,12 @@ function getReplacements(
 
 export function refactor(from: string, to: string) {
   const fromParsed = parseDesmosLatex(from.trim());
-  if (fromParsed.type === "Identifier") {
+  if (satisfiesType(fromParsed, "Identifier")) {
     // trim `from` to prevent inputs such as "  a" messing up matches that depend on `from` itself.
     from = from.trim();
     replace((s: string) => {
       const node = parseDesmosLatex(s);
-      if (node.type === "Error") {
+      if (satisfiesType(node, "Error")) {
         return s;
       }
       const idPositions: {

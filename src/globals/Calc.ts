@@ -38,6 +38,7 @@ interface BasicSetExpression {
   points?: boolean;
   lines?: boolean;
   hidden?: boolean;
+  shouldGraph?: boolean;
   dragMode?: "X" | "Y" | "XY" | "NONE" | "AUTO";
 }
 

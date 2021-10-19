@@ -6,6 +6,7 @@ import builtinSettings from "plugins/builtin-settings";
 import rightClickTray from "plugins/right-click-tray";
 import pinExpressions from "plugins/pin-expressions";
 import shiftEnterNewline from "plugins/shift-enter-newline";
+import GLesmos from "plugins/GLesmos";
 import hideErrors from "plugins/hide-errors";
 import debugMode from "plugins/debug-mode";
 import showTips from "plugins/show-tips";
@@ -59,6 +60,7 @@ const _plugins = {
   [rightClickTray.id]: rightClickTray,
   [duplicateHotkey.id]: duplicateHotkey,
   [shiftEnterNewline.id]: shiftEnterNewline,
+  [GLesmos.id]: GLesmos,
   [hideErrors.id]: hideErrors,
   [folderTools.id]: folderTools,
 } as const;
