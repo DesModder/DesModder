@@ -12,6 +12,7 @@ export default () => ({
       t.isIdentifier(path.node.callee.property, { name: "sampleImplicit" })
     ) {
       // TODO: proper conditional replacement
+      // probably want to mess with userData= and getGraphInfo=
       // path.replaceWith(
       //   template.expression(
       //     `window.DesModder?.controller?.shouldSkipImplicit()

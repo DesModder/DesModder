@@ -410,4 +410,17 @@ export default class Controller {
     Calc.controller._toplevelReplaceItemAt(noteIndex, T, true);
     this.folderMerge(noteIndex);
   }
+
+  isGlesmosMode(id: string) {
+    return (
+      this.pluginsEnabled["GLesmos"] &&
+      this.graphMetadata.expressions[id]?.glesmos
+    );
+  }
+
+  toggleGlesmos(id: string) {
+    this.updateExprMetadata(id, {
+      glesmos: !this.isGlesmosMode(id),
+    });
+  }
 }
