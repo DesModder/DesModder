@@ -11,6 +11,7 @@ export default function withDependencyMap(
       "__rootLevelDefinition"
     );
     const output = transform(code, {
+      compact: true,
       plugins: [
         () => ({
           visitor: {
