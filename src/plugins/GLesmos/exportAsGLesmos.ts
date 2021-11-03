@@ -6,7 +6,7 @@ import computeContext, {
   Statement,
 } from "./computeContext";
 import emitChunkGL from "./emitChunkGL";
-import { colorToVec3, getGLType, glslFloatify } from "./outputHelpers";
+import { colorVec4, getGLType } from "./outputHelpers";
 
 function getImplicits(context: ComputedContext) {
   const implicits = [];
@@ -58,7 +58,7 @@ export default function exportAsGLesmos() {
   return [
     functionDeps.map(getDefinition).join("\n"),
     implicitFuncBody,
-    "vec4 outColor = vec4(1.0);",
+    "vec4 outColor = vec4(0.0);",
     "void glesmosMain(vec2 coords) {",
     "  float x = coords.x; float y = coords.y;",
     body,
@@ -87,8 +87,6 @@ function implicitToGL(statement: Statement, analysis: Analysis, i: number) {
     throw "Lists of implicits not yet implemented";
   }
   fillOpacity = isNaN(fillOpacity) ? 0.4 : fillOpacity;
-  const colorStr = colorToVec3(color);
-  const opacityStr = glslFloatify(fillOpacity);
   const { source, deps } = emitChunkGL(analysis.concreteTree._chunk);
   let f = `_f${i}`;
   let type = getGLType(analysis.concreteTree.valueType);
@@ -96,7 +94,7 @@ function implicitToGL(statement: Statement, analysis: Analysis, i: number) {
     funcSource: `${type} ${f}(float x, float y) {\n${source}\n}`,
     drawSource:
       `  if (${f}(x,y) > 0.0) {\n` +
-      `    outColor.rgb = mix(outColor.rgb, ${colorStr}, ${opacityStr});\n` +
+      `    outColor = ${colorVec4(color, fillOpacity)};\n` +
       `  }`,
     deps,
   };

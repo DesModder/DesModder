@@ -1,4 +1,5 @@
 import { Calc } from "desmodder";
+import ViewportTransforms from "./ViewportTransforms";
 
 function showGLesmosError(msg: string) {
   console.error("GLesmos Error: " + msg);
@@ -73,7 +74,7 @@ export interface GLesmosCanvas {
   element: HTMLCanvasElement;
   glContext: WebGLRenderingContext;
   deleteCanvas(): void;
-  resizeCanvas(w: number, h: number): void;
+  updateTransforms(transforms: ViewportTransforms): void;
   setGLesmosShader(shader: string): void;
   render(): void;
 }
@@ -94,16 +95,6 @@ const VERTEX_SHADER = `
     }
 `;
 
-const TEST_FRAGMENT_SHADER = `
-
-varying mediump vec2 texCoord;
-
-void main() {
-    gl_FragColor = vec4(texCoord.xy, 0.0, 1.0);
-}
-
-`;
-
 const GLESMOS_FRAGMENT_SHADER = `
 varying mediump vec2 texCoord;
 precision highp float;
@@ -112,7 +103,7 @@ uniform vec2 corner;
 uniform vec2 size;
 
 //REPLACE_WITH_GLESMOS
-vec4 outColor = vec4(1.0);
+vec4 outColor = vec4(0.0);
 void glesmosMain(vec2 coords) {}
 //REPLACE_WITH_GLESMOS_END
 
@@ -124,57 +115,35 @@ void main() {
 `;
 
 export function initGLesmosCanvas(): GLesmosCanvas {
-
   //================= INIT ELEMENTS =======================
   let c: HTMLCanvasElement = document.createElement("canvas");
-  let gl: WebGLRenderingContext = c.getContext(
-    "webgl"
-  ) as WebGLRenderingContext;
-
-  let container: HTMLDivElement = document.createElement("div");
-  container.appendChild(c);
-  container.style.resize = "both";
-  container.style.padding = "10px";
-  container.style.position = "absolute";
-  container.style.bottom = "0px";
-  container.style.right = "0px";
-  container.style.zIndex = "999999";
-
-  document.body.appendChild(container);
+  let gl: WebGLRenderingContext = c.getContext("webgl", {
+    // Disable premultiplied alpha
+    // Thanks to <https://stackoverflow.com/a/12290551/7481517>
+    premultipliedAlpha: false,
+  }) as WebGLRenderingContext;
 
   //================= GRAPH BOUNDS ======================
   let cornerOfGraph = [-10, -6];
   let sizeOfGraph = [20, 12];
 
   //======================= RESIZING STUFF =======================
-  let resizeCanvas = (w: number, h: number) => {
+
+  let updateTransforms = (transforms: ViewportTransforms) => {
+    const w = transforms.pixelCoordinates.right;
+    const h = transforms.pixelCoordinates.bottom;
+    const p2m = transforms.pixelsToMath;
     c.width = w;
     c.height = h;
     gl.viewport(0, 0, c.width, c.height);
+    cornerOfGraph = [p2m.tx, p2m.sy * h + p2m.ty];
+    sizeOfGraph = [p2m.sx * w, -p2m.sy * h];
   };
-
-  window.addEventListener("resize", () => {
-    resizeCanvas(window.innerWidth * 0.25, window.innerHeight * 0.25);
-  });
-  resizeCanvas(window.innerWidth * 0.25, window.innerHeight * 0.25);
-
-  Calc.observe("graphpaperBounds", () => {
-    let bounds = Calc.graphpaperBounds.mathCoordinates;
-    cornerOfGraph = [bounds.left, bounds.bottom];
-    sizeOfGraph = [bounds.width, bounds.height];
-    requestAnimationFrame(render);
-  });
 
   //============================ WEBGL STUFF ==========================
   let fullscreenQuadBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, fullscreenQuadBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, FULLSCREEN_QUAD, gl.STATIC_DRAW);
-
-  let testShaderProgram = buildShaderProgram(
-    gl,
-    VERTEX_SHADER,
-    TEST_FRAGMENT_SHADER
-  );
 
   let glesmosShaderProgram: WebGLProgram | undefined;
 
@@ -188,7 +157,7 @@ export function initGLesmosCanvas(): GLesmosCanvas {
   };
 
   setGLesmosShader(`
-    vec4 outColor = vec4(1.0);
+    vec4 outColor = vec4(0.0);
     void glesmosMain(vec2 coords) {}
     `);
 
@@ -231,8 +200,8 @@ export function initGLesmosCanvas(): GLesmosCanvas {
   return {
     element: c,
     glContext: gl,
-    deleteCanvas: deleteCanvas,
-    resizeCanvas: resizeCanvas,
+    deleteCanvas,
+    updateTransforms: updateTransforms,
     setGLesmosShader: setGLesmosShader,
     render: render,
   };

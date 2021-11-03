@@ -6,26 +6,12 @@ export default () => ({
     /* @plugin glesmos
 
     @what Disable calculation of implicits when unwanted.
+      Note that this currently has no effect because the worker src override is not loaded
     */
     if (
       t.isMemberExpression(path.node.callee) &&
       t.isIdentifier(path.node.callee.property, { name: "sampleImplicit" })
     ) {
-      // TODO: proper conditional replacement
-      // probably want to mess with userData= and getGraphInfo=
-      // path.replaceWith(
-      //   template.expression(
-      //     `window.DesModder?.controller?.shouldSkipImplicit()
-      //       ? {
-      //         fillSegments: [],
-      //         segments: [],
-      //         resolved: false // unresolved detail fun
-      //       }`
-      //       : %%originalSample%%
-      //   )({
-      //     originalSample: path.node,
-      //   })
-      // );
       path.replaceWith(
         template.expression.ast(
           `{
