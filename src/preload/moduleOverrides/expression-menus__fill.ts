@@ -25,7 +25,7 @@ export default (dependencyNameMap: DependencyNameMap) => ({
         %%DCGView%%.createElement(
           %%DCGView%%.Components.If,
           {
-            predicate: () => %%this%%.isInequality(),
+            predicate: () => DesModder.controller.isPluginEnabled("GLesmos") && %%this%%.isInequality(),
           },
           () => %%DCGView%%.createElement(
             "div",
