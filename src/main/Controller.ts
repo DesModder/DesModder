@@ -415,7 +415,7 @@ export default class Controller {
     return (
       this.pluginsEnabled["GLesmos"] &&
       this.graphMetadata.expressions[id]?.glesmos
-      // TODO: replace conditions in getImplicits of exportAsGLesmos.ts
+      // TODO: reference canBeGlesmos from the GLesmos controller
     );
   }
 

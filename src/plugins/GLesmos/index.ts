@@ -4,7 +4,6 @@ export let controller: Controller;
 
 function onEnable() {
   controller = new Controller();
-  controller.initCanvas();
   return controller;
 }
 
