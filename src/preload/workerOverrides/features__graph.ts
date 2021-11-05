@@ -11,6 +11,13 @@ export default () => ({
     @how    
       This gets executed once for every element in the list of the statement, 
         e.g. three times for `tan(xy) = [1...3]`
+
+        O = Parsenodes.List
+        O.wrap(a).eachElement(function (t, a) {
+          // t = IR for element
+          // a = index
+        })
+
       Reached for the following graphmodes:
         case Graphmode.X:
         case Graphmode.Y:
@@ -53,8 +60,16 @@ export default () => ({
       const containingBlock = path.findParent((path) =>
         path.isBlockStatement()
       );
+      // Assume that the first argument of this anonymous function is the IR
+      const anonymousFunc = path.findParent((path) =>
+        path.isFunctionExpression()
+      );
+      let ir;
       if (
         containingBlock !== null &&
+        anonymousFunc !== null &&
+        t.isFunctionExpression(anonymousFunc.node) &&
+        t.isIdentifier((ir = anonymousFunc.node.params[0])) &&
         ppp &&
         t.isLogicalExpression(ppp.node) &&
         t.isCallExpression(ppp.node.right) &&
@@ -66,7 +81,7 @@ export default () => ({
             if (%%this%%.userData.glesmos) {
               %%push%%({
                 graphMode: "GLesmos",
-                compiledGL: "abcdef",
+                compiledGL: self.dsm_compileGLesmos(%%ir%%),
                 segments: [],
                 poi: {}
               })
@@ -75,6 +90,7 @@ export default () => ({
             this: findIdentifierThis(path),
             push: ppp.node.right.callee,
             containingBlock: containingBlock.node,
+            ir: ir,
           })
         );
         path.skip();

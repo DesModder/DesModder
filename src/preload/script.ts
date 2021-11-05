@@ -161,3 +161,16 @@ pollForValue(
   };
   document.body.appendChild(script);
 });
+
+listenToMessageDown((message) => {
+  if (message.type === "set-worker-append-url") {
+    fetch(message.value).then(async (response) => {
+      window.dsm_workerAppend = await response.text();
+    });
+    // cancel listener
+    return true;
+  }
+});
+postMessageUp({
+  type: "get-worker-append-url",
+});

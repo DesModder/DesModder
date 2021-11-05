@@ -29,6 +29,9 @@ type MessageWindowToContent =
     }
   | {
       type: "get-script-url";
+    }
+  | {
+      type: "get-worker-append-url";
     };
 
 type MessageContentToWindow =
@@ -46,6 +49,10 @@ type MessageContentToWindow =
     }
   | {
       type: "set-script-url";
+      value: string;
+    }
+  | {
+      type: "set-worker-append-url";
       value: string;
     };
 

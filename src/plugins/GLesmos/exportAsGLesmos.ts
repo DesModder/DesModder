@@ -1,10 +1,7 @@
 import { satisfiesType } from "parsing/nodeTypes";
+import { IRExpression } from "parsing/parsenode";
 import { getDefinition, getDependencies } from "./builtins";
-import computeContext, {
-  Analysis,
-  ComputedContext,
-  Statement,
-} from "./computeContext";
+import { Analysis, ComputedContext, Statement } from "./computeContext";
 import emitChunkGL from "./emitChunkGL";
 import { colorVec4, getGLType } from "./outputHelpers";
 
@@ -14,7 +11,7 @@ function accDeps(depsAcc: string[], dep: string) {
   depsAcc.push(dep);
 }
 
-export default function exportAsGLesmos(context: ComputedContext, id: string) {
+function exportAsGLesmos(context: ComputedContext, id: string) {
   let functionDeps: string[] = [];
   const { mainSource, deps } = implicitToGL(
     context.statements[id],
@@ -62,4 +59,13 @@ function implicitToGL(statement: Statement, analysis: Analysis) {
     ].join("\n"),
     deps,
   };
+}
+
+export function compileGLesmos(
+  concreteTree: IRExpression,
+  color: string,
+  fillOpacity: string
+) {
+  const { source, deps } = emitChunkGL(concreteTree._chunk);
+  return source;
 }

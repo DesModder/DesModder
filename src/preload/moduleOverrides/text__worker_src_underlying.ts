@@ -1,11 +1,8 @@
-import window from "globals/window";
 import * as t from "@babel/types";
 import moduleOverrides from "../workerOverrides";
-import withDependencyMap, {
-  DependencyNameMap,
-} from "../overrideHelpers/withDependencyMap";
-
+import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
 import { transform } from "@babel/standalone";
+import window from "globals/window";
 
 /*
 Can't just paste newDefine and ALMOND_OVERRIDES from src/preload/script.ts a la:
@@ -36,12 +33,15 @@ export default () => ({
         (match = line.match(/^define\(['"]([^'"]*)['"]/)) !== null &&
         moduleOverrides[match[1]] !== undefined
       ) {
-        lines.push(transformLine(line));
+        const transformed = transformLine(line);
+        if (transformed) {
+          lines.push(transformed);
+        }
       } else {
         lines.push(line);
       }
     }
-    path.node.value = lines.join("\n");
+    path.node.value = lines.join("\n") + window.dsm_workerAppend;
   },
 });
 

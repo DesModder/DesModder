@@ -1,4 +1,4 @@
-import { Calc, desmosRequire, ItemModel } from "desmodder";
+import { ItemModel } from "globals/Calc";
 import {
   AnyNode,
   FunctionDefinition,
@@ -7,7 +7,6 @@ import {
   Seed,
   IRExpression,
 } from "parsing/parsenode";
-const Context = desmosRequire("core/math/context").Context;
 
 // core/math/expression_types
 type ExprType =
@@ -149,31 +148,12 @@ TODO:
   - successfully passed, but toggling the glesmos sliders doesn't instantly trigger a message to the worker
   - maybe have to look into changing .glesmos props on expressions inside __itemModelArray
   - or manually trigger addStatement
-½ compile the glesmos code from this.conreteTree in core/math/statementanalysis
-  ⬚ check for glesmos flag enabled
+½ compile the glesmos code from this.conreteTree in core/math/features/graph
+  ✓ check for glesmos flag enabled
   ⬚ check for no error
-⬚ send compiled glesmos code back during passMessage
-  - currently working up from getCompiledFunction call in Base.prototype._graph in core/math/features/graph
-    → want to remove getCompiledFunction in favor of getCompiledGLesmos when wanted
-    - keep in mind that getCompliedFunction is also called in getCompiledDerivative
-  - confirm via breakpoint in require("main/evaluator").Evaluator→processChangeSet
-
-⬚ handle worker messages (containing the compiled glesmos code) in processChangeSet from main/evaluator
+  ½ actually compile
+✓ send compiled glesmos code back during passMessage
+  - View via breakpoint in require("main/evaluator").Evaluator→processChangeSet
+✓ handle worker messages (containing the compiled glesmos code) in processChangeSet from main/evaluator
 ⬚ removeStatement handling?
 */
-
-export default function computeContext() {
-  const context = new Context();
-  const changeSet = {
-    isCompleteState: true,
-    statements: {} as { [K: string]: ItemModel },
-  };
-  for (let stmt of Calc.controller.getAllItemModels()) {
-    if (stmt.type !== "expression") continue;
-    // stmt should be cloned, but core/lib/deepCopy threw an error
-    changeSet.statements[stmt.id] = stmt;
-  }
-  context.processChangeSet(changeSet);
-  context.updateAnalysis();
-  return context as ComputedContext;
-}

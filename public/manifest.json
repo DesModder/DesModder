@@ -20,7 +20,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["script.js", "preloadScript.js"],
+      "resources": ["script.js", "preloadScript.js", "workerAppend.js"],
       "matches": ["https://www.desmos.com/*"]
     }
   ],

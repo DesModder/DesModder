@@ -1,4 +1,4 @@
-import { desmosRequire } from "desmodder";
+import { desmosRequire } from "globals/workerSelf";
 import { IRChunk, Opcodes, ValueType, Types as ValueTypes } from "parsing/IR";
 
 export const countReferences = desmosRequire(

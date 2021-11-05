@@ -415,7 +415,21 @@ export default class Controller {
     return (
       this.pluginsEnabled["GLesmos"] &&
       this.graphMetadata.expressions[id]?.glesmos
-      // TODO: reference canBeGlesmos from the GLesmos controller
+      // TODO: reference canBeGLesmos
+      /*
+      canBeGLesmos(id: string) {
+        const userData = this.context.statements[id].userData;
+        const analysis = this.context.analysis[id];
+        return (
+          userData.type === "expression" &&
+          userData.shouldGraph &&
+          analysis.evaluationState.is_inequality &&
+          analysis.evaluationState.is_graphable &&
+          analysis.rawTree.type !== "Error" &&
+          satisfiesType(analysis.rawTree, "BaseComparator") &&
+          analysis.concreteTree.type === "IRExpression"
+        );
+      }*/
     );
   }
 

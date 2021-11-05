@@ -1,4 +1,3 @@
-import { Calc } from "desmodder";
 import ViewportTransforms from "./ViewportTransforms";
 
 function showGLesmosError(msg: string) {
