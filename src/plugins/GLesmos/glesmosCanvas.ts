@@ -152,7 +152,6 @@ export function initGLesmosCanvas(): GLesmosCanvas {
       /\/\/REPLACE_WITH_GLESMOS[\s\S]*\/\/REPLACE_WITH_GLESMOS_END/g,
       shaderCode
     );
-    console.log(shaderResult);
     glesmosShaderProgram = buildShaderProgram(gl, VERTEX_SHADER, shaderResult);
   };
 

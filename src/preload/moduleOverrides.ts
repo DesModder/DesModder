@@ -12,9 +12,10 @@ import mainController from "./moduleOverrides/main__controller";
 import expressionView from "./moduleOverrides/expression_view";
 import genericView from "./moduleOverrides/generic-view";
 import folderView from "./moduleOverrides/folder-view";
-// import workerSrcUnderlying from "./moduleOverrides/text__worker_src_underlying";
+import workerSrcUnderlying from "./moduleOverrides/text__worker_src_underlying";
 import expressionMenusFill from "./moduleOverrides/expression-menus__fill";
 import graphslayer from "./moduleOverrides/graphslayer";
+import mainEvaluator from "./moduleOverrides/main__evaluator";
 
 export default {
   "dcgview-helpers/tooltipped-error": tooltippedError,
@@ -31,8 +32,8 @@ export default {
   "expressions/table-view": genericView,
   "expressions/text_view": genericView,
   "expressions/folder-view": folderView,
-  // The worker src is currently not changed
-  // "text!worker_src_underlying": workerSrcUnderlying,
+  "text!worker_src_underlying": workerSrcUnderlying,
   "expressions/expression-menus/fill": expressionMenusFill,
   "graphing/graphslayer": graphslayer,
+  "main/evaluator": mainEvaluator,
 } as { [key: string]: (dependencyNameMap: DependencyNameMap) => Visitor };

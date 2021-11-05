@@ -779,8 +779,3 @@ export function wolfram2desmos(input: string) {
   replace(/(^(\s*))|(\s*$)/g, "");
   return input;
 }
-
-// Always love to have my signature :)
-console.log(
-  "wolfram2desmos loaded properly ✔️\n_   _ _____ ___  _   _ _____ _   _ ___________  ___  \n| | | |  ___/ _ \\| | | |  ___| \\ | |_   _| ___ \\/ _ \\ \n| |_| | |__/ /_\\ | | | | |__ |  \\| | | | | |_/ / /_\\ \\\n|  _  |  __|  _  | | | |  __|| . ` | | | |    /|  _  |\n| | | | |__| | | \\ \\_/ | |___| |\\  |_| |_| |\\ \\| | | |\n\\_| |_\\____\\_| |_/\\___/\\____/\\_| \\_/\\___/\\_| \\_\\_| |_/"
-);

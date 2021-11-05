@@ -5,8 +5,7 @@ export default () => ({
   CallExpression(path: babel.NodePath<t.CallExpression>) {
     /* @plugin glesmos
 
-    @what Disable calculation of implicits when unwanted.
-      Note that this currently has no effect because the worker src override is not loaded
+    @what Disable calculation of implicits when unwanted
     */
     if (
       t.isMemberExpression(path.node.callee) &&
@@ -17,7 +16,7 @@ export default () => ({
           `{
             fillSegments: [],
             segments: [],
-            resolved: false
+            resolved: false,
           }`
         )
       );

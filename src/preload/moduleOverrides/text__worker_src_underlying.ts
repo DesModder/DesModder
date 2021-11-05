@@ -29,7 +29,13 @@ export default () => ({
     const src = path.node.value;
     const lines = [];
     for (let line of src.split("\n")) {
-      if (line.startsWith("define(")) {
+      let match;
+      // Use regex here instead of proper parsing for performance
+      if (
+        line.startsWith("define(") &&
+        (match = line.match(/^define\(['"]([^'"]*)['"]/)) !== null &&
+        moduleOverrides[match[1]] !== undefined
+      ) {
         lines.push(transformLine(line));
       } else {
         lines.push(line);
