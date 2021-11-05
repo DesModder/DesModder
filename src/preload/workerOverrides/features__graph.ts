@@ -52,8 +52,18 @@ export default () => ({
       Precede it with:
         else if (y.userData.glesmos) {
           // don't compile glesmos here; reference compiled glesmos from statement analysis
-          q.push({graphMode: "GLesmos", compiledGLesmos: "..." })
+          q.push({graphMode: "GLesmos", compiledGLesmos: ... })
         }
+
+      For finding fillOpacity and color:
+      There's an object `O` assigned via `O.color = P` within the if statement of 
+        O.wrap(a).eachElement(function (t, a) {
+          if (!(a >= j)) {
+            // Somewhere in this block
+            O.color = P;
+          }
+        })
+      This object `O` provides both `O.fillOpacity` and `O.color`
     */
     if (path.node.value === "=") {
       const ppp = path.parentPath?.parentPath?.parentPath;
@@ -75,24 +85,29 @@ export default () => ({
         t.isCallExpression(ppp.node.right) &&
         t.isMemberExpression(ppp.node.right.callee)
       ) {
-        // do we need listIndex, color, fillOpacity?
-        containingBlock.replaceWith(
-          template.statement(`
+        // find O documented above
+        const objO = findO(anonymousFunc.node);
+
+        if (objO)
+          // do we need listIndex?
+          containingBlock.replaceWith(
+            template.statement(`
             if (%%this%%.userData.glesmos) {
               %%push%%({
                 graphMode: "GLesmos",
-                compiledGL: self.dsm_compileGLesmos(%%ir%%),
+                compiledGL: self.dsm_compileGLesmos(%%ir%%, %%O%%.color, %%O%%.fillOpacity),
                 segments: [],
                 poi: {}
               })
             } else %%containingBlock%%
           `)({
-            this: findIdentifierThis(path),
-            push: ppp.node.right.callee,
-            containingBlock: containingBlock.node,
-            ir: ir,
-          })
-        );
+              this: findIdentifierThis(path),
+              push: ppp.node.right.callee,
+              containingBlock: containingBlock.node,
+              ir: ir,
+              O: objO,
+            })
+          );
         path.skip();
         containingBlock.skip();
       }
@@ -107,3 +122,24 @@ export default () => ({
    */
   },
 });
+
+function findO(anonymousFunc: t.FunctionExpression) {
+  const ifStatement = anonymousFunc.body.body[0];
+  if (
+    t.isIfStatement(ifStatement) &&
+    t.isBlockStatement(ifStatement.consequent)
+  ) {
+    let lhs;
+    for (let statement of ifStatement.consequent.body) {
+      if (
+        t.isExpressionStatement(statement) &&
+        t.isAssignmentExpression(statement.expression) &&
+        t.isMemberExpression((lhs = statement.expression.left)) &&
+        t.isIdentifier(lhs.property, { name: "color" }) &&
+        t.isIdentifier(lhs.object)
+      ) {
+        return lhs.object;
+      }
+    }
+  }
+}
