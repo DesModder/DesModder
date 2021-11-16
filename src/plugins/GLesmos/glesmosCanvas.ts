@@ -101,6 +101,9 @@ precision highp float;
 uniform vec2 corner;
 uniform vec2 size;
 
+#define M_PI 3.1415926535897932384626433832795
+#define M_E 2.71828182845904523536028747135266
+
 //REPLACE_WITH_GLESMOS
 vec4 outColor = vec4(0.0);
 void glesmosMain(vec2 coords) {}
