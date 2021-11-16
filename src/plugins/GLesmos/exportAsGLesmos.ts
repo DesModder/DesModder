@@ -3,7 +3,7 @@ import { getDefinition, getDependencies } from "./builtins";
 import emitChunkGL from "./emitChunkGL";
 import { colorVec4, getGLType } from "./outputHelpers";
 
-function accDeps(depsAcc: string[], dep: string) {
+export function accDeps(depsAcc: string[], dep: string) {
   if (depsAcc.includes(dep)) return;
   getDependencies(dep).forEach((d) => accDeps(depsAcc, d));
   depsAcc.push(dep);
@@ -12,22 +12,21 @@ function accDeps(depsAcc: string[], dep: string) {
 export function compileGLesmos(
   concreteTree: IRExpression,
   color: string,
-  fillOpacity: number
+  fillOpacity: number,
+  id: number
 ) {
   const { source, deps } = emitChunkGL(concreteTree._chunk);
   let type = getGLType(concreteTree.valueType);
   let functionDeps: string[] = [];
   deps.forEach((d) => accDeps(functionDeps, d));
-  return [
-    functionDeps.map(getDefinition).join("\n"),
-    `${type} f(float x, float y) {\n${source}\n}`,
-    "",
-    "vec4 outColor = vec4(0.0);",
-    "void glesmosMain(vec2 coords) {",
-    "  float x = coords.x; float y = coords.y;",
-    "  if (f(x,y) > 0.0) {",
-    `    outColor = ${colorVec4(color, fillOpacity)};`,
-    "  }",
-    "}",
-  ].join("\n");
+  const f = "_f" + id;
+  return {
+    deps: functionDeps.map(getDefinition),
+    defs: [`${type} ${f}(float x, float y) {\n${source}\n}`],
+    bodies: [
+      `if (${f}(x,y) > 0.0) {` +
+        `  outColor = mix(outColor, ${colorVec4(color, 1)}, ${fillOpacity});` +
+        `}`,
+    ],
+  };
 }

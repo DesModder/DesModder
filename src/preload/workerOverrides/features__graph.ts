@@ -89,20 +89,33 @@ export default () => ({
         const objO = findO(anonymousFunc.node);
 
         if (objO)
-          // do we need listIndex?
           containingBlock.replaceWith(
             template.statement(`
             if (%%this%%.userData.glesmos) {
-              %%push%%({
-                graphMode: "GLesmos",
-                compiledGL: self.dsm_compileGLesmos(%%ir%%, %%O%%.color, %%O%%.fillOpacity),
-                segments: [],
-                poi: {}
-              })
+              const newCompiled = self.dsm_compileGLesmos(%%ir%%, %%O%%.color, %%O%%.fillOpacity, %%O%%.listIndex);
+              const prev =  %%graphs%%[%%graphs%%.length - 1];
+              if (prev?.graphMode === "GLesmos") {
+                // merge GLesmos graphs when possible
+                const prevGL = prev.compiledGL;
+                for (let dep of newCompiled.deps) {
+                  if (!prevGL.deps.includes(dep)) {
+                    prevGL.deps.push(dep);
+                  }
+                }
+                prevGL.defs.push(...newCompiled.defs);
+                prevGL.bodies.push(...newCompiled.bodies);
+              } else {
+                %%graphs%%.push({
+                  graphMode: "GLesmos",
+                  compiledGL: newCompiled,
+                  segments: [],
+                  poi: {}
+                })
+              }
             } else %%containingBlock%%
           `)({
               this: findIdentifierThis(path),
-              push: ppp.node.right.callee,
+              graphs: ppp.node.right.callee.object,
               containingBlock: containingBlock.node,
               ir: ir,
               O: objO,
@@ -112,14 +125,6 @@ export default () => ({
         containingBlock.skip();
       }
     }
-    /*
-    Some more notes
-
-      t.Base.prototype._graph = f() {
-    var y = this; // use findIdentifierThis; need this.userData.glesmos
-
-    // throughout, avoid getCompiledFunction (two places) if y.userData.glesmos
-   */
   },
 });
 
