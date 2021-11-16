@@ -25,7 +25,7 @@ export function compileGLesmos(
     defs: [`${type} ${f}(float x, float y) {\n${source}\n}`],
     bodies: [
       `if (${f}(x,y) > 0.0) {` +
-        `  outColor = mix(outColor, ${colorVec4(color, 1)}, ${fillOpacity});` +
+        `  outColor = mixColor(outColor, ${colorVec4(color, fillOpacity)});` +
         `}`,
     ],
   };

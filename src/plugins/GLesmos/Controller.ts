@@ -21,14 +21,17 @@ export default class Controller {
     const compiledGLString = [
       compiledGL.deps.join("\n"),
       compiledGL.defs.join("\n"),
-      "",
+      // Non-premultiplied alpha:
+      `vec4 mixColor(vec4 from, vec4 top) {
+        float a = 1.0 - (1.0 - from.a) * (1.0 - top.a);
+        return vec4((from.rgb * from.a * (1.0 - top.a) + top.rgb * top.a) / a, a);
+      }`,
       "vec4 outColor = vec4(0.0);",
       "void glesmosMain(vec2 coords) {",
       "  float x = coords.x; float y = coords.y;",
       compiledGL.bodies.join("\n"),
       "}",
     ].join("\n");
-    console.log(compiledGLString);
     if (this.canvas?.element) {
       this.canvas.updateTransforms(transforms);
       this.canvas?.setGLesmosShader(compiledGLString);
