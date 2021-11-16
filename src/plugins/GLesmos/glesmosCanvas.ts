@@ -100,6 +100,7 @@ precision highp float;
 
 uniform vec2 corner;
 uniform vec2 size;
+uniform float NaN;
 
 #define M_PI 3.1415926535897932384626433832795
 #define M_E 2.71828182845904523536028747135266
@@ -172,6 +173,7 @@ export function initGLesmosCanvas(): GLesmosCanvas {
       );
       setUniform(gl, glesmosShaderProgram, "corner", "2fv", cornerOfGraph);
       setUniform(gl, glesmosShaderProgram, "size", "2fv", sizeOfGraph);
+      setUniform(gl, glesmosShaderProgram, "NaN", "1f", NaN);
 
       gl.enableVertexAttribArray(vertexPositionAttribLocation);
       gl.vertexAttribPointer(
