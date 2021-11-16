@@ -98,9 +98,19 @@ export const builtins: {
   // TODO: use toFraction handling to define x^(1/3) for x < 0
   // Or maybe wrap pow using `x < 0 ? -pow(-x,n) : pow(x,n)`
   pow: {
-    // rational pow
+    // Rational pow. For x<0, Desmos converts the exponent y to a fraction
+    // and adjusts sign based on the parity of the numerator of y.
+    // Instead, we only handle the x<0 case where y is an integer.
     alias: "rpow",
-    def: "float rpow(float x, float y) { return pow(x, y); }",
+    def: `float rpow(float x, float y) {
+      if (x >= 0.0) return pow(x,y);
+      else {
+        float m = mod(y, 2.0);
+        if (m == 0.0) return pow(-x, y);
+        else if (m == 1.0) return -pow(-x, y);
+        else return pow(x, y);
+      }
+    }`,
   },
   nthroot: {
     def: "float nthroot(float x, float n) { return pow(x,1.0/n); }",

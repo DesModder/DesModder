@@ -30,7 +30,7 @@ function getSourceBinOp(
     case opcodes.Exponent:
       return `rpow(${a},${b})`;
     case opcodes.RawExponent:
-      return `pow(${a},${b})`;
+      return `rpow(${a},${b})`;
     case opcodes.Equal:
       return `${a}==${b}`;
     case opcodes.Less:
