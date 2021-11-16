@@ -132,10 +132,11 @@ export default class Controller {
       type: "get-initial-data",
     });
     // metadata stuff
-    Calc.observeEvent("change.dsm-main-controller", () =>
-      this.checkForMetadataChange()
-    );
+    Calc.observeEvent("change.dsm-main-controller", () => {
+      this.checkForMetadataChange();
+    });
     this.checkForMetadataChange();
+    this.initCheckGLesmos();
   }
 
   updateMenuView() {
@@ -411,7 +412,22 @@ export default class Controller {
     this.folderMerge(noteIndex);
   }
 
+  initCheckGLesmos() {
+    if (this.pluginsEnabled["GLesmos"]) {
+      if (
+        Object.values(this.graphMetadata.expressions).some(
+          (meta) => meta.glesmos
+        )
+      ) {
+        // The graph loaded before DesModder loaded, so DesModder was not available to
+        // return true when asked isGlesmosMode.
+        this.fullRefresh();
+      }
+    }
+  }
+
   isGlesmosMode(id: string) {
+    this.checkForMetadataChange();
     return (
       this.pluginsEnabled["GLesmos"] &&
       this.graphMetadata.expressions[id]?.glesmos
@@ -437,5 +453,13 @@ export default class Controller {
     this.updateExprMetadata(id, {
       glesmos: !this.isGlesmosMode(id),
     });
+    // Trigger a new requestParseForAllItems such that it looks at the changed expression again
+    // Surely there's a better way though.
+    this.fullRefresh();
+  }
+
+  fullRefresh() {
+    Calc.setState(Calc.getState());
+    Calc.controller.evaluator.workerPoolConnection.killWorker();
   }
 }

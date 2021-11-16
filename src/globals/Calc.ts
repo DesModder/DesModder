@@ -289,6 +289,11 @@ export default interface Calc {
     // returns a subscript that occurs nowhere else in the graph
     generateTableXSubscript(): number;
     updateViews(): void;
+    evaluator: {
+      workerPoolConnection: {
+        killWorker(): void;
+      };
+    };
   };
   selectedExpressionId: string;
   //// public
