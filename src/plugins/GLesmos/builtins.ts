@@ -301,12 +301,15 @@ export const builtins: {
 
 export function getDefinition(s: string) {
   const data = builtins[s];
-  let name = data?.alias ?? s;
-  return (
+  if (data === undefined) {
+    throw `Undefined: ${s}`;
+  }
+  const name = data?.alias ?? s;
+  const res =
     data?.def ??
     (data?.body && `float ${name}(float x) { return ${data.body}; }`) ??
-    ""
-  );
+    "";
+  return res;
 }
 
 export function getDependencies(s: string) {
