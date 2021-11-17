@@ -46,6 +46,7 @@ interface ItemModelBase {
   id: string;
   folderId?: string;
   secret?: boolean;
+  error?: any;
 }
 
 interface BaseClickable {
@@ -135,6 +136,7 @@ export interface FolderModel {
   id: string;
   title?: string;
   secret?: boolean;
+  error?: any;
 }
 
 export type ItemModel =

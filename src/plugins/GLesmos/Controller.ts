@@ -1,3 +1,4 @@
+import { Calc } from "globals/window";
 import { initGLesmosCanvas, GLesmosCanvas } from "./glesmosCanvas";
 import ViewportTransforms from "./ViewportTransforms";
 
@@ -16,7 +17,8 @@ export default class Controller {
   drawGlesmosSketchToCtx(
     compiledGL: CompiledGL,
     ctx: CanvasRenderingContext2D,
-    transforms: ViewportTransforms
+    transforms: ViewportTransforms,
+    id: string
   ) {
     const compiledGLString = [
       compiledGL.deps.join("\n"),
@@ -32,11 +34,18 @@ export default class Controller {
       compiledGL.bodies.join("\n"),
       "}",
     ].join("\n");
-    if (this.canvas?.element) {
-      this.canvas.updateTransforms(transforms);
-      this.canvas?.setGLesmosShader(compiledGLString);
-      this.canvas?.render();
-      ctx.drawImage(this.canvas?.element, 0, 0);
+    try {
+      if (this.canvas?.element) {
+        this.canvas.updateTransforms(transforms);
+        this.canvas?.setGLesmosShader(compiledGLString, id);
+        this.canvas?.render(id);
+        ctx.drawImage(this.canvas?.element, 0, 0);
+      }
+    } catch (e) {
+      const model = Calc.controller.getItemModel(id);
+      if (model) {
+        model.error = e;
+      }
     }
   }
 }

@@ -2,6 +2,15 @@ import { getFunctionName } from "./builtins";
 import { IRChunk, IRInstruction } from "parsing/IR";
 import { compileObject, getGLType } from "./outputHelpers";
 import { countReferences, opcodes, printOp, Types } from "./opcodeDeps";
+import { desmosRequire } from "globals/workerSelf";
+import { Error as ParsenodeError } from "parsing/parsenode";
+const PError = desmosRequire("core/math/parsenode/error") as (
+  msg: string
+) => ParsenodeError;
+
+function glesmosError(msg: string) {
+  return PError(`[GLesmos Error] ${msg}`);
+}
 
 function getIdentifier(index: number) {
   return `_${index}`;
@@ -49,7 +58,7 @@ function getSourceBinOp(
       return `${a}[${b}-1]`;
     default:
       const op = printOp(ci.type);
-      throw `Programming error: ${op} is not a binary operator`;
+      throw glesmosError(`Programming error: ${op} is not a binary operator`);
   }
 }
 
@@ -61,7 +70,7 @@ function getSourceSimple(
   switch (ci.type) {
     case opcodes.Constant:
       if (Types.isList(ci.valueType)) {
-        throw "Lists not yet implemented";
+        throw glesmosError("Lists not yet implemented: opcodes.Constant");
       } else {
         return compileObject(ci.value);
       }
@@ -92,27 +101,32 @@ function getSourceSimple(
         maybeInlined(ci.args[2], inlined)
       );
     case opcodes.List:
-      throw "Lists not yet implemented";
+      throw glesmosError("Lists not yet implemented: opcodes.List");
     case opcodes.DeferredListAccess:
     case opcodes.Distribution:
     case opcodes.SymbolicVar:
     case opcodes.SymbolicListVar:
       const op = printOp(ci.type);
-      throw `Programming Error: expect ${op} to be removed before emitting code.`;
+      throw glesmosError(
+        `Programming Error: expect ${op} to be removed before emitting code.`
+      );
     case opcodes.ListAccess:
+      throw glesmosError("Lists not yet implemented: opcodes.ListAccess");
     // in-bounds list access assumes that args[1] is an integer
-    // between 1 and args[1].length, inclusive
+    // between 1 and args[0].length, inclusive
     case opcodes.InboundsListAccess:
-      throw "Lists not yet implemented";
+      throw glesmosError(
+        "Lists not yet implemented: opcodes.InboundsListAccess"
+      );
     case opcodes.NativeFunction:
       deps.add(ci.symbol);
       const name = getFunctionName(ci.symbol);
       const args = ci.args.map((e) => maybeInlined(e, inlined)).join(",");
       return `${name}(${args})`;
     case opcodes.ExtendSeed:
-      throw "ExtendSeed not yet implemented";
+      throw glesmosError("ExtendSeed not yet implemented");
     default:
-      throw `Unexpected opcode: ${printOp(ci.type)}`;
+      throw glesmosError(`Unexpected opcode: ${printOp(ci.type)}`);
   }
 }
 
@@ -136,7 +150,7 @@ function getSourceAndNextIndex(
         nextIndex: incrementedIndex,
       };
     case opcodes.BeginIntegral:
-      throw "Integrals not currently handled";
+      throw glesmosError("Integrals not currently handled");
     case opcodes.LoadArg:
       inlined[instructionIndex] = chunk.argNames[instructionIndex];
       return {
@@ -145,10 +159,10 @@ function getSourceAndNextIndex(
       };
     case opcodes.BeginBroadcast:
     case opcodes.EndBroadcast:
-      throw "Broadcasts not currently handled";
+      throw glesmosError("Broadcasts not currently handled");
     case opcodes.BeginLoop:
     case opcodes.EndLoop:
-      throw "Loops not currently handled";
+      throw glesmosError("Loops not currently handled");
     default:
       let src = getSourceSimple(currInstruction, inlined, deps);
       if (referenceCountList[instructionIndex] <= 1) {

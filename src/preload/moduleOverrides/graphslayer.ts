@@ -13,7 +13,7 @@ import withinFunctionAssignment from "preload/overrideHelpers/withinFunctionAssi
             // t: CanvasRenderingContext2D
             window.DesModder?.controller?.exposedPlugins[
               "GLesmos"
-            ]?.drawGlesmosSketchToCtx?.(t, branch.compiledGL);
+            ]?.drawGlesmosSketchToCtx?.(t, branch.compiledGL, e.id);
           }
         }
       at the start of the consequent of the if statement in:
@@ -33,7 +33,7 @@ import withinFunctionAssignment from "preload/overrideHelpers/withinFunctionAssi
         if (O.graphMode === "GLesmos") {
           window.DesModder?.controller?.exposedPlugins[
             "GLesmos"
-          ]?.drawGlesmosSketchToCtx?.(t, O.compiledGL);
+          ]?.drawGlesmosSketchToCtx?.(t, O.compiledGL, e.id);
           continue;
         }
       after the first statement in 
@@ -56,7 +56,7 @@ export default () =>
             if (branch.graphMode === "GLesmos") {
               window.DesModder?.controller?.exposedPlugins[
                 "GLesmos"
-              ]?.drawGlesmosSketchToCtx?.(branch.compiledGL, %%ctx%%, %%transforms%%);
+              ]?.drawGlesmosSketchToCtx?.(branch.compiledGL, %%ctx%%, %%transforms%%, %%e%%.id);
             }
           }
         `)({

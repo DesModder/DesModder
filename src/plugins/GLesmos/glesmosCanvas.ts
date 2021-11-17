@@ -1,7 +1,7 @@
 import ViewportTransforms from "./ViewportTransforms";
 
-function showGLesmosError(msg: string) {
-  console.error("GLesmos Error: " + msg);
+function glesmosError(msg: string) {
+  throw `[GLesmos Error] ${msg}`;
 }
 
 function compileShader(
@@ -11,21 +11,20 @@ function compileShader(
 ) {
   let shader: WebGLShader | null = gl.createShader(type);
   if (shader === null) {
-    showGLesmosError("Invalid shader type!");
-    return;
+    throw glesmosError("Invalid shader type");
   }
 
   gl.shaderSource(shader, shaderCode);
   gl.compileShader(shader);
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    showGLesmosError(
-      `Error compiling ${
-        type === gl.VERTEX_SHADER ? "vertex" : "fragment"
-      } shader:`
-    );
     let shaderInfoLog = gl.getShaderInfoLog(shader);
-    showGLesmosError(shaderInfoLog ? shaderInfoLog : "");
+    throw glesmosError(
+      `While compiling ${
+        type === gl.VERTEX_SHADER ? "vertex" : "fragment"
+      } shader:
+      ${shaderInfoLog ?? ""}`
+    );
   }
   return shader;
 }
@@ -33,11 +32,12 @@ function compileShader(
 function buildShaderProgram(
   gl: WebGLRenderingContext | WebGL2RenderingContext,
   vert: string,
-  frag: string
+  frag: string,
+  id: string
 ) {
   let shaderProgram = gl.createProgram();
   if (shaderProgram === null) {
-    showGLesmosError("Unable to create shader program!");
+    throw glesmosError("Unable to create shader program!");
     return;
   }
   let vertexShader = compileShader(gl, vert, gl.VERTEX_SHADER);
@@ -48,7 +48,7 @@ function buildShaderProgram(
     gl.linkProgram(shaderProgram);
     return shaderProgram;
   } else {
-    showGLesmosError("One or more shaders did not compile.");
+    throw glesmosError("One or more shaders did not compile.");
   }
 }
 
@@ -69,14 +69,7 @@ function setUniform(
   );
 }
 
-export interface GLesmosCanvas {
-  element: HTMLCanvasElement;
-  glContext: WebGLRenderingContext;
-  deleteCanvas(): void;
-  updateTransforms(transforms: ViewportTransforms): void;
-  setGLesmosShader(shader: string): void;
-  render(): void;
-}
+export type GLesmosCanvas = ReturnType<typeof initGLesmosCanvas>;
 
 const FULLSCREEN_QUAD = new Float32Array([
   -1, 1, 1, 1, 1, -1, -1, 1, 1, -1, -1, -1,
@@ -101,6 +94,7 @@ precision highp float;
 uniform vec2 corner;
 uniform vec2 size;
 uniform float NaN;
+uniform float Infinity;
 
 #define M_PI 3.1415926535897932384626433832795
 #define M_E 2.71828182845904523536028747135266
@@ -117,7 +111,7 @@ void main() {
 
 `;
 
-export function initGLesmosCanvas(): GLesmosCanvas {
+export function initGLesmosCanvas() {
   //================= INIT ELEMENTS =======================
   let c: HTMLCanvasElement = document.createElement("canvas");
   let gl: WebGLRenderingContext = c.getContext("webgl", {
@@ -150,20 +144,26 @@ export function initGLesmosCanvas(): GLesmosCanvas {
 
   let glesmosShaderProgram: WebGLProgram | undefined;
 
-  let setGLesmosShader = (shaderCode: string) => {
+  let setGLesmosShader = (shaderCode: string, id: string) => {
     const shaderResult = GLESMOS_FRAGMENT_SHADER.replace(
       /\/\/REPLACE_WITH_GLESMOS[\s\S]*\/\/REPLACE_WITH_GLESMOS_END/g,
       shaderCode
     );
-    glesmosShaderProgram = buildShaderProgram(gl, VERTEX_SHADER, shaderResult);
+    glesmosShaderProgram = buildShaderProgram(
+      gl,
+      VERTEX_SHADER,
+      shaderResult,
+      id
+    );
   };
 
-  setGLesmosShader(`
-    vec4 outColor = vec4(0.0);
-    void glesmosMain(vec2 coords) {}
-    `);
+  setGLesmosShader(
+    `vec4 outColor = vec4(0.0);
+    void glesmosMain(vec2 coords) {}`,
+    "Empty"
+  );
 
-  let render = () => {
+  let render = (id: string) => {
     if (glesmosShaderProgram) {
       gl.useProgram(glesmosShaderProgram);
 
@@ -174,6 +174,7 @@ export function initGLesmosCanvas(): GLesmosCanvas {
       setUniform(gl, glesmosShaderProgram, "corner", "2fv", cornerOfGraph);
       setUniform(gl, glesmosShaderProgram, "size", "2fv", sizeOfGraph);
       setUniform(gl, glesmosShaderProgram, "NaN", "1f", NaN);
+      setUniform(gl, glesmosShaderProgram, "Infinity", "1f", Infinity);
 
       gl.enableVertexAttribArray(vertexPositionAttribLocation);
       gl.vertexAttribPointer(
@@ -187,11 +188,11 @@ export function initGLesmosCanvas(): GLesmosCanvas {
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     } else {
-      showGLesmosError("Shader failed!");
+      throw glesmosError("Shader failed");
     }
   };
 
-  render();
+  render("Base");
 
   //================= CLEANUP =============
 
