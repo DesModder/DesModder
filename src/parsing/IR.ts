@@ -235,14 +235,16 @@ interface EndBroadcast extends HasValueType {
 
 interface BeginLoop extends HasValueType {
   type: Opcodes["BeginLoop"];
-  args: unknown;
+  // args: lower bound, upper bound, initial value
+  args: number[];
   endIndex: number;
   callData: unknown;
 }
 
 interface EndLoop extends HasValueType {
   type: Opcodes["EndLoop"];
-  args: unknown;
+  // args: matching BeginLoop index, accumulator new value
+  args: [number, number];
 }
 
 interface ExtendSeed extends HasValueType {

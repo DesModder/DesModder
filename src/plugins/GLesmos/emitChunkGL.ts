@@ -121,6 +121,81 @@ function getSourceSimple(
   }
 }
 
+function constFloat(s: string) {
+  // return "<num>" if s is the form "(<num>)" for some float <num>; otherwise throws
+  const inner = s.substring(1, s.length - 1);
+  if (/^[-+]?\d*(\.\d*)?$/.test(inner)) {
+    return inner;
+  } else {
+    throw "Sum/product bounds must be constants";
+  }
+}
+
+function getBeginLoopSource(
+  instructionIndex: number,
+  ci: IRInstruction & { type: typeof opcodes.BeginLoop },
+  chunk: IRChunk,
+  inlined: string[]
+) {
+  const iterationVar = getIdentifier(instructionIndex);
+  const lowerBound = constFloat(maybeInlined(ci.args[0], inlined));
+  const upperBound = constFloat(maybeInlined(ci.args[1], inlined));
+  const its = parseFloat(upperBound) - parseFloat(lowerBound) + 1;
+  if (its < 1) {
+    throw "Sum/product must have upper bound > lower bound";
+  }
+  if (its > 10000) {
+    // Too many iterations can cause freezing or losing the webgl context
+    throw "Sum/product cannot have more than 10000 iterations";
+  }
+  const outputIndex = ci.endIndex + 1;
+  const outputIdentifier = getIdentifier(outputIndex);
+  // const resultIsUsed =
+  //   outputIndex < chunk.instructionsLength() &&
+  //   chunk.getInstruction(outputIndex).type === opcodes.BlockVar;
+  const initialValue = maybeInlined(ci.args[2], inlined);
+  const accumulatorIndex = instructionIndex + 1;
+  const accumulatorIdentifier = getIdentifier(accumulatorIndex);
+  let s = `float ${accumulatorIdentifier};\n` + `float ${outputIdentifier};\n`;
+  // `if(${lowerBound}>${upperBound}){` +
+  // (resultIsUsed ? `${outputIdentifier}=${initialValue};` : "") +
+  // `}\nelse if(${upperBound}-${lowerBound} > 10000.0){` +
+  // (resultIsUsed ? `${outputIdentifier}=NaN;` : "") +
+  // `}\nelse{\n`;
+  if (chunk.getInstruction(accumulatorIndex).type === opcodes.BlockVar) {
+    s += `${accumulatorIdentifier}=${initialValue};`;
+  }
+  return `${s}\nfor(float ${iterationVar}=${lowerBound};${iterationVar}<=${upperBound};${iterationVar}++){\n`;
+}
+
+function getEndLoopSource(
+  instructionIndex: number,
+  ci: IRInstruction & { type: typeof opcodes.EndLoop },
+  chunk: IRChunk,
+  inlined: string[]
+) {
+  var s = "";
+  var accumulatorIndex = ci.args[0] + 1;
+  if (chunk.getInstruction(accumulatorIndex).type === opcodes.BlockVar) {
+    s += `${getIdentifier(accumulatorIndex)}=${maybeInlined(
+      ci.args[1],
+      inlined
+    )};\n`;
+  }
+  // end the loop
+  s += "}\n";
+  var outputIndex = instructionIndex + 1;
+  if (outputIndex < chunk.instructionsLength()) {
+    if (chunk.getInstruction(outputIndex).type === opcodes.BlockVar) {
+      s += `${getIdentifier(outputIndex)}=${maybeInlined(
+        accumulatorIndex,
+        inlined
+      )};\n`;
+    }
+  }
+  return s;
+}
+
 function getSourceAndNextIndex(
   chunk: IRChunk,
   currInstruction: IRInstruction,
@@ -152,8 +227,26 @@ function getSourceAndNextIndex(
     case opcodes.EndBroadcast:
       throw "Broadcasts not yet implemented";
     case opcodes.BeginLoop:
+      deps.add("round");
+      return {
+        source: getBeginLoopSource(
+          instructionIndex,
+          currInstruction,
+          chunk,
+          inlined
+        ),
+        nextIndex: incrementedIndex,
+      };
     case opcodes.EndLoop:
-      throw "Loops not yet implemented";
+      return {
+        source: getEndLoopSource(
+          instructionIndex,
+          currInstruction,
+          chunk,
+          inlined
+        ),
+        nextIndex: incrementedIndex,
+      };
     default:
       let src = getSourceSimple(currInstruction, inlined, deps);
       if (referenceCountList[instructionIndex] <= 1) {
