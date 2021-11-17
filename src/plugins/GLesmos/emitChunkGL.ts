@@ -46,7 +46,11 @@ function getSourceBinOp(
     case opcodes.OrderedPair:
       return `vec2(${a},${b})`;
     case opcodes.OrderedPairAccess:
-      return `${a}[${b}-1]`;
+      // Should only be called with a constant (inlined) index arg
+      if (b !== "(1.0)" && b !== "(2.0)") {
+        throw `Programming error in OrderedPairAccess`;
+      }
+      return b === "(1.0)" ? `${a}.x` : `${a}.y`;
     default:
       const op = printOp(ci.type);
       throw `Programming error: ${op} is not a binary operator`;
