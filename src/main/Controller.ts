@@ -136,7 +136,11 @@ export default class Controller {
       this.checkForMetadataChange();
     });
     this.checkForMetadataChange();
-    this.initCheckGLesmos();
+    if (this.pluginsEnabled["GLesmos"]) {
+      // The graph loaded before DesModder loaded, so DesModder was not available to
+      // return true when asked isGlesmosMode. Refresh those expressions now
+      this.checkGLesmos();
+    }
   }
 
   updateMenuView() {
@@ -178,6 +182,10 @@ export default class Controller {
 
   setPluginEnabled(i: PluginID, isEnabled: boolean) {
     this.pluginsEnabled[i] = isEnabled;
+    if (i === "GLesmos") {
+      // Need to refresh glesmos expressions
+      this.checkGLesmos();
+    }
     postMessageUp({
       type: "set-plugins-enabled",
       value: this.pluginsEnabled,
@@ -412,17 +420,13 @@ export default class Controller {
     this.folderMerge(noteIndex);
   }
 
-  initCheckGLesmos() {
-    if (this.pluginsEnabled["GLesmos"]) {
-      const glesmosIDs = Object.keys(this.graphMetadata.expressions).filter(
-        (id) => this.graphMetadata.expressions[id].glesmos
-      );
-      if (glesmosIDs.length > 0) {
-        // The graph loaded before DesModder loaded, so DesModder was not available to
-        // return true when asked isGlesmosMode. Refresh those expressions now
-        glesmosIDs.map((id) => this.toggleExpr(id));
-        this.killWorker();
-      }
+  checkGLesmos() {
+    const glesmosIDs = Object.keys(this.graphMetadata.expressions).filter(
+      (id) => this.graphMetadata.expressions[id].glesmos
+    );
+    if (glesmosIDs.length > 0) {
+      glesmosIDs.map((id) => this.toggleExpr(id));
+      this.killWorker();
     }
   }
 
