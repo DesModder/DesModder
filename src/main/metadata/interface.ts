@@ -8,4 +8,5 @@ export default interface Metadata {
 export interface Expression {
   pinned?: boolean;
   errorHidden?: boolean;
+  glesmos?: boolean;
 }

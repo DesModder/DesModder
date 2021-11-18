@@ -52,6 +52,13 @@ listenToMessageUp((message) => {
         type: "set-script-url",
         value: chrome.runtime.getURL("script.js"),
       });
+      break;
+    case "get-worker-append-url":
+      postMessageDown({
+        type: "set-worker-append-url",
+        value: chrome.runtime.getURL("workerAppend.js"),
+      });
+      break;
   }
 });
 

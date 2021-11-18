@@ -6,12 +6,13 @@ export function glslFloatify(x: number) {
   return Number.isInteger(x) ? x.toString() + ".0" : x.toString();
 }
 
-export function colorToVec3(color: string) {
+export function colorVec4(color: string, opacity: number) {
   // assumes col is a string of the form "#FF2200"
   let r = glslFloatify(parseInt(color.slice(1, 3), 16) / 256);
   let g = glslFloatify(parseInt(color.slice(3, 5), 16) / 256);
   let b = glslFloatify(parseInt(color.slice(5, 7), 16) / 256);
-  return `vec3(${r}, ${g}, ${b})`;
+  let a = glslFloatify(opacity);
+  return `vec4(${r}, ${g}, ${b}, ${a})`;
 }
 
 export function evalMaybeRational(x: MaybeRational) {

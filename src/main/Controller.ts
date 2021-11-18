@@ -132,10 +132,11 @@ export default class Controller {
       type: "get-initial-data",
     });
     // metadata stuff
-    Calc.observeEvent("change.dsm-main-controller", () =>
-      this.checkForMetadataChange()
-    );
+    Calc.observeEvent("change.dsm-main-controller", () => {
+      this.checkForMetadataChange();
+    });
     this.checkForMetadataChange();
+    this.initCheckGLesmos();
   }
 
   updateMenuView() {
@@ -409,5 +410,61 @@ export default class Controller {
     });
     Calc.controller._toplevelReplaceItemAt(noteIndex, T, true);
     this.folderMerge(noteIndex);
+  }
+
+  initCheckGLesmos() {
+    if (this.pluginsEnabled["GLesmos"]) {
+      const glesmosIDs = Object.keys(this.graphMetadata.expressions).filter(
+        (id) => this.graphMetadata.expressions[id].glesmos
+      );
+      if (glesmosIDs.length > 0) {
+        // The graph loaded before DesModder loaded, so DesModder was not available to
+        // return true when asked isGlesmosMode. Refresh those expressions now
+        glesmosIDs.map((id) => this.toggleExpr(id));
+        this.killWorker();
+      }
+    }
+  }
+
+  canBeGLesmos(id: string) {
+    let model;
+    return (
+      this.pluginsEnabled["GLesmos"] &&
+      (model = Calc.controller.getItemModel(id)) &&
+      model.type === "expression" &&
+      model.formula &&
+      model.formula.expression_type === "IMPLICIT" &&
+      model.formula.is_inequality
+    );
+  }
+
+  isGlesmosMode(id: string) {
+    if (!this.pluginsEnabled["GLesmos"]) return false;
+    this.checkForMetadataChange();
+    return this.graphMetadata.expressions[id]?.glesmos;
+  }
+
+  toggleGlesmos(id: string) {
+    this.updateExprMetadata(id, {
+      glesmos: !this.isGlesmosMode(id),
+    });
+    // force the worker to revisit the expression
+    this.toggleExpr(id);
+    this.killWorker();
+  }
+
+  toggleExpr(id: string) {
+    Calc.controller.dispatch({
+      type: "toggle-item-hidden",
+      id,
+    });
+    Calc.controller.dispatch({
+      type: "toggle-item-hidden",
+      id,
+    });
+  }
+
+  killWorker() {
+    Calc.controller.evaluator.workerPoolConnection.killWorker();
   }
 }

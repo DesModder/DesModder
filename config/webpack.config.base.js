@@ -17,6 +17,7 @@ const config = {
     script: "./src/script.ts",
     preloadContent: "./src/preload/content.ts",
     preloadScript: "./src/preload/script.ts",
+    workerAppend: "./src/worker/append.ts",
   },
   output: {
     path: path.resolve(__dirname, "../dist"),

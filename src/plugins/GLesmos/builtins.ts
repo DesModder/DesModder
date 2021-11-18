@@ -98,9 +98,19 @@ export const builtins: {
   // TODO: use toFraction handling to define x^(1/3) for x < 0
   // Or maybe wrap pow using `x < 0 ? -pow(-x,n) : pow(x,n)`
   pow: {
-    // rational pow
+    // Rational pow. For x<0, Desmos converts the exponent y to a fraction
+    // and adjusts sign based on the parity of the numerator of y.
+    // Instead, we only handle the x<0 case where y is an integer.
     alias: "rpow",
-    def: "float rpow(float x, float y) { return pow(x, y); }",
+    def: `float rpow(float x, float y) {
+      if (x >= 0.0) return pow(x,y);
+      else {
+        float m = mod(y, 2.0);
+        if (m == 0.0) return pow(-x, y);
+        else if (m == 1.0) return -pow(-x, y);
+        else return pow(x, y);
+      }
+    }`,
   },
   nthroot: {
     def: "float nthroot(float x, float n) { return pow(x,1.0/n); }",
@@ -121,22 +131,86 @@ export const builtins: {
   exp: {},
   floor: {},
   ceil: {},
+  round_single: {
+    def: "float round(float x) { return floor(0.5 + x); }",
+  },
   round: {
-    def: "float round(float x, float n) { float p=pow(10.0, n); return floor(0.5+x*p)/p; }",
+    def: "float round(float x, float n) { float p=pow(10.0, n); return round(x*p)/p; }",
+    deps: ["round_single"],
   },
   abs: {},
   sign: {},
   // GLSL uses actual mod, not JS's remainder
   mod: {},
-  // nCr: {},
-  // nPr: {},
-  // factorial: {},
-  // polyGamma: {},
-  // lcm: {},
-  // gcd: {},
+  // nCr and nPr are limited to a small region of values because we
+  // are naively using factorials (non-fixed loop size doesn't work with GL)
+  nCr: {
+    def: `float nCr(float n, float k) {
+      n = round(n);
+      k = round(k);
+      if (k > n || n < 0.0 || k < 0.0) return 0.0;
+      return round(factorial(n) / (factorial(k) * factorial(n-k)));
+    }`,
+    deps: ["factorial", "round_single"],
+  },
+  nPr: {
+    def: `float nPr(float n, float k) {
+      n = round(n);
+      k = round(k);
+      if (k > n || n < 0.0 || k < 0.0) return 0.0;
+      return round(factorial(n) / factorial(n - k));
+    }`,
+    deps: ["factorial", "round_single"],
+  },
+  factorial: {
+    body: "gamma(x + 1.0)",
+    deps: ["gamma"],
+  },
+  polyGamma: {
+    def: `
+    float polyGamma(float m, float z) {
+      float a = mod(m, 2.0) == 0.0 ? -1.0 : 1.0;
+      // z < 0 is not handled
+      float u = 0.0;
+      float i = pow(z, -(m + 1.0));
+      for (float j = 0.0; j < 10.0; j++) {
+        if (z < 10.0) {
+          u += i;
+          z++;
+          i = pow(z, -(m + 1.0));
+        }
+      }
+      u += m == 0.0 ? -log(z) : (i * z) / m;
+      u += 0.5 * i;
+      float c = 2.0;
+      float h = m + 1.0;
+      float s = (i * z * h) / c;
+      float l = 1.0 / (z * z);
+
+      // manually unrolled loop lol. It's ok because the compiler would do the same
+      s *= l; u += s * 0.166666666666666667; s *= ++h / ++c; s *= ++h / ++c;
+      s *= l; u += s * -0.03333333333333333; s *= ++h / ++c; s *= ++h / ++c;
+      s *= l; u += s * 0.023809523809523808; s *= ++h / ++c; s *= ++h / ++c;
+      s *= l; u += s * -0.03333333333333333; s *= ++h / ++c; s *= ++h / ++c;
+      s *= l; u += s * 0.07575757575757576; s *= ++h / ++c; s *= ++h / ++c;
+      s *= l; u += s * -0.2531135531135531; s *= ++h / ++c; s *= ++h / ++c;
+      s *= l; u += s * 1.16666666666666667; s *= ++h / ++c; s *= ++h / ++c;
+      s *= l; u += s * -7.092156862745098; s *= ++h / ++c; s *= ++h / ++c;
+      s *= l; u += s * 54.971177944862156; s *= ++h / ++c; s *= ++h / ++c;
+      s *= l; u += s * -529.1242424242424; s *= ++h / ++c; s *= ++h / ++c;
+      s *= l; u += s * 6192.123188405797; s *= ++h / ++c; s *= ++h / ++c;
+      s *= l; u += s * -86580.25311355312; s *= ++h / ++c; s *= ++h / ++c;
+      s *= l; u += s * 1425517.1666666667; s *= ++h / ++c; s *= ++h / ++c;
+      s *= l; u += s * -27298231.067816094;
+      return factorial(m) * a * u;
+    }`,
+    deps: ["factorial"],
+  },
   distance: {},
 
   /** LISTS */
+  // lcm: {},
+  // gcd: {},
   // mean: {},
   // total: {},
   // stdev: {},
@@ -188,7 +262,7 @@ export const builtins: {
   // poissonSample: {},
   // binomSample: {},
 
-  /** COLORS (do no need to implement) */
+  /** COLORS (do not need to implement) */
   // rgb: {},
   // hsv: {},
 
@@ -206,18 +280,36 @@ export const builtins: {
   rtxsqmone: {
     def: "float rtxsqmone(float x) { float t = x*x; return t-1.0==t ? abs(x) : sqrt(t-1.0); }",
   },
+  gamma: {
+    body: `x < 0.0
+      ? M_PI / (sin(M_PI * x) * gamma_pos(1.0 - x))
+      : gamma_pos(x)`,
+    deps: ["gamma_pos"],
+  },
+  gamma_pos: {
+    // https://github.com/libretro/glsl-shaders/blob/master/crt/shaders/crt-royale/port-helpers/special-functions.h#L228
+    def: `float gamma_pos(float s) {
+      float sph = s + 0.5;
+      float lanczos_sum = 0.8109119309638332633713423362694399653724431 + 0.4808354605142681877121661197951496120000040/(s + 1.0);
+      float base = (sph + 1.12906830989)/2.71828182845904523536028747135266249775724709;
+      return (pow(base, sph) * lanczos_sum) / s;
+    }`,
+  },
 };
 
 // Unhandled: CompilerFunctionTable
 
 export function getDefinition(s: string) {
   const data = builtins[s];
-  let name = data?.alias ?? s;
-  return (
+  if (data === undefined) {
+    throw `Undefined: ${s}`;
+  }
+  const name = data?.alias ?? s;
+  const res =
     data?.def ??
     (data?.body && `float ${name}(float x) { return ${data.body}; }`) ??
-    ""
-  );
+    "";
+  return res;
 }
 
 export function getDependencies(s: string) {

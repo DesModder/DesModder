@@ -46,6 +46,29 @@ interface ItemModelBase {
   id: string;
   folderId?: string;
   secret?: boolean;
+  error?: any;
+  formula?: {
+    expression_type:
+      | "X_OR_Y"
+      | "SINGLE_POINT"
+      | "POINT_LIST"
+      | "PARAMETRIC"
+      | "POLAR"
+      | "IMPLICIT"
+      | "POLYGON"
+      | "HISTOGRAM"
+      | "DOTPLOT"
+      | "BOXPLOT"
+      | "TTEST"
+      | "STATS"
+      | "CUBE"
+      | "SPHERE";
+    is_graphable: boolean;
+    is_inequality: boolean;
+    action_value?: {
+      [K: string]: string;
+    };
+  };
 }
 
 interface BaseClickable {
@@ -92,11 +115,6 @@ export interface ExpressionModel extends BasicSetExpression, ItemModelBase {
     | "auto_left"
     | "right"
     | "auto_right";
-  formula?: {
-    action_value?: {
-      [K: string]: string;
-    };
-  };
   clickableInfo?: BaseClickable;
 }
 
@@ -135,6 +153,7 @@ export interface FolderModel {
   id: string;
   title?: string;
   secret?: boolean;
+  error?: any;
 }
 
 export type ItemModel =
@@ -289,6 +308,11 @@ export default interface Calc {
     // returns a subscript that occurs nowhere else in the graph
     generateTableXSubscript(): number;
     updateViews(): void;
+    evaluator: {
+      workerPoolConnection: {
+        killWorker(): void;
+      };
+    };
   };
   selectedExpressionId: string;
   //// public

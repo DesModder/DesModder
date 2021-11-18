@@ -5,7 +5,6 @@
     "strictNullChecks": true,
     "module": "es6",
     "moduleResolution": "node",
-    "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "jsx": "react",
     "jsxFactory": "DCGView.jsx",

@@ -108,6 +108,7 @@ export function changeExprInMetadata(
     switch (key) {
       case "pinned":
       case "errorHidden":
+      case "glesmos":
         if (value) {
           changed[key] = true;
         } else {

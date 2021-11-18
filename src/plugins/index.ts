@@ -59,8 +59,8 @@ const _plugins = {
   [showTips.id]: showTips,
   [rightClickTray.id]: rightClickTray,
   [duplicateHotkey.id]: duplicateHotkey,
-  [shiftEnterNewline.id]: shiftEnterNewline,
   [GLesmos.id]: GLesmos,
+  [shiftEnterNewline.id]: shiftEnterNewline,
   [hideErrors.id]: hideErrors,
   [folderTools.id]: folderTools,
 } as const;
