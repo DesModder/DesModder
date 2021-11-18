@@ -414,52 +414,57 @@ export default class Controller {
 
   initCheckGLesmos() {
     if (this.pluginsEnabled["GLesmos"]) {
-      if (
-        Object.values(this.graphMetadata.expressions).some(
-          (meta) => meta.glesmos
-        )
-      ) {
+      const glesmosIDs = Object.keys(this.graphMetadata.expressions).filter(
+        (id) => this.graphMetadata.expressions[id].glesmos
+      );
+      if (glesmosIDs.length > 0) {
         // The graph loaded before DesModder loaded, so DesModder was not available to
-        // return true when asked isGlesmosMode.
-        this.fullRefresh();
+        // return true when asked isGlesmosMode. Refresh those expressions now
+        glesmosIDs.map((id) => this.toggleExpr(id));
+        this.killWorker();
       }
     }
   }
 
-  isGlesmosMode(id: string) {
-    this.checkForMetadataChange();
+  canBeGLesmos(id: string) {
+    let model;
     return (
       this.pluginsEnabled["GLesmos"] &&
-      this.graphMetadata.expressions[id]?.glesmos
-      // TODO: reference canBeGLesmos
-      /*
-      canBeGLesmos(id: string) {
-        const userData = this.context.statements[id].userData;
-        const analysis = this.context.analysis[id];
-        return (
-          userData.type === "expression" &&
-          userData.shouldGraph &&
-          analysis.evaluationState.is_inequality &&
-          analysis.evaluationState.is_graphable &&
-          analysis.rawTree.type !== "Error" &&
-          satisfiesType(analysis.rawTree, "BaseComparator") &&
-          analysis.concreteTree.type === "IRExpression"
-        );
-      }*/
+      (model = Calc.controller.getItemModel(id)) &&
+      model.type === "expression" &&
+      model.formula &&
+      model.formula.expression_type === "IMPLICIT" &&
+      model.formula.is_inequality
     );
+  }
+
+  isGlesmosMode(id: string) {
+    if (!this.pluginsEnabled["GLesmos"]) return false;
+    this.checkForMetadataChange();
+    return this.graphMetadata.expressions[id]?.glesmos;
   }
 
   toggleGlesmos(id: string) {
     this.updateExprMetadata(id, {
       glesmos: !this.isGlesmosMode(id),
     });
-    // Trigger a new requestParseForAllItems such that it looks at the changed expression again
-    // Surely there's a better way though.
-    this.fullRefresh();
+    // force the worker to revisit the expression
+    this.toggleExpr(id);
+    this.killWorker();
   }
 
-  fullRefresh() {
-    Calc.setState(Calc.getState());
+  toggleExpr(id: string) {
+    Calc.controller.dispatch({
+      type: "toggle-item-hidden",
+      id,
+    });
+    Calc.controller.dispatch({
+      type: "toggle-item-hidden",
+      id,
+    });
+  }
+
+  killWorker() {
     Calc.controller.evaluator.workerPoolConnection.killWorker();
   }
 }
