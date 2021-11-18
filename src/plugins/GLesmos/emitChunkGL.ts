@@ -69,12 +69,12 @@ function getSourceSimple(
       } else {
         return compileObject(ci.value);
       }
+    case opcodes.Exponent:
+      deps.add("pow"); // now fall through
     case opcodes.Add:
     case opcodes.Subtract:
     case opcodes.Multiply:
     case opcodes.Divide:
-    case opcodes.Exponent:
-      deps.add("pow"); // now fall through
     case opcodes.RawExponent:
     case opcodes.Equal:
     case opcodes.Less:
