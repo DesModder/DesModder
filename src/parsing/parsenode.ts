@@ -264,6 +264,19 @@ interface RGBColor extends Expression {
   type: "RGBColor";
 }
 
+/* List comprehensions */
+
+interface AssignmentExpression extends Expression {
+  type: "AssignmentExpression";
+  args: [Identifier, ChildExprNode];
+}
+
+interface ListComprehension extends Expression {
+  type: "ListComprehension";
+  // The identifier is something like `_comprehensionIndex_5`
+  args: [Identifier, ChildExprNode, ...AssignmentExpression[]];
+}
+
 /* Repeated Operators */
 
 interface RepeatedOperator extends Expression {
@@ -603,6 +616,8 @@ export type ChildExprNode =
   | BareSeq
   | ParenSeq
   | UpdateRule
+  | AssignmentExpression
+  | ListComprehension
   | OrderedPairAccess
   | Piecewise
   | Product
