@@ -5,7 +5,7 @@ import {
   containingCreateElementCall,
   findIdentifierThis,
 } from "../overrideHelpers/moduleUtils";
-import "./components/menu.less";
+import "./styles/expression-menus__fill.less";
 
 export default (dependencyNameMap: DependencyNameMap) => ({
   StringLiteral(path: babel.NodePath<t.StringLiteral>) {

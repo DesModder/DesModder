@@ -17,6 +17,7 @@ import expressionMenusFill from "./moduleOverrides/expression-menus__fill";
 import graphslayer from "./moduleOverrides/graphslayer";
 import mainEvaluator from "./moduleOverrides/main__evaluator";
 import expressionOptionsMenuView from "./moduleOverrides/expression-options-menu-view";
+import promptSliderView from "./moduleOverrides/promptslider_view";
 
 export default {
   "dcgview-helpers/tooltipped-error": tooltippedError,
@@ -39,4 +40,5 @@ export default {
   "main/evaluator": mainEvaluator,
   "expressions/expression-menus/expression-options-menu-view":
     expressionOptionsMenuView,
+  "expressions/promptslider_view": promptSliderView,
 } as { [key: string]: (dependencyNameMap: DependencyNameMap) => Visitor };

@@ -8,7 +8,7 @@ export default (dependencyNameMap: DependencyNameMap) => ({
     /* @plugin hide-errors
     
     @what Wrap the error message tooltipped-error with a div, using
-      onTap to trigger hiding/showing the error.
+      onTap to trigger hiding/showing the error (but only when shift is held).
       
     @how
       Replaces
@@ -38,7 +38,7 @@ export default (dependencyNameMap: DependencyNameMap) => ({
         `() => %%DCGView%%.createElement(
           "div",
           {
-            onTap: () => window.DesModder.controller.toggleErrorHidden(%%this%%.model.id),
+            onTap: evt => evt.shiftKey && window.DesModder.controller.toggleErrorHidden(%%this%%.model.id),
             style: () => (
               window.DesModder.controller.isErrorHidden(%%this%%.model.id)
                 ? "opacity: 0.5"
