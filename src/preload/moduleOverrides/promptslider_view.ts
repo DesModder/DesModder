@@ -2,6 +2,7 @@ import * as t from "@babel/types";
 import template from "@babel/template";
 import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
 import { containingCreateElementCall } from "../overrideHelpers/moduleUtils";
+import { findIdentifierThis } from "../overrideHelpers/moduleUtils";
 import "./styles/promptslider_view.less";
 
 export default (dependencyNameMap: DependencyNameMap) => ({
@@ -22,7 +23,10 @@ export default (dependencyNameMap: DependencyNameMap) => ({
         %%DCGView%%.createElement(
           %%DCGView%%.Components.If,
           {
-            predicate: () => DesModder.controller?.isPluginEnabled("hide-errors"),
+            predicate: () => (
+              %%this%%.model.type !== "ticker" &&
+              DesModder.controller?.isPluginEnabled("hide-errors")
+            ),
           },
           () => %%DCGView%%.createElement(
             "div",
@@ -42,7 +46,7 @@ export default (dependencyNameMap: DependencyNameMap) => ({
         )
       `)({
           DCGView: dependencyNameMap.dcgview,
-          // ToggleView: dependencyNameMap["expressions/toggle-view"],
+          this: findIdentifierThis(path),
         })
       );
     }
