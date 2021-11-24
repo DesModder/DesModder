@@ -41,7 +41,12 @@ export default () => ({
         lines.push(line);
       }
     }
-    path.node.value = lines.join("\n") + window.dsm_workerAppend;
+    // Place at the beginning of the code for the source mapping to line up
+    // Call at the end of the code to run after modules defined
+    path.node.value =
+      `function loadDesModderWorker(){${window.dsm_workerAppend}\n}` +
+      lines.join("\n") +
+      "\nloadDesModderWorker();";
   },
 });
 
