@@ -107,9 +107,11 @@ export async function exportFrames(controller: Controller) {
     new Blob([data.buffer as ArrayBuffer], { type: "video/mp4" })
   );
 
-  const humanOutFilename =
-    "DesModder Video Creator." +
-    (controller.fileType === "apng" ? "png" : controller.fileType);
+  let humanOutFilename = controller.outfileName;
+  const ext = controller.fileType === "apng" ? "png" : controller.fileType;
+  if (!humanOutFilename.endsWith("." + ext)) {
+    humanOutFilename += "." + ext;
+  }
   download(url, humanOutFilename);
 
   controller.isExporting = false;

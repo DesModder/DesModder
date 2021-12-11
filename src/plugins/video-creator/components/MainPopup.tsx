@@ -3,6 +3,7 @@ import {
   SmallMathQuillInput,
   SegmentedControl,
   If,
+  Input,
   jquery,
   Button,
   IfElse,
@@ -133,6 +134,15 @@ export default class MainPopup extends DCGView.Class<{
                   setSelectedIndex={(i) => this.setSelectedFileTypeIndex(i)}
                 />
               </div>
+              <Input
+                class="dsm-vc-outfile-name"
+                value={() => this.controller.getOutfileName()}
+                onInput={(s: string) => this.controller.setOutfileName(s)}
+                required={() => true}
+                placeholder={() => "set a filename"}
+                // Avoid red squiggles throughout filename
+                spellcheck={() => false}
+              />
               <div class="dsm-vc-export">
                 <Button
                   color="green"
