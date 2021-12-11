@@ -309,10 +309,18 @@ export default class Controller {
     this.finishUpdateMetadata();
   }
 
+  commitStateChange(allowUndo: boolean) {
+    Calc.controller.updateTheComputedWorld();
+    if (allowUndo) {
+      Calc.controller.commitUndoRedoSynchronously({ type: "dsm-blank" });
+    }
+    Calc.controller.updateViews();
+  }
+
   finishUpdateMetadata() {
     setMetadata(this.graphMetadata);
     this.applyPinnedStyle();
-    Calc.controller.updateViews();
+    this.commitStateChange(false);
   }
 
   getDsmItemModel(id: string) {
@@ -386,7 +394,7 @@ export default class Controller {
     });
     Calc.controller._toplevelReplaceItemAt(folderIndex, T, true);
 
-    Calc.controller.updateViews();
+    this.commitStateChange(true);
   }
 
   folderMerge(folderIndex: number) {
@@ -403,7 +411,7 @@ export default class Controller {
       AbstractItem.setFolderId(currExpr, folderId);
     }
 
-    Calc.controller.updateViews();
+    this.commitStateChange(true);
   }
 
   noteEnclose(noteIndex: number) {
@@ -418,6 +426,8 @@ export default class Controller {
     });
     Calc.controller._toplevelReplaceItemAt(noteIndex, T, true);
     this.folderMerge(noteIndex);
+
+    this.commitStateChange(true);
   }
 
   checkGLesmos() {
