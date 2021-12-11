@@ -308,6 +308,8 @@ export default interface Calc {
     // returns a subscript that occurs nowhere else in the graph
     generateTableXSubscript(): number;
     updateViews(): void;
+    updateTheComputedWorld(): void;
+    commitUndoRedoSynchronously(e: { type: string }): void;
     evaluator: {
       workerPoolConnection: {
         killWorker(): void;
