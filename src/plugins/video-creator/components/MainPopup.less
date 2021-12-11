@@ -7,7 +7,7 @@
 
 .dsm-vc-select-export-type {
   margin-top: 5px;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 
 .dsm-vc-preview-menu,
@@ -37,6 +37,32 @@
 
   .dsm-vc-preview-inner {
     max-width: @mw;
+  }
+}
+
+input.dsm-vc-outfile-name {
+  outline: none;
+  border-width: 0 0 1px 0;
+  border-color: #bbb;
+  padding: 5px;
+  width: 100%;
+  margin-bottom: 10px;
+
+  &.dcg-hovered {
+    border-color: #ccc;
+    box-shadow: 0 1px #ccc;
+  }
+
+  &:focus {
+    @focus-color: #6399cb;
+    border-color: @focus-color;
+    box-shadow: 0 1px @focus-color;
+  }
+
+  &.dsm-invalid {
+    @invalid-color: #e15855;
+    border-color: @invalid-color;
+    box-shadow: 0 1px @invalid-color;
   }
 }
 

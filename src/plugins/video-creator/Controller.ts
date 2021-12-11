@@ -28,6 +28,7 @@ export default class Controller {
   captureCancelled = false;
   fpsLatex = "30";
   fileType: OutFileType = "mp4";
+  outfileName: string = "DesModder_Video_Creator";
 
   focusedMQ: FocusedMQ = "none";
 
@@ -116,6 +117,14 @@ export default class Controller {
   setOutputFiletype(type: OutFileType) {
     this.fileType = type;
     this.updateView();
+  }
+
+  setOutfileName(name: string) {
+    this.outfileName = name;
+  }
+
+  getOutfileName() {
+    return this.outfileName;
   }
 
   setCaptureMethod(method: CaptureMethod) {
