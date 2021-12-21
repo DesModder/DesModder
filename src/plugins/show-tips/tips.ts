@@ -127,10 +127,57 @@ const tips: TipData[] = [
     desc: "Regressions are more powerful than you can imagine",
     learnMore: "https://www.desmos.com/calculator/vof10zrr5i",
   },
+  {
+    desc: "Paste spreadsheet data to make a table",
+    learnMore: "https://help.desmos.com/hc/en-us/articles/4405489674381-Tables",
+  },
+  {
+    desc: "Type Control+/ or Command+/ to open the list of keyboard shortcuts",
+  },
+  {
+    desc: "List comprehensions are great for grids of points or lists of polygons",
+    learnMore: "https://help.desmos.com/hc/en-us/articles/4407889068557-Lists",
+  },
+  {
+    desc: "List filters can be used to filter for positive elements, even elements, and more",
+    learnMore: "https://www.desmos.com/calculator/acmvprhzba",
+  },
+  {
+    desc: "Bernard",
+    learnMore: "https://www.desmos.com/calculator/pbj6pw1kde",
+  },
+  {
+    desc: "What's new at Desmos",
+    learnMore:
+      "https://help.desmos.com/hc/en-us/articles/4405017454477-What-s-New-at-Desmos",
+  },
+  {
+    desc: "Action assignments are simultaneous, not sequential",
+    learnMore: "https://www.desmos.com/calculator/v4feh9jgc8",
+  },
+  {
+    desc: "You can share graphs via permalink without signing in",
+    learnMore:
+      "https://help.desmos.com/hc/en-us/articles/4405901719309-Saving-and-Managing-Graphs",
+  },
   /* Motivation */
   {
     desc: "You're doing great :)",
   },
+  {
+    desc: "You're superb <3",
+  },
 ];
+
+function hashString(str: string) {
+  // We just want a simple constant ordering that's not the same as the source
+  // Details don't matter. https://stackoverflow.com/a/8831937/7481517
+  return Array.from(str).reduce(
+    (hash, char) => 0 | (31 * hash + char.charCodeAt(0)),
+    0
+  );
+}
+
+tips.sort((a, b) => hashString(a.desc) - hashString(b.desc));
 
 export default tips;

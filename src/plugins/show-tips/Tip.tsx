@@ -3,16 +3,20 @@ import tips, { TipData } from "./tips";
 import "./Tip.less";
 
 export default class Tip extends DCGView.Class {
-  currentTip: TipData = this.randomTip();
+  currentTipIndex!: number;
+
+  init() {
+    this.currentTipIndex = Math.floor(Math.random() * tips.length);
+  }
 
   template() {
     return (
       <div class="dsm-usage-tip" onTap={() => this.nextTip()}>
-        <div>{() => this.currentTip.desc}</div>
-        <If predicate={() => this.currentTip?.learnMore !== undefined}>
+        <div>{() => this.getCurrentTip().desc}</div>
+        <If predicate={() => this.getCurrentTip().learnMore !== undefined}>
           {() => (
             <a
-              href={() => this.currentTip?.learnMore}
+              href={() => this.getCurrentTip().learnMore}
               target="_blank"
               onTap={(e: MouseEvent) => e.stopPropagation()}
             >
@@ -24,17 +28,13 @@ export default class Tip extends DCGView.Class {
     );
   }
 
-  randomTip() {
-    return tips[Math.floor(Math.random() * tips.length)];
+  getCurrentTip() {
+    return tips[this.currentTipIndex];
   }
 
   nextTip() {
-    let nextTip = this.randomTip();
-    while (nextTip === this.currentTip) {
-      // Avoid repeating the same tip two times in a row
-      nextTip = this.randomTip();
-    }
-    this.currentTip = nextTip;
+    this.currentTipIndex += 1;
+    this.currentTipIndex %= tips.length;
     Calc.controller.updateViews();
   }
 }
