@@ -2,7 +2,10 @@ import * as t from "@babel/types";
 
 export default function withinFunctionAssignment(
   functionName: string,
-  atFunctionDefinition: (func: t.FunctionExpression) => t.Expression | void
+  atFunctionDefinition: (
+    func: t.FunctionExpression,
+    path: babel.NodePath<t.FunctionExpression>
+  ) => t.Expression | void
 ) {
   /* Looks for someObject.[functionName] = function (...) {...}
   and calls `atFunctionDefinition` on the RHS function. If `atFunctionDefinition`
@@ -16,7 +19,10 @@ export default function withinFunctionAssignment(
         t.isIdentifier(lhs.property, { name: functionName }) &&
         t.isFunctionExpression(path.node.right)
       ) {
-        const result = atFunctionDefinition(path.node.right);
+        const result = atFunctionDefinition(
+          path.node.right,
+          path.get("right") as babel.NodePath<t.FunctionExpression>
+        );
         if (result) {
           path.node.right = result;
         }

@@ -57,10 +57,64 @@ const enter2 = withinFunctionAssignment(
   }
 ).enter;
 
+const enter3 = withinFunctionAssignment(
+  /* @plugin core
+    
+    @what Duplicate metadata when an expression is duplicated
+
+    @how
+      In the following statement:
+        var n = this.createItemModel(
+          Tslib.__assign(Tslib.__assign({}, o), { id: this.generateId() })
+        );
+      
+      We have:
+        fromId ≡ o.id
+        toId ≡ n.id
+      
+
+      Append `desmodderController.duplicateMetadata(toId, fromId)`
+        to the end of controller `copyExpressionToIndex`
+    */
+  "copyExpressionToIndex",
+  (func: t.FunctionExpression, path: babel.NodePath) => {
+    let fromObject: t.Identifier | null = null;
+    let toObject: t.Identifier | null = null;
+    path.traverse({
+      CallExpression(path: babel.NodePath<t.CallExpression>) {
+        if (
+          t.isMemberExpression(path.node.callee) &&
+          t.isIdentifier(path.node.callee.property, {
+            name: "createItemModel",
+          }) &&
+          path.parentPath.isVariableDeclarator() &&
+          t.isIdentifier(path.parentPath.node.id) &&
+          t.isCallExpression(path.node.arguments[0]) &&
+          t.isCallExpression(path.node.arguments[0].arguments[0]) &&
+          t.isIdentifier(path.node.arguments[0].arguments[0].arguments[1])
+        ) {
+          toObject = path.parentPath.node.id;
+          fromObject = path.node.arguments[0].arguments[0].arguments[1];
+          path.stop();
+        }
+      },
+    });
+    func.body.body.push(
+      template.statement(
+        `window.DesModder?.controller?.duplicateMetadata(%%toObject%%.id, %%fromObject%%.id)`
+      )({
+        toObject,
+        fromObject,
+      })
+    );
+  }
+).enter;
+
 export default () => ({
   /* Warning: not resiliant to variable name change (`s`, `e`, `t`) */
   enter(path: babel.NodePath) {
     enter1(path);
     enter2(path);
+    enter3(path);
   },
 });
