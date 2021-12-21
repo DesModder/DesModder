@@ -15,7 +15,8 @@
     {
       "matches": ["https://www.desmos.com/calculator*"],
       "run_at": "document_start",
-      "js": ["preloadContent.js"]
+      "js": ["preloadContent.js"],
+      "all_frames": true
     }
   ],
   "web_accessible_resources": [
