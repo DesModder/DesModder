@@ -6,7 +6,7 @@ Supercharge your Desmos graph creation and sharing experience with many convenie
 - Find and replace expressions
 - Pin expressions to the top
 - Paste ASCIIMath (such as the results of Wolfram Alpha queries) into Desmos
-- Duplicate folders and more with a button or Ctrl+Q
+- Duplicate any expression with keybind Ctrl+Q
 - Quickly dump a folder's entire contents, and merge expressions into a folder
 - Use Shift+Enter to write newlines in notes
 - Hide and ignore unwanted slider suggestions

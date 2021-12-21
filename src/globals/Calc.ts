@@ -315,6 +315,8 @@ export default interface Calc {
         killWorker(): void;
       };
     };
+    listModel: unknown;
+    _addItemToEndFromAPI(item: ItemModel): void;
   };
   selectedExpressionId: string;
   //// public

@@ -34,7 +34,6 @@ export default class Controller {
     [plugin in PluginID]?: any;
   } = {};
   graphMetadata: GraphMetadata = getBlankMetadata();
-  metadataChangeSuppressed: boolean = false;
 
   // array of IDs
   pillboxButtonsOrder: string[] = ["main-menu"];
@@ -295,13 +294,17 @@ export default class Controller {
   }
 
   checkForMetadataChange() {
-    if (this.metadataChangeSuppressed) return;
     this.graphMetadata = getMetadata();
     this.applyPinnedStyle();
   }
 
   _updateExprMetadata(id: string, obj: OptionalProperties<MetadataExpression>) {
     changeExprInMetadata(this.graphMetadata, id, obj);
+    setMetadata(this.graphMetadata);
+  }
+
+  duplicateMetadata(toID: string, fromID: string) {
+    this._updateExprMetadata(toID, this.getDsmItemModel(fromID));
   }
 
   updateExprMetadata(id: string, obj: OptionalProperties<MetadataExpression>) {
@@ -318,7 +321,6 @@ export default class Controller {
   }
 
   finishUpdateMetadata() {
-    setMetadata(this.graphMetadata);
     this.applyPinnedStyle();
     this.commitStateChange(false);
   }

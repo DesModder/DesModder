@@ -1,8 +1,9 @@
-import { Calc } from "globals/window";
+import { Calc, desmosRequire } from "globals/window";
 import { ItemModel } from "globals/Calc";
 import Metadata, { Expression } from "./interface";
 import { desModderController, OptionalProperties } from "desmodder";
 import migrateToLatest from "./migrate";
+const List = desmosRequire("graphing-calc/models/list");
 
 /*
 This file manages the metadata expressions. These are stored on the graph state as expressions and consist of:
@@ -43,19 +44,14 @@ export function getMetadata() {
 }
 
 function addItemToEnd(state: ItemModel) {
-  Calc.controller.dispatch({
-    type: "add-item-to-end-from-api",
-    state,
-  });
+  Calc.controller._addItemToEndFromAPI(Calc.controller.createItemModel(state));
 }
 
 export function setMetadata(metadata: Metadata) {
-  desModderController.metadataChangeSuppressed = true;
   cleanMetadata(metadata);
-  Calc.removeExpressions([{ id: ID_METADATA }, { id: ID_METADATA_FOLDER }]);
+  List.removeItemById(Calc.controller.listModel, ID_METADATA);
+  List.removeItemById(Calc.controller.listModel, ID_METADATA_FOLDER);
   if (!isBlankMetadata(metadata)) {
-    // Calc.setExpression and Calc.setExpressions limit to expressions and tables only,
-    // so we bypass them using a dispatch
     addItemToEnd({
       type: "folder",
       id: ID_METADATA_FOLDER,
@@ -69,7 +65,6 @@ export function setMetadata(metadata: Metadata) {
       text: JSON.stringify(metadata),
     });
   }
-  desModderController.metadataChangeSuppressed = false;
 }
 
 export function getBlankMetadata(): Metadata {
