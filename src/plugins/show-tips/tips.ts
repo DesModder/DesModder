@@ -169,4 +169,15 @@ const tips: TipData[] = [
   },
 ];
 
+function hashString(str: string) {
+  // We just want a simple constant ordering that's not the same as the source
+  // Details don't matter. https://stackoverflow.com/a/8831937/7481517
+  return Array.from(str).reduce(
+    (hash, char) => 0 | (31 * hash + char.charCodeAt(0)),
+    0
+  );
+}
+
+tips.sort((a, b) => hashString(a.desc) - hashString(b.desc));
+
 export default tips;
