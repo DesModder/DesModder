@@ -4,7 +4,7 @@ import template from "@babel/template";
 export default () => ({
   CallExpression(path: babel.NodePath<t.CallExpression>) {
     /* @plugin pin-expressions
-    @plugin duplicate-hotkey
+    @plugin folder-tools
     
     @what Allows clicking on the pin/unpin button for notes and tables, without exiting edit-list-mode.
       This also allows clicking on the duplicate and delete button for non-expressions
