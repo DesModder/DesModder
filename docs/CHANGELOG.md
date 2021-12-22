@@ -2,6 +2,23 @@
 
 Regarding version numbers: The `1.0` release will be when the plugin API is a bit more stable. While in `0.*` releases, I increment the minor number if a new plugin is added and the patch number if a release consists only of bug fixes and enhancements.
 
+## 0.7.0
+
+New features
+
+- GLesmos: use the GPU to render implicits via GLSL. Disabled by default: enable through the plugins list.
+
+Bug fixes and improvements:
+
+- (Find and Replace): handle list comprehensions better
+- (Hide Errors): replace left-click on triangle with shift-left-click
+- (Hide Errors): add "hide" button after suggested sliders
+- (Folder Tools): fix undo-redo stack
+- (Tips): new tips
+- (Tips): move through tips in a stable order instead of random
+- (Improved Duplication → Duplicate Hotkey) cede control of duplication to new vanilla duplication
+- (Core) fix Desmos loading in iframes
+
 ## 0.6.1
 
 Bug fixes and improvements:
