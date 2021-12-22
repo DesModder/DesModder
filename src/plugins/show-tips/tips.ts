@@ -132,7 +132,7 @@ const tips: TipData[] = [
     learnMore: "https://help.desmos.com/hc/en-us/articles/4405489674381-Tables",
   },
   {
-    desc: "Type Control+/ or Command+/ to open the list of keyboard shortcuts",
+    desc: "Type Ctrl+/ or Cmd+/ to open the list of keyboard shortcuts",
   },
   {
     desc: "List comprehensions are great for grids of points or lists of polygons",

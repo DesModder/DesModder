@@ -317,6 +317,7 @@ export default interface Calc {
     };
     listModel: unknown;
     _addItemToEndFromAPI(item: ItemModel): void;
+    _showToast(toast: { message: string }): void;
   };
   selectedExpressionId: string;
   //// public
