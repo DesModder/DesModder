@@ -20,9 +20,9 @@ function onDisable() {
 
 export default {
   id: "duplicate-expression-hotkey",
-  name: "Improved Duplication",
+  name: "Duplicate Expression Hotkey",
   description:
-    "Lets you duplicate all expression types, including folders. Ctrl+Q duplicates the currently-selected expression.",
+    "Type Ctrl+Q or Cmd+Q to duplicate the currently-selected expression.",
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true,

@@ -294,7 +294,21 @@ export default class Controller {
   }
 
   checkForMetadataChange() {
-    this.graphMetadata = getMetadata();
+    const newMetadata = getMetadata();
+    if (!this.pluginsEnabled["GLesmos"]) {
+      if (
+        Object.entries(newMetadata.expressions).some(
+          ([id, e]) => e.glesmos && !this.graphMetadata.expressions[id]?.glesmos
+        )
+      ) {
+        // list of glesmos expressions changed
+        Calc.controller._showToast({
+          message:
+            "Enable the GLesmos plugin to improve the performance of some implicits in this graph",
+        });
+      }
+    }
+    this.graphMetadata = newMetadata;
     this.applyPinnedStyle();
   }
 
