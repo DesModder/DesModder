@@ -10,5 +10,5 @@ Graphs:
 
 - Find and Replace: https://www.desmos.com/calculator/zwitc97i1u
 - Video Creator - Actions: https://www.desmos.com/calculator/ep6aiarl5s
-- Pin Expressions: https://www.desmos.com/calculator/wrh1qselps
+- GLesmos: https://www.desmos.com/calculator/uum9ixgpgb
 - Shift-Enter and Duplicate: https://www.desmos.com/calculator/qtgovf1hle
