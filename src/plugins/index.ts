@@ -11,6 +11,7 @@ import shiftEnterNewline from "plugins/shift-enter-newline";
 import showTips from "plugins/show-tips";
 import videoCreator from "plugins/video-creator";
 import wolfram2desmos from "plugins/wolfram2desmos";
+import wakatime from "./wakatime/index";
 
 interface ConfigItemGeneric {
   key: string;
@@ -63,6 +64,7 @@ const _plugins = {
   [shiftEnterNewline.id]: shiftEnterNewline,
   [hideErrors.id]: hideErrors,
   [folderTools.id]: folderTools,
+  [wakatime.id]: wakatime,
 } as const;
 
 export const pluginList = Object.values(_plugins);
