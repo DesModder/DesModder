@@ -101,24 +101,53 @@ export function wolfram2desmos(input: string) {
 
   // iterates the bracket parser with {} in mind
   function bracketEvalFinal() {
-		if (input[i] == ")" || input[i] == "}" || input[i] == "〕") {
-			bracket += 1;
-		} else if (input[i] == "(" || input[i] == "{" || input[i] == "〔") {
-			bracket -= 1;
-		}
+    if (input[i] == ")" || input[i] == "}" || input[i] == "〕") {
+      bracket += 1;
+    } else if (input[i] == "(" || input[i] == "{" || input[i] == "〔") {
+      bracket -= 1;
+    }
   }
 
   // checks if its an operator
   function isOperator0(x: number) {
-    return ["+", "-", "±", "*", "=", ">", "<", "≥", "≤", "≠", "→", " ", "〔", "〕", ":"].includes(
-      input[x]
-    );
+    return [
+      "+",
+      "-",
+      "±",
+      "*",
+      "=",
+      ">",
+      "<",
+      "≥",
+      "≤",
+      "≠",
+      "→",
+      " ",
+      "〔",
+      "〕",
+      ":",
+    ].includes(input[x]);
   }
 
   function isOperator1(x: number) {
-    return ["+", "-", "±", "*", "=", ">", "<", "≥", "≤", "≠", "→", "/", "%", "〔", "〕", ":"].includes(
-      input[x]
-    );
+    return [
+      "+",
+      "-",
+      "±",
+      "*",
+      "=",
+      ">",
+      "<",
+      "≥",
+      "≤",
+      "≠",
+      "→",
+      "/",
+      "%",
+      "〔",
+      "〕",
+      ":",
+    ].includes(input[x]);
   }
 
   function isOperator2(x: number) {
@@ -150,22 +179,22 @@ export function wolfram2desmos(input: string) {
   replace(/\<\=/g, "≤");
   replace(/\!\=/g, "≠");
   replace(/\-\>/g, "→");
-  
+
   // replace piecewise {} brackets with special character
   while (find(/(?<!_|\^|\\\w+|\S]|}){/) != -1) {
-		startingIndex = find(/(?<!_|\^|\\\w+|\S]|}){/);
-		i = startingIndex;
-		bracket = -1;
-		while (i < input.length) {
-			i++;
-			bracketEvalFinal();
-			if (bracket == 0) {
-				overwrite(startingIndex, "〔");
-				overwrite(i, "〕");
-				break;
-			}
-		}
-	}
+    startingIndex = find(/(?<!_|\^|\\\w+|\S]|}){/);
+    i = startingIndex;
+    bracket = -1;
+    while (i < input.length) {
+      i++;
+      bracketEvalFinal();
+      if (bracket == 0) {
+        overwrite(startingIndex, "〔");
+        overwrite(i, "〕");
+        break;
+      }
+    }
+  }
 
   // function replacements
   // ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ
@@ -659,8 +688,8 @@ export function wolfram2desmos(input: string) {
   replace(/\)/g, "\\right)");
   replace(/\«/g, "\\left|");
   replace(/\»/g, "\\right|");
-  replace(/〔/g,"\\left\\{");
-	replace(/〕/g,"\\right\\}");
+  replace(/〔/g, "\\left\\{");
+  replace(/〕/g, "\\right\\}");
 
   // symbol replacements
   replace(/√/g, "\\sqrt");
