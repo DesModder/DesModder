@@ -12,7 +12,8 @@
   "scripts": {
     "prettier": "prettier --write .",
     "build": "webpack --mode production --config config/webpack.config.base.js",
-    "dev": "webpack --mode development --config config/webpack.config.dev.js"
+    "dev": "webpack --mode development --config config/webpack.config.dev.js",
+    "test": "prettier-check . && tsc --noEmit"
   },
   "repository": {
     "type": "git",
