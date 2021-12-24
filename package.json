@@ -29,6 +29,7 @@
     "less": "^4.1.1",
     "less-loader": "^8.1.0",
     "prettier": "^2.2.1",
+    "prettier-check": "^2.0.0",
     "style-loader": "^2.0.0",
     "ts-loader": "^8.1.0",
     "typescript": "^4.2.3",
