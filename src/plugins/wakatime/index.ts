@@ -1,4 +1,5 @@
-import { FetchMessage, RuntimeResponse } from "../../background";
+import { HearbeatMessage, RuntimeResponse } from "background";
+import { listenToMessageDown, postMessageUp } from "utils/messages";
 import { Calc } from "../../globals/window";
 import { Plugin } from "../index";
 
@@ -6,14 +7,16 @@ import { Plugin } from "../index";
 const secretKey = "";
 const heartbeatIntervalMs = 120 * 1000;
 
+let isEnabled = false;
+
 function sendHeartbeat(
+  extId: string,
   key: string,
   graphName: string,
   graphURL: string,
   lineCount: number
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    const url = "https://wakatime.com/api/v1/users/current/heartbeats";
     const data = {
       // This is background information for WakaTime to handle. These values need no change.
       language: "Desmos", // constant
@@ -49,8 +52,8 @@ function sendHeartbeat(
       body: JSON.stringify(data),
     };
 
-    const message: FetchMessage = { type: "fetch", url, options };
-    chrome.runtime.sendMessage(message, (res: RuntimeResponse) => {
+    const message: HearbeatMessage = { type: "sendHeartbeat", options };
+    chrome.runtime.sendMessage(extId, message, (res: RuntimeResponse) => {
       if (res.type == "error") {
         reject(new Error(`Backend reported error: ${res.message}`));
       } else if (res.type == "success") {
@@ -60,11 +63,10 @@ function sendHeartbeat(
   });
 }
 
-let isEnabled = false;
-
 const sleep = (t: number) => new Promise((res) => setTimeout(res, t));
 
-async function main() {
+async function main(extId: string) {
+  console.log("[WakaTime] Starting");
   // Date.now can be messed up by system clock changes
   let lastUpdate = performance.now();
   while (isEnabled) {
@@ -75,7 +77,7 @@ async function main() {
 
     if (secretKey) {
       try {
-        await sendHeartbeat(secretKey, graphName, graphURL, lineCount);
+        await sendHeartbeat(extId, secretKey, graphName, graphURL, lineCount);
         console.log("[WakaTime] Heartbeat sent sucessfully");
       } catch (e) {
         console.error("[WakaTime] Error sending heartbeat:", e);
@@ -89,9 +91,28 @@ async function main() {
   }
 }
 
-function onEnable() {
+function getExtId(): Promise<string> {
+  return new Promise((res) => {
+    listenToMessageDown((msg) => {
+      if (msg.type == "set-ext-id") {
+        res(msg.value);
+        // cancel = true
+        return true;
+      }
+    });
+    postMessageUp({ type: "get-ext-id" });
+  });
+}
+
+async function onEnable() {
   isEnabled = true;
-  main().catch((e) => console.error("[WakaTime] Main loop crashed", e));
+  const extId = await getExtId();
+  console.log(`[WakaTime] Got extension ID: ${extId}`);
+  try {
+    await main(extId);
+  } catch (e) {
+    console.error("[WakaTime] Main loop crashed", e);
+  }
 }
 
 function onDisable() {
