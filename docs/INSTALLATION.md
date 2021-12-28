@@ -2,4 +2,4 @@ You can install the stable version of DesModder [directly from the Chrome Web St
 
 The extension updates every few weeks (see DesModder releases page for a history).
 
-If you want to get new features early, follow the instructions in https://github.com/DesModder/DesModder/wiki/Development#Setup, keeping in mind these it may not always work at all times.
+If you want to get new features early, follow the instructions in https://github.com/DesModder/DesModder/wiki/Development#Setup, keeping in mind these may not always work at all times.
