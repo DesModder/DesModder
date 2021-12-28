@@ -30,3 +30,12 @@ Currently only works on the public-facing calculator at https://desmos.com/calcu
 Changelog: https://github.com/DesModder/DesModder/blob/main/docs/CHANGELOG.md.
 
 Not affiliated with Desmos.
+
+## Documentation
+
+Refer to:
+
+- [Installation](/docs/INSTALLATION.md) for installation instructions
+- [Development](/docs/DEVELOPMENT.md) for setting up a development environment
+- [Plugins](/docs/PLUGINS.md) for detailed information about the plugin structure
+- [Changelog](/docs/CHANGELOG.md) for each release's changelog
