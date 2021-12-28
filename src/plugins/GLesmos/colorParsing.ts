@@ -32,7 +32,6 @@ function isEqual(lhs: any[], rhs: any[]) {
     return output;
 }
 
-// KEEP
 // returns a function that maps between the specified color spaces
 function mapToColorSpace(clFrom: string, clTo: string): Function {
     if (clFrom === clTo) return (...args: number[]) => args[0];
@@ -100,7 +99,6 @@ function mapToColorSpace(clFrom: string, clTo: string): Function {
     }
 }
 
-// KEEP
 // returns an array with RGB values from an HSL color space
 function getRGBfromHSL(hue: number, sat: number, light: number) {
     const mod = (n: number, m: number) => (n * m >= 0 ? n % m : n % m + m);
@@ -113,7 +111,6 @@ function getRGBfromHSL(hue: number, sat: number, light: number) {
     });
 }
 
-// KEEP
 // returns an array with RGB values from an HSV color space
 function getRGBfromHSV(hue: number, sat: number, value: number) {
     const mod = (n: number, m: number) => (n * m >= 0 ? n % m : n % m + m);
@@ -126,7 +123,6 @@ function getRGBfromHSV(hue: number, sat: number, value: number) {
     });
 }
 
-// KEEP
 // returns an array with HSV values from an RGB color space
 function getHSVfromRGB(red: number, green: number, blue: number) {
     let value: number = Math.max(red, green, blue);
@@ -142,7 +138,6 @@ function getHSVfromRGB(red: number, green: number, blue: number) {
     return [hue, sat, value];
 }
 
-// KEEP
 // returns an array with HSV values from an HSL color space
 function getHSVfromHSL(hue: number, sat: number, light: number) {
     let v: number = light + sat * Math.min(light, 1 - light);
@@ -150,7 +145,6 @@ function getHSVfromHSL(hue: number, sat: number, light: number) {
     return [hue, s, v];
 }
 
-// KEEP
 // returns an array with HSL values from an RGB color space
 function getHSLfromRGB(red: number, green: number, blue: number) {
     let max: number = Math.max(red, green, blue);
@@ -167,7 +161,6 @@ function getHSLfromRGB(red: number, green: number, blue: number) {
     return [hue, sat, li];
 }
 
-// KEEP
 // returns an array with HSL values from an HSV color space
 function getHSLfromHSV(hue: number, sat: number, value: number) {
     let li: number = value * (1 - sat / 2);
@@ -175,7 +168,6 @@ function getHSLfromHSV(hue: number, sat: number, value: number) {
     return [hue, s, li];
 }
 
-// KEEP
 // returns an array containing the CSS funcion name and its parameters destructured and normalized (except for degree angles those stay as they are)
 function parseCSSFunc(value: string): ColorType {
     const matchSignature: RegExp = /^([a-zA-Z]+)(\(.+\))$/i;
@@ -194,7 +186,7 @@ function parseCSSFunc(value: string): ColorType {
     let alphaStr: string | undefined = (args = args.slice(1)).pop();
     let alpha = parseFloat(alphaStr ?? '')
     // truthy map if argument evaluates as NaN
-    let pType: boolean[] = args.map(t => isNaN(parseFloat(t)));
+    let pType: boolean[] = args.map(t => isNaN(Number(t)));
     
     let output: number[];
     
@@ -227,7 +219,6 @@ function parseCSSFunc(value: string): ColorType {
     return {type: funcName, values: output}
 }
 
-// KEEP
 // returns an array containing a desctructured version of a valid CSS hex color
 function parseCSSHex(value: string) {
     const rxHex:RegExp = /^#((?:[0-9a-z]){3,8})$/i;
@@ -263,7 +254,6 @@ function parseCSSHex(value: string) {
     return output;
 }
 
-// KEEP
 // Retruns the CSS hex value of given named CSS color
 function parseNamedColor(input: string) {
     const NAME_TABLE: {[key: string]: string} = {
@@ -350,7 +340,6 @@ function parseNamedColor(input: string) {
     }
 }
 
-// KEEP
 // returns an RGB array from any given CSS color
 export default function getRGBpack(cssColor: string): number[] {
     // try if cssColor is a named color
@@ -374,12 +363,12 @@ export default function getRGBpack(cssColor: string): number[] {
         // maps current color space onto rgb
         colorPack = mapToColorSpace(funcPar.type, 'rgba')(funcPar.values);
     } catch (error: unknown) {
-        if (typeof error === "string") {
-            console.error(error);
-        } else if (error instanceof Error) {
-            console.error(`${error.name}:${error.message}`);
-        }
-        colorPack = [0.5, 0.5, 0.5, 1]; // gray
+        // if (typeof error === "string") {
+        //     console.error(error);
+        // } else if (error instanceof Error) {
+        //     console.error(`${error.name}:${error.message}`);
+        // }
+        colorPack = [0.5, 0.5, 0.5, 1]; // make gray on error
     }
     return colorPack
 }
