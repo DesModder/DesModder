@@ -1,27 +1,8 @@
-// creates an error with custom name
-class CustomError extends Error {
-    /* Source
-    * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error
-    */
-    constructor(name: string, ...params: string[]) {
-        // Pass remaining arguments (including vendor specific ones) to parent constructor
-        super(...params);
-
-        // Maintains proper stack trace for where our error was thrown (only available on V8)
-        if (Error.captureStackTrace) {
-            Error.captureStackTrace(this, CustomError);
-        }
-            
-        this.name = name;
-    }
-}
-
 interface ColorType {
     type: string,
     values: number[]
 }
 
-// determines if two arrays are equal (memberwise)
 function isEqual(lhs: any[], rhs: any[]) {
     if (lhs.length !== rhs.length) return false;
     let output = true;
@@ -32,8 +13,8 @@ function isEqual(lhs: any[], rhs: any[]) {
     return output;
 }
 
-// returns a function that maps between the specified color spaces
-function mapToColorSpace(clFrom: string, clTo: string): Function {
+function mapToColorSpace(clFrom: string | undefined, clTo: string | undefined): Function {
+    if (clFrom === undefined || clTo === undefined) return () => null;
     if (clFrom === clTo) return (...args: number[]) => args[0];
     
     let convFunc: Function;
@@ -77,13 +58,11 @@ function mapToColorSpace(clFrom: string, clTo: string): Function {
             rxAlpha = /[a-z]{3}a/;
             break;
         default:
-            throw new CustomError('Argument error', `There is no conversion between ${clFrom} and ${clTo}`);
+            return () => null;
     }
     
-    /*jshint bitwise: false */
     // bitfield to decide what to do with alpha disparity
     let aBf: number = (rxAlpha.test(clFrom) ? 1 : 0) | (rxAlpha.test(clTo) ? 2 : 0);
-    /*jshint bitwise: true */
     
     switch (aBf) {
         case 0: // none to none - does nothing
@@ -95,11 +74,10 @@ function mapToColorSpace(clFrom: string, clTo: string): Function {
         case 3: // alpha to alpha - alpha value gets added to output
             return (args: number[]) => {let al = args.pop(); return convFunc(...args).concat(al);};
         default:
-            throw new CustomError('Unknown error', `The bitfield has a value of ${aBf}. What kind of sorcery is this?`);
+            return () => null;
     }
 }
 
-// returns an array with RGB values from an HSL color space
 function getRGBfromHSL(hue: number, sat: number, light: number) {
     const mod = (n: number, m: number) => (n * m >= 0 ? n % m : n % m + m);
     let ls_ratio: number = Math.min(light, 1 - light)*sat;
@@ -111,7 +89,6 @@ function getRGBfromHSL(hue: number, sat: number, light: number) {
     });
 }
 
-// returns an array with RGB values from an HSV color space
 function getRGBfromHSV(hue: number, sat: number, value: number) {
     const mod = (n: number, m: number) => (n * m >= 0 ? n % m : n % m + m);
     let vs_ratio: number = value * sat;
@@ -123,7 +100,6 @@ function getRGBfromHSV(hue: number, sat: number, value: number) {
     });
 }
 
-// returns an array with HSV values from an RGB color space
 function getHSVfromRGB(red: number, green: number, blue: number) {
     let value: number = Math.max(red, green, blue);
     let range: number = value - Math.min(red, green, blue);
@@ -138,14 +114,12 @@ function getHSVfromRGB(red: number, green: number, blue: number) {
     return [hue, sat, value];
 }
 
-// returns an array with HSV values from an HSL color space
 function getHSVfromHSL(hue: number, sat: number, light: number) {
     let v: number = light + sat * Math.min(light, 1 - light);
     let s: number = (v == 0 ? 0 : 2 * (1 - light / v));
     return [hue, s, v];
 }
 
-// returns an array with HSL values from an RGB color space
 function getHSLfromRGB(red: number, green: number, blue: number) {
     let max: number = Math.max(red, green, blue);
     let range: number = max - Math.min(red, green, blue);
@@ -161,70 +135,63 @@ function getHSLfromRGB(red: number, green: number, blue: number) {
     return [hue, sat, li];
 }
 
-// returns an array with HSL values from an HSV color space
 function getHSLfromHSV(hue: number, sat: number, value: number) {
     let li: number = value * (1 - sat / 2);
     let s: number = (li == 0 || li == 1 ? 0 : (value - li) / Math.min(li, 1 - li));
     return [hue, s, li];
 }
 
-// returns an array containing the CSS funcion name and its parameters destructured and normalized (except for degree angles those stay as they are)
-function parseCSSFunc(value: string): ColorType {
+function parseCSSFunc(color: string): ColorType | null {
     const matchSignature: RegExp = /^([a-zA-Z]+)(\(.+\))$/i;
     const matchArgs: RegExp = /\(\s*([+-]?(?:\d*?\.)?\d+%?)\s*,\s*([+-]?(?:\d*?\.)?\d+%?)\s*,\s*([+-]?(?:\d*?\.)?\d+%?)\s*(?:,\s*([+-]?(?:\d*?\.)?\d+%?)\s*)?\)/;
     
-    // map of non-numbers as parameters
+    // matching map for units of parameters (which are NaN when parsed blindly)
     const NUMMAP_RGB: boolean[] = [false, false, false];
     const NUMMAP_HSL: boolean[] = [false, true, true];
     
-    // gets function name and argument set
-    let [ , funcName = '', argSet = ''] = value.trim().match(matchSignature) ?? [];
-    // matches the list of arguments (trimmed)
+    let [ , funcName = '', argSet = ''] = color.trim().match(matchSignature) ?? [];
     let args = argSet.match(matchArgs);
-    if (args === null) throw new CustomError('Type error', 'the value provided is not a CSS function');
-    // remove full match and alpha from array, store alpha in variable
+    if (args === null) return null;
     let alphaStr: string | undefined = (args = args.slice(1)).pop();
-    let alpha = parseFloat(alphaStr ?? '')
-    // truthy map if argument evaluates as NaN
+    let alpha = parseFloat(alphaStr ?? '');
+    // truthy map if argument evaluates as NaN (means number contains css units)
     let pType: boolean[] = args.map(t => isNaN(Number(t)));
     
-    let output: number[];
+    let components: number[];
     
-    // select the format of parameters
     switch (true) {
         case funcName === 'rgb':
         case funcName === 'rgba':
-            if (!isEqual(pType, NUMMAP_RGB)) throw new CustomError('Argument error', 'RGB arguments are not valid');
-            output = args.map((num) => {
+            if (!isEqual(pType, NUMMAP_RGB)) return null;
+            components = args.map((num) => {
                 return parseFloat(num) / 255;
             });
             
             break;
         case funcName === 'hsl':
         case funcName === 'hsla':
-            if (!isEqual(pType, NUMMAP_HSL)) throw new CustomError('Argument error', 'HSL parameters are not valid');
-            output = args.map((num, i) => {
+            if (!isEqual(pType, NUMMAP_HSL)) return null;
+            components = args.map((num, i) => {
                 return parseFloat(num) * (pType[i] ? 0.01 : 1);
             });
             break;
         default:
-            throw new CustomError('Argument error', `${funcName} is not a recognized CSS function`);
+            return null;
     }
     
     if (alphaStr !== undefined) {
-        if (funcName.length === 3) throw new CustomError('Argument error', `${funcName} function only recieves 3 arguments`);
-        output.push(alpha * (isNaN(alpha) ? 0.01 : 1));
+        if (funcName.length === 3) return null;
+        components.push(alpha * (isNaN(alpha) ? 0.01 : 1));
     }
     
-    return {type: funcName, values: output}
+    return {type: funcName, values: components}
 }
 
-// returns an array containing a desctructured version of a valid CSS hex color
-function parseCSSHex(value: string) {
+function parseCSSHex(color: string) {
     const rxHex:RegExp = /^#((?:[0-9a-z]){3,8})$/i;
     
-    let hexMatch: RegExpMatchArray | null = value.match(rxHex);
-    if (hexMatch === null) throw new CustomError('Type error', 'the value provided is not a CSS hex color');
+    let hexMatch: RegExpMatchArray | null = color.match(rxHex);
+    if (hexMatch === null) return null;
     let hex: string = hexMatch[1];
     
     let output: string[] | number[];
@@ -244,7 +211,7 @@ function parseCSSHex(value: string) {
             output = hex.match(/(..)(..)(..)(..)/)?.splice(1) ?? [];
             break;
         default:
-            throw new CustomError('Argument error', `${value} is not a valid CSS hex color`);
+            return null;
     }
     
     output = output.map((item) => {
@@ -254,8 +221,7 @@ function parseCSSHex(value: string) {
     return output;
 }
 
-// Retruns the CSS hex value of given named CSS color
-function parseNamedColor(input: string) {
+function parseNamedColor(color: string) {
     const NAME_TABLE: {[key: string]: string} = {
         'black' : '#000000', 'navy' : '#000080',
         'darkblue' : '#00008b', 'mediumblue' : '#0000cd',
@@ -333,42 +299,24 @@ function parseNamedColor(input: string) {
         'ivory' : '#fffff0', 'white' : '#ffffff'
     }; // !NAME_TABLE
     
-    if (NAME_TABLE.hasOwnProperty(input.toLowerCase())) {
-        return NAME_TABLE[input.toLowerCase()];
+    if (NAME_TABLE.hasOwnProperty(color.toLowerCase())) {
+        return NAME_TABLE[color.toLowerCase()];
     } else {
-        throw new CustomError('Type error', input + ' is not a recognized named color');
+        return null
     }
 }
 
-// returns an RGB array from any given CSS color
 export default function getRGBpack(cssColor: string): number[] {
-    // try if cssColor is a named color
-    try {
-        return parseCSSHex(parseNamedColor(cssColor));
-    } catch (error) {
-        // no need to log error, color might still be parsable
-    }
+    let color: number[] | null = parseCSSHex(parseNamedColor(cssColor) ?? cssColor);
     
-    // try if cssColor is a hex value
-    try {
-        return parseCSSHex(cssColor);
-    } catch (error) {
-        // no need to log error, color might still be parsable
+    if (color) {
+        return color;
+    } else {
+        let funcPar: ColorType | null = parseCSSFunc(cssColor);
+        let colorPack: number[] | null = mapToColorSpace(funcPar?.type, 'rgba')(funcPar?.values);
+        if (colorPack === null) {
+            return [0.5, 0.5, 0.5, 1]
+        }
+        return colorPack;
     }
-    
-    let colorPack: number[];
-    // try if cssColor is a function
-    try {
-        let funcPar: ColorType = parseCSSFunc(cssColor);
-        // maps current color space onto rgb
-        colorPack = mapToColorSpace(funcPar.type, 'rgba')(funcPar.values);
-    } catch (error: unknown) {
-        // if (typeof error === "string") {
-        //     console.error(error);
-        // } else if (error instanceof Error) {
-        //     console.error(`${error.name}:${error.message}`);
-        // }
-        colorPack = [0.5, 0.5, 0.5, 1]; // make gray on error
-    }
-    return colorPack
 }
