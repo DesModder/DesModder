@@ -1,16 +1,26 @@
 import { ValueType } from "parsing/IR";
 import { MaybeRational } from "parsing/parsenode";
 import { Types } from "./opcodeDeps";
+import getRGBPack from "./colorParsing";
 
 export function glslFloatify(x: number) {
   return Number.isInteger(x) ? x.toString() + ".0" : x.toString();
 }
 
 export function colorVec4(color: string, opacity: number) {
-  // assumes col is a string of the form "#FF2200"
-  let r = glslFloatify(parseInt(color.slice(1, 3), 16) / 256);
-  let g = glslFloatify(parseInt(color.slice(3, 5), 16) / 256);
-  let b = glslFloatify(parseInt(color.slice(5, 7), 16) / 256);
+  let r: string, g: string, b: string;
+  if (color[0] === "#" && color.length === 7) {
+    r = glslFloatify(parseInt(color.slice(1, 3), 16) / 256);
+    g = glslFloatify(parseInt(color.slice(3, 5), 16) / 256);
+    b = glslFloatify(parseInt(color.slice(5, 7), 16) / 256);
+  } else {
+    /**
+     * alpha from css color is neglected
+     * function doesn't support css units other than % on hsl
+     * but Desmos either so it doesn't affect much
+     */
+    [r, g, b] = getRGBPack(color).map(glslFloatify);
+  }
   let a = glslFloatify(opacity);
   return `vec4(${r}, ${g}, ${b}, ${a})`;
 }
