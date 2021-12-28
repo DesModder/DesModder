@@ -1,7 +1,7 @@
 import { ValueType } from "parsing/IR";
 import { MaybeRational } from "parsing/parsenode";
 import { Types } from "./opcodeDeps";
-import getRGBPack from "./colorParsing"
+import getRGBPack from "./colorParsing";
 
 export function glslFloatify(x: number) {
   return Number.isInteger(x) ? x.toString() + ".0" : x.toString();
@@ -19,7 +19,7 @@ export function colorVec4(color: string, opacity: number) {
      * function doesn't support css units other than % on hsl
      * but Desmos either so it doesn't affect much
      */
-    [r, g, b,] = getRGBPack(color).map(glslFloatify)
+    [r, g, b] = getRGBPack(color).map(glslFloatify);
   }
   let a = glslFloatify(opacity);
   return `vec4(${r}, ${g}, ${b}, ${a})`;
