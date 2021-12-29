@@ -85,6 +85,6 @@ In this section, we will create a plugin which will simply change the displayed 
    - after reloading the webpage (assuming you're running `npm run dev`), a new plugin should appear in the list in [desmos.com/calculator](https://desmos.com/calculator).
 5. Commit the changes to your fork
    - `git add .`
-   - `git commit -m "Add Plugin "Change Username"`
+   - `git commit -m "Add Plugin 'Change Username'"`
    - `git push`
 6. For an actual plugin, you would do some more testing and eventually open a pull request on the repository. Run `npm run test` before submitting the PR to ensure that it will meet the checks.

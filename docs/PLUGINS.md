@@ -50,7 +50,7 @@ Each plugin consists of an `onEnable` and `onDisable` hook. The `onDisable` func
 Examples:
 
 - If the plugin is disabled, `index.ts` is run at page load, but neither `onEnable` nor `onDisable` are called. If the user then toggles it on, `onEnable` is run.
-- If the plugin is enabled, `index.ts` and `onEnable` are run at page load. If the user then toggles it of, `onDisable` is run.
+- If the plugin is enabled, `index.ts` and `onEnable` are run at page load. If the user then toggles it off, `onDisable` is run.
 
 The setting `enabledByDefault` only affects users when they first use DesModder.
 
