@@ -335,6 +335,7 @@ export default interface Calc {
     }
   ): void;
   setExpression(obj: SetExpressionObject): void;
+  getExpressions(): ItemModel[];
   setExpressions(objs: SetExpressionObject[]): void;
   removeExpression(obj: SetExpressionObject): void;
   removeExpressions(objs: SetExpressionObject[]): void;

@@ -32,6 +32,9 @@ type MessageWindowToContent =
     }
   | {
       type: "get-worker-append-url";
+    }
+  | {
+      type: "get-ext-id";
     };
 
 type MessageContentToWindow =
@@ -53,6 +56,10 @@ type MessageContentToWindow =
     }
   | {
       type: "set-worker-append-url";
+      value: string;
+    }
+  | {
+      type: "set-ext-id";
       value: string;
     };
 
