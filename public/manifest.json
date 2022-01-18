@@ -1,16 +1,15 @@
 {
   "name": "DesModder for Desmos",
   "description": "Supercharge your Desmos graph creation and sharing experience with many convenient features",
-  "manifest_version": 3,
+  "manifest_version": 2,
   "version": "0.7.0",
   "icons": {
     "48": "icon48.png",
     "128": "icon128.png"
   },
   "background": {
-    "service_worker": "background.js"
+    "scripts": ["background.js"]
   },
-  "action": {},
   "content_scripts": [
     {
       "matches": ["https://www.desmos.com/calculator*"],
@@ -20,23 +19,14 @@
     }
   ],
   "web_accessible_resources": [
-    {
-      "resources": ["script.js", "preloadScript.js", "workerAppend.js"],
-      "matches": ["https://www.desmos.com/*"]
-    }
+    "script.js",
+    "preloadScript.js",
+    "workerAppend.js"
   ],
-  "declarative_net_request": {
-    "rule_resources": [
-      {
-        "id": "ruleset_1",
-        "enabled": true,
-        "path": "net_request_rules.json"
-      }
-    ]
-  },
-  "permissions": ["storage", "declarativeNetRequest"],
-  "host_permissions": ["https://*.desmos.com/*"],
-  "externally_connectable": {
-    "matches": ["https://www.desmos.com/*"]
-  }
+  "permissions": [
+    "https://*.desmos.com/*",
+    "storage",
+    "webRequest",
+    "webRequestBlocking"
+  ]
 }

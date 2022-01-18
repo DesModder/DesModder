@@ -18,7 +18,6 @@ function newDefine(
   if (moduleName in moduleOverrides) {
     try {
       // override should either be `{dependencies, definition}` or just `definition`
-      console.debug("transforming", moduleName);
       const override = withDependencyMap(moduleOverrides[moduleName])(
         definition,
         dependencies
