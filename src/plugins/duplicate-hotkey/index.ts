@@ -22,7 +22,7 @@ export default {
   id: "duplicate-expression-hotkey",
   name: "Duplicate Expression Hotkey",
   description:
-    "Type Ctrl+Q or Cmd+Q to duplicate the currently-selected expression.",
+    "Type Ctrl+Q, Ctrl+Shift+Q, or Cmd+Q to duplicate the selected expression.",
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true,
