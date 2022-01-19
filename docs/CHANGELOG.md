@@ -2,6 +2,10 @@
 
 Regarding version numbers: The `1.0` release will be when the plugin API is a bit more stable. While in `0.*` releases, I increment the minor number if a new plugin is added and the patch number if a release consists only of bug fixes and enhancements.
 
+## 0.7.1
+
+This version is released only for Firefox as the first Firefox build.
+
 ## 0.7.0
 
 New features

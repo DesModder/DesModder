@@ -33,13 +33,17 @@ export default class LoadingPie extends DCGView.Class<{
 
   setSVG(e: HTMLElement) {
     const progress = this.props.progress();
-    // similar to React's dangerouslySetInnerHTML
-    e.innerHTML =
-      0 <= progress && progress <= 1
-        ? `<svg class='dsm-vc-pie-overlay' viewBox='-1 -1 2 2'>
-          <path d='${this.getPiePath()}' />
-        </svg>`
-        : "";
+    while (e.firstChild) {
+      e.removeChild(e.firstChild);
+    }
+    if (0 <= progress && progress <= 1) {
+      const svg = document.createElement("svg");
+      svg.className = "dsm-vc-pie-overlay";
+      svg.setAttribute("viewBox", "-1 -1 2 2");
+      const path = document.createElement("path");
+      svg.appendChild(path);
+      path.setAttribute("d", this.getPiePath());
+    }
   }
 
   getPiePath() {

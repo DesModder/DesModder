@@ -2,8 +2,9 @@ const webpack = require("webpack");
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
 const { merge } = require("webpack-merge");
+const { options } = require("less");
 
-baseConfig = (env) => ({
+baseConfig = (env, options) => ({
   resolve: {
     modules: ["node_modules", "src"],
     extensions: [".ts", ".tsx", ".js", ".jsx"],
@@ -69,14 +70,15 @@ baseConfig = (env) => ({
     }),
   ],
   optimization: {
-    // extension stores don't like minimized code? Faster approval?
-    minimize: false,
+    // Chrome doesn't like minified code, but
+    // Firefox is ok as long as the source code is available
+    minimize: env.browser === "firefox" && options.mode !== "development",
   },
 });
 
 module.exports = (env, options) => {
   env.browser = env.browser === "firefox" ? "firefox" : "chrome";
-  let config = baseConfig(env);
+  let config = baseConfig(env, options);
   if (options.mode === "development") {
     config = merge(config, {
       // can't use eval- in Manifest v3 extension
