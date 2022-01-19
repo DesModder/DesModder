@@ -126,7 +126,11 @@ export default class MainPopup extends DCGView.Class<{
         <If predicate={() => this.controller.frames.length > 0}>
           {() => (
             <div class="dsm-vc-export-menu">
-              <div class="dcg-group-title">Export</div>
+              <div class="dcg-group-title">
+                {BROWSER === "firefox"
+                  ? "Export (Warning: currently unreliable/slow in Firefox)"
+                  : "Export"}
+              </div>
               <div class="dsm-vc-select-export-type">
                 <SegmentedControl
                   names={fileTypeNames}

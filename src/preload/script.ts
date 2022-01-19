@@ -18,7 +18,6 @@ function newDefine(
   if (moduleName in moduleOverrides) {
     try {
       // override should either be `{dependencies, definition}` or just `definition`
-      console.debug("transforming", moduleName);
       const override = withDependencyMap(moduleOverrides[moduleName])(
         definition,
         dependencies
@@ -87,7 +86,9 @@ function alertFailure() {
         <a href="https://www.desmos.com/calculator" target="_blank">Open</a>
       </li>
       <li>
-        Disable DesModder in chrome://extensions.
+        Disable DesModder in ${
+          BROWSER === "firefox" ? "about:addons" : "chrome://extensions"
+        }.
       </li>
       <li>
         If #3 worked, DO NOT report this to Desmos. This is an issue with DesModder.

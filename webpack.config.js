@@ -1,8 +1,10 @@
 const webpack = require("webpack");
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
+const { merge } = require("webpack-merge");
+const { options } = require("less");
 
-const config = {
+baseConfig = (env, options) => ({
   resolve: {
     modules: ["node_modules", "src"],
     extensions: [".ts", ".tsx", ".js", ".jsx"],
@@ -20,9 +22,10 @@ const config = {
     workerAppend: "./src/worker/append.ts",
   },
   output: {
-    path: path.resolve(__dirname, "../dist"),
+    path: path.resolve(__dirname, "./dist"),
     filename: "[name].js",
     publicPath: "chrome-extension://__MSG_@@extension_id__/",
+    clean: true,
   },
   module: {
     rules: [
@@ -48,20 +51,43 @@ const config = {
     ],
   },
   devServer: {
-    contentBase: "../dist",
+    contentBase: "./dist",
   },
   plugins: [
     new CopyPlugin({
-      patterns: [{ from: "public", to: "." }],
+      patterns: [
+        {
+          from: `public/{${env.browser},common}/*`,
+          to: "[name][ext]",
+        },
+      ],
     }),
     new webpack.ProvidePlugin({
       process: "process/browser",
     }),
+    new webpack.DefinePlugin({
+      BROWSER: JSON.stringify(env.browser),
+    }),
   ],
   optimization: {
-    // extension stores don't like minimized code? Faster approval?
-    minimize: false,
+    // Chrome doesn't like minified code, but
+    // Firefox is ok as long as the source code is available
+    minimize: env.browser === "firefox" && options.mode !== "development",
   },
-};
+});
 
-module.exports = config;
+module.exports = (env, options) => {
+  env.browser = env.browser === "firefox" ? "firefox" : "chrome";
+  let config = baseConfig(env, options);
+  if (options.mode === "development") {
+    config = merge(config, {
+      // can't use eval- in Manifest v3 extension
+      devtool: "inline-cheap-module-source-map",
+      watch: true,
+      watchOptions: {
+        ignored: /node_modules/,
+      },
+    });
+  }
+  return config;
+};
