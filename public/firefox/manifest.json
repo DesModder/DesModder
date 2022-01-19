@@ -28,5 +28,10 @@
     "storage",
     "webRequest",
     "webRequestBlocking"
-  ]
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "DesModder@jared-hughes.github.io"
+    }
+  }
 }
