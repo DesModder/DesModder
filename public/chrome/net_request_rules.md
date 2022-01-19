@@ -1,5 +1,8 @@
 Overview of header modification:
 
+This applies to MV3 web request manipulation
+The manifest v2 manipulation is done in src/background.ts
+
 The manifest specifies that `https://*.desmos.com/*` can be modified, and it loads the ruleset `net_request_rules.json` through the [declarativeNetRequest](https://developer.chrome.com/docs/extensions/reference/declarativeNetRequest) API.
 
 The ruleset `net_request_rules.json` modifies the headers on Desmos URLs to include:
