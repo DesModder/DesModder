@@ -49,14 +49,14 @@ export function isIllegalASCIIMath(input: string) {
     //console.warn("Input has " + (count(/\}/g) - count(/\{/g)) + " more '}' characters than '{' characters");
     return false;
   }
-  if (count(/\[/g) > count(/\]/g)) {
+  if (count(/\[/g) != count(/\]/g)) {
     //console.warn("Input has " + (count(/\[/g) - count(/\]/g)) + " more '[' characters than ']' characters");
     return false;
   }
-  if (count(/\[/g) < count(/\]/g)) {
+  /*if (count(/\[/g) < count(/\]/g)) {
     //console.warn("Input has " + (count(/\]/g) - count(/\[/g)) + " more ']' characters than '[' characters");
     return false;
-  }
+  }*/
   if (count(/\|/g) % 2 == 1) {
     //console.warn("Input has uneven '|' brackets");
     return false;
