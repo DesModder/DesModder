@@ -691,15 +691,15 @@ export function wolfram2desmos(input: string) {
   replace(/✅/g, "(");
 
   // FINAL REPLACEMENTS
-  // implment proper brackets when all the operator brackets are gone
+  // implement proper brackets when all the operator brackets are gone
   replace(/\(/g, "\\left(");
   replace(/\)/g, "\\right)");
   replace(/\«/g, "\\left|");
   replace(/\»/g, "\\right|");
   replace(/〔/g, "\\left\\{");
   replace(/〕/g, "\\right\\}");
-	replace(/\[/g, "\\left[");
-	replace(/\]/g, "\\right]");
+  replace(/\[/g, "\\left[");
+  replace(/\]/g, "\\right]");
 
   // symbol replacements
   replace(/√/g, "\\sqrt");
