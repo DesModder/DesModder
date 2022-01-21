@@ -49,6 +49,14 @@ export function isIllegalASCIIMath(input: string) {
     //console.warn("Input has " + (count(/\}/g) - count(/\{/g)) + " more '}' characters than '{' characters");
     return false;
   }
+  if (count(/\[/g) != count(/\]/g)) {
+    //console.warn("Input has " + (count(/\[/g) - count(/\]/g)) + " more '[' characters than ']' characters");
+    return false;
+  }
+  /*if (count(/\[/g) < count(/\]/g)) {
+    //console.warn("Input has " + (count(/\]/g) - count(/\[/g)) + " more ']' characters than '[' characters");
+    return false;
+  }*/
   if (count(/\|/g) % 2 == 1) {
     //console.warn("Input has uneven '|' brackets");
     return false;
@@ -458,14 +466,14 @@ export function wolfram2desmos(input: string) {
       input =
         input.slice(0, startingIndex - 1) + input.slice(i + 1, input.length);
       i = startingIndex;
-      insert(i, "(");
+      insert(i - 2, "(");
       bracket = -2;
       while (i < input.length) {
         i++;
         bracketEval();
         if (bracket == -1) {
-          insert(i, ")");
-          insert(i + 1, "^" + selection);
+          insert(i + 1, ")");
+          insert(i + 2, "^" + selection);
           break;
         }
       }
@@ -683,13 +691,15 @@ export function wolfram2desmos(input: string) {
   replace(/✅/g, "(");
 
   // FINAL REPLACEMENTS
-  // implment proper brackets when all the operator brackets are gone
+  // implement proper brackets when all the operator brackets are gone
   replace(/\(/g, "\\left(");
   replace(/\)/g, "\\right)");
   replace(/\«/g, "\\left|");
   replace(/\»/g, "\\right|");
   replace(/〔/g, "\\left\\{");
   replace(/〕/g, "\\right\\}");
+  replace(/\[/g, "\\left[");
+  replace(/\]/g, "\\right]");
 
   // symbol replacements
   replace(/√/g, "\\sqrt");
