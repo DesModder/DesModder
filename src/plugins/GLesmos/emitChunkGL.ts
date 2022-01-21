@@ -110,23 +110,25 @@ function getSourceSimple(
         maybeInlined(ci.args[2], inlined)
       );
     case opcodes.List:
-      throw "List construction not yet implemented";
+      const init = ci.args.map((i) => maybeInlined(i, inlined)).join(",");
+      return `float[${ci.args.length}](${init})`;
     case opcodes.DeferredListAccess:
     case opcodes.Distribution:
     case opcodes.SymbolicVar:
     case opcodes.SymbolicListVar:
+    case opcodes.ListAccess:
+      // ListAccess seems to be replaced with InboundsListAccess and a ternary operator
+      // The others are obvious
       const op = printOp(ci.type);
       throw `Programming Error: expect ${op} to be removed before emitting code.`;
-    case opcodes.ListAccess:
-      throw "List access not yet implemented";
     // in-bounds list access assumes that args[1] is an integer
     // between 1 and args[0].length, inclusive
     case opcodes.InboundsListAccess:
       return (
         maybeInlined(ci.args[0], inlined) +
-        "[" +
+        "[int(" +
         maybeInlined(ci.args[1], inlined) +
-        "-1]"
+        ")-1]"
       );
     case opcodes.NativeFunction:
       if (getBuiltin(ci.symbol)?.tag === "list") {
@@ -253,8 +255,7 @@ function getBeginBroadcastSource(
 function getEndBroadcastSource(
   instructionIndex: number,
   ci: IRInstruction & { type: typeof opcodes.EndBroadcast },
-  chunk: IRChunk,
-  inlined: string[]
+  chunk: IRChunk
 ) {
   const resultAssignments = [];
   const broadcastIndexVar = getIdentifier(ci.args[0]);
@@ -265,9 +266,9 @@ function getEndBroadcastSource(
       if (chunk.getInstruction(index).type === opcodes.BroadcastResult) {
         resultAssignments.push(
           getIdentifier(index) +
-            "[" +
+            "[int(" +
             broadcastIndexVar +
-            "-1]=" +
+            ")-1]=" +
             getIdentifier(ci.args[i]) +
             ";\n"
         );
@@ -316,12 +317,7 @@ function getSourceAndNextIndex(
       };
     case opcodes.EndBroadcast:
       return {
-        source: getEndBroadcastSource(
-          instructionIndex,
-          currInstruction,
-          chunk,
-          inlined
-        ),
+        source: getEndBroadcastSource(instructionIndex, currInstruction, chunk),
         nextIndex: incrementedIndex,
       };
     case opcodes.BeginLoop:
@@ -366,7 +362,8 @@ function getSourceAndNextIndex(
         const type = getGLType(currInstruction.valueType);
         const id = getIdentifier(instructionIndex);
         return {
-          source: `${type} ${id}=${src};\n`,
+          // check id === src to avoid reassignments to self like `float[] _1 = _1`;
+          source: id === src ? "" : `${type} ${id}=${src};\n`,
           nextIndex: incrementedIndex,
         };
       }

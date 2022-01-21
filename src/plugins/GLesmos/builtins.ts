@@ -292,8 +292,34 @@ const builtins: {
   // mad: {},
   // careful: GLSL length is Euclidean norm
   // length: {},
-  // min: {},
-  // max: {},
+  min: {
+    // We know n >= 1: otherwise the `min` could be constant-collapsed to 0
+    make: (n) => `
+    float minList(float[${n}] L) {
+      float m = L[0];
+      for (int i=1; i<${n}; i++) {
+        m = min(m, L[i]);
+      }
+      return m;
+    }
+    `,
+    alias: "minList",
+    tag: "list",
+  },
+  max: {
+    // We know n >= 1: otherwise the `min` could be constant-collapsed to 0
+    make: (n) => `
+    float maxList(float[${n}] L) {
+      float m = L[0];
+      for (int i=1; i<${n}; i++) {
+        m = max(m, L[i]);
+      }
+      return m;
+    }
+    `,
+    alias: "maxList",
+    tag: "list",
+  },
   // argmin: {},
   // argmax: {},
   // median: {},
@@ -386,7 +412,7 @@ export function getDefinition(s: string) {
   // which should be specialized to a list of 10 args
   const data = getBuiltin(s);
   if (data === undefined) {
-    throw `Undefined: ${s}`;
+    throw `Undefined identifier: ${s}`;
   }
   if (data.tag === "simple") {
     const name = data?.alias ?? s;

@@ -57,11 +57,17 @@ export function compileObject(x: any): string {
 export function getGLType(v: ValueType) {
   switch (v) {
     case Types.Bool:
-      return "boolean";
+      return "bool";
     case Types.Number:
       return "float";
     case Types.Point:
       return "vec2";
+    case Types.ListOfBool:
+      return "bool[]";
+    case Types.ListOfNumber:
+      return "float[]";
+    case Types.ListOfPoint:
+      return "vec2[]";
     default:
       throw `Type ${v} is not yet supported`;
   }
