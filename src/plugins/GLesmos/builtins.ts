@@ -1,9 +1,11 @@
 // reference https://www.khronos.org/registry/OpenGL-Refpages/gl4/index.php
+
 // Test using https://www.desmos.com/calculator/2l2pnpsazy
-export const builtins: {
+const builtins: {
   [K: string]:
     | undefined
     | {
+        tag: "simple";
         // alias: replace function call references to this
         alias?: string;
         // def: function definition
@@ -12,89 +14,125 @@ export const builtins: {
         deps?: string[];
         // body is a just a more concise way to set def
         body?: string;
+      }
+    | {
+        // make: specialize the function definition for a given list size
+        tag: "list";
+        alias?: string;
+        make(n: string): string;
+        deps?: string[];
       };
 } = {
-  sin: {},
-  cos: {},
-  tan: {},
+  sin: {
+    tag: "simple",
+  },
+  cos: {
+    tag: "simple",
+  },
+  tan: {
+    tag: "simple",
+  },
   cot: {
     body: "1.0/tan(x)",
+    tag: "simple",
   },
   sec: {
     body: "1.0/cos(x)",
+    tag: "simple",
   },
   csc: {
     body: "1.0/sin(x)",
+    tag: "simple",
   },
   arcsin: {
     alias: "asin",
+    tag: "simple",
   },
   arccos: {
     alias: "acos",
+    tag: "simple",
   },
   arctan: {
     def:
       `float arctan(float y_over_x) { return atan(y_over_x); }\n` +
       `float arctan(float y, float x) { return atan(y, x); }`,
+    tag: "simple",
   },
   arccot: {
     def: "float arccot(float x) { return atan(1.0, x); }",
+    tag: "simple",
   },
   arcsec: {
     body: "acos(1.0/x)",
+    tag: "simple",
   },
   arccsc: {
     body: "asin(1.0/x)",
+    tag: "simple",
   },
   sinh: {
     def: "float sinh(float x) { float a=abs(x); return -0.5*sign(x)*exp(a)*expm1(-2.0*a); }",
     deps: ["expm1"],
+    tag: "simple",
   },
   cosh: {
     body: "0.5*(exp(x)+exp(-x))",
+    tag: "simple",
   },
   tanh: {
     def: "float tanh(float x) { float m=expm1(-2.0*abs(x)); return -sign(x)*m/(2.0+m); }",
     deps: ["expm1"],
+    tag: "simple",
   },
   coth: {
     body: "1.0/tanh(x)",
     deps: ["tanh"],
+    tag: "simple",
   },
   sech: {
     body: "1.0/cosh(x)",
     deps: ["cosh"],
+    tag: "simple",
   },
   csch: {
     body: "1.0/sinh(x)",
     deps: ["sinh"],
+    tag: "simple",
   },
   arcsinh: {
     def: "float arcsinh(float x) { float a=abs(x); return sign(x) * (1.0+x*x==1.0 ? log1p(a) : log(a+rtxsqpone(a))); }",
     deps: ["log1p", "rtxsqpone"],
+    tag: "simple",
   },
   arccosh: {
     // should be NaN for x<1
     body: "log(x+rtxsqmone(x))",
     deps: ["rtxsqmone"],
+    tag: "simple",
   },
   arctanh: {
     body: "0.5*(log1p(x)-log1p(-x))",
     deps: ["log1p"],
+    tag: "simple",
   },
   arccoth: {
     body: "arctanh(1.0/x)",
     deps: ["arctanh"],
+    tag: "simple",
   },
   arcsech: {
     body: "arccosh(1.0/x)",
     deps: ["arccosh"],
+    tag: "simple",
   },
   arccsch: {
     body: "arcsinh(1.0/x)",
     deps: ["arcsinh"],
+    tag: "simple",
   },
-  sqrt: {},
+  sqrt: {
+    tag: "simple",
+  },
   // TODO: use toFraction handling to define x^(1/3) for x < 0
   // Or maybe wrap pow using `x < 0 ? -pow(-x,n) : pow(x,n)`
   pow: {
@@ -111,37 +149,57 @@ export const builtins: {
         else return pow(x, y);
       }
     }`,
+    tag: "simple",
   },
   nthroot: {
     def: "float nthroot(float x, float n) { return pow(x,1.0/n); }",
+    tag: "simple",
   },
   hypot: {
     def: "float hypot(float x, float y) { return length(vec2(x,y)); }",
+    tag: "simple",
   },
   log: {
     body: "log(x)/2.302585092994045684",
     alias: "log10",
+    tag: "simple",
   },
   logbase: {
     def: "float logbase(float x, float base) { return log(x)/log(base); }",
+    tag: "simple",
   },
   ln: {
     body: "log(x)",
+    tag: "simple",
   },
-  exp: {},
-  floor: {},
-  ceil: {},
+  exp: {
+    tag: "simple",
+  },
+  floor: {
+    tag: "simple",
+  },
+  ceil: {
+    tag: "simple",
+  },
   round_single: {
     def: "float round(float x) { return floor(0.5 + x); }",
+    tag: "simple",
   },
   round: {
     def: "float round(float x, float n) { float p=pow(10.0, n); return round(x*p)/p; }",
     deps: ["round_single"],
+    tag: "simple",
   },
-  abs: {},
-  sign: {},
+  abs: {
+    tag: "simple",
+  },
+  sign: {
+    tag: "simple",
+  },
   // GLSL uses actual mod, not JS's remainder
-  mod: {},
+  mod: {
+    tag: "simple",
+  },
   // nCr and nPr are limited to a small region of values because we
   // are naively using factorials (non-fixed loop size doesn't work with GL)
   nCr: {
@@ -152,6 +210,7 @@ export const builtins: {
       return round(factorial(n) / (factorial(k) * factorial(n-k)));
     }`,
     deps: ["factorial", "round_single"],
+    tag: "simple",
   },
   nPr: {
     def: `float nPr(float n, float k) {
@@ -161,10 +220,12 @@ export const builtins: {
       return round(factorial(n) / factorial(n - k));
     }`,
     deps: ["factorial", "round_single"],
+    tag: "simple",
   },
   factorial: {
     body: "gamma(x + 1.0)",
     deps: ["gamma"],
+    tag: "simple",
   },
   polyGamma: {
     def: `
@@ -205,14 +266,28 @@ export const builtins: {
       return factorial(m) * a * u;
     }`,
     deps: ["factorial"],
+    tag: "simple",
   },
-  distance: {},
+  distance: {
+    tag: "simple",
+  },
 
   /** LISTS */
   // lcm: {},
   // gcd: {},
   // mean: {},
-  // total: {},
+  total: {
+    make: (n) => `
+    float total(float[${n}] L) {
+      float tot = 0.0;
+      for (int i=0; i<${n}; i++) {
+        tot += L[i];
+      }
+      return tot;
+    }
+    `,
+    tag: "list",
+  },
   // stdev: {},
   // mad: {},
   // careful: GLSL length is Euclidean norm
@@ -269,22 +344,27 @@ export const builtins: {
   /** HELPERS for numeric stability */
   expm1: {
     body: "x+0.5*x*x == x ? x : exp(x)-1.0",
+    tag: "simple",
   },
   log1p: {
     body: "x-0.5*x*x == x ? x : log(1.0+x)",
+    tag: "simple",
   },
   rtxsqpone: {
     body: "hypot(x,1.0)",
     deps: ["hypot"],
+    tag: "simple",
   },
   rtxsqmone: {
     def: "float rtxsqmone(float x) { float t = x*x; return t-1.0==t ? abs(x) : sqrt(t-1.0); }",
+    tag: "simple",
   },
   gamma: {
     body: `x < 0.0
       ? M_PI / (sin(M_PI * x) * gamma_pos(1.0 - x))
       : gamma_pos(x)`,
     deps: ["gamma_pos"],
+    tag: "simple",
   },
   gamma_pos: {
     // https://github.com/libretro/glsl-shaders/blob/master/crt/shaders/crt-royale/port-helpers/special-functions.h#L228
@@ -294,28 +374,41 @@ export const builtins: {
       float base = (sph + 1.12906830989)/2.71828182845904523536028747135266249775724709;
       return (pow(base, sph) * lanczos_sum) / s;
     }`,
+    tag: "simple",
   },
 };
 
 // Unhandled: CompilerFunctionTable
 
 export function getDefinition(s: string) {
-  const data = builtins[s];
+  // We take the definition as either a raw string, like "hypot" for the hypot function,
+  // or the function name and size separated by a #, like "total#10" for the total function,
+  // which should be specialized to a list of 10 args
+  const data = getBuiltin(s);
   if (data === undefined) {
     throw `Undefined: ${s}`;
   }
-  const name = data?.alias ?? s;
-  const res =
-    data?.def ??
-    (data?.body && `float ${name}(float x) { return ${data.body}; }`) ??
-    "";
-  return res;
+  if (data.tag === "simple") {
+    const name = data?.alias ?? s;
+    const res =
+      data?.def ??
+      (data?.body && `float ${name}(float x) { return ${data.body}; }`) ??
+      "";
+    return res;
+  } else {
+    // data.tag === "list"
+    return data.make(s.split("#")[1]);
+  }
 }
 
 export function getDependencies(s: string) {
-  return builtins[s]?.deps ?? [];
+  return getBuiltin(s)?.deps ?? [];
 }
 
 export function getFunctionName(s: string) {
-  return builtins[s]?.alias ?? s;
+  return getBuiltin(s)?.alias ?? s;
+}
+
+export function getBuiltin(s: string) {
+  return builtins[s.split("#")[0]];
 }

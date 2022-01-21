@@ -1,4 +1,5 @@
 import { desmosRequire, Calc } from "globals/window";
+import { IRChunk } from "parsing/IR";
 import Node from "../parsing/parsenode";
 
 const _EvaluateSingleExpression = desmosRequire(

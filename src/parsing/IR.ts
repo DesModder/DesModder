@@ -93,13 +93,6 @@ interface SymbolicListVar extends HasValueType {
   // valueType must be a list
 }
 
-interface BroadcastResult extends HasValueType {
-  type: Opcodes["BroadcastResult"];
-  args: unknown;
-  length: number;
-  isConstantBroadcast: boolean;
-}
-
 interface Constant extends HasValueType {
   type: Opcodes["Constant"];
   value: unknown;
@@ -184,6 +177,7 @@ interface List extends HasValueType {
 
 interface ListAccess extends HasValueType {
   type: Opcodes["ListAccess"];
+  // args: [list, index]
   args: [number, number];
 }
 
@@ -194,6 +188,7 @@ interface DeferredListAccess extends HasValueType {
 
 interface InboundsListAccess extends HasValueType {
   type: Opcodes["InboundsListAccess"];
+  // args: [list, index]
   args: [number, number];
 }
 
@@ -226,11 +221,22 @@ interface BeginBroadcast extends HasValueType {
   type: Opcodes["BeginBroadcast"];
   length: number;
   endIndex: number;
+  // args: [index of list length]
+  args: [number];
 }
 
 interface EndBroadcast extends HasValueType {
   type: Opcodes["EndBroadcast"];
-  args: unknown;
+  // args: [matching StartBroadcast index, return index, ...more return indices]
+  args: number[];
+}
+
+interface BroadcastResult extends HasValueType {
+  type: Opcodes["BroadcastResult"];
+  // args: [matching EndBroadcast index]
+  args: [number];
+  constantLength?: number;
+  isConstantBroadcast: boolean;
 }
 
 interface BeginLoop extends HasValueType {
