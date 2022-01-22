@@ -1,6 +1,6 @@
 // reference https://www.khronos.org/registry/OpenGL-Refpages/gl4/index.php
 
-// Test using https://www.desmos.com/calculator/2l2pnpsazy
+// Test using https://www.desmos.com/calculator/lfgehepjce
 const builtins: {
   [K: string]:
     | undefined
@@ -71,32 +71,24 @@ const builtins: {
     tag: "simple",
   },
   sinh: {
-    def: "float sinh(float x) { float a=abs(x); return -0.5*sign(x)*exp(a)*expm1(-2.0*a); }",
-    deps: ["expm1"],
     tag: "simple",
   },
   cosh: {
-    body: "0.5*(exp(x)+exp(-x))",
     tag: "simple",
   },
   tanh: {
-    def: "float tanh(float x) { float m=expm1(-2.0*abs(x)); return -sign(x)*m/(2.0+m); }",
-    deps: ["expm1"],
     tag: "simple",
   },
   coth: {
     body: "1.0/tanh(x)",
-    deps: ["tanh"],
     tag: "simple",
   },
   sech: {
     body: "1.0/cosh(x)",
-    deps: ["cosh"],
     tag: "simple",
   },
   csch: {
     body: "1.0/sinh(x)",
-    deps: ["sinh"],
     tag: "simple",
   },
   arcsinh: {
@@ -546,10 +538,6 @@ const builtins: {
   },
 
   /** HELPERS for numeric stability */
-  expm1: {
-    body: "x+0.5*x*x == x ? x : exp(x)-1.0",
-    tag: "simple",
-  },
   log1p: {
     body: "x-0.5*x*x == x ? x : log(1.0+x)",
     tag: "simple",
