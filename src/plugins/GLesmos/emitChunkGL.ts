@@ -250,7 +250,7 @@ function getBeginBroadcastSource(
   const broadcastIndexVar = getIdentifier(instructionIndex);
   return (
     varInits.join("") +
-    `for(int ${broadcastIndexVar}=1;${broadcastIndexVar}<=${broadcastLength};++${broadcastIndexVar}){\n`
+    `for(float ${broadcastIndexVar}=1.0;${broadcastIndexVar}<=${broadcastLength}.0;++${broadcastIndexVar}){\n`
   );
 }
 

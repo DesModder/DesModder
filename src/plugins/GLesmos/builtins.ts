@@ -204,7 +204,8 @@ const builtins: {
   // nCr and nPr are limited to a small region of values because we
   // are naively using factorials (non-fixed loop size doesn't work with GL)
   nCr: {
-    def: `float nCr(float n, float k) {
+    def: `
+    float nCr(float n, float k) {
       n = round(n);
       k = round(k);
       if (k > n || n < 0.0 || k < 0.0) return 0.0;
@@ -214,7 +215,8 @@ const builtins: {
     tag: "simple",
   },
   nPr: {
-    def: `float nPr(float n, float k) {
+    def: `
+    float nPr(float n, float k) {
       n = round(n);
       k = round(k);
       if (k > n || n < 0.0 || k < 0.0) return 0.0;
@@ -275,7 +277,8 @@ const builtins: {
 
   /** LISTS */
   lcm: {
-    make: (n) => `float lcm(float[${n}] L) {
+    make: (n) => `
+    float lcm(float[${n}] L) {
       float g = abs(round(L[0]));
       for (int i=1; i<${n}; i++) {
         float v = abs(round(L[i]));
@@ -287,7 +290,8 @@ const builtins: {
     tag: "list",
   },
   gcd: {
-    make: (n) => `float gcd(float[${n}] L) {
+    make: (n) => `
+    float gcd(float[${n}] L) {
       float g = abs(round(L[0]));
       for (int i=1; i<${n}; i++) {
         g = gcd(g, abs(round(L[i])));
@@ -304,7 +308,8 @@ const builtins: {
     // needed is log_{phi}(sqrt(5) * 2^127) = 184.6
     // Each loop does two iterations, so just 93 loops are needed
     // Precondition: gcd expects non-negative integer-valued floats
-    def: `float gcd(float u, float v) {
+    def: `
+    float gcd(float u, float v) {
       for (int i=0; i<95; i++) {
         if (v == 0.0) break;
         u = mod(u, v);
@@ -474,6 +479,67 @@ const builtins: {
   // rgb: {},
   // hsv: {},
 
+  /** New additions */
+  // validateRangeLength: {},
+  // validateSampleCount: {},
+  // select: {},
+  // shuffle: {},
+  sortPerm: {
+    // Bottom-up merge sort
+    // Does not handle NaNs the same as JS
+    make: (n) => `
+    float[${n}] sortPerm(float[${n}] L) {
+      int[${n}] perm;
+      int[${n}] nextPerm;
+      for (int i=0; i<${n}; i++) {
+        perm[i] = i;
+      }
+      for (int step=1; step<${n}; step*=2) {
+        int s2 = step * 2;
+        for (int start=0; start<${n}; start += s2) {
+          int i = 0;
+          int j = step;
+          int mergelen = min(s2, ${n}-start);
+          for (int k=0; k < mergelen; k++) {
+            if (j >= mergelen || (L[perm[start + i]] < L[perm[start + j]] && i < step)) {
+              nextPerm[start + k] = perm[start + i];
+              i += 1;
+            } else {
+              nextPerm[start + k] = perm[start + j];
+              j += 1;
+            }
+          }
+        }
+        for (int i=0; i<${n}; i++) {
+          perm[i] = nextPerm[i];
+        }
+      }
+      float[${n}] permFloat;
+      for (int i=0; i<${n}; i++) {
+        permFloat[i] = float(perm[i] + 1);
+      }
+      return permFloat;
+    }`,
+    tag: "list",
+  },
+  elementsAt: {
+    make: (n) => `
+    float[${n}] elementsAt(float[${n}] L, float[${n}] I) {
+      float[${n}] outList;
+      for (int i=0; i<${n}; i++) {
+        outList[i] = L[int(I[i])-1];
+      }
+      return outList;
+    }`,
+    tag: "list",
+  },
+  uniquePerm: {
+    make: () => {
+      throw "The unique function is not supported";
+    },
+    tag: "list",
+  },
+
   /** HELPERS for numeric stability */
   expm1: {
     body: "x+0.5*x*x == x ? x : exp(x)-1.0",
@@ -501,7 +567,8 @@ const builtins: {
   },
   gamma_pos: {
     // https://github.com/libretro/glsl-shaders/blob/master/crt/shaders/crt-royale/port-helpers/special-functions.h#L228
-    def: `float gamma_pos(float s) {
+    def: `
+    float gamma_pos(float s) {
       float sph = s + 0.5;
       float lanczos_sum = 0.8109119309638332633713423362694399653724431 + 0.4808354605142681877121661197951496120000040/(s + 1.0);
       float base = (sph + 1.12906830989)/2.71828182845904523536028747135266249775724709;
@@ -511,7 +578,7 @@ const builtins: {
   },
 };
 
-// Unhandled: CompilerFunctionTable
+// Unhandled: CompilerFunctionTable (these get compiled out to the above functions)
 
 export function getDefinition(s: string) {
   // We take the definition as either a raw string, like "hypot" for the hypot function,
