@@ -116,11 +116,13 @@ function getSourceSimple(
     case opcodes.Distribution:
     case opcodes.SymbolicVar:
     case opcodes.SymbolicListVar:
-    case opcodes.ListAccess:
-      // ListAccess seems to be replaced with InboundsListAccess and a ternary operator
-      // The others are obvious
       const op = printOp(ci.type);
       throw `Programming Error: expect ${op} to be removed before emitting code.`;
+    case opcodes.ListAccess:
+      const length = ListLength.getConstantListLength(chunk, ci.args[0]);
+      const list = maybeInlined(ci.args[0], inlined);
+      const index = `int(${maybeInlined(ci.args[1], inlined)})`;
+      return `${index}>=1 && ${index}<=${length} ? ${list}[int(${index})-1] : NaN`;
     // in-bounds list access assumes that args[1] is an integer
     // between 1 and args[0].length, inclusive
     case opcodes.InboundsListAccess:
@@ -238,7 +240,7 @@ function getBeginBroadcastSource(
       if (broadcastRes.type === opcodes.BroadcastResult) {
         const len = broadcastRes.constantLength;
         if (typeof len !== "number") {
-          throw "Broadcast not supported on list with non-constant length";
+          throw "List with non-constant length not supported";
         }
         broadcastLength = len;
         varInits.push(`float[${len}] ${getIdentifier(index)};\n`);

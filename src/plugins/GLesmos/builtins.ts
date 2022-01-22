@@ -20,7 +20,7 @@ const builtins: {
         tag: "list";
         alias?: string;
         make(n: string): string;
-        deps?: string[];
+        deps?: (n: string) => string[];
       };
 } = {
   sin: {
@@ -140,7 +140,8 @@ const builtins: {
     // and adjusts sign based on the parity of the numerator of y.
     // Instead, we only handle the x<0 case where y is an integer.
     alias: "rpow",
-    def: `float rpow(float x, float y) {
+    def: `
+    float rpow(float x, float y) {
       if (x >= 0.0) return pow(x,y);
       else {
         float m = mod(y, 2.0);
@@ -273,55 +274,161 @@ const builtins: {
   },
 
   /** LISTS */
-  // lcm: {},
-  // gcd: {},
-  // mean: {},
+  lcm: {
+    make: (n) => `float lcm(float[${n}] L) {
+      float g = abs(round(L[0]));
+      for (int i=1; i<${n}; i++) {
+        float v = abs(round(L[i]));
+        g = g * v / gcd(g, v);
+      }
+      return g;
+    }`,
+    deps: () => ["gcdTwo"],
+    tag: "list",
+  },
+  gcd: {
+    make: (n) => `float gcd(float[${n}] L) {
+      float g = abs(round(L[0]));
+      for (int i=1; i<${n}; i++) {
+        g = gcd(g, abs(round(L[i])));
+      }
+      return g;
+    }`,
+    deps: () => ["gcdTwo"],
+    tag: "list",
+  },
+  gcdTwo: {
+    // Based on https://github.com/riccardoscalco/glsl-gcd/blob/master/index.glsl
+    // Note that the gcd worst-case is Fibonacci numbers, and we're
+    // dealing with 32-bit floats, so the max number of iterations
+    // needed is log_{phi}(sqrt(5) * 2^127) = 184.6
+    // Each loop does two iterations, so just 93 loops are needed
+    // Precondition: gcd expects non-negative integer-valued floats
+    def: `float gcd(float u, float v) {
+      for (int i=0; i<95; i++) {
+        if (v == 0.0) break;
+        u = mod(u, v);
+        if (u == 0.0) break;
+        v = mod(v, u);
+      }
+      return u+v;
+    }`,
+    tag: "simple",
+    alias: "gcd",
+  },
+  mean: {
+    // We know n >= 1: otherwise the `mean` could be constant-collapsed to NaN
+    make: (n) => `
+    float mean(float[${n}] L) {
+      return total(L) / ${n}.0;
+    }`,
+    tag: "list",
+    deps: (n) => [`total#${n}`],
+  },
   total: {
     make: (n) => `
     float total(float[${n}] L) {
-      float tot = 0.0;
-      for (int i=0; i<${n}; i++) {
+      float tot = L[0];
+      for (int i=1; i<${n}; i++) {
         tot += L[i];
       }
       return tot;
-    }
-    `,
+    }`,
     tag: "list",
   },
-  // stdev: {},
-  // mad: {},
+  stdev: {
+    make: (n) => `
+    float stdev(float[${n}] L) {
+      float mean = mean(L);
+      float tot = 0.0;
+      for (int i=0; i<${n}; i++) {
+        float v = L[i] - mean;
+        tot += v * v;
+      }
+      return sqrt(tot / ${parseInt(n) - 1}.0);
+    }`,
+    tag: "list",
+    deps: (n) => [`mean#${n}`],
+  },
+  mad: {
+    make: (n) => `
+    float mad(float[${n}] L) {
+      float mean = mean(L);
+      float tot = 0.0;
+      for (int i=0; i<${n}; i++) {
+        tot += abs(L[i] - mean);
+      }
+      return tot / ${n}.0;
+    }`,
+    tag: "list",
+    deps: (n) => [`mean#${n}`],
+  },
   // careful: GLSL length is Euclidean norm
+  // But length doesn't need to be implemented because it should
+  // always be constant-collapsed
   // length: {},
   min: {
     // We know n >= 1: otherwise the `min` could be constant-collapsed to 0
     make: (n) => `
-    float minList(float[${n}] L) {
+    float min(float[${n}] L) {
       float m = L[0];
       for (int i=1; i<${n}; i++) {
         m = min(m, L[i]);
       }
       return m;
-    }
-    `,
-    alias: "minList",
+    }`,
     tag: "list",
   },
   max: {
     // We know n >= 1: otherwise the `min` could be constant-collapsed to 0
     make: (n) => `
-    float maxList(float[${n}] L) {
+    float max(float[${n}] L) {
       float m = L[0];
       for (int i=1; i<${n}; i++) {
         m = max(m, L[i]);
       }
       return m;
-    }
-    `,
-    alias: "maxList",
+    }`,
     tag: "list",
   },
-  // argmin: {},
-  // argmax: {},
+  argmin: {
+    // We know n >= 1: otherwise the `argmin` could be constant-collapsed to 0
+    make: (n) => `
+    float argmin(float[${n}] L) {
+      if (isnan(L[0])) return 0.0;
+      int arg = 0;
+      float min = L[0];
+      for (int i=1; i<${n}; i++) {
+        float e = L[i];
+        if (isnan(e)) return 0.0;
+        if (e < min) {
+          arg = i;
+          min = e;
+        }
+      }
+      return float(arg + 1);
+    }`,
+    tag: "list",
+  },
+  argmax: {
+    // We know n >= 1: otherwise the `argmax` could be constant-collapsed to 0
+    make: (n) => `
+    float argmax(float[${n}] L) {
+      if (isnan(L[0])) return 0.0;
+      int arg = 0;
+      float max = L[0];
+      for (int i=1; i<${n}; i++) {
+        float e = L[i];
+        if (isnan(e)) return 0.0;
+        if (e > max) {
+          arg = i;
+          max = e;
+        }
+      }
+      return float(arg + 1);
+    }`,
+    tag: "list",
+  },
   // median: {},
   // var: {},
   // varp: {},
@@ -423,12 +530,18 @@ export function getDefinition(s: string) {
     return res;
   } else {
     // data.tag === "list"
-    return data.make(s.split("#")[1]);
+    return data.make(getArgs(s));
   }
 }
 
 export function getDependencies(s: string) {
-  return getBuiltin(s)?.deps ?? [];
+  const builtin = getBuiltin(s);
+  if (!builtin?.deps) return [];
+  if (builtin.tag === "list") {
+    return builtin.deps(getArgs(s));
+  } else {
+    return builtin.deps;
+  }
 }
 
 export function getFunctionName(s: string) {
@@ -437,4 +550,8 @@ export function getFunctionName(s: string) {
 
 export function getBuiltin(s: string) {
   return builtins[s.split("#")[0]];
+}
+
+export function getArgs(s: string) {
+  return s.split(/#/)[1];
 }
