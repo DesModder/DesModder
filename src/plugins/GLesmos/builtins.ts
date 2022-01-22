@@ -485,41 +485,46 @@ const builtins: {
   // select: {},
   // shuffle: {},
   sortPerm: {
-    // Bottom-up merge sort
+    // Insertion sort, which is more performant than other
+    // sorts I tried (bubble-up merge, bitonic, and bubble)
     // Does not handle NaNs the same as JS
-    make: (n) => `
-    float[${n}] sortPerm(float[${n}] L) {
-      int[${n}] perm;
-      int[${n}] nextPerm;
-      for (int i=0; i<${n}; i++) {
-        perm[i] = i;
+    make: (n) => {
+      if (+n > 128) {
+        throw "Sorted list length exceeds 128. Stopping to avoid page freeze.";
       }
-      for (int step=1; step<${n}; step*=2) {
-        int s2 = step * 2;
-        for (int start=0; start<${n}; start += s2) {
-          int i = 0;
-          int j = step;
-          int mergelen = min(s2, ${n}-start);
-          for (int k=0; k < mergelen; k++) {
-            if (j >= mergelen || (L[perm[start + i]] < L[perm[start + j]] && i < step)) {
-              nextPerm[start + k] = perm[start + i];
-              i += 1;
-            } else {
-              nextPerm[start + k] = perm[start + j];
-              j += 1;
+      return `float[${n}] sortPerm(float[${n}] L) {
+        int[${n}] perm;
+        int[${n}] nextPerm;
+        for (int i=0; i<${n}; i++) {
+          perm[i] = i;
+        }
+        float lastMin = -Infinity;
+        int lastIndex = -1;
+        for (int i=0; i<${n}; i++) {
+          float currMin = Infinity;
+          int currIndex = -1;
+          int j;
+          for (j=0; j<${n}; j++) {
+            float e = L[j];
+            if (
+              (e > lastMin || (e == lastMin && j > lastIndex))
+              && e < currMin
+            ) {
+              currMin = e;
+              currIndex = j;
             }
           }
+          perm[i] = currIndex;
+          lastMin = currMin;
+          lastIndex = currIndex;
         }
+        float[${n}] permFloat;
         for (int i=0; i<${n}; i++) {
-          perm[i] = nextPerm[i];
+          permFloat[i] = float(perm[i] + 1);
         }
-      }
-      float[${n}] permFloat;
-      for (int i=0; i<${n}; i++) {
-        permFloat[i] = float(perm[i] + 1);
-      }
-      return permFloat;
-    }`,
+        return permFloat;
+      }`;
+    },
     tag: "list",
   },
   elementsAt: {
