@@ -82,7 +82,12 @@ export default (dependencyNameMap: DependencyNameMap) => ({
               predicate: () => window.DesModder?.controller?.inTextMode?.()
             },
             () => %%DCGView%%.createElement(
-              "textarea"
+              "div",
+              {
+                class: %%DCGView%%.const("dsm-text-editor-container"),
+                didMount: div => window.DesModder?.controller?.exposedPlugins["text-mode"].mountEditor(div),
+                willUnmount: div => window.DesModder?.controller?.exposedPlugins["text-mode"].unmountEditor(div)
+              }
             )
           )
         `)({

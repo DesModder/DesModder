@@ -44,6 +44,9 @@
     "@babel/core": "^7.7.0",
     "@babel/standalone": "^7.14.7",
     "@babel/template": "^7.14.5",
+    "@codemirror/basic-setup": "^0.19.1",
+    "@codemirror/state": "^0.19.6",
+    "@codemirror/view": "^0.19.40",
     "@ffmpeg/core": "^0.10.0",
     "@ffmpeg/ffmpeg": "^0.10.0",
     "process": "^0.11.10"
