@@ -1,8 +1,9 @@
 import { getFunctionName, getBuiltin } from "./builtins";
 import { IRChunk, IRInstruction } from "parsing/IR";
-import { compileObject, getGLType } from "./outputHelpers";
+import { compileObject, evalMaybeRational, getGLType } from "./outputHelpers";
 import { countReferences, opcodes, printOp, Types } from "./opcodeDeps";
 import { desmosRequire } from "globals/workerSelf";
+import { MaybeRational } from "parsing/parsenode";
 
 export const ListLength = desmosRequire(
   "core/math/ir/features/list-length"
@@ -122,6 +123,18 @@ function getSourceSimple(
       const length = ListLength.getConstantListLength(chunk, ci.args[0]);
       const list = maybeInlined(ci.args[0], inlined);
       const index = `int(${maybeInlined(ci.args[1], inlined)})`;
+      const indexInst = chunk.getInstruction(ci.args[1]);
+      if (
+        indexInst.type === opcodes.Constant &&
+        indexInst.valueType === Types.Number
+      ) {
+        // Avoid list access like [1,2,3][4], where webGL throws an error during compilation
+        const constIndex = evalMaybeRational(indexInst.value as MaybeRational);
+        const floorIndex = Math.floor(constIndex);
+        if (floorIndex < 1 || floorIndex > length) {
+          throw `Constant index ${constIndex} out of range on array of length ${length}`;
+        }
+      }
       return `${index}>=1 && ${index}<=${length} ? ${list}[int(${index})-1] : NaN`;
     // in-bounds list access assumes that args[1] is an integer
     // between 1 and args[0].length, inclusive
