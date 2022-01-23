@@ -28,8 +28,8 @@ export default class Controller {
         float a = 1.0 - (1.0 - from.a) * (1.0 - top.a);
         return vec4((from.rgb * from.a * (1.0 - top.a) + top.rgb * top.a) / a, a);
       }`,
-      "vec4 outColor = vec4(0.0);",
       "void glesmosMain(vec2 coords) {",
+      "  outColor = vec4(0.0);",
       "  float x = coords.x; float y = coords.y;",
       compiledGL.bodies.join("\n"),
       "}",

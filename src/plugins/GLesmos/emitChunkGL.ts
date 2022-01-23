@@ -1,7 +1,15 @@
-import { getFunctionName } from "./builtins";
+import { getFunctionName, getBuiltin } from "./builtins";
 import { IRChunk, IRInstruction } from "parsing/IR";
-import { compileObject, getGLType } from "./outputHelpers";
+import { compileObject, evalMaybeRational, getGLType } from "./outputHelpers";
 import { countReferences, opcodes, printOp, Types } from "./opcodeDeps";
+import { desmosRequire } from "globals/workerSelf";
+import { MaybeRational } from "parsing/parsenode";
+
+export const ListLength = desmosRequire(
+  "core/math/ir/features/list-length"
+) as {
+  getConstantListLength(chunk: IRChunk, index: number): number;
+};
 
 function getIdentifier(index: number) {
   return `_${index}`;
@@ -59,13 +67,20 @@ function getSourceBinOp(
 
 function getSourceSimple(
   ci: IRInstruction,
+  instructionIndex: number,
   inlined: string[],
-  deps: Set<string>
+  deps: Set<string>,
+  lists: string[],
+  chunk: IRChunk
 ) {
   switch (ci.type) {
     case opcodes.Constant:
       if (Types.isList(ci.valueType)) {
-        throw "Lists not yet implemented";
+        const id = getIdentifier(instructionIndex);
+        const val = ci.value as any[];
+        const init = val.map(compileObject).join(",");
+        lists.push(`float ${id}[${val.length}] = float[](${init});\n`);
+        return id;
       } else {
         return compileObject(ci.value);
       }
@@ -96,7 +111,8 @@ function getSourceSimple(
         maybeInlined(ci.args[2], inlined)
       );
     case opcodes.List:
-      throw "Lists not yet implemented";
+      const init = ci.args.map((i) => maybeInlined(i, inlined)).join(",");
+      return `float[${ci.args.length}](${init})`;
     case opcodes.DeferredListAccess:
     case opcodes.Distribution:
     case opcodes.SymbolicVar:
@@ -104,13 +120,39 @@ function getSourceSimple(
       const op = printOp(ci.type);
       throw `Programming Error: expect ${op} to be removed before emitting code.`;
     case opcodes.ListAccess:
-      throw "Lists not yet implemented";
+      const length = ListLength.getConstantListLength(chunk, ci.args[0]);
+      const list = maybeInlined(ci.args[0], inlined);
+      const index = `int(${maybeInlined(ci.args[1], inlined)})`;
+      const indexInst = chunk.getInstruction(ci.args[1]);
+      if (
+        indexInst.type === opcodes.Constant &&
+        indexInst.valueType === Types.Number
+      ) {
+        // Avoid list access like [1,2,3][4], where webGL throws an error during compilation
+        const constIndex = evalMaybeRational(indexInst.value as MaybeRational);
+        const floorIndex = Math.floor(constIndex);
+        if (floorIndex < 1 || floorIndex > length) {
+          throw `Constant index ${constIndex} out of range on array of length ${length}`;
+        }
+      }
+      return `${index}>=1 && ${index}<=${length} ? ${list}[int(${index})-1] : NaN`;
     // in-bounds list access assumes that args[1] is an integer
     // between 1 and args[0].length, inclusive
     case opcodes.InboundsListAccess:
-      throw "Lists not yet implemented";
+      return (
+        maybeInlined(ci.args[0], inlined) +
+        "[int(" +
+        maybeInlined(ci.args[1], inlined) +
+        ")-1]"
+      );
     case opcodes.NativeFunction:
-      deps.add(ci.symbol);
+      if (getBuiltin(ci.symbol)?.tag === "list") {
+        deps.add(
+          ci.symbol + "#" + ListLength.getConstantListLength(chunk, ci.args[0])
+        );
+      } else {
+        deps.add(ci.symbol);
+      }
       const name = getFunctionName(ci.symbol);
       const args = ci.args.map((e) => maybeInlined(e, inlined)).join(",");
       return `${name}(${args})`;
@@ -196,13 +238,69 @@ function getEndLoopSource(
   return s;
 }
 
+function getBeginBroadcastSource(
+  instructionIndex: number,
+  ci: IRInstruction & { type: typeof opcodes.BeginBroadcast },
+  chunk: IRChunk
+) {
+  const endInstruction = chunk.getInstruction(ci.endIndex);
+  const varInits = [];
+  let broadcastLength = 0;
+  if (endInstruction.type === opcodes.EndBroadcast) {
+    for (let i = 1; i < endInstruction.args.length; i++) {
+      const index = ci.endIndex + i;
+      const broadcastRes = chunk.getInstruction(index);
+      if (broadcastRes.type === opcodes.BroadcastResult) {
+        const len = broadcastRes.constantLength;
+        if (typeof len !== "number") {
+          throw "List with non-constant length not supported";
+        }
+        broadcastLength = len;
+        varInits.push(`float[${len}] ${getIdentifier(index)};\n`);
+      }
+    }
+  }
+  const broadcastIndexVar = getIdentifier(instructionIndex);
+  return (
+    varInits.join("") +
+    `for(float ${broadcastIndexVar}=1.0;${broadcastIndexVar}<=${broadcastLength}.0;++${broadcastIndexVar}){\n`
+  );
+}
+
+function getEndBroadcastSource(
+  instructionIndex: number,
+  ci: IRInstruction & { type: typeof opcodes.EndBroadcast },
+  chunk: IRChunk
+) {
+  const resultAssignments = [];
+  const broadcastIndexVar = getIdentifier(ci.args[0]);
+
+  for (let i = 1; i < ci.args.length; i++) {
+    const index = instructionIndex + i;
+    if (index < chunk.instructionsLength()) {
+      if (chunk.getInstruction(index).type === opcodes.BroadcastResult) {
+        resultAssignments.push(
+          getIdentifier(index) +
+            "[int(" +
+            broadcastIndexVar +
+            ")-1]=" +
+            getIdentifier(ci.args[i]) +
+            ";\n"
+        );
+      }
+    }
+  }
+  return resultAssignments.join("") + "}\n";
+}
+
 function getSourceAndNextIndex(
   chunk: IRChunk,
   currInstruction: IRInstruction,
   instructionIndex: number,
   referenceCountList: number[],
   inlined: string[],
-  deps: Set<string>
+  deps: Set<string>,
+  lists: string[]
 ) {
   const incrementedIndex = instructionIndex + 1;
   switch (currInstruction.type) {
@@ -224,8 +322,19 @@ function getSourceAndNextIndex(
         nextIndex: incrementedIndex,
       };
     case opcodes.BeginBroadcast:
+      return {
+        source: getBeginBroadcastSource(
+          instructionIndex,
+          currInstruction,
+          chunk
+        ),
+        nextIndex: incrementedIndex,
+      };
     case opcodes.EndBroadcast:
-      throw "Broadcasts not yet implemented";
+      return {
+        source: getEndBroadcastSource(instructionIndex, currInstruction, chunk),
+        nextIndex: incrementedIndex,
+      };
     case opcodes.BeginLoop:
       deps.add("round");
       return {
@@ -248,7 +357,14 @@ function getSourceAndNextIndex(
         nextIndex: incrementedIndex,
       };
     default:
-      let src = getSourceSimple(currInstruction, inlined, deps);
+      let src = getSourceSimple(
+        currInstruction,
+        instructionIndex,
+        inlined,
+        deps,
+        lists,
+        chunk
+      );
       if (referenceCountList[instructionIndex] <= 1) {
         inlined[instructionIndex] = `(${src})`;
         // referenced at most once, so just inline it
@@ -261,7 +377,8 @@ function getSourceAndNextIndex(
         const type = getGLType(currInstruction.valueType);
         const id = getIdentifier(instructionIndex);
         return {
-          source: `${type} ${id}=${src};\n`,
+          // check id === src to avoid reassignments to self like `float[] _1 = _1`;
+          source: id === src ? "" : `${type} ${id}=${src};\n`,
           nextIndex: incrementedIndex,
         };
       }
@@ -273,6 +390,7 @@ export default function emitChunkGL(chunk: IRChunk) {
   let outputSource = "";
   let inlined: string[] = [];
   let deps = new Set<string>();
+  let lists: string[] = [];
   for (
     let instructionIndex = 0;
     instructionIndex < chunk.instructionsLength();
@@ -285,14 +403,15 @@ export default function emitChunkGL(chunk: IRChunk) {
       instructionIndex,
       referenceCountList,
       inlined,
-      deps
+      deps,
+      lists
     );
     outputSource += u.source;
     instructionIndex = u.nextIndex;
   }
   outputSource += `return ${maybeInlined(chunk.returnIndex, inlined)};`;
   return {
-    source: outputSource,
+    source: lists.join("") + outputSource,
     deps,
   };
 }

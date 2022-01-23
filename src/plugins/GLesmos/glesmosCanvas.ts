@@ -75,21 +75,21 @@ const FULLSCREEN_QUAD = new Float32Array([
   -1, 1, 1, 1, 1, -1, -1, 1, 1, -1, -1, -1,
 ]);
 
-const VERTEX_SHADER = `
+const VERTEX_SHADER = `#version 300 es
 
-    attribute highp vec2 vertexPosition;
+in highp vec2 vertexPosition;
+out vec2 texCoord;
 
-    varying vec2 texCoord;
-
-    void main() {
-        texCoord = vertexPosition * 0.5 + 0.5;
-        gl_Position = vec4(vertexPosition, 0.0, 1.0);
-    }
+void main() {
+    texCoord = vertexPosition * 0.5 + 0.5;
+    gl_Position = vec4(vertexPosition, 0.0, 1.0);
+}
 `;
 
-const GLESMOS_FRAGMENT_SHADER = `
-varying mediump vec2 texCoord;
+const GLESMOS_FRAGMENT_SHADER = `#version 300 es
 precision highp float;
+in vec2 texCoord;
+out vec4 outColor;
 
 uniform vec2 corner;
 uniform vec2 size;
@@ -100,13 +100,11 @@ uniform float Infinity;
 #define M_E 2.71828182845904523536028747135266
 
 //REPLACE_WITH_GLESMOS
-vec4 outColor = vec4(0.0);
 void glesmosMain(vec2 coords) {}
 //REPLACE_WITH_GLESMOS_END
 
 void main() {
     glesmosMain(texCoord * size + corner);
-    gl_FragColor = outColor;
 }
 
 `;
@@ -114,7 +112,7 @@ void main() {
 export function initGLesmosCanvas() {
   //================= INIT ELEMENTS =======================
   let c: HTMLCanvasElement = document.createElement("canvas");
-  let gl: WebGLRenderingContext = c.getContext("webgl", {
+  let gl: WebGLRenderingContext = c.getContext("webgl2", {
     // Disable premultiplied alpha
     // Thanks to <https://stackoverflow.com/a/12290551/7481517>
     premultipliedAlpha: false,
@@ -157,12 +155,6 @@ export function initGLesmosCanvas() {
     );
   };
 
-  setGLesmosShader(
-    `vec4 outColor = vec4(0.0);
-    void glesmosMain(vec2 coords) {}`,
-    "Empty"
-  );
-
   let render = (id: string) => {
     if (glesmosShaderProgram) {
       gl.useProgram(glesmosShaderProgram);
@@ -191,8 +183,6 @@ export function initGLesmosCanvas() {
       throw glesmosError("Shader failed");
     }
   };
-
-  render("Base");
 
   //================= CLEANUP =============
 
