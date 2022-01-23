@@ -11,6 +11,7 @@ import hideErrors from "plugins/hide-errors";
 import debugMode from "plugins/debug-mode";
 import showTips from "plugins/show-tips";
 import folderTools from "plugins/folder-tools";
+import textMode from "plugins/text-mode";
 
 interface ConfigItemGeneric {
   key: string;
@@ -55,6 +56,7 @@ const _plugins = {
   [pinExpressions.id]: pinExpressions,
   [videoCreator.id]: videoCreator,
   [findReplace.id]: findReplace,
+  [textMode.id]: textMode,
   [debugMode.id]: debugMode,
   [showTips.id]: showTips,
   [rightClickTray.id]: rightClickTray,

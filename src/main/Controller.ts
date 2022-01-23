@@ -497,4 +497,15 @@ export default class Controller {
   killWorker() {
     Calc.controller.evaluator.workerPoolConnection.killWorker();
   }
+
+  toggleTextMode() {
+    this.exposedPlugins["text-mode"].toggleTextMode();
+  }
+
+  inTextMode() {
+    return (
+      this.isPluginEnabled("text-mode") &&
+      this.exposedPlugins["text-mode"]?.inTextMode
+    );
+  }
 }
