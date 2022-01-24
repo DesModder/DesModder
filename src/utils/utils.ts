@@ -44,25 +44,6 @@ export function mergeClass(c1: MaybeClassDict, c2: MaybeClassDict) {
   return out;
 }
 
-// https://dev.to/_gdelgado/implement-a-type-safe-version-of-node-s-promisify-in-7-lines-of-code-in-typescript-2j34
-export const promisify =
-  <T, A>(
-    fn: (args: T, cb: (args: A) => void) => void
-  ): ((args: T) => Promise<A>) =>
-  (args: T) =>
-    new Promise((resolve) => {
-      fn(args, (callbackArgs) => {
-        resolve(callbackArgs);
-      });
-    });
-
 export type OptionalProperties<T> = {
   [K in keyof T]?: T[K];
 };
-
-export function arraysEqual(arr1: unknown[], arr2: unknown[]) {
-  return (
-    arr1.length === arr2.length &&
-    arr1.every((value, index) => arr2[index] === value)
-  );
-}

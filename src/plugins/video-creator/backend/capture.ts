@@ -47,7 +47,7 @@ export async function captureFrame(controller: Controller) {
         targetPixelRatio: targetPixelRatio,
         height: height / targetPixelRatio,
         showLabels: true,
-        preserveAxisLabels: true,
+        preserveAxisNumbers: true,
         mathBounds: clampedMathBounds,
       },
       (data) => {

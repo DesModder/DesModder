@@ -1,5 +1,5 @@
 import { Calc, desmosRequire } from "globals/window";
-import { ItemModel } from "globals/Calc";
+import { ItemModel } from "globals/models";
 import Metadata, { Expression } from "./interface";
 import { desModderController, OptionalProperties } from "desmodder";
 import migrateToLatest from "./migrate";

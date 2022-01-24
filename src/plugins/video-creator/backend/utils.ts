@@ -1,4 +1,11 @@
-import { EvaluateSingleExpression, Bounds } from "desmodder";
+import { EvaluateSingleExpression } from "desmodder";
+
+interface Bounds {
+  left: number;
+  right: number;
+  bottom: number;
+  top: number;
+}
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
 export function escapeRegex(s: string) {
@@ -12,15 +19,6 @@ export function isValidNumber(s: string) {
 export function isValidLength(s: string) {
   const evaluated = EvaluateSingleExpression(s);
   return !isNaN(evaluated) && evaluated > 0;
-}
-
-export function boundsEqual(a: Bounds, b: Bounds) {
-  return (
-    a.left === b.left &&
-    a.right === b.right &&
-    a.top === b.top &&
-    a.bottom === b.bottom
-  );
 }
 
 export function scaleBoundsAboutCenter(b: Bounds, r: number) {
