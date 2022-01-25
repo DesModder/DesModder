@@ -1,9 +1,9 @@
 import { getFunctionName, getBuiltin } from "./builtins";
 import { IRChunk, IRInstruction } from "parsing/IR";
-import { compileObject, evalMaybeRational, getGLType } from "./outputHelpers";
+import { compileObject, getGLType } from "./outputHelpers";
 import { countReferences, opcodes, printOp, Types } from "./opcodeDeps";
 import { desmosRequire } from "globals/workerSelf";
-import { MaybeRational } from "parsing/parsenode";
+import { evalMaybeRational, MaybeRational } from "parsing/parsenode";
 
 export const ListLength = desmosRequire(
   "core/math/ir/features/list-length"

@@ -1,5 +1,4 @@
 import { desmosRequire, Calc } from "globals/window";
-import { IRChunk } from "parsing/IR";
 import Node from "../parsing/parsenode";
 
 const _EvaluateSingleExpression = desmosRequire(
@@ -19,3 +18,7 @@ export function EvaluateSingleExpression(s: string): number {
 
 export const getQueryParams: () => { [key: string]: string | true } =
   desmosRequire("lib/parse-query-params").getQueryParams;
+
+const mqOperators = desmosRequire("main/mathquill-operators");
+export const autoCommandNames: string = mqOperators.getAutoCommands();
+export const autoOperatorNames: string = mqOperators.getAutoOperators();

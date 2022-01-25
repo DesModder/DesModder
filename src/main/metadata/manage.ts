@@ -74,7 +74,7 @@ export function getBlankMetadata(): Metadata {
   };
 }
 
-function isBlankMetadata(metadata: Metadata) {
+export function isBlankMetadata(metadata: Metadata) {
   return (
     Object.keys(metadata.expressions).length === 0 &&
     Object.keys(metadata).length === 2

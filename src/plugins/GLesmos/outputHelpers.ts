@@ -1,5 +1,5 @@
 import { ValueType } from "parsing/IR";
-import { MaybeRational } from "parsing/parsenode";
+import { evalMaybeRational, MaybeRational } from "parsing/parsenode";
 import { Types } from "./opcodeDeps";
 import getRGBPack from "./colorParsing";
 
@@ -23,14 +23,6 @@ export function colorVec4(color: string, opacity: number) {
   }
   let a = glslFloatify(opacity);
   return `vec4(${r}, ${g}, ${b}, ${a})`;
-}
-
-export function evalMaybeRational(x: MaybeRational) {
-  if (typeof x === "number") {
-    return x;
-  } else {
-    return x.n / x.d;
-  }
 }
 
 export function compileObject(x: any): string {
