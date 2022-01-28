@@ -11,17 +11,17 @@
  *  - FunctionFactorial
  */
 
-type Latex = RootLatexNode | ChildNode;
+type Latex = RootLatex | ChildLatex;
 export default Latex;
 
-export type RootLatexNode =
+export type RootLatex =
   | Equation
   | Assignment
   | FunctionDefinition
   | Visualization
   | Regression;
 
-export type ChildNode =
+export type ChildLatex =
   | Constant
   | FunctionCall
   | Identifier // This includes ans
@@ -41,26 +41,26 @@ export type ChildNode =
   | RepeatedOperator
   | BinaryOperator
   | Negative
-  | And
-  | Comparator;
+  | Comparator
+  | DoubleInequality;
 
 export interface Equation {
   type: "Equation";
-  left: ChildNode;
-  right: ChildNode;
+  left: ChildLatex;
+  right: ChildLatex;
 }
 
 export interface Assignment {
   type: "Assignment";
   left: Identifier;
-  right: ChildNode;
+  right: ChildLatex;
 }
 
 export interface FunctionDefinition {
   type: "FunctionDefinition";
   symbol: Identifier;
   argSymbols: Identifier[];
-  definition: ChildNode;
+  definition: ChildLatex;
 }
 
 export interface Visualization {
@@ -75,13 +75,13 @@ export interface Visualization {
       | "IndependentTTest"
       | "TTest";
   };
-  args: ChildNode[];
+  args: ChildLatex[];
 }
 
 export interface Regression {
   type: "Regression";
-  left: ChildNode;
-  right: ChildNode;
+  left: ChildLatex;
+  right: ChildLatex;
 }
 
 export interface Constant {
@@ -111,22 +111,22 @@ export interface FunctionCall {
   // absolute value and factorial are both included in FunctionCall
   type: "FunctionCall";
   callee: Identifier;
-  args: ChildNode[];
+  args: ChildLatex[];
 }
 
 export interface Integral {
   // "\\int_{0}^{1}tdt"
   type: "Integral";
   differential: Identifier;
-  start: ChildNode;
-  end: ChildNode;
-  integrand: ChildNode;
+  start: ChildLatex;
+  end: ChildLatex;
+  integrand: ChildLatex;
 }
 
 export interface Derivative {
   // "\\frac{d}{dx}x";
   type: "Derivative";
-  arg: ChildNode;
+  arg: ChildLatex;
   variable: Identifier;
 }
 
@@ -140,7 +140,7 @@ export interface Prime {
 export interface List {
   // "[1,2,3]"
   type: "List";
-  args: ChildNode[];
+  args: ChildLatex[];
 }
 
 export interface Range {
@@ -149,28 +149,28 @@ export interface Range {
   For [1...2], start = List[1,] and end = List[2,]
   For [1,2,3,4...9,10,11], start = List[1,2,3,4] and end = List[9,10,11]
   */
-  start: ChildNode[];
-  end: ChildNode[];
+  start: ChildLatex[];
+  end: ChildLatex[];
 }
 
 export interface ListAccess {
   // "L[1]"
   type: "ListAccess";
-  list: ChildNode;
-  index: ChildNode;
+  list: ChildLatex;
+  index: ChildLatex;
 }
 
 export interface DotAccess {
   // "L.\\operatorname{random}"
   type: "DotAccess";
-  object: ChildNode;
+  object: ChildLatex;
   property: Identifier | FunctionCall;
 }
 
 export interface OrderedPairAccess {
   // "a.x" or "a.y"
   type: "OrderedPairAccess";
-  point: ChildNode;
+  point: ChildLatex;
   index: "x" | "y";
 }
 
@@ -178,70 +178,79 @@ export interface Seq {
   // "1,2" or "(1,2)"
   type: "Seq";
   parenWrapped: boolean;
-  args: ChildNode[];
+  args: ChildLatex[];
 }
 
 export interface UpdateRule {
   // "a\\to a+1"
   type: "UpdateRule";
   variable: Identifier;
-  expression: ChildNode;
+  expression: ChildLatex;
 }
 
 export interface AssignmentExpression {
   // "a=[1...5]" inside "for a=[1...5],b=[1...3]"
   type: "AssignmentExpression";
   variable: Identifier;
-  expression: ChildNode;
+  expression: ChildLatex;
 }
 
 export interface ListComprehension {
   type: "ListComprehension";
   // we don't include the comprehension index
-  expr: ChildNode;
+  expr: ChildLatex;
   assignments: AssignmentExpression[];
 }
 
 export interface Piecewise {
   // A large piecewise is represented by another piecewise in the alternate
   type: "Piecewise";
-  condition: Comparator | And;
-  consequent: ChildNode;
-  alternate: ChildNode;
+  condition: Comparator | DoubleInequality;
+  consequent: ChildLatex;
+  alternate: ChildLatex;
 }
 
 export interface RepeatedOperator {
   type: "RepeatedOperator";
   name: "Product" | "Sum";
   index: Identifier;
-  start: ChildNode;
-  end: ChildNode;
-  expression: ChildNode;
+  start: ChildLatex;
+  end: ChildLatex;
+  expression: ChildLatex;
 }
 
 export interface BinaryOperator {
   type: "BinaryOperator";
   name: "Add" | "Subtract" | "Multiply" | "Divide" | "Exponent";
-  left: ChildNode;
-  right: ChildNode;
+  left: ChildLatex;
+  right: ChildLatex;
 }
 
 export interface Negative {
   type: "Negative";
-  arg: ChildNode;
+  arg: ChildLatex;
 }
 
-export interface And {
-  // double inequality
-  // n.left.right == n.right.left
-  type: "And";
-  left: Comparator;
-  right: Comparator;
+type ComparatorSymbol = "<" | "<=" | "=" | ">=" | ">";
+
+export interface DoubleInequality {
+  type: "DoubleInequality";
+  left: ChildLatex;
+  leftOperator: ComparatorSymbol;
+  middle: ChildLatex;
+  rightOperator: ComparatorSymbol;
+  right: ChildLatex;
 }
 
 export interface Comparator {
   type: "Comparator";
-  symbol: "<" | "<=" | "=" | ">=" | ">";
-  left: ChildNode;
-  right: ChildNode;
+  left: ChildLatex;
+  operator: ComparatorSymbol;
+  right: ChildLatex;
+}
+
+export function isConstant(e: Latex, v: number) {
+  return (
+    e.type === "Constant" && (e.value === v || (isNaN(e.value) && isNaN(v)))
+  );
 }

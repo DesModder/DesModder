@@ -19,8 +19,8 @@ a * b
 a ^ b
 // Negative
 -a
-// Equals: use double equals for comparsion
-a == b
+// Equals: use single equals for comparison. This is now unambiguous
+a = b
 // Less, less or equal, greater or equal, greater
 a < b; a <= b; a >= b; a > b
 // Double inequalities work too (currently no more than double)
@@ -32,12 +32,13 @@ f(x); g(a,b,c)
 f; quack42; total
 // Integral
 // TODO: figure out integral syntax
-int (a ... b) sin(x) dx
-int (c ... d) int (a ... b) sin(x) dx dy
+integral (a ... b) sin(x) dx
+integral (c ... d) int (a ... b) sin(x) dx dy
 // Repeated operator (sum, product)
 // TODO: figure out repeated operator syntax
 sum_{x=a}^{b}{sin(x)}
 sum x=(a ... b) sin(x)
+product n=(a...b) n
 // Derivative
 (d/dx) f(x,y)
 // Prime (only one argument allowed)
@@ -126,13 +127,13 @@ A few ways to solve this:
 ```cpp
 // Equation
 show y = 2*x + 5
-show sin(x) == sin(y) @style
+show sin(x) = sin(y) @style
 // Assignment
 slider a = 7.5
 let b = a + 1
 // Function definition
-def f(x) = x + 1
-def f(a,b,c) = a + 2 * b + c
+let f(x) = x + 1
+let f(a,b,c) = a + 2 * b + c
 // Visualization
 show stats(L)
 show histogram(L) @{mode: "density"}
@@ -150,15 +151,15 @@ show y < x + 2 @style
 table {
   // The first column header must be an identifier or nothing
   // just "[1, 2, 3, 4]" without the "x1 =" is ok
-  x1 = [1, 2, 3, 4];
-  y1 = [5, 6, 7, 8];
+  x1 = [1, 2, 3, 4]
+  show y1 = [5, 6, 7, 8] @{color: "#abc"}
   // this takes the value of the list y2 from elsewhere in the graph
-  y2;
+  hide y2
   // Any column can have no header
-  [9, 10, 11, 12];
+  show [9, 10, 11, 12]
   // If a formula is more than just a fixed list of specific values, then it
   // must be placed in the header with no value entry
-  [1 ... 4]
+  show [1 ... 4]
 }
 ```
 
@@ -174,7 +175,7 @@ image "Picture of my dog" "data:image/png,rest_of_image_url"
 
 ## Folder
 
-Collapsed folder data could be stored based on code mirror editor state, but it should really be in the text with the rest of the graph state. My current idea is a hyphen (`-`) before the open brace, but I'm not vibing too much with it.
+Collapsed folder data could be stored based on code mirror editor state, but it should really be in the text with the rest of the graph state. One idea is a hyphen (`-`) before the open brace, but I'm not vibing too much with it, so just shoving it into a style map.
 
 ```
 folder {
@@ -183,8 +184,10 @@ folder {
 folder "Title" {
   contents
 }
-folder "This one is collapsed" - {
+folder "This one is collapsed" {
   contents
+} @{
+  collapsed: true
 }
 ```
 
@@ -200,6 +203,20 @@ y = cos(x)
 This is a multiline string perhaps
 Maybe we go with this syntax, maybe not.
 """
+```
+
+## Graph Settings
+
+```
+settings @{
+  randomSeed: "ab13few...",
+  viewport: {
+    xmin: -10,
+    ymin: -10,
+    xmax: 10,
+    ymax: 10
+  }
+}
 ```
 
 ## On unclosed objects

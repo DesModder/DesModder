@@ -8,14 +8,14 @@ import {
   TableColumn,
 } from "@desmodder/graph-state";
 import { parseDesmosLatex } from "desmodder";
-import Latex, { ChildNode, Comparator, Identifier } from "./AugLatex";
+import Latex, { ChildLatex, Comparator, Identifier } from "./AugLatex";
 import AugState, {
   FolderAug,
   ItemAug,
   ExpressionAug,
   NonFolderAug,
 } from "./AugState";
-import { ChildExprNode, evalMaybeRational } from "parsing/parsenode";
+import { ChildExprNode, evalMaybeRational, AnyNode } from "parsing/parsenode";
 import migrateToLatest from "main/metadata/migrate";
 import Metadata from "main/metadata/interface";
 
@@ -30,8 +30,10 @@ export default function rawToAug(raw: GraphState): AugState {
   );
   const res: AugState = {
     version: 9,
-    randomSeed: raw.randomSeed,
-    graph: raw.graph,
+    settings: {
+      ...raw.graph,
+      randomSeed: raw.randomSeed,
+    },
     expressions: {
       list: rawListToAug(raw.expressions.list, dsmMetadata),
     },
@@ -100,6 +102,7 @@ function rawNonFolderToAug(
         ...base,
         type: "expression",
         ...columnExpressionCommon(item),
+        ...(item.latex ? { latex: parseRootLatex(item.latex) } : {}),
         ...(item.labelSize !== "0" && item.label
           ? {
               label: {
@@ -124,7 +127,7 @@ function rawNonFolderToAug(
             }
           : undefined,
         slider: {
-          animationPeriod: item.slider?.animationPeriod,
+          period: item.slider?.animationPeriod,
           loopMode: item.slider?.loopMode,
           playDirection: item.slider?.playDirection,
           isPlaying: item.slider?.isPlaying,
@@ -183,6 +186,7 @@ function rawNonFolderToAug(
           id: column.id,
           values: column.values.map(parseLatex),
           ...columnExpressionCommon(column),
+          ...(column.latex ? { latex: parseLatex(column.latex) } : {}),
         })),
       };
     case "text":
@@ -233,7 +237,6 @@ function columnExpressionCommon(item: TableColumn | ExpressionState) {
   }
   return {
     color: color,
-    ...(item.latex ? { latex: parseLatex(item.latex) } : {}),
     hidden: item.hidden ?? false,
     points:
       item.points && item.pointOpacity !== "0" && item.pointSize !== "0"
@@ -255,27 +258,33 @@ function columnExpressionCommon(item: TableColumn | ExpressionState) {
   };
 }
 
-function parseLatex(str: string): Latex {
+function parseLatex(str: string): ChildLatex {
+  const res = parseDesmosLatex(str);
+  // childNodeToTree throws an error if res is not a child node
+  return childNodeToTree(res);
+}
+
+function parseRootLatex(str: string): Latex {
   const parsed = parseDesmosLatex(str);
   switch (parsed.type) {
     case "Equation":
       return {
         type: "Equation",
-        left: nodeToTree(parsed._lhs),
-        right: nodeToTree(parsed._rhs),
+        left: childNodeToTree(parsed._lhs),
+        right: childNodeToTree(parsed._rhs),
       };
     case "Assignment":
       return {
         type: "Assignment",
         left: parseIdentifier(parsed._symbol),
-        right: nodeToTree(parsed._expression),
+        right: childNodeToTree(parsed._expression),
       };
     case "FunctionDefinition":
       return {
         type: "FunctionDefinition",
         symbol: parseIdentifier(parsed._symbol),
         argSymbols: parsed._argSymbols.map(parseIdentifier),
-        definition: nodeToTree(parsed._expression),
+        definition: childNodeToTree(parsed._expression),
       };
     case "Stats":
     case "BoxPlot":
@@ -289,20 +298,20 @@ function parseLatex(str: string): Latex {
           type: "Identifier",
           symbol: parsed.type,
         },
-        args: parsed.args.map(nodeToTree),
+        args: parsed.args.map(childNodeToTree),
       };
     case "Regression":
       return {
         type: "Regression",
-        left: nodeToTree(parsed._lhs),
-        right: nodeToTree(parsed._rhs),
+        left: childNodeToTree(parsed._lhs),
+        right: childNodeToTree(parsed._rhs),
       };
     default:
-      return nodeToTree(parsed);
+      return childNodeToTree(parsed);
   }
 }
 
-function nodeToTree(node: ChildExprNode): ChildNode {
+function childNodeToTree(node: AnyNode): ChildLatex {
   switch (node.type) {
     case "Constant":
     case "MixedNumber":
@@ -319,7 +328,7 @@ function nodeToTree(node: ChildExprNode): ChildNode {
       return {
         type: "FunctionCall",
         callee: parseIdentifier(node._symbol),
-        args: node.args.map(nodeToTree),
+        args: node.args.map(childNodeToTree),
       };
     case "SeededFunctionCall":
       return {
@@ -328,7 +337,7 @@ function nodeToTree(node: ChildExprNode): ChildNode {
         // exclude the seed
         args: node.args
           .filter((e) => e.type !== "ExtendSeed")
-          .map((e) => nodeToTree(e as ChildExprNode)),
+          .map((e) => childNodeToTree(e as ChildExprNode)),
       };
     case "Seed":
     case "ExtendSeed":
@@ -340,9 +349,9 @@ function nodeToTree(node: ChildExprNode): ChildNode {
         left: {
           type: "FunctionCall",
           callee: nodeToIdentifier(node.args[0]),
-          args: [nodeToTree(node.args[1])],
+          args: [childNodeToTree(node.args[1])],
         },
-        right: nodeToTree(node.args[2]),
+        right: childNodeToTree(node.args[2]),
       };
     case "FunctionFactorial":
       return {
@@ -355,7 +364,7 @@ function nodeToTree(node: ChildExprNode): ChildNode {
           {
             type: "FunctionCall",
             callee: nodeToIdentifier(node.args[0]),
-            args: [nodeToTree(node.args[1])],
+            args: [childNodeToTree(node.args[1])],
           },
         ],
       };
@@ -363,18 +372,18 @@ function nodeToTree(node: ChildExprNode): ChildNode {
       return {
         type: "Integral",
         differential: nodeToIdentifier(node.args[0]),
-        start: nodeToTree(node.args[1]),
-        end: nodeToTree(node.args[2]),
-        integrand: nodeToTree(node.args[3]),
+        start: childNodeToTree(node.args[1]),
+        end: childNodeToTree(node.args[2]),
+        integrand: childNodeToTree(node.args[3]),
       };
     case "Derivative":
       return {
         type: "Derivative",
-        arg: nodeToTree(node.args[0]),
+        arg: childNodeToTree(node.args[0]),
         variable: parseIdentifier(node._symbol),
       };
     case "Prime":
-      const primeArg = nodeToTree(node.args[0]);
+      const primeArg = childNodeToTree(node.args[0]);
       if (primeArg.type !== "FunctionCall") {
         throw "Expected function call as argument of prime";
       }
@@ -386,33 +395,33 @@ function nodeToTree(node: ChildExprNode): ChildNode {
     case "List":
       return {
         type: "List",
-        args: node.args.map(nodeToTree),
+        args: node.args.map(childNodeToTree),
       };
     case "List":
       return {
         type: "List",
-        args: node.args.map(nodeToTree),
+        args: node.args.map(childNodeToTree),
       };
     case "Range":
       return {
         type: "Range",
-        start: node.args[0].args.map(nodeToTree),
-        end: node.args[1].args.map(nodeToTree),
+        start: node.args[0].args.map(childNodeToTree),
+        end: node.args[1].args.map(childNodeToTree),
       };
     case "ListAccess":
       return {
         type: "ListAccess",
-        list: nodeToTree(node.args[0]),
-        index: nodeToTree(node.args[1]),
+        list: childNodeToTree(node.args[0]),
+        index: childNodeToTree(node.args[1]),
       };
     case "DotAccess":
-      const prop = nodeToTree(node.args[1]);
+      const prop = childNodeToTree(node.args[1]);
       if (prop.type !== "Identifier" && prop.type !== "FunctionCall") {
         throw "Dot access property is not an identifier or function call";
       }
       return {
         type: "DotAccess",
-        object: nodeToTree(node.args[0]),
+        object: childNodeToTree(node.args[0]),
         property: prop,
       };
     case "OrderedPairAccess":
@@ -425,7 +434,7 @@ function nodeToTree(node: ChildExprNode): ChildNode {
       }
       return {
         type: "OrderedPairAccess",
-        point: nodeToTree(node.point),
+        point: childNodeToTree(node.point),
         index: indexValue === 1 ? "x" : "y",
       };
     case "BareSeq":
@@ -433,26 +442,26 @@ function nodeToTree(node: ChildExprNode): ChildNode {
       return {
         type: "Seq",
         parenWrapped: node.type === "ParenSeq",
-        args: node.args.map(nodeToTree),
+        args: node.args.map(childNodeToTree),
       };
     case "UpdateRule":
       return {
         type: "UpdateRule",
         variable: parseIdentifier(node._symbol),
-        expression: nodeToTree(node._expression),
+        expression: childNodeToTree(node._expression),
       };
     case "AssignmentExpression":
       return {
         type: "AssignmentExpression",
         variable: nodeToIdentifier(node.args[0]),
-        expression: nodeToTree(node.args[1]),
+        expression: childNodeToTree(node.args[1]),
       };
     case "ListComprehension":
       return {
         type: "ListComprehension",
-        expr: nodeToTree(node.args[1]),
+        expr: childNodeToTree(node.args[1]),
         assignments: node.args.slice(2).map((n) => {
-          const expr = nodeToTree(n);
+          const expr = childNodeToTree(n);
           if (expr.type !== "AssignmentExpression") {
             throw "ListComprehension contains unexpected non-AssignmentExpression";
           }
@@ -460,15 +469,18 @@ function nodeToTree(node: ChildExprNode): ChildNode {
         }),
       };
     case "Piecewise":
-      const condition = nodeToTree(node.args[0]);
-      if (condition.type !== "Comparator" && condition.type !== "And") {
-        throw "Expected condition of Piecewise to be a Comparator or And";
+      const condition = childNodeToTree(node.args[0]);
+      if (
+        condition.type !== "Comparator" &&
+        condition.type !== "DoubleInequality"
+      ) {
+        throw "Expected condition of Piecewise to be a Comparator or DoubleInequality";
       }
       return {
         type: "Piecewise",
         condition: condition,
-        consequent: nodeToTree(node.args[1]),
-        alternate: nodeToTree(node.args[2]),
+        consequent: childNodeToTree(node.args[1]),
+        alternate: childNodeToTree(node.args[2]),
       };
     case "Product":
     case "Sum":
@@ -476,9 +488,9 @@ function nodeToTree(node: ChildExprNode): ChildNode {
         type: "RepeatedOperator",
         name: node.type,
         index: nodeToIdentifier(node._index),
-        start: nodeToTree(node.args[1]),
-        end: nodeToTree(node.args[2]),
-        expression: nodeToTree(node.args[3]),
+        start: childNodeToTree(node.args[1]),
+        end: childNodeToTree(node.args[2]),
+        expression: childNodeToTree(node.args[3]),
       };
     case "Add":
     case "Subtract":
@@ -488,37 +500,32 @@ function nodeToTree(node: ChildExprNode): ChildNode {
       return {
         type: "BinaryOperator",
         name: node.type,
-        left: nodeToTree(node.args[0]),
-        right: nodeToTree(node.args[1]),
+        left: childNodeToTree(node.args[0]),
+        right: childNodeToTree(node.args[1]),
       };
     case "Negative":
       return {
         type: "Negative",
-        arg: nodeToTree(node.args[0]),
+        arg: childNodeToTree(node.args[0]),
       };
     case "And":
       return {
-        type: "And",
+        type: "DoubleInequality",
         // We know these are comparators because the args are comparators
-        left: nodeToTree(node.args[0]) as Comparator,
-        right: nodeToTree(node.args[1]) as Comparator,
+        left: childNodeToTree(node.args[0].args[0]),
+        leftOperator: node.args[0].operator,
+        middle: childNodeToTree(node.args[0].args[1]),
+        rightOperator: node.args[1].operator,
+        right: childNodeToTree(node.args[1].args[1]),
       };
     case "DoubleInequality":
-      const doubleInequalityMiddle = nodeToTree(node.args[2]);
       return {
-        type: "And",
-        left: {
-          type: "Comparator",
-          left: nodeToTree(node.args[0]),
-          right: doubleInequalityMiddle,
-          symbol: node.args[1] as "<" | "<=" | "=" | ">=" | ">",
-        },
-        right: {
-          type: "Comparator",
-          left: doubleInequalityMiddle,
-          right: nodeToTree(node.args[4]),
-          symbol: node.args[3] as "<" | "<=" | "=" | ">=" | ">",
-        },
+        type: "DoubleInequality",
+        left: childNodeToTree(node.args[0]),
+        leftOperator: node.args[1] as "<" | "<=" | "=" | ">=" | ">",
+        middle: childNodeToTree(node.args[2]),
+        rightOperator: node.args[3] as "<" | "<=" | "=" | ">=" | ">",
+        right: childNodeToTree(node.args[4]),
       };
     case "Comparator['<']":
     case "Comparator['<=']":
@@ -527,12 +534,14 @@ function nodeToTree(node: ChildExprNode): ChildNode {
     case "Comparator['>']":
       return {
         type: "Comparator",
-        symbol: node.operator,
-        left: nodeToTree(node.args[0]),
-        right: nodeToTree(node.args[1]),
+        operator: node.operator,
+        left: childNodeToTree(node.args[0]),
+        right: childNodeToTree(node.args[1]),
       };
     case "Error":
       throw "Parsing threw an error";
+    default:
+      throw `Unexpected ${node.type}`;
   }
 }
 

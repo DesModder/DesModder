@@ -4,7 +4,7 @@ import {
   ColumnExpressionShared,
   NonFolderState,
 } from "@desmodder/graph-state";
-import Latex, { ChildNode, Identifier } from "./AugLatex";
+import Latex, { ChildLatex, Identifier, isConstant } from "./AugLatex";
 import AugState, {
   FolderAug,
   ItemAug,
@@ -55,10 +55,12 @@ export default function augToRaw(aug: AugState): GraphState {
       } as const
     );
   }
+  const randomSeed = aug.settings.randomSeed;
+  delete aug.settings.randomSeed;
   const res: GraphState = {
     version: 9,
-    randomSeed: aug.randomSeed,
-    graph: aug.graph,
+    randomSeed: randomSeed,
+    graph: aug.settings,
     expressions: {
       list: list,
       ticker: aug.expressions.ticker && augTickerToRaw(aug.expressions.ticker),
@@ -121,7 +123,7 @@ function augNonFolderToRaw(item: NonFolderAug): NonFolderState {
   switch (item.type) {
     case "expression":
       const shouldFill = item.fillOpacity
-        ? item.fillOpacity.type !== "Constant" || item.fillOpacity.value !== 0
+        ? !isConstant(item.fillOpacity, 0)
         : false;
       return {
         ...base,
@@ -152,7 +154,7 @@ function augNonFolderToRaw(item: NonFolderAug): NonFolderState {
             }
           : {}),
         slider: {
-          animationPeriod: item.slider.animationPeriod,
+          animationPeriod: item.slider.period,
           loopMode: item.slider.loopMode,
           playDirection: item.slider.playDirection,
           isPlaying: item.slider.isPlaying,
@@ -194,7 +196,7 @@ function augNonFolderToRaw(item: NonFolderAug): NonFolderState {
         name: item.name,
         width: latexTreeToString(item.width),
         height: latexTreeToString(item.height),
-        hidden: item.opacity.type !== "Constant" || item.opacity.value !== 0,
+        hidden: isConstant(item.opacity, 0),
         center: latexTreeToString(item.center),
         angle: latexTreeToString(item.angle),
         opacity: latexTreeToString(item.opacity),
@@ -301,7 +303,7 @@ function latexTreeToString(e: Latex) {
   }
 }
 
-function childNodeToString(e: ChildNode): string {
+function childNodeToString(e: ChildLatex): string {
   switch (e.type) {
     case "Constant":
       return e.value.toString();
@@ -340,9 +342,13 @@ function childNodeToString(e: ChildNode): string {
           : wrapBracket(childNodeToString(e.index)))
       );
     case "DotAccess":
-      return childNodeToString(e.object) + "." + childNodeToString(e.property);
+      return (
+        wrapParen(childNodeToString(e.object)) +
+        "." +
+        childNodeToString(e.property)
+      );
     case "OrderedPairAccess":
-      return childNodeToString(e.point) + "." + e.index;
+      return wrapParen(childNodeToString(e.point)) + "." + e.index;
     case "Seq":
       return e.parenWrapped ? wrapParen(bareSeq(e.args)) : bareSeq(e.args);
     case "UpdateRule":
@@ -363,19 +369,16 @@ function childNodeToString(e: ChildNode): string {
       );
     case "Piecewise":
       const piecewiseParts: string[] = [];
-      let curr: ChildNode = e;
+      let curr: ChildLatex = e;
       while (curr.type === "Piecewise") {
         let part = childNodeToString(curr.condition);
-        if (
-          curr.consequent.type !== "Constant" ||
-          curr.consequent.value !== 1
-        ) {
+        if (!isConstant(curr.consequent, 1)) {
           part += ":" + childNodeToString(curr.consequent);
         }
         piecewiseParts.push(part);
         curr = curr.alternate;
       }
-      if (curr.type !== "Constant" || !isNaN(curr.value)) {
+      if (!isConstant(curr, NaN)) {
         piecewiseParts.push(childNodeToString(curr));
       }
       return "\\left\\{" + piecewiseParts.join(",") + "\\right\\}";
@@ -404,16 +407,18 @@ function childNodeToString(e: ChildNode): string {
       }
     case "Negative":
       return "-" + wrapParen(childNodeToString(e.arg));
-    case "And":
-      return (
-        childNodeToString(e.left) +
-        comparatorMap[e.right.symbol] +
-        childNodeToString(e.right.right)
-      );
     case "Comparator":
       return (
         childNodeToString(e.left) +
-        comparatorMap[e.symbol] +
+        comparatorMap[e.operator] +
+        childNodeToString(e.right)
+      );
+    case "DoubleInequality":
+      return (
+        childNodeToString(e.left) +
+        comparatorMap[e.leftOperator] +
+        childNodeToString(e.middle) +
+        comparatorMap[e.rightOperator] +
         childNodeToString(e.right)
       );
   }
@@ -427,11 +432,11 @@ const comparatorMap = {
   ">": ">",
 };
 
-function bareSeq(e: ChildNode[]): string {
+function bareSeq(e: ChildLatex[]): string {
   return e.map(childNodeToString).join(",");
 }
 
-function funcToString(callee: Identifier, args: ChildNode[]): string {
+function funcToString(callee: Identifier, args: ChildLatex[]): string {
   if (callee.symbol === "factorial") {
     return `\\left(${bareSeq(args)}\\right)!`;
   } else if (callee.symbol === "abs") {
