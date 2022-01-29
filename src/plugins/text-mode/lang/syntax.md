@@ -107,7 +107,7 @@ In general:
 
 ### On unary operators
 
-From a usability perspective, it makes sense to have a (prefix) unary minus operator `-` as well a (postifx) unary factorial operator `!`.
+From a usability perspective, it makes sense to have a (prefix) unary minus operator `-` as well a (postfix) unary factorial operator `!`.
 
 Unary minus isn't much of an issue; most discussion about parsing unary minus is about choosing between high precedence (so `-x^5` is `(-x)^5`) or low precedence (so `-x^5` is `-(x^5)`). We will stick with the mathematical convention of low precedence. Then the main ambiguity is numbers as the base of an exponent: `-2^x` can be parsed as `(-2)^x` (where `-2` is a number literal) or `-(2^x)`. Again, we use the latter case because negative bases are uncommon.
 
@@ -129,7 +129,7 @@ A few ways to solve this:
 show y = 2*x + 5
 show sin(x) = sin(y) @style
 // Assignment
-slider a = 7.5
+let a = 7.5
 let b = a + 1
 // Function definition
 let f(x) = x + 1

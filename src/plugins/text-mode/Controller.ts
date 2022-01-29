@@ -1,4 +1,5 @@
 import { EditorView, ViewUpdate } from "@codemirror/view";
+import { ParseContext } from "@codemirror/language";
 import { Calc } from "globals/window";
 import { initView } from "./view/editor";
 import applyText from "./down/applyText";
@@ -26,6 +27,8 @@ export default class Controller {
 
   handleUpdate(update: ViewUpdate) {
     if (this.view && update.docChanged) {
+      const parseContext = ParseContext.get();
+      console.log(parseContext);
       const text = this.view.state.sliceDoc();
       applyText(text);
       this.view.focus();

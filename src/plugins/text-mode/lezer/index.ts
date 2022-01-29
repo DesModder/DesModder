@@ -9,29 +9,33 @@ import {
 } from "@codemirror/language";
 import { styleTags, tags as t } from "@codemirror/highlight";
 
-export const EXAMPLELanguage = LRLanguage.define({
+export const TextModeLanguage = LRLanguage.define({
   parser: parser.configure({
     props: [
       indentNodeProp.add({
         Application: delimitedIndent({ closing: ")", align: false }),
       }),
       foldNodeProp.add({
-        Application: foldInside,
+        "Mapping Piecewise ListComprehension ListExpression": foldInside,
+        "TableInner FolderInner": foldInside,
       }),
       styleTags({
         Identifier: t.variableName,
-        Boolean: t.bool,
         String: t.string,
+        Number: t.number,
         LineComment: t.lineComment,
+        Ellipsis: t.separator,
         "( )": t.paren,
+        "[ ]": t.squareBracket,
+        "{ }": t.brace,
       }),
     ],
   }),
   languageData: {
-    commentTokens: { line: ";" },
+    commentTokens: { line: "//" },
   },
 });
 
-export function EXAMPLE() {
-  return new LanguageSupport(EXAMPLELanguage);
+export function TextMode() {
+  return new LanguageSupport(TextModeLanguage);
 }

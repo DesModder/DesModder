@@ -4,7 +4,7 @@ import { basicSetup } from "@codemirror/basic-setup";
 import Controller from "../Controller";
 import "./editor.css";
 import getText from "../up/getText";
-import { EXAMPLE } from "../lezer/index";
+import { TextMode } from "../lezer/index";
 
 const scrollTheme = EditorView.theme({
   "&": {
@@ -22,7 +22,7 @@ export function initView(controller: Controller) {
       basicSetup,
       scrollTheme,
       EditorView.updateListener.of(controller.handleUpdate.bind(controller)),
-      EXAMPLE(),
+      TextMode(),
     ],
   });
 
