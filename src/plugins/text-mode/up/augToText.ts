@@ -119,7 +119,7 @@ function columnToText(col: TableColumnAug) {
       ? `${identifierToText(col.latex)} = [${bareSeqText(col.values)}]`
       : childLatexToText(col.latex);
   return indent(
-    (col.hidden ? "hide " : "show ") +
+    (col.hidden ? "calc " : "show ") +
       s +
       " " +
       styleMapToText(columnExpressionCommonStyle(col))
@@ -193,14 +193,12 @@ function rootLatexToText(e: Latex): string {
 }
 
 function getPrefix(e: Latex, hidden: boolean): string {
-  // TODO: "calc" prefix if nothing should be shown (like "1+2")
-  // Or maybe the code formatter should do that
   return e.type === "Assignment" || e.type === "FunctionDefinition"
     ? "let"
     : e.type === "Regression"
     ? "regression"
     : hidden
-    ? "hide"
+    ? "calc"
     : "show";
 }
 
@@ -314,7 +312,7 @@ function bareSeqText(list: ChildLatex[]) {
 }
 
 function identifierToText(id: Identifier) {
-  // TODO underscore removal
+  // FIXME: underscore removal
   return id.symbol;
 }
 
