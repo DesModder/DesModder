@@ -312,8 +312,8 @@ function bareSeqText(list: ChildLatex[]) {
 }
 
 function identifierToText(id: Identifier) {
-  // FIXME: underscore removal
-  return id.symbol;
+  // FIXME: avoid collisions from underscore removal
+  return id.symbol.replace("_", "");
 }
 
 function numToText(num: number) {

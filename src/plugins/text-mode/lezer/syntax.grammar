@@ -19,45 +19,42 @@
 }
 
 
-@top Program { line* }
+@top Program { statement* }
 
-line[@isGroup=Statement] {
-  ShowStatement { ShowOrHidden expression style? } |
-  LetStatement { kw<"let"> (Identifier | CallExpression) "=" expression style? } |
-  RegressionStatement { kw<"regression"> expression "~" expression style? } |
+statement[@isGroup=Statement] {
+  ShowStatement { ShowOrHidden expression StyleMapping? } |
+  LetStatement { kw<"let"> Identifier "=" expression StyleMapping? } |
+  FunctionDefinition { kw<"let"> CallExpression "=" expression StyleMapping? } |
+  RegressionStatement { kw<"regression"> expression "~" expression StyleMapping? } |
   Table |
-  Image { kw<"image"> String String style? } |
-  Text { String style? } |
-  Folder { kw<"folder"> String FolderInner style? } |
-  Settings { kw<"settings"> style }
+  Image { kw<"image"> String String StyleMapping? } |
+  Text { String StyleMapping? } |
+  Folder { kw<"folder"> String FolderInner StyleMapping? } |
+  Settings { kw<"settings"> StyleMapping }
 }
 
 FolderInner {
-  "{" line* "}"
+  "{" statement* "}"
 }
 
 Table {
-  kw<"table"> TableInner style?
+  kw<"table"> TableInner StyleMapping?
 }
 
 TableInner {
-  "{"
-    (Identifier "=" ListExpression)?
-    TableColumn+
-  "}"
+  "{" TableColumn* "}"
 }
 
 TableColumn {
   ShowOrHidden
-  tableColumnInner {
-    ColumnAssignment { Identifier "=" ListExpression style? } |
-    ColumnCalc { expression }
-  }
+  (AssignmentStart { Identifier "=" })?
+  expression
+  StyleMapping?
 }
 
 ShowOrHidden { kw<"show"> | kw<"calc"> }
 
-expression {
+expression[@isGroup=Expression] {
   Number |
   Identifier |
   String |
@@ -72,7 +69,8 @@ expression {
   ListAccessExpression { expression !access ListExpression } |
   BinaryExpression |
   PostfixExpression { expression !postfix ArithOp<"!"> } |
-  CallExpression
+  CallExpression |
+  StyleMapping
 }
 
 PiecewiseBranch { expression ":" expression }
@@ -81,15 +79,11 @@ AssignmentExpression { Identifier "=" expression }
 
 CallExpression { expression !call "(" commaSep<expression> ")" }
 
-Mapping {
+StyleMapping {
   MappingStart commaSep<MappingEntry> MappingEnd
 }
 
-MappingEntry { Identifier ":" (expression | style) }
-
-style {
-  Mapping
-}
+MappingEntry { Identifier ":" expression }
 
 RepeatedExpression {
   (kw<"integral"> | kw<"sum"> | kw<"product">)
@@ -97,8 +91,8 @@ RepeatedExpression {
   expression
 }
 
-ListExpression { 
-  "[" commaSep<expression> ("..." ","? commaSep<expression>)? "]"
+ListExpression {
+  "[" commaSep1<expression> ("..." ","? commaSep1<expression>)? "]"
 }
 
 BinaryExpression {

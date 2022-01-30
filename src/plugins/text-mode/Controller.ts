@@ -2,8 +2,6 @@ import { EditorView, ViewUpdate } from "@codemirror/view";
 import { Calc } from "globals/window";
 import { initView } from "./view/editor";
 import applyText from "./down/applyText";
-import { printTree } from "./lezer/print-lezer-tree";
-import { parser } from "./lezer/syntax.grammar";
 
 export default class Controller {
   inTextMode: boolean = false;
@@ -29,9 +27,6 @@ export default class Controller {
   handleUpdate(update: ViewUpdate) {
     if (this.view && update.docChanged) {
       const text = this.view.state.sliceDoc();
-      console.groupCollapsed("Program");
-      console.log(printTree(parser.parse(text), text));
-      console.groupEnd();
       applyText(text);
       this.view.focus();
     }
