@@ -50,20 +50,18 @@ function statementToAST(text: string, node: SyntaxNode): Statement {
       return {
         type: "LetStatement",
         identifier: identifierToAST(text, node.getChild("Identifier")),
-        expr: exprToAST(text, node.getChild("Expression")!),
+        expr: exprToAST(text, node.getChild("Expression", "=")!),
         style,
       };
     case "FunctionDefinition":
-      const fdExprChildren = node
-        .getChild("CallExpression")!
-        .getChildren("Expression");
+      const callExpr = node.getChild("CallExpression")!;
       return {
         type: "FunctionDefinition",
-        identifier: identifierToAST(text, fdExprChildren[0]),
-        params: fdExprChildren
-          .slice(1)
+        identifier: identifierToAST(text, callExpr.getChild("Identifier")!),
+        params: callExpr
+          .getChildren("Identifier", "(")
           .map((node) => identifierToAST(text, node)),
-        expr: exprToAST(text, node.getChildren("Expression")![1]),
+        expr: exprToAST(text, node.getChild("Expression", "=")!),
         style,
       };
     case "RegressionStatement":
@@ -113,7 +111,7 @@ function statementToAST(text: string, node: SyntaxNode): Statement {
         style,
       };
     default:
-      throw `Unexpected statment type ${node.name}`;
+      throw `Unexpected statement type ${node.name}`;
   }
 }
 
@@ -122,6 +120,10 @@ function statementToAST(text: string, node: SyntaxNode): Statement {
  */
 function styleToAST(text: string, node: SyntaxNode | null) {
   if (node == null) return null;
+  return styleToASTKnown(text, node);
+}
+
+function styleToASTKnown(text: string, node: SyntaxNode) {
   return {
     type: "StyleMapping" as const,
     entries: node
@@ -334,10 +336,14 @@ function parenToAST(text: string, node: SyntaxNode): Expression {
  * @param node MappingEntry
  */
 function mappingEntryToAST(text: string, node: SyntaxNode): MappingEntry {
+  const expr = node.getChild("Expression", ":")!;
   return {
     type: "MappingEntry",
     property: identifierName(text, node.getChild("Identifier")!),
-    expr: exprToAST(text, node.getChild("Expression")!),
+    expr:
+      expr.name === "StyleMapping"
+        ? styleToAST(text, expr)
+        : exprToAST(text, expr),
   };
 }
 

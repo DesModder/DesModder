@@ -477,7 +477,7 @@ const builtins: {
   // select: {},
   // shuffle: {},
   sortPerm: {
-    // Insertion sort, which is more performant than other
+    // Selection sort, which is more performant than other
     // sorts I tried (bubble-up merge, bitonic, and bubble)
     // Does not handle NaNs the same as JS
     make: (n) => {

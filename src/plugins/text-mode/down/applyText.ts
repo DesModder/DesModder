@@ -1,12 +1,11 @@
-import { Calc } from "globals/window";
+import { Calc } from "desmodder";
 import augToRaw from "../aug/augToRaw";
 import textToAST from "../down/textToAST";
-
-// For now, just let Text → Raw be the same as Aug → Raw
+import astToAug from "./astToAug";
 
 export default function applyText(text: string) {
   const ast = textToAST(text);
-  console.log(ast);
-  // const state = augToRaw(JSON.parse(text));
-  // Calc.setState(state);
+  const aug = astToAug(ast);
+  const state = augToRaw(aug);
+  Calc.setState(state);
 }

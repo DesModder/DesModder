@@ -20,14 +20,7 @@ export default function augToText(aug: AugState) {
 }
 
 function graphSettingsToText(settings: GraphSettings) {
-  return (
-    "settings " +
-    styleMapToText({
-      ...settings,
-      viewport: undefined,
-      ...settings.viewport,
-    })
-  );
+  return "settings " + styleMapToText(settings);
 }
 
 function itemToText(item: ItemAug): string {
