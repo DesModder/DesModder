@@ -1,6 +1,0 @@
-{
-  "compilerOptions": {
-    "types": ["jest", "node", "@types/jest"]
-  },
-  "extends": "../../../tsconfig.json"
-}

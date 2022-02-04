@@ -1,10 +1,9 @@
-const path = require("path");
 const buildLezer = require("lezer-loader").default;
 const tsJest = require("ts-jest");
 const tsJestTransformer = new tsJest.TsJestTransformer();
 
 module.exports = {
-  process(src, filename, config, options) {
+  process(src, filename, config) {
     const ts = buildLezer(src).replace("LRParser.", "(LRParser as any).");
     return tsJestTransformer.process(
       ts,
