@@ -181,21 +181,25 @@ describe("Basic exprs", () => {
     });
   });
   describe("Piecewise", () => {
-    // TODO: how to handle empty piecewise? Disallow? Treat as `true?1:NaN`
-    //  like Desmos? Store as `{else:1}`?
-    // testExpr("empty", "{}", {
-    //   type: "Piecewise",
-    //   condition: true,
-    //   consequent: number(1),
-    //   alternate: number(NaN),
-    // });
+    testExpr("empty piecewise", "{else:1}", {
+      type: "Piecewise",
+      condition: true,
+      consequent: number(1),
+      alternate: number(NaN),
+    });
+    testExpr("implicit consequent", "{x>1}", {
+      type: "Piecewise",
+      condition: comparator(">", id("x"), number(1)),
+      consequent: number(1),
+      alternate: number(NaN),
+    });
     testExpr("single condition", "{x>1:2}", {
       type: "Piecewise",
       condition: comparator(">", id("x"), number(1)),
       consequent: number(2),
       alternate: number(NaN),
     });
-    testExpr("two conditions", "{x>1:2,y>3:4}", {
+    testExpr("two conditions and else", "{x>1:2,y>3:4,else:5}", {
       type: "Piecewise",
       condition: comparator(">", id("x"), number(1)),
       consequent: number(2),
@@ -203,10 +207,9 @@ describe("Basic exprs", () => {
         type: "Piecewise",
         condition: comparator(">", id("y"), number(3)),
         consequent: number(4),
-        alternate: number(NaN),
+        alternate: number(5),
       },
     });
-    // TODO: piecewise tests with "else" clause
   });
   describe("PrefixExpression", () => {
     testExpr("negative number", "-5.0", {

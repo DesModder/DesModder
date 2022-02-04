@@ -159,11 +159,13 @@ function exprToAST(text: string, node: SyntaxNode): Expression {
           .map((node) => assignmentToAST(text, node)),
       };
     case "Piecewise":
+      const piecewiseChildren = node.getChildren("PiecewiseBranch");
+      if (piecewiseChildren.length === 0) throw "Empty piecewise not permitted";
       return {
         type: "PiecewiseExpression",
-        branches: node
-          .getChildren("PiecewiseBranch")
-          .map((node) => piecewiseBranchToAST(text, node)),
+        branches: piecewiseChildren.map((node) =>
+          piecewiseBranchToAST(text, node)
+        ),
       };
     case "PrefixExpression":
       return {
@@ -271,7 +273,12 @@ function piecewiseBranchToAST(text: string, node: SyntaxNode): PiecewiseBranch {
   return {
     type: "PiecewiseBranch",
     condition: exprToAST(text, exprs[0]),
-    consequent: exprToAST(text, exprs[1]),
+    consequent: exprs[1]
+      ? exprToAST(text, exprs[1])
+      : {
+          type: "Number",
+          value: 1,
+        },
   };
 }
 

@@ -465,12 +465,18 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         }),
       };
     case "Piecewise":
-      const condition = childNodeToTree(node.args[0]);
+      const conditionNode = node.args[0];
+      const condition =
+        conditionNode.type === "Constant" &&
+        conditionNode._constantValue === true
+          ? true
+          : childNodeToTree(conditionNode);
       if (
+        condition !== true &&
         condition.type !== "Comparator" &&
         condition.type !== "DoubleInequality"
       ) {
-        throw "Expected condition of Piecewise to be a Comparator or DoubleInequality";
+        throw "Expected condition of Piecewise to be a Comparator, DoubleInequality, or true";
       }
       return {
         type: "Piecewise",

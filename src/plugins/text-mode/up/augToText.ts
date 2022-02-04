@@ -258,7 +258,7 @@ function childLatexToText(e: Aug.Latex.AnyChild): string {
         curr = curr.alternate;
       }
       if (!Aug.Latex.isConstant(curr, NaN)) {
-        piecewiseParts.push(childLatexToText(curr));
+        piecewiseParts.push("else:" + childLatexToText(curr));
       }
       return "{" + piecewiseParts.join(", ") + "}";
     case "RepeatedOperator":

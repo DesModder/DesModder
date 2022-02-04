@@ -73,7 +73,7 @@ expression[@isGroup=Expression] {
   StyleMapping
 }
 
-PiecewiseBranch { expression ":" expression }
+PiecewiseBranch { expression (":" expression)? }
 
 AssignmentExpression { Identifier "=" expression }
 

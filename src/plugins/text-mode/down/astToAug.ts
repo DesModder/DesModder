@@ -313,9 +313,27 @@ const binopMap = {
   "^": "Exponent",
 } as { [key: string]: string };
 
-function piecewiseToAug(
-  branches: PiecewiseBranch[]
-): Aug.Latex.Piecewise | Aug.Latex.Constant {
+function piecewiseToAug(branches: PiecewiseBranch[]): Aug.Latex.AnyChild {
+  const res = piecewiseInnerToAug(branches);
+  if (res.type === "Constant" && res.value === 1) {
+    return {
+      type: "Piecewise",
+      condition: true,
+      consequent: {
+        type: "Constant",
+        value: 1,
+      },
+      alternate: {
+        type: "Constant",
+        value: NaN,
+      },
+    };
+  } else {
+    return res;
+  }
+}
+
+function piecewiseInnerToAug(branches: PiecewiseBranch[]): Aug.Latex.AnyChild {
   const firstBranch = branches[0];
   if (firstBranch === undefined)
     return {
@@ -323,6 +341,10 @@ function piecewiseToAug(
       value: NaN,
     };
   const firstCond = childExprToAug(firstBranch.condition);
+  if (firstCond.type === "Identifier" && firstCond.symbol === "else") {
+    // Rudimentary variable inlining
+    return childExprToAug(firstBranch.consequent);
+  }
   if (
     firstCond.type !== "DoubleInequality" &&
     firstCond.type !== "Comparator"
