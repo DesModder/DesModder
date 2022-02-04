@@ -1,25 +1,11 @@
-import {
-  Domain,
-  ExpressionState,
-  FolderState,
-  GraphState,
-  ItemState,
-  NonFolderState,
-  TableColumn,
-} from "@desmodder/graph-state";
+import * as Graph from "@desmodder/graph-state";
 import { parseDesmosLatex } from "desmodder";
-import Latex, { ChildLatex, Comparator, Identifier } from "./AugLatex";
-import AugState, {
-  FolderAug,
-  ItemAug,
-  ExpressionAug,
-  NonFolderAug,
-} from "./AugState";
+import * as Aug from "./AugState";
 import { ChildExprNode, evalMaybeRational, AnyNode } from "parsing/parsenode";
 import migrateToLatest from "main/metadata/migrate";
 import Metadata from "main/metadata/interface";
 
-export default function rawToAug(raw: GraphState): AugState {
+export default function rawToAug(raw: Graph.GraphState): Aug.State {
   const dsmMetadataExpr = raw.expressions.list.find(
     (e) => e.id === "dsm-metadata"
   );
@@ -28,7 +14,7 @@ export default function rawToAug(raw: GraphState): AugState {
       ? JSON.parse(dsmMetadataExpr.text ?? "{}")
       : {}
   );
-  const res: AugState = {
+  const res: Aug.State = {
     version: 9,
     settings: {
       ...raw.graph,
@@ -49,9 +35,12 @@ export default function rawToAug(raw: GraphState): AugState {
   return res;
 }
 
-function rawListToAug(list: ItemState[], dsmMetadata: Metadata): ItemAug[] {
-  const res: ItemAug[] = [];
-  let currentFolder: null | FolderAug = null;
+function rawListToAug(
+  list: Graph.ItemState[],
+  dsmMetadata: Metadata
+): Aug.ItemAug[] {
+  const res: Aug.ItemAug[] = [];
+  let currentFolder: null | Aug.FolderAug = null;
   for (let item of list) {
     if (item.id === "dsm-metadata-folder" || item.id === "dsm-metadata") {
       continue;
@@ -74,7 +63,10 @@ function rawListToAug(list: ItemState[], dsmMetadata: Metadata): ItemAug[] {
   return res;
 }
 
-function rawFolderToAug(item: FolderState, dsmMetadata: Metadata): FolderAug {
+function rawFolderToAug(
+  item: Graph.FolderState,
+  dsmMetadata: Metadata
+): Aug.FolderAug {
   return {
     type: "folder" as const,
     id: item.id,
@@ -88,9 +80,9 @@ function rawFolderToAug(item: FolderState, dsmMetadata: Metadata): FolderAug {
 }
 
 function rawNonFolderToAug(
-  item: NonFolderState,
+  item: Graph.NonFolderState,
   dsmMetadata: Metadata
-): NonFolderAug {
+): Aug.NonFolderAug {
   const base = {
     id: item.id,
     pinned: dsmMetadata.expressions[item.id]?.pinned ?? false,
@@ -198,10 +190,12 @@ function rawNonFolderToAug(
   }
 }
 
-function vizPropsAug(item: ExpressionState): ExpressionAug["vizProps"] {
+function vizPropsAug(
+  item: Graph.ExpressionState
+): Aug.ExpressionAug["vizProps"] {
   const viz = item.vizProps ?? {};
   if (!viz) return {};
-  const res: ExpressionAug["vizProps"] = {
+  const res: Aug.ExpressionAug["vizProps"] = {
     dotplotMode: viz.dotplotXMode,
     binAlignment: viz.binAlignment,
     histogramMode: viz.histogramMode,
@@ -222,7 +216,7 @@ function vizPropsAug(item: ExpressionState): ExpressionAug["vizProps"] {
   return res;
 }
 
-function parseMapDomain(domain: Domain | undefined) {
+function parseMapDomain(domain: Graph.Domain | undefined) {
   if (!domain) return undefined;
   return {
     min: parseLatex(domain.min),
@@ -230,7 +224,9 @@ function parseMapDomain(domain: Domain | undefined) {
   };
 }
 
-function columnExpressionCommon(item: TableColumn | ExpressionState) {
+function columnExpressionCommon(
+  item: Graph.TableColumn | Graph.ExpressionState
+) {
   const color = item.colorLatex ? parseLatex(item.colorLatex) : item.color;
   if (typeof color !== "string" && color.type !== "Identifier") {
     throw "Expected colorLatex to be an identifier";
@@ -258,13 +254,13 @@ function columnExpressionCommon(item: TableColumn | ExpressionState) {
   };
 }
 
-function parseLatex(str: string): ChildLatex {
+function parseLatex(str: string): Aug.Latex.AnyChild {
   const res = parseDesmosLatex(str);
   // childNodeToTree throws an error if res is not a child node
   return childNodeToTree(res);
 }
 
-function parseRootLatex(str: string): Latex {
+function parseRootLatex(str: string): Aug.Latex.AnyRootOrChild {
   const parsed = parseDesmosLatex(str);
   switch (parsed.type) {
     case "Equation":
@@ -311,7 +307,7 @@ function parseRootLatex(str: string): Latex {
   }
 }
 
-function childNodeToTree(node: AnyNode): ChildLatex {
+function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
   switch (node.type) {
     case "Constant":
     case "MixedNumber":
@@ -555,7 +551,7 @@ function nodeToIdentifier(node: ChildExprNode) {
 /**
  * Does not check if `str` is a valid identifier
  */
-function parseIdentifier(str: string): Identifier {
+function parseIdentifier(str: string): Aug.Latex.Identifier {
   return {
     type: "Identifier",
     symbol: str,

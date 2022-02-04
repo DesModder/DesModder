@@ -1,24 +1,10 @@
-import {
-  FolderState,
-  GraphState,
-  ColumnExpressionShared,
-  NonFolderState,
-} from "@desmodder/graph-state";
-import Latex, { ChildLatex, Identifier, isConstant } from "./AugLatex";
-import AugState, {
-  FolderAug,
-  ItemAug,
-  ExpressionAug,
-  NonFolderAug,
-  TableColumnAug,
-  DomainAug,
-  TickerAug,
-} from "./AugState";
+import * as Graph from "@desmodder/graph-state";
+import * as Aug from "./AugState";
 import Metadata from "main/metadata/interface";
 import { changeExprInMetadata, isBlankMetadata } from "main/metadata/manage";
 import { autoCommandNames } from "utils/depUtils";
 
-export default function augToRaw(aug: AugState): GraphState {
+export default function augToRaw(aug: Aug.State): Graph.GraphState {
   const list = [];
   const dsmMetadata = {
     version: 2 as const,
@@ -57,7 +43,7 @@ export default function augToRaw(aug: AugState): GraphState {
   }
   const randomSeed = aug.settings.randomSeed;
   delete aug.settings.randomSeed;
-  const res: GraphState = {
+  const res: Graph.GraphState = {
     version: 9,
     randomSeed: randomSeed,
     graph: aug.settings,
@@ -82,7 +68,7 @@ function cleanUndefined(obj: any): void {
   }
 }
 
-function augTickerToRaw(ticker: TickerAug) {
+function augTickerToRaw(ticker: Aug.TickerAug) {
   return {
     handlerLatex: latexTreeToString(ticker.handlerLatex),
     minStepLatex: latexTreeToString(ticker.minStepLatex),
@@ -90,7 +76,7 @@ function augTickerToRaw(ticker: TickerAug) {
   };
 }
 
-function updateDsmMetadata(dsmMetadata: Metadata, expr: ItemAug): void {
+function updateDsmMetadata(dsmMetadata: Metadata, expr: Aug.ItemAug): void {
   if (expr.pinned) {
     changeExprInMetadata(dsmMetadata, expr.id, { pinned: true });
   }
@@ -104,7 +90,7 @@ function updateDsmMetadata(dsmMetadata: Metadata, expr: ItemAug): void {
   }
 }
 
-function augFolderToRaw(expr: FolderAug): FolderState {
+function augFolderToRaw(expr: Aug.FolderAug): Graph.FolderState {
   return {
     id: expr.id,
     secret: expr.secret,
@@ -115,7 +101,7 @@ function augFolderToRaw(expr: FolderAug): FolderState {
   };
 }
 
-function augNonFolderToRaw(item: NonFolderAug): NonFolderState {
+function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
   const base = {
     id: item.id,
     secret: item.secret,
@@ -123,7 +109,7 @@ function augNonFolderToRaw(item: NonFolderAug): NonFolderState {
   switch (item.type) {
     case "expression":
       const shouldFill = item.fillOpacity
-        ? !isConstant(item.fillOpacity, 0)
+        ? !Aug.Latex.isConstant(item.fillOpacity, 0)
         : false;
       return {
         ...base,
@@ -196,7 +182,7 @@ function augNonFolderToRaw(item: NonFolderAug): NonFolderState {
         name: item.name,
         width: latexTreeToString(item.width),
         height: latexTreeToString(item.height),
-        hidden: isConstant(item.opacity, 0),
+        hidden: Aug.Latex.isConstant(item.opacity, 0),
         center: latexTreeToString(item.center),
         angle: latexTreeToString(item.angle),
         opacity: latexTreeToString(item.opacity),
@@ -229,7 +215,7 @@ function augNonFolderToRaw(item: NonFolderAug): NonFolderState {
   }
 }
 
-function latexMapDomain(domain: DomainAug | undefined) {
+function latexMapDomain(domain: Aug.DomainAug | undefined) {
   if (!domain) {
     return undefined;
   } else {
@@ -240,8 +226,8 @@ function latexMapDomain(domain: DomainAug | undefined) {
   }
 }
 
-function columnExpressionCommon(item: TableColumnAug | ExpressionAug) {
-  const res: ColumnExpressionShared = {
+function columnExpressionCommon(item: Aug.TableColumnAug | Aug.ExpressionAug) {
+  const res: Graph.ColumnExpressionShared = {
     color: "",
     hidden: item.hidden,
     latex: latexTreeToStringMaybe(item.latex),
@@ -277,12 +263,12 @@ function wrapBracket(s: string) {
   return "\\left[" + s + "\\right]";
 }
 
-function latexTreeToStringMaybe(e: Latex | undefined) {
+function latexTreeToStringMaybe(e: Aug.Latex.AnyRootOrChild | undefined) {
   if (!e) return undefined;
   return latexTreeToString(e);
 }
 
-function latexTreeToString(e: Latex) {
+function latexTreeToString(e: Aug.Latex.AnyRootOrChild) {
   switch (e.type) {
     case "Equation":
     case "Assignment":
@@ -303,7 +289,7 @@ function latexTreeToString(e: Latex) {
   }
 }
 
-function childNodeToString(e: ChildLatex): string {
+function childNodeToString(e: Aug.Latex.AnyChild): string {
   switch (e.type) {
     case "Constant":
       return e.value.toString();
@@ -369,16 +355,16 @@ function childNodeToString(e: ChildLatex): string {
       );
     case "Piecewise":
       const piecewiseParts: string[] = [];
-      let curr: ChildLatex = e;
+      let curr: Aug.Latex.AnyChild = e;
       while (curr.type === "Piecewise") {
         let part = childNodeToString(curr.condition);
-        if (!isConstant(curr.consequent, 1)) {
+        if (!Aug.Latex.isConstant(curr.consequent, 1)) {
           part += ":" + childNodeToString(curr.consequent);
         }
         piecewiseParts.push(part);
         curr = curr.alternate;
       }
-      if (!isConstant(curr, NaN)) {
+      if (!Aug.Latex.isConstant(curr, NaN)) {
         piecewiseParts.push(childNodeToString(curr));
       }
       return "\\left\\{" + piecewiseParts.join(",") + "\\right\\}";
@@ -432,11 +418,14 @@ const comparatorMap = {
   ">": ">",
 };
 
-function bareSeq(e: ChildLatex[]): string {
+function bareSeq(e: Aug.Latex.AnyChild[]): string {
   return e.map(childNodeToString).join(",");
 }
 
-function funcToString(callee: Identifier, args: ChildLatex[]): string {
+function funcToString(
+  callee: Aug.Latex.Identifier,
+  args: Aug.Latex.AnyChild[]
+): string {
   if (callee.symbol === "factorial") {
     return `\\left(${bareSeq(args)}\\right)!`;
   } else if (callee.symbol === "abs") {
@@ -451,7 +440,7 @@ function funcToString(callee: Identifier, args: ChildLatex[]): string {
  */
 const backslashCommands = new Set(autoCommandNames.split(" "));
 
-function identifierToString(id: Identifier): string {
+function identifierToString(id: Aug.Latex.Identifier): string {
   const symbol = id.symbol.replace(/[{}]/g, "");
   let main = symbol;
   let subscript = undefined;

@@ -1,14 +1,8 @@
-import Latex, { ChildLatex, Identifier, isConstant } from "../aug/AugLatex";
-import AugState, {
-  ExpressionAug,
-  GraphSettings,
-  ItemAug,
-  TableColumnAug,
-} from "../aug/AugState";
+import * as Aug from "../aug/AugState";
 
 const INDENT = 2;
 
-export default function augToText(aug: AugState) {
+export default function augToText(aug: Aug.State) {
   // TODO: ticker
   return (
     graphSettingsToText(aug.settings) +
@@ -19,11 +13,11 @@ export default function augToText(aug: AugState) {
   );
 }
 
-function graphSettingsToText(settings: GraphSettings) {
+function graphSettingsToText(settings: Aug.GraphSettings) {
   return "settings " + styleMapToText(settings);
 }
 
-function itemToText(item: ItemAug): string {
+function itemToText(item: Aug.ItemAug): string {
   const base = {
     id: item.id,
     secret: item.secret,
@@ -104,7 +98,7 @@ function itemToText(item: ItemAug): string {
   }
 }
 
-function columnToText(col: TableColumnAug) {
+function columnToText(col: Aug.TableColumnAug) {
   const s =
     col.latex === undefined
       ? `[${bareSeqText(col.values)}]`
@@ -119,7 +113,9 @@ function columnToText(col: TableColumnAug) {
   );
 }
 
-function columnExpressionCommonStyle(item: TableColumnAug | ExpressionAug) {
+function columnExpressionCommonStyle(
+  item: Aug.TableColumnAug | Aug.ExpressionAug
+) {
   return {
     color: item.color,
     lines: item.lines && {
@@ -151,7 +147,7 @@ function styleMapToTextInner(mapping: { [key: string]: any }): string {
       parts.push(prefix + numToText(val));
     } else if (tv === "object") {
       if (val.type !== undefined) {
-        parts.push(prefix + childLatexToText(val as ChildLatex));
+        parts.push(prefix + childLatexToText(val as Aug.Latex.AnyChild));
       } else {
         parts.push(prefix + "@{\n" + indent(styleMapToTextInner(val)) + "\n}");
       }
@@ -164,7 +160,7 @@ function stringToText(str: string) {
   return JSON.stringify(str);
 }
 
-function rootLatexToText(e: Latex): string {
+function rootLatexToText(e: Aug.Latex.AnyRootOrChild): string {
   switch (e.type) {
     case "Equation":
       return childLatexToText(e.left) + "=" + childLatexToText(e.right);
@@ -185,7 +181,7 @@ function rootLatexToText(e: Latex): string {
   }
 }
 
-function getPrefix(e: Latex, hidden: boolean): string {
+function getPrefix(e: Aug.Latex.AnyRootOrChild, hidden: boolean): string {
   return e.type === "Assignment" || e.type === "FunctionDefinition"
     ? "let"
     : e.type === "Regression"
@@ -195,7 +191,7 @@ function getPrefix(e: Latex, hidden: boolean): string {
     : "show";
 }
 
-function childLatexToText(e: ChildLatex): string {
+function childLatexToText(e: Aug.Latex.AnyChild): string {
   switch (e.type) {
     case "Constant":
       return numToText(e.value);
@@ -247,7 +243,7 @@ function childLatexToText(e: ChildLatex): string {
       return `[${e.expr} for ${bareSeqText(e.assignments)}]`;
     case "Piecewise":
       const piecewiseParts: string[] = [];
-      let curr: ChildLatex = e;
+      let curr: Aug.Latex.AnyChild = e;
       while (curr.type === "Piecewise") {
         let part =
           childLatexToText(curr.condition) +
@@ -257,7 +253,7 @@ function childLatexToText(e: ChildLatex): string {
         piecewiseParts.push(part);
         curr = curr.alternate;
       }
-      if (!isConstant(curr, NaN)) {
+      if (!Aug.Latex.isConstant(curr, NaN)) {
         piecewiseParts.push(childLatexToText(curr));
       }
       return "{" + piecewiseParts.join(", ") + "}";
@@ -296,15 +292,15 @@ const binopMap = {
   Exponent: "^",
 };
 
-function funcToText(callee: Identifier, args: ChildLatex[]) {
+function funcToText(callee: Aug.Latex.Identifier, args: Aug.Latex.AnyChild[]) {
   return identifierToText(callee) + "(" + bareSeqText(args) + ")";
 }
 
-function bareSeqText(list: ChildLatex[]) {
+function bareSeqText(list: Aug.Latex.AnyChild[]) {
   return list.map(childLatexToText).join(",");
 }
 
-function identifierToText(id: Identifier) {
+function identifierToText(id: Aug.Latex.Identifier) {
   // FIXME: avoid collisions from underscore removal
   return id.symbol.replace("_", "");
 }
@@ -316,10 +312,10 @@ function numToText(num: number) {
 
 function repeatedOperator(
   name: string,
-  variable: Identifier,
-  start: ChildLatex,
-  end: ChildLatex,
-  body: ChildLatex
+  variable: Aug.Latex.Identifier,
+  start: Aug.Latex.AnyChild,
+  end: Aug.Latex.AnyChild,
+  body: Aug.Latex.AnyChild
 ) {
   return (
     "(" +

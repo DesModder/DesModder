@@ -21,9 +21,10 @@
  * should produce no visual/functional difference.
  */
 
-import Latex, { Identifier, ChildLatex } from "./AugLatex";
+import * as Latex from "./AugLatex";
+export * as Latex from "./AugLatex";
 
-export default interface AugState {
+export interface State {
   version: 9;
   settings: GraphSettings;
   expressions: {
@@ -66,9 +67,9 @@ export type ArrowMode = "NONE" | "POSITIVE" | "BOTH";
 
 export interface TickerAug {
   // The `open` property is removed in favor of an undefined `aug.expressions.ticker`
-  handlerLatex: ChildLatex;
+  handlerLatex: Latex.AnyChild;
   // minStepLatex of 0 corresponds to undefined
-  minStepLatex: ChildLatex;
+  minStepLatex: Latex.AnyChild;
   playing: boolean;
 }
 
@@ -84,8 +85,8 @@ export interface BaseItemAug {
 
 export interface ExpressionAug extends BaseItemAug {
   type: "expression";
-  color: string | Identifier;
-  latex?: Latex;
+  color: string | Latex.Identifier;
+  latex?: Latex.AnyRootOrChild;
   // label=undefined corresponds to label: false in Raw
   label?: LabelStyle;
   hidden: boolean;
@@ -95,7 +96,7 @@ export interface ExpressionAug extends BaseItemAug {
   points?: PointStyle;
   lines?: LineStyle;
   // fillOpacity=0 corresponds to fill: false in Raw
-  fillOpacity: ChildLatex;
+  fillOpacity: Latex.AnyChild;
   regression?: RegressionData;
   displayEvaluationAsFraction: boolean;
   slider: SliderData;
@@ -103,13 +104,13 @@ export interface ExpressionAug extends BaseItemAug {
   // In Raw GraphState, `domain` is the same as `parametricDomain` (migration)
   parametricDomain?: DomainAug;
   cdf?: {
-    min?: ChildLatex;
-    max?: ChildLatex;
+    min?: Latex.AnyChild;
+    max?: Latex.AnyChild;
   };
   vizProps: {
     boxplot?: {
-      breadth: ChildLatex;
-      axisOffset: ChildLatex;
+      breadth: Latex.AnyChild;
+      axisOffset: Latex.AnyChild;
       alignedAxis: "x" | "y";
       showOutliers: boolean;
     };
@@ -128,9 +129,9 @@ export interface ExpressionAug extends BaseItemAug {
 
 export interface TableColumnAug {
   id: string;
-  values: ChildLatex[];
-  color: string | Identifier;
-  latex?: ChildLatex;
+  values: Latex.AnyChild[];
+  color: string | Latex.Identifier;
+  latex?: Latex.AnyChild;
   hidden: boolean;
   points?: PointStyle;
   lines?: LineStyle;
@@ -147,16 +148,16 @@ export interface BaseClickable {
   // enabled is inferred by the presence of this object
   // description is the screen reader label. empty = undefined
   description: string;
-  latex: ChildLatex;
+  latex: Latex.AnyChild;
 }
 
 export interface DomainAug {
-  min: ChildLatex;
-  max: ChildLatex;
+  min: Latex.AnyChild;
+  max: Latex.AnyChild;
 }
 
 export interface RegressionData {
-  residualVariable: Identifier;
+  residualVariable: Latex.Identifier;
   regressionParameters: {
     // TODO: key should be Identifier. Map<Identifier, number> may also make sense
     // Maybe this should be a list of (Identifier, number) pairs instead
@@ -170,10 +171,10 @@ export interface LabelStyle {
   // to handle string interpolation
   text: string;
   // size=0 also sets label: false
-  size: ChildLatex;
+  size: Latex.AnyChild;
   orientation: LabelOrientation;
   // angle=0 is default
-  angle: ChildLatex;
+  angle: Latex.AnyChild;
   // outline is the negation of suppressTextOutline
   outline: boolean;
   showOnHover: boolean;
@@ -201,16 +202,16 @@ export type LabelOrientation =
 
 export interface PointStyle {
   // pointOpacity=0 or pointSize=0 corresponds to points: false in Raw
-  opacity: ChildLatex;
-  size: ChildLatex;
+  opacity: Latex.AnyChild;
+  size: Latex.AnyChild;
   style: "POINT" | "OPEN" | "CROSS";
   dragMode: "NONE" | "X" | "Y" | "XY" | "AUTO";
 }
 
 export interface LineStyle {
   // lineOpacity=0 or lineWidth=0 corresponds to lines: false in Raw
-  opacity: ChildLatex;
-  width: ChildLatex;
+  opacity: Latex.AnyChild;
+  width: Latex.AnyChild;
   style: "SOLID" | "DASHED" | "DOTTED";
 }
 
@@ -225,21 +226,21 @@ export interface SliderData {
     | "PLAY_INDEFINITELY";
   playDirection?: 1 | -1;
   isPlaying?: boolean;
-  min?: ChildLatex;
-  max?: ChildLatex;
-  step?: ChildLatex;
+  min?: Latex.AnyChild;
+  max?: Latex.AnyChild;
+  step?: Latex.AnyChild;
 }
 
 export interface ImageAug extends BaseItemAug {
   type: "image";
   image_url: string;
   name: string;
-  width: ChildLatex;
-  height: ChildLatex;
-  center: ChildLatex;
-  angle: ChildLatex;
+  width: Latex.AnyChild;
+  height: Latex.AnyChild;
+  center: Latex.AnyChild;
+  angle: Latex.AnyChild;
   // opacity=0 also sets hidden=false on Raw
-  opacity: ChildLatex;
+  opacity: Latex.AnyChild;
   foreground: boolean;
   draggable: boolean;
   clickableInfo?: BaseClickable & {

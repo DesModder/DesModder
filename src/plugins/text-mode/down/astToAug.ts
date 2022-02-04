@@ -6,11 +6,10 @@ import {
   Identifier,
   PiecewiseBranch,
 } from "./textAST";
-import Latex, * as AugLatex from "../aug/AugLatex";
-import AugState from "../aug/AugState";
+import * as Aug from "../aug/AugState";
 
 export default function astToAug(program: Program) {
-  const state: AugState = {
+  const state: Aug.State = {
     version: 9,
     settings: {
       viewport: {
@@ -30,7 +29,7 @@ export default function astToAug(program: Program) {
   return state;
 }
 
-function pushStatement(state: AugState, stmt: Statement) {
+function pushStatement(state: Aug.State, stmt: Statement) {
   const style = evalStyle(stmt.style ?? { type: "StyleMapping", entries: [] });
   switch (stmt.type) {
     case "Settings":
@@ -67,7 +66,11 @@ function pushStatement(state: AugState, stmt: Statement) {
   }
 }
 
-function pushExpression(state: AugState, style: StyleValue, expr: Latex) {
+function pushExpression(
+  state: Aug.State,
+  style: StyleValue,
+  expr: Aug.Latex.AnyRootOrChild
+) {
   // TODO: improve expression schema
   // TODO: handle rest of styling
   if (typeof style.color !== "string") throw "Non-string color";
@@ -117,7 +120,7 @@ const graphSettingsSchema = {
   polarMode: "boolean",
 };
 
-function applySettings(state: AugState, style: StyleValue) {
+function applySettings(state: Aug.State, style: StyleValue) {
   validateSchema(style, graphSettingsSchema, "settings");
   for (let [key, value] of Object.entries(style)) {
     if (key === "viewport") {
@@ -186,7 +189,7 @@ function evalExpr(expr: Expression): number | string | boolean {
   }
 }
 
-function childExprToAug(expr: Expression): AugLatex.ChildLatex {
+function childExprToAug(expr: Expression): Aug.Latex.AnyChild {
   switch (expr.type) {
     case "Number":
       return {
@@ -312,7 +315,7 @@ const binopMap = {
 
 function piecewiseToAug(
   branches: PiecewiseBranch[]
-): AugLatex.Piecewise | AugLatex.Constant {
+): Aug.Latex.Piecewise | Aug.Latex.Constant {
   const firstBranch = branches[0];
   if (firstBranch === undefined)
     return {
