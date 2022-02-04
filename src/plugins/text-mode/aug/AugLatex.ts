@@ -204,7 +204,7 @@ export interface ListComprehension {
 export interface Piecewise {
   // A large piecewise is represented by another piecewise in the alternate
   type: "Piecewise";
-  condition: Comparator | DoubleInequality;
+  condition: Comparator | DoubleInequality | true;
   consequent: AnyChild;
   alternate: AnyChild;
 }

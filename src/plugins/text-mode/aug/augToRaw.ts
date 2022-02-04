@@ -357,6 +357,10 @@ function childNodeToString(e: Aug.Latex.AnyChild): string {
       const piecewiseParts: string[] = [];
       let curr: Aug.Latex.AnyChild = e;
       while (curr.type === "Piecewise") {
+        if (curr.condition === true) {
+          curr = curr.consequent;
+          break;
+        }
         let part = childNodeToString(curr.condition);
         if (!Aug.Latex.isConstant(curr.consequent, 1)) {
           part += ":" + childNodeToString(curr.consequent);

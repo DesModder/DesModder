@@ -134,7 +134,7 @@ export interface RepeatedExpression {
 
 export interface RangeExpression {
   type: "RangeExpression";
-  fromValues: Expression[];
+  startValues: Expression[];
   endValues: Expression[];
 }
 

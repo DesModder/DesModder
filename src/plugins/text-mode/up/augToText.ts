@@ -245,6 +245,10 @@ function childLatexToText(e: Aug.Latex.AnyChild): string {
       const piecewiseParts: string[] = [];
       let curr: Aug.Latex.AnyChild = e;
       while (curr.type === "Piecewise") {
+        if (curr.condition === true) {
+          curr = curr.consequent;
+          break;
+        }
         let part =
           childLatexToText(curr.condition) +
           // Always include `:1`, unlike in raw

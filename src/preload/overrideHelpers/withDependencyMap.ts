@@ -1,6 +1,6 @@
 import { transform } from "@babel/standalone";
-import * as t from "@babel/types";
 import { Visitor } from "@babel/traverse";
+import * as t from "@babel/types";
 
 export default function withDependencyMap(
   visitorFunc: (dependencyNameMap: DependencyNameMap) => Visitor

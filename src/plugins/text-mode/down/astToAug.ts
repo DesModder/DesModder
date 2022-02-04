@@ -222,7 +222,7 @@ function childExprToAug(expr: Expression): Aug.Latex.AnyChild {
     case "RangeExpression":
       return {
         type: "Range",
-        start: expr.endValues.map(childExprToAug),
+        start: expr.startValues.map(childExprToAug),
         end: expr.endValues.map(childExprToAug),
       };
     case "ListExpression":

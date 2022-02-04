@@ -174,11 +174,10 @@ function exprToAST(text: string, node: SyntaxNode): Expression {
     case "ParenthesizedExpression":
       return parenToAST(text, node);
     case "MemberExpression":
-      const meExpr = node.getChild("Expression")!;
       return {
         type: "MemberExpression",
-        object: exprToAST(text, meExpr),
-        property: identifierToAST(text, meExpr.nextSibling!.nextSibling!),
+        object: exprToAST(text, node.getChild("Expression")!),
+        property: identifierToAST(text, node.getChild("Identifier", ".")!),
       };
     case "ListAccessExpression":
       const laExpr = node.getChild("Expression")!;
@@ -235,12 +234,12 @@ function listExpressionToAST(
   text: string,
   node: SyntaxNode
 ): RangeExpression | ListExpression {
-  const exprsStart = node.getChildren("Expression", "...", null);
-  const exprsEnd = node.getChildren("Expression", null, "...");
-  if (exprsStart.length && exprsEnd.length) {
+  const exprsStart = node.getChildren("Expression", null, "...");
+  const exprsEnd = node.getChildren("Expression", "...");
+  if (exprsEnd.length) {
     return {
       type: "RangeExpression",
-      fromValues: exprsStart.map((node) => exprToAST(text, node)),
+      startValues: exprsStart.map((node) => exprToAST(text, node)),
       endValues: exprsEnd.map((node) => exprToAST(text, node)),
     };
   } else {
@@ -349,6 +348,7 @@ function mappingEntryToAST(text: string, node: SyntaxNode): MappingEntry {
  */
 function identifierName(text: string, node: SyntaxNode | null): string {
   if (node?.name !== "Identifier") {
+    debugger;
     throw "Expected identifier";
   }
   return text.substring(node.from, node.to);

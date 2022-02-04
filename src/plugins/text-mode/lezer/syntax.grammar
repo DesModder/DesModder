@@ -92,7 +92,7 @@ RepeatedExpression {
 }
 
 ListExpression {
-  "[" commaSep1<expression> ("..." ","? commaSep1<expression>)? "]"
+  "[" commaSep<expression> ("..." ","? commaSep<expression>)? "]"
 }
 
 BinaryExpression {
@@ -140,7 +140,7 @@ kw<term> { @specialize[@name={term}]<Identifier, term> }
 
   "(" ")" "[" "]" "{" "}"
 
-  "..." "," "=" ":"
+  "..." "," "=" ":" "."
 }
 
 @detectDelim
