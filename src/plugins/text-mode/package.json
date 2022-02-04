@@ -1,0 +1,16 @@
+{
+  "name": "text-mode",
+  "version": "0.1.0",
+  "description": "Desmos text mode language.",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^27.4.0",
+    "jest": "^27.4.7",
+    "ts-jest": "^27.1.3",
+    "typescript": "^4.5.5"
+  }
+}

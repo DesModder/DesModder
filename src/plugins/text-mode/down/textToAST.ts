@@ -18,9 +18,6 @@ import {
 
 export default function textToAST(text: string) {
   const cst = parser.parse(text);
-  console.groupCollapsed("Program");
-  console.log(printTree(cst, text));
-  console.groupEnd();
   if (cst.type.name !== "Program") {
     throw "Expected parsed program";
   }
@@ -29,7 +26,7 @@ export default function textToAST(text: string) {
   if (!hasFirstChild) {
     throw "Expected nonempty program";
   }
-  const statements = [];
+  const statements: Statement[] = [];
   do {
     statements.push(statementToAST(text, cursor.node));
   } while (cursor.nextSibling());
@@ -217,17 +214,17 @@ function repeatedExpressionToAST(
   node: SyntaxNode
 ): RepeatedExpression {
   const exprs = node.getChildren("Expression");
-  const name = node.firstChild!.firstChild!.name;
+  const name = node.firstChild!.name;
   if (name !== "integral" && name !== "sum" && name !== "product") {
     throw `Unexpected repeated oeprator name: ${name}`;
   }
   return {
     type: "RepeatedExpression",
     name: name,
-    index: identifierToAST(text, node.getChild("Identifier")),
-    start: exprToAST(text, exprs[0]),
-    end: exprToAST(text, exprs[1]),
-    expr: exprToAST(text, exprs[2]),
+    index: identifierToAST(text, exprs[0]),
+    start: exprToAST(text, exprs[1]),
+    end: exprToAST(text, exprs[2]),
+    expr: exprToAST(text, exprs[3]),
   };
 }
 
