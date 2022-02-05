@@ -73,14 +73,27 @@ function pushExpression(
 ) {
   // TODO: improve expression schema
   // TODO: handle rest of styling
-  if (typeof style.color !== "string") throw "Non-string color";
+  if (
+    !(
+      typeof style.color === "string" ||
+      (typeof style.color === "object" && style.color.type === "Identifier")
+    )
+  ) {
+    throw (
+      `Color should be either string or identifier.` +
+      `Got ${style.color} of type ${typeof style.color}`
+    );
+  }
   if (typeof style.id !== "string") throw "Non-string ID";
   state.expressions.list.push({
     type: "expression",
     id: style.id,
     secret: !!style.secret,
     pinned: !!style.pinned,
-    color: style.color,
+    color:
+      typeof style.color === "string"
+        ? style.color
+        : identifierToAug(style.color),
     latex: expr,
     hidden: !!style.hidden,
     errorHidden: !!style.errorHidden,
@@ -163,8 +176,15 @@ function evalStyle(style: StyleMappingFilled) {
   let obj: StyleValue = {};
   for (let { property, expr } of style.entries) {
     if (expr === null) throw "Null expression in style mapping";
-    obj[property] =
-      expr.type === "StyleMapping" ? evalStyle(expr) : evalExpr(expr);
+    if (
+      (property === "color" || property === "residualVariable") &&
+      expr.type === "Identifier"
+    ) {
+      obj[property] = expr;
+    } else {
+      obj[property] =
+        expr.type === "StyleMapping" ? evalStyle(expr) : evalExpr(expr);
+    }
   }
   return obj;
 }

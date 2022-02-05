@@ -7,22 +7,43 @@ function textToAug(s: string) {
   return astToAug(textToAST(s));
 }
 
-function testExpr(desc: string, s: string, expected: any) {
+const exprDefaults = {
+  type: "expression",
+  id: "1",
+  latex: number(1),
+  color: "#FFF",
+  hidden: false,
+  errorHidden: false,
+  glesmos: false,
+  pinned: false,
+  secret: false,
+  fillOpacity: number(0),
+  displayEvaluationAsFraction: false,
+  slider: {},
+  vizProps: {},
+};
+
+function testStmt(desc: string, s: string, expected: any) {
   test(`${desc} ${JSON.stringify(s)}`, () => {
-    const augStmt = textToAug(`show ${s} @{id:"1",color:"#FFF"}`).expressions
-      .list[0];
+    const augStmt = textToAug(s).expressions.list[0];
     expect(augStmt.type).toEqual("expression");
     if (augStmt.type === "expression") {
-      expect(augStmt.latex).toEqual(expected);
+      expect(augStmt).toEqual(expected);
     }
   });
 }
 
-function testString(desc: string, s: string, expected: any) {
-  test(`${desc} ${JSON.stringify(s)}`, () => {
-    const augStmt = textToAug(`show 1 @{id:${s},color:"#FFF"}`).expressions
-      .list[0];
-    expect(augStmt.id).toEqual(expected);
+function testExpr(desc: string, s: string, expected: any) {
+  testStmt(desc, `show ${s} @{id:"1",color:"#FFF"}`, {
+    ...exprDefaults,
+    latex: expected,
+  });
+}
+
+function testString(desc: string, s: string, expected: string) {
+  testStmt(desc, `show 1 @{id:${s},color:"#FFF"}`, {
+    ...exprDefaults,
+    id: expected,
   });
 }
 
@@ -302,9 +323,23 @@ describe("Basic exprs", () => {
     testExpr("single arg", "f(x)", functionCall(id("f"), [id("x")]));
     testExpr("two args", "g(x,y)", functionCall(id("g"), [id("x"), id("y")]));
   });
-  // TODO: describe StyleMapping
-  // describe("StyleMapping", () => {
-  // })
+});
+
+describe("Statement metadata", () => {
+  describe("Color", () => {
+    testStmt("Identifier color", `show 1 @{id:"1",color:C}`, {
+      ...exprDefaults,
+      color: id("C"),
+    });
+    testStmt("String color", `show 1 @{id:"1",color:"#abcdef"}`, {
+      ...exprDefaults,
+      color: "#abcdef",
+    });
+  });
+  // TODO
+  // describe("GLesmos flags", () => {
+  //   testStmt("");
+  // });
 });
 
 // TODO: test constexpr evaluation
