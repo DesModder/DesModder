@@ -230,7 +230,7 @@ function childLatexToText(e: Aug.Latex.AnyChild): string {
     case "OrderedPairAccess":
       return `(${childLatexToText(e.point)}).${e.index}`;
     case "Seq":
-      return `(${bareSeqText(e.args)})`;
+      return e.parenWrapped ? `(${bareSeqText(e.args)})` : bareSeqText(e.args);
     case "UpdateRule":
       return (
         identifierToText(e.variable) + "->" + childLatexToText(e.expression)

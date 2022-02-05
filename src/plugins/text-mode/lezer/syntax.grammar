@@ -6,10 +6,11 @@
 @precedence {
   member,
   access,
+  seq @right,
   call,
+  updateRule @right,
   prefix,
   postfix,
-  typeof,
   exp @right,
   times @left,
   plus @left,
@@ -22,9 +23,8 @@
 @top Program { statement* }
 
 statement[@isGroup=Statement] {
-  ShowStatement { ShowOrHidden expression StyleMapping? } |
-  LetStatement { kw<"let"> Identifier "=" expression StyleMapping? } |
-  FunctionDefinition { kw<"let"> CallExpression "=" expression StyleMapping? } |
+  ShowStatement { ShowOrHidden expressionMaybeSeq StyleMapping? } |
+  LetStatement { kw<"let"> expression "=" expressionMaybeSeq StyleMapping? } |
   RegressionStatement { kw<"regression"> expression "~" expression StyleMapping? } |
   Table |
   Image { kw<"image"> String String StyleMapping? } |
@@ -54,7 +54,12 @@ TableColumn {
 
 ShowOrHidden { kw<"show"> | kw<"calc"> }
 
-expression[@isGroup=Expression] {
+expressionMaybeSeq[@isGroup=Expression] {
+  expression |
+  SequenceExpression { expression !seq "," expressionMaybeSeq }   
+}
+
+expression {
   Number |
   Identifier |
   String |
@@ -62,9 +67,9 @@ expression[@isGroup=Expression] {
   ListExpression |
   ListComprehension { "[" expression kw<"for"> commaSep1<AssignmentExpression> "]" } |
   Piecewise { "{" commaSep<PiecewiseBranch> "}" } |
+  UpdateRule { expression !updateRule "->" expression } |
   PrefixExpression { !prefix ArithOp<"-"> expression } |
-  // ParenthesizedExpression also includes tuples (points)
-  ParenthesizedExpression { "(" commaSep1<expression> ")" } |
+  ParenthesizedExpression { "(" expressionMaybeSeq ")" } |
   MemberExpression { expression !member "." Identifier } |
   ListAccessExpression { expression !access ListExpression } |
   BinaryExpression |
@@ -132,6 +137,8 @@ kw<term> { @specialize[@name={term}]<Identifier, term> }
 
   @precedence { LineComment, divide }
 
+  @precedence { "->", "-" }
+
   spaces { $[ \t\n\r]+ }
 
   MappingStart[closedBy=MappingEnd] { "@{" }
@@ -140,7 +147,7 @@ kw<term> { @specialize[@name={term}]<Identifier, term> }
 
   "(" ")" "[" "]" "{" "}"
 
-  "..." "," "=" ":" "."
+  "..." "," "=" ":" "." "->"
 }
 
 @detectDelim

@@ -14,10 +14,16 @@ import {
   Identifier,
   AssignmentExpression,
   TableColumn,
+  StyleMapping,
+  FunctionDefinition,
+  LetStatement,
 } from "./textAST";
 
 export default function textToAST(text: string) {
   const cst = parser.parse(text);
+  // console.groupCollapsed("Program");
+  // console.log(printTree(cst, text));
+  // console.groupEnd();
   if (cst.type.name !== "Program") {
     throw "Expected parsed program";
   }
@@ -44,23 +50,7 @@ function statementToAST(text: string, node: SyntaxNode): Statement {
         style,
       };
     case "LetStatement":
-      return {
-        type: "LetStatement",
-        identifier: identifierToAST(text, node.getChild("Identifier")),
-        expr: exprToAST(text, node.getChild("Expression", "=")!),
-        style,
-      };
-    case "FunctionDefinition":
-      const callExpr = node.getChild("CallExpression")!;
-      return {
-        type: "FunctionDefinition",
-        identifier: identifierToAST(text, callExpr.getChild("Identifier")!),
-        params: callExpr
-          .getChildren("Identifier", "(")
-          .map((node) => identifierToAST(text, node)),
-        expr: exprToAST(text, node.getChild("Expression", "=")!),
-        style,
-      };
+      return letStatementToAST(text, node, style);
     case "RegressionStatement":
       const regressionChildren = node.getChildren("Expression");
       return {
@@ -109,6 +99,37 @@ function statementToAST(text: string, node: SyntaxNode): Statement {
       };
     default:
       throw `Unexpected statement type ${node.name}`;
+  }
+}
+
+/**
+ * @param node LetStatement
+ */
+function letStatementToAST(
+  text: string,
+  node: SyntaxNode,
+  style: StyleMapping
+): FunctionDefinition | LetStatement {
+  const lhs = node.getChild("Expression")!;
+  if (lhs.name === "Identifier") {
+    return {
+      type: "LetStatement",
+      identifier: identifierToAST(text, lhs),
+      expr: exprToAST(text, node.getChild("Expression", "=")!),
+      style,
+    };
+  } else if (lhs.name === "CallExpression") {
+    return {
+      type: "FunctionDefinition",
+      callee: identifierToAST(text, lhs.getChild("Identifier")!),
+      params: lhs
+        .getChildren("Identifier", "(")
+        .map((node) => identifierToAST(text, node)),
+      expr: exprToAST(text, node.getChild("Expression", "=")!),
+      style,
+    };
+  } else {
+    throw "LHS is not an identifier or call expression";
   }
 }
 
@@ -202,6 +223,19 @@ function exprToAST(text: string, node: SyntaxNode): Expression {
       };
     case "CallExpression":
       return callExpressionToAST(text, node);
+    case "UpdateRule":
+      return {
+        type: "UpdateRule",
+        variable: exprToAST(text, node.getChild("Expression")!),
+        expression: exprToAST(text, node.getChild("Expression", "->")!),
+      };
+    case "SequenceExpression":
+      return {
+        type: "SequenceExpression",
+        left: exprToAST(text, node.getChild("Expression")!),
+        right: exprToAST(text, node.getChild("Expression", ",")!),
+        parenWrapped: false,
+      };
     default:
       throw `Unexpected expression node: ${node.name}`;
   }
@@ -322,17 +356,11 @@ function callExpressionToAST(text: string, node: SyntaxNode): CallExpression {
  * @param node ParenthesizedExpression
  */
 function parenToAST(text: string, node: SyntaxNode): Expression {
-  const exprs = node.getChildren("Expression");
-  if (exprs.length === 1) {
-    return exprToAST(text, exprs[0]);
-  } else if (exprs.length === 2) {
-    return {
-      type: "PointExpression",
-      values: [exprToAST(text, exprs[0]), exprToAST(text, exprs[1])],
-    };
-  } else {
-    throw "Points may not have more than 2 coordinates";
+  const expr = exprToAST(text, node.getChild("Expression")!);
+  if (expr.type === "SequenceExpression") {
+    expr.parenWrapped = true;
   }
+  return expr;
 }
 
 /**

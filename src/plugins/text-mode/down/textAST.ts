@@ -27,7 +27,7 @@ export interface LetStatement {
 
 export interface FunctionDefinition {
   type: "FunctionDefinition";
-  identifier: Identifier;
+  callee: Identifier;
   params: Identifier[];
   expr: Expression;
   style: StyleMapping;
@@ -78,7 +78,7 @@ export interface Settings {
   style: StyleMapping;
 }
 
-type StyleMapping = StyleMappingFilled | null;
+export type StyleMapping = StyleMappingFilled | null;
 
 export interface StyleMappingFilled {
   type: "StyleMapping";
@@ -101,7 +101,8 @@ export type Expression =
   | ListComprehension
   | PiecewiseExpression
   | PrefixExpression
-  | PointExpression
+  | SequenceExpression
+  | UpdateRule
   | MemberExpression
   | ListAccessExpression
   | BinaryExpression
@@ -172,9 +173,17 @@ export interface PrefixExpression {
   expr: Expression;
 }
 
-export interface PointExpression {
-  type: "PointExpression";
-  values: [Expression, Expression];
+export interface UpdateRule {
+  type: "UpdateRule";
+  variable: Expression;
+  expression: Expression;
+}
+
+export interface SequenceExpression {
+  type: "SequenceExpression";
+  left: Expression;
+  right: Expression;
+  parenWrapped: boolean;
 }
 
 export interface MemberExpression {

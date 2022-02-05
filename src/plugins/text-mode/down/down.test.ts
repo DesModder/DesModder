@@ -211,6 +211,13 @@ describe("Basic exprs", () => {
       },
     });
   });
+  describe("Action", () => {
+    testExpr("update rule", "a->7", {
+      type: "UpdateRule",
+      variable: id("a"),
+      expression: number(7),
+    });
+  });
   describe("PrefixExpression", () => {
     testExpr("negative number", "-5.0", {
       type: "Negative",
@@ -228,16 +235,25 @@ describe("Basic exprs", () => {
       parenWrapped: true,
       args: [number(2), number(3)],
     });
-    // TODO: wrapped Seq of actions
-    // testExpr("action sequence", "(a->2,b->3,c->4)", {
-    //   type: "Seq",
-    //   args: [
-    //     updateRule(id("a"), number(2)),
-    //     updateRule(id("b"), number(3)),
-    //     updateRule(id("c"), number(4)),
-    //   ],
-    // });
-    // TODO: unwrapped Seq of actions like A=a->2,b->3,c->4
+    testExpr("unwrapped action sequence", "a->2,b->3,c->4", {
+      type: "Seq",
+      parenWrapped: false,
+      args: [
+        updateRule(id("a"), number(2)),
+        updateRule(id("b"), number(3)),
+        updateRule(id("c"), number(4)),
+      ],
+    });
+    testExpr("wrapped action sequence", "(a->2,b->3)", {
+      type: "Seq",
+      parenWrapped: true,
+      args: [updateRule(id("a"), number(2)), updateRule(id("b"), number(3))],
+    });
+    testExpr("point", "(2,3)", {
+      type: "Seq",
+      parenWrapped: true,
+      args: [number(2), number(3)],
+    });
   });
   describe("MemberExpression", () => {
     testExpr("point access", "P.y", {

@@ -56,7 +56,7 @@ function pushStatement(state: Aug.State, stmt: Statement) {
         operator: "=",
         left: {
           type: "FunctionCall",
-          callee: identifierToAug(stmt.identifier),
+          callee: identifierToAug(stmt.callee),
           args: stmt.params.map(identifierToAug),
         },
         right: childExprToAug(stmt.expr),
@@ -247,11 +247,26 @@ function childExprToAug(expr: Expression): Aug.Latex.AnyChild {
         type: "Negative",
         arg: childExprToAug(expr.expr),
       };
-    case "PointExpression":
+    case "UpdateRule":
+      if (expr.variable.type !== "Identifier") {
+        throw "Update rule may only assign to a variable";
+      }
+      return {
+        type: "UpdateRule",
+        variable: identifierToAug(expr.variable),
+        expression: childExprToAug(expr.expression),
+      };
+    case "SequenceExpression":
+      const seqRight = childExprToAug(expr.right);
       return {
         type: "Seq",
-        parenWrapped: true,
-        args: expr.values.map(childExprToAug),
+        parenWrapped: expr.parenWrapped,
+        args: [
+          childExprToAug(expr.left),
+          ...(seqRight.type === "Seq" && !seqRight.parenWrapped
+            ? seqRight.args
+            : [seqRight]),
+        ],
       };
     case "MemberExpression":
       return ["x", "y"].includes(expr.property.name)
