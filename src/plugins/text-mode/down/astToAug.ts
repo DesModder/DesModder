@@ -5,6 +5,7 @@ import {
   Expression,
   Identifier,
   PiecewiseBranch,
+  TableColumn,
 } from "./textAST";
 import * as Aug from "../aug/AugState";
 
@@ -49,7 +50,7 @@ function fixEmptyIDs(state: Aug.State) {
 }
 
 function pushStatement(state: Aug.State, stmt: Statement) {
-  const style = evalStyle(stmt.style ?? { type: "StyleMapping", entries: [] });
+  const style = evalStyle(stmt.style);
   switch (stmt.type) {
     case "Settings":
       applySettings(state, style);
@@ -80,6 +81,23 @@ function pushStatement(state: Aug.State, stmt: Statement) {
         },
         right: childExprToAug(stmt.expr),
       });
+      break;
+    case "RegressionStatement":
+      // TODO Regression
+      break;
+    case "Table":
+      pushTable(state, style, stmt.columns);
+      // TODO Table
+      break;
+    case "Image":
+      // TODO Image
+      break;
+    case "Text":
+      // TODO Text
+      break;
+    case "Folder":
+      // TODO Folder
+      break;
   }
 }
 
@@ -90,32 +108,18 @@ function pushExpression(
 ) {
   // TODO: improve expression schema
   const style = styleValue.props;
-  if (!isExpr(style.color)) {
-    throw (
-      `Color should be either string or identifier. ` +
-      `Got ${JSON.stringify(style.color)} of type ${typeof style.color}`
-    );
-  }
   if (style.label !== undefined && !isStyleValue(style.label))
     throw "Label should be a style map";
   state.expressions.list.push({
     type: "expression",
     // Use empty string as an ID placeholder. These will get filled in at the end
-    id: isExpr(style.id) ? evalExprToString(style.id) : "",
-    secret: stylePropBoolean(style.secret, false),
-    pinned: stylePropBoolean(style.pinned, false),
-    color:
-      style.color.type === "Identifier"
-        ? identifierToAug(style.color)
-        : evalExprToString(style.color),
+    ...exprBase(styleValue),
     latex: expr,
     // TODO label
     label: style.label && labelStyleToAug(style.label),
-    hidden: stylePropBoolean(style.hidden, false),
+    // hidden from common
     errorHidden: stylePropBoolean(style.errorHidden, false),
     glesmos: stylePropBoolean(style.glesmos, false),
-    // TODO points
-    // TODO Lines
     fillOpacity: { type: "Constant", value: 0 },
     // TODO regression
     displayEvaluationAsFraction: stylePropBoolean(
@@ -128,8 +132,78 @@ function pushExpression(
     // TODO parametricDomain
     // TODO cdf
     vizProps: {},
-    // TODO clickableInfo
+    // TODO clickableInfo,
+    ...columnExpressionCommonStyle(styleValue),
   });
+}
+
+function columnExpressionCommonStyle({ props: style }: StyleValue) {
+  if (!isExpr(style.color)) {
+    throw (
+      `Color should be either string or identifier. ` +
+      `Got ${JSON.stringify(style.color)} of type ${typeof style.color}`
+    );
+  }
+  return {
+    color:
+      style.color.type === "Identifier"
+        ? identifierToAug(style.color)
+        : evalExprToString(style.color),
+    hidden: stylePropBoolean(style.hidden, false),
+    // TODO points
+    // TODO Lines
+  };
+}
+
+function exprBase({ props: style }: StyleValue) {
+  return {
+    // Use empty string as an ID placeholder. These will get filled in at the end
+    id: isExpr(style.id) ? evalExprToString(style.id) : "",
+    secret: stylePropBoolean(style.secret, false),
+    pinned: stylePropBoolean(style.pinned, false),
+  };
+}
+
+function pushTable(
+  state: Aug.State,
+  styleValue: StyleValue,
+  columns: TableColumn[]
+) {
+  state.expressions.list.push({
+    type: "table",
+    ...exprBase(styleValue),
+    columns: columns.map(tableColumnToAug),
+  });
+}
+
+function tableColumnToAug(column: TableColumn) {
+  const styleValue = evalStyle(column.style);
+  const style = styleValue.props;
+  const expr = column.expr;
+  const base = {
+    id: isExpr(style.id) ? evalExprToString(style.id) : "",
+    ...columnExpressionCommonStyle(styleValue),
+  };
+  if (column.type === "LetStatement") {
+    if (expr.type !== "ListExpression")
+      throw "Table assignment can only assign from a ListExpression";
+    return {
+      ...base,
+      values: expr.values.map(childExprToAug),
+      latex: childExprToAug(column.identifier),
+    };
+  } else if (expr.type === "ListExpression") {
+    return {
+      ...base,
+      values: expr.values.map(childExprToAug),
+    };
+  } else {
+    return {
+      ...base,
+      values: [],
+      latex: childExprToAug(expr),
+    };
+  }
 }
 
 const labelOrientations = [
@@ -275,7 +349,8 @@ interface StyleValue {
 
 type StyleProp = Expression | StyleValue | undefined;
 
-function evalStyle(style: StyleMappingFilled) {
+function evalStyle(style: StyleMappingFilled | null) {
+  style ??= { type: "StyleMapping", entries: [] };
   let res: StyleValue = {
     type: "StyleValue",
     props: {},

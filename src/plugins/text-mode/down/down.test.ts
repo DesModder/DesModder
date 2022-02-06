@@ -26,10 +26,7 @@ const exprDefaults = {
 function testStmt(desc: string, s: string, expected: any) {
   test(`${desc} ${JSON.stringify(s).split(/ ?@/)[0]}`, () => {
     const augStmt = textToAug(s).expressions.list[0];
-    expect(augStmt.type).toEqual("expression");
-    if (augStmt.type === "expression") {
-      expect(augStmt).toEqual(expected);
-    }
+    expect(augStmt).toEqual(expected);
   });
 }
 
@@ -412,6 +409,63 @@ describe("Statement metadata", () => {
       }
     );
   });
+});
+
+const tableDefaults = {
+  type: "table",
+  id: "1",
+  pinned: false,
+  secret: false,
+};
+
+describe("Tables", () => {
+  testStmt(
+    "Value list",
+    `table { calc [1,2,3] @{id:"2",color:"#FFF"} } @{id:"1"}`,
+    {
+      ...tableDefaults,
+      columns: [
+        {
+          values: [number(1), number(2), number(3)],
+          color: "#FFF",
+          hidden: false,
+          id: "2",
+        },
+      ],
+    }
+  );
+  testStmt(
+    "Expression",
+    `table { calc L+1 @{id:"2",color:"#FFF"} } @{id:"1"}`,
+    {
+      ...tableDefaults,
+      columns: [
+        {
+          latex: binop("Add", id("L"), number(1)),
+          values: [],
+          color: "#FFF",
+          hidden: false,
+          id: "2",
+        },
+      ],
+    }
+  );
+  testStmt(
+    "Assignment",
+    `table { let a=[1,2,3] @{id:"2",color:"#FFF"} } @{id:"1"}`,
+    {
+      ...tableDefaults,
+      columns: [
+        {
+          latex: id("a"),
+          values: [number(1), number(2), number(3)],
+          color: "#FFF",
+          hidden: false,
+          id: "2",
+        },
+      ],
+    }
+  );
 });
 
 // TODO: test constexpr evaluation

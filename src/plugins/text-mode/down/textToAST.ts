@@ -58,7 +58,7 @@ function statementToAST(text: string, node: SyntaxNode): Statement {
         type: "Table",
         columns: node
           .getChild("TableInner")!
-          .getChildren("TableColumn")
+          .getChildren("Statement")
           .map((node) => tableColumnToAST(text, node)),
         style,
       };
