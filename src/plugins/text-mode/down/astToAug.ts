@@ -26,7 +26,26 @@ export default function astToAug(program: Program) {
   for (let stmt of program) {
     pushStatement(state, stmt);
   }
+  fixEmptyIDs(state);
   return state;
+}
+
+/**
+ * Convert IDs with value "" (empty string) to valid collision-free IDs
+ */
+function fixEmptyIDs(state: Aug.State) {
+  let maxNumericID = Math.max(
+    ...state.expressions.list.map((item) => {
+      const p = parseInt(item.id);
+      return item.id === p.toString() ? p : 0;
+    })
+  );
+  for (let expr of state.expressions.list) {
+    if (expr.id === "") {
+      maxNumericID++;
+      expr.id = maxNumericID.toString();
+    }
+  }
 }
 
 function pushStatement(state: Aug.State, stmt: Statement) {
@@ -39,7 +58,7 @@ function pushStatement(state: Aug.State, stmt: Statement) {
     //   pushFolder(state, style, )
     //   break;
     case "ShowStatement":
-      style.hidden = !stmt.show;
+      style.props.hidden = boolean(!stmt.show);
       pushExpression(state, style, childExprToAug(stmt.expr));
       break;
     case "LetStatement":
@@ -61,48 +80,127 @@ function pushStatement(state: Aug.State, stmt: Statement) {
         },
         right: childExprToAug(stmt.expr),
       });
-    default:
-      let u = stmt.type;
   }
 }
 
 function pushExpression(
   state: Aug.State,
-  style: StyleValue,
+  styleValue: StyleValue,
   expr: Aug.Latex.AnyRootOrChild
 ) {
   // TODO: improve expression schema
-  // TODO: handle rest of styling
-  if (
-    !(
-      typeof style.color === "string" ||
-      (typeof style.color === "object" && style.color.type === "Identifier")
-    )
-  ) {
+  const style = styleValue.props;
+  if (!isExpr(style.color)) {
     throw (
-      `Color should be either string or identifier.` +
-      `Got ${style.color} of type ${typeof style.color}`
+      `Color should be either string or identifier. ` +
+      `Got ${JSON.stringify(style.color)} of type ${typeof style.color}`
     );
   }
-  if (typeof style.id !== "string") throw "Non-string ID";
+  if (style.label !== undefined && !isStyleValue(style.label))
+    throw "Label should be a style map";
   state.expressions.list.push({
     type: "expression",
-    id: style.id,
-    secret: !!style.secret,
-    pinned: !!style.pinned,
+    // Use empty string as an ID placeholder. These will get filled in at the end
+    id: isExpr(style.id) ? evalExprToString(style.id) : "",
+    secret: stylePropBoolean(style.secret, false),
+    pinned: stylePropBoolean(style.pinned, false),
     color:
-      typeof style.color === "string"
-        ? style.color
-        : identifierToAug(style.color),
+      style.color.type === "Identifier"
+        ? identifierToAug(style.color)
+        : evalExprToString(style.color),
     latex: expr,
-    hidden: !!style.hidden,
-    errorHidden: !!style.errorHidden,
+    // TODO label
+    label: style.label && labelStyleToAug(style.label),
+    hidden: stylePropBoolean(style.hidden, false),
+    errorHidden: stylePropBoolean(style.errorHidden, false),
+    glesmos: stylePropBoolean(style.glesmos, false),
+    // TODO points
+    // TODO Lines
     fillOpacity: { type: "Constant", value: 0 },
-    glesmos: !!style.glesmos,
-    displayEvaluationAsFraction: !!style.displayEvaluationAsFraction,
+    // TODO regression
+    displayEvaluationAsFraction: stylePropBoolean(
+      style.displayEvaluationAsFraction,
+      false
+    ),
+    // TODO slider
     slider: {},
+    // TODO polarDomain
+    // TODO parametricDomain
+    // TODO cdf
     vizProps: {},
+    // TODO clickableInfo
   });
+}
+
+const labelOrientations = [
+  "default",
+  "center",
+  "center_auto",
+  "auto_center",
+  "above",
+  "above_left",
+  "above_right",
+  "above_auto",
+  "below",
+  "below_left",
+  "below_right",
+  "below_auto",
+  "left",
+  "auto_left",
+  "right",
+  "auto_right",
+];
+
+function isLabelOrientation(str: string): str is Aug.LabelOrientation {
+  return labelOrientations.includes(str);
+}
+
+function labelStyleToAug(styleValue: StyleValue): Aug.LabelStyle {
+  const style = styleValue.props;
+  const orientation = isExpr(style.orientation)
+    ? evalExprToString(style.orientation)
+    : "default";
+  const editableMode = isExpr(style.editableMode)
+    ? evalExprToString(style.editableMode)
+    : "NONE";
+  return {
+    text: isExpr(style.text) ? evalExprToString(style.text) : "",
+    size: stylePropExpr(style.size, 1),
+    orientation: isLabelOrientation(orientation) ? orientation : "default",
+    angle: stylePropExpr(style.angle, 0),
+    outline: stylePropBoolean(style.outline, true),
+    showOnHover: stylePropBoolean(style.showOnHover, false),
+    editableMode:
+      editableMode === "MATH" ||
+      editableMode === "TEXT" ||
+      editableMode === "NONE"
+        ? editableMode
+        : "NONE",
+  };
+}
+
+function stylePropExpr(
+  value: StyleProp,
+  defaultValue: number
+): Aug.Latex.AnyChild {
+  return isExpr(value)
+    ? childExprToAug(value)
+    : {
+        type: "Constant",
+        value: defaultValue,
+      };
+}
+
+function stylePropBoolean(value: StyleProp, defaultValue: boolean) {
+  return isExpr(value) ? evalExprToBoolean(value) : defaultValue;
+}
+
+function isExpr(value: StyleProp): value is Expression {
+  return typeof value === "object" && value.type !== "StyleValue";
+}
+
+function isStyleValue(value: StyleProp): value is StyleValue {
+  return typeof value === "object" && value.type === "StyleValue";
 }
 
 const graphSettingsSchema = {
@@ -169,24 +267,24 @@ function validateSchema(style: object, schema: any, path: string) {
 }
 
 interface StyleValue {
-  [key: string]: string | number | boolean | Expression | StyleValue;
+  type: "StyleValue";
+  props: {
+    [key: string]: StyleProp;
+  };
 }
 
+type StyleProp = Expression | StyleValue | undefined;
+
 function evalStyle(style: StyleMappingFilled) {
-  let obj: StyleValue = {};
+  let res: StyleValue = {
+    type: "StyleValue",
+    props: {},
+  };
   for (let { property, expr } of style.entries) {
     if (expr === null) throw "Null expression in style mapping";
-    if (
-      (property === "color" || property === "residualVariable") &&
-      expr.type === "Identifier"
-    ) {
-      obj[property] = expr;
-    } else {
-      obj[property] =
-        expr.type === "StyleMapping" ? evalStyle(expr) : evalExpr(expr);
-    }
+    res.props[property] = expr.type === "StyleMapping" ? evalStyle(expr) : expr;
   }
-  return obj;
+  return res;
 }
 
 function evalExpr(expr: Expression): number | string | boolean {
@@ -199,6 +297,7 @@ function evalExpr(expr: Expression): number | string | boolean {
       return -evalExpr(expr.expr);
     case "Identifier":
       // TODO: create proper builtin map
+      // Rudimentary variable inlining
       if (expr.name === "false") return false;
       else if (expr.name === "true") return true;
       else {
@@ -207,6 +306,33 @@ function evalExpr(expr: Expression): number | string | boolean {
     default:
       throw `Unhandled expr type: ${expr.type}`;
   }
+}
+
+function boolean(value: boolean): Identifier {
+  return {
+    type: "Identifier",
+    name: value ? "true" : "false",
+  };
+}
+
+function evalExprTo(expr: Expression, type: string) {
+  const res = evalExpr(expr);
+  if (typeof res !== type) {
+    throw `Expected expression to evaluate to a ${type}`;
+  }
+  return res;
+}
+
+function evalExprToString(expr: Expression): string {
+  return evalExprTo(expr, "string") as string;
+}
+
+function evalExprToNumber(expr: Expression): number {
+  return evalExprTo(expr, "number") as number;
+}
+
+function evalExprToBoolean(expr: Expression): boolean {
+  return evalExprTo(expr, "boolean") as boolean;
 }
 
 function childExprToAug(expr: Expression): Aug.Latex.AnyChild {

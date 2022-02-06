@@ -24,7 +24,7 @@ const exprDefaults = {
 };
 
 function testStmt(desc: string, s: string, expected: any) {
-  test(`${desc} ${JSON.stringify(s)}`, () => {
+  test(`${desc} ${JSON.stringify(s).split(/ ?@/)[0]}`, () => {
     const augStmt = textToAug(s).expressions.list[0];
     expect(augStmt.type).toEqual("expression");
     if (augStmt.type === "expression") {
@@ -336,10 +336,82 @@ describe("Statement metadata", () => {
       color: "#abcdef",
     });
   });
-  // TODO
-  // describe("GLesmos flags", () => {
-  //   testStmt("");
-  // });
+  describe("Basic booleans", () => {
+    testStmt("Hidden", `calc 1 @{id:"1",color:"#FFF"}`, {
+      ...exprDefaults,
+      hidden: true,
+    });
+    testStmt("Secret", `show 1 @{id:"1",color:"#FFF",secret:true}`, {
+      ...exprDefaults,
+      secret: true,
+    });
+    testStmt(
+      "Fraction",
+      `show 1 @{id:"1",color:"#FFF",displayEvaluationAsFraction:true}`,
+      {
+        ...exprDefaults,
+        displayEvaluationAsFraction: true,
+      }
+    );
+    testStmt("Error hidden", `show 1 @{id:"1",color:"#FFF",errorHidden:true}`, {
+      ...exprDefaults,
+      errorHidden: true,
+    });
+    testStmt("Glesmos", `show 1 @{id:"1",color:"#FFF",glesmos:true}`, {
+      ...exprDefaults,
+      glesmos: true,
+    });
+    testStmt("Pinned", `show 1 @{id:"1",color:"#FFF",pinned:true}`, {
+      ...exprDefaults,
+      pinned: true,
+    });
+  });
+  describe("Label", () => {
+    testStmt(
+      "Label text",
+      `show 1 @{id:"1",color:"#FFF",label:@{text:"hello"}}`,
+      {
+        ...exprDefaults,
+        label: {
+          text: "hello",
+          size: number(1),
+          orientation: "default",
+          angle: number(0),
+          outline: true,
+          showOnHover: false,
+          editableMode: "NONE",
+        },
+      }
+    );
+    testStmt(
+      "Full label info",
+      `show 1 @{
+        id:"1",
+        color:"#FFF",
+        label:@{
+          text: "abc",
+          size: 2,
+          orientation: "above",
+          angle: pi,
+          outline: false,
+          showOnHover: true,
+          editableMode: "TEXT",
+        }
+      }`,
+      {
+        ...exprDefaults,
+        label: {
+          text: "abc",
+          size: number(2),
+          orientation: "above",
+          angle: id("pi"),
+          outline: false,
+          showOnHover: true,
+          editableMode: "TEXT",
+        },
+      }
+    );
+  });
 });
 
 // TODO: test constexpr evaluation

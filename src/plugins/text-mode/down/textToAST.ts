@@ -327,7 +327,6 @@ function binaryExpressionToAST(
 ): BinaryExpression {
   const exprs = node.getChildren("Expression");
   const opNode = exprs[0].nextSibling!;
-  console.log("op", opNode);
   const op = text.substring(opNode.from, opNode.to);
   if (!binaryOps.includes(op)) {
     throw `Unexpected binary operator: ${op}`;
