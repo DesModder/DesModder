@@ -17,6 +17,7 @@ import {
   StyleMapping,
   FunctionDefinition,
   LetStatement,
+  ShowStatement,
 } from "./textAST";
 
 export default function textToAST(text: string) {
@@ -42,15 +43,8 @@ export default function textToAST(text: string) {
 function statementToAST(text: string, node: SyntaxNode): Statement {
   const style = styleToAST(text, node.getChild("StyleMapping"));
   switch (node.name) {
-    case "ShowStatement":
-      return {
-        type: "ShowStatement",
-        expr: exprToAST(text, node.getChild("Expression")!),
-        show: isShown(node.getChild("ShowOrHidden")!),
-        style,
-      };
-    case "LetStatement":
-      return letStatementToAST(text, node, style);
+    case "SimpleStatement":
+      return simpleStatementToAST(text, node, style);
     case "RegressionStatement":
       const regressionChildren = node.getChildren("Expression");
       return {
@@ -103,33 +97,48 @@ function statementToAST(text: string, node: SyntaxNode): Statement {
 }
 
 /**
- * @param node LetStatement
+ * @param node SimpleStatement
  */
-function letStatementToAST(
+function simpleStatementToAST(
   text: string,
   node: SyntaxNode,
   style: StyleMapping
-): FunctionDefinition | LetStatement {
-  const lhs = node.getChild("Expression")!;
-  if (lhs.name === "Identifier") {
+): FunctionDefinition | LetStatement | ShowStatement {
+  const expr = exprToAST(text, node.getChild("Expression")!);
+  const prefix = node.getChild("ShowOrHidden")!.firstChild!.name;
+  if (expr.type !== "BinaryExpression" || expr.op !== "=") {
     return {
-      type: "LetStatement",
-      identifier: identifierToAST(text, lhs),
-      expr: exprToAST(text, node.getChild("Expression", "=")!),
+      type: "ShowStatement",
+      expr: expr,
+      show: prefix === "show",
       style,
     };
-  } else if (lhs.name === "CallExpression") {
+  }
+  const lhs = expr.left;
+  const rhs = expr.right;
+  if (lhs.type === "Identifier") {
+    return {
+      type: "LetStatement",
+      identifier: lhs,
+      expr: rhs,
+      style,
+    };
+  } else if (lhs.type === "CallExpression") {
+    if (lhs.callee.type !== "Identifier") {
+      throw "Expected identifier as function definition callee";
+    }
+    if (lhs.arguments.some((e) => e.type !== "Identifier")) {
+      throw "All parameters should be identifiers";
+    }
     return {
       type: "FunctionDefinition",
-      callee: identifierToAST(text, lhs.getChild("Identifier")!),
-      params: lhs
-        .getChildren("Identifier", "(")
-        .map((node) => identifierToAST(text, node)),
-      expr: exprToAST(text, node.getChild("Expression", "=")!),
+      callee: lhs.callee,
+      params: lhs.arguments as Identifier[],
+      expr: rhs,
       style,
     };
   } else {
-    throw "LHS is not an identifier or call expression";
+    throw "LetStatement left-hand side is not an identifier or call expression";
   }
 }
 
@@ -399,28 +408,15 @@ function identifierToAST(text: string, node: SyntaxNode | null): Identifier {
 }
 
 /**
- * @param node ShowOrHidden
- */
-function isShown(node: SyntaxNode) {
-  return node.firstChild!.name === "show";
-}
-
-/**
  * @param node TableColumn
  */
 function tableColumnToAST(text: string, node: SyntaxNode): TableColumn {
-  const assignmentStartIdentifier = node
-    .getChild("AssignmentStart")
-    ?.getChild("Identifier");
-  const assignment = assignmentStartIdentifier
-    ? identifierToAST(text, assignmentStartIdentifier)
-    : null;
-  return {
-    type: "TableColumn" as const,
-    show: isShown(node.getChild("ShowOrHidden")!),
-    assignment,
-    style: styleToAST(text, node.getChild("StyleMapping")),
-  };
+  const style = styleToAST(text, node.getChild("StyleMapping"));
+  const simple = simpleStatementToAST(text, node, style);
+  if (simple.type === "FunctionDefinition") {
+    throw "Table column cannot be a FunctionDefinition";
+  }
+  return simple;
 }
 
 /**

@@ -46,12 +46,7 @@ export interface Table {
   style: StyleMapping;
 }
 
-export interface TableColumn {
-  type: "TableColumn";
-  show: boolean;
-  assignment: Identifier | null;
-  style: StyleMapping;
-}
+export type TableColumn = ShowStatement | LetStatement;
 
 export interface Image {
   type: "Image";

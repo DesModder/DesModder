@@ -22,9 +22,14 @@
 
 @top Program { statement* }
 
+ShowOrHidden { kw<"show"> | kw<"calc">| kw<"let"> }
+
+SimpleStatement {
+  ShowOrHidden expressionMaybeSeq StyleMapping?
+}
+
 statement[@isGroup=Statement] {
-  ShowStatement { ShowOrHidden expressionMaybeSeq StyleMapping? } |
-  LetStatement { kw<"let"> expression "=" expressionMaybeSeq StyleMapping? } |
+  SimpleStatement |
   RegressionStatement { kw<"regression"> expression "~" expression StyleMapping? } |
   Table |
   Image { kw<"image"> String String StyleMapping? } |
@@ -42,17 +47,8 @@ Table {
 }
 
 TableInner {
-  "{" TableColumn* "}"
+  "{" SimpleStatement* "}"
 }
-
-TableColumn {
-  ShowOrHidden
-  (AssignmentStart { Identifier "=" })?
-  expression
-  StyleMapping?
-}
-
-ShowOrHidden { kw<"show"> | kw<"calc"> }
 
 expressionMaybeSeq[@isGroup=Expression] {
   expression |
@@ -104,7 +100,7 @@ BinaryExpression {
   expression !exp ArithOp<"^"> expression |
   expression !times (divide | ArithOp<"*">) expression |
   expression !plus ArithOp<"+" | "-"> expression |
-  expression !rel CompareOp<"<" "="? | ">" "="? | "=="> expression
+  expression !rel CompareOp<"<" "="? | ">" "="? | "="> expression
 }
 
 commaSep<content> {
