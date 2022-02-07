@@ -6,6 +6,7 @@ import {
   Identifier,
   PiecewiseBranch,
   TableColumn,
+  Image,
 } from "./textAST";
 import * as Aug from "../aug/AugState";
 
@@ -89,7 +90,7 @@ function pushStatement(state: Aug.State, stmt: Statement) {
       pushTable(state, style, stmt.columns);
       break;
     case "Image":
-      // TODO Image
+      pushImage(state, style, stmt);
       break;
     case "Text":
       state.expressions.list.push({
@@ -123,7 +124,7 @@ function pushExpression(
     // hidden from common
     errorHidden: stylePropBoolean(style.errorHidden, false),
     glesmos: stylePropBoolean(style.glesmos, false),
-    fillOpacity: { type: "Constant", value: 0 },
+    fillOpacity: constant(0),
     // TODO regression
     displayEvaluationAsFraction: stylePropBoolean(
       style.displayEvaluationAsFraction,
@@ -209,6 +210,28 @@ function tableColumnToAug(column: TableColumn) {
   }
 }
 
+function pushImage(state: Aug.State, styleValue: StyleValue, expr: Image) {
+  const style = styleValue.props;
+  state.expressions.list.push({
+    type: "image",
+    ...exprBase(styleValue),
+    image_url: expr.url,
+    name: expr.name,
+    width: stylePropExpr(style.width, constant(10)),
+    height: stylePropExpr(style.height, constant(10)),
+    center: stylePropExpr(style.center, {
+      type: "Seq",
+      args: [constant(0), constant(0)],
+      parenWrapped: true,
+    }),
+    angle: stylePropExpr(style.angle, constant(0)),
+    opacity: stylePropExpr(style.opacity, constant(1)),
+    foreground: stylePropBoolean(style.foreground, false),
+    draggable: stylePropBoolean(style.draggable, false),
+    // TODO: clickableInfo
+  });
+}
+
 const labelOrientations = [
   "default",
   "center",
@@ -242,9 +265,9 @@ function labelStyleToAug(styleValue: StyleValue): Aug.LabelStyle {
     : "NONE";
   return {
     text: isExpr(style.text) ? evalExprToString(style.text) : "",
-    size: stylePropExpr(style.size, 1),
+    size: stylePropExpr(style.size, constant(1)),
     orientation: isLabelOrientation(orientation) ? orientation : "default",
-    angle: stylePropExpr(style.angle, 0),
+    angle: stylePropExpr(style.angle, constant(0)),
     outline: stylePropBoolean(style.outline, true),
     showOnHover: stylePropBoolean(style.showOnHover, false),
     editableMode:
@@ -258,14 +281,9 @@ function labelStyleToAug(styleValue: StyleValue): Aug.LabelStyle {
 
 function stylePropExpr(
   value: StyleProp,
-  defaultValue: number
+  defaultValue: Aug.Latex.AnyChild
 ): Aug.Latex.AnyChild {
-  return isExpr(value)
-    ? childExprToAug(value)
-    : {
-        type: "Constant",
-        value: defaultValue,
-      };
+  return isExpr(value) ? childExprToAug(value) : defaultValue;
 }
 
 function stylePropBoolean(value: StyleProp, defaultValue: boolean) {
@@ -416,10 +434,7 @@ function evalExprToBoolean(expr: Expression): boolean {
 function childExprToAug(expr: Expression): Aug.Latex.AnyChild {
   switch (expr.type) {
     case "Number":
-      return {
-        type: "Constant",
-        value: expr.value,
-      };
+      return constant(expr.value);
     case "Identifier":
       return identifierToAug(expr);
     case "String":
@@ -558,14 +573,8 @@ function piecewiseToAug(branches: PiecewiseBranch[]): Aug.Latex.AnyChild {
     return {
       type: "Piecewise",
       condition: true,
-      consequent: {
-        type: "Constant",
-        value: 1,
-      },
-      alternate: {
-        type: "Constant",
-        value: NaN,
-      },
+      consequent: constant(1),
+      alternate: constant(NaN),
     };
   } else {
     return res;
@@ -574,11 +583,7 @@ function piecewiseToAug(branches: PiecewiseBranch[]): Aug.Latex.AnyChild {
 
 function piecewiseInnerToAug(branches: PiecewiseBranch[]): Aug.Latex.AnyChild {
   const firstBranch = branches[0];
-  if (firstBranch === undefined)
-    return {
-      type: "Constant",
-      value: NaN,
-    };
+  if (firstBranch === undefined) return constant(NaN);
   const firstCond = childExprToAug(firstBranch.condition);
   if (firstCond.type === "Identifier" && firstCond.symbol === "else") {
     // Rudimentary variable inlining
@@ -602,5 +607,12 @@ function identifierToAug(expr: Identifier) {
   return {
     type: "Identifier" as const,
     symbol: expr.name,
+  };
+}
+
+function constant(val: number): Aug.Latex.Constant {
+  return {
+    type: "Constant",
+    value: val,
   };
 }

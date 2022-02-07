@@ -478,6 +478,59 @@ describe("Text", () => {
   });
 });
 
+describe("Image", () => {
+  testStmt("Plain image", `image "name" "data:image/png,stub"`, {
+    type: "image",
+    id: "1",
+    pinned: false,
+    secret: false,
+    name: "name",
+    image_url: "data:image/png,stub",
+    width: number(10),
+    height: number(10),
+    center: {
+      type: "Seq",
+      parenWrapped: true,
+      args: [number(0), number(0)],
+    },
+    angle: number(0),
+    opacity: number(1),
+    foreground: false,
+    draggable: false,
+  });
+  testStmt(
+    "Image with options",
+    `image "name" "data:image/png,stub"
+      @{
+        id: "1",
+        secret: true,
+        pinned: true,
+        width: 20,
+        height: 30,
+        center: P,
+        angle: pi,
+        opacity: 0.5,
+        foreground: true,
+        draggable: true,
+      }`,
+    {
+      type: "image",
+      id: "1",
+      pinned: true,
+      secret: true,
+      name: "name",
+      image_url: "data:image/png,stub",
+      width: number(20),
+      height: number(30),
+      center: id("P"),
+      angle: id("pi"),
+      opacity: number(0.5),
+      foreground: true,
+      draggable: true,
+    }
+  );
+});
+
 // TODO: test constexpr evaluation
 // TODO: operator precedence
 // TODO: statement types
