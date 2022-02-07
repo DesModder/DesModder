@@ -41,7 +41,12 @@ export interface GraphSettings {
     xmax: number;
     ymax: number;
   };
-  // Minor subdivisions should be from 0 to 5, inclusive
+  /**
+   * Minor subdivisions should be from 0 to 5, inclusive
+   * 0 = auto
+   * 1 = no minor grid lines
+   * 2 to 5 = that many minor or major grid lines per major grid line
+   */
   xAxisMinorSubdivisions?: number;
   yAxisMinorSubdivisions?: number;
   degreeMode?: boolean;
@@ -51,7 +56,10 @@ export interface GraphSettings {
   xAxisNumbers?: boolean;
   yAxisNumbers?: boolean;
   polarNumbers?: boolean;
-  // The UI lets users type in any latex for the axis steps, but they get stored as numbers
+  /**
+   * The UI lets users type in any latex for the axis steps, but they get stored as numbers
+   * 0 = auto
+   */
   xAxisStep?: number;
   yAxisStep?: number;
   xAxisArrowMode?: ArrowMode;

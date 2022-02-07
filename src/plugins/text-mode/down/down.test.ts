@@ -23,8 +23,28 @@ const exprDefaults = {
   vizProps: {},
 };
 
+const defaultSettings: Aug.GraphSettings = {
+  viewport: {
+    xmin: -10,
+    ymin: -10,
+    xmax: 10,
+    ymax: 10,
+  },
+};
+
+function getTestName(desc: string, s: string) {
+  return `${desc} ${JSON.stringify(s).split(/ ?@/)[0]}`;
+}
+
+function testSettings(desc: string, s: string, expected: any) {
+  test(getTestName(desc, s), () => {
+    const graphSettings = textToAug(s).settings;
+    expect(graphSettings).toEqual(expected);
+  });
+}
+
 function testStmt(desc: string, s: string, expected: any) {
-  test(`${desc} ${JSON.stringify(s).split(/ ?@/)[0]}`, () => {
+  test(getTestName(desc, s), () => {
     const augStmt = textToAug(s).expressions.list[0];
     expect(augStmt).toEqual(expected);
   });
@@ -571,6 +591,70 @@ describe("Folder", () => {
   );
 });
 
+describe("Settings", () => {
+  testSettings(
+    "No settings expr",
+    `show 1 @{id:"1",color:"#FFF"}`,
+    defaultSettings
+  );
+  testSettings(
+    "All settings",
+    `settings @{
+      randomSeed: "abc",
+      viewport: @{
+        xmin: -20,
+        ymin: -5,
+        xmax: 20,
+        ymax: 5,
+      },
+      xAxisMinorSubdivisions: 0,
+      yAxisMinorSubdivisions: 0,
+      degreeMode: true,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      xAxisNumbers: false,
+      yAxisNumbers: false,
+      polarNumbers: false,
+      xAxisStep: 1,
+      yAxisStep: 1,
+      xAxisArrowMode: "BOTH",
+      yAxisArrowMode: "BOTH",
+      xAxisLabel: "x",
+      yAxisLabel: "y",
+      squareAxes: false,
+      restrictGridToFirstQuadrant: true,
+      polarMode: false
+    }`,
+    {
+      randomSeed: "abc",
+      viewport: {
+        xmin: -20,
+        ymin: -5,
+        xmax: 20,
+        ymax: 5,
+      },
+      xAxisMinorSubdivisions: 0,
+      yAxisMinorSubdivisions: 0,
+      degreeMode: true,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      xAxisNumbers: false,
+      yAxisNumbers: false,
+      polarNumbers: false,
+      xAxisStep: 1,
+      yAxisStep: 1,
+      xAxisArrowMode: "BOTH",
+      yAxisArrowMode: "BOTH",
+      xAxisLabel: "x",
+      yAxisLabel: "y",
+      squareAxes: false,
+      restrictGridToFirstQuadrant: true,
+      polarMode: false,
+    }
+  );
+});
+
 // TODO: test constexpr evaluation
 // TODO: operator precedence
-// TODO: statement types

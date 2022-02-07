@@ -324,68 +324,93 @@ function isStyleValue(value: StyleProp): value is StyleValue {
   return typeof value === "object" && value.type === "StyleValue";
 }
 
-const graphSettingsSchema = {
-  randomSeed: "string",
-  viewport: {
-    xmin: "number",
-    ymin: "number",
-    xmax: "number",
-    ymax: "number",
-  },
-  xAxisMinorSubdivisions: "number",
-  yAxisMinorSubdivisions: "number",
-  degreeMode: "boolean",
-  showGrid: "boolean",
-  showXAxis: "boolean",
-  showYAxis: "boolean",
-  xAxisNumbers: "boolean",
-  yAxisNumbers: "boolean",
-  polarNumbers: "boolean",
-  xAxisStep: "number",
-  yAxisStep: "number",
-  xAxisArrowMode: "ArrowMode",
-  yAxisArrowMode: "ArrowMode",
-  xAxisLabel: "string",
-  yAxisLabel: "string",
-  squareAxes: "boolean",
-  restrictGridToFirstQuadrant: "boolean",
-  polarMode: "boolean",
+function applySettings(state: Aug.State, styleValue: StyleValue) {
+  const style = styleValue.props;
+  const settings = state.settings;
+  for (let key in style) {
+    const value = style[key];
+    switch (key) {
+      case "viewport":
+        if (value?.type !== "StyleValue") {
+          throw "Viewport should be a style mapping";
+        }
+        for (let prop of ["xmin", "ymin", "xmax", "ymax"] as const) {
+          const val = value.props[prop];
+          if (!isExpr(val)) {
+            throw `The viewport must specify ${prop}`;
+          }
+          settings.viewport[prop] = evalExprToNumber(val);
+        }
+        break;
+      case "randomSeed":
+        if (isExpr(value)) {
+          settings[key] = evalExprToString(value);
+        } else {
+          throw "Random seed must currently be specified";
+        }
+        break;
+      case "xAxisLabel":
+      case "yAxisLabel":
+        settings[key] = isExpr(value) ? evalExprToString(value) : "";
+        break;
+      case "xAxisArrowMode":
+      case "yAxisArrowMode":
+        if (!isExpr(value)) {
+          settings[key] = "NONE";
+        } else {
+          const stringValue = evalExprToString(value);
+          if (
+            stringValue !== "NONE" &&
+            stringValue !== "POSITIVE" &&
+            stringValue !== "BOTH"
+          ) {
+            const strRepr = JSON.stringify(stringValue);
+            throw (
+              `String ${strRepr} is not a valid arrow mode. ` +
+              `Expected "NONE", "POSITIVE", or "BOTH"`
+            );
+          }
+          settings[key] = stringValue;
+        }
+        break;
+      case "xAxisMinorSubdivisions":
+      case "yAxisMinorSubdivisions":
+      case "xAxisStep":
+      case "yAxisStep":
+        settings[key] = isExpr(value) ? evalExprToNumber(value) : 0;
+        break;
+      case "degreeMode":
+      case "showGrid":
+      case "showXAxis":
+      case "showYAxis":
+      case "xAxisNumbers":
+      case "yAxisNumbers":
+      case "polarNumbers":
+      case "squareAxes":
+      case "restrictGridToFirstQuadrant":
+      case "polarMode":
+        settings[key] = isExpr(value)
+          ? evalExprToBoolean(value)
+          : boolDefaults[key];
+        break;
+      default:
+        throw `Unexpected settings key: ${key}`;
+    }
+  }
+}
+
+const boolDefaults = {
+  degreeMode: false,
+  showGrid: true,
+  showXAxis: true,
+  showYAxis: true,
+  xAxisNumbers: true,
+  yAxisNumbers: true,
+  polarMode: false,
+  polarNumbers: true,
+  squareAxes: true,
+  restrictGridToFirstQuadrant: false,
 };
-
-function applySettings(state: Aug.State, style: StyleValue) {
-  validateSchema(style, graphSettingsSchema, "settings");
-  for (let [key, value] of Object.entries(style)) {
-    if (key === "viewport") {
-      let newVP = value as {
-        xmin?: number;
-        ymin?: number;
-        xmax?: number;
-        ymax?: number;
-      };
-      state.settings.viewport = { ...state.settings.viewport, ...newVP };
-    } else {
-      (state.settings as any)[key] = value;
-    }
-  }
-}
-
-function validateSchema(style: object, schema: any, path: string) {
-  for (let [key, value] of Object.entries(style)) {
-    const type = typeof value;
-    const expectedType = schema[key];
-    const fullPath = path + "." + key;
-    if (expectedType === undefined) {
-      throw `Unexpected property: ${fullPath}`;
-    } else if (typeof expectedType === "object") {
-      if (type !== "object") {
-        throw `Property ${fullPath} is type ${type} but should be a style map`;
-      }
-      validateSchema(value, schema[key], fullPath);
-    } else if (expectedType !== type) {
-      throw `Property ${fullPath} is type ${type} but should be ${expectedType}`;
-    }
-  }
-}
 
 interface StyleValue {
   type: "StyleValue";
