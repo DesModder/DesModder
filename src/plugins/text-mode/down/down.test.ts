@@ -468,6 +468,16 @@ describe("Tables", () => {
   );
 });
 
+describe("Text", () => {
+  testStmt("Text", `"abc" @{id:"1"}`, {
+    type: "text",
+    id: "1",
+    pinned: false,
+    secret: false,
+    text: "abc",
+  });
+});
+
 // TODO: test constexpr evaluation
 // TODO: operator precedence
 // TODO: statement types

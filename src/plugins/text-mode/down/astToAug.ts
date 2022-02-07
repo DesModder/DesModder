@@ -87,13 +87,16 @@ function pushStatement(state: Aug.State, stmt: Statement) {
       break;
     case "Table":
       pushTable(state, style, stmt.columns);
-      // TODO Table
       break;
     case "Image":
       // TODO Image
       break;
     case "Text":
-      // TODO Text
+      state.expressions.list.push({
+        ...exprBase(style),
+        type: "text",
+        text: stmt.text,
+      });
       break;
     case "Folder":
       // TODO Folder
