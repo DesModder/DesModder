@@ -63,7 +63,7 @@ export interface Text {
 
 export interface Folder {
   type: "Folder";
-  name: string;
+  title: string;
   children: Statement[];
   style: StyleMapping;
 }

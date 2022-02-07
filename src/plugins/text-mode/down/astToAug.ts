@@ -7,6 +7,7 @@ import {
   PiecewiseBranch,
   TableColumn,
   Image,
+  Folder,
 } from "./textAST";
 import * as Aug from "../aug/AugState";
 
@@ -51,28 +52,34 @@ function fixEmptyIDs(state: Aug.State) {
 }
 
 function pushStatement(state: Aug.State, stmt: Statement) {
+  const stmtAug = statementToAug(state, stmt);
+  if (stmtAug !== null) {
+    state.expressions.list.push(stmtAug);
+  }
+}
+
+/**
+ * Convert a statement to its Aug form. Null represents inserting nothing.
+ * The `state` parameter may be modified
+ */
+function statementToAug(state: Aug.State, stmt: Statement): Aug.ItemAug | null {
   const style = evalStyle(stmt.style);
   switch (stmt.type) {
     case "Settings":
       applySettings(state, style);
-      break;
-    // case "Folder":
-    //   pushFolder(state, style, )
-    //   break;
+      return null;
     case "ShowStatement":
       style.props.hidden = boolean(!stmt.show);
-      pushExpression(state, style, childExprToAug(stmt.expr));
-      break;
+      return expressionToAug(style, childExprToAug(stmt.expr));
     case "LetStatement":
-      pushExpression(state, style, {
+      return expressionToAug(style, {
         type: "Comparator",
         operator: "=",
         left: identifierToAug(stmt.identifier),
         right: childExprToAug(stmt.expr),
       });
-      break;
     case "FunctionDefinition":
-      pushExpression(state, style, {
+      return expressionToAug(style, {
         type: "Comparator",
         operator: "=",
         left: {
@@ -82,39 +89,33 @@ function pushStatement(state: Aug.State, stmt: Statement) {
         },
         right: childExprToAug(stmt.expr),
       });
-      break;
     case "RegressionStatement":
       // TODO Regression
-      break;
+      return null;
     case "Table":
-      pushTable(state, style, stmt.columns);
-      break;
+      return tableToAug(style, stmt.columns);
     case "Image":
-      pushImage(state, style, stmt);
-      break;
+      return imageToAug(style, stmt);
     case "Text":
-      state.expressions.list.push({
+      return {
         ...exprBase(style),
         type: "text",
         text: stmt.text,
-      });
-      break;
+      };
     case "Folder":
-      // TODO Folder
-      break;
+      return folderToAug(style, stmt, state);
   }
 }
 
-function pushExpression(
-  state: Aug.State,
+function expressionToAug(
   styleValue: StyleValue,
   expr: Aug.Latex.AnyRootOrChild
-) {
+): Aug.ExpressionAug {
   // TODO: improve expression schema
   const style = styleValue.props;
   if (style.label !== undefined && !isStyleValue(style.label))
     throw "Label should be a style map";
-  state.expressions.list.push({
+  return {
     type: "expression",
     // Use empty string as an ID placeholder. These will get filled in at the end
     ...exprBase(styleValue),
@@ -138,7 +139,7 @@ function pushExpression(
     vizProps: {},
     // TODO clickableInfo,
     ...columnExpressionCommonStyle(styleValue),
-  });
+  };
 }
 
 function columnExpressionCommonStyle({ props: style }: StyleValue) {
@@ -168,19 +169,18 @@ function exprBase({ props: style }: StyleValue) {
   };
 }
 
-function pushTable(
-  state: Aug.State,
+function tableToAug(
   styleValue: StyleValue,
   columns: TableColumn[]
-) {
-  state.expressions.list.push({
+): Aug.TableAug {
+  return {
     type: "table",
     ...exprBase(styleValue),
     columns: columns.map(tableColumnToAug),
-  });
+  };
 }
 
-function tableColumnToAug(column: TableColumn) {
+function tableColumnToAug(column: TableColumn): Aug.TableColumnAug {
   const styleValue = evalStyle(column.style);
   const style = styleValue.props;
   const expr = column.expr;
@@ -210,9 +210,9 @@ function tableColumnToAug(column: TableColumn) {
   }
 }
 
-function pushImage(state: Aug.State, styleValue: StyleValue, expr: Image) {
+function imageToAug(styleValue: StyleValue, expr: Image): Aug.ImageAug {
   const style = styleValue.props;
-  state.expressions.list.push({
+  return {
     type: "image",
     ...exprBase(styleValue),
     image_url: expr.url,
@@ -229,7 +229,33 @@ function pushImage(state: Aug.State, styleValue: StyleValue, expr: Image) {
     foreground: stylePropBoolean(style.foreground, false),
     draggable: stylePropBoolean(style.draggable, false),
     // TODO: clickableInfo
-  });
+  };
+}
+
+function folderToAug(
+  styleValue: StyleValue,
+  expr: Folder,
+  state: Aug.State
+): Aug.FolderAug {
+  const style = styleValue.props;
+  const children: Aug.NonFolderAug[] = [];
+  for (let child of expr.children) {
+    const stmtAug = statementToAug(state, child);
+    if (stmtAug !== null) {
+      if (stmtAug.type === "folder") {
+        throw "Nested folders are not yet permitted";
+      }
+      children.push(stmtAug);
+    }
+  }
+  return {
+    type: "folder",
+    ...exprBase(styleValue),
+    hidden: stylePropBoolean(style.hidden, false),
+    collapsed: stylePropBoolean(style.collapsed, false),
+    title: expr.title,
+    children: children,
+  };
 }
 
 const labelOrientations = [

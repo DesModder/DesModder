@@ -79,7 +79,7 @@ function statementToAST(text: string, node: SyntaxNode): Statement {
     case "Folder":
       return {
         type: "Folder",
-        name: parseString(text, node.getChild("String")!),
+        title: parseString(text, node.getChild("String")!),
         children: node
           .getChild("FolderInner")!
           .getChildren("Statement")

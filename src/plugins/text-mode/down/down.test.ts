@@ -531,6 +531,46 @@ describe("Image", () => {
   );
 });
 
+describe("Folder", () => {
+  testStmt(
+    "Plain folder",
+    `folder "Title" {
+      show 1 @{id:"2",color:"#A"}
+    } @{id:"1"}`,
+    {
+      type: "folder",
+      id: "1",
+      title: "Title",
+      collapsed: false,
+      hidden: false,
+      pinned: false,
+      secret: false,
+      children: [
+        {
+          ...exprDefaults,
+          id: "2",
+          color: "#A",
+        },
+      ],
+    }
+  );
+  testStmt(
+    "Folder options",
+    `folder "Title" {}
+      @{id:"1",pinned:true,collapsed:true,secret:true,hidden:true}`,
+    {
+      type: "folder",
+      id: "1",
+      title: "Title",
+      collapsed: true,
+      hidden: true,
+      pinned: true,
+      secret: true,
+      children: [],
+    }
+  );
+});
+
 // TODO: test constexpr evaluation
 // TODO: operator precedence
 // TODO: statement types
