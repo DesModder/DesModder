@@ -175,6 +175,7 @@ function rawNonFolderToAug(
         ...base,
         type: "table",
         columns: item.columns.map((column) => ({
+          type: "column",
           id: column.id,
           values: column.values.map(parseLatex),
           ...columnExpressionCommon(column),

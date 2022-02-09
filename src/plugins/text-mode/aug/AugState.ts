@@ -136,6 +136,7 @@ export interface ExpressionAug extends BaseItemAug {
 }
 
 export interface TableColumnAug {
+  type: "column";
   id: string;
   values: Latex.AnyChild[];
   color: string | Latex.Identifier;

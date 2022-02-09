@@ -7,11 +7,13 @@ function textToAug(s: string) {
   return astToAug(textToAST(s));
 }
 
+const colors = ["#c74440", "#2d70b3", "#388c46", "#6042a6", "#000000"];
+
 const exprDefaults = {
   type: "expression",
   id: "1",
   latex: number(1),
-  color: "#FFF",
+  color: colors[0],
   hidden: false,
   errorHidden: false,
   glesmos: false,
@@ -21,6 +23,20 @@ const exprDefaults = {
   displayEvaluationAsFraction: false,
   slider: {},
   vizProps: {},
+};
+
+const columnDefaults = {
+  type: "column",
+  hidden: false,
+  values: [],
+  color: colors[0],
+};
+
+const tableDefaults = {
+  type: "table",
+  id: "1",
+  pinned: false,
+  secret: false,
 };
 
 const defaultSettings: Aug.GraphSettings = {
@@ -51,14 +67,14 @@ function testStmt(desc: string, s: string, expected: any) {
 }
 
 function testExpr(desc: string, s: string, expected: any) {
-  testStmt(desc, `show ${s} @{color:"#FFF"}`, {
+  testStmt(desc, `show ${s}`, {
     ...exprDefaults,
     latex: expected,
   });
 }
 
 function testString(desc: string, s: string, expected: string) {
-  testStmt(desc, `show 1 @{id:${s},color:"#FFF"}`, {
+  testStmt(desc, `show 1 @{id:${s}}`, {
     ...exprDefaults,
     id: expected,
   });
@@ -354,37 +370,33 @@ describe("Statement metadata", () => {
     });
   });
   describe("Basic booleans", () => {
-    testStmt("Hidden", `calc 1 @{color:"#FFF"}`, {
+    testStmt("Hidden", `calc 1`, {
       ...exprDefaults,
       hidden: true,
     });
-    testStmt("Secret", `show 1 @{color:"#FFF",secret:true}`, {
+    testStmt("Secret", `show 1 @{secret:true}`, {
       ...exprDefaults,
       secret: true,
     });
-    testStmt(
-      "Fraction",
-      `show 1 @{color:"#FFF",displayEvaluationAsFraction:true}`,
-      {
-        ...exprDefaults,
-        displayEvaluationAsFraction: true,
-      }
-    );
-    testStmt("Error hidden", `show 1 @{color:"#FFF",errorHidden:true}`, {
+    testStmt("Fraction", `show 1 @{displayEvaluationAsFraction:true}`, {
+      ...exprDefaults,
+      displayEvaluationAsFraction: true,
+    });
+    testStmt("Error hidden", `show 1 @{errorHidden:true}`, {
       ...exprDefaults,
       errorHidden: true,
     });
-    testStmt("Glesmos", `show 1 @{color:"#FFF",glesmos:true}`, {
+    testStmt("Glesmos", `show 1 @{glesmos:true}`, {
       ...exprDefaults,
       glesmos: true,
     });
-    testStmt("Pinned", `show 1 @{color:"#FFF",pinned:true}`, {
+    testStmt("Pinned", `show 1 @{pinned:true}`, {
       ...exprDefaults,
       pinned: true,
     });
   });
   describe("Label", () => {
-    testStmt("Label text", `show 1 @{color:"#FFF",label:@{text:"hello"}}`, {
+    testStmt("Label text", `show 1 @{label:@{text:"hello"}}`, {
       ...exprDefaults,
       label: {
         text: "hello",
@@ -399,7 +411,6 @@ describe("Statement metadata", () => {
     testStmt(
       "Full label info",
       `show 1 @{
-        color:"#FFF",
         label:@{
           text: "abc",
           size: 2,
@@ -426,44 +437,34 @@ describe("Statement metadata", () => {
   });
 });
 
-const tableDefaults = {
-  type: "table",
-  id: "1",
-  pinned: false,
-  secret: false,
-};
-
 describe("Tables", () => {
-  testStmt("Value list", `table { calc [1,2,3] @{color:"#FFF"} }`, {
+  testStmt("Value list", `table { calc [1,2,3] }`, {
     ...tableDefaults,
     columns: [
       {
+        ...columnDefaults,
         values: [number(1), number(2), number(3)],
-        color: "#FFF",
-        hidden: false,
         id: "2",
       },
     ],
   });
-  testStmt("Expression", `table { calc L+1 @{color:"#FFF"} }`, {
+  testStmt("Expression", `table { calc L+1 }`, {
     ...tableDefaults,
     columns: [
       {
+        ...columnDefaults,
         latex: binop("Add", id("L"), number(1)),
-        values: [],
-        color: "#FFF",
-        hidden: false,
         id: "2",
       },
     ],
   });
-  testStmt("Assignment", `table { let a=[1,2,3] @{color:"#FFF"} }`, {
+  testStmt("Assignment", `table { let a=[1,2,3] }`, {
     ...tableDefaults,
     columns: [
       {
+        ...columnDefaults,
         latex: id("a"),
         values: [number(1), number(2), number(3)],
-        color: "#FFF",
         hidden: false,
         id: "2",
       },
@@ -546,7 +547,7 @@ describe("Folder", () => {
   testStmt(
     "Plain folder",
     `folder "Title" {
-      show 1 @{color:"#A"}
+      show 1
     }`,
     {
       ...folderDefaults,
@@ -555,7 +556,6 @@ describe("Folder", () => {
         {
           ...exprDefaults,
           id: "2",
-          color: "#A",
         },
       ],
     }
@@ -576,32 +576,28 @@ describe("Folder", () => {
     }
   );
 });
-
 describe("Automatic IDs", () => {
   test("IDs are correctly managed with tables", () => {
     const exprs = textToAug(`
       table {
-        let a=[] @{color:"#FFF"}
-        let b=[] @{color:"#FFF"}
-      } @{color:"#FFF"}
-      show 1 @{color:"#FFF"}
+        let a=[]
+        let b=[]
+      }
+      show 1
     `).expressions.list;
     expect(exprs[0]).toEqual({
       ...tableDefaults,
       columns: [
         {
+          ...columnDefaults,
           latex: id("a"),
-          values: [],
-          color: "#FFF",
-          hidden: false,
           id: "2",
         },
         {
+          ...columnDefaults,
           latex: id("b"),
-          values: [],
-          color: "#FFF",
-          hidden: false,
           id: "3",
+          color: colors[1],
         },
       ],
     });
@@ -609,15 +605,16 @@ describe("Automatic IDs", () => {
       ...exprDefaults,
       latex: number(1),
       id: "4",
+      color: colors[2],
     });
   });
   test("IDs are correctly managed with folders", () => {
     const exprs = textToAug(`
       folder "Title" {
-        show a @{color:"#FFF"}
-        show b @{color:"#FFF"}
-      } @{color:"#FFF"}
-      show 1 @{color:"#FFF"}
+        show a
+        show b
+      }
+      show 1
     `).expressions.list;
     expect(exprs[0]).toEqual({
       ...folderDefaults,
@@ -630,6 +627,7 @@ describe("Automatic IDs", () => {
         },
         {
           ...exprDefaults,
+          color: colors[1],
           latex: id("b"),
           id: "3",
         },
@@ -638,13 +636,14 @@ describe("Automatic IDs", () => {
     expect(exprs[1]).toEqual({
       ...exprDefaults,
       latex: number(1),
+      color: colors[2],
       id: "4",
     });
   });
 });
 
 describe("Settings", () => {
-  testSettings("No settings expr", `show 1 @{color:"#FFF"}`, defaultSettings);
+  testSettings("No settings expr", `show 1`, defaultSettings);
   testSettings(
     "All settings",
     `settings @{

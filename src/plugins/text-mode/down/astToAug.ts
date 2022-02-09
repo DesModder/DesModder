@@ -30,6 +30,7 @@ export default function astToAug(program: Program) {
     pushStatement(state, stmt);
   }
   fixEmptyIDs(state);
+  fixEmptyColors(state);
   return state;
 }
 
@@ -43,29 +44,49 @@ function fixEmptyIDs(state: Aug.State) {
       return item.id === p.toString() ? p : 0;
     })
   );
-  // This could be replaced with some aug traverse function
-  for (let expr of state.expressions.list) {
-    if (expr.id === "") {
+  forEachExpr(state.expressions.list, (item) => {
+    if (item.id === "") {
       maxNumericID++;
-      expr.id = maxNumericID.toString();
+      item.id = maxNumericID.toString();
     }
-    if (expr.type === "table") {
-      for (let column of expr.columns) {
-        if (column.id === "") {
-          maxNumericID++;
-          column.id = maxNumericID.toString();
-        }
+  });
+}
+
+/**
+ * Convert colors with value "" (empty string) to valid colors
+ */
+function fixEmptyColors(state: Aug.State) {
+  // TODO: use RED, BLUE, etc. variables instead of fixed colors
+  const colors = ["#c74440", "#2d70b3", "#388c46", "#6042a6", "#000000"];
+  // colorIndex will be the index of the next color filled
+  let colorIndex = 0;
+  forEachExpr(state.expressions.list, (item) => {
+    if ("color" in item) {
+      if (item.color === "") {
+        item.color = colors[colorIndex];
+        colorIndex = (colorIndex + 1) % colors.length;
+      } else if (
+        typeof item.color === "string" &&
+        colors.includes(item.color)
+      ) {
+        colorIndex = (colors.indexOf(item.color) + 1) % colors.length;
       }
     }
-    if (expr.type === "folder") {
-      for (let child of expr.children) {
-        if (child.id === "") {
-          maxNumericID++;
-          child.id = maxNumericID.toString();
-        }
-      }
+  });
+}
+
+function forEachExpr(
+  items: Aug.ItemAug[],
+  func: (e: Aug.ItemAug | Aug.TableColumnAug) => void
+) {
+  items.forEach((item) => {
+    func(item);
+    if (item.type === "table") {
+      item.columns.forEach(func);
+    } else if (item.type === "folder") {
+      forEachExpr(item.children, func);
     }
-  }
+  });
 }
 
 function pushStatement(state: Aug.State, stmt: Statement) {
@@ -160,17 +181,13 @@ function expressionToAug(
 }
 
 function columnExpressionCommonStyle({ props: style }: StyleValue) {
-  if (!isExpr(style.color)) {
-    throw (
-      `Color should be either string or identifier. ` +
-      `Got ${JSON.stringify(style.color)} of type ${typeof style.color}`
-    );
-  }
   return {
-    color:
-      style.color.type === "Identifier"
-        ? identifierToAug(style.color)
-        : evalExprToString(style.color),
+    // Use empty string as a color placeholder. These will get filled in at the end
+    color: !isExpr(style.color)
+      ? ""
+      : style.color.type === "Identifier"
+      ? identifierToAug(style.color)
+      : evalExprToString(style.color),
     hidden: stylePropBoolean(style.hidden, false),
     // TODO points
     // TODO Lines
@@ -202,6 +219,7 @@ function tableColumnToAug(column: TableColumn): Aug.TableColumnAug {
   const style = styleValue.props;
   const expr = column.expr;
   const base = {
+    type: "column" as const,
     id: isExpr(style.id) ? evalExprToString(style.id) : "",
     ...columnExpressionCommonStyle(styleValue),
   };
