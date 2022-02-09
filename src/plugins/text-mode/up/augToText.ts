@@ -17,11 +17,30 @@ function graphSettingsToText(settings: Aug.GraphSettings) {
   return "settings " + styleMapToText(settings);
 }
 
+/**
+ * Return undefined if `value` matches `defaultValue` under JSON.stringify,
+ * otherwise return the original `value`. Note that JSON.stringify excludes
+ * nullish values like {prop: undefined} and {prop: null}.
+ */
+function undefineIfMatch(value: any, defaultValue: any) {
+  return JSON.stringify(value) === JSON.stringify(defaultValue)
+    ? undefined
+    : value;
+}
+
+function undefineIfFalse(value: boolean) {
+  return value === false ? undefined : true;
+}
+
+function undefineIfEmpty(value: any) {
+  return undefineIfMatch(value, {});
+}
+
 function itemToText(item: Aug.ItemAug): string {
   const base = {
     id: item.id,
-    secret: item.secret,
-    pinned: item.pinned,
+    secret: undefineIfFalse(item.secret),
+    pinned: undefineIfFalse(item.pinned),
   };
   switch (item.type) {
     case "expression":
@@ -37,20 +56,20 @@ function itemToText(item: Aug.ItemAug): string {
             ...columnExpressionCommonStyle(item),
             fill: item.fillOpacity,
             label: item.label,
-            errorHidden: item.errorHidden,
-            glesmos: item.glesmos,
+            errorHidden: undefineIfFalse(item.glesmos),
+            glesmos: undefineIfFalse(item.glesmos),
             // TODO: regression; need to handle regressionParameters
             // regression: item.regression && styleMapToText({}),
-            fractionDisplay: item.displayEvaluationAsFraction,
-            slider: {
+            fractionDisplay: undefineIfFalse(item.displayEvaluationAsFraction),
+            slider: undefineIfEmpty({
               ...item.slider,
               isPlaying: undefined,
               playing: item.slider.isPlaying,
-            },
+            }),
             // We will infer whether parametric or polar domain is needed
-            domain: item.parametricDomain ?? item.polarDomain,
-            cdf: item.cdf,
-            vizProps: item.vizProps,
+            domain: undefineIfEmpty(item.parametricDomain ?? item.polarDomain),
+            cdf: undefineIfEmpty(item.cdf),
+            vizProps: undefineIfEmpty(item.vizProps),
             onClick: item.clickableInfo?.latex,
             clickDescription: item.clickableInfo?.description,
           })
@@ -65,10 +84,10 @@ function itemToText(item: Aug.ItemAug): string {
             width: item.width,
             height: item.height,
             center: item.center,
-            angle: item.angle,
-            opacity: item.opacity,
-            foreground: item.foreground,
-            draggable: item.draggable,
+            angle: undefineIfMatch(item.angle, constant(0)),
+            opacity: undefineIfMatch(item.opacity, constant(1)),
+            foreground: undefineIfFalse(item.foreground),
+            draggable: undefineIfFalse(item.draggable),
             onClick: item.clickableInfo?.latex,
             clickDescription: item.clickableInfo?.description,
             hoveredImage: item.clickableInfo?.hoveredImage,
@@ -92,7 +111,7 @@ function itemToText(item: Aug.ItemAug): string {
         "\n} " +
         styleMapToText({
           ...base,
-          collapsed: item.collapsed,
+          collapsed: undefineIfFalse(item.collapsed),
         })
       );
   }
@@ -133,7 +152,10 @@ function columnExpressionCommonStyle(
 }
 
 function styleMapToText(mapping: { [key: string]: any }) {
-  return "@{\n" + indent(styleMapToTextInner(mapping)) + "\n}";
+  const inner = styleMapToTextInner(mapping);
+  return inner.split("\n").length > 1
+    ? `@{\n${indent(inner)},\n}`
+    : `@{${inner}}`;
 }
 
 function styleMapToTextInner(mapping: { [key: string]: any }): string {
@@ -149,11 +171,11 @@ function styleMapToTextInner(mapping: { [key: string]: any }): string {
       if (val.type !== undefined) {
         parts.push(prefix + childLatexToText(val as Aug.Latex.AnyChild));
       } else {
-        parts.push(prefix + "@{\n" + indent(styleMapToTextInner(val)) + "\n}");
+        parts.push(prefix + styleMapToText(val));
       }
     }
   }
-  return parts.map((e) => e + ",").join("\n");
+  return parts.join(",\n");
 }
 
 function stringToText(str: string) {
@@ -339,4 +361,11 @@ function indent(str: string) {
     .split("\n")
     .map((line) => INDENT_PREFIX + line)
     .join("\n");
+}
+
+function constant(val: number): Aug.Latex.Constant {
+  return {
+    type: "Constant",
+    value: val,
+  };
 }
