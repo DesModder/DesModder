@@ -51,7 +51,7 @@ function testStmt(desc: string, s: string, expected: any) {
 }
 
 function testExpr(desc: string, s: string, expected: any) {
-  testStmt(desc, `show ${s} @{id:"1",color:"#FFF"}`, {
+  testStmt(desc, `show ${s} @{color:"#FFF"}`, {
     ...exprDefaults,
     latex: expected,
   });
@@ -344,66 +344,61 @@ describe("Basic exprs", () => {
 
 describe("Statement metadata", () => {
   describe("Color", () => {
-    testStmt("Identifier color", `show 1 @{id:"1",color:C}`, {
+    testStmt("Identifier color", `show 1 @{color:C}`, {
       ...exprDefaults,
       color: id("C"),
     });
-    testStmt("String color", `show 1 @{id:"1",color:"#abcdef"}`, {
+    testStmt("String color", `show 1 @{color:"#abcdef"}`, {
       ...exprDefaults,
       color: "#abcdef",
     });
   });
   describe("Basic booleans", () => {
-    testStmt("Hidden", `calc 1 @{id:"1",color:"#FFF"}`, {
+    testStmt("Hidden", `calc 1 @{color:"#FFF"}`, {
       ...exprDefaults,
       hidden: true,
     });
-    testStmt("Secret", `show 1 @{id:"1",color:"#FFF",secret:true}`, {
+    testStmt("Secret", `show 1 @{color:"#FFF",secret:true}`, {
       ...exprDefaults,
       secret: true,
     });
     testStmt(
       "Fraction",
-      `show 1 @{id:"1",color:"#FFF",displayEvaluationAsFraction:true}`,
+      `show 1 @{color:"#FFF",displayEvaluationAsFraction:true}`,
       {
         ...exprDefaults,
         displayEvaluationAsFraction: true,
       }
     );
-    testStmt("Error hidden", `show 1 @{id:"1",color:"#FFF",errorHidden:true}`, {
+    testStmt("Error hidden", `show 1 @{color:"#FFF",errorHidden:true}`, {
       ...exprDefaults,
       errorHidden: true,
     });
-    testStmt("Glesmos", `show 1 @{id:"1",color:"#FFF",glesmos:true}`, {
+    testStmt("Glesmos", `show 1 @{color:"#FFF",glesmos:true}`, {
       ...exprDefaults,
       glesmos: true,
     });
-    testStmt("Pinned", `show 1 @{id:"1",color:"#FFF",pinned:true}`, {
+    testStmt("Pinned", `show 1 @{color:"#FFF",pinned:true}`, {
       ...exprDefaults,
       pinned: true,
     });
   });
   describe("Label", () => {
-    testStmt(
-      "Label text",
-      `show 1 @{id:"1",color:"#FFF",label:@{text:"hello"}}`,
-      {
-        ...exprDefaults,
-        label: {
-          text: "hello",
-          size: number(1),
-          orientation: "default",
-          angle: number(0),
-          outline: true,
-          showOnHover: false,
-          editableMode: "NONE",
-        },
-      }
-    );
+    testStmt("Label text", `show 1 @{color:"#FFF",label:@{text:"hello"}}`, {
+      ...exprDefaults,
+      label: {
+        text: "hello",
+        size: number(1),
+        orientation: "default",
+        angle: number(0),
+        outline: true,
+        showOnHover: false,
+        editableMode: "NONE",
+      },
+    });
     testStmt(
       "Full label info",
       `show 1 @{
-        id:"1",
         color:"#FFF",
         label:@{
           text: "abc",
@@ -439,57 +434,45 @@ const tableDefaults = {
 };
 
 describe("Tables", () => {
-  testStmt(
-    "Value list",
-    `table { calc [1,2,3] @{id:"2",color:"#FFF"} } @{id:"1"}`,
-    {
-      ...tableDefaults,
-      columns: [
-        {
-          values: [number(1), number(2), number(3)],
-          color: "#FFF",
-          hidden: false,
-          id: "2",
-        },
-      ],
-    }
-  );
-  testStmt(
-    "Expression",
-    `table { calc L+1 @{id:"2",color:"#FFF"} } @{id:"1"}`,
-    {
-      ...tableDefaults,
-      columns: [
-        {
-          latex: binop("Add", id("L"), number(1)),
-          values: [],
-          color: "#FFF",
-          hidden: false,
-          id: "2",
-        },
-      ],
-    }
-  );
-  testStmt(
-    "Assignment",
-    `table { let a=[1,2,3] @{id:"2",color:"#FFF"} } @{id:"1"}`,
-    {
-      ...tableDefaults,
-      columns: [
-        {
-          latex: id("a"),
-          values: [number(1), number(2), number(3)],
-          color: "#FFF",
-          hidden: false,
-          id: "2",
-        },
-      ],
-    }
-  );
+  testStmt("Value list", `table { calc [1,2,3] @{color:"#FFF"} }`, {
+    ...tableDefaults,
+    columns: [
+      {
+        values: [number(1), number(2), number(3)],
+        color: "#FFF",
+        hidden: false,
+        id: "2",
+      },
+    ],
+  });
+  testStmt("Expression", `table { calc L+1 @{color:"#FFF"} }`, {
+    ...tableDefaults,
+    columns: [
+      {
+        latex: binop("Add", id("L"), number(1)),
+        values: [],
+        color: "#FFF",
+        hidden: false,
+        id: "2",
+      },
+    ],
+  });
+  testStmt("Assignment", `table { let a=[1,2,3] @{color:"#FFF"} }`, {
+    ...tableDefaults,
+    columns: [
+      {
+        latex: id("a"),
+        values: [number(1), number(2), number(3)],
+        color: "#FFF",
+        hidden: false,
+        id: "2",
+      },
+    ],
+  });
 });
 
 describe("Text", () => {
-  testStmt("Text", `"abc" @{id:"1"}`, {
+  testStmt("Text", `"abc"`, {
     type: "text",
     id: "1",
     pinned: false,
@@ -522,7 +505,6 @@ describe("Image", () => {
     "Image with options",
     `image "name" "data:image/png,stub"
       @{
-        id: "1",
         secret: true,
         pinned: true,
         width: 20,
@@ -551,20 +533,24 @@ describe("Image", () => {
   );
 });
 
+const folderDefaults = {
+  type: "folder",
+  id: "1",
+  collapsed: false,
+  hidden: false,
+  pinned: false,
+  secret: false,
+};
+
 describe("Folder", () => {
   testStmt(
     "Plain folder",
     `folder "Title" {
-      show 1 @{id:"2",color:"#A"}
-    } @{id:"1"}`,
+      show 1 @{color:"#A"}
+    }`,
     {
-      type: "folder",
-      id: "1",
+      ...folderDefaults,
       title: "Title",
-      collapsed: false,
-      hidden: false,
-      pinned: false,
-      secret: false,
       children: [
         {
           ...exprDefaults,
@@ -577,7 +563,7 @@ describe("Folder", () => {
   testStmt(
     "Folder options",
     `folder "Title" {}
-      @{id:"1",pinned:true,collapsed:true,secret:true,hidden:true}`,
+      @{pinned:true,collapsed:true,secret:true,hidden:true}`,
     {
       type: "folder",
       id: "1",
@@ -591,12 +577,74 @@ describe("Folder", () => {
   );
 });
 
+describe("Automatic IDs", () => {
+  test("IDs are correctly managed with tables", () => {
+    const exprs = textToAug(`
+      table {
+        let a=[] @{color:"#FFF"}
+        let b=[] @{color:"#FFF"}
+      } @{color:"#FFF"}
+      show 1 @{color:"#FFF"}
+    `).expressions.list;
+    expect(exprs[0]).toEqual({
+      ...tableDefaults,
+      columns: [
+        {
+          latex: id("a"),
+          values: [],
+          color: "#FFF",
+          hidden: false,
+          id: "2",
+        },
+        {
+          latex: id("b"),
+          values: [],
+          color: "#FFF",
+          hidden: false,
+          id: "3",
+        },
+      ],
+    });
+    expect(exprs[1]).toEqual({
+      ...exprDefaults,
+      latex: number(1),
+      id: "4",
+    });
+  });
+  test("IDs are correctly managed with folders", () => {
+    const exprs = textToAug(`
+      folder "Title" {
+        show a @{color:"#FFF"}
+        show b @{color:"#FFF"}
+      } @{color:"#FFF"}
+      show 1 @{color:"#FFF"}
+    `).expressions.list;
+    expect(exprs[0]).toEqual({
+      ...folderDefaults,
+      title: "Title",
+      children: [
+        {
+          ...exprDefaults,
+          latex: id("a"),
+          id: "2",
+        },
+        {
+          ...exprDefaults,
+          latex: id("b"),
+          id: "3",
+        },
+      ],
+    });
+    expect(exprs[1]).toEqual({
+      ...exprDefaults,
+      latex: number(1),
+      id: "4",
+    });
+  });
+});
+
 describe("Settings", () => {
-  testSettings(
-    "No settings expr",
-    `show 1 @{id:"1",color:"#FFF"}`,
-    defaultSettings
-  );
+  testSettings("No settings expr", `show 1 @{color:"#FFF"}`, defaultSettings);
   testSettings(
     "All settings",
     `settings @{

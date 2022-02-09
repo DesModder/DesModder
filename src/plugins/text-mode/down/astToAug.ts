@@ -43,10 +43,27 @@ function fixEmptyIDs(state: Aug.State) {
       return item.id === p.toString() ? p : 0;
     })
   );
+  // This could be replaced with some aug traverse function
   for (let expr of state.expressions.list) {
     if (expr.id === "") {
       maxNumericID++;
       expr.id = maxNumericID.toString();
+    }
+    if (expr.type === "table") {
+      for (let column of expr.columns) {
+        if (column.id === "") {
+          maxNumericID++;
+          column.id = maxNumericID.toString();
+        }
+      }
+    }
+    if (expr.type === "folder") {
+      for (let child of expr.children) {
+        if (child.id === "") {
+          maxNumericID++;
+          child.id = maxNumericID.toString();
+        }
+      }
     }
   }
 }
