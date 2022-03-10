@@ -112,12 +112,15 @@ export async function exportFrames(controller: Controller) {
     ffmpeg.FS("unlink", filename);
   }
   ffmpeg.FS("unlink", outFilename);
+  const ext = controller.fileType === "apng" ? "png" : controller.fileType;
+  const metaExt = { png: "image", gif: "image", mp4: "video", webm: "video" }[
+    ext
+  ];
   const url = URL.createObjectURL(
-    new Blob([data.buffer as ArrayBuffer], { type: "video/mp4" })
+    new Blob([data.buffer as ArrayBuffer], { type: `${metaExt}/${ext}` })
   );
 
   let humanOutFilename = controller.outfileName;
-  const ext = controller.fileType === "apng" ? "png" : controller.fileType;
   if (!humanOutFilename.endsWith("." + ext)) {
     humanOutFilename += "." + ext;
   }
