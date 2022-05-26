@@ -19,12 +19,6 @@ function manageConfigChange(current: Config, changes: ConfigOptional) {
     if (false === proposedConfig.graphpaper) {
       newChanges.graphpaper = true;
     }
-    if (proposedConfig.lockViewport) {
-      newChanges.lockViewport = false;
-    }
-  }
-  if (changes.lockViewport && proposedConfig.zoomButtons) {
-    newChanges.zoomButtons = false;
   }
   if (false === changes.graphpaper && proposedConfig.zoomButtons) {
     newChanges.zoomButtons = false;

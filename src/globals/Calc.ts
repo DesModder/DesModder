@@ -214,7 +214,6 @@ interface PublicCalculatorOptions {
   pointsOfInterest: boolean;
   trace: boolean;
   border: boolean;
-  lockViewport: boolean;
   expressionsCollapsed: boolean;
   administerSecretFolders: boolean;
   advancedStyling: boolean;
