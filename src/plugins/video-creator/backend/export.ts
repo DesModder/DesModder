@@ -10,7 +10,7 @@ async function exportAll(ffmpeg: FFmpeg, fileType: OutFileType, fps: number) {
   const outFilename = "out." + fileType;
 
   const moreFlags = {
-    mp4: ["-vcodec", "libx264"],
+    mp4: ["-vcodec", "libx264", "-vf", "format=yuv420p"],
     webm: ["-vcodec", "libvpx-vp9", "-quality", "realtime", "-speed", "8"],
     // generate fresh palette on every frame (higher quality)
     // https://superuser.com/a/1239082
