@@ -33,12 +33,6 @@ export const configList = [
     default: true,
   },
   {
-    key: "lockViewport",
-    name: "Lock Viewport",
-    type: "boolean",
-    default: false,
-  },
-  {
     key: "expressions",
     name: "Show Expressions",
     type: "boolean",
@@ -86,7 +80,6 @@ export interface Config {
   administerSecretFolders: boolean;
   pointsOfInterest: boolean;
   trace: boolean;
-  lockViewport: boolean;
   expressions: boolean;
   zoomButtons: boolean;
   expressionsTopbar: boolean;
