@@ -120,7 +120,7 @@ function getRGBfromHSV(hue: number, sat: number, value: number) {
     });
 }
 
-function getHSVfromRGB(red: number, green: number, blue: number) {
+export function getHSVfromRGB(red: number, green: number, blue: number) {
   let value: number = Math.max(red, green, blue);
   let range: number = value - Math.min(red, green, blue);
 
