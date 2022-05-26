@@ -122,14 +122,14 @@ export default class SelectCapture extends DCGView.Class<{
                     {() => (
                       <div class="dsm-vc-action-navigate-container">
                         <Button
-                          color="green"
+                          color="primary"
                           onTap={() => this.controller.addToActionIndex(-1)}
                           disabled={() => this.controller.isCapturing}
                         >
                           Prev
                         </Button>
                         <Button
-                          color="green"
+                          color="primary"
                           onTap={() => this.controller.addToActionIndex(+1)}
                           disabled={() => this.controller.isCapturing}
                         >
@@ -215,7 +215,6 @@ export default class SelectCapture extends DCGView.Class<{
                   this.controller.setSamePixelRatio(checked)
                 }
                 ariaLabel="Target same pixel ratio"
-                green
               >
                 <Tooltip
                   tooltip="Adjusts scaling of line width, point size, label size, etc."
@@ -237,7 +236,7 @@ export default class SelectCapture extends DCGView.Class<{
             {
               true: () => (
                 <Button
-                  color="green"
+                  color="primary"
                   class="dsm-vc-capture-frame-button"
                   disabled={() =>
                     this.controller.isCapturing ||
@@ -251,7 +250,7 @@ export default class SelectCapture extends DCGView.Class<{
               ),
               false: () => (
                 <Button
-                  color="blue"
+                  color="red"
                   class="dsm-vc-cancel-capture-button"
                   onTap={() => cancelCapture(this.controller)}
                 >

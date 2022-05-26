@@ -95,7 +95,6 @@ export default class Menu extends DCGView.Class<{
                         }
                         checked={() => pluginSettings[item.key] ?? false}
                         ariaLabel={() => item.key}
-                        green
                       >
                         <Tooltip tooltip={item.description ?? ""} gravity="n">
                           <div class="dsm-settings-label">{item.name}</div>

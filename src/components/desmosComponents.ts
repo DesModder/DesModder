@@ -5,7 +5,6 @@ abstract class CheckboxComponent extends ClassComponent<{
   checked: boolean;
   disabled?: boolean;
   small?: boolean;
-  green?: boolean;
   ariaLabel: string;
   onChange: (checked: boolean) => void;
 }> {}
