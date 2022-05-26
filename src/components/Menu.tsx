@@ -93,13 +93,35 @@ export default class Menu extends DCGView.Class<{
                             checked
                           )
                         }
-                        checked={() => pluginSettings[item.key] ?? false}
+                        checked={() =>
+                          (pluginSettings[item.key] as boolean) ?? false
+                        }
                         ariaLabel={() => item.key}
                       >
                         <Tooltip tooltip={item.description ?? ""} gravity="n">
                           <div class="dsm-settings-label">{item.name}</div>
                         </Tooltip>
                       </Checkbox>
+                    </div>
+                  ),
+                  color: () => (
+                    <div class="dsm-settings-item dsm-settings-color">
+                      <input
+                        type="color"
+                        id={`dsm-settings-item__input-${item.key}`}
+                        value={pluginSettings[item.key]}
+                        onChange={(evt: Event) =>
+                          this.controller.expandedPlugin &&
+                          this.controller.setPluginSetting(
+                            this.controller.expandedPlugin,
+                            item.key,
+                            (evt.target as HTMLInputElement).value
+                          )
+                        }
+                      />
+                      <label for={`dsm-settings-item__input-${item.key}`}>
+                        {item.name}
+                      </label>
                     </div>
                   ),
                 }[item.type]())

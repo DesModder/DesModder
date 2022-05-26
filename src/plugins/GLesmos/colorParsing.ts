@@ -208,7 +208,7 @@ function parseCSSFunc(color: string): ColorType | null {
   return { type: funcName, values: components };
 }
 
-function parseCSSHex(color: string) {
+export function parseCSSHex(color: string) {
   const rxHex: RegExp = /^#((?:[0-9a-z]){3,8})$/i;
 
   let hexMatch: RegExpMatchArray | null = color.match(rxHex);
