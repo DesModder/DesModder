@@ -21,6 +21,8 @@ type FocusedMQ =
   | "capture-height"
   | "export-fps";
 
+const DEFAULT_FILENAME = "DesModder_Video_Creator";
+
 export default class Controller {
   ffmpegLoaded = false;
   frames: string[] = [];
@@ -28,7 +30,7 @@ export default class Controller {
   captureCancelled = false;
   fpsLatex = "30";
   fileType: OutFileType = "mp4";
-  outfileName: string = "DesModder_Video_Creator";
+  outfileName: string = DEFAULT_FILENAME;
 
   focusedMQ: FocusedMQ = "none";
 
@@ -117,6 +119,14 @@ export default class Controller {
   setOutputFiletype(type: OutFileType) {
     this.fileType = type;
     this.updateView();
+  }
+
+  tryDefaultOutfileName() {
+    if (this.outfileName === DEFAULT_FILENAME) {
+      this.outfileName =
+        Calc.myGraphsWrapper.graphsController.getCurrentGraphTitle() ??
+        DEFAULT_FILENAME;
+    }
   }
 
   setOutfileName(name: string) {

@@ -277,6 +277,11 @@ type CalculatorOptionsAssign = {
 
 export default interface Calc {
   //// undocumented, may break
+  myGraphsWrapper: {
+    graphsController: {
+      getCurrentGraphTitle(): string | undefined;
+    };
+  };
   controller: {
     // _removeExpressionSynchronously(model: ItemModel): void;
     _toplevelReplaceItemAt(
