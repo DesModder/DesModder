@@ -13,7 +13,9 @@ import {
   getBlankMetadata,
   changeExprInMetadata,
 } from "./metadata/manage";
+import { ItemModel } from "globals/Calc";
 const AbstractItem = desmosRequire("graphing-calc/models/abstract-item");
+const List = desmosRequire("graphing-calc/models/list");
 
 interface PillboxButton {
   id: string;
@@ -417,15 +419,35 @@ export default class Controller {
     const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
     const folderId = folderModel?.id;
 
+    let newIndex = folderIndex;
+    let currIndex = folderIndex;
+    let currExpr: ItemModel | undefined;
     // Place all expressions until the next folder into this folder
-    for (
-      let currIndex = folderIndex + 1,
-        currExpr = Calc.controller.getItemModelByIndex(currIndex);
-      currExpr && currExpr.type !== "folder";
-      currIndex++, currExpr = Calc.controller.getItemModelByIndex(currIndex)
-    ) {
+    do {
+      newIndex++;
+      currIndex++;
+      currExpr = Calc.controller.getItemModelByIndex(currIndex);
+      if (currExpr === undefined) break;
+      // If administerSecretFolders is disabled, skip secret folders
+      while (
+        !Calc.settings.administerSecretFolders &&
+        currExpr?.type === "folder" &&
+        currExpr.secret
+      ) {
+        const secretID = currExpr.id;
+        do {
+          currIndex++;
+          currExpr = Calc.controller.getItemModelByIndex(currIndex);
+        } while (
+          currExpr &&
+          currExpr.type !== "folder" &&
+          currExpr.folderId === secretID
+        );
+      }
+      // Actually move the item into place
       AbstractItem.setFolderId(currExpr, folderId);
-    }
+      List.moveItemsTo(Calc.controller.listModel, currIndex, newIndex, 1);
+    } while (currExpr && currExpr.type !== "folder");
 
     this.commitStateChange(true);
   }
