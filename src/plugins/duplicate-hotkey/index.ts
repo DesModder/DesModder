@@ -5,8 +5,13 @@ function onEnable() {
     "keydown.duplicateHotkey",
     (e: KeyboardEvent) => {
       if (e.ctrlKey && keys.lookupChar(e) === "Q") {
+        const selectedItem = Calc.controller.getSelectedItem();
+        if (!selectedItem) return;
         Calc.controller.dispatch({
-          type: "duplicate-expression",
+          type:
+            selectedItem.type === "folder"
+              ? "duplicate-folder"
+              : "duplicate-expression",
           id: Calc.selectedExpressionId,
         });
       }
