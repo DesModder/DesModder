@@ -1,6 +1,7 @@
 import { OptionalProperties } from "desmodder";
 import { parseCSSHex } from "plugins/GLesmos/colorParsing";
 import "./overrides.less";
+import "./custom-overrides.less";
 
 interface Config {
   primaryColor: string;
