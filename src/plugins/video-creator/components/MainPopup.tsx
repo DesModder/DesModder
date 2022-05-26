@@ -30,7 +30,6 @@ export default class MainPopup extends DCGView.Class<{
   init() {
     this.controller = this.props.controller();
     this.controller.tryInitFFmpeg();
-    this.controller.tryDefaultOutfileName();
   }
 
   template() {

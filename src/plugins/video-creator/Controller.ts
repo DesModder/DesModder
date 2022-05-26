@@ -30,7 +30,7 @@ export default class Controller {
   captureCancelled = false;
   fpsLatex = "30";
   fileType: OutFileType = "mp4";
-  outfileName: string = DEFAULT_FILENAME;
+  outfileName: string | null = null;
 
   focusedMQ: FocusedMQ = "none";
 
@@ -121,20 +121,16 @@ export default class Controller {
     this.updateView();
   }
 
-  tryDefaultOutfileName() {
-    if (this.outfileName === DEFAULT_FILENAME) {
-      this.outfileName =
-        Calc.myGraphsWrapper.graphsController.getCurrentGraphTitle() ??
-        DEFAULT_FILENAME;
-    }
-  }
-
   setOutfileName(name: string) {
     this.outfileName = name;
   }
 
   getOutfileName() {
-    return this.outfileName;
+    return (
+      this.outfileName ??
+      Calc.myGraphsWrapper.graphsController.getCurrentGraphTitle() ??
+      DEFAULT_FILENAME
+    );
   }
 
   setCaptureMethod(method: CaptureMethod) {
