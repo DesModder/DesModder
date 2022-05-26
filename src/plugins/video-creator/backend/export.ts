@@ -120,7 +120,7 @@ export async function exportFrames(controller: Controller) {
     new Blob([data.buffer as ArrayBuffer], { type: `${metaExt}/${ext}` })
   );
 
-  let humanOutFilename = controller.outfileName;
+  let humanOutFilename = controller.getOutfileName();
   if (!humanOutFilename.endsWith("." + ext)) {
     humanOutFilename += "." + ext;
   }
