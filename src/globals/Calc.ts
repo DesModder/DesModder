@@ -300,6 +300,7 @@ export default interface Calc {
     };
     getTickerPlaying?(): boolean;
     // The item models returned are actually much more detailed
+    getSelectedItem(): ItemModel | undefined;
     getItemModel(id: any): ItemModel | undefined;
     getItemModelByIndex(index: number): ItemModel | undefined;
     getAllItemModels(): ItemModel[];
