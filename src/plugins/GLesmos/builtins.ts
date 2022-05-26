@@ -367,7 +367,7 @@ const builtins: {
   min: {
     // We know n >= 1: otherwise the `min` could be constant-collapsed to 0
     make: (n) => `
-    float min(float[${n}] L) {
+    float listmin(float[${n}] L) {
       float m = L[0];
       for (int i=1; i<${n}; i++) {
         m = min(m, L[i]);
@@ -375,11 +375,12 @@ const builtins: {
       return m;
     }`,
     tag: "list",
+    alias: "listmin",
   },
   max: {
     // We know n >= 1: otherwise the `min` could be constant-collapsed to 0
     make: (n) => `
-    float max(float[${n}] L) {
+    float listmax(float[${n}] L) {
       float m = L[0];
       for (int i=1; i<${n}; i++) {
         m = max(m, L[i]);
@@ -387,6 +388,7 @@ const builtins: {
       return m;
     }`,
     tag: "list",
+    alias: "listmax",
   },
   argmin: {
     // We know n >= 1: otherwise the `argmin` could be constant-collapsed to 0
