@@ -79,7 +79,7 @@ export default class Controller {
   applyStoredEnabled(storedEnabled: { [id: string]: boolean }) {
     for (const { id } of pluginList) {
       const stored = storedEnabled[id];
-      if (stored !== undefined) {
+      if (stored !== undefined && id !== "GLesmos") {
         this.pluginsEnabled[id] = stored;
       }
     }
