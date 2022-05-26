@@ -70,6 +70,8 @@ declare global {
       img: any;
       p: any;
       a: any;
+      input: any;
+      label: any;
     }
   }
 }

@@ -1,4 +1,4 @@
-import { plugins, pluginList, PluginID } from "plugins";
+import { plugins, pluginList, PluginID, GenericSettings } from "plugins";
 import View from "./View";
 import { MenuFunc } from "components/Menu";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
@@ -30,7 +30,7 @@ export default class Controller {
   view: View | null = null;
   expandedPlugin: PluginID | null = null;
   pluginSettings: {
-    [plugin in PluginID]: { [key: string]: boolean };
+    [plugin in PluginID]: GenericSettings;
   };
   exposedPlugins: {
     [plugin in PluginID]?: any;
@@ -66,7 +66,7 @@ export default class Controller {
   }
 
   getDefaultConfig(id: PluginID) {
-    const out: { [key: string]: boolean } = {};
+    const out: GenericSettings = {};
     const config = plugins[id].config;
     if (config !== undefined) {
       for (const configItem of config) {
@@ -85,9 +85,7 @@ export default class Controller {
     }
   }
 
-  applyStoredSettings(storedSettings: {
-    [id: string]: { [key: string]: boolean };
-  }) {
+  applyStoredSettings(storedSettings: { [id: string]: GenericSettings }) {
     for (const { id } of pluginList) {
       const stored = storedSettings[id];
       if (stored !== undefined) {
@@ -268,7 +266,7 @@ export default class Controller {
   setPluginSetting(
     pluginID: PluginID,
     key: string,
-    value: boolean,
+    value: boolean | string,
     doCallback: boolean = true
   ) {
     const pluginSettings = this.pluginSettings[pluginID];
