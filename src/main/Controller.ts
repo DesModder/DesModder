@@ -267,7 +267,7 @@ export default class Controller {
     pluginID: PluginID,
     key: string,
     value: boolean | string,
-    doCallback: boolean = true
+    temporary: boolean = false
   ) {
     const pluginSettings = this.pluginSettings[pluginID];
     if (pluginSettings === undefined) return;
@@ -280,17 +280,44 @@ export default class Controller {
         ? manageConfigChange(pluginSettings, proposedChanges)
         : proposedChanges;
     Object.assign(pluginSettings, changes);
-    postMessageUp({
-      type: "set-plugin-settings",
-      value: this.pluginSettings,
-    });
-    if (doCallback && this.pluginsEnabled[pluginID]) {
+    if (!temporary)
+      postMessageUp({
+        type: "set-plugin-settings",
+        value: this.pluginSettings,
+      });
+    if (this.pluginsEnabled[pluginID]) {
       const onConfigChange = plugins[pluginID]?.onConfigChange;
       if (onConfigChange !== undefined) {
-        onConfigChange(changes);
+        onConfigChange(changes, pluginSettings);
       }
     }
     this.updateMenuView();
+  }
+
+  getDefaultSetting(key: string) {
+    return (
+      this.expandedPlugin &&
+      plugins[this.expandedPlugin].config?.find((e) => e.key === key)?.default
+    );
+  }
+
+  canResetSetting(key: string) {
+    if (!this.expandedPlugin) return false;
+    const defaultValue = this.getDefaultSetting(key);
+    return (
+      defaultValue != undefined &&
+      this.pluginSettings[this.expandedPlugin][key] !== defaultValue
+    );
+  }
+
+  resetSetting(key: string) {
+    this.expandedPlugin &&
+      this.canResetSetting(key) &&
+      this.setPluginSetting(
+        this.expandedPlugin,
+        key,
+        this.getDefaultSetting(key)!
+      );
   }
 
   checkForMetadataChange() {
