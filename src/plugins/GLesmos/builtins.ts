@@ -242,7 +242,7 @@ const builtins: {
       float h = m + 1.0;
       float s = (i * z * h) / c;
       float l = 1.0 / (z * z);
-
+      
       // manually unrolled loop lol. It's ok because the compiler would do the same
       s *= l; u += s * 0.166666666666666667; s *= ++h / ++c; s *= ++h / ++c;
       s *= l; u += s * -0.03333333333333333; s *= ++h / ++c; s *= ++h / ++c;
@@ -261,6 +261,42 @@ const builtins: {
       return factorial(m) * a * u;
     }`,
     deps: ["factorial"],
+    tag: "simple",
+  },
+  // Probably excessive precision considering GLesmos is 32-bit
+  // But it's easy to just copy Desmos's 64-bit approximation
+  erf: {
+    def: `float erf(float x) {
+      float t = abs(x);
+      float n = x*x;
+      float r = -n;
+      return sign(x) * (
+        r < -750.0
+          ? 1.0
+          : t >= 0.065
+          ? 1.0 - exp(r) * (
+            t > 50000000.0
+              ? r / t
+              : t > 50.0
+              ? (r * (n * (n + 4.5) + 2.0)) / (t * (n * (n + 5.0) + 3.75))
+              : ((0.9999999999999999+t*(2.224574423459406+t*(2.444115549920689+
+                 t*(1.7057986861852539+t*(0.8257463703357973+
+                  t*(0.28647031042892007+t*(0.07124513844341643+
+                    t*(0.012296749268608364+t*(0.001347817214557592+
+                      0.00007263959403471071*t))))))))
+                )/(1.0+t*(3.352953590554884+t*(5.227518529742423+
+                  t*(5.003720878235473+t*(3.266590890998987+
+                    t*(1.5255421920765353+t*(0.5185887413188858+
+                      t*(0.12747319185915415+t*(0.02185979575963238+
+                        t*(0.0023889438122503674+0.00012875032817508128*t
+                ))))))))))
+              )
+          )
+          : t*(1.1283791670955126+r*(0.37612638903183754+
+              r*(0.11283791670955126+r*(0.026866170645131252+
+                0.005223977625442188*r))))
+      );
+    }`,
     tag: "simple",
   },
   distance: {
@@ -458,7 +494,6 @@ const builtins: {
   // invUniform: {},
   // tpdf: {},
   // tcdf: {},
-  // erf: {},
   // invNorm: {},
 
   /** LISTS AGAIN */
