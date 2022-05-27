@@ -19,13 +19,12 @@
   rel @left
 }
 
-
 @top Program { statement* }
 
-ShowOrHidden { kw<"show"> | kw<"calc">| kw<"let"> }
+ExprPrefix { kw<"show"> | kw<"hide"> | "" }
 
 SimpleStatement {
-  ShowOrHidden expressionMaybeSeq StyleMapping?
+  ExprPrefix expressionMaybeSeq StyleMapping?
 }
 
 statement[@isGroup=Statement] {
@@ -58,7 +57,6 @@ expressionMaybeSeq[@isGroup=Expression] {
 expression {
   Number |
   Identifier |
-  String |
   RepeatedExpression |
   ListExpression |
   ListComprehension { "[" expression kw<"for"> commaSep1<AssignmentExpression> "]" } |
@@ -66,12 +64,11 @@ expression {
   UpdateRule { expression !updateRule "->" expression } |
   PrefixExpression { !prefix ArithOp<"-"> expression } |
   ParenthesizedExpression { "(" expressionMaybeSeq ")" } |
-  MemberExpression { expression !member "." Identifier } |
+  MemberExpression { expression !member DotAccessIdentifier } |
   ListAccessExpression { expression !access ListExpression } |
   BinaryExpression |
   PostfixExpression { expression !postfix ArithOp<"!"> } |
-  CallExpression |
-  StyleMapping
+  CallExpression
 }
 
 PiecewiseBranch { expression (":" expression)? }
@@ -84,7 +81,13 @@ StyleMapping {
   MappingStart commaSep<MappingEntry> MappingEnd
 }
 
-MappingEntry { Identifier ":" expression }
+MappingEntry { Identifier ":" mappingValue }
+
+mappingValue {
+  expression |
+  String |
+  StyleMapping
+}
 
 RepeatedExpression {
   (kw<"integral"> | kw<"sum"> | kw<"product">)
@@ -120,6 +123,9 @@ kw<term> { @specialize[@name={term}]<Identifier, term> }
 @tokens {
   Identifier { $[a-zA-Z] $[a-zA-Z0-9]* }
 
+  // Needed to avoid confusion with p .5x being dot access: p.5x
+  DotAccessIdentifier { "." $[a-zA-Z] $[a-zA-Z0-9]* }
+
   String { '"' (!["\\] | "\\" _)* '"' }
 
   Number {
@@ -143,7 +149,7 @@ kw<term> { @specialize[@name={term}]<Identifier, term> }
 
   "(" ")" "[" "]" "{" "}"
 
-  "..." "," "=" ":" "." "->"
+  "..." "," "=" ":" "->"
 }
 
 @detectDelim

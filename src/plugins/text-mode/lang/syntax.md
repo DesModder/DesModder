@@ -129,16 +129,20 @@ A few ways to solve this:
 show y = 2*x + 5
 show sin(x) = sin(y) @style
 // Assignment
-let a = 7.5
-let b = a + 1
+a = 7.5
+b = a + 1
 // Function definition
-let f(x) = x + 1
-let f(a,b,c) = a + 2 * b + c
+hide f(x) = x + 1
+f(a,b,c) = a + 2 * b + c
 // Visualization
 show stats(L)
 show histogram(L) @{mode: "density"}
 // Regression
 regression a + 1 ~ sin(a)
+regression y1 ~ a*x1 + b {
+  expr a = 1.234
+  expr b = 6.521
+}
 // Other expression
 show sin(x) @{lines: @{opacity: 0.6}}
 show 1 + 7/2;
@@ -151,10 +155,10 @@ show y < x + 2 @style
 table {
   // The first column header must be an identifier or nothing
   // just "[1, 2, 3, 4]" without the "x1 =" is ok
-  x1 = [1, 2, 3, 4]
+  expr x1 = [1, 2, 3, 4]
   show y1 = [5, 6, 7, 8] @{color: "#abc"}
   // this takes the value of the list y2 from elsewhere in the graph
-  hide y2
+  expr y2
   // Any column can have no header
   show [9, 10, 11, 12]
   // If a formula is more than just a fixed list of specific values, then it

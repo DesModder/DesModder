@@ -105,7 +105,7 @@ function simpleStatementToAST(
   style: StyleMapping
 ): FunctionDefinition | LetStatement | ShowStatement {
   const expr = exprToAST(text, node.getChild("Expression")!);
-  const prefix = node.getChild("ShowOrHidden")!.firstChild!.name;
+  const prefix = node.getChild("ExprPrefix")!.firstChild!.name;
   if (expr.type !== "BinaryExpression" || expr.op !== "=") {
     return {
       type: "ShowStatement",

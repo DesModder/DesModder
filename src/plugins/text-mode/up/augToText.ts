@@ -47,7 +47,6 @@ function itemToText(item: Aug.ItemAug): string {
       if (!item.latex) return "";
       return (
         getPrefix(item.latex, item.hidden) +
-        " " +
         rootLatexToText(item.latex) +
         "\n" +
         indent(
@@ -125,7 +124,7 @@ function columnToText(col: Aug.TableColumnAug) {
       ? `${identifierToText(col.latex)} = [${bareSeqText(col.values)}]`
       : childLatexToText(col.latex);
   return indent(
-    (col.hidden ? "calc " : "show ") +
+    (col.hidden ? "expr " : "show ") +
       s +
       " " +
       styleMapToText(columnExpressionCommonStyle(col))
@@ -204,13 +203,13 @@ function rootLatexToText(e: Aug.Latex.AnyRootOrChild): string {
 }
 
 function getPrefix(e: Aug.Latex.AnyRootOrChild, hidden: boolean): string {
-  return e.type === "Assignment" || e.type === "FunctionDefinition"
-    ? "let"
+  return e.type === "FunctionDefinition" && e.argSymbols.length > 1
+    ? ""
     : e.type === "Regression"
-    ? "regression"
+    ? "regression "
     : hidden
-    ? "calc"
-    : "show";
+    ? "hide "
+    : "show ";
 }
 
 function childLatexToText(e: Aug.Latex.AnyChild): string {
