@@ -5,6 +5,7 @@ import "./custom-overrides.less";
 
 interface Config {
   primaryColor: string;
+  doFavicon: boolean;
 }
 
 function scaleColor(hex: string, s: number) {
@@ -28,7 +29,6 @@ function applyColor(hex: string) {
   for (const [key, scale] of Object.entries(colorMapping)) {
     apiContainer.style.setProperty(key, scaleColor(hex, scale));
   }
-  applyHexToFavicon(hex);
 }
 
 let originalImage: HTMLImageElement | null = null;
@@ -68,14 +68,21 @@ function applyHexToOldFavicon(hex: string) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-type ConfigOptional = OptionalProperties<Config>;
-
 let apiContainer!: HTMLElement;
 
 function onEnable(config: Config) {
   apiContainer = document.querySelector(".dcg-calculator-api-container")!;
-  applyColor(config.primaryColor);
+  applyConfig(config);
   apiContainer.classList.add("dsm-set-primary-color");
+}
+
+function applyConfig(config: Config) {
+  applyColor(config.primaryColor);
+  if (config.doFavicon) {
+    applyHexToFavicon(config.primaryColor);
+  } else {
+    faviconLink.href = "/favicon.ico";
+  }
 }
 
 function onDisable() {
@@ -96,16 +103,20 @@ export default {
       name: "Primary Color",
       description: "Primary color across the calculator",
       type: "color",
-      // Blue, unfortunately
+      // Desmos Blue, unfortunately
       // We don't set green as default because it's hard to match up
       // button color and favicon color when green
       default: "#2f72dc",
     },
+    {
+      key: "doFavicon",
+      name: "Update Site Icon",
+      description: "Toggle updating the site icon",
+      type: "boolean",
+      default: true,
+    },
   ],
-  onConfigChange(changes: ConfigOptional) {
-    // called only when plugin is active
-    if (changes.primaryColor !== undefined) {
-      applyColor(changes.primaryColor);
-    }
+  onConfigChange(_: OptionalProperties<Config>, config: Config) {
+    applyConfig(config);
   },
 } as const;

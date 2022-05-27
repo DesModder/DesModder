@@ -287,7 +287,7 @@ export default class Controller {
     if (doCallback && this.pluginsEnabled[pluginID]) {
       const onConfigChange = plugins[pluginID]?.onConfigChange;
       if (onConfigChange !== undefined) {
-        onConfigChange(changes);
+        onConfigChange(changes, pluginSettings);
       }
     }
     this.updateMenuView();
