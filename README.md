@@ -4,6 +4,7 @@ Supercharge your Desmos graph creation and sharing experience with many convenie
 
 - Export videos and GIFs of your graphs based on actions or sliders
 - Render implicit-filled expressions on the GPU
+- Change the primary color from blue to any color
 - Find and replace expressions
 - Pin expressions to the top
 - Paste ASCIIMath (such as the results of Wolfram Alpha queries) into Desmos
