@@ -63,7 +63,7 @@ export default class MainPopup extends DCGView.Class<{
             />
           </div>
           <div class="dsm-vc-cancel-export-button">
-            <Button color="blue" onTap={() => cancelExport(this.controller)}>
+            <Button color="red" onTap={() => cancelExport(this.controller)}>
               Cancel
             </Button>
           </div>
@@ -149,7 +149,7 @@ export default class MainPopup extends DCGView.Class<{
               />
               <div class="dsm-vc-export">
                 <Button
-                  color="green"
+                  color="primary"
                   class="dsm-vc-export-frames-button"
                   onTap={() => this.controller.exportFrames()}
                   disabled={() =>

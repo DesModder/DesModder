@@ -11,6 +11,11 @@ type DispatchListenerID = string;
 
 interface CalcPrivate {
   //// undocumented, may break
+  myGraphsWrapper: {
+    graphsController: {
+      getCurrentGraphTitle(): string | undefined;
+    };
+  };
   controller: {
     // _removeExpressionSynchronously(model: ItemModel): void;
     _toplevelReplaceItemAt(
@@ -29,6 +34,7 @@ interface CalcPrivate {
     };
     getTickerPlaying?(): boolean;
     // The item models returned are actually much more detailed
+    getSelectedItem(): ItemModel | undefined;
     getItemModel(id: any): ItemModel | undefined;
     getItemModelByIndex(index: number): ItemModel | undefined;
     getAllItemModels(): ItemModel[];

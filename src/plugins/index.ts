@@ -12,6 +12,7 @@ import debugMode from "plugins/debug-mode";
 import showTips from "plugins/show-tips";
 import folderTools from "plugins/folder-tools";
 import textMode from "plugins/text-mode";
+import setPrimaryColor from "plugins/set-primary-color";
 
 interface ConfigItemGeneric {
   key: string;
@@ -23,12 +24,16 @@ interface ConfigItemBoolean extends ConfigItemGeneric {
   type: "boolean";
   default: boolean;
 }
+interface ConfigItemColor extends ConfigItemGeneric {
+  type: "color";
+  default: string;
+}
 
-type ConfigItem = ConfigItemBoolean;
+type ConfigItem = ConfigItemBoolean | ConfigItemColor;
 
-type GenericBooleanSettings = { [key: string]: boolean };
+export type GenericSettings = { [key: string]: boolean | string };
 
-export interface Plugin<Settings extends GenericBooleanSettings = {}> {
+export interface Plugin<Settings extends GenericSettings = {}> {
   // the id is fixed permanently, even for future releases
   // where you might change the plugin's name
   // and can help handle migrating save state if the display name changes
@@ -41,7 +46,7 @@ export interface Plugin<Settings extends GenericBooleanSettings = {}> {
   enabledByDefault?: boolean;
   alwaysEnabled?: boolean;
   config?: readonly ConfigItem[];
-  onConfigChange?(changes: Settings): void;
+  onConfigChange?(changes: Settings, config: Settings): void;
   manageConfigChange?(current: Settings, next: Settings): Settings;
   enableRequiresReload?: boolean;
   moduleOverrides?: unknown; // should be used only in preload coad, not in main code
@@ -52,6 +57,7 @@ export interface Plugin<Settings extends GenericBooleanSettings = {}> {
 
 const _plugins = {
   [builtinSettings.id]: builtinSettings,
+  [setPrimaryColor.id]: setPrimaryColor,
   [wolfram2desmos.id]: wolfram2desmos,
   [pinExpressions.id]: pinExpressions,
   [videoCreator.id]: videoCreator,

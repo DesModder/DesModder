@@ -64,7 +64,12 @@ if (BROWSER === "firefox") {
         },
       ],
     }),
-    { urls: ["https://saved-work.desmos.com/calc_thumbs/**/*"] },
+    {
+      urls: [
+        "https://saved-work.desmos.com/calc_thumbs/**/*",
+        "https://saved-work.desmos.com/calc-recovery-thumbs/**/*",
+      ],
+    },
     ["blocking", "responseHeaders"]
   );
 }

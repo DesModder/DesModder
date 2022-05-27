@@ -120,7 +120,7 @@ function getRGBfromHSV(hue: number, sat: number, value: number) {
     });
 }
 
-function getHSVfromRGB(red: number, green: number, blue: number) {
+export function getHSVfromRGB(red: number, green: number, blue: number) {
   let value: number = Math.max(red, green, blue);
   let range: number = value - Math.min(red, green, blue);
 
@@ -208,7 +208,7 @@ function parseCSSFunc(color: string): ColorType | null {
   return { type: funcName, values: components };
 }
 
-function parseCSSHex(color: string) {
+export function parseCSSHex(color: string) {
   const rxHex: RegExp = /^#((?:[0-9a-z]){3,8})$/i;
 
   let hexMatch: RegExpMatchArray | null = color.match(rxHex);

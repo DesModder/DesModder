@@ -4,7 +4,15 @@ import { Types } from "./opcodeDeps";
 import getRGBPack from "./colorParsing";
 
 export function glslFloatify(x: number) {
-  return Number.isInteger(x) ? x.toString() + ".0" : x.toString();
+  return Number.isInteger(x)
+    ? // BigInt prevents scientific notation
+      BigInt(x).toString() + ".0"
+    : // toLocaleString prevents scientific notation
+      // https://stackoverflow.com/a/50978675
+      x.toLocaleString("fullwide", {
+        maximumSignificantDigits: 21,
+        useGrouping: false,
+      });
 }
 
 export function colorVec4(color: string, opacity: number) {

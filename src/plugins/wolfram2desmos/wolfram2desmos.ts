@@ -175,12 +175,12 @@ export function wolfram2desmos(input: string) {
   // symbol replacements
   replace(/ϕ/g, "φ");
   replace(/\*\*/g, "^");
-  replace(/(?<![A-Z|a-z|Α-ω])sqrt/g, "√");
-  replace(/(?<![A-Z|a-z|Α-ω])cbrt/g, "∛");
-  replace(/(?<![A-Z|a-z|Α-ω])infinity|infty/g, "∞");
-  replace(/(?<![A-Z|a-z|Α-ω])mod(ulus|ulo)/g, "mod");
-  replace(/(?<![A-Z|a-z|Α-ω])mod(?!\s*\()/g, "%");
-  replace(/(?<![A-Z|a-z|Α-ω])pm/g, "±");
+  replace(/(?<![A-Za-zΑ-ω])sqrt/g, "√");
+  replace(/(?<![A-Za-zΑ-ω])cbrt/g, "∛");
+  replace(/(?<![A-Za-zΑ-ω])infinity|infty/g, "∞");
+  replace(/(?<![A-Za-zΑ-ω])mod(ulus|ulo)/g, "mod");
+  replace(/(?<![A-Za-zΑ-ω])mod(?!\s*\()/g, "%");
+  replace(/(?<![A-Za-zΑ-ω])pm/g, "±");
   replace(/×|∙/g, "*");
   replace(/==/g, "=");
   replace(/\>\=/g, "≥");
@@ -206,55 +206,55 @@ export function wolfram2desmos(input: string) {
 
   // function replacements
   // ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ
-  replace(/(?<![A-Z|a-z|Α-ω])arcsinh/g, "Ⓐ"); // 	https://qaz.wtf/u/convert.cgi?
-  replace(/(?<![A-Z|a-z|Α-ω])arccosh/g, "Ⓑ");
-  replace(/(?<![A-Z|a-z|Α-ω])arctanh/g, "Ⓒ");
-  replace(/(?<![A-Z|a-z|Α-ω])arccsch/g, "Ⓓ");
-  replace(/(?<![A-Z|a-z|Α-ω])arcsech/g, "Ⓔ");
-  replace(/(?<![A-Z|a-z|Α-ω])arccoth/g, "Ⓕ");
-  replace(/(?<![A-Z|a-z|Α-ω])sinh/g, "Ⓖ");
-  replace(/(?<![A-Z|a-z|Α-ω])cosh/g, "Ⓗ");
-  replace(/(?<![A-Z|a-z|Α-ω])tanh/g, "Ⓘ");
-  replace(/(?<![A-Z|a-z|Α-ω])csch/g, "Ⓙ");
-  replace(/(?<![A-Z|a-z|Α-ω])sech/g, "Ⓚ");
-  replace(/(?<![A-Z|a-z|Α-ω])coth/g, "Ⓛ");
-  replace(/(?<![A-Z|a-z|Α-ω])arcsin/g, "Ⓜ");
-  replace(/(?<![A-Z|a-z|Α-ω])arccos/g, "Ⓝ");
-  replace(/(?<![A-Z|a-z|Α-ω])arctan/g, "Ⓞ");
-  replace(/(?<![A-Z|a-z|Α-ω])arccsc/g, "Ⓟ");
-  replace(/(?<![A-Z|a-z|Α-ω])arcsec/g, "Ⓠ");
-  replace(/(?<![A-Z|a-z|Α-ω])arccot/g, "Ⓡ");
-  replace(/(?<![A-Z|a-z|Α-ω])sin/g, "Ⓢ");
-  replace(/(?<![A-Z|a-z|Α-ω])cos/g, "Ⓣ");
-  replace(/(?<![A-Z|a-z|Α-ω])tan/g, "Ⓤ");
-  replace(/(?<![A-Z|a-z|Α-ω])csc/g, "Ⓥ");
-  replace(/(?<![A-Z|a-z|Α-ω])sec/g, "Ⓦ");
-  replace(/(?<![A-Z|a-z|Α-ω])cot/g, "Ⓧ");
-  replace(/(?<![A-Z|a-z|Α-ω])log|ln/g, "Ⓩ");
+  replace(/(?<![A-Za-zΑ-ω])arcsinh/g, "Ⓐ"); // 	https://qaz.wtf/u/convert.cgi?
+  replace(/(?<![A-Za-zΑ-ω])arccosh/g, "Ⓑ");
+  replace(/(?<![A-Za-zΑ-ω])arctanh/g, "Ⓒ");
+  replace(/(?<![A-Za-zΑ-ω])arccsch/g, "Ⓓ");
+  replace(/(?<![A-Za-zΑ-ω])arcsech/g, "Ⓔ");
+  replace(/(?<![A-Za-zΑ-ω])arccoth/g, "Ⓕ");
+  replace(/(?<![A-Za-zΑ-ω])sinh/g, "Ⓖ");
+  replace(/(?<![A-Za-zΑ-ω])cosh/g, "Ⓗ");
+  replace(/(?<![A-Za-zΑ-ω])tanh/g, "Ⓘ");
+  replace(/(?<![A-Za-zΑ-ω])csch/g, "Ⓙ");
+  replace(/(?<![A-Za-zΑ-ω])sech/g, "Ⓚ");
+  replace(/(?<![A-Za-zΑ-ω])coth/g, "Ⓛ");
+  replace(/(?<![A-Za-zΑ-ω])arcsin/g, "Ⓜ");
+  replace(/(?<![A-Za-zΑ-ω])arccos/g, "Ⓝ");
+  replace(/(?<![A-Za-zΑ-ω])arctan/g, "Ⓞ");
+  replace(/(?<![A-Za-zΑ-ω])arccsc/g, "Ⓟ");
+  replace(/(?<![A-Za-zΑ-ω])arcsec/g, "Ⓠ");
+  replace(/(?<![A-Za-zΑ-ω])arccot/g, "Ⓡ");
+  replace(/(?<![A-Za-zΑ-ω])sin/g, "Ⓢ");
+  replace(/(?<![A-Za-zΑ-ω])cos/g, "Ⓣ");
+  replace(/(?<![A-Za-zΑ-ω])tan/g, "Ⓤ");
+  replace(/(?<![A-Za-zΑ-ω])csc/g, "Ⓥ");
+  replace(/(?<![A-Za-zΑ-ω])sec/g, "Ⓦ");
+  replace(/(?<![A-Za-zΑ-ω])cot/g, "Ⓧ");
+  replace(/(?<![A-Za-zΑ-ω])log|ln/g, "Ⓩ");
 
   // ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ
   replace(/int(egral|)(?!\S)/g, "Ａ");
   replace(/int(egral|)(?=_)/g, "Ｂ");
   replace(/sum(?=_)/g, "Ｃ");
   replace(/prod(uct|)(?=_)/g, "Ｄ");
-  while (find(/(?<![A-Z|a-z|Α-ω])mod(?![A-Z|a-z|Α-ω])/) != -1) {
-    i = find(/(?<![A-Z|a-z|Α-ω])mod(?![A-Z|a-z|Α-ω])/) + 3;
+  while (find(/(?<![A-Za-zΑ-ω])mod(?![A-Za-zΑ-ω])/) != -1) {
+    i = find(/(?<![A-Za-zΑ-ω])mod(?![A-Za-zΑ-ω])/) + 3;
     bracket = -1;
     while (i < input.length) {
       i++;
       bracketEval();
       if (input[i] == "," && bracket == -1) {
-        replace(/(?<![A-Z|a-z|Α-ω])mod(?![A-Z|a-z|Α-ω])/, "Ｅ");
+        replace(/(?<![A-Za-zΑ-ω])mod(?![A-Za-zΑ-ω])/, "Ｅ");
         break;
       }
       if (bracket == 0) {
-        replace(/(?<![A-Z|a-z|Α-ω])mod(?![A-Z|a-z|Α-ω])/, "%");
+        replace(/(?<![A-Za-zΑ-ω])mod(?![A-Za-zΑ-ω])/, "%");
         break;
       }
     }
     continue;
   }
-  replace(/(?<![A-Z|a-z|Α-ω])abs(olute|)/g, "Ｆ");
+  replace(/(?<![A-Za-zΑ-ω])abs(olute|)/g, "Ｆ");
   while (find(/\|/) != -1) {
     i = find(/\|/) + 1;
     overwrite(i - 1, "Ｆ(");
@@ -268,12 +268,12 @@ export function wolfram2desmos(input: string) {
       }
     }
   }
-  replace(/(?<![A-Z|a-z|Α-ω])binomial(?![A-Z|a-z|Α-ω])/g, "Ｇ");
-  replace(/(?<![A-Z|a-z|Α-ω])floor(?![A-Z|a-z|Α-ω])/g, "Ｈ");
-  replace(/(?<![A-Z|a-z|Α-ω])ceiling(?![A-Z|a-z|Α-ω])/g, "Ｉ");
-  replace(/(?<![A-Z|a-z|Α-ω])round(?![A-Z|a-z|Α-ω])/g, "Ｊ");
-  replace(/(?<![A-Z|a-z|Α-ω])(gcd|gcf)(?![A-Z|a-z|Α-ω])/g, "Ｋ");
-  replace(/(?<![A-Z|a-z|Α-ω])lcm(?![A-Z|a-z|Α-ω])/g, "Ｌ");
+  replace(/(?<![A-Za-zΑ-ω])binomial(?![A-Za-zΑ-ω])/g, "Ｇ");
+  replace(/(?<![A-Za-zΑ-ω])floor(?![A-Za-zΑ-ω])/g, "Ｈ");
+  replace(/(?<![A-Za-zΑ-ω])ceiling(?![A-Za-zΑ-ω])/g, "Ｉ");
+  replace(/(?<![A-Za-zΑ-ω])round(?![A-Za-zΑ-ω])/g, "Ｊ");
+  replace(/(?<![A-Za-zΑ-ω])(gcd|gcf)(?![A-Za-zΑ-ω])/g, "Ｋ");
+  replace(/(?<![A-Za-zΑ-ω])lcm(?![A-Za-zΑ-ω])/g, "Ｌ");
   while (find(/d(\^\d*)*\/dx(\^\d*)*/) != -1) {
     i = find(/d(\^\d*)*\/dx(\^\d*)*/);
     selection = input.match(/(?<=\^)(\d*)/)?.[0] ?? "";
@@ -294,41 +294,41 @@ export function wolfram2desmos(input: string) {
   replace(/\(Taylor series\)/g, "");
 
   // latin replacements
-  replace(/(?<![A-Z|a-z|Α-ω])alpha/g, "α");
-  replace(/(?<![A-Z|a-z|Α-ω])beta/g, "β");
-  replace(/(?<![A-Z|a-z|Α-ω])Gamma/g, "Γ");
-  replace(/(?<![A-Z|a-z|Α-ω])gamma/g, "γ");
-  replace(/(?<![A-Z|a-z|Α-ω])Delta/g, "Δ");
-  replace(/(?<![A-Z|a-z|Α-ω])delta/g, "δ");
-  replace(/(?<![A-Z|a-z|Α-ω])epsilon/g, "ε");
-  replace(/(?<![A-Z|a-z|Α-ω])zeta/g, "ζ");
-  replace(/(?<![A-Z|a-z|Α-ω])eta/g, "η");
-  replace(/(?<![A-Z|a-z|Α-ω])Theta/g, "Θ");
-  replace(/(?<![A-Z|a-z|Α-ω])theta/g, "θ");
-  replace(/(?<![A-Z|a-z|Α-ω])iota/g, "ι");
-  replace(/(?<![A-Z|a-z|Α-ω])kappa/g, "κ");
-  replace(/(?<![A-Z|a-z|Α-ω])Lambda/g, "Λ");
-  replace(/(?<![A-Z|a-z|Α-ω])lambda/g, "λ");
-  replace(/(?<![A-Z|a-z|Α-ω])mu/g, "μ");
-  replace(/(?<![A-Z|a-z|Α-ω])nu/g, "ν");
-  replace(/(?<![A-Z|a-z|Α-ω])Xi/g, "Ξ");
-  replace(/(?<![A-Z|a-z|Α-ω])xi/g, "ξ");
-  replace(/(?<![A-Z|a-z|Α-ω])Pi/g, "Π");
-  replace(/(?<![A-Z|a-z|Α-ω])pi/g, "π");
-  replace(/(?<![A-Z|a-z|Α-ω])rho/g, "ρ");
-  replace(/(?<![A-Z|a-z|Α-ω])Sigma/g, "Σ");
-  replace(/(?<![A-Z|a-z|Α-ω])sigma/g, "σ");
-  replace(/(?<![A-Z|a-z|Α-ω])tau/g, "τ");
-  replace(/(?<![A-Z|a-z|Α-ω])Upsilon/g, "Τ");
-  replace(/(?<![A-Z|a-z|Α-ω])upsilon/g, "υ");
-  replace(/(?<![A-Z|a-z|Α-ω])Phi/g, "Φ");
-  replace(/(?<![A-Z|a-z|Α-ω])phi/g, "φ");
-  replace(/(?<![A-Z|a-z|Α-ω])chi/g, "χ");
-  replace(/(?<![A-Z|a-z|Α-ω])Psi/g, "Ψ");
-  replace(/(?<![A-Z|a-z|Α-ω])psi/g, "ψ");
-  replace(/(?<![A-Z|a-z|Α-ω])Omega/g, "Ω");
-  replace(/(?<![A-Z|a-z|Α-ω])omega/g, "ω");
-  replace(/(?<![A-Z|a-z|Α-ω])constant/g, "C");
+  replace(/(?<![A-Za-zΑ-ω])alpha/g, "α");
+  replace(/(?<![A-Za-zΑ-ω])beta/g, "β");
+  replace(/(?<![A-Za-zΑ-ω])Gamma/g, "Γ");
+  replace(/(?<![A-Za-zΑ-ω])gamma/g, "γ");
+  replace(/(?<![A-Za-zΑ-ω])Delta/g, "Δ");
+  replace(/(?<![A-Za-zΑ-ω])delta/g, "δ");
+  replace(/(?<![A-Za-zΑ-ω])epsilon/g, "ε");
+  replace(/(?<![A-Za-zΑ-ω])zeta/g, "ζ");
+  replace(/(?<![A-Za-zΑ-ω])eta/g, "η");
+  replace(/(?<![A-Za-zΑ-ω])Theta/g, "Θ");
+  replace(/(?<![A-Za-zΑ-ω])theta/g, "θ");
+  replace(/(?<![A-Za-zΑ-ω])iota/g, "ι");
+  replace(/(?<![A-Za-zΑ-ω])kappa/g, "κ");
+  replace(/(?<![A-Za-zΑ-ω])Lambda/g, "Λ");
+  replace(/(?<![A-Za-zΑ-ω])lambda/g, "λ");
+  replace(/(?<![A-Za-zΑ-ω])mu/g, "μ");
+  replace(/(?<![A-Za-zΑ-ω])nu/g, "ν");
+  replace(/(?<![A-Za-zΑ-ω])Xi/g, "Ξ");
+  replace(/(?<![A-Za-zΑ-ω])xi/g, "ξ");
+  replace(/(?<![A-Za-zΑ-ω])Pi/g, "Π");
+  replace(/(?<![A-Za-zΑ-ω])pi/g, "π");
+  replace(/(?<![A-Za-zΑ-ω])rho/g, "ρ");
+  replace(/(?<![A-Za-zΑ-ω])Sigma/g, "Σ");
+  replace(/(?<![A-Za-zΑ-ω])sigma/g, "σ");
+  replace(/(?<![A-Za-zΑ-ω])tau/g, "τ");
+  replace(/(?<![A-Za-zΑ-ω])Upsilon/g, "Τ");
+  replace(/(?<![A-Za-zΑ-ω])upsilon/g, "υ");
+  replace(/(?<![A-Za-zΑ-ω])Phi/g, "Φ");
+  replace(/(?<![A-Za-zΑ-ω])phi/g, "φ");
+  replace(/(?<![A-Za-zΑ-ω])chi/g, "χ");
+  replace(/(?<![A-Za-zΑ-ω])Psi/g, "Ψ");
+  replace(/(?<![A-Za-zΑ-ω])psi/g, "ψ");
+  replace(/(?<![A-Za-zΑ-ω])Omega/g, "Ω");
+  replace(/(?<![A-Za-zΑ-ω])omega/g, "ω");
+  replace(/(?<![A-Za-zΑ-ω])constant/g, "C");
 
   // MISSING BRACKETS
   // this will ensure brackets AFTER each operator

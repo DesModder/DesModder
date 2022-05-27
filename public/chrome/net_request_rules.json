@@ -36,7 +36,7 @@
       ]
     },
     "condition": {
-      "urlFilter": "https://saved-work.desmos.com/calc_thumbs*",
+      "urlFilter": "https://saved-work.desmos.com/*",
       "resourceTypes": ["image"]
     }
   },

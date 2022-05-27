@@ -1,0 +1,17 @@
+// "Fix" the save button by making the save-ok state colorful again
+// Styles are copied from .dcg-btn-primary
+.dsm-set-primary-color.dcg-calculator-api-container {
+  .dcg-action-save.dcg-btn-white-outline {
+    background: var(--dsm-primary-color);
+    border: 1px solid var(--dsm-primary-dark-2);
+    box-shadow: none;
+
+    &.dcg-hovered {
+      background: var(--dsm-primary-dark-1);
+    }
+
+    &.dcg-depressed {
+      background: var(--dsm-primary-dark-3);
+    }
+  }
+}

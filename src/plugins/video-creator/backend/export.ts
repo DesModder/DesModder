@@ -10,7 +10,7 @@ async function exportAll(ffmpeg: FFmpeg, fileType: OutFileType, fps: number) {
   const outFilename = "out." + fileType;
 
   const moreFlags = {
-    mp4: ["-vcodec", "libx264"],
+    mp4: ["-vcodec", "libx264", "-vf", "format=yuv420p"],
     webm: ["-vcodec", "libvpx-vp9", "-quality", "realtime", "-speed", "8"],
     // generate fresh palette on every frame (higher quality)
     // https://superuser.com/a/1239082
@@ -112,12 +112,15 @@ export async function exportFrames(controller: Controller) {
     ffmpeg.FS("unlink", filename);
   }
   ffmpeg.FS("unlink", outFilename);
+  const ext = controller.fileType === "apng" ? "png" : controller.fileType;
+  const metaExt = { png: "image", gif: "image", mp4: "video", webm: "video" }[
+    ext
+  ];
   const url = URL.createObjectURL(
-    new Blob([data.buffer as ArrayBuffer], { type: "video/mp4" })
+    new Blob([data.buffer as ArrayBuffer], { type: `${metaExt}/${ext}` })
   );
 
-  let humanOutFilename = controller.outfileName;
-  const ext = controller.fileType === "apng" ? "png" : controller.fileType;
+  let humanOutFilename = controller.getOutfileName();
   if (!humanOutFilename.endsWith("." + ext)) {
     humanOutFilename += "." + ext;
   }
