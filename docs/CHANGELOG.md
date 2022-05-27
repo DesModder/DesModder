@@ -1,6 +1,23 @@
 # DesModder Changelog
 
-Regarding version numbers: The `1.0` release will be when the plugin API is a bit more stable. While in `0.*` releases, I increment the minor number if a new plugin is added and the patch number if a release consists only of bug fixes and enhancements.
+## 0.7.2
+
+New features:
+
+- Set Primary Color plugin
+- Always disable GLesmos on page load
+
+Bug fixes and improvements:
+
+- Fix colors that became invisible after the blue update
+- (GLesmos) Proper list support, including `max` and `min`
+- (GLesmos) Add `erf` implementation
+- (Video Creator) Fix media type for non-mp4s
+- (Video Creator) Fix mp4 export chroma (yuv420p)
+- (Video Creator) Default video export name to graph title
+- (Duplicate Hotkey) Fix duplicate hotkey for folders
+- (Builtin Settings) Remove lock viewport to avoid duplication
+- (Folder tools) Merge past secret folders
 
 ## 0.7.1
 
