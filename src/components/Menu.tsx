@@ -118,6 +118,15 @@ export default class Menu extends DCGView.Class<{
                             (evt.target as HTMLInputElement).value
                           )
                         }
+                        onInput={(evt: Event) =>
+                          this.controller.expandedPlugin &&
+                          this.controller.setPluginSetting(
+                            this.controller.expandedPlugin,
+                            item.key,
+                            (evt.target as HTMLInputElement).value,
+                            true
+                          )
+                        }
                       />
                       <label for={`dsm-settings-item__input-${item.key}`}>
                         {item.name}
