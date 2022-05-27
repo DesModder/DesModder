@@ -67,6 +67,7 @@ export default class Menu extends DCGView.Class<{
       </div>
     );
   }
+
   getExpandedSettings() {
     if (this.controller.expandedPlugin === null) return null;
     const plugin = this.controller.getPlugin(this.controller.expandedPlugin);
@@ -102,6 +103,10 @@ export default class Menu extends DCGView.Class<{
                           <div class="dsm-settings-label">{item.name}</div>
                         </Tooltip>
                       </Checkbox>
+                      <ResetButton
+                        controller={this.controller}
+                        key={item.key}
+                      />
                     </div>
                   ),
                   color: () => (
@@ -110,6 +115,10 @@ export default class Menu extends DCGView.Class<{
                         type="color"
                         id={`dsm-settings-item__input-${item.key}`}
                         value={pluginSettings[item.key]}
+                        onUpdate={(e: HTMLInputElement) =>
+                          !e.classList.contains("dcg-hovered") &&
+                          (e.value = pluginSettings[item.key] as string)
+                        }
                         onChange={(evt: Event) =>
                           this.controller.expandedPlugin &&
                           this.controller.setPluginSetting(
@@ -131,6 +140,10 @@ export default class Menu extends DCGView.Class<{
                       <label for={`dsm-settings-item__input-${item.key}`}>
                         {item.name}
                       </label>
+                      <ResetButton
+                        controller={this.controller}
+                        key={item.key}
+                      />
                     </div>
                   ),
                 }[item.type]())
@@ -143,5 +156,34 @@ export default class Menu extends DCGView.Class<{
       // should never happen
       return null;
     }
+  }
+}
+
+class ResetButton extends DCGView.Class<{
+  controller: Controller;
+  key: string;
+}> {
+  controller!: Controller;
+  key!: string;
+
+  init() {
+    this.controller = this.props.controller();
+    this.key = this.props.key();
+  }
+
+  template() {
+    return (
+      <If predicate={() => this.controller.canResetSetting(this.key)}>
+        {() => (
+          <div
+            class="dsm-reset-btn"
+            role="button"
+            onTap={() => this.controller.resetSetting(this.key)}
+          >
+            <i class="dcg-icon-reset" />
+          </div>
+        )}
+      </If>
+    );
   }
 }

@@ -294,6 +294,32 @@ export default class Controller {
     this.updateMenuView();
   }
 
+  getDefaultSetting(key: string) {
+    return (
+      this.expandedPlugin &&
+      plugins[this.expandedPlugin].config?.find((e) => e.key === key)?.default
+    );
+  }
+
+  canResetSetting(key: string) {
+    if (!this.expandedPlugin) return false;
+    const defaultValue = this.getDefaultSetting(key);
+    return (
+      defaultValue != undefined &&
+      this.pluginSettings[this.expandedPlugin][key] !== defaultValue
+    );
+  }
+
+  resetSetting(key: string) {
+    this.expandedPlugin &&
+      this.canResetSetting(key) &&
+      this.setPluginSetting(
+        this.expandedPlugin,
+        key,
+        this.getDefaultSetting(key)!
+      );
+  }
+
   checkForMetadataChange() {
     const newMetadata = getMetadata();
     if (!this.pluginsEnabled["GLesmos"]) {

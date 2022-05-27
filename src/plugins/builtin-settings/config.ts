@@ -46,7 +46,7 @@ export const configList = [
   },
   {
     key: "expressionsTopbar",
-    name: "Show Expressions Top Bar",
+    name: "Show Top Bar",
     type: "boolean",
     default: true,
   },
