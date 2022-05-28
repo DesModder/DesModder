@@ -178,7 +178,6 @@ function expressionToAug(
     // Use empty string as an ID placeholder. These will get filled in at the end
     ...exprBase(styleValue),
     latex: expr,
-    // TODO label
     label: style.label && labelStyleToAug(style.label),
     // hidden from common
     errorHidden: stylePropBoolean(style.errorHidden, false),
@@ -221,8 +220,18 @@ function columnExpressionCommonStyle({ props: style }: StyleValue) {
           size: childExprToAug(
             style.points.props.size ?? { type: "Number", value: 9 }
           ),
-          style: getPointsStyle(style.points.props.style),
-          dragMode: getDragModeStyle(style.points.props.drag),
+          style: evalExprToStringEnum(style.points.props.style, "POINT", [
+            "POINT",
+            "OPEN",
+            "CROSS",
+          ]) as "POINT" | "OPEN" | "CROSS",
+          dragMode: evalExprToStringEnum(style.points.props.drag, "NONE", [
+            "NONE",
+            "X",
+            "Y",
+            "XY",
+            "AUTO",
+          ]) as "NONE" | "X" | "Y" | "XY" | "AUTO",
         }
       : undefined,
     lines: style.lines
@@ -233,46 +242,27 @@ function columnExpressionCommonStyle({ props: style }: StyleValue) {
           width: childExprToAug(
             style.lines.props.width ?? { type: "Number", value: 2.5 }
           ),
-          style: getLineStyle(style.lines.props.style),
+          style: evalExprToStringEnum(style.lines.props.style, "SOLID", [
+            "SOLID",
+            "DASHED",
+            "DOTTED",
+          ]) as "SOLID" | "DASHED" | "DOTTED",
         }
       : undefined,
   };
   return res;
 }
 
-function getPointsStyle(prop: StyleProp): "POINT" | "OPEN" | "CROSS" {
-  const style = evalExprToString(prop, "POINT");
-  if (style !== "POINT" && style !== "OPEN" && style !== "CROSS") {
+function evalExprToStringEnum(
+  prop: StyleProp,
+  fallback: string,
+  values: string[]
+) {
+  const style = evalExprToString(prop, fallback);
+  if (!values.includes(style)) {
     throw (
-      `String ${JSON.stringify(style)} is not a valid line style. ` +
-      `Expected "POINT", "OPEN", or "CROSS"`
-    );
-  }
-  return style;
-}
-function getDragModeStyle(prop: StyleProp): "NONE" | "X" | "Y" | "XY" | "AUTO" {
-  const style = evalExprToString(prop, "NONE");
-  if (
-    style !== "NONE" &&
-    style !== "X" &&
-    style !== "Y" &&
-    style !== "XY" &&
-    style !== "AUTO"
-  ) {
-    throw (
-      `String ${JSON.stringify(style)} is not a valid line style. ` +
-      `Expected "NONE", "X", "Y", "XY", or "AUTO"`
-    );
-  }
-  return style;
-}
-
-function getLineStyle(prop: StyleProp): "SOLID" | "DASHED" | "DOTTED" {
-  const style = evalExprToString(prop, "SOLID");
-  if (style !== "SOLID" && style !== "DASHED" && style !== "DOTTED") {
-    throw (
-      `String ${JSON.stringify(style)} is not a valid line style. ` +
-      `Expected "SOLID", "DASHED", or "DOTTED"`
+      `String ${JSON.stringify(style)} is not a valid style here. ` +
+      `Expected any of: ${values.map((s) => JSON.stringify(s)).join(", ")}`
     );
   }
   return style;
@@ -470,19 +460,11 @@ function applySettings(state: Aug.State, styleValue: StyleValue) {
         break;
       case "xAxisArrowMode":
       case "yAxisArrowMode":
-        const stringValue = evalExprToString(value, "NONE");
-        if (
-          stringValue !== "NONE" &&
-          stringValue !== "POSITIVE" &&
-          stringValue !== "BOTH"
-        ) {
-          const strRepr = JSON.stringify(stringValue);
-          throw (
-            `String ${strRepr} is not a valid arrow mode. ` +
-            `Expected "NONE", "POSITIVE", or "BOTH"`
-          );
-        }
-        settings[key] = stringValue;
+        settings[key] = evalExprToStringEnum(value, "NONE", [
+          "NONE",
+          "POSITIVE",
+          "BOTH",
+        ]) as "NONE" | "POSITIVE" | "BOTH";
         break;
       case "xAxisMinorSubdivisions":
       case "yAxisMinorSubdivisions":
