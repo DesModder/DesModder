@@ -107,7 +107,6 @@ function statementToAug(state: Aug.State, stmt: Statement): Aug.ItemAug | null {
       applySettings(state, style);
       return null;
     case "ShowStatement":
-      style.props.hidden = boolean(!stmt.show);
       return expressionToAug(style, childExprToAug(stmt.expr));
     case "LetStatement":
       return expressionToAug(style, {

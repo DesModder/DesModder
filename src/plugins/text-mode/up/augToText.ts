@@ -46,7 +46,7 @@ function itemToText(item: Aug.ItemAug): string {
     case "expression":
       if (!item.latex) return "";
       return (
-        getPrefix(item.latex, item.hidden) +
+        getPrefix(item.latex) +
         rootLatexToText(item.latex) +
         "\n" +
         indent(
@@ -202,14 +202,8 @@ function rootLatexToText(e: Aug.Latex.AnyRootOrChild): string {
   }
 }
 
-function getPrefix(e: Aug.Latex.AnyRootOrChild, hidden: boolean): string {
-  return e.type === "FunctionDefinition" && e.argSymbols.length > 1
-    ? ""
-    : e.type === "Regression"
-    ? "regression "
-    : hidden
-    ? "hide "
-    : "show ";
+function getPrefix(e: Aug.Latex.AnyRootOrChild): string {
+  return e.type === "Regression" ? "regression " : "";
 }
 
 function childLatexToText(e: Aug.Latex.AnyChild): string {

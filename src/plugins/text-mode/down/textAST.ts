@@ -14,7 +14,6 @@ export type Statement =
 export interface ShowStatement {
   type: "ShowStatement";
   expr: Expression;
-  show: boolean;
   style: StyleMapping;
 }
 

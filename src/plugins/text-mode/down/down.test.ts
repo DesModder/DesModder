@@ -67,14 +67,14 @@ function testStmt(desc: string, s: string, expected: any) {
 }
 
 function testExpr(desc: string, s: string, expected: any) {
-  testStmt(desc, `show ${s}`, {
+  testStmt(desc, s, {
     ...exprDefaults,
     latex: expected,
   });
 }
 
 function testString(desc: string, s: string, expected: string) {
-  testStmt(desc, `show 1 @{id:${s}}`, {
+  testStmt(desc, `1 @{id:${s}}`, {
     ...exprDefaults,
     id: expected,
   });
@@ -361,47 +361,43 @@ describe("Basic exprs", () => {
 
 describe("Statement metadata", () => {
   describe("Color", () => {
-    testStmt("Identifier color", `show 1 @{color:C}`, {
+    testStmt("Identifier color", `1 @{color:C}`, {
       ...exprDefaults,
       color: id("C"),
     });
-    testStmt("String color", `show 1 @{color:"#abcdef"}`, {
+    testStmt("String color", `1 @{color:"#abcdef"}`, {
       ...exprDefaults,
       color: "#abcdef",
     });
   });
   describe("Basic booleans", () => {
-    testStmt("Implcit hidden", `1`, {
+    testStmt("Hidden", `1 @{hidden: true}`, {
       ...exprDefaults,
       hidden: true,
     });
-    testStmt("Hidden", `hide 1`, {
-      ...exprDefaults,
-      hidden: true,
-    });
-    testStmt("Secret", `show 1 @{secret:true}`, {
+    testStmt("Secret", `1 @{secret:true}`, {
       ...exprDefaults,
       secret: true,
     });
-    testStmt("Fraction", `show 1 @{displayEvaluationAsFraction:true}`, {
+    testStmt("Fraction", `1 @{displayEvaluationAsFraction:true}`, {
       ...exprDefaults,
       displayEvaluationAsFraction: true,
     });
-    testStmt("Error hidden", `show 1 @{errorHidden:true}`, {
+    testStmt("Error hidden", `1 @{errorHidden:true}`, {
       ...exprDefaults,
       errorHidden: true,
     });
-    testStmt("Glesmos", `show 1 @{glesmos:true}`, {
+    testStmt("Glesmos", `1 @{glesmos:true}`, {
       ...exprDefaults,
       glesmos: true,
     });
-    testStmt("Pinned", `show 1 @{pinned:true}`, {
+    testStmt("Pinned", `1 @{pinned:true}`, {
       ...exprDefaults,
       pinned: true,
     });
   });
   describe("Label", () => {
-    testStmt("Label text", `show 1 @{label:@{text:"hello"}}`, {
+    testStmt("Label text", `1 @{label:@{text:"hello"}}`, {
       ...exprDefaults,
       label: {
         text: "hello",
@@ -415,7 +411,7 @@ describe("Statement metadata", () => {
     });
     testStmt(
       "Full label info",
-      `show 1 @{
+      `1 @{
         label:@{
           text: "abc",
           size: 2,
@@ -453,7 +449,7 @@ describe("Tables", () => {
       },
     ],
   });
-  testStmt("Expression", `table { hide L+1 }`, {
+  testStmt("Expression", `table { L+1 }`, {
     ...tableDefaults,
     columns: [
       {
@@ -552,7 +548,7 @@ describe("Folder", () => {
   testStmt(
     "Plain folder",
     `folder "Title" {
-      show 1
+      1
     }`,
     {
       ...folderDefaults,
@@ -588,7 +584,7 @@ describe("Automatic IDs", () => {
         a=[]
         b=[]
       }
-      show 1
+      1
     `).expressions.list;
     expect(exprs[0]).toEqual({
       ...tableDefaults,
@@ -616,10 +612,10 @@ describe("Automatic IDs", () => {
   test("IDs are correctly managed with folders", () => {
     const exprs = textToAug(`
       folder "Title" {
-        show a
-        show b
+        a
+        b
       }
-      show 1
+      1
     `).expressions.list;
     expect(exprs[0]).toEqual({
       ...folderDefaults,
@@ -648,7 +644,7 @@ describe("Automatic IDs", () => {
 });
 
 describe("Settings", () => {
-  testSettings("No settings expr", `show 1`, defaultSettings);
+  testSettings("No settings expr", `1`, defaultSettings);
   testSettings(
     "All settings",
     `settings @{

@@ -21,10 +21,8 @@
 
 @top Program { statement* }
 
-ExprPrefix { kw<"show"> | kw<"hide"> }
-
 SimpleStatement {
-  ExprPrefix? expressionMaybeSeq StyleMapping?
+  expressionMaybeSeq StyleMapping?
 }
 
 statement[@isGroup=Statement] {
