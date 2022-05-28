@@ -94,7 +94,7 @@ function rawNonFolderToAug(
       return {
         ...base,
         type: "expression",
-        ...columnExpressionCommon(item),
+        ...columnExpressionCommon(item, false),
         ...(item.latex ? { latex: parseRootLatex(item.latex) } : {}),
         ...(item.labelSize !== "0" && item.label
           ? {
@@ -188,7 +188,7 @@ function rawNonFolderToAug(
           type: "column",
           id: column.id,
           values: column.values.map(parseLatex),
-          ...columnExpressionCommon(column),
+          ...columnExpressionCommon(column, true),
           ...(column.latex ? { latex: parseLatex(column.latex) } : {}),
         })),
       };
@@ -236,7 +236,8 @@ function parseMapDomain(domain: Graph.Domain | undefined) {
 }
 
 function columnExpressionCommon(
-  item: Graph.TableColumn | Graph.ExpressionState
+  item: Graph.TableColumn | Graph.ExpressionState,
+  isColumn: boolean
 ) {
   const color = item.colorLatex ? parseLatex(item.colorLatex) : item.color;
   if (typeof color !== "string" && color.type !== "Identifier") {
@@ -255,7 +256,9 @@ function columnExpressionCommon(
           }
         : undefined,
     lines:
-      item.lines && item.lineOpacity !== "0" && item.lineWidth !== "0"
+      (item.lines || (item.lines === undefined && !isColumn)) &&
+      item.lineOpacity !== "0" &&
+      item.lineWidth !== "0"
         ? {
             opacity: parseLatex(item.lineOpacity ?? "0.9"),
             width: parseLatex(item.lineWidth ?? "2.5"),
