@@ -320,6 +320,7 @@ describe("Basic exprs", () => {
       object: id("L"),
       property: id("random"),
     });
+    // TODO: testExpr("dot access call", "L.random(5)", {});
   });
   describe("ListAccessExpression", () => {
     testExpr("numeric index", "L[1]", {
@@ -370,7 +371,11 @@ describe("Statement metadata", () => {
     });
   });
   describe("Basic booleans", () => {
-    testStmt("Hidden", `calc 1`, {
+    testStmt("Implcit hidden", `1`, {
+      ...exprDefaults,
+      hidden: true,
+    });
+    testStmt("Hidden", `hide 1`, {
       ...exprDefaults,
       hidden: true,
     });
@@ -438,7 +443,7 @@ describe("Statement metadata", () => {
 });
 
 describe("Tables", () => {
-  testStmt("Value list", `table { calc [1,2,3] }`, {
+  testStmt("Value list", `table { [1,2,3] }`, {
     ...tableDefaults,
     columns: [
       {
@@ -448,7 +453,7 @@ describe("Tables", () => {
       },
     ],
   });
-  testStmt("Expression", `table { calc L+1 }`, {
+  testStmt("Expression", `table { hide L+1 }`, {
     ...tableDefaults,
     columns: [
       {
@@ -458,7 +463,7 @@ describe("Tables", () => {
       },
     ],
   });
-  testStmt("Assignment", `table { let a=[1,2,3] }`, {
+  testStmt("Assignment", `table { a=[1,2,3] }`, {
     ...tableDefaults,
     columns: [
       {
@@ -580,8 +585,8 @@ describe("Automatic IDs", () => {
   test("IDs are correctly managed with tables", () => {
     const exprs = textToAug(`
       table {
-        let a=[]
-        let b=[]
+        a=[]
+        b=[]
       }
       show 1
     `).expressions.list;

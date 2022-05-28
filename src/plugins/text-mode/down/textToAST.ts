@@ -105,7 +105,7 @@ function simpleStatementToAST(
   style: StyleMapping
 ): FunctionDefinition | LetStatement | ShowStatement {
   const expr = exprToAST(text, node.getChild("Expression")!);
-  const prefix = node.getChild("ExprPrefix")!.firstChild!.name;
+  const prefix = node.getChild("ExprPrefix")?.firstChild?.name;
   if (expr.type !== "BinaryExpression" || expr.op !== "=") {
     return {
       type: "ShowStatement",
@@ -209,7 +209,7 @@ function exprToAST(text: string, node: SyntaxNode): Expression {
       return {
         type: "MemberExpression",
         object: exprToAST(text, node.getChild("Expression")!),
-        property: identifierToAST(text, node.getChild("Identifier", ".")!),
+        property: identifierToAST(text, node.getChild("DotAccessIdentifier")!),
       };
     case "ListAccessExpression":
       const laExpr = node.getChild("Expression")!;
@@ -375,7 +375,7 @@ function parenToAST(text: string, node: SyntaxNode): Expression {
  * @param node MappingEntry
  */
 function mappingEntryToAST(text: string, node: SyntaxNode): MappingEntry {
-  const expr = node.getChild("Expression", ":")!;
+  const expr = node.lastChild!;
   return {
     type: "MappingEntry",
     property: identifierName(text, node.getChild("Identifier")!),
@@ -387,18 +387,20 @@ function mappingEntryToAST(text: string, node: SyntaxNode): MappingEntry {
 }
 
 /**
- * @param node Identifier
+ * @param node Identifier | DotAccessIdentifier
  */
 function identifierName(text: string, node: SyntaxNode | null): string {
-  if (node?.name !== "Identifier") {
-    debugger;
+  if (node?.name === "DotAccessIdentifier") {
+    return text.substring(node.from + 1, node.to);
+  } else if (node?.name === "Identifier") {
+    return text.substring(node.from, node.to);
+  } else {
     throw "Expected identifier";
   }
-  return text.substring(node.from, node.to);
 }
 
 /**
- * @param node Identifier
+ * @param node Identifier | DotAccessIdentifier
  */
 function identifierToAST(text: string, node: SyntaxNode | null): Identifier {
   return {

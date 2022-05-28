@@ -21,10 +21,10 @@
 
 @top Program { statement* }
 
-ExprPrefix { kw<"show"> | kw<"hide"> | "" }
+ExprPrefix { kw<"show"> | kw<"hide"> }
 
 SimpleStatement {
-  ExprPrefix expressionMaybeSeq StyleMapping?
+  ExprPrefix? expressionMaybeSeq StyleMapping?
 }
 
 statement[@isGroup=Statement] {
