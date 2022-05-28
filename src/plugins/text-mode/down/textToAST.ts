@@ -19,6 +19,7 @@ import {
   LetStatement,
   ShowStatement,
 } from "./textAST";
+import { mapFromEntries } from "../../../utils/utils";
 
 export default function textToAST(text: string) {
   const cst = parser.parse(text);
@@ -52,6 +53,7 @@ function statementToAST(text: string, node: SyntaxNode): Statement {
         left: exprToAST(text, regressionChildren[0]),
         right: exprToAST(text, regressionChildren[1]),
         style,
+        body: regressionBodyToAST(text, node.getChild("RegressionBody")),
       };
     case "Table":
       return {
@@ -94,6 +96,24 @@ function statementToAST(text: string, node: SyntaxNode): Statement {
     default:
       throw `Unexpected statement type ${node.name}`;
   }
+}
+
+/**
+ * @param node RegressionBody
+ */
+function regressionBodyToAST(text: string, node: SyntaxNode | null) {
+  return node
+    ? {
+        residualVariable: identifierToAST(text, node.getChild("Identifier")),
+        regressionParameters: mapFromEntries(
+          node.getChildren("Statement").map((node) => {
+            const ast = statementToAST(text, node);
+            if (ast.type !== "LetStatement") throw "Invalid regression body";
+            return [ast.identifier, ast.expr];
+          })
+        ),
+      }
+    : undefined;
 }
 
 /**

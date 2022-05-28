@@ -46,8 +46,10 @@ function itemToText(item: Aug.ItemAug): string {
     case "expression":
       if (!item.latex) return "";
       return (
-        getPrefix(item.latex) +
         rootLatexToText(item.latex) +
+        (item.regression
+          ? "\n" + indent(regressionBody(item.regression))
+          : "") +
         "\n" +
         indent(
           styleMapToText({
@@ -57,8 +59,7 @@ function itemToText(item: Aug.ItemAug): string {
             label: item.label,
             errorHidden: undefineIfFalse(item.glesmos),
             glesmos: undefineIfFalse(item.glesmos),
-            // TODO: regression; need to handle regressionParameters
-            // regression: item.regression && styleMapToText({}),
+            logMode: undefineIfFalse(item.regression?.isLogMode ?? false),
             fractionDisplay: undefineIfFalse(item.displayEvaluationAsFraction),
             slider: undefineIfEmpty({
               ...item.slider,
@@ -116,6 +117,21 @@ function itemToText(item: Aug.ItemAug): string {
   }
 }
 
+function regressionBody(data: Aug.RegressionData) {
+  return (
+    "# " +
+    identifierToText(data.residualVariable) +
+    " {\n" +
+    [...data.regressionParameters.entries()]
+      .map(
+        ([id, value]) =>
+          INDENT_PREFIX + identifierToText(id) + " = " + numToText(value)
+      )
+      .join("\n") +
+    "\n}"
+  );
+}
+
 function columnToText(col: Aug.TableColumnAug) {
   const s =
     col.latex === undefined
@@ -123,12 +139,7 @@ function columnToText(col: Aug.TableColumnAug) {
       : col.latex.type === "Identifier"
       ? `${identifierToText(col.latex)} = [${bareSeqText(col.values)}]`
       : childLatexToText(col.latex);
-  return indent(
-    (col.hidden ? "expr " : "show ") +
-      s +
-      " " +
-      styleMapToText(columnExpressionCommonStyle(col))
-  );
+  return indent(s + " " + styleMapToText(columnExpressionCommonStyle(col)));
 }
 
 function columnExpressionCommonStyle(
@@ -147,6 +158,7 @@ function columnExpressionCommonStyle(
       style: item.points.style,
       drag: item.points.dragMode,
     },
+    hidden: item.hidden,
   };
 }
 
@@ -200,10 +212,6 @@ function rootLatexToText(e: Aug.Latex.AnyRootOrChild): string {
     default:
       return childLatexToText(e);
   }
-}
-
-function getPrefix(e: Aug.Latex.AnyRootOrChild): string {
-  return e.type === "Regression" ? "regression " : "";
 }
 
 function childLatexToText(e: Aug.Latex.AnyChild): string {
@@ -325,8 +333,8 @@ function identifierToText(id: Aug.Latex.Identifier) {
 }
 
 function numToText(num: number) {
-  // FIXME: scientific notation
-  return num.toString();
+  const s = num.toString();
+  return s.includes("e") ? `(${s.replace("e", "*10^")})` : s;
 }
 
 function repeatedOperator(

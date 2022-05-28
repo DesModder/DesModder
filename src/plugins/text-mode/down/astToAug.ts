@@ -8,8 +8,10 @@ import {
   TableColumn,
   Image,
   Folder,
+  RegressionStatement,
 } from "./textAST";
 import * as Aug from "../aug/AugState";
+import { mapFromEntries } from "../../../utils/utils";
 
 export default function astToAug(program: Program) {
   const state: Aug.State = {
@@ -127,8 +129,15 @@ function statementToAug(state: Aug.State, stmt: Statement): Aug.ItemAug | null {
         right: childExprToAug(stmt.expr),
       });
     case "RegressionStatement":
-      // TODO Regression
-      return null;
+      return expressionToAug(
+        style,
+        {
+          type: "Regression",
+          left: childExprToAug(stmt.left),
+          right: childExprToAug(stmt.right),
+        },
+        stmt.body
+      );
     case "Table":
       return tableToAug(style, stmt.columns);
     case "Image":
@@ -146,12 +155,24 @@ function statementToAug(state: Aug.State, stmt: Statement): Aug.ItemAug | null {
 
 function expressionToAug(
   styleValue: StyleValue,
-  expr: Aug.Latex.AnyRootOrChild
+  expr: Aug.Latex.AnyRootOrChild,
+  regressionBody?: RegressionStatement["body"]
 ): Aug.ExpressionAug {
   // TODO: improve expression schema
   const style = styleValue.props;
   if (style.label !== undefined && !isStyleValue(style.label))
     throw "Label should be a style map";
+  let regression = regressionBody
+    ? {
+        isLogMode: stylePropBoolean(style.logMode, false),
+        residualVariable: identifierToAug(regressionBody.residualVariable),
+        regressionParameters: mapFromEntries(
+          [...regressionBody.regressionParameters.entries()].map(
+            ([key, value]) => [identifierToAug(key), evalExprToNumber(value)]
+          )
+        ),
+      }
+    : undefined;
   return {
     type: "expression",
     // Use empty string as an ID placeholder. These will get filled in at the end
@@ -163,7 +184,7 @@ function expressionToAug(
     errorHidden: stylePropBoolean(style.errorHidden, false),
     glesmos: stylePropBoolean(style.glesmos, false),
     fillOpacity: constant(0),
-    // TODO regression
+    regression: regression,
     displayEvaluationAsFraction: stylePropBoolean(
       style.displayEvaluationAsFraction,
       false

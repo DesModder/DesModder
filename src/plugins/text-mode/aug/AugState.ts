@@ -167,11 +167,7 @@ export interface DomainAug {
 
 export interface RegressionData {
   residualVariable: Latex.Identifier;
-  regressionParameters: {
-    // TODO: key should be Identifier. Map<Identifier, number> may also make sense
-    // Maybe this should be a list of (Identifier, number) pairs instead
-    [key: string]: number;
-  };
+  regressionParameters: Map<Latex.Identifier, number>;
   isLogMode: boolean;
 }
 

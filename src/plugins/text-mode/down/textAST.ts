@@ -37,6 +37,10 @@ export interface RegressionStatement {
   left: Expression;
   right: Expression;
   style: StyleMapping;
+  body?: {
+    residualVariable: Identifier;
+    regressionParameters: Map<Identifier, Expression>;
+  };
 }
 
 export interface Table {

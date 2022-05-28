@@ -27,20 +27,20 @@ SimpleStatement {
 
 statement[@isGroup=Statement] {
   SimpleStatement |
-  RegressionStatement { kw<"regression"> expression "~" expression StyleMapping? } |
-  Table |
+  RegressionStatement { expression "~" expression RegressionBody? StyleMapping? } |
+  Table { kw<"table"> TableInner StyleMapping? } |
   Image { kw<"image"> String String StyleMapping? } |
   Text { String StyleMapping? } |
   Folder { kw<"folder"> String FolderInner StyleMapping? } |
   Settings { kw<"settings"> StyleMapping }
 }
 
-FolderInner {
-  "{" statement* "}"
+RegressionBody {
+  "#" Identifier "{" statement* "}"
 }
 
-Table {
-  kw<"table"> TableInner StyleMapping?
+FolderInner {
+  "{" statement* "}"
 }
 
 TableInner {

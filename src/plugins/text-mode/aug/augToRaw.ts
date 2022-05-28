@@ -122,7 +122,9 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
         residualVariable: latexTreeToStringMaybe(
           item.regression?.residualVariable
         ),
-        regressionParameters: item.regression?.regressionParameters,
+        regressionParameters: Object.fromEntries(
+          item.regression?.regressionParameters ?? []
+        ),
         isLogModeRegression: item.regression?.isLogMode,
         ...(item.label
           ? {

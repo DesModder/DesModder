@@ -2,6 +2,7 @@ import textToAST from "./textToAST";
 import astToAug from "./astToAug";
 import * as Aug from "../aug/AugState";
 import { test, expect, describe } from "@jest/globals";
+import { mapFromEntries } from "../../../utils/utils";
 
 function textToAug(s: string) {
   return astToAug(textToAST(s));
@@ -470,6 +471,41 @@ describe("Tables", () => {
         id: "2",
       },
     ],
+  });
+});
+
+describe("Regressions", () => {
+  testStmt("Blank regression", `Y ~ a`, {
+    ...exprDefaults,
+    latex: {
+      left: id("Y"),
+      right: id("a"),
+      type: "Regression",
+    },
+  });
+  testStmt("Regression with values", `Y ~ a # r { a = 1.5 }`, {
+    ...exprDefaults,
+    latex: {
+      left: id("Y"),
+      right: id("a"),
+      type: "Regression",
+    },
+    regression: {
+      isLogMode: false,
+      regressionParameters: mapFromEntries([
+        [
+          {
+            symbol: "a",
+            type: "Identifier",
+          },
+          1.5,
+        ],
+      ]),
+      residualVariable: {
+        symbol: "r",
+        type: "Identifier",
+      },
+    },
   });
 });
 

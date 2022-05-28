@@ -4,6 +4,7 @@ import * as Aug from "./AugState";
 import { ChildExprNode, evalMaybeRational, AnyNode } from "parsing/parsenode";
 import migrateToLatest from "main/metadata/migrate";
 import Metadata from "main/metadata/interface";
+import { mapFromEntries } from "utils/utils";
 
 export default function rawToAug(raw: Graph.GraphState): Aug.State {
   const dsmMetadataExpr = raw.expressions.list.find(
@@ -113,8 +114,17 @@ function rawNonFolderToAug(
           : parseLatex("0"),
         regression: item.residualVariable
           ? {
-              residualVariable: parseIdentifier(item.residualVariable),
-              regressionParameters: item.regressionParameters ?? {},
+              residualVariable: parseLatex(
+                item.residualVariable
+              ) as Aug.Latex.Identifier,
+              regressionParameters: mapFromEntries(
+                Object.entries(item.regressionParameters ?? {}).map(
+                  ([key, value]) => [
+                    parseLatex(key) as Aug.Latex.Identifier,
+                    value,
+                  ]
+                )
+              ),
               isLogMode: !!item.isLogModeRegression,
             }
           : undefined,
