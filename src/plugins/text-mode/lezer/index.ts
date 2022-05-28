@@ -17,7 +17,7 @@ export const TextModeLanguage = LRLanguage.define({
       }),
       foldNodeProp.add({
         "Mapping Piecewise ListComprehension ListExpression": foldInside,
-        "TableInner FolderInner": foldInside,
+        BlockInner: foldInside,
       }),
       styleTags({
         Identifier: t.variableName,

@@ -59,7 +59,7 @@ function statementToAST(text: string, node: SyntaxNode): Statement {
       return {
         type: "Table",
         columns: node
-          .getChild("TableInner")!
+          .getChild("BlockInner")!
           .getChildren("Statement")
           .map((node) => tableColumnToAST(text, node)),
         style,
@@ -83,7 +83,7 @@ function statementToAST(text: string, node: SyntaxNode): Statement {
         type: "Folder",
         title: parseString(text, node.getChild("String")!),
         children: node
-          .getChild("FolderInner")!
+          .getChild("BlockInner")!
           .getChildren("Statement")
           .map((node) => statementToAST(text, node)),
         style,
@@ -428,9 +428,10 @@ function identifierToAST(text: string, node: SyntaxNode | null): Identifier {
 }
 
 /**
- * @param node TableColumn
+ * @param node TableInner statement
  */
 function tableColumnToAST(text: string, node: SyntaxNode): TableColumn {
+  if (node.name !== "SimpleStatement") throw "Invalid table column";
   const style = styleToAST(text, node.getChild("StyleMapping"));
   const simple = simpleStatementToAST(text, node, style);
   if (simple.type === "FunctionDefinition") {

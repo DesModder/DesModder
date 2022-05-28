@@ -28,10 +28,10 @@ SimpleStatement {
 statement[@isGroup=Statement] {
   SimpleStatement |
   RegressionStatement { expression "~" expression RegressionBody? StyleMapping? } |
-  Table { kw<"table"> TableInner StyleMapping? } |
+  Table { kw<"table"> BlockInner StyleMapping? } |
   Image { kw<"image"> String String StyleMapping? } |
   Text { String StyleMapping? } |
-  Folder { kw<"folder"> String FolderInner StyleMapping? } |
+  Folder { kw<"folder"> String BlockInner StyleMapping? } |
   Settings { kw<"settings"> StyleMapping }
 }
 
@@ -39,12 +39,8 @@ RegressionBody {
   "#" Identifier "{" statement* "}"
 }
 
-FolderInner {
+BlockInner {
   "{" statement* "}"
-}
-
-TableInner {
-  "{" SimpleStatement* "}"
 }
 
 expressionMaybeSeq[@isGroup=Expression] {
