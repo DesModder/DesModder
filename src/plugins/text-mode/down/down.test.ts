@@ -437,6 +437,24 @@ describe("Statement metadata", () => {
       }
     );
   });
+  describe("Lines", () => {
+    testStmt("Lines", `1 @{lines:@{opacity: 1, width: 5, style: "DASHED"}}`, {
+      ...exprDefaults,
+      lines: {
+        opacity: number(1),
+        width: number(5),
+        style: "DASHED",
+      },
+    });
+    testStmt("Lines defaults", `1 @{lines:@{}}`, {
+      ...exprDefaults,
+      lines: {
+        opacity: number(0.9),
+        width: number(2.5),
+        style: "SOLID",
+      },
+    });
+  });
 });
 
 describe("Tables", () => {

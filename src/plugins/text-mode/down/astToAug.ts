@@ -201,7 +201,9 @@ function expressionToAug(
 }
 
 function columnExpressionCommonStyle({ props: style }: StyleValue) {
-  return {
+  if (style.lines && style.lines.type !== "StyleValue")
+    throw "Property `.lines` must be a style value";
+  const res = {
     // Use empty string as a color placeholder. These will get filled in at the end
     color: !isExpr(style.color)
       ? ""
@@ -210,14 +212,36 @@ function columnExpressionCommonStyle({ props: style }: StyleValue) {
       : evalExprToString(style.color),
     hidden: stylePropBoolean(style.hidden, false),
     // TODO points
-    // TODO Lines
+    lines: style.lines
+      ? {
+          opacity: childExprToAug(
+            style.lines.props.opacity ?? { type: "Number", value: 0.9 }
+          ),
+          width: childExprToAug(
+            style.lines.props.width ?? { type: "Number", value: 2.5 }
+          ),
+          style: getLineStyle(style.lines.props.style),
+        }
+      : undefined,
   };
+  return res;
+}
+
+function getLineStyle(prop: StyleProp): "SOLID" | "DASHED" | "DOTTED" {
+  const style = evalExprToString(prop, "SOLID");
+  if (style !== "SOLID" && style !== "DASHED" && style !== "DOTTED") {
+    throw (
+      `String ${JSON.stringify(style)} is not a valid line style. ` +
+      `Expected "SOLID", "DASHED", or "DOTTED"`
+    );
+  }
+  return style;
 }
 
 function exprBase({ props: style }: StyleValue) {
   return {
     // Use empty string as an ID placeholder. These will get filled in at the end
-    id: isExpr(style.id) ? evalExprToString(style.id) : "",
+    id: evalExprToString(style.id, ""),
     secret: stylePropBoolean(style.secret, false),
     pinned: stylePropBoolean(style.pinned, false),
   };
@@ -240,7 +264,7 @@ function tableColumnToAug(column: TableColumn): Aug.TableColumnAug {
   const expr = column.expr;
   const base = {
     type: "column" as const,
-    id: isExpr(style.id) ? evalExprToString(style.id) : "",
+    id: evalExprToString(style.id, ""),
     ...columnExpressionCommonStyle(styleValue),
   };
   if (column.type === "LetStatement") {
@@ -338,14 +362,10 @@ function isLabelOrientation(str: string): str is Aug.LabelOrientation {
 
 function labelStyleToAug(styleValue: StyleValue): Aug.LabelStyle {
   const style = styleValue.props;
-  const orientation = isExpr(style.orientation)
-    ? evalExprToString(style.orientation)
-    : "default";
-  const editableMode = isExpr(style.editableMode)
-    ? evalExprToString(style.editableMode)
-    : "NONE";
+  const orientation = evalExprToString(style.orientation, "default");
+  const editableMode = evalExprToString(style.editableMode, "NONE");
   return {
-    text: isExpr(style.text) ? evalExprToString(style.text) : "",
+    text: evalExprToString(style.text, ""),
     size: stylePropExpr(style.size, constant(1)),
     orientation: isLabelOrientation(orientation) ? orientation : "default",
     angle: stylePropExpr(style.angle, constant(0)),
@@ -406,27 +426,23 @@ function applySettings(state: Aug.State, styleValue: StyleValue) {
         break;
       case "xAxisLabel":
       case "yAxisLabel":
-        settings[key] = isExpr(value) ? evalExprToString(value) : "";
+        settings[key] = evalExprToString(value, "");
         break;
       case "xAxisArrowMode":
       case "yAxisArrowMode":
-        if (!isExpr(value)) {
-          settings[key] = "NONE";
-        } else {
-          const stringValue = evalExprToString(value);
-          if (
-            stringValue !== "NONE" &&
-            stringValue !== "POSITIVE" &&
-            stringValue !== "BOTH"
-          ) {
-            const strRepr = JSON.stringify(stringValue);
-            throw (
-              `String ${strRepr} is not a valid arrow mode. ` +
-              `Expected "NONE", "POSITIVE", or "BOTH"`
-            );
-          }
-          settings[key] = stringValue;
+        const stringValue = evalExprToString(value, "NONE");
+        if (
+          stringValue !== "NONE" &&
+          stringValue !== "POSITIVE" &&
+          stringValue !== "BOTH"
+        ) {
+          const strRepr = JSON.stringify(stringValue);
+          throw (
+            `String ${strRepr} is not a valid arrow mode. ` +
+            `Expected "NONE", "POSITIVE", or "BOTH"`
+          );
         }
+        settings[key] = stringValue;
         break;
       case "xAxisMinorSubdivisions":
       case "yAxisMinorSubdivisions":
@@ -510,13 +526,6 @@ function evalExpr(expr: Expression): number | string | boolean {
   }
 }
 
-function boolean(value: boolean): Identifier {
-  return {
-    type: "Identifier",
-    name: value ? "true" : "false",
-  };
-}
-
 function evalExprTo(expr: Expression, type: string) {
   const res = evalExpr(expr);
   if (typeof res !== type) {
@@ -525,7 +534,11 @@ function evalExprTo(expr: Expression, type: string) {
   return res;
 }
 
-function evalExprToString(expr: Expression): string {
+function evalExprToString(expr: StyleProp, fallback?: string): string {
+  if (!isExpr(expr)) {
+    if (fallback !== undefined) return fallback;
+    throw "Expected string expression here";
+  }
   return evalExprTo(expr, "string") as string;
 }
 
@@ -537,7 +550,8 @@ function evalExprToBoolean(expr: Expression): boolean {
   return evalExprTo(expr, "boolean") as boolean;
 }
 
-function childExprToAug(expr: Expression): Aug.Latex.AnyChild {
+function childExprToAug(expr: StyleValue | Expression): Aug.Latex.AnyChild {
+  if (expr.type === "StyleValue") throw "Unexpected style value";
   switch (expr.type) {
     case "Number":
       return constant(expr.value);
