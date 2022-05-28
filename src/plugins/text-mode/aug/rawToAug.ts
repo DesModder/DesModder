@@ -246,8 +246,10 @@ function columnExpressionCommon(
   return {
     color: color,
     hidden: item.hidden ?? false,
+    // TODO: don't include points property by default for curves and polygons
+    // Rely on Desmos's automatic detection?
     points:
-      item.points && item.pointOpacity !== "0" && item.pointSize !== "0"
+      item.pointOpacity !== "0" && item.pointSize !== "0"
         ? {
             opacity: parseLatex(item.pointOpacity ?? "0.9"),
             size: parseLatex(item.pointSize ?? "9"),
@@ -255,6 +257,8 @@ function columnExpressionCommon(
             dragMode: item.dragMode ?? "AUTO",
           }
         : undefined,
+    // TODO: don't include lines property by default for points like (1,2)
+    // Rely on Desmos's automatic detection?
     lines:
       (item.lines || (item.lines === undefined && !isColumn)) &&
       item.lineOpacity !== "0" &&

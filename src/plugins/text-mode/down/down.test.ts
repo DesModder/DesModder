@@ -455,6 +455,30 @@ describe("Statement metadata", () => {
       },
     });
   });
+  describe("Points", () => {
+    testStmt(
+      "Points",
+      `1 @{points:@{opacity: 1, size: 15, style: "CROSS", drag: "AUTO"}}`,
+      {
+        ...exprDefaults,
+        points: {
+          opacity: number(1),
+          size: number(15),
+          style: "CROSS",
+          dragMode: "AUTO",
+        },
+      }
+    );
+    testStmt("Points defaults", `1 @{points:@{}}`, {
+      ...exprDefaults,
+      points: {
+        opacity: number(0.9),
+        size: number(9),
+        style: "POINT",
+        dragMode: "NONE",
+      },
+    });
+  });
 });
 
 describe("Tables", () => {

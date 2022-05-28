@@ -203,6 +203,8 @@ function expressionToAug(
 function columnExpressionCommonStyle({ props: style }: StyleValue) {
   if (style.lines && style.lines.type !== "StyleValue")
     throw "Property `.lines` must be a style value";
+  if (style.points && style.points.type !== "StyleValue")
+    throw "Property `.points` must be a style value";
   const res = {
     // Use empty string as a color placeholder. These will get filled in at the end
     color: !isExpr(style.color)
@@ -211,7 +213,18 @@ function columnExpressionCommonStyle({ props: style }: StyleValue) {
       ? identifierToAug(style.color)
       : evalExprToString(style.color),
     hidden: stylePropBoolean(style.hidden, false),
-    // TODO points
+    points: style.points
+      ? {
+          opacity: childExprToAug(
+            style.points.props.opacity ?? { type: "Number", value: 0.9 }
+          ),
+          size: childExprToAug(
+            style.points.props.size ?? { type: "Number", value: 9 }
+          ),
+          style: getPointsStyle(style.points.props.style),
+          dragMode: getDragModeStyle(style.points.props.drag),
+        }
+      : undefined,
     lines: style.lines
       ? {
           opacity: childExprToAug(
@@ -225,6 +238,33 @@ function columnExpressionCommonStyle({ props: style }: StyleValue) {
       : undefined,
   };
   return res;
+}
+
+function getPointsStyle(prop: StyleProp): "POINT" | "OPEN" | "CROSS" {
+  const style = evalExprToString(prop, "POINT");
+  if (style !== "POINT" && style !== "OPEN" && style !== "CROSS") {
+    throw (
+      `String ${JSON.stringify(style)} is not a valid line style. ` +
+      `Expected "POINT", "OPEN", or "CROSS"`
+    );
+  }
+  return style;
+}
+function getDragModeStyle(prop: StyleProp): "NONE" | "X" | "Y" | "XY" | "AUTO" {
+  const style = evalExprToString(prop, "NONE");
+  if (
+    style !== "NONE" &&
+    style !== "X" &&
+    style !== "Y" &&
+    style !== "XY" &&
+    style !== "AUTO"
+  ) {
+    throw (
+      `String ${JSON.stringify(style)} is not a valid line style. ` +
+      `Expected "NONE", "X", "Y", "XY", or "AUTO"`
+    );
+  }
+  return style;
 }
 
 function getLineStyle(prop: StyleProp): "SOLID" | "DASHED" | "DOTTED" {

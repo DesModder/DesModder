@@ -244,7 +244,7 @@ function columnExpressionCommon(item: Aug.TableColumnAug | Aug.ExpressionAug) {
   if (item.points) {
     res.points = true;
     res.pointOpacity = latexTreeToString(item.points.opacity);
-    res.pointSize = latexTreeToString(item.points.opacity);
+    res.pointSize = latexTreeToString(item.points.size);
     res.pointStyle = item.points.style;
     res.dragMode = item.points.dragMode;
   }
