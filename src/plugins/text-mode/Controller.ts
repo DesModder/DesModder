@@ -18,9 +18,7 @@ export default class Controller {
   mountEditor(container: HTMLDivElement) {
     this.view = initView(this);
     container.appendChild(this.view.dom);
-    Calc.observeEvent("change.dsm-text-mode", () =>
-      setTimeout(() => this.updateFromGraph(), 1000)
-    );
+    Calc.observeEvent("change.dsm-text-mode", () => this.updateFromGraph());
   }
 
   unmountEditor(container: HTMLDivElement) {
