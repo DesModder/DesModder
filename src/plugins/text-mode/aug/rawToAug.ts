@@ -140,8 +140,8 @@ function rawNonFolderToAug(
         glesmos: dsmMetadata.expressions[item.id]?.glesmos ?? false,
         errorHidden: dsmMetadata.expressions[item.id]?.errorHidden ?? false,
         displayEvaluationAsFraction: item.displayEvaluationAsFraction ?? false,
-        polarDomain: parseMapDomain(item.polarDomain),
-        parametricDomain: parseMapDomain(item.parametricDomain),
+        polarDomain: parseMapDomain(item.polarDomain, "0", "12\\pi"),
+        parametricDomain: parseMapDomain(item.parametricDomain, "0", "1"),
         cdf: item.cdf?.show
           ? {
               min: item.cdf.min ? parseLatex(item.cdf.min) : undefined,
@@ -227,11 +227,15 @@ function vizPropsAug(
   return res;
 }
 
-function parseMapDomain(domain: Graph.Domain | undefined) {
+function parseMapDomain(
+  domain: Graph.Domain | undefined,
+  fallbackMin: string,
+  fallbackMax: string
+): Aug.DomainAug | undefined {
   if (!domain) return undefined;
   return {
-    min: parseLatex(domain.min),
-    max: parseLatex(domain.max),
+    min: parseLatex(domain.min || fallbackMin),
+    max: parseLatex(domain.max || fallbackMax),
   };
 }
 

@@ -9,6 +9,7 @@ import {
   Image,
   Folder,
   RegressionStatement,
+  Number,
 } from "./textAST";
 import * as Aug from "../aug/AugState";
 import { mapFromEntries } from "utils/utils";
@@ -163,6 +164,8 @@ function expressionToAug(
   const style = styleValue.props;
   if (style.label !== undefined && !isStyleValue(style.label))
     throw "Label should be a style map";
+  if (style.domain !== undefined && !isStyleValue(style.domain))
+    throw "Property `.domain` must be a style value";
   let regression = regressionBody
     ? {
         isLogMode: stylePropBoolean(style.logMode, false),
@@ -174,6 +177,11 @@ function expressionToAug(
         ),
       }
     : undefined;
+  // is the expr polar for the purposes of domain?
+  const isPolar =
+    expr.type === "Comparator" &&
+    expr.left.type === "Identifier" &&
+    expr.left.symbol === "r";
   return {
     type: "expression",
     // Use empty string as an ID placeholder. These will get filled in at the end
@@ -191,8 +199,27 @@ function expressionToAug(
     ),
     // TODO slider
     slider: {},
-    // TODO polarDomain
-    // TODO parametricDomain
+    polarDomain:
+      isPolar && style.domain
+        ? {
+            min: childExprToAug(style.domain.props.min ?? number(0)),
+            max: childExprToAug(
+              style.domain.props.max ?? {
+                type: "BinaryExpression",
+                op: "*",
+                left: number(12),
+                right: { type: "Identifier", name: "pi" },
+              }
+            ),
+          }
+        : undefined,
+    parametricDomain:
+      !isPolar && style.domain
+        ? {
+            min: childExprToAug(style.domain.props.min ?? number(0)),
+            max: childExprToAug(style.domain.props.max ?? number(1)),
+          }
+        : undefined,
     // TODO cdf
     vizProps: {},
     // TODO clickableInfo,
@@ -215,12 +242,8 @@ function columnExpressionCommonStyle({ props: style }: StyleValue) {
     hidden: stylePropBoolean(style.hidden, false),
     points: style.points
       ? {
-          opacity: childExprToAug(
-            style.points.props.opacity ?? { type: "Number", value: 0.9 }
-          ),
-          size: childExprToAug(
-            style.points.props.size ?? { type: "Number", value: 9 }
-          ),
+          opacity: childExprToAug(style.points.props.opacity ?? number(0.5)),
+          size: childExprToAug(style.points.props.size ?? number(9)),
           style: evalExprToStringEnum(style.points.props.style, "POINT", [
             "POINT",
             "OPEN",
@@ -237,12 +260,8 @@ function columnExpressionCommonStyle({ props: style }: StyleValue) {
       : undefined,
     lines: style.lines
       ? {
-          opacity: childExprToAug(
-            style.lines.props.opacity ?? { type: "Number", value: 0.9 }
-          ),
-          width: childExprToAug(
-            style.lines.props.width ?? { type: "Number", value: 2.5 }
-          ),
+          opacity: childExprToAug(style.lines.props.opacity ?? number(0.9)),
+          width: childExprToAug(style.lines.props.width ?? number(2.5)),
           style: evalExprToStringEnum(style.lines.props.style, "SOLID", [
             "SOLID",
             "DASHED",
@@ -799,6 +818,13 @@ function identifierToAug(expr: Identifier) {
 function constant(val: number): Aug.Latex.Constant {
   return {
     type: "Constant",
+    value: val,
+  };
+}
+
+function number(val: number): Number {
+  return {
+    type: "Number",
     value: val,
   };
 }
