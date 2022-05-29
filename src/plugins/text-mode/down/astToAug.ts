@@ -164,17 +164,17 @@ function expressionToAug(
   const style = styleValue.props;
   assertOnlyStyleOrUndefined(style.label, "label");
   assertOnlyStyleOrUndefined(style.domain, "domain");
-  let regression = regressionBody
-    ? {
-        isLogMode: stylePropBoolean(style.logMode, false),
-        residualVariable: identifierToAug(regressionBody.residualVariable),
-        regressionParameters: mapFromEntries(
-          [...regressionBody.regressionParameters.entries()].map(
-            ([key, value]) => [identifierToAug(key), evalExprToNumber(value)]
-          )
-        ),
-      }
-    : undefined;
+  assertOnlyStyleOrUndefined(style.cdf, "cdf");
+  let regression = regressionBody && {
+    isLogMode: stylePropBoolean(style.logMode, false),
+    residualVariable: identifierToAug(regressionBody.residualVariable),
+    regressionParameters: mapFromEntries(
+      [...regressionBody.regressionParameters.entries()].map(([key, value]) => [
+        identifierToAug(key),
+        evalExprToNumber(value),
+      ])
+    ),
+  };
   // is the expr polar for the purposes of domain?
   const isPolar =
     expr.type === "Comparator" &&
@@ -218,14 +218,16 @@ function expressionToAug(
             max: childExprToAug(style.domain.props.max ?? number(1)),
           }
         : undefined,
-    // TODO cdf
+    cdf: style.cdf && {
+      min: style.cdf.props.min && childExprToAug(style.cdf.props.min),
+      max: style.cdf.props.max && childExprToAug(style.cdf.props.max),
+    },
+    // TODO: vizProps
     vizProps: {},
-    clickableInfo: style.onClick
-      ? {
-          description: evalExprToString(style.clickDescription) ?? "",
-          latex: childExprToAug(style.onClick),
-        }
-      : undefined,
+    clickableInfo: style.onClick && {
+      description: evalExprToString(style.clickDescription) ?? "",
+      latex: childExprToAug(style.onClick),
+    },
     ...columnExpressionCommonStyle(styleValue),
   };
 }
@@ -242,35 +244,31 @@ function columnExpressionCommonStyle({ props: style }: StyleValue) {
       ? identifierToAug(style.color)
       : evalExprToString(style.color),
     hidden: stylePropBoolean(style.hidden, false),
-    points: style.points
-      ? {
-          opacity: childExprToAug(style.points.props.opacity ?? number(0.5)),
-          size: childExprToAug(style.points.props.size ?? number(9)),
-          style: evalExprToStringEnum(style.points.props.style, "POINT", [
-            "POINT",
-            "OPEN",
-            "CROSS",
-          ]) as "POINT" | "OPEN" | "CROSS",
-          dragMode: evalExprToStringEnum(style.points.props.drag, "NONE", [
-            "NONE",
-            "X",
-            "Y",
-            "XY",
-            "AUTO",
-          ]) as "NONE" | "X" | "Y" | "XY" | "AUTO",
-        }
-      : undefined,
-    lines: style.lines
-      ? {
-          opacity: childExprToAug(style.lines.props.opacity ?? number(0.9)),
-          width: childExprToAug(style.lines.props.width ?? number(2.5)),
-          style: evalExprToStringEnum(style.lines.props.style, "SOLID", [
-            "SOLID",
-            "DASHED",
-            "DOTTED",
-          ]) as "SOLID" | "DASHED" | "DOTTED",
-        }
-      : undefined,
+    points: style.points && {
+      opacity: childExprToAug(style.points.props.opacity ?? number(0.9)),
+      size: childExprToAug(style.points.props.size ?? number(9)),
+      style: evalExprToStringEnum(style.points.props.style, "POINT", [
+        "POINT",
+        "OPEN",
+        "CROSS",
+      ]) as "POINT" | "OPEN" | "CROSS",
+      dragMode: evalExprToStringEnum(style.points.props.drag, "NONE", [
+        "NONE",
+        "X",
+        "Y",
+        "XY",
+        "AUTO",
+      ]) as "NONE" | "X" | "Y" | "XY" | "AUTO",
+    },
+    lines: style.lines && {
+      opacity: childExprToAug(style.lines.props.opacity ?? number(0.9)),
+      width: childExprToAug(style.lines.props.width ?? number(2.5)),
+      style: evalExprToStringEnum(style.lines.props.style, "SOLID", [
+        "SOLID",
+        "DASHED",
+        "DOTTED",
+      ]) as "SOLID" | "DASHED" | "DOTTED",
+    },
   };
   return res;
 }
@@ -359,14 +357,12 @@ function imageToAug(styleValue: StyleValue, expr: Image): Aug.ImageAug {
     opacity: stylePropExpr(style.opacity, constant(1)),
     foreground: stylePropBoolean(style.foreground, false),
     draggable: stylePropBoolean(style.draggable, false),
-    clickableInfo: style.onClick
-      ? {
-          description: evalExprToString(style.clickDescription) ?? "",
-          latex: childExprToAug(style.onClick),
-          hoveredImage: evalExprToString(style.hoveredImage) ?? "",
-          depressedImage: evalExprToString(style.depressedImage) ?? "",
-        }
-      : undefined,
+    clickableInfo: style.onClick && {
+      description: evalExprToString(style.clickDescription) ?? "",
+      latex: childExprToAug(style.onClick),
+      hoveredImage: evalExprToString(style.hoveredImage) ?? "",
+      depressedImage: evalExprToString(style.depressedImage) ?? "",
+    },
   };
 }
 
