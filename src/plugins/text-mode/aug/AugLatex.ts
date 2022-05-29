@@ -94,8 +94,8 @@ export interface Identifier {
   /**
    * Symbols are stored as a symbol. Three main cases:
    *  - one-character name like "a"
-   *  - long name like "random"
-   *  - greek name like "delta"
+   *  - long name like "random" that becomes \\operatorname{random}
+   *  - greek name like "delta" that becomes \delta
    * Each of these can be optionally followed by an underscore
    * and one or more letters/digits. Sometimes there are curly braces
    * (example?), but these should be ignored

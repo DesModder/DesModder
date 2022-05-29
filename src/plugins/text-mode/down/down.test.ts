@@ -2,7 +2,9 @@ import textToAST from "./textToAST";
 import astToAug from "./astToAug";
 import * as Aug from "../aug/AugState";
 import { test, expect, describe } from "@jest/globals";
-import { mapFromEntries } from "../../../utils/utils";
+import { mapFromEntries } from "utils/utils";
+
+jest.mock("utils/depUtils");
 
 function textToAug(s: string) {
   return astToAug(textToAST(s));
@@ -164,7 +166,7 @@ describe("Basic exprs", () => {
   });
   describe("Identifier", () => {
     testExpr("one character", "a", id("a"));
-    testExpr("multiple characters", "abcd", id("abcd"));
+    testExpr("multiple characters", "abcd", id("a_bcd"));
   });
   describe("String", () => {
     testString("simple", `"abc"`, "abc");

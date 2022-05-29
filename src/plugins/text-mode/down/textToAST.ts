@@ -19,7 +19,7 @@ import {
   LetStatement,
   ShowStatement,
 } from "./textAST";
-import { mapFromEntries } from "../../../utils/utils";
+import { mapFromEntries } from "utils/utils";
 
 export default function textToAST(text: string) {
   const cst = parser.parse(text);

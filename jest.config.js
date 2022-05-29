@@ -15,4 +15,6 @@ module.exports = {
       tsconfig: "jest-config/tsconfig.spec.json",
     },
   },
+  moduleDirectories: ["node_modules", "src"],
+  testEnvironment: "jsdom",
 };

@@ -11,7 +11,8 @@ import {
   RegressionStatement,
 } from "./textAST";
 import * as Aug from "../aug/AugState";
-import { mapFromEntries } from "../../../utils/utils";
+import { mapFromEntries } from "utils/utils";
+import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
 
 export default function astToAug(program: Program) {
   const state: Aug.State = {
@@ -727,7 +728,7 @@ function piecewiseInnerToAug(branches: PiecewiseBranch[]): Aug.Latex.AnyChild {
   const firstBranch = branches[0];
   if (firstBranch === undefined) return constant(NaN);
   const firstCond = childExprToAug(firstBranch.condition);
-  if (firstCond.type === "Identifier" && firstCond.symbol === "else") {
+  if (firstCond.type === "Identifier" && firstCond.symbol === "e_lse") {
     // Rudimentary variable inlining
     return childExprToAug(firstBranch.consequent);
   }
@@ -745,10 +746,38 @@ function piecewiseInnerToAug(branches: PiecewiseBranch[]): Aug.Latex.AnyChild {
   };
 }
 
+/**
+ * Fragile names. Subset of those given by the following script:
+ *
+ *     const {BuiltInTable, CompilerFunctionTable} = require("core/math/ir/builtin-table")
+ *     const builtins = Object.keys({...BuiltInTable, ...CompilerFunctionTable})
+ *     const {getAutoOperators, getAutoCommands}  = require("main/mathquill-operators")
+ *     const operators = new Set((getAutoOperators()+" "+getAutoCommands()).split(/[ |]/));
+ *     console.log(builtins.filter(name => !operators.has(name)))
+ */
+const fragileNames = [
+  "polyGamma",
+  "argmin",
+  "argmax",
+  "uniquePerm",
+  "rtxsqpone",
+  "rtxsqmone",
+  "hypot",
+];
+
+const dontSubscriptIdentifiers = new Set([
+  ...autoOperatorNames.split(" ").map((e) => e.split("|")[0]),
+  ...autoCommandNames.split(" "),
+  ...fragileNames,
+]);
+
 function identifierToAug(expr: Identifier) {
   return {
     type: "Identifier" as const,
-    symbol: expr.name,
+    symbol:
+      expr.name.length > 1 && !dontSubscriptIdentifiers.has(expr.name)
+        ? expr.name[0] + "_" + expr.name.substring(1)
+        : expr.name,
   };
 }
 
