@@ -123,7 +123,9 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
           item.regression?.residualVariable
         ),
         regressionParameters: Object.fromEntries(
-          item.regression?.regressionParameters ?? []
+          [...(item.regression?.regressionParameters.entries() ?? [])].map(
+            ([k, v]) => [identifierToString(k), v]
+          )
         ),
         isLogModeRegression: item.regression?.isLogMode,
         ...(item.label
