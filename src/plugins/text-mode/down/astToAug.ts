@@ -692,13 +692,28 @@ function childExprToAug(expr: StyleValue | Expression): Aug.Latex.AnyChild {
         args: [childExprToAug(expr.expr)],
       };
     case "CallExpression":
-      if (expr.callee.type !== "Identifier")
-        throw "Non-identifier callee not yet implemented";
-      return {
-        type: "FunctionCall",
-        callee: identifierToAug(expr.callee),
-        args: expr.arguments.map(childExprToAug),
-      };
+      if (expr.callee.type === "Identifier")
+        return {
+          type: "FunctionCall",
+          callee: identifierToAug(expr.callee),
+          args: expr.arguments.map(childExprToAug),
+        };
+      else if (
+        expr.callee.type === "MemberExpression" &&
+        expr.callee.object.type === "Identifier" &&
+        expr.callee.property.type === "Identifier"
+      )
+        // Case e.g. L.random(5)
+        return {
+          type: "DotAccess",
+          object: identifierToAug(expr.callee.object),
+          property: {
+            type: "FunctionCall",
+            callee: identifierToAug(expr.callee.property),
+            args: expr.arguments.map(childExprToAug),
+          },
+        };
+      throw "Invalid callee";
   }
 }
 

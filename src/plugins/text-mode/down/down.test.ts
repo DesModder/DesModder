@@ -323,7 +323,11 @@ describe("Basic exprs", () => {
       object: id("L"),
       property: id("random"),
     });
-    // TODO: testExpr("dot access call", "L.random(5)", {});
+    testExpr("dot access call", "L.random(5)", {
+      type: "DotAccess",
+      object: id("L"),
+      property: functionCall(id("random"), [number(5)]),
+    });
   });
   describe("ListAccessExpression", () => {
     testExpr("numeric index", "L[1]", {
