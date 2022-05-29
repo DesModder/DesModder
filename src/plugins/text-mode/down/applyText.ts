@@ -4,8 +4,13 @@ import textToAST from "../down/textToAST";
 import astToAug from "./astToAug";
 
 export default function applyText(text: string) {
-  const ast = textToAST(text);
-  const aug = astToAug(ast);
-  const state = augToRaw(aug);
+  let state;
+  try {
+    const ast = textToAST(text);
+    const aug = astToAug(ast);
+    state = augToRaw(aug);
+  } catch (err) {
+    console.error("Error while compiling to Desmos:\n", err);
+  }
   Calc.setState(state);
 }
