@@ -8,14 +8,12 @@
   access,
   seq @right,
   call,
-  updateRule @right,
   prefix,
   postfix,
   exp @right,
   times @left,
   plus @left,
-  shift @left,
-  loop,
+  updateRule @right,
   rel @left
 }
 

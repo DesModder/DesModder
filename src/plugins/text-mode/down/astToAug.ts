@@ -162,10 +162,8 @@ function expressionToAug(
 ): Aug.ExpressionAug {
   // TODO: improve expression schema
   const style = styleValue.props;
-  if (style.label !== undefined && !isStyleValue(style.label))
-    throw "Label should be a style map";
-  if (style.domain !== undefined && !isStyleValue(style.domain))
-    throw "Property `.domain` must be a style value";
+  assertOnlyStyleOrUndefined(style.label, "label");
+  assertOnlyStyleOrUndefined(style.domain, "domain");
   let regression = regressionBody
     ? {
         isLogMode: stylePropBoolean(style.logMode, false),
@@ -222,11 +220,15 @@ function expressionToAug(
         : undefined,
     // TODO cdf
     vizProps: {},
-    // TODO clickableInfo,
+    clickableInfo: style.onClick
+      ? {
+          description: evalExprToString(style.clickDescription) ?? "",
+          latex: childExprToAug(style.onClick),
+        }
+      : undefined,
     ...columnExpressionCommonStyle(styleValue),
   };
 }
-
 function columnExpressionCommonStyle({ props: style }: StyleValue) {
   if (style.lines && style.lines.type !== "StyleValue")
     throw "Property `.lines` must be a style value";
@@ -357,7 +359,14 @@ function imageToAug(styleValue: StyleValue, expr: Image): Aug.ImageAug {
     opacity: stylePropExpr(style.opacity, constant(1)),
     foreground: stylePropBoolean(style.foreground, false),
     draggable: stylePropBoolean(style.draggable, false),
-    // TODO: clickableInfo
+    clickableInfo: style.onClick
+      ? {
+          description: evalExprToString(style.clickDescription) ?? "",
+          latex: childExprToAug(style.onClick),
+          hoveredImage: evalExprToString(style.hoveredImage) ?? "",
+          depressedImage: evalExprToString(style.depressedImage) ?? "",
+        }
+      : undefined,
   };
 }
 
@@ -447,6 +456,14 @@ function isExpr(value: StyleProp): value is Expression {
 
 function isStyleValue(value: StyleProp): value is StyleValue {
   return typeof value === "object" && value.type === "StyleValue";
+}
+
+function assertOnlyStyleOrUndefined(
+  value: StyleValue | Expression | undefined,
+  name: string
+): asserts value is StyleValue | undefined {
+  if (value !== undefined && !isStyleValue(value))
+    throw `Property '.${name}' must be a style value`;
 }
 
 function applySettings(state: Aug.State, styleValue: StyleValue) {
