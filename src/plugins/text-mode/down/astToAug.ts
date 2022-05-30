@@ -14,6 +14,7 @@ import {
 import * as Aug from "../aug/AugState";
 import { mapFromEntries } from "utils/utils";
 import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
+import { Calc } from "globals/window";
 
 export default function astToAug(program: Program) {
   const state: Aug.State = {
@@ -60,7 +61,7 @@ function fixEmptyIDs(state: Aug.State) {
  * Convert colors with value "" (empty string) to valid colors
  */
 function fixEmptyColors(state: Aug.State) {
-  // TODO: use RED, BLUE, etc. variables instead of fixed colors
+  // TODO: use Calc.colors instead of fixed colors
   const colors = ["#c74440", "#2d70b3", "#388c46", "#6042a6", "#000000"];
   // colorIndex will be the index of the next color filled
   let colorIndex = 0;
@@ -241,7 +242,7 @@ function columnExpressionCommonStyle({ props: style }: StyleValue) {
     color: !isExpr(style.color)
       ? ""
       : style.color.type === "Identifier"
-      ? identifierToAug(style.color)
+      ? Calc.colors[style.color.name] ?? identifierToAug(style.color)
       : evalExprToString(style.color),
     hidden: stylePropBoolean(style.hidden, false),
     points: style.points && {

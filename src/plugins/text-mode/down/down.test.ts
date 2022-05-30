@@ -5,6 +5,7 @@ import { test, expect, describe } from "@jest/globals";
 import { mapFromEntries } from "utils/utils";
 
 jest.mock("utils/depUtils");
+jest.mock("globals/window");
 
 function textToAug(s: string) {
   return astToAug(textToAST(s));
