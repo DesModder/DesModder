@@ -8,6 +8,7 @@ import {
   delimitedIndent,
 } from "@codemirror/language";
 import { styleTags, tags as t } from "@codemirror/highlight";
+import { completions } from "./completions";
 
 export const TextModeLanguage = LRLanguage.define({
   parser: parser.configure({
@@ -34,6 +35,7 @@ export const TextModeLanguage = LRLanguage.define({
   languageData: {
     commentTokens: { line: "//" },
     indentOnInput: /^\s*[})\]]$/,
+    autocomplete: completions,
   },
 });
 

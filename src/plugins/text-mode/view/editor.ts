@@ -60,7 +60,6 @@ export function initView(controller: Controller) {
       bracketMatching(),
       // enable automatic close brackets
       closeBrackets(),
-      // TODO: autocompletion setup
       autocompletion(),
       // highlight the active line
       highlightActiveLine(),
@@ -81,7 +80,6 @@ export function initView(controller: Controller) {
         // TODO: avoid collision with keybinding list from vanilla Desmos
         ...commentKeymap,
         // Ctrl+Space to start completion
-        // TODO: autocompletion setup
         ...completionKeymap,
       ]),
       scrollTheme,
