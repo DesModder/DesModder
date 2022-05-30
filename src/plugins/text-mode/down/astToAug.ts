@@ -1,22 +1,10 @@
-import {
-  Program,
-  StyleMappingFilled,
-  Statement,
-  Expression,
-  Identifier,
-  PiecewiseBranch,
-  TableColumn,
-  Image,
-  Folder,
-  RegressionStatement,
-  Number,
-} from "./textAST";
+import * as TextAST from "./TextAST";
 import * as Aug from "../aug/AugState";
 import { mapFromEntries } from "utils/utils";
 import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
 import { Calc } from "globals/window";
 
-export default function astToAug(program: Program) {
+export default function astToAug(program: TextAST.Program) {
   const state: Aug.State = {
     version: 9,
     settings: {
@@ -94,7 +82,7 @@ function forEachExpr(
   });
 }
 
-function pushStatement(state: Aug.State, stmt: Statement) {
+function pushStatement(state: Aug.State, stmt: TextAST.Statement) {
   const stmtAug = statementToAug(state, stmt);
   if (stmtAug !== null) {
     state.expressions.list.push(stmtAug);
@@ -105,7 +93,10 @@ function pushStatement(state: Aug.State, stmt: Statement) {
  * Convert a statement to its Aug form. Null represents inserting nothing.
  * The `state` parameter may be modified
  */
-function statementToAug(state: Aug.State, stmt: Statement): Aug.ItemAug | null {
+function statementToAug(
+  state: Aug.State,
+  stmt: TextAST.Statement
+): Aug.ItemAug | null {
   const style = evalStyle(stmt.style);
   switch (stmt.type) {
     case "Settings":
@@ -159,7 +150,7 @@ function statementToAug(state: Aug.State, stmt: Statement): Aug.ItemAug | null {
 function expressionToAug(
   styleValue: StyleValue,
   expr: Aug.Latex.AnyRootOrChild,
-  regressionBody?: RegressionStatement["body"]
+  regressionBody?: TextAST.RegressionStatement["body"]
 ): Aug.ExpressionAug {
   // TODO: improve expression schema
   const style = styleValue.props;
@@ -300,7 +291,7 @@ function exprBase({ props: style }: StyleValue) {
 
 function tableToAug(
   styleValue: StyleValue,
-  columns: TableColumn[]
+  columns: TextAST.TableColumn[]
 ): Aug.TableAug {
   return {
     type: "table",
@@ -309,7 +300,7 @@ function tableToAug(
   };
 }
 
-function tableColumnToAug(column: TableColumn): Aug.TableColumnAug {
+function tableColumnToAug(column: TextAST.TableColumn): Aug.TableColumnAug {
   const styleValue = evalStyle(column.style);
   const style = styleValue.props;
   const expr = column.expr;
@@ -340,7 +331,7 @@ function tableColumnToAug(column: TableColumn): Aug.TableColumnAug {
   }
 }
 
-function imageToAug(styleValue: StyleValue, expr: Image): Aug.ImageAug {
+function imageToAug(styleValue: StyleValue, expr: TextAST.Image): Aug.ImageAug {
   const style = styleValue.props;
   return {
     type: "image",
@@ -369,7 +360,7 @@ function imageToAug(styleValue: StyleValue, expr: Image): Aug.ImageAug {
 
 function folderToAug(
   styleValue: StyleValue,
-  expr: Folder,
+  expr: TextAST.Folder,
   state: Aug.State
 ): Aug.FolderAug {
   const style = styleValue.props;
@@ -447,7 +438,7 @@ function stylePropBoolean(value: StyleProp, defaultValue: boolean) {
   return isExpr(value) ? evalExprToBoolean(value) : defaultValue;
 }
 
-function isExpr(value: StyleProp): value is Expression {
+function isExpr(value: StyleProp): value is TextAST.Expression {
   return typeof value === "object" && value.type !== "StyleValue";
 }
 
@@ -456,7 +447,7 @@ function isStyleValue(value: StyleProp): value is StyleValue {
 }
 
 function assertOnlyStyleOrUndefined(
-  value: StyleValue | Expression | undefined,
+  value: StyleValue | TextAST.Expression | undefined,
   name: string
 ): asserts value is StyleValue | undefined {
   if (value !== undefined && !isStyleValue(value))
@@ -546,9 +537,9 @@ interface StyleValue {
   };
 }
 
-type StyleProp = Expression | StyleValue | undefined;
+type StyleProp = TextAST.Expression | StyleValue | undefined;
 
-function evalStyle(style: StyleMappingFilled | null) {
+function evalStyle(style: TextAST.StyleMappingFilled | null) {
   style ??= { type: "StyleMapping", entries: [] };
   let res: StyleValue = {
     type: "StyleValue",
@@ -561,7 +552,7 @@ function evalStyle(style: StyleMappingFilled | null) {
   return res;
 }
 
-function evalExpr(expr: Expression): number | string | boolean {
+function evalExpr(expr: TextAST.Expression): number | string | boolean {
   switch (expr.type) {
     case "Number":
       return expr.value;
@@ -582,7 +573,7 @@ function evalExpr(expr: Expression): number | string | boolean {
   }
 }
 
-function evalExprTo(expr: Expression, type: string) {
+function evalExprTo(expr: TextAST.Expression, type: string) {
   const res = evalExpr(expr);
   if (typeof res !== type) {
     throw `Expected expression to evaluate to a ${type}`;
@@ -598,15 +589,17 @@ function evalExprToString(expr: StyleProp, fallback?: string): string {
   return evalExprTo(expr, "string") as string;
 }
 
-function evalExprToNumber(expr: Expression): number {
+function evalExprToNumber(expr: TextAST.Expression): number {
   return evalExprTo(expr, "number") as number;
 }
 
-function evalExprToBoolean(expr: Expression): boolean {
+function evalExprToBoolean(expr: TextAST.Expression): boolean {
   return evalExprTo(expr, "boolean") as boolean;
 }
 
-function childExprToAug(expr: StyleValue | Expression): Aug.Latex.AnyChild {
+function childExprToAug(
+  expr: StyleValue | TextAST.Expression
+): Aug.Latex.AnyChild {
   if (expr.type === "StyleValue") throw "Unexpected style value";
   switch (expr.type) {
     case "Number":
@@ -758,7 +751,9 @@ const binopMap = {
   "^": "Exponent",
 } as { [key: string]: string };
 
-function piecewiseToAug(branches: PiecewiseBranch[]): Aug.Latex.AnyChild {
+function piecewiseToAug(
+  branches: TextAST.PiecewiseBranch[]
+): Aug.Latex.AnyChild {
   const res = piecewiseInnerToAug(branches);
   if (res.type === "Constant" && res.value === 1) {
     return {
@@ -772,7 +767,9 @@ function piecewiseToAug(branches: PiecewiseBranch[]): Aug.Latex.AnyChild {
   }
 }
 
-function piecewiseInnerToAug(branches: PiecewiseBranch[]): Aug.Latex.AnyChild {
+function piecewiseInnerToAug(
+  branches: TextAST.PiecewiseBranch[]
+): Aug.Latex.AnyChild {
   const firstBranch = branches[0];
   if (firstBranch === undefined) return constant(NaN);
   const firstCond = childExprToAug(firstBranch.condition);
@@ -819,7 +816,7 @@ const dontSubscriptIdentifiers = new Set([
   ...fragileNames,
 ]);
 
-function identifierToAug(expr: Identifier) {
+function identifierToAug(expr: TextAST.Identifier) {
   return {
     type: "Identifier" as const,
     symbol:
@@ -836,7 +833,7 @@ function constant(val: number): Aug.Latex.Constant {
   };
 }
 
-function number(val: number): Number {
+function number(val: number): TextAST.Number {
   return {
     type: "Number",
     value: val,

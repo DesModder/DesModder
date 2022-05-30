@@ -1,24 +1,7 @@
 import { parser } from "../lezer/syntax.grammar";
 import { printTree } from "../lezer/print-lezer-tree";
 import { SyntaxNode } from "@lezer/common";
-import {
-  Statement,
-  Expression,
-  RepeatedExpression,
-  RangeExpression,
-  ListExpression,
-  PiecewiseBranch,
-  BinaryExpression,
-  CallExpression,
-  MappingEntry,
-  Identifier,
-  AssignmentExpression,
-  TableColumn,
-  StyleMapping,
-  FunctionDefinition,
-  LetStatement,
-  ShowStatement,
-} from "./textAST";
+import * as TextAST from "./TextAST";
 import { mapFromEntries } from "utils/utils";
 
 export default function textToAST(text: string) {
@@ -34,14 +17,14 @@ export default function textToAST(text: string) {
   if (!hasFirstChild) {
     throw "Expected nonempty program";
   }
-  const statements: Statement[] = [];
+  const statements: TextAST.Statement[] = [];
   do {
     statements.push(statementToAST(text, cursor.node));
   } while (cursor.nextSibling());
   return statements;
 }
 
-function statementToAST(text: string, node: SyntaxNode): Statement {
+function statementToAST(text: string, node: SyntaxNode): TextAST.Statement {
   const style = styleToAST(text, node.getChild("StyleMapping"));
   switch (node.name) {
     case "SimpleStatement":
@@ -122,8 +105,8 @@ function regressionBodyToAST(text: string, node: SyntaxNode | null) {
 function simpleStatementToAST(
   text: string,
   node: SyntaxNode,
-  style: StyleMapping
-): FunctionDefinition | LetStatement | ShowStatement {
+  style: TextAST.StyleMapping
+): TextAST.FunctionDefinition | TextAST.LetStatement | TextAST.ShowStatement {
   const expr = exprToAST(text, node.getChild("Expression")!);
   if (expr.type !== "BinaryExpression" || expr.op !== "=") {
     return {
@@ -151,7 +134,7 @@ function simpleStatementToAST(
     return {
       type: "FunctionDefinition",
       callee: lhs.callee,
-      params: lhs.arguments as Identifier[],
+      params: lhs.arguments as TextAST.Identifier[],
       expr: rhs,
       style,
     };
@@ -180,7 +163,7 @@ function styleToASTKnown(text: string, node: SyntaxNode) {
 /**
  * @param node Expression
  */
-function exprToAST(text: string, node: SyntaxNode): Expression {
+function exprToAST(text: string, node: SyntaxNode): TextAST.Expression {
   switch (node.name) {
     case "Number":
       return {
@@ -274,7 +257,7 @@ function exprToAST(text: string, node: SyntaxNode): Expression {
 function repeatedExpressionToAST(
   text: string,
   node: SyntaxNode
-): RepeatedExpression {
+): TextAST.RepeatedExpression {
   const exprs = node.getChildren("Expression");
   const name = node.firstChild!.name;
   if (name !== "integral" && name !== "sum" && name !== "product") {
@@ -296,7 +279,7 @@ function repeatedExpressionToAST(
 function listExpressionToAST(
   text: string,
   node: SyntaxNode
-): RangeExpression | ListExpression {
+): TextAST.RangeExpression | TextAST.ListExpression {
   const exprsStart = node.getChildren("Expression", null, "...");
   const exprsEnd = node.getChildren("Expression", "...");
   if (exprsEnd.length) {
@@ -317,7 +300,10 @@ function listExpressionToAST(
 /**
  * @param node AssignmentExpression
  */
-function assignmentToAST(text: string, node: SyntaxNode): AssignmentExpression {
+function assignmentToAST(
+  text: string,
+  node: SyntaxNode
+): TextAST.AssignmentExpression {
   const variableNode = node.getChild("Identifier")!;
   return {
     type: "AssignmentExpression",
@@ -329,7 +315,10 @@ function assignmentToAST(text: string, node: SyntaxNode): AssignmentExpression {
 /**
  * @param node PiecewiseBranch
  */
-function piecewiseBranchToAST(text: string, node: SyntaxNode): PiecewiseBranch {
+function piecewiseBranchToAST(
+  text: string,
+  node: SyntaxNode
+): TextAST.PiecewiseBranch {
   const exprs = node.getChildren("Expression");
   return {
     type: "PiecewiseBranch",
@@ -351,7 +340,7 @@ const binaryOps = ["^", "/", "*", "+", "-", "<", "<=", ">=", ">", "="];
 function binaryExpressionToAST(
   text: string,
   node: SyntaxNode
-): BinaryExpression {
+): TextAST.BinaryExpression {
   const exprs = node.getChildren("Expression");
   const opNode = exprs[0].nextSibling!;
   const op = text.substring(opNode.from, opNode.to);
@@ -369,7 +358,10 @@ function binaryExpressionToAST(
 /**
  * @param node CallExpression
  */
-function callExpressionToAST(text: string, node: SyntaxNode): CallExpression {
+function callExpressionToAST(
+  text: string,
+  node: SyntaxNode
+): TextAST.CallExpression {
   const exprs = node.getChildren("Expression");
   return {
     type: "CallExpression",
@@ -381,7 +373,7 @@ function callExpressionToAST(text: string, node: SyntaxNode): CallExpression {
 /**
  * @param node ParenthesizedExpression
  */
-function parenToAST(text: string, node: SyntaxNode): Expression {
+function parenToAST(text: string, node: SyntaxNode): TextAST.Expression {
   const expr = exprToAST(text, node.getChild("Expression")!);
   if (expr.type === "SequenceExpression") {
     expr.parenWrapped = true;
@@ -392,7 +384,10 @@ function parenToAST(text: string, node: SyntaxNode): Expression {
 /**
  * @param node MappingEntry
  */
-function mappingEntryToAST(text: string, node: SyntaxNode): MappingEntry {
+function mappingEntryToAST(
+  text: string,
+  node: SyntaxNode
+): TextAST.MappingEntry {
   const expr = node.lastChild!;
   return {
     type: "MappingEntry",
@@ -420,7 +415,10 @@ function identifierName(text: string, node: SyntaxNode | null): string {
 /**
  * @param node Identifier | DotAccessIdentifier
  */
-function identifierToAST(text: string, node: SyntaxNode | null): Identifier {
+function identifierToAST(
+  text: string,
+  node: SyntaxNode | null
+): TextAST.Identifier {
   return {
     type: "Identifier",
     name: identifierName(text, node),
@@ -430,7 +428,7 @@ function identifierToAST(text: string, node: SyntaxNode | null): Identifier {
 /**
  * @param node TableInner statement
  */
-function tableColumnToAST(text: string, node: SyntaxNode): TableColumn {
+function tableColumnToAST(text: string, node: SyntaxNode): TextAST.TableColumn {
   if (node.name !== "SimpleStatement") throw "Invalid table column";
   const style = styleToAST(text, node.getChild("StyleMapping"));
   const simple = simpleStatementToAST(text, node, style);
