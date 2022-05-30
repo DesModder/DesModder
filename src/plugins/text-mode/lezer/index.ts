@@ -33,6 +33,7 @@ export const TextModeLanguage = LRLanguage.define({
   }),
   languageData: {
     commentTokens: { line: "//" },
+    indentOnInput: /^\s*[})\]]$/,
   },
 });
 
