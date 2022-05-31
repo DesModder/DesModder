@@ -3,6 +3,8 @@ import astToAug from "./astToAug";
 import * as Aug from "../aug/AugState";
 import { test, expect, describe } from "@jest/globals";
 import { mapFromEntries } from "utils/utils";
+import { error, warning } from "./diagnostics";
+import { Diagnostic } from "@codemirror/lint";
 
 jest.mock("utils/depUtils");
 jest.mock("globals/window");
@@ -59,6 +61,7 @@ function getTestName(desc: string, s: string) {
 function testSettings(desc: string, s: string, expected: any) {
   test(getTestName(desc, s), () => {
     const [errors, res] = textToAug(s);
+    if (errors.length > 0) fail();
     if (res === null) fail();
     const graphSettings = res.settings;
     expect(graphSettings).toEqual(expected);
@@ -68,9 +71,21 @@ function testSettings(desc: string, s: string, expected: any) {
 function testStmt(desc: string, s: string, expected: any) {
   test(getTestName(desc, s), () => {
     const [errors, res] = textToAug(s);
+    if (errors.length > 0) fail();
     if (res === null) fail();
     const augStmt = res.expressions.list[0];
     expect(augStmt).toEqual(expected);
+  });
+}
+
+function pos(from: number, to: number) {
+  return { from, to };
+}
+
+function testDiagnostics(desc: string, s: string, expected: Diagnostic[]) {
+  test(getTestName(desc, s), () => {
+    const [errors, res] = textToAug(s);
+    expect(errors).toEqual(expected);
   });
 }
 
@@ -804,6 +819,110 @@ describe("Settings", () => {
       polarMode: false,
     }
   );
+});
+
+describe("Diagnostics", () => {
+  describe("Hydration diagnostics", () => {
+    testDiagnostics(
+      "Warning of missing properties",
+      `settings
+      @{abc: 1, viewport: @{def: 2}}`,
+      [
+        warning("Property abc unexpected on settings", pos(17, 20)),
+        warning("Property def unexpected on settings.viewport", pos(37, 40)),
+      ]
+    );
+    testDiagnostics(
+      "Expected style mapping, got primitive",
+      `y=x @{points: 7}`,
+      [
+        error(
+          "Expected expression.points to be style mapping, but got primitive",
+          pos(14, 15)
+        ),
+      ]
+    );
+    testDiagnostics(
+      "Expected primitive, got style mapping",
+      `y=1 @{color: "#FFF"} y=2 @{color: @{}}`,
+      [
+        error(
+          "Expected expression.color to be primitive, but got style mapping",
+          pos(34, 37)
+        ),
+      ]
+    );
+    testDiagnostics(
+      "Unexpected enum value",
+      `y=1 @{points: @{style: "ABC", drag: "DEF"}}`,
+      [
+        error(
+          'Expected expression.points.style to be one of ["POINT","OPEN","CROSS"], but got "ABC" instead',
+          pos(23, 28)
+        ),
+        error(
+          'Expected expression.points.drag to be one of ["NONE","X","Y","XY","AUTO"], but got "DEF" instead',
+          pos(36, 41)
+        ),
+      ]
+    );
+    // TODO: variable scoping, so `true` resolves to boolean
+    testDiagnostics(
+      "Expected color, got other",
+      `y=1 @{color: "abc"} y=2 @{color: BLUE} y=3 @{color: 5}  y=4 @{color: true}`,
+      [
+        error(
+          "Expected expression.color to evaluate to string or identifier, but got number",
+          pos(52, 53)
+        ),
+      ]
+    );
+    testDiagnostics(
+      "Expected string,boolean,number got other",
+      `settings @{randomSeed: 1, squareAxes: "abc", xAxisStep: true}`,
+      [
+        error(
+          "Expected settings.squareAxes to evaluate to boolean, but got string",
+          pos(38, 43)
+        ),
+        error(
+          "Expected settings.randomSeed to evaluate to string, but got number",
+          pos(23, 24)
+        ),
+        error(
+          "Expected settings.xAxisStep to evaluate to number, but got boolean",
+          pos(56, 60)
+        ),
+      ]
+    );
+  });
+  describe("Evaluation diagnostics", () => {
+    testDiagnostics(
+      "Undefined identifier",
+      `settings @{squareAxes: TRUE, xAxisStep: -b}`,
+      [
+        error("Undefined identifier: TRUE", pos(23, 27)),
+        error("Undefined identifier: b", pos(41, 42)),
+      ]
+    );
+  });
+  describe("General diagnostics", () => {
+    testDiagnostics("Regression value type error", `a ~ 3 # r { a = true }`, [
+      error(
+        "Expected regression value a to be a number, but got boolean",
+        pos(16, 20)
+      ),
+    ]);
+    testDiagnostics("Table column non-list", `table { x1 = [1,2] y1 = 42 }`, [
+      error(
+        "Expected table assignment to assign from a ListExpression",
+        pos(24, 26)
+      ),
+    ]);
+    testDiagnostics("Settings in folder", `folder "title" { settings @{} }`, [
+      error("Settings may not be in a folder", pos(17, 29)),
+    ]);
+  });
 });
 
 // TODO: test constexpr evaluation

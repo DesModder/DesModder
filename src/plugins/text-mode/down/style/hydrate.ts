@@ -59,8 +59,9 @@ export function hydrate<T>(
         );
     const chosenEntry: TextAST.MappingEntry | undefined = matchingEntries[0];
     if (chosenEntry?.expr === null) throw "Null expression in style mapping";
-    function earlyReturn(msg: string): [Diagnostic[], T | null] {
-      return [[...allErrors, error(msg, chosenEntry?.expr?.pos)], null];
+    function pushError(msg: string) {
+      allErrors.push(error(msg, chosenEntry?.expr?.pos));
+      hasNull = true;
     }
     const givenValue = matchingEntries[0]?.expr ?? undefined;
     const errPath = itemType + path + "." + key;
@@ -68,9 +69,7 @@ export function hydrate<T>(
       if (givenValue === undefined) {
         res[key] = undefined;
       } else if (givenValue.type !== "StyleMapping") {
-        return earlyReturn(
-          `Expected ${errPath} to be style mapping, but got primitive`
-        );
+        pushError(`Expected ${errPath} to be style mapping, but got primitive`);
       } else {
         const [errors, style] = hydrate(
           givenValue,
@@ -86,11 +85,9 @@ export function hydrate<T>(
     } else if (givenValue === undefined) {
       res[key] = defaults[key] as any;
     } else {
-      if (givenValue.type === "StyleMapping")
-        return earlyReturn(
-          `Expected ${errPath} to be primitive, but got style mapping`
-        );
-      if (schemaType === "expr") {
+      if (givenValue.type === "StyleMapping") {
+        pushError(`Expected ${errPath} to be primitive, but got style mapping`);
+      } else if (schemaType === "expr") {
         res[key] = givenValue;
       } else if (schemaType === "color" && givenValue.type === "Identifier") {
         res[key] = givenValue;
@@ -100,24 +97,25 @@ export function hydrate<T>(
         if (evaluated === null) {
           hasNull = true;
         } else if (typeof schemaType !== "string") {
+          // enum type
           if (typeof evaluated !== "string")
-            return earlyReturn(
+            pushError(
               `Expected ${errPath} to evaluate to string, but got ${typeof evaluated}`
             );
-          if (!schemaType.enum.includes(evaluated))
-            return earlyReturn(
+          else if (!schemaType.enum.includes(evaluated))
+            pushError(
               `Expected ${errPath} to be one of ` +
                 `${JSON.stringify(schemaType.enum)}, but got ` +
                 `${JSON.stringify(evaluated)} instead`
             );
         } else if (schemaType === "color") {
           if (typeof evaluated !== "string")
-            return earlyReturn(
+            pushError(
               `Expected ${errPath} to evaluate to string or identifier, but got ${typeof evaluated}`
             );
         } else {
           if (typeof evaluated !== schemaType)
-            return earlyReturn(
+            pushError(
               `Expected ${errPath} to evaluate to ${schemaType}, but got ${typeof evaluated}`
             );
         }

@@ -293,7 +293,7 @@ function regressionMapEntries(
             `Expected regression value ${
               key.name
             } to be a number, but got ${typeof evaluated}`,
-            regression.pos
+            value.pos
           )
         );
         return null;
@@ -417,8 +417,8 @@ function tableColumnToAug(
     return [
       [
         error(
-          "Table assignment can only assign from a ListExpression",
-          column.pos
+          "Expected table assignment to assign from a ListExpression",
+          column.expr.pos
         ),
       ],
       null,
