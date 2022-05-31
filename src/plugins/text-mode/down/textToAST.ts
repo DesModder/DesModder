@@ -37,6 +37,7 @@ function statementToAST(text: string, node: SyntaxNode): TextAST.Statement {
         right: exprToAST(text, regressionChildren[1]),
         style,
         body: regressionBodyToAST(text, node.getChild("RegressionBody")),
+        pos: getPos(node),
       };
     case "Table":
       return {
@@ -46,6 +47,7 @@ function statementToAST(text: string, node: SyntaxNode): TextAST.Statement {
           .getChildren("Statement")
           .map((node) => tableColumnToAST(text, node)),
         style,
+        pos: getPos(node),
       };
     case "Image":
       const imageStrings = node.getChildren("String");
@@ -54,12 +56,14 @@ function statementToAST(text: string, node: SyntaxNode): TextAST.Statement {
         name: parseString(text, imageStrings[0]),
         url: parseString(text, imageStrings[1]),
         style,
+        pos: getPos(node),
       };
     case "Text":
       return {
         type: "Text",
         text: parseString(text, node.getChild("String")!),
         style,
+        pos: getPos(node),
       };
     case "Folder":
       return {
@@ -70,11 +74,13 @@ function statementToAST(text: string, node: SyntaxNode): TextAST.Statement {
           .getChildren("Statement")
           .map((node) => statementToAST(text, node)),
         style,
+        pos: getPos(node),
       };
     case "Settings":
       return {
         type: "Settings",
         style,
+        pos: getPos(node),
       };
     default:
       throw `Unexpected statement type ${node.name}`;
@@ -113,6 +119,7 @@ function simpleStatementToAST(
       type: "ShowStatement",
       expr: expr,
       style,
+      pos: getPos(node),
     };
   }
   const lhs = expr.left;
@@ -123,6 +130,7 @@ function simpleStatementToAST(
       identifier: lhs,
       expr: rhs,
       style,
+      pos: getPos(node),
     };
   } else if (lhs.type === "CallExpression") {
     if (lhs.callee.type !== "Identifier") {
@@ -137,6 +145,7 @@ function simpleStatementToAST(
       params: lhs.arguments as TextAST.Identifier[],
       expr: rhs,
       style,
+      pos: getPos(node),
     };
   } else {
     throw "LetStatement left-hand side is not an identifier or call expression";
@@ -157,6 +166,7 @@ function styleToASTKnown(text: string, node: SyntaxNode) {
     entries: node
       ?.getChildren("MappingEntry")
       .map((node) => mappingEntryToAST(text, node)),
+    pos: getPos(node),
   };
 }
 
@@ -169,6 +179,7 @@ function exprToAST(text: string, node: SyntaxNode): TextAST.Expression {
       return {
         type: "Number",
         value: parseFloat(text.substring(node.from, node.to)),
+        pos: getPos(node),
       };
     case "Identifier":
       return identifierToAST(text, node);
@@ -176,6 +187,7 @@ function exprToAST(text: string, node: SyntaxNode): TextAST.Expression {
       return {
         type: "String",
         value: parseString(text, node),
+        pos: getPos(node),
       };
     case "RepeatedExpression":
       return repeatedExpressionToAST(text, node);
@@ -188,6 +200,7 @@ function exprToAST(text: string, node: SyntaxNode): TextAST.Expression {
         assignments: node
           .getChildren("AssignmentExpression")
           .map((node) => assignmentToAST(text, node)),
+        pos: getPos(node),
       };
     case "Piecewise":
       const piecewiseChildren = node.getChildren("PiecewiseBranch");
@@ -197,12 +210,14 @@ function exprToAST(text: string, node: SyntaxNode): TextAST.Expression {
         branches: piecewiseChildren.map((node) =>
           piecewiseBranchToAST(text, node)
         ),
+        pos: getPos(node),
       };
     case "PrefixExpression":
       return {
         type: "PrefixExpression",
         op: "negative",
         expr: exprToAST(text, node.getChild("Expression")!),
+        pos: getPos(node),
       };
     case "ParenthesizedExpression":
       return parenToAST(text, node);
@@ -211,6 +226,7 @@ function exprToAST(text: string, node: SyntaxNode): TextAST.Expression {
         type: "MemberExpression",
         object: exprToAST(text, node.getChild("Expression")!),
         property: identifierToAST(text, node.getChild("DotAccessIdentifier")!),
+        pos: getPos(node),
       };
     case "ListAccessExpression":
       const laExpr = node.getChild("Expression")!;
@@ -222,6 +238,7 @@ function exprToAST(text: string, node: SyntaxNode): TextAST.Expression {
           laIndex.type === "ListExpression" && laIndex.values.length === 1
             ? laIndex.values[0]
             : laIndex,
+        pos: getPos(node),
       };
     case "BinaryExpression":
       return binaryExpressionToAST(text, node);
@@ -230,6 +247,7 @@ function exprToAST(text: string, node: SyntaxNode): TextAST.Expression {
         type: "PostfixExpression",
         op: "factorial",
         expr: exprToAST(text, node.getChild("Expression")!),
+        pos: getPos(node),
       };
     case "CallExpression":
       return callExpressionToAST(text, node);
@@ -238,6 +256,7 @@ function exprToAST(text: string, node: SyntaxNode): TextAST.Expression {
         type: "UpdateRule",
         variable: exprToAST(text, node.getChild("Expression")!),
         expression: exprToAST(text, node.getChild("Expression", "->")!),
+        pos: getPos(node),
       };
     case "SequenceExpression":
       return {
@@ -245,6 +264,7 @@ function exprToAST(text: string, node: SyntaxNode): TextAST.Expression {
         left: exprToAST(text, node.getChild("Expression")!),
         right: exprToAST(text, node.getChild("Expression", ",")!),
         parenWrapped: false,
+        pos: getPos(node),
       };
     default:
       throw `Unexpected expression node: ${node.name}`;
@@ -270,6 +290,7 @@ function repeatedExpressionToAST(
     start: exprToAST(text, exprs[1]),
     end: exprToAST(text, exprs[2]),
     expr: exprToAST(text, exprs[3]),
+    pos: getPos(node),
   };
 }
 
@@ -287,12 +308,14 @@ function listExpressionToAST(
       type: "RangeExpression",
       startValues: exprsStart.map((node) => exprToAST(text, node)),
       endValues: exprsEnd.map((node) => exprToAST(text, node)),
+      pos: getPos(node),
     };
   } else {
     const exprs = node.getChildren("Expression");
     return {
       type: "ListExpression",
       values: exprs.map((node) => exprToAST(text, node)),
+      pos: getPos(node),
     };
   }
 }
@@ -309,6 +332,7 @@ function assignmentToAST(
     type: "AssignmentExpression",
     variable: identifierToAST(text, variableNode),
     expr: exprToAST(text, variableNode.nextSibling!.nextSibling!),
+    pos: getPos(node),
   };
 }
 
@@ -329,6 +353,7 @@ function piecewiseBranchToAST(
           type: "Number",
           value: 1,
         },
+    pos: getPos(node),
   };
 }
 
@@ -352,6 +377,7 @@ function binaryExpressionToAST(
     op: op as "^" | "/" | "*" | "+" | "-" | "<" | "<=" | ">=" | ">" | "=",
     left: exprToAST(text, exprs[0]),
     right: exprToAST(text, exprs[1]),
+    pos: getPos(node),
   };
 }
 
@@ -367,6 +393,7 @@ function callExpressionToAST(
     type: "CallExpression",
     callee: exprToAST(text, exprs[0]),
     arguments: exprs.slice(1).map((expr) => exprToAST(text, expr)),
+    pos: getPos(node),
   };
 }
 
@@ -396,6 +423,7 @@ function mappingEntryToAST(
       expr.name === "StyleMapping"
         ? styleToAST(text, expr)
         : exprToAST(text, expr),
+    pos: getPos(node),
   };
 }
 
@@ -422,6 +450,7 @@ function identifierToAST(
   return {
     type: "Identifier",
     name: identifierName(text, node),
+    pos: node ? getPos(node) : undefined,
   };
 }
 
@@ -443,4 +472,11 @@ function tableColumnToAST(text: string, node: SyntaxNode): TextAST.TableColumn {
  */
 function parseString(text: string, node: SyntaxNode): string {
   return JSON.parse(text.substring(node.from, node.to));
+}
+
+function getPos(node: SyntaxNode): TextAST.Pos {
+  return {
+    from: node.from,
+    to: node.to,
+  };
 }

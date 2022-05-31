@@ -8,8 +8,22 @@ import { StyleValue, StyleProp, hydrate } from "./style/hydrate";
 import * as Hydrated from "./style/Hydrated";
 import * as Default from "./style/defaults";
 import * as Schema from "./style/schema";
+import { error, warning } from "./diagnostics";
+import { Diagnostic } from "@codemirror/lint";
+import { evalExpr } from "./staticEval";
+import { Identifier } from "../aug/AugLatex";
 
-export default function astToAug(program: TextAST.Program) {
+/*
+ * Many functions return `[Diagnostic[], ResultValue | null]`
+ *
+ * The first element has errors, including warnings
+ *
+ * If the second element is null, then there is some unrecoverable error.
+ */
+
+export default function astToAug(
+  program: TextAST.Program
+): [Diagnostic[], Aug.State | null] {
   const state: Aug.State = {
     version: 9,
     settings: {
@@ -24,13 +38,23 @@ export default function astToAug(program: TextAST.Program) {
       list: [],
     },
   };
+  const allErrors: Diagnostic[] = [];
+  let hasBlockingError = false;
   for (let stmt of program) {
     // TODO: throw if there are multiple settings expressions
-    pushStatement(state, stmt);
+    const [errors, stmtAug] = statementToAug(state, stmt);
+    allErrors.push(...errors);
+    if (stmtAug === null) {
+      hasBlockingError = true;
+    } else if (stmtAug.type === "settings") {
+      state.settings = { ...state.settings, ...stmtAug.settings };
+    } else {
+      state.expressions.list.push(stmtAug);
+    }
   }
   fixEmptyIDs(state);
   fixEmptyColors(state);
-  return state;
+  return [allErrors, hasBlockingError ? null : state];
 }
 
 /**
@@ -88,13 +112,6 @@ function forEachExpr(
   });
 }
 
-function pushStatement(state: Aug.State, stmt: TextAST.Statement) {
-  const stmtAug = statementToAug(state, stmt);
-  if (stmtAug !== null) {
-    state.expressions.list.push(stmtAug);
-  }
-}
-
 /**
  * Convert a statement to its Aug form. Null represents inserting nothing.
  * The `state` parameter may be modified
@@ -102,12 +119,18 @@ function pushStatement(state: Aug.State, stmt: TextAST.Statement) {
 function statementToAug(
   state: Aug.State,
   stmt: TextAST.Statement
-): Aug.ItemAug | null {
+): [
+  Diagnostic[],
+  Aug.ItemAug | { type: "settings"; settings: Hydrated.Settings } | null
+] {
   const style = evalStyle(stmt.style);
   switch (stmt.type) {
     case "Settings":
-      state.settings = getSettings(style);
-      return null;
+      const [errors, res] = getSettings(style);
+      return [
+        errors,
+        res !== null ? { type: "settings", settings: res } : null,
+      ];
     case "ShowStatement":
       return expressionToAug(style, childExprToAug(stmt.expr));
     case "LetStatement":
@@ -136,28 +159,46 @@ function statementToAug(
           left: childExprToAug(stmt.left),
           right: childExprToAug(stmt.right),
         },
-        stmt.body
+        stmt
       );
     case "Table":
       return tableToAug(style, stmt.columns);
     case "Image":
       return imageToAug(style, stmt);
     case "Text":
-      return {
-        ...exprBase(hydrate(style, Default.text, Schema.text, "text")),
-        type: "text",
-        text: stmt.text,
-      };
+      return textToAug(style, stmt);
     case "Folder":
       return folderToAug(style, stmt, state);
   }
 }
 
+function textToAug(
+  styleValue: StyleValue,
+  stmt: TextAST.Text
+): [Diagnostic[], Aug.TextAug | null] {
+  const [errors, style] = hydrate(
+    styleValue,
+    Default.text,
+    Schema.text,
+    "text"
+  );
+  return [
+    errors,
+    style !== null
+      ? {
+          ...exprBase(style),
+          type: "text",
+          text: stmt.text,
+        }
+      : null,
+  ];
+}
+
 function expressionToAug(
   styleValue: StyleValue,
   expr: Aug.Latex.AnyRootOrChild,
-  regressionBody?: TextAST.RegressionStatement["body"]
-): Aug.ExpressionAug {
+  regressionNode?: TextAST.RegressionStatement
+): [Diagnostic[], Aug.ExpressionAug | null] {
   // is the expr polar for the purposes of domain?
   const isPolar =
     expr.type === "Comparator" &&
@@ -165,29 +206,29 @@ function expressionToAug(
     expr.left.symbol === "r";
 
   // TODO: split this based on regression, function definition, etc.
-  const style = hydrate(
+  const [errors, style] = hydrate(
     styleValue,
     isPolar ? Default.polarExpression : Default.nonpolarExpression,
     Schema.expression,
     "expression"
   );
-  const regression = regressionBody && {
+  if (style === null) return [errors, null];
+  const [regressionErrors, regMapEntries] =
+    regressionMapEntries(regressionNode);
+  errors.push(...regressionErrors);
+  if (regMapEntries === null) return [errors, null];
+  const regression = regressionNode?.body && {
     isLogMode: style.logModeRegression,
-    residualVariable: identifierToAug(regressionBody.residualVariable),
-    regressionParameters: mapFromEntries(
-      [...regressionBody.regressionParameters.entries()].map(([key, value]) => [
-        identifierToAug(key),
-        evalExprToNumber(value),
-      ])
-    ),
+    residualVariable: identifierToAug(regressionNode.body.residualVariable),
+    regressionParameters: mapFromEntries(regMapEntries),
   };
-  return {
+  const res: Aug.ExpressionAug = {
     type: "expression",
     // Use empty string as an ID placeholder. These will get filled in at the end
     ...exprBase(style),
     latex: expr,
     label:
-      style.label.text !== ""
+      style.label && style.label.text !== ""
         ? {
             ...style.label,
             size: childExprToAug(style.label.size),
@@ -203,25 +244,31 @@ function expressionToAug(
     // TODO slider
     slider: {},
     polarDomain:
-      isPolar && !exprEvalSameDeep(style.domain, { min: 0, max: 12 * Math.PI })
+      style.domain &&
+      isPolar &&
+      !exprEvalSameDeep(style.domain, { min: 0, max: 12 * Math.PI })
         ? {
             min: childExprToAug(style.domain.min),
             max: childExprToAug(style.domain.max),
           }
         : undefined,
     parametricDomain:
-      !isPolar && !exprEvalSameDeep(style.domain, { min: 0, max: 1 })
+      style.domain &&
+      !isPolar &&
+      !exprEvalSameDeep(style.domain, { min: 0, max: 1 })
         ? {
             min: childExprToAug(style.domain.min),
             max: childExprToAug(style.domain.max),
           }
         : undefined,
-    cdf: !exprEvalSameDeep(style.cdf, { min: -Infinity, max: Infinity })
-      ? {
-          min: childExprToAug(style.cdf.min),
-          max: childExprToAug(style.cdf.max),
-        }
-      : undefined,
+    cdf:
+      style.cdf &&
+      !exprEvalSameDeep(style.cdf, { min: -Infinity, max: Infinity })
+        ? {
+            min: childExprToAug(style.cdf.min),
+            max: childExprToAug(style.cdf.max),
+          }
+        : undefined,
     // TODO: vizProps
     vizProps: {},
     clickableInfo: style.onClick
@@ -230,65 +277,64 @@ function expressionToAug(
           latex: childExprToAug(style.onClick),
         }
       : undefined,
-    ...columnExpressionCommonStyle(styleValue),
+    ...columnExpressionCommonStyle(style),
   };
+  return [errors, res];
 }
 
-function columnExpressionCommonStyle({ props: style }: StyleValue) {
-  if (style.lines && style.lines.type !== "StyleValue")
-    throw "Property `.lines` must be a style value";
-  if (style.points && style.points.type !== "StyleValue")
-    throw "Property `.points` must be a style value";
+function regressionMapEntries(
+  regression?: TextAST.RegressionStatement
+): [Diagnostic[], null | [Identifier, number][]] {
+  if (regression?.body === undefined) return [[], []];
+  const errors: Diagnostic[] = [];
+  const res = [...regression.body.regressionParameters.entries()].map(
+    ([key, value]): [Identifier, number] | null => {
+      const evaluated = evalExpr(value);
+      if (typeof evaluated !== "number") {
+        errors.push(
+          error(
+            `Expected regression value ${key} to be a number, but got ${typeof evaluated}`,
+            regression.pos
+          )
+        );
+        return null;
+      }
+      return [identifierToAug(key), evaluated];
+    }
+  );
+  return [errors, everyNonNull(res) ? res : null];
+}
+
+function columnExpressionCommonStyle(style: Hydrated.ColumnExpressionCommon) {
   const res = {
-    // Use empty string as a color placeholder. These will get filled in at the end
-    color: !isExpr(style.color)
-      ? ""
-      : style.color.type === "Identifier"
-      ? Calc.colors[style.color.name] ?? identifierToAug(style.color)
-      : evalExprToString(style.color),
-    hidden: stylePropBoolean(style.hidden, false),
-    points: style.points && {
-      opacity: childExprToAug(style.points.props.opacity ?? number(0.9)),
-      size: childExprToAug(style.points.props.size ?? number(9)),
-      style: evalExprToStringEnum(style.points.props.style, "POINT", [
-        "POINT",
-        "OPEN",
-        "CROSS",
-      ]) as "POINT" | "OPEN" | "CROSS",
-      dragMode: evalExprToStringEnum(style.points.props.drag, "NONE", [
-        "NONE",
-        "X",
-        "Y",
-        "XY",
-        "AUTO",
-      ]) as "NONE" | "X" | "Y" | "XY" | "AUTO",
-    },
-    lines: style.lines && {
-      opacity: childExprToAug(style.lines.props.opacity ?? number(0.9)),
-      width: childExprToAug(style.lines.props.width ?? number(2.5)),
-      style: evalExprToStringEnum(style.lines.props.style, "SOLID", [
-        "SOLID",
-        "DASHED",
-        "DOTTED",
-      ]) as "SOLID" | "DASHED" | "DOTTED",
-    },
+    color:
+      typeof style.color === "string"
+        ? style.color
+        : Calc.colors[style.color.name] ?? identifierToAug(style.color),
+    hidden: style.hidden,
+    points:
+      style.points &&
+      !exprEvalSame(style.points.opacity, 0) &&
+      !exprEvalSame(style.points.size, 0)
+        ? {
+            opacity: childExprToAug(style.points.opacity),
+            size: childExprToAug(style.points.size),
+            style: style.points.style,
+            dragMode: style.points.drag,
+          }
+        : undefined,
+    lines:
+      style.lines &&
+      !exprEvalSame(style.lines.opacity, 0) &&
+      !exprEvalSame(style.lines.width, 0)
+        ? {
+            opacity: childExprToAug(style.lines.opacity),
+            width: childExprToAug(style.lines.width),
+            style: style.lines.style,
+          }
+        : undefined,
   };
   return res;
-}
-
-function evalExprToStringEnum(
-  prop: StyleProp,
-  fallback: string,
-  values: string[]
-) {
-  const style = evalExprToString(prop, fallback);
-  if (!values.includes(style)) {
-    throw (
-      `String ${JSON.stringify(style)} is not a valid style here. ` +
-      `Expected any of: ${values.map((s) => JSON.stringify(s)).join(", ")}`
-    );
-  }
-  return style;
 }
 
 function exprBase(style: Hydrated.NonFolderBase) {
@@ -302,48 +348,95 @@ function exprBase(style: Hydrated.NonFolderBase) {
 function tableToAug(
   styleValue: StyleValue,
   columns: TextAST.TableColumn[]
-): Aug.TableAug {
-  return {
-    type: "table",
-    ...exprBase(hydrate(styleValue, Default.table, Schema.table, "table")),
-    columns: columns.map(tableColumnToAug),
-  };
+): [Diagnostic[], Aug.TableAug | null] {
+  const results = columns.map(tableColumnToAug);
+  const tableColumnErrors = results
+    .map((e) => e[0])
+    .reduce((a, b) => [...a, ...b], []);
+  const resultColumns = results.map((e) => e[1]);
+  if (!everyNonNull(resultColumns)) return [tableColumnErrors, null];
+  const [hydrateErrors, style] = hydrate(
+    styleValue,
+    Default.table,
+    Schema.table,
+    "table"
+  );
+  const errors = [...tableColumnErrors, ...hydrateErrors];
+  if (style === null) return [errors, null];
+  return [
+    errors,
+    {
+      type: "table",
+      ...exprBase(style),
+      columns: resultColumns,
+    },
+  ];
 }
 
-function tableColumnToAug(column: TextAST.TableColumn): Aug.TableColumnAug {
+function tableColumnToAug(
+  column: TextAST.TableColumn
+): [Diagnostic[], Aug.TableColumnAug | null] {
   const styleValue = evalStyle(column.style);
-  const style = styleValue.props;
+  const [errors, style] = hydrate(
+    styleValue,
+    Default.column,
+    Schema.column,
+    "column"
+  );
+  if (style === null) return [errors, null];
   const expr = column.expr;
   const base = {
     type: "column" as const,
-    id: evalExprToString(style.id, ""),
-    ...columnExpressionCommonStyle(styleValue),
+    id: style.id,
+    ...columnExpressionCommonStyle(style),
   };
-  if (column.type === "LetStatement") {
-    if (expr.type !== "ListExpression")
-      throw "Table assignment can only assign from a ListExpression";
-    return {
-      ...base,
-      values: expr.values.map(childExprToAug),
-      latex: childExprToAug(column.identifier),
-    };
-  } else if (expr.type === "ListExpression") {
-    return {
-      ...base,
-      values: expr.values.map(childExprToAug),
-    };
+  if (expr.type === "ListExpression") {
+    const values = expr.values.map(childExprToAug);
+    return [
+      errors,
+      {
+        ...base,
+        values,
+        latex:
+          column.type === "LetStatement"
+            ? childExprToAug(column.identifier)
+            : undefined,
+      },
+    ];
+  } else if (column.type === "LetStatement") {
+    return [
+      [
+        error(
+          "Table assignment can only assign from a ListExpression",
+          column.pos
+        ),
+      ],
+      null,
+    ];
   } else {
-    return {
-      ...base,
-      values: [],
-      latex: childExprToAug(expr),
-    };
+    return [
+      errors,
+      {
+        ...base,
+        values: [],
+        latex: childExprToAug(expr),
+      },
+    ];
   }
 }
 
-function imageToAug(styleValue: StyleValue, expr: TextAST.Image): Aug.ImageAug {
-  const style = hydrate(styleValue, Default.image, Schema.image, "image");
-  return {
+function imageToAug(
+  styleValue: StyleValue,
+  expr: TextAST.Image
+): [Diagnostic[], Aug.ImageAug | null] {
+  const [errors, style] = hydrate(
+    styleValue,
+    Default.image,
+    Schema.image,
+    "image"
+  );
+  if (style === null) return [errors, null];
+  const res: Aug.ImageAug = {
     type: "image",
     ...exprBase(style),
     image_url: expr.url,
@@ -364,25 +457,41 @@ function imageToAug(styleValue: StyleValue, expr: TextAST.Image): Aug.ImageAug {
         }
       : undefined,
   };
+  return [errors, res];
 }
 
 function folderToAug(
   styleValue: StyleValue,
   expr: TextAST.Folder,
   state: Aug.State
-): Aug.FolderAug {
+): [Diagnostic[], Aug.FolderAug | null] {
   const children: Aug.NonFolderAug[] = [];
+  const allErrors: Diagnostic[] = [];
   for (let child of expr.children) {
-    const stmtAug = statementToAug(state, child);
+    const [errors, stmtAug] = statementToAug(state, child);
+    allErrors.push(...errors);
     if (stmtAug !== null) {
       if (stmtAug.type === "folder") {
-        throw "Nested folders are not yet permitted";
+        return [
+          [error("Nested folders are not yet implemented", child.pos)],
+          null,
+        ];
+      } else if (stmtAug.type === "settings") {
+        return [[error("Settings may not be in a folder", child.pos)], null];
+      } else {
+        children.push(stmtAug);
       }
-      children.push(stmtAug);
     }
   }
-  const style = hydrate(styleValue, Default.folder, Schema.folder, "folder");
-  return {
+  const [styleErrors, style] = hydrate(
+    styleValue,
+    Default.folder,
+    Schema.folder,
+    "folder"
+  );
+  allErrors.push(...styleErrors);
+  if (style === null) return [allErrors, null];
+  const res: Aug.FolderAug = {
     type: "folder",
     id: style.id,
     secret: style.secret,
@@ -391,6 +500,7 @@ function folderToAug(
     title: expr.title,
     children: children,
   };
+  return [allErrors, res];
 }
 
 const labelOrientations = [
@@ -412,35 +522,8 @@ const labelOrientations = [
   "auto_right",
 ];
 
-function isLabelOrientation(str: string): str is Aug.LabelOrientation {
-  return labelOrientations.includes(str);
-}
-
-function stylePropExpr(
-  value: StyleProp,
-  defaultValue: Aug.Latex.AnyChild
-): Aug.Latex.AnyChild {
-  return isExpr(value) ? childExprToAug(value) : defaultValue;
-}
-
-function stylePropBoolean(value: StyleProp, defaultValue: boolean) {
-  return isExpr(value) ? evalExprToBoolean(value) : defaultValue;
-}
-
 function isExpr(value: StyleProp): value is TextAST.Expression {
   return typeof value === "object" && value.type !== "StyleValue";
-}
-
-function isStyleValue(value: StyleProp): value is StyleValue {
-  return typeof value === "object" && value.type === "StyleValue";
-}
-
-function assertOnlyStyleOrUndefined(
-  value: StyleValue | TextAST.Expression | undefined,
-  name: string
-): asserts value is StyleValue | undefined {
-  if (value !== undefined && !isStyleValue(value))
-    throw `Property '.${name}' must be a style value`;
 }
 
 function getSettings(style: StyleValue) {
@@ -465,6 +548,7 @@ function evalStyle(style: TextAST.StyleMappingFilled | null) {
   let res: StyleValue = {
     type: "StyleValue",
     props: {},
+    pos: style.pos,
   };
   for (let { property, expr } of style.entries) {
     if (expr === null) throw "Null expression in style mapping";
@@ -490,53 +574,6 @@ function exprEvalSameDeep<T extends { [key: string]: TextAST.Expression }>(
   for (const key in expected)
     if (!exprEvalSame(exprMap[key], expected[key])) return false;
   return true;
-}
-
-function evalExpr(expr: TextAST.Expression): number | string | boolean {
-  switch (expr.type) {
-    case "Number":
-      return expr.value;
-    case "String":
-      return expr.value;
-    case "PrefixExpression":
-      return -evalExpr(expr.expr);
-    case "Identifier":
-      // TODO: create proper builtin map
-      // Rudimentary variable inlining
-      if (expr.name === "false") return false;
-      else if (expr.name === "true") return true;
-      else if (expr.name === "infty") return Infinity;
-      else if (expr.name === "pi") return Math.PI;
-      else {
-        throw `Undefined identifier: ${expr.name}`;
-      }
-    default:
-      throw `Unhandled expr type: ${expr.type}`;
-  }
-}
-
-function evalExprTo(expr: TextAST.Expression, type: string) {
-  const res = evalExpr(expr);
-  if (typeof res !== type) {
-    throw `Expected expression to evaluate to a ${type}`;
-  }
-  return res;
-}
-
-function evalExprToString(expr: StyleProp, fallback?: string): string {
-  if (!isExpr(expr)) {
-    if (fallback !== undefined) return fallback;
-    throw "Expected string expression here";
-  }
-  return evalExprTo(expr, "string") as string;
-}
-
-function evalExprToNumber(expr: TextAST.Expression): number {
-  return evalExprTo(expr, "number") as number;
-}
-
-function evalExprToBoolean(expr: TextAST.Expression): boolean {
-  return evalExprTo(expr, "boolean") as boolean;
 }
 
 function childExprToAug(
@@ -770,4 +807,8 @@ function identifierToAug(expr: TextAST.Identifier) {
 
 function constant(value: number) {
   return { type: "Constant" as const, value };
+}
+
+function everyNonNull<T>(arr: (T | null)[]): arr is T[] {
+  return arr.every((e) => e !== null);
 }

@@ -23,6 +23,7 @@ import { commentKeymap } from "@codemirror/comment";
 import { defaultHighlightStyle } from "@codemirror/highlight";
 // Language extension
 import { TextMode } from "../lezer/index";
+import { linter } from "@codemirror/lint";
 
 const scrollTheme = EditorView.theme({
   "&": {
@@ -37,6 +38,10 @@ export function initView(controller: Controller) {
   let startState = EditorState.create({
     doc: getText(),
     extensions: [
+      // linter, showing errors
+      // The linter is also the entry point to evaluation
+      linter(controller.doLint.bind(controller), { delay: 250 }),
+      // line numbers and gutter
       lineNumbers(),
       highlightActiveLineGutter(),
       // undo/redo history
@@ -83,7 +88,6 @@ export function initView(controller: Controller) {
         ...completionKeymap,
       ]),
       scrollTheme,
-      EditorView.updateListener.of(controller.handleUpdate.bind(controller)),
       // language support
       TextMode(),
     ],

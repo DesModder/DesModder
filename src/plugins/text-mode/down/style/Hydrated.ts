@@ -2,7 +2,7 @@ import { Expression as Expr, Identifier } from "../TextAST";
 import { LabelOrientation } from "@desmodder/graph-state";
 
 export interface Settings {
-  viewport: {
+  viewport?: {
     xmin: number;
     ymin: number;
     xmax: number;
@@ -44,13 +44,13 @@ export interface NonFolderBase extends ItemBase {
 export interface ColumnExpressionCommon {
   color: Identifier | string;
   hidden: boolean;
-  points: {
+  points?: {
     opacity: Expr;
     size: Expr;
     style: "POINT" | "OPEN" | "CROSS";
     drag: "NONE" | "X" | "Y" | "XY" | "AUTO";
   };
-  lines: {
+  lines?: {
     opacity: Expr;
     width: Expr;
     style: "SOLID" | "DASHED" | "DOTTED";
@@ -67,7 +67,7 @@ export interface Expression
   extends NonFolderBase,
     ColumnExpressionCommon,
     Clickable {
-  label: {
+  label?: {
     text: string;
     size: Expr;
     orientation: LabelOrientation;
@@ -83,11 +83,11 @@ export interface Expression
   displayEvaluationAsFraction: boolean;
   // TODO slider
   // slider:
-  domain: {
+  domain?: {
     min: Expr;
     max: Expr;
   };
-  cdf: {
+  cdf?: {
     min: Expr;
     max: Expr;
   };
@@ -110,8 +110,6 @@ export interface Image extends NonFolderBase, Clickable {
   hoveredImage: string;
   depressedImage: string;
 }
-
-export interface Text extends NonFolderBase {}
 
 export interface Folder extends ItemBase {
   hidden: boolean;

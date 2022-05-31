@@ -11,20 +11,20 @@ export type Statement =
   | Folder
   | Settings;
 
-export interface ShowStatement {
+export interface ShowStatement extends Positioned {
   type: "ShowStatement";
   expr: Expression;
   style: StyleMapping;
 }
 
-export interface LetStatement {
+export interface LetStatement extends Positioned {
   type: "LetStatement";
   identifier: Identifier;
   expr: Expression;
   style: StyleMapping;
 }
 
-export interface FunctionDefinition {
+export interface FunctionDefinition extends Positioned {
   type: "FunctionDefinition";
   callee: Identifier;
   params: Identifier[];
@@ -32,7 +32,7 @@ export interface FunctionDefinition {
   style: StyleMapping;
 }
 
-export interface RegressionStatement {
+export interface RegressionStatement extends Positioned {
   type: "RegressionStatement";
   left: Expression;
   right: Expression;
@@ -43,7 +43,7 @@ export interface RegressionStatement {
   };
 }
 
-export interface Table {
+export interface Table extends Positioned {
   type: "Table";
   columns: TableColumn[];
   style: StyleMapping;
@@ -51,39 +51,39 @@ export interface Table {
 
 export type TableColumn = ShowStatement | LetStatement;
 
-export interface Image {
+export interface Image extends Positioned {
   type: "Image";
   name: string;
   url: string;
   style: StyleMapping;
 }
 
-export interface Text {
+export interface Text extends Positioned {
   type: "Text";
   text: string;
   style: StyleMapping;
 }
 
-export interface Folder {
+export interface Folder extends Positioned {
   type: "Folder";
   title: string;
   children: Statement[];
   style: StyleMapping;
 }
 
-export interface Settings {
+export interface Settings extends Positioned {
   type: "Settings";
   style: StyleMapping;
 }
 
 export type StyleMapping = StyleMappingFilled | null;
 
-export interface StyleMappingFilled {
+export interface StyleMappingFilled extends Positioned {
   type: "StyleMapping";
   entries: MappingEntry[];
 }
 
-export interface MappingEntry {
+export interface MappingEntry extends Positioned {
   type: "MappingEntry";
   property: string;
   expr: Expression | StyleMapping;
@@ -107,22 +107,22 @@ export type Expression =
   | PostfixExpression
   | CallExpression;
 
-export interface Number {
+export interface Number extends Positioned {
   type: "Number";
   value: number;
 }
 
-export interface Identifier {
+export interface Identifier extends Positioned {
   type: "Identifier";
   name: string;
 }
 
-export interface String {
+export interface String extends Positioned {
   type: "String";
   value: string;
 }
 
-export interface RepeatedExpression {
+export interface RepeatedExpression extends Positioned {
   type: "RepeatedExpression";
   name: "integral" | "sum" | "product";
   index: Identifier;
@@ -131,88 +131,98 @@ export interface RepeatedExpression {
   expr: Expression;
 }
 
-export interface RangeExpression {
+export interface RangeExpression extends Positioned {
   type: "RangeExpression";
   startValues: Expression[];
   endValues: Expression[];
 }
 
-export interface ListExpression {
+export interface ListExpression extends Positioned {
   type: "ListExpression";
   values: Expression[];
 }
 
-export interface ListComprehension {
+export interface ListComprehension extends Positioned {
   type: "ListComprehension";
   expr: Expression;
   assignments: AssignmentExpression[];
 }
 
-export interface AssignmentExpression {
+export interface AssignmentExpression extends Positioned {
   type: "AssignmentExpression";
   variable: Identifier;
   expr: Expression;
 }
 
-export interface PiecewiseExpression {
+export interface PiecewiseExpression extends Positioned {
   type: "PiecewiseExpression";
   branches: PiecewiseBranch[];
 }
 
-export interface PiecewiseBranch {
+export interface PiecewiseBranch extends Positioned {
   type: "PiecewiseBranch";
   condition: Expression;
   consequent: Expression;
 }
 
-export interface PrefixExpression {
+export interface PrefixExpression extends Positioned {
   type: "PrefixExpression";
   op: "negative";
   expr: Expression;
 }
 
-export interface UpdateRule {
+export interface UpdateRule extends Positioned {
   type: "UpdateRule";
   variable: Expression;
   expression: Expression;
 }
 
-export interface SequenceExpression {
+export interface SequenceExpression extends Positioned {
   type: "SequenceExpression";
   left: Expression;
   right: Expression;
   parenWrapped: boolean;
 }
 
-export interface MemberExpression {
+export interface MemberExpression extends Positioned {
   type: "MemberExpression";
   object: Expression;
   property: Identifier;
 }
 
-export interface ListAccessExpression {
+export interface ListAccessExpression extends Positioned {
   type: "ListAccessExpression";
   expr: Expression;
   index: Expression;
 }
 
-export interface BinaryExpression {
+export interface BinaryExpression extends Positioned {
   type: "BinaryExpression";
   op: "^" | "/" | "*" | "+" | "-" | "<" | "<=" | ">=" | ">" | "=";
   left: Expression;
   right: Expression;
 }
 
-export interface PostfixExpression {
+export interface PostfixExpression extends Positioned {
   type: "PostfixExpression";
   op: "factorial";
   expr: Expression;
 }
 
-export interface CallExpression {
+export interface CallExpression extends Positioned {
   type: "CallExpression";
   callee: Expression;
   arguments: Expression[];
+}
+
+interface Positioned {
+  /* pos should be defined for all nodes that come from the text via the CST */
+  pos?: Pos;
+}
+
+export interface Pos {
+  from: number;
+  to: number;
 }
 
 /* Builders */

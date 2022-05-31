@@ -58,14 +58,18 @@ function getTestName(desc: string, s: string) {
 
 function testSettings(desc: string, s: string, expected: any) {
   test(getTestName(desc, s), () => {
-    const graphSettings = textToAug(s).settings;
+    const [errors, res] = textToAug(s);
+    if (res === null) fail();
+    const graphSettings = res.settings;
     expect(graphSettings).toEqual(expected);
   });
 }
 
 function testStmt(desc: string, s: string, expected: any) {
   test(getTestName(desc, s), () => {
-    const augStmt = textToAug(s).expressions.list[0];
+    const [errors, res] = textToAug(s);
+    if (res === null) fail();
+    const augStmt = res.expressions.list[0];
     expect(augStmt).toEqual(expected);
   });
 }
@@ -373,6 +377,10 @@ describe("Statement metadata", () => {
       ...exprDefaults,
       color: id("C"),
     });
+    testStmt("Identifier color from color set", `1 @{color:BLUE}`, {
+      ...exprDefaults,
+      color: "#2d70b3",
+    });
     testStmt("String color", `1 @{color:"#abcdef"}`, {
       ...exprDefaults,
       color: "#abcdef",
@@ -669,13 +677,15 @@ describe("Folder", () => {
 });
 describe("Automatic IDs", () => {
   test("IDs are correctly managed with tables", () => {
-    const exprs = textToAug(`
+    const [errors, res] = textToAug(`
       table {
         a=[]
         b=[]
       }
       1
-    `).expressions.list;
+    `);
+    if (res === null) fail();
+    const exprs = res.expressions.list;
     expect(exprs[0]).toEqual({
       ...tableDefaults,
       columns: [
@@ -700,13 +710,15 @@ describe("Automatic IDs", () => {
     });
   });
   test("IDs are correctly managed with folders", () => {
-    const exprs = textToAug(`
+    const [errors, res] = textToAug(`
       folder "Title" {
         a
         b
       }
       1
-    `).expressions.list;
+    `);
+    if (res === null) fail();
+    const exprs = res.expressions.list;
     expect(exprs[0]).toEqual({
       ...folderDefaults,
       title: "Title",

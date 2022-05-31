@@ -3,12 +3,14 @@ import { Calc } from "globals/window";
 import { initView } from "./view/editor";
 import applyText from "./down/applyText";
 import getText from "./up/getText";
+import { Diagnostic } from "@codemirror/lint";
 
 export default class Controller {
   inTextMode: boolean = false;
   view: EditorView | null = null;
   applyingUpdateFromGraph: boolean = false;
   applyingUpdateFromText: boolean = false;
+  lastDiagnostics: Diagnostic[] = [];
 
   toggleTextMode() {
     this.inTextMode = !this.inTextMode;
@@ -29,14 +31,18 @@ export default class Controller {
     }
   }
 
-  handleUpdate(update: ViewUpdate) {
-    if (!this.applyingUpdateFromGraph && this.view && update.docChanged) {
+  /**
+   * Linting is the entry point for linting but also for evaluation
+   */
+  doLint(view: EditorView): Diagnostic[] {
+    if (!this.applyingUpdateFromGraph) {
       this.applyingUpdateFromText = true;
-      const text = this.view.state.sliceDoc();
-      applyText(text);
-      this.view.focus();
+      const text = view.state.sliceDoc();
+      this.lastDiagnostics = applyText(text);
+      view.focus();
       this.applyingUpdateFromText = false;
     }
+    return this.lastDiagnostics;
   }
 
   updateFromGraph() {

@@ -3,3 +3,8 @@
   grid-row-end: 6;
   grid-column: 1/2;
 }
+
+.cm-tooltip {
+  /* Tooltip position is miscalculated by the same height as the 42 px header */
+  transform: translateY(-42px);
+}
