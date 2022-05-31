@@ -284,11 +284,15 @@ function regressionMapEntries(
   const errors: Diagnostic[] = [];
   const res = [...regression.body.regressionParameters.entries()].map(
     ([key, value]): [Identifier, number] | null => {
-      const evaluated = evalExpr(value);
+      const [evalErrors, evaluated] = evalExpr(value);
+      errors.push(...evalErrors);
+      if (evaluated === null) return null;
       if (typeof evaluated !== "number") {
         errors.push(
           error(
-            `Expected regression value ${key} to be a number, but got ${typeof evaluated}`,
+            `Expected regression value ${
+              key.name
+            } to be a number, but got ${typeof evaluated}`,
             regression.pos
           )
         );
