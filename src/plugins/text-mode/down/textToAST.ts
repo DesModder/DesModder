@@ -418,7 +418,7 @@ function mappingEntryToAST(
   const expr = node.lastChild!;
   return {
     type: "MappingEntry",
-    property: identifierName(text, node.getChild("Identifier")!),
+    property: identifierToStringAST(text, node.getChild("Identifier")!),
     expr:
       expr.name === "StyleMapping"
         ? styleToAST(text, expr)
@@ -450,6 +450,17 @@ function identifierToAST(
   return {
     type: "Identifier",
     name: identifierName(text, node),
+    pos: node ? getPos(node) : undefined,
+  };
+}
+
+function identifierToStringAST(
+  text: string,
+  node: SyntaxNode | null
+): TextAST.String {
+  return {
+    type: "String",
+    value: identifierName(text, node),
     pos: node ? getPos(node) : undefined,
   };
 }

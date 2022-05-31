@@ -85,7 +85,7 @@ export interface StyleMappingFilled extends Positioned {
 
 export interface MappingEntry extends Positioned {
   type: "MappingEntry";
-  property: string;
+  property: String;
   expr: Expression | StyleMapping;
 }
 

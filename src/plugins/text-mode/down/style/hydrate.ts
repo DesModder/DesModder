@@ -9,27 +9,28 @@ export interface StyleValue {
   props: {
     [key: string]: StyleProp;
   };
-  pos?: TextAST.Pos;
 }
 
 export type StyleProp = TextAST.Expression | StyleValue | undefined;
 
 export function hydrate<T>(
-  styleValue: StyleValue,
+  styleMapping: TextAST.StyleMapping,
   defaults: T,
   schema: Schema,
   itemType: string,
   path = ""
 ): [Diagnostic[], T | null] {
-  const style = styleValue.props;
+  const smEntries = styleMapping?.entries ?? [];
+  // const styleValue = evalStyle(styleMapping);
+  // const style = styleValue.props;
   const allErrors: Diagnostic[] = [];
-  function earlyReturn(msg: string): [Diagnostic[], T | null] {
-    return [[...allErrors, error(msg, styleValue.pos)], null];
-  }
-  for (let key in style) {
-    if (!(key in schema)) {
+  for (const entry of smEntries) {
+    if (!(entry.property.value in schema)) {
       allErrors.push(
-        warning(`Key ${key} unexpected on ${itemType}${path}`, styleValue.pos)
+        warning(
+          `Property ${entry.property.value} unexpected on ${itemType}${path}`,
+          entry.property.pos
+        )
       );
     }
   }
@@ -38,18 +39,37 @@ export function hydrate<T>(
   const res: {
     [Key in keyof T]?: TextAST.Expression | number | string | boolean;
   } = {};
+  let hasNull = false;
   for (const _key in schema) {
     const key = _key as keyof Schema & keyof T & string;
     const schemaType = schema[key];
-    const givenValue: StyleProp = style[key];
+    const matchingEntries = smEntries.filter(
+      (entry) => entry.property.value === key
+    );
+    if (matchingEntries.length > 1)
+      matchingEntries
+        .slice(1)
+        .forEach((entry) =>
+          allErrors.push(
+            warning(
+              `Duplicate property ${entry.property.value} on ${itemType}${path}`,
+              entry.property.pos
+            )
+          )
+        );
+    const chosenEntry: TextAST.MappingEntry | undefined = matchingEntries[0];
+    if (chosenEntry?.expr === null) throw "Null expression in style mapping";
+    function earlyReturn(msg: string): [Diagnostic[], T | null] {
+      return [[...allErrors, error(msg, chosenEntry?.expr?.pos)], null];
+    }
+    const givenValue = matchingEntries[0]?.expr ?? undefined;
     const errPath = itemType + path + "." + key;
-
     if (typeof schemaType === "object" && schemaType.type === "schema") {
       if (givenValue === undefined) {
         res[key] = undefined;
-      } else if (givenValue.type !== "StyleValue") {
+      } else if (givenValue.type !== "StyleMapping") {
         return earlyReturn(
-          `Expected ${errPath} to be style value, but got primitive`
+          `Expected ${errPath} to be style mapping, but got primitive`
         );
       } else {
         const [errors, style] = hydrate(
@@ -60,14 +80,15 @@ export function hydrate<T>(
           path + "." + key
         );
         allErrors.push(...errors);
+        if (style === null) hasNull = true;
         res[key] = style;
       }
     } else if (givenValue === undefined) {
       res[key] = defaults[key] as any;
     } else {
-      if (givenValue.type === "StyleValue")
+      if (givenValue.type === "StyleMapping")
         return earlyReturn(
-          `Expected ${errPath} to be primitive, but got style value`
+          `Expected ${errPath} to be primitive, but got style mapping`
         );
       if (schemaType === "expr") {
         res[key] = givenValue;
@@ -101,5 +122,5 @@ export function hydrate<T>(
       }
     }
   }
-  return [allErrors, res as T];
+  return [allErrors, hasNull ? null : (res as T)];
 }

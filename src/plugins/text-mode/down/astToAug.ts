@@ -123,25 +123,20 @@ function statementToAug(
   Diagnostic[],
   Aug.ItemAug | { type: "settings"; settings: Hydrated.Settings } | null
 ] {
-  const style = evalStyle(stmt.style);
   switch (stmt.type) {
     case "Settings":
-      const [errors, res] = getSettings(style);
-      return [
-        errors,
-        res !== null ? { type: "settings", settings: res } : null,
-      ];
+      return settingsToAug(stmt.style);
     case "ShowStatement":
-      return expressionToAug(style, childExprToAug(stmt.expr));
+      return expressionToAug(stmt.style, childExprToAug(stmt.expr));
     case "LetStatement":
-      return expressionToAug(style, {
+      return expressionToAug(stmt.style, {
         type: "Comparator",
         operator: "=",
         left: identifierToAug(stmt.identifier),
         right: childExprToAug(stmt.expr),
       });
     case "FunctionDefinition":
-      return expressionToAug(style, {
+      return expressionToAug(stmt.style, {
         type: "Comparator",
         operator: "=",
         left: {
@@ -153,7 +148,7 @@ function statementToAug(
       });
     case "RegressionStatement":
       return expressionToAug(
-        style,
+        stmt.style,
         {
           type: "Regression",
           left: childExprToAug(stmt.left),
@@ -162,22 +157,22 @@ function statementToAug(
         stmt
       );
     case "Table":
-      return tableToAug(style, stmt.columns);
+      return tableToAug(stmt.style, stmt.columns);
     case "Image":
-      return imageToAug(style, stmt);
+      return imageToAug(stmt.style, stmt);
     case "Text":
-      return textToAug(style, stmt);
+      return textToAug(stmt.style, stmt);
     case "Folder":
-      return folderToAug(style, stmt, state);
+      return folderToAug(stmt.style, stmt, state);
   }
 }
 
 function textToAug(
-  styleValue: StyleValue,
+  styleMapping: TextAST.StyleMapping,
   stmt: TextAST.Text
 ): [Diagnostic[], Aug.TextAug | null] {
   const [errors, style] = hydrate(
-    styleValue,
+    styleMapping,
     Default.text,
     Schema.text,
     "text"
@@ -195,7 +190,7 @@ function textToAug(
 }
 
 function expressionToAug(
-  styleValue: StyleValue,
+  styleMapping: TextAST.StyleMapping,
   expr: Aug.Latex.AnyRootOrChild,
   regressionNode?: TextAST.RegressionStatement
 ): [Diagnostic[], Aug.ExpressionAug | null] {
@@ -207,7 +202,7 @@ function expressionToAug(
 
   // TODO: split this based on regression, function definition, etc.
   const [errors, style] = hydrate(
-    styleValue,
+    styleMapping,
     isPolar ? Default.polarExpression : Default.nonpolarExpression,
     Schema.expression,
     "expression"
@@ -305,6 +300,18 @@ function regressionMapEntries(
   return [errors, everyNonNull(res) ? res : null];
 }
 
+function settingsToAug(
+  styleMapping: TextAST.StyleMapping
+): [Diagnostic[], null | { type: "settings"; settings: Hydrated.Settings }] {
+  const [errors, res] = hydrate(
+    styleMapping,
+    Default.settings,
+    Schema.settings,
+    "settings"
+  );
+  return [errors, res !== null ? { type: "settings", settings: res } : null];
+}
+
 function columnExpressionCommonStyle(style: Hydrated.ColumnExpressionCommon) {
   const res = {
     color:
@@ -346,7 +353,7 @@ function exprBase(style: Hydrated.NonFolderBase) {
 }
 
 function tableToAug(
-  styleValue: StyleValue,
+  styleMapping: TextAST.StyleMapping,
   columns: TextAST.TableColumn[]
 ): [Diagnostic[], Aug.TableAug | null] {
   const results = columns.map(tableColumnToAug);
@@ -356,7 +363,7 @@ function tableToAug(
   const resultColumns = results.map((e) => e[1]);
   if (!everyNonNull(resultColumns)) return [tableColumnErrors, null];
   const [hydrateErrors, style] = hydrate(
-    styleValue,
+    styleMapping,
     Default.table,
     Schema.table,
     "table"
@@ -376,9 +383,8 @@ function tableToAug(
 function tableColumnToAug(
   column: TextAST.TableColumn
 ): [Diagnostic[], Aug.TableColumnAug | null] {
-  const styleValue = evalStyle(column.style);
   const [errors, style] = hydrate(
-    styleValue,
+    column.style,
     Default.column,
     Schema.column,
     "column"
@@ -426,11 +432,11 @@ function tableColumnToAug(
 }
 
 function imageToAug(
-  styleValue: StyleValue,
+  styleMapping: TextAST.StyleMapping,
   expr: TextAST.Image
 ): [Diagnostic[], Aug.ImageAug | null] {
   const [errors, style] = hydrate(
-    styleValue,
+    styleMapping,
     Default.image,
     Schema.image,
     "image"
@@ -461,7 +467,7 @@ function imageToAug(
 }
 
 function folderToAug(
-  styleValue: StyleValue,
+  styleMapping: TextAST.StyleMapping,
   expr: TextAST.Folder,
   state: Aug.State
 ): [Diagnostic[], Aug.FolderAug | null] {
@@ -484,7 +490,7 @@ function folderToAug(
     }
   }
   const [styleErrors, style] = hydrate(
-    styleValue,
+    styleMapping,
     Default.folder,
     Schema.folder,
     "folder"
@@ -501,60 +507,6 @@ function folderToAug(
     children: children,
   };
   return [allErrors, res];
-}
-
-const labelOrientations = [
-  "default",
-  "center",
-  "center_auto",
-  "auto_center",
-  "above",
-  "above_left",
-  "above_right",
-  "above_auto",
-  "below",
-  "below_left",
-  "below_right",
-  "below_auto",
-  "left",
-  "auto_left",
-  "right",
-  "auto_right",
-];
-
-function isExpr(value: StyleProp): value is TextAST.Expression {
-  return typeof value === "object" && value.type !== "StyleValue";
-}
-
-function getSettings(style: StyleValue) {
-  return hydrate(style, Default.settings, Schema.settings, "settings");
-}
-
-const boolDefaults = {
-  degreeMode: false,
-  showGrid: true,
-  showXAxis: true,
-  showYAxis: true,
-  xAxisNumbers: true,
-  yAxisNumbers: true,
-  polarMode: false,
-  polarNumbers: true,
-  squareAxes: true,
-  restrictGridToFirstQuadrant: false,
-};
-
-function evalStyle(style: TextAST.StyleMappingFilled | null) {
-  style ??= { type: "StyleMapping", entries: [] };
-  let res: StyleValue = {
-    type: "StyleValue",
-    props: {},
-    pos: style.pos,
-  };
-  for (let { property, expr } of style.entries) {
-    if (expr === null) throw "Null expression in style mapping";
-    res.props[property] = expr.type === "StyleMapping" ? evalStyle(expr) : expr;
-  }
-  return res;
 }
 
 function exprEvalSame(expr: TextAST.Expression, expected: number) {
