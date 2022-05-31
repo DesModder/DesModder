@@ -14,19 +14,19 @@ export interface StyleValue {
 export type StyleProp = TextAST.Expression | StyleValue | undefined;
 
 export function hydrate<T>(
+  diagnostics: Diagnostic[],
   styleMapping: TextAST.StyleMapping,
   defaults: T,
   schema: Schema,
   itemType: string,
   path = ""
-): [Diagnostic[], T | null] {
+): T | null {
   const smEntries = styleMapping?.entries ?? [];
   // const styleValue = evalStyle(styleMapping);
   // const style = styleValue.props;
-  const allErrors: Diagnostic[] = [];
   for (const entry of smEntries) {
     if (!(entry.property.value in schema)) {
-      allErrors.push(
+      diagnostics.push(
         warning(
           `Property ${entry.property.value} unexpected on ${itemType}${path}`,
           entry.property.pos
@@ -50,7 +50,7 @@ export function hydrate<T>(
       matchingEntries
         .slice(1)
         .forEach((entry) =>
-          allErrors.push(
+          diagnostics.push(
             warning(
               `Duplicate property ${entry.property.value} on ${itemType}${path}`,
               entry.property.pos
@@ -60,7 +60,7 @@ export function hydrate<T>(
     const chosenEntry: TextAST.MappingEntry | undefined = matchingEntries[0];
     if (chosenEntry?.expr === null) throw "Null expression in style mapping";
     function pushError(msg: string) {
-      allErrors.push(error(msg, chosenEntry?.expr?.pos));
+      diagnostics.push(error(msg, chosenEntry?.expr?.pos));
       hasNull = true;
     }
     const givenValue = matchingEntries[0]?.expr ?? undefined;
@@ -71,14 +71,14 @@ export function hydrate<T>(
       } else if (givenValue.type !== "StyleMapping") {
         pushError(`Expected ${errPath} to be style mapping, but got primitive`);
       } else {
-        const [errors, style] = hydrate(
+        const style = hydrate(
+          diagnostics,
           givenValue,
           (defaults as any)[key],
           schemaType.schema,
           itemType,
           path + "." + key
         );
-        allErrors.push(...errors);
         if (style === null) hasNull = true;
         res[key] = style;
       }
@@ -92,8 +92,7 @@ export function hydrate<T>(
       } else if (schemaType === "color" && givenValue.type === "Identifier") {
         res[key] = givenValue;
       } else {
-        const [errors, evaluated] = evalExpr(givenValue);
-        allErrors.push(...errors);
+        const evaluated = evalExpr(diagnostics, givenValue);
         if (evaluated === null) {
           hasNull = true;
         } else if (typeof schemaType !== "string") {
@@ -123,5 +122,5 @@ export function hydrate<T>(
       }
     }
   }
-  return [allErrors, hasNull ? null : (res as T)];
+  return hasNull ? null : (res as T);
 }

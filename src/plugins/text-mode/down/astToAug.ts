@@ -38,12 +38,11 @@ export default function astToAug(
       list: [],
     },
   };
-  const allErrors: Diagnostic[] = [];
+  const diagnostics: Diagnostic[] = [];
   let hasBlockingError = false;
   for (let stmt of program) {
     // TODO: throw if there are multiple settings expressions
-    const [errors, stmtAug] = statementToAug(state, stmt);
-    allErrors.push(...errors);
+    const stmtAug = statementToAug(diagnostics, state, stmt);
     if (stmtAug === null) {
       hasBlockingError = true;
     } else if (stmtAug.type === "settings") {
@@ -54,7 +53,7 @@ export default function astToAug(
   }
   fixEmptyIDs(state);
   fixEmptyColors(state);
-  return [allErrors, hasBlockingError ? null : state];
+  return [diagnostics, hasBlockingError ? null : state];
 }
 
 /**
@@ -117,26 +116,28 @@ function forEachExpr(
  * The `state` parameter may be modified
  */
 function statementToAug(
+  diagnostics: Diagnostic[],
   state: Aug.State,
   stmt: TextAST.Statement
-): [
-  Diagnostic[],
-  Aug.ItemAug | { type: "settings"; settings: Hydrated.Settings } | null
-] {
+): Aug.ItemAug | { type: "settings"; settings: Hydrated.Settings } | null {
   switch (stmt.type) {
     case "Settings":
-      return settingsToAug(stmt.style);
+      return settingsToAug(diagnostics, stmt.style);
     case "ShowStatement":
-      return expressionToAug(stmt.style, childExprToAug(stmt.expr));
+      return expressionToAug(
+        diagnostics,
+        stmt.style,
+        childExprToAug(stmt.expr)
+      );
     case "LetStatement":
-      return expressionToAug(stmt.style, {
+      return expressionToAug(diagnostics, stmt.style, {
         type: "Comparator",
         operator: "=",
         left: identifierToAug(stmt.identifier),
         right: childExprToAug(stmt.expr),
       });
     case "FunctionDefinition":
-      return expressionToAug(stmt.style, {
+      return expressionToAug(diagnostics, stmt.style, {
         type: "Comparator",
         operator: "=",
         left: {
@@ -148,6 +149,7 @@ function statementToAug(
       });
     case "RegressionStatement":
       return expressionToAug(
+        diagnostics,
         stmt.style,
         {
           type: "Regression",
@@ -157,43 +159,43 @@ function statementToAug(
         stmt
       );
     case "Table":
-      return tableToAug(stmt.style, stmt.columns);
+      return tableToAug(diagnostics, stmt.style, stmt.columns);
     case "Image":
-      return imageToAug(stmt.style, stmt);
+      return imageToAug(diagnostics, stmt.style, stmt);
     case "Text":
-      return textToAug(stmt.style, stmt);
+      return textToAug(diagnostics, stmt.style, stmt);
     case "Folder":
-      return folderToAug(stmt.style, stmt, state);
+      return folderToAug(diagnostics, stmt.style, stmt, state);
   }
 }
 
 function textToAug(
+  diagnostics: Diagnostic[],
   styleMapping: TextAST.StyleMapping,
   stmt: TextAST.Text
-): [Diagnostic[], Aug.TextAug | null] {
-  const [errors, style] = hydrate(
+): Aug.TextAug | null {
+  const style = hydrate(
+    diagnostics,
     styleMapping,
     Default.text,
     Schema.text,
     "text"
   );
-  return [
-    errors,
-    style !== null
-      ? {
-          ...exprBase(style),
-          type: "text",
-          text: stmt.text,
-        }
-      : null,
-  ];
+  return style !== null
+    ? {
+        ...exprBase(style),
+        type: "text",
+        text: stmt.text,
+      }
+    : null;
 }
 
 function expressionToAug(
+  diagnostics: Diagnostic[],
   styleMapping: TextAST.StyleMapping,
   expr: Aug.Latex.AnyRootOrChild,
   regressionNode?: TextAST.RegressionStatement
-): [Diagnostic[], Aug.ExpressionAug | null] {
+): Aug.ExpressionAug | null {
   // is the expr polar for the purposes of domain?
   const isPolar =
     expr.type === "Comparator" &&
@@ -201,23 +203,22 @@ function expressionToAug(
     expr.left.symbol === "r";
 
   // TODO: split this based on regression, function definition, etc.
-  const [errors, style] = hydrate(
+  const style = hydrate(
+    diagnostics,
     styleMapping,
     isPolar ? Default.polarExpression : Default.nonpolarExpression,
     Schema.expression,
     "expression"
   );
-  if (style === null) return [errors, null];
-  const [regressionErrors, regMapEntries] =
-    regressionMapEntries(regressionNode);
-  errors.push(...regressionErrors);
-  if (regMapEntries === null) return [errors, null];
+  if (style === null) return null;
+  const regMapEntries = regressionMapEntries(diagnostics, regressionNode);
+  if (regMapEntries === null) return null;
   const regression = regressionNode?.body && {
     isLogMode: style.logModeRegression,
     residualVariable: identifierToAug(regressionNode.body.residualVariable),
     regressionParameters: mapFromEntries(regMapEntries),
   };
-  const res: Aug.ExpressionAug = {
+  return {
     type: "expression",
     // Use empty string as an ID placeholder. These will get filled in at the end
     ...exprBase(style),
@@ -274,21 +275,19 @@ function expressionToAug(
       : undefined,
     ...columnExpressionCommonStyle(style),
   };
-  return [errors, res];
 }
 
 function regressionMapEntries(
+  diagnostics: Diagnostic[],
   regression?: TextAST.RegressionStatement
-): [Diagnostic[], null | [Identifier, number][]] {
-  if (regression?.body === undefined) return [[], []];
-  const errors: Diagnostic[] = [];
+): null | [Identifier, number][] {
+  if (regression?.body === undefined) return [];
   const res = [...regression.body.regressionParameters.entries()].map(
     ([key, value]): [Identifier, number] | null => {
-      const [evalErrors, evaluated] = evalExpr(value);
-      errors.push(...evalErrors);
+      const evaluated = evalExpr(diagnostics, value);
       if (evaluated === null) return null;
       if (typeof evaluated !== "number") {
-        errors.push(
+        diagnostics.push(
           error(
             `Expected regression value ${
               key.name
@@ -301,19 +300,21 @@ function regressionMapEntries(
       return [identifierToAug(key), evaluated];
     }
   );
-  return [errors, everyNonNull(res) ? res : null];
+  return everyNonNull(res) ? res : null;
 }
 
 function settingsToAug(
+  diagnostics: Diagnostic[],
   styleMapping: TextAST.StyleMapping
-): [Diagnostic[], null | { type: "settings"; settings: Hydrated.Settings }] {
-  const [errors, res] = hydrate(
+): null | { type: "settings"; settings: Hydrated.Settings } {
+  const res = hydrate(
+    diagnostics,
     styleMapping,
     Default.settings,
     Schema.settings,
     "settings"
   );
-  return [errors, res !== null ? { type: "settings", settings: res } : null];
+  return res !== null ? { type: "settings", settings: res } : null;
 }
 
 function columnExpressionCommonStyle(style: Hydrated.ColumnExpressionCommon) {
@@ -357,43 +358,41 @@ function exprBase(style: Hydrated.NonFolderBase) {
 }
 
 function tableToAug(
+  diagnostics: Diagnostic[],
   styleMapping: TextAST.StyleMapping,
   columns: TextAST.TableColumn[]
-): [Diagnostic[], Aug.TableAug | null] {
-  const results = columns.map(tableColumnToAug);
-  const tableColumnErrors = results
-    .map((e) => e[0])
-    .reduce((a, b) => [...a, ...b], []);
-  const resultColumns = results.map((e) => e[1]);
-  if (!everyNonNull(resultColumns)) return [tableColumnErrors, null];
-  const [hydrateErrors, style] = hydrate(
+): Aug.TableAug | null {
+  const resultColumns = columns.map((col) =>
+    tableColumnToAug(diagnostics, col)
+  );
+  if (!everyNonNull(resultColumns)) return null;
+  const style = hydrate(
+    diagnostics,
     styleMapping,
     Default.table,
     Schema.table,
     "table"
   );
-  const errors = [...tableColumnErrors, ...hydrateErrors];
-  if (style === null) return [errors, null];
-  return [
-    errors,
-    {
-      type: "table",
-      ...exprBase(style),
-      columns: resultColumns,
-    },
-  ];
+  if (style === null) return null;
+  return {
+    type: "table",
+    ...exprBase(style),
+    columns: resultColumns,
+  };
 }
 
 function tableColumnToAug(
+  diagnostics: Diagnostic[],
   column: TextAST.TableColumn
-): [Diagnostic[], Aug.TableColumnAug | null] {
-  const [errors, style] = hydrate(
+): Aug.TableColumnAug | null {
+  const style = hydrate(
+    diagnostics,
     column.style,
     Default.column,
     Schema.column,
     "column"
   );
-  if (style === null) return [errors, null];
+  if (style === null) return null;
   const expr = column.expr;
   const base = {
     type: "column" as const,
@@ -402,50 +401,44 @@ function tableColumnToAug(
   };
   if (expr.type === "ListExpression") {
     const values = expr.values.map(childExprToAug);
-    return [
-      errors,
-      {
-        ...base,
-        values,
-        latex:
-          column.type === "LetStatement"
-            ? childExprToAug(column.identifier)
-            : undefined,
-      },
-    ];
+    return {
+      ...base,
+      values,
+      latex:
+        column.type === "LetStatement"
+          ? childExprToAug(column.identifier)
+          : undefined,
+    };
   } else if (column.type === "LetStatement") {
-    return [
-      [
-        error(
-          "Expected table assignment to assign from a ListExpression",
-          column.expr.pos
-        ),
-      ],
-      null,
-    ];
+    diagnostics.push(
+      error(
+        "Expected table assignment to assign from a ListExpression",
+        column.expr.pos
+      )
+    );
+    return null;
   } else {
-    return [
-      errors,
-      {
-        ...base,
-        values: [],
-        latex: childExprToAug(expr),
-      },
-    ];
+    return {
+      ...base,
+      values: [],
+      latex: childExprToAug(expr),
+    };
   }
 }
 
 function imageToAug(
+  diagnostics: Diagnostic[],
   styleMapping: TextAST.StyleMapping,
   expr: TextAST.Image
-): [Diagnostic[], Aug.ImageAug | null] {
-  const [errors, style] = hydrate(
+): Aug.ImageAug | null {
+  const style = hydrate(
+    diagnostics,
     styleMapping,
     Default.image,
     Schema.image,
     "image"
   );
-  if (style === null) return [errors, null];
+  if (style === null) return null;
   const res: Aug.ImageAug = {
     type: "image",
     ...exprBase(style),
@@ -467,41 +460,41 @@ function imageToAug(
         }
       : undefined,
   };
-  return [errors, res];
+  return res;
 }
 
 function folderToAug(
+  diagnostics: Diagnostic[],
   styleMapping: TextAST.StyleMapping,
   expr: TextAST.Folder,
   state: Aug.State
-): [Diagnostic[], Aug.FolderAug | null] {
+): Aug.FolderAug | null {
   const children: Aug.NonFolderAug[] = [];
-  const allErrors: Diagnostic[] = [];
   for (let child of expr.children) {
-    const [errors, stmtAug] = statementToAug(state, child);
-    allErrors.push(...errors);
+    const stmtAug = statementToAug(diagnostics, state, child);
     if (stmtAug !== null) {
       if (stmtAug.type === "folder") {
-        return [
-          [error("Nested folders are not yet implemented", child.pos)],
-          null,
-        ];
+        diagnostics.push(
+          error("Nested folders are not yet implemented", child.pos)
+        );
+        return null;
       } else if (stmtAug.type === "settings") {
-        return [[error("Settings may not be in a folder", child.pos)], null];
+        diagnostics.push(error("Settings may not be in a folder", child.pos));
+        return null;
       } else {
         children.push(stmtAug);
       }
     }
   }
-  const [styleErrors, style] = hydrate(
+  const style = hydrate(
+    diagnostics,
     styleMapping,
     Default.folder,
     Schema.folder,
     "folder"
   );
-  allErrors.push(...styleErrors);
-  if (style === null) return [allErrors, null];
-  const res: Aug.FolderAug = {
+  if (style === null) return null;
+  return {
     type: "folder",
     id: style.id,
     secret: style.secret,
@@ -510,11 +503,10 @@ function folderToAug(
     title: expr.title,
     children: children,
   };
-  return [allErrors, res];
 }
 
 function exprEvalSame(expr: TextAST.Expression, expected: number) {
-  const [errors, evaluated] = evalExpr(expr);
+  const evaluated = evalExpr([], expr);
   return evaluated === null ? false : evaluated === expected;
 }
 
