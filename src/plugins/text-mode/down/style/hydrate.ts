@@ -95,8 +95,11 @@ export function hydrate<T>(
       } else if (schemaType === "color" && givenValue.type === "Identifier") {
         res[key] = givenValue;
       } else {
-        const evaluated = evalExpr(givenValue);
-        if (typeof schemaType !== "string") {
+        const [errors, evaluated] = evalExpr(givenValue);
+        allErrors.push(...errors);
+        if (evaluated === null) {
+          hasNull = true;
+        } else if (typeof schemaType !== "string") {
           if (typeof evaluated !== "string")
             return earlyReturn(
               `Expected ${errPath} to evaluate to string, but got ${typeof evaluated}`
@@ -118,7 +121,7 @@ export function hydrate<T>(
               `Expected ${errPath} to evaluate to ${schemaType}, but got ${typeof evaluated}`
             );
         }
-        res[key] = evaluated;
+        if (evaluated !== null) res[key] = evaluated;
       }
     }
   }

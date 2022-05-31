@@ -510,13 +510,8 @@ function folderToAug(
 }
 
 function exprEvalSame(expr: TextAST.Expression, expected: number) {
-  try {
-    const evaluated = evalExpr(expr);
-    return evaluated === expected;
-  } catch {
-    // the expr can't be statically evaluated currently
-    return false;
-  }
+  const [errors, evaluated] = evalExpr(expr);
+  return evaluated === null ? false : evaluated === expected;
 }
 
 function exprEvalSameDeep<T extends { [key: string]: TextAST.Expression }>(

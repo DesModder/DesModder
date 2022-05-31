@@ -1,23 +1,40 @@
+import { Diagnostic } from "@codemirror/lint";
+import { error } from "./diagnostics";
 import * as TextAST from "./TextAST";
 
-export function evalExpr(expr: TextAST.Expression): number | string | boolean {
+export function evalExpr(
+  expr: TextAST.Expression
+): [Diagnostic[], number | string | boolean | null] {
   switch (expr.type) {
     case "Number":
-      return expr.value;
+      return [[], expr.value];
     case "String":
-      return expr.value;
+      return [[], expr.value];
     case "PrefixExpression":
-      return -evalExpr(expr.expr);
+      const [errors, value] = evalExpr(expr.expr);
+      return [errors, value !== null ? -value : null];
     case "Identifier":
       // TODO: create proper builtin map
       // Rudimentary variable inlining
-      if (expr.name === "false") return false;
-      else if (expr.name === "true") return true;
-      else {
-        throw `Undefined identifier: ${expr.name}`;
+      if (expr.name in builtinMap) {
+        return [[], builtinMap[expr.name]];
+      } else {
+        return [[error(`Undefined identifier: ${expr.name}`, expr.pos)], null];
       }
     default:
-      // TODO: handle more?
-      throw `Unhandled expr type: ${expr.type}`;
+      return [
+        [
+          error(
+            `Static evaluation of ${expr.type} has not yet been implemented`,
+            expr.pos
+          ),
+        ],
+        null,
+      ];
   }
 }
+
+const builtinMap: { [key: string]: number | string | boolean | null } = {
+  false: false,
+  true: true,
+};
