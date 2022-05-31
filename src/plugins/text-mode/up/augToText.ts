@@ -40,7 +40,7 @@ function itemToText(item: Aug.ItemAug): string {
   const base = {
     id: item.id,
     secret: undefineIfFalse(item.secret),
-    pinned: undefineIfFalse(item.pinned),
+    pinned: item.type !== "folder" ? undefineIfFalse(item.pinned) : false,
   };
   switch (item.type) {
     case "expression":

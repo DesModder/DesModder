@@ -77,7 +77,7 @@ function augTickerToRaw(ticker: Aug.TickerAug) {
 }
 
 function updateDsmMetadata(dsmMetadata: Metadata, expr: Aug.ItemAug): void {
-  if (expr.pinned) {
+  if (expr.type !== "folder" && expr.pinned) {
     changeExprInMetadata(dsmMetadata, expr.id, { pinned: true });
   }
   if (expr.type === "expression") {

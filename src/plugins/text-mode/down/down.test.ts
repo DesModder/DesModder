@@ -444,6 +444,13 @@ describe("Statement metadata", () => {
       }
     );
   });
+  describe("Fill", () => {
+    testStmt("Zero fill", `1 @{fill: 0}`, exprDefaults);
+    testStmt("Nonzero fill", `1 @{fill: 0.5}`, {
+      ...exprDefaults,
+      fillOpacity: number(0.5),
+    });
+  });
   describe("Lines", () => {
     testStmt("Lines", `1 @{lines:@{opacity: 1, width: 5, style: "DASHED"}}`, {
       ...exprDefaults,
@@ -625,7 +632,6 @@ const folderDefaults = {
   id: "1",
   collapsed: false,
   hidden: false,
-  pinned: false,
   secret: false,
 };
 
@@ -649,14 +655,13 @@ describe("Folder", () => {
   testStmt(
     "Folder options",
     `folder "Title" {}
-      @{pinned:true,collapsed:true,secret:true,hidden:true}`,
+      @{collapsed:true,secret:true,hidden:true}`,
     {
       type: "folder",
       id: "1",
       title: "Title",
       collapsed: true,
       hidden: true,
-      pinned: true,
       secret: true,
       children: [],
     }

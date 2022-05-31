@@ -87,11 +87,14 @@ export type ItemAug = FolderAug | NonFolderAug;
 export interface BaseItemAug {
   id: string;
   secret: boolean;
+}
+
+export interface BaseNonFolderAug extends BaseItemAug {
   // pinned is a DesModder flag
   pinned: boolean;
 }
 
-export interface ExpressionAug extends BaseItemAug {
+export interface ExpressionAug extends BaseNonFolderAug {
   type: "expression";
   color: string | Latex.Identifier;
   latex?: Latex.AnyRootOrChild;
@@ -146,7 +149,7 @@ export interface TableColumnAug {
   lines?: LineStyle;
 }
 
-export interface TableAug extends BaseItemAug {
+export interface TableAug extends BaseNonFolderAug {
   type: "table";
   // The first column will always be set to hidden: true in Raw
   // regardless of its hidden value
@@ -236,7 +239,7 @@ export interface SliderData {
   step?: Latex.AnyChild;
 }
 
-export interface ImageAug extends BaseItemAug {
+export interface ImageAug extends BaseNonFolderAug {
   type: "image";
   image_url: string;
   name: string;
@@ -262,7 +265,7 @@ export interface FolderAug extends BaseItemAug {
   children: NonFolderAug[];
 }
 
-export interface TextAug extends BaseItemAug {
+export interface TextAug extends BaseNonFolderAug {
   type: "text";
   text: string;
 }

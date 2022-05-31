@@ -1,8 +1,13 @@
 import * as TextAST from "./TextAST";
+import { number } from "./TextAST";
 import * as Aug from "../aug/AugState";
 import { mapFromEntries } from "utils/utils";
 import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
 import { Calc } from "globals/window";
+import { StyleValue, StyleProp, hydrate } from "./style/hydrate";
+import * as Hydrated from "./style/Hydrated";
+import * as Default from "./style/defaults";
+import * as Schema from "./style/schema";
 
 export default function astToAug(program: TextAST.Program) {
   const state: Aug.State = {
@@ -20,6 +25,7 @@ export default function astToAug(program: TextAST.Program) {
     },
   };
   for (let stmt of program) {
+    // TODO: throw if there are multiple settings expressions
     pushStatement(state, stmt);
   }
   fixEmptyIDs(state);
@@ -100,7 +106,7 @@ function statementToAug(
   const style = evalStyle(stmt.style);
   switch (stmt.type) {
     case "Settings":
-      applySettings(state, style);
+      state.settings = getSettings(style);
       return null;
     case "ShowStatement":
       return expressionToAug(style, childExprToAug(stmt.expr));
@@ -138,7 +144,7 @@ function statementToAug(
       return imageToAug(style, stmt);
     case "Text":
       return {
-        ...exprBase(style),
+        ...exprBase(hydrate(style, Default.text, Schema.text, "text")),
         type: "text",
         text: stmt.text,
       };
@@ -152,13 +158,21 @@ function expressionToAug(
   expr: Aug.Latex.AnyRootOrChild,
   regressionBody?: TextAST.RegressionStatement["body"]
 ): Aug.ExpressionAug {
-  // TODO: improve expression schema
-  const style = styleValue.props;
-  assertOnlyStyleOrUndefined(style.label, "label");
-  assertOnlyStyleOrUndefined(style.domain, "domain");
-  assertOnlyStyleOrUndefined(style.cdf, "cdf");
-  let regression = regressionBody && {
-    isLogMode: stylePropBoolean(style.logMode, false),
+  // is the expr polar for the purposes of domain?
+  const isPolar =
+    expr.type === "Comparator" &&
+    expr.left.type === "Identifier" &&
+    expr.left.symbol === "r";
+
+  // TODO: split this based on regression, function definition, etc.
+  const style = hydrate(
+    styleValue,
+    isPolar ? Default.polarExpression : Default.nonpolarExpression,
+    Schema.expression,
+    "expression"
+  );
+  const regression = regressionBody && {
+    isLogMode: style.logModeRegression,
     residualVariable: identifierToAug(regressionBody.residualVariable),
     regressionParameters: mapFromEntries(
       [...regressionBody.regressionParameters.entries()].map(([key, value]) => [
@@ -167,62 +181,59 @@ function expressionToAug(
       ])
     ),
   };
-  // is the expr polar for the purposes of domain?
-  const isPolar =
-    expr.type === "Comparator" &&
-    expr.left.type === "Identifier" &&
-    expr.left.symbol === "r";
   return {
     type: "expression",
     // Use empty string as an ID placeholder. These will get filled in at the end
-    ...exprBase(styleValue),
+    ...exprBase(style),
     latex: expr,
-    label: style.label && labelStyleToAug(style.label),
+    label:
+      style.label.text !== ""
+        ? {
+            ...style.label,
+            size: childExprToAug(style.label.size),
+            angle: childExprToAug(style.label.angle),
+          }
+        : undefined,
     // hidden from common
-    errorHidden: stylePropBoolean(style.errorHidden, false),
-    glesmos: stylePropBoolean(style.glesmos, false),
-    fillOpacity: constant(0),
+    errorHidden: style.errorHidden,
+    glesmos: style.glesmos,
+    fillOpacity: childExprToAug(style.fill),
     regression: regression,
-    displayEvaluationAsFraction: stylePropBoolean(
-      style.displayEvaluationAsFraction,
-      false
-    ),
+    displayEvaluationAsFraction: style.displayEvaluationAsFraction,
     // TODO slider
     slider: {},
     polarDomain:
-      isPolar && style.domain
+      isPolar && !exprEvalSameDeep(style.domain, { min: 0, max: 12 * Math.PI })
         ? {
-            min: childExprToAug(style.domain.props.min ?? number(0)),
-            max: childExprToAug(
-              style.domain.props.max ?? {
-                type: "BinaryExpression",
-                op: "*",
-                left: number(12),
-                right: { type: "Identifier", name: "pi" },
-              }
-            ),
+            min: childExprToAug(style.domain.min),
+            max: childExprToAug(style.domain.max),
           }
         : undefined,
     parametricDomain:
-      !isPolar && style.domain
+      !isPolar && !exprEvalSameDeep(style.domain, { min: 0, max: 1 })
         ? {
-            min: childExprToAug(style.domain.props.min ?? number(0)),
-            max: childExprToAug(style.domain.props.max ?? number(1)),
+            min: childExprToAug(style.domain.min),
+            max: childExprToAug(style.domain.max),
           }
         : undefined,
-    cdf: style.cdf && {
-      min: style.cdf.props.min && childExprToAug(style.cdf.props.min),
-      max: style.cdf.props.max && childExprToAug(style.cdf.props.max),
-    },
+    cdf: !exprEvalSameDeep(style.cdf, { min: -Infinity, max: Infinity })
+      ? {
+          min: childExprToAug(style.cdf.min),
+          max: childExprToAug(style.cdf.max),
+        }
+      : undefined,
     // TODO: vizProps
     vizProps: {},
-    clickableInfo: style.onClick && {
-      description: evalExprToString(style.clickDescription) ?? "",
-      latex: childExprToAug(style.onClick),
-    },
+    clickableInfo: style.onClick
+      ? {
+          description: style.clickDescription,
+          latex: childExprToAug(style.onClick),
+        }
+      : undefined,
     ...columnExpressionCommonStyle(styleValue),
   };
 }
+
 function columnExpressionCommonStyle({ props: style }: StyleValue) {
   if (style.lines && style.lines.type !== "StyleValue")
     throw "Property `.lines` must be a style value";
@@ -280,12 +291,11 @@ function evalExprToStringEnum(
   return style;
 }
 
-function exprBase({ props: style }: StyleValue) {
+function exprBase(style: Hydrated.NonFolderBase) {
   return {
-    // Use empty string as an ID placeholder. These will get filled in at the end
-    id: evalExprToString(style.id, ""),
-    secret: stylePropBoolean(style.secret, false),
-    pinned: stylePropBoolean(style.pinned, false),
+    id: style.id,
+    secret: style.secret,
+    pinned: style.pinned,
   };
 }
 
@@ -295,7 +305,7 @@ function tableToAug(
 ): Aug.TableAug {
   return {
     type: "table",
-    ...exprBase(styleValue),
+    ...exprBase(hydrate(styleValue, Default.table, Schema.table, "table")),
     columns: columns.map(tableColumnToAug),
   };
 }
@@ -332,29 +342,27 @@ function tableColumnToAug(column: TextAST.TableColumn): Aug.TableColumnAug {
 }
 
 function imageToAug(styleValue: StyleValue, expr: TextAST.Image): Aug.ImageAug {
-  const style = styleValue.props;
+  const style = hydrate(styleValue, Default.image, Schema.image, "image");
   return {
     type: "image",
-    ...exprBase(styleValue),
+    ...exprBase(style),
     image_url: expr.url,
     name: expr.name,
-    width: stylePropExpr(style.width, constant(10)),
-    height: stylePropExpr(style.height, constant(10)),
-    center: stylePropExpr(style.center, {
-      type: "Seq",
-      args: [constant(0), constant(0)],
-      parenWrapped: true,
-    }),
-    angle: stylePropExpr(style.angle, constant(0)),
-    opacity: stylePropExpr(style.opacity, constant(1)),
-    foreground: stylePropBoolean(style.foreground, false),
-    draggable: stylePropBoolean(style.draggable, false),
-    clickableInfo: style.onClick && {
-      description: evalExprToString(style.clickDescription) ?? "",
-      latex: childExprToAug(style.onClick),
-      hoveredImage: evalExprToString(style.hoveredImage) ?? "",
-      depressedImage: evalExprToString(style.depressedImage) ?? "",
-    },
+    width: childExprToAug(style.width),
+    height: childExprToAug(style.height),
+    center: childExprToAug(style.center),
+    angle: childExprToAug(style.angle),
+    opacity: childExprToAug(style.opacity),
+    foreground: style.foreground,
+    draggable: style.draggable,
+    clickableInfo: style.onClick
+      ? {
+          description: style.clickDescription,
+          latex: childExprToAug(style.onClick),
+          hoveredImage: style.hoveredImage,
+          depressedImage: style.depressedImage,
+        }
+      : undefined,
   };
 }
 
@@ -363,7 +371,6 @@ function folderToAug(
   expr: TextAST.Folder,
   state: Aug.State
 ): Aug.FolderAug {
-  const style = styleValue.props;
   const children: Aug.NonFolderAug[] = [];
   for (let child of expr.children) {
     const stmtAug = statementToAug(state, child);
@@ -374,11 +381,13 @@ function folderToAug(
       children.push(stmtAug);
     }
   }
+  const style = hydrate(styleValue, Default.folder, Schema.folder, "folder");
   return {
     type: "folder",
-    ...exprBase(styleValue),
-    hidden: stylePropBoolean(style.hidden, false),
-    collapsed: stylePropBoolean(style.collapsed, false),
+    id: style.id,
+    secret: style.secret,
+    hidden: style.hidden,
+    collapsed: style.collapsed,
     title: expr.title,
     children: children,
   };
@@ -405,26 +414,6 @@ const labelOrientations = [
 
 function isLabelOrientation(str: string): str is Aug.LabelOrientation {
   return labelOrientations.includes(str);
-}
-
-function labelStyleToAug(styleValue: StyleValue): Aug.LabelStyle {
-  const style = styleValue.props;
-  const orientation = evalExprToString(style.orientation, "default");
-  const editableMode = evalExprToString(style.editableMode, "NONE");
-  return {
-    text: evalExprToString(style.text, ""),
-    size: stylePropExpr(style.size, constant(1)),
-    orientation: isLabelOrientation(orientation) ? orientation : "default",
-    angle: stylePropExpr(style.angle, constant(0)),
-    outline: stylePropBoolean(style.outline, true),
-    showOnHover: stylePropBoolean(style.showOnHover, false),
-    editableMode:
-      editableMode === "MATH" ||
-      editableMode === "TEXT" ||
-      editableMode === "NONE"
-        ? editableMode
-        : "NONE",
-  };
 }
 
 function stylePropExpr(
@@ -454,67 +443,8 @@ function assertOnlyStyleOrUndefined(
     throw `Property '.${name}' must be a style value`;
 }
 
-function applySettings(state: Aug.State, styleValue: StyleValue) {
-  const style = styleValue.props;
-  const settings = state.settings;
-  for (let key in style) {
-    const value = style[key];
-    switch (key) {
-      case "viewport":
-        if (value?.type !== "StyleValue") {
-          throw "Viewport should be a style mapping";
-        }
-        for (let prop of ["xmin", "ymin", "xmax", "ymax"] as const) {
-          const val = value.props[prop];
-          if (!isExpr(val)) {
-            throw `The viewport must specify ${prop}`;
-          }
-          settings.viewport[prop] = evalExprToNumber(val);
-        }
-        break;
-      case "randomSeed":
-        if (isExpr(value)) {
-          settings[key] = evalExprToString(value);
-        } else {
-          throw "Random seed must currently be specified";
-        }
-        break;
-      case "xAxisLabel":
-      case "yAxisLabel":
-        settings[key] = evalExprToString(value, "");
-        break;
-      case "xAxisArrowMode":
-      case "yAxisArrowMode":
-        settings[key] = evalExprToStringEnum(value, "NONE", [
-          "NONE",
-          "POSITIVE",
-          "BOTH",
-        ]) as "NONE" | "POSITIVE" | "BOTH";
-        break;
-      case "xAxisMinorSubdivisions":
-      case "yAxisMinorSubdivisions":
-      case "xAxisStep":
-      case "yAxisStep":
-        settings[key] = isExpr(value) ? evalExprToNumber(value) : 0;
-        break;
-      case "degreeMode":
-      case "showGrid":
-      case "showXAxis":
-      case "showYAxis":
-      case "xAxisNumbers":
-      case "yAxisNumbers":
-      case "polarNumbers":
-      case "squareAxes":
-      case "restrictGridToFirstQuadrant":
-      case "polarMode":
-        settings[key] = isExpr(value)
-          ? evalExprToBoolean(value)
-          : boolDefaults[key];
-        break;
-      default:
-        throw `Unexpected settings key: ${key}`;
-    }
-  }
+function getSettings(style: StyleValue) {
+  return hydrate(style, Default.settings, Schema.settings, "settings");
 }
 
 const boolDefaults = {
@@ -530,15 +460,6 @@ const boolDefaults = {
   restrictGridToFirstQuadrant: false,
 };
 
-interface StyleValue {
-  type: "StyleValue";
-  props: {
-    [key: string]: StyleProp;
-  };
-}
-
-type StyleProp = TextAST.Expression | StyleValue | undefined;
-
 function evalStyle(style: TextAST.StyleMappingFilled | null) {
   style ??= { type: "StyleMapping", entries: [] };
   let res: StyleValue = {
@@ -550,6 +471,25 @@ function evalStyle(style: TextAST.StyleMappingFilled | null) {
     res.props[property] = expr.type === "StyleMapping" ? evalStyle(expr) : expr;
   }
   return res;
+}
+
+function exprEvalSame(expr: TextAST.Expression, expected: number) {
+  try {
+    const evaluated = evalExpr(expr);
+    return evaluated === expected;
+  } catch {
+    // the expr can't be statically evaluated currently
+    return false;
+  }
+}
+
+function exprEvalSameDeep<T extends { [key: string]: TextAST.Expression }>(
+  exprMap: T,
+  expected: { [K in keyof T]: number }
+) {
+  for (const key in expected)
+    if (!exprEvalSame(exprMap[key], expected[key])) return false;
+  return true;
 }
 
 function evalExpr(expr: TextAST.Expression): number | string | boolean {
@@ -565,6 +505,8 @@ function evalExpr(expr: TextAST.Expression): number | string | boolean {
       // Rudimentary variable inlining
       if (expr.name === "false") return false;
       else if (expr.name === "true") return true;
+      else if (expr.name === "infty") return Infinity;
+      else if (expr.name === "pi") return Math.PI;
       else {
         throw `Undefined identifier: ${expr.name}`;
       }
@@ -826,16 +768,6 @@ function identifierToAug(expr: TextAST.Identifier) {
   };
 }
 
-function constant(val: number): Aug.Latex.Constant {
-  return {
-    type: "Constant",
-    value: val,
-  };
-}
-
-function number(val: number): TextAST.Number {
-  return {
-    type: "Number",
-    value: val,
-  };
+function constant(value: number) {
+  return { type: "Constant" as const, value };
 }

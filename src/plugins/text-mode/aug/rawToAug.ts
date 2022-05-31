@@ -47,7 +47,7 @@ function rawListToAug(
       continue;
     }
     if (item.type === "folder") {
-      currentFolder = rawFolderToAug(item, dsmMetadata);
+      currentFolder = rawFolderToAug(item);
       res.push(currentFolder);
     } else {
       const augItem = rawNonFolderToAug(item, dsmMetadata);
@@ -64,15 +64,11 @@ function rawListToAug(
   return res;
 }
 
-function rawFolderToAug(
-  item: Graph.FolderState,
-  dsmMetadata: Metadata
-): Aug.FolderAug {
+function rawFolderToAug(item: Graph.FolderState): Aug.FolderAug {
   return {
     type: "folder" as const,
     id: item.id,
     secret: item.secret ?? false,
-    pinned: dsmMetadata.expressions[item.id]?.pinned ?? false,
     hidden: item.hidden ?? false,
     collapsed: item.collapsed ?? false,
     title: item.title ?? "",

@@ -214,3 +214,12 @@ export interface CallExpression {
   callee: Expression;
   arguments: Expression[];
 }
+
+/* Builders */
+
+export function number(val: number): Number {
+  return {
+    type: "Number",
+    value: val,
+  };
+}

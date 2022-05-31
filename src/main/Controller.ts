@@ -371,9 +371,10 @@ export default class Controller {
   }
 
   pinExpression(id: string) {
-    this.updateExprMetadata(id, {
-      pinned: true,
-    });
+    if (Calc.controller.getItemModel(id)?.type !== "folder")
+      this.updateExprMetadata(id, {
+        pinned: true,
+      });
   }
 
   unpinExpression(id: string) {
@@ -386,6 +387,7 @@ export default class Controller {
     return (
       this.pluginsEnabled["pin-expressions"] &&
       !Calc.controller.getExpressionSearchOpen() &&
+      Calc.controller.getItemModel(id)?.type !== "folder" &&
       this.graphMetadata.expressions[id]?.pinned
     );
   }
