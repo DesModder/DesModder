@@ -1,5 +1,14 @@
 # DesModder Changelog
 
+## 0.7.3
+
+Emergency bug fix because Desmos removed the `parser` module in favor of `core/math/parser`
+
+Bug fixes and improvements:
+
+- Fix `Uncaught Error: No parser/parser` on load
+- (GLesmos) Fix infinity literals
+
 ## 0.7.2
 
 New features:

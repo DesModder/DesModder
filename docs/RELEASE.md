@@ -1,8 +1,7 @@
 Documentation for the release process of DesModder:
 
 - [ ] Make a new release branch named `prepare-X.Y.Z`
-- [ ] Bump version number in both the `package.json`, `chrome/manifest.json`, and `firefox/manifest.json` following semver.
-  - then run `npm install` to bump the version in `package-lock.json`
+- [ ] Bump version number in `package.json`, `package-lock.json` (x2), `chrome/manifest.json`, and `firefox/manifest.json` following semver.
 - [ ] Update [the changelog](https://github.com/DesModder/DesModder/blob/main/docs/CHANGELOG.md) with migration directions and other changes based on commits
   - Helpful: https://github.com/DesModder/DesModder/compare/v0.3.0...main
 - [ ] Update README.md, and update the corresponding webstore description.

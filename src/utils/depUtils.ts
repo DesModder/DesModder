@@ -7,7 +7,7 @@ const _EvaluateSingleExpression = desmosRequire(
 
 export const jquery = desmosRequire("jquery");
 export const keys = desmosRequire("keys");
-export const parseDesmosLatex = desmosRequire("parser").parse as (
+export const parseDesmosLatex = desmosRequire("core/math/parser").parse as (
   s: string
 ) => Node;
 
