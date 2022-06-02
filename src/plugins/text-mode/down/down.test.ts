@@ -10,7 +10,7 @@ jest.mock("utils/depUtils");
 jest.mock("globals/window");
 
 function textToAug(s: string) {
-  return astToAug(textToAST(s));
+  return astToAug(...textToAST(s));
 }
 
 const colors = ["#c74440", "#2d70b3", "#388c46", "#6042a6", "#000000"];
@@ -922,6 +922,55 @@ describe("Diagnostics", () => {
     testDiagnostics("Settings in folder", `folder "title" { settings @{} }`, [
       error("Settings may not be in a folder", pos(17, 29)),
     ]);
+  });
+  describe("Parse errors", () => {
+    testDiagnostics("Empty program", `\n\n`, [
+      warning("Program is empty. Try typing: y=x", undefined),
+    ]);
+    testDiagnostics("Skip node", `y=x @{} @#!# y=x^2`, [
+      error("Syntax error; unexpected text: @#!#", pos(8, 12)),
+    ]);
+    testDiagnostics("Multiple skips", `y=)x]`, [
+      error("Syntax error; unexpected text: )", pos(2, 3)),
+      error("Syntax error; unexpected text: ]", pos(4, 5)),
+    ]);
+    testDiagnostics("Multiple insertions", `y=(1+)*(5+)`, [
+      error("Syntax error; expected something here", pos(5, 5)),
+      error("Syntax error; expected something here", pos(10, 10)),
+    ]);
+    testDiagnostics(
+      "Non-identifier function parameters",
+      `f(x,1,2+3)=(x)^(2)`,
+      [
+        error("Expected parameter to be an identifier, got 1", pos(4, 5)),
+        error("Expected parameter to be an identifier, got 2+3", pos(6, 9)),
+      ]
+    );
+    testDiagnostics("Non-identifier callee", `y = 7(x)`, [
+      error(
+        "Invalid callee; expected identifier or member expression",
+        pos(4, 5)
+      ),
+    ]);
+    testDiagnostics("Function definition in table", `table { f(x) = x^2 }`, [
+      error("Table column cannot be a function definition", pos(8, 18)),
+    ]);
+    testDiagnostics("Non-simple statement in table", `table { a ~ 5 }`, [
+      error("Expected a valid table column. Try: x1 = [1, 2, 3]", pos(8, 13)),
+    ]);
+    testDiagnostics("Invalid regression body", `a ~ 5 # e1 { f(x) = 5 }`, [
+      error("Invalid regression body", pos(13, 21)),
+    ]);
+    testDiagnostics(
+      "Member expression in function definition",
+      `L.random(x) = x^2`,
+      [
+        error(
+          "Member expressions cannot be used in function definitions",
+          pos(0, 8)
+        ),
+      ]
+    );
   });
 });
 

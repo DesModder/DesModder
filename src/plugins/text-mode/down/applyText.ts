@@ -7,12 +7,12 @@ import { error } from "./diagnostics";
 
 export default function applyText(text: string): Diagnostic[] {
   try {
-    const ast = textToAST(text);
-    const [errors, aug] = astToAug(ast);
-    if (aug === null) return errors;
+    const [parseErrors, ast] = textToAST(text);
+    const [allErrors, aug] = astToAug(parseErrors, ast);
+    if (aug === null) return allErrors;
     const state = augToRaw(aug);
     Calc.setState(state);
-    return errors;
+    return allErrors;
   } catch (err) {
     console.error("Error while compiling to Desmos:\n", err);
     return [error(`Fatal error: ${err}`, undefined)];

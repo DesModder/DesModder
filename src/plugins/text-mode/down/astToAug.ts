@@ -12,6 +12,7 @@ import { error, warning } from "./diagnostics";
 import { Diagnostic } from "@codemirror/lint";
 import { evalExpr } from "./staticEval";
 import { Identifier } from "../aug/AugLatex";
+import { everyNonNull } from "utils/utils";
 
 /*
  * Many functions return `[Diagnostic[], ResultValue | null]`
@@ -20,10 +21,11 @@ import { Identifier } from "../aug/AugLatex";
  *
  * If the second element is null, then there is some unrecoverable error.
  */
-
 export default function astToAug(
-  program: TextAST.Program
+  parseErrors: Diagnostic[],
+  program: TextAST.Program | null
 ): [Diagnostic[], Aug.State | null] {
+  if (program === null) return [parseErrors, null];
   const state: Aug.State = {
     version: 9,
     settings: {
@@ -38,7 +40,7 @@ export default function astToAug(
       list: [],
     },
   };
-  const diagnostics: Diagnostic[] = [];
+  const diagnostics: Diagnostic[] = [...parseErrors];
   let hasBlockingError = false;
   for (let stmt of program) {
     // TODO: throw if there are multiple settings expressions
@@ -750,8 +752,4 @@ function identifierToAug(expr: TextAST.Identifier) {
 
 function constant(value: number) {
   return { type: "Constant" as const, value };
-}
-
-function everyNonNull<T>(arr: (T | null)[]): arr is T[] {
-  return arr.every((e) => e !== null);
 }

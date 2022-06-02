@@ -55,3 +55,7 @@ export function mapFromEntries<K, V>(entries: Iterable<[K, V]>): Map<K, V> {
   }
   return res;
 }
+
+export function everyNonNull<T>(arr: (T | null)[]): arr is T[] {
+  return arr.every((e) => e !== null);
+}

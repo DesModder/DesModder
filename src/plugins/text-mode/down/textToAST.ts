@@ -1,51 +1,128 @@
 import { parser } from "../lezer/syntax.grammar";
 import { printTree } from "../lezer/print-lezer-tree";
 import { SyntaxNode } from "@lezer/common";
+import { Tree } from "@lezer/common";
 import * as TextAST from "./TextAST";
 import { mapFromEntries } from "utils/utils";
+import { Diagnostic } from "@codemirror/lint";
+import { error, warning } from "./diagnostics";
+import { everyNonNull } from "utils/utils";
 
-export default function textToAST(text: string) {
-  const cst = parser.parse(text);
-  // console.groupCollapsed("Program");
-  // console.log(printTree(cst, text));
-  // console.groupEnd();
-  if (cst.type.name !== "Program") {
-    throw "Expected parsed program";
+class TextAndDiagnostics {
+  constructor(public text: string, public diagnostics: Diagnostic[]) {}
+
+  nodeText(pos: TextAST.Pos) {
+    return this.text.substring(pos.from, pos.to);
   }
+
+  pushError(message: string, pos: TextAST.Pos | undefined) {
+    this.diagnostics.push(error(message, pos));
+  }
+
+  pushWarning(message: string, pos: TextAST.Pos | undefined) {
+    this.diagnostics.push(warning(message, pos));
+  }
+}
+
+/**
+ * Convert the given string text to AST, throwing out all error nodes and
+ * ancestors of error nodes in the CST except for Program.
+ */
+export default function textToAST(
+  text: string
+): [Diagnostic[], TextAST.Statement[] | null] {
+  const cst = parser.parse(text);
+  console.groupCollapsed("Program");
+  console.log(printTree(cst, text));
+  console.groupEnd();
+  if (cst.type.name !== "Program") {
+    throw "Programming error: expected parsed program";
+  }
+  const statements: TextAST.Statement[] = [];
+  const td = new TextAndDiagnostics(text, []);
+  for (const statementNode of statementsWithoutErrors(td, cst)) {
+    const statementAST = statementToAST(td, statementNode);
+    statementAST && statements.push(statementAST);
+  }
+  return [td.diagnostics, statements];
+}
+
+/**
+ * Get a list of the statement nodes that do not have any error nodes in them
+ */
+function statementsWithoutErrors(
+  td: TextAndDiagnostics,
+  cst: Tree
+): SyntaxNode[] {
   const cursor = cst.cursor();
   const hasFirstChild = cursor.firstChild();
   if (!hasFirstChild) {
-    throw "Expected nonempty program";
+    td.pushWarning("Program is empty. Try typing: y=x", undefined);
+    return [];
   }
-  const statements: TextAST.Statement[] = [];
+  const statementNodes: SyntaxNode[] = [];
   do {
-    statements.push(statementToAST(text, cursor.node));
+    if (!hasError(td, cursor.node)) statementNodes.push(cursor.node);
   } while (cursor.nextSibling());
-  return statements;
+  return statementNodes;
 }
 
-function statementToAST(text: string, node: SyntaxNode): TextAST.Statement {
-  const style = styleToAST(text, node.getChild("StyleMapping"));
+/**
+ * Check for syntax errors, and push diagnostics. This should be executed at
+ * most once per node to avoid duplicate diagnostics
+ */
+function hasError(td: TextAndDiagnostics, node: SyntaxNode) {
+  if (node.type.isError) {
+    if (node.to > node.from) {
+      const text = td.nodeText(node);
+      td.pushError("Syntax error; unexpected text: " + text, getPos(node));
+    } else {
+      td.pushError("Syntax error; expected something here", getPos(node));
+    }
+    return true;
+  }
+  const cursor = node.cursor;
+  if (!cursor.firstChild()) return false;
+  let foundError = false;
+  do {
+    // don't short-circuit, to allow indicating more errors
+    if (hasError(td, cursor.node)) foundError = true;
+  } while (cursor.nextSibling());
+  return foundError;
+}
+
+function statementToAST(
+  td: TextAndDiagnostics,
+  node: SyntaxNode
+): TextAST.Statement | null {
+  const style = styleToAST(td, node.getChild("StyleMapping"));
   switch (node.name) {
     case "SimpleStatement":
-      return simpleStatementToAST(text, node, style);
+      return simpleStatementToAST(td, node, style);
     case "RegressionStatement":
       const regressionChildren = node.getChildren("Expression");
+      const regLeft = exprToAST(td, regressionChildren[0]);
+      const regRight = exprToAST(td, regressionChildren[1]);
+      const regBody = regressionBodyToAST(td, node.getChild("RegressionBody"));
+      if (regLeft === null || regRight === null || regBody === null)
+        return null;
       return {
         type: "RegressionStatement",
-        left: exprToAST(text, regressionChildren[0]),
-        right: exprToAST(text, regressionChildren[1]),
+        left: regLeft,
+        right: regRight,
         style,
-        body: regressionBodyToAST(text, node.getChild("RegressionBody")),
+        body: regBody,
         pos: getPos(node),
       };
     case "Table":
+      const tableChildren = node
+        .getChild("BlockInner")!
+        .getChildren("Statement")
+        .map((node) => tableColumnToAST(td, node));
+      if (!everyNonNull(tableChildren)) return null;
       return {
         type: "Table",
-        columns: node
-          .getChild("BlockInner")!
-          .getChildren("Statement")
-          .map((node) => tableColumnToAST(text, node)),
+        columns: tableChildren,
         style,
         pos: getPos(node),
       };
@@ -53,26 +130,28 @@ function statementToAST(text: string, node: SyntaxNode): TextAST.Statement {
       const imageStrings = node.getChildren("String");
       return {
         type: "Image",
-        name: parseString(text, imageStrings[0]),
-        url: parseString(text, imageStrings[1]),
+        name: parseString(td, imageStrings[0]),
+        url: parseString(td, imageStrings[1]),
         style,
         pos: getPos(node),
       };
     case "Text":
       return {
         type: "Text",
-        text: parseString(text, node.getChild("String")!),
+        text: parseString(td, node.getChild("String")!),
         style,
         pos: getPos(node),
       };
     case "Folder":
+      const folderChildren = node
+        .getChild("BlockInner")!
+        .getChildren("Statement")
+        .map((node) => statementToAST(td, node));
+      if (!everyNonNull(folderChildren)) return null;
       return {
         type: "Folder",
-        title: parseString(text, node.getChild("String")!),
-        children: node
-          .getChild("BlockInner")!
-          .getChildren("Statement")
-          .map((node) => statementToAST(text, node)),
+        title: parseString(td, node.getChild("String")!),
+        children: folderChildren,
         style,
         pos: getPos(node),
       };
@@ -83,37 +162,50 @@ function statementToAST(text: string, node: SyntaxNode): TextAST.Statement {
         pos: getPos(node),
       };
     default:
-      throw `Unexpected statement type ${node.name}`;
+      throw `Programming error: Unexpected statement type ${node.name}`;
   }
 }
 
 /**
  * @param node RegressionBody
+ * @returns undefined for no body, null for syntax error, else Regression
  */
-function regressionBodyToAST(text: string, node: SyntaxNode | null) {
-  return node
-    ? {
-        residualVariable: identifierToAST(text, node.getChild("Identifier")),
-        regressionParameters: mapFromEntries(
-          node.getChildren("Statement").map((node) => {
-            const ast = statementToAST(text, node);
-            if (ast.type !== "LetStatement") throw "Invalid regression body";
-            return [ast.identifier, ast.expr];
-          })
-        ),
+function regressionBodyToAST(
+  td: TextAndDiagnostics,
+  node: SyntaxNode | null
+): TextAST.RegressionStatement["body"] | undefined | null {
+  if (!node) return undefined;
+  const children = node
+    .getChildren("Statement")
+    .map((node): [TextAST.Identifier, TextAST.Expression] | null => {
+      const ast = statementToAST(td, node);
+      if (ast?.type !== "LetStatement") {
+        td.pushError("Invalid regression body", getPos(node));
+        return null;
       }
-    : undefined;
+      return [ast.identifier, ast.expr];
+    });
+  if (!everyNonNull(children)) return null;
+  return {
+    residualVariable: identifierToAST(td, node.getChild("Identifier")),
+    regressionParameters: mapFromEntries(children),
+  };
 }
 
 /**
  * @param node SimpleStatement
  */
 function simpleStatementToAST(
-  text: string,
+  td: TextAndDiagnostics,
   node: SyntaxNode,
   style: TextAST.StyleMapping
-): TextAST.FunctionDefinition | TextAST.LetStatement | TextAST.ShowStatement {
-  const expr = exprToAST(text, node.getChild("Expression")!);
+):
+  | TextAST.FunctionDefinition
+  | TextAST.LetStatement
+  | TextAST.ShowStatement
+  | null {
+  const expr = exprToAST(td, node.getChild("Expression")!);
+  if (expr === null) return null;
   if (expr.type !== "BinaryExpression" || expr.op !== "=") {
     return {
       type: "ShowStatement",
@@ -134,11 +226,20 @@ function simpleStatementToAST(
     };
   } else if (lhs.type === "CallExpression") {
     if (lhs.callee.type !== "Identifier") {
-      throw "Expected identifier as function definition callee";
+      td.pushError(
+        "Member expressions cannot be used in function definitions",
+        lhs.callee.pos
+      );
+      return null;
     }
-    if (lhs.arguments.some((e) => e.type !== "Identifier")) {
-      throw "All parameters should be identifiers";
+    const nonIdentifiers = lhs.arguments.filter((e) => e.type !== "Identifier");
+    for (const np of nonIdentifiers) {
+      td.pushError(
+        `Expected parameter to be an identifier, got ${td.nodeText(np.pos!)}`,
+        np.pos
+      );
     }
+    if (nonIdentifiers.length > 0) return null;
     return {
       type: "FunctionDefinition",
       callee: lhs.callee,
@@ -148,24 +249,24 @@ function simpleStatementToAST(
       pos: getPos(node),
     };
   } else {
-    throw "LetStatement left-hand side is not an identifier or call expression";
+    throw "Programming Error: LetStatement left-hand side is not an identifier or call expression";
   }
 }
 
 /**
  * @param node StyleMapping
  */
-function styleToAST(text: string, node: SyntaxNode | null) {
+function styleToAST(td: TextAndDiagnostics, node: SyntaxNode | null) {
   if (node == null) return null;
-  return styleToASTKnown(text, node);
+  return styleToASTKnown(td, node);
 }
 
-function styleToASTKnown(text: string, node: SyntaxNode) {
+function styleToASTKnown(td: TextAndDiagnostics, node: SyntaxNode) {
   return {
     type: "StyleMapping" as const,
     entries: node
       ?.getChildren("MappingEntry")
-      .map((node) => mappingEntryToAST(text, node)),
+      .map((node) => mappingEntryToAST(td, node)),
     pos: getPos(node),
   };
 }
@@ -173,67 +274,83 @@ function styleToASTKnown(text: string, node: SyntaxNode) {
 /**
  * @param node Expression
  */
-function exprToAST(text: string, node: SyntaxNode): TextAST.Expression {
+function exprToAST(
+  td: TextAndDiagnostics,
+  node: SyntaxNode
+): TextAST.Expression | null {
   switch (node.name) {
     case "Number":
       return {
         type: "Number",
-        value: parseFloat(text.substring(node.from, node.to)),
+        value: parseFloat(td.nodeText(node)),
         pos: getPos(node),
       };
     case "Identifier":
-      return identifierToAST(text, node);
+      return identifierToAST(td, node);
     case "String":
       return {
         type: "String",
-        value: parseString(text, node),
+        value: parseString(td, node),
         pos: getPos(node),
       };
     case "RepeatedExpression":
-      return repeatedExpressionToAST(text, node);
+      return repeatedExpressionToAST(td, node);
     case "ListExpression":
-      return listExpressionToAST(text, node);
+      return listExpressionToAST(td, node);
     case "ListComprehension":
+      const listcompArg = exprToAST(td, node.getChild("Expression")!);
+      const listcompAssignments = node
+        .getChildren("AssignmentExpression")
+        .map((node) => assignmentToAST(td, node));
+      if (listcompArg === null || !everyNonNull(listcompAssignments))
+        return null;
       return {
         type: "ListComprehension",
-        expr: exprToAST(text, node.getChild("Expression")!),
-        assignments: node
-          .getChildren("AssignmentExpression")
-          .map((node) => assignmentToAST(text, node)),
+        expr: listcompArg,
+        assignments: listcompAssignments,
         pos: getPos(node),
       };
     case "Piecewise":
       const piecewiseChildren = node.getChildren("PiecewiseBranch");
-      if (piecewiseChildren.length === 0) throw "Empty piecewise not permitted";
+      if (piecewiseChildren.length === 0)
+        throw "Programming error: empty piecewise not yet implemented";
+      const piecewiseBranches = piecewiseChildren.map((node) =>
+        piecewiseBranchToAST(td, node)
+      );
+      if (!everyNonNull(piecewiseBranches)) return null;
       return {
         type: "PiecewiseExpression",
-        branches: piecewiseChildren.map((node) =>
-          piecewiseBranchToAST(text, node)
-        ),
+        branches: piecewiseBranches,
         pos: getPos(node),
       };
     case "PrefixExpression":
+      const prefixArg = exprToAST(td, node.getChild("Expression")!);
+      if (prefixArg === null) return null;
       return {
         type: "PrefixExpression",
         op: "negative",
-        expr: exprToAST(text, node.getChild("Expression")!),
+        expr: prefixArg,
         pos: getPos(node),
       };
     case "ParenthesizedExpression":
-      return parenToAST(text, node);
+      return parenToAST(td, node);
     case "MemberExpression":
+      const memberObj = exprToAST(td, node.getChild("Expression")!);
+      if (memberObj === null) return null;
       return {
         type: "MemberExpression",
-        object: exprToAST(text, node.getChild("Expression")!),
-        property: identifierToAST(text, node.getChild("DotAccessIdentifier")!),
+        object: memberObj,
+        property: identifierToAST(td, node.getChild("DotAccessIdentifier")!),
         pos: getPos(node),
       };
     case "ListAccessExpression":
-      const laExpr = node.getChild("Expression")!;
-      const laIndex = exprToAST(text, laExpr.nextSibling!);
+      const laExprNode = node.getChild("Expression")!;
+      const laIndex = exprToAST(td, laExprNode.nextSibling!);
+      const laExpr = exprToAST(td, laExprNode);
+      if (laIndex === null || laExpr === null) return null;
       return {
         type: "ListAccessExpression",
-        expr: exprToAST(text, laExpr),
+        expr: laExpr,
         index:
           laIndex.type === "ListExpression" && laIndex.values.length === 1
             ? laIndex.values[0]
@@ -241,33 +358,41 @@ function exprToAST(text: string, node: SyntaxNode): TextAST.Expression {
         pos: getPos(node),
       };
     case "BinaryExpression":
-      return binaryExpressionToAST(text, node);
+      return binaryExpressionToAST(td, node);
     case "PostfixExpression":
+      const postfixArg = exprToAST(td, node.getChild("Expression")!);
+      if (postfixArg === null) return null;
       return {
         type: "PostfixExpression",
         op: "factorial",
-        expr: exprToAST(text, node.getChild("Expression")!),
+        expr: postfixArg,
         pos: getPos(node),
       };
     case "CallExpression":
-      return callExpressionToAST(text, node);
+      return callExpressionToAST(td, node);
     case "UpdateRule":
+      const updateVar = exprToAST(td, node.getChild("Expression")!);
+      const updateExpr = exprToAST(td, node.getChild("Expression", "->")!);
+      if (updateVar === null || updateExpr === null) return null;
       return {
         type: "UpdateRule",
-        variable: exprToAST(text, node.getChild("Expression")!),
-        expression: exprToAST(text, node.getChild("Expression", "->")!),
+        variable: updateVar,
+        expression: updateExpr,
         pos: getPos(node),
       };
     case "SequenceExpression":
+      const seqLeft = exprToAST(td, node.getChild("Expression")!);
+      const seqRight = exprToAST(td, node.getChild("Expression", ",")!);
+      if (seqLeft === null || seqRight === null) return null;
       return {
         type: "SequenceExpression",
-        left: exprToAST(text, node.getChild("Expression")!),
-        right: exprToAST(text, node.getChild("Expression", ",")!),
+        left: seqLeft,
+        right: seqRight,
         parenWrapped: false,
         pos: getPos(node),
       };
     default:
-      throw `Unexpected expression node: ${node.name}`;
+      throw `Programming error: Unexpected expression node: ${node.name}`;
   }
 }
 
@@ -275,21 +400,25 @@ function exprToAST(text: string, node: SyntaxNode): TextAST.Expression {
  * @param node RepeatedExpression
  */
 function repeatedExpressionToAST(
-  text: string,
+  td: TextAndDiagnostics,
   node: SyntaxNode
-): TextAST.RepeatedExpression {
+): TextAST.RepeatedExpression | null {
   const exprs = node.getChildren("Expression");
   const name = node.firstChild!.name;
   if (name !== "integral" && name !== "sum" && name !== "product") {
-    throw `Unexpected repeated oeprator name: ${name}`;
+    throw `Programming error: Unexpected repeated operator name: ${name}`;
   }
+  const startExpr = exprToAST(td, exprs[1]);
+  const endExpr = exprToAST(td, exprs[2]);
+  const exprExpr = exprToAST(td, exprs[3]);
+  if (startExpr === null || endExpr === null || exprExpr === null) return null;
   return {
     type: "RepeatedExpression",
     name: name,
-    index: identifierToAST(text, exprs[0]),
-    start: exprToAST(text, exprs[1]),
-    end: exprToAST(text, exprs[2]),
-    expr: exprToAST(text, exprs[3]),
+    index: identifierToAST(td, exprs[0]),
+    start: startExpr,
+    end: endExpr,
+    expr: exprExpr,
     pos: getPos(node),
   };
 }
@@ -298,23 +427,28 @@ function repeatedExpressionToAST(
  * @param node ListExpression
  */
 function listExpressionToAST(
-  text: string,
+  td: TextAndDiagnostics,
   node: SyntaxNode
-): TextAST.RangeExpression | TextAST.ListExpression {
+): TextAST.RangeExpression | TextAST.ListExpression | null {
   const exprsStart = node.getChildren("Expression", null, "...");
   const exprsEnd = node.getChildren("Expression", "...");
   if (exprsEnd.length) {
+    const startValues = exprsStart.map((node) => exprToAST(td, node));
+    const endValues = exprsEnd.map((node) => exprToAST(td, node));
+    if (!everyNonNull(startValues) || !everyNonNull(endValues)) return null;
     return {
       type: "RangeExpression",
-      startValues: exprsStart.map((node) => exprToAST(text, node)),
-      endValues: exprsEnd.map((node) => exprToAST(text, node)),
+      startValues,
+      endValues,
       pos: getPos(node),
     };
   } else {
     const exprs = node.getChildren("Expression");
+    const values = exprs.map((node) => exprToAST(td, node));
+    if (!everyNonNull(values)) return null;
     return {
       type: "ListExpression",
-      values: exprs.map((node) => exprToAST(text, node)),
+      values,
       pos: getPos(node),
     };
   }
@@ -324,14 +458,16 @@ function listExpressionToAST(
  * @param node AssignmentExpression
  */
 function assignmentToAST(
-  text: string,
+  td: TextAndDiagnostics,
   node: SyntaxNode
-): TextAST.AssignmentExpression {
+): TextAST.AssignmentExpression | null {
   const variableNode = node.getChild("Identifier")!;
+  const expr = exprToAST(td, variableNode.nextSibling!.nextSibling!);
+  if (expr === null) return null;
   return {
     type: "AssignmentExpression",
-    variable: identifierToAST(text, variableNode),
-    expr: exprToAST(text, variableNode.nextSibling!.nextSibling!),
+    variable: identifierToAST(td, variableNode),
+    expr,
     pos: getPos(node),
   };
 }
@@ -340,19 +476,22 @@ function assignmentToAST(
  * @param node PiecewiseBranch
  */
 function piecewiseBranchToAST(
-  text: string,
+  td: TextAndDiagnostics,
   node: SyntaxNode
-): TextAST.PiecewiseBranch {
+): TextAST.PiecewiseBranch | null {
   const exprs = node.getChildren("Expression");
+  const condition = exprToAST(td, exprs[0]);
+  const consequent = exprs[1]
+    ? exprToAST(td, exprs[1])
+    : {
+        type: "Number" as const,
+        value: 1,
+      };
+  if (condition === null || consequent === null) return null;
   return {
     type: "PiecewiseBranch",
-    condition: exprToAST(text, exprs[0]),
-    consequent: exprs[1]
-      ? exprToAST(text, exprs[1])
-      : {
-          type: "Number",
-          value: 1,
-        },
+    condition,
+    consequent,
     pos: getPos(node),
   };
 }
@@ -363,20 +502,23 @@ const binaryOps = ["^", "/", "*", "+", "-", "<", "<=", ">=", ">", "="];
  * @param node BinaryExpression
  */
 function binaryExpressionToAST(
-  text: string,
+  td: TextAndDiagnostics,
   node: SyntaxNode
-): TextAST.BinaryExpression {
+): TextAST.BinaryExpression | null {
   const exprs = node.getChildren("Expression");
   const opNode = exprs[0].nextSibling!;
-  const op = text.substring(opNode.from, opNode.to);
+  const op = td.nodeText(opNode);
   if (!binaryOps.includes(op)) {
-    throw `Unexpected binary operator: ${op}`;
+    throw `Programming Error: Unexpected binary operator: ${op}`;
   }
+  const left = exprToAST(td, exprs[0]);
+  const right = exprToAST(td, exprs[1]);
+  if (left === null || right === null) return null;
   return {
     type: "BinaryExpression",
     op: op as "^" | "/" | "*" | "+" | "-" | "<" | "<=" | ">=" | ">" | "=",
-    left: exprToAST(text, exprs[0]),
-    right: exprToAST(text, exprs[1]),
+    left,
+    right,
     pos: getPos(node),
   };
 }
@@ -385,14 +527,24 @@ function binaryExpressionToAST(
  * @param node CallExpression
  */
 function callExpressionToAST(
-  text: string,
+  td: TextAndDiagnostics,
   node: SyntaxNode
-): TextAST.CallExpression {
+): TextAST.CallExpression | null {
   const exprs = node.getChildren("Expression");
+  if (exprs[0].name !== "Identifier" && exprs[0].name !== "MemberExpression") {
+    td.pushError(
+      "Invalid callee; expected identifier or member expression",
+      getPos(exprs[0])
+    );
+    return null;
+  }
+  const callee = exprToAST(td, exprs[0]);
+  const args = exprs.slice(1).map((expr) => exprToAST(td, expr));
+  if (callee === null || !everyNonNull(args)) return null;
   return {
     type: "CallExpression",
-    callee: exprToAST(text, exprs[0]),
-    arguments: exprs.slice(1).map((expr) => exprToAST(text, expr)),
+    callee,
+    arguments: args,
     pos: getPos(node),
   };
 }
@@ -400,8 +552,12 @@ function callExpressionToAST(
 /**
  * @param node ParenthesizedExpression
  */
-function parenToAST(text: string, node: SyntaxNode): TextAST.Expression {
-  const expr = exprToAST(text, node.getChild("Expression")!);
+function parenToAST(
+  td: TextAndDiagnostics,
+  node: SyntaxNode
+): TextAST.Expression | null {
+  const expr = exprToAST(td, node.getChild("Expression")!);
+  if (expr === null) return null;
   if (expr.type === "SequenceExpression") {
     expr.parenWrapped = true;
   }
@@ -412,17 +568,15 @@ function parenToAST(text: string, node: SyntaxNode): TextAST.Expression {
  * @param node MappingEntry
  */
 function mappingEntryToAST(
-  text: string,
+  td: TextAndDiagnostics,
   node: SyntaxNode
 ): TextAST.MappingEntry {
   const expr = node.lastChild!;
   return {
     type: "MappingEntry",
-    property: identifierToStringAST(text, node.getChild("Identifier")!),
+    property: identifierToStringAST(td, node.getChild("Identifier")!),
     expr:
-      expr.name === "StyleMapping"
-        ? styleToAST(text, expr)
-        : exprToAST(text, expr),
+      expr.name === "StyleMapping" ? styleToAST(td, expr) : exprToAST(td, expr),
     pos: getPos(node),
   };
 }
@@ -430,13 +584,16 @@ function mappingEntryToAST(
 /**
  * @param node Identifier | DotAccessIdentifier
  */
-function identifierName(text: string, node: SyntaxNode | null): string {
+function identifierName(
+  td: TextAndDiagnostics,
+  node: SyntaxNode | null
+): string {
   if (node?.name === "DotAccessIdentifier") {
-    return text.substring(node.from + 1, node.to);
+    return td.text.substring(node.from + 1, node.to);
   } else if (node?.name === "Identifier") {
-    return text.substring(node.from, node.to);
+    return td.nodeText(node);
   } else {
-    throw "Expected identifier";
+    throw "Programming Error: expected identifier here";
   }
 }
 
@@ -444,23 +601,23 @@ function identifierName(text: string, node: SyntaxNode | null): string {
  * @param node Identifier | DotAccessIdentifier
  */
 function identifierToAST(
-  text: string,
+  td: TextAndDiagnostics,
   node: SyntaxNode | null
 ): TextAST.Identifier {
   return {
     type: "Identifier",
-    name: identifierName(text, node),
+    name: identifierName(td, node),
     pos: node ? getPos(node) : undefined,
   };
 }
 
 function identifierToStringAST(
-  text: string,
+  td: TextAndDiagnostics,
   node: SyntaxNode | null
 ): TextAST.String {
   return {
     type: "String",
-    value: identifierName(text, node),
+    value: identifierName(td, node),
     pos: node ? getPos(node) : undefined,
   };
 }
@@ -468,12 +625,23 @@ function identifierToStringAST(
 /**
  * @param node TableInner statement
  */
-function tableColumnToAST(text: string, node: SyntaxNode): TextAST.TableColumn {
-  if (node.name !== "SimpleStatement") throw "Invalid table column";
-  const style = styleToAST(text, node.getChild("StyleMapping"));
-  const simple = simpleStatementToAST(text, node, style);
+function tableColumnToAST(
+  td: TextAndDiagnostics,
+  node: SyntaxNode
+): TextAST.TableColumn | null {
+  if (node.name !== "SimpleStatement") {
+    td.pushError(
+      "Expected a valid table column. Try: x1 = [1, 2, 3]",
+      getPos(node)
+    );
+    return null;
+  }
+  const style = styleToAST(td, node.getChild("StyleMapping"));
+  const simple = simpleStatementToAST(td, node, style);
+  if (simple === null) return null;
   if (simple.type === "FunctionDefinition") {
-    throw "Table column cannot be a FunctionDefinition";
+    td.pushError("Table column cannot be a function definition", simple.pos);
+    return null;
   }
   return simple;
 }
@@ -481,8 +649,8 @@ function tableColumnToAST(text: string, node: SyntaxNode): TextAST.TableColumn {
 /**
  * @param node String
  */
-function parseString(text: string, node: SyntaxNode): string {
-  return JSON.parse(text.substring(node.from, node.to));
+function parseString(td: TextAndDiagnostics, node: SyntaxNode): string {
+  return JSON.parse(td.nodeText(node));
 }
 
 function getPos(node: SyntaxNode): TextAST.Pos {
