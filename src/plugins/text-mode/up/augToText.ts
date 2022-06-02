@@ -193,6 +193,15 @@ function stringToText(str: string) {
   return JSON.stringify(str);
 }
 
+const vizNameMap = {
+  Stats: "stats",
+  BoxPlot: "boxplot",
+  DotPlot: "dotplot",
+  Histogram: "histogram",
+  TTest: "ttest",
+  IndependentTTest: "ittest",
+};
+
 function rootLatexToText(e: Aug.Latex.AnyRootOrChild): string {
   switch (e.type) {
     case "Equation":
@@ -206,7 +215,10 @@ function rootLatexToText(e: Aug.Latex.AnyRootOrChild): string {
         childLatexToText(e.definition)
       );
     case "Visualization":
-      return funcToText(e.callee, e.args);
+      return funcToText(
+        { type: "Identifier", symbol: vizNameMap[e.callee.symbol] },
+        e.args
+      );
     case "Regression":
       return childLatexToText(e.left) + " ~ " + childLatexToText(e.right);
     default:
