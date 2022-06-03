@@ -438,6 +438,14 @@ function funcToString(
     return `\\left(${bareSeq(args)}\\right)!`;
   } else if (callee.symbol === "abs") {
     return `\\left|${bareSeq(args)}\\right|`;
+  } else if (callee.symbol === "sqrt") {
+    return `\\sqrt{${bareSeq(args)}}`;
+  } else if (callee.symbol === "nthroot") {
+    if (args.length === 1) return `\\sqrt{${bareSeq(args)}}`;
+    return `\\sqrt[${childNodeToString(args[1])}]{${bareSeq([
+      ...args.slice(0, 1),
+      ...args.slice(2),
+    ])}}`;
   } else {
     return identifierToString(callee) + wrapParen(bareSeq(args));
   }
