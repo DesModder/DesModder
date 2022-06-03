@@ -1,13 +1,14 @@
 import { Diagnostic } from "@codemirror/lint";
 import { Calc } from "desmodder";
 import augToRaw from "../aug/augToRaw";
-import textToAST from "../down/textToAST";
+import { cstToAST } from "../down/textToAST";
 import astToAug from "./astToAug";
 import { error } from "./diagnostics";
+import { Tree } from "@lezer/common";
 
-export default function applyText(text: string): Diagnostic[] {
+export default function applyCST(cst: Tree, text: string): Diagnostic[] {
   try {
-    const [parseErrors, ast] = textToAST(text);
+    const [parseErrors, ast] = cstToAST(cst, text);
     const [allErrors, aug] = astToAug(parseErrors, ast);
     if (aug === null) return allErrors;
     const state = augToRaw(aug);

@@ -1,10 +1,11 @@
 import { EditorView, ViewUpdate } from "@codemirror/view";
 import { Calc } from "globals/window";
 import { initView } from "./view/editor";
-import applyText from "./down/applyText";
+import applyCST from "./down/applyCST";
 import getText from "./up/getText";
 import { Diagnostic } from "@codemirror/lint";
 import { keys } from "utils/depUtils";
+import { ensureSyntaxTree } from "@codemirror/language";
 
 export default class Controller {
   inTextMode: boolean = false;
@@ -52,17 +53,29 @@ export default class Controller {
   /**
    * Linting is the entry point for linting but also for evaluation
    */
-  doLint(view: EditorView): Diagnostic[] {
-    if (this.initialDoc) {
-      this.initialDoc = false;
-    } else if (!this.applyingUpdateFromGraph) {
-      this.applyingUpdateFromText = true;
-      const text = view.state.sliceDoc();
-      this.lastDiagnostics = applyText(text);
-      view.focus();
-      this.applyingUpdateFromText = false;
-    }
-    return this.lastDiagnostics;
+  doLint(view: EditorView): Promise<Diagnostic[]> {
+    return new Promise((resolve) => {
+      if (this.initialDoc) {
+        this.initialDoc = false;
+        resolve(this.lastDiagnostics);
+      } else if (!this.applyingUpdateFromGraph) {
+        const stLoop = setInterval(() => {
+          const state = view.state;
+          const syntaxTree = ensureSyntaxTree(state, state.doc.length, 50);
+          if (syntaxTree) {
+            clearInterval(stLoop);
+            console.log("Applying update from text");
+            this.applyingUpdateFromText = true;
+            this.lastDiagnostics = applyCST(syntaxTree, state.sliceDoc());
+            view.focus();
+            this.applyingUpdateFromText = false;
+            resolve(this.lastDiagnostics);
+          }
+        }, 100);
+      } else {
+        resolve(this.lastDiagnostics);
+      }
+    });
   }
 
   updateFromGraph() {

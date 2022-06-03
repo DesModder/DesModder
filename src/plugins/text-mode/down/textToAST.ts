@@ -1,5 +1,4 @@
 import { parser } from "../lezer/syntax.grammar";
-import { printTree } from "../lezer/print-lezer-tree";
 import { SyntaxNode } from "@lezer/common";
 import { Tree } from "@lezer/common";
 import * as TextAST from "./TextAST";
@@ -24,17 +23,13 @@ class TextAndDiagnostics {
   }
 }
 
-/**
- * Convert the given string text to AST, throwing out all error nodes and
- * ancestors of error nodes in the CST except for Program.
- */
-export default function textToAST(
+export function cstToAST(
+  cst: Tree,
   text: string
 ): [Diagnostic[], TextAST.Statement[] | null] {
-  const cst = parser.parse(text);
-  console.groupCollapsed("Program");
-  console.log(printTree(cst, text));
-  console.groupEnd();
+  // console.groupCollapsed("Program");
+  // console.log(printTree(cst, text));
+  // console.groupEnd();
   if (cst.type.name !== "Program") {
     throw "Programming error: expected parsed program";
   }
@@ -45,6 +40,17 @@ export default function textToAST(
     statementAST && statements.push(statementAST);
   }
   return [td.diagnostics, statements];
+}
+
+/**
+ * Convert the given string text to AST, throwing out all error nodes and
+ * ancestors of error nodes in the CST except for Program.
+ */
+export default function textToAST(
+  text: string
+): [Diagnostic[], TextAST.Statement[] | null] {
+  const cst = parser.parse(text);
+  return cstToAST(cst, text);
 }
 
 /**
