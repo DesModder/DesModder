@@ -1,20 +1,33 @@
-import { EditorView, ViewUpdate } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import { Calc } from "globals/window";
 import { initView } from "./view/editor";
 import applyCST from "./down/applyCST";
-import getText from "./up/getText";
 import { Diagnostic } from "@codemirror/lint";
 import { keys } from "utils/depUtils";
 import { ensureSyntaxTree } from "@codemirror/language";
+import { DispatchedEvent } from "globals/Calc";
+import { Tree } from "@lezer/common";
+import {
+  RelevantEvent,
+  relevantEventTypes,
+  eventSequenceChanges,
+} from "./modify/modify";
 
 export default class Controller {
   inTextMode: boolean = false;
   view: EditorView | null = null;
-  applyingUpdateFromGraph: boolean = false;
+  /**
+   * Is the initial doc being applying from initView()?
+   * or was the most recent modification of the text based on a state change
+   * from the graph?
+   */
+  lastUpdateWasByUser: boolean = false;
   applyingUpdateFromText: boolean = false;
-  /** Is the initial doc being applying from initView()? */
-  initialDoc: boolean = false;
   lastDiagnostics: Diagnostic[] = [];
+  dispatchListenerID: string | null = null;
+  /** Dispatched events to handle once the syntax tree finishes */
+  queuedEvents: RelevantEvent[] = [];
+  currentlyLooping: boolean = false;
 
   toggleTextMode() {
     this.inTextMode = !this.inTextMode;
@@ -22,19 +35,61 @@ export default class Controller {
   }
 
   mountEditor(container: HTMLDivElement) {
-    this.initialDoc = true;
+    this.lastUpdateWasByUser = false;
     this.view = initView(this);
     container.appendChild(this.view.dom);
     this.preventPropagation(container);
-    Calc.observeEvent("change.dsm-text-mode", () => this.updateFromGraph());
+    this.dispatchListenerID = Calc.controller.dispatcher.register(
+      this.pushEvent.bind(this)
+    );
   }
 
   unmountEditor(container: HTMLDivElement) {
-    Calc.unobserveEvent("change.dsm-text-mode");
+    if (this.dispatchListenerID !== null) {
+      Calc.controller.dispatcher.unregister(this.dispatchListenerID);
+    }
     if (this.view) {
       this.view.destroy();
       this.view = null;
     }
+    this.queuedEvents = [];
+  }
+
+  pushEvent(event: DispatchedEvent) {
+    if (!this.view) return;
+    if (!(relevantEventTypes as readonly string[]).includes(event.type)) return;
+    this.queuedEvents.push(event as RelevantEvent);
+    if (this.currentlyLooping) {
+      // Another loop is currently checking for the syntax tree to be ready
+      return;
+    }
+    const tryProcessQueuedEvents = () => {
+      if (!this.view) {
+        this.currentlyLooping = false;
+        return;
+      }
+      const state = this.view.state;
+      const tree = ensureSyntaxTree(state, state.doc.length, 25);
+      if (tree !== null) {
+        this.processQueuedEvents(tree);
+        this.currentlyLooping = false;
+      } else {
+        // try again later for a valid syntax tree
+        setTimeout(tryProcessQueuedEvents, 50);
+      }
+    };
+    tryProcessQueuedEvents();
+  }
+
+  processQueuedEvents(tree: Tree) {
+    if (!this.view) return;
+    this.lastUpdateWasByUser = false;
+    this.view.update([
+      this.view.state.update({
+        changes: eventSequenceChanges(this.queuedEvents, tree),
+      }),
+    ]);
+    this.queuedEvents = [];
   }
 
   /**
@@ -53,44 +108,36 @@ export default class Controller {
   /**
    * Linting is the entry point for linting but also for evaluation
    */
-  doLint(view: EditorView): Promise<Diagnostic[]> {
+  doLint(): Promise<Diagnostic[]> {
     return new Promise((resolve) => {
-      if (this.initialDoc) {
-        this.initialDoc = false;
+      if (!this.lastUpdateWasByUser) {
+        // TODO: also set this.lastUpdateWasByUser = true if the user edits
+        // the text while a non-user update was waiting to be acted upon
+        this.lastUpdateWasByUser = true;
+        // Assume computer actions (changing viewport bounds for example)
+        // do not affect any diagnostics
         resolve(this.lastDiagnostics);
-      } else if (!this.applyingUpdateFromGraph) {
+      } else {
         const stLoop = setInterval(() => {
-          const state = view.state;
+          // don't use the `view` function parameter to doLint because we want
+          // to stop the loop if the view got destroyed
+          if (this.view === null) {
+            clearInterval(stLoop);
+            return;
+          }
+          const state = this.view.state;
           const syntaxTree = ensureSyntaxTree(state, state.doc.length, 50);
           if (syntaxTree) {
             clearInterval(stLoop);
             console.log("Applying update from text");
             this.applyingUpdateFromText = true;
             this.lastDiagnostics = applyCST(syntaxTree, state.sliceDoc());
-            view.focus();
+            this.view.focus();
             this.applyingUpdateFromText = false;
             resolve(this.lastDiagnostics);
           }
         }, 100);
-      } else {
-        resolve(this.lastDiagnostics);
       }
     });
-  }
-
-  updateFromGraph() {
-    // Update changes from user dragging point, slider/regression tick, etc.
-    // TODO: incremental update
-    if (!this.applyingUpdateFromText && this.view) {
-      this.applyingUpdateFromGraph = true;
-      const editorState = this.view.state;
-      const [errors, text] = getText();
-      this.view.update([
-        editorState.update({
-          changes: { from: 0, to: editorState.doc.length, insert: text },
-        }),
-      ]);
-      this.applyingUpdateFromGraph = false;
-    }
   }
 }

@@ -17,10 +17,7 @@ export default function rawToAug(raw: Graph.GraphState): Aug.State {
   );
   const res: Aug.State = {
     version: 9,
-    settings: {
-      ...raw.graph,
-      randomSeed: raw.randomSeed,
-    },
+    settings: rawToAugSettings(raw),
     expressions: {
       list: rawListToAug(raw.expressions.list, dsmMetadata),
     },
@@ -34,6 +31,13 @@ export default function rawToAug(raw: Graph.GraphState): Aug.State {
     };
   }
   return res;
+}
+
+export function rawToAugSettings(raw: Graph.GraphState) {
+  return {
+    ...raw.graph,
+    randomSeed: raw.randomSeed,
+  };
 }
 
 function rawListToAug(

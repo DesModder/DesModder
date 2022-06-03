@@ -532,6 +532,10 @@ export default class Controller {
     this.killWorker();
   }
 
+  /**
+   * Force the worker to revisit this expression by toggling it hidden then
+   * un-hidden
+   */
   toggleExpr(id: string) {
     Calc.controller.dispatch({
       type: "toggle-item-hidden",

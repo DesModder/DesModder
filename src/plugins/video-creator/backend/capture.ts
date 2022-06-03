@@ -117,7 +117,7 @@ async function captureActionFrame(
       await captureAndApplyFrame(controller);
       controller.setTickCountLatex(String(tickCountRemaining - 1));
       controller.actionCaptureState = "waiting-for-update";
-      if (tickCountRemaining - 1 > 0) {
+      if (tickCountRemaining - 1 > 0 && controller.currentActionID !== null) {
         Calc.controller.dispatch({
           type: "action-single-step",
           id: controller.currentActionID,

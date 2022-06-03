@@ -2,12 +2,34 @@ import { GraphState } from "@desmodder/graph-state";
 import { ItemModel } from "./models";
 import "desmos";
 
-interface DispatchedEvent {
-  type: string;
-  [key: string]: any;
-}
-
-type DispatchListenerID = string;
+export type DispatchedEvent =
+  | {
+      type:
+        | "keypad/set-minimized"
+        | "close-graph-settings"
+        | "open-expression-search"
+        | "close-expression-search"
+        | "toggle-ticker"
+        | "re-randomize"
+        | "toggle-lock-viewport"
+        | "grapher/drag-end"
+        | "set-axis-limit-latex"
+        | "commit-user-requested-viewport"
+        | "zoom"
+        | "set-graph-settings";
+    }
+  | {
+      type:
+        | "action-single-step"
+        | "toggle-item-hidden"
+        | "duplicate-folder"
+        | "duplicate-expression";
+      id: string;
+    }
+  | {
+      type: "set-focus-location";
+      location: { type: string };
+    };
 
 interface CalcPrivate {
   //// undocumented, may break
@@ -29,8 +51,8 @@ interface CalcPrivate {
     dispatch(e: DispatchedEvent): void;
     getExpressionSearchStr(): string;
     dispatcher: {
-      register(func: (e: DispatchedEvent) => void): DispatchListenerID;
-      unregister(id: DispatchListenerID): void;
+      register(func: (e: DispatchedEvent) => void): string;
+      unregister(id: string): void;
     };
     getTickerPlaying?(): boolean;
     // The item models returned are actually much more detailed
@@ -57,6 +79,14 @@ interface CalcPrivate {
     listModel: unknown;
     _addItemToEndFromAPI(item: ItemModel): void;
     _showToast(toast: { message: string; undoCallback?: () => void }): void;
+    getViewState(): {
+      viewport: {
+        xmin: number;
+        ymin: number;
+        xmax: number;
+        ymax: number;
+      };
+    };
   };
   //// public
 

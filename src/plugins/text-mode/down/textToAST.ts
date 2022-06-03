@@ -2,10 +2,9 @@ import { parser } from "../lezer/syntax.grammar";
 import { SyntaxNode } from "@lezer/common";
 import { Tree } from "@lezer/common";
 import * as TextAST from "./TextAST";
-import { mapFromEntries } from "utils/utils";
+import { mapFromEntries, everyNonNull } from "utils/utils";
 import { Diagnostic } from "@codemirror/lint";
 import { error, warning } from "./diagnostics";
-import { everyNonNull } from "utils/utils";
 
 class TextAndDiagnostics {
   constructor(public text: string, public diagnostics: Diagnostic[]) {}

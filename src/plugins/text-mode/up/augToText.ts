@@ -13,7 +13,7 @@ export default function augToText(aug: Aug.State) {
   );
 }
 
-function graphSettingsToText(settings: Aug.GraphSettings) {
+export function graphSettingsToText(settings: Aug.GraphSettings) {
   return "settings " + styleMapToText(settings);
 }
 
