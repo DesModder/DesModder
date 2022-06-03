@@ -6,7 +6,13 @@ const _EvaluateSingleExpression = desmosRequire(
 ).default;
 
 export const jquery = desmosRequire("jquery");
-export const keys = desmosRequire("keys");
+export const keys = desmosRequire("keys") as {
+  lookup: (e: KeyboardEvent) => string;
+  lookupChar: (e: KeyboardEvent) => string;
+  isUndo: (e: KeyboardEvent) => boolean;
+  isRedo: (e: KeyboardEvent) => boolean;
+  isHelp: (e: KeyboardEvent) => boolean;
+};
 export const parseDesmosLatex = desmosRequire("core/math/parser").parse as (
   s: string
 ) => Node;

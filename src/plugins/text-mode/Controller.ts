@@ -4,6 +4,7 @@ import { initView } from "./view/editor";
 import applyText from "./down/applyText";
 import getText from "./up/getText";
 import { Diagnostic } from "@codemirror/lint";
+import { keys } from "utils/depUtils";
 
 export default class Controller {
   inTextMode: boolean = false;
@@ -23,6 +24,7 @@ export default class Controller {
     this.initialDoc = true;
     this.view = initView(this);
     container.appendChild(this.view.dom);
+    this.preventPropagation(container);
     Calc.observeEvent("change.dsm-text-mode", () => this.updateFromGraph());
   }
 
@@ -32,6 +34,19 @@ export default class Controller {
       this.view.destroy();
       this.view = null;
     }
+  }
+
+  /**
+   * Codemirror handles undo, redo, and Ctrl+/; we don't want Desmos to get
+   * these, so we stop their propagation at the container
+   */
+  preventPropagation(container: HTMLDivElement) {
+    container.addEventListener(
+      "keydown",
+      (e) =>
+        (keys.isUndo(e) || keys.isRedo(e) || keys.isHelp(e)) &&
+        e.stopPropagation()
+    );
   }
 
   /**
