@@ -11,7 +11,9 @@ export default function applyText(text: string): Diagnostic[] {
     const [allErrors, aug] = astToAug(parseErrors, ast);
     if (aug === null) return allErrors;
     const state = augToRaw(aug);
-    Calc.setState(state);
+    Calc.setState(state, {
+      allowUndo: true,
+    });
     return allErrors;
   } catch (err) {
     console.error("Error while compiling to Desmos:\n", err);

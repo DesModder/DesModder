@@ -10,6 +10,8 @@ export default class Controller {
   view: EditorView | null = null;
   applyingUpdateFromGraph: boolean = false;
   applyingUpdateFromText: boolean = false;
+  /** Is the initial doc being applying from initView()? */
+  initialDoc: boolean = false;
   lastDiagnostics: Diagnostic[] = [];
 
   toggleTextMode() {
@@ -18,6 +20,7 @@ export default class Controller {
   }
 
   mountEditor(container: HTMLDivElement) {
+    this.initialDoc = true;
     this.view = initView(this);
     container.appendChild(this.view.dom);
     Calc.observeEvent("change.dsm-text-mode", () => this.updateFromGraph());
@@ -35,7 +38,9 @@ export default class Controller {
    * Linting is the entry point for linting but also for evaluation
    */
   doLint(view: EditorView): Diagnostic[] {
-    if (!this.applyingUpdateFromGraph) {
+    if (this.initialDoc) {
+      this.initialDoc = false;
+    } else if (!this.applyingUpdateFromGraph) {
       this.applyingUpdateFromText = true;
       const text = view.state.sliceDoc();
       this.lastDiagnostics = applyText(text);
@@ -51,7 +56,7 @@ export default class Controller {
     if (!this.applyingUpdateFromText && this.view) {
       this.applyingUpdateFromGraph = true;
       const editorState = this.view.state;
-      const text = getText();
+      const [errors, text] = getText();
       this.view.update([
         editorState.update({
           changes: { from: 0, to: editorState.doc.length, insert: text },

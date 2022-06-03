@@ -56,7 +56,7 @@ interface CalcPrivate {
     };
     listModel: unknown;
     _addItemToEndFromAPI(item: ItemModel): void;
-    _showToast(toast: { message: string }): void;
+    _showToast(toast: { message: string; undoCallback?: () => void }): void;
   };
   //// public
 

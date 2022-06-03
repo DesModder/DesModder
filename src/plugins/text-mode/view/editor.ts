@@ -24,6 +24,7 @@ import { defaultHighlightStyle } from "@codemirror/highlight";
 // Language extension
 import { TextMode } from "../lezer/index";
 import { linter } from "@codemirror/lint";
+import { Calc } from "globals/window";
 
 const scrollTheme = EditorView.theme({
   "&": {
@@ -35,8 +36,20 @@ const scrollTheme = EditorView.theme({
 });
 
 export function initView(controller: Controller) {
-  let startState = EditorState.create({
-    doc: getText(),
+  const [errors, text] = getText();
+
+  if (errors) {
+    Calc.controller._showToast({
+      message:
+        "Automatic conversion to text encountered errors in some expressions.",
+      undoCallback: () => {
+        controller.toggleTextMode();
+      },
+    });
+  }
+
+  const startState = EditorState.create({
+    doc: text,
     extensions: [
       // linter, showing errors
       // The linter is also the entry point to evaluation

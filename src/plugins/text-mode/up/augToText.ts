@@ -37,6 +37,13 @@ function undefineIfEmpty(value: any) {
 }
 
 function itemToText(item: Aug.ItemAug): string {
+  if (item.error) {
+    if (item.type === "text") {
+      return stringToText(`(Error in automatic conversion: ${item.text})`);
+    } else {
+      return stringToText(`(Error in automatic conversion)`);
+    }
+  }
   const base = {
     id: item.id,
     secret: undefineIfFalse(item.secret),

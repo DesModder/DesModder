@@ -80,6 +80,24 @@ function rawNonFolderToAug(
   item: Graph.NonFolderState,
   dsmMetadata: Metadata
 ): Aug.NonFolderAug {
+  try {
+    return tryRawNonFolderToAug(item, dsmMetadata);
+  } catch {
+    return {
+      id: item.id,
+      secret: false,
+      pinned: false,
+      type: "text",
+      text: item.type,
+      error: true,
+    };
+  }
+}
+
+function tryRawNonFolderToAug(
+  item: Graph.NonFolderState,
+  dsmMetadata: Metadata
+): Aug.NonFolderAug {
   const base = {
     id: item.id,
     pinned: dsmMetadata.expressions[item.id]?.pinned ?? false,
@@ -561,7 +579,7 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
     case "Error":
       throw "Parsing threw an error";
     default:
-      throw `Unexpected ${node.type}`;
+      throw `Programming Error: Unexpected raw node ${node.type}`;
   }
 }
 

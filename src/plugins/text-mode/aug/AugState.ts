@@ -87,6 +87,14 @@ export type ItemAug = FolderAug | NonFolderAug;
 export interface BaseItemAug {
   id: string;
   secret: boolean;
+  /**
+   * The error flag is set to true when the Desmos to Aug conversion encounters
+   * a parse error. If `item.type==="text"`, then `item.text` gives an error
+   * message.
+   *
+   * The error flag is ignored in the conversion of Aug back to Desmos.
+   */
+  error?: boolean;
 }
 
 export interface BaseNonFolderAug extends BaseItemAug {
