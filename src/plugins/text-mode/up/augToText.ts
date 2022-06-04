@@ -1,16 +1,22 @@
 import * as Aug from "../aug/AugState";
+import { MapIDPosition } from "../modify/mapIDPosition";
 
 const INDENT = 2;
 
-export default function augToText(aug: Aug.State) {
+export default function augToText(aug: Aug.State): [string, MapIDPosition] {
   // TODO: ticker
-  return (
-    graphSettingsToText(aug.settings) +
-    aug.expressions.list
-      .map(itemToText)
-      .map((s) => "\n\n" + s)
-      .join("")
-  );
+  const idMap: MapIDPosition = {};
+  const settingsString = graphSettingsToText(aug.settings);
+  let pos = settingsString.length;
+  const itemStrings = [];
+  for (const item of aug.expressions.list) {
+    // + 2 for the \n\n
+    idMap[item.id] = pos + 2;
+    const text = "\n\n" + itemToText(item);
+    itemStrings.push(text);
+    pos += text.length;
+  }
+  return [settingsString + itemStrings.join(""), idMap];
 }
 
 export function graphSettingsToText(settings: Aug.GraphSettings) {
@@ -36,7 +42,7 @@ function undefineIfEmpty(value: any) {
   return undefineIfMatch(value, {});
 }
 
-function itemToText(item: Aug.ItemAug): string {
+export function itemToText(item: Aug.ItemAug): string {
   if (item.error) {
     if (item.type === "text") {
       return stringToText(`(Error in automatic conversion: ${item.text})`);
@@ -45,7 +51,7 @@ function itemToText(item: Aug.ItemAug): string {
     }
   }
   const base = {
-    id: item.id,
+    id: item.id.startsWith("__") ? undefined : item.id,
     secret: undefineIfFalse(item.secret),
     pinned: undefineIfFalse(item.type !== "folder" && item.pinned),
   };

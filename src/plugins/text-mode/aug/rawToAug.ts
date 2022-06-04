@@ -7,14 +7,7 @@ import Metadata from "main/metadata/interface";
 import { mapFromEntries } from "utils/utils";
 
 export default function rawToAug(raw: Graph.GraphState): Aug.State {
-  const dsmMetadataExpr = raw.expressions.list.find(
-    (e) => e.id === "dsm-metadata"
-  );
-  const dsmMetadata = migrateToLatest(
-    dsmMetadataExpr?.type === "text"
-      ? JSON.parse(dsmMetadataExpr.text ?? "{}")
-      : {}
-  );
+  const dsmMetadata = rawToDsmMetadata(raw);
   const res: Aug.State = {
     version: 9,
     settings: rawToAugSettings(raw),
@@ -38,6 +31,17 @@ export function rawToAugSettings(raw: Graph.GraphState) {
     ...raw.graph,
     randomSeed: raw.randomSeed,
   };
+}
+
+export function rawToDsmMetadata(raw: Graph.GraphState) {
+  const dsmMetadataExpr = raw.expressions.list.find(
+    (e) => e.id === "dsm-metadata"
+  );
+  return migrateToLatest(
+    dsmMetadataExpr?.type === "text"
+      ? JSON.parse(dsmMetadataExpr.text ?? "{}")
+      : {}
+  );
 }
 
 function rawListToAug(
@@ -80,7 +84,7 @@ function rawFolderToAug(item: Graph.FolderState): Aug.FolderAug {
   };
 }
 
-function rawNonFolderToAug(
+export function rawNonFolderToAug(
   item: Graph.NonFolderState,
   dsmMetadata: Metadata
 ): Aug.NonFolderAug {

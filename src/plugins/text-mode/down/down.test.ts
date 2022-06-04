@@ -17,7 +17,7 @@ const colors = ["#c74440", "#2d70b3", "#388c46", "#6042a6", "#000000"];
 
 const exprDefaults = {
   type: "expression",
-  id: "1",
+  id: "__dsm-auto-1",
   latex: number(1),
   color: colors[0],
   hidden: false,
@@ -33,6 +33,7 @@ const exprDefaults = {
 
 const columnDefaults = {
   type: "column",
+  id: "__dsm-auto-2",
   hidden: false,
   values: [],
   color: colors[0],
@@ -40,7 +41,7 @@ const columnDefaults = {
 
 const tableDefaults = {
   type: "table",
-  id: "1",
+  id: "__dsm-auto-1",
   pinned: false,
   secret: false,
 };
@@ -525,7 +526,6 @@ describe("Tables", () => {
       {
         ...columnDefaults,
         values: [number(1), number(2), number(3)],
-        id: "2",
       },
     ],
   });
@@ -535,7 +535,6 @@ describe("Tables", () => {
       {
         ...columnDefaults,
         latex: binop("Add", id("L"), number(1)),
-        id: "2",
       },
     ],
   });
@@ -547,7 +546,6 @@ describe("Tables", () => {
         latex: id("a"),
         values: [number(1), number(2), number(3)],
         hidden: false,
-        id: "2",
       },
     ],
   });
@@ -591,7 +589,7 @@ describe("Regressions", () => {
 describe("Text", () => {
   testStmt("Text", `"abc"`, {
     type: "text",
-    id: "1",
+    id: "__dsm-auto-1",
     pinned: false,
     secret: false,
     text: "abc",
@@ -601,7 +599,7 @@ describe("Text", () => {
 describe("Image", () => {
   testStmt("Plain image", `image "name" "data:image/png,stub"`, {
     type: "image",
-    id: "1",
+    id: "__dsm-auto-1",
     pinned: false,
     secret: false,
     name: "name",
@@ -634,7 +632,7 @@ describe("Image", () => {
       }`,
     {
       type: "image",
-      id: "1",
+      id: "__dsm-auto-1",
       pinned: true,
       secret: true,
       name: "name",
@@ -652,7 +650,7 @@ describe("Image", () => {
 
 const folderDefaults = {
   type: "folder",
-  id: "1",
+  id: "__dsm-auto-1",
   collapsed: false,
   hidden: false,
   secret: false,
@@ -670,7 +668,7 @@ describe("Folder", () => {
       children: [
         {
           ...exprDefaults,
-          id: "2",
+          id: "__dsm-auto-2",
         },
       ],
     }
@@ -681,7 +679,7 @@ describe("Folder", () => {
       @{collapsed:true,secret:true,hidden:true}`,
     {
       type: "folder",
-      id: "1",
+      id: "__dsm-auto-1",
       title: "Title",
       collapsed: true,
       hidden: true,
@@ -707,12 +705,11 @@ describe("Automatic IDs", () => {
         {
           ...columnDefaults,
           latex: id("a"),
-          id: "2",
         },
         {
           ...columnDefaults,
           latex: id("b"),
-          id: "3",
+          id: "__dsm-auto-3",
           color: colors[1],
         },
       ],
@@ -720,7 +717,7 @@ describe("Automatic IDs", () => {
     expect(exprs[1]).toEqual({
       ...exprDefaults,
       latex: number(1),
-      id: "4",
+      id: "__dsm-auto-4",
       color: colors[2],
     });
   });
@@ -741,13 +738,13 @@ describe("Automatic IDs", () => {
         {
           ...exprDefaults,
           latex: id("a"),
-          id: "2",
+          id: "__dsm-auto-2",
         },
         {
           ...exprDefaults,
           color: colors[1],
           latex: id("b"),
-          id: "3",
+          id: "__dsm-auto-3",
         },
       ],
     });
@@ -755,7 +752,7 @@ describe("Automatic IDs", () => {
       ...exprDefaults,
       latex: number(1),
       color: colors[2],
-      id: "4",
+      id: "__dsm-auto-4",
     });
   });
 });
@@ -921,6 +918,9 @@ describe("Diagnostics", () => {
     ]);
     testDiagnostics("Settings in folder", `folder "title" { settings @{} }`, [
       error("Settings may not be in a folder", pos(17, 29)),
+    ]);
+    testDiagnostics("Invalid id", `y=x @{id: "__dsm-auto-1"}`, [
+      error("ID may not start with '__'", pos(10, 24)),
     ]);
   });
   describe("Parse errors", () => {

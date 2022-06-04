@@ -1,5 +1,6 @@
 import { Diagnostic } from "@codemirror/lint";
 import { Pos } from "./TextAST";
+import * as TextAST from "./TextAST";
 
 function diagnostic(
   severity: "error" | "warning",
@@ -20,4 +21,16 @@ export function error(message: string, pos: Pos | undefined): Diagnostic {
 
 export function warning(message: string, pos: Pos | undefined): Diagnostic {
   return diagnostic("warning", message, pos);
+}
+
+export class DiagnosticsState {
+  constructor(public diagnostics: Diagnostic[] = []) {}
+
+  pushError(message: string, pos: TextAST.Pos | undefined) {
+    this.diagnostics.push(error(message, pos));
+  }
+
+  pushWarning(message: string, pos: TextAST.Pos | undefined) {
+    this.diagnostics.push(warning(message, pos));
+  }
 }

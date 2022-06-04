@@ -1,7 +1,6 @@
 import { EditorState } from "@codemirror/state";
 import Controller from "../Controller";
 import "./editor.css";
-import getText from "../up/getText";
 // Basic editor extensions
 import {
   EditorView,
@@ -36,7 +35,7 @@ const scrollTheme = EditorView.theme({
 });
 
 export function initView(controller: Controller) {
-  const [errors, text] = getText();
+  const [errors, text] = controller.getInitialText();
 
   if (errors) {
     Calc.controller._showToast({

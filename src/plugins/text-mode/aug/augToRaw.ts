@@ -400,6 +400,8 @@ function childNodeToString(e: Aug.Latex.AnyChild): string {
           return wrapParen(binopLeft) + "^{" + binopRight + "}";
       }
     case "Negative":
+      if (e.arg.type === "Constant" && e.arg.value > 0)
+        return "-" + childNodeToString(e.arg);
       return "-" + wrapParen(childNodeToString(e.arg));
     case "Comparator":
       return (

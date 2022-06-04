@@ -4,21 +4,15 @@ import { Tree } from "@lezer/common";
 import * as TextAST from "./TextAST";
 import { mapFromEntries, everyNonNull } from "utils/utils";
 import { Diagnostic } from "@codemirror/lint";
-import { error, warning } from "./diagnostics";
+import { DiagnosticsState, error, warning } from "./diagnostics";
 
-class TextAndDiagnostics {
-  constructor(public text: string, public diagnostics: Diagnostic[]) {}
+class TextAndDiagnostics extends DiagnosticsState {
+  constructor(public text: string, diagnostics: Diagnostic[]) {
+    super(diagnostics);
+  }
 
   nodeText(pos: TextAST.Pos) {
     return this.text.substring(pos.from, pos.to);
-  }
-
-  pushError(message: string, pos: TextAST.Pos | undefined) {
-    this.diagnostics.push(error(message, pos));
-  }
-
-  pushWarning(message: string, pos: TextAST.Pos | undefined) {
-    this.diagnostics.push(warning(message, pos));
   }
 }
 

@@ -12,6 +12,8 @@ import {
   relevantEventTypes,
   eventSequenceChanges,
 } from "./modify/modify";
+import { MapIDPosition, applyChanges } from "./modify/mapIDPosition";
+import getText from "./up/getText";
 
 export default class Controller {
   inTextMode: boolean = false;
@@ -28,6 +30,7 @@ export default class Controller {
   /** Dispatched events to handle once the syntax tree finishes */
   queuedEvents: RelevantEvent[] = [];
   currentlyLooping: boolean = false;
+  mapIDPosition: MapIDPosition = {};
 
   toggleTextMode() {
     this.inTextMode = !this.inTextMode;
@@ -42,6 +45,13 @@ export default class Controller {
     this.dispatchListenerID = Calc.controller.dispatcher.register(
       this.pushEvent.bind(this)
     );
+  }
+
+  /** Returns [hasError, string text] */
+  getInitialText(): [boolean, string] {
+    const [hasError, text, idMap] = getText();
+    this.mapIDPosition = idMap;
+    return [hasError, text];
   }
 
   unmountEditor(container: HTMLDivElement) {
@@ -84,11 +94,11 @@ export default class Controller {
   processQueuedEvents(tree: Tree) {
     if (!this.view) return;
     this.lastUpdateWasByUser = false;
-    this.view.update([
-      this.view.state.update({
-        changes: eventSequenceChanges(this.queuedEvents, tree),
-      }),
-    ]);
+    const transaction = this.view.state.update({
+      changes: eventSequenceChanges(this, this.queuedEvents, tree),
+    });
+    this.view.update([transaction]);
+    applyChanges(this.mapIDPosition, transaction.changes);
     this.queuedEvents = [];
   }
 
@@ -131,10 +141,12 @@ export default class Controller {
             clearInterval(stLoop);
             console.log("Applying update from text");
             this.applyingUpdateFromText = true;
-            this.lastDiagnostics = applyCST(syntaxTree, state.sliceDoc());
+            const [diagnostics, mapID] = applyCST(syntaxTree, state.sliceDoc());
+            this.lastDiagnostics = diagnostics;
+            this.mapIDPosition = mapID;
             this.view.focus();
             this.applyingUpdateFromText = false;
-            resolve(this.lastDiagnostics);
+            resolve(diagnostics);
           }
         }, 100);
       }

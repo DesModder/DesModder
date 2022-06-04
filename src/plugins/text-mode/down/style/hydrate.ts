@@ -1,7 +1,6 @@
 import * as TextAST from "../TextAST";
 import { Schema } from "./schema";
-import { error, warning } from "../diagnostics";
-import { Diagnostic } from "@codemirror/lint";
+import { DownState } from "../astToAug";
 import { evalExpr } from "../staticEval";
 
 export interface StyleValue {
@@ -14,7 +13,7 @@ export interface StyleValue {
 export type StyleProp = TextAST.Expression | StyleValue | undefined;
 
 export function hydrate<T>(
-  diagnostics: Diagnostic[],
+  ds: DownState,
   styleMapping: TextAST.StyleMapping,
   defaults: T,
   schema: Schema,
@@ -26,11 +25,9 @@ export function hydrate<T>(
   // const style = styleValue.props;
   for (const entry of smEntries) {
     if (!(entry.property.value in schema)) {
-      diagnostics.push(
-        warning(
-          `Property ${entry.property.value} unexpected on ${itemType}${path}`,
-          entry.property.pos
-        )
+      ds.pushWarning(
+        `Property ${entry.property.value} unexpected on ${itemType}${path}`,
+        entry.property.pos
       );
     }
   }
@@ -50,17 +47,15 @@ export function hydrate<T>(
       matchingEntries
         .slice(1)
         .forEach((entry) =>
-          diagnostics.push(
-            warning(
-              `Duplicate property ${entry.property.value} on ${itemType}${path}`,
-              entry.property.pos
-            )
+          ds.pushWarning(
+            `Duplicate property ${entry.property.value} on ${itemType}${path}`,
+            entry.property.pos
           )
         );
     const chosenEntry: TextAST.MappingEntry | undefined = matchingEntries[0];
     if (chosenEntry?.expr === null) throw "Null expression in style mapping";
     function pushError(msg: string) {
-      diagnostics.push(error(msg, chosenEntry?.expr?.pos));
+      ds.pushError(msg, chosenEntry?.expr?.pos);
       hasNull = true;
     }
     const givenValue = matchingEntries[0]?.expr ?? undefined;
@@ -72,7 +67,7 @@ export function hydrate<T>(
         pushError(`Expected ${errPath} to be style mapping, but got primitive`);
       } else {
         const style = hydrate(
-          diagnostics,
+          ds,
           givenValue,
           (defaults as any)[key],
           schemaType.schema,
@@ -92,7 +87,7 @@ export function hydrate<T>(
       } else if (schemaType === "color" && givenValue.type === "Identifier") {
         res[key] = givenValue;
       } else {
-        const evaluated = evalExpr(diagnostics, givenValue);
+        const evaluated = evalExpr(ds.diagnostics, givenValue);
         if (evaluated === null) {
           hasNull = true;
         } else if (typeof schemaType !== "string") {
@@ -117,6 +112,14 @@ export function hydrate<T>(
             pushError(
               `Expected ${errPath} to evaluate to ${schemaType}, but got ${typeof evaluated}`
             );
+        }
+        if (
+          key === "id" &&
+          typeof evaluated === "string" &&
+          evaluated.startsWith("__")
+        ) {
+          // We don't want conflicts with auto-generated IDs
+          pushError("ID may not start with '__'");
         }
         if (evaluated !== null) res[key] = evaluated;
       }

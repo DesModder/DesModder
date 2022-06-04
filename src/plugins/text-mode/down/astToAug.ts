@@ -1,31 +1,46 @@
 import * as TextAST from "./TextAST";
-import { number } from "./TextAST";
 import * as Aug from "../aug/AugState";
 import { mapFromEntries } from "utils/utils";
 import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
 import { Calc } from "globals/window";
-import { StyleValue, StyleProp, hydrate } from "./style/hydrate";
+import { StyleValue, hydrate } from "./style/hydrate";
 import * as Hydrated from "./style/Hydrated";
 import * as Default from "./style/defaults";
 import * as Schema from "./style/schema";
-import { error, warning } from "./diagnostics";
+import { DiagnosticsState } from "./diagnostics";
 import { Diagnostic } from "@codemirror/lint";
 import { evalExpr } from "./staticEval";
 import { Identifier } from "../aug/AugLatex";
 import { everyNonNull } from "utils/utils";
+import { MapIDPosition } from "../modify/mapIDPosition";
 
-/*
- * Many functions return `[Diagnostic[], ResultValue | null]`
- *
- * The first element has errors, including warnings
- *
- * If the second element is null, then there is some unrecoverable error.
- */
+export class DownState extends DiagnosticsState {
+  public idMap: MapIDPosition = {};
+  maxCustomID = 0;
+  hasBlockingError = false;
+
+  constructor(diagnostics: Diagnostic[]) {
+    super(diagnostics);
+  }
+
+  generateID() {
+    // TODO: incremental updates, so later IDs don't get destroyed when a new
+    // expression is added in the middle of the code
+    return `__dsm-auto-${++this.maxCustomID}`;
+  }
+
+  ensureIDAndMarkPos(tryID: string, stmt: { pos?: TextAST.Pos }) {
+    const id = tryID === "" ? this.generateID() : tryID;
+    this.idMap[id] = stmt.pos!.from;
+    return id;
+  }
+}
+
 export default function astToAug(
   parseErrors: Diagnostic[],
   program: TextAST.Program | null
-): [Diagnostic[], Aug.State | null] {
-  if (program === null) return [parseErrors, null];
+): [Diagnostic[], Aug.State | null, MapIDPosition] {
+  if (program === null) return [parseErrors, null, {}];
   const state: Aug.State = {
     version: 9,
     settings: {
@@ -41,39 +56,23 @@ export default function astToAug(
     },
   };
   const diagnostics: Diagnostic[] = [...parseErrors];
+  const ds = new DownState(diagnostics);
   let hasBlockingError = false;
   for (let stmt of program) {
     // TODO: throw if there are multiple settings expressions
-    const stmtAug = statementToAug(diagnostics, state, stmt);
+    const stmtAug = statementToAug(ds, state, stmt);
     if (stmtAug === null) {
-      hasBlockingError = true;
+      ds.hasBlockingError = true;
     } else if (stmtAug.type === "settings") {
       state.settings = { ...state.settings, ...stmtAug.settings };
     } else {
       state.expressions.list.push(stmtAug);
     }
   }
-  fixEmptyIDs(state);
   fixEmptyColors(state);
-  return [diagnostics, hasBlockingError ? null : state];
-}
-
-/**
- * Convert IDs with value "" (empty string) to valid collision-free IDs
- */
-function fixEmptyIDs(state: Aug.State) {
-  let maxNumericID = Math.max(
-    ...state.expressions.list.map((item) => {
-      const p = parseInt(item.id);
-      return item.id === p.toString() ? p : 0;
-    })
-  );
-  forEachExpr(state.expressions.list, (item) => {
-    if (item.id === "") {
-      maxNumericID++;
-      item.id = maxNumericID.toString();
-    }
-  });
+  return ds.hasBlockingError
+    ? [diagnostics, null, {}]
+    : [diagnostics, state, ds.idMap];
 }
 
 /**
@@ -118,40 +117,46 @@ function forEachExpr(
  * The `state` parameter may be modified
  */
 function statementToAug(
-  diagnostics: Diagnostic[],
+  ds: DownState,
   state: Aug.State,
   stmt: TextAST.Statement
 ): Aug.ItemAug | { type: "settings"; settings: Hydrated.Settings } | null {
   switch (stmt.type) {
     case "Settings":
-      return settingsToAug(diagnostics, stmt.style);
+      return settingsToAug(ds, stmt.style);
     case "ShowStatement":
-      return expressionToAug(
-        diagnostics,
-        stmt.style,
-        childExprToAug(stmt.expr)
-      );
+      return expressionToAug(ds, stmt.style, childExprToAug(stmt.expr), stmt);
     case "LetStatement":
-      return expressionToAug(diagnostics, stmt.style, {
-        type: "Comparator",
-        operator: "=",
-        left: identifierToAug(stmt.identifier),
-        right: childExprToAug(stmt.expr),
-      });
-    case "FunctionDefinition":
-      return expressionToAug(diagnostics, stmt.style, {
-        type: "Comparator",
-        operator: "=",
-        left: {
-          type: "FunctionCall",
-          callee: identifierToAug(stmt.callee),
-          args: stmt.params.map(identifierToAug),
+      return expressionToAug(
+        ds,
+        stmt.style,
+        {
+          type: "Comparator",
+          operator: "=",
+          left: identifierToAug(stmt.identifier),
+          right: childExprToAug(stmt.expr),
         },
-        right: childExprToAug(stmt.expr),
-      });
+        stmt
+      );
+    case "FunctionDefinition":
+      return expressionToAug(
+        ds,
+        stmt.style,
+        {
+          type: "Comparator",
+          operator: "=",
+          left: {
+            type: "FunctionCall",
+            callee: identifierToAug(stmt.callee),
+            args: stmt.params.map(identifierToAug),
+          },
+          right: childExprToAug(stmt.expr),
+        },
+        stmt
+      );
     case "RegressionStatement":
       return expressionToAug(
-        diagnostics,
+        ds,
         stmt.style,
         {
           type: "Regression",
@@ -161,31 +166,25 @@ function statementToAug(
         stmt
       );
     case "Table":
-      return tableToAug(diagnostics, stmt.style, stmt.columns);
+      return tableToAug(ds, stmt.style, stmt);
     case "Image":
-      return imageToAug(diagnostics, stmt.style, stmt);
+      return imageToAug(ds, stmt.style, stmt);
     case "Text":
-      return textToAug(diagnostics, stmt.style, stmt);
+      return textToAug(ds, stmt.style, stmt);
     case "Folder":
-      return folderToAug(diagnostics, stmt.style, stmt, state);
+      return folderToAug(ds, stmt.style, stmt, state);
   }
 }
 
 function textToAug(
-  diagnostics: Diagnostic[],
+  ds: DownState,
   styleMapping: TextAST.StyleMapping,
   stmt: TextAST.Text
 ): Aug.TextAug | null {
-  const style = hydrate(
-    diagnostics,
-    styleMapping,
-    Default.text,
-    Schema.text,
-    "text"
-  );
+  const style = hydrate(ds, styleMapping, Default.text, Schema.text, "text");
   return style !== null
     ? {
-        ...exprBase(style),
+        ...exprBase(ds, style, stmt),
         type: "text",
         text: stmt.text,
       }
@@ -193,10 +192,10 @@ function textToAug(
 }
 
 function expressionToAug(
-  diagnostics: Diagnostic[],
+  ds: DownState,
   styleMapping: TextAST.StyleMapping,
   expr: Aug.Latex.AnyRootOrChild,
-  regressionNode?: TextAST.RegressionStatement
+  stmt: TextAST.Statement
 ): Aug.ExpressionAug | null {
   // is the expr polar for the purposes of domain?
   const isPolar =
@@ -204,26 +203,32 @@ function expressionToAug(
     expr.left.type === "Identifier" &&
     expr.left.symbol === "r";
 
-  // TODO: split this based on regression, function definition, etc.
+  // TODO: split hydration based on regression, function definition, etc.
   const style = hydrate(
-    diagnostics,
+    ds,
     styleMapping,
     isPolar ? Default.polarExpression : Default.nonpolarExpression,
     Schema.expression,
     "expression"
   );
   if (style === null) return null;
-  const regMapEntries = regressionMapEntries(diagnostics, regressionNode);
+  const regMapEntries = regressionMapEntries(
+    ds,
+    stmt.type === "RegressionStatement" ? stmt : undefined
+  );
   if (regMapEntries === null) return null;
-  const regression = regressionNode?.body && {
-    isLogMode: style.logModeRegression,
-    residualVariable: identifierToAug(regressionNode.body.residualVariable),
-    regressionParameters: mapFromEntries(regMapEntries),
-  };
+  const regression =
+    stmt.type === "RegressionStatement"
+      ? stmt.body && {
+          isLogMode: style.logModeRegression,
+          residualVariable: identifierToAug(stmt.body.residualVariable),
+          regressionParameters: mapFromEntries(regMapEntries),
+        }
+      : undefined;
   return {
     type: "expression",
     // Use empty string as an ID placeholder. These will get filled in at the end
-    ...exprBase(style),
+    ...exprBase(ds, style, stmt),
     latex: expr,
     label:
       style.label && style.label.text !== ""
@@ -280,22 +285,20 @@ function expressionToAug(
 }
 
 function regressionMapEntries(
-  diagnostics: Diagnostic[],
+  ds: DownState,
   regression?: TextAST.RegressionStatement
 ): null | [Identifier, number][] {
   if (regression?.body === undefined) return [];
   const res = [...regression.body.regressionParameters.entries()].map(
     ([key, value]): [Identifier, number] | null => {
-      const evaluated = evalExpr(diagnostics, value);
+      const evaluated = evalExpr(ds.diagnostics, value);
       if (evaluated === null) return null;
       if (typeof evaluated !== "number") {
-        diagnostics.push(
-          error(
-            `Expected regression value ${
-              key.name
-            } to be a number, but got ${typeof evaluated}`,
-            value.pos
-          )
+        ds.pushError(
+          `Expected regression value ${
+            key.name
+          } to be a number, but got ${typeof evaluated}`,
+          value.pos
         );
         return null;
       }
@@ -306,11 +309,11 @@ function regressionMapEntries(
 }
 
 function settingsToAug(
-  diagnostics: Diagnostic[],
+  ds: DownState,
   styleMapping: TextAST.StyleMapping
 ): null | { type: "settings"; settings: Hydrated.Settings } {
   const res = hydrate(
-    diagnostics,
+    ds,
     styleMapping,
     Default.settings,
     Schema.settings,
@@ -351,44 +354,41 @@ function columnExpressionCommonStyle(style: Hydrated.ColumnExpressionCommon) {
   return res;
 }
 
-function exprBase(style: Hydrated.NonFolderBase) {
+function exprBase(
+  ds: DownState,
+  style: Hydrated.NonFolderBase,
+  stmt: TextAST.Statement
+) {
   return {
-    id: style.id,
+    id: ds.ensureIDAndMarkPos(style.id, stmt),
     secret: style.secret,
     pinned: style.pinned,
   };
 }
 
 function tableToAug(
-  diagnostics: Diagnostic[],
+  ds: DownState,
   styleMapping: TextAST.StyleMapping,
-  columns: TextAST.TableColumn[]
+  stmt: TextAST.Table
 ): Aug.TableAug | null {
-  const resultColumns = columns.map((col) =>
-    tableColumnToAug(diagnostics, col)
-  );
-  if (!everyNonNull(resultColumns)) return null;
-  const style = hydrate(
-    diagnostics,
-    styleMapping,
-    Default.table,
-    Schema.table,
-    "table"
-  );
+  const style = hydrate(ds, styleMapping, Default.table, Schema.table, "table");
   if (style === null) return null;
+  const base = exprBase(ds, style, stmt);
+  const resultColumns = stmt.columns.map((col) => tableColumnToAug(ds, col));
+  if (!everyNonNull(resultColumns)) return null;
   return {
     type: "table",
-    ...exprBase(style),
+    ...base,
     columns: resultColumns,
   };
 }
 
 function tableColumnToAug(
-  diagnostics: Diagnostic[],
+  ds: DownState,
   column: TextAST.TableColumn
 ): Aug.TableColumnAug | null {
   const style = hydrate(
-    diagnostics,
+    ds,
     column.style,
     Default.column,
     Schema.column,
@@ -398,7 +398,7 @@ function tableColumnToAug(
   const expr = column.expr;
   const base = {
     type: "column" as const,
-    id: style.id,
+    id: ds.ensureIDAndMarkPos(style.id, column),
     ...columnExpressionCommonStyle(style),
   };
   if (expr.type === "ListExpression") {
@@ -412,11 +412,9 @@ function tableColumnToAug(
           : undefined,
     };
   } else if (column.type === "LetStatement") {
-    diagnostics.push(
-      error(
-        "Expected table assignment to assign from a ListExpression",
-        column.expr.pos
-      )
+    ds.pushError(
+      "Expected table assignment to assign from a ListExpression",
+      column.expr.pos
     );
     return null;
   } else {
@@ -429,21 +427,15 @@ function tableColumnToAug(
 }
 
 function imageToAug(
-  diagnostics: Diagnostic[],
+  ds: DownState,
   styleMapping: TextAST.StyleMapping,
   expr: TextAST.Image
 ): Aug.ImageAug | null {
-  const style = hydrate(
-    diagnostics,
-    styleMapping,
-    Default.image,
-    Schema.image,
-    "image"
-  );
+  const style = hydrate(ds, styleMapping, Default.image, Schema.image, "image");
   if (style === null) return null;
   const res: Aug.ImageAug = {
     type: "image",
-    ...exprBase(style),
+    ...exprBase(ds, style, expr),
     image_url: expr.url,
     name: expr.name,
     width: childExprToAug(style.width),
@@ -466,39 +458,38 @@ function imageToAug(
 }
 
 function folderToAug(
-  diagnostics: Diagnostic[],
+  ds: DownState,
   styleMapping: TextAST.StyleMapping,
   expr: TextAST.Folder,
   state: Aug.State
 ): Aug.FolderAug | null {
   const children: Aug.NonFolderAug[] = [];
-  for (let child of expr.children) {
-    const stmtAug = statementToAug(diagnostics, state, child);
-    if (stmtAug !== null) {
-      if (stmtAug.type === "folder") {
-        diagnostics.push(
-          error("Nested folders are not yet implemented", child.pos)
-        );
-        return null;
-      } else if (stmtAug.type === "settings") {
-        diagnostics.push(error("Settings may not be in a folder", child.pos));
-        return null;
-      } else {
-        children.push(stmtAug);
-      }
-    }
-  }
   const style = hydrate(
-    diagnostics,
+    ds,
     styleMapping,
     Default.folder,
     Schema.folder,
     "folder"
   );
   if (style === null) return null;
+  const id = ds.ensureIDAndMarkPos(style.id ?? "", expr);
+  for (let child of expr.children) {
+    const stmtAug = statementToAug(ds, state, child);
+    if (stmtAug !== null) {
+      if (stmtAug.type === "folder") {
+        ds.pushError("Nested folders are not yet implemented", child.pos);
+        return null;
+      } else if (stmtAug.type === "settings") {
+        ds.pushError("Settings may not be in a folder", child.pos);
+        return null;
+      } else {
+        children.push(stmtAug);
+      }
+    }
+  }
   return {
     type: "folder",
-    id: style.id,
+    id,
     secret: style.secret,
     hidden: style.hidden,
     collapsed: style.collapsed,
