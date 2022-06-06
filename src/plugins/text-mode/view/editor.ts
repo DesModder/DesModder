@@ -50,6 +50,7 @@ export function initView(controller: Controller) {
   const startState = EditorState.create({
     doc: text,
     extensions: [
+      EditorView.updateListener.of(controller.onEditorUpdate.bind(controller)),
       // linter, showing errors
       // The linter is also the entry point to evaluation
       linter(controller.doLint.bind(controller), { delay: 250 }),

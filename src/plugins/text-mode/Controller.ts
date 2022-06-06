@@ -1,11 +1,10 @@
-import { EditorView } from "@codemirror/view";
+import { EditorView, ViewUpdate } from "@codemirror/view";
 import { Calc } from "globals/window";
 import { initView } from "./view/editor";
-import applyCST from "./down/applyCST";
+import cstToRaw from "./down/cstToRaw";
 import { Diagnostic } from "@codemirror/lint";
 import { keys } from "utils/depUtils";
 import { ensureSyntaxTree } from "@codemirror/language";
-import { DispatchedEvent } from "globals/Calc";
 import { Tree } from "@lezer/common";
 import {
   RelevantEvent,
@@ -19,18 +18,35 @@ export default class Controller {
   inTextMode: boolean = false;
   view: EditorView | null = null;
   /**
-   * Is the initial doc being applying from initView()?
-   * or was the most recent modification of the text based on a state change
-   * from the graph?
+   * Was the current/latest parsing cycle caused by a user edit?
+   *
+   * Start false, user edit sets lastUpdateWasByUser to true, then set to
+   * false on the Calc.setState applying the user changes
    */
   lastUpdateWasByUser: boolean = false;
-  applyingUpdateFromText: boolean = false;
-  lastDiagnostics: Diagnostic[] = [];
+  /**
+   * Will the next onEdit be due to an update from the graph automatically
+   * changing the text, not a user?
+   *
+   * TODO: This should be replaced with the remote or userEvent annotations on
+   * transactions (in case an actual user event gets combined with this one),
+   * but I haven't figured out transaction annotations yet.
+   */
+  nextEditDueToGraph: boolean = true;
   dispatchListenerID: string | null = null;
   /** Dispatched events to handle once the syntax tree finishes */
   queuedEvents: RelevantEvent[] = [];
-  currentlyLooping: boolean = false;
+  parseCheckInterval: number | null = null;
+  lintResolve: ((e: Diagnostic[]) => void) | null = null;
+  /**
+   * isParsing = false: idle state
+   *    mapIDPosition + diagnostics are in sync with document
+   * isParsing = true: parsing state
+   *    text has been edited, mapIDPosition + diagnostics not yet updated
+   */
+  isParsing: boolean = false;
   mapIDPosition: MapIDPosition = {};
+  diagnostics: Diagnostic[] = [];
 
   toggleTextMode() {
     this.inTextMode = !this.inTextMode;
@@ -39,12 +55,14 @@ export default class Controller {
 
   mountEditor(container: HTMLDivElement) {
     this.lastUpdateWasByUser = false;
+    this.nextEditDueToGraph = true;
     this.view = initView(this);
     container.appendChild(this.view.dom);
     this.preventPropagation(container);
-    this.dispatchListenerID = Calc.controller.dispatcher.register(
-      this.pushEvent.bind(this)
-    );
+    this.dispatchListenerID = Calc.controller.dispatcher.register((event) => {
+      if ((relevantEventTypes as readonly string[]).includes(event.type))
+        this.onCalcEvent(event as RelevantEvent);
+    });
   }
 
   /** Returns [hasError, string text] */
@@ -65,45 +83,8 @@ export default class Controller {
     this.queuedEvents = [];
   }
 
-  pushEvent(event: DispatchedEvent) {
-    if (!this.view) return;
-    if (!(relevantEventTypes as readonly string[]).includes(event.type)) return;
-    this.queuedEvents.push(event as RelevantEvent);
-    if (this.currentlyLooping) {
-      // Another loop is currently checking for the syntax tree to be ready
-      return;
-    }
-    const tryProcessQueuedEvents = () => {
-      if (!this.view) {
-        this.currentlyLooping = false;
-        return;
-      }
-      const state = this.view.state;
-      const tree = ensureSyntaxTree(state, state.doc.length, 25);
-      if (tree !== null) {
-        this.processQueuedEvents(tree);
-        this.currentlyLooping = false;
-      } else {
-        // try again later for a valid syntax tree
-        setTimeout(tryProcessQueuedEvents, 50);
-      }
-    };
-    tryProcessQueuedEvents();
-  }
-
-  processQueuedEvents(tree: Tree) {
-    if (!this.view) return;
-    this.lastUpdateWasByUser = false;
-    const transaction = this.view.state.update({
-      changes: eventSequenceChanges(this, this.queuedEvents, tree),
-    });
-    this.view.update([transaction]);
-    applyChanges(this.mapIDPosition, transaction.changes);
-    this.queuedEvents = [];
-  }
-
   /**
-   * Codemirror handles undo, redo, and Ctrl+/; we don't want Desmos to get
+   * Codemirror handles undo, redo, and Ctrl+/; we don't want Desmos to receive
    * these, so we stop their propagation at the container
    */
   preventPropagation(container: HTMLDivElement) {
@@ -115,41 +96,138 @@ export default class Controller {
     );
   }
 
-  /**
-   * Linting is the entry point for linting but also for evaluation
-   */
   doLint(): Promise<Diagnostic[]> {
     return new Promise((resolve) => {
-      if (!this.lastUpdateWasByUser) {
-        // TODO: also set this.lastUpdateWasByUser = true if the user edits
-        // the text while a non-user update was waiting to be acted upon
-        this.lastUpdateWasByUser = true;
-        // Assume computer actions (changing viewport bounds for example)
-        // do not affect any diagnostics
-        resolve(this.lastDiagnostics);
+      if (!this.isParsing) {
+        resolve(this.diagnostics);
       } else {
-        const stLoop = setInterval(() => {
-          // don't use the `view` function parameter to doLint because we want
-          // to stop the loop if the view got destroyed
-          if (this.view === null) {
-            clearInterval(stLoop);
-            return;
-          }
-          const state = this.view.state;
-          const syntaxTree = ensureSyntaxTree(state, state.doc.length, 50);
-          if (syntaxTree) {
-            clearInterval(stLoop);
-            console.log("Applying update from text");
-            this.applyingUpdateFromText = true;
-            const [diagnostics, mapID] = applyCST(syntaxTree, state.sliceDoc());
-            this.lastDiagnostics = diagnostics;
-            this.mapIDPosition = mapID;
-            this.view.focus();
-            this.applyingUpdateFromText = false;
-            resolve(diagnostics);
-          }
-        }, 100);
+        if (this.lintResolve !== null)
+          throw "Programming Error: Second lint before the first resolved";
+        this.lintResolve = resolve;
       }
     });
   }
+
+  setParsing(parsing: boolean) {
+    if (this.isParsing == parsing) return;
+    this.isParsing = parsing;
+    console.log("set parsing", parsing);
+    if (parsing) {
+      if (this.parseCheckInterval !== null)
+        throw "Programming Error: start parsing with parseCheckInterval non-null";
+      this.parseCheckInterval = window.setInterval(() => this.parseCheck(), 50);
+    } else {
+      if (this.parseCheckInterval === null)
+        throw "Programming error: stop parsing with parseCheckInterval null";
+      clearInterval(this.parseCheckInterval);
+      this.parseCheckInterval = null;
+    }
+  }
+
+  parseCheck() {
+    if (!this.view) {
+      this.setParsing(false);
+      return;
+    }
+    const tree = ensureFullTree(this.view);
+    if (tree !== null) {
+      this.onFinishParsing(tree);
+    }
+  }
+
+  /**
+   * onCalcEvent: when we receive a new event dispatched via Calc (such as a
+   * slider value change, or viewport move) which affects the text
+   */
+  onCalcEvent(event: RelevantEvent) {
+    if (!this.view) return;
+    this.queuedEvents.push(event);
+    if (!this.isParsing) {
+      const tree = ensureFullTree(this.view);
+      if (tree === null) {
+        this.setParsing(true);
+      } else {
+        this.processQueuedEvents(tree);
+      }
+    }
+  }
+
+  onEditorUpdate(update: ViewUpdate) {
+    if (this.nextEditDueToGraph) {
+      this.nextEditDueToGraph = false;
+    } else if (update.docChanged) {
+      // TODO: look into @codemirror/collab to treat dispatched events as a
+      // collaborator
+      // Pretty complicated: https://codemirror.net/6/examples/collab/
+      this.onUserEdit();
+    }
+  }
+
+  /**
+   * onUserEdit: when the user edits text, so the current document text is out
+   * of sync with the graph state, current ID map, and diagnostics
+   */
+  onUserEdit() {
+    console.log("user edit");
+    this.lastUpdateWasByUser = true;
+    if (!this.isParsing) {
+      this.setParsing(true);
+    }
+  }
+
+  /**
+   * onFinishParsing: when our ensureFullTree loop gives a non-null tree,
+   * so we know the tree is in sync with the doc.
+   */
+  onFinishParsing(tree: Tree) {
+    console.log("finish parsing");
+    if (!this.view) return;
+    this.setParsing(false);
+    const [diagnostics, rawGraphState, mapID] = cstToRaw(
+      tree,
+      this.view.state.sliceDoc()
+    );
+    this.diagnostics = diagnostics;
+    if (this.lintResolve) {
+      this.lintResolve(diagnostics);
+      this.lintResolve = null;
+    }
+    this.mapIDPosition = mapID;
+    const textChangedBecauseWorker = this.queuedEvents.length > 0;
+    if (textChangedBecauseWorker) this.processQueuedEvents(tree);
+    if (this.lastUpdateWasByUser) {
+      console.log("set state from text", rawGraphState);
+      Calc.setState(rawGraphState, { allowUndo: true });
+      this.lastUpdateWasByUser = false;
+    } else if (!textChangedBecauseWorker) this.setParsing(false);
+  }
+
+  /**
+   * Finally apply queued events, now that we definitely have a parse tree
+   * available. Uses `this.mapIDPosition` to locate existing items by ID,
+   * so `this.mapIDPosition` must be in sync with the current document
+   */
+  processQueuedEvents(tree: Tree) {
+    console.log("process queued events");
+    if (!this.view) return;
+    const transaction = this.view.state.update({
+      changes: eventSequenceChanges(this, this.queuedEvents, tree),
+    });
+    // TODO: figure out annotations on this transaction as mentioned in the
+    // nextEditDueToGraph doc text
+    this.nextEditDueToGraph = true;
+    this.view.update([transaction]);
+    applyChanges(this.mapIDPosition, transaction.changes);
+    this.queuedEvents = [];
+    this.setParsing(true);
+  }
+}
+
+/**
+ * Try to get a full parse tree for the current document given in `view`, doing
+ * at most 20ms of work. If incomplete, return null.
+ */
+function ensureFullTree(view: EditorView) {
+  const state = view.state;
+  return ensureSyntaxTree(state, state.doc.length, 20);
 }

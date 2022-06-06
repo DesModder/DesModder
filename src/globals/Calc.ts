@@ -41,12 +41,12 @@ export type DispatchedEvent =
  * Evaluator change: a change set associated with a single id, passed back from
  * the evaluator. Do not use these values for any logic because Desmos has some
  * more complicated handling; instead, use them to filter for relevant evaluator
- * changes and know what might have changed.
+ * changes and know what might have changed without waiting for an update from
+ * Calc.observeEvent("change", ...), which heavily throttles updates.
  *
- * For example, not mentioned in here: Desmos automatically determines log
+ * Other changes not given in the change event (so don't use it alone): log
  * mode regression, regression residual variable, regression parameters,
  * displayed table columns, more?
- *
  */
 interface EvaluatorChange {
   /** New number value for slider change or action update */
@@ -58,6 +58,7 @@ interface EvaluatorChange {
   move_strategy?: unknown;
   /** New action to be applied on the next click. Ignore */
   action_value?: unknown;
+  /** Regression metadata */
   regression?: unknown;
 }
 
