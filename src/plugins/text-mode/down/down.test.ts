@@ -551,6 +551,13 @@ describe("Tables", () => {
   });
 });
 
+describe("Comments", () => {
+  testStmt("Line comments", `// prev line\n1 // end line\n// next line`, {
+    ...exprDefaults,
+    latex: number(1),
+  });
+});
+
 describe("Regressions", () => {
   testStmt("Blank regression", `Y ~ a`, {
     ...exprDefaults,
