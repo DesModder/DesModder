@@ -16,7 +16,8 @@ export type DispatchedEvent =
         | "set-axis-limit-latex"
         | "commit-user-requested-viewport"
         | "zoom"
-        | "set-graph-settings";
+        | "set-graph-settings"
+        | "resize-exp-list";
     }
   | {
       type:

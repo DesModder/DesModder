@@ -21,6 +21,7 @@ export const relevantEventTypes = [
   "grapher/drag-end",
   "set-graph-settings",
   "zoom",
+  "resize-exp-list", // resize-exp-list can update viewport size
   // sliders, draggable points, action updates, etc.
   "on-evaluator-changes",
 ] as const;
@@ -45,6 +46,7 @@ export function eventSequenceChanges(
       case "set-graph-settings":
       case "zoom":
       case "grapher/drag-end":
+      case "resize-exp-list":
         settingsChanged = true;
         break;
       case "on-evaluator-changes":
