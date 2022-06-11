@@ -244,8 +244,17 @@ function expressionToAug(
     fillOpacity: childExprToAug(style.fill),
     regression: regression,
     displayEvaluationAsFraction: style.displayEvaluationAsFraction,
-    // TODO slider
-    slider: {},
+    slider: style.slider
+      ? {
+          period: style.slider.period,
+          loopMode: style.slider.loopMode,
+          playDirection: style.slider.reversed ? -1 : 1,
+          isPlaying: style.slider.playing,
+          min: childExprToAug(style.slider.min),
+          max: childExprToAug(style.slider.max),
+          step: childExprToAug(style.slider.step),
+        }
+      : {},
     polarDomain:
       style.domain &&
       isPolar &&

@@ -85,8 +85,15 @@ const expression = {
   fill: number(0),
   logModeRegression: false,
   displayEvaluationAsFraction: false,
-  // TODO slider
-  // slider: ,
+  slider: {
+    playing: false,
+    reversed: false,
+    loopMode: "LOOP_FORWARD_REVERSE",
+    period: 4000,
+    min: number(-10),
+    max: number(10),
+    step: number(0),
+  },
   cdf: {
     min: {
       type: "PrefixExpression",

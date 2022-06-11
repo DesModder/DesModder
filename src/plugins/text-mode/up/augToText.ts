@@ -75,9 +75,13 @@ export function itemToText(item: Aug.ItemAug): string {
             logMode: undefineIfFalse(item.regression?.isLogMode ?? false),
             fractionDisplay: undefineIfFalse(item.displayEvaluationAsFraction),
             slider: undefineIfEmpty({
-              ...item.slider,
-              isPlaying: undefined,
               playing: item.slider.isPlaying,
+              backwards: item.slider.playDirection === -1,
+              loopMode: item.slider.loopMode,
+              period: item.slider.period,
+              min: item.slider.min,
+              max: item.slider.max,
+              step: item.slider.step,
             }),
             // We will infer whether parametric or polar domain is needed
             domain: undefineIfEmpty(item.parametricDomain ?? item.polarDomain),

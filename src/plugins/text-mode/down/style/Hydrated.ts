@@ -81,8 +81,19 @@ export interface Expression
   fill: Expr;
   logModeRegression: boolean;
   displayEvaluationAsFraction: boolean;
-  // TODO slider
-  // slider:
+  slider?: {
+    playing: boolean;
+    reversed: boolean;
+    loopMode:
+      | "LOOP_FORWARD_REVERSE"
+      | "LOOP_FORWARD"
+      | "PLAY_ONCE"
+      | "PLAY_INDEFINITELY";
+    period: number;
+    min: Expr;
+    max: Expr;
+    step: Expr;
+  };
   domain?: {
     min: Expr;
     max: Expr;

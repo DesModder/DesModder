@@ -123,8 +123,20 @@ export const expression: Schema = {
   fill: "expr",
   logModeRegression: "boolean",
   displayEvaluationAsFraction: "boolean",
-  // TODO slider
-  // slider: ,
+  slider: schemaL({
+    playing: "boolean",
+    reversed: "boolean",
+    loopMode: enumL([
+      "LOOP_FORWARD_REVERSE",
+      "LOOP_FORWARD",
+      "PLAY_ONCE",
+      "PLAY_INDEFINITELY",
+    ]),
+    period: "number",
+    min: "expr",
+    max: "expr",
+    step: "expr",
+  }),
   domain: schemaL({
     min: "expr",
     max: "expr",

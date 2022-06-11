@@ -62,8 +62,9 @@ function getTestName(desc: string, s: string) {
 function testSettings(desc: string, s: string, expected: any) {
   test(getTestName(desc, s), () => {
     const [errors, res] = textToAug(s);
-    if (errors.length > 0) fail();
-    if (res === null) fail();
+    expect(errors).toEqual([]);
+    expect(res).not.toBeNull;
+    if (res === null) return;
     const graphSettings = res.settings;
     expect(graphSettings).toEqual(expected);
   });
@@ -72,8 +73,9 @@ function testSettings(desc: string, s: string, expected: any) {
 function testStmt(desc: string, s: string, expected: any) {
   test(getTestName(desc, s), () => {
     const [errors, res] = textToAug(s);
-    if (errors.length > 0) fail();
-    if (res === null) fail();
+    expect(errors).toEqual([]);
+    expect(res).not.toBeNull;
+    if (res === null) return;
     const augStmt = res.expressions.list[0];
     expect(augStmt).toEqual(expected);
   });
@@ -468,6 +470,46 @@ describe("Statement metadata", () => {
       }
     );
   });
+  describe("Sliders", () => {
+    testStmt("Slider defaults", `1 @{slider:@{}}`, {
+      ...exprDefaults,
+      slider: {
+        period: 4000,
+        loopMode: "LOOP_FORWARD_REVERSE",
+        playDirection: 1,
+        isPlaying: false,
+        min: number(-10),
+        max: number(10),
+        step: number(0),
+      },
+    });
+    testStmt(
+      "Slider custom values",
+      `1 @{
+      slider: @{
+        period: 2000,
+        loopMode: "LOOP_FORWARD",
+        reversed: true,
+        playing: true,
+        min: 0,
+        max: 20,
+        step: 1
+      }
+    }`,
+      {
+        ...exprDefaults,
+        slider: {
+          period: 2000,
+          loopMode: "LOOP_FORWARD",
+          playDirection: -1,
+          isPlaying: true,
+          min: number(0),
+          max: number(20),
+          step: number(1),
+        },
+      }
+    );
+  });
   describe("Fill", () => {
     testStmt("Zero fill", `1 @{fill: 0}`, exprDefaults);
     testStmt("Nonzero fill", `1 @{fill: 0.5}`, {
@@ -704,7 +746,8 @@ describe("Automatic IDs", () => {
       }
       1
     `);
-    if (res === null) fail();
+    expect(res).not.toBeNull();
+    if (res === null) return;
     const exprs = res.expressions.list;
     expect(exprs[0]).toEqual({
       ...tableDefaults,
@@ -736,7 +779,8 @@ describe("Automatic IDs", () => {
       }
       1
     `);
-    if (res === null) fail();
+    expect(res).not.toBeNull();
+    if (res === null) return;
     const exprs = res.expressions.list;
     expect(exprs[0]).toEqual({
       ...folderDefaults,
