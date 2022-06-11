@@ -20,7 +20,14 @@ export default function augToText(aug: Aug.State): [string, MapIDPosition] {
 }
 
 export function graphSettingsToText(settings: Aug.GraphSettings) {
-  return "settings " + styleMapToText(settings);
+  return (
+    "settings " +
+    styleMapToText({
+      ...settings,
+      userLockedViewport: undefined,
+      lockViewport: settings.userLockedViewport,
+    })
+  );
 }
 
 /**

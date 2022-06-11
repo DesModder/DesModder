@@ -837,7 +837,8 @@ describe("Settings", () => {
       yAxisLabel: "y",
       squareAxes: false,
       restrictGridToFirstQuadrant: true,
-      polarMode: false
+      polarMode: false,
+      lockViewport: true
     }`,
     {
       randomSeed: "abc",
@@ -865,6 +866,7 @@ describe("Settings", () => {
       squareAxes: false,
       restrictGridToFirstQuadrant: true,
       polarMode: false,
+      userLockedViewport: true,
     }
   );
 });

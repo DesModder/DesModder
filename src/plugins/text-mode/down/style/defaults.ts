@@ -28,6 +28,7 @@ export const settings: Hydrated.Settings = {
   polarNumbers: true,
   restrictGridToFirstQuadrant: false,
   polarMode: false,
+  lockViewport: false,
 };
 
 const base: Hydrated.Base = {

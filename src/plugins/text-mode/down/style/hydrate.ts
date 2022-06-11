@@ -62,7 +62,11 @@ export function hydrate<T>(
     const errPath = itemType + path + "." + key;
     if (typeof schemaType === "object" && schemaType.type === "schema") {
       if (givenValue === undefined) {
-        res[key] = undefined;
+        if (schemaType.fillDefaults) {
+          res[key] = (defaults as any)[key];
+        } else {
+          res[key] = undefined;
+        }
       } else if (givenValue.type !== "StyleMapping") {
         pushError(`Expected ${errPath} to be style mapping, but got primitive`);
       } else {

@@ -16,16 +16,19 @@ export interface Schema {
     | "expr"
     | "color"
     | { type: "enum"; enum: string[] }
-    | { type: "schema"; schema: Schema };
+    | { type: "schema"; schema: Schema; fillDefaults: boolean };
 }
 
 export const settings: Schema = {
-  viewport: schemaL({
-    xmin: "number",
-    ymin: "number",
-    xmax: "number",
-    ymax: "number",
-  }),
+  viewport: schemaL(
+    {
+      xmin: "number",
+      ymin: "number",
+      xmax: "number",
+      ymax: "number",
+    },
+    true
+  ),
   squareAxes: "boolean",
   // empty randomSeed will be filled in later in the process
   randomSeed: "string",
@@ -46,6 +49,7 @@ export const settings: Schema = {
   polarNumbers: "boolean",
   restrictGridToFirstQuadrant: "boolean",
   polarMode: "boolean",
+  lockViewport: "boolean",
 };
 
 const base: Schema = {
@@ -182,6 +186,6 @@ function enumL(L: string[]) {
   return { type: "enum" as const, enum: L };
 }
 
-function schemaL(s: Schema) {
-  return { type: "schema" as const, schema: s };
+function schemaL(s: Schema, fillDefaults = false) {
+  return { type: "schema" as const, schema: s, fillDefaults };
 }

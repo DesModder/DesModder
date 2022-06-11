@@ -2,7 +2,7 @@ import { Expression as Expr, Identifier } from "../TextAST";
 import { LabelOrientation } from "@desmodder/graph-state";
 
 export interface Settings {
-  viewport?: {
+  viewport: {
     xmin: number;
     ymin: number;
     xmax: number;
@@ -27,6 +27,7 @@ export interface Settings {
   polarNumbers: boolean;
   restrictGridToFirstQuadrant: boolean;
   polarMode: boolean;
+  lockViewport: boolean;
 }
 
 export interface Base {

@@ -69,6 +69,7 @@ export interface GraphSettings {
   squareAxes?: boolean;
   restrictGridToFirstQuadrant?: boolean;
   polarMode?: boolean;
+  userLockedViewport?: boolean;
 }
 
 export type ArrowMode = "NONE" | "POSITIVE" | "BOTH";

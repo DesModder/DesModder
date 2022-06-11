@@ -13,6 +13,7 @@ import { evalExpr } from "./staticEval";
 import { Identifier } from "../aug/AugLatex";
 import { everyNonNull } from "utils/utils";
 import { MapIDPosition } from "../modify/mapIDPosition";
+import { GrapherState } from "@desmodder/graph-state";
 
 export class DownState extends DiagnosticsState {
   public idMap: MapIDPosition = {};
@@ -120,7 +121,7 @@ function statementToAug(
   ds: DownState,
   state: Aug.State,
   stmt: TextAST.Statement
-): Aug.ItemAug | { type: "settings"; settings: Hydrated.Settings } | null {
+): Aug.ItemAug | { type: "settings"; settings: GrapherState } | null {
   switch (stmt.type) {
     case "Settings":
       return settingsToAug(ds, stmt.style);
@@ -320,15 +321,21 @@ function regressionMapEntries(
 function settingsToAug(
   ds: DownState,
   styleMapping: TextAST.StyleMapping
-): null | { type: "settings"; settings: Hydrated.Settings } {
-  const res = hydrate(
+): null | { type: "settings"; settings: GrapherState } {
+  const hydrated = hydrate(
     ds,
     styleMapping,
     Default.settings,
     Schema.settings,
     "settings"
   );
-  return res !== null ? { type: "settings", settings: res } : null;
+  if (hydrated === null) return null;
+  const res: GrapherState = {
+    ...hydrated,
+    userLockedViewport: hydrated.lockViewport,
+  };
+  delete (res as any).lockViewport;
+  return { type: "settings", settings: res };
 }
 
 function columnExpressionCommonStyle(style: Hydrated.ColumnExpressionCommon) {
