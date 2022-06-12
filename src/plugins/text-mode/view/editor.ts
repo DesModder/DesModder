@@ -9,17 +9,23 @@ import {
   highlightActiveLine,
   keymap,
 } from "@codemirror/view";
-import { history, historyKeymap } from "@codemirror/history";
-import { foldGutter, foldKeymap } from "@codemirror/fold";
-import { indentOnInput } from "@codemirror/language";
-import { lineNumbers, highlightActiveLineGutter } from "@codemirror/gutter";
-import { defaultKeymap } from "@codemirror/commands";
-import { bracketMatching } from "@codemirror/matchbrackets";
-import { closeBrackets, closeBracketsKeymap } from "@codemirror/closebrackets";
+import {
+  indentOnInput,
+  foldGutter,
+  bracketMatching,
+  syntaxHighlighting,
+  foldKeymap,
+} from "@codemirror/language";
+import { lineNumbers, highlightActiveLineGutter } from "@codemirror/view";
+import { history, defaultKeymap, historyKeymap } from "@codemirror/commands";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
-import { autocompletion, completionKeymap } from "@codemirror/autocomplete";
-import { commentKeymap } from "@codemirror/comment";
-import { defaultHighlightStyle } from "@codemirror/highlight";
+import {
+  closeBrackets,
+  autocompletion,
+  completionKeymap,
+  closeBracketsKeymap,
+} from "@codemirror/autocomplete";
+import { defaultHighlightStyle } from "@codemirror/language";
 // Language extension
 import { TextMode } from "../lezer/index";
 import { linter } from "@codemirror/lint";
@@ -71,7 +77,7 @@ export function initView(controller: Controller) {
       // reindent (dedent) based on languageData.indentOnInput
       // specifically, it reindents after },),]
       indentOnInput(),
-      defaultHighlightStyle.fallback,
+      syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
       // show matching brackets
       // TODO: add empty content parse node to support proper matching on (())
       //  It may also help with partial expressions
@@ -87,6 +93,7 @@ export function initView(controller: Controller) {
         // delete both brackets in the pair if the first gets backspaced on
         ...closeBracketsKeymap,
         // standard keybindings
+        // includes comment using Ctrl+/.
         ...defaultKeymap,
         // Ctrl+F to search, and more
         ...searchKeymap,
@@ -94,9 +101,6 @@ export function initView(controller: Controller) {
         ...historyKeymap,
         // fold using keybind Ctrl-Shift-[ and similar
         ...foldKeymap,
-        // comment using Ctrl+/.
-        // TODO: avoid collision with keybinding list from vanilla Desmos
-        ...commentKeymap,
         // Ctrl+Space to start completion
         ...completionKeymap,
       ]),

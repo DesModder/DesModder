@@ -80,7 +80,7 @@ function hasError(td: TextAndDiagnostics, node: SyntaxNode) {
     }
     return true;
   }
-  const cursor = node.cursor;
+  const cursor = node.cursor();
   if (!cursor.firstChild()) return false;
   let foundError = false;
   do {

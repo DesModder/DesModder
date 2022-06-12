@@ -3,7 +3,7 @@
  * https://gist.github.com/msteen/e4828fbf25d6efef73576fc43ac479d2
  */
 
-import { Text } from "@codemirror/text";
+import { Text } from "@codemirror/state";
 import { Input, NodeType, SyntaxNode, Tree, TreeCursor } from "@lezer/common";
 
 class StringInput implements Input {
@@ -80,8 +80,7 @@ export function traverseTree(
     onLeave,
   }: TreeTraversalOptions
 ): void {
-  if (!(cursor instanceof TreeCursor))
-    cursor = cursor instanceof Tree ? cursor.cursor() : cursor.cursor;
+  if (!(cursor instanceof TreeCursor)) cursor = cursor.cursor();
   for (;;) {
     let node = cursorNode(cursor);
     let leave = false;

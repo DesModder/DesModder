@@ -7,7 +7,7 @@ import {
   foldInside,
   delimitedIndent,
 } from "@codemirror/language";
-import { styleTags, tags as t } from "@codemirror/highlight";
+import { styleTags, tags as t } from "@lezer/highlight";
 import { completions } from "./completions";
 
 export const TextModeLanguage = LRLanguage.define({
