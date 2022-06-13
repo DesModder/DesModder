@@ -1,10 +1,9 @@
-import { parser } from "../lezer/syntax.grammar";
 import { SyntaxNode } from "@lezer/common";
 import { Tree } from "@lezer/common";
 import * as TextAST from "./TextAST";
 import { mapFromEntries, everyNonNull } from "utils/utils";
 import { Diagnostic } from "@codemirror/lint";
-import { DiagnosticsState, error, warning } from "./diagnostics";
+import { DiagnosticsState } from "./diagnostics";
 
 export class TextAndDiagnostics extends DiagnosticsState {
   constructor(public text: string, diagnostics: Diagnostic[]) {
@@ -33,17 +32,6 @@ export function cstToAST(
     statementAST && statements.push(statementAST);
   }
   return [td.diagnostics, statements];
-}
-
-/**
- * Convert the given string text to AST, throwing out all error nodes and
- * ancestors of error nodes in the CST except for Program.
- */
-export default function textToAST(
-  text: string
-): [Diagnostic[], TextAST.Statement[] | null] {
-  const cst = parser.parse(text);
-  return cstToAST(cst, text);
 }
 
 /**

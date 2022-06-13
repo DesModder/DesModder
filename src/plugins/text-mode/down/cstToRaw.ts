@@ -1,6 +1,6 @@
 import { Diagnostic } from "@codemirror/lint";
 import augToRaw from "../aug/augToRaw";
-import { cstToAST } from "../down/textToAST";
+import { cstToAST } from "./cstToAST";
 import astToAug from "./astToAug";
 import { error } from "./diagnostics";
 import { Tree } from "@lezer/common";

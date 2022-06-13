@@ -1,4 +1,5 @@
-import textToAST from "./textToAST";
+import { parser } from "../lezer/syntax.grammar";
+import { cstToAST } from "./cstToAST";
 import astToAug from "./astToAug";
 import * as Aug from "../aug/AugState";
 import { test, expect, describe } from "@jest/globals";
@@ -9,8 +10,10 @@ import { Diagnostic } from "@codemirror/lint";
 jest.mock("utils/depUtils");
 jest.mock("globals/window");
 
-function textToAug(s: string) {
-  return astToAug(...textToAST(s));
+function textToAug(text: string) {
+  const cst = parser.parse(text);
+  const [diagnostics, statements] = cstToAST(cst, text);
+  return astToAug(diagnostics, statements);
 }
 
 const colors = ["#c74440", "#2d70b3", "#388c46", "#6042a6", "#000000"];
