@@ -6,13 +6,14 @@ import { test, expect, describe } from "@jest/globals";
 import { mapFromEntries } from "utils/utils";
 import { error, warning } from "./diagnostics";
 import { Diagnostic } from "@codemirror/lint";
+import { Text } from "@codemirror/state";
 
 jest.mock("utils/depUtils");
 jest.mock("globals/window");
 
 function textToAug(text: string) {
   const cst = parser.parse(text);
-  const [diagnostics, statements] = cstToAST(cst, text);
+  const [diagnostics, statements] = cstToAST(cst, Text.of(text.split("\n")));
   return astToAug(diagnostics, statements);
 }
 

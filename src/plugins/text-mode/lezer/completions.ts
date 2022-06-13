@@ -133,7 +133,7 @@ function styleDefaults(controller: Controller, node: SyntaxNode): any {
     case "MappingEntry":
       return styleDefaults(controller, node.parent!)[
         identifierToStringAST(
-          new TextAndDiagnostics(controller.view!.state.sliceDoc(), []),
+          new TextAndDiagnostics(controller.view!.state.doc, []),
           node.getChild("Identifier")
         ).value
       ];

@@ -4,20 +4,21 @@ import * as TextAST from "./TextAST";
 import { mapFromEntries, everyNonNull } from "utils/utils";
 import { Diagnostic } from "@codemirror/lint";
 import { DiagnosticsState } from "./diagnostics";
+import { Text } from "@codemirror/state";
 
 export class TextAndDiagnostics extends DiagnosticsState {
-  constructor(public text: string, diagnostics: Diagnostic[]) {
+  constructor(public text: Text, diagnostics: Diagnostic[]) {
     super(diagnostics);
   }
 
   nodeText(pos: TextAST.Pos) {
-    return this.text.substring(pos.from, pos.to);
+    return this.text.sliceString(pos.from, pos.to);
   }
 }
 
 export function cstToAST(
   cst: Tree,
-  text: string
+  text: Text
 ): [Diagnostic[], TextAST.Statement[] | null] {
   // console.groupCollapsed("Program");
   // console.log(printTree(cst, text));
@@ -576,7 +577,7 @@ function identifierName(
   node: SyntaxNode | null
 ): string {
   if (node?.name === "DotAccessIdentifier") {
-    return td.text.substring(node.from + 1, node.to);
+    return td.nodeText({ from: node.from + 1, to: node.to });
   } else if (node?.name === "Identifier") {
     return td.nodeText(node);
   } else {

@@ -6,10 +6,11 @@ import { error } from "./diagnostics";
 import { Tree } from "@lezer/common";
 import { MapIDPosition } from "../modify/mapIDPosition";
 import { GraphState } from "@desmodder/graph-state";
+import { Text } from "@codemirror/state";
 
 export default function cstToRaw(
   cst: Tree,
-  text: string
+  text: Text
 ): [Diagnostic[], GraphState | null, MapIDPosition] {
   try {
     const [parseErrors, ast] = cstToAST(cst, text);

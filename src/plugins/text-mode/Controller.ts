@@ -185,7 +185,7 @@ export default class Controller {
     this.setParsing(false);
     const [diagnostics, rawGraphState, mapID] = cstToRaw(
       tree,
-      this.view.state.sliceDoc()
+      this.view.state.doc
     );
     this.diagnostics = diagnostics;
     if (this.lintResolve) {
