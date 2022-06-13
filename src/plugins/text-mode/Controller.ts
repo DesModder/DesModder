@@ -198,6 +198,8 @@ export default class Controller {
     if (this.lastUpdateWasByUser) {
       console.log("set state from text", rawGraphState);
       Calc.setState(rawGraphState, { allowUndo: true });
+      // Undo Desmos focusing the expression list after a setState
+      this.view.focus();
       this.lastUpdateWasByUser = false;
     } else if (!textChangedBecauseWorker) this.setParsing(false);
   }
@@ -208,11 +210,11 @@ export default class Controller {
    * so `this.mapIDPosition` must be in sync with the current document
    */
   processQueuedEvents(tree: Tree) {
-    console.log("process queued events");
     if (!this.view) return;
-    const transaction = this.view.state.update({
-      changes: eventSequenceChanges(this, this.queuedEvents, tree),
-    });
+    const changes = eventSequenceChanges(this, this.queuedEvents, tree);
+    if (changes.length === 0) return;
+    console.log("apply changes from queued events");
+    const transaction = this.view.state.update({ changes });
     // TODO: figure out annotations on this transaction as mentioned in the
     // nextEditDueToGraph doc text
     this.nextEditDueToGraph = true;
