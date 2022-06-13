@@ -83,7 +83,7 @@ export function itemToText(item: Aug.ItemAug): string {
             fractionDisplay: undefineIfFalse(item.displayEvaluationAsFraction),
             slider: undefineIfEmpty({
               playing: item.slider.isPlaying,
-              backwards: item.slider.playDirection === -1,
+              reversed: undefineIfFalse(item.slider.playDirection === -1),
               loopMode: item.slider.loopMode,
               period: item.slider.period,
               min: item.slider.min,
