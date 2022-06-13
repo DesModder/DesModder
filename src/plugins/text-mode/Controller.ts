@@ -3,7 +3,7 @@ import { Calc } from "globals/window";
 import { initView } from "./view/editor";
 import cstToRaw from "./down/cstToRaw";
 import { Diagnostic } from "@codemirror/lint";
-import { keys } from "utils/depUtils";
+import { jquery, keys } from "utils/depUtils";
 import { ensureSyntaxTree } from "@codemirror/language";
 import { Tree } from "@lezer/common";
 import {
@@ -197,9 +197,14 @@ export default class Controller {
     if (textChangedBecauseWorker) this.processQueuedEvents(tree);
     if (this.lastUpdateWasByUser) {
       console.log("set state from text", rawGraphState);
+      // Prevent Desmos from blurring the currently active element via
+      //   jquery(document.activeElement).trigger("blur")
+      // Alternative method this.view.focus() after setState does not prevent
+      //   the current autocomplete tooltip from disappearing
+      const trigger = jquery.prototype.trigger;
+      jquery.prototype.trigger = () => [];
       Calc.setState(rawGraphState, { allowUndo: true });
-      // Undo Desmos focusing the expression list after a setState
-      this.view.focus();
+      jquery.prototype.trigger = trigger;
       this.lastUpdateWasByUser = false;
     } else if (!textChangedBecauseWorker) this.setParsing(false);
   }
