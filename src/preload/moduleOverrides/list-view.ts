@@ -99,10 +99,14 @@ export default (dependencyNameMap: DependencyNameMap) => ({
 
       @what Hide the main expressions list when in text mode
 
-      @how Wrap the original create element in an IF
+      @how Wrap the original createElement in an IF
       */
       const createElementCall = containingCreateElementCall(path);
       if (createElementCall === null) return;
+      // edit the value of the string to avoid re-triggering
+      // we can't simply createELementCall.skip() because the CEC includes
+      // the CEC with class "dcg-noedit-branding" needed for show-tips below
+      path.node.value = "dcg-exppanel ";
       createElementCall.replaceWith(
         template.expression(
           `%%DCGView%%.createElement(
@@ -117,8 +121,6 @@ export default (dependencyNameMap: DependencyNameMap) => ({
           originalCEC: createElementCall.node,
         })
       );
-      createElementCall.skip();
-      path.skip();
     } else if (path.node.value === "dcg-noedit-branding") {
       /* @plugin show-tips
 
