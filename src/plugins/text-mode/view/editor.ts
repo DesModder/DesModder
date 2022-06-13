@@ -106,7 +106,7 @@ export function initView(controller: Controller) {
       ]),
       scrollTheme,
       // language support
-      TextMode(),
+      TextMode(controller),
     ],
   });
 

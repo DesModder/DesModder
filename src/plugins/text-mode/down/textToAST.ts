@@ -6,7 +6,7 @@ import { mapFromEntries, everyNonNull } from "utils/utils";
 import { Diagnostic } from "@codemirror/lint";
 import { DiagnosticsState, error, warning } from "./diagnostics";
 
-class TextAndDiagnostics extends DiagnosticsState {
+export class TextAndDiagnostics extends DiagnosticsState {
   constructor(public text: string, diagnostics: Diagnostic[]) {
     super(diagnostics);
   }
@@ -610,7 +610,7 @@ function identifierToAST(
   };
 }
 
-function identifierToStringAST(
+export function identifierToStringAST(
   td: TextAndDiagnostics,
   node: SyntaxNode | null
 ): TextAST.String {

@@ -6,6 +6,12 @@ import {
 import { syntaxTree } from "@codemirror/language";
 import { EditorSelection } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
+import { SyntaxNode } from "@lezer/common";
+import Controller from "../Controller";
+import { childExprToAug } from "../down/astToAug";
+import * as Defaults from "../down/style/defaults";
+import { identifierToStringAST, TextAndDiagnostics } from "../down/textToAST";
+import { childLatexToText } from "../up/augToText";
 
 function macroExpandWithSelection(
   before: string,
@@ -29,58 +35,133 @@ function macroExpandWithSelection(
   };
 }
 
-const completionsMap: { [key: string]: Completion[] | undefined } = {
-  Program: [
-    {
-      type: "keyword",
-      label: "folder",
-      apply: macroExpandWithSelection('folder "', "title", '" {}'),
-    },
-    {
-      type: "keyword",
-      label: "table",
-      apply: macroExpandWithSelection(
-        "table {\n  ",
-        "x1",
-        " = [ ]\n  y1 = [ ]\n}"
-      ),
-    },
-    {
-      type: "keyword",
-      label: "image",
-      apply: macroExpandWithSelection(
-        'image "',
-        "name",
-        '" "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjYGBg+A8AAQQBAHAgZQsAAAAASUVORK5CYII="' +
-          "\n  @{\n    width: 10,\n    height: 10,\n    center: (0,0),\n  }"
-      ),
-    },
-  ],
-  StyleMapping: [
-    // TODO: generalize for all valid styles with their defaults
-    // TODO: determine valid options based on style mapping path from root
-    {
-      type: "property",
-      label: "color",
-      apply: macroExpandWithSelection("color: ", "BLUE", ""),
-    },
-    {
-      type: "property",
-      label: "hidden",
-      apply: macroExpandWithSelection("hidden: ", "true", ""),
-    },
-  ],
-};
+const PROGRAM_COMPLETIONS: Completion[] = [
+  {
+    type: "keyword",
+    label: "folder",
+    apply: macroExpandWithSelection('folder "', "title", '" {}'),
+  },
+  {
+    type: "keyword",
+    label: "table",
+    apply: macroExpandWithSelection(
+      "table {\n  ",
+      "x1",
+      " = [ ]\n  y1 = [ ]\n}"
+    ),
+  },
+  {
+    type: "keyword",
+    label: "image",
+    apply: macroExpandWithSelection(
+      'image "',
+      "name",
+      '" "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjYGBg+A8AAQQBAHAgZQsAAAAASUVORK5CYII="' +
+        "\n  @{\n    width: 10,\n    height: 10,\n    center: (0,0),\n  }"
+    ),
+  },
+];
 
-export function completions(context: CompletionContext) {
+export function completions(
+  controller: Controller,
+  context: CompletionContext
+) {
   let word = context.matchBefore(/\w*/);
   if (word === null || (word.from == word.to && !context.explicit)) return null;
   const tree = syntaxTree(context.state);
-  const parentName = tree.resolve(context.pos).name;
+  const parent = tree.resolve(context.pos);
   return {
-    // TODO: validFor does not seem to be preventing re-calling this function
     validFor: /^\w*$/,
     from: word.from,
-    options: completionsMap[parentName] ?? [],
+    options:
+      parent.name === "Program"
+        ? PROGRAM_COMPLETIONS
+        : parent.name === "StyleMapping" || parent.name === "MappingEntry"
+        ? styleCompletions(controller, parent)
+        : [],
   };
+}
+
+/**
+ * parents of StyleMapping can be
+ *   SimpleStatement
+ *   Table . BlockInner . SimpleStatement (table column)
+ *   RegressionStatement
+ *   Table
+ *   Image
+ *   Text
+ *   Folder
+ *   Settings
+ *   StyleMapping . MappingEntry
+ */
+function styleCompletions(
+  controller: Controller,
+  node: SyntaxNode
+): Completion[] {
+  const defaults =
+    node.name === "MappingEntry"
+      ? styleDefaults(controller, node.parent!)
+      : styleDefaults(controller, node);
+  return styleCompletionsFromDefaults(defaults);
+}
+
+function styleDefaults(controller: Controller, node: SyntaxNode): any {
+  if (
+    node.name === "SimpleStatement" &&
+    node.parent?.name === "BlockInner" &&
+    node.parent.parent?.name === "Table"
+  ) {
+    return Defaults.column;
+  }
+  switch (node.name) {
+    case "SimpleStatement":
+    case "RegressionStatement":
+      // TODO: check polar and other stuff
+      return Defaults.nonpolarExpression;
+    case "Table":
+      return Defaults.table;
+    case "Image":
+      return Defaults.image;
+    case "Text":
+      return Defaults.text;
+    case "Folder":
+      return Defaults.folder;
+    case "Settings":
+      return Defaults.settings;
+    case "StyleMapping":
+      return styleDefaults(controller, node.parent!);
+    case "MappingEntry":
+      return styleDefaults(controller, node.parent!)[
+        identifierToStringAST(
+          new TextAndDiagnostics(controller.view!.state.sliceDoc(), []),
+          node.getChild("Identifier")
+        ).value
+      ];
+    default:
+      throw `Unexpected node type as parent of style: ${node.name}`;
+  }
+}
+
+function styleCompletionsFromDefaults(defaults: any): Completion[] {
+  const completions = [];
+  for (let key in defaults) {
+    const value = defaults[key];
+    completions.push({
+      type: "property",
+      label: key,
+      apply:
+        value === null
+          ? macroExpandWithSelection(key + ": ", "", ",")
+          : typeof value === "object"
+          ? "type" in value
+            ? macroExpandWithSelection(
+                key + ": ",
+                childLatexToText(childExprToAug(value)),
+                ","
+              )
+            : macroExpandWithSelection(key + ": @{ ", "", " },")
+          : macroExpandWithSelection(key + ": ", JSON.stringify(value), ","),
+    });
+  }
+  return completions;
 }

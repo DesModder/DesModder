@@ -528,7 +528,7 @@ function exprEvalSameDeep<T extends { [key: string]: TextAST.Expression }>(
   return true;
 }
 
-function childExprToAug(
+export function childExprToAug(
   expr: StyleValue | TextAST.Expression
 ): Aug.Latex.AnyChild {
   if (expr.type === "StyleValue") throw "Unexpected style value";

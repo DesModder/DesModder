@@ -250,7 +250,7 @@ function rootLatexToText(e: Aug.Latex.AnyRootOrChild): string {
   }
 }
 
-function childLatexToText(e: Aug.Latex.AnyChild): string {
+export function childLatexToText(e: Aug.Latex.AnyChild): string {
   switch (e.type) {
     case "Constant":
       return numToText(e.value);
