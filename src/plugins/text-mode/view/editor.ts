@@ -30,6 +30,7 @@ import { defaultHighlightStyle } from "@codemirror/language";
 import { TextMode } from "../lezer/index";
 import { linter } from "@codemirror/lint";
 import { Calc } from "globals/window";
+import { checkboxPlugin } from "./plugins/checkboxWidget";
 
 const scrollTheme = EditorView.theme({
   "&": {
@@ -107,6 +108,8 @@ export function initView(controller: Controller) {
       scrollTheme,
       // language support
       TextMode(controller),
+      // Text mode plugins
+      checkboxPlugin,
     ],
   });
 
