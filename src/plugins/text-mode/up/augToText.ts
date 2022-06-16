@@ -299,7 +299,7 @@ export function childLatexToText(e: Aug.Latex.AnyChild): string {
         identifierToText(e.variable) + "=" + childLatexToText(e.expression)
       );
     case "ListComprehension":
-      return `[${e.expr} for ${bareSeqText(e.assignments)}]`;
+      return `[${childLatexToText(e.expr)} for ${bareSeqText(e.assignments)}]`;
     case "Piecewise":
       const piecewiseParts: string[] = [];
       let curr: Aug.Latex.AnyChild = e;
