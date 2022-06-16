@@ -41,19 +41,7 @@ const scrollTheme = EditorView.theme({
   },
 });
 
-export function initView(controller: Controller) {
-  const [errors, text] = controller.getInitialText();
-
-  if (errors) {
-    Calc.controller._showToast({
-      message:
-        "Automatic conversion to text encountered errors in some expressions.",
-      undoCallback: () => {
-        controller.toggleTextMode();
-      },
-    });
-  }
-
+export function initView(controller: Controller, text: string) {
   const startState = EditorState.create({
     doc: text,
     extensions: [

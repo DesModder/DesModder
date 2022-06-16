@@ -10,7 +10,7 @@ import {
 } from "../aug/rawToAug";
 import { graphSettingsToText, itemToText } from "../up/augToText";
 import Metadata from "main/metadata/interface";
-import Controller from "../Controller";
+import LanguageServer from "../LanguageServer";
 
 export const relevantEventTypes = [
   // @settings related
@@ -31,7 +31,7 @@ export type RelevantEvent = DispatchedEvent & {
 };
 
 export function eventSequenceChanges(
-  controller: Controller,
+  ls: LanguageServer,
   events: RelevantEvent[],
   tree: Tree
 ): ChangeSpec[] {
@@ -72,9 +72,7 @@ export function eventSequenceChanges(
   if (itemsChanged.size > 0) {
     const dsmMetadata = rawToDsmMetadata(state);
     for (const changeID of itemsChanged.values()) {
-      changes.push(
-        ...itemChange(controller, tree, state, dsmMetadata, changeID)
-      );
+      changes.push(...itemChange(ls, tree, state, dsmMetadata, changeID));
     }
   }
   return changes;
@@ -107,7 +105,7 @@ function getSettingsNode(tree: Tree): SyntaxNode | null {
 }
 
 function itemChange(
-  controller: Controller,
+  ls: LanguageServer,
   tree: Tree,
   state: GraphState,
   dsmMetadata: Metadata,
@@ -115,7 +113,7 @@ function itemChange(
 ): ChangeSpec[] {
   const newStateItem = state.expressions.list.find((e) => e.id === changeID);
   if (!newStateItem || newStateItem.type === "folder") return [];
-  const oldNode = getItemNode(controller, tree, changeID);
+  const oldNode = getItemNode(ls, tree, changeID);
   if (oldNode === null) return [];
   const itemAug = rawNonFolderToAug(newStateItem, dsmMetadata);
   const newItemText = itemToText(itemAug);
@@ -129,14 +127,14 @@ function itemChange(
 }
 
 function getItemNode(
-  controller: Controller,
+  ls: LanguageServer,
   tree: Tree,
   id: string
 ): SyntaxNode | null {
-  const startPos = controller.mapIDPosition[id];
+  const startPos = ls.mapIDPosition[id];
   if (startPos === undefined) return null;
   const cursor = tree.cursor();
   cursor.childAfter(startPos);
-  // Assume this is correct
+  // Assume this is the correct node
   return cursor.node;
 }
