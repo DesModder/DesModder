@@ -490,22 +490,12 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         variable: parseIdentifier(node._symbol),
         expression: childNodeToTree(node._expression),
       };
-    case "AssignmentExpression":
-      return {
-        type: "AssignmentExpression",
-        variable: nodeToIdentifier(node.args[0]),
-        expression: childNodeToTree(node.args[1]),
-      };
     case "ListComprehension":
       return {
         type: "ListComprehension",
         expr: childNodeToTree(node.args[1]),
         assignments: node.args.slice(2).map((n) => {
-          const expr = childNodeToTree(n);
-          if (expr.type !== "AssignmentExpression") {
-            throw "ListComprehension contains unexpected non-AssignmentExpression";
-          }
-          return expr;
+          return assignmentExprToTree(n);
         }),
       };
     case "Piecewise":
@@ -589,6 +579,18 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
     default:
       throw `Programming Error: Unexpected raw node ${node.type}`;
   }
+}
+
+function assignmentExprToTree(
+  node: ChildExprNode
+): Aug.Latex.AssignmentExpression {
+  if (node.type !== "AssignmentExpression")
+    throw "Programming Error: expected AssignmentExpression in list comprehension";
+  return {
+    type: "AssignmentExpression",
+    variable: nodeToIdentifier(node.args[0]),
+    expression: childNodeToTree(node.args[1]),
+  };
 }
 
 function nodeToIdentifier(node: ChildExprNode) {

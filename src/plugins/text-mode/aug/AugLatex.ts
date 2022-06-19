@@ -34,7 +34,6 @@ export type AnyChild =
   | OrderedPairAccess
   | Seq
   | UpdateRule
-  | AssignmentExpression
   | ListComprehension
   | Piecewise
   | RepeatedOperator

@@ -34,13 +34,18 @@ export interface FunctionDefinition extends Positioned {
 
 export interface RegressionStatement extends Positioned {
   type: "RegressionStatement";
-  left: Expression;
-  right: Expression;
+  expr: RegressionExpression;
   style: StyleMapping;
   body?: {
     residualVariable: Identifier;
     regressionParameters: Map<Identifier, Expression>;
   };
+}
+
+export interface RegressionExpression extends Positioned {
+  type: "RegressionExpression";
+  left: Expression;
+  right: Expression;
 }
 
 export interface Table extends Positioned {
@@ -86,7 +91,7 @@ export interface StyleMappingFilled extends Positioned {
 export interface MappingEntry extends Positioned {
   type: "MappingEntry";
   property: String;
-  expr: Expression | StyleMapping;
+  expr: Expression | StyleMappingFilled;
 }
 
 export type Expression =
@@ -105,7 +110,9 @@ export type Expression =
   | ListAccessExpression
   | BinaryExpression
   | PostfixExpression
-  | CallExpression;
+  | CallExpression
+  // TODO: RegressionExpression here is temporary because it should not be a child
+  | RegressionExpression;
 
 export interface Number extends Positioned {
   type: "Number";
@@ -173,7 +180,7 @@ export interface PrefixExpression extends Positioned {
 
 export interface UpdateRule extends Positioned {
   type: "UpdateRule";
-  variable: Expression;
+  variable: Identifier;
   expression: Expression;
 }
 

@@ -161,8 +161,8 @@ function statementToAug(
         stmt.style,
         {
           type: "Regression",
-          left: childExprToAug(stmt.left),
-          right: childExprToAug(stmt.right),
+          left: childExprToAug(stmt.expr.left),
+          right: childExprToAug(stmt.expr.right),
         },
         stmt
       );
@@ -671,6 +671,9 @@ export function childExprToAug(
           },
         };
       throw "Invalid callee";
+    case "RegressionExpression":
+      // TODO: Typescript should know this case is unreachable
+      throw "Programming Error: RegressionExpression unexpected";
   }
 }
 

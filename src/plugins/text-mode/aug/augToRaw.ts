@@ -347,15 +347,11 @@ function childNodeToString(e: Aug.Latex.AnyChild): string {
         "\\to " +
         childNodeToString(e.expression)
       );
-    case "AssignmentExpression":
-      return (
-        identifierToString(e.variable) + "=" + childNodeToString(e.expression)
-      );
     case "ListComprehension":
       return wrapBracket(
         childNodeToString(e.expr) +
           "\\operatorname{for}" +
-          bareSeq(e.assignments)
+          e.assignments.map(assignmentExprToRaw).join(",")
       );
     case "Piecewise":
       const piecewiseParts: string[] = [];
@@ -418,6 +414,10 @@ function childNodeToString(e: Aug.Latex.AnyChild): string {
         childNodeToString(e.right)
       );
   }
+}
+
+function assignmentExprToRaw(e: Aug.Latex.AssignmentExpression): string {
+  return identifierToString(e.variable) + "=" + childNodeToString(e.expression);
 }
 
 const comparatorMap = {

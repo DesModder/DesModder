@@ -8,10 +8,10 @@ import { EditorSelection } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { SyntaxNode } from "@lezer/common";
 import Controller from "../Controller";
-import { childExprToAug } from "../down/astToAug";
 import * as Defaults from "../down/style/defaults";
 import { identifierToStringAST, TextAndDiagnostics } from "../down/cstToAST";
-import { childLatexToText } from "../up/augToText";
+import * as TextAST from "../down/TextAST";
+import { exprToText } from "../up/astToText";
 
 function macroExpandWithSelection(
   before: string,
@@ -156,7 +156,7 @@ function styleCompletionsFromDefaults(defaults: any): Completion[] {
           ? "type" in value
             ? macroExpandWithSelection(
                 key + ": ",
-                childLatexToText(childExprToAug(value)),
+                exprToText(value as TextAST.Expression),
                 ","
               )
             : macroExpandWithSelection(key + ": @{ ", "", " },")

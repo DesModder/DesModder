@@ -96,8 +96,11 @@ function statementToAST(
         return null;
       return {
         type: "RegressionStatement",
-        left: regLeft,
-        right: regRight,
+        expr: {
+          type: "RegressionExpression",
+          left: regLeft,
+          right: regRight,
+        },
         style,
         body: regBody,
         pos: getPos(node),
@@ -244,17 +247,24 @@ function simpleStatementToAST(
 /**
  * @param node StyleMapping
  */
-function styleToAST(td: TextAndDiagnostics, node: SyntaxNode | null) {
+function styleToAST(
+  td: TextAndDiagnostics,
+  node: SyntaxNode | null
+): TextAST.StyleMapping {
   if (node == null) return null;
   return styleToASTKnown(td, node);
 }
 
-function styleToASTKnown(td: TextAndDiagnostics, node: SyntaxNode) {
+function styleToASTKnown(
+  td: TextAndDiagnostics,
+  node: SyntaxNode
+): TextAST.StyleMapping {
   return {
     type: "StyleMapping" as const,
     entries: node
       ?.getChildren("MappingEntry")
-      .map((node) => mappingEntryToAST(td, node)),
+      .map((node) => mappingEntryToAST(td, node))
+      .filter((entry) => entry !== null) as TextAST.MappingEntry[],
     pos: getPos(node),
   };
 }
@@ -362,6 +372,13 @@ function exprToAST(
       const updateVar = exprToAST(td, node.getChild("Expression")!);
       const updateExpr = exprToAST(td, node.getChild("Expression", "->")!);
       if (updateVar === null || updateExpr === null) return null;
+      if (updateVar.type !== "Identifier") {
+        td.pushError(
+          `Left side of update rule must be Identifier, got ${updateVar.type}`,
+          updateVar.pos
+        );
+        return null;
+      }
       return {
         type: "UpdateRule",
         variable: updateVar,
@@ -558,13 +575,15 @@ function parenToAST(
 function mappingEntryToAST(
   td: TextAndDiagnostics,
   node: SyntaxNode
-): TextAST.MappingEntry {
+): TextAST.MappingEntry | null {
   const expr = node.lastChild!;
+  const resExpr =
+    expr.name === "StyleMapping" ? styleToAST(td, expr) : exprToAST(td, expr);
+  if (resExpr === null) return null;
   return {
     type: "MappingEntry",
     property: identifierToStringAST(td, node.getChild("Identifier")!),
-    expr:
-      expr.name === "StyleMapping" ? styleToAST(td, expr) : exprToAST(td, expr),
+    expr: resExpr,
     pos: getPos(node),
   };
 }
