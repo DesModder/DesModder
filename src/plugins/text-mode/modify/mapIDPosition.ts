@@ -10,7 +10,7 @@ export function applyChanges(map: MapIDPosition, changeSet: ChangeSet) {
       const pos = map[key];
       map[key] = pos >= toA ? toB - toA + pos : pos;
       if (pos > fromA && pos < fromB) {
-        throw "Programming error: Change applied spanning an item";
+        throw Error("Programming error: Change applied spanning an item");
       }
     }
   });

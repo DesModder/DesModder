@@ -63,7 +63,9 @@ export default class LanguageServer {
         resolve(this.diagnostics);
       } else {
         if (this.lintResolve !== null)
-          throw "Programming Error: Second lint before the first resolved";
+          throw Error(
+            "Programming Error: Second lint before the first resolved"
+          );
         this.lintResolve = resolve;
       }
     });
@@ -75,11 +77,15 @@ export default class LanguageServer {
     console.log("set parsing", parsing);
     if (parsing) {
       if (this.parseCheckInterval !== null)
-        throw "Programming Error: start parsing with parseCheckInterval non-null";
+        throw Error(
+          "Programming Error: start parsing with parseCheckInterval non-null"
+        );
       this.parseCheckInterval = window.setInterval(() => this.parseCheck(), 50);
     } else {
       if (this.parseCheckInterval === null)
-        throw "Programming error: stop parsing with parseCheckInterval null";
+        throw Error(
+          "Programming error: stop parsing with parseCheckInterval null"
+        );
       clearInterval(this.parseCheckInterval);
       this.parseCheckInterval = null;
     }

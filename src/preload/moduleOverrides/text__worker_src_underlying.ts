@@ -69,11 +69,13 @@ const visitor = {
         for (let i = 0; i < func.params.length; i++) {
           const param = func.params[i];
           if (!t.isIdentifier(param)) {
-            throw "Expected module definition to consist entirely of identifiers";
+            throw Error(
+              "Expected module definition to consist entirely of identifiers"
+            );
           }
           const dep = dependencies.elements[i];
           if (!t.isStringLiteral(dep)) {
-            throw "Expected dependencies to be exclusively strings";
+            throw Error("Expected dependencies to be exclusively strings");
           }
           dependencyNameMap[dep.value] = param;
         }

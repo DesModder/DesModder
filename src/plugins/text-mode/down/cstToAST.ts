@@ -24,7 +24,7 @@ export function cstToAST(
   // console.log(printTree(cst, text));
   // console.groupEnd();
   if (cst.type.name !== "Program") {
-    throw "Programming error: expected parsed program";
+    throw Error("Programming error: expected parsed program");
   }
   const statements: TextAST.Statement[] = [];
   const td = new TextAndDiagnostics(text, []);
@@ -135,7 +135,7 @@ function statementToAST(
         pos: getPos(node),
       };
     default:
-      throw `Programming error: Unexpected statement type ${node.name}`;
+      throw Error(`Programming error: Unexpected statement type ${node.name}`);
   }
 }
 
@@ -291,7 +291,7 @@ function exprToAST(
     case "Piecewise":
       const piecewiseChildren = node.getChildren("PiecewiseBranch");
       if (piecewiseChildren.length === 0)
-        throw "Programming error: empty piecewise not yet implemented";
+        throw Error("Programming error: empty piecewise not yet implemented");
       const piecewiseBranches = piecewiseChildren.map((node) =>
         piecewiseBranchToAST(td, node)
       );
@@ -377,7 +377,9 @@ function exprToAST(
         pos: getPos(node),
       };
     default:
-      throw `Programming error: Unexpected expression node: ${node.name}`;
+      throw Error(
+        `Programming error: Unexpected expression node: ${node.name}`
+      );
   }
 }
 
@@ -391,7 +393,9 @@ function repeatedExpressionToAST(
   const exprs = node.getChildren("Expression");
   const name = node.firstChild!.name;
   if (name !== "integral" && name !== "sum" && name !== "product") {
-    throw `Programming error: Unexpected repeated operator name: ${name}`;
+    throw Error(
+      `Programming error: Unexpected repeated operator name: ${name}`
+    );
   }
   const startExpr = exprToAST(td, exprs[1]);
   const endExpr = exprToAST(td, exprs[2]);
@@ -494,7 +498,7 @@ function binaryExpressionToAST(
   const opNode = exprs[0].nextSibling!;
   const op = td.nodeText(opNode);
   if (!binaryOps.includes(op)) {
-    throw `Programming Error: Unexpected binary operator: ${op}`;
+    throw Error(`Programming Error: Unexpected binary operator: ${op}`);
   }
   const left = exprToAST(td, exprs[0]);
   const right = exprToAST(td, exprs[1]);
@@ -581,7 +585,7 @@ function identifierName(
   } else if (node?.name === "Identifier") {
     return td.nodeText(node);
   } else {
-    throw "Programming Error: expected identifier here";
+    throw Error("Programming Error: expected identifier here");
   }
 }
 

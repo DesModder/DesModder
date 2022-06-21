@@ -61,7 +61,7 @@ function rawListToAug(
       const augItem = rawNonFolderToAug(item, dsmMetadata);
       if (item.folderId) {
         if (!currentFolder || item.folderId !== currentFolder.id) {
-          throw "Folder ID inconsistent";
+          throw Error("Folder ID inconsistent");
         }
         currentFolder.children.push(augItem);
       } else {
@@ -267,7 +267,7 @@ function columnExpressionCommon(
 ) {
   const color = item.colorLatex ? parseLatex(item.colorLatex) : item.color;
   if (typeof color !== "string" && color.type !== "Identifier") {
-    throw "Expected colorLatex to be an identifier";
+    throw Error("Expected colorLatex to be an identifier");
   }
   return {
     color: color,
@@ -356,7 +356,9 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
     case "Constant":
     case "MixedNumber":
       if (typeof node._constantValue === "boolean") {
-        throw "Constant value is boolean, but expected rational or number";
+        throw Error(
+          "Constant value is boolean, but expected rational or number"
+        );
       }
       return {
         type: "Constant",
@@ -381,7 +383,7 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
       };
     case "Seed":
     case "ExtendSeed":
-      throw `Programming error: ${node.type} encountered`;
+      throw Error(`Programming error: ${node.type} encountered`);
     case "FunctionExponent":
       return {
         type: "BinaryOperator",
@@ -425,7 +427,7 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
     case "Prime":
       const primeArg = childNodeToTree(node.args[0]);
       if (primeArg.type !== "FunctionCall") {
-        throw "Expected function call as argument of prime";
+        throw Error("Expected function call as argument of prime");
       }
       return {
         type: "Prime",
@@ -457,7 +459,9 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
     case "DotAccess":
       const prop = childNodeToTree(node.args[1]);
       if (prop.type !== "Identifier" && prop.type !== "FunctionCall") {
-        throw "Dot access property is not an identifier or function call";
+        throw Error(
+          "Dot access property is not an identifier or function call"
+        );
       }
       return {
         type: "DotAccess",
@@ -466,11 +470,13 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
       };
     case "OrderedPairAccess":
       if (typeof node.index._constantValue === "boolean") {
-        throw "Ordered pair index is boolean, but expected rational or number";
+        throw Error(
+          "Ordered pair index is boolean, but expected rational or number"
+        );
       }
       const indexValue = evalMaybeRational(node.index._constantValue);
       if (indexValue !== 1 && indexValue !== 2) {
-        throw "Ordered pair index is neither 1 nor 2";
+        throw Error("Ordered pair index is neither 1 nor 2");
       }
       return {
         type: "OrderedPairAccess",
@@ -510,7 +516,9 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         condition.type !== "Comparator" &&
         condition.type !== "DoubleInequality"
       ) {
-        throw "Expected condition of Piecewise to be a Comparator, DoubleInequality, or true";
+        throw Error(
+          "Expected condition of Piecewise to be a Comparator, DoubleInequality, or true"
+        );
       }
       return {
         type: "Piecewise",
@@ -575,9 +583,9 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         right: childNodeToTree(node.args[1]),
       };
     case "Error":
-      throw "Parsing threw an error";
+      throw Error("Parsing threw an error");
     default:
-      throw `Programming Error: Unexpected raw node ${node.type}`;
+      throw Error(`Programming Error: Unexpected raw node ${node.type}`);
   }
 }
 
@@ -585,7 +593,9 @@ function assignmentExprToTree(
   node: ChildExprNode
 ): Aug.Latex.AssignmentExpression {
   if (node.type !== "AssignmentExpression")
-    throw "Programming Error: expected AssignmentExpression in list comprehension";
+    throw Error(
+      "Programming Error: expected AssignmentExpression in list comprehension"
+    );
   return {
     type: "AssignmentExpression",
     variable: nodeToIdentifier(node.args[0]),
@@ -595,7 +605,7 @@ function assignmentExprToTree(
 
 function nodeToIdentifier(node: ChildExprNode) {
   if (node.type !== "Identifier") {
-    throw "Expected identifier";
+    throw Error("Expected identifier");
   }
   return parseIdentifier(node._symbol);
 }

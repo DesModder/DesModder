@@ -136,7 +136,7 @@ function styleDefaults(controller: Controller, node: SyntaxNode): any {
         ).value
       ];
     default:
-      throw `Unexpected node type as parent of style: ${node.name}`;
+      throw Error(`Unexpected node type as parent of style: ${node.name}`);
   }
 }
 

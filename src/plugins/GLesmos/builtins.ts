@@ -519,7 +519,9 @@ const builtins: {
     // Does not handle NaNs the same as JS
     make: (n) => {
       if (+n > 128) {
-        throw "Sorted list length exceeds 128. Stopping to avoid page freeze.";
+        throw Error(
+          "Sorted list length exceeds 128. Stopping to avoid page freeze."
+        );
       }
       return `float[${n}] sortPerm(float[${n}] L) {
         int[${n}] perm;
@@ -569,7 +571,7 @@ const builtins: {
   },
   uniquePerm: {
     make: () => {
-      throw "The unique function is not supported";
+      throw Error("The unique function is not supported");
     },
     tag: "list",
   },
@@ -616,7 +618,7 @@ export function getDefinition(s: string) {
   // which should be specialized to a list of 10 args
   const data = getBuiltin(s);
   if (data === undefined) {
-    throw `Undefined identifier: ${s}`;
+    throw Error(`Undefined identifier: ${s}`);
   }
   if (data.tag === "simple") {
     const name = data?.alias ?? s;

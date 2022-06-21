@@ -527,14 +527,14 @@ function exprEvalSameDeep<T extends { [key: string]: TextAST.Expression }>(
 export function childExprToAug(
   expr: StyleValue | TextAST.Expression
 ): Aug.Latex.AnyChild {
-  if (expr.type === "StyleValue") throw "Unexpected style value";
+  if (expr.type === "StyleValue") throw Error("Unexpected style value");
   switch (expr.type) {
     case "Number":
       return constant(expr.value);
     case "Identifier":
       return identifierToAug(expr);
     case "String":
-      throw "Unexpected string in expression";
+      throw Error("Unexpected string in expression");
     case "RepeatedExpression":
       if (expr.name === "integral") {
         return {
@@ -584,7 +584,7 @@ export function childExprToAug(
       };
     case "UpdateRule":
       if (expr.variable.type !== "Identifier") {
-        throw "Update rule may only assign to a variable";
+        throw Error("Update rule may only assign to a variable");
       }
       return {
         type: "UpdateRule",
@@ -623,7 +623,7 @@ export function childExprToAug(
       };
     case "BinaryExpression":
       if (expr.op === "~")
-        throw "Programming Error: `~` in child BinaryExpression";
+        throw Error("Programming Error: `~` in child BinaryExpression");
       return binopMap[expr.op] !== undefined
         ? {
             type: "BinaryOperator",
@@ -668,7 +668,7 @@ export function childExprToAug(
             args: expr.arguments.map(childExprToAug),
           },
         };
-      throw "Invalid callee";
+      throw Error("Invalid callee");
   }
 }
 
@@ -710,7 +710,7 @@ function piecewiseInnerToAug(
     firstCond.type !== "DoubleInequality" &&
     firstCond.type !== "Comparator"
   ) {
-    throw "Invalid condition";
+    throw Error("Invalid condition");
   }
   return {
     type: "Piecewise" as const,

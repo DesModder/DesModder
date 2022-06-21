@@ -353,9 +353,9 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         expr: childLatexToAST(e.integrand),
       };
     case "Derivative":
-      throw "Derivative not yet implemented";
+      throw Error("Derivative not yet implemented");
     case "Prime":
-      throw "Prime not yet implemented";
+      throw Error("Prime not yet implemented");
     case "List":
       return {
         type: "ListExpression",
@@ -397,7 +397,7 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
       };
     case "Seq":
       if (e.args.length <= 1)
-        throw "Programming Error: Expected at least 2 elements in Seq";
+        throw Error("Programming Error: Expected at least 2 elements in Seq");
       return {
         type: "SequenceExpression",
         left: childLatexToAST(e.args[0]),
@@ -479,7 +479,7 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         right: childLatexToAST(e.right),
       };
     case "DoubleInequality":
-      throw "DoubleInequality not yet implemented";
+      throw Error("DoubleInequality not yet implemented");
   }
 }
 

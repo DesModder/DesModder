@@ -42,14 +42,14 @@ export function compileObject(x: any): string {
       return x ? "true" : "false";
     case "object":
       if (typeof x.n !== "number" || typeof x.d !== "number")
-        throw "Not a rational";
+        throw Error("Not a rational");
     // ... fall through to number
     case "number":
       return glslFloatify(evalMaybeRational(x));
     case "string":
-      throw "Strings not handled";
+      throw Error("Strings not handled");
     default:
-      throw `Unexpected value ${x}`;
+      throw Error(`Unexpected value ${x}`);
   }
 }
 
@@ -68,6 +68,6 @@ export function getGLType(v: ValueType) {
     case Types.ListOfPoint:
       return "vec2[]";
     default:
-      throw `Type ${v} is not yet supported`;
+      throw Error(`Type ${v} is not yet supported`);
   }
 }

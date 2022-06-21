@@ -21,7 +21,9 @@ export default function withDependencyMap(
               for (let i = 0; i < path.node.params.length; i++) {
                 const param = path.node.params[i];
                 if (!t.isIdentifier(param)) {
-                  throw "Expected module definition to consist entirely of identifiers";
+                  throw Error(
+                    "Expected module definition to consist entirely of identifiers"
+                  );
                 }
                 dependencyNameMap[dependencies[i]] = param;
               }

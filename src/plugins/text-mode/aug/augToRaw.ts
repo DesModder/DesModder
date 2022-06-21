@@ -467,7 +467,7 @@ function identifierToString(id: Aug.Latex.Identifier): string {
     main = symbol.substring(0, uIndex);
     subscript = symbol.substring(uIndex + 1);
     if (!/^[a-zA-Z]+$/.test(main) || !/^[a-zA-Z0-9]+$/.test(subscript)) {
-      throw `Unexpected character in ${symbol}`;
+      throw Error(`Unexpected character in ${symbol}`);
     }
   }
   const start =
