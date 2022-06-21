@@ -178,7 +178,7 @@ export interface DomainAug {
 }
 
 export interface RegressionData {
-  residualVariable: Latex.Identifier;
+  residualVariable?: Latex.Identifier;
   regressionParameters: Map<Latex.Identifier, number>;
   isLogMode: boolean;
 }

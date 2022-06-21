@@ -125,47 +125,8 @@ function statementToAug(
   switch (stmt.type) {
     case "Settings":
       return settingsToAug(ds, stmt.style);
-    case "ShowStatement":
-      return expressionToAug(ds, stmt.style, childExprToAug(stmt.expr), stmt);
-    case "LetStatement":
-      return expressionToAug(
-        ds,
-        stmt.style,
-        {
-          type: "Comparator",
-          operator: "=",
-          left: identifierToAug(stmt.identifier),
-          right: childExprToAug(stmt.expr),
-        },
-        stmt
-      );
-    case "FunctionDefinition":
-      return expressionToAug(
-        ds,
-        stmt.style,
-        {
-          type: "Comparator",
-          operator: "=",
-          left: {
-            type: "FunctionCall",
-            callee: identifierToAug(stmt.callee),
-            args: stmt.params.map(identifierToAug),
-          },
-          right: childExprToAug(stmt.expr),
-        },
-        stmt
-      );
-    case "RegressionStatement":
-      return expressionToAug(
-        ds,
-        stmt.style,
-        {
-          type: "Regression",
-          left: childExprToAug(stmt.expr.left),
-          right: childExprToAug(stmt.expr.right),
-        },
-        stmt
-      );
+    case "ExprStatement":
+      return expressionToAug(ds, stmt.style, stmt);
     case "Table":
       return tableToAug(ds, stmt.style, stmt);
     case "Image":
@@ -192,19 +153,82 @@ function textToAug(
     : null;
 }
 
+function regressionToAug(
+  ds: DownState,
+  styleMapping: TextAST.StyleMapping,
+  stmt: TextAST.ExprStatement,
+  regressionData: TextAST.RegressionData,
+  exprAST: TextAST.BinaryExpression
+): Aug.ExpressionAug | null {
+  const expr: Aug.Latex.Regression = {
+    type: "Regression",
+    left: childExprToAug(exprAST.left),
+    right: childExprToAug(exprAST.right),
+  };
+  const style = hydrate(
+    ds,
+    styleMapping,
+    Default.regression,
+    Schema.regression,
+    "regression"
+  );
+  if (style === null) return null;
+  const params = regressionData.parameters.entries.map(
+    ({ variable, value }): [Identifier, number] | null => {
+      const evaluated = evalExpr(ds.diagnostics, value);
+      if (typeof evaluated !== "number") {
+        ds.pushError(
+          `Expected regression parameter to evaluate to number, but got ${typeof evaluated}`,
+          value.pos
+        );
+        return null;
+      }
+      return [identifierToAug(variable), evaluated];
+    }
+  );
+  if (!everyNonNull(params)) return null;
+  return {
+    type: "expression",
+    ...exprBase(ds, style, stmt),
+    latex: expr,
+    regression: {
+      isLogMode: style.logMode,
+      residualVariable:
+        regressionData.residualVariable &&
+        identifierToAug(regressionData.residualVariable),
+      regressionParameters: mapFromEntries(params),
+    },
+    color: "",
+    errorHidden: style.errorHidden,
+    hidden: false,
+    glesmos: false,
+    fillOpacity: constant(0),
+    displayEvaluationAsFraction: false,
+    slider: {},
+    vizProps: {},
+  };
+}
+
 function expressionToAug(
   ds: DownState,
   styleMapping: TextAST.StyleMapping,
-  expr: Aug.Latex.AnyRootOrChild,
-  stmt: TextAST.Statement
+  stmt: TextAST.ExprStatement
 ): Aug.ExpressionAug | null {
+  if (
+    stmt.expr.type === "BinaryExpression" &&
+    stmt.expr.op === "~" &&
+    stmt.regression !== undefined
+  ) {
+    return regressionToAug(ds, styleMapping, stmt, stmt.regression, stmt.expr);
+  }
+  const expr = childExprToAug(stmt.expr);
   // is the expr polar for the purposes of domain?
   const isPolar =
     expr.type === "Comparator" &&
     expr.left.type === "Identifier" &&
     expr.left.symbol === "r";
 
-  // TODO: split hydration based on regression, function definition, etc.
+  // TODO: split hydration based on lines, function definition, etc.
   const style = hydrate(
     ds,
     styleMapping,
@@ -213,19 +237,6 @@ function expressionToAug(
     "expression"
   );
   if (style === null) return null;
-  const regMapEntries = regressionMapEntries(
-    ds,
-    stmt.type === "RegressionStatement" ? stmt : undefined
-  );
-  if (regMapEntries === null) return null;
-  const regression =
-    stmt.type === "RegressionStatement"
-      ? stmt.body && {
-          isLogMode: style.logModeRegression,
-          residualVariable: identifierToAug(stmt.body.residualVariable),
-          regressionParameters: mapFromEntries(regMapEntries),
-        }
-      : undefined;
   return {
     type: "expression",
     // Use empty string as an ID placeholder. These will get filled in at the end
@@ -243,7 +254,6 @@ function expressionToAug(
     errorHidden: style.errorHidden,
     glesmos: style.glesmos,
     fillOpacity: childExprToAug(style.fill),
-    regression: regression,
     displayEvaluationAsFraction: style.displayEvaluationAsFraction,
     slider: style.slider
       ? {
@@ -292,30 +302,6 @@ function expressionToAug(
       : undefined,
     ...columnExpressionCommonStyle(style),
   };
-}
-
-function regressionMapEntries(
-  ds: DownState,
-  regression?: TextAST.RegressionStatement
-): null | [Identifier, number][] {
-  if (regression?.body === undefined) return [];
-  const res = [...regression.body.regressionParameters.entries()].map(
-    ([key, value]): [Identifier, number] | null => {
-      const evaluated = evalExpr(ds.diagnostics, value);
-      if (evaluated === null) return null;
-      if (typeof evaluated !== "number") {
-        ds.pushError(
-          `Expected regression value ${
-            key.name
-          } to be a number, but got ${typeof evaluated}`,
-          value.pos
-        );
-        return null;
-      }
-      return [identifierToAug(key), evaluated];
-    }
-  );
-  return everyNonNull(res) ? res : null;
 }
 
 function settingsToAug(
@@ -417,22 +403,32 @@ function tableColumnToAug(
     id: ds.ensureIDAndMarkPos(style.id, column),
     ...columnExpressionCommonStyle(style),
   };
-  if (expr.type === "ListExpression") {
-    const values = expr.values.map(childExprToAug);
+
+  if (expr.type === "BinaryExpression" && expr.op === "=") {
+    if (expr.left.type !== "Identifier") {
+      ds.pushError(
+        `Expected column to assign to an identifier, but got ${expr.left.type}`,
+        expr.left.pos
+      );
+      return null;
+    } else if (expr.right.type !== "ListExpression") {
+      ds.pushError(
+        `Expected table assignment to assign from a ListExpression, but got ${expr.right.type}`,
+        expr.right.pos
+      );
+      return null;
+    } else {
+      return {
+        ...base,
+        values: expr.right.values.map(childExprToAug),
+        latex: childExprToAug(expr.left),
+      };
+    }
+  } else if (expr.type === "ListExpression") {
     return {
       ...base,
-      values,
-      latex:
-        column.type === "LetStatement"
-          ? childExprToAug(column.identifier)
-          : undefined,
+      values: expr.values.map(childExprToAug),
     };
-  } else if (column.type === "LetStatement") {
-    ds.pushError(
-      "Expected table assignment to assign from a ListExpression",
-      column.expr.pos
-    );
-    return null;
   } else {
     return {
       ...base,
@@ -626,6 +622,8 @@ export function childExprToAug(
         index: childExprToAug(expr.index),
       };
     case "BinaryExpression":
+      if (expr.op === "~")
+        throw "Programming Error: `~` in child BinaryExpression";
       return binopMap[expr.op] !== undefined
         ? {
             type: "BinaryOperator",
@@ -671,9 +669,6 @@ export function childExprToAug(
           },
         };
       throw "Invalid callee";
-    case "RegressionExpression":
-      // TODO: Typescript should know this case is unreachable
-      throw "Programming Error: RegressionExpression unexpected";
   }
 }
 

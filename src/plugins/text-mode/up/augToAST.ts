@@ -57,85 +57,45 @@ export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
   switch (item.type) {
     case "expression":
       if (item.latex === undefined) return null;
-      const domain = item.parametricDomain ?? item.polarDomain;
-      return {
-        // TODO: pick the correct statement
-        // Or change the AST to unify all of them; splitting should really be
-        // an analysis step
-        type: "ShowStatement",
-        expr: rootLatexToAST(item.latex),
-        style:
-          styleMapping({
+      const expr = rootLatexToAST(item.latex);
+      if (
+        expr.type === "BinaryExpression" &&
+        expr.op === "~" &&
+        item.regression
+      ) {
+        // regression
+        return {
+          type: "ExprStatement",
+          expr,
+          style: styleMapping({
             ...base,
-            ...columnExpressionCommonStyle(item),
-            fill: childLatexToASTmaybe(item.fillOpacity),
-            label:
-              item.label &&
-              styleMapping({
-                text: stringToASTmaybe(item.label.text),
-                size: childLatexToASTmaybe(item.label.size),
-                orientation: stringToASTmaybe(item.label.orientation),
-                angle: childLatexToASTmaybe(item.label.angle),
-                outline: booleanToAST(item.label.outline, true),
-                showOnHover: booleanToAST(item.label.showOnHover, false),
-                editableMode: stringToASTmaybe(item.label.editableMode),
-              }),
             errorHidden: booleanToAST(item.errorHidden, false),
-            glesmos: booleanToAST(item.glesmos, false),
             logMode: booleanToAST(item.regression?.isLogMode, false),
-            fractionDisplay: booleanToAST(
-              item.displayEvaluationAsFraction,
-              false
-            ),
-            slider: styleMapping({
-              playing: booleanToAST(item.slider.isPlaying, false),
-              reversed: booleanToAST(item.slider.playDirection === -1, false),
-              loopMode: stringToASTmaybe(item.slider.loopMode),
-              period: numberToASTmaybe(item.slider.period),
-              min: childLatexToASTmaybe(item.slider.min),
-              max: childLatexToASTmaybe(item.slider.max),
-              step: childLatexToASTmaybe(item.slider.step),
-            }),
-            // We will infer whether parametric or polar domain is needed
-            domain:
-              domain &&
-              styleMapping({
-                min: childLatexToASTmaybe(domain.min),
-                max: childLatexToASTmaybe(domain.max),
-              }),
-            cdf:
-              item.cdf &&
-              styleMapping({
-                min: childLatexToASTmaybe(item.cdf.min),
-                max: childLatexToASTmaybe(item.cdf.max),
-              }),
-            vizProps:
-              item.vizProps &&
-              styleMapping({
-                boxplot:
-                  item.vizProps.boxplot &&
-                  styleMapping({
-                    breadth: childLatexToASTmaybe(
-                      item.vizProps.boxplot.breadth
-                    ),
-                    axisOffset: childLatexToASTmaybe(
-                      item.vizProps.boxplot.axisOffset
-                    ),
-                    alignedAxis: stringToASTmaybe(
-                      item.vizProps.boxplot.alignedAxis
-                    ),
-                    showOutliers: booleanToAST(
-                      item.vizProps.boxplot.showOutliers,
-                      true
-                    ),
-                  }),
-                dotplotMode: stringToASTmaybe(item.vizProps.dotplotMode),
-                binAlignment: stringToASTmaybe(item.vizProps.binAlignment),
-                histogramMode: stringToASTmaybe(item.vizProps.histogramMode),
-              }),
-            onClick: childLatexToASTmaybe(item.clickableInfo?.latex),
-            clickDescription: stringToASTmaybe(item.clickableInfo?.description),
-          }) ?? null,
+          }),
+          regression: {
+            parameters: {
+              type: "RegressionParameters",
+              entries: [...item.regression.regressionParameters.entries()].map(
+                ([id, value]) => ({
+                  type: "RegressionEntry",
+                  variable: identifierToAST(id),
+                  value: { type: "Number", value },
+                })
+              ),
+            },
+            residualVariable:
+              item.regression.residualVariable &&
+              identifierToAST(item.regression.residualVariable),
+          },
+        };
+      }
+      return {
+        type: "ExprStatement",
+        expr,
+        style: styleMapping({
+          ...base,
+          ...expressionStyle(item),
+        }),
       };
     case "image":
       return {
@@ -192,6 +152,72 @@ export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
   }
 }
 
+function expressionStyle(
+  item: Aug.ExpressionAug
+): Parameters<typeof styleMapping>[0] {
+  const domain = item.parametricDomain ?? item.polarDomain;
+  return {
+    ...columnExpressionCommonStyle(item),
+    fill: childLatexToASTmaybe(item.fillOpacity),
+    label:
+      item.label &&
+      styleMapping({
+        text: stringToASTmaybe(item.label.text),
+        size: childLatexToASTmaybe(item.label.size),
+        orientation: stringToASTmaybe(item.label.orientation),
+        angle: childLatexToASTmaybe(item.label.angle),
+        outline: booleanToAST(item.label.outline, true),
+        showOnHover: booleanToAST(item.label.showOnHover, false),
+        editableMode: stringToASTmaybe(item.label.editableMode),
+      }),
+    errorHidden: booleanToAST(item.errorHidden, false),
+    glesmos: booleanToAST(item.glesmos, false),
+    fractionDisplay: booleanToAST(item.displayEvaluationAsFraction, false),
+    slider: styleMapping({
+      playing: booleanToAST(item.slider.isPlaying, false),
+      reversed: booleanToAST(item.slider.playDirection === -1, false),
+      loopMode: stringToASTmaybe(item.slider.loopMode),
+      period: numberToASTmaybe(item.slider.period),
+      min: childLatexToASTmaybe(item.slider.min),
+      max: childLatexToASTmaybe(item.slider.max),
+      step: childLatexToASTmaybe(item.slider.step),
+    }),
+    // We will infer whether parametric or polar domain is needed
+    domain:
+      domain &&
+      styleMapping({
+        min: childLatexToASTmaybe(domain.min),
+        max: childLatexToASTmaybe(domain.max),
+      }),
+    cdf:
+      item.cdf &&
+      styleMapping({
+        min: childLatexToASTmaybe(item.cdf.min),
+        max: childLatexToASTmaybe(item.cdf.max),
+      }),
+    vizProps:
+      item.vizProps &&
+      styleMapping({
+        boxplot:
+          item.vizProps.boxplot &&
+          styleMapping({
+            breadth: childLatexToASTmaybe(item.vizProps.boxplot.breadth),
+            axisOffset: childLatexToASTmaybe(item.vizProps.boxplot.axisOffset),
+            alignedAxis: stringToASTmaybe(item.vizProps.boxplot.alignedAxis),
+            showOutliers: booleanToAST(
+              item.vizProps.boxplot.showOutliers,
+              true
+            ),
+          }),
+        dotplotMode: stringToASTmaybe(item.vizProps.dotplotMode),
+        binAlignment: stringToASTmaybe(item.vizProps.binAlignment),
+        histogramMode: stringToASTmaybe(item.vizProps.histogramMode),
+      }),
+    onClick: childLatexToASTmaybe(item.clickableInfo?.latex),
+    clickDescription: stringToASTmaybe(item.clickableInfo?.description),
+  };
+}
+
 function columnExpressionCommonStyle(
   item: Aug.TableColumnAug | Aug.ExpressionAug
 ): Parameters<typeof styleMapping>[0] {
@@ -221,7 +247,7 @@ function columnExpressionCommonStyle(
 
 function columnToAST(col: Aug.TableColumnAug): TextAST.TableColumn {
   return {
-    type: "ShowStatement",
+    type: "ExprStatement",
     expr:
       col.latex === undefined
         ? {
@@ -504,7 +530,8 @@ function rootLatexToAST(e: Aug.Latex.AnyRootOrChild): TextAST.Expression {
       };
     case "Regression":
       return {
-        type: "RegressionExpression",
+        type: "BinaryExpression",
+        op: "~",
         left: childLatexToAST(e.left),
         right: childLatexToAST(e.right),
       };

@@ -80,7 +80,6 @@ export interface Expression
   errorHidden: boolean;
   glesmos: boolean;
   fill: Expr;
-  logModeRegression: boolean;
   displayEvaluationAsFraction: boolean;
   slider?: {
     playing: boolean;
@@ -105,6 +104,11 @@ export interface Expression
   };
   // TODO vizProps
   // vizProps:
+}
+
+export interface Regression extends NonFolderBase {
+  errorHidden: boolean;
+  logMode: boolean;
 }
 
 export interface Table extends NonFolderBase {}

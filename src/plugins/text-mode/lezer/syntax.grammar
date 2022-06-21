@@ -14,18 +14,15 @@
   times @left,
   plus @left,
   updateRule @right,
+  sim @left,
   rel @left
 }
 
 @top Program { statement* }
 
-SimpleStatement {
-  expressionMaybeSeq StyleMapping?
-}
 
 statement[@isGroup=Statement] {
-  SimpleStatement |
-  RegressionStatement { expression "~" expression RegressionBody? StyleMapping? } |
+  ExprStatement { expressionMaybeSeq RegressionBody? StyleMapping? } |
   Table { kw<"table"> BlockInner StyleMapping? } |
   Image { kw<"image"> String String StyleMapping? } |
   Text { String StyleMapping? } |
@@ -34,7 +31,7 @@ statement[@isGroup=Statement] {
 }
 
 RegressionBody {
-  "#" Identifier "{" statement* "}"
+  RegressionBodyStart statement* RegressionBodyEnd
 }
 
 BlockInner {
@@ -95,6 +92,7 @@ BinaryExpression {
   expression !exp ArithOp<"^"> expression |
   expression !times (divide | ArithOp<"*">) expression |
   expression !plus ArithOp<"+" | "-"> expression |
+  expression !sim CompareOp<"~"> expression |
   expression !rel CompareOp<"<" "="? | ">" "="? | "="> expression
 }
 
@@ -138,6 +136,8 @@ kw<term> { @specialize[@name={term}]<Identifier, term> }
   MappingStart[closedBy=MappingEnd] { "@{" }
   MappingEnd[openedBy=MappingStart] { "}" }
 
+  RegressionBodyStart[closedBy=RegressionBodyEnd] { "#{" }
+  RegressionBodyEnd[closedBy=RegressionBodyStart] { "}" }
 
   "(" ")" "[" "]" "{" "}"
 

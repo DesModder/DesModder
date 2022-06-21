@@ -85,26 +85,8 @@ function statementToAST(
 ): TextAST.Statement | null {
   const style = styleToAST(td, node.getChild("StyleMapping"));
   switch (node.name) {
-    case "SimpleStatement":
+    case "ExprStatement":
       return simpleStatementToAST(td, node, style);
-    case "RegressionStatement":
-      const regressionChildren = node.getChildren("Expression");
-      const regLeft = exprToAST(td, regressionChildren[0]);
-      const regRight = exprToAST(td, regressionChildren[1]);
-      const regBody = regressionBodyToAST(td, node.getChild("RegressionBody"));
-      if (regLeft === null || regRight === null || regBody === null)
-        return null;
-      return {
-        type: "RegressionStatement",
-        expr: {
-          type: "RegressionExpression",
-          left: regLeft,
-          right: regRight,
-        },
-        style,
-        body: regBody,
-        pos: getPos(node),
-      };
     case "Table":
       const tableChildren = node
         .getChild("BlockInner")!
@@ -161,87 +143,85 @@ function statementToAST(
  * @param node RegressionBody
  * @returns undefined for no body, null for syntax error, else Regression
  */
-function regressionBodyToAST(
+function regressionBodyToParameters(
   td: TextAndDiagnostics,
   node: SyntaxNode | null
-): TextAST.RegressionStatement["body"] | undefined | null {
+): TextAST.RegressionParameters | undefined | null {
   if (!node) return undefined;
   const children = node
     .getChildren("Statement")
-    .map((node): [TextAST.Identifier, TextAST.Expression] | null => {
+    .map((node): TextAST.RegressionEntry | null => {
       const ast = statementToAST(td, node);
-      if (ast?.type !== "LetStatement") {
+      if (
+        ast?.type !== "ExprStatement" ||
+        ast.expr.type !== "BinaryExpression" ||
+        ast.expr.op !== "=" ||
+        ast.expr.left.type !== "Identifier"
+      ) {
         td.pushError("Invalid regression body", getPos(node));
         return null;
       }
-      return [ast.identifier, ast.expr];
+      return {
+        type: "RegressionEntry",
+        variable: ast.expr.left,
+        value: ast.expr.right,
+      };
     });
   if (!everyNonNull(children)) return null;
   return {
-    residualVariable: identifierToAST(td, node.getChild("Identifier")),
-    regressionParameters: mapFromEntries(children),
+    type: "RegressionParameters",
+    entries: children,
   };
 }
 
 /**
- * @param node SimpleStatement
+ * @param node ExprStatement
  */
 function simpleStatementToAST(
   td: TextAndDiagnostics,
   node: SyntaxNode,
   style: TextAST.StyleMapping
-):
-  | TextAST.FunctionDefinition
-  | TextAST.LetStatement
-  | TextAST.ShowStatement
-  | null {
-  const expr = exprToAST(td, node.getChild("Expression")!);
+): TextAST.ExprStatement | null {
+  let expr = exprToAST(td, node.getChild("Expression")!);
+  let residualVariable: TextAST.Identifier | undefined = undefined;
   if (expr === null) return null;
-  if (expr.type !== "BinaryExpression" || expr.op !== "=") {
-    return {
-      type: "ShowStatement",
-      expr: expr,
-      style,
-      pos: getPos(node),
-    };
-  }
-  const lhs = expr.left;
-  const rhs = expr.right;
-  if (lhs.type === "Identifier") {
-    return {
-      type: "LetStatement",
-      identifier: lhs,
-      expr: rhs,
-      style,
-      pos: getPos(node),
-    };
-  } else if (lhs.type === "CallExpression") {
-    if (lhs.callee.type !== "Identifier") {
+  if (
+    expr.type === "BinaryExpression" &&
+    expr.op === "=" &&
+    expr.right.type === "BinaryExpression" &&
+    expr.right.op === "~"
+  ) {
+    const left = expr.left;
+    if (left.type !== "Identifier") {
       td.pushError(
-        "Member expressions cannot be used in function definitions",
-        lhs.callee.pos
+        `Residual variable must be identifier, but got ${left.type}`,
+        left.pos
       );
       return null;
     }
-    const nonIdentifiers = lhs.arguments.filter((e) => e.type !== "Identifier");
-    for (const np of nonIdentifiers) {
-      td.pushError(
-        `Expected parameter to be an identifier, got ${td.nodeText(np.pos!)}`,
-        np.pos
-      );
-    }
-    if (nonIdentifiers.length > 0) return null;
-    return {
-      type: "FunctionDefinition",
-      callee: lhs.callee,
-      params: lhs.arguments as TextAST.Identifier[],
-      expr: rhs,
-      style,
-      pos: getPos(node),
-    };
-  } else {
-    throw "Programming Error: LetStatement left-hand side is not an identifier or call expression";
+    expr = expr.right;
+    residualVariable = left;
   }
+  const regressionBody = node.getChild("RegressionBody");
+  const regParams = regressionBody
+    ? regressionBodyToParameters(td, regressionBody)
+    : null;
+  return {
+    type: "ExprStatement",
+    expr: expr,
+    style,
+    pos: getPos(node),
+    regression:
+      expr.type === "BinaryExpression" && expr.op === "~"
+        ? {
+            residualVariable,
+            parameters: regParams ?? {
+              type: "RegressionParameters",
+              entries: [],
+            },
+          }
+        : undefined,
+  };
 }
 
 /**
@@ -374,7 +354,7 @@ function exprToAST(
       if (updateVar === null || updateExpr === null) return null;
       if (updateVar.type !== "Identifier") {
         td.pushError(
-          `Left side of update rule must be Identifier, got ${updateVar.type}`,
+          `Left side of update rule must be Identifier, but got ${updateVar.type}`,
           updateVar.pos
         );
         return null;
@@ -501,7 +481,7 @@ function piecewiseBranchToAST(
   };
 }
 
-const binaryOps = ["^", "/", "*", "+", "-", "<", "<=", ">=", ">", "="];
+const binaryOps = ["~", "^", "/", "*", "+", "-", "<", "<=", ">=", ">", "="];
 
 /**
  * @param node BinaryExpression
@@ -519,9 +499,10 @@ function binaryExpressionToAST(
   const left = exprToAST(td, exprs[0]);
   const right = exprToAST(td, exprs[1]);
   if (left === null || right === null) return null;
+  // TODO: Disallow "~" in most cases
   return {
     type: "BinaryExpression",
-    op: op as "^" | "/" | "*" | "+" | "-" | "<" | "<=" | ">=" | ">" | "=",
+    op: op as "~" | "^" | "/" | "*" | "+" | "-" | "<" | "<=" | ">=" | ">" | "=",
     left,
     right,
     pos: getPos(node),
@@ -636,7 +617,7 @@ function tableColumnToAST(
   td: TextAndDiagnostics,
   node: SyntaxNode
 ): TextAST.TableColumn | null {
-  if (node.name !== "SimpleStatement") {
+  if (node.name !== "ExprStatement") {
     td.pushError(
       "Expected a valid table column. Try: x1 = [1, 2, 3]",
       getPos(node)
@@ -646,10 +627,6 @@ function tableColumnToAST(
   const style = styleToAST(td, node.getChild("StyleMapping"));
   const simple = simpleStatementToAST(td, node, style);
   if (simple === null) return null;
-  if (simple.type === "FunctionDefinition") {
-    td.pushError("Table column cannot be a function definition", simple.pos);
-    return null;
-  }
   return simple;
 }
 

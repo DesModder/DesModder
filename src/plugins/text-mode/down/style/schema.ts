@@ -125,7 +125,6 @@ export const expression: Schema = {
   errorHidden: "boolean",
   glesmos: "boolean",
   fill: "expr",
-  logModeRegression: "boolean",
   displayEvaluationAsFraction: "boolean",
   slider: schemaL({
     playing: "boolean",
@@ -151,6 +150,12 @@ export const expression: Schema = {
   }),
   // TODO vizProps
   // vizProps
+};
+
+export const regression: Schema = {
+  ...nonFolderBase,
+  errorHidden: "boolean",
+  logMode: "boolean",
 };
 
 export const table: Schema = nonFolderBase;

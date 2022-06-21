@@ -84,9 +84,8 @@ export function completions(
 
 /**
  * parents of StyleMapping can be
- *   SimpleStatement
- *   Table . BlockInner . SimpleStatement (table column)
- *   RegressionStatement
+ *   ExprStatement
+ *   Table . BlockInner . ExprStatement (table column)
  *   Table
  *   Image
  *   Text
@@ -107,15 +106,14 @@ function styleCompletions(
 
 function styleDefaults(controller: Controller, node: SyntaxNode): any {
   if (
-    node.name === "SimpleStatement" &&
+    node.name === "ExprStatement" &&
     node.parent?.name === "BlockInner" &&
     node.parent.parent?.name === "Table"
   ) {
     return Defaults.column;
   }
   switch (node.name) {
-    case "SimpleStatement":
-    case "RegressionStatement":
+    case "ExprStatement":
       // TODO: check polar and other stuff
       return Defaults.nonpolarExpression;
     case "Table":

@@ -1,51 +1,27 @@
 export type Program = Statement[];
 
 export type Statement =
-  | ShowStatement
-  | LetStatement
-  | FunctionDefinition
-  | RegressionStatement
+  | ExprStatement
   | Table
   | Image
   | Text
   | Folder
   | Settings;
 
-export interface ShowStatement extends Positioned {
-  type: "ShowStatement";
+export interface ExprStatement extends Positioned {
+  type: "ExprStatement";
   expr: Expression;
   style: StyleMapping;
+  /**
+   * Data for regression. Not in style mapping because identifiers get
+   * evaluated in style mapping. Also mapping keys are strings, not identifiers
+   */
+  regression?: RegressionData;
 }
 
-export interface LetStatement extends Positioned {
-  type: "LetStatement";
-  identifier: Identifier;
-  expr: Expression;
-  style: StyleMapping;
-}
-
-export interface FunctionDefinition extends Positioned {
-  type: "FunctionDefinition";
-  callee: Identifier;
-  params: Identifier[];
-  expr: Expression;
-  style: StyleMapping;
-}
-
-export interface RegressionStatement extends Positioned {
-  type: "RegressionStatement";
-  expr: RegressionExpression;
-  style: StyleMapping;
-  body?: {
-    residualVariable: Identifier;
-    regressionParameters: Map<Identifier, Expression>;
-  };
-}
-
-export interface RegressionExpression extends Positioned {
-  type: "RegressionExpression";
-  left: Expression;
-  right: Expression;
+export interface RegressionData {
+  parameters: RegressionParameters;
+  residualVariable?: Identifier;
 }
 
 export interface Table extends Positioned {
@@ -54,7 +30,7 @@ export interface Table extends Positioned {
   style: StyleMapping;
 }
 
-export type TableColumn = ShowStatement | LetStatement;
+export type TableColumn = ExprStatement;
 
 export interface Image extends Positioned {
   type: "Image";
@@ -79,6 +55,17 @@ export interface Folder extends Positioned {
 export interface Settings extends Positioned {
   type: "Settings";
   style: StyleMapping;
+}
+
+export interface RegressionParameters extends Positioned {
+  type: "RegressionParameters";
+  entries: RegressionEntry[];
+}
+
+export interface RegressionEntry extends Positioned {
+  type: "RegressionEntry";
+  variable: Identifier;
+  value: Expression;
 }
 
 export type StyleMapping = StyleMappingFilled | null;
@@ -110,9 +97,7 @@ export type Expression =
   | ListAccessExpression
   | BinaryExpression
   | PostfixExpression
-  | CallExpression
-  // TODO: RegressionExpression here is temporary because it should not be a child
-  | RegressionExpression;
+  | CallExpression;
 
 export interface Number extends Positioned {
   type: "Number";
@@ -205,7 +190,7 @@ export interface ListAccessExpression extends Positioned {
 
 export interface BinaryExpression extends Positioned {
   type: "BinaryExpression";
-  op: "^" | "/" | "*" | "+" | "-" | "<" | "<=" | ">=" | ">" | "=";
+  op: "~" | "^" | "/" | "*" | "+" | "-" | "<" | "<=" | ">=" | ">" | "=";
   left: Expression;
   right: Expression;
 }

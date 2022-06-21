@@ -84,7 +84,7 @@ const expression = {
   errorHidden: false,
   glesmos: false,
   fill: number(0),
-  logModeRegression: false,
+  logMode: false,
   displayEvaluationAsFraction: false,
   slider: {
     playing: false,
@@ -126,6 +126,12 @@ export const nonpolarExpression: Hydrated.Expression = {
     min: number(0),
     max: number(1),
   },
+};
+
+export const regression: Hydrated.Regression = {
+  ...nonFolderBase,
+  errorHidden: false,
+  logMode: false,
 };
 
 export const table: Hydrated.Table = nonFolderBase;

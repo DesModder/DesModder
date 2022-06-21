@@ -612,8 +612,12 @@ describe("Regressions", () => {
       right: id("a"),
       type: "Regression",
     },
+    regression: {
+      isLogMode: false,
+      regressionParameters: new Map(),
+    },
   });
-  testStmt("Regression with values", `Y ~ a # r { a = 1.5 }`, {
+  testStmt("Regression with values", `r = Y ~ a #{ a = 1.5 }`, {
     ...exprDefaults,
     latex: {
       left: id("Y"),
@@ -961,15 +965,25 @@ describe("Diagnostics", () => {
     );
   });
   describe("General diagnostics", () => {
-    testDiagnostics("Regression value type error", `a ~ 3 # r { a = true }`, [
+    testDiagnostics("Regression value type error", `a ~ 3 #{ a = true }`, [
       error(
-        "Expected regression value a to be a number, but got boolean",
-        pos(16, 20)
+        "Expected regression parameter to evaluate to number, but got boolean",
+        pos(13, 17)
       ),
     ]);
+    testDiagnostics(
+      "Table column assign to non-identifier",
+      `table { f(x) = [1,2] }`,
+      [
+        error(
+          "Expected column to assign to an identifier, but got CallExpression",
+          pos(8, 12)
+        ),
+      ]
+    );
     testDiagnostics("Table column non-list", `table { x1 = [1,2] y1 = 42 }`, [
       error(
-        "Expected table assignment to assign from a ListExpression",
+        "Expected table assignment to assign from a ListExpression, but got Number",
         pos(24, 26)
       ),
     ]);
@@ -995,39 +1009,30 @@ describe("Diagnostics", () => {
       error("Syntax error; expected something here", pos(5, 5)),
       error("Syntax error; expected something here", pos(10, 10)),
     ]);
-    testDiagnostics(
-      "Non-identifier function parameters",
-      `f(x,1,2+3)=(x)^(2)`,
-      [
-        error("Expected parameter to be an identifier, got 1", pos(4, 5)),
-        error("Expected parameter to be an identifier, got 2+3", pos(6, 9)),
-      ]
-    );
     testDiagnostics("Non-identifier callee", `y = 7(x)`, [
       error(
         "Invalid callee; expected identifier or member expression",
         pos(4, 5)
       ),
     ]);
-    testDiagnostics("Function definition in table", `table { f(x) = x^2 }`, [
-      error("Table column cannot be a function definition", pos(8, 18)),
+    testDiagnostics("Non-simple statement in table", `table { "note" }`, [
+      error("Expected a valid table column. Try: x1 = [1, 2, 3]", pos(8, 14)),
     ]);
-    testDiagnostics("Non-simple statement in table", `table { a ~ 5 }`, [
-      error("Expected a valid table column. Try: x1 = [1, 2, 3]", pos(8, 13)),
+    testDiagnostics("Invalid regression body", `a ~ 5 #{ "note" }`, [
+      error("Invalid regression body", pos(9, 15)),
     ]);
-    testDiagnostics("Invalid regression body", `a ~ 5 # e1 { f(x) = 5 }`, [
-      error("Invalid regression body", pos(13, 21)),
+    testDiagnostics("Non-identifier residual variable", `f(x) = a ~ b`, [
+      error(
+        "Residual variable must be identifier, but got CallExpression",
+        pos(0, 4)
+      ),
     ]);
-    testDiagnostics(
-      "Member expression in function definition",
-      `L.random(x) = x^2`,
-      [
-        error(
-          "Member expressions cannot be used in function definitions",
-          pos(0, 8)
-        ),
-      ]
-    );
+    testDiagnostics("Non-identifier update assignment", `f(x) -> 5`, [
+      error(
+        "Left side of update rule must be Identifier, but got CallExpression",
+        pos(0, 4)
+      ),
+    ]);
   });
 });
 

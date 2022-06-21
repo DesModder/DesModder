@@ -6,17 +6,16 @@ const INDENT_PREFIX = " ".repeat(INDENT);
 
 export function astItemToText(item: TextAST.Statement): string {
   switch (item.type) {
-    case "LetStatement":
-    case "RegressionStatement":
-    case "FunctionDefinition":
-      // TODO: RegressionStatement should not be removed
-      throw (
-        "Programming Error: LetStatement, RegressionStatement, and " +
-        "FunctionDefinition are slated for removal and should not be created"
-      );
-    case "ShowStatement":
+    case "ExprStatement":
       // TODO fix Regression Statement
-      return exprToText(item.expr) + trailingStyleMap(item.style, "\n");
+      return (
+        (item.regression?.residualVariable
+          ? item.regression.residualVariable.name + " = "
+          : "") +
+        exprToText(item.expr) +
+        trailingRegressionParams(item.regression?.parameters) +
+        trailingStyleMap(item.style, "\n")
+      );
     case "Image":
       return (
         `image ${stringToText(item.name)} ${stringToText(item.url)}` +
@@ -65,6 +64,21 @@ function styleMapToText(style: TextAST.StyleMappingFilled): string {
       ","
   );
   return `@{\n${indent(lines.join("\n"))}\n}`;
+}
+
+function trailingRegressionParams(
+  params?: TextAST.RegressionParameters
+): string {
+  if (!params) return "";
+  const main = regressionParamsToText(params);
+  return "\n" + indent(main);
+}
+
+function regressionParamsToText(params: TextAST.RegressionParameters): string {
+  const lines = params.entries.map(
+    (entry) => exprToText(entry.variable) + " = " + exprToText(entry.value)
+  );
+  return `#{\n${indent(lines.join("\n"))}\n}`;
 }
 
 function indent(str: string): string {
@@ -148,8 +162,6 @@ export function exprToText(e: TextAST.Expression): string {
       return `(${exprToText(e.expr)})!`;
     case "String":
       return stringToText(e.value);
-    case "RegressionExpression":
-      return exprToText(e.left) + " ~ " + exprToText(e.right);
     // TODO double inequality
   }
 }
