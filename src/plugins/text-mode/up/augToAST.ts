@@ -331,6 +331,14 @@ function childLatexToASTmaybe(
   return e && childLatexToAST(e);
 }
 
+function functionCallToAST(e: Aug.Latex.FunctionCall): TextAST.CallExpression {
+  return {
+    type: "CallExpression",
+    callee: identifierToAST(e.callee),
+    arguments: e.args.map(childLatexToAST),
+  };
+}
+
 function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
   switch (e.type) {
     case "Constant":
@@ -338,10 +346,12 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
     case "Identifier":
       return identifierToAST(e);
     case "FunctionCall":
+      return functionCallToAST(e);
+    case "Prime":
       return {
-        type: "CallExpression",
-        callee: identifierToAST(e.callee),
-        arguments: e.args.map(childLatexToAST),
+        type: "PrimeExpression",
+        expr: functionCallToAST(e.arg),
+        order: e.order,
       };
     case "Integral":
       return {
@@ -354,8 +364,6 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
       };
     case "Derivative":
       throw Error("Derivative not yet implemented");
-    case "Prime":
-      throw Error("Prime not yet implemented");
     case "List":
       return {
         type: "ListExpression",

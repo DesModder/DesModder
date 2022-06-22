@@ -519,7 +519,7 @@ function binaryExpressionToAST(
 function callExpressionToAST(
   td: TextAndDiagnostics,
   node: SyntaxNode
-): TextAST.CallExpression | null {
+): TextAST.CallExpression | TextAST.PrimeExpression | null {
   const exprs = node.getChildren("Expression");
   if (exprs[0].name !== "Identifier" && exprs[0].name !== "MemberExpression") {
     td.pushError(
@@ -531,12 +531,21 @@ function callExpressionToAST(
   const callee = exprToAST(td, exprs[0]);
   const args = exprs.slice(1).map((expr) => exprToAST(td, expr));
   if (callee === null || !everyNonNull(args)) return null;
-  return {
+  const call: TextAST.CallExpression = {
     type: "CallExpression",
     callee,
     arguments: args,
     pos: getPos(node),
   };
+  const primeNode = node.getChild("Prime");
+  if (primeNode !== null) {
+    return {
+      type: "PrimeExpression",
+      expr: call,
+      order: td.nodeText(primeNode).length,
+    };
+  }
+  return call;
 }
 
 /**

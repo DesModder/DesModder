@@ -64,7 +64,7 @@ PiecewiseBranch { expression (":" expression)? }
 
 AssignmentExpression { Identifier "=" expression }
 
-CallExpression { expression !call "(" commaSep<expression> ")" }
+CallExpression { expression Prime? !call "(" commaSep<expression> ")" }
 
 StyleMapping {
   MappingStart commaSep<MappingEntry> MappingEnd
@@ -81,7 +81,7 @@ mappingValue {
 RepeatedExpression {
   (kw<"integral"> | kw<"sum"> | kw<"product">)
   Identifier "=" "(" expression "..." expression ")"
-  expression
+  "(" expression ")"
 }
 
 ListExpression {
@@ -122,6 +122,8 @@ kw<term> { @specialize[@name={term}]<Identifier, term> }
     std.digit+ ("." (std.digit)+)? |
     "." std.digit+
   }
+
+  Prime { "'"+ }
 
   lineComment { "//" ![\n]* }
 

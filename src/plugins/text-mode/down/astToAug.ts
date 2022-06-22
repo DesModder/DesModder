@@ -647,29 +647,45 @@ export function childExprToAug(
         args: [childExprToAug(expr.expr)],
       };
     case "CallExpression":
-      if (expr.callee.type === "Identifier")
-        return {
-          type: "FunctionCall",
-          callee: identifierToAug(expr.callee),
-          args: expr.arguments.map(childExprToAug),
-        };
-      else if (
-        expr.callee.type === "MemberExpression" &&
-        expr.callee.object.type === "Identifier" &&
-        expr.callee.property.type === "Identifier"
-      )
-        // Case e.g. L.random(5)
-        return {
-          type: "DotAccess",
-          object: identifierToAug(expr.callee.object),
-          property: {
-            type: "FunctionCall",
-            callee: identifierToAug(expr.callee.property),
-            args: expr.arguments.map(childExprToAug),
-          },
-        };
-      throw Error("Invalid callee");
+      return callExpressionToAug(expr);
+    case "PrimeExpression":
+      const child = callExpressionToAug(expr.expr);
+      if (child.type === "DotAccess") {
+        throw new Error("Cannot use prime notation together with dot notation");
+      }
+      return {
+        type: "Prime",
+        arg: child,
+        order: expr.order,
+      };
   }
+}
+
+function callExpressionToAug(
+  expr: TextAST.CallExpression
+): Aug.Latex.FunctionCall | Aug.Latex.DotAccess {
+  if (expr.callee.type === "Identifier")
+    return {
+      type: "FunctionCall",
+      callee: identifierToAug(expr.callee),
+      args: expr.arguments.map(childExprToAug),
+    };
+  else if (
+    expr.callee.type === "MemberExpression" &&
+    expr.callee.object.type === "Identifier" &&
+    expr.callee.property.type === "Identifier"
+  )
+    // Case e.g. L.random(5)
+    return {
+      type: "DotAccess",
+      object: identifierToAug(expr.callee.object),
+      property: {
+        type: "FunctionCall",
+        callee: identifierToAug(expr.callee.property),
+        args: expr.arguments.map(childExprToAug),
+      },
+    };
+  throw Error("Programming Error: Invalid callee");
 }
 
 const binopMap = {

@@ -91,6 +91,16 @@ function stringToText(str: string) {
   return JSON.stringify(str);
 }
 
+function primeOrCallToText(e: TextAST.CallExpression, primeOrder: number) {
+  return (
+    exprToText(e.callee) +
+    "'".repeat(primeOrder) +
+    "(" +
+    e.arguments.map(exprToText).join(",") +
+    ")"
+  );
+}
+
 export function exprToText(e: TextAST.Expression): string {
   switch (e.type) {
     case "Number":
@@ -98,18 +108,17 @@ export function exprToText(e: TextAST.Expression): string {
     case "Identifier":
       return e.name;
     case "CallExpression":
-      return (
-        exprToText(e.callee) + "(" + e.arguments.map(exprToText).join(",") + ")"
-      );
+      return primeOrCallToText(e, 0);
+    case "PrimeExpression":
+      return primeOrCallToText(e.expr, e.order);
     case "RepeatedExpression":
       return (
         `(${e.name} ${e.index.name}=` +
-        `(${exprToText(e.start)} ... ${exprToText(e.end)}) ` +
+        `(${exprToText(e.start)} ... ${exprToText(e.end)}) (` +
         exprToText(e.expr) +
-        ")"
+        "))"
       );
     // TODO Derivative
-    // TODO Prime
     case "ListExpression":
       return "[" + e.values.map(exprToText).join(",") + "]";
     case "RangeExpression":

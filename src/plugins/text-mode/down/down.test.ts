@@ -200,7 +200,7 @@ describe("Basic exprs", () => {
     testString("escaped quote", `"abc\\"def"`, 'abc"def');
   });
   describe("RepeatedExpression", () => {
-    testExpr("sum", "sum i=(1...5) i+2", {
+    testExpr("sum", "sum i=(1...5) (i+2)", {
       type: "RepeatedOperator",
       name: "Sum",
       index: id("i"),
@@ -208,13 +208,20 @@ describe("Basic exprs", () => {
       end: number(5),
       expression: binop("Add", id("i"), number(2)),
     });
-    testExpr("product", "product i=(1...5) i*2", {
+    testExpr("product", "product i=(1...5) (i*2)", {
       type: "RepeatedOperator",
       name: "Product",
       index: id("i"),
       start: number(1),
       end: number(5),
       expression: binop("Multiply", id("i"), number(2)),
+    });
+    testExpr("integral", "integral x=(1...5) (x*2)", {
+      type: "Integral",
+      differential: id("x"),
+      start: number(1),
+      end: number(5),
+      integrand: binop("Multiply", id("x"), number(2)),
     });
   });
   describe("ListExpression", () => {
