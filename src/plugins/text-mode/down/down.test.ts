@@ -1,7 +1,7 @@
 import { parser } from "../lezer/syntax.grammar";
 import { cstToAST } from "./cstToAST";
 import astToAug from "./astToAug";
-import * as Aug from "../aug/AugState";
+import Aug from "../aug/AugState";
 import { test, expect, describe } from "@jest/globals";
 import { mapFromEntries } from "utils/utils";
 import { error, warning } from "./diagnostics";

@@ -1,7 +1,7 @@
 import { SyntaxNode } from "@lezer/common";
 import { Tree } from "@lezer/common";
-import * as TextAST from "./TextAST";
-import { mapFromEntries, everyNonNull } from "utils/utils";
+import TextAST from "./TextAST";
+import { everyNonNull } from "utils/utils";
 import { Diagnostic } from "@codemirror/lint";
 import { DiagnosticsState } from "./diagnostics";
 import { Text } from "@codemirror/state";

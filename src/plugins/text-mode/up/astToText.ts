@@ -1,5 +1,4 @@
-import * as TextAST from "../down/TextAST";
-import { itemToText } from "./augToText";
+import TextAST from "../down/TextAST";
 
 const INDENT = 2;
 const INDENT_PREFIX = " ".repeat(INDENT);

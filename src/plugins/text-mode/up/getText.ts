@@ -1,5 +1,5 @@
 import { Calc } from "globals/window";
-import * as Aug from "../aug/AugState";
+import Aug from "../aug/AugState";
 import rawToAug from "../aug/rawToAug";
 import { MapIDPosition } from "../modify/mapIDPosition";
 import augToText from "./augToText";

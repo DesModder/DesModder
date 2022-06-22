@@ -1,4 +1,4 @@
-import * as TextAST from "../TextAST";
+import TextAST from "../TextAST";
 import { Schema } from "./schema";
 import { DownState } from "../astToAug";
 import { evalExpr } from "../staticEval";
@@ -53,7 +53,8 @@ export function hydrate<T>(
           )
         );
     const chosenEntry: TextAST.MappingEntry | undefined = matchingEntries[0];
-    if (chosenEntry?.expr === null) throw Error("Null expression in style mapping");
+    if (chosenEntry?.expr === null)
+      throw Error("Null expression in style mapping");
     function pushError(msg: string) {
       ds.pushError(msg, chosenEntry?.expr?.pos);
       hasNull = true;

@@ -1,5 +1,5 @@
-import * as TextAST from "./TextAST";
-import * as Aug from "../aug/AugState";
+import TextAST from "./TextAST";
+import Aug from "../aug/AugState";
 import { mapFromEntries } from "utils/utils";
 import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
 import { Calc } from "globals/window";

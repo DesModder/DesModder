@@ -1,5 +1,5 @@
-import * as Aug from "../aug/AugState";
-import * as TextAST from "../down/TextAST";
+import Aug from "../aug/AugState";
+import TextAST from "../down/TextAST";
 
 export function graphSettingsToAST(
   settings: Aug.GraphSettings

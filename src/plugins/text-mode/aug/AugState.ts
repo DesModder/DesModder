@@ -24,6 +24,9 @@
 import * as Latex from "./AugLatex";
 export * as Latex from "./AugLatex";
 
+import * as Aug from "./AugState";
+export default Aug;
+
 export interface State {
   version: 9;
   settings: GraphSettings;

@@ -1,6 +1,6 @@
 import * as Graph from "@desmodder/graph-state";
 import { parseDesmosLatex } from "desmodder";
-import * as Aug from "./AugState";
+import Aug from "./AugState";
 import { ChildExprNode, evalMaybeRational, AnyNode } from "parsing/parsenode";
 import migrateToLatest from "main/metadata/migrate";
 import Metadata from "main/metadata/interface";

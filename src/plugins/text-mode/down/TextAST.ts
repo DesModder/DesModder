@@ -1,5 +1,8 @@
 export type Program = Statement[];
 
+import * as TextAST from "./TextAST";
+export default TextAST;
+
 export type Statement =
   | ExprStatement
   | Table

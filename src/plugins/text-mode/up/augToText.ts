@@ -1,4 +1,4 @@
-import * as Aug from "../aug/AugState";
+import Aug from "../aug/AugState";
 import { MapIDPosition } from "../modify/mapIDPosition";
 import { astItemToText } from "./astToText";
 import { graphSettingsToAST, itemAugToAST } from "./augToAST";

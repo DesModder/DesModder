@@ -1,6 +1,6 @@
 import { Diagnostic } from "@codemirror/lint";
 import { error } from "./diagnostics";
-import * as TextAST from "./TextAST";
+import TextAST from "./TextAST";
 
 export function evalExpr(
   diagnostics: Diagnostic[],

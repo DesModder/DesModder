@@ -10,7 +10,7 @@ import { SyntaxNode } from "@lezer/common";
 import Controller from "../Controller";
 import * as Defaults from "../down/style/defaults";
 import { identifierToStringAST, TextAndDiagnostics } from "../down/cstToAST";
-import * as TextAST from "../down/TextAST";
+import TextAST from "../down/TextAST";
 import { exprToText } from "../up/astToText";
 
 function macroExpandWithSelection(
