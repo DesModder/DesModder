@@ -363,7 +363,11 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         expr: childLatexToAST(e.integrand),
       };
     case "Derivative":
-      throw Error("Derivative not yet implemented");
+      return {
+        type: "DerivativeExpression",
+        expr: childLatexToAST(e.arg),
+        variable: identifierToAST(e.variable),
+      };
     case "List":
       return {
         type: "ListExpression",

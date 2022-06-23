@@ -658,6 +658,12 @@ export function childExprToAug(
         arg: child,
         order: expr.order,
       };
+    case "DerivativeExpression":
+      return {
+        type: "Derivative",
+        arg: childExprToAug(expr.expr),
+        variable: identifierToAug(expr.variable),
+      };
   }
 }
 

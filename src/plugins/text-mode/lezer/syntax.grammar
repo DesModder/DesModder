@@ -13,6 +13,7 @@
   exp @right,
   times @left,
   plus @left,
+  derivative,
   updateRule @right,
   sim @left,
   rel @left
@@ -52,6 +53,7 @@ expression {
   Piecewise { "{" commaSep<PiecewiseBranch> "}" } |
   UpdateRule { expression !updateRule "->" expression } |
   PrefixExpression { !prefix ArithOp<"-"> expression } |
+  DerivativeExpression { !derivative "(" "d/d" Identifier ")" expression } |
   ParenthesizedExpression { "(" expressionMaybeSeq ")" } |
   MemberExpression { expression !member DotAccessIdentifier } |
   ListAccessExpression { expression !access ListExpression } |
@@ -130,6 +132,8 @@ kw<term> { @specialize[@name={term}]<Identifier, term> }
   divide[@name=ArithOp] { "/" }
 
   @precedence { lineComment, divide }
+
+  @precedence { Identifier, "d/d" }
 
   @precedence { "->", "-" }
 

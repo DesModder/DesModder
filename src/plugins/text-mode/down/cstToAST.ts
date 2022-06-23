@@ -21,7 +21,7 @@ export function cstToAST(
   text: Text
 ): [Diagnostic[], TextAST.Statement[] | null] {
   // console.groupCollapsed("Program");
-  // console.log(printTree(cst, text));
+  // console.log(printTree(cst, text.sliceString(0)));
   // console.groupEnd();
   if (cst.type.name !== "Program") {
     throw Error("Programming error: expected parsed program");
@@ -348,6 +348,14 @@ function exprToAST(
       };
     case "CallExpression":
       return callExpressionToAST(td, node);
+    case "DerivativeExpression":
+      const dExpr = exprToAST(td, node.getChild("Expression", ")")!);
+      if (dExpr === null) return null;
+      return {
+        type: "DerivativeExpression",
+        variable: identifierToAST(td, node.getChild("Identifier")!),
+        expr: dExpr,
+      };
     case "UpdateRule":
       const updateVar = exprToAST(td, node.getChild("Expression")!);
       const updateExpr = exprToAST(td, node.getChild("Expression", "->")!);

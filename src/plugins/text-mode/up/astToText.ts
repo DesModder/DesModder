@@ -111,6 +111,8 @@ export function exprToText(e: TextAST.Expression): string {
       return primeOrCallToText(e, 0);
     case "PrimeExpression":
       return primeOrCallToText(e.expr, e.order);
+    case "DerivativeExpression":
+      return `(d/d ${exprToText(e.variable)}) ${exprToText(e.expr)}`;
     case "RepeatedExpression":
       return (
         `(${e.name} ${e.index.name}=` +

@@ -101,7 +101,8 @@ export type Expression =
   | BinaryExpression
   | PostfixExpression
   | CallExpression
-  | PrimeExpression;
+  | PrimeExpression
+  | DerivativeExpression;
 
 export interface Number extends Positioned {
   type: "Number";
@@ -215,6 +216,12 @@ export interface PrimeExpression extends Positioned {
   type: "PrimeExpression";
   expr: CallExpression;
   order: number;
+}
+
+export interface DerivativeExpression extends Positioned {
+  type: "DerivativeExpression";
+  expr: Expression;
+  variable: Identifier;
 }
 
 interface Positioned {
