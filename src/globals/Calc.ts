@@ -55,7 +55,7 @@ interface EvaluatorChange {
   raw_slider_value?: string;
   /** New list value for action update */
   zero_values?: [{ val: number | number[] }];
-  /** New point positions */
+  /** New point positions, OR viewport panned with draggable point on top */
   move_strategy?: unknown;
   /** New action to be applied on the next click. Ignore */
   action_value?: unknown;

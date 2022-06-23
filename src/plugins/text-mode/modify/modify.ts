@@ -55,6 +55,9 @@ export function eventSequenceChanges(
             change.constant_value !== undefined ||
             change.raw_slider_value !== undefined ||
             change.zero_values !== undefined ||
+            // TODO: move_strategy also gets omitted when the viewport is panned
+            // even if the point was not dragged. Only difference in the events
+            // seem to be  the coordinates to update, so check that
             change.move_strategy !== undefined ||
             change.regression !== undefined
           ) {

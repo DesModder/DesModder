@@ -29,7 +29,6 @@ import { defaultHighlightStyle } from "@codemirror/language";
 // Language extension
 import { TextMode } from "../lezer/index";
 import { linter } from "@codemirror/lint";
-import { Calc } from "globals/window";
 import { checkboxPlugin } from "./plugins/checkboxWidget";
 
 const scrollTheme = EditorView.theme({

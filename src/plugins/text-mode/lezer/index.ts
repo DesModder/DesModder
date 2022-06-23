@@ -20,7 +20,7 @@ export const TextModeLanguage = (controller: Controller) =>
           Application: delimitedIndent({ closing: ")", align: false }),
         }),
         foldNodeProp.add({
-          "Mapping Piecewise ListComprehension ListExpression": foldInside,
+          "StyleMapping Piecewise ListComprehension ListExpression": foldInside,
           BlockInner: foldInside,
         }),
         styleTags({
