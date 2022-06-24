@@ -30,6 +30,7 @@ import { defaultHighlightStyle } from "@codemirror/language";
 import { TextMode } from "../lezer/index";
 import { linter } from "@codemirror/lint";
 import { checkboxPlugin } from "./plugins/checkboxWidget";
+import { lineStylePlugin } from "./plugins/lineStyleWidget";
 
 const scrollTheme = EditorView.theme({
   "&": {
@@ -97,6 +98,7 @@ export function initView(controller: Controller, text: string) {
       TextMode(controller),
       // Text mode plugins
       checkboxPlugin,
+      lineStylePlugin,
     ],
   });
 

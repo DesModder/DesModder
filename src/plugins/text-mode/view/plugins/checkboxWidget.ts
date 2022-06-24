@@ -55,7 +55,7 @@ function checkboxes(view: EditorView) {
           let isTrue = text == "true";
           let deco = Decoration.widget({
             widget: new CheckboxWidget(isTrue),
-            side: 1,
+            side: -1,
           });
           widgets.push(deco.range(node.from));
         }

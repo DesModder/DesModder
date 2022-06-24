@@ -59,3 +59,32 @@ export function mapFromEntries<K, V>(entries: Iterable<[K, V]>): Map<K, V> {
 export function everyNonNull<T>(arr: (T | null)[]): arr is T[] {
   return arr.every((e) => e !== null);
 }
+
+export function createElement(
+  tag: string,
+  attrs: { [key: string]: string },
+  ...children: (Node | string)[]
+) {
+  const element = document.createElement(tag);
+
+  // Set all defined/non-null attributes.
+  Object.entries(attrs ?? {})
+    .filter(([, value]) => value != null)
+    .forEach(([name, value]) =>
+      element.setAttribute(
+        name,
+        typeof value === "object"
+          ? // handle class={{class1: true, class2: false}}
+            Object.keys(value)
+              .filter((key) => value[key])
+              .join(" ")
+          : // all other attribute changes
+            value
+      )
+    );
+
+  // Set all defined/non-null children.
+  element.append(...children.flat().filter((e) => e != null));
+
+  return element;
+}
