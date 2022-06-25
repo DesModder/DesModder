@@ -53,10 +53,10 @@ interface DCGViewModule {
   unmountFromNode(el: HTMLElement): void;
 }
 
-export default {
-  ...DCGView,
-  jsx: jsx,
-};
+export const Component = DCGView.Class;
+export const constArg = DCGView.const;
+export const mountToNode = DCGView.mountToNode;
+export const unmountFromNode = DCGView.unmountFromNode;
 
 declare global {
   namespace JSX {
@@ -97,7 +97,11 @@ declare global {
  * stateless anyway (state control in Model.js)
  */
 
-function jsx(el: Component, props: LooseProps, ...children: Component[]) {
+export function jsx(
+  el: Component,
+  props: LooseProps,
+  ...children: Component[]
+) {
   /* Handle differences between typescript's expectation and DCGView */
   if (!Array.isArray(children)) {
     children = [children];

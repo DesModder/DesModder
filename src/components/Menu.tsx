@@ -1,4 +1,4 @@
-import DCGView from "DCGView";
+import { Component, jsx } from "DCGView";
 import Toggle from "./Toggle";
 import Controller from "main/Controller";
 import { If, Switch, Checkbox, Tooltip } from "./desmosComponents";
@@ -8,7 +8,7 @@ export function MenuFunc(controller: Controller) {
   return <Menu controller={controller} />;
 }
 
-export default class Menu extends DCGView.Class<{
+export default class Menu extends Component<{
   controller: Controller;
 }> {
   controller!: Controller;
@@ -159,7 +159,7 @@ export default class Menu extends DCGView.Class<{
   }
 }
 
-class ResetButton extends DCGView.Class<{
+class ResetButton extends Component<{
   controller: Controller;
   key: string;
 }> {

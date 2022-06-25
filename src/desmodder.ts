@@ -4,7 +4,6 @@ export { default as SmallMathQuillInput } from "components/SmallMathQuillInput";
 export { default as SegmentedControl } from "components/SegmentedControl";
 export { default as StaticMathQuillView } from "components/StaticMathQuillView";
 export { default as Button } from "components/Button";
-export { MountedComponent, default as DCGView } from "DCGView";
 export { OptionalProperties } from "utils/utils";
 export {
   EvaluateSingleExpression,

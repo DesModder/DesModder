@@ -1,7 +1,7 @@
-import { DCGView } from "desmodder";
+import { Component, jsx } from "DCGView";
 import "./LoadingPie.less";
 
-export default class LoadingPie extends DCGView.Class<{
+export default class LoadingPie extends Component<{
   // progress 0 to 1 when not pending
   progress: number;
   // if true, just pulse

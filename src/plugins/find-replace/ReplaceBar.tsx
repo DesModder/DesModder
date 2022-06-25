@@ -1,9 +1,10 @@
-import { DCGView, MathQuillView, Calc } from "desmodder";
+import { Component, jsx } from "DCGView";
+import { MathQuillView, Calc } from "desmodder";
 import { autoOperatorNames } from "utils/depUtils";
 import Controller from "./Controller";
 import "./ReplaceBar.less";
 
-export default class ReplaceBar extends DCGView.Class<{
+export default class ReplaceBar extends Component<{
   controller: Controller;
 }> {
   controller!: Controller;

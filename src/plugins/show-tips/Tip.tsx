@@ -1,8 +1,9 @@
-import { Calc, DCGView, If, jquery } from "desmodder";
-import tips, { TipData } from "./tips";
+import { Calc, If } from "desmodder";
+import { Component, jsx } from "DCGView";
+import tips from "./tips";
 import "./Tip.less";
 
-export default class Tip extends DCGView.Class {
+export default class Tip extends Component {
   currentTipIndex!: number;
 
   init() {

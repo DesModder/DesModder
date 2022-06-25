@@ -60,7 +60,7 @@ export function everyNonNull<T>(arr: (T | null)[]): arr is T[] {
   return arr.every((e) => e !== null);
 }
 
-export function createElement(
+export function jsx(
   tag: string,
   attrs: { [key: string]: string },
   ...children: (Node | string)[]

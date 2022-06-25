@@ -1,8 +1,8 @@
-import DCGView from "DCGView";
+import { Component, jsx } from "DCGView";
 import { mergeClass, MaybeClassDict } from "utils/utils";
 import "./SegmentedControl.less";
 
-export default class SegmentedControl extends DCGView.Class<{
+export default class SegmentedControl extends Component<{
   names: string[];
   selectedIndex: number;
   setSelectedIndex(i: number): void;

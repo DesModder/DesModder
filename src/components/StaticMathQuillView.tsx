@@ -1,7 +1,7 @@
-import DCGView from "DCGView";
+import { Component, jsx } from "DCGView";
 import { DStaticMathquillView } from "./desmosComponents";
 
-export default class StaticMathquillView extends DCGView.Class<{
+export default class StaticMathquillView extends Component<{
   latex: string;
 }> {
   template() {

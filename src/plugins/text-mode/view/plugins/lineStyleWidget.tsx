@@ -2,11 +2,9 @@ import { WidgetType } from "@codemirror/view";
 import { EditorView, Decoration } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
 import { ViewUpdate, ViewPlugin, DecorationSet } from "@codemirror/view";
-import { createElement } from "utils/utils";
+import { jsx } from "utils/utils";
 import { SyntaxNode } from "@lezer/common";
 import "./lineStyleWidget.less";
-
-const DCGView = { jsx: createElement };
 
 class LineStyleWidget extends WidgetType {
   constructor(readonly value: string) {

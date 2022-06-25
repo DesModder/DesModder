@@ -1,5 +1,4 @@
 import {
-  DCGView,
   SmallMathQuillInput,
   SegmentedControl,
   If,
@@ -9,6 +8,7 @@ import {
   IfElse,
   Tooltip,
 } from "desmodder";
+import { Component, jsx } from "DCGView";
 import CaptureMethod from "./CaptureMethod";
 import PreviewCarousel from "./PreviewCarousel";
 import LoadingPie from "./LoadingPie";
@@ -22,7 +22,7 @@ export function MainPopupFunc(videoCreatorController: Controller) {
   return <MainPopup controller={videoCreatorController} />;
 }
 
-export default class MainPopup extends DCGView.Class<{
+export default class MainPopup extends Component<{
   controller: Controller;
 }> {
   controller!: Controller;
