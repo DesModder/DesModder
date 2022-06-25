@@ -104,6 +104,7 @@ interface TableColumn extends BasicSetExpression {
 export interface TableModel extends ItemModelBase {
   type: "table";
   columns: TableColumn[];
+  columnModels: { draggable: boolean }[];
 }
 
 export interface TextModel extends ItemModelBase {

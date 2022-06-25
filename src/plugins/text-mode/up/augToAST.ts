@@ -1,3 +1,5 @@
+import { Calc } from "globals/window";
+import { getSections } from "utils/depUtils";
 import Aug from "../aug/AugState";
 import TextAST from "../down/TextAST";
 
@@ -128,7 +130,7 @@ export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
     case "table":
       return {
         type: "Table",
-        columns: item.columns.map(columnToAST),
+        columns: item.columns.map((e, i) => columnToAST(e, item, i)),
         style: styleMapping(base),
       };
     case "text":
@@ -156,20 +158,28 @@ function expressionStyle(
   item: Aug.ExpressionAug
 ): Parameters<typeof styleMapping>[0] {
   const domain = item.parametricDomain ?? item.polarDomain;
+  const model = Calc.controller.getItemModel(item.id);
+  const sections: ReturnType<typeof getSections> = model
+    ? getSections(model)
+    : // model not found. Just show everything we have data for
+      ["points", "label", "fill", "lines", "drag"];
   return {
-    ...columnExpressionCommonStyle(item),
-    fill: childLatexToASTmaybe(item.fillOpacity),
-    label:
-      item.label &&
-      styleMapping({
-        text: stringToASTmaybe(item.label.text),
-        size: childLatexToASTmaybe(item.label.size),
-        orientation: stringToASTmaybe(item.label.orientation),
-        angle: childLatexToASTmaybe(item.label.angle),
-        outline: booleanToAST(item.label.outline, true),
-        showOnHover: booleanToAST(item.label.showOnHover, false),
-        editableMode: stringToASTmaybe(item.label.editableMode),
-      }),
+    ...columnExpressionCommonStyle(item, sections),
+    fill: sections.includes("fill")
+      ? childLatexToASTmaybe(item.fillOpacity)
+      : undefined,
+    label: sections.includes("label")
+      ? item.label &&
+        styleMapping({
+          text: stringToASTmaybe(item.label.text),
+          size: childLatexToASTmaybe(item.label.size),
+          orientation: stringToASTmaybe(item.label.orientation),
+          angle: childLatexToASTmaybe(item.label.angle),
+          outline: booleanToAST(item.label.outline, true),
+          showOnHover: booleanToAST(item.label.showOnHover, false),
+          editableMode: stringToASTmaybe(item.label.editableMode),
+        })
+      : undefined,
     errorHidden: booleanToAST(item.errorHidden, false),
     glesmos: booleanToAST(item.glesmos, false),
     fractionDisplay: booleanToAST(item.displayEvaluationAsFraction, false),
@@ -219,33 +229,49 @@ function expressionStyle(
 }
 
 function columnExpressionCommonStyle(
-  item: Aug.TableColumnAug | Aug.ExpressionAug
-): Parameters<typeof styleMapping>[0] {
-  return {
-    color:
-      typeof item.color === "string"
-        ? stringToASTmaybe(item.color)
-        : identifierToAST(item.color),
-    lines:
-      item.lines &&
-      styleMapping({
-        opacity: childLatexToASTmaybe(item.lines.opacity),
-        width: childLatexToASTmaybe(item.lines.width),
-        style: stringToASTmaybe(item.lines.style),
-      }),
-    points:
-      item.points &&
-      styleMapping({
-        opacity: childLatexToASTmaybe(item.points.opacity),
-        size: childLatexToASTmaybe(item.points.size),
-        style: stringToASTmaybe(item.points.style),
-        drag: stringToASTmaybe(item.points.dragMode),
-      }),
-    hidden: booleanToAST(item.hidden, false),
-  };
+  item: Aug.TableColumnAug | Aug.ExpressionAug,
+  sections: ReturnType<typeof getSections>
+) {
+  const res: Parameters<typeof styleMapping>[0] =
+    sections.length > 0
+      ? {
+          color:
+            typeof item.color === "string"
+              ? stringToASTmaybe(item.color)
+              : identifierToAST(item.color),
+          hidden: booleanToAST(item.hidden, false),
+        }
+      : {};
+  if (sections.includes("lines") && item.lines) {
+    res.lines = styleMapping({
+      opacity: childLatexToASTmaybe(item.lines.opacity),
+      width: childLatexToASTmaybe(item.lines.width),
+      style: stringToASTmaybe(item.lines.style),
+    });
+  }
+  if (sections.includes("points") && item.points) {
+    res.points = styleMapping({
+      opacity: childLatexToASTmaybe(item.points.opacity),
+      size: childLatexToASTmaybe(item.points.size),
+      style: stringToASTmaybe(item.points.style),
+      drag: sections.includes("drag")
+        ? stringToASTmaybe(item.points.dragMode)
+        : undefined,
+    });
+  }
+  return res;
 }
 
-function columnToAST(col: Aug.TableColumnAug): TextAST.TableColumn {
+function columnToAST(
+  col: Aug.TableColumnAug,
+  parentTable: Aug.TableAug,
+  colIndex: number
+): TextAST.TableColumn {
+  const model = Calc.controller.getItemModel(parentTable.id);
+  const draggable =
+    model && model.type === "table"
+      ? model.columnModels[colIndex].draggable
+      : true;
   return {
     type: "ExprStatement",
     expr:
@@ -265,7 +291,14 @@ function columnToAST(col: Aug.TableColumnAug): TextAST.TableColumn {
             },
           }
         : childLatexToAST(col.latex),
-    style: styleMapping(columnExpressionCommonStyle(col)),
+    style: styleMapping(
+      columnExpressionCommonStyle(
+        col,
+        colIndex == 0
+          ? []
+          : ["points", "lines", ...(draggable ? ["drag" as const] : [])]
+      )
+    ),
   };
 }
 

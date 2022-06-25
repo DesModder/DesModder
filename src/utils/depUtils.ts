@@ -1,3 +1,4 @@
+import { ItemModel } from "globals/models";
 import { desmosRequire, Calc } from "globals/window";
 import Node from "../parsing/parsenode";
 
@@ -28,3 +29,16 @@ export const getQueryParams: () => { [key: string]: string | true } =
 const mqOperators = desmosRequire("main/mathquill-operators");
 export const autoCommandNames: string = mqOperators.getAutoCommands();
 export const autoOperatorNames: string = mqOperators.getAutoOperators();
+
+const getSectionsProto = desmosRequire(
+  "expressions/expression-menus/expression-options-menu-view"
+).ExpressionOptionsMenuView.prototype.getSections;
+
+/**
+ * getSections
+ */
+export function getSections(
+  model: ItemModel
+): ("colors-only" | "lines" | "points" | "fill" | "label" | "drag")[] {
+  return getSectionsProto.apply({ model });
+}
