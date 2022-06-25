@@ -3,11 +3,11 @@ import {
   SegmentedControl,
   If,
   Input,
-  jquery,
   Button,
   IfElse,
   Tooltip,
-} from "desmodder";
+} from "components";
+import { jquery } from "utils/depUtils";
 import { Component, jsx } from "DCGView";
 import CaptureMethod from "./CaptureMethod";
 import PreviewCarousel from "./PreviewCarousel";

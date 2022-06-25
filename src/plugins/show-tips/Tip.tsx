@@ -1,4 +1,5 @@
-import { Calc, If } from "desmodder";
+import { Calc } from "globals/window";
+import { If } from "components";
 import { Component, jsx } from "DCGView";
 import tips from "./tips";
 import "./Tip.less";

@@ -1,4 +1,6 @@
-import { Calc, OptionalProperties, getQueryParams } from "desmodder";
+import { Calc } from "globals/window";
+import { OptionalProperties } from "utils/utils";
+import { getQueryParams } from "utils/depUtils";
 import { Config, configList } from "./config";
 
 type ConfigOptional = OptionalProperties<Config>;

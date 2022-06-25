@@ -1,7 +1,7 @@
 import { Calc, desmosRequire } from "globals/window";
 import { ItemModel } from "globals/models";
 import Metadata, { Expression } from "./interface";
-import { desModderController, OptionalProperties } from "desmodder";
+import { OptionalProperties } from "utils/utils";
 import migrateToLatest from "./migrate";
 const List = desmosRequire("graphing-calc/models/list");
 

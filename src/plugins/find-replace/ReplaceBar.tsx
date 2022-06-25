@@ -1,5 +1,6 @@
 import { Component, jsx } from "DCGView";
-import { MathQuillView, Calc } from "desmodder";
+import { Calc } from "globals/window";
+import { MathQuillView } from "components";
 import { autoOperatorNames } from "utils/depUtils";
 import Controller from "./Controller";
 import "./ReplaceBar.less";

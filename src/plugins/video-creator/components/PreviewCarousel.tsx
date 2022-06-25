@@ -1,4 +1,4 @@
-import { If } from "desmodder";
+import { If } from "components";
 import { Component, jsx } from "DCGView";
 import "./PreviewCarousel.less";
 import Controller from "../Controller";

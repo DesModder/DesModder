@@ -1,4 +1,4 @@
-import { Calc } from "desmodder";
+import { Calc } from "globals/window";
 
 export default {
   id: "debug-mode",

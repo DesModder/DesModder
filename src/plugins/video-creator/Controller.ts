@@ -1,5 +1,6 @@
 import { updateView } from "./View";
-import { Calc, jquery, keys, EvaluateSingleExpression } from "desmodder";
+import { jquery, keys, EvaluateSingleExpression } from "utils/depUtils";
+import { Calc } from "globals/window";
 import { ExpressionModel } from "globals/models";
 import { isValidNumber, isValidLength, escapeRegex } from "./backend/utils";
 import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";

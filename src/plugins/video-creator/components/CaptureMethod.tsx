@@ -8,7 +8,7 @@ import {
   IfElse,
   Checkbox,
   Tooltip,
-} from "desmodder";
+} from "components";
 import { Component, jsx } from "DCGView";
 import Controller from "../Controller";
 import { cancelCapture, CaptureMethod } from "../backend/capture";

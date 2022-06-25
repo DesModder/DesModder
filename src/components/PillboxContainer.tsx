@@ -1,6 +1,6 @@
 import { Component, jsx } from "DCGView";
 import { If, Tooltip, For, Switch } from "./desmosComponents";
-import { jquery, keys } from "desmodder";
+import { jquery, keys } from "utils/depUtils";
 import Controller from "main/Controller";
 import { Calc } from "globals/window";
 import "./PillboxContainer.less";

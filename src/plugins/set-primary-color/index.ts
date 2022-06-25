@@ -1,4 +1,4 @@
-import { OptionalProperties } from "desmodder";
+import { OptionalProperties } from "utils/utils";
 import { getHSVfromRGB, parseCSSHex } from "plugins/GLesmos/colorParsing";
 import "./overrides.less";
 import "./custom-overrides.less";

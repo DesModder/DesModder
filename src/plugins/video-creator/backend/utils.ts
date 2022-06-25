@@ -1,4 +1,4 @@
-import { EvaluateSingleExpression } from "desmodder";
+import { EvaluateSingleExpression } from "utils/depUtils";
 
 interface Bounds {
   left: number;

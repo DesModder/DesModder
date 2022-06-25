@@ -1,5 +1,5 @@
 import { mountToNode, MountedComponent } from "DCGView";
-import PillboxContainer from "components/PillboxContainer";
+import { PillboxContainer } from "components";
 import { pollForValue } from "utils/utils";
 import Controller from "./Controller";
 import { Calc } from "globals/window";

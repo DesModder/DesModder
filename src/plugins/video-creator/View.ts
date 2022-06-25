@@ -1,4 +1,6 @@
-import { desModderController, jquery, keys, Calc } from "desmodder";
+import { jquery, keys } from "utils/depUtils";
+import { Calc } from "globals/window";
+import { desModderController } from "script";
 import { MainPopupFunc } from "./components/MainPopup";
 import { controller } from "./index";
 

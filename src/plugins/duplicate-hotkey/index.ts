@@ -1,4 +1,5 @@
-import { Calc, jquery, keys } from "desmodder";
+import { Calc } from "globals/window";
+import { jquery, keys } from "utils/depUtils";
 
 function onEnable() {
   jquery(".dcg-exppanel-outer").on(
