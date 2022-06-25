@@ -59,7 +59,8 @@ export function eventSequenceChanges(
             // even if the point was not dragged. Only difference in the events
             // seem to be  the coordinates to update, so check that
             change.move_strategy !== undefined ||
-            change.regression !== undefined
+            change.regression !== undefined ||
+            change.column_data !== undefined
           ) {
             itemsChanged.add(changeID);
           }

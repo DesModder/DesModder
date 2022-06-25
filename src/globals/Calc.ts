@@ -61,6 +61,7 @@ interface EvaluatorChange {
   action_value?: unknown;
   /** Regression metadata */
   regression?: unknown;
+  column_data?: unknown[];
 }
 
 interface CalcPrivate {
