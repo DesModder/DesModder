@@ -1,3 +1,8 @@
 import { LRParser } from "@lezer/lr";
 
-export declare const parser: LRParser;
+declare const parser: LRParser;
+export default parser;
+
+export declare const insertSemi: number;
+export declare const spaces: number;
+export declare const newline: number;

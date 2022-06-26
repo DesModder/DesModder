@@ -1,7 +1,9 @@
 // Based on the Lezer JavaScript grammer
 // <https://github.com/lezer-parser/javascript/blob/main/src/javascript.grammar>
 
-@skip { spaces | lineComment }
+@skip { spaces | newline | lineComment }
+
+@context trackNewline from "./tokens"
 
 @precedence {
   member,
@@ -19,24 +21,29 @@
   rel @left
 }
 
-@top Program { statement* }
-
+@top Program {
+  statements
+}
 
 statement[@isGroup=Statement] {
   ExprStatement { expressionMaybeSeq RegressionBody? StyleMapping? } |
   Table { kw<"table"> BlockInner StyleMapping? } |
-  Image { kw<"image"> String String StyleMapping? } |
-  Text { String StyleMapping? } |
+  Image { kw<"image"> String String  StyleMapping? } |
+  Text { String  StyleMapping? } |
   Folder { kw<"folder"> String BlockInner StyleMapping? } |
   Settings { kw<"settings"> StyleMapping }
 }
 
 RegressionBody {
-  RegressionBodyStart statement* RegressionBodyEnd
+  RegressionBodyStart statements RegressionBodyEnd
 }
 
 BlockInner {
-  "{" statement* "}"
+  "{" statements "}"
+}
+
+statements {
+  (statement? semicolon | statement insertSemi)*
 }
 
 expressionMaybeSeq[@isGroup=Expression] {
@@ -113,6 +120,8 @@ CompareOp<expr> { expr }
 kw<term> { @specialize[@name={term}]<Identifier, term> }
 
 @tokens {
+  semicolon { ";" }
+
   Identifier { $[a-zA-Z] $[a-zA-Z0-9]* }
 
   // Needed to avoid confusion with p .5x being dot access: p.5x
@@ -137,7 +146,8 @@ kw<term> { @specialize[@name={term}]<Identifier, term> }
 
   @precedence { "->", "-" }
 
-  spaces { $[ \t\n\r]+ }
+  spaces[@export] { $[ \t]+ }
+  newline[@export] { "\n" }
 
   MappingStart[closedBy=MappingEnd] { "@{" }
   MappingEnd[openedBy=MappingStart] { "}" }
@@ -149,5 +159,7 @@ kw<term> { @specialize[@name={term}]<Identifier, term> }
 
   "..." "," "=" ":" "->"
 }
+
+@external tokens insertSemicolon from "./tokens" { insertSemi }
 
 @detectDelim

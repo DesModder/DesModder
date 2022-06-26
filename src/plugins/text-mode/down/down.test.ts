@@ -1,4 +1,4 @@
-import { parser } from "../lezer/syntax.grammar";
+import parser from "../lezer/syntax.grammar";
 import { cstToAST } from "./cstToAST";
 import astToAug from "./astToAug";
 import Aug from "../aug/AugState";
@@ -50,6 +50,14 @@ const tableDefaults = {
   secret: false,
 };
 
+const folderDefaults = {
+  type: "folder",
+  id: "__dsm-auto-1",
+  collapsed: false,
+  hidden: false,
+  secret: false,
+};
+
 const defaultSettings: Aug.GraphSettings = {
   viewport: {
     xmin: -10,
@@ -67,21 +75,23 @@ function testSettings(desc: string, s: string, expected: any) {
   test(getTestName(desc, s), () => {
     const [errors, res] = textToAug(s);
     expect(errors).toEqual([]);
-    expect(res).not.toBeNull;
+    expect(res).not.toBeNull();
     if (res === null) return;
     const graphSettings = res.settings;
     expect(graphSettings).toEqual(expected);
   });
 }
 
-function testStmt(desc: string, s: string, expected: any) {
+function testStmt(desc: string, s: string, ...expected: any[]) {
   test(getTestName(desc, s), () => {
     const [errors, res] = textToAug(s);
     expect(errors).toEqual([]);
-    expect(res).not.toBeNull;
+    expect(res).not.toBeNull();
     if (res === null) return;
-    const augStmt = res.expressions.list[0];
-    expect(augStmt).toEqual(expected);
+    expected.map((e, i) => {
+      const augStmt = res.expressions.list[i];
+      expect(augStmt).toEqual(e);
+    });
   });
 }
 
@@ -660,6 +670,66 @@ describe("Text", () => {
   });
 });
 
+describe("Semicolons", () => {
+  testStmt("No insertion inside unclosed expressions", `1 + \nx`, {
+    ...exprDefaults,
+    latex: binop("Add", number(1), id("x")),
+  });
+  testStmt("No insertion inside closeable expressions", `1\n+ x`, {
+    ...exprDefaults,
+    latex: binop("Add", number(1), id("x")),
+  });
+  testStmt(
+    "Simple semi insertion",
+    `y=x\nx=1`,
+    {
+      ...exprDefaults,
+      latex: comparator("=", id("y"), id("x")),
+    },
+    {
+      ...exprDefaults,
+      id: "__dsm-auto-2",
+      color: "#2d70b3",
+      latex: comparator("=", id("x"), number(1)),
+    }
+  );
+  testStmt("Insertion inside folder", `folder "" {\ny=x\nx=1}`, {
+    ...folderDefaults,
+    title: "",
+    children: [
+      {
+        ...exprDefaults,
+        id: "__dsm-auto-2",
+        color: "#c74440",
+        latex: comparator("=", id("y"), id("x")),
+      },
+      {
+        ...exprDefaults,
+        id: "__dsm-auto-3",
+        color: "#2d70b3",
+        latex: comparator("=", id("x"), number(1)),
+      },
+    ],
+  });
+  testStmt("Insertion inside no-newline folder", `folder "" {y=x;x=1}`, {
+    ...folderDefaults,
+    title: "",
+    children: [
+      {
+        ...exprDefaults,
+        id: "__dsm-auto-2",
+        color: "#c74440",
+        latex: comparator("=", id("y"), id("x")),
+      },
+      {
+        ...exprDefaults,
+        id: "__dsm-auto-3",
+        color: "#2d70b3",
+        latex: comparator("=", id("x"), number(1)),
+      },
+    ],
+  });
+});
 describe("Image", () => {
   testStmt("Plain image", `image "name" "data:image/png,stub"`, {
     type: "image",
@@ -711,14 +781,6 @@ describe("Image", () => {
     }
   );
 });
-
-const folderDefaults = {
-  type: "folder",
-  id: "__dsm-auto-1",
-  collapsed: false,
-  hidden: false,
-  secret: false,
-};
 
 describe("Folder", () => {
   testStmt(
@@ -909,7 +971,7 @@ describe("Diagnostics", () => {
     );
     testDiagnostics(
       "Expected primitive, got style mapping",
-      `y=1 @{color: "#FFF"} y=2 @{color: @{}}`,
+      `y=1 @{color: "#FFF"}\ny=2 @{color: @{}}`,
       [
         error(
           "Expected expression.color to be primitive, but got style mapping",
@@ -934,7 +996,7 @@ describe("Diagnostics", () => {
     // TODO: variable scoping, so `true` resolves to boolean
     testDiagnostics(
       "Expected color, got other",
-      `y=1 @{color: "abc"} y=2 @{color: BLUE} y=3 @{color: 5}  y=4 @{color: true}`,
+      `y=1 @{color: "abc"}\ny=2 @{color: BLUE}\ny=3 @{color: 5}\ny=4 @{color: true}`,
       [
         error(
           "Expected expression.color to evaluate to string or identifier, but got number",
@@ -988,10 +1050,10 @@ describe("Diagnostics", () => {
         ),
       ]
     );
-    testDiagnostics("Table column non-list", `table { x1 = [1,2] y1 = 42 }`, [
+    testDiagnostics("Table column non-list", `table { x1 = [1,2]; y1 = 42 }`, [
       error(
         "Expected table assignment to assign from a ListExpression, but got Number",
-        pos(24, 26)
+        pos(25, 27)
       ),
     ]);
     testDiagnostics("Settings in folder", `folder "title" { settings @{} }`, [

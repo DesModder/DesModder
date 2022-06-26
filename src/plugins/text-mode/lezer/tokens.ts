@@ -1,0 +1,36 @@
+import { ContextTracker, ExternalTokenizer } from "@lezer/lr";
+import { insertSemi, spaces, newline } from "./syntax.grammar";
+
+/**
+ * Semicolon insertion similar to JavaScript.
+ *
+ * Implementation mostly copied from
+ * https://github.com/lezer-parser/javascript/blob/8ef45643798fbd6e58218a4434a43106bb5c36a8/src/tokens.js#L15
+ */
+
+// curly brace "}"
+const closeBrace = 125;
+
+// Track newlines with a boolean flag:
+//   has a newline been passed since the last non-spaces token?
+export const trackNewline = new ContextTracker<boolean>({
+  start: false,
+  shift(context, term) {
+    return term === spaces ? context : term === newline;
+  },
+  strict: false,
+});
+
+export const insertSemicolon = new ExternalTokenizer(
+  (input, stack) => {
+    const { next } = input;
+    if (
+      // next character is "}" or EOF,
+      // or we've passed a newline (stack.context === true)
+      (next === closeBrace || next === -1 || stack.context) &&
+      stack.canShift(insertSemi)
+    )
+      input.acceptToken(insertSemi);
+  },
+  { contextual: true, fallback: true }
+);

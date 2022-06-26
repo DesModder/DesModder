@@ -29,7 +29,7 @@ baseConfig = (env, options) => ({
   module: {
     rules: [
       {
-        test: /\.grammar$/,
+        test: /\.grammar(\?terms)?$/,
         loader: "lezer-loader",
       },
       {
