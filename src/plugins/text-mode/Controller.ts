@@ -2,13 +2,10 @@ import { EditorView, ViewUpdate } from "@codemirror/view";
 import { Calc } from "globals/window";
 import { initView } from "./view/editor";
 import { jquery, keys } from "utils/depUtils";
-import {
-  RelevantEvent,
-  relevantEventTypes,
-  eventSequenceChanges,
-} from "./modify/modify";
+import { RelevantEvent, relevantEventTypes } from "./modify/modify";
 import LanguageServer from "./LanguageServer";
 import getText from "./up/getText";
+import { GraphState } from "@desmodder/graph-state";
 
 export default class Controller {
   inTextMode: boolean = false;
@@ -28,7 +25,21 @@ export default class Controller {
     /** TODO: getText as a pure function of Calc state */
     const [hasError, text, idMap] = getText();
     this.view = initView(this, text);
-    this.languageServer = new LanguageServer(this.view, idMap);
+    this.languageServer = new LanguageServer(
+      this.view,
+      idMap,
+      (state: GraphState) => {
+        console.log("set state from text", state);
+        // Prevent Desmos from blurring the currently active element via
+        //   jquery(document.activeElement).trigger("blur")
+        // Alternative method this.view.focus() after setState does not prevent
+        //   the current autocomplete tooltip from disappearing
+        const trigger = jquery.prototype.trigger;
+        jquery.prototype.trigger = () => [];
+        Calc.setState(state, { allowUndo: true });
+        jquery.prototype.trigger = trigger;
+      }
+    );
     if (hasError)
       Calc.controller._showToast({
         message:

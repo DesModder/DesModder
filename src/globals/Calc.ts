@@ -50,9 +50,13 @@ export type DispatchedEvent =
  * displayed table columns, more?
  */
 interface EvaluatorChange {
-  /** New number value for slider change or action update */
+  /**
+   * New number value for slider change or action update, or constant value of
+   * constant expression
+   */
   constant_value?: number;
-  raw_slider_value?: string;
+  /** New number value for slider change or action update */
+  raw_slider_latex?: string;
   /** New list value for action update */
   zero_values?: [{ val: number | number[] }];
   /** New point positions, OR viewport panned with draggable point on top */

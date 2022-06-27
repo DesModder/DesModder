@@ -12,18 +12,13 @@
  */
 
 import { Diagnostic } from "@codemirror/lint";
-import {
-  RelevantEvent,
-  relevantEventTypes,
-  eventSequenceChanges,
-} from "./modify/modify";
+import { RelevantEvent, eventSequenceChanges } from "./modify/modify";
 import { MapIDPosition, applyChanges } from "./modify/mapIDPosition";
-import { jquery, keys } from "utils/depUtils";
 import { EditorView, ViewUpdate } from "@codemirror/view";
 import { Tree } from "@lezer/common";
 import cstToRaw from "./down/cstToRaw";
 import { ensureSyntaxTree } from "@codemirror/language";
-import { Calc } from "globals/window";
+import { GraphState } from "@desmodder/graph-state";
 
 export default class LanguageServer {
   /** Dispatched events to handle once the syntax tree finishes */
@@ -55,7 +50,11 @@ export default class LanguageServer {
    */
   lastUpdateWasByUser: boolean = false;
 
-  constructor(private view: EditorView, public mapIDPosition: MapIDPosition) {}
+  constructor(
+    private view: EditorView,
+    public mapIDPosition: MapIDPosition,
+    private setCalcState: (state: GraphState) => void
+  ) {}
 
   doLint(): Promise<Diagnostic[]> {
     return new Promise((resolve) => {
@@ -157,16 +156,8 @@ export default class LanguageServer {
     this.mapIDPosition = mapID;
     const textChangedBecauseWorker = this.queuedEvents.length > 0;
     if (textChangedBecauseWorker) this.processQueuedEvents(tree);
-    if (this.lastUpdateWasByUser) {
-      console.log("set state from text", rawGraphState);
-      // Prevent Desmos from blurring the currently active element via
-      //   jquery(document.activeElement).trigger("blur")
-      // Alternative method this.view.focus() after setState does not prevent
-      //   the current autocomplete tooltip from disappearing
-      const trigger = jquery.prototype.trigger;
-      jquery.prototype.trigger = () => [];
-      Calc.setState(rawGraphState, { allowUndo: true });
-      jquery.prototype.trigger = trigger;
+    if (this.lastUpdateWasByUser && rawGraphState !== null) {
+      this.setCalcState(rawGraphState);
       this.lastUpdateWasByUser = false;
     } else if (!textChangedBecauseWorker) this.setParsing(false);
   }

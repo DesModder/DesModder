@@ -53,7 +53,7 @@ export function eventSequenceChanges(
         for (const [changeID, change] of Object.entries(event.changes)) {
           if (
             change.constant_value !== undefined ||
-            change.raw_slider_value !== undefined ||
+            change.raw_slider_latex !== undefined ||
             change.zero_values !== undefined ||
             // TODO: move_strategy also gets omitted when the viewport is panned
             // even if the point was not dragged. Only difference in the events
