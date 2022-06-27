@@ -10,6 +10,10 @@ import { insertSemi, spaces, newline } from "./syntax.grammar";
 
 // curly brace "}"
 const closeBrace = 125;
+// at symbol "@"
+const at = 64;
+// spaces $[ \t]
+const spacesCodes = [9, 32];
 
 // Track newlines with a boolean flag:
 //   has a newline been passed since the last non-spaces token?
@@ -28,6 +32,8 @@ export const insertSemicolon = new ExternalTokenizer(
       // next character is "}" or EOF,
       // or we've passed a newline (stack.context === true)
       (next === closeBrace || next === -1 || stack.context) &&
+      next !== at &&
+      !spacesCodes.includes(next) &&
       stack.canShift(insertSemi)
     )
       input.acceptToken(insertSemi);

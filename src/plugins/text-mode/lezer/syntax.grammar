@@ -119,6 +119,10 @@ CompareOp<expr> { expr }
 // Keywords
 kw<term> { @specialize[@name={term}]<Identifier, term> }
 
+// insertSemi above the rest of the tokens prioritizes inserting a semi when
+// possible, so "x\n-x" is "x; -x;", not "x-x;"
+@external tokens insertSemicolon from "./tokens" { insertSemi }
+
 @tokens {
   semicolon { ";" }
 
@@ -159,7 +163,5 @@ kw<term> { @specialize[@name={term}]<Identifier, term> }
 
   "..." "," "=" ":" "->"
 }
-
-@external tokens insertSemicolon from "./tokens" { insertSemi }
 
 @detectDelim

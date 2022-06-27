@@ -151,12 +151,19 @@ function comparator(
   op: "<" | "<=" | "=" | ">=" | ">",
   left: Aug.Latex.AnyChild,
   right: Aug.Latex.AnyChild
-) {
+): Aug.Latex.Comparator {
   return {
     type: "Comparator",
     operator: op,
     left,
     right,
+  };
+}
+
+function list(...children: Aug.Latex.AnyChild[]): Aug.Latex.List {
+  return {
+    type: "List",
+    args: children,
   };
 }
 
@@ -235,18 +242,9 @@ describe("Basic exprs", () => {
     });
   });
   describe("ListExpression", () => {
-    testExpr("empty", "[]", {
-      type: "List",
-      args: [],
-    });
-    testExpr("one element", "[1]", {
-      type: "List",
-      args: [number(1)],
-    });
-    testExpr("three elements", "[1,2,x]", {
-      type: "List",
-      args: [number(1), number(2), id("x")],
-    });
+    testExpr("empty", "[]", list());
+    testExpr("one element", "[1]", list(number(1)));
+    testExpr("three elements", "[1,2,x]", list(number(1), number(2), id("x")));
     testExpr("simple range", "[1...10]", {
       type: "Range",
       start: [number(1)],
@@ -675,10 +673,6 @@ describe("Semicolons", () => {
     ...exprDefaults,
     latex: binop("Add", number(1), id("x")),
   });
-  testStmt("No insertion inside closeable expressions", `1\n+ x`, {
-    ...exprDefaults,
-    latex: binop("Add", number(1), id("x")),
-  });
   testStmt(
     "Simple semi insertion",
     `y=x\nx=1`,
@@ -718,7 +712,6 @@ describe("Semicolons", () => {
       {
         ...exprDefaults,
         id: "__dsm-auto-2",
-        color: "#c74440",
         latex: comparator("=", id("y"), id("x")),
       },
       {
@@ -729,6 +722,51 @@ describe("Semicolons", () => {
       },
     ],
   });
+  testStmt(
+    "Force semicolon to avoid multi-line CallExpression",
+    `y=x\n(x)^2`,
+    {
+      ...exprDefaults,
+      latex: comparator("=", id("y"), id("x")),
+    },
+    {
+      ...exprDefaults,
+      id: "__dsm-auto-2",
+      color: "#2d70b3",
+      latex: binop("Exponent", id("x"), number(2)),
+    }
+  );
+  testStmt(
+    "Force semicolon to avoid multi-line ListExpression",
+    `[x,2,3]\n[1,2]+x`,
+    {
+      ...exprDefaults,
+      latex: list(id("x"), number(2), number(3)),
+    },
+    {
+      ...exprDefaults,
+      id: "__dsm-auto-2",
+      color: "#2d70b3",
+      latex: binop("Add", list(number(1), number(2)), id("x")),
+    }
+  );
+  testStmt(
+    "Force semicolon to avoid multi-line subtraction",
+    `x\n-x`,
+    {
+      ...exprDefaults,
+      latex: id("x"),
+    },
+    {
+      ...exprDefaults,
+      id: "__dsm-auto-2",
+      color: "#2d70b3",
+      latex: {
+        type: "Negative",
+        arg: id("x"),
+      },
+    }
+  );
 });
 describe("Image", () => {
   testStmt("Plain image", `image "name" "data:image/png,stub"`, {
@@ -1066,6 +1104,9 @@ describe("Diagnostics", () => {
   describe("Parse errors", () => {
     testDiagnostics("Empty program", `\n\n`, [
       warning("Program is empty. Try typing: y=x", undefined),
+    ]);
+    testDiagnostics("Binary op without indication of continuation", `1\n+ x`, [
+      error("Syntax error; unexpected text: +", pos(2, 3)),
     ]);
     testDiagnostics("Skip node", `y=x @{} @#!# y=x^2`, [
       error("Syntax error; unexpected text: @#!#", pos(8, 12)),
