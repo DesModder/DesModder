@@ -12,11 +12,11 @@ import { Diagnostic } from "@codemirror/lint";
 import { evalExpr } from "./staticEval";
 import { Identifier } from "../aug/AugLatex";
 import { everyNonNull } from "utils/utils";
-import { MapIDPosition } from "../modify/mapIDPosition";
 import { GrapherState } from "@desmodder/graph-state";
+import { ProgramAnalysis } from "../LanguageServer";
 
 export class DownState extends DiagnosticsState {
-  public idMap: MapIDPosition = {};
+  mapIDstmt: { [key: string]: TextAST.Statement } = {};
   maxCustomID = 0;
   hasBlockingError = false;
 
@@ -30,18 +30,17 @@ export class DownState extends DiagnosticsState {
     return `__dsm-auto-${++this.maxCustomID}`;
   }
 
-  ensureIDAndMarkPos(tryID: string, stmt: { pos?: TextAST.Pos }) {
+  ensureID(tryID: string, stmt: TextAST.Statement) {
     const id = tryID === "" ? this.generateID() : tryID;
-    this.idMap[id] = stmt.pos!.from;
+    this.mapIDstmt[id] = stmt;
     return id;
   }
 }
 
 export default function astToAug(
   parseErrors: Diagnostic[],
-  program: TextAST.Program | null
-): [Diagnostic[], Aug.State | null, MapIDPosition] {
-  if (program === null) return [parseErrors, null, {}];
+  program: TextAST.Statement[]
+): [ProgramAnalysis, Aug.State | null] {
   const state: Aug.State = {
     version: 9,
     settings: {
@@ -58,7 +57,6 @@ export default function astToAug(
   };
   const diagnostics: Diagnostic[] = [...parseErrors];
   const ds = new DownState(diagnostics);
-  let hasBlockingError = false;
   for (let stmt of program) {
     // TODO: throw if there are multiple settings expressions
     const stmtAug = statementToAug(ds, state, stmt);
@@ -71,9 +69,14 @@ export default function astToAug(
     }
   }
   fixEmptyColors(state);
-  return ds.hasBlockingError
-    ? [diagnostics, null, {}]
-    : [diagnostics, state, ds.idMap];
+  return [
+    {
+      diagnostics,
+      ast: program,
+      mapIDstmt: ds.mapIDstmt,
+    },
+    ds.hasBlockingError ? null : state,
+  ];
 }
 
 /**
@@ -362,7 +365,7 @@ function exprBase(
   stmt: TextAST.Statement
 ) {
   return {
-    id: ds.ensureIDAndMarkPos(style.id, stmt),
+    id: ds.ensureID(style.id, stmt),
     secret: style.secret,
     pinned: style.pinned,
   };
@@ -400,7 +403,7 @@ function tableColumnToAug(
   const expr = column.expr;
   const base = {
     type: "column" as const,
-    id: ds.ensureIDAndMarkPos(style.id, column),
+    id: ds.ensureID(style.id, column),
     ...columnExpressionCommonStyle(style),
   };
 
@@ -484,7 +487,7 @@ function folderToAug(
     "folder"
   );
   if (style === null) return null;
-  const id = ds.ensureIDAndMarkPos(style.id ?? "", expr);
+  const id = ds.ensureID(style.id ?? "", expr);
   for (let child of expr.children) {
     const stmtAug = statementToAug(ds, state, child);
     if (stmtAug !== null) {

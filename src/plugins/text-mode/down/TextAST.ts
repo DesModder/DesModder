@@ -1,5 +1,3 @@
-export type Program = Statement[];
-
 import * as TextAST from "./TextAST";
 export default TextAST;
 
@@ -225,7 +223,7 @@ export interface DerivativeExpression extends Positioned {
 }
 
 interface Positioned {
-  /* pos should be defined for all nodes that come from the text via the CST */
+  /** pos should be defined for all nodes that come from the text via the CST */
   pos?: Pos;
 }
 

@@ -19,7 +19,7 @@ export class TextAndDiagnostics extends DiagnosticsState {
 export function cstToAST(
   cst: Tree,
   text: Text
-): [Diagnostic[], TextAST.Statement[] | null] {
+): [Diagnostic[], TextAST.Statement[]] {
   // console.groupCollapsed("Program");
   // console.log(printTree(cst, text.sliceString(0)));
   // console.groupEnd();

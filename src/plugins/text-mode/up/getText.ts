@@ -1,15 +1,14 @@
 import { Calc } from "globals/window";
 import Aug from "../aug/AugState";
 import rawToAug from "../aug/rawToAug";
-import { MapIDPosition } from "../modify/mapIDPosition";
 import augToText from "./augToText";
 
-export default function getText(): [boolean, string, MapIDPosition] {
+export default function getText(): [boolean, string] {
   const state = Calc.getState();
   const aug = rawToAug(state);
   const augHasError = aug.expressions.list.some(itemHasError);
-  const [text, idMap] = augToText(aug);
-  return [augHasError, text, idMap];
+  const text = augToText(aug);
+  return [augHasError, text];
 }
 
 function itemHasError(item: Aug.ItemAug) {

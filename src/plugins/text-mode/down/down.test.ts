@@ -73,8 +73,8 @@ function getTestName(desc: string, s: string) {
 
 function testSettings(desc: string, s: string, expected: any) {
   test(getTestName(desc, s), () => {
-    const [errors, res] = textToAug(s);
-    expect(errors).toEqual([]);
+    const [{ diagnostics }, res] = textToAug(s);
+    expect(diagnostics).toEqual([]);
     expect(res).not.toBeNull();
     if (res === null) return;
     const graphSettings = res.settings;
@@ -84,8 +84,8 @@ function testSettings(desc: string, s: string, expected: any) {
 
 function testStmt(desc: string, s: string, ...expected: any[]) {
   test(getTestName(desc, s), () => {
-    const [errors, res] = textToAug(s);
-    expect(errors).toEqual([]);
+    const [{ diagnostics }, res] = textToAug(s);
+    expect(diagnostics).toEqual([]);
     expect(res).not.toBeNull();
     if (res === null) return;
     expected.map((e, i) => {
@@ -101,8 +101,8 @@ function pos(from: number, to: number) {
 
 function testDiagnostics(desc: string, s: string, expected: Diagnostic[]) {
   test(getTestName(desc, s), () => {
-    const [errors, res] = textToAug(s);
-    expect(errors).toEqual(expected);
+    const [{ diagnostics }, res] = textToAug(s);
+    expect(diagnostics).toEqual(expected);
   });
 }
 
@@ -854,7 +854,7 @@ describe("Folder", () => {
 });
 describe("Automatic IDs", () => {
   test("IDs are correctly managed with tables", () => {
-    const [errors, res] = textToAug(`
+    const [analysis, res] = textToAug(`
       table {
         a=[]
         b=[]

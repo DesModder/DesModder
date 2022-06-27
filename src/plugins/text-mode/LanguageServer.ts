@@ -12,13 +12,19 @@
  */
 
 import { Diagnostic } from "@codemirror/lint";
-import { RelevantEvent, eventSequenceChanges } from "./modify/modify";
-import { MapIDPosition, applyChanges } from "./modify/mapIDPosition";
+import { RelevantEvent, eventSequenceChanges } from "./modify";
 import { EditorView, ViewUpdate } from "@codemirror/view";
 import { Tree } from "@lezer/common";
 import cstToRaw from "./down/cstToRaw";
 import { ensureSyntaxTree } from "@codemirror/language";
 import { GraphState } from "@desmodder/graph-state";
+import { Statement } from "./down/TextAST";
+
+export interface ProgramAnalysis {
+  ast: Statement[];
+  diagnostics: Diagnostic[];
+  mapIDstmt: { [key: string]: Statement | undefined };
+}
 
 export default class LanguageServer {
   /** Dispatched events to handle once the syntax tree finishes */
@@ -27,12 +33,12 @@ export default class LanguageServer {
   lintResolve: ((e: Diagnostic[]) => void) | null = null;
   /**
    * isParsing = false: idle state
-   *    mapIDPosition + diagnostics are in sync with document
+   *    analysis is in sync with document
    * isParsing = true: parsing state
-   *    text has been edited, mapIDPosition + diagnostics not yet updated
+   *    text has been edited, analysis is out of date
    */
   isParsing: boolean = false;
-  diagnostics: Diagnostic[] = [];
+  analysis: ProgramAnalysis | null = null;
   /**
    * Will the next onEdit be due to an update from the graph automatically
    * changing the text, not a user?
@@ -52,14 +58,15 @@ export default class LanguageServer {
 
   constructor(
     private view: EditorView,
-    public mapIDPosition: MapIDPosition,
     private setCalcState: (state: GraphState) => void
-  ) {}
+  ) {
+    this.setParsing(true);
+  }
 
   doLint(): Promise<Diagnostic[]> {
     return new Promise((resolve) => {
       if (!this.isParsing) {
-        resolve(this.diagnostics);
+        resolve(this.analysis!.diagnostics);
       } else {
         if (this.lintResolve !== null)
           throw Error(
@@ -104,12 +111,7 @@ export default class LanguageServer {
   onCalcEvent(event: RelevantEvent) {
     this.queuedEvents.push(event);
     if (!this.isParsing) {
-      const tree = ensureFullTree(this.view);
-      if (tree === null) {
-        this.setParsing(true);
-      } else {
-        this.processQueuedEvents(tree);
-      }
+      this.processQueuedEvents();
     }
   }
 
@@ -144,18 +146,14 @@ export default class LanguageServer {
     console.log("finish parsing");
     if (!this.view) return;
     this.setParsing(false);
-    const [diagnostics, rawGraphState, mapID] = cstToRaw(
-      tree,
-      this.view.state.doc
-    );
-    this.diagnostics = diagnostics;
+    const [analysis, rawGraphState] = cstToRaw(tree, this.view.state.doc);
+    this.analysis = analysis;
     if (this.lintResolve) {
-      this.lintResolve(diagnostics);
+      this.lintResolve(analysis.diagnostics);
       this.lintResolve = null;
     }
-    this.mapIDPosition = mapID;
     const textChangedBecauseWorker = this.queuedEvents.length > 0;
-    if (textChangedBecauseWorker) this.processQueuedEvents(tree);
+    if (textChangedBecauseWorker) this.processQueuedEvents();
     if (this.lastUpdateWasByUser && rawGraphState !== null) {
       this.setCalcState(rawGraphState);
       this.lastUpdateWasByUser = false;
@@ -167,8 +165,12 @@ export default class LanguageServer {
    * available. Uses `this.mapIDPosition` to locate existing items by ID,
    * so `this.mapIDPosition` must be in sync with the current document
    */
-  processQueuedEvents(tree: Tree) {
-    const changes = eventSequenceChanges(this, this.queuedEvents, tree);
+  processQueuedEvents() {
+    const changes = eventSequenceChanges(
+      this,
+      this.queuedEvents,
+      this.analysis!
+    );
     if (changes.length === 0) return;
     console.log("apply changes from queued events");
     const transaction = this.view.state.update({ changes });
@@ -176,7 +178,6 @@ export default class LanguageServer {
     // nextEditDueToGraph doc text
     this.nextEditDueToGraph = true;
     this.view.update([transaction]);
-    applyChanges(this.mapIDPosition, transaction.changes);
     this.queuedEvents = [];
     this.setParsing(true);
   }
