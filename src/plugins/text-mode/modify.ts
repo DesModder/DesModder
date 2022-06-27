@@ -10,7 +10,9 @@ import {
 import { graphSettingsToText, itemToText } from "./up/augToText";
 import Metadata from "main/metadata/interface";
 import LanguageServer, { ProgramAnalysis } from "./LanguageServer";
-import { Settings, Statement } from "./down/TextAST";
+import TextAST, { Settings, Statement } from "./down/TextAST";
+import { itemAugToAST } from "./up/augToAST";
+import { exprToText } from "./up/astToText";
 
 export const relevantEventTypes = [
   // @settings related
@@ -30,13 +32,15 @@ export type RelevantEvent = DispatchedEvent & {
   type: typeof relevantEventTypes[number];
 };
 
+type ToChange = "latex-only" | "all";
+
 export function eventSequenceChanges(
   ls: LanguageServer,
   events: RelevantEvent[],
   analysis: ProgramAnalysis
 ): ChangeSpec[] {
   let settingsChanged: boolean = false;
-  let itemsChanged: Set<string> = new Set();
+  let itemsChanged: { [key: string]: ToChange } = {};
   for (const event of events) {
     switch (event.type) {
       case "re-randomize":
@@ -54,16 +58,26 @@ export function eventSequenceChanges(
           if (
             change.constant_value !== undefined ||
             change.raw_slider_latex !== undefined ||
-            change.zero_values !== undefined ||
-            // TODO: move_strategy also gets omitted when the viewport is panned
+            change.zero_values !== undefined
+          )
+            itemsChanged[changeID] = "latex-only";
+          else if (
+            // TODO: move_strategy also gets emitted when the viewport is panned
             // even if the point was not dragged. Only difference in the events
-            // seem to be  the coordinates to update, so check that
-            change.move_strategy !== undefined ||
+            // seem to be the coordinates to update, so check that
+            // TODO: ignore the first move_strategy after an update from
+            // the text because it's always no change
+            change.move_strategy !== undefined
+          )
+            // length 2 corresponds to dragging a point, which is latex only
+            // otherwise (length 4), it is dragging an image
+            itemsChanged[changeID] =
+              change.move_strategy?.length === 2 ? "latex-only" : "all";
+          else if (
             change.regression !== undefined ||
             change.column_data !== undefined
-          ) {
-            itemsChanged.add(changeID);
-          }
+          )
+            itemsChanged[changeID] = "all";
         }
         break;
     }
@@ -73,11 +87,11 @@ export function eventSequenceChanges(
   if (settingsChanged) {
     changes.push(settingsChange(analysis, state));
   }
-  if (itemsChanged.size > 0) {
-    const dsmMetadata = rawToDsmMetadata(state);
-    for (const changeID of itemsChanged.values()) {
-      changes.push(...itemChange(analysis, state, dsmMetadata, changeID));
-    }
+  const dsmMetadata = rawToDsmMetadata(state);
+  for (const [changeID, toChange] of Object.entries(itemsChanged)) {
+    changes.push(
+      ...itemChange(analysis, state, dsmMetadata, changeID, toChange)
+    );
   }
   return changes;
 }
@@ -122,19 +136,36 @@ function itemChange(
   analysis: ProgramAnalysis,
   state: GraphState,
   dsmMetadata: Metadata,
-  changeID: string
+  changeID: string,
+  toChange: ToChange
 ): ChangeSpec[] {
   const newStateItem = state.expressions.list.find((e) => e.id === changeID);
   if (!newStateItem || newStateItem.type === "folder") return [];
   const oldNode = analysis.mapIDstmt[changeID];
   if (oldNode === undefined) return [];
   const itemAug = rawNonFolderToAug(newStateItem, dsmMetadata);
-  const newItemText = itemToText(itemAug);
-  return [
-    {
-      from: oldNode.pos!.from,
-      to: oldNode.pos!.to,
-      insert: newItemText,
-    },
-  ];
+  if (toChange === "latex-only") {
+    if (oldNode.type !== "ExprStatement" || itemAug.type !== "expression")
+      throw new Error(
+        "Programming Error: expected expression on a latex-only change"
+      );
+    const ast = itemAugToAST(itemAug) as TextAST.ExprStatement | null;
+    if (ast === null)
+      throw "Programming error: expect new item to always be parseable";
+    return [
+      {
+        from: oldNode.expr.pos!.from,
+        to: oldNode.expr.pos!.to,
+        insert: exprToText(ast.expr),
+      },
+    ];
+  } else {
+    return [
+      {
+        from: oldNode.pos!.from,
+        to: oldNode.pos!.to,
+        insert: itemToText(itemAug),
+      },
+    ];
+  }
 }

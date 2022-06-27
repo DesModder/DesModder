@@ -51,20 +51,25 @@ export type DispatchedEvent =
  */
 interface EvaluatorChange {
   /**
-   * New number value for slider change or action update, or constant value of
-   * constant expression
+   * (Expressions) New number value for slider change or action update, or
+   * constant value of constant expression
    */
   constant_value?: number;
-  /** New number value for slider change or action update */
+  /** (Expressions) New number value for slider change or action update */
   raw_slider_latex?: string;
-  /** New list value for action update */
+  /** (Expressions) New list value for action update */
   zero_values?: [{ val: number | number[] }];
-  /** New point positions, OR viewport panned with draggable point on top */
-  move_strategy?: unknown;
-  /** New action to be applied on the next click. Ignore */
+  /**
+   * Expressions: [x, y] new point positions
+   * Images: [width, height, x, y] movement of image
+   * updateCoordinate = change latex; updateSlider = handle elsewhere
+   */
+  move_strategy?: { type: "updateCoordinate" | "updateSlider" }[];
+  /** (Expressions, images, (ticker)?) New action to be applied on the next click. Ignore */
   action_value?: unknown;
-  /** Regression metadata */
+  /** (Regression expressions) Regression metadata */
   regression?: unknown;
+  /** (Tables) column changes */
   column_data?: unknown[];
 }
 

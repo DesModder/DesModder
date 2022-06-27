@@ -568,6 +568,8 @@ function parenToAST(
   if (expr.type === "SequenceExpression") {
     expr.parenWrapped = true;
   }
+  expr.pos!.from = node.from;
+  expr.pos!.to = node.to;
   return expr;
 }
 
