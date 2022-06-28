@@ -14,7 +14,7 @@ export type StyleProp = TextAST.Expression | StyleValue | undefined;
 
 export function hydrate<T>(
   ds: DownState,
-  styleMapping: TextAST.StyleMapping,
+  styleMapping: TextAST.StyleMapping | null,
   defaults: T,
   schema: Schema,
   itemType: string,

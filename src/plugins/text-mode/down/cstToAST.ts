@@ -19,7 +19,7 @@ export class TextAndDiagnostics extends DiagnosticsState {
 export function cstToAST(
   cst: Tree,
   text: Text
-): [Diagnostic[], TextAST.Statement[]] {
+): [Diagnostic[], TextAST.Program] {
   // console.groupCollapsed("Program");
   // console.log(printTree(cst, text.sliceString(0)));
   // console.groupEnd();
@@ -32,7 +32,14 @@ export function cstToAST(
     const statementAST = statementToAST(td, statementNode);
     statementAST && statements.push(statementAST);
   }
-  return [td.diagnostics, statements];
+  return [
+    td.diagnostics,
+    {
+      type: "Program",
+      children: statements,
+      pos: getPos(cst.topNode),
+    },
+  ];
 }
 
 /**
@@ -180,7 +187,7 @@ function regressionBodyToParameters(
 function simpleStatementToAST(
   td: TextAndDiagnostics,
   node: SyntaxNode,
-  style: TextAST.StyleMapping
+  style: TextAST.StyleMapping | null
 ): TextAST.ExprStatement | null {
   let expr = exprToAST(td, node.getChild("Expression")!);
   let residualVariable: TextAST.Identifier | undefined = undefined;
@@ -230,7 +237,7 @@ function simpleStatementToAST(
 function styleToAST(
   td: TextAndDiagnostics,
   node: SyntaxNode | null
-): TextAST.StyleMapping {
+): TextAST.StyleMapping | null {
   if (node == null) return null;
   return styleToASTKnown(td, node);
 }
@@ -306,7 +313,7 @@ function exprToAST(
       if (prefixArg === null) return null;
       return {
         type: "PrefixExpression",
-        op: "negative",
+        op: "-",
         expr: prefixArg,
         pos: getPos(node),
       };
@@ -370,7 +377,7 @@ function exprToAST(
       return {
         type: "UpdateRule",
         variable: updateVar,
-        expression: updateExpr,
+        expr: updateExpr,
         pos: getPos(node),
       };
     case "SequenceExpression":

@@ -13,8 +13,8 @@ jest.mock("globals/window");
 
 function textToAug(text: string) {
   const cst = parser.parse(text);
-  const [diagnostics, statements] = cstToAST(cst, Text.of(text.split("\n")));
-  return astToAug(diagnostics, statements);
+  const [diagnostics, program] = cstToAST(cst, Text.of(text.split("\n")));
+  return astToAug(diagnostics, program);
 }
 
 const colors = ["#c74440", "#2d70b3", "#388c46", "#6042a6", "#000000"];

@@ -10,7 +10,7 @@ import { SyntaxNode } from "@lezer/common";
 import Controller from "../Controller";
 import * as Defaults from "../down/style/defaults";
 import { identifierToStringAST, TextAndDiagnostics } from "../down/cstToAST";
-import TextAST from "../down/TextAST";
+import TextAST, { NodePath } from "../down/TextAST";
 import { exprToText } from "../up/astToText";
 
 function macroExpandWithSelection(
@@ -154,7 +154,7 @@ function styleCompletionsFromDefaults(defaults: any): Completion[] {
           ? "type" in value
             ? macroExpandWithSelection(
                 key + ": ",
-                exprToText(value as TextAST.Expression),
+                exprToText(new NodePath(value as TextAST.Expression, null)),
                 ","
               )
             : macroExpandWithSelection(key + ": @{ ", "", " },")

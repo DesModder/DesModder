@@ -10,7 +10,7 @@ import {
 import { graphSettingsToText, itemToText } from "./up/augToText";
 import Metadata from "main/metadata/interface";
 import LanguageServer, { ProgramAnalysis } from "./LanguageServer";
-import TextAST, { Settings, Statement } from "./down/TextAST";
+import TextAST, { NodePath, Settings, Statement } from "./down/TextAST";
 import { itemAugToAST } from "./up/augToAST";
 import { exprToText } from "./up/astToText";
 
@@ -102,7 +102,7 @@ function settingsChange(
 ): ChangeSpec {
   const newSettingsText = graphSettingsToText(rawToAugSettings(state));
   const settingsNode = findStatement(
-    analysis.ast,
+    analysis.ast.children,
     (stmt): stmt is Settings => stmt.type === "Settings"
   );
   return settingsNode
@@ -156,7 +156,7 @@ function itemChange(
       {
         from: oldNode.expr.pos!.from,
         to: oldNode.expr.pos!.to,
-        insert: exprToText(ast.expr),
+        insert: exprToText(new NodePath(ast.expr, null)),
       },
     ];
   } else {

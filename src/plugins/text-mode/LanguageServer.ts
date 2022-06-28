@@ -18,10 +18,10 @@ import { Tree } from "@lezer/common";
 import cstToRaw from "./down/cstToRaw";
 import { ensureSyntaxTree } from "@codemirror/language";
 import { GraphState } from "@desmodder/graph-state";
-import { Statement } from "./down/TextAST";
+import { Program, Statement } from "./down/TextAST";
 
 export interface ProgramAnalysis {
-  ast: Statement[];
+  ast: Program;
   diagnostics: Diagnostic[];
   mapIDstmt: { [key: string]: Statement | undefined };
 }

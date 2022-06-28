@@ -303,11 +303,11 @@ function columnToAST(
 }
 
 function styleMapping(from: {
-  [key: string]: TextAST.Expression | TextAST.StyleMapping | undefined;
-}): TextAST.StyleMappingFilled | null {
+  [key: string]: TextAST.Expression | TextAST.StyleMapping | null | undefined;
+}): TextAST.StyleMapping | null {
   const nonemptyEntries = Object.entries(from).filter(
     ([_, value]) => value != null
-  ) as [string, TextAST.Expression | TextAST.StyleMappingFilled][];
+  ) as [string, TextAST.Expression | TextAST.StyleMapping][];
   return nonemptyEntries.length > 0
     ? {
         type: "StyleMapping",
@@ -460,7 +460,7 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
       return {
         type: "UpdateRule",
         variable: identifierToAST(e.variable),
-        expression: childLatexToAST(e.expression),
+        expr: childLatexToAST(e.expression),
       };
     case "ListComprehension":
       return {
@@ -513,7 +513,7 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
     case "Negative":
       return {
         type: "PrefixExpression",
-        op: "negative",
+        op: "-",
         expr: childLatexToAST(e.arg),
       };
     case "Comparator":

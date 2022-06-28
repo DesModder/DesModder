@@ -39,7 +39,7 @@ export class DownState extends DiagnosticsState {
 
 export default function astToAug(
   parseErrors: Diagnostic[],
-  program: TextAST.Statement[]
+  program: TextAST.Program
 ): [ProgramAnalysis, Aug.State | null] {
   const state: Aug.State = {
     version: 9,
@@ -57,7 +57,7 @@ export default function astToAug(
   };
   const diagnostics: Diagnostic[] = [...parseErrors];
   const ds = new DownState(diagnostics);
-  for (let stmt of program) {
+  for (let stmt of program.children) {
     // TODO: throw if there are multiple settings expressions
     const stmtAug = statementToAug(ds, state, stmt);
     if (stmtAug === null) {
@@ -143,7 +143,7 @@ function statementToAug(
 
 function textToAug(
   ds: DownState,
-  styleMapping: TextAST.StyleMapping,
+  styleMapping: TextAST.StyleMapping | null,
   stmt: TextAST.Text
 ): Aug.TextAug | null {
   const style = hydrate(ds, styleMapping, Default.text, Schema.text, "text");
@@ -158,7 +158,7 @@ function textToAug(
 
 function regressionToAug(
   ds: DownState,
-  styleMapping: TextAST.StyleMapping,
+  styleMapping: TextAST.StyleMapping | null,
   stmt: TextAST.ExprStatement,
   regressionData: TextAST.RegressionData,
   exprAST: TextAST.BinaryExpression
@@ -214,7 +214,7 @@ function regressionToAug(
 
 function expressionToAug(
   ds: DownState,
-  styleMapping: TextAST.StyleMapping,
+  styleMapping: TextAST.StyleMapping | null,
   stmt: TextAST.ExprStatement
 ): Aug.ExpressionAug | null {
   if (
@@ -309,7 +309,7 @@ function expressionToAug(
 
 function settingsToAug(
   ds: DownState,
-  styleMapping: TextAST.StyleMapping
+  styleMapping: TextAST.StyleMapping | null
 ): null | { type: "settings"; settings: GrapherState } {
   const hydrated = hydrate(
     ds,
@@ -373,7 +373,7 @@ function exprBase(
 
 function tableToAug(
   ds: DownState,
-  styleMapping: TextAST.StyleMapping,
+  styleMapping: TextAST.StyleMapping | null,
   stmt: TextAST.Table
 ): Aug.TableAug | null {
   const style = hydrate(ds, styleMapping, Default.table, Schema.table, "table");
@@ -443,7 +443,7 @@ function tableColumnToAug(
 
 function imageToAug(
   ds: DownState,
-  styleMapping: TextAST.StyleMapping,
+  styleMapping: TextAST.StyleMapping | null,
   expr: TextAST.Image
 ): Aug.ImageAug | null {
   const style = hydrate(ds, styleMapping, Default.image, Schema.image, "image");
@@ -474,7 +474,7 @@ function imageToAug(
 
 function folderToAug(
   ds: DownState,
-  styleMapping: TextAST.StyleMapping,
+  styleMapping: TextAST.StyleMapping | null,
   expr: TextAST.Folder,
   state: Aug.State
 ): Aug.FolderAug | null {
@@ -592,7 +592,7 @@ export function childExprToAug(
       return {
         type: "UpdateRule",
         variable: identifierToAug(expr.variable),
-        expression: childExprToAug(expr.expression),
+        expression: childExprToAug(expr.expr),
       };
     case "SequenceExpression":
       const seqRight = childExprToAug(expr.right);

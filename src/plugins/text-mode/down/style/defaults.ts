@@ -98,7 +98,7 @@ const expression = {
   cdf: {
     min: {
       type: "PrefixExpression",
-      op: "negative",
+      op: "-",
       expr: { type: "Identifier", name: "infty" },
     },
     max: { type: "Identifier", name: "infty" },

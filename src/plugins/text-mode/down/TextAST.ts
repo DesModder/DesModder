@@ -1,6 +1,11 @@
 import * as TextAST from "./TextAST";
 export default TextAST;
 
+export interface Program extends Positioned {
+  type: "Program";
+  children: Statement[];
+}
+
 export type Statement =
   | ExprStatement
   | Table
@@ -9,10 +14,9 @@ export type Statement =
   | Folder
   | Settings;
 
-export interface ExprStatement extends Positioned {
+export interface ExprStatement extends Positioned, Styled {
   type: "ExprStatement";
   expr: Expression;
-  style: StyleMapping;
   /**
    * Data for regression. Not in style mapping because identifiers get
    * evaluated in style mapping. Also mapping keys are strings, not identifiers
@@ -25,37 +29,32 @@ export interface RegressionData {
   residualVariable?: Identifier;
 }
 
-export interface Table extends Positioned {
+export interface Table extends Positioned, Styled {
   type: "Table";
   columns: TableColumn[];
-  style: StyleMapping;
 }
 
 export type TableColumn = ExprStatement;
 
-export interface Image extends Positioned {
+export interface Image extends Positioned, Styled {
   type: "Image";
   name: string;
   url: string;
-  style: StyleMapping;
 }
 
-export interface Text extends Positioned {
+export interface Text extends Positioned, Styled {
   type: "Text";
   text: string;
-  style: StyleMapping;
 }
 
-export interface Folder extends Positioned {
+export interface Folder extends Positioned, Styled {
   type: "Folder";
   title: string;
   children: Statement[];
-  style: StyleMapping;
 }
 
-export interface Settings extends Positioned {
+export interface Settings extends Positioned, Styled {
   type: "Settings";
-  style: StyleMapping;
 }
 
 export interface RegressionParameters extends Positioned {
@@ -69,9 +68,7 @@ export interface RegressionEntry extends Positioned {
   value: Expression;
 }
 
-export type StyleMapping = StyleMappingFilled | null;
-
-export interface StyleMappingFilled extends Positioned {
+export interface StyleMapping extends Positioned {
   type: "StyleMapping";
   entries: MappingEntry[];
 }
@@ -79,7 +76,7 @@ export interface StyleMappingFilled extends Positioned {
 export interface MappingEntry extends Positioned {
   type: "MappingEntry";
   property: String;
-  expr: Expression | StyleMappingFilled;
+  expr: Expression | StyleMapping;
 }
 
 export type Expression =
@@ -162,14 +159,14 @@ export interface PiecewiseBranch extends Positioned {
 
 export interface PrefixExpression extends Positioned {
   type: "PrefixExpression";
-  op: "negative";
+  op: "-";
   expr: Expression;
 }
 
 export interface UpdateRule extends Positioned {
   type: "UpdateRule";
   variable: Identifier;
-  expression: Expression;
+  expr: Expression;
 }
 
 export interface SequenceExpression extends Positioned {
@@ -232,6 +229,10 @@ export interface Pos {
   to: number;
 }
 
+interface Styled {
+  style: StyleMapping | null;
+}
+
 /* Builders */
 
 export function number(val: number): Number {
@@ -239,4 +240,34 @@ export function number(val: number): Number {
     type: "Number",
     value: val,
   };
+}
+
+/* Path */
+
+export type NonExprNode =
+  | Program
+  | Statement
+  | RegressionParameters
+  | RegressionEntry
+  | StyleMapping
+  | MappingEntry
+  | AssignmentExpression
+  | PiecewiseBranch;
+
+export type Node = NonExprNode | Expression;
+
+export class NodePath<T extends Node = Node> {
+  constructor(
+    public node: T,
+    public parentPath: NodePath | null,
+    public name?: string | number
+  ) {}
+
+  get parent() {
+    return this.parentPath ? this.parentPath.node : null;
+  }
+
+  withChild<U extends Node>(node: U, name: string | number): NodePath<U> {
+    return new NodePath<U>(node, this, name);
+  }
 }

@@ -8,17 +8,16 @@
 @precedence {
   member,
   access,
-  seq @right,
   call,
-  prefix,
   postfix,
+  prefix,
   exp @right,
   times @left,
   plus @left,
   derivative,
+  rel @left,
   updateRule @right,
-  sim @left,
-  rel @left
+  sim @left
 }
 
 @top Program {
@@ -48,7 +47,7 @@ statements {
 
 expressionMaybeSeq[@isGroup=Expression] {
   expression |
-  SequenceExpression { expression !seq "," expressionMaybeSeq }   
+  SequenceExpression { expression "," expressionMaybeSeq }   
 }
 
 expression {
