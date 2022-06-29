@@ -15,9 +15,9 @@
   times @left,
   plus @left,
   derivative,
-  rel @left,
   updateRule @right,
-  sim @left
+  sim @left,
+  rel @left
 }
 
 @top Program {
