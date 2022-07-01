@@ -12,7 +12,7 @@ module.exports = {
   testPathIgnorePatterns: ["<rootDir>/node_modules/"],
   globals: {
     "ts-jest": {
-      tsconfig: "jest-config/tsconfig.spec.json",
+      tsconfig: "tsconfig.json",
     },
   },
   moduleDirectories: ["node_modules", "src"],

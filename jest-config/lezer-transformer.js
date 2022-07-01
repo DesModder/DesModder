@@ -5,11 +5,8 @@ const fs = require("fs");
 
 module.exports = {
   process(sourceText, sourcePath, config) {
-    const newPath = sourcePath.replace(".grammar", ".ts");
-    const ts = buildLezer(sourceText).replace(
-      "LRParser.",
-      "(LRParser as any)."
-    );
+    const newPath = sourcePath.replace(".grammar", ".js");
+    const ts = buildLezer(sourceText);
     // tsJestTranformer needs the path of the file, and it needs to be valid
     // even though tsJestTranformer takes in the string contents of the file
     fs.writeFileSync(newPath, ts);

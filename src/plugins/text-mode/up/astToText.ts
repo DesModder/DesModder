@@ -133,7 +133,7 @@ function primeOrCallToText(
     "(" +
     path.node.arguments
       .map((e, i) => exprToText(path.withChild(e, "argument." + i)))
-      .join(",") +
+      .join(", ") +
     ")"
   );
 }
@@ -148,6 +148,8 @@ export function exprToTextNoParen(path: NodePath<TextAST.Expression>): string {
   const e = path.node;
   switch (e.type) {
     case "Number":
+      // TODO: raw string property so users don't get their numbers auto
+      // formatted to scientific notation every time
       return numToText(e.value);
     case "Identifier":
       return e.name;
@@ -173,7 +175,7 @@ export function exprToTextNoParen(path: NodePath<TextAST.Expression>): string {
         "[" +
         e.values
           .map((v, i) => exprToText(path.withChild(v, "values." + i)))
-          .join(",") +
+          .join(", ") +
         "]"
       );
     case "RangeExpression":
@@ -181,11 +183,11 @@ export function exprToTextNoParen(path: NodePath<TextAST.Expression>): string {
         "[" +
         e.startValues
           .map((v, i) => exprToText(path.withChild(v, "startValues." + i)))
-          .join(",") +
+          .join(", ") +
         "..." +
         e.endValues
           .map((v, i) => exprToText(path.withChild(v, "endValues" + i)))
-          .join(",") +
+          .join(", ") +
         "]"
       );
     case "ListAccessExpression":
@@ -203,12 +205,12 @@ export function exprToTextNoParen(path: NodePath<TextAST.Expression>): string {
     case "SequenceExpression":
       return (
         exprToText(path.withChild(e.left, "left")) +
-        "," +
+        ", " +
         exprToText(path.withChild(e.right, "right"))
       );
     case "UpdateRule":
       return (
-        e.variable.name + "->" + exprToText(path.withChild(e.expr, "expr"))
+        e.variable.name + " -> " + exprToText(path.withChild(e.expr, "expr"))
       );
     case "ListComprehension":
       return `[${exprToText(path.withChild(e.expr, "expr"))} for ${e.assignments
@@ -217,7 +219,7 @@ export function exprToTextNoParen(path: NodePath<TextAST.Expression>): string {
             path.withChild(assignment, "assignments.i")
           )
         )
-        .join(",")}]`;
+        .join(", ")}]`;
     case "PiecewiseExpression":
       return (
         "{" +
@@ -225,16 +227,18 @@ export function exprToTextNoParen(path: NodePath<TextAST.Expression>): string {
           .map(
             (branch) =>
               exprToText(path.withChild(branch.condition, "condition")) +
-              ":" +
+              ": " +
               exprToText(path.withChild(branch.consequent, "consequent"))
           )
-          .join(",") +
+          .join(", ") +
         "}"
       );
     case "BinaryExpression":
       return (
         exprToText(path.withChild(e.left, "left")) +
+        " " +
         e.op +
+        " " +
         exprToText(path.withChild(e.right, "right"))
       );
     case "PrefixExpression":
@@ -259,5 +263,7 @@ function assignmentExpressionToText(
 
 function numToText(num: number) {
   const s = num.toString();
-  return s.includes("e") ? `(${s.replace("e", "*10^")})` : s;
+  return s.includes("e")
+    ? `(${s.replace("e+", "e").replace("e", " * 10 ^ ")})`
+    : s;
 }

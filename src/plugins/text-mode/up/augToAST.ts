@@ -379,7 +379,13 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
     case "Identifier":
       return identifierToAST(e);
     case "FunctionCall":
-      return functionCallToAST(e);
+      return e.callee.symbol === "factorial" && e.args.length === 1
+        ? {
+            type: "PostfixExpression",
+            op: "factorial",
+            expr: childLatexToAST(e.args[0]),
+          }
+        : functionCallToAST(e);
     case "Prime":
       return {
         type: "PrimeExpression",

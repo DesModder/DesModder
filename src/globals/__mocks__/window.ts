@@ -7,4 +7,9 @@ export const Calc = {
     PURPLE: "#6042a6",
     BLACK: "#000000",
   },
+  controller: {
+    getItemModel(id: string) {
+      return { id };
+    },
+  },
 };

@@ -7,6 +7,16 @@ import { mapFromEntries } from "utils/utils";
 import { error, warning } from "./diagnostics";
 import { Diagnostic } from "@codemirror/lint";
 import { Text } from "@codemirror/state";
+import {
+  assignmentExpr,
+  binop,
+  comparator,
+  functionCall,
+  id,
+  list,
+  number,
+  updateRule,
+} from "../aug/augBuilders";
 
 jest.mock("utils/depUtils");
 jest.mock("globals/window");
@@ -118,86 +128,6 @@ function testString(desc: string, s: string, expected: string) {
     ...exprDefaults,
     id: expected,
   });
-}
-
-function number(x: number): Aug.Latex.Constant {
-  return {
-    type: "Constant",
-    value: x,
-  };
-}
-
-function id(name: string): Aug.Latex.Identifier {
-  return {
-    type: "Identifier",
-    symbol: name,
-  };
-}
-
-function binop(
-  op: "Add" | "Subtract" | "Multiply" | "Divide" | "Exponent",
-  left: Aug.Latex.AnyChild,
-  right: Aug.Latex.AnyChild
-): Aug.Latex.BinaryOperator {
-  return {
-    type: "BinaryOperator",
-    name: op,
-    left,
-    right,
-  };
-}
-
-function comparator(
-  op: "<" | "<=" | "=" | ">=" | ">",
-  left: Aug.Latex.AnyChild,
-  right: Aug.Latex.AnyChild
-): Aug.Latex.Comparator {
-  return {
-    type: "Comparator",
-    operator: op,
-    left,
-    right,
-  };
-}
-
-function list(...children: Aug.Latex.AnyChild[]): Aug.Latex.List {
-  return {
-    type: "List",
-    args: children,
-  };
-}
-
-function assignmentExpr(
-  variable: Aug.Latex.Identifier,
-  expression: Aug.Latex.AnyChild
-) {
-  return {
-    type: "AssignmentExpression",
-    variable,
-    expression,
-  };
-}
-
-function updateRule(
-  variable: Aug.Latex.Identifier,
-  expression: Aug.Latex.AnyChild
-) {
-  return {
-    type: "UpdateRule",
-    variable,
-    expression,
-  };
-}
-
-function functionCall(
-  callee: Aug.Latex.Identifier,
-  args: Aug.Latex.AnyChild[]
-) {
-  return {
-    type: "FunctionCall",
-    callee,
-    args,
-  };
 }
 
 describe("Basic exprs", () => {
@@ -348,11 +278,6 @@ describe("Basic exprs", () => {
       parenWrapped: true,
       args: [updateRule(id("a"), number(2)), updateRule(id("b"), number(3))],
     });
-    testExpr("point", "(2,3)", {
-      type: "Seq",
-      parenWrapped: true,
-      args: [number(2), number(3)],
-    });
   });
   describe("MemberExpression", () => {
     testExpr("point access", "P.y", {
@@ -405,6 +330,18 @@ describe("Basic exprs", () => {
   describe("CallExpression", () => {
     testExpr("single arg", "f(x)", functionCall(id("f"), [id("x")]));
     testExpr("two args", "g(x,y)", functionCall(id("g"), [id("x"), id("y")]));
+  });
+  describe("Derivatives", () => {
+    testExpr("Derivative", "(d/d x) f(x)", {
+      type: "Derivative",
+      arg: functionCall(id("f"), [id("x")]),
+      variable: id("x"),
+    });
+    testExpr("Prime", "f'''(x)", {
+      type: "Prime",
+      arg: functionCall(id("f"), [id("x")]),
+      order: 3,
+    });
   });
 });
 

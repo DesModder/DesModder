@@ -13,10 +13,16 @@ import {
  */
 export default function needsParens(path: NodePath) {
   const parent = path.parent;
+  /* istanbul ignore if */
   if (parent === null) return false;
 
   const node = path.node;
   const name = path.name;
+
+  if (node.type === "SequenceExpression")
+    // sequence expressions will only ever be unwrapped when their parent
+    // is a statement
+    return node.parenWrapped;
 
   if (isNonExpression(node) || isNonExpression(parent)) return false;
 
@@ -37,7 +43,7 @@ export default function needsParens(path: NodePath) {
     case "ListComprehension":
       return false;
     case "MemberExpression":
-      return true;
+      return name !== "object" || node.type !== "Identifier";
     // else fall through to the next switch
   }
 
@@ -67,10 +73,6 @@ export default function needsParens(path: NodePath) {
         default:
           return false;
       }
-    case "SequenceExpression":
-      // sequence expressions will only ever be unwrapped when their parent
-      // is a statement
-      return node.parenWrapped;
     case "UpdateRule":
       switch (parent.type) {
         case "SequenceExpression":
@@ -82,6 +84,7 @@ export default function needsParens(path: NodePath) {
           // This one can be contentious.
           // {x > 1: x -> 0, x -> 2} is NOT {x > 1: (x -> 0, x -> 2)}
           return false;
+        /* istanbul ignore next */
         default:
           return true;
       }
