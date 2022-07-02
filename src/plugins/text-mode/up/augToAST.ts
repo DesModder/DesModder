@@ -42,6 +42,10 @@ export function graphSettingsToAST(
   };
 }
 
+function idToString(id: string) {
+  return id.startsWith("__") ? undefined : stringToASTmaybe(id);
+}
+
 export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
   if (item.error)
     return {
@@ -52,7 +56,7 @@ export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
       style: null,
     };
   const base = {
-    id: item.id.startsWith("__") ? undefined : stringToASTmaybe(item.id),
+    id: idToString(item.id),
     secret: booleanToAST(item.secret, false),
     pinned: booleanToAST(item.type !== "folder" && item.pinned, false),
   };
@@ -291,14 +295,15 @@ function columnToAST(
             },
           }
         : childLatexToAST(col.latex),
-    style: styleMapping(
-      columnExpressionCommonStyle(
+    style: styleMapping({
+      id: idToString(col.id),
+      ...columnExpressionCommonStyle(
         col,
         colIndex == 0
           ? []
           : ["points", "lines", ...(draggable ? ["drag" as const] : [])]
-      )
-    ),
+      ),
+    }),
   };
 }
 

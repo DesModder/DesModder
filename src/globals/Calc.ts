@@ -69,7 +69,7 @@ interface EvaluatorChange {
   action_value?: unknown;
   /** (Regression expressions) Regression metadata */
   regression?: unknown;
-  /** (Tables) column changes */
+  /** (Tables) column changes from dragging points */
   column_data?: unknown[];
 }
 

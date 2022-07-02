@@ -32,7 +32,7 @@ export type RelevantEvent = DispatchedEvent & {
   type: typeof relevantEventTypes[number];
 };
 
-type ToChange = "latex-only" | "all";
+type ToChange = "table-columns" | "latex-only" | "all";
 
 export function eventSequenceChanges(
   ls: LanguageServer,
@@ -73,11 +73,10 @@ export function eventSequenceChanges(
             // otherwise (length 4), it is dragging an image
             itemsChanged[changeID] =
               change.move_strategy?.length === 2 ? "latex-only" : "all";
-          else if (
-            change.regression !== undefined ||
-            change.column_data !== undefined
-          )
+          else if (change.regression !== undefined)
             itemsChanged[changeID] = "all";
+          else if (change.column_data !== undefined)
+            itemsChanged[changeID] = "table-columns";
         }
         break;
     }
@@ -144,14 +143,29 @@ function itemChange(
   const oldNode = analysis.mapIDstmt[changeID];
   if (oldNode === undefined) return [];
   const itemAug = rawNonFolderToAug(newStateItem, dsmMetadata);
-  if (toChange === "latex-only") {
+  if (toChange === "table-columns") {
+    if (oldNode.type !== "Table" || itemAug.type !== "table")
+      throw new Error(
+        "Programming Error: expected table on a table-columns change"
+      );
+    const ast = itemAugToAST(itemAug) as TextAST.Table | null;
+    if (ast === null)
+      throw "Programming error: expect new table item to always be parseable";
+    if (ast.columns.length < oldNode.columns.length)
+      throw "Programming error: expect no fewer new table columns than old";
+    return oldNode.columns.map((e, i) => ({
+      from: e.expr.pos!.from,
+      to: e.expr.pos!.to,
+      insert: exprToTextString(new NodePath(ast.columns[i].expr, null)),
+    }));
+  } else if (toChange === "latex-only") {
     if (oldNode.type !== "ExprStatement" || itemAug.type !== "expression")
       throw new Error(
         "Programming Error: expected expression on a latex-only change"
       );
     const ast = itemAugToAST(itemAug) as TextAST.ExprStatement | null;
     if (ast === null)
-      throw "Programming error: expect new item to always be parseable";
+      throw "Programming error: expect new expr item to always be parseable";
     return [
       {
         from: oldNode.expr.pos!.from,
