@@ -1,7 +1,7 @@
 // Based on the Lezer JavaScript grammer
 // <https://github.com/lezer-parser/javascript/blob/main/src/javascript.grammar>
 
-@skip { spaces | newline | lineComment }
+@skip { spaces | newline | LineComment }
 
 @context trackNewline from "./tokens"
 
@@ -139,11 +139,11 @@ kw<term> { @specialize[@name={term}]<Identifier, term> }
 
   Prime { "'"+ }
 
-  lineComment { "//" ![\n]* }
+  LineComment { "//" ![\n]* }
 
   divide[@name=ArithOp] { "/" }
 
-  @precedence { lineComment, divide }
+  @precedence { LineComment, divide }
 
   @precedence { Identifier, "d/d" }
 
