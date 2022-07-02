@@ -3,7 +3,6 @@ import { cstToAST } from "./cstToAST";
 import astToAug from "./astToAug";
 import Aug from "../aug/AugState";
 import { test, expect, describe } from "@jest/globals";
-import { mapFromEntries } from "utils/utils";
 import { error, warning } from "./diagnostics";
 import { Diagnostic } from "@codemirror/lint";
 import { Text } from "@codemirror/state";
@@ -578,7 +577,7 @@ describe("Regressions", () => {
     },
     regression: {
       isLogMode: false,
-      regressionParameters: mapFromEntries([
+      regressionParameters: new Map([
         [
           {
             symbol: "a",

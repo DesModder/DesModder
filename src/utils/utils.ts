@@ -48,14 +48,6 @@ export type OptionalProperties<T> = {
   [K in keyof T]?: T[K];
 };
 
-export function mapFromEntries<K, V>(entries: Iterable<[K, V]>): Map<K, V> {
-  let res = new Map();
-  for (let [key, value] of entries) {
-    res.set(key, value);
-  }
-  return res;
-}
-
 export function everyNonNull<T>(arr: (T | null)[]): arr is T[] {
   return arr.every((e) => e !== null);
 }

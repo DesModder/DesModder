@@ -1,6 +1,5 @@
 import TextAST from "./TextAST";
 import Aug from "../aug/AugState";
-import { mapFromEntries } from "utils/utils";
 import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
 import { Calc } from "globals/window";
 import { StyleValue, hydrate } from "./style/hydrate";
@@ -199,7 +198,7 @@ function regressionToAug(
       residualVariable:
         regressionData.residualVariable &&
         identifierToAug(regressionData.residualVariable),
-      regressionParameters: mapFromEntries(params),
+      regressionParameters: new Map(params),
     },
     color: "",
     errorHidden: style.errorHidden,

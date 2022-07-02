@@ -4,7 +4,6 @@ import { ChildExprNode, evalMaybeRational, AnyNode } from "parsing/parsenode";
 import migrateToLatest from "main/metadata/migrate";
 import Metadata from "main/metadata/interface";
 import { parseDesmosLatex } from "utils/depUtils";
-import { mapFromEntries } from "utils/utils";
 
 export default function rawToAug(raw: Graph.GraphState): Aug.State {
   const dsmMetadata = rawToDsmMetadata(raw);
@@ -139,7 +138,7 @@ function tryRawNonFolderToAug(
               residualVariable: parseLatex(
                 item.residualVariable
               ) as Aug.Latex.Identifier,
-              regressionParameters: mapFromEntries(
+              regressionParameters: new Map(
                 Object.entries(item.regressionParameters ?? {}).map(
                   ([key, value]) => [
                     parseLatex(key) as Aug.Latex.Identifier,
