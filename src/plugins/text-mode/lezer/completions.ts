@@ -56,8 +56,9 @@ const PROGRAM_COMPLETIONS: Completion[] = [
     apply: macroExpandWithSelection(
       'image "',
       "name",
-      '" "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjYGBg+A8AAQQBAHAgZQsAAAAASUVORK5CYII="' +
-        "\n  @{\n    width: 10,\n    height: 10,\n    center: (0,0),\n  }"
+      `" @{\n  url: ${JSON.stringify(
+        Defaults.image.url
+      )},\n  width: 10,\n  height: 10,\n  center: (0, 0),\n}`
     ),
   },
 ];

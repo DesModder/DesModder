@@ -27,8 +27,8 @@
 statement[@isGroup=Statement] {
   ExprStatement { expressionMaybeSeq RegressionBody? StyleMapping? } |
   Table { kw<"table"> BlockInner StyleMapping? } |
-  Image { kw<"image"> String String  StyleMapping? } |
-  Text { String  StyleMapping? } |
+  Image { kw<"image"> String StyleMapping? } |
+  Text { String StyleMapping? } |
   Folder { kw<"folder"> String BlockInner StyleMapping? } |
   Settings { kw<"settings"> StyleMapping }
 }

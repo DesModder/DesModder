@@ -39,7 +39,6 @@ export type TableColumn = ExprStatement;
 export interface Image extends Positioned, Styled {
   type: "Image";
   name: string;
-  url: string;
 }
 
 export interface Text extends Positioned, Styled {

@@ -450,7 +450,7 @@ function imageToAug(
   const res: Aug.ImageAug = {
     type: "image",
     ...exprBase(ds, style, expr),
-    image_url: expr.url,
+    image_url: style.url,
     name: expr.name,
     width: childExprToAug(style.width),
     height: childExprToAug(style.height),

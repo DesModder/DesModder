@@ -107,9 +107,11 @@ export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
       return {
         type: "Image",
         name: item.name,
-        url: item.image_url,
         style: styleMapping({
           ...base,
+          url: stringToASTmaybe(item.image_url),
+          hoveredImage: stringToASTmaybe(item.clickableInfo?.hoveredImage),
+          depressedImage: stringToASTmaybe(item.clickableInfo?.depressedImage),
           width: childLatexToASTmaybe(item.width),
           height: childLatexToASTmaybe(item.height),
           center: childLatexToASTmaybe(item.center),
@@ -127,8 +129,6 @@ export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
           draggable: booleanToAST(item.draggable, false),
           onClick: childLatexToASTmaybe(item.clickableInfo?.latex),
           clickDescription: stringToASTmaybe(item.clickableInfo?.description),
-          hoveredImage: stringToASTmaybe(item.clickableInfo?.hoveredImage),
-          depressedImage: stringToASTmaybe(item.clickableInfo?.depressedImage),
         }),
       };
     case "table":

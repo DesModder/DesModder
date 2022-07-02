@@ -42,11 +42,7 @@ function astItemToText(path: NodePath<TextAST.Statement>): Doc {
       return [
         "image ",
         stringToText(item.name),
-        indent([
-          hardline,
-          stringToText(item.url),
-          trailingStyleMap(path, item.style, true),
-        ]),
+        trailingStyleMap(path, item.style),
       ];
     case "Table":
       return [
@@ -98,12 +94,10 @@ function columnToText(path: NodePath<TextAST.TableColumn>): Doc {
 
 function trailingStyleMap(
   parentPath: NodePath,
-  node: TextAST.StyleMapping | null,
-  forceNextLine: boolean = false
+  node: TextAST.StyleMapping | null
 ): Doc {
   if (node === null) return "";
-  const main = styleMapToText(parentPath.withChild(node, "style"));
-  return forceNextLine ? [hardline, main] : [" ", main];
+  return [" ", styleMapToText(parentPath.withChild(node, "style"))];
 }
 
 function styleMapToText(path: NodePath<TextAST.StyleMapping>): Doc {

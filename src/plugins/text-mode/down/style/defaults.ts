@@ -156,6 +156,7 @@ export const image: Hydrated.Image = {
   opacity: number(1),
   foreground: false,
   draggable: false,
+  url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjYGBg+A8AAQQBAHAgZQsAAAAASUVORK5CYII=",
   hoveredImage: "",
   depressedImage: "",
 };

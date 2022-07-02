@@ -107,11 +107,9 @@ function statementToAST(
         pos: getPos(node),
       };
     case "Image":
-      const imageStrings = node.getChildren("String");
       return {
         type: "Image",
-        name: parseString(td, imageStrings[0]),
-        url: parseString(td, imageStrings[1]),
+        name: parseString(td, node.getChild("String")!),
         style,
         pos: getPos(node),
       };

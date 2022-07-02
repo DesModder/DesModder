@@ -123,6 +123,7 @@ export interface Image extends NonFolderBase, Clickable {
   opacity: Expr;
   foreground: boolean;
   draggable: boolean;
+  url: string;
   hoveredImage: string;
   depressedImage: string;
 }

@@ -175,6 +175,7 @@ export const image: Schema = {
   opacity: "expr",
   foreground: "boolean",
   draggable: "boolean",
+  url: "string",
   hoveredImage: "string",
   depressedImage: "string",
 };
