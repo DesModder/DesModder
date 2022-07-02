@@ -298,7 +298,7 @@ function latexTreeToString(e: Aug.Latex.AnyRootOrChild) {
 }
 
 function columnEntryToString(e: Aug.Latex.AnyRootOrChild): string {
-  if (e.type === "Identifier" && e.symbol === "NaN") return "";
+  if (e.type === "Identifier" && e.symbol === "N_aN") return "";
   return latexTreeToString(e);
 }
 
