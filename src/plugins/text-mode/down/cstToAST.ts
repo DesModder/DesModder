@@ -139,6 +139,8 @@ function statementToAST(
         style,
         pos: getPos(node),
       };
+    case "LineComment":
+      return null;
     default:
       throw Error(`Programming error: Unexpected statement type ${node.name}`);
   }

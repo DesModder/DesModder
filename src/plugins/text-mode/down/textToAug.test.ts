@@ -705,7 +705,7 @@ describe("Semicolons", () => {
   );
 });
 describe("Image", () => {
-  testStmt("Plain image", `image "name" "data:image/png,stub"`, {
+  testStmt("Plain image", `image "name" @{ url: "data:image/png,stub" }`, {
     type: "image",
     id: "__dsm-auto-1",
     pinned: false,
@@ -726,8 +726,9 @@ describe("Image", () => {
   });
   testStmt(
     "Image with options",
-    `image "name" "data:image/png,stub"
+    `image "name"
       @{
+        url: "data:image/png,stub",
         secret: true,
         pinned: true,
         width: 20,
