@@ -143,6 +143,7 @@ function itemChange(
   const oldNode = analysis.mapIDstmt[changeID];
   if (oldNode === undefined) return [];
   const itemAug = rawNonFolderToAug(newStateItem, dsmMetadata);
+  if (itemAug.error) throw new Error("Expected valid itemAug in modify");
   if (toChange === "table-columns") {
     if (oldNode.type !== "Table" || itemAug.type !== "table")
       throw new Error(

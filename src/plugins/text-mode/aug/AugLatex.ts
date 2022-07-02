@@ -84,6 +84,7 @@ export interface Regression {
 
 export interface Constant {
   type: "Constant";
+  /** Reminder: value can be NaN, for e.g. empty table entries */
   value: number;
 }
 

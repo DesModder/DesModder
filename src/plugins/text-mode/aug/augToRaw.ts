@@ -205,7 +205,11 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
         ...base,
         type: "table",
         columns: item.columns.map((column) => ({
-          values: column.values.map(latexTreeToString),
+          values:
+            // Desmos expects at least one row
+            column.values.length > 0
+              ? column.values.map(columnEntryToString)
+              : [""],
           id: column.id,
           ...columnExpressionCommon(column),
         })),
@@ -291,6 +295,11 @@ function latexTreeToString(e: Aug.Latex.AnyRootOrChild) {
     default:
       return childNodeToString(e);
   }
+}
+
+function columnEntryToString(e: Aug.Latex.AnyRootOrChild): string {
+  if (e.type === "Identifier" && e.symbol === "NaN") return "";
+  return latexTreeToString(e);
 }
 
 function childNodeToString(e: Aug.Latex.AnyChild): string {

@@ -202,13 +202,20 @@ function tryRawNonFolderToAug(
           : undefined,
       };
     case "table":
+      const longestColumnLength = Math.max(
+        ...item.columns.map((col) =>
+          col.values.map((e) => e !== "").lastIndexOf(true)
+        )
+      );
       return {
         ...base,
         type: "table",
         columns: item.columns.map((column) => ({
           type: "column",
           id: column.id,
-          values: column.values.map(parseLatex),
+          values: column.values
+            .slice(0, longestColumnLength + 1)
+            .map(parseLatex),
           ...columnExpressionCommon(column, true),
           ...(column.latex ? { latex: parseLatex(column.latex) } : {}),
         })),
@@ -298,6 +305,7 @@ function columnExpressionCommon(
 }
 
 function parseLatex(str: string): Aug.Latex.AnyChild {
+  if (str === "") return { type: "Constant", value: NaN };
   const res = parseDesmosLatex(str);
   // childNodeToTree throws an error if res is not a child node
   return childNodeToTree(res);
