@@ -37,7 +37,6 @@
     "less": "^4.1.1",
     "less-loader": "^8.1.0",
     "lezer-loader": "^0.3.0",
-    "prettier": "^2.2.1",
     "prettier-check": "^2.0.0",
     "style-loader": "^2.0.0",
     "ts-jest": "^28.0.5",
@@ -62,6 +61,7 @@
     "@lezer/common": "^1.0.0",
     "@lezer/lr": "^1.0.0",
     "@types/desmos": "^1.6.0",
+    "prettier": "^2.7.1",
     "process": "^0.11.10"
   }
 }

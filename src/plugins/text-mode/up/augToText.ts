@@ -1,6 +1,6 @@
 import { NodePath } from "../down/TextAST";
 import Aug from "../aug/AugState";
-import { astItemToText } from "./astToText";
+import { astItemToTextString } from "./astToText";
 import { graphSettingsToAST, itemAugToAST } from "./augToAST";
 
 export default function augToText(aug: Aug.State): string {
@@ -15,11 +15,11 @@ export default function augToText(aug: Aug.State): string {
 }
 
 export function graphSettingsToText(settings: Aug.GraphSettings) {
-  return astItemToText(new NodePath(graphSettingsToAST(settings), null));
+  return astItemToTextString(new NodePath(graphSettingsToAST(settings), null));
 }
 
 export function itemToText(item: Aug.ItemAug): string {
   const ast = itemAugToAST(item);
   if (ast === null) return "";
-  return astItemToText(new NodePath(ast, null));
+  return astItemToTextString(new NodePath(ast, null));
 }

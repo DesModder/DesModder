@@ -11,7 +11,7 @@ import Controller from "../Controller";
 import * as Defaults from "../down/style/defaults";
 import { identifierToStringAST, TextAndDiagnostics } from "../down/cstToAST";
 import TextAST, { NodePath } from "../down/TextAST";
-import { exprToText } from "../up/astToText";
+import { exprToTextString } from "../up/astToText";
 
 function macroExpandWithSelection(
   before: string,
@@ -154,7 +154,9 @@ function styleCompletionsFromDefaults(defaults: any): Completion[] {
           ? "type" in value
             ? macroExpandWithSelection(
                 key + ": ",
-                exprToText(new NodePath(value as TextAST.Expression, null)),
+                exprToTextString(
+                  new NodePath(value as TextAST.Expression, null)
+                ),
                 ","
               )
             : macroExpandWithSelection(key + ": @{ ", "", " },")

@@ -12,7 +12,7 @@ import Metadata from "main/metadata/interface";
 import LanguageServer, { ProgramAnalysis } from "./LanguageServer";
 import TextAST, { NodePath, Settings, Statement } from "./down/TextAST";
 import { itemAugToAST } from "./up/augToAST";
-import { exprToText } from "./up/astToText";
+import { exprToTextString } from "./up/astToText";
 
 export const relevantEventTypes = [
   // @settings related
@@ -156,7 +156,7 @@ function itemChange(
       {
         from: oldNode.expr.pos!.from,
         to: oldNode.expr.pos!.to,
-        insert: exprToText(new NodePath(ast.expr, null)),
+        insert: exprToTextString(new NodePath(ast.expr, null)),
       },
     ];
   } else {
