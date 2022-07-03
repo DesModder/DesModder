@@ -13,8 +13,6 @@ import {
  */
 export default function needsParens(path: NodePath) {
   const parent = path.parent;
-  /* istanbul ignore if */
-  if (parent === null) return false;
 
   const node = path.node;
   const name = path.name;
@@ -23,6 +21,9 @@ export default function needsParens(path: NodePath) {
     // sequence expressions will only ever be unwrapped when their parent
     // is a statement
     return node.parenWrapped;
+
+  /* istanbul ignore if */
+  if (parent === null) return false;
 
   if (isNonExpression(node) || isNonExpression(parent)) return false;
 
