@@ -45,9 +45,7 @@ class LineStyleWidget extends WidgetType {
   }
 }
 
-const styleMappingWidget = {
-  path: ".lines.style",
+export default {
+  paths: [".lines.style"],
   widget: LineStyleWidget,
 };
-
-export default styleMappingWidget;

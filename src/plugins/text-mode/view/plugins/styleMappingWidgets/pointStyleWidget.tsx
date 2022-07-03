@@ -14,7 +14,7 @@ class PointStyleWidget extends WidgetType {
   toDOM() {
     return (
       <span
-        class="dcg-toggle dsm-inline-toggle dcg-line-style-toggle"
+        class="dcg-toggle dsm-inline-toggle dcg-point-style-toggle"
         role="radiogroup"
         data-selected={this.value}
       >
@@ -45,9 +45,7 @@ class PointStyleWidget extends WidgetType {
   }
 }
 
-const styleMappingWidget = {
-  path: ".points.style",
+export default {
+  paths: [".points.style"],
   widget: PointStyleWidget,
 };
-
-export default styleMappingWidget;

@@ -5,14 +5,16 @@ import { ViewUpdate, ViewPlugin, DecorationSet } from "@codemirror/view";
 import { SyntaxNode } from "@lezer/common";
 import lineStyleWidget from "./lineStyleWidget";
 import pointStyleWidget from "./pointStyleWidget";
+import imageWidget from "./imageWidget";
 
 const widgetSpecs: StyleMappingWidgetSpec[] = [
   lineStyleWidget,
   pointStyleWidget,
+  imageWidget,
 ];
 
 interface StyleMappingWidgetSpec {
-  path: string;
+  paths: string[];
   widget: new (value: string) => WidgetType;
 }
 
@@ -34,6 +36,7 @@ export const styleMappingPlugin = ViewPlugin.fromClass(
 
     eventHandlers: {
       mousedown: (e, view) => {
+        console.log("mousedown");
         let target = e.target as HTMLElement;
         const option = target.closest(
           ".dcg-toggle-option"
@@ -52,7 +55,12 @@ export const styleMappingPlugin = ViewPlugin.fromClass(
   }
 );
 
-function toggleString(view: EditorView, pos: number, from: string, to: string) {
+export function toggleString(
+  view: EditorView,
+  pos: number,
+  from: string,
+  to: string
+) {
   let after = view.state.doc.sliceString(pos + 1, pos + from.length + 1);
   if (after === from) {
     view.dispatch({
@@ -66,6 +74,7 @@ function toggleString(view: EditorView, pos: number, from: string, to: string) {
   }
   return false;
 }
+
 /**
  * Get widget locations from a given view
  */
@@ -80,7 +89,7 @@ export function getWidgets(view: EditorView) {
           const path = stylePath(view, node.node);
 
           for (const spec of widgetSpecs) {
-            if (path === spec.path) {
+            if (spec.paths.includes(path)) {
               const value = node.node.getChild(":")!.nextSibling;
               if (value?.name === "String") {
                 const deco = Decoration.widget({

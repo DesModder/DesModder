@@ -1,0 +1,22 @@
+.dsm-text-editor-container .dsm-inline-image {
+  display: inline-block;
+  margin-right: 4px;
+  position: relative;
+  cursor: pointer;
+
+  img {
+    max-width: 75px;
+    height: 22px;
+    vertical-align: bottom;
+  }
+
+  &::after {
+    position: absolute;
+    content: "";
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    box-shadow: inset black 0px 0px 4px 0px;
+  }
+}
