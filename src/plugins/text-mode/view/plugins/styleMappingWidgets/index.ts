@@ -3,19 +3,14 @@ import { EditorView, Decoration } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
 import { ViewUpdate, ViewPlugin, DecorationSet } from "@codemirror/view";
 import { SyntaxNode } from "@lezer/common";
-import lineStyleWidget from "./lineStyleWidget";
-import pointStyleWidget from "./pointStyleWidget";
+import inlineToggleWidget from "./inlineToggleWidget";
 import imageWidget from "./imageWidget";
 
-const widgetSpecs: StyleMappingWidgetSpec[] = [
-  lineStyleWidget,
-  pointStyleWidget,
-  imageWidget,
-];
+const widgetSpecs: StyleMappingWidgetSpec[] = [inlineToggleWidget, imageWidget];
 
 interface StyleMappingWidgetSpec {
   paths: string[];
-  widget: new (value: string) => WidgetType;
+  widget: new (value: string, path: string) => WidgetType;
 }
 
 export const styleMappingPlugin = ViewPlugin.fromClass(
@@ -31,28 +26,7 @@ export const styleMappingPlugin = ViewPlugin.fromClass(
         this.decorations = getWidgets(update.view);
     }
   },
-  {
-    decorations: (v) => v.decorations,
-
-    eventHandlers: {
-      mousedown: (e, view) => {
-        console.log("mousedown");
-        let target = e.target as HTMLElement;
-        const option = target.closest(
-          ".dcg-toggle-option"
-        ) as HTMLElement | null;
-        const toggle = target.closest(".dcg-toggle") as HTMLElement | null;
-        if (option && toggle) {
-          return toggleString(
-            view,
-            view.posAtDOM(target),
-            toggle.dataset.selected!,
-            option.dataset.style!
-          );
-        }
-      },
-    },
-  }
+  { decorations: (v) => v.decorations }
 );
 
 export function toggleString(
@@ -94,7 +68,10 @@ export function getWidgets(view: EditorView) {
               if (value?.name === "String") {
                 const deco = Decoration.widget({
                   widget: new spec.widget(
-                    JSON.parse(view.state.doc.sliceString(value.from, value.to))
+                    JSON.parse(
+                      view.state.doc.sliceString(value.from, value.to)
+                    ),
+                    path
                   ),
                   side: -1,
                 });
