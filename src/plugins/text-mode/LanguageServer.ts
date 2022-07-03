@@ -167,7 +167,7 @@ export default class LanguageServer {
    */
   processQueuedEvents() {
     const changes = eventSequenceChanges(
-      this,
+      this.view!,
       this.queuedEvents,
       this.analysis!
     );

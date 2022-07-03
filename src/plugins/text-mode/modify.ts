@@ -13,6 +13,7 @@ import LanguageServer, { ProgramAnalysis } from "./LanguageServer";
 import TextAST, { NodePath, Settings, Statement } from "./down/TextAST";
 import { itemAugToAST } from "./up/augToAST";
 import { exprToTextString } from "./up/astToText";
+import { EditorView } from "@codemirror/view";
 
 export const relevantEventTypes = [
   // @settings related
@@ -35,7 +36,7 @@ export type RelevantEvent = DispatchedEvent & {
 type ToChange = "table-columns" | "latex-only" | "all";
 
 export function eventSequenceChanges(
-  ls: LanguageServer,
+  view: EditorView,
   events: RelevantEvent[],
   analysis: ProgramAnalysis
 ): ChangeSpec[] {
@@ -89,7 +90,7 @@ export function eventSequenceChanges(
   const dsmMetadata = rawToDsmMetadata(state);
   for (const [changeID, toChange] of Object.entries(itemsChanged)) {
     changes.push(
-      ...itemChange(analysis, state, dsmMetadata, changeID, toChange)
+      ...itemChange(analysis, state, dsmMetadata, changeID, toChange, view)
     );
   }
   return changes;
@@ -136,7 +137,8 @@ function itemChange(
   state: GraphState,
   dsmMetadata: Metadata,
   changeID: string,
-  toChange: ToChange
+  toChange: ToChange,
+  view: EditorView
 ): ChangeSpec[] {
   const newStateItem = state.expressions.list.find((e) => e.id === changeID);
   if (!newStateItem || newStateItem.type === "folder") return [];
@@ -154,11 +156,13 @@ function itemChange(
       throw "Programming error: expect new table item to always be parseable";
     if (ast.columns.length < oldNode.columns.length)
       throw "Programming error: expect no fewer new table columns than old";
-    return oldNode.columns.map((e, i) => ({
-      from: e.expr.pos!.from,
-      to: e.expr.pos!.to,
-      insert: exprToTextString(new NodePath(ast.columns[i].expr, null)),
-    }));
+    return oldNode.columns.map((e, i) =>
+      insertWithIndentation(
+        view,
+        e.expr.pos!,
+        exprToTextString(new NodePath(ast.columns[i].expr, null))
+      )
+    );
   } else if (toChange === "latex-only") {
     if (oldNode.type !== "ExprStatement" || itemAug.type !== "expression")
       throw new Error(
@@ -168,19 +172,32 @@ function itemChange(
     if (ast === null)
       throw "Programming error: expect new expr item to always be parseable";
     return [
-      {
-        from: oldNode.expr.pos!.from,
-        to: oldNode.expr.pos!.to,
-        insert: exprToTextString(new NodePath(ast.expr, null)),
-      },
+      insertWithIndentation(
+        view,
+        oldNode.expr.pos!,
+        exprToTextString(new NodePath(ast.expr, null))
+      ),
     ];
   } else {
-    return [
-      {
-        from: oldNode.pos!.from,
-        to: oldNode.pos!.to,
-        insert: itemToText(itemAug),
-      },
-    ];
+    return [insertWithIndentation(view, oldNode.pos!, itemToText(itemAug))];
   }
+}
+
+function insertWithIndentation(
+  view: EditorView,
+  pos: TextAST.Pos,
+  insert: string
+) {
+  const indentation = getIndentation(view, pos.from);
+  return {
+    from: pos.from,
+    to: pos.to,
+    insert: insert.replace(/\n/g, "\n" + indentation),
+  };
+}
+
+export function getIndentation(view: EditorView, from: number) {
+  const line = view.state.doc.lineAt(from + 1);
+  const indentation = line.text.slice(0, from - line.from);
+  return /^[ \t]+$/.test(indentation) ? indentation : "";
 }

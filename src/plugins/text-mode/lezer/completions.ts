@@ -12,6 +12,7 @@ import * as Defaults from "../down/style/defaults";
 import { identifierToStringAST, TextAndDiagnostics } from "../down/cstToAST";
 import TextAST, { NodePath } from "../down/TextAST";
 import { exprToTextString } from "../up/astToText";
+import { getIndentation } from "../modify";
 
 function macroExpandWithSelection(
   before: string,
@@ -24,6 +25,12 @@ function macroExpandWithSelection(
     from: number,
     to: number
   ) => {
+    const indentation = getIndentation(view, from);
+    if (indentation.length > 0) {
+      before = before.replace(/\n/g, "\n" + indentation);
+      selString = selString.replace(/\n/g, "\n" + indentation);
+      after = after.replace(/\n/g, "\n" + indentation);
+    }
     view.dispatch({
       changes: [{ from, to, insert: before + selString + after }],
       annotations: pickedCompletion.of(completion),
@@ -35,12 +42,7 @@ function macroExpandWithSelection(
   };
 }
 
-const PROGRAM_COMPLETIONS: Completion[] = [
-  {
-    type: "keyword",
-    label: "folder",
-    apply: macroExpandWithSelection('folder "', "title", '" {}'),
-  },
+const FOLDER_COMPLETIONS: Completion[] = [
   {
     type: "keyword",
     label: "table",
@@ -63,6 +65,15 @@ const PROGRAM_COMPLETIONS: Completion[] = [
   },
 ];
 
+const PROGRAM_COMPLETIONS: Completion[] = [
+  {
+    type: "keyword",
+    label: "folder",
+    apply: macroExpandWithSelection('folder "', "title", '" {}'),
+  },
+  ...FOLDER_COMPLETIONS,
+];
+
 export function completions(
   controller: Controller,
   context: CompletionContext
@@ -75,7 +86,9 @@ export function completions(
     validFor: /^\w*$/,
     from: word.from,
     options:
-      parent.name === "Program"
+      parent.name === "BlockInner" && parent.parent!.name === "Folder"
+        ? FOLDER_COMPLETIONS
+        : parent.name === "Program"
         ? PROGRAM_COMPLETIONS
         : parent.name === "StyleMapping" || parent.name === "MappingEntry"
         ? styleCompletions(controller, parent)
