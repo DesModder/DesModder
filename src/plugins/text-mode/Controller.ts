@@ -86,6 +86,41 @@ export default class Controller {
 
   onEditorUpdate(update: ViewUpdate) {
     if (!this.languageServer) return;
+    if (update.docChanged || update.selectionSet)
+      selectFromText(update.view, this.languageServer);
     return this.languageServer.onEditorUpdate(update);
+  }
+}
+
+function selectFromText(view: EditorView, ls: LanguageServer) {
+  const currSelected = Calc.selectedExpressionId as string | undefined;
+  const newSelected = getSelectedItem(view, ls);
+  if (newSelected !== currSelected) {
+    if (newSelected !== undefined) {
+      Calc.controller.dispatch({
+        type: "set-selected-id",
+        id: newSelected,
+      });
+    } else {
+      Calc.controller.dispatch({
+        type: "set-none-selected",
+      });
+    }
+  }
+}
+
+function getSelectedItem(
+  view: EditorView,
+  ls: LanguageServer
+): string | undefined {
+  const selection = view.state.selection.main;
+  if (ls.analysis) {
+    const containingPairs = Object.entries(ls.analysis.mapIDstmt).filter(
+      ([id, stmt]) =>
+        stmt!.type !== "Folder" &&
+        stmt!.pos!.from <= selection.from &&
+        stmt!.pos!.to >= selection.to
+    );
+    return containingPairs[0]?.[0];
   }
 }

@@ -17,14 +17,16 @@ export type DispatchedEvent =
         | "commit-user-requested-viewport"
         | "zoom"
         | "set-graph-settings"
-        | "resize-exp-list";
+        | "resize-exp-list"
+        | "set-none-selected";
     }
   | {
       type:
         | "action-single-step"
         | "toggle-item-hidden"
         | "duplicate-folder"
-        | "duplicate-expression";
+        | "duplicate-expression"
+        | "set-selected-id";
       id: string;
     }
   | {
