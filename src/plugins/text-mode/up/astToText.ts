@@ -9,7 +9,7 @@ const { group, indent, join, line, softline, hardline, ifBreak, breakParent } =
 (window as any).builders = builders;
 (window as any).print = docToString;
 
-function docToString(doc: Doc): string {
+export function docToString(doc: Doc): string {
   return printer.printDocToString(doc, {
     printWidth: 60,
     tabWidth: 2,
@@ -110,7 +110,7 @@ function styleMapToText(path: NodePath<TextAST.StyleMapping>): Doc {
   return group(["@{", indent([line, join(line, lines)]), line, "}"]);
 }
 
-function styleEntryToText(path: NodePath<TextAST.MappingEntry>) {
+export function styleEntryToText(path: NodePath<TextAST.MappingEntry>) {
   const entry = path.node;
   return [
     entry.property.value,

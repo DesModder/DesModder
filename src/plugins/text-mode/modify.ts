@@ -12,7 +12,11 @@ import Metadata from "main/metadata/interface";
 import LanguageServer, { ProgramAnalysis } from "./LanguageServer";
 import TextAST, { NodePath, Settings, Statement } from "./down/TextAST";
 import { itemAugToAST } from "./up/augToAST";
-import { exprToTextString } from "./up/astToText";
+import {
+  docToString,
+  exprToTextString,
+  styleEntryToText,
+} from "./up/astToText";
 import { EditorView } from "@codemirror/view";
 
 export const relevantEventTypes = [
@@ -33,7 +37,7 @@ export type RelevantEvent = DispatchedEvent & {
   type: typeof relevantEventTypes[number];
 };
 
-type ToChange = "table-columns" | "latex-only" | "all";
+type ToChange = "table-columns" | "latex-only" | "image-pos" | "all";
 
 export function eventSequenceChanges(
   view: EditorView,
@@ -73,7 +77,7 @@ export function eventSequenceChanges(
             // length 2 corresponds to dragging a point, which is latex only
             // otherwise (length 4), it is dragging an image
             itemsChanged[changeID] =
-              change.move_strategy?.length === 2 ? "latex-only" : "all";
+              change.move_strategy?.length === 2 ? "latex-only" : "image-pos";
           else if (change.regression !== undefined)
             itemsChanged[changeID] = "all";
           else if (change.column_data !== undefined)
@@ -146,40 +150,78 @@ function itemChange(
   if (oldNode === undefined) return [];
   const itemAug = rawNonFolderToAug(newStateItem, dsmMetadata);
   if (itemAug.error) throw new Error("Expected valid itemAug in modify");
-  if (toChange === "table-columns") {
-    if (oldNode.type !== "Table" || itemAug.type !== "table")
-      throw new Error(
-        "Programming Error: expected table on a table-columns change"
+  switch (toChange) {
+    case "table-columns": {
+      if (oldNode.type !== "Table" || itemAug.type !== "table")
+        throw new Error(
+          "Programming Error: expected table on a table-columns change"
+        );
+      const ast = itemAugToAST(itemAug) as TextAST.Table | null;
+      if (ast === null)
+        throw "Programming error: expect new table item to always be parseable";
+      if (ast.columns.length < oldNode.columns.length)
+        throw "Programming error: expect no fewer new table columns than old";
+      return oldNode.columns.map((e, i) =>
+        insertWithIndentation(
+          view,
+          e.expr.pos!,
+          exprToTextString(new NodePath(ast.columns[i].expr, null))
+        )
       );
-    const ast = itemAugToAST(itemAug) as TextAST.Table | null;
-    if (ast === null)
-      throw "Programming error: expect new table item to always be parseable";
-    if (ast.columns.length < oldNode.columns.length)
-      throw "Programming error: expect no fewer new table columns than old";
-    return oldNode.columns.map((e, i) =>
-      insertWithIndentation(
-        view,
-        e.expr.pos!,
-        exprToTextString(new NodePath(ast.columns[i].expr, null))
-      )
-    );
-  } else if (toChange === "latex-only") {
-    if (oldNode.type !== "ExprStatement" || itemAug.type !== "expression")
-      throw new Error(
-        "Programming Error: expected expression on a latex-only change"
-      );
-    const ast = itemAugToAST(itemAug) as TextAST.ExprStatement | null;
-    if (ast === null)
-      throw "Programming error: expect new expr item to always be parseable";
-    return [
-      insertWithIndentation(
-        view,
-        oldNode.expr.pos!,
-        exprToTextString(new NodePath(ast.expr, null))
-      ),
-    ];
-  } else {
-    return [insertWithIndentation(view, oldNode.pos!, itemToText(itemAug))];
+    }
+    case "latex-only": {
+      if (oldNode.type !== "ExprStatement" || itemAug.type !== "expression")
+        throw new Error(
+          "Programming Error: expected expression on a latex-only change"
+        );
+      const ast = itemAugToAST(itemAug) as TextAST.ExprStatement | null;
+      if (ast === null)
+        throw "Programming error: expect new expr item to always be parseable";
+      return [
+        insertWithIndentation(
+          view,
+          oldNode.expr.pos!,
+          exprToTextString(new NodePath(ast.expr, null))
+        ),
+      ];
+    }
+    case "image-pos": {
+      if (oldNode.type !== "Image" || itemAug.type !== "image")
+        throw new Error(
+          "Programming Error: expected image on an image-pos change"
+        );
+      const ast = itemAugToAST(itemAug) as TextAST.Image | null;
+      if (ast === null)
+        throw "Programming error: expect new image item to always be parseable";
+      const newEntries = ast.style!.entries;
+      const oldEntries = oldNode.style!.entries;
+      return newEntries
+        .filter((e) => ["width", "height", "center"].includes(e.property.value))
+        .map((newEntry) => {
+          const oldEntry = oldEntries.find(
+            (e) => e.property.value === newEntry.property.value
+          );
+          const text = docToString(
+            styleEntryToText(new NodePath(newEntry, null))
+          );
+          if (oldEntry) return insertWithIndentation(view, oldEntry.pos!, text);
+          else {
+            const prevEnd = oldEntries[oldEntries.length - 1].pos!.to;
+            const isComma = view.state.sliceDoc(prevEnd, prevEnd + 1) === ",";
+            const insertPos = prevEnd + (isComma ? 1 : 0);
+            return insertWithIndentation(
+              view,
+              {
+                from: insertPos,
+                to: insertPos,
+              },
+              (isComma ? "" : ",") + "\n" + text + ","
+            );
+          }
+        });
+    }
+    case "all":
+      return [insertWithIndentation(view, oldNode.pos!, itemToText(itemAug))];
   }
 }
 
@@ -197,7 +239,6 @@ function insertWithIndentation(
 }
 
 export function getIndentation(view: EditorView, from: number) {
-  const line = view.state.doc.lineAt(from + 1);
-  const indentation = line.text.slice(0, from - line.from);
-  return /^[ \t]+$/.test(indentation) ? indentation : "";
+  const line = view.state.doc.lineAt(from);
+  return line.text.match(/^[ \t]*/)![0];
 }
