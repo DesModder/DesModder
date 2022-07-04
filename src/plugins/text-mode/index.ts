@@ -11,7 +11,9 @@ export default {
     Calc.controller.updateViews();
     return controller;
   },
-  onDisable: () => {},
+  onDisable: () => {
+    if (controller.inTextMode) controller.toggleTextMode();
+  },
   afterDisable: () => {
     Calc.controller.updateViews();
   },
