@@ -47,8 +47,14 @@ export default class Controller {
     container.appendChild(this.view.dom);
     this.preventPropagation(container);
     this.dispatchListenerID = Calc.controller.dispatcher.register((event) => {
-      if ((relevantEventTypes as readonly string[]).includes(event.type))
-        this.languageServer!.onCalcEvent(event as RelevantEvent);
+      if ((relevantEventTypes as readonly string[]).includes(event.type)) {
+        // setTimeout to avoid dispatch-in-dispatch from handlers responding to
+        // calc state changing by dispatching an event
+        setTimeout(
+          () => this.languageServer!.onCalcEvent(event as RelevantEvent),
+          0
+        );
+      }
     });
   }
 
