@@ -80,7 +80,6 @@ export default class LanguageServer {
   setParsing(parsing: boolean) {
     if (this.isParsing == parsing) return;
     this.isParsing = parsing;
-    console.log("set parsing", parsing);
     if (parsing) {
       if (this.parseCheckInterval !== null)
         throw Error(
@@ -120,7 +119,6 @@ export default class LanguageServer {
    * of sync with the graph state, current ID map, and diagnostics
    */
   onUserEdit() {
-    console.log("user edit");
     this.lastUpdateWasByUser = true;
     if (!this.isParsing) {
       this.setParsing(true);
@@ -143,7 +141,6 @@ export default class LanguageServer {
    * so we know the tree is in sync with the doc.
    */
   onFinishParsing(tree: Tree) {
-    console.log("finish parsing");
     if (!this.view) return;
     this.setParsing(false);
     const [analysis, rawGraphState] = cstToRaw(tree, this.view.state.doc);
@@ -172,7 +169,6 @@ export default class LanguageServer {
       this.analysis!
     );
     if (changes.length === 0) return;
-    console.log("apply changes from queued events");
     const transaction = this.view.state.update({ changes });
     // TODO: figure out annotations on this transaction as mentioned in the
     // nextEditDueToGraph doc text

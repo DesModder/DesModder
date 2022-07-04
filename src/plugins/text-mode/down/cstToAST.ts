@@ -20,9 +20,6 @@ export function cstToAST(
   cst: Tree,
   text: Text
 ): [Diagnostic[], TextAST.Program] {
-  // console.groupCollapsed("Program");
-  // console.log(printTree(cst, text.sliceString(0)));
-  // console.groupEnd();
   if (cst.type.name !== "Program") {
     throw Error("Programming error: expected parsed program");
   }

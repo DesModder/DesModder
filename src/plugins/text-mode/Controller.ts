@@ -33,7 +33,6 @@ export default class Controller {
     const [hasError, text] = getText();
     this.view = initView(this, text);
     this.languageServer = new LanguageServer(this.view, (state: GraphState) => {
-      console.log("set state from text", state);
       // Prevent Desmos from blurring the currently active element via
       //   jquery(document.activeElement).trigger("blur")
       // Alternative method this.view.focus() after setState does not prevent

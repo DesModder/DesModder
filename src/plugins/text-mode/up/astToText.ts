@@ -6,8 +6,6 @@ import * as DocNS from "prettier/doc";
 type Doc = DocNS.builders.Doc;
 const { group, indent, join, line, softline, hardline, ifBreak, breakParent } =
   builders;
-(window as any).builders = builders;
-(window as any).print = docToString;
 
 export function docToString(doc: Doc): string {
   return printer.printDocToString(doc, {
