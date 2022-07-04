@@ -299,22 +299,23 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
     case "BinaryExpression":
       return group([
         exprToText(path.withChild(e.left, "left")),
-        line,
+        " ",
         e.op,
-        line,
-        exprToText(path.withChild(e.right, "right")),
+        indent([line, exprToText(path.withChild(e.right, "right"))]),
       ]);
     case "DoubleInequality":
       return group([
         exprToText(path.withChild(e.left, "left")),
-        line,
+        " ",
         e.leftOp,
-        line,
-        exprToText(path.withChild(e.middle, "middle")),
-        line,
-        e.rightOp,
-        line,
-        exprToText(path.withChild(e.right, "right")),
+        indent([
+          line,
+          exprToText(path.withChild(e.middle, "middle")),
+          " ",
+          e.rightOp,
+          line,
+          exprToText(path.withChild(e.right, "right")),
+        ]),
       ]);
     case "PrefixExpression":
       return ["-", exprToText(path.withChild(e.expr, "expr"))];
