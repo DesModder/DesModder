@@ -93,6 +93,7 @@ export type Expression =
   | MemberExpression
   | ListAccessExpression
   | BinaryExpression
+  | DoubleInequality
   | PostfixExpression
   | CallExpression
   | PrimeExpression
@@ -187,10 +188,21 @@ export interface ListAccessExpression extends Positioned {
   index: Expression;
 }
 
+type CompareOp = "<" | "<=" | ">=" | ">" | "=";
+
 export interface BinaryExpression extends Positioned {
   type: "BinaryExpression";
-  op: "~" | "^" | "/" | "*" | "+" | "-" | "<" | "<=" | ">=" | ">" | "=";
+  op: "~" | "^" | "/" | "*" | "+" | "-" | CompareOp;
   left: Expression;
+  right: Expression;
+}
+
+export interface DoubleInequality extends Positioned {
+  type: "DoubleInequality";
+  left: Expression;
+  leftOp: CompareOp;
+  middle: Expression;
+  rightOp: CompareOp;
   right: Expression;
 }
 

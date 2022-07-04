@@ -535,7 +535,14 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         right: childLatexToAST(e.right),
       };
     case "DoubleInequality":
-      throw Error("DoubleInequality not yet implemented");
+      return {
+        type: "DoubleInequality",
+        left: childLatexToAST(e.left),
+        leftOp: e.leftOperator,
+        middle: childLatexToAST(e.middle),
+        rightOp: e.rightOperator,
+        right: childLatexToAST(e.right),
+      };
   }
 }
 

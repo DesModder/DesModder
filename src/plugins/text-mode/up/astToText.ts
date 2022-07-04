@@ -213,7 +213,6 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
         ") ",
         exprToText(path.withChild(e.expr, "expr")),
       ]);
-    // TODO Derivative
     case "ListExpression":
       return group([
         "[",
@@ -307,13 +306,24 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
         line,
         exprToText(path.withChild(e.right, "right")),
       ]);
+    case "DoubleInequality":
+      return group([
+        exprToText(path.withChild(e.left, "left")),
+        line,
+        e.leftOp,
+        line,
+        exprToText(path.withChild(e.middle, "middle")),
+        line,
+        e.rightOp,
+        line,
+        exprToText(path.withChild(e.right, "right")),
+      ]);
     case "PrefixExpression":
       return ["-", exprToText(path.withChild(e.expr, "expr"))];
     case "PostfixExpression":
       return [exprToText(path.withChild(e.expr, "expr")), "!"];
     case "String":
       return stringToText(e.value);
-    // TODO double inequality
   }
 }
 

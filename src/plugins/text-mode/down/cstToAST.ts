@@ -500,7 +500,8 @@ function piecewiseBranchToAST(
   };
 }
 
-const binaryOps = ["~", "^", "/", "*", "+", "-", "<", "<=", ">=", ">", "="];
+const compareOps = ["<", "<=", ">=", ">", "="];
+const binaryOps = ["~", "^", "/", "*", "+", "-", ...compareOps];
 
 /**
  * @param node BinaryExpression
@@ -508,7 +509,7 @@ const binaryOps = ["~", "^", "/", "*", "+", "-", "<", "<=", ">=", ">", "="];
 function binaryExpressionToAST(
   td: TextAndDiagnostics,
   node: SyntaxNode
-): TextAST.BinaryExpression | null {
+): TextAST.BinaryExpression | TextAST.DoubleInequality | null {
   const exprs = node.getChildren("Expression");
   const opNode = exprs[0].nextSibling!;
   const op = td.nodeText(opNode);
@@ -519,6 +520,20 @@ function binaryExpressionToAST(
   const right = exprToAST(td, exprs[1]);
   if (left === null || right === null) return null;
   // TODO: Disallow "~" in most cases
+  if (
+    left.type === "BinaryExpression" &&
+    compareOps.includes(left.op) &&
+    compareOps.includes(op)
+  ) {
+    return {
+      type: "DoubleInequality",
+      left: left.left,
+      leftOp: left.op as "<" | "<=" | ">=" | ">" | "=",
+      middle: left.right,
+      rightOp: op as "<" | "<=" | ">=" | ">" | "=",
+      right: right,
+    };
+  }
   return {
     type: "BinaryExpression",
     op: op as "~" | "^" | "/" | "*" | "+" | "-" | "<" | "<=" | ">=" | ">" | "=",

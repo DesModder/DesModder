@@ -11,7 +11,7 @@ import {
  *
  * Based on https://github.com/prettier/prettier/blob/main/src/language-js/needs-parens.js
  */
-export default function needsParens(path: NodePath) {
+export default function needsParens(path: NodePath): boolean {
   const parent = path.parent;
 
   const node = path.node;
@@ -93,6 +93,7 @@ export default function needsParens(path: NodePath) {
     case "ListAccessExpression":
       return false;
     case "BinaryExpression":
+    case "DoubleInequality":
       switch (parent.type) {
         case "DerivativeExpression":
         case "PrefixExpression":
@@ -101,6 +102,7 @@ export default function needsParens(path: NodePath) {
         case "ListAccessExpression":
           return name == "expr";
         case "BinaryExpression": {
+          if (node.type === "DoubleInequality") return true;
           const precedence = getPrecedence(node.op);
           const parentPrecedence = getPrecedence(parent.op);
           if (parentPrecedence > precedence) return true;

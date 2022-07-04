@@ -623,6 +623,15 @@ export function childExprToAug(
         list: childExprToAug(expr.expr),
         index: childExprToAug(expr.index),
       };
+    case "DoubleInequality":
+      return {
+        type: "DoubleInequality",
+        left: childExprToAug(expr.left),
+        leftOperator: expr.leftOp,
+        middle: childExprToAug(expr.middle),
+        rightOperator: expr.rightOp,
+        right: childExprToAug(expr.right),
+      };
     case "BinaryExpression":
       if (expr.op === "~")
         throw Error("Programming Error: `~` in child BinaryExpression");
