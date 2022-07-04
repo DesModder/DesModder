@@ -37,7 +37,7 @@ export type RelevantEvent = DispatchedEvent & {
   type: typeof relevantEventTypes[number];
 };
 
-type ToChange = "table-columns" | "latex-only" | "image-pos" | "all";
+type ToChange = "table-columns" | "latex-only" | "image-pos" | "regression";
 
 export function eventSequenceChanges(
   view: EditorView,
@@ -79,7 +79,7 @@ export function eventSequenceChanges(
             itemsChanged[changeID] =
               change.move_strategy?.length === 2 ? "latex-only" : "image-pos";
           else if (change.regression !== undefined)
-            itemsChanged[changeID] = "all";
+            itemsChanged[changeID] = "regression";
           else if (change.column_data !== undefined)
             itemsChanged[changeID] = "table-columns";
         }
@@ -220,7 +220,7 @@ function itemChange(
           }
         });
     }
-    case "all":
+    case "regression":
       return [insertWithIndentation(view, oldNode.pos!, itemToText(itemAug))];
   }
 }

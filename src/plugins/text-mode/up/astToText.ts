@@ -124,7 +124,7 @@ export function styleEntryToText(path: NodePath<TextAST.MappingEntry>) {
 function trailingRegressionParams(
   path: NodePath<TextAST.RegressionParameters>
 ): Doc {
-  return [hardline, indent(regressionParamsToText(path))];
+  return [" ", regressionParamsToText(path)];
 }
 
 function regressionParamsToText(
@@ -136,7 +136,7 @@ function regressionParamsToText(
       regressionEntryToText(path.withChild(entry, "entry." + i))
     )
   );
-  return ["#{", line, indent(lines), line, "}"];
+  return ["#{", indent([line, lines]), line, "}"];
 }
 
 function regressionEntryToText(path: NodePath<TextAST.RegressionEntry>): Doc {
