@@ -131,6 +131,8 @@ interface CalcPrivate {
         ymax: number;
       };
     };
+    /** Mark UI tick required to convert render shells to full item lines */
+    markTickRequiredNextFrame(): void;
   };
   //// public
 

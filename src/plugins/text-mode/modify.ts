@@ -61,7 +61,6 @@ export function eventSequenceChanges(
       case "on-evaluator-changes":
         for (const [changeID, change] of Object.entries(event.changes)) {
           if (
-            change.constant_value !== undefined ||
             change.raw_slider_latex !== undefined ||
             change.zero_values !== undefined
           )

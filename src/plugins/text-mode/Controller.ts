@@ -15,6 +15,13 @@ export default class Controller {
 
   toggleTextMode() {
     this.inTextMode = !this.inTextMode;
+    // Prevent a tick loop when render shells don't render
+    if (this.inTextMode) {
+      Calc.controller.markTickRequiredNextFrame = () => {};
+    } else {
+      // Revert back to the old markTickRequiredNextFrame given by prototype
+      delete (Calc.controller as any).markTickRequiredNextFrame;
+    }
     Calc.controller.updateViews();
   }
 
