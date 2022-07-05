@@ -812,6 +812,8 @@ const dontSubscriptIdentifiers = new Set([
   ...autoOperatorNames.split(" ").map((e) => e.split("|")[0]),
   ...autoCommandNames.split(" "),
   ...fragileNames,
+  "index",
+  "dt",
 ]);
 
 function identifierToAug(expr: TextAST.Identifier) {

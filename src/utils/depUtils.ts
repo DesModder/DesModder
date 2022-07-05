@@ -14,9 +14,20 @@ export const keys = desmosRequire("keys") as {
   isRedo: (e: KeyboardEvent) => boolean;
   isHelp: (e: KeyboardEvent) => boolean;
 };
-export const parseDesmosLatex = desmosRequire("core/math/parser").parse as (
-  s: string
+export const parseDesmosLatexRaw = desmosRequire("core/math/parser").parse as (
+  s: string,
+  config?: {
+    allowDt?: boolean;
+    allowIndex?: boolean;
+    disallowFrac?: boolean;
+    trailingComma?: boolean;
+    seedPrefix?: string;
+  }
 ) => Node;
+
+export function parseDesmosLatex(s: string) {
+  return parseDesmosLatexRaw(s, { allowDt: true, allowIndex: true });
+}
 
 export function EvaluateSingleExpression(s: string): number {
   // may also return NaN (which is a number)
