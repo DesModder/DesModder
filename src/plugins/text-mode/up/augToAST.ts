@@ -164,6 +164,7 @@ export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
         style: styleMapping({
           ...base,
           collapsed: booleanToAST(item.collapsed, false),
+          hidden: booleanToAST(item.hidden, false),
         }),
       };
   }
