@@ -80,6 +80,12 @@ function astItemToText(path: NodePath<TextAST.Statement>): Doc {
       ];
     case "Settings":
       return ["settings", trailingStyleMap(path, item.style)];
+    case "Ticker":
+      return [
+        "ticker ",
+        exprToText(path.withChild(item.handler, "handler")),
+        trailingStyleMap(path, item.style),
+      ];
   }
 }
 

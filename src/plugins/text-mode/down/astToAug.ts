@@ -63,6 +63,10 @@ export default function astToAug(
       ds.hasBlockingError = true;
     } else if (stmtAug.type === "settings") {
       state.settings = { ...state.settings, ...stmtAug.settings };
+    } else if (stmtAug.type === "ticker") {
+      if (state.expressions.ticker !== undefined)
+        ds.pushWarning("Duplicate ticker, ignoring this one", stmt.pos);
+      state.expressions.ticker = stmtAug.ticker;
     } else {
       state.expressions.list.push(stmtAug);
     }
@@ -123,10 +127,16 @@ function statementToAug(
   ds: DownState,
   state: Aug.State,
   stmt: TextAST.Statement
-): Aug.ItemAug | { type: "settings"; settings: GrapherState } | null {
+):
+  | Aug.ItemAug
+  | { type: "settings"; settings: GrapherState }
+  | { type: "ticker"; ticker: Aug.TickerAug }
+  | null {
   switch (stmt.type) {
     case "Settings":
       return settingsToAug(ds, stmt.style);
+    case "Ticker":
+      return tickerToAug(ds, stmt.style, stmt.handler);
     case "ExprStatement":
       return expressionToAug(ds, stmt.style, stmt);
     case "Table":
@@ -303,6 +313,29 @@ function expressionToAug(
         }
       : undefined,
     ...columnExpressionCommonStyle(style),
+  };
+}
+
+function tickerToAug(
+  ds: DownState,
+  styleMapping: TextAST.StyleMapping | null,
+  handler: TextAST.Expression
+): null | { type: "ticker"; ticker: Aug.TickerAug } {
+  const hydrated = hydrate(
+    ds,
+    styleMapping,
+    Default.ticker,
+    Schema.ticker,
+    "ticker"
+  );
+  if (hydrated === null) return null;
+  return {
+    type: "ticker",
+    ticker: {
+      handlerLatex: childExprToAug(handler),
+      minStepLatex: childExprToAug(hydrated.minStep),
+      playing: hydrated.playing,
+    },
   };
 }
 
@@ -495,6 +528,9 @@ function folderToAug(
         return null;
       } else if (stmtAug.type === "settings") {
         ds.pushError("Settings may not be in a folder", child.pos);
+        return null;
+      } else if (stmtAug.type === "ticker") {
+        ds.pushError("Ticker may not be in a folder", child.pos);
         return null;
       } else {
         children.push(stmtAug);

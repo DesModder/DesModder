@@ -139,7 +139,8 @@ function isStatement(node: Node): node is Statement {
     node.type === "Image" ||
     node.type === "Text" ||
     node.type === "Folder" ||
-    node.type === "Settings"
+    node.type === "Settings" ||
+    node.type === "Ticker"
   );
 }
 

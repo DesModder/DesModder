@@ -12,7 +12,8 @@ export type Statement =
   | Image
   | Text
   | Folder
-  | Settings;
+  | Settings
+  | Ticker;
 
 export interface ExprStatement extends Positioned, Styled {
   type: "ExprStatement";
@@ -54,6 +55,11 @@ export interface Folder extends Positioned, Styled {
 
 export interface Settings extends Positioned, Styled {
   type: "Settings";
+}
+
+export interface Ticker extends Positioned, Styled {
+  type: "Ticker";
+  handler: Expression;
 }
 
 export interface RegressionParameters extends Positioned {

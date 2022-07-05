@@ -31,6 +31,11 @@ export const settings: Hydrated.Settings = {
   lockViewport: false,
 };
 
+export const ticker: Hydrated.Ticker = {
+  minStep: number(0),
+  playing: false,
+};
+
 const base: Hydrated.Base = {
   // empty ID will be filled in later in the process
   id: "",

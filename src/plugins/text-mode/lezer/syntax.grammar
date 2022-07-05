@@ -30,7 +30,8 @@ statement[@isGroup=Statement] {
   Image { kw<"image"> String StyleMapping? } |
   Text { String StyleMapping? } |
   Folder { kw<"folder"> String BlockInner StyleMapping? } |
-  Settings { kw<"settings"> StyleMapping }
+  Settings { kw<"settings"> StyleMapping } |
+  Ticker { kw<"ticker"> expressionMaybeSeq StyleMapping? }
 }
 
 RegressionBody {

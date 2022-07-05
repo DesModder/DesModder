@@ -136,6 +136,16 @@ function statementToAST(
         style,
         pos: getPos(node),
       };
+    case "Ticker": {
+      const handler = exprToAST(td, node.getChild("Expression")!);
+      if (handler === null) return null;
+      return {
+        type: "Ticker",
+        handler,
+        style,
+        pos: getPos(node),
+      };
+    }
     case "LineComment":
       return null;
     default:

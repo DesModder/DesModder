@@ -30,6 +30,11 @@ export interface Settings {
   lockViewport: boolean;
 }
 
+export interface Ticker {
+  minStep: Expr;
+  playing: boolean;
+}
+
 export interface Base {
   id: string;
 }

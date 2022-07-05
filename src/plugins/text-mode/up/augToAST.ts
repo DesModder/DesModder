@@ -42,6 +42,17 @@ export function graphSettingsToAST(
   };
 }
 
+export function tickerToAST(ticker: Aug.TickerAug): TextAST.Ticker {
+  return {
+    type: "Ticker",
+    handler: childLatexToAST(ticker.handlerLatex),
+    style: styleMapping({
+      minStep: childLatexToAST(ticker.minStepLatex),
+      playing: booleanToAST(ticker.playing, false),
+    }),
+  };
+}
+
 function idToString(id: string) {
   return id.startsWith("__") ? undefined : stringToASTmaybe(id);
 }

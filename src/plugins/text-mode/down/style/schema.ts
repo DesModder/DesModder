@@ -52,6 +52,11 @@ export const settings: Schema = {
   lockViewport: "boolean",
 };
 
+export const ticker: Schema = {
+  minStep: "expr",
+  playing: "boolean",
+};
+
 const base: Schema = {
   // empty ID will be filled in later in the process
   id: "string",
