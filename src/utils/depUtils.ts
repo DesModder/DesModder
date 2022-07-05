@@ -45,6 +45,19 @@ const getSectionsProto = desmosRequire(
   "expressions/expression-menus/expression-options-menu-view"
 ).ExpressionOptionsMenuView.prototype.getSections;
 
+const grep = desmosRequire(
+  "core/math/expression-types"
+).getReconciledExpressionProps;
+
+export function getReconciledExpressionProps(id: string): {
+  points: boolean;
+  lines: boolean;
+  fill: boolean;
+} {
+  const model = Calc.controller.getItemModel(id);
+  return grep((model as any).formula.expression_type, model);
+}
+
 /**
  * getSections
  */

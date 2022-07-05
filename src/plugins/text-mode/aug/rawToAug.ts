@@ -3,7 +3,7 @@ import Aug from "./AugState";
 import { ChildExprNode, evalMaybeRational, AnyNode } from "parsing/parsenode";
 import migrateToLatest from "main/metadata/migrate";
 import Metadata from "main/metadata/interface";
-import { parseDesmosLatex } from "utils/depUtils";
+import { getReconciledExpressionProps, parseDesmosLatex } from "utils/depUtils";
 
 export default function rawToAug(raw: Graph.GraphState): Aug.State {
   const dsmMetadata = rawToDsmMetadata(raw);
@@ -111,11 +111,16 @@ function tryRawNonFolderToAug(
     secret: item.secret ?? false,
   };
   switch (item.type) {
-    case "expression":
+    case "expression": {
+      // TODO: make this pure instead of relying on Calc.controller.getItemModel
+      // to inflate defaults. Unfortunately
+      //   desmosRequire("core/graphing-calc/json/expression").inflateDefaults()
+      // doesn't take into account the worker analysis points vs lines etc.
+      const { points, lines, fill } = getReconciledExpressionProps(item.id);
       return {
         ...base,
         type: "expression",
-        ...columnExpressionCommon(item, false),
+        ...columnExpressionCommon(item, points, lines),
         ...(item.latex ? { latex: parseRootLatex(item.latex) } : {}),
         ...(item.labelSize !== "0" && item.label
           ? {
@@ -130,7 +135,7 @@ function tryRawNonFolderToAug(
               },
             }
           : {}),
-        fillOpacity: item.fill
+        fillOpacity: fill
           ? parseLatex(item.fillOpacity ?? "0.4")
           : parseLatex("0"),
         regression: item.residualVariable
@@ -177,6 +182,7 @@ function tryRawNonFolderToAug(
             }
           : undefined,
       };
+    }
     case "image":
       return {
         ...base,
@@ -216,7 +222,11 @@ function tryRawNonFolderToAug(
           values: column.values
             .slice(0, longestColumnLength + 1)
             .map(parseLatex),
-          ...columnExpressionCommon(column, true),
+          ...columnExpressionCommon(
+            column,
+            column.points !== false,
+            column.lines === true
+          ),
           ...(column.latex ? { latex: parseLatex(column.latex) } : {}),
         })),
       };
@@ -269,7 +279,8 @@ function parseMapDomain(
 
 function columnExpressionCommon(
   item: Graph.TableColumn | Graph.ExpressionState,
-  isColumn: boolean
+  points: boolean,
+  lines: boolean
 ) {
   const color = item.colorLatex ? parseLatex(item.colorLatex) : item.color;
   if (typeof color !== "string" && color.type !== "Identifier") {
@@ -281,7 +292,7 @@ function columnExpressionCommon(
     // TODO: don't include points property by default for curves and polygons
     // Rely on Desmos's automatic detection?
     points:
-      item.pointOpacity !== "0" && item.pointSize !== "0"
+      points && item.pointOpacity !== "0" && item.pointSize !== "0"
         ? {
             opacity: parseLatex(item.pointOpacity ?? "0.9"),
             size: parseLatex(item.pointSize ?? "9"),
@@ -289,12 +300,8 @@ function columnExpressionCommon(
             dragMode: item.dragMode ?? "AUTO",
           }
         : undefined,
-    // TODO: don't include lines property by default for points like (1,2)
-    // Rely on Desmos's automatic detection?
     lines:
-      (item.lines || (item.lines === undefined && !isColumn)) &&
-      item.lineOpacity !== "0" &&
-      item.lineWidth !== "0"
+      lines && item.lineOpacity !== "0" && item.lineWidth !== "0"
         ? {
             opacity: parseLatex(item.lineOpacity ?? "0.9"),
             width: parseLatex(item.lineWidth ?? "2.5"),
