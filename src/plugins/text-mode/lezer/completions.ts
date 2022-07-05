@@ -63,6 +63,11 @@ const FOLDER_COMPLETIONS: Completion[] = [
       )},\n  width: 10,\n  height: 10,\n  center: (0, 0),\n}`
     ),
   },
+  {
+    type: "keyword",
+    label: "ticker",
+    apply: macroExpandWithSelection("ticker ", "action", `" @{ minStep: 0 }`),
+  },
 ];
 
 const PROGRAM_COMPLETIONS: Completion[] = [
@@ -140,6 +145,8 @@ function styleDefaults(controller: Controller, node: SyntaxNode): any {
       return Defaults.folder;
     case "Settings":
       return Defaults.settings;
+    case "Ticker":
+      return Defaults.ticker;
     case "StyleMapping":
       return styleDefaults(controller, node.parent!);
     case "MappingEntry":

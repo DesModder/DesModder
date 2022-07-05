@@ -73,6 +73,7 @@ function augTickerToRaw(ticker: Aug.TickerAug) {
     handlerLatex: latexTreeToString(ticker.handlerLatex),
     minStepLatex: latexTreeToString(ticker.minStepLatex),
     playing: ticker.playing,
+    open: true,
   };
 }
 
