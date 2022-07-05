@@ -458,6 +458,11 @@ function funcToString(
       ...args.slice(0, 1),
       ...args.slice(2),
     ])}}`;
+  } else if (callee.symbol === "l_ogbase") {
+    if (args.length === 1) return `\\log\\left(${bareSeq(args)}\\right)`;
+    return `\\log_{${childNodeToString(args[args.length - 1])}}\\left(${bareSeq(
+      args.slice(0, args.length - 1)
+    )}\\right)`;
   } else {
     return identifierToString(callee) + wrapParen(bareSeq(args));
   }
