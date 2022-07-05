@@ -443,7 +443,7 @@ function listExpressionToAST(
 ): TextAST.RangeExpression | TextAST.ListExpression | null {
   const exprsStart = node.getChildren("Expression", null, "...");
   const exprsEnd = node.getChildren("Expression", "...");
-  if (exprsEnd.length) {
+  if (node.getChild("...")) {
     const startValues = exprsStart.map((node) => exprToAST(td, node));
     const endValues = exprsEnd.map((node) => exprToAST(td, node));
     if (!everyNonNull(startValues) || !everyNonNull(endValues)) return null;
