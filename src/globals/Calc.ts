@@ -133,6 +133,7 @@ interface CalcPrivate {
     };
     /** Mark UI tick required to convert render shells to full item lines */
     markTickRequiredNextFrame(): void;
+    getPlayingSliders(): unknown[];
   };
   //// public
 

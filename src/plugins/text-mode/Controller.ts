@@ -15,9 +15,15 @@ export default class Controller {
 
   toggleTextMode() {
     this.inTextMode = !this.inTextMode;
-    // Prevent a tick loop when render shells don't render
+    // Ticks update rendering as well as process sliders. Since the existing
+    // expression UI doesn't render in text mode, we replace markTickRequiredNextFrame
+    // with a version that calls markTickRequiredNextFrame only when sliders are playing
     if (this.inTextMode) {
-      Calc.controller.markTickRequiredNextFrame = () => {};
+      Calc.controller.markTickRequiredNextFrame = function () {
+        if (this.getPlayingSliders().length > 0) {
+          (this as any).__proto__.markTickRequiredNextFrame.apply(this);
+        }
+      };
     } else {
       // Revert back to the old markTickRequiredNextFrame given by prototype
       delete (Calc.controller as any).markTickRequiredNextFrame;
