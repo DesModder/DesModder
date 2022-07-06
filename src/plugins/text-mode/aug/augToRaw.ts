@@ -321,8 +321,9 @@ function childNodeToString(e: Aug.Latex.AnyChild): string {
       );
     case "Derivative":
       return (
-        `\\frac{d}{d${identifierToString(e.variable)}}` +
-        childNodeToString(e.arg)
+        `\\left(\\frac{d}{d${identifierToString(e.variable)}}` +
+        childNodeToString(e.arg) +
+        "\\right)"
       );
     case "Prime":
       return (

@@ -369,6 +369,7 @@ function exprToAST(
         type: "DerivativeExpression",
         variable: identifierToAST(td, node.getChild("Identifier")!),
         expr: dExpr,
+        pos: getPos(node),
       };
     case "UpdateRule":
       const updateVar = exprToAST(td, node.getChild("Expression")!);
