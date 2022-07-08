@@ -1,15 +1,13 @@
 import TextAST, { NodePath } from "../down/TextAST";
 import needsParens from "./needsParens";
-
 import { builders, printer } from "prettier/doc";
 import * as DocNS from "prettier/doc";
 type Doc = DocNS.builders.Doc;
-const { group, indent, join, line, softline, hardline, ifBreak, breakParent } =
-  builders;
+const { group, indent, join, line, softline, hardline, ifBreak } = builders;
 
 export function docToString(doc: Doc): string {
   return printer.printDocToString(doc, {
-    printWidth: 60,
+    printWidth: 80,
     tabWidth: 2,
     useTabs: false,
   }).formatted;
@@ -159,18 +157,18 @@ function primeOrCallToText(
   path: NodePath<TextAST.CallExpression>,
   primeOrder: number
 ): Doc {
-  return [
+  return group([
     exprToText(path.withChild(path.node.callee, "callee")),
     "'".repeat(primeOrder),
-    "(",
-    join(
-      ", ",
-      path.node.arguments.map((e, i) =>
-        exprToText(path.withChild(e, "argument." + i))
+    parenthesize(
+      join(
+        [",", line],
+        path.node.arguments.map((e, i) =>
+          exprToText(path.withChild(e, "argument." + i))
+        )
       )
     ),
-    ")",
-  ];
+  ]);
 }
 
 export function exprToTextString(path: NodePath<TextAST.Expression>): string {
@@ -179,7 +177,7 @@ export function exprToTextString(path: NodePath<TextAST.Expression>): string {
 
 function exprToText(path: NodePath<TextAST.Expression>): Doc {
   const inner = exprToTextNoParen(path);
-  if (needsParens(path)) return ["(", inner, ")"];
+  if (needsParens(path)) return parenthesize(inner);
   return inner;
 }
 
@@ -207,43 +205,43 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
     case "RepeatedExpression":
       return group([
         e.name,
-        line,
+        " ",
         e.index.name,
         "=",
-        "(",
-        exprToText(path.withChild(e.start, "start")),
-        " ... ",
-        exprToText(path.withChild(e.end, "end")),
-        ") ",
+        parenthesize([
+          exprToText(path.withChild(e.start, "start")),
+          " ... ",
+          exprToText(path.withChild(e.end, "end")),
+        ]),
+        line,
         exprToText(path.withChild(e.expr, "expr")),
       ]);
     case "ListExpression":
-      return group([
-        "[",
-        softline,
+      return bracketize(
         join(
-          ", ",
+          [",", line],
           e.values.map((v, i) => exprToText(path.withChild(v, "values." + i)))
-        ),
-        "]",
-      ]);
+        )
+      );
     case "RangeExpression":
-      return group([
-        "[",
-        join(
-          ", ",
-          e.startValues.map((v, i) =>
-            exprToText(path.withChild(v, "startValues." + i))
+      return bracketize([
+        group(
+          join(
+            ", ",
+            e.startValues.map((v, i) =>
+              exprToText(path.withChild(v, "startValues." + i))
+            )
           )
         ),
         "...",
-        join(
-          ", ",
-          e.endValues.map((v, i) =>
-            exprToText(path.withChild(v, "endValues" + i))
+        group(
+          join(
+            ", ",
+            e.endValues.map((v, i) =>
+              exprToText(path.withChild(v, "endValues" + i))
+            )
           )
         ),
-        "]",
       ]);
     case "ListAccessExpression":
       const listAccessIndex = exprToText(path.withChild(e.index, "index"));
@@ -253,7 +251,7 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
           e.index.type === "RangeExpression" ||
             e.index.type === "ListExpression"
             ? listAccessIndex
-            : ["[", listAccessIndex, "]"]
+            : bracketize(listAccessIndex)
         ),
       ];
     case "MemberExpression":
@@ -265,7 +263,8 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
     case "SequenceExpression":
       return group([
         exprToText(path.withChild(e.left, "left")),
-        ", ",
+        ",",
+        line,
         exprToText(path.withChild(e.right, "right")),
       ]);
     case "UpdateRule":
@@ -275,8 +274,7 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
         exprToText(path.withChild(e.expr, "expr")),
       ]);
     case "ListComprehension":
-      return group([
-        "[",
+      return bracketize([
         exprToText(path.withChild(e.expr, "expr")),
         " for ",
         join(
@@ -287,19 +285,27 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
             )
           )
         ),
-        "]",
       ]);
     case "PiecewiseExpression":
       return group([
         "{",
-        join(
-          ", ",
-          e.branches.map((branch) => [
-            exprToText(path.withChild(branch.condition, "condition")),
-            ": ",
-            exprToText(path.withChild(branch.consequent, "consequent")),
-          ])
-        ),
+        indent([
+          line,
+          join(
+            [",", line],
+            e.branches.map((branch) =>
+              group([
+                exprToText(path.withChild(branch.condition, "condition")),
+                ":",
+                indent([
+                  line,
+                  exprToText(path.withChild(branch.consequent, "consequent")),
+                ]),
+              ])
+            )
+          ),
+        ]),
+        line,
         "}",
       ]);
     case "BinaryExpression":
@@ -345,6 +351,14 @@ function assignmentExpressionToText(
 function numToText(num: number): Doc {
   const s = num.toString();
   return s.includes("e")
-    ? group(["(", s.replace("e+", "e").replace("e", " * 10 ^ "), ")"])
+    ? group(parenthesize(s.replace("e+", "e").replace("e", " * 10 ^ ")))
     : s;
+}
+
+function parenthesize(doc: Doc): Doc {
+  return group(["(", indent([softline, doc]), softline, ")"]);
+}
+
+function bracketize(doc: Doc): Doc {
+  return group(["[", indent([softline, doc]), softline, "]"]);
 }
