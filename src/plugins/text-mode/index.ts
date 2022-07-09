@@ -6,7 +6,7 @@ const controller = new Controller();
 export default {
   id: "text-mode",
   name: "Text Mode BETA",
-  description: "Add plaintext mode. Temporary documentation:",
+  description: "Expect bugs. Temporary documentation:",
   descriptionLearnMore:
     "https://github.com/DesModder/DesModder/tree/main/src/plugins/text-mode/docs/intro.md",
   onEnable: () => {

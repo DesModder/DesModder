@@ -17,7 +17,12 @@ import {
   foldKeymap,
 } from "@codemirror/language";
 import { lineNumbers, highlightActiveLineGutter } from "@codemirror/view";
-import { history, defaultKeymap, historyKeymap } from "@codemirror/commands";
+import {
+  history,
+  defaultKeymap,
+  historyKeymap,
+  indentWithTab,
+} from "@codemirror/commands";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
 import {
   closeBrackets,
@@ -92,6 +97,7 @@ export function initView(controller: Controller, text: string) {
         ...foldKeymap,
         // Ctrl+Space to start completion
         ...completionKeymap,
+        indentWithTab,
       ]),
       scrollTheme,
       // language support

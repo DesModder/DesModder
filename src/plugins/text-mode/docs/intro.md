@@ -60,6 +60,12 @@ If you want a more guided tutorial then playing around with converting graphs to
 - [Settings](./settings.md)
 - [Tickers](./tickers.md)
 
+## Hotkeys
+
+Use Escape, then Tab to focus the element after the editor ("Graph settings" menu)
+
+Use Escape, then Shift-Tab to focus the element before the editor ("Hide Expressions List" button)
+
 ## Notable Bugs
 
 - The existing undo and redo buttons do not edit text code
