@@ -37,4 +37,8 @@ export function evalExpr(
 const builtinMap: { [key: string]: number | string | boolean | null } = {
   false: false,
   true: true,
+  pi: Math.PI,
+  tau: 2 * Math.PI,
+  e: Math.E,
+  infty: Infinity,
 };
