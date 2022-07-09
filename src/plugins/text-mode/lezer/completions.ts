@@ -57,7 +57,7 @@ const FOLDER_COMPLETIONS: Completion[] = [
     label: "image",
     apply: macroExpandWithSelection(
       'image "',
-      "name",
+      "Black Pixel",
       `" @{\n  url: ${JSON.stringify(
         Defaults.image.url
       )},\n  width: 10,\n  height: 10,\n  center: (0, 0),\n}`

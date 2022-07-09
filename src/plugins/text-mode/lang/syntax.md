@@ -2,84 +2,6 @@ This is a living document for the current specification of the syntax
 
 ## Summary
 
-## Expression
-
-In mathematical sense, typically something that can be evaluated. Here is an overview of the extent of the syntax, without parsing details.
-
-```c
-// Constants
-// Leading 0 cannot be omitted before a decimal point; not OK: .12345
-1; 1.5; 300; 0.12345; -4.5
-// Addition, subtraction, division
-a + b; a - b; a / b
-// Multiplication
-// Juxtaposed (implicit) multiplication like ab is not supported
-a * b
-// Exponent
-a ^ b
-// Negative
--a
-// Equals: use single equals for comparison. This is now unambiguous
-a = b
-// Less, less or equal, greater or equal, greater
-a < b; a <= b; a >= b; a > b
-// Double inequalities work too (currently no more than double)
-// The comparisons must be in the same direction
-a < b < c; a > b > c
-// Function call
-f(x); g(a,b,c)
-// Identifier (multi-character are allowed)
-f; quack42; total
-// Integral
-// TODO: figure out integral syntax
-integral (a ... b) sin(x) dx
-integral (c ... d) int (a ... b) sin(x) dx dy
-// Repeated operator (sum, product)
-// TODO: figure out repeated operator syntax
-sum_{x=a}^{b}{sin(x)}
-sum x=(a ... b) sin(x)
-product n=(a...b) n
-// Derivative
-(d/dx) f(x,y)
-// Prime (only one argument allowed)
-f'(x); func''''(a)
-// List
-[1, x, sin(x), x^2]
-// Range
-[1...x]
-[1,2,3...10,11,12]
-// List access (includes list filters)
-L[1...5]
-L[M+1]
-L[L>3]
-// Dot access
-L.random(5)
-// Ordered pair access
-(a,b).x; (a,b).y
-// Update rule
-a -> a+1
-// Bare sequence
-a -> a+1, b -> b+1
-// Paren sequence
-(a -> a+1, b -> b+1);
-(1, 2)
-// List comprehension (including one or more assignment expressions)
-[a for a=[1...5]]
-[a+b+c for a=[1...5],b=[1...4],c=[1,2,3]]
-// Piecewise
-{a > 5}
-{a > 5: 7}
-{a > 5: 7, 0}
-{a > 5: 7, b > 3: 4}
-// Style mapping
-sty = @{color: RED, glesmos: true}
-sty2 = @{
-  color: "#abc",
-  points: @{opacity: 0.8, style: "OPEN"},
-  lines: @{width: a+1}
-}
-```
-
 ### On Identifiers
 
 Desmos restricts variables to a single character, optionally followed by a subscript, for the main reason of adhering to math notation and allowing juxtaposition for multiplication. So it takes some care to ensure compatability.
@@ -98,6 +20,8 @@ The text mode compiler must know which identifiers are builtin. Reference `main/
 
 ### On equality
 
+(Not currently applied; might help analysis)
+
 Desmos consistently uses single-equals, but this causes an ambiguity with function/variable definition: "f(x,y) = x+y" is a function definition but "x+y = f(x,y)" is an implicit equation. We use double-equals for comparison to avoid this ambiguity.
 
 In general:
@@ -106,6 +30,8 @@ In general:
 - double equals (`==`) for comparison, such as equations and piecewise conditions
 
 ### On unary operators
+
+(Doesn't matter until we add not-equals operator)
 
 From a usability perspective, it makes sense to have a (prefix) unary minus operator `-` as well a (postfix) unary factorial operator `!`.
 
