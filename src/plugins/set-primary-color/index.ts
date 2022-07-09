@@ -85,7 +85,10 @@ function applyConfig(config: Config) {
   }
 }
 
+const DEFAULT_COLOR = "#2f72dc";
+
 function onDisable() {
+  applyColor(DEFAULT_COLOR);
   apiContainer.classList.remove("dsm-set-primary-color");
   faviconLink.href = "/favicon.ico";
 }
@@ -106,7 +109,7 @@ export default {
       // Desmos Blue, unfortunately
       // We don't set green as default because it's hard to match up
       // button color and favicon color when green
-      default: "#2f72dc",
+      default: DEFAULT_COLOR,
     },
     {
       key: "doFavicon",

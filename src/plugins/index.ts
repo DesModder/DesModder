@@ -40,6 +40,7 @@ export interface Plugin<Settings extends GenericSettings = {}> {
   id: string;
   name: string;
   description: string;
+  descriptionLearnMore?: string;
   onEnable(config?: unknown): any;
   onDisable?(): void;
   afterDisable?(): void;
@@ -49,7 +50,7 @@ export interface Plugin<Settings extends GenericSettings = {}> {
   onConfigChange?(changes: Settings, config: Settings): void;
   manageConfigChange?(current: Settings, next: Settings): Settings;
   enableRequiresReload?: boolean;
-  moduleOverrides?: unknown; // should be used only in preload coad, not in main code
+  moduleOverrides?: unknown; // should be used only in preload code, not in main code
 }
 
 // these plugins will be listed in list order in the menu
@@ -62,7 +63,6 @@ const _plugins = {
   [pinExpressions.id]: pinExpressions,
   [videoCreator.id]: videoCreator,
   [findReplace.id]: findReplace,
-  [textMode.id]: textMode,
   [debugMode.id]: debugMode,
   [showTips.id]: showTips,
   [rightClickTray.id]: rightClickTray,
@@ -71,6 +71,7 @@ const _plugins = {
   [shiftEnterNewline.id]: shiftEnterNewline,
   [hideErrors.id]: hideErrors,
   [folderTools.id]: folderTools,
+  [textMode.id]: textMode,
 } as const;
 
 export const pluginList = Object.values(_plugins);

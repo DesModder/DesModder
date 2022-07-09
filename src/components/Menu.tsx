@@ -3,6 +3,7 @@ import Toggle from "./Toggle";
 import Controller from "main/Controller";
 import { If, Switch, Checkbox, Tooltip } from "./desmosComponents";
 import "./Menu.less";
+import { Plugin } from "../plugins";
 
 export function MenuFunc(controller: Controller) {
   return <Menu controller={controller} />;
@@ -56,6 +57,21 @@ export default class Menu extends Component<{
                   <div class="dsm-plugin-info-body">
                     <div class="dsm-plugin-description">
                       {plugin.description}
+                      <If
+                        predicate={() =>
+                          (plugin as Plugin).descriptionLearnMore !== undefined
+                        }
+                      >
+                        {() => (
+                          <a
+                            href={() => (plugin as Plugin).descriptionLearnMore}
+                            target="_blank"
+                            onTap={(e: MouseEvent) => e.stopPropagation()}
+                          >
+                            &nbsp;Learn more
+                          </a>
+                        )}
+                      </If>
                     </div>
                     {this.getExpandedSettings()}
                   </div>
