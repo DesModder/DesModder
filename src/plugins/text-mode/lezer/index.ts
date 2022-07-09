@@ -21,7 +21,11 @@ export const TextModeLanguage = (controller: Controller) =>
         }),
         foldNodeProp.add({
           "StyleMapping Piecewise ListComprehension ListExpression": foldInside,
-          BlockInner: foldInside,
+          "BlockInner ParenthesizedExpression RegressionBody": foldInside,
+          CallExpression: (node) => ({
+            from: node.getChild("(")?.to ?? node.from,
+            to: node.lastChild?.from ?? node.to,
+          }),
         }),
         styleTags({
           Identifier: t.variableName,
