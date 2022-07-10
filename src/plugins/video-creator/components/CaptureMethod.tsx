@@ -1,5 +1,4 @@
 import {
-  DCGView,
   SmallMathQuillInput,
   SegmentedControl,
   If,
@@ -9,7 +8,8 @@ import {
   IfElse,
   Checkbox,
   Tooltip,
-} from "desmodder";
+} from "components";
+import { Component, jsx } from "DCGView";
 import Controller from "../Controller";
 import { cancelCapture, CaptureMethod } from "../backend/capture";
 import "./CaptureMethod.css";
@@ -17,7 +17,7 @@ import { For } from "components/desmosComponents";
 
 const captureMethodNames: CaptureMethod[] = ["once", "slider", "action"];
 
-export default class SelectCapture extends DCGView.Class<{
+export default class SelectCapture extends Component<{
   controller: Controller;
 }> {
   controller!: Controller;

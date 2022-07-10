@@ -1,7 +1,7 @@
-import DCGView from "DCGView";
+import { Component, jsx } from "DCGView";
 import "./Toggle.less";
 
-export default class Toggle extends DCGView.Class<{
+export default class Toggle extends Component<{
   toggled(): boolean;
   disabled(): boolean;
   onChange(): void;

@@ -1,4 +1,6 @@
-import { Calc, OptionalProperties, getQueryParams } from "desmodder";
+import { Calc } from "globals/window";
+import { OptionalProperties } from "utils/utils";
+import { getQueryParams } from "utils/depUtils";
 import { Config, configList } from "./config";
 
 type ConfigOptional = OptionalProperties<Config>;
@@ -30,7 +32,10 @@ function onEnable(config: Config) {
   initialSettings = { ...config };
   const queryParams = getQueryParams();
   for (const key of managedKeys) {
-    initialSettings[key] = Calc.settings[key];
+    initialSettings[key] =
+      (Calc.settings as typeof Calc.settings & { advancedStyling: boolean })[
+        key
+      ] ?? false;
   }
   const queryConfig: ConfigOptional = {};
   for (const key of managedKeys) {

@@ -29,6 +29,10 @@ baseConfig = (env, options) => ({
   module: {
     rules: [
       {
+        test: /\.grammar(\?terms)?$/,
+        loader: "lezer-loader",
+      },
+      {
         test: /\.css$/,
         use: ["style-loader", "css-loader"],
         exclude: /\.module\.css$/,
@@ -62,7 +66,7 @@ baseConfig = (env, options) => ({
       ],
     }),
     new webpack.ProvidePlugin({
-      process: "process/browser",
+      process: "process/browser.js",
     }),
     new webpack.DefinePlugin({
       BROWSER: JSON.stringify(env.browser),

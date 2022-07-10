@@ -1,4 +1,5 @@
-import { Calc, EvaluateSingleExpression } from "desmodder";
+import { Calc } from "globals/window";
+import { EvaluateSingleExpression } from "utils/depUtils";
 import { scaleBoundsAboutCenter } from "./utils";
 import Controller from "../Controller";
 
@@ -47,7 +48,7 @@ export async function captureFrame(controller: Controller) {
         targetPixelRatio: targetPixelRatio,
         height: height / targetPixelRatio,
         showLabels: true,
-        preserveAxisLabels: true,
+        preserveAxisNumbers: true,
         mathBounds: clampedMathBounds,
       },
       (data) => {
@@ -117,7 +118,7 @@ async function captureActionFrame(
       await captureAndApplyFrame(controller);
       controller.setTickCountLatex(String(tickCountRemaining - 1));
       controller.actionCaptureState = "waiting-for-update";
-      if (tickCountRemaining - 1 > 0) {
+      if (tickCountRemaining - 1 > 0 && controller.currentActionID !== null) {
         Calc.controller.dispatch({
           type: "action-single-step",
           id: controller.currentActionID,

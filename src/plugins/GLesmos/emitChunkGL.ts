@@ -1,9 +1,9 @@
 import { getFunctionName, getBuiltin } from "./builtins";
 import { IRChunk, IRInstruction } from "parsing/IR";
-import { compileObject, evalMaybeRational, getGLType } from "./outputHelpers";
+import { compileObject, getGLType } from "./outputHelpers";
 import { countReferences, opcodes, printOp, Types } from "./opcodeDeps";
 import { desmosRequire } from "globals/workerSelf";
-import { MaybeRational } from "parsing/parsenode";
+import { evalMaybeRational, MaybeRational } from "parsing/parsenode";
 
 export const ListLength = desmosRequire(
   "core/math/ir/features/list-length"
@@ -56,12 +56,12 @@ function getSourceBinOp(
     case opcodes.OrderedPairAccess:
       // Should only be called with a constant (inlined) index arg
       if (b !== "(1.0)" && b !== "(2.0)") {
-        throw `Programming error in OrderedPairAccess`;
+        throw Error(`Programming error in OrderedPairAccess`);
       }
       return b === "(1.0)" ? `${a}.x` : `${a}.y`;
     default:
       const op = printOp(ci.type);
-      throw `Programming error: ${op} is not a binary operator`;
+      throw Error(`Programming error: ${op} is not a binary operator`);
   }
 }
 
@@ -118,7 +118,9 @@ function getSourceSimple(
     case opcodes.SymbolicVar:
     case opcodes.SymbolicListVar:
       const op = printOp(ci.type);
-      throw `Programming Error: expect ${op} to be removed before emitting code.`;
+      throw Error(
+        `Programming Error: expect ${op} to be removed before emitting code.`
+      );
     case opcodes.ListAccess:
       const length = ListLength.getConstantListLength(chunk, ci.args[0]);
       const list = maybeInlined(ci.args[0], inlined);
@@ -132,7 +134,9 @@ function getSourceSimple(
         const constIndex = evalMaybeRational(indexInst.value as MaybeRational);
         const floorIndex = Math.floor(constIndex);
         if (floorIndex < 1 || floorIndex > length) {
-          throw `Constant index ${constIndex} out of range on array of length ${length}`;
+          throw Error(
+            `Constant index ${constIndex} out of range on array of length ${length}`
+          );
         }
       }
       return `${index}>=1 && ${index}<=${length} ? ${list}[int(${index})-1] : NaN`;
@@ -157,9 +161,9 @@ function getSourceSimple(
       const args = ci.args.map((e) => maybeInlined(e, inlined)).join(",");
       return `${name}(${args})`;
     case opcodes.ExtendSeed:
-      throw "ExtendSeed not yet implemented";
+      throw Error("ExtendSeed not yet implemented");
     default:
-      throw `Unexpected opcode: ${printOp(ci.type)}`;
+      throw Error(`Unexpected opcode: ${printOp(ci.type)}`);
   }
 }
 
@@ -169,7 +173,7 @@ function constFloat(s: string) {
   if (/^[-+]?\d*(\.\d*)?$/.test(inner)) {
     return inner;
   } else {
-    throw "Sum/product bounds must be constants";
+    throw Error("Sum/product bounds must be constants");
   }
 }
 
@@ -184,11 +188,11 @@ function getBeginLoopSource(
   const upperBound = constFloat(maybeInlined(ci.args[1], inlined));
   const its = parseFloat(upperBound) - parseFloat(lowerBound) + 1;
   if (its < 1) {
-    throw "Sum/product must have upper bound > lower bound";
+    throw Error("Sum/product must have upper bound > lower bound");
   }
   if (its > 10000) {
     // Too many iterations can cause freezing or losing the webgl context
-    throw "Sum/product cannot have more than 10000 iterations";
+    throw Error("Sum/product cannot have more than 10000 iterations");
   }
   const outputIndex = ci.endIndex + 1;
   const outputIdentifier = getIdentifier(outputIndex);
@@ -253,7 +257,7 @@ function getBeginBroadcastSource(
       if (broadcastRes.type === opcodes.BroadcastResult) {
         const len = broadcastRes.constantLength;
         if (typeof len !== "number") {
-          throw "List with non-constant length not supported";
+          throw Error("List with non-constant length not supported");
         }
         broadcastLength = len;
         varInits.push(`float[${len}] ${getIdentifier(index)};\n`);
@@ -314,7 +318,7 @@ function getSourceAndNextIndex(
         nextIndex: incrementedIndex,
       };
     case opcodes.BeginIntegral:
-      throw "Integrals not yet implemented";
+      throw Error("Integrals not yet implemented");
     case opcodes.LoadArg:
       inlined[instructionIndex] = chunk.argNames[instructionIndex];
       return {

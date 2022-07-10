@@ -41,7 +41,7 @@ const pinUnpinAction = `
   %%DCGView%%.createElement(
     %%DCGView%%.Components.If,
     {
-      predicate: () => window.DesModder.controller.pluginsEnabled["pin-expressions"] && %%this%%.model().type !== "folder"
+      predicate: () => window.DesModder?.controller?.isPluginEnabled?.("pin-expressions") && %%this%%.model().type !== "folder"
     },
     () => %%DCGView%%.Components.IfElse(
       () => window.DesModder?.controller?.isPinned(%%this%%.model().id),
@@ -66,7 +66,7 @@ const folderDumpAction = `
   %%DCGView%%.createElement(
     %%DCGView%%.Components.If,
     {
-      predicate: () => window.DesModder.controller.pluginsEnabled["folder-tools"] && %%this%%.model().type === "folder"
+      predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && %%this%%.model().type === "folder"
         && window.Calc.controller.getItemModelByIndex(%%this%%.model().index + 1)?.folderId === %%this%%.model().id
     },
     ${actionCreate(
@@ -82,7 +82,7 @@ const folderMergeAction = `
   %%DCGView%%.createElement(
     %%DCGView%%.Components.If,
     {
-      predicate: () => window.DesModder.controller.pluginsEnabled["folder-tools"] && %%this%%.model().type === "folder"
+      predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && %%this%%.model().type === "folder"
     },
     ${actionCreate(
       "Merge",
@@ -97,7 +97,7 @@ const noteEncloseAction = `
   %%DCGView%%.createElement(
     %%DCGView%%.Components.If,
     {
-      predicate: () => window.DesModder.controller.pluginsEnabled["folder-tools"] && %%this%%.model().type === "text"
+      predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && %%this%%.model().type === "text"
     },
     ${actionCreate(
       "Enclose",

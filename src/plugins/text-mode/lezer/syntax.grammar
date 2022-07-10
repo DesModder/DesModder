@@ -1,0 +1,167 @@
+// Based on the Lezer JavaScript grammer
+// <https://github.com/lezer-parser/javascript/blob/main/src/javascript.grammar>
+
+@skip { spaces | newline | LineComment }
+
+@context trackNewline from "./tokens"
+
+@precedence {
+  member,
+  access,
+  call,
+  postfix,
+  prefix,
+  exp @right,
+  times @left,
+  plus @left,
+  derivative,
+  updateRule @right,
+  sim @left,
+  rel @left
+}
+
+@top Program {
+  statements
+}
+
+statement[@isGroup=Statement] {
+  ExprStatement { expressionMaybeSeq RegressionBody? StyleMapping? } |
+  Table { kw<"table"> BlockInner StyleMapping? } |
+  Image { kw<"image"> String StyleMapping? } |
+  Text { String StyleMapping? } |
+  Folder { kw<"folder"> String BlockInner StyleMapping? } |
+  Settings { kw<"settings"> StyleMapping } |
+  Ticker { kw<"ticker"> expressionMaybeSeq StyleMapping? }
+}
+
+RegressionBody {
+  RegressionBodyStart statements RegressionBodyEnd
+}
+
+BlockInner {
+  "{" statements "}"
+}
+
+statements {
+  (statement? semicolon | statement insertSemi)*
+}
+
+expressionMaybeSeq[@isGroup=Expression] {
+  expression |
+  SequenceExpression { expression "," expressionMaybeSeq }   
+}
+
+expression {
+  Number |
+  Identifier |
+  RepeatedExpression |
+  ListExpression |
+  ListComprehension { "[" expression kw<"for"> commaSep1<AssignmentExpression> "]" } |
+  Piecewise { "{" commaSep<PiecewiseBranch> "}" } |
+  UpdateRule { expression !updateRule "->" expression } |
+  PrefixExpression { !prefix ArithOp<"-"> expression } |
+  DerivativeExpression { !derivative "(" "d/d" Identifier ")" expression } |
+  ParenthesizedExpression { "(" expressionMaybeSeq ")" } |
+  MemberExpression { expression !member DotAccessIdentifier } |
+  ListAccessExpression { expression !access ListExpression } |
+  BinaryExpression |
+  PostfixExpression { expression !postfix ArithOp<"!"> } |
+  CallExpression
+}
+
+PiecewiseBranch { expression (":" expression)? }
+
+AssignmentExpression { Identifier "=" expression }
+
+CallExpression { expression Prime? !call "(" commaSep<expression> ")" }
+
+StyleMapping {
+  MappingStart commaSep<MappingEntry> MappingEnd
+}
+
+MappingEntry { Identifier ":" mappingValue }
+
+mappingValue {
+  expression |
+  String |
+  StyleMapping
+}
+
+RepeatedExpression {
+  (kw<"integral"> | kw<"sum"> | kw<"product">)
+  Identifier "=" "(" expression "..." expression ")"
+  "(" expression ")"
+}
+
+ListExpression {
+  "[" commaSep<expression> ("..." ","? commaSep<expression>)? "]"
+}
+
+BinaryExpression {
+  expression !exp ArithOp<"^"> expression |
+  expression !times (divide | ArithOp<"*">) expression |
+  expression !plus ArithOp<"+" | "-"> expression |
+  expression !sim CompareOp<"~"> expression |
+  expression !rel CompareOp<"<" "="? | ">" "="? | "="> expression
+}
+
+commaSep<content> {
+  "" | content ("," content)* ","?
+}
+
+commaSep1<content> {
+  content ("," content)* ","?
+}
+
+ArithOp<expr> { expr }
+CompareOp<expr> { expr }
+
+// Keywords
+kw<term> { @specialize[@name={term}]<Identifier, term> }
+
+// insertSemi above the rest of the tokens prioritizes inserting a semi when
+// possible, so "x\n-x" is "x; -x;", not "x-x;"
+@external tokens insertSemicolon from "./tokens" { insertSemi }
+
+@tokens {
+  semicolon { ";" }
+
+  Identifier { $[a-zA-Z] $[a-zA-Z0-9]* }
+
+  // Needed to avoid confusion with p .5x being dot access: p.5x
+  DotAccessIdentifier { "." $[a-zA-Z] $[a-zA-Z0-9]* }
+
+  String { '"' (!["\\] | "\\" _)* '"' }
+
+  Number {
+    (std.digit+ ("." std.digit+)? | "." std.digit+)
+      (("e" | "E") ("+" | "-")? std.digit+)? 
+  }
+
+  Prime { "'"+ }
+
+  LineComment { "//" ![\n]* }
+
+  divide[@name=ArithOp] { "/" }
+
+  @precedence { LineComment, divide }
+
+  @precedence { Identifier, "d/d" }
+
+  @precedence { "->", "-" }
+
+  spaces[@export] { $[ \t]+ }
+  newline[@export] { "\n" }
+
+  MappingStart[closedBy=MappingEnd] { "@{" }
+  MappingEnd[openedBy=MappingStart] { "}" }
+
+  RegressionBodyStart[closedBy=RegressionBodyEnd] { "#{" }
+  RegressionBodyEnd[closedBy=RegressionBodyStart] { "}" }
+
+  "(" ")" "[" "]" "{" "}"
+
+  "..." "," "=" ":" "->"
+}
+
+@detectDelim

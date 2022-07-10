@@ -13,7 +13,7 @@ import {
   getBlankMetadata,
   changeExprInMetadata,
 } from "./metadata/manage";
-import { ItemModel } from "globals/Calc";
+import { ItemModel } from "globals/models";
 const AbstractItem = desmosRequire("graphing-calc/models/abstract-item");
 const List = desmosRequire("graphing-calc/models/list");
 
@@ -371,9 +371,10 @@ export default class Controller {
   }
 
   pinExpression(id: string) {
-    this.updateExprMetadata(id, {
-      pinned: true,
-    });
+    if (Calc.controller.getItemModel(id)?.type !== "folder")
+      this.updateExprMetadata(id, {
+        pinned: true,
+      });
   }
 
   unpinExpression(id: string) {
@@ -386,6 +387,7 @@ export default class Controller {
     return (
       this.pluginsEnabled["pin-expressions"] &&
       !Calc.controller.getExpressionSearchOpen() &&
+      Calc.controller.getItemModel(id)?.type !== "folder" &&
       this.graphMetadata.expressions[id]?.pinned
     );
   }
@@ -530,6 +532,10 @@ export default class Controller {
     this.killWorker();
   }
 
+  /**
+   * Force the worker to revisit this expression by toggling it hidden then
+   * un-hidden
+   */
   toggleExpr(id: string) {
     Calc.controller.dispatch({
       type: "toggle-item-hidden",
@@ -543,5 +549,16 @@ export default class Controller {
 
   killWorker() {
     Calc.controller.evaluator.workerPoolConnection.killWorker();
+  }
+
+  toggleTextMode() {
+    this.exposedPlugins["text-mode"].toggleTextMode();
+  }
+
+  inTextMode() {
+    return (
+      this.isPluginEnabled("text-mode") &&
+      this.exposedPlugins["text-mode"]?.inTextMode
+    );
   }
 }

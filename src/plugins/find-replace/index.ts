@@ -1,6 +1,6 @@
 import Controller from "./Controller";
 import View from "./View";
-import { Calc } from "desmodder";
+import { Calc } from "globals/window";
 
 const controller = new Controller();
 const view = new View();

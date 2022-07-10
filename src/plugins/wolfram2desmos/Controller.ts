@@ -1,5 +1,5 @@
 import { Config } from "./config";
-import { OptionalProperties } from "desmodder";
+import { OptionalProperties } from "utils/utils";
 
 /*
  This controller manages the focus events of Expression panel

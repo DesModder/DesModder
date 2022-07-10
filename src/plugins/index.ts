@@ -11,6 +11,7 @@ import hideErrors from "plugins/hide-errors";
 import debugMode from "plugins/debug-mode";
 import showTips from "plugins/show-tips";
 import folderTools from "plugins/folder-tools";
+import textMode from "plugins/text-mode";
 import setPrimaryColor from "plugins/set-primary-color";
 
 interface ConfigItemGeneric {
@@ -39,6 +40,7 @@ export interface Plugin<Settings extends GenericSettings = {}> {
   id: string;
   name: string;
   description: string;
+  descriptionLearnMore?: string;
   onEnable(config?: unknown): any;
   onDisable?(): void;
   afterDisable?(): void;
@@ -48,7 +50,7 @@ export interface Plugin<Settings extends GenericSettings = {}> {
   onConfigChange?(changes: Settings, config: Settings): void;
   manageConfigChange?(current: Settings, next: Settings): Settings;
   enableRequiresReload?: boolean;
-  moduleOverrides?: unknown; // should be used only in preload coad, not in main code
+  moduleOverrides?: unknown; // should be used only in preload code, not in main code
 }
 
 // these plugins will be listed in list order in the menu
@@ -69,6 +71,7 @@ const _plugins = {
   [shiftEnterNewline.id]: shiftEnterNewline,
   [hideErrors.id]: hideErrors,
   [folderTools.id]: folderTools,
+  [textMode.id]: textMode,
 } as const;
 
 export const pluginList = Object.values(_plugins);

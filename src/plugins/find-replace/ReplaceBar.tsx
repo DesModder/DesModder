@@ -1,12 +1,11 @@
-import { DCGView, MathQuillView, Calc, desmosRequire } from "desmodder";
+import { Component, jsx } from "DCGView";
+import { Calc } from "globals/window";
+import { MathQuillView } from "components";
+import { autoOperatorNames } from "utils/depUtils";
 import Controller from "./Controller";
 import "./ReplaceBar.less";
 
-const autoOperatorNames = desmosRequire(
-  "main/mathquill-operators"
-).getAutoOperators();
-
-export default class ReplaceBar extends DCGView.Class<{
+export default class ReplaceBar extends Component<{
   controller: Controller;
 }> {
   controller!: Controller;

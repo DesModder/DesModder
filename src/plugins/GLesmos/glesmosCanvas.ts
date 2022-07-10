@@ -1,7 +1,7 @@
 import ViewportTransforms from "./ViewportTransforms";
 
 function glesmosError(msg: string) {
-  throw `[GLesmos Error] ${msg}`;
+  throw Error(`[GLesmos Error] ${msg}`);
 }
 
 function compileShader(

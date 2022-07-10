@@ -8,13 +8,16 @@ import {
 
 export default (dependencyNameMap: DependencyNameMap) => ({
   StringLiteral(path: babel.NodePath<t.StringLiteral>) {
-    if (path.node.value == "dcg-exppanel-container") {
+    if (path.node.value === "dcg-exppanel-container") {
       /* @plugin pin-expressions
+      @plugin text-mode
       
       @what Insert div.dcg-exppanel.dsm-pinned-expressions to show the pinned expressions
+        and a div.dcg-exppanel.dsm-text-editor for the edited text
       
       @how
-        Splices in a new <For></For> (to show all the pinned expressions) at the end of
+        Splices in a new <For></For> (to show all the pinned expressions)
+        and a new <If></If> (for the text editor) at the end of
           <div class="dcg-exppanel-container">
             <If predicate> <ExpressionsHeader/> </If>
             <If predicate> <ExpressionSearchBar/> </If>
@@ -22,8 +25,9 @@ export default (dependencyNameMap: DependencyNameMap) => ({
             <If predicate> <div class="dcg-exppanel"> ... </div> </If>
             // here
           </div>
-          We want to insert the extra child at the end to make the first .dcg-exppanel the one selected by Desmos's JS.
-          The CSS will move it to the beginning
+        We want to insert the pinned expressions child at the end to make the first
+        .dcg-exppanel the one selected by Desmos's JS. The CSS will move it to the beginning.
+        The position of the text editor doesn't really matter. Just has to be after the header.
       */
       const createElementCall = containingCreateElementCall(path);
       if (createElementCall === null) return;
@@ -36,7 +40,9 @@ export default (dependencyNameMap: DependencyNameMap) => ({
             %%DCGView%%.Components.For,
             {
               each: function () {
-                return %%this%%.controller.getAllItemModels();
+                return window.DesModder?.controller?.isTextMode?.()
+                  ? [] 
+                  : %%this%%.controller.getAllItemModels();
               },
               key: function (e) {
                 return e.guid;
@@ -68,6 +74,51 @@ export default (dependencyNameMap: DependencyNameMap) => ({
         )({
           DCGView: dependencyNameMap.dcgview,
           this: findIdentifierThis(path),
+        }),
+        template.expression(`
+          %%DCGView%%.createElement(
+            %%DCGView%%.Components.If,
+            {
+              predicate: () => window.DesModder?.controller?.inTextMode?.()
+            },
+            () => %%DCGView%%.createElement(
+              "div",
+              {
+                class: %%DCGView%%.const("dsm-text-editor-container"),
+                didMount: div => window.DesModder?.controller?.exposedPlugins["text-mode"].mountEditor(div),
+                willUnmount: div => window.DesModder?.controller?.exposedPlugins["text-mode"].unmountEditor(div)
+              }
+            )
+          )
+        `)({
+          DCGView: dependencyNameMap.dcgview,
+        })
+      );
+    } else if (path.node.value === "dcg-exppanel") {
+      /* @plugin text-mode
+
+      @what Hide the main expressions list when in text mode
+
+      @how Wrap the original createElement in an IF
+      */
+      const createElementCall = containingCreateElementCall(path);
+      if (createElementCall === null) return;
+      // edit the value of the string to avoid re-triggering
+      // we can't simply createELementCall.skip() because the CEC includes
+      // the CEC with class "dcg-noedit-branding" needed for show-tips below
+      path.node.value = "dcg-exppanel ";
+      createElementCall.replaceWith(
+        template.expression(
+          `%%DCGView%%.createElement(
+            %%DCGView%%.Components.If,
+            {
+              predicate: () => !window.DesModder?.controller?.inTextMode?.()
+            },
+            () => %%originalCEC%%
+          )`
+        )({
+          DCGView: dependencyNameMap.dcgview,
+          originalCEC: createElementCall.node,
         })
       );
     } else if (path.node.value === "dcg-noedit-branding") {

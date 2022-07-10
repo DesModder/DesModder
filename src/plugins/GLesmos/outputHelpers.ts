@@ -1,5 +1,5 @@
 import { ValueType } from "parsing/IR";
-import { MaybeRational } from "parsing/parsenode";
+import { evalMaybeRational, MaybeRational } from "parsing/parsenode";
 import { Types } from "./opcodeDeps";
 import getRGBPack from "./colorParsing";
 
@@ -32,14 +32,6 @@ export function colorVec4(color: string, opacity: number) {
   return `vec4(${r}, ${g}, ${b}, ${a})`;
 }
 
-export function evalMaybeRational(x: MaybeRational) {
-  if (typeof x === "number") {
-    return x;
-  } else {
-    return x.n / x.d;
-  }
-}
-
 export function compileObject(x: any): string {
   if (Array.isArray(x)) {
     // x is a point (a,b)
@@ -50,14 +42,14 @@ export function compileObject(x: any): string {
       return x ? "true" : "false";
     case "object":
       if (typeof x.n !== "number" || typeof x.d !== "number")
-        throw "Not a rational";
+        throw Error("Not a rational");
     // ... fall through to number
     case "number":
       return glslFloatify(evalMaybeRational(x));
     case "string":
-      throw "Strings not handled";
+      throw Error("Strings not handled");
     default:
-      throw `Unexpected value ${x}`;
+      throw Error(`Unexpected value ${x}`);
   }
 }
 
@@ -76,6 +68,6 @@ export function getGLType(v: ValueType) {
     case Types.ListOfPoint:
       return "vec2[]";
     default:
-      throw `Type ${v} is not yet supported`;
+      throw Error(`Type ${v} is not yet supported`);
   }
 }

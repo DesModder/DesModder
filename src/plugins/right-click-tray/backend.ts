@@ -1,4 +1,4 @@
-import { jquery } from "desmodder";
+import { jquery } from "utils/depUtils";
 
 // these are effectively private because they are not exported;
 let showContextMenu = true;

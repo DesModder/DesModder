@@ -2,6 +2,8 @@ import { DependencyNameMap } from "./overrideHelpers/withDependencyMap";
 import { Visitor } from "@babel/traverse";
 import tooltippedError from "./moduleOverrides/tooltipped-error";
 import expressionIconView from "./moduleOverrides/expression-icon-view";
+import expressionsHeader from "./moduleOverrides/expressions-header";
+import keypadsMain from "./moduleOverrides/keypads__main";
 import smartTextarea from "./moduleOverrides/smart_textarea";
 import listView from "./moduleOverrides/list-view";
 import abstractItem from "./moduleOverrides/abstract-item";
@@ -18,10 +20,13 @@ import graphslayer from "./moduleOverrides/graphslayer";
 import mainEvaluator from "./moduleOverrides/main__evaluator";
 import expressionOptionsMenuView from "./moduleOverrides/expression-options-menu-view";
 import promptSliderView from "./moduleOverrides/promptslider_view";
+import instancehotkeys from "./moduleOverrides/instancehotkeys";
 
 export default {
   "dcgview-helpers/tooltipped-error": tooltippedError,
   "expressions/expression-icon-view": expressionIconView,
+  "expressions/expressions-header": expressionsHeader,
+  "graphing-calc/keypads/main": keypadsMain,
   "expressions/smart_textarea": smartTextarea,
   "expressions/list-view": listView,
   "graphing-calc/models/abstract-item": abstractItem,
@@ -41,4 +46,5 @@ export default {
   "expressions/expression-menus/expression-options-menu-view":
     expressionOptionsMenuView,
   "expressions/promptslider_view": promptSliderView,
+  "main/instancehotkeys": instancehotkeys,
 } as { [key: string]: (dependencyNameMap: DependencyNameMap) => Visitor };

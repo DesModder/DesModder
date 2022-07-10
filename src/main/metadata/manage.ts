@@ -1,7 +1,7 @@
 import { Calc, desmosRequire } from "globals/window";
-import { ItemModel } from "globals/Calc";
+import { ItemModel } from "globals/models";
 import Metadata, { Expression } from "./interface";
-import { desModderController, OptionalProperties } from "desmodder";
+import { OptionalProperties } from "utils/utils";
 import migrateToLatest from "./migrate";
 const List = desmosRequire("graphing-calc/models/list");
 
@@ -74,7 +74,7 @@ export function getBlankMetadata(): Metadata {
   };
 }
 
-function isBlankMetadata(metadata: Metadata) {
+export function isBlankMetadata(metadata: Metadata) {
   return (
     Object.keys(metadata.expressions).length === 0 &&
     Object.keys(metadata).length === 2

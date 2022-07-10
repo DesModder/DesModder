@@ -1,4 +1,5 @@
-import { Calc, OptionalProperties } from "desmodder";
+import { OptionalProperties } from "utils/utils";
+import { Calc } from "globals/window";
 import Controller from "./Controller";
 import { Config, configList } from "./config";
 import { wolfram2desmos, isIllegalASCIIMath } from "./wolfram2desmos";
