@@ -176,6 +176,19 @@ export function exprToTextString(path: NodePath<TextAST.Expression>): string {
 }
 
 function exprToText(path: NodePath<TextAST.Expression>): Doc {
+  if (
+    path.node.type === "SequenceExpression" &&
+    isNumericOrNumericPoint(path.node)
+  ) {
+    // keep numeric points like (2, 3) on the same line
+    return [
+      "(",
+      exprToText(path.withChild(path.node.left, "left")),
+      ", ",
+      exprToText(path.withChild(path.node.right, "right")),
+      ")",
+    ];
+  }
   const inner = exprToTextNoParen(path);
   if (needsParens(path)) return parenthesize(inner);
   return inner;
@@ -217,12 +230,7 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
         exprToText(path.withChild(e.expr, "expr")),
       ]);
     case "ListExpression":
-      return bracketize(
-        join(
-          [",", line],
-          e.values.map((v, i) => exprToText(path.withChild(v, "values." + i)))
-        )
-      );
+      return listToText(path as TextAST.NodePath<TextAST.ListExpression>);
     case "RangeExpression":
       return bracketize([
         group(
@@ -364,4 +372,43 @@ function parenthesize(doc: Doc): Doc {
 
 function bracketize(doc: Doc): Doc {
   return group(["[", indent([softline, doc]), softline, "]"]);
+}
+
+function listToText(path: NodePath<TextAST.ListExpression>) {
+  const values = path.node.values;
+  const printOneLineOnly =
+    values.length > 50 || values.every(isNumericOrNumericPoint);
+  const inner = values.map((v, i) =>
+    exprToText(path.withChild(v, "values." + i))
+  );
+  return printOneLineOnly
+    ? ["[", join(", ", inner), "]"]
+    : bracketize(join([",", line], inner));
+}
+
+function isNumericOrNumericPoint(node: TextAST.Expression) {
+  return (
+    isNumericLikeLiteral(node) ||
+    (node.type === "SequenceExpression" &&
+      node.parenWrapped &&
+      isNumericLikeLiteral(node.right) &&
+      isNumericLikeLiteral(node.left))
+  );
+}
+
+function isNumericLikeLiteral(node: TextAST.Expression) {
+  return (
+    isUnsignedNumericLikeLiteral(node) ||
+    (node.type === "PrefixExpression" &&
+      node.op === "-" &&
+      isUnsignedNumericLikeLiteral(node.expr))
+  );
+}
+
+function isUnsignedNumericLikeLiteral(node: TextAST.Expression) {
+  return (
+    node.type === "Number" ||
+    (node.type === "Identifier" &&
+      (node.name === "infty" || node.name === "NaN"))
+  );
 }
