@@ -522,7 +522,13 @@ describe("Tables", () => {
     columns: [
       {
         ...columnDefaults,
-        values: [number(1), number(2), number(3)],
+        values: [],
+        latex: {
+          type: "BinaryOperator",
+          name: "Add",
+          left: number(0),
+          right: list(number(1), number(2), number(3)),
+        },
       },
     ],
   });

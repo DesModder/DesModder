@@ -155,7 +155,7 @@ export interface TableColumnAug {
   id: string;
   values: Latex.AnyChild[];
   color: string | Latex.Identifier;
-  latex?: Latex.AnyChild;
+  latex: Latex.AnyChild;
   hidden: boolean;
   points?: PointStyle;
   lines?: LineStyle;

@@ -1,4 +1,4 @@
-import TextAST from "./TextAST";
+import TextAST, { number } from "./TextAST";
 import Aug from "../aug/AugState";
 import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
 import { Calc } from "globals/window";
@@ -459,16 +459,22 @@ function tableColumnToAug(
         latex: childExprToAug(expr.left),
       };
     }
-  } else if (expr.type === "ListExpression") {
-    return {
-      ...base,
-      values: expr.values.map(childExprToAug),
-    };
   } else {
     return {
       ...base,
       values: [],
-      latex: childExprToAug(expr),
+      latex: childExprToAug(
+        expr.type === "ListExpression"
+          ? // Desmos complains about a plain list expression as latex
+            // so placate it by adding zero
+            {
+              type: "BinaryExpression",
+              op: "+",
+              left: number(0),
+              right: expr,
+            }
+          : expr
+      ),
     };
   }
 }

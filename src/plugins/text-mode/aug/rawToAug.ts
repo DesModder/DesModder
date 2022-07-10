@@ -216,19 +216,21 @@ function tryRawNonFolderToAug(
       return {
         ...base,
         type: "table",
-        columns: item.columns.map((column) => ({
-          type: "column",
-          id: column.id,
-          values: column.values
-            .slice(0, longestColumnLength + 1)
-            .map(parseLatex),
-          ...columnExpressionCommon(
-            column,
-            column.points !== false,
-            column.lines === true
-          ),
-          ...(column.latex ? { latex: parseLatex(column.latex) } : {}),
-        })),
+        columns: item.columns
+          .filter((column) => column.latex !== undefined)
+          .map((column) => ({
+            type: "column",
+            id: column.id,
+            values: column.values
+              .slice(0, longestColumnLength + 1)
+              .map(parseLatex),
+            ...columnExpressionCommon(
+              column,
+              column.points !== false,
+              column.lines === true
+            ),
+            latex: parseLatex(column.latex!),
+          })),
       };
     case "text":
       return {
