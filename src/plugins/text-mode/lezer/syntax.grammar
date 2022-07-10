@@ -134,8 +134,8 @@ kw<term> { @specialize[@name={term}]<Identifier, term> }
   String { '"' (!["\\] | "\\" _)* '"' }
 
   Number {
-    std.digit+ ("." (std.digit)+)? |
-    "." std.digit+
+    (std.digit+ ("." std.digit+)? | "." std.digit+)
+      (("e" | "E") ("+" | "-")? std.digit+)? 
   }
 
   Prime { "'"+ }

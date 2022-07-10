@@ -306,7 +306,8 @@ function columnEntryToString(e: Aug.Latex.AnyRootOrChild): string {
 function childNodeToString(e: Aug.Latex.AnyChild): string {
   switch (e.type) {
     case "Constant":
-      return e.value.toString();
+      const res = e.value.toString();
+      return res.includes("e") ? "(" + res.replace("e", "*10^{") + "})" : res;
     case "Identifier":
       return identifierToString(e);
     case "FunctionCall":

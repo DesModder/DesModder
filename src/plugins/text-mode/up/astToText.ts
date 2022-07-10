@@ -349,10 +349,13 @@ function assignmentExpressionToText(
 }
 
 function numToText(num: number): Doc {
-  const s = num.toString();
-  return s.includes("e")
-    ? group(parenthesize(s.replace("e+", "e").replace("e", " * 10 ^ ")))
-    : s;
+  return isFinite(num)
+    ? num.toString().replace("e+", "e")
+    : num > 0
+    ? "infty"
+    : num < 0
+    ? "-infty"
+    : "NaN";
 }
 
 function parenthesize(doc: Doc): Doc {

@@ -60,7 +60,7 @@ describe("Basic exprs", () => {
     testExpr("large", "123456", number(123456));
     testExpr(
       "scientific notation",
-      "(4.230000000000001 * 10 ^ 25)",
+      "4.230000000000001e25",
       number(4.23 * 10 ** 25)
     );
     testExpr("between 0 and 1", "0.25", number(0.25));
