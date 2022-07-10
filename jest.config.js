@@ -13,6 +13,7 @@ module.exports = {
   globals: {
     "ts-jest": {
       tsconfig: "tsconfig.json",
+      isolatedModules: true,
     },
   },
   moduleDirectories: ["node_modules", "src"],
