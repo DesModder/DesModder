@@ -8,16 +8,14 @@ export default () => ({
     
     @how
       Replaces
-        this.controller.isExpressionListFocused() &&
-          (this.controller.dispatch({ type: "open-expression-search" }), ...
-      with just the right side of the `&&`:
-        (this.controller.dispatch({ type: "open-expression-search" }), ...
+        this.controller.isExpressionListFocused()
+      with `true`
     */
     if (path.node.name === "isExpressionListFocused") {
-      const andPath = path.findParent((p) =>
-        p.isLogicalExpression()
-      ) as babel.NodePath<t.LogicalExpression> | null;
-      andPath?.replaceWith(andPath.node.right);
+      const callPath = path.findParent((p) =>
+        p.isCallExpression()
+      ) as babel.NodePath<t.CallExpression> | null;
+      callPath?.replaceWith(t.booleanLiteral(true));
     }
   },
 });
