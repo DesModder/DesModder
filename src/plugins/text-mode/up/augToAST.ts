@@ -54,7 +54,9 @@ export function tickerToAST(ticker: Aug.TickerAug): TextAST.Ticker {
 }
 
 function idToString(id: string) {
-  return id.startsWith("__") ? undefined : stringToASTmaybe(id);
+  return id.startsWith("__") || /\d+/.test(id)
+    ? undefined
+    : stringToASTmaybe(id);
 }
 
 export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {

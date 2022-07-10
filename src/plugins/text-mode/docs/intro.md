@@ -16,15 +16,13 @@ settings @{
 }
 
 y = (1 / (4 * p)) * x ^ 2 @{
-  id: "1",
   color: "#c74440",
   lines: @{ opacity: 0.9, width: 2.5, style: "SOLID" },
 }
 
-p = 3 @{ id: "2", color: "#2d70b3", slider: @{ min: 0.1, max: 20, step: 0 } }
+p = 3 @{ color: "#2d70b3", slider: @{ min: 0.1, max: 20, step: 0 } }
 
 (0, p) @{
-  id: "3",
   color: "#c74440",
   points: @{ opacity: 0.9, size: 9, style: "POINT", drag: "AUTO" },
 }
