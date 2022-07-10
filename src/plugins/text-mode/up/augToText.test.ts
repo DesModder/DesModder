@@ -263,6 +263,11 @@ describe("Basic exprs", () => {
       "2 * 3",
       binop("Multiply", number(2), number(3))
     );
+    testExpr(
+      "scientific notation notation",
+      "2e25",
+      binop("Multiply", number(2), binop("Exponent", number(10), number(25)))
+    );
     testExpr("division", "2 / 3", binop("Divide", number(2), number(3)));
     testExpr("exponents", "2 ^ 3", binop("Exponent", number(2), number(3)));
   });

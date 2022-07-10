@@ -527,6 +527,24 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         expr: childLatexToAST(e.expression),
       };
     case "BinaryOperator":
+      if (
+        e.name === "Multiply" &&
+        e.left.type === "Constant" &&
+        e.right.type === "BinaryOperator" &&
+        e.right.name === "Exponent" &&
+        e.right.left.type === "Constant" &&
+        e.right.left.value === 10 &&
+        e.right.right.type === "Constant" &&
+        Number.isSafeInteger(e.right.right.value)
+      ) {
+        // special case to change exponential notation e.g. 2 * 10 ^ 5 to 2e5
+        // advantage: every float from an action value looks like a float after
+        // disadvantage: maybe unexpected conversion in some cases
+        return {
+          type: "Number",
+          value: e.left.value * e.right.left.value ** e.right.right.value,
+        };
+      }
       return {
         type: "BinaryExpression",
         op: binopMap[e.name],
