@@ -1,3 +1,4 @@
+import template from "@babel/template";
 import * as t from "@babel/types";
 
 export default () => ({
@@ -9,13 +10,16 @@ export default () => ({
     @how
       Replaces
         this.controller.isExpressionListFocused()
-      with `true`
+      with
+        !window.DesModder?.controller?.inTextMode?.()
     */
     if (path.node.name === "isExpressionListFocused") {
       const callPath = path.findParent((p) =>
         p.isCallExpression()
       ) as babel.NodePath<t.CallExpression> | null;
-      callPath?.replaceWith(t.booleanLiteral(true));
+      callPath?.replaceWith(
+        template.expression.ast(`!window.DesModder?.controller?.inTextMode?.()`)
+      );
     }
   },
 });

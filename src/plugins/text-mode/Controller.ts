@@ -19,6 +19,7 @@ export default class Controller {
     // expression UI doesn't render in text mode, we replace markTickRequiredNextFrame
     // with a version that calls markTickRequiredNextFrame only when sliders are playing
     if (this.inTextMode) {
+      Calc.controller.dispatch({ type: "close-expression-search" });
       Calc.controller.markTickRequiredNextFrame = function () {
         if (this.getPlayingSliders().length > 0) {
           (this as any).__proto__.markTickRequiredNextFrame.apply(this);
