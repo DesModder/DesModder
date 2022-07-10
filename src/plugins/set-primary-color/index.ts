@@ -35,6 +35,7 @@ let originalImage: HTMLImageElement | null = null;
 const faviconLink = document.querySelector(
   "link[rel~='icon'][type]"
 ) as HTMLLinkElement;
+const originalHref = faviconLink.href;
 
 function applyHexToFavicon(hex: string) {
   if (originalImage) {
@@ -59,10 +60,10 @@ function applyHexToOldFavicon(hex: string) {
   canvas.height = originalImage.naturalHeight;
   const ctx = canvas.getContext("2d");
   if (ctx === null) return;
-  // assume originalImage is currently: hsv(217, 0.79, 0.93)
-  ctx.filter = `saturate(${sat / 0.79})
-    brightness(${li / 0.93})
-    hue-rotate(${hue - 217}deg)`;
+  // assume originalImage is currently: hsv(217, 1.00, 0.73)
+  ctx.filter = `saturate(${sat / 1.0})
+    brightness(${li / 0.73})
+    hue-rotate(${hue - 130}deg)`;
   ctx.drawImage(originalImage, 0, 0);
   faviconLink.href = canvas.toDataURL("image/png");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -81,7 +82,7 @@ function applyConfig(config: Config) {
   if (config.doFavicon) {
     applyHexToFavicon(config.primaryColor);
   } else {
-    faviconLink.href = "/favicon.ico";
+    faviconLink.href = originalHref;
   }
 }
 
@@ -90,7 +91,7 @@ const DEFAULT_COLOR = "#2f72dc";
 function onDisable() {
   applyColor(DEFAULT_COLOR);
   apiContainer.classList.remove("dsm-set-primary-color");
-  faviconLink.href = "/favicon.ico";
+  faviconLink.href = originalHref;
 }
 
 export default {
