@@ -34,7 +34,7 @@ export default class View {
     searchBar.parentNode.insertBefore(searchContainer, searchBar);
     searchContainer.appendChild(searchBar);
     this.mountNode = document.createElement("div");
-    this.mountNode.className = "find-replace-expression-replace-bar";
+    this.mountNode.className = "dsm-find-replace-expression-replace-bar";
     searchContainer.appendChild(this.mountNode);
     this.replaceView = mountToNode(ReplaceBar, this.mountNode, {
       controller: constArg(this.controller),

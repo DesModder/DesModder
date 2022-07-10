@@ -1,3 +1,4 @@
+import template from "@babel/template";
 import * as t from "@babel/types";
 
 export default () => ({
@@ -8,16 +9,17 @@ export default () => ({
     
     @how
       Replaces
-        this.controller.isExpressionListFocused() &&
-          (this.controller.dispatch({ type: "open-expression-search" }), ...
-      with just the right side of the `&&`:
-        (this.controller.dispatch({ type: "open-expression-search" }), ...
+        this.controller.isExpressionListFocused()
+      with
+        !window.DesModder?.controller?.inTextMode?.()
     */
     if (path.node.name === "isExpressionListFocused") {
-      const andPath = path.findParent((p) =>
-        p.isLogicalExpression()
-      ) as babel.NodePath<t.LogicalExpression> | null;
-      andPath?.replaceWith(andPath.node.right);
+      const callPath = path.findParent((p) =>
+        p.isCallExpression()
+      ) as babel.NodePath<t.CallExpression> | null;
+      callPath?.replaceWith(
+        template.expression.ast(`!window.DesModder?.controller?.inTextMode?.()`)
+      );
     }
   },
 });

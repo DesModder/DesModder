@@ -54,7 +54,7 @@ export default class ReplaceBar extends Component<{
         </div>
         {/* Using a standard Button looks horrible on the gray background */}
         <div
-          class="find-replace-replace-all"
+          class="dsm-find-replace-replace-all"
           role="button"
           onTap={() => this.controller.refactorAll()}
         >
