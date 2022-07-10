@@ -290,7 +290,7 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
       return group([
         "{",
         indent([
-          line,
+          softline,
           join(
             [",", line],
             e.branches.map((branch) =>
@@ -305,7 +305,7 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
             )
           ),
         ]),
-        line,
+        softline,
         "}",
       ]);
     case "BinaryExpression":
