@@ -501,7 +501,25 @@ const builtins: {
     }`,
     tag: "list",
   },
-  // median: {},
+  median: {
+    // We know n >= 1: otherwise the `median` could be constant-collapsed to NaN
+    alias: "dsm_median",
+    make: (n) => {
+      const len = parseInt(n);
+      return len % 2 == 1
+        ? `float dsm_median(float[${n}] L) {
+            return L[int(dsm_sortPerm(L)[${(len - 1) / 2}])-1];
+          }`
+        : `float dsm_median(float[${n}] L) {
+            float[${n}] perm = dsm_sortPerm(L);
+            return 0.5*(L[int(perm[${len / 2}])-1]+L[int(perm[${
+            len / 2 - 1
+          }])-1]);
+          }`;
+    },
+    tag: "list",
+    deps: (n) => [`sortPerm#${n}`],
+  },
   // var: {},
   // varp: {},
   // cov: {},
