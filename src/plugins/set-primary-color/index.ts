@@ -12,7 +12,7 @@ function scaleColor(hex: string, s: number) {
   const parsed = parseCSSHex(hex);
   const [r, g, b] = parsed ?? [0, 0, 0];
   s *= 255;
-  return `rgb(${r * s}, ${g * s}, ${b * s})`;
+  return `${r * s}, ${g * s}, ${b * s}`;
 }
 
 const colorMapping = {
@@ -27,7 +27,9 @@ const colorMapping = {
 
 function applyColor(hex: string) {
   for (const [key, scale] of Object.entries(colorMapping)) {
-    apiContainer.style.setProperty(key, scaleColor(hex, scale));
+    const s = scaleColor(hex, scale);
+    apiContainer.style.setProperty(key, `rgb(${s})`);
+    apiContainer.style.setProperty(key + "-rgb", `${s}`);
   }
 }
 
