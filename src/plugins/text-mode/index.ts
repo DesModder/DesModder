@@ -19,6 +19,6 @@ export default {
   afterDisable: () => {
     Calc.controller.updateViews();
   },
-  enabledByDefault: true,
+  enabledByDefault: false,
   /* Has module overrides */
 } as const;
