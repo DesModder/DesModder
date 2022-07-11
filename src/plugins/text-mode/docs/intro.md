@@ -46,7 +46,7 @@ Cons:
 
 ## Learn the Language
 
-If you want a more guided tutorial then playing around with converting graphs to Text Mode, check out the following links:
+If you want a more guided tutorial than playing around with converting graphs to Text Mode, check out the following links:
 
 - [Expressions](./expressions.md)
 - [Style Mappings](./style-mappings.md)
