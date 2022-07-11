@@ -1,5 +1,20 @@
 # DesModder Changelog
 
+## 0.8.0
+
+New features:
+
+- Text Mode plugin (beta)
+
+Bug fixes and improvements:
+
+- (Video Creator) Exported mp4s on Ubuntu and some Mac are no longer zero bytes
+- (Set Primary Color) Fix various styling issues
+- (Set Primary Color) Fix wrong favicon when plugin is disabled
+- (Find and Replace) Ctrl+F once again works when the expressions list is unfocused
+- (GLesmos) Naming collisions (including `round`) avoided
+- (GLesmos) `median` function implemented
+
 ## 0.7.3
 
 Emergency bug fix because Desmos removed the `parser` module in favor of `core/math/parser`
