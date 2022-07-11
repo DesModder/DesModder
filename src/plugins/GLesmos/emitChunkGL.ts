@@ -36,9 +36,9 @@ function getSourceBinOp(
     case opcodes.Divide:
       return `${a}/${b}`;
     case opcodes.Exponent:
-      return `rpow(${a},${b})`;
+      return `dsm_rpow(${a},${b})`;
     case opcodes.RawExponent:
-      return `rpow(${a},${b})`;
+      return `dsm_rpow(${a},${b})`;
     case opcodes.Equal:
       return `${a}==${b}`;
     case opcodes.Less:

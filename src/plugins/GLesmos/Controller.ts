@@ -44,7 +44,7 @@ export default class Controller {
     } catch (e) {
       const model = Calc.controller.getItemModel(id);
       if (model) {
-        model.error = e;
+        model.error = e instanceof Error ? e.message : e;
       }
     }
   }
