@@ -16,20 +16,28 @@ let css = fs.readFileSync("raw.css").toString();
 const colorMapping = {
   // secondary btn depressed, primary link depressed, show more rows in table, braille
   "#17396e": "var(--dsm-primary-dark-5)", // 0.5
+  "23,57,110": "var(--dsm-primary-dark-5-rgb)",
   // primary/secondary btn hovered, export image depressed, label orientation hovered, more
   "#2253a1": "var(--dsm-primary-dark-4)", // 0.725
+  "34,83,161": "var(--dsm-primary-dark-4-rgb)",
   // primary/secondary btn depressed, braille, more
   "#2457a8": "var(--dsm-primary-dark-3)", // 0.765
+  "36,87,168": "var(--dsm-primary-dark-4-rgb)",
   // primary (not dark bg) btn. Group with the next one
   "#2862bd": "var(--dsm-primary-dark-2)", // 0.855
+  "40,98,189": "var(--dsm-primary-dark-2-rgb)",
   // primary btn hovered, primary btn (not dark) depressed, export image, braille, more
   "#2964c2": "var(--dsm-primary-dark-1)", // 0.877
+  "41,100,194": "var(--dsm-primary-dark-1-rgb)",
   // pretty much everything (70); blue text and stuff
   "#2f72dc": "var(--dsm-primary-color)", // 1
+  "47,114,220": "var(--dsm-primary-color-rgb)",
   // primary btn hovered
   "#347ff5": "var(--dsm-primary-light-1)", // 1.11
+  "52,127,245": "var(--dsm-primary-light-1-rgb)",
   // primary btn border (on dark bg); for simplicity make same as light-1
   "#4480e0": "var(--dsm-primary-light-1)", // nonlinear, avg 1.2
+  "68,128,224": "var(--dsm-primary-light-1-rgb)",
   // Green from Desmos. Will probably be patched
   "#127a3d": "var(--dsm-primary-color)",
   // share failed
@@ -58,10 +66,10 @@ css = css.replace(
   /@(media|\S*keyframes)[^{}]*{[^{}]*({[^{}]*}[^{}]*)*[^{}]*}/gm,
   ""
 );
-// Remove lines that have none of: #{}
+// Remove lines with "var" already
 // Restrict to lines starting with an even number of spaces
 // to avoid mangling stuff
-css = css.replace(/^(  )+\S[^#{}]*$/gm, "");
+css = css.replace(/^(  )+.*var.*$/gm, "");
 // Replace based on the replacements in the colorMapping
 for (let [from, to] of Object.entries(colorMapping)) {
   css = css.replaceAll(from, to);
