@@ -167,8 +167,7 @@ const tips: TipData[] = [
   // From Ranny Bergamotte
   {
     desc: "Listen to your graphs using Audio Trace!",
-    learnMore:
-      "https://www.desmos.com/accessibility#audio-trace",
+    learnMore: "https://www.desmos.com/accessibility#audio-trace",
   },
   {
     desc: "Note frequencies for audio trace depend on how high or low they are located in the viewport",
@@ -178,8 +177,7 @@ const tips: TipData[] = [
   },
   {
     desc: "Desmos also has other calculators!",
-    learnMore:
-      "https://www.desmos.com",
+    learnMore: "https://www.desmos.com",
   },
   {
     desc: "Don't want your viewport to be moved? Lock it in the graph settings!",
@@ -200,7 +198,7 @@ const tips: TipData[] = [
     desc: "You're superb <3",
   },
   {
-    desc: "Huggy!"
+    desc: "Huggy!",
   },
 ];
 
