@@ -163,8 +163,6 @@ const tips: TipData[] = [
   // From flexabrotnt
   {
     desc: "Extract the x or y coordinate of points by appending .x or .y to your point variable",
-    learnMore:
-      "link",
   },
   // From Ranny Bergamotte
   {
