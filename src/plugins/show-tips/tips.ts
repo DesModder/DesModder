@@ -160,7 +160,7 @@ const tips: TipData[] = [
     learnMore:
       "https://help.desmos.com/hc/en-us/articles/4405901719309-Saving-and-Managing-Graphs",
   },
-  // From flexabrotnt https://discord.com/channels/655972529030037504/663607163532476426/999501013096616036
+  // From flexabrotnt
   {
     desc: "Extract the x or y coordinate of points by appending .x or .y to your point variable",
     learnMore:
