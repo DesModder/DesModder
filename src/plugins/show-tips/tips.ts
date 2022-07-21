@@ -160,12 +160,49 @@ const tips: TipData[] = [
     learnMore:
       "https://help.desmos.com/hc/en-us/articles/4405901719309-Saving-and-Managing-Graphs",
   },
+  // From flexabrotnt https://discord.com/channels/655972529030037504/663607163532476426/999501013096616036
+  {
+    desc: "Extract the x or y coordinate of points by appending .x or .y to your point variable",
+    learnMore:
+      "link",
+  },
+  // From Ranny Bergamotte
+  {
+    desc: "Listen to your graphs using Audio Trace!",
+    learnMore:
+      "https://www.desmos.com/accessibility#audio-trace",
+  },
+  {
+    desc: "Note frequencies for audio trace depend on how high or low they are located in the viewport",
+  },
+  {
+    desc: "Audio Trace range starts on an E4 (329.63Hz) and ends on E5 (659.25Hz)",
+  },
+  {
+    desc: "Desmos also has other calculators!",
+    learnMore:
+      "https://www.desmos.com",
+  },
+  {
+    desc: "Don't want your viewport to be moved? Lock it in the graph settings!",
+    learnMore:
+      "https://help.desmos.com/hc/en-us/articles/4405296853517-Graph-Settings",
+  },
+  {
+    desc: "Enable GLEsmos to make implicits run faster",
+  },
+  {
+    desc: "Tired of seeing me? Disable show tips in the Desmodder settings",
+  },
   /* Motivation */
   {
     desc: "You're doing great :)",
   },
   {
     desc: "You're superb <3",
+  },
+  {
+    desc: "Huggy!"
   },
 ];
 
