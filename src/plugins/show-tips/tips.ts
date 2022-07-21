@@ -189,7 +189,7 @@ const tips: TipData[] = [
       "https://help.desmos.com/hc/en-us/articles/4405296853517-Graph-Settings",
   },
   {
-    desc: "Enable GLEsmos to make implicits run faster",
+    desc: "Enable the GLesmos plugin to make some implicits run faster",
   },
   {
     desc: "Tired of seeing me? Disable show tips in the Desmodder settings",
