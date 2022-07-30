@@ -1,16 +1,19 @@
 import { Component, jsx } from "DCGView";
-import { TimingData } from "globals/Calc";
-import { Calc } from "globals/window";
-import "./PerfomanceView.less";
+import Controller from "./Controller"
+// import "./PerfomanceView.less";
 
-export default class PerformanceView extends Component <{
-    performanceInfo: TimingData;
+export class PerformanceView extends Component <{
+    controller: Controller;
 }> {
     template() {
         return (
-            <div class="dcg-performance-view">
-                <p>{() => this.props.performanceInfo().timeInWorker}</p>
+            <div class="dcg-popover-interior">
+                <p><span style="font-weight: bold">Time In Worker:</span>{() => this.props.controller().getTimingData()?.timeInWorker ?? 0}ms</p>
             </div>
         )
     }
+}
+
+export function MainPopupFunc(performanceViewController: Controller): PerformanceView {
+    return <PerformanceView controller={performanceViewController}/>;
 }
