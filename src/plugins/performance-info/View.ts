@@ -7,7 +7,7 @@ export function initView() {
   desModderController.addPillboxButton({
     id: "dsm-pi-menu",
     tooltip: "Performance Info View",
-    iconClass: "dcg-icon-histogram",
+    iconClass: "dsm-icon-pie-chart",
     popup: () => MainPopupFunc(controller),
   });
 }
