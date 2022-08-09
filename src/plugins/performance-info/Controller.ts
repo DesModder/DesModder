@@ -4,26 +4,43 @@ import { updateView } from "./View";
 import { TimingData } from "globals/Calc";
 
 let dispatchListenerID: string;
+let defaultTimingData: TimingData = {
+  cacheHits: 0,
+  cacheMisses: 0,
+  cacheReads: 0,
+  cacheWrites: 0,
+  timeInWorker: 0,
+  updateAnalysis: 0,
+  computeAllLabels: 0,
+  computeAriaDescriptions: 0,
+  graphAllChanges: 0,
+  processStatements: 0,
+  publishAllStatuses: 0,
+  updateIntersections: 0,
+};
 
 export default class Controller {
-    lastTimingData: TimingData | null = null;
-    constructor() {
-        dispatchListenerID = Calc.controller.dispatcher.register((e) => {
-            if (e.type === "on-evaluator-changes") {
-                this.onEvaluatorChanges(e)
-            }
-        })
-    }
-    onEvaluatorChanges(e: DispatchedEvent) {
-        if(e.type != "on-evaluator-changes") return
-        this.lastTimingData = e.timingData
-        updateView()
-    }
-    getTimingData() {
-        return this.lastTimingData;
-    }
-    refreshState() {
-        // TODO: When you make the css for this, use dcg-icon-reset
-        Calc.setState(Calc.getState());
-    }
+  timingDataHistory: TimingData[] = [];
+  constructor() {
+    dispatchListenerID = Calc.controller.dispatcher.register((e) => {
+      if (e.type === "on-evaluator-changes") {
+        this.onEvaluatorChanges(e);
+      }
+    });
+  }
+  onEvaluatorChanges(e: DispatchedEvent) {
+    if (e.type != "on-evaluator-changes") return;
+    this.timingDataHistory?.push(e.timingData);
+    if (this.timingDataHistory.length > 10) this.timingDataHistory.shift();
+    updateView();
+  }
+  getTimingData() {
+    return (
+      this.timingDataHistory[this.timingDataHistory.length - 1] ??
+      defaultTimingData
+    );
+  }
+  refreshState() {
+    Calc.setState(Calc.getState());
+  }
 }

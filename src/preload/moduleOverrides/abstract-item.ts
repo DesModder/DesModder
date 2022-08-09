@@ -12,7 +12,7 @@ export default () =>
   withinFunctionAssignment(
     "getDisplayState",
     () => template.expression.ast`function (e) {
-        return e.isHiddenFromUI || e.filteredBySearch || window.DesModder?.controller?.isPinned(e.id)
+        return e.isHiddenFromUI || e.filteredBySearch || window.DesModder?.controller?.isExpressionPinned(e.id)
           ? "none"
           : e.renderShell
           ? "shell"

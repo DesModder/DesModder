@@ -60,7 +60,7 @@ export default (dependencyNameMap: DependencyNameMap) => ({
                 return %%DCGView%%.createElement(
                   %%DCGView%%.Components.If,
                   {
-                    predicate: () => window.DesModder?.controller?.isPinned(t.id)
+                    predicate: () => window.DesModder?.controller?.isExpressionPinned(t.id)
                   },
                   // marking as a drag copy causes it not to affect the render shells calcuations
                   // (all the logic is present already because if the top expression is dragged

@@ -21,6 +21,7 @@ interface PillboxButton {
   id: string;
   tooltip: string;
   iconClass: string;
+  pinned?: boolean;
   // popup should return a JSX element. Not sure of type
   popup: (desmodderController: Controller) => unknown;
 }
@@ -52,6 +53,8 @@ export default class Controller {
   };
   // string if open, null if none are open
   pillboxMenuOpen: string | null = null;
+
+  pillboxMenuPinned: boolean = false;
 
   constructor() {
     // default values
@@ -162,12 +165,19 @@ export default class Controller {
   }
 
   toggleMenu(id: string) {
+    if (this.pillboxMenuPinned) return;
     this.pillboxMenuOpen = this.pillboxMenuOpen === id ? null : id;
     this.updateMenuView();
   }
 
   closeMenu() {
+    if (this.pillboxMenuPinned) return;
     this.pillboxMenuOpen = null;
+    this.updateMenuView();
+  }
+
+  toggleMenuPinned() {
+    this.pillboxMenuPinned = !this.pillboxMenuPinned;
     this.updateMenuView();
   }
 
@@ -383,7 +393,7 @@ export default class Controller {
     });
   }
 
-  isPinned(id: string) {
+  isExpressionPinned(id: string) {
     return (
       this.pluginsEnabled["pin-expressions"] &&
       !Calc.controller.getExpressionSearchOpen() &&

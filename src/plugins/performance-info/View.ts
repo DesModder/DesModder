@@ -1,6 +1,6 @@
 import { jquery } from "utils/depUtils";
 import { desModderController } from "script";
-import { MainPopupFunc} from "./PerformanceView";
+import { MainPopupFunc } from "./PerformanceView";
 import { controller } from "./index";
 
 export function initView() {
@@ -8,7 +8,7 @@ export function initView() {
     id: "dsm-pi-menu",
     tooltip: "Performance Info View",
     iconClass: "dsm-icon-pie-chart",
-    popup: () => MainPopupFunc(controller),
+    popup: (desModderController) => MainPopupFunc(controller, desModderController),
   });
 }
 
@@ -18,5 +18,5 @@ export function destroyView() {
 }
 
 export function updateView() {
-    desModderController.updateMenuView();
+  desModderController.updateMenuView();
 }

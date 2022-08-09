@@ -81,7 +81,7 @@ interface EvaluatorChange {
  * Timing data for evaluator updates
  * What exactly is being cached is currently unknown
  * Most properties are self explanatory
- * publishAllStatuses is 
+ * publishAllStatuses is
  * timeInWorker is the total time taken across all parts of re-evaluation
  */
 export interface TimingData {

@@ -16,19 +16,15 @@ export default class IconButton extends Component<{
         class={() =>
           mergeClass(
             {
-              "dsm-btn-icon-disabled":
-                this.props.disabled?.() || false,
+              "dsm-btn-icon-disabled": this.props.disabled?.() || false,
               "dsm-btn-icon": true,
             },
-            this.props.class && this.props.class()
+            this.props.class?.()
           )
         }
-        onTap={(e: Event) =>
-          !this.props.disabled?.() && this.props.onTap(e)
-        }
+        onTap={(e: Event) => !this.props.disabled?.() && this.props.onTap(e)}
       >
-        <i class={this.props.iconClass()}></i>
-        {this.children}
+        <i class={() => this.props.iconClass()}></i>
       </span>
     );
   }

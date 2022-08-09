@@ -72,6 +72,9 @@ declare global {
       a: any;
       input: any;
       label: any;
+      strong: any;
+      ul: any;
+      li: any;
     }
   }
 }
