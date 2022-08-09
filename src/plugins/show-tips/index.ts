@@ -2,8 +2,6 @@ import { Calc } from "globals/window";
 
 export default {
   id: "show-tips",
-  name: "Show Tips",
-  description: "Show tips at the bottom of the expressions list.",
   onEnable: () => {
     Calc.controller.updateViews();
   },

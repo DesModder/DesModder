@@ -14,6 +14,7 @@ import {
   changeExprInMetadata,
 } from "./metadata/manage";
 import { ItemModel } from "globals/models";
+import { format } from "i18n/i18n-core";
 const AbstractItem = desmosRequire("graphing-calc/models/abstract-item");
 const List = desmosRequire("graphing-calc/models/list");
 
@@ -45,7 +46,7 @@ export default class Controller {
   } = {
     "main-menu": {
       id: "main-menu",
-      tooltip: "DesModder Menu",
+      tooltip: format("menu-desmodder-tooltip"),
       iconClass: "dsm-icon-desmodder",
       popup: MenuFunc,
     },
@@ -560,5 +561,9 @@ export default class Controller {
       this.isPluginEnabled("text-mode") &&
       this.exposedPlugins["text-mode"]?.inTextMode
     );
+  }
+
+  format(key: string, args?: any) {
+    return format(key, args);
   }
 }

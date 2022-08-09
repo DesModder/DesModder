@@ -98,16 +98,12 @@ function onDisable() {
 
 export default {
   id: "set-primary-color",
-  name: "Set Primary Color",
-  description: "Choose the primary color for the user interface",
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: false,
   config: [
     {
       key: "primaryColor",
-      name: "Primary Color",
-      description: "Primary color across the calculator",
       type: "color",
       // Desmos Blue, unfortunately
       // We don't set green as default because it's hard to match up
@@ -116,8 +112,6 @@ export default {
     },
     {
       key: "doFavicon",
-      name: "Update Site Icon",
-      description: "Toggle updating the site icon",
       type: "boolean",
       default: true,
     },

@@ -58,6 +58,7 @@
     "@codemirror/view": "^6.0.0",
     "@ffmpeg/core": "^0.10.0",
     "@ffmpeg/ffmpeg": "^0.10.0",
+    "@fluent/bundle": "^0.17.1",
     "@lezer/common": "^1.0.0",
     "@lezer/lr": "^1.0.0",
     "@types/desmos": "^1.6.0",

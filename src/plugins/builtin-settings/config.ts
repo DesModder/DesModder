@@ -1,59 +1,46 @@
 export const configList = [
   {
     key: "advancedStyling",
-    name: "Advanced styling",
-    description:
-      "Enable label editing, show-on-hover, text outline, and one-quadrant grid",
     type: "boolean",
     default: true,
   },
   {
     key: "graphpaper",
-    name: "Graphpaper",
     type: "boolean",
     default: true,
   },
   {
     key: "administerSecretFolders",
-    name: "Create hidden folders",
     type: "boolean",
     default: false,
   },
   {
     key: "pointsOfInterest",
-    name: "Show points of interest",
-    description: "Intercepts, holes, intersections, etc.",
     type: "boolean",
     default: true,
   },
   {
     key: "trace",
-    name: "Trace along curves",
     type: "boolean",
     default: true,
   },
   {
     key: "expressions",
-    name: "Show Expressions",
     type: "boolean",
     default: true,
   },
   {
     key: "zoomButtons",
-    name: "Show Zoom Buttons",
     type: "boolean",
     default: true,
   },
   {
     key: "expressionsTopbar",
-    name: "Show Top Bar",
     type: "boolean",
     default: true,
   },
   {
     key: "border",
-    name: "Border",
-    description: "Subtle border around the calculator",
     type: "boolean",
     default: false,
   },
@@ -65,7 +52,6 @@ export const configList = [
   },
   {
     key: "qwertyKeyboard",
-    name: "QWERTY Keyboard",
     type: "boolean",
     default: true,
   },

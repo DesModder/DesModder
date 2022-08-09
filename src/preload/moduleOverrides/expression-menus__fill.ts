@@ -30,9 +30,8 @@ export default (dependencyNameMap: DependencyNameMap) => ({
           () => %%DCGView%%.createElement(
             "div",
             { class: %%DCGView%%.const("dcg-options-menu-section-title dsm-gl-fill-title") },
-            () => "Render with GLesmos",
+            () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
             %%DCGView%%.createElement(%%ToggleView%%.ToggleView, {
-              ariaLabel: () => "Rendered with GLesmos",
               toggled: () => window.DesModder?.controller?.isGlesmosMode?.(%%this%%.id),
               onChange: (a) => window.DesModder?.controller?.toggleGlesmos?.(%%this%%.id),
             })
