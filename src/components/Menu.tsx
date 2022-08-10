@@ -160,9 +160,14 @@ export default class Menu extends Component<{
                           )
                         }
                       />
-                      <label for={`dsm-settings-item__input-${item.key}`}>
-                        {configItemName(plugin, item)}
-                      </label>
+                      <Tooltip
+                        tooltip={configItemDesc(plugin, item)}
+                        gravity="n"
+                      >
+                        <label for={`dsm-settings-item__input-${item.key}`}>
+                          {configItemName(plugin, item)}
+                        </label>
+                      </Tooltip>
                       <ResetButton
                         controller={this.controller}
                         key={item.key}
