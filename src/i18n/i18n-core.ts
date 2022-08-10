@@ -1,5 +1,4 @@
 import { FluentBundle, FluentResource, FluentVariable } from "@fluent/bundle";
-import { Pattern } from "@fluent/bundle/esm/ast";
 import { desmosRequire } from "globals/window";
 import enFTL from "../../localization/en.ftl";
 
@@ -8,6 +7,20 @@ const { currentLanguage } = desmosRequire("lib/i18n-core") as {
 };
 
 const locales = new Map<string, FluentBundle>();
+
+export function format(
+  key: string,
+  args?: Record<string, FluentVariable> | null | undefined
+) {
+  const lang = currentLanguage();
+  const bundle = locales.get(lang) ?? locales.get("en")!;
+  const message = bundle.getMessage(key);
+  if (message === undefined || message.value === null) {
+    console.warn("Error formatting key ", key, "in locale", lang);
+    return "";
+  }
+  return bundle.formatPattern(message.value, args);
+}
 
 /**
  * Add locale based on ftl string. The locale must be the same as Desmos's
@@ -24,17 +37,3 @@ function addLanguage(locale: string, ftl: string) {
 }
 
 addLanguage("en", enFTL);
-
-export function format(
-  key: string,
-  args?: Record<string, FluentVariable> | null | undefined
-) {
-  const lang = currentLanguage();
-  const bundle = locales.get(lang) ?? locales.get("en")!;
-  const message = bundle.getMessage(key);
-  if (message === undefined || message.value === null) {
-    console.warn("Error formatting key ", key, "in locale", lang);
-    return "";
-  }
-  return bundle.formatPattern(message.value, args);
-}

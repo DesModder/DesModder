@@ -34,7 +34,7 @@ First follow the instructions above in "Setup Environment".
 10. Back in `src/plugins.ts`, delete one of the lines declaring a plugin, for example delete `[duplicateHotkey.id]: duplicateHotkey,`
 11. Refresh the Desmos page. The plugin should now be removed from the list.
 
-## Creating a plugin
+## Example: Creating a plugin
 
 In this section, we will create a plugin which will simply change the displayed username in the top-right.
 
@@ -88,3 +88,15 @@ In this section, we will create a plugin which will simply change the displayed 
    - `git commit -m "Add Plugin 'Change Username'"`
    - `git push`
 6. For an actual plugin, you would do some more testing and eventually open a pull request on the repository. Run `npm run test` before submitting the PR to ensure that it will meet the checks.
+
+## Example: Creating a new translation file
+
+Before creating translations, figure out the language code for the language. At time of writing, vanilla Desmos has support for: en, es, et, ru, da, de, pt-BR, pt-PT, ca, fr, it, is, nl, no, sv-SE, hu, cs, pl, id, vi, el, uk, ka, th, tr, zh-CN, zh-TW, ko, ja.
+
+The following examples will refer to the language code `fr` (French), but replace it with your language code.
+
+1. Create a new FTL (fluent) file by duplicating `localization/en.ftl` to `localization/fr.ftl`
+2. Add a line near the top of `src/i18n/i18n-core.ts` with an import statement, e.g. `import frFTL from "../../localization/fr.ftl";`
+3. Add a line at the bottom of `src/i18n/18n-core.ts` adding the imported l anguage, e.g. `addLanguage("fr", frFTL)`
+4. Edit some strings in the `localization/fr.ftl` file
+5. Follow the directions in "Making Changes" to run `npm run dev` to view changes on each reload of the page.
