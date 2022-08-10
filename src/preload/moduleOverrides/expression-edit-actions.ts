@@ -5,7 +5,6 @@ import {
   containingCreateElementCall,
   findIdentifierThis,
 } from "../overrideHelpers/moduleUtils";
-import withinFunctionAssignment from "../overrideHelpers/withinFunctionAssignment";
 
 function actionCreate(
   tooltip: string,
@@ -16,7 +15,7 @@ function actionCreate(
   return `() => %%DCGView%%.createElement(
     %%Tooltip%%.Tooltip,
     {
-      tooltip: %%DCGView%%.const("${tooltip}"),
+      tooltip: %%DCGView%%.const(DesModder.controller.format("${tooltip}")),
       gravity: %%DCGView%%.const("s")
     },
     %%DCGView%%.createElement(
@@ -47,13 +46,13 @@ const pinUnpinAction = `
       () => window.DesModder?.controller?.isPinned(%%this%%.model().id),
       {
         false: ${actionCreate(
-          "Pin",
+          "pin-expressions-pin",
           "dsm-pin-button",
           "dsm-icon-bookmark-outline-add",
           "() => window.DesModder.controller.pinExpression(%%this%%.model().id)"
         )},
         true: ${actionCreate(
-          "Unpin",
+          "pin-expressions-unpin",
           "dsm-unpin-button",
           "dsm-icon-bookmark",
           "() => window.DesModder.controller.unpinExpression(%%this%%.model().id)"
@@ -70,7 +69,7 @@ const folderDumpAction = `
         && window.Calc.controller.getItemModelByIndex(%%this%%.model().index + 1)?.folderId === %%this%%.model().id
     },
     ${actionCreate(
-      "Dump",
+      "folder-tools-dump",
       "dsm-folder-dump-button",
       "dsm-icon-folder-minus",
       "() => window.DesModder.controller.folderDump(%%this%%.model().index)"
@@ -85,7 +84,7 @@ const folderMergeAction = `
       predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && %%this%%.model().type === "folder"
     },
     ${actionCreate(
-      "Merge",
+      "folder-tools-merge",
       "dsm-folder-merge-button",
       "dsm-icon-folder-plus",
       "() => window.DesModder.controller.folderMerge(%%this%%.model().index)"
@@ -100,7 +99,7 @@ const noteEncloseAction = `
       predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && %%this%%.model().type === "text"
     },
     ${actionCreate(
-      "Enclose",
+      "folder-tools-enclose",
       "dsm-note-enclose-button",
       "dsm-icon-folder-plus",
       "() => window.DesModder.controller.noteEnclose(%%this%%.model().index)"

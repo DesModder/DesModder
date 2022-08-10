@@ -61,10 +61,6 @@ function onDisable() {
 
 export default {
   id: "builtin-settings",
-  name: "Calculator Settings",
-  description:
-    "Lets you toggle features built-in to Desmos including locking viewport, hiding keypad, and more." +
-    " Most options apply only to your own browser and are ignored when you share graphs with others.",
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true,

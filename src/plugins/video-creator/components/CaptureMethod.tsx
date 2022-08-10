@@ -14,6 +14,7 @@ import Controller from "../Controller";
 import { cancelCapture, CaptureMethod } from "../backend/capture";
 import "./CaptureMethod.css";
 import { For } from "components/desmosComponents";
+import { format } from "i18n/i18n-core";
 
 const captureMethodNames: CaptureMethod[] = ["once", "slider", "action"];
 
@@ -32,9 +33,10 @@ export default class SelectCapture extends Component<{
         <SegmentedControl
           class="dsm-vc-select-capture-method"
           names={() =>
-            this.controller.hasAction()
+            (this.controller.hasAction()
               ? captureMethodNames
               : captureMethodNames.slice(0, -1)
+            ).map((method) => format("video-creator-method-" + method))
           }
           selectedIndex={() => this.getSelectedCaptureMethodIndex()}
           setSelectedIndex={(i) => this.setSelectedCaptureMethodIndex(i)}
@@ -79,7 +81,7 @@ export default class SelectCapture extends Component<{
                         this.controller.updateFocus("capture-slider-min", b)
                       }
                     />
-                    to
+                    {format("video-creator-to")}
                     <SmallMathQuillInput
                       ariaLabel="slider max"
                       onUserChangedLatex={(v) =>
@@ -96,7 +98,7 @@ export default class SelectCapture extends Component<{
                         this.controller.updateFocus("capture-slider-max", b)
                       }
                     />
-                    , step
+                    {format("video-creator-step")}
                     <SmallMathQuillInput
                       ariaLabel="slider step"
                       onUserChangedLatex={(v) =>
@@ -126,14 +128,14 @@ export default class SelectCapture extends Component<{
                           onTap={() => this.controller.addToActionIndex(-1)}
                           disabled={() => this.controller.isCapturing}
                         >
-                          Prev
+                          {format("video-creator-prev-action")}
                         </Button>
                         <Button
                           color="primary"
                           onTap={() => this.controller.addToActionIndex(+1)}
                           disabled={() => this.controller.isCapturing}
                         >
-                          Next
+                          {format("video-creator-next-action")}
                         </Button>
                       </div>
                     )}
@@ -165,7 +167,7 @@ export default class SelectCapture extends Component<{
           }
         </Switch>
         <div class="dsm-vc-capture-size">
-          Size:
+          {format("video-creator-size")}
           <SmallMathQuillInput
             ariaLabel="capture width"
             onUserChangedLatex={(latex) =>
@@ -217,11 +219,11 @@ export default class SelectCapture extends Component<{
                 ariaLabel="Target same pixel ratio"
               >
                 <Tooltip
-                  tooltip="Adjusts scaling of line width, point size, label size, etc."
+                  tooltip={() => format("video-creator-target-tooltip")}
                   gravity="n"
                 >
                   <div class="dsm-vc-pixel-ratio-inner">
-                    Target same pixel ratio
+                    {format("video-creator-target-same-pixel-ratio")}
                   </div>
                 </Tooltip>
               </Checkbox>
@@ -245,7 +247,7 @@ export default class SelectCapture extends Component<{
                   }
                   onTap={() => this.controller.capture()}
                 >
-                  Capture
+                  {format("video-creator-capture")}
                 </Button>
               ),
               false: () => (
@@ -254,7 +256,7 @@ export default class SelectCapture extends Component<{
                   class="dsm-vc-cancel-capture-button"
                   onTap={() => cancelCapture(this.controller)}
                 >
-                  Cancel
+                  {format("video-creator-cancel-capture")}
                 </Button>
               ),
             }
@@ -262,7 +264,7 @@ export default class SelectCapture extends Component<{
           <If predicate={() => this.getSelectedCaptureMethod() === "action"}>
             {() => (
               <div class="dsm-vc-end-condition-settings">
-                Step count:
+                {format("video-creator-step-count")}
                 <SmallMathQuillInput
                   ariaLabel="ticker while"
                   onUserChangedLatex={(v) =>

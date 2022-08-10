@@ -15,6 +15,7 @@ import LoadingPie from "./LoadingPie";
 import Controller from "../Controller";
 import { OutFileType, cancelExport } from "../backend/export";
 import "./MainPopup.less";
+import { format } from "i18n/i18n-core";
 
 const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng"];
 
@@ -37,10 +38,9 @@ export default class MainPopup extends Component<{
       true: () => this.templateFFmpegLoaded(),
       false: () => (
         <div class="dcg-popover-interior">
-          <p>FFmpeg loading...</p>
+          <p>{format("video-creator-ffmpeg-loading")}</p>
           <p class="dsm-delayed-reveal">
-            If this doesn't work in the next few seconds, try reloading the page
-            or reporting this bug to DesModder devs.
+            {format("video-creator-ffmpeg-fail")}
           </p>
         </div>
       ),
@@ -53,7 +53,7 @@ export default class MainPopup extends Component<{
       true: () => (
         <div class="dcg-popover-interior">
           <div class="dsm-vc-export-in-progress">
-            Exporting ...
+            {format("video-creator-exporting")}
             <LoadingPie
               progress={() => this.controller.exportProgress}
               isPending={() =>
@@ -64,7 +64,7 @@ export default class MainPopup extends Component<{
           </div>
           <div class="dsm-vc-cancel-export-button">
             <Button color="red" onTap={() => cancelExport(this.controller)}>
-              Cancel
+              {format("video-creator-cancel-export")}
             </Button>
           </div>
         </div>
@@ -76,15 +76,18 @@ export default class MainPopup extends Component<{
     return (
       <div class="dcg-popover-interior">
         <div class="dsm-vc-capture-menu">
-          <div class="dcg-group-title">Capture</div>
+          <div class="dcg-group-title">{format("video-creator-capture")}</div>
           <CaptureMethod controller={this.controller} />
         </div>
         <If predicate={() => this.controller.frames.length > 0}>
           {() => (
             <div class="dsm-vc-preview-menu">
               <div class="dcg-group-title dsm-vc-delete-all-row">
-                Preview
-                <Tooltip tooltip="Delete all" gravity="n">
+                {format("video-creator-preview")}
+                <Tooltip
+                  tooltip={format("video-creator-delete-all")}
+                  gravity="n"
+                >
                   <Button
                     color="red"
                     onTap={() => this.controller.deleteAll()}
@@ -128,8 +131,8 @@ export default class MainPopup extends Component<{
             <div class="dsm-vc-export-menu">
               <div class="dcg-group-title">
                 {BROWSER === "firefox"
-                  ? "Export (Warning: currently unreliable/slow in Firefox)"
-                  : "Export"}
+                  ? format("video-creator-export-ff")
+                  : format("video-creator-export")}
               </div>
               <div class="dsm-vc-select-export-type">
                 <SegmentedControl
@@ -143,7 +146,7 @@ export default class MainPopup extends Component<{
                 value={() => this.controller.getOutfileName()}
                 onInput={(s: string) => this.controller.setOutfileName(s)}
                 required={() => true}
-                placeholder={() => "set a filename"}
+                placeholder={() => format("video-creator-filename-placeholder")}
                 // Avoid red squiggles throughout filename
                 spellcheck={() => false}
               />
@@ -159,10 +162,14 @@ export default class MainPopup extends Component<{
                     !this.controller.isFPSValid()
                   }
                 >
-                  Export as {() => this.controller.fileType}
+                  {() =>
+                    format("video-creator-export-as", {
+                      fileType: this.controller.fileType,
+                    })
+                  }
                 </Button>
                 <div class="dsm-vc-fps-settings">
-                  FPS:
+                  {format("video-creator-fps")}
                   <SmallMathQuillInput
                     ariaLabel="fps"
                     onUserChangedLatex={(s) => this.controller.setFPSLatex(s)}

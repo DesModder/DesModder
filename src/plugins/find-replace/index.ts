@@ -40,9 +40,6 @@ function onDisable() {
 
 export default {
   id: "find-and-replace",
-  name: "Find and Replace",
-  description:
-    'Adds a "replace all" button in the Ctrl+F Menu to let you easily refactor variable/function names.',
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true,

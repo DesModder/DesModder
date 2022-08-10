@@ -3,7 +3,8 @@ import Toggle from "./Toggle";
 import Controller from "main/Controller";
 import { If, Switch, Checkbox, Tooltip } from "./desmosComponents";
 import "./Menu.less";
-import { Plugin } from "../plugins";
+import { ConfigItem, Plugin } from "../plugins";
+import { format } from "i18n/i18n-core";
 
 export function MenuFunc(controller: Controller) {
   return <Menu controller={controller} />;
@@ -21,7 +22,7 @@ export default class Menu extends Component<{
   template() {
     return (
       <div class="dcg-popover-interior">
-        <div class="dcg-group-title">DesModder plugins</div>
+        <div class="dcg-group-title">{format("menu-desmodder-plugins")}</div>
         {this.controller.getPluginsList().map((plugin) => (
           <div
             class="dcg-options-menu-section dsm-plugin-section"
@@ -41,7 +42,7 @@ export default class Menu extends Component<{
                 >
                   <i class="dcg-icon-chevron-down" />
                 </div>
-                <div class="dsm-plugin-name"> {plugin.name} </div>
+                <div class="dsm-plugin-name">{pluginDisplayName(plugin)}</div>
               </div>
               <Toggle
                 toggled={() => this.controller.isPluginEnabled(plugin.id)}
@@ -56,7 +57,7 @@ export default class Menu extends Component<{
                 {() => (
                   <div class="dsm-plugin-info-body">
                     <div class="dsm-plugin-description">
-                      {plugin.description}
+                      {pluginDesc(plugin)}
                       <If
                         predicate={() =>
                           (plugin as Plugin).descriptionLearnMore !== undefined
@@ -68,7 +69,8 @@ export default class Menu extends Component<{
                             target="_blank"
                             onTap={(e: MouseEvent) => e.stopPropagation()}
                           >
-                            &nbsp;Learn more
+                            {" "}
+                            {format("menu-learn-more")}
                           </a>
                         )}
                       </If>
@@ -115,8 +117,13 @@ export default class Menu extends Component<{
                         }
                         ariaLabel={() => item.key}
                       >
-                        <Tooltip tooltip={item.description ?? ""} gravity="n">
-                          <div class="dsm-settings-label">{item.name}</div>
+                        <Tooltip
+                          tooltip={configItemDesc(plugin, item)}
+                          gravity="n"
+                        >
+                          <div class="dsm-settings-label">
+                            {configItemName(plugin, item)}
+                          </div>
                         </Tooltip>
                       </Checkbox>
                       <ResetButton
@@ -153,9 +160,14 @@ export default class Menu extends Component<{
                           )
                         }
                       />
-                      <label for={`dsm-settings-item__input-${item.key}`}>
-                        {item.name}
-                      </label>
+                      <Tooltip
+                        tooltip={configItemDesc(plugin, item)}
+                        gravity="n"
+                      >
+                        <label for={`dsm-settings-item__input-${item.key}`}>
+                          {configItemName(plugin, item)}
+                        </label>
+                      </Tooltip>
                       <ResetButton
                         controller={this.controller}
                         key={item.key}
@@ -202,4 +214,20 @@ class ResetButton extends Component<{
       </If>
     );
   }
+}
+
+function pluginDisplayName(plugin: Plugin) {
+  return format(plugin.id + "-name");
+}
+
+function pluginDesc(plugin: Plugin) {
+  return format(plugin.id + "-desc");
+}
+
+function configItemDesc(plugin: Plugin, item: ConfigItem) {
+  return format(plugin.id + "-opt-" + item.key + "-desc");
+}
+
+function configItemName(plugin: Plugin, item: ConfigItem) {
+  return format(plugin.id + "-opt-" + item.key + "-name");
 }

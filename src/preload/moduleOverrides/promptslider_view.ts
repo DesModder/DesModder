@@ -40,7 +40,7 @@ export default (dependencyNameMap: DependencyNameMap) => ({
                 tabindex: %%DCGView%%.const("0"),
                 class: %%DCGView%%.const("dcg-btn-slider dcg-btn-light-gray")
               },
-              () => "hide"
+              () => DesModder.controller.format("hide-errors-hide")
             )
           )
         )

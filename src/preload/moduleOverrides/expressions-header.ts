@@ -41,7 +41,7 @@ export default (dependencyNameMap: DependencyNameMap) => ({
               return %%DCGView%%.createElement(
                 %%Tooltip%%.Tooltip,
                 {
-                  tooltip: %%DCGView%%.const("Toggle text mode"),
+                  tooltip: () => DesModder.controller.format("text-mode-toggle"),
                   gravity: function() {
                     return %%this%%.controller.isNarrow() ? 'n' : 's';
                   }
@@ -53,7 +53,6 @@ export default (dependencyNameMap: DependencyNameMap) => ({
                     handleEvent: %%DCGView%%.const('true'),
                     role: %%DCGView%%.const('button'),
                     tabindex: %%DCGView%%.const('0'),
-                    'aria-label': %%DCGView%%.const("Toggle text mode"),
                     onTap: () => window.DesModder.controller.toggleTextMode()
                   },
                   %%DCGView%%.createElement('i', {

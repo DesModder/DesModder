@@ -16,20 +16,19 @@ import setPrimaryColor from "plugins/set-primary-color";
 
 interface ConfigItemGeneric {
   key: string;
-  name: string;
-  description?: string;
+  // display name and descriptions are managed in a translations file
 }
 
-interface ConfigItemBoolean extends ConfigItemGeneric {
+export interface ConfigItemBoolean extends ConfigItemGeneric {
   type: "boolean";
   default: boolean;
 }
-interface ConfigItemColor extends ConfigItemGeneric {
+export interface ConfigItemColor extends ConfigItemGeneric {
   type: "color";
   default: string;
 }
 
-type ConfigItem = ConfigItemBoolean | ConfigItemColor;
+export type ConfigItem = ConfigItemBoolean | ConfigItemColor;
 
 export type GenericSettings = { [key: string]: boolean | string };
 
@@ -38,8 +37,7 @@ export interface Plugin<Settings extends GenericSettings = {}> {
   // where you might change the plugin's name
   // and can help handle migrating save state if the display name changes
   id: string;
-  name: string;
-  description: string;
+  // display name and descriptions are managed in a translations file
   descriptionLearnMore?: string;
   onEnable(config?: unknown): any;
   onDisable?(): void;
