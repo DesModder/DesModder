@@ -24,7 +24,7 @@ const tips: TipData[] = [
     desc: "Find and Replace is great for renaming variables",
   },
   {
-    desc: "Press Ctrl+Q, Ctrl+Shift+Q, or Cmd+Q to duplicate the current expression",
+    desc: "Press Ctrl+Q or Ctrl+Shift+Q to duplicate the current expression",
   },
   {
     desc: "Type Shift+Enter inside notes and folder titles for a newline",

@@ -1,5 +1,6 @@
 # File Conventions:
 # Everything related to a plugin starts with the ID of the plugin
+# Harcdoded in the Typescript:
 # [pluginID]-name = Name
 # [pluginID]-desc = Description
 # [pluginID]-opt-[optionKey]-name = Option Name
@@ -19,12 +20,13 @@ GLesmos-label-toggle-glesmos = Render with GLesmos
 ## Tips
 show-tips-name = Show Tips
 show-tips-desc = Show tips at the bottom of the expressions list.
-# TODO: translate all tips
+# Missing: all tips. Is it worthwhile?
 
 ## Text Mode
 text-mode-name = Text Mode BETA
 text-mode-desc = Expect bugs. Temporary documentation:
-# TODO: hella stuff. maybe leave off translations for now
+text-mode-toggle = Toggle Text Mode
+# Missing: error messages
 
 ## Debug Mode
 debug-mode-name = Debug Mode
@@ -33,7 +35,7 @@ debug-mode-desc = Show expression IDs instead of indices
 ## Find and Replace
 find-and-replace-name = Find and Replace
 find-and-replace-desc = Adds a "replace all" button in the Ctrl+F Menu to let you easily refactor variable/function names.
-# TODO: "replace all" text
+find-and-replace-replace-all = replace all
 
 ## Wolfram To Desmos
 wolfram2desmos-name = Wolfram To Desmos
@@ -42,12 +44,12 @@ wolfram2desmos-opt-reciprocalExponents2Surds-name = Radical Notation
 wolfram2desmos-opt-reciprocalExponents2Surds-desc = Converts fractional powers less than one to a radical equivalent (surd)
 wolfram2desmos-opt-derivativeLoopLimit-name = Expand Derivatives
 wolfram2desmos-opt-derivativeLoopLimit-desc = Expands the nth derivative of Leibniz notation into repeated derivatives (limited to 10).
-# TODO: options
 
 ## Pin Expressions
 pin-expressions-name = Pin Expressions
 pin-expressions-desc = Pin expressions from Edit List mode
-# TODO: "pin"
+pin-expressions-pin = Pin
+pin-expressions-unpin = Unpin
 
 ## Builtin Settings
 builtin-settings-name = Calculator Settings
@@ -90,22 +92,47 @@ set-primary-color-opt-primaryColor-name = Primary Color
 set-primary-color-opt-primaryColor-desc = Primary color across the calculator
 set-primary-color-opt-doFavicon-name = Update Site Icon
 set-primary-color-opt-doFavicon-desc = Toggle updating the site icon
-# TODO: options
 
 ## Hide Errors
 hide-errors-name = Hide Errors
 hide-errors-desc = Click error triangles to fade them and hide suggested sliders.
-# TODO: "hide", 
+hide-errors-hide = hide
 
 ## Folder Tools
 folder-tools-name = Folder Tools
 folder-tools-desc = Adds buttons in edit-list-mode to help manage folders.
-# TODO: "merge", "enclose" etc
+folder-tools-dump = Dump
+folder-tools-merge = Merge
+folder-tools-enclose = Enclose
 
 ## Video Creator
 video-creator-name = Video Creator
 video-creator-desc = Lets you export videos and GIFs of your graphs based on actions or sliders.
-# TODO: ffmpeg loading, "once", "slider", "action", capture etc
+video-creator-menu = Video Creator Menu
+video-creator-to = to
+video-creator-step = , step
+video-creator-prev-action = Prev
+video-creator-next-action = Next
+video-creator-size = Size:
+video-creator-step-count = Step count:
+video-creator-target-same-pixel-ratio = Target same pixel ratio
+video-creator-target-tooltip = Adjusts scaling of line width, point size, label size, etc.
+video-creator-ffmpeg-loading = FFmpeg loading...
+video-creator-ffmpeg-fail = If this doesn't work in the next few seconds, try reloading the page or reporting this bug to DesModder devs.
+video-creator-exporting = Exporting...
+video-creator-cancel-capture = Cancel
+video-creator-cancel-export = Cancel
+video-creator-capture = Capture
+video-creator-preview = Preview
+video-creator-delete-all = Delete all
+video-creator-filename-placeholder = set a filename
+video-creator-export = Export
+video-creator-export-ff = Export (Warning: currently unreliable/slow in Firefox)
+video-creator-export-as = Export as { $fileType }
+video-creator-fps = FPS:
+video-creator-method-once = once
+video-creator-method-slider = slider
+video-creator-method-action = action
 
 ## Shift+Enter Newline
 shift-enter-newline-name = Shift+Enter Newline

@@ -4,6 +4,7 @@ import { MathQuillView } from "components";
 import { autoOperatorNames } from "utils/depUtils";
 import Controller from "./Controller";
 import "./ReplaceBar.less";
+import { format } from "i18n/i18n-core";
 
 export default class ReplaceBar extends Component<{
   controller: Controller;
@@ -58,7 +59,7 @@ export default class ReplaceBar extends Component<{
           role="button"
           onTap={() => this.controller.refactorAll()}
         >
-          replace all
+          {format("find-and-replace-replace-all")}
         </div>
       </div>
     );
