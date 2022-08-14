@@ -169,14 +169,8 @@ describe("Basic exprs", () => {
     });
   });
   describe("PrefixExpression", () => {
-    testExpr("negative number", "-5", {
-      type: "Negative",
-      arg: number(5),
-    });
-    testExpr("negated identifier", "-x", {
-      type: "Negative",
-      arg: id("x"),
-    });
+    testExpr("negative number", "-5", negative(number(5)));
+    testExpr("negated identifier", "-x", negative(id("x")));
   });
   describe("PostfixExpression", () => {
     testExpr("factorial", "x!", functionCall(id("factorial"), [id("x")]));

@@ -13,6 +13,8 @@ import {
   functionCall,
   id,
   list,
+  listAccess,
+  negative,
   number,
   updateRule,
 } from "../aug/augBuilders";
@@ -247,14 +249,8 @@ describe("Basic exprs", () => {
     });
   });
   describe("PrefixExpression", () => {
-    testExpr("negative number", "-5.0", {
-      type: "Negative",
-      arg: number(5),
-    });
-    testExpr("negated identifier", "-x", {
-      type: "Negative",
-      arg: id("x"),
-    });
+    testExpr("negative number", "-5.0", negative(number(5)));
+    testExpr("negated identifier", "-x", negative(id("x")));
   });
   describe("ParenthesizedExpression", () => {
     testExpr("parenthesized number", "(5)", number(5));
@@ -703,10 +699,7 @@ describe("Semicolons", () => {
       ...exprDefaults,
       id: "__dsm-auto-2",
       color: "#2d70b3",
-      latex: {
-        type: "Negative",
-        arg: id("x"),
-      },
+      latex: negative(id("x")),
     }
   );
 });
@@ -1090,4 +1083,39 @@ describe("Diagnostics", () => {
 });
 
 // TODO: test constexpr evaluation
-// TODO: operator precedence
+
+describe("Operator precedence", () => {
+  testExpr(
+    "member > access",
+    "P.x[5]",
+    listAccess(
+      {
+        type: "OrderedPairAccess",
+        point: id("P"),
+        index: "x",
+      },
+      number(5)
+    )
+  );
+  testExpr(
+    "postfix > exp",
+    "x^y!",
+    binop("Exponent", id("x"), functionCall(id("factorial"), [id("y")]))
+  );
+  testExpr(
+    "exp > prefix",
+    "-x^y",
+    negative(binop("Exponent", id("x"), id("y")))
+  );
+  testExpr(
+    "prefix > times",
+    "-x*y",
+    binop("Multiply", negative(id("x")), id("y"))
+  );
+  testExpr(
+    "times > plus",
+    "x+y*z",
+    binop("Add", id("x"), binop("Multiply", id("y"), id("z")))
+  );
+  // TODO: some of the more arcane ones: derivative, and lower
+});
