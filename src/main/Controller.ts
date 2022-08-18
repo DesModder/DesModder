@@ -67,11 +67,11 @@ export default class Controller {
       pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
     );
     Calc.controller.dispatcher.register((e) => {
-      if (e.type==="toggle-graph-settings") {
+      if (e.type === "toggle-graph-settings") {
         this.pillboxMenuPinned = false;
         this.closeMenu();
       }
-    })
+    });
   }
 
   getDefaultConfig(id: PluginID) {
