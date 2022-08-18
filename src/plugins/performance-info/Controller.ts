@@ -41,6 +41,7 @@ export default class Controller {
     );
   }
   refreshState() {
+    Calc.controller._showToast({ message: "Refreshing graph..." });
     Calc.setState(Calc.getState());
   }
 }

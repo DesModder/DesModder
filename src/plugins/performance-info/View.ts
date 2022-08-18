@@ -8,7 +8,8 @@ export function initView() {
     id: "dsm-pi-menu",
     tooltip: "Performance Info View",
     iconClass: "dsm-icon-pie-chart",
-    popup: (desModderController) => MainPopupFunc(controller, desModderController),
+    popup: (desModderController) =>
+      MainPopupFunc(controller, desModderController),
   });
 }
 

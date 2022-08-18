@@ -1,8 +1,8 @@
-import { IconButton, Tooltip } from "components";
+import { Button, IconButton, Tooltip } from "components";
 import { Component, jsx } from "DCGView";
 import { TimingData } from "globals/Calc";
 import Controller from "./Controller";
-import DesModderController from "main/Controller"
+import DesModderController from "main/Controller";
 import "./PerformanceView.less";
 
 export class PerformanceView extends Component<{
@@ -21,7 +21,7 @@ export class PerformanceView extends Component<{
                   : "dsm-icon-bookmark-outline-add"
               }
               onTap={() => {
-                this.props.desModderController().toggleMenuPinned()
+                this.props.desModderController().toggleMenuPinned();
               }}
               class="dsm-pi-pin-menu-button"
             />
@@ -66,6 +66,19 @@ export class PerformanceView extends Component<{
             ms
           </li>
         </ul>
+        <div class="dsm-pi-refresh-state-button-container">
+          <Tooltip tooltip="Refresh the graph state to measure first load performance">
+            <Button
+              color="primary"
+              class="dsm-pi-refresh-state-button"
+              onTap={() => {
+                this.props.controller().refreshState();
+              }}
+            >
+              Refresh Graph
+            </Button>
+          </Tooltip>
+        </div>
       </div>
     );
   }
@@ -75,5 +88,10 @@ export function MainPopupFunc(
   performanceViewController: Controller,
   desModderController: DesModderController
 ): PerformanceView {
-  return <PerformanceView controller={() => performanceViewController} desModderController={() => desModderController} />;
+  return (
+    <PerformanceView
+      controller={() => performanceViewController}
+      desModderController={() => desModderController}
+    />
+  );
 }
