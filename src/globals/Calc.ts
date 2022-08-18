@@ -18,7 +18,8 @@ export type DispatchedEvent =
         | "zoom"
         | "set-graph-settings"
         | "resize-exp-list"
-        | "set-none-selected";
+        | "set-none-selected"
+        | "toggle-graph-settings";
     }
   | {
       type:
@@ -38,7 +39,6 @@ export type DispatchedEvent =
       changes: {
         [id: string]: EvaluatorChange;
       };
-      // TODO: Check if fireflame is okay with this
       timingData: TimingData;
     };
 

@@ -66,6 +66,12 @@ export default class Controller {
     this.pluginsEnabled = Object.fromEntries(
       pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
     );
+    Calc.controller.dispatcher.register((e) => {
+      if (e.type==="toggle-graph-settings") {
+        this.pillboxMenuPinned = false;
+        this.closeMenu();
+      }
+    })
   }
 
   getDefaultConfig(id: PluginID) {
@@ -165,8 +171,8 @@ export default class Controller {
   }
 
   toggleMenu(id: string) {
-    if (this.pillboxMenuPinned) return;
     this.pillboxMenuOpen = this.pillboxMenuOpen === id ? null : id;
+    this.pillboxMenuPinned = false;
     this.updateMenuView();
   }
 
