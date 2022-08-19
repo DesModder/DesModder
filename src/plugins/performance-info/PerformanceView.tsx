@@ -1,6 +1,5 @@
 import { Button, IconButton, Tooltip } from "components";
 import { Component, jsx } from "DCGView";
-import { TimingData } from "globals/Calc";
 import Controller from "./Controller";
 import DesModderController from "main/Controller";
 import "./PerformanceView.less";
@@ -56,12 +55,9 @@ export class PerformanceView extends Component<{
             {() => {
               const timingData = this.props.controller().getTimingData();
               return Math.round(
-                timingData.computeAllLabels +
-                  timingData.computeAriaDescriptions +
-                  timingData.processStatements +
-                  timingData.publishAllStatuses +
-                  timingData.updateIntersections
-              );
+                timingData.timeInWorker -
+                  (timingData.updateAnalysis + timingData.graphAllChanges)
+              );              
             }}
             ms
           </li>
