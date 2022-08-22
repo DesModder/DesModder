@@ -43,7 +43,7 @@ const pinUnpinAction = `
       predicate: () => window.DesModder?.controller?.isPluginEnabled?.("pin-expressions") && %%this%%.model().type !== "folder"
     },
     () => %%DCGView%%.Components.IfElse(
-      () => window.DesModder?.controller?.isPinned(%%this%%.model().id),
+      () => window.DesModder?.controller?.isExpressionPinned(%%this%%.model().id),
       {
         false: ${actionCreate(
           "pin-expressions-pin",

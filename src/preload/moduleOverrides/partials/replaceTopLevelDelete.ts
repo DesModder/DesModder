@@ -32,7 +32,7 @@ export default (dependencyNameMap: DependencyNameMap) => ({
       createElementCall.replaceWith(
         template.expression(`
           %%DCGView%%.Components.IfElse(
-            () => window.DesModder?.controller?.isPinned(%%this%%.model.id),
+            () => window.DesModder?.controller?.isExpressionPinned(%%this%%.model.id),
             {
               false: () => %%cec%%,
               true: () => %%DCGView%%.createElement("i", {

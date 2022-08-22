@@ -13,6 +13,7 @@ import showTips from "plugins/show-tips";
 import folderTools from "plugins/folder-tools";
 import textMode from "plugins/text-mode";
 import setPrimaryColor from "plugins/set-primary-color";
+import performanceInfo from "plugins/performance-info";
 
 interface ConfigItemGeneric {
   key: string;
@@ -70,6 +71,7 @@ const _plugins = {
   [hideErrors.id]: hideErrors,
   [folderTools.id]: folderTools,
   [textMode.id]: textMode,
+  [performanceInfo.id]: performanceInfo,
 } as const;
 
 export const pluginList = Object.values(_plugins);
