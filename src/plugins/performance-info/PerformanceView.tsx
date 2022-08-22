@@ -57,7 +57,7 @@ export class PerformanceView extends Component<{
               return Math.round(
                 timingData.timeInWorker -
                   (timingData.updateAnalysis + timingData.graphAllChanges)
-              );              
+              );
             }}
             ms
           </li>
