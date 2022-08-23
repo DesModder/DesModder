@@ -120,11 +120,9 @@ function onDisable() {
   isEnabled = false;
 }
 
-const wakatime: Plugin = {
+export default {
   id: "wakatime",
-  name: "WakaTime",
-  description: "Track your desmos activity on WakaTime.com",
   onEnable,
   onDisable,
-};
-export default wakatime;
+  enabledByDefault: false,
+} as const;

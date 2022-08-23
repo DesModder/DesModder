@@ -43,7 +43,7 @@ export interface Plugin<Settings extends GenericSettings = {}> {
   onEnable(config?: unknown): any;
   onDisable?(): void;
   afterDisable?(): void;
-  enabledByDefault?: boolean;
+  enabledByDefault: boolean;
   alwaysEnabled?: boolean;
   config?: readonly ConfigItem[];
   onConfigChange?(changes: Settings, config: Settings): void;

@@ -137,3 +137,7 @@ video-creator-method-action = action
 ## Shift+Enter Newline
 shift-enter-newline-name = Shift+Enter Newline
 shift-enter-newline-desc = Use Shift+Enter to type newlines in notes and image/folder titles.
+
+## Wakatime
+wakatime-name = WakaTime
+wakatime-desc = Track your desmos activity on WakaTime.com
