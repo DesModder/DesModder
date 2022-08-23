@@ -9,8 +9,8 @@ let ffmpeg: null | FFmpeg = null;
 async function exportAll(ffmpeg: FFmpeg, fileType: OutFileType, fps: number) {
   const outFilename = "out." + fileType;
 
-  const moreFlags = {
-    mp4: ["-vcodec", "libx264"],
+  const outFlags = {
+    mp4: ["-vcodec", "libx264", "-pix_fmt", "yuv420p"],
     webm: ["-vcodec", "libvpx-vp9", "-quality", "realtime", "-speed", "8"],
     // generate fresh palette on every frame (higher quality)
     // https://superuser.com/a/1239082
@@ -23,9 +23,11 @@ async function exportAll(ffmpeg: FFmpeg, fileType: OutFileType, fps: number) {
     fps.toString(),
     "-pattern_type",
     "glob",
+    "-pix_fmt",
+    "rgba",
     "-i",
     "*.png",
-    ...moreFlags,
+    ...outFlags,
     outFilename
   );
 
@@ -46,6 +48,15 @@ export async function cancelExport(controller: Controller) {
 }
 
 export async function initFFmpeg(controller: Controller) {
+  if (BROWSER === "firefox") {
+    console.warn(
+      "Close the Firefox DevTools before first opening the video creator menu. " +
+        "Cannot load ffmpeg.wasm while the DevTools are open due to a Firefox bug. " +
+        "See https://github.com/ffmpegwasm/ffmpeg.wasm/issues/111\n\n" +
+        "You may see errors 'Module.instantiateWasm callback failed with error: out of memory' or " +
+        "'worker.js onmessage() captured an uncaught exception: TypeError: f.asm is undefined' as a result"
+    );
+  }
   if (ffmpeg === null) {
     ffmpeg = createFFmpeg({
       log: false,
@@ -103,12 +114,15 @@ export async function exportFrames(controller: Controller) {
     ffmpeg.FS("unlink", filename);
   }
   ffmpeg.FS("unlink", outFilename);
+  const ext = controller.fileType === "apng" ? "png" : controller.fileType;
+  const metaExt = { png: "image", gif: "image", mp4: "video", webm: "video" }[
+    ext
+  ];
   const url = URL.createObjectURL(
-    new Blob([data.buffer as ArrayBuffer], { type: "video/mp4" })
+    new Blob([data.buffer as ArrayBuffer], { type: `${metaExt}/${ext}` })
   );
 
-  let humanOutFilename = controller.outfileName;
-  const ext = controller.fileType === "apng" ? "png" : controller.fileType;
+  let humanOutFilename = controller.getOutfileName();
   if (!humanOutFilename.endsWith("." + ext)) {
     humanOutFilename += "." + ext;
   }

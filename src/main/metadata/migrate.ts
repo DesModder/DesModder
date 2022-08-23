@@ -7,5 +7,12 @@ export default function migrateToLatest(metadata: any): Metadata {
     property (it was the only property) */
     metadata = migrate1to2(metadata);
   }
+  if (metadata.version !== 2) {
+    // Something went wrong with migration. Just return a blank metadata
+    return {
+      version: 2,
+      expressions: {},
+    };
+  }
   return metadata;
 }

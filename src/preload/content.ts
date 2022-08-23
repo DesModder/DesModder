@@ -15,13 +15,15 @@ function getInitialData() {
     (items) => {
       postMessageDown({
         type: "apply-plugin-settings",
-        value: items[StorageKeys.pluginSettings] as {
+        value: (items?.[StorageKeys.pluginSettings] ?? {}) as {
           [id: string]: { [key: string]: boolean };
         },
       });
       postMessageDown({
         type: "apply-plugins-enabled",
-        value: items[StorageKeys.pluginsEnabled] as { [id: string]: boolean },
+        value: (items?.[StorageKeys.pluginsEnabled] ?? {}) as {
+          [id: string]: boolean;
+        },
       });
     }
   );

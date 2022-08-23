@@ -38,6 +38,14 @@ type EvaluationInfo = false | undefined | { val: unknown }[];
 
 export type MaybeRational = number | { n: number; d: number };
 
+export function evalMaybeRational(x: MaybeRational) {
+  if (typeof x === "number") {
+    return x;
+  } else {
+    return x.n / x.d;
+  }
+}
+
 export interface Error {
   // "1 ("
   type: "Error";
@@ -94,9 +102,9 @@ export interface MixedNumber extends UpperConstant {
 }
 
 export interface DotAccess extends Expression {
-  // "a.w"
+  // "a.w" or "a.length" or "a.random()"
   type: "DotAccess";
-  args: [ChildExprNode, Identifier];
+  args: [ChildExprNode, Identifier | FunctionCall | SeededFunctionCall];
 }
 
 export interface OrderedPairAccess extends Expression {
@@ -172,7 +180,7 @@ export interface Ans extends UpperIdentifier {
 export interface Integral extends Expression {
   // "\\int_{0}^{1}tdt"
   type: "Integral";
-  // differential, bottom, top, integrant
+  // differential, bottom, top, integrand
   args: [Identifier, ChildExprNode, ChildExprNode, ChildExprNode];
   _differential: Identifier;
 }
@@ -365,6 +373,7 @@ export interface Comparator extends BaseComparator {
     | "Comparator['<=']"
     | "Comparator['>=']"
     | "Comparator['=']";
+  operator: "<" | ">" | "<=" | ">=" | "=";
   args: [ChildExprNode, ChildExprNode];
 }
 
@@ -398,7 +407,7 @@ export interface Equation extends UpperEquation {
   type: "Equation";
 }
 
-interface UpperAssignment extends UpperEquation {
+interface UpperAssignment extends Base {
   _expression: ChildExprNode;
   _symbol: string;
   _exports: [] | [string];
@@ -473,11 +482,6 @@ export interface TTest extends FullExprFunc {
   // "\\operatorname{ttest}(L)"
   type: "TTest";
   _symbol: "ttest";
-}
-export interface Polygon extends FullExprFunc {
-  // "\\operatorname{polygon}(P)"
-  type: "Polygon";
-  _symbol: "polygon";
 }
 
 export type Object3D = unknown;
@@ -595,7 +599,6 @@ export type RootOnlyExprNode =
   | Histogram
   | IndependentTTest
   | TTest
-  | Polygon
   | Regression;
 
 export type ChildExprNode =
@@ -631,7 +634,6 @@ export type ChildExprNode =
   | Negative
   | And
   | Comparator
-  | Assignment
   // Seed + ExtendSeed only used in SeededFunctionCalls?
   | Seed
   | ExtendSeed

@@ -1,8 +1,9 @@
 const webpack = require("webpack");
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
+const { merge } = require("webpack-merge");
 
-const config = {
+baseConfig = (env, options) => ({
   resolve: {
     modules: ["node_modules", "src"],
     extensions: [".ts", ".tsx", ".js", ".jsx"],
@@ -20,12 +21,17 @@ const config = {
     workerAppend: "./src/worker/append.ts",
   },
   output: {
-    path: path.resolve(__dirname, "../dist"),
+    path: path.resolve(__dirname, "./dist"),
     filename: "[name].js",
     publicPath: "chrome-extension://__MSG_@@extension_id__/",
+    clean: true,
   },
   module: {
     rules: [
+      {
+        test: /\.grammar(\?terms)?$/,
+        loader: "lezer-loader",
+      },
       {
         test: /\.css$/,
         use: ["style-loader", "css-loader"],
@@ -43,25 +49,52 @@ const config = {
       // https://stackoverflow.com/a/47514735/7481517
       {
         test: /\.(jpe?g|png|ttf|eot|svg|woff(2)?)(\?[a-z0-9=&.]+)?$/,
-        use: "base64-inline-loader",
+        type: "asset/inline",
+      },
+      {
+        test: /\.ftl$/,
+        type: "asset/source",
       },
     ],
   },
   devServer: {
-    contentBase: "../dist",
+    contentBase: "./dist",
   },
   plugins: [
     new CopyPlugin({
-      patterns: [{ from: "public", to: "." }],
+      patterns: [
+        {
+          from: `public/{${env.browser},common}/*`,
+          to: "[name][ext]",
+        },
+      ],
     }),
     new webpack.ProvidePlugin({
-      process: "process/browser",
+      process: "process/browser.js",
+    }),
+    new webpack.DefinePlugin({
+      BROWSER: JSON.stringify(env.browser),
     }),
   ],
   optimization: {
-    // extension stores don't like minimized code? Faster approval?
-    minimize: false,
+    // Chrome doesn't like minified code, but
+    // Firefox is ok as long as the source code is available
+    minimize: env.browser === "firefox" && options.mode !== "development",
   },
-};
+});
 
-module.exports = config;
+module.exports = (env, options) => {
+  env.browser = env.browser === "firefox" ? "firefox" : "chrome";
+  let config = baseConfig(env, options);
+  if (options.mode === "development") {
+    config = merge(config, {
+      // can't use eval- in Manifest v3 extension
+      devtool: "inline-cheap-module-source-map",
+      watch: true,
+      watchOptions: {
+        ignored: /node_modules/,
+      },
+    });
+  }
+  return config;
+};

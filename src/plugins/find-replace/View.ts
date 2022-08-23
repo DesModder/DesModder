@@ -1,4 +1,9 @@
-import { DCGView, MountedComponent } from "desmodder";
+import {
+  MountedComponent,
+  constArg,
+  mountToNode,
+  unmountFromNode,
+} from "DCGView";
 import ReplaceBar from "./ReplaceBar";
 import Controller from "./Controller";
 
@@ -29,10 +34,10 @@ export default class View {
     searchBar.parentNode.insertBefore(searchContainer, searchBar);
     searchContainer.appendChild(searchBar);
     this.mountNode = document.createElement("div");
-    this.mountNode.className = "find-replace-expression-replace-bar";
+    this.mountNode.className = "dsm-find-replace-expression-replace-bar";
     searchContainer.appendChild(this.mountNode);
-    this.replaceView = DCGView.mountToNode(ReplaceBar, this.mountNode, {
-      controller: DCGView.const(this.controller),
+    this.replaceView = mountToNode(ReplaceBar, this.mountNode, {
+      controller: constArg(this.controller),
     });
   }
 
@@ -41,7 +46,7 @@ export default class View {
       // the view is already destroyed, so no need to throw an error
       return;
     }
-    DCGView.unmountFromNode(this.mountNode);
+    unmountFromNode(this.mountNode);
     this.mountNode = null;
     this.replaceView = null;
   }

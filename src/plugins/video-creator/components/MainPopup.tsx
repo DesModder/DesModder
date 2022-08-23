@@ -1,20 +1,21 @@
 import {
-  DCGView,
   SmallMathQuillInput,
   SegmentedControl,
   If,
   Input,
-  jquery,
   Button,
   IfElse,
   Tooltip,
-} from "desmodder";
+} from "components";
+import { jquery } from "utils/depUtils";
+import { Component, jsx } from "DCGView";
 import CaptureMethod from "./CaptureMethod";
 import PreviewCarousel from "./PreviewCarousel";
 import LoadingPie from "./LoadingPie";
 import Controller from "../Controller";
 import { OutFileType, cancelExport } from "../backend/export";
 import "./MainPopup.less";
+import { format } from "i18n/i18n-core";
 
 const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng"];
 
@@ -22,7 +23,7 @@ export function MainPopupFunc(videoCreatorController: Controller) {
   return <MainPopup controller={videoCreatorController} />;
 }
 
-export default class MainPopup extends DCGView.Class<{
+export default class MainPopup extends Component<{
   controller: Controller;
 }> {
   controller!: Controller;
@@ -37,10 +38,9 @@ export default class MainPopup extends DCGView.Class<{
       true: () => this.templateFFmpegLoaded(),
       false: () => (
         <div class="dcg-popover-interior">
-          <p>FFmpeg loading...</p>
+          <p>{format("video-creator-ffmpeg-loading")}</p>
           <p class="dsm-delayed-reveal">
-            If this doesn't work in the next few seconds, try reloading the page
-            or reporting this bug to DesModder devs.
+            {format("video-creator-ffmpeg-fail")}
           </p>
         </div>
       ),
@@ -53,7 +53,7 @@ export default class MainPopup extends DCGView.Class<{
       true: () => (
         <div class="dcg-popover-interior">
           <div class="dsm-vc-export-in-progress">
-            Exporting ...
+            {format("video-creator-exporting")}
             <LoadingPie
               progress={() => this.controller.exportProgress}
               isPending={() =>
@@ -63,8 +63,8 @@ export default class MainPopup extends DCGView.Class<{
             />
           </div>
           <div class="dsm-vc-cancel-export-button">
-            <Button color="blue" onTap={() => cancelExport(this.controller)}>
-              Cancel
+            <Button color="red" onTap={() => cancelExport(this.controller)}>
+              {format("video-creator-cancel-export")}
             </Button>
           </div>
         </div>
@@ -76,15 +76,18 @@ export default class MainPopup extends DCGView.Class<{
     return (
       <div class="dcg-popover-interior">
         <div class="dsm-vc-capture-menu">
-          <div class="dcg-group-title">Capture</div>
+          <div class="dcg-group-title">{format("video-creator-capture")}</div>
           <CaptureMethod controller={this.controller} />
         </div>
         <If predicate={() => this.controller.frames.length > 0}>
           {() => (
             <div class="dsm-vc-preview-menu">
               <div class="dcg-group-title dsm-vc-delete-all-row">
-                Preview
-                <Tooltip tooltip="Delete all" gravity="n">
+                {format("video-creator-preview")}
+                <Tooltip
+                  tooltip={format("video-creator-delete-all")}
+                  gravity="n"
+                >
                   <Button
                     color="red"
                     onTap={() => this.controller.deleteAll()}
@@ -126,7 +129,11 @@ export default class MainPopup extends DCGView.Class<{
         <If predicate={() => this.controller.frames.length > 0}>
           {() => (
             <div class="dsm-vc-export-menu">
-              <div class="dcg-group-title">Export</div>
+              <div class="dcg-group-title">
+                {BROWSER === "firefox"
+                  ? format("video-creator-export-ff")
+                  : format("video-creator-export")}
+              </div>
               <div class="dsm-vc-select-export-type">
                 <SegmentedControl
                   names={fileTypeNames}
@@ -139,13 +146,13 @@ export default class MainPopup extends DCGView.Class<{
                 value={() => this.controller.getOutfileName()}
                 onInput={(s: string) => this.controller.setOutfileName(s)}
                 required={() => true}
-                placeholder={() => "set a filename"}
+                placeholder={() => format("video-creator-filename-placeholder")}
                 // Avoid red squiggles throughout filename
                 spellcheck={() => false}
               />
               <div class="dsm-vc-export">
                 <Button
-                  color="green"
+                  color="primary"
                   class="dsm-vc-export-frames-button"
                   onTap={() => this.controller.exportFrames()}
                   disabled={() =>
@@ -155,10 +162,14 @@ export default class MainPopup extends DCGView.Class<{
                     !this.controller.isFPSValid()
                   }
                 >
-                  Export as {() => this.controller.fileType}
+                  {() =>
+                    format("video-creator-export-as", {
+                      fileType: this.controller.fileType,
+                    })
+                  }
                 </Button>
                 <div class="dsm-vc-fps-settings">
-                  FPS:
+                  {format("video-creator-fps")}
                   <SmallMathQuillInput
                     ariaLabel="fps"
                     onUserChangedLatex={(s) => this.controller.setFPSLatex(s)}

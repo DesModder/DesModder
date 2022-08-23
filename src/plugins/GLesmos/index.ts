@@ -13,9 +13,6 @@ function onDisable() {
 
 export default {
   id: "GLesmos",
-  name: "GLesmos",
-  description:
-    "Render implicits on the GPU. Can cause the UI slow down or freeze in rare cases; reload the page if you have issues.",
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: false,

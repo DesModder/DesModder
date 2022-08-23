@@ -1,7 +1,7 @@
-import DCGView from "DCGView";
+import { Component, jsx } from "DCGView";
 import { MathQuillView } from "./desmosComponents";
 
-export default class SmallMathQuillInput extends DCGView.Class<{
+export default class SmallMathQuillInput extends Component<{
   autoOperatorNames?: string;
   ariaLabel: string;
   onUserChangedLatex: (s: string) => void;

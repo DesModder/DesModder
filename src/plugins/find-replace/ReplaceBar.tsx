@@ -1,12 +1,12 @@
-import { DCGView, MathQuillView, Calc, desmosRequire } from "desmodder";
+import { Component, jsx } from "DCGView";
+import { Calc } from "globals/window";
+import { MathQuillView } from "components";
+import { autoOperatorNames } from "utils/depUtils";
 import Controller from "./Controller";
 import "./ReplaceBar.less";
+import { format } from "i18n/i18n-core";
 
-const autoOperatorNames = desmosRequire(
-  "main/mathquill-operators"
-).getAutoOperators();
-
-export default class ReplaceBar extends DCGView.Class<{
+export default class ReplaceBar extends Component<{
   controller: Controller;
 }> {
   controller!: Controller;
@@ -55,11 +55,11 @@ export default class ReplaceBar extends DCGView.Class<{
         </div>
         {/* Using a standard Button looks horrible on the gray background */}
         <div
-          class="find-replace-replace-all"
+          class="dsm-find-replace-replace-all"
           role="button"
           onTap={() => this.controller.refactorAll()}
         >
-          replace all
+          {format("find-and-replace-replace-all")}
         </div>
       </div>
     );

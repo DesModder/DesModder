@@ -1,4 +1,6 @@
-import { Calc, OptionalProperties, getQueryParams } from "desmodder";
+import { Calc } from "globals/window";
+import { OptionalProperties } from "utils/utils";
+import { getQueryParams } from "utils/depUtils";
 import { Config, configList } from "./config";
 
 type ConfigOptional = OptionalProperties<Config>;
@@ -19,12 +21,6 @@ function manageConfigChange(current: Config, changes: ConfigOptional) {
     if (false === proposedConfig.graphpaper) {
       newChanges.graphpaper = true;
     }
-    if (proposedConfig.lockViewport) {
-      newChanges.lockViewport = false;
-    }
-  }
-  if (changes.lockViewport && proposedConfig.zoomButtons) {
-    newChanges.zoomButtons = false;
   }
   if (false === changes.graphpaper && proposedConfig.zoomButtons) {
     newChanges.zoomButtons = false;
@@ -36,7 +32,10 @@ function onEnable(config: Config) {
   initialSettings = { ...config };
   const queryParams = getQueryParams();
   for (const key of managedKeys) {
-    initialSettings[key] = Calc.settings[key];
+    initialSettings[key] =
+      (Calc.settings as typeof Calc.settings & { advancedStyling: boolean })[
+        key
+      ] ?? false;
   }
   const queryConfig: ConfigOptional = {};
   for (const key of managedKeys) {
@@ -62,10 +61,6 @@ function onDisable() {
 
 export default {
   id: "builtin-settings",
-  name: "Calculator Settings",
-  description:
-    "Lets you toggle features built-in to Desmos including locking viewport, hiding keypad, and more." +
-    " Most options apply only to your own browser and are ignored when you share graphs with others.",
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true,

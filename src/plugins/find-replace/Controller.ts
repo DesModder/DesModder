@@ -1,6 +1,6 @@
 import { refactor } from "./backend";
 import View from "./View";
-import { Calc } from "desmodder";
+import { Calc } from "globals/window";
 
 export default class Controller {
   replaceLatex = "";

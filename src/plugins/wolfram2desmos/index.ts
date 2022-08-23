@@ -1,4 +1,5 @@
-import { Calc, OptionalProperties } from "desmodder";
+import { OptionalProperties } from "utils/utils";
+import { Calc } from "globals/window";
 import Controller from "./Controller";
 import { Config, configList } from "./config";
 import { wolfram2desmos, isIllegalASCIIMath } from "./wolfram2desmos";
@@ -67,9 +68,6 @@ export function onDisable() {
 
 export default {
   id: "wolfram2desmos",
-  name: "Wolfram To Desmos",
-  description:
-    "Lets you paste ASCIIMath (such as the results of Wolfram Alpha queries) into Desmos.",
   onEnable: onEnable,
   onDisable: onDisable,
   enabledByDefault: true,

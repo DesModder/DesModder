@@ -1,5 +1,5 @@
-import DCGView, { MountedComponent } from "DCGView";
-import PillboxContainer from "components/PillboxContainer";
+import { mountToNode, MountedComponent } from "DCGView";
+import { PillboxContainer } from "components";
 import { pollForValue } from "utils/utils";
 import Controller from "./Controller";
 import { Calc } from "globals/window";
@@ -50,13 +50,9 @@ export default class View {
       this.pillboxMountNode,
       pillbox.firstElementChild!.nextElementSibling
     );
-    this.menuView = DCGView.mountToNode(
-      PillboxContainer,
-      this.pillboxMountNode,
-      {
-        controller: () => controller,
-      }
-    );
+    this.menuView = mountToNode(PillboxContainer, this.pillboxMountNode, {
+      controller: () => controller,
+    });
   }
 
   updatePillboxHeight() {

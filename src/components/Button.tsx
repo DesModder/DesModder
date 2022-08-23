@@ -1,9 +1,9 @@
-import DCGView from "DCGView";
+import { Component, jsx } from "DCGView";
 import { mergeClass, MaybeClassDict } from "utils/utils";
 import "./Button.less";
 
-export default class Button extends DCGView.Class<{
-  color: "blue" | "green" | "red" | "light-gray";
+export default class Button extends Component<{
+  color: "primary" | "red" | "light-gray";
   class?: MaybeClassDict;
   onTap(e: Event): void;
   disabled?: boolean;

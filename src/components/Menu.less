@@ -38,10 +38,32 @@
 .dsm-plugin-info-body {
   padding: 5px 0;
   color: #444;
+
+  a {
+    color: var(--dsm-primary-color);
+  }
 }
 
 .dsm-settings-item {
   padding-top: 10px;
+  padding-right: 10px;
+  display: flex;
+  align-items: center;
+
+  input,
+  label {
+    cursor: pointer;
+  }
+
+  &.dsm-settings-color label {
+    padding-left: 0.5em;
+  }
+
+  .dsm-reset-btn {
+    opacity: 0.6;
+    flex: 1;
+    text-align: right;
+  }
 
   .dcg-tooltip-hit-area-container {
     // Desmos uses important, so we must use important to override it

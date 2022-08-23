@@ -8,6 +8,8 @@ Post message conventions:
   get-* = message from page to content script, asking to get data in chrome.storage
 */
 
+import { GenericSettings } from "plugins";
+
 type MessageWindowToContent =
   | {
       type: "enable-script";
@@ -19,7 +21,7 @@ type MessageWindowToContent =
     }
   | {
       type: "set-plugin-settings";
-      value: { [id: string]: { [key: string]: boolean } };
+      value: { [id: string]: GenericSettings };
     }
   | {
       type: "get-initial-data";

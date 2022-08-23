@@ -1,0 +1,37 @@
+{
+  "name": "DesModder for Desmos",
+  "description": "Supercharge your Desmos graph creation and sharing experience with many convenient features",
+  "manifest_version": 2,
+  "version": "0.8.0",
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.desmos.com/calculator*"],
+      "run_at": "document_start",
+      "js": ["preloadContent.js"],
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    "script.js",
+    "preloadScript.js",
+    "workerAppend.js"
+  ],
+  "permissions": [
+    "https://*.desmos.com/*",
+    "storage",
+    "webRequest",
+    "webRequestBlocking"
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "DesModder@jared-hughes.github.io"
+    }
+  }
+}

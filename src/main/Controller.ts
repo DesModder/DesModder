@@ -1,4 +1,4 @@
-import { plugins, pluginList, PluginID } from "plugins";
+import { plugins, pluginList, PluginID, GenericSettings } from "plugins";
 import View from "./View";
 import { MenuFunc } from "components/Menu";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
@@ -13,7 +13,10 @@ import {
   getBlankMetadata,
   changeExprInMetadata,
 } from "./metadata/manage";
+import { ItemModel } from "globals/models";
+import { format } from "i18n/i18n-core";
 const AbstractItem = desmosRequire("graphing-calc/models/abstract-item");
+const List = desmosRequire("graphing-calc/models/list");
 
 interface PillboxButton {
   id: string;
@@ -28,7 +31,7 @@ export default class Controller {
   view: View | null = null;
   expandedPlugin: PluginID | null = null;
   pluginSettings: {
-    [plugin in PluginID]: { [key: string]: boolean };
+    [plugin in PluginID]: GenericSettings;
   };
   exposedPlugins: {
     [plugin in PluginID]?: any;
@@ -43,7 +46,7 @@ export default class Controller {
   } = {
     "main-menu": {
       id: "main-menu",
-      tooltip: "DesModder Menu",
+      tooltip: format("menu-desmodder-tooltip"),
       iconClass: "dsm-icon-desmodder",
       popup: MenuFunc,
     },
@@ -64,7 +67,7 @@ export default class Controller {
   }
 
   getDefaultConfig(id: PluginID) {
-    const out: { [key: string]: boolean } = {};
+    const out: GenericSettings = {};
     const config = plugins[id].config;
     if (config !== undefined) {
       for (const configItem of config) {
@@ -77,15 +80,13 @@ export default class Controller {
   applyStoredEnabled(storedEnabled: { [id: string]: boolean }) {
     for (const { id } of pluginList) {
       const stored = storedEnabled[id];
-      if (stored !== undefined) {
+      if (stored !== undefined && id !== "GLesmos") {
         this.pluginsEnabled[id] = stored;
       }
     }
   }
 
-  applyStoredSettings(storedSettings: {
-    [id: string]: { [key: string]: boolean };
-  }) {
+  applyStoredSettings(storedSettings: { [id: string]: GenericSettings }) {
     for (const { id } of pluginList) {
       const stored = storedSettings[id];
       if (stored !== undefined) {
@@ -266,8 +267,8 @@ export default class Controller {
   setPluginSetting(
     pluginID: PluginID,
     key: string,
-    value: boolean,
-    doCallback: boolean = true
+    value: boolean | string,
+    temporary: boolean = false
   ) {
     const pluginSettings = this.pluginSettings[pluginID];
     if (pluginSettings === undefined) return;
@@ -280,17 +281,44 @@ export default class Controller {
         ? manageConfigChange(pluginSettings, proposedChanges)
         : proposedChanges;
     Object.assign(pluginSettings, changes);
-    postMessageUp({
-      type: "set-plugin-settings",
-      value: this.pluginSettings,
-    });
-    if (doCallback && this.pluginsEnabled[pluginID]) {
+    if (!temporary)
+      postMessageUp({
+        type: "set-plugin-settings",
+        value: this.pluginSettings,
+      });
+    if (this.pluginsEnabled[pluginID]) {
       const onConfigChange = plugins[pluginID]?.onConfigChange;
       if (onConfigChange !== undefined) {
-        onConfigChange(changes);
+        onConfigChange(changes, pluginSettings);
       }
     }
     this.updateMenuView();
+  }
+
+  getDefaultSetting(key: string) {
+    return (
+      this.expandedPlugin &&
+      plugins[this.expandedPlugin].config?.find((e) => e.key === key)?.default
+    );
+  }
+
+  canResetSetting(key: string) {
+    if (!this.expandedPlugin) return false;
+    const defaultValue = this.getDefaultSetting(key);
+    return (
+      defaultValue != undefined &&
+      this.pluginSettings[this.expandedPlugin][key] !== defaultValue
+    );
+  }
+
+  resetSetting(key: string) {
+    this.expandedPlugin &&
+      this.canResetSetting(key) &&
+      this.setPluginSetting(
+        this.expandedPlugin,
+        key,
+        this.getDefaultSetting(key)!
+      );
   }
 
   checkForMetadataChange() {
@@ -344,9 +372,10 @@ export default class Controller {
   }
 
   pinExpression(id: string) {
-    this.updateExprMetadata(id, {
-      pinned: true,
-    });
+    if (Calc.controller.getItemModel(id)?.type !== "folder")
+      this.updateExprMetadata(id, {
+        pinned: true,
+      });
   }
 
   unpinExpression(id: string) {
@@ -359,6 +388,7 @@ export default class Controller {
     return (
       this.pluginsEnabled["pin-expressions"] &&
       !Calc.controller.getExpressionSearchOpen() &&
+      Calc.controller.getItemModel(id)?.type !== "folder" &&
       this.graphMetadata.expressions[id]?.pinned
     );
   }
@@ -417,15 +447,35 @@ export default class Controller {
     const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
     const folderId = folderModel?.id;
 
+    let newIndex = folderIndex;
+    let currIndex = folderIndex;
+    let currExpr: ItemModel | undefined;
     // Place all expressions until the next folder into this folder
-    for (
-      let currIndex = folderIndex + 1,
-        currExpr = Calc.controller.getItemModelByIndex(currIndex);
-      currExpr && currExpr.type !== "folder";
-      currIndex++, currExpr = Calc.controller.getItemModelByIndex(currIndex)
-    ) {
+    do {
+      newIndex++;
+      currIndex++;
+      currExpr = Calc.controller.getItemModelByIndex(currIndex);
+      if (currExpr === undefined) break;
+      // If administerSecretFolders is disabled, skip secret folders
+      while (
+        !Calc.settings.administerSecretFolders &&
+        currExpr?.type === "folder" &&
+        currExpr.secret
+      ) {
+        const secretID = currExpr.id;
+        do {
+          currIndex++;
+          currExpr = Calc.controller.getItemModelByIndex(currIndex);
+        } while (
+          currExpr &&
+          currExpr.type !== "folder" &&
+          currExpr.folderId === secretID
+        );
+      }
+      // Actually move the item into place
       AbstractItem.setFolderId(currExpr, folderId);
-    }
+      List.moveItemsTo(Calc.controller.listModel, currIndex, newIndex, 1);
+    } while (currExpr && currExpr.type !== "folder");
 
     this.commitStateChange(true);
   }
@@ -483,6 +533,10 @@ export default class Controller {
     this.killWorker();
   }
 
+  /**
+   * Force the worker to revisit this expression by toggling it hidden then
+   * un-hidden
+   */
   toggleExpr(id: string) {
     Calc.controller.dispatch({
       type: "toggle-item-hidden",
@@ -496,5 +550,20 @@ export default class Controller {
 
   killWorker() {
     Calc.controller.evaluator.workerPoolConnection.killWorker();
+  }
+
+  toggleTextMode() {
+    this.exposedPlugins["text-mode"].toggleTextMode();
+  }
+
+  inTextMode() {
+    return (
+      this.isPluginEnabled("text-mode") &&
+      this.exposedPlugins["text-mode"]?.inTextMode
+    );
+  }
+
+  format(key: string, args?: any) {
+    return format(key, args);
   }
 }

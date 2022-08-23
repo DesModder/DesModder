@@ -1,4 +1,5 @@
-import { Calc, parseDesmosLatex } from "desmodder";
+import { Calc } from "globals/window";
+import { parseDesmosLatex } from "utils/depUtils";
 import traverse, { Path } from "parsing/traverse";
 import { Identifier } from "parsing/parsenode";
 import { satisfiesType } from "parsing/nodeTypes";

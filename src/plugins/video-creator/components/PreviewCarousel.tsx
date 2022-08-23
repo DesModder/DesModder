@@ -1,8 +1,9 @@
-import { DCGView, If } from "desmodder";
+import { If } from "components";
+import { Component, jsx } from "DCGView";
 import "./PreviewCarousel.less";
 import Controller from "../Controller";
 
-export default class PreviewCarousel extends DCGView.Class<{
+export default class PreviewCarousel extends Component<{
   controller: Controller;
 }> {
   controller!: Controller;

@@ -4,6 +4,7 @@ Supercharge your Desmos graph creation and sharing experience with many convenie
 
 - Export videos and GIFs of your graphs based on actions or sliders
 - Render implicit-filled expressions on the GPU
+- Change the primary color from blue to any color
 - Find and replace expressions
 - Pin expressions to the top
 - Paste ASCIIMath (such as the results of Wolfram Alpha queries) into Desmos
@@ -30,3 +31,12 @@ Currently only works on the public-facing calculator at https://desmos.com/calcu
 Changelog: https://github.com/DesModder/DesModder/blob/main/docs/CHANGELOG.md.
 
 Not affiliated with Desmos.
+
+## Documentation
+
+Refer to:
+
+- [Installation](/docs/INSTALLATION.md) for installation instructions
+- [Development](/docs/DEVELOPMENT.md) for setting up a development environment
+- [Plugins](/docs/PLUGINS.md) for detailed information about the plugin structure
+- [Changelog](/docs/CHANGELOG.md) for each release's changelog

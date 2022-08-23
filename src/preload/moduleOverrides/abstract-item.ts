@@ -2,7 +2,7 @@ import template from "@babel/template";
 import withinFunctionAssignment from "../overrideHelpers/withinFunctionAssignment";
 
 export default () =>
-  /* @plugin pinned-expressions
+  /* @plugin pin-expressions
   
   @what Disable pinned expressions from appearing in the unpinned section
   Might break tours/base_tour or expressions hidden inside folders

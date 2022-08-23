@@ -1,11 +1,7 @@
 import { updateView } from "./View";
-import {
-  Calc,
-  jquery,
-  keys,
-  EvaluateSingleExpression,
-  ExpressionModel,
-} from "desmodder";
+import { jquery, keys, EvaluateSingleExpression } from "utils/depUtils";
+import { Calc } from "globals/window";
+import { ExpressionModel } from "globals/models";
 import { isValidNumber, isValidLength, escapeRegex } from "./backend/utils";
 import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
 import { CaptureMethod, SliderSettings, capture } from "./backend/capture";
@@ -21,6 +17,8 @@ type FocusedMQ =
   | "capture-height"
   | "export-fps";
 
+const DEFAULT_FILENAME = "DesModder_Video_Creator";
+
 export default class Controller {
   ffmpegLoaded = false;
   frames: string[] = [];
@@ -28,7 +26,7 @@ export default class Controller {
   captureCancelled = false;
   fpsLatex = "30";
   fileType: OutFileType = "mp4";
-  outfileName: string = "DesModder_Video_Creator";
+  outfileName: string | null = null;
 
   focusedMQ: FocusedMQ = "none";
 
@@ -124,7 +122,11 @@ export default class Controller {
   }
 
   getOutfileName() {
-    return this.outfileName;
+    return (
+      this.outfileName ??
+      Calc.myGraphsWrapper.graphsController.getCurrentGraphTitle() ??
+      DEFAULT_FILENAME
+    );
   }
 
   setCaptureMethod(method: CaptureMethod) {
