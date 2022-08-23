@@ -55,8 +55,14 @@
     cursor: pointer;
   }
 
-  &.dsm-settings-color label {
-    padding-left: 0.5em;
+  &:not(.dsm-settings-boolean) label {
+    padding-inline: 0.5em;
+    white-space: nowrap;
+  }
+
+  input[type="text"],
+  input[type="password"] {
+    width: 100%;
   }
 
   .dsm-reset-btn {

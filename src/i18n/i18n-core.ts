@@ -16,7 +16,7 @@ export function format(
   const bundle = locales.get(lang) ?? locales.get("en")!;
   const message = bundle.getMessage(key);
   if (message === undefined || message.value === null) {
-    console.warn("Error formatting key ", key, "in locale", lang);
+    console.warn("Error formatting key", key, "in locale", lang);
     return "";
   }
   return bundle.formatPattern(message.value, args);

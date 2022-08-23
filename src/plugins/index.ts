@@ -10,7 +10,7 @@ import GLesmos from "plugins/GLesmos";
 import hideErrors from "plugins/hide-errors";
 import debugMode from "plugins/debug-mode";
 import showTips from "plugins/show-tips";
-import wakatime from "./wakatime/index";
+import wakatime from "plugins/wakatime";
 import folderTools from "plugins/folder-tools";
 import textMode from "plugins/text-mode";
 import setPrimaryColor from "plugins/set-primary-color";
@@ -24,12 +24,14 @@ export interface ConfigItemBoolean extends ConfigItemGeneric {
   type: "boolean";
   default: boolean;
 }
-export interface ConfigItemColor extends ConfigItemGeneric {
-  type: "color";
+
+export interface ConfigItemString extends ConfigItemGeneric {
+  type: "string";
+  variant: "color" | "password" | "text";
   default: string;
 }
 
-export type ConfigItem = ConfigItemBoolean | ConfigItemColor;
+export type ConfigItem = ConfigItemBoolean | ConfigItemString;
 
 export type GenericSettings = { [key: string]: boolean | string };
 

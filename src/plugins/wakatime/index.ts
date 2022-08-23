@@ -1,10 +1,12 @@
 import { HearbeatMessage, RuntimeResponse } from "background";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
 import { Calc } from "../../globals/window";
-import { Plugin } from "../index";
+interface Config {
+  secretKey: string;
+}
 
-// TODO: Make this a config option
-const secretKey = "";
+let config!: Config;
+
 const heartbeatIntervalMs = 120 * 1000;
 
 let isEnabled = false;
@@ -75,9 +77,15 @@ async function main(extId: string) {
     const graphURL = window.location.href;
     const lineCount = Calc.getExpressions().length;
 
-    if (secretKey) {
+    if (config.secretKey) {
       try {
-        await sendHeartbeat(extId, secretKey, graphName, graphURL, lineCount);
+        await sendHeartbeat(
+          extId,
+          config.secretKey,
+          graphName,
+          graphURL,
+          lineCount
+        );
         console.log("[WakaTime] Heartbeat sent sucessfully");
       } catch (e) {
         console.error("[WakaTime] Error sending heartbeat:", e);
@@ -104,7 +112,8 @@ function getExtId(): Promise<string> {
   });
 }
 
-async function onEnable() {
+async function onEnable(newConfig: Config) {
+  config = newConfig;
   isEnabled = true;
   const extId = await getExtId();
   console.log(`[WakaTime] Got extension ID: ${extId}`);
@@ -113,6 +122,10 @@ async function onEnable() {
   } catch (e) {
     console.error("[WakaTime] Main loop crashed", e);
   }
+}
+
+function onConfigChange(_: any, newConfig: Config) {
+  config = newConfig;
 }
 
 function onDisable() {
@@ -124,5 +137,14 @@ export default {
   id: "wakatime",
   onEnable,
   onDisable,
+  onConfigChange,
+  config: [
+    {
+      key: "secretKey",
+      type: "string",
+      variant: "password",
+      default: "",
+    },
+  ] as const,
   enabledByDefault: false,
 } as const;

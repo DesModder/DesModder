@@ -104,10 +104,8 @@ export default {
   config: [
     {
       key: "primaryColor",
-      type: "color",
-      // Desmos Blue, unfortunately
-      // We don't set green as default because it's hard to match up
-      // button color and favicon color when green
+      type: "string",
+      variant: "color",
       default: DEFAULT_COLOR,
     },
     {

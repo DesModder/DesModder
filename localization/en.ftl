@@ -141,3 +141,5 @@ shift-enter-newline-desc = Use Shift+Enter to type newlines in notes and image/f
 ## Wakatime
 wakatime-name = WakaTime
 wakatime-desc = Track your desmos activity on WakaTime.com
+wakatime-opt-secretKey-name = Secret Key
+wakatime-opt-secretKey-desc = API Key used for WakaTime servers
