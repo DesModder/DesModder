@@ -137,3 +137,7 @@ video-creator-method-action = action
 ## Shift+Enter Newline
 shift-enter-newline-name = Shift+Enter Newline
 shift-enter-newline-desc = Use Shift+Enter to type newlines in notes and image/folder titles.
+
+## Performance Display
+performance-info-name = Performance Display
+performance-info-desc = Displays information about the performance of the current graph.
