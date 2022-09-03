@@ -1,11 +1,11 @@
 import {
-  SmallMathQuillInput,
   SegmentedControl,
   If,
   Input,
   Button,
   IfElse,
   Tooltip,
+  InlineMathInputView,
 } from "components";
 import { jquery } from "utils/depUtils";
 import { Component, jsx } from "DCGView";
@@ -16,6 +16,7 @@ import Controller from "../Controller";
 import { OutFileType, cancelExport } from "../backend/export";
 import "./MainPopup.less";
 import { format } from "i18n/i18n-core";
+import { Calc } from "globals/window";
 
 const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng"];
 
@@ -170,15 +171,17 @@ export default class MainPopup extends Component<{
                 </Button>
                 <div class="dsm-vc-fps-settings">
                   {format("video-creator-fps")}
-                  <SmallMathQuillInput
+                  <InlineMathInputView
                     ariaLabel="fps"
-                    onUserChangedLatex={(s) => this.controller.setFPSLatex(s)}
+                    handleLatexChanged={(s) => this.controller.setFPSLatex(s)}
                     hasError={() => !this.controller.isFPSValid()}
                     latex={() => this.controller.fpsLatex}
                     isFocused={() => this.controller.isFocused("export-fps")}
-                    onFocusedChanged={(b) =>
+                    handleFocusChanged={(b) =>
                       this.controller.updateFocus("export-fps", b)
                     }
+                    controller={Calc.controller}
+                    readonly={false}
                   />
                 </div>
               </div>

@@ -1,5 +1,5 @@
 import { ClassComponent } from "DCGView";
-import { desmosRequire } from "globals/window";
+import { Calc, desmosRequire } from "globals/window";
 
 abstract class CheckboxComponent extends ClassComponent<{
   checked: boolean;
@@ -35,8 +35,31 @@ abstract class MathQuillViewComponent extends ClassComponent<{
 }> {}
 
 export const MathQuillView: typeof MathQuillViewComponent & {
+  // static abstract getFocusedMathquill()
   getFocusedMathquill(): MathQuillField;
 } = desmosRequire("dcgview-helpers/mathquill-view").default;
+
+abstract class InlineMathInputViewComponent extends ClassComponent<{
+  latex: string;
+  // capExpressionSize: number | false;
+  // config: { autoOperatorNames: string };
+  isFocused: boolean;
+  ariaLabel: string;
+  // ariaPostLabel: string;
+  placeholder?: string;
+  handleLatexChanged: (s: string) => void;
+  handlePressedKey?: (key: string, e: KeyboardEvent) => void;
+  hasError?: boolean;
+  selectOnFocus?: boolean;
+  needsSystemKeypad?: boolean;
+  handleFocusChanged?: (isFocused: boolean) => void;
+  noFadeout?: boolean;
+  readonly: boolean;
+  controller: typeof Calc.controller;
+}> {}
+
+export const InlineMathInputView: typeof InlineMathInputViewComponent =
+  desmosRequire("expressions/inline-math-input-view").InlineMathInputView;
 
 abstract class ForComponent<T> extends ClassComponent<{
   each: Array<T>;
