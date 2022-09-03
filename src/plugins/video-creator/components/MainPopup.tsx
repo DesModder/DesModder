@@ -1,11 +1,11 @@
 import {
-  SmallMathQuillInput,
   SegmentedControl,
   If,
   Input,
   Button,
   IfElse,
   Tooltip,
+  InlineMathInputView,
 } from "components";
 import { jquery } from "utils/depUtils";
 import { Component, jsx } from "DCGView";
@@ -170,13 +170,13 @@ export default class MainPopup extends Component<{
                 </Button>
                 <div class="dsm-vc-fps-settings">
                   {format("video-creator-fps")}
-                  <SmallMathQuillInput
+                  <InlineMathInputView
                     ariaLabel="fps"
-                    onUserChangedLatex={(s) => this.controller.setFPSLatex(s)}
+                    handleLatexChanged={(s) => this.controller.setFPSLatex(s)}
                     hasError={() => !this.controller.isFPSValid()}
                     latex={() => this.controller.fpsLatex}
                     isFocused={() => this.controller.isFocused("export-fps")}
-                    onFocusedChanged={(b) =>
+                    handleFocusChanged={(b) =>
                       this.controller.updateFocus("export-fps", b)
                     }
                   />

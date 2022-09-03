@@ -1,5 +1,4 @@
 import {
-  SmallMathQuillInput,
   SegmentedControl,
   If,
   Switch,
@@ -8,6 +7,7 @@ import {
   IfElse,
   Checkbox,
   Tooltip,
+  InlineMathInputView,
 } from "components";
 import { Component, jsx } from "DCGView";
 import Controller from "../Controller";
@@ -48,9 +48,9 @@ export default class SelectCapture extends Component<{
               slider: () => (
                 <div>
                   <div class="dsm-vc-slider-settings">
-                    <SmallMathQuillInput
+                    <InlineMathInputView
                       ariaLabel="slider variable"
-                      onUserChangedLatex={(v) =>
+                      handleLatexChanged={(v) =>
                         this.controller.setSliderSetting("variable", v)
                       }
                       hasError={() =>
@@ -60,14 +60,14 @@ export default class SelectCapture extends Component<{
                       isFocused={() =>
                         this.controller.isFocused("capture-slider-var")
                       }
-                      onFocusedChanged={(b) =>
+                      handleFocusChanged={(b) =>
                         this.controller.updateFocus("capture-slider-var", b)
                       }
                     />
                     <StaticMathQuillView latex="=" />
-                    <SmallMathQuillInput
+                    <InlineMathInputView
                       ariaLabel="slider min"
-                      onUserChangedLatex={(v) =>
+                      handleLatexChanged={(v) =>
                         this.controller.setSliderSetting("minLatex", v)
                       }
                       hasError={() =>
@@ -77,14 +77,14 @@ export default class SelectCapture extends Component<{
                       isFocused={() =>
                         this.controller.isFocused("capture-slider-min")
                       }
-                      onFocusedChanged={(b) =>
+                      handleFocusChanged={(b) =>
                         this.controller.updateFocus("capture-slider-min", b)
                       }
                     />
                     {format("video-creator-to")}
-                    <SmallMathQuillInput
+                    <InlineMathInputView
                       ariaLabel="slider max"
-                      onUserChangedLatex={(v) =>
+                      handleLatexChanged={(v) =>
                         this.controller.setSliderSetting("maxLatex", v)
                       }
                       hasError={() =>
@@ -94,14 +94,14 @@ export default class SelectCapture extends Component<{
                       isFocused={() =>
                         this.controller.isFocused("capture-slider-max")
                       }
-                      onFocusedChanged={(b) =>
+                      handleFocusChanged={(b) =>
                         this.controller.updateFocus("capture-slider-max", b)
                       }
                     />
                     {format("video-creator-step")}
-                    <SmallMathQuillInput
+                    <InlineMathInputView
                       ariaLabel="slider step"
-                      onUserChangedLatex={(v) =>
+                      handleLatexChanged={(v) =>
                         this.controller.setSliderSetting("stepLatex", v)
                       }
                       hasError={() =>
@@ -111,7 +111,7 @@ export default class SelectCapture extends Component<{
                       isFocused={() =>
                         this.controller.isFocused("capture-slider-step")
                       }
-                      onFocusedChanged={(b) =>
+                      handleFocusChanged={(b) =>
                         this.controller.updateFocus("capture-slider-step", b)
                       }
                     />
@@ -168,27 +168,27 @@ export default class SelectCapture extends Component<{
         </Switch>
         <div class="dsm-vc-capture-size">
           {format("video-creator-size")}
-          <SmallMathQuillInput
+          <InlineMathInputView
             ariaLabel="capture width"
-            onUserChangedLatex={(latex) =>
+            handleLatexChanged={(latex) =>
               this.controller.setCaptureWidthLatex(latex)
             }
             latex={() => this.controller.captureWidthLatex}
             hasError={() => !this.controller.isCaptureWidthValid()}
-            onFocusedChanged={(b) =>
+            handleFocusChanged={(b) =>
               this.controller.updateFocus("capture-width", b)
             }
             isFocused={() => this.controller.isFocused("capture-width")}
           />
           ×
-          <SmallMathQuillInput
+          <InlineMathInputView
             ariaLabel="capture height"
-            onUserChangedLatex={(latex) =>
+            handleLatexChanged={(latex) =>
               this.controller.setCaptureHeightLatex(latex)
             }
             latex={() => this.controller.captureHeightLatex}
             hasError={() => !this.controller.isCaptureHeightValid()}
-            onFocusedChanged={(b) =>
+            handleFocusChanged={(b) =>
               this.controller.updateFocus("capture-height", b)
             }
             isFocused={() => this.controller.isFocused("capture-height")}
@@ -265,9 +265,9 @@ export default class SelectCapture extends Component<{
             {() => (
               <div class="dsm-vc-end-condition-settings">
                 {format("video-creator-step-count")}
-                <SmallMathQuillInput
+                <InlineMathInputView
                   ariaLabel="ticker while"
-                  onUserChangedLatex={(v) =>
+                  handleLatexChanged={(v) =>
                     this.controller.setTickCountLatex(v)
                   }
                   hasError={() => !this.controller.isTickCountValid()}
@@ -275,7 +275,7 @@ export default class SelectCapture extends Component<{
                   isFocused={() =>
                     this.controller.isFocused("capture-tick-count")
                   }
-                  onFocusedChanged={(b) =>
+                  handleFocusChanged={(b) =>
                     this.controller.updateFocus("capture-tick-count", b)
                   }
                 />
