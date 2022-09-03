@@ -58,7 +58,8 @@ abstract class InlineMathInputViewComponent extends ClassComponent<{
   controller: typeof Calc.controller;
 }> {}
 
-export const InlineMathInputView: typeof InlineMathInputViewComponent =
+/** General InlineMathInputView, without any defaults filled in */
+export const InlineMathInputViewGeneral: typeof InlineMathInputViewComponent =
   desmosRequire("expressions/inline-math-input-view").InlineMathInputView;
 
 abstract class ForComponent<T> extends ClassComponent<{

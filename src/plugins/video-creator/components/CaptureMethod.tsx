@@ -7,14 +7,14 @@ import {
   IfElse,
   Checkbox,
   Tooltip,
+  InlineMathInputView,
 } from "components";
 import { Component, jsx } from "DCGView";
 import Controller from "../Controller";
 import { cancelCapture, CaptureMethod } from "../backend/capture";
 import "./CaptureMethod.css";
-import { For, InlineMathInputView } from "components/desmosComponents";
+import { For } from "components/desmosComponents";
 import { format } from "i18n/i18n-core";
-import { Calc } from "globals/window";
 
 const captureMethodNames: CaptureMethod[] = ["once", "slider", "action"];
 
@@ -63,8 +63,6 @@ export default class SelectCapture extends Component<{
                       handleFocusChanged={(b) =>
                         this.controller.updateFocus("capture-slider-var", b)
                       }
-                      controller={Calc.controller}
-                      readonly={false}
                     />
                     <StaticMathQuillView latex="=" />
                     <InlineMathInputView
@@ -82,8 +80,6 @@ export default class SelectCapture extends Component<{
                       handleFocusChanged={(b) =>
                         this.controller.updateFocus("capture-slider-min", b)
                       }
-                      controller={Calc.controller}
-                      readonly={false}
                     />
                     {format("video-creator-to")}
                     <InlineMathInputView
@@ -101,8 +97,6 @@ export default class SelectCapture extends Component<{
                       handleFocusChanged={(b) =>
                         this.controller.updateFocus("capture-slider-max", b)
                       }
-                      controller={Calc.controller}
-                      readonly={false}
                     />
                     {format("video-creator-step")}
                     <InlineMathInputView
@@ -120,8 +114,6 @@ export default class SelectCapture extends Component<{
                       handleFocusChanged={(b) =>
                         this.controller.updateFocus("capture-slider-step", b)
                       }
-                      controller={Calc.controller}
-                      readonly={false}
                     />
                   </div>
                 </div>
@@ -187,8 +179,6 @@ export default class SelectCapture extends Component<{
               this.controller.updateFocus("capture-width", b)
             }
             isFocused={() => this.controller.isFocused("capture-width")}
-            controller={Calc.controller}
-            readonly={false}
           />
           ×
           <InlineMathInputView
@@ -202,8 +192,6 @@ export default class SelectCapture extends Component<{
               this.controller.updateFocus("capture-height", b)
             }
             isFocused={() => this.controller.isFocused("capture-height")}
-            controller={Calc.controller}
-            readonly={false}
           />
           <If predicate={() => this.controller.isDefaultCaptureSizeDifferent()}>
             {() => (
@@ -290,8 +278,6 @@ export default class SelectCapture extends Component<{
                   handleFocusChanged={(b) =>
                     this.controller.updateFocus("capture-tick-count", b)
                   }
-                  controller={Calc.controller}
-                  readonly={false}
                 />
               </div>
             )}

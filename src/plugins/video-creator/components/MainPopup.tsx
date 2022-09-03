@@ -16,7 +16,6 @@ import Controller from "../Controller";
 import { OutFileType, cancelExport } from "../backend/export";
 import "./MainPopup.less";
 import { format } from "i18n/i18n-core";
-import { Calc } from "globals/window";
 
 const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng"];
 
@@ -180,8 +179,6 @@ export default class MainPopup extends Component<{
                     handleFocusChanged={(b) =>
                       this.controller.updateFocus("export-fps", b)
                     }
-                    controller={Calc.controller}
-                    readonly={false}
                   />
                 </div>
               </div>
