@@ -33,9 +33,12 @@ function onEnable(config: Config) {
   const queryParams = getQueryParams();
   for (const key of managedKeys) {
     initialSettings[key] =
-      (Calc.settings as typeof Calc.settings & { advancedStyling: boolean })[
-        key
-      ] ?? false;
+      (
+        Calc.settings as typeof Calc.settings & {
+          advancedStyling: boolean;
+          authorFeatures: boolean;
+        }
+      )[key] ?? false;
   }
   const queryConfig: ConfigOptional = {};
   for (const key of managedKeys) {

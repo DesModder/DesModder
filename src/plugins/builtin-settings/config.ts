@@ -10,7 +10,7 @@ export const configList = [
     default: true,
   },
   {
-    key: "administerSecretFolders",
+    key: "authorFeatures",
     type: "boolean",
     default: false,
   },
@@ -63,7 +63,7 @@ export interface Config {
   clickableObjects: boolean;
   advancedStyling: boolean;
   graphpaper: boolean;
-  administerSecretFolders: boolean;
+  authorFeatures: boolean;
   pointsOfInterest: boolean;
   trace: boolean;
   expressions: boolean;

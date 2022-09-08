@@ -472,9 +472,10 @@ export default class Controller {
       currIndex++;
       currExpr = Calc.controller.getItemModelByIndex(currIndex);
       if (currExpr === undefined) break;
-      // If administerSecretFolders is disabled, skip secret folders
+      // If authorFeatures is disabled, skip secret folders
       while (
-        !Calc.settings.administerSecretFolders &&
+        // type cast beacuse Desmos has not yet updated types for authorFeatures
+        !(Calc.settings as any).authorFeatures &&
         currExpr?.type === "folder" &&
         currExpr.secret
       ) {
