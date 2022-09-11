@@ -20,7 +20,8 @@ export class PerformanceView extends Component<{
               }}
               btnClass={() => ({
                 "dsm-pi-pin-menu-button": true,
-                "dsm-selected": this.props.desModderController().pillboxMenuPinned
+                "dsm-selected":
+                  this.props.desModderController().pillboxMenuPinned,
               })}
             />
           </Tooltip>
