@@ -48,12 +48,12 @@ const pinUnpinAction = `
         false: ${actionCreate(
           "pin-expressions-pin",
           "dsm-pin-button",
-          "dsm-icon-bookmark-outline-add",
+          "dsm-icon-bookmark",
           "() => window.DesModder.controller.pinExpression(%%this%%.model().id)"
         )},
         true: ${actionCreate(
           "pin-expressions-unpin",
-          "dsm-unpin-button",
+          "dsm-unpin-button dcg-selected",
           "dsm-icon-bookmark",
           "() => window.DesModder.controller.unpinExpression(%%this%%.model().id)"
         )}

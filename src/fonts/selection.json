@@ -21,7 +21,7 @@
         "name": "folder-minus"
       },
       "setIdx": 0,
-      "setId": 2,
+      "setId": 4,
       "iconIdx": 0
     },
     {
@@ -44,7 +44,7 @@
         "name": "folder-plus"
       },
       "setIdx": 0,
-      "setId": 2,
+      "setId": 4,
       "iconIdx": 1
     },
     {
@@ -68,31 +68,8 @@
         "code": 59652
       },
       "setIdx": 0,
-      "setId": 2,
+      "setId": 4,
       "iconIdx": 2
-    },
-    {
-      "icon": {
-        "paths": [
-          "M102.4 102.4c0-56.32 46.080-102.4 102.4-102.4h614.4c56.554 0 102.4 45.846 102.4 102.4v0 921.6l-409.6-204.8-409.6 204.8v-921.6zM204.8 102.4v768l307.2-153.6 307.2 153.6v-768h-614.4zM460.8 358.4v-102.4h102.4v102.4h102.4v102.4h-102.4v102.4h-102.4v-102.4h-102.4v-102.4h102.4z"
-        ],
-        "attrs": [{}],
-        "isMulticolor": false,
-        "isMulticolor2": false,
-        "tags": ["bookmark-outline-add"],
-        "grid": 24
-      },
-      "attrs": [{}],
-      "properties": {
-        "order": 3,
-        "id": 3,
-        "prevSize": 24,
-        "code": 59648,
-        "name": "bookmark-outline-add"
-      },
-      "setIdx": 0,
-      "setId": 2,
-      "iconIdx": 3
     },
     {
       "icon": {
@@ -114,7 +91,7 @@
         "name": "bookmark"
       },
       "setIdx": 0,
-      "setId": 2,
+      "setId": 4,
       "iconIdx": 4
     },
     {
@@ -122,23 +99,25 @@
         "paths": [
           "M448 576v-448c-247.424 0-448 200.576-448 448s200.576 448 448 448 448-200.576 448-448c0-72.034-17.028-140.084-47.236-200.382l-400.764 200.382zM912.764 247.618c-73.552-146.816-225.374-247.618-400.764-247.618v448l400.764-200.382z"
         ],
+        "attrs": [],
+        "isMulticolor": false,
+        "isMulticolor2": false,
         "tags": ["pie-chart", "stats", "statistics", "graph"],
         "defaultCode": 59802,
-        "grid": 24,
-        "attrs": []
+        "grid": 24
       },
       "attrs": [],
       "properties": {
         "ligatures": "pie-chart, stats",
         "name": "pie-chart",
         "order": 6,
-        "id": 155,
+        "id": 5,
         "prevSize": 24,
         "code": 59802
       },
-      "setIdx": 1,
-      "setId": 1,
-      "iconIdx": 154
+      "setIdx": 0,
+      "setId": 4,
+      "iconIdx": 5
     }
   ],
   "height": 1024,

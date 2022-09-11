@@ -7,6 +7,7 @@
   border-radius: 5px;
   text-align: center;
   margin: -1px -1px -1px -1px;
+  opacity: 0.6;
   &.dsm-btn-icon-disabled {
     opacity: 0.3;
     pointer-events: none;
@@ -14,17 +15,15 @@
   &.dcg-hovered,
   &.dcg-active {
     background: rgba(0, 0, 0, 0.1);
-    i {
-      opacity: 0.8;
-    }
+    opacity: 0.8;
   }
   &.dcg-depressed {
     background: rgba(0, 0, 0, 0.2);
-    i {
-      opacity: 1;
-    }
+    opacity: 1;
   }
-  i {
+  &.dsm-selected {
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
     opacity: 0.6;
   }
 }
