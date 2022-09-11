@@ -14,7 +14,7 @@ export default class InlineMathInputView extends Component<
     return (
       <InlineMathInputViewGeneral
         {...(this.props as any)}
-        readonly={true}
+        readonly={false}
         controller={Calc.controller}
       />
     );
