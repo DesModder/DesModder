@@ -1,11 +1,10 @@
 import { Component, jsx } from "DCGView";
 import { mergeClass, MaybeClassDict } from "utils/utils";
-import { Tooltip } from "./desmosComponents";
 import "./IconButton.less";
 
 export default class IconButton extends Component<{
   iconClass: string;
-  class?: MaybeClassDict;
+  btnClass?: MaybeClassDict;
   onTap(e: Event): void;
   disabled?: boolean;
 }> {
@@ -19,7 +18,7 @@ export default class IconButton extends Component<{
               "dsm-btn-icon-disabled": this.props.disabled?.() || false,
               "dsm-btn-icon": true,
             },
-            this.props.class?.()
+            this.props.btnClass?.()
           )
         }
         onTap={(e: Event) => !this.props.disabled?.() && this.props.onTap(e)}

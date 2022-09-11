@@ -14,15 +14,14 @@ export class PerformanceView extends Component<{
         <div class="dsm-pi-pin-menu-button-container">
           <Tooltip gravity="w" tooltip="Keep menu open">
             <IconButton
-              iconClass={() =>
-                this.props.desModderController().pillboxMenuPinned
-                  ? "dsm-icon-bookmark"
-                  : "dsm-icon-bookmark-outline-add"
-              }
+              iconClass={"dsm-icon-bookmark"}
               onTap={() => {
                 this.props.desModderController().toggleMenuPinned();
               }}
-              class="dsm-pi-pin-menu-button"
+              btnClass={() => ({
+                "dsm-pi-pin-menu-button": true,
+                "dsm-selected": this.props.desModderController().pillboxMenuPinned
+              })}
             />
           </Tooltip>
         </div>
