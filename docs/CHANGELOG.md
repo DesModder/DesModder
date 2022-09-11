@@ -1,5 +1,11 @@
 # DesModder Changelog
 
+## 0.8.2
+
+Bug fix:
+
+- (Video Creator) Actually fix inline math inputs
+
 ## 0.8.1
 
 New features:
