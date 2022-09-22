@@ -141,3 +141,10 @@ shift-enter-newline-desc = Use Shift+Enter to type newlines in notes and image/f
 ## Performance Display
 performance-info-name = Performance Display
 performance-info-desc = Displays information about the performance of the current graph.
+performance-info-refresh-graph = Refresh Graph
+performance-info-refresh-graph-tooltip = Refresh the graph to test initial load time
+performance-info-sticky-tooltip = Keep menu open
+performance-info-time-in-worker = Time In Worker
+performance-info-compiling = Compiling
+performance-info-rendering = Rendering
+performance-info-other = Other
