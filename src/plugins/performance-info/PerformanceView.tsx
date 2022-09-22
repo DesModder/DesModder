@@ -13,7 +13,10 @@ export class PerformanceView extends Component<{
     return (
       <div class="dcg-popover-interior dsm-performance-info-menu">
         <div class="dsm-pi-pin-menu-button-container">
-          <Tooltip gravity="s" tooltip={format("performance-info-sticky-tooltip")}>
+          <Tooltip
+            gravity="s"
+            tooltip={format("performance-info-sticky-tooltip")}
+          >
             <IconButton
               iconClass={"dsm-icon-bookmark"}
               onTap={() => {
