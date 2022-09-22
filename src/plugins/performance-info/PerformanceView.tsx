@@ -3,6 +3,7 @@ import { Component, jsx } from "DCGView";
 import Controller from "./Controller";
 import DesModderController from "main/Controller";
 import "./PerformanceView.less";
+import { format } from "i18n/i18n-core";
 
 export class PerformanceView extends Component<{
   controller: () => Controller;
@@ -12,7 +13,7 @@ export class PerformanceView extends Component<{
     return (
       <div class="dcg-popover-interior dsm-performance-info-menu">
         <div class="dsm-pi-pin-menu-button-container">
-          <Tooltip gravity="w" tooltip="Keep menu open">
+          <Tooltip gravity="s" tooltip={format("performance-info-sticky-tooltip")}>
             <IconButton
               iconClass={"dsm-icon-bookmark"}
               onTap={() => {
@@ -28,21 +29,21 @@ export class PerformanceView extends Component<{
         </div>
         <ul>
           <li>
-            <strong>Time In Worker: </strong>
+            <strong>{format("performance-info-time-in-worker")}: </strong>
             {() =>
               Math.round(this.props.controller().getTimingData().timeInWorker)
             }
             ms
           </li>
           <li>
-            <strong>Compiling: </strong>
+            <strong>{format("performance-info-compiling")}: </strong>
             {() =>
               Math.round(this.props.controller().getTimingData().updateAnalysis)
             }
             ms
           </li>
           <li>
-            <strong>Rendering: </strong>
+            <strong>{format("performance-info-rendering")}: </strong>
             {() =>
               Math.round(
                 this.props.controller().getTimingData().graphAllChanges
@@ -51,7 +52,7 @@ export class PerformanceView extends Component<{
             ms
           </li>
           <li>
-            <strong>Other: </strong>
+            <strong>{format("performance-info-other")}: </strong>
             {() => {
               const timingData = this.props.controller().getTimingData();
               return Math.round(
@@ -63,7 +64,7 @@ export class PerformanceView extends Component<{
           </li>
         </ul>
         <div class="dsm-pi-refresh-state-button-container">
-          <Tooltip tooltip="Refresh the graph state to measure first load performance">
+          <Tooltip tooltip={format("performance-info-refresh-graph-tooltip")}>
             <Button
               color="primary"
               class="dsm-pi-refresh-state-button"
@@ -71,7 +72,7 @@ export class PerformanceView extends Component<{
                 this.props.controller().refreshState();
               }}
             >
-              Refresh Graph
+              {format("performance-info-refresh-graph")}
             </Button>
           </Tooltip>
         </div>
