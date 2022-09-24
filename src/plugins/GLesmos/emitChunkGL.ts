@@ -1,6 +1,6 @@
 import { getFunctionName, getBuiltin } from "./builtins";
 import { IRChunk, IRInstruction } from "parsing/IR";
-import { compileObject, getGLType } from "./outputHelpers";
+import { compileObject, getGLScalarType, getGLType } from "./outputHelpers";
 import { countReferences, opcodes, printOp, Types } from "./opcodeDeps";
 import { desmosRequire } from "globals/workerSelf";
 import { evalMaybeRational, MaybeRational } from "parsing/parsenode";
@@ -92,7 +92,8 @@ function getSourceSimple(
         const id = getIdentifier(instructionIndex);
         const val = ci.value as any[];
         const init = val.map(compileObject).join(",");
-        lists.push(`float ${id}[${val.length}] = float[](${init});\n`);
+        const type = getGLScalarType(ci.valueType);
+        lists.push(`${type} ${id}[${val.length}] = ${type}[](${init});\n`);
         return id;
       } else {
         return compileObject(ci.value);
@@ -125,7 +126,8 @@ function getSourceSimple(
       );
     case opcodes.List:
       const init = ci.args.map((i) => maybeInlined(i, inlined)).join(",");
-      return `float[${ci.args.length}](${init})`;
+      const type = getGLScalarType(ci.valueType);
+      return `${type}[${ci.args.length}](${init})`;
     case opcodes.DeferredListAccess:
     case opcodes.Distribution:
     case opcodes.SymbolicVar:
@@ -273,7 +275,8 @@ function getBeginBroadcastSource(
           throw Error("List with non-constant length not supported");
         }
         broadcastLength = len;
-        varInits.push(`float[${len}] ${getIdentifier(index)};\n`);
+        const type = getGLScalarType(broadcastRes.valueType);
+        varInits.push(`${type}[${len}] ${getIdentifier(index)};\n`);
       }
     }
   }

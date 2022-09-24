@@ -71,3 +71,9 @@ export function getGLType(v: ValueType) {
       throw Error(`Type ${v} is not yet supported`);
   }
 }
+
+export function getGLScalarType(v: ValueType) {
+  const type = getGLType(v);
+  if (type.endsWith("[]")) return type.slice(0, -2);
+  else return type;
+}
