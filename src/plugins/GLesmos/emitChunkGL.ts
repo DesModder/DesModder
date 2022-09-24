@@ -57,7 +57,7 @@ function getSourceBinOp(
     case opcodes.OrderedPairAccess:
       // Should only be called with a constant (inlined) index arg
       if (b !== "(1.0)" && b !== "(2.0)") {
-        const componentInst = chunk.instructions[ci.args[1]];
+        const componentInst = chunk.getInstruction(ci.args[1]);
         if (componentInst.type != opcodes.Constant) {
           throw Error(
             `Programming Error: OrderedPairAccess index must be a constant`
@@ -154,7 +154,11 @@ function getSourceSimple(
           );
         }
       }
-      return `${index}>=1 && ${index}<=${length} ? ${list}[int(${index})-1] : NaN`;
+      const nan =
+        getGLScalarType(chunk.getInstruction(ci.args[0]).valueType) === "vec2"
+          ? "vec2(NaN,NaN)"
+          : "NaN";
+      return `${index}>=1 && ${index}<=${length} ? ${list}[int(${index})-1] : ${nan}`;
     // in-bounds list access assumes that args[1] is an integer
     // between 1 and args[0].length, inclusive
     case opcodes.InboundsListAccess:
