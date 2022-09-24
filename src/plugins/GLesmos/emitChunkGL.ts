@@ -22,7 +22,8 @@ function maybeInlined(index: number, inlined: string[]) {
 
 function getSourceBinOp(
   ci: IRInstruction & { args: [number, number] },
-  inlined: string[]
+  inlined: string[],
+  chunk: IRChunk
 ) {
   const a = maybeInlined(ci.args[0], inlined);
   const b = maybeInlined(ci.args[1], inlined);
@@ -56,7 +57,19 @@ function getSourceBinOp(
     case opcodes.OrderedPairAccess:
       // Should only be called with a constant (inlined) index arg
       if (b !== "(1.0)" && b !== "(2.0)") {
-        throw Error(`Programming error in OrderedPairAccess`);
+        const componentInst = chunk.instructions[ci.args[1]];
+        if (componentInst.type != opcodes.Constant) {
+          throw Error(
+            `Programming Error: OrderedPairAccess index must be a constant`
+          );
+        }
+        const componentValue = compileObject(componentInst.value);
+        if (componentValue !== "1.0" && componentValue !== "2.0") {
+          throw Error(
+            `Programming Error: OrderedPairAccess index must be 1.0 or 2.0`
+          );
+        }
+        return componentValue === "1.0" ? `${a}.x` : `${a}.y`;
       }
       return b === "(1.0)" ? `${a}.x` : `${a}.y`;
     default:
@@ -99,7 +112,7 @@ function getSourceSimple(
     case opcodes.And:
     case opcodes.OrderedPair:
     case opcodes.OrderedPairAccess:
-      return getSourceBinOp(ci, inlined);
+      return getSourceBinOp(ci, inlined, chunk);
     case opcodes.Negative:
       return "-" + maybeInlined(ci.args[0], inlined);
     case opcodes.Piecewise:
