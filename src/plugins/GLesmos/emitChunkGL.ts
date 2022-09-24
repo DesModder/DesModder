@@ -1,6 +1,6 @@
 import { getFunctionName, getBuiltin } from "./builtins";
 import { IRChunk, IRInstruction } from "parsing/IR";
-import { compileObject, getGLType } from "./outputHelpers";
+import { compileObject, getGLScalarType, getGLType } from "./outputHelpers";
 import { countReferences, opcodes, printOp, Types } from "./opcodeDeps";
 import { desmosRequire } from "globals/workerSelf";
 import { evalMaybeRational, MaybeRational } from "parsing/parsenode";
@@ -22,7 +22,8 @@ function maybeInlined(index: number, inlined: string[]) {
 
 function getSourceBinOp(
   ci: IRInstruction & { args: [number, number] },
-  inlined: string[]
+  inlined: string[],
+  chunk: IRChunk
 ) {
   const a = maybeInlined(ci.args[0], inlined);
   const b = maybeInlined(ci.args[1], inlined);
@@ -56,7 +57,19 @@ function getSourceBinOp(
     case opcodes.OrderedPairAccess:
       // Should only be called with a constant (inlined) index arg
       if (b !== "(1.0)" && b !== "(2.0)") {
-        throw Error(`Programming error in OrderedPairAccess`);
+        const componentInst = chunk.getInstruction(ci.args[1]);
+        if (componentInst.type != opcodes.Constant) {
+          throw Error(
+            `Programming Error: OrderedPairAccess index must be a constant`
+          );
+        }
+        const componentValue = compileObject(componentInst.value);
+        if (componentValue !== "1.0" && componentValue !== "2.0") {
+          throw Error(
+            `Programming Error: OrderedPairAccess index must be 1.0 or 2.0`
+          );
+        }
+        return componentValue === "1.0" ? `${a}.x` : `${a}.y`;
       }
       return b === "(1.0)" ? `${a}.x` : `${a}.y`;
     default:
@@ -79,7 +92,8 @@ function getSourceSimple(
         const id = getIdentifier(instructionIndex);
         const val = ci.value as any[];
         const init = val.map(compileObject).join(",");
-        lists.push(`float ${id}[${val.length}] = float[](${init});\n`);
+        const type = getGLScalarType(ci.valueType);
+        lists.push(`${type} ${id}[${val.length}] = ${type}[](${init});\n`);
         return id;
       } else {
         return compileObject(ci.value);
@@ -99,7 +113,7 @@ function getSourceSimple(
     case opcodes.And:
     case opcodes.OrderedPair:
     case opcodes.OrderedPairAccess:
-      return getSourceBinOp(ci, inlined);
+      return getSourceBinOp(ci, inlined, chunk);
     case opcodes.Negative:
       return "-" + maybeInlined(ci.args[0], inlined);
     case opcodes.Piecewise:
@@ -112,7 +126,8 @@ function getSourceSimple(
       );
     case opcodes.List:
       const init = ci.args.map((i) => maybeInlined(i, inlined)).join(",");
-      return `float[${ci.args.length}](${init})`;
+      const type = getGLScalarType(ci.valueType);
+      return `${type}[${ci.args.length}](${init})`;
     case opcodes.DeferredListAccess:
     case opcodes.Distribution:
     case opcodes.SymbolicVar:
@@ -139,7 +154,11 @@ function getSourceSimple(
           );
         }
       }
-      return `${index}>=1 && ${index}<=${length} ? ${list}[int(${index})-1] : NaN`;
+      const nan =
+        getGLScalarType(chunk.getInstruction(ci.args[0]).valueType) === "vec2"
+          ? "vec2(NaN,NaN)"
+          : "NaN";
+      return `${index}>=1 && ${index}<=${length} ? ${list}[int(${index})-1] : ${nan}`;
     // in-bounds list access assumes that args[1] is an integer
     // between 1 and args[0].length, inclusive
     case opcodes.InboundsListAccess:
@@ -260,7 +279,8 @@ function getBeginBroadcastSource(
           throw Error("List with non-constant length not supported");
         }
         broadcastLength = len;
-        varInits.push(`float[${len}] ${getIdentifier(index)};\n`);
+        const type = getGLScalarType(broadcastRes.valueType);
+        varInits.push(`${type}[${len}] ${getIdentifier(index)};\n`);
       }
     }
   }
