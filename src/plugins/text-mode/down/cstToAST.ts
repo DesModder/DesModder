@@ -306,8 +306,8 @@ function exprToAST(
       const piecewiseChildren = node.getChildren("PiecewiseBranch");
       if (piecewiseChildren.length === 0)
         throw Error("Programming error: empty piecewise not yet implemented");
-      const piecewiseBranches = piecewiseChildren.map((node) =>
-        piecewiseBranchToAST(td, node)
+      const piecewiseBranches = piecewiseChildren.map((node, i) =>
+        piecewiseBranchToAST(td, node, i === piecewiseChildren.length - 1)
       );
       if (!everyNonNull(piecewiseBranches)) return null;
       return {
@@ -489,11 +489,17 @@ function assignmentToAST(
  */
 function piecewiseBranchToAST(
   td: TextAndDiagnostics,
-  node: SyntaxNode
+  node: SyntaxNode,
+  isLast: boolean
 ): TextAST.PiecewiseBranch | null {
   const exprs = node.getChildren("Expression");
-  const condition = exprToAST(td, exprs[0]);
-  const consequent = exprs[1]
+  const implicitTrueCondition = isLast && exprs.length === 1;
+  const condition = implicitTrueCondition
+    ? { type: "Identifier" as const, name: "else" }
+    : exprToAST(td, exprs[0]);
+  const consequent = implicitTrueCondition
+    ? exprToAST(td, exprs[0])
+    : exprs[1]
     ? exprToAST(td, exprs[1])
     : {
         type: "Number" as const,
