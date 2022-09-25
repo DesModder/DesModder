@@ -211,7 +211,7 @@ describe("Basic exprs", () => {
     });
   });
   describe("Piecewise", () => {
-    testExpr("empty piecewise", "{else:1}", {
+    testExpr("trivial (else-only) piecewise", "{else:1}", {
       type: "Piecewise",
       condition: true,
       consequent: number(1),

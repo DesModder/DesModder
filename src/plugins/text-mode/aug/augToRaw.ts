@@ -381,6 +381,8 @@ function childNodeToString(e: Aug.Latex.AnyChild): string {
         curr = curr.alternate;
       }
       if (!Aug.Latex.isConstant(curr, NaN)) {
+        // check handles trivial piecewise such as {else: 1}
+        if (piecewiseParts.length === 0) return childNodeToString(curr);
         piecewiseParts.push(childNodeToString(curr));
       }
       return "\\left\\{" + piecewiseParts.join(",") + "\\right\\}";
