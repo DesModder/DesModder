@@ -307,7 +307,11 @@ function exprToAST(
       if (piecewiseChildren.length === 0)
         throw Error("Programming error: empty piecewise not yet implemented");
       const piecewiseBranches = piecewiseChildren.map((node, i) =>
-        piecewiseBranchToAST(td, node, i === piecewiseChildren.length - 1)
+        piecewiseBranchToAST(
+          td,
+          node,
+          i === piecewiseChildren.length - 1 && i > 0
+        )
       );
       if (!everyNonNull(piecewiseBranches)) return null;
       return {
