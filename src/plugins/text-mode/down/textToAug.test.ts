@@ -211,7 +211,7 @@ describe("Basic exprs", () => {
     });
   });
   describe("Piecewise", () => {
-    testExpr("empty piecewise", "{else:1}", {
+    testExpr("trivial (else-only) piecewise", "{else:1}", {
       type: "Piecewise",
       condition: true,
       consequent: number(1),
@@ -228,6 +228,12 @@ describe("Basic exprs", () => {
       condition: comparator(">", id("x"), number(1)),
       consequent: number(2),
       alternate: number(NaN),
+    });
+    testExpr("single condition and implicit else", "{x>1:2,5}", {
+      type: "Piecewise",
+      condition: comparator(">", id("x"), number(1)),
+      consequent: number(2),
+      alternate: number(5),
     });
     testExpr("two conditions and else", "{x>1:2,y>3:4,else:5}", {
       type: "Piecewise",
