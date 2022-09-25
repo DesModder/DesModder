@@ -1,5 +1,13 @@
 # DesModder Changelog
 
+## 0.8.3
+
+Bug fixes:
+
+- (GLesmos) No longer freeze the UI when enabled
+- (GLesmos) Lists of points now work properly
+- (Text Mode) Fix some edge cases with piecewises
+
 ## 0.8.2
 
 Bug fix:
