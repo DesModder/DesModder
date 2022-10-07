@@ -184,6 +184,8 @@ export function initGLesmosCanvas() {
   let currentWidth = 0;
   let currentHeight = 0;
 
+  let forceUpdateTransforms = false;
+
   let updateTransforms = (transforms: ViewportTransforms) => {
     //console.log("Updated GLesmos transforms.");
     const w = transforms.pixelCoordinates.right;
@@ -194,7 +196,8 @@ export function initGLesmosCanvas() {
 
     const [fw, fh] = [Math.floor(w), Math.floor(h)]
 
-    if (currentWidth == fw && currentHeight == fh) return;
+    if (currentWidth == fw && currentHeight == fh && !forceUpdateTransforms) return;
+    forceUpdateTransforms = false;
     console.log(fw, fh);
     currentWidth = fw;
     currentHeight = fh;
@@ -243,7 +246,6 @@ export function initGLesmosCanvas() {
   let oldShaderCode = "";
 
   let setGLesmosShader = (shaderCode: string, id: string) => {
-    console.log("why");
     if (shaderCode == oldShaderCode) return;
     widthSinceLastRender = 0;
     heightSinceLastRender = 0;
@@ -286,7 +288,11 @@ export function initGLesmosCanvas() {
   let widthSinceLastRender = 0;
   let heightSinceLastRender = 0;
   let drawindex = 0;
-  let speed = 4;
+  let speed = 2;
+  let setSpeed = (n: number) => {
+    speed = n;
+    forceUpdateTransforms = true;
+  }
 
   let render = (id: string) => {
     if (glesmosShaderProgram && blitShaderProgram && mixShaderProgram) {
@@ -383,6 +389,8 @@ export function initGLesmosCanvas() {
     deleteCanvas,
     updateTransforms: updateTransforms,
     setGLesmosShader: setGLesmosShader,
+    setSpeed,
+    getSpeed: () => speed,
     render: render,
   };
 }

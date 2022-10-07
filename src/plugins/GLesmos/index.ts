@@ -1,9 +1,13 @@
+
 import Controller from "./Controller";
+import { InitView } from "./View";
 
 export let controller: Controller;
+export let view: ReturnType<typeof InitView>;
 
 function onEnable() {
   controller = new Controller();
+  view = InitView(controller);
   return controller;
 }
 

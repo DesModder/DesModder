@@ -15,6 +15,8 @@ menu-desmodder-tooltip = DesModder Menu
 GLesmos-name = GLesmos
 GLesmos-desc = Render implicits on the GPU. Disabled on tab reload. Can cause the UI to slow down or freeze in rare cases; reload the page if you have issues.
 GLesmos-label-toggle-glesmos = Render with GLesmos
+glesmos-menu = GLesmos Menu
+glesmos-spread-across-multiple-frames = Spread render across multiple frames: Higher values result in faster framerates, but look worse at the beginning. Set to 1 to disable entirely.
 # Missing: error messages
 
 ## Tips
