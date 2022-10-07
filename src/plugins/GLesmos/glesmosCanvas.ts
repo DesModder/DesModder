@@ -192,13 +192,15 @@ export function initGLesmosCanvas() {
     cornerOfGraph = [p2m.tx, p2m.sy * h + p2m.ty];
     sizeOfGraph = [p2m.sx * w, -p2m.sy * h];
 
+    const [fw, fh] = [Math.floor(w), Math.floor(h)]
 
-    if (currentWidth == w && currentHeight == h) return;
-    currentWidth = w;
-    currentHeight = h;
+    if (currentWidth == fw && currentHeight == fh) return;
+    console.log(fw, fh);
+    currentWidth = fw;
+    currentHeight = fh;
 
-    c.width = w;
-    c.height = h;
+    c.width = fw;
+    c.height = fh;
 
     currFramebuffer2 = gl.createFramebuffer();
     currTexture2 = gl.createTexture();
@@ -214,7 +216,7 @@ export function initGLesmosCanvas() {
     gl.bindTexture(gl.TEXTURE_2D, prevTexture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, currentWidth, currentHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
     gl.bindFramebuffer(gl.FRAMEBUFFER, prevFramebuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, prevTexture, 0);
 
@@ -223,7 +225,7 @@ export function initGLesmosCanvas() {
     gl.bindTexture(gl.TEXTURE_2D, currTexture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, currentWidth, currentHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
     gl.bindFramebuffer(gl.FRAMEBUFFER, currFramebuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, currTexture, 0);
 
@@ -238,7 +240,12 @@ export function initGLesmosCanvas() {
   let blitShaderProgram: WebGLProgram | undefined;
   let mixShaderProgram: WebGLProgram | undefined;
 
+  let oldShaderCode = "";
+
   let setGLesmosShader = (shaderCode: string, id: string) => {
+    console.log("why");
+    if (shaderCode == oldShaderCode) return;
+    oldShaderCode = shaderCode;
     const shaderResult = GLESMOS_FRAGMENT_SHADER.replace(
       /\/\/REPLACE_WITH_GLESMOS[\s\S]*\/\/REPLACE_WITH_GLESMOS_END/g,
       shaderCode
@@ -277,7 +284,7 @@ export function initGLesmosCanvas() {
   let widthSinceLastRender = 0;
   let heightSinceLastRender = 0;
   let drawindex = 0;
-  let speed = 2;
+  let speed = 4;
 
   let render = (id: string) => {
     if (glesmosShaderProgram && blitShaderProgram && mixShaderProgram) {
@@ -307,7 +314,6 @@ export function initGLesmosCanvas() {
       setUniform(gl, glesmosShaderProgram, "Infinity", "1f", Infinity);
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
-      //console.log("main image", gl.getError());
 
       if (speed == 1) return;
 
@@ -333,7 +339,6 @@ export function initGLesmosCanvas() {
       setUniform(gl, mixShaderProgram, "renderindex", "1i", drawindex);
       setUniform(gl, mixShaderProgram, "speed", "1i", speed);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
-      //console.log("blend with prev image", gl.getError());
 
 
       // move current to previous image
@@ -343,7 +348,6 @@ export function initGLesmosCanvas() {
       gl.useProgram(blitShaderProgram);
       setUniform(gl, blitShaderProgram, "tex", "1i", 0);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
-      //console.log("current to previous image", gl.getError());
 
       // actually draw to the screen
       gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
@@ -351,7 +355,6 @@ export function initGLesmosCanvas() {
       gl.useProgram(blitShaderProgram);
       setUniform(gl, blitShaderProgram, "tex", "1i", 0);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
-      //console.log("draw to main image", gl.getError());
 
       xSinceLastRender = cornerOfGraph[0];
       ySinceLastRender = cornerOfGraph[1];
