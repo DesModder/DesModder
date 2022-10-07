@@ -52,7 +52,7 @@ function buildShaderProgram(
   }
 }
 
-type UniformType = "1f" | "2fv" | "3fv" | "4fv";
+type UniformType = "1f" | "2fv" | "3fv" | "4fv" | "1i" | "Matrix2fv";
 
 function setUniform(
   gl: WebGLRenderingContext | WebGL2RenderingContext,
@@ -64,8 +64,9 @@ function setUniform(
   let uniformSetterKey: keyof WebGLRenderingContext = ("uniform" +
     uniformType) as keyof WebGLRenderingContext;
   (gl[uniformSetterKey] as Function)(
-    gl.getUniformLocation(program, uniformName),
-    uniformValue
+    ...[gl.getUniformLocation(program, uniformName),
+    ...(uniformType.startsWith("Matrix") ? [false] : []),
+    uniformValue]
   );
 }
 
@@ -85,6 +86,51 @@ void main() {
     gl_Position = vec4(vertexPosition, 0.0, 1.0);
 }
 `;
+
+const BLIT_FRAGMENT_SHADER = `#version 300 es
+
+precision highp float;
+
+in vec2 texCoord;
+out vec4 fragColor;
+
+uniform sampler2D tex;
+
+void main() {
+    fragColor = texture(tex, texCoord);
+}`;
+
+const MIX_FRAGMENT_SHADER = `#version 300 es
+
+precision highp float;
+
+in vec2 texCoord;
+out vec4 fragColor;
+
+uniform sampler2D tex1;
+uniform sampler2D tex2;
+uniform float factor;
+uniform vec2 scaleFactor;
+uniform vec2 translation;
+uniform int renderindex;
+uniform int speed;
+
+void main() {
+    vec2 transformedTexCoord = scaleFactor * (texCoord + translation);
+    vec2 size = floor(vec2(textureSize(tex1, 0)) / float(speed)) * float(speed);
+    int pixeltype = (int(texCoord.x * size.x) % speed)
+      + speed * (int(texCoord.y * size.y) % speed);
+    fragColor = mix(
+      texture(tex1, transformedTexCoord),
+      texture(tex2, texCoord),
+      all(equal(clamp(transformedTexCoord, 0.0, 1.0), transformedTexCoord))
+      ?
+      ((pixeltype == renderindex) ? 1.0 : 0.0)
+      : 1.0
+    );
+}
+
+`
 
 const GLESMOS_FRAGMENT_SHADER = `#version 300 es
 precision highp float;
@@ -112,11 +158,22 @@ void main() {
 export function initGLesmosCanvas() {
   //================= INIT ELEMENTS =======================
   let c: HTMLCanvasElement = document.createElement("canvas");
-  let gl: WebGLRenderingContext = c.getContext("webgl2", {
+  let gl: WebGL2RenderingContext = c.getContext("webgl2", {
     // Disable premultiplied alpha
     // Thanks to <https://stackoverflow.com/a/12290551/7481517>
     premultipliedAlpha: false,
-  }) as WebGLRenderingContext;
+  }) as WebGL2RenderingContext;
+
+  let prevFramebuffer: WebGLFramebuffer | null;
+  let prevTexture: WebGLTexture | null;
+
+  let currFramebuffer: WebGLFramebuffer | null;
+  let currTexture: WebGLTexture | null;
+
+  let currFramebuffer2: WebGLFramebuffer | null;
+  let currTexture2: WebGLTexture | null;
+
+  let vao: WebGLVertexArrayObject | null;
 
   //================= GRAPH BOUNDS ======================
   let cornerOfGraph = [-10, -6];
@@ -124,15 +181,52 @@ export function initGLesmosCanvas() {
 
   //======================= RESIZING STUFF =======================
 
+  let currentWidth = 0;
+  let currentHeight = 0;
+
   let updateTransforms = (transforms: ViewportTransforms) => {
+    //console.log("Updated GLesmos transforms.");
     const w = transforms.pixelCoordinates.right;
     const h = transforms.pixelCoordinates.bottom;
     const p2m = transforms.pixelsToMath;
-    c.width = w;
-    c.height = h;
-    gl.viewport(0, 0, c.width, c.height);
     cornerOfGraph = [p2m.tx, p2m.sy * h + p2m.ty];
     sizeOfGraph = [p2m.sx * w, -p2m.sy * h];
+
+
+    if (currentWidth == w && currentHeight == h) return;
+    currentWidth = w;
+    currentHeight = h;
+
+    c.width = w;
+    c.height = h;
+
+    currFramebuffer2 = gl.createFramebuffer();
+    currTexture2 = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, currTexture2);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, Math.floor(w/speed), Math.floor(h/speed), 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, currFramebuffer2);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, currTexture2, 0);
+
+    prevFramebuffer = gl.createFramebuffer();
+    prevTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, prevTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, prevFramebuffer);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, prevTexture, 0);
+
+    currFramebuffer = gl.createFramebuffer();
+    currTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, currTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, currFramebuffer);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, currTexture, 0);
+
   };
 
   //============================ WEBGL STUFF ==========================
@@ -141,6 +235,8 @@ export function initGLesmosCanvas() {
   gl.bufferData(gl.ARRAY_BUFFER, FULLSCREEN_QUAD, gl.STATIC_DRAW);
 
   let glesmosShaderProgram: WebGLProgram | undefined;
+  let blitShaderProgram: WebGLProgram | undefined;
+  let mixShaderProgram: WebGLProgram | undefined;
 
   let setGLesmosShader = (shaderCode: string, id: string) => {
     const shaderResult = GLESMOS_FRAGMENT_SHADER.replace(
@@ -153,32 +249,117 @@ export function initGLesmosCanvas() {
       shaderResult,
       id
     );
+    blitShaderProgram = buildShaderProgram(gl, VERTEX_SHADER, BLIT_FRAGMENT_SHADER, id);
+    mixShaderProgram = buildShaderProgram(gl, VERTEX_SHADER, MIX_FRAGMENT_SHADER, id);
+    if (!glesmosShaderProgram) return;
+    vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+
+    let vertexPositionAttribLocation = gl.getAttribLocation(
+      glesmosShaderProgram,
+      "vertexPosition"
+    );
+    gl.enableVertexAttribArray(vertexPositionAttribLocation);
+    gl.vertexAttribPointer(
+      vertexPositionAttribLocation,
+      2,
+      gl.FLOAT,
+      false,
+      8,
+      0
+    );
+
   };
 
+  let xSinceLastRender = 0;
+  let ySinceLastRender = 0;
+
+  let widthSinceLastRender = 0;
+  let heightSinceLastRender = 0;
+  let drawindex = 0;
+  let speed = 2;
+
   let render = (id: string) => {
-    if (glesmosShaderProgram) {
+    if (glesmosShaderProgram && blitShaderProgram && mixShaderProgram) {
+
+      let jitterX = drawindex % speed;
+      let jitterY = Math.floor(drawindex / speed);
+      //gl.enable(gl.SCISSOR_TEST);
+      //gl.scissor((drawindex % 4) / 4 * currentWidth, Math.floor(drawindex / 4) / 4 * currentHeight, 0.25 * currentWidth, 0.25 * currentHeight)
+      gl.bindVertexArray(vao);
+
+      // render main image
+      if (speed == 1) {
+        gl.viewport(0, 0, c.width, c.height);
+      } else {
+        gl.viewport(0, 0, Math.floor(currentWidth / speed), Math.floor(currentHeight / speed));
+      }
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, (speed == 1) ? null : currFramebuffer2);
+
       gl.useProgram(glesmosShaderProgram);
 
-      let vertexPositionAttribLocation = gl.getAttribLocation(
-        glesmosShaderProgram,
-        "vertexPosition"
-      );
-      setUniform(gl, glesmosShaderProgram, "corner", "2fv", cornerOfGraph);
+      setUniform(gl, glesmosShaderProgram, "corner", "2fv", [
+        cornerOfGraph[0] + jitterX / currentWidth * sizeOfGraph[0],
+        cornerOfGraph[1] + jitterY / currentHeight * sizeOfGraph[1]
+      ]);
       setUniform(gl, glesmosShaderProgram, "size", "2fv", sizeOfGraph);
       setUniform(gl, glesmosShaderProgram, "NaN", "1f", NaN);
       setUniform(gl, glesmosShaderProgram, "Infinity", "1f", Infinity);
 
-      gl.enableVertexAttribArray(vertexPositionAttribLocation);
-      gl.vertexAttribPointer(
-        vertexPositionAttribLocation,
-        2,
-        gl.FLOAT,
-        false,
-        8,
-        0
-      );
-
       gl.drawArrays(gl.TRIANGLES, 0, 6);
+      //console.log("main image", gl.getError());
+
+      if (speed == 1) return;
+
+      gl.viewport(0, 0, c.width, c.height);
+      // blend main image with previous image for temporal antialiasing
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, currFramebuffer);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, prevTexture);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, currTexture2);
+      gl.useProgram(mixShaderProgram);
+      setUniform(gl, mixShaderProgram, "tex1", "1i", 0);
+      setUniform(gl, mixShaderProgram, "tex2", "1i", 1);
+      setUniform(gl, mixShaderProgram, "factor", "1f", 0.1);
+      setUniform(gl, mixShaderProgram, "scaleFactor", "2fv", [
+        sizeOfGraph[0] / widthSinceLastRender,
+        sizeOfGraph[1] / heightSinceLastRender
+      ]);
+      setUniform(gl, mixShaderProgram, "translation", "2fv", [
+        (cornerOfGraph[0] - xSinceLastRender) / sizeOfGraph[0] + 0.4*(Math.random() - 0.5) / currentWidth,
+        (cornerOfGraph[1] - ySinceLastRender) / sizeOfGraph[1] + 0.4*(Math.random() - 0.5) / currentHeight
+      ]);
+      setUniform(gl, mixShaderProgram, "renderindex", "1i", drawindex);
+      setUniform(gl, mixShaderProgram, "speed", "1i", speed);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      //console.log("blend with prev image", gl.getError());
+
+
+      // move current to previous image
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, prevFramebuffer );
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, currTexture);
+      gl.useProgram(blitShaderProgram);
+      setUniform(gl, blitShaderProgram, "tex", "1i", 0);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      //console.log("current to previous image", gl.getError());
+
+      // actually draw to the screen
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
+      gl.bindTexture(gl.TEXTURE_2D, currTexture);
+      gl.useProgram(blitShaderProgram);
+      setUniform(gl, blitShaderProgram, "tex", "1i", 0);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      //console.log("draw to main image", gl.getError());
+
+      xSinceLastRender = cornerOfGraph[0];
+      ySinceLastRender = cornerOfGraph[1];
+      widthSinceLastRender = sizeOfGraph[0];
+      heightSinceLastRender = sizeOfGraph[1];
+
+      drawindex = (drawindex + 1) % (speed * speed);
+
     } else {
       throw glesmosError("Shader failed");
     }
