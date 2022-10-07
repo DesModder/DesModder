@@ -1,6 +1,6 @@
 import ViewportTransforms from "./ViewportTransforms";
 
-function glesmosError(msg: string) {
+function glesmosError(msg: string): never {
   throw Error(`[GLesmos Error] ${msg}`);
 }
 
@@ -11,7 +11,7 @@ function compileShader(
 ) {
   let shader: WebGLShader | null = gl.createShader(type);
   if (shader === null) {
-    throw glesmosError("Invalid shader type");
+    glesmosError("Invalid shader type");
   }
 
   gl.shaderSource(shader, shaderCode);
@@ -19,7 +19,7 @@ function compileShader(
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     let shaderInfoLog = gl.getShaderInfoLog(shader);
-    throw glesmosError(
+    glesmosError(
       `While compiling ${
         type === gl.VERTEX_SHADER ? "vertex" : "fragment"
       } shader:
@@ -37,8 +37,7 @@ function buildShaderProgram(
 ) {
   let shaderProgram = gl.createProgram();
   if (shaderProgram === null) {
-    throw glesmosError("Unable to create shader program!");
-    return;
+    glesmosError("Unable to create shader program!");
   }
   let vertexShader = compileShader(gl, vert, gl.VERTEX_SHADER);
   let fragmentShader = compileShader(gl, frag, gl.FRAGMENT_SHADER);
@@ -48,8 +47,21 @@ function buildShaderProgram(
     gl.linkProgram(shaderProgram);
     return shaderProgram;
   } else {
-    throw glesmosError("One or more shaders did not compile.");
+    glesmosError("One or more shaders did not compile.");
   }
+}
+
+const shaderCache = new Map<string, WebGLProgram>();
+function getShaderProgram(gl: WebGLRenderingContext | WebGL2RenderingContext, key: string, id: string, create: () => { vertexSource: string, fragmentSource: string }) {
+    const cachedShader = shaderCache.get(key);
+    if (cachedShader) {
+        return cachedShader;
+    } else {
+        const sources = create();
+        const shaderProgram = buildShaderProgram(gl, sources.vertexSource, sources.fragmentSource, id);
+        shaderCache.set(key, shaderProgram);
+        return shaderProgram;
+    }
 }
 
 type UniformType = "1f" | "2fv" | "3fv" | "4fv";
@@ -143,16 +155,15 @@ export function initGLesmosCanvas() {
   let glesmosShaderProgram: WebGLProgram | undefined;
 
   let setGLesmosShader = (shaderCode: string, id: string) => {
-    const shaderResult = GLESMOS_FRAGMENT_SHADER.replace(
-      /\/\/REPLACE_WITH_GLESMOS[\s\S]*\/\/REPLACE_WITH_GLESMOS_END/g,
-      shaderCode
-    );
-    glesmosShaderProgram = buildShaderProgram(
-      gl,
-      VERTEX_SHADER,
-      shaderResult,
-      id
-    );
+    glesmosShaderProgram = getShaderProgram(gl, shaderCode, id, () => {
+        return {
+            fragmentSource: GLESMOS_FRAGMENT_SHADER.replace(
+                /\/\/REPLACE_WITH_GLESMOS[\s\S]*\/\/REPLACE_WITH_GLESMOS_END/g,
+                shaderCode
+            ),
+            vertexSource: VERTEX_SHADER
+        }
+    });
   };
 
   let render = (id: string) => {
