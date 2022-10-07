@@ -52,16 +52,26 @@ function buildShaderProgram(
 }
 
 const shaderCache = new Map<string, WebGLProgram>();
-function getShaderProgram(gl: WebGLRenderingContext | WebGL2RenderingContext, key: string, id: string, create: () => { vertexSource: string, fragmentSource: string }) {
-    const cachedShader = shaderCache.get(key);
-    if (cachedShader) {
-        return cachedShader;
-    } else {
-        const sources = create();
-        const shaderProgram = buildShaderProgram(gl, sources.vertexSource, sources.fragmentSource, id);
-        shaderCache.set(key, shaderProgram);
-        return shaderProgram;
-    }
+function getShaderProgram(
+  gl: WebGLRenderingContext | WebGL2RenderingContext,
+  key: string,
+  id: string,
+  create: () => { vertexSource: string; fragmentSource: string }
+) {
+  const cachedShader = shaderCache.get(key);
+  if (cachedShader) {
+    return cachedShader;
+  } else {
+    const sources = create();
+    const shaderProgram = buildShaderProgram(
+      gl,
+      sources.vertexSource,
+      sources.fragmentSource,
+      id
+    );
+    shaderCache.set(key, shaderProgram);
+    return shaderProgram;
+  }
 }
 
 type UniformType = "1f" | "2fv" | "3fv" | "4fv";
@@ -156,13 +166,13 @@ export function initGLesmosCanvas() {
 
   let setGLesmosShader = (shaderCode: string, id: string) => {
     glesmosShaderProgram = getShaderProgram(gl, shaderCode, id, () => {
-        return {
-            fragmentSource: GLESMOS_FRAGMENT_SHADER.replace(
-                /\/\/REPLACE_WITH_GLESMOS[\s\S]*\/\/REPLACE_WITH_GLESMOS_END/g,
-                shaderCode
-            ),
-            vertexSource: VERTEX_SHADER
-        }
+      return {
+        fragmentSource: GLESMOS_FRAGMENT_SHADER.replace(
+          /\/\/REPLACE_WITH_GLESMOS[\s\S]*\/\/REPLACE_WITH_GLESMOS_END/g,
+          shaderCode
+        ),
+        vertexSource: VERTEX_SHADER,
+      };
     });
   };
 
