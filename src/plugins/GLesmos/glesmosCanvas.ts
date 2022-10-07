@@ -245,6 +245,8 @@ export function initGLesmosCanvas() {
   let setGLesmosShader = (shaderCode: string, id: string) => {
     console.log("why");
     if (shaderCode == oldShaderCode) return;
+    widthSinceLastRender = 0;
+    heightSinceLastRender = 0;
     oldShaderCode = shaderCode;
     const shaderResult = GLESMOS_FRAGMENT_SHADER.replace(
       /\/\/REPLACE_WITH_GLESMOS[\s\S]*\/\/REPLACE_WITH_GLESMOS_END/g,
