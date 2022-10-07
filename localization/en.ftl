@@ -17,6 +17,7 @@ GLesmos-desc = Render implicits on the GPU. Disabled on tab reload. Can cause th
 GLesmos-label-toggle-glesmos = Render with GLesmos
 glesmos-menu = GLesmos Menu
 glesmos-spread-across-multiple-frames = Spread render across multiple frames: Higher values result in faster framerates, but look worse at the beginning. Set to 1 to disable entirely.
+glesmos-running-slow-frame-spreading-toast = GLesmos running slow? Enable frame spreading in the GLesmos menu to increase your framerate.
 # Missing: error messages
 
 ## Tips

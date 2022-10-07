@@ -1,6 +1,12 @@
+import { TimingData } from "globals/Calc";
+import { Calc, desmosRequire } from "globals/window";
+import { format } from "i18n/i18n-core";
 import ViewportTransforms from "./ViewportTransforms";
 
-function glesmosError(msg: string) {
+const graphslayer = desmosRequire("graphing/graphslayer");
+console.log(graphslayer);
+
+function glesmosError(msg: string): never {
   throw Error(`[GLesmos Error] ${msg}`);
 }
 
@@ -19,6 +25,7 @@ function compileShader(
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     let shaderInfoLog = gl.getShaderInfoLog(shader);
+    console.error("shader error:", shaderInfoLog);
     throw glesmosError(
       `While compiling ${
         type === gl.VERTEX_SHADER ? "vertex" : "fragment"
@@ -26,6 +33,7 @@ function compileShader(
       ${shaderInfoLog ?? ""}`
     );
   }
+
   return shader;
 }
 
@@ -38,7 +46,6 @@ function buildShaderProgram(
   let shaderProgram = gl.createProgram();
   if (shaderProgram === null) {
     throw glesmosError("Unable to create shader program!");
-    return;
   }
   let vertexShader = compileShader(gl, vert, gl.VERTEX_SHADER);
   let fragmentShader = compileShader(gl, frag, gl.FRAGMENT_SHADER);
@@ -46,13 +53,17 @@ function buildShaderProgram(
     gl.attachShader(shaderProgram, vertexShader);
     gl.attachShader(shaderProgram, fragmentShader);
     gl.linkProgram(shaderProgram);
+    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+        let programInfoLog = gl.getProgramInfoLog(shaderProgram);
+        throw glesmosError(`Failed to link shader program: ${programInfoLog}`);
+    }
     return shaderProgram;
   } else {
     throw glesmosError("One or more shaders did not compile.");
   }
 }
 
-type UniformType = "1f" | "2fv" | "3fv" | "4fv" | "1i" | "Matrix2fv";
+type UniformType = "1f" | "2fv" | "3fv" | "4fv" | "1i" | "Matrix2fv" | "1ui";
 
 function setUniform(
   gl: WebGLRenderingContext | WebGL2RenderingContext,
@@ -107,27 +118,40 @@ const MIX_FRAGMENT_SHADER = `#version 300 es
 precision highp float;
 
 in vec2 texCoord;
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
+layout(location = 1) out uint history;
 
 uniform sampler2D tex1;
 uniform sampler2D tex2;
+uniform highp usampler2D historyTex;
 uniform float factor;
 uniform vec2 scaleFactor;
 uniform vec2 translation;
 uniform int renderindex;
 uniform int speed;
+uniform uint clampHistory;
 
 void main() {
     vec2 transformedTexCoord = scaleFactor * (texCoord + translation);
     vec2 size = floor(vec2(textureSize(tex1, 0)) / float(speed)) * float(speed);
     int pixeltype = (int(texCoord.x * size.x) % speed)
       + speed * (int(texCoord.y * size.y) % speed);
+    bool inRange = all(equal(clamp(transformedTexCoord, 0.0, 1.0), transformedTexCoord));
+    bool shouldDrawPixel = (pixeltype == renderindex);
+
+    uint lastHistory = inRange ? texture(historyTex, transformedTexCoord).x : 0u;
+
+    history = min(shouldDrawPixel ? (lastHistory + 1u)
+        : lastHistory, clampHistory);
+    
+    float historyDrawFactor = (1.0 / max(1.0, float(lastHistory)));
+
     fragColor = mix(
       texture(tex1, transformedTexCoord),
       texture(tex2, texCoord),
-      all(equal(clamp(transformedTexCoord, 0.0, 1.0), transformedTexCoord))
+      inRange
       ?
-      ((pixeltype == renderindex) ? 1.0 : 0.0)
+      (shouldDrawPixel ? historyDrawFactor : 0.0)
       : 1.0
     );
 }
@@ -157,6 +181,34 @@ void main() {
 
 `;
 
+function initTexture(
+    gl: WebGL2RenderingContext,
+    w: number,
+    h: number,
+    filters: number,
+    internalformat?: number,
+    format?: number,
+    type?: number
+) {
+    let texture = gl.createTexture();
+    if (texture === null) glesmosError("Failed to create texture.");
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filters);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filters);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      internalformat ?? gl.RGBA,
+      w,
+      h,
+      0,
+      format ?? gl.RGBA,
+      type ?? gl.UNSIGNED_BYTE,
+      null
+    );
+    return texture;
+}
+
 function initFramebufferWithSingleImage(
   gl: WebGL2RenderingContext,
   w: number,
@@ -164,21 +216,7 @@ function initFramebufferWithSingleImage(
   filters: number
 ) {
   let framebuffer = gl.createFramebuffer();
-  let texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filters);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filters);
-  gl.texImage2D(
-    gl.TEXTURE_2D,
-    0,
-    gl.RGBA,
-    w,
-    h,
-    0,
-    gl.RGBA,
-    gl.UNSIGNED_BYTE,
-    null
-  );
+  let texture = initTexture(gl, w,h, filters);
   gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
   gl.framebufferTexture2D(
     gl.FRAMEBUFFER,
@@ -187,13 +225,13 @@ function initFramebufferWithSingleImage(
     texture,
     0
   );
-  if (!framebuffer) throw new Error("Failed to create a framebuffer.");
-  if (!texture) throw new Error("Failed to create a texture.");
+  if (!framebuffer) glesmosError("Failed to create a framebuffer.");
+  if (!texture) glesmosError("Failed to create a texture.");
   return [framebuffer, texture];
 }
 
 export function initGLesmosCanvas() {
-  let speed = 2;
+  let speed = 1;
   let setSpeed = (n: number) => {
     speed = n;
     forceUpdateTransforms = true;
@@ -208,9 +246,11 @@ export function initGLesmosCanvas() {
 
   let prevFramebuffer: WebGLFramebuffer;
   let prevTexture: WebGLTexture;
+  let prevHistory: WebGLTexture;
 
   let currFramebuffer: WebGLFramebuffer;
   let currTexture: WebGLTexture;
+  let currHistory: WebGLTexture;
 
   let currFramebuffer2: WebGLFramebuffer;
   let currTexture2: WebGLTexture;
@@ -252,18 +292,24 @@ export function initGLesmosCanvas() {
       Math.floor(h / speed),
       gl.NEAREST
     );
+
     [currFramebuffer, currTexture] = initFramebufferWithSingleImage(
       gl,
       currentWidth,
       currentHeight,
       gl.LINEAR
     );
+    currHistory = initTexture(gl, currentWidth, currentHeight, gl.NEAREST, gl.R8UI, gl.RED_INTEGER, gl.UNSIGNED_BYTE);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, currHistory, 0);
+
     [prevFramebuffer, prevTexture] = initFramebufferWithSingleImage(
       gl,
       currentWidth,
       currentHeight,
       gl.LINEAR
     );
+    prevHistory = initTexture(gl, currentWidth, currentHeight, gl.NEAREST, gl.R8UI, gl.RED_INTEGER, gl.UNSIGNED_BYTE);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, prevHistory, 0);
   };
 
   //============================ WEBGL STUFF ==========================
@@ -271,9 +317,9 @@ export function initGLesmosCanvas() {
   gl.bindBuffer(gl.ARRAY_BUFFER, fullscreenQuadBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, FULLSCREEN_QUAD, gl.STATIC_DRAW);
 
-  let glesmosShaderProgram: WebGLProgram | undefined;
-  let blitShaderProgram: WebGLProgram | undefined;
-  let mixShaderProgram: WebGLProgram | undefined;
+  let glesmosShaderProgram: WebGLProgram;
+  let blitShaderProgram: WebGLProgram;
+  let mixShaderProgram: WebGLProgram;
 
   let oldShaderCode = "";
 
@@ -306,7 +352,7 @@ export function initGLesmosCanvas() {
     );
     if (!glesmosShaderProgram) return;
     let vao2 = gl.createVertexArray();
-    if (!vao2) throw new Error("Failed to create vertex array object.");
+    if (!vao2) glesmosError("Failed to create vertex array object.");
     vao = vao2;
     gl.bindVertexArray(vao);
 
@@ -332,101 +378,189 @@ export function initGLesmosCanvas() {
   let heightSinceLastRender = 0;
   let drawindex = 0;
 
-  let render = (id: string) => {
-    if (glesmosShaderProgram && blitShaderProgram && mixShaderProgram) {
-      let jitterX = drawindex % speed;
-      let jitterY = Math.floor(drawindex / speed);
-      gl.bindVertexArray(vao);
+  let shouldKeepRendering = true;
 
-      // render main image
-      if (speed == 1) {
-        gl.viewport(0, 0, c.width, c.height);
-      } else {
-        gl.viewport(
-          0,
-          0,
-          Math.floor(currentWidth / speed),
-          Math.floor(currentHeight / speed)
-        );
-      }
-      gl.bindFramebuffer(
-        gl.DRAW_FRAMEBUFFER,
-        speed == 1 ? null : currFramebuffer2
-      );
+  let rerenderForcerModifier = 0;
 
-      gl.useProgram(glesmosShaderProgram);
+  let shouldRenderFrame = true;
 
-      setUniform(gl, glesmosShaderProgram, "corner", "2fv", [
-        cornerOfGraph[0] + (jitterX / currentWidth) * sizeOfGraph[0],
-        cornerOfGraph[1] + (jitterY / currentHeight) * sizeOfGraph[1],
-      ]);
-      setUniform(gl, glesmosShaderProgram, "size", "2fv", sizeOfGraph);
-      setUniform(gl, glesmosShaderProgram, "NaN", "1f", NaN);
-      setUniform(gl, glesmosShaderProgram, "Infinity", "1f", Infinity);
+  let frameDeltas: number[] = [];
+  let notifiedAboutFrameSpreading = false;
 
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
+  let lastFrameTime = 0;
 
-      if (speed == 1) return;
+  let renderedLastFrame = false;
 
-      gl.viewport(0, 0, c.width, c.height);
-      // blend main image with previous image for temporal antialiasing
-      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, currFramebuffer);
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, prevTexture);
-      gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, currTexture2);
-      gl.useProgram(mixShaderProgram);
-      setUniform(gl, mixShaderProgram, "tex1", "1i", 0);
-      setUniform(gl, mixShaderProgram, "tex2", "1i", 1);
-      setUniform(gl, mixShaderProgram, "factor", "1f", 0.1);
-      setUniform(gl, mixShaderProgram, "scaleFactor", "2fv", [
-        sizeOfGraph[0] / widthSinceLastRender,
-        sizeOfGraph[1] / heightSinceLastRender,
-      ]);
-      setUniform(gl, mixShaderProgram, "translation", "2fv", [
-        (cornerOfGraph[0] - xSinceLastRender) / sizeOfGraph[0] +
-          (0.4 * (Math.random() - 0.5)) / currentWidth,
-        (cornerOfGraph[1] - ySinceLastRender) / sizeOfGraph[1] +
-          (0.4 * (Math.random() - 0.5)) / currentHeight,
-      ]);
-      setUniform(gl, mixShaderProgram, "renderindex", "1i", drawindex);
-      setUniform(gl, mixShaderProgram, "speed", "1i", speed);
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
+  let backgroundRenderLoop = (frameTime: number) => {
+    let frameDelta = frameTime - lastFrameTime;
+    lastFrameTime = frameTime;
 
-      // move current to previous image
-      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, prevFramebuffer);
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, currTexture);
-      gl.useProgram(blitShaderProgram);
-      setUniform(gl, blitShaderProgram, "tex", "1i", 0);
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-      // actually draw to the screen
-      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
-      gl.bindTexture(gl.TEXTURE_2D, currTexture);
-      gl.useProgram(blitShaderProgram);
-      setUniform(gl, blitShaderProgram, "tex", "1i", 0);
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-      xSinceLastRender = cornerOfGraph[0];
-      ySinceLastRender = cornerOfGraph[1];
-      widthSinceLastRender = sizeOfGraph[0];
-      heightSinceLastRender = sizeOfGraph[1];
-
-      drawindex = (drawindex + 1) % (speed * speed);
-    } else {
-      throw glesmosError("Shader failed");
+    if (renderedLastFrame) {
+        frameDeltas.push(frameDelta);
+        renderedLastFrame = false;
     }
+
+    if (frameDeltas.length > 100) frameDeltas.shift();
+    if (frameDeltas.length == 100 && !notifiedAboutFrameSpreading) {
+        if (frameDeltas.reduce((prev, curr) => prev + curr, 0) / frameDeltas.length > (1e3 / 15)) {
+            notifiedAboutFrameSpreading = true;
+            Calc.controller._showToast({
+                message: format("glesmos-running-slow-frame-spreading-toast")
+            });
+        }
+    }
+    console.log(frameDeltas.reduce((prev, curr) => prev + curr, 0) / frameDeltas.length);
+    if (speed == 1 && glesmosShaderProgram && blitShaderProgram && mixShaderProgram && shouldRenderFrame) {
+        renderedLastFrame = true;
+        gl.viewport(0, 0, c.width, c.height);
+        gl.bindFramebuffer(
+            gl.DRAW_FRAMEBUFFER,
+            null
+        );
+
+        gl.useProgram(glesmosShaderProgram);
+
+        setUniform(gl, glesmosShaderProgram, "corner", "2fv", cornerOfGraph);
+        setUniform(gl, glesmosShaderProgram, "size", "2fv", sizeOfGraph);
+        setUniform(gl, glesmosShaderProgram, "NaN", "1f", NaN);
+        setUniform(gl, glesmosShaderProgram, "Infinity", "1f", Infinity);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        xSinceLastRender = cornerOfGraph[0];
+        ySinceLastRender = cornerOfGraph[1];
+        widthSinceLastRender = sizeOfGraph[0];
+        heightSinceLastRender = sizeOfGraph[1];
+        shouldRenderFrame = false;
+
+        // force Desmos to rerender
+        Calc.setExpression({ id: "thisIsLongSoNobodyOverwritesThisExprAccidentally_forceRefresh" + rerenderForcerModifier });
+        rerenderForcerModifier = 1 - rerenderForcerModifier;
+
+        // draw image to main canvas
+        if (glesmosCanvas.ctx != null) {
+            glesmosCanvas.ctx.drawImage(c, 0, 0);
+        }
+    }
+    if (speed > 1 && glesmosShaderProgram && blitShaderProgram && mixShaderProgram) {
+        let jitterX = drawindex % speed;
+        let jitterY = Math.floor(drawindex / speed);
+        gl.bindVertexArray(vao);
+        // render main image
+        if (speed == 1) {
+          gl.viewport(0, 0, c.width, c.height);
+        } else {
+          gl.viewport(
+            0,
+            0,
+            Math.floor(currentWidth / speed),
+            Math.floor(currentHeight / speed)
+          );
+        }
+        gl.bindFramebuffer(
+          gl.DRAW_FRAMEBUFFER,
+          speed == 1 ? null : currFramebuffer2
+        );
+  
+        gl.useProgram(glesmosShaderProgram);
+  
+        setUniform(gl, glesmosShaderProgram, "corner", "2fv", [
+          cornerOfGraph[0] + (jitterX / currentWidth) * sizeOfGraph[0] + (1.5 * (Math.random() - 0.5)) / currentWidth * sizeOfGraph[0],
+          cornerOfGraph[1] + (jitterY / currentHeight) * sizeOfGraph[1] + (1.5 * (Math.random() - 0.5)) / currentHeight * sizeOfGraph[1],
+        ]);
+        setUniform(gl, glesmosShaderProgram, "size", "2fv", sizeOfGraph);
+        setUniform(gl, glesmosShaderProgram, "NaN", "1f", NaN);
+        setUniform(gl, glesmosShaderProgram, "Infinity", "1f", Infinity);
+  
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+  
+        if (speed == 1) return;
+  
+
+        // blend main image with previous image for frame spread
+        gl.viewport(0, 0, c.width, c.height);
+        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, currFramebuffer);
+        gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, prevTexture);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, currTexture2);
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_2D, prevHistory);
+        gl.useProgram(mixShaderProgram);
+        setUniform(gl, mixShaderProgram, "tex1", "1i", 0);
+        setUniform(gl, mixShaderProgram, "tex2", "1i", 1);
+        setUniform(gl, mixShaderProgram, "historyTex", "1i", 2);
+        setUniform(gl, mixShaderProgram, "factor", "1f", 0.1);
+        setUniform(gl, mixShaderProgram, "scaleFactor", "2fv", [
+          sizeOfGraph[0] / widthSinceLastRender,
+          sizeOfGraph[1] / heightSinceLastRender,
+        ]);
+        setUniform(gl, mixShaderProgram, "translation", "2fv", [
+          (cornerOfGraph[0] - xSinceLastRender) / sizeOfGraph[0] +
+            (0.0 * (Math.random() - 0.5)) / currentWidth,
+          (cornerOfGraph[1] - ySinceLastRender) / sizeOfGraph[1] +
+            (0.0 * (Math.random() - 0.5)) / currentHeight,
+        ]);
+        setUniform(gl, mixShaderProgram, "renderindex", "1i", drawindex);
+        setUniform(gl, mixShaderProgram, "speed", "1i", speed);
+        setUniform(gl, mixShaderProgram, "clampHistory", "1ui", 
+            (sizeOfGraph[0] < widthSinceLastRender || sizeOfGraph[1] < heightSinceLastRender) ? 3 : 256,
+        );
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        // current texture to previous texture (to store history buffer and previous color buffer)
+        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, currFramebuffer);
+        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, prevFramebuffer);
+        gl.readBuffer(gl.COLOR_ATTACHMENT0);
+        gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
+        gl.blitFramebuffer(0, 0, currentWidth, currentHeight, 0, 0, currentWidth, currentHeight, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+        gl.readBuffer(gl.COLOR_ATTACHMENT1);
+        gl.drawBuffers([gl.NONE, gl.COLOR_ATTACHMENT1]);
+        gl.blitFramebuffer(0, 0, currentWidth, currentHeight, 0, 0, currentWidth, currentHeight, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+
+        // actually draw image to screen
+        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, currTexture);
+        gl.useProgram(blitShaderProgram);
+        setUniform(gl, blitShaderProgram, "tex", "1i", 0);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        drawindex = (drawindex + 1) % (speed * speed);
+        xSinceLastRender = cornerOfGraph[0];
+        ySinceLastRender = cornerOfGraph[1];
+        widthSinceLastRender = sizeOfGraph[0];
+        heightSinceLastRender = sizeOfGraph[1];
+
+        // force Desmos to rerender
+        Calc.setExpression({ id: "thisIsLongSoNobodyOverwritesThisExprAccidentally_forceRefresh" + rerenderForcerModifier });
+        rerenderForcerModifier = 1 - rerenderForcerModifier;
+
+        // draw image to main canvas
+        if (glesmosCanvas.ctx != null) {
+            glesmosCanvas.ctx.drawImage(c, 0, 0);
+        }
+        
+    }
+    if (shouldKeepRendering) requestAnimationFrame(backgroundRenderLoop);
+  }
+
+  requestAnimationFrame(backgroundRenderLoop);
+
+  // triggers based on events
+  let render = (id: string) => {
+    shouldRenderFrame = true;
   };
 
   //================= CLEANUP =============
 
   let deleteCanvas = () => {
+    shouldKeepRendering = false;
     c.parentElement?.removeChild(c);
   };
 
-  //===================== CONSTRUCTED OBJECT ============
-  return {
+  let glesmosCanvas = {
     element: c,
     glContext: gl,
     deleteCanvas,
@@ -435,5 +569,9 @@ export function initGLesmosCanvas() {
     setSpeed,
     getSpeed: () => speed,
     render: render,
+    ctx: null as (CanvasRenderingContext2D | null)
   };
+
+  //===================== CONSTRUCTED OBJECT ============
+  return glesmosCanvas;
 }

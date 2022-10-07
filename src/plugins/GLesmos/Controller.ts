@@ -20,6 +20,7 @@ export default class Controller {
     transforms: ViewportTransforms,
     id: string
   ) {
+    if (this.canvas) this.canvas.ctx = ctx;
     const compiledGLString = [
       compiledGL.deps.join("\n"),
       compiledGL.defs.join("\n"),
@@ -39,7 +40,7 @@ export default class Controller {
         this.canvas.updateTransforms(transforms);
         this.canvas?.setGLesmosShader(compiledGLString, id);
         this.canvas?.render(id);
-        ctx.drawImage(this.canvas?.element, 0, 0);
+        //ctx.drawImage(this.canvas?.element, 0, 0);
       }
     } catch (e) {
       const model = Calc.controller.getItemModel(id);
