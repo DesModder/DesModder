@@ -61,8 +61,7 @@ function setUniform(
   uniformType: UniformType,
   uniformValue: number | number[]
 ) {
-  let uniformSetterKey: keyof WebGLRenderingContext = ("uniform" +
-    uniformType) as keyof WebGLRenderingContext;
+  const uniformSetterKey = ("uniform" + uniformType) as keyof WebGLRenderingContext;
   (gl[uniformSetterKey] as Function)(
     ...[
       gl.getUniformLocation(program, uniformName),
