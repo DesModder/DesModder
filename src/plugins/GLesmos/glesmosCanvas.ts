@@ -71,7 +71,7 @@ function getShaderProgram(
     );
     shaderCache.set(key, shaderProgram);
     if (shaderCache.size > 100) {
-        shaderCache.delete(Array.from(shaderCache.keys())[0]);
+      shaderCache.delete(Array.from(shaderCache.keys())[0]);
     }
     return shaderProgram;
   }
