@@ -61,8 +61,7 @@ function setUniform(
   uniformType: UniformType,
   uniformValue: number | number[]
 ) {
-  let uniformSetterKey: keyof WebGLRenderingContext = ("uniform" +
-    uniformType) as keyof WebGLRenderingContext;
+  let uniformSetterKey = ("uniform" + uniformType) as keyof WebGLRenderingContext;
   (gl[uniformSetterKey] as Function)(
     ...[
       gl.getUniformLocation(program, uniformName),
@@ -157,7 +156,42 @@ void main() {
 
 `;
 
+function initFramebufferWithSingleImage(gl: WebGL2RenderingContext, w: number, h: number, filters: number) {
+    let framebuffer = gl.createFramebuffer();
+    let texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filters);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filters);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      w,
+      h,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      null
+    );
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,
+      gl.TEXTURE_2D,
+      texture,
+      0
+    );
+    if (!framebuffer) throw new Error("Failed to create a framebuffer.");
+    if (!texture) throw new Error("Failed to create a texture.");
+    return [framebuffer, texture];
+}
+
 export function initGLesmosCanvas() {
+    let speed = 2;
+    let setSpeed = (n: number) => {
+      speed = n;
+      forceUpdateTransforms = true;
+    };
   //================= INIT ELEMENTS =======================
   let c: HTMLCanvasElement = document.createElement("canvas");
   let gl: WebGL2RenderingContext = c.getContext("webgl2", {
@@ -166,16 +200,16 @@ export function initGLesmosCanvas() {
     premultipliedAlpha: false,
   }) as WebGL2RenderingContext;
 
-  let prevFramebuffer: WebGLFramebuffer | null;
-  let prevTexture: WebGLTexture | null;
+  let prevFramebuffer: WebGLFramebuffer;
+  let prevTexture: WebGLTexture;
 
-  let currFramebuffer: WebGLFramebuffer | null;
-  let currTexture: WebGLTexture | null;
+  let currFramebuffer: WebGLFramebuffer;
+  let currTexture: WebGLTexture;
 
-  let currFramebuffer2: WebGLFramebuffer | null;
-  let currTexture2: WebGLTexture | null;
+  let currFramebuffer2: WebGLFramebuffer;
+  let currTexture2: WebGLTexture;
 
-  let vao: WebGLVertexArrayObject | null;
+  let vao: WebGLVertexArrayObject;
 
   //================= GRAPH BOUNDS ======================
   let cornerOfGraph = [-10, -6];
@@ -206,81 +240,10 @@ export function initGLesmosCanvas() {
     c.width = fw;
     c.height = fh;
 
-    currFramebuffer2 = gl.createFramebuffer();
-    currTexture2 = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, currTexture2);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
-      Math.floor(w / speed),
-      Math.floor(h / speed),
-      0,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      null
-    );
-    gl.bindFramebuffer(gl.FRAMEBUFFER, currFramebuffer2);
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      gl.COLOR_ATTACHMENT0,
-      gl.TEXTURE_2D,
-      currTexture2,
-      0
-    );
-
-    prevFramebuffer = gl.createFramebuffer();
-    prevTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, prevTexture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
-      currentWidth,
-      currentHeight,
-      0,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      null
-    );
-    gl.bindFramebuffer(gl.FRAMEBUFFER, prevFramebuffer);
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      gl.COLOR_ATTACHMENT0,
-      gl.TEXTURE_2D,
-      prevTexture,
-      0
-    );
-
-    currFramebuffer = gl.createFramebuffer();
-    currTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, currTexture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
-      currentWidth,
-      currentHeight,
-      0,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      null
-    );
-    gl.bindFramebuffer(gl.FRAMEBUFFER, currFramebuffer);
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      gl.COLOR_ATTACHMENT0,
-      gl.TEXTURE_2D,
-      currTexture,
-      0
-    );
-  };
+    [currFramebuffer2, currTexture2] = initFramebufferWithSingleImage(gl, Math.floor(w / speed), Math.floor(h / speed), gl.NEAREST);
+    [currFramebuffer, currTexture] = initFramebufferWithSingleImage(gl, currentWidth, currentHeight, gl.LINEAR);
+    [prevFramebuffer, prevTexture] = initFramebufferWithSingleImage(gl, currentWidth, currentHeight, gl.LINEAR);
+  }
 
   //============================ WEBGL STUFF ==========================
   let fullscreenQuadBuffer = gl.createBuffer();
@@ -321,7 +284,9 @@ export function initGLesmosCanvas() {
       id
     );
     if (!glesmosShaderProgram) return;
-    vao = gl.createVertexArray();
+    let vao2 = gl.createVertexArray();
+    if (!vao2) throw new Error("Failed to create vertex array object.");
+    vao = vao2;
     gl.bindVertexArray(vao);
 
     let vertexPositionAttribLocation = gl.getAttribLocation(
@@ -345,11 +310,6 @@ export function initGLesmosCanvas() {
   let widthSinceLastRender = 0;
   let heightSinceLastRender = 0;
   let drawindex = 0;
-  let speed = 2;
-  let setSpeed = (n: number) => {
-    speed = n;
-    forceUpdateTransforms = true;
-  };
 
   let render = (id: string) => {
     if (glesmosShaderProgram && blitShaderProgram && mixShaderProgram) {

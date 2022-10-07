@@ -12,6 +12,7 @@ function onEnable() {
 
 function onDisable() {
   controller.deleteCanvas();
+  view.destroyPillboxMenu();
 }
 
 export default {
