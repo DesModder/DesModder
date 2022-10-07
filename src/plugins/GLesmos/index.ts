@@ -1,4 +1,3 @@
-
 import Controller from "./Controller";
 import { InitView } from "./View";
 

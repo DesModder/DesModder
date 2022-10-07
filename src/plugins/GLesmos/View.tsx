@@ -9,20 +9,22 @@ export function InitView(controller: Controller) {
     tooltip: format("glesmos-menu"),
     iconClass: "dcg-icon-image",
     popup: () => {
-        return <div class="dcg-popover-interior">
-            <label>{format("glesmos-spread-across-multiple-frames")}</label>
-            <input
-                value={controller.canvas?.getSpeed()}
-                type="number"
-                onChange={(e: InputEvent) => {
-                    let elem = (e.currentTarget as HTMLInputElement);
-                    let speed = Number(elem.value);
-                    speed = Math.max(1, Math.floor(speed));
-                    elem.value = speed.toString();
-                    controller.canvas?.setSpeed(speed);
-                }}
-            ></input>
+      return (
+        <div class="dcg-popover-interior">
+          <label>{format("glesmos-spread-across-multiple-frames")}</label>
+          <input
+            value={controller.canvas?.getSpeed()}
+            type="number"
+            onChange={(e: InputEvent) => {
+              let elem = e.currentTarget as HTMLInputElement;
+              let speed = Number(elem.value);
+              speed = Math.max(1, Math.floor(speed));
+              elem.value = speed.toString();
+              controller.canvas?.setSpeed(speed);
+            }}
+          ></input>
         </div>
-    }
+      );
+    },
   });
 }

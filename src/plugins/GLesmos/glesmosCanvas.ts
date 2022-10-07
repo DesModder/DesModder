@@ -64,9 +64,11 @@ function setUniform(
   let uniformSetterKey: keyof WebGLRenderingContext = ("uniform" +
     uniformType) as keyof WebGLRenderingContext;
   (gl[uniformSetterKey] as Function)(
-    ...[gl.getUniformLocation(program, uniformName),
-    ...(uniformType.startsWith("Matrix") ? [false] : []),
-    uniformValue]
+    ...[
+      gl.getUniformLocation(program, uniformName),
+      ...(uniformType.startsWith("Matrix") ? [false] : []),
+      uniformValue,
+    ]
   );
 }
 
@@ -130,7 +132,7 @@ void main() {
     );
 }
 
-`
+`;
 
 const GLESMOS_FRAGMENT_SHADER = `#version 300 es
 precision highp float;
@@ -194,9 +196,10 @@ export function initGLesmosCanvas() {
     cornerOfGraph = [p2m.tx, p2m.sy * h + p2m.ty];
     sizeOfGraph = [p2m.sx * w, -p2m.sy * h];
 
-    const [fw, fh] = [Math.floor(w), Math.floor(h)]
+    const [fw, fh] = [Math.floor(w), Math.floor(h)];
 
-    if (currentWidth == fw && currentHeight == fh && !forceUpdateTransforms) return;
+    if (currentWidth == fw && currentHeight == fh && !forceUpdateTransforms)
+      return;
     forceUpdateTransforms = false;
     console.log(fw, fh);
     currentWidth = fw;
@@ -210,28 +213,75 @@ export function initGLesmosCanvas() {
     gl.bindTexture(gl.TEXTURE_2D, currTexture2);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, Math.floor(w/speed), Math.floor(h/speed), 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      Math.floor(w / speed),
+      Math.floor(h / speed),
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      null
+    );
     gl.bindFramebuffer(gl.FRAMEBUFFER, currFramebuffer2);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, currTexture2, 0);
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,
+      gl.TEXTURE_2D,
+      currTexture2,
+      0
+    );
 
     prevFramebuffer = gl.createFramebuffer();
     prevTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, prevTexture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, currentWidth, currentHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      currentWidth,
+      currentHeight,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      null
+    );
     gl.bindFramebuffer(gl.FRAMEBUFFER, prevFramebuffer);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, prevTexture, 0);
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,
+      gl.TEXTURE_2D,
+      prevTexture,
+      0
+    );
 
     currFramebuffer = gl.createFramebuffer();
     currTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, currTexture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, currentWidth, currentHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      currentWidth,
+      currentHeight,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      null
+    );
     gl.bindFramebuffer(gl.FRAMEBUFFER, currFramebuffer);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, currTexture, 0);
-
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,
+      gl.TEXTURE_2D,
+      currTexture,
+      0
+    );
   };
 
   //============================ WEBGL STUFF ==========================
@@ -260,8 +310,18 @@ export function initGLesmosCanvas() {
       shaderResult,
       id
     );
-    blitShaderProgram = buildShaderProgram(gl, VERTEX_SHADER, BLIT_FRAGMENT_SHADER, id);
-    mixShaderProgram = buildShaderProgram(gl, VERTEX_SHADER, MIX_FRAGMENT_SHADER, id);
+    blitShaderProgram = buildShaderProgram(
+      gl,
+      VERTEX_SHADER,
+      BLIT_FRAGMENT_SHADER,
+      id
+    );
+    mixShaderProgram = buildShaderProgram(
+      gl,
+      VERTEX_SHADER,
+      MIX_FRAGMENT_SHADER,
+      id
+    );
     if (!glesmosShaderProgram) return;
     vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
@@ -279,7 +339,6 @@ export function initGLesmosCanvas() {
       8,
       0
     );
-
   };
 
   let xSinceLastRender = 0;
@@ -292,11 +351,10 @@ export function initGLesmosCanvas() {
   let setSpeed = (n: number) => {
     speed = n;
     forceUpdateTransforms = true;
-  }
+  };
 
   let render = (id: string) => {
     if (glesmosShaderProgram && blitShaderProgram && mixShaderProgram) {
-
       let jitterX = drawindex % speed;
       let jitterY = Math.floor(drawindex / speed);
       //gl.enable(gl.SCISSOR_TEST);
@@ -307,15 +365,23 @@ export function initGLesmosCanvas() {
       if (speed == 1) {
         gl.viewport(0, 0, c.width, c.height);
       } else {
-        gl.viewport(0, 0, Math.floor(currentWidth / speed), Math.floor(currentHeight / speed));
+        gl.viewport(
+          0,
+          0,
+          Math.floor(currentWidth / speed),
+          Math.floor(currentHeight / speed)
+        );
       }
-      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, (speed == 1) ? null : currFramebuffer2);
+      gl.bindFramebuffer(
+        gl.DRAW_FRAMEBUFFER,
+        speed == 1 ? null : currFramebuffer2
+      );
 
       gl.useProgram(glesmosShaderProgram);
 
       setUniform(gl, glesmosShaderProgram, "corner", "2fv", [
-        cornerOfGraph[0] + jitterX / currentWidth * sizeOfGraph[0],
-        cornerOfGraph[1] + jitterY / currentHeight * sizeOfGraph[1]
+        cornerOfGraph[0] + (jitterX / currentWidth) * sizeOfGraph[0],
+        cornerOfGraph[1] + (jitterY / currentHeight) * sizeOfGraph[1],
       ]);
       setUniform(gl, glesmosShaderProgram, "size", "2fv", sizeOfGraph);
       setUniform(gl, glesmosShaderProgram, "NaN", "1f", NaN);
@@ -338,19 +404,20 @@ export function initGLesmosCanvas() {
       setUniform(gl, mixShaderProgram, "factor", "1f", 0.1);
       setUniform(gl, mixShaderProgram, "scaleFactor", "2fv", [
         sizeOfGraph[0] / widthSinceLastRender,
-        sizeOfGraph[1] / heightSinceLastRender
+        sizeOfGraph[1] / heightSinceLastRender,
       ]);
       setUniform(gl, mixShaderProgram, "translation", "2fv", [
-        (cornerOfGraph[0] - xSinceLastRender) / sizeOfGraph[0] + 0.4*(Math.random() - 0.5) / currentWidth,
-        (cornerOfGraph[1] - ySinceLastRender) / sizeOfGraph[1] + 0.4*(Math.random() - 0.5) / currentHeight
+        (cornerOfGraph[0] - xSinceLastRender) / sizeOfGraph[0] +
+          (0.4 * (Math.random() - 0.5)) / currentWidth,
+        (cornerOfGraph[1] - ySinceLastRender) / sizeOfGraph[1] +
+          (0.4 * (Math.random() - 0.5)) / currentHeight,
       ]);
       setUniform(gl, mixShaderProgram, "renderindex", "1i", drawindex);
       setUniform(gl, mixShaderProgram, "speed", "1i", speed);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-
       // move current to previous image
-      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, prevFramebuffer );
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, prevFramebuffer);
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, currTexture);
       gl.useProgram(blitShaderProgram);
@@ -370,7 +437,6 @@ export function initGLesmosCanvas() {
       heightSinceLastRender = sizeOfGraph[1];
 
       drawindex = (drawindex + 1) % (speed * speed);
-
     } else {
       throw glesmosError("Shader failed");
     }
