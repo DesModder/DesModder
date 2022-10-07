@@ -61,7 +61,8 @@ function setUniform(
   uniformType: UniformType,
   uniformValue: number | number[]
 ) {
-  let uniformSetterKey = ("uniform" + uniformType) as keyof WebGLRenderingContext;
+  let uniformSetterKey = ("uniform" +
+    uniformType) as keyof WebGLRenderingContext;
   (gl[uniformSetterKey] as Function)(
     ...[
       gl.getUniformLocation(program, uniformName),
@@ -156,42 +157,47 @@ void main() {
 
 `;
 
-function initFramebufferWithSingleImage(gl: WebGL2RenderingContext, w: number, h: number, filters: number) {
-    let framebuffer = gl.createFramebuffer();
-    let texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filters);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filters);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
-      w,
-      h,
-      0,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      null
-    );
-    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      gl.COLOR_ATTACHMENT0,
-      gl.TEXTURE_2D,
-      texture,
-      0
-    );
-    if (!framebuffer) throw new Error("Failed to create a framebuffer.");
-    if (!texture) throw new Error("Failed to create a texture.");
-    return [framebuffer, texture];
+function initFramebufferWithSingleImage(
+  gl: WebGL2RenderingContext,
+  w: number,
+  h: number,
+  filters: number
+) {
+  let framebuffer = gl.createFramebuffer();
+  let texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filters);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filters);
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    w,
+    h,
+    0,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    null
+  );
+  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+  gl.framebufferTexture2D(
+    gl.FRAMEBUFFER,
+    gl.COLOR_ATTACHMENT0,
+    gl.TEXTURE_2D,
+    texture,
+    0
+  );
+  if (!framebuffer) throw new Error("Failed to create a framebuffer.");
+  if (!texture) throw new Error("Failed to create a texture.");
+  return [framebuffer, texture];
 }
 
 export function initGLesmosCanvas() {
-    let speed = 2;
-    let setSpeed = (n: number) => {
-      speed = n;
-      forceUpdateTransforms = true;
-    };
+  let speed = 2;
+  let setSpeed = (n: number) => {
+    speed = n;
+    forceUpdateTransforms = true;
+  };
   //================= INIT ELEMENTS =======================
   let c: HTMLCanvasElement = document.createElement("canvas");
   let gl: WebGL2RenderingContext = c.getContext("webgl2", {
@@ -240,10 +246,25 @@ export function initGLesmosCanvas() {
     c.width = fw;
     c.height = fh;
 
-    [currFramebuffer2, currTexture2] = initFramebufferWithSingleImage(gl, Math.floor(w / speed), Math.floor(h / speed), gl.NEAREST);
-    [currFramebuffer, currTexture] = initFramebufferWithSingleImage(gl, currentWidth, currentHeight, gl.LINEAR);
-    [prevFramebuffer, prevTexture] = initFramebufferWithSingleImage(gl, currentWidth, currentHeight, gl.LINEAR);
-  }
+    [currFramebuffer2, currTexture2] = initFramebufferWithSingleImage(
+      gl,
+      Math.floor(w / speed),
+      Math.floor(h / speed),
+      gl.NEAREST
+    );
+    [currFramebuffer, currTexture] = initFramebufferWithSingleImage(
+      gl,
+      currentWidth,
+      currentHeight,
+      gl.LINEAR
+    );
+    [prevFramebuffer, prevTexture] = initFramebufferWithSingleImage(
+      gl,
+      currentWidth,
+      currentHeight,
+      gl.LINEAR
+    );
+  };
 
   //============================ WEBGL STUFF ==========================
   let fullscreenQuadBuffer = gl.createBuffer();

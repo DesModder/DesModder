@@ -4,7 +4,7 @@ import { desModderController } from "script";
 import Controller from "./Controller";
 
 export function InitView(controller: Controller) {
-    desModderController.addPillboxButton({
+  desModderController.addPillboxButton({
     id: "dsm-glesmos-menu",
     tooltip: format("glesmos-menu"),
     iconClass: "dcg-icon-image",
@@ -25,11 +25,11 @@ export function InitView(controller: Controller) {
           ></input>
         </div>
       );
-    }
+    },
   });
   return {
     destroyPillboxMenu: () => {
-        desModderController.removePillboxButton("dsm-glesmos-menu")
-    }
-  }
+      desModderController.removePillboxButton("dsm-glesmos-menu");
+    },
+  };
 }
