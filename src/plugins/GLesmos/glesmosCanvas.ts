@@ -189,7 +189,6 @@ export function initGLesmosCanvas() {
   let forceUpdateTransforms = false;
 
   let updateTransforms = (transforms: ViewportTransforms) => {
-    //console.log("Updated GLesmos transforms.");
     const w = transforms.pixelCoordinates.right;
     const h = transforms.pixelCoordinates.bottom;
     const p2m = transforms.pixelsToMath;
@@ -201,7 +200,6 @@ export function initGLesmosCanvas() {
     if (currentWidth == fw && currentHeight == fh && !forceUpdateTransforms)
       return;
     forceUpdateTransforms = false;
-    console.log(fw, fh);
     currentWidth = fw;
     currentHeight = fh;
 
@@ -357,8 +355,6 @@ export function initGLesmosCanvas() {
     if (glesmosShaderProgram && blitShaderProgram && mixShaderProgram) {
       let jitterX = drawindex % speed;
       let jitterY = Math.floor(drawindex / speed);
-      //gl.enable(gl.SCISSOR_TEST);
-      //gl.scissor((drawindex % 4) / 4 * currentWidth, Math.floor(drawindex / 4) / 4 * currentHeight, 0.25 * currentWidth, 0.25 * currentHeight)
       gl.bindVertexArray(vao);
 
       // render main image
