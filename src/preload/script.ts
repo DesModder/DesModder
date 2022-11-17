@@ -1,9 +1,9 @@
-import window from "globals/window";
 import moduleOverrides from "./moduleOverrides";
-import { postMessageUp, listenToMessageDown } from "utils/messages";
-import injectScript from "utils/injectScript";
-import { pollForValue } from "utils/utils";
 import withDependencyMap from "./overrideHelpers/withDependencyMap";
+import window from "globals/window";
+import injectScript from "utils/injectScript";
+import { postMessageUp, listenToMessageDown } from "utils/messages";
+import { pollForValue } from "utils/utils";
 
 /* This script is loaded at document_start, before the page's scripts, to give it 
 time to set ALMOND_OVERRIDES and replace module definitions */

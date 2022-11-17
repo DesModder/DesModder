@@ -1,5 +1,5 @@
-import { Calc } from "globals/window";
 import Controller from "./Controller";
+import { Calc } from "globals/window";
 
 const controller = new Controller();
 

@@ -1,7 +1,7 @@
-import { OptionalProperties } from "utils/utils";
-import { getHSVfromRGB, parseCSSHex } from "plugins/GLesmos/colorParsing";
-import "./overrides.less";
 import "./custom-overrides.less";
+import "./overrides.less";
+import { getHSVfromRGB, parseCSSHex } from "plugins/GLesmos/colorParsing";
+import { OptionalProperties } from "utils/utils";
 
 interface Config {
   primaryColor: string;

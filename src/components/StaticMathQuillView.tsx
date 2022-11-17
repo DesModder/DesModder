@@ -1,5 +1,5 @@
-import { Component, jsx } from "DCGView";
 import { DStaticMathquillView } from "./desmosComponents";
+import { Component, jsx } from "DCGView";
 
 export default class StaticMathquillView extends Component<{
   latex: string;

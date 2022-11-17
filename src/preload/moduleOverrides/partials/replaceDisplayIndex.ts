@@ -1,5 +1,5 @@
-import * as t from "@babel/types";
 import template from "@babel/template";
+import * as t from "@babel/types";
 
 export default () => ({
   /* @plugin debug-mode

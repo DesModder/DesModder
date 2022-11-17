@@ -1,7 +1,7 @@
-import { Calc } from "globals/window";
 import Aug from "../aug/AugState";
 import rawToAug from "../aug/rawToAug";
 import augToText from "./augToText";
+import { Calc } from "globals/window";
 
 /**
  * @returns [boolean hasError, string text]

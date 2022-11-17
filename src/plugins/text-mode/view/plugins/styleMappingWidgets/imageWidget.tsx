@@ -1,7 +1,7 @@
-import { EditorView, WidgetType } from "@codemirror/view";
-import { jsx } from "utils/utils";
 import { toggleString } from ".";
 import "./imageWidget.less";
+import { EditorView, WidgetType } from "@codemirror/view";
+import { jsx } from "utils/utils";
 
 class ImageWidget extends WidgetType {
   constructor(readonly value: string) {

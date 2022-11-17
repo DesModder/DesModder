@@ -2,6 +2,7 @@ import TextAST, { NodePath } from "../down/TextAST";
 import needsParens from "./needsParens";
 import { builders, printer } from "prettier/doc";
 import * as DocNS from "prettier/doc";
+
 type Doc = DocNS.builders.Doc;
 const { group, indent, join, line, softline, hardline, ifBreak } = builders;
 

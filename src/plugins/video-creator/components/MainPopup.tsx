@@ -1,3 +1,10 @@
+import Controller from "../Controller";
+import { OutFileType, cancelExport } from "../backend/export";
+import CaptureMethod from "./CaptureMethod";
+import LoadingPie from "./LoadingPie";
+import "./MainPopup.less";
+import PreviewCarousel from "./PreviewCarousel";
+import { Component, jsx } from "DCGView";
 import {
   SegmentedControl,
   If,
@@ -7,15 +14,8 @@ import {
   Tooltip,
   InlineMathInputView,
 } from "components";
-import { jquery } from "utils/depUtils";
-import { Component, jsx } from "DCGView";
-import CaptureMethod from "./CaptureMethod";
-import PreviewCarousel from "./PreviewCarousel";
-import LoadingPie from "./LoadingPie";
-import Controller from "../Controller";
-import { OutFileType, cancelExport } from "../backend/export";
-import "./MainPopup.less";
 import { format } from "i18n/i18n-core";
+import { jquery } from "utils/depUtils";
 
 const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng"];
 

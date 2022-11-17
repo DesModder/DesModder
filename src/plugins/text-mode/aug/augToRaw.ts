@@ -1,5 +1,5 @@
-import * as Graph from "@desmodder/graph-state";
 import Aug from "./AugState";
+import * as Graph from "@desmodder/graph-state";
 import Metadata from "main/metadata/interface";
 import { changeExprInMetadata, isBlankMetadata } from "main/metadata/manage";
 import { autoCommandNames } from "utils/depUtils";

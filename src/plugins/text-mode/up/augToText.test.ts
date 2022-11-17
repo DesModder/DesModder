@@ -1,3 +1,4 @@
+import Aug from "../aug/AugState";
 import {
   assignmentExpr,
   binop,
@@ -11,7 +12,6 @@ import {
   range,
   updateRule,
 } from "../aug/augBuilders";
-import Aug from "../aug/AugState";
 import { itemToText } from "./augToText";
 
 jest.mock("utils/depUtils");

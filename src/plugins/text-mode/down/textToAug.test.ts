@@ -1,11 +1,4 @@
-import parser from "../lezer/syntax.grammar";
-import { cstToAST } from "./cstToAST";
-import astToAug from "./astToAug";
 import Aug from "../aug/AugState";
-import { test, expect, describe } from "@jest/globals";
-import { error, warning } from "./diagnostics";
-import { Diagnostic } from "@codemirror/lint";
-import { Text } from "@codemirror/state";
 import {
   assignmentExpr,
   binop,
@@ -18,6 +11,13 @@ import {
   number,
   updateRule,
 } from "../aug/augBuilders";
+import parser from "../lezer/syntax.grammar";
+import astToAug from "./astToAug";
+import { cstToAST } from "./cstToAST";
+import { error, warning } from "./diagnostics";
+import { Diagnostic } from "@codemirror/lint";
+import { Text } from "@codemirror/state";
+import { test, expect, describe } from "@jest/globals";
 
 jest.mock("utils/depUtils");
 jest.mock("globals/window");

@@ -10,15 +10,14 @@
  * This can maybe be moved to a worker at some point? But codemirror isn't in a
  * worker, so not sure.
  */
-
-import { Diagnostic } from "@codemirror/lint";
-import { RelevantEvent, eventSequenceChanges } from "./modify";
-import { EditorView, ViewUpdate } from "@codemirror/view";
-import { Tree } from "@lezer/common";
-import cstToRaw from "./down/cstToRaw";
-import { ensureSyntaxTree } from "@codemirror/language";
-import { GraphState } from "@desmodder/graph-state";
 import { Program, Statement } from "./down/TextAST";
+import cstToRaw from "./down/cstToRaw";
+import { RelevantEvent, eventSequenceChanges } from "./modify";
+import { ensureSyntaxTree } from "@codemirror/language";
+import { Diagnostic } from "@codemirror/lint";
+import { EditorView, ViewUpdate } from "@codemirror/view";
+import { GraphState } from "@desmodder/graph-state";
+import { Tree } from "@lezer/common";
 
 export interface ProgramAnalysis {
   ast: Program;

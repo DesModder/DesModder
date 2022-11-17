@@ -1,7 +1,7 @@
+import getRGBPack from "./colorParsing";
+import { Types } from "./opcodeDeps";
 import { ValueType } from "parsing/IR";
 import { evalMaybeRational, MaybeRational } from "parsing/parsenode";
-import { Types } from "./opcodeDeps";
-import getRGBPack from "./colorParsing";
 
 export function glslFloatify(x: number) {
   return Number.isInteger(x)

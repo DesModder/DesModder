@@ -1,9 +1,9 @@
-import * as t from "@babel/types";
-import template from "@babel/template";
-import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
 import { containingCreateElementCall } from "../overrideHelpers/moduleUtils";
 import { findIdentifierThis } from "../overrideHelpers/moduleUtils";
+import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
 import "./styles/promptslider_view.less";
+import template from "@babel/template";
+import * as t from "@babel/types";
 
 export default (dependencyNameMap: DependencyNameMap) => ({
   StringLiteral(path: babel.NodePath<t.StringLiteral>) {

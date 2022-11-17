@@ -1,4 +1,5 @@
 import { desmosRequire } from "globals/window";
+
 const DCGView = desmosRequire("dcgview") as DCGViewModule;
 
 type OrConst<T> = {

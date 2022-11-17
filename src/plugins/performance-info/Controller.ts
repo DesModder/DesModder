@@ -1,7 +1,7 @@
-import { DispatchedEvent } from "globals/Calc";
-import { Calc } from "globals/window";
 import { updateView } from "./View";
+import { DispatchedEvent } from "globals/Calc";
 import { TimingData } from "globals/Calc";
+import { Calc } from "globals/window";
 
 let dispatchListenerID: string;
 let defaultTimingData: TimingData = {

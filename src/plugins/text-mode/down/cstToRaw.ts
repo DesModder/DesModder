@@ -1,11 +1,11 @@
-import augToRaw from "../aug/augToRaw";
-import { cstToAST } from "./cstToAST";
-import astToAug from "./astToAug";
-import { error } from "./diagnostics";
-import { Tree } from "@lezer/common";
-import { GraphState } from "@desmodder/graph-state";
-import { Text } from "@codemirror/state";
 import { ProgramAnalysis } from "../LanguageServer";
+import augToRaw from "../aug/augToRaw";
+import astToAug from "./astToAug";
+import { cstToAST } from "./cstToAST";
+import { error } from "./diagnostics";
+import { Text } from "@codemirror/state";
+import { GraphState } from "@desmodder/graph-state";
+import { Tree } from "@lezer/common";
 
 export default function cstToRaw(
   cst: Tree,

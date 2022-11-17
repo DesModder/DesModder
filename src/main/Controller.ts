@@ -1,9 +1,4 @@
-import { plugins, pluginList, PluginID, GenericSettings } from "plugins";
 import View from "./View";
-import { MenuFunc } from "components/Menu";
-import { listenToMessageDown, postMessageUp } from "utils/messages";
-import { OptionalProperties } from "utils/utils";
-import { Calc, desmosRequire } from "globals/window";
 import GraphMetadata, {
   Expression as MetadataExpression,
 } from "./metadata/interface";
@@ -13,8 +8,14 @@ import {
   getBlankMetadata,
   changeExprInMetadata,
 } from "./metadata/manage";
+import { MenuFunc } from "components/Menu";
 import { ItemModel } from "globals/models";
+import { Calc, desmosRequire } from "globals/window";
 import { format } from "i18n/i18n-core";
+import { plugins, pluginList, PluginID, GenericSettings } from "plugins";
+import { listenToMessageDown, postMessageUp } from "utils/messages";
+import { OptionalProperties } from "utils/utils";
+
 const AbstractItem = desmosRequire("graphing-calc/models/abstract-item");
 const List = desmosRequire("graphing-calc/models/list");
 

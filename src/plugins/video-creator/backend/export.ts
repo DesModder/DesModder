@@ -1,5 +1,5 @@
-import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 import Controller from "../Controller";
+import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 
 type FFmpeg = ReturnType<typeof createFFmpeg>;
 export type OutFileType = "gif" | "mp4" | "webm" | "apng";

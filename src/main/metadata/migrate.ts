@@ -1,5 +1,5 @@
-import migrate1to2 from "./migrations/migrate1to2";
 import Metadata from "./interface";
+import migrate1to2 from "./migrations/migrate1to2";
 
 export default function migrateToLatest(metadata: any): Metadata {
   if ("pinnedExpressions" in metadata) {

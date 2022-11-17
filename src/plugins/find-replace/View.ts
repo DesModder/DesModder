@@ -1,11 +1,11 @@
+import Controller from "./Controller";
+import ReplaceBar from "./ReplaceBar";
 import {
   MountedComponent,
   constArg,
   mountToNode,
   unmountFromNode,
 } from "DCGView";
-import ReplaceBar from "./ReplaceBar";
-import Controller from "./Controller";
 
 export default class View {
   controller!: Controller;

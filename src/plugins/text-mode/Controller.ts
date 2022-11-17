@@ -1,11 +1,11 @@
-import { EditorView, ViewUpdate } from "@codemirror/view";
-import { Calc } from "globals/window";
-import { initView } from "./view/editor";
-import { jquery, keys } from "utils/depUtils";
-import { RelevantEvent, relevantEventTypes } from "./modify";
 import LanguageServer from "./LanguageServer";
+import { RelevantEvent, relevantEventTypes } from "./modify";
 import getText from "./up/getText";
+import { initView } from "./view/editor";
+import { EditorView, ViewUpdate } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
+import { Calc } from "globals/window";
+import { jquery, keys } from "utils/depUtils";
 
 export default class Controller {
   inTextMode: boolean = false;

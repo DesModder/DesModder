@@ -1,6 +1,6 @@
-import * as t from "@babel/types";
-import template from "@babel/template";
 import withinFunctionAssignment from "../overrideHelpers/withinFunctionAssignment";
+import template from "@babel/template";
+import * as t from "@babel/types";
 
 export default () =>
   withinFunctionAssignment("addStatement", (func: t.FunctionExpression) => {
