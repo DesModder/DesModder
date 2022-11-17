@@ -1,26 +1,26 @@
-import { DependencyNameMap } from "./overrideHelpers/withDependencyMap";
-import { Visitor } from "@babel/traverse";
-import tooltippedError from "./moduleOverrides/tooltipped-error";
-import expressionIconView from "./moduleOverrides/expression-icon-view";
-import expressionsHeader from "./moduleOverrides/expressions-header";
-import keypadsMain from "./moduleOverrides/keypads__main";
-import smartTextarea from "./moduleOverrides/smart_textarea";
-import listView from "./moduleOverrides/list-view";
 import abstractItem from "./moduleOverrides/abstract-item";
 import abstractItemView from "./moduleOverrides/abstract-item-view";
-import expressionEditActions from "./moduleOverrides/expression-edit-actions";
 import actionsKeyboard from "./moduleOverrides/actions__keyboard";
-import mainController from "./moduleOverrides/main__controller";
-import expressionView from "./moduleOverrides/expression_view";
-import genericView from "./moduleOverrides/generic-view";
-import folderView from "./moduleOverrides/folder-view";
-import workerSrcUnderlying from "./moduleOverrides/text__worker_src_underlying";
+import expressionEditActions from "./moduleOverrides/expression-edit-actions";
+import expressionIconView from "./moduleOverrides/expression-icon-view";
 import expressionMenusFill from "./moduleOverrides/expression-menus__fill";
-import graphslayer from "./moduleOverrides/graphslayer";
-import mainEvaluator from "./moduleOverrides/main__evaluator";
 import expressionOptionsMenuView from "./moduleOverrides/expression-options-menu-view";
-import promptSliderView from "./moduleOverrides/promptslider_view";
+import expressionView from "./moduleOverrides/expression_view";
+import expressionsHeader from "./moduleOverrides/expressions-header";
+import folderView from "./moduleOverrides/folder-view";
+import genericView from "./moduleOverrides/generic-view";
+import graphslayer from "./moduleOverrides/graphslayer";
 import instancehotkeys from "./moduleOverrides/instancehotkeys";
+import keypadsMain from "./moduleOverrides/keypads__main";
+import listView from "./moduleOverrides/list-view";
+import mainController from "./moduleOverrides/main__controller";
+import mainEvaluator from "./moduleOverrides/main__evaluator";
+import promptSliderView from "./moduleOverrides/promptslider_view";
+import smartTextarea from "./moduleOverrides/smart_textarea";
+import workerSrcUnderlying from "./moduleOverrides/text__worker_src_underlying";
+import tooltippedError from "./moduleOverrides/tooltipped-error";
+import { DependencyNameMap } from "./overrideHelpers/withDependencyMap";
+import { Visitor } from "@babel/traverse";
 
 export default {
   "dcgview-helpers/tooltipped-error": tooltippedError,

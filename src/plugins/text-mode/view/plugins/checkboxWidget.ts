@@ -1,6 +1,6 @@
+import { syntaxTree } from "@codemirror/language";
 import { WidgetType } from "@codemirror/view";
 import { EditorView, Decoration } from "@codemirror/view";
-import { syntaxTree } from "@codemirror/language";
 import { ViewUpdate, ViewPlugin, DecorationSet } from "@codemirror/view";
 
 /**

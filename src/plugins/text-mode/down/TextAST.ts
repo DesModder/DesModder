@@ -1,4 +1,5 @@
 import * as TextAST from "./TextAST";
+
 export default TextAST;
 
 export interface Program extends Positioned {

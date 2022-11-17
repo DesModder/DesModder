@@ -1,5 +1,5 @@
-import * as Hydrated from "./Hydrated";
 import { number } from "../TextAST";
+import * as Hydrated from "./Hydrated";
 
 export const settings: Hydrated.Settings = {
   viewport: {

@@ -1,23 +1,23 @@
-import { ChangeSpec } from "@codemirror/state";
-import { GraphState } from "@desmodder/graph-state";
-import { DispatchedEvent } from "globals/Calc";
-import { Calc } from "globals/window";
+import LanguageServer, { ProgramAnalysis } from "./LanguageServer";
 import {
   rawNonFolderToAug,
   rawToAugSettings,
   rawToDsmMetadata,
 } from "./aug/rawToAug";
-import { graphSettingsToText, itemToText } from "./up/augToText";
-import Metadata from "main/metadata/interface";
-import LanguageServer, { ProgramAnalysis } from "./LanguageServer";
 import TextAST, { NodePath, Settings, Statement } from "./down/TextAST";
-import { itemAugToAST } from "./up/augToAST";
 import {
   docToString,
   exprToTextString,
   styleEntryToText,
 } from "./up/astToText";
+import { itemAugToAST } from "./up/augToAST";
+import { graphSettingsToText, itemToText } from "./up/augToText";
+import { ChangeSpec } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
+import { GraphState } from "@desmodder/graph-state";
+import { DispatchedEvent } from "globals/Calc";
+import { Calc } from "globals/window";
+import Metadata from "main/metadata/interface";
 
 export const relevantEventTypes = [
   // @settings related

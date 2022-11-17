@@ -1,10 +1,10 @@
+import TextAST from "./TextAST";
+import { DiagnosticsState } from "./diagnostics";
+import { Diagnostic } from "@codemirror/lint";
+import { Text } from "@codemirror/state";
 import { SyntaxNode } from "@lezer/common";
 import { Tree } from "@lezer/common";
-import TextAST from "./TextAST";
 import { everyNonNull } from "utils/utils";
-import { Diagnostic } from "@codemirror/lint";
-import { DiagnosticsState } from "./diagnostics";
-import { Text } from "@codemirror/state";
 
 export class TextAndDiagnostics extends DiagnosticsState {
   constructor(public text: Text, diagnostics: Diagnostic[]) {

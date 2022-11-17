@@ -1,9 +1,9 @@
-import Calc from "./Calc";
+import CalcType from "./Calc";
 
 interface windowConfig extends Window {
   require(s: string[], callback: Function): void;
   require(s: string): any;
-  Calc: Calc;
+  Calc: CalcType;
   DesModder: any;
   define(
     moduleName: string,
@@ -30,7 +30,7 @@ export const Calc = new Proxy(
       }
     },
   }
-) as Calc;
+) as CalcType;
 
 // defer access of window.require to when it is used
 export const desmosRequire = new Proxy(() => {}, {

@@ -1,6 +1,6 @@
-import { Diagnostic } from "@codemirror/lint";
 import { Pos } from "./TextAST";
 import TextAST from "./TextAST";
+import { Diagnostic } from "@codemirror/lint";
 
 function diagnostic(
   severity: "error" | "warning",

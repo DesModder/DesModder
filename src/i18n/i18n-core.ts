@@ -1,6 +1,6 @@
+import enFTL from "../../localization/en.ftl";
 import { FluentBundle, FluentResource, FluentVariable } from "@fluent/bundle";
 import { desmosRequire } from "globals/window";
-import enFTL from "../../localization/en.ftl";
 
 const { currentLanguage } = desmosRequire("lib/i18n-core") as {
   currentLanguage: () => string;

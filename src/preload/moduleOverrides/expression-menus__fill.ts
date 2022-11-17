@@ -1,11 +1,11 @@
-import * as t from "@babel/types";
-import template from "@babel/template";
-import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
 import {
   containingCreateElementCall,
   findIdentifierThis,
 } from "../overrideHelpers/moduleUtils";
+import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
 import "./styles/expression-menus__fill.less";
+import template from "@babel/template";
+import * as t from "@babel/types";
 
 export default (dependencyNameMap: DependencyNameMap) => ({
   StringLiteral(path: babel.NodePath<t.StringLiteral>) {

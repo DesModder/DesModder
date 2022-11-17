@@ -1,5 +1,5 @@
-import { GraphState } from "@desmodder/graph-state";
 import { ItemModel } from "./models";
+import { GraphState } from "@desmodder/graph-state";
 import "desmos";
 
 export type DispatchedEvent =

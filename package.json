@@ -25,6 +25,7 @@
   "devDependencies": {
     "@desmodder/graph-state": "^0.2.3",
     "@lezer/generator": "^1.1.1",
+    "@trivago/prettier-plugin-sort-imports": "^3.4.0",
     "@types/babel__core": "^7.1.19",
     "@types/babel__standalone": "^7.1.4",
     "@types/babel__template": "^7.4.1",

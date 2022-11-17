@@ -1,5 +1,5 @@
-import { refactor } from "./backend";
 import View from "./View";
+import { refactor } from "./backend";
 import { Calc } from "globals/window";
 
 export default class Controller {

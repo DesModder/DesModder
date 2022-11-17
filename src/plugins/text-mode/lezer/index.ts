@@ -1,4 +1,7 @@
+import Controller from "../Controller";
+import { completions } from "./completions";
 import parser from "./syntax.grammar";
+import { CompletionContext } from "@codemirror/autocomplete";
 import {
   LRLanguage,
   LanguageSupport,
@@ -8,9 +11,6 @@ import {
   delimitedIndent,
 } from "@codemirror/language";
 import { styleTags, tags as t } from "@lezer/highlight";
-import { completions } from "./completions";
-import { CompletionContext } from "@codemirror/autocomplete";
-import Controller from "../Controller";
 
 export const TextModeLanguage = (controller: Controller) =>
   LRLanguage.define({

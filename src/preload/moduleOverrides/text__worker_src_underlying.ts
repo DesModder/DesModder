@@ -1,7 +1,7 @@
-import * as t from "@babel/types";
-import moduleOverrides from "../workerOverrides";
 import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
+import moduleOverrides from "../workerOverrides";
 import { transform } from "@babel/standalone";
+import * as t from "@babel/types";
 import window from "globals/window";
 
 /*

@@ -1,8 +1,8 @@
-import { jquery } from "utils/depUtils";
-import { desModderController } from "script";
 import { MainPopupFunc } from "./PerformanceView";
 import { controller } from "./index";
 import { format } from "i18n/i18n-core";
+import { desModderController } from "script";
+import { jquery } from "utils/depUtils";
 
 export function initView() {
   desModderController.addPillboxButton({

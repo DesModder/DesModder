@@ -1,9 +1,10 @@
-import { IRExpression } from "parsing/parsenode";
 import { getDefinition, getDependencies } from "./builtins";
 import emitChunkGL from "./emitChunkGL";
 import { colorVec4, getGLType } from "./outputHelpers";
-import { Error as ParsenodeError } from "parsing/parsenode";
 import { desmosRequire } from "globals/workerSelf";
+import { IRExpression } from "parsing/parsenode";
+import { Error as ParsenodeError } from "parsing/parsenode";
+
 const PError = desmosRequire("core/math/parsenode/error") as (
   msg: string
 ) => ParsenodeError;

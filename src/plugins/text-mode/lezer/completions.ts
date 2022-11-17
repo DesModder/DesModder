@@ -1,3 +1,9 @@
+import Controller from "../Controller";
+import TextAST, { NodePath } from "../down/TextAST";
+import { identifierToStringAST, TextAndDiagnostics } from "../down/cstToAST";
+import * as Defaults from "../down/style/defaults";
+import { getIndentation } from "../modify";
+import { exprToTextString } from "../up/astToText";
 import {
   Completion,
   CompletionContext,
@@ -7,12 +13,6 @@ import { syntaxTree } from "@codemirror/language";
 import { EditorSelection } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { SyntaxNode } from "@lezer/common";
-import Controller from "../Controller";
-import * as Defaults from "../down/style/defaults";
-import { identifierToStringAST, TextAndDiagnostics } from "../down/cstToAST";
-import TextAST, { NodePath } from "../down/TextAST";
-import { exprToTextString } from "../up/astToText";
-import { getIndentation } from "../modify";
 
 function macroExpandWithSelection(
   before: string,

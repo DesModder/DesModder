@@ -1,6 +1,6 @@
+import Node from "../parsing/parsenode";
 import { ItemModel } from "globals/models";
 import { desmosRequire, Calc } from "globals/window";
-import Node from "../parsing/parsenode";
 
 const _EvaluateSingleExpression = desmosRequire(
   "core/math/evaluate-single-expression"

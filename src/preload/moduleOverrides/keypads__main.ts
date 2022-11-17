@@ -1,6 +1,6 @@
+import withinFunctionAssignment from "../overrideHelpers/withinFunctionAssignment";
 import template from "@babel/template";
 import * as t from "@babel/types";
-import withinFunctionAssignment from "../overrideHelpers/withinFunctionAssignment";
 
 export default () =>
   /* @plugin text-mode

@@ -1,6 +1,6 @@
+import "./SegmentedControl.less";
 import { Component, jsx } from "DCGView";
 import { mergeClass, MaybeClassDict } from "utils/utils";
-import "./SegmentedControl.less";
 
 export default class SegmentedControl extends Component<{
   names: string[];

@@ -1,8 +1,9 @@
-import { Calc, desmosRequire } from "globals/window";
-import { ItemModel } from "globals/models";
 import Metadata, { Expression } from "./interface";
-import { OptionalProperties } from "utils/utils";
 import migrateToLatest from "./migrate";
+import { ItemModel } from "globals/models";
+import { Calc, desmosRequire } from "globals/window";
+import { OptionalProperties } from "utils/utils";
+
 const List = desmosRequire("graphing-calc/models/list");
 
 /*

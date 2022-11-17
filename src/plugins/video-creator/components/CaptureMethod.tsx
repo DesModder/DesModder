@@ -1,3 +1,7 @@
+import Controller from "../Controller";
+import { cancelCapture, CaptureMethod } from "../backend/capture";
+import "./CaptureMethod.css";
+import { Component, jsx } from "DCGView";
 import {
   SegmentedControl,
   If,
@@ -9,10 +13,6 @@ import {
   Tooltip,
   InlineMathInputView,
 } from "components";
-import { Component, jsx } from "DCGView";
-import Controller from "../Controller";
-import { cancelCapture, CaptureMethod } from "../backend/capture";
-import "./CaptureMethod.css";
 import { For } from "components/desmosComponents";
 import { format } from "i18n/i18n-core";
 
