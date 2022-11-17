@@ -21,9 +21,9 @@ export function compileGLesmos(
   id: number
 ) {
   try {
-    if (isNaN(fillOpacity)) {
-      fillOpacity = 0.4;
-    }
+    if (isNaN(fillOpacity)) fillOpacity = 0.4;
+    else if (fillOpacity > 1) fillOpacity = 1;
+    else if (fillOpacity < 0) fillOpacity = 0;
     const { source, deps } = emitChunkGL(concreteTree._chunk);
     let type = getGLType(concreteTree.valueType);
     let functionDeps: string[] = [];
