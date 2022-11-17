@@ -173,6 +173,14 @@ function getSourceSimple(
         deps.add(
           ci.symbol + "#" + ListLength.getConstantListLength(chunk, ci.args[0])
         );
+      } else if (getBuiltin(ci.symbol)?.tag === "list2") {
+        deps.add(
+          ci.symbol +
+            "#" +
+            ListLength.getConstantListLength(chunk, ci.args[0]) +
+            "#" +
+            ListLength.getConstantListLength(chunk, ci.args[1])
+        );
       } else {
         deps.add(ci.symbol);
       }

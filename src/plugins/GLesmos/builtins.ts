@@ -27,6 +27,11 @@ const builtins: {
         alias: string;
         make(n: string): string;
         deps?: (n: string) => string[];
+      }
+    | {
+        tag: "list2";
+        alias: string;
+        make(n: string, m: string): string;
       };
 } = {
   sin: {
@@ -616,15 +621,18 @@ const builtins: {
   },
   elementsAt: {
     alias: "dsm_elementsAt",
-    make: (n) => `
-    float[${n}] dsm_elementsAt(float[${n}] L, float[${n}] I) {
-      float[${n}] outList;
-      for (int i=0; i<${n}; i++) {
+    make: (n, m) => {
+      const len = Math.min(parseInt(n), parseInt(m));
+      return `
+    float[${len}] dsm_elementsAt(float[${n}] L, float[${m}] I) {
+      float[${len}] outList;
+      for (int i=0; i<${len}; i++) {
         outList[i] = L[int(I[i])-1];
       }
       return outList;
-    }`,
-    tag: "list",
+    }`;
+    },
+    tag: "list2",
   },
   uniquePerm: {
     alias: "dsm_uniquePerm",
@@ -694,15 +702,23 @@ export function getDefinition(s: string): string {
         ""
       );
     case "list":
-      return data.make(getArgs(s));
+      return data.make(getArg1(s));
+    case "list2":
+      return data.make(getArg1(s), getArg2(s));
   }
 }
 
 export function getDependencies(s: string) {
   const builtin = getBuiltin(s);
-  if (!builtin || builtin.tag === "glsl-builtin" || !builtin.deps) return [];
+  if (
+    !builtin ||
+    builtin.tag === "glsl-builtin" ||
+    !("deps" in builtin) ||
+    !builtin.deps
+  )
+    return [];
   if (builtin.tag === "list") {
-    return builtin.deps(getArgs(s));
+    return builtin.deps(getArg1(s));
   } else {
     return builtin.deps;
   }
@@ -716,6 +732,10 @@ export function getBuiltin(s: string) {
   return builtins[s.split("#")[0]];
 }
 
-export function getArgs(s: string) {
+export function getArg1(s: string) {
   return s.split(/#/)[1];
+}
+
+export function getArg2(s: string) {
+  return s.split(/#/)[2];
 }
