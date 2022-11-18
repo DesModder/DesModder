@@ -138,6 +138,12 @@ video-creator-method-action = action
 shift-enter-newline-name = Shift+Enter Newline
 shift-enter-newline-desc = Use Shift+Enter to type newlines in notes and image/folder titles.
 
+## Wakatime
+wakatime-name = WakaTime
+wakatime-desc = Track your desmos activity on WakaTime.com
+wakatime-opt-secretKey-name = Secret Key
+wakatime-opt-secretKey-desc = API Key used for WakaTime servers
+
 ## Performance Display
 performance-info-name = Performance Display
 performance-info-desc = Displays information about the performance of the current graph.

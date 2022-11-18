@@ -1,4 +1,4 @@
-import { ConfigItem, Plugin } from "../plugins";
+import { ConfigItem, ConfigItemString, Plugin } from "../plugins";
 import "./Menu.less";
 import Toggle from "./Toggle";
 import { If, Switch, Checkbox, Tooltip } from "./desmosComponents";
@@ -132,10 +132,10 @@ export default class Menu extends Component<{
                       />
                     </div>
                   ),
-                  color: () => (
+                  string: () => (
                     <div class="dsm-settings-item dsm-settings-color">
                       <input
-                        type="color"
+                        type={(item as ConfigItemString).variant}
                         id={`dsm-settings-item__input-${item.key}`}
                         value={pluginSettings[item.key]}
                         onUpdate={(e: HTMLInputElement) =>

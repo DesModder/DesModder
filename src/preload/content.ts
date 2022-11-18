@@ -1,5 +1,5 @@
 import injectScript from "utils/injectScript";
-import { postMessageDown, listenToMessageUp } from "utils/messages";
+import { listenToMessageUp, postMessageDown } from "utils/messages";
 
 const StorageKeys = {
   pluginsEnabled: "_plugins-enabled",
@@ -60,6 +60,9 @@ listenToMessageUp((message) => {
         type: "set-worker-append-url",
         value: chrome.runtime.getURL("workerAppend.js"),
       });
+      break;
+    case "get-ext-id":
+      postMessageDown({ type: "set-ext-id", value: chrome.runtime.id });
       break;
   }
 });

@@ -13,6 +13,7 @@ import shiftEnterNewline from "plugins/shift-enter-newline";
 import showTips from "plugins/show-tips";
 import textMode from "plugins/text-mode";
 import videoCreator from "plugins/video-creator";
+import wakatime from "plugins/wakatime";
 import wolfram2desmos from "plugins/wolfram2desmos";
 
 interface ConfigItemGeneric {
@@ -24,12 +25,14 @@ export interface ConfigItemBoolean extends ConfigItemGeneric {
   type: "boolean";
   default: boolean;
 }
-export interface ConfigItemColor extends ConfigItemGeneric {
-  type: "color";
+
+export interface ConfigItemString extends ConfigItemGeneric {
+  type: "string";
+  variant: "color" | "password" | "text";
   default: string;
 }
 
-export type ConfigItem = ConfigItemBoolean | ConfigItemColor;
+export type ConfigItem = ConfigItemBoolean | ConfigItemString;
 
 export type GenericSettings = { [key: string]: boolean | string };
 
@@ -43,7 +46,7 @@ export interface Plugin<Settings extends GenericSettings = {}> {
   onEnable(config?: unknown): any;
   onDisable?(): void;
   afterDisable?(): void;
-  enabledByDefault?: boolean;
+  enabledByDefault: boolean;
   alwaysEnabled?: boolean;
   config?: readonly ConfigItem[];
   onConfigChange?(changes: Settings, config: Settings): void;
@@ -61,6 +64,7 @@ const _plugins = {
   [wolfram2desmos.id]: wolfram2desmos,
   [pinExpressions.id]: pinExpressions,
   [videoCreator.id]: videoCreator,
+  [wakatime.id]: wakatime,
   [findReplace.id]: findReplace,
   [debugMode.id]: debugMode,
   [showTips.id]: showTips,
