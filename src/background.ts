@@ -6,18 +6,18 @@ chrome.action.onClicked.addListener(() => {
   });
 });
 
-export type HearbeatMessage = {
+export type HeartbeatMessage = {
   type: "sendHeartbeat";
   options: RequestInit | undefined;
 };
-export type RuntimeMessage = HearbeatMessage;
+export type RuntimeMessage = HeartbeatMessage;
 
 export type ErrorResponse = { type: "error"; message: string };
 export type SuccessResponse = { type: "success" };
 export type RuntimeResponse = ErrorResponse | SuccessResponse;
 
 async function sendHeartbeat(
-  req: HearbeatMessage,
+  req: HeartbeatMessage,
   sendResponse: (res: RuntimeResponse) => void
 ) {
   const r = await fetch(

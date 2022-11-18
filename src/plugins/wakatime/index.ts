@@ -1,6 +1,6 @@
 import { Calc } from "../../globals/window";
 import { desModderController } from "../../script";
-import { HearbeatMessage, RuntimeResponse } from "background";
+import { HeartbeatMessage, RuntimeResponse } from "background";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
 
 interface Config {
@@ -48,7 +48,7 @@ function sendHeartbeat(
       body: JSON.stringify(data),
     };
 
-    const message: HearbeatMessage = { type: "sendHeartbeat", options };
+    const message: HeartbeatMessage = { type: "sendHeartbeat", options };
     chrome.runtime.sendMessage(
       extId,
       message,
