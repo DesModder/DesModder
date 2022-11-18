@@ -67,7 +67,7 @@ const sleep = (t: number) => new Promise((res) => setTimeout(res, t));
 
 async function main(extId: string) {
   // Date.now can be messed up by system clock changes
-  let lastUpdate = performance.now();
+  let lastUpdate = performance.now() - heartbeatIntervalMs;
   while (isEnabled) {
     const graphName =
       desModderController.topLevelComponents.graphsController.getCurrentGraphTitle() ??
@@ -93,7 +93,7 @@ async function main(extId: string) {
     const now = performance.now();
     const elapsed = now - lastUpdate;
     lastUpdate = now;
-    await sleep(Math.max(heartbeatIntervalMs - elapsed, 0));
+    await sleep(Math.max(2 * heartbeatIntervalMs - elapsed, 0));
   }
 }
 
