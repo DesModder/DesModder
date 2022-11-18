@@ -14,6 +14,7 @@ export default class SegmentedControl extends Component<{
       <DesmosSegmentedControl
         staticConfig={this.getStaticConfig()}
         ariaGroupLabel={this.props.ariaGroupLabel()}
+        disabled={() => !this.getChangeAllowed(-1)}
       />
     );
   }
@@ -23,8 +24,8 @@ export default class SegmentedControl extends Component<{
       key: name,
       label: () => name,
       selected: () => i == this.props.selectedIndex(),
-      onSelect: () => this.props.setSelectedIndex(i),
-      allowChange: () => this.props.allowChange?.() ?? true,
+      onSelect: () =>
+        this.getChangeAllowed(i) && this.props.setSelectedIndex(i),
     }));
   }
 
