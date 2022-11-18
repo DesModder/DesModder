@@ -10,7 +10,7 @@ import {
 } from "./metadata/manage";
 import { MenuFunc } from "components/Menu";
 import { ItemModel } from "globals/models";
-import { Calc, desmosRequire } from "globals/window";
+import { Calc, desmosRequire, TopLevelComponents } from "globals/window";
 import { format } from "i18n/i18n-core";
 import { plugins, pluginList, PluginID, GenericSettings } from "plugins";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
@@ -57,6 +57,7 @@ export default class Controller {
   pillboxMenuOpen: string | null = null;
 
   pillboxMenuPinned: boolean = false;
+  topLevelComponents: TopLevelComponents;
 
   constructor() {
     // default values
@@ -74,6 +75,11 @@ export default class Controller {
         this.closeMenu();
       }
     });
+    // _topLevelComponents is created by src/preload/moduleOverrides/main__calc_desktop
+    this.topLevelComponents = (window as any)
+      ._topLevelComponents as TopLevelComponents;
+    // force access through DesModder, to make clear this is not vanilla
+    delete (window as any)._topLevelComponents;
   }
 
   getDefaultConfig(id: PluginID) {

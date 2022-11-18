@@ -4,6 +4,7 @@ import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
 import { isValidNumber, isValidLength, escapeRegex } from "./backend/utils";
 import { ExpressionModel } from "globals/models";
 import { Calc } from "globals/window";
+import { desModderController } from "script";
 import { jquery, keys, EvaluateSingleExpression } from "utils/depUtils";
 
 type FocusedMQ =
@@ -124,7 +125,7 @@ export default class Controller {
   getOutfileName() {
     return (
       this.outfileName ??
-      Calc.myGraphsWrapper.graphsController.getCurrentGraphTitle() ??
+      desModderController.topLevelComponents.graphsController.getCurrentGraphTitle() ??
       DEFAULT_FILENAME
     );
   }

@@ -101,11 +101,6 @@ export interface TimingData {
 
 interface CalcPrivate {
   //// undocumented, may break
-  myGraphsWrapper: {
-    graphsController: {
-      getCurrentGraphTitle(): string | undefined;
-    };
-  };
   controller: {
     // _removeExpressionSynchronously(model: ItemModel): void;
     _toplevelReplaceItemAt(
