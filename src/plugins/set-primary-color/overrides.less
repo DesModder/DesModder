@@ -31,17 +31,6 @@
   .dcg-settings-dropdown .dcg-checkbox-box {
     color: var(--dsm-primary-color);
   }
-  .dcg-settings-dropdown
-    .dcg-segmented-control-container
-    .dcg-segmented-control-btn:not(.dcg-dark-gray-segmented-control-btn):not(.dcg-blue-segmented-control-btn).dcg-selected {
-    border: 1px solid var(--dsm-primary-color);
-    background: rgba(var(--dsm-primary-color-rgb), 0.75);
-  }
-  .dcg-settings-dropdown
-    .dcg-segmented-control-container
-    .dcg-segmented-control-btn.dcg-blue-segmented-control-btn.dcg-selected {
-    background: var(--dsm-primary-color);
-  }
   .dcg-settings-dropdown .dcg-download-button.dcg-braille-equations {
     color: var(--dsm-primary-color);
   }
@@ -98,21 +87,14 @@
     -webkit-box-shadow: 0 0 0 1px var(--dsm-primary-color);
     box-shadow: 0 0 0 1px var(--dsm-primary-color);
   }
-  #export-image-dialog .dcg-button-group .dcg-button.dcg-selected {
-    border: 1px solid var(--dsm-primary-color);
-    background-color: var(--dsm-primary-color);
+  .dcg-contest-submission-dialog .dcg-resubmit-link {
+    color: var(--dsm-primary-color);
   }
-  #export-image-dialog .dcg-button-group .dcg-button.dcg-selected.dcg-hovered {
-    border-color: rgba(var(--dsm-primary-dark-4-rgb), 0.6);
-    -webkit-box-shadow: inset 0 0 0 1px rgba(var(--dsm-primary-dark-4-rgb), 0.6);
-    box-shadow: inset 0 0 0 1px rgba(var(--dsm-primary-dark-4-rgb), 0.6);
+  .dcg-contest-submission-dialog .dcg-resubmit-link.dcg-hovered {
+    text-decoration: var(--dsm-primary-dark-4);
   }
-  #export-image-dialog
-    .dcg-button-group
-    .dcg-button.dcg-selected.dcg-depressed {
-    border-color: var(--dsm-primary-dark-4);
-    -webkit-box-shadow: inset 0 0 0 1px var(--dsm-primary-dark-4);
-    box-shadow: inset 0 0 0 1px var(--dsm-primary-dark-4);
+  .dcg-contest-submission-dialog .dcg-resubmit-link.dcg-depressed {
+    color: var(--dsm-primary-dark-5);
   }
   #export-image-dialog .dcg-download-not-enabled-notice {
     border: 2px solid var(--dsm-primary-color);
@@ -219,6 +201,17 @@
   .dcg-component-checkbox.dcg-checked .dcg-checkbox i {
     color: var(--dsm-primary-color);
   }
+  .dcg-segmented-control-container
+    .dcg-segmented-control-btn.dcg-theme-mini.dcg-selected {
+    background: rgba(var(--dsm-primary-color-rgb), 0.15);
+    border-color: var(--dsm-primary-color);
+    color: var(--dsm-primary-color);
+  }
+  .dcg-segmented-control-container
+    .dcg-segmented-control-btn.dcg-theme-mini.dcg-selected
+    + .dcg-segmented-control-btn {
+    border-left: 1px solid var(--dsm-primary-color);
+  }
   .dcg-slider-interior .dcg-thumb:focus:after {
     border: 2px solid rgba(var(--dsm-primary-color-rgb), 0.35);
   }
@@ -227,20 +220,6 @@
   }
   .dcg-slider-interior .dcg-thumb .dcg-center {
     background: var(--dsm-primary-color);
-  }
-  .dcg-mq-underline-container .dcg-math-field.dcg-focus,
-  .dcg-mq-underline-container .dcg-math-field.dcg-invalid {
-    border-bottom: 2px solid var(--dsm-primary-color);
-  }
-  .dcg-mq-underline-container
-    :not(.dcg-evaluation)
-    > .dcg-mathquill-wrapper
-    .dcg-mathquill-braille.dcg-focus,
-  .dcg-mq-underline-container
-    :not(.dcg-evaluation)
-    > .dcg-mathquill-wrapper
-    .dcg-mathquill-braille.dcg-invalid {
-    border-bottom: 2px solid var(--dsm-primary-color);
   }
   .dcg-clickable-section .dcg-clickable-menu-row .dcg-math-field.dcg-focus,
   .dcg-clickable-section .dcg-clickable-menu-row .dcg-math-field.dcg-invalid {
@@ -279,12 +258,12 @@
     .dcg-checkbox-box {
     color: var(--dsm-primary-color);
   }
-  .dcg-expressionitem.dcg-expressionimage
-    .dcg-image-input-grid
-    .dcg-mq-editable-field.dcg-focus,
-  .dcg-expressionitem.dcg-expressionimage
-    .dcg-image-input-grid
-    .dcg-mathquill-braille.dcg-focus {
+  .dcg-inline-math-input-view .dcg-math-field.dcg-focus,
+  .dcg-inline-math-input-view .dcg-math-field.dcg-invalid {
+    border-bottom: 2px solid var(--dsm-primary-color);
+  }
+  .dcg-inline-math-input-view .dcg-mathquill-braille.dcg-focus,
+  .dcg-inline-math-input-view .dcg-mathquill-braille.dcg-invalid {
     border-bottom: 2px solid var(--dsm-primary-color);
   }
   .dcg-options-menu textarea:focus {
@@ -421,29 +400,10 @@
     box-shadow: inset 0 0 0 1px var(--dsm-primary-color);
   }
   .dcg-settings-container
-    .dcg-segmented-control-container
-    .dcg-segmented-control-btn:not(.dcg-dark-gray-segmented-control-btn):not(.dcg-blue-segmented-control-btn).dcg-selected {
-    border: 1px solid var(--dsm-primary-color);
-    background: rgba(var(--dsm-primary-color-rgb), 0.75);
-  }
-  .dcg-settings-container
-    .dcg-segmented-control-container
-    .dcg-segmented-control-btn.dcg-blue-segmented-control-btn.dcg-selected {
-    background: var(--dsm-primary-color);
-  }
-  .dcg-settings-container
     .dcg-braille-container
     .dcg-refreshable-braille-note
     a {
     color: var(--dsm-primary-color);
-  }
-  .dcg-settings-container .dcg-mq-editable-field.dcg-math-input.dcg-focus,
-  .dcg-settings-container .dcg-mathquill-braille.dcg-focus,
-  .dcg-settings-container .dcg-mq-editable-field.dcg-math-input.dcg-invalid,
-  .dcg-settings-container .dcg-mathquill-braille.dcg-invalid,
-  .dcg-settings-container .dcg-mq-editable-field.dcg-math-input.dcg-outofbounds,
-  .dcg-settings-container .dcg-mathquill-braille.dcg-outofbounds {
-    border-bottom: 2px solid var(--dsm-primary-color);
   }
   .modal .input:focus {
     border: 1px solid var(--dsm-primary-color);
@@ -545,14 +505,6 @@
   .dcg-shared-options-dropdown
     .dropdown-choice:not(.dropdown-choice-disabled).blue-link.dcg-depressed {
     color: var(--dsm-primary-dark-5);
-  }
-  .dcg-toggle .dcg-toggle-option.dcg-selected-toggle + .dcg-toggle-option {
-    border-left: 1px solid var(--dsm-primary-color);
-  }
-  .dcg-toggle .dcg-toggle-option.dcg-selected-toggle {
-    background: rgba(var(--dsm-primary-color-rgb), 0.15);
-    border-color: var(--dsm-primary-color);
-    color: var(--dsm-primary-color);
   }
   .trip-block .trip-interior {
     border: 3px solid var(--dsm-primary-color);
