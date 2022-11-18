@@ -139,6 +139,7 @@ export default class MainPopup extends Component<{
                   names={fileTypeNames}
                   selectedIndex={() => this.getSelectedFileTypeIndex()}
                   setSelectedIndex={(i) => this.setSelectedFileTypeIndex(i)}
+                  ariaGroupLabel={"Select export type"}
                 />
               </div>
               <Input

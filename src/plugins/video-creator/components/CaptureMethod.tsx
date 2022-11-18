@@ -30,18 +30,20 @@ export default class SelectCapture extends Component<{
   template() {
     return (
       <div>
-        <SegmentedControl
-          class="dsm-vc-select-capture-method"
-          names={() =>
-            (this.controller.hasAction()
-              ? captureMethodNames
-              : captureMethodNames.slice(0, -1)
-            ).map((method) => format("video-creator-method-" + method))
-          }
-          selectedIndex={() => this.getSelectedCaptureMethodIndex()}
-          setSelectedIndex={(i) => this.setSelectedCaptureMethodIndex(i)}
-          allowChange={() => !this.controller.isCapturing}
-        />
+        <div class="dsm-vc-select-capture-method">
+          <SegmentedControl
+            names={() =>
+              (this.controller.hasAction()
+                ? captureMethodNames
+                : captureMethodNames.slice(0, -1)
+              ).map((method) => format("video-creator-method-" + method))
+            }
+            selectedIndex={() => this.getSelectedCaptureMethodIndex()}
+            setSelectedIndex={(i) => this.setSelectedCaptureMethodIndex(i)}
+            allowChange={() => !this.controller.isCapturing}
+            ariaGroupLabel={"Select capture method"}
+          />
+        </div>
         <Switch key={() => this.getSelectedCaptureMethod()}>
           {() =>
             ({

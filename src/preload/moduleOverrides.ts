@@ -13,6 +13,7 @@ import graphslayer from "./moduleOverrides/graphslayer";
 import instancehotkeys from "./moduleOverrides/instancehotkeys";
 import keypadsMain from "./moduleOverrides/keypads__main";
 import listView from "./moduleOverrides/list-view";
+import calcDesktop from "./moduleOverrides/main__calc_desktop";
 import mainController from "./moduleOverrides/main__controller";
 import mainEvaluator from "./moduleOverrides/main__evaluator";
 import promptSliderView from "./moduleOverrides/promptslider_view";
@@ -47,4 +48,5 @@ export default {
     expressionOptionsMenuView,
   "expressions/promptslider_view": promptSliderView,
   "main/instancehotkeys": instancehotkeys,
+  "main/calc_desktop": calcDesktop,
 } as { [key: string]: (dependencyNameMap: DependencyNameMap) => Visitor };

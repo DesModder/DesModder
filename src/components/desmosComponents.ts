@@ -13,6 +13,28 @@ export const Checkbox: typeof CheckboxComponent = desmosRequire(
   "dcgview-helpers/checkbox"
 ).Checkbox;
 
+abstract class SegmentedControlComponent extends ClassComponent<{
+  ariaGroupLabel: string;
+  minButtonWidth?: number;
+  disabled?: boolean;
+  theme?: "mini" | "default";
+  staticConfig: {
+    key: string;
+    label: () => string;
+    ariaLabel?: () => string;
+    selected: () => boolean;
+    onSelect: () => void;
+    icon?: () => string;
+    tooltip?: () => unknown;
+    tooltipGravity?: () => unknown;
+    class?: () => string;
+    focusHelperOptions?: unknown;
+  }[];
+}> {}
+
+export const DesmosSegmentedControl: typeof SegmentedControlComponent =
+  desmosRequire("dcgview-helpers/segmented-control").SegmentedControl;
+
 interface MathQuillField {
   keystroke(key: string, e: KeyboardEvent): void;
   latex(): string;
