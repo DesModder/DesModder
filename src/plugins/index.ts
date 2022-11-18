@@ -1,19 +1,20 @@
+import GLesmos from "plugins/GLesmos";
+import builtinSettings from "plugins/builtin-settings";
+import debugMode from "plugins/debug-mode";
 import duplicateHotkey from "plugins/duplicate-hotkey";
 import findReplace from "plugins/find-replace";
-import wolfram2desmos from "plugins/wolfram2desmos";
-import videoCreator from "plugins/video-creator";
-import builtinSettings from "plugins/builtin-settings";
-import rightClickTray from "plugins/right-click-tray";
-import pinExpressions from "plugins/pin-expressions";
-import shiftEnterNewline from "plugins/shift-enter-newline";
-import GLesmos from "plugins/GLesmos";
-import hideErrors from "plugins/hide-errors";
-import debugMode from "plugins/debug-mode";
-import showTips from "plugins/show-tips";
-import wakatime from "plugins/wakatime";
 import folderTools from "plugins/folder-tools";
-import textMode from "plugins/text-mode";
+import hideErrors from "plugins/hide-errors";
+import performanceInfo from "plugins/performance-info";
+import pinExpressions from "plugins/pin-expressions";
+import rightClickTray from "plugins/right-click-tray";
 import setPrimaryColor from "plugins/set-primary-color";
+import shiftEnterNewline from "plugins/shift-enter-newline";
+import showTips from "plugins/show-tips";
+import textMode from "plugins/text-mode";
+import videoCreator from "plugins/video-creator";
+import wakatime from "plugins/wakatime";
+import wolfram2desmos from "plugins/wolfram2desmos";
 
 interface ConfigItemGeneric {
   key: string;
@@ -74,6 +75,7 @@ const _plugins = {
   [hideErrors.id]: hideErrors,
   [folderTools.id]: folderTools,
   [textMode.id]: textMode,
+  [performanceInfo.id]: performanceInfo,
 } as const;
 
 export const pluginList = Object.values(_plugins);

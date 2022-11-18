@@ -1,5 +1,5 @@
-import { NodePath } from "../down/TextAST";
 import Aug from "../aug/AugState";
+import { NodePath } from "../down/TextAST";
 import { astItemToTextString } from "./astToText";
 import { graphSettingsToAST, itemAugToAST, tickerToAST } from "./augToAST";
 

@@ -1,7 +1,7 @@
+import Controller from "../Controller";
+import { scaleBoundsAboutCenter } from "./utils";
 import { Calc } from "globals/window";
 import { EvaluateSingleExpression } from "utils/depUtils";
-import { scaleBoundsAboutCenter } from "./utils";
-import Controller from "../Controller";
 
 export type CaptureMethod = "once" | "action" | "slider";
 

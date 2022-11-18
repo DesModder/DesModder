@@ -1,10 +1,10 @@
+import Controller from "./Controller";
 import { mountToNode, MountedComponent } from "DCGView";
 import { PillboxContainer } from "components";
-import { pollForValue } from "utils/utils";
-import Controller from "./Controller";
 import { Calc } from "globals/window";
 // Not good to have a specific workaround for this single plugin
 import { createTipElement } from "plugins/show-tips/Tip";
+import { pollForValue } from "utils/utils";
 
 export default class View {
   pillboxMountNode: HTMLElement | null = null;

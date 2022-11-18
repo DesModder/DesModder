@@ -58,8 +58,8 @@ builtin-settings-opt-advancedStyling-name = Advanced styling
 builtin-settings-opt-advancedStyling-desc = Enable label editing, show-on-hover, text outline, and one-quadrant grid
 builtin-settings-opt-graphpaper-name = Graphpaper
 builtin-settings-opt-graphpaper-desc = {""}
-builtin-settings-opt-administerSecretFolders-name = Create hidden folders
-builtin-settings-opt-administerSecretFolders-desc = {""}
+builtin-settings-opt-authorFeatures-name = Author features
+builtin-settings-opt-authorFeatures-desc = Toggle hidden folders, toggle readonly, and more
 builtin-settings-opt-pointsOfInterest-name = Show points of interest
 builtin-settings-opt-pointsOfInterest-desc = Intercepts, holes, intersections, etc.
 builtin-settings-opt-trace-name = Trace along curves
@@ -143,3 +143,14 @@ wakatime-name = WakaTime
 wakatime-desc = Track your desmos activity on WakaTime.com
 wakatime-opt-secretKey-name = Secret Key
 wakatime-opt-secretKey-desc = API Key used for WakaTime servers
+
+## Performance Display
+performance-info-name = Performance Display
+performance-info-desc = Displays information about the performance of the current graph.
+performance-info-refresh-graph = Refresh Graph
+performance-info-refresh-graph-tooltip = Refresh the graph to test initial load time
+performance-info-sticky-tooltip = Keep menu open
+performance-info-time-in-worker = Time In Worker
+performance-info-compiling = Compiling
+performance-info-rendering = Rendering
+performance-info-other = Other

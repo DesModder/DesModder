@@ -1,7 +1,7 @@
-import { If } from "components";
-import { Component, jsx } from "DCGView";
-import "./PreviewCarousel.less";
 import Controller from "../Controller";
+import "./PreviewCarousel.less";
+import { Component, jsx } from "DCGView";
+import { If } from "components";
 
 export default class PreviewCarousel extends Component<{
   controller: Controller;

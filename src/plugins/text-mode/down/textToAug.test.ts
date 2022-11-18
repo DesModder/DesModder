@@ -1,11 +1,4 @@
-import parser from "../lezer/syntax.grammar";
-import { cstToAST } from "./cstToAST";
-import astToAug from "./astToAug";
 import Aug from "../aug/AugState";
-import { test, expect, describe } from "@jest/globals";
-import { error, warning } from "./diagnostics";
-import { Diagnostic } from "@codemirror/lint";
-import { Text } from "@codemirror/state";
 import {
   assignmentExpr,
   binop,
@@ -18,6 +11,13 @@ import {
   number,
   updateRule,
 } from "../aug/augBuilders";
+import parser from "../lezer/syntax.grammar";
+import astToAug from "./astToAug";
+import { cstToAST } from "./cstToAST";
+import { error, warning } from "./diagnostics";
+import { Diagnostic } from "@codemirror/lint";
+import { Text } from "@codemirror/state";
+import { test, expect, describe } from "@jest/globals";
 
 jest.mock("utils/depUtils");
 jest.mock("globals/window");
@@ -211,7 +211,7 @@ describe("Basic exprs", () => {
     });
   });
   describe("Piecewise", () => {
-    testExpr("empty piecewise", "{else:1}", {
+    testExpr("trivial (else-only) piecewise", "{else:1}", {
       type: "Piecewise",
       condition: true,
       consequent: number(1),
@@ -228,6 +228,12 @@ describe("Basic exprs", () => {
       condition: comparator(">", id("x"), number(1)),
       consequent: number(2),
       alternate: number(NaN),
+    });
+    testExpr("single condition and implicit else", "{x>1:2,5}", {
+      type: "Piecewise",
+      condition: comparator(">", id("x"), number(1)),
+      consequent: number(2),
+      alternate: number(5),
     });
     testExpr("two conditions and else", "{x>1:2,y>3:4,else:5}", {
       type: "Piecewise",

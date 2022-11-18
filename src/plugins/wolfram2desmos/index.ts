@@ -1,8 +1,8 @@
-import { OptionalProperties } from "utils/utils";
-import { Calc } from "globals/window";
 import Controller from "./Controller";
 import { Config, configList } from "./config";
 import { wolfram2desmos, isIllegalASCIIMath } from "./wolfram2desmos";
+import { Calc } from "globals/window";
+import { OptionalProperties } from "utils/utils";
 
 // initialize controller and observe textarea and input tags
 export let controller = new Controller(["textarea", "input"], function (

@@ -1,10 +1,10 @@
+import TextAST from "./TextAST";
+import { DiagnosticsState } from "./diagnostics";
+import { Diagnostic } from "@codemirror/lint";
+import { Text } from "@codemirror/state";
 import { SyntaxNode } from "@lezer/common";
 import { Tree } from "@lezer/common";
-import TextAST from "./TextAST";
 import { everyNonNull } from "utils/utils";
-import { Diagnostic } from "@codemirror/lint";
-import { DiagnosticsState } from "./diagnostics";
-import { Text } from "@codemirror/state";
 
 export class TextAndDiagnostics extends DiagnosticsState {
   constructor(public text: Text, diagnostics: Diagnostic[]) {
@@ -306,8 +306,12 @@ function exprToAST(
       const piecewiseChildren = node.getChildren("PiecewiseBranch");
       if (piecewiseChildren.length === 0)
         throw Error("Programming error: empty piecewise not yet implemented");
-      const piecewiseBranches = piecewiseChildren.map((node) =>
-        piecewiseBranchToAST(td, node)
+      const piecewiseBranches = piecewiseChildren.map((node, i) =>
+        piecewiseBranchToAST(
+          td,
+          node,
+          i === piecewiseChildren.length - 1 && i > 0
+        )
       );
       if (!everyNonNull(piecewiseBranches)) return null;
       return {
@@ -489,11 +493,17 @@ function assignmentToAST(
  */
 function piecewiseBranchToAST(
   td: TextAndDiagnostics,
-  node: SyntaxNode
+  node: SyntaxNode,
+  isLast: boolean
 ): TextAST.PiecewiseBranch | null {
   const exprs = node.getChildren("Expression");
-  const condition = exprToAST(td, exprs[0]);
-  const consequent = exprs[1]
+  const implicitTrueCondition = isLast && exprs.length === 1;
+  const condition = implicitTrueCondition
+    ? { type: "Identifier" as const, name: "else" }
+    : exprToAST(td, exprs[0]);
+  const consequent = implicitTrueCondition
+    ? exprToAST(td, exprs[0])
+    : exprs[1]
     ? exprToAST(td, exprs[1])
     : {
         type: "Number" as const,

@@ -1,10 +1,10 @@
-import * as t from "@babel/types";
-import template from "@babel/template";
-import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
 import {
   containingCreateElementCall,
   findIdentifierThis,
 } from "../overrideHelpers/moduleUtils";
+import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
+import template from "@babel/template";
+import * as t from "@babel/types";
 
 export default (dependencyNameMap: DependencyNameMap) => ({
   StringLiteral(path: babel.NodePath<t.StringLiteral>) {
@@ -60,7 +60,7 @@ export default (dependencyNameMap: DependencyNameMap) => ({
                 return %%DCGView%%.createElement(
                   %%DCGView%%.Components.If,
                   {
-                    predicate: () => window.DesModder?.controller?.isPinned(t.id)
+                    predicate: () => window.DesModder?.controller?.isExpressionPinned(t.id)
                   },
                   // marking as a drag copy causes it not to affect the render shells calcuations
                   // (all the logic is present already because if the top expression is dragged

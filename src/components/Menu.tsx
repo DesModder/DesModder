@@ -1,10 +1,10 @@
-import { Component, jsx } from "DCGView";
-import Toggle from "./Toggle";
-import Controller from "main/Controller";
-import { If, Switch, Checkbox, Tooltip } from "./desmosComponents";
-import "./Menu.less";
 import { ConfigItem, ConfigItemString, Plugin } from "../plugins";
+import "./Menu.less";
+import Toggle from "./Toggle";
+import { If, Switch, Checkbox, Tooltip } from "./desmosComponents";
+import { Component, jsx } from "DCGView";
 import { format } from "i18n/i18n-core";
+import Controller from "main/Controller";
 
 export function MenuFunc(controller: Controller) {
   return <Menu controller={controller} />;

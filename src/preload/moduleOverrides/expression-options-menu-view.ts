@@ -1,7 +1,7 @@
-import * as t from "@babel/types";
-import template from "@babel/template";
 import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
 import withinFunctionAssignment from "../overrideHelpers/withinFunctionAssignment";
+import template from "@babel/template";
+import * as t from "@babel/types";
 
 export default (dependencyNameMap: DependencyNameMap) =>
   withinFunctionAssignment("getSections", (func: t.FunctionExpression) => {

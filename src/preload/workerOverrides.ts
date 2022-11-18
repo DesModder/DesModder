@@ -1,6 +1,6 @@
 import { DependencyNameMap } from "./overrideHelpers/withDependencyMap";
-import { Visitor } from "@babel/traverse";
 import featuresGraph from "./workerOverrides/features__graph";
+import { Visitor } from "@babel/traverse";
 
 export default {
   "core/math/features/graph": featuresGraph,

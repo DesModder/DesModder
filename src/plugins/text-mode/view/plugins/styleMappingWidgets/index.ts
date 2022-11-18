@@ -1,10 +1,10 @@
+import imageWidget from "./imageWidget";
+import inlineToggleWidget from "./inlineToggleWidget";
+import { syntaxTree } from "@codemirror/language";
 import { WidgetType } from "@codemirror/view";
 import { EditorView, Decoration } from "@codemirror/view";
-import { syntaxTree } from "@codemirror/language";
 import { ViewUpdate, ViewPlugin, DecorationSet } from "@codemirror/view";
 import { SyntaxNode } from "@lezer/common";
-import inlineToggleWidget from "./inlineToggleWidget";
-import imageWidget from "./imageWidget";
 
 const widgetSpecs: StyleMappingWidgetSpec[] = [inlineToggleWidget, imageWidget];
 

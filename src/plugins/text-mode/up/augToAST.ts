@@ -1,7 +1,7 @@
-import { Calc } from "globals/window";
-import { getSections } from "utils/depUtils";
 import Aug from "../aug/AugState";
 import TextAST from "../down/TextAST";
+import { Calc } from "globals/window";
+import { getSections } from "utils/depUtils";
 
 export function graphSettingsToAST(
   settings: Aug.GraphSettings

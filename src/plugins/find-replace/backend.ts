@@ -1,8 +1,8 @@
 import { Calc } from "globals/window";
-import { parseDesmosLatex } from "utils/depUtils";
-import traverse, { Path } from "parsing/traverse";
-import { Identifier } from "parsing/parsenode";
 import { satisfiesType } from "parsing/nodeTypes";
+import { Identifier } from "parsing/parsenode";
+import traverse, { Path } from "parsing/traverse";
+import { parseDesmosLatex } from "utils/depUtils";
 
 function replace(replaceLatex: (s: string) => string) {
   // replaceString is applied to stuff like labels

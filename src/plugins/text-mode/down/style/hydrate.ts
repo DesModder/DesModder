@@ -1,7 +1,7 @@
 import TextAST from "../TextAST";
-import { Schema } from "./schema";
 import { DownState } from "../astToAug";
 import { evalExpr } from "../staticEval";
+import { Schema } from "./schema";
 
 export interface StyleValue {
   type: "StyleValue";

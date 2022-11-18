@@ -1,9 +1,4 @@
-import { plugins, pluginList, PluginID, GenericSettings } from "plugins";
 import View from "./View";
-import { MenuFunc } from "components/Menu";
-import { listenToMessageDown, postMessageUp } from "utils/messages";
-import { OptionalProperties } from "utils/utils";
-import { Calc, desmosRequire } from "globals/window";
 import GraphMetadata, {
   Expression as MetadataExpression,
 } from "./metadata/interface";
@@ -13,8 +8,14 @@ import {
   getBlankMetadata,
   changeExprInMetadata,
 } from "./metadata/manage";
+import { MenuFunc } from "components/Menu";
 import { ItemModel } from "globals/models";
+import { Calc, desmosRequire, TopLevelComponents } from "globals/window";
 import { format } from "i18n/i18n-core";
+import { plugins, pluginList, PluginID, GenericSettings } from "plugins";
+import { listenToMessageDown, postMessageUp } from "utils/messages";
+import { OptionalProperties } from "utils/utils";
+
 const AbstractItem = desmosRequire("graphing-calc/models/abstract-item");
 const List = desmosRequire("graphing-calc/models/list");
 
@@ -22,6 +23,7 @@ interface PillboxButton {
   id: string;
   tooltip: string;
   iconClass: string;
+  pinned?: boolean;
   // popup should return a JSX element. Not sure of type
   popup: (desmodderController: Controller) => unknown;
 }
@@ -54,6 +56,9 @@ export default class Controller {
   // string if open, null if none are open
   pillboxMenuOpen: string | null = null;
 
+  pillboxMenuPinned: boolean = false;
+  topLevelComponents: TopLevelComponents;
+
   constructor() {
     // default values
     this.pluginSettings = Object.fromEntries(
@@ -64,6 +69,17 @@ export default class Controller {
     this.pluginsEnabled = Object.fromEntries(
       pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
     );
+    Calc.controller.dispatcher.register((e) => {
+      if (e.type === "toggle-graph-settings") {
+        this.pillboxMenuPinned = false;
+        this.closeMenu();
+      }
+    });
+    // _topLevelComponents is created by src/preload/moduleOverrides/main__calc_desktop
+    this.topLevelComponents = (window as any)
+      ._topLevelComponents as TopLevelComponents;
+    // force access through DesModder, to make clear this is not vanilla
+    delete (window as any)._topLevelComponents;
   }
 
   getDefaultConfig(id: PluginID) {
@@ -164,11 +180,18 @@ export default class Controller {
 
   toggleMenu(id: string) {
     this.pillboxMenuOpen = this.pillboxMenuOpen === id ? null : id;
+    this.pillboxMenuPinned = false;
     this.updateMenuView();
   }
 
   closeMenu() {
+    if (this.pillboxMenuPinned) return;
     this.pillboxMenuOpen = null;
+    this.updateMenuView();
+  }
+
+  toggleMenuPinned() {
+    this.pillboxMenuPinned = !this.pillboxMenuPinned;
     this.updateMenuView();
   }
 
@@ -384,7 +407,7 @@ export default class Controller {
     });
   }
 
-  isPinned(id: string) {
+  isExpressionPinned(id: string) {
     return (
       this.pluginsEnabled["pin-expressions"] &&
       !Calc.controller.getExpressionSearchOpen() &&
@@ -456,9 +479,10 @@ export default class Controller {
       currIndex++;
       currExpr = Calc.controller.getItemModelByIndex(currIndex);
       if (currExpr === undefined) break;
-      // If administerSecretFolders is disabled, skip secret folders
+      // If authorFeatures is disabled, skip secret folders
       while (
-        !Calc.settings.administerSecretFolders &&
+        // type cast beacuse Desmos has not yet updated types for authorFeatures
+        !(Calc.settings as any).authorFeatures &&
         currExpr?.type === "folder" &&
         currExpr.secret
       ) {

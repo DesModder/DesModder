@@ -1,10 +1,10 @@
-import { Component, jsx } from "DCGView";
-import { Calc } from "globals/window";
-import { MathQuillView } from "components";
-import { autoOperatorNames } from "utils/depUtils";
 import Controller from "./Controller";
 import "./ReplaceBar.less";
+import { Component, jsx } from "DCGView";
+import { MathQuillView } from "components";
+import { Calc } from "globals/window";
 import { format } from "i18n/i18n-core";
+import { autoOperatorNames } from "utils/depUtils";
 
 export default class ReplaceBar extends Component<{
   controller: Controller;

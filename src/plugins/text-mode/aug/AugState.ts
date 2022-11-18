@@ -20,11 +20,11 @@
  * store the handler of a hidden ticker. However, converting to AugState and back to GraphState
  * should produce no visual/functional difference.
  */
-
 import * as Latex from "./AugLatex";
+import * as Aug from "./AugState";
+
 export * as Latex from "./AugLatex";
 
-import * as Aug from "./AugState";
 export default Aug;
 
 export interface State {

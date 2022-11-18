@@ -1,5 +1,5 @@
-import * as t from "@babel/types";
 import template from "@babel/template";
+import * as t from "@babel/types";
 import { findIdentifierThis } from "preload/overrideHelpers/moduleUtils";
 
 export default () => ({

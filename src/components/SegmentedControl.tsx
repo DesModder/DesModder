@@ -1,45 +1,31 @@
-import { Component, jsx } from "DCGView";
-import { mergeClass, MaybeClassDict } from "utils/utils";
 import "./SegmentedControl.less";
+import { DesmosSegmentedControl } from "./desmosComponents";
+import { Component, jsx } from "DCGView";
 
 export default class SegmentedControl extends Component<{
   names: string[];
   selectedIndex: number;
+  ariaGroupLabel: string;
   setSelectedIndex(i: number): void;
-  class?: MaybeClassDict;
   allowChange?: boolean;
 }> {
   template() {
     return (
-      <div
-        class={() =>
-          mergeClass(
-            "dcg-segmented-control-container",
-            this.props.class && this.props.class()
-          )
-        }
-        role="group"
-      >
-        {this.props.names().map((name, i) => (
-          <div
-            key={i}
-            class={() => ({
-              "dcg-segmented-control-btn": true,
-              "dcg-dark-gray-segmented-control-btn": true,
-              "dcg-selected dcg-active": i === this.props.selectedIndex(),
-              "dsm-disallow-change": !this.getChangeAllowed(i),
-            })}
-            role="button"
-            ariaLabel={name}
-            onTap={() =>
-              this.getChangeAllowed(i) && this.props.setSelectedIndex(i)
-            }
-          >
-            {name}
-          </div>
-        ))}
-      </div>
+      <DesmosSegmentedControl
+        staticConfig={this.getStaticConfig()}
+        ariaGroupLabel={this.props.ariaGroupLabel()}
+      />
     );
+  }
+
+  getStaticConfig() {
+    return this.props.names().map((name, i) => ({
+      key: name,
+      label: () => name,
+      selected: () => i == this.props.selectedIndex(),
+      onSelect: () => this.props.setSelectedIndex(i),
+      allowChange: () => this.props.allowChange?.() ?? true,
+    }));
   }
 
   getChangeAllowed(i: number) {

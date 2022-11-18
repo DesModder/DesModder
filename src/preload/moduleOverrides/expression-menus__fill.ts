@@ -1,11 +1,11 @@
-import * as t from "@babel/types";
-import template from "@babel/template";
-import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
 import {
   containingCreateElementCall,
   findIdentifierThis,
 } from "../overrideHelpers/moduleUtils";
+import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
 import "./styles/expression-menus__fill.less";
+import template from "@babel/template";
+import * as t from "@babel/types";
 
 export default (dependencyNameMap: DependencyNameMap) => ({
   StringLiteral(path: babel.NodePath<t.StringLiteral>) {
@@ -32,6 +32,7 @@ export default (dependencyNameMap: DependencyNameMap) => ({
             { class: %%DCGView%%.const("dcg-options-menu-section-title dsm-gl-fill-title") },
             () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
             %%DCGView%%.createElement(%%ToggleView%%.ToggleView, {
+              ariaLabel: () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
               toggled: () => window.DesModder?.controller?.isGlesmosMode?.(%%this%%.id),
               onChange: (a) => window.DesModder?.controller?.toggleGlesmos?.(%%this%%.id),
             })

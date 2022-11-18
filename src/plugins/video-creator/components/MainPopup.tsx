@@ -1,21 +1,21 @@
+import Controller from "../Controller";
+import { OutFileType, cancelExport } from "../backend/export";
+import CaptureMethod from "./CaptureMethod";
+import LoadingPie from "./LoadingPie";
+import "./MainPopup.less";
+import PreviewCarousel from "./PreviewCarousel";
+import { Component, jsx } from "DCGView";
 import {
-  SmallMathQuillInput,
   SegmentedControl,
   If,
   Input,
   Button,
   IfElse,
   Tooltip,
+  InlineMathInputView,
 } from "components";
-import { jquery } from "utils/depUtils";
-import { Component, jsx } from "DCGView";
-import CaptureMethod from "./CaptureMethod";
-import PreviewCarousel from "./PreviewCarousel";
-import LoadingPie from "./LoadingPie";
-import Controller from "../Controller";
-import { OutFileType, cancelExport } from "../backend/export";
-import "./MainPopup.less";
 import { format } from "i18n/i18n-core";
+import { jquery } from "utils/depUtils";
 
 const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng"];
 
@@ -139,6 +139,7 @@ export default class MainPopup extends Component<{
                   names={fileTypeNames}
                   selectedIndex={() => this.getSelectedFileTypeIndex()}
                   setSelectedIndex={(i) => this.setSelectedFileTypeIndex(i)}
+                  ariaGroupLabel={"Select export type"}
                 />
               </div>
               <Input
@@ -170,13 +171,13 @@ export default class MainPopup extends Component<{
                 </Button>
                 <div class="dsm-vc-fps-settings">
                   {format("video-creator-fps")}
-                  <SmallMathQuillInput
+                  <InlineMathInputView
                     ariaLabel="fps"
-                    onUserChangedLatex={(s) => this.controller.setFPSLatex(s)}
+                    handleLatexChanged={(s) => this.controller.setFPSLatex(s)}
                     hasError={() => !this.controller.isFPSValid()}
                     latex={() => this.controller.fpsLatex}
                     isFocused={() => this.controller.isFocused("export-fps")}
-                    onFocusedChanged={(b) =>
+                    handleFocusChanged={(b) =>
                       this.controller.updateFocus("export-fps", b)
                     }
                   />

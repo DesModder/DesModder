@@ -1,8 +1,8 @@
-import { Calc } from "globals/window";
-import { If } from "components";
-import { Component, jsx } from "DCGView";
-import tips from "./tips";
 import "./Tip.less";
+import tips from "./tips";
+import { Component, jsx } from "DCGView";
+import { If } from "components";
+import { Calc } from "globals/window";
 import { format } from "i18n/i18n-core";
 
 export default class Tip extends Component {

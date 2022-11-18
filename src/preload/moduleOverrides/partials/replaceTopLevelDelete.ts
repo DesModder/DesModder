@@ -1,10 +1,10 @@
-import * as t from "@babel/types";
-import template from "@babel/template";
-import { DependencyNameMap } from "../../overrideHelpers/withDependencyMap";
 import {
   containingCreateElementCall,
   findIdentifierThis,
 } from "../../overrideHelpers/moduleUtils";
+import { DependencyNameMap } from "../../overrideHelpers/withDependencyMap";
+import template from "@babel/template";
+import * as t from "@babel/types";
 
 export default (dependencyNameMap: DependencyNameMap) => ({
   /* @plugin pin-expressions
@@ -32,7 +32,7 @@ export default (dependencyNameMap: DependencyNameMap) => ({
       createElementCall.replaceWith(
         template.expression(`
           %%DCGView%%.Components.IfElse(
-            () => window.DesModder?.controller?.isPinned(%%this%%.model.id),
+            () => window.DesModder?.controller?.isExpressionPinned(%%this%%.model.id),
             {
               false: () => %%cec%%,
               true: () => %%DCGView%%.createElement("i", {

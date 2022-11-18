@@ -1,5 +1,5 @@
-import { ContextTracker, ExternalTokenizer } from "@lezer/lr";
 import { insertSemi, spaces, newline } from "./syntax.grammar";
+import { ContextTracker, ExternalTokenizer } from "@lezer/lr";
 
 /**
  * Semicolon insertion similar to JavaScript.

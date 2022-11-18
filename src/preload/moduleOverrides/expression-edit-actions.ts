@@ -1,10 +1,10 @@
-import * as t from "@babel/types";
-import template from "@babel/template";
-import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
 import {
   containingCreateElementCall,
   findIdentifierThis,
 } from "../overrideHelpers/moduleUtils";
+import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
+import template from "@babel/template";
+import * as t from "@babel/types";
 
 function actionCreate(
   tooltip: string,
@@ -43,17 +43,17 @@ const pinUnpinAction = `
       predicate: () => window.DesModder?.controller?.isPluginEnabled?.("pin-expressions") && %%this%%.model().type !== "folder"
     },
     () => %%DCGView%%.Components.IfElse(
-      () => window.DesModder?.controller?.isPinned(%%this%%.model().id),
+      () => window.DesModder?.controller?.isExpressionPinned(%%this%%.model().id),
       {
         false: ${actionCreate(
           "pin-expressions-pin",
           "dsm-pin-button",
-          "dsm-icon-bookmark-outline-add",
+          "dsm-icon-bookmark",
           "() => window.DesModder.controller.pinExpression(%%this%%.model().id)"
         )},
         true: ${actionCreate(
           "pin-expressions-unpin",
-          "dsm-unpin-button",
+          "dsm-unpin-button dcg-selected",
           "dsm-icon-bookmark",
           "() => window.DesModder.controller.unpinExpression(%%this%%.model().id)"
         )}

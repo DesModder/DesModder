@@ -1,8 +1,8 @@
-import * as t from "@babel/types";
-import template from "@babel/template";
-import replaceTopLevelDelete from "./partials/replaceTopLevelDelete";
-import replaceDisplayIndex from "./partials/replaceDisplayIndex";
 import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
+import replaceDisplayIndex from "./partials/replaceDisplayIndex";
+import replaceTopLevelDelete from "./partials/replaceTopLevelDelete";
+import template from "@babel/template";
+import * as t from "@babel/types";
 
 export default (dependencyNameMap: DependencyNameMap) => ({
   ...replaceTopLevelDelete(dependencyNameMap),

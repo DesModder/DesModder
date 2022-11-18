@@ -1,5 +1,5 @@
-import { GraphState } from "@desmodder/graph-state";
 import { ItemModel } from "./models";
+import { GraphState } from "@desmodder/graph-state";
 import "desmos";
 
 export type DispatchedEvent =
@@ -18,7 +18,8 @@ export type DispatchedEvent =
         | "zoom"
         | "set-graph-settings"
         | "resize-exp-list"
-        | "set-none-selected";
+        | "set-none-selected"
+        | "toggle-graph-settings";
     }
   | {
       type:
@@ -38,6 +39,7 @@ export type DispatchedEvent =
       changes: {
         [id: string]: EvaluatorChange;
       };
+      timingData: TimingData;
     };
 
 /**
@@ -75,13 +77,30 @@ interface EvaluatorChange {
   column_data?: unknown[];
 }
 
+/**
+ * Timing data for evaluator updates
+ * What exactly is being cached is currently unknown
+ * Most properties are self explanatory
+ * publishAllStatuses is
+ * timeInWorker is the total time taken across all parts of re-evaluation
+ */
+export interface TimingData {
+  cacheHits: number;
+  cacheMisses: number;
+  cacheReads: number;
+  cacheWrites: number;
+  computeAllLabels: number;
+  computeAriaDescriptions: number;
+  graphAllChanges: number;
+  processStatements: number;
+  publishAllStatuses: number;
+  timeInWorker: number;
+  updateAnalysis: number;
+  updateIntersections: number;
+}
+
 interface CalcPrivate {
   //// undocumented, may break
-  myGraphsWrapper: {
-    graphsController: {
-      getCurrentGraphTitle(): string | undefined;
-    };
-  };
   controller: {
     // _removeExpressionSynchronously(model: ItemModel): void;
     _toplevelReplaceItemAt(

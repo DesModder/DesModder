@@ -1,18 +1,18 @@
-import TextAST, { number } from "./TextAST";
+import { ProgramAnalysis } from "../LanguageServer";
+import { Identifier } from "../aug/AugLatex";
 import Aug from "../aug/AugState";
-import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
-import { Calc } from "globals/window";
-import { StyleValue, hydrate } from "./style/hydrate";
+import TextAST, { number } from "./TextAST";
+import { DiagnosticsState } from "./diagnostics";
+import { evalExpr } from "./staticEval";
 import * as Hydrated from "./style/Hydrated";
 import * as Default from "./style/defaults";
+import { StyleValue, hydrate } from "./style/hydrate";
 import * as Schema from "./style/schema";
-import { DiagnosticsState } from "./diagnostics";
 import { Diagnostic } from "@codemirror/lint";
-import { evalExpr } from "./staticEval";
-import { Identifier } from "../aug/AugLatex";
-import { everyNonNull } from "utils/utils";
 import { GrapherState } from "@desmodder/graph-state";
-import { ProgramAnalysis } from "../LanguageServer";
+import { Calc } from "globals/window";
+import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
+import { everyNonNull } from "utils/utils";
 
 export class DownState extends DiagnosticsState {
   mapIDstmt: { [key: string]: TextAST.Statement } = {};

@@ -1,5 +1,34 @@
 # DesModder Changelog
 
+## 0.8.3
+
+Bug fixes:
+
+- (GLesmos) No longer freeze the UI when enabled
+- (GLesmos) Lists of points now work properly
+- (Text Mode) Fix some edge cases with piecewises
+
+## 0.8.2
+
+Bug fix:
+
+- (Video Creator) Actually fix inline math inputs
+
+## 0.8.1
+
+New features:
+
+- Performance Display plugin
+
+Bug fixes and improvements:
+
+- (Video Creator) Fix inline math inputs
+- (Text Mode) Decrease unary minus precedence below exp
+- (Tips) New tips
+- (Calculator Settings) Follow Desmos rename to "Author features" where appropriate
+- (Pin Expressions) Fill outside of bookmarks, following readonly button style
+- Prepare translations support
+
 ## 0.8.0
 
 New features:

@@ -1,6 +1,6 @@
-import { Calc } from "globals/window";
-import { initGLesmosCanvas, GLesmosCanvas } from "./glesmosCanvas";
 import ViewportTransforms from "./ViewportTransforms";
+import { initGLesmosCanvas, GLesmosCanvas } from "./glesmosCanvas";
+import { Calc } from "globals/window";
 
 export default class Controller {
   canvas: GLesmosCanvas | null = null;

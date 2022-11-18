@@ -1,5 +1,5 @@
-import template from "@babel/template";
 import withinFunctionAssignment from "../overrideHelpers/withinFunctionAssignment";
+import template from "@babel/template";
 
 export default () =>
   /* @plugin pin-expressions
@@ -12,7 +12,7 @@ export default () =>
   withinFunctionAssignment(
     "getDisplayState",
     () => template.expression.ast`function (e) {
-        return e.isHiddenFromUI || e.filteredBySearch || window.DesModder?.controller?.isPinned(e.id)
+        return e.isHiddenFromUI || e.filteredBySearch || window.DesModder?.controller?.isExpressionPinned(e.id)
           ? "none"
           : e.renderShell
           ? "shell"

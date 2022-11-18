@@ -1,5 +1,5 @@
-import { Calc } from "globals/window";
 import "./pinExpressions.less";
+import { Calc } from "globals/window";
 
 export default {
   id: "pin-expressions",

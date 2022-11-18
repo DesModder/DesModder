@@ -21,7 +21,7 @@
         "name": "folder-minus"
       },
       "setIdx": 0,
-      "setId": 5,
+      "setId": 4,
       "iconIdx": 0
     },
     {
@@ -44,7 +44,7 @@
         "name": "folder-plus"
       },
       "setIdx": 0,
-      "setId": 5,
+      "setId": 4,
       "iconIdx": 1
     },
     {
@@ -55,44 +55,21 @@
         "attrs": [],
         "isMulticolor": false,
         "isMulticolor2": false,
-        "grid": 24,
+        "colorPermutations": {},
         "tags": ["logo"],
-        "colorPermutations": {}
+        "grid": 24
       },
       "attrs": [],
       "properties": {
-        "order": 5,
-        "id": 0,
+        "order": 3,
+        "id": 2,
         "name": "desmodder",
         "prevSize": 24,
         "code": 59652
       },
-      "setIdx": 1,
-      "setId": 6,
-      "iconIdx": 0
-    },
-    {
-      "icon": {
-        "paths": [
-          "M102.4 102.4c0-56.32 46.080-102.4 102.4-102.4h614.4c56.554 0 102.4 45.846 102.4 102.4v0 921.6l-409.6-204.8-409.6 204.8v-921.6zM204.8 102.4v768l307.2-153.6 307.2 153.6v-768h-614.4zM460.8 358.4v-102.4h102.4v102.4h102.4v102.4h-102.4v102.4h-102.4v-102.4h-102.4v-102.4h102.4z"
-        ],
-        "attrs": [{}],
-        "isMulticolor": false,
-        "isMulticolor2": false,
-        "tags": ["bookmark-outline-add"],
-        "grid": 24
-      },
-      "attrs": [{}],
-      "properties": {
-        "order": 3,
-        "id": 0,
-        "prevSize": 24,
-        "code": 59648,
-        "name": "bookmark-outline-add"
-      },
-      "setIdx": 2,
+      "setIdx": 0,
       "setId": 4,
-      "iconIdx": 0
+      "iconIdx": 2
     },
     {
       "icon": {
@@ -108,14 +85,39 @@
       "attrs": [{}],
       "properties": {
         "order": 2,
-        "id": 1,
+        "id": 4,
         "prevSize": 24,
         "code": 59649,
         "name": "bookmark"
       },
-      "setIdx": 2,
+      "setIdx": 0,
       "setId": 4,
-      "iconIdx": 1
+      "iconIdx": 4
+    },
+    {
+      "icon": {
+        "paths": [
+          "M448 576v-448c-247.424 0-448 200.576-448 448s200.576 448 448 448 448-200.576 448-448c0-72.034-17.028-140.084-47.236-200.382l-400.764 200.382zM912.764 247.618c-73.552-146.816-225.374-247.618-400.764-247.618v448l400.764-200.382z"
+        ],
+        "attrs": [],
+        "isMulticolor": false,
+        "isMulticolor2": false,
+        "tags": ["pie-chart", "stats", "statistics", "graph"],
+        "defaultCode": 59802,
+        "grid": 24
+      },
+      "attrs": [],
+      "properties": {
+        "ligatures": "pie-chart, stats",
+        "name": "pie-chart",
+        "order": 6,
+        "id": 5,
+        "prevSize": 24,
+        "code": 59802
+      },
+      "setIdx": 0,
+      "setId": 4,
+      "iconIdx": 5
     }
   ],
   "height": 1024,
@@ -137,10 +139,13 @@
       "autoHost": false,
       "noie8": true,
       "ie7": false,
-      "showSelector": false,
-      "showMetrics": false,
-      "showMetadata": false,
-      "showVersion": false
+      "showSelector": true,
+      "showMetrics": true,
+      "showMetadata": true,
+      "showVersion": true,
+      "resetPoint": 59648,
+      "cssVars": false,
+      "cssVarsFormat": "less"
     },
     "imagePref": {
       "prefix": "icon-",

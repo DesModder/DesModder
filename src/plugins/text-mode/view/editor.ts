@@ -1,6 +1,32 @@
-import { EditorState } from "@codemirror/state";
 import Controller from "../Controller";
+// Language extension
+import { TextMode } from "../lezer/index";
 import "./editor.css";
+import { checkboxPlugin } from "./plugins/checkboxWidget";
+import { styleMappingPlugin } from "./plugins/styleMappingWidgets";
+import {
+  closeBrackets,
+  autocompletion,
+  completionKeymap,
+  closeBracketsKeymap,
+} from "@codemirror/autocomplete";
+import {
+  history,
+  defaultKeymap,
+  historyKeymap,
+  indentWithTab,
+} from "@codemirror/commands";
+import {
+  indentOnInput,
+  foldGutter,
+  bracketMatching,
+  syntaxHighlighting,
+  foldKeymap,
+} from "@codemirror/language";
+import { defaultHighlightStyle } from "@codemirror/language";
+import { linter } from "@codemirror/lint";
+import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
+import { EditorState } from "@codemirror/state";
 // Basic editor extensions
 import {
   EditorView,
@@ -9,33 +35,7 @@ import {
   highlightActiveLine,
   keymap,
 } from "@codemirror/view";
-import {
-  indentOnInput,
-  foldGutter,
-  bracketMatching,
-  syntaxHighlighting,
-  foldKeymap,
-} from "@codemirror/language";
 import { lineNumbers, highlightActiveLineGutter } from "@codemirror/view";
-import {
-  history,
-  defaultKeymap,
-  historyKeymap,
-  indentWithTab,
-} from "@codemirror/commands";
-import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
-import {
-  closeBrackets,
-  autocompletion,
-  completionKeymap,
-  closeBracketsKeymap,
-} from "@codemirror/autocomplete";
-import { defaultHighlightStyle } from "@codemirror/language";
-// Language extension
-import { TextMode } from "../lezer/index";
-import { linter } from "@codemirror/lint";
-import { checkboxPlugin } from "./plugins/checkboxWidget";
-import { styleMappingPlugin } from "./plugins/styleMappingWidgets";
 
 const scrollTheme = EditorView.theme({
   "&": {
