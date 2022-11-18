@@ -66,7 +66,6 @@ function sendHeartbeat(
 const sleep = (t: number) => new Promise((res) => setTimeout(res, t));
 
 async function main(extId: string) {
-  console.log("[WakaTime] Starting");
   // Date.now can be messed up by system clock changes
   let lastUpdate = performance.now();
   while (isEnabled) {
@@ -85,7 +84,7 @@ async function main(extId: string) {
           graphURL,
           lineCount
         );
-        console.log("[WakaTime] Heartbeat sent sucessfully");
+        console.debug("[WakaTime] Heartbeat sent sucessfully at", new Date());
       } catch (e) {
         console.error("[WakaTime] Error sending heartbeat:", e);
       }
@@ -115,7 +114,6 @@ async function onEnable(newConfig: Config) {
   config = newConfig;
   isEnabled = true;
   const extId = await getExtId();
-  console.log(`[WakaTime] Got extension ID: ${extId}`);
   try {
     await main(extId);
   } catch (e) {
