@@ -2,6 +2,10 @@
   .dcg-expressions-branding {
     // Usage tip will be above the normal bounding box
     overflow: visible;
+    // Still center, but allow widening
+    // Leave a gap for the keypad no matter what
+    width: calc(100% - 170px);
+    margin-left: calc(85px - 50%);
   }
 
   .dcg-expressionlist {
