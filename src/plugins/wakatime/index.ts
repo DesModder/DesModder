@@ -1,6 +1,8 @@
+import { Calc } from "../../globals/window";
+import { desModderController } from "../../script";
 import { HearbeatMessage, RuntimeResponse } from "background";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
-import { Calc } from "../../globals/window";
+
 interface Config {
   secretKey: string;
 }
@@ -32,17 +34,9 @@ function sendHeartbeat(
       is_write: null, // (boolean) Maybe this could be implemented in the future?
 
       // Everything below will show up in your Leaderboard.
-      // This is personally the heartbeat scheme that I use.
-      project: "Desmos Projects",
+      project: graphName,
       entity: graphURL,
-      branch: graphName,
-
-      // But if you are unhappy with the above, you can opt with this instead.
-      /*
-      "project": graphName,
-      "entity": graphURL,
-      "branch": null
-      */
+      branch: null,
     };
 
     const options: RequestInit = {
@@ -55,13 +49,17 @@ function sendHeartbeat(
     };
 
     const message: HearbeatMessage = { type: "sendHeartbeat", options };
-    chrome.runtime.sendMessage(extId, message, (res: RuntimeResponse) => {
-      if (res.type == "error") {
-        reject(new Error(`Backend reported error: ${res.message}`));
-      } else if (res.type == "success") {
-        resolve();
+    chrome.runtime.sendMessage(
+      extId,
+      message,
+      (res: RuntimeResponse | undefined) => {
+        if (res?.type == "success") {
+          resolve();
+        } else {
+          reject(new Error(`Backend reported error: ${res?.message}`));
+        }
       }
-    });
+    );
   });
 }
 
@@ -73,7 +71,8 @@ async function main(extId: string) {
   let lastUpdate = performance.now();
   while (isEnabled) {
     const graphName =
-      (document.querySelector(".dcg-variable-title") as any).innerText ?? "";
+      desModderController.topLevelComponents.graphsController.getCurrentGraphTitle() ??
+      "Untitled Graph";
     const graphURL = window.location.href;
     const lineCount = Calc.getExpressions().length;
 
