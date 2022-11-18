@@ -1,11 +1,5 @@
 import "globals/env";
 
-chrome.action.onClicked.addListener(() => {
-  chrome.tabs.create({
-    url: "https://www.desmos.com/calculator",
-  });
-});
-
 export type HeartbeatMessage = {
   type: "sendHeartbeat";
   options: RequestInit | undefined;
