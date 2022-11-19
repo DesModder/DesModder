@@ -1,8 +1,21 @@
 import { getFunctionName, getBuiltin } from "./builtins";
 import { countReferences, opcodes, printOp, Types } from "./opcodeDeps";
-import { compileObject, getGLScalarType, getGLType } from "./outputHelpers";
+import {
+  compileObject,
+  getGLScalarType,
+  getGLType,
+  getGLTypeOfLength,
+} from "./outputHelpers";
 import { desmosRequire } from "globals/workerSelf";
-import { IRChunk, IRInstruction } from "parsing/IR";
+import {
+  BeginBroadcast,
+  BeginLoop,
+  EndBroadcast,
+  EndLoop,
+  IRChunk,
+  IRInstruction,
+  NativeFunction,
+} from "parsing/IR";
 import { evalMaybeRational, MaybeRational } from "parsing/parsenode";
 
 export const ListLength = desmosRequire(
@@ -116,14 +129,33 @@ function getSourceSimple(
       return getSourceBinOp(ci, inlined, chunk);
     case opcodes.Negative:
       return "-" + maybeInlined(ci.args[0], inlined);
-    case opcodes.Piecewise:
-      return (
-        maybeInlined(ci.args[0], inlined) +
-        "?" +
-        maybeInlined(ci.args[1], inlined) +
-        ":" +
-        maybeInlined(ci.args[2], inlined)
-      );
+    case opcodes.Piecewise: {
+      const condition = maybeInlined(ci.args[0], inlined);
+      const branchIndices = [ci.args[1], ci.args[2]];
+      const branches = branchIndices.map((i) => chunk.getInstruction(i));
+      const isList = branches.map((b) => Types.isList(b.valueType));
+      const args = branchIndices.map((i) => maybeInlined(i, inlined));
+      if (isList[0] != isList[1]) {
+        // Desmos should eliminate this case (by expanding the scalar to the
+        // length of the list) before reaching here, so this is just in case
+        throw new Error(
+          "Cannot mix list and scalar value in piecewise expression."
+        );
+      }
+      if (isList[0]) {
+        const lengths = branchIndices.map((i) =>
+          ListLength.getConstantListLength(chunk, i)
+        );
+        if (lengths[0] != lengths[1])
+          throw new Error(
+            "Cannot mix lists of different lengths in piecewise expression."
+          );
+        deps.add("ternary#" + getGLTypeOfLength(ci.valueType, lengths[0]));
+        return `dsm_ternary(${condition},${args.join(",")})`;
+      } else {
+        return condition + "?" + args.join(":");
+      }
+    }
     case opcodes.List:
       const init = ci.args.map((i) => maybeInlined(i, inlined)).join(",");
       const type = getGLScalarType(ci.valueType);
@@ -169,21 +201,7 @@ function getSourceSimple(
         ")-1]"
       );
     case opcodes.NativeFunction:
-      if (getBuiltin(ci.symbol)?.tag === "list") {
-        deps.add(
-          ci.symbol + "#" + ListLength.getConstantListLength(chunk, ci.args[0])
-        );
-      } else if (getBuiltin(ci.symbol)?.tag === "list2") {
-        deps.add(
-          ci.symbol +
-            "#" +
-            ListLength.getConstantListLength(chunk, ci.args[0]) +
-            "#" +
-            ListLength.getConstantListLength(chunk, ci.args[1])
-        );
-      } else {
-        deps.add(ci.symbol);
-      }
+      deps.add(nativeFunctionDependency(chunk, ci));
       const name = getFunctionName(ci.symbol);
       const args = ci.args.map((e) => maybeInlined(e, inlined)).join(",");
       return `${name}(${args})`;
@@ -191,6 +209,31 @@ function getSourceSimple(
       throw Error("ExtendSeed not yet implemented");
     default:
       throw Error(`Unexpected opcode: ${printOp(ci.type)}`);
+  }
+}
+
+function nativeFunctionDependency(chunk: IRChunk, ci: NativeFunction): string {
+  const builtin = getBuiltin(ci.symbol);
+  switch (builtin?.tag) {
+    case "list":
+      return (
+        ci.symbol + "#" + ListLength.getConstantListLength(chunk, ci.args[0])
+      );
+    case "list2":
+      return (
+        ci.symbol +
+        "#" +
+        ListLength.getConstantListLength(chunk, ci.args[0]) +
+        "#" +
+        ListLength.getConstantListLength(chunk, ci.args[1])
+      );
+    case "glsl-builtin":
+    case "simple":
+      return ci.symbol;
+    default:
+      throw new Error(
+        `Programming error: Impossible native function builtin type: ${builtin?.tag}`
+      );
   }
 }
 
@@ -206,7 +249,7 @@ function constFloat(s: string) {
 
 function getBeginLoopSource(
   instructionIndex: number,
-  ci: IRInstruction & { type: typeof opcodes.BeginLoop },
+  ci: BeginLoop,
   chunk: IRChunk,
   inlined: string[]
 ) {
@@ -243,7 +286,7 @@ function getBeginLoopSource(
 
 function getEndLoopSource(
   instructionIndex: number,
-  ci: IRInstruction & { type: typeof opcodes.EndLoop },
+  ci: EndLoop,
   chunk: IRChunk,
   inlined: string[]
 ) {
@@ -271,7 +314,7 @@ function getEndLoopSource(
 
 function getBeginBroadcastSource(
   instructionIndex: number,
-  ci: IRInstruction & { type: typeof opcodes.BeginBroadcast },
+  ci: BeginBroadcast,
   chunk: IRChunk
 ) {
   const endInstruction = chunk.getInstruction(ci.endIndex);
@@ -301,7 +344,7 @@ function getBeginBroadcastSource(
 
 function getEndBroadcastSource(
   instructionIndex: number,
-  ci: IRInstruction & { type: typeof opcodes.EndBroadcast },
+  ci: EndBroadcast,
   chunk: IRChunk
 ) {
   const resultAssignments = [];

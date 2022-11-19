@@ -70,154 +70,154 @@ export interface Types {
 
 export type ValueType = Types[keyof Types];
 
-interface HasValueType {
+export interface HasValueType {
   valueType: ValueType;
 }
 
-interface LoadArg extends HasValueType {
+export interface LoadArg extends HasValueType {
   type: Opcodes["LoadArg"];
 }
 
-interface BlockVar extends HasValueType {
+export interface BlockVar extends HasValueType {
   type: Opcodes["BlockVar"];
 }
 
-interface SymbolicVar extends HasValueType {
+export interface SymbolicVar extends HasValueType {
   type: Opcodes["SymbolicVar"];
   // valueType must not be a list
 }
 
-interface SymbolicListVar extends HasValueType {
+export interface SymbolicListVar extends HasValueType {
   type: Opcodes["SymbolicListVar"];
   length: number;
   // valueType must be a list
 }
 
-interface Constant extends HasValueType {
+export interface Constant extends HasValueType {
   type: Opcodes["Constant"];
   value: unknown;
 }
 
-interface BinaryOp extends HasValueType {
+export interface BinaryOp extends HasValueType {
   args: [number, number];
 }
 
-interface Add extends BinaryOp {
+export interface Add extends BinaryOp {
   type: Opcodes["Add"];
 }
 
-interface Subtract extends BinaryOp {
+export interface Subtract extends BinaryOp {
   type: Opcodes["Subtract"];
 }
 
-interface Multiply extends BinaryOp {
+export interface Multiply extends BinaryOp {
   type: Opcodes["Multiply"];
 }
 
-interface Divide extends BinaryOp {
+export interface Divide extends BinaryOp {
   type: Opcodes["Divide"];
 }
 
-interface Exponent extends BinaryOp {
+export interface Exponent extends BinaryOp {
   type: Opcodes["Exponent"];
 }
 
-interface RawExponent extends BinaryOp {
+export interface RawExponent extends BinaryOp {
   type: Opcodes["RawExponent"];
 }
 
-interface Negative extends HasValueType {
+export interface Negative extends HasValueType {
   type: Opcodes["Negative"];
   args: [number];
 }
 
-interface Equal extends BinaryOp {
+export interface Equal extends BinaryOp {
   type: Opcodes["Equal"];
 }
 
-interface Less extends BinaryOp {
+export interface Less extends BinaryOp {
   type: Opcodes["Less"];
 }
 
-interface Greater extends BinaryOp {
+export interface Greater extends BinaryOp {
   type: Opcodes["Greater"];
 }
 
-interface LessEqual extends BinaryOp {
+export interface LessEqual extends BinaryOp {
   type: Opcodes["LessEqual"];
 }
 
-interface GreaterEqual extends BinaryOp {
+export interface GreaterEqual extends BinaryOp {
   type: Opcodes["GreaterEqual"];
 }
 
-interface And extends BinaryOp {
+export interface And extends BinaryOp {
   type: Opcodes["And"];
 }
 
-interface Piecewise extends HasValueType {
+export interface Piecewise extends HasValueType {
   type: Opcodes["Piecewise"];
   args: number[];
 }
 
-interface OrderedPair extends HasValueType {
+export interface OrderedPair extends HasValueType {
   type: Opcodes["OrderedPair"];
   args: [number, number];
 }
 
-interface OrderedPairAccess extends HasValueType {
+export interface OrderedPairAccess extends HasValueType {
   type: Opcodes["OrderedPairAccess"];
   args: [number, number];
 }
 
-interface List extends HasValueType {
+export interface List extends HasValueType {
   type: Opcodes["List"];
   args: number[];
 }
 
-interface ListAccess extends HasValueType {
+export interface ListAccess extends HasValueType {
   type: Opcodes["ListAccess"];
   // args: [list, index]
   args: [number, number];
 }
 
-interface DeferredListAccess extends HasValueType {
+export interface DeferredListAccess extends HasValueType {
   type: Opcodes["DeferredListAccess"];
   args: unknown;
 }
 
-interface InboundsListAccess extends HasValueType {
+export interface InboundsListAccess extends HasValueType {
   type: Opcodes["InboundsListAccess"];
   // args: [list, index]
   args: [number, number];
 }
 
-interface NativeFunction extends HasValueType {
+export interface NativeFunction extends HasValueType {
   type: Opcodes["NativeFunction"];
   args: number[];
   symbol: string;
   callData: unknown;
 }
 
-interface Distribution extends HasValueType {
+export interface Distribution extends HasValueType {
   type: Opcodes["Distribution"];
   args: unknown;
   symbol: string;
 }
 
-interface BeginIntegral extends HasValueType {
+export interface BeginIntegral extends HasValueType {
   type: Opcodes["BeginIntegral"];
   args: unknown;
   endIndex: number;
   callData: unknown;
 }
 
-interface EndIntegral extends HasValueType {
+export interface EndIntegral extends HasValueType {
   type: Opcodes["EndIntegral"];
   args: unknown;
 }
 
-interface BeginBroadcast extends HasValueType {
+export interface BeginBroadcast extends HasValueType {
   type: Opcodes["BeginBroadcast"];
   length: number;
   endIndex: number;
@@ -225,13 +225,13 @@ interface BeginBroadcast extends HasValueType {
   args: [number];
 }
 
-interface EndBroadcast extends HasValueType {
+export interface EndBroadcast extends HasValueType {
   type: Opcodes["EndBroadcast"];
   // args: [matching StartBroadcast index, return index, ...more return indices]
   args: number[];
 }
 
-interface BroadcastResult extends HasValueType {
+export interface BroadcastResult extends HasValueType {
   type: Opcodes["BroadcastResult"];
   // args: [matching EndBroadcast index]
   args: [number];
@@ -239,7 +239,7 @@ interface BroadcastResult extends HasValueType {
   isConstantBroadcast: boolean;
 }
 
-interface BeginLoop extends HasValueType {
+export interface BeginLoop extends HasValueType {
   type: Opcodes["BeginLoop"];
   // args: lower bound, upper bound, initial value
   args: number[];
@@ -247,23 +247,23 @@ interface BeginLoop extends HasValueType {
   callData: unknown;
 }
 
-interface EndLoop extends HasValueType {
+export interface EndLoop extends HasValueType {
   type: Opcodes["EndLoop"];
   // args: matching BeginLoop index, accumulator new value
   args: [number, number];
 }
 
-interface ExtendSeed extends HasValueType {
+export interface ExtendSeed extends HasValueType {
   type: Opcodes["ExtendSeed"];
   args: unknown;
   tag: unknown;
 }
 
-interface Noop extends HasValueType {
+export interface Noop extends HasValueType {
   type: Opcodes["Noop"];
 }
 
-interface Action extends HasValueType {
+export interface Action extends HasValueType {
   type: Opcodes["Action"];
   args: unknown;
   symbols: unknown;
