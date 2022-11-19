@@ -45,8 +45,10 @@ export default class Controller {
     maxLatex: "10",
     stepLatex: "1",
   };
+
   actionCaptureState: "none" | "waiting-for-update" | "waiting-for-screenshot" =
     "none";
+
   currentActionID: string | null = null;
   tickCountLatex: string = "10";
 
@@ -74,11 +76,10 @@ export default class Controller {
     updateView();
   }
 
-  tryInitFFmpeg() {
-    initFFmpeg(this).then(() => {
-      this.ffmpegLoaded = true;
-      this.updateView();
-    });
+  async tryInitFFmpeg() {
+    await initFFmpeg(this);
+    this.ffmpegLoaded = true;
+    this.updateView();
   }
 
   deleteAll() {
@@ -211,7 +212,7 @@ export default class Controller {
 
   getMatchingSlider() {
     const regex = new RegExp(
-      `^(\\?\s)*${escapeRegex(this.sliderSettings.variable)}(\\?\s)*=`
+      `^(\\\\?\\s)*${escapeRegex(this.sliderSettings.variable)}(\\\\?\\s)*=`
     );
     return Calc.getState().expressions.list.find(
       (e) =>

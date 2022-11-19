@@ -1,4 +1,4 @@
-import LanguageServer, { ProgramAnalysis } from "./LanguageServer";
+import { ProgramAnalysis } from "./LanguageServer";
 import {
   rawNonFolderToAug,
   rawToAugSettings,
@@ -45,7 +45,7 @@ export function eventSequenceChanges(
   analysis: ProgramAnalysis
 ): ChangeSpec[] {
   let settingsChanged: boolean = false;
-  let itemsChanged: { [key: string]: ToChange } = {};
+  const itemsChanged: { [key: string]: ToChange } = {};
   for (const event of events) {
     switch (event.type) {
       case "re-randomize":
@@ -157,9 +157,13 @@ function itemChange(
         );
       const ast = itemAugToAST(itemAug) as TextAST.Table | null;
       if (ast === null)
-        throw "Programming error: expect new table item to always be parseable";
+        throw new Error(
+          "Programming error: expect new table item to always be parseable"
+        );
       if (ast.columns.length < oldNode.columns.length)
-        throw "Programming error: expect no fewer new table columns than old";
+        throw new Error(
+          "Programming error: expect no fewer new table columns than old"
+        );
       return oldNode.columns.map((e, i) =>
         insertWithIndentation(
           view,
@@ -175,7 +179,9 @@ function itemChange(
         );
       const ast = itemAugToAST(itemAug) as TextAST.ExprStatement | null;
       if (ast === null)
-        throw "Programming error: expect new expr item to always be parseable";
+        throw new Error(
+          "Programming error: expect new expr item to always be parseable"
+        );
       return [
         insertWithIndentation(
           view,
@@ -191,7 +197,9 @@ function itemChange(
         );
       const ast = itemAugToAST(itemAug) as TextAST.Image | null;
       if (ast === null)
-        throw "Programming error: expect new image item to always be parseable";
+        throw new Error(
+          "Programming error: expect new image item to always be parseable"
+        );
       const newEntries = ast.style!.entries;
       const oldEntries = oldNode.style!.entries;
       return newEntries

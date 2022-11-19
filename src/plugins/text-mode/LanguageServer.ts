@@ -56,14 +56,14 @@ export default class LanguageServer {
   lastUpdateWasByUser: boolean = false;
 
   constructor(
-    private view: EditorView,
-    private setCalcState: (state: GraphState) => void
+    private readonly view: EditorView,
+    private readonly setCalcState: (state: GraphState) => void
   ) {
     this.setParsing(true);
   }
 
-  doLint(): Promise<Diagnostic[]> {
-    return new Promise((resolve) => {
+  async doLint(): Promise<Diagnostic[]> {
+    return await new Promise((resolve) => {
       if (!this.isParsing) {
         resolve(this.analysis!.diagnostics);
       } else {
@@ -77,7 +77,7 @@ export default class LanguageServer {
   }
 
   setParsing(parsing: boolean) {
-    if (this.isParsing == parsing) return;
+    if (this.isParsing === parsing) return;
     this.isParsing = parsing;
     if (parsing) {
       if (this.parseCheckInterval !== null)
@@ -163,7 +163,7 @@ export default class LanguageServer {
    */
   processQueuedEvents() {
     const changes = eventSequenceChanges(
-      this.view!,
+      this.view,
       this.queuedEvents,
       this.analysis!
     );

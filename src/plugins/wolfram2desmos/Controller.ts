@@ -14,7 +14,7 @@ export default class Controller {
   enabled: boolean = false;
 
   public configFlags = {
-    reciprocalExponents2Surds: false, //converts ^(1/#) to surd
+    reciprocalExponents2Surds: false, // converts ^(1/#) to surd
     derivativeLoopLimit: true, // converts (d^#/dx^#) to (d/dx)... # times, limited to 10 iterations
   };
 
@@ -22,10 +22,10 @@ export default class Controller {
     this.panel = document.querySelector(".dcg-exppanel-outer");
     this.onFocus = callback;
     this.filterTag = filterTag;
-    let focusHandler = (e: FocusEvent) => {
+    const focusHandler = (e: FocusEvent) => {
       // used arrow function to allow "this" to point to the class instance
-      let elem: HTMLElement = e.target as HTMLElement;
-      let isTarget: boolean = this.filterTag.includes(
+      const elem: HTMLElement = e.target as HTMLElement;
+      const isTarget: boolean = this.filterTag.includes(
         elem.tagName.toLowerCase()
       );
       if (isTarget && this.enabled) {

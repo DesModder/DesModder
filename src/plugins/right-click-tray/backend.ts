@@ -37,11 +37,11 @@ function onMouseDown(e: MouseEvent) {
     }
     // assume the target is an HTMLElement
     const target = e.target as HTMLElement;
-    let tag = target.tagName.toLowerCase();
+    const tag = target.tagName.toLowerCase();
 
     // determines if clicked target is an icon container
-    let isIconContainer = (tagName: string, lvl: number, type: string) => {
-      let container = seekParent(target, lvl);
+    const isIconContainer = (tagName: string, lvl: number, type: string) => {
+      const container = seekParent(target, lvl);
       if (container === null) return false;
       return (
         tag === tagName &&
@@ -51,8 +51,8 @@ function onMouseDown(e: MouseEvent) {
     };
 
     // determines if container is part of an expression or image
-    let hasLongHoldButton = (lvl: number) => {
-      let wrapper = seekParent(target, lvl + 1);
+    const hasLongHoldButton = (lvl: number) => {
+      const wrapper = seekParent(target, lvl + 1);
       if (wrapper === null) return false;
       if (typeof wrapper.classList === "undefined") return false;
       return wrapper.classList.contains("dcg-expression-icon-container");
@@ -91,7 +91,7 @@ function onMouseDown(e: MouseEvent) {
 function seekParent(src: HTMLElement | null, level: number) {
   if (level <= 0) return src;
 
-  for (var i = 0; i < level; ++i) {
+  for (let i = 0; i < level; ++i) {
     if (src != null) {
       src = src.parentElement;
     } else {
