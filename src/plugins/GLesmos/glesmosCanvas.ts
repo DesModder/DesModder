@@ -179,7 +179,7 @@ export function initGLesmosCanvas() {
     });
   };
 
-  const render = (id: string) => {
+  const render = () => {
     if (glesmosShaderProgram) {
       gl.useProgram(glesmosShaderProgram);
 

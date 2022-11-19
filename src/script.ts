@@ -1,3 +1,4 @@
+import { pollForValue } from "./utils/utils";
 import "fonts/style.css";
 import window from "globals/window";
 import Controller from "main/Controller";
@@ -12,6 +13,10 @@ window.DesModder = {
   controller,
   exposedPlugins: controller.exposedPlugins,
 };
-
-controller.init(view);
-view.init(controller);
+void (async () => {
+  const pillbox = (await pollForValue(() =>
+    document.querySelector(".dcg-overgraph-pillbox-elements")
+  )) as HTMLElement;
+  controller.init(view);
+  view.init(controller, pillbox);
+})();

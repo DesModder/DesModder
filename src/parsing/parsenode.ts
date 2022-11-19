@@ -655,8 +655,6 @@ type IrrelevantExprNode =
   | Table
   | Ticker;
 
-type SubclassedOnly = RepeatedOperator | BaseComparator;
-
 type Node = RootOnlyExprNode | ChildExprNode;
 export default Node;
 

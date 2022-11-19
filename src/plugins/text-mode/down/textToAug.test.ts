@@ -99,7 +99,7 @@ function testStmt(desc: string, s: string, ...expected: any[]) {
     expect(diagnostics).toEqual([]);
     expect(res).not.toBeNull();
     if (res === null) return;
-    expected.map((e, i) => {
+    expected.forEach((e, i) => {
       const augStmt = res.expressions.list[i];
       expect(augStmt).toEqual(e);
     });
@@ -112,7 +112,7 @@ function pos(from: number, to: number) {
 
 function testDiagnostics(desc: string, s: string, expected: Diagnostic[]) {
   test(getTestName(desc, s), () => {
-    const [{ diagnostics }, res] = textToAug(s);
+    const [{ diagnostics }] = textToAug(s);
     expect(diagnostics).toEqual(expected);
   });
 }
@@ -796,7 +796,7 @@ describe("Folder", () => {
 });
 describe("Automatic IDs", () => {
   test("IDs are correctly managed with tables", () => {
-    const [analysis, res] = textToAug(`
+    const [_analysis, res] = textToAug(`
       table {
         a=[]
         b=[]
@@ -829,7 +829,7 @@ describe("Automatic IDs", () => {
     });
   });
   test("IDs are correctly managed with folders", () => {
-    const [errors, res] = textToAug(`
+    const [_errors, res] = textToAug(`
       folder "Title" {
         a
         b

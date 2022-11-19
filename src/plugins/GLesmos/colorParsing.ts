@@ -94,10 +94,10 @@ function getRGBfromHSL(hue: number, sat: number, light: number) {
   const lsRatio: number = Math.min(light, 1 - light) * sat;
 
   return [0, 8, 4]
-    .map((offset, i) => {
+    .map((offset) => {
       return mod(offset + hue / 30, 12);
     })
-    .map((kval, i) => {
+    .map((kval) => {
       return (
         light -
         lsRatio * Math.max(Math.min(Math.min(kval - 3, 9 - kval), 1), -1)
@@ -110,10 +110,10 @@ function getRGBfromHSV(hue: number, sat: number, value: number) {
   const vsRatio: number = value * sat;
 
   return [5, 3, 1]
-    .map((offset, i) => {
+    .map((offset) => {
       return mod(offset + hue / 60, 6);
     })
-    .map((kval, i) => {
+    .map((kval) => {
       return (
         value - vsRatio * Math.max(Math.min(Math.min(kval, 4 - kval), 1), 0)
       );

@@ -4,16 +4,15 @@ import { PillboxContainer } from "components";
 import { Calc } from "globals/window";
 // Not good to have a specific workaround for this single plugin
 import { createTipElement } from "plugins/show-tips/Tip";
-import { pollForValue } from "utils/utils";
 
 export default class View {
   pillboxMountNode: HTMLElement | null = null;
   menuView: MountedComponent | null = null;
   controller: Controller | null = null;
 
-  async init(controller: Controller) {
+  init(controller: Controller, pillbox: HTMLElement) {
     this.controller = controller;
-    await this.mountPillbox(controller);
+    this.mountPillbox(controller, pillbox);
     Calc.controller.dispatcher.register((e) => {
       if (
         e.type === "keypad/set-minimized" ||
@@ -24,10 +23,7 @@ export default class View {
     });
   }
 
-  async mountPillbox(controller: Controller) {
-    const pillbox = (await pollForValue(() =>
-      document.querySelector(".dcg-overgraph-pillbox-elements")
-    )) as HTMLElement;
+  mountPillbox(controller: Controller, pillbox: HTMLElement) {
     /*
      * pillbox is shaped like:
      * <div class="dcg-overgraph-pillbox-elements">
@@ -59,6 +55,7 @@ export default class View {
     if (Calc.controller.isGraphSettingsOpen()) {
       return;
     }
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     const pillboxContainer = document.querySelector(
       ".dcg-overgraph-pillbox-elements"
     ) as HTMLElement | null;
@@ -69,15 +66,13 @@ export default class View {
         ? Calc.controller.getKeypadHeight()
         : 0;
       const bottom =
-        this.controller && this.controller.pillboxMenuOpen !== null
-          ? t + "px"
-          : "auto";
+        this.controller?.pillboxMenuOpen !== null ? `${t}px` : "auto";
       pillboxContainer.style.bottom = bottom;
     }
   }
 
   updateMenuView() {
-    this.menuView && this.menuView.update();
+    this.menuView?.update();
     this.updatePillboxHeight();
   }
 

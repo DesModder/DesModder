@@ -38,7 +38,7 @@ export default class Controller {
       if (this.canvas?.element) {
         this.canvas.updateTransforms(transforms);
         this.canvas?.setGLesmosShader(compiledGLString, id);
-        this.canvas?.render(id);
+        this.canvas?.render();
         ctx.drawImage(this.canvas?.element, 0, 0);
       }
     } catch (e) {

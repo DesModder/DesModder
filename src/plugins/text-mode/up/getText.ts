@@ -20,6 +20,7 @@ export default function getText(): [boolean, string] {
 
 function itemHasError(item: Aug.ItemAug) {
   return (
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
     item.error || (item.type === "folder" && item.children.some(itemHasError))
   );
 }

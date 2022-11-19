@@ -70,7 +70,7 @@ export default function needsParens(path: NodePath): boolean {
         case "PostfixExpression":
           return true;
         case "BinaryExpression":
-          return name === "left" && parent.op == "^";
+          return name === "left" && parent.op === "^";
         default:
           return false;
       }
@@ -100,7 +100,7 @@ export default function needsParens(path: NodePath): boolean {
         case "PostfixExpression":
           return true;
         case "ListAccessExpression":
-          return name == "expr";
+          return name === "expr";
         case "BinaryExpression": {
           if (node.type === "DoubleInequality") return true;
           const precedence = getPrecedence(node.op);
@@ -117,6 +117,7 @@ export default function needsParens(path: NodePath): boolean {
             )
               return true;
           }
+          return false;
         }
         default:
           return false;

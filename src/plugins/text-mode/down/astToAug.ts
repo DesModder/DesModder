@@ -19,10 +19,6 @@ export class DownState extends DiagnosticsState {
   maxCustomID = 0;
   hasBlockingError = false;
 
-  constructor(diagnostics: Diagnostic[]) {
-    super(diagnostics);
-  }
-
   generateID() {
     // TODO: incremental updates, so later IDs don't get destroyed when a new
     // expression is added in the middle of the code
@@ -56,7 +52,7 @@ export default function astToAug(
   };
   const diagnostics: Diagnostic[] = [...parseErrors];
   const ds = new DownState(diagnostics);
-  for (let stmt of program.children) {
+  for (const stmt of program.children) {
     // TODO: throw if there are multiple settings expressions
     const stmtAug = statementToAug(ds, state, stmt);
     if (stmtAug === null) {
@@ -526,7 +522,7 @@ function folderToAug(
   );
   if (style === null) return null;
   const id = ds.ensureID(style.id ?? "", expr);
-  for (let child of expr.children) {
+  for (const child of expr.children) {
     const stmtAug = statementToAug(ds, state, child);
     if (stmtAug !== null) {
       if (stmtAug.type === "folder") {
@@ -550,7 +546,7 @@ function folderToAug(
     hidden: style.hidden,
     collapsed: style.collapsed,
     title: expr.title,
-    children: children,
+    children,
   };
 }
 
@@ -635,7 +631,7 @@ export function childExprToAug(
         variable: identifierToAug(expr.variable),
         expression: childExprToAug(expr.expr),
       };
-    case "SequenceExpression":
+    case "SequenceExpression": {
       const seqRight = childExprToAug(expr.right);
       return {
         type: "Seq",
@@ -647,6 +643,7 @@ export function childExprToAug(
             : [seqRight]),
         ],
       };
+    }
     case "MemberExpression":
       return ["x", "y"].includes(expr.property.name)
         ? {
@@ -701,7 +698,7 @@ export function childExprToAug(
       };
     case "CallExpression":
       return callExpressionToAug(expr);
-    case "PrimeExpression":
+    case "PrimeExpression": {
       const child = callExpressionToAug(expr.expr);
       if (child.type === "DotAccess") {
         throw new Error("Cannot use prime notation together with dot notation");
@@ -711,6 +708,7 @@ export function childExprToAug(
         arg: child,
         order: expr.order,
       };
+    }
     case "DerivativeExpression":
       return {
         type: "Derivative",
@@ -747,13 +745,13 @@ function callExpressionToAug(
   throw Error("Programming Error: Invalid callee");
 }
 
-const binopMap = {
+const binopMap: Record<string, string> = {
   "+": "Add",
   "-": "Subtract",
   "*": "Multiply",
   "/": "Divide",
   "^": "Exponent",
-} as { [key: string]: string };
+};
 
 function piecewiseToAug(
   branches: TextAST.PiecewiseBranch[]

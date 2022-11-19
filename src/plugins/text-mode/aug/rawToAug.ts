@@ -15,7 +15,7 @@ export default function rawToAug(raw: Graph.GraphState): Aug.State {
     },
   };
   const ticker = raw.expressions.ticker;
-  if (ticker && ticker.handlerLatex) {
+  if (ticker?.handlerLatex) {
     res.expressions.ticker = {
       handlerLatex: parseLatex(ticker.handlerLatex),
       minStepLatex: parseLatex(ticker.minStepLatex ?? "0"),
@@ -49,7 +49,7 @@ function rawListToAug(
 ): Aug.ItemAug[] {
   const res: Aug.ItemAug[] = [];
   let currentFolder: null | Aug.FolderAug = null;
-  for (let item of list) {
+  for (const item of list) {
     if (item.id === "dsm-metadata-folder" || item.id === "dsm-metadata") {
       continue;
     }
@@ -207,7 +207,7 @@ function tryRawNonFolderToAug(
             }
           : undefined,
       };
-    case "table":
+    case "table": {
       const longestColumnLength = Math.max(
         ...item.columns.map((col) =>
           col.values.map((e) => e !== "").lastIndexOf(true)
@@ -232,6 +232,7 @@ function tryRawNonFolderToAug(
             latex: parseLatex(column.latex!),
           })),
       };
+    }
     case "text":
       return {
         ...base,
@@ -252,9 +253,9 @@ function vizPropsAug(
     histogramMode: viz.histogramMode,
   };
   if (
-    viz.breadth ||
-    viz.axisOffset ||
-    viz.alignedAxis ||
+    viz.breadth ??
+    viz.axisOffset ??
+    viz.alignedAxis ??
     viz.showBoxplotOutliers
   ) {
     res.boxplot = {
@@ -289,7 +290,7 @@ function columnExpressionCommon(
     throw Error("Expected colorLatex to be an identifier");
   }
   return {
-    color: color,
+    color,
     hidden: item.hidden ?? false,
     // TODO: don't include points property by default for curves and polygons
     // Rely on Desmos's automatic detection?
@@ -395,7 +396,7 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         // exclude the seed
         args: node.args
           .filter((e) => e.type !== "ExtendSeed")
-          .map((e) => childNodeToTree(e as ChildExprNode)),
+          .map((e) => childNodeToTree(e)),
       };
     case "Seed":
     case "ExtendSeed":
@@ -440,7 +441,7 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         arg: childNodeToTree(node.args[0]),
         variable: parseIdentifier(node._symbol),
       };
-    case "Prime":
+    case "Prime": {
       const primeArg = childNodeToTree(node.args[0]);
       if (primeArg.type !== "FunctionCall") {
         throw Error("Expected function call as argument of prime");
@@ -450,11 +451,7 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         arg: primeArg,
         order: node.order,
       };
-    case "List":
-      return {
-        type: "List",
-        args: node.args.map(childNodeToTree),
-      };
+    }
     case "List":
       return {
         type: "List",
@@ -472,7 +469,7 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         list: childNodeToTree(node.args[0]),
         index: childNodeToTree(node.args[1]),
       };
-    case "DotAccess":
+    case "DotAccess": {
       const prop = childNodeToTree(node.args[1]);
       if (prop.type !== "Identifier" && prop.type !== "FunctionCall") {
         throw Error(
@@ -484,7 +481,8 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         object: childNodeToTree(node.args[0]),
         property: prop,
       };
-    case "OrderedPairAccess":
+    }
+    case "OrderedPairAccess": {
       if (typeof node.index._constantValue === "boolean") {
         throw Error(
           "Ordered pair index is boolean, but expected rational or number"
@@ -499,6 +497,7 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         point: childNodeToTree(node.point),
         index: indexValue === 1 ? "x" : "y",
       };
+    }
     case "BareSeq":
     case "ParenSeq":
       return {
@@ -520,7 +519,7 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
           return assignmentExprToTree(n);
         }),
       };
-    case "Piecewise":
+    case "Piecewise": {
       const conditionNode = node.args[0];
       const condition =
         conditionNode.type === "Constant" &&
@@ -538,10 +537,11 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
       }
       return {
         type: "Piecewise",
-        condition: condition,
+        condition,
         consequent: childNodeToTree(node.args[1]),
         alternate: childNodeToTree(node.args[2]),
       };
+    }
     case "Product":
     case "Sum":
       return {

@@ -22,8 +22,8 @@ import {
   bracketMatching,
   syntaxHighlighting,
   foldKeymap,
+  defaultHighlightStyle,
 } from "@codemirror/language";
-import { defaultHighlightStyle } from "@codemirror/language";
 import { linter } from "@codemirror/lint";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
 import { EditorState } from "@codemirror/state";
@@ -34,8 +34,9 @@ import {
   dropCursor,
   highlightActiveLine,
   keymap,
+  lineNumbers,
+  highlightActiveLineGutter,
 } from "@codemirror/view";
-import { lineNumbers, highlightActiveLineGutter } from "@codemirror/view";
 
 const scrollTheme = EditorView.theme({
   "&": {

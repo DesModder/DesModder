@@ -39,5 +39,5 @@ class ImageWidget extends WidgetType {
 
 export default {
   paths: [".url", ".hoveredImage", ".depressedImage"],
-  widget: ImageWidget,
+  Widget: ImageWidget,
 };

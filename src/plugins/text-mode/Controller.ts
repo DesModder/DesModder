@@ -75,7 +75,7 @@ export default class Controller {
   /**
    * unmountEditor: called from module overrides when the DCGView node unmounts
    */
-  unmountEditor(container: HTMLDivElement) {
+  unmountEditor() {
     if (this.dispatchListenerID !== null) {
       Calc.controller.dispatcher.unregister(this.dispatchListenerID);
     }
@@ -136,7 +136,7 @@ function getSelectedItem(
   const selection = view.state.selection.main;
   if (ls.analysis) {
     const containingPairs = Object.entries(ls.analysis.mapIDstmt).filter(
-      ([id, stmt]) =>
+      ([_id, stmt]) =>
         stmt!.type !== "Folder" &&
         stmt!.pos!.from <= selection.from &&
         stmt!.pos!.to >= selection.to
