@@ -107,6 +107,7 @@ async function getExtId(): Promise<string> {
         // cancel = true
         return true;
       }
+      return false;
     });
     postMessageUp({ type: "get-ext-id" });
   });

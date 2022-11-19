@@ -33,7 +33,10 @@ export default function withDependencyMap(
         }),
       ],
     });
+    if (typeof output.code !== "string")
+      throw new Error("Babel did not give a string in output");
     // use `Function` instead of `eval` to force treatment as an expression
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
     return Function("return " + output.code)();
   };
 }

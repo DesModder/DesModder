@@ -76,7 +76,7 @@ export function postMessageDown(message: MessageContentToWindow) {
   postMessage(message);
 }
 
-type ShouldCancel = boolean | void;
+type ShouldCancel = boolean;
 
 // https://stackoverflow.com/a/11431812/7481517
 function listenToMessage<T>(callback: (message: T) => ShouldCancel) {

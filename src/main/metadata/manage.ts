@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
 import Metadata, { Expression } from "./interface";
 import migrateToLatest from "./migrate";
 import { ItemModel } from "globals/models";
@@ -84,7 +85,7 @@ export function isBlankMetadata(metadata: Metadata) {
 
 function cleanMetadata(metadata: Metadata) {
   /* Mutates metadata by removing expressions that no longer exist */
-  for (let id in metadata.expressions) {
+  for (const id in metadata.expressions) {
     if (Calc.controller.getItemModel(id) === undefined) {
       delete metadata.expressions[id];
     }
@@ -99,7 +100,7 @@ export function changeExprInMetadata(
   /* Mutates metadata by spreading obj into metadata.expressions[id],
   with default values deleted */
   const changed = metadata.expressions[id] ?? {};
-  for (let key in obj) {
+  for (const key in obj) {
     const value = obj[key as keyof typeof obj];
     switch (key) {
       case "pinned":

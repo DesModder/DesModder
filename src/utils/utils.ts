@@ -1,9 +1,7 @@
-interface FuncAny {
-  (): any;
-}
+type FuncAny = () => any;
 
-function _pollForValue<T>(func: () => T) {
-  return new Promise<T>((resolve) => {
+async function _pollForValue<T>(func: () => T) {
+  return await new Promise<T>((resolve) => {
     const interval = setInterval(() => {
       const val = func();
       if (val !== null && val !== undefined) {

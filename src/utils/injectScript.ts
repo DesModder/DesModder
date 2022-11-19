@@ -1,7 +1,7 @@
 // https://stackoverflow.com/a/9517879
 // injects script.ts into the correct window context
 export default function injectScript(url: string) {
-  let s = document.createElement("script");
+  const s = document.createElement("script");
   s.src = url;
   s.onload = function () {
     // remove the script so it doesn't appear in the DOM tree

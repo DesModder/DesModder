@@ -1,5 +1,7 @@
-import { containingCreateElementCall } from "../overrideHelpers/moduleUtils";
-import { findIdentifierThis } from "../overrideHelpers/moduleUtils";
+import {
+  containingCreateElementCall,
+  findIdentifierThis,
+} from "../overrideHelpers/moduleUtils";
 import { DependencyNameMap } from "../overrideHelpers/withDependencyMap";
 import "./styles/promptslider_view.less";
 import template from "@babel/template";
@@ -62,7 +64,7 @@ export default (dependencyNameMap: DependencyNameMap) => ({
       const parentNode = path.parentPath.node;
       if (t.isCallExpression(parentNode)) {
         const block = path.findParent((p) => p.isBlockStatement());
-        if (block && block.isBlockStatement()) {
+        if (block?.isBlockStatement()) {
           block.node.body.unshift(
             template.statement(`
               if (%%hasClassCallee%%("dsm-hide-errors")) {

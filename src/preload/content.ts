@@ -40,12 +40,12 @@ listenToMessageUp((message) => {
       getInitialData();
       break;
     case "set-plugins-enabled":
-      chrome.storage.sync.set({
+      void chrome.storage.sync.set({
         [StorageKeys.pluginsEnabled]: message.value,
       });
       break;
     case "set-plugin-settings":
-      chrome.storage.sync.set({
+      void chrome.storage.sync.set({
         [StorageKeys.pluginSettings]: message.value,
       });
       break;
@@ -65,6 +65,7 @@ listenToMessageUp((message) => {
       postMessageDown({ type: "set-ext-id", value: chrome.runtime.id });
       break;
   }
+  return false;
 });
 
 injectScript(chrome.runtime.getURL("preloadScript.js"));

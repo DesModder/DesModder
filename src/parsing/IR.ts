@@ -4,8 +4,8 @@ export interface IRChunk {
   blockMask: unknown;
   instructions: IRInstruction[];
   returnIndex: number;
-  instructionsLength(): number;
-  getInstruction(i: number): IRInstruction;
+  instructionsLength: () => number;
+  getInstruction: (i: number) => IRInstruction;
 }
 
 export interface Opcodes {

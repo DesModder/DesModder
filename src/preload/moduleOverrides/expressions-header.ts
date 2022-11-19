@@ -9,7 +9,7 @@ import * as t from "@babel/types";
 
 export default (dependencyNameMap: DependencyNameMap) => ({
   StringLiteral(path: babel.NodePath<t.StringLiteral>) {
-    if (path.node.value == "dcg-right-buttons") {
+    if (path.node.value === "dcg-right-buttons") {
       /* @plugin text-mode
       
       @what Add text mode toggle button

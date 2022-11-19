@@ -100,49 +100,49 @@ export interface TimingData {
 }
 
 interface CalcPrivate {
-  //// undocumented, may break
+  /// / undocumented, may break
   controller: {
     // _removeExpressionSynchronously(model: ItemModel): void;
-    _toplevelReplaceItemAt(
+    _toplevelReplaceItemAt: (
       index: number,
       model: ItemModel,
       shouldFocus: boolean
-    ): void;
-    createItemModel(modelTemplate: any): ItemModel;
-    getPillboxBackgroundColor(): string;
-    isGraphSettingsOpen(): boolean;
-    dispatch(e: DispatchedEvent): void;
-    getExpressionSearchStr(): string;
+    ) => void;
+    createItemModel: (modelTemplate: any) => ItemModel;
+    getPillboxBackgroundColor: () => string;
+    isGraphSettingsOpen: () => boolean;
+    dispatch: (e: DispatchedEvent) => void;
+    getExpressionSearchStr: () => string;
     dispatcher: {
-      register(func: (e: DispatchedEvent) => void): string;
-      unregister(id: string): void;
+      register: (func: (e: DispatchedEvent) => void) => string;
+      unregister: (id: string) => void;
     };
-    getTickerPlaying?(): boolean;
+    getTickerPlaying?: () => boolean;
     // The item models returned are actually much more detailed
-    getSelectedItem(): ItemModel | undefined;
-    getItemModel(id: any): ItemModel | undefined;
-    getItemModelByIndex(index: number): ItemModel | undefined;
-    getAllItemModels(): ItemModel[];
-    stopAllSliders(): void;
-    isKeypadOpen(): boolean;
-    getKeypadHeight(): number;
-    isDegreeMode(): boolean;
-    getExpressionSearchOpen(): boolean;
-    generateId(): string;
+    getSelectedItem: () => ItemModel | undefined;
+    getItemModel: (id: any) => ItemModel | undefined;
+    getItemModelByIndex: (index: number) => ItemModel | undefined;
+    getAllItemModels: () => ItemModel[];
+    stopAllSliders: () => void;
+    isKeypadOpen: () => boolean;
+    getKeypadHeight: () => number;
+    isDegreeMode: () => boolean;
+    getExpressionSearchOpen: () => boolean;
+    generateId: () => string;
     // returns a subscript that occurs nowhere else in the graph
-    generateTableXSubscript(): number;
-    updateViews(): void;
-    updateTheComputedWorld(): void;
-    commitUndoRedoSynchronously(e: { type: string }): void;
+    generateTableXSubscript: () => number;
+    updateViews: () => void;
+    updateTheComputedWorld: () => void;
+    commitUndoRedoSynchronously: (e: { type: string }) => void;
     evaluator: {
       workerPoolConnection: {
-        killWorker(): void;
+        killWorker: () => void;
       };
     };
     listModel: unknown;
-    _addItemToEndFromAPI(item: ItemModel): void;
-    _showToast(toast: { message: string; undoCallback?: () => void }): void;
-    getViewState(): {
+    _addItemToEndFromAPI: (item: ItemModel) => void;
+    _showToast: (toast: { message: string; undoCallback?: () => void }) => void;
+    getViewState: () => {
       viewport: {
         xmin: number;
         ymin: number;
@@ -151,23 +151,23 @@ interface CalcPrivate {
       };
     };
     /** Mark UI tick required to convert render shells to full item lines */
-    markTickRequiredNextFrame(): void;
-    getPlayingSliders(): unknown[];
+    markTickRequiredNextFrame: () => void;
+    getPlayingSliders: () => unknown[];
   };
-  //// public
+  /// / public
 
   // ** state manipulation
-  getState(): GraphState;
+  getState: () => GraphState;
   // "Warning: Calculator states should be treated as opaque values.
   // Manipulating states directly may produce a result that cannot be loaded
   // by GraphingCalculator.setState."
-  setState(
+  setState: (
     state: GraphState,
     opts?: {
       allowUndo?: boolean;
       remapColors?: boolean;
     }
-  ): void;
+  ) => void;
 }
 
 type Calc = CalcPrivate & Desmos.Calculator;

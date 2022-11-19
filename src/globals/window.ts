@@ -1,20 +1,19 @@
 import CalcType from "./Calc";
 
 interface windowConfig extends Window {
-  require(s: string[], callback: Function): void;
-  require(s: string): any;
+  require: ((s: string[], callback: Function) => void) & ((s: string) => any);
   Calc: CalcType;
   DesModder: any;
-  define(
+  define: (
     moduleName: string,
     dependencies: string[],
     definition: Function
-  ): void;
+  ) => void;
   ALMOND_OVERRIDES: { [key: string]: Function };
   dsm_workerAppend: string;
 }
 
-declare var window: windowConfig;
+declare let window: windowConfig;
 
 export default window;
 
@@ -52,12 +51,13 @@ export type FromEntriesWithReadOnly<T> = FromEntries<DeepWriteable<T>>;
 
 declare global {
   interface ObjectConstructor {
+    // eslint-disable-next-line @typescript-eslint/method-signature-style
     fromEntries<T>(obj: T): FromEntriesWithReadOnly<T>;
   }
 }
 
 export interface TopLevelComponents {
   graphsController: {
-    getCurrentGraphTitle(): string | undefined;
+    getCurrentGraphTitle: () => string | undefined;
   };
 }

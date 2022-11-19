@@ -36,8 +36,8 @@ export const DesmosSegmentedControl: typeof SegmentedControlComponent =
   desmosRequire("dcgview-helpers/segmented-control").SegmentedControl;
 
 interface MathQuillField {
-  keystroke(key: string, e: KeyboardEvent): void;
-  latex(): string;
+  keystroke: (key: string, e: KeyboardEvent) => void;
+  latex: () => string;
 }
 
 abstract class MathQuillViewComponent extends ClassComponent<{
@@ -58,7 +58,7 @@ abstract class MathQuillViewComponent extends ClassComponent<{
 
 export const MathQuillView: typeof MathQuillViewComponent & {
   // static abstract getFocusedMathquill()
-  getFocusedMathquill(): MathQuillField;
+  getFocusedMathquill: () => MathQuillField;
 } = desmosRequire("dcgview-helpers/mathquill-view").default;
 
 abstract class InlineMathInputViewComponent extends ClassComponent<{
@@ -86,12 +86,12 @@ export const InlineMathInputViewGeneral: typeof InlineMathInputViewComponent =
 
 abstract class ForComponent<T> extends ClassComponent<{
   each: Array<T>;
-  key(t: T): string | number;
+  key: (t: T) => string | number;
 }> {}
 
 interface IfElseSecondParam {
-  true(): typeof ClassComponent;
-  false(): typeof ClassComponent;
+  true: () => typeof ClassComponent;
+  false: () => typeof ClassComponent;
 }
 
 export const {
@@ -106,7 +106,7 @@ export const {
 } = desmosRequire("dcgview").Components as {
   For: typeof ForComponent;
   If: typeof ClassComponent;
-  IfElse(p: () => boolean, v: IfElseSecondParam): typeof ClassComponent;
+  IfElse: (p: () => boolean, v: IfElseSecondParam) => typeof ClassComponent;
   // I don't know how to use the rest of these
   IfDefined: typeof ClassComponent;
   Input: typeof ClassComponent;

@@ -129,6 +129,7 @@ function runCalculator() {
             // cancel listener
             return true;
           }
+          return false;
         });
         postMessageUp({
           type: "get-script-url",
@@ -138,14 +139,14 @@ function runCalculator() {
   );
 }
 
-pollForValue(
+void pollForValue(
   () =>
     (
       document.querySelector(
         "script[src^='/assets/build/calculator_desktop']"
       ) as HTMLScriptElement
     )?.src
-).then((src) => {
+).then((src: string) => {
   /* we blocked calculator_desktop.js earlier to ensure that the preload/override script runs first.
   Now we load it, but with '?' appended to prevent the web request rules from blocking it */
   const script = document.createElement("script");
@@ -165,12 +166,13 @@ pollForValue(
 
 listenToMessageDown((message) => {
   if (message.type === "set-worker-append-url") {
-    fetch(message.value).then(async (response) => {
+    void fetch(message.value).then(async (response) => {
       window.dsm_workerAppend = await response.text();
     });
     // cancel listener
     return true;
   }
+  return false;
 });
 postMessageUp({
   type: "get-worker-append-url",

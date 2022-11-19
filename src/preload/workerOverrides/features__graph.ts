@@ -117,7 +117,7 @@ export default () => ({
               this: findIdentifierThis(path),
               graphs: ppp.node.right.callee.object,
               containingBlock: containingBlock.node,
-              ir: ir,
+              ir,
               O: objO,
             })
           );
@@ -135,7 +135,7 @@ function findO(anonymousFunc: t.FunctionExpression) {
     t.isBlockStatement(ifStatement.consequent)
   ) {
     let lhs;
-    for (let statement of ifStatement.consequent.body) {
+    for (const statement of ifStatement.consequent.body) {
       if (
         t.isExpressionStatement(statement) &&
         t.isAssignmentExpression(statement.expression) &&

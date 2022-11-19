@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/method-signature-style */
 import GLesmos from "plugins/GLesmos";
 import builtinSettings from "plugins/builtin-settings";
 import debugMode from "plugins/debug-mode";
@@ -34,7 +35,9 @@ export interface ConfigItemString extends ConfigItemGeneric {
 
 export type ConfigItem = ConfigItemBoolean | ConfigItemString;
 
-export type GenericSettings = { [key: string]: boolean | string };
+export interface GenericSettings {
+  [key: string]: boolean | string;
+}
 
 export interface Plugin<Settings extends GenericSettings = {}> {
   // the id is fixed permanently, even for future releases

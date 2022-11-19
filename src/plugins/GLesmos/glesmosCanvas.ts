@@ -33,7 +33,7 @@ function buildShaderProgram(
   gl: WebGLRenderingContext | WebGL2RenderingContext,
   vert: string,
   frag: string,
-  id: string
+  _id: string
 ) {
   const shaderProgram = gl.createProgram();
   if (shaderProgram === null) {
