@@ -32,7 +32,8 @@ const builtins: {
         tag: "list2";
         alias: string;
         make(n: string, m: string): string;
-      };
+      }
+    | { tag: "type"; alias?: string; def: string };
 } = {
   sin: {
     tag: "glsl-builtin",
@@ -679,6 +680,11 @@ const builtins: {
     }`,
     tag: "simple",
   },
+  ternary: {
+    alias: "dsm_ternary",
+    def: `T dsm_ternary(bool x, T y, T z) { if (x) return y; return z; }`,
+    tag: "type",
+  },
 };
 
 // Unhandled: CompilerFunctionTable (these get compiled out to the above functions)
@@ -705,6 +711,8 @@ export function getDefinition(s: string): string {
       return data.make(getArg1(s));
     case "list2":
       return data.make(getArg1(s), getArg2(s));
+    case "type":
+      return data.def.replace(/T/g, getArg1(s));
   }
 }
 

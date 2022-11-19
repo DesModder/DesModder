@@ -72,6 +72,11 @@ export function getGLType(v: ValueType) {
   }
 }
 
+export function getGLTypeOfLength(v: ValueType, len: number) {
+  const t = getGLType(v);
+  return t.endsWith("[]") ? t.slice(0, -1) + len.toFixed(0) + "]" : t;
+}
+
 export function getGLScalarType(v: ValueType) {
   const type = getGLType(v);
   if (type.endsWith("[]")) return type.slice(0, -2);

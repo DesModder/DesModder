@@ -1,6 +1,11 @@
 import { getFunctionName, getBuiltin } from "./builtins";
 import { countReferences, opcodes, printOp, Types } from "./opcodeDeps";
-import { compileObject, getGLScalarType, getGLType } from "./outputHelpers";
+import {
+  compileObject,
+  getGLScalarType,
+  getGLType,
+  getGLTypeOfLength,
+} from "./outputHelpers";
 import { desmosRequire } from "globals/workerSelf";
 import { IRChunk, IRInstruction } from "parsing/IR";
 import { evalMaybeRational, MaybeRational } from "parsing/parsenode";
@@ -116,14 +121,33 @@ function getSourceSimple(
       return getSourceBinOp(ci, inlined, chunk);
     case opcodes.Negative:
       return "-" + maybeInlined(ci.args[0], inlined);
-    case opcodes.Piecewise:
-      return (
-        maybeInlined(ci.args[0], inlined) +
-        "?" +
-        maybeInlined(ci.args[1], inlined) +
-        ":" +
-        maybeInlined(ci.args[2], inlined)
-      );
+    case opcodes.Piecewise: {
+      const condition = maybeInlined(ci.args[0], inlined);
+      const branchIndices = [ci.args[1], ci.args[2]];
+      const branches = branchIndices.map((i) => chunk.getInstruction(i));
+      const isList = branches.map((b) => Types.isList(b.valueType));
+      const args = branchIndices.map((i) => maybeInlined(i, inlined));
+      if (isList[0] != isList[1]) {
+        // Desmos should eliminate this case (by expanding the scalar to the
+        // length of the list) before reaching here, so this is just in case
+        throw new Error(
+          "Cannot mix list and scalar value in piecewise expression."
+        );
+      }
+      if (isList[0]) {
+        const lengths = branchIndices.map((i) =>
+          ListLength.getConstantListLength(chunk, i)
+        );
+        if (lengths[0] != lengths[1])
+          throw new Error(
+            "Cannot mix lists of different lengths in piecewise expression."
+          );
+        deps.add("ternary#" + getGLTypeOfLength(ci.valueType, lengths[0]));
+        return `dsm_ternary(${condition},${args.join(",")})`;
+      } else {
+        return condition + "?" + args.join(":");
+      }
+    }
     case opcodes.List:
       const init = ci.args.map((i) => maybeInlined(i, inlined)).join(",");
       const type = getGLScalarType(ci.valueType);
