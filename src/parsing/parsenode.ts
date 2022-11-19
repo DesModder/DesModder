@@ -46,7 +46,7 @@ export function evalMaybeRational(x: MaybeRational) {
   }
 }
 
-export interface Error {
+export interface ParsenodeError extends Error {
   // "1 ("
   type: "Error";
   _msg: {
@@ -58,8 +58,8 @@ export interface Error {
   getError(): string;
   blocksExport(): boolean;
   // setDependencies() and allowExport() mutate then return `this`, hence Error
-  setDependencies(): Error;
-  allowExport(): Error;
+  setDependencies(): ParsenodeError;
+  allowExport(): ParsenodeError;
 }
 
 export interface Span {
@@ -602,7 +602,7 @@ export type RootOnlyExprNode =
   | Regression;
 
 export type ChildExprNode =
-  | Error
+  | ParsenodeError
   | Constant
   | MixedNumber
   | DotAccess

@@ -2,8 +2,7 @@ import { getDefinition, getDependencies } from "./builtins";
 import emitChunkGL from "./emitChunkGL";
 import { colorVec4, getGLType } from "./outputHelpers";
 import { desmosRequire } from "globals/workerSelf";
-import { IRExpression } from "parsing/parsenode";
-import { Error as ParsenodeError } from "parsing/parsenode";
+import { IRExpression, ParsenodeError } from "parsing/parsenode";
 
 const PError = desmosRequire("core/math/parsenode/error") as (
   msg: string
@@ -26,10 +25,10 @@ export function compileGLesmos(
     else if (fillOpacity > 1) fillOpacity = 1;
     else if (fillOpacity < 0) fillOpacity = 0;
     const { source, deps } = emitChunkGL(concreteTree._chunk);
-    let type = getGLType(concreteTree.valueType);
-    let functionDeps: string[] = [];
+    const type = getGLType(concreteTree.valueType);
+    const functionDeps: string[] = [];
     deps.forEach((d) => accDeps(functionDeps, d));
-    const f = "_f" + id;
+    const f = "_f" + id.toString();
     return {
       deps: functionDeps.map(getDefinition),
       defs: [`${type} ${f}(float x, float y) {\n${source}\n}`],

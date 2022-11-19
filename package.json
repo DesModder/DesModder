@@ -11,11 +11,12 @@
   ],
   "scripts": {
     "prettier": "prettier --write .",
+    "eslint-fix": "eslint --fix  \"src/**.ts\"",
     "build": "webpack --mode production --env=browser=chrome",
     "build-ff": "webpack --mode production --env=browser=firefox",
     "dev": "webpack --mode development --env=browser=chrome",
     "dev-ff": "webpack --mode development --env=browser=firefox",
-    "lint": "eslint \"src/**\"",
+    "lint": "eslint \"src/**.ts\"",
     "test": "prettier-check . && tsc --noEmit && npm run lint && npm run test:jest",
     "test:jest": "jest --config jest.config.js"
   },

@@ -25,13 +25,13 @@ const builtins: {
         // make: specialize the function definition for a given list size
         tag: "list";
         alias: string;
-        make(n: string): string;
+        make: (n: string) => string;
         deps?: (n: string) => string[];
       }
     | {
         tag: "list2";
         alias: string;
-        make(n: string, m: string): string;
+        make: (n: string, m: string) => string;
       }
     | { tag: "type"; alias?: string; def: string };
 } = {
@@ -512,7 +512,7 @@ const builtins: {
     alias: "dsm_median",
     make: (n) => {
       const len = parseInt(n);
-      return len % 2 == 1
+      return len % 2 === 1
         ? `float dsm_median(float[${n}] L) {
             return L[int(dsm_sortPerm(L)[${(len - 1) / 2}])-1];
           }`

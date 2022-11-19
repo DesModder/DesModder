@@ -9,7 +9,7 @@ function compileShader(
   shaderCode: string,
   type: number
 ) {
-  let shader: WebGLShader | null = gl.createShader(type);
+  const shader: WebGLShader | null = gl.createShader(type);
   if (shader === null) {
     glesmosError("Invalid shader type");
   }
@@ -18,7 +18,7 @@ function compileShader(
   gl.compileShader(shader);
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    let shaderInfoLog = gl.getShaderInfoLog(shader);
+    const shaderInfoLog = gl.getShaderInfoLog(shader);
     glesmosError(
       `While compiling ${
         type === gl.VERTEX_SHADER ? "vertex" : "fragment"
@@ -35,12 +35,12 @@ function buildShaderProgram(
   frag: string,
   id: string
 ) {
-  let shaderProgram = gl.createProgram();
+  const shaderProgram = gl.createProgram();
   if (shaderProgram === null) {
     glesmosError("Unable to create shader program!");
   }
-  let vertexShader = compileShader(gl, vert, gl.VERTEX_SHADER);
-  let fragmentShader = compileShader(gl, frag, gl.FRAGMENT_SHADER);
+  const vertexShader = compileShader(gl, vert, gl.VERTEX_SHADER);
+  const fragmentShader = compileShader(gl, frag, gl.FRAGMENT_SHADER);
   if (vertexShader && fragmentShader) {
     gl.attachShader(shaderProgram, vertexShader);
     gl.attachShader(shaderProgram, fragmentShader);
@@ -86,7 +86,7 @@ function setUniform(
   uniformType: UniformType,
   uniformValue: number | number[]
 ) {
-  let uniformSetterKey: keyof WebGLRenderingContext = ("uniform" +
+  const uniformSetterKey: keyof WebGLRenderingContext = ("uniform" +
     uniformType) as keyof WebGLRenderingContext;
   (gl[uniformSetterKey] as Function)(
     gl.getUniformLocation(program, uniformName),
@@ -135,21 +135,21 @@ void main() {
 `;
 
 export function initGLesmosCanvas() {
-  //================= INIT ELEMENTS =======================
-  let c: HTMLCanvasElement = document.createElement("canvas");
-  let gl: WebGLRenderingContext = c.getContext("webgl2", {
+  //= ================ INIT ELEMENTS =======================
+  const c: HTMLCanvasElement = document.createElement("canvas");
+  const gl: WebGLRenderingContext = c.getContext("webgl2", {
     // Disable premultiplied alpha
     // Thanks to <https://stackoverflow.com/a/12290551/7481517>
     premultipliedAlpha: false,
   }) as WebGLRenderingContext;
 
-  //================= GRAPH BOUNDS ======================
+  //= ================ GRAPH BOUNDS ======================
   let cornerOfGraph = [-10, -6];
   let sizeOfGraph = [20, 12];
 
-  //======================= RESIZING STUFF =======================
+  //= ====================== RESIZING STUFF =======================
 
-  let updateTransforms = (transforms: ViewportTransforms) => {
+  const updateTransforms = (transforms: ViewportTransforms) => {
     const w = transforms.pixelCoordinates.right;
     const h = transforms.pixelCoordinates.bottom;
     const p2m = transforms.pixelsToMath;
@@ -160,14 +160,14 @@ export function initGLesmosCanvas() {
     sizeOfGraph = [p2m.sx * w, -p2m.sy * h];
   };
 
-  //============================ WEBGL STUFF ==========================
-  let fullscreenQuadBuffer = gl.createBuffer();
+  //= =========================== WEBGL STUFF ==========================
+  const fullscreenQuadBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, fullscreenQuadBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, FULLSCREEN_QUAD, gl.STATIC_DRAW);
 
   let glesmosShaderProgram: WebGLProgram | undefined;
 
-  let setGLesmosShader = (shaderCode: string, id: string) => {
+  const setGLesmosShader = (shaderCode: string, id: string) => {
     glesmosShaderProgram = getShaderProgram(gl, shaderCode, id, () => {
       return {
         fragmentSource: GLESMOS_FRAGMENT_SHADER.replace(
@@ -179,11 +179,11 @@ export function initGLesmosCanvas() {
     });
   };
 
-  let render = (id: string) => {
+  const render = (id: string) => {
     if (glesmosShaderProgram) {
       gl.useProgram(glesmosShaderProgram);
 
-      let vertexPositionAttribLocation = gl.getAttribLocation(
+      const vertexPositionAttribLocation = gl.getAttribLocation(
         glesmosShaderProgram,
         "vertexPosition"
       );
@@ -204,23 +204,23 @@ export function initGLesmosCanvas() {
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     } else {
-      throw glesmosError("Shader failed");
+      glesmosError("Shader failed");
     }
   };
 
-  //================= CLEANUP =============
+  //= ================ CLEANUP =============
 
-  let deleteCanvas = () => {
+  const deleteCanvas = () => {
     c.parentElement?.removeChild(c);
   };
 
-  //===================== CONSTRUCTED OBJECT ============
+  //= ==================== CONSTRUCTED OBJECT ============
   return {
     element: c,
     glContext: gl,
     deleteCanvas,
-    updateTransforms: updateTransforms,
-    setGLesmosShader: setGLesmosShader,
-    render: render,
+    updateTransforms,
+    setGLesmosShader,
+    render,
   };
 }

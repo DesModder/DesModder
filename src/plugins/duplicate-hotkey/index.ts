@@ -26,7 +26,7 @@ function onDisable() {
 
 export default {
   id: "duplicate-expression-hotkey",
-  onEnable: onEnable,
-  onDisable: onDisable,
+  onEnable,
+  onDisable,
   enabledByDefault: true,
 } as const;

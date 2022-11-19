@@ -13,7 +13,7 @@ function onDisable() {
 
 export default {
   id: "GLesmos",
-  onEnable: onEnable,
-  onDisable: onDisable,
+  onEnable,
+  onDisable,
   enabledByDefault: false,
 } as const;

@@ -1,7 +1,7 @@
 import getRGBPack from "./colorParsing";
 import { Types } from "./opcodeDeps";
 import { ValueType } from "parsing/IR";
-import { evalMaybeRational, MaybeRational } from "parsing/parsenode";
+import { evalMaybeRational } from "parsing/parsenode";
 
 export function glslFloatify(x: number) {
   return Number.isInteger(x)
@@ -28,7 +28,7 @@ export function colorVec4(color: string, opacity: number) {
      */
     [r, g, b] = getRGBPack(color).map(glslFloatify);
   }
-  let a = glslFloatify(opacity);
+  const a = glslFloatify(opacity);
   return `vec4(${r}, ${g}, ${b}, ${a})`;
 }
 

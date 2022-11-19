@@ -40,7 +40,7 @@ function onDisable() {
 
 export default {
   id: "find-and-replace",
-  onEnable: onEnable,
-  onDisable: onDisable,
+  onEnable,
+  onDisable,
   enabledByDefault: true,
 } as const;

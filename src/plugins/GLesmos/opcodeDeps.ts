@@ -9,5 +9,5 @@ export const printOp = desmosRequire("core/math/ir/features/print").printOp as (
   k: Opcodes[keyof Opcodes]
 ) => string;
 export const Types = desmosRequire("core/math/types") as {
-  isList(t: ValueType): boolean;
+  isList: (t: ValueType) => boolean;
 } & ValueTypes;

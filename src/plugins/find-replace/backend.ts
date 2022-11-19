@@ -118,7 +118,7 @@ function getReplacements(
       }
       break;
     case "Assignment":
-    case "FunctionDefinition":
+    case "FunctionDefinition": {
       span = path.node.getInputSpan();
       line = path.node.getInputString();
       const eqIndex = line.indexOf("=");
@@ -141,8 +141,8 @@ function getReplacements(
             ),
         },
       ];
-      break;
-    case "Derivative":
+    }
+    case "Derivative": {
       span = path.node.getInputSpan();
       line = path.node.getInputString();
       const diffBottomStr = `{d${from}}`;
@@ -154,7 +154,7 @@ function getReplacements(
           replacement: `{d${to}}`,
         },
       ];
-      break;
+    }
   }
   return [];
 }
@@ -183,7 +183,7 @@ export function refactor(from: string, to: string) {
       const sorted = idPositions.sort((a, b) => a.start - b.start);
       let acc = "";
       let endIndex = 0;
-      for (let { start, end, replacement } of sorted) {
+      for (const { start, end, replacement } of sorted) {
         // Conditional start >= endIndex to avoid double-replacement of the middle value
         // in And(Inequality, Inequality) which were not transformed to DoubleInequality.
         if (start >= endIndex) {

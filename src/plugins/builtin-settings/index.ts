@@ -18,11 +18,11 @@ function manageConfigChange(current: Config, changes: ConfigOptional) {
     ...changes,
   };
   if (changes.zoomButtons) {
-    if (false === proposedConfig.graphpaper) {
+    if (!proposedConfig.graphpaper) {
       newChanges.graphpaper = true;
     }
   }
-  if (false === changes.graphpaper && proposedConfig.zoomButtons) {
+  if (changes.graphpaper === false && proposedConfig.zoomButtons) {
     newChanges.zoomButtons = false;
   }
   return newChanges;
@@ -64,8 +64,8 @@ function onDisable() {
 
 export default {
   id: "builtin-settings",
-  onEnable: onEnable,
-  onDisable: onDisable,
+  onEnable,
+  onDisable,
   enabledByDefault: true,
   config: configList,
   onConfigChange(changes: ConfigOptional) {
