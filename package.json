@@ -16,8 +16,8 @@
     "build-ff": "webpack --mode production --env=browser=firefox",
     "dev": "webpack --mode development --env=browser=chrome",
     "dev-ff": "webpack --mode development --env=browser=firefox",
-    "lint": "eslint \"src/**/*.ts\"",
-    "test": "prettier-check . && tsc --noEmit && npm run lint && npm run test:jest",
+    "lint": "prettier-check . && tsc --noEmit && eslint \"src/**/*.ts\"",
+    "test": "npm run test:jest",
     "test:jest": "jest --config jest.config.js"
   },
   "repository": {
