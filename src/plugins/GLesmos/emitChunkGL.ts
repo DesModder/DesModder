@@ -169,21 +169,7 @@ function getSourceSimple(
         ")-1]"
       );
     case opcodes.NativeFunction:
-      if (getBuiltin(ci.symbol)?.tag === "list") {
-        deps.add(
-          ci.symbol + "#" + ListLength.getConstantListLength(chunk, ci.args[0])
-        );
-      } else if (getBuiltin(ci.symbol)?.tag === "list2") {
-        deps.add(
-          ci.symbol +
-            "#" +
-            ListLength.getConstantListLength(chunk, ci.args[0]) +
-            "#" +
-            ListLength.getConstantListLength(chunk, ci.args[1])
-        );
-      } else {
-        deps.add(ci.symbol);
-      }
+      deps.add(nativeFunctionDependency(chunk, ci));
       const name = getFunctionName(ci.symbol);
       const args = ci.args.map((e) => maybeInlined(e, inlined)).join(",");
       return `${name}(${args})`;
@@ -191,6 +177,34 @@ function getSourceSimple(
       throw Error("ExtendSeed not yet implemented");
     default:
       throw Error(`Unexpected opcode: ${printOp(ci.type)}`);
+  }
+}
+
+function nativeFunctionDependency(
+  chunk: IRChunk,
+  ci: IRInstruction & { type: typeof opcodes.NativeFunction }
+): string {
+  const builtin = getBuiltin(ci.symbol);
+  switch (builtin?.tag) {
+    case "list":
+      return (
+        ci.symbol + "#" + ListLength.getConstantListLength(chunk, ci.args[0])
+      );
+    case "list2":
+      return (
+        ci.symbol +
+        "#" +
+        ListLength.getConstantListLength(chunk, ci.args[0]) +
+        "#" +
+        ListLength.getConstantListLength(chunk, ci.args[1])
+      );
+    case "glsl-builtin":
+    case "simple":
+      return ci.symbol;
+    default:
+      throw new Error(
+        `Programming error: Impossible native function builtin type: ${builtin?.tag}`
+      );
   }
 }
 
