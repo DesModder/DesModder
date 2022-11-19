@@ -7,7 +7,15 @@ import {
   getGLTypeOfLength,
 } from "./outputHelpers";
 import { desmosRequire } from "globals/workerSelf";
-import { IRChunk, IRInstruction } from "parsing/IR";
+import {
+  BeginBroadcast,
+  BeginLoop,
+  EndBroadcast,
+  EndLoop,
+  IRChunk,
+  IRInstruction,
+  NativeFunction,
+} from "parsing/IR";
 import { evalMaybeRational, MaybeRational } from "parsing/parsenode";
 
 export const ListLength = desmosRequire(
@@ -204,10 +212,7 @@ function getSourceSimple(
   }
 }
 
-function nativeFunctionDependency(
-  chunk: IRChunk,
-  ci: IRInstruction & { type: typeof opcodes.NativeFunction }
-): string {
+function nativeFunctionDependency(chunk: IRChunk, ci: NativeFunction): string {
   const builtin = getBuiltin(ci.symbol);
   switch (builtin?.tag) {
     case "list":
@@ -244,7 +249,7 @@ function constFloat(s: string) {
 
 function getBeginLoopSource(
   instructionIndex: number,
-  ci: IRInstruction & { type: typeof opcodes.BeginLoop },
+  ci: BeginLoop,
   chunk: IRChunk,
   inlined: string[]
 ) {
@@ -281,7 +286,7 @@ function getBeginLoopSource(
 
 function getEndLoopSource(
   instructionIndex: number,
-  ci: IRInstruction & { type: typeof opcodes.EndLoop },
+  ci: EndLoop,
   chunk: IRChunk,
   inlined: string[]
 ) {
@@ -309,7 +314,7 @@ function getEndLoopSource(
 
 function getBeginBroadcastSource(
   instructionIndex: number,
-  ci: IRInstruction & { type: typeof opcodes.BeginBroadcast },
+  ci: BeginBroadcast,
   chunk: IRChunk
 ) {
   const endInstruction = chunk.getInstruction(ci.endIndex);
@@ -339,7 +344,7 @@ function getBeginBroadcastSource(
 
 function getEndBroadcastSource(
   instructionIndex: number,
-  ci: IRInstruction & { type: typeof opcodes.EndBroadcast },
+  ci: EndBroadcast,
   chunk: IRChunk
 ) {
   const resultAssignments = [];
