@@ -6,11 +6,11 @@ export function findIdentifierThis(path: babel.NodePath): t.Identifier | null {
   Returns the identifier `e` */
   let func = path.getFunctionParent();
   while (func !== null) {
-    let body = func.node.body;
+    const body = func.node.body;
     if (t.isBlockStatement(body)) {
-      for (let statement of body.body) {
+      for (const statement of body.body) {
         if (t.isVariableDeclaration(statement)) {
-          for (let decl of statement.declarations) {
+          for (const decl of statement.declarations) {
             if (t.isThisExpression(decl.init) && t.isIdentifier(decl.id)) {
               return decl.id;
             }

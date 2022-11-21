@@ -35,9 +35,11 @@ export default class Controller {
   pluginSettings: {
     [plugin in PluginID]: GenericSettings;
   };
+
   exposedPlugins: {
     [plugin in PluginID]?: any;
   } = {};
+
   graphMetadata: GraphMetadata = getBlankMetadata();
 
   // array of IDs
@@ -53,6 +55,7 @@ export default class Controller {
       popup: MenuFunc,
     },
   };
+
   // string if open, null if none are open
   pillboxMenuOpen: string | null = null;
 
@@ -125,7 +128,7 @@ export default class Controller {
       } else if (message.type === "apply-plugins-enabled") {
         this.applyStoredEnabled(message.value);
       } else {
-        return;
+        return false;
       }
       // I'm not sure if the messages are guaranteed to be in the expected
       // order. Doesn't matter except for making sure we only
@@ -142,6 +145,7 @@ export default class Controller {
         // cancel listener
         return true;
       }
+      return false;
     });
     // fire GET after starting listener in case it gets resolved before the listener begins
     postMessageUp({
@@ -152,7 +156,7 @@ export default class Controller {
       this.checkForMetadataChange();
     });
     this.checkForMetadataChange();
-    if (this.pluginsEnabled["GLesmos"]) {
+    if (this.pluginsEnabled.GLesmos) {
       // The graph loaded before DesModder loaded, so DesModder was not available to
       // return true when asked isGlesmosMode. Refresh those expressions now
       this.checkGLesmos();
@@ -171,6 +175,7 @@ export default class Controller {
 
   removePillboxButton(id: string) {
     this.pillboxButtonsOrder.splice(this.pillboxButtonsOrder.indexOf(id), 1);
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete this.pillboxButtons[id];
     if (this.pillboxMenuOpen === id) {
       this.pillboxMenuOpen = null;
@@ -228,6 +233,7 @@ export default class Controller {
       if (this.pluginsEnabled[i]) {
         if (plugin.onDisable) {
           plugin.onDisable();
+          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
           delete this.pluginsEnabled[i];
         } else {
           this.warnReload();
@@ -329,7 +335,7 @@ export default class Controller {
     if (!this.expandedPlugin) return false;
     const defaultValue = this.getDefaultSetting(key);
     return (
-      defaultValue != undefined &&
+      defaultValue !== undefined &&
       this.pluginSettings[this.expandedPlugin][key] !== defaultValue
     );
   }
@@ -346,7 +352,7 @@ export default class Controller {
 
   checkForMetadataChange() {
     const newMetadata = getMetadata();
-    if (!this.pluginsEnabled["GLesmos"]) {
+    if (!this.pluginsEnabled.GLesmos) {
       if (
         Object.entries(newMetadata.expressions).some(
           ([id, e]) => e.glesmos && !this.graphMetadata.expressions[id]?.glesmos
@@ -533,7 +539,7 @@ export default class Controller {
   canBeGLesmos(id: string) {
     let model;
     return (
-      this.pluginsEnabled["GLesmos"] &&
+      this.pluginsEnabled.GLesmos &&
       (model = Calc.controller.getItemModel(id)) &&
       model.type === "expression" &&
       model.formula &&
@@ -543,7 +549,7 @@ export default class Controller {
   }
 
   isGlesmosMode(id: string) {
-    if (!this.pluginsEnabled["GLesmos"]) return false;
+    if (!this.pluginsEnabled.GLesmos) return false;
     this.checkForMetadataChange();
     return this.graphMetadata.expressions[id]?.glesmos;
   }

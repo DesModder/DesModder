@@ -52,6 +52,6 @@ export default class View {
   }
 
   updateReplaceView() {
-    this.replaceView && this.replaceView.update();
+    this.replaceView?.update();
   }
 }

@@ -13,14 +13,14 @@ const heartbeatIntervalMs = 120 * 1000;
 
 let isEnabled = false;
 
-function sendHeartbeat(
+async function sendHeartbeat(
   extId: string,
   key: string,
   graphName: string,
   graphURL: string,
   lineCount: number
 ): Promise<void> {
-  return new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     const data = {
       // This is background information for WakaTime to handle. These values need no change.
       language: "Desmos", // constant
@@ -53,7 +53,7 @@ function sendHeartbeat(
       extId,
       message,
       (res: RuntimeResponse | undefined) => {
-        if (res?.type == "success") {
+        if (res?.type === "success") {
           resolve();
         } else {
           reject(new Error(`Backend reported error: ${res?.message}`));
@@ -63,11 +63,13 @@ function sendHeartbeat(
   });
 }
 
-const sleep = (t: number) => new Promise((res) => setTimeout(res, t));
+const sleep = async (t: number) =>
+  await new Promise((resolve) => setTimeout(resolve, t));
 
 async function main(extId: string) {
   // Date.now can be messed up by system clock changes
   let lastUpdate = performance.now() - heartbeatIntervalMs;
+  // eslint-disable-next-line no-unmodified-loop-condition
   while (isEnabled) {
     const graphName =
       desModderController.topLevelComponents.graphsController.getCurrentGraphTitle() ??
@@ -97,14 +99,15 @@ async function main(extId: string) {
   }
 }
 
-function getExtId(): Promise<string> {
-  return new Promise((res) => {
+async function getExtId(): Promise<string> {
+  return await new Promise((resolve) => {
     listenToMessageDown((msg) => {
-      if (msg.type == "set-ext-id") {
-        res(msg.value);
+      if (msg.type === "set-ext-id") {
+        resolve(msg.value);
         // cancel = true
         return true;
       }
+      return false;
     });
     postMessageUp({ type: "get-ext-id" });
   });

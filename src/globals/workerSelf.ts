@@ -1,9 +1,8 @@
 interface selfConfig extends WorkerGlobalScope {
-  require(s: string[], callback: Function): void;
-  require(s: string): any;
+  require: ((s: string[], callback: Function) => void) & ((s: string) => any);
 }
 
-declare var self: selfConfig;
+declare let self: selfConfig;
 
 export default self;
 

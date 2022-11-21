@@ -1,13 +1,18 @@
 import "globals/env";
 
-export type HeartbeatMessage = {
+export interface HeartbeatMessage {
   type: "sendHeartbeat";
   options: RequestInit | undefined;
-};
+}
 export type RuntimeMessage = HeartbeatMessage;
 
-export type ErrorResponse = { type: "error"; message: string };
-export type SuccessResponse = { type: "success" };
+export interface ErrorResponse {
+  type: "error";
+  message: string;
+}
+export interface SuccessResponse {
+  type: "success";
+}
 export type RuntimeResponse = ErrorResponse | SuccessResponse;
 
 async function sendHeartbeat(
@@ -19,7 +24,7 @@ async function sendHeartbeat(
     req.options
   );
   // for now we don't care about the response content, just the status.
-  if (r.status != 201) {
+  if (r.status !== 201) {
     const res: ErrorResponse = {
       type: "error",
       message:
@@ -33,31 +38,27 @@ async function sendHeartbeat(
 }
 
 // Send requests that would otherwise be blocked by CORS if sent from a content script
-chrome.runtime.onMessageExternal.addListener(
-  async (msg, sender, sendResponse) => {
-    const req = msg as RuntimeMessage;
-    try {
-      if (req.type == "sendHeartbeat") {
-        await sendHeartbeat(req, sendResponse);
-      }
-    } catch (e: any) {
-      console.error(e);
-      // if a response has already been sent this will be a no-op
-      const res: ErrorResponse = { type: "error", message: e?.message ?? "" };
-      sendResponse(res);
+chrome.runtime.onMessageExternal.addListener((msg, _sender, sendResponse) => {
+  const req = msg as RuntimeMessage;
+  try {
+    if (req.type === "sendHeartbeat") {
+      void sendHeartbeat(req, sendResponse);
     }
+  } catch (e: any) {
+    console.error(e);
+    // if a response has already been sent this will be a no-op
+    const res: ErrorResponse = { type: "error", message: e?.message ?? "" };
+    sendResponse(res);
   }
-);
+});
 
 if (BROWSER === "chrome") {
   // FIREFOX TODO: find Firefox equivalent. chrome.browserAction?
-  if (chrome.action?.onClicked) {
-    chrome.action.onClicked.addListener(() => {
-      chrome.tabs.create({
-        url: "https://www.desmos.com/calculator",
-      });
+  chrome.action.onClicked?.addListener(() => {
+    void chrome.tabs.create({
+      url: "https://www.desmos.com/calculator",
     });
-  }
+  });
 }
 
 if (BROWSER === "firefox") {

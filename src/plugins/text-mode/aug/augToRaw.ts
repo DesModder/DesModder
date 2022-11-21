@@ -10,11 +10,11 @@ export default function augToRaw(aug: Aug.State): Graph.GraphState {
     version: 2 as const,
     expressions: {},
   };
-  for (let expr of aug.expressions.list) {
+  for (const expr of aug.expressions.list) {
     updateDsmMetadata(dsmMetadata, expr);
     if (expr.type === "folder") {
       list.push(augFolderToRaw(expr));
-      for (let child of expr.children) {
+      for (const child of expr.children) {
         updateDsmMetadata(dsmMetadata, child);
         list.push({
           ...augNonFolderToRaw(child),
@@ -45,10 +45,10 @@ export default function augToRaw(aug: Aug.State): Graph.GraphState {
   delete aug.settings.randomSeed;
   const res: Graph.GraphState = {
     version: 9,
-    randomSeed: randomSeed,
+    randomSeed,
     graph: aug.settings,
     expressions: {
-      list: list,
+      list,
       ticker: aug.expressions.ticker && augTickerToRaw(aug.expressions.ticker),
     },
   };
@@ -58,8 +58,9 @@ export default function augToRaw(aug: Aug.State): Graph.GraphState {
 
 function cleanUndefined(obj: any): void {
   if (typeof obj === "object") {
-    for (let key in obj) {
-      if (obj.hasOwnProperty(key) && obj[key] === undefined) {
+    for (const key in obj) {
+      if (key in obj && obj[key] === undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete obj[key];
       } else {
         cleanUndefined(obj[key]);
@@ -108,7 +109,7 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
     secret: item.secret,
   };
   switch (item.type) {
-    case "expression":
+    case "expression": {
       const shouldFill = item.fillOpacity
         ? !Aug.Latex.isConstant(item.fillOpacity, 0)
         : false;
@@ -179,6 +180,7 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
           latex: latexTreeToString(item.clickableInfo.latex),
         },
       };
+    }
     case "image":
       return {
         ...base,
@@ -305,9 +307,10 @@ function columnEntryToString(e: Aug.Latex.AnyRootOrChild): string {
 
 function childNodeToString(e: Aug.Latex.AnyChild): string {
   switch (e.type) {
-    case "Constant":
+    case "Constant": {
       const res = e.value.toString();
       return res.includes("e") ? "(" + res.replace("e", "*10^{") + "})" : res;
+    }
     case "Identifier":
       return identifierToString(e);
     case "FunctionCall":
@@ -365,7 +368,7 @@ function childNodeToString(e: Aug.Latex.AnyChild): string {
           "\\operatorname{for}" +
           e.assignments.map(assignmentExprToRaw).join(",")
       );
-    case "Piecewise":
+    case "Piecewise": {
       const piecewiseParts: string[] = [];
       let curr: Aug.Latex.AnyChild = e;
       while (curr.type === "Piecewise") {
@@ -386,15 +389,17 @@ function childNodeToString(e: Aug.Latex.AnyChild): string {
         piecewiseParts.push(childNodeToString(curr));
       }
       return "\\left\\{" + piecewiseParts.join(",") + "\\right\\}";
-    case "RepeatedOperator":
-      let prefix = e.name === "Product" ? "\\prod" : "\\sum";
+    }
+    case "RepeatedOperator": {
+      const prefix = e.name === "Product" ? "\\prod" : "\\sum";
       return (
         prefix +
         `_{${identifierToString(e.index)}=${childNodeToString(e.start)}}` +
         `^{${childNodeToString(e.end)}}` +
         wrapParen(childNodeToString(e.expression))
       );
-    case "BinaryOperator":
+    }
+    case "BinaryOperator": {
       const binopLeft = childNodeToString(e.left);
       const binopRight = childNodeToString(e.right);
       switch (e.name) {
@@ -409,6 +414,8 @@ function childNodeToString(e: Aug.Latex.AnyChild): string {
         case "Exponent":
           return wrapParen(binopLeft) + "^{" + binopRight + "}";
       }
+    }
+    // eslint-disable-next-line no-fallthrough
     case "Negative":
       if (e.arg.type === "Constant" && e.arg.value > 0)
         return "-" + childNodeToString(e.arg);
@@ -480,7 +487,7 @@ const backslashCommands = new Set(autoCommandNames.split(" "));
 function identifierToString(id: Aug.Latex.Identifier): string {
   const symbol = id.symbol.replace(/[{}]/g, "");
   let main = symbol;
-  let subscript = undefined;
+  let subscript;
   const uIndex = symbol.indexOf("_");
   if (uIndex >= 0) {
     main = symbol.substring(0, uIndex);

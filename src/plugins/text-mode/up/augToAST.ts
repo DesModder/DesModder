@@ -74,7 +74,7 @@ export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
     pinned: booleanToAST(item.type !== "folder" && item.pinned, false),
   };
   switch (item.type) {
-    case "expression":
+    case "expression": {
       if (item.latex === undefined) return null;
       const expr = rootLatexToAST(item.latex);
       if (
@@ -116,6 +116,7 @@ export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
           ...expressionStyle(item),
         }),
       };
+    }
     case "image":
       return {
         type: "Image",
@@ -313,7 +314,7 @@ function columnToAST(
       id: idToString(col.id),
       ...columnExpressionCommonStyle(
         col,
-        colIndex == 0
+        colIndex === 0
           ? []
           : ["points", "lines", ...(draggable ? ["drag" as const] : [])]
       ),
@@ -493,7 +494,7 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         expr: childLatexToAST(e.expr),
         assignments: e.assignments.map(assignmentExprToAST),
       };
-    case "Piecewise":
+    case "Piecewise": {
       const piecewiseBranches: TextAST.PiecewiseBranch[] = [];
       let curr: Aug.Latex.AnyChild = e;
       while (curr.type === "Piecewise") {
@@ -519,6 +520,7 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         type: "PiecewiseExpression",
         branches: piecewiseBranches,
       };
+    }
     case "RepeatedOperator":
       return {
         type: "RepeatedExpression",

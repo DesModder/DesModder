@@ -83,8 +83,9 @@ export function completions(
   controller: Controller,
   context: CompletionContext
 ) {
-  let word = context.matchBefore(/\w*/);
-  if (word === null || (word.from == word.to && !context.explicit)) return null;
+  const word = context.matchBefore(/\w*/);
+  if (word === null || (word.from === word.to && !context.explicit))
+    return null;
   const tree = syntaxTree(context.state);
   const parent = tree.resolve(context.pos);
   return {
@@ -163,7 +164,7 @@ function styleDefaults(controller: Controller, node: SyntaxNode): any {
 
 function styleCompletionsFromDefaults(defaults: any): Completion[] {
   const completions = [];
-  for (let key in defaults) {
+  for (const key in defaults) {
     const value = defaults[key];
     completions.push({
       type: "property",

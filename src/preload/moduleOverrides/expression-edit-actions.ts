@@ -109,7 +109,7 @@ const noteEncloseAction = `
 
 export default (dependencyNameMap: DependencyNameMap) => ({
   StringLiteral(path: babel.NodePath<t.StringLiteral>) {
-    if (path.node.value == "dcg-expression-edit-actions") {
+    if (path.node.value === "dcg-expression-edit-actions") {
       /* @plugin pin-expressions
       @plugin folder-tools
       
@@ -123,7 +123,7 @@ export default (dependencyNameMap: DependencyNameMap) => ({
             <If predicate> duplicate expression </If>
             // here
             <If predicate> delete expression </If>
-          </span>*/
+          </span> */
       const createElementCall = containingCreateElementCall(path);
       if (createElementCall === null) return;
       createElementCall.node.arguments.splice(

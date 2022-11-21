@@ -65,9 +65,7 @@ export async function initFFmpeg(controller: Controller) {
     ffmpeg.setLogger(({ type, message }) => {
       if (type === "fferr") {
         const match = message.match(/frame=\s*(?<frame>\d+)/);
-        if (match === null) {
-          return;
-        } else {
+        if (match !== null) {
           const frame = (match.groups as { frame: string }).frame;
           let denom = controller.frames.length - 1;
           if (denom === 0) denom = 1;
@@ -90,17 +88,20 @@ export async function exportFrames(controller: Controller) {
 
   const filenames: string[] = [];
 
+  async function writeFile(filename: string, frame: string) {
+    if (ffmpeg !== null)
+      ffmpeg.FS("writeFile", filename, await fetchFile(frame));
+  }
+
   const len = (controller.frames.length - 1).toString().length;
-  controller.frames.forEach(async (frame, i) => {
+  controller.frames.forEach((frame, i) => {
     const raw = i.toString();
     // glob orders lexicographically, but we want numerically
     const padded = "0".repeat(len - raw.length) + raw;
     const filename = `desmos.${padded}.png`;
     // filenames may be pushed out of order because async, but doesn't matter
     filenames.push(filename);
-    if (ffmpeg !== null) {
-      ffmpeg.FS("writeFile", filename, await fetchFile(frame));
-    }
+    void writeFile(filename, frame);
   });
 
   const outFilename = await exportAll(
@@ -135,7 +136,7 @@ export async function exportFrames(controller: Controller) {
 function download(url: string, filename: string) {
   // https://gist.github.com/SlimRunner/3b0a7571f04d3a03bff6dbd9de6ad729#file-desmovie-user-js-L325
   // no point supporting anything besides Chrome (no SharedArrayBuffer support)
-  var a = document.createElement("a");
+  const a = document.createElement("a");
   a.href = url;
   a.download = filename;
   document.body.appendChild(a);

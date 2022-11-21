@@ -11,7 +11,9 @@
     "target": "es2020",
     "allowJs": true,
     "strict": true,
-    "baseUrl": "src"
+    "baseUrl": "src",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   },
   "include": ["./src/"]
 }

@@ -10,6 +10,7 @@ export default {
     initView();
   },
   onDisable: () => {
+    controller.stop();
     destroyView();
   },
   enabledByDefault: false,

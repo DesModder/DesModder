@@ -42,12 +42,12 @@ export function isType(cursor: TreeCursor, type: number): boolean {
   return cond;
 }
 
-export type CursorNode = {
+export interface CursorNode {
   type: NodeType;
   from: number;
   to: number;
   isLeaf: boolean;
-};
+}
 
 function cursorNode(
   { type, from, to }: TreeCursor,
@@ -56,11 +56,11 @@ function cursorNode(
   return { type, from, to, isLeaf };
 }
 
-export type TreeTraversal = {
+export interface TreeTraversal {
   beforeEnter?: (cursor: TreeCursor) => void;
-  onEnter: (node: CursorNode) => false | void;
-  onLeave?: (node: CursorNode) => false | void;
-};
+  onEnter: (node: CursorNode) => boolean;
+  onLeave?: (node: CursorNode) => boolean;
+}
 
 type TreeTraversalOptions = {
   from?: number;
@@ -91,13 +91,13 @@ export function traverseTree(
       node.isLeaf = !cursor.firstChild();
       if (enter) {
         leave = true;
-        if (onEnter(node) === false) return;
+        if (!onEnter(node)) return;
       }
       if (!node.isLeaf) continue;
     }
     for (;;) {
       node = cursorNode(cursor, node.isLeaf);
-      if (leave && onLeave) if (onLeave(node) === false) return;
+      if (leave && onLeave) if (!onLeave(node)) return;
       leave = cursor.type.isAnonymous;
       node.isLeaf = false;
       if (cursor.nextSibling()) break;
@@ -128,6 +128,7 @@ export function validatorTraversal(
   };
   return {
     state,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     traversal: {
       onEnter(node) {
         state.valid = true;
@@ -176,16 +177,16 @@ enum Color {
 }
 
 function colorize(value: any, color: number): string {
-  return "\u001b[" + color + "m" + String(value) + "\u001b[39m";
+  return "\u001b[" + color.toString() + "m" + String(value) + "\u001b[39m";
 }
 
-type PrintTreeOptions = {
+interface PrintTreeOptions {
   from?: number;
   to?: number;
   start?: number;
   includeParents?: boolean;
   showRange?: boolean;
-};
+}
 
 export function printTree(
   cursor: TreeCursor | Tree | SyntaxNode,
@@ -246,10 +247,12 @@ export function printTree(
           ": " +
           colorize(JSON.stringify(inp.read(node.from, node.to)), Color.Green);
       }
+      return true;
     },
     onLeave(node) {
       validator.traversal.onLeave!(node);
       state.prefixes.pop();
+      return true;
     },
   });
   return state.output;
@@ -257,5 +260,5 @@ export function printTree(
 
 function locAt(text: Text, pos: number): string {
   const line = text.lineAt(pos);
-  return line.number + ":" + (pos - line.from);
+  return `${line.number}:${pos - line.from}`;
 }

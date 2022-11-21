@@ -16,49 +16,36 @@ export function isIllegalASCIIMath(input: string) {
   }
 
   // checks for illegal characters
-  if (input.search(/\\/) != -1) {
+  if (input.search(/\\/) !== -1) {
     return false;
   }
-  if (input.search(/\n/) != -1) {
-    //console.warn("Newline detected");
+  if (input.search(/\n/) !== -1) {
     return false;
   }
-  if (input.search(/(?<=_|\^|\\\w+|\S]|}){/) != -1) {
-    //console.warn("Function curly bracket detected");
+  if (input.search(/(?<=_|\^|\\\w+|\S]|}){/) !== -1) {
     return false;
   }
-  if (input.search(/\/\//) != -1) {
-    //console.warn("URL detected");
+  if (input.search(/\/\//) !== -1) {
     return false;
   }
 
   // determines if the brackets are correct
   if (count(/\(/g) > count(/\)/g)) {
-    //console.warn("Input has " + (count(/\(/g) - count(/\)/g)) + " more '(' characters than ')' characters");
     return false;
   }
   if (count(/\(/g) < count(/\)/g)) {
-    //console.warn("Input has " + (count(/\)/g) - count(/\(/g)) + " more ')' characters than '(' characters");
     return false;
   }
   if (count(/\{/g) > count(/\}/g)) {
-    //console.warn("Input has " + (count(/\{/g) - count(/\}/g)) + " more '{' characters than '}' characters");
     return false;
   }
   if (count(/\{/g) < count(/\}/g)) {
-    //console.warn("Input has " + (count(/\}/g) - count(/\{/g)) + " more '}' characters than '{' characters");
     return false;
   }
-  if (count(/\[/g) != count(/\]/g)) {
-    //console.warn("Input has " + (count(/\[/g) - count(/\]/g)) + " more '[' characters than ']' characters");
+  if (count(/\[/g) !== count(/\]/g)) {
     return false;
   }
-  /*if (count(/\[/g) < count(/\]/g)) {
-    //console.warn("Input has " + (count(/\]/g) - count(/\[/g)) + " more ']' characters than '[' characters");
-    return false;
-  }*/
-  if (count(/\|/g) % 2 == 1) {
-    //console.warn("Input has uneven '|' brackets");
+  if (count(/\|/g) % 2 === 1) {
     return false;
   }
   return true;
@@ -73,7 +60,7 @@ export function wolfram2desmos(input: string) {
 
   // returns the last match's index (requires global expr)
   function findFinal(expr: RegExp) {
-    let recent = [...input.matchAll(expr)];
+    const recent = [...input.matchAll(expr)];
     return recent[recent.length - 1]?.index ?? -1;
   }
 
@@ -100,18 +87,18 @@ export function wolfram2desmos(input: string) {
 
   // iterates the bracket parser
   function bracketEval() {
-    if (input[i] == ")") {
+    if (input[i] === ")") {
       bracket += 1;
-    } else if (input[i] == "(") {
+    } else if (input[i] === "(") {
       bracket -= 1;
     }
   }
 
   // iterates the bracket parser with {} in mind
   function bracketEvalFinal() {
-    if (input[i] == ")" || input[i] == "}" || input[i] == "〕") {
+    if (input[i] === ")" || input[i] === "}" || input[i] === "〕") {
       bracket += 1;
-    } else if (input[i] == "(" || input[i] == "{" || input[i] == "〔") {
+    } else if (input[i] === "(" || input[i] === "{" || input[i] === "〔") {
       bracket -= 1;
     }
   }
@@ -169,7 +156,7 @@ export function wolfram2desmos(input: string) {
   let startingIndex: number;
   let selection!: string;
   let temp;
-  let functionSymbols = /^[a-wΑ-ωⒶ-ⓏＡ-Ｚ⒜-⒵√%][\(\_\^]/gi;
+  const functionSymbols = /^[a-wΑ-ωⒶ-ⓏＡ-Ｚ⒜-⒵√%][(_^]/gi;
   input = " " + input + " "; // this gives some breathing space
 
   // symbol replacements
@@ -183,20 +170,20 @@ export function wolfram2desmos(input: string) {
   replace(/(?<![A-Za-zΑ-ω])pm/g, "±");
   replace(/×|∙/g, "*");
   replace(/==/g, "=");
-  replace(/\>\=/g, "≥");
-  replace(/\<\=/g, "≤");
-  replace(/\!\=/g, "≠");
-  replace(/\-\>/g, "→");
+  replace(/>=/g, "≥");
+  replace(/<=/g, "≤");
+  replace(/!=/g, "≠");
+  replace(/->/g, "→");
 
   // replace piecewise {} brackets with special character
-  while (find(/(?<!_|\^|\\\w+|\S]|}){/) != -1) {
+  while (find(/(?<!_|\^|\\\w+|\S]|}){/) !== -1) {
     startingIndex = find(/(?<!_|\^|\\\w+|\S]|}){/);
     i = startingIndex;
     bracket = -1;
     while (i < input.length) {
       i++;
       bracketEvalFinal();
-      if (bracket == 0) {
+      if (bracket === 0) {
         overwrite(startingIndex, "〔");
         overwrite(i, "〕");
         break;
@@ -237,17 +224,17 @@ export function wolfram2desmos(input: string) {
   replace(/int(egral|)(?=_)/g, "Ｂ");
   replace(/sum(?=_)/g, "Ｃ");
   replace(/prod(uct|)(?=_)/g, "Ｄ");
-  while (find(/(?<![A-Za-zΑ-ω])mod(?![A-Za-zΑ-ω])/) != -1) {
+  while (find(/(?<![A-Za-zΑ-ω])mod(?![A-Za-zΑ-ω])/) !== -1) {
     i = find(/(?<![A-Za-zΑ-ω])mod(?![A-Za-zΑ-ω])/) + 3;
     bracket = -1;
     while (i < input.length) {
       i++;
       bracketEval();
-      if (input[i] == "," && bracket == -1) {
+      if (input[i] === "," && bracket === -1) {
         replace(/(?<![A-Za-zΑ-ω])mod(?![A-Za-zΑ-ω])/, "Ｅ");
         break;
       }
-      if (bracket == 0) {
+      if (bracket === 0) {
         replace(/(?<![A-Za-zΑ-ω])mod(?![A-Za-zΑ-ω])/, "%");
         break;
       }
@@ -255,14 +242,14 @@ export function wolfram2desmos(input: string) {
     continue;
   }
   replace(/(?<![A-Za-zΑ-ω])abs(olute|)/g, "Ｆ");
-  while (find(/\|/) != -1) {
+  while (find(/\|/) !== -1) {
     i = find(/\|/) + 1;
     overwrite(i - 1, "Ｆ(");
     bracket = -1;
     while (i < input.length) {
       i++;
       bracketEvalFinal();
-      if (bracket == -1 && input[i] == "|") {
+      if (bracket === -1 && input[i] === "|") {
         overwrite(i, ")");
         break;
       }
@@ -274,20 +261,19 @@ export function wolfram2desmos(input: string) {
   replace(/(?<![A-Za-zΑ-ω])round(?![A-Za-zΑ-ω])/g, "Ｊ");
   replace(/(?<![A-Za-zΑ-ω])(gcd|gcf)(?![A-Za-zΑ-ω])/g, "Ｋ");
   replace(/(?<![A-Za-zΑ-ω])lcm(?![A-Za-zΑ-ω])/g, "Ｌ");
-  while (find(/d(\^\d*)*\/dx(\^\d*)*/) != -1) {
+  if (find(/d(\^\d*)*\/dx(\^\d*)*/) !== -1) {
     i = find(/d(\^\d*)*\/dx(\^\d*)*/);
     selection = input.match(/(?<=\^)(\d*)/)?.[0] ?? "";
     replace(/d(\^\d*)*\/dx(\^\d*)*/, "");
     insert(i, "Ｍ");
     insert(i + 1, "^(" + selection + ")");
-    break;
   }
 
   // unused: ⒜⒝⒞⒟⒠⒡⒢⒣⒤⒥⒦⒧⒨⒩⒪⒫⒬⒭⒮⒯⒰⒱⒲⒳⒴⒵
 
   // dead space removal
-  replace(/(?<=[\/\^\_\√∛%])\s*/g, "");
-  replace(/\s*(?=[\/\^\_%])/g, "");
+  replace(/(?<=[/^_√∛%])\s*/g, "");
+  replace(/\s*(?=[/^_%])/g, "");
 
   // trail removal
   replace(/\sfor(?!.*\sfor).*/g, "");
@@ -332,21 +318,21 @@ export function wolfram2desmos(input: string) {
 
   // MISSING BRACKETS
   // this will ensure brackets AFTER each operator
-  while (findFinal(/[\/\^\_\√∛%](?!\()/g) != -1) {
-    i = findFinal(/[\/\^\_\√∛%](?!\()/g) + 1;
+  while (findFinal(/[/^_√∛%](?!\()/g) !== -1) {
+    i = findFinal(/[/^_√∛%](?!\()/g) + 1;
     insert(i, "(");
     temp = input.slice(i - 2, i);
-    temp = temp.search(functionSymbols) != -1;
+    temp = temp.search(functionSymbols) !== -1;
     bracket = -1;
     selection = input.slice(i + 1, input.length);
-    if (selection[0] == "+" || selection[0] == "-" || selection[0] == "±") {
+    if (selection[0] === "+" || selection[0] === "-" || selection[0] === "±") {
       i += 1;
     }
-    if (selection.search(functionSymbols) == 0 && selection[1] == "(") {
+    if (selection.search(functionSymbols) === 0 && selection[1] === "(") {
       i += 1;
-    } else if (selection.search(/([0-9]*[.])?[0-9]+/) == 0) {
+    } else if (selection.search(/([0-9]*[.])?[0-9]+/) === 0) {
       i += selection.match(/([0-9]*[.])?[0-9]+/)?.[0]?.length ?? 0;
-      if (input[i + 1] == "(") {
+      if (input[i + 1] === "(") {
         insert(i + 1, ")");
         continue;
       }
@@ -354,21 +340,21 @@ export function wolfram2desmos(input: string) {
     while (true) {
       i++;
       bracketEval();
-      if (bracket == 0) {
+      if (bracket === 0) {
         insert(i, ")");
         break;
       }
       if (temp) {
-        if ((isOperator1(i) || isOperator2(i)) && bracket == -1) {
+        if ((isOperator1(i) || isOperator2(i)) && bracket === -1) {
           insert(i, ")");
           break;
         }
-        if (input[i] == "(" && bracket == -2) {
+        if (input[i] === "(" && bracket === -2) {
           insert(i, ")");
           break;
         }
       }
-      if (bracket == -1) {
+      if (bracket === -1) {
         if (isOperator1(i)) {
           insert(i, ")");
           break;
@@ -378,12 +364,12 @@ export function wolfram2desmos(input: string) {
           bracket -= 1;
           continue;
         }
-        if (input[i] == " " || input[i] == "," || input[i] == ":") {
+        if (input[i] === " " || input[i] === "," || input[i] === ":") {
           // eg: "a/(a 2" → "a/(a) (2)"
           insert(i, ")");
           break;
         }
-        if (i == input.length) {
+        if (i === input.length) {
           insert(i, ")");
           break;
         }
@@ -392,28 +378,28 @@ export function wolfram2desmos(input: string) {
   }
 
   // this will ensure brackets BEFORE each DIVISION | MODULO
-  while (find(/\/|%/) != -1) {
+  while (find(/\/|%/) !== -1) {
     startingIndex = find(/\/|%/);
     i = startingIndex - 1;
     temp = false;
-    if (input[startingIndex] == "/") {
+    if (input[startingIndex] === "/") {
       replace(/\//, "╱");
     } else {
       replace(/%/, "⁒");
     }
 
     // preceded by a ")" scenario
-    if (input[i] == ")") {
+    if (input[i] === ")") {
       bracket = 1;
       while (i > 1) {
         i -= 1;
         bracketEval();
-        if (bracket == 0) {
+        if (bracket === 0) {
           temp = input[i - 1] + "(";
           if (
-            temp.search(functionSymbols) == 0 ||
-            temp == "^(" ||
-            temp == "_	("
+            temp.search(functionSymbols) === 0 ||
+            temp === "^(" ||
+            temp === "_	("
           ) {
             temp = true;
             break;
@@ -423,14 +409,14 @@ export function wolfram2desmos(input: string) {
     }
 
     // preceded WITHOUT a ")" scenario
-    if (input[i] != ")" || temp) {
+    if (input[i] !== ")" || temp) {
       insert(startingIndex, ")");
       i = startingIndex;
       bracket = 1;
       while (i > 0) {
         i -= 1;
         bracketEval();
-        if ((isOperator0(i) && bracket == 1) || bracket == 0) {
+        if ((isOperator0(i) && bracket === 1) || bracket === 0) {
           insert(i + 1, "(");
           break;
         }
@@ -443,7 +429,7 @@ export function wolfram2desmos(input: string) {
 
   // BEGIN LATEX FORMATTING
   // implement function exponents
-  while (find(/(?<=[Ⓐ-Ⓩ]\^)\(/) != -1) {
+  while (find(/(?<=[Ⓐ-Ⓩ]\^)\(/) !== -1) {
     startingIndex = find(/(?<=[Ⓐ-Ⓩ]\^)\(/);
     i = startingIndex;
     overwrite(i, "‹");
@@ -451,15 +437,15 @@ export function wolfram2desmos(input: string) {
     while (i < input.length) {
       i++;
       bracketEval();
-      if (bracket == 0) {
+      if (bracket === 0) {
         overwrite(i, "›");
         break;
       }
     }
     selection = input.slice(startingIndex, i + 1);
     if (
-      selection == "‹2›" ||
-      (selection == "‹-1›" && input[startingIndex - 2] != "Ⓩ")
+      selection === "‹2›" ||
+      (selection === "‹-1›" && input[startingIndex - 2] !== "Ⓩ")
     ) {
       continue;
     } else {
@@ -471,7 +457,7 @@ export function wolfram2desmos(input: string) {
       while (i < input.length) {
         i++;
         bracketEval();
-        if (bracket == -1) {
+        if (bracket === -1) {
           insert(i + 1, ")");
           insert(i + 2, "^" + selection);
           break;
@@ -483,7 +469,7 @@ export function wolfram2desmos(input: string) {
   replace(/›/g, ")");
 
   // implement fractions
-  while (find(/\//) != -1) {
+  while (find(/\//) !== -1) {
     startingIndex = find(/\//);
     i = startingIndex + 1;
     bracket = -1;
@@ -491,7 +477,7 @@ export function wolfram2desmos(input: string) {
     while (i < input.length) {
       i++;
       bracketEval();
-      if (bracket == 0) {
+      if (bracket === 0) {
         overwrite(i, "}");
         break;
       }
@@ -504,7 +490,7 @@ export function wolfram2desmos(input: string) {
     while (i > 0) {
       i -= 1;
       bracketEval();
-      if (bracket == 0) {
+      if (bracket === 0) {
         overwrite(i, "\\frac{");
         break;
       }
@@ -512,7 +498,7 @@ export function wolfram2desmos(input: string) {
   }
 
   // implement modulo (BASED ON FRACTION IMPLEMENTATION)
-  while (find(/%/) != -1) {
+  while (find(/%/) !== -1) {
     startingIndex = find(/%/);
     i = startingIndex + 1;
     bracket = -1;
@@ -520,7 +506,7 @@ export function wolfram2desmos(input: string) {
     while (i < input.length) {
       i++;
       bracketEval();
-      if (bracket == 0) {
+      if (bracket === 0) {
         overwrite(i, ")");
         break;
       }
@@ -533,7 +519,7 @@ export function wolfram2desmos(input: string) {
     while (i > 0) {
       i -= 1;
       bracketEval();
-      if (bracket == 0) {
+      if (bracket === 0) {
         overwrite(i, "Ｅ(");
         break;
       }
@@ -541,14 +527,14 @@ export function wolfram2desmos(input: string) {
   }
 
   // implement subscripts and superscripts
-  while (find(/[_\^√∛]\(/) != -1) {
-    i = find(/[_\^√∛]\(/) + 1;
+  while (find(/[_^√∛]\(/) !== -1) {
+    i = find(/[_^√∛]\(/) + 1;
     overwrite(i, "{");
     bracket = -1;
     while (i < input.length) {
       i++;
       bracketEval();
-      if (bracket == 0) {
+      if (bracket === 0) {
         overwrite(i, "}");
         break;
       }
@@ -556,7 +542,7 @@ export function wolfram2desmos(input: string) {
   }
 
   // remove excess brackets
-  while (find(/\\frac{\(/) != -1) {
+  while (find(/\\frac{\(/) !== -1) {
     startingIndex = find(/\\frac\{\(/) + 6;
     i = startingIndex; // "("
     bracket = -1;
@@ -565,10 +551,10 @@ export function wolfram2desmos(input: string) {
       i++;
       bracketEvalFinal();
       if (temp) {
-        if (input[i] == " ") {
+        if (input[i] === " ") {
           continue;
         }
-        if (input[i] == "}") {
+        if (input[i] === "}") {
           overwrite(startingIndex, "❌");
           overwrite(i - 1, "❌");
           break;
@@ -577,7 +563,7 @@ export function wolfram2desmos(input: string) {
           break;
         }
       }
-      if (!temp && bracket == 0) {
+      if (!temp && bracket === 0) {
         temp = true;
       }
     }
@@ -587,14 +573,14 @@ export function wolfram2desmos(input: string) {
 
   // implement absolutes
   replace(/(?<=Ｆ)\s*/g, "");
-  while (find(/Ｆ\(/) != -1) {
+  while (find(/Ｆ\(/) !== -1) {
     i = find(/Ｆ\(/);
     replace(/Ｆ\(/, "«");
     bracket = -1;
     while (i < input.length) {
       i++;
       bracketEvalFinal();
-      if (bracket == 0) {
+      if (bracket === 0) {
         overwrite(i, "»");
         break;
       }
@@ -604,15 +590,15 @@ export function wolfram2desmos(input: string) {
   // convert reciprocal exponents to surd
   while (
     controller.configFlags.reciprocalExponents2Surds &&
-    findFinal(/\^\{\\frac\{1\}\{[A-z\d\s\.\	+\-\*]*\}\}/g) != -1
+    findFinal(/\^\{\\frac\{1\}\{[A-z\d\s.\t+\-*]*\}\}/g) !== -1
   ) {
-    startingIndex = findFinal(/\^\{\\frac\{1\}\{[A-z\d\s\.\+\-\*]*\}\}/g);
+    startingIndex = findFinal(/\^\{\\frac\{1\}\{[A-z\d\s.+\-*]*\}\}/g);
     i = startingIndex;
     bracket = 0;
     while (i < input.length) {
       i++;
       bracketEvalFinal();
-      if (bracket == 0) {
+      if (bracket === 0) {
         selection = input.slice(startingIndex, i + 1);
         input =
           input.slice(0, startingIndex) + input.slice(i + 1, input.length);
@@ -622,22 +608,18 @@ export function wolfram2desmos(input: string) {
 
     i = startingIndex - 1;
     // proceeding with a ")" scenario
-    if (input[i] == ")") {
+    if (input[i] === ")") {
       bracket = 1;
       while (i > 0) {
         i -= 1;
         bracketEvalFinal();
-        if (bracket == 0) {
+        if (bracket === 0) {
           overwrite(startingIndex - 1, "}");
           overwrite(i, "{");
-          insert(
-            i,
-            "√[" +
-              selection.match(
-                /(?<=\^\{\\frac\{1\}\{)[A-z\d\s\.\	+\-\*]*(?=\}\})/
-              )?.[0] +
-              "]"
-          );
+          const match = selection.match(
+            /(?<=\^\{\\frac\{1\}\{)[A-z\d\s.\t+\-*]*(?=\}\})/
+          )?.[0];
+          if (match) insert(i, "√[" + match + "]");
           break;
         }
       }
@@ -649,16 +631,12 @@ export function wolfram2desmos(input: string) {
       while (i > 0) {
         i -= 1;
         bracketEvalFinal();
-        if ((isOperator0(i) && bracket == 1) || bracket == 0) {
+        if ((isOperator0(i) && bracket === 1) || bracket === 0) {
           insert(i + 1, "{");
-          insert(
-            i,
-            "√[" +
-              selection?.match(
-                /(?<=\^\{\\frac\{1\}\{)[A-z\d\s\.\	+\-\*]*(?=\}\})/
-              )?.[0] +
-              "]"
-          );
+          const match = selection?.match(
+            /(?<=\^\{\\frac\{1\}\{)[A-z\d\s.\t+\-*]*(?=\}\})/
+          )?.[0];
+          if (match) insert(i, "√[" + match + "]");
           break;
         }
       }
@@ -667,14 +645,14 @@ export function wolfram2desmos(input: string) {
 
   // implement double-argument logarithm
   replace(/(?<=Ⓩ)\s*/g, "");
-  while (find(/(?<=Ⓩ)\(/) != -1) {
+  while (find(/(?<=Ⓩ)\(/) !== -1) {
     startingIndex = find(/(?<=Ⓩ)\(/);
     i = startingIndex;
     bracket = -1;
     while (i < input.length) {
       i++;
       bracketEvalFinal();
-      if (input[i] == "," && bracket == -1) {
+      if (input[i] === "," && bracket === -1) {
         overwrite(i, "");
         selection = input.slice(startingIndex + 1, i);
         input =
@@ -682,7 +660,7 @@ export function wolfram2desmos(input: string) {
         insert(startingIndex, "_{" + selection + "}");
         break;
       }
-      if (bracket == 0) {
+      if (bracket === 0) {
         overwrite(startingIndex, "✅");
         break;
       }
@@ -694,8 +672,8 @@ export function wolfram2desmos(input: string) {
   // implement proper brackets when all the operator brackets are gone
   replace(/\(/g, "\\left(");
   replace(/\)/g, "\\right)");
-  replace(/\«/g, "\\left|");
-  replace(/\»/g, "\\right|");
+  replace(/«/g, "\\left|");
+  replace(/»/g, "\\right|");
   replace(/〔/g, "\\left\\{");
   replace(/〕/g, "\\right\\}");
   replace(/\[/g, "\\left[");
@@ -749,21 +727,21 @@ export function wolfram2desmos(input: string) {
   replace(/Ｋ/g, "\\operatorname{gcf}");
   replace(/Ｌ/g, "\\operatorname{lcm}");
   replace(/Ｍ(?!\^\{)/g, "\\frac{d}{dx}");
-  while (find(/Ｍ/) != -1) {
+  while (find(/Ｍ/) !== -1) {
     startingIndex = find(/Ｍ/);
     i = startingIndex + 2;
     bracket = -1;
     while (i < input.length) {
       i++;
       bracketEvalFinal();
-      if (bracket == 0) {
+      if (bracket === 0) {
         selection = input.slice(startingIndex + 3, i);
         input =
           input.slice(0, startingIndex + 1) + input.slice(i + 1, input.length);
         break;
       }
     }
-    if (selection.search(/[^\d]*/g) != -1) {
+    if (selection.search(/[^\d]*/g) !== -1) {
       const selectionNum = parseInt(selection);
       if (selectionNum <= 10 && controller.configFlags.derivativeLoopLimit) {
         replace(/Ｍ/, "");

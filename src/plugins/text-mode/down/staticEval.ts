@@ -11,9 +11,10 @@ export function evalExpr(
       return expr.value;
     case "String":
       return expr.value;
-    case "PrefixExpression":
+    case "PrefixExpression": {
       const value = evalExpr(diagnostics, expr.expr);
       return value !== null ? -value : null;
+    }
     case "Identifier":
       // TODO: create proper builtin map
       // Rudimentary variable inlining

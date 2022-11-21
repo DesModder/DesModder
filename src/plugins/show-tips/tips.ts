@@ -115,6 +115,7 @@ const tips: TipData[] = [
     learnMore: "https://help.desmos.com/hc/en-us/articles/4405487300877-Labels",
   },
   {
+    // eslint-disable-next-line no-template-curly-in-string
     desc: "Use ${ } for dynamic point labels based on a variable",
     learnMore: "https://help.desmos.com/hc/en-us/articles/4405487300877-Labels",
   },

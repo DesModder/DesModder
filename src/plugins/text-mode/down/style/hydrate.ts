@@ -113,6 +113,7 @@ export function hydrate<T>(
               `Expected ${errPath} to evaluate to string or identifier, but got ${typeof evaluated}`
             );
         } else {
+          // eslint-disable-next-line valid-typeof
           if (typeof evaluated !== schemaType)
             pushError(
               `Expected ${errPath} to evaluate to ${schemaType}, but got ${typeof evaluated}`

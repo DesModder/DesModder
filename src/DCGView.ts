@@ -13,6 +13,7 @@ type ToFunc<T> = {
 export abstract class ClassComponent<PropsType = Props> {
   props!: ToFunc<PropsType>;
   children!: unknown;
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
   constructor(_props: OrConst<PropsType>) {}
   init(): void {}
   abstract template(): unknown;
@@ -27,7 +28,7 @@ export abstract class ClassComponent<PropsType = Props> {
       };
 }
 
-type Component = ClassComponent | (() => string);
+type ComponentArgument = ClassComponent | (() => string);
 
 export interface LooseProps {
   [key: string]: any;
@@ -38,20 +39,24 @@ export interface Props {
 }
 
 export interface MountedComponent {
-  update(): void;
+  update: () => void;
 }
 
 interface DCGViewModule {
   Class: typeof ClassComponent;
-  const<T>(v: T): () => T;
-  createElement(el: Component, props: Props, ...children: Component[]): unknown;
+  const: <T>(v: T) => () => T;
+  createElement: (
+    el: ComponentArgument,
+    props: Props,
+    ...children: ComponentArgument[]
+  ) => unknown;
   // couldn't figure out type for `comp`, so I just put | any
-  mountToNode(
+  mountToNode: (
     comp: ClassComponent | any,
     el: HTMLElement,
     props: Props
-  ): MountedComponent;
-  unmountFromNode(el: HTMLElement): void;
+  ) => MountedComponent;
+  unmountFromNode: (el: HTMLElement) => void;
 }
 
 export const Component = DCGView.Class;
@@ -60,6 +65,7 @@ export const mountToNode = DCGView.mountToNode;
 export const unmountFromNode = DCGView.unmountFromNode;
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace JSX {
     interface IntrinsicAttributes {
       class?: string | { [key: string]: boolean };
@@ -102,9 +108,9 @@ declare global {
  */
 
 export function jsx(
-  el: Component,
+  el: ComponentArgument,
   props: LooseProps,
-  ...children: Component[]
+  ...children: ComponentArgument[]
 ) {
   /* Handle differences between typescript's expectation and DCGView */
   if (!Array.isArray(children)) {

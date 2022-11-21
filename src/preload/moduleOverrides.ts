@@ -23,6 +23,7 @@ import tooltippedError from "./moduleOverrides/tooltipped-error";
 import { DependencyNameMap } from "./overrideHelpers/withDependencyMap";
 import { Visitor } from "@babel/traverse";
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 export default {
   "dcgview-helpers/tooltipped-error": tooltippedError,
   "expressions/expression-icon-view": expressionIconView,

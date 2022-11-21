@@ -1,37 +1,37 @@
 import { IRChunk, ValueType } from "./IR";
 
 interface Base {
-  init(): void;
+  init: () => void;
   exportPenalty: number;
-  setInputSpan(span: Span): void;
-  getInputString(): string;
-  getInputSpan(): Span;
-  shouldExportAns(): boolean;
-  getAnsVariable(): [string] | [];
-  addDependency(dep: string): void;
-  addDependencies(deps: string[]): void;
-  addDummyDependency(dep: string): void;
-  addDummyDependencies(deps: string[]): void;
-  mergeDependencies(): void;
-  mergeDependenciesInScope(): void;
-  getDependencies(): string[];
-  getDummyDependencies(): string[];
-  getScope(): Scope;
-  dependsOn(v: string): boolean;
-  getExports(): string[];
-  getLegalExports(): string[];
-  exportsSymbol(v: string): boolean;
+  setInputSpan: (span: Span) => void;
+  getInputString: () => string;
+  getInputSpan: () => Span;
+  shouldExportAns: () => boolean;
+  getAnsVariable: () => [string] | [];
+  addDependency: (dep: string) => void;
+  addDependencies: (deps: string[]) => void;
+  addDummyDependency: (dep: string) => void;
+  addDummyDependencies: (deps: string[]) => void;
+  mergeDependencies: () => void;
+  mergeDependenciesInScope: () => void;
+  getDependencies: () => string[];
+  getDummyDependencies: () => string[];
+  getScope: () => Scope;
+  dependsOn: (v: string) => boolean;
+  getExports: () => string[];
+  getLegalExports: () => string[];
+  exportsSymbol: (v: string) => boolean;
   // exportTo(): unknown;
-  getOperator(): string;
-  isInequality(): boolean;
-  isShadeBetween(): boolean;
-  getAllIds(): string[];
-  getEvaluationInfo(): EvaluationInfo;
-  shouldPromoteToSlider(): boolean;
-  getSliderVariables(): string[];
-  getCompiledDerivative(): Function;
-  asValue(): undefined | string | number | boolean | number[] | unknown;
-  boundDomain(): unknown;
+  getOperator: () => string;
+  isInequality: () => boolean;
+  isShadeBetween: () => boolean;
+  getAllIds: () => string[];
+  getEvaluationInfo: () => EvaluationInfo;
+  shouldPromoteToSlider: () => boolean;
+  getSliderVariables: () => string[];
+  getCompiledDerivative: () => Function;
+  asValue: () => undefined | string | number | boolean | number[] | unknown;
+  boundDomain: () => unknown;
 }
 
 type EvaluationInfo = false | undefined | { val: unknown }[];
@@ -46,7 +46,7 @@ export function evalMaybeRational(x: MaybeRational) {
   }
 }
 
-export interface Error {
+export interface ParsenodeError extends Error {
   // "1 ("
   type: "Error";
   _msg: {
@@ -55,11 +55,11 @@ export interface Error {
   };
   _sliderVariables: string[];
   isError: true;
-  getError(): string;
-  blocksExport(): boolean;
+  getError: () => string;
+  blocksExport: () => boolean;
   // setDependencies() and allowExport() mutate then return `this`, hence Error
-  setDependencies(): Error;
-  allowExport(): Error;
+  setDependencies: () => ParsenodeError;
+  allowExport: () => ParsenodeError;
 }
 
 export interface Span {
@@ -74,20 +74,20 @@ interface Expression extends Base {
   args: unknown[];
   treeSize: number;
   _updateSymbols: string[];
-  addUpdateSymbol(s: string): void;
-  getUpdateSymbols(): string[];
+  addUpdateSymbol: (s: string) => void;
+  getUpdateSymbols: () => string[];
   // called within init():
-  registerDependencies(): void;
-  computeTreeSize(): void;
-  copyWithArgs(): Expression;
+  registerDependencies: () => void;
+  computeTreeSize: () => void;
+  copyWithArgs: () => Expression;
 }
 
 interface UpperConstant extends Expression {
   args: [];
   _constantValue: boolean | MaybeRational;
-  asCompilerValue(): boolean | MaybeRational;
-  scalarExprString(): string;
-  isNaN(): boolean;
+  asCompilerValue: () => boolean | MaybeRational;
+  scalarExprString: () => string;
+  isNaN: () => boolean;
 }
 
 export interface Constant extends UpperConstant {
@@ -144,7 +144,7 @@ export interface ExtendSeed extends Expression {
   seed: Expression;
   userSeed: Expression;
   tag: unknown;
-  asValue(): string;
+  asValue: () => string;
 }
 
 export interface FunctionExponent extends Expression {
@@ -205,9 +205,9 @@ export interface List extends Expression {
   args: ChildExprNode[];
   length: number;
   isList: true;
-  asCompilerValue(): (boolean | MaybeRational)[];
+  asCompilerValue: () => (boolean | MaybeRational)[];
   // eachArgs(): void // TODO
-  wrap(): unknown;
+  wrap: () => unknown;
 }
 
 export interface Range extends Expression {
@@ -220,7 +220,7 @@ export interface Range extends Expression {
   args: [List, List];
   beginning: List;
   end: List;
-  isHalfEmpty(): boolean;
+  isHalfEmpty: () => boolean;
 }
 
 export interface ListAccess extends Expression {
@@ -291,8 +291,8 @@ interface RepeatedOperator extends Expression {
   _index: Identifier;
   // index, start, end, summand
   args: [Identifier, ChildExprNode, ChildExprNode, ChildExprNode];
-  evaluateConstant(b: [number, number]): number;
-  update(acc: number, el: number): number;
+  evaluateConstant: (b: [number, number]) => number;
+  update: (acc: number, el: number) => number;
 }
 
 export interface Product extends RepeatedOperator {
@@ -354,8 +354,8 @@ interface RawExponent extends Exponent {
 
 interface BaseComparator extends Expression {
   // .create is called with "<", ">", "<=", ">=", and "="
-  create(): BaseComparator;
-  asComparator(): BaseComparator;
+  create: () => BaseComparator;
+  asComparator: () => BaseComparator;
 
   // The _difference reverses direction for '<' and '<=' to satisfy the same order as '>'
   _difference: Subtract;
@@ -384,7 +384,7 @@ interface DoubleInequality extends Base {
   _operators: [Expression, Expression];
   _expressions: [Expression, Expression];
   _indicator: unknown;
-  isShadeBetween(): true;
+  isShadeBetween: () => true;
 }
 
 interface SolvedEquation extends Base {
@@ -411,11 +411,11 @@ interface UpperAssignment extends Base {
   _expression: ChildExprNode;
   _symbol: string;
   _exports: [] | [string];
-  shouldExportAns(): true;
-  computeExports(): [] | [string];
-  isEquation(): boolean;
-  asEquation(): Equation;
-  shouldPromoteToSlider(): boolean;
+  shouldExportAns: () => true;
+  computeExports: () => [] | [string];
+  isEquation: () => boolean;
+  asEquation: () => Equation;
+  shouldPromoteToSlider: () => boolean;
 }
 
 export interface Assignment extends UpperAssignment {
@@ -432,8 +432,8 @@ export interface Slider extends UpperAssignment {
   sliderSoftMax: ChildExprNode;
   sliderStep: ChildExprNode;
   sliderIsPlayingOnce: boolean;
-  shouldPromoteToSlider(): false;
-  asAssignment(): Assignment;
+  shouldPromoteToSlider: () => false;
+  asAssignment: () => Assignment;
 }
 
 export interface FunctionDefinition extends UpperEquation {
@@ -444,7 +444,7 @@ export interface FunctionDefinition extends UpperEquation {
   _symbol: string;
   _argSymbols: string[];
   _expression: ChildExprNode;
-  asEquation(): Equation;
+  asEquation: () => Equation;
 }
 
 /* Full-expr funcs */
@@ -511,7 +511,7 @@ export interface Regression extends Base {
   _logDifference: Subtract;
   isRegression: true;
   exportTo: unknown;
-  getSliderVariables(): [];
+  getSliderVariables: () => [];
 }
 
 export interface OptimizedRegression extends Base {
@@ -527,8 +527,8 @@ export interface OptimizedRegression extends Base {
   isLinear: boolean;
   parameterWarning: unknown;
   _exports: [string];
-  getCompiledFunction(): Function;
-  getCompiledDerivative(): Function;
+  getCompiledFunction: () => Function;
+  getCompiledDerivative: () => Function;
 }
 
 /* Intermediate Representation */
@@ -541,21 +541,21 @@ export interface IRExpression extends Base {
   // length is for isList only
   length: number;
   isConstant: boolean;
-  shouldExportAns(): true;
-  getCompiledFunction(): Function;
-  polynomialOrder(): number;
-  getPolynomialCoefficients(): number[];
-  takeDerivative(): IRExpression;
-  boundDomain(): unknown;
-  asValue(): unknown;
-  asCompilerValue(): boolean | MaybeRational | boolean[] | MaybeRational[];
-  isNaN(): boolean;
-  getEvaluationInfo(): EvaluationInfo;
-  elementAt(): unknown;
-  findLinearSubset(): unknown;
-  deriveRegressionRestrictions(): unknown;
-  eachElement(f: unknown): void;
-  mapElements(f: unknown): unknown[];
+  shouldExportAns: () => true;
+  getCompiledFunction: () => Function;
+  polynomialOrder: () => number;
+  getPolynomialCoefficients: () => number[];
+  takeDerivative: () => IRExpression;
+  boundDomain: () => unknown;
+  asValue: () => unknown;
+  asCompilerValue: () => boolean | MaybeRational | boolean[] | MaybeRational[];
+  isNaN: () => boolean;
+  getEvaluationInfo: () => EvaluationInfo;
+  elementAt: () => unknown;
+  findLinearSubset: () => unknown;
+  deriveRegressionRestrictions: () => unknown;
+  eachElement: (f: unknown) => void;
+  mapElements: (f: unknown) => unknown[];
 }
 
 /* Table */
@@ -567,7 +567,7 @@ export interface TableColumn extends Base {
   values: unknown;
   isIndependent: boolean;
   _exports: string[];
-  isDiscrete(): boolean;
+  isDiscrete: () => boolean;
   _exportSymbolsTo: unknown;
   exportTo: unknown;
   exportToLocal: unknown;
@@ -580,7 +580,7 @@ export interface Table extends Base {
   exportPenalty: 1;
   isTable: true;
   // exportTo
-  getAllIds(): string[];
+  getAllIds: () => string[];
 }
 
 export interface Ticker extends Base {
@@ -602,7 +602,7 @@ export type RootOnlyExprNode =
   | Regression;
 
 export type ChildExprNode =
-  | Error
+  | ParsenodeError
   | Constant
   | MixedNumber
   | DotAccess
@@ -654,8 +654,6 @@ type IrrelevantExprNode =
   | TableColumn
   | Table
   | Ticker;
-
-type SubclassedOnly = RepeatedOperator | BaseComparator;
 
 type Node = RootOnlyExprNode | ChildExprNode;
 export default Node;

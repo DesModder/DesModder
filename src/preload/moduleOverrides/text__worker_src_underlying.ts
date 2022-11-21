@@ -25,7 +25,7 @@ export default () => ({
     */
     const src = path.node.value;
     const lines = [];
-    for (let line of src.split("\n")) {
+    for (const line of src.split("\n")) {
       let match;
       // Use regex here instead of proper parsing for performance
       if (
@@ -92,7 +92,7 @@ function transformLine(line: string) {
     compact: true,
     plugins: [
       () => ({
-        visitor: visitor,
+        visitor,
       }),
     ],
   }).code;

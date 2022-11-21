@@ -28,7 +28,7 @@ export function destroyView() {
 const captureFrameID = "dsm-vc-capture-frame";
 
 function percentage(x: number) {
-  return 100 * x + "%";
+  return `${100 * x}%`;
 }
 
 function applyCaptureFrame() {

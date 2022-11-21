@@ -55,5 +55,5 @@ class InlineToggleWidget extends WidgetType {
 
 export default {
   paths: [".points.style", ".lines.style"],
-  widget: InlineToggleWidget,
+  Widget: InlineToggleWidget,
 };

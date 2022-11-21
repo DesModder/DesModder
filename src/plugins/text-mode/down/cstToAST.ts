@@ -2,8 +2,7 @@ import TextAST from "./TextAST";
 import { DiagnosticsState } from "./diagnostics";
 import { Diagnostic } from "@codemirror/lint";
 import { Text } from "@codemirror/state";
-import { SyntaxNode } from "@lezer/common";
-import { Tree } from "@lezer/common";
+import { SyntaxNode, Tree } from "@lezer/common";
 import { everyNonNull } from "utils/utils";
 
 export class TextAndDiagnostics extends DiagnosticsState {
@@ -91,7 +90,7 @@ function statementToAST(
   switch (node.name) {
     case "ExprStatement":
       return simpleStatementToAST(td, node, style);
-    case "Table":
+    case "Table": {
       const tableChildren = node
         .getChild("BlockInner")!
         .getChildren("Statement")
@@ -103,6 +102,7 @@ function statementToAST(
         style,
         pos: getPos(node),
       };
+    }
     case "Image":
       return {
         type: "Image",
@@ -117,7 +117,7 @@ function statementToAST(
         style,
         pos: getPos(node),
       };
-    case "Folder":
+    case "Folder": {
       const folderChildren = node
         .getChild("BlockInner")!
         .getChildren("Statement")
@@ -130,6 +130,7 @@ function statementToAST(
         style,
         pos: getPos(node),
       };
+    }
     case "Settings":
       return {
         type: "Settings",
@@ -197,7 +198,7 @@ function simpleStatementToAST(
   style: TextAST.StyleMapping | null
 ): TextAST.ExprStatement | null {
   let expr = exprToAST(td, node.getChild("Expression")!);
-  let residualVariable: TextAST.Identifier | undefined = undefined;
+  let residualVariable: TextAST.Identifier | undefined;
   if (expr === null) return null;
   if (
     expr.type === "BinaryExpression" &&
@@ -222,7 +223,7 @@ function simpleStatementToAST(
     : null;
   return {
     type: "ExprStatement",
-    expr: expr,
+    expr,
     style,
     pos: getPos(node),
     regression:
@@ -289,7 +290,7 @@ function exprToAST(
       return repeatedExpressionToAST(td, node);
     case "ListExpression":
       return listExpressionToAST(td, node);
-    case "ListComprehension":
+    case "ListComprehension": {
       const listcompArg = exprToAST(td, node.getChild("Expression")!);
       const listcompAssignments = node
         .getChildren("AssignmentExpression")
@@ -302,7 +303,8 @@ function exprToAST(
         assignments: listcompAssignments,
         pos: getPos(node),
       };
-    case "Piecewise":
+    }
+    case "Piecewise": {
       const piecewiseChildren = node.getChildren("PiecewiseBranch");
       if (piecewiseChildren.length === 0)
         throw Error("Programming error: empty piecewise not yet implemented");
@@ -319,7 +321,8 @@ function exprToAST(
         branches: piecewiseBranches,
         pos: getPos(node),
       };
-    case "PrefixExpression":
+    }
+    case "PrefixExpression": {
       const prefixArg = exprToAST(td, node.getChild("Expression")!);
       if (prefixArg === null) return null;
       return {
@@ -328,18 +331,20 @@ function exprToAST(
         expr: prefixArg,
         pos: getPos(node),
       };
+    }
     case "ParenthesizedExpression":
       return parenToAST(td, node);
-    case "MemberExpression":
+    case "MemberExpression": {
       const memberObj = exprToAST(td, node.getChild("Expression")!);
       if (memberObj === null) return null;
       return {
         type: "MemberExpression",
         object: memberObj,
-        property: identifierToAST(td, node.getChild("DotAccessIdentifier")!),
+        property: identifierToAST(td, node.getChild("DotAccessIdentifier")),
         pos: getPos(node),
       };
-    case "ListAccessExpression":
+    }
+    case "ListAccessExpression": {
       const laExprNode = node.getChild("Expression")!;
       const laIndex = exprToAST(td, laExprNode.nextSibling!);
       const laExpr = exprToAST(td, laExprNode);
@@ -353,9 +358,10 @@ function exprToAST(
             : laIndex,
         pos: getPos(node),
       };
+    }
     case "BinaryExpression":
       return binaryExpressionToAST(td, node);
-    case "PostfixExpression":
+    case "PostfixExpression": {
       const postfixArg = exprToAST(td, node.getChild("Expression")!);
       if (postfixArg === null) return null;
       return {
@@ -364,18 +370,20 @@ function exprToAST(
         expr: postfixArg,
         pos: getPos(node),
       };
+    }
     case "CallExpression":
       return callExpressionToAST(td, node);
-    case "DerivativeExpression":
+    case "DerivativeExpression": {
       const dExpr = exprToAST(td, node.getChild("Expression", ")")!);
       if (dExpr === null) return null;
       return {
         type: "DerivativeExpression",
-        variable: identifierToAST(td, node.getChild("Identifier")!),
+        variable: identifierToAST(td, node.getChild("Identifier")),
         expr: dExpr,
         pos: getPos(node),
       };
-    case "UpdateRule":
+    }
+    case "UpdateRule": {
       const updateVar = exprToAST(td, node.getChild("Expression")!);
       const updateExpr = exprToAST(td, node.getChild("Expression", "->")!);
       if (updateVar === null || updateExpr === null) return null;
@@ -392,7 +400,8 @@ function exprToAST(
         expr: updateExpr,
         pos: getPos(node),
       };
-    case "SequenceExpression":
+    }
+    case "SequenceExpression": {
       const seqLeft = exprToAST(td, node.getChild("Expression")!);
       const seqRight = exprToAST(td, node.getChild("Expression", ",")!);
       if (seqLeft === null || seqRight === null) return null;
@@ -403,6 +412,7 @@ function exprToAST(
         parenWrapped: false,
         pos: getPos(node),
       };
+    }
     default:
       throw Error(
         `Programming error: Unexpected expression node: ${node.name}`
@@ -430,7 +440,7 @@ function repeatedExpressionToAST(
   if (startExpr === null || endExpr === null || exprExpr === null) return null;
   return {
     type: "RepeatedExpression",
-    name: name,
+    name,
     index: identifierToAST(td, exprs[0]),
     start: startExpr,
     end: endExpr,
@@ -549,7 +559,7 @@ function binaryExpressionToAST(
       leftOp: left.op as "<" | "<=" | ">=" | ">" | "=",
       middle: left.right,
       rightOp: op as "<" | "<=" | ">=" | ">" | "=",
-      right: right,
+      right,
     };
   }
   return {
@@ -626,7 +636,7 @@ function mappingEntryToAST(
   if (resExpr === null) return null;
   return {
     type: "MappingEntry",
-    property: identifierToStringAST(td, node.getChild("Identifier")!),
+    property: identifierToStringAST(td, node.getChild("Identifier")),
     expr: resExpr,
     pos: getPos(node),
   };

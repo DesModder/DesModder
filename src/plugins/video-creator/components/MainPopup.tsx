@@ -30,7 +30,7 @@ export default class MainPopup extends Component<{
 
   init() {
     this.controller = this.props.controller();
-    this.controller.tryInitFFmpeg();
+    void this.controller.tryInitFFmpeg();
   }
 
   template() {

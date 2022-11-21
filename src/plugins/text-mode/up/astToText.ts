@@ -49,7 +49,7 @@ function astItemToText(path: NodePath<TextAST.Statement>): Doc {
           join(
             hardline,
             item.columns.map((col, i) =>
-              columnToText(path.withChild(col, "column." + i))
+              columnToText(path.withChild(col, "column." + i.toString()))
             )
           ),
         ]),
@@ -69,7 +69,7 @@ function astItemToText(path: NodePath<TextAST.Statement>): Doc {
           join(
             [hardline, hardline],
             item.children.map((child, i) =>
-              astItemToText(path.withChild(child, "child." + i))
+              astItemToText(path.withChild(child, "child." + i.toString()))
             )
           ),
         ]),
@@ -107,7 +107,7 @@ function styleMapToText(path: NodePath<TextAST.StyleMapping>): Doc {
   // TODO: handle quotes/unquotes for property names
   // TODO: remove newlines when only 1 or zero entries
   const lines = path.node.entries.map((entry, i, list) => [
-    styleEntryToText(path.withChild(entry, "entry." + i)),
+    styleEntryToText(path.withChild(entry, "entry." + i.toString())),
     i === list.length - 1 ? ifBreak(",", "") : ",",
   ]);
   return group(["@{", indent([line, join(line, lines)]), line, "}"]);
@@ -136,7 +136,7 @@ function regressionParamsToText(
   const lines = join(
     line,
     path.node.entries.map((entry, i) =>
-      regressionEntryToText(path.withChild(entry, "entry." + i))
+      regressionEntryToText(path.withChild(entry, "entry." + i.toString()))
     )
   );
   return ["#{", indent([line, lines]), line, "}"];
@@ -165,7 +165,7 @@ function primeOrCallToText(
       join(
         [",", line],
         path.node.arguments.map((e, i) =>
-          exprToText(path.withChild(e, "argument." + i))
+          exprToText(path.withChild(e, "argument." + i.toString()))
         )
       )
     ),
@@ -238,7 +238,7 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
           join(
             ", ",
             e.startValues.map((v, i) =>
-              exprToText(path.withChild(v, "startValues." + i))
+              exprToText(path.withChild(v, "startValues." + i.toString()))
             )
           )
         ),
@@ -247,12 +247,12 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
           join(
             ", ",
             e.endValues.map((v, i) =>
-              exprToText(path.withChild(v, "endValues" + i))
+              exprToText(path.withChild(v, "endValues." + i.toString()))
             )
           )
         ),
       ]);
-    case "ListAccessExpression":
+    case "ListAccessExpression": {
       const listAccessIndex = exprToText(path.withChild(e.index, "index"));
       return [
         exprToText(path.withChild(e.expr, "expr")),
@@ -263,6 +263,7 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
             : bracketize(listAccessIndex)
         ),
       ];
+    }
     case "MemberExpression":
       return group([
         exprToText(path.withChild(e.object, "object")),
@@ -290,7 +291,7 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
           ", ",
           e.assignments.map((assignment, i) =>
             assignmentExpressionToText(
-              path.withChild(assignment, "assignments.i")
+              path.withChild(assignment, `assignments.${i}`)
             )
           )
         ),
@@ -380,7 +381,7 @@ function listToText(path: NodePath<TextAST.ListExpression>) {
   const printOneLineOnly =
     values.length > 50 || values.every(isNumericOrNumericPoint);
   const inner = values.map((v, i) =>
-    exprToText(path.withChild(v, "values." + i))
+    exprToText(path.withChild(v, "values." + i.toString()))
   );
   return printOneLineOnly
     ? ["[", join(", ", inner), "]"]

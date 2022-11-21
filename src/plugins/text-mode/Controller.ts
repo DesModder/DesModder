@@ -15,13 +15,14 @@ export default class Controller {
 
   toggleTextMode() {
     this.inTextMode = !this.inTextMode;
-    // Ticks update rendering as well as process sliders. Since the existing
+    // Ticks update rendering, and they process sliders. Since the existing
     // expression UI doesn't render in text mode, we replace markTickRequiredNextFrame
     // with a version that calls markTickRequiredNextFrame only when sliders are playing
     if (this.inTextMode) {
       Calc.controller.dispatch({ type: "close-expression-search" });
       Calc.controller.markTickRequiredNextFrame = function () {
         if (this.getPlayingSliders().length > 0) {
+          // eslint-disable-next-line no-proto
           (this as any).__proto__.markTickRequiredNextFrame.apply(this);
         }
       };
@@ -74,7 +75,7 @@ export default class Controller {
   /**
    * unmountEditor: called from module overrides when the DCGView node unmounts
    */
-  unmountEditor(container: HTMLDivElement) {
+  unmountEditor() {
     if (this.dispatchListenerID !== null) {
       Calc.controller.dispatcher.unregister(this.dispatchListenerID);
     }
@@ -135,7 +136,7 @@ function getSelectedItem(
   const selection = view.state.selection.main;
   if (ls.analysis) {
     const containingPairs = Object.entries(ls.analysis.mapIDstmt).filter(
-      ([id, stmt]) =>
+      ([_id, stmt]) =>
         stmt!.type !== "Folder" &&
         stmt!.pos!.from <= selection.from &&
         stmt!.pos!.to >= selection.to

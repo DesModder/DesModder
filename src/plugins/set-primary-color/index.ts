@@ -98,8 +98,8 @@ function onDisable() {
 
 export default {
   id: "set-primary-color",
-  onEnable: onEnable,
-  onDisable: onDisable,
+  onEnable,
+  onDisable,
   enabledByDefault: false,
   config: [
     {

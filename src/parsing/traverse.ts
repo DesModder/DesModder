@@ -21,19 +21,21 @@ export class Path<n extends Node = Node> {
         if ("args" in this.node) {
           return [this.node.args[0], this.node.args[2], this.node.args[4]];
         }
-      default:
+      // fallthrough
+      default: {
         if ("args" in this.node) {
           return this.node.args as ChildExprNode[];
         }
         const type = (this.node as any).type;
         throw Error(`Unexpected node type: ${type}. How did you obtain it?`);
+      }
     }
   }
 }
 
 interface Callbacks {
-  enter?(path: Path): void;
-  exit?(path: Path): void;
+  enter?: (path: Path) => void;
+  exit?: (path: Path) => void;
 }
 
 export default function traverse(node: Node, callbacks: Callbacks) {

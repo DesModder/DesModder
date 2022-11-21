@@ -5,11 +5,12 @@ export default function withinFunctionAssignment(
   atFunctionDefinition: (
     func: t.FunctionExpression,
     path: babel.NodePath<t.FunctionExpression>
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   ) => t.Expression | void
 ) {
   /* Looks for someObject.[functionName] = function (...) {...}
   and calls `atFunctionDefinition` on the RHS function. If `atFunctionDefinition`
-  returns a node, then it is assigned to replace the RHS function*/
+  returns a node, then it is assigned to replace the RHS function */
   return {
     enter(path: babel.NodePath) {
       if (path.node.type !== "AssignmentExpression") return;

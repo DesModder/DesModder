@@ -21,7 +21,7 @@ import { evalMaybeRational, MaybeRational } from "parsing/parsenode";
 export const ListLength = desmosRequire(
   "core/math/ir/features/list-length"
 ) as {
-  getConstantListLength(chunk: IRChunk, index: number): number;
+  getConstantListLength: (chunk: IRChunk, index: number) => number;
 };
 
 function getIdentifier(index: number) {
@@ -67,11 +67,11 @@ function getSourceBinOp(
       return `${a}&&${b}`;
     case opcodes.OrderedPair:
       return `vec2(${a},${b})`;
-    case opcodes.OrderedPairAccess:
+    case opcodes.OrderedPairAccess: {
       // Should only be called with a constant (inlined) index arg
       if (b !== "(1.0)" && b !== "(2.0)") {
         const componentInst = chunk.getInstruction(ci.args[1]);
-        if (componentInst.type != opcodes.Constant) {
+        if (componentInst.type !== opcodes.Constant) {
           throw Error(
             `Programming Error: OrderedPairAccess index must be a constant`
           );
@@ -85,9 +85,11 @@ function getSourceBinOp(
         return componentValue === "1.0" ? `${a}.x` : `${a}.y`;
       }
       return b === "(1.0)" ? `${a}.x` : `${a}.y`;
-    default:
+    }
+    default: {
       const op = printOp(ci.type);
       throw Error(`Programming error: ${op} is not a binary operator`);
+    }
   }
 }
 
@@ -135,7 +137,7 @@ function getSourceSimple(
       const branches = branchIndices.map((i) => chunk.getInstruction(i));
       const isList = branches.map((b) => Types.isList(b.valueType));
       const args = branchIndices.map((i) => maybeInlined(i, inlined));
-      if (isList[0] != isList[1]) {
+      if (isList[0] !== isList[1]) {
         // Desmos should eliminate this case (by expanding the scalar to the
         // length of the list) before reaching here, so this is just in case
         throw new Error(
@@ -146,7 +148,7 @@ function getSourceSimple(
         const lengths = branchIndices.map((i) =>
           ListLength.getConstantListLength(chunk, i)
         );
-        if (lengths[0] != lengths[1])
+        if (lengths[0] !== lengths[1])
           throw new Error(
             "Cannot mix lists of different lengths in piecewise expression."
           );
@@ -156,19 +158,21 @@ function getSourceSimple(
         return condition + "?" + args.join(":");
       }
     }
-    case opcodes.List:
+    case opcodes.List: {
       const init = ci.args.map((i) => maybeInlined(i, inlined)).join(",");
       const type = getGLScalarType(ci.valueType);
       return `${type}[${ci.args.length}](${init})`;
+    }
     case opcodes.DeferredListAccess:
     case opcodes.Distribution:
     case opcodes.SymbolicVar:
-    case opcodes.SymbolicListVar:
+    case opcodes.SymbolicListVar: {
       const op = printOp(ci.type);
       throw Error(
         `Programming Error: expect ${op} to be removed before emitting code.`
       );
-    case opcodes.ListAccess:
+    }
+    case opcodes.ListAccess: {
       const length = ListLength.getConstantListLength(chunk, ci.args[0]);
       const list = maybeInlined(ci.args[0], inlined);
       const index = `int(${maybeInlined(ci.args[1], inlined)})`;
@@ -191,6 +195,7 @@ function getSourceSimple(
           ? "vec2(NaN,NaN)"
           : "NaN";
       return `${index}>=1 && ${index}<=${length} ? ${list}[int(${index})-1] : ${nan}`;
+    }
     // in-bounds list access assumes that args[1] is an integer
     // between 1 and args[0].length, inclusive
     case opcodes.InboundsListAccess:
@@ -200,11 +205,12 @@ function getSourceSimple(
         maybeInlined(ci.args[1], inlined) +
         ")-1]"
       );
-    case opcodes.NativeFunction:
+    case opcodes.NativeFunction: {
       deps.add(nativeFunctionDependency(chunk, ci));
       const name = getFunctionName(ci.symbol);
       const args = ci.args.map((e) => maybeInlined(e, inlined)).join(",");
       return `${name}(${args})`;
+    }
     case opcodes.ExtendSeed:
       throw Error("ExtendSeed not yet implemented");
     default:
@@ -217,15 +223,17 @@ function nativeFunctionDependency(chunk: IRChunk, ci: NativeFunction): string {
   switch (builtin?.tag) {
     case "list":
       return (
-        ci.symbol + "#" + ListLength.getConstantListLength(chunk, ci.args[0])
+        ci.symbol +
+        "#" +
+        ListLength.getConstantListLength(chunk, ci.args[0]).toString()
       );
     case "list2":
       return (
         ci.symbol +
         "#" +
-        ListLength.getConstantListLength(chunk, ci.args[0]) +
+        ListLength.getConstantListLength(chunk, ci.args[0]).toString() +
         "#" +
-        ListLength.getConstantListLength(chunk, ci.args[1])
+        ListLength.getConstantListLength(chunk, ci.args[1]).toString()
       );
     case "glsl-builtin":
     case "simple":
@@ -290,8 +298,8 @@ function getEndLoopSource(
   chunk: IRChunk,
   inlined: string[]
 ) {
-  var s = "";
-  var accumulatorIndex = ci.args[0] + 1;
+  let s = "";
+  const accumulatorIndex = ci.args[0] + 1;
   if (chunk.getInstruction(accumulatorIndex).type === opcodes.BlockVar) {
     s += `${getIdentifier(accumulatorIndex)}=${maybeInlined(
       ci.args[1],
@@ -300,7 +308,7 @@ function getEndLoopSource(
   }
   // end the loop
   s += "}\n";
-  var outputIndex = instructionIndex + 1;
+  const outputIndex = instructionIndex + 1;
   if (outputIndex < chunk.instructionsLength()) {
     if (chunk.getInstruction(outputIndex).type === opcodes.BlockVar) {
       s += `${getIdentifier(outputIndex)}=${maybeInlined(
@@ -431,8 +439,8 @@ function getSourceAndNextIndex(
         ),
         nextIndex: incrementedIndex,
       };
-    default:
-      let src = getSourceSimple(
+    default: {
+      const src = getSourceSimple(
         currInstruction,
         instructionIndex,
         inlined,
@@ -457,15 +465,16 @@ function getSourceAndNextIndex(
           nextIndex: incrementedIndex,
         };
       }
+    }
   }
 }
 
 export default function emitChunkGL(chunk: IRChunk) {
   const referenceCountList = countReferences(chunk);
   let outputSource = "";
-  let inlined: string[] = [];
-  let deps = new Set<string>();
-  let lists: string[] = [];
+  const inlined: string[] = [];
+  const deps = new Set<string>();
+  const lists: string[] = [];
   for (
     let instructionIndex = 0;
     instructionIndex < chunk.instructionsLength();

@@ -24,11 +24,11 @@ export async function captureFrame(controller: Controller) {
   const height = controller.getCaptureHeightNumber();
   const targetPixelRatio = controller.getTargetPixelRatio();
   // resolves the screenshot as a data URI
-  return new Promise<string>((resolve, reject) => {
+  return await new Promise<string>((resolve, reject) => {
     const tryCancel = () => {
       if (controller.captureCancelled) {
         controller.captureCancelled = false;
-        reject("cancelled");
+        reject(new Error("cancelled"));
       }
     };
     tryCancel();
@@ -45,7 +45,7 @@ export async function captureFrame(controller: Controller) {
     Calc.asyncScreenshot(
       {
         width: width / targetPixelRatio,
-        targetPixelRatio: targetPixelRatio,
+        targetPixelRatio,
         height: height / targetPixelRatio,
         showLabels: true,
         preserveAxisNumbers: true,
@@ -138,15 +138,15 @@ async function captureActionFrame(
 }
 
 async function captureAction(controller: Controller) {
-  return new Promise<void>((resolve) => {
+  return await new Promise<void>((resolve) => {
     Calc.observeEvent("change.dsm-action-change", () => {
       // check in case there is more than one update before the screenshot finishes
       if (controller.actionCaptureState === "waiting-for-update") {
-        captureActionFrame(controller, resolve);
+        void captureActionFrame(controller, resolve);
       }
     });
 
-    captureActionFrame(controller, resolve);
+    void captureActionFrame(controller, resolve);
   });
 }
 
