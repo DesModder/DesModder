@@ -1,5 +1,21 @@
 # DesModder Changelog
 
+## 0.8.4
+
+New features:
+
+- WakaTime plugin
+
+Bug fixes and improvements:
+
+- (Video Creator) Fix UI bugs that prevented capture
+- (Video Creator) Fix mp4 0-byte export
+- (GLesmos) Cache compiled shaders: huge performance gain
+- (GLesmos) Clamp fill opacity between 0 and 1
+- (GLesmos) Fix two-argument sort when the lists are different lengths
+- (GLesmos) Fix lists in piecewise expressions
+- (Tip) Widen tips when the expression list is wide
+
 ## 0.8.3
 
 Bug fixes:
