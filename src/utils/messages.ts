@@ -1,12 +1,11 @@
 /*
 Post message conventions:
   Always have a type
-  Start type with an underscore (e.g. "_plugins-enabled") for DesModder
-    (leaves non-underscore namespace free for plugins)
   apply-* = message from content script to page, applying some data
   set-* = message from page to content script, asking to store data in chrome.storage
   get-* = message from page to content script, asking to get data in chrome.storage
 */
+import { HeartbeatOptions } from "../plugins/wakatime/heartbeat";
 import { GenericSettings } from "plugins";
 
 type MessageWindowToContent =
@@ -16,7 +15,7 @@ type MessageWindowToContent =
     }
   | {
       type: "set-plugins-enabled";
-      value: { [id: string]: boolean };
+      value: { [id: string]: any };
     }
   | {
       type: "set-plugin-settings";
@@ -35,7 +34,8 @@ type MessageWindowToContent =
       type: "get-worker-append-url";
     }
   | {
-      type: "get-ext-id";
+      type: "send-heartbeat";
+      options: HeartbeatOptions;
     };
 
 type MessageContentToWindow =
@@ -49,7 +49,7 @@ type MessageContentToWindow =
     }
   | {
       type: "apply-plugin-settings";
-      value: { [id: string]: { [key: string]: boolean } };
+      value: { [id: string]: { [key: string]: any } };
     }
   | {
       type: "set-script-url";
@@ -60,8 +60,8 @@ type MessageContentToWindow =
       value: string;
     }
   | {
-      type: "set-ext-id";
-      value: string;
+      type: "heartbeat-error";
+      message: any;
     };
 
 function postMessage<T extends { type: string }>(message: T) {

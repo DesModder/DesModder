@@ -1,3 +1,4 @@
+import { HeartbeatOptions, sendHeartbeat } from "../plugins/wakatime/heartbeat";
 import injectScript from "utils/injectScript";
 import { listenToMessageUp, postMessageDown } from "utils/messages";
 
@@ -13,11 +14,16 @@ function getInitialData() {
       [StorageKeys.pluginSettings]: {}, // default: no settings known
     },
     (items) => {
+      const settings = (items?.[StorageKeys.pluginSettings] ?? {}) as {
+        [id: string]: { [key: string]: any };
+      };
+      // Hide secret key from web page
+      if (settings.wakatime?.secretKey !== "") {
+        settings.wakatime.secretKey = "????????-????-????-????-????????????";
+      }
       postMessageDown({
         type: "apply-plugin-settings",
-        value: (items?.[StorageKeys.pluginSettings] ?? {}) as {
-          [id: string]: { [key: string]: boolean };
-        },
+        value: settings,
       });
       postMessageDown({
         type: "apply-plugins-enabled",
@@ -25,6 +31,40 @@ function getInitialData() {
           [id: string]: boolean;
         },
       });
+    }
+  );
+}
+
+function _sendHeartbeat(options: HeartbeatOptions) {
+  chrome.storage.sync.get(
+    {
+      [StorageKeys.pluginSettings]: {},
+    },
+    (items) => {
+      const s = items?.[StorageKeys.pluginSettings];
+      const secretKey = s?.wakatime?.secretKey;
+
+      if (BROWSER === "chrome") {
+        // Chrome can only send wakatime requests from the background page
+        // pass message along to the background page
+        chrome.runtime.sendMessage(
+          chrome.runtime.id,
+          { type: "send-background-heartbeat", options, secretKey },
+          (e) => {
+            if (e.type === "heartbeat-error") {
+              postMessageDown(e);
+            }
+          }
+        );
+      } else {
+        // Firefox can only send wakatime requests from the content script
+        sendHeartbeat(secretKey, options).catch((e) =>
+          postMessageDown({
+            type: "heartbeat-error",
+            message: e,
+          })
+        );
+      }
     }
   );
 }
@@ -61,8 +101,8 @@ listenToMessageUp((message) => {
         value: chrome.runtime.getURL("workerAppend.js"),
       });
       break;
-    case "get-ext-id":
-      postMessageDown({ type: "set-ext-id", value: chrome.runtime.id });
+    case "send-heartbeat":
+      _sendHeartbeat(message.options);
       break;
   }
   return false;
