@@ -36,7 +36,7 @@ export interface ConfigItemString extends ConfigItemGeneric {
 export type ConfigItem = ConfigItemBoolean | ConfigItemString;
 
 export interface GenericSettings {
-  [key: string]: boolean | string;
+  [key: string]: any;
 }
 
 export interface Plugin<Settings extends GenericSettings = {}> {

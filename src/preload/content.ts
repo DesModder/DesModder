@@ -1,3 +1,4 @@
+import { HeartbeatOptions, sendHeartbeat } from "../plugins/wakatime/heartbeat";
 import injectScript from "utils/injectScript";
 import { listenToMessageUp, postMessageDown } from "utils/messages";
 
@@ -13,11 +14,16 @@ function getInitialData() {
       [StorageKeys.pluginSettings]: {}, // default: no settings known
     },
     (items) => {
+      const settings = (items?.[StorageKeys.pluginSettings] ?? {}) as {
+        [id: string]: { [key: string]: any };
+      };
+      // Hide secret key from web page
+      if (settings.wakatime?.secretKey !== "") {
+        settings.wakatime.secretKey = "????????-????-????-????-????????????";
+      }
       postMessageDown({
         type: "apply-plugin-settings",
-        value: (items?.[StorageKeys.pluginSettings] ?? {}) as {
-          [id: string]: { [key: string]: boolean };
-        },
+        value: settings,
       });
       postMessageDown({
         type: "apply-plugins-enabled",
@@ -25,6 +31,33 @@ function getInitialData() {
           [id: string]: boolean;
         },
       });
+    }
+  );
+}
+
+function _sendHeartbeat(options: HeartbeatOptions) {
+  chrome.storage.sync.get(
+    {
+      [StorageKeys.pluginSettings]: {},
+    },
+    (items) => {
+      const s = items?.[StorageKeys.pluginSettings];
+      const secretKey = s?.wakatime?.secretKey;
+
+      if (BROWSER === "chrome") {
+        // Chrome can only send wakatime requests from the background page
+        // pass message along to the background page
+        chrome.runtime.sendMessage(
+          chrome.runtime.id,
+          { type: "send-background-heartbeat", options, secretKey },
+          // TODO handle error
+          () => {}
+        );
+      } else {
+        // Firefox can only send wakatime requests from the content script
+        void sendHeartbeat(secretKey, options);
+        // TODO error handling
+      }
     }
   );
 }
@@ -62,23 +95,7 @@ listenToMessageUp((message) => {
       });
       break;
     case "send-heartbeat":
-      if (BROWSER === "chrome") {
-        // Chrome can only send wakatime requests from the background page
-        // pass message along to the background page
-        chrome.runtime.sendMessage(
-          chrome.runtime.id,
-          message,
-          // TODO handle error
-          () => {}
-        );
-      } else {
-        // Firefox can only send wakatime requests from the content script
-        void fetch(
-          "https://wakatime.com/api/v1/users/current/heartbeats",
-          message.options
-        );
-        // TODO error handling
-      }
+      _sendHeartbeat(message.options);
       break;
   }
   return false;

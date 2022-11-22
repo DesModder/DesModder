@@ -1,53 +1,10 @@
+import { sendHeartbeat } from "./plugins/wakatime/heartbeat";
 import "globals/env";
 
-export interface HeartbeatMessage {
-  type: "send-heartbeat";
-  options: RequestInit | undefined;
-}
-export type RuntimeMessage = HeartbeatMessage;
-
-export interface ErrorResponse {
-  type: "error";
-  message: string;
-}
-export interface SuccessResponse {
-  type: "success";
-}
-export type RuntimeResponse = ErrorResponse | SuccessResponse;
-
-async function sendHeartbeat(
-  req: HeartbeatMessage,
-  sendResponse: (res: RuntimeResponse) => void
-) {
-  const r = await fetch(
-    "https://wakatime.com/api/v1/users/current/heartbeats",
-    req.options
-  );
-  // for now we don't care about the response content, just the status.
-  if (r.status !== 201) {
-    const res: ErrorResponse = {
-      type: "error",
-      message:
-        `Request failed with status ${r.status} (expected 201).` +
-        "Check background page network tab for details.",
-    };
-    return sendResponse(res);
-  }
-  sendResponse({ type: "success" });
-}
-
 // Send requests that would otherwise be blocked by CORS if sent from a content script
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  const req = msg as RuntimeMessage;
-  try {
-    if (req.type === "send-heartbeat") {
-      void sendHeartbeat(req, sendResponse);
-    }
-  } catch (e: any) {
-    console.error(e);
-    // if a response has already been sent this will be a no-op
-    const res: ErrorResponse = { type: "error", message: e?.message ?? "" };
-    sendResponse(res);
+chrome.runtime.onMessage.addListener((msg, _sender) => {
+  if (msg.type === "send-background-heartbeat") {
+    void sendHeartbeat(msg.secretKey, msg.options);
   }
   return true;
 });

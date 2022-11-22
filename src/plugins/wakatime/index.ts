@@ -2,55 +2,9 @@ import { Calc } from "../../globals/window";
 import { desModderController } from "../../script";
 import { postMessageUp } from "utils/messages";
 
-interface Config {
-  secretKey: string;
-}
-
-let config!: Config;
-
 const heartbeatIntervalMs = 120 * 1000;
 
 let isEnabled = false;
-
-async function sendHeartbeat(
-  key: string,
-  graphName: string,
-  graphURL: string,
-  lineCount: number
-): Promise<void> {
-  return await new Promise((resolve) => {
-    const data = {
-      // This is background information for WakaTime to handle. These values need no change.
-      language: "Desmos", // constant
-      category: "coding", // constant
-      type: "app", // constant
-      dependencies: [], // constant
-      time: Date.now() * 0.001, // constant
-      lines: lineCount, // constant
-      lineno: null, // (int) I tend not to touch this; seems redundant for visualizations
-      cursorpos: null, // redundant
-      is_write: null, // (boolean) Maybe this could be implemented in the future?
-
-      // Everything below will show up in your Leaderboard.
-      project: graphName,
-      entity: graphURL,
-      branch: null,
-    };
-
-    const options: RequestInit = {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${btoa(key)}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(data),
-    };
-
-    postMessageUp({ type: "send-heartbeat", options });
-    // TODO: actual handling
-    resolve();
-  });
-}
 
 const sleep = async (t: number) =>
   await new Promise((resolve) => setTimeout(resolve, t));
@@ -66,14 +20,11 @@ async function main() {
     const graphURL = window.location.href;
     const lineCount = Calc.getExpressions().length;
 
-    if (config.secretKey) {
-      try {
-        await sendHeartbeat(config.secretKey, graphName, graphURL, lineCount);
-        console.debug("[WakaTime] Heartbeat sent sucessfully at", new Date());
-      } catch (e) {
-        console.error("[WakaTime] Error sending heartbeat:", e);
-      }
-    }
+    console.debug("[WakaTime] Sending heartbeat at:", new Date());
+    postMessageUp({
+      type: "send-heartbeat",
+      options: { graphName, graphURL, lineCount },
+    });
 
     const now = performance.now();
     const elapsed = now - lastUpdate;
@@ -82,18 +33,9 @@ async function main() {
   }
 }
 
-async function onEnable(newConfig: Config) {
-  config = newConfig;
+async function onEnable() {
   isEnabled = true;
-  try {
-    await main();
-  } catch (e) {
-    console.error("[WakaTime] Main loop crashed", e);
-  }
-}
-
-function onConfigChange(_: any, newConfig: Config) {
-  config = newConfig;
+  void main();
 }
 
 function onDisable() {
@@ -105,7 +47,6 @@ export default {
   id: "wakatime",
   onEnable,
   onDisable,
-  onConfigChange,
   config: [
     {
       key: "secretKey",
