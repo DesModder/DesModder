@@ -1,5 +1,11 @@
 # DesModder Changelog
 
+## 0.8.5
+
+Bug fixes:
+
+- (WakaTime) Fix heartbeats in Firefox
+
 ## 0.8.4
 
 New features:
