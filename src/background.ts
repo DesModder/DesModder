@@ -1,7 +1,7 @@
 import "globals/env";
 
 export interface HeartbeatMessage {
-  type: "sendHeartbeat";
+  type: "send-heartbeat";
   options: RequestInit | undefined;
 }
 export type RuntimeMessage = HeartbeatMessage;
@@ -33,15 +33,14 @@ async function sendHeartbeat(
     };
     return sendResponse(res);
   }
-  const res: SuccessResponse = { type: "success" };
-  sendResponse(res);
+  sendResponse({ type: "success" });
 }
 
 // Send requests that would otherwise be blocked by CORS if sent from a content script
-chrome.runtime.onMessageExternal.addListener((msg, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   const req = msg as RuntimeMessage;
   try {
-    if (req.type === "sendHeartbeat") {
+    if (req.type === "send-heartbeat") {
       void sendHeartbeat(req, sendResponse);
     }
   } catch (e: any) {
@@ -50,6 +49,7 @@ chrome.runtime.onMessageExternal.addListener((msg, _sender, sendResponse) => {
     const res: ErrorResponse = { type: "error", message: e?.message ?? "" };
     sendResponse(res);
   }
+  return true;
 });
 
 if (BROWSER === "chrome") {

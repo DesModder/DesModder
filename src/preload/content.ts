@@ -61,8 +61,24 @@ listenToMessageUp((message) => {
         value: chrome.runtime.getURL("workerAppend.js"),
       });
       break;
-    case "get-ext-id":
-      postMessageDown({ type: "set-ext-id", value: chrome.runtime.id });
+    case "send-heartbeat":
+      if (BROWSER === "chrome") {
+        // Chrome can only send wakatime requests from the background page
+        // pass message along to the background page
+        chrome.runtime.sendMessage(
+          chrome.runtime.id,
+          message,
+          // TODO handle error
+          () => {}
+        );
+      } else {
+        // Firefox can only send wakatime requests from the content script
+        void fetch(
+          "https://wakatime.com/api/v1/users/current/heartbeats",
+          message.options
+        );
+        // TODO error handling
+      }
       break;
   }
   return false;

@@ -1,8 +1,6 @@
 /*
 Post message conventions:
   Always have a type
-  Start type with an underscore (e.g. "_plugins-enabled") for DesModder
-    (leaves non-underscore namespace free for plugins)
   apply-* = message from content script to page, applying some data
   set-* = message from page to content script, asking to store data in chrome.storage
   get-* = message from page to content script, asking to get data in chrome.storage
@@ -35,7 +33,8 @@ type MessageWindowToContent =
       type: "get-worker-append-url";
     }
   | {
-      type: "get-ext-id";
+      type: "send-heartbeat";
+      options: RequestInit;
     };
 
 type MessageContentToWindow =
@@ -57,10 +56,6 @@ type MessageContentToWindow =
     }
   | {
       type: "set-worker-append-url";
-      value: string;
-    }
-  | {
-      type: "set-ext-id";
       value: string;
     };
 
