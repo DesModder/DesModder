@@ -25,12 +25,19 @@ export async function sendHeartbeat(key: string, opts: HeartbeatOptions) {
     branch: null,
   };
 
-  void fetch("https://wakatime.com/api/v1/users/current/heartbeats", {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${btoa(key)}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+  if (key === "") throw new Error("Secret key not provided.");
+
+  const r = await fetch(
+    "https://wakatime.com/api/v1/users/current/heartbeats",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${btoa(key)}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(data),
+    }
+  );
+  if (r.status !== 201)
+    throw new Error(`Request failed with status ${r.status}.`);
 }

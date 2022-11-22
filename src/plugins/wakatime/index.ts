@@ -1,6 +1,6 @@
 import { Calc } from "../../globals/window";
 import { desModderController } from "../../script";
-import { postMessageUp } from "utils/messages";
+import { listenToMessageDown, postMessageUp } from "utils/messages";
 
 const heartbeatIntervalMs = 120 * 1000;
 
@@ -42,6 +42,13 @@ function onDisable() {
   // main loop will stop
   isEnabled = false;
 }
+
+listenToMessageDown((msg) => {
+  if (msg.type === "heartbeat-error") {
+    console.error("Wakatime heartbeat error:", msg.message);
+  }
+  return false;
+});
 
 export default {
   id: "wakatime",

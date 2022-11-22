@@ -60,8 +60,8 @@ type MessageContentToWindow =
       value: string;
     }
   | {
-      type: "heartbeat-done";
-      success: boolean;
+      type: "heartbeat-error";
+      message: any;
     };
 
 function postMessage<T extends { type: string }>(message: T) {

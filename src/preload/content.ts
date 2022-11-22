@@ -50,13 +50,20 @@ function _sendHeartbeat(options: HeartbeatOptions) {
         chrome.runtime.sendMessage(
           chrome.runtime.id,
           { type: "send-background-heartbeat", options, secretKey },
-          // TODO handle error
-          () => {}
+          (e) => {
+            if (e.type === "heartbeat-error") {
+              postMessageDown(e);
+            }
+          }
         );
       } else {
         // Firefox can only send wakatime requests from the content script
-        void sendHeartbeat(secretKey, options);
-        // TODO error handling
+        sendHeartbeat(secretKey, options).catch((e) =>
+          postMessageDown({
+            type: "heartbeat-error",
+            message: e,
+          })
+        );
       }
     }
   );
