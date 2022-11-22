@@ -1,6 +1,5 @@
 The extension can be built with any relatively recent version of node and npm.
-I built this with node v16.15.1 and npm 8.11.0 on Ubuntu 20.04, though
-collaborators have built it on Windows.
+I built this with node v18.7.0 and npm 8.15.0 on Ubuntu 22.04.
 
 Build process:
 
