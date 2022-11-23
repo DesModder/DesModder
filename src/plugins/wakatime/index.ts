@@ -1,46 +1,44 @@
 import { Calc } from "../../globals/window";
 import { desModderController } from "../../script";
+import { Config, configList } from "./config";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
+import { OptionalProperties } from "utils/utils";
 
-const heartbeatIntervalMs = 120 * 1000;
+let splitProjects = false;
 
-let isEnabled = false;
+const heartbeatInterval = 120 * 1000;
+let lastUpdate = performance.now() - heartbeatInterval;
 
-const sleep = async (t: number) =>
-  await new Promise((resolve) => setTimeout(resolve, t));
+let handler: string;
 
-async function main() {
-  // Date.now can be messed up by system clock changes
-  let lastUpdate = performance.now() - heartbeatIntervalMs;
-  // eslint-disable-next-line no-unmodified-loop-condition
-  while (isEnabled) {
-    const graphName =
-      desModderController.topLevelComponents.graphsController.getCurrentGraphTitle() ??
-      "Untitled Graph";
-    const graphURL = window.location.href;
-    const lineCount = Calc.getExpressions().length;
+async function maybeSendHeartbeat(isWrite: boolean) {
+  if (!(performance.now() - lastUpdate > heartbeatInterval || isWrite)) return;
+  const graphName =
+    desModderController.topLevelComponents.graphsController.getCurrentGraphTitle() ??
+    "Untitled Graph";
+  const graphURL = window.location.href;
+  const lineCount = Calc.getExpressions().length;
 
-    console.debug("[WakaTime] Sending heartbeat at:", new Date());
-    postMessageUp({
-      type: "send-heartbeat",
-      options: { graphName, graphURL, lineCount },
-    });
-
-    const now = performance.now();
-    const elapsed = now - lastUpdate;
-    lastUpdate = now;
-    await sleep(Math.max(2 * heartbeatIntervalMs - elapsed, 0));
-  }
+  console.debug("[WakaTime] Sending heartbeat at:", new Date());
+  postMessageUp({
+    type: "send-heartbeat",
+    options: { graphName, graphURL, lineCount, splitProjects, isWrite },
+  });
 }
 
 async function onEnable() {
-  isEnabled = true;
-  void main();
+  handler = Calc.controller.dispatcher.register((e) => {
+    if (
+      e.type === "on-evaluator-changes" ||
+      e.type === "clear-unsaved-changes"
+    ) {
+      maybeSendHeartbeat(e.type === "clear-unsaved-changes");
+    }
+  });
 }
 
 function onDisable() {
-  // main loop will stop
-  isEnabled = false;
+  Calc.controller.dispatcher.unregister(handler);
 }
 
 listenToMessageDown((msg) => {
@@ -54,13 +52,11 @@ export default {
   id: "wakatime",
   onEnable,
   onDisable,
-  config: [
-    {
-      key: "secretKey",
-      type: "string",
-      variant: "password",
-      default: "",
-    },
-  ] as const,
+  config: configList,
+  onConfigChange(changes: OptionalProperties<Config>) {
+    if (changes.splitProjects !== undefined) {
+      splitProjects = changes.splitProjects;
+    }
+  },
   enabledByDefault: false,
 } as const;

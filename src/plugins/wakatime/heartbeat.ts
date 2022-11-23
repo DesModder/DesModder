@@ -4,6 +4,8 @@ export interface HeartbeatOptions {
   graphName: string;
   graphURL: string;
   lineCount: number;
+  splitProjects: boolean;
+  isWrite: boolean;
 }
 
 export async function sendHeartbeat(key: string, opts: HeartbeatOptions) {
@@ -17,12 +19,12 @@ export async function sendHeartbeat(key: string, opts: HeartbeatOptions) {
     lines: opts.lineCount,
     lineno: null,
     cursorpos: null,
-    is_write: null,
+    is_write: opts.isWrite,
 
     // Everything below will show up in your Leaderboard.
-    project: opts.graphName,
+    project: opts.splitProjects ? opts.graphName : "Desmos Project",
     entity: opts.graphURL,
-    branch: null,
+    branch: opts.splitProjects ? null : opts.graphName,
   };
 
   if (key === "") throw new Error("Secret key not provided.");

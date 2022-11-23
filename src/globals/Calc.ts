@@ -19,7 +19,8 @@ export type DispatchedEvent =
         | "set-graph-settings"
         | "resize-exp-list"
         | "set-none-selected"
-        | "toggle-graph-settings";
+        | "toggle-graph-settings"
+        | "clear-unsaved-changes";
     }
   | {
       type:

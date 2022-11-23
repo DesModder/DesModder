@@ -18,7 +18,7 @@ function getInitialData() {
         [id: string]: { [key: string]: any };
       };
       // Hide secret key from web page
-      if (settings.wakatime?.secretKey !== "") {
+      if (settings.wakatime?.secretKey) {
         settings.wakatime.secretKey = "????????-????-????-????-????????????";
       }
       postMessageDown({
@@ -51,7 +51,7 @@ function _sendHeartbeat(options: HeartbeatOptions) {
           chrome.runtime.id,
           { type: "send-background-heartbeat", options, secretKey },
           (e) => {
-            if (e.type === "heartbeat-error") {
+            if (e?.type === "heartbeat-error") {
               postMessageDown(e);
             }
           }
