@@ -24,6 +24,7 @@ async function maybeSendHeartbeat(isWrite: boolean) {
     type: "send-heartbeat",
     options: { graphName, graphURL, lineCount, splitProjects, isWrite },
   });
+  lastUpdate = performance.now();
 }
 
 async function onEnable() {
@@ -32,7 +33,7 @@ async function onEnable() {
       e.type === "on-evaluator-changes" ||
       e.type === "clear-unsaved-changes"
     ) {
-      maybeSendHeartbeat(e.type === "clear-unsaved-changes");
+      void maybeSendHeartbeat(e.type === "clear-unsaved-changes");
     }
   });
 }
