@@ -16,6 +16,10 @@ function recordToMap<V>(x: Record<string, V>): Map<string, V> {
   return new Map(Object.entries(x));
 }
 
+function mapToRecord<V>(x: Map<string, V>): Record<string, V> {
+  return Object.fromEntries(x.entries());
+}
+
 function getInitialData() {
   chrome.storage.sync.get(
     {
@@ -100,12 +104,12 @@ listenToMessageUp((message) => {
       break;
     case "set-plugins-enabled":
       void chrome.storage.sync.set({
-        [StorageKeys.pluginsEnabled]: message.value,
+        [StorageKeys.pluginsEnabled]: mapToRecord(message.value),
       });
       break;
     case "set-plugin-settings":
       void chrome.storage.sync.set({
-        [StorageKeys.pluginSettings]: message.value,
+        [StorageKeys.pluginSettings]: mapToRecord(message.value),
       });
       break;
     case "get-script-url":
