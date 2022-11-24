@@ -1,9 +1,10 @@
 import Controller from "./Controller";
 import { destroyView, initView } from "./View";
+import { Plugin } from "plugins";
 
 export let controller: Controller;
 
-export default {
+const performanceInfo: Plugin = {
   id: "performance-info",
   onEnable: () => {
     controller = new Controller();
@@ -15,3 +16,4 @@ export default {
   },
   enabledByDefault: false,
 } as const;
+export default performanceInfo;

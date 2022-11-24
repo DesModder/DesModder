@@ -1,5 +1,6 @@
 import { Config, configList } from "./config";
 import { Calc } from "globals/window";
+import { Plugin } from "plugins";
 import { getQueryParams } from "utils/depUtils";
 import { OptionalProperties } from "utils/utils";
 
@@ -62,7 +63,7 @@ function onDisable() {
   }
 }
 
-export default {
+const builtinSettings: Plugin = {
   id: "builtin-settings",
   onEnable,
   onDisable,
@@ -73,4 +74,5 @@ export default {
     Calc.updateSettings(changes);
   },
   manageConfigChange,
-} as const;
+};
+export default builtinSettings;

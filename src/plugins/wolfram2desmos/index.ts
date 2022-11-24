@@ -2,6 +2,7 @@ import Controller from "./Controller";
 import { Config, configList } from "./config";
 import { wolfram2desmos, isIllegalASCIIMath } from "./wolfram2desmos";
 import { Calc } from "globals/window";
+import { Plugin } from "plugins";
 import { OptionalProperties } from "utils/utils";
 
 // initialize controller and observe textarea and input tags
@@ -66,7 +67,7 @@ export function onDisable() {
   controller.disable();
 }
 
-export default {
+const w2d: Plugin = {
   id: "wolfram2desmos",
   onEnable,
   onDisable,
@@ -75,4 +76,5 @@ export default {
   onConfigChange(changes: OptionalProperties<Config>) {
     controller.applyConfigFlags(changes);
   },
-} as const;
+};
+export default w2d;

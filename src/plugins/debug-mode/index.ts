@@ -1,6 +1,7 @@
 import { Calc } from "globals/window";
+import { Plugin } from "plugins";
 
-export default {
+const debugMode: Plugin = {
   id: "debug-mode",
   onEnable: () => {
     Calc.controller.updateViews();
@@ -11,4 +12,5 @@ export default {
   },
   alwaysEnabled: false,
   enabledByDefault: false,
-} as const;
+};
+export default debugMode;

@@ -1,6 +1,7 @@
 import Controller from "./Controller";
 import View from "./View";
 import { Calc } from "globals/window";
+import { Plugin } from "plugins";
 
 const controller = new Controller();
 const view = new View();
@@ -38,9 +39,10 @@ function onDisable() {
   view.destroyView();
 }
 
-export default {
+const findAndReplace: Plugin = {
   id: "find-and-replace",
   onEnable,
   onDisable,
   enabledByDefault: true,
-} as const;
+};
+export default findAndReplace;

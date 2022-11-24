@@ -1,5 +1,6 @@
 import "./custom-overrides.less";
 import "./overrides.less";
+import { Plugin } from "plugins";
 import { getHSVfromRGB, parseCSSHex } from "plugins/GLesmos/colorParsing";
 import { OptionalProperties } from "utils/utils";
 
@@ -96,7 +97,7 @@ function onDisable() {
   faviconLink.href = originalHref;
 }
 
-export default {
+const setPrimaryColor: Plugin = {
   id: "set-primary-color",
   onEnable,
   onDisable,
@@ -118,3 +119,4 @@ export default {
     applyConfig(config);
   },
 } as const;
+export default setPrimaryColor;

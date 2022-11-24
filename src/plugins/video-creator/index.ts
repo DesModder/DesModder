@@ -1,5 +1,6 @@
 import Controller from "./Controller";
 import { initView, destroyView } from "./View";
+import { Plugin } from "plugins";
 
 export let controller: Controller;
 
@@ -13,9 +14,10 @@ function onDisable() {
   destroyView();
 }
 
-export default {
+const videoCreator: Plugin = {
   id: "video-creator",
   onEnable,
   onDisable,
   enabledByDefault: true,
-} as const;
+};
+export default videoCreator;
