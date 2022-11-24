@@ -1,9 +1,10 @@
 import Controller from "./Controller";
 import { Calc } from "globals/window";
+import { Plugin } from "plugins";
 
 const controller = new Controller();
 
-export default {
+const textMode: Plugin = {
   id: "text-mode",
   descriptionLearnMore:
     "https://github.com/DesModder/DesModder/tree/main/src/plugins/text-mode/docs/intro.md",
@@ -19,4 +20,5 @@ export default {
   },
   enabledByDefault: false,
   /* Has module overrides */
-} as const;
+};
+export default textMode;

@@ -1,6 +1,7 @@
 import { Calc } from "../../globals/window";
 import { desModderController } from "../../script";
 import { configList } from "./config";
+import { Plugin } from "plugins";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
 
 const heartbeatInterval = 120 * 1000;
@@ -51,10 +52,11 @@ listenToMessageDown((msg) => {
   return false;
 });
 
-export default {
+const wakatime: Plugin = {
   id: "wakatime",
   onEnable,
   onDisable,
   config: configList,
   enabledByDefault: false,
-} as const;
+};
+export default wakatime;

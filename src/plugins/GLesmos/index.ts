@@ -1,4 +1,5 @@
 import Controller from "./Controller";
+import { Plugin } from "plugins";
 
 export let controller: Controller;
 
@@ -11,9 +12,10 @@ function onDisable() {
   controller.deleteCanvas();
 }
 
-export default {
+const glesmos: Plugin = {
   id: "GLesmos",
   onEnable,
   onDisable,
   enabledByDefault: false,
-} as const;
+};
+export default glesmos;

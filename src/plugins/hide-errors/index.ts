@@ -1,4 +1,6 @@
-export default {
+import { Plugin } from "plugins";
+
+const hideErrors: Plugin = {
   id: "hide-errors",
   // Still need to declare empty onEnable and onDisable to get the right UI
   onEnable: () => {},
@@ -6,4 +8,5 @@ export default {
   alwaysEnabled: true,
   enabledByDefault: true,
   /* Has module overrides */
-} as const;
+};
+export default hideErrors;

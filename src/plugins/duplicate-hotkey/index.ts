@@ -1,4 +1,5 @@
 import { Calc } from "globals/window";
+import { Plugin } from "plugins";
 import { jquery, keys } from "utils/depUtils";
 
 function onEnable() {
@@ -24,9 +25,10 @@ function onDisable() {
   jquery(".dcg-exppanel-outer").off(".duplicateHotkey");
 }
 
-export default {
+const duplicateHotkey: Plugin = {
   id: "duplicate-expression-hotkey",
   onEnable,
   onDisable,
   enabledByDefault: true,
-} as const;
+};
+export default duplicateHotkey;

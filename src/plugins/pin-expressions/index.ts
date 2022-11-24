@@ -1,7 +1,8 @@
 import "./pinExpressions.less";
 import { Calc } from "globals/window";
+import { Plugin } from "plugins";
 
-export default {
+const pinExpressions: Plugin = {
   id: "pin-expressions",
   // Controller handles enable/disable by changing the results of isPinned
   // (used in modified module definitions), but we need to update views
@@ -13,4 +14,5 @@ export default {
   },
   enabledByDefault: true,
   /* Has module overrides */
-} as const;
+};
+export default pinExpressions;

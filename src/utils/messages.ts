@@ -6,7 +6,7 @@ Post message conventions:
   get-* = message from page to content script, asking to get data in chrome.storage
 */
 import { WindowHeartbeatOptions } from "../plugins/wakatime/heartbeat";
-import { GenericSettings } from "plugins";
+import { GenericSettings, PluginID } from "plugins";
 
 type MessageWindowToContent =
   | {
@@ -15,11 +15,11 @@ type MessageWindowToContent =
     }
   | {
       type: "set-plugins-enabled";
-      value: { [id: string]: any };
+      value: Map<PluginID, boolean>;
     }
   | {
       type: "set-plugin-settings";
-      value: { [id: string]: GenericSettings };
+      value: Map<PluginID, GenericSettings>;
     }
   | {
       type: "get-initial-data";
@@ -40,16 +40,12 @@ type MessageWindowToContent =
 
 type MessageContentToWindow =
   | {
-      type: "apply-preload-enabled";
-      value: { [key: string]: boolean };
-    }
-  | {
       type: "apply-plugins-enabled";
-      value: { [key: string]: boolean };
+      value: Map<PluginID, boolean>;
     }
   | {
       type: "apply-plugin-settings";
-      value: { [id: string]: { [key: string]: any } };
+      value: Map<PluginID, GenericSettings>;
     }
   | {
       type: "set-script-url";

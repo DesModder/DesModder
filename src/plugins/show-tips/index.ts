@@ -1,6 +1,7 @@
 import { Calc } from "globals/window";
+import { Plugin } from "plugins";
 
-export default {
+const showTips: Plugin = {
   id: "show-tips",
   onEnable: () => {
     Calc.controller.updateViews();
@@ -11,4 +12,5 @@ export default {
   },
   enabledByDefault: true,
   /* Has moduleOverride */
-} as const;
+};
+export default showTips;
