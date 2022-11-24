@@ -63,28 +63,26 @@ export interface Plugin<Settings extends GenericSettings = {}> {
 // these plugins will be listed in list order in the menu
 // place closer to the top: plugins that people are more likely to adjust
 
-const _plugins = {
-  [builtinSettings.id]: builtinSettings,
-  [setPrimaryColor.id]: setPrimaryColor,
-  [wolfram2desmos.id]: wolfram2desmos,
-  [pinExpressions.id]: pinExpressions,
-  [videoCreator.id]: videoCreator,
-  [wakatime.id]: wakatime,
-  [findReplace.id]: findReplace,
-  [debugMode.id]: debugMode,
-  [showTips.id]: showTips,
-  [rightClickTray.id]: rightClickTray,
-  [duplicateHotkey.id]: duplicateHotkey,
-  [GLesmos.id]: GLesmos,
-  [shiftEnterNewline.id]: shiftEnterNewline,
-  [hideErrors.id]: hideErrors,
-  [folderTools.id]: folderTools,
-  [textMode.id]: textMode,
-  [performanceInfo.id]: performanceInfo,
-} as const;
+export const pluginList: Plugin[] = [
+  builtinSettings,
+  setPrimaryColor,
+  wolfram2desmos,
+  pinExpressions,
+  videoCreator,
+  wakatime,
+  findReplace,
+  debugMode,
+  showTips,
+  rightClickTray,
+  duplicateHotkey,
+  GLesmos,
+  shiftEnterNewline,
+  hideErrors,
+  folderTools,
+  textMode,
+  performanceInfo,
+];
 
-export const pluginList = Object.values(_plugins);
+export type PluginID = string;
 
-export type PluginID = keyof typeof _plugins;
-
-export const plugins = _plugins as { [key in PluginID]: Plugin };
+export const plugins = new Map(pluginList.map((plugin) => [plugin.id, plugin]));

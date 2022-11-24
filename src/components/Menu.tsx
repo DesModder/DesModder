@@ -60,12 +60,12 @@ export default class Menu extends Component<{
                       {pluginDesc(plugin)}
                       <If
                         predicate={() =>
-                          (plugin as Plugin).descriptionLearnMore !== undefined
+                          plugin.descriptionLearnMore !== undefined
                         }
                       >
                         {() => (
                           <a
-                            href={() => (plugin as Plugin).descriptionLearnMore}
+                            href={() => plugin.descriptionLearnMore}
                             target="_blank"
                             onTap={(e: MouseEvent) => e.stopPropagation()}
                           >
@@ -90,8 +90,9 @@ export default class Menu extends Component<{
     if (this.controller.expandedPlugin === null) return null;
     const plugin = this.controller.getPlugin(this.controller.expandedPlugin);
     if (plugin?.config === undefined) return null;
-    const pluginSettings =
-      this.controller.pluginSettings[this.controller.expandedPlugin];
+    const pluginSettings = this.controller.pluginSettings.get(
+      this.controller.expandedPlugin
+    );
     if (pluginSettings === undefined) return null;
     return (
       <div>

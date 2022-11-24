@@ -1,3 +1,4 @@
+import { GenericSettings, PluginID } from "../plugins";
 import {
   HeartbeatOptions,
   sendHeartbeat,
@@ -11,6 +12,10 @@ const StorageKeys = {
   pluginSettings: "_plugin-settings",
 } as const;
 
+function recordToMap<V>(x: Record<string, V>): Map<string, V> {
+  return new Map(Object.entries(x));
+}
+
 function getInitialData() {
   chrome.storage.sync.get(
     {
@@ -18,24 +23,23 @@ function getInitialData() {
       [StorageKeys.pluginSettings]: {}, // default: no settings known
     },
     (items) => {
-      const settings = (items?.[StorageKeys.pluginSettings] ?? {}) as {
-        [id: string]: { [key: string]: any };
-      };
+      const settingsDown: Record<PluginID, GenericSettings> = structuredClone(
+        items?.[StorageKeys.pluginSettings] ?? {}
+      );
       // Hide secret key from web page
-      const settingsDown = structuredClone(settings);
       if (settingsDown.wakatime?.secretKey) {
         settingsDown.wakatime.secretKey =
           "????????-????-????-????-????????????";
       }
       postMessageDown({
         type: "apply-plugin-settings",
-        value: settingsDown,
+        value: recordToMap(settingsDown),
       });
+      const pluginsEnabled: Record<PluginID, boolean> =
+        items?.[StorageKeys.pluginsEnabled] ?? {};
       postMessageDown({
         type: "apply-plugins-enabled",
-        value: (items?.[StorageKeys.pluginsEnabled] ?? {}) as {
-          [id: string]: boolean;
-        },
+        value: recordToMap(pluginsEnabled),
       });
     }
   );
