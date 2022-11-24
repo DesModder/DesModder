@@ -22,7 +22,7 @@ export async function sendHeartbeat(key: string, opts: HeartbeatOptions) {
     is_write: opts.isWrite,
 
     // Everything below will show up in your Leaderboard.
-    project: opts.splitProjects ? opts.graphName : "Desmos Project",
+    project: opts.splitProjects ? opts.graphName : "Desmos Projects",
     entity: opts.graphURL,
     branch: opts.splitProjects ? null : opts.graphName,
   };
