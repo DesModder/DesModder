@@ -1,10 +1,7 @@
 import { Calc } from "../../globals/window";
 import { desModderController } from "../../script";
-import { Config, configList } from "./config";
+import { configList } from "./config";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
-import { OptionalProperties } from "utils/utils";
-
-let splitProjects = false;
 
 const heartbeatInterval = 120 * 1000;
 let lastUpdate = performance.now() - heartbeatInterval;
@@ -22,7 +19,12 @@ async function maybeSendHeartbeat(isWrite: boolean) {
   console.debug("[WakaTime] Sending heartbeat at:", new Date());
   postMessageUp({
     type: "send-heartbeat",
-    options: { graphName, graphURL, lineCount, splitProjects, isWrite },
+    options: {
+      graphName,
+      graphURL,
+      lineCount,
+      isWrite,
+    },
   });
   lastUpdate = performance.now();
 }
@@ -54,10 +56,5 @@ export default {
   onEnable,
   onDisable,
   config: configList,
-  onConfigChange(changes: OptionalProperties<Config>) {
-    if (changes.splitProjects !== undefined) {
-      splitProjects = changes.splitProjects;
-    }
-  },
   enabledByDefault: false,
 } as const;

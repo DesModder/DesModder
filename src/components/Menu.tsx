@@ -98,85 +98,89 @@ export default class Menu extends Component<{
       return (
         <div>
           {config.map((item) => (
-            <Switch key={() => item.type}>
-              {() =>
-                ({
-                  boolean: () => (
-                    <div class="dsm-settings-item dsm-settings-boolean">
-                      <Checkbox
-                        onChange={(checked) =>
-                          this.controller.expandedPlugin &&
-                          this.controller.setPluginSetting(
-                            this.controller.expandedPlugin,
-                            item.key,
-                            checked
-                          )
-                        }
-                        checked={() =>
-                          (pluginSettings[item.key] as boolean) ?? false
-                        }
-                        ariaLabel={() => item.key}
-                      >
-                        <Tooltip
-                          tooltip={configItemDesc(plugin, item)}
-                          gravity="n"
-                        >
-                          <div class="dsm-settings-label">
-                            {configItemName(plugin, item)}
-                          </div>
-                        </Tooltip>
-                      </Checkbox>
-                      <ResetButton
-                        controller={this.controller}
-                        key={item.key}
-                      />
-                    </div>
-                  ),
-                  string: () => (
-                    <div class="dsm-settings-item dsm-settings-color">
-                      <input
-                        type={(item as ConfigItemString).variant}
-                        id={`dsm-settings-item__input-${item.key}`}
-                        value={pluginSettings[item.key]}
-                        onUpdate={(e: HTMLInputElement) =>
-                          !e.classList.contains("dcg-hovered") &&
-                          (e.value = pluginSettings[item.key] as string)
-                        }
-                        onChange={(evt: Event) =>
-                          this.controller.expandedPlugin &&
-                          this.controller.setPluginSetting(
-                            this.controller.expandedPlugin,
-                            item.key,
-                            (evt.target as HTMLInputElement).value
-                          )
-                        }
-                        onInput={(evt: Event) =>
-                          this.controller.expandedPlugin &&
-                          this.controller.setPluginSetting(
-                            this.controller.expandedPlugin,
-                            item.key,
-                            (evt.target as HTMLInputElement).value,
-                            true
-                          )
-                        }
-                      />
-                      <Tooltip
-                        tooltip={configItemDesc(plugin, item)}
-                        gravity="n"
-                      >
-                        <label for={`dsm-settings-item__input-${item.key}`}>
-                          {configItemName(plugin, item)}
-                        </label>
-                      </Tooltip>
-                      <ResetButton
-                        controller={this.controller}
-                        key={item.key}
-                      />
-                    </div>
-                  ),
-                }[item.type]())
-              }
-            </Switch>
+            <If predicate={() => item.shouldShow?.(pluginSettings) ?? true}>
+              {() => (
+                <Switch key={() => item.type}>
+                  {() =>
+                    ({
+                      boolean: () => (
+                        <div class="dsm-settings-item dsm-settings-boolean">
+                          <Checkbox
+                            onChange={(checked) =>
+                              this.controller.expandedPlugin &&
+                              this.controller.setPluginSetting(
+                                this.controller.expandedPlugin,
+                                item.key,
+                                checked
+                              )
+                            }
+                            checked={() =>
+                              (pluginSettings[item.key] as boolean) ?? false
+                            }
+                            ariaLabel={() => item.key}
+                          >
+                            <Tooltip
+                              tooltip={configItemDesc(plugin, item)}
+                              gravity="n"
+                            >
+                              <div class="dsm-settings-label">
+                                {configItemName(plugin, item)}
+                              </div>
+                            </Tooltip>
+                          </Checkbox>
+                          <ResetButton
+                            controller={this.controller}
+                            key={item.key}
+                          />
+                        </div>
+                      ),
+                      string: () => (
+                        <div class="dsm-settings-item dsm-settings-color">
+                          <input
+                            type={(item as ConfigItemString).variant}
+                            id={`dsm-settings-item__input-${item.key}`}
+                            value={pluginSettings[item.key]}
+                            onUpdate={(e: HTMLInputElement) =>
+                              !e.classList.contains("dcg-hovered") &&
+                              (e.value = pluginSettings[item.key] as string)
+                            }
+                            onChange={(evt: Event) =>
+                              this.controller.expandedPlugin &&
+                              this.controller.setPluginSetting(
+                                this.controller.expandedPlugin,
+                                item.key,
+                                (evt.target as HTMLInputElement).value
+                              )
+                            }
+                            onInput={(evt: Event) =>
+                              this.controller.expandedPlugin &&
+                              this.controller.setPluginSetting(
+                                this.controller.expandedPlugin,
+                                item.key,
+                                (evt.target as HTMLInputElement).value,
+                                true
+                              )
+                            }
+                          />
+                          <Tooltip
+                            tooltip={configItemDesc(plugin, item)}
+                            gravity="n"
+                          >
+                            <label for={`dsm-settings-item__input-${item.key}`}>
+                              {configItemName(plugin, item)}
+                            </label>
+                          </Tooltip>
+                          <ResetButton
+                            controller={this.controller}
+                            key={item.key}
+                          />
+                        </div>
+                      ),
+                    }[item.type]())
+                  }
+                </Switch>
+              )}
+            </If>
           ))}
         </div>
       );
