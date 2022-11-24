@@ -1,4 +1,8 @@
-import { HeartbeatOptions, sendHeartbeat } from "../plugins/wakatime/heartbeat";
+import {
+  HeartbeatOptions,
+  sendHeartbeat,
+  WindowHeartbeatOptions,
+} from "../plugins/wakatime/heartbeat";
 import injectScript from "utils/injectScript";
 import { listenToMessageUp, postMessageDown } from "utils/messages";
 
@@ -18,12 +22,14 @@ function getInitialData() {
         [id: string]: { [key: string]: any };
       };
       // Hide secret key from web page
-      if (settings.wakatime?.secretKey) {
-        settings.wakatime.secretKey = "????????-????-????-????-????????????";
+      const settingsDown = structuredClone(settings);
+      if (settingsDown.wakatime?.secretKey) {
+        settingsDown.wakatime.secretKey =
+          "????????-????-????-????-????????????";
       }
       postMessageDown({
         type: "apply-plugin-settings",
-        value: settings,
+        value: settingsDown,
       });
       postMessageDown({
         type: "apply-plugins-enabled",
@@ -35,21 +41,30 @@ function getInitialData() {
   );
 }
 
-function _sendHeartbeat(options: HeartbeatOptions) {
+function _sendHeartbeat(options: WindowHeartbeatOptions) {
   chrome.storage.sync.get(
     {
       [StorageKeys.pluginSettings]: {},
     },
     (items) => {
       const s = items?.[StorageKeys.pluginSettings];
-      const secretKey = s?.wakatime?.secretKey;
+      const wakatime = s?.wakatime;
+      const secretKey = wakatime?.secretKey;
+      const projectName = wakatime?.projectName;
+      const splitProjects = wakatime?.splitProjects;
+      const fullOptions: HeartbeatOptions = {
+        ...options,
+        secretKey,
+        projectName,
+        splitProjects,
+      };
 
       if (BROWSER === "chrome") {
         // Chrome can only send wakatime requests from the background page
         // pass message along to the background page
         chrome.runtime.sendMessage(
           chrome.runtime.id,
-          { type: "send-background-heartbeat", options, secretKey },
+          { type: "send-background-heartbeat", options: fullOptions },
           (e) => {
             if (e?.type === "heartbeat-error") {
               postMessageDown(e);
@@ -58,7 +73,7 @@ function _sendHeartbeat(options: HeartbeatOptions) {
         );
       } else {
         // Firefox can only send wakatime requests from the content script
-        sendHeartbeat(secretKey, options).catch((e) =>
+        sendHeartbeat(fullOptions).catch((e) =>
           postMessageDown({
             type: "heartbeat-error",
             message: e,

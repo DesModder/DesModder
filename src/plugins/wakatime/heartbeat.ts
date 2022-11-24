@@ -1,14 +1,19 @@
 // This script gets used in content and background scripts
 
-export interface HeartbeatOptions {
+export interface WindowHeartbeatOptions {
   graphName: string;
   graphURL: string;
   lineCount: number;
-  splitProjects: boolean;
   isWrite: boolean;
 }
 
-export async function sendHeartbeat(key: string, opts: HeartbeatOptions) {
+export interface HeartbeatOptions extends WindowHeartbeatOptions {
+  splitProjects: boolean;
+  projectName: string;
+  secretKey: string;
+}
+
+export async function sendHeartbeat(opts: HeartbeatOptions) {
   const data = {
     // This is background information for WakaTime to handle. These values need no change.
     language: "Desmos",
@@ -22,19 +27,22 @@ export async function sendHeartbeat(key: string, opts: HeartbeatOptions) {
     is_write: opts.isWrite,
 
     // Everything below will show up in your Leaderboard.
-    project: opts.splitProjects ? opts.graphName : "Desmos Projects",
+    project: opts.splitProjects
+      ? opts.graphName
+      : // Defend against empty string
+        opts.projectName || "Desmos Projects",
     entity: opts.graphURL,
     branch: opts.splitProjects ? null : opts.graphName,
   };
 
-  if (key === "") throw new Error("Secret key not provided.");
+  if (opts.secretKey === "") throw new Error("Secret key not provided.");
 
   const r = await fetch(
     "https://wakatime.com/api/v1/users/current/heartbeats",
     {
       method: "POST",
       headers: {
-        Authorization: `Basic ${btoa(key)}`,
+        Authorization: `Basic ${btoa(opts.secretKey)}`,
         "content-type": "application/json",
       },
       body: JSON.stringify(data),

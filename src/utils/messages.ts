@@ -5,7 +5,7 @@ Post message conventions:
   set-* = message from page to content script, asking to store data in chrome.storage
   get-* = message from page to content script, asking to get data in chrome.storage
 */
-import { HeartbeatOptions } from "../plugins/wakatime/heartbeat";
+import { WindowHeartbeatOptions } from "../plugins/wakatime/heartbeat";
 import { GenericSettings } from "plugins";
 
 type MessageWindowToContent =
@@ -35,7 +35,7 @@ type MessageWindowToContent =
     }
   | {
       type: "send-heartbeat";
-      options: HeartbeatOptions;
+      options: WindowHeartbeatOptions;
     };
 
 type MessageContentToWindow =

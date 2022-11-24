@@ -145,6 +145,8 @@ wakatime-opt-secretKey-name = Secret Key
 wakatime-opt-secretKey-desc = API Key used for WakaTime servers
 wakatime-opt-splitProjects-name = Split Projects by Graph
 wakatime-opt-splitProjects-desc = Store each graph as its own project instead of branches of a unified Desmos Project
+wakatime-opt-projectName-name = Project name
+wakatime-opt-projectName-desc = Visible from WakaTime, and shared for all Desmos projects
 
 ## Performance Display
 performance-info-name = Performance Display

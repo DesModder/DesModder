@@ -19,6 +19,8 @@ import wolfram2desmos from "plugins/wolfram2desmos";
 
 interface ConfigItemGeneric {
   key: string;
+  // TODO proper type here
+  shouldShow?: (current: any) => boolean;
   // display name and descriptions are managed in a translations file
 }
 

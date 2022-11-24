@@ -5,6 +5,13 @@ export const configList = [
     default: false,
   },
   {
+    key: "projectName",
+    type: "string",
+    default: "Desmos Projects",
+    variant: "text",
+    shouldShow: (config: Config) => !config.splitProjects,
+  },
+  {
     key: "secretKey",
     type: "string",
     variant: "password",
@@ -16,5 +23,6 @@ export const configList = [
 
 export interface Config {
   splitProjects: boolean;
+  projectName: string;
   secretKey: string;
 }
