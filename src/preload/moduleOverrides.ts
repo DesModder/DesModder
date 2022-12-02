@@ -1,6 +1,7 @@
 import abstractItem from "./moduleOverrides/abstract-item";
 import abstractItemView from "./moduleOverrides/abstract-item-view";
 import actionsKeyboard from "./moduleOverrides/actions__keyboard";
+import evaluationView from "./moduleOverrides/evaluation-view";
 import expressionEditActions from "./moduleOverrides/expression-edit-actions";
 import expressionIconView from "./moduleOverrides/expression-icon-view";
 import expressionMenusFill from "./moduleOverrides/expression-menus__fill";
@@ -22,7 +23,6 @@ import workerSrcUnderlying from "./moduleOverrides/text__worker_src_underlying";
 import tooltippedError from "./moduleOverrides/tooltipped-error";
 import { DependencyNameMap } from "./overrideHelpers/withDependencyMap";
 import { Visitor } from "@babel/traverse";
-import evaluationView from "./moduleOverrides/evaluation-view";
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 export default {
