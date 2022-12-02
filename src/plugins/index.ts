@@ -16,6 +16,7 @@ import textMode from "plugins/text-mode";
 import videoCreator from "plugins/video-creator";
 import wakatime from "plugins/wakatime";
 import wolfram2desmos from "plugins/wolfram2desmos";
+import betterEvaluationView from "./better-evaluation-view";
 
 interface ConfigItemGeneric {
   key: string;
@@ -81,6 +82,7 @@ export const pluginList: Plugin[] = [
   folderTools,
   textMode,
   performanceInfo,
+  betterEvaluationView,
 ];
 
 export type PluginID = string;

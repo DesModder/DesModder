@@ -158,3 +158,7 @@ performance-info-time-in-worker = Time In Worker
 performance-info-compiling = Compiling
 performance-info-rendering = Rendering
 performance-info-other = Other
+
+## Better Evaluation View
+better-evaluation-view-name = Better Evaluation View
+better-evaluation-view-desc = Improves the evaluation view
