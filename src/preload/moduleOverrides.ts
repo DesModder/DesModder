@@ -22,6 +22,7 @@ import workerSrcUnderlying from "./moduleOverrides/text__worker_src_underlying";
 import tooltippedError from "./moduleOverrides/tooltipped-error";
 import { DependencyNameMap } from "./overrideHelpers/withDependencyMap";
 import { Visitor } from "@babel/traverse";
+import evaluationView from "./moduleOverrides/evaluation-view";
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 export default {
@@ -50,4 +51,5 @@ export default {
   "expressions/promptslider_view": promptSliderView,
   "main/instancehotkeys": instancehotkeys,
   "main/calc_desktop": calcDesktop,
+  "expressions/evaluation-view": evaluationView,
 } as { [key: string]: (dependencyNameMap: DependencyNameMap) => Visitor };
