@@ -1,5 +1,10 @@
 # DesModder Changelog
 
+## 0.8.6
+
+- Fix various WakaTime bugs
+- Allow configuring WakaTime project name
+
 ## 0.8.5
 
 Bug fixes:
