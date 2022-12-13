@@ -1,5 +1,4 @@
 import abstractItem from "./moduleOverrides/abstract-item";
-import abstractItemView from "./moduleOverrides/abstract-item-view";
 import actionsKeyboard from "./moduleOverrides/actions__keyboard";
 import expressionEditActions from "./moduleOverrides/expression-edit-actions";
 import expressionIconView from "./moduleOverrides/expression-icon-view";
@@ -32,7 +31,6 @@ export default {
   "expressions/smart_textarea": smartTextarea,
   "expressions/list-view": listView,
   "graphing-calc/models/abstract-item": abstractItem,
-  "expressions/abstract-item-view": abstractItemView,
   "expressions/expression-edit-actions": expressionEditActions,
   "graphing-calc/actions/keyboard": actionsKeyboard,
   "main/controller": mainController,

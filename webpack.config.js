@@ -52,7 +52,7 @@ baseConfig = (env, options) => ({
         type: "asset/inline",
       },
       {
-        test: /\.ftl$/,
+        test: /\.(ftl|replacements)$/,
         type: "asset/source",
       },
     ],

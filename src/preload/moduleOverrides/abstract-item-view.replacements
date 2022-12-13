@@ -1,0 +1,6 @@
+// in module "expressions/abstract-item-view"
+// replace {
+this.exitEditListMode()
+// } with {
+(event.target.closest(".dsm-stay-edit-list-mode") || this.exitEditListMode())
+// }

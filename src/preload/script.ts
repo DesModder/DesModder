@@ -1,4 +1,6 @@
+import applyReplacement from "./applyReplacement";
 import moduleOverrides from "./moduleOverrides";
+import moduleReplacements from "./moduleReplacements";
 import withDependencyMap from "./overrideHelpers/withDependencyMap";
 import window from "globals/window";
 import injectScript from "utils/injectScript";
@@ -15,7 +17,12 @@ function newDefine(
   dependencies: string[],
   definition: Function
 ) {
-  if (moduleName in moduleOverrides) {
+  if (moduleReplacements.has(moduleName)) {
+    definition = applyReplacement(
+      moduleReplacements.get(moduleName)!,
+      definition
+    );
+  } else if (moduleName in moduleOverrides) {
     try {
       // override should either be `{dependencies, definition}` or just `definition`
       const override = withDependencyMap(moduleOverrides[moduleName])(
