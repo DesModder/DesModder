@@ -1,5 +1,11 @@
 # DesModder Changelog
 
+## 0.8.7
+
+Emergency bugfix after Desmos changed a bunch of internals.
+
+- Fixes Video Creator, WakaTime, and GLesmos
+
 ## 0.8.6
 
 - Fix various WakaTime bugs
