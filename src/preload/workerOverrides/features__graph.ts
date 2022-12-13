@@ -56,14 +56,20 @@ export default () => ({
         }
 
       For finding fillOpacity and color:
-      There's an object `O` assigned via `O.color = P` within the if statement of 
+      There's an object `h` assigned via `h.fillOpacity = d` within the if statement of 
         O.wrap(a).eachElement(function (t, a) {
           if (!(a >= j)) {
-            // Somewhere in this block
-            O.color = P;
+            // Somewhere in this block, probably in a SequenceExpression
+            h.fillOpacity= d
           }
         })
-      This object `O` provides both `O.fillOpacity` and `O.color`
+      This object `h` provides both `h.fillOpacity` and `h.color`
+
+      For finding `graphs`:
+      We have
+        b.graphMode === l.IMPLICIT && '=' !== b.operator && q.push({...})
+      where q is the list of graphs. Go up to this full expression (`ppp`), then
+      down to `ppp.node.right.callee.object`, which gives `q`
     */
     if (path.node.value === "=") {
       const ppp = path.parentPath?.parentPath?.parentPath;
@@ -85,14 +91,14 @@ export default () => ({
         t.isCallExpression(ppp.node.right) &&
         t.isMemberExpression(ppp.node.right.callee)
       ) {
-        // find O documented above
-        const objO = findO(anonymousFunc.node);
+        // findO documented above
+        const objH = findH(anonymousFunc);
 
-        if (objO)
+        if (objH)
           containingBlock.replaceWith(
             template.statement(`
             if (%%this%%.userData.glesmos) {
-              const newCompiled = self.dsm_compileGLesmos(%%ir%%, %%O%%.color, %%O%%.fillOpacity, %%O%%.listIndex);
+              const newCompiled = self.dsm_compileGLesmos(%%ir%%, %%h%%.color, %%h%%.fillOpacity, %%h%%.listIndex);
               const prev =  %%graphs%%[%%graphs%%.length - 1];
               if (prev?.graphMode === "GLesmos") {
                 // merge GLesmos graphs when possible
@@ -118,7 +124,7 @@ export default () => ({
               graphs: ppp.node.right.callee.object,
               containingBlock: containingBlock.node,
               ir,
-              O: objO,
+              h: objH,
             })
           );
         path.skip();
@@ -128,23 +134,18 @@ export default () => ({
   },
 });
 
-function findO(anonymousFunc: t.FunctionExpression) {
-  const ifStatement = anonymousFunc.body.body[0];
-  if (
-    t.isIfStatement(ifStatement) &&
-    t.isBlockStatement(ifStatement.consequent)
-  ) {
-    let lhs;
-    for (const statement of ifStatement.consequent.body) {
+function findH(anonymousFunc: babel.NodePath<t.Node>): t.Identifier | null {
+  let h: t.Identifier | null = null;
+  anonymousFunc.traverse({
+    MemberExpression(m: babel.NodePath<t.MemberExpression>) {
       if (
-        t.isExpressionStatement(statement) &&
-        t.isAssignmentExpression(statement.expression) &&
-        t.isMemberExpression((lhs = statement.expression.left)) &&
-        t.isIdentifier(lhs.property, { name: "color" }) &&
-        t.isIdentifier(lhs.object)
+        t.isIdentifier(m.node.property, { name: "fillOpacity" }) &&
+        t.isIdentifier(m.node.object)
       ) {
-        return lhs.object;
+        h = m.node.object;
+        m.stop();
       }
-    }
-  }
+    },
+  });
+  return h;
 }
