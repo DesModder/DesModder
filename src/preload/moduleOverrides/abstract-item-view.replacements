@@ -1,6 +1,11 @@
-// in module "expressions/abstract-item-view"
-// replace {
+# Module `expressions/abstract-item-view`
+
+From:
+```js
 this.exitEditListMode()
-// } with {
+```
+
+To:
+```js
 (event.target.closest(".dsm-stay-edit-list-mode") || this.exitEditListMode())
-// }
+```

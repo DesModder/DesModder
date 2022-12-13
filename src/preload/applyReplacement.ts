@@ -70,14 +70,17 @@ function parseReplacement(replacementString: string): ReplacementRule {
     .map((x) => x.trim())
     .filter((x) => x.length > 0);
   if (
-    lines.length !== 5 ||
-    lines[0] !== "// replace {" ||
-    lines[2] !== "// } with {" ||
-    lines[4] !== "// }"
+    lines.length !== 8 ||
+    lines[0] !== "From:" ||
+    lines[1] !== "```js" ||
+    lines[3] !== "```" ||
+    lines[4] !== "To:" ||
+    lines[5] !== "```js" ||
+    lines[7] !== "```"
   )
     throw new Error("Replacement syntax error");
   return {
-    from: Array.from(jsTokens(lines[1])),
-    to: Array.from(jsTokens(lines[3])),
+    from: Array.from(jsTokens(lines[2])),
+    to: Array.from(jsTokens(lines[6])),
   };
 }
