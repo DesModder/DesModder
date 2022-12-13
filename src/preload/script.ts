@@ -1,7 +1,7 @@
-import applyReplacement from "./applyReplacement";
 import moduleOverrides from "./moduleOverrides";
 import moduleReplacements from "./moduleReplacements";
 import withDependencyMap from "./overrideHelpers/withDependencyMap";
+import applyReplacement from "./replacementHelpers/applyReplacement";
 import window from "globals/window";
 import injectScript from "utils/injectScript";
 import { postMessageUp, listenToMessageDown } from "utils/messages";

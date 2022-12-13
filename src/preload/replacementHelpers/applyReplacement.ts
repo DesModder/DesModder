@@ -1,22 +1,18 @@
+import { ReplacementRule } from "./parseReplacement";
 import jsTokens, { Token } from "js-tokens";
 
-export default function applyReplacement(replacement: string, fn: Function) {
+export default function applyReplacement(
+  replacement: ReplacementRule,
+  fn: Function
+) {
   // use `Function` instead of `eval` to force treatment as an expression
   // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
   return Function(
     "return " +
-      applyStringReplacement(
-        parseReplacement(replacement),
-        Array.from(jsTokens(fn.toString()))
-      )
+      applyStringReplacement(replacement, Array.from(jsTokens(fn.toString())))
         .map((t) => t.value)
         .join("")
   )();
-}
-
-interface ReplacementRule {
-  from: Token[];
-  to: Token[];
 }
 
 function applyStringReplacement(
@@ -62,25 +58,4 @@ function patternTest(
       return false;
   }
   return true;
-}
-
-function parseReplacement(replacementString: string): ReplacementRule {
-  const lines = replacementString
-    .split(/\n/g)
-    .map((x) => x.trim())
-    .filter((x) => x.length > 0);
-  if (
-    lines.length !== 8 ||
-    lines[0] !== "From:" ||
-    lines[1] !== "```js" ||
-    lines[3] !== "```" ||
-    lines[4] !== "To:" ||
-    lines[5] !== "```js" ||
-    lines[7] !== "```"
-  )
-    throw new Error("Replacement syntax error");
-  return {
-    from: Array.from(jsTokens(lines[2])),
-    to: Array.from(jsTokens(lines[6])),
-  };
 }

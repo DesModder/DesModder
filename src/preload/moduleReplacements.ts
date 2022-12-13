@@ -1,21 +1,18 @@
 import abstractItemView from "./moduleOverrides/abstract-item-view.replacements";
+import parseReplacement, {
+  ReplacementRule,
+} from "./replacementHelpers/parseReplacement";
 
-const replacements: Map<string, string> = new Map();
-
-const IN_MODULE = "# Module ";
+const replacements: Map<string, ReplacementRule> = new Map();
 
 for (const replacement of [abstractItemView]) {
-  const newlineIndex = replacement.indexOf("\n");
-  const head = replacement.slice(0, newlineIndex);
-  if (!head.startsWith(IN_MODULE))
-    throw new Error("Replacement syntax error: missing '// in module '");
-  const module = JSON.parse(head.slice(IN_MODULE.length).replace(/`/g, '"'));
+  const parsed = parseReplacement(replacement);
+  const module = parsed.module;
   if (replacements.has(module))
     throw new Error(
       `Programming error: duplicate module replacement for ${module}`
     );
-  const tail = replacement.slice(newlineIndex + 1);
-  replacements.set(module, tail);
+  replacements.set(module, parsed);
 }
 
 export default replacements;
