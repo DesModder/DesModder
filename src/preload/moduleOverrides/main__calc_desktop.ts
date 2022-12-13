@@ -11,16 +11,16 @@ export default () => ({
     @how
 
     In
-      var r = InstantiateTopLevelComponents({...),
-        C = r.Calc,
-        k = C._calc.controller;
+      var C = InstantiateTopLevelComponents({...}),
+        // some lines omitted
+        I = C.userController,
     Replace
-        C = r.Calc
+        I = C.userController
     With
-        C = (window._topLevelComponents = r).Calc
+        I = (window._topLevelComponents = C).userController
      */
     if (
-      t.isIdentifier(path.node.property, { name: "Calc" }) &&
+      t.isIdentifier(path.node.property, { name: "userController" }) &&
       t.isIdentifier(path.node.object)
     ) {
       path.get("object").replaceWith(
