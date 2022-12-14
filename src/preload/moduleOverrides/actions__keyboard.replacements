@@ -1,0 +1,21 @@
+# Module `graphing-calc/actions/keyboard`
+
+@plugin hide-errors
+
+Prevent enter/shift-enter from creating sliders
+
+From:
+```js
+if ($List.getMissingVariablesForItem($l).length && $e.areSlidersEnabled())
+  return $e.createSlidersForItem(
+```
+
+To:
+```js
+if (
+  $List.getMissingVariablesForItem($l).length &&
+  $e.areSlidersEnabled() &&
+  !window.DesModder.controller.isErrorHidden($l.id)
+)
+  return $e.createSlidersForItem(
+```

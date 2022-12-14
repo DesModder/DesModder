@@ -1,5 +1,3 @@
-import abstractItem from "./moduleOverrides/abstract-item";
-import actionsKeyboard from "./moduleOverrides/actions__keyboard";
 import expressionEditActions from "./moduleOverrides/expression-edit-actions";
 import expressionIconView from "./moduleOverrides/expression-icon-view";
 import expressionMenusFill from "./moduleOverrides/expression-menus__fill";
@@ -28,9 +26,7 @@ export default {
   "expressions/expressions-header": expressionsHeader,
   "graphing-calc/keypads/main": keypadsMain,
   "expressions/list-view": listView,
-  "graphing-calc/models/abstract-item": abstractItem,
   "expressions/expression-edit-actions": expressionEditActions,
-  "graphing-calc/actions/keyboard": actionsKeyboard,
   "main/controller": mainController,
   "expressions/expression_view": expressionView,
   "expressions/image-view": genericView,

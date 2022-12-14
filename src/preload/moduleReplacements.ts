@@ -1,4 +1,6 @@
 import abstractItemView from "./moduleOverrides/abstract-item-view.replacements";
+import abstractItem from "./moduleOverrides/abstract-item.replacements";
+import actionsKeyboard from "./moduleOverrides/actions__keyboard.replacements";
 import smartTextarea from "./moduleOverrides/smart_textarea.replacements";
 import parseReplacement, {
   ReplacementRule,
@@ -6,7 +8,14 @@ import parseReplacement, {
 
 const replacements: Map<string, ReplacementRule> = new Map();
 
-for (const replacement of [abstractItemView, smartTextarea]) {
+const replacementStrings = [
+  abstractItemView,
+  smartTextarea,
+  abstractItem,
+  actionsKeyboard,
+];
+
+for (const replacement of replacementStrings) {
   const parsed = parseReplacement(replacement);
   const module = parsed.module;
   if (replacements.has(module))

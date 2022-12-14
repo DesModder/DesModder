@@ -1,0 +1,29 @@
+# Module `graphing-calc/models/abstract-item`
+
+@plugin pin-expressions
+
+Disable pinned expressions from appearing in the unpinned section.
+
+Completely rewrites function `getDisplayState(e)` to also set an item as hidden if it is pinned
+
+From:
+```js
+$e.isHiddenFromUI || $e.filteredBySearch
+```
+
+To:
+```js
+$e.isHiddenFromUI || $e.filteredBySearch || window.DesModder?.controller?.isExpressionPinned($e.id)
+```
+
+Replacement appears in
+
+```js
+exports.getDisplayState = function (e) {
+    return e.isHiddenFromUI || e.filteredBySearch
+      ? 'none'
+      : e.renderShell
+      ? 'shell'
+      : 'render'
+  }
+```

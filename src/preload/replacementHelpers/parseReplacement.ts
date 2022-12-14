@@ -56,8 +56,13 @@ function tokenizeReplacement(replacementString: string) {
         tokens.push({
           tag: "code",
           value: Array.from(
-            jsTokens(lines.slice(codeStartLine + 1, i).join("\n"))
-          ).filter((x) => x.type !== "WhiteSpace"),
+            jsTokens(
+              lines
+                .slice(codeStartLine + 1, i)
+                .join("\n")
+                .trim()
+            )
+          ),
           prefix: lines[codeStartLine - 1],
         });
         codeStartLine = null;
