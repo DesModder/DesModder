@@ -1,34 +1,7 @@
+import { syntaxError } from "./errors";
 import jsTokens, { Token } from "js-tokens";
 
-export interface ReplacementRule {
-  module: string;
-  from: Token[];
-  to: Token[];
-}
-
-export default function parseReplacement(
-  replacementString: string
-): ReplacementRule {
-  const tokens = tokenizeReplacement(replacementString);
-  if (
-    tokens.length < 3 ||
-    tokens[0].tag !== "heading" ||
-    tokens[1].tag !== "code" ||
-    tokens[1].prefix !== "From:" ||
-    tokens[2].tag !== "code" ||
-    tokens[2].prefix !== "To:"
-  )
-    syntaxError("Currently only support (heading)(from)(to)");
-  const moduleMatch = tokens[0].value.match(/Module `([^`]*)`/);
-  if (tokens[0].depth !== 1 || !moduleMatch) syntaxError("Invalid heading");
-  return {
-    module: moduleMatch[1],
-    from: tokens[1].value,
-    to: tokens[2].value,
-  };
-}
-
-function tokenizeReplacement(replacementString: string) {
+export function tokenizeReplacement(replacementString: string) {
   if (!replacementString.startsWith("#"))
     syntaxError("file must start with heading");
   const tokens: ReplacementToken[] = [];
@@ -42,7 +15,16 @@ function tokenizeReplacement(replacementString: string) {
       tokens.push({
         tag: "heading",
         depth,
-        value: line.slice(depth).trim(),
+        text: line.slice(depth),
+      });
+    } else if (line.startsWith("*")) {
+      const match = line.match(/^\*([^*]+)\*(.*)$/);
+      if (match === null)
+        syntaxError("Expected line starting with '*' to be valid command");
+      tokens.push({
+        tag: "emph",
+        command: normalizeCommand(match[1]),
+        args: inlineCodes(match[2]),
       });
     } else if (line.startsWith("```")) {
       const isStart = line.startsWith("```js");
@@ -63,7 +45,6 @@ function tokenizeReplacement(replacementString: string) {
                 .trim()
             )
           ),
-          prefix: lines[codeStartLine - 1],
         });
         codeStartLine = null;
       }
@@ -73,19 +54,26 @@ function tokenizeReplacement(replacementString: string) {
   return tokens;
 }
 
-type ReplacementToken =
+function normalizeCommand(command: string) {
+  return command.trim().toLowerCase().replace(/\W/g, "");
+}
+
+function inlineCodes(str: string) {
+  return [...str.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
+}
+
+export type ReplacementToken =
   | {
       tag: "code";
       value: Token[];
-      /** prefix should something like From: or To: */
-      prefix: string;
     }
   | {
       tag: "heading";
       depth: number;
-      value: string;
+      text: string;
+    }
+  | {
+      tag: "emph";
+      command: string;
+      args: string[];
     };
-
-function syntaxError(s: string): never {
-  throw new Error(`Replacement syntax error: ${s}`);
-}

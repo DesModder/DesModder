@@ -1,28 +1,14 @@
-import abstractItemView from "./moduleOverrides/abstract-item-view.replacements";
-import abstractItem from "./moduleOverrides/abstract-item.replacements";
-import actionsKeyboard from "./moduleOverrides/actions__keyboard.replacements";
-import smartTextarea from "./moduleOverrides/smart_textarea.replacements";
-import parseReplacement, {
-  ReplacementRule,
-} from "./replacementHelpers/parseReplacement";
+import hideErrors from "./moduleOverrides/hide-errors.replacements";
+import pinExpressions from "./moduleOverrides/pin-expressions.replacements";
+import shiftEnterNewline from "./moduleOverrides/shift-enter-newline.replacements";
+import parseReplacement, { ReplacementRule } from "./replacementHelpers/parse";
 
-const replacements: Map<string, ReplacementRule> = new Map();
+const replacementStrings = [hideErrors, pinExpressions, shiftEnterNewline];
 
-const replacementStrings = [
-  abstractItemView,
-  smartTextarea,
-  abstractItem,
-  actionsKeyboard,
-];
+const replacements: ReplacementRule[] = [];
 
 for (const replacement of replacementStrings) {
-  const parsed = parseReplacement(replacement);
-  const module = parsed.module;
-  if (replacements.has(module))
-    throw new Error(
-      `Programming error: duplicate module replacement for ${module}`
-    );
-  replacements.set(module, parsed);
+  replacements.push(...parseReplacement(replacement));
 }
 
 export default replacements;

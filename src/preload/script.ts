@@ -17,12 +17,9 @@ function newDefine(
   dependencies: string[],
   definition: Function
 ) {
-  if (moduleReplacements.has(moduleName)) {
-    definition = applyReplacement(
-      moduleReplacements.get(moduleName)!,
-      definition
-    );
-  } else if (moduleName in moduleOverrides) {
+  for (const rep of moduleReplacements.filter((r) => r.module === moduleName))
+    definition = applyReplacement(rep, definition);
+  if (moduleName in moduleOverrides) {
     try {
       // override should either be `{dependencies, definition}` or just `definition`
       const override = withDependencyMap(moduleOverrides[moduleName])(

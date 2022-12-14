@@ -1,4 +1,4 @@
-import { ReplacementRule } from "./parseReplacement";
+import { ReplacementRule } from "./parse";
 import jsTokens, { Token } from "js-tokens";
 
 export default function applyReplacement(

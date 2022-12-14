@@ -4,14 +4,16 @@ As an example, suppose you wanted to change a single line in the module `express
 
 <!-- prettier-ignore -->
 ````md
-# Module `expressions/abstract-item-view`
+## Allow pin/unpin without exiting ELM
 
-From:
+*Module* `expressions/abstract-item-view`
+
+*From:*
 ```js
 this.exitEditListMode()
 ```
 
-To:
+*To:*
 ```js
 (event.target.closest(".dsm-stay-edit-list-mode") || this.exitEditListMode())
 ```
@@ -23,10 +25,22 @@ This is one step above plain string regex: substitutions are done based on token
 
 The syntax is a subset of Markdown.
 
-The file must start with the string `# Module ` then the module in which to do substitutions, wrapped in backticks.
+Commands are specified by lines starting with italics like `*from*`. There are currently three commands:
 
-Each replacement is specified by two code blocks with `js` as their language. The first must be preceded by "From:" and the second by "To:". Any text outside these code blocks has no effect.
+- `*Module*`: starts a module
+- `*From*`: gives the "from" pattern. Must be followed by a JS code block.
+- `*To*`: gives the "to" replacement. Must be followed by a JS code block.
+
+Currently, the parser is limited and must have chunks of `module, from, to`, in that order.
 
 The "from" code block is a pattern to search for: all tokens must match exactly, with the exception of identifiers that start with `$`, which can match any identifier and store that value. For example, `$x` could match the identifier `ab`
 
 The "to" code block is what the "from" block gets replaced with. The tokens are substituted exactly, with the exception of identifiers that start with `$`, which use the stored value from the "from" block.
+
+## Plans
+
+- Command `*using*`: add a pattern to match but not replace with. Used for finding identifiers
+- Command `*inside*`: narrow the search to inside
+- Syntax to match balanced strings
+
+These three should be enough to port the rest of the overrides to the new replacements system.

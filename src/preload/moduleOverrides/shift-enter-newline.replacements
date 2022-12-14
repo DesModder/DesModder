@@ -1,15 +1,15 @@
-# Module `expressions/smart_textarea`
+# Replacements for Shift-Enter Newline
 
-@plugin shift-enter-newline
+## Change shift-enter to insert a newline in notes
 
-Change shift-enter to insert a newline.
+*Module* `expressions/smart_textarea`
 
-From:
+*From:*
 ```js
 $n !== $Keys.ENTER || $e.metaKey
 ```
 
-To:
+*To:*
 ```js
 $n !== $Keys.ENTER || $e.metaKey || $e.shiftKey
 ```
