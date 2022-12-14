@@ -16,7 +16,6 @@ import calcDesktop from "./moduleOverrides/main__calc_desktop";
 import mainController from "./moduleOverrides/main__controller";
 import mainEvaluator from "./moduleOverrides/main__evaluator";
 import promptSliderView from "./moduleOverrides/promptslider_view";
-import smartTextarea from "./moduleOverrides/smart_textarea";
 import workerSrcUnderlying from "./moduleOverrides/text__worker_src_underlying";
 import tooltippedError from "./moduleOverrides/tooltipped-error";
 import { DependencyNameMap } from "./overrideHelpers/withDependencyMap";
@@ -28,7 +27,6 @@ export default {
   "expressions/expression-icon-view": expressionIconView,
   "expressions/expressions-header": expressionsHeader,
   "graphing-calc/keypads/main": keypadsMain,
-  "expressions/smart_textarea": smartTextarea,
   "expressions/list-view": listView,
   "graphing-calc/models/abstract-item": abstractItem,
   "expressions/expression-edit-actions": expressionEditActions,

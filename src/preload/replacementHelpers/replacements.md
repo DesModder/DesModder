@@ -1,4 +1,4 @@
-Replacements are now specified using pattern matching with a custom literate-style syntax, rather than complicated Babel expressions. The syntax is a subset of Markdown.
+Replacements are now specified using pattern matching with a custom literate-style syntax, rather than complicated Babel expressions.
 
 As an example, suppose you wanted to change a single line in the module `expressions/abstract-item-view` from `this.exitEditListMode()` to `(event.target.closest(".dsm-stay-edit-list-mode") || this.exitEditListMode())`. This could be represented by
 
@@ -21,6 +21,12 @@ This is one step above plain string regex: substitutions are done based on token
 
 ## Syntax
 
+The syntax is a subset of Markdown.
+
 The file must start with the string `# Module ` then the module in which to do substitutions, wrapped in backticks.
 
-Each replacement is specified by two code blocks with `js` as their language. The first must be preceded by "From:" and the second by "To:".
+Each replacement is specified by two code blocks with `js` as their language. The first must be preceded by "From:" and the second by "To:". Any text outside these code blocks has no effect.
+
+The "from" code block is a pattern to search for: all tokens must match exactly, with the exception of identifiers that start with `$`, which can match any identifier and store that value. For example, `$x` could match the identifier `ab`
+
+The "to" code block is what the "from" block gets replaced with. The tokens are substituted exactly, with the exception of identifiers that start with `$`, which use the stored value from the "from" block.

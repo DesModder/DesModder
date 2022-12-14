@@ -11,7 +11,7 @@ export default function parseReplacement(
 ): ReplacementRule {
   const tokens = tokenizeReplacement(replacementString);
   if (
-    tokens.length !== 3 ||
+    tokens.length < 3 ||
     tokens[0].tag !== "heading" ||
     tokens[1].tag !== "code" ||
     tokens[1].prefix !== "From:" ||
@@ -57,7 +57,7 @@ function tokenizeReplacement(replacementString: string) {
           tag: "code",
           value: Array.from(
             jsTokens(lines.slice(codeStartLine + 1, i).join("\n"))
-          ),
+          ).filter((x) => x.type !== "WhiteSpace"),
           prefix: lines[codeStartLine - 1],
         });
         codeStartLine = null;

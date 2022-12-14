@@ -1,11 +1,12 @@
 import abstractItemView from "./moduleOverrides/abstract-item-view.replacements";
+import smartTextarea from "./moduleOverrides/smart_textarea.replacements";
 import parseReplacement, {
   ReplacementRule,
 } from "./replacementHelpers/parseReplacement";
 
 const replacements: Map<string, ReplacementRule> = new Map();
 
-for (const replacement of [abstractItemView]) {
+for (const replacement of [abstractItemView, smartTextarea]) {
   const parsed = parseReplacement(replacement);
   const module = parsed.module;
   if (replacements.has(module))
