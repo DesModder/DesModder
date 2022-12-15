@@ -202,10 +202,7 @@ function patternMatch(
     } else if (expectedToken.type === "PatternIdentifier") {
       if (foundToken.type !== "IdentifierName") return null;
       table.set(expectedToken.value, { start: strIndex, length: 1 });
-    } else if (
-      expectedToken.type !== foundToken.type ||
-      expectedToken.value !== foundToken.value
-    ) {
+    } else if (!tokensEqual(expectedToken, foundToken)) {
       return null;
     }
     patternIndex++;
@@ -216,6 +213,15 @@ function patternMatch(
     startIndex,
     length: strIndex - startIndex,
   };
+}
+
+function tokensEqual(a: Token, b: Token) {
+  if (a.type !== b.type) return false;
+  else if (a.type === "StringLiteral") {
+    return a.value.replace(/"/g, "'") === b.value.replace(/"/g, "'");
+  } else {
+    return a.value === b.value;
+  }
 }
 
 const balanced = new Map([

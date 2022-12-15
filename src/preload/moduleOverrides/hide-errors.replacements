@@ -20,7 +20,7 @@ if (
   return $e.createSlidersForItem(
 ```
 
-##  Wrap error triangle with div for onTap and opacity control
+## Wrap error triangle with div for onTap and opacity control
 
 *Module* `expressions/expression-icon-view`
 

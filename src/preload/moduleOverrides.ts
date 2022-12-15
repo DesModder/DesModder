@@ -1,5 +1,4 @@
 import expressionEditActions from "./moduleOverrides/expression-edit-actions";
-import expressionMenusFill from "./moduleOverrides/expression-menus__fill";
 import expressionOptionsMenuView from "./moduleOverrides/expression-options-menu-view";
 import expressionView from "./moduleOverrides/expression_view";
 import expressionsHeader from "./moduleOverrides/expressions-header";
@@ -32,7 +31,6 @@ export default {
   "expressions/text_view": genericView,
   "expressions/folder-view": folderView,
   "text!worker_src_underlying": workerSrcUnderlying,
-  "expressions/expression-menus/fill": expressionMenusFill,
   "graphing/graphslayer": graphslayer,
   "main/evaluator": mainEvaluator,
   "expressions/expression-menus/expression-options-menu-view":
