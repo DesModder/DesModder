@@ -8,14 +8,14 @@ Allows clicking on the pin/unpin button for notes and tables, without exiting ed
 
 The class "dsm-stay-edit-list-mode" is added in `expression-edit-actions.ts`.
 
-*From:*
+*Find* `from`
 ```js
 this.exitEditListMode()
 ```
 
 Using `.closest` handles the case where the user clicks directly on the (child/::before) icon instead of the padding.
 
-*To:*
+*Replace* `from` with
 ```js
 (event.target.closest(".dsm-stay-edit-list-mode") || this.exitEditListMode())
 ```
@@ -26,12 +26,12 @@ Using `.closest` handles the case where the user clicks directly on the (child/:
 
 Completely rewrites function `getDisplayState(e)` to also set an item as hidden if it is pinned
 
-*From:*
+*Find* `from`
 ```js
 $e.isHiddenFromUI || $e.filteredBySearch
 ```
 
-*To:*
+*Replace* `from` with
 ```js
 $e.isHiddenFromUI || $e.filteredBySearch || window.DesModder?.controller?.isExpressionPinned($e.id)
 ```

@@ -4,13 +4,13 @@
 
 *Module* `graphing-calc/actions/keyboard`
 
-*From:*
+*Find* `from`
 ```js
 if ($List.getMissingVariablesForItem($l).length && $e.areSlidersEnabled())
   return $e.createSlidersForItem(
 ```
 
-*To:*
+*Replace* `from` with
 ```js
 if (
   $List.getMissingVariablesForItem($l).length &&

@@ -4,12 +4,12 @@
 
 *Module* `expressions/smart_textarea`
 
-*From:*
+*Find* `from`
 ```js
 $n !== $Keys.ENTER || $e.metaKey
 ```
 
-*To:*
+*Replace* `from` with
 ```js
 $n !== $Keys.ENTER || $e.metaKey || $e.shiftKey
 ```

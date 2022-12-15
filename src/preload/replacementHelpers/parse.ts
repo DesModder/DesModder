@@ -4,8 +4,13 @@ import { Token } from "js-tokens";
 
 export interface ReplacementRule {
   module: string;
-  from: Token[];
-  to: Token[];
+  commands: Command[];
+}
+
+export interface Command {
+  tag: "find" | "replace";
+  arg: string;
+  code: Token[];
 }
 
 export default function parseReplacement(
@@ -48,8 +53,10 @@ function parseBlock(
   moduleCommand: ReplacementToken & { tag: "emph" },
   tokens: ReplacementToken[]
 ): ReplacementRule {
-  let from: Token[] | null = null;
-  let to: Token[] | null = null;
+  const rule: ReplacementRule = {
+    module: moduleCommand.args[0],
+    commands: [],
+  };
   if (moduleCommand.args.length === 0)
     errorInBlock(`Command *module* must have at least one argument`, heading);
   if (moduleCommand.args.length > 1)
@@ -68,19 +75,24 @@ function parseBlock(
           `Command *${token.command}* must be followed by a code block`,
           heading
         );
-      if (token.command === "from") from = nextToken.value;
-      else if (token.command === "to") to = nextToken.value;
-      else errorInBlock("Command must be *from* or *to*", heading);
+      if (token.args.length !== 1)
+        errorInBlock(
+          `Command *${token.command}* takes exactly one argument`,
+          heading
+        );
+      if (token.command === "find" || token.command === "replace")
+        rule.commands.push({
+          tag: token.command,
+          arg: token.args[0],
+          code: nextToken.value,
+        });
+      else errorInBlock("Command must be *find* or *replace*", heading);
       i += 2;
     } else {
       i++;
     }
   }
-  if (from === null || to === null)
-    errorInBlock(`Command *from* or *to* is missing`, heading);
-  return {
-    module: moduleCommand.args[0],
-    from,
-    to,
-  };
+  if (rule.commands.filter((x) => x.tag === "replace").length !== 1)
+    errorInBlock("Only one *replace* command is currently supported", heading);
+  return rule;
 }

@@ -1,3 +1,4 @@
+import { syntaxError, runtimeError } from "./errors";
 import { ReplacementRule } from "./parse";
 import jsTokens, { Token } from "js-tokens";
 
@@ -16,56 +17,106 @@ export default function applyReplacement(
   return Function("return " + newCode)();
 }
 
+interface Range {
+  start: number;
+  length: number;
+}
+
+interface SymbolTable {
+  // yes, there's two namespaces. What are you going to do about it?
+  capturedIds: Map<string, Token>;
+  ranges: Map<string, Range>;
+}
+
+/** Apply replacement to `str`, mutating and returning `str` */
 function applyStringReplacement(
   replacement: ReplacementRule,
   str: Token[]
 ): Token[] {
-  let found = false;
-  const output: Token[] = [];
+  const table: SymbolTable = {
+    capturedIds: new Map(),
+    ranges: new Map(),
+  };
+  for (const command of replacement.commands) {
+    switch (command.tag) {
+      case "find": {
+        const found = findPattern(command.code, str);
+        found.capturedIds.forEach((v, k) => table.capturedIds.set(k, v));
+        if (table.ranges.has(command.arg)) syntaxError("");
+        table.ranges.set(command.arg, {
+          start: found.startIndex,
+          length: found.length,
+        });
+        break;
+      }
+      case "replace": {
+        const range = table.ranges.get(command.arg);
+        if (range === undefined) syntaxError(`Range not defined: \`${range}\``);
+        replaceRange(str, range, command.code, table);
+        break;
+      }
+      default:
+        syntaxError(`Invalid command: *${command.tag}*`);
+    }
+  }
+  return str;
+}
+
+function replaceRange(
+  str: Token[],
+  range: Range,
+  to: Token[],
+  table: SymbolTable
+) {
+  str.splice(
+    range.start,
+    range.length,
+    ...to.map((token) => {
+      if (token.type === "IdentifierName" && token.value.startsWith("$")) {
+        const id = table.capturedIds.get(token.value);
+        if (id === undefined)
+          throw new Error(
+            `Programming error: identifier ${token.value} in "to" not found in "from"`
+          );
+        return id;
+      } else return token;
+    })
+  );
+}
+
+interface MatchResult {
+  capturedIds: Map<string, Token>;
+  startIndex: number;
+  length: number;
+}
+
+function findPattern(pattern: Token[], str: Token[]): MatchResult {
+  let found: MatchResult | null = null;
   for (let i = 0; i < str.length; ) {
-    const match = patternMatch(replacement.from, str, i);
+    const match = patternMatch(pattern, str, i);
     if (match !== null) {
-      if (found) {
+      if (found !== null) {
         console.error(
           "Duplicate replacement; ignoring it, but this might be a bug"
         );
         break;
       }
-      found = true;
-      output.push(
-        ...replacement.to.map((token) => {
-          if (token.type === "IdentifierName" && token.value.startsWith("$")) {
-            const id = match.capturedIds.get(token.value);
-            if (id === undefined)
-              throw new Error(
-                `Programming error: identifier ${token.value} in "to" not found in "from"`
-              );
-            return id;
-          } else return token;
-        })
-      );
+      found = match;
       i += match.length;
     } else {
-      output.push(str[i]);
       i++;
     }
   }
-  if (!found) console.error("Replacement not found. Uh oh?");
-  return output;
+  if (found === null) runtimeError("Replacement not found");
+  return found;
 }
 
-type MatchResult = {
-  capturedIds: Map<string, Token>;
-  startIndex: number;
-  length: number;
-} | null;
-
-/** Return null if not matching, or a map from $identifier to dsmId if found. */
+/** Return null if not matching, or a MatchResult if found. */
 function patternMatch(
   pattern: Token[],
   str: Token[],
   startIndex: number
-): MatchResult {
+): MatchResult | null {
   const captured = new Map<string, Token>();
   let patternIndex = 0;
   let strIndex = startIndex;
