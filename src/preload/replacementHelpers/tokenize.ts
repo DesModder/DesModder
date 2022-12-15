@@ -1,6 +1,17 @@
 import { syntaxError } from "./errors";
 import jsTokens, { Token } from "js-tokens";
 
+export type PatternToken =
+  | Token
+  | {
+      type: "PatternBalanced";
+      value: string;
+    }
+  | {
+      type: "PatternIdentifier";
+      value: string;
+    };
+
 export function tokenizeReplacement(replacementString: string) {
   if (!replacementString.startsWith("#"))
     syntaxError("file must start with heading");
@@ -37,14 +48,7 @@ export function tokenizeReplacement(replacementString: string) {
           syntaxError("Unexpected code block end without start");
         tokens.push({
           tag: "code",
-          value: Array.from(
-            jsTokens(
-              lines
-                .slice(codeStartLine + 1, i)
-                .join("\n")
-                .trim()
-            )
-          ),
+          value: patternTokens(lines.slice(codeStartLine + 1, i).join("\n")),
         });
         codeStartLine = null;
       }
@@ -52,6 +56,19 @@ export function tokenizeReplacement(replacementString: string) {
     // else: this line is a comment, or part of code block
   }
   return tokens;
+}
+
+function patternTokens(str: string): PatternToken[] {
+  return [...jsTokens(str.trim().replace(/\s*<(\w+)>\s*/, "__$1__"))].map(
+    (token) =>
+      token.type !== "IdentifierName"
+        ? token
+        : /^__\w+__$/.test(token.value)
+        ? { type: "PatternBalanced", value: token.value }
+        : token.value.startsWith("$")
+        ? { type: "PatternIdentifier", value: token.value }
+        : token
+  );
 }
 
 function normalizeCommand(command: string) {
@@ -65,7 +82,7 @@ function inlineCodes(str: string) {
 export type ReplacementToken =
   | {
       tag: "code";
-      value: Token[];
+      value: PatternToken[];
     }
   | {
       tag: "heading";

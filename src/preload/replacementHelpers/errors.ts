@@ -16,7 +16,7 @@ export function errorInBlock(
 
 export function runtimeError(s: string): never {
   throw new Error(
-    `Runtime error while applying replacement: ${s}\n` +
+    `Runtime error while applying replacement: ${s}.\n` +
       "This might be a problem with a .replacement file, or Desmos's code has changed"
   );
 }

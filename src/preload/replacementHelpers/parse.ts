@@ -1,6 +1,9 @@
 import { errorInBlock, syntaxError } from "./errors";
-import { ReplacementToken, tokenizeReplacement } from "./tokenize";
-import { Token } from "js-tokens";
+import {
+  PatternToken,
+  ReplacementToken,
+  tokenizeReplacement,
+} from "./tokenize";
 
 export interface ReplacementRule {
   module: string;
@@ -10,7 +13,7 @@ export interface ReplacementRule {
 export interface Command {
   tag: "find" | "replace";
   arg: string;
-  code: Token[];
+  code: PatternToken[];
 }
 
 export default function parseReplacement(
@@ -35,7 +38,10 @@ export default function parseReplacement(
       rules.push(parseBlock(prevToken, token, block));
       i = blockEndIndex;
     } else if (token.tag === "emph") {
-      syntaxError(`Command out of place: *${token.command}*`);
+      syntaxError(
+        `Command out of place: *${token.command}*.` +
+          ` Did you forget a *module* command?`
+      );
     }
   }
   return rules;

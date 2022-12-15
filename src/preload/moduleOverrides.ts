@@ -1,5 +1,4 @@
 import expressionEditActions from "./moduleOverrides/expression-edit-actions";
-import expressionIconView from "./moduleOverrides/expression-icon-view";
 import expressionMenusFill from "./moduleOverrides/expression-menus__fill";
 import expressionOptionsMenuView from "./moduleOverrides/expression-options-menu-view";
 import expressionView from "./moduleOverrides/expression_view";
@@ -22,7 +21,6 @@ import { Visitor } from "@babel/traverse";
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 export default {
   "dcgview-helpers/tooltipped-error": tooltippedError,
-  "expressions/expression-icon-view": expressionIconView,
   "expressions/expressions-header": expressionsHeader,
   "graphing-calc/keypads/main": keypadsMain,
   "expressions/list-view": listView,

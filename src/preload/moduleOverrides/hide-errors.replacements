@@ -19,3 +19,40 @@ if (
 )
   return $e.createSlidersForItem(
 ```
+
+##  Wrap error triangle with div for onTap and opacity control
+
+*Module* `expressions/expression-icon-view`
+
+Wrap the error message tooltipped-error with a div, using `onTap` to trigger hiding/showing the error (but only when shift is held).
+
+*Find* `this`
+```js
+$this.bindFn($this.getIconMode)
+```
+
+*Find* `from`
+```js
+error: function () {
+  return $DCGView.createElement($T.TooltippedError, { <body> })
+}
+```
+
+*Replace* `from` with
+```js
+error: () => $DCGView.createElement(
+  "div",
+  {
+    onTap: evt => (
+      evt.shiftKey &&
+      window.DesModder.controller.toggleErrorHidden($this.model.id)
+    ),
+    style: () => (
+      window.DesModder.controller.isErrorHidden($this.model.id)
+        ? "opacity: 0.5"
+        : ""
+    )
+  },
+  $DCGView.createElement($T.TooltippedError, { <body> })
+)
+```
