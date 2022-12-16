@@ -1,0 +1,19 @@
+# Replacements for Find-Replace
+
+*plugin* `find-replace`
+
+## Allow find-replace to appear, even if the expression list is not focused
+
+*Module* `main/instancehotkeys`
+
+*Find* `from`
+
+```js
+this.controller.isExpressionListFocused()
+```
+
+*Replace* `from` with
+
+```js
+!window.DesModder?.controller?.inTextMode?.()
+```

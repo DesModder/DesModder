@@ -222,7 +222,7 @@ function patternMatch(
     }
     patternIndex++;
     strIndex++;
-    if (strIndex >= inside.start + inside.length) return null;
+    if (strIndex > inside.start + inside.length) return null;
   }
   return {
     newBindings: table,

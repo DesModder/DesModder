@@ -61,3 +61,57 @@ return $DCGView.createElement(
   )
 )
 ```
+
+## Replace main renderer with glesmos rendering when necessary
+
+*Module* `graphing/graphslayer`
+
+*Find* `drawSketchToCtx`
+
+```js
+.drawSketchToCtx = function ($e, $ctx, $transforms, __args__) {__body__}
+```
+
+*Find_inside* `if_statement` `__body__`
+
+```js
+if ($c || ($c = {}), $t.branches && $t.branches.length) {__consequent__}
+```
+
+*Replace* `__consequent__` with
+
+```js
+__consequent__;
+for (const branch of $e.branches) {
+  if (branch.graphMode === "GLesmos") {
+    window.DesModder?.controller?.exposedPlugins[
+      "GLesmos"
+    ]?.drawGlesmosSketchToCtx?.(branch.compiledGL, $ctx, $transforms, $e.id);
+  }
+}
+```
+
+## Hide lines option for GLesmos expressions
+
+*Module* `expressions/expression-menus/expression-options-menu-view`
+
+*Find* `drawSketchToCtx`
+
+```js
+.getSections = function () {__body__}
+```
+
+*Find_inside* `Expression1` inside `__body__`
+
+```js
+$Expression.isHistogram
+```
+
+*Replace* `__body__` with
+
+```js
+if ($Expression.isInequality(this.model) && DesModder.controller.isGlesmosMode(this.model.id)) {
+  return ['fill'];
+}
+__body__
+```

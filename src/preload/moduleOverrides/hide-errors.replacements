@@ -64,3 +64,97 @@ error: () => $DCGView.createElement(
   $DCGView.createElement($T.TooltippedError, { <body> })
 )
 ```
+
+## Trigger DesModder hide instead of `create-sliders-for-item` on tap
+
+*module* `expressions/promptslider_view`
+
+*Find* `from`
+```js
+var $r = $e.hasClass('dcg-all')
+```
+
+*Replace* `from` with
+```js
+if ($e.hasClass("dsm-hide-errors")) {
+  DesModder.controller?.hideError(this.model.id)
+  return;
+}
+var $r = $e.hasClass('dcg-all')
+```
+
+## Add a "hide" button to the slider prompts
+
+*module* `expressions/promptslider_view`
+
+*Find* `template`
+```js
+.template = function () {__template__}
+```
+
+*Find_inside* `this` inside `__template__`
+```js
+var $this = this
+```
+
+*Find_inside* `from` inside `__template__`
+```js
+$DCGView.createElement(
+  'span',
+  { class: $DCGView.const('btns') },
+  $DCGView.createElement(__body1__),
+  $DCGView.createElement(__body2__)
+)
+```
+
+Add one more child for the hide button
+
+*Replace* `from` with
+```js
+$DCGView.createElement(
+  'span',
+  { class: $DCGView.const('btns') },
+  $DCGView.createElement(__body1__),
+  $DCGView.createElement(__body2__),
+  $DCGView.createElement(
+    $DCGView.Components.If,
+    {
+      predicate: () => (
+        $this.model.type !== "ticker" &&
+        DesModder.controller?.isPluginEnabled("hide-errors")
+      ),
+    },
+    () => $DCGView.createElement(
+      "div",
+      {
+        class: $DCGView.const("dcg-slider-btn-container dsm-hide-errors")
+      },
+      $DCGView.createElement(
+        "div",
+        {
+          role: $DCGView.const("button"),
+          tabindex: $DCGView.const("0"),
+          class: $DCGView.const("dcg-btn-slider dcg-btn-light-gray")
+        },
+        () => DesModder.controller.format("hide-errors-hide")
+      )
+    )
+  )
+)
+```
+
+## Reduce suggested slider count to 3
+
+Avoids overflowing on narrow expression lists since we've added the "hide" button.
+
+*module* `expressions/promptslider_view`
+
+*Find* `from`
+```js
+$t.getMissingVariables().slice(0, 4)
+```
+
+*Replace* `from` with
+```js
+$t.getMissingVariables().slice(0, 3)
+```

@@ -1,0 +1,23 @@
+# Replacements for Video Creator
+
+*plugin* `video-creator`
+<!-- *plugin* WakaTime; TODO: multiple plugins are not supported yet -->
+
+## Get access to the top-level components
+
+The top-level components is a javascript object storing the stuff in the wrapper shell around the calculator, including the graph title.
+
+*module* `main/calc_desktop`
+
+*Find* `from`
+```js
+$I = $C.userController
+```
+
+*Replace* `from` with
+
+```js
+$I = (window._topLevelComponents = $C).userController
+```
+
+Note: `$C = InstantiateTopLevelComponents({...})`
