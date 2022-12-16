@@ -1,5 +1,7 @@
 # Replacements for GLesmos
 
+*plugin* `glesmos`
+
 ## Add a menu option for switching an expression to glesmos rendering mode
 
 *Module* `expressions/expression-menus/fill`

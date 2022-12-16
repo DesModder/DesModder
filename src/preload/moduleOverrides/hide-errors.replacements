@@ -1,5 +1,7 @@
 # Replacements for Hide Errors
 
+*plugin* `hide-errors`
+
 ## Prevent enter/shift-enter from creating sliders
 
 *Module* `graphing-calc/actions/keyboard`

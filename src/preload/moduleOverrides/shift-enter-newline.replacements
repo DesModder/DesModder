@@ -1,5 +1,7 @@
 # Replacements for Shift-Enter Newline
 
+*plugin* `shift-enter-newline`
+
 ## Change shift-enter to insert a newline in notes
 
 *Module* `expressions/smart_textarea`

@@ -1,5 +1,7 @@
 # Replacements for Pin Expressions
 
+*plugin* `pin-expressions`
+
 ## Allow pin/unpin without exiting ELM
 
 *Module* `expressions/abstract-item-view`

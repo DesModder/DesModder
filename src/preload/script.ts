@@ -2,6 +2,7 @@ import moduleOverrides from "./moduleOverrides";
 import moduleReplacements from "./moduleReplacements";
 import withDependencyMap from "./overrideHelpers/withDependencyMap";
 import applyReplacement from "./replacementHelpers/applyReplacement";
+import { ReplacementRule } from "./replacementHelpers/parse";
 import window from "globals/window";
 import injectScript from "utils/injectScript";
 import { postMessageUp, listenToMessageDown } from "utils/messages";
@@ -10,6 +11,8 @@ import { pollForValue } from "utils/utils";
 /* This script is loaded at document_start, before the page's scripts, to give it 
 time to set ALMOND_OVERRIDES and replace module definitions */
 
+const reachedReplacements = new Set<ReplacementRule>();
+
 // assumes `oldDefine` gets defined before `newDefine` is needed
 let oldDefine!: typeof window["define"];
 function newDefine(
@@ -17,8 +20,14 @@ function newDefine(
   dependencies: string[],
   definition: Function
 ) {
-  for (const rep of moduleReplacements.filter((r) => r.module === moduleName))
-    definition = applyReplacement(rep, definition);
+  for (const r of moduleReplacements.filter((r) => r.module === moduleName)) {
+    reachedReplacements.add(r);
+    try {
+      definition = applyReplacement(r, definition);
+    } catch (err) {
+      console.error(`Error while applying ${nameReplacement(r)}:\n`, err);
+    }
+  }
   if (moduleName in moduleOverrides) {
     try {
       // override should either be `{dependencies, definition}` or just `definition`
@@ -32,7 +41,23 @@ function newDefine(
       throw e;
     }
   }
+  if (moduleName === "toplevel/calculator_desktop") {
+    doneLoading();
+  }
   return oldDefine(moduleName, dependencies, definition);
+}
+
+function nameReplacement(r: ReplacementRule) {
+  return `${r.plugin} replacement "${r.heading}" in module "${r.module}"`;
+}
+
+function doneLoading() {
+  const unusedReplacements = moduleReplacements.filter(
+    (r) => !reachedReplacements.has(r)
+  );
+  for (const r of unusedReplacements) {
+    console.error("Replacement not applied:", nameReplacement(r));
+  }
 }
 
 // without this, you get Error: touchtracking missing jquery

@@ -7,6 +7,8 @@ import {
 
 export interface ReplacementRule {
   module: string;
+  plugin: string;
+  heading: string;
   commands: Command[];
 }
 
@@ -22,8 +24,15 @@ export default function parseReplacement(
   const tokens = tokenizeReplacement(replacementString);
   if (tokens[0].tag !== "heading" || tokens[0].depth !== 1)
     syntaxError("First line must be a # Heading");
+  if (
+    tokens[1].tag !== "emph" ||
+    tokens[1].command !== "plugin" ||
+    tokens[1].args.length !== 1
+  )
+    syntaxError("Second line must be *plugin* `plugin-name`");
+  const pluginName = tokens[1].args[0];
   const rules: ReplacementRule[] = [];
-  for (let i = 0; i < tokens.length; i++) {
+  for (let i = 2; i < tokens.length; i++) {
     const token = tokens[i];
     if (token.tag === "emph" && token.command === "module") {
       const prevToken = tokens[i - 1];
@@ -35,7 +44,7 @@ export default function parseReplacement(
       const blockEndIndex =
         nextHeadingIndex < 0 ? tokens.length : nextHeadingIndex;
       const block = tokens.slice(i + 1, blockEndIndex);
-      rules.push(parseBlock(prevToken, token, block));
+      rules.push(parseBlock(prevToken, token, block, pluginName));
       i = blockEndIndex;
     } else if (token.tag === "emph") {
       syntaxError(
@@ -57,10 +66,13 @@ export default function parseReplacement(
 function parseBlock(
   heading: ReplacementToken & { tag: "heading" },
   moduleCommand: ReplacementToken & { tag: "emph" },
-  tokens: ReplacementToken[]
+  tokens: ReplacementToken[],
+  plugin: string
 ): ReplacementRule {
   const rule: ReplacementRule = {
     module: moduleCommand.args[0],
+    plugin,
+    heading: heading.text,
     commands: [],
   };
   if (moduleCommand.args.length === 0)

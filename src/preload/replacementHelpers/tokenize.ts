@@ -26,7 +26,7 @@ export function tokenizeReplacement(replacementString: string) {
       tokens.push({
         tag: "heading",
         depth,
-        text: line.slice(depth),
+        text: line.slice(depth).trim(),
       });
     } else if (line.startsWith("*")) {
       const match = line.match(/^\*([^*]+)\*(.*)$/);
