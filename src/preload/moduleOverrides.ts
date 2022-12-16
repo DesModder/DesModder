@@ -6,7 +6,6 @@ import folderView from "./moduleOverrides/folder-view";
 import genericView from "./moduleOverrides/generic-view";
 import graphslayer from "./moduleOverrides/graphslayer";
 import instancehotkeys from "./moduleOverrides/instancehotkeys";
-import keypadsMain from "./moduleOverrides/keypads__main";
 import listView from "./moduleOverrides/list-view";
 import calcDesktop from "./moduleOverrides/main__calc_desktop";
 import mainController from "./moduleOverrides/main__controller";
@@ -21,7 +20,6 @@ import { Visitor } from "@babel/traverse";
 export default {
   "dcgview-helpers/tooltipped-error": tooltippedError,
   "expressions/expressions-header": expressionsHeader,
-  "graphing-calc/keypads/main": keypadsMain,
   "expressions/list-view": listView,
   "expressions/expression-edit-actions": expressionEditActions,
   "main/controller": mainController,

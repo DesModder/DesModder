@@ -1,0 +1,21 @@
+# Replacements for Text Mode
+
+*plugin* `text-mode`
+
+## Hide the keypad when in text mode
+
+*module* `graphing-calc/keypads/main`
+
+*find* `from`
+
+```js
+.isShowKeypadButtonVisible = function () { return __curr__}
+```
+
+*replace* `from` with
+
+```js
+.isShowKeypadButtonVisible = function () {
+  return (__curr__) && !window.DesModder?.controller?.inTextMode?.()
+}
+```

@@ -12,11 +12,18 @@ export interface ReplacementRule {
   commands: Command[];
 }
 
-export interface Command {
-  tag: "find" | "replace";
-  arg: string;
-  code: PatternToken[];
-}
+export type Command =
+  | {
+      tag: "find";
+      arg: string;
+      code: PatternToken[];
+      inside?: string;
+    }
+  | {
+      tag: "replace";
+      arg: string;
+      code: PatternToken[];
+    };
 
 export default function parseReplacement(
   replacementString: string
@@ -93,18 +100,7 @@ function parseBlock(
           `Command *${token.command}* must be followed by a code block`,
           heading
         );
-      if (token.args.length !== 1)
-        errorInBlock(
-          `Command *${token.command}* takes exactly one argument`,
-          heading
-        );
-      if (token.command === "find" || token.command === "replace")
-        rule.commands.push({
-          tag: token.command,
-          arg: token.args[0],
-          code: nextToken.value,
-        });
-      else errorInBlock("Command must be *find* or *replace*", heading);
+      rule.commands.push(getCommand(token, nextToken, heading));
       i += 2;
     } else {
       i++;
@@ -113,4 +109,39 @@ function parseBlock(
   if (rule.commands.filter((x) => x.tag === "replace").length !== 1)
     errorInBlock("Only one *replace* command is currently supported", heading);
   return rule;
+}
+
+function getCommand(
+  token: ReplacementToken & { tag: "emph" },
+  nextToken: ReplacementToken & { tag: "code" },
+  heading: ReplacementToken & { tag: "heading" }
+): Command {
+  switch (token.command) {
+    case "find":
+    case "replace":
+      if (token.args.length !== 1)
+        errorInBlock(
+          `Command *${token.command}* takes exactly one argument`,
+          heading
+        );
+      return {
+        tag: token.command,
+        arg: token.args[0],
+        code: nextToken.value,
+      };
+    case "find_inside":
+      if (token.args.length !== 2)
+        errorInBlock(
+          `Command *${token.command}* takes exactly two arguments`,
+          heading
+        );
+      return {
+        tag: "find",
+        arg: token.args[0],
+        code: nextToken.value,
+        inside: token.args[1],
+      };
+    default:
+      errorInBlock(`Invalid command: *${token.command}*`, heading);
+  }
 }

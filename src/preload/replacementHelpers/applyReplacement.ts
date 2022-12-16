@@ -81,7 +81,10 @@ function applyStringReplacement(
   for (const command of replacement.commands) {
     switch (command.tag) {
       case "find": {
-        const found = findPattern(command.code, str);
+        const inside = command.inside
+          ? table.getRequired(command.inside)
+          : { start: 0, length: str.length };
+        const found = findPattern(command.code, str, inside);
         table.merge(found.newBindings);
         table.set(command.arg, {
           start: found.startIndex,
@@ -97,8 +100,6 @@ function applyStringReplacement(
           table
         );
         break;
-      default:
-        syntaxError(`Invalid command: *${command.tag}*`);
     }
   }
   return str;
@@ -132,10 +133,14 @@ interface MatchResult {
   length: number;
 }
 
-function findPattern(pattern: PatternToken[], str: Token[]): MatchResult {
+function findPattern(
+  pattern: PatternToken[],
+  str: Token[],
+  inside: Range
+): MatchResult {
   let found: MatchResult | null = null;
-  for (let i = 0; i < str.length; ) {
-    const match = patternMatch(pattern, str, i);
+  for (let i = inside.start; i < inside.start + inside.length; ) {
+    const match = patternMatch(pattern, str, i, inside);
     if (match !== null) {
       if (found !== null) {
         console.error(
@@ -157,7 +162,8 @@ function findPattern(pattern: PatternToken[], str: Token[]): MatchResult {
 function patternMatch(
   pattern: PatternToken[],
   str: Token[],
-  startIndex: number
+  startIndex: number,
+  inside: Range
 ): MatchResult | null {
   const table = new SymbolTable(str);
   let patternIndex = 0;
@@ -176,11 +182,20 @@ function patternMatch(
       continue;
     }
     if (expectedToken.type === "PatternBalanced") {
-      const prev = pattern[patternIndex - 1].value;
+      // scan left to find the last open brace
+      let prevIndex = patternIndex - 1;
+      while (!balanced.has(pattern[prevIndex].value)) {
+        prevIndex--;
+        if (prevIndex < inside.start)
+          syntaxError(
+            `Balanced ${expectedToken.value} must be preceded by an open brace`
+          );
+      }
+      const prev = pattern[prevIndex].value;
       const next = pattern[patternIndex + 1].value;
       if (!balanced.has(prev) || balanced.get(prev) !== next)
         syntaxError(
-          `Balanced ${expectedToken.value} must be inside balanced braces`
+          `Balanced ${expectedToken.value} must be immediately followed by a close brace`
         );
       // Gobble up tokens while matching
       const punctStack = [prev];
@@ -207,6 +222,7 @@ function patternMatch(
     }
     patternIndex++;
     strIndex++;
+    if (strIndex >= inside.start + inside.length) return null;
   }
   return {
     newBindings: table,

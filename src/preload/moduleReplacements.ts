@@ -4,6 +4,7 @@ import pinExpressions from "./moduleOverrides/pin-expressions.replacements";
 import shiftEnterNewline from "./moduleOverrides/shift-enter-newline.replacements";
 // temporary style import for glesmos
 import "./moduleOverrides/styles/expression-menus__fill.less";
+import textMode from "./moduleOverrides/text-mode.replacements";
 import parseReplacement, { ReplacementRule } from "./replacementHelpers/parse";
 
 const replacementStrings = [
@@ -11,6 +12,7 @@ const replacementStrings = [
   pinExpressions,
   shiftEnterNewline,
   glesmos,
+  textMode,
 ];
 
 const replacements: ReplacementRule[] = [];

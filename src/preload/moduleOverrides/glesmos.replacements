@@ -6,19 +6,25 @@
 
 *Module* `expressions/expression-menus/fill`
 
-*Find* `toggleView`
+*find* `template`
+
+```js
+.template = function () {__template__}
+```
+
+*Find_inside* `toggleView` inside `__template__`
 
 ```js
 $DCGView.createElement($ToggleView.ToggleView
 ```
 
-*Find* `this`
+*Find_inside* `this` inside `__template__`
 
 ```js
 var $this = this
 ```
 
-*Find* `from`
+*Find_inside* `from` inside `__template__`
 ```js
 return $DCGView.createElement(
   'div',

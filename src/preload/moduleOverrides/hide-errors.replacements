@@ -28,12 +28,18 @@ if (
 
 Wrap the error message tooltipped-error with a div, using `onTap` to trigger hiding/showing the error (but only when shift is held).
 
-*Find* `this`
+*find* `template`
+
+```js
+.template = function () {__template__}
+```
+
+*Find_inside* `this` inside `__template__`
 ```js
 $this.bindFn($this.getIconMode)
 ```
 
-*Find* `from`
+*Find_inside* `from` inside `__template__`
 ```js
 error: function () {
   return $DCGView.createElement($T.TooltippedError, { <body> })
