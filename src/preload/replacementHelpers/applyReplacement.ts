@@ -138,6 +138,8 @@ function findPattern(
   str: Token[],
   inside: Range
 ): MatchResult {
+  // filter whitespace out of pattern
+  pattern = pattern.filter((token) => !isIgnoredWhitespace(token));
   let found: MatchResult | null = null;
   for (let i = inside.start; i < inside.start + inside.length; ) {
     const match = patternMatch(pattern, str, i, inside);
@@ -172,41 +174,30 @@ function patternMatch(
     const expectedToken = pattern[patternIndex];
     const foundToken = str[strIndex];
     if (foundToken === undefined) return null;
-    if (isIgnoredWhitespace(expectedToken)) {
-      patternIndex++;
-      continue;
-    }
-    // ignore whitespace, except at the start of a match
+    // whitespace is already filtered out of pattern
+    // ignore whitespace in str, except at the start of a match
     if (isIgnoredWhitespace(foundToken) && patternIndex > 0) {
       strIndex++;
       continue;
     }
     if (expectedToken.type === "PatternBalanced") {
-      // scan left to find the last open brace
-      let prevIndex = patternIndex - 1;
-      while (!balanced.has(pattern[prevIndex].value)) {
-        prevIndex--;
-        if (prevIndex < inside.start)
-          syntaxError(
-            `Balanced ${expectedToken.value} must be preceded by an open brace`
-          );
-      }
-      const prev = pattern[prevIndex].value;
       const next = pattern[patternIndex + 1].value;
-      if (!balanced.has(prev) || balanced.get(prev) !== next)
+      const closeBraces = new Set([")", "]", "}"]);
+      const openBraces = new Set(["(", "[", "{"]);
+      if (!closeBraces.has(next))
         syntaxError(
           `Balanced ${expectedToken.value} must be immediately followed by a close brace`
         );
-      // Gobble up tokens while matching
-      const punctStack = [prev];
+      // Scan right, keeping track of nested depth
+      let depth = 1;
       let currIndex = strIndex;
-      while (punctStack.length > 0) {
+      while (depth > 0) {
         currIndex++;
         const curr = str[currIndex].value;
-        if (curr === balanced.get(punctStack[punctStack.length - 1]))
-          punctStack.pop();
-        else if (balanced.has(curr)) punctStack.push(curr);
+        if (closeBraces.has(curr)) depth--;
+        else if (openBraces.has(curr)) depth++;
       }
+      // done scanning: currIndex points to a close brace in `str`
       table.set(expectedToken.value, {
         start: strIndex,
         length: currIndex - strIndex,
@@ -239,12 +230,6 @@ function tokensEqual(a: Token, b: Token) {
     return a.value === b.value;
   }
 }
-
-const balanced = new Map([
-  ["(", ")"],
-  ["[", "]"],
-  ["{", "}"],
-]);
 
 /** Is this token ignored for the purpose of matching? */
 function isIgnoredWhitespace(token: PatternToken) {

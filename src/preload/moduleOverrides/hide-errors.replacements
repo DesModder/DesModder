@@ -102,42 +102,36 @@ var $this = this
 $DCGView.createElement(
   'span',
   { class: $DCGView.const('btns') },
-  $DCGView.createElement(__body1__),
-  $DCGView.createElement(__body2__)
+  __children__
 )
 ```
 
 Add one more child for the hide button
 
-*Replace* `from` with
+*Replace* `__children__` with
 ```js
+__children__,
 $DCGView.createElement(
-  'span',
-  { class: $DCGView.const('btns') },
-  $DCGView.createElement(__body1__),
-  $DCGView.createElement(__body2__),
-  $DCGView.createElement(
-    $DCGView.Components.If,
+  $DCGView.Components.If,
+  {
+    predicate: () => (
+      $this.model.type !== "ticker" &&
+      DesModder.controller?.isPluginEnabled("hide-errors")
+    ),
+  },
+  () => $DCGView.createElement(
+    "div",
     {
-      predicate: () => (
-        $this.model.type !== "ticker" &&
-        DesModder.controller?.isPluginEnabled("hide-errors")
-      ),
+      class: $DCGView.const("dcg-slider-btn-container dsm-hide-errors")
     },
-    () => $DCGView.createElement(
+    $DCGView.createElement(
       "div",
       {
-        class: $DCGView.const("dcg-slider-btn-container dsm-hide-errors")
+        role: $DCGView.const("button"),
+        tabindex: $DCGView.const("0"),
+        class: $DCGView.const("dcg-btn-slider dcg-btn-light-gray")
       },
-      $DCGView.createElement(
-        "div",
-        {
-          role: $DCGView.const("button"),
-          tabindex: $DCGView.const("0"),
-          class: $DCGView.const("dcg-btn-slider dcg-btn-light-gray")
-        },
-        () => DesModder.controller.format("hide-errors-hide")
-      )
+      () => DesModder.controller.format("hide-errors-hide")
     )
   )
 )
