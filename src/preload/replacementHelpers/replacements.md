@@ -8,16 +8,16 @@ Command list:
 - `` *find_inside* `captured_name` inside `inside_range` (code block pattern) ``: find the pattern inside the range `inside_range`, and bind its range to `captured_name`
 - `` *replace* `from` (code block) ``: replace the range in `from` with the code block. Only one allowed per replacement
 
+For `*find*` and `*find_inside*`, if the `` `captured_name` `` is blank, then duplicates are allowed. E.g. if you watch to find the `Tooltip` import, you might match `.createElement($Tooltip.Tooltip`. If this appears several times, then blank the captured name; otherwise you get an error.
+
 ## Syntax inside
 
-Patterns (`*from*`):
+Patterns (`*find*` and `*find_inside*`):
 
 - `$variable` to match any variable, and capture the name for reuse
-- `<range>` to match any balanced sequence of tokens. Must be inside something balanced, such as `{ <range> }`
-- `__range__` is similar to `<range>` but can't have whitespace after it. The advantage of `__range__` is syntax highlighting works better. Currently a pain point; I'd like to change this
+- `__range__` to match any balanced sequence of tokens. Greedy, matches up to the next close brace
 
 Replacements (`*replace*`):
 
 - `$variable` to use the earlier captured range
-- `<range>` to use the earlier token sequence
-- `__range__` is similar to `<range>`
+- `__range__` to use the earlier token sequence

@@ -9,13 +9,13 @@
 *find* `template`
 
 ```js
-.template = function () {__template__}
+.template = function () { __template__ }
 ```
 
 *Find_inside* `toggleView` inside `__template__`
 
 ```js
-$DCGView.createElement($ToggleView.ToggleView
+.createElement($ToggleView.ToggleView
 ```
 
 *Find_inside* `this` inside `__template__`

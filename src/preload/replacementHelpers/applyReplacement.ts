@@ -23,14 +23,6 @@ interface Range {
   length: number;
 }
 
-function sameIdentifier(a: Token, b: Token) {
-  return (
-    a.type === "IdentifierName" &&
-    b.type === "IdentifierName" &&
-    a.value === b.value
-  );
-}
-
 class SymbolTable extends Map<string, Range> {
   constructor(private readonly str: Token[]) {
     super();
@@ -38,17 +30,7 @@ class SymbolTable extends Map<string, Range> {
 
   /** set overridden to prevent duplicate bindings */
   set(key: string, value: Range) {
-    const curr = this.get(key);
-    if (
-      curr !== undefined &&
-      // duplicate bindings are ok if both are equal identifiers
-      !(
-        curr.length === 1 &&
-        value.length === 1 &&
-        sameIdentifier(this.str[curr.start], this.str[value.start])
-      )
-    )
-      runtimeError(`Duplicate binding: ${key}`);
+    if (this.has(key)) runtimeError(`Duplicate binding: ${key}`);
     super.set(key, value);
     return this;
   }
@@ -84,7 +66,13 @@ function applyStringReplacement(
         const inside = command.inside
           ? table.getRequired(command.inside)
           : { start: 0, length: str.length };
-        const found = findPattern(command.code, str, inside);
+        const found = findPattern(
+          command.code,
+          str,
+          inside,
+          // if the first arg is blank, duplicates are allowed
+          command.arg.trim().length === 0
+        );
         table.merge(found.newBindings);
         table.set(command.arg, {
           start: found.startIndex,
@@ -136,7 +124,8 @@ interface MatchResult {
 function findPattern(
   pattern: PatternToken[],
   str: Token[],
-  inside: Range
+  inside: Range,
+  allowDuplicates: boolean
 ): MatchResult {
   // filter whitespace out of pattern
   pattern = pattern.filter((token) => !isIgnoredWhitespace(token));
@@ -144,12 +133,8 @@ function findPattern(
   for (let i = inside.start; i < inside.start + inside.length; ) {
     const match = patternMatch(pattern, str, i, inside);
     if (match !== null) {
-      if (found !== null) {
-        console.error(
-          "Duplicate replacement; ignoring it, but this might be a bug"
-        );
-        break;
-      }
+      if (allowDuplicates) return match;
+      if (found !== null) runtimeError("Duplicate pattern match");
       found = match;
       i += match.length;
     } else {
@@ -171,7 +156,20 @@ function patternMatch(
   let patternIndex = 0;
   let strIndex = startIndex;
   while (patternIndex < pattern.length) {
-    const expectedToken = pattern[patternIndex];
+    let expectedToken = pattern[patternIndex];
+    // If a pattern identifier appears twice, then use the old value
+    // e.g. `$DCGView.createElement('div', {class: $DCGView.const`
+    if (
+      expectedToken.type === "PatternIdentifier" &&
+      table.has(expectedToken.value)
+    ) {
+      const currValue = table.getSlice(expectedToken.value);
+      if (currValue.length !== 1 || currValue[0].type !== "IdentifierName")
+        runtimeError(
+          `Identifier pattern ${expectedToken.value} already bound to a non-identifier`
+        );
+      expectedToken = currValue[0];
+    }
     const foundToken = str[strIndex];
     if (foundToken === undefined) return null;
     // whitespace is already filtered out of pattern

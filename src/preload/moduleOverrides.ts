@@ -1,6 +1,5 @@
 import expressionEditActions from "./moduleOverrides/expression-edit-actions";
 import expressionView from "./moduleOverrides/expression_view";
-import expressionsHeader from "./moduleOverrides/expressions-header";
 import folderView from "./moduleOverrides/folder-view";
 import genericView from "./moduleOverrides/generic-view";
 import listView from "./moduleOverrides/list-view";
@@ -14,7 +13,6 @@ import { Visitor } from "@babel/traverse";
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 export default {
   "dcgview-helpers/tooltipped-error": tooltippedError,
-  "expressions/expressions-header": expressionsHeader,
   "expressions/list-view": listView,
   "expressions/expression-edit-actions": expressionEditActions,
   "main/controller": mainController,
