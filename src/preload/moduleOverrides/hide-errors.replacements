@@ -6,7 +6,7 @@
 
 *Module* `graphing-calc/actions/keyboard`
 
-*Find* `from`
+*Find* => `from`
 ```js
 if ($List.getMissingVariablesForItem($l).length && $e.areSlidersEnabled())
   return $e.createSlidersForItem(
@@ -28,18 +28,18 @@ if (
 
 Wrap the error message tooltipped-error with a div, using `onTap` to trigger hiding/showing the error (but only when shift is held).
 
-*find* ` `
+*Find*
 
 ```js
 .template = function () {__template__}
 ```
 
-*Find_inside* ` ` inside `template`
+*Find* inside `template`
 ```js
 $this.bindFn($this.getIconMode)
 ```
 
-*Find_inside* `from` inside `template`
+*Find* inside `template` => `from`
 ```js
 error: function () {
   return $DCGView.createElement($T.TooltippedError, { <body> })
@@ -69,7 +69,7 @@ error: () => $DCGView.createElement(
 
 *module* `expressions/promptslider_view`
 
-*Find* `from`
+*Find* => `from`
 ```js
 var $r = $e.hasClass('dcg-all')
 ```
@@ -87,17 +87,17 @@ var $r = $e.hasClass('dcg-all')
 
 *module* `expressions/promptslider_view`
 
-*Find* ` `
+*Find*
 ```js
 .template = function () {__template__}
 ```
 
-*Find_inside* ` ` inside `template`
+*Find* inside `template`
 ```js
 var $this = this
 ```
 
-*Find_inside* `from` inside `template`
+*Find* inside `template`
 ```js
 $DCGView.createElement(
   'span',
@@ -143,7 +143,7 @@ Avoids overflowing on narrow expression lists since we've added the "hide" butto
 
 *module* `expressions/promptslider_view`
 
-*Find* `from`
+*Find* => `from`
 ```js
 $t.getMissingVariables().slice(0, 4)
 ```
@@ -157,7 +157,7 @@ $t.getMissingVariables().slice(0, 3)
 
 *module* `expressions/expression_view`
 
-*Find* `from`
+*Find*
 ```js
 .shouldShowSliderPrompt = function () {
   return __ret__
@@ -173,7 +173,7 @@ __ret__ && !window.DesModder.controller.isErrorHidden(this.model?.id)
 
 *module* `expressions/expression_view`
 
-*Find* `__from__`
+*Find* => `from`
 ```js
 if ("Enter" === $e)
   return t && (t.preventDefault(), t.stopPropagation()),
@@ -181,7 +181,7 @@ if ("Enter" === $e)
 
 ```
 
-*Replace* `__from__` with
+*Replace* `from` with
 ```js
 __from__
 else if ("Shift-Enter" === e) {

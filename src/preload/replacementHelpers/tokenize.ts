@@ -32,10 +32,16 @@ export function tokenizeReplacement(replacementString: string) {
       const match = line.match(/^\*([^*]+)\*(.*)$/);
       if (match === null)
         syntaxError("Expected line starting with '*' to be valid command");
+      const parts = match[2].split("=>");
+      if (parts.length > 2) syntaxError("Only one '=>' is allowed");
+      const args = inlineCodes(parts[0]);
+      const ret = inlineCodes(parts[1] ?? "");
+      if (ret.length > 1) syntaxError("At most one return value is allowed");
       tokens.push({
         tag: "emph",
         command: normalizeCommand(match[1]),
-        args: inlineCodes(match[2]),
+        args,
+        returns: ret[0],
       });
     } else if (line.startsWith("```")) {
       const isStart = line.startsWith("```js");
@@ -93,4 +99,5 @@ export type ReplacementToken =
       tag: "emph";
       command: string;
       args: string[];
+      returns?: string;
     };

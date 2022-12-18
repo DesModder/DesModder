@@ -9,7 +9,7 @@ The top-level components is a javascript object storing the stuff in the wrapper
 
 *module* `main/calc_desktop`
 
-*Find* `from`
+*Find* => `from`
 ```js
 $I = $C.userController
 ```

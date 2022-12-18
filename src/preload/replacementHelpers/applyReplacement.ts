@@ -89,13 +89,14 @@ function applyStringReplacement(
           str,
           inside,
           // if the first arg is blank, duplicates are allowed
-          command.arg.trim().length === 0
+          command.returns === undefined || symbolName(command.returns) === ""
         );
         table.merge(found.newBindings);
-        table.set(command.arg, {
-          start: found.startIndex,
-          length: found.length,
-        });
+        if (command.returns)
+          table.set(command.returns, {
+            start: found.startIndex,
+            length: found.length,
+          });
         break;
       }
       case "replace":

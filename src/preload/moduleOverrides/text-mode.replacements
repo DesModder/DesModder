@@ -6,13 +6,13 @@
 
 *module* `graphing-calc/keypads/main`
 
-*find* `from`
+*Find* => `from`
 
 ```js
 .isShowKeypadButtonVisible = function () { return __curr__}
 ```
 
-*replace* `from` with
+*Replace* `from` with
 
 ```js
 .isShowKeypadButtonVisible = function () {
@@ -24,25 +24,25 @@
 
 *module* `expressions/expressions-header`
 
-*Find* ` `
+*Find*
 
 ```js
 .template = function () { __template__ }
 ```
 
-*Find_inside* ` ` inside `template`
+*Find* inside `template`
 
 ```js
 var $this = this
 ```
 
-*Find_inside* ` ` inside `template`
+*Find* inside `template`
 
 ```js
 .createElement($Tooltip.Tooltip
 ```
 
-*Find_inside* `from` inside `template`
+*Find* inside `template`
 ```js
 $DCGView.createElement(
   'div',

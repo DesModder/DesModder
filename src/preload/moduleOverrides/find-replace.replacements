@@ -6,7 +6,7 @@
 
 *Module* `main/instancehotkeys`
 
-*Find* `from`
+*Find* => `from`
 
 ```js
 this.controller.isExpressionListFocused()

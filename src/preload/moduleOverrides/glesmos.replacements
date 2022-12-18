@@ -6,25 +6,25 @@
 
 *Module* `expressions/expression-menus/fill`
 
-*find* ` `
+*find*
 
 ```js
 .template = function () { __template__ }
 ```
 
-*Find_inside* `toggleView` inside `template`
+*Find* inside `template`
 
 ```js
 .createElement($ToggleView.ToggleView
 ```
 
-*Find_inside* ` ` inside `template`
+*Find* inside `template`
 
 ```js
 var $this = this
 ```
 
-*Find_inside* `from` inside `template`
+*Find* inside `template`
 ```js
 return $DCGView.createElement(
   'div',
@@ -60,13 +60,13 @@ $DCGView.createElement(
 
 *Module* `graphing/graphslayer`
 
-*Find* `drawSketchToCtx`
+*Find*
 
 ```js
 .drawSketchToCtx = function ($e, $ctx, $transforms, __args__) {__body__}
 ```
 
-*Find_inside* `if_statement` `__body__`
+*Find* inside `__body__`
 
 ```js
 if ($c || ($c = {}), $t.branches && $t.branches.length) {__consequent__}
@@ -89,13 +89,13 @@ for (const branch of $e.branches) {
 
 *Module* `expressions/expression-menus/expression-options-menu-view`
 
-*Find* `drawSketchToCtx`
+*Find*
 
 ```js
 .getSections = function () {__body__}
 ```
 
-*Find_inside* `Expression1` inside `__body__`
+*Find* inside `__body__`
 
 ```js
 $Expression.isHistogram

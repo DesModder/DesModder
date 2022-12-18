@@ -15,7 +15,7 @@ export interface ReplacementRule {
 export type Command =
   | {
       tag: "find";
-      arg: string;
+      returns?: string;
       code: PatternToken[];
       inside?: string;
     }
@@ -117,7 +117,6 @@ function getCommand(
   heading: ReplacementToken & { tag: "heading" }
 ): Command {
   switch (token.command) {
-    case "find":
     case "replace":
       if (token.args.length !== 1)
         errorInBlock(
@@ -125,21 +124,18 @@ function getCommand(
           heading
         );
       return {
-        tag: token.command,
+        tag: "replace",
         arg: token.args[0],
         code: nextToken.value,
       };
-    case "find_inside":
-      if (token.args.length !== 2)
-        errorInBlock(
-          `Command *${token.command}* takes exactly two arguments`,
-          heading
-        );
+    case "find":
+      if (token.args.length > 1)
+        errorInBlock(`Command *find* takes at most one argument`, heading);
       return {
         tag: "find",
-        arg: token.args[0],
+        returns: token.returns,
         code: nextToken.value,
-        inside: token.args[1],
+        inside: token.args[0],
       };
     default:
       errorInBlock(`Invalid command: *${token.command}*`, heading);
