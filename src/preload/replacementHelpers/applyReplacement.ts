@@ -130,7 +130,7 @@ function getSymbols(
         }
         const symb = tryWithErrorContext(
           () => getSymbols(block.commands, argTable, allBlocks),
-          `command *${command.command}*`
+          { message: `command *${command.command}*`, filename: block.filename }
         );
         const returned = symb.get("return");
         if (returned === undefined)

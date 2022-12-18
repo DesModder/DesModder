@@ -29,8 +29,7 @@ function newDefine(
         () => {
           definition = applyReplacement(r, definition, moduleReplacements);
         },
-        `replacement "${r.heading}"`,
-        `module "${r.module}"`
+        { message: `replacement "${r.heading}"`, filename: r.filename }
       );
     } catch (e) {
       // Trick: get the pretty console output as if this was uncaught, but do

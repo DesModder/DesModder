@@ -8,6 +8,7 @@ import {
 export type Block = DefineBlock | ModuleBlock;
 
 interface BaseBlock {
+  filename: string;
   heading: string;
   commands: Command[];
 }
@@ -31,7 +32,10 @@ export interface Command {
   patternArg?: PatternToken[];
 }
 
-export default function parseFile(fileString: string): Block[] {
+export default function parseFile(
+  fileString: string,
+  filename: string
+): Block[] {
   const tokens = tokenizeReplacement(fileString);
   if (tokens[0].tag !== "heading" || tokens[0].depth !== 1)
     throw new ReplacementError("First line must be a # Heading");
@@ -58,8 +62,9 @@ export default function parseFile(fileString: string): Block[] {
         nextHeadingIndex < 0 ? tokens.length : nextHeadingIndex;
       const block = tokens.slice(i + 1, blockEndIndex);
       tryWithErrorContext(
-        () => rules.push(parseBlock(prevToken, token, block, pluginName)),
-        `parsing block '${prevToken.text}'`
+        () =>
+          rules.push(parseBlock(prevToken, token, block, pluginName, filename)),
+        { message: `parsing block '${prevToken.text}'`, filename }
       );
       i = blockEndIndex;
     } else if (token.tag === "emph") {
@@ -83,7 +88,8 @@ function parseBlock(
   heading: ReplacementToken & { tag: "heading" },
   blockStarterCommand: ReplacementToken & { tag: "emph" },
   tokens: ReplacementToken[],
-  plugin: string
+  plugin: string,
+  filename: string
 ): Block {
   if (blockStarterCommand.args.length !== 1)
     throw new ReplacementError(
@@ -117,10 +123,14 @@ function parseBlock(
     throw new ReplacementError(
       `Module block should have *replace* command at end, but found one in the middle`
     );
+  const base = {
+    heading: heading.text,
+    filename,
+  };
   return blockStarterCommand.command === "module"
     ? {
         tag: "ModuleBlock",
-        heading: heading.text,
+        ...base,
         commands: commands.slice(0, -1),
         replaceCommand: commands[commands.length - 1],
         plugin,
@@ -128,7 +138,7 @@ function parseBlock(
       }
     : {
         tag: "DefineBlock",
-        heading: heading.text,
+        ...base,
         commands,
         commandName: blockStarterCommand.args[0],
       };

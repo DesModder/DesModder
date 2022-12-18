@@ -28,8 +28,9 @@ const replacements: Block[] = [];
 
 for (const replacement of replacementStrings) {
   tryWithErrorContext(
-    () => replacements.push(...parseFile(replacement)),
-    `parsing of file starting '${replacement.split("\n")[0]}'`
+    () =>
+      replacements.push(...parseFile(replacement.file, replacement.filename)),
+    { message: `parsing`, filename: replacement.filename }
   );
 }
 

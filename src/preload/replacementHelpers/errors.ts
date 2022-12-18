@@ -1,5 +1,5 @@
 export class ReplacementError extends Error {
-  readonly langStack: string[] = [];
+  readonly langStack: StackFrame[] = [];
 
   constructor(readonly message: string) {
     super(message);
@@ -7,19 +7,24 @@ export class ReplacementError extends Error {
     this.stack = this.message;
   }
 
-  pushToStack(...s: string[]) {
+  pushToStack(...s: StackFrame[]) {
     this.langStack.push(...s);
-    // TODO: get actual line numbers (source map?)
     this.stack =
       "ReplacementError: " +
       this.message +
       this.langStack
-        .map((x) => "\n    at " + x + " (applyReplacement:0:0)")
+        // Use "in" instead of "at" to prevent filename from being clickable in Chrome.
+        .map((x) => `\n    in ${x.message} (${x.filename})`)
         .join("");
   }
 }
 
-export function tryWithErrorContext<T>(f: () => T, ...s: string[]): T {
+interface StackFrame {
+  message: string;
+  filename: string;
+}
+
+export function tryWithErrorContext<T>(f: () => T, ...s: StackFrame[]): T {
   try {
     return f();
   } catch (err) {
