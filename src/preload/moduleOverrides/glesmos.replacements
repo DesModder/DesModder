@@ -6,11 +6,7 @@
 
 *Module* `expressions/expression-menus/fill`
 
-*find*
-
-```js
-.template = function () { __template__ }
-```
+*Find_template* => `template`
 
 *Find* inside `template`
 

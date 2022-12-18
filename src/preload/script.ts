@@ -24,7 +24,7 @@ function newDefine(
     if (r.tag !== "ModuleBlock" || r.module !== moduleName) continue;
     reachedReplacements.add(r);
     try {
-      definition = applyReplacement(r, definition);
+      definition = applyReplacement(r, definition, moduleReplacements);
     } catch (err) {
       console.error(`Error while applying ${nameReplacement(r)}:\n`, err);
     }

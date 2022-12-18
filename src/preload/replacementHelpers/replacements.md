@@ -168,3 +168,5 @@ _Define_ `find_this`
 Any ranges found inside a defined command are localized to that command.
 
 A single range can be returned by calling it `__return__` or `$return`.
+
+Args, if any, are numbered started at 1 with `$arg1`, `$arg2`, ....

@@ -21,6 +21,7 @@ export interface ModuleBlock extends BaseBlock {
   tag: "ModuleBlock";
   module: string;
   plugin: string;
+  replaceCommand: Command;
 }
 
 export interface Command {
@@ -93,22 +94,35 @@ function parseBlock(
       errorInBlock("Subheadings not yet implemented", heading);
     } else if (token.tag === "emph") {
       const nextToken = tokens[i + 1];
-      if (nextToken === undefined || nextToken.tag !== "code")
-        errorInBlock(
-          `Command *${token.command}* must be followed by a code block`,
-          heading
-        );
-      commands.push(getCommand(token, nextToken));
-      i += 2;
+      const code = nextToken?.tag === "code" ? nextToken : undefined;
+      commands.push(getCommand(token, code));
+      i += code !== undefined ? 2 : 1;
     } else {
       i++;
     }
   }
+  const expectedReplaces = blockStarterCommand.command === "module" ? 1 : 0;
+  const numReplaces = commands.filter((x) => x.command === "replace").length;
+  if (numReplaces !== expectedReplaces)
+    errorInBlock(
+      `Block ${blockStarterCommand.command} expects ${expectedReplaces} ` +
+        `*replace* command(s) but got ${numReplaces}`,
+      heading
+    );
+  if (
+    blockStarterCommand.command === "module" &&
+    commands.findIndex((x) => x.command === "replace") < commands.length - 1
+  )
+    errorInBlock(
+      `Module block should have *replace* command at end, but found one in the middle`,
+      heading
+    );
   return blockStarterCommand.command === "module"
     ? {
         tag: "ModuleBlock",
         heading: heading.text,
-        commands,
+        commands: commands.slice(0, -1),
+        replaceCommand: commands[commands.length - 1],
         plugin,
         module: blockStarterCommand.args[0],
       }
@@ -122,12 +136,12 @@ function parseBlock(
 
 function getCommand(
   token: ReplacementToken & { tag: "emph" },
-  nextToken: ReplacementToken
+  nextToken: (ReplacementToken & { tag: "code" }) | undefined
 ): Command {
   return {
     command: token.command,
     returns: token.returns,
     args: token.args,
-    patternArg: nextToken.tag === "code" ? nextToken.value : undefined,
+    patternArg: nextToken?.value,
   };
 }

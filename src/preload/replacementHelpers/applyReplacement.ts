@@ -1,15 +1,17 @@
 import { syntaxError, runtimeError } from "./errors";
-import { ModuleBlock } from "./parse";
+import { Block, Command, ModuleBlock } from "./parse";
 import { PatternToken } from "./tokenize";
 import jsTokens, { Token } from "js-tokens";
 
 export default function applyReplacement(
   replacement: ModuleBlock,
-  fn: Function
+  fn: Function,
+  allBlocks: Block[]
 ) {
   const newCode = applyStringReplacement(
     replacement,
-    Array.from(jsTokens(fn.toString()))
+    Array.from(jsTokens(fn.toString())),
+    allBlocks
   )
     .map((t) => t.value)
     .join("");
@@ -30,10 +32,13 @@ function symbolName(str: string) {
 class SymbolTable {
   private readonly map = new Map<string, Range>();
 
-  constructor(private readonly str: Token[]) {}
+  constructor(readonly str: Token[], private readonly parent?: SymbolTable) {}
 
-  has(key: string) {
-    return this.map.has(symbolName(key));
+  has(key: string): boolean {
+    return (
+      this.map.has(symbolName(key)) ||
+      (this.parent ? this.parent.has(key) : false)
+    );
   }
 
   uncheckedSet(key: string, value: Range) {
@@ -42,8 +47,8 @@ class SymbolTable {
     return this.map.set(key, value);
   }
 
-  get(key: string) {
-    return this.map.get(symbolName(key));
+  get(key: string): Range | undefined {
+    return this.map.get(symbolName(key)) ?? this.parent?.get(symbolName(key));
   }
 
   /** set but checking for duplicate bindings */
@@ -72,16 +77,13 @@ class SymbolTable {
   }
 }
 
-/** Apply replacement to `str`, and returned the changed value */
-function applyStringReplacement(
-  replacement: ModuleBlock,
-  str: Token[]
-): Token[] {
-  const table = new SymbolTable(str);
-  let didReplace = false;
-  for (const command of replacement.commands) {
-    if (didReplace)
-      runtimeError("Command after a *replace* command; not allowed");
+function getSymbols(
+  commands: Command[],
+  args: SymbolTable,
+  allBlocks: Block[]
+): SymbolTable {
+  const table = new SymbolTable(args.str, args);
+  for (const command of commands) {
     switch (command.command) {
       case "find": {
         if (command.args.length > 1)
@@ -92,10 +94,10 @@ function applyStringReplacement(
           runtimeError(`*find* command missing a pattern argument.`);
         const inside = command.args[0]
           ? table.getRequired(command.args[0])
-          : { start: 0, length: str.length };
+          : { start: 0, length: table.str.length };
         const found = findPattern(
           command.patternArg,
-          str,
+          table.str,
           inside,
           // if the first arg is blank, duplicates are allowed
           command.returns === undefined || symbolName(command.returns) === ""
@@ -109,27 +111,62 @@ function applyStringReplacement(
         break;
       }
       case "replace":
-        if (command.args.length !== 1)
-          runtimeError(
-            `*replace* command must have exactly 1 argument. You passed ${command.args.length}`
-          );
-        if (command.patternArg === undefined)
-          runtimeError(`*replace* command missing a pattern argument.`);
-        str = replaceRange(
-          str,
-          table.getRequired(command.args[0]),
-          command.patternArg,
-          table
-        );
-        didReplace = true;
+        runtimeError("Programming Error: *replace* where it shouldn't be");
         break;
       default: {
-        // user-defined command
-        // TODO
+        // user-defined command (not builtin)
+        const block = allBlocks.find(
+          (x) => x.tag === "DefineBlock" && x.commandName === command.command
+        );
+        if (block === undefined)
+          runtimeError(`Command not defined: ${command.command}`);
+        const argTable = new SymbolTable(table.str);
+        for (let i = 0; i < command.args.length; i++) {
+          argTable.set(`arg${i + 1}`, table.getRequired(command.args[i]));
+        }
+        const symb = getSymbols(block.commands, argTable, allBlocks);
+        const returned = symb.get("return");
+        if (returned === undefined)
+          runtimeError(
+            `Command *${command.command}* doesn't return anything, so it is useless`
+          );
+        if (command.returns === undefined)
+          runtimeError(
+            `Usage of command *${command.command}* doesn't use return value, so it is useless`
+          );
+        table.set(command.returns, returned);
       }
     }
   }
-  return str;
+  return table;
+}
+
+/** Apply replacement to `str`, and returned the changed value */
+function applyStringReplacement(
+  replacement: ModuleBlock,
+  str: Token[],
+  allBlocks: Block[]
+): Token[] {
+  const table = getSymbols(
+    replacement.commands,
+    new SymbolTable(str),
+    allBlocks
+  );
+  const command = replacement.replaceCommand;
+  if (command.command !== "replace")
+    runtimeError("Programming error: replaceCommand is not *replace*");
+  if (command.args.length !== 1)
+    runtimeError(
+      `*replace* command must have exactly 1 argument. You passed ${command.args.length}`
+    );
+  if (command.patternArg === undefined)
+    runtimeError(`*replace* command missing a pattern argument.`);
+  return replaceRange(
+    str,
+    table.getRequired(command.args[0]),
+    command.patternArg,
+    table
+  );
 }
 
 function replaceRange(

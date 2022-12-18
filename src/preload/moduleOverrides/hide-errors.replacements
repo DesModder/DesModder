@@ -28,11 +28,7 @@ if (
 
 Wrap the error message tooltipped-error with a div, using `onTap` to trigger hiding/showing the error (but only when shift is held).
 
-*Find*
-
-```js
-.template = function () {__template__}
-```
+*Find_template* => `template`
 
 *Find* inside `template`
 ```js
@@ -87,10 +83,7 @@ var $r = $e.hasClass('dcg-all')
 
 *module* `expressions/promptslider_view`
 
-*Find*
-```js
-.template = function () {__template__}
-```
+*Find_template* => `template`
 
 *Find* inside `template`
 ```js

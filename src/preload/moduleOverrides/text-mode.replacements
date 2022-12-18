@@ -24,11 +24,7 @@
 
 *module* `expressions/expressions-header`
 
-*Find*
-
-```js
-.template = function () { __template__ }
-```
+*Find_template* => `template`
 
 *Find* inside `template`
 

@@ -1,0 +1,12 @@
+# Helper commands!
+
+*plugin* `temp-workaround-name`
+
+## Find_template
+
+*define* `find_template`
+
+*Find*
+```js
+.template = function () { __return__ }
+```
