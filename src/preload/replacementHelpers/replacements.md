@@ -14,10 +14,12 @@ For `*find*` and `*find_inside*`, if the `` `captured_name` `` is blank, then du
 
 Patterns (`*find*` and `*find_inside*`):
 
-- `$variable` to match any variable, and capture the name for reuse
-- `__range__` to match any balanced sequence of tokens. Greedy, matches up to the next close brace
+- `$variable` to match any variable, and capture the name "variable"
+- `__range__` to match any balanced sequence of tokens and capture the name "range". Greedy, matches up to the next close brace
 
 Replacements (`*replace*`):
 
 - `$variable` to use the earlier captured range
 - `__range__` to use the earlier token sequence
+
+These two syntaxes are interchangeable in replacements: `__range__` and `$range` refer to the same thing. They are only different in patterns.

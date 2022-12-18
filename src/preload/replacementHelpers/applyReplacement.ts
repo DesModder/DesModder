@@ -23,21 +23,39 @@ interface Range {
   length: number;
 }
 
-class SymbolTable extends Map<string, Range> {
-  constructor(private readonly str: Token[]) {
-    super();
+function symbolName(str: string) {
+  return str.trim().replace(/[_$]/g, "");
+}
+
+class SymbolTable {
+  private readonly map = new Map<string, Range>();
+
+  constructor(private readonly str: Token[]) {}
+
+  has(key: string) {
+    return this.map.has(symbolName(key));
   }
 
-  /** set overridden to prevent duplicate bindings */
+  uncheckedSet(key: string, value: Range) {
+    key = symbolName(key);
+    if (key === "") return;
+    return this.map.set(key, value);
+  }
+
+  get(key: string) {
+    return this.map.get(symbolName(key));
+  }
+
+  /** set but checking for duplicate bindings */
   set(key: string, value: Range) {
     if (this.has(key)) runtimeError(`Duplicate binding: ${key}`);
-    super.set(key, value);
+    this.uncheckedSet(key, value);
     return this;
   }
 
   /** Mutate this in place by grabbing all of other's entries */
   merge(other: SymbolTable) {
-    for (const [key, value] of other.entries()) this.set(key, value);
+    for (const [key, value] of other.map.entries()) this.set(key, value);
   }
 
   /** get but throws an error if not found */

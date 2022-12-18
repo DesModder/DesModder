@@ -6,13 +6,13 @@
 
 *Module* `expressions/smart_textarea`
 
-*Find* `onKeydownEvent`
+*Find* ` `
 
 ```js
 .onKeydownEvent = function (e) {__onKeydownEvent__}
 ```
 
-*Find_inside* `from` inside `__onKeydownEvent__`
+*Find_inside* `from` inside `onKeydownEvent`
 ```js
 $n !== $Keys.ENTER || $e.metaKey
 ```

@@ -24,25 +24,25 @@
 
 *module* `expressions/expressions-header`
 
-*Find* `template`
+*Find* ` `
 
 ```js
 .template = function () { __template__ }
 ```
 
-*Find_inside* `this` inside `__template__`
+*Find_inside* ` ` inside `template`
 
 ```js
 var $this = this
 ```
 
-*Find_inside* ` ` inside `__template__`
+*Find_inside* ` ` inside `template`
 
 ```js
 .createElement($Tooltip.Tooltip
 ```
 
-*Find_inside* `from` inside `__template__`
+*Find_inside* `from` inside `template`
 ```js
 $DCGView.createElement(
   'div',
