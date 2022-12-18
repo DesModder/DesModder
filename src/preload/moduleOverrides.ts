@@ -1,8 +1,5 @@
 import expressionEditActions from "./moduleOverrides/expression-edit-actions";
-import expressionView from "./moduleOverrides/expression_view";
-import genericView from "./moduleOverrides/generic-view";
 import listView from "./moduleOverrides/list-view";
-import mainController from "./moduleOverrides/main__controller";
 import mainEvaluator from "./moduleOverrides/main__evaluator";
 import workerSrcUnderlying from "./moduleOverrides/text__worker_src_underlying";
 import tooltippedError from "./moduleOverrides/tooltipped-error";
@@ -14,11 +11,6 @@ export default {
   "dcgview-helpers/tooltipped-error": tooltippedError,
   "expressions/list-view": listView,
   "expressions/expression-edit-actions": expressionEditActions,
-  "main/controller": mainController,
-  "expressions/expression_view": expressionView,
-  "expressions/image-view": genericView,
-  "expressions/table-view": genericView,
-  "expressions/text_view": genericView,
   "text!worker_src_underlying": workerSrcUnderlying,
   "main/evaluator": mainEvaluator,
 } as { [key: string]: (dependencyNameMap: DependencyNameMap) => Visitor };

@@ -105,3 +105,20 @@ if ($Expression.isInequality(this.model) && DesModder.controller.isGlesmosMode(t
 }
 __body__
 ```
+
+## Check/update DesModder metadata before allowing statements to update.
+
+Allows correct checking of the .glesmos metadata; otherwise, we run into `Calc.observeEvent("change")` triggering after addStatement sends the data to the worker. We need the correct `.glesmos` property before addStatement.
+
+*Module* `main/controller`
+
+*Find*
+```js
+.requestParseForAllItems = function() {__body__}
+```
+
+*Replace* `body` with
+```js
+window.DesModder?.controller?.checkForMetadataChange();
+__body__
+```

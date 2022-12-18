@@ -1,3 +1,4 @@
+import core from "./moduleOverrides/core.replacements";
 import debugMode from "./moduleOverrides/debug-mode.replacements";
 import findReplace from "./moduleOverrides/find-replace.replacements";
 import glesmos from "./moduleOverrides/glesmos.replacements";
@@ -10,19 +11,18 @@ import "./moduleOverrides/styles/expression-menus__fill.less";
 // temporary style import for hide-errors
 import "./moduleOverrides/styles/promptslider_view.less";
 import textMode from "./moduleOverrides/text-mode.replacements";
-import videoCreator from "./moduleOverrides/video-creator.replacements";
 import { tryWithErrorContext } from "./replacementHelpers/errors";
 import parseFile, { Block } from "./replacementHelpers/parse";
 
 const replacementStrings = [
   helpers,
+  core,
   findReplace,
   glesmos,
   hideErrors,
   pinExpressions,
   shiftEnterNewline,
   textMode,
-  videoCreator,
   debugMode,
 ];
 

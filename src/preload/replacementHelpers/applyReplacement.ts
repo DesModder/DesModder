@@ -276,7 +276,7 @@ function patternMatch(
         );
       // Scan right, keeping track of nested depth
       let depth = 1;
-      let currIndex = strIndex;
+      let currIndex = strIndex - 1;
       while (depth > 0) {
         currIndex++;
         const curr = str[currIndex].value;
