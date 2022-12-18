@@ -22,14 +22,15 @@ function newDefine(
   definition: Function
 ) {
   for (const r of moduleReplacements) {
-    if (r.tag !== "ModuleBlock" || r.module !== moduleName) continue;
+    if (r.tag !== "ModuleBlock" || !r.modules.includes(moduleName)) continue;
     reachedReplacements.add(r);
     try {
       tryWithErrorContext(
         () => {
           definition = applyReplacement(r, definition, moduleReplacements);
         },
-        { message: `replacement "${r.heading}"`, filename: r.filename }
+        { message: `replacement "${r.heading}"`, filename: r.filename },
+        { message: `module replacement`, filename: `${moduleName}` }
       );
     } catch (e) {
       // Trick: get the pretty console output as if this was uncaught, but do
@@ -60,7 +61,9 @@ function newDefine(
 
 function nameReplacement(r: Block) {
   return r.tag === "ModuleBlock"
-    ? `${r.plugin} replacement "${r.heading}" in module "${r.module}"`
+    ? `${r.plugin} replacement "${r.heading}" in modules: ${r.modules.join(
+        ","
+      )}`
     : `helper "${r.heading}" defining command "${r.commandName}"`;
 }
 

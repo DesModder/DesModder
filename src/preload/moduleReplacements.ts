@@ -1,3 +1,4 @@
+import debugMode from "./moduleOverrides/debug-mode.replacements";
 import findReplace from "./moduleOverrides/find-replace.replacements";
 import glesmos from "./moduleOverrides/glesmos.replacements";
 import hideErrors from "./moduleOverrides/hide-errors.replacements";
@@ -22,6 +23,7 @@ const replacementStrings = [
   shiftEnterNewline,
   textMode,
   videoCreator,
+  debugMode,
 ];
 
 const replacements: Block[] = [];

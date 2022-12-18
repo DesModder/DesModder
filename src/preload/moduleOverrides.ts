@@ -1,6 +1,5 @@
 import expressionEditActions from "./moduleOverrides/expression-edit-actions";
 import expressionView from "./moduleOverrides/expression_view";
-import folderView from "./moduleOverrides/folder-view";
 import genericView from "./moduleOverrides/generic-view";
 import listView from "./moduleOverrides/list-view";
 import mainController from "./moduleOverrides/main__controller";
@@ -20,7 +19,6 @@ export default {
   "expressions/image-view": genericView,
   "expressions/table-view": genericView,
   "expressions/text_view": genericView,
-  "expressions/folder-view": folderView,
   "text!worker_src_underlying": workerSrcUnderlying,
   "main/evaluator": mainEvaluator,
 } as { [key: string]: (dependencyNameMap: DependencyNameMap) => Visitor };

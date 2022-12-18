@@ -20,7 +20,7 @@ export interface DefineBlock extends BaseBlock {
 
 export interface ModuleBlock extends BaseBlock {
   tag: "ModuleBlock";
-  module: string;
+  modules: string[];
   plugin: string;
   replaceCommand: Command;
 }
@@ -86,14 +86,18 @@ export default function parseFile(
  **/
 function parseBlock(
   heading: ReplacementToken & { tag: "heading" },
-  blockStarterCommand: ReplacementToken & { tag: "emph" },
+  start: ReplacementToken & { tag: "emph" },
   tokens: ReplacementToken[],
   plugin: string,
   filename: string
 ): Block {
-  if (blockStarterCommand.args.length !== 1)
+  if (start.command === "define" && start.args.length !== 1)
     throw new ReplacementError(
-      `Command *${blockStarterCommand.command}* must have exactly one argument`
+      `Command *define* must have exactly one argument`
+    );
+  if (start.command === "module" && start.args.length === 0)
+    throw new ReplacementError(
+      `Command *module* must have at least one argument`
     );
   const commands: Command[] = [];
   for (let i = 0; i < tokens.length; ) {
@@ -109,15 +113,15 @@ function parseBlock(
       i++;
     }
   }
-  const expectedReplaces = blockStarterCommand.command === "module" ? 1 : 0;
+  const expectedReplaces = start.command === "module" ? 1 : 0;
   const numReplaces = commands.filter((x) => x.command === "replace").length;
   if (numReplaces !== expectedReplaces)
     throw new ReplacementError(
-      `Block ${blockStarterCommand.command} expects ${expectedReplaces} ` +
+      `Block ${start.command} expects ${expectedReplaces} ` +
         `*replace* command(s) but got ${numReplaces}`
     );
   if (
-    blockStarterCommand.command === "module" &&
+    start.command === "module" &&
     commands.findIndex((x) => x.command === "replace") < commands.length - 1
   )
     throw new ReplacementError(
@@ -127,20 +131,20 @@ function parseBlock(
     heading: heading.text,
     filename,
   };
-  return blockStarterCommand.command === "module"
+  return start.command === "module"
     ? {
         tag: "ModuleBlock",
         ...base,
         commands: commands.slice(0, -1),
         replaceCommand: commands[commands.length - 1],
         plugin,
-        module: blockStarterCommand.args[0],
+        modules: start.args,
       }
     : {
         tag: "DefineBlock",
         ...base,
         commands,
-        commandName: blockStarterCommand.args[0],
+        commandName: start.args[0],
       };
 }
 

@@ -149,7 +149,7 @@ The two block-starter commands are `*Module*` and `*Define*`
 
 ### `*Module*`
 
-`*Module*` takes exactly one argument, the module name to apply this block's replacements to. Example usage:
+`*Module*` takes at least one argument, the module names to apply this block's replacements to. Example usage:
 
 <!-- prettier-ignore -->
 ```md
