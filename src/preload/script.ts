@@ -2,6 +2,7 @@ import moduleOverrides from "./moduleOverrides";
 import moduleReplacements from "./moduleReplacements";
 import withDependencyMap from "./overrideHelpers/withDependencyMap";
 import applyReplacement from "./replacementHelpers/applyReplacement";
+import { tryWithErrorContext } from "./replacementHelpers/errors";
 import { Block } from "./replacementHelpers/parse";
 import window from "globals/window";
 import injectScript from "utils/injectScript";
@@ -24,9 +25,19 @@ function newDefine(
     if (r.tag !== "ModuleBlock" || r.module !== moduleName) continue;
     reachedReplacements.add(r);
     try {
-      definition = applyReplacement(r, definition, moduleReplacements);
-    } catch (err) {
-      console.error(`Error while applying ${nameReplacement(r)}:\n`, err);
+      tryWithErrorContext(
+        () => {
+          definition = applyReplacement(r, definition, moduleReplacements);
+        },
+        `replacement "${r.heading}"`,
+        `module "${r.module}"`
+      );
+    } catch (e) {
+      // Trick: get the pretty console output as if this was uncaught, but do
+      // not stop execution
+      setTimeout(() => {
+        throw e;
+      }, 0);
     }
   }
   if (moduleName in moduleOverrides) {

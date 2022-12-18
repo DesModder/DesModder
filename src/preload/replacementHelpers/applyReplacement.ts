@@ -1,4 +1,4 @@
-import { syntaxError, runtimeError } from "./errors";
+import { ReplacementError, tryWithErrorContext } from "./errors";
 import { Block, Command, ModuleBlock } from "./parse";
 import { PatternToken } from "./tokenize";
 import jsTokens, { Token } from "js-tokens";
@@ -53,7 +53,7 @@ class SymbolTable {
 
   /** set but checking for duplicate bindings */
   set(key: string, value: Range) {
-    if (this.has(key)) runtimeError(`Duplicate binding: ${key}`);
+    if (this.has(key)) throw new ReplacementError(`Duplicate binding: ${key}`);
     this.uncheckedSet(key, value);
     return this;
   }
@@ -66,7 +66,8 @@ class SymbolTable {
   /** get but throws an error if not found */
   getRequired(key: string) {
     const got = this.get(key);
-    if (got === undefined) runtimeError(`Binding not found: ${key}`);
+    if (got === undefined)
+      throw new ReplacementError(`Binding not found: ${key}`);
     return got;
   }
 
@@ -87,11 +88,13 @@ function getSymbols(
     switch (command.command) {
       case "find": {
         if (command.args.length > 1)
-          runtimeError(
+          throw new ReplacementError(
             `*find* command must have either 0 or 1 arguments. You passed ${command.args.length}`
           );
         if (command.patternArg === undefined)
-          runtimeError(`*find* command missing a pattern argument.`);
+          throw new ReplacementError(
+            `*find* command missing a pattern argument.`
+          );
         const inside = command.args[0]
           ? table.getRequired(command.args[0])
           : { start: 0, length: table.str.length };
@@ -111,27 +114,31 @@ function getSymbols(
         break;
       }
       case "replace":
-        runtimeError("Programming Error: *replace* where it shouldn't be");
-        break;
+        throw new ReplacementError(
+          "Programming Error: *replace* where it shouldn't be"
+        );
       default: {
         // user-defined command (not builtin)
         const block = allBlocks.find(
           (x) => x.tag === "DefineBlock" && x.commandName === command.command
         );
         if (block === undefined)
-          runtimeError(`Command not defined: ${command.command}`);
+          throw new ReplacementError(`Command not defined: ${command.command}`);
         const argTable = new SymbolTable(table.str);
         for (let i = 0; i < command.args.length; i++) {
           argTable.set(`arg${i + 1}`, table.getRequired(command.args[i]));
         }
-        const symb = getSymbols(block.commands, argTable, allBlocks);
+        const symb = tryWithErrorContext(
+          () => getSymbols(block.commands, argTable, allBlocks),
+          `command *${command.command}*`
+        );
         const returned = symb.get("return");
         if (returned === undefined)
-          runtimeError(
+          throw new ReplacementError(
             `Command *${command.command}* doesn't return anything, so it is useless`
           );
         if (command.returns === undefined)
-          runtimeError(
+          throw new ReplacementError(
             `Usage of command *${command.command}* doesn't use return value, so it is useless`
           );
         table.set(command.returns, returned);
@@ -154,13 +161,15 @@ function applyStringReplacement(
   );
   const command = replacement.replaceCommand;
   if (command.command !== "replace")
-    runtimeError("Programming error: replaceCommand is not *replace*");
+    throw new ReplacementError(
+      "Programming error: replaceCommand is not *replace*"
+    );
   if (command.args.length !== 1)
-    runtimeError(
+    throw new ReplacementError(
       `*replace* command must have exactly 1 argument. You passed ${command.args.length}`
     );
   if (command.patternArg === undefined)
-    runtimeError(`*replace* command missing a pattern argument.`);
+    throw new ReplacementError(`*replace* command missing a pattern argument.`);
   return replaceRange(
     str,
     table.getRequired(command.args[0]),
@@ -210,14 +219,17 @@ function findPattern(
     const match = patternMatch(pattern, str, i, inside);
     if (match !== null) {
       if (allowDuplicates) return match;
-      if (found !== null) runtimeError("Duplicate pattern match");
+      if (found !== null) throw new ReplacementError("Duplicate pattern match");
       found = match;
       i += match.length;
     } else {
       i++;
     }
   }
-  if (found === null) runtimeError("Pattern not found");
+  if (found === null)
+    throw new ReplacementError(
+      `Pattern not found: ${pattern.map((v) => v.value).join("")}`
+    );
   return found;
 }
 
@@ -241,7 +253,7 @@ function patternMatch(
     ) {
       const currValue = table.getSlice(expectedToken.value);
       if (currValue.length !== 1 || currValue[0].type !== "IdentifierName")
-        runtimeError(
+        throw new ReplacementError(
           `Identifier pattern ${expectedToken.value} already bound to a non-identifier`
         );
       expectedToken = currValue[0];
@@ -259,7 +271,7 @@ function patternMatch(
       const closeBraces = new Set([")", "]", "}"]);
       const openBraces = new Set(["(", "[", "{"]);
       if (!closeBraces.has(next))
-        syntaxError(
+        throw new ReplacementError(
           `Balanced ${expectedToken.value} must be immediately followed by a close brace`
         );
       // Scan right, keeping track of nested depth

@@ -10,6 +10,7 @@ import "./moduleOverrides/styles/expression-menus__fill.less";
 import "./moduleOverrides/styles/promptslider_view.less";
 import textMode from "./moduleOverrides/text-mode.replacements";
 import videoCreator from "./moduleOverrides/video-creator.replacements";
+import { tryWithErrorContext } from "./replacementHelpers/errors";
 import parseFile, { Block } from "./replacementHelpers/parse";
 
 const replacementStrings = [
@@ -26,7 +27,10 @@ const replacementStrings = [
 const replacements: Block[] = [];
 
 for (const replacement of replacementStrings) {
-  replacements.push(...parseFile(replacement));
+  tryWithErrorContext(
+    () => replacements.push(...parseFile(replacement)),
+    `parsing of file starting '${replacement.split("\n")[0]}'`
+  );
 }
 
 export default replacements;

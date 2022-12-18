@@ -1,4 +1,4 @@
-import { errorInBlock, syntaxError } from "./errors";
+import { ReplacementError, tryWithErrorContext } from "./errors";
 import {
   PatternToken,
   ReplacementToken,
@@ -34,13 +34,13 @@ export interface Command {
 export default function parseFile(fileString: string): Block[] {
   const tokens = tokenizeReplacement(fileString);
   if (tokens[0].tag !== "heading" || tokens[0].depth !== 1)
-    syntaxError("First line must be a # Heading");
+    throw new ReplacementError("First line must be a # Heading");
   if (
     tokens[1].tag !== "emph" ||
     tokens[1].command !== "plugin" ||
     tokens[1].args.length !== 1
   )
-    syntaxError("Second line must be *plugin* `plugin-name`");
+    throw new ReplacementError("Second line must be *plugin* `plugin-name`");
   const pluginName = tokens[1].args[0];
   const rules: Block[] = [];
   for (let i = 2; i < tokens.length; i++) {
@@ -48,7 +48,7 @@ export default function parseFile(fileString: string): Block[] {
     if (token.tag === "emph" && ["module", "define"].includes(token.command)) {
       const prevToken = tokens[i - 1];
       if (prevToken.tag !== "heading")
-        syntaxError(
+        throw new ReplacementError(
           `Block-starter command *${token.command}* must be preceded by a heading`
         );
       const nextHeadingIndex = tokens.findIndex(
@@ -57,10 +57,13 @@ export default function parseFile(fileString: string): Block[] {
       const blockEndIndex =
         nextHeadingIndex < 0 ? tokens.length : nextHeadingIndex;
       const block = tokens.slice(i + 1, blockEndIndex);
-      rules.push(parseBlock(prevToken, token, block, pluginName));
+      tryWithErrorContext(
+        () => rules.push(parseBlock(prevToken, token, block, pluginName)),
+        `parsing block '${prevToken.text}'`
+      );
       i = blockEndIndex;
     } else if (token.tag === "emph") {
-      syntaxError(
+      throw new ReplacementError(
         `Command out of place: *${token.command}*.` +
           ` Did you forget a *module* or *define* command?`
       );
@@ -83,15 +86,14 @@ function parseBlock(
   plugin: string
 ): Block {
   if (blockStarterCommand.args.length !== 1)
-    errorInBlock(
-      `Command *${blockStarterCommand.command}* must have exactly one argument`,
-      heading
+    throw new ReplacementError(
+      `Command *${blockStarterCommand.command}* must have exactly one argument`
     );
   const commands: Command[] = [];
   for (let i = 0; i < tokens.length; ) {
     const token = tokens[i];
     if (token.tag === "heading") {
-      errorInBlock("Subheadings not yet implemented", heading);
+      throw new ReplacementError("Subheadings not yet implemented");
     } else if (token.tag === "emph") {
       const nextToken = tokens[i + 1];
       const code = nextToken?.tag === "code" ? nextToken : undefined;
@@ -104,18 +106,16 @@ function parseBlock(
   const expectedReplaces = blockStarterCommand.command === "module" ? 1 : 0;
   const numReplaces = commands.filter((x) => x.command === "replace").length;
   if (numReplaces !== expectedReplaces)
-    errorInBlock(
+    throw new ReplacementError(
       `Block ${blockStarterCommand.command} expects ${expectedReplaces} ` +
-        `*replace* command(s) but got ${numReplaces}`,
-      heading
+        `*replace* command(s) but got ${numReplaces}`
     );
   if (
     blockStarterCommand.command === "module" &&
     commands.findIndex((x) => x.command === "replace") < commands.length - 1
   )
-    errorInBlock(
-      `Module block should have *replace* command at end, but found one in the middle`,
-      heading
+    throw new ReplacementError(
+      `Module block should have *replace* command at end, but found one in the middle`
     );
   return blockStarterCommand.command === "module"
     ? {

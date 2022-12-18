@@ -1,4 +1,4 @@
-import { syntaxError } from "./errors";
+import { ReplacementError } from "./errors";
 import jsTokens, { Token } from "js-tokens";
 
 export type PatternToken =
@@ -14,7 +14,7 @@ export type PatternToken =
 
 export function tokenizeReplacement(replacementString: string) {
   if (!replacementString.startsWith("#"))
-    syntaxError("file must start with heading");
+    throw new ReplacementError("File is missing heading");
   const tokens: ReplacementToken[] = [];
   const lines = replacementString.split(/\n/g);
   // starting line (containing "```js") of the current code block, else null
@@ -31,12 +31,18 @@ export function tokenizeReplacement(replacementString: string) {
     } else if (line.startsWith("*")) {
       const match = line.match(/^\*([^*]+)\*(.*)$/);
       if (match === null)
-        syntaxError("Expected line starting with '*' to be valid command");
+        throw new ReplacementError(
+          "Line starting with '*' is not valid command"
+        );
       const parts = match[2].split("=>");
-      if (parts.length > 2) syntaxError("Only one '=>' is allowed");
+      if (parts.length > 2)
+        throw new ReplacementError("Duplicate '=>'; only one is allowed");
       const args = inlineCodes(parts[0]);
       const ret = inlineCodes(parts[1] ?? "");
-      if (ret.length > 1) syntaxError("At most one return value is allowed");
+      if (ret.length > 1)
+        throw new ReplacementError(
+          "Duplicate return capture; only one is allowed"
+        );
       tokens.push({
         tag: "emph",
         command: normalizeCommand(match[1]),
@@ -47,11 +53,11 @@ export function tokenizeReplacement(replacementString: string) {
       const isStart = line.startsWith("```js");
       if (isStart) {
         if (codeStartLine !== null)
-          syntaxError("Unexpected code block start after start");
+          throw new ReplacementError("Unexpected code block start after start");
         codeStartLine = i;
       } else {
         if (codeStartLine === null)
-          syntaxError("Unexpected code block end without start");
+          throw new ReplacementError("Unexpected code block end without start");
         tokens.push({
           tag: "code",
           value: patternTokens(lines.slice(codeStartLine + 1, i).join("\n")),

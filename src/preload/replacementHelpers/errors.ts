@@ -1,22 +1,29 @@
-import { ReplacementToken } from "./tokenize";
+export class ReplacementError extends Error {
+  readonly langStack: string[] = [];
 
-export function syntaxError(s: string): never {
-  throw new Error(
-    `Error with replacement: ${s}\n` +
-      "This is a problem with a .replacement file"
-  );
+  constructor(readonly message: string) {
+    super(message);
+    this.name = "ReplacementError";
+    this.stack = this.message;
+  }
+
+  pushToStack(...s: string[]) {
+    this.langStack.push(...s);
+    // TODO: get actual line numbers (source map?)
+    this.stack =
+      "ReplacementError: " +
+      this.message +
+      this.langStack
+        .map((x) => "\n    at " + x + " (applyReplacement:0:0)")
+        .join("");
+  }
 }
 
-export function errorInBlock(
-  s: string,
-  heading: ReplacementToken & { tag: "heading" }
-): never {
-  throw new Error(`Replacement error under heading "${heading.text}": ${s}`);
-}
-
-export function runtimeError(s: string): never {
-  throw new Error(
-    `Runtime error while applying replacement: ${s}.\n` +
-      "This might be a problem with a .replacement file, or Desmos's code has changed"
-  );
+export function tryWithErrorContext<T>(f: () => T, ...s: string[]): T {
+  try {
+    return f();
+  } catch (err) {
+    if (err instanceof ReplacementError) err.pushToStack(...s);
+    throw err;
+  }
 }
