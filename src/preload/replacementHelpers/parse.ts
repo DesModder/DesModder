@@ -5,30 +5,33 @@ import {
   tokenizeReplacement,
 } from "./tokenize";
 
-export interface ReplacementRule {
-  module: string;
-  plugin: string;
+export type Block = DefineBlock | ModuleBlock;
+
+interface BaseBlock {
   heading: string;
   commands: Command[];
 }
 
-export type Command =
-  | {
-      tag: "find";
-      returns?: string;
-      code: PatternToken[];
-      inside?: string;
-    }
-  | {
-      tag: "replace";
-      arg: string;
-      code: PatternToken[];
-    };
+export interface DefineBlock extends BaseBlock {
+  tag: "DefineBlock";
+  commandName: string;
+}
 
-export default function parseReplacement(
-  replacementString: string
-): ReplacementRule[] {
-  const tokens = tokenizeReplacement(replacementString);
+export interface ModuleBlock extends BaseBlock {
+  tag: "ModuleBlock";
+  module: string;
+  plugin: string;
+}
+
+export interface Command {
+  command: string;
+  returns?: string;
+  args: string[];
+  patternArg?: PatternToken[];
+}
+
+export default function parseFile(fileString: string): Block[] {
+  const tokens = tokenizeReplacement(fileString);
   if (tokens[0].tag !== "heading" || tokens[0].depth !== 1)
     syntaxError("First line must be a # Heading");
   if (
@@ -38,13 +41,15 @@ export default function parseReplacement(
   )
     syntaxError("Second line must be *plugin* `plugin-name`");
   const pluginName = tokens[1].args[0];
-  const rules: ReplacementRule[] = [];
+  const rules: Block[] = [];
   for (let i = 2; i < tokens.length; i++) {
     const token = tokens[i];
-    if (token.tag === "emph" && token.command === "module") {
+    if (token.tag === "emph" && ["module", "define"].includes(token.command)) {
       const prevToken = tokens[i - 1];
       if (prevToken.tag !== "heading")
-        syntaxError("Module command must be preceded by a heading");
+        syntaxError(
+          `Block-starter command *${token.command}* must be preceded by a heading`
+        );
       const nextHeadingIndex = tokens.findIndex(
         (t, j) => j > i && t.tag === "heading" && t.depth <= prevToken.depth
       );
@@ -56,7 +61,7 @@ export default function parseReplacement(
     } else if (token.tag === "emph") {
       syntaxError(
         `Command out of place: *${token.command}*.` +
-          ` Did you forget a *module* command?`
+          ` Did you forget a *module* or *define* command?`
       );
     }
   }
@@ -72,23 +77,16 @@ export default function parseReplacement(
  **/
 function parseBlock(
   heading: ReplacementToken & { tag: "heading" },
-  moduleCommand: ReplacementToken & { tag: "emph" },
+  blockStarterCommand: ReplacementToken & { tag: "emph" },
   tokens: ReplacementToken[],
   plugin: string
-): ReplacementRule {
-  const rule: ReplacementRule = {
-    module: moduleCommand.args[0],
-    plugin,
-    heading: heading.text,
-    commands: [],
-  };
-  if (moduleCommand.args.length === 0)
-    errorInBlock(`Command *module* must have at least one argument`, heading);
-  if (moduleCommand.args.length > 1)
+): Block {
+  if (blockStarterCommand.args.length !== 1)
     errorInBlock(
-      `Command *module* does not yet support more than one argument`,
+      `Command *${blockStarterCommand.command}* must have exactly one argument`,
       heading
     );
+  const commands: Command[] = [];
   for (let i = 0; i < tokens.length; ) {
     const token = tokens[i];
     if (token.tag === "heading") {
@@ -100,44 +98,36 @@ function parseBlock(
           `Command *${token.command}* must be followed by a code block`,
           heading
         );
-      rule.commands.push(getCommand(token, nextToken, heading));
+      commands.push(getCommand(token, nextToken));
       i += 2;
     } else {
       i++;
     }
   }
-  if (rule.commands.filter((x) => x.tag === "replace").length !== 1)
-    errorInBlock("Only one *replace* command is currently supported", heading);
-  return rule;
+  return blockStarterCommand.command === "module"
+    ? {
+        tag: "ModuleBlock",
+        heading: heading.text,
+        commands,
+        plugin,
+        module: blockStarterCommand.args[0],
+      }
+    : {
+        tag: "DefineBlock",
+        heading: heading.text,
+        commands,
+        commandName: blockStarterCommand.args[0],
+      };
 }
 
 function getCommand(
   token: ReplacementToken & { tag: "emph" },
-  nextToken: ReplacementToken & { tag: "code" },
-  heading: ReplacementToken & { tag: "heading" }
+  nextToken: ReplacementToken
 ): Command {
-  switch (token.command) {
-    case "replace":
-      if (token.args.length !== 1)
-        errorInBlock(
-          `Command *${token.command}* takes exactly one argument`,
-          heading
-        );
-      return {
-        tag: "replace",
-        arg: token.args[0],
-        code: nextToken.value,
-      };
-    case "find":
-      if (token.args.length > 1)
-        errorInBlock(`Command *find* takes at most one argument`, heading);
-      return {
-        tag: "find",
-        returns: token.returns,
-        code: nextToken.value,
-        inside: token.args[0],
-      };
-    default:
-      errorInBlock(`Invalid command: *${token.command}*`, heading);
-  }
+  return {
+    command: token.command,
+    returns: token.returns,
+    args: token.args,
+    patternArg: nextToken.tag === "code" ? nextToken.value : undefined,
+  };
 }

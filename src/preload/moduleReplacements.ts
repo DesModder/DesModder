@@ -9,7 +9,7 @@ import "./moduleOverrides/styles/expression-menus__fill.less";
 import "./moduleOverrides/styles/promptslider_view.less";
 import textMode from "./moduleOverrides/text-mode.replacements";
 import videoCreator from "./moduleOverrides/video-creator.replacements";
-import parseReplacement, { ReplacementRule } from "./replacementHelpers/parse";
+import parseFile, { Block } from "./replacementHelpers/parse";
 
 const replacementStrings = [
   findReplace,
@@ -21,10 +21,10 @@ const replacementStrings = [
   videoCreator,
 ];
 
-const replacements: ReplacementRule[] = [];
+const replacements: Block[] = [];
 
 for (const replacement of replacementStrings) {
-  replacements.push(...parseReplacement(replacement));
+  replacements.push(...parseFile(replacement));
 }
 
 export default replacements;

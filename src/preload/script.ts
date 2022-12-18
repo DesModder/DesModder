@@ -2,7 +2,7 @@ import moduleOverrides from "./moduleOverrides";
 import moduleReplacements from "./moduleReplacements";
 import withDependencyMap from "./overrideHelpers/withDependencyMap";
 import applyReplacement from "./replacementHelpers/applyReplacement";
-import { ReplacementRule } from "./replacementHelpers/parse";
+import { Block } from "./replacementHelpers/parse";
 import window from "globals/window";
 import injectScript from "utils/injectScript";
 import { postMessageUp, listenToMessageDown } from "utils/messages";
@@ -11,7 +11,7 @@ import { pollForValue } from "utils/utils";
 /* This script is loaded at document_start, before the page's scripts, to give it 
 time to set ALMOND_OVERRIDES and replace module definitions */
 
-const reachedReplacements = new Set<ReplacementRule>();
+const reachedReplacements = new Set<Block>();
 
 // assumes `oldDefine` gets defined before `newDefine` is needed
 let oldDefine!: typeof window["define"];
@@ -20,7 +20,8 @@ function newDefine(
   dependencies: string[],
   definition: Function
 ) {
-  for (const r of moduleReplacements.filter((r) => r.module === moduleName)) {
+  for (const r of moduleReplacements) {
+    if (r.tag !== "ModuleBlock" || r.module !== moduleName) continue;
     reachedReplacements.add(r);
     try {
       definition = applyReplacement(r, definition);
@@ -47,8 +48,10 @@ function newDefine(
   return oldDefine(moduleName, dependencies, definition);
 }
 
-function nameReplacement(r: ReplacementRule) {
-  return `${r.plugin} replacement "${r.heading}" in module "${r.module}"`;
+function nameReplacement(r: Block) {
+  return r.tag === "ModuleBlock"
+    ? `${r.plugin} replacement "${r.heading}" in module "${r.module}"`
+    : `helper "${r.heading}" defining command "${r.commandName}"`;
 }
 
 function doneLoading() {
@@ -56,6 +59,8 @@ function doneLoading() {
     (r) => !reachedReplacements.has(r)
   );
   for (const r of unusedReplacements) {
+    // ignore defines in checking that they're all used
+    if (r.tag !== "ModuleBlock") continue;
     console.error("Replacement not applied:", nameReplacement(r));
   }
 }

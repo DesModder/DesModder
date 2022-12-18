@@ -1,10 +1,10 @@
 import { syntaxError, runtimeError } from "./errors";
-import { ReplacementRule } from "./parse";
+import { ModuleBlock } from "./parse";
 import { PatternToken } from "./tokenize";
 import jsTokens, { Token } from "js-tokens";
 
 export default function applyReplacement(
-  replacement: ReplacementRule,
+  replacement: ModuleBlock,
   fn: Function
 ) {
   const newCode = applyStringReplacement(
@@ -74,18 +74,27 @@ class SymbolTable {
 
 /** Apply replacement to `str`, and returned the changed value */
 function applyStringReplacement(
-  replacement: ReplacementRule,
+  replacement: ModuleBlock,
   str: Token[]
 ): Token[] {
   const table = new SymbolTable(str);
+  let didReplace = false;
   for (const command of replacement.commands) {
-    switch (command.tag) {
+    if (didReplace)
+      runtimeError("Command after a *replace* command; not allowed");
+    switch (command.command) {
       case "find": {
-        const inside = command.inside
-          ? table.getRequired(command.inside)
+        if (command.args.length > 1)
+          runtimeError(
+            `*find* command must have either 0 or 1 arguments. You passed ${command.args.length}`
+          );
+        if (command.patternArg === undefined)
+          runtimeError(`*find* command missing a pattern argument.`);
+        const inside = command.args[0]
+          ? table.getRequired(command.args[0])
           : { start: 0, length: str.length };
         const found = findPattern(
-          command.code,
+          command.patternArg,
           str,
           inside,
           // if the first arg is blank, duplicates are allowed
@@ -100,13 +109,24 @@ function applyStringReplacement(
         break;
       }
       case "replace":
+        if (command.args.length !== 1)
+          runtimeError(
+            `*replace* command must have exactly 1 argument. You passed ${command.args.length}`
+          );
+        if (command.patternArg === undefined)
+          runtimeError(`*replace* command missing a pattern argument.`);
         str = replaceRange(
           str,
-          table.getRequired(command.arg),
-          command.code,
+          table.getRequired(command.args[0]),
+          command.patternArg,
           table
         );
+        didReplace = true;
         break;
+      default: {
+        // user-defined command
+        // TODO
+      }
     }
   }
   return str;
