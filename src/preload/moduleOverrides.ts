@@ -1,4 +1,3 @@
-import expressionEditActions from "./moduleOverrides/expression-edit-actions";
 import listView from "./moduleOverrides/list-view";
 import mainEvaluator from "./moduleOverrides/main__evaluator";
 import workerSrcUnderlying from "./moduleOverrides/text__worker_src_underlying";
@@ -10,7 +9,6 @@ import { Visitor } from "@babel/traverse";
 export default {
   "dcgview-helpers/tooltipped-error": tooltippedError,
   "expressions/list-view": listView,
-  "expressions/expression-edit-actions": expressionEditActions,
   "text!worker_src_underlying": workerSrcUnderlying,
   "main/evaluator": mainEvaluator,
 } as { [key: string]: (dependencyNameMap: DependencyNameMap) => Visitor };

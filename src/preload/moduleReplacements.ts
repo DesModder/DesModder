@@ -1,5 +1,6 @@
 import core from "./moduleOverrides/core.replacements";
 import debugMode from "./moduleOverrides/debug-mode.replacements";
+import extraExpressionButtons from "./moduleOverrides/extra-expression-buttons.replacements";
 import findReplace from "./moduleOverrides/find-replace.replacements";
 import glesmos from "./moduleOverrides/glesmos.replacements";
 import hideErrors from "./moduleOverrides/hide-errors.replacements";
@@ -24,6 +25,7 @@ const replacementStrings = [
   shiftEnterNewline,
   textMode,
   debugMode,
+  extraExpressionButtons,
 ];
 
 const replacements: Block[] = [];
