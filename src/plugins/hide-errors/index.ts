@@ -1,3 +1,4 @@
+import "./hide-errors.less";
 import { Plugin } from "plugins";
 
 const hideErrors: Plugin = {

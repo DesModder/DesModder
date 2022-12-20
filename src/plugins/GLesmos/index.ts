@@ -1,4 +1,5 @@
 import Controller from "./Controller";
+import "./glesmos.less";
 import { Plugin } from "plugins";
 
 export let controller: Controller;

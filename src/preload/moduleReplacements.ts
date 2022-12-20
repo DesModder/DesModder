@@ -8,10 +8,6 @@ import helpers from "./moduleOverrides/partials/helpers.replacements";
 import pinExpressions from "./moduleOverrides/pin-expressions.replacements";
 import shiftEnterNewline from "./moduleOverrides/shift-enter-newline.replacements";
 import showTips from "./moduleOverrides/show-tips.replacements";
-// temporary style import for glesmos
-import "./moduleOverrides/styles/expression-menus__fill.less";
-// temporary style import for hide-errors
-import "./moduleOverrides/styles/promptslider_view.less";
 import textMode from "./moduleOverrides/text-mode.replacements";
 import { tryWithErrorContext } from "./replacementHelpers/errors";
 import parseFile, { Block } from "./replacementHelpers/parse";
