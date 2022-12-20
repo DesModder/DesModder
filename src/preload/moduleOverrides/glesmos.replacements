@@ -137,3 +137,86 @@ if ($stmt.type === "statement") {
 }
 __body__
 ```
+
+## Replace quadtree implicit tracing with glesmos compilation
+
+This will be applied in the worker.
+
+*module* `core/math/features/graph`
+
+*Find* 
+```js
+._graph = function(____) {
+  __graph__
+}
+```
+
+*Find* inside `graph`
+```js
+var $this = this
+```
+
+Here, `__case__` will match up to the end of its switch block, which extends to the end of the `_graph` function.
+
+*Find* inside `graph`
+```js
+case $Graphmode.IMPLICIT: __case__
+```
+
+The code loops over the different IR objects `$ir`.
+
+*Find* inside `case`
+```js
+.wrap($).eachElement(function ($ir, ____) {
+  __body__
+})
+```
+
+The `styles` object provides `styles.fillOpacity` and `styles.color`.
+
+*Find* inside `body`
+```js
+$styles.fillOpacity =
+```
+
+This is just for finding the `$graphs` list.
+
+*Find* inside `body`
+```js
+$graphs.push({
+  graphMode: $.POLYGONFILL
+```
+
+*Find* inside `body` => `else`
+```js
+else {
+  var $ = void 0 === $.userData.lines || $.userData.lines
+```
+
+*Replace* `else` with
+```js
+else if ($this.userData.glesmos) {
+  const newCompiled = self.dsm_compileGLesmos(
+    $ir, $styles.color, $styles.fillOpacity, $styles.listIndex
+  );
+  const prev =  $graphs[$graphs.length - 1];
+  if (prev?.graphMode === "GLesmos") {
+    // merge GLesmos graphs when possible
+    const prevGL = prev.compiledGL;
+    for (let dep of newCompiled.deps) {
+      if (!prevGL.deps.includes(dep)) {
+        prevGL.deps.push(dep);
+      }
+    }
+    prevGL.defs.push(...newCompiled.defs);
+    prevGL.bodies.push(...newCompiled.bodies);
+  } else {
+    $graphs.push({
+      graphMode: "GLesmos",
+      compiledGL: newCompiled,
+      segments: [],
+      poi: {}
+    })
+  }
+} __else__
+```

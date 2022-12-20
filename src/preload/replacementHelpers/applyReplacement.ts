@@ -3,21 +3,40 @@ import { Block, Command, ModuleBlock } from "./parse";
 import { PatternToken } from "./tokenize";
 import jsTokens, { Token } from "js-tokens";
 
-export default function applyReplacement(
+export function tryApplyReplacement(
+  r: ModuleBlock,
+  def: string,
+  allBlocks: Block[],
+  moduleName: string
+): string {
+  try {
+    return tryWithErrorContext(
+      () => applyReplacement(r, def, allBlocks),
+      { message: `replacement "${r.heading}"`, filename: r.filename },
+      { message: `module replacement`, filename: `${moduleName}` }
+    );
+  } catch (e) {
+    // Trick: get the pretty console output as if this was uncaught, but do
+    // not stop execution
+    setTimeout(() => {
+      throw e;
+    }, 0);
+    return def;
+  }
+}
+
+export function applyReplacement(
   replacement: ModuleBlock,
-  fn: Function,
+  fn: string,
   allBlocks: Block[]
-) {
-  const newCode = applyStringReplacement(
+): string {
+  return applyStringReplacement(
     replacement,
     Array.from(jsTokens(fn.toString())),
     allBlocks
   )
     .map((t) => t.value)
     .join("");
-  // use `Function` instead of `eval` to force treatment as an expression
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-  return Function("return " + newCode)();
 }
 
 interface Range {
@@ -267,13 +286,8 @@ function patternMatch(
       continue;
     }
     if (expectedToken.type === "PatternBalanced") {
-      const next = pattern[patternIndex + 1].value;
       const closeBraces = new Set([")", "]", "}"]);
       const openBraces = new Set(["(", "[", "{"]);
-      if (!closeBraces.has(next))
-        throw new ReplacementError(
-          `Balanced ${expectedToken.value} must be immediately followed by a close brace`
-        );
       // Scan right, keeping track of nested depth
       let depth = 1;
       let currIndex = strIndex - 1;
