@@ -16,7 +16,7 @@
     "build-ff": "webpack --mode production --env=browser=firefox",
     "dev": "webpack --mode development --env=browser=chrome",
     "dev-ff": "webpack --mode development --env=browser=firefox",
-    "lint": "prettier-check . && tsc --noEmit && eslint \"src/**/*.ts\"",
+    "lint": "prettier --check . && tsc --noEmit && eslint \"src/**/*.ts\"",
     "test": "npm run test:jest",
     "test:jest": "jest --config jest.config.js"
   },
@@ -44,7 +44,6 @@
     "less": "^4.1.1",
     "less-loader": "^8.1.0",
     "lezer-loader": "^0.3.0",
-    "prettier-check": "^2.0.0",
     "style-loader": "^2.0.0",
     "ts-jest": "^28.0.5",
     "ts-loader": "^9.3.1",
