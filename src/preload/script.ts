@@ -1,6 +1,4 @@
-import moduleOverrides from "./moduleOverrides";
 import moduleReplacements from "./moduleReplacements";
-import withDependencyMap from "./overrideHelpers/withDependencyMap";
 import { tryApplyReplacement } from "./replacementHelpers/applyReplacement";
 import { Block, ModuleBlock } from "./replacementHelpers/parse";
 import window from "globals/window";
@@ -45,20 +43,6 @@ function newDefine(
       // use `Function` instead of `eval` to force treatment as an expression
       // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
       definition = Function("return " + newCode)();
-    }
-  }
-  // apply overrides
-  if (moduleName in moduleOverrides) {
-    try {
-      // override should either be `{dependencies, definition}` or just `definition`
-      const override = withDependencyMap(moduleOverrides[moduleName])(
-        definition,
-        dependencies
-      );
-      definition = override;
-    } catch (e) {
-      alertFailure();
-      throw e;
     }
   }
   if (moduleName === "toplevel/calculator_desktop") {
