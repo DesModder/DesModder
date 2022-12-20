@@ -62,11 +62,7 @@ Insert before the delete button but before the other buttons.
 
 *Find_template* => `template`
 
-*Find* inside `template`
-
-```js
-var $this = this
-```
+*Find_this* `template` => `this`
 
 *Find* inside `template`
 ```js

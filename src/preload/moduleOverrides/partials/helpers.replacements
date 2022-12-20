@@ -10,3 +10,12 @@
 ```js
 .template = function () { __return__ }
 ```
+
+## Find_this
+
+*define* `find_this`
+
+*Find* inside `arg1`
+```js
+var $return = this;
+```

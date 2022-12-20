@@ -85,10 +85,7 @@ var $r = $e.hasClass('dcg-all')
 
 *Find_template* => `template`
 
-*Find* inside `template`
-```js
-var $this = this
-```
+*Find_this* `template` => `this`
 
 *Find* inside `template`
 ```js
