@@ -7,6 +7,7 @@ import hideErrors from "./moduleOverrides/hide-errors.replacements";
 import helpers from "./moduleOverrides/partials/helpers.replacements";
 import pinExpressions from "./moduleOverrides/pin-expressions.replacements";
 import shiftEnterNewline from "./moduleOverrides/shift-enter-newline.replacements";
+import showTips from "./moduleOverrides/show-tips.replacements";
 // temporary style import for glesmos
 import "./moduleOverrides/styles/expression-menus__fill.less";
 // temporary style import for hide-errors
@@ -26,6 +27,7 @@ const replacementStrings = [
   textMode,
   debugMode,
   extraExpressionButtons,
+  showTips,
 ];
 
 const replacements: Block[] = [];

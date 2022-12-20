@@ -2,6 +2,8 @@
 
 *plugin* `workaround-core`
 
+Replacements that apply to more than one plugin.
+
 ## Get access to the top-level components
 
 The top-level components is a javascript object storing the stuff in the wrapper shell around the calculator, including the graph title.
@@ -43,4 +45,85 @@ var $to = this.createItemModel(
 ```js
 __body__;
 window.DesModder?.controller?.duplicateMetadata($to.id, $from.id)
+```
+
+## Insert panels on the expressions list
+
+This is relevant to both pin-expressions and text-mode.
+
+*module* `expressions/list-view`
+
+*Find_template* => `template`
+
+*Find_this* inside `template` => `this`
+
+*Find* inside `template`
+```js
+$DCGView.createElement(
+  "div",
+  {
+    class: function () {
+      return {
+        "dcg-exppanel-container" ____
+      }
+    },
+    ____
+  },
+  __children__
+)
+```
+
+*Replace* `children` with
+```js
+__children__,
+// pinned expressions
+$DCGView.createElement(
+  $DCGView.Components.For,
+  {
+    each: function () {
+      return window.DesModder?.controller?.isTextMode?.()
+        ? [] 
+        : $this.controller.getAllItemModels();
+    },
+    key: function (e) {
+      return e.guid;
+    }
+  },
+  $DCGView.createElement(
+    "div",
+    {
+      class: $DCGView.const("dsm-pinned-expressions dcg-exppanel"),
+      style: () => ({
+        background: $this.controller.getBackgroundColor()
+      })
+    },
+    function (t) {
+      return $DCGView.createElement(
+        $DCGView.Components.If,
+        {
+          predicate: () => window.DesModder?.controller?.isExpressionPinned(t.id)
+        },
+        // marking as a drag copy causes it not to affect the render shells calcuations
+        // (all the logic is present already because if the top expression is dragged
+        // to the bottom, it shouldn't cause all expressions to render from the top)
+        () => $this.makeDragCopyViewForModel(t)
+      )
+    }
+  )
+),
+// text mode panel
+$DCGView.createElement(
+  $DCGView.Components.If,
+  {
+    predicate: () => window.DesModder?.controller?.inTextMode?.()
+  },
+  () => $DCGView.createElement(
+    "div",
+    {
+      class: $DCGView.const("dsm-text-editor-container"),
+      didMount: div => window.DesModder?.controller?.exposedPlugins["text-mode"].mountEditor(div),
+      willUnmount: div => window.DesModder?.controller?.exposedPlugins["text-mode"].unmountEditor(div)
+    }
+  )
+)
 ```

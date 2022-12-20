@@ -71,7 +71,3 @@ $s = this.getItemSelectorById($)
 __body__;
 $s || this._finishDeletingItemAfterAnimation($e, $t);
 ```
-
-  ee## Replace the delete button with unpin button when an expression is pinned
-
-ee*Module* `expressions/expression_view` `expressions/image-view` `expressions/table-view` `expressions/text_view`

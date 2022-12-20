@@ -79,3 +79,36 @@ $DCGView.createElement(
 ),
 __children__
 ```
+
+## Hide the main expressions list when in text mode
+
+*module* `expressions/list-view`
+
+Just wraps the original `createElement` in an `If`.
+
+*Find* => `old_createElement`
+```js
+$DCGView.createElement(
+  "div",
+  {
+    class: function () {
+      return {
+        "dcg-exppanel" ____
+      }
+    },
+    ____
+  },
+  ____
+)
+```
+
+*Replace* `old_createElement` with
+```js
+$DCGView.createElement(
+  $DCGView.Components.If,
+  {
+    predicate: () => !window.DesModder?.controller?.inTextMode?.()
+  },
+  () => __old_createElement__
+)
+```

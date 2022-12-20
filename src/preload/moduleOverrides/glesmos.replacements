@@ -118,3 +118,22 @@ Allows correct checking of the .glesmos metadata; otherwise, we run into `Calc.o
 window.DesModder?.controller?.checkForMetadataChange();
 __body__
 ```
+
+## Pass GLesmos flag to worker
+
+*Module* `main/evaluator`
+
+*Find*
+```js
+.addStatement = function ($stmt) {
+  __body__
+}
+```
+
+*Replace* `body` with
+```js
+if ($stmt.type === "statement") {
+  $stmt.glesmos = window.DesModder?.controller?.isGlesmosMode?.($stmt.id);
+}
+__body__
+```
