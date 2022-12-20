@@ -1,0 +1,154 @@
+# Replacements for Extra Expression Buttons
+
+*plugin* `workaround-pin-expressions-and-folder-tools`
+
+TODO: work this into an API so it doesn't need a ton of injected code.
+
+## Action Create Helper
+
+Adds a helper function for use below.
+
+*module* `expressions/expression-edit-actions`
+
+*Find* => `start`
+```js
+"use strict";
+```
+
+*Find*
+```js
+$Tooltip.Tooltip
+```
+
+*Find*
+```js
+$DCGView.createElement(
+```
+
+*Replace* `start` with
+```js
+__start__
+function dsm_actionCreate(tooltip, buttonClass, iconClass, onTap) {
+  return () => $DCGView.createElement(
+    $Tooltip.Tooltip,
+    {
+      tooltip: $DCGView.const(DesModder.controller.format(tooltip)),
+      gravity: $DCGView.const("s")
+    },
+    $DCGView.createElement(
+      "span",
+      {
+        class: $DCGView.const(
+          buttonClass + " dsm-stay-edit-list-mode dcg-exp-action-button"
+        ),
+        handleEvent: $DCGView.const("true"),
+        role: $DCGView.const("button"),
+        tabindex: $DCGView.const("0"),
+        onTap: onTap
+      },
+      $DCGView.createElement("i", {
+        class: $DCGView.const(iconClass + " dsm-stay-edit-list-mode"),
+      })
+    )
+  )
+}
+```
+
+## Insert extra buttons
+
+Insert before the delete button but before the other buttons.
+
+*module* `expressions/expression-edit-actions`
+
+*Find_template* => `template`
+
+*Find_this* `template` => `this`
+
+*Find* inside `template`
+```js
+return $DCGView.createElement(
+  'span',
+  {
+    class: function () {
+      return {
+        'dcg-expression-edit-actions' ____
+      }
+    },
+    ____
+  },
+  $DCGView.createElement(____),
+  $DCGView.createElement(____),
+  $DCGView.createElement(____),
+  $DCGView.createElement(____),
+  __delete_button__
+)
+```
+
+*Replace* `delete_button` with
+```js
+// pin-unpin
+$DCGView.createElement(
+  $DCGView.Components.If,
+  {
+    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("pin-expressions") && $this.model().type !== "folder"
+  },
+  () => $DCGView.Components.IfElse(
+    () => window.DesModder?.controller?.isExpressionPinned($this.model().id),
+    {
+      false: dsm_actionCreate(
+        "pin-expressions-pin",
+        "dsm-pin-button",
+        "dsm-icon-bookmark",
+        () => window.DesModder.controller.pinExpression($this.model().id)
+      ),
+      true: dsm_actionCreate(
+        "pin-expressions-unpin",
+        "dsm-unpin-button dcg-selected",
+        "dsm-icon-bookmark",
+        () => window.DesModder.controller.unpinExpression($this.model().id)
+      )
+    }
+  )
+),
+// enclose note
+$DCGView.createElement(
+  $DCGView.Components.If,
+  {
+    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && $this.model().type === "text"
+  },
+  dsm_actionCreate(
+    "folder-tools-enclose",
+    "dsm-note-enclose-button",
+    "dsm-icon-folder-plus",
+    () => window.DesModder.controller.noteEnclose($this.model().index)
+  )
+),
+// dump folder
+$DCGView.createElement(
+  $DCGView.Components.If,
+  {
+    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && $this.model().type === "folder"
+      && window.Calc.controller.getItemModelByIndex($this.model().index + 1)?.folderId === $this.model().id
+  },
+  dsm_actionCreate(
+    "folder-tools-dump",
+    "dsm-folder-dump-button",
+    "dsm-icon-folder-minus",
+    () => window.DesModder.controller.folderDump($this.model().index)
+  )
+),
+// merge folder
+$DCGView.createElement(
+  $DCGView.Components.If,
+  {
+    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && $this.model().type === "folder"
+  },
+  dsm_actionCreate(
+    "folder-tools-merge",
+    "dsm-folder-merge-button",
+    "dsm-icon-folder-plus",
+    () => window.DesModder.controller.folderMerge($this.model().index)
+  )
+),
+__delete_button__
+```

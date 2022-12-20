@@ -10,7 +10,6 @@ interface windowConfig extends Window {
     definition: Function
   ) => void;
   ALMOND_OVERRIDES: { [key: string]: Function };
-  dsm_workerAppend: string;
 }
 
 declare let window: windowConfig;

@@ -1,0 +1,30 @@
+# Debug Mode Replacements
+
+*plugin* `debug-mode`
+
+## Replace expression index with expression id.
+
+*Module* `expressions/expression_view` `expressions/image-view` `expressions/table-view` `expressions/text_view` `expressions/folder-view`
+
+*Find*
+```js
+.createElement(
+  'span',
+  { class: $DCGView.const('dcg-num') },
+  __body__
+)
+```
+
+*Find* inside `body` => `from`
+```js
+$this.$model.displayIndex
+```
+
+*Replace* `from` with
+```js
+window.DesModder?.controller?.isPluginEnabled("debug-mode")
+  ? $this.$model.id.length <= 6
+    ? $this.$model.id
+    : $this.$model.id.substring(0, 4) + "…"
+  : $this.$model.displayIndex
+```

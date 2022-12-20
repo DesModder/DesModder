@@ -1,0 +1,222 @@
+# Replacements for GLesmos
+
+*plugin* `glesmos`
+
+## Add a menu option for switching an expression to glesmos rendering mode
+
+*Module* `expressions/expression-menus/fill`
+
+*Find_template* => `template`
+
+*Find* inside `template`
+
+```js
+.createElement($ToggleView.ToggleView
+```
+
+*Find_this* `template` => `this`
+
+*Find* inside `template`
+```js
+return $DCGView.createElement(
+  'div',
+  { class: $DCGView.const('dcg-options-menu-content') },
+  __rest__
+)
+```
+
+Just add one more child.
+
+*Replace* `__rest__` with
+```js
+__rest__,
+$DCGView.createElement(
+  $DCGView.Components.If,
+  {
+    predicate: () => DesModder.controller.canBeGLesmos($this.id),
+  },
+  () => $DCGView.createElement(
+    "div",
+    { class: $DCGView.const("dcg-options-menu-section-title dsm-gl-fill-title") },
+    () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
+    $DCGView.createElement($ToggleView.ToggleView, {
+      ariaLabel: () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
+      toggled: () => window.DesModder?.controller?.isGlesmosMode?.($this.id),
+      onChange: (a) => window.DesModder?.controller?.toggleGlesmos?.($this.id),
+    })
+  )
+)
+```
+
+## Replace main renderer with glesmos rendering when necessary
+
+*Module* `graphing/graphslayer`
+
+*Find*
+
+```js
+.drawSketchToCtx = function ($e, $ctx, $transforms, __args__) {__body__}
+```
+
+*Find* inside `__body__`
+
+```js
+if ($c || ($c = {}), $t.branches && $t.branches.length) {__consequent__}
+```
+
+*Replace* `__consequent__` with
+
+```js
+__consequent__;
+for (const branch of $e.branches) {
+  if (branch.graphMode === "GLesmos") {
+    window.DesModder?.controller?.exposedPlugins[
+      "GLesmos"
+    ]?.drawGlesmosSketchToCtx?.(branch.compiledGL, $ctx, $transforms, $e.id);
+  }
+}
+```
+
+## Hide lines option for GLesmos expressions
+
+*Module* `expressions/expression-menus/expression-options-menu-view`
+
+*Find*
+
+```js
+.getSections = function () {__body__}
+```
+
+*Find* inside `__body__`
+
+```js
+$Expression.isHistogram
+```
+
+*Replace* `__body__` with
+
+```js
+if ($Expression.isInequality(this.model) && DesModder.controller.isGlesmosMode(this.model.id)) {
+  return ['fill'];
+}
+__body__
+```
+
+## Check/update DesModder metadata before allowing statements to update.
+
+Allows correct checking of the .glesmos metadata; otherwise, we run into `Calc.observeEvent("change")` triggering after addStatement sends the data to the worker. We need the correct `.glesmos` property before addStatement.
+
+*Module* `main/controller`
+
+*Find*
+```js
+.requestParseForAllItems = function() {__body__}
+```
+
+*Replace* `body` with
+```js
+window.DesModder?.controller?.checkForMetadataChange();
+__body__
+```
+
+## Pass GLesmos flag to worker
+
+*Module* `main/evaluator`
+
+*Find*
+```js
+.addStatement = function ($stmt) {
+  __body__
+}
+```
+
+*Replace* `body` with
+```js
+if ($stmt.type === "statement") {
+  $stmt.glesmos = window.DesModder?.controller?.isGlesmosMode?.($stmt.id);
+}
+__body__
+```
+
+## Replace quadtree implicit tracing with glesmos compilation
+
+This will be applied in the worker.
+
+*module* `core/math/features/graph`
+
+*Find* 
+```js
+._graph = function(____) {
+  __graph__
+}
+```
+
+*Find* inside `graph`
+```js
+var $this = this
+```
+
+Here, `__case__` will match up to the end of its switch block, which extends to the end of the `_graph` function.
+
+*Find* inside `graph`
+```js
+case $Graphmode.IMPLICIT: __case__
+```
+
+The code loops over the different IR objects `$ir`.
+
+*Find* inside `case`
+```js
+.wrap($).eachElement(function ($ir, ____) {
+  __body__
+})
+```
+
+The `styles` object provides `styles.fillOpacity` and `styles.color`.
+
+*Find* inside `body`
+```js
+$styles.fillOpacity =
+```
+
+This is just for finding the `$graphs` list.
+
+*Find* inside `body`
+```js
+$graphs.push({
+  graphMode: $.POLYGONFILL
+```
+
+*Find* inside `body` => `else`
+```js
+else {
+  var $ = void 0 === $.userData.lines || $.userData.lines
+```
+
+*Replace* `else` with
+```js
+else if ($this.userData.glesmos) {
+  const newCompiled = self.dsm_compileGLesmos(
+    $ir, $styles.color, $styles.fillOpacity, $styles.listIndex
+  );
+  const prev =  $graphs[$graphs.length - 1];
+  if (prev?.graphMode === "GLesmos") {
+    // merge GLesmos graphs when possible
+    const prevGL = prev.compiledGL;
+    for (let dep of newCompiled.deps) {
+      if (!prevGL.deps.includes(dep)) {
+        prevGL.deps.push(dep);
+      }
+    }
+    prevGL.defs.push(...newCompiled.defs);
+    prevGL.bodies.push(...newCompiled.bodies);
+  } else {
+    $graphs.push({
+      graphMode: "GLesmos",
+      compiledGL: newCompiled,
+      segments: [],
+      poi: {}
+    })
+  }
+} __else__
+```

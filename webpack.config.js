@@ -3,7 +3,7 @@ const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
 const { merge } = require("webpack-merge");
 
-baseConfig = (env, options) => ({
+const baseConfig = (env, options) => ({
   resolve: {
     modules: ["node_modules", "src"],
     extensions: [".ts", ".tsx", ".js", ".jsx"],
@@ -54,6 +54,10 @@ baseConfig = (env, options) => ({
       {
         test: /\.ftl$/,
         type: "asset/source",
+      },
+      {
+        test: /\.replacements$/,
+        loader: path.resolve(__dirname, "src/preload/replacement-loader.js"),
       },
     ],
   },

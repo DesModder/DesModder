@@ -1,5 +1,6 @@
-import moduleOverrides from "./moduleOverrides";
-import withDependencyMap from "./overrideHelpers/withDependencyMap";
+import moduleReplacements from "./moduleReplacements";
+import { tryApplyReplacement } from "./replacementHelpers/applyReplacement";
+import { Block, ModuleBlock } from "./replacementHelpers/parse";
 import window from "globals/window";
 import injectScript from "utils/injectScript";
 import { postMessageUp, listenToMessageDown } from "utils/messages";
@@ -8,27 +9,89 @@ import { pollForValue } from "utils/utils";
 /* This script is loaded at document_start, before the page's scripts, to give it 
 time to set ALMOND_OVERRIDES and replace module definitions */
 
+// workerAppend will get filled in from a message
+let workerAppend: string = "console.error('worker append not filled in ')";
+
+const reachedReplacements = new Set<Block>();
+
+/** Find the replacements with the given module name, and mark them as reached */
+function matchingReplacements(moduleName: string) {
+  const mr = moduleReplacements.filter(
+    (r) => r.tag === "ModuleBlock" && r.modules.includes(moduleName)
+  ) as ModuleBlock[];
+  mr.forEach((r) => reachedReplacements.add(r));
+  return mr;
+}
+
 // assumes `oldDefine` gets defined before `newDefine` is needed
 let oldDefine!: typeof window["define"];
 function newDefine(
   moduleName: string,
   dependencies: string[],
   definition: Function
-) {
-  if (moduleName in moduleOverrides) {
-    try {
-      // override should either be `{dependencies, definition}` or just `definition`
-      const override = withDependencyMap(moduleOverrides[moduleName])(
-        definition,
-        dependencies
+): void {
+  if (moduleName === "text!worker_src_underlying") {
+    const workerSource = definition() as string;
+    definition = () => overrideWorkerSource(workerSource);
+  } else {
+    const mr = matchingReplacements(moduleName);
+    if (mr.length > 0) {
+      const newCode = mr.reduce(
+        (def, r) => tryApplyReplacement(r, def, moduleReplacements, moduleName),
+        definition.toString()
       );
-      definition = override;
-    } catch (e) {
-      alertFailure();
-      throw e;
+      // use `Function` instead of `eval` to force treatment as an expression
+      // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
+      definition = Function("return " + newCode)();
     }
   }
+  if (moduleName === "toplevel/calculator_desktop") {
+    doneLoading();
+  }
   return oldDefine(moduleName, dependencies, definition);
+}
+
+function overrideWorkerSource(src: string) {
+  const lines = [];
+  for (const line of src.split("\n")) {
+    const match = line.match(/^define\(['"]([^'"]*)['"]/);
+    if (match !== null) {
+      const moduleName = match[1];
+      const newCode = matchingReplacements(moduleName).reduce(
+        (def, r) => tryApplyReplacement(r, def, moduleReplacements, moduleName),
+        line
+      );
+      lines.push(newCode);
+    } else {
+      lines.push(line);
+    }
+  }
+  // Place at the beginning of the code for the source mapping to line up
+  // Call at the end of the code to run after modules defined
+  return (
+    `function loadDesModderWorker(){${workerAppend}\n}` +
+    lines.join("\n") +
+    "\nloadDesModderWorker();"
+  );
+}
+
+function nameReplacement(r: Block) {
+  return r.tag === "ModuleBlock"
+    ? `${r.plugin} replacement "${r.heading}" in modules: ${r.modules.join(
+        ","
+      )}`
+    : `helper "${r.heading}" defining command "${r.commandName}"`;
+}
+
+function doneLoading() {
+  const unusedReplacements = moduleReplacements.filter(
+    (r) => !reachedReplacements.has(r)
+  );
+  for (const r of unusedReplacements) {
+    // ignore defines in checking that they're all used
+    if (r.tag !== "ModuleBlock") continue;
+    console.error("Replacement not applied:", nameReplacement(r));
+  }
 }
 
 // without this, you get Error: touchtracking missing jquery
@@ -167,7 +230,7 @@ void pollForValue(
 listenToMessageDown((message) => {
   if (message.type === "set-worker-append-url") {
     void fetch(message.value).then(async (response) => {
-      window.dsm_workerAppend = await response.text();
+      workerAppend = await response.text();
     });
     // cancel listener
     return true;
