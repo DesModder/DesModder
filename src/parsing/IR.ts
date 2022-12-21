@@ -3,7 +3,7 @@ export interface IRChunk {
   argTypes: number[];
   blockMask: unknown;
   instructions: IRInstruction[];
-  returnIndex: number;
+  getReturnIndex: () => number;
   instructionsLength: () => number;
   getInstruction: (i: number) => IRInstruction;
 }

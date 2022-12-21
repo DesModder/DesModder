@@ -493,7 +493,7 @@ export default function emitChunkGL(chunk: IRChunk) {
     outputSource += u.source;
     instructionIndex = u.nextIndex;
   }
-  outputSource += `return ${maybeInlined(chunk.returnIndex, inlined)};`;
+  outputSource += `return ${maybeInlined(chunk.getReturnIndex(), inlined)};`;
   return {
     source: lists.join("") + outputSource,
     deps,
