@@ -50,13 +50,14 @@ function symbolName(str: string) {
 
 class SymbolTable {
   private readonly map = new Map<string, Range>();
+  /** A set of invalidated names: invalidated by replacing a range including
+   * them. At all times, the map must not have any invalidated keys */
+  private readonly invalidated = new Set<string>();
 
-  constructor(readonly str: Token[], entries?: Iterable<[string, Range]>) {
-    for (const [key, value] of entries ?? []) this.set(key, value);
-  }
+  constructor(public str: Token[]) {}
 
-  entries() {
-    return this.map.entries();
+  keyInvalidated(key: string): boolean {
+    return this.invalidated.has(symbolName(key));
   }
 
   has(key: string): boolean {
@@ -76,20 +77,29 @@ class SymbolTable {
   /** set but checking for duplicate bindings */
   set(key: string, value: Range) {
     if (this.has(key)) throw new ReplacementError(`Duplicate binding: ${key}`);
+    if (this.keyInvalidated(key))
+      throw new ReplacementError(
+        `Key ${key} already invalidated from a previous replacement`
+      );
     this.uncheckedSet(key, value);
     return this;
   }
 
   /** Mutate this in place by grabbing all of other's entries */
   merge(other: SymbolTable) {
-    for (const [key, value] of other.entries()) this.set(key, value);
+    for (const [key, value] of other.map.entries()) this.set(key, value);
+    for (const key of other.invalidated) this.invalidated.add(key);
   }
 
   /** get but throws an error if not found */
   getRequired(key: string) {
     const got = this.get(key);
-    if (got === undefined)
-      throw new ReplacementError(`Binding not found: ${key}`);
+    if (got === undefined) {
+      const hint = this.keyInvalidated(symbolName(key))
+        ? ". It has been removed in a previous *replace*."
+        : "";
+      throw new ReplacementError(`Binding not found: ${key}` + hint);
+    }
     return got;
   }
 
@@ -99,30 +109,28 @@ class SymbolTable {
     return this.str.slice(range.start, range.start + range.length);
   }
 
-  /** (non-mutate) Replace range `from` with range of length `length`, removing
-   * all symbols contained inside `from` and shifting all symbols after `from`. */
-  withReplacedRange(from: Range, to: Token[]) {
-    const str = structuredClone(this.str);
-    str.splice(from.start, from.length, ...to);
-    const entries = Array.from(this.entries())
-      .filter(
-        ([_, range]) =>
-          range.start >= from.start + from.length ||
-          range.start + range.length < from.start
-      )
-      .map(
-        ([name, range]) =>
-          [
-            name,
-            {
-              start:
-                range.start +
-                (range.start > from.start ? to.length - from.length : 0),
-              length: range.length,
-            },
-          ] as [string, Range]
-      );
-    return new SymbolTable(str, entries);
+  /** Replace range `from` with tokens `to`, removing all symbols for ranges
+   * contained inside `from` and shifting all symbols after `from`.
+   * Modifies `this.str`. */
+  replaceRange(from: Range, to: Token[]) {
+    this.str = structuredClone(this.str);
+    this.str.splice(from.start, from.length, ...to);
+    // invalidate overlapping names
+    for (const [name, range] of this.map.entries()) {
+      if (range.start >= from.start + from.length) {
+        // the range is after the `from` range; offset it
+        this.uncheckedSet(name, {
+          start: range.start + to.length - from.length,
+          length: range.length,
+        });
+      } else if (range.start + range.length < from.start) {
+        // the range is before the `from` range; change nothing
+      } else {
+        // the range overlaps somehow with the `from` range.
+        this.map.delete(name);
+        this.invalidated.add(name);
+      }
+    }
   }
 }
 
@@ -131,7 +139,8 @@ function getSymbols(
   args: SymbolTable,
   allBlocks: Block[]
 ): SymbolTable {
-  const table = new SymbolTable(args.str, args.entries());
+  const table = new SymbolTable(args.str);
+  table.merge(args);
   for (const command of commands) {
     switch (command.command) {
       case "find": {
@@ -207,7 +216,7 @@ function applyStringReplacement(
     new SymbolTable(str),
     allBlocks
   );
-  return replacement.replaceCommands.reduce((table, command) => {
+  for (const command of replacement.replaceCommands) {
     if (command.command !== "replace")
       throw new ReplacementError(
         "Programming error: replaceCommand is not *replace*"
@@ -220,7 +229,7 @@ function applyStringReplacement(
       throw new ReplacementError(
         `*replace* command missing a pattern argument.`
       );
-    return table.withReplacedRange(
+    table.replaceRange(
       table.getRequired(command.args[0]),
       command.patternArg.flatMap((token) => {
         if (
@@ -231,7 +240,8 @@ function applyStringReplacement(
         } else return token;
       })
     );
-  }, table).str;
+  }
+  return table.str;
 }
 
 interface MatchResult {

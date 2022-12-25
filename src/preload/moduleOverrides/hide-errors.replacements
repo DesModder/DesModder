@@ -166,9 +166,8 @@ __ret__ && !window.DesModder.controller.isErrorHidden(this.model?.id)
 *Find* => `from`
 ```js
 if ("Enter" === $e)
-  return t && (t.preventDefault(), t.stopPropagation()),
+  return $t && ($t.preventDefault(), $t.stopPropagation()),
     this.controller.dispatch({ type: "on-special-key-pressed", key: "Enter" })
-
 ```
 
 *Replace* `from` with
