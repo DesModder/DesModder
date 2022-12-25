@@ -12,10 +12,14 @@ export type PatternToken =
       value: string;
     };
 
+function errorOnLine(msg: string, lineIndex: number, line: string): never {
+  throw new ReplacementError(`${msg} (line ${lineIndex + 1}): ${line}`);
+}
+
 export function tokenizeReplacement(replacementString: string) {
   replacementString = replacementString.replace(/\r/g, "");
   if (!replacementString.startsWith("#"))
-    throw new ReplacementError("File is missing heading");
+    throw new ReplacementError("File is missing heading (line 1)");
   const tokens: ReplacementToken[] = [];
   const lines = replacementString.split(/\n/g);
   // starting line (containing "```js") of the current code block, else null
@@ -32,18 +36,14 @@ export function tokenizeReplacement(replacementString: string) {
     } else if (line.startsWith("*")) {
       const match = line.match(/^\*([^*]+)\*(.*)$/);
       if (match === null)
-        throw new ReplacementError(
-          "Line starting with '*' is not valid command"
-        );
+        errorOnLine(`Line starting with '*' missing second '*'`, i, line);
       const parts = match[2].split("=>");
       if (parts.length > 2)
-        throw new ReplacementError("Duplicate '=>'; only one is allowed");
+        errorOnLine("Duplicate '=>'; only one is allowed", i, line);
       const args = inlineCodes(parts[0]);
       const ret = inlineCodes(parts[1] ?? "");
       if (ret.length > 1)
-        throw new ReplacementError(
-          "Duplicate return capture; only one is allowed"
-        );
+        errorOnLine("Duplicate return capture variable", i, line);
       tokens.push({
         tag: "emph",
         command: normalizeCommand(match[1]),
@@ -54,11 +54,21 @@ export function tokenizeReplacement(replacementString: string) {
       const isStart = line.startsWith("```js");
       if (isStart) {
         if (codeStartLine !== null)
-          throw new ReplacementError("Unexpected code block start after start");
+          errorOnLine(
+            "Unexpected code block start after start. " +
+              "Missing '```' or duplicated '```js'",
+            i,
+            line
+          );
         codeStartLine = i;
       } else {
         if (codeStartLine === null)
-          throw new ReplacementError("Unexpected code block end without start");
+          errorOnLine(
+            "Unexpected code block end without start. " +
+              "Code blocks need to start with '```js'",
+            i,
+            line
+          );
         tokens.push({
           tag: "code",
           value: patternTokens(lines.slice(codeStartLine + 1, i).join("\n")),
