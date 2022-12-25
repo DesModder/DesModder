@@ -256,6 +256,7 @@ function findPattern(
   inside: Range,
   allowDuplicates: boolean
 ): MatchResult {
+  const fullPattern = pattern;
   // filter whitespace out of pattern
   pattern = pattern.filter((token) => !isIgnoredWhitespace(token));
   let found: MatchResult | null = null;
@@ -272,7 +273,7 @@ function findPattern(
   }
   if (found === null)
     throw new ReplacementError(
-      `Pattern not found: ${pattern.map((v) => v.value).join("")}`
+      `Pattern not found: ${fullPattern.map((v) => v.value).join("")}`
     );
   return found;
 }
