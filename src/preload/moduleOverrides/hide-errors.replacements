@@ -174,7 +174,7 @@ if ("Enter" === $e)
 *Replace* `from` with
 ```js
 __from__
-else if ("Shift-Enter" === e) {
+else if ("Shift-Enter" === $e) {
   window.DesModder.controller.hideError(this.model.id);
   return this.controller.dispatch({
     type: "on-special-key-pressed",

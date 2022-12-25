@@ -51,13 +51,16 @@ function symbolName(str: string) {
 class SymbolTable {
   private readonly map = new Map<string, Range>();
 
-  constructor(readonly str: Token[], private readonly parent?: SymbolTable) {}
+  constructor(readonly str: Token[], entries?: Iterable<[string, Range]>) {
+    for (const [key, value] of entries ?? []) this.set(key, value);
+  }
+
+  entries() {
+    return this.map.entries();
+  }
 
   has(key: string): boolean {
-    return (
-      this.map.has(symbolName(key)) ||
-      (this.parent ? this.parent.has(key) : false)
-    );
+    return this.map.has(symbolName(key));
   }
 
   uncheckedSet(key: string, value: Range) {
@@ -67,7 +70,7 @@ class SymbolTable {
   }
 
   get(key: string): Range | undefined {
-    return this.map.get(symbolName(key)) ?? this.parent?.get(symbolName(key));
+    return this.map.get(symbolName(key));
   }
 
   /** set but checking for duplicate bindings */
@@ -79,7 +82,7 @@ class SymbolTable {
 
   /** Mutate this in place by grabbing all of other's entries */
   merge(other: SymbolTable) {
-    for (const [key, value] of other.map.entries()) this.set(key, value);
+    for (const [key, value] of other.entries()) this.set(key, value);
   }
 
   /** get but throws an error if not found */
@@ -95,6 +98,32 @@ class SymbolTable {
     const range = this.getRequired(key);
     return this.str.slice(range.start, range.start + range.length);
   }
+
+  /** (non-mutate) Replace range `from` with range of length `length`, removing
+   * all symbols contained inside `from` and shifting all symbols after `from`. */
+  withReplacedRange(from: Range, to: Token[]) {
+    const str = structuredClone(this.str);
+    str.splice(from.start, from.length, ...to);
+    const entries = Array.from(this.entries())
+      .filter(
+        ([_, range]) =>
+          range.start >= from.start + from.length ||
+          range.start + range.length < from.start
+      )
+      .map(
+        ([name, range]) =>
+          [
+            name,
+            {
+              start:
+                range.start +
+                (range.start > from.start ? to.length - from.length : 0),
+              length: range.length,
+            },
+          ] as [string, Range]
+      );
+    return new SymbolTable(str, entries);
+  }
 }
 
 function getSymbols(
@@ -102,7 +131,7 @@ function getSymbols(
   args: SymbolTable,
   allBlocks: Block[]
 ): SymbolTable {
-  const table = new SymbolTable(args.str, args);
+  const table = new SymbolTable(args.str, args.entries());
   for (const command of commands) {
     switch (command.command) {
       case "find": {
@@ -178,45 +207,31 @@ function applyStringReplacement(
     new SymbolTable(str),
     allBlocks
   );
-  const command = replacement.replaceCommand;
-  if (command.command !== "replace")
-    throw new ReplacementError(
-      "Programming error: replaceCommand is not *replace*"
+  return replacement.replaceCommands.reduce((table, command) => {
+    if (command.command !== "replace")
+      throw new ReplacementError(
+        "Programming error: replaceCommand is not *replace*"
+      );
+    if (command.args.length !== 1)
+      throw new ReplacementError(
+        `*replace* command must have exactly 1 argument. You passed ${command.args.length}`
+      );
+    if (command.patternArg === undefined)
+      throw new ReplacementError(
+        `*replace* command missing a pattern argument.`
+      );
+    return table.withReplacedRange(
+      table.getRequired(command.args[0]),
+      command.patternArg.flatMap((token) => {
+        if (
+          token.type === "PatternBalanced" ||
+          token.type === "PatternIdentifier"
+        ) {
+          return table.getSlice(token.value);
+        } else return token;
+      })
     );
-  if (command.args.length !== 1)
-    throw new ReplacementError(
-      `*replace* command must have exactly 1 argument. You passed ${command.args.length}`
-    );
-  if (command.patternArg === undefined)
-    throw new ReplacementError(`*replace* command missing a pattern argument.`);
-  return replaceRange(
-    str,
-    table.getRequired(command.args[0]),
-    command.patternArg,
-    table
-  );
-}
-
-function replaceRange(
-  str: Token[],
-  range: Range,
-  to: PatternToken[],
-  table: SymbolTable
-) {
-  str = structuredClone(str);
-  str.splice(
-    range.start,
-    range.length,
-    ...to.flatMap((token) => {
-      if (
-        token.type === "PatternBalanced" ||
-        token.type === "PatternIdentifier"
-      ) {
-        return table.getSlice(token.value);
-      } else return token;
-    })
-  );
-  return str;
+  }, table).str;
 }
 
 interface MatchResult {

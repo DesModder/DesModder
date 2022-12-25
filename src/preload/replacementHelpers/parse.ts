@@ -22,7 +22,7 @@ export interface ModuleBlock extends BaseBlock {
   tag: "ModuleBlock";
   modules: string[];
   plugin: string;
-  replaceCommand: Command;
+  replaceCommands: Command[];
 }
 
 export interface Command {
@@ -113,20 +113,6 @@ function parseBlock(
       i++;
     }
   }
-  const expectedReplaces = start.command === "module" ? 1 : 0;
-  const numReplaces = commands.filter((x) => x.command === "replace").length;
-  if (numReplaces !== expectedReplaces)
-    throw new ReplacementError(
-      `Block ${start.command} expects ${expectedReplaces} ` +
-        `*replace* command(s) but got ${numReplaces}`
-    );
-  if (
-    start.command === "module" &&
-    commands.findIndex((x) => x.command === "replace") < commands.length - 1
-  )
-    throw new ReplacementError(
-      `Module block should have *replace* command at end, but found one in the middle`
-    );
   const base = {
     heading: heading.text,
     filename,
@@ -135,8 +121,8 @@ function parseBlock(
     ? {
         tag: "ModuleBlock",
         ...base,
-        commands: commands.slice(0, -1),
-        replaceCommand: commands[commands.length - 1],
+        commands: commands.filter((x) => x.command !== "replace"),
+        replaceCommands: commands.filter((x) => x.command === "replace"),
         plugin,
         modules: start.args,
       }
