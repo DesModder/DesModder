@@ -13,6 +13,7 @@ export type PatternToken =
     };
 
 export function tokenizeReplacement(replacementString: string) {
+  replacementString = replacementString.replace(/\r/g, "");
   if (!replacementString.startsWith("#"))
     throw new ReplacementError("File is missing heading");
   const tokens: ReplacementToken[] = [];
