@@ -54,9 +54,3 @@ declare global {
     fromEntries<T>(obj: T): FromEntriesWithReadOnly<T>;
   }
 }
-
-export interface TopLevelComponents {
-  graphsController: {
-    getCurrentGraphTitle: () => string | undefined;
-  };
-}

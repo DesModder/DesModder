@@ -100,6 +100,12 @@ export interface TimingData {
   updateIntersections: number;
 }
 
+export interface TopLevelComponents {
+  graphsController: {
+    getCurrentGraphTitle: () => string | undefined;
+  };
+}
+
 interface CalcPrivate {
   /// / undocumented, may break
   controller: {
@@ -154,6 +160,9 @@ interface CalcPrivate {
     /** Mark UI tick required to convert render shells to full item lines */
     markTickRequiredNextFrame: () => void;
     getPlayingSliders: () => unknown[];
+  };
+  _calc: {
+    globalHotkeys: TopLevelComponents;
   };
   /// / public
 

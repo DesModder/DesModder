@@ -58,11 +58,11 @@ export function getReconciledExpressionProps(id: string): {
   return grep((model as any).formula.expression_type, model);
 }
 
-/**
- * getSections
- */
 export function getSections(
   model: ItemModel
 ): ("colors-only" | "lines" | "points" | "fill" | "label" | "drag")[] {
   return getSectionsProto.apply({ model });
 }
+
+export const getCurrentGraphTitle =
+  Calc._calc.globalHotkeys.graphsController.getCurrentGraphTitle;

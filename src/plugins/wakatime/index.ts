@@ -1,5 +1,5 @@
 import { Calc } from "../../globals/window";
-import { desModderController } from "../../script";
+import { getCurrentGraphTitle } from "../../utils/depUtils";
 import { configList } from "./config";
 import { Plugin } from "plugins";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
@@ -11,9 +11,7 @@ let handler: string;
 
 async function maybeSendHeartbeat(isWrite: boolean) {
   if (!(performance.now() - lastUpdate > heartbeatInterval || isWrite)) return;
-  const graphName =
-    desModderController.topLevelComponents.graphsController.getCurrentGraphTitle() ??
-    "Untitled Graph";
+  const graphName = getCurrentGraphTitle() ?? "Untitled Graph";
   const graphURL = window.location.href;
   const lineCount = Calc.getExpressions().length;
 

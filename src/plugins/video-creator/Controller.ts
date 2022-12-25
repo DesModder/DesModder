@@ -4,8 +4,12 @@ import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
 import { isValidNumber, isValidLength, escapeRegex } from "./backend/utils";
 import { ExpressionModel } from "globals/models";
 import { Calc } from "globals/window";
-import { desModderController } from "script";
-import { jquery, keys, EvaluateSingleExpression } from "utils/depUtils";
+import {
+  jquery,
+  keys,
+  EvaluateSingleExpression,
+  getCurrentGraphTitle,
+} from "utils/depUtils";
 
 type FocusedMQ =
   | "none"
@@ -124,11 +128,7 @@ export default class Controller {
   }
 
   getOutfileName() {
-    return (
-      this.outfileName ??
-      desModderController.topLevelComponents.graphsController.getCurrentGraphTitle() ??
-      DEFAULT_FILENAME
-    );
+    return this.outfileName ?? getCurrentGraphTitle() ?? DEFAULT_FILENAME;
   }
 
   setCaptureMethod(method: CaptureMethod) {
