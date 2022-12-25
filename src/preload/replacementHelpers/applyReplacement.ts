@@ -50,14 +50,18 @@ function symbolName(str: string) {
 
 class SymbolTable {
   private readonly map = new Map<string, Range>();
+  /** A set of invalidated names: invalidated by replacing a range including
+   * them. At all times, the map must not have any invalidated keys */
+  private readonly invalidated = new Set<string>();
 
-  constructor(readonly str: Token[], private readonly parent?: SymbolTable) {}
+  constructor(public str: Token[]) {}
+
+  keyInvalidated(key: string): boolean {
+    return this.invalidated.has(symbolName(key));
+  }
 
   has(key: string): boolean {
-    return (
-      this.map.has(symbolName(key)) ||
-      (this.parent ? this.parent.has(key) : false)
-    );
+    return this.map.has(symbolName(key));
   }
 
   uncheckedSet(key: string, value: Range) {
@@ -67,12 +71,16 @@ class SymbolTable {
   }
 
   get(key: string): Range | undefined {
-    return this.map.get(symbolName(key)) ?? this.parent?.get(symbolName(key));
+    return this.map.get(symbolName(key));
   }
 
   /** set but checking for duplicate bindings */
   set(key: string, value: Range) {
     if (this.has(key)) throw new ReplacementError(`Duplicate binding: ${key}`);
+    if (this.keyInvalidated(key))
+      throw new ReplacementError(
+        `Key ${key} already invalidated from a previous replacement`
+      );
     this.uncheckedSet(key, value);
     return this;
   }
@@ -80,13 +88,18 @@ class SymbolTable {
   /** Mutate this in place by grabbing all of other's entries */
   merge(other: SymbolTable) {
     for (const [key, value] of other.map.entries()) this.set(key, value);
+    for (const key of other.invalidated) this.invalidated.add(key);
   }
 
   /** get but throws an error if not found */
   getRequired(key: string) {
     const got = this.get(key);
-    if (got === undefined)
-      throw new ReplacementError(`Binding not found: ${key}`);
+    if (got === undefined) {
+      const hint = this.keyInvalidated(symbolName(key))
+        ? ". It has been removed in a previous *replace*."
+        : "";
+      throw new ReplacementError(`Binding not found: ${key}` + hint);
+    }
     return got;
   }
 
@@ -95,6 +108,30 @@ class SymbolTable {
     const range = this.getRequired(key);
     return this.str.slice(range.start, range.start + range.length);
   }
+
+  /** Replace range `from` with tokens `to`, removing all symbols for ranges
+   * contained inside `from` and shifting all symbols after `from`.
+   * Modifies `this.str`. */
+  replaceRange(from: Range, to: Token[]) {
+    this.str = structuredClone(this.str);
+    this.str.splice(from.start, from.length, ...to);
+    // invalidate overlapping names
+    for (const [name, range] of this.map.entries()) {
+      if (range.start >= from.start + from.length) {
+        // the range is after the `from` range; offset it
+        this.uncheckedSet(name, {
+          start: range.start + to.length - from.length,
+          length: range.length,
+        });
+      } else if (range.start + range.length < from.start) {
+        // the range is before the `from` range; change nothing
+      } else {
+        // the range overlaps somehow with the `from` range.
+        this.map.delete(name);
+        this.invalidated.add(name);
+      }
+    }
+  }
 }
 
 function getSymbols(
@@ -102,7 +139,8 @@ function getSymbols(
   args: SymbolTable,
   allBlocks: Block[]
 ): SymbolTable {
-  const table = new SymbolTable(args.str, args);
+  const table = new SymbolTable(args.str);
+  table.merge(args);
   for (const command of commands) {
     switch (command.command) {
       case "find": {
@@ -178,45 +216,32 @@ function applyStringReplacement(
     new SymbolTable(str),
     allBlocks
   );
-  const command = replacement.replaceCommand;
-  if (command.command !== "replace")
-    throw new ReplacementError(
-      "Programming error: replaceCommand is not *replace*"
+  for (const command of replacement.replaceCommands) {
+    if (command.command !== "replace")
+      throw new ReplacementError(
+        "Programming error: replaceCommand is not *replace*"
+      );
+    if (command.args.length !== 1)
+      throw new ReplacementError(
+        `*replace* command must have exactly 1 argument. You passed ${command.args.length}`
+      );
+    if (command.patternArg === undefined)
+      throw new ReplacementError(
+        `*replace* command missing a pattern argument.`
+      );
+    table.replaceRange(
+      table.getRequired(command.args[0]),
+      command.patternArg.flatMap((token) => {
+        if (
+          token.type === "PatternBalanced" ||
+          token.type === "PatternIdentifier"
+        ) {
+          return table.getSlice(token.value);
+        } else return token;
+      })
     );
-  if (command.args.length !== 1)
-    throw new ReplacementError(
-      `*replace* command must have exactly 1 argument. You passed ${command.args.length}`
-    );
-  if (command.patternArg === undefined)
-    throw new ReplacementError(`*replace* command missing a pattern argument.`);
-  return replaceRange(
-    str,
-    table.getRequired(command.args[0]),
-    command.patternArg,
-    table
-  );
-}
-
-function replaceRange(
-  str: Token[],
-  range: Range,
-  to: PatternToken[],
-  table: SymbolTable
-) {
-  str = structuredClone(str);
-  str.splice(
-    range.start,
-    range.length,
-    ...to.flatMap((token) => {
-      if (
-        token.type === "PatternBalanced" ||
-        token.type === "PatternIdentifier"
-      ) {
-        return table.getSlice(token.value);
-      } else return token;
-    })
-  );
-  return str;
+  }
+  return table.str;
 }
 
 interface MatchResult {
@@ -231,6 +256,7 @@ function findPattern(
   inside: Range,
   allowDuplicates: boolean
 ): MatchResult {
+  const fullPattern = pattern;
   // filter whitespace out of pattern
   pattern = pattern.filter((token) => !isIgnoredWhitespace(token));
   let found: MatchResult | null = null;
@@ -247,7 +273,7 @@ function findPattern(
   }
   if (found === null)
     throw new ReplacementError(
-      `Pattern not found: ${pattern.map((v) => v.value).join("")}`
+      `Pattern not found: ${fullPattern.map((v) => v.value).join("")}`
     );
   return found;
 }
