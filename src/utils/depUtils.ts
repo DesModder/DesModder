@@ -64,5 +64,7 @@ export function getSections(
   return getSectionsProto.apply({ model });
 }
 
-export const getCurrentGraphTitle =
-  Calc._calc.globalHotkeys.graphsController.getCurrentGraphTitle;
+// TODO: this might return "Untitled Graph" if called too soon, please fix!
+export function getCurrentGraphTitle(): string {
+  return Calc._calc.globalHotkeys?.graphsController?.getCurrentGraphTitle() || "Untitled Graph";
+};
