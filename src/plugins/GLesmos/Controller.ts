@@ -1,5 +1,5 @@
 import ViewportTransforms from "./ViewportTransforms";
-import { initGLesmosCanvas, GLesmosCanvas } from "./glesmosCanvas";
+import { initGLesmosCanvas, GLesmosCanvas, GLesmosShaderPackage } from "./glesmosCanvas";
 import { Calc } from "globals/window";
 
 export default class Controller {
@@ -15,43 +15,29 @@ export default class Controller {
   }
 
   drawGlesmosSketchToCtx(
-    compiledGL: CompiledGL,
+    compiledGL: GLesmosShaderPackage, // comes from exportAsGLesmos
     ctx: CanvasRenderingContext2D,
     transforms: ViewportTransforms,
     id: string
   ) {
-    const compiledGLString = [
-      compiledGL.deps.join("\n"),
-      compiledGL.defs.join("\n"),
-      // Non-premultiplied alpha:
-      `vec4 mixColor(vec4 from, vec4 top) {
-        float a = 1.0 - (1.0 - from.a) * (1.0 - top.a);
-        return vec4((from.rgb * from.a * (1.0 - top.a) + top.rgb * top.a) / a, a);
-      }`,
-      "void glesmosMain(vec2 coords) {",
-      "  outColor = vec4(0.0);",
-      "  float x = coords.x; float y = coords.y;",
-      compiledGL.bodies.join("\n"),
-      "}",
-    ].join("\n");
-    try {
-      if (this.canvas?.element) {
-        this.canvas.updateTransforms(transforms);
-        this.canvas?.setGLesmosShader(compiledGLString, id);
-        this.canvas?.render();
-        ctx.drawImage(this.canvas?.element, 0, 0);
-      }
-    } catch (e) {
-      const model = Calc.controller.getItemModel(id);
-      if (model) {
-        model.error = e instanceof Error ? e.message : e;
+    const deps = compiledGL.deps.join("\n");
+    for( let i in compiledGL.defs ){ // outlines will give us problems if we group these
+      try {
+        if (this.canvas?.element) {
+          this.canvas.updateTransforms(transforms);
+          this.canvas?.buildGLesmosShaders(
+            id,
+            {deps: deps, def: compiledGL.defs[i], color: compiledGL.colors[i]}
+          );
+          this.canvas?.render();
+          ctx.drawImage(this.canvas?.element, 0, 0);
+        }
+      } catch (e) {
+        const model = Calc.controller.getItemModel(id);
+        if (model) {
+          model.error = e instanceof Error ? e.message : e;
+        }
       }
     }
   }
-}
-
-interface CompiledGL {
-  deps: string[];
-  defs: string[];
-  bodies: string[];
 }
