@@ -106,6 +106,19 @@ function getShaderProgram(
   return shaderProgram;
 }
 
+function createAndBindTexture(
+  gl: WebGL2RenderingContext
+) {
+  const tex = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  return tex;
+}
+
 type UniformType = '1f' | '2fv' | '3fv' | '4fv' | '1i'; // TODO: this isn't very typesafe!
 function setUniform(
   gl: WebGL2RenderingContext,
@@ -120,7 +133,6 @@ function setUniform(
     uniformValue,
   )
 };
-
 
 const FULLSCREEN_QUAD = new Float32Array([
   -1, 1, 1, 1, 1, -1, -1, 1, 1, -1, -1, -1,
@@ -265,13 +277,13 @@ vec4 Step(in vec2 fragCoord){
 //= =================== Output ===================
 void main(){
   if ( setupMode == 1 ){
-    outColor = Setup( texCoord );
+    outColor = Setup( texCoord * size + corner );
   }
   else if( setupMode == 0 ){
-    outColor = Step( texCoord );
+    outColor = Step( texCoord * size + corner );
   }
   else{
-    vec4 jfa = getPixel( texCoord );
+    vec4 jfa = getPixel( texCoord * size + corner );
     float dist = JFA_getDistance(jfa);
     vec3 color = vec3( clamp(3.0-dist,0.0,1.0) );
     outColor = vec4(color, 1.0);
@@ -291,8 +303,7 @@ export function initGLesmosCanvas() {
     antialias: true,
   }) as WebGL2RenderingContext
 
-  gl.getExtension('OES_texture_float');
-  gl.getExtension('WEBGL_color_buffer_float');
+  gl.getExtension("EXT_color_buffer_float");
 
   //= ================ INIT WEBGL STUFF ================
 
@@ -300,9 +311,26 @@ export function initGLesmosCanvas() {
   gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, FULLSCREEN_QUAD, gl.STATIC_DRAW);
 
+  const initialTexture = createAndBindTexture(gl);
+
+  const textures: (WebGLTexture | null)[] = [];
+  const framebuffers: (WebGLFramebuffer | null)[] = [];
+  let activeFb = 0;
+  for (let i = 0; i < 2; i++) {
+    const tex = createAndBindTexture(gl);
+    const fb  = gl.createFramebuffer();
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+
+    textures.push(tex);
+    framebuffers.push(fb);
+  }
+
   //= ================ SHADER OBJECTS ================
 
   let glesmos_SDF: GLesmosProgram | null;
+  const glesmos_BufferCopy = buildShaderProgram(gl, VERTEX_SHADER, BUFFER_COPY_SHADER, "lol");
   let glesmos_SDF_requiredSteps: number;
 
   //= ================ GRAPH BOUNDS ======================
@@ -325,6 +353,14 @@ export function initGLesmosCanvas() {
 
     cornerOfGraph = [p2m.tx, p2m.sy * h + p2m.ty];
     sizeOfGraph = [p2m.sx * w, -p2m.sy * h];
+
+    for (const tex of textures) { // resize the framebuffer textures
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, w, h, 0, gl.RGBA, gl.FLOAT, null);
+    }
+    gl.bindTexture(gl.TEXTURE_2D, initialTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, w, h, 0, gl.RGBA, gl.FLOAT, null);    
+
   };
 
   const setupGLesmosEnvironment = (program: GLesmosProgram) => {
@@ -357,10 +393,38 @@ export function initGLesmosCanvas() {
 
     gl.useProgram(glesmos_SDF);
     {
+
+      activeFb = 0;
+
       setupGLesmosEnvironment(glesmos_SDF);
+      
+      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[activeFb]); // draw to texture 0
+      
+      setUniform(gl, glesmos_SDF, "c_maxSteps", "1f", glesmos_SDF_requiredSteps);
+      setUniform(gl, glesmos_SDF, "direction", "1f", +1.0);
+
+      setUniform(gl, glesmos_SDF, "setupMode", "1i", 1);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+      setUniform(gl, glesmos_SDF, "setupMode", "1i", 0);
+      
+      for (let i = 0; i < glesmos_SDF_requiredSteps; i++) {
+
+        gl.bindTexture(gl.TEXTURE_2D, textures[activeFb]);
+        activeFb = 1 - activeFb;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[activeFb]);
+        setUniform(gl, glesmos_SDF, "c_stepNum", "1f", i);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+      }
+
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null); // now draw to the screen
+      setUniform(gl, glesmos_SDF, "setupMode", "1i", -1); // debug jfa
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      
     }
     gl.useProgram(null);
+
   };
 
   const render = () => {
