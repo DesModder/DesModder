@@ -91,8 +91,8 @@ function getShaderProgram(
     shaderProgram,
     'vertexPosition',
   );
-  shaderProgram.corner = gl.getUniformLocation(shaderProgram, 'corner');
-  shaderProgram.size = gl.getUniformLocation(shaderProgram, 'size');
+  shaderProgram.corner = gl.getUniformLocation(shaderProgram, 'graphCorner');
+  shaderProgram.size = gl.getUniformLocation(shaderProgram, 'graphSize');
   shaderProgram.NaN = gl.getUniformLocation(shaderProgram, 'NaN');
   shaderProgram.Infinity = gl.getUniformLocation(shaderProgram, 'Infinity');
   
@@ -158,29 +158,18 @@ in highp vec2 vertexPosition;
 out vec2 texCoord;
 
 void main() {
-  texCoord = vertexPosition * 0.5 + 0.5;
+  texCoord    = vertexPosition * 0.5 + 0.5;
   gl_Position = vec4(vertexPosition, 0.0, 1.0);
-}
-`;
-
-const BUFFER_COPY_SHADER = `#version 300 es
-precision highp float;
-uniform sampler2D sampler;
-in vec2 texCoord;
-out vec4 outColor;
-
-void main(){
-  outColor = texture(sampler, texCoord);
 }
 `;
 
 const GLESMOS_ENVIRONMENT = `#version 300 es
 precision highp float;
-in vec2 texCoord;
+in  vec2 texCoord;
 out vec4 outColor;
 
-uniform vec2 corner;
-uniform vec2 size;
+uniform vec2  graphCorner;
+uniform vec2  graphSize;
 uniform float NaN;
 uniform float Infinity;
 
@@ -198,6 +187,7 @@ uniform int       setupMode;
 uniform float     c_maxSteps;
 uniform float     c_stepNum;
 uniform float     direction;
+uniform vec2      canvasSize;
 
 // dependencies
 ${chunks.deps}
@@ -236,33 +226,32 @@ float JFA_getDistance( in vec4 jfa ){
 
 //= =================== JFA Main ===================
 
-vec4 getPixel( in vec2 coord ){
-  return texture( sampler, (coord - corner) / size );
+vec4 getPixel( in vec2 texCoord ){
+  return texture( sampler, texCoord );
 }
 
-vec4 Setup(in vec2 fragCoord){
-  vec2 transform = fragCoord * size + corner;
-
-  if( _f0(transform.x, transform.y) * direction > 0.0 ) return newJFA(fragCoord, 0.0);
+vec4 Setup(in vec2 mathCoord){
+  if( _f0(mathCoord.x, mathCoord.y) * direction > 0.0 ) return newJFA(mathCoord, 0.0);
   else return vec4(0.0);
 }
 
-vec4 Step(in vec2 fragCoord){
+vec4 Step(in vec2 texCoord, in vec2 mathCoord){
 
-  float stepwidth = floor( exp2(c_maxSteps - c_stepNum)-1.0 );
+  float stepwidth = floor( exp2(c_maxSteps - c_stepNum) - 1.0 );
+  float maxSize = exp2(c_maxSteps);
   
   float bestDistance = 9999.0;
   vec2  bestCoord    = vec2(0.0);
   
   for (int n = 0; n < 9; n++) {
     
-    vec2 sampleCoord = fragCoord + JFA_kernel[n] * stepwidth;
+    vec2 sampleCoord = texCoord + JFA_kernel[n] / maxSize * stepwidth;
     vec4 jfa         = getPixel( sampleCoord );
 
     if( JFA_isUndefined(jfa) ) continue;
     
     vec2  seed = JFA_getSeed(jfa);
-    float dist = length( seed - fragCoord );
+    float dist = length( (seed - mathCoord) * canvasSize / graphSize );
     
     if (dist < bestDistance){
       bestDistance = dist;
@@ -276,17 +265,20 @@ vec4 Step(in vec2 fragCoord){
 
 //= =================== Output ===================
 void main(){
+
+  vec2 mathCoord = texCoord * graphSize + graphCorner;
+
   if ( setupMode == 1 ){
-    outColor = Setup( texCoord * size + corner );
+    outColor = Setup( mathCoord );
   }
   else if( setupMode == 0 ){
-    outColor = Step( texCoord * size + corner );
+    outColor = Step( texCoord, mathCoord );
   }
   else{
-    vec4 jfa = getPixel( texCoord * size + corner );
+    vec4 jfa = getPixel( texCoord );
     float dist = JFA_getDistance(jfa);
-    vec3 color = vec3( clamp(3.0-dist,0.0,1.0) );
-    outColor = vec4(color, 1.0);
+    vec3 color = vec3( clamp(dist,0.0,1.0) );
+    outColor = vec4( color, 1.0 );
   }
 }
 `;
@@ -330,7 +322,7 @@ export function initGLesmosCanvas() {
   //= ================ SHADER OBJECTS ================
 
   let glesmos_SDF: GLesmosProgram | null;
-  const glesmos_BufferCopy = buildShaderProgram(gl, VERTEX_SHADER, BUFFER_COPY_SHADER, "lol");
+  // const glesmos_BufferCopy = buildShaderProgram(gl, VERTEX_SHADER, BUFFER_COPY_SHADER, "lol");
   let glesmos_SDF_requiredSteps: number;
 
   //= ================ GRAPH BOUNDS ======================
@@ -402,6 +394,7 @@ export function initGLesmosCanvas() {
       
       setUniform(gl, glesmos_SDF, "c_maxSteps", "1f", glesmos_SDF_requiredSteps);
       setUniform(gl, glesmos_SDF, "direction", "1f", +1.0);
+      setUniform(gl, glesmos_SDF, "canvasSize", "2fv", [c.width, c.height]);
 
       setUniform(gl, glesmos_SDF, "setupMode", "1i", 1);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
