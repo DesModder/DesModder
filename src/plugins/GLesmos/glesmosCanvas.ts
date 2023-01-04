@@ -39,10 +39,10 @@ function buildShaderProgram(
   frag: string,
   _id: string,
 ) {
-  console.group('buildShaderProgram');
-  console.log('vert: %c\n' + vert, 'color: #fc83fc;');
-  console.log('frag: %c\n' + frag, 'color: #fc83fc;');
-  console.groupEnd();
+  // console.group('buildShaderProgram');
+  // console.log('vert: %c\n' + vert, 'color: #fc83fc;');
+  // console.log('frag: %c\n' + frag, 'color: #fc83fc;');
+  // console.groupEnd();
   const shaderProgram = gl.createProgram();
   if (shaderProgram === null) {
     glesmosError('Unable to create shader program!');
@@ -192,7 +192,7 @@ void main(){
   float dist2 = JFA_getDistance( texture(positive, texCoord) );
 
   float dist = max(dist1, dist2);
-  float alpha = clamp(radius-dist,0.0,1.0);
+  float alpha = clamp( (radius + 1.0)*0.5 - dist, 0.0, 1.0 );
   outColor = vec4(1.0, 1.0, 1.0, alpha);
 }
 `;
@@ -447,7 +447,7 @@ export function initGLesmosCanvas() {
       gl.bindTexture(gl.TEXTURE_2D, textures[3]);
       setUniform(gl, glesmos_mergeSDFs, "positive", "1i", 1);
 
-      setUniform(gl, glesmos_mergeSDFs, "radius", "1f", 2.0); // test radius
+      setUniform(gl, glesmos_mergeSDFs, "radius", "1f", 5.0); // test radius
 
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
