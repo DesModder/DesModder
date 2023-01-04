@@ -177,6 +177,26 @@ uniform float Infinity;
 #define M_E 2.71828182845904523536028747135266
 `;
 
+const MERGE_SHADER = `${GLESMOS_ENVIRONMENT}
+
+uniform sampler2D positive;
+uniform sampler2D negative;
+uniform float     radius;
+
+float JFA_getDistance( in vec4 jfa ){
+  return jfa[2];
+}
+
+void main(){
+  float dist1 = JFA_getDistance( texture(negative, texCoord) );
+  float dist2 = JFA_getDistance( texture(positive, texCoord) );
+
+  float dist = max(dist1, dist2);
+  float alpha = clamp(radius-dist,0.0,1.0);
+  outColor = vec4(1.0, 1.0, 1.0, alpha);
+}
+`;
+
 // = ===================== WebGL Source Generators ======================
 
 function glesmos_SDF_Source(chunks: GLesmosShaderChunks) {
@@ -226,10 +246,6 @@ float JFA_getDistance( in vec4 jfa ){
 
 //= =================== JFA Main ===================
 
-vec4 getPixel( in vec2 texCoord ){
-  return texture( sampler, texCoord );
-}
-
 vec4 Setup(in vec2 mathCoord){
   if( _f0(mathCoord.x, mathCoord.y) * direction > 0.0 ) return newJFA(mathCoord, 0.0);
   else return vec4(0.0);
@@ -246,7 +262,7 @@ vec4 Step(in vec2 texCoord, in vec2 mathCoord){
   for (int n = 0; n < 9; n++) {
     
     vec2 sampleCoord = texCoord + JFA_kernel[n] / maxSize * stepwidth;
-    vec4 jfa         = getPixel( sampleCoord );
+    vec4 jfa         = texture( sampler, sampleCoord );
 
     if( JFA_isUndefined(jfa) ) continue;
     
@@ -265,20 +281,13 @@ vec4 Step(in vec2 texCoord, in vec2 mathCoord){
 
 //= =================== Output ===================
 void main(){
-
   vec2 mathCoord = texCoord * graphSize + graphCorner;
 
   if ( setupMode == 1 ){
     outColor = Setup( mathCoord );
   }
-  else if( setupMode == 0 ){
+  else {
     outColor = Step( texCoord, mathCoord );
-  }
-  else{
-    vec4 jfa = getPixel( texCoord );
-    float dist = JFA_getDistance(jfa);
-    vec3 color = vec3( clamp(dist,0.0,1.0) );
-    outColor = vec4( color, 1.0 );
   }
 }
 `;
@@ -308,7 +317,7 @@ export function initGLesmosCanvas() {
   const textures: (WebGLTexture | null)[] = [];
   const framebuffers: (WebGLFramebuffer | null)[] = [];
   let activeFb = 0;
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 4; i++) {
     const tex = createAndBindTexture(gl);
     const fb  = gl.createFramebuffer();
 
@@ -322,8 +331,9 @@ export function initGLesmosCanvas() {
   //= ================ SHADER OBJECTS ================
 
   let glesmos_SDF: GLesmosProgram | null;
-  // const glesmos_BufferCopy = buildShaderProgram(gl, VERTEX_SHADER, BUFFER_COPY_SHADER, "lol");
   let glesmos_SDF_requiredSteps: number;
+
+  const glesmos_mergeSDFs = getShaderProgram(gl, "lol", VERTEX_SHADER, MERGE_SHADER);
 
   //= ================ GRAPH BOUNDS ======================
 
@@ -380,7 +390,7 @@ export function initGLesmosCanvas() {
     );
   };
 
-  const drawSDF1 = () => {
+  const drawSDF = (direction: number, resultLocation: number) => {
     if (!glesmos_SDF) glesmosError('SDF shader failed.');
 
     gl.useProgram(glesmos_SDF);
@@ -390,29 +400,30 @@ export function initGLesmosCanvas() {
 
       setupGLesmosEnvironment(glesmos_SDF);
       
+      gl.activeTexture(gl.TEXTURE0);
       gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[activeFb]); // draw to texture 0
+      gl.bindTexture(gl.TEXTURE_2D, null);
       
       setUniform(gl, glesmos_SDF, "c_maxSteps", "1f", glesmos_SDF_requiredSteps);
-      setUniform(gl, glesmos_SDF, "direction", "1f", +1.0);
+      setUniform(gl, glesmos_SDF, "direction", "1f", direction);
       setUniform(gl, glesmos_SDF, "canvasSize", "2fv", [c.width, c.height]);
-
       setUniform(gl, glesmos_SDF, "setupMode", "1i", 1);
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-      setUniform(gl, glesmos_SDF, "setupMode", "1i", 0);
       
       for (let i = 0; i < glesmos_SDF_requiredSteps; i++) {
 
-        gl.bindTexture(gl.TEXTURE_2D, textures[activeFb]);
-        activeFb = 1 - activeFb;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[activeFb]);
-        setUniform(gl, glesmos_SDF, "c_stepNum", "1f", i);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
+        
+        setUniform(gl, glesmos_SDF, "setupMode", "1i", 0);
+
+        gl.bindTexture(gl.TEXTURE_2D, textures[activeFb]);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[1-activeFb]);
+
+        setUniform(gl, glesmos_SDF, "c_stepNum", "1f", i);
+        activeFb = 1 - activeFb;
 
       }
 
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null); // now draw to the screen
-      setUniform(gl, glesmos_SDF, "setupMode", "1i", -1); // debug jfa
+      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[resultLocation]); // dump output to a texture
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       
     }
@@ -420,8 +431,36 @@ export function initGLesmosCanvas() {
 
   };
 
+  const mergeSDFs = () => {
+    if (!glesmos_mergeSDFs) glesmosError('SDF shader failed.');
+
+    gl.useProgram(glesmos_mergeSDFs);
+    {
+
+      setupGLesmosEnvironment(glesmos_mergeSDFs);
+
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, textures[2]);
+      setUniform(gl, glesmos_mergeSDFs, "positive", "1i", 0);
+
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, textures[3]);
+      setUniform(gl, glesmos_mergeSDFs, "positive", "1i", 1);
+
+      setUniform(gl, glesmos_mergeSDFs, "radius", "1f", 2.0); // test radius
+
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+    }
+    gl.useProgram(null);
+
+  };
+
   const render = () => {
-    drawSDF1();
+    drawSDF(+1.0, 2);
+    drawSDF(-1.0, 3);
+    mergeSDFs();
   };
 
   //= ================ CLEANUP ================
