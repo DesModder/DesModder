@@ -1,5 +1,9 @@
 # DesModder Changelog
 
+## 0.9.1
+
+Fixes a loading race condition introduced by the previous release.
+
 ## 0.9.0
 
 Another emergency bugfix; fixes the loading error.
