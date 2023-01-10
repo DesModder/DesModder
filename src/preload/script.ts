@@ -106,14 +106,28 @@ if (window.ALMOND_OVERRIDES !== undefined) {
   );
 }
 
+function newRequire(
+  deps: string[],
+  callback: Function,
+  relName?: any,
+  forceSync?: any,
+  alt?: any
+) {
+  if (deps.includes("toplevel/calculator_desktop")) {
+    return almond.require(deps, runDesModder);
+  } else {
+    return almond.require(deps, callback, relName, forceSync, alt);
+  }
+}
+
 window.ALMOND_OVERRIDES = {
   define: newDefine,
-  require: almond.require,
-  requirejs: almond.requirejs,
+  require: newRequire,
+  requirejs: newRequire,
 };
 
 window.define = newDefine;
-window.require = almond.require;
+(window as any).require = newRequire;
 
 function alertFailure() {
   /* Assuming only the DOM API is available */
@@ -159,7 +173,6 @@ function alertFailure() {
 }
 
 function runDesModder() {
-  // following lines added
   listenToMessageDown((message) => {
     if (message.type === "set-script-url") {
       injectScript(message.value);
@@ -189,7 +202,6 @@ void pollForValue(
   script.onload = () => {
     // remove from DOM
     script.remove();
-    runDesModder();
   };
   script.onerror = () => {
     console.error("Injected script onerror");
