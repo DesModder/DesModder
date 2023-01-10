@@ -64,5 +64,6 @@ export function getSections(
   return getSectionsProto.apply({ model });
 }
 
-export const getCurrentGraphTitle =
-  Calc._calc.globalHotkeys.graphsController.getCurrentGraphTitle;
+export function getCurrentGraphTitle(): string | undefined {
+  return Calc._calc.globalHotkeys?.graphsController?.getCurrentGraphTitle();
+}
