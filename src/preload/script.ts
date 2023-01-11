@@ -114,7 +114,7 @@ function newRequire(
   alt?: any
 ) {
   if (deps.includes("toplevel/calculator_desktop")) {
-    return almond.require(deps, runDesModder);
+    return almond.require(deps, tryRunDesModder);
   } else {
     return almond.require(deps, callback, relName, forceSync, alt);
   }
@@ -170,6 +170,15 @@ function alertFailure() {
     </ol>
   `;
   document.body.appendChild(outerFailure);
+}
+
+/** The calculator is not loaded as soon as toplevel/calculator_desktop is
+ * loaded; toplevel/calculator_desktop sneakily contains a thenable, so it
+ * returns before actually initializing the calculator. This leads to a race
+ * condition, so poll for Calc being ready. */
+function tryRunDesModder() {
+  if (window.Calc !== undefined) runDesModder();
+  else setTimeout(tryRunDesModder, 10);
 }
 
 function runDesModder() {
