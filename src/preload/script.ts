@@ -1,3 +1,4 @@
+import * as almond from "./almond";
 import moduleReplacements from "./moduleReplacements";
 import { tryApplyReplacement } from "./replacementHelpers/applyReplacement";
 import { Block, ModuleBlock } from "./replacementHelpers/parse";
@@ -23,8 +24,6 @@ function matchingReplacements(moduleName: string) {
   return mr;
 }
 
-// assumes `oldDefine` gets defined before `newDefine` is needed
-let oldDefine!: typeof window["define"];
 function newDefine(
   moduleName: string,
   dependencies: string[],
@@ -48,7 +47,7 @@ function newDefine(
   if (moduleName === "toplevel/calculator_desktop") {
     doneLoading();
   }
-  return oldDefine(moduleName, dependencies, definition);
+  return almond.define(moduleName, dependencies, definition);
 }
 
 function overrideWorkerSource(src: string) {
@@ -106,20 +105,29 @@ if (window.ALMOND_OVERRIDES !== undefined) {
       "so try disabling Tampermonkey scripts."
   );
 }
-// trick to override `define`s
-window.ALMOND_OVERRIDES = new Proxy(
-  {},
-  {
-    get(target, prop, receiver) {
-      if (prop === "define") {
-        oldDefine = window.define;
-        return newDefine;
-      } else {
-        return Reflect.get(target, prop, receiver);
-      }
-    },
+
+function newRequire(
+  deps: string[],
+  callback: Function,
+  relName?: any,
+  forceSync?: any,
+  alt?: any
+) {
+  if (deps.includes("toplevel/calculator_desktop")) {
+    return almond.require(deps, tryRunDesModder);
+  } else {
+    return almond.require(deps, callback, relName, forceSync, alt);
   }
-);
+}
+
+window.ALMOND_OVERRIDES = {
+  define: newDefine,
+  require: newRequire,
+  requirejs: newRequire,
+};
+
+window.define = newDefine;
+(window as any).require = newRequire;
 
 function alertFailure() {
   /* Assuming only the DOM API is available */
@@ -157,8 +165,6 @@ function alertFailure() {
         If #3 worked, DO NOT report this to Desmos. This is an issue with DesModder.
         Please report this to the DesModder devs on
         <a href="https://github.com/DesModder/DesModder/issues/new">GitHub</a>
-        or
-        <a href="https://discord.gg/SdFsURWKvF">Discord</a>
         so we can fix it prompty.
       </li>
     </ol>
@@ -166,40 +172,27 @@ function alertFailure() {
   document.body.appendChild(outerFailure);
 }
 
-function runCalculator() {
-  /* The following script should have failed earlier because we blocked calculator_desktop.js.
-  We copy it verbatim here to actually load the calculator. */
+/** The calculator is not loaded as soon as toplevel/calculator_desktop is
+ * loaded; toplevel/calculator_desktop sneakily contains a thenable, so it
+ * returns before actually initializing the calculator. This leads to a race
+ * condition, so poll for Calc being ready. */
+function tryRunDesModder() {
+  if (window.Calc !== undefined) runDesModder();
+  else setTimeout(tryRunDesModder, 10);
+}
 
-  window.require(
-    ["toplevel/calculator_desktop", "testbridge", "jquery"],
-    function (calcPromise: any, TestBridge: any, $: any) {
-      $(".dcg-loading-div-container").hide();
-      if (calcPromise === undefined) {
-        console.error("No calc promise");
-        alertFailure();
-      }
-      calcPromise.then(function (calc: any) {
-        if (calc === undefined) {
-          console.error("No calc");
-          alertFailure();
-        }
-        window.Calc = calc;
-        TestBridge.ready();
-        // following lines added
-        listenToMessageDown((message) => {
-          if (message.type === "set-script-url") {
-            injectScript(message.value);
-            // cancel listener
-            return true;
-          }
-          return false;
-        });
-        postMessageUp({
-          type: "get-script-url",
-        });
-      });
+function runDesModder() {
+  listenToMessageDown((message) => {
+    if (message.type === "set-script-url") {
+      injectScript(message.value);
+      // cancel listener
+      return true;
     }
-  );
+    return false;
+  });
+  postMessageUp({
+    type: "get-script-url",
+  });
 }
 
 void pollForValue(
@@ -218,7 +211,6 @@ void pollForValue(
   script.onload = () => {
     // remove from DOM
     script.remove();
-    runCalculator();
   };
   script.onerror = () => {
     console.error("Injected script onerror");

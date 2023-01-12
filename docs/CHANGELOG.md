@@ -1,5 +1,19 @@
 # DesModder Changelog
 
+## 0.9.2
+
+Fixes another race condition preventing loading under certain conditions.
+
+## 0.9.1
+
+Fixes a loading race condition introduced by the previous release.
+
+## 0.9.0
+
+Another emergency bugfix; fixes the loading error.
+
+Also comes with some performance improvements from an overhaul of the patching system.
+
 ## 0.8.7
 
 Emergency bugfix after Desmos changed a bunch of internals.
