@@ -2,6 +2,6 @@ You can install the stable version of DesModder [directly from the Chrome Web St
 
 The extension updates every few weeks (see DesModder releases page for a history).
 
-If you want to update the extension to a release yourself (useful for chrome because the chrome webstore is behind on the current release by a few days) (useful for hotfixes that are applied), you can go to [Releases](https://github.com/DesModder/DesModder/releases) and download dist-chrome.zip (or dist-ff.zip for Firefox). Then unzip the file, go to manage extensions page in your browser (usually right click an extension or extension icon), enable Developer Mode, and then select load unpacked. Then select the unzipped extension folder in your system, and click open. 
+If you want to update the extension on the latest release yourself (useful for chrome because the chrome webstore is behind on the current release by a few days) (useful for hotfixes that are applied), you can go to [Releases](https://github.com/DesModder/DesModder/releases) and download the latest dist-chrome.zip (or dist-ff.zip for Firefox). Then unzip the file, go to manage extensions page in your browser (usually right click an extension or extension icon), enable Developer Mode, and then select load unpacked. Then select the unzipped extension folder in your system, and click open.
 
-If you want to get new features early, follow the instructions in https://github.com/DesModder/DesModder/wiki/Development#Setup, keeping in mind these may not always work at all times.
+If you want to get new features even earlier, follow the instructions in https://github.com/DesModder/DesModder/wiki/Development#Setup, keeping in mind these may not always work at all times.
