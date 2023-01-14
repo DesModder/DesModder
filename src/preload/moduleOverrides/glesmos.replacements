@@ -158,9 +158,9 @@ __body__
 
 ## Replace quadtree implicit tracing with glesmos compilation
 
-This will be applied in the worker.
-
 *module* `core/math/features/graph`
+
+*worker_only*
 
 *Find* 
 ```js

@@ -1,8 +1,9 @@
 import * as almond from "./almond";
 import moduleReplacements from "./moduleReplacements";
 import { tryApplyReplacement } from "./replacementHelpers/applyReplacement";
-import { isModuleBlock } from "./replacementHelpers/parse";
+import { isModuleBlock, ModuleBlock } from "./replacementHelpers/parse";
 import window from "globals/window";
+import jsTokens from "js-tokens";
 import injectScript from "utils/injectScript";
 import { postMessageUp, listenToMessageDown } from "utils/messages";
 import { pollForValue } from "utils/utils";
@@ -11,7 +12,7 @@ import { pollForValue } from "utils/utils";
 time to set ALMOND_OVERRIDES and replace module definitions */
 
 // workerAppend will get filled in from a message
-// let workerAppend: string = "console.error('worker append not filled in ')";
+let workerAppend: string = "console.error('worker append not filled in')";
 
 if (window.ALMOND_OVERRIDES !== undefined) {
   window.alert(
@@ -65,7 +66,54 @@ void pollForValue(getCalcDesktopURL).then(async (srcURL: string) => {
   /* we blocked calculator_desktop.js earlier to ensure that the preload/override script runs first.
   Now we load it, but with '?' appended to prevent the web request rules from blocking it */
   const calcDesktop = await (await fetch(srcURL + "?")).text();
-  const newCode = moduleReplacements.filter(isModuleBlock).reduce((src, r) => {
+  // Apply replacements
+  const newCode = applyReplacements(
+    moduleReplacements.filter(isModuleBlock).filter((r) => !r.workerOnly),
+    calcDesktop
+  );
+  const newerCode = applyWorkerReplacements(newCode);
+  // tryRunDesModder polls until the following eval'd code is done.
+  tryRunDesModder();
+  // eslint-disable-next-line no-eval
+  eval(newerCode);
+});
+
+function applyWorkerReplacements(src: string): string {
+  // Apply replacements to the worker. This could also be done by tweaking the
+  // Worker constructor, but currently all of these replacements could be
+  // performed outside the main page
+  const tokens = Array.from(jsTokens(src));
+  const workerCodeTokens = tokens.filter(
+    (x) =>
+      x.type === "StringLiteral" &&
+      x.value.length > 200000 &&
+      // JS is sure to have &&. Protects against translations getting longer
+      // than the length cutoff, which is intentionally low in case of huge
+      // improvements in minification.
+      x.value.includes("&&")
+  );
+  if (workerCodeTokens.length > 1)
+    throw new Error("More than one worker code found");
+  const wcToken = workerCodeTokens[0];
+  wcToken.value = JSON.stringify(
+    // Place at the beginning of the code for the source mapping to line up
+    // Call at the end of the code to run after modules defined
+    `function loadDesModderWorker(){${workerAppend}\n}` +
+      applyReplacements(
+        moduleReplacements.filter(isModuleBlock).filter((r) => r.workerOnly),
+        // JSON.parse doesn't work because this is a single-quoted string.
+        // js-tokens tokenized this as a string anyway, so it should be
+        // safely eval'able to a string.
+        // eslint-disable-next-line no-eval
+        eval(wcToken.value) as string
+      ) +
+      "\nloadDesModderWorker();"
+  );
+  return tokens.map((x) => x.value).join("");
+}
+
+function applyReplacements(repls: ModuleBlock[], src: string) {
+  return repls.reduce((src, r) => {
     console.log("applying replacement intended for module", r.modules);
     return tryApplyReplacement(
       r,
@@ -73,17 +121,14 @@ void pollForValue(getCalcDesktopURL).then(async (srcURL: string) => {
       moduleReplacements,
       "temporary-any-module"
     );
-  }, calcDesktop);
-  tryRunDesModder();
-  // eslint-disable-next-line no-eval
-  eval(newCode);
-});
+  }, src);
+}
 
 listenToMessageDown((message) => {
   if (message.type === "set-worker-append-url") {
-    // void fetch(message.value).then(async (response) => {
-    //   workerAppend = await response.text();
-    // });
+    void fetch(message.value).then(async (response) => {
+      workerAppend = await response.text();
+    });
     // cancel listener
     return true;
   }

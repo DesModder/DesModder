@@ -23,6 +23,7 @@ export interface ModuleBlock extends BaseBlock {
   modules: string[];
   plugin: string;
   replaceCommands: Command[];
+  workerOnly: boolean;
 }
 
 export interface Command {
@@ -104,10 +105,18 @@ function parseBlock(
       `Command *module* must have at least one argument`
     );
   const commands: Command[] = [];
+  let workerOnly = false;
   for (let i = 0; i < tokens.length; ) {
     const token = tokens[i];
     if (token.tag === "heading") {
       throw new ReplacementError("Subheadings not yet implemented");
+    } else if (token.tag === "emph" && token.command === "worker_only") {
+      if (start.command !== "module")
+        throw new ReplacementError(
+          `Command *worker_only* can only be used in a replacement`
+        );
+      workerOnly = true;
+      i++;
     } else if (token.tag === "emph") {
       const nextToken = tokens[i + 1];
       const code = nextToken?.tag === "code" ? nextToken : undefined;
@@ -129,6 +138,7 @@ function parseBlock(
         replaceCommands: commands.filter((x) => x.command === "replace"),
         plugin,
         modules: start.args,
+        workerOnly,
       }
     : {
         tag: "DefineBlock",
