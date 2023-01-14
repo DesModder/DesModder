@@ -32,6 +32,10 @@ export interface Command {
   patternArg?: PatternToken[];
 }
 
+export function isModuleBlock(b: Block): b is ModuleBlock {
+  return b.tag === "ModuleBlock";
+}
+
 export default function parseFile(
   fileString: string,
   filename: string

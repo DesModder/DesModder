@@ -32,11 +32,7 @@ This is relevant to both pin-expressions and text-mode.
 
 *module* `expressions/list-view`
 
-*Find_template* => `template`
-
-*Find_this* inside `template` => `this`
-
-*Find* inside `template`
+*Find* => `element`
 ```js
 $DCGView.createElement(
   "div",
@@ -51,6 +47,10 @@ $DCGView.createElement(
   __children__
 )
 ```
+
+*Find_surrounding_template* `element` => `template`
+
+*Find_this* inside `template` => `this`
 
 *Replace* `children` with
 ```js

@@ -13,16 +13,18 @@ Adds a helper function for use below.
 *Find* => `start`
 ```js
 "use strict";
-```
-
-*Find*
-```js
-$Tooltip.Tooltip
+Object.defineProperty($, "__esModule", { value: !0 }),
+  $.ExpressionEditActions = void 0;
 ```
 
 *Find*
 ```js
 $DCGView.createElement(
+  $Tooltip.Tooltip,
+  {
+    tooltip: $.bindFn($.getConvertTooltip),
+    gravity: $.const('s')
+  },
 ```
 
 *Replace* `start` with
@@ -60,11 +62,7 @@ Insert before the delete button but before the other buttons.
 
 *module* `expressions/expression-edit-actions`
 
-*Find_template* => `template`
-
-*Find_this* `template` => `this`
-
-*Find* inside `template`
+*Find* => `element`
 ```js
 return $DCGView.createElement(
   'span',
@@ -83,6 +81,10 @@ return $DCGView.createElement(
   __delete_button__
 )
 ```
+
+*Find_surrounding_template* `element` => `template`
+
+*Find_this* `template` => `this`
 
 *Replace* `delete_button` with
 ```js

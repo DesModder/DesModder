@@ -6,23 +6,41 @@
 
 *Module* `expressions/expression-menus/fill`
 
-*Find_template* => `template`
+*Find* => `element`
+```js
+return $DCGView.createElement(
+  'div',
+  { class: $DCGView.const('dcg-options-menu-content') },
+  $DCGView.createElement(
+    'div',
+    {
+      class: $DCGView.const(
+        'dcg-iconed-mathquill-row dcg-fill-opacity-row'
+      )
+    },
+    __rest0__
+  ),
+  __rest1__
+)
+```
+
+*Find* inside `element`
+```js
+return $.createElement(
+  'div',
+  { class: $.const('dcg-options-menu-content') },
+  __rest__
+)
+```
+
+*Find_surrounding_template* `element` => `template`
+
+*Find_this* `template` => `this`
 
 *Find* inside `template`
 
 ```js
 .createElement($ToggleView.ToggleView
-```
-
-*Find_this* `template` => `this`
-
-*Find* inside `template`
-```js
-return $DCGView.createElement(
-  'div',
-  { class: $DCGView.const('dcg-options-menu-content') },
-  __rest__
-)
 ```
 
 Just add one more child.

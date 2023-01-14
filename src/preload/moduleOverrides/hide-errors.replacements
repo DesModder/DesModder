@@ -28,18 +28,21 @@ if (
 
 Wrap the error message tooltipped-error with a div, using `onTap` to trigger hiding/showing the error (but only when shift is held).
 
-*Find_template* => `template`
+*Find* => `from`
+```js
+error: function () {
+  return $DCGView.createElement($T.TooltippedError, {
+    error: $e.bindFn($e.getErrorMsg),
+    __opts__
+  })
+}
+```
+
+*Find_surrounding_template* `from` => `template`
 
 *Find* inside `template`
 ```js
 $this.bindFn($this.getIconMode)
-```
-
-*Find* inside `template` => `from`
-```js
-error: function () {
-  return $DCGView.createElement($T.TooltippedError, { <body> })
-}
 ```
 
 *Replace* `from` with
@@ -57,7 +60,10 @@ error: () => $DCGView.createElement(
         : ""
     )
   },
-  $DCGView.createElement($T.TooltippedError, { <body> })
+  $DCGView.createElement($T.TooltippedError, {
+    error: $e.bindFn($e.getErrorMsg),
+    __opts__
+  })
 )
 ```
 
@@ -83,11 +89,7 @@ var $r = $e.hasClass('dcg-all')
 
 *module* `expressions/promptslider_view`
 
-*Find_template* => `template`
-
-*Find_this* `template` => `this`
-
-*Find* inside `template`
+*Find* => `element`
 ```js
 $DCGView.createElement(
   'span',
@@ -95,6 +97,10 @@ $DCGView.createElement(
   __children__
 )
 ```
+
+*Find_surrounding_template* `element` => `template`
+
+*Find_this* `template` => `this`
 
 Add one more child for the hide button
 

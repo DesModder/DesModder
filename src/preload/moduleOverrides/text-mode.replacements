@@ -24,7 +24,16 @@
 
 *module* `expressions/expressions-header`
 
-*Find_template* => `template`
+*Find* => `element`
+```js
+$DCGView.createElement(
+  'div',
+  { class: $DCGView.const('dcg-right-buttons') },
+  __children__
+)
+```
+
+*Find_surrounding_template* `element` => `template`
 
 *Find_this* `template` => `this`
 
@@ -32,15 +41,6 @@
 
 ```js
 .createElement($Tooltip.Tooltip
-```
-
-*Find* inside `template`
-```js
-$DCGView.createElement(
-  'div',
-  { class: $DCGView.const('dcg-right-buttons') },
-  __children__
-)
 ```
 
 *Replace* `__children__` with

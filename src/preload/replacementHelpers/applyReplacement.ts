@@ -1,6 +1,6 @@
 import { ReplacementError, tryWithErrorContext } from "./errors";
 import { Block, Command, ModuleBlock } from "./parse";
-import { PatternToken } from "./tokenize";
+import { PatternToken, patternTokens } from "./tokenize";
 import jsTokens, { Token } from "js-tokens";
 
 export function tryApplyReplacement(
@@ -170,6 +170,33 @@ function getSymbols(
           });
         break;
       }
+      case "find_surrounding_template": {
+        if (command.args.length > 1)
+          throw new ReplacementError(
+            `*find_surrounding_template* command must exactly 1 argument. You passed ${command.args.length}`
+          );
+        if (command.patternArg !== undefined)
+          throw new ReplacementError(
+            `*find_surrounding_template* should not have a pattern argument.`
+          );
+        if (command.returns === undefined)
+          throw new ReplacementError(
+            `*find_surround_template* must have return value specified`
+          );
+        const around = table.getRequired(command.args[0]);
+        const ts = findTemplateStartBefore(table, around.start);
+        const found = findPattern(
+          patternTokens(".template=function(){__return__}"),
+          table.str,
+          { start: ts, length: table.str.length - ts - 1 },
+          true
+        );
+        table.set(command.returns, {
+          start: found.startIndex,
+          length: found.length,
+        });
+        break;
+      }
       case "replace":
         throw new ReplacementError(
           "Programming Error: *replace* where it shouldn't be"
@@ -248,6 +275,21 @@ interface MatchResult {
   newBindings: SymbolTable;
   startIndex: number;
   length: number;
+}
+
+function findTemplateStartBefore(table: SymbolTable, before: number) {
+  for (let i = before; i > 0; i--) {
+    if (
+      tokensEqual(table.str[i], {
+        type: "IdentifierName",
+        value: "template",
+      }) &&
+      tokensEqual(table.str[i + 1], { type: "Punctuator", value: "=" }) &&
+      tokensEqual(table.str[i - 1], { type: "Punctuator", value: "." })
+    )
+      return i - 1;
+  }
+  throw new ReplacementError(`Template not found before index ${before}`);
 }
 
 function findPattern(
