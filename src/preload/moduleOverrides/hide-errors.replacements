@@ -100,7 +100,10 @@ $DCGView.createElement(
 
 *Find_surrounding_template* `element` => `template`
 
-*Find_this* `template` => `this`
+*Find* inside `template`
+```js
+var $this = this;
+```
 
 Add one more child for the hide button
 

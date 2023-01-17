@@ -1,17 +1,16 @@
 import { ReplacementError, tryWithErrorContext } from "./errors";
-import { Block, Command, ModuleBlock } from "./parse";
+import { Command, Block } from "./parse";
 import { PatternToken, patternTokens } from "./tokenize";
 import jsTokens, { Token } from "js-tokens";
 
 export function tryApplyReplacement(
-  r: ModuleBlock,
+  r: Block,
   def: string,
-  allBlocks: Block[],
   moduleName: string
 ): string {
   try {
     return tryWithErrorContext(
-      () => applyReplacement(r, def, allBlocks),
+      () => applyReplacement(r, def),
       { message: `replacement "${r.heading}"`, filename: r.filename },
       { message: `module replacement`, filename: `${moduleName}` }
     );
@@ -25,15 +24,10 @@ export function tryApplyReplacement(
   }
 }
 
-export function applyReplacement(
-  replacement: ModuleBlock,
-  fn: string,
-  allBlocks: Block[]
-): string {
+export function applyReplacement(replacement: Block, fn: string): string {
   return applyStringReplacement(
     replacement,
-    Array.from(jsTokens(fn.toString())),
-    allBlocks
+    Array.from(jsTokens(fn.toString()))
   )
     .map((t) => t.value)
     .join("");
@@ -134,11 +128,7 @@ class SymbolTable {
   }
 }
 
-function getSymbols(
-  commands: Command[],
-  args: SymbolTable,
-  allBlocks: Block[]
-): SymbolTable {
+function getSymbols(commands: Command[], args: SymbolTable): SymbolTable {
   const table = new SymbolTable(args.str);
   table.merge(args);
   for (const command of commands) {
@@ -181,7 +171,7 @@ function getSymbols(
           );
         if (command.returns === undefined)
           throw new ReplacementError(
-            `*find_surround_template* must have return value specified`
+            `*find_surrounding_template* must have return value specified`
           );
         const around = table.getRequired(command.args[0]);
         const ts = findTemplateStartBefore(table, around.start);
@@ -201,48 +191,14 @@ function getSymbols(
         throw new ReplacementError(
           "Programming Error: *replace* where it shouldn't be"
         );
-      default: {
-        // user-defined command (not builtin)
-        const block = allBlocks.find(
-          (x) => x.tag === "DefineBlock" && x.commandName === command.command
-        );
-        if (block === undefined)
-          throw new ReplacementError(`Command not defined: ${command.command}`);
-        const argTable = new SymbolTable(table.str);
-        for (let i = 0; i < command.args.length; i++) {
-          argTable.set(`arg${i + 1}`, table.getRequired(command.args[i]));
-        }
-        const symb = tryWithErrorContext(
-          () => getSymbols(block.commands, argTable, allBlocks),
-          { message: `command *${command.command}*`, filename: block.filename }
-        );
-        const returned = symb.get("return");
-        if (returned === undefined)
-          throw new ReplacementError(
-            `Command *${command.command}* doesn't return anything, so it is useless`
-          );
-        if (command.returns === undefined)
-          throw new ReplacementError(
-            `Usage of command *${command.command}* doesn't use return value, so it is useless`
-          );
-        table.set(command.returns, returned);
-      }
     }
   }
   return table;
 }
 
 /** Apply replacement to `str`, and returned the changed value */
-function applyStringReplacement(
-  replacement: ModuleBlock,
-  str: Token[],
-  allBlocks: Block[]
-): Token[] {
-  const table = getSymbols(
-    replacement.commands,
-    new SymbolTable(str),
-    allBlocks
-  );
+function applyStringReplacement(replacement: Block, str: Token[]): Token[] {
+  const table = getSymbols(replacement.commands, new SymbolTable(str));
   for (const command of replacement.replaceCommands) {
     if (command.command !== "replace")
       throw new ReplacementError(

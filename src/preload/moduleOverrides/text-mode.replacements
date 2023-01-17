@@ -35,7 +35,10 @@ $DCGView.createElement(
 
 *Find_surrounding_template* `element` => `template`
 
-*Find_this* `template` => `this`
+*Find* inside `template`
+```js
+var $this = this;
+```
 
 *Find* inside `template`
 

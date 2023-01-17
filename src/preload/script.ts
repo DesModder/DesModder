@@ -1,7 +1,7 @@
 import * as almond from "./almond";
 import moduleReplacements from "./moduleReplacements";
 import { tryApplyReplacement } from "./replacementHelpers/applyReplacement";
-import { isModuleBlock, ModuleBlock } from "./replacementHelpers/parse";
+import { Block } from "./replacementHelpers/parse";
 import window from "globals/window";
 import jsTokens from "js-tokens";
 import injectScript from "utils/injectScript";
@@ -68,7 +68,7 @@ void pollForValue(getCalcDesktopURL).then(async (srcURL: string) => {
   const calcDesktop = await (await fetch(srcURL + "?")).text();
   // Apply replacements
   const newCode = applyReplacements(
-    moduleReplacements.filter(isModuleBlock).filter((r) => !r.workerOnly),
+    moduleReplacements.filter((r) => !r.workerOnly),
     calcDesktop
   );
   const newerCode = applyWorkerReplacements(newCode);
@@ -100,7 +100,7 @@ function applyWorkerReplacements(src: string): string {
     // Call at the end of the code to run after modules defined
     `function loadDesModderWorker(){${workerAppend}\n}` +
       applyReplacements(
-        moduleReplacements.filter(isModuleBlock).filter((r) => r.workerOnly),
+        moduleReplacements.filter((r) => r.workerOnly),
         // JSON.parse doesn't work because this is a single-quoted string.
         // js-tokens tokenized this as a string anyway, so it should be
         // safely eval'able to a string.
@@ -112,15 +112,10 @@ function applyWorkerReplacements(src: string): string {
   return tokens.map((x) => x.value).join("");
 }
 
-function applyReplacements(repls: ModuleBlock[], src: string) {
+function applyReplacements(repls: Block[], src: string) {
   return repls.reduce((src, r) => {
     console.log("applying replacement intended for module", r.modules);
-    return tryApplyReplacement(
-      r,
-      src,
-      moduleReplacements,
-      "temporary-any-module"
-    );
+    return tryApplyReplacement(r, src, "temporary-any-module");
   }, src);
 }
 

@@ -5,21 +5,10 @@ import {
   tokenizeReplacement,
 } from "./tokenize";
 
-export type Block = DefineBlock | ModuleBlock;
-
-interface BaseBlock {
+export interface Block {
   filename: string;
   heading: string;
   commands: Command[];
-}
-
-export interface DefineBlock extends BaseBlock {
-  tag: "DefineBlock";
-  commandName: string;
-}
-
-export interface ModuleBlock extends BaseBlock {
-  tag: "ModuleBlock";
   modules: string[];
   plugin: string;
   replaceCommands: Command[];
@@ -31,10 +20,6 @@ export interface Command {
   returns?: string;
   args: string[];
   patternArg?: PatternToken[];
-}
-
-export function isModuleBlock(b: Block): b is ModuleBlock {
-  return b.tag === "ModuleBlock";
 }
 
 export default function parseFile(
@@ -54,7 +39,7 @@ export default function parseFile(
   const rules: Block[] = [];
   for (let i = 2; i < tokens.length; i++) {
     const token = tokens[i];
-    if (token.tag === "emph" && ["module", "define"].includes(token.command)) {
+    if (token.tag === "emph" && token.command === "module") {
       const prevToken = tokens[i - 1];
       if (prevToken.tag !== "heading")
         throw new ReplacementError(
@@ -75,7 +60,7 @@ export default function parseFile(
     } else if (token.tag === "emph") {
       throw new ReplacementError(
         `Command out of place: *${token.command}*.` +
-          ` Did you forget a *module* or *define* command?`
+          ` Did you forget a *module* command?`
       );
     }
   }
@@ -96,10 +81,6 @@ function parseBlock(
   plugin: string,
   filename: string
 ): Block {
-  if (start.command === "define" && start.args.length !== 1)
-    throw new ReplacementError(
-      `Command *define* must have exactly one argument`
-    );
   if (start.command === "module" && start.args.length === 0)
     throw new ReplacementError(
       `Command *module* must have at least one argument`
@@ -126,26 +107,15 @@ function parseBlock(
       i++;
     }
   }
-  const base = {
+  return {
     heading: heading.text,
     filename,
+    commands: commands.filter((x) => x.command !== "replace"),
+    replaceCommands: commands.filter((x) => x.command === "replace"),
+    plugin,
+    modules: start.args,
+    workerOnly,
   };
-  return start.command === "module"
-    ? {
-        tag: "ModuleBlock",
-        ...base,
-        commands: commands.filter((x) => x.command !== "replace"),
-        replaceCommands: commands.filter((x) => x.command === "replace"),
-        plugin,
-        modules: start.args,
-        workerOnly,
-      }
-    : {
-        tag: "DefineBlock",
-        ...base,
-        commands,
-        commandName: start.args[0],
-      };
 }
 
 function getCommand(

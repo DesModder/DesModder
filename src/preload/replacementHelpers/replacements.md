@@ -10,7 +10,7 @@ Calling a command looks like:
 
 Any text outside of `` `backticks` `` or `*asterisks*` are ignored, except the return separator `=>`.
 
-Arguments are passed by value. There is only one data type, a range in the code. For example, `` *Find_this* `template` `` passes the range value of `template` to the `*Find_this*` command. So `*Find_this*` might receive a range like `{start: 400, length: 200}` as argument.
+Arguments are passed by value. There is only one data type, a range in the code. For example, `` *Find* `template` `` passes the range value of `template` to the `*Find*` command. So `*Find*` might receive a range like `{start: 400, length: 200}` as argument.
 
 Some commands require a pattern as an extra argument (a second data type? ok I lied). A pattern is passed as a code block like
 
@@ -145,7 +145,7 @@ Demonstrates the variables carrying over: the value of `e` is used in the `*Repl
 
 A block is the basic unit of a replacement. A block starts at a block-starter command. The block-starter command must be immediately after a heading. The block continues until the next heading of equal or shallower depth (fewer `#`s).
 
-The two block-starter commands are `*Module*` and `*Define*`
+The one block-starter command are `*Module*`
 
 ### `*Module*`
 
@@ -155,18 +155,3 @@ The two block-starter commands are `*Module*` and `*Define*`
 ```md
 _Module_ `main/calc_desktop`
 ```
-
-### `*Define*`
-
-`*Define*` takes exactly one argument, the name of the command to define. Example usage
-
-<!-- prettier-ignore -->
-```md
-_Define_ `find_this`
-```
-
-Any ranges found inside a defined command are localized to that command.
-
-A single range can be returned by calling it `__return__` or `$return`.
-
-Args, if any, are numbered started at 1 with `$arg1`, `$arg2`, ....
