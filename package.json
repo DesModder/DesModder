@@ -12,6 +12,10 @@
   "scripts": {
     "prettier": "prettier --write .",
     "eslint-fix": "eslint --fix  \"src/**/*.ts\"",
+    "build": "node ./esbuild.mjs --clean --browser=chrome",
+    "build-ff": "node ./esbuild.mjs --clean --browser=firefox",
+    "dev": "node ./esbuild.mjs --watch --browser=chrome",
+    "dev-ff": "node ./esbuild.mjs --watch --browser=firefox",
     "lint": "prettier --check . && tsc --noEmit && eslint \"src/**/*.ts\"",
     "test": "npm run test:jest",
     "test:jest": "jest --config jest.config.js"
@@ -39,6 +43,7 @@
     "jest": "^28.1.1",
     "jest-environment-jsdom": "^28.1.1",
     "less": "^4.1.1",
+    "minimist-lite": "^2.2.1",
     "ts-jest": "^28.0.5",
     "typescript": "^4.7.4"
   },
