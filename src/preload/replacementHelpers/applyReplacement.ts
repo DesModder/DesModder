@@ -259,7 +259,10 @@ function findPattern(
   pattern = pattern.filter((token) => !isIgnoredWhitespace(token));
   let found: MatchResult | null = null;
   for (let i = inside.start; i < inside.start + inside.length; ) {
-    const match = patternMatch(pattern, str, i, inside);
+    const match =
+      patternMatch(pattern, str, i, inside, false) !== null
+        ? patternMatch(pattern, str, i, inside, true)
+        : null;
     if (match !== null) {
       if (allowDuplicates) return match;
       if (found !== null) throw new ReplacementError("Duplicate pattern match");
@@ -276,14 +279,29 @@ function findPattern(
   return found;
 }
 
-/** Return null if not matching, or a MatchResult if found. */
 function patternMatch(
   pattern: PatternToken[],
   str: Token[],
   startIndex: number,
-  inside: Range
-): MatchResult | null {
-  const table = new SymbolTable(str);
+  inside: Range,
+  doTable: true
+): MatchResult | null;
+function patternMatch(
+  pattern: PatternToken[],
+  str: Token[],
+  startIndex: number,
+  inside: Range,
+  doTable: false
+): true | null;
+function patternMatch(
+  pattern: PatternToken[],
+  str: Token[],
+  startIndex: number,
+  inside: Range,
+  doTable: boolean
+): MatchResult | true | null {
+  let table: SymbolTable | null = null;
+  if (doTable) table = new SymbolTable(str);
   let patternIndex = 0;
   let strIndex = startIndex;
   while (patternIndex < pattern.length) {
@@ -291,10 +309,11 @@ function patternMatch(
     // If a pattern identifier appears twice, then use the old value
     // e.g. `$DCGView.createElement('div', {class: $DCGView.const`
     if (
+      doTable &&
       expectedToken.type === "PatternIdentifier" &&
-      table.has(expectedToken.value)
+      table!.has(expectedToken.value)
     ) {
-      const currValue = table.getSlice(expectedToken.value);
+      const currValue = table!.getSlice(expectedToken.value);
       if (currValue.length !== 1 || currValue[0].type !== "IdentifierName")
         throw new ReplacementError(
           `Identifier pattern ${expectedToken.value} already bound to a non-identifier`
@@ -322,16 +341,18 @@ function patternMatch(
         else if (openBraces.has(curr)) depth++;
       }
       // done scanning: currIndex points to a close brace in `str`
-      table.set(expectedToken.value, {
-        start: strIndex,
-        length: currIndex - strIndex,
-      });
+      if (doTable)
+        table!.set(expectedToken.value, {
+          start: strIndex,
+          length: currIndex - strIndex,
+        });
       // while loop stops when currIndex points to the matching close brace
       // but patternIndex points to the <balanced> before it, so subtract 1
       strIndex = currIndex - 1;
     } else if (expectedToken.type === "PatternIdentifier") {
       if (foundToken.type !== "IdentifierName") return null;
-      table.set(expectedToken.value, { start: strIndex, length: 1 });
+      if (doTable)
+        table!.set(expectedToken.value, { start: strIndex, length: 1 });
     } else if (!tokensEqual(expectedToken, foundToken)) {
       return null;
     }
@@ -339,11 +360,13 @@ function patternMatch(
     strIndex++;
     if (strIndex > inside.start + inside.length) return null;
   }
-  return {
-    newBindings: table,
-    startIndex,
-    length: strIndex - startIndex,
-  };
+  if (doTable)
+    return {
+      newBindings: table!,
+      startIndex,
+      length: strIndex - startIndex,
+    };
+  else return true;
 }
 
 function tokensEqual(a: Token, b: Token) {
