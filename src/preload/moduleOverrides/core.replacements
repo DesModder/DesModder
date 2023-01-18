@@ -143,7 +143,7 @@ require(['toplevel/calculator_desktop'])
     };
   }
 
-  // FIXME: Uncaught Error: Cannot remount a DCGElement
+  // TODO: Uncaught Error: Cannot remount a DCGElement
   //    may be related to computing args unconditionally
   // but this code is not actually necessary; just saves performance from
   // rendering mathquill
@@ -172,6 +172,28 @@ require(['toplevel/calculator_desktop'])
       )
     )
   );
+
+}
+
+
+{
+  // Reduce suggested slider count to 3
+  // Avoids overflowing on narrow expression lists since we've added the "hide" button.
+  // getMissingVariables is used in different ways, but we care about
+  //    t.getMissingVariables().slice(0, 4)
+  const proto = require("expressions/promptslider_view").default.prototype;
+  const oldGMV = proto.getMissingVariables;
+  proto.getMissingVariables = function() {
+    const missing = oldGMV.call(this);
+    missing.slice = function() {
+      if (arguments.length === 2 && arguments[0] === 0 && arguments[1] === 4) {
+        return Array.prototype.slice.call(missing, 0, 3);
+      } else {
+        return Array.prototype.slice.apply(missing, arguments)
+      }
+    }
+    return missing;
+  }
 }
 
 __init__
