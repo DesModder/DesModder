@@ -23,8 +23,9 @@ createElement(
   $Tooltip.Tooltip,
   {
     tooltip: $.bindFn($.getConvertTooltip),
-    gravity: $DCGView.const('s')
+    gravity: $.const('s')
   },
+  $DCGView.createElement
 ```
 
 *Replace* `start` with
