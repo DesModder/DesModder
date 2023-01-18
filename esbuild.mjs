@@ -19,14 +19,13 @@ if (argv.help) {
     --help         Show help
     --browser=...  Browser target: "firefox", or "chrome"  [default: "chrome"]
     --watch        Watch mode: rebuild on file system changes [default: false]
-    --clean        Clear output directory                     [default: false]
     
   Examples:
     # Dev server for Chrome
     node esbuild.mjs --watch --browser=chrome
     
     # Final build for Firefox
-    node esbuild.mjs --clean --browser=firefox`
+    node esbuild.mjs --browser=firefox`
   );
   process.exit(0);
 }
@@ -40,7 +39,6 @@ if (
 }
 const browser = argv.browser ?? "chrome";
 const watch = !!argv.watch;
-const clean = !!argv.clean;
 
 const opts = {
   entryPoints: [
@@ -86,13 +84,12 @@ const opts = {
   logLevel: "info",
 };
 
-if (clean) {
-  try {
-    await fs.rm("dist", { recursive: true });
-  } catch (e) {
-    // permit no dist folder to begin with
-    if (e?.code !== "ENOENT") throw e;
-  }
+// clean dist folder
+try {
+  await fs.rm("dist", { recursive: true });
+} catch (e) {
+  // permit no dist folder to begin with
+  if (e?.code !== "ENOENT") throw e;
 }
 
 if (watch) {
