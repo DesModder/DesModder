@@ -20,15 +20,8 @@ function symbolName(str: string) {
 
 class SymbolTable {
   private readonly map = new Map<string, Range>();
-  /** A set of invalidated names: invalidated by replacing a range including
-   * them. At all times, the map must not have any invalidated keys */
-  private readonly invalidated = new Set<string>();
 
   constructor(public str: Token[]) {}
-
-  keyInvalidated(key: string): boolean {
-    return this.invalidated.has(symbolName(key));
-  }
 
   has(key: string): boolean {
     return this.map.has(symbolName(key));
@@ -47,10 +40,6 @@ class SymbolTable {
   /** set but checking for duplicate bindings */
   set(key: string, value: Range) {
     if (this.has(key)) throw new ReplacementError(`Duplicate binding: ${key}`);
-    if (this.keyInvalidated(key))
-      throw new ReplacementError(
-        `Key ${key} already invalidated from a previous replacement`
-      );
     this.uncheckedSet(key, value);
     return this;
   }
@@ -62,27 +51,19 @@ class SymbolTable {
     for (const [k, v] of entries) {
       this.map.set(p + k, v);
     }
-    const s = [...this.invalidated.entries()];
-    this.invalidated.clear();
-    for (const [k] of s) this.invalidated.add(k);
     return this;
   }
 
   /** Mutate this in place by grabbing all of other's entries */
   merge(other: SymbolTable) {
     for (const [key, value] of other.map.entries()) this.set(key, value);
-    for (const key of other.invalidated) this.invalidated.add(key);
   }
 
   /** get but throws an error if not found */
   getRequired(key: string) {
     const got = this.get(key);
-    if (got === undefined) {
-      const hint = this.keyInvalidated(symbolName(key))
-        ? ". It has been removed in a previous *replace*."
-        : "";
-      throw new ReplacementError(`Binding not found: ${key}` + hint);
-    }
+    if (got === undefined)
+      throw new ReplacementError(`Binding not found: ${key}`);
     return got;
   }
 

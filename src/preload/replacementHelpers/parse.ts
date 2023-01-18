@@ -43,7 +43,7 @@ export default function parseFile(
       const prevToken = tokens[i - 1];
       if (prevToken.tag !== "heading")
         throw new ReplacementError(
-          `Block-starter command *${token.command}* must be preceded by a heading`
+          `*module* command must be preceded by a heading`
         );
       const nextHeadingIndex = tokens.findIndex(
         (t, j) => j > i && t.tag === "heading" && t.depth <= prevToken.depth
@@ -77,7 +77,7 @@ function parseBlock(
   plugin: string,
   filename: string
 ): Block {
-  if (start.command === "module" && start.args.length === 0)
+  if (start.args.length === 0)
     throw new ReplacementError(
       `Command *module* must have at least one argument`
     );
@@ -88,10 +88,6 @@ function parseBlock(
     if (token.tag === "heading") {
       throw new ReplacementError("Subheadings not yet implemented");
     } else if (token.tag === "emph" && token.command === "worker_only") {
-      if (start.command !== "module")
-        throw new ReplacementError(
-          `Command *worker_only* can only be used in a replacement`
-        );
       workerOnly = true;
       i++;
     } else if (token.tag === "emph") {
