@@ -10,7 +10,7 @@ Replacements that apply to more than one plugin.
 
 *Find*
 ```js
-.copyExpressionToIndex = function(____) { __body__ }
+copyExpressionToIndex = function(____) { __body__ }
 ```
 
 *Find* inside `body`:

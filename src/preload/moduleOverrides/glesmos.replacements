@@ -8,7 +8,7 @@
 
 *Find* => `element`
 ```js
-return $DCGView.createElement(
+createElement(
   'div',
   { class: $DCGView.const('dcg-options-menu-content') },
   $DCGView.createElement(
@@ -26,7 +26,7 @@ return $DCGView.createElement(
 
 *Find* inside `element`
 ```js
-return $.createElement(
+createElement(
   'div',
   { class: $.const('dcg-options-menu-content') },
   __rest__
@@ -43,7 +43,7 @@ var $this = this;
 *Find* inside `template`
 
 ```js
-.createElement($ToggleView.ToggleView
+createElement($ToggleView.ToggleView
 ```
 
 Just add one more child.
@@ -76,7 +76,7 @@ $DCGView.createElement(
 *Find*
 
 ```js
-.drawSketchToCtx = function ($e, $ctx, $transforms, __args__) {__body__}
+drawSketchToCtx = function ($e, $ctx, $transforms, __args__) {__body__}
 ```
 
 *Find* inside `__body__`
@@ -105,7 +105,7 @@ for (const branch of $e.branches) {
 *Find*
 
 ```js
-.getSections = function () {__body__}
+getSections = function () {__body__}
 ```
 
 *Find* inside `__body__`
@@ -131,7 +131,7 @@ Allows correct checking of the .glesmos metadata; otherwise, we run into `Calc.o
 
 *Find*
 ```js
-.requestParseForAllItems = function() {__body__}
+requestParseForAllItems = function() {__body__}
 ```
 
 *Replace* `body` with
@@ -146,7 +146,7 @@ __body__
 
 *Find*
 ```js
-.addStatement = function ($stmt) {
+addStatement = function ($stmt) {
   __body__
 }
 ```
@@ -167,7 +167,7 @@ __body__
 
 *Find* 
 ```js
-._graph = function(____) {
+_graph = function(____) {
   __graph__
 }
 ```

@@ -91,7 +91,7 @@ var $r = $e.hasClass('dcg-all')
 
 *Find* => `element`
 ```js
-$DCGView.createElement(
+createElement(
   'span',
   { class: $DCGView.const('btns') },
   __children__
@@ -160,7 +160,7 @@ $DCGView.createElement(
 
 *Find*
 ```js
-.shouldShowSliderPrompt = function () {
+shouldShowSliderPrompt = function () {
   return __ret__
 }
 ```

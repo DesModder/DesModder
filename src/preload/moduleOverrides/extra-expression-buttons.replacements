@@ -19,11 +19,11 @@ Object.defineProperty($, "__esModule", { value: !0 }),
 
 *Find*
 ```js
-$DCGView.createElement(
+createElement(
   $Tooltip.Tooltip,
   {
     tooltip: $.bindFn($.getConvertTooltip),
-    gravity: $.const('s')
+    gravity: $DCGView.const('s')
   },
 ```
 
@@ -64,7 +64,7 @@ Insert before the delete button but before the other buttons.
 
 *Find* => `element`
 ```js
-return $DCGView.createElement(
+createElement(
   'span',
   {
     class: function () {

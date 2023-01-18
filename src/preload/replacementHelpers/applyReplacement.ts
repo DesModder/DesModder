@@ -257,8 +257,24 @@ function findPattern(
   const fullPattern = pattern;
   // filter whitespace out of pattern
   pattern = pattern.filter((token) => !isIgnoredWhitespace(token));
+  // find a forced token; used to optimize the search a little
+  const fixedToken = pattern.find(
+    (x) => !x.type.startsWith("Pattern")
+  ) as Token;
+  if (fixedToken === undefined)
+    throw new Error("Pattern Error: No fixed token found");
+  const fixedTokenIdx = pattern.indexOf(fixedToken);
+  if (pattern.slice(0, fixedTokenIdx).some((x) => x.type === "PatternBalanced"))
+    throw new Error("First fixed token is after a variable-width span.");
+
+  // search time!
   let found: MatchResult | null = null;
-  for (let i = inside.start; i < inside.start + inside.length; ) {
+  const end = inside.start + inside.length - pattern.length;
+  for (let i = inside.start; i < end; ) {
+    if (!tokensEqual(str[i + fixedTokenIdx], fixedToken)) {
+      i++;
+      continue;
+    }
     const match =
       patternMatch(pattern, str, i, inside, false) !== null
         ? patternMatch(pattern, str, i, inside, true)
