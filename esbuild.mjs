@@ -17,9 +17,9 @@ if (argv.help) {
   
   Options:
     --help         Show help
-    --browser=...  Browser target: "firefox", or "chrome" (default)
-    --watch        Watch mode: rebuild on file system changes
-    --clean        Clear output directory
+    --browser=...  Browser target: "firefox", or "chrome"  [default: "chrome"]
+    --watch        Watch mode: rebuild on file system changes [default: false]
+    --clean        Clear output directory                     [default: false]
     
   Examples:
     # Dev server for Chrome
@@ -50,6 +50,7 @@ const opts = {
     "src/preload/script.ts",
     "src/worker/append.ts",
   ],
+  sourcemap: "inline",
   bundle: true,
   outdir: "dist",
   plugins: [
