@@ -28,12 +28,3 @@ interface StackFrame {
   message: string;
   filename: string;
 }
-
-export function tryWithErrorContext<T>(f: () => T, ...s: StackFrame[]): T {
-  try {
-    return f();
-  } catch (err) {
-    if (err instanceof ReplacementError) err.pushToStack(...s);
-    throw err;
-  }
-}

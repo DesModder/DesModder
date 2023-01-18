@@ -1,34 +1,10 @@
-import { ReplacementError, tryWithErrorContext } from "./errors";
+import { ReplacementError } from "./errors";
 import { Command, Block } from "./parse";
 import { PatternToken, patternTokens } from "./tokenize";
 import jsTokens, { Token } from "js-tokens";
 
-export function tryApplyReplacement(
-  r: Block,
-  def: string,
-  moduleName: string
-): string {
-  try {
-    return tryWithErrorContext(
-      () => applyReplacement(r, def),
-      { message: `replacement "${r.heading}"`, filename: r.filename },
-      { message: `module replacement`, filename: `${moduleName}` }
-    );
-  } catch (e) {
-    // Trick: get the pretty console output as if this was uncaught, but do
-    // not stop execution
-    setTimeout(() => {
-      throw e;
-    }, 0);
-    return def;
-  }
-}
-
-export function applyReplacement(replacement: Block, fn: string): string {
-  return applyStringReplacement(
-    replacement,
-    Array.from(jsTokens(fn.toString()))
-  )
+export function applyReplacements(repls: Block[], file: string): string {
+  return applyStringReplacements(repls, Array.from(jsTokens(file)))
     .map((t) => t.value)
     .join("");
 }
@@ -76,6 +52,19 @@ class SymbolTable {
         `Key ${key} already invalidated from a previous replacement`
       );
     this.uncheckedSet(key, value);
+    return this;
+  }
+
+  /** Mutate this in place by prefixing all names */
+  prefix(p: string) {
+    const entries = [...this.map.entries()];
+    this.map.clear();
+    for (const [k, v] of entries) {
+      this.map.set(p + k, v);
+    }
+    const s = [...this.invalidated.entries()];
+    this.invalidated.clear();
+    for (const [k] of s) this.invalidated.add(k);
     return this;
   }
 
@@ -128,9 +117,8 @@ class SymbolTable {
   }
 }
 
-function getSymbols(commands: Command[], args: SymbolTable): SymbolTable {
-  const table = new SymbolTable(args.str);
-  table.merge(args);
+function getSymbols(commands: Command[], str: Token[]): SymbolTable {
+  const table = new SymbolTable(str);
   for (const command of commands) {
     switch (command.command) {
       case "find": {
@@ -197,32 +185,44 @@ function getSymbols(commands: Command[], args: SymbolTable): SymbolTable {
 }
 
 /** Apply replacement to `str`, and returned the changed value */
-function applyStringReplacement(replacement: Block, str: Token[]): Token[] {
-  const table = getSymbols(replacement.commands, new SymbolTable(str));
-  for (const command of replacement.replaceCommands) {
-    if (command.command !== "replace")
-      throw new ReplacementError(
-        "Programming error: replaceCommand is not *replace*"
+function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
+  const idTable = new Map<Block, string>(
+    repls.map((r) => [r, r.heading + "_" + Math.random().toString() + "_"])
+  );
+  const table = new SymbolTable(str);
+  for (const r of repls) {
+    const prefix = idTable.get(r)!;
+    table.merge(getSymbols(r.commands, str).prefix(prefix));
+    console.log("got symbols for", r.heading);
+  }
+  for (const r of repls) {
+    const prefix = idTable.get(r)!;
+    for (const command of r.replaceCommands) {
+      if (command.command !== "replace")
+        throw new ReplacementError(
+          "Programming error: replaceCommand is not *replace*"
+        );
+      if (command.args.length !== 1)
+        throw new ReplacementError(
+          `*replace* command must have exactly 1 argument. You passed ${command.args.length}`
+        );
+      if (command.patternArg === undefined)
+        throw new ReplacementError(
+          `*replace* command missing a pattern argument.`
+        );
+      table.replaceRange(
+        table.getRequired(prefix + command.args[0]),
+        command.patternArg.flatMap((token) => {
+          if (
+            token.type === "PatternBalanced" ||
+            token.type === "PatternIdentifier"
+          ) {
+            return table.getSlice(prefix + token.value);
+          } else return token;
+        })
       );
-    if (command.args.length !== 1)
-      throw new ReplacementError(
-        `*replace* command must have exactly 1 argument. You passed ${command.args.length}`
-      );
-    if (command.patternArg === undefined)
-      throw new ReplacementError(
-        `*replace* command missing a pattern argument.`
-      );
-    table.replaceRange(
-      table.getRequired(command.args[0]),
-      command.patternArg.flatMap((token) => {
-        if (
-          token.type === "PatternBalanced" ||
-          token.type === "PatternIdentifier"
-        ) {
-          return table.getSlice(token.value);
-        } else return token;
-      })
-    );
+    }
+    console.log("applied replacement for", r.heading);
   }
   return table.str;
 }

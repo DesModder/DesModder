@@ -109,3 +109,66 @@ $DCGView.createElement(
   )
 )
 ```
+
+## Create Element Replacements
+
+*Module* `final-load`
+
+*Find* => `init`
+```js
+require(['toplevel/calculator_desktop'])
+```
+
+*Replace* `init` with
+```js
+{
+  const dcgview = require("dcgview");
+
+  function overrideCreateElement(className, repl) {
+    const oldCreateElement = dcgview.createElement;
+    dcgview.createElement = function (_, opts) {
+      let c;
+      if (
+        typeof opts === "object" &&
+        opts !== null &&
+        "class" in opts &&
+        typeof opts.class === "function" &&
+        ((c = opts.class()),
+        typeof c === "object"
+          ? c[className]
+          : typeof c === "string" && c === className)
+      ) {
+        return repl(arguments, oldCreateElement);
+      } else return oldCreateElement(...arguments);
+    };
+  }
+
+  // Hide dcg-exppanel when in text mode
+  // FIXME: Uncaught Error: Cannot remount a DCGElement
+  //    may be related to computing args unconditionally
+  overrideCreateElement("dcg-exppanel", (args, oldCreateElement) =>
+    oldCreateElement(
+      dcgview.Components.If,
+      {
+        predicate: () => !window.DesModder?.controller?.inTextMode?.(),
+      },
+      () => oldCreateElement(...args)
+    )
+  );
+
+  // Replace branding for show tips
+  // FIXME: Uncaught Error: Cannot remount a DCGElement 
+  //    may be related to computing args unconditionally
+  overrideCreateElement("dcg-noedit-branding", (args, oldCreateElement) =>
+    dcgview.Components.IfElse(
+      () => window.DesModder?.controller?.isPluginEnabled?.("show-tips"),
+      {
+        false: () => oldCreateElement(...args),
+        true: () => window.DesModder?.view?.createTipElement(),
+      }
+    )
+  );
+}
+
+__init__
+```

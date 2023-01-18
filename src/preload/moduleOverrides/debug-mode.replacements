@@ -16,7 +16,7 @@ $o.displayIndex=$r
 $o.displayIndex=window.DesModder?.controller?.isPluginEnabled("debug-mode") ? $o.id : $r
 ```
 
-## Replace expression index with expression id.
+## Replace blank expression index with expression id.
 
 *Module* `graphing-calc/models/list`
 

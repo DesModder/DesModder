@@ -1,4 +1,4 @@
-import { ReplacementError, tryWithErrorContext } from "./errors";
+import { ReplacementError } from "./errors";
 import {
   PatternToken,
   ReplacementToken,
@@ -51,11 +51,7 @@ export default function parseFile(
       const blockEndIndex =
         nextHeadingIndex < 0 ? tokens.length : nextHeadingIndex;
       const block = tokens.slice(i + 1, blockEndIndex);
-      tryWithErrorContext(
-        () =>
-          rules.push(parseBlock(prevToken, token, block, pluginName, filename)),
-        { message: `parsing block '${prevToken.text}'`, filename }
-      );
+      rules.push(parseBlock(prevToken, token, block, pluginName, filename));
       i = blockEndIndex;
     } else if (token.tag === "emph") {
       throw new ReplacementError(

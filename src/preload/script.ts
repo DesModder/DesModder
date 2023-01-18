@@ -1,7 +1,6 @@
 import * as almond from "./almond";
 import moduleReplacements from "./moduleReplacements";
-import { tryApplyReplacement } from "./replacementHelpers/applyReplacement";
-import { Block } from "./replacementHelpers/parse";
+import { applyReplacements } from "./replacementHelpers/applyReplacement";
 import window from "globals/window";
 import jsTokens from "js-tokens";
 import injectScript from "utils/injectScript";
@@ -110,13 +109,6 @@ function applyWorkerReplacements(src: string): string {
       "\nloadDesModderWorker();"
   );
   return tokens.map((x) => x.value).join("");
-}
-
-function applyReplacements(repls: Block[], src: string) {
-  return repls.reduce((src, r) => {
-    console.log("applying replacement intended for module", r.modules);
-    return tryApplyReplacement(r, src, "temporary-any-module");
-  }, src);
 }
 
 listenToMessageDown((message) => {

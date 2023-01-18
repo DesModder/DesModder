@@ -136,21 +136,23 @@ $DCGView.createElement(
 )
 ```
 
-## Reduce suggested slider count to 3
+<!-- Disabled due to overlap with `Add a "hide" button to the slider prompts`. Minor importance. TODO: re-enable again.
 
-Avoids overflowing on narrow expression lists since we've added the "hide" button.
+  ## Reduce suggested slider count to 3
 
-*module* `expressions/promptslider_view`
+  Avoids overflowing on narrow expression lists since we've added the "hide" button.
 
-*Find* => `from`
-```js
-$t.getMissingVariables().slice(0, 4)
-```
+  *module* `expressions/promptslider_view`
 
-*Replace* `from` with
-```js
-$t.getMissingVariables().slice(0, 3)
-```
+  *Find* => `from`
+  ```js
+  $t.getMissingVariables().slice(0, 4)
+  ```
+
+  *Replace* `from` with
+  ```js
+  $t.getMissingVariables().slice(0, 3)
+  ``` -->
 
 ## Disable slider creation prompt if error is hidden
 
