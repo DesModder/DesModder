@@ -21,7 +21,6 @@ if (window.ALMOND_OVERRIDES !== undefined) {
   );
 }
 
-window.define = almond.define;
 (window as any).require = almond.require;
 
 window.ALMOND_OVERRIDES = {
@@ -74,7 +73,7 @@ void pollForValue(getCalcDesktopURL).then(async (srcURL: string) => {
   // tryRunDesModder polls until the following eval'd code is done.
   tryRunDesModder();
   // eslint-disable-next-line no-eval
-  eval(newerCode);
+  (0, eval)(newerCode);
 });
 
 function applyWorkerReplacements(src: string): string {
@@ -104,7 +103,7 @@ function applyWorkerReplacements(src: string): string {
         // js-tokens tokenized this as a string anyway, so it should be
         // safely eval'able to a string.
         // eslint-disable-next-line no-eval
-        eval(wcToken.value) as string
+        (0, eval)(wcToken.value) as string
       ) +
       "\nloadDesModderWorker();"
   );

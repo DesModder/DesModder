@@ -99,9 +99,16 @@ listenToMessageUp((message) => {
         injectScript(chrome.runtime.getURL("wolfram2desmos.js"));
       }
       break;
-    case "get-initial-data":
+    case "get-initial-data": {
+      // prep to send data back down
       getInitialData();
+      // but also insert style sheet
+      const s = document.createElement("link");
+      s.rel = "stylesheet";
+      s.href = chrome.runtime.getURL("script.css");
+      document.head.appendChild(s);
       break;
+    }
     case "set-plugins-enabled":
       void chrome.storage.sync.set({
         [StorageKeys.pluginsEnabled]: mapToRecord(message.value),
@@ -121,7 +128,7 @@ listenToMessageUp((message) => {
     case "get-worker-append-url":
       postMessageDown({
         type: "set-worker-append-url",
-        value: chrome.runtime.getURL("workerAppend.js"),
+        value: chrome.runtime.getURL("worker/append.js"),
       });
       break;
     case "send-heartbeat":
@@ -131,4 +138,4 @@ listenToMessageUp((message) => {
   return false;
 });
 
-injectScript(chrome.runtime.getURL("preloadScript.js"));
+injectScript(chrome.runtime.getURL("preload/script.js"));
