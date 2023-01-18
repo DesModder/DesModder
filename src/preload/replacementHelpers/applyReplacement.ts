@@ -91,30 +91,6 @@ class SymbolTable {
     const range = this.getRequired(key);
     return this.str.slice(range.start, range.start + range.length);
   }
-
-  /** Replace range `from` with tokens `to`, removing all symbols for ranges
-   * contained inside `from` and shifting all symbols after `from`.
-   * Modifies `this.str`. */
-  replaceRange(from: Range, to: Token[]) {
-    this.str = structuredClone(this.str);
-    this.str.splice(from.start, from.length, ...to);
-    // invalidate overlapping names
-    for (const [name, range] of this.map.entries()) {
-      if (range.start >= from.start + from.length) {
-        // the range is after the `from` range; offset it
-        this.uncheckedSet(name, {
-          start: range.start + to.length - from.length,
-          length: range.length,
-        });
-      } else if (range.start + range.length < from.start) {
-        // the range is before the `from` range; change nothing
-      } else {
-        // the range overlaps somehow with the `from` range.
-        this.map.delete(name);
-        this.invalidated.add(name);
-      }
-    }
-  }
 }
 
 function getSymbols(commands: Command[], str: Token[]): SymbolTable {
@@ -193,11 +169,10 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
   for (const r of repls) {
     const prefix = idTable.get(r)!;
     table.merge(getSymbols(r.commands, str).prefix(prefix));
-    console.log("got symbols for", r.heading);
   }
-  for (const r of repls) {
+  const finalRepls = repls.flatMap((r) => {
     const prefix = idTable.get(r)!;
-    for (const command of r.replaceCommands) {
+    return r.replaceCommands.map((command) => {
       if (command.command !== "replace")
         throw new ReplacementError(
           "Programming error: replaceCommand is not *replace*"
@@ -210,21 +185,46 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
         throw new ReplacementError(
           `*replace* command missing a pattern argument.`
         );
-      table.replaceRange(
-        table.getRequired(prefix + command.args[0]),
-        command.patternArg.flatMap((token) => {
+      const res: Replacement = {
+        heading: r.heading,
+        from: table.getRequired(prefix + command.args[0]),
+        to: command.patternArg.flatMap((token) => {
           if (
             token.type === "PatternBalanced" ||
             token.type === "PatternIdentifier"
           ) {
             return table.getSlice(prefix + token.value);
           } else return token;
-        })
+        }),
+      };
+      return res;
+    });
+  });
+
+  return Array.from(withReplacements(table.str, finalRepls));
+}
+
+function* withReplacements(tokens: readonly Token[], repls: Replacement[]) {
+  repls.sort((a, b) => a.from.start - b.from.start);
+  repls.forEach((e, i) => {
+    if (i > 0 && e.from.start + e.from.length <= repls[i - 1].from.start)
+      throw new Error(
+        `Overlapping replacements: "${repls[i - 1].heading}" and "${e.heading}"`
       );
-    }
-    console.log("applied replacement for", r.heading);
+  });
+  let start = 0;
+  for (const { from, to } of repls) {
+    yield* tokens.slice(start, from.start);
+    yield* to;
+    start = from.start + from.length;
   }
-  return table.str;
+  yield* tokens.slice(start);
+}
+
+interface Replacement {
+  heading: string;
+  from: Range;
+  to: Token[];
 }
 
 interface MatchResult {
