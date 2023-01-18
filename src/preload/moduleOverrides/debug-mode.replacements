@@ -4,27 +4,32 @@
 
 ## Replace expression index with expression id.
 
-*Module* `expressions/expression_view` `expressions/image-view` `expressions/table-view` `expressions/text_view` `expressions/folder-view`
+*Module* `graphing-calc/models/list`
 
-*Find*
+*Find* => `from`
 ```js
-.createElement(
-  'span',
-  { class: $DCGView.const('dcg-num') },
-  __body__
-)
-```
-
-*Find* inside `body` => `from`
-```js
-$this.$model.displayIndex
+$o.displayIndex=$r
 ```
 
 *Replace* `from` with
 ```js
-window.DesModder?.controller?.isPluginEnabled("debug-mode")
-  ? $this.$model.id.length <= 6
-    ? $this.$model.id
-    : $this.$model.id.substring(0, 4) + "…"
-  : $this.$model.displayIndex
+$o.displayIndex=window.DesModder?.controller?.isPluginEnabled("debug-mode")
+  ? $o.id.length <= 6
+    ? $o.id
+    : $o.id.substring(0, 4) + "…"
+  : $r
+```
+
+## Replace blank expression index with expression id.
+
+*Module* `graphing-calc/models/list`
+
+*Find* => `from`
+```js
+$e.nextDisplayIndex=$r
+```
+
+*Replace* `from` with
+```js
+$e.nextDisplayIndex = window.DesModder?.controller?.isPluginEnabled("debug-mode") ? "" : $r
 ```

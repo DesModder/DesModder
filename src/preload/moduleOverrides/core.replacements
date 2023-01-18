@@ -10,7 +10,7 @@ Replacements that apply to more than one plugin.
 
 *Find*
 ```js
-.copyExpressionToIndex = function(____) { __body__ }
+copyExpressionToIndex = function(____) { __body__ }
 ```
 
 *Find* inside `body`:
@@ -32,11 +32,7 @@ This is relevant to both pin-expressions and text-mode.
 
 *module* `expressions/list-view`
 
-*Find_template* => `template`
-
-*Find_this* inside `template` => `this`
-
-*Find* inside `template`
+*Find* => `element`
 ```js
 $DCGView.createElement(
   "div",
@@ -50,6 +46,13 @@ $DCGView.createElement(
   },
   __children__
 )
+```
+
+*Find_surrounding_template* `element` => `template`
+
+*Find* inside `template`
+```js
+var $this = this;
 ```
 
 *Replace* `children` with
@@ -105,4 +108,93 @@ $DCGView.createElement(
     }
   )
 )
+```
+
+## Create Element Replacements
+
+*Module* `final-load`
+
+*Find* => `init`
+```js
+require(['toplevel/calculator_desktop'])
+```
+
+*Replace* `init` with
+```js
+{
+  const dcgview = require("dcgview");
+
+  function overrideCreateElement(className, repl) {
+    const oldCreateElement = dcgview.createElement;
+    dcgview.createElement = function (_, opts) {
+      let c;
+      if (
+        typeof opts === "object" &&
+        opts !== null &&
+        "class" in opts &&
+        typeof opts.class === "function" &&
+        ((c = opts.class()),
+        typeof c === "object"
+          ? c[className]
+          : typeof c === "string" && c === className)
+      ) {
+        return repl(arguments, oldCreateElement);
+      } else return oldCreateElement(...arguments);
+    };
+  }
+
+  // TODO: Uncaught Error: Cannot remount a DCGElement
+  //    may be related to computing args unconditionally
+  // but this code is not actually necessary; just saves performance from
+  // rendering mathquill
+  // // Hide dcg-exppanel when in text mode
+  // overrideCreateElement("dcg-exppanel", (args, oldCreateElement) =>
+  //   oldCreateElement(
+  //     dcgview.Components.If,
+  //     {
+  //       predicate: () => !window.DesModder?.controller?.inTextMode?.(),
+  //     },
+  //     () => oldCreateElement(...args)
+  //   )
+  // );
+
+  // Replace branding for show tips
+  overrideCreateElement("dcg-expressions-branding", (args, oldCreateElement) =>
+    oldCreateElement(
+      ...args,
+      oldCreateElement(
+        dcgview.Components.If,
+        {
+          predicate: () =>
+            window.DesModder?.controller?.isPluginEnabled?.("show-tips"),
+        },
+        () => window.DesModder?.view?.createTipElement()
+      )
+    )
+  );
+
+}
+
+
+{
+  // Reduce suggested slider count to 3
+  // Avoids overflowing on narrow expression lists since we've added the "hide" button.
+  // getMissingVariables is used in different ways, but we care about
+  //    t.getMissingVariables().slice(0, 4)
+  const proto = require("expressions/promptslider_view").default.prototype;
+  const oldGMV = proto.getMissingVariables;
+  proto.getMissingVariables = function() {
+    const missing = oldGMV.call(this);
+    missing.slice = function() {
+      if (arguments.length === 2 && arguments[0] === 0 && arguments[1] === 4) {
+        return Array.prototype.slice.call(missing, 0, 3);
+      } else {
+        return Array.prototype.slice.apply(missing, arguments)
+      }
+    }
+    return missing;
+  }
+}
+
+__init__
 ```

@@ -9,13 +9,13 @@
 *Find* => `from`
 
 ```js
-.isShowKeypadButtonVisible = function () { return __curr__}
+isShowKeypadButtonVisible = function () { return __curr__}
 ```
 
 *Replace* `from` with
 
 ```js
-.isShowKeypadButtonVisible = function () {
+isShowKeypadButtonVisible = function () {
   return (__curr__) && !window.DesModder?.controller?.inTextMode?.()
 }
 ```
@@ -24,23 +24,26 @@
 
 *module* `expressions/expressions-header`
 
-*Find_template* => `template`
+*Find* => `element`
+```js
+createElement(
+  'div',
+  { class: $DCGView.const('dcg-right-buttons') },
+  __children__
+)
+```
 
-*Find_this* `template` => `this`
+*Find_surrounding_template* `element` => `template`
+
+*Find* inside `template`
+```js
+var $this = this;
+```
 
 *Find* inside `template`
 
 ```js
 .createElement($Tooltip.Tooltip
-```
-
-*Find* inside `template`
-```js
-$DCGView.createElement(
-  'div',
-  { class: $DCGView.const('dcg-right-buttons') },
-  __children__
-)
 ```
 
 *Replace* `__children__` with
@@ -78,37 +81,4 @@ $DCGView.createElement(
   }
 ),
 __children__
-```
-
-## Hide the main expressions list when in text mode
-
-*module* `expressions/list-view`
-
-Just wraps the original `createElement` in an `If`.
-
-*Find* => `old_createElement`
-```js
-$DCGView.createElement(
-  "div",
-  {
-    class: function () {
-      return {
-        "dcg-exppanel" ____
-      }
-    },
-    ____
-  },
-  ____
-)
-```
-
-*Replace* `old_createElement` with
-```js
-$DCGView.createElement(
-  $DCGView.Components.If,
-  {
-    predicate: () => !window.DesModder?.controller?.inTextMode?.()
-  },
-  () => __old_createElement__
-)
 ```
