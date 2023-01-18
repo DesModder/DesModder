@@ -13,7 +13,11 @@ $o.displayIndex=$r
 
 *Replace* `from` with
 ```js
-$o.displayIndex=window.DesModder?.controller?.isPluginEnabled("debug-mode") ? $o.id : $r
+$o.displayIndex=window.DesModder?.controller?.isPluginEnabled("debug-mode")
+  ? $o.id.length <= 6
+    ? $o.id
+    : $o.id.substring(0, 4) + "…"
+  : $r
 ```
 
 ## Replace blank expression index with expression id.
