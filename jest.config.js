@@ -7,7 +7,7 @@ module.exports = {
   coverageDirectory: "<rootDir>/coverage",
   transform: {
     "^.+\\.ts": "ts-jest",
-    "\\.grammar": "<rootDir>/jest-config/lezer-transformer.js",
+    "\\.grammar": "<rootDir>/jest-config/lezer-transformer.mjs",
   },
   testPathIgnorePatterns: ["<rootDir>/node_modules/"],
   globals: {

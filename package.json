@@ -12,10 +12,10 @@
   "scripts": {
     "prettier": "prettier --write .",
     "eslint-fix": "eslint --fix  \"src/**/*.ts\"",
-    "build": "webpack --mode production --env=browser=chrome",
-    "build-ff": "webpack --mode production --env=browser=firefox",
-    "dev": "webpack --mode development --env=browser=chrome",
-    "dev-ff": "webpack --mode development --env=browser=firefox",
+    "build": "node ./esbuild.mjs --browser=chrome",
+    "build-ff": "node ./esbuild.mjs --browser=firefox",
+    "dev": "node ./esbuild.mjs --watch --browser=chrome",
+    "dev-ff": "node ./esbuild.mjs --watch --browser=firefox",
     "lint": "prettier --check . && tsc --noEmit && eslint \"src/**/*.ts\"",
     "test": "npm run test:jest",
     "test:jest": "jest --config jest.config.js"
@@ -33,8 +33,9 @@
     "@types/babel__template": "^7.4.1",
     "@types/chrome": "0.0.197",
     "@types/jest": "^28.1.4",
-    "copy-webpack-plugin": "^8.1.0",
-    "css-loader": "^5.2.0",
+    "esbuild": "^0.17.2",
+    "esbuild-plugin-copy": "^2.0.1",
+    "esbuild-plugin-less": "^1.1.12",
     "eslint": "^8.28.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-config-standard-with-typescript": "^23.0.0",
@@ -42,15 +43,9 @@
     "jest": "^28.1.1",
     "jest-environment-jsdom": "^28.1.1",
     "less": "^4.1.1",
-    "less-loader": "^8.1.0",
-    "lezer-loader": "^0.3.0",
-    "style-loader": "^2.0.0",
+    "minimist-lite": "^2.2.1",
     "ts-jest": "^28.0.5",
-    "ts-loader": "^9.3.1",
-    "typescript": "^4.7.4",
-    "webpack": "^5.74.0",
-    "webpack-cli": "^4.10.0",
-    "webpack-merge": "^5.8.0"
+    "typescript": "^4.7.4"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.2.0",
@@ -67,7 +62,6 @@
     "@lezer/lr": "^1.2.3",
     "@types/desmos": "^1.6.0",
     "js-tokens": "^8.0.0",
-    "prettier": "^2.7.1",
-    "process": "^0.11.10"
+    "prettier": "^2.7.1"
   }
 }

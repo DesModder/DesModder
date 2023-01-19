@@ -15,13 +15,18 @@
     {
       "matches": ["https://www.desmos.com/calculator*"],
       "run_at": "document_start",
-      "js": ["preloadContent.js"],
+      "js": ["preload/content.js"],
       "all_frames": true
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["script.js", "preloadScript.js", "workerAppend.js"],
+      "resources": [
+        "script.css",
+        "script.js",
+        "preload/script.js",
+        "worker/append.js"
+      ],
       "matches": ["https://www.desmos.com/*"]
     }
   ],

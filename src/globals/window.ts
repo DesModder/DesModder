@@ -4,11 +4,6 @@ interface windowConfig extends Window {
   require: ((s: string[], callback: Function) => void) & ((s: string) => any);
   Calc: CalcType;
   DesModder: any;
-  define: (
-    moduleName: string,
-    dependencies: string[],
-    definition: Function
-  ) => void;
   ALMOND_OVERRIDES: { [key: string]: Function };
 }
 
