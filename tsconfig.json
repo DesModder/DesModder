@@ -15,5 +15,5 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["./src/", "loaders/esbuild-plugin-replacements.mjs"]
+  "include": ["./src/", "./loaders/"]
 }
