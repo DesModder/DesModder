@@ -12,7 +12,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.desmos.com/calculator*"],
+      "matches": ["https://*.desmos.com/calculator*"],
       "run_at": "document_start",
       "js": ["preload/content.js"],
       "all_frames": true

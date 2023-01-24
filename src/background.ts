@@ -31,7 +31,7 @@ if (BROWSER === "firefox") {
       cancel: url.endsWith(".js"),
     }),
     {
-      urls: ["https://www.desmos.com/assets/build/calculator_desktop-*.js"],
+      urls: ["https://*.desmos.com/assets/build/calculator_desktop-*.js"],
     },
     ["blocking"]
   );
@@ -56,7 +56,7 @@ if (BROWSER === "firefox") {
       ],
     }),
     {
-      urls: ["https://www.desmos.com/*"],
+      urls: ["https://*.desmos.com/calculator*"],
     },
     ["blocking", "responseHeaders"]
   );

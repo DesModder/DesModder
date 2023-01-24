@@ -18,7 +18,7 @@
       ]
     },
     "condition": {
-      "urlFilter": "https://www.desmos.com/*",
+      "urlFilter": "https://*.desmos.com/calculator*",
       "resourceTypes": ["main_frame", "script"]
     }
   },
@@ -47,7 +47,7 @@
       "type": "block"
     },
     "condition": {
-      "urlFilter": "https://www.desmos.com/assets/build/calculator_desktop-*.js|"
+      "urlFilter": "https://*.desmos.com/assets/build/calculator_desktop-*.js|"
     }
   }
 ]
