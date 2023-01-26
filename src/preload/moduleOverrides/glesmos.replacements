@@ -114,15 +114,6 @@ getSections = function () {__body__}
 $Expression.isHistogram
 ```
 
-*Replace* `__body__` with
-
-```js
-if ($Expression.isInequality(this.model) && DesModder.controller.isGlesmosMode(this.model.id)) {
-  return ['fill'];
-}
-__body__
-```
-
 ## Check/update DesModder metadata before allowing statements to update.
 
 Allows correct checking of the .glesmos metadata; otherwise, we run into `Calc.observeEvent("change")` triggering after addStatement sends the data to the worker. We need the correct `.glesmos` property before addStatement.
