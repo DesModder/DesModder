@@ -17,7 +17,7 @@ if ($List.getMissingVariablesForItem($l).length && $e.areSlidersEnabled())
 if (
   $List.getMissingVariablesForItem($l).length &&
   $e.areSlidersEnabled() &&
-  !window.DesModder.controller.isErrorHidden($l.id)
+  !window.DesModder?.controller.isErrorHidden($l.id)
 )
   return $e.createSlidersForItem(
 ```
@@ -28,18 +28,21 @@ if (
 
 Wrap the error message tooltipped-error with a div, using `onTap` to trigger hiding/showing the error (but only when shift is held).
 
-*Find_template* => `template`
+*Find* => `from`
+```js
+error: function () {
+  return $DCGView.createElement($T.TooltippedError, {
+    error: $e.bindFn($e.getErrorMsg),
+    __opts__
+  })
+}
+```
+
+*Find_surrounding_template* `from` => `template`
 
 *Find* inside `template`
 ```js
 $this.bindFn($this.getIconMode)
-```
-
-*Find* inside `template` => `from`
-```js
-error: function () {
-  return $DCGView.createElement($T.TooltippedError, { <body> })
-}
 ```
 
 *Replace* `from` with
@@ -49,15 +52,18 @@ error: () => $DCGView.createElement(
   {
     onTap: evt => (
       evt.shiftKey &&
-      window.DesModder.controller.toggleErrorHidden($this.model.id)
+      window.DesModder?.controller.toggleErrorHidden($this.model.id)
     ),
     style: () => (
-      window.DesModder.controller.isErrorHidden($this.model.id)
+      window.DesModder?.controller.isErrorHidden($this.model.id)
         ? "opacity: 0.5"
         : ""
     )
   },
-  $DCGView.createElement($T.TooltippedError, { <body> })
+  $DCGView.createElement($T.TooltippedError, {
+    error: $e.bindFn($e.getErrorMsg),
+    __opts__
+  })
 )
 ```
 
@@ -83,17 +89,20 @@ var $r = $e.hasClass('dcg-all')
 
 *module* `expressions/promptslider_view`
 
-*Find_template* => `template`
-
-*Find_this* `template` => `this`
-
-*Find* inside `template`
+*Find* => `element`
 ```js
-$DCGView.createElement(
+createElement(
   'span',
   { class: $DCGView.const('btns') },
   __children__
 )
+```
+
+*Find_surrounding_template* `element` => `template`
+
+*Find* inside `template`
+```js
+var $this = this;
 ```
 
 Add one more child for the hide button
@@ -106,7 +115,7 @@ $DCGView.createElement(
   {
     predicate: () => (
       $this.model.type !== "ticker" &&
-      DesModder.controller?.isPluginEnabled("hide-errors")
+      window.DesModder?.controller?.isPluginEnabled("hide-errors")
     ),
   },
   () => $DCGView.createElement(
@@ -121,26 +130,10 @@ $DCGView.createElement(
         tabindex: $DCGView.const("0"),
         class: $DCGView.const("dcg-btn-slider dcg-btn-light-gray")
       },
-      () => DesModder.controller.format("hide-errors-hide")
+      () => window.DesModder?.controller.format("hide-errors-hide")
     )
   )
 )
-```
-
-## Reduce suggested slider count to 3
-
-Avoids overflowing on narrow expression lists since we've added the "hide" button.
-
-*module* `expressions/promptslider_view`
-
-*Find* => `from`
-```js
-$t.getMissingVariables().slice(0, 4)
-```
-
-*Replace* `from` with
-```js
-$t.getMissingVariables().slice(0, 3)
 ```
 
 ## Disable slider creation prompt if error is hidden
@@ -149,14 +142,14 @@ $t.getMissingVariables().slice(0, 3)
 
 *Find*
 ```js
-.shouldShowSliderPrompt = function () {
+shouldShowSliderPrompt = function () {
   return __ret__
 }
 ```
 
 *Replace* `__ret__` with
 ```js
-__ret__ && !window.DesModder.controller.isErrorHidden(this.model?.id)
+__ret__ && !window.DesModder?.controller.isErrorHidden(this.model?.id)
 ```
 
 ## Allow shift-enter to create a new expression and hide errors on the old expression

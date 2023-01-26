@@ -81,7 +81,7 @@ export function tokenizeReplacement(replacementString: string) {
   return tokens;
 }
 
-function patternTokens(str: string): PatternToken[] {
+export function patternTokens(str: string): PatternToken[] {
   return [...jsTokens(str.trim().replace(/\s*<(\w+)>\s*/, "__$1__"))].map(
     (token) =>
       token.type !== "IdentifierName"

@@ -50,7 +50,7 @@ exports.getDisplayState = function (e) {
   }
 ```
 
-## Allow deleting pinned expressions;
+## Allow deleting pinned expressions
 
 Since pinned expressions have `isDragDrop=true`, they have `model.dcgView = undefined`, which otherwise prevents the delete animation from occurring.
 
@@ -58,7 +58,7 @@ Since pinned expressions have `isDragDrop=true`, they have `model.dcgView = unde
 
 *Find*
 ```js
-._deleteItemAndAnimateOut = function ($e, $t) {__body__}
+_deleteItemAndAnimateOut = function ($e, $t) {__body__}
 ```
 
 *Find* inside `body`

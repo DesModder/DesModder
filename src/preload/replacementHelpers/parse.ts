@@ -1,28 +1,18 @@
-import { ReplacementError, tryWithErrorContext } from "./errors";
+import { ReplacementError } from "./errors";
 import {
   PatternToken,
   ReplacementToken,
   tokenizeReplacement,
 } from "./tokenize";
 
-export type Block = DefineBlock | ModuleBlock;
-
-interface BaseBlock {
+export interface Block {
   filename: string;
   heading: string;
   commands: Command[];
-}
-
-export interface DefineBlock extends BaseBlock {
-  tag: "DefineBlock";
-  commandName: string;
-}
-
-export interface ModuleBlock extends BaseBlock {
-  tag: "ModuleBlock";
   modules: string[];
   plugin: string;
   replaceCommands: Command[];
+  workerOnly: boolean;
 }
 
 export interface Command {
@@ -49,11 +39,11 @@ export default function parseFile(
   const rules: Block[] = [];
   for (let i = 2; i < tokens.length; i++) {
     const token = tokens[i];
-    if (token.tag === "emph" && ["module", "define"].includes(token.command)) {
+    if (token.tag === "emph" && token.command === "module") {
       const prevToken = tokens[i - 1];
       if (prevToken.tag !== "heading")
         throw new ReplacementError(
-          `Block-starter command *${token.command}* must be preceded by a heading`
+          `*module* command must be preceded by a heading`
         );
       const nextHeadingIndex = tokens.findIndex(
         (t, j) => j > i && t.tag === "heading" && t.depth <= prevToken.depth
@@ -61,16 +51,12 @@ export default function parseFile(
       const blockEndIndex =
         nextHeadingIndex < 0 ? tokens.length : nextHeadingIndex;
       const block = tokens.slice(i + 1, blockEndIndex);
-      tryWithErrorContext(
-        () =>
-          rules.push(parseBlock(prevToken, token, block, pluginName, filename)),
-        { message: `parsing block '${prevToken.text}'`, filename }
-      );
+      rules.push(parseBlock(prevToken, token, block, pluginName, filename));
       i = blockEndIndex;
     } else if (token.tag === "emph") {
       throw new ReplacementError(
         `Command out of place: *${token.command}*.` +
-          ` Did you forget a *module* or *define* command?`
+          ` Did you forget a *module* command?`
       );
     }
   }
@@ -91,19 +77,19 @@ function parseBlock(
   plugin: string,
   filename: string
 ): Block {
-  if (start.command === "define" && start.args.length !== 1)
-    throw new ReplacementError(
-      `Command *define* must have exactly one argument`
-    );
-  if (start.command === "module" && start.args.length === 0)
+  if (start.args.length === 0)
     throw new ReplacementError(
       `Command *module* must have at least one argument`
     );
   const commands: Command[] = [];
+  let workerOnly = false;
   for (let i = 0; i < tokens.length; ) {
     const token = tokens[i];
     if (token.tag === "heading") {
       throw new ReplacementError("Subheadings not yet implemented");
+    } else if (token.tag === "emph" && token.command === "worker_only") {
+      workerOnly = true;
+      i++;
     } else if (token.tag === "emph") {
       const nextToken = tokens[i + 1];
       const code = nextToken?.tag === "code" ? nextToken : undefined;
@@ -113,25 +99,15 @@ function parseBlock(
       i++;
     }
   }
-  const base = {
+  return {
     heading: heading.text,
     filename,
+    commands: commands.filter((x) => x.command !== "replace"),
+    replaceCommands: commands.filter((x) => x.command === "replace"),
+    plugin,
+    modules: start.args,
+    workerOnly,
   };
-  return start.command === "module"
-    ? {
-        tag: "ModuleBlock",
-        ...base,
-        commands: commands.filter((x) => x.command !== "replace"),
-        replaceCommands: commands.filter((x) => x.command === "replace"),
-        plugin,
-        modules: start.args,
-      }
-    : {
-        tag: "DefineBlock",
-        ...base,
-        commands,
-        commandName: start.args[0],
-      };
 }
 
 function getCommand(

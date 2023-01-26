@@ -14,14 +14,14 @@
     {
       "matches": ["https://www.desmos.com/calculator*"],
       "run_at": "document_start",
-      "js": ["preloadContent.js"],
+      "js": ["preload/content.js"],
       "all_frames": true
     }
   ],
   "web_accessible_resources": [
     "script.js",
     "preloadScript.js",
-    "workerAppend.js"
+    "worker/append.js"
   ],
   "permissions": [
     "https://*.desmos.com/*",
