@@ -97,9 +97,12 @@ function getShaderProgram(
   shaderProgram.Infinity = gl.getUniformLocation(shaderProgram, 'Infinity');
   
   shaderCache.set(key, shaderProgram);
-  if (shaderCache.size > 100) {
+  if (shaderCache.size > 256) {
     const key = Array.from(shaderCache.keys())[0];
-    gl.deleteShader(shaderCache.get(key) as WebGLProgram); // avoid another memory leak
+    try {
+      gl.deleteShader(shaderCache.get(key) as WebGLProgram); // avoid another memory leak
+    }
+    catch(e){}
     shaderCache.delete(key);
   }
 
@@ -285,9 +288,9 @@ vec2 d_f0( in vec2 fragCoord ){
 }
 
 bool detectSignChange( in vec2 fragCoord ){
-  float first = sign( f0_cache( fragCoord + Q_kernel[0] / iResolution ) );
+  float first = sign( f0_cache( fragCoord + Q_kernel[0] * 2.0 / iResolution ) );
   for( int i = 1; i < 4; i++ ){
-    if( sign( f0_cache(fragCoord + Q_kernel[i] / iResolution) ) != first ){
+    if( sign( f0_cache(fragCoord + Q_kernel[i] * 2.0 / iResolution) ) != first ){
       return true;
     }
   }
@@ -397,10 +400,8 @@ void main(){
   vec4 seed = getPixel( texCoord, iChannel0 );
   float dist = LineSDF( seed * vec4(warp,warp), texCoord * warp ) * max(iResolution.x, iResolution.y);
 
-  float color = smoothstep( 0.0, 1.0, clamp( dist - 5.0, 0.0, 1.0 ));
-  // outColor = vec4(1.0);
-  // return;
-  outColor = vec4( vec3(1.0 - color), 1.0 ); 
+  float alpha = smoothstep(0.0, 1.0, clamp( dist - float(${chunks.line_width}) + 1.0, 0.0, 1.0 ));
+  outColor = ${chunks.line_color} * vec4(1.0,1.0,1.0,1.0 - alpha); 
 }
 `
 }

@@ -30,8 +30,8 @@ export function compileGLesmos(
   try {
 
     fillOpacity = preprocParam(fillOpacity, 0, 1, 0.4);
-    lineOpacity = preprocParam(fillOpacity, 0, 1, 0.9);
-    lineWidth   = preprocParam(fillOpacity, 0, Infinity, 2.5);
+    lineOpacity = preprocParam(lineOpacity, 0, 1, 0.9);
+    lineWidth   = preprocParam(lineWidth, 0, Infinity, 2.5);
 
     const { source, deps } = emitChunkGL(concreteTree._chunk);
     const type = getGLType(concreteTree.valueType);
