@@ -365,9 +365,13 @@ export function glesmos_getOutlineShader(gl: WebGL2RenderingContext, id:string, 
 
     void main(){
 
+      vec4 JFA_undefined = vec4(-Infinity);
       vec2 warp = iResolution / max(iResolution.x, iResolution.y);
 
       vec4 seed = getPixel( texCoord, iChannel0 );
+
+      if( seed == JFA_undefined ){ return; }
+
       float dist = LineSDF( seed * vec4(warp,warp), texCoord * warp ) * max(iResolution.x, iResolution.y);
 
       float alpha = smoothstep(0.0, 1.0, clamp( dist - float(${chunks.line_width}) * 0.5 + 0.5, 0.0, 1.0 ));

@@ -3,7 +3,7 @@ GLesmos Roadmap 2023, proposed by Fasteroid.
 Required:
 
     Outlines:
-        Fix whole screen filling when no outlines are visible [ ]
+        Fix whole screen filling when no outlines are visible [x]
         Don't run the shader if they're disabled              [ ]
 
     Fill:
