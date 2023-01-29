@@ -209,7 +209,7 @@ else {
 ```js
 else if ($this.userData.glesmos) {
   const newCompiled = self.dsm_compileGLesmos(
-    $ir, $styles.color, $styles.fillOpacity, $styles.listIndex
+    $ir, $styles.color, $styles.fillOpacity, $styles.lineOpacity, $styles.lineWidth, $styles.listIndex
   );
   const prev =  $graphs[$graphs.length - 1];
   if (prev?.graphMode === "GLesmos") {
@@ -223,6 +223,8 @@ else if ($this.userData.glesmos) {
     }
     prevGL.defs.push(...newCompiled.defs);
     prevGL.colors.push(...newCompiled.colors);
+    prevGL.line_colors.push(...newCompiled.line_colors);
+    prevGL.line_widths.push(...newCompiled.line_widths);   
   } else {
     $graphs.push({
       graphMode: "GLesmos",

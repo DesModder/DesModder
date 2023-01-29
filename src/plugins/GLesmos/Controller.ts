@@ -27,7 +27,7 @@ export default class Controller {
           this.canvas.updateTransforms(transforms);
           this.canvas?.buildGLesmosShaders(
             id,
-            {deps: deps, def: compiledGL.defs[i], color: compiledGL.colors[i]}
+            {deps: deps, def: compiledGL.defs[i], color: compiledGL.colors[i], line_color: compiledGL.line_colors[i], line_width: compiledGL.line_widths[i] }
           );
           this.canvas?.render();
           ctx.drawImage(this.canvas?.element, 0, 0);

@@ -142,6 +142,8 @@ type GLesmosShaderChunks = {
   deps: string
   def: string
   color: string
+  line_color: string
+  line_width: string
 };
 
 // NOTE: glesmos.replacements:205 must reflect any changes to this type, or you will get errors
@@ -149,6 +151,8 @@ export type GLesmosShaderPackage = {
   deps: string[]
   defs: string[]
   colors: string[]
+  line_colors: string[]
+  line_widths: string[]
 };
 
 // = ====================== Constant WebGL Code Components ======================
@@ -175,39 +179,33 @@ uniform float Infinity;
 
 #define M_PI 3.1415926535897932384626433832795
 #define M_E 2.71828182845904523536028747135266
-`;
 
-const MERGE_SHADER = `${GLESMOS_ENVIRONMENT}
-
-uniform sampler2D positive;
-uniform sampler2D negative;
-uniform float     radius;
-
-float JFA_getDistance( in vec4 jfa ){
-  return jfa[2];
-}
-
-void main(){
-  float dist1 = JFA_getDistance( texture(negative, texCoord) );
-  float dist2 = JFA_getDistance( texture(positive, texCoord) );
-
-  float dist = max(dist1, dist2);
-  float alpha = clamp( (radius + 1.0)*0.5 - dist, 0.0, 1.0 );
-  outColor = vec4(1.0, 1.0, 1.0, alpha);
+vec2 toMathCoord(in vec2 fragCoord){
+  return fragCoord * graphSize + graphCorner;
 }
 `;
+
+const GLESMOS_SHARED = `
+  vec4 getPixel( in vec2 coord, in sampler2D channel ){
+    return texture( channel, coord );
+  }
+
+  float line_segment(in vec2 p, in vec2 a, in vec2 b) {
+    vec2 ba = b - a;
+    vec2 pa = p - a;
+    float h = clamp(dot(pa, ba) / dot(ba, ba), 0., 1.);
+    return length(pa - h * ba);
+  }
+
+  float LineSDF(in vec4 line, in vec2 p){
+    return line_segment(p, vec2(line[0], line[1]), vec2(line[2], line[3]) );
+  }
+`
 
 // = ===================== WebGL Source Generators ======================
 
-function glesmos_SDF_Source(chunks: GLesmosShaderChunks) {
+function glesmos_Cache_Source(chunks: GLesmosShaderChunks) {
 return `${GLESMOS_ENVIRONMENT}
-
-uniform sampler2D sampler;
-uniform int       setupMode;
-uniform float     c_maxSteps;
-uniform float     c_stepNum;
-uniform float     direction;
-uniform vec2      canvasSize;
 
 // dependencies
 ${chunks.deps}
@@ -215,82 +213,196 @@ ${chunks.deps}
 // main func
 ${chunks.def}
 
-//= =================== JFA Helpers ===================
-const vec2 JFA_kernel[9] = vec2[9]( 
-  vec2(-1.0,1.0)  , vec2(0.0,1.0)  , vec2(1.0,1.0)  ,
-  vec2(-1.0,0.0)  , vec2(0.0,0.0)  , vec2(1.0,0.0)  ,
-  vec2(-1.0,-1.0) , vec2(0.0,-1.0) , vec2(1.0,-1.0)
-);
-
-const vec4 JFA_undefined = vec4(0.0);
-
-vec4 newJFA (in vec2 seed, in float dist){
-  vec4 jfa = vec4(0.0);
-  jfa.xy = seed;
-  jfa[2] = dist;
-  jfa[3] = 1.0;  // a valid jfa object
-  return jfa;
+void main(){
+  vec2 mathCoord = texCoord * graphSize + graphCorner;
+  float v = _f0( mathCoord.x, mathCoord.y );
+  outColor = vec4(v, 0, 0, 1);
+}
+`
 }
 
-bool JFA_isUndefined( in vec4 jfa ){
-  return jfa[3] == 0.0;
+function glesmos_SDF_Source(chunks: GLesmosShaderChunks) {
+return `${GLESMOS_ENVIRONMENT}
+
+uniform sampler2D iChannel0; // storage
+uniform sampler2D iChannel1; // cache
+uniform int       iInitFlag; // are we initializing?
+uniform vec2      iResolution; // canvas size
+
+uniform float     c_maxSteps;
+uniform float     c_stepNum;
+
+// dependencies
+${chunks.deps}
+
+// main func
+${chunks.def}
+
+//============== BEGIN Shared Stuff ==============//
+
+${GLESMOS_SHARED}
+
+//============== END Shared Stuff ==============//
+
+
+
+//============== BEGIN JFA Helper Data ==============//
+
+  const vec2 JFA_kernel[9] = vec2[9]( 
+    vec2(-1.0,1.0)  , vec2(0.0,1.0)  , vec2(1.0,1.0)  ,
+    vec2(-1.0,0.0)  , vec2(0.0,0.0)  , vec2(1.0,0.0)  ,
+    vec2(-1.0,-1.0) , vec2(0.0,-1.0) , vec2(1.0,-1.0)
+  );
+
+  const vec2 Q_kernel[4] = vec2[4](
+    vec2(-0.5,-0.5), vec2(0.5,-0.5),
+    vec2(-0.5,0.5), vec2(0.5,0.5)
+  );
+
+  const vec2 D_kernel[4] = vec2[4](
+    vec2(0,0), vec2(1,0),
+    vec2(0,1), vec2(1,1)
+  );
+
+  // const vec4 JFA_undefined = vec4(-Infinity);
+
+//============== END JFA Helper Data ==============//
+
+
+
+//============== BEGIN Shadertoy Buffer A ==============//
+
+float f0_cache( in vec2 fragCoord ){
+  return getPixel( fragCoord, iChannel1).x;
 }
 
-vec2 JFA_getSeed( in vec4 jfa ){
-  return jfa.xy;
+vec2 d_f0( in vec2 fragCoord ){
+  float px = f0_cache(fragCoord);
+  return vec2( 
+    px - f0_cache(fragCoord + vec2(1.0,0) / iResolution),
+    px - f0_cache(fragCoord + vec2(0,1.0) / iResolution) 
+  );
 }
 
-float JFA_getDistance( in vec4 jfa ){
-  return jfa[2];
+bool detectSignChange( in vec2 fragCoord ){
+  float first = sign( f0_cache( fragCoord + Q_kernel[0] / iResolution ) );
+  for( int i = 1; i < 4; i++ ){
+    if( sign( f0_cache(fragCoord + Q_kernel[i] / iResolution) ) != first ){
+      return true;
+    }
+  }
+  return false;
 }
 
-//= =================== JFA Main ===================
-
-vec4 Setup(in vec2 mathCoord){
-  if( _f0(mathCoord.x, mathCoord.y) * direction > 0.0 ) return newJFA(mathCoord, 0.0);
-  else return vec4(0.0);
+vec4 lineToPixel(in vec2 p1, in vec2 p2, in vec2 fragCoord){
+  return vec4( p1 + fragCoord, p2 + fragCoord );
 }
 
-vec4 Step(in vec2 texCoord, in vec2 mathCoord){
+vec2 quadTreeSolve( in vec2 seed, in float scale ){
 
-  float stepwidth = floor( exp2(c_maxSteps - c_stepNum) - 1.0 );
-  float maxSize = exp2(c_maxSteps);
+  float closest = Infinity;
+  int closest_n = 0;
+
+  for( int n = 0; n < 4; n++ ){
+    vec2 samplepos = toMathCoord(seed + Q_kernel[n] / iResolution * scale);
+    float tmp = abs( _f0( samplepos.x, samplepos.y ) );
+    if( tmp < closest ){
+      closest_n = n;
+      closest = tmp;
+    }
+  }
   
-  float bestDistance = 9999.0;
-  vec2  bestCoord    = vec2(0.0);
+  return seed + Q_kernel[closest_n]  / iResolution * scale;
+  
+}
+
+vec4 Step(in vec2 fragCoord){
+
+  vec4 JFA_undefined = vec4(-Infinity);
+
+  float stepwidth = floor(exp2(c_maxSteps - c_stepNum - 1.0));
+
+  vec2 warp = iResolution / max(iResolution.x, iResolution.y);
+  
+  float bestDistance = Infinity;
+  vec4  bestLine     = JFA_undefined;
   
   for (int n = 0; n < 9; n++) {
-    
-    vec2 sampleCoord = texCoord + JFA_kernel[n] / maxSize * stepwidth;
-    vec4 jfa         = texture( sampler, sampleCoord );
+      
+    vec2 sampleCoord = fragCoord + JFA_kernel[n] / iResolution * stepwidth;
+    vec4 seed        = getPixel( sampleCoord, iChannel0 );
 
-    if( JFA_isUndefined(jfa) ) continue;
-    
-    vec2  seed = JFA_getSeed(jfa);
-    float dist = length( (seed - mathCoord) * canvasSize / graphSize );
+    if( seed == JFA_undefined ) continue; // don't try to use this one
+    float dist = LineSDF( seed * vec4(warp,warp), fragCoord * warp );
     
     if (dist < bestDistance){
       bestDistance = dist;
-      bestCoord    = seed;
+      bestLine     = seed;
     }
+          
+  }
   
-  }
- 
-  return newJFA(bestCoord, bestDistance);
+  return bestLine;
 }
 
-//= =================== Output ===================
 void main(){
-  vec2 mathCoord = texCoord * graphSize + graphCorner;
 
-  if ( setupMode == 1 ){
-    outColor = Setup( mathCoord );
+  vec4 JFA_undefined = vec4(-Infinity);
+
+  vec2 fragCoord = texCoord;
+  
+  if( iInitFlag == 1 ) {  // JFA initialization
+    
+    bool mask = detectSignChange( fragCoord ); // works correctly
+    
+    if( mask ){
+
+      fragCoord = quadTreeSolve(fragCoord, 1.0);
+      fragCoord = quadTreeSolve(fragCoord, 0.5);
+      fragCoord = quadTreeSolve(fragCoord, 0.25);
+      
+      vec2 d = d_f0(fragCoord);
+      d = normalize( vec2(-d.y, d.x) ) / iResolution;
+      
+      outColor = lineToPixel(-d, d, fragCoord);
+    }
+    else {
+      outColor = JFA_undefined;
+    }
+      
   }
-  else {
-    outColor = Step( texCoord, mathCoord );
+  else {  // JFA stepping
+    outColor = Step( fragCoord );
   }
+      
 }
+
+//============== END Shadertoy Buffer A ==============//
+
 `;
+}
+
+function glesmos_OutlinePass_Source(chunks: GLesmosShaderChunks) {
+return `${GLESMOS_ENVIRONMENT}
+
+uniform sampler2D iChannel0; // storage
+uniform vec2      iResolution; // canvas size
+
+${GLESMOS_SHARED}
+
+void main(){
+
+  vec2 warp = iResolution / max(iResolution.x, iResolution.y);
+
+  vec4 seed = getPixel( texCoord, iChannel0 );
+  float dist = LineSDF( seed * vec4(warp,warp), texCoord * warp ) * max(iResolution.x, iResolution.y);
+
+  float color = smoothstep( 0.0, 1.0, clamp( dist - 5.0, 0.0, 1.0 ));
+  // outColor = vec4(1.0);
+  // return;
+  outColor = vec4( vec3(1.0 - color), 1.0 ); 
+}
+`
 }
 
 export function initGLesmosCanvas() {
@@ -312,12 +424,19 @@ export function initGLesmosCanvas() {
   gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, FULLSCREEN_QUAD, gl.STATIC_DRAW);
 
-  const initialTexture = createAndBindTexture(gl);
+  let ACTIVE_FB = 0; // all caps so I don't forget this is global
 
   const textures: (WebGLTexture | null)[] = [];
   const framebuffers: (WebGLFramebuffer | null)[] = [];
-  let activeFb = 0;
-  for (let i = 0; i < 4; i++) {
+
+  // a "cache" buffer for storing the first pass of the shader madness
+  const cacheTexture = createAndBindTexture(gl);
+  const cacheFB      = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, cacheFB);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, cacheTexture, 0);
+
+   // 3 extra buffers for pingponging and feedback loop dodging
+  for (let i = 0; i < 3; i++) {
     const tex = createAndBindTexture(gl);
     const fb  = gl.createFramebuffer();
 
@@ -330,10 +449,12 @@ export function initGLesmosCanvas() {
 
   //= ================ SHADER OBJECTS ================
 
+  let glesmos_Cache: GLesmosProgram | null;
+
   let glesmos_SDF: GLesmosProgram | null;
   let glesmos_SDF_requiredSteps: number;
 
-  const glesmos_mergeSDFs = getShaderProgram(gl, "lol", VERTEX_SHADER, MERGE_SHADER);
+  let glesmos_OutlinePass: GLesmosProgram | null;
 
   //= ================ GRAPH BOUNDS ======================
 
@@ -360,9 +481,10 @@ export function initGLesmosCanvas() {
       gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, w, h, 0, gl.RGBA, gl.FLOAT, null);
     }
-    gl.bindTexture(gl.TEXTURE_2D, initialTexture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, w, h, 0, gl.RGBA, gl.FLOAT, null);    
 
+    // resize the cache
+    gl.bindTexture(gl.TEXTURE_2D, cacheTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, w, h, 0, gl.RGBA, gl.FLOAT, null);    
   };
 
   const setupGLesmosEnvironment = (program: GLesmosProgram) => {
@@ -381,86 +503,105 @@ export function initGLesmosCanvas() {
   //= ================ WEBGL FUNCTIONS ================
 
   const buildGLesmosShaders = (id: string, chunks: GLesmosShaderChunks) => {
-    console.log('setGLesmosShader');
+    let shdbg = glesmos_SDF_Source(chunks);
+    (window as any).shader_debug = shdbg
+    glesmos_Cache = getShaderProgram(
+      gl,
+      id,
+      VERTEX_SHADER,
+      glesmos_Cache_Source(chunks),
+    );
+
     glesmos_SDF = getShaderProgram(
       gl,
       id,
       VERTEX_SHADER,
-      glesmos_SDF_Source(chunks),
+      shdbg
     );
+
+    glesmos_OutlinePass = getShaderProgram(
+      gl,
+      id,
+      VERTEX_SHADER,
+      glesmos_OutlinePass_Source(chunks)
+    )
   };
 
-  const drawSDF = (direction: number, resultLocation: number) => {
-    if (!glesmos_SDF) glesmosError('SDF shader failed.');
+  const draw = () => {
 
-    gl.useProgram(glesmos_SDF);
+    if (!glesmos_Cache) glesmosError('Cache shader failed.');
+    gl.useProgram(glesmos_Cache);
     {
 
-      activeFb = 0;
+      setupGLesmosEnvironment(glesmos_Cache);
+      
+      gl.activeTexture(gl.TEXTURE1);               // following texture operations concern texture 1
+      gl.bindTexture(gl.TEXTURE_2D, cacheTexture); // texture 1 now points to cacheTexture
+      gl.bindFramebuffer(gl.FRAMEBUFFER, cacheFB); // draw to cacheFB, which points to cacheTexture, which is on texture 1
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      
+    }
+
+    if (!glesmos_SDF) glesmosError('SDF shader failed.');
+    gl.useProgram(glesmos_SDF);   
+    {
+
+      ACTIVE_FB = 0;
 
       setupGLesmosEnvironment(glesmos_SDF);
-      
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[activeFb]); // draw to texture 0
-      gl.bindTexture(gl.TEXTURE_2D, null);
-      
+
+      gl.activeTexture(gl.TEXTURE1);               // following texture operations concern texture 1
+      gl.bindTexture(gl.TEXTURE_2D, cacheTexture); // texture 1 now points to cacheTexture
+
+      gl.activeTexture(gl.TEXTURE0);               // following texture operations concern texture 0
+      gl.bindTexture(gl.TEXTURE_2D, null);         // texture 0 now points to pingpong texture 0
+      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[ACTIVE_FB]); // draw to selected texture
+
       setUniform(gl, glesmos_SDF, "c_maxSteps", "1f", glesmos_SDF_requiredSteps);
-      setUniform(gl, glesmos_SDF, "direction", "1f", direction);
-      setUniform(gl, glesmos_SDF, "canvasSize", "2fv", [c.width, c.height]);
-      setUniform(gl, glesmos_SDF, "setupMode", "1i", 1);
-      
+      setUniform(gl, glesmos_SDF, "iResolution", "2fv", [c.width, c.height]);
+      setUniform(gl, glesmos_SDF, "iInitFlag", "1i", 1);
+
+      setUniform(gl, glesmos_SDF, "iChannel0", "1i", 0); // probably not explicitly needed
+      setUniform(gl, glesmos_SDF, "iChannel1", "1i", 1);
+
       for (let i = 0; i < glesmos_SDF_requiredSteps; i++) {
 
         gl.drawArrays(gl.TRIANGLES, 0, 6);
         
-        setUniform(gl, glesmos_SDF, "setupMode", "1i", 0);
+        setUniform(gl, glesmos_SDF, "iInitFlag", "1i", 0);
 
-        gl.bindTexture(gl.TEXTURE_2D, textures[activeFb]);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[1-activeFb]);
+        gl.bindTexture(gl.TEXTURE_2D, textures[ACTIVE_FB]);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[1-ACTIVE_FB]);
 
         setUniform(gl, glesmos_SDF, "c_stepNum", "1f", i);
-        activeFb = 1 - activeFb;
+        ACTIVE_FB = 1 - ACTIVE_FB;
 
       }
 
-      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[resultLocation]); // dump output to a texture
+      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[2]);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       
     }
     gl.useProgram(null);
 
-  };
-
-  const mergeSDFs = () => {
-    if (!glesmos_mergeSDFs) glesmosError('SDF shader failed.');
-
-    gl.useProgram(glesmos_mergeSDFs);
+    if (!glesmos_OutlinePass) glesmosError('Outline pass shader failed.');
+    gl.useProgram(glesmos_OutlinePass);   
     {
+      setupGLesmosEnvironment(glesmos_OutlinePass);
 
-      setupGLesmosEnvironment(glesmos_mergeSDFs);
+      setUniform(gl, glesmos_OutlinePass, "iResolution", "2fv", [c.width, c.height]);
+      setUniform(gl, glesmos_OutlinePass, "iChannel0", "1i", 0);
 
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, textures[2]);
-      setUniform(gl, glesmos_mergeSDFs, "positive", "1i", 0);
 
-      gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, textures[3]);
-      setUniform(gl, glesmos_mergeSDFs, "positive", "1i", 1);
-
-      setUniform(gl, glesmos_mergeSDFs, "radius", "1f", 5.0); // test radius
-
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null); // now draw directly to the screen!
       gl.drawArrays(gl.TRIANGLES, 0, 6);
-
     }
-    gl.useProgram(null);
-
   };
 
   const render = () => {
-    drawSDF(+1.0, 2);
-    drawSDF(-1.0, 3);
-    mergeSDFs();
+    draw();
   };
 
   //= ================ CLEANUP ================
