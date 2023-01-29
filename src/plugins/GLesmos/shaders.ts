@@ -370,7 +370,7 @@ export function glesmos_getOutlineShader(gl: WebGL2RenderingContext, id:string, 
       vec4 seed = getPixel( texCoord, iChannel0 );
       float dist = LineSDF( seed * vec4(warp,warp), texCoord * warp ) * max(iResolution.x, iResolution.y);
 
-      float alpha = smoothstep(0.0, 1.0, clamp( dist - float(${chunks.line_width}) + 1.0, 0.0, 1.0 ));
+      float alpha = smoothstep(0.0, 1.0, clamp( dist - float(${chunks.line_width}) * 0.5 + 0.5, 0.0, 1.0 ));
       outColor = ${chunks.line_color} * vec4(1.0,1.0,1.0,1.0 - alpha); 
     }
   `;
