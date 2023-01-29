@@ -1,0 +1,31 @@
+GLesmos Roadmap 2023, proposed by Fasteroid.
+
+Required:
+
+    Outlines:
+        Fix whole screen filling when no outlines are visible [ ]
+        Don't run the shader if they're disabled              [ ]
+
+    Fill:
+        Implement [ ]
+
+
+Desired:
+
+    General Performance:
+        Use less division in the fragment shaders  [ ]
+        Use uniforms for colors, alpha, and width  [ ]
+        Combine "fill" and "cache" passes          [ ]
+
+    Outlines:
+        Investigate blobby lines bug [ ]
+        FIX blobby lines bug         [ ]
+
+
+Future:
+
+    Implement integrals [ ]
+
+    Optimize sliders by passing values via uniforms [ ]
+
+    GLesmos polygon renderer [ ]
