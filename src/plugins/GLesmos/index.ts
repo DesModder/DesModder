@@ -17,6 +17,6 @@ const glesmos: Plugin = {
   id: "GLesmos",
   onEnable,
   onDisable,
-  enabledByDefault: true,
+  enabledByDefault: false,
 };
 export default glesmos;
