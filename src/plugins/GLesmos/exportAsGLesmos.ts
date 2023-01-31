@@ -3,7 +3,7 @@ import emitChunkGL from "./emitChunkGL";
 import { colorVec4, getGLType } from "./outputHelpers";
 import { desmosRequire } from "globals/workerSelf";
 import { IRExpression, ParsenodeError } from "parsing/parsenode";
-import { GLesmosShaderPackage } from "./glesmosCanvas";
+import { GLesmosShaderPackage } from "./shaders";
 
 const PError = desmosRequire("core/math/parsenode/error") as (
   msg: string
@@ -44,7 +44,7 @@ export function compileGLesmos(
       defs:   [`${type} _f0(float x, float y) {\n    ${source}\n}`],
       colors: [`${colorVec4(color, fillOpacity)}`],
       line_colors: [`${colorVec4(color, lineOpacity)}`],
-      line_widths: [`${lineWidth}`]
+      line_widths: [lineWidth]
     };
 
   } catch (msg) {

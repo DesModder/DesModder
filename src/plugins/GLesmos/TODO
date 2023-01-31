@@ -4,10 +4,12 @@ Required:
 
     Outlines:
         Fix whole screen filling when no outlines are visible [x]
-        Don't run the shader if they're disabled              [ ]
+        Don't run the shader if they're disabled              [x]
+        Increase width and opacity on equation selected       [ ]
 
     Fill:
-        Implement [ ]
+        Implement                             [x]
+        Increase opacity on equation selected [ ]
 
 
 Desired:
@@ -15,7 +17,6 @@ Desired:
     General Performance:
         Use less division in the fragment shaders  [ ]
         Use uniforms for colors, alpha, and width  [ ]
-        Combine "fill" and "cache" passes          [ ]
 
     Outlines:
         Investigate blobby lines bug [ ]

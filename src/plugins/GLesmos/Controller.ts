@@ -1,5 +1,6 @@
 import ViewportTransforms from "./ViewportTransforms";
-import { initGLesmosCanvas, GLesmosCanvas, GLesmosShaderPackage } from "./glesmosCanvas";
+import { initGLesmosCanvas, GLesmosCanvas } from "./glesmosCanvas";
+import { GLesmosShaderPackage } from "./shaders";
 import { Calc } from "globals/window";
 
 export default class Controller {

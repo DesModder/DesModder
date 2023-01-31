@@ -3,12 +3,21 @@ export function glesmosError(msg: string): never {
   throw Error(`[GLesmos Error] ${msg}`);
 }
 
+// NOTE: glesmos.replacements:212 must reflect any changes to this type, or you will get errors
+export type GLesmosShaderPackage = {
+  deps: string[]
+  defs: string[]
+  colors: string[]
+  line_colors: string[]
+  line_widths: number[]
+};
+
 export type GLesmosShaderChunks = {
   deps: string
   def: string
   color: string
   line_color: string
-  line_width: string
+  line_width: number
 };
 
 // I introduced this to make things uniforms more type-safe
@@ -18,6 +27,21 @@ export type GLesmosProgram = WebGLProgram & {
   size: WebGLUniformLocation | null
   NaN: WebGLUniformLocation | null
   Infinity: WebGLUniformLocation | null
+};
+
+type UniformType = '1f' | '2fv' | '3fv' | '4fv' | '1i'; // TODO: this isn't very typesafe!
+export function setUniform(
+  gl: WebGL2RenderingContext,
+  program: WebGLProgram,
+  uniformName: string,
+  uniformType: UniformType,
+  uniformValue: number | number[],
+) {
+  const uniformSetterKey: keyof WebGLRenderingContext = ('uniform' + uniformType) as keyof WebGLRenderingContext;
+  (gl[uniformSetterKey] as Function)(
+    gl.getUniformLocation(program, uniformName),
+    uniformValue,
+  )
 };
 
 function compileShader(
@@ -102,7 +126,6 @@ function getShaderProgram(
   shaderCache.set(key, shaderProgram);
   if (shaderCache.size > 100) {
     const key = Array.from(shaderCache.keys())[0];
-    gl.deleteShader(shaderCache.get(key) as WebGLProgram); // avoid another memory leak
     shaderCache.delete(key);
   }
 
@@ -134,6 +157,11 @@ uniform float Infinity;
 
 vec2 toMathCoord(in vec2 fragCoord){
   return fragCoord * graphSize + graphCorner;
+}
+
+vec4 mixColor(vec4 from, vec4 top) {
+  float a = 1.0 - (1.0 - from.a) * (1.0 - top.a);
+  return vec4((from.rgb * from.a * (1.0 - top.a) + top.rgb * top.a) / a, a);
 }
 `;
 
@@ -354,17 +382,27 @@ export function glesmos_getSDFShader(gl: WebGL2RenderingContext, id:string, chun
 
 }
 
-export function glesmos_getOutlineShader(gl: WebGL2RenderingContext, id:string, chunks: GLesmosShaderChunks): GLesmosProgram {
+export function glesmos_getFinalPassShader(gl: WebGL2RenderingContext, id:string, chunks: GLesmosShaderChunks): GLesmosProgram {
 
   const source = `${GLESMOS_ENVIRONMENT}
 
-    uniform sampler2D iChannel0; // storage
+    uniform sampler2D iChannel0;   // storage
+    uniform sampler2D iChannel1;   // cache
     uniform vec2      iResolution; // canvas size
+    uniform int       iDoOutlines;
 
     ${GLESMOS_SHARED}
 
     void main(){
 
+      // fill
+      vec4 test = getPixel( texCoord, iChannel1 );
+      if( test.x > 0.0 ){
+        outColor = mixColor(outColor, ${chunks.color});
+      }
+
+      // lines
+      if( iDoOutlines != 1 ) return;
       vec4 JFA_undefined = vec4(-Infinity);
       vec2 warp = iResolution / max(iResolution.x, iResolution.y);
 
@@ -375,7 +413,7 @@ export function glesmos_getOutlineShader(gl: WebGL2RenderingContext, id:string, 
       float dist = LineSDF( seed * vec4(warp,warp), texCoord * warp ) * max(iResolution.x, iResolution.y);
 
       float alpha = smoothstep(0.0, 1.0, clamp( dist - float(${chunks.line_width}) * 0.5 + 0.5, 0.0, 1.0 ));
-      outColor = ${chunks.line_color} * vec4(1.0,1.0,1.0,1.0 - alpha); 
+      outColor = mixColor(outColor, ${chunks.line_color} * vec4(1.0,1.0,1.0,1.0 - alpha));
     }
   `;
 
@@ -385,6 +423,8 @@ export function glesmos_getOutlineShader(gl: WebGL2RenderingContext, id:string, 
     VERTEX_SHADER,
     source,
   );
+  gl.useProgram(shader);
+  setUniform(gl, shader, "iDoOutlines", "1i", chunks.line_width > 0 ? 1 : 0)
 
   return shader;
 

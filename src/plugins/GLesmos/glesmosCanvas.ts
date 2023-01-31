@@ -2,7 +2,8 @@ import ViewportTransforms from './ViewportTransforms';
 
 import { 
   GLesmosShaderChunks, GLesmosProgram, glesmosError,
-  glesmos_getCacheShader, glesmos_getSDFShader, glesmos_getOutlineShader
+  glesmos_getCacheShader, glesmos_getSDFShader, glesmos_getFinalPassShader,
+  setUniform
 } from './shaders';
 
 export type GLesmosCanvas = ReturnType<typeof initGLesmosCanvas>;
@@ -21,33 +22,9 @@ function createAndBindTexture(
   return tex;
 }
 
-type UniformType = '1f' | '2fv' | '3fv' | '4fv' | '1i'; // TODO: this isn't very typesafe!
-function setUniform(
-  gl: WebGL2RenderingContext,
-  program: WebGLProgram,
-  uniformName: string,
-  uniformType: UniformType,
-  uniformValue: number | number[],
-) {
-  const uniformSetterKey: keyof WebGLRenderingContext = ('uniform' + uniformType) as keyof WebGLRenderingContext;
-  (gl[uniformSetterKey] as Function)(
-    gl.getUniformLocation(program, uniformName),
-    uniformValue,
-  )
-};
-
 const FULLSCREEN_QUAD = new Float32Array([
   -1, 1, 1, 1, 1, -1, -1, 1, 1, -1, -1, -1,
 ]);
-
-// NOTE: glesmos.replacements:212 must reflect any changes to this type, or you will get errors
-export type GLesmosShaderPackage = {
-  deps: string[]
-  defs: string[]
-  colors: string[]
-  line_colors: string[]
-  line_widths: string[]
-};
 
 export function initGLesmosCanvas() {
 
@@ -95,11 +72,13 @@ export function initGLesmosCanvas() {
   //= ================ SHADER OBJECTS ================
 
   let glesmos_Cache: GLesmosProgram | null;
+  
+  let glesmos_doOutlines = true;
 
   let glesmos_SDF: GLesmosProgram | null;
   let glesmos_SDF_requiredSteps: number;
 
-  let glesmos_Outline: GLesmosProgram | null;
+  let glesmos_FinalPass: GLesmosProgram | null;
 
   //= ================ GRAPH BOUNDS ======================
 
@@ -150,13 +129,19 @@ export function initGLesmosCanvas() {
   const buildGLesmosShaders = (id: string, chunks: GLesmosShaderChunks) => {
 
     glesmos_Cache   = glesmos_getCacheShader(gl, id, chunks);
-    glesmos_SDF     = glesmos_getSDFShader(gl, id, chunks);
-    glesmos_Outline = glesmos_getOutlineShader(gl, id, chunks);
+    glesmos_FinalPass = glesmos_getFinalPassShader(gl, id, chunks);
+
+    if(chunks.line_width == 0){ // TODO: this is bad, globals are bad
+      glesmos_doOutlines = false;
+      return;
+    }
+
+    glesmos_doOutlines = true;
+    glesmos_SDF        = glesmos_getSDFShader(gl, id, chunks); // we don't need to build this if we aren't drawing outlines
 
   };
 
-  const draw = () => {
-
+  const runCacheShader = () => {
     if (!glesmos_Cache) glesmosError('Cache shader failed.');
     gl.useProgram(glesmos_Cache);
     {
@@ -169,7 +154,9 @@ export function initGLesmosCanvas() {
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       
     }
+  }
 
+  const runSDFShader = () => {
     if (!glesmos_SDF) glesmosError('SDF shader failed.');
     gl.useProgram(glesmos_SDF);   
     {
@@ -210,27 +197,36 @@ export function initGLesmosCanvas() {
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       
     }
-    gl.useProgram(null);
+  }
 
-    if (!glesmos_Outline) glesmosError('Outline pass shader failed.');
-    gl.useProgram(glesmos_Outline);   
+  const runFinalPassShader = () => {
+    if (!glesmos_FinalPass) glesmosError('Outline pass shader failed.');
+    gl.useProgram(glesmos_FinalPass);   
     {
-      setupGLesmosEnvironment(glesmos_Outline);
+      setupGLesmosEnvironment(glesmos_FinalPass);
 
-      setUniform(gl, glesmos_Outline, "iResolution", "2fv", [c.width, c.height]);
-      setUniform(gl, glesmos_Outline, "iChannel0", "1i", 0);
+      setUniform(gl, glesmos_FinalPass, "iResolution", "2fv", [c.width, c.height]);
+      setUniform(gl, glesmos_FinalPass, "iChannel0", "1i", 0);
+      setUniform(gl, glesmos_FinalPass, "iChannel1", "1i", 1);
 
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, textures[2]);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, cacheTexture);
 
       gl.bindFramebuffer(gl.FRAMEBUFFER, null); // now draw directly to the screen!
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
-  };
+  }
 
   const render = () => {
-    draw();
-  };
+
+    runCacheShader();
+    if( glesmos_doOutlines ) runSDFShader();
+    runFinalPassShader();
+
+  }
+    
 
   //= ================ CLEANUP ================
 

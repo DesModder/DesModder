@@ -209,7 +209,7 @@ else {
 ```js
 else if ($this.userData.glesmos) {
   const newCompiled = self.dsm_compileGLesmos(
-    $ir, $styles.color, $styles.fillOpacity, $styles.lineOpacity, $styles.lineWidth, $styles.listIndex
+    $ir, $styles.color, $styles.fillOpacity, $styles.lineOpacity, $this.userData.lines !== false ? $styles.lineWidth : 0.0, $styles.listIndex
   );
   const prev =  $graphs[$graphs.length - 1];
   if (prev?.graphMode === "GLesmos") {
