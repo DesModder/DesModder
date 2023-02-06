@@ -112,7 +112,7 @@ export function initGLesmosCanvas() {
     cornerOfGraph = [p2m.tx, p2m.sy * h + p2m.ty];
     sizeOfGraph = [p2m.sx * w, -p2m.sy * h];
 
-    for (const tex of textures) {
+    for (const tex of textures.concat(cacheTexture)) {
       // resize the framebuffer textures
       gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.texImage2D(
@@ -127,20 +127,6 @@ export function initGLesmosCanvas() {
         null
       );
     }
-
-    // resize the cache
-    gl.bindTexture(gl.TEXTURE_2D, cacheTexture);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA32F,
-      w,
-      h,
-      0,
-      gl.RGBA,
-      gl.FLOAT,
-      null
-    );
   };
 
   const setupGLesmosEnvironment = (program: GLesmosProgram) => {

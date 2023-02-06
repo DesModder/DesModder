@@ -9,7 +9,7 @@ const PError = desmosRequire("core/math/parsenode/error") as (
   msg: string
 ) => ParsenodeError;
 
-function preprocParam(input: number, min: number, max: number, def: number) {
+function clampParam(input: number, min: number, max: number, def: number) {
   if (isNaN(input)) return def;
   return Math.min(Math.max(input, min), max);
 }
@@ -28,9 +28,9 @@ export function compileGLesmos(
   lineWidth: number
 ): GLesmosShaderPackage {
   try {
-    fillOpacity = preprocParam(fillOpacity, 0, 1, 0.4);
-    lineOpacity = preprocParam(lineOpacity, 0, 1, 0.9);
-    lineWidth = preprocParam(lineWidth, 0, Infinity, 2.5);
+    fillOpacity = clampParam(fillOpacity, 0, 1, 0.4);
+    lineOpacity = clampParam(lineOpacity, 0, 1, 0.9);
+    lineWidth = clampParam(lineWidth, 0, Infinity, 2.5);
 
     const { source, deps } = emitChunkGL(concreteTree._chunk);
     const type = getGLType(concreteTree.valueType);

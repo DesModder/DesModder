@@ -73,10 +73,6 @@ function buildShaderProgram(
   frag: string,
   _id: string
 ) {
-  // console.group('buildShaderProgram');
-  // console.log('vert: %c\n' + vert, 'color: #fc83fc;');
-  // console.log('frag: %c\n' + frag, 'color: #fc83fc;');
-  // console.groupEnd();
   const shaderProgram = gl.createProgram();
   if (shaderProgram === null) {
     glesmosError("Unable to create shader program!");
