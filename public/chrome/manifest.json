@@ -13,7 +13,7 @@
   "action": {},
   "content_scripts": [
     {
-      "matches": ["https://www.desmos.com/calculator*"],
+      "matches": ["https://*.desmos.com/calculator*"],
       "run_at": "document_start",
       "js": ["preload/content.js"],
       "all_frames": true
@@ -27,7 +27,7 @@
         "preload/script.js",
         "worker/append.js"
       ],
-      "matches": ["https://www.desmos.com/*"]
+      "matches": ["https://*.desmos.com/*"]
     }
   ],
   "declarative_net_request": {
@@ -42,6 +42,6 @@
   "permissions": ["storage", "declarativeNetRequest"],
   "host_permissions": ["https://*.desmos.com/*", "https://wakatime.com/"],
   "externally_connectable": {
-    "matches": ["https://www.desmos.com/*"]
+    "matches": ["https://*.desmos.com/*"]
   }
 }
