@@ -1,6 +1,6 @@
 import ViewportTransforms from "./ViewportTransforms";
 import {
-  GLesmosShaderChunks,
+  GLesmosShaderChunk,
   GLesmosProgram,
   glesmosError,
   glesmosGetCacheShader,
@@ -158,18 +158,22 @@ export function initGLesmosCanvas() {
 
   //= ================ WEBGL FUNCTIONS ================
 
-  const buildGLesmosShaders = (id: string, chunks: GLesmosShaderChunks) => {
-    glesmosCache = glesmosGetCacheShader(gl, id, chunks);
-    glesmosFinalPass = glesmosGetFinalPassShader(gl, id, chunks);
+  const buildGLesmosShaders = (
+    id: string,
+    deps: string,
+    chunk: GLesmosShaderChunk
+  ) => {
+    glesmosCache = glesmosGetCacheShader(gl, id, chunk, deps);
+    glesmosFinalPass = glesmosGetFinalPassShader(gl, id, chunk);
 
-    if (chunks.line_width === 0) {
+    if (chunk.line_width === 0) {
       // TODO: this is bad, globals are bad
       glesmosDoOutlines = false;
       return;
     }
 
     glesmosDoOutlines = true;
-    glesmosSDF = glesmosGetSDFShader(gl, id, chunks); // we don't need to build this if we aren't drawing outlines
+    glesmosSDF = glesmosGetSDFShader(gl, id, chunk, deps); // we don't need to build this if we aren't drawing outlines
   };
 
   const runCacheShader = () => {

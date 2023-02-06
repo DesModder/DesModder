@@ -40,10 +40,14 @@ export function compileGLesmos(
 
     return {
       deps: functionDeps.map(getDefinition),
-      defs: [`${type} _f0(float x, float y) {\n    ${source}\n}`],
-      colors: [`${colorVec4(color, fillOpacity)}`],
-      line_colors: [`${colorVec4(color, lineOpacity)}`],
-      line_widths: [lineWidth],
+      chunks: [
+        {
+          def: `${type} _f0(float x, float y) {\n    ${source}\n}`,
+          color: `${colorVec4(color, fillOpacity)}`,
+          line_color: `${colorVec4(color, lineOpacity)}`,
+          line_width: lineWidth,
+        },
+      ],
     };
   } catch (msg) {
     throw PError(`[GLesmos Error] ${msg}`);

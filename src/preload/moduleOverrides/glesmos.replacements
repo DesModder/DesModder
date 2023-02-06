@@ -208,23 +208,21 @@ else {
 *Replace* `else` with
 ```js
 else if ($this.userData.glesmos) {
+  // newCompiled: GLesmosShaderPackage
   const newCompiled = self.dsm_compileGLesmos(
     $ir, $styles.color, $styles.fillOpacity, $styles.lineOpacity, $this.userData.lines !== false ? $styles.lineWidth : 0.0, $styles.listIndex
   );
   const prev =  $graphs[$graphs.length - 1];
   if (prev?.graphMode === "GLesmos") {
     // merge GLesmos graphs when possible
-    // note these fields must be consistent with those defined in type GLesmosShaderPackage, or this will error
+    // prevGL: GLesmosShaderPackage
     const prevGL = prev.compiledGL;
     for (let dep of newCompiled.deps) {
       if (!prevGL.deps.includes(dep)) {
         prevGL.deps.push(dep);
       }
     }
-    prevGL.defs.push(...newCompiled.defs);
-    prevGL.colors.push(...newCompiled.colors);
-    prevGL.line_colors.push(...newCompiled.line_colors);
-    prevGL.line_widths.push(...newCompiled.line_widths);   
+    prevGL.chunks.push(...newCompiled.chunks);
   } else {
     $graphs.push({
       graphMode: "GLesmos",

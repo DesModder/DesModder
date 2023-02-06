@@ -7,14 +7,10 @@ export function glesmosError(msg: string): never {
 // (Replacement "Replace quadtree implicit tracing with glesmos compilation")
 export interface GLesmosShaderPackage {
   deps: string[];
-  defs: string[];
-  colors: string[];
-  line_colors: string[];
-  line_widths: number[];
+  chunks: GLesmosShaderChunk[];
 }
 
-export interface GLesmosShaderChunks {
-  deps: string;
+export interface GLesmosShaderChunk {
   def: string;
   color: string;
   line_color: string;
@@ -189,14 +185,15 @@ export const GLESMOS_SHARED = `
 export function glesmosGetCacheShader(
   gl: WebGL2RenderingContext,
   id: string,
-  chunks: GLesmosShaderChunks
+  chunk: GLesmosShaderChunk,
+  deps: string
 ): GLesmosProgram {
   const source = `${GLESMOS_ENVIRONMENT}
     // dependencies
-    ${chunks.deps}
+    ${deps}
 
     // main func
-    ${chunks.def}
+    ${chunk.def}
 
     void main(){
       vec2 mathCoord = texCoord * graphSize + graphCorner;
@@ -215,7 +212,8 @@ export function glesmosGetCacheShader(
 export function glesmosGetSDFShader(
   gl: WebGL2RenderingContext,
   id: string,
-  chunks: GLesmosShaderChunks
+  chunk: GLesmosShaderChunk,
+  deps: string
 ): GLesmosProgram {
   const source = `${GLESMOS_ENVIRONMENT}
     uniform sampler2D iChannel0; // storage
@@ -227,10 +225,10 @@ export function glesmosGetSDFShader(
     uniform float     c_stepNum;
 
     // dependencies
-    ${chunks.deps}
+    ${deps}
 
     // main func
-    ${chunks.def}
+    ${chunk.def}
 
     //============== BEGIN Shared Stuff ==============//
 
@@ -382,7 +380,7 @@ export function glesmosGetSDFShader(
 export function glesmosGetFinalPassShader(
   gl: WebGL2RenderingContext,
   id: string,
-  chunks: GLesmosShaderChunks
+  chunk: GLesmosShaderChunk
 ): GLesmosProgram {
   const source = `${GLESMOS_ENVIRONMENT}
 
@@ -398,7 +396,7 @@ export function glesmosGetFinalPassShader(
       // fill
       vec4 test = getPixel( texCoord, iChannel1 );
       if( test.x > 0.0 ){
-        outColor = mixColor(outColor, ${chunks.color});
+        outColor = mixColor(outColor, ${chunk.color});
       }
 
       // lines
@@ -412,14 +410,14 @@ export function glesmosGetFinalPassShader(
 
       float dist = LineSDF( seed * vec4(warp,warp), texCoord * warp ) * max(iResolution.x, iResolution.y);
 
-      float alpha = smoothstep(0.0, 1.0, clamp( dist - float(${chunks.line_width}) * 0.5 + 0.5, 0.0, 1.0 ));
-      outColor = mixColor(outColor, ${chunks.line_color} * vec4(1.0,1.0,1.0,1.0 - alpha));
+      float alpha = smoothstep(0.0, 1.0, clamp( dist - float(${chunk.line_width}) * 0.5 + 0.5, 0.0, 1.0 ));
+      outColor = mixColor(outColor, ${chunk.line_color} * vec4(1.0,1.0,1.0,1.0 - alpha));
     }
   `;
 
   const shader = getShaderProgram(gl, id, VERTEX_SHADER, source);
   gl.useProgram(shader);
-  setUniform(gl, shader, "iDoOutlines", "1i", chunks.line_width > 0 ? 1 : 0);
+  setUniform(gl, shader, "iDoOutlines", "1i", chunk.line_width > 0 ? 1 : 0);
 
   return shader;
 }
