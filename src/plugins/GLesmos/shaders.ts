@@ -4,6 +4,7 @@ export function glesmosError(msg: string): never {
 }
 
 // NOTE: glesmos.replacements:212 must reflect any changes to this type, or you will get errors
+// (Replacement "Replace quadtree implicit tracing with glesmos compilation")
 export interface GLesmosShaderPackage {
   deps: string[];
   defs: string[];
