@@ -1,17 +1,17 @@
-import ViewportTransforms from './ViewportTransforms';
-
-import { 
-  GLesmosShaderChunks, GLesmosProgram, glesmosError,
-  glesmos_getCacheShader, glesmos_getSDFShader, glesmos_getFinalPassShader,
-  setUniform
-} from './shaders';
+import ViewportTransforms from "./ViewportTransforms";
+import {
+  GLesmosShaderChunks,
+  GLesmosProgram,
+  glesmosError,
+  glesmosGetCacheShader,
+  glesmosGetSDFShader,
+  glesmosGetFinalPassShader,
+  setUniform,
+} from "./shaders";
 
 export type GLesmosCanvas = ReturnType<typeof initGLesmosCanvas>;
 
-
-function createAndBindTexture(
-  gl: WebGL2RenderingContext
-) {
+function createAndBindTexture(gl: WebGL2RenderingContext) {
   const tex = gl.createTexture();
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -27,16 +27,15 @@ const FULLSCREEN_QUAD = new Float32Array([
 ]);
 
 export function initGLesmosCanvas() {
-
   //= ================ INIT ELEMENTS =======================
 
-  const c: HTMLCanvasElement = document.createElement('canvas');
-  const gl: WebGL2RenderingContext = c.getContext('webgl2', {
+  const c: HTMLCanvasElement = document.createElement("canvas");
+  const gl: WebGL2RenderingContext = c.getContext("webgl2", {
     // Disable premultiplied alpha
     // Thanks to <https://stackoverflow.com/a/12290551/7481517>
     premultipliedAlpha: false,
     antialias: true,
-  }) as WebGL2RenderingContext
+  }) as WebGL2RenderingContext;
 
   //= ================ INIT WEBGL STUFF ================
 
@@ -48,22 +47,34 @@ export function initGLesmosCanvas() {
 
   let ACTIVE_FB = 0; // all caps so I don't forget this is global
 
-  const textures:     (WebGLTexture | null)[]     = [];
+  const textures: (WebGLTexture | null)[] = [];
   const framebuffers: (WebGLFramebuffer | null)[] = [];
 
   // a "cache" buffer for storing the first pass of the shader madness
   const cacheTexture = createAndBindTexture(gl);
-  const cacheFB      = gl.createFramebuffer();
+  const cacheFB = gl.createFramebuffer();
   gl.bindFramebuffer(gl.FRAMEBUFFER, cacheFB);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, cacheTexture, 0);
+  gl.framebufferTexture2D(
+    gl.FRAMEBUFFER,
+    gl.COLOR_ATTACHMENT0,
+    gl.TEXTURE_2D,
+    cacheTexture,
+    0
+  );
 
   // 3 extra buffers for pingponging and feedback loop dodging
   for (let i = 0; i < 3; i++) {
     const tex = createAndBindTexture(gl);
-    const fb  = gl.createFramebuffer();
+    const fb = gl.createFramebuffer();
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,
+      gl.TEXTURE_2D,
+      tex,
+      0
+    );
 
     textures.push(tex);
     framebuffers.push(fb);
@@ -71,14 +82,14 @@ export function initGLesmosCanvas() {
 
   //= ================ SHADER OBJECTS ================
 
-  let glesmos_Cache: GLesmosProgram | null;
-  
-  let glesmos_doOutlines = true;
+  let glesmosCache: GLesmosProgram | null;
 
-  let glesmos_SDF: GLesmosProgram | null;
-  let glesmos_SDF_requiredSteps: number;
+  let glesmosDoOutlines = true;
 
-  let glesmos_FinalPass: GLesmosProgram | null;
+  let glesmosSDF: GLesmosProgram | null;
+  let glesmosSDFrequiredSteps: number;
+
+  let glesmosFinalPass: GLesmosProgram | null;
 
   //= ================ GRAPH BOUNDS ======================
 
@@ -96,19 +107,40 @@ export function initGLesmosCanvas() {
 
     gl.viewport(0, 0, c.width, c.height);
 
-    glesmos_SDF_requiredSteps = Math.ceil(Math.log2(Math.max(w, h)));
+    glesmosSDFrequiredSteps = Math.ceil(Math.log2(Math.max(w, h)));
 
     cornerOfGraph = [p2m.tx, p2m.sy * h + p2m.ty];
     sizeOfGraph = [p2m.sx * w, -p2m.sy * h];
 
-    for (const tex of textures) { // resize the framebuffer textures
+    for (const tex of textures) {
+      // resize the framebuffer textures
       gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, w, h, 0, gl.RGBA, gl.FLOAT, null);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA32F,
+        w,
+        h,
+        0,
+        gl.RGBA,
+        gl.FLOAT,
+        null
+      );
     }
 
     // resize the cache
     gl.bindTexture(gl.TEXTURE_2D, cacheTexture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, w, h, 0, gl.RGBA, gl.FLOAT, null);    
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA32F,
+      w,
+      h,
+      0,
+      gl.RGBA,
+      gl.FLOAT,
+      null
+    );
   };
 
   const setupGLesmosEnvironment = (program: GLesmosProgram) => {
@@ -127,106 +159,90 @@ export function initGLesmosCanvas() {
   //= ================ WEBGL FUNCTIONS ================
 
   const buildGLesmosShaders = (id: string, chunks: GLesmosShaderChunks) => {
+    glesmosCache = glesmosGetCacheShader(gl, id, chunks);
+    glesmosFinalPass = glesmosGetFinalPassShader(gl, id, chunks);
 
-    glesmos_Cache   = glesmos_getCacheShader(gl, id, chunks);
-    glesmos_FinalPass = glesmos_getFinalPassShader(gl, id, chunks);
-
-    if(chunks.line_width == 0){ // TODO: this is bad, globals are bad
-      glesmos_doOutlines = false;
+    if (chunks.line_width === 0) {
+      // TODO: this is bad, globals are bad
+      glesmosDoOutlines = false;
       return;
     }
 
-    glesmos_doOutlines = true;
-    glesmos_SDF        = glesmos_getSDFShader(gl, id, chunks); // we don't need to build this if we aren't drawing outlines
-
+    glesmosDoOutlines = true;
+    glesmosSDF = glesmosGetSDFShader(gl, id, chunks); // we don't need to build this if we aren't drawing outlines
   };
 
   const runCacheShader = () => {
-    if (!glesmos_Cache) glesmosError('Cache shader failed.');
-    gl.useProgram(glesmos_Cache);
-    {
+    if (!glesmosCache) glesmosError("Cache shader failed.");
+    gl.useProgram(glesmosCache);
+    setupGLesmosEnvironment(glesmosCache);
 
-      setupGLesmosEnvironment(glesmos_Cache);
-      
-      gl.activeTexture(gl.TEXTURE1);               // following texture operations concern texture 1
-      gl.bindTexture(gl.TEXTURE_2D, cacheTexture); // texture 1 now points to cacheTexture
-      gl.bindFramebuffer(gl.FRAMEBUFFER, cacheFB); // draw to cacheFB, which points to cacheTexture, which is on texture 1
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
-      
-    }
-  }
+    gl.activeTexture(gl.TEXTURE1); // following texture operations concern texture 1
+    gl.bindTexture(gl.TEXTURE_2D, cacheTexture); // texture 1 now points to cacheTexture
+    gl.bindFramebuffer(gl.FRAMEBUFFER, cacheFB); // draw to cacheFB, which points to cacheTexture, which is on texture 1
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  };
 
   const runSDFShader = () => {
-    if (!glesmos_SDF) glesmosError('SDF shader failed.');
-    gl.useProgram(glesmos_SDF);   
-    {
+    if (!glesmosSDF) glesmosError("SDF shader failed.");
+    gl.useProgram(glesmosSDF);
+    ACTIVE_FB = 0;
 
-      ACTIVE_FB = 0;
+    setupGLesmosEnvironment(glesmosSDF);
 
-      setupGLesmosEnvironment(glesmos_SDF);
+    gl.activeTexture(gl.TEXTURE1); // following texture operations concern texture 1
+    gl.bindTexture(gl.TEXTURE_2D, cacheTexture); // texture 1 now points to cacheTexture
 
-      gl.activeTexture(gl.TEXTURE1);               // following texture operations concern texture 1
-      gl.bindTexture(gl.TEXTURE_2D, cacheTexture); // texture 1 now points to cacheTexture
+    gl.activeTexture(gl.TEXTURE0); // following texture operations concern texture 0
+    gl.bindTexture(gl.TEXTURE_2D, null); // texture 0 now points to pingpong texture 0
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[ACTIVE_FB]); // draw to selected texture
 
-      gl.activeTexture(gl.TEXTURE0);               // following texture operations concern texture 0
-      gl.bindTexture(gl.TEXTURE_2D, null);         // texture 0 now points to pingpong texture 0
-      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[ACTIVE_FB]); // draw to selected texture
+    setUniform(gl, glesmosSDF, "c_maxSteps", "1f", glesmosSDFrequiredSteps);
+    setUniform(gl, glesmosSDF, "iResolution", "2fv", [c.width, c.height]);
+    setUniform(gl, glesmosSDF, "iInitFlag", "1i", 1);
 
-      setUniform(gl, glesmos_SDF, "c_maxSteps", "1f", glesmos_SDF_requiredSteps);
-      setUniform(gl, glesmos_SDF, "iResolution", "2fv", [c.width, c.height]);
-      setUniform(gl, glesmos_SDF, "iInitFlag", "1i", 1);
+    setUniform(gl, glesmosSDF, "iChannel0", "1i", 0); // probably not explicitly needed
+    setUniform(gl, glesmosSDF, "iChannel1", "1i", 1);
 
-      setUniform(gl, glesmos_SDF, "iChannel0", "1i", 0); // probably not explicitly needed
-      setUniform(gl, glesmos_SDF, "iChannel1", "1i", 1);
-
-      for (let i = 0; i < glesmos_SDF_requiredSteps; i++) {
-
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
-        
-        setUniform(gl, glesmos_SDF, "iInitFlag", "1i", 0);
-
-        gl.bindTexture(gl.TEXTURE_2D, textures[ACTIVE_FB]);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[1-ACTIVE_FB]);
-
-        setUniform(gl, glesmos_SDF, "c_stepNum", "1f", i);
-        ACTIVE_FB = 1 - ACTIVE_FB;
-
-      }
-
-      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[2]);
+    for (let i = 0; i < glesmosSDFrequiredSteps; i++) {
       gl.drawArrays(gl.TRIANGLES, 0, 6);
-      
+
+      setUniform(gl, glesmosSDF, "iInitFlag", "1i", 0);
+
+      gl.bindTexture(gl.TEXTURE_2D, textures[ACTIVE_FB]);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[1 - ACTIVE_FB]);
+
+      setUniform(gl, glesmosSDF, "c_stepNum", "1f", i);
+      ACTIVE_FB = 1 - ACTIVE_FB;
     }
-  }
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffers[2]);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  };
 
   const runFinalPassShader = () => {
-    if (!glesmos_FinalPass) glesmosError('Outline pass shader failed.');
-    gl.useProgram(glesmos_FinalPass);   
-    {
-      setupGLesmosEnvironment(glesmos_FinalPass);
+    if (!glesmosFinalPass) glesmosError("Outline pass shader failed.");
+    gl.useProgram(glesmosFinalPass);
+    setupGLesmosEnvironment(glesmosFinalPass);
 
-      setUniform(gl, glesmos_FinalPass, "iResolution", "2fv", [c.width, c.height]);
-      setUniform(gl, glesmos_FinalPass, "iChannel0", "1i", 0);
-      setUniform(gl, glesmos_FinalPass, "iChannel1", "1i", 1);
+    setUniform(gl, glesmosFinalPass, "iResolution", "2fv", [c.width, c.height]);
+    setUniform(gl, glesmosFinalPass, "iChannel0", "1i", 0);
+    setUniform(gl, glesmosFinalPass, "iChannel1", "1i", 1);
 
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, textures[2]);
-      gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, cacheTexture);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, textures[2]);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, cacheTexture);
 
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null); // now draw directly to the screen!
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
-    }
-  }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null); // now draw directly to the screen!
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  };
 
   const render = () => {
-
     runCacheShader();
-    if( glesmos_doOutlines ) runSDFShader();
+    if (glesmosDoOutlines) runSDFShader();
     runFinalPassShader();
-
-  }
-    
+  };
 
   //= ================ CLEANUP ================
 

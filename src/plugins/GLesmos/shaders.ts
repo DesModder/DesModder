@@ -4,54 +4,55 @@ export function glesmosError(msg: string): never {
 }
 
 // NOTE: glesmos.replacements:212 must reflect any changes to this type, or you will get errors
-export type GLesmosShaderPackage = {
-  deps: string[]
-  defs: string[]
-  colors: string[]
-  line_colors: string[]
-  line_widths: number[]
-};
+export interface GLesmosShaderPackage {
+  deps: string[];
+  defs: string[];
+  colors: string[];
+  line_colors: string[];
+  line_widths: number[];
+}
 
-export type GLesmosShaderChunks = {
-  deps: string
-  def: string
-  color: string
-  line_color: string
-  line_width: number
-};
+export interface GLesmosShaderChunks {
+  deps: string;
+  def: string;
+  color: string;
+  line_color: string;
+  line_width: number;
+}
 
 // I introduced this to make things uniforms more type-safe
 export type GLesmosProgram = WebGLProgram & {
-  vertexAttribPos: number
-  corner: WebGLUniformLocation | null
-  size: WebGLUniformLocation | null
-  NaN: WebGLUniformLocation | null
-  Infinity: WebGLUniformLocation | null
+  vertexAttribPos: number;
+  corner: WebGLUniformLocation | null;
+  size: WebGLUniformLocation | null;
+  NaN: WebGLUniformLocation | null;
+  Infinity: WebGLUniformLocation | null;
 };
 
-type UniformType = '1f' | '2fv' | '3fv' | '4fv' | '1i'; // TODO: this isn't very typesafe!
+type UniformType = "1f" | "2fv" | "3fv" | "4fv" | "1i"; // TODO: this isn't very typesafe!
 export function setUniform(
   gl: WebGL2RenderingContext,
   program: WebGLProgram,
   uniformName: string,
   uniformType: UniformType,
-  uniformValue: number | number[],
+  uniformValue: number | number[]
 ) {
-  const uniformSetterKey: keyof WebGLRenderingContext = ('uniform' + uniformType) as keyof WebGLRenderingContext;
+  const uniformSetterKey: keyof WebGLRenderingContext = ("uniform" +
+    uniformType) as keyof WebGLRenderingContext;
   (gl[uniformSetterKey] as Function)(
     gl.getUniformLocation(program, uniformName),
-    uniformValue,
-  )
-};
+    uniformValue
+  );
+}
 
 function compileShader(
   gl: WebGL2RenderingContext,
   shaderCode: string,
-  type: number,
+  type: number
 ) {
   const shader: WebGLShader | null = gl.createShader(type);
   if (shader === null) {
-    glesmosError('Invalid shader type');
+    glesmosError("Invalid shader type");
   }
 
   gl.shaderSource(shader, shaderCode);
@@ -61,10 +62,10 @@ function compileShader(
     const shaderInfoLog = gl.getShaderInfoLog(shader);
     glesmosError(
       `While compiling ${
-        type === gl.VERTEX_SHADER ? 'vertex' : 'fragment'
+        type === gl.VERTEX_SHADER ? "vertex" : "fragment"
       } shader:
-      ${shaderInfoLog ?? ''}`,
-    )
+      ${shaderInfoLog ?? ""}`
+    );
   }
   return shader;
 }
@@ -73,7 +74,7 @@ function buildShaderProgram(
   gl: WebGL2RenderingContext,
   vert: string,
   frag: string,
-  _id: string,
+  _id: string
 ) {
   // console.group('buildShaderProgram');
   // console.log('vert: %c\n' + vert, 'color: #fc83fc;');
@@ -81,7 +82,7 @@ function buildShaderProgram(
   // console.groupEnd();
   const shaderProgram = gl.createProgram();
   if (shaderProgram === null) {
-    glesmosError('Unable to create shader program!');
+    glesmosError("Unable to create shader program!");
   }
   const vertexShader = compileShader(gl, vert, gl.VERTEX_SHADER);
   const fragmentShader = compileShader(gl, frag, gl.FRAGMENT_SHADER);
@@ -91,7 +92,7 @@ function buildShaderProgram(
     gl.linkProgram(shaderProgram);
     return shaderProgram;
   } else {
-    glesmosError('One or more shaders did not compile.');
+    glesmosError("One or more shaders did not compile.");
   }
 }
 
@@ -100,9 +101,9 @@ function getShaderProgram(
   gl: WebGL2RenderingContext,
   id: string,
   vertexSource: string,
-  fragmentSource: string,
+  fragmentSource: string
 ) {
-  let key = vertexSource + fragmentSource; // TODO: this is terrible
+  const key = vertexSource + fragmentSource; // TODO: this is terrible
   const cachedShader = shaderCache.get(key);
 
   if (cachedShader) return cachedShader;
@@ -111,18 +112,18 @@ function getShaderProgram(
     gl,
     vertexSource,
     fragmentSource,
-    id,
-  ) as GLesmosProgram
+    id
+  ) as GLesmosProgram;
 
   shaderProgram.vertexAttribPos = gl.getAttribLocation(
     shaderProgram,
-    'vertexPosition',
+    "vertexPosition"
   );
-  shaderProgram.corner   = gl.getUniformLocation(shaderProgram, 'graphCorner');
-  shaderProgram.size     = gl.getUniformLocation(shaderProgram, 'graphSize');
-  shaderProgram.NaN      = gl.getUniformLocation(shaderProgram, 'NaN');
-  shaderProgram.Infinity = gl.getUniformLocation(shaderProgram, 'Infinity');
-  
+  shaderProgram.corner = gl.getUniformLocation(shaderProgram, "graphCorner");
+  shaderProgram.size = gl.getUniformLocation(shaderProgram, "graphSize");
+  shaderProgram.NaN = gl.getUniformLocation(shaderProgram, "NaN");
+  shaderProgram.Infinity = gl.getUniformLocation(shaderProgram, "Infinity");
+
   shaderCache.set(key, shaderProgram);
   if (shaderCache.size > 100) {
     const key = Array.from(shaderCache.keys())[0];
@@ -180,12 +181,15 @@ export const GLESMOS_SHARED = `
   float LineSDF(in vec4 line, in vec2 p){
     return line_segment(p, vec2(line[0], line[1]), vec2(line[2], line[3]) );
   }
-`
+`;
 
 // = ===================== WebGL Source Generators ======================
 
-export function glesmos_getCacheShader(gl: WebGL2RenderingContext, id:string, chunks: GLesmosShaderChunks): GLesmosProgram {
-
+export function glesmosGetCacheShader(
+  gl: WebGL2RenderingContext,
+  id: string,
+  chunks: GLesmosShaderChunks
+): GLesmosProgram {
   const source = `${GLESMOS_ENVIRONMENT}
     // dependencies
     ${chunks.deps}
@@ -200,20 +204,18 @@ export function glesmos_getCacheShader(gl: WebGL2RenderingContext, id:string, ch
     }
   `;
 
-  const shader = getShaderProgram(
-    gl,
-    id,
-    VERTEX_SHADER,
-    source,
-  );
+  const shader = getShaderProgram(gl, id, VERTEX_SHADER, source);
 
   // TODO: set some uniforms here
 
   return shader;
 }
 
-export function glesmos_getSDFShader(gl: WebGL2RenderingContext, id:string, chunks: GLesmosShaderChunks): GLesmosProgram {
-
+export function glesmosGetSDFShader(
+  gl: WebGL2RenderingContext,
+  id: string,
+  chunks: GLesmosShaderChunks
+): GLesmosProgram {
   const source = `${GLESMOS_ENVIRONMENT}
     uniform sampler2D iChannel0; // storage
     uniform sampler2D iChannel1; // cache
@@ -371,19 +373,16 @@ export function glesmos_getSDFShader(gl: WebGL2RenderingContext, id:string, chun
     //============== END Shadertoy Buffer A ==============//
   `;
 
-  const shader = getShaderProgram(
-    gl,
-    id,
-    VERTEX_SHADER,
-    source,
-  );
+  const shader = getShaderProgram(gl, id, VERTEX_SHADER, source);
 
   return shader;
-
 }
 
-export function glesmos_getFinalPassShader(gl: WebGL2RenderingContext, id:string, chunks: GLesmosShaderChunks): GLesmosProgram {
-
+export function glesmosGetFinalPassShader(
+  gl: WebGL2RenderingContext,
+  id: string,
+  chunks: GLesmosShaderChunks
+): GLesmosProgram {
   const source = `${GLESMOS_ENVIRONMENT}
 
     uniform sampler2D iChannel0;   // storage
@@ -417,15 +416,9 @@ export function glesmos_getFinalPassShader(gl: WebGL2RenderingContext, id:string
     }
   `;
 
-  const shader = getShaderProgram(
-    gl,
-    id,
-    VERTEX_SHADER,
-    source,
-  );
+  const shader = getShaderProgram(gl, id, VERTEX_SHADER, source);
   gl.useProgram(shader);
-  setUniform(gl, shader, "iDoOutlines", "1i", chunks.line_width > 0 ? 1 : 0)
+  setUniform(gl, shader, "iDoOutlines", "1i", chunks.line_width > 0 ? 1 : 0);
 
   return shader;
-
 }
