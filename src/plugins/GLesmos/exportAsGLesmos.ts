@@ -43,6 +43,7 @@ export function compileGLesmos(
       chunks: [
         {
           def: `${type} _f0(float x, float y) {\n    ${source}\n}`,
+          fill: fillOpacity > 0,
           color: `${colorVec4(color, fillOpacity)}`,
           line_color: `${colorVec4(color, lineOpacity)}`,
           line_width: lineWidth,

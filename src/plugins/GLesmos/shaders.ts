@@ -12,6 +12,7 @@ export interface GLesmosShaderPackage {
 
 export interface GLesmosShaderChunk {
   def: string;
+  fill: boolean;
   color: string;
   line_color: string;
   line_width: number;
@@ -384,15 +385,18 @@ export function glesmosGetFinalPassShader(
     uniform sampler2D iChannel1;   // cache
     uniform vec2      iResolution; // canvas size
     uniform int       iDoOutlines;
+    uniform int       iDoFill;
 
     ${GLESMOS_SHARED}
 
     void main(){
 
       // fill
-      vec4 test = getPixel( texCoord, iChannel1 );
-      if( test.x > 0.0 ){
-        outColor = mixColor(outColor, ${chunk.color});
+      if ( iDoFill == 1 ) {
+        vec4 test = getPixel( texCoord, iChannel1 );
+        if( test.x > 0.0 ){
+          outColor = mixColor(outColor, ${chunk.color});
+        }
       }
 
       // lines
@@ -414,6 +418,7 @@ export function glesmosGetFinalPassShader(
   const shader = getShaderProgram(gl, id, VERTEX_SHADER, source);
   gl.useProgram(shader);
   setUniform(gl, shader, "iDoOutlines", "1i", chunk.line_width > 0 ? 1 : 0);
+  setUniform(gl, shader, "iDoFill", "1i", chunk.fill ? 1 : 0);
 
   return shader;
 }
