@@ -39,7 +39,6 @@ export function compileGLesmos(
     let source, dxsource, dysource, deps;
     ({ source, deps } = emitChunkGL(concreteTree._chunk));
     deps.forEach((d) => accDeps(functionDeps, d));
-    const type = getGLType(concreteTree.valueType);
 
     if (lineWidth > 0 && derivativeX && derivativeY) {
       ({ source: dxsource, deps } = emitChunkGL(derivativeX._chunk));
@@ -47,14 +46,18 @@ export function compileGLesmos(
       ({ source: dysource, deps } = emitChunkGL(derivativeY._chunk));
       deps.forEach((d) => accDeps(functionDeps, d));
     }
-  
+    
+    if( dxsource == undefined || dysource == undefined ){
+      throw "Derivative solve failed :("; // todo: handle gracefully
+    }
+
     return {
       deps: functionDeps.map(getDefinition),
       chunks: [
         {
-          main: `${type} glesmos_xy(float x, float y) {\n${source}\n}`,
-          dx: `${type} glesmos_dx(float x, float y) {\n${dxsource}\n}`,
-          dy: `${type} glesmos_dy(float x, float y) {\n${dysource}\n}`,
+          main: source,
+          dx: dxsource,
+          dy: dysource,
           fill: fillOpacity > 0,
           color: `${colorVec4(color, fillOpacity)}`,
           line_color: `${colorVec4(color, lineOpacity)}`,
