@@ -36,26 +36,25 @@ export function compileGLesmos(
 
     const functionDeps: string[] = [];
 
-    let source, derivativeXSource, derivativeYSource, deps;
+    let source, dxsource, dysource, deps;
     ({ source, deps } = emitChunkGL(concreteTree._chunk));
     deps.forEach((d) => accDeps(functionDeps, d));
     const type = getGLType(concreteTree.valueType);
 
     if (lineWidth > 0 && derivativeX && derivativeY) {
-      ({ source: derivativeXSource, deps } = emitChunkGL(derivativeX._chunk));
+      ({ source: dxsource, deps } = emitChunkGL(derivativeX._chunk));
       deps.forEach((d) => accDeps(functionDeps, d));
-      ({ source: derivativeYSource, deps } = emitChunkGL(derivativeY._chunk));
+      ({ source: dysource, deps } = emitChunkGL(derivativeY._chunk));
       deps.forEach((d) => accDeps(functionDeps, d));
     }
-    
-    console.log("derivativeX:", derivativeXSource);
-    console.log("derivativeY:", derivativeYSource);
-
+  
     return {
       deps: functionDeps.map(getDefinition),
       chunks: [
         {
-          def: `${type} _f0(float x, float y) {\n    ${source}\n}`,
+          main: `${type} glesmos_xy(float x, float y) {\n${source}\n}`,
+          dx: `${type} glesmos_dx(float x, float y) {\n${dxsource}\n}`,
+          dy: `${type} glesmos_dy(float x, float y) {\n${dysource}\n}`,
           fill: fillOpacity > 0,
           color: `${colorVec4(color, fillOpacity)}`,
           line_color: `${colorVec4(color, lineOpacity)}`,

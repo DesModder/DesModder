@@ -11,7 +11,9 @@ export interface GLesmosShaderPackage {
 }
 
 export interface GLesmosShaderChunk {
-  def: string;
+  main: string;
+  dx: string;
+  dy: string;
   fill: boolean;
   color: string;
   line_color: string;
@@ -190,11 +192,11 @@ export function glesmosGetCacheShader(
     ${deps}
 
     // main func
-    ${chunk.def}
+    ${chunk.main}
 
     void main(){
       vec2 mathCoord = texCoord * graphSize + graphCorner;
-      float v = _f0( mathCoord.x, mathCoord.y );
+      float v = glesmos_xy( mathCoord.x, mathCoord.y );
       outColor = vec4(v, 0, 0, 1);
     }
   `;
@@ -224,8 +226,12 @@ export function glesmosGetSDFShader(
     // dependencies
     ${deps}
 
-    // main func
-    ${chunk.def}
+    // glesmos_xy
+    ${chunk.main}
+
+    // derivatives, glesmos_dx and glesmos_dy
+    ${chunk.dx}
+    ${chunk.dy}
 
     //============== BEGIN Shared Stuff ==============//
 
@@ -294,7 +300,7 @@ export function glesmosGetSDFShader(
 
       for( int n = 0; n < 4; n++ ){
         vec2 samplepos = toMathCoord(seed + Q_kernel[n] / iResolution * scale);
-        float tmp = abs( _f0( samplepos.x, samplepos.y ) );
+        float tmp = abs( glesmos_xy( samplepos.x, samplepos.y ) );
         if( tmp < closest ){
           closest_n = n;
           closest = tmp;
