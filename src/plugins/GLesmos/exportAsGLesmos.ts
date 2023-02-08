@@ -25,18 +25,31 @@ export function compileGLesmos(
   color: string,
   fillOpacity: number,
   lineOpacity: number,
-  lineWidth: number
+  lineWidth: number,
+  derivativeX: undefined | IRExpression,
+  derivativeY: undefined | IRExpression
 ): GLesmosShaderPackage {
   try {
     fillOpacity = clampParam(fillOpacity, 0, 1, 0.4);
     lineOpacity = clampParam(lineOpacity, 0, 1, 0.9);
     lineWidth = clampParam(lineWidth, 0, Infinity, 2.5);
 
-    const { source, deps } = emitChunkGL(concreteTree._chunk);
+    const functionDeps: string[] = [];
+
+    let source, derivativeXSource, derivativeYSource, deps;
+    ({ source, deps } = emitChunkGL(concreteTree._chunk));
+    deps.forEach((d) => accDeps(functionDeps, d));
     const type = getGLType(concreteTree.valueType);
 
-    const functionDeps: string[] = [];
-    deps.forEach((d) => accDeps(functionDeps, d));
+    if (lineWidth > 0 && derivativeX && derivativeY) {
+      ({ source: derivativeXSource, deps } = emitChunkGL(derivativeX._chunk));
+      deps.forEach((d) => accDeps(functionDeps, d));
+      ({ source: derivativeYSource, deps } = emitChunkGL(derivativeY._chunk));
+      deps.forEach((d) => accDeps(functionDeps, d));
+    }
+    
+    console.log("derivativeX:", derivativeXSource);
+    console.log("derivativeY:", derivativeYSource);
 
     return {
       deps: functionDeps.map(getDefinition),

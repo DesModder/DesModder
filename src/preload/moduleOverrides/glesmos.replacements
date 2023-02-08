@@ -266,9 +266,18 @@ else {
 *Replace* `else` with
 ```js
 else if ($this.userData.glesmos) {
+  const lines = $this.userData.lines !== false;
+  let derivativeX, derivativeY;
+  if (lines) {
+    try {
+      derivativeX = $ir.takeDerivative('x');
+      derivativeY = $ir.takeDerivative('y');
+    } catch(e) {}
+  }
   // newCompiled: GLesmosShaderPackage
   const newCompiled = self.dsm_compileGLesmos(
-    $ir, $styles.color, $styles.fillOpacity ?? 0, $styles.lineOpacity, $this.userData.lines !== false ? $styles.lineWidth : 0.0, $styles.listIndex
+    $ir, $styles.color, $styles.fillOpacity, $styles.lineOpacity, $this.userData.lines !== false ? $styles.lineWidth : 0.0,
+    derivativeX, derivativeY
   );
   const prev =  $graphs[$graphs.length - 1];
   if (prev?.graphMode === "GLesmos") {
