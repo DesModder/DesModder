@@ -76,24 +76,24 @@ $DCGView.createElement(
 *Find*
 
 ```js
-drawSketchToCtx = function ($e, $ctx, $transforms, __args__) {__body__}
+drawSketchToCtx = function ($t) {__body__}
 ```
 
 *Find* inside `__body__`
 
 ```js
-if ($c || ($c = {}), $t.branches && $t.branches.length) {__consequent__}
+if ($n.branches && $n.branches.length) {__consequent__}
 ```
 
 *Replace* `__consequent__` with
 
 ```js
 __consequent__;
-for (const branch of $e.branches) {
+for (const branch of $t.sketch.branches) {
   if (branch.graphMode === "GLesmos") {
     window.DesModder?.controller?.exposedPlugins[
       "GLesmos"
-    ]?.drawGlesmosSketchToCtx?.(branch.compiledGL, $ctx, $transforms, $e.id);
+    ]?.drawGlesmosSketchToCtx?.(branch.compiledGL, $t.ctx, $t.projection, $t.sketch.id);
   }
 }
 ```
