@@ -1,6 +1,6 @@
 import { getDefinition, getDependencies } from "./builtins";
 import emitChunkGL from "./emitChunkGL";
-import { colorVec4, getGLType } from "./outputHelpers";
+import { colorVec4 } from "./outputHelpers";
 import { GLesmosShaderPackage } from "./shaders";
 import { desmosRequire } from "globals/workerSelf";
 import { IRExpression, ParsenodeError } from "parsing/parsenode";
@@ -46,8 +46,8 @@ export function compileGLesmos(
       ({ source: dysource, deps } = emitChunkGL(derivativeY._chunk));
       deps.forEach((d) => accDeps(functionDeps, d));
     }
-    
-    if( dxsource == undefined || dysource == undefined ){
+
+    if (dxsource == undefined || dysource == undefined) {
       throw "Derivative solve failed :("; // todo: handle gracefully
     }
 

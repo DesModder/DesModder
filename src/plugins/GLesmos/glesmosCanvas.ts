@@ -149,7 +149,6 @@ export function initGLesmosCanvas() {
     deps: string,
     chunk: GLesmosShaderChunk
   ) => {
-    
     glesmosCache = glesmosGetCacheShader(gl, id, chunk, deps);
     glesmosFinalPass = glesmosGetFinalPassShader(gl, id, chunk);
 
