@@ -153,14 +153,14 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
       const prefix = idTable.get(r)!;
       table.merge(getSymbols(r.commands, str).prefix(prefix));
     } catch (e) {
-      addPanic(r.plugin);
+      r.plugins.forEach(addPanic);
     }
   }
   const finalRepls = repls.flatMap((r) => {
     try {
       return blockReplacements(r, idTable, table);
     } catch (e) {
-      addPanic(r.plugin);
+      r.plugins.forEach(addPanic);
       return [];
     }
   });
