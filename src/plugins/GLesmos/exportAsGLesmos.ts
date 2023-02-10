@@ -40,6 +40,10 @@ export function compileGLesmos(
     ({ source, deps } = emitChunkGL(concreteTree._chunk));
     deps.forEach((d) => accDeps(functionDeps, d));
 
+    if (source.length > 2048) {
+      throw Error("Definitions are nested too deeply."); // seriously this is for your own good
+    }
+
     if (lineWidth > 0 && derivativeX && derivativeY) {
       ({ source: dxsource, deps } = emitChunkGL(derivativeX._chunk));
       deps.forEach((d) => accDeps(functionDeps, d));
