@@ -47,8 +47,9 @@ export function compileGLesmos(
       deps.forEach((d) => accDeps(functionDeps, d));
     }
 
-    if (dxsource == undefined || dysource == undefined) {
-      throw "Derivative solve failed :("; // todo: handle gracefully
+    if (dxsource === undefined || dysource === undefined) {
+      dxsource = "return 0;"; // todo: handle gracefully
+      dysource = "return 0;";
     }
 
     return {
