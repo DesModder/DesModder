@@ -303,41 +303,41 @@ export function glesmosGetSDFShader(
 
       const vec4 identity = vec4(1,1,1,1);
       vec4 corners = vec4(
-        f_xy( (fragCoord + Q_kernel[0] * 1.0 / iResolution) ),
-        f_xy( (fragCoord + Q_kernel[1] * 1.0 / iResolution) ),
-        f_xy( (fragCoord + Q_kernel[2] * 1.0 / iResolution) ),
-        f_xy( (fragCoord + Q_kernel[3] * 1.0 / iResolution) )
+        f_xy_cache( (fragCoord + Q_kernel[0] / iResolution) ),
+        f_xy_cache( (fragCoord + Q_kernel[1] / iResolution) ),
+        f_xy_cache( (fragCoord + Q_kernel[2] / iResolution) ),
+        f_xy_cache( (fragCoord + Q_kernel[3] / iResolution) )
       );
 
       vec4 corner_signs = sign(corners);
 
-      if( abs( dot(abs(corner_signs), identity) ) < 4.0 ){ // we legitimately sampled a 0
+      // TEST 0: NaN -> no outlines!
+      for(int i=0; i<4; i++){
+        if( corners[i] != corners[i] ){ return false; }
+      }
+
+      // TEST 1: did we get extremely lucky and sample a zero directly?
+      if( abs( dot(abs(corner_signs), identity) ) < 4.0 ){
         return true;
       }
 
-      if( abs( dot(corner_signs, identity) ) == 4.0 ){ // can't possibly be an edge since there was no sign change
+      // TEST 2: was there a sign change? (if not, no outline)
+      if( abs( dot(corner_signs, identity) ) == 4.0 ){
         return false;
       }
 
+      // TEST 3: is this an asymptote like 1/x? (compare true derivative to an approximation)
       vec4 deriv_samples = vec4(
         (corners[1] - corners[0]), (corners[3] - corners[2]),
         (corners[0] - corners[2]), (corners[1] - corners[3]) 
       );
-      vec4 d_dample_sgns = sign(deriv_samples);
-
-      if( abs( dot(d_dample_sgns, identity) ) < 4.0 ){ // this might be a saddle point, ensure derivative consistency
-        if( d_dample_sgns[0] != d_dample_sgns[1] || d_dample_sgns[2] != d_dample_sgns[3] ){ // derivatives inconsistent...
-          return false;
-        }
-      }
-
       vec2 derivative_approx = vec2(
-        deriv_samples[0] + deriv_samples[1],
-        deriv_samples[2] + deriv_samples[3] 
+        deriv_samples[0] * 0.5 + deriv_samples[1] * 0.5,
+        deriv_samples[2] * 0.5 + deriv_samples[3] * 0.5 
       );
 
       vec2 derivative_real = f_dxy_p( toMathCoord(fragCoord) );
-      return dot( derivative_real, derivative_approx ) > 0.0; // if these are about the same, it probably isn't an asymptote
+      return dot( normalize(derivative_real), normalize(derivative_approx) ) > 0.8; // if these are about the same, it probably isn't an asymptote
 
     }
 
