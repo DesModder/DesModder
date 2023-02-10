@@ -234,6 +234,9 @@ export function glesmosGetSDFShader(
     float f_xy(float x, float y){
       ${chunk.main}
     }
+    float f_xy_p(in vec2 p){
+      return f_xy(p.x, p.y);
+    }
 
     // derivative stuff
     float f_dx(float x, float y){
@@ -247,6 +250,9 @@ export function glesmosGetSDFShader(
         f_dx(x, y),
         f_dy(x, y)
       );
+    }
+    vec2 f_dxy_p(in vec2 p){
+      return f_dxy(p.x, p.y);
     }
 
     //============== END GLesmos Imports ==============//
@@ -270,8 +276,8 @@ export function glesmosGetSDFShader(
       );
 
       const vec2 Q_kernel[4] = vec2[4](
-        vec2(-0.5,-0.5), vec2(0.5,-0.5),
-        vec2(-0.5,0.5), vec2(0.5,0.5)
+        vec2(-0.5,0.5),  vec2(0.5,0.5),
+        vec2(-0.5,-0.5), vec2(0.5,-0.5)
       );
 
       const vec2 D_kernel[4] = vec2[4](
@@ -292,13 +298,47 @@ export function glesmosGetSDFShader(
     }
 
     bool detectSignChange( in vec2 fragCoord ){
-      float first = sign( f_xy_cache( fragCoord + Q_kernel[0] * 2.0 / iResolution ) );
-      for( int i = 1; i < 4; i++ ){
-        if( sign( f_xy_cache(fragCoord + Q_kernel[i] * 2.0 / iResolution) ) != first ){
-          return true;
+
+      vec2 mathcoord = toMathCoord(fragCoord);
+
+      const vec4 identity = vec4(1,1,1,1);
+      vec4 corners = vec4(
+        f_xy( (fragCoord + Q_kernel[0] * 1.0 / iResolution) ),
+        f_xy( (fragCoord + Q_kernel[1] * 1.0 / iResolution) ),
+        f_xy( (fragCoord + Q_kernel[2] * 1.0 / iResolution) ),
+        f_xy( (fragCoord + Q_kernel[3] * 1.0 / iResolution) )
+      );
+
+      vec4 corner_signs = sign(corners);
+
+      if( abs( dot(abs(corner_signs), identity) ) < 4.0 ){ // we legitimately sampled a 0
+        return true;
+      }
+
+      if( abs( dot(corner_signs, identity) ) == 4.0 ){ // can't possibly be an edge since there was no sign change
+        return false;
+      }
+
+      vec4 deriv_samples = vec4(
+        (corners[1] - corners[0]), (corners[3] - corners[2]),
+        (corners[0] - corners[2]), (corners[1] - corners[3]) 
+      );
+      vec4 d_dample_sgns = sign(deriv_samples);
+
+      if( abs( dot(d_dample_sgns, identity) ) < 4.0 ){ // this might be a saddle point, ensure derivative consistency
+        if( d_dample_sgns[0] != d_dample_sgns[1] || d_dample_sgns[2] != d_dample_sgns[3] ){ // derivatives inconsistent...
+          return false;
         }
       }
-      return false;
+
+      vec2 derivative_approx = vec2(
+        deriv_samples[0] + deriv_samples[1],
+        deriv_samples[2] + deriv_samples[3] 
+      );
+
+      vec2 derivative_real = f_dxy_p( toMathCoord(fragCoord) );
+      return dot( derivative_real, derivative_approx ) > 0.0; // if these are about the same, it probably isn't an asymptote
+
     }
 
     vec4 lineToPixel(in vec2 p1, in vec2 p2, in vec2 fragCoord){
@@ -388,6 +428,7 @@ export function glesmosGetSDFShader(
 
     //============== END Shadertoy Buffer A ==============//
   `;
+  // console.log(source)
   const shader = getShaderProgram(gl, id, VERTEX_SHADER, source);
 
   return shader;
