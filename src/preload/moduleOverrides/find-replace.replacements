@@ -1,6 +1,6 @@
 # Replacements for Find-Replace
 
-*plugin* `find-replace`
+*plugin* `find-and-replace`
 
 ## Allow find-replace to appear, even if the expression list is not focused
 
@@ -9,7 +9,7 @@
 *Find* => `from`
 
 ```js
-this.controller.isExpressionListFocused()
+this.controller.isExpressionListFocused(TEMP_FORCE_ERROR_PLEASE_REMOVE)
 ```
 
 *Replace* `from` with

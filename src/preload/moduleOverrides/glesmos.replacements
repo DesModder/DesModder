@@ -76,7 +76,7 @@ $DCGView.createElement(
 *Find*
 
 ```js
-drawSketchToCtx = function ($t) {__body__}
+drawSketchToCtx = function ($t, $TEMP_FORCE_ERROR_PLEASE_REMOVE) {__body__}
 ```
 
 *Find* inside `__body__`

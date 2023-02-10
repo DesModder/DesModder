@@ -1,0 +1,38 @@
+<!-- we don't necessarily have communication with the background script that
+  would insert the style css, so use an inline style element -->
+<style>
+  #dsm-panic-popover {
+    /* positioning */
+    position: absolute;
+    top: 10px;
+    left: calc(50%);
+    transform: translateX(-50%);
+    z-index: 9999;
+    width: max-content;
+    max-width: calc(100% - 20px);
+    /* formatting */
+    background: white;
+    padding: 0 20px 20px 20px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    box-shadow: 0 5px 10px rgb(0 0 0 / 20%);
+    user-select: text;
+  }
+  #dsm-panic-popover ul {
+    list-style-type: none;
+  }
+  #dsm-panic-popover input[type="checkbox"] {
+    cursor: pointer;
+  }
+  #dsm-panic-apply-reload-btn {
+    float: right;
+  }
+</style>
+<div id="dsm-panic-popover">
+  <h2>DesModder Errors Detected</h2>
+  <p>
+    Following errors: (the checkboxes do nothing for now. This is temporary)
+  </p>
+  <ul id="dsm-panic-list"></ul>
+  <button id="dsm-panic-apply-reload-btn">Apply and Reload</button>
+</div>
