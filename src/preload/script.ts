@@ -1,6 +1,6 @@
 import * as almond from "./almond";
 import moduleReplacements from "./moduleReplacements";
-import { applyReplacements } from "./replacementHelpers/applyReplacement";
+import { applyReplacementsCached } from "./replacementHelpers/cacheReplacement";
 import window from "globals/window";
 import jsTokens from "js-tokens";
 import injectScript from "utils/injectScript";
@@ -65,18 +65,19 @@ void pollForValue(getCalcDesktopURL).then(async (srcURL: string) => {
   Now we load it, but with '?' appended to prevent the web request rules from blocking it */
   const calcDesktop = await (await fetch(srcURL + "?")).text();
   // Apply replacements
-  const newCode = applyReplacements(
+  const newCode = await applyReplacementsCached(
     moduleReplacements.filter((r) => !r.workerOnly),
-    calcDesktop
+    calcDesktop,
+    "main"
   );
-  const newerCode = applyWorkerReplacements(newCode);
+  const newerCode = await applyWorkerReplacements(newCode);
   // tryRunDesModder polls until the following eval'd code is done.
   tryRunDesModder();
   // eslint-disable-next-line no-eval
   (0, eval)(newerCode);
 });
 
-function applyWorkerReplacements(src: string): string {
+async function applyWorkerReplacements(src: string): Promise<string> {
   // Apply replacements to the worker. This could also be done by tweaking the
   // Worker constructor, but currently all of these replacements could be
   // performed outside the main page
@@ -93,18 +94,20 @@ function applyWorkerReplacements(src: string): string {
   if (workerCodeTokens.length > 1)
     throw new Error("More than one worker code found");
   const wcToken = workerCodeTokens[0];
+  const newWorker = await applyReplacementsCached(
+    moduleReplacements.filter((r) => r.workerOnly),
+    // JSON.parse doesn't work because this is a single-quoted string.
+    // js-tokens tokenized this as a string anyway, so it should be
+    // safely eval'able to a string.
+    // eslint-disable-next-line no-eval
+    (0, eval)(wcToken.value) as string,
+    "worker"
+  );
   wcToken.value = JSON.stringify(
     // Place at the beginning of the code for the source mapping to line up
     // Call at the end of the code to run after modules defined
     `function loadDesModderWorker(){${workerAppend}\n}` +
-      applyReplacements(
-        moduleReplacements.filter((r) => r.workerOnly),
-        // JSON.parse doesn't work because this is a single-quoted string.
-        // js-tokens tokenized this as a string anyway, so it should be
-        // safely eval'able to a string.
-        // eslint-disable-next-line no-eval
-        (0, eval)(wcToken.value) as string
-      ) +
+      newWorker +
       "\nloadDesModderWorker();"
   );
   return tokens.map((x) => x.value).join("");
