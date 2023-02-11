@@ -36,7 +36,7 @@ export default class LoadingPie extends Component<{
     while (e.firstChild) {
       e.removeChild(e.firstChild);
     }
-    if (0 <= progress && progress <= 1) {
+    if (progress >= 0 && progress <= 1) {
       const svg = document.createElement("svg");
       svg.className = "dsm-vc-pie-overlay";
       svg.setAttribute("viewBox", "-1 -1 2 2");

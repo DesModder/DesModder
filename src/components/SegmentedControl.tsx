@@ -6,7 +6,7 @@ export default class SegmentedControl extends Component<{
   names: string[];
   selectedIndex: number;
   ariaGroupLabel: string;
-  setSelectedIndex(i: number): void;
+  setSelectedIndex: (i: number) => void;
   allowChange?: boolean;
 }> {
   template() {
@@ -23,7 +23,7 @@ export default class SegmentedControl extends Component<{
     return this.props.names().map((name, i) => ({
       key: name,
       label: () => name,
-      selected: () => i == this.props.selectedIndex(),
+      selected: () => i === this.props.selectedIndex(),
       onSelect: () =>
         this.getChangeAllowed(i) && this.props.setSelectedIndex(i),
     }));
@@ -33,7 +33,7 @@ export default class SegmentedControl extends Component<{
     const allowChange = this.props.allowChange;
     return (
       allowChange === undefined ||
-      allowChange() ||
+      allowChange() === true ||
       i === this.props.selectedIndex()
     );
   }
