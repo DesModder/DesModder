@@ -10,7 +10,7 @@ import { postMessageUp, listenToMessageDown } from "utils/messages";
 import { pollForValue } from "utils/utils";
 
 /* This script is loaded at document_start, before the page's scripts, to give it 
-time to set ALMOND_OVERRIDES and replace module definitions */
+time to set ALMOND_OVERRIDES to expose `require` */
 
 // workerAppend will get filled in from a message
 let workerAppend: string = "console.error('worker append not filled in')";
@@ -86,6 +86,7 @@ async function load(pluginsForceDisabled: Set<string>) {
 listenToMessageDown((message) => {
   if (message.type === "apply-plugins-force-disabled") {
     message.value.forEach((disabledPlugin) => addForceDisabled(disabledPlugin));
+    (window as any).DesModderForceDisabled = message.value;
     void load(message.value);
     // cancel listener
     return true;
