@@ -23,6 +23,16 @@ function insertPanicElement() {
       });
       location.reload();
     });
+  document
+    .getElementById("dsm-panic-close-button")!
+    .addEventListener("click", () => {
+      document.body.classList.add("dsm-panic-closed");
+    });
+  document
+    .getElementById("dsm-panic-reopen-button")!
+    .addEventListener("click", () => {
+      document.body.classList.remove("dsm-panic-closed");
+    });
 }
 
 function getPanicPopover() {

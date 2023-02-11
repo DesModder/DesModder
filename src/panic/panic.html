@@ -26,14 +26,60 @@
   }
   #dsm-panic-apply-reload-btn {
     float: right;
+    padding: 3px 10px;
   }
   #dsm-plugins-disabled,
   #dsm-encountered-errors {
     /* Don't show until something gets added to this list */
     display: none;
   }
+  #dsm-panic-reopen-button {
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999;
+    width: 37px;
+    height: 37px;
+    line-height: 34px;
+    font-size: 20px;
+    color: #5f5f5f;
+  }
+  .dsm-panic-button {
+    text-align: center;
+    cursor: pointer;
+    background: #ededed;
+    box-shadow: 0 0 5px rgb(0 0 0 / 15%);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+  }
+  #dsm-panic-close-button {
+    border: none;
+    background: transparent;
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    cursor: pointer;
+    font-size: 25px;
+    color: #5f5f5f;
+  }
+  #dsm-panic-close-button:hover,
+  #dsm-panic-reopen-button:hover {
+    color: black;
+  }
+  body.dsm-panic-closed #dsm-panic-popover {
+    display: none;
+  }
+  body:not(.dsm-panic-closed) #dsm-panic-reopen-button {
+    display: none;
+  }
+  body.dsm-panic-closed .dcg-header .dcg-home-link {
+    pointer-events: none;
+    cursor: default;
+  }
 </style>
 <div id="dsm-panic-popover">
+  <button id="dsm-panic-close-button">✖</button>
   <h2>DesModder Loading Errors Manager</h2>
   <p id="dsm-encountered-errors">
     DesModder encountered loading errors with the following plugins: (check box
@@ -45,5 +91,8 @@
     allow enabling plugin)
   </p>
   <ul id="dsm-disabled-list"></ul>
-  <button id="dsm-panic-apply-reload-btn">Apply and Reload</button>
+  <button class="dsm-panic-button" id="dsm-panic-apply-reload-btn">
+    Apply and Reload
+  </button>
 </div>
+<button class="dsm-panic-button" id="dsm-panic-reopen-button">!</button>
