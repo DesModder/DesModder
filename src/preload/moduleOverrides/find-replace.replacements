@@ -9,7 +9,7 @@
 *Find* => `from`
 
 ```js
-this.controller.isExpressionListFocused(TEMP_FORCE_ERROR_PLEASE_REMOVE)
+this.controller.isExpressionListFocused()
 ```
 
 *Replace* `from` with
