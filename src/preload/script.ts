@@ -1,6 +1,8 @@
+import { addForceDisabled } from "../panic/panic";
 import * as almond from "./almond";
 import moduleReplacements from "./moduleReplacements";
 import { applyReplacements } from "./replacementHelpers/applyReplacement";
+import { Block } from "./replacementHelpers/parse";
 import window from "globals/window";
 import jsTokens from "js-tokens";
 import injectScript from "utils/injectScript";
@@ -60,23 +62,42 @@ function getCalcDesktopURL() {
   )?.src;
 }
 
-void pollForValue(getCalcDesktopURL).then(async (srcURL: string) => {
+async function load(pluginsForceDisabled: Set<string>) {
+  const srcURL = await pollForValue(getCalcDesktopURL);
   /* we blocked calculator_desktop.js earlier to ensure that the preload/override script runs first.
   Now we load it, but with '?' appended to prevent the web request rules from blocking it */
   const calcDesktop = await (await fetch(srcURL + "?")).text();
+  // Filter out force-disabled replacements
+  const enabledReplacements = moduleReplacements.filter(
+    (r) => !r.plugins.every((p) => pluginsForceDisabled.has(p))
+  );
   // Apply replacements
   const newCode = applyReplacements(
-    moduleReplacements.filter((r) => !r.workerOnly),
+    enabledReplacements.filter((r) => !r.workerOnly),
     calcDesktop
   );
-  const newerCode = applyWorkerReplacements(newCode);
+  const newerCode = applyWorkerReplacements(enabledReplacements, newCode);
   // tryRunDesModder polls until the following eval'd code is done.
   tryRunDesModder();
   // eslint-disable-next-line no-eval
   (0, eval)(newerCode);
+}
+
+listenToMessageDown((message) => {
+  if (message.type === "apply-plugins-force-disabled") {
+    message.value.forEach((disabledPlugin) => addForceDisabled(disabledPlugin));
+    void load(message.value);
+    // cancel listener
+    return true;
+  }
+  return false;
 });
 
-function applyWorkerReplacements(src: string): string {
+postMessageUp({
+  type: "get-plugins-force-disabled",
+});
+
+function applyWorkerReplacements(enabledReplacements: Block[], src: string) {
   // Apply replacements to the worker. This could also be done by tweaking the
   // Worker constructor, but currently all of these replacements could be
   // performed outside the main page
@@ -98,7 +119,7 @@ function applyWorkerReplacements(src: string): string {
     // Call at the end of the code to run after modules defined
     `function loadDesModderWorker(){${workerAppend}\n}` +
       applyReplacements(
-        moduleReplacements.filter((r) => r.workerOnly),
+        enabledReplacements.filter((r) => r.workerOnly),
         // JSON.parse doesn't work because this is a single-quoted string.
         // js-tokens tokenized this as a string anyway, so it should be
         // safely eval'able to a string.

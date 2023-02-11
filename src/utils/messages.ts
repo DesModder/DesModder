@@ -18,8 +18,15 @@ type MessageWindowToContent =
       value: Map<PluginID, boolean>;
     }
   | {
+      type: "set-plugins-force-disabled";
+      value: Set<PluginID>;
+    }
+  | {
       type: "set-plugin-settings";
       value: Map<PluginID, GenericSettings>;
+    }
+  | {
+      type: "get-plugins-force-disabled";
     }
   | {
       type: "get-initial-data";
@@ -42,6 +49,10 @@ type MessageContentToWindow =
   | {
       type: "apply-plugins-enabled";
       value: Map<PluginID, boolean>;
+    }
+  | {
+      type: "apply-plugins-force-disabled";
+      value: Set<PluginID>;
     }
   | {
       type: "apply-plugin-settings";

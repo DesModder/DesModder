@@ -1,7 +1,6 @@
 import { format } from "../i18n/i18n-core";
+import { postMessageUp } from "../utils/messages";
 import panicHTML from "./panic.html";
-
-const existingPanics = new Set<string>();
 
 function insertPanicElement() {
   const frag = document.createRange().createContextualFragment(panicHTML);
@@ -10,6 +9,18 @@ function insertPanicElement() {
     .getElementById("dsm-panic-apply-reload-btn")!
     .addEventListener("click", () => {
       // TODO: apply changes;
+      const inputs: HTMLInputElement[] = Array.from(
+        document.querySelectorAll("#dsm-panic-popover ul input")
+      );
+      postMessageUp({
+        type: "set-plugins-force-disabled",
+        value: new Set(
+          inputs
+            .filter((el) => el.checked)
+            .map((el) => el.dataset.plugin)
+            .filter((n): n is string => n !== undefined)
+        ),
+      });
       location.reload();
     });
 }
@@ -24,24 +35,38 @@ function ensurePanicPopover() {
   return getPanicPopover()!;
 }
 
-export function addPanic(problem: string) {
-  const panicPopover = ensurePanicPopover();
-  if (!existingPanics.has(problem)) {
-    const id = "dsm_panic_" + problem;
-    const idInQuotes = JSON.stringify(id);
-    const list = panicPopover.querySelector("ul")!;
-    list.appendChild(
-      document.createRange().createContextualFragment(`<li>
-      <label for=${idInQuotes}>
-        <input type="checkbox" id=${idInQuotes} />
+/** Returns the new list item */
+function addLabelledCheckboxItem(list: Element, plugin: string) {
+  list.appendChild(
+    document.createRange().createContextualFragment(`<li>
+      <label>
+        <input type="checkbox" />
       </label>
     </li>`)
-    );
-    const problemName = format(problem + "-name", undefined, problem);
-    list
-      .lastElementChild!.querySelector("label")!
-      .appendChild(document.createTextNode(problemName));
-    console.log("panicking for", problem);
+  );
+  const li = list.lastElementChild!;
+  const humanName = format(plugin + "-name", undefined, plugin);
+  li.querySelector("label")!.appendChild(document.createTextNode(humanName));
+  li.querySelector("input")!.dataset.plugin = plugin;
+  return li;
+}
+
+const existingPanics = new Set<string>();
+export function addPanic(plugin: string) {
+  console.warn("Panicking for plugin", plugin);
+  const panicPopover = ensurePanicPopover();
+  document.getElementById("dsm-encountered-errors")!.style.display = "unset";
+  if (!existingPanics.has(plugin)) {
+    const list = panicPopover.querySelector("ul#dsm-panic-list")!;
+    addLabelledCheckboxItem(list, plugin);
   }
-  existingPanics.add(problem);
+  existingPanics.add(plugin);
+}
+
+export function addForceDisabled(plugin: string) {
+  const panicPopover = ensurePanicPopover();
+  document.getElementById("dsm-plugins-disabled")!.style.display = "unset";
+  const list = panicPopover.querySelector("ul#dsm-disabled-list")!;
+  const li = addLabelledCheckboxItem(list, plugin);
+  li.querySelector("input")!.checked = true;
 }

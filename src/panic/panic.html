@@ -27,12 +27,23 @@
   #dsm-panic-apply-reload-btn {
     float: right;
   }
+  #dsm-plugins-disabled,
+  #dsm-encountered-errors {
+    /* Don't show until something gets added to this list */
+    display: none;
+  }
 </style>
 <div id="dsm-panic-popover">
-  <h2>DesModder Errors Detected</h2>
-  <p>
-    Following errors: (the checkboxes do nothing for now. This is temporary)
+  <h2>DesModder Loading Errors Manager</h2>
+  <p id="dsm-encountered-errors">
+    DesModder encountered loading errors with the following plugins: (check the
+    box to disable plugin)
   </p>
   <ul id="dsm-panic-list"></ul>
+  <p id="dsm-plugins-disabled">
+    The following plugins are already disabled from loading: (uncheck box to
+    allow enabling plugin)
+  </p>
+  <ul id="dsm-disabled-list"></ul>
   <button id="dsm-panic-apply-reload-btn">Apply and Reload</button>
 </div>
