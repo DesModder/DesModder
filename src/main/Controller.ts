@@ -10,10 +10,15 @@ import {
 } from "./metadata/manage";
 import { MenuFunc } from "components/Menu";
 import { ItemModel } from "globals/models";
-import { Calc, desmosRequire } from "globals/window";
+import window, { Calc, desmosRequire } from "globals/window";
 import { format } from "i18n/i18n-core";
 import { plugins, pluginList, PluginID, GenericSettings } from "plugins";
-import { listenToMessageDown, postMessageUp } from "utils/messages";
+import {
+  listenToMessageDown,
+  postMessageUp,
+  mapToRecord,
+  recordToMap,
+} from "utils/messages";
 import { OptionalProperties } from "utils/utils";
 
 const AbstractItem = desmosRequire("graphing-calc/models/abstract-item");
@@ -65,8 +70,8 @@ export default class Controller {
         (plugin) => [plugin.id, this.getDefaultConfig(plugin.id)] as const
       )
     );
-    this.forceDisabled = (window as any).DesModderForceDisabled as Set<string>;
-    delete (window as any).DesModderForceDisabled;
+    this.forceDisabled = window.DesModderForceDisabled!;
+    delete window.DesModderForceDisabled;
     this.pluginsEnabled = new Map(
       pluginList.map((plugin) => {
         const enabled =
@@ -123,9 +128,9 @@ export default class Controller {
     let numFulfilled = 0;
     listenToMessageDown((message) => {
       if (message.type === "apply-plugin-settings") {
-        this.applyStoredSettings(message.value);
+        this.applyStoredSettings(recordToMap(message.value));
       } else if (message.type === "apply-plugins-enabled") {
-        this.applyStoredEnabled(message.value);
+        this.applyStoredEnabled(recordToMap(message.value));
       } else {
         return false;
       }
@@ -216,7 +221,7 @@ export default class Controller {
     }
     postMessageUp({
       type: "set-plugins-enabled",
-      value: this.pluginsEnabled,
+      value: mapToRecord(this.pluginsEnabled),
     });
   }
 
@@ -316,7 +321,7 @@ export default class Controller {
     if (!temporary)
       postMessageUp({
         type: "set-plugin-settings",
-        value: this.pluginSettings,
+        value: mapToRecord(this.pluginSettings),
       });
     if (this.pluginsEnabled.get(pluginID)) {
       const onConfigChange = plugins.get(pluginID)?.onConfigChange;

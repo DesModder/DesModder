@@ -5,6 +5,7 @@ interface windowConfig extends Window {
   Calc: CalcType;
   DesModder: any;
   ALMOND_OVERRIDES: { [key: string]: Function };
+  DesModderForceDisabled?: Set<string>;
 }
 
 declare let window: windowConfig;

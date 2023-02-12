@@ -13,12 +13,10 @@ function insertPanicElement() {
       );
       postMessageUp({
         type: "set-plugins-force-disabled",
-        value: new Set(
-          inputs
-            .filter((el) => el.checked)
-            .map((el) => el.dataset.plugin)
-            .filter((n): n is string => n !== undefined)
-        ),
+        value: inputs
+          .filter((el) => el.checked)
+          .map((el) => el.dataset.plugin)
+          .filter((n): n is string => n !== undefined),
       });
       location.reload();
     });
