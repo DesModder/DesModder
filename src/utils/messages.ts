@@ -66,10 +66,13 @@ type MessageContentToWindow =
       type: "set-worker-append-url";
       value: string;
     }
-  | {
-      type: "heartbeat-error";
-      message: any;
-    };
+  | HeartbeatError;
+
+export interface HeartbeatError {
+  type: "heartbeat-error";
+  isAuthError: boolean;
+  message: string;
+}
 
 function postMessage<T extends { type: string }>(message: T) {
   window.postMessage(message, "*");
