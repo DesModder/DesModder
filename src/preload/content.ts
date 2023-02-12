@@ -81,12 +81,7 @@ function _sendHeartbeat(options: WindowHeartbeatOptions) {
         );
       } else {
         // Firefox can only send wakatime requests from the content script
-        sendHeartbeat(fullOptions).catch((e) =>
-          postMessageDown({
-            type: "heartbeat-error",
-            message: e,
-          })
-        );
+        void sendHeartbeat(fullOptions, (e) => postMessageDown(e));
       }
     }
   );
