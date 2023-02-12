@@ -61,6 +61,7 @@
     "@lezer/common": "^1.0.1",
     "@lezer/lr": "^1.2.3",
     "@types/desmos": "^1.6.0",
+    "idb-keyval": "^6.2.0",
     "js-tokens": "^8.0.0",
     "prettier": "^2.7.1"
   }
