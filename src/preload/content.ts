@@ -13,14 +13,6 @@ const StorageKeys = {
   pluginSettings: "_plugin-settings",
 } as const;
 
-function recordToMap<V>(x: Record<string, V>): Map<string, V> {
-  return new Map(Object.entries(x));
-}
-
-function mapToRecord<V>(x: Map<string, V>): Record<string, V> {
-  return Object.fromEntries(x.entries());
-}
-
 function getInitialData() {
   chrome.storage.sync.get(
     {
@@ -38,13 +30,13 @@ function getInitialData() {
       }
       postMessageDown({
         type: "apply-plugin-settings",
-        value: recordToMap(settingsDown),
+        value: settingsDown,
       });
       const pluginsEnabled: Record<PluginID, boolean> =
         items?.[StorageKeys.pluginsEnabled] ?? {};
       postMessageDown({
         type: "apply-plugins-enabled",
-        value: recordToMap(pluginsEnabled),
+        value: pluginsEnabled,
       });
     }
   );
@@ -53,14 +45,14 @@ function getInitialData() {
 function getPluginsForceDisabled() {
   chrome.storage.sync.get(
     {
-      [StorageKeys.forceDisabled]: {}, // default: no plugins force-disabled
+      [StorageKeys.forceDisabled]: [], // default: no plugins force-disabled
     },
     (items) => {
       const forceDisabled: PluginID[] =
         items?.[StorageKeys.forceDisabled] ?? [];
       postMessageDown({
         type: "apply-plugins-force-disabled",
-        value: new Set(forceDisabled),
+        value: forceDisabled,
       });
     }
   );
@@ -126,7 +118,7 @@ listenToMessageUp((message) => {
     }
     case "set-plugins-enabled":
       void chrome.storage.sync.set({
-        [StorageKeys.pluginsEnabled]: mapToRecord(message.value),
+        [StorageKeys.pluginsEnabled]: message.value,
       });
       break;
     case "set-plugins-force-disabled":
@@ -136,7 +128,7 @@ listenToMessageUp((message) => {
       break;
     case "set-plugin-settings":
       void chrome.storage.sync.set({
-        [StorageKeys.pluginSettings]: mapToRecord(message.value),
+        [StorageKeys.pluginSettings]: message.value,
       });
       break;
     case "get-script-url":

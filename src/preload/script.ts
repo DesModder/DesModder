@@ -4,7 +4,7 @@ import moduleReplacements from "./moduleReplacements";
 import { fullReplacementCached } from "./replacementHelpers/cacheReplacement";
 import window from "globals/window";
 import injectScript from "utils/injectScript";
-import { postMessageUp, listenToMessageDown } from "utils/messages";
+import { postMessageUp, listenToMessageDown, arrayToSet } from "utils/messages";
 import { pollForValue } from "utils/utils";
 
 /* This script is loaded at document_start, before the page's scripts, to give it 
@@ -21,7 +21,7 @@ if (window.ALMOND_OVERRIDES !== undefined) {
   );
 }
 
-(window as any).require = almond.require;
+window.require = almond.require;
 
 window.ALMOND_OVERRIDES = {
   define: almond.define,
@@ -84,8 +84,8 @@ async function load(pluginsForceDisabled: Set<string>) {
 listenToMessageDown((message) => {
   if (message.type === "apply-plugins-force-disabled") {
     message.value.forEach((disabledPlugin) => addForceDisabled(disabledPlugin));
-    (window as any).DesModderForceDisabled = message.value;
-    void load(message.value);
+    window.DesModderForceDisabled = arrayToSet(message.value);
+    void load(arrayToSet(message.value));
     // cancel listener
     return true;
   }
