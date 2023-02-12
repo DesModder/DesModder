@@ -1,3 +1,4 @@
+import { existingPanics } from "../../panic/panic";
 import { applyReplacements } from "./applyReplacement";
 import { Block } from "./parse";
 import { get, set } from "idb-keyval";
@@ -33,12 +34,14 @@ export async function fullReplacementCached(
     workerAppend,
     enabledReplacements
   );
-  void set(k, {
-    hashRepls,
-    hashFile,
-    hashAppend,
-    result,
-  });
+  // cache if there's no panics
+  if (existingPanics.size === 0)
+    void set(k, {
+      hashRepls,
+      hashFile,
+      hashAppend,
+      result,
+    });
   return result;
 }
 

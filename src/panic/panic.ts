@@ -59,7 +59,7 @@ function addLabelledCheckboxItem(list: Element, plugin: string) {
   return li;
 }
 
-const existingPanics = new Set<string>();
+export const existingPanics = new Set<string>();
 export function addPanic(plugin: string) {
   console.warn("Panicking for plugin", plugin);
   const panicPopover = ensurePanicPopover();
