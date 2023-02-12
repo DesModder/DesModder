@@ -1,4 +1,5 @@
 // This script gets used in content and background scripts
+import { HeartbeatError } from "../../utils/messages";
 
 export interface WindowHeartbeatOptions {
   graphName: string;
@@ -13,7 +14,10 @@ export interface HeartbeatOptions extends WindowHeartbeatOptions {
   secretKey: string;
 }
 
-export async function sendHeartbeat(opts: HeartbeatOptions) {
+export async function sendHeartbeat(
+  opts: HeartbeatOptions,
+  sendResponse: (x: HeartbeatError) => void
+) {
   const data = {
     // This is background information for WakaTime to handle. These values need no change.
     language: "Desmos",
@@ -35,19 +39,39 @@ export async function sendHeartbeat(opts: HeartbeatOptions) {
     branch: opts.splitProjects ? null : opts.graphName,
   };
 
-  if (opts.secretKey === "") throw new Error("Secret key not provided.");
+  if (opts.secretKey === "") {
+    sendResponse({
+      type: "heartbeat-error",
+      isAuthError: true,
+      message: "Secret key not provided",
+    });
+    return;
+  }
 
-  const r = await fetch(
-    "https://wakatime.com/api/v1/users/current/heartbeats",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${btoa(opts.secretKey)}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(data),
-    }
-  );
-  if (r.status !== 201)
-    throw new Error(`Request failed with status ${r.status}.`);
+  try {
+    const r = await fetch(
+      "https://wakatime.com/api/v1/users/current/heartbeats",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${btoa(opts.secretKey)}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
+    if (r.status !== 201)
+      sendResponse({
+        type: "heartbeat-error",
+        isAuthError: r.status === 401,
+        message: await r.text(),
+      });
+  } catch (e) {
+    sendResponse({
+      type: "heartbeat-error",
+      isAuthError: false,
+      message:
+        typeof e === "object" && e !== null ? (e as any).message ?? e : e,
+    });
+  }
 }

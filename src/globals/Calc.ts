@@ -106,6 +106,14 @@ export interface TopLevelComponents {
   };
 }
 
+interface Toast {
+  message: string;
+  undoCallback?: () => void;
+  toastStyle?: "error";
+  /** Number of ms, non-positive means never hide (until "x" close button) */
+  hideAfter?: number;
+}
+
 interface CalcPrivate {
   /// / undocumented, may break
   controller: {
@@ -148,7 +156,7 @@ interface CalcPrivate {
     };
     listModel: unknown;
     _addItemToEndFromAPI: (item: ItemModel) => void;
-    _showToast: (toast: { message: string; undoCallback?: () => void }) => void;
+    _showToast: (toast: Toast) => void;
     getViewState: () => {
       viewport: {
         xmin: number;
