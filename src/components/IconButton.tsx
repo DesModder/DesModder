@@ -5,7 +5,7 @@ import { mergeClass, MaybeClassDict } from "utils/utils";
 export default class IconButton extends Component<{
   iconClass: string;
   btnClass?: MaybeClassDict;
-  onTap(e: Event): void;
+  onTap: (e: Event) => void;
   disabled?: boolean;
 }> {
   template() {
@@ -15,7 +15,7 @@ export default class IconButton extends Component<{
         class={() =>
           mergeClass(
             {
-              "dsm-btn-icon-disabled": this.props.disabled?.() || false,
+              "dsm-btn-icon-disabled": this.props.disabled?.() ?? false,
               "dsm-btn-icon": true,
             },
             this.props.btnClass?.()
