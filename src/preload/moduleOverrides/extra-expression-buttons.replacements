@@ -1,6 +1,6 @@
 # Replacements for Extra Expression Buttons
 
-*plugin* `workaround-pin-expressions-and-folder-tools`
+*plugin* `pin-expressions` `folder-tools`
 
 TODO: work this into an API so it doesn't need a ton of injected code.
 

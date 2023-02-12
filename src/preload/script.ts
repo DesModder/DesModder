@@ -1,4 +1,6 @@
+import { addForceDisabled } from "../panic/panic";
 import * as almond from "./almond";
+import moduleReplacements from "./moduleReplacements";
 import { fullReplacementCached } from "./replacementHelpers/cacheReplacement";
 import window from "globals/window";
 import injectScript from "utils/injectScript";
@@ -6,7 +8,7 @@ import { postMessageUp, listenToMessageDown } from "utils/messages";
 import { pollForValue } from "utils/utils";
 
 /* This script is loaded at document_start, before the page's scripts, to give it 
-time to set ALMOND_OVERRIDES and replace module definitions */
+time to set ALMOND_OVERRIDES to expose `require` */
 
 // workerAppend will get filled in from a message
 let workerAppend: string = "console.error('worker append not filled in')";
@@ -58,16 +60,40 @@ function getCalcDesktopURL() {
   )?.src;
 }
 
-void pollForValue(getCalcDesktopURL).then(async (srcURL: string) => {
+async function load(pluginsForceDisabled: Set<string>) {
+  const srcURL = await pollForValue(getCalcDesktopURL);
   /* we blocked calculator_desktop.js earlier to ensure that the preload/override script runs first.
   Now we load it, but with '?' appended to prevent the web request rules from blocking it */
   const calcDesktop = await (await fetch(srcURL + "?")).text();
+  // Filter out force-disabled replacements
+  const enabledReplacements = moduleReplacements.filter(
+    (r) => !r.plugins.every((p) => pluginsForceDisabled.has(p))
+  );
   // Apply replacements
-  const newCode = await fullReplacementCached(calcDesktop, workerAppend);
+  const newCode = await fullReplacementCached(
+    calcDesktop,
+    workerAppend,
+    enabledReplacements
+  );
   // tryRunDesModder polls until the following eval'd code is done.
   tryRunDesModder();
   // eslint-disable-next-line no-eval
   (0, eval)(newCode);
+}
+
+listenToMessageDown((message) => {
+  if (message.type === "apply-plugins-force-disabled") {
+    message.value.forEach((disabledPlugin) => addForceDisabled(disabledPlugin));
+    (window as any).DesModderForceDisabled = message.value;
+    void load(message.value);
+    // cancel listener
+    return true;
+  }
+  return false;
+});
+
+postMessageUp({
+  type: "get-plugins-force-disabled",
 });
 
 listenToMessageDown((message) => {

@@ -30,6 +30,7 @@ interface PillboxButton {
 
 export default class Controller {
   pluginsEnabled: Map<PluginID, boolean>;
+  forceDisabled: Set<string>;
   view: View | null = null;
   expandedPlugin: string | null = null;
   pluginSettings: Map<PluginID, GenericSettings>;
@@ -64,8 +65,14 @@ export default class Controller {
         (plugin) => [plugin.id, this.getDefaultConfig(plugin.id)] as const
       )
     );
+    this.forceDisabled = (window as any).DesModderForceDisabled as Set<string>;
+    delete (window as any).DesModderForceDisabled;
     this.pluginsEnabled = new Map(
-      pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
+      pluginList.map((plugin) => {
+        const enabled =
+          plugin.enabledByDefault && !this.forceDisabled.has(plugin.id);
+        return [plugin.id, enabled] as const;
+      })
     );
     Calc.controller.dispatcher.register((e) => {
       if (e.type === "toggle-graph-settings") {
@@ -89,6 +96,7 @@ export default class Controller {
   applyStoredEnabled(storedEnabled: Map<PluginID, boolean>) {
     for (const { id } of pluginList) {
       const stored = storedEnabled.get(id);
+      if (stored && this.isPluginForceDisabled(id)) continue;
       if (stored !== undefined && id !== "GLesmos") {
         this.pluginsEnabled.set(id, stored);
       }
@@ -200,6 +208,7 @@ export default class Controller {
   }
 
   setPluginEnabled(id: PluginID, isEnabled: boolean) {
+    if (isEnabled && this.isPluginForceDisabled(id)) return;
     this.pluginsEnabled.set(id, isEnabled);
     if (id === "GLesmos") {
       // Need to refresh glesmos expressions
@@ -266,12 +275,16 @@ export default class Controller {
     }
   }
 
+  isPluginForceDisabled(id: PluginID) {
+    return this.forceDisabled.has(id);
+  }
+
   isPluginEnabled(id: PluginID) {
     return this.pluginsEnabled.get(id) ?? false;
   }
 
   isPluginToggleable(id: PluginID) {
-    return !plugins.get(id)?.alwaysEnabled;
+    return !plugins.get(id)?.alwaysEnabled && !this.isPluginForceDisabled(id);
   }
 
   togglePluginExpanded(i: PluginID) {

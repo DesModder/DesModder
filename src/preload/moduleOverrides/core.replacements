@@ -1,6 +1,6 @@
 # Core Replacements
 
-*plugin* `workaround-core`
+*plugin* `pin-expressions` `hide-errors` `text-mode` `GLesmos`
 
 Replacements that apply to more than one plugin.
 

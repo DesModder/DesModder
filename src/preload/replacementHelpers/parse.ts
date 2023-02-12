@@ -10,7 +10,7 @@ export interface Block {
   heading: string;
   commands: Command[];
   modules: string[];
-  plugin: string;
+  plugins: string[];
   replaceCommands: Command[];
   workerOnly: boolean;
 }
@@ -29,13 +29,9 @@ export default function parseFile(
   const tokens = tokenizeReplacement(fileString);
   if (tokens[0].tag !== "heading" || tokens[0].depth !== 1)
     throw new ReplacementError("First line must be a # Heading");
-  if (
-    tokens[1].tag !== "emph" ||
-    tokens[1].command !== "plugin" ||
-    tokens[1].args.length !== 1
-  )
+  if (tokens[1].tag !== "emph" || tokens[1].command !== "plugin")
     throw new ReplacementError("Second line must be *plugin* `plugin-name`");
-  const pluginName = tokens[1].args[0];
+  const plugins = tokens[1].args;
   const rules: Block[] = [];
   for (let i = 2; i < tokens.length; i++) {
     const token = tokens[i];
@@ -51,7 +47,7 @@ export default function parseFile(
       const blockEndIndex =
         nextHeadingIndex < 0 ? tokens.length : nextHeadingIndex;
       const block = tokens.slice(i + 1, blockEndIndex);
-      rules.push(parseBlock(prevToken, token, block, pluginName, filename));
+      rules.push(parseBlock(prevToken, token, block, plugins, filename));
       i = blockEndIndex;
     } else if (token.tag === "emph") {
       throw new ReplacementError(
@@ -74,7 +70,7 @@ function parseBlock(
   heading: ReplacementToken & { tag: "heading" },
   start: ReplacementToken & { tag: "emph" },
   tokens: ReplacementToken[],
-  plugin: string,
+  plugins: string[],
   filename: string
 ): Block {
   if (start.args.length === 0)
@@ -104,7 +100,7 @@ function parseBlock(
     filename,
     commands: commands.filter((x) => x.command !== "replace"),
     replaceCommands: commands.filter((x) => x.command === "replace"),
-    plugin,
+    plugins,
     modules: start.args,
     workerOnly,
   };

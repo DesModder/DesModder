@@ -1,3 +1,4 @@
+import { addPanic } from "../../panic/panic";
 import { ReplacementError } from "./errors";
 import { Command, Block } from "./parse";
 import { PatternToken, patternTokens } from "./tokenize";
@@ -148,41 +149,58 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
   );
   const table = new SymbolTable(str);
   for (const r of repls) {
-    const prefix = idTable.get(r)!;
-    table.merge(getSymbols(r.commands, str).prefix(prefix));
+    try {
+      const prefix = idTable.get(r)!;
+      table.merge(getSymbols(r.commands, str).prefix(prefix));
+    } catch (e) {
+      r.plugins.forEach(addPanic);
+    }
   }
   const finalRepls = repls.flatMap((r) => {
-    const prefix = idTable.get(r)!;
-    return r.replaceCommands.map((command) => {
-      if (command.command !== "replace")
-        throw new ReplacementError(
-          "Programming error: replaceCommand is not *replace*"
-        );
-      if (command.args.length !== 1)
-        throw new ReplacementError(
-          `*replace* command must have exactly 1 argument. You passed ${command.args.length}`
-        );
-      if (command.patternArg === undefined)
-        throw new ReplacementError(
-          `*replace* command missing a pattern argument.`
-        );
-      const res: Replacement = {
-        heading: r.heading,
-        from: table.getRequired(prefix + command.args[0]),
-        to: command.patternArg.flatMap((token) => {
-          if (
-            token.type === "PatternBalanced" ||
-            token.type === "PatternIdentifier"
-          ) {
-            return table.getSlice(prefix + token.value);
-          } else return token;
-        }),
-      };
-      return res;
-    });
+    try {
+      return blockReplacements(r, idTable, table);
+    } catch (e) {
+      r.plugins.forEach(addPanic);
+      return [];
+    }
   });
 
   return Array.from(withReplacements(table.str, finalRepls));
+}
+
+function blockReplacements(
+  r: Block,
+  idTable: Map<Block, string>,
+  table: SymbolTable
+): Replacement[] {
+  const prefix = idTable.get(r)!;
+  return r.replaceCommands.map((command) => {
+    if (command.command !== "replace")
+      throw new ReplacementError(
+        "Programming error: replaceCommand is not *replace*"
+      );
+    if (command.args.length !== 1)
+      throw new ReplacementError(
+        `*replace* command must have exactly 1 argument. You passed ${command.args.length}`
+      );
+    if (command.patternArg === undefined)
+      throw new ReplacementError(
+        `*replace* command missing a pattern argument.`
+      );
+    const res: Replacement = {
+      heading: r.heading,
+      from: table.getRequired(prefix + command.args[0]),
+      to: command.patternArg.flatMap((token) => {
+        if (
+          token.type === "PatternBalanced" ||
+          token.type === "PatternIdentifier"
+        ) {
+          return table.getSlice(prefix + token.value);
+        } else return token;
+      }),
+    };
+    return res;
+  });
 }
 
 function* withReplacements(tokens: readonly Token[], repls: Replacement[]) {

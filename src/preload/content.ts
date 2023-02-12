@@ -9,6 +9,7 @@ import { listenToMessageUp, postMessageDown } from "utils/messages";
 
 const StorageKeys = {
   pluginsEnabled: "_plugins-enabled",
+  forceDisabled: "_force-disabled",
   pluginSettings: "_plugin-settings",
 } as const;
 
@@ -44,6 +45,22 @@ function getInitialData() {
       postMessageDown({
         type: "apply-plugins-enabled",
         value: recordToMap(pluginsEnabled),
+      });
+    }
+  );
+}
+
+function getPluginsForceDisabled() {
+  chrome.storage.sync.get(
+    {
+      [StorageKeys.forceDisabled]: {}, // default: no plugins force-disabled
+    },
+    (items) => {
+      const forceDisabled: PluginID[] =
+        items?.[StorageKeys.forceDisabled] ?? [];
+      postMessageDown({
+        type: "apply-plugins-force-disabled",
+        value: new Set(forceDisabled),
       });
     }
   );
@@ -99,6 +116,9 @@ listenToMessageUp((message) => {
         injectScript(chrome.runtime.getURL("wolfram2desmos.js"));
       }
       break;
+    case "get-plugins-force-disabled":
+      getPluginsForceDisabled();
+      break;
     case "get-initial-data": {
       // prep to send data back down
       getInitialData();
@@ -112,6 +132,11 @@ listenToMessageUp((message) => {
     case "set-plugins-enabled":
       void chrome.storage.sync.set({
         [StorageKeys.pluginsEnabled]: mapToRecord(message.value),
+      });
+      break;
+    case "set-plugins-force-disabled":
+      void chrome.storage.sync.set({
+        [StorageKeys.forceDisabled]: Array.from(message.value),
       });
       break;
     case "set-plugin-settings":

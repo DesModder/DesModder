@@ -1,6 +1,6 @@
 # Replacements for Find-Replace
 
-*plugin* `find-replace`
+*plugin* `find-and-replace`
 
 ## Allow find-replace to appear, even if the expression list is not focused
 

@@ -1,5 +1,5 @@
-import moduleReplacements from "../moduleReplacements";
 import { applyReplacements } from "./applyReplacement";
+import { Block } from "./parse";
 import { get, set } from "idb-keyval";
 import jsTokens from "js-tokens";
 
@@ -10,11 +10,12 @@ import jsTokens from "js-tokens";
  */
 export async function fullReplacementCached(
   calcDesktop: string,
-  workerAppend: string
+  workerAppend: string,
+  enabledReplacements: Block[]
 ): Promise<string> {
   const k = "replacement_cached";
   const cached = await get(k);
-  const hashRepls = cyrb53(JSON.stringify(moduleReplacements));
+  const hashRepls = cyrb53(JSON.stringify(enabledReplacements));
   const hashFile = cyrb53(calcDesktop);
   const hashAppend = cyrb53(workerAppend);
   if (
@@ -27,7 +28,11 @@ export async function fullReplacementCached(
     return cached.result;
   }
   // cache miss :(
-  const result = fullReplacement(calcDesktop, workerAppend);
+  const result = fullReplacement(
+    calcDesktop,
+    workerAppend,
+    enabledReplacements
+  );
   void set(k, {
     hashRepls,
     hashFile,
@@ -37,15 +42,23 @@ export async function fullReplacementCached(
   return result;
 }
 
-function fullReplacement(calcDesktop: string, workerAppend: string) {
+function fullReplacement(
+  calcDesktop: string,
+  workerAppend: string,
+  enabledReplacements: Block[]
+) {
   const newCode = applyReplacements(
-    moduleReplacements.filter((r) => !r.workerOnly),
+    enabledReplacements.filter((r) => !r.workerOnly),
     calcDesktop
   );
-  return applyWorkerReplacements(newCode, workerAppend);
+  return applyWorkerReplacements(newCode, workerAppend, enabledReplacements);
 }
 
-function applyWorkerReplacements(src: string, workerAppend: string): string {
+function applyWorkerReplacements(
+  src: string,
+  workerAppend: string,
+  enabledReplacements: Block[]
+): string {
   // Apply replacements to the worker. This could also be done by tweaking the
   // Worker constructor, but currently all of these replacements could be
   // performed outside the main page
@@ -63,7 +76,7 @@ function applyWorkerReplacements(src: string, workerAppend: string): string {
     throw new Error("More than one worker code found");
   const wcToken = workerCodeTokens[0];
   const newWorker = applyReplacements(
-    moduleReplacements.filter((r) => r.workerOnly),
+    enabledReplacements.filter((r) => r.workerOnly),
     // JSON.parse doesn't work because this is a single-quoted string.
     // js-tokens tokenized this as a string anyway, so it should be
     // safely eval'able to a string.

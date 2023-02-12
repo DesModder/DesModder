@@ -80,6 +80,7 @@ const opts = {
     ".ts": "ts",
     ".ftl": "text",
     ".woff": "dataurl",
+    ".html": "text",
   },
   logLevel: "info",
 };

@@ -1,5 +1,8 @@
-// many classes to handle specificity for cursor
-.dcg-toggle-view.dcg-toggled.dsm-disabled-toggle {
-  opacity: 0.3;
-  cursor: not-allowed;
+.dcg-toggle-view.dsm-disabled-toggle {
+  cursor: not-allowed !important;
+  opacity: 0.3 !important;
+  &:not(.dcg-toggled) .dcg-toggle-switch {
+    background: #666 !important;
+    box-shadow: none !important;
+  }
 }
