@@ -5,9 +5,8 @@ import Controller from "main/Controller";
 import View from "main/View";
 
 const controller = new Controller();
-export { controller as desModderController };
-
 const view = new View();
+export { controller as desModderController };
 
 window.DesModder = {
   view,

@@ -7,7 +7,7 @@ interface Intl {
 }
 let i18nCore: Intl | null = null;
 function currentLanguage() {
-  // defend against currentLangauge being used before Desmos loaded, e.g.
+  // defend against currentLanguage being used before Desmos loaded, e.g.
   // for showing panic messages
   if (i18nCore === null) {
     try {

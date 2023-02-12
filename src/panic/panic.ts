@@ -8,7 +8,6 @@ function insertPanicElement() {
   document
     .getElementById("dsm-panic-apply-reload-btn")!
     .addEventListener("click", () => {
-      // TODO: apply changes;
       const inputs: HTMLInputElement[] = Array.from(
         document.querySelectorAll("#dsm-panic-popover ul input")
       );
@@ -40,8 +39,7 @@ function getPanicPopover() {
 }
 
 function ensurePanicPopover() {
-  const popover = getPanicPopover();
-  if (popover === null) insertPanicElement();
+  if (getPanicPopover() === null) insertPanicElement();
   return getPanicPopover()!;
 }
 
