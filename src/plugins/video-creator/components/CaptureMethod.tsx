@@ -247,7 +247,9 @@ export default class SelectCapture extends Component<{
                     this.controller.isExporting ||
                     !this.controller.areCaptureSettingsValid()
                   }
-                  onTap={() => this.controller.capture()}
+                  onTap={() => {
+                    void this.controller.capture();
+                  }}
                 >
                   {format("video-creator-capture")}
                 </Button>

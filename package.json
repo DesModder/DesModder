@@ -1,7 +1,7 @@
 {
   "name": "desmodder",
   "description": "Supercharge your Desmos graph creation and sharing experience with many convenient features",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "author": {
     "name": "Jared Hughes"
   },
@@ -11,12 +11,12 @@
   ],
   "scripts": {
     "prettier": "prettier --write .",
-    "eslint-fix": "eslint --fix  \"src/**/*.ts\"",
+    "eslint-fix": "eslint --fix src",
     "build": "node ./esbuild.mjs --browser=chrome",
     "build-ff": "node ./esbuild.mjs --browser=firefox",
     "dev": "node ./esbuild.mjs --watch --browser=chrome",
     "dev-ff": "node ./esbuild.mjs --watch --browser=firefox",
-    "lint": "prettier --check . && tsc --noEmit && eslint \"src/**/*.ts\"",
+    "lint": "prettier --check . && tsc --noEmit && eslint src",
     "test": "npm run test:jest",
     "test:jest": "jest --config jest.config.js"
   },
@@ -61,6 +61,7 @@
     "@lezer/common": "^1.0.1",
     "@lezer/lr": "^1.2.3",
     "@types/desmos": "^1.6.0",
+    "idb-keyval": "^6.2.0",
     "js-tokens": "^8.0.0",
     "prettier": "^2.7.1"
   }

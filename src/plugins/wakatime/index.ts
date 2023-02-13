@@ -1,4 +1,5 @@
 import { Calc } from "../../globals/window";
+import { desModderController } from "../../script";
 import { getCurrentGraphTitle } from "../../utils/depUtils";
 import { configList } from "./config";
 import { Plugin } from "plugins";
@@ -45,6 +46,15 @@ function onDisable() {
 
 listenToMessageDown((msg) => {
   if (msg.type === "heartbeat-error") {
+    if (msg.isAuthError) {
+      desModderController.disablePlugin("wakatime");
+      Calc.controller._showToast({
+        message:
+          "WakaTime heartbeat error: check your secret key. Plugin has been deactivated.",
+        toastStyle: "error",
+        hideAfter: 0,
+      });
+    }
     console.error("Wakatime heartbeat error:", msg.message);
   }
   return false;

@@ -1,6 +1,4 @@
-type FuncAny = () => any;
-
-async function _pollForValue<T>(func: () => T) {
+export async function pollForValue<T>(func: () => T) {
   return await new Promise<T>((resolve) => {
     const interval = setInterval(() => {
       const val = func();
@@ -10,10 +8,6 @@ async function _pollForValue<T>(func: () => T) {
       }
     }, 50);
   });
-}
-
-export async function pollForValue(func: FuncAny) {
-  return await _pollForValue(func);
 }
 
 interface ClassDict {

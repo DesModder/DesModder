@@ -90,8 +90,8 @@ export default class PillboxContainer extends Component<{
       right += 43 * index;
     }
     return {
-      top: top + "px",
-      right: right + "px",
+      top: top.toString() + "px",
+      right: right.toString() + "px",
     };
   }
 

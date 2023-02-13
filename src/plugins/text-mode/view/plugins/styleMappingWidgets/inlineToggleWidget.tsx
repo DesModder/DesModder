@@ -9,7 +9,7 @@ class InlineToggleWidget extends WidgetType {
   }
 
   eq(other: InlineToggleWidget) {
-    return other.value == this.value && other.path === this.path;
+    return other.value === this.value && other.path === this.path;
   }
 
   toDOM(view: EditorView) {

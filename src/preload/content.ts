@@ -9,16 +9,9 @@ import { listenToMessageUp, postMessageDown } from "utils/messages";
 
 const StorageKeys = {
   pluginsEnabled: "_plugins-enabled",
+  forceDisabled: "_force-disabled",
   pluginSettings: "_plugin-settings",
 } as const;
-
-function recordToMap<V>(x: Record<string, V>): Map<string, V> {
-  return new Map(Object.entries(x));
-}
-
-function mapToRecord<V>(x: Map<string, V>): Record<string, V> {
-  return Object.fromEntries(x.entries());
-}
 
 function getInitialData() {
   chrome.storage.sync.get(
@@ -37,13 +30,29 @@ function getInitialData() {
       }
       postMessageDown({
         type: "apply-plugin-settings",
-        value: recordToMap(settingsDown),
+        value: settingsDown,
       });
       const pluginsEnabled: Record<PluginID, boolean> =
         items?.[StorageKeys.pluginsEnabled] ?? {};
       postMessageDown({
         type: "apply-plugins-enabled",
-        value: recordToMap(pluginsEnabled),
+        value: pluginsEnabled,
+      });
+    }
+  );
+}
+
+function getPluginsForceDisabled() {
+  chrome.storage.sync.get(
+    {
+      [StorageKeys.forceDisabled]: [], // default: no plugins force-disabled
+    },
+    (items) => {
+      const forceDisabled: PluginID[] =
+        items?.[StorageKeys.forceDisabled] ?? [];
+      postMessageDown({
+        type: "apply-plugins-force-disabled",
+        value: forceDisabled,
       });
     }
   );
@@ -81,12 +90,7 @@ function _sendHeartbeat(options: WindowHeartbeatOptions) {
         );
       } else {
         // Firefox can only send wakatime requests from the content script
-        sendHeartbeat(fullOptions).catch((e) =>
-          postMessageDown({
-            type: "heartbeat-error",
-            message: e,
-          })
-        );
+        void sendHeartbeat(fullOptions, (e) => postMessageDown(e));
       }
     }
   );
@@ -98,6 +102,9 @@ listenToMessageUp((message) => {
       if (message.scriptName === "wolfram2desmos") {
         injectScript(chrome.runtime.getURL("wolfram2desmos.js"));
       }
+      break;
+    case "get-plugins-force-disabled":
+      getPluginsForceDisabled();
       break;
     case "get-initial-data": {
       // prep to send data back down
@@ -111,12 +118,17 @@ listenToMessageUp((message) => {
     }
     case "set-plugins-enabled":
       void chrome.storage.sync.set({
-        [StorageKeys.pluginsEnabled]: mapToRecord(message.value),
+        [StorageKeys.pluginsEnabled]: message.value,
+      });
+      break;
+    case "set-plugins-force-disabled":
+      void chrome.storage.sync.set({
+        [StorageKeys.forceDisabled]: Array.from(message.value),
       });
       break;
     case "set-plugin-settings":
       void chrome.storage.sync.set({
-        [StorageKeys.pluginSettings]: mapToRecord(message.value),
+        [StorageKeys.pluginSettings]: message.value,
       });
       break;
     case "get-script-url":

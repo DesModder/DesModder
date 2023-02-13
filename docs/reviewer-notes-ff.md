@@ -10,4 +10,6 @@ npm run build-ff
 
 Then the `dist` directory will contain the distributed code.
 
-The Function constructor is used for eval exclusively within the webpage and does not have access to any web resources or the background extension context.
+Eval is used exclusively within the webpage (for patching code) and does not have access to any web resources or the background extension context.
+
+"Unsafe call to `document.createRange().createContextualFragment` for argument 0" is erroneous because the first argument is a constant hardcoded string. ESBuild just happens to not constant-collapse it.

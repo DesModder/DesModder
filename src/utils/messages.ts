@@ -15,11 +15,18 @@ type MessageWindowToContent =
     }
   | {
       type: "set-plugins-enabled";
-      value: Map<PluginID, boolean>;
+      value: Record<PluginID, boolean>;
+    }
+  | {
+      type: "set-plugins-force-disabled";
+      value: PluginID[];
     }
   | {
       type: "set-plugin-settings";
-      value: Map<PluginID, GenericSettings>;
+      value: Record<PluginID, GenericSettings>;
+    }
+  | {
+      type: "get-plugins-force-disabled";
     }
   | {
       type: "get-initial-data";
@@ -41,11 +48,15 @@ type MessageWindowToContent =
 type MessageContentToWindow =
   | {
       type: "apply-plugins-enabled";
-      value: Map<PluginID, boolean>;
+      value: Record<PluginID, boolean>;
+    }
+  | {
+      type: "apply-plugins-force-disabled";
+      value: PluginID[];
     }
   | {
       type: "apply-plugin-settings";
-      value: Map<PluginID, GenericSettings>;
+      value: Record<PluginID, GenericSettings>;
     }
   | {
       type: "set-script-url";
@@ -55,10 +66,13 @@ type MessageContentToWindow =
       type: "set-worker-append-url";
       value: string;
     }
-  | {
-      type: "heartbeat-error";
-      message: any;
-    };
+  | HeartbeatError;
+
+export interface HeartbeatError {
+  type: "heartbeat-error";
+  isAuthError: boolean;
+  message: string;
+}
 
 function postMessage<T extends { type: string }>(message: T) {
   window.postMessage(message, "*");
@@ -99,4 +113,28 @@ export function listenToMessageDown(
   callback: (message: MessageContentToWindow) => ShouldCancel
 ) {
   listenToMessage(callback);
+}
+
+/** Security issue on Firefox with posting a Map, so use this to convert a
+ * Map to a Record (plain JS object). */
+export function mapToRecord<V>(x: Map<string, V>): Record<string, V> {
+  return Object.fromEntries(x.entries());
+}
+
+/** Security issue on Firefox with posting a Map, so use this to convert a
+ * Record (plain JS object) back to a Map. */
+export function recordToMap<V>(x: Record<string, V>): Map<string, V> {
+  return new Map(Object.entries(x));
+}
+
+/** Security issue on Firefox with posting a Set, so use this to convert a
+ * Set to an Array. */
+export function setToArray<V>(x: Set<V>): Array<V> {
+  return Array.from(x);
+}
+
+/** Security issue on Firefox with posting a Map, so use this to convert an
+ * Array to a Set. */
+export function arrayToSet<V>(x: Array<V>): Set<V> {
+  return new Set(x);
 }

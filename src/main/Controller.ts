@@ -10,10 +10,15 @@ import {
 } from "./metadata/manage";
 import { MenuFunc } from "components/Menu";
 import { ItemModel } from "globals/models";
-import { Calc, desmosRequire } from "globals/window";
+import window, { Calc, desmosRequire } from "globals/window";
 import { format } from "i18n/i18n-core";
 import { plugins, pluginList, PluginID, GenericSettings } from "plugins";
-import { listenToMessageDown, postMessageUp } from "utils/messages";
+import {
+  listenToMessageDown,
+  postMessageUp,
+  mapToRecord,
+  recordToMap,
+} from "utils/messages";
 import { OptionalProperties } from "utils/utils";
 
 const AbstractItem = desmosRequire("graphing-calc/models/abstract-item");
@@ -30,6 +35,7 @@ interface PillboxButton {
 
 export default class Controller {
   pluginsEnabled: Map<PluginID, boolean>;
+  forceDisabled: Set<string>;
   view: View | null = null;
   expandedPlugin: string | null = null;
   pluginSettings: Map<PluginID, GenericSettings>;
@@ -64,8 +70,14 @@ export default class Controller {
         (plugin) => [plugin.id, this.getDefaultConfig(plugin.id)] as const
       )
     );
+    this.forceDisabled = window.DesModderForceDisabled!;
+    delete window.DesModderForceDisabled;
     this.pluginsEnabled = new Map(
-      pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
+      pluginList.map((plugin) => {
+        const enabled =
+          plugin.enabledByDefault && !this.forceDisabled.has(plugin.id);
+        return [plugin.id, enabled] as const;
+      })
     );
     Calc.controller.dispatcher.register((e) => {
       if (e.type === "toggle-graph-settings") {
@@ -89,6 +101,7 @@ export default class Controller {
   applyStoredEnabled(storedEnabled: Map<PluginID, boolean>) {
     for (const { id } of pluginList) {
       const stored = storedEnabled.get(id);
+      if (stored && this.isPluginForceDisabled(id)) continue;
       if (stored !== undefined && id !== "GLesmos") {
         this.pluginsEnabled.set(id, stored);
       }
@@ -115,9 +128,9 @@ export default class Controller {
     let numFulfilled = 0;
     listenToMessageDown((message) => {
       if (message.type === "apply-plugin-settings") {
-        this.applyStoredSettings(message.value);
+        this.applyStoredSettings(recordToMap(message.value));
       } else if (message.type === "apply-plugins-enabled") {
-        this.applyStoredEnabled(message.value);
+        this.applyStoredEnabled(recordToMap(message.value));
       } else {
         return false;
       }
@@ -200,6 +213,7 @@ export default class Controller {
   }
 
   setPluginEnabled(id: PluginID, isEnabled: boolean) {
+    if (isEnabled && this.isPluginForceDisabled(id)) return;
     this.pluginsEnabled.set(id, isEnabled);
     if (id === "GLesmos") {
       // Need to refresh glesmos expressions
@@ -207,7 +221,7 @@ export default class Controller {
     }
     postMessageUp({
       type: "set-plugins-enabled",
-      value: this.pluginsEnabled,
+      value: mapToRecord(this.pluginsEnabled),
     });
   }
 
@@ -266,12 +280,16 @@ export default class Controller {
     }
   }
 
+  isPluginForceDisabled(id: PluginID) {
+    return this.forceDisabled.has(id);
+  }
+
   isPluginEnabled(id: PluginID) {
     return this.pluginsEnabled.get(id) ?? false;
   }
 
   isPluginToggleable(id: PluginID) {
-    return !plugins.get(id)?.alwaysEnabled;
+    return !plugins.get(id)?.alwaysEnabled && !this.isPluginForceDisabled(id);
   }
 
   togglePluginExpanded(i: PluginID) {
@@ -303,7 +321,7 @@ export default class Controller {
     if (!temporary)
       postMessageUp({
         type: "set-plugin-settings",
-        value: this.pluginSettings,
+        value: mapToRecord(this.pluginSettings),
       });
     if (this.pluginsEnabled.get(pluginID)) {
       const onConfigChange = plugins.get(pluginID)?.onConfigChange;

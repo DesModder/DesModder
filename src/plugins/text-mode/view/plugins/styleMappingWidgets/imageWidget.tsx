@@ -9,7 +9,7 @@ class ImageWidget extends WidgetType {
   }
 
   eq(other: ImageWidget) {
-    return other.value == this.value;
+    return other.value === this.value;
   }
 
   toDOM(view: EditorView) {

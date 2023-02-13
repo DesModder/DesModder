@@ -1,14 +1,14 @@
+import { addForceDisabled } from "../panic/panic";
 import * as almond from "./almond";
 import moduleReplacements from "./moduleReplacements";
-import { applyReplacements } from "./replacementHelpers/applyReplacement";
+import { fullReplacementCached } from "./replacementHelpers/cacheReplacement";
 import window from "globals/window";
-import jsTokens from "js-tokens";
 import injectScript from "utils/injectScript";
-import { postMessageUp, listenToMessageDown } from "utils/messages";
+import { postMessageUp, listenToMessageDown, arrayToSet } from "utils/messages";
 import { pollForValue } from "utils/utils";
 
 /* This script is loaded at document_start, before the page's scripts, to give it 
-time to set ALMOND_OVERRIDES and replace module definitions */
+time to set ALMOND_OVERRIDES to expose `require` */
 
 // workerAppend will get filled in from a message
 let workerAppend: string = "console.error('worker append not filled in')";
@@ -21,7 +21,7 @@ if (window.ALMOND_OVERRIDES !== undefined) {
   );
 }
 
-(window as any).require = almond.require;
+window.require = almond.require;
 
 window.ALMOND_OVERRIDES = {
   define: almond.define,
@@ -60,55 +60,41 @@ function getCalcDesktopURL() {
   )?.src;
 }
 
-void pollForValue(getCalcDesktopURL).then(async (srcURL: string) => {
+async function load(pluginsForceDisabled: Set<string>) {
+  const srcURL = await pollForValue(getCalcDesktopURL);
   /* we blocked calculator_desktop.js earlier to ensure that the preload/override script runs first.
   Now we load it, but with '?' appended to prevent the web request rules from blocking it */
   const calcDesktop = await (await fetch(srcURL + "?")).text();
-  // Apply replacements
-  const newCode = applyReplacements(
-    moduleReplacements.filter((r) => !r.workerOnly),
-    calcDesktop
+  // Filter out force-disabled replacements
+  const enabledReplacements = moduleReplacements.filter(
+    (r) => !r.plugins.every((p) => pluginsForceDisabled.has(p))
   );
-  const newerCode = applyWorkerReplacements(newCode);
+  // Apply replacements
+  const newCode = await fullReplacementCached(
+    calcDesktop,
+    workerAppend,
+    enabledReplacements
+  );
   // tryRunDesModder polls until the following eval'd code is done.
   tryRunDesModder();
   // eslint-disable-next-line no-eval
-  (0, eval)(newerCode);
+  (0, eval)(newCode);
+}
+
+listenToMessageDown((message) => {
+  if (message.type === "apply-plugins-force-disabled") {
+    message.value.forEach((disabledPlugin) => addForceDisabled(disabledPlugin));
+    window.DesModderForceDisabled = arrayToSet(message.value);
+    void load(arrayToSet(message.value));
+    // cancel listener
+    return true;
+  }
+  return false;
 });
 
-function applyWorkerReplacements(src: string): string {
-  // Apply replacements to the worker. This could also be done by tweaking the
-  // Worker constructor, but currently all of these replacements could be
-  // performed outside the main page
-  const tokens = Array.from(jsTokens(src));
-  const workerCodeTokens = tokens.filter(
-    (x) =>
-      x.type === "StringLiteral" &&
-      x.value.length > 200000 &&
-      // JS is sure to have &&. Protects against translations getting longer
-      // than the length cutoff, which is intentionally low in case of huge
-      // improvements in minification.
-      x.value.includes("&&")
-  );
-  if (workerCodeTokens.length > 1)
-    throw new Error("More than one worker code found");
-  const wcToken = workerCodeTokens[0];
-  wcToken.value = JSON.stringify(
-    // Place at the beginning of the code for the source mapping to line up
-    // Call at the end of the code to run after modules defined
-    `function loadDesModderWorker(){${workerAppend}\n}` +
-      applyReplacements(
-        moduleReplacements.filter((r) => r.workerOnly),
-        // JSON.parse doesn't work because this is a single-quoted string.
-        // js-tokens tokenized this as a string anyway, so it should be
-        // safely eval'able to a string.
-        // eslint-disable-next-line no-eval
-        (0, eval)(wcToken.value) as string
-      ) +
-      "\nloadDesModderWorker();"
-  );
-  return tokens.map((x) => x.value).join("");
-}
+postMessageUp({
+  type: "get-plugins-force-disabled",
+});
 
 listenToMessageDown((message) => {
   if (message.type === "set-worker-append-url") {

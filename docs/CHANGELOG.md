@@ -1,5 +1,13 @@
 # DesModder Changelog
 
+## 0.9.3
+
+Bug fixes and improvements:
+
+- Various internal stability improvements
+- Faster loading time
+- Show a message if WakaTime secret key is wrong
+
 ## 0.9.2
 
 Fixes another race condition preventing loading under certain conditions.

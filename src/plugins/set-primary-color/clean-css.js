@@ -60,7 +60,7 @@ const colorMapping = {
 // Ensure close braces are always followed by newlines
 css = css.replace(/}/g, "}\n");
 // Remove block comments
-css = css.replace(/\/\*([^*]|\*[^\/])*\*\//gm, "");
+css = css.replace(/\/\*([^*]|\*[^/])*\*\//gm, "");
 // Remove @media blocks, which never have color changes
 css = css.replace(
   /@(media|\S*keyframes)[^{}]*{[^{}]*({[^{}]*}[^{}]*)*[^{}]*}/gm,
@@ -69,9 +69,9 @@ css = css.replace(
 // Remove lines with "var" already
 // Restrict to lines starting with an even number of spaces
 // to avoid mangling stuff
-css = css.replace(/^(  )+.*var.*$/gm, "");
+css = css.replace(/^( {2})+.*var.*$/gm, "");
 // Replace based on the replacements in the colorMapping
-for (let [from, to] of Object.entries(colorMapping)) {
+for (const [from, to] of Object.entries(colorMapping)) {
   css = css.replaceAll(from, to);
 }
 // Remove lines without "var"

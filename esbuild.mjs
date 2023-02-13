@@ -48,7 +48,8 @@ const opts = {
     "src/preload/script.ts",
     "src/worker/append.ts",
   ],
-  sourcemap: "inline",
+  // don't include source map on release builds
+  sourcemap: watch ? "inline" : false,
   bundle: true,
   outdir: "dist",
   plugins: [
@@ -80,6 +81,7 @@ const opts = {
     ".ts": "ts",
     ".ftl": "text",
     ".woff": "dataurl",
+    ".html": "text",
   },
   logLevel: "info",
 };

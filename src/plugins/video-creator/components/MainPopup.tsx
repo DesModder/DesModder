@@ -63,7 +63,12 @@ export default class MainPopup extends Component<{
             />
           </div>
           <div class="dsm-vc-cancel-export-button">
-            <Button color="red" onTap={() => cancelExport(this.controller)}>
+            <Button
+              color="red"
+              onTap={() => {
+                void cancelExport(this.controller);
+              }}
+            >
               {format("video-creator-cancel-export")}
             </Button>
           </div>
@@ -155,7 +160,9 @@ export default class MainPopup extends Component<{
                 <Button
                   color="primary"
                   class="dsm-vc-export-frames-button"
-                  onTap={() => this.controller.exportFrames()}
+                  onTap={() => {
+                    void this.controller.exportFrames();
+                  }}
                   disabled={() =>
                     this.controller.frames.length === 0 ||
                     this.controller.isCapturing ||
