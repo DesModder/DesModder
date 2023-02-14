@@ -2,7 +2,10 @@
 
 *plugin* `GLesmos`
 
-## Add a menu option for switching an expression to glesmos rendering mode
+## Add a fill menu option for switching an expression to glesmos rendering mode
+
+Warning: this is duplicated below ("Add a lines menu option...") rather than
+adding an extra section to the menu view.
 
 *Module* `expressions/expression-menus/fill`
 
@@ -41,7 +44,6 @@ var $this = this;
 ```
 
 *Find* inside `template`
-
 ```js
 createElement($ToggleView.ToggleView
 ```
@@ -55,6 +57,62 @@ $DCGView.createElement(
   $DCGView.Components.If,
   {
     predicate: () => DesModder.controller.canBeGLesmos($this.id),
+  },
+  () => $DCGView.createElement(
+    "div",
+    { class: $DCGView.const("dcg-options-menu-section-title dsm-gl-fill-title") },
+    () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
+    $DCGView.createElement($ToggleView.ToggleView, {
+      ariaLabel: () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
+      toggled: () => window.DesModder?.controller?.isGlesmosMode?.($this.id),
+      onChange: (a) => window.DesModder?.controller?.toggleGlesmos?.($this.id),
+    })
+  )
+)
+```
+
+## Add a lines menu option for switching an expression to glesmos rendering mode
+
+Warning: this is duplicated above ("Add a fill menu option...").
+
+*Module* `expressions/expression-menus/lines`
+
+*Find* => `key`
+```js
+{ class: $DCGView.const('dcg-iconed-mathquill-row dcg-line-opacity-row') }
+```
+
+*Find_surrounding_template* `key` => `template`
+
+*Find* inside `template`
+```js
+createElement(
+  'div',
+  { class: $.const('dcg-options-menu-content') },
+  __rest__
+)
+```
+
+*Find* inside `template`
+```js
+var $this = this;
+```
+
+*Find* inside `template`
+```js
+createElement($ToggleView.ToggleView
+```
+
+Just add one more child.
+
+*Replace* `__rest__` with
+```js
+__rest__,
+$DCGView.createElement(
+  $DCGView.Components.If,
+  {
+    predicate: () => DesModder.controller.canBeGLesmos($this.id) &&
+      !Calc.controller.getItemModel($this.id)?.formula.is_inequality,
   },
   () => $DCGView.createElement(
     "div",
@@ -112,15 +170,6 @@ getSections = function () {__body__}
 
 ```js
 $Expression.isHistogram
-```
-
-*Replace* `__body__` with
-
-```js
-if ($Expression.isInequality(this.model) && DesModder.controller.isGlesmosMode(this.model.id)) {
-  return ['fill'];
-}
-__body__
 ```
 
 ## Check/update DesModder metadata before allowing statements to update.
@@ -217,8 +266,17 @@ else {
 *Replace* `else` with
 ```js
 else if ($this.userData.glesmos) {
+  const lines = $this.userData.lines !== false;
+  let derivativeX, derivativeY;
+  if (lines) {
+    try {
+      derivativeX = $ir.takeDerivative('x');
+      derivativeY = $ir.takeDerivative('y');
+    } catch(e) {}
+  }
   const newCompiled = self.dsm_compileGLesmos(
-    $ir, $styles.color, $styles.fillOpacity, $styles.listIndex
+    $ir, $styles.color, $styles.fillOpacity ?? 0, $styles.lineOpacity, $this.userData.lines !== false ? $styles.lineWidth : 0.0,
+    derivativeX, derivativeY
   );
   const prev =  $graphs[$graphs.length - 1];
   if (prev?.graphMode === "GLesmos") {
@@ -229,8 +287,7 @@ else if ($this.userData.glesmos) {
         prevGL.deps.push(dep);
       }
     }
-    prevGL.defs.push(...newCompiled.defs);
-    prevGL.bodies.push(...newCompiled.bodies);
+    prevGL.chunks.push(...newCompiled.chunks);
   } else {
     $graphs.push({
       graphMode: "GLesmos",

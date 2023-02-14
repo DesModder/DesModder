@@ -552,8 +552,7 @@ export default class Controller {
       (model = Calc.controller.getItemModel(id)) &&
       model.type === "expression" &&
       model.formula &&
-      model.formula.expression_type === "IMPLICIT" &&
-      model.formula.is_inequality
+      model.formula.expression_type === "IMPLICIT"
     );
   }
 
