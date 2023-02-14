@@ -428,7 +428,6 @@ export function glesmosGetSDFShader(
 
     //============== END Shadertoy Buffer A ==============//
   `;
-  // console.log(source)
   const shader = getShaderProgram(gl, id, VERTEX_SHADER, source);
 
   return shader;

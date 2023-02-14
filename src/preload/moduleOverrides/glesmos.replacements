@@ -274,7 +274,6 @@ else if ($this.userData.glesmos) {
       derivativeY = $ir.takeDerivative('y');
     } catch(e) {}
   }
-  // newCompiled: GLesmosShaderPackage
   const newCompiled = self.dsm_compileGLesmos(
     $ir, $styles.color, $styles.fillOpacity ?? 0, $styles.lineOpacity, $this.userData.lines !== false ? $styles.lineWidth : 0.0,
     derivativeX, derivativeY
@@ -282,7 +281,6 @@ else if ($this.userData.glesmos) {
   const prev =  $graphs[$graphs.length - 1];
   if (prev?.graphMode === "GLesmos") {
     // merge GLesmos graphs when possible
-    // prevGL: GLesmosShaderPackage
     const prevGL = prev.compiledGL;
     for (let dep of newCompiled.deps) {
       if (!prevGL.deps.includes(dep)) {
