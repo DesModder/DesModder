@@ -274,20 +274,16 @@ function getBeginLoopSource(
   }
   const outputIndex = ci.endIndex + 1;
   const outputIdentifier = getIdentifier(outputIndex);
-  // const resultIsUsed =
-  //   outputIndex < chunk.instructionsLength() &&
-  //   chunk.getInstruction(outputIndex).type === opcodes.BlockVar;
-  const initialValue = maybeInlined(ci.args[2], inlined);
-  const accumulatorIndex = instructionIndex + 1;
-  const accumulatorIdentifier = getIdentifier(accumulatorIndex);
-  let s = `float ${accumulatorIdentifier};\n` + `float ${outputIdentifier};\n`;
-  // `if(${lowerBound}>${upperBound}){` +
-  // (resultIsUsed ? `${outputIdentifier}=${initialValue};` : "") +
-  // `}\nelse if(${upperBound}-${lowerBound} > 10000.0){` +
-  // (resultIsUsed ? `${outputIdentifier}=NaN;` : "") +
-  // `}\nelse{\n`;
-  if (chunk.getInstruction(accumulatorIndex).type === opcodes.BlockVar) {
-    s += `${accumulatorIdentifier}=${initialValue};`;
+  // Initialize accumulators. There may be more than one; see
+  // https://www.desmos.com/calculator/tggl7kcm7w from issue #506, in which a
+  // sum's derivative accumulates both the original sum and the derivative's sum
+  let s = `float ${outputIdentifier};\n`;
+  for (let i = 2; i < ci.args.length; i++) {
+    const initialValue = maybeInlined(ci.args[i], inlined);
+    const accumulatorIndex = instructionIndex + i - 1;
+    const accumulatorIdentifier = getIdentifier(accumulatorIndex);
+    if (chunk.getInstruction(accumulatorIndex).type === opcodes.BlockVar)
+      s += `float ${accumulatorIdentifier}=${initialValue};`;
   }
   return `${s}\nfor(float ${iterationVar}=${lowerBound};${iterationVar}<=${upperBound};${iterationVar}++){\n`;
 }
@@ -299,20 +295,23 @@ function getEndLoopSource(
   inlined: string[]
 ) {
   let s = "";
-  const accumulatorIndex = ci.args[0] + 1;
-  if (chunk.getInstruction(accumulatorIndex).type === opcodes.BlockVar) {
-    s += `${getIdentifier(accumulatorIndex)}=${maybeInlined(
-      ci.args[1],
-      inlined
-    )};\n`;
+  for (let i = 1; i < ci.args.length; i++) {
+    const accumulatorIndex = ci.args[0] + i;
+    if (chunk.getInstruction(accumulatorIndex).type === opcodes.BlockVar) {
+      s += `${getIdentifier(accumulatorIndex)}=${maybeInlined(
+        ci.args[i],
+        inlined
+      )};\n`;
+    }
   }
   // end the loop
   s += "}\n";
-  const outputIndex = instructionIndex + 1;
-  if (outputIndex < chunk.instructionsLength()) {
+  for (let i = 1; i < ci.args.length; i++) {
+    const outputIndex = instructionIndex + i;
+    if (outputIndex >= chunk.instructionsLength()) continue;
     if (chunk.getInstruction(outputIndex).type === opcodes.BlockVar) {
-      s += `${getIdentifier(outputIndex)}=${maybeInlined(
-        accumulatorIndex,
+      s += `float ${getIdentifier(outputIndex)}=${maybeInlined(
+        ci.args[i],
         inlined
       )};\n`;
     }
