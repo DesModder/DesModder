@@ -17,9 +17,9 @@ export function glslFloatify(x: number) {
 export function colorVec4(color: string, opacity: number) {
   let r: string, g: string, b: string;
   if (color[0] === "#" && color.length === 7) {
-    r = glslFloatify(parseInt(color.slice(1, 3), 16) / 256);
-    g = glslFloatify(parseInt(color.slice(3, 5), 16) / 256);
-    b = glslFloatify(parseInt(color.slice(5, 7), 16) / 256);
+    r = glslFloatify(parseInt(color.slice(1, 3), 16) / 255);
+    g = glslFloatify(parseInt(color.slice(3, 5), 16) / 255);
+    b = glslFloatify(parseInt(color.slice(5, 7), 16) / 255);
   } else {
     /**
      * alpha from css color is neglected
