@@ -1,0 +1,101 @@
+# Better Evaluation View Replacements
+
+*plugin* `better-evaluation-view`
+
+## Override evaluation view
+
+*Module* `expressions/evaluation-view`
+
+Bindings
+
+*Find*
+```js
+fraction: function() {
+  return $Dcgview.createElement($StaticMathquillView.default, {latex
+```
+
+*Find*
+```js
+count: $this.props.val().length
+```
+
+*Find*
+```js
+$Label.numericLabel($, $)
+```
+
+Show exposed undefined values
+
+*Find* => `undefined`
+```js
+undefined: function () {
+  return $.createElement(
+    'span',
+    null,
+    $.const("undefined")
+  )
+}
+```
+
+*Replace* `undefined` with
+```js
+undefined: function() {
+  return $Dcgview.createElement(
+    $StaticMathquillView.default,
+    {
+      latex: function() {
+        return $this.getNumberLabel().value
+      },
+      config: $Dcgview.const({})
+    }
+  )
+}
+```
+
+Show list elements
+
+*Find* => `list`
+```js
+},{
+list: function () {
+  ____
+}
+```
+
+*Replace* `list` with
+```js
+},{
+list: function () {
+  return $Dcgview.createElement(
+    $StaticMathquillView.default,
+    {
+      latex: function() {
+        let values = $this.props.val()
+        let labelOptions = {
+          smallCutoff: 0.001,
+          bigCutoff: 1000000,
+          digits: 5,
+          displayAsFraction: false
+        }
+        let labels = values.map(e=>$Label.truncatedLatexLabel(e,labelOptions))
+        return "\\left[" + labels.join(",") + "\\right]"
+      },
+      config: $Dcgview.const({})
+    }
+  )
+}
+```
+
+## Add an extra value field to the result of undefined numericLabels
+
+*Module* `core/lib/label`
+
+*Find* => `from`
+```js
+if ($options = $options || {}, isNaN($val) || !isFinite($val)) return { type: "undefined" }
+```
+
+*Replace* `from` with
+```js
+if ($options = $options || {}, isNaN($val) || !isFinite($val)) return { type: "undefined", value: isNaN($val) ? "\\mathrm{NaN}" : $val === Infinity ? "\\infty" : $val === -Infinity ? "-\\infty" : "undefined"}
+```
