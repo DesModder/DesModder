@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/method-signature-style */
+import betterEvaluationView from "./better-evaluation-view";
 import GLesmos from "plugins/GLesmos";
 import builtinSettings from "plugins/builtin-settings";
 import debugMode from "plugins/debug-mode";
@@ -16,7 +17,6 @@ import textMode from "plugins/text-mode";
 import videoCreator from "plugins/video-creator";
 import wakatime from "plugins/wakatime";
 import wolfram2desmos from "plugins/wolfram2desmos";
-import betterEvaluationView from "./better-evaluation-view";
 
 interface ConfigItemGeneric {
   key: string;

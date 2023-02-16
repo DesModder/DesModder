@@ -50,7 +50,7 @@ const pluginNames = [
   "folder-tools",
   "text-mode",
   "performance-info",
-  "better-evaluation-view"
+  "better-evaluation-view",
 ];
 
 replacements.forEach((r) => {
