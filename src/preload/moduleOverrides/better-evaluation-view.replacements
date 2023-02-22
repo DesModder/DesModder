@@ -91,7 +91,7 @@ Show color values
 *Find* => `color`
 ```js
 rgbcolor: function () {
-  ____
+  return $.createElement(__swatch__)
 }
 ```
 
@@ -99,30 +99,43 @@ rgbcolor: function () {
 ```js
 rgbcolor: function () {
   return $Dcgview.createElement(
-    $StaticMathquillView.default,
+    "div",
     {
-      latex: function() {
-        let color = $this.props.val()
-        // https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
-        function rgb(hex) {
-          let result = /^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-          return [
-            parseInt(result[1], 16),
-            parseInt(result[2], 16),
-            parseInt(result[3], 16)
-          ]
-        }
-        let length = 3
-        if (Array.isArray(color)) {
-          color = color.map(rgb)
-          return "\\operatorname{rgb}\\left(\\left[" + color.slice(0,length).map(c=>`\\left(${c.join(",")}\\right)`).join(",") + (color.length > length ? `,...${color.length - length}\\ \\mathrm{more}` : "") + "\\right]\\right)"
-        } else {
-          color = rgb(color)
-          return "\\operatorname{rgb}\\left(" + color.join(",") + "\\right)"
-        }
+      class: $Dcgview.const("dsm-color-container")
+    },
+    $Dcgview.createElement(
+      $Dcgview.Components.If,
+      {
+        predicate: () => window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view")
       },
-      config: $Dcgview.const({}) // shush diff
-    }
+      () => $Dcgview.createElement(
+        $StaticMathquillView.default,
+        {
+          latex: function() {
+            let color = $this.props.val()
+            // https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+            function rgb(hex) {
+              let result = /^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+              return [
+                parseInt(result[1], 16),
+                parseInt(result[2], 16),
+                parseInt(result[3], 16)
+              ]
+            }
+            let length = 3
+            if (Array.isArray(color)) {
+              color = color.map(rgb)
+              return "\\operatorname{rgb}\\left(\\left[" + color.slice(0,length).map(c=>`\\left(${c.join(",")}\\right)`).join(",") + (color.length > length ? `,...${color.length - length}\\ \\mathrm{more}` : "") + "\\right]\\right)"
+            } else {
+              color = rgb(color)
+              return "\\operatorname{rgb}\\left(" + color.join(",") + "\\right)"
+            }
+          },
+          config: $Dcgview.const({})
+        }
+      )
+    ),
+    $Dcgview.createElement(__swatch__)
   )
 }
 ```
