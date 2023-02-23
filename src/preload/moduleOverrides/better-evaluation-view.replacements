@@ -79,7 +79,7 @@ list: function () {
         }
         let length = 10
         let labels = values.slice(0,length).map(e=>$Label.truncatedLatexLabel(e,labelOptions))
-        return "\\left[" + labels.join(",") + (values.length > length ? `,...${values.length - length}\\ \\mathrm{more}` : "") + "\\right]"
+        return "\\left[" + labels.join(",") + (values.length > length ? `\\textcolor{gray}{...\\mathit{${values.length - length}\\ more}}` : "") + "\\right]"
       },
       config: $Dcgview.const({})
     }
@@ -125,7 +125,7 @@ rgbcolor: function () {
             let length = 3
             if (Array.isArray(color)) {
               color = color.map(rgb)
-              return "\\operatorname{rgb}\\left(\\left[" + color.slice(0,length).map(c=>`\\left(${c.join(",")}\\right)`).join(",") + (color.length > length ? `,...${color.length - length}\\ \\mathrm{more}` : "") + "\\right]\\right)"
+              return "\\operatorname{rgb}\\left(\\left[" + color.slice(0,length).map(c=>`\\left(${c.join(",")}\\right)`).join(",") + (color.length > length ? `\\textcolor{gray}{...\\mathit{${color.length - length}\\ more}}` : "") + "\\right]\\right)"
             } else {
               color = rgb(color)
               return "\\operatorname{rgb}\\left(" + color.join(",") + "\\right)"
