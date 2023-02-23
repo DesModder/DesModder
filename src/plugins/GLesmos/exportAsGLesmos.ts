@@ -40,8 +40,8 @@ export function compileGLesmos(
     deps.forEach((d) => accDeps(functionDeps, d));
 
     // default values for if there should be no dx, dy
-    let dxsource = "return 0;";
-    let dysource = "return 0;";
+    let dxsource = "return 0.0;";
+    let dysource = "return 0.0;";
     if (lineWidth > 0 && derivativeX && derivativeY) {
       ({ source: dxsource, deps } = emitChunkGL(derivativeX._chunk));
       deps.forEach((d) => accDeps(functionDeps, d));

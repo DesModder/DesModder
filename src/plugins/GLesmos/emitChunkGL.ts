@@ -108,7 +108,7 @@ function getSourceSimple(
         const val = ci.value as any[];
         const init = val.map(compileObject).join(",");
         const type = getGLScalarType(ci.valueType);
-        lists.push(`${type} ${id}[${val.length}] = ${type}[](${init});\n`);
+        lists.push(`${id}[${val.length}] = ${type}[](${init});\n`);
         return id;
       } else {
         return compileObject(ci.value);
@@ -272,24 +272,18 @@ function getBeginLoopSource(
     // Too many iterations can cause freezing or losing the webgl context
     throw Error("Sum/product cannot have more than 10000 iterations");
   }
-  const outputIndex = ci.endIndex + 1;
-  const outputIdentifier = getIdentifier(outputIndex);
-  // const resultIsUsed =
-  //   outputIndex < chunk.instructionsLength() &&
-  //   chunk.getInstruction(outputIndex).type === opcodes.BlockVar;
-  const initialValue = maybeInlined(ci.args[2], inlined);
-  const accumulatorIndex = instructionIndex + 1;
-  const accumulatorIdentifier = getIdentifier(accumulatorIndex);
-  let s = `float ${accumulatorIdentifier};\n` + `float ${outputIdentifier};\n`;
-  // `if(${lowerBound}>${upperBound}){` +
-  // (resultIsUsed ? `${outputIdentifier}=${initialValue};` : "") +
-  // `}\nelse if(${upperBound}-${lowerBound} > 10000.0){` +
-  // (resultIsUsed ? `${outputIdentifier}=NaN;` : "") +
-  // `}\nelse{\n`;
-  if (chunk.getInstruction(accumulatorIndex).type === opcodes.BlockVar) {
-    s += `${accumulatorIdentifier}=${initialValue};`;
+  // Initialize accumulators. There may be more than one; see
+  // https://www.desmos.com/calculator/tggl7kcm7w from issue #506, in which a
+  // sum's derivative accumulates both the original sum and the derivative's sum
+  let s = "";
+  for (let i = 2; i < ci.args.length; i++) {
+    const initialValue = maybeInlined(ci.args[i], inlined);
+    const accumulatorIndex = instructionIndex + i - 1;
+    const accumulatorIdentifier = getIdentifier(accumulatorIndex);
+    if (chunk.getInstruction(accumulatorIndex).type === opcodes.BlockVar)
+      s += `${accumulatorIdentifier}=${initialValue};`;
   }
-  return `${s}\nfor(float ${iterationVar}=${lowerBound};${iterationVar}<=${upperBound};${iterationVar}++){\n`;
+  return `${s}\nfor(${iterationVar}=${lowerBound};${iterationVar}<=${upperBound};${iterationVar}++){\n`;
 }
 
 function getEndLoopSource(
@@ -299,20 +293,23 @@ function getEndLoopSource(
   inlined: string[]
 ) {
   let s = "";
-  const accumulatorIndex = ci.args[0] + 1;
-  if (chunk.getInstruction(accumulatorIndex).type === opcodes.BlockVar) {
-    s += `${getIdentifier(accumulatorIndex)}=${maybeInlined(
-      ci.args[1],
-      inlined
-    )};\n`;
+  for (let i = 1; i < ci.args.length; i++) {
+    const accumulatorIndex = ci.args[0] + i;
+    if (chunk.getInstruction(accumulatorIndex).type === opcodes.BlockVar) {
+      s += `${getIdentifier(accumulatorIndex)}=${maybeInlined(
+        ci.args[i],
+        inlined
+      )};\n`;
+    }
   }
   // end the loop
   s += "}\n";
-  const outputIndex = instructionIndex + 1;
-  if (outputIndex < chunk.instructionsLength()) {
+  for (let i = 1; i < ci.args.length; i++) {
+    const outputIndex = instructionIndex + i;
+    if (outputIndex >= chunk.instructionsLength()) continue;
     if (chunk.getInstruction(outputIndex).type === opcodes.BlockVar) {
       s += `${getIdentifier(outputIndex)}=${maybeInlined(
-        accumulatorIndex,
+        ci.args[i],
         inlined
       )};\n`;
     }
@@ -346,7 +343,7 @@ function getBeginBroadcastSource(
   const broadcastIndexVar = getIdentifier(instructionIndex);
   return (
     varInits.join("") +
-    `for(float ${broadcastIndexVar}=1.0;${broadcastIndexVar}<=${broadcastLength}.0;++${broadcastIndexVar}){\n`
+    `for(${broadcastIndexVar}=1.0;${broadcastIndexVar}<=${broadcastLength}.0;++${broadcastIndexVar}){\n`
   );
 }
 
@@ -374,6 +371,35 @@ function getEndBroadcastSource(
     }
   }
   return resultAssignments.join("") + "}\n";
+}
+
+const neverDeclareOpcodes: number[] = [
+  opcodes.Noop,
+  opcodes.EndBroadcast,
+  opcodes.EndLoop,
+];
+
+const alwaysDeclareOpcodes: number[] = [
+  opcodes.BeginIntegral,
+  opcodes.BeginBroadcast,
+  opcodes.BeginLoop,
+  opcodes.EndLoop,
+  opcodes.EndIntegral,
+  opcodes.EndBroadcast,
+  opcodes.BlockVar,
+  opcodes.BroadcastResult,
+];
+
+function getTypedefsSource(chunk: IRChunk, referenceCountList: number[]) {
+  let s = "";
+  const len = chunk.instructionsLength();
+  for (let i = chunk.argNames.length; i < len; i++) {
+    const ci = chunk.getInstruction(i);
+    if (neverDeclareOpcodes.includes(ci.type)) continue;
+    if (referenceCountList[i] > 1 || alwaysDeclareOpcodes.includes(ci.type))
+      s += `${getGLType(ci.valueType)} ${getIdentifier(i)};\n`;
+  }
+  return s;
 }
 
 function getSourceAndNextIndex(
@@ -457,11 +483,10 @@ function getSourceAndNextIndex(
         };
       } else {
         // referenced more than once, so it helps to reuse this
-        const type = getGLType(currInstruction.valueType);
         const id = getIdentifier(instructionIndex);
         return {
           // check id === src to avoid reassignments to self like `float[] _1 = _1`;
-          source: id === src ? "" : `${type} ${id}=${src};\n`,
+          source: id === src ? "" : `${id}=${src};\n`,
           nextIndex: incrementedIndex,
         };
       }
@@ -471,7 +496,7 @@ function getSourceAndNextIndex(
 
 export default function emitChunkGL(chunk: IRChunk) {
   const referenceCountList = countReferences(chunk);
-  let outputSource = "";
+  let outputSource = getTypedefsSource(chunk, referenceCountList);
   const inlined: string[] = [];
   const deps = new Set<string>();
   const lists: string[] = [];
