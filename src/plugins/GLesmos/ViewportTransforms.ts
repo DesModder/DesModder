@@ -19,14 +19,14 @@ export default interface ViewportTransforms {
   };
   pixelsToMath: {
     xScale: {
-      type: "linear" | "log",
-      s: number,
-      t: number
-    },
+      type: "linear" | "log";
+      s: number;
+      t: number;
+    };
     yScale: {
-      type: "linear" | "log",
-      s: number,
-      t: number
-    }
+      type: "linear" | "log";
+      s: number;
+      t: number;
+    };
   };
 }

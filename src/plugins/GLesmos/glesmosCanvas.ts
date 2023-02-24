@@ -105,8 +105,8 @@ export function initGLesmosCanvas() {
     c.width = w;
     c.height = h;
 
-    if( p2m.xScale.type != "linear" || p2m.yScale.type != "linear" ){
-      glesmosError("Unsupported transformation.  Please use linear.")
+    if (p2m.xScale.type != "linear" || p2m.yScale.type != "linear") {
+      glesmosError("Unsupported transformation.  Please use linear.");
     }
 
     gl.viewport(0, 0, c.width, c.height);
@@ -140,7 +140,7 @@ export function initGLesmosCanvas() {
     gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
 
     // uniforms
-    console.log(sizeOfGraph, cornerOfGraph)
+    console.log(sizeOfGraph, cornerOfGraph);
     gl.uniform2fv(program.size, sizeOfGraph);
     gl.uniform2fv(program.corner, cornerOfGraph);
     gl.uniform1f(program.NaN, NaN);
