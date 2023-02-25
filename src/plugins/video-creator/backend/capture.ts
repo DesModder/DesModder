@@ -3,16 +3,14 @@ import { scaleBoundsAboutCenter } from "./utils";
 import { Calc } from "globals/window";
 import { EvaluateSingleExpression } from "utils/depUtils";
 
-let dispatchListenerID: string;
+let dispatchListenerID: string | null = null;
+let callbackIfCancel: (() => void) | null = null;
 
 export type CaptureMethod = "once" | "action" | "slider" | "ticks";
 
 export function cancelCapture(controller: Controller) {
   controller.captureCancelled = true;
-
-  if (controller.actionCaptureState !== "none") {
-    cancelActionCapture(controller);
-  }
+  callbackIfCancel?.();
 }
 
 async function captureAndApplyFrame(controller: Controller) {
@@ -99,13 +97,6 @@ export async function captureSlider(controller: Controller) {
   }
 }
 
-function cancelActionCapture(controller: Controller) {
-  controller.isCapturing = false;
-  controller.actionCaptureState = "none";
-  controller.updateView();
-  Calc.controller.dispatcher.unregister(dispatchListenerID);
-}
-
 function slidersLatexJoined() {
   return Calc.controller
     .getPlayingSliders()
@@ -113,11 +104,7 @@ function slidersLatexJoined() {
     .join(";");
 }
 
-async function captureActionFrame(
-  controller: Controller,
-  callbackIfCancel: () => void,
-  step: () => void
-) {
+async function captureActionFrame(controller: Controller, step: () => void) {
   let stepped = false;
   try {
     const tickCountRemaining = EvaluateSingleExpression(
@@ -139,7 +126,7 @@ async function captureActionFrame(
           // Due to rounding, this slider tick does not actually change the state,
           // so don't expect an event update. Just move to the next frame now.
           setTimeout(() => {
-            void captureActionFrame(controller, callbackIfCancel, step);
+            void captureActionFrame(controller, step);
           }, 0);
         }
       }
@@ -149,8 +136,7 @@ async function captureActionFrame(
     if (!stepped) {
       // should be paused due to cancellation or tickCountRemaining ≤ 0
       // this is effectively a break
-      cancelActionCapture(controller);
-      callbackIfCancel();
+      callbackIfCancel?.();
     }
   }
 }
@@ -160,6 +146,7 @@ async function captureActionOrSliderTicks(
   step: () => void
 ) {
   return await new Promise<void>((resolve) => {
+    callbackIfCancel = resolve;
     dispatchListenerID = Calc.controller.dispatcher.register((e) => {
       if (
         // near-equivalent to Calc.observeEvent("change", ...)
@@ -168,11 +155,11 @@ async function captureActionOrSliderTicks(
         // check waiting-for-update in case there is more than one update before the screenshot finishes
         controller.actionCaptureState === "waiting-for-update"
       ) {
-        void captureActionFrame(controller, resolve, step);
+        void captureActionFrame(controller, step);
       }
     });
 
-    void captureActionFrame(controller, resolve, step);
+    void captureActionFrame(controller, step);
   });
 }
 
@@ -230,7 +217,12 @@ export async function capture(controller: Controller) {
     }
   }
   controller.isCapturing = false;
+  controller.actionCaptureState = "none";
   controller.updateView();
+  if (dispatchListenerID !== null) {
+    Calc.controller.dispatcher.unregister(dispatchListenerID);
+    dispatchListenerID = null;
+  }
   // no need to retain a pending cancellation, if any; capture is already finished
   controller.captureCancelled = false;
 }
