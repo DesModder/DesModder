@@ -190,8 +190,7 @@ export async function capture(controller: Controller) {
     case "ticks": {
       let currTime = performance.now();
       const step = () => {
-        // tick by half a second each tick. Temporary
-        currTime += 500;
+        currTime += controller.getTickTimeStepNumber();
         tickSliders(currTime);
       };
       await captureActionOrSliderTicks(controller, step);

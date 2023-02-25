@@ -162,7 +162,25 @@ export default class SelectCapture extends Component<{
                   </For>
                 </div>
               ),
-              ticks: () => null,
+              ticks: () => (
+                <div class="dsm-vc-ticks-settings">
+                  {format("video-creator-ticks-step")}
+                  <InlineMathInputView
+                    ariaLabel="time step (ms)"
+                    handleLatexChanged={(v) =>
+                      this.controller.setTickTimeStepLatex(v)
+                    }
+                    hasError={() => !this.controller.isTickTimeStepValid()}
+                    latex={() => this.controller.tickTimeStepLatex}
+                    isFocused={() =>
+                      this.controller.isFocused("capture-tick-time-step")
+                    }
+                    handleFocusChanged={(b) =>
+                      this.controller.updateFocus("capture-tick-time-step", b)
+                    }
+                  />
+                </div>
+              ),
               once: () => null,
             }[this.controller.captureMethod]())
           }

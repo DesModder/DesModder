@@ -18,6 +18,7 @@ type FocusedMQ =
   | "capture-slider-max"
   | "capture-slider-step"
   | "capture-tick-count"
+  | "capture-tick-time-step"
   | "capture-width"
   | "capture-height"
   | "export-fps";
@@ -55,6 +56,7 @@ export default class Controller {
 
   currentActionID: string | null = null;
   tickCountLatex: string = "10";
+  tickTimeStepLatex: string = "40";
 
   // ** capture sizing
   captureHeightLatex = "";
@@ -222,6 +224,19 @@ export default class Controller {
   setTickCountLatex(value: string) {
     this.tickCountLatex = value;
     this.updateView();
+  }
+
+  setTickTimeStepLatex(value: string) {
+    this.tickTimeStepLatex = value;
+    this.updateView();
+  }
+
+  getTickTimeStepNumber() {
+    return EvaluateSingleExpression(this.tickTimeStepLatex);
+  }
+
+  isTickTimeStepValid() {
+    return this.getTickTimeStepNumber() > 0;
   }
 
   getMatchingSlider() {
