@@ -105,12 +105,16 @@ export function initGLesmosCanvas() {
     c.width = w;
     c.height = h;
 
+    if (p2m.xScale.type !== "linear" || p2m.yScale.type !== "linear") {
+      glesmosError("Unsupported transformation. Please use linear.");
+    }
+
     gl.viewport(0, 0, c.width, c.height);
 
     glesmosSDFrequiredSteps = Math.ceil(Math.log2(Math.max(w, h)));
 
-    cornerOfGraph = [p2m.tx, p2m.sy * h + p2m.ty];
-    sizeOfGraph = [p2m.sx * w, -p2m.sy * h];
+    cornerOfGraph = [p2m.xScale.t, p2m.yScale.s * h + p2m.yScale.t];
+    sizeOfGraph = [p2m.xScale.s * w, -p2m.yScale.s * h];
 
     for (const tex of textures.concat(cacheTexture)) {
       // resize the framebuffer textures

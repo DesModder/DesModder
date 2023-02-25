@@ -17,16 +17,16 @@ export default interface ViewportTransforms {
     top: number;
     bottom: number;
   };
-  mathToPixels: {
-    tx: number;
-    ty: number;
-    sx: number;
-    sy: number;
-  };
   pixelsToMath: {
-    tx: number;
-    ty: number;
-    sx: number;
-    sy: number;
+    xScale: {
+      type: "linear" | "log";
+      s: number;
+      t: number;
+    };
+    yScale: {
+      type: "linear" | "log";
+      s: number;
+      t: number;
+    };
   };
 }
