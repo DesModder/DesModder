@@ -1,3 +1,4 @@
+import { desModderController } from "../../../script";
 import Controller from "../Controller";
 import { scaleBoundsAboutCenter } from "./utils";
 import { Calc } from "globals/window";
@@ -163,6 +164,21 @@ async function captureActionOrSliderTicks(
   });
 }
 
+/** SegmentedControl does not plan for the list of names to change, so
+ * force-reload the list of options by closing and re-opening the menu.
+ * This is needed when action-capture stops sliders, so the slider-ticks
+ * capture method option gets disabled. */
+function forceReloadMenu() {
+  // XXX: it would be better if SegmentedControl actually re-loaded options
+  // A proper implementation is needed if we ever allow pinning the vc menu.
+  if (desModderController.pillboxMenuOpen === "dsm-vc-menu") {
+    desModderController.pillboxMenuOpen = null;
+    desModderController.updateMenuView();
+    desModderController.pillboxMenuOpen = "dsm-vc-menu";
+    desModderController.updateMenuView();
+  }
+}
+
 export async function capture(controller: Controller) {
   controller.isCapturing = true;
   controller.updateView();
@@ -174,8 +190,9 @@ export async function capture(controller: Controller) {
     if (controller.captureMethod === "ticks") {
       // prevent the current slider ticking since we will manually tick the sliders.
       Calc.controller._tickSliders = () => {};
-    } else {
+    } else if (Calc.controller.getPlayingSliders().length > 0) {
       Calc.controller.stopAllSliders();
+      forceReloadMenu();
     }
   }
   switch (controller.captureMethod) {
