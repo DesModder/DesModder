@@ -167,7 +167,7 @@ interface CalcPrivate {
     };
     /** Mark UI tick required to convert render shells to full item lines */
     markTickRequiredNextFrame: () => void;
-    getPlayingSliders: () => unknown[];
+    getPlayingSliders: () => { latex: string }[];
     _tickSliders: (nowTimestamp: number) => void;
   };
   _calc: {

@@ -17,7 +17,6 @@ export function cancelCapture(controller: Controller) {
 
 async function captureAndApplyFrame(controller: Controller) {
   const frame = await captureFrame(controller);
-  console.log("got frame");
   controller.frames.push(frame);
   controller.updateView();
 }
@@ -107,6 +106,13 @@ function cancelActionCapture(controller: Controller) {
   Calc.controller.dispatcher.unregister(dispatchListenerID);
 }
 
+function slidersLatexJoined() {
+  return Calc.controller
+    .getPlayingSliders()
+    .map((x) => x.latex)
+    .join(";");
+}
+
 async function captureActionFrame(
   controller: Controller,
   callbackIfCancel: () => void,
@@ -122,10 +128,20 @@ async function captureActionFrame(
       await captureAndApplyFrame(controller);
       controller.setTickCountLatex(String(tickCountRemaining - 1));
       controller.actionCaptureState = "waiting-for-update";
-      console.log("waiting for update");
       if (tickCountRemaining - 1 > 0) {
+        const slidersBefore = slidersLatexJoined();
         step();
         stepped = true;
+        if (
+          controller.captureMethod === "ticks" &&
+          slidersLatexJoined() === slidersBefore
+        ) {
+          // Due to rounding, this slider tick does not actually change the state,
+          // so don't expect an event update. Just move to the next frame now.
+          setTimeout(() => {
+            void captureActionFrame(controller, callbackIfCancel, step);
+          }, 0);
+        }
       }
     }
   } catch {

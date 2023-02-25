@@ -1,4 +1,3 @@
-import { Calc } from "../../../globals/window";
 import Controller from "../Controller";
 import { cancelCapture, CaptureMethod } from "../backend/capture";
 import "./CaptureMethod.css";
