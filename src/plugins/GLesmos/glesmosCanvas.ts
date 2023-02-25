@@ -106,7 +106,7 @@ export function initGLesmosCanvas() {
     c.height = h;
 
     if (p2m.xScale.type !== "linear" || p2m.yScale.type !== "linear") {
-      glesmosError("Unsupported transformation.  Please use linear.");
+      glesmosError("Unsupported transformation. Please use linear.");
     }
 
     gl.viewport(0, 0, c.width, c.height);
