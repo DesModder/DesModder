@@ -42,7 +42,7 @@ export default class Controller {
   exportProgress = -1;
 
   // ** capture methods
-  captureMethod: CaptureMethod = "once";
+  #captureMethod: CaptureMethod = "once";
   sliderSettings: SliderSettings = {
     variable: "a",
     minLatex: "0",
@@ -131,9 +131,23 @@ export default class Controller {
     return this.outfileName ?? getCurrentGraphTitle() ?? DEFAULT_FILENAME;
   }
 
-  setCaptureMethod(method: CaptureMethod) {
-    this.captureMethod = method;
+  set captureMethod(method: CaptureMethod) {
+    this.#captureMethod = method;
     this.updateView();
+  }
+
+  get captureMethod() {
+    return this.isCaptureMethodValid(this.#captureMethod)
+      ? this.#captureMethod
+      : "once";
+  }
+
+  isCaptureMethodValid(method: CaptureMethod) {
+    return method === "action"
+      ? this.hasAction()
+      : method === "ticks"
+      ? Calc.controller.getPlayingSliders().length > 0
+      : true;
   }
 
   isCaptureWidthValid() {
@@ -245,17 +259,23 @@ export default class Controller {
     if (!this.isCaptureWidthValid() || !this.isCaptureHeightValid()) {
       return false;
     }
-    if (this.captureMethod === "once") {
-      return true;
-    } else if (this.captureMethod === "slider") {
-      return (
-        this.isSliderSettingValid("variable") &&
-        this.isSliderSettingValid("minLatex") &&
-        this.isSliderSettingValid("maxLatex") &&
-        this.isSliderSettingValid("stepLatex")
-      );
-    } else if (this.captureMethod === "action") {
-      return this.isTickCountValid();
+    switch (this.captureMethod) {
+      case "once":
+        return true;
+      case "slider":
+        return (
+          this.isSliderSettingValid("variable") &&
+          this.isSliderSettingValid("minLatex") &&
+          this.isSliderSettingValid("maxLatex") &&
+          this.isSliderSettingValid("stepLatex")
+        );
+      case "action":
+      case "ticks":
+        return this.isTickCountValid();
+      default: {
+        const exhaustiveCheck: never = this.captureMethod;
+        return exhaustiveCheck;
+      }
     }
   }
 

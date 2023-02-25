@@ -133,6 +133,7 @@ video-creator-fps = FPS:
 video-creator-method-once = once
 video-creator-method-slider = slider
 video-creator-method-action = action
+video-creator-method-ticks = ticks
 
 ## Shift+Enter Newline
 shift-enter-newline-name = Shift+Enter Newline
