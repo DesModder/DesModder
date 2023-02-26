@@ -680,6 +680,7 @@ export function wolfram2desmos(input: string) {
   replace(/\]/g, "\\right]");
 
   // symbol replacements
+  replace(/√\\left\[([^\]]*)\\right\]/g, "\\sqrt[$1]");
   replace(/√/g, "\\sqrt");
   replace(/∛/g, "\\sqrt[3]");
   replace(/\*/g, "\\cdot ");
