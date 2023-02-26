@@ -74,6 +74,8 @@ css = css.replace(/^( {2})+.*var.*$/gm, "");
 for (const [from, to] of Object.entries(colorMapping)) {
   css = css.replaceAll(from, to);
 }
+// Remove .dcg-invalid rules, which are primary color then overwritten with red
+css = css.replace(/,\n.*\.dcg-invalid/g, "");
 // Remove lines without "var"
 css = css
   .split("\n")
