@@ -108,9 +108,7 @@ function slidersLatexJoined() {
 async function captureActionFrame(controller: Controller, step: () => void) {
   let stepped = false;
   try {
-    const tickCountRemaining = EvaluateSingleExpression(
-      controller.tickCountLatex
-    );
+    const tickCountRemaining = controller.getTickCountNumber();
     if (tickCountRemaining > 0) {
       controller.actionCaptureState = "waiting-for-screenshot";
       await captureAndApplyFrame(controller);

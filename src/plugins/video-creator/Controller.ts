@@ -236,7 +236,8 @@ export default class Controller {
   }
 
   isTickTimeStepValid() {
-    return this.getTickTimeStepNumber() > 0;
+    const ts = this.getTickTimeStepNumber();
+    return !isNaN(ts) && ts > 0;
   }
 
   getMatchingSlider() {
@@ -259,11 +260,13 @@ export default class Controller {
     }
   }
 
+  getTickCountNumber() {
+    return EvaluateSingleExpression(this.tickCountLatex);
+  }
+
   isTickCountValid() {
-    return (
-      isValidNumber(this.tickCountLatex) &&
-      EvaluateSingleExpression(this.tickCountLatex) > 0
-    );
+    const tc = this.getTickCountNumber();
+    return Number.isInteger(tc) && tc > 0;
   }
 
   async capture() {
@@ -285,8 +288,9 @@ export default class Controller {
           this.isSliderSettingValid("stepLatex")
         );
       case "action":
-      case "ticks":
         return this.isTickCountValid();
+      case "ticks":
+        return this.isTickCountValid() && this.isTickTimeStepValid();
       default: {
         const exhaustiveCheck: never = this.captureMethod;
         return exhaustiveCheck;
