@@ -485,36 +485,58 @@ export default class Controller {
     const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
     const folderId = folderModel?.id;
 
+    // type cast beacuse Desmos has not yet updated types for authorFeatures
+    const skipAuthors = !(Calc.settings as any).authorFeatures;
+
     let newIndex = folderIndex;
     let currIndex = folderIndex;
     let currExpr: ItemModel | undefined;
+    // we might want to delete the folder heading immediately after this folder
+    // at most one; keep track if we've seen any expressions since the end of
+    // this folder, so we only delete a folder with no expressions in between
+    let movedAny = false;
+    // Keep track of if we've deleted a folder
+    let toDeleteFolderID = "";
     // Place all expressions until the next folder into this folder
-    do {
+    while (true) {
       newIndex++;
       currIndex++;
       currExpr = Calc.controller.getItemModelByIndex(currIndex);
       if (currExpr === undefined) break;
       // If authorFeatures is disabled, skip secret folders
-      while (
-        // type cast beacuse Desmos has not yet updated types for authorFeatures
-        !(Calc.settings as any).authorFeatures &&
-        currExpr?.type === "folder" &&
-        currExpr.secret
-      ) {
-        const secretID = currExpr.id;
-        do {
-          currIndex++;
-          currExpr = Calc.controller.getItemModelByIndex(currIndex);
-        } while (
-          currExpr &&
-          currExpr.type !== "folder" &&
-          currExpr.folderId === secretID
-        );
+      if (skipAuthors) {
+        while (currExpr?.type === "folder" && currExpr.secret) {
+          const secretID = currExpr.id;
+          do {
+            currIndex++;
+            currExpr = Calc.controller.getItemModelByIndex(currIndex);
+          } while (
+            currExpr &&
+            currExpr.type !== "folder" &&
+            currExpr.folderId === secretID
+          );
+        }
+        if (currExpr === undefined) break;
       }
-      // Actually move the item into place
-      AbstractItem.setFolderId(currExpr, folderId);
-      List.moveItemsTo(Calc.controller.listModel, currIndex, newIndex, 1);
-    } while (currExpr && currExpr.type !== "folder");
+      if (currExpr.type === "folder") {
+        if (!movedAny) {
+          // This is a folder immediately after the end of our starting folder
+          // Mark it to delete, and move on.
+          newIndex--;
+          movedAny = true;
+          toDeleteFolderID = currExpr.id;
+        } else break;
+      } else if (currExpr.folderId !== folderId) {
+        if (toDeleteFolderID && !currExpr.folderId) break;
+        movedAny = true;
+        // Actually move the item into place
+        AbstractItem.setFolderId(currExpr, folderId);
+        console.log(`moving ${currIndex} to ${newIndex}`);
+        List.moveItemsTo(Calc.controller.listModel, currIndex, newIndex, 1);
+      }
+    }
+    if (toDeleteFolderID)
+      List.removeItemById(Calc.controller.listModel, toDeleteFolderID);
 
     this.commitStateChange(true);
   }
