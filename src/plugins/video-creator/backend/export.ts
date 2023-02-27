@@ -74,7 +74,12 @@ export async function initFFmpeg(controller: Controller) {
         }
       }
     });
-    await ffmpeg.load();
+    try {
+      await ffmpeg.load();
+    } catch (e) {
+      ffmpeg = null;
+      throw e;
+    }
   }
   return ffmpeg;
 }
