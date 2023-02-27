@@ -40,13 +40,23 @@ undefined: function () {
 *Replace* `undefined` with
 ```js
 undefined: function() {
-  return $Dcgview.createElement(
-    $StaticMathquillView.default,
+  return $Dcgview.Components.IfElse(
+    () => window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view"),
     {
-      latex: function() {
-        return $this.getNumberLabel().value
-      },
-      config: $Dcgview.const({})
+      true: () => $Dcgview.createElement(
+        $StaticMathquillView.default,
+        {
+          latex: function() {
+            return $this.getNumberLabel().value
+          },
+          config: $Dcgview.const({})
+        }
+      ),
+      false: () => $Dcgview.createElement(
+        "span",
+        null,
+        $Dcgview.const("undefined")
+      )
     }
   )
 }
@@ -58,7 +68,7 @@ Show list elements
 ```js
 },{
 list: function () {
-  ____
+  return $.createElement(__oldList__)
 }
 ```
 
@@ -66,22 +76,28 @@ list: function () {
 ```js
 },{
 list: function () {
-  return $Dcgview.createElement(
-    $StaticMathquillView.default,
+  return $Dcgview.Components.IfElse(
+    () => window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view"),
     {
-      latex: function() {
-        let values = $this.props.val()
-        let labelOptions = {
-          smallCutoff: 0.00001,
-          bigCutoff: 1000000,
-          digits: 5,
-          displayAsFraction: false
+      true: () => $Dcgview.createElement(
+        $StaticMathquillView.default,
+        {
+          latex: function() {
+            let values = $this.props.val()
+            let labelOptions = {
+              smallCutoff: 0.00001,
+              bigCutoff: 1000000,
+              digits: 5,
+              displayAsFraction: false
+            }
+            let length = 10
+            let labels = values.slice(0,length).map(e=>$Label.truncatedLatexLabel(e,labelOptions))
+            return "\\left[" + labels.join(",") + (values.length > length ? `\\textcolor{gray}{...\\mathit{${values.length - length}\\ more}}` : "") + "\\right]"
+          },
+          config: $Dcgview.const({})
         }
-        let length = 10
-        let labels = values.slice(0,length).map(e=>$Label.truncatedLatexLabel(e,labelOptions))
-        return "\\left[" + labels.join(",") + (values.length > length ? `\\textcolor{gray}{...\\mathit{${values.length - length}\\ more}}` : "") + "\\right]"
-      },
-      config: $Dcgview.const({})
+      ),
+      false: () => $Dcgview.createElement(__oldList__)
     }
   )
 }
@@ -170,21 +186,28 @@ if (0 === $ || $.zeroCutoff && Math.abs($) < $.zeroCutoff)
 *Replace* `zero` with
 ```js
 if (0 === $val) {
-  if (Object.is($val, 0)) {
+  if (!window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view") || Object.is($val, 0)) {
     return {
       type: "decimal",
-      value: "0",
+      value: "0"
     }
   } else {
     return {
       type: "decimal",
-      value: "-0",
+      value: "-0"
     }
   }
 } else if ($options.zeroCutoff && Math.abs($val) < $options.zeroCutoff) {
-  return {
-    type: "decimal",
-    value: Math.sign($val) === 1 ? "0" : "-0"
+  if (!window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view") || Math.sign($val) === 1) {
+    return {
+      type: "decimal",
+      value: "0"
+    }
+  } else {
+    return {
+      type: "decimal",
+      value: "-0"
+    }
   }
 }
 ```
