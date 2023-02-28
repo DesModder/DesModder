@@ -149,19 +149,13 @@ export function initGLesmosCanvas() {
 
   //= ================ WEBGL FUNCTIONS ================
 
-  const buildGLesmosFancy = (
-    deps: string,
-    chunk: GLesmosShaderChunk
-  ) => {
+  const buildGLesmosFancy = (deps: string, chunk: GLesmosShaderChunk) => {
     glesmosCache = glesmosGetCacheShader(gl, chunk, deps);
     glesmosFinalPass = glesmosGetFinalPassShader(gl, chunk);
     glesmosSDF = glesmosGetSDFShader(gl, chunk, deps); // we don't need to build this if we aren't drawing outlines
   };
 
-  const buildGLesmosFast = (
-    deps: string,
-    chunks: GLesmosShaderChunk[]
-  ) => {
+  const buildGLesmosFast = (deps: string, chunks: GLesmosShaderChunk[]) => {
     glesmosFastFill = glesmosGetFastFillShader(gl, chunks, deps);
   };
 
@@ -265,6 +259,6 @@ export function initGLesmosCanvas() {
     buildGLesmosFancy,
     buildGLesmosFast,
     renderFancy,
-    renderFast
+    renderFast,
   };
 }

@@ -8,7 +8,7 @@ export function glesmosError(msg: string): never {
 export interface GLesmosShaderPackage {
   deps: string[];
   chunks: GLesmosShaderChunk[];
-  hasOutlines: boolean
+  hasOutlines: boolean;
 }
 
 export interface GLesmosShaderChunk {
@@ -74,7 +74,7 @@ function compileShader(
 function buildShaderProgram(
   gl: WebGL2RenderingContext,
   vert: string,
-  frag: string,
+  frag: string
 ) {
   const shaderProgram = gl.createProgram();
   if (shaderProgram === null) {
@@ -106,7 +106,7 @@ function getShaderProgram(
   const shaderProgram = buildShaderProgram(
     gl,
     vertexSource,
-    fragmentSource,
+    fragmentSource
   ) as GLesmosProgram;
 
   shaderProgram.vertexAttribPos = gl.getAttribLocation(
@@ -513,4 +513,3 @@ export function glesmosGetFastFillShader(
 
   return shader;
 }
-

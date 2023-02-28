@@ -24,13 +24,12 @@ export default class Controller {
     const deps = compiledGL.deps.join("\n");
 
     try {
-
-      if( !this.canvas?.element )
-        throw glesmosError("WebGL Context Lost!")
+      if (!this.canvas?.element) throw glesmosError("WebGL Context Lost!");
 
       this.canvas.updateTransforms(transforms); // only do this once
 
-      if( compiledGL.hasOutlines ) // no grouping, perf will suffer
+      if (compiledGL.hasOutlines)
+        // no grouping, perf will suffer
         for (const chunk of compiledGL.chunks) {
           this.canvas?.buildGLesmosFancy(deps, chunk);
           this.canvas?.renderFancy();
@@ -41,14 +40,11 @@ export default class Controller {
         this.canvas?.renderFast();
         ctx.drawImage(this.canvas?.element, 0, 0);
       }
-        
     } catch (e) {
       const model = Calc.controller.getItemModel(id);
       if (model) {
         model.error = e instanceof Error ? e.message : e;
       }
     }
-
-    
   }
 }
