@@ -3,7 +3,6 @@ import { IRChunk, Opcodes, ValueType, Types as ValueTypes } from "parsing/IR";
 
 export let countReferences: (c: IRChunk) => number[];
 export let opcodes: Opcodes;
-export let printOp: (k: Opcodes[keyof Opcodes]) => string;
 export let Types: {
   isList: (t: ValueType) => boolean;
 } & ValueTypes;
@@ -14,6 +13,5 @@ if ((self as any).WorkerGlobalScope) {
   countReferences = desmosRequire("core/math/ir/features/count-references")
     .countReferences as (c: IRChunk) => number[];
   opcodes = desmosRequire("core/math/ir/opcodes") as Opcodes;
-  printOp = desmosRequire("core/math/ir/features/print").printOp;
   Types = desmosRequire("core/math/types");
 }

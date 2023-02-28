@@ -79,6 +79,7 @@ async function load(pluginsForceDisabled: Set<string>) {
   tryRunDesModder();
   // eslint-disable-next-line no-eval
   (0, eval)(newCode);
+  delete (window as any).dsm_workerAppend;
 }
 
 listenToMessageDown((message) => {

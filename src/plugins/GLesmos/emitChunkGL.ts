@@ -1,5 +1,5 @@
 import { getFunctionName, getBuiltin } from "./builtins";
-import { countReferences, opcodes, printOp, Types } from "./opcodeDeps";
+import { countReferences, opcodes, Types } from "./opcodeDeps";
 import {
   compileObject,
   getGLScalarType,
@@ -87,8 +87,7 @@ function getSourceBinOp(
       return b === "(1.0)" ? `${a}.x` : `${a}.y`;
     }
     default: {
-      const op = printOp(ci.type);
-      throw Error(`Programming error: ${op} is not a binary operator`);
+      throw Error(`Programming error: op ${ci.type} is not a binary operator`);
     }
   }
 }
@@ -167,9 +166,8 @@ function getSourceSimple(
     case opcodes.Distribution:
     case opcodes.SymbolicVar:
     case opcodes.SymbolicListVar: {
-      const op = printOp(ci.type);
       throw Error(
-        `Programming Error: expect ${op} to be removed before emitting code.`
+        `Programming Error: expect op ${ci.type} to be removed before emitting code.`
       );
     }
     case opcodes.ListAccess: {
@@ -214,7 +212,7 @@ function getSourceSimple(
     case opcodes.ExtendSeed:
       throw Error("ExtendSeed not yet implemented");
     default:
-      throw Error(`Unexpected opcode: ${printOp(ci.type)}`);
+      throw Error(`Unexpected opcode: ${ci.type}`);
   }
 }
 
