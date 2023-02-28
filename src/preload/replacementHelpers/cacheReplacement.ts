@@ -2,7 +2,7 @@ import { existingPanics } from "../../panic/panic";
 import { applyReplacements } from "./applyReplacement";
 import { Block } from "./parse";
 import { get, set } from "idb-keyval";
-import jsTokens from "js-tokens";
+import jsTokens, { Token } from "js-tokens";
 
 /**
  * Replacements are slow, so we cache the result. We optimize for the common
@@ -49,23 +49,11 @@ function fullReplacement(
   calcDesktop: string,
   workerAppend: string,
   enabledReplacements: Block[]
-) {
-  const newCode = applyReplacements(
-    enabledReplacements.filter((r) => !r.workerOnly),
-    calcDesktop
-  );
-  return applyWorkerReplacements(newCode, workerAppend, enabledReplacements);
-}
-
-function applyWorkerReplacements(
-  src: string,
-  workerAppend: string,
-  enabledReplacements: Block[]
 ): string {
   // Apply replacements to the worker. This could also be done by tweaking the
   // Worker constructor, but currently all of these replacements could be
   // performed outside the main page
-  const tokens = Array.from(jsTokens(src));
+  const tokens = Array.from(jsTokens(calcDesktop));
   const workerCodeTokens = tokens.filter(
     (x) =>
       x.type === "StringLiteral" &&
@@ -76,44 +64,70 @@ function applyWorkerReplacements(
       x.value.includes("&&")
   );
   if (workerCodeTokens.length === 0) {
-    // post-esbuild
-    const wbTokenHead = tokens.find(
-      (x) =>
-        x.type === "TemplateHead" &&
-        x.value.includes("const __sharedModuleFn =")
-    );
-    const wbTokenTail = tokens.find(
-      (x) =>
-        x.type === "TemplateTail" &&
-        x.value.includes("__workerFn(__sharedModuleFn());")
-    );
-    if (wbTokenTail === undefined || wbTokenHead === undefined)
-      throw new Error("Failed to find valid worker builder.");
-    wbTokenHead.value =
-      `function loadDesModderWorker(){${workerAppend}\n}` + wbTokenHead.value;
-    wbTokenTail.value += `\nloadDesModderWorker();`;
+    return newFullReplacement(tokens, workerAppend, enabledReplacements);
   } else if (workerCodeTokens.length === 1) {
-    // pre-esbuild
-    const wcToken = workerCodeTokens[0];
-    const newWorker = applyReplacements(
-      enabledReplacements.filter((r) => r.workerOnly),
-      // JSON.parse doesn't work because this is a single-quoted string.
-      // js-tokens tokenized this as a string anyway, so it should be
-      // safely eval'able to a string.
-      // eslint-disable-next-line no-eval
-      (0, eval)(wcToken.value) as string
-    );
-    wcToken.value = JSON.stringify(
-      // Place at the beginning of the code for the source mapping to line up
-      // Call at the end of the code to run after modules defined
-      `function loadDesModderWorker(){${workerAppend}\n}` +
-        newWorker +
-        "\nloadDesModderWorker();"
+    return oldFullReplacement(
+      tokens,
+      workerAppend,
+      enabledReplacements,
+      workerCodeTokens[0]
     );
   } else {
     throw new Error("More than one worker code found");
   }
-  return tokens.map((x) => x.value).join("");
+}
+
+function newFullReplacement(
+  tokens: Token[],
+  workerAppend: string,
+  enabledReplacements: Block[]
+) {
+  // post-esbuild
+  const wbTokenHead = tokens.find(
+    (x) =>
+      x.type === "TemplateHead" && x.value.includes("const __sharedModuleFn =")
+  );
+  const wbTokenTail = tokens.find(
+    (x) =>
+      x.type === "TemplateTail" &&
+      x.value.includes("__workerFn(__sharedModuleFn());")
+  );
+  if (wbTokenTail === undefined || wbTokenHead === undefined)
+    throw new Error("Failed to find valid worker builder.");
+  wbTokenHead.value =
+    `function loadDesModderWorker(){${workerAppend}\n}` + wbTokenHead.value;
+  wbTokenTail.value += `\nloadDesModderWorker();`;
+  const srcWithWorkerAppend = tokens.map((x) => x.value).join("");
+  return applyReplacements(enabledReplacements, srcWithWorkerAppend);
+}
+
+function oldFullReplacement(
+  tokens: Token[],
+  workerAppend: string,
+  enabledReplacements: Block[],
+  wcToken: Token
+): string {
+  // pre-esbuild
+  const newWorker = applyReplacements(
+    enabledReplacements.filter((r) => r.workerOnly),
+    // JSON.parse doesn't work because this is a single-quoted string.
+    // js-tokens tokenized this as a string anyway, so it should be
+    // safely eval'able to a string.
+    // eslint-disable-next-line no-eval
+    (0, eval)(wcToken.value) as string
+  );
+  wcToken.value = JSON.stringify(
+    // Place at the beginning of the code for the source mapping to line up
+    // Call at the end of the code to run after modules defined
+    `function loadDesModderWorker(){${workerAppend}\n}` +
+      newWorker +
+      "\nloadDesModderWorker();"
+  );
+  const srcWithWorkerReplacements = tokens.map((x) => x.value).join("");
+  return applyReplacements(
+    enabledReplacements.filter((r) => !r.workerOnly),
+    srcWithWorkerReplacements
+  );
 }
 
 // https://github.com/bryc/code/blob/fed42df9db547493452e32375c93d7854383e480/jshash/experimental/cyrb53.js

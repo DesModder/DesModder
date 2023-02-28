@@ -20,6 +20,24 @@ isShowKeypadButtonVisible = function () {
 }
 ```
 
+### Alternative
+
+*module* `graphing-calc/keypads/main`
+
+*Find* => `from`
+
+```js
+isShowKeypadButtonVisible () { return __curr__ }
+```
+
+*Replace* `from` with
+
+```js
+isShowKeypadButtonVisible () {
+  return (__curr__) && !window.DesModder?.controller?.inTextMode?.()
+}
+```
+
 ## Add text mode toggle button
 
 *module* `expressions/expressions-header`
@@ -62,6 +80,64 @@ $DCGView.createElement(
         tooltip: () => DesModder.controller.format("text-mode-toggle"),
         gravity: function() {
           return $this.controller.isNarrow() ? 'n' : 's';
+        }
+      },
+      $DCGView.createElement(
+        'span',
+        {
+          class: $DCGView.const('dcg-icon-btn'),
+          handleEvent: $DCGView.const('true'),
+          role: $DCGView.const('button'),
+          tabindex: $DCGView.const('0'),
+          onTap: () => window.DesModder.controller.toggleTextMode()
+        },
+        $DCGView.createElement('i', {
+          class: $DCGView.const('dcg-icon-title')
+        })
+      )
+    )
+  }
+),
+__children__
+```
+
+### Alternative
+
+*module* `expressions/expressions-header`
+
+*Find* => `element`
+```js
+createElement(
+  'div',
+  { class: $DCGView.const('dcg-right-buttons') },
+  __children__
+)
+```
+
+*Find_surrounding_template* `element` => `template`
+
+*Find* inside `template`
+
+```js
+.createElement($Tooltip
+```
+
+*Replace* `__children__` with
+```js
+$DCGView.createElement(
+  $DCGView.Components.If,
+  {
+    predicate: function() {
+      return window.DesModder?.controller?.isPluginEnabled?.("text-mode") && !this.controller.isInEditListMode(); 
+    }
+  },
+  function() {
+    return $DCGView.createElement(
+      $Tooltip,
+      {
+        tooltip: () => DesModder.controller.format("text-mode-toggle"),
+        gravity: function() {
+          return this.controller.isNarrow() ? 'n' : 's';
         }
       },
       $DCGView.createElement(
