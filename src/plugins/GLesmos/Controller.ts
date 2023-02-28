@@ -1,6 +1,6 @@
 import ViewportTransforms from "./ViewportTransforms";
 import { initGLesmosCanvas, GLesmosCanvas } from "./glesmosCanvas";
-import { GLesmosShaderPackage } from "./shaders";
+import { glesmosError, GLesmosShaderPackage } from "./shaders";
 import { Calc } from "globals/window";
 
 export default class Controller {
@@ -22,21 +22,33 @@ export default class Controller {
     id: string
   ) {
     const deps = compiledGL.deps.join("\n");
-    for (const chunk of compiledGL.chunks) {
-      // outlines will give us problems if we group these
-      try {
-        if (this.canvas?.element) {
-          this.canvas.updateTransforms(transforms);
-          this.canvas?.buildGLesmosShaders(id, deps, chunk);
-          this.canvas?.render();
+
+    try {
+
+      if( !this.canvas?.element )
+        throw glesmosError("WebGL Context Lost!")
+
+      this.canvas.updateTransforms(transforms); // only do this once
+
+      if( compiledGL.hasOutlines ) // no grouping, perf will suffer
+        for (const chunk of compiledGL.chunks) {
+          this.canvas?.buildGLesmosFancy(deps, chunk);
+          this.canvas?.renderFancy();
           ctx.drawImage(this.canvas?.element, 0, 0);
         }
-      } catch (e) {
-        const model = Calc.controller.getItemModel(id);
-        if (model) {
-          model.error = e instanceof Error ? e.message : e;
-        }
+      else {
+        this.canvas?.buildGLesmosFast(deps, compiledGL.chunks);
+        this.canvas?.renderFast();
+        ctx.drawImage(this.canvas?.element, 0, 0);
+      }
+        
+    } catch (e) {
+      const model = Calc.controller.getItemModel(id);
+      if (model) {
+        model.error = e instanceof Error ? e.message : e;
       }
     }
+
+    
   }
 }
