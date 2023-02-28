@@ -77,7 +77,7 @@ list: function () {
 },{
 list: function () {
   return $Dcgview.Components.IfElse(
-    () => window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view"),
+    () => window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view") && window.DesModder?.controller?.pluginSettings.get("better-evaluation-view").lists,
     {
       true: () => $Dcgview.createElement(
         $StaticMathquillView.default,
@@ -122,7 +122,7 @@ rgbcolor: function () {
     $Dcgview.createElement(
       $Dcgview.Components.If,
       {
-        predicate: () => window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view")
+        predicate: () => window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view") && window.DesModder?.controller?.pluginSettings.get("better-evaluation-view").colors && (!Array.isArray($this.props.val()) || (window.DesModder?.controller?.pluginSettings.get("better-evaluation-view").lists && window.DesModder?.controller?.pluginSettings.get("better-evaluation-view").colorLists))
       },
       () => $Dcgview.createElement(
         $StaticMathquillView.default,

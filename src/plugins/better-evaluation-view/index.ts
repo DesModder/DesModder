@@ -1,6 +1,7 @@
 import "./ColorSwatch.less";
 import { Calc } from "globals/window";
 import { Plugin } from "plugins";
+import { configList } from "./config";
 
 const betterEvaluationView: Plugin = {
   id: "better-evaluation-view",
@@ -9,6 +10,10 @@ const betterEvaluationView: Plugin = {
   },
   onDisable: () => {},
   afterDisable: () => {
+    Calc.controller.updateViews();
+  },
+  config: configList,
+  onConfigChange: () => {
     Calc.controller.updateViews();
   },
   enabledByDefault: true,
