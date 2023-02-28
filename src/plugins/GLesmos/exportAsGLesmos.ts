@@ -51,7 +51,7 @@ export function compileGLesmos(
       hasOutlines = true;
     }
     return {
-      hasOutlines: hasOutlines,
+      hasOutlines,
       deps: functionDeps.map(getDefinition),
       chunks: [
         {

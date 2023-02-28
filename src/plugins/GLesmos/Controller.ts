@@ -24,7 +24,7 @@ export default class Controller {
     const deps = compiledGL.deps.join("\n");
 
     try {
-      if (!this.canvas?.element) throw glesmosError("WebGL Context Lost!");
+      if (!this.canvas?.element) glesmosError("WebGL Context Lost!");
 
       this.canvas.updateTransforms(transforms); // only do this once
 
