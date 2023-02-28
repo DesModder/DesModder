@@ -75,24 +75,44 @@ function applyWorkerReplacements(
       // improvements in minification.
       x.value.includes("&&")
   );
-  if (workerCodeTokens.length > 1)
+  if (workerCodeTokens.length === 0) {
+    // post-esbuild
+    const wbTokenHead = tokens.find(
+      (x) =>
+        x.type === "TemplateHead" &&
+        x.value.includes("const __sharedModuleFn =")
+    );
+    const wbTokenTail = tokens.find(
+      (x) =>
+        x.type === "TemplateTail" &&
+        x.value.includes("__workerFn(__sharedModuleFn());")
+    );
+    if (wbTokenTail === undefined || wbTokenHead === undefined)
+      throw new Error("Failed to find valid worker builder.");
+    wbTokenHead.value =
+      `function loadDesModderWorker(){${workerAppend}\n}` + wbTokenHead.value;
+    wbTokenTail.value += `\nloadDesModderWorker();`;
+  } else if (workerCodeTokens.length === 1) {
+    // pre-esbuild
+    const wcToken = workerCodeTokens[0];
+    const newWorker = applyReplacements(
+      enabledReplacements.filter((r) => r.workerOnly),
+      // JSON.parse doesn't work because this is a single-quoted string.
+      // js-tokens tokenized this as a string anyway, so it should be
+      // safely eval'able to a string.
+      // eslint-disable-next-line no-eval
+      (0, eval)(wcToken.value) as string
+    );
+    wcToken.value = JSON.stringify(
+      // Place at the beginning of the code for the source mapping to line up
+      // Call at the end of the code to run after modules defined
+      `function loadDesModderWorker(){${workerAppend}\n}` +
+        newWorker +
+        "\nloadDesModderWorker();"
+    );
+  } else {
     throw new Error("More than one worker code found");
-  const wcToken = workerCodeTokens[0];
-  const newWorker = applyReplacements(
-    enabledReplacements.filter((r) => r.workerOnly),
-    // JSON.parse doesn't work because this is a single-quoted string.
-    // js-tokens tokenized this as a string anyway, so it should be
-    // safely eval'able to a string.
-    // eslint-disable-next-line no-eval
-    (0, eval)(wcToken.value) as string
-  );
-  wcToken.value = JSON.stringify(
-    // Place at the beginning of the code for the source mapping to line up
-    // Call at the end of the code to run after modules defined
-    `function loadDesModderWorker(){${workerAppend}\n}` +
-      newWorker +
-      "\nloadDesModderWorker();"
-  );
+  }
   return tokens.map((x) => x.value).join("");
 }
 
