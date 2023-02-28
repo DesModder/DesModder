@@ -507,8 +507,7 @@ export function glesmosGetFastFillShader(
       ${colorCalls}
     }
   `;
-  (window as any).shadersrc = source;
-
+  
   const shader = getShaderProgram(gl, VERTEX_SHADER, source);
 
   return shader;
