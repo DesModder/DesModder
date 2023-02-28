@@ -1,5 +1,5 @@
-import { ClassComponent } from "DCGView";
-import { Calc, desmosRequire } from "globals/window";
+import { ClassComponent, DCGView } from "DCGView";
+import { Calc, desmosRequire, Fragile } from "globals/window";
 
 abstract class CheckboxComponent extends ClassComponent<{
   checked: boolean;
@@ -9,9 +9,8 @@ abstract class CheckboxComponent extends ClassComponent<{
   onChange: (checked: boolean) => void;
 }> {}
 
-export const Checkbox: typeof CheckboxComponent = desmosRequire(
-  "dcgview-helpers/checkbox"
-).Checkbox;
+export const Checkbox: typeof CheckboxComponent =
+  Fragile.Checkbox ?? desmosRequire("dcgview-helpers/checkbox").Checkbox;
 
 abstract class SegmentedControlComponent extends ClassComponent<{
   ariaGroupLabel: string;
@@ -33,6 +32,7 @@ abstract class SegmentedControlComponent extends ClassComponent<{
 }> {}
 
 export const DesmosSegmentedControl: typeof SegmentedControlComponent =
+  Fragile.SegmentedControl ??
   desmosRequire("dcgview-helpers/segmented-control").SegmentedControl;
 
 interface MathQuillField {
@@ -59,7 +59,9 @@ abstract class MathQuillViewComponent extends ClassComponent<{
 export const MathQuillView: typeof MathQuillViewComponent & {
   // static abstract getFocusedMathquill()
   getFocusedMathquill: () => MathQuillField;
-} = desmosRequire("dcgview-helpers/mathquill-view").default;
+} =
+  Fragile.MathquillView ??
+  desmosRequire("dcgview-helpers/mathquill-view").default;
 
 abstract class InlineMathInputViewComponent extends ClassComponent<{
   latex: string;
@@ -82,6 +84,7 @@ abstract class InlineMathInputViewComponent extends ClassComponent<{
 
 /** General InlineMathInputView, without any defaults filled in */
 export const InlineMathInputViewGeneral: typeof InlineMathInputViewComponent =
+  Fragile.InlineMathInputView ??
   desmosRequire("expressions/inline-math-input-view").InlineMathInputView;
 
 abstract class ForComponent<T> extends ClassComponent<{
@@ -103,7 +106,7 @@ export const {
   Switch,
   SwitchUnion,
   Textarea,
-} = desmosRequire("dcgview").Components as {
+} = DCGView.Components as {
   For: typeof ForComponent;
   If: typeof ClassComponent;
   IfElse: (p: () => boolean, v: IfElseSecondParam) => typeof ClassComponent;
@@ -121,6 +124,7 @@ abstract class DStaticMathquillViewComponent extends ClassComponent<{
 }> {}
 
 export const DStaticMathquillView: typeof DStaticMathquillViewComponent =
+  Fragile.StaticMathquillView ??
   desmosRequire("dcgview-helpers/static-mathquill-view").default;
 
 abstract class TooltipComponent extends ClassComponent<{
@@ -128,6 +132,5 @@ abstract class TooltipComponent extends ClassComponent<{
   gravity?: "n" | "e" | "s" | "w";
 }> {}
 
-export const Tooltip: typeof TooltipComponent = desmosRequire(
-  "shared-components/tooltip"
-).Tooltip;
+export const Tooltip: typeof TooltipComponent =
+  Fragile.Tooltip ?? desmosRequire("shared-components/tooltip").Tooltip;

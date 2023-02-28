@@ -94,9 +94,13 @@ function newFullReplacement(
   );
   if (wbTokenTail === undefined || wbTokenHead === undefined)
     throw new Error("Failed to find valid worker builder.");
+  (window as any).dsm_workerAppend = workerAppend;
   wbTokenHead.value =
-    `function loadDesModderWorker(){${workerAppend}\n}` + wbTokenHead.value;
-  wbTokenTail.value += `\nloadDesModderWorker();`;
+    // eslint-disable-next-line no-template-curly-in-string
+    "`function loadDesModderWorker(){${window.dsm_workerAppend}}" +
+    wbTokenHead.value.slice(1);
+  wbTokenTail.value =
+    wbTokenTail.value.slice(0, -1) + "\n loadDesModderWorker();`";
   const srcWithWorkerAppend = tokens.map((x) => x.value).join("");
   return applyReplacements(enabledReplacements, srcWithWorkerAppend);
 }

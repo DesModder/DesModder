@@ -165,7 +165,7 @@ $DCGView.createElement(
     each: function () {
       return window.DesModder?.controller?.isTextMode?.()
         ? [] 
-        : this.controller.getAllItemModels();
+        : this.controller?.getAllItemModels?.() ?? [];
     },
     key: function (e) {
       return e.guid;
@@ -224,7 +224,16 @@ $DCGView.createElement(
 __init__
 
 {
-  const dcgview = require("dcgview");
+  const dcgview = new Proxy(
+    {},
+    {
+      get(_target, prop) {
+        if (window.Desmos?.Private === undefined) return undefined;
+        const d = window.Desmos?.Private?.Fragile?.DCGView ?? require("dcgview");
+        return d[prop];
+      },
+    }
+  );
 
   function overrideCreateElement(className, repl) {
     const oldCreateElement = dcgview.createElement;
@@ -279,22 +288,35 @@ __init__
 
 
 {
-  // Reduce suggested slider count to 3
-  // Avoids overflowing on narrow expression lists since we've added the "hide" button.
-  // getMissingVariables is used in different ways, but we care about
-  //    t.getMissingVariables().slice(0, 4)
-  const proto = require("expressions/promptslider_view").default.prototype;
-  const oldGMV = proto.getMissingVariables;
-  proto.getMissingVariables = function() {
-    const missing = oldGMV.call(this);
-    missing.slice = function() {
-      if (arguments.length === 2 && arguments[0] === 0 && arguments[1] === 4) {
-        return Array.prototype.slice.call(missing, 0, 3);
-      } else {
-        return Array.prototype.slice.apply(missing, arguments)
+  function initPromptSlider() {
+    // Reduce suggested slider count to 3
+    // Avoids overflowing on narrow expression lists since we've added the "hide" button.
+    // getMissingVariables is used in different ways, but we care about
+    //    t.getMissingVariables().slice(0, 4)
+    const proto = window.Desmos?.Private?.Fragile?.promptSliderView?.prototype ??
+      require("expressions/promptslider_view").default.prototype;
+    const oldGMV = proto.getMissingVariables;
+    proto.getMissingVariables = function() {
+      const missing = oldGMV.call(this);
+      missing.slice = function() {
+        if (arguments.length === 2 && arguments[0] === 0 && arguments[1] === 4) {
+          return Array.prototype.slice.call(missing, 0, 3);
+        } else {
+          return Array.prototype.slice.apply(missing, arguments)
+        }
       }
+      return missing;
     }
-    return missing;
   }
+
+  function tryInitPromptSlider() {
+    try {
+      initPromptSlider();
+    } catch {
+      setTimeout(tryInitPromptSlider, 10);
+    }
+  }
+
+  tryInitPromptSlider();
 }
 ```

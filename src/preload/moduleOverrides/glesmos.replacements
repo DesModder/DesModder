@@ -279,7 +279,7 @@ for (const branch of $t.sketch.branches) {
 
 ```js
 drawSketchToCtx({
-  sketch: $e, ctx: $t, projection: $i, poiLabelsLayer: $n,
+  sketch: $sketch, ctx: $t, projection: $i, poiLabelsLayer: $n,
   clickableObjectsLayer: $o, geometryContext: $a, showMovablePoints: $l
 }) {__body__}
 ```
@@ -294,7 +294,7 @@ if (!$ee.branches || !$ee.branches.length) return;
 
 ```js
 __guard__
-for (const branch of $t.sketch.branches) {
+for (const branch of $sketch.branches) {
   if (branch.graphMode === "GLesmos") {
     window.DesModder?.controller?.exposedPlugins[
       "GLesmos"

@@ -1,3 +1,4 @@
+import { AbstractItem, List } from "../utils/depUtils";
 import View from "./View";
 import GraphMetadata, {
   Expression as MetadataExpression,
@@ -10,7 +11,7 @@ import {
 } from "./metadata/manage";
 import { MenuFunc } from "components/Menu";
 import { ItemModel } from "globals/models";
-import window, { Calc, desmosRequire } from "globals/window";
+import window, { Calc } from "globals/window";
 import { format } from "i18n/i18n-core";
 import { plugins, pluginList, PluginID, GenericSettings } from "plugins";
 import {
@@ -20,9 +21,6 @@ import {
   recordToMap,
 } from "utils/messages";
 import { OptionalProperties } from "utils/utils";
-
-const AbstractItem = desmosRequire("graphing-calc/models/abstract-item");
-const List = desmosRequire("graphing-calc/models/list");
 
 interface PillboxButton {
   id: string;

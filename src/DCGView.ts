@@ -1,6 +1,7 @@
-import { desmosRequire } from "globals/window";
+import { desmosRequire, Fragile } from "globals/window";
 
-const DCGView = desmosRequire("dcgview") as DCGViewModule;
+export const DCGView =
+  Fragile.DCGView ?? (desmosRequire("dcgview") as DCGViewModule);
 
 type OrConst<T> = {
   [K in keyof T]: T[K] extends Function ? T[K] : T[K] | (() => T[K]);
