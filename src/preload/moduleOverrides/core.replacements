@@ -204,7 +204,7 @@ $DCGView.createElement(
 )
 ```
 
-## Create Element Replacements
+## Reduce suggested slider count to 3
 
 *Module* `final-load`
 
@@ -216,70 +216,6 @@ $DCGView.createElement(
 *Replace* `init` with
 ```js
 __init__
-
-{
-  const dcgview = new Proxy(
-    {},
-    {
-      get(_target, prop) {
-        if (window.Desmos?.Private === undefined) return undefined;
-        const d = window.Desmos?.Private?.Fragile?.DCGView ?? require("dcgview");
-        return d[prop];
-      },
-    }
-  );
-
-  function overrideCreateElement(className, repl) {
-    const oldCreateElement = dcgview.createElement;
-    dcgview.createElement = function (_, opts) {
-      let c;
-      if (
-        typeof opts === "object" &&
-        opts !== null &&
-        "class" in opts &&
-        typeof opts.class === "function" &&
-        ((c = opts.class()),
-        typeof c === "object"
-          ? c[className]
-          : typeof c === "string" && c === className)
-      ) {
-        return repl(arguments, oldCreateElement);
-      } else return oldCreateElement(...arguments);
-    };
-  }
-
-  // TODO: Uncaught Error: Cannot remount a DCGElement
-  //    may be related to computing args unconditionally
-  // but this code is not actually necessary; just saves performance from
-  // rendering mathquill
-  // // Hide dcg-exppanel when in text mode
-  // overrideCreateElement("dcg-exppanel", (args, oldCreateElement) =>
-  //   oldCreateElement(
-  //     dcgview.Components.If,
-  //     {
-  //       predicate: () => !window.DesModder?.controller?.inTextMode?.(),
-  //     },
-  //     () => oldCreateElement(...args)
-  //   )
-  // );
-
-  // Replace branding for show tips
-  overrideCreateElement("dcg-expressions-branding", (args, oldCreateElement) =>
-    oldCreateElement(
-      ...args,
-      oldCreateElement(
-        dcgview.Components.If,
-        {
-          predicate: () =>
-            window.DesModder?.controller?.isPluginEnabled?.("show-tips"),
-        },
-        () => window.DesModder?.view?.createTipElement()
-      )
-    )
-  );
-
-}
-
 
 {
   function initPromptSlider() {

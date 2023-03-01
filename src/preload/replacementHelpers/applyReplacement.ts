@@ -226,10 +226,16 @@ function blockReplacements(
       throw new ReplacementError(
         `*replace* command missing a pattern argument.`
       );
+    // skipFirst = this is just an append
+    const skipFirst =
+      (command.patternArg[0].type === "PatternBalanced" ||
+        command.patternArg[0].type === "PatternIdentifier") &&
+      symbolName(command.patternArg[0].value) === symbolName(command.args[0]);
+    const from = table.getRequired(prefix + command.args[0]);
     const res: Replacement = {
       heading: r.heading,
-      from: table.getRequired(prefix + command.args[0]),
-      to: command.patternArg.flatMap((token) => {
+      from: skipFirst ? { start: from.start + from.length, length: 0 } : from,
+      to: command.patternArg.slice(skipFirst ? 1 : 0).flatMap((token) => {
         if (
           token.type === "PatternBalanced" ||
           token.type === "PatternIdentifier"
