@@ -1,7 +1,7 @@
 import "./ColorSwatch.less";
+import { configList } from "./config";
 import { Calc } from "globals/window";
 import { Plugin } from "plugins";
-import { configList } from "./config";
 
 const betterEvaluationView: Plugin = {
   id: "better-evaluation-view",
