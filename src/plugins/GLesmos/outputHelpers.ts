@@ -1,5 +1,5 @@
 import getRGBPack from "./colorParsing";
-import { Types } from "./opcodeDeps";
+import { Types } from "./workerDeps";
 import { ValueType } from "parsing/IR";
 import { evalMaybeRational } from "parsing/parsenode";
 
