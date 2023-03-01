@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/method-signature-style */
+import betterEvaluationView from "./better-evaluation-view";
 import GLesmos from "plugins/GLesmos";
 import builtinSettings from "plugins/builtin-settings";
 import debugMode from "plugins/debug-mode";
@@ -65,6 +66,7 @@ export interface Plugin<Settings extends GenericSettings = {}> {
 
 export const pluginList: Plugin[] = [
   builtinSettings,
+  betterEvaluationView,
   setPrimaryColor,
   wolfram2desmos,
   pinExpressions,

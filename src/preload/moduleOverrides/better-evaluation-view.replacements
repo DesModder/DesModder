@@ -1,0 +1,218 @@
+# Better Evaluation View Replacements
+
+*plugin* `better-evaluation-view`
+
+## Override evaluation view
+
+*Module* `expressions/evaluation-view`
+
+Bindings
+
+*Find*
+```js
+fraction: function() {
+  return $Dcgview.createElement($StaticMathquillView.default, {latex
+```
+
+*Find*
+```js
+count: $this.props.val().length
+```
+
+*Find*
+```js
+$Label.numericLabel($, $)
+```
+
+Show exposed undefined values
+
+*Find* => `undefined`
+```js
+undefined: function () {
+  return $.createElement(
+    'span',
+    null,
+    $.const("undefined")
+  )
+}
+```
+
+*Replace* `undefined` with
+```js
+undefined: function() {
+  return $Dcgview.Components.IfElse(
+    () => window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view"),
+    {
+      true: () => $Dcgview.createElement(
+        $StaticMathquillView.default,
+        {
+          latex: function() {
+            return $this.getNumberLabel().value
+          },
+          config: $Dcgview.const({})
+        }
+      ),
+      false: () => $Dcgview.createElement(
+        "span",
+        null,
+        $Dcgview.const("undefined")
+      )
+    }
+  )
+}
+```
+
+Show list elements
+
+*Find* => `list`
+```js
+},{
+list: function () {
+  return $.createElement(__oldList__)
+}
+```
+
+*Replace* `list` with
+```js
+},{
+list: function () {
+  return $Dcgview.Components.IfElse(
+    () => window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view") && window.DesModder?.controller?.pluginSettings.get("better-evaluation-view").lists,
+    {
+      true: () => $Dcgview.createElement(
+        $StaticMathquillView.default,
+        {
+          latex: function() {
+            let values = $this.props.val()
+            let labelOptions = {
+              smallCutoff: 0.00001,
+              bigCutoff: 1000000,
+              digits: 5,
+              displayAsFraction: false
+            }
+            let length = 10
+            let labels = values.slice(0,length).map(e=>$Label.truncatedLatexLabel(e,labelOptions))
+            return "\\left[" + labels.join(",") + (values.length > length ? `\\textcolor{gray}{...\\mathit{${values.length - length}\\ more}}` : "") + "\\right]"
+          },
+          config: $Dcgview.const({})
+        }
+      ),
+      false: () => $Dcgview.createElement(__oldList__)
+    }
+  )
+}
+```
+
+Show color values
+*Find* => `color`
+```js
+rgbcolor: function () {
+  return $.createElement(__swatch__)
+}
+```
+
+*Replace* `color` with
+```js
+rgbcolor: function () {
+  return $Dcgview.createElement(
+    "div",
+    {
+      class: $Dcgview.const("dsm-color-container")
+    },
+    $Dcgview.createElement(
+      $Dcgview.Components.If,
+      {
+        predicate: () => {
+          let isEnabled = window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view")
+          let pluginSettings = window.DesModder?.controller?.pluginSettings.get("better-evaluation-view")
+          let isArray = Array.isArray($this.props.val())
+          return isEnabled && pluginSettings.colors && (!isArray || pluginSettings.lists && pluginSettings.colorLists)
+        }
+      },
+      () => $Dcgview.createElement(
+        $StaticMathquillView.default,
+        {
+          latex: function() {
+            let color = $this.props.val()
+            // https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+            function rgb(hex) {
+              let result = /^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+              return [
+                parseInt(result[1], 16),
+                parseInt(result[2], 16),
+                parseInt(result[3], 16)
+              ]
+            }
+            let length = 3
+            if (Array.isArray(color)) {
+              color = color.map(rgb)
+              return "\\operatorname{rgb}\\left(\\left[" + color.slice(0,length).map(c=>`\\left(${c.join(",")}\\right)`).join(",") + (color.length > length ? `\\textcolor{gray}{...\\mathit{${color.length - length}\\ more}}` : "") + "\\right]\\right)"
+            } else {
+              color = rgb(color)
+              return "\\operatorname{rgb}\\left(" + color.join(",") + "\\right)"
+            }
+          },
+          config: $Dcgview.const({})
+        }
+      )
+    ),
+    $Dcgview.createElement(__swatch__)
+  )
+}
+```
+
+## Return more info from numericLabels
+
+*Module* `core/lib/label`
+
+Add a value field to "undefined" labels
+
+*Find* => `undefined`
+```js
+if ($options = $options || {}, isNaN($val) || !isFinite($val)) return { type: "undefined" }
+```
+
+*Replace* `undefined` with
+```js
+if ($options = $options || {}, isNaN($val) || !isFinite($val)) return { type: "undefined", value: isNaN($val) ? "\\mathrm{NaN}" : $val === Infinity ? "\\infty" : $val === -Infinity ? "-\\infty" : "undefined"}
+```
+
+Distinguish between 0 and -0
+
+*Find* => `zero`
+```js
+if (0 === $ || $.zeroCutoff && Math.abs($) < $.zeroCutoff)
+  return {
+    type: 'decimal',
+    value: '0'
+  }
+```
+
+*Replace* `zero` with
+```js
+if (0 === $val) {
+  if (!window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view") || Object.is($val, 0)) {
+    return {
+      type: "decimal",
+      value: "0"
+    }
+  } else {
+    return {
+      type: "decimal",
+      value: "-0"
+    }
+  }
+} else if ($options.zeroCutoff && Math.abs($val) < $options.zeroCutoff) {
+  if (!window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view") || Math.sign($val) === 1) {
+    return {
+      type: "decimal",
+      value: "0"
+    }
+  } else {
+    return {
+      type: "decimal",
+      value: "-0"
+    }
+  }
+}
+```
