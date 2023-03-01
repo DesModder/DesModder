@@ -8,6 +8,7 @@ export function glesmosError(msg: string): never {
 export interface GLesmosShaderPackage {
   deps: string[];
   chunks: GLesmosShaderChunk[];
+  hasOutlines: boolean;
 }
 
 export interface GLesmosShaderChunk {
@@ -73,8 +74,7 @@ function compileShader(
 function buildShaderProgram(
   gl: WebGL2RenderingContext,
   vert: string,
-  frag: string,
-  _id: string
+  frag: string
 ) {
   const shaderProgram = gl.createProgram();
   if (shaderProgram === null) {
@@ -95,20 +95,18 @@ function buildShaderProgram(
 const shaderCache = new Map<string, GLesmosProgram>();
 function getShaderProgram(
   gl: WebGL2RenderingContext,
-  id: string,
   vertexSource: string,
   fragmentSource: string
 ) {
-  const key = vertexSource + fragmentSource; // TODO: this is terrible
-  const cachedShader = shaderCache.get(key);
+  const key = vertexSource + fragmentSource;
+  const cachedShader = shaderCache.get(key); // TODO: hashing this whole thing is probably slow
 
   if (cachedShader) return cachedShader;
 
   const shaderProgram = buildShaderProgram(
     gl,
     vertexSource,
-    fragmentSource,
-    id
+    fragmentSource
   ) as GLesmosProgram;
 
   shaderProgram.vertexAttribPos = gl.getAttribLocation(
@@ -183,7 +181,6 @@ export const GLESMOS_SHARED = `
 
 export function glesmosGetCacheShader(
   gl: WebGL2RenderingContext,
-  id: string,
   chunk: GLesmosShaderChunk,
   deps: string
 ): GLesmosProgram {
@@ -203,7 +200,7 @@ export function glesmosGetCacheShader(
     }
   `;
 
-  const shader = getShaderProgram(gl, id, VERTEX_SHADER, source);
+  const shader = getShaderProgram(gl, VERTEX_SHADER, source);
 
   // TODO: set some uniforms here
 
@@ -212,7 +209,6 @@ export function glesmosGetCacheShader(
 
 export function glesmosGetSDFShader(
   gl: WebGL2RenderingContext,
-  id: string,
   chunk: GLesmosShaderChunk,
   deps: string
 ): GLesmosProgram {
@@ -428,14 +424,13 @@ export function glesmosGetSDFShader(
 
     //============== END Shadertoy Buffer A ==============//
   `;
-  const shader = getShaderProgram(gl, id, VERTEX_SHADER, source);
+  const shader = getShaderProgram(gl, VERTEX_SHADER, source);
 
   return shader;
 }
 
 export function glesmosGetFinalPassShader(
   gl: WebGL2RenderingContext,
-  id: string,
   chunk: GLesmosShaderChunk
 ): GLesmosProgram {
   const source = `${GLESMOS_ENVIRONMENT}
@@ -474,10 +469,47 @@ export function glesmosGetFinalPassShader(
     }
   `;
 
-  const shader = getShaderProgram(gl, id, VERTEX_SHADER, source);
+  const shader = getShaderProgram(gl, VERTEX_SHADER, source);
   gl.useProgram(shader);
   setUniform(gl, shader, "iDoOutlines", "1i", chunk.line_width > 0 ? 1 : 0);
   setUniform(gl, shader, "iDoFill", "1i", chunk.fill ? 1 : 0);
+
+  return shader;
+}
+
+export function glesmosGetFastFillShader(
+  gl: WebGL2RenderingContext,
+  chunks: GLesmosShaderChunk[],
+  deps: string
+): GLesmosProgram {
+  // prettier-ignore
+  const mains = chunks.map((chunk, id) => {
+    return `float f_xy_${id}(float x, float y){
+      ${chunk.main}
+    }`;
+  }).join("\n");
+
+  // prettier-ignore
+  const colorCalls = chunks.map((chunk, id) => {
+    return `if( f_xy_${id}( mathCoord.x, mathCoord.y ) > 0.0 ){
+      outColor = mixColor(outColor, ${chunk.color});
+    }`;
+  }).join("\n");
+
+  const source = `${GLESMOS_ENVIRONMENT}
+    ${GLESMOS_SHARED}
+
+    ${deps}
+
+    ${mains}
+
+    void main(){
+      vec2 mathCoord = texCoord * graphSize + graphCorner;
+      ${colorCalls}
+    }
+  `;
+
+  const shader = getShaderProgram(gl, VERTEX_SHADER, source);
 
   return shader;
 }

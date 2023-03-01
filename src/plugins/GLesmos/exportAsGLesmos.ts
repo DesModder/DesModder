@@ -42,14 +42,16 @@ export function compileGLesmos(
     // default values for if there should be no dx, dy
     let dxsource = "return 0.0;";
     let dysource = "return 0.0;";
-    if (lineWidth > 0 && derivativeX && derivativeY) {
+    let hasOutlines = false;
+    if (lineWidth > 0 && lineOpacity > 0 && derivativeX && derivativeY) {
       ({ source: dxsource, deps } = emitChunkGL(derivativeX._chunk));
       deps.forEach((d) => accDeps(functionDeps, d));
       ({ source: dysource, deps } = emitChunkGL(derivativeY._chunk));
       deps.forEach((d) => accDeps(functionDeps, d));
+      hasOutlines = true;
     }
-
     return {
+      hasOutlines,
       deps: functionDeps.map(getDefinition),
       chunks: [
         {
