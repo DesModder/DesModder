@@ -216,3 +216,21 @@ if (0 === $val) {
   }
 }
 ```
+
+*Find* => `truncatedLatexLabel`
+```js
+.truncatedLatexLabel = function ($num, $opts) {
+  var $result = $numericLabel($num, $opts);
+  switch ($result.type) {
+    case 'undefined':
+      return 'undefined'
+```
+
+*Replace* `truncatedLatexLabel` with
+```js
+.truncatedLatexLabel = function ($num, $opts) {
+  var $result = $numericLabel($num, $opts);
+  switch ($result.type) {
+    case 'undefined':
+      return window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view") ? $result.value : 'undefined'
+```
