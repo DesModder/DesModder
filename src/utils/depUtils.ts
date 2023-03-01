@@ -77,6 +77,4 @@ export function getCurrentGraphTitle(): string | undefined {
   return Calc._calc.globalHotkeys?.graphsController?.getCurrentGraphTitle();
 }
 
-export const AbstractItem =
-  Fragile.AbstractItem ?? desmosRequire("graphing-calc/models/abstract-item");
 export const List = Fragile.List ?? desmosRequire("graphing-calc/models/list");
