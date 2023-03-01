@@ -14,6 +14,7 @@ export async function fullReplacementCached(
   workerAppend: string,
   enabledReplacements: Block[]
 ): Promise<string> {
+  (window as any).dsm_workerAppend = workerAppend;
   const k = "replacement_cached";
   const cached = await get(k);
   const hashRepls = cyrb53(JSON.stringify(enabledReplacements));
@@ -64,7 +65,7 @@ function fullReplacement(
       x.value.includes("&&")
   );
   if (workerCodeTokens.length === 0) {
-    return newFullReplacement(tokens, workerAppend, enabledReplacements);
+    return newFullReplacement(tokens, enabledReplacements);
   } else if (workerCodeTokens.length === 1) {
     return oldFullReplacement(
       tokens,
@@ -77,11 +78,7 @@ function fullReplacement(
   }
 }
 
-function newFullReplacement(
-  tokens: Token[],
-  workerAppend: string,
-  enabledReplacements: Block[]
-) {
+function newFullReplacement(tokens: Token[], enabledReplacements: Block[]) {
   // post-esbuild
   const wbTokenHead = tokens.find(
     (x) =>
@@ -94,7 +91,6 @@ function newFullReplacement(
   );
   if (wbTokenTail === undefined || wbTokenHead === undefined)
     throw new Error("Failed to find valid worker builder.");
-  (window as any).dsm_workerAppend = workerAppend;
   wbTokenHead.value =
     // eslint-disable-next-line no-template-curly-in-string
     "`function loadDesModderWorker(){${window.dsm_workerAppend}}" +

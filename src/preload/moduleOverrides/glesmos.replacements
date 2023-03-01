@@ -109,7 +109,8 @@ createElement(
 
 *Find* inside `template`
 ```js
-createElement($ToggleView
+createElement($ToggleView, {
+  ariaLabel: () => this.controller.s("graphing-calculator-narration-fill-visible")
 ```
 
 Just add one more child.
@@ -215,7 +216,8 @@ createElement(
 
 *Find* inside `template`
 ```js
-createElement($ToggleView
+createElement($ToggleView, {
+  ariaLabel: () => this.controller.s("graphing-calculator-narration-lines-visible")
 ```
 
 Just add one more child.
@@ -279,7 +281,7 @@ for (const branch of $t.sketch.branches) {
 
 ```js
 drawSketchToCtx({
-  sketch: $sketch, ctx: $t, projection: $i, poiLabelsLayer: $n,
+  sketch: $sketch, ctx: $ctx, projection: $projection, poiLabelsLayer: $n,
   clickableObjectsLayer: $o, geometryContext: $a, showMovablePoints: $l
 }) {__body__}
 ```
@@ -298,7 +300,7 @@ for (const branch of $sketch.branches) {
   if (branch.graphMode === "GLesmos") {
     window.DesModder?.controller?.exposedPlugins[
       "GLesmos"
-    ]?.drawGlesmosSketchToCtx?.(branch.compiledGL, $t.ctx, $t.projection, $t.sketch.id);
+    ]?.drawGlesmosSketchToCtx?.(branch.compiledGL, $ctx, $projection, $sketch.id);
   }
 }
 ```

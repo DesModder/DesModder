@@ -198,7 +198,6 @@ $DCGView.createElement(
 
 ### Alternative
 
-
 *module* `expressions/promptslider_view`
 
 *Find* => `element`
@@ -254,7 +253,7 @@ shouldShowSliderPrompt = function () {
 
 *Replace* `__ret__` with
 ```js
-__ret__ && !window.DesModder?.controller.isErrorHidden(this.model?.id)
+(__ret__) && !window.DesModder?.controller.isErrorHidden(this.model?.id)
 ```
 
 ### Alternative
@@ -270,7 +269,7 @@ shouldShowSliderPrompt() {
 
 *Replace* `__ret__` with
 ```js
-__ret__ && !window.DesModder?.controller.isErrorHidden(this.model?.id)
+(__ret__) && !window.DesModder?.controller.isErrorHidden(this.model?.id)
 ```
 
 ## Allow shift-enter to create a new expression and hide errors on the old expression

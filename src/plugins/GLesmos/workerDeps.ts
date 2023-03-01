@@ -15,7 +15,6 @@ const _self = self as any;
 // Rather than fix the root cause, just check if we're in the worker
 if (_self.WorkerGlobalScope) {
   const Fragile = _self.Fragile;
-  console.log(Fragile);
   const desmosRequire = _self.require;
   countReferences =
     Fragile?.countReferences ??

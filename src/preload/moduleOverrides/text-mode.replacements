@@ -119,7 +119,8 @@ createElement(
 *Find* inside `template`
 
 ```js
-.createElement($Tooltip
+.createElement($Tooltip, {
+  tooltip: () => this.controller.s("graphing-calculator-label-edit-list-tooltip")
 ```
 
 *Replace* `__children__` with
@@ -127,18 +128,14 @@ createElement(
 $DCGView.createElement(
   $DCGView.Components.If,
   {
-    predicate: function() {
-      return window.DesModder?.controller?.isPluginEnabled?.("text-mode") && !this.controller.isInEditListMode(); 
-    }
+    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("text-mode") &&
+      !this.controller.isInEditListMode()
   },
-  function() {
-    return $DCGView.createElement(
+  () => $DCGView.createElement(
       $Tooltip,
       {
         tooltip: () => DesModder.controller.format("text-mode-toggle"),
-        gravity: function() {
-          return this.controller.isNarrow() ? 'n' : 's';
-        }
+        gravity: () => this.controller.isNarrow() ? 'n' : 's'
       },
       $DCGView.createElement(
         'span',
@@ -154,7 +151,6 @@ $DCGView.createElement(
         })
       )
     )
-  }
 ),
 __children__
 ```

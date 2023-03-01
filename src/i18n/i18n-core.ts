@@ -1,12 +1,14 @@
 import enFTL from "../../localization/en.ftl";
 import { FluentBundle, FluentResource, FluentVariable } from "@fluent/bundle";
-import { desmosRequire } from "globals/window";
+import { desmosRequire, Fragile } from "globals/window";
 
 interface Intl {
   currentLanguage: () => string;
 }
 let i18nCore: Intl | null = null;
 function currentLanguage() {
+  const fcl = Fragile?.currentLanguage?.();
+  if (fcl) return fcl;
   // defend against currentLanguage being used before Desmos loaded, e.g.
   // for showing panic messages
   if (i18nCore === null) {

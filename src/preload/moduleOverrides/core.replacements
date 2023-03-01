@@ -162,14 +162,10 @@ __children__,
 $DCGView.createElement(
   $DCGView.Components.For,
   {
-    each: function () {
-      return window.DesModder?.controller?.isTextMode?.()
+    each: () => window.DesModder?.controller?.isTextMode?.()
         ? [] 
-        : this.controller?.getAllItemModels?.() ?? [];
-    },
-    key: function (e) {
-      return e.guid;
-    }
+        : this.controller?.getAllItemModels?.() ?? [],
+    key: e => e.guid
   },
   $DCGView.createElement(
     "div",
@@ -179,8 +175,7 @@ $DCGView.createElement(
         background: this.controller.getBackgroundColor()
       })
     },
-    function (t) {
-      return $DCGView.createElement(
+    t => $DCGView.createElement(
         $DCGView.Components.If,
         {
           predicate: () => window.DesModder?.controller?.isExpressionPinned(t.id)
@@ -190,7 +185,6 @@ $DCGView.createElement(
         // to the bottom, it shouldn't cause all expressions to render from the top)
         () => this.makeDragCopyViewForModel(t)
       )
-    }
   )
 ),
 // text mode panel
@@ -293,7 +287,7 @@ __init__
     // Avoids overflowing on narrow expression lists since we've added the "hide" button.
     // getMissingVariables is used in different ways, but we care about
     //    t.getMissingVariables().slice(0, 4)
-    const proto = window.Desmos?.Private?.Fragile?.promptSliderView?.prototype ??
+    const proto = window.Desmos?.Private?.Fragile?.PromptSliderView?.prototype ??
       require("expressions/promptslider_view").default.prototype;
     const oldGMV = proto.getMissingVariables;
     proto.getMissingVariables = function() {
