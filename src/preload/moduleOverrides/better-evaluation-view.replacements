@@ -122,7 +122,12 @@ rgbcolor: function () {
     $Dcgview.createElement(
       $Dcgview.Components.If,
       {
-        predicate: () => window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view") && window.DesModder?.controller?.pluginSettings.get("better-evaluation-view").colors && (!Array.isArray($this.props.val()) || (window.DesModder?.controller?.pluginSettings.get("better-evaluation-view").lists && window.DesModder?.controller?.pluginSettings.get("better-evaluation-view").colorLists))
+        predicate: () => {
+          let isEnabled = window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view")
+          let pluginSettings = window.DesModder?.controller?.pluginSettings.get("better-evaluation-view")
+          let isArray = Array.isArray($this.props.val())
+          return isEnabled && pluginSettings.colors && (!isArray || pluginSettings.lists && pluginSettings.colorLists)
+        }
       },
       () => $Dcgview.createElement(
         $StaticMathquillView.default,
