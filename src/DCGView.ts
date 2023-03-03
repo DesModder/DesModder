@@ -1,7 +1,7 @@
 import { desmosRequire, Fragile } from "globals/window";
 
-export const DCGView =
-  Fragile.DCGView ?? (desmosRequire("dcgview") as DCGViewModule);
+export const DCGView = (Fragile.DCGView ??
+  desmosRequire("dcgview")) as DCGViewModule;
 
 type OrConst<T> = {
   [K in keyof T]: T[K] extends Function ? T[K] : T[K] | (() => T[K]);
@@ -43,7 +43,28 @@ export interface MountedComponent {
   update: () => void;
 }
 
+abstract class ForComponent<T> extends ClassComponent<{
+  each: Array<T>;
+  key: (t: T) => string | number;
+}> {}
+
+interface IfElseSecondParam {
+  true: () => typeof ClassComponent;
+  false: () => typeof ClassComponent;
+}
+
 interface DCGViewModule {
+  Components: {
+    For: typeof ForComponent;
+    If: typeof ClassComponent;
+    IfElse: (p: () => boolean, v: IfElseSecondParam) => typeof ClassComponent;
+    // I don't know how to use the rest of these
+    IfDefined: typeof ClassComponent;
+    Input: typeof ClassComponent;
+    Switch: typeof ClassComponent;
+    SwitchUnion: typeof ClassComponent;
+    Textarea: typeof ClassComponent;
+  };
   Class: typeof ClassComponent;
   const: <T>(v: T) => () => T;
   createElement: (

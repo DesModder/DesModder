@@ -87,16 +87,6 @@ export const InlineMathInputViewGeneral: typeof InlineMathInputViewComponent =
   Fragile.InlineMathInputView ??
   desmosRequire("expressions/inline-math-input-view").InlineMathInputView;
 
-abstract class ForComponent<T> extends ClassComponent<{
-  each: Array<T>;
-  key: (t: T) => string | number;
-}> {}
-
-interface IfElseSecondParam {
-  true: () => typeof ClassComponent;
-  false: () => typeof ClassComponent;
-}
-
 export const {
   If,
   For,
@@ -106,17 +96,7 @@ export const {
   Switch,
   SwitchUnion,
   Textarea,
-} = DCGView.Components as {
-  For: typeof ForComponent;
-  If: typeof ClassComponent;
-  IfElse: (p: () => boolean, v: IfElseSecondParam) => typeof ClassComponent;
-  // I don't know how to use the rest of these
-  IfDefined: typeof ClassComponent;
-  Input: typeof ClassComponent;
-  Switch: typeof ClassComponent;
-  SwitchUnion: typeof ClassComponent;
-  Textarea: typeof ClassComponent;
-};
+} = DCGView.Components;
 
 abstract class DStaticMathquillViewComponent extends ClassComponent<{
   latex: string;
