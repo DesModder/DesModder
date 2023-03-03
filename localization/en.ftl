@@ -160,3 +160,13 @@ performance-info-time-in-worker = Time In Worker
 performance-info-compiling = Compiling
 performance-info-rendering = Rendering
 performance-info-other = Other
+
+## Better Evaluation View
+better-evaluation-view-name = Better Evaluation View
+better-evaluation-view-desc = Displays list elements, colors, and undefined values
+better-evaluation-view-opt-lists-name = Show list elements
+better-evaluation-view-opt-lists-desc = Show list elements instead of list length
+better-evaluation-view-opt-colors-name = Show colors
+better-evaluation-view-opt-colors-desc = Show colors as rgb values
+better-evaluation-view-opt-colorLists-name = Show lists of colors
+better-evaluation-view-opt-colorLists-desc = Show lists of colors as lists of rgb values

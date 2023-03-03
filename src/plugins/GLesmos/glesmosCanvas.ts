@@ -6,6 +6,7 @@ import {
   glesmosGetCacheShader,
   glesmosGetSDFShader,
   glesmosGetFinalPassShader,
+  glesmosGetFastFillShader,
   setUniform,
 } from "./shaders";
 
@@ -84,12 +85,12 @@ export function initGLesmosCanvas() {
 
   let glesmosCache: GLesmosProgram | null;
 
-  let glesmosDoOutlines = true;
-
   let glesmosSDF: GLesmosProgram | null;
   let glesmosSDFrequiredSteps: number;
 
   let glesmosFinalPass: GLesmosProgram | null;
+
+  let glesmosFastFill: GLesmosProgram | null;
 
   //= ================ GRAPH BOUNDS ======================
 
@@ -148,22 +149,14 @@ export function initGLesmosCanvas() {
 
   //= ================ WEBGL FUNCTIONS ================
 
-  const buildGLesmosShaders = (
-    id: string,
-    deps: string,
-    chunk: GLesmosShaderChunk
-  ) => {
-    glesmosCache = glesmosGetCacheShader(gl, id, chunk, deps);
-    glesmosFinalPass = glesmosGetFinalPassShader(gl, id, chunk);
+  const buildGLesmosFancy = (deps: string, chunk: GLesmosShaderChunk) => {
+    glesmosCache = glesmosGetCacheShader(gl, chunk, deps);
+    glesmosFinalPass = glesmosGetFinalPassShader(gl, chunk);
+    glesmosSDF = glesmosGetSDFShader(gl, chunk, deps); // we don't need to build this if we aren't drawing outlines
+  };
 
-    if (chunk.line_width === 0) {
-      // TODO: this is bad, globals are bad
-      glesmosDoOutlines = false;
-      return;
-    }
-
-    glesmosDoOutlines = true;
-    glesmosSDF = glesmosGetSDFShader(gl, id, chunk, deps); // we don't need to build this if we aren't drawing outlines
+  const buildGLesmosFast = (deps: string, chunks: GLesmosShaderChunk[]) => {
+    glesmosFastFill = glesmosGetFastFillShader(gl, chunks, deps);
   };
 
   const runCacheShader = () => {
@@ -232,10 +225,23 @@ export function initGLesmosCanvas() {
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   };
 
-  const render = () => {
+  const runFastShader = () => {
+    if (!glesmosFastFill) glesmosError("Fast-fill shader failed.");
+    gl.useProgram(glesmosFastFill);
+    setupGLesmosEnvironment(glesmosFastFill);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  };
+
+  const renderFancy = () => {
     runCacheShader();
-    if (glesmosDoOutlines) runSDFShader();
+    runSDFShader();
     runFinalPassShader();
+  };
+
+  const renderFast = () => {
+    runFastShader();
   };
 
   //= ================ CLEANUP ================
@@ -250,7 +256,9 @@ export function initGLesmosCanvas() {
     glContext: gl,
     deleteCanvas,
     updateTransforms,
-    buildGLesmosShaders,
-    render,
+    buildGLesmosFancy,
+    buildGLesmosFast,
+    renderFancy,
+    renderFast,
   };
 }

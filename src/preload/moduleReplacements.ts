@@ -1,3 +1,4 @@
+import betterEvaluationView from "./moduleOverrides/better-evaluation-view.replacements";
 import core from "./moduleOverrides/core.replacements";
 import debugMode from "./moduleOverrides/debug-mode.replacements";
 import extraExpressionButtons from "./moduleOverrides/extra-expression-buttons.replacements";
@@ -12,6 +13,7 @@ import parseFile, { Block } from "./replacementHelpers/parse";
 
 const replacementStrings = [
   core,
+  betterEvaluationView,
   findReplace,
   glesmos,
   hideErrors,
@@ -50,6 +52,7 @@ const pluginNames = [
   "folder-tools",
   "text-mode",
   "performance-info",
+  "better-evaluation-view",
 ];
 
 replacements.forEach((r) => {
