@@ -39,7 +39,7 @@ export const Fragile = new Proxy(
   {
     get(_target, prop) {
       if ((window as any).Desmos === undefined) return undefined;
-      const fragile = (window as any).Desmos.Private.Fragile;
+      const fragile = (window as any).Desmos?.Private?.Fragile;
       if (fragile === undefined) return undefined;
       return fragile[prop];
     },
