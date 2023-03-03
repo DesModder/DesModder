@@ -22,6 +22,28 @@ Using `.closest` handles the case where the user clicks directly on the (child/:
 (event.target.closest(".dsm-stay-edit-list-mode") || this.exitEditListMode())
 ```
 
+### Alternative
+
+*Module* `expressions/abstract-item-view`
+
+*Find* => `outer`
+```js
+if (this.controller.isInEditListMode() && !$uee($e)) {
+    this.exitEditListMode();
+    return
+}
+```
+
+*Find* inside `outer` => `from`
+```js
+this.exitEditListMode()
+```
+
+*Replace* `from` with
+```js
+(event.target.closest(".dsm-stay-edit-list-mode") || this.exitEditListMode())
+```
+
 ## Disable pinned expressions from appearing in the unpinned section.
 
 *Module* `graphing-calc/models/abstract-item`
@@ -59,6 +81,26 @@ Since pinned expressions have `isDragDrop=true`, they have `model.dcgView = unde
 *Find*
 ```js
 _deleteItemAndAnimateOut = function ($e, $t) {__body__}
+```
+
+*Find* inside `body`
+```js
+$s = this.getItemSelectorById($)
+```
+
+*Replace* `body` with
+```js
+__body__;
+$s || this._finishDeletingItemAfterAnimation($e, $t);
+```
+
+### Alternative
+
+*Module* `main/controller`
+
+*Find*
+```js
+_deleteItemAndAnimateOut ($e, $t) {__body__}
 ```
 
 *Find* inside `body`

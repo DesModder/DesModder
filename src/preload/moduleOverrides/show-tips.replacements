@@ -1,0 +1,39 @@
+# Show-Tips
+
+*plugin* `show-tips`
+
+## Replace branding to show tips
+
+*Module* `expressions/list-view`
+
+*Find* => `from`
+```js
+$DCGView.createElement(
+  "div",
+  {
+    class: $DCGView.const("dcg-expressions-branding"),
+    __args__
+  },
+  __children__
+)
+```
+
+*Replace* `from` with
+```js
+$DCGView.createElement(
+  "div",
+  {
+    class: $DCGView.const("dcg-expressions-branding"),
+    __args__
+  },
+  __children__,
+  $DCGView.createElement(
+    $DCGView.Components.If,
+    {
+      predicate: () =>
+        window.DesModder?.controller?.isPluginEnabled?.("show-tips"),
+    },
+    () => window.DesModder?.view?.createTipElement()
+  )
+)   
+```

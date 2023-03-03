@@ -2,12 +2,8 @@ import { getDefinition, getDependencies } from "./builtins";
 import emitChunkGL from "./emitChunkGL";
 import { colorVec4 } from "./outputHelpers";
 import { GLesmosShaderPackage } from "./shaders";
-import { desmosRequire } from "globals/workerSelf";
-import { IRExpression, ParsenodeError } from "parsing/parsenode";
-
-const PError = desmosRequire("core/math/parsenode/error") as (
-  msg: string
-) => ParsenodeError;
+import { ParsenodeError } from "./workerDeps";
+import { IRExpression } from "parsing/parsenode";
 
 function clampParam(input: number, min: number, max: number, def: number) {
   if (isNaN(input)) return def;
@@ -66,6 +62,6 @@ export function compileGLesmos(
       ],
     };
   } catch (msg) {
-    throw PError(`[GLesmos Error] ${msg}`);
+    throw ParsenodeError(`[GLesmos Error] ${msg}`);
   }
 }

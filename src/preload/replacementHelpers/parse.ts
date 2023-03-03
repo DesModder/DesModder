@@ -13,6 +13,7 @@ export interface Block {
   plugins: string[];
   replaceCommands: Command[];
   workerOnly: boolean;
+  alternative: Block | undefined;
 }
 
 export interface Command {
@@ -78,11 +79,26 @@ function parseBlock(
       `Command *module* must have at least one argument`
     );
   const commands: Command[] = [];
+  let alternative: Block | undefined;
   let workerOnly = false;
   for (let i = 0; i < tokens.length; ) {
     const token = tokens[i];
     if (token.tag === "heading") {
-      throw new ReplacementError("Subheadings not yet implemented");
+      const next = tokens[i + 1];
+      if (
+        token.text.includes("Alternative") &&
+        next.tag === "emph" &&
+        next.command === "module"
+      ) {
+        alternative = parseBlock(
+          token,
+          next,
+          tokens.slice(i + 2),
+          plugins,
+          filename
+        );
+        break;
+      } else throw new ReplacementError("Subheadings not yet implemented");
     } else if (token.tag === "emph" && token.command === "worker_only") {
       workerOnly = true;
       i++;
@@ -103,6 +119,7 @@ function parseBlock(
     plugins,
     modules: start.args,
     workerOnly,
+    alternative,
   };
 }
 

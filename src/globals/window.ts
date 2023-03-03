@@ -34,6 +34,30 @@ export const desmosRequire = new Proxy(() => {}, {
   },
 }) as typeof window.require;
 
+export const Fragile = new Proxy(
+  {},
+  {
+    get(_target, prop) {
+      if ((window as any).Desmos === undefined) return undefined;
+      const fragile = (window as any).Desmos?.Private?.Fragile;
+      if (fragile === undefined) return undefined;
+      return fragile[prop];
+    },
+  }
+) as any;
+
+export const Private = new Proxy(
+  {},
+  {
+    get(_target, prop) {
+      if ((window as any).Desmos === undefined) return undefined;
+      const priv = (window as any).Desmos.Private;
+      if (priv === undefined) return undefined;
+      return priv[prop];
+    },
+  }
+) as any;
+
 /* Object.fromEntries based on https://dev.to/svehla/typescript-object-fromentries-389c */
 type DeepWriteable<T> = { -readonly [P in keyof T]: DeepWriteable<T[P]> };
 type FromEntries<T> = T extends [infer Key, any][]

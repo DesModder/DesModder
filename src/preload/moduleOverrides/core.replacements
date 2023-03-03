@@ -26,6 +26,31 @@ __body__;
 window.DesModder?.controller?.duplicateMetadata($to.id, $from.id)
 ```
 
+### Alternative
+
+*module* `main/controller`
+
+*Find*
+```js
+copyExpressionToIndex(____) { __body__ }
+```
+
+*Find* inside `body`:
+```js
+let $to = this.createItemModel(
+```
+
+*Find*
+```js
+case "expression": $from =
+```
+
+*Replace* `body` with
+```js
+__body__;
+window.DesModder?.controller?.duplicateMetadata($to.id, $from.id)
+```
+
 ## Insert panels on the expressions list
 
 This is relevant to both pin-expressions and text-mode.
@@ -110,91 +135,71 @@ $DCGView.createElement(
 )
 ```
 
-## Create Element Replacements
+### Alternative
 
-*Module* `final-load`
+This is relevant to both pin-expressions and text-mode.
 
-*Find* => `init`
+*module* `expressions/list-view`
+
+*Find* => `element`
 ```js
-require(['toplevel/calculator_desktop'])
+$DCGView.createElement(
+  "div",
+  {
+    class: () => ({
+        "dcg-exppanel-container" ____
+      }),
+    ____
+  },
+  __children__
+)
 ```
 
-*Replace* `init` with
+*Replace* `children` with
 ```js
-{
-  const dcgview = require("dcgview");
-
-  function overrideCreateElement(className, repl) {
-    const oldCreateElement = dcgview.createElement;
-    dcgview.createElement = function (_, opts) {
-      let c;
-      if (
-        typeof opts === "object" &&
-        opts !== null &&
-        "class" in opts &&
-        typeof opts.class === "function" &&
-        ((c = opts.class()),
-        typeof c === "object"
-          ? c[className]
-          : typeof c === "string" && c === className)
-      ) {
-        return repl(arguments, oldCreateElement);
-      } else return oldCreateElement(...arguments);
-    };
-  }
-
-  // TODO: Uncaught Error: Cannot remount a DCGElement
-  //    may be related to computing args unconditionally
-  // but this code is not actually necessary; just saves performance from
-  // rendering mathquill
-  // // Hide dcg-exppanel when in text mode
-  // overrideCreateElement("dcg-exppanel", (args, oldCreateElement) =>
-  //   oldCreateElement(
-  //     dcgview.Components.If,
-  //     {
-  //       predicate: () => !window.DesModder?.controller?.inTextMode?.(),
-  //     },
-  //     () => oldCreateElement(...args)
-  //   )
-  // );
-
-  // Replace branding for show tips
-  overrideCreateElement("dcg-expressions-branding", (args, oldCreateElement) =>
-    oldCreateElement(
-      ...args,
-      oldCreateElement(
-        dcgview.Components.If,
+__children__,
+// pinned expressions
+$DCGView.createElement(
+  $DCGView.Components.For,
+  {
+    each: () => window.DesModder?.controller?.isTextMode?.()
+        ? [] 
+        : this.controller?.getAllItemModels?.() ?? [],
+    key: e => e.guid
+  },
+  $DCGView.createElement(
+    "div",
+    {
+      class: $DCGView.const("dsm-pinned-expressions dcg-exppanel"),
+      style: () => ({
+        background: this.controller.getBackgroundColor()
+      })
+    },
+    t => $DCGView.createElement(
+        $DCGView.Components.If,
         {
-          predicate: () =>
-            window.DesModder?.controller?.isPluginEnabled?.("show-tips"),
+          predicate: () => window.DesModder?.controller?.isExpressionPinned(t.id)
         },
-        () => window.DesModder?.view?.createTipElement()
+        // marking as a drag copy causes it not to affect the render shells calcuations
+        // (all the logic is present already because if the top expression is dragged
+        // to the bottom, it shouldn't cause all expressions to render from the top)
+        () => this.makeDragCopyViewForModel(t)
       )
-    )
-  );
-
-}
-
-
-{
-  // Reduce suggested slider count to 3
-  // Avoids overflowing on narrow expression lists since we've added the "hide" button.
-  // getMissingVariables is used in different ways, but we care about
-  //    t.getMissingVariables().slice(0, 4)
-  const proto = require("expressions/promptslider_view").default.prototype;
-  const oldGMV = proto.getMissingVariables;
-  proto.getMissingVariables = function() {
-    const missing = oldGMV.call(this);
-    missing.slice = function() {
-      if (arguments.length === 2 && arguments[0] === 0 && arguments[1] === 4) {
-        return Array.prototype.slice.call(missing, 0, 3);
-      } else {
-        return Array.prototype.slice.apply(missing, arguments)
-      }
+  )
+),
+// text mode panel
+$DCGView.createElement(
+  $DCGView.Components.If,
+  {
+    predicate: () => window.DesModder?.controller?.inTextMode?.()
+  },
+  () => $DCGView.createElement(
+    "div",
+    {
+      class: $DCGView.const("dsm-text-editor-container"),
+      didMount: div => window.DesModder?.controller?.exposedPlugins["text-mode"].mountEditor(div),
+      willUnmount: div => window.DesModder?.controller?.exposedPlugins["text-mode"].unmountEditor(div)
     }
-    return missing;
-  }
-}
-
-__init__
+  )
+)
 ```

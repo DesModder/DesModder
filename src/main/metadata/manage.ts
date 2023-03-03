@@ -2,10 +2,9 @@
 import Metadata, { Expression } from "./interface";
 import migrateToLatest from "./migrate";
 import { ItemModel } from "globals/models";
-import { Calc, desmosRequire } from "globals/window";
+import { Calc } from "globals/window";
+import { List } from "utils/depUtils";
 import { OptionalProperties } from "utils/utils";
-
-const List = desmosRequire("graphing-calc/models/list");
 
 /*
 This file manages the metadata expressions. These are stored on the graph state as expressions and consist of:

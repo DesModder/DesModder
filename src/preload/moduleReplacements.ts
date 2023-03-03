@@ -7,6 +7,7 @@ import glesmos from "./moduleOverrides/glesmos.replacements";
 import hideErrors from "./moduleOverrides/hide-errors.replacements";
 import pinExpressions from "./moduleOverrides/pin-expressions.replacements";
 import shiftEnterNewline from "./moduleOverrides/shift-enter-newline.replacements";
+import showTips from "./moduleOverrides/show-tips.replacements";
 import textMode from "./moduleOverrides/text-mode.replacements";
 import parseFile, { Block } from "./replacementHelpers/parse";
 
@@ -21,6 +22,7 @@ const replacementStrings = [
   textMode,
   debugMode,
   extraExpressionButtons,
+  showTips,
 ];
 
 const replacements: Block[] = [];

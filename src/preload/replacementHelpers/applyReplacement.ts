@@ -121,16 +121,31 @@ function getSymbols(commands: Command[], str: Token[]): SymbolTable {
           );
         const around = table.getRequired(command.args[0]);
         const ts = findTemplateStartBefore(table, around.start);
-        const found = findPattern(
-          patternTokens(".template=function(){__return__}"),
-          table.str,
-          { start: ts, length: table.str.length - ts - 1 },
-          true
-        );
-        table.set(command.returns, {
-          start: found.startIndex,
-          length: found.length,
-        });
+        try {
+          // pre-esbuild
+          const found = findPattern(
+            patternTokens(".template=function(){__return__}"),
+            table.str,
+            { start: ts, length: table.str.length - ts - 1 },
+            true
+          );
+          table.set(command.returns, {
+            start: found.startIndex,
+            length: found.length,
+          });
+        } catch {
+          // post-esbuild
+          const found = findPattern(
+            patternTokens("template() {__return__}"),
+            table.str,
+            { start: ts, length: table.str.length - ts - 1 },
+            true
+          );
+          table.set(command.returns, {
+            start: found.startIndex,
+            length: found.length,
+          });
+        }
         break;
       }
       case "replace":
@@ -144,36 +159,60 @@ function getSymbols(commands: Command[], str: Token[]): SymbolTable {
 
 /** Apply replacement to `str`, and returned the changed value */
 function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
-  const idTable = new Map<Block, string>(
-    repls.map((r) => [r, r.heading + "_" + Math.random().toString() + "_"])
-  );
+  const idTable = new Map<Block, string>();
+  function getPrefix(r: Block): string {
+    if (!idTable.has(r))
+      idTable.set(r, r.heading + "_" + Math.random().toString() + "_");
+    return idTable.get(r)!;
+  }
+
+  const blockSucceededSymbols = new Map<Block, boolean>();
+
   const table = new SymbolTable(str);
-  for (const r of repls) {
+  function applySymbolsForTable(r: Block) {
     try {
-      const prefix = idTable.get(r)!;
+      const prefix = getPrefix(r);
       table.merge(getSymbols(r.commands, str).prefix(prefix));
+      blockSucceededSymbols.set(r, true);
     } catch (e) {
-      r.plugins.forEach(addPanic);
+      if (r.alternative !== undefined) applySymbolsForTable(r.alternative);
+      else r.plugins.forEach(addPanic);
     }
   }
-  const finalRepls = repls.flatMap((r) => {
-    try {
-      return blockReplacements(r, idTable, table);
-    } catch (e) {
-      r.plugins.forEach(addPanic);
-      return [];
+
+  for (const r of repls) {
+    applySymbolsForTable(r);
+  }
+
+  function getReplacement(r: Block): Replacement[] {
+    if (!blockSucceededSymbols.get(r)) {
+      if (r.alternative) return getReplacement(r.alternative);
+      else {
+        r.plugins.forEach(addPanic);
+        return [];
+      }
     }
-  });
+    try {
+      return blockReplacements(r, getPrefix, table);
+    } catch (e) {
+      if (r.alternative !== undefined) return getReplacement(r.alternative);
+      else {
+        r.plugins.forEach(addPanic);
+        return [];
+      }
+    }
+  }
+  const finalRepls = repls.flatMap(getReplacement);
 
   return Array.from(withReplacements(table.str, finalRepls));
 }
 
 function blockReplacements(
   r: Block,
-  idTable: Map<Block, string>,
+  getPrefix: (r: Block) => string,
   table: SymbolTable
 ): Replacement[] {
-  const prefix = idTable.get(r)!;
+  const prefix = getPrefix(r);
   return r.replaceCommands.map((command) => {
     if (command.command !== "replace")
       throw new ReplacementError(
@@ -187,10 +226,16 @@ function blockReplacements(
       throw new ReplacementError(
         `*replace* command missing a pattern argument.`
       );
+    // skipFirst = this is just an append
+    const skipFirst =
+      (command.patternArg[0].type === "PatternBalanced" ||
+        command.patternArg[0].type === "PatternIdentifier") &&
+      symbolName(command.patternArg[0].value) === symbolName(command.args[0]);
+    const from = table.getRequired(prefix + command.args[0]);
     const res: Replacement = {
       heading: r.heading,
-      from: table.getRequired(prefix + command.args[0]),
-      to: command.patternArg.flatMap((token) => {
+      from: skipFirst ? { start: from.start + from.length, length: 0 } : from,
+      to: command.patternArg.slice(skipFirst ? 1 : 0).flatMap((token) => {
         if (
           token.type === "PatternBalanced" ||
           token.type === "PatternIdentifier"
@@ -238,9 +283,7 @@ function findTemplateStartBefore(table: SymbolTable, before: number) {
       tokensEqual(table.str[i], {
         type: "IdentifierName",
         value: "template",
-      }) &&
-      tokensEqual(table.str[i + 1], { type: "Punctuator", value: "=" }) &&
-      tokensEqual(table.str[i - 1], { type: "Punctuator", value: "." })
+      })
     )
       return i - 1;
   }

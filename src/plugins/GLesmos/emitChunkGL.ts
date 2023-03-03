@@ -1,12 +1,16 @@
 import { getFunctionName, getBuiltin } from "./builtins";
-import { countReferences, opcodes, printOp, Types } from "./opcodeDeps";
 import {
   compileObject,
   getGLScalarType,
   getGLType,
   getGLTypeOfLength,
 } from "./outputHelpers";
-import { desmosRequire } from "globals/workerSelf";
+import {
+  countReferences,
+  getConstantListLength,
+  opcodes,
+  Types,
+} from "./workerDeps";
 import {
   BeginBroadcast,
   BeginLoop,
@@ -17,12 +21,6 @@ import {
   NativeFunction,
 } from "parsing/IR";
 import { evalMaybeRational, MaybeRational } from "parsing/parsenode";
-
-export const ListLength = desmosRequire(
-  "core/math/ir/features/list-length"
-) as {
-  getConstantListLength: (chunk: IRChunk, index: number) => number;
-};
 
 function getIdentifier(index: number) {
   return `_${index}`;
@@ -87,8 +85,7 @@ function getSourceBinOp(
       return b === "(1.0)" ? `${a}.x` : `${a}.y`;
     }
     default: {
-      const op = printOp(ci.type);
-      throw Error(`Programming error: ${op} is not a binary operator`);
+      throw Error(`Programming error: op ${ci.type} is not a binary operator`);
     }
   }
 }
@@ -146,7 +143,7 @@ function getSourceSimple(
       }
       if (isList[0]) {
         const lengths = branchIndices.map((i) =>
-          ListLength.getConstantListLength(chunk, i)
+          getConstantListLength(chunk, i)
         );
         if (lengths[0] !== lengths[1])
           throw new Error(
@@ -167,13 +164,12 @@ function getSourceSimple(
     case opcodes.Distribution:
     case opcodes.SymbolicVar:
     case opcodes.SymbolicListVar: {
-      const op = printOp(ci.type);
       throw Error(
-        `Programming Error: expect ${op} to be removed before emitting code.`
+        `Programming Error: expect op ${ci.type} to be removed before emitting code.`
       );
     }
     case opcodes.ListAccess: {
-      const length = ListLength.getConstantListLength(chunk, ci.args[0]);
+      const length = getConstantListLength(chunk, ci.args[0]);
       const list = maybeInlined(ci.args[0], inlined);
       const index = `int(${maybeInlined(ci.args[1], inlined)})`;
       const indexInst = chunk.getInstruction(ci.args[1]);
@@ -214,7 +210,7 @@ function getSourceSimple(
     case opcodes.ExtendSeed:
       throw Error("ExtendSeed not yet implemented");
     default:
-      throw Error(`Unexpected opcode: ${printOp(ci.type)}`);
+      throw Error(`Unexpected opcode: ${ci.type}`);
   }
 }
 
@@ -223,17 +219,15 @@ function nativeFunctionDependency(chunk: IRChunk, ci: NativeFunction): string {
   switch (builtin?.tag) {
     case "list":
       return (
-        ci.symbol +
-        "#" +
-        ListLength.getConstantListLength(chunk, ci.args[0]).toString()
+        ci.symbol + "#" + getConstantListLength(chunk, ci.args[0]).toString()
       );
     case "list2":
       return (
         ci.symbol +
         "#" +
-        ListLength.getConstantListLength(chunk, ci.args[0]).toString() +
+        getConstantListLength(chunk, ci.args[0]).toString() +
         "#" +
-        ListLength.getConstantListLength(chunk, ci.args[1]).toString()
+        getConstantListLength(chunk, ci.args[1]).toString()
       );
     case "glsl-builtin":
     case "simple":

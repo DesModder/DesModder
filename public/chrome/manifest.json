@@ -13,7 +13,7 @@
   "action": {},
   "content_scripts": [
     {
-      "matches": ["https://*.desmos.com/calculator*"],
+      "matches": ["*://*.desmos.com/calculator*"],
       "run_at": "document_start",
       "js": ["preload/content.js"],
       "all_frames": true
@@ -27,7 +27,7 @@
         "preload/script.js",
         "worker/append.js"
       ],
-      "matches": ["https://*.desmos.com/*"]
+      "matches": ["*://*.desmos.com/*"]
     }
   ],
   "declarative_net_request": {
