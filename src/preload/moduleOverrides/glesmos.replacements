@@ -535,6 +535,7 @@ else if (this.userData.glesmos) {
   const prev =  $graphs[$graphs.length - 1];
   if (prev?.graphMode === "GLesmos") {
     // merge GLesmos graphs when possible
+    newCompiled.hasOutlines = newCompiled.hasOutlines && prev.hasOutlines
     const prevGL = prev.compiledGL;
     for (let dep of newCompiled.deps) {
       if (!prevGL.deps.includes(dep)) {
