@@ -47,7 +47,17 @@
       "type": "block"
     },
     "condition": {
-      "urlFilter": "https://*.desmos.com/assets/build/calculator_desktop-*.js|"
+      "urlFilter": "*://*.desmos.com/*/calculator_desktop-*.js|"
+    }
+  },
+  {
+    "id": 4,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "*://*.desmos.com:*/*/calculator_desktop.js|"
     }
   }
 ]

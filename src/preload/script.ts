@@ -55,7 +55,7 @@ function runDesModder() {
 function getCalcDesktopURL() {
   return (
     document.querySelector(
-      "script[src^='/assets/build/calculator_desktop']"
+      "script[src*='calculator_desktop']"
     ) as HTMLScriptElement
   )?.src;
 }
