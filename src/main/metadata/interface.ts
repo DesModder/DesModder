@@ -9,4 +9,5 @@ export interface Expression {
   pinned?: boolean;
   errorHidden?: boolean;
   glesmos?: boolean;
+  glesmosLinesConfirmed?: boolean;
 }

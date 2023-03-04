@@ -15,6 +15,8 @@ menu-desmodder-tooltip = DesModder Menu
 GLesmos-name = GLesmos
 GLesmos-desc = Render implicits on the GPU. Disabled on tab reload. Can cause the UI to slow down or freeze in rare cases; reload the page if you have issues.
 GLesmos-label-toggle-glesmos = Render with GLesmos
+GLesmos-confirm-lines = Are you sure?
+GLesmos-confirm-lines-body = GLesmos line rendering can be slow. Be careful, especially for a list of layers.
 # Missing: error messages
 
 ## Tips

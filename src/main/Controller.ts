@@ -578,16 +578,39 @@ export default class Controller {
   isGlesmosMode(id: string) {
     if (!this.pluginsEnabled.get("GLesmos")) return false;
     this.checkForMetadataChange();
-    return this.graphMetadata.expressions[id]?.glesmos;
+    return this.graphMetadata.expressions[id]?.glesmos ?? false;
   }
 
   toggleGlesmos(id: string) {
     this.updateExprMetadata(id, {
       glesmos: !this.isGlesmosMode(id),
     });
+    this.forceWorkerUpdate(id);
+  }
+
+  forceWorkerUpdate(id: string) {
     // force the worker to revisit the expression
     this.toggleExpr(id);
     this.killWorker();
+  }
+
+  /** Returns boolean or undefined (representing "worker has not told me yet") */
+  isInequality(id: string) {
+    const model = Calc.controller.getItemModel(id);
+    if (model?.type !== "expression") return false;
+    return model.formula?.is_inequality;
+  }
+
+  isGLesmosLinesConfirmed(id: string) {
+    this.checkForMetadataChange();
+    return this.graphMetadata.expressions[id]?.glesmosLinesConfirmed ?? false;
+  }
+
+  toggleGLesmosLinesConfirmed(id: string) {
+    this.updateExprMetadata(id, {
+      glesmosLinesConfirmed: !this.isGLesmosLinesConfirmed(id),
+    });
+    this.forceWorkerUpdate(id);
   }
 
   /**

@@ -99,22 +99,32 @@ export function changeExprInMetadata(
   /* Mutates metadata by spreading obj into metadata.expressions[id],
   with default values deleted */
   const changed = metadata.expressions[id] ?? {};
-  for (const key in obj) {
-    const value = obj[key as keyof typeof obj];
-    switch (key) {
-      case "pinned":
-      case "errorHidden":
-      case "glesmos":
-        if (value) {
-          changed[key] = true;
-        } else {
-          delete changed[key];
-        }
+  for (const _key in obj) {
+    const key = _key as keyof Expression;
+    const value = obj[key];
+    if (value !== getDefaultValue(key)) {
+      changed[key] = value;
+    } else {
+      delete changed[key];
     }
   }
   if (Object.keys(changed).length === 0) {
     delete metadata.expressions[id];
   } else {
     metadata.expressions[id] = changed;
+  }
+}
+
+function getDefaultValue(key: keyof Expression) {
+  switch (key) {
+    case "pinned":
+    case "errorHidden":
+    case "glesmos":
+    case "glesmosLinesConfirmed":
+      return false;
+    default: {
+      const _exhaustive: never = key;
+      return _exhaustive;
+    }
   }
 }
