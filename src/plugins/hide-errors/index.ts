@@ -47,7 +47,6 @@ const hideErrors: Plugin = {
     enabled = false;
     Calc.controller.updateViews();
   },
-  alwaysEnabled: true,
   enabledByDefault: true,
   /* Has module overrides */
 };

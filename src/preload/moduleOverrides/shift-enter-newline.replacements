@@ -19,7 +19,8 @@ $n !== $Keys.ENTER || $e.metaKey
 
 *Replace* `from` with
 ```js
-$n !== $Keys.ENTER || $e.metaKey || $e.shiftKey
+$n !== $Keys.ENTER || $e.metaKey
+  || ($e.shiftKey && window.DesModder?.controller?.isPluginEnabled?.("shift-enter-newline"))
 ```
 
 This leads to
@@ -48,7 +49,8 @@ $n === $Keys.ENTER && !$e.metaKey
 
 *Replace* `from` with
 ```js
-$n === $Keys.ENTER && !$e.metaKey && !$e.shiftKey
+$n === $Keys.ENTER && !$e.metaKey
+  && !($e.shiftKey && window.DesModder?.controller?.isPluginEnabled?.("shift-enter-newline"))
 ```
 
 This leads to
