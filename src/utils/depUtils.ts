@@ -74,7 +74,7 @@ export function getSections(
 }
 
 export function getCurrentGraphTitle(): string | undefined {
-  return Calc._calc.globalHotkeys?.graphsController?.getCurrentGraphTitle();
+  return Calc._calc.globalHotkeys?.headerController?.graphsController?.getCurrentGraphTitle?.();
 }
 
 export const List = Fragile.List ?? desmosRequire("graphing-calc/models/list");
