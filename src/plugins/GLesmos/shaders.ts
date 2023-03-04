@@ -482,19 +482,17 @@ export function glesmosGetFastFillShader(
   chunks: GLesmosShaderChunk[],
   deps: string
 ): GLesmosProgram {
-  // prettier-ignore
-  const mains = chunks.map((chunk, id) => {
-    return `float f_xy_${id}(float x, float y){
-      ${chunk.main}
-    }`;
-  }).join("\n");
+  const mains = chunks
+    .map((chunk, id) => `float f_xy_${id}(float x, float y){ ${chunk.main} }`)
+    .join("\n");
 
-  // prettier-ignore
-  const colorCalls = chunks.map((chunk, id) => {
-    return `if( f_xy_${id}( mathCoord.x, mathCoord.y ) > 0.0 ){
-      outColor = mixColor(outColor, ${chunk.color});
-    }`;
-  }).join("\n");
+  const colorCalls = chunks
+    .map(
+      (chunk, id) => `if( f_xy_${id}( mathCoord.x, mathCoord.y ) > 0.0 ){
+        outColor = mixColor(outColor, ${chunk.color});
+      }`
+    )
+    .join("\n");
 
   const source = `${GLESMOS_ENVIRONMENT}
     ${GLESMOS_SHARED}
@@ -506,8 +504,7 @@ export function glesmosGetFastFillShader(
     void main(){
       vec2 mathCoord = texCoord * graphSize + graphCorner;
       ${colorCalls}
-    }
-  `;
+    }`;
 
   const shader = getShaderProgram(gl, VERTEX_SHADER, source);
 
