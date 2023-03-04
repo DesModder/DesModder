@@ -5,7 +5,6 @@ const folderTools: Plugin = {
   // Still need to declare empty onEnable and onDisable to get the right UI
   onEnable: () => {},
   onDisable: () => {},
-  alwaysEnabled: false,
   enabledByDefault: true,
   /* Has module overrides */
 };

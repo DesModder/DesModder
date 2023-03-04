@@ -14,7 +14,6 @@ const debugMode: Plugin = {
     Calc.controller.updateTheComputedWorld();
     Calc.controller.updateViews();
   },
-  alwaysEnabled: false,
   enabledByDefault: false,
 };
 export default debugMode;
