@@ -1,8 +1,8 @@
 import { getFunctionName, getBuiltin } from "./builtins";
 import {
   compileObject,
+  getConstantListLengthRequired,
   getGLScalarType,
-  getGLType,
   getGLTypeOfLength,
 } from "./outputHelpers";
 import {
@@ -95,18 +95,13 @@ function getSourceSimple(
   instructionIndex: number,
   inlined: string[],
   deps: Set<string>,
-  lists: string[],
   chunk: IRChunk
 ) {
   switch (ci.type) {
     case opcodes.Constant:
       if (Types.isList(ci.valueType)) {
-        const id = getIdentifier(instructionIndex);
-        const val = ci.value as any[];
-        const init = val.map(compileObject).join(",");
-        const type = getGLScalarType(ci.valueType);
-        lists.push(`${type}[${val.length}] ${id} = ${type}[](${init});\n`);
-        return id;
+        // initialized in getTypedefsSource
+        return getIdentifier(instructionIndex);
       } else {
         return compileObject(ci.value);
       }
@@ -143,7 +138,7 @@ function getSourceSimple(
       }
       if (isList[0]) {
         const lengths = branchIndices.map((i) =>
-          getConstantListLength(chunk, i)
+          getConstantListLengthRequired(chunk, i)
         );
         if (lengths[0] !== lengths[1])
           throw new Error(
@@ -169,7 +164,7 @@ function getSourceSimple(
       );
     }
     case opcodes.ListAccess: {
-      const length = getConstantListLength(chunk, ci.args[0]);
+      const length = getConstantListLengthRequired(chunk, ci.args[0]);
       const list = maybeInlined(ci.args[0], inlined);
       const index = `int(${maybeInlined(ci.args[1], inlined)})`;
       const indexInst = chunk.getInstruction(ci.args[1]);
@@ -219,15 +214,17 @@ function nativeFunctionDependency(chunk: IRChunk, ci: NativeFunction): string {
   switch (builtin?.tag) {
     case "list":
       return (
-        ci.symbol + "#" + getConstantListLength(chunk, ci.args[0]).toString()
+        ci.symbol +
+        "#" +
+        getConstantListLengthRequired(chunk, ci.args[0]).toString()
       );
     case "list2":
       return (
         ci.symbol +
         "#" +
-        getConstantListLength(chunk, ci.args[0]).toString() +
+        getConstantListLengthRequired(chunk, ci.args[0]).toString() +
         "#" +
-        getConstantListLength(chunk, ci.args[1]).toString()
+        getConstantListLengthRequired(chunk, ci.args[1]).toString()
       );
     case "glsl-builtin":
     case "simple":
@@ -317,28 +314,22 @@ function getBeginBroadcastSource(
   chunk: IRChunk
 ) {
   const endInstruction = chunk.getInstruction(ci.endIndex);
-  const varInits = [];
   let broadcastLength = 0;
   if (endInstruction.type === opcodes.EndBroadcast) {
     for (let i = 1; i < endInstruction.args.length; i++) {
       const index = ci.endIndex + i;
       const broadcastRes = chunk.getInstruction(index);
       if (broadcastRes.type === opcodes.BroadcastResult) {
-        const len = broadcastRes.constantLength;
+        const len = getConstantListLength(chunk, index);
         if (typeof len !== "number") {
           throw Error("List with non-constant length not supported");
         }
         broadcastLength = len;
-        const type = getGLScalarType(broadcastRes.valueType);
-        varInits.push(`${type}[${len}] ${getIdentifier(index)};\n`);
       }
     }
   }
   const broadcastIndexVar = getIdentifier(instructionIndex);
-  return (
-    varInits.join("") +
-    `for(${broadcastIndexVar}=1.0;${broadcastIndexVar}<=${broadcastLength}.0;++${broadcastIndexVar}){\n`
-  );
+  return `for(${broadcastIndexVar}=1.0;${broadcastIndexVar}<=${broadcastLength}.0;++${broadcastIndexVar}){\n`;
 }
 
 function getEndBroadcastSource(
@@ -390,8 +381,27 @@ function getTypedefsSource(chunk: IRChunk, referenceCountList: number[]) {
   for (let i = chunk.argNames.length; i < len; i++) {
     const ci = chunk.getInstruction(i);
     if (neverDeclareOpcodes.includes(ci.type)) continue;
-    if (referenceCountList[i] > 1 || alwaysDeclareOpcodes.includes(ci.type))
-      s += `${getGLType(ci.valueType)} ${getIdentifier(i)};\n`;
+    const isListConstant =
+      ci.type === opcodes.Constant && Types.isList(ci.valueType);
+    if (
+      isListConstant ||
+      referenceCountList[i] > 1 ||
+      alwaysDeclareOpcodes.includes(ci.type)
+    ) {
+      const type = Types.isList(ci.valueType)
+        ? getGLTypeOfLength(
+            ci.valueType,
+            getConstantListLengthRequired(chunk, i)
+          )
+        : getGLScalarType(ci.valueType);
+      const id = getIdentifier(i);
+      if (isListConstant) {
+        const init = (ci.value as any[]).map(compileObject).join(",");
+        s += `${type} ${id} = ${type}(${init});\n`;
+      } else {
+        s += `${type} ${id};\n`;
+      }
+    }
   }
   return s;
 }
@@ -402,8 +412,7 @@ function getSourceAndNextIndex(
   instructionIndex: number,
   referenceCountList: number[],
   inlined: string[],
-  deps: Set<string>,
-  lists: string[]
+  deps: Set<string>
 ) {
   const incrementedIndex = instructionIndex + 1;
   switch (currInstruction.type) {
@@ -465,7 +474,6 @@ function getSourceAndNextIndex(
         instructionIndex,
         inlined,
         deps,
-        lists,
         chunk
       );
       if (referenceCountList[instructionIndex] <= 1) {
@@ -490,7 +498,8 @@ function getSourceAndNextIndex(
 
 export default function emitChunkGL(chunk: IRChunk) {
   const referenceCountList = countReferences(chunk);
-  let outputSource = getTypedefsSource(chunk, referenceCountList);
+  const varDeclarations = getTypedefsSource(chunk, referenceCountList);
+  let outputSource = "";
   const inlined: string[] = [];
   const deps = new Set<string>();
   const lists: string[] = [];
@@ -506,15 +515,14 @@ export default function emitChunkGL(chunk: IRChunk) {
       instructionIndex,
       referenceCountList,
       inlined,
-      deps,
-      lists
+      deps
     );
     outputSource += u.source;
     instructionIndex = u.nextIndex;
   }
   outputSource += `return ${maybeInlined(chunk.getReturnIndex(), inlined)};`;
   return {
-    source: lists.join("") + outputSource,
+    source: varDeclarations + lists.join("") + outputSource,
     deps,
   };
 }

@@ -6,7 +6,10 @@ export let opcodes: Opcodes;
 export let Types: {
   isList: (t: ValueType) => boolean;
 } & ValueTypes;
-export let getConstantListLength: (chunk: IRChunk, index: number) => number;
+export let getConstantListLength: (
+  chunk: IRChunk,
+  index: number
+) => number | undefined;
 export let ParsenodeError: (msg: string) => IParsenodeError;
 
 const _self = self as any;

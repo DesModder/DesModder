@@ -1,6 +1,6 @@
 import getRGBPack from "./colorParsing";
-import { Types } from "./workerDeps";
-import { ValueType } from "parsing/IR";
+import { getConstantListLength, Types } from "./workerDeps";
+import { IRChunk, ValueType } from "parsing/IR";
 import { evalMaybeRational } from "parsing/parsenode";
 
 export function glslFloatify(x: number) {
@@ -53,32 +53,29 @@ export function compileObject(x: any): string {
   }
 }
 
-export function getGLType(v: ValueType) {
+export function getGLScalarType(v: ValueType) {
   switch (v) {
     case Types.Bool:
+    case Types.ListOfBool:
       return "bool";
     case Types.Number:
+    case Types.ListOfNumber:
       return "float";
     case Types.Point:
-      return "vec2";
-    case Types.ListOfBool:
-      return "bool[]";
-    case Types.ListOfNumber:
-      return "float[]";
     case Types.ListOfPoint:
-      return "vec2[]";
+      return "vec2";
     default:
       throw Error(`Type ${v} is not yet supported`);
   }
 }
 
-export function getGLTypeOfLength(v: ValueType, len: number) {
-  const t = getGLType(v);
-  return t.endsWith("[]") ? t.slice(0, -1) + len.toFixed(0) + "]" : t;
+export function getConstantListLengthRequired(chunk: IRChunk, index: number) {
+  const len = getConstantListLength(chunk, index);
+  if (len === undefined) throw new Error("List length must be a constant");
+  return len;
 }
 
-export function getGLScalarType(v: ValueType) {
-  const type = getGLType(v);
-  if (type.endsWith("[]")) return type.slice(0, -2);
-  else return type;
+export function getGLTypeOfLength(v: ValueType, len: number) {
+  const t = getGLScalarType(v);
+  return Types.isList(v) ? `${t}[${len.toFixed(0)}]` : t;
 }
