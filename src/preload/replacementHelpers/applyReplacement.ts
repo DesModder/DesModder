@@ -176,7 +176,10 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
       blockSucceededSymbols.set(r, true);
     } catch (e) {
       if (r.alternative !== undefined) applySymbolsForTable(r.alternative);
-      else r.plugins.forEach(addPanic);
+      else {
+        console.warn(e);
+        r.plugins.forEach(addPanic);
+      }
     }
   }
 
@@ -197,6 +200,7 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
     } catch (e) {
       if (r.alternative !== undefined) return getReplacement(r.alternative);
       else {
+        console.warn(e);
         r.plugins.forEach(addPanic);
         return [];
       }
@@ -330,10 +334,20 @@ function findPattern(
       i++;
     }
   }
-  if (found === null)
+  if (found === null) {
+    const s = inside.start;
+    const len = inside.length;
     throw new ReplacementError(
-      `Pattern not found: ${fullPattern.map((v) => v.value).join("")}`
+      `Pattern not found: ${fullPattern.map((v) => v.value).join("")} ` +
+        `in {start: ${s}, length: ${len}}\n  ` +
+        str
+          .slice(s, s + 20)
+          .concat({ value: " … " } as any)
+          .concat(str.slice(s + len - 20, s + len))
+          .map((v) => v.value)
+          .join("")
     );
+  }
   return found;
 }
 

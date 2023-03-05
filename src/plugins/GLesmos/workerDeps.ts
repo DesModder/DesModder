@@ -29,7 +29,10 @@ if (_self.WorkerGlobalScope) {
   getConstantListLength =
     Fragile?.getConstantListLength ??
     desmosRequire("core/math/ir/features/list-length")?.getConstantListLength;
+  // .ErrorNode is after some TS migration.
   ParsenodeError =
+    Fragile?.ParsenodeError ??
     Fragile?.ParsenodeError?.ErrorNode ??
+    desmosRequire("core/math/parsenode/error") ??
     desmosRequire("core/math/parsenode/error")?.ErrorNode;
 }

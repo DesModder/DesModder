@@ -602,7 +602,7 @@ else if ($this.userData.glesmos) {
 *Find* 
 ```js
 {
-  if (t instanceof Q.SolvedEquation)
+  if ($ instanceof $.SolvedEquation) return this._graph
   __graph__
 }
 ```
@@ -611,7 +611,7 @@ The code loops over the different IR objects `$ir`.
 
 *Find* inside `graph`
 ```js
-.wrap($).eachElement(($ir, ____) => {
+.wrap($).eachElement(($ir, $) => {
   __body__
 })
 ```
