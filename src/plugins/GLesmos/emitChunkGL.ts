@@ -105,7 +105,7 @@ function getSourceSimple(
         const val = ci.value as any[];
         const init = val.map(compileObject).join(",");
         const type = getGLScalarType(ci.valueType);
-        lists.push(`${id}[${val.length}] = ${type}[](${init});\n`);
+        lists.push(`${type}[${val.length}] ${id} = ${type}[](${init});\n`);
         return id;
       } else {
         return compileObject(ci.value);
@@ -190,7 +190,7 @@ function getSourceSimple(
         getGLScalarType(chunk.getInstruction(ci.args[0]).valueType) === "vec2"
           ? "vec2(NaN,NaN)"
           : "NaN";
-      return `${index}>=1 && ${index}<=${length} ? ${list}[int(${index})-1] : ${nan}`;
+      return `${index}>=1 && ${index}<=${length} ? ${list}[${index}-1] : ${nan}`;
     }
     // in-bounds list access assumes that args[1] is an integer
     // between 1 and args[0].length, inclusive
