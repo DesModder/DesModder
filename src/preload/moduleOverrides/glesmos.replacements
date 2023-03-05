@@ -177,7 +177,7 @@ $DCGView.createElement(
   $DCGView.Components.If,
   {
     predicate: () => DesModder.controller.canBeGLesmos($this.id) &&
-      !Calc.controller.getItemModel($this.id)?.formula.is_inequality,
+      !DesModder.controller.isInequality($this.id)
   },
   () => $DCGView.createElement(
     "div",
@@ -229,7 +229,7 @@ $DCGView.createElement(
   $DCGView.Components.If,
   {
     predicate: () => DesModder.controller.canBeGLesmos(this.id) &&
-      !Calc.controller.getItemModel(this.id)?.formula.is_inequality,
+      !DesModder.controller.isInequality(this.id)
   },
   () => $DCGView.createElement(
     "div",
@@ -242,6 +242,124 @@ $DCGView.createElement(
     })
   )
 )
+```
+
+## Add a lines menu option for confirming GLesmos lines
+
+*Module* `expressions/expression-menus/lines`
+
+*Find* => `options`
+```js
+$DCGView.createElement("div",
+  { class: $DCGView.const("dcg-options-flex-container") },
+  $DCGView.createElement("div",
+    { class: $DCGView.const("dcg-options-left-side") },
+    $DCGView.createElement("div", {
+      class: $DCGView.const("dcg-iconed-mathquill-row dcg-line-opacity-row")
+```
+
+*Find_surrounding_template* `options` => `template`
+
+*Find* inside `template`
+```js
+var $this = this;
+```
+
+*Find* inside `template`
+```js
+createElement($ToggleView.ToggleView
+```
+
+Prefix with a child
+
+*Replace* `options` with
+```js
+$DCGView.createElement(
+  $DCGView.Components.If,
+  {
+    predicate: () =>
+      DesModder.controller.isGlesmosMode($this.id) &&
+      DesModder.controller.isInequality($this.id),
+  },
+  () => $DCGView.createElement(
+    "div",
+    { class: $DCGView.const("dcg-options-menu-section-title dsm-gl-lines-confirm") },
+    () => DesModder.controller.format("GLesmos-confirm-lines"),
+    $DCGView.createElement($ToggleView.ToggleView, {
+      ariaLabel: () => DesModder.controller.format("GLesmos-confirm-lines"),
+      toggled: () => window.DesModder?.controller?.isGLesmosLinesConfirmed?.($this.id),
+      onChange: (a) => window.DesModder?.controller?.toggleGLesmosLinesConfirmed?.($this.id),
+    }),
+    $DCGView.createElement(
+      $DCGView.Components.If,
+      {
+        predicate: () => !DesModder?.controller?.isGLesmosLinesConfirmed?.($this.id)
+      },
+      () => $DCGView.createElement("div",
+        { class: $DCGView.const("dsm-gl-lines-confirm-body") },
+        () => DesModder.controller.format("GLesmos-confirm-lines-body")
+      )
+    )
+  )
+),
+__options__
+```
+
+### Alternative
+
+*Module* `expressions/expression-menus/lines`
+
+*Find* => `options`
+```js
+$DCGView.createElement("div",
+  { class: $DCGView.const("dcg-options-flex-container") },
+  $DCGView.createElement("div",
+    { class: $DCGView.const("dcg-options-left-side") },
+    $DCGView.createElement("div", {
+      class: $DCGView.const("dcg-iconed-mathquill-row dcg-line-opacity-row")
+```
+
+*Find_surrounding_template* `options` => `template`
+
+*Find* inside `template`
+```js
+createElement($ToggleView, {
+  ariaLabel: () => this.controller.s("graphing-calculator-narration-lines-visible")
+```
+
+Prefix with a child
+
+*Replace* `options` with
+```js
+$DCGView.createElement(
+  $DCGView.Components.If,
+  {
+    predicate: () =>
+      DesModder.controller.isGlesmosMode(this.id) &&
+      DesModder.controller.isInequality(this.id),
+  },
+  () => $DCGView.createElement(
+    "div",
+    { class: $DCGView.const("dcg-options-menu-section-title dsm-gl-lines-confirm") },
+    () => DesModder.controller.format("GLesmos-confirm-lines"),
+    $DCGView.createElement($ToggleView, {
+      ariaLabel: () => DesModder.controller.format("GLesmos-confirm-lines"),
+      toggled: () => window.DesModder?.controller?.isGLesmosLinesConfirmed?.(this.id),
+      onChange: (a) => window.DesModder?.controller?.toggleGLesmosLinesConfirmed?.(this.id),
+    }),
+    $DCGView.createElement(
+      $DCGView.Components.If,
+      {
+        predicate: () => !DesModder?.controller?.isGLesmosLinesConfirmed?.(this.id)
+      },
+      () => $DCGView.createElement("div",
+        { class: $DCGView.const("dsm-gl-lines-confirm-body") },
+        () => DesModder.controller.format("GLesmos-confirm-lines-body")
+      )
+    )
+  )
+),
+__options__
 ```
 
 ## Replace main renderer with glesmos rendering when necessary
@@ -353,7 +471,8 @@ addStatement = function ($stmt) {
 *Replace* `body` with
 ```js
 if ($stmt.type === "statement") {
-  $stmt.glesmos = window.DesModder?.controller?.isGlesmosMode?.($stmt.id);
+  $stmt.glesmos = window.DesModder?.controller?.isGlesmosMode($stmt.id);
+  $stmt.glesmosLinesConfirmed = window.DesModder?.controller?.isGLesmosLinesConfirmed($stmt.id);
 }
 __body__
 ```
@@ -374,7 +493,8 @@ addStatement($stmt) {
 *Replace* `body` with
 ```js
 if ($stmt.type === "statement") {
-  $stmt.glesmos = window.DesModder?.controller?.isGlesmosMode?.($stmt.id);
+  $stmt.glesmos = window.DesModder?.controller?.isGlesmosMode($stmt.id);
+  $stmt.glesmosLinesConfirmed = window.DesModder?.controller?.isGLesmosLinesConfirmed($stmt.id);
 }
 __body__
 ```
@@ -437,7 +557,9 @@ else {
 *Replace* `else` with
 ```js
 else if ($this.userData.glesmos) {
-  const lines = $this.userData.lines !== false;
+  const lines =
+    $this.userData.lines !== false &&
+    (!$this.isInequality() || $this.userData.glesmosLinesConfirmed);
   let derivativeX, derivativeY;
   if (lines) {
     try {
@@ -520,7 +642,9 @@ else {
 *Replace* `else` with
 ```js
 else if (this.userData.glesmos) {
-  const lines = this.userData.lines !== false;
+  const lines =
+    this.userData.lines !== false &&
+    (!this.isInequality() || this.userData.glesmosLinesConfirmed);
   let derivativeX, derivativeY;
   if (lines) {
     try {
