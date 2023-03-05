@@ -135,9 +135,7 @@ export default class MainPopup extends Component<{
           {() => (
             <div class="dsm-vc-export-menu">
               <div class="dcg-group-title">
-                {BROWSER === "firefox"
-                  ? format("video-creator-export-ff")
-                  : format("video-creator-export")}
+                {format("video-creator-export")}
               </div>
               <div class="dsm-vc-select-export-type">
                 <SegmentedControl
