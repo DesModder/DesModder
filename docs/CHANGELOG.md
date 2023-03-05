@@ -1,5 +1,25 @@
 # DesModder Changelog
 
+## 0.10.0
+
+New features:
+
+- Better Evaluation View plugin
+- (GLesmos) Now supports lines (outlines)
+- (Video Creator) Support capturing all moving sliders simultaneously
+
+Bug fixes and improvements:
+
+- (GLesmos) Rescale brightness to allow reaching pure white
+- (GLesmos) No longer breaks when toggled off then on
+- (GLesmos) Some list bugs fixed
+- (Set Primary Color) Styling improvements
+- (Wolfram to Desmos) Fix radical notation
+- (Folder Tools) Merge next folder if no expressions are between
+- (Video Creator) FFmpeg load can no longer be circumvented by toggling the menu
+- (Video Creator) Fixes defaulting video export name to graph title
+- Internal stability improvements
+
 ## 0.9.3
 
 Bug fixes and improvements:
