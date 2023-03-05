@@ -48,15 +48,6 @@ export async function cancelExport(controller: Controller) {
 }
 
 export async function initFFmpeg(controller: Controller) {
-  if (BROWSER === "firefox") {
-    console.warn(
-      "Close the Firefox DevTools before first opening the video creator menu. " +
-        "Cannot load ffmpeg.wasm while the DevTools are open due to a Firefox bug. " +
-        "See https://github.com/ffmpegwasm/ffmpeg.wasm/issues/111\n\n" +
-        "You may see errors 'Module.instantiateWasm callback failed with error: out of memory' or " +
-        "'worker.js onmessage() captured an uncaught exception: TypeError: f.asm is undefined' as a result"
-    );
-  }
   if (ffmpeg === null) {
     ffmpeg = createFFmpeg({
       log: false,
