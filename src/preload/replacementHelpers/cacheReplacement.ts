@@ -116,6 +116,7 @@ function oldFullReplacement(
     // eslint-disable-next-line no-eval
     (0, eval)(wcToken.value) as string
   );
+  workerAppend = workerAppend.replace(/\/\/# sourceMappingURL=.*/, "");
   wcToken.value = JSON.stringify(
     // Place at the beginning of the code for the source mapping to line up
     // Call at the end of the code to run after modules defined
