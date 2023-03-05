@@ -62,6 +62,6 @@ export function compileGLesmos(
       ],
     };
   } catch (msg) {
-    throw ParsenodeError(`[GLesmos Error] ${msg}`);
+    throw new ParsenodeError(`[GLesmos Error] ${msg}`);
   }
 }

@@ -10,7 +10,7 @@ export let getConstantListLength: (
   chunk: IRChunk,
   index: number
 ) => number | undefined;
-export let ParsenodeError: (msg: string) => IParsenodeError;
+export let ParsenodeError: new (msg: string) => IParsenodeError;
 
 const _self = self as any;
 
@@ -30,5 +30,6 @@ if (_self.WorkerGlobalScope) {
     Fragile?.getConstantListLength ??
     desmosRequire("core/math/ir/features/list-length")?.getConstantListLength;
   ParsenodeError =
-    Fragile?.ParsenodeError ?? desmosRequire("core/math/parsenode/error");
+    Fragile?.ParsenodeError?.ErrorNode ??
+    desmosRequire("core/math/parsenode/error")?.ErrorNode;
 }
