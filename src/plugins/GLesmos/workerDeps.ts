@@ -18,21 +18,12 @@ const _self = self as any;
 // Rather than fix the root cause, just check if we're in the worker
 if (_self.WorkerGlobalScope) {
   const Fragile = _self.Fragile;
-  const desmosRequire = _self.require;
-  countReferences =
-    Fragile?.countReferences ??
-    (desmosRequire("core/math/ir/features/count-references")
-      .countReferences as (c: IRChunk) => number[]);
-  opcodes =
-    Fragile?.Opcodes ?? (desmosRequire("core/math/ir/opcodes") as Opcodes);
-  Types = Fragile?.Types ?? desmosRequire("core/math/types");
-  getConstantListLength =
-    Fragile?.getConstantListLength ??
-    desmosRequire("core/math/ir/features/list-length")?.getConstantListLength;
+  countReferences = Fragile?.countReferences;
+  opcodes = Fragile?.Opcodes;
+  Types = Fragile?.Types;
+  getConstantListLength = Fragile?.getConstantListLength;
+
   // .ErrorNode is after some TS migration.
   ParsenodeError =
-    Fragile?.ParsenodeError ??
-    Fragile?.ParsenodeError?.ErrorNode ??
-    desmosRequire("core/math/parsenode/error") ??
-    desmosRequire("core/math/parsenode/error")?.ErrorNode;
+    Fragile?.ParsenodeError ?? Fragile?.ParsenodeError?.ErrorNode;
 }

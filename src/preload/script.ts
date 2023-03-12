@@ -1,5 +1,4 @@
 import { addForceDisabled } from "../panic/panic";
-import * as almond from "./almond";
 import moduleReplacements from "./moduleReplacements";
 import { fullReplacementCached } from "./replacementHelpers/cacheReplacement";
 import window from "globals/window";
@@ -7,27 +6,10 @@ import injectScript from "utils/injectScript";
 import { postMessageUp, listenToMessageDown, arrayToSet } from "utils/messages";
 import { pollForValue } from "utils/utils";
 
-/* This script is loaded at document_start, before the page's scripts, to give it 
-time to set ALMOND_OVERRIDES to expose `require` */
+/* This script is loaded at document_start, before the page's scripts */
 
 // workerAppend will get filled in from a message
 let workerAppend: string = "console.error('worker append not filled in')";
-
-if (window.ALMOND_OVERRIDES !== undefined) {
-  window.alert(
-    "Warning: you have a script installed that overrides modules definitions. " +
-      "This is incompatible with some features of DesModder, " +
-      "so try disabling Tampermonkey scripts."
-  );
-}
-
-window.require = almond.require;
-
-window.ALMOND_OVERRIDES = {
-  define: almond.define,
-  require: almond.require,
-  requirejs: almond.requirejs,
-};
 
 /** The calculator is not loaded as soon as toplevel/calculator_desktop is
  * loaded; toplevel/calculator_desktop sneakily contains a thenable, so it

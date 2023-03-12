@@ -1,23 +1,9 @@
 import enFTL from "../../localization/en.ftl";
 import { FluentBundle, FluentResource, FluentVariable } from "@fluent/bundle";
-import { desmosRequire, Fragile } from "globals/window";
+import { Fragile } from "globals/window";
 
-interface Intl {
-  currentLanguage: () => string;
-}
-let i18nCore: Intl | null = null;
 function currentLanguage() {
-  const fcl = Fragile?.currentLanguage?.();
-  if (fcl) return fcl;
-  // defend against currentLanguage being used before Desmos loaded, e.g.
-  // for showing panic messages
-  if (i18nCore === null) {
-    try {
-      i18nCore = desmosRequire("lib/i18n-core") as Intl;
-    } catch (e) {}
-  }
-  if (i18nCore === null) return "en";
-  else return i18nCore.currentLanguage();
+  return Fragile?.currentLanguage?.() ?? "en";
 }
 
 const locales = new Map<string, FluentBundle>();
@@ -40,7 +26,7 @@ export function format(
 
 /**
  * Add locale based on ftl string. The locale must be the same as Desmos's
- * locale string as returned by `require("lib/i18n-core").currentLanguage()`
+ * locale string as returned by `currentLanguage()`
  */
 function addLanguage(locale: string, ftl: string) {
   const resource = new FluentResource(ftl);

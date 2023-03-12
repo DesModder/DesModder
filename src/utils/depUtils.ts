@@ -1,21 +1,17 @@
 import Node from "../parsing/parsenode";
 import { ItemModel } from "globals/models";
-import { desmosRequire, Calc, Fragile, Private } from "globals/window";
+import { Calc, Fragile, Private } from "globals/window";
 
-const evaluateLatex =
-  Fragile.evaluateLatex ??
-  desmosRequire("core/math/evaluate-single-expression").default;
+const evaluateLatex = Fragile.evaluateLatex;
 
-export const jquery = Fragile.jQuery ?? desmosRequire("jquery");
-export const keys =
-  Fragile.Keys ??
-  (desmosRequire("keys") as {
-    lookup: (e: KeyboardEvent) => string;
-    lookupChar: (e: KeyboardEvent) => string;
-    isUndo: (e: KeyboardEvent) => boolean;
-    isRedo: (e: KeyboardEvent) => boolean;
-    isHelp: (e: KeyboardEvent) => boolean;
-  });
+export const jquery = Fragile.jQuery;
+export const keys = Fragile.Keys as {
+  lookup: (e: KeyboardEvent) => string;
+  lookupChar: (e: KeyboardEvent) => string;
+  isUndo: (e: KeyboardEvent) => boolean;
+  isRedo: (e: KeyboardEvent) => boolean;
+  isHelp: (e: KeyboardEvent) => boolean;
+};
 export const parseDesmosLatexRaw = Private.Parser.parse as (
   s: string,
   config?: {
@@ -37,19 +33,14 @@ export function EvaluateSingleExpression(s: string): number {
 }
 
 export const getQueryParams: () => { [key: string]: string | true } =
-  Fragile.getQueryParams ??
-  desmosRequire("lib/parse-query-params").getQueryParams;
+  Fragile.getQueryParams;
 
 export const autoCommandNames: string =
-  Private.MathquillConfig?.getAutoCommands?.() ??
-  desmosRequire("main/mathquill-operators").getAutoCommands();
+  Private.MathquillConfig?.getAutoCommands?.();
 export const autoOperatorNames: string =
-  Private.MathquillConfig?.getAutoOperators?.() ??
-  desmosRequire("main/mathquill-operators").getAutoOperators();
+  Private.MathquillConfig?.getAutoOperators?.();
 
-const grep =
-  Fragile.getReconciledExpressionProps ??
-  desmosRequire("core/math/expression-types").getReconciledExpressionProps;
+const grep = Fragile.getReconciledExpressionProps;
 
 export function getReconciledExpressionProps(id: string): {
   points: boolean;
@@ -60,10 +51,7 @@ export function getReconciledExpressionProps(id: string): {
   return grep((model as any).formula.expression_type, model);
 }
 
-const ExpressionOptionsMenuView =
-  Fragile.ExpressionOptionsMenuView ??
-  desmosRequire("expressions/expression-menus/expression-options-menu-view")
-    .ExpressionOptionsMenuView;
+const ExpressionOptionsMenuView = Fragile.ExpressionOptionsMenuView;
 
 const getSectionsProto = ExpressionOptionsMenuView.prototype.getSections;
 
@@ -77,4 +65,4 @@ export function getCurrentGraphTitle(): string | undefined {
   return Calc._calc.globalHotkeys?.headerController?.graphsController?.getCurrentGraphTitle?.();
 }
 
-export const List = Fragile.List ?? desmosRequire("graphing-calc/models/list");
+export const List = Fragile.List;

@@ -1,7 +1,6 @@
 import CalcType from "./Calc";
 
 interface windowConfig extends Window {
-  require: ((s: string[], callback: Function) => void) & ((s: string) => any);
   Calc: CalcType;
   DesModder: any;
   ALMOND_OVERRIDES: { [key: string]: Function };
@@ -25,14 +24,6 @@ export const Calc = new Proxy(
     },
   }
 ) as CalcType;
-
-// defer access of window.require to when it is used
-export const desmosRequire = new Proxy(() => {}, {
-  apply: function (_target, _that, args) {
-    if (window.require === undefined) return undefined;
-    return (window.require as any)(...args);
-  },
-}) as typeof window.require;
 
 export const Fragile = new Proxy(
   {},

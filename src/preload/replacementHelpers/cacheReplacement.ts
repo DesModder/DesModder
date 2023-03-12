@@ -119,11 +119,9 @@ function oldFullReplacement(
   );
   workerAppend = workerAppend.replace(/\/\/# sourceMappingURL=.*/, "");
   wcToken.value = JSON.stringify(
-    // Place at the beginning of the code for the source mapping to line up
-    // Call at the end of the code to run after modules defined
+    // Call immediately after Fragile is defined
     `function loadDesModderWorker(){${workerAppend}\n}` +
-      newWorker +
-      "\nloadDesModderWorker();"
+      newWorker.replace(/(\.Fragile ?= ?{[^}]+})/, "$1, loadDesModderWorker()")
   );
   const srcWithWorkerReplacements = tokens.map((x) => x.value).join("");
   return applyReplacements(

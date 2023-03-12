@@ -1,4 +1,4 @@
-import { Calc, desmosRequire, Fragile } from "../../globals/window";
+import { Calc, Fragile } from "../../globals/window";
 import "./hide-errors.less";
 import { Plugin } from "plugins";
 
@@ -10,9 +10,7 @@ function initPromptSlider() {
   // Avoids overflowing on narrow expression lists since we've added the "hide" button.
   // getMissingVariables is used in different ways, but we care about
   //    t.getMissingVariables().slice(0, 4)
-  const proto =
-    Fragile.PromptSliderView?.prototype ??
-    desmosRequire("expressions/promptslider_view").default.prototype;
+  const proto = Fragile.PromptSliderView?.prototype;
   const oldGMV = proto.getMissingVariables;
   proto.getMissingVariables = function () {
     const missing = oldGMV.call(this);
