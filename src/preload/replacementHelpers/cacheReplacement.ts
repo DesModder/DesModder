@@ -82,12 +82,13 @@ function newFullReplacement(tokens: Token[], enabledReplacements: Block[]) {
   // post-esbuild
   const wbTokenHead = tokens.find(
     (x) =>
-      x.type === "TemplateHead" && x.value.includes("const __sharedModuleFn =")
+      x.type === "TemplateHead" &&
+      x.value.includes("const __dcg_shared_module__ =")
   );
   const wbTokenTail = tokens.find(
     (x) =>
       x.type === "TemplateTail" &&
-      x.value.includes("__workerFn(__sharedModuleFn());")
+      x.value.includes("__dcg_worker_module__(__dcg_shared_module__());")
   );
   if (wbTokenTail === undefined || wbTokenHead === undefined)
     throw new Error("Failed to find valid worker builder.");
