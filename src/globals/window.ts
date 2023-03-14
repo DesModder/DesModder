@@ -1,4 +1,15 @@
+import { DCGViewModule } from "../DCGView";
+import {
+  CheckboxComponent,
+  DStaticMathquillViewComponent,
+  InlineMathInputViewComponent,
+  MathQuillField,
+  MathQuillViewComponent,
+  SegmentedControlComponent,
+  TooltipComponent,
+} from "../components/desmosComponents";
 import CalcType from "./Calc";
+import { ItemModel } from "./models";
 
 interface windowConfig extends Window {
   Calc: CalcType;
@@ -35,7 +46,51 @@ export const Fragile = new Proxy(
       return fragile[prop];
     },
   }
-) as any;
+) as {
+  DCGView: DCGViewModule;
+  PromptSliderView: any;
+  Checkbox: typeof CheckboxComponent;
+  SegmentedControl: typeof SegmentedControlComponent;
+  MathquillView: typeof MathQuillViewComponent & {
+    // static abstract getFocusedMathquill()
+    getFocusedMathquill: () => MathQuillField;
+  };
+  InlineMathInputView: typeof InlineMathInputViewComponent;
+  StaticMathquillView: typeof DStaticMathquillViewComponent;
+  Tooltip: typeof TooltipComponent;
+  ExpressionOptionsMenuView: {
+    prototype: {
+      getSections: {
+        apply: (m: { model: ItemModel }) => Section[];
+      };
+    };
+  };
+  evaluateLatex: (s: string, isDegreeMode: boolean) => number;
+  Keys: {
+    lookup: (e: KeyboardEvent) => string;
+    lookupChar: (e: KeyboardEvent) => string;
+    isUndo: (e: KeyboardEvent) => boolean;
+    isRedo: (e: KeyboardEvent) => boolean;
+    isHelp: (e: KeyboardEvent) => boolean;
+  };
+  jQuery: any;
+  getQueryParams: () => { [key: string]: string | true };
+  getReconciledExpressionProps: (
+    type: string,
+    model?: ItemModel
+  ) => {
+    points: boolean;
+    lines: boolean;
+    fill: boolean;
+  };
+  List: {
+    removeItemById: (listModel: any, id: string) => void;
+    moveItemsTo: (listModel: any, from: number, to: number, n: number) => void;
+  };
+  currentLanguage: () => string;
+};
+
+type Section = "colors-only" | "lines" | "points" | "fill" | "label" | "drag";
 
 export const Private = new Proxy(
   {},

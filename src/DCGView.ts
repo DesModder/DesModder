@@ -1,6 +1,6 @@
 import { Fragile } from "globals/window";
 
-export const DCGView = Fragile.DCGView as DCGViewModule;
+export const DCGView = Fragile.DCGView;
 
 type OrConst<T> = {
   [K in keyof T]: T[K] extends Function ? T[K] : T[K] | (() => T[K]);
@@ -52,7 +52,7 @@ interface IfElseSecondParam {
   false: () => typeof ClassComponent;
 }
 
-interface DCGViewModule {
+export interface DCGViewModule {
   Components: {
     For: typeof ForComponent;
     If: typeof ClassComponent;

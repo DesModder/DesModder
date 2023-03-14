@@ -1,7 +1,7 @@
 import { ClassComponent, DCGView } from "DCGView";
 import { Calc, Fragile } from "globals/window";
 
-abstract class CheckboxComponent extends ClassComponent<{
+export abstract class CheckboxComponent extends ClassComponent<{
   checked: boolean;
   disabled?: boolean;
   small?: boolean;
@@ -9,9 +9,9 @@ abstract class CheckboxComponent extends ClassComponent<{
   onChange: (checked: boolean) => void;
 }> {}
 
-export const Checkbox: typeof CheckboxComponent = Fragile.Checkbox;
+export const Checkbox = Fragile.Checkbox;
 
-abstract class SegmentedControlComponent extends ClassComponent<{
+export abstract class SegmentedControlComponent extends ClassComponent<{
   ariaGroupLabel: string;
   minButtonWidth?: number;
   disabled?: boolean;
@@ -30,15 +30,14 @@ abstract class SegmentedControlComponent extends ClassComponent<{
   }[];
 }> {}
 
-export const DesmosSegmentedControl: typeof SegmentedControlComponent =
-  Fragile.SegmentedControl;
+export const DesmosSegmentedControl = Fragile.SegmentedControl;
 
-interface MathQuillField {
+export interface MathQuillField {
   keystroke: (key: string, e: KeyboardEvent) => void;
   latex: () => string;
 }
 
-abstract class MathQuillViewComponent extends ClassComponent<{
+export abstract class MathQuillViewComponent extends ClassComponent<{
   latex: string;
   capExpressionSize: number | false;
   config: { autoOperatorNames: string };
@@ -54,12 +53,9 @@ abstract class MathQuillViewComponent extends ClassComponent<{
   noFadeout?: boolean;
 }> {}
 
-export const MathQuillView: typeof MathQuillViewComponent & {
-  // static abstract getFocusedMathquill()
-  getFocusedMathquill: () => MathQuillField;
-} = Fragile.MathquillView;
+export const MathQuillView = Fragile.MathquillView;
 
-abstract class InlineMathInputViewComponent extends ClassComponent<{
+export abstract class InlineMathInputViewComponent extends ClassComponent<{
   latex: string;
   // capExpressionSize: number | false;
   // config: { autoOperatorNames: string };
@@ -79,8 +75,7 @@ abstract class InlineMathInputViewComponent extends ClassComponent<{
 }> {}
 
 /** General InlineMathInputView, without any defaults filled in */
-export const InlineMathInputViewGeneral: typeof InlineMathInputViewComponent =
-  Fragile.InlineMathInputView;
+export const InlineMathInputViewGeneral = Fragile.InlineMathInputView;
 
 export const {
   If,
@@ -93,17 +88,16 @@ export const {
   Textarea,
 } = DCGView.Components;
 
-abstract class DStaticMathquillViewComponent extends ClassComponent<{
+export abstract class DStaticMathquillViewComponent extends ClassComponent<{
   latex: string;
   config: any;
 }> {}
 
-export const DStaticMathquillView: typeof DStaticMathquillViewComponent =
-  Fragile.StaticMathquillView;
+export const DStaticMathquillView = Fragile.StaticMathquillView;
 
-abstract class TooltipComponent extends ClassComponent<{
+export abstract class TooltipComponent extends ClassComponent<{
   tooltip: string;
   gravity?: "n" | "e" | "s" | "w";
 }> {}
 
-export const Tooltip: typeof TooltipComponent = Fragile.Tooltip;
+export const Tooltip = Fragile.Tooltip;

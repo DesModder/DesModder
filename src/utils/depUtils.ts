@@ -5,13 +5,7 @@ import { Calc, Fragile, Private } from "globals/window";
 const evaluateLatex = Fragile.evaluateLatex;
 
 export const jquery = Fragile.jQuery;
-export const keys = Fragile.Keys as {
-  lookup: (e: KeyboardEvent) => string;
-  lookupChar: (e: KeyboardEvent) => string;
-  isUndo: (e: KeyboardEvent) => boolean;
-  isRedo: (e: KeyboardEvent) => boolean;
-  isHelp: (e: KeyboardEvent) => boolean;
-};
+export const keys = Fragile.Keys;
 export const parseDesmosLatexRaw = Private.Parser.parse as (
   s: string,
   config?: {
@@ -32,8 +26,7 @@ export function EvaluateSingleExpression(s: string): number {
   return evaluateLatex(s, Calc.controller.isDegreeMode());
 }
 
-export const getQueryParams: () => { [key: string]: string | true } =
-  Fragile.getQueryParams;
+export const getQueryParams = Fragile.getQueryParams;
 
 export const autoCommandNames: string =
   Private.MathquillConfig?.getAutoCommands?.();
@@ -42,11 +35,7 @@ export const autoOperatorNames: string =
 
 const grep = Fragile.getReconciledExpressionProps;
 
-export function getReconciledExpressionProps(id: string): {
-  points: boolean;
-  lines: boolean;
-  fill: boolean;
-} {
+export function getReconciledExpressionProps(id: string) {
   const model = Calc.controller.getItemModel(id);
   return grep((model as any).formula.expression_type, model);
 }
@@ -55,9 +44,7 @@ const ExpressionOptionsMenuView = Fragile.ExpressionOptionsMenuView;
 
 const getSectionsProto = ExpressionOptionsMenuView.prototype.getSections;
 
-export function getSections(
-  model: ItemModel
-): ("colors-only" | "lines" | "points" | "fill" | "label" | "drag")[] {
+export function getSections(model: ItemModel) {
   return getSectionsProto.apply({ model });
 }
 
