@@ -1,0 +1,40 @@
+// Color Swatch
+.dcg-color-evaluation .dcg-color-evaluation {
+  vertical-align: middle;
+}
+
+.dcg-color-evaluation .dcg-static-mathquill-view {
+  margin-right: 5px;
+}
+
+.dsm-color-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+// Scrollbar for output
+.dcg-evaluation-container {
+  > .dcg-evaluation.dcg-do-blur {
+    max-width: 100%;
+    overflow-x: auto;
+    .dcg-inline-math-input-view {
+      font-size: 100%;
+      display: unset;
+    }
+    > .dcg-mathquill-wrapper {
+      > .dcg-typeset-math {
+        display: flow-root;
+        max-width: 100%;
+        overflow-x: auto;
+      }
+      .dcg-evaluation-html {
+        .dcg-typeset-math {
+          background: none;
+          border: none;
+          padding: 0;
+        }
+      }
+    }
+  }
+}

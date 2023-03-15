@@ -80,7 +80,7 @@ list: function () {
     () => window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view") && window.DesModder?.controller?.pluginSettings.get("better-evaluation-view").lists,
     {
       true: () => $Dcgview.createElement(
-        $StaticMathquillView.default,
+        Desmos.Private.Fragile.InlineMathInputView,
         {
           latex: function() {
             let values = $this.props.val()
@@ -94,7 +94,12 @@ list: function () {
             let labels = values.slice(0,length).map(e=>$Label.truncatedLatexLabel(e,labelOptions))
             return "\\left[" + labels.join(",") + (values.length > length ? `\\textcolor{gray}{...\\mathit{${values.length - length}\\ more}}` : "") + "\\right]"
           },
-          config: $Dcgview.const({})
+          config: $Dcgview.const({}),
+          readonly: $Dcgview.const(true),
+          controller: $Dcgview.const(Calc.controller),
+          isFocused: $Dcgview.const(false),
+          fullWidth: $Dcgview.const(true),
+          noBorder: $Dcgview.const(true)
         }
       ),
       false: () => $Dcgview.createElement(__oldList__)
