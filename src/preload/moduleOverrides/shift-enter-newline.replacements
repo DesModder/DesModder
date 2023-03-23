@@ -44,19 +44,15 @@ onKeydownEvent(e) {__onKeydownEvent__}
 
 *Find* inside `onKeydownEvent` => `from`
 ```js
-$n === $Keys.ENTER && !$e.metaKey
+$n === $enterKey && !$e.metaKey
+  ? ($e.preventDefault(), this.props.onSpecialKey("Enter"))
 ```
 
 *Replace* `from` with
 ```js
-$n === $Keys.ENTER && !$e.metaKey
+$n === $enterKey && !$e.metaKey
   && !($e.shiftKey && window.DesModder?.controller?.isPluginEnabled?.("shift-enter-newline"))
-```
-
-This leads to
-```js
-  if ($n === $Keys.ENTER && !$e.metaKey && !$e.shiftKey)
-    { $e.preventDefault(), this.props.onSpecialKey("Enter") }
+  ? ($e.preventDefault(), this.props.onSpecialKey("Enter"))
 ```
 
 When shift-enter is pressed, the test fails, so `this.props.onSpecialKey("Enter")` is not triggered, and the cursor does not move to the next expression.
