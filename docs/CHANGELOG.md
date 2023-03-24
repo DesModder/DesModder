@@ -1,5 +1,9 @@
 # DesModder Changelog
 
+## 0.10.1
+
+Internal fixes.
+
 ## 0.10.0
 
 New features:
