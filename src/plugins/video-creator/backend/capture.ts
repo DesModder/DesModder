@@ -144,7 +144,7 @@ async function captureActionOrSliderTicks(
   controller: Controller,
   step: () => void
 ) {
-  return await new Promise<void>((resolve) => {
+  await new Promise<void>((resolve) => {
     callbackIfCancel = resolve;
     dispatchListenerID = Calc.controller.dispatcher.register((e) => {
       if (
