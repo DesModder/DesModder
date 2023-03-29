@@ -24,7 +24,10 @@
         "ignoreArrowShorthand": true
       }
     ],
-    "@typescript-eslint/consistent-type-imports": "off",
+    "@typescript-eslint/consistent-type-imports": [
+      "error",
+      { "prefer": "no-type-imports" }
+    ],
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": "off"
   }

@@ -3,11 +3,13 @@ import { Fragile } from "globals/window";
 export const DCGView = Fragile.DCGView;
 
 type OrConst<T> = {
-  [K in keyof T]: T[K] extends () => any ? T[K] : T[K] | (() => T[K]);
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  [K in keyof T]: T[K] extends Function ? T[K] : T[K] | (() => T[K]);
 };
 
 type ToFunc<T> = {
-  [K in keyof T]: T[K] extends () => any ? T[K] : () => T[K];
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  [K in keyof T]: T[K] extends Function ? T[K] : () => T[K];
 };
 
 export abstract class ClassComponent<PropsType = Props> {
@@ -32,7 +34,7 @@ type ComponentArgument = ClassComponent | (() => string);
 
 export type LooseProps = Record<string, any>;
 
-export type Props = Record<string, () => any>;
+export type Props = Record<string, () => unknown>;
 
 export interface MountedComponent {
   update: () => void;
