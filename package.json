@@ -10,13 +10,18 @@
     "dist/*.js"
   ],
   "scripts": {
-    "prettier": "prettier --write .",
-    "eslint-fix": "eslint --fix src",
     "build": "node ./esbuild.mjs --browser=chrome",
     "build-ff": "node ./esbuild.mjs --browser=firefox",
     "dev": "node ./esbuild.mjs --watch --browser=chrome",
     "dev-ff": "node ./esbuild.mjs --watch --browser=firefox",
-    "lint": "prettier --check . && tsc --noEmit && eslint src",
+    "prettier": "npm run fix:prettier",
+    "fix:prettier": "prettier --write .",
+    "fix:eslint": "eslint --fix src",
+    "fix": "npm run fix:eslint && npm run fix:prettier",
+    "lint": "npm run lint:formatting && npm run lint:types && npm run lint:eslint",
+    "lint:formatting": "prettier --check .",
+    "lint:types": "tsc --noEmit",
+    "lint:eslint": "eslint src",
     "test": "npm run test:jest",
     "test:jest": "jest --config jest.config.js"
   },
