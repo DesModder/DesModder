@@ -246,7 +246,7 @@ export function parseCSSHex(color: string) {
 }
 
 function parseNamedColor(color: string) {
-  const NAME_TABLE: { [key: string]: string } = {
+  const NAME_TABLE: Record<string, string> = {
     black: "#000000",
     navy: "#000080",
     darkblue: "#00008b",

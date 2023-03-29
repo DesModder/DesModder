@@ -1,40 +1,40 @@
 // reference https://www.khronos.org/registry/OpenGL-Refpages/gl4/index.php
 
 // Test using https://www.desmos.com/calculator/lfgehepjce
-const builtins: {
-  [K: string]:
-    | undefined
-    | {
-        tag: "glsl-builtin";
-        alias?: string;
-      }
-    | {
-        tag: "simple";
-        /** alias: replace function call references to this.
+const builtins: Record<
+  string,
+  | undefined
+  | {
+      tag: "glsl-builtin";
+      alias?: string;
+    }
+  | {
+      tag: "simple";
+      /** alias: replace function call references to this.
         Any builtin with a def or body specified must have an alias
         starting with "dsm_" to avoid collisions */
-        alias: string;
-        // def: function definition
-        def?: string;
-        // deps: dependencies
-        deps?: string[];
-        // body is a just a more concise way to set def
-        body?: string;
-      }
-    | {
-        // make: specialize the function definition for a given list size
-        tag: "list";
-        alias: string;
-        make: (n: string) => string;
-        deps?: (n: string) => string[];
-      }
-    | {
-        tag: "list2";
-        alias: string;
-        make: (n: string, m: string) => string;
-      }
-    | { tag: "type"; alias?: string; def: string };
-} = {
+      alias: string;
+      // def: function definition
+      def?: string;
+      // deps: dependencies
+      deps?: string[];
+      // body is a just a more concise way to set def
+      body?: string;
+    }
+  | {
+      // make: specialize the function definition for a given list size
+      tag: "list";
+      alias: string;
+      make: (n: string) => string;
+      deps?: (n: string) => string[];
+    }
+  | {
+      tag: "list2";
+      alias: string;
+      make: (n: string, m: string) => string;
+    }
+  | { tag: "type"; alias?: string; def: string }
+> = {
   sin: {
     tag: "glsl-builtin",
   },

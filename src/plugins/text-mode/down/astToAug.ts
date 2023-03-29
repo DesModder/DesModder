@@ -15,7 +15,7 @@ import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
 import { everyNonNull } from "utils/utils";
 
 export class DownState extends DiagnosticsState {
-  mapIDstmt: { [key: string]: TextAST.Statement } = {};
+  mapIDstmt: Record<string, TextAST.Statement> = {};
   maxCustomID = 0;
   hasBlockingError = false;
 
@@ -555,7 +555,7 @@ function exprEvalSame(expr: TextAST.Expression, expected: number) {
   return evaluated === null ? false : evaluated === expected;
 }
 
-function exprEvalSameDeep<T extends { [key: string]: TextAST.Expression }>(
+function exprEvalSameDeep<T extends Record<string, TextAST.Expression>>(
   exprMap: T,
   expected: { [K in keyof T]: number }
 ) {

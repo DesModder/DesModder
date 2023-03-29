@@ -10,9 +10,7 @@ export async function pollForValue<T>(func: () => T) {
   });
 }
 
-interface ClassDict {
-  [key: string]: boolean;
-}
+type ClassDict = Record<string, boolean>;
 
 export type MaybeClassDict = string | ClassDict | undefined | null;
 
@@ -46,7 +44,7 @@ export function everyNonNull<T>(arr: (T | null)[]): arr is T[] {
 
 export function jsx(
   tag: string,
-  attrs: { [key: string]: string },
+  attrs: Record<string, string>,
   ...children: (Node | string)[]
 ) {
   const element = document.createElement(tag);

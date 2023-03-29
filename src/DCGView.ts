@@ -30,13 +30,9 @@ export abstract class ClassComponent<PropsType = Props> {
 
 type ComponentArgument = ClassComponent | (() => string);
 
-export interface LooseProps {
-  [key: string]: any;
-}
+export type LooseProps = Record<string, any>;
 
-export interface Props {
-  [key: string]: Function;
-}
+export type Props = Record<string, Function>;
 
 export interface MountedComponent {
   update: () => void;
@@ -89,7 +85,7 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace JSX {
     interface IntrinsicAttributes {
-      class?: string | { [key: string]: boolean };
+      class?: string | Record<string, boolean>;
     }
     interface IntrinsicElements {
       div: any;

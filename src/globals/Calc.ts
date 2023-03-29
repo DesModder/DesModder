@@ -37,9 +37,7 @@ export type DispatchedEvent =
     }
   | {
       type: "on-evaluator-changes";
-      changes: {
-        [id: string]: EvaluatorChange;
-      };
+      changes: Record<string, EvaluatorChange>;
       timingData: TimingData;
     };
 

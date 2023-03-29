@@ -38,9 +38,7 @@ export interface ConfigItemString extends ConfigItemGeneric {
 
 export type ConfigItem = ConfigItemBoolean | ConfigItemString;
 
-export interface GenericSettings {
-  [key: string]: any;
-}
+export type GenericSettings = Record<string, any>;
 
 export interface Plugin<Settings extends GenericSettings = {}> {
   // the id is fixed permanently, even for future releases

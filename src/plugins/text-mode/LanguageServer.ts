@@ -22,7 +22,7 @@ import { Tree } from "@lezer/common";
 export interface ProgramAnalysis {
   ast: Program;
   diagnostics: Diagnostic[];
-  mapIDstmt: { [key: string]: Statement | undefined };
+  mapIDstmt: Record<string, Statement | undefined>;
 }
 
 export default class LanguageServer {

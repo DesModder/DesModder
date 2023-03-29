@@ -322,9 +322,12 @@ function columnToAST(
   };
 }
 
-function styleMapping(from: {
-  [key: string]: TextAST.Expression | TextAST.StyleMapping | null | undefined;
-}): TextAST.StyleMapping | null {
+function styleMapping(
+  from: Record<
+    string,
+    TextAST.Expression | TextAST.StyleMapping | null | undefined
+  >
+): TextAST.StyleMapping | null {
   const nonemptyEntries = Object.entries(from).filter(
     ([_, value]) => value != null
   ) as [string, TextAST.Expression | TextAST.StyleMapping][];
