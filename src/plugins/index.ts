@@ -40,7 +40,7 @@ export type ConfigItem = ConfigItemBoolean | ConfigItemString;
 
 export type GenericSettings = Record<string, any>;
 
-export interface Plugin<Settings extends GenericSettings = {}> {
+export interface Plugin<Settings extends GenericSettings = GenericSettings> {
   // the id is fixed permanently, even for future releases
   // where you might change the plugin's name
   // and can help handle migrating save state if the display name changes

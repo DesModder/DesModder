@@ -3,11 +3,11 @@ import { Fragile } from "globals/window";
 export const DCGView = Fragile.DCGView;
 
 type OrConst<T> = {
-  [K in keyof T]: T[K] extends Function ? T[K] : T[K] | (() => T[K]);
+  [K in keyof T]: T[K] extends () => any ? T[K] : T[K] | (() => T[K]);
 };
 
 type ToFunc<T> = {
-  [K in keyof T]: T[K] extends Function ? T[K] : () => T[K];
+  [K in keyof T]: T[K] extends () => any ? T[K] : () => T[K];
 };
 
 export abstract class ClassComponent<PropsType = Props> {
@@ -32,7 +32,7 @@ type ComponentArgument = ClassComponent | (() => string);
 
 export type LooseProps = Record<string, any>;
 
-export type Props = Record<string, Function>;
+export type Props = Record<string, () => any>;
 
 export interface MountedComponent {
   update: () => void;

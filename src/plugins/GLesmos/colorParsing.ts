@@ -13,14 +13,16 @@ function isEqual(lhs: any[], rhs: any[]) {
   return output;
 }
 
+const FALLBACK_COLOR = [0.5, 0.5, 0.5, 1];
+
 function mapToColorSpace(
   clFrom: string | undefined,
   clTo: string | undefined
-): Function {
-  if (clFrom === undefined || clTo === undefined) return () => null;
-  if (clFrom === clTo) return (...args: number[]) => args[0];
+): (args: number[]) => number[] {
+  if (clFrom === undefined || clTo === undefined) return () => FALLBACK_COLOR;
+  if (clFrom === clTo) return (args) => args;
 
-  let convFunc: Function;
+  let convFunc: (...args: number[]) => number[];
   let rxAlpha: RegExp;
 
   switch (true) {
@@ -61,7 +63,7 @@ function mapToColorSpace(
       rxAlpha = /[a-z]{3}a/;
       break;
     default:
-      return () => null;
+      return () => FALLBACK_COLOR;
   }
 
   // bitfield to decide what to do with alpha disparity
@@ -81,11 +83,11 @@ function mapToColorSpace(
       };
     case 3: // alpha to alpha - alpha value gets added to output
       return (args: number[]) => {
-        const al = args.pop();
+        const al = args.pop()!;
         return convFunc(...args).concat(al);
       };
     default:
-      return () => null;
+      return () => FALLBACK_COLOR;
   }
 }
 
@@ -409,13 +411,11 @@ export default function getRGBpack(cssColor: string): number[] {
     return color;
   } else {
     const funcPar: ColorType | null = parseCSSFunc(cssColor);
+    if (funcPar?.values === undefined) return FALLBACK_COLOR;
     const colorPack: number[] | null = mapToColorSpace(
       funcPar?.type,
       "rgba"
-    )(funcPar?.values);
-    if (colorPack === null) {
-      return [0.5, 0.5, 0.5, 1];
-    }
-    return colorPack;
+    )(funcPar.values);
+    return colorPack ?? FALLBACK_COLOR;
   }
 }

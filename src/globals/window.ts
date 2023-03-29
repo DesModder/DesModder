@@ -14,7 +14,6 @@ import { ItemModel } from "./models";
 interface windowConfig extends Window {
   Calc: CalcType;
   DesModder: any;
-  ALMOND_OVERRIDES: Record<string, Function>;
   DesModderForceDisabled?: Set<string>;
 }
 

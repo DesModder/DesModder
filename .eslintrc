@@ -19,7 +19,6 @@
     "@typescript-eslint/restrict-template-expressions": "off",
     "@typescript-eslint/no-confusing-void-expression": "off",
     "@typescript-eslint/consistent-type-imports": "off",
-    "@typescript-eslint/ban-types": "off",
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": "off"
   }

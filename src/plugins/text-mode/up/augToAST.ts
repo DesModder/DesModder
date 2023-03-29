@@ -360,7 +360,9 @@ function identifierToAST(name: { symbol: string }): TextAST.Identifier {
   };
 }
 
-function numberToASTmaybe(num: number | undefined): TextAST.Number | undefined {
+function numberToASTmaybe(
+  num: number | undefined
+): TextAST.NumberNode | undefined {
   return num !== undefined
     ? {
         type: "Number",
@@ -369,7 +371,9 @@ function numberToASTmaybe(num: number | undefined): TextAST.Number | undefined {
     : undefined;
 }
 
-function stringToASTmaybe(str: string | undefined): TextAST.String | undefined {
+function stringToASTmaybe(
+  str: string | undefined
+): TextAST.StringNode | undefined {
   return str !== undefined
     ? {
         type: "String",
