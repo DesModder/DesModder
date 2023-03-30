@@ -339,13 +339,15 @@ function findPattern(
     const len = inside.length;
     throw new ReplacementError(
       `Pattern not found: ${fullPattern.map((v) => v.value).join("")} ` +
-        `in {start: ${s}, length: ${len}}\n  ` +
+        `in {start: ${s}, length: ${len}}\n` +
         str
           .slice(s, s + 20)
           .concat({ value: " … " } as any)
           .concat(str.slice(s + len - 20, s + len))
+          .filter((v) => v.type !== "MultiLineComment")
           .map((v) => v.value)
           .join("")
+          .replace(/\n{2,}/g, "\n")
     );
   }
   return found;
