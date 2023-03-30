@@ -34,7 +34,7 @@ export const relevantEventTypes = [
 ] as const;
 
 export type RelevantEvent = DispatchedEvent & {
-  type: typeof relevantEventTypes[number];
+  type: (typeof relevantEventTypes)[number];
 };
 
 type ToChange = "table-columns" | "latex-only" | "image-pos" | "regression";
