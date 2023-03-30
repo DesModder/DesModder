@@ -1,5 +1,7 @@
 ### Web Store
 
+This is reccommended as the extension will auto-update this way.
+
 You can install the stable version of DesModder [directly from the Chrome Web Store](https://chrome.google.com/webstore/detail/desmodder-for-desmos/eclmfdfimjhkmjglgdldedokjaemjfjp) or [from the Firefox Web Store](https://addons.mozilla.org/en-US/firefox/addon/desmodder-for-desmos/).
 
 DesModder is currently only supported for Google Chrome, Chromium-based browsers such as Opera, Brave, and Vivaldi, and Firefox (or Firefox based browsers).
