@@ -1,5 +1,9 @@
 # DesModder Changelog
 
+## 0.10.2
+
+Fix GLesmos loading error.
+
 ## 0.10.1
 
 Internal fixes.
