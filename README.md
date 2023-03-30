@@ -8,7 +8,7 @@ Supercharge your Desmos graph creation and sharing experience with many convenie
 - Paste ASCIIMath (such as the results of Wolfrfam Alpha queries) into Desmos
 - Pin expressions to the top
 - Export videos and GIFs of your graphs based on actions or sliders
-- Integration with WakaTime, join the [Desmos Discord Leaderboard](https://wakatime.com/leaders/sec/ea0a4e72-e83c-4437-a71f-a71a41a016a7/join/xiynskikiu)
+- Integration with WakaTime
 - Find and replace expressions
 - Toggle display of expression IDs
 - View tips including lesser-known features of Desmos
