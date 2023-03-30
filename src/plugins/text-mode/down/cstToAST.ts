@@ -675,7 +675,7 @@ function identifierToAST(
 export function identifierToStringAST(
   td: TextAndDiagnostics,
   node: SyntaxNode | null
-): TextAST.String {
+): TextAST.StringNode {
   return {
     type: "String",
     value: identifierName(td, node),

@@ -35,7 +35,7 @@ export function evalExpr(
   }
 }
 
-const builtinMap: { [key: string]: number | string | boolean | null } = {
+const builtinMap: Record<string, number | string | boolean | null> = {
   false: false,
   true: true,
   pi: Math.PI,

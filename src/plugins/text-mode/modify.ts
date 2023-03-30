@@ -34,7 +34,7 @@ export const relevantEventTypes = [
 ] as const;
 
 export type RelevantEvent = DispatchedEvent & {
-  type: typeof relevantEventTypes[number];
+  type: (typeof relevantEventTypes)[number];
 };
 
 type ToChange = "table-columns" | "latex-only" | "image-pos" | "regression";
@@ -45,7 +45,7 @@ export function eventSequenceChanges(
   analysis: ProgramAnalysis
 ): ChangeSpec[] {
   let settingsChanged: boolean = false;
-  const itemsChanged: { [key: string]: ToChange } = {};
+  const itemsChanged: Record<string, ToChange> = {};
   for (const event of events) {
     switch (event.type) {
       case "re-randomize":

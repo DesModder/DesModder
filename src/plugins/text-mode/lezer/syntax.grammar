@@ -146,7 +146,7 @@ kw<term> { @specialize[@name={term}]<Identifier, term> }
 
   @precedence { LineComment, divide }
 
-  @precedence { Identifier, "d/d" }
+  @precedence { "d/d", Identifier}
 
   @precedence { "->", "-" }
 

@@ -322,9 +322,12 @@ function columnToAST(
   };
 }
 
-function styleMapping(from: {
-  [key: string]: TextAST.Expression | TextAST.StyleMapping | null | undefined;
-}): TextAST.StyleMapping | null {
+function styleMapping(
+  from: Record<
+    string,
+    TextAST.Expression | TextAST.StyleMapping | null | undefined
+  >
+): TextAST.StyleMapping | null {
   const nonemptyEntries = Object.entries(from).filter(
     ([_, value]) => value != null
   ) as [string, TextAST.Expression | TextAST.StyleMapping][];
@@ -357,7 +360,9 @@ function identifierToAST(name: { symbol: string }): TextAST.Identifier {
   };
 }
 
-function numberToASTmaybe(num: number | undefined): TextAST.Number | undefined {
+function numberToASTmaybe(
+  num: number | undefined
+): TextAST.NumberNode | undefined {
   return num !== undefined
     ? {
         type: "Number",
@@ -366,7 +371,9 @@ function numberToASTmaybe(num: number | undefined): TextAST.Number | undefined {
     : undefined;
 }
 
-function stringToASTmaybe(str: string | undefined): TextAST.String | undefined {
+function stringToASTmaybe(
+  str: string | undefined
+): TextAST.StringNode | undefined {
   return str !== undefined
     ? {
         type: "String",

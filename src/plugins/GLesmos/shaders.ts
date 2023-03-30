@@ -31,6 +31,10 @@ export type GLesmosProgram = WebGLProgram & {
 };
 
 type UniformType = "1f" | "2fv" | "3fv" | "4fv" | "1i"; // TODO: this isn't very typesafe!
+type UniformSetter = (
+  location: WebGLUniformLocation | null,
+  v: number | number[]
+) => void;
 export function setUniform(
   gl: WebGL2RenderingContext,
   program: WebGLProgram,
@@ -40,7 +44,7 @@ export function setUniform(
 ) {
   const uniformSetterKey: keyof WebGLRenderingContext = ("uniform" +
     uniformType) as keyof WebGLRenderingContext;
-  (gl[uniformSetterKey] as Function)(
+  (gl[uniformSetterKey] as UniformSetter)(
     gl.getUniformLocation(program, uniformName),
     uniformValue
   );

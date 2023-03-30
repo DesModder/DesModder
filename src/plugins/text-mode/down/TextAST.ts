@@ -81,14 +81,14 @@ export interface StyleMapping extends Positioned {
 
 export interface MappingEntry extends Positioned {
   type: "MappingEntry";
-  property: String;
+  property: StringNode;
   expr: Expression | StyleMapping;
 }
 
 export type Expression =
-  | Number
+  | NumberNode
   | Identifier
-  | String
+  | StringNode
   | RepeatedExpression
   | RangeExpression
   | ListExpression
@@ -106,7 +106,7 @@ export type Expression =
   | PrimeExpression
   | DerivativeExpression;
 
-export interface Number extends Positioned {
+export interface NumberNode extends Positioned {
   type: "Number";
   value: number;
 }
@@ -116,7 +116,7 @@ export interface Identifier extends Positioned {
   name: string;
 }
 
-export interface String extends Positioned {
+export interface StringNode extends Positioned {
   type: "String";
   value: string;
 }
@@ -253,7 +253,7 @@ interface Styled {
 
 /* Builders */
 
-export function number(val: number): Number {
+export function number(val: number): NumberNode {
   return {
     type: "Number",
     value: val,

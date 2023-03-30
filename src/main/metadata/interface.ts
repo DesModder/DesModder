@@ -1,8 +1,6 @@
 export default interface Metadata {
   version: 2;
-  expressions: {
-    [key: string]: Expression;
-  };
+  expressions: Record<string, Expression>;
 }
 
 export interface Expression {

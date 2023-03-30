@@ -45,9 +45,7 @@ export default class Controller {
   // array of IDs
   pillboxButtonsOrder: string[] = ["main-menu"];
   // map button ID to setup
-  pillboxButtons: {
-    [id: string]: PillboxButton;
-  } = {
+  pillboxButtons: Record<string, PillboxButton> = {
     "main-menu": {
       id: "main-menu",
       tooltip: format("menu-desmodder-tooltip"),

@@ -13,11 +13,11 @@ const sectionNames = [
 ] as const;
 export function getSections(model: {
   id: string;
-}): typeof sectionNames[number][] {
+}): (typeof sectionNames)[number][] {
   const given = model.id
     .split(" ")
     .filter((word) =>
       (sectionNames as readonly string[]).includes(word)
-    ) as typeof sectionNames[number][];
+    ) as (typeof sectionNames)[number][];
   return given.length === 0 ? ["colors-only" as const] : given;
 }

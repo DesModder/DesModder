@@ -29,7 +29,7 @@ interface Base {
   getEvaluationInfo: () => EvaluationInfo;
   shouldPromoteToSlider: () => boolean;
   getSliderVariables: () => string[];
-  getCompiledDerivative: () => Function;
+  getCompiledDerivative: () => unknown;
   asValue: () => undefined | string | number | boolean | number[] | unknown;
   boundDomain: () => unknown;
 }
@@ -527,8 +527,8 @@ export interface OptimizedRegression extends Base {
   isLinear: boolean;
   parameterWarning: unknown;
   _exports: [string];
-  getCompiledFunction: () => Function;
-  getCompiledDerivative: () => Function;
+  getCompiledFunction: () => unknown;
+  getCompiledDerivative: () => unknown;
 }
 
 /* Intermediate Representation */
@@ -542,7 +542,7 @@ export interface IRExpression extends Base {
   length: number;
   isConstant: boolean;
   shouldExportAns: () => true;
-  getCompiledFunction: () => Function;
+  getCompiledFunction: () => unknown;
   polynomialOrder: () => number;
   getPolynomialCoefficients: () => number[];
   takeDerivative: () => IRExpression;

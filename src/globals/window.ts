@@ -14,7 +14,6 @@ import { ItemModel } from "./models";
 interface windowConfig extends Window {
   Calc: CalcType;
   DesModder: any;
-  ALMOND_OVERRIDES: { [key: string]: Function };
   DesModderForceDisabled?: Set<string>;
 }
 
@@ -74,7 +73,7 @@ export const Fragile = new Proxy(
     isHelp: (e: KeyboardEvent) => boolean;
   };
   jQuery: any;
-  getQueryParams: () => { [key: string]: string | true };
+  getQueryParams: () => Record<string, string | true>;
   getReconciledExpressionProps: (
     type: string,
     model?: ItemModel

@@ -108,7 +108,7 @@ export default class Controller {
     if (!this.languageServer) return;
     if (update.docChanged || update.selectionSet)
       selectFromText(update.view, this.languageServer);
-    return this.languageServer.onEditorUpdate(update);
+    this.languageServer.onEditorUpdate(update);
   }
 }
 

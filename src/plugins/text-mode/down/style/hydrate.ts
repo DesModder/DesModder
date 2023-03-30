@@ -5,9 +5,7 @@ import { Schema } from "./schema";
 
 export interface StyleValue {
   type: "StyleValue";
-  props: {
-    [key: string]: StyleProp;
-  };
+  props: Record<string, StyleProp>;
 }
 
 export type StyleProp = TextAST.Expression | StyleValue | undefined;

@@ -44,9 +44,7 @@ interface ItemModelBase {
       | "SPHERE";
     is_graphable: boolean;
     is_inequality: boolean;
-    action_value?: {
-      [K: string]: string;
-    };
+    action_value?: Record<string, string>;
   };
 }
 
