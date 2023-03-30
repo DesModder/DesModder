@@ -601,8 +601,8 @@ else if ($this.userData.glesmos) {
 
 *Find* 
 ```js
-{
-  if ($ instanceof $.SolvedEquation) return this._graph
+._graph = $_graphFunc;
+function $_graphFunc(____) {
   __graph__
 }
 ```
