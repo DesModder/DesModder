@@ -70,7 +70,7 @@ builtin-settings-opt-expressions-name = Show Expressions
 builtin-settings-opt-expressions-desc = {""}
 builtin-settings-opt-zoomButtons-name = Show Zoom Buttons
 builtin-settings-opt-zoomButtons-desc = {""}
-builtin-settings-opt-expressionsTopbar-name = Show Top Bar
+builtin-settings-opt-expressionsTopbar-name = Show Expression List Top Bar
 builtin-settings-opt-expressionsTopbar-desc = {""}
 builtin-settings-opt-border-name = Border
 builtin-settings-opt-border-desc = Subtle border around the calculator
@@ -85,7 +85,7 @@ duplicate-expression-hotkey-desc = Type Ctrl+Q or Ctrl+Shift+Q to duplicate the 
 
 ## Right Click Tray
 right-click-tray-name = Right Click Tray
-right-click-tray-desc = Allows you to right click the settings bubble (style circle) to open the settings tray instead of having to hold left click.
+right-click-tray-desc = Allows settings tray to be opened with a right click instead of holding left click on the settings bubble
 
 ## Set Primary Color
 set-primary-color-name = Set Primary Color
@@ -98,7 +98,7 @@ set-primary-color-opt-doFavicon-desc = Toggle updating the site icon
 ## Hide Errors
 hide-errors-name = Hide Errors
 hide-errors-desc = Click error triangles to fade them and hide suggested sliders.
-hide-errors-hide = hide
+hide-errors-hide = Hide
 
 ## Folder Tools
 folder-tools-name = Folder Tools
