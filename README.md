@@ -2,20 +2,24 @@
 
 Supercharge your Desmos graph creation and sharing experience with many convenient features:
 
-- Export videos and GIFs of your graphs based on actions or sliders
-- Render implicit-filled expressions on the GPU
+- Adjust settings that can let you hide the keypad, lock the viewport, and more
+- Display list elements, colors, and undefined values in expression list
 - Change the primary color from blue to any color
-- Find and replace expressions
+- Paste ASCIIMath (such as the results of Wolfrfam Alpha queries) into Desmos
 - Pin expressions to the top
-- Paste ASCIIMath (such as the results of Wolfram Alpha queries) into Desmos
-- Duplicate any expression with hotkey Ctrl+Q
-- Quickly dump a folder's entire contents, and merge expressions into a folder
-- Use Shift+Enter to write newlines in notes
-- Hide and ignore unwanted slider suggestions
+- Export videos and GIFs of your graphs based on actions or sliders
+- Integration with WakaTime
+- Find and replace expressions
+- Toggle display of expression IDs
 - View tips including lesser-known features of Desmos
 - Adds right-click (instead of long press) on expressions to style them
-- Adjust settings that can let you hide the keypad, lock the viewport, and more
-- Toggle display of expression IDs
+- Duplicate any expression with hotkey Ctrl+Q
+- Render implicit-filled expressions on the GPU
+- Use Shift+Enter to write newlines in notes
+- Hide and ignore unwanted slider suggestions
+- Quickly dump a folder's entire contents, and merge expressions into a folder
+- View expressions in a text editor (Beta)
+- Display graph performance metrics
 - More to come!
 
 All graphs created using this extension are compatible with vanilla Desmos. This means your graphs are always safe to share with others, regardless of whether or not they have DesModder.
