@@ -1,7 +1,19 @@
-You can install the stable version of DesModder [directly from the Chrome Web Store](https://chrome.google.com/webstore/detail/desmodder-for-desmos/eclmfdfimjhkmjglgdldedokjaemjfjp) or [from the Firefox Web Store](https://addons.mozilla.org/en-US/firefox/addon/desmodder-for-desmos/). DesModder is currently only supported for Google Chrome, Chromium-based browsers such as Opera, Brave, and Vivaldi, and Firefox (or Firefox based browsers).
+### Web Store
+
+You can install the stable version of DesModder [directly from the Chrome Web Store](https://chrome.google.com/webstore/detail/desmodder-for-desmos/eclmfdfimjhkmjglgdldedokjaemjfjp) or [from the Firefox Web Store](https://addons.mozilla.org/en-US/firefox/addon/desmodder-for-desmos/).
+
+DesModder is currently only supported for Google Chrome, Chromium-based browsers such as Opera, Brave, and Vivaldi, and Firefox (or Firefox based browsers).
 
 The extension updates every few weeks (see DesModder releases page for a history).
 
-If you want to update the extension on the latest release yourself (useful for chrome because the chrome webstore is behind on the current release by a few days) (useful for hotfixes that are applied), you can go to [Releases](https://github.com/DesModder/DesModder/releases) and download the latest dist-chrome.zip (or dist-ff.zip for Firefox). Then unzip the file, go to manage extensions page in your browser (usually right click an extension or extension icon), enable Developer Mode, and then select load unpacked. Then select the unzipped extension folder in your system, and click open.
+### Latest
+
+Sometimes the chrome web store takes a few days to approve new extension releases, where hotfixes that have yet to be applied might cause Desmos to not load.
+
+**Chrome**: Go to [Releases](https://github.com/DesModder/DesModder/releases), download the latest dist-chrome.zip and unzip the file. Then go to the [manage extensions](chrome://extensions/) in your browser (click link or right click an extension icon) and enable Developer Mode. Select load unpacked, find and select your unzipped folder of the extension, and click open.
+
+**FireFox**: Go to [Releases](https://github.com/DesModder/DesModder/releases), download the latest dist-ff.zip. Then go to the [addons](about:addons) (or click the addon icon). Click the cogwheel to the right of Manage Your Extensions, find and select dist-ff.zip, and click open.
+
+### Git Version
 
 If you want to get new features even earlier, follow the instructions in https://github.com/DesModder/DesModder/wiki/Development#Setup, keeping in mind these may not always work at all times.
