@@ -12,9 +12,9 @@ The extension updates every few weeks (see DesModder releases page for a history
 
 Sometimes the chrome web store takes a few days to approve new extension releases, where hotfixes that have yet to be applied might cause Desmos to not load.
 
-**Chrome**: Go to [Releases](https://github.com/DesModder/DesModder/releases), download the latest dist-chrome.zip and unzip the file. Then go to the [manage extensions](chrome://extensions/) in your browser (click link or right click an extension icon) and enable Developer Mode. Select load unpacked, find and select your unzipped folder of the extension, and click open.
+**Chrome**: Go to [Releases](https://github.com/DesModder/DesModder/releases), download the latest dist-chrome.zip and unzip the file. Then go to `chrome://extensions` in the browser address bar, and enable Developer Mode. Select load unpacked, find and select your unzipped folder of the extension, and click open.
 
-**FireFox**: Go to [Releases](https://github.com/DesModder/DesModder/releases), download the latest dist-ff.zip. Then go to the [addons](about:addons) (or click the addon icon). Click the cogwheel to the right of Manage Your Extensions, find and select dist-ff.zip, and click open.
+**Firefox**: Go to [Releases](https://github.com/DesModder/DesModder/releases), download the latest dist-ff.zip. Then go to `about:addons` in the browser address bar. Click the cogwheel to the right of Manage Your Extensions, find and select dist-ff.zip, and click open.
 
 ### Git Version
 
