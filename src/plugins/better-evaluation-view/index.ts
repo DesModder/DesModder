@@ -1,4 +1,4 @@
-import "./ColorSwatch.less";
+import "./better-evaluation-view.less";
 import { configList } from "./config";
 import { Calc } from "globals/window";
 import { Plugin } from "plugins";

@@ -1,0 +1,29 @@
+// Color Swatch
+.dcg-color-evaluation .dcg-color-evaluation {
+  vertical-align: middle;
+}
+
+.dcg-color-evaluation .dcg-static-mathquill-view {
+  margin-right: 5px;
+}
+
+.dsm-color-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+// Scrollbar for output
+.dcg-evaluation-container {
+  max-width: 100%;
+  overflow-x: auto;
+  // -3px margin is removed from .dcg-evaluation due to clipping. Move it here.
+  margin-top: -3px;
+  > .dcg-evaluation.dcg-do-blur {
+    margin-top: 0;
+    max-width: 100%;
+    .dcg-inline-math-input-view {
+      font-size: 100%;
+    }
+  }
+}
