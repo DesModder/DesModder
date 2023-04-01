@@ -272,7 +272,7 @@ export default class SelectCapture extends Component<{
               ),
               false: () => (
                 <Button
-                  color="red"
+                  color="light-gray"
                   class="dsm-vc-cancel-capture-button"
                   onTap={() => cancelCapture(this.controller)}
                 >

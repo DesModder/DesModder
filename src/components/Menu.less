@@ -3,6 +3,20 @@
   border-top: 1px solid #e2e2e2;
 }
 
+.dsm-category-section:nth-child(2) {
+  border: none;
+
+  .dsm-category-header {
+    margin-top: -8px;
+  }
+}
+
+.dsm-category-section:last-child {
+  .dsm-category-header:not(.dsm-expanded) {
+    padding-bottom: 5px;
+  }
+}
+
 .dsm-plugin-section {
   padding: 10px 0 10px 25px;
 }
@@ -28,7 +42,7 @@
   display: flex;
   margin-right: 10px;
   align-items: center;
-  flex-grow: 1;
+  flex: 1;
 
   .dsm-caret-container {
     transform: rotate(-90deg);

@@ -52,7 +52,7 @@ export default class Menu extends Component<{
   template() {
     return (
       <div class="dcg-popover-interior">
-        <div class="dcg-group-title">{format("menu-desmodder-plugins")}</div>
+        <div class="dcg-popover-title">{format("menu-desmodder-plugins")}</div>
         {categories.map((category) => (
           <div
             class="dcg-options-menu-section dsm-category-section"

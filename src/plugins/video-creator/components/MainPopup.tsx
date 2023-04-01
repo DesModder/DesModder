@@ -81,26 +81,24 @@ export default class MainPopup extends Component<{
     return (
       <div class="dcg-popover-interior">
         <div class="dsm-vc-capture-menu">
-          <div class="dcg-group-title">{format("video-creator-capture")}</div>
+          <div class="dcg-popover-title">{format("video-creator-capture")}</div>
           <CaptureMethod controller={this.controller} />
         </div>
         <If predicate={() => this.controller.frames.length > 0}>
           {() => (
             <div class="dsm-vc-preview-menu">
-              <div class="dcg-group-title dsm-vc-delete-all-row">
-                {format("video-creator-preview")}
-                <Tooltip
-                  tooltip={format("video-creator-delete-all")}
-                  gravity="n"
-                >
+              <div class="dsm-vc-delete-all-row">
+                <div class="dcg-popover-title">
+                  {format("video-creator-preview")}
+                </div>
+                <div class="dsm-vc-delete-all">
                   <Button
-                    color="red"
+                    color="light-gray"
                     onTap={() => this.controller.deleteAll()}
-                    class="dsm-vc-delete-all-button"
                   >
-                    <i class="dcg-icon-remove" />
+                    {format("video-creator-delete-all")}
                   </Button>
-                </Tooltip>
+                </div>
               </div>
               <div
                 class={() => ({
@@ -134,7 +132,7 @@ export default class MainPopup extends Component<{
         <If predicate={() => this.controller.frames.length > 0}>
           {() => (
             <div class="dsm-vc-export-menu">
-              <div class="dcg-group-title">
+              <div class="dcg-popover-title">
                 {format("video-creator-export")}
               </div>
               <div class="dsm-vc-select-export-type">
