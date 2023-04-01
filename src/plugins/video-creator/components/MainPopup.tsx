@@ -11,7 +11,6 @@ import {
   Input,
   Button,
   IfElse,
-  Tooltip,
   InlineMathInputView,
 } from "components";
 import { format } from "i18n/i18n-core";
