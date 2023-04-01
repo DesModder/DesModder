@@ -33,7 +33,7 @@
   // avoid scrollbar jiggle
   @scrollbar-width: 15px;
   @mw: (250px - @scrollbar-width);
-  transform: translateX(calc((100% - @mw) / 2));
+  margin-left: calc((100% - @mw) / 2);
 
   .dsm-vc-preview-inner {
     max-width: @mw;
