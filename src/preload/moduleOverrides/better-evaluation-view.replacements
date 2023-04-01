@@ -90,7 +90,7 @@ list: function () {
               digits: 5,
               displayAsFraction: false
             }
-            let length = 10
+            let length = 20
             let labels = values.slice(0,length).map(e=>$Label.truncatedLatexLabel(e,labelOptions))
             return "\\left[" + labels.join(",") + (values.length > length ? `\\textcolor{gray}{...\\mathit{${values.length - length}\\ more}}` : "") + "\\right]"
           },
@@ -148,7 +148,7 @@ rgbcolor: function () {
                 parseInt(result[3], 16)
               ]
             }
-            let length = 3
+            let length = 6
             if (Array.isArray(color)) {
               color = color.map(rgb)
               return "\\operatorname{rgb}\\left(\\left[" + color.slice(0,length).map(c=>`\\left(${c.join(",")}\\right)`).join(",") + (color.length > length ? `\\textcolor{gray}{...\\mathit{${color.length - length}\\ more}}` : "") + "\\right]\\right)"
@@ -260,7 +260,7 @@ list: () => $Dcgview.Components.IfElse(
               digits: 5,
               displayAsFraction: false
             }
-            let length = 10
+            let length = 20
             let labels = values.slice(0,length).map(e => Desmos.Private.Mathtools.Label.truncatedLatexLabel(e,labelOptions))
             return "\\left[" + labels.join(",") + (values.length > length ? `\\textcolor{gray}{...\\mathit{${values.length - length}\\ more}}` : "") + "\\right]"
           },
@@ -309,7 +309,7 @@ rgbcolor: () => $Dcgview.createElement(
                 parseInt(result[3], 16)
               ]
             }
-            let length = 3
+            let length = 6
             if (Array.isArray(color)) {
               color = color.map(rgb)
               return "\\operatorname{rgb}\\left(\\left[" + color.slice(0,length).map(c=>`\\left(${c.join(",")}\\right)`).join(",") + (color.length > length ? `\\textcolor{gray}{...\\mathit{${color.length - length}\\ more}}` : "") + "\\right]\\right)"
