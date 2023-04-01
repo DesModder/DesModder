@@ -58,9 +58,6 @@ export interface Plugin<Settings extends GenericSettings = GenericSettings> {
   moduleOverrides?: unknown; // should be used only in preload code, not in main code
 }
 
-// these plugins will be listed in list order in the menu
-// place closer to the top: plugins that people are more likely to adjust
-
 export const pluginList: Plugin[] = [
   builtinSettings,
   betterEvaluationView,
