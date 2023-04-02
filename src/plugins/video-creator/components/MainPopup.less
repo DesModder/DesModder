@@ -12,16 +12,16 @@
 
 .dsm-vc-preview-menu,
 .dsm-vc-export-menu {
-  padding-top: 10px;
-  border-top: 1px solid #ddd;
   margin-top: 10px;
 }
 
 .dsm-vc-delete-all-row {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  margin: -5px 0 5px;
+
+  .dcg-popover-title {
+    flex: 1;
+  }
 
   .dsm-vc-delete-all-button {
     // 2 pixels shorter to support icon
@@ -33,7 +33,7 @@
   // avoid scrollbar jiggle
   @scrollbar-width: 15px;
   @mw: (250px - @scrollbar-width);
-  transform: translateX(calc((100% - @mw) / 2));
+  margin-left: calc((100% - @mw) / 2);
 
   .dsm-vc-preview-inner {
     max-width: @mw;

@@ -11,6 +11,12 @@ menu-learn-more = Learn more
 menu-desmodder-plugins = DesModder Plugins
 menu-desmodder-tooltip = DesModder Menu
 
+## Category names
+category-core-name = Core
+category-utility-name = Utility
+category-visual-name = Visual
+category-integrations-name = Integrations
+
 ## GLesmos
 GLesmos-name = GLesmos
 GLesmos-desc = Render implicits on the GPU. Disabled on tab reload. Can cause the UI to slow down or freeze in rare cases; reload the page if you have issues.

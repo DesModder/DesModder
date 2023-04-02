@@ -54,7 +54,6 @@ export default class PillboxContainer extends Component<{
               style={() => ({
                 position: "absolute",
                 ...this.getPopoverPosition(),
-                "line-height": "1em",
               })}
             >
               <Switch key={() => this.controller.pillboxMenuOpen}>

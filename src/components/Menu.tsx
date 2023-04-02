@@ -1,7 +1,13 @@
-import { ConfigItem, ConfigItemString, Plugin } from "../plugins";
+import {
+  ConfigItem,
+  ConfigItemString,
+  Plugin,
+  PluginID,
+  plugins,
+} from "../plugins";
 import "./Menu.less";
 import Toggle from "./Toggle";
-import { If, Switch, Checkbox, Tooltip } from "./desmosComponents";
+import { If, Switch, Checkbox, Tooltip, For } from "./desmosComponents";
 import { Component, jsx } from "DCGView";
 import { format } from "i18n/i18n-core";
 import Controller from "main/Controller";
@@ -9,6 +15,30 @@ import Controller from "main/Controller";
 export function MenuFunc(controller: Controller) {
   return <Menu controller={controller} />;
 }
+
+const categoryPlugins: Record<string, PluginID[]> = {
+  core: ["builtin-settings", "GLesmos", "video-creator", "text-mode"],
+  utility: [
+    "wolfram2desmos",
+    "pin-expressions",
+    "find-and-replace",
+    "performance-info",
+    "right-click-tray",
+    "duplicate-expression-hotkey",
+    "shift-enter-newline",
+    "folder-tools",
+  ],
+  visual: [
+    "set-primary-color",
+    "debug-mode",
+    "better-evaluation-view",
+    "show-tips",
+    "hide-errors",
+  ],
+  integrations: ["wakatime"],
+};
+
+const categories = ["core", "utility", "visual", "integrations"];
 
 export default class Menu extends Component<{
   controller: Controller;
@@ -22,66 +52,98 @@ export default class Menu extends Component<{
   template() {
     return (
       <div class="dcg-popover-interior">
-        <div class="dcg-group-title">{format("menu-desmodder-plugins")}</div>
-        {this.controller.getPluginsList().map((plugin) => (
+        <div class="dcg-popover-title">{format("menu-desmodder-plugins")}</div>
+        {categories.map((category) => (
           <div
-            class="dcg-options-menu-section dsm-plugin-section"
-            key={plugin.id}
+            class="dcg-options-menu-section dsm-category-section"
+            key={category}
           >
             <div class="dcg-options-menu-section-title dsm-plugin-title-bar">
               <div
-                class="dsm-plugin-header"
-                onClick={() => this.controller.togglePluginExpanded(plugin.id)}
+                class={() => ({
+                  "dsm-category-header": true,
+                  "dsm-expanded": this.controller.isCategoryExpanded(category),
+                })}
+                onClick={() => this.controller.toggleCategoryExpanded(category)}
               >
                 <div
                   class={() => ({
                     "dsm-caret-container": true,
                     "dsm-caret-expanded":
-                      plugin.id === this.controller.expandedPlugin,
+                      this.controller.isCategoryExpanded(category),
                   })}
                 >
-                  <i class="dcg-icon-chevron-down" />
+                  <i class="dcg-icon-caret-down" />
                 </div>
-                <div class="dsm-plugin-name">{pluginDisplayName(plugin)}</div>
+                <div>{categoryDisplayName(category)}</div>
               </div>
-              <Toggle
-                toggled={() => this.controller.isPluginEnabled(plugin.id)}
-                disabled={() => !this.controller.isPluginToggleable(plugin.id)}
-                onChange={() => this.controller.togglePlugin(plugin.id)}
-              />
             </div>
-            {
-              <If
-                predicate={() => plugin.id === this.controller.expandedPlugin}
-              >
-                {() => (
-                  <div class="dsm-plugin-info-body">
-                    <div class="dsm-plugin-description">
-                      {pluginDesc(plugin)}
-                      <If
-                        predicate={() =>
-                          plugin.descriptionLearnMore !== undefined
-                        }
-                      >
-                        {() => (
-                          <a
-                            href={() => plugin.descriptionLearnMore}
-                            target="_blank"
-                            onTap={(e: MouseEvent) => e.stopPropagation()}
-                          >
-                            {" "}
-                            {format("menu-learn-more")}
-                          </a>
-                        )}
-                      </If>
-                    </div>
-                    {this.getExpandedSettings()}
+            <If predicate={() => this.controller.isCategoryExpanded(category)}>
+              {() => (
+                <For each={() => categoryPlugins[category]} key={(id) => id}>
+                  <div class="dsm-category-container">
+                    {(pluginID: string) => this.plugin(plugins.get(pluginID)!)}
                   </div>
-                )}
-              </If>
-            }
+                </For>
+              )}
+            </If>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  plugin(plugin: Plugin) {
+    return (
+      <div class="dcg-options-menu-section dsm-plugin-section" key={plugin.id}>
+        <div class="dcg-options-menu-section-title dsm-plugin-title-bar">
+          <div
+            class="dsm-plugin-header"
+            onClick={() => this.controller.togglePluginExpanded(plugin.id)}
+          >
+            <div
+              class={() => ({
+                "dsm-caret-container": true,
+                "dsm-caret-expanded":
+                  plugin.id === this.controller.expandedPlugin,
+              })}
+            >
+              <i class="dcg-icon-caret-down" />
+            </div>
+            <div>{pluginDisplayName(plugin)}</div>
+          </div>
+          <Toggle
+            toggled={() => this.controller.isPluginEnabled(plugin.id)}
+            disabled={() => !this.controller.isPluginToggleable(plugin.id)}
+            onChange={() => this.controller.togglePlugin(plugin.id)}
+          />
+        </div>
+        {
+          <If predicate={() => plugin.id === this.controller.expandedPlugin}>
+            {() => (
+              <div class="dsm-plugin-info-body">
+                <div class="dsm-plugin-description">
+                  {pluginDesc(plugin)}
+                  <If
+                    predicate={() => plugin.descriptionLearnMore !== undefined}
+                  >
+                    {() => (
+                      <a
+                        href={() => plugin.descriptionLearnMore}
+                        target="_blank"
+                        onTap={(e: MouseEvent) => e.stopPropagation()}
+                      >
+                        {" "}
+                        {format("menu-learn-more")}
+                      </a>
+                    )}
+                  </If>
+                </div>
+                {this.getExpandedSettings()}
+              </div>
+            )}
+          </If>
+        }
       </div>
     );
   }
@@ -205,6 +267,10 @@ class ResetButton extends Component<{
       </If>
     );
   }
+}
+
+function categoryDisplayName(id: string) {
+  return format("category-" + id + "-name");
 }
 
 function pluginDisplayName(plugin: Plugin) {
