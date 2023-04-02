@@ -10,6 +10,7 @@ import { listenToMessageUp, postMessageDown } from "utils/messages";
 const StorageKeys = {
   pluginsEnabled: "_plugins-enabled",
   forceDisabled: "_force-disabled",
+  forceDisabledVersion: "_force-disabled-version",
   pluginSettings: "_plugin-settings",
 } as const;
 
@@ -46,10 +47,19 @@ function getPluginsForceDisabled() {
   chrome.storage.sync.get(
     {
       [StorageKeys.forceDisabled]: [], // default: no plugins force-disabled
+      [StorageKeys.forceDisabledVersion]: "",
     },
     (items) => {
-      const forceDisabled: PluginID[] =
-        items?.[StorageKeys.forceDisabled] ?? [];
+      let forceDisabled: PluginID[] = items?.[StorageKeys.forceDisabled] ?? [];
+      const forceDisabledVersion: string =
+        items?.[StorageKeys.forceDisabledVersion] ?? "";
+      if (forceDisabledVersion !== VERSION) {
+        forceDisabled = [];
+        void chrome.storage.sync.set({
+          [StorageKeys.forceDisabled]: [],
+          [StorageKeys.forceDisabledVersion]: VERSION,
+        });
+      }
       postMessageDown({
         type: "apply-plugins-force-disabled",
         value: forceDisabled,
@@ -119,6 +129,7 @@ listenToMessageUp((message) => {
     case "set-plugins-force-disabled":
       void chrome.storage.sync.set({
         [StorageKeys.forceDisabled]: Array.from(message.value),
+        [StorageKeys.forceDisabledVersion]: VERSION,
       });
       break;
     case "set-plugin-settings":

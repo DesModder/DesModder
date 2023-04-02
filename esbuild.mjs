@@ -1,6 +1,7 @@
 import { esbuildPluginInline } from "./loaders/esbuild-plugin-inline.mjs";
 import { esbuildPluginLezer } from "./loaders/esbuild-plugin-lezer.mjs";
 import { esbuildPluginReplacements } from "./loaders/esbuild-plugin-replacements.mjs";
+import { loadFile } from "./loaders/utils.mjs";
 import esbuild from "esbuild";
 import { copy } from "esbuild-plugin-copy";
 import { lessLoader } from "esbuild-plugin-less";
@@ -38,6 +39,7 @@ if (
   console.error(`Invalid browser name: ${argv.browser}`);
   process.exit(1);
 }
+const { version } = JSON.parse(await loadFile("./package.json"));
 const browser = argv.browser ?? "chrome";
 const watch = !!argv.watch;
 
@@ -77,6 +79,7 @@ const opts = {
   ],
   define: {
     BROWSER: JSON.stringify(browser),
+    VERSION: JSON.stringify(version),
   },
   loader: {
     ".ts": "ts",
