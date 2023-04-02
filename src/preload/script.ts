@@ -8,9 +8,6 @@ import { pollForValue } from "utils/utils";
 
 /* This script is loaded at document_start, before the page's scripts */
 
-// workerAppend will get filled in from a message
-let workerAppend: string = "console.error('worker append not filled in')";
-
 /** The calculator is not loaded as soon as toplevel/calculator_desktop is
  * loaded; toplevel/calculator_desktop sneakily contains a thenable, so it
  * returns before actually initializing the calculator. This leads to a race
@@ -52,11 +49,7 @@ async function load(pluginsForceDisabled: Set<string>) {
     (r) => !r.plugins.every((p) => pluginsForceDisabled.has(p))
   );
   // Apply replacements
-  const newCode = await fullReplacementCached(
-    calcDesktop,
-    workerAppend,
-    enabledReplacements
-  );
+  const newCode = await fullReplacementCached(calcDesktop, enabledReplacements);
   // tryRunDesModder polls until the following eval'd code is done.
   tryRunDesModder();
   // eslint-disable-next-line no-eval
@@ -77,18 +70,4 @@ listenToMessageDown((message) => {
 
 postMessageUp({
   type: "get-plugins-force-disabled",
-});
-
-listenToMessageDown((message) => {
-  if (message.type === "set-worker-append-url") {
-    void fetch(message.value).then(async (response) => {
-      workerAppend = await response.text();
-    });
-    // cancel listener
-    return true;
-  }
-  return false;
-});
-postMessageUp({
-  type: "get-worker-append-url",
 });

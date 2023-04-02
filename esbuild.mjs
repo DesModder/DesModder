@@ -1,3 +1,4 @@
+import { esbuildPluginInline } from "./loaders/esbuild-plugin-inline.mjs";
 import { esbuildPluginLezer } from "./loaders/esbuild-plugin-lezer.mjs";
 import { esbuildPluginReplacements } from "./loaders/esbuild-plugin-replacements.mjs";
 import esbuild from "esbuild";
@@ -46,7 +47,6 @@ const opts = {
     "src/script.ts",
     "src/preload/content.ts",
     "src/preload/script.ts",
-    "src/worker/append.ts",
   ],
   // don't include source map on release builds
   sourcemap: watch ? "inline" : false,
@@ -54,6 +54,7 @@ const opts = {
   outdir: "dist",
   plugins: [
     lessLoader(),
+    esbuildPluginInline(),
     esbuildPluginLezer(),
     esbuildPluginReplacements(),
     // The copy plugin *should* support array or glob "from", but I encountered

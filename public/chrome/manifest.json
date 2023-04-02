@@ -21,12 +21,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": [
-        "script.css",
-        "script.js",
-        "preload/script.js",
-        "worker/append.js"
-      ],
+      "resources": ["script.css", "script.js", "preload/script.js"],
       "matches": ["*://*.desmos.com/*"]
     }
   ],

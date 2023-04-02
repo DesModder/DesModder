@@ -132,12 +132,6 @@ listenToMessageUp((message) => {
         value: chrome.runtime.getURL("script.js"),
       });
       break;
-    case "get-worker-append-url":
-      postMessageDown({
-        type: "set-worker-append-url",
-        value: chrome.runtime.getURL("worker/append.js"),
-      });
-      break;
     case "send-heartbeat":
       _sendHeartbeat(message.options);
       break;

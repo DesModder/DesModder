@@ -1,4 +1,5 @@
 import { existingPanics } from "../../panic/panic";
+import workerAppend from "../../worker/append.inline";
 import { applyReplacements } from "./applyReplacement";
 import { Block } from "./parse";
 import { get, set } from "idb-keyval";
@@ -11,7 +12,6 @@ import jsTokens, { Token } from "js-tokens";
  */
 export async function fullReplacementCached(
   calcDesktop: string,
-  workerAppend: string,
   enabledReplacements: Block[]
 ): Promise<string> {
   (window as any).dsm_workerAppend = workerAppend;
@@ -30,11 +30,7 @@ export async function fullReplacementCached(
     return cached.result;
   }
   // cache miss :(
-  const result = fullReplacement(
-    calcDesktop,
-    workerAppend,
-    enabledReplacements
-  );
+  const result = fullReplacement(calcDesktop, enabledReplacements);
   // cache if there's no panics
   if (existingPanics.size === 0)
     void set(k, {
@@ -48,7 +44,6 @@ export async function fullReplacementCached(
 
 function fullReplacement(
   calcDesktop: string,
-  workerAppend: string,
   enabledReplacements: Block[]
 ): string {
   // Apply replacements to the worker. This could also be done by tweaking the
