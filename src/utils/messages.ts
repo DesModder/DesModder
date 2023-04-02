@@ -10,10 +10,6 @@ import { GenericSettings, PluginID } from "plugins";
 
 type MessageWindowToContent =
   | {
-      type: "enable-script";
-      scriptName: string;
-    }
-  | {
       type: "set-plugins-enabled";
       value: Record<PluginID, boolean>;
     }

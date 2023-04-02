@@ -98,11 +98,6 @@ function _sendHeartbeat(options: WindowHeartbeatOptions) {
 
 listenToMessageUp((message) => {
   switch (message.type) {
-    case "enable-script":
-      if (message.scriptName === "wolfram2desmos") {
-        injectScript(chrome.runtime.getURL("wolfram2desmos.js"));
-      }
-      break;
     case "get-plugins-force-disabled":
       getPluginsForceDisabled();
       break;
