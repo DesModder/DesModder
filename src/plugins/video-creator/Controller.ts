@@ -90,6 +90,7 @@ export default class Controller {
 
   deleteAll() {
     this.frames = [];
+    this.previewIndex = 0;
     this.updateView();
   }
 
@@ -340,6 +341,7 @@ export default class Controller {
   addToPreviewIndex(dx: number) {
     if (this.frames.length > 0) {
       this.previewIndex += dx;
+      this.previewIndex += this.frames.length;
       this.previewIndex %= this.frames.length;
     } else {
       this.previewIndex = 0;
@@ -406,6 +408,17 @@ export default class Controller {
     if (this.frames.length <= 1 && this.isPlayingPreview) {
       this.togglePlayingPreview();
     }
+    this.updateView();
+  }
+
+  pushFrame(frame: string) {
+    if (
+      !this.isPlayingPreview &&
+      this.previewIndex === this.frames.length - 1
+    ) {
+      this.previewIndex++;
+    }
+    this.frames.push(frame);
     this.updateView();
   }
 

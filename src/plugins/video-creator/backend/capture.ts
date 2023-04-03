@@ -16,8 +16,7 @@ export function cancelCapture(controller: Controller) {
 
 async function captureAndApplyFrame(controller: Controller) {
   const frame = await captureFrame(controller);
-  controller.frames.push(frame);
-  controller.updateView();
+  controller.pushFrame(frame);
 }
 
 export async function captureFrame(controller: Controller) {
