@@ -19,7 +19,7 @@ category-integrations-name = Intégrations
 
 ## GLesmos
 GLesmos-name = GLesmos
-GLesmos-desc = Rendre les implicites sur le GPU. Désactive sur rechargement de l'onglet. Dans des rares cas, peut causait l'onglet de s'arreter; reload the page if you have issues.
+GLesmos-desc = Rendre les implicites sur le GPU. Désactive sur rechargement de l'onglet. Dans des rares cas, peut causait l'onglet de s'arreter; rechargez la page si vous rencontrez des problèmes.
 GLesmos-label-toggle-glesmos = Rendre avec GLesmos
 Lesmos-confirm-lines = Confirmer les lignes
 GLesmos-confirm-lines-body = Le rendu des lignes GLesmos peut être lent. Soyez prudent, surtout pour une liste de calques.
@@ -57,19 +57,19 @@ wolfram2desmos-opt-derivativeLoopLimit-desc = Développer les nth dérivés de n
 pin-expressions-name = Épingler l'Expression
 pin-expressions-desc = Épingler l'Expression depuis Edit List mode
 pin-expressions-pin = Épingler
-pin-expressions-unpin = Épingler
+pin-expressions-unpin = Détacher
 
 ## Builtin Settings
 builtin-settings-name = Paramètres
 builtin-settings-desc = Permet l'utilisation de fonctionnalités intégrées à Desmos. La plupart des option appliquent uniquement à votre navigateure et sont ignorées lorsque vous partagez des graphiques avec d'autres.
 builtin-settings-opt-advancedStyling-name = Outils de Style Avancé
 builtin-settings-opt-advancedStyling-desc = Permet l'édition d'étiquettes, l'affichage au survol, le contour du texte et la grille à un quadrant
-builtin-settings-opt-graphpaper-name = Tableau Graphiques
+builtin-settings-opt-authorFeatures-name = Tableau Graphiques
 builtin-settings-opt-graphpaper-desc = {""}
 builtin-settings-opt-administerSecretFolders-name = Créer des dossiers cachés
 builtin-settings-opt-administerSecretFolders-desc = {""}
 builtin-settings-opt-pointsOfInterest-name = Afficher les points d'intérêt
-builtin-settings-opt-pointsOfInterest-desc = Interception, trous , intersections, etc.
+builtin-settings-opt-pointsOfInterest-desc = Interception, trous, intersections, etc.
 builtin-settings-opt-trace-name = Trace des Courbes
 builtin-settings-opt-trace-desc = {""}
 builtin-settings-opt-expressions-name = Afficher les expression
@@ -135,7 +135,6 @@ video-creator-preview = Avant-première
 video-creator-delete-all = Tout Suprimer
 video-creator-filename-placeholder = définir le nom de fichier
 video-creator-export = Créer
-video-creator-export-ff = Créer (Avertissement : actuellement peu fiable/lent dans Firefox)
 video-creator-export-as = Créer comme { $fileType }
 video-creator-fps = Images par seconde:
 video-creator-method-once = unique
@@ -154,22 +153,22 @@ wakatime-opt-secretKey-desc = Clé API utilisée pour les serveurs WakaTime
 wakatime-opt-splitProjects-name = Diviser les projets par graphique
 wakatime-opt-splitProjects-desc = Stockez chaque graphique comme son propre projet au lieu des branches d'un projet unifié
 wakatime-opt-projectName-name = Nom du projet
-wakatime-opt-projectName-desc = Visible from WakaTime, and shared for all Desmos projects
+wakatime-opt-projectName-desc = Visible depuis WakaTime, et partagé pour tous les projets Desmos
 
 ## Performance Display
-performance-info-name = Performance Display
+performance-info-name = Affichage des Performances
 performance-info-desc = Affiche des informations sur les performances du graphique actuel.
 performance-info-refresh-graph = Actualiser le graphique
 performance-info-refresh-graph-tooltip = Actualisez le graphique pour mesurer le temps de chargement initial
 performance-info-sticky-tooltip = Garder le Menu Ouvert
 performance-info-time-in-worker = Time In Worker
 performance-info-compiling = Compilation
-performance-info-rendering = Rendering Rendition
+performance-info-rendering = Rendition
 performance-info-other = Autre
 
 ## Better Evaluation View
 better-evaluation-view-name = Meilleure Vue d'évaluation
-better-evaluation-view-desc = Displays list elements, colors, and undefined values
+better-evaluation-view-desc = Affiche les éléments de la liste, les couleurs et les valeurs non définies
 better-evaluation-view-opt-lists-name = Afficher les éléments du liste
 better-evaluation-view-opt-lists-desc = Afficher les éléments du liste plutôt que la longeur du liste
 better-evaluation-view-opt-colors-name = Afficher les couleurs
