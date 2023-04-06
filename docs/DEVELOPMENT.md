@@ -29,7 +29,7 @@ First follow the instructions above in "Setup Environment".
 5. For this example, open the file `src/plugins.ts`.
 6. To test Prettier, find the line that starts `const _plugins = {`, and add an extra newline after the opening brace. Prettier should automatically remove that unneeded newline on save.
 7. To test Typescript, remove the `.id` from the next line. Typescript should tell you "A computed property name must be of type 'string', 'number', 'symbol', or 'any'."
-8. If both of these worked, then you are ready to start development. Run `npm run dev` in the DesModder directory to start the development server. There should hopefully be no errors. If there is a prettier error, run `npm. run fix:prettier`
+8. If both of these worked, then you are ready to start development. Run `npm run dev` in the DesModder directory to start the development server. There should hopefully be no errors. If there is a prettier error, run `npm run fix:prettier`
 9. You should have loaded the unpacked extension based on the instructions in "Setup Environment." Check that it works by opening https://desmos.com/calculator.
 10. Back in `src/plugins.ts`, delete one of the lines declaring a plugin, for example delete `[duplicateHotkey.id]: duplicateHotkey,`
 11. Refresh the Desmos page. The plugin should now be removed from the list.
