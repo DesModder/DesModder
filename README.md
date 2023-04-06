@@ -19,7 +19,7 @@ Supercharge your Desmos graph creation and sharing experience with many convenie
 - Visual
   - Change the primary color from blue to any color
   - Toggle display of expression IDs
-    - Display list elements, colors, and undefined values in expression list
+  - Display list elements, colors, and undefined values in expression list
   - View tips including lesser-known features of Desmos
   - Hide and ignore unwanted slider suggestions
 - Integration
