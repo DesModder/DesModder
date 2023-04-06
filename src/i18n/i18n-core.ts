@@ -40,4 +40,4 @@ function addLanguage(locale: string, ftl: string) {
 }
 
 addLanguage("en", enFTL);
-addLanguage("fr", frFTL)
+addLanguage("fr", frFTL);
