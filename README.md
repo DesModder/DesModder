@@ -8,7 +8,7 @@ Supercharge your Desmos graph creation and sharing experience with many convenie
   - Export videos and GIFs of your graphs based on actions or sliders
   - View expressions in a text editor (Beta)
 - Utility
-  - Paste ASCIIMath (such as the results of Wolfrfam Alpha queries) into Desmos
+  - Paste ASCIIMath (such as the results of Wolfram Alpha queries) into Desmos
   - Pin expressions to the top
   - Find and replace expressions
   - Display graph performance metrics
