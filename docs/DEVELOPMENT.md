@@ -38,56 +38,60 @@ First follow the instructions above in "Setup Environment".
 
 In this section, we will create a plugin which will simply change the displayed username in the top-right.
 
+All the code changes are visible at https://github.com/DesModder/DesModder/compare/main...example-plugin-change-username.
+
 1. You should already have a fork of DesModder cloned to your computer
 2. Create a new branch named "plugin-change-username" using `git checkout -b plugin-change-username`
 3. In the directory `src/plugins`, add a new directory called `change-username` and a file `src/plugins/change-username/index.ts` with the following contents:
 
    ```ts
-   function getHeaderElement() {
-     return document.querySelector(
-       ".header-account-name"
-     ) as HTMLElement | null;
+   import { Plugin } from "plugins";
+
+   function getHeaderElement(): HTMLElement | null {
+     return document.querySelector(".header-account-name");
    }
 
    let oldName = "";
 
    function onEnable() {
      const headerElement = getHeaderElement();
-     if (headerElement === null) {
-       return;
-     }
+     if (headerElement === null) return;
      const text = headerElement.innerText;
-     if (text !== undefined) {
-       oldName = text;
-     }
+     if (text !== undefined) oldName = text;
      headerElement.innerText = "DesModder ♥";
    }
 
    function onDisable() {
      const headerElement = getHeaderElement();
-     if (headerElement === null) {
-       return;
-     }
+     if (headerElement === null) return;
      headerElement.innerText = oldName;
    }
 
-   export default {
+   const changeUsername: Plugin = {
      id: "change-username",
-     name: "Change Username",
-     description: 'Change your username to "DesModder"',
-     onEnable: onEnable,
-     onDisable: onDisable,
+     onEnable,
+     onDisable,
      enabledByDefault: false,
-   } as const;
+   };
+   export default changeUsername;
    ```
 
-4. Load the plugin: In `src/plugins/index.ts`, add `import changeUsername from "plugins/change-username/index"` near the top and `[changeUsername.id]: changeUsername,` in `_plugins` near the bottom of the file.
+4. Setup the displayed name. This is managed in the Fluent file `localization/en.ftl`. Add some lines at the bottom. These are of the form `[pluginID]-name` and `[pluginID]-desc`:
+
+   ```
+   ## Change Username
+   change-username-name = Change Username
+   change-username-desc = Renames the displayed username in the top-right
+   ```
+
+5. Load the plugin: In `src/plugins/index.ts`, add `import changeUsername from "plugins/change-username/index"` near the top and `[changeUsername.id]: changeUsername,` in `_plugins` near the bottom of the file.
+6. Add the plugin to the menu: in `src/components/Menu.tsx`, add the plugin ID `"change-username"` to the category list `visual` in `categoryPlugins`.
    - after reloading the webpage (assuming you're running `npm run dev`), a new plugin should appear in the list in [desmos.com/calculator](https://desmos.com/calculator).
-5. Commit the changes to your fork
+7. Commit the changes to your fork
    - `git add .`
    - `git commit -m "Add Plugin 'Change Username'"`
    - `git push`
-6. For an actual plugin, you would do some more testing and eventually open a pull request on the repository. Run `npm run test` before submitting the PR to ensure that it will meet the checks.
+8. For an actual plugin, you would do some more testing and eventually open a pull request on the repository. Run `npm run test` and `npm run lint` before submitting the PR to ensure that it will meet automated checks. You can fix some problems automatically with `npm run fix`.
 
 ## Example: Creating a new translation file
 
