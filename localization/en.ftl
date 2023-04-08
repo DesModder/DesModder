@@ -177,3 +177,7 @@ better-evaluation-view-opt-colors-name = Show colors
 better-evaluation-view-opt-colors-desc = Show colors as rgb values
 better-evaluation-view-opt-colorLists-name = Show lists of colors
 better-evaluation-view-opt-colorLists-desc = Show lists of colors as lists of rgb values
+
+## Change Username
+change-username-name = Change Username
+change-username-desc = Renames the displayed username in the top-right

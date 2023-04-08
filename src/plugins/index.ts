@@ -2,6 +2,7 @@
 import betterEvaluationView from "./better-evaluation-view";
 import GLesmos from "plugins/GLesmos";
 import builtinSettings from "plugins/builtin-settings";
+import changeUsername from "plugins/change-username";
 import debugMode from "plugins/debug-mode";
 import duplicateHotkey from "plugins/duplicate-hotkey";
 import findReplace from "plugins/find-replace";
@@ -77,6 +78,7 @@ export const pluginList: Plugin[] = [
   folderTools,
   textMode,
   performanceInfo,
+  changeUsername,
 ];
 
 export type PluginID = string;
