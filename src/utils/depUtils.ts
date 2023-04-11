@@ -45,7 +45,7 @@ const ExpressionOptionsMenuView = Fragile.ExpressionOptionsMenuView;
 const getSectionsProto = ExpressionOptionsMenuView.prototype.getSections;
 
 export function getSections(model: ItemModel) {
-  return getSectionsProto.apply({ model });
+  return getSectionsProto.apply({ model, controller: Calc.controller } as any);
 }
 
 export function getCurrentGraphTitle(): string | undefined {
