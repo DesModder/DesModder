@@ -64,7 +64,7 @@ function replace(replaceLatex: (s: string) => string) {
             col[k] = replaceLatex(col[k]);
           }
         });
-        col.values = col.values.map(replaceLatex);
+        if (col.values) col.values = col.values.map(replaceLatex);
       });
     }
     if (expr.clickableInfo?.latex) {
