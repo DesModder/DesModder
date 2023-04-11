@@ -176,9 +176,10 @@ function parseCSSFunc(color: string): ColorType | null {
 
   const [, funcName = "", argSet = ""] =
     color.trim().match(matchSignature) ?? [];
-  let args = argSet.match(matchArgs);
-  if (args === null) return null;
-  const alphaStr: string | undefined = (args = args.slice(1)).pop();
+  const args0 = argSet.match(matchArgs);
+  if (args0 === null) return null;
+  const args = args0.slice(1);
+  const alphaStr: string | undefined = args.pop();
   const alpha = parseFloat(alphaStr ?? "");
   // truthy map if argument evaluates as NaN (means number contains css units)
   const pType: boolean[] = args.map((t) => isNaN(Number(t)));
