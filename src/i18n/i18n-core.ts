@@ -15,14 +15,19 @@ export function format(
   missingReplacement?: string | undefined
 ): string {
   const lang = currentLanguage();
-  const bundle = locales.get(lang) ?? locales.get("en")!;
-  const message = bundle.getMessage(key);
-  if (message === undefined || message.value === null) {
-    if (missingReplacement === undefined)
-      console.warn("Error formatting key", key, "in locale", lang);
-    return missingReplacement ?? "";
+  const bundle = locales.get(lang);
+  const message = bundle?.getMessage(key);
+  if (message?.value != null) {
+    return bundle!.formatPattern(message.value, args);
   }
-  return bundle.formatPattern(message.value, args);
+  if (missingReplacement === undefined)
+    console.warn("[DesModder] Error formatting key", key, "in locale", lang);
+  const englishBundle = locales.get("en")!;
+  const englishMessage = englishBundle.getMessage(key);
+  if (englishMessage?.value != null) {
+    return englishBundle.formatPattern(englishMessage.value, args);
+  }
+  return missingReplacement ?? "";
 }
 
 /**
