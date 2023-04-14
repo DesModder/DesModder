@@ -1,5 +1,21 @@
 # DesModder Changelog
 
+## 0.10.3
+
+New: translations for French!
+
+Bug fixes and improvements:
+
+- Fancier title for popover menus (DesModder menu, Video Creator menu, Performance View menu)
+- Allow vertical scrollbar for the popover menus
+- Divide plugins into categories on the main menu
+- Automatically re-enable plugins when version is updated
+- (Better Evaluation View) Use horizontal scrollbar instead of overflowing output
+- (Video Creator) Fix bug where the previewed frame would "jump around"
+- (Find and Replace) Fix bug where replacements would not work on tables
+- (Text Mode) Fix initialization error
+- (Text Mode) Fix ticker overflow visual issue
+
 ## 0.10.2
 
 Fix GLesmos loading error.
