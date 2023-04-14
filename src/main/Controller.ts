@@ -311,6 +311,12 @@ export default class Controller {
     return this.expandedCategories.has(category);
   }
 
+  togglePluginSettingBoolean(pluginID: PluginID, key: string) {
+    const pluginSettings = this.pluginSettings.get(pluginID);
+    if (pluginSettings === undefined) return;
+    this.setPluginSetting(pluginID, key, !pluginSettings[key]);
+  }
+
   setPluginSetting(
     pluginID: PluginID,
     key: string,
