@@ -178,22 +178,20 @@ export default class Menu extends Component<{
 }
 
 function booleanOption(controller: any, item: any, plugin: any, settings: any) {
+  const toggle = () =>
+    controller.expandedPlugin &&
+    controller.togglePluginSettingBoolean(controller.expandedPlugin, item.key);
   return (
     <div class="dsm-settings-item dsm-settings-boolean">
       <Checkbox
-        onChange={(checked) =>
-          controller.expandedPlugin &&
-          controller.setPluginSetting(
-            controller.expandedPlugin,
-            item.key,
-            checked
-          )
-        }
+        onChange={toggle}
         checked={() => (settings[item.key] as boolean) ?? false}
         ariaLabel={() => item.key}
       ></Checkbox>
       <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
-        <div class="dsm-settings-label">{configItemName(plugin, item)}</div>
+        <div class="dsm-settings-label" onClick={toggle}>
+          {configItemName(plugin, item)}
+        </div>
       </Tooltip>
       <ResetButton controller={controller} key={item.key} />
     </div>
