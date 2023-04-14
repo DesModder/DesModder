@@ -4,6 +4,10 @@
   grid-column: 1/2;
 }
 
+.dsm-in-text-mode .dcg-ticker {
+  display: none;
+}
+
 .cm-tooltip {
   /* Tooltip position is miscalculated by the same height as the 42 px header */
   transform: translateY(-42px);

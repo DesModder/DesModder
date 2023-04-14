@@ -154,3 +154,20 @@ $DCGView.createElement(
 ),
 __children__
 ```
+
+## Add Text Mode class for styling
+
+*Module* `expressions/list-view`
+
+*Find* => `from`
+
+```js
+"dcg-exppanel-container": !0
+```
+
+*Replace* `from` with
+
+```js
+"dcg-exppanel-container": !0,
+"dsm-in-text-mode": window.DesModder?.controller?.inTextMode?.()
+```
