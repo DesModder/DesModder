@@ -36,7 +36,7 @@ export default class Controller {
   forceDisabled: Set<string>;
   view: View | null = null;
   expandedPlugin: string | null = null;
-  private readonly expandedCategories = new Set<string>();
+  private expandedCategory: string | null = null;
   pluginSettings: Map<PluginID, GenericSettings>;
 
   exposedPlugins: Record<PluginID, any> = {};
@@ -299,16 +299,16 @@ export default class Controller {
   }
 
   toggleCategoryExpanded(category: string) {
-    if (this.expandedCategories.has(category)) {
-      this.expandedCategories.delete(category);
+    if (this.expandedCategory === category) {
+      this.expandedCategory = null;
     } else {
-      this.expandedCategories.add(category);
+      this.expandedCategory = category;
     }
     this.updateMenuView();
   }
 
   isCategoryExpanded(category: string) {
-    return this.expandedCategories.has(category);
+    return this.expandedCategory === category;
   }
 
   togglePluginSettingBoolean(pluginID: PluginID, key: string) {
