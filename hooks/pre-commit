@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-FILES=$(git diff --cached --name-only)
+FILES=$(git diff --cached --name-only --diff-filter=d)
 
 [ -z "$FILES" ] && { echo "No staged files. Looks good!"; exit 0; }
 
