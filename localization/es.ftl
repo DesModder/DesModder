@@ -46,12 +46,12 @@ find-and-replace-desc = Agrega un botón de "reemplazar todo" en el menu de busq
 find-and-replace-replace-all = reemplazar todo
 
 ## Wolfram To Desmos
-wolfram2desmos-name = Wolfram To Desmos
-wolfram2desmos-desc = Lets you paste ASCII Math (such as the results of Wolfram Alpha queries) into Desmos.
-wolfram2desmos-opt-reciprocalExponents2Surds-name = Radical Notation
-wolfram2desmos-opt-reciprocalExponents2Surds-desc = Converts fractional powers less than one to a radical equivalent (surd)
-wolfram2desmos-opt-derivativeLoopLimit-name = Expand Derivatives
-wolfram2desmos-opt-derivativeLoopLimit-desc = Expands the nth derivative of Leibniz notation into repeated derivatives (limited to 10).
+wolfram2desmos-name = De Wolfram a Desmos
+wolfram2desmos-desc = Te permite pegar texto de ecuaciones en formato ASCII (así como las busquedas en Wolfram Alpha) en Desmos.
+wolfram2desmos-opt-reciprocalExponents2Surds-name = Notación Radical
+wolfram2desmos-opt-reciprocalExponents2Surds-desc = Convierte exponentes fraccionales menores de uno a su equivalente en radical.
+wolfram2desmos-opt-derivativeLoopLimit-name = Expandir derivadas
+wolfram2desmos-opt-derivativeLoopLimit-desc = Expande las derivadas de orden superior en notación de Leibniz en forma de derivadas anidadas (limite de 10).
 
 ## Pin Expressions
 pin-expressions-name = Pin Expressions
