@@ -61,33 +61,33 @@ pin-expressions-unpin = Desfijar
 
 ## Builtin Settings
 builtin-settings-name = Configuración de Calculadora
-builtin-settings-desc = Te permite alternar las funciones integradas en Desmos. Most options apply only to your own browser and are ignored when you share graphs with others.
-builtin-settings-opt-advancedStyling-name = Advanced styling
-builtin-settings-opt-advancedStyling-desc = Enable label editing, show-on-hover, text outline, and one-quadrant grid
-builtin-settings-opt-graphpaper-name = Graphpaper
+builtin-settings-desc = Te permite alternar las funciones integradas en Desmos. Lo mayoridad de los opciones solo aplica a el navegador tuyo, y son ignoradas cuando compartes tu gráfica con otras personas.
+builtin-settings-opt-advancedStyling-name = Diseño avanzado
+builtin-settings-opt-advancedStyling-desc = Permite la edición de etiquetas, mostra-en-pasar, contorno de texto, y cuadrícula con un quadrante
+builtin-settings-opt-graphpaper-name = Papel de Gráfica
 builtin-settings-opt-graphpaper-desc = {""}
-builtin-settings-opt-authorFeatures-name = Author features
-builtin-settings-opt-authorFeatures-desc = Toggle hidden folders, toggle readonly, and more
-builtin-settings-opt-pointsOfInterest-name = Show points of interest
-builtin-settings-opt-pointsOfInterest-desc = Intercepts, holes, intersections, etc.
-builtin-settings-opt-trace-name = Trace along curves
+builtin-settings-opt-authorFeatures-name = Carecterísticas Autores 
+builtin-settings-opt-authorFeatures-desc = Permite carpetas escondidas, permite sóloleer, y más
+builtin-settings-opt-pointsOfInterest-name = Muestra puntos de interés
+builtin-settings-opt-pointsOfInterest-desc = Cortas, heucos, intersecciones, etc.
+builtin-settings-opt-trace-name = Traza sobre cuervas
 builtin-settings-opt-trace-desc = {""}
-builtin-settings-opt-expressions-name = Show Expressions
+builtin-settings-opt-expressions-name = Muestra Expresiones
 builtin-settings-opt-expressions-desc = {""}
-builtin-settings-opt-zoomButtons-name = Show Zoom Buttons
+builtin-settings-opt-zoomButtons-name = Muestra los Botones del Zoom
 builtin-settings-opt-zoomButtons-desc = {""}
-builtin-settings-opt-expressionsTopbar-name = Show Expressions Top Bar
+builtin-settings-opt-expressionsTopbar-name = Muestra la Barra Superior de Expresiones
 builtin-settings-opt-expressionsTopbar-desc = {""}
-builtin-settings-opt-border-name = Border
-builtin-settings-opt-border-desc = Subtle border around the calculator
-builtin-settings-opt-keypad-name = Show keypad
+builtin-settings-opt-border-name = Ribete
+builtin-settings-opt-border-desc = Ribete minor alrededor del calculador 
+builtin-settings-opt-keypad-name = Muestra el teclado numérico
 builtin-settings-opt-keypad-desc = {""}
-builtin-settings-opt-qwertyKeyboard-name = QWERTY Keyboard
+builtin-settings-opt-qwertyKeyboard-name = QWERTY Teclado
 builtin-settings-opt-qwertyKeyboard-desc = {""}
 
 ## Duplicate Expression Hotkey
-duplicate-expression-hotkey-name = Duplicate Expression Hotkey
-duplicate-expression-hotkey-desc = Type Ctrl+Q or Ctrl+Shift+Q to duplicate the selected expression.
+duplicate-expression-hotkey-name = Atajo de teclado para Replicar Expresión
+duplicate-expression-hotkey-desc = Teclea Ctrl+Q o Ctrl+Shift+Q para replicar el expresión selecciónado.
 
 ## Right Click Tray
 right-click-tray-name = Right Click Tray
@@ -127,7 +127,6 @@ video-creator-size = tamaño:
 video-creator-step-count = Número de pasos:
 video-creator-target-same-pixel-ratio = Dirige la misma ratio de píxeles
 video-creator-target-tooltip = Ajusta la magnitud del ancho de los líneas, el tamaño de puntos, el tamaño de etiquetas, etc.
-Adjusts scaling of line width, point size, label size, etc.
 video-creator-ffmpeg-loading = FFmpeg cargando...
 video-creator-ffmpeg-fail = Si eso no funciona en unos segundos, prueba recargando la página o informando los devs de DesModder sobre el error.
 video-creator-exporting = Exportando...
