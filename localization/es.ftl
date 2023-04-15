@@ -54,10 +54,10 @@ wolfram2desmos-opt-derivativeLoopLimit-name = Expandir derivadas
 wolfram2desmos-opt-derivativeLoopLimit-desc = Expande las derivadas de orden superior en notación de Leibniz en forma de derivadas anidadas (limite de 10).
 
 ## Pin Expressions
-pin-expressions-name = Pin Expressions
-pin-expressions-desc = Pin expressions from Edit List mode
-pin-expressions-pin = Pin
-pin-expressions-unpin = Unpin
+pin-expressions-name = Fijar Expresiones
+pin-expressions-desc = Fija expresiones desde modo de Editar Lista
+pin-expressions-pin = Fijar
+pin-expressions-unpin = Desfijar
 
 ## Builtin Settings
 builtin-settings-name = Calculator Settings
