@@ -7,22 +7,22 @@
 # [pluginID]-opt-[optionKey]-desc = Option Description
 
 ## General
-menu-learn-more = Aprender más
-menu-desmodder-plugins = Plugins de DesModder
+menu-learn-more = Aprende más
+menu-desmodder-plugins = Extensiones de DesModder
 menu-desmodder-tooltip = Menú de DesModder
 
 ## Category names
-category-core-name = Funciones Básicas
+category-core-name = Funciones Principales
 category-utility-name = Utilidades
 category-visual-name = Apariencia
 category-integrations-name = Integraciones
 
 ## GLesmos
 GLesmos-name = GLesmos
-GLesmos-desc = Genera funciones implícitas en la GPU. Se deshabilita cuando la pagina es refrescada. Puede ralentizar la interfaz grafica o en raras ocaciones puede congelar la página. Recarga la página si te causa problemas.
+GLesmos-desc = Genera funciones implícitas en la GPU. Se deshabilita cuando la página es refrescada. Puede ralentizar la interfaz gráfica o en raras ocasiones puede congelar la página. Recarga la página si te causa problemas.
 GLesmos-label-toggle-glesmos = Generar gráfica con GLesmos
-GLesmos-confirm-lines = Confimar lineas
-GLesmos-confirm-lines-body = Generar lineas con GLesmos puede ser lento. Sé especialmente cuidadoso cuando utlizes listas.
+GLesmos-confirm-lines = Confirmar líneas
+GLesmos-confirm-lines-body = Generar líneas con GLesmos puede ser lento. Sé especialmente cuidadoso cuando utilices listas.
 # Missing: error messages
 
 ## Tips
@@ -38,24 +38,24 @@ text-mode-toggle = Alternar Modo Texto
 
 ## Debug Mode
 debug-mode-name = Modo de Depuración
-debug-mode-desc = Muestra los IDs de las expresiones en lugar de los indices.
+debug-mode-desc = Muestra los IDs de las expresiones en lugar de los índices.
 
 ## Find and Replace
 find-and-replace-name = Buscar y Reemplazar
-find-and-replace-desc = Agrega un botón de "reemplazar todo" en el menu de busqueda con Ctrl+F y te permite cambiar fácilmente nombres de variables o de funciones.
+find-and-replace-desc = Agrega un botón de "reemplazar todo" en el menú de búsqueda con Ctrl+F y te permite cambiar fácilmente los nombres de variables o funciones.
 find-and-replace-replace-all = reemplazar todo
 
 ## Wolfram To Desmos
-wolfram2desmos-name = De Wolfram a Desmos
-wolfram2desmos-desc = Te permite pegar texto de ecuaciones en formato ASCII (así como las busquedas en Wolfram Alpha) en Desmos.
+wolfram2desmos-name = Wolfram a Desmos
+wolfram2desmos-desc = Te permite pegar texto de ecuaciones en formato ASCII (así como las búsquedas en Wolfram Alpha) en Desmos.
 wolfram2desmos-opt-reciprocalExponents2Surds-name = Notación Radical
-wolfram2desmos-opt-reciprocalExponents2Surds-desc = Convierte exponentes fraccionales menores de uno a su equivalente en radical.
+wolfram2desmos-opt-reciprocalExponents2Surds-desc = Convierte exponentes fraccionales menor que uno a su equivalente en radical.
 wolfram2desmos-opt-derivativeLoopLimit-name = Expandir derivadas
-wolfram2desmos-opt-derivativeLoopLimit-desc = Expande las derivadas de orden superior en notación de Leibniz en forma de derivadas anidadas (limite de 10).
+wolfram2desmos-opt-derivativeLoopLimit-desc = Expande las derivadas de orden superior en notación de Leibniz en forma de derivadas anidadas (límite de 10).
 
 ## Pin Expressions
 pin-expressions-name = Fijar Expresiones
-pin-expressions-desc = Fija expresiones desde modo de Editar Lista
+pin-expressions-desc = Fija expresiones desde modo de edición
 pin-expressions-pin = Fijar
 pin-expressions-unpin = Desfijar
 
