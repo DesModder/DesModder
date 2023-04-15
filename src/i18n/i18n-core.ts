@@ -7,7 +7,7 @@ function currentLanguage() {
   return Fragile?.currentLanguage?.() ?? "en";
 }
 
-const locales = new Map<string, FluentBundle>();
+export const locales = new Map<string, FluentBundle>();
 
 export function format(
   key: string,

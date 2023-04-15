@@ -18,10 +18,11 @@ category-visual-name = Visuel
 category-integrations-name = Intégrations
 
 ## GLesmos
+# Unchanged
 GLesmos-name = GLesmos
 GLesmos-desc = Rendre les implicites sur le GPU. Désactive sur rechargement de l'onglet. Dans des rares cas, peut causait l'onglet de s'arreter; rechargez la page si vous rencontrez des problèmes.
 GLesmos-label-toggle-glesmos = Rendre avec GLesmos
-Lesmos-confirm-lines = Confirmer les lignes
+GLesmos-confirm-lines = Confirmer les lignes
 GLesmos-confirm-lines-body = Le rendu des lignes GLesmos peut être lent. Soyez prudent, surtout pour une liste de calques.
 # Missing: error messages
 
@@ -65,24 +66,29 @@ builtin-settings-desc = Permet l'utilisation de fonctionnalités intégrées à 
 builtin-settings-opt-advancedStyling-name = Outils de Style Avancé
 builtin-settings-opt-advancedStyling-desc = Permet l'édition d'étiquettes, l'affichage au survol, le contour du texte et la grille à un quadrant
 builtin-settings-opt-authorFeatures-name = Tableau Graphiques
+# Unchanged
 builtin-settings-opt-graphpaper-desc = {""}
-builtin-settings-opt-administerSecretFolders-name = Créer des dossiers cachés
-builtin-settings-opt-administerSecretFolders-desc = {""}
 builtin-settings-opt-pointsOfInterest-name = Afficher les points d'intérêt
 builtin-settings-opt-pointsOfInterest-desc = Interception, trous, intersections, etc.
 builtin-settings-opt-trace-name = Trace des Courbes
+# Unchanged
 builtin-settings-opt-trace-desc = {""}
 builtin-settings-opt-expressions-name = Afficher les expression
+# Unchanged
 builtin-settings-opt-expressions-desc = {""}
 builtin-settings-opt-zoomButtons-name = Afficher le navigateur de zoom
+# Unchanged
 builtin-settings-opt-zoomButtons-desc = {""}
 builtin-settings-opt-expressionsTopbar-name = Afficher le bar en haut du bar d'expression
+# Unchanged
 builtin-settings-opt-expressionsTopbar-desc = {""}
 builtin-settings-opt-border-name = Cadre
 builtin-settings-opt-border-desc = Cadre subtile autour de la calculatrice
 builtin-settings-opt-keypad-name = Afficher le Clavier
+# Unchanged
 builtin-settings-opt-keypad-desc = {""}
 builtin-settings-opt-qwertyKeyboard-name = Clavier QWERTY
+# Unchanged
 builtin-settings-opt-qwertyKeyboard-desc = {""}
 
 ## Duplicate Expression Hotkey
@@ -139,6 +145,7 @@ video-creator-export-as = Créer comme { $fileType }
 video-creator-fps = Images par seconde:
 video-creator-method-once = unique
 video-creator-method-slider = curseurs
+# Unchanged
 video-creator-method-action = action
 
 ## Shift+Enter Newline
@@ -146,6 +153,7 @@ shift-enter-newline-name = Maj+Entrée Nouvelle Ligne
 shift-enter-newline-desc = Utilisez Maj+Entrée pour taper des retours à la ligne dans les notes et les titres des images/dossiers.
 
 ## Wakatime
+# Unchanged
 wakatime-name = WakaTime
 wakatime-desc = Suivez votre activité sur Desmos sur WakaTime.com
 wakatime-opt-secretKey-name = Clef Secrète
@@ -161,6 +169,7 @@ performance-info-desc = Affiche des informations sur les performances du graphiq
 performance-info-refresh-graph = Actualiser le graphique
 performance-info-refresh-graph-tooltip = Actualisez le graphique pour mesurer le temps de chargement initial
 performance-info-sticky-tooltip = Garder le Menu Ouvert
+# Unchanged
 performance-info-time-in-worker = Time In Worker
 performance-info-compiling = Compilation
 performance-info-rendering = Rendition
