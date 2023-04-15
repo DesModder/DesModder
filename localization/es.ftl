@@ -60,8 +60,8 @@ pin-expressions-pin = Fijar
 pin-expressions-unpin = Desfijar
 
 ## Builtin Settings
-builtin-settings-name = Calculator Settings
-builtin-settings-desc = Lets you toggle features built-in to Desmos. Most options apply only to your own browser and are ignored when you share graphs with others.
+builtin-settings-name = Configuración de Calculadora
+builtin-settings-desc = Te permite alternar las funciones integradas en Desmos. Most options apply only to your own browser and are ignored when you share graphs with others.
 builtin-settings-opt-advancedStyling-name = Advanced styling
 builtin-settings-opt-advancedStyling-desc = Enable label editing, show-on-hover, text outline, and one-quadrant grid
 builtin-settings-opt-graphpaper-name = Graphpaper
