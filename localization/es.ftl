@@ -19,10 +19,10 @@ category-integrations-name = Integraciones
 
 ## GLesmos
 GLesmos-name = GLesmos
-GLesmos-desc = Render implicits on the GPU. Disabled on tab reload. Can cause the UI to slow down or freeze in rare cases; reload the page if you have issues.
-GLesmos-label-toggle-glesmos = Render with GLesmos
-GLesmos-confirm-lines = Confirm lines
-GLesmos-confirm-lines-body = GLesmos line rendering can be slow. Be careful, especially for a list of layers.
+GLesmos-desc = Genera funciones implícitas en la GPU. Se deshabilita cuando la pagina es refrescada. Puede ralentizar la interfaz grafica o en raras ocaciones puede congelar la página. Recarga la página si te causa problemas.
+GLesmos-label-toggle-glesmos = Generar gráfica con GLesmos
+GLesmos-confirm-lines = Confimar lineas
+GLesmos-confirm-lines-body = Generar lineas con GLesmos puede ser lento. Sé especialmente cuidadoso cuando utlizes listas.
 # Missing: error messages
 
 ## Tips
