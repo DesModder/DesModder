@@ -37,8 +37,8 @@ text-mode-toggle = Alternar Modo Texto
 # Missing: error messages
 
 ## Debug Mode
-debug-mode-name = Debug Mode
-debug-mode-desc = Show expression IDs instead of indices
+debug-mode-name = Modo de Depuración
+debug-mode-desc = Muestra los IDs de las expresiones en lugar de los indices.
 
 ## Find and Replace
 find-and-replace-name = Find and Replace
