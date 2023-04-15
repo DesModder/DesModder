@@ -12,10 +12,10 @@ menu-desmodder-plugins = Plugins de DesModder
 menu-desmodder-tooltip = Menú de DesModder
 
 ## Category names
-category-core-name = Core
-category-utility-name = Utility
-category-visual-name = Visual
-category-integrations-name = Integrations
+category-core-name = Funciones Básicas
+category-utility-name = Utilidades
+category-visual-name = Apariencia
+category-integrations-name = Integraciones
 
 ## GLesmos
 GLesmos-name = GLesmos
