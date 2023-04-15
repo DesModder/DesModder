@@ -144,29 +144,30 @@ video-creator-method-action = action
 video-creator-method-ticks = ticks
 
 ## Shift+Enter Newline
-shift-enter-newline-name = Shift+Enter Newline
-shift-enter-newline-desc = Use Shift+Enter to type newlines in notes and image/folder titles.
+shift-enter-newline-name = Shift+Enter Nueva línea 
+shift-enter-newline-desc = Usa Shift+Enter para teclear líneas nuevas en las notas y los títulos de imágenes/carpetas.
 
 ## Wakatime
 wakatime-name = WakaTime
-wakatime-desc = Track your desmos activity on WakaTime.com
-wakatime-opt-secretKey-name = Secret Key
-wakatime-opt-secretKey-desc = API Key used for WakaTime servers
-wakatime-opt-splitProjects-name = Split Projects by Graph
-wakatime-opt-splitProjects-desc = Store each graph as its own project instead of branches of a unified Desmos Project
-wakatime-opt-projectName-name = Project name
-wakatime-opt-projectName-desc = Visible from WakaTime, and shared for all Desmos projects
+wakatime-desc = Mira tu actividad en Desmos en WakaTime.com
+wakatime-opt-secretKey-name = Llave Secreto
+wakatime-opt-secretKey-desc = Llave API usado para los servidores de WakaTime
+wakatime-opt-splitProjects-name = Separa los Prollectos por cada gráfica
+wakatime-opt-splitProjects-desc = Guarda cada gráfica como su misma proyecto, y no como branchas de un Proyecto de Desmos unido
+wakatime-opt-projectName-name = Nombre de Proyecto
+wakatime-opt-projectName-desc = Visible en WakaTime, y compartido por todos tus proyectos Desmos 
+
 
 ## Performance Display
-performance-info-name = Performance Display
-performance-info-desc = Displays information about the performance of the current graph.
-performance-info-refresh-graph = Refresh Graph
-performance-info-refresh-graph-tooltip = Refresh the graph to test initial load time
-performance-info-sticky-tooltip = Keep menu open
-performance-info-time-in-worker = Time In Worker
-performance-info-compiling = Compiling
-performance-info-rendering = Rendering
-performance-info-other = Other
+performance-info-name = Visualizador de Rendimiento
+performance-info-desc = Visualiza información sobre la rendimiento del gráfico.
+performance-info-refresh-graph = Refrescar el Gráfico
+performance-info-refresh-graph-tooltip = Refresca el gráfico para pruebar el tiempo de carga.
+performance-info-sticky-tooltip = Mantén el menú abierto 
+performance-info-time-in-worker = Tiempo En Trabajador
+performance-info-compiling = Compilando
+performance-info-rendering = Visualizando
+performance-info-other = Otro
 
 ## Better Evaluation View
 better-evaluation-view-name = Better Evaluation View
