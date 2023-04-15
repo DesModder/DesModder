@@ -26,8 +26,8 @@ GLesmos-confirm-lines-body = Generar lineas con GLesmos puede ser lento. Sé esp
 # Missing: error messages
 
 ## Tips
-show-tips-name = Show Tips
-show-tips-desc = Show tips at the bottom of the expressions list.
+show-tips-name = Mostrar consejos
+show-tips-desc = Muestra consejos hasta abajo de la lista de expresiones.
 # Missing: all tips. Is it worthwhile?
 
 ## Text Mode
