@@ -7,9 +7,9 @@
 # [pluginID]-opt-[optionKey]-desc = Option Description
 
 ## General
-menu-learn-more = Learn more
-menu-desmodder-plugins = DesModder Plugins
-menu-desmodder-tooltip = DesModder Menu
+menu-learn-more = Aprender más
+menu-desmodder-plugins = Plugins de DesModder
+menu-desmodder-tooltip = Menú de DesModder
 
 ## Category names
 category-core-name = Core
