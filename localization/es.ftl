@@ -41,9 +41,9 @@ debug-mode-name = Modo de Depuración
 debug-mode-desc = Muestra los IDs de las expresiones en lugar de los indices.
 
 ## Find and Replace
-find-and-replace-name = Find and Replace
-find-and-replace-desc = Adds a "replace all" button in the Ctrl+F Menu to let you easily refactor variable/function names.
-find-and-replace-replace-all = replace all
+find-and-replace-name = Buscar y Reemplazar
+find-and-replace-desc = Agrega un botón de "reemplazar todo" en el menu de busqueda con Ctrl+F y te permite cambiar fácilmente nombres de variables o de funciones.
+find-and-replace-replace-all = reemplazar todo
 
 ## Wolfram To Desmos
 wolfram2desmos-name = Wolfram To Desmos
