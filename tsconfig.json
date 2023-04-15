@@ -16,5 +16,5 @@
     "noUnusedParameters": true,
     "skipLibCheck": true
   },
-  "include": ["./src/", "./loaders/", "./esbuild.mjs"]
+  "include": ["./src/", "./scripts/", "./loaders/", "./esbuild.mjs"]
 }
