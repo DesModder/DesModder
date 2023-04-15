@@ -31,9 +31,9 @@ show-tips-desc = Muestra consejos hasta abajo de la lista de expresiones.
 # Missing: all tips. Is it worthwhile?
 
 ## Text Mode
-text-mode-name = Text Mode BETA
-text-mode-desc = Expect bugs. Temporary documentation:
-text-mode-toggle = Toggle Text Mode
+text-mode-name = Modo Texto BETA
+text-mode-desc = Errores son esperados. Documentación temporal:
+text-mode-toggle = Alternar Modo Texto
 # Missing: error messages
 
 ## Debug Mode
