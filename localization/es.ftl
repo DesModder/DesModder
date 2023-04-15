@@ -102,46 +102,48 @@ set-primary-color-opt-doFavicon-name = Update Site Icon
 set-primary-color-opt-doFavicon-desc = Toggle updating the site icon
 
 ## Hide Errors
-hide-errors-name = Hide Errors
-hide-errors-desc = Click error triangles to fade them and hide suggested sliders.
-hide-errors-hide = Hide
+hide-errors-name = Esconde los Errores
+hide-errors-desc = Haz click a los triángulos de errores para desvanecerlos y esconde los controles deslizantes sugeridos
+hide-errors-hide = Esconde
 
 ## Folder Tools
-folder-tools-name = Folder Tools
-folder-tools-desc = Adds buttons in edit-list-mode to help manage folders.
-folder-tools-dump = Dump
-folder-tools-merge = Merge
-folder-tools-enclose = Enclose
+folder-tools-name = Herramientas para Carpetas
+folder-tools-desc = Añade botónes en edita-lista-modo para ayudar con la manipulación de carpetas
+folder-tools-dump = Bota
+folder-tools-merge = Une
+folder-tools-enclose = Encerrar
 
 ## Video Creator
-video-creator-name = Video Creator
-video-creator-desc = Lets you export videos and GIFs of your graphs based on actions or sliders.
-video-creator-menu = Video Creator Menu
-video-creator-to = to
-video-creator-step = , step
-video-creator-ticks-step = Time step (ms):
-video-creator-prev-action = Prev
-video-creator-next-action = Next
-video-creator-size = Size:
-video-creator-step-count = Step count:
-video-creator-target-same-pixel-ratio = Target same pixel ratio
-video-creator-target-tooltip = Adjusts scaling of line width, point size, label size, etc.
-video-creator-ffmpeg-loading = FFmpeg loading...
-video-creator-ffmpeg-fail = If this doesn't work in the next few seconds, try reloading the page or reporting this bug to DesModder devs.
-video-creator-exporting = Exporting...
-video-creator-cancel-capture = Cancel
-video-creator-cancel-export = Cancel
-video-creator-capture = Capture
-video-creator-preview = Preview
-video-creator-delete-all = Delete all
-video-creator-filename-placeholder = set a filename
-video-creator-export = Export
-video-creator-export-as = Export as { $fileType }
+video-creator-name = Creador de Videos
+video-creator-desc = Usas para exportar videos y GIFs de tu gráfica con los acciones y los controles deslizantes
+Lets you export videos and GIFs of your graphs based on actions or sliders.
+video-creator-menu = Menu para la Creador de Video
+video-creator-to = hasta
+video-creator-step = , paso
+video-creator-ticks-step = Tiempo por paso (ms):
+video-creator-prev-action = Anterior
+video-creator-next-action = Proximo
+video-creator-size = tamaño:
+video-creator-step-count = Número de pasos:
+video-creator-target-same-pixel-ratio = Dirige la misma ratio de píxeles
+video-creator-target-tooltip = Ajusta la magnitud del ancho de los líneas, el tamaño de puntos, el tamaño de etiquetas, etc.
+Adjusts scaling of line width, point size, label size, etc.
+video-creator-ffmpeg-loading = FFmpeg cargando...
+video-creator-ffmpeg-fail = Si eso no funciona en unos segundos, prueba recargando la página o informando los devs de DesModder sobre el error.
+video-creator-exporting = Exportando...
+video-creator-cancel-capture = Cancela
+video-creator-cancel-export = Cancela
+video-creator-capture = Captura
+video-creator-preview = Avance
+video-creator-delete-all = elimina todo
+video-creator-filename-placeholder = pone un nombre para el archivo...
+video-creator-export = Exporta
+video-creator-export-as = Exporta como { $fileType }
 video-creator-fps = FPS:
-video-creator-method-once = once
+video-creator-method-once = una vez
 video-creator-method-slider = slider
-video-creator-method-action = action
-video-creator-method-ticks = ticks
+video-creator-method-action = acción
+video-creator-method-ticks = segunditas
 
 ## Shift+Enter Newline
 shift-enter-newline-name = Shift+Enter Nueva línea 
@@ -170,11 +172,11 @@ performance-info-rendering = Visualizando
 performance-info-other = Otro
 
 ## Better Evaluation View
-better-evaluation-view-name = Better Evaluation View
-better-evaluation-view-desc = Displays list elements, colors, and undefined values
-better-evaluation-view-opt-lists-name = Show list elements
-better-evaluation-view-opt-lists-desc = Show list elements instead of list length
-better-evaluation-view-opt-colors-name = Show colors
-better-evaluation-view-opt-colors-desc = Show colors as rgb values
-better-evaluation-view-opt-colorLists-name = Show lists of colors
-better-evaluation-view-opt-colorLists-desc = Show lists of colors as lists of rgb values
+better-evaluation-view-name = Mejor Vista de Evaluación
+better-evaluation-view-desc =  Dispone elementos en listas, colores, y los números indefinidos.
+better-evaluation-view-opt-lists-name = Dispone los elementos en listas
+better-evaluation-view-opt-lists-desc = Dispone los elementos en listas en vez de la longitud en las listas.
+better-evaluation-view-opt-colors-name = Mostra colores
+better-evaluation-view-opt-colors-desc = Mostra colores como valores rgb
+better-evaluation-view-opt-colorLists-name = Mostra listas de colores
+better-evaluation-view-opt-colorLists-desc = Mostra listas de colores como listas de valores rgb
