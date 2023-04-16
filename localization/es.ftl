@@ -91,7 +91,7 @@ duplicate-expression-hotkey-desc = Teclea Ctrl+Q ó Ctrl+Shift+Q para replicar l
 
 ## Right Click Tray
 right-click-tray-name = Color con Click Derecho
-right-click-tray-desc = Permite abrir el menú para configurar expresiones con click derecho.
+right-click-tray-desc = Permite abrir el menú para configurar expresiones con el click derecho.
 
 ## Set Primary Color
 set-primary-color-name = Cambiar Color de Aplicación
@@ -145,7 +145,7 @@ video-creator-method-ticks = contador
 
 ## Shift+Enter Newline
 shift-enter-newline-name = Nueva línea con Shift+Entrar
-shift-enter-newline-desc = Usa la combinación Shift+Entrar para teclear líneas nuevas en las notas y en los títulos de imágenes/carpetas.
+shift-enter-newline-desc = Teclea Shift+Entrar para añadir líneas nuevas en las notas y en los títulos de imágenes/carpetas.
 
 ## Wakatime
 wakatime-name = WakaTime
