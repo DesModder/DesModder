@@ -61,121 +61,120 @@ pin-expressions-unpin = Desfijar
 
 ## Builtin Settings
 builtin-settings-name = Configuración de Calculadora
-builtin-settings-desc = Te permite alternar las funciones integradas en Desmos. Lo mayoridad de los opciones solo aplica a el navegador tuyo, y son ignoradas cuando compartes tu gráfica con otras personas.
+builtin-settings-desc = Te permite configurar las funciones integradas en Desmos. La mayoría de las opciones aplican solamente a tu navegador y son ignoradas cuando compartes tu gráfica con otras personas.
 builtin-settings-opt-advancedStyling-name = Diseño avanzado
-builtin-settings-opt-advancedStyling-desc = Permite la edición de etiquetas, mostra-en-pasar, contorno de texto, y cuadrícula con un quadrante
-builtin-settings-opt-graphpaper-name = Papel de Gráfica
+builtin-settings-opt-advancedStyling-desc = Permite editar rótulos, mostrar el rótulo al pasar el mouse, añadir contorno de texto y mostrar un solo cuadrante de cuadrícula.
+builtin-settings-opt-graphpaper-name = Área de Gráfica
 builtin-settings-opt-graphpaper-desc = {""}
-builtin-settings-opt-authorFeatures-name = Carecterísticas Autores 
-builtin-settings-opt-authorFeatures-desc = Permite carpetas escondidas, permite sóloleer, y más
-builtin-settings-opt-pointsOfInterest-name = Muestra puntos de interés
-builtin-settings-opt-pointsOfInterest-desc = Cortas, heucos, intersecciones, etc.
-builtin-settings-opt-trace-name = Traza sobre cuervas
-builtin-settings-opt-trace-desc = {""}
-builtin-settings-opt-expressions-name = Muestra Expresiones
+builtin-settings-opt-authorFeatures-name = Funciones para autores 
+builtin-settings-opt-authorFeatures-desc = Permite esconder carpetas, expresiones de solo lectura, y más.
+builtin-settings-opt-pointsOfInterest-name = Muestra puntos de interés.
+builtin-settings-opt-pointsOfInterest-desc = Cortes de eje x/y, discontinuidades, intersecciones, etc.
+builtin-settings-opt-trace-name = Trazar sobre curvas
+builtin-settings-opt-trace-desc = Permite hacer click en curvas para obtener coordenadas.
+builtin-settings-opt-expressions-name = Mostrar Expresiones
 builtin-settings-opt-expressions-desc = {""}
-builtin-settings-opt-zoomButtons-name = Muestra los Botones del Zoom
+builtin-settings-opt-zoomButtons-name = Muestra los Botones de Zoom
 builtin-settings-opt-zoomButtons-desc = {""}
 builtin-settings-opt-expressionsTopbar-name = Muestra la Barra Superior de Expresiones
 builtin-settings-opt-expressionsTopbar-desc = {""}
-builtin-settings-opt-border-name = Ribete
-builtin-settings-opt-border-desc = Ribete minor alrededor del calculador 
-builtin-settings-opt-keypad-name = Muestra el teclado numérico
+builtin-settings-opt-border-name = Borde
+builtin-settings-opt-border-desc = Muestra un borde alrededor del calculador.
+builtin-settings-opt-keypad-name = Mostrar el teclado numérico
 builtin-settings-opt-keypad-desc = {""}
-builtin-settings-opt-qwertyKeyboard-name = QWERTY Teclado
+builtin-settings-opt-qwertyKeyboard-name = Teclado QWERTY
 builtin-settings-opt-qwertyKeyboard-desc = {""}
 
 ## Duplicate Expression Hotkey
-duplicate-expression-hotkey-name = Atajo de teclado para Replicar Expresión
-duplicate-expression-hotkey-desc = Teclea Ctrl+Q o Ctrl+Shift+Q para replicar el expresión selecciónado.
+duplicate-expression-hotkey-name = Atajo de teclado para Duplicar Expresión
+duplicate-expression-hotkey-desc = Teclea Ctrl+Q ó Ctrl+Shift+Q para replicar la expresión seleccionada.
 
 ## Right Click Tray
-right-click-tray-name = Right Click Tray
-right-click-tray-desc = Allows settings tray to be opened with a right click instead of holding left click on the settings bubble
+right-click-tray-name = Color con Click Derecho
+right-click-tray-desc = Permite abrir el menú para configurar expresiones con click derecho.
 
 ## Set Primary Color
-set-primary-color-name = Set Primary Color
-set-primary-color-desc = Choose the primary color for the user interface
-set-primary-color-opt-primaryColor-name = Primary Color
-set-primary-color-opt-primaryColor-desc = Primary color across the calculator
-set-primary-color-opt-doFavicon-name = Update Site Icon
-set-primary-color-opt-doFavicon-desc = Toggle updating the site icon
+set-primary-color-name = Cambiar Color de Aplicación
+set-primary-color-desc = Elije el color principal para la interfaz de usuario.
+set-primary-color-opt-primaryColor-name = Color principal
+set-primary-color-opt-primaryColor-desc = Cambia el color principal en toda la calculadora.
+set-primary-color-opt-doFavicon-name = Actualizar el icono del sitio web.
+set-primary-color-opt-doFavicon-desc = Alternar el color del icono del sitio web.
 
 ## Hide Errors
-hide-errors-name = Esconde los Errores
-hide-errors-desc = Haz click a los triángulos de errores para desvanecerlos y esconde los controles deslizantes sugeridos
-hide-errors-hide = Esconde
+hide-errors-name = Esconder los Errores
+hide-errors-desc = Permite hacer click a los triángulos de error para desvanecerlos y esconde las sugerencias de controles deslizantes.
+hide-errors-hide = Esconder
 
 ## Folder Tools
 folder-tools-name = Herramientas para Carpetas
-folder-tools-desc = Añade botónes en edita-lista-modo para ayudar con la manipulación de carpetas
-folder-tools-dump = Bota
-folder-tools-merge = Une
+folder-tools-desc = Añade botones en el modo de edición para ayudar con la gestión de carpetas
+folder-tools-dump = Vaciar
+folder-tools-merge = Llenar
 folder-tools-enclose = Encerrar
 
 ## Video Creator
-video-creator-name = Creador de Videos
-video-creator-desc = Usas para exportar videos y GIFs de tu gráfica con los acciones y los controles deslizantes
-Lets you export videos and GIFs of your graphs based on actions or sliders.
-video-creator-menu = Menu para la Creador de Video
+video-creator-name = Creador de Video
+video-creator-desc = Te permite exportar videos y GIFs de tu gráfica con acciones o controles deslizantes.
+video-creator-menu = Menú del Creador de Video
 video-creator-to = hasta
 video-creator-step = , paso
 video-creator-ticks-step = Tiempo por paso (ms):
-video-creator-prev-action = Anterior
-video-creator-next-action = Proximo
-video-creator-size = tamaño:
+video-creator-prev-action = Previo
+video-creator-next-action = Siguiente
+video-creator-size = Tamaño:
 video-creator-step-count = Número de pasos:
-video-creator-target-same-pixel-ratio = Dirige la misma ratio de píxeles
-video-creator-target-tooltip = Ajusta la magnitud del ancho de los líneas, el tamaño de puntos, el tamaño de etiquetas, etc.
-video-creator-ffmpeg-loading = FFmpeg cargando...
-video-creator-ffmpeg-fail = Si eso no funciona en unos segundos, prueba recargando la página o informando los devs de DesModder sobre el error.
+video-creator-target-same-pixel-ratio = Mantener la misma proporción de píxeles.
+video-creator-target-tooltip = Ajustar la magnitud del ancho de las líneas, el tamaño de puntos, el tamaño de rótulos, etc.
+video-creator-ffmpeg-loading = cargando FFmpeg...
+video-creator-ffmpeg-fail = Si no funciona en unos segundos, prueba recargar la página o informa los devs de DesModder sobre el error.
 video-creator-exporting = Exportando...
-video-creator-cancel-capture = Cancela
-video-creator-cancel-export = Cancela
-video-creator-capture = Captura
-video-creator-preview = Avance
-video-creator-delete-all = elimina todo
-video-creator-filename-placeholder = pone un nombre para el archivo...
-video-creator-export = Exporta
-video-creator-export-as = Exporta como { $fileType }
+video-creator-cancel-capture = Cancelar
+video-creator-cancel-export = Cancelar
+video-creator-capture = Capturar
+video-creator-preview = Vista Rápida
+video-creator-delete-all = Eliminar todo
+video-creator-filename-placeholder = nombre de tu video...
+video-creator-export = Exportar
+video-creator-export-as = Exportar como { $fileType }
 video-creator-fps = FPS:
 video-creator-method-once = una vez
-video-creator-method-slider = slider
+video-creator-method-slider = deslizador
 video-creator-method-action = acción
-video-creator-method-ticks = segunditas
+video-creator-method-ticks = contador
 
 ## Shift+Enter Newline
-shift-enter-newline-name = Shift+Enter Nueva línea 
-shift-enter-newline-desc = Usa Shift+Enter para teclear líneas nuevas en las notas y los títulos de imágenes/carpetas.
+shift-enter-newline-name = Nueva línea con Shift+Entrar
+shift-enter-newline-desc = Usa la combinación Shift+Entrar para teclear líneas nuevas en las notas y en los títulos de imágenes/carpetas.
 
 ## Wakatime
 wakatime-name = WakaTime
-wakatime-desc = Mira tu actividad en Desmos en WakaTime.com
-wakatime-opt-secretKey-name = Llave Secreto
-wakatime-opt-secretKey-desc = Llave API usado para los servidores de WakaTime
-wakatime-opt-splitProjects-name = Separa los Prollectos por cada gráfica
-wakatime-opt-splitProjects-desc = Guarda cada gráfica como su misma proyecto, y no como branchas de un Proyecto de Desmos unido
+wakatime-desc = Dale seguimiento a tu actividad de Desmos en WakaTime.com
+wakatime-opt-secretKey-name = Llave Secreta
+wakatime-opt-secretKey-desc = Llave API usada para los servidores de WakaTime
+wakatime-opt-splitProjects-name = Separa los proyectos por gráficas individuales
+wakatime-opt-splitProjects-desc = Guarda cada gráfica como su propio proyecto y no como ramificaciones de un solo proyecto de Desmos.
 wakatime-opt-projectName-name = Nombre de Proyecto
-wakatime-opt-projectName-desc = Visible en WakaTime, y compartido por todos tus proyectos Desmos 
+wakatime-opt-projectName-desc = Visible en WakaTime y es compartido por todos tus proyectos de Desmos.
 
 
 ## Performance Display
-performance-info-name = Visualizador de Rendimiento
-performance-info-desc = Visualiza información sobre la rendimiento del gráfico.
+performance-info-name = Monitor de Rendimiento
+performance-info-desc = Visualiza información sobre el rendimiento del gráfico.
 performance-info-refresh-graph = Refrescar el Gráfico
-performance-info-refresh-graph-tooltip = Refresca el gráfico para pruebar el tiempo de carga.
-performance-info-sticky-tooltip = Mantén el menú abierto 
-performance-info-time-in-worker = Tiempo En Trabajador
+performance-info-refresh-graph-tooltip = Refresca el gráfico para monitorear el tiempo de carga.
+performance-info-sticky-tooltip = Mantener el menú abierto 
+performance-info-time-in-worker = Tiempo en Web Worker
 performance-info-compiling = Compilando
 performance-info-rendering = Visualizando
 performance-info-other = Otro
 
 ## Better Evaluation View
 better-evaluation-view-name = Mejor Vista de Evaluación
-better-evaluation-view-desc =  Dispone elementos en listas, colores, y los números indefinidos.
-better-evaluation-view-opt-lists-name = Dispone los elementos en listas
-better-evaluation-view-opt-lists-desc = Dispone los elementos en listas en vez de la longitud en las listas.
-better-evaluation-view-opt-colors-name = Mostra colores
-better-evaluation-view-opt-colors-desc = Mostra colores como valores rgb
-better-evaluation-view-opt-colorLists-name = Mostra listas de colores
-better-evaluation-view-opt-colorLists-desc = Mostra listas de colores como listas de valores rgb
+better-evaluation-view-desc = Permite dar un vistazo a los elementos en listas, colores, y los números indefinidos.
+better-evaluation-view-opt-lists-name = Mostrar los elementos de la lista.
+better-evaluation-view-opt-lists-desc = Mostrar los elementos de la lista en vez de su tamaño.
+better-evaluation-view-opt-colors-name = Mostrar colores
+better-evaluation-view-opt-colors-desc = Mostrar colores como valores RGB
+better-evaluation-view-opt-colorLists-name = Mostrar listas de colores
+better-evaluation-view-opt-colorLists-desc = Mostrar listas de colores como listas de valores RGB
