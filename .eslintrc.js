@@ -1,8 +1,12 @@
-{
+const rulesDirPlugin = require("eslint-plugin-rulesdir");
+rulesDirPlugin.RULES_DIR = "scripts/eslint-rules";
+
+module.exports = {
   "env": {
     "browser": true,
     "es2021": true
   },
+  "plugins": ["rulesdir"],
   "extends": ["standard-with-typescript", "prettier"],
   "overrides": [],
   "parserOptions": {
@@ -13,6 +17,7 @@
   "ignorePatterns": ["src/frontend/grammar*"],
   "parser": "@typescript-eslint/parser",
   "rules": {
+    "rulesdir/no-format-in-ts": "error",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/array-type": "off",
     "@typescript-eslint/strict-boolean-expressions": "off",
