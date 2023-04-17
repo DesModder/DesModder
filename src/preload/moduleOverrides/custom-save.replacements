@@ -1,0 +1,53 @@
+# Custom Save Replacements
+
+*plugin* `custom-save`
+
+## Add a checkbox to the save dialog
+
+*module* `yee`
+
+*Find*
+```js
+$checkbox,
+{
+onChange: this.bindFn(this.onCheckboxInput),
+checked: this.bindFn(this.getShowLabel)
+```
+*Find*
+```js
+$Dcgview.createElement("h1", null, () => this.getTitle()),
+```
+
+*Find* => `from`
+```js
+        "dcg-btn dcg-btn-primary pull-right dcg-action-save"
+    )
+    },
+    () => this.controller.s("account-shell-button-save")
+),
+```
+*Replace* `from` with
+```js
+        "dcg-btn dcg-btn-primary pull-right dcg-action-save"
+    )
+    },
+    () => this.controller.s("account-shell-button-save")
+),
+$Dcgview.createElement(
+    $Dcgview.Components.If,
+    {
+        predicate: () => DesModder?.controller?.isPluginEnabled?.("custom-save")
+    },
+    () => $Dcgview.createElement($checkbox, {
+            onChange: () => {
+                DesModder?.controller?.exposedPlugins?.["custom-save"]?.check();
+                this.update();
+                },
+            checked : () => !!DesModder?.controller?.exposedPlugins?.["custom-save"]?.isChecked(),
+
+            disabled: () => !DesModder?.exposedPlugins?.['video-creator']?.frames?.[0],
+        },
+        () => "Use VideoCreator frame as thumb"
+    )
+),
+```

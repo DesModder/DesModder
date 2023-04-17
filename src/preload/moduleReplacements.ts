@@ -9,6 +9,7 @@ import pinExpressions from "./moduleOverrides/pin-expressions.replacements";
 import shiftEnterNewline from "./moduleOverrides/shift-enter-newline.replacements";
 import showTips from "./moduleOverrides/show-tips.replacements";
 import textMode from "./moduleOverrides/text-mode.replacements";
+import CustomSave from "./moduleOverrides/custom-save.replacements";
 import parseFile, { Block } from "./replacementHelpers/parse";
 
 const replacementStrings = [
@@ -23,6 +24,7 @@ const replacementStrings = [
   debugMode,
   extraExpressionButtons,
   showTips,
+  CustomSave,
 ];
 
 const replacements: Block[] = [];
@@ -53,6 +55,7 @@ const pluginNames = [
   "text-mode",
   "performance-info",
   "better-evaluation-view",
+  "custom-save",
 ];
 
 replacements.forEach((r) => {

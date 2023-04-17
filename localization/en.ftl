@@ -177,3 +177,9 @@ better-evaluation-view-opt-colors-name = Show colors
 better-evaluation-view-opt-colors-desc = Show colors as rgb values
 better-evaluation-view-opt-colorLists-name = Show lists of colors
 better-evaluation-view-opt-colorLists-desc = Show lists of colors as lists of rgb values
+
+## Custom Save
+custom-save-name = Custom Save
+custom-save-desc = uuh it adds a lil checkbox to the save dialog
+custom-save-opt-hash-option-name = Custom hash option
+custom-save-opt-hash-option-desc = Option to change the hash when saving the graph
