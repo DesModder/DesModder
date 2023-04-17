@@ -18,6 +18,7 @@ category-visual-name = Apariencia
 category-integrations-name = Integraciones
 
 ## GLesmos
+# Unchanged
 GLesmos-name = GLesmos
 GLesmos-desc = Genera funciones implícitas en la GPU. Se deshabilita cuando la página es refrescada. Puede ralentizar la interfaz gráfica o en raras ocasiones puede congelar la página. Recarga la página si te causa problemas.
 GLesmos-label-toggle-glesmos = Usar GLesmos
@@ -65,6 +66,7 @@ builtin-settings-desc = Te permite configurar las funciones integradas en Desmos
 builtin-settings-opt-advancedStyling-name = Diseño avanzado
 builtin-settings-opt-advancedStyling-desc = Permite editar rótulos, mostrar el rótulo al pasar el mouse, añadir contorno de texto y mostrar un solo cuadrante de cuadrícula.
 builtin-settings-opt-graphpaper-name = Área de Gráfica
+# Unchanged
 builtin-settings-opt-graphpaper-desc = {""}
 builtin-settings-opt-authorFeatures-name = Funciones para autores 
 builtin-settings-opt-authorFeatures-desc = Permite esconder carpetas, expresiones de solo lectura, y más.
@@ -73,16 +75,21 @@ builtin-settings-opt-pointsOfInterest-desc = Cortes de eje x/y, discontinuidades
 builtin-settings-opt-trace-name = Trazar sobre curvas
 builtin-settings-opt-trace-desc = Permite hacer click en curvas para obtener coordenadas.
 builtin-settings-opt-expressions-name = Mostrar Expresiones
+# Unchanged
 builtin-settings-opt-expressions-desc = {""}
 builtin-settings-opt-zoomButtons-name = Muestra los Botones de Zoom
+# Unchanged
 builtin-settings-opt-zoomButtons-desc = {""}
 builtin-settings-opt-expressionsTopbar-name = Muestra la Barra Superior de Expresiones
+# Unchanged
 builtin-settings-opt-expressionsTopbar-desc = {""}
 builtin-settings-opt-border-name = Borde
 builtin-settings-opt-border-desc = Muestra un borde alrededor del calculador.
 builtin-settings-opt-keypad-name = Mostrar el teclado numérico
+# Unchanged
 builtin-settings-opt-keypad-desc = {""}
 builtin-settings-opt-qwertyKeyboard-name = Teclado QWERTY
+# Unchanged
 builtin-settings-opt-qwertyKeyboard-desc = {""}
 
 ## Duplicate Expression Hotkey
@@ -137,6 +144,7 @@ video-creator-delete-all = Eliminar todo
 video-creator-filename-placeholder = nombre de tu video...
 video-creator-export = Exportar
 video-creator-export-as = Exportar como { $fileType }
+# Unchanged
 video-creator-fps = FPS:
 video-creator-method-once = una vez
 video-creator-method-slider = deslizador
@@ -148,6 +156,7 @@ shift-enter-newline-name = Nueva línea con Shift+Entrar
 shift-enter-newline-desc = Teclea Shift+Entrar para añadir líneas nuevas en las notas y en los títulos de imágenes/carpetas.
 
 ## Wakatime
+# Unchanged
 wakatime-name = WakaTime
 wakatime-desc = Dale seguimiento a tu actividad de Desmos en WakaTime.com
 wakatime-opt-secretKey-name = Llave Secreta
