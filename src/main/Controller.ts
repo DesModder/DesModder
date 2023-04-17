@@ -49,7 +49,7 @@ export default class Controller {
   pillboxButtons: Record<string, PillboxButton> = {
     "main-menu": {
       id: "main-menu",
-      tooltip: format("menu-desmodder-tooltip"),
+      tooltip: "menu-desmodder-tooltip",
       iconClass: "dsm-icon-desmodder",
       popup: MenuFunc,
     },

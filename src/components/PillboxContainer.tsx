@@ -1,3 +1,4 @@
+import { format } from "../i18n/i18n-core";
 import "./PillboxContainer.less";
 import { If, Tooltip, For, Switch } from "./desmosComponents";
 import { Component, jsx } from "DCGView";
@@ -22,7 +23,7 @@ export default class PillboxContainer extends Component<{
             {(id: string) => (
               <Tooltip
                 tooltip={() =>
-                  this.controller.pillboxButtons[id]?.tooltip ?? ""
+                  format(this.controller.pillboxButtons[id].tooltip)
                 }
                 gravity="w"
               >
@@ -37,7 +38,7 @@ export default class PillboxContainer extends Component<{
                 >
                   <i
                     class={() =>
-                      this.controller.pillboxButtons[id]?.iconClass ?? ""
+                      this.controller.pillboxButtons[id].iconClass ?? ""
                     }
                   />
                 </div>

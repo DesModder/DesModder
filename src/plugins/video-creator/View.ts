@@ -1,14 +1,13 @@
 import { MainPopupFunc } from "./components/MainPopup";
 import { controller } from "./index";
 import { Calc } from "globals/window";
-import { format } from "i18n/i18n-core";
 import { desModderController } from "script";
 import { jquery, keys } from "utils/depUtils";
 
 export function initView() {
   desModderController.addPillboxButton({
     id: "dsm-vc-menu",
-    tooltip: format("video-creator-menu"),
+    tooltip: "video-creator-menu",
     iconClass: "dcg-icon-film",
     popup: () => MainPopupFunc(controller),
   });
