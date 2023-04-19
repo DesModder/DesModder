@@ -195,7 +195,7 @@ export interface ListAccessExpression extends Positioned {
   index: Expression;
 }
 
-type CompareOp = "<" | "<=" | ">=" | ">" | "=";
+export type CompareOp = "<" | "<=" | ">=" | ">" | "=";
 
 export interface BinaryExpression extends Positioned {
   type: "BinaryExpression";
@@ -262,9 +262,10 @@ export function number(val: number): NumberNode {
 
 /* Path */
 
-export type NonExprNode =
+export type NonExprNode = Statement | NonExprNonStatementNode;
+
+export type NonExprNonStatementNode =
   | Program
-  | Statement
   | RegressionParameters
   | RegressionEntry
   | StyleMapping
@@ -273,6 +274,41 @@ export type NonExprNode =
   | PiecewiseBranch;
 
 export type Node = NonExprNode | Expression;
+
+export function isExpression(n: Node): n is Expression {
+  if (isStatement(n)) return false;
+  switch (n.type) {
+    case "Program":
+    case "RegressionParameters":
+    case "RegressionEntry":
+    case "StyleMapping":
+    case "MappingEntry":
+    case "AssignmentExpression":
+    case "PiecewiseBranch":
+      n satisfies NonExprNode;
+      return false;
+    default:
+      n satisfies Expression;
+      return true;
+  }
+}
+
+export function isStatement(n: Node): n is Statement {
+  switch (n.type) {
+    case "ExprStatement":
+    case "Table":
+    case "Image":
+    case "Text":
+    case "Folder":
+    case "Settings":
+    case "Ticker":
+      n satisfies Statement;
+      return true;
+    default:
+      n satisfies NonExprNonStatementNode | Expression;
+      return false;
+  }
+}
 
 export class NodePath<T extends Node = Node> {
   constructor(

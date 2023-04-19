@@ -1,6 +1,7 @@
 import Aug from "../aug/AugState";
 import {
   assignmentExpr,
+  bareSeq,
   binop,
   comparator,
   functionCall,
@@ -10,21 +11,19 @@ import {
   negative,
   number,
   updateRule,
+  wrappedSeq,
 } from "../aug/augBuilders";
-import parser from "../lezer/syntax.grammar";
 import astToAug from "./astToAug";
-import { cstToAST } from "./cstToAST";
 import { error, warning } from "./diagnostics";
+import { parse } from "./textToAST";
 import { Diagnostic } from "@codemirror/lint";
-import { Text } from "@codemirror/state";
 import { test, expect, describe } from "@jest/globals";
 
 jest.mock("utils/depUtils");
 jest.mock("globals/window");
 
 function textToAug(text: string) {
-  const cst = parser.parse(text);
-  const [diagnostics, program] = cstToAST(cst, Text.of(text.split("\n")));
+  const [diagnostics, program] = parse(text);
   return astToAug(diagnostics, program);
 }
 
@@ -100,8 +99,12 @@ function testStmt(desc: string, s: string, ...expected: any[]) {
     expect(res).not.toBeNull();
     if (res === null) return;
     expected.forEach((e, i) => {
-      const augStmt = res.expressions.list[i];
-      expect(augStmt).toEqual(e);
+      if (e.handlerLatex) {
+        expect(res.expressions.ticker).toEqual(e);
+      } else {
+        const augStmt = res.expressions.list[i];
+        expect(augStmt).toEqual(e);
+      }
     });
   });
 }
@@ -260,25 +263,31 @@ describe("Basic exprs", () => {
   });
   describe("ParenthesizedExpression", () => {
     testExpr("parenthesized number", "(5)", number(5));
-    testExpr("point", "(2,3)", {
-      type: "Seq",
-      parenWrapped: true,
-      args: [number(2), number(3)],
-    });
-    testExpr("unwrapped action sequence", "a->2,b->3,c->4", {
-      type: "Seq",
-      parenWrapped: false,
-      args: [
-        updateRule(id("a"), number(2)),
-        updateRule(id("b"), number(3)),
-        updateRule(id("c"), number(4)),
-      ],
-    });
-    testExpr("wrapped action sequence", "(a->2,b->3)", {
-      type: "Seq",
-      parenWrapped: true,
-      args: [updateRule(id("a"), number(2)), updateRule(id("b"), number(3))],
-    });
+    testExpr("point", "(2,3)", wrappedSeq(number(2), number(3)));
+    const abc = bareSeq(
+      updateRule(id("a"), number(2)),
+      updateRule(id("b"), number(3)),
+      updateRule(id("c"), number(4))
+    );
+    testExpr("unwrapped action sequence", "a->2,b->3,c->4", abc);
+    testExpr(
+      "unwrapped action sequence on RHS of equality",
+      "A=a->2,b->3,c->4",
+      comparator("=", id("A"), abc)
+    );
+    testExpr(
+      "wrapped action sequence",
+      "(a->2,b->3)",
+      wrappedSeq(updateRule(id("a"), number(2)), updateRule(id("b"), number(3)))
+    );
+    testExpr(
+      "function on points",
+      "polygon((1,2),(3,4))",
+      functionCall(id("polygon"), [
+        wrappedSeq(number(1), number(2)),
+        wrappedSeq(number(3), number(4)),
+      ])
+    );
   });
   describe("MemberExpression", () => {
     testExpr("point access", "P.y", {
@@ -303,6 +312,16 @@ describe("Basic exprs", () => {
       list: id("L"),
       index: number(1),
     });
+    testExpr("multiple numbers index", "L[1,2,3]", {
+      type: "ListAccess",
+      list: id("L"),
+      index: list(number(1), number(2), number(3)),
+    });
+    testExpr("list index", "L[[1,2,3]]", {
+      type: "ListAccess",
+      list: id("L"),
+      index: list(number(1), number(2), number(3)),
+    });
     testExpr("filter", "L[L>5]", {
       type: "ListAccess",
       list: id("L"),
@@ -315,6 +334,24 @@ describe("Basic exprs", () => {
         type: "Range",
         start: [number(1)],
         end: [number(5)],
+      },
+    });
+    testExpr("range in brackets", "L[[1...5]]", {
+      type: "ListAccess",
+      list: id("L"),
+      index: {
+        type: "Range",
+        start: [number(1)],
+        end: [number(5)],
+      },
+    });
+    testExpr("list comprehension", "L[i+1 for i=M]", {
+      type: "ListAccess",
+      list: id("L"),
+      index: {
+        type: "ListComprehension",
+        expr: binop("Add", id("i"), number(1)),
+        assignments: [assignmentExpr(id("i"), id("M"))],
       },
     });
   });
@@ -613,13 +650,13 @@ describe("Text", () => {
 });
 
 describe("Semicolons", () => {
-  testStmt("No insertion inside unclosed expressions", `1 + \nx`, {
+  testStmt("No insertion in single-newline", `1 + \nx`, {
     ...exprDefaults,
     latex: binop("Add", number(1), id("x")),
   });
   testStmt(
-    "Simple semi insertion",
-    `y=x\nx=1`,
+    "Simple semi",
+    `y=x\n\nx=1`,
     {
       ...exprDefaults,
       latex: comparator("=", id("y"), id("x")),
@@ -631,7 +668,7 @@ describe("Semicolons", () => {
       latex: comparator("=", id("x"), number(1)),
     }
   );
-  testStmt("Insertion inside folder", `folder "" {\ny=x\nx=1}`, {
+  testStmt("Insertion inside folder", `folder "" {\ny=x\n\nx=1}`, {
     ...folderDefaults,
     title: "",
     children: [
@@ -666,49 +703,20 @@ describe("Semicolons", () => {
       },
     ],
   });
-  testStmt(
-    "Force semicolon to avoid multi-line CallExpression",
-    `y=x\n(x)^2`,
-    {
-      ...exprDefaults,
-      latex: comparator("=", id("y"), id("x")),
-    },
-    {
-      ...exprDefaults,
-      id: "__dsm-auto-2",
-      color: "#2d70b3",
-      latex: binop("Exponent", id("x"), number(2)),
-    }
-  );
-  testStmt(
-    "Force semicolon to avoid multi-line ListExpression",
-    `[x,2,3]\n[1,2]+x`,
-    {
-      ...exprDefaults,
-      latex: list(id("x"), number(2), number(3)),
-    },
-    {
-      ...exprDefaults,
-      id: "__dsm-auto-2",
-      color: "#2d70b3",
-      latex: binop("Add", list(number(1), number(2)), id("x")),
-    }
-  );
-  testStmt(
-    "Force semicolon to avoid multi-line subtraction",
-    `x\n-x`,
-    {
-      ...exprDefaults,
-      latex: id("x"),
-    },
-    {
-      ...exprDefaults,
-      id: "__dsm-auto-2",
-      color: "#2d70b3",
-      latex: negative(id("x")),
-    }
-  );
+  testStmt("Newline gets ignored, even in CallExpression", `y=x\n(x)`, {
+    ...exprDefaults,
+    latex: comparator("=", id("y"), functionCall(id("x"), [id("x")])),
+  });
+  testStmt("Newline gets ignored, even in ListExpression", `[x,2]\n[x,1]`, {
+    ...exprDefaults,
+    latex: listAccess(list(id("x"), number(2)), list(id("x"), number(1))),
+  });
+  testStmt("Newline gets ignored, even in subtraction", `x\n-x`, {
+    ...exprDefaults,
+    latex: binop("Subtract", id("x"), id("x")),
+  });
 });
+
 describe("Image", () => {
   testStmt("Plain image", `image "name" @{ url: "data:image/png,stub" }`, {
     type: "image",
@@ -719,11 +727,7 @@ describe("Image", () => {
     image_url: "data:image/png,stub",
     width: number(10),
     height: number(10),
-    center: {
-      type: "Seq",
-      parenWrapped: true,
-      args: [number(0), number(0)],
-    },
+    center: wrappedSeq(number(0), number(0)),
     angle: number(0),
     opacity: number(1),
     foreground: false,
@@ -794,13 +798,37 @@ describe("Folder", () => {
     }
   );
 });
+
+describe("Ticker", () => {
+  testStmt("Basic ticker", `ticker a -> a+1`, {
+    handlerLatex: updateRule(id("a"), binop("Add", id("a"), number(1))),
+    minStepLatex: number(0),
+    playing: false,
+  });
+  testStmt("Ticker with comma", `ticker a -> a+1, A`, {
+    handlerLatex: bareSeq(
+      updateRule(id("a"), binop("Add", id("a"), number(1))),
+      id("A")
+    ),
+    minStepLatex: number(0),
+    playing: false,
+  });
+  testStmt("Styled ticker", `ticker a -> a+1 @{minStep: 100, playing: true}`, {
+    handlerLatex: updateRule(id("a"), binop("Add", id("a"), number(1))),
+    minStepLatex: number(100),
+    playing: true,
+  });
+});
+
 describe("Automatic IDs", () => {
   test("IDs are correctly managed with tables", () => {
     const [_analysis, res] = textToAug(`
       table {
         a=[]
+
         b=[]
       }
+
       1
     `);
     expect(res).not.toBeNull();
@@ -832,8 +860,10 @@ describe("Automatic IDs", () => {
     const [_errors, res] = textToAug(`
       folder "Title" {
         a
+
         b
       }
+
       1
     `);
     expect(res).not.toBeNull();
@@ -951,7 +981,7 @@ describe("Diagnostics", () => {
     );
     testDiagnostics(
       "Expected primitive, got style mapping",
-      `y=1 @{color: "#FFF"}\ny=2 @{color: @{}}`,
+      `y=1 @{color: "#FFF"};y=2 @{color: @{}}`,
       [
         error(
           "Expected expression.color to be primitive, but got style mapping",
@@ -976,7 +1006,7 @@ describe("Diagnostics", () => {
     // TODO: variable scoping, so `true` resolves to boolean
     testDiagnostics(
       "Expected color, got other",
-      `y=1 @{color: "abc"}\ny=2 @{color: BLUE}\ny=3 @{color: 5}\ny=4 @{color: true}`,
+      `y=1 @{color: "abc"};y=2 @{color: BLUE};y=3 @{color: 5};y=4 @{color: true}`,
       [
         error(
           "Expected expression.color to evaluate to string or identifier, but got number",
@@ -1047,31 +1077,30 @@ describe("Diagnostics", () => {
     testDiagnostics("Empty program", `\n\n`, [
       warning("Program is empty. Try typing: y=x", undefined),
     ]);
-    testDiagnostics("Binary op without indication of continuation", `1\n+ x`, [
-      error("Syntax error; unexpected text: +", pos(2, 3)),
-    ]);
-    testDiagnostics("Skip node", `y=x @{} @#!# y=x^2`, [
-      error("Syntax error; unexpected text: @#!#", pos(8, 12)),
+    testDiagnostics("Skip node", `y=x @{} @! y=x^2`, [
+      error("Syntax error: invalid character @", pos(8, 9)),
+      error(
+        "Unexpected '!'. Did you mean to precede it by an expression, such as 'x!'?",
+        pos(9, 10)
+      ),
     ]);
     testDiagnostics("Multiple skips", `y=)x]`, [
-      error("Syntax error; unexpected text: )", pos(2, 3)),
-      error("Syntax error; unexpected text: ]", pos(4, 5)),
+      error("Syntax error: unexpected text: ')'.", pos(2, 3)),
     ]);
     testDiagnostics("Multiple insertions", `y=(1+)*(5+)`, [
-      error("Syntax error; expected something here", pos(5, 5)),
-      error("Syntax error; expected something here", pos(10, 10)),
+      error("Syntax error: unexpected text: ')'.", pos(5, 6)),
     ]);
     testDiagnostics("Non-identifier callee", `y = 7(x)`, [
-      error(
-        "Invalid callee; expected identifier or member expression",
-        pos(4, 5)
-      ),
+      error("Function call must be an identifier", pos(4, 5)),
     ]);
     testDiagnostics("Non-simple statement in table", `table { "note" }`, [
       error("Expected a valid table column. Try: x1 = [1, 2, 3]", pos(8, 14)),
     ]);
     testDiagnostics("Invalid regression body", `a ~ 5 #{ "note" }`, [
-      error("Invalid regression body", pos(9, 15)),
+      error(
+        "Regression mapping entry must be of the form 'name = 123'",
+        pos(9, 15)
+      ),
     ]);
     testDiagnostics("Non-identifier residual variable", `f(x) = a ~ b`, [
       error(
@@ -1083,6 +1112,24 @@ describe("Diagnostics", () => {
       error(
         "Left side of update rule must be Identifier, but got CallExpression",
         pos(0, 4)
+      ),
+    ]);
+    testDiagnostics("Non-expression dot access", `table{}.x`, [
+      error(
+        "Unexpected '.'. Did you mean to precede it by an expression, such as '(2,3).x'?",
+        pos(7, 8)
+      ),
+    ]);
+    testDiagnostics("Non-expression list", `[table{}]`, [
+      error(
+        "Syntax error: expected item in sequence to be an expression. Did you mean to write something like '[1,2,3]'?",
+        pos(1, 8)
+      ),
+    ]);
+    testDiagnostics("Non-expression piecewise", `{x>5:table{}}`, [
+      error(
+        "Syntax error: expected branch of piecewise to be an expression. Did you mean to write something like '{x>3:5}'?",
+        pos(5, 12)
       ),
     ]);
   });

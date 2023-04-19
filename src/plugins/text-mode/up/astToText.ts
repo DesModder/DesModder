@@ -47,7 +47,7 @@ function astItemToText(path: NodePath<TextAST.Statement>): Doc {
         indent([
           hardline,
           join(
-            hardline,
+            [hardline, hardline],
             item.columns.map((col, i) =>
               columnToText(path.withChild(col, "column." + i.toString()))
             )

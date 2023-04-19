@@ -383,6 +383,15 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
       };
     case "Identifier":
       return parseIdentifier(node._symbol);
+    case "Norm":
+      return {
+        type: "FunctionCall",
+        callee: {
+          type: "Identifier",
+          symbol: "abs",
+        },
+        args: [childNodeToTree(node.args[0])],
+      };
     case "FunctionCall":
       return {
         type: "FunctionCall",
@@ -482,20 +491,11 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         property: prop,
       };
     }
-    case "OrderedPairAccess": {
-      if (typeof node.index._constantValue === "boolean") {
-        throw Error(
-          "Ordered pair index is boolean, but expected rational or number"
-        );
-      }
-      const indexValue = evalMaybeRational(node.index._constantValue);
-      if (indexValue !== 1 && indexValue !== 2) {
-        throw Error("Ordered pair index is neither 1 nor 2");
-      }
+    case "NamedCoordinateAccess": {
       return {
         type: "OrderedPairAccess",
-        point: childNodeToTree(node.point),
-        index: indexValue === 1 ? "x" : "y",
+        point: childNodeToTree(node.args[0]),
+        index: node.symbol,
       };
     }
     case "BareSeq":
@@ -555,11 +555,16 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
     case "Add":
     case "Subtract":
     case "Multiply":
+    case "DotMultiply":
+    case "CrossMultiply":
     case "Divide":
     case "Exponent":
       return {
         type: "BinaryOperator",
-        name: node.type,
+        name:
+          node.type === "DotMultiply" || node.type === "CrossMultiply"
+            ? "Multiply"
+            : node.type,
         left: childNodeToTree(node.args[0]),
         right: childNodeToTree(node.args[1]),
       };
@@ -599,9 +604,37 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         right: childNodeToTree(node.args[1]),
       };
     case "Error":
-      throw Error("Parsing threw an error");
+      throw new Error("Parsing threw an error");
+    case "Equation":
+    case "Assignment":
+    case "FunctionDefinition":
+    case "Stats":
+    case "AssignmentExpression":
+    case "Ans":
+    case "DotPlot":
+    case "BoxPlot":
+    case "Histogram":
+    case "IndependentTTest":
+    case "TTest":
+    case "Regression":
+    case "RGBColor":
+    case "Image":
+    case "Ticker":
+    case "SolvedEquation":
+    case "Slider":
+    case "OptimizedRegression":
+    case "IRExpression":
+    case "Table":
+    case "TableColumn":
+      throw new Error(
+        `Programming Error: Expected parsenode ${node.type} to not be created`
+      );
     default:
-      throw Error(`Programming Error: Unexpected raw node ${node.type}`);
+      node satisfies never;
+      // node.type satisfies never
+      throw new Error(
+        `Programming Error: Unexpected raw node ${(node as any).type}`
+      );
   }
 }
 

@@ -1,6 +1,5 @@
 import Controller from "../Controller";
 import TextAST, { NodePath } from "../down/TextAST";
-import { identifierToStringAST, TextAndDiagnostics } from "../down/cstToAST";
 import * as Defaults from "../down/style/defaults";
 import { getIndentation } from "../modify";
 import { exprToTextString } from "../up/astToText";
@@ -150,13 +149,12 @@ function styleDefaults(controller: Controller, node: SyntaxNode): any {
       return Defaults.ticker;
     case "StyleMapping":
       return styleDefaults(controller, node.parent!);
-    case "MappingEntry":
+    case "MappingEntry": {
+      const id = node.getChild("Identifier")!;
       return styleDefaults(controller, node.parent!)[
-        identifierToStringAST(
-          new TextAndDiagnostics(controller.view!.state.doc, []),
-          node.getChild("Identifier")
-        ).value
+        controller.view!.state.doc.sliceString(id.from, id.to)
       ];
+    }
     default:
       throw Error(`Unexpected node type as parent of style: ${node.name}`);
   }

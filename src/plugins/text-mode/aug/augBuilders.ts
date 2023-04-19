@@ -108,3 +108,19 @@ export function range(
     end,
   };
 }
+
+export function bareSeq(...args: Aug.Latex.AnyChild[]): Aug.Latex.Seq {
+  return {
+    type: "Seq",
+    parenWrapped: false,
+    args,
+  };
+}
+
+export function wrappedSeq(...args: Aug.Latex.AnyChild[]): Aug.Latex.Seq {
+  return {
+    type: "Seq",
+    parenWrapped: true,
+    args,
+  };
+}

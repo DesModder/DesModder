@@ -82,7 +82,6 @@ export default class Controller {
     if (this.view) {
       this.view.destroy();
       this.view = null;
-      this.languageServer!.destroy();
     }
   }
 
