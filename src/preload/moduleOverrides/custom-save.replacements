@@ -39,18 +39,15 @@ $Dcgview.createElement(
         predicate: () => DesModder?.controller?.isPluginEnabled?.("custom-save")
     },
     () => $Dcgview.createElement($checkbox, {
-            
             class: $Dcgview.const("dcg-pull-left"),
             onChange: () => {
                 DesModder?.controller?.exposedPlugins?.["custom-save"]?.check();
                 this.update();
             },
             checked : () => !!DesModder?.controller?.exposedPlugins?.["custom-save"]?.isChecked(),
-
             disabled: () => !DesModder?.exposedPlugins?.['video-creator']?.frames?.[0],
-
         },
-        () => "Use VideoCreator frame as thumb"
+        () => DesModder?.controller?.format("custom-save-checkbox")
     )
 ),
 ```
@@ -69,7 +66,8 @@ $r.setProperty("thumbURL", $o)
 ```js
 let $o = DesModder?.controller?.isPluginEnabled?.("custom-save") &&
 !!DesModder?.controller?.exposedPlugins?.["custom-save"]?.isChecked()
-? DesModder?.exposedPlugins?.['video-creator']?.frames?.[0]
+? DesModder?.exposedPlugins?.['video-creator']?.frames?
+.[DesModder?.exposedPlugins?.['video-creator']?.previewIndex]
 : this.api.screenshot({
     width: 200,
     height: 200,

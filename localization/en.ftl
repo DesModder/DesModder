@@ -180,6 +180,5 @@ better-evaluation-view-opt-colorLists-desc = Show lists of colors as lists of rg
 
 ## Custom Save
 custom-save-name = Custom Save
-custom-save-desc = uuh it adds a lil checkbox to the save dialog
-custom-save-opt-hash-option-name = Custom hash option
-custom-save-opt-hash-option-desc = Option to change the hash when saving the graph
+custom-save-desc = Save graphs with custom thumbnails captured using the Video Creator  
+custom-save-checkbox = Use Video Creator frame as thumbnail 
