@@ -51,6 +51,8 @@ function addLabelledCheckboxItem(list: Element, plugin: string) {
     </li>`)
   );
   const li = list.lastElementChild!;
+  // We're panicking anyways. Don't worry about language changing.
+  // eslint-disable-next-line rulesdir/no-format-in-ts
   const humanName = format(plugin + "-name", undefined, plugin);
   li.querySelector("label")!.appendChild(document.createTextNode(humanName));
   li.querySelector("input")!.dataset.plugin = plugin;

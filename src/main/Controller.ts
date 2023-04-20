@@ -49,7 +49,7 @@ export default class Controller {
   pillboxButtons: Record<string, PillboxButton> = {
     "main-menu": {
       id: "main-menu",
-      tooltip: format("menu-desmodder-tooltip"),
+      tooltip: "menu-desmodder-tooltip",
       iconClass: "dsm-icon-desmodder",
       popup: MenuFunc,
     },
@@ -82,6 +82,12 @@ export default class Controller {
         this.closeMenu();
       }
     });
+    // Provide an access point to translations for replacements
+    // But not as a method, so it can't be used in TS
+    (this as any).format = (key: string, args?: any) => {
+      // eslint-disable-next-line rulesdir/no-format-in-ts
+      return format(key, args);
+    };
   }
 
   getDefaultConfig(id: PluginID) {
@@ -662,9 +668,5 @@ export default class Controller {
       this.isPluginEnabled("text-mode") &&
       this.exposedPlugins["text-mode"]?.inTextMode
     );
-  }
-
-  format(key: string, args?: any) {
-    return format(key, args);
   }
 }
