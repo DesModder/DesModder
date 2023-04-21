@@ -1,4 +1,5 @@
 import enFTL from "../../localization/en.ftl";
+import esFTL from "../../localization/es.ftl";
 import frFTL from "../../localization/fr.ftl";
 import { FluentBundle, FluentResource, FluentVariable } from "@fluent/bundle";
 import { Fragile } from "globals/window";
@@ -45,4 +46,5 @@ function addLanguage(locale: string, ftl: string) {
 }
 
 addLanguage("en", enFTL);
+addLanguage("es", esFTL);
 addLanguage("fr", frFTL);
