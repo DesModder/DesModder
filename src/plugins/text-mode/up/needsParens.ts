@@ -49,7 +49,6 @@ export default function needsParens(path: NodePath): boolean {
   }
 
   switch (node.type) {
-    case "Number":
     case "Identifier":
     case "String":
       return false;
@@ -62,6 +61,9 @@ export default function needsParens(path: NodePath): boolean {
     case "PiecewiseExpression":
       // They come with their own grouping ([] or {}), no need to add parens
       return false;
+    case "Number":
+      if (node.value >= 0) return false;
+    // fall through since "-1" parses like a prefix
     case "PrefixExpression":
       // Currently the only prefix expression is unary minus
       switch (parent.type) {
