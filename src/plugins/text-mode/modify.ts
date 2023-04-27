@@ -5,6 +5,7 @@ import {
   rawToDsmMetadata,
 } from "./aug/rawToAug";
 import TextAST, { NodePath, Settings, Statement } from "./down/TextAST";
+import { childExprToAug } from "./down/astToAug";
 import {
   docToString,
   exprToTextString,
@@ -46,6 +47,7 @@ export function eventSequenceChanges(
 ): ChangeSpec[] {
   let settingsChanged: boolean = false;
   const itemsChanged: Record<string, ToChange> = {};
+  const state = Calc.getState();
   for (const event of events) {
     switch (event.type) {
       case "re-randomize":
@@ -63,9 +65,14 @@ export function eventSequenceChanges(
           if (
             change.raw_slider_latex !== undefined ||
             change.zero_values !== undefined
-          )
+          ) {
+            // change.raw_slider_latex e.g. a slider was played.
+            // This is also triggered on first update of a slider
+            // Filtering out unnecessary re-writes is done later in itemChange
+            // change.zero_values is for lists
+            // I don't know why we update lists
             itemsChanged[changeID] = "latex-only";
-          else if (
+          } else if (
             // TODO: move_strategy also gets emitted when the viewport is panned
             // even if the point was not dragged. Only difference in the events
             // seem to be the coordinates to update, so check that
@@ -86,7 +93,6 @@ export function eventSequenceChanges(
     }
   }
   const changes: ChangeSpec[] = [];
-  const state = Calc.getState();
   if (settingsChanged) {
     changes.push(settingsChange(analysis, state));
   }
@@ -182,6 +188,8 @@ function itemChange(
         throw new Error(
           "Programming error: expect new expr item to always be parseable"
         );
+      if (childExprAugString(oldNode.expr) === childExprAugString(ast.expr))
+        return [];
       return [
         insertWithIndentation(
           view,
@@ -230,6 +238,10 @@ function itemChange(
     case "regression":
       return [insertWithIndentation(view, oldNode.pos!, itemToText(itemAug))];
   }
+}
+
+function childExprAugString(expr: TextAST.Expression) {
+  return JSON.stringify(childExprToAug(expr));
 }
 
 function insertWithIndentation(
