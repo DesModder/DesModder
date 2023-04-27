@@ -257,7 +257,7 @@ function columnExpressionCommonStyle(
           color:
             typeof item.color === "string"
               ? stringToASTmaybe(item.color)
-              : identifierToAST(item.color),
+              : childLatexToASTmaybe(item.color),
           hidden: booleanToAST(item.hidden, false),
         }
       : {};

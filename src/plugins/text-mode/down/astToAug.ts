@@ -360,7 +360,9 @@ function columnExpressionCommonStyle(style: Hydrated.ColumnExpressionCommon) {
     color:
       typeof style.color === "string"
         ? style.color
-        : Calc.colors[style.color.name] ?? identifierToAug(style.color),
+        : (style.color.type === "Identifier" &&
+            Calc.colors[style.color.name]) ||
+          childExprToAug(style.color),
     hidden: style.hidden,
     points:
       style.points &&

@@ -1,4 +1,4 @@
-import { Expression as Expr, Identifier } from "../TextAST";
+import { Expression as Expr } from "../TextAST";
 import { LabelOrientation } from "@desmodder/graph-state";
 
 export interface Settings {
@@ -48,7 +48,7 @@ export interface NonFolderBase extends ItemBase {
 }
 
 export interface ColumnExpressionCommon {
-  color: Identifier | string;
+  color: Expr | string;
   hidden: boolean;
   points?: {
     opacity: Expr;

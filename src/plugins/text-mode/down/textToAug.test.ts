@@ -389,6 +389,10 @@ describe("Statement metadata", () => {
       ...exprDefaults,
       color: id("C"),
     });
+    testStmt("RGB color", `1 @{color: rgb(a,b,c)}`, {
+      ...exprDefaults,
+      color: functionCall(id("rgb"), [id("a"), id("b"), id("c")]),
+    });
     testStmt("Identifier color from color set", `1 @{color:BLUE}`, {
       ...exprDefaults,
       color: "#2d70b3",
@@ -1004,16 +1008,6 @@ describe("Diagnostics", () => {
       ]
     );
     // TODO: variable scoping, so `true` resolves to boolean
-    testDiagnostics(
-      "Expected color, got other",
-      `y=1 @{color: "abc"};y=2 @{color: BLUE};y=3 @{color: 5};y=4 @{color: true}`,
-      [
-        error(
-          "Expected expression.color to evaluate to string or identifier, but got number",
-          pos(52, 53)
-        ),
-      ]
-    );
     testDiagnostics(
       "Expected string,boolean,number got other",
       `settings @{randomSeed: 1, squareAxes: "abc", xAxisStep: true}`,

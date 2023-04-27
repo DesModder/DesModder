@@ -286,9 +286,6 @@ function columnExpressionCommon(
   lines: boolean
 ) {
   const color = item.colorLatex ? parseLatex(item.colorLatex) : item.color;
-  if (typeof color !== "string" && color.type !== "Identifier") {
-    throw Error("Expected colorLatex to be an identifier");
-  }
   return {
     color,
     hidden: item.hidden ?? false,

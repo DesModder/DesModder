@@ -248,7 +248,7 @@ function columnExpressionCommon(item: Aug.TableColumnAug | Aug.ExpressionAug) {
   } else {
     // default to red if latex
     res.color = "#c74440";
-    res.colorLatex = identifierToString(item.color);
+    res.colorLatex = latexTreeToString(item.color);
   }
   if (item.points) {
     res.points = true;

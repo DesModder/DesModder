@@ -3,7 +3,7 @@
  * - boolean: evaluated value must be boolean
  * - string: evaluated value must be string
  * - expr: must be some expression
- * - color: must be identifier or string
+ * - color: must be string or some expression
  * - enum: constrained to that set of strings
  * - Schema: nest!
  */

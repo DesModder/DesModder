@@ -108,7 +108,7 @@ export interface BaseNonFolderAug extends BaseItemAug {
 
 export interface ExpressionAug extends BaseNonFolderAug {
   type: "expression";
-  color: string | Latex.Identifier;
+  color: string | Latex.AnyChild;
   latex?: Latex.AnyRootOrChild;
   // label=undefined corresponds to label: false in Raw
   label?: LabelStyle;
@@ -154,7 +154,7 @@ export interface TableColumnAug {
   type: "column";
   id: string;
   values: Latex.AnyChild[];
-  color: string | Latex.Identifier;
+  color: string | Latex.AnyChild;
   latex: Latex.AnyChild;
   hidden: boolean;
   points?: PointStyle;
