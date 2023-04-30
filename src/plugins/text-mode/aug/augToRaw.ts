@@ -207,15 +207,24 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
       return {
         ...base,
         type: "table",
-        columns: item.columns.map((column) => ({
-          values:
-            // Desmos expects at least one row
-            column.values.length > 0
-              ? column.values.map(columnEntryToString)
-              : [""],
-          id: column.id,
-          ...columnExpressionCommon(column),
-        })),
+        columns: item.columns
+          .map((column) => ({
+            values:
+              // Desmos expects at least one row
+              column.values.length > 0
+                ? column.values.map(columnEntryToString)
+                : [""],
+            id: column.id,
+            ...columnExpressionCommon(column),
+          }))
+          // Desmos expects at least two columns
+          .concat(
+            Array.from({ length: 2 - item.columns.length }).map(() => ({
+              id: "dsm-blank-" + Math.random().toString().slice(2, 16),
+              values: [""],
+              color: "#2D70B3",
+            }))
+          ),
       };
     case "text":
       return {
