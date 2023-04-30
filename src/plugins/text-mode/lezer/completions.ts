@@ -48,7 +48,7 @@ const FOLDER_COMPLETIONS: Completion[] = [
     apply: macroExpandWithSelection(
       "table {\n  ",
       "x1",
-      " = [ ]\n  y1 = [ ]\n}"
+      " = []\n  \n  y1 = []\n}"
     ),
   },
   {
@@ -65,7 +65,7 @@ const FOLDER_COMPLETIONS: Completion[] = [
   {
     type: "keyword",
     label: "ticker",
-    apply: macroExpandWithSelection("ticker ", "action", `" @{ minStep: 0 }`),
+    apply: macroExpandWithSelection("ticker ", "a -> a+1", ` @{ minStep: 0 }`),
   },
 ];
 
