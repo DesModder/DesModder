@@ -16,7 +16,12 @@ export interface Schema {
     | "expr"
     | "color"
     | { type: "enum"; enum: string[] }
-    | { type: "schema"; schema: Schema; fillDefaults: boolean };
+    | {
+        type: "schema";
+        schema: Schema;
+        fillDefaults: boolean;
+        orBool: boolean;
+      };
 }
 
 export const settings: Schema = {
@@ -27,7 +32,7 @@ export const settings: Schema = {
       xmax: "number",
       ymax: "number",
     },
-    true
+    { fillDefaults: true }
   ),
   squareAxes: "boolean",
   // empty randomSeed will be filled in later in the process
@@ -76,17 +81,23 @@ const columnExpressionCommon: Schema = {
   // empty color will be filled in later in the process
   color: "color",
   hidden: "boolean",
-  points: schemaL({
-    opacity: "expr",
-    size: "expr",
-    style: enumL(["POINT", "OPEN", "CROSS"]),
-    drag: enumL(["NONE", "X", "Y", "XY", "AUTO"]),
-  }),
-  lines: schemaL({
-    opacity: "expr",
-    width: "expr",
-    style: enumL(["SOLID", "DASHED", "DOTTED"]),
-  }),
+  points: schemaL(
+    {
+      opacity: "expr",
+      size: "expr",
+      style: enumL(["POINT", "OPEN", "CROSS"]),
+      drag: enumL(["NONE", "X", "Y", "XY", "AUTO"]),
+    },
+    { orBool: true }
+  ),
+  lines: schemaL(
+    {
+      opacity: "expr",
+      width: "expr",
+      style: enumL(["SOLID", "DASHED", "DOTTED"]),
+    },
+    { orBool: true }
+  ),
 };
 
 const clickable: Schema = {
@@ -197,6 +208,14 @@ function enumL(L: string[]) {
   return { type: "enum" as const, enum: L };
 }
 
-function schemaL(s: Schema, fillDefaults = false) {
-  return { type: "schema" as const, schema: s, fillDefaults };
+function schemaL(
+  s: Schema,
+  t: { fillDefaults?: boolean; orBool?: boolean } = {}
+) {
+  return {
+    type: "schema" as const,
+    schema: s,
+    fillDefaults: t.fillDefaults ?? false,
+    orBool: t.orBool ?? false,
+  };
 }

@@ -248,8 +248,10 @@ export interface Comparator {
   right: AnyChild;
 }
 
-export function isConstant(e: AnyRootOrChild, v: number) {
+export function isConstant(e: AnyRootOrChild | undefined, v: number) {
   return (
-    e.type === "Constant" && (e.value === v || (isNaN(e.value) && isNaN(v)))
+    e &&
+    e.type === "Constant" &&
+    (e.value === v || (isNaN(e.value) && isNaN(v)))
   );
 }

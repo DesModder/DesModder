@@ -119,7 +119,7 @@ export interface ExpressionAug extends BaseNonFolderAug {
   points?: PointStyle;
   lines?: LineStyle;
   // fillOpacity=0 corresponds to fill: false in Raw
-  fillOpacity: Latex.AnyChild;
+  fillOpacity?: Latex.AnyChild;
   regression?: RegressionData;
   displayEvaluationAsFraction: boolean;
   slider: SliderData;
@@ -222,17 +222,17 @@ export type LabelOrientation =
 
 export interface PointStyle {
   // pointOpacity=0 or pointSize=0 corresponds to points: false in Raw
-  opacity: Latex.AnyChild;
-  size: Latex.AnyChild;
-  style: "POINT" | "OPEN" | "CROSS";
-  dragMode: "NONE" | "X" | "Y" | "XY" | "AUTO";
+  opacity?: Latex.AnyChild;
+  size?: Latex.AnyChild;
+  style?: "POINT" | "OPEN" | "CROSS";
+  dragMode?: "NONE" | "X" | "Y" | "XY" | "AUTO";
 }
 
 export interface LineStyle {
   // lineOpacity=0 or lineWidth=0 corresponds to lines: false in Raw
-  opacity: Latex.AnyChild;
-  width: Latex.AnyChild;
-  style: "SOLID" | "DASHED" | "DOTTED";
+  opacity?: Latex.AnyChild;
+  width?: Latex.AnyChild;
+  style?: "SOLID" | "DASHED" | "DOTTED";
 }
 
 export interface SliderData {

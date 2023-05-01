@@ -210,7 +210,7 @@ function regressionToAug(
     errorHidden: style.errorHidden,
     hidden: false,
     glesmos: false,
-    fillOpacity: constant(0),
+    fillOpacity: undefined,
     displayEvaluationAsFraction: false,
     slider: {},
     vizProps: {},
@@ -261,7 +261,7 @@ function expressionToAug(
     // hidden from common
     errorHidden: style.errorHidden,
     glesmos: style.glesmos,
-    fillOpacity: childExprToAug(style.fill),
+    fillOpacity: style.fill ? childExprToAug(style.fill) : undefined,
     displayEvaluationAsFraction: style.displayEvaluationAsFraction,
     slider: style.slider
       ? {
@@ -365,25 +365,35 @@ function columnExpressionCommonStyle(style: Hydrated.ColumnExpressionCommon) {
           childExprToAug(style.color),
     hidden: style.hidden,
     points:
-      style.points &&
-      !exprEvalSame(style.points.opacity, 0) &&
-      !exprEvalSame(style.points.size, 0)
-        ? {
-            opacity: childExprToAug(style.points.opacity),
-            size: childExprToAug(style.points.size),
-            style: style.points.style,
-            dragMode: style.points.drag,
-          }
+      style.points === true
+        ? {}
+        : style.points === false
+        ? { size: constant(0) }
+        : style.points
+        ? exprEvalSame(style.points.opacity, 0) ||
+          exprEvalSame(style.points.size, 0)
+          ? { size: constant(0) }
+          : {
+              opacity: childExprToAug(style.points.opacity),
+              size: childExprToAug(style.points.size),
+              style: style.points.style,
+              dragMode: style.points.drag,
+            }
         : undefined,
     lines:
-      style.lines &&
-      !exprEvalSame(style.lines.opacity, 0) &&
-      !exprEvalSame(style.lines.width, 0)
-        ? {
-            opacity: childExprToAug(style.lines.opacity),
-            width: childExprToAug(style.lines.width),
-            style: style.lines.style,
-          }
+      style.lines === true
+        ? {}
+        : style.lines === false
+        ? { width: constant(0) }
+        : style.lines
+        ? exprEvalSame(style.lines.opacity, 0) ||
+          exprEvalSame(style.lines.width, 0)
+          ? { width: constant(0) }
+          : {
+              opacity: childExprToAug(style.lines.opacity),
+              width: childExprToAug(style.lines.width),
+              style: style.lines.style,
+            }
         : undefined,
   };
   return res;

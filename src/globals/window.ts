@@ -74,14 +74,6 @@ export const Fragile = new Proxy(
   };
   jQuery: any;
   getQueryParams: () => Record<string, string | true>;
-  getReconciledExpressionProps: (
-    type: string,
-    model?: ItemModel
-  ) => {
-    points: boolean;
-    lines: boolean;
-    fill: boolean;
-  };
   List: {
     removeItemById: (listModel: any, id: string) => void;
     moveItemsTo: (listModel: any, from: number, to: number, n: number) => void;

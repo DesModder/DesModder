@@ -3,7 +3,7 @@ import * as Graph from "@desmodder/graph-state";
 import Metadata from "main/metadata/interface";
 import migrateToLatest from "main/metadata/migrate";
 import { ChildExprNode, evalMaybeRational, AnyNode } from "parsing/parsenode";
-import { getReconciledExpressionProps, parseDesmosLatex } from "utils/depUtils";
+import { parseDesmosLatex } from "utils/depUtils";
 
 export default function rawToAug(raw: Graph.GraphState): Aug.State {
   const dsmMetadata = rawToDsmMetadata(raw);
@@ -112,15 +112,10 @@ function tryRawNonFolderToAug(
   };
   switch (item.type) {
     case "expression": {
-      // TODO: make this pure instead of relying on Calc.controller.getItemModel
-      // to inflate defaults. Unfortunately
-      //   desmosRequire("core/graphing-calc/json/expression").inflateDefaults()
-      // doesn't take into account the worker analysis points vs lines etc.
-      const { points, lines, fill } = getReconciledExpressionProps(item.id);
       return {
         ...base,
         type: "expression",
-        ...columnExpressionCommon(item, points, lines),
+        ...columnExpressionCommon(item),
         ...(item.latex ? { latex: parseRootLatex(item.latex) } : {}),
         ...(item.labelSize !== "0" && item.label
           ? {
@@ -135,9 +130,12 @@ function tryRawNonFolderToAug(
               },
             }
           : {}),
-        fillOpacity: fill
-          ? parseLatex(item.fillOpacity ?? "0.4")
-          : parseLatex("0"),
+        fillOpacity:
+          item.fill === false
+            ? parseLatex("0")
+            : parseMaybeLatex(
+                item.fillOpacity ?? (item.fill ? "0.4" : undefined)
+              ),
         regression: item.residualVariable
           ? {
               residualVariable: parseLatex(
@@ -224,11 +222,7 @@ function tryRawNonFolderToAug(
             values: column.values
               .slice(0, longestColumnLength + 1)
               .map(parseLatex),
-            ...columnExpressionCommon(
-              column,
-              column.points !== false,
-              column.lines === true
-            ),
+            ...columnExpressionCommon(column),
             latex: parseLatex(column.latex!),
           })),
       };
@@ -281,34 +275,44 @@ function parseMapDomain(
 }
 
 function columnExpressionCommon(
-  item: Graph.TableColumn | Graph.ExpressionState,
-  points: boolean,
-  lines: boolean
+  item: Graph.TableColumn | Graph.ExpressionState
 ) {
   const color = item.colorLatex ? parseLatex(item.colorLatex) : item.color;
   return {
     color,
     hidden: item.hidden ?? false,
-    // TODO: don't include points property by default for curves and polygons
-    // Rely on Desmos's automatic detection?
     points:
-      points && item.pointOpacity !== "0" && item.pointSize !== "0"
+      item.points === false ||
+      item.pointOpacity === "0" ||
+      item.pointSize === "0"
+        ? { size: parseLatex("0") }
+        : item.points === true ||
+          item.pointOpacity !== undefined ||
+          item.pointSize !== undefined
         ? {
-            opacity: parseLatex(item.pointOpacity ?? "0.9"),
-            size: parseLatex(item.pointSize ?? "9"),
-            style: item.pointStyle ?? "POINT",
-            dragMode: item.dragMode ?? "AUTO",
+            opacity: parseMaybeLatex(item.pointOpacity),
+            size: parseMaybeLatex(item.pointSize),
+            style: item.pointStyle,
+            dragMode: item.dragMode,
           }
         : undefined,
     lines:
-      lines && item.lineOpacity !== "0" && item.lineWidth !== "0"
+      item.lines === false || item.lineOpacity === "0" || item.lineWidth === "0"
+        ? { width: parseLatex("0") }
+        : item.lines === true ||
+          item.lineOpacity !== undefined ||
+          item.lineWidth !== undefined
         ? {
-            opacity: parseLatex(item.lineOpacity ?? "0.9"),
-            width: parseLatex(item.lineWidth ?? "2.5"),
-            style: item.lineStyle ?? "SOLID",
+            opacity: parseMaybeLatex(item.lineOpacity),
+            width: parseMaybeLatex(item.lineWidth),
+            style: item.lineStyle,
           }
         : undefined,
   };
+}
+
+function parseMaybeLatex(str: string | undefined) {
+  return str !== undefined ? parseLatex(str) : undefined;
 }
 
 function parseLatex(str: string): Aug.Latex.AnyChild {

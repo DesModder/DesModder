@@ -1,3 +1,4 @@
+import { isConstant } from "./AugLatex";
 import Aug from "./AugState";
 import * as Graph from "@desmodder/graph-state";
 import Metadata from "main/metadata/interface";
@@ -112,7 +113,7 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
     case "expression": {
       const shouldFill = item.fillOpacity
         ? !Aug.Latex.isConstant(item.fillOpacity, 0)
-        : false;
+        : undefined;
       return {
         ...base,
         type: "expression",
@@ -260,16 +261,20 @@ function columnExpressionCommon(item: Aug.TableColumnAug | Aug.ExpressionAug) {
     res.colorLatex = latexTreeToString(item.color);
   }
   if (item.points) {
-    res.points = true;
-    res.pointOpacity = latexTreeToString(item.points.opacity);
-    res.pointSize = latexTreeToString(item.points.size);
+    res.points =
+      !isConstant(item.points.opacity, 0) && !isConstant(item.points.size, 0);
+    if (item.points.opacity)
+      res.pointOpacity = latexTreeToString(item.points.opacity);
+    if (item.points.size) res.pointSize = latexTreeToString(item.points.size);
     res.pointStyle = item.points.style;
     res.dragMode = item.points.dragMode;
   }
   if (item.lines) {
-    res.lines = true;
-    res.lineOpacity = latexTreeToString(item.lines.opacity);
-    res.lineWidth = latexTreeToString(item.lines.width);
+    res.lines =
+      !isConstant(item.lines.opacity, 0) && !isConstant(item.lines.width, 0);
+    if (item.lines.opacity)
+      res.lineOpacity = latexTreeToString(item.lines.opacity);
+    if (item.lines.width) res.lineWidth = latexTreeToString(item.lines.width);
     res.lineStyle = item.lines.style;
   }
   return res;

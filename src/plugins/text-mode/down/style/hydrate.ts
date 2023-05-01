@@ -66,9 +66,7 @@ export function hydrate<T>(
         } else {
           res[key] = undefined;
         }
-      } else if (givenValue.type !== "StyleMapping") {
-        pushError(`Expected ${errPath} to be style mapping, but got primitive`);
-      } else {
+      } else if (givenValue.type === "StyleMapping") {
         const style = hydrate(
           ds,
           givenValue,
@@ -79,6 +77,14 @@ export function hydrate<T>(
         );
         if (style === null) hasNull = true;
         res[key] = style;
+      } else {
+        const evaluated = evalExpr(ds.diagnostics, givenValue);
+        if (schemaType.orBool && typeof evaluated === "boolean")
+          res[key] = evaluated;
+        else
+          pushError(
+            `Expected ${errPath} to be style mapping, but got primitive`
+          );
       }
     } else if (givenValue === undefined) {
       res[key] = defaults[key] as any;

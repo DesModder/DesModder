@@ -39,7 +39,7 @@ const exprDefaults = {
   glesmos: false,
   pinned: false,
   secret: false,
-  fillOpacity: number(0),
+  fillOpacity: undefined,
   displayEvaluationAsFraction: false,
   slider: {},
   vizProps: {},
@@ -509,7 +509,10 @@ describe("Statement metadata", () => {
     );
   });
   describe("Fill", () => {
-    testStmt("Zero fill", `1 @{fill: 0}`, exprDefaults);
+    testStmt("Zero fill", `1 @{fill: 0}`, {
+      ...exprDefaults,
+      fillOpacity: number(0),
+    });
     testStmt("Nonzero fill", `1 @{fill: 0.5}`, {
       ...exprDefaults,
       fillOpacity: number(0.5),

@@ -50,17 +50,21 @@ export interface NonFolderBase extends ItemBase {
 export interface ColumnExpressionCommon {
   color: Expr | string;
   hidden: boolean;
-  points?: {
-    opacity: Expr;
-    size: Expr;
-    style: "POINT" | "OPEN" | "CROSS";
-    drag: "NONE" | "X" | "Y" | "XY" | "AUTO";
-  };
-  lines?: {
-    opacity: Expr;
-    width: Expr;
-    style: "SOLID" | "DASHED" | "DOTTED";
-  };
+  points?:
+    | {
+        opacity: Expr;
+        size: Expr;
+        style: "POINT" | "OPEN" | "CROSS";
+        drag: "NONE" | "X" | "Y" | "XY" | "AUTO";
+      }
+    | boolean;
+  lines?:
+    | {
+        opacity: Expr;
+        width: Expr;
+        style: "SOLID" | "DASHED" | "DOTTED";
+      }
+    | boolean;
 }
 
 export interface Clickable {
@@ -84,7 +88,7 @@ export interface Expression
   };
   errorHidden: boolean;
   glesmos: boolean;
-  fill: Expr;
+  fill?: Expr;
   displayEvaluationAsFraction: boolean;
   slider?: {
     playing: boolean;
