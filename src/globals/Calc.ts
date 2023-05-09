@@ -173,6 +173,7 @@ interface CalcPrivate {
     isGeometry: () => boolean;
     isGeoUIActive: () => boolean;
     isNarrowGeometryHeader: () => boolean;
+    expressionSearchOpen: boolean;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;
