@@ -23,11 +23,7 @@ export interface ExprStatement extends Positioned, Styled {
    * Data for regression. Not in style mapping because identifiers get
    * evaluated in style mapping. Also mapping keys are strings, not identifiers
    */
-  regression?: RegressionData;
-}
-
-export interface RegressionData {
-  parameters: RegressionParameters;
+  parameters?: RegressionParameters;
   residualVariable?: Identifier;
 }
 

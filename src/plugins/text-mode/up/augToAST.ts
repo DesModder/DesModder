@@ -89,21 +89,19 @@ export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
             errorHidden: booleanToAST(item.errorHidden, false),
             logMode: booleanToAST(item.regression?.isLogMode, false),
           }),
-          regression: {
-            parameters: {
-              type: "RegressionParameters",
-              entries: [...item.regression.regressionParameters.entries()].map(
-                ([id, value]) => ({
-                  type: "RegressionEntry",
-                  variable: identifierToAST(id),
-                  value: { type: "Number", value },
-                })
-              ),
-            },
-            residualVariable:
-              item.regression.residualVariable &&
-              identifierToAST(item.regression.residualVariable),
+          parameters: {
+            type: "RegressionParameters",
+            entries: [...item.regression.regressionParameters.entries()].map(
+              ([id, value]) => ({
+                type: "RegressionEntry",
+                variable: identifierToAST(id),
+                value: { type: "Number", value },
+              })
+            ),
           },
+          residualVariable:
+            item.regression.residualVariable &&
+            identifierToAST(item.regression.residualVariable),
         };
       }
       return {

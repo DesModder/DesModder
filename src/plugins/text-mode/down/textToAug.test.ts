@@ -13,18 +13,56 @@ import {
   updateRule,
   wrappedSeq,
 } from "../aug/augBuilders";
+import * as TextAST from "./TextAST";
 import astToAug from "./astToAug";
 import { error, warning } from "./diagnostics";
 import { parse } from "./textToAST";
 import { Diagnostic } from "@codemirror/lint";
-import { test, expect, describe } from "@jest/globals";
+import { test, expect as _expect, describe } from "@jest/globals";
 
 jest.mock("utils/depUtils");
 jest.mock("globals/window");
 
 function textToAug(text: string) {
   const [diagnostics, program] = parse(text);
+  testPosNesting(program);
   return astToAug(diagnostics, program);
+}
+
+_expect.extend({
+  ok(received, message) {
+    return {
+      pass: !!received,
+      message: () => message,
+    };
+  },
+});
+
+declare module "expect" {
+  interface Matchers<R> {
+    ok: (message: string) => R;
+  }
+}
+
+const expect = _expect as typeof _expect & (() => { ok: (s: string) => void });
+
+function testPosNesting(node: TextAST.Node, okNoPos = false) {
+  if (node?.type === undefined) return;
+  const childPos = Object.values(node)
+    .map((x) => x?.pos as TextAST.Pos)
+    .filter((x) => x);
+  if (!okNoPos) expect(node.pos).ok(`Type ${node.type} should have a pos`);
+  if (node.pos) {
+    expect(childPos.every((x) => x.from >= node.pos!.from)).ok(
+      `Type ${node.type} .pos.from should not exceed child.pos.from`
+    );
+    expect(childPos.every((x) => x.to <= node.pos!.to)).ok(
+      `Type ${node.type} .pos.to should not be less than child.pos.to`
+    );
+  }
+  Object.values(node)
+    .flat(1)
+    .forEach((x) => testPosNesting(x, node.type === "PiecewiseBranch"));
 }
 
 const colors = ["#c74440", "#2d70b3", "#388c46", "#6042a6", "#000000"];

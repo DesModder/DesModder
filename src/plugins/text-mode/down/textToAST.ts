@@ -177,6 +177,10 @@ export function parse(input: string): [Diagnostic[], TextAST.Program] {
   const program: TextAST.Program = {
     type: "Program",
     children,
+    pos: posMany(children.map((x) => x.pos).filter((p) => p) as Pos[], {
+      from: 0,
+      to: 0,
+    }),
   };
 
   return [ps.diagnostics, program];
@@ -614,7 +618,11 @@ const consequentParselets: Record<Punct, ConsequentParselet | undefined> = {
   }),
   "#{": consequentParselet(Power.meta, (ps, left, token): Node => {
     if (!isStatement(left)) left = finalizeStatement(ps, left);
-    if (left.type !== "ExprStatement" || !left.regression?.parameters)
+    if (
+      left.type !== "ExprStatement" ||
+      left.expr.type !== "BinaryExpression" ||
+      left.expr.op !== "~"
+    )
       throw ps.pushFatalError(
         "Regression Parameters '#{' must be preceded by a regression of the form `LHS ~ RHS`",
         pos(token)
@@ -645,10 +653,7 @@ const consequentParselets: Record<Punct, ConsequentParselet | undefined> = {
     };
     return {
       ...left,
-      regression: {
-        ...left.regression,
-        parameters,
-      },
+      parameters,
       pos: pos(left, parameters),
     };
   }),
@@ -791,21 +796,17 @@ function exprToStatement(ps: ParseState, expr: Expression): TextAST.Statement {
     expr = expr.right;
     residualVariable = left;
   }
+  const isRegression = expr.type === "BinaryExpression" && expr.op === "~";
   return {
     type: "ExprStatement",
     expr,
     style: null,
-    pos: pos(expr),
-    regression:
-      expr.type === "BinaryExpression" && expr.op === "~"
-        ? {
-            residualVariable,
-            parameters: {
-              type: "RegressionParameters",
-              entries: [],
-            },
-          }
-        : undefined,
+    pos:
+      isRegression && residualVariable
+        ? pos(residualVariable, expr)
+        : pos(expr),
+    parameters: undefined,
+    residualVariable: isRegression ? residualVariable : undefined,
   };
 }
 
@@ -936,4 +937,11 @@ function pos(
       ? end.offset + end.text.length
       : undefined);
   return from !== undefined && to !== undefined ? { from, to } : undefined;
+}
+
+function posMany(arr: Pos[], initial: Pos) {
+  return arr.reduce(
+    (a, b) => ({ from: Math.min(a.from, b.from), to: Math.max(a.to, b.to) }),
+    initial
+  );
 }

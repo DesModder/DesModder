@@ -165,7 +165,6 @@ function regressionToAug(
   ds: DownState,
   styleMapping: TextAST.StyleMapping | null,
   stmt: TextAST.ExprStatement,
-  regressionData: TextAST.RegressionData,
   exprAST: TextAST.BinaryExpression
 ): Aug.ExpressionAug | null {
   const expr: Aug.Latex.Regression = {
@@ -181,7 +180,7 @@ function regressionToAug(
     "regression"
   );
   if (style === null) return null;
-  const params = regressionData.parameters.entries.map(
+  const params = (stmt.parameters?.entries ?? []).map(
     ({ variable, value }): [Identifier, number] | null => {
       const evaluated = evalExpr(ds.diagnostics, value);
       if (typeof evaluated !== "number") {
@@ -202,8 +201,7 @@ function regressionToAug(
     regression: {
       isLogMode: style.logMode,
       residualVariable:
-        regressionData.residualVariable &&
-        identifierToAug(regressionData.residualVariable),
+        stmt.residualVariable && identifierToAug(stmt.residualVariable),
       regressionParameters: new Map(params),
     },
     color: "",
@@ -222,12 +220,8 @@ function expressionToAug(
   styleMapping: TextAST.StyleMapping | null,
   stmt: TextAST.ExprStatement
 ): Aug.ExpressionAug | null {
-  if (
-    stmt.expr.type === "BinaryExpression" &&
-    stmt.expr.op === "~" &&
-    stmt.regression !== undefined
-  ) {
-    return regressionToAug(ds, styleMapping, stmt, stmt.regression, stmt.expr);
+  if (stmt.expr.type === "BinaryExpression" && stmt.expr.op === "~") {
+    return regressionToAug(ds, styleMapping, stmt, stmt.expr);
   }
   const expr = childExprToAug(stmt.expr);
   // is the expr polar for the purposes of domain?
