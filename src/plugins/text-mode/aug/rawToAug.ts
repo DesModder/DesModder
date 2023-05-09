@@ -134,7 +134,9 @@ function tryRawNonFolderToAug(
           item.fill === false
             ? parseLatex("0")
             : parseMaybeLatex(
-                item.fillOpacity ?? (item.fill ? "0.4" : undefined)
+                item.fillOpacity === "0"
+                  ? "2^{-99}"
+                  : item.fillOpacity ?? (item.fill ? "0.4" : undefined)
               ),
         regression: item.residualVariable
           ? {
