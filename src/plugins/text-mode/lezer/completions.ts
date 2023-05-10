@@ -180,7 +180,15 @@ function styleCompletionsFromDefaults(defaults: any): Completion[] {
                 ","
               )
             : macroExpandWithSelection(key + ": @{ ", "", " },")
-          : macroExpandWithSelection(key + ": ", JSON.stringify(value), ","),
+          : typeof value === "string"
+          ? macroExpandWithSelection(
+              key + ': "',
+              // string stringify will always start and end with `"`
+              JSON.stringify(value).slice(1, -1),
+              '",'
+            )
+          : // I don't know if this last case is reachable
+            macroExpandWithSelection(key + ": ", JSON.stringify(value), ","),
     });
   }
   return completions;
