@@ -157,6 +157,12 @@ function itemChange(
   if (itemAug.error) throw new Error("Expected valid itemAug in modify");
   switch (toChange) {
     case "table-columns": {
+      // Table column updates from dragging a point
+      // Also includes updates from just calculating the values
+      // Overwrite if and only if the editor is unfocused:
+      //   - point dragging can only occur when editor is unfocused
+      //   - overwriting is not harmful when the editor is unfocused
+      if (view.hasFocus) return [];
       if (oldNode.type !== "Table" || itemAug.type !== "table")
         throw new Error(
           "Programming Error: expected table on a table-columns change"
@@ -199,6 +205,12 @@ function itemChange(
       ];
     }
     case "image-pos": {
+      // Image pos updates from dragging a handle
+      // Also includes updates from just calculating the values
+      // Overwrite if and only if the editor is unfocused:
+      //   - image dragging/resizing can only occur when editor is unfocused
+      //   - overwriting is not harmful when the editor is unfocused
+      if (view.hasFocus) return [];
       if (oldNode.type !== "Image" || itemAug.type !== "image")
         throw new Error(
           "Programming Error: expected image on an image-pos change"
@@ -235,8 +247,22 @@ function itemChange(
           }
         });
     }
-    case "regression":
-      return [insertWithIndentation(view, oldNode.pos!, itemToText(itemAug))];
+    case "regression": {
+      if (oldNode.type !== "ExprStatement" || itemAug.type !== "expression")
+        throw new Error(
+          "Programming Error: expected expression on a regression change"
+        );
+      const text = itemToText(itemAug);
+      // we trust there's only one "#{" since this is our itemToText
+      const params = "#{" + text.split("#{")[1];
+      // only modify the parameters
+      if (!oldNode.parameters) {
+        const to = oldNode.pos!.to;
+        return [insertWithIndentation(view, { from: to, to }, " " + params)];
+      } else {
+        return [insertWithIndentation(view, oldNode.parameters.pos!, params)];
+      }
+    }
   }
 }
 
@@ -248,7 +274,7 @@ function insertWithIndentation(
   view: EditorView,
   pos: TextAST.Pos,
   insert: string
-) {
+): ChangeSpec {
   const indentation = getIndentation(view, pos.from);
   return {
     from: pos.from,
