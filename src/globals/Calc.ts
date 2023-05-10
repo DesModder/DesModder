@@ -27,9 +27,14 @@ export type DispatchedEvent =
         | "action-single-step"
         | "toggle-item-hidden"
         | "duplicate-folder"
-        | "duplicate-expression"
-        | "set-selected-id";
+        | "duplicate-expression";
       id: string;
+    }
+  | {
+      type: "set-selected-id";
+      id: string;
+      // Added to avoid feedback loop. Desmos will pass this through ignored.
+      dsmFromTextModeSelection?: boolean;
     }
   | {
       type: "set-focus-location";

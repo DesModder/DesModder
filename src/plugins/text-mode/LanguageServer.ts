@@ -61,6 +61,17 @@ export default class LanguageServer {
    * slider value change, or viewport move) which affects the text
    */
   onCalcEvent(event: RelevantEvent) {
+    if (event.type === "set-selected-id") {
+      if (event.dsmFromTextModeSelection) return;
+      const stmt = this.analysis.mapIDstmt[event.id];
+      if (!stmt?.pos) return;
+      const transaction = this.view.state.update({
+        scrollIntoView: true,
+        selection: { anchor: stmt.pos.from },
+      });
+      this.view.dispatch(transaction);
+      return;
+    }
     const changes = eventSequenceChanges(this.view, [event], this.analysis);
     if (changes.length === 0) return;
     const transaction = this.view.state.update({

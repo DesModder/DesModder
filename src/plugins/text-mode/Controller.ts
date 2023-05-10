@@ -115,10 +115,11 @@ function selectFromText(view: EditorView, ls: LanguageServer) {
   const currSelected = Calc.selectedExpressionId as string | undefined;
   const newSelected = getSelectedItem(view, ls);
   if (newSelected !== currSelected) {
-    if (newSelected !== undefined) {
+    if (view.hasFocus && newSelected !== undefined) {
       Calc.controller.dispatch({
         type: "set-selected-id",
         id: newSelected,
+        dsmFromTextModeSelection: true,
       });
     } else {
       Calc.controller.dispatch({

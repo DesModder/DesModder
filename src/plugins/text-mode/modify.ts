@@ -32,6 +32,8 @@ export const relevantEventTypes = [
   "resize-exp-list", // resize-exp-list can update viewport size
   // sliders, draggable points, action updates, etc.
   "on-evaluator-changes",
+  // only should affect selection
+  "set-selected-id",
 ] as const;
 
 export type RelevantEvent = DispatchedEvent & {
