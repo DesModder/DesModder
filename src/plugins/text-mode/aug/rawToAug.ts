@@ -290,7 +290,8 @@ function columnExpressionCommon(
         ? { size: parseLatex("0") }
         : item.points === true ||
           item.pointOpacity !== undefined ||
-          item.pointSize !== undefined
+          item.pointSize !== undefined ||
+          item.dragMode !== undefined
         ? {
             opacity: parseMaybeLatex(item.pointOpacity),
             size: parseMaybeLatex(item.pointSize),
