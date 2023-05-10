@@ -123,7 +123,7 @@ function settingsChange(
     : {
         from: 0,
         to: 0,
-        insert: newSettingsText + "\n",
+        insert: newSettingsText + "\n\n",
       };
 }
 
