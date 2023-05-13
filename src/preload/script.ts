@@ -33,9 +33,10 @@ function runDesModder() {
 
 function getCalcDesktopURL() {
   return (
-    document.querySelector(
-      "script[src*='calculator_desktop']"
-    ) as HTMLScriptElement
+    (document.querySelector("script[src*='calculator_desktop']") ??
+      document.querySelector(
+        "script[src*='calculator_geometry']"
+      )) as HTMLScriptElement
   )?.src;
 }
 
