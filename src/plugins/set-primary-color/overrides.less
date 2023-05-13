@@ -17,6 +17,11 @@
   .trip-block.trip-w .trip-arrow {
     border-left-color: var(--dsm-primary-color);
   }
+  .dcg-grapher-focused {
+    -webkit-box-shadow: inset 0px 0px 0px 3px
+      rgba(var(--dsm-primary-color-rgb), 0.6);
+    box-shadow: inset 0 0 0 3px var(--dsm-primary-color) 99;
+  }
   .dcg-expressions-branding a.dcg-hovered i,
   .dcg-graphpaper-branding a.dcg-hovered i,
   .dcg-expressions-branding .dcg-edit-branding.dcg-hovered i,
@@ -198,6 +203,12 @@
     i.dcg-icon-reflection:after {
     border-right: 2px dashed rgba(var(--dsm-primary-color-rgb), 0.5);
   }
+  .dcg-geo-basic-tools
+    .dcg-icon-row
+    .dcg-icon-container:focus:not(.dcg-depressed) {
+    -webkit-box-shadow: 0 0 0 2px rgba(var(--dsm-primary-color-rgb), 0.5) !important;
+    box-shadow: 0 0 0 2px var(--dsm-primary-color) 80 !important;
+  }
   .dcg-geo-basic-tools .dcg-icon-row .dcg-icon-container.dcg-selected {
     border: 1px solid var(--dsm-primary-color);
     -webkit-box-shadow: 0 0 0 1px var(--dsm-primary-color);
@@ -252,13 +263,16 @@
     a {
     color: var(--dsm-primary-color);
   }
-  .dcg-create-transformation-view .dcg-step-completed i {
+  .dcg-geometry-toolbar-view .dcg-complex-tool-success i.dcg-icon-check {
     color: var(--dsm-primary-color);
   }
-  .dcg-create-transformation-view .dcg-step-active-icon span {
+  .dcg-complex-tool-instruction-view .dcg-step-completed i {
+    color: var(--dsm-primary-color);
+  }
+  .dcg-complex-tool-instruction-view .dcg-step-active-icon span {
     background: var(--dsm-primary-color);
   }
-  .dcg-create-transformation-view
+  .dcg-complex-tool-instruction-view
     .dcg-mathquill-wrapper
     .dcg-mq-container
     .dcg-math-field.dcg-focus {
