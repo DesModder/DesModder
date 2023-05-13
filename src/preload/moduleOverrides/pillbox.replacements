@@ -129,3 +129,19 @@ __classes__,
 "dcg-settings-container": this.controller.isNarrowGeometryHeader(),
 "dcg-left": this.controller.isNarrowGeometryHeader()
 ```
+
+## Show pillbox container even without zoom buttons
+
+*module* `pillbox`
+
+*Find*
+```js
+shouldShowContainer() {
+    return __ret__
+}
+```
+
+*Replace* `ret` with
+```js
+__ret__ || (DesModder?.controller && !DesModder.controller.showHorizontalPillboxMenu())
+```
