@@ -1,6 +1,7 @@
 import { DCGView } from "../DCGView";
 import { PillboxContainer } from "../components";
 import PillboxMenu from "../components/PillboxMenu";
+import { createTipElement } from "../plugins/show-tips/Tip";
 import { List } from "../utils/depUtils";
 import GraphMetadata, {
   Expression as MetadataExpression,
@@ -183,6 +184,10 @@ export default class Controller {
       controller: () => this,
       horizontal: DCGView.const(horizontal),
     });
+  }
+
+  createTipElement() {
+    return createTipElement();
   }
 
   updateMenuView() {

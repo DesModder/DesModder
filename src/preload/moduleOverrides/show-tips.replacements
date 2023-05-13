@@ -33,7 +33,7 @@ $DCGView.createElement(
       predicate: () =>
         window.DesModder?.controller?.isPluginEnabled?.("show-tips"),
     },
-    () => window.DesModder?.view?.createTipElement()
+    () => window.DesModder?.controller.createTipElement()
   )
-)   
+)
 ```
