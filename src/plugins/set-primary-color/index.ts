@@ -1,5 +1,5 @@
+import "./_overrides.less";
 import "./custom-overrides.less";
-import "./overrides.less";
 import { Plugin } from "plugins";
 import { getHSVfromRGB, parseCSSHex } from "plugins/GLesmos/colorParsing";
 import { OptionalProperties } from "utils/utils";

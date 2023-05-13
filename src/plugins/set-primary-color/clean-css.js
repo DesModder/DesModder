@@ -5,8 +5,8 @@
  *
  * Usage:
  *   cd src/plugins/set-primary-color/
- *   node clean-css.js > overrides.less
- *   npx prettier --write overrides.less
+ *   node clean-css.js > _overrides.less
+ *   npx prettier --write _overrides.less
  */
 
 const fs = require("fs");
