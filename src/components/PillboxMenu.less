@@ -1,0 +1,37 @@
+.dcg-calculator-api-container
+  .dsm-menu-container.dcg-constrained-height-popover
+  .dcg-popover-interior {
+  padding: 10px;
+
+  &:after {
+    right: var(--dsm-popover-arrow-right);
+  }
+
+  &:before {
+    right: calc(var(--dsm-popover-arrow-right) - 1px);
+  }
+}
+
+.dcg-calculator-api-container
+  .dcg-settings-container.dcg-left.dcg-geometry-settings-container.dcg-constrained-height-popover {
+  top: 53px;
+  right: 43px;
+  .dcg-popover-interior {
+    &:after,
+    &:before {
+      content: unset;
+    }
+  }
+}
+
+.dcg-calculator-api-container
+  .dcg-tooltip-positioning-container
+  .dcg-tooltip-message-container
+  .dcg-tooltip-message {
+  pointer-events: none;
+}
+
+.dcg-overgraph-pillbox-elements {
+  display: flex;
+  flex-direction: column;
+}

@@ -1,0 +1,131 @@
+# Core Replacements
+
+*plugin* `pin-expressions`
+
+<!-- TODO: this should really be plugin "core", or "all", but that is disallowed. -->
+
+## Insert spot for extra pillbox buttons in geometry toolbar
+
+*Module* `geometry-toolbar`
+
+*Find* => `from`
+```js
+$DCGView.createElement("div", {
+  class: $DCGView.const("dcg-header-right dcg-do-blur")
+},
+```
+
+*Replace* `from` with
+```js
+__from__
+$DCGView.Components.IfElse(
+    () => window.DesModder,
+    {
+      true: () => window.DesModder?.controller.pillboxButtonsView(true),
+      false: null
+    }
+),
+```
+
+## Insert spot for extra pillbox buttons in regular pillbox view
+
+*Module* `pillbox`
+
+*Find* => `from`
+```js
+$DCGView.createElement($, {
+  predicate: this.bindFn(this.shouldShowResetButton)
+} ____)
+```
+
+*Replace* `from` with
+```js
+$DCGView.Components.IfElse(
+    () => window.DesModder,
+    {
+      true: () => window.DesModder?.controller.pillboxButtonsView(false),
+      false: null
+    }
+), __from__
+```
+
+## Bottom zero for our pillbox menus
+
+*Module* `pillbox`
+
+*Find* => `from`
+```js
+this.controller.isGraphSettingsOpen() ? `bottom: ${$e}px;` : "bottom: auto"
+```
+
+*Replace* `from` with
+```js
+this.controller.isGraphSettingsOpen() || window.DesModder?.controller?.isSomePillboxMenuOpen()
+  ? `bottom: ${$e}px;` : "bottom: auto;"
+```
+
+## Add popover view for geometry
+
+*Module* `pillbox`
+
+*Find* => `from`
+```js
+$DCGView.createElement($If, {
+  predicate: () =>
+    this.controller.isGeoUIActive() &&
+    this.controller.getGraphSettings().config.settingsMenu &&
+    this.controller.isGraphSettingsOpen()
+}, ____)
+```
+
+*Replace* `from` with
+```js
+__from__,
+$DCGView.Components.IfElse(
+    () => window.DesModder,
+    {
+      true: () => window.DesModder?.controller.pillboxMenuView(true),
+      false: null
+    }
+)
+```
+
+## Tweak placement of existing settings menu
+
+*Module* `pillbox`
+
+It should be on the left to avoid covering up all the DesModder config stuff.
+
+*Find*
+```js
+return $DCGView.createElement("div", {
+    class: ()=>({
+        "dcg-geometry-settings-container": !0,
+        "dcg-popover": !0,
+        __classes__
+    }),
+    style: this.bindFn(this.getContainerStyle),
+    didMount: this.bindFn(this.didMountContainer),
+    didUnmount: this.bindFn(this.didUnmountContainer)
+}, $DCGView.createElement("div", {
+    class: $DCGView.const("dcg-popover-interior"),
+    role: $DCGView.const("complementary"),
+    "aria-label": () => this.controller.s("graphing-calculator-label-tooltip-geometry-settings")
+}, __children__
+))
+```
+
+*Replace* `children` with
+```js
+__children__,
+$DCGView.createElement("div", {
+    class: $DCGView.const("dcg-arrow")
+}),
+```
+
+*Replace* `classes` with
+```js
+__classes__,
+"dcg-settings-container": this.controller.isNarrowGeometryHeader(),
+"dcg-left": this.controller.isNarrowGeometryHeader()
+```
