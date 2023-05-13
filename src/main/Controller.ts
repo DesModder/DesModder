@@ -70,6 +70,7 @@ export default class Controller {
     );
     this.forceDisabled = window.DesModderForceDisabled!;
     delete window.DesModderForceDisabled;
+    if (Calc.controller.isGeometry()) this.forceDisabled.add("text-mode");
     this.pluginsEnabled = new Map(
       pluginList.map((plugin) => {
         const enabled =
