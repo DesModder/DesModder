@@ -111,7 +111,7 @@ set-primary-color-opt-doFavicon-desc = Alternar el color del icono del sitio web
 ## Hide Errors
 hide-errors-name = Esconder los Errores
 hide-errors-desc = Permite hacer click a los triángulos de error para desvanecerlos y esconde las sugerencias de controles deslizantes.
-hide-errors-hide = Esconder
+hide-errors-hide = esconder
 
 ## Folder Tools
 folder-tools-name = Herramientas para Carpetas

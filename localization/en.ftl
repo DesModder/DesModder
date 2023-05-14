@@ -104,7 +104,7 @@ set-primary-color-opt-doFavicon-desc = Toggle updating the site icon
 ## Hide Errors
 hide-errors-name = Hide Errors
 hide-errors-desc = Click error triangles to fade them and hide suggested sliders.
-hide-errors-hide = Hide
+hide-errors-hide = hide
 
 ## Folder Tools
 folder-tools-name = Folder Tools

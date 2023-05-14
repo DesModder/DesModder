@@ -1,5 +1,6 @@
+import { Calc } from "../../globals/window";
+import "./_overrides.less";
 import "./custom-overrides.less";
-import "./overrides.less";
 import { Plugin } from "plugins";
 import { getHSVfromRGB, parseCSSHex } from "plugins/GLesmos/colorParsing";
 import { OptionalProperties } from "utils/utils";
@@ -63,10 +64,12 @@ function applyHexToOldFavicon(hex: string) {
   canvas.height = originalImage.naturalHeight;
   const ctx = canvas.getContext("2d");
   if (ctx === null) return;
-  // assume originalImage is currently: hsv(217, 1.00, 0.73)
-  ctx.filter = `saturate(${sat / 1.0})
-    brightness(${li / 0.73})
-    hue-rotate(${hue - 130}deg)`;
+  const [bsat, bli, bhue] = Calc.controller.isGeometry()
+    ? [0.67, 0.8, 285]
+    : [1, 0.73, 130];
+  ctx.filter = `saturate(${sat / bsat})
+    brightness(${li / bli})
+    hue-rotate(${hue - bhue}deg)`;
   ctx.drawImage(originalImage, 0, 0);
   faviconLink.href = canvas.toDataURL("image/png");
   ctx.clearRect(0, 0, canvas.width, canvas.height);

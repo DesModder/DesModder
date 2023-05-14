@@ -169,6 +169,10 @@ interface CalcPrivate {
     markTickRequiredNextFrame: () => void;
     getPlayingSliders: () => { latex: string }[];
     _tickSliders: (nowTimestamp: number) => void;
+    computeMajorLayout: () => { grapher: { width: number } };
+    isGeometry: () => boolean;
+    isGeoUIActive: () => boolean;
+    isNarrowGeometryHeader: () => boolean;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;

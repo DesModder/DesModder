@@ -12,7 +12,10 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://*.desmos.com/calculator*"],
+      "matches": [
+        "https://*.desmos.com/calculator*",
+        "https://*.desmos.com/geometry-beta*"
+      ],
       "run_at": "document_start",
       "js": ["preload/content.js"],
       "all_frames": true

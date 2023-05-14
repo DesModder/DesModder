@@ -29,7 +29,10 @@ if (BROWSER === "firefox") {
       cancel: url.endsWith(".js"),
     }),
     {
-      urls: ["https://*.desmos.com/assets/build/calculator_desktop-*.js"],
+      urls: [
+        "https://*.desmos.com/assets/build/calculator_desktop-*.js",
+        "https://*.desmos.com/assets/build/calculator_geometry-*.js",
+      ],
     },
     ["blocking"]
   );
@@ -54,7 +57,10 @@ if (BROWSER === "firefox") {
       ],
     }),
     {
-      urls: ["https://*.desmos.com/calculator*"],
+      urls: [
+        "https://*.desmos.com/calculator*",
+        "https://*.desmos.com/geometry-beta*",
+      ],
     },
     ["blocking", "responseHeaders"]
   );

@@ -1,5 +1,8 @@
+import { DCGView } from "../DCGView";
+import { PillboxContainer } from "../components";
+import PillboxMenu from "../components/PillboxMenu";
+import { createTipElement } from "../plugins/show-tips/Tip";
 import { List } from "../utils/depUtils";
-import View from "./View";
 import GraphMetadata, {
   Expression as MetadataExpression,
 } from "./metadata/interface";
@@ -34,7 +37,6 @@ interface PillboxButton {
 export default class Controller {
   pluginsEnabled: Map<PluginID, boolean>;
   forceDisabled: Set<string>;
-  view: View | null = null;
   expandedPlugin: string | null = null;
   private expandedCategory: string | null = null;
   pluginSettings: Map<PluginID, GenericSettings>;
@@ -69,6 +71,7 @@ export default class Controller {
     );
     this.forceDisabled = window.DesModderForceDisabled!;
     delete window.DesModderForceDisabled;
+    if (Calc.controller.isGeometry()) this.forceDisabled.add("text-mode");
     this.pluginsEnabled = new Map(
       pluginList.map((plugin) => {
         const enabled =
@@ -126,7 +129,7 @@ export default class Controller {
     }
   }
 
-  init(view: View) {
+  init() {
     // async
     let numFulfilled = 0;
     listenToMessageDown((message) => {
@@ -142,13 +145,12 @@ export default class Controller {
       // enable once
       numFulfilled += 1;
       if (numFulfilled === 2) {
-        this.view = view;
         for (const { id } of pluginList) {
           if (this.pluginsEnabled.get(id)) {
             this._enablePlugin(id, true);
           }
         }
-        this.view.updateMenuView();
+        this.updateMenuView();
         // cancel listener
         return true;
       }
@@ -170,8 +172,26 @@ export default class Controller {
     }
   }
 
+  pillboxButtonsView(horizontal: boolean) {
+    return DCGView.createElement(PillboxContainer as any, {
+      controller: () => this,
+      horizontal: DCGView.const(horizontal),
+    });
+  }
+
+  pillboxMenuView(horizontal: boolean) {
+    return DCGView.createElement(PillboxMenu as any, {
+      controller: () => this,
+      horizontal: DCGView.const(horizontal),
+    });
+  }
+
+  createTipElement() {
+    return createTipElement();
+  }
+
   updateMenuView() {
-    this.view?.updateMenuView();
+    Calc.controller.updateViews();
   }
 
   addPillboxButton(info: PillboxButton) {
@@ -190,6 +210,10 @@ export default class Controller {
     this.updateMenuView();
   }
 
+  isSomePillboxMenuOpen() {
+    return this.pillboxMenuOpen !== null;
+  }
+
   toggleMenu(id: string) {
     this.pillboxMenuOpen = this.pillboxMenuOpen === id ? null : id;
     this.pillboxMenuPinned = false;
@@ -205,6 +229,18 @@ export default class Controller {
   toggleMenuPinned() {
     this.pillboxMenuPinned = !this.pillboxMenuPinned;
     this.updateMenuView();
+  }
+
+  showHorizontalPillboxMenu() {
+    // Constant threshold, independent of this.controller.pillboxButtonsOrder.length
+    // Maybe want to tweak the threshold if a fourth possible pillbox button is
+    // added, or figure out a better layout at that point because it's starting
+    // to be a lot of pillbox threshold.
+    return (
+      !Calc.settings.graphpaper ||
+      (Calc.controller.isGeoUIActive() &&
+        Calc.controller.computeMajorLayout().grapher.width > 500)
+    );
   }
 
   getPlugin(id: PluginID) {

@@ -110,7 +110,7 @@ set-primary-color-opt-doFavicon-desc = {""}
 ## Hide Errors
 hide-errors-name = Cacher les Erreurs
 hide-errors-desc = Click error triangles to fade them and hide suggested sliders.
-hide-errors-hide = Cacher
+hide-errors-hide = cacher
 
 ## Folder Tools
 folder-tools-name = Outils de Dossier

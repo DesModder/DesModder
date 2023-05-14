@@ -1,6 +1,9 @@
 .dsm-pillbox-buttons {
   display: flex;
   flex-direction: column;
+  &.dsm-horizontal-pillbox {
+    flex-direction: row-reverse;
+  }
 }
 
 .dcg-no-graphpaper {
@@ -13,4 +16,12 @@
   .dsm-pillbox-buttons > * {
     margin-right: 6px;
   }
+}
+
+.dcg-geometry-toolbar-view .dcg-header-right {
+  display: flex;
+}
+
+.dcg-right-buttons {
+  display: flex;
 }
