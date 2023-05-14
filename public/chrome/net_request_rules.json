@@ -80,7 +80,7 @@
       "type": "block"
     },
     "condition": {
-      "urlFilter": "*://*.desmos.com:*/*/calculator_desktop.js|"
+      "urlFilter": "*://*.desmos.com:*/*/calculator_desktop-*.js|"
     }
   },
   {
@@ -100,7 +100,7 @@
       "type": "block"
     },
     "condition": {
-      "urlFilter": "*://*.desmos.com:*/*/calculator_geometry.js|"
+      "urlFilter": "*://*.desmos.com:*/*/calculator_geometry-*.js|"
     }
   }
 ]
