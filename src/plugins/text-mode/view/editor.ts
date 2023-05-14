@@ -47,8 +47,8 @@ const scrollTheme = EditorView.theme({
   },
 });
 
-export function initView(controller: Controller, text: string) {
-  const startState = EditorState.create({
+export function startState(controller: Controller, text: string) {
+  return EditorState.create({
     doc: text,
     extensions: [
       EditorView.updateListener.of(controller.onEditorUpdate.bind(controller)),
@@ -108,9 +108,11 @@ export function initView(controller: Controller, text: string) {
       styleMappingPlugin,
     ],
   });
+}
 
+export function initView(controller: Controller, text: string) {
   return new EditorView({
-    state: startState,
+    state: startState(controller, text),
     parent: document.body,
   });
 }

@@ -44,6 +44,15 @@ export type DispatchedEvent =
       type: "on-evaluator-changes";
       changes: Record<string, EvaluatorChange>;
       timingData: TimingData;
+    }
+  | {
+      type: "set-state";
+      opts: {
+        allowUndo?: boolean;
+        // Added to avoid feedback loop. Desmos will pass this through ignored.
+        fromTextMode?: boolean;
+      };
+      state: GraphState;
     };
 
 /**
