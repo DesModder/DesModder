@@ -93,6 +93,7 @@ export interface ExpressionModel extends BasicSetExpression, ItemModelBase {
     | "right"
     | "auto_right";
   clickableInfo?: BaseClickable;
+  shouldGraph?: boolean;
 }
 
 interface TableColumn extends BasicSetExpression {

@@ -681,6 +681,8 @@ export default class Controller {
    * un-hidden
    */
   toggleExpr(id: string) {
+    const model = Calc.controller.getItemModel(id);
+    if (!model || model.type !== "expression" || !model.shouldGraph) return;
     Calc.controller.dispatch({
       type: "toggle-item-hidden",
       id,
