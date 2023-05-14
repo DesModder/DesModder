@@ -10,11 +10,13 @@ interface Config {
   doFavicon: boolean;
 }
 
+let wiggle = 0;
+
 function scaleColor(hex: string, s: number) {
   const parsed = parseCSSHex(hex);
   const [r, g, b] = parsed ?? [0, 0, 0];
   s *= 255;
-  return `${r * s}, ${g * s}, ${b * s}`;
+  return `${r * s + wiggle}, ${g * s}, ${b * s}`;
 }
 
 const colorMapping = {
@@ -28,6 +30,7 @@ const colorMapping = {
 };
 
 function applyColor(hex: string) {
+  wiggle = 0.1 - wiggle;
   for (const [key, scale] of Object.entries(colorMapping)) {
     const s = scaleColor(hex, scale);
     apiContainer.style.setProperty(key, `rgb(${s})`);
@@ -81,6 +84,31 @@ function onEnable(config: Config) {
   apiContainer = document.querySelector(".dcg-calculator-api-container")!;
   applyConfig(config);
   apiContainer.classList.add("dsm-set-primary-color");
+  senseDarkReader(config);
+}
+
+/** Wait for up to 5 seconds for Dark Reader to add its own style. Immediately
+ * re-update the colors since Dark Reader sometimes does some funny stuff. */
+function senseDarkReader(config: Config) {
+  const observer = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      if (
+        [...m.addedNodes].some((x) =>
+          (x as HTMLElement).classList.contains("darkreader")
+        )
+      ) {
+        console.log("boop");
+        applyColor(config.primaryColor);
+        observer.disconnect();
+      }
+    }
+  });
+  observer.observe(document.head, {
+    attributes: false,
+    childList: true,
+    subtree: false,
+  });
+  setTimeout(() => observer.disconnect(), 5000);
 }
 
 function applyConfig(config: Config) {
