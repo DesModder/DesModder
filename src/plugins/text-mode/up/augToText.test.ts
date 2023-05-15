@@ -118,12 +118,12 @@ describe("Basic exprs", () => {
     );
   });
   describe("ListComprehension", () => {
-    testExpr("single nest", "[i + 1 for i=L]", {
+    testExpr("single nest", "[i + 1 for i = L]", {
       type: "ListComprehension",
       expr: binop("Add", id("i"), number(1)),
       assignments: [assignmentExpr(id("i"), id("L"))],
     });
-    testExpr("double nesting", "[i + j for i=L, j=[1...5]]", {
+    testExpr("double nesting", "[i + j for i = L, j = [1...5]]", {
       type: "ListComprehension",
       expr: binop("Add", id("i"), id("j")),
       assignments: [
@@ -135,12 +135,12 @@ describe("Basic exprs", () => {
   describe("Substitution", () => {
     testExpr(
       "simple sub",
-      "a with a=3",
+      "a with a = 3",
       substitution(id("a"), assignmentExpr(id("a"), number(3)))
     );
     testExpr(
       "simple sub",
-      "2 + (a with a=3)",
+      "2 + (a with a = 3)",
       binop(
         "Add",
         number(2),
@@ -149,7 +149,7 @@ describe("Basic exprs", () => {
     );
     testExpr(
       "multiple subs",
-      "a with a=3, b=3",
+      "a with a = 3, b = 3",
       substitution(
         id("a"),
         assignmentExpr(id("a"), number(3)),
@@ -158,7 +158,7 @@ describe("Basic exprs", () => {
     );
     testExpr(
       "sub precedence with arrow",
-      "a -> b, c -> b with b=3",
+      "a -> b, c -> b with b = 3",
       bareSeq(
         updateRule(id("a"), id("b")),
         updateRule(

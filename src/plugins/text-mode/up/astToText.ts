@@ -369,7 +369,7 @@ function assignmentExpressionToText(
 ): Doc {
   return group([
     path.node.variable.name,
-    "=",
+    " = ",
     exprToText(path.withChild(path.node.expr, "expr")),
   ]);
 }
