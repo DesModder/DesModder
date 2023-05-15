@@ -29,7 +29,7 @@ const rules = {
       // prettier-ignore
       keyword: [
         "table", "image", "settings", "folder", "ticker",
-        "for", "integral", "sum", "product", "of" // 'with' TODO
+        "for", "integral", "sum", "product", "of", "with"
       ],
     }),
   },
@@ -47,6 +47,7 @@ const _power = [
   "rel",
   "sim",
   "updateRule",
+  "substitution",
   "derivative",
   "add",
   "mul",
@@ -203,8 +204,7 @@ function parseMain(
 
   while (true) {
     const nextToken = ps.peek();
-    // const p = firstToken.value === "=";
-    const cp = consequentParselets[nextToken.value as Punct];
+    const cp = consequentParselets[nextToken.value as Punct | "with"];
     if (!cp) break;
     if (cp.bindingPower <= lastBindingPower) break;
     ps.consume();
@@ -514,7 +514,10 @@ function repeatedOperatorParselet(
   };
 }
 
-const consequentParselets: Record<Punct, ConsequentParselet | undefined> = {
+const consequentParselets: Record<
+  Punct | "with",
+  ConsequentParselet | undefined
+> = {
   "+": binaryParselet(Power.add, "+"),
   "-": binaryParselet(Power.add, "-"),
   "*": binaryParselet(Power.mul, "*"),
@@ -680,6 +683,34 @@ const consequentParselets: Record<Punct, ConsequentParselet | undefined> = {
       ...left,
       parameters,
       pos: pos(left, parameters),
+    };
+  }),
+  with: consequentParselet(Power.substitution, (ps, left, token): Node => {
+    assertLeftIsExpression(ps, left, token, "f(x) with a=3");
+    const assignments = parseBareSeq(ps, "f(x) with a=3,b=[1...5]").map(
+      (item): TextAST.AssignmentExpression => {
+        if (
+          item.type !== "BinaryExpression" ||
+          item.op !== "=" ||
+          item.left.type !== "Identifier"
+        )
+          throw ps.pushFatalError(
+            "List comprehension must set variable = identifier",
+            pos(item)
+          );
+        return {
+          type: "AssignmentExpression",
+          variable: item.left,
+          expr: item.right,
+          pos: item.pos,
+        };
+      }
+    );
+    return {
+      type: "Substitution",
+      body: left,
+      assignments,
+      pos: pos(left, assignments[assignments.length - 1]),
     };
   }),
   "...": undefined,

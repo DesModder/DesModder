@@ -1,6 +1,7 @@
 import Aug from "../aug/AugState";
 import {
   assignmentExpr,
+  bareSeq,
   binop,
   comparator,
   functionCall,
@@ -10,6 +11,7 @@ import {
   negative,
   number,
   range,
+  substitution,
   updateRule,
 } from "../aug/augBuilders";
 import { itemToText } from "./augToText";
@@ -129,6 +131,42 @@ describe("Basic exprs", () => {
         assignmentExpr(id("j"), range([number(1)], [number(5)])),
       ],
     });
+  });
+  describe("Substitution", () => {
+    testExpr(
+      "simple sub",
+      "a with a=3",
+      substitution(id("a"), assignmentExpr(id("a"), number(3)))
+    );
+    testExpr(
+      "simple sub",
+      "2 + (a with a=3)",
+      binop(
+        "Add",
+        number(2),
+        substitution(id("a"), assignmentExpr(id("a"), number(3)))
+      )
+    );
+    testExpr(
+      "multiple subs",
+      "a with a=3, b=3",
+      substitution(
+        id("a"),
+        assignmentExpr(id("a"), number(3)),
+        assignmentExpr(id("b"), number(3))
+      )
+    );
+    testExpr(
+      "sub precedence with arrow",
+      "a -> b, c -> b with b=3",
+      bareSeq(
+        updateRule(id("a"), id("b")),
+        updateRule(
+          id("c"),
+          substitution(id("b"), assignmentExpr(id("b"), number(3)))
+        )
+      )
+    );
   });
   describe("Piecewise", () => {
     testExpr("empty piecewise", "{else: 1}", {

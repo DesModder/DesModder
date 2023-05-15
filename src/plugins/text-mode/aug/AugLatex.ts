@@ -35,6 +35,7 @@ export type AnyChild =
   | Seq
   | UpdateRule
   | ListComprehension
+  | Substitution
   | Piecewise
   | RepeatedOperator
   | BinaryOperator
@@ -198,6 +199,12 @@ export interface ListComprehension {
   type: "ListComprehension";
   // we don't include the comprehension index
   expr: AnyChild;
+  assignments: AssignmentExpression[];
+}
+
+export interface Substitution {
+  type: "Substitution";
+  body: AnyChild;
   assignments: AssignmentExpression[];
 }
 

@@ -77,6 +77,13 @@ export function assignmentExpr(
   };
 }
 
+export function substitution(
+  body: Aug.Latex.AnyChild,
+  ...assignments: Aug.Latex.AssignmentExpression[]
+): Aug.Latex.Substitution {
+  return { type: "Substitution", body, assignments };
+}
+
 export function updateRule(
   variable: Aug.Latex.Identifier,
   expression: Aug.Latex.AnyChild

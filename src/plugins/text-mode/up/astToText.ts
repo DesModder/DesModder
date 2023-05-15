@@ -294,6 +294,19 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
           )
         ),
       ]);
+    case "Substitution":
+      return [
+        exprToText(path.withChild(e.body, "body")),
+        " with ",
+        join(
+          ", ",
+          e.assignments.map((assignment, i) =>
+            assignmentExpressionToText(
+              path.withChild(assignment, `assignments.${i}`)
+            )
+          )
+        ),
+      ];
     case "PiecewiseExpression":
       return group([
         "{",
@@ -343,6 +356,11 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
       return [exprToText(path.withChild(e.expr, "expr")), "!"];
     case "String":
       return stringToText(e.value);
+    default:
+      e satisfies never;
+      throw new Error(
+        `Programming Error: Unexpected AST node ${(e as any).type}`
+      );
   }
 }
 

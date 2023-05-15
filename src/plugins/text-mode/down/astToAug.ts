@@ -615,11 +615,13 @@ export function childExprToAug(
       return {
         type: "ListComprehension",
         expr: childExprToAug(expr.expr),
-        assignments: expr.assignments.map((assignment) => ({
-          type: "AssignmentExpression",
-          variable: identifierToAug(assignment.variable),
-          expression: childExprToAug(assignment.expr),
-        })),
+        assignments: expr.assignments.map(assignment),
+      };
+    case "Substitution":
+      return {
+        type: "Substitution",
+        body: childExprToAug(expr.body),
+        assignments: expr.assignments.map(assignment),
       };
     case "PiecewiseExpression":
       return piecewiseToAug(expr.branches);
@@ -721,7 +723,22 @@ export function childExprToAug(
         arg: childExprToAug(expr.expr),
         variable: identifierToAug(expr.variable),
       };
+    default:
+      expr satisfies never;
+      throw new Error(
+        `Programming Error: Unexpected AST node ${(expr as any).type}`
+      );
   }
+}
+
+function assignment(
+  e: TextAST.AssignmentExpression
+): Aug.Latex.AssignmentExpression {
+  return {
+    type: "AssignmentExpression",
+    variable: identifierToAug(e.variable),
+    expression: childExprToAug(e.expr),
+  };
 }
 
 function callExpressionToAug(

@@ -479,6 +479,12 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         expr: childLatexToAST(e.expr),
         assignments: e.assignments.map(assignmentExprToAST),
       };
+    case "Substitution":
+      return {
+        type: "Substitution",
+        body: childLatexToAST(e.body),
+        assignments: e.assignments.map(assignmentExprToAST),
+      };
     case "Piecewise": {
       const piecewiseBranches: TextAST.PiecewiseBranch[] = [];
       let curr: Aug.Latex.AnyChild = e;
@@ -562,6 +568,11 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         rightOp: e.rightOperator,
         right: childLatexToAST(e.right),
       };
+    default:
+      e satisfies never;
+      throw new Error(
+        `Programming Error: Unexpected Aug node ${(e as any).type}`
+      );
   }
 }
 

@@ -519,9 +519,13 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
       return {
         type: "ListComprehension",
         expr: childNodeToTree(node.args[1]),
-        assignments: node.args.slice(2).map((n) => {
-          return assignmentExprToTree(n);
-        }),
+        assignments: node.args.slice(2).map(assignmentExprToTree),
+      };
+    case "Substitution":
+      return {
+        type: "Substitution",
+        body: childNodeToTree(node.args[0]),
+        assignments: node.args.slice(1).map(assignmentExprToTree),
       };
     case "Piecewise": {
       const conditionNode = node.args[0];
@@ -635,7 +639,6 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
       );
     default:
       node satisfies never;
-      // node.type satisfies never
       throw new Error(
         `Programming Error: Unexpected raw node ${(node as any).type}`
       );

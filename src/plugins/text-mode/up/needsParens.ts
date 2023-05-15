@@ -42,6 +42,7 @@ export default function needsParens(path: NodePath): boolean {
     case "RangeExpression":
     case "ListExpression":
     case "ListComprehension":
+    case "Substitution":
       return false;
     case "MemberExpression":
       return name !== "object" || node.type !== "Identifier";
@@ -55,6 +56,15 @@ export default function needsParens(path: NodePath): boolean {
     case "RepeatedExpression":
       // TODO: better logic for RepeatedExpression
       return true;
+    case "Substitution":
+      switch (parent.type) {
+        case "UpdateRule":
+          return false;
+        case "BinaryExpression":
+          return !comparisonOps.includes(parent.op);
+        default:
+          return true;
+      }
     case "RangeExpression":
     case "ListExpression":
     case "ListComprehension":
@@ -132,6 +142,11 @@ export default function needsParens(path: NodePath): boolean {
     case "DerivativeExpression":
       // TODO: don't always need parens
       return true;
+    default:
+      node satisfies never;
+      throw new Error(
+        `Programming Error: Unexpected Text node ${(node as any).type}`
+      );
   }
 }
 

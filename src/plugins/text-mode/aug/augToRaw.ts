@@ -382,6 +382,12 @@ function childNodeToString(e: Aug.Latex.AnyChild): string {
           "\\operatorname{for}" +
           e.assignments.map(assignmentExprToRaw).join(",")
       );
+    case "Substitution":
+      return (
+        childNodeToString(e.body) +
+        "\\operatorname{with}" +
+        e.assignments.map(assignmentExprToRaw).join(",")
+      );
     case "Piecewise": {
       const piecewiseParts: string[] = [];
       let curr: Aug.Latex.AnyChild = e;
@@ -447,6 +453,11 @@ function childNodeToString(e: Aug.Latex.AnyChild): string {
         childNodeToString(e.middle) +
         comparatorMap[e.rightOperator] +
         childNodeToString(e.right)
+      );
+    default:
+      e satisfies never;
+      throw new Error(
+        `Programming Error: Unexpected Aug node ${(e as any).type}`
       );
   }
 }

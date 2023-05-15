@@ -290,6 +290,11 @@ interface ListComprehension extends Expression {
   args: [Identifier, ChildExprNode, ...AssignmentExpression[]];
 }
 
+interface Substitution extends Expression {
+  type: "Substitution";
+  args: [ChildExprNode, ...AssignmentExpression[]];
+}
+
 /* Repeated Operators */
 
 interface RepeatedOperator extends Expression {
@@ -636,6 +641,7 @@ export type ChildExprNode =
   | UpdateRule
   | AssignmentExpression
   | ListComprehension
+  | Substitution
   | Norm
   | NamedCoordinateAccess
   | Piecewise

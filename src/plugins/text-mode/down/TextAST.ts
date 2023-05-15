@@ -89,6 +89,7 @@ export type Expression =
   | RangeExpression
   | ListExpression
   | ListComprehension
+  | Substitution
   | PiecewiseExpression
   | PrefixExpression
   | SequenceExpression
@@ -140,6 +141,12 @@ export interface ListExpression extends Positioned {
 export interface ListComprehension extends Positioned {
   type: "ListComprehension";
   expr: Expression;
+  assignments: AssignmentExpression[];
+}
+
+export interface Substitution extends Positioned {
+  type: "Substitution";
+  body: Expression;
   assignments: AssignmentExpression[];
 }
 

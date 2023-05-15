@@ -11,6 +11,7 @@ import {
   listAccess,
   negative,
   number,
+  substitution,
   updateRule,
   wrappedSeq,
 } from "../aug/augBuilders";
@@ -251,6 +252,33 @@ describe("Basic exprs", () => {
         }),
       ],
     });
+  });
+  describe("Substitution", () => {
+    testExpr(
+      "simple sub",
+      "a with a=3",
+      substitution(id("a"), assignmentExpr(id("a"), number(3)))
+    );
+    testExpr(
+      "multiple subs",
+      "a with a=3, b=3",
+      substitution(
+        id("a"),
+        assignmentExpr(id("a"), number(3)),
+        assignmentExpr(id("b"), number(3))
+      )
+    );
+    testExpr(
+      "sub precedence with arrow",
+      "a->b, c->b with b=3",
+      bareSeq(
+        updateRule(id("a"), id("b")),
+        updateRule(
+          id("c"),
+          substitution(id("b"), assignmentExpr(id("b"), number(3)))
+        )
+      )
+    );
   });
   describe("Piecewise", () => {
     testExpr("trivial (else-only) piecewise", "{else:1}", {
