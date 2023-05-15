@@ -1,5 +1,4 @@
 import Node from "../parsing/parsenode";
-import { ItemModel } from "globals/models";
 import { Calc, Fragile, Private } from "globals/window";
 
 const evaluateLatex = Fragile.evaluateLatex;
@@ -32,21 +31,6 @@ export const autoCommandNames: string =
   Private.MathquillConfig?.getAutoCommands?.();
 export const autoOperatorNames: string =
   Private.MathquillConfig?.getAutoOperators?.();
-
-const grep = Fragile.getReconciledExpressionProps;
-
-export function getReconciledExpressionProps(id: string) {
-  const model = Calc.controller.getItemModel(id);
-  return grep((model as any).formula.expression_type, model);
-}
-
-const ExpressionOptionsMenuView = Fragile.ExpressionOptionsMenuView;
-
-const getSectionsProto = ExpressionOptionsMenuView.prototype.getSections;
-
-export function getSections(model: ItemModel) {
-  return getSectionsProto.apply({ model, controller: Calc.controller } as any);
-}
 
 export function getCurrentGraphTitle(): string | undefined {
   return Calc._calc.globalHotkeys?.headerController?.graphsController?.getCurrentGraphTitle?.();

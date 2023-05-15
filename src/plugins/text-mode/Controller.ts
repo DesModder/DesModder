@@ -1,7 +1,7 @@
 import LanguageServer from "./LanguageServer";
 import { RelevantEvent, relevantEventTypes } from "./modify";
 import getText from "./up/getText";
-import { initView } from "./view/editor";
+import { initView, startState } from "./view/editor";
 import { EditorView, ViewUpdate } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
 import { Calc } from "globals/window";
@@ -19,7 +19,7 @@ export default class Controller {
     // expression UI doesn't render in text mode, we replace markTickRequiredNextFrame
     // with a version that calls markTickRequiredNextFrame only when sliders are playing
     if (this.inTextMode) {
-      Calc.controller.dispatch({ type: "close-expression-search" });
+      Calc.controller.expressionSearchOpen = false;
       Calc.controller.markTickRequiredNextFrame = function () {
         if (this.getPlayingSliders().length > 0) {
           // eslint-disable-next-line no-proto
@@ -37,7 +37,6 @@ export default class Controller {
    * mountEditor: called from module overrides when the DCGView node mounts
    */
   mountEditor(container: HTMLDivElement) {
-    /** TODO: getText as a pure function of Calc state */
     const [hasError, text] = getText();
     this.view = initView(this, text);
     this.languageServer = new LanguageServer(this.view, (state: GraphState) => {
@@ -47,20 +46,15 @@ export default class Controller {
       //   the current autocomplete tooltip from disappearing
       const trigger = jquery.prototype.trigger;
       jquery.prototype.trigger = () => [];
-      Calc.setState(state, { allowUndo: true });
+      Calc.setState(state, { allowUndo: true, fromTextMode: true } as any);
       jquery.prototype.trigger = trigger;
     });
-    if (hasError)
-      Calc.controller._showToast({
-        message:
-          "Automatic conversion to text encountered errors in some expressions.",
-        undoCallback: () => {
-          this.toggleTextMode();
-        },
-      });
+    if (hasError) this.conversionError(() => this.toggleTextMode());
     container.appendChild(this.view.dom);
     this.preventPropagation(container);
     this.dispatchListenerID = Calc.controller.dispatcher.register((event) => {
+      if (event.type === "set-state" && !event.opts.fromTextMode)
+        this.setState();
       if ((relevantEventTypes as readonly string[]).includes(event.type)) {
         // setTimeout to avoid dispatch-in-dispatch from handlers responding to
         // calc state changing by dispatching an event
@@ -69,6 +63,22 @@ export default class Controller {
           0
         );
       }
+    });
+  }
+
+  setState() {
+    const [hasError, text] = getText();
+    this.view?.setState(startState(this, text));
+    this.languageServer?.parse(true);
+    if (hasError) this.conversionError();
+  }
+
+  conversionError(undoCallback?: () => void) {
+    Calc.controller._showToast({
+      message:
+        "Automatic conversion to text encountered errors in some expressions.",
+      // `undoCallback: undefined` still adds the "Press Ctrl+Z" message
+      ...(undoCallback ? { undoCallback } : {}),
     });
   }
 
@@ -82,7 +92,6 @@ export default class Controller {
     if (this.view) {
       this.view.destroy();
       this.view = null;
-      this.languageServer!.destroy();
     }
   }
 
@@ -116,10 +125,11 @@ function selectFromText(view: EditorView, ls: LanguageServer) {
   const currSelected = Calc.selectedExpressionId as string | undefined;
   const newSelected = getSelectedItem(view, ls);
   if (newSelected !== currSelected) {
-    if (newSelected !== undefined) {
+    if (view.hasFocus && newSelected !== undefined) {
       Calc.controller.dispatch({
         type: "set-selected-id",
         id: newSelected,
+        dsmFromTextModeSelection: true,
       });
     } else {
       Calc.controller.dispatch({

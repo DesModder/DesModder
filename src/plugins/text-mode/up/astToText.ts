@@ -24,13 +24,11 @@ function astItemToText(path: NodePath<TextAST.Statement>): Doc {
     case "ExprStatement":
       // TODO fix Regression Statement
       return [
-        item.regression?.residualVariable
-          ? item.regression.residualVariable.name + " = "
-          : "",
+        item.residualVariable ? item.residualVariable.name + " = " : "",
         exprToText(path.withChild(item.expr, "expr")),
-        item.regression
+        item.parameters
           ? trailingRegressionParams(
-              path.withChild(item.regression.parameters, "parameters")
+              path.withChild(item.parameters, "parameters")
             )
           : "",
         trailingStyleMap(path, item.style),
@@ -47,7 +45,7 @@ function astItemToText(path: NodePath<TextAST.Statement>): Doc {
         indent([
           hardline,
           join(
-            hardline,
+            [hardline, hardline],
             item.columns.map((col, i) =>
               columnToText(path.withChild(col, "column." + i.toString()))
             )

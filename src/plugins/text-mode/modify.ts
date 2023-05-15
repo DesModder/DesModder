@@ -5,6 +5,7 @@ import {
   rawToDsmMetadata,
 } from "./aug/rawToAug";
 import TextAST, { NodePath, Settings, Statement } from "./down/TextAST";
+import { childExprToAug } from "./down/astToAug";
 import {
   docToString,
   exprToTextString,
@@ -31,6 +32,8 @@ export const relevantEventTypes = [
   "resize-exp-list", // resize-exp-list can update viewport size
   // sliders, draggable points, action updates, etc.
   "on-evaluator-changes",
+  // only should affect selection
+  "set-selected-id",
 ] as const;
 
 export type RelevantEvent = DispatchedEvent & {
@@ -46,6 +49,7 @@ export function eventSequenceChanges(
 ): ChangeSpec[] {
   let settingsChanged: boolean = false;
   const itemsChanged: Record<string, ToChange> = {};
+  const state = Calc.getState();
   for (const event of events) {
     switch (event.type) {
       case "re-randomize":
@@ -63,9 +67,14 @@ export function eventSequenceChanges(
           if (
             change.raw_slider_latex !== undefined ||
             change.zero_values !== undefined
-          )
+          ) {
+            // change.raw_slider_latex e.g. a slider was played.
+            // This is also triggered on first update of a slider
+            // Filtering out unnecessary re-writes is done later in itemChange
+            // change.zero_values is for lists
+            // I don't know why we update lists
             itemsChanged[changeID] = "latex-only";
-          else if (
+          } else if (
             // TODO: move_strategy also gets emitted when the viewport is panned
             // even if the point was not dragged. Only difference in the events
             // seem to be the coordinates to update, so check that
@@ -86,7 +95,6 @@ export function eventSequenceChanges(
     }
   }
   const changes: ChangeSpec[] = [];
-  const state = Calc.getState();
   if (settingsChanged) {
     changes.push(settingsChange(analysis, state));
   }
@@ -117,7 +125,7 @@ function settingsChange(
     : {
         from: 0,
         to: 0,
-        insert: newSettingsText + "\n",
+        insert: newSettingsText + "\n\n",
       };
 }
 
@@ -151,6 +159,12 @@ function itemChange(
   if (itemAug.error) throw new Error("Expected valid itemAug in modify");
   switch (toChange) {
     case "table-columns": {
+      // Table column updates from dragging a point
+      // Also includes updates from just calculating the values
+      // Overwrite if and only if the editor is unfocused:
+      //   - point dragging can only occur when editor is unfocused
+      //   - overwriting is not harmful when the editor is unfocused
+      if (view.hasFocus) return [];
       if (oldNode.type !== "Table" || itemAug.type !== "table")
         throw new Error(
           "Programming Error: expected table on a table-columns change"
@@ -182,6 +196,8 @@ function itemChange(
         throw new Error(
           "Programming error: expect new expr item to always be parseable"
         );
+      if (childExprAugString(oldNode.expr) === childExprAugString(ast.expr))
+        return [];
       return [
         insertWithIndentation(
           view,
@@ -191,6 +207,12 @@ function itemChange(
       ];
     }
     case "image-pos": {
+      // Image pos updates from dragging a handle
+      // Also includes updates from just calculating the values
+      // Overwrite if and only if the editor is unfocused:
+      //   - image dragging/resizing can only occur when editor is unfocused
+      //   - overwriting is not harmful when the editor is unfocused
+      if (view.hasFocus) return [];
       if (oldNode.type !== "Image" || itemAug.type !== "image")
         throw new Error(
           "Programming Error: expected image on an image-pos change"
@@ -227,16 +249,34 @@ function itemChange(
           }
         });
     }
-    case "regression":
-      return [insertWithIndentation(view, oldNode.pos!, itemToText(itemAug))];
+    case "regression": {
+      if (oldNode.type !== "ExprStatement" || itemAug.type !== "expression")
+        throw new Error(
+          "Programming Error: expected expression on a regression change"
+        );
+      const text = itemToText(itemAug);
+      // we trust there's only one "#{" since this is our itemToText
+      const params = "#{" + text.split("#{")[1];
+      // only modify the parameters
+      if (!oldNode.parameters) {
+        const to = oldNode.pos!.to;
+        return [insertWithIndentation(view, { from: to, to }, " " + params)];
+      } else {
+        return [insertWithIndentation(view, oldNode.parameters.pos!, params)];
+      }
+    }
   }
+}
+
+function childExprAugString(expr: TextAST.Expression) {
+  return JSON.stringify(childExprToAug(expr));
 }
 
 function insertWithIndentation(
   view: EditorView,
   pos: TextAST.Pos,
   insert: string
-) {
+): ChangeSpec {
   const indentation = getIndentation(view, pos.from);
   return {
     from: pos.from,

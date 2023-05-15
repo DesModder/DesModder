@@ -42,6 +42,7 @@
     "@types/babel__template": "^7.4.1",
     "@types/chrome": "0.0.226",
     "@types/jest": "^28.1.4",
+    "@types/moo": "^0.5.5",
     "esbuild": "^0.17.14",
     "esbuild-plugin-copy": "^2.1.1",
     "esbuild-plugin-less": "^1.1.13",
@@ -57,13 +58,13 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@codemirror/autocomplete": "^6.4.2",
-    "@codemirror/commands": "^6.2.2",
+    "@codemirror/autocomplete": "^6.6.1",
+    "@codemirror/commands": "^6.2.4",
     "@codemirror/language": "^6.6.0",
-    "@codemirror/lint": "^6.2.0",
-    "@codemirror/search": "^6.3.0",
+    "@codemirror/lint": "^6.2.1",
+    "@codemirror/search": "^6.4.0",
     "@codemirror/state": "^6.2.0",
-    "@codemirror/view": "^6.9.3",
+    "@codemirror/view": "^6.11.1",
     "@ffmpeg/core": "^0.10.0",
     "@ffmpeg/ffmpeg": "^0.10.0",
     "@fluent/bundle": "^0.18.0",
@@ -73,6 +74,7 @@
     "eslint-plugin-rulesdir": "^0.2.2",
     "idb-keyval": "^6.2.0",
     "js-tokens": "^8.0.1",
+    "moo": "^0.5.2",
     "prettier": "^2.8.7"
   }
 }

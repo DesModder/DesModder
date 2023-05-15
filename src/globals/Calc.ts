@@ -27,9 +27,14 @@ export type DispatchedEvent =
         | "action-single-step"
         | "toggle-item-hidden"
         | "duplicate-folder"
-        | "duplicate-expression"
-        | "set-selected-id";
+        | "duplicate-expression";
       id: string;
+    }
+  | {
+      type: "set-selected-id";
+      id: string;
+      // Added to avoid feedback loop. Desmos will pass this through ignored.
+      dsmFromTextModeSelection?: boolean;
     }
   | {
       type: "set-focus-location";
@@ -39,6 +44,15 @@ export type DispatchedEvent =
       type: "on-evaluator-changes";
       changes: Record<string, EvaluatorChange>;
       timingData: TimingData;
+    }
+  | {
+      type: "set-state";
+      opts: {
+        allowUndo?: boolean;
+        // Added to avoid feedback loop. Desmos will pass this through ignored.
+        fromTextMode?: boolean;
+      };
+      state: GraphState;
     };
 
 /**
@@ -173,6 +187,7 @@ interface CalcPrivate {
     isGeometry: () => boolean;
     isGeoUIActive: () => boolean;
     isNarrowGeometryHeader: () => boolean;
+    expressionSearchOpen: boolean;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;

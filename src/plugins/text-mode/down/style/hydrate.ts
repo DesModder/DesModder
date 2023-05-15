@@ -66,9 +66,7 @@ export function hydrate<T>(
         } else {
           res[key] = undefined;
         }
-      } else if (givenValue.type !== "StyleMapping") {
-        pushError(`Expected ${errPath} to be style mapping, but got primitive`);
-      } else {
+      } else if (givenValue.type === "StyleMapping") {
         const style = hydrate(
           ds,
           givenValue,
@@ -79,6 +77,14 @@ export function hydrate<T>(
         );
         if (style === null) hasNull = true;
         res[key] = style;
+      } else {
+        const evaluated = evalExpr(ds.diagnostics, givenValue);
+        if (schemaType.orBool && typeof evaluated === "boolean")
+          res[key] = evaluated;
+        else
+          pushError(
+            `Expected ${errPath} to be style mapping, but got primitive`
+          );
       }
     } else if (givenValue === undefined) {
       res[key] = defaults[key] as any;
@@ -87,8 +93,12 @@ export function hydrate<T>(
         pushError(`Expected ${errPath} to be primitive, but got style mapping`);
       } else if (schemaType === "expr") {
         res[key] = givenValue;
-      } else if (schemaType === "color" && givenValue.type === "Identifier") {
-        res[key] = givenValue;
+      } else if (schemaType === "color") {
+        if (givenValue.type === "String") {
+          res[key] = givenValue.value;
+        } else {
+          res[key] = givenValue;
+        }
       } else {
         const evaluated = evalExpr(ds.diagnostics, givenValue);
         if (evaluated === null) {
@@ -104,11 +114,6 @@ export function hydrate<T>(
               `Expected ${errPath} to be one of ` +
                 `${JSON.stringify(schemaType.enum)}, but got ` +
                 `${JSON.stringify(evaluated)} instead`
-            );
-        } else if (schemaType === "color") {
-          if (typeof evaluated !== "string")
-            pushError(
-              `Expected ${errPath} to evaluate to string or identifier, but got ${typeof evaluated}`
             );
         } else {
           // eslint-disable-next-line valid-typeof

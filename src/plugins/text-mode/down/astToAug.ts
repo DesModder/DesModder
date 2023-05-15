@@ -165,7 +165,6 @@ function regressionToAug(
   ds: DownState,
   styleMapping: TextAST.StyleMapping | null,
   stmt: TextAST.ExprStatement,
-  regressionData: TextAST.RegressionData,
   exprAST: TextAST.BinaryExpression
 ): Aug.ExpressionAug | null {
   const expr: Aug.Latex.Regression = {
@@ -181,7 +180,7 @@ function regressionToAug(
     "regression"
   );
   if (style === null) return null;
-  const params = regressionData.parameters.entries.map(
+  const params = (stmt.parameters?.entries ?? []).map(
     ({ variable, value }): [Identifier, number] | null => {
       const evaluated = evalExpr(ds.diagnostics, value);
       if (typeof evaluated !== "number") {
@@ -202,15 +201,14 @@ function regressionToAug(
     regression: {
       isLogMode: style.logMode,
       residualVariable:
-        regressionData.residualVariable &&
-        identifierToAug(regressionData.residualVariable),
+        stmt.residualVariable && identifierToAug(stmt.residualVariable),
       regressionParameters: new Map(params),
     },
     color: "",
     errorHidden: style.errorHidden,
     hidden: false,
     glesmos: false,
-    fillOpacity: constant(0),
+    fillOpacity: undefined,
     displayEvaluationAsFraction: false,
     slider: {},
     vizProps: {},
@@ -222,12 +220,8 @@ function expressionToAug(
   styleMapping: TextAST.StyleMapping | null,
   stmt: TextAST.ExprStatement
 ): Aug.ExpressionAug | null {
-  if (
-    stmt.expr.type === "BinaryExpression" &&
-    stmt.expr.op === "~" &&
-    stmt.regression !== undefined
-  ) {
-    return regressionToAug(ds, styleMapping, stmt, stmt.regression, stmt.expr);
+  if (stmt.expr.type === "BinaryExpression" && stmt.expr.op === "~") {
+    return regressionToAug(ds, styleMapping, stmt, stmt.expr);
   }
   const expr = childExprToAug(stmt.expr);
   // is the expr polar for the purposes of domain?
@@ -261,7 +255,7 @@ function expressionToAug(
     // hidden from common
     errorHidden: style.errorHidden,
     glesmos: style.glesmos,
-    fillOpacity: childExprToAug(style.fill),
+    fillOpacity: style.fill ? childExprToAug(style.fill) : undefined,
     displayEvaluationAsFraction: style.displayEvaluationAsFraction,
     slider: style.slider
       ? {
@@ -360,28 +354,40 @@ function columnExpressionCommonStyle(style: Hydrated.ColumnExpressionCommon) {
     color:
       typeof style.color === "string"
         ? style.color
-        : Calc.colors[style.color.name] ?? identifierToAug(style.color),
+        : (style.color.type === "Identifier" &&
+            Calc.colors[style.color.name]) ||
+          childExprToAug(style.color),
     hidden: style.hidden,
     points:
-      style.points &&
-      !exprEvalSame(style.points.opacity, 0) &&
-      !exprEvalSame(style.points.size, 0)
-        ? {
-            opacity: childExprToAug(style.points.opacity),
-            size: childExprToAug(style.points.size),
-            style: style.points.style,
-            dragMode: style.points.drag,
-          }
+      style.points === true
+        ? {}
+        : style.points === false
+        ? { size: constant(0) }
+        : style.points
+        ? exprEvalSame(style.points.opacity, 0) ||
+          exprEvalSame(style.points.size, 0)
+          ? { size: constant(0) }
+          : {
+              opacity: childExprToAug(style.points.opacity),
+              size: childExprToAug(style.points.size),
+              style: style.points.style,
+              dragMode: style.points.drag,
+            }
         : undefined,
     lines:
-      style.lines &&
-      !exprEvalSame(style.lines.opacity, 0) &&
-      !exprEvalSame(style.lines.width, 0)
-        ? {
-            opacity: childExprToAug(style.lines.opacity),
-            width: childExprToAug(style.lines.width),
-            style: style.lines.style,
-          }
+      style.lines === true
+        ? {}
+        : style.lines === false
+        ? { width: constant(0) }
+        : style.lines
+        ? exprEvalSame(style.lines.opacity, 0) ||
+          exprEvalSame(style.lines.width, 0)
+          ? { width: constant(0) }
+          : {
+              opacity: childExprToAug(style.lines.opacity),
+              width: childExprToAug(style.lines.width),
+              style: style.lines.style,
+            }
         : undefined,
   };
   return res;

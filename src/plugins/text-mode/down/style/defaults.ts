@@ -88,7 +88,7 @@ const expression = {
   },
   errorHidden: false,
   glesmos: false,
-  fill: number(0),
+  fill: undefined,
   logMode: false,
   displayEvaluationAsFraction: false,
   slider: {

@@ -1,6 +1,5 @@
 import Controller from "../Controller";
 import TextAST, { NodePath } from "../down/TextAST";
-import { identifierToStringAST, TextAndDiagnostics } from "../down/cstToAST";
 import * as Defaults from "../down/style/defaults";
 import { getIndentation } from "../modify";
 import { exprToTextString } from "../up/astToText";
@@ -49,7 +48,7 @@ const FOLDER_COMPLETIONS: Completion[] = [
     apply: macroExpandWithSelection(
       "table {\n  ",
       "x1",
-      " = [ ]\n  y1 = [ ]\n}"
+      " = []\n  \n  y1 = []\n}"
     ),
   },
   {
@@ -66,7 +65,7 @@ const FOLDER_COMPLETIONS: Completion[] = [
   {
     type: "keyword",
     label: "ticker",
-    apply: macroExpandWithSelection("ticker ", "action", `" @{ minStep: 0 }`),
+    apply: macroExpandWithSelection("ticker ", "a -> a+1", ` @{ minStep: 0 }`),
   },
 ];
 
@@ -150,13 +149,12 @@ function styleDefaults(controller: Controller, node: SyntaxNode): any {
       return Defaults.ticker;
     case "StyleMapping":
       return styleDefaults(controller, node.parent!);
-    case "MappingEntry":
+    case "MappingEntry": {
+      const id = node.getChild("Identifier")!;
       return styleDefaults(controller, node.parent!)[
-        identifierToStringAST(
-          new TextAndDiagnostics(controller.view!.state.doc, []),
-          node.getChild("Identifier")
-        ).value
+        controller.view!.state.doc.sliceString(id.from, id.to)
       ];
+    }
     default:
       throw Error(`Unexpected node type as parent of style: ${node.name}`);
   }
@@ -182,7 +180,15 @@ function styleCompletionsFromDefaults(defaults: any): Completion[] {
                 ","
               )
             : macroExpandWithSelection(key + ": @{ ", "", " },")
-          : macroExpandWithSelection(key + ": ", JSON.stringify(value), ","),
+          : typeof value === "string"
+          ? macroExpandWithSelection(
+              key + ': "',
+              // string stringify will always start and end with `"`
+              JSON.stringify(value).slice(1, -1),
+              '",'
+            )
+          : // I don't know if this last case is reachable
+            macroExpandWithSelection(key + ": ", JSON.stringify(value), ","),
     });
   }
   return completions;
