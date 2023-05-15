@@ -4,6 +4,7 @@ import {
   bareSeq,
   binop,
   comparator,
+  doubleInequality,
   functionCall,
   id,
   list,
@@ -264,17 +265,40 @@ describe("Basic exprs", () => {
       consequent: number(1),
       alternate: number(NaN),
     });
+    testExpr("implicit consequent double inequality", "{1<x<5}", {
+      type: "Piecewise",
+      condition: doubleInequality(number(1), "<", id("x"), "<", number(5)),
+      consequent: number(1),
+      alternate: number(NaN),
+    });
     testExpr("single condition", "{x>1:2}", {
       type: "Piecewise",
       condition: comparator(">", id("x"), number(1)),
       consequent: number(2),
       alternate: number(NaN),
     });
+    testExpr("implicit consequent and implicit else", "{x>1,5}", {
+      type: "Piecewise",
+      condition: comparator(">", id("x"), number(1)),
+      consequent: number(1),
+      alternate: number(5),
+    });
     testExpr("single condition and implicit else", "{x>1:2,5}", {
       type: "Piecewise",
       condition: comparator(">", id("x"), number(1)),
       consequent: number(2),
       alternate: number(5),
+    });
+    testExpr("implicit consequent twice", "{x<1,x>1}", {
+      type: "Piecewise",
+      condition: comparator("<", id("x"), number(1)),
+      consequent: number(1),
+      alternate: {
+        type: "Piecewise",
+        condition: comparator(">", id("x"), number(1)),
+        consequent: number(1),
+        alternate: number(NaN),
+      },
     });
     testExpr("two conditions and else", "{x>1:2,y>3:4,else:5}", {
       type: "Piecewise",
@@ -287,6 +311,23 @@ describe("Basic exprs", () => {
         alternate: number(5),
       },
     });
+  });
+  describe("Piecewise Diagnostics", () => {
+    testDiagnostics("not a condition: bad binop", "{x+3}", [
+      error("Condition must be a comparison", pos(1, 4)),
+    ]);
+    testDiagnostics("not a condition: bad id", "{abc}", [
+      error("Condition must be a comparison", pos(1, 4)),
+    ]);
+    testDiagnostics("not a condition on left of ':'", "{x+3:2}", [
+      error("Condition must be a comparison", pos(1, 4)),
+    ]);
+    testDiagnostics("not a condition in implicit pos", "{abc,2}", [
+      error("Condition must be a comparison", pos(1, 4)),
+    ]);
+    testDiagnostics("not comma", "{abc 2}", [
+      error("Unexpected character in Piecewise", pos(5, 6)),
+    ]);
   });
   describe("Action", () => {
     testExpr("update rule", "a->7", {
@@ -1113,17 +1154,17 @@ describe("Diagnostics", () => {
       warning("Program is empty. Try typing: y=x", undefined),
     ]);
     testDiagnostics("Skip node", `y=x @{} @! y=x^2`, [
-      error("Syntax error: invalid character @", pos(8, 9)),
+      error("Invalid character @", pos(8, 9)),
       error(
         "Unexpected '!'. Did you mean to precede it by an expression, such as 'x!'?",
         pos(9, 10)
       ),
     ]);
     testDiagnostics("Multiple skips", `y=)x]`, [
-      error("Syntax error: unexpected text: ')'.", pos(2, 3)),
+      error("Unexpected text: ')'.", pos(2, 3)),
     ]);
     testDiagnostics("Multiple insertions", `y=(1+)*(5+)`, [
-      error("Syntax error: unexpected text: ')'.", pos(5, 6)),
+      error("Unexpected text: ')'.", pos(5, 6)),
     ]);
     testDiagnostics("Non-identifier callee", `y = 7(x)`, [
       error("Function call must be an identifier", pos(4, 5)),
@@ -1157,13 +1198,13 @@ describe("Diagnostics", () => {
     ]);
     testDiagnostics("Non-expression list", `[table{}]`, [
       error(
-        "Syntax error: expected item in sequence to be an expression. Did you mean to write something like '[1,2,3]'?",
+        "Expected item in sequence to be an expression. Did you mean to write something like '[1,2,3]'?",
         pos(1, 8)
       ),
     ]);
     testDiagnostics("Non-expression piecewise", `{x>5:table{}}`, [
       error(
-        "Syntax error: expected branch of piecewise to be an expression. Did you mean to write something like '{x>3:5}'?",
+        "Expected branch of piecewise to be an expression. Did you mean to write something like '{x>3:5}'?",
         pos(5, 12)
       ),
     ]);

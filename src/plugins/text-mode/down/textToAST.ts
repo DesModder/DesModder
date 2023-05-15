@@ -104,7 +104,7 @@ class ParseState extends DiagnosticsState {
           col: prev ? prev.col + prev.text.length : 0,
         };
       if (t.type === "invalid")
-        this.pushError(`Syntax error: invalid character ${t.value}`, pos(t));
+        this.pushError(`Invalid character ${t.value}`, pos(t));
       if (!["space", "invalid", "comment"].includes(t.type)) return t;
     }
   }
@@ -169,7 +169,7 @@ class ParseError extends Error {}
 
 export function parse(input: string): [Diagnostic[], TextAST.Program] {
   const ps = new ParseState(input);
-  const children = parseStatements(ps);
+  const children = parseStatements(ps, { isTop: true });
   if (children.length === 0 && ps.diagnostics.length === 0)
     ps.pushWarning("Program is empty. Try typing: y=x", { from: 0, to: 0 });
   if (ps.peek().type !== "eof")
@@ -196,7 +196,7 @@ function parseMain(
   const initial = getInitialParselet(firstToken);
   if (!initial)
     throw ps.pushFatalError(
-      `Syntax error: unexpected text: '${firstToken.value}'.`,
+      `Unexpected text: '${firstToken.value}'.`,
       pos(firstToken)
     );
   let leftNode = initial(ps, firstToken);
@@ -224,7 +224,7 @@ function parseExpr(
   const result = parseMain(ps, lastBindingPower);
   if (!isExpression(result))
     throw ps.pushFatalError(
-      `Syntax error: expected ${posMsg} to be an expression. Did you mean to write something like '${example}'?`,
+      `Expected ${posMsg} to be an expression. Did you mean to write something like '${example}'?`,
       pos(result)
     );
   return result;
@@ -242,9 +242,6 @@ type TokenMap<T> = {
 
 type InitialParselet = (ps: ParseState, token: Token) => Node;
 
-// TODO consider: many initialParselets can become implicit multiplication
-// as well (consequentParselets): one exceptions is punct/'-'
-// Consider relation with newline breaking.
 const initialParselets: TokenMap<InitialParselet> = {
   punct: {
     "(": (ps, token): Node => {
@@ -293,7 +290,6 @@ const initialParselets: TokenMap<InitialParselet> = {
     "{": (ps, token): Node => {
       const branches: TextAST.PiecewiseBranch[] = [];
       while (true) {
-        // TODO disallow seq
         const curr = parseExpr(
           ps,
           Power.seq,
@@ -303,10 +299,12 @@ const initialParselets: TokenMap<InitialParselet> = {
         const next = ps.consume();
         if (next.value === "}") {
           const first = branches.length === 0;
+          if (first) assertComparison(ps, curr);
+          const bool = first || isComparison(curr);
           branches.push({
             type: "PiecewiseBranch",
-            condition: first ? curr : { type: "Identifier", name: "else" },
-            consequent: first ? { type: "Number", value: 1 } : curr,
+            condition: bool ? curr : { type: "Identifier", name: "else" },
+            consequent: bool ? { type: "Number", value: 1 } : curr,
             pos: pos(curr),
           });
           return {
@@ -321,6 +319,7 @@ const initialParselets: TokenMap<InitialParselet> = {
             "branch of piecewise",
             "{x>3:5}"
           );
+          assertComparison(ps, curr);
           branches.push({
             type: "PiecewiseBranch",
             condition: curr,
@@ -336,15 +335,24 @@ const initialParselets: TokenMap<InitialParselet> = {
             };
           else if (next.value !== ",")
             throw ps.pushFatalError(
-              "Invalid character in Piecewise",
+              "Unexpected character in Piecewise",
               pos(next)
             );
+        } else if (next.value === ",") {
+          assertComparison(ps, curr);
+          branches.push({
+            type: "PiecewiseBranch",
+            condition: curr,
+            consequent: { type: "Number", value: 1 },
+            pos: pos(curr),
+          });
+        } else {
+          throw ps.pushFatalError(
+            "Unexpected character in Piecewise",
+            pos(next)
+          );
         }
       }
-      // TODO: disallow non-comparisons
-      // hit colon: shift left
-      // hit comma: move on
-      // hit close brace: finish
     },
     "@{": parseStyleMapping,
   },
@@ -419,6 +427,21 @@ const initialParselets: TokenMap<InitialParselet> = {
   },
 };
 
+const comparisonOps = ["<", ">", "<=", ">=", "="];
+
+function assertComparison(ps: ParseState, node: TextAST.Expression) {
+  if (!isComparison(node))
+    throw ps.pushFatalError("Condition must be a comparison", node.pos);
+}
+
+function isComparison(node: TextAST.Expression) {
+  return (
+    node.type === "DoubleInequality" ||
+    (node.type === "BinaryExpression" && comparisonOps.includes(node.op)) ||
+    (node.type === "Identifier" && node.name === "else")
+  );
+}
+
 function id(token: Token): TextAST.Identifier {
   return {
     type: "Identifier",
@@ -428,14 +451,18 @@ function id(token: Token): TextAST.Identifier {
 }
 
 /** Parse statements until a '}' or EOF */
-// TODO: Don't stop on '}' at top level
-function parseStatements(ps: ParseState) {
+function parseStatements(ps: ParseState, { isTop } = { isTop: false }) {
   const out: TextAST.Statement[] = [];
   while (true) {
     let next = ps.peek();
     while (next.type === "semi") {
       ps.consume();
       next = ps.peek();
+    }
+    if (isTop && next.value === "}") {
+      ps.pushError("Unexpected '}'", pos(next));
+      ps.consume();
+      continue;
     }
     if (next.value === "}" || next.type === "eof") return out;
     try {
@@ -474,7 +501,6 @@ function repeatedOperatorParselet(
     ps.consume("...");
     const end = parseExpr(ps, Power.top, `Upper bound of ${name}`, ex);
     ps.consume(")");
-    // TODO: different precedence for product?
     const expr = parseExpr(ps, Power.add, `Term expression of ${name}`, ex);
     return {
       type: "RepeatedExpression",
@@ -582,7 +608,6 @@ const consequentParselets: Record<Punct, ConsequentParselet | undefined> = {
   }),
   ",": consequentParselet(Power.seq, (ps, left, token): Node => {
     // Right-associative for no reason
-    // TODO: flatten sequence, same as piecewise. Careful of parenWrapped
     const ex = "a -> a+b, b -> a";
     assertLeftIsExpression(ps, left, token, ex);
     if (ps.peek().value === "...") return left;
@@ -762,7 +787,7 @@ function parseStyleMapping(ps: ParseState, token: Token): TextAST.StyleMapping {
 function finalizeStatement(ps: ParseState, expr: Node): TextAST.Statement {
   if (isStatement(expr)) return expr;
   else if (isExpression(expr)) return exprToStatement(ps, expr);
-  // TODO
+  // Stuff like Program or StyleMapping that should not show up in this context
   else
     throw ps.pushFatalError(
       `I don't know how to finalize '${expr.type}'`,

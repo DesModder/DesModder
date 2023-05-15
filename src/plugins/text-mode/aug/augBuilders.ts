@@ -27,8 +27,10 @@ export function binop(
   };
 }
 
+type CompOp = "<" | "<=" | "=" | ">=" | ">";
+
 export function comparator(
-  op: "<" | "<=" | "=" | ">=" | ">",
+  op: CompOp,
   left: Aug.Latex.AnyChild,
   right: Aug.Latex.AnyChild
 ): Aug.Latex.Comparator {
@@ -36,6 +38,23 @@ export function comparator(
     type: "Comparator",
     operator: op,
     left,
+    right,
+  };
+}
+
+export function doubleInequality(
+  left: Aug.Latex.AnyChild,
+  leftOperator: CompOp,
+  middle: Aug.Latex.AnyChild,
+  rightOperator: CompOp,
+  right: Aug.Latex.AnyChild
+) {
+  return {
+    type: "DoubleInequality",
+    left,
+    leftOperator,
+    middle,
+    rightOperator,
     right,
   };
 }
