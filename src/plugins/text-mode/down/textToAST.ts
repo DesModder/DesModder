@@ -8,6 +8,7 @@ import TextAST, {
 import { DiagnosticsState } from "./diagnostics";
 import { Diagnostic } from "@codemirror/lint";
 import * as moo from "moo";
+import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
 
 // prettier-ignore
 const punct = [
@@ -24,7 +25,7 @@ const rules = {
   number: /(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?/,
   punct: [...punct],
   id: {
-    match: /[a-zA-Z][a-zA-Z0-9]*/,
+    match: /[a-zA-Z][a-zA-Z0-9_]*/,
     type: moo.keywords({
       // prettier-ignore
       keyword: [
@@ -247,7 +248,7 @@ const initialParselets: TokenMap<InitialParselet> = {
     "(": (ps, token): Node => {
       if (ps.peek().value === "d/d") {
         ps.consume();
-        const variable = id(ps.consumeType("id"));
+        const variable = id(ps, ps.consumeType("id"));
         ps.consume(")");
         const expr = parseExpr(
           ps,
@@ -303,7 +304,7 @@ const initialParselets: TokenMap<InitialParselet> = {
           const bool = first || isComparison(curr);
           branches.push({
             type: "PiecewiseBranch",
-            condition: bool ? curr : { type: "Identifier", name: "else" },
+            condition: bool ? curr : { type: "Identifier", name: "e_lse" },
             consequent: bool ? { type: "Number", value: 1 } : curr,
             pos: pos(curr),
           });
@@ -361,7 +362,7 @@ const initialParselets: TokenMap<InitialParselet> = {
     value: parseFloat(token.value),
     pos: pos(token),
   }),
-  id: (_, token) => id(token),
+  id: (ps, token) => id(ps, token),
   string: stringParselet,
   keyword: {
     sum: repeatedOperatorParselet("sum"),
@@ -438,16 +439,71 @@ function isComparison(node: TextAST.Expression) {
   return (
     node.type === "DoubleInequality" ||
     (node.type === "BinaryExpression" && comparisonOps.includes(node.op)) ||
-    (node.type === "Identifier" && node.name === "else")
+    (node.type === "Identifier" && node.name === "e_lse")
   );
 }
 
-function id(token: Token): TextAST.Identifier {
+function id(ps: ParseState, token: Token): TextAST.Identifier {
   return {
     type: "Identifier",
-    name: token.value,
+    name: normalizeID(ps, token),
     pos: pos(token),
   };
+}
+
+/**
+ * Fragile names. Subset of those given by the following script:
+ *
+ *     const {BuiltInTable, CompilerFunctionTable} = require("core/math/ir/builtin-table")
+ *     const builtins = Object.keys({...BuiltInTable, ...CompilerFunctionTable})
+ *     const {getAutoOperators, getAutoCommands}  = require("main/mathquill-operators")
+ *     const operators = new Set((getAutoOperators()+" "+getAutoCommands()).split(/[ |]/));
+ *     console.log(builtins.filter(name => !operators.has(name)))
+ */
+const fragileNames = [
+  "polyGamma",
+  "argmin",
+  "argmax",
+  "uniquePerm",
+  "rtxsqpone",
+  "rtxsqmone",
+  "hypot",
+];
+
+const dontSubscriptIdentifiers = new Set([
+  ...autoOperatorNames.split(" ").map((e) => e.split("|")[0]),
+  ...autoCommandNames.split(" "),
+  ...fragileNames,
+  "index",
+  "dt",
+]);
+
+/**
+ * Pre-condition: expr.name matches:
+ *  - [a-zA-Z][a-zA-Z0-9_]*
+ *
+ * Post-condition: expr.name matches either:
+ *  - [a-zA-Z][a-zA-Z]*
+ *  - [a-zA-Z][a-zA-Z]*_[a-zA-Z0-9]+
+ */
+function normalizeID(ps: ParseState, token: Token): string {
+  const error = (msg: string) => {
+    ps.pushError(msg, pos(token));
+    return "error";
+  };
+  const parts = token.value.split("_");
+  if (parts.length === 1) {
+    const [p] = parts;
+    if (p.length === 1 || dontSubscriptIdentifiers.has(p)) return p;
+    return p[0] + "_" + p.slice(1);
+  } else if (parts.length === 2) {
+    const [main, subscript] = parts;
+    if (subscript.length === 0) return error("Cannot end with '_'");
+    if (/[0-9]/.test(main)) return error("Digits are not allowed before '_'");
+    return main + "_" + subscript;
+  } else {
+    return error("Too many '_' in identifier");
+  }
 }
 
 /** Parse statements until a '}' or EOF */
@@ -494,7 +550,7 @@ function repeatedOperatorParselet(
 ): InitialParselet {
   const ex = `(${name}=(1...5) x^2)`;
   return (ps, token): Node => {
-    const index = id(ps.consumeType("id"));
+    const index = id(ps, ps.consumeType("id"));
     ps.consume("=");
     ps.consume("(");
     const start = parseExpr(ps, Power.top, `lower bound of ${name}`, ex);

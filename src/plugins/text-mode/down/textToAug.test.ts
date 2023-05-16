@@ -185,6 +185,23 @@ describe("Basic exprs", () => {
   describe("Identifier", () => {
     testExpr("one character", "a", id("a"));
     testExpr("multiple characters", "abcd", id("a_bcd"));
+    testExpr("multiple characters with subscript", "a_bcd", id("a_bcd"));
+    testExpr("backslash command", "theta", id("theta"));
+    testExpr("backslash command with subscript", "theta_xy", id("theta_xy"));
+    testExpr("operatorname", "min", id("min"));
+    testExpr("operatorname with subscript", "min_xy", id("min_xy"));
+    testExpr("fragile", "hypot", id("hypot"));
+    testExpr("dt", "dt", id("dt"));
+    testExpr("index", "index", id("index"));
+    testDiagnostics("digits before sub", "a0_xy", [
+      error("Digits are not allowed before '_'", pos(0, 5)),
+    ]);
+    testDiagnostics("trailing sub", "theta_", [
+      error("Cannot end with '_'", pos(0, 6)),
+    ]);
+    testDiagnostics("multiple sub", "theta_x_y", [
+      error("Too many '_' in identifier", pos(0, 9)),
+    ]);
   });
   describe("String", () => {
     testString("simple", `"abc"`, "abc");

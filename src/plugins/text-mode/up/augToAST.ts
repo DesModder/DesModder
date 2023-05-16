@@ -331,10 +331,9 @@ function booleanToAST(bool: boolean | undefined, defaultValue: boolean) {
 }
 
 function identifierToAST(name: { symbol: string }): TextAST.Identifier {
-  // TODO: avoid collisions from underscore removal
   return {
     type: "Identifier",
-    name: name.symbol.replace("_", ""),
+    name: name.symbol,
   };
 }
 

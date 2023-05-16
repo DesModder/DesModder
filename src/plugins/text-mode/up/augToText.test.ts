@@ -71,7 +71,11 @@ describe("Basic exprs", () => {
   });
   describe("Identifier", () => {
     testExpr("one character", "a", id("a"));
-    testExpr("multiple characters", "abcd", id("a_bcd"));
+    testExpr("multiple characters", "a_bcd", id("a_bcd"));
+    testExpr("backslash command", "theta", id("theta"));
+    testExpr("backslash command with subscript", "theta_xy", id("theta_xy"));
+    testExpr("operatorname", "min", id("min"));
+    testExpr("operatorname with subscript", "min_xy", id("min_xy"));
   });
   describe("RepeatedExpression", () => {
     // TODO: don't need parens for any of these

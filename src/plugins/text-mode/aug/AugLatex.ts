@@ -95,8 +95,8 @@ export interface Identifier {
   /**
    * Symbols are stored as a symbol. Three main cases:
    *  - one-character name like "a"
-   *  - long name like "random" that becomes \\operatorname{random}
-   *  - greek name like "delta" that becomes \delta
+   *  - operatorname, e.g. "random" -> \operatorname{random}
+   *  - backslash command, e.g. "theta" -> \theta, and "min" -> \min
    * Each of these can be optionally followed by an underscore
    * and one or more letters/digits. Sometimes there are curly braces
    * (example?), but these should be ignored

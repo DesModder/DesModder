@@ -21,7 +21,9 @@ export function evalExpr(
       if (expr.name in builtinMap) {
         return builtinMap[expr.name];
       } else {
-        diagnostics.push(error(`Undefined identifier: ${expr.name}`, expr.pos));
+        diagnostics.push(
+          error(`Undefined identifier: ${expr.name.replace("_", "")}`, expr.pos)
+        );
         return null;
       }
     default:
@@ -36,8 +38,8 @@ export function evalExpr(
 }
 
 const builtinMap: Record<string, number | string | boolean | null> = {
-  false: false,
-  true: true,
+  f_alse: false,
+  t_rue: true,
   pi: Math.PI,
   tau: 2 * Math.PI,
   e: Math.E,

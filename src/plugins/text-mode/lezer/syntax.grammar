@@ -126,7 +126,7 @@ kw<term> { @specialize[@name={term}]<Identifier, term> }
 @tokens {
   semicolon { ";" }
 
-  Identifier { $[a-zA-Z] $[a-zA-Z0-9]* }
+  Identifier { $[a-zA-Z] $[a-zA-Z0-9_]* }
 
   // Needed to avoid confusion with p .5x being dot access: p.5x
   DotAccessIdentifier { "." $[a-zA-Z] $[a-zA-Z0-9]* }

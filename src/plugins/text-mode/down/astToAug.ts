@@ -11,7 +11,6 @@ import * as Schema from "./style/schema";
 import { Diagnostic } from "@codemirror/lint";
 import { GrapherState } from "@desmodder/graph-state";
 import { Calc } from "globals/window";
-import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
 import { everyNonNull } from "utils/utils";
 
 export class DownState extends DiagnosticsState {
@@ -351,7 +350,7 @@ function columnExpressionCommonStyle(style: Hydrated.ColumnExpressionCommon) {
       typeof style.color === "string"
         ? style.color
         : (style.color.type === "Identifier" &&
-            Calc.colors[style.color.name]) ||
+            Calc.colors[style.color.name.replace("_", "")]) ||
           childExprToAug(style.color),
     hidden: style.hidden,
     points:
@@ -811,40 +810,10 @@ function piecewiseInnerToAug(
   };
 }
 
-/**
- * Fragile names. Subset of those given by the following script:
- *
- *     const {BuiltInTable, CompilerFunctionTable} = require("core/math/ir/builtin-table")
- *     const builtins = Object.keys({...BuiltInTable, ...CompilerFunctionTable})
- *     const {getAutoOperators, getAutoCommands}  = require("main/mathquill-operators")
- *     const operators = new Set((getAutoOperators()+" "+getAutoCommands()).split(/[ |]/));
- *     console.log(builtins.filter(name => !operators.has(name)))
- */
-const fragileNames = [
-  "polyGamma",
-  "argmin",
-  "argmax",
-  "uniquePerm",
-  "rtxsqpone",
-  "rtxsqmone",
-  "hypot",
-];
-
-const dontSubscriptIdentifiers = new Set([
-  ...autoOperatorNames.split(" ").map((e) => e.split("|")[0]),
-  ...autoCommandNames.split(" "),
-  ...fragileNames,
-  "index",
-  "dt",
-]);
-
 function identifierToAug(expr: TextAST.Identifier) {
   return {
     type: "Identifier" as const,
-    symbol:
-      expr.name.length > 1 && !dontSubscriptIdentifiers.has(expr.name)
-        ? expr.name[0] + "_" + expr.name.substring(1)
-        : expr.name,
+    symbol: expr.name,
   };
 }
 
