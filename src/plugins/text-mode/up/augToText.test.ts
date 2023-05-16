@@ -175,7 +175,7 @@ describe("Basic exprs", () => {
         )
       )
     );
-    testExpr("sub precedence with derivative", "(d/d x) (f with b = 3)", {
+    testExpr("sub precedence with derivative", "((d/d x) (f with b = 3))", {
       type: "Derivative",
       arg: substitution(id("f"), assignmentExpr(id("b"), number(3))),
       variable: id("x"),

@@ -25,7 +25,7 @@
     "lint:formatting": "prettier --check .",
     "lint:types": "tsc --noEmit",
     "eslint": "eslint",
-    "lint:eslint": "eslint src",
+    "lint:eslint": "eslint .",
     "test": "npm run test:jest",
     "test:jest": "jest --config jest.config.js"
   },
