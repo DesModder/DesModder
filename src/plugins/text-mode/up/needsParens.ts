@@ -17,13 +17,13 @@ export default function needsParens(path: NodePath): boolean {
   const node = path.node;
   const name = path.name;
 
-  if (node.type === "SequenceExpression")
-    // sequence expressions will only ever be unwrapped when their parent
-    // is a statement
-    return node.parenWrapped;
-
   /* istanbul ignore if */
   if (parent === null) return false;
+
+  if (node.type === "SequenceExpression")
+    // sequence expressions will only ever be unwrapped when their parent
+    // is a statement or style mapping (onClick event)
+    return node.parenWrapped || parent.type === "MappingEntry";
 
   if (isNonExpression(node) || isNonExpression(parent)) return false;
 
@@ -143,6 +143,7 @@ export default function needsParens(path: NodePath): boolean {
     case "DerivativeExpression":
       // TODO: don't always need parens
       return true;
+    /* istanbul ignore next */
     default:
       node satisfies never;
       throw new Error(

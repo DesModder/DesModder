@@ -19,6 +19,13 @@ import { itemToText } from "./augToText";
 jest.mock("utils/depUtils");
 jest.mock("globals/window");
 
+function testStmtWithStyle(desc: string, item: Aug.ItemAug, expected: string) {
+  test(desc, () => {
+    const text = itemToText(item);
+    expect(text).toEqual(expected);
+  });
+}
+
 function testStmt(desc: string, item: Aug.ItemAug, expected: string) {
   test(desc, () => {
     const text = itemToText(item);
@@ -26,30 +33,27 @@ function testStmt(desc: string, item: Aug.ItemAug, expected: string) {
   });
 }
 
+const stmtDefaults = {
+  type: "expression",
+  id: "1",
+  color: "",
+  hidden: false,
+  errorHidden: false,
+  pinned: false,
+  secret: false,
+  glesmos: false,
+  fillOpacity: number(0),
+  displayEvaluationAsFraction: false,
+  slider: {},
+  vizProps: {},
+} as const;
+
 function testExprPlain(
   desc: string,
   expected: string,
   expr: Aug.Latex.AnyRootOrChild
 ) {
-  testStmt(
-    desc,
-    {
-      type: "expression",
-      id: "1",
-      latex: expr,
-      color: "",
-      hidden: false,
-      errorHidden: false,
-      pinned: false,
-      secret: false,
-      glesmos: false,
-      fillOpacity: number(0),
-      displayEvaluationAsFraction: false,
-      slider: {},
-      vizProps: {},
-    },
-    expected
-  );
+  testStmt(desc, { ...stmtDefaults, latex: expr }, expected);
 }
 
 function testExpr(desc: string, expected: string, expr: Aug.Latex.AnyChild) {
@@ -171,6 +175,11 @@ describe("Basic exprs", () => {
         )
       )
     );
+    testExpr("sub precedence with derivative", "(d/d x) (f with b = 3)", {
+      type: "Derivative",
+      arg: substitution(id("f"), assignmentExpr(id("b"), number(3))),
+      variable: id("x"),
+    });
   });
   describe("Piecewise", () => {
     testExpr("empty piecewise", "{else: 1}", {
@@ -260,6 +269,21 @@ describe("Basic exprs", () => {
       consequent: updateRule(id("a"), number(3)),
       alternate: updateRule(id("a"), id("b")),
     });
+    testStmtWithStyle(
+      "UpdateRule in assignment",
+      {
+        ...stmtDefaults,
+        latex: id("P"),
+        clickableInfo: {
+          description: "",
+          latex: bareSeq(
+            updateRule(id("a"), number(3)),
+            updateRule(id("b"), number(5))
+          ),
+        },
+      },
+      'P @{ color: "", fill: 0, onClick: (a -> 3, b -> 5), clickDescription: "" }'
+    );
   });
   describe("MemberExpression", () => {
     testExpr("point access", "P.y", {
