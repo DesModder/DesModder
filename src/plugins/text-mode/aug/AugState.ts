@@ -176,8 +176,8 @@ export interface BaseClickable {
 }
 
 export interface DomainAug {
-  min: Latex.AnyChild;
-  max: Latex.AnyChild;
+  min?: Latex.AnyChild;
+  max?: Latex.AnyChild;
 }
 
 export interface RegressionData {

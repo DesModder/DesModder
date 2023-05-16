@@ -263,35 +263,31 @@ function expressionToAug(
           loopMode: style.slider.loopMode,
           playDirection: style.slider.reversed ? -1 : 1,
           isPlaying: style.slider.playing,
-          min: childExprToAug(style.slider.min),
-          max: childExprToAug(style.slider.max),
-          step: childExprToAug(style.slider.step),
+          min: style.slider.min && childExprToAug(style.slider.min),
+          max: style.slider.max && childExprToAug(style.slider.max),
+          step: style.slider.step && childExprToAug(style.slider.step),
         }
       : {},
     polarDomain:
-      style.domain &&
-      isPolar &&
-      !exprEvalSameDeep(style.domain, { min: 0, max: 12 * Math.PI })
+      style.domain && isPolar
         ? {
-            min: childExprToAug(style.domain.min),
-            max: childExprToAug(style.domain.max),
+            min: style.domain.min && childExprToAug(style.domain.min),
+            max: style.domain.max && childExprToAug(style.domain.max),
           }
         : undefined,
     parametricDomain:
-      style.domain &&
-      !isPolar &&
-      !exprEvalSameDeep(style.domain, { min: 0, max: 1 })
+      style.domain && !isPolar
         ? {
-            min: childExprToAug(style.domain.min),
-            max: childExprToAug(style.domain.max),
+            min: style.domain.min && childExprToAug(style.domain.min),
+            max: style.domain.max && childExprToAug(style.domain.max),
           }
         : undefined,
     cdf:
       style.cdf &&
       !exprEvalSameDeep(style.cdf, { min: -Infinity, max: Infinity })
         ? {
-            min: childExprToAug(style.cdf.min),
-            max: childExprToAug(style.cdf.max),
+            min: style.cdf.min && childExprToAug(style.cdf.min),
+            max: style.cdf.max && childExprToAug(style.cdf.max),
           }
         : undefined,
     // TODO: vizProps

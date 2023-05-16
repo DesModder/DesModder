@@ -96,17 +96,13 @@ const expression = {
     reversed: false,
     loopMode: "LOOP_FORWARD_REVERSE",
     period: 4000,
-    min: number(-10),
-    max: number(10),
-    step: number(0),
+    min: undefined,
+    max: undefined,
+    step: undefined,
   },
   cdf: {
-    min: {
-      type: "PrefixExpression",
-      op: "-",
-      expr: { type: "Identifier", name: "infty" },
-    },
-    max: { type: "Identifier", name: "infty" },
+    min: undefined,
+    max: undefined,
   },
   // TODO vizProps
   // vizProps
@@ -115,21 +111,16 @@ const expression = {
 export const polarExpression: Hydrated.Expression = {
   ...expression,
   domain: {
-    min: number(0),
-    max: {
-      type: "BinaryExpression",
-      op: "*",
-      left: number(12),
-      right: { type: "Identifier", name: "pi" },
-    },
+    min: undefined,
+    max: undefined,
   },
 };
 
 export const nonpolarExpression: Hydrated.Expression = {
   ...expression,
   domain: {
-    min: number(0),
-    max: number(1),
+    min: undefined,
+    max: undefined,
   },
 };
 

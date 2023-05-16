@@ -596,9 +596,6 @@ describe("Statement metadata", () => {
         loopMode: "LOOP_FORWARD_REVERSE",
         playDirection: 1,
         isPlaying: false,
-        min: number(-10),
-        max: number(10),
-        step: number(0),
       },
     });
     testStmt(

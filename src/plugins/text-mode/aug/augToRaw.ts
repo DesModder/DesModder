@@ -151,16 +151,19 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
           loopMode: item.slider.loopMode,
           playDirection: item.slider.playDirection,
           isPlaying: item.slider.isPlaying,
-          hardMin: !!item.slider.min,
+          hardMin:
+            !!item.slider.min && item.slider.loopMode !== "PLAY_INDEFINITELY",
           min: latexTreeToStringMaybe(item.slider.min),
-          hardMax: !!item.slider.max,
+          hardMax:
+            !!item.slider.max && item.slider.loopMode !== "PLAY_INDEFINITELY",
           max: latexTreeToStringMaybe(item.slider.max),
           step: latexTreeToStringMaybe(item.slider.step),
         },
         displayEvaluationAsFraction: item.displayEvaluationAsFraction,
-        polarDomain: latexMapDomain(item.polarDomain),
-        parametricDomain: latexMapDomain(item.parametricDomain),
-        domain: latexMapDomain(item.parametricDomain),
+        polarDomain: item.polarDomain && latexMapDomain(item.polarDomain),
+        parametricDomain:
+          item.parametricDomain && latexMapDomain(item.parametricDomain),
+        domain: item.parametricDomain && latexMapDomain(item.parametricDomain),
         cdf: item.cdf && {
           show: true,
           min: latexTreeToStringMaybe(item.cdf.min),
@@ -241,8 +244,8 @@ function latexMapDomain(domain: Aug.DomainAug | undefined) {
     return undefined;
   } else {
     return {
-      min: latexTreeToString(domain.min),
-      max: latexTreeToString(domain.max),
+      min: domain.min ? latexTreeToString(domain.min) : "",
+      max: domain.max ? latexTreeToString(domain.max) : "",
     };
   }
 }

@@ -99,17 +99,17 @@ export interface Expression
       | "PLAY_ONCE"
       | "PLAY_INDEFINITELY";
     period: number;
-    min: Expr;
-    max: Expr;
-    step: Expr;
+    min?: Expr;
+    max?: Expr;
+    step?: Expr;
   };
   domain?: {
-    min: Expr;
-    max: Expr;
+    min?: Expr;
+    max?: Expr;
   };
   cdf?: {
-    min: Expr;
-    max: Expr;
+    min?: Expr;
+    max?: Expr;
   };
   // TODO vizProps
   // vizProps:
