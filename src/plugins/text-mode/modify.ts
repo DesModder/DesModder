@@ -71,8 +71,7 @@ export function eventSequenceChanges(
             // change.raw_slider_latex e.g. a slider was played.
             // This is also triggered on first update of a slider
             // Filtering out unnecessary re-writes is done later in itemChange
-            // change.zero_values is for lists
-            // I don't know why we update lists
+            // change.zero_values is for lists: action updates
             itemsChanged[changeID] = "latex-only";
           } else if (
             // TODO: move_strategy also gets emitted when the viewport is panned

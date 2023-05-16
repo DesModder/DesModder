@@ -882,7 +882,7 @@ function parseBareSeq(ps: ParseState, example: string): TextAST.Expression[] {
 
 /** Assumes last token parsed is open paren '(' */
 function parseFunctionCall(ps: ParseState, left: Node): TextAST.CallExpression {
-  const args = parseBareSeq(ps, "f(x,y)");
+  const args = ps.peek().value === ")" ? [] : parseBareSeq(ps, "f(x,y)");
   const next = ps.consume(")");
   if (left.type !== "Identifier" && left.type !== "MemberExpression")
     throw ps.pushFatalError("Function call must be an identifier", pos(left));

@@ -752,13 +752,12 @@ function callExpressionToAug(
     };
   else if (
     expr.callee.type === "MemberExpression" &&
-    expr.callee.object.type === "Identifier" &&
     expr.callee.property.type === "Identifier"
   )
-    // Case e.g. L.random(5)
+    // Case e.g. L.random(5) or f(x).total()
     return {
       type: "DotAccess",
-      object: identifierToAug(expr.callee.object),
+      object: childExprToAug(expr.callee.object),
       property: {
         type: "FunctionCall",
         callee: identifierToAug(expr.callee.property),

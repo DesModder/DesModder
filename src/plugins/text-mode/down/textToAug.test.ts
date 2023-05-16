@@ -412,6 +412,16 @@ describe("Basic exprs", () => {
       object: id("L"),
       property: functionCall(id("random"), [number(5)]),
     });
+    testExpr("dot access call on a function", "f(x).total()", {
+      type: "DotAccess",
+      object: functionCall(id("f"), [id("x")]),
+      property: functionCall(id("total"), []),
+    });
+    testExpr("dot access call on a list", "[1,2,3,4,5,6].random(3)", {
+      type: "DotAccess",
+      object: list(...[1, 2, 3, 4, 5, 6].map(number)),
+      property: functionCall(id("random"), [number(3)]),
+    });
   });
   describe("ListAccessExpression", () => {
     testExpr("numeric index", "L[1]", {
