@@ -1,3 +1,4 @@
+import { Console } from "../globals/window";
 import { format } from "../i18n/i18n-core";
 import { postMessageUp } from "../utils/messages";
 import panicHTML from "./panic.html";
@@ -61,7 +62,7 @@ function addLabelledCheckboxItem(list: Element, plugin: string) {
 
 export const existingPanics = new Set<string>();
 export function addPanic(plugin: string) {
-  console.warn("Panicking for plugin", plugin);
+  Console.warn("Panicking for plugin", plugin);
   const panicPopover = ensurePanicPopover();
   document.getElementById("dsm-encountered-errors")!.style.display = "unset";
   if (!existingPanics.has(plugin)) {

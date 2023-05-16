@@ -2,7 +2,7 @@ import enFTL from "../../localization/en.ftl";
 import esFTL from "../../localization/es.ftl";
 import frFTL from "../../localization/fr.ftl";
 import { FluentBundle, FluentResource, FluentVariable } from "@fluent/bundle";
-import { Fragile } from "globals/window";
+import { Console, Fragile } from "globals/window";
 
 function currentLanguage() {
   return Fragile?.currentLanguage?.() ?? "en";
@@ -22,7 +22,7 @@ export function format(
     return bundle!.formatPattern(message.value, args);
   }
   if (missingReplacement === undefined)
-    console.warn("[DesModder] Error formatting key", key, "in locale", lang);
+    Console.warn("[DesModder] Error formatting key", key, "in locale", lang);
   const englishBundle = locales.get("en")!;
   const englishMessage = englishBundle.getMessage(key);
   if (englishMessage?.value != null) {
@@ -40,7 +40,7 @@ function addLanguage(locale: string, ftl: string) {
   const bundle = new FluentBundle(locale, { useIsolating: false });
   const errors = bundle.addResource(resource);
   if (errors.length) {
-    console.warn("FTL translation file errors for locale " + locale, errors);
+    Console.warn("FTL translation file errors for locale " + locale, errors);
   }
   locales.set(locale, bundle);
 }

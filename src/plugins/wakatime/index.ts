@@ -1,4 +1,4 @@
-import { Calc } from "../../globals/window";
+import { Calc, Console } from "../../globals/window";
 import { desModderController } from "../../script";
 import { getCurrentGraphTitle } from "../../utils/depUtils";
 import { configList } from "./config";
@@ -16,7 +16,7 @@ async function maybeSendHeartbeat(isWrite: boolean) {
   const graphURL = window.location.href;
   const lineCount = Calc.getExpressions().length;
 
-  console.debug("[WakaTime] Sending heartbeat at:", new Date());
+  Console.debug("[WakaTime] Sending heartbeat at:", new Date());
   postMessageUp({
     type: "send-heartbeat",
     options: {
@@ -55,7 +55,7 @@ listenToMessageDown((msg) => {
         hideAfter: 0,
       });
     }
-    console.error("Wakatime heartbeat error:", msg.message);
+    Console.error("Wakatime heartbeat error:", msg.message);
   }
   return false;
 });

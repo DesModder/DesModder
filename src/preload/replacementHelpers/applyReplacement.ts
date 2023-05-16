@@ -1,3 +1,4 @@
+import { Console } from "../../globals/window";
 import { addPanic } from "../../panic/panic";
 import { ReplacementError } from "./errors";
 import { Command, Block } from "./parse";
@@ -177,7 +178,7 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
     } catch (e) {
       if (r.alternative !== undefined) applySymbolsForTable(r.alternative);
       else {
-        console.warn(e);
+        Console.warn(e);
         r.plugins.forEach(addPanic);
       }
     }
@@ -200,7 +201,7 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
     } catch (e) {
       if (r.alternative !== undefined) return getReplacement(r.alternative);
       else {
-        console.warn(e);
+        Console.warn(e);
         r.plugins.forEach(addPanic);
         return [];
       }

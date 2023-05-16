@@ -2,7 +2,7 @@
 import Metadata, { Expression } from "./interface";
 import migrateToLatest from "./migrate";
 import { ItemModel } from "globals/models";
-import { Calc } from "globals/window";
+import { Calc, Console } from "globals/window";
 import { List } from "utils/depUtils";
 import { OptionalProperties } from "utils/utils";
 
@@ -40,7 +40,7 @@ export function getMetadata() {
     const parsed = JSON.parse(expr.text);
     return migrateToLatest(parsed);
   }
-  console.warn("Invalid dsm-metadata. Ignoring");
+  Console.warn("Invalid dsm-metadata. Ignoring");
   return getBlankMetadata();
 }
 

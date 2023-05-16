@@ -97,7 +97,6 @@ function senseDarkReader(config: Config) {
           (x as HTMLElement).classList.contains("darkreader")
         )
       ) {
-        console.log("boop");
         applyColor(config.primaryColor);
         observer.disconnect();
       }

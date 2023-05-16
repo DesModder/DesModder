@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * This is a script that takes the contents of raw.css and generates
  * overrides.less, replacing primary-based colors with var(--variable) and

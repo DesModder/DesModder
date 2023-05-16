@@ -111,3 +111,10 @@ declare global {
     fromEntries<T>(obj: T): FromEntriesWithReadOnly<T>;
   }
 }
+
+/**
+ * Use `Console.warn` and related methods for logs that should be released
+ * Use `console.log` (lowercase) when you're debugging, to avoid accidental commit
+ * Use `/* eslint-disable no-console` and lowercase `console.log` on node scripts
+ */
+export const Console = (window as any).console;

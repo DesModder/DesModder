@@ -1,6 +1,6 @@
 import Controller from "./Controller";
 import View from "./View";
-import { Calc } from "globals/window";
+import { Calc, Console } from "globals/window";
 import { Plugin } from "plugins";
 
 const controller = new Controller();
@@ -15,7 +15,7 @@ function tryInitView() {
   try {
     view.initView();
   } catch {
-    console.warn("Failed to initialize find-replace view");
+    Console.warn("Failed to initialize find-replace view");
   }
 }
 
