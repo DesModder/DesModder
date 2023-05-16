@@ -279,6 +279,9 @@ describe("Basic exprs", () => {
         )
       )
     );
+    testDiagnostics("substitution precedence with comma", "[b with b=3, 5]", [
+      error("List comprehension must set variable = identifier", pos(13, 14)),
+    ]);
   });
   describe("Piecewise", () => {
     testExpr("trivial (else-only) piecewise", "{else:1}", {

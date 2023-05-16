@@ -297,7 +297,8 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
     case "Substitution":
       return [
         exprToText(path.withChild(e.body, "body")),
-        " with ",
+        line,
+        "with ",
         join(
           ", ",
           e.assignments.map((assignment, i) =>

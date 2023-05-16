@@ -383,10 +383,10 @@ function childNodeToString(e: Aug.Latex.AnyChild): string {
           e.assignments.map(assignmentExprToRaw).join(",")
       );
     case "Substitution":
-      return (
+      return wrapParen(
         childNodeToString(e.body) +
-        "\\operatorname{with}" +
-        e.assignments.map(assignmentExprToRaw).join(",")
+          "\\operatorname{with}" +
+          e.assignments.map(assignmentExprToRaw).join(",")
       );
     case "Piecewise": {
       const piecewiseParts: string[] = [];

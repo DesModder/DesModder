@@ -39,8 +39,9 @@ export default function needsParens(path: NodePath): boolean {
         node.type !== "Identifier" &&
         node.type !== "MemberExpression"
       );
-    case "RangeExpression":
     case "ListExpression":
+      return node.type === "Substitution";
+    case "RangeExpression":
     case "ListComprehension":
     case "Substitution":
       return false;
