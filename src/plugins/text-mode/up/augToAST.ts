@@ -61,9 +61,7 @@ export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
   if (item.error)
     return {
       type: "Text",
-      text: `(Error in automatic conversion${
-        item.type === "text" ? ": " + item.text : ""
-      })`,
+      text: `Conversion error${item.type === "text" ? ": " + item.text : ""}`,
       style: null,
     };
   const base = {

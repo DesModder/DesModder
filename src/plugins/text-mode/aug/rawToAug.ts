@@ -112,11 +112,24 @@ function tryRawNonFolderToAug(
   };
   switch (item.type) {
     case "expression": {
+      let latex;
+      if (item.latex) {
+        try {
+          latex = parseRootLatex(item.latex);
+        } catch {
+          return {
+            ...base,
+            type: "text",
+            text: item.latex,
+            error: true,
+          };
+        }
+      }
       return {
         ...base,
         type: "expression",
         ...columnExpressionCommon(item),
-        ...(item.latex ? { latex: parseRootLatex(item.latex) } : {}),
+        ...(latex ? { latex } : {}),
         ...(item.labelSize !== "0" && item.label
           ? {
               label: {
