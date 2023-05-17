@@ -6,26 +6,6 @@
 
 *Module* `expressions/abstract-item-view`
 
-Allows clicking on the pin/unpin button for notes and tables, without exiting edit-list-mode. This also allows clicking on the duplicate and delete button for non-expressions.
-
-The class "dsm-stay-edit-list-mode" is added in `expression-edit-actions.ts`.
-
-*Find* => `from`
-```js
-this.exitEditListMode()
-```
-
-Using `.closest` handles the case where the user clicks directly on the (child/::before) icon instead of the padding.
-
-*Replace* `from` with
-```js
-(event.target.closest(".dsm-stay-edit-list-mode") || this.exitEditListMode())
-```
-
-### Alternative
-
-*Module* `expressions/abstract-item-view`
-
 *Find* => `outer`
 ```js
 if (this.controller.isInEditListMode() && !$uee($e)) {
@@ -75,26 +55,6 @@ exports.getDisplayState = function (e) {
 ## Allow deleting pinned expressions
 
 Since pinned expressions have `isDragDrop=true`, they have `model.dcgView = undefined`, which otherwise prevents the delete animation from occurring.
-
-*Module* `main/controller`
-
-*Find*
-```js
-_deleteItemAndAnimateOut = function ($e, $t) {__body__}
-```
-
-*Find* inside `body`
-```js
-$s = this.getItemSelectorById($)
-```
-
-*Replace* `body` with
-```js
-__body__;
-$s || this._finishDeletingItemAfterAnimation($e, $t);
-```
-
-### Alternative
 
 *Module* `main/controller`
 
