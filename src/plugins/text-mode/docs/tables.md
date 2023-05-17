@@ -50,7 +50,7 @@ table {
 
 The entire table can have a style mapping, which just supports the standard `pinned`, `secret`, and `id`.
 
-The style mappings for the first column are more detailed
+The style mappings for columns after the first are more detailed
 
 ```js
 table {

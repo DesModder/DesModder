@@ -4,7 +4,7 @@ Statements are the core of graphs. They are all based around some math expressio
 
 The style mapping options below are listed divided by type of statement because many options are useless for other types. However, this is not currently enforced; unused options are often ignored without a warning.
 
-As a reminder, press Ctrl+Space while inside a style mapping to v
+As a reminder, press Ctrl+Space while inside a style mapping to preview some available options.
 
 ## Comparison (Equation or Inequality)
 
