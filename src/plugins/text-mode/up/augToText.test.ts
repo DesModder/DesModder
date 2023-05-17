@@ -13,6 +13,7 @@ import {
   range,
   substitution,
   updateRule,
+  wrappedSeq,
 } from "../aug/augBuilders";
 import { itemToText } from "./augToText";
 
@@ -34,11 +35,15 @@ function testStmt(desc: string, item: Aug.ItemAug, expected: string) {
 }
 
 const stmtDefaults = {
-  type: "expression",
   id: "1",
-  color: "",
   hidden: false,
   errorHidden: false,
+} as const;
+
+const exprDefaults = {
+  ...stmtDefaults,
+  type: "expression",
+  color: "",
   pinned: false,
   secret: false,
   glesmos: false,
@@ -48,12 +53,28 @@ const stmtDefaults = {
   vizProps: {},
 } as const;
 
+const imageDefaults = {
+  ...stmtDefaults,
+  type: "image",
+  name: "image.png",
+  image_url: "data:example",
+  width: number(10),
+  height: number(10),
+  center: wrappedSeq(number(0), number(0)),
+  angle: number(0),
+  opacity: number(1),
+  foreground: false,
+  draggable: false,
+  pinned: false,
+  secret: false,
+} as const;
+
 function testExprPlain(
   desc: string,
   expected: string,
   expr: Aug.Latex.AnyRootOrChild
 ) {
-  testStmt(desc, { ...stmtDefaults, latex: expr }, expected);
+  testStmt(desc, { ...exprDefaults, latex: expr }, expected);
 }
 
 function testExpr(desc: string, expected: string, expr: Aug.Latex.AnyChild) {
@@ -272,7 +293,7 @@ describe("Basic exprs", () => {
     testStmtWithStyle(
       "UpdateRule in assignment",
       {
-        ...stmtDefaults,
+        ...exprDefaults,
         latex: id("P"),
         clickableInfo: {
           description: "",
@@ -349,6 +370,25 @@ describe("Basic exprs", () => {
     arg: functionCall(id("f"), [id("x")]),
     order: 3,
   });
+});
+
+describe("Styles", () => {
+  testStmtWithStyle(
+    "Hidden image",
+    {
+      ...imageDefaults,
+      opacity: number(0),
+    },
+    [
+      'image "image.png" @{',
+      '  url: "data:example",',
+      "  width: 10,",
+      "  height: 10,",
+      "  center: (0, 0),",
+      "  opacity: 0,",
+      "}",
+    ].join("\n")
+  );
 });
 
 describe("Parens", () => {

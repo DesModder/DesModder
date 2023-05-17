@@ -208,7 +208,7 @@ function tryRawNonFolderToAug(
         center: parseLatex(item.center ?? "(0,0)"),
         angle: parseLatex(item.angle ?? "0"),
         // opacity = 0 corresponds to hidden: true
-        opacity: parseLatex(item.opacity ?? "1"),
+        opacity: parseLatex(item.hidden ? "0" : item.opacity ?? "1"),
         foreground: item.foreground ?? false,
         draggable: item.draggable ?? false,
         clickableInfo: item.clickableInfo?.latex
