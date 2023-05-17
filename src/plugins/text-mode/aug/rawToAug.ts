@@ -130,7 +130,7 @@ function tryRawNonFolderToAug(
         type: "expression",
         ...columnExpressionCommon(item),
         ...(latex ? { latex } : {}),
-        ...(item.labelSize !== "0" && item.label
+        ...(item.labelSize !== "0" && item.label && item.showLabel
           ? {
               label: {
                 text: item.label,
