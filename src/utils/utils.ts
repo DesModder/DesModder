@@ -34,10 +34,6 @@ export function mergeClass(c1: MaybeClassDict, c2: MaybeClassDict) {
   return out;
 }
 
-export type OptionalProperties<T> = {
-  [K in keyof T]?: T[K];
-};
-
 export function everyNonNull<T>(arr: (T | null)[]): arr is T[] {
   return arr.every((e) => e !== null);
 }

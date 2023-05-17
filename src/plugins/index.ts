@@ -52,8 +52,7 @@ export interface Plugin<Settings extends GenericSettings = GenericSettings> {
   afterDisable?(): void;
   enabledByDefault: boolean;
   config?: readonly ConfigItem[];
-  onConfigChange?(changes: Settings, config: Settings): void;
-  manageConfigChange?(current: Settings, next: Settings): Settings;
+  onConfigChange?(config: Settings): void;
   enableRequiresReload?: boolean;
   moduleOverrides?: unknown; // should be used only in preload code, not in main code
 }

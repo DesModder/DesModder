@@ -10,6 +10,12 @@ export const configList = [
     default: true,
   },
   {
+    key: "zoomButtons",
+    type: "boolean",
+    default: true,
+    shouldShow: (config: Config) => !!config.graphpaper,
+  },
+  {
     key: "authorFeatures",
     type: "boolean",
     default: false,
@@ -26,11 +32,6 @@ export const configList = [
   },
   {
     key: "expressions",
-    type: "boolean",
-    default: true,
-  },
-  {
-    key: "zoomButtons",
     type: "boolean",
     default: true,
   },

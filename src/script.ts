@@ -3,7 +3,7 @@ import window from "globals/window";
 import Controller from "main/Controller";
 
 const controller = new Controller();
-export { controller as desModderController };
+export { controller as desModderController, Controller as DesModderController };
 
 window.DesModder = {
   controller,

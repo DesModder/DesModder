@@ -23,7 +23,6 @@ import {
   mapToRecord,
   recordToMap,
 } from "utils/messages";
-import { OptionalProperties } from "utils/utils";
 
 interface PillboxButton {
   id: string;
@@ -370,15 +369,7 @@ export default class Controller {
   ) {
     const pluginSettings = this.pluginSettings.get(pluginID);
     if (pluginSettings === undefined) return;
-    const proposedChanges = {
-      [key]: value,
-    };
-    const manageConfigChange = plugins.get(pluginID)?.manageConfigChange;
-    const changes =
-      manageConfigChange !== undefined
-        ? manageConfigChange(pluginSettings, proposedChanges)
-        : proposedChanges;
-    Object.assign(pluginSettings, changes);
+    pluginSettings[key] = value;
     if (!temporary)
       postMessageUp({
         type: "set-plugin-settings",
@@ -386,9 +377,7 @@ export default class Controller {
       });
     if (this.isPluginEnabled(pluginID)) {
       const onConfigChange = plugins.get(pluginID)?.onConfigChange;
-      if (onConfigChange !== undefined) {
-        onConfigChange(changes, pluginSettings);
-      }
+      if (onConfigChange !== undefined) onConfigChange(pluginSettings);
     }
     this.updateMenuView();
   }
@@ -439,7 +428,7 @@ export default class Controller {
     this.applyPinnedStyle();
   }
 
-  _updateExprMetadata(id: string, obj: OptionalProperties<MetadataExpression>) {
+  _updateExprMetadata(id: string, obj: Partial<MetadataExpression>) {
     changeExprInMetadata(this.graphMetadata, id, obj);
     setMetadata(this.graphMetadata);
   }
@@ -448,7 +437,7 @@ export default class Controller {
     this._updateExprMetadata(toID, this.getDsmItemModel(fromID));
   }
 
-  updateExprMetadata(id: string, obj: OptionalProperties<MetadataExpression>) {
+  updateExprMetadata(id: string, obj: Partial<MetadataExpression>) {
     this._updateExprMetadata(id, obj);
     this.finishUpdateMetadata();
   }

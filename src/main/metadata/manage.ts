@@ -4,7 +4,6 @@ import migrateToLatest from "./migrate";
 import { ItemModel } from "globals/models";
 import { Calc, Console } from "globals/window";
 import { List } from "utils/depUtils";
-import { OptionalProperties } from "utils/utils";
 
 /*
 This file manages the metadata expressions. These are stored on the graph state as expressions and consist of:
@@ -94,7 +93,7 @@ function cleanMetadata(metadata: Metadata) {
 export function changeExprInMetadata(
   metadata: Metadata,
   id: string,
-  obj: OptionalProperties<Expression>
+  obj: Partial<Expression>
 ) {
   /* Mutates metadata by spreading obj into metadata.expressions[id],
   with default values deleted */

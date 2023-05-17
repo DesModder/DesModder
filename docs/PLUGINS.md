@@ -10,7 +10,6 @@ interface Plugin<Settings extends GenericBooleanSettings = {}> {
   enabledByDefault: boolean;
   config?: readonly ConfigItem[];
   onConfigChange?(changes: Settings): void;
-  manageConfigChange?(current: Settings, next: Settings): Settings;
 }
 ```
 

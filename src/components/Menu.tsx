@@ -1,10 +1,12 @@
 import {
   ConfigItem,
   ConfigItemString,
+  GenericSettings,
   Plugin,
   PluginID,
   plugins,
 } from "../plugins";
+import { DesModderController } from "../script";
 import "./Menu.less";
 import Toggle from "./Toggle";
 import { If, Switch, Checkbox, Tooltip, For } from "./desmosComponents";
@@ -177,7 +179,12 @@ export default class Menu extends Component<{
   }
 }
 
-function booleanOption(controller: any, item: any, plugin: any, settings: any) {
+function booleanOption(
+  controller: DesModderController,
+  item: ConfigItem,
+  plugin: Plugin,
+  settings: GenericSettings
+) {
   const toggle = () =>
     controller.expandedPlugin &&
     controller.togglePluginSettingBoolean(controller.expandedPlugin, item.key);
@@ -198,7 +205,12 @@ function booleanOption(controller: any, item: any, plugin: any, settings: any) {
   );
 }
 
-function stringOption(controller: any, item: any, plugin: any, settings: any) {
+function stringOption(
+  controller: DesModderController,
+  item: ConfigItem,
+  plugin: Plugin,
+  settings: GenericSettings
+) {
   return (
     <div class="dsm-settings-item dsm-settings-color">
       <input

@@ -2,31 +2,19 @@ import { Config, configList } from "./config";
 import { Calc } from "globals/window";
 import { Plugin } from "plugins";
 import { getQueryParams } from "utils/depUtils";
-import { OptionalProperties } from "utils/utils";
-
-type ConfigOptional = OptionalProperties<Config>;
 
 const managedKeys = configList.map((e) => e.key);
 
 let initialSettings: null | Config = null;
 
-function manageConfigChange(current: Config, changes: ConfigOptional) {
-  const proposedConfig = {
-    ...current,
-    ...changes,
-  };
-  const newChanges = {
-    ...changes,
-  };
-  if (changes.zoomButtons) {
-    if (!proposedConfig.graphpaper) {
-      newChanges.graphpaper = true;
-    }
-  }
-  if (changes.graphpaper === false && proposedConfig.zoomButtons) {
-    newChanges.zoomButtons = false;
-  }
-  return newChanges;
+function updateSettings(config: Config) {
+  let { graphpaper, zoomButtons } = config;
+  zoomButtons &&= graphpaper;
+  // Deal with zoomButtons needing to be off before graphpaper is disabled
+  // But graphpaper needs to be on before zoomButtons is enabled.
+  if (graphpaper) Calc.updateSettings({ graphpaper });
+  if (!zoomButtons) Calc.updateSettings({ zoomButtons });
+  Calc.updateSettings({ ...config, zoomButtons, graphpaper });
 }
 
 function onEnable(config: Config) {
@@ -41,7 +29,7 @@ function onEnable(config: Config) {
         }
       )[key] ?? false;
   }
-  const queryConfig: ConfigOptional = {};
+  const queryConfig: Partial<Config> = {};
   for (const key of managedKeys) {
     if (queryParams[key]) {
       queryConfig[key] = true;
@@ -50,16 +38,12 @@ function onEnable(config: Config) {
       queryConfig[key] = false;
     }
   }
-  const newChanges = manageConfigChange(config, queryConfig);
-  Calc.updateSettings({
-    ...config,
-    ...newChanges,
-  });
+  updateSettings(config);
 }
 
 function onDisable() {
   if (initialSettings !== null) {
-    Calc.updateSettings(initialSettings);
+    updateSettings(initialSettings);
   }
 }
 
@@ -69,10 +53,9 @@ const builtinSettings: Plugin = {
   onDisable,
   enabledByDefault: true,
   config: configList,
-  onConfigChange(changes: ConfigOptional) {
+  onConfigChange(config: Config) {
     // called only when plugin is active
-    Calc.updateSettings(changes);
+    updateSettings(config);
   },
-  manageConfigChange,
 };
 export default builtinSettings;

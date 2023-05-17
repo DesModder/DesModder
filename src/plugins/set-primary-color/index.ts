@@ -3,7 +3,6 @@ import "./_overrides.less";
 import "./custom-overrides.less";
 import { Plugin } from "plugins";
 import { getHSVfromRGB, parseCSSHex } from "plugins/GLesmos/colorParsing";
-import { OptionalProperties } from "utils/utils";
 
 interface Config {
   primaryColor: string;
@@ -145,7 +144,7 @@ const setPrimaryColor: Plugin = {
       default: true,
     },
   ],
-  onConfigChange(_: OptionalProperties<Config>, config: Config) {
+  onConfigChange(config: Config) {
     applyConfig(config);
   },
 } as const;

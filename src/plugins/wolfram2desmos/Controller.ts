@@ -1,5 +1,4 @@
 import { Config } from "./config";
-import { OptionalProperties } from "utils/utils";
 
 /*
  This controller manages the focus events of Expression panel
@@ -45,10 +44,7 @@ export default class Controller {
     this.enabled = false;
   }
 
-  applyConfigFlags(changes: OptionalProperties<Config>) {
-    this.configFlags = {
-      ...this.configFlags,
-      ...changes,
-    };
+  applyConfigFlags(config: Config) {
+    this.configFlags = config;
   }
 }
