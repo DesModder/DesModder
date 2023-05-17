@@ -35,8 +35,12 @@ interface PillboxButton {
 }
 
 export default class Controller {
-  pluginsEnabled: Map<PluginID, boolean>;
-  forceDisabled: Set<string>;
+  /**
+   * pluginsEnabled keeps track of what plugins the user wants enabled,
+   * regardless of forceDisabled settings.
+   */
+  private readonly pluginsEnabled: Map<PluginID, boolean>;
+  private readonly forceDisabled: Set<string>;
   expandedPlugin: string | null = null;
   private expandedCategory: string | null = null;
   pluginSettings: Map<PluginID, GenericSettings>;
@@ -73,11 +77,7 @@ export default class Controller {
     delete window.DesModderForceDisabled;
     if (Calc.controller.isGeometry()) this.forceDisabled.add("text-mode");
     this.pluginsEnabled = new Map(
-      pluginList.map((plugin) => {
-        const enabled =
-          plugin.enabledByDefault && !this.forceDisabled.has(plugin.id);
-        return [plugin.id, enabled] as const;
-      })
+      pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
     );
     Calc.controller.dispatcher.register((e) => {
       if (e.type === "toggle-graph-settings") {
@@ -107,7 +107,6 @@ export default class Controller {
   applyStoredEnabled(storedEnabled: Map<PluginID, boolean>) {
     for (const { id } of pluginList) {
       const stored = storedEnabled.get(id);
-      if (stored && this.isPluginForceDisabled(id)) continue;
       if (stored !== undefined && id !== "GLesmos") {
         this.pluginsEnabled.set(id, stored);
       }
@@ -146,7 +145,7 @@ export default class Controller {
       numFulfilled += 1;
       if (numFulfilled === 2) {
         for (const { id } of pluginList) {
-          if (this.pluginsEnabled.get(id)) {
+          if (this.isPluginEnabled(id)) {
             this._enablePlugin(id, true);
           }
         }
@@ -165,7 +164,7 @@ export default class Controller {
       this.checkForMetadataChange();
     });
     this.checkForMetadataChange();
-    if (this.pluginsEnabled.get("GLesmos")) {
+    if (this.isPluginEnabled("GLesmos")) {
       // The graph loaded before DesModder loaded, so DesModder was not available to
       // return true when asked isGlesmosMode. Refresh those expressions now
       this.checkGLesmos();
@@ -253,15 +252,17 @@ export default class Controller {
 
   setPluginEnabled(id: PluginID, isEnabled: boolean) {
     if (isEnabled && this.isPluginForceDisabled(id)) return;
+    const same = isEnabled === this.pluginsEnabled.get(id);
     this.pluginsEnabled.set(id, isEnabled);
     if (id === "GLesmos") {
       // Need to refresh glesmos expressions
       this.checkGLesmos();
     }
-    postMessageUp({
-      type: "set-plugins-enabled",
-      value: mapToRecord(this.pluginsEnabled),
-    });
+    if (!same)
+      postMessageUp({
+        type: "set-plugins-enabled",
+        value: mapToRecord(this.pluginsEnabled),
+      });
   }
 
   warnReload() {
@@ -274,7 +275,7 @@ export default class Controller {
   disablePlugin(id: PluginID) {
     const plugin = plugins.get(id);
     if (plugin && this.isPluginToggleable(id)) {
-      if (this.pluginsEnabled.get(id)) {
+      if (this.isPluginEnabled(id)) {
         if (plugin.onDisable) {
           plugin.onDisable();
           this.pluginsEnabled.delete(id);
@@ -305,14 +306,14 @@ export default class Controller {
   }
 
   enablePlugin(id: PluginID) {
-    if (this.isPluginToggleable(id) && !this.pluginsEnabled.get(id)) {
+    if (this.isPluginToggleable(id) && !this.isPluginEnabled(id)) {
       this.setPluginEnabled(id, true);
       this._enablePlugin(id, false);
     }
   }
 
   togglePlugin(id: PluginID) {
-    if (this.pluginsEnabled.get(id)) {
+    if (this.isPluginEnabled(id)) {
       this.disablePlugin(id);
     } else {
       this.enablePlugin(id);
@@ -324,7 +325,9 @@ export default class Controller {
   }
 
   isPluginEnabled(id: PluginID) {
-    return this.pluginsEnabled.get(id) ?? false;
+    return (
+      !this.isPluginForceDisabled(id) && (this.pluginsEnabled.get(id) ?? false)
+    );
   }
 
   isPluginToggleable(id: PluginID) {
@@ -381,7 +384,7 @@ export default class Controller {
         type: "set-plugin-settings",
         value: mapToRecord(this.pluginSettings),
       });
-    if (this.pluginsEnabled.get(pluginID)) {
+    if (this.isPluginEnabled(pluginID)) {
       const onConfigChange = plugins.get(pluginID)?.onConfigChange;
       if (onConfigChange !== undefined) {
         onConfigChange(changes, pluginSettings);
@@ -419,7 +422,7 @@ export default class Controller {
 
   checkForMetadataChange() {
     const newMetadata = getMetadata();
-    if (!this.pluginsEnabled.get("GLesmos")) {
+    if (!this.isPluginEnabled("GLesmos")) {
       if (
         Object.entries(newMetadata.expressions).some(
           ([id, e]) => e.glesmos && !this.graphMetadata.expressions[id]?.glesmos
@@ -482,7 +485,7 @@ export default class Controller {
 
   isExpressionPinned(id: string) {
     return (
-      this.pluginsEnabled.get("pin-expressions") &&
+      this.isPluginEnabled("pin-expressions") &&
       !Calc.controller.getExpressionSearchOpen() &&
       Calc.controller.getItemModel(id)?.type !== "folder" &&
       this.graphMetadata.expressions[id]?.pinned
@@ -630,7 +633,7 @@ export default class Controller {
   canBeGLesmos(id: string) {
     let model;
     return (
-      this.pluginsEnabled.get("GLesmos") &&
+      this.isPluginEnabled("GLesmos") &&
       (model = Calc.controller.getItemModel(id)) &&
       model.type === "expression" &&
       model.formula &&
@@ -639,7 +642,7 @@ export default class Controller {
   }
 
   isGlesmosMode(id: string) {
-    if (!this.pluginsEnabled.get("GLesmos")) return false;
+    if (!this.isPluginEnabled("GLesmos")) return false;
     this.checkForMetadataChange();
     return this.graphMetadata.expressions[id]?.glesmos ?? false;
   }
