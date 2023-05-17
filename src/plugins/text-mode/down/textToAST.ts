@@ -304,7 +304,7 @@ const initialParselets: TokenMap<InitialParselet> = {
           const bool = first || isComparison(curr);
           branches.push({
             type: "PiecewiseBranch",
-            condition: bool ? curr : { type: "Identifier", name: "e_lse" },
+            condition: bool ? curr : { type: "Identifier", name: "else" },
             consequent: bool ? { type: "Number", value: 1 } : curr,
             pos: pos(curr),
           });
@@ -439,7 +439,7 @@ function isComparison(node: TextAST.Expression) {
   return (
     node.type === "DoubleInequality" ||
     (node.type === "BinaryExpression" && comparisonOps.includes(node.op)) ||
-    (node.type === "Identifier" && node.name === "e_lse")
+    (node.type === "Identifier" && node.name === "else")
   );
 }
 
@@ -470,12 +470,15 @@ const fragileNames = [
   "hypot",
 ];
 
+const desModderNames = ["else", "true", "false"];
+
 const dontSubscriptIdentifiers = new Set([
   ...autoOperatorNames.split(" ").map((e) => e.split("|")[0]),
   ...autoCommandNames.split(" "),
   ...fragileNames,
   "index",
   "dt",
+  ...desModderNames,
 ]);
 
 /**

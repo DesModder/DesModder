@@ -38,8 +38,8 @@ export function evalExpr(
 }
 
 const builtinMap: Record<string, number | string | boolean | null> = {
-  f_alse: false,
-  t_rue: true,
+  false: false,
+  true: true,
   pi: Math.PI,
   tau: 2 * Math.PI,
   e: Math.E,

@@ -792,7 +792,7 @@ function piecewiseInnerToAug(
   const firstBranch = branches[0];
   if (firstBranch === undefined) return constant(NaN);
   const firstCond = childExprToAug(firstBranch.condition);
-  if (firstCond.type === "Identifier" && firstCond.symbol === "e_lse") {
+  if (firstCond.type === "Identifier" && firstCond.symbol === "else") {
     // Rudimentary variable inlining
     return childExprToAug(firstBranch.consequent);
   }
