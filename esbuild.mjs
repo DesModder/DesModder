@@ -21,6 +21,7 @@ if (argv.help) {
     --help         Show help
     --browser=...  Browser target: "firefox", or "chrome"  [default: "chrome"]
     --watch        Watch mode: rebuild on file system changes [default: false]
+    --outdir=...   Output directory                          [default: "dist"]
     
   Examples:
     # Dev server for Chrome
@@ -42,6 +43,7 @@ if (
 const { version } = JSON.parse(await loadFile("./package.json"));
 const browser = argv.browser ?? "chrome";
 const watch = !!argv.watch;
+const outdir = argv.outdir ?? "dist";
 
 const opts = {
   entryPoints: [
@@ -53,7 +55,7 @@ const opts = {
   // don't include source map on release builds
   sourcemap: watch ? "inline" : false,
   bundle: true,
-  outdir: "dist",
+  outdir,
   plugins: [
     lessLoader(),
     esbuildPluginInline(),
@@ -66,14 +68,14 @@ const opts = {
       resolveFrom: "cwd",
       assets: {
         from: [`./public/${browser}/*`],
-        to: "dist",
+        to: outdir,
       },
     }),
     copy({
       resolveFrom: "cwd",
       assets: {
         from: [`./public/common/*`],
-        to: "dist",
+        to: outdir,
       },
     }),
   ],
@@ -92,7 +94,7 @@ const opts = {
 
 // clean dist folder
 try {
-  await fs.rm("dist", { recursive: true });
+  await fs.rm(outdir, { recursive: true });
 } catch (e) {
   // permit no dist folder to begin with
   if (e?.code !== "ENOENT") throw e;
