@@ -285,15 +285,14 @@ if ($W !== void 0 && $X !== void 0 && isFinite($W) && isFinite($X)) {
 }
 ```
 
-*Find* inside `body` => `else`
+*Find* inside `body` => `if2d`
 ```js
-else {
-  let $ = this.userData.lines === void 0 ? !0 : this.userData.lines
+if (!$is3d(T.graphMode) || $) {
 ```
 
-*Replace* `else` with
+*Replace* `if2d` with
 ```js
-else if (this.userData.glesmos) {
+if (this.userData.glesmos) {
   const lines =
     this.userData.lines !== false &&
     (!this.isInequality() || this.userData.glesmosLinesConfirmed);
@@ -327,5 +326,5 @@ else if (this.userData.glesmos) {
       poi: {}
     })
   }
-} __else__
+} else __if2d__
 ```
