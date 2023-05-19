@@ -4,31 +4,37 @@ This page details how to download and run pre-release builds of DesModder. Warni
 
 ## Download
 
-The first step is to identify which build you want to download. If you're here, you probably want the most recent version. If you were linked to a specific build, you can skip steps 1-4 below.
+The first step is to identify which build you want to download.
+If you're here, you probably want the most recent version.
+If you were linked to a specific download, you can skip to step 3 using the downloaded file.
 
-1. Navigate to https://github.com/DesModder/DesModder
-2. Click the green checkmark
-3. Click "Details" next to the workflow named "Build / build"
-4. Click "Summary"
-5. Click on the correct artifact to download, either `DesModder-Chrome-[hash]` or `DesModder-Firefox-[hash]` depending on if you are on Chrome (or most other browsers) or Firefox.
+1. Navigate to [the nightly builds page](https://nightly.link/DesModder/DesModder/workflows/build/main).
 
-![Click green checkmark, then click details](./assets/prerelease_first_steps.png)
+2. Click the link in the **right column** corresponding to your browser. Chrome builds start with "DesModder-Chrome", and Firefox builds start with "DesModder-Firefox"
 
-![Click summary, then click the correct artifact](./assets/prerelease_find_artifact.png)
+If you are using a browser that isn't Chrome or Firefox or you aren't sure what to use, choose Chrome.
 
-## Install (Chrome)
+## Install (Chrome/Other Browsers)
 
-6. Unzip (extract) the downloaded zip file to somewhere
-7. Navigate to chrome://extensions
-8. Enable "Developer mode" (top-right)
-9. Click "Load unpacked"
-10. Select the unzipped folder
+3. Unzip (extract) the downloaded zip file to a folder
+4. Navigate to chrome://extensions
+5. Enable "Developer mode" (top-right)
+6. Click "Load unpacked"
+7. Select the unzipped folder
+8. If you already have DesModder from the webstore, **disable** that version.
+   The prerelease version will have a red dot by its logo.
 
-If you get the error "Manifest file is missing or unreadable," make sure you selected the folder itself and not a folder containing it.
+![Labelled extensions page](./assets/prerelease-chrome.png)
+
+> If you get the error "Manifest file is missing or unreadable" in step 5, make sure you selected the folder itself and not a folder containing it.
+> The correct folder will have a file called `manifest.json` directly inside.
 
 ## Install (Firefox)
 
-6. Navigate to about:debugging
-7. Click "Temporary Extensions"
-8. Click "Load Temporary Add-on"
-9. Select the downloaded zip file.
+3. Navigate to about:debugging
+4. Choose "This Firefox" on the left
+5. Click "Temporary Extensions"
+6. Click "Load Temporary Add-on"
+7. Select the downloaded zip file (do not extract).
+
+![Labelled debugging page](./assets/prerelease-firefox.png)
