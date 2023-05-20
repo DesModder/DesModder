@@ -338,7 +338,7 @@ function parseLatex(str: string): Aug.Latex.AnyChild {
   return childNodeToTree(res);
 }
 
-function parseRootLatex(str: string): Aug.Latex.AnyRootOrChild {
+export function parseRootLatex(str: string): Aug.Latex.AnyRootOrChild {
   const parsed = parseDesmosLatex(str);
   switch (parsed.type) {
     case "Equation":

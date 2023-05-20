@@ -296,7 +296,7 @@ function latexTreeToStringMaybe(e: Aug.Latex.AnyRootOrChild | undefined) {
   return latexTreeToString(e);
 }
 
-function latexTreeToString(e: Aug.Latex.AnyRootOrChild) {
+export function latexTreeToString(e: Aug.Latex.AnyRootOrChild) {
   switch (e.type) {
     case "Equation":
     case "Assignment":
