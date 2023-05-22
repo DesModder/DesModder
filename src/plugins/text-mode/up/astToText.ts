@@ -357,6 +357,10 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
       return [exprToText(path.withChild(e.expr, "expr")), "!"];
     case "String":
       return stringToText(e.value);
+    case "AssignmentExpression":
+      return assignmentExpressionToText(
+        path as NodePath<TextAST.AssignmentExpression>
+      );
     default:
       e satisfies never;
       throw new Error(

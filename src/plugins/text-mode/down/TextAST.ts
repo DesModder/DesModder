@@ -90,6 +90,7 @@ export type Expression =
   | ListExpression
   | ListComprehension
   | Substitution
+  | AssignmentExpression
   | PiecewiseExpression
   | PrefixExpression
   | SequenceExpression

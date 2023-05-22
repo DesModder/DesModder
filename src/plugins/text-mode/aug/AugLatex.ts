@@ -41,7 +41,8 @@ export type AnyChild =
   | BinaryOperator
   | Negative
   | Comparator
-  | DoubleInequality;
+  | DoubleInequality
+  | AssignmentExpression;
 
 export interface Equation {
   type: "Equation";

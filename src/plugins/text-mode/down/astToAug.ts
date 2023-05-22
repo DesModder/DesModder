@@ -718,6 +718,8 @@ export function childExprToAug(
         arg: childExprToAug(expr.expr),
         variable: identifierToAug(expr.variable),
       };
+    case "AssignmentExpression":
+      return assignment(expr);
     default:
       expr satisfies never;
       throw new Error(
