@@ -1,5 +1,6 @@
 import { isConstant } from "./AugLatex";
 import Aug from "./AugState";
+import rawNeedsParens from "./augNeedsParens";
 import * as Graph from "@desmodder/graph-state";
 import Metadata from "main/metadata/interface";
 import { changeExprInMetadata, isBlankMetadata } from "main/metadata/manage";
@@ -296,24 +297,26 @@ function latexTreeToStringMaybe(e: Aug.Latex.AnyRootOrChild | undefined) {
   return latexTreeToString(e);
 }
 
-function latexTreeToString(e: Aug.Latex.AnyRootOrChild) {
+export function latexTreeToString(e: Aug.Latex.AnyRootOrChild) {
   switch (e.type) {
     case "Equation":
     case "Assignment":
-      return childNodeToString(e.left) + "=" + childNodeToString(e.right);
+      return childNodeToString(e.left, e) + "=" + childNodeToString(e.right, e);
     case "FunctionDefinition":
       return (
-        funcToString(e.symbol, e.argSymbols) +
+        funcToString(e.symbol, e.argSymbols, e) +
         "=" +
-        childNodeToString(e.definition)
+        childNodeToString(e.definition, e)
       );
     case "Visualization":
       // Lower case handles "Stats" → "stats" etc
-      return funcToString(e.callee, e.args);
+      return funcToString(e.callee, e.args, e);
     case "Regression":
-      return childNodeToString(e.left) + "\\sim " + childNodeToString(e.right);
+      return (
+        childNodeToString(e.left, e) + "\\sim " + childNodeToString(e.right, e)
+      );
     default:
-      return childNodeToString(e);
+      return childNodeToString(e, null);
   }
 }
 
@@ -322,7 +325,17 @@ function columnEntryToString(e: Aug.Latex.AnyRootOrChild): string {
   return latexTreeToString(e);
 }
 
-function childNodeToString(e: Aug.Latex.AnyChild): string {
+function childNodeToString(
+  e: Aug.Latex.AnyChild,
+  parent: Aug.Latex.AnyRootOrChild | null,
+  path?: string | undefined
+): string {
+  const inner = childNodeToStringNoParen(e);
+  if (rawNeedsParens(e, parent, path)) return wrapParen(inner);
+  return inner;
+}
+
+function childNodeToStringNoParen(e: Aug.Latex.AnyChild): string {
   switch (e.type) {
     case "Constant": {
       const res = e.value.toString();
@@ -331,65 +344,65 @@ function childNodeToString(e: Aug.Latex.AnyChild): string {
     case "Identifier":
       return identifierToString(e);
     case "FunctionCall":
-      return funcToString(e.callee, e.args);
+      return funcToString(e.callee, e.args, e);
     case "Integral":
       return (
-        `\\int_{${childNodeToString(e.start)}}` +
-        `^{${childNodeToString(e.end)}}` +
-        wrapParen(childNodeToString(e.integrand)) +
+        `\\int_{${childNodeToString(e.start, e)}}` +
+        `^{${childNodeToString(e.end, e)}}` +
+        childNodeToString(e.integrand, e, "integrand") +
         "d" +
         identifierToString(e.differential)
       );
     case "Derivative":
       return (
-        `\\left(\\frac{d}{d${identifierToString(e.variable)}}` +
-        childNodeToString(e.arg) +
-        "\\right)"
+        `\\frac{d}{d${identifierToString(e.variable)}}` +
+        childNodeToString(e.arg, e)
       );
     case "Prime":
       return (
         identifierToString(e.arg.callee) +
         "'".repeat(e.order) +
-        wrapParen(childNodeToString(e.arg.args[0]))
+        wrapParen(bareSeq(e.arg.args, e.arg))
       );
     case "List":
-      return wrapBracket(bareSeq(e.args));
+      return wrapBracket(bareSeq(e.args, e));
     case "Range":
-      return wrapBracket(bareSeq(e.start) + "..." + bareSeq(e.end));
+      return wrapBracket(bareSeq(e.start, e) + "..." + bareSeq(e.end, e));
     case "ListAccess":
       return (
-        wrapParen(childNodeToString(e.list)) +
+        childNodeToString(e.list, e, "list") +
         (e.index.type === "Range"
-          ? childNodeToString(e.index)
-          : wrapBracket(childNodeToString(e.index)))
+          ? childNodeToString(e.index, e)
+          : wrapBracket(childNodeToString(e.index, e)))
       );
     case "DotAccess":
       return (
-        wrapParen(childNodeToString(e.object)) +
+        childNodeToString(e.object, e, "object") +
         "." +
-        childNodeToString(e.property)
+        childNodeToString(e.property, e)
       );
     case "OrderedPairAccess":
-      return wrapParen(childNodeToString(e.point)) + "." + e.index;
+      return childNodeToString(e.point, e, "object") + "." + e.index;
     case "Seq":
-      return e.parenWrapped ? wrapParen(bareSeq(e.args)) : bareSeq(e.args);
+      // needsParen handles wrapping in paren for parenWrapped
+      return bareSeq(e.args, e);
     case "UpdateRule":
       return (
         identifierToString(e.variable) +
         "\\to " +
-        childNodeToString(e.expression)
+        childNodeToString(e.expression, e)
       );
     case "ListComprehension":
       return wrapBracket(
-        childNodeToString(e.expr) +
+        childNodeToString(e.expr, e) +
           "\\operatorname{for}" +
           e.assignments.map(assignmentExprToRaw).join(",")
       );
     case "Substitution":
-      return wrapParen(
-        childNodeToString(e.body) +
-          "\\operatorname{with}" +
-          e.assignments.map(assignmentExprToRaw).join(",")
+      return (
+        childNodeToString(e.body, e) +
+        "\\operatorname{with}" +
+        e.assignments.map(assignmentExprToRaw).join(",")
       );
     case "Piecewise": {
       const piecewiseParts: string[] = [];
@@ -399,17 +412,17 @@ function childNodeToString(e: Aug.Latex.AnyChild): string {
           curr = curr.consequent;
           break;
         }
-        let part = childNodeToString(curr.condition);
+        let part = childNodeToString(curr.condition, curr);
         if (!Aug.Latex.isConstant(curr.consequent, 1)) {
-          part += ":" + childNodeToString(curr.consequent);
+          part += ":" + childNodeToString(curr.consequent, curr);
         }
         piecewiseParts.push(part);
         curr = curr.alternate;
       }
       if (!Aug.Latex.isConstant(curr, NaN)) {
         // check handles trivial piecewise such as {else: 1}
-        if (piecewiseParts.length === 0) return childNodeToString(curr);
-        piecewiseParts.push(childNodeToString(curr));
+        if (piecewiseParts.length === 0) return childNodeToString(curr, e);
+        piecewiseParts.push(childNodeToString(curr, e));
       }
       return "\\left\\{" + piecewiseParts.join(",") + "\\right\\}";
     }
@@ -417,46 +430,46 @@ function childNodeToString(e: Aug.Latex.AnyChild): string {
       const prefix = e.name === "Product" ? "\\prod" : "\\sum";
       return (
         prefix +
-        `_{${identifierToString(e.index)}=${childNodeToString(e.start)}}` +
-        `^{${childNodeToString(e.end)}}` +
-        wrapParen(childNodeToString(e.expression))
+        `_{${identifierToString(e.index)}=${childNodeToString(e.start, e)}}` +
+        `^{${childNodeToString(e.end, e)}}` +
+        childNodeToString(e.expression, e, "term")
       );
     }
     case "BinaryOperator": {
-      const binopLeft = childNodeToString(e.left);
-      const binopRight = childNodeToString(e.right);
+      const binopLeft = childNodeToString(e.left, e, "left");
+      const binopRight = childNodeToString(e.right, e, "right");
       switch (e.name) {
         case "Add":
-          return wrapParen(binopLeft) + "+" + wrapParen(binopRight);
+          return binopLeft + "+" + binopRight;
         case "Subtract":
-          return wrapParen(binopLeft) + "-" + wrapParen(binopRight);
+          return binopLeft + "-" + binopRight;
         case "Multiply":
-          return wrapParen(binopLeft) + "\\cdot " + wrapParen(binopRight);
+          return binopLeft + "\\cdot " + binopRight;
         case "Divide":
           return `\\frac{${binopLeft}}{${binopRight}}`;
         case "Exponent":
-          return wrapParen(binopLeft) + "^{" + binopRight + "}";
+          return binopLeft + "^{" + binopRight + "}";
       }
     }
     // eslint-disable-next-line no-fallthrough
     case "Negative":
-      if (e.arg.type === "Constant" && e.arg.value > 0)
-        return "-" + childNodeToString(e.arg);
-      return "-" + wrapParen(childNodeToString(e.arg));
+      return "-" + childNodeToString(e.arg, e);
     case "Comparator":
       return (
-        childNodeToString(e.left) +
+        childNodeToString(e.left, e) +
         comparatorMap[e.operator] +
-        childNodeToString(e.right)
+        childNodeToString(e.right, e)
       );
     case "DoubleInequality":
       return (
-        childNodeToString(e.left) +
+        childNodeToString(e.left, e) +
         comparatorMap[e.leftOperator] +
-        childNodeToString(e.middle) +
+        childNodeToString(e.middle, e) +
         comparatorMap[e.rightOperator] +
-        childNodeToString(e.right)
+        childNodeToString(e.right, e)
       );
+    case "AssignmentExpression":
+      return assignmentExprToRaw(e);
     default:
       e satisfies never;
       throw new Error(
@@ -466,7 +479,9 @@ function childNodeToString(e: Aug.Latex.AnyChild): string {
 }
 
 function assignmentExprToRaw(e: Aug.Latex.AssignmentExpression): string {
-  return identifierToString(e.variable) + "=" + childNodeToString(e.expression);
+  return (
+    identifierToString(e.variable) + "=" + childNodeToString(e.expression, e)
+  );
 }
 
 const comparatorMap = {
@@ -477,34 +492,46 @@ const comparatorMap = {
   ">": ">",
 };
 
-function bareSeq(e: Aug.Latex.AnyChild[]): string {
-  return e.map(childNodeToString).join(",");
+function bareSeq(
+  e: Aug.Latex.AnyChild[],
+  parent: Aug.Latex.AnyRootOrChild
+): string {
+  return e.map((f) => childNodeToString(f, parent)).join(",");
 }
 
 function funcToString(
   callee: Aug.Latex.Identifier,
-  args: Aug.Latex.AnyChild[]
+  args: Aug.Latex.AnyChild[],
+  parent: Aug.Latex.AnyRootOrChild
 ): string {
-  if (callee.symbol === "factorial") {
-    return `\\left(${bareSeq(args)}\\right)!`;
-  } else if (callee.symbol === "abs") {
-    return `\\left|${bareSeq(args)}\\right|`;
-  } else if (callee.symbol === "sqrt") {
-    return `\\sqrt{${bareSeq(args)}}`;
-  } else if (callee.symbol === "nthroot") {
-    if (args.length === 1) return `\\sqrt{${bareSeq(args)}}`;
-    return `\\sqrt[${childNodeToString(args[1])}]{${bareSeq([
-      ...args.slice(0, 1),
-      ...args.slice(2),
-    ])}}`;
-  } else if (callee.symbol === "l_ogbase") {
-    if (args.length === 1) return `\\log\\left(${bareSeq(args)}\\right)`;
-    return `\\log_{${childNodeToString(args[args.length - 1])}}\\left(${bareSeq(
-      args.slice(0, args.length - 1)
-    )}\\right)`;
+  if (isFactorialBang(callee, args)) {
+    return childNodeToString(args[0], parent, "factorial") + "!";
+  } else if (callee.symbol === "abs" && args.length === 1) {
+    return `\\left|${bareSeq(args, parent)}\\right|`;
+  } else if (callee.symbol === "sqrt" && args.length === 1) {
+    return `\\sqrt{${bareSeq(args, parent)}}`;
+  } else if (callee.symbol === "nthroot" && [1, 2].includes(args.length)) {
+    if (args.length === 1) return `\\sqrt{${bareSeq(args, parent)}}`;
+    return `\\sqrt[${childNodeToString(args[1], parent)}]{${bareSeq(
+      [...args.slice(0, 1), ...args.slice(2)],
+      parent
+    )}}`;
+  } else if (callee.symbol === "l_ogbase" && [1, 2].includes(args.length)) {
+    if (args.length === 1) return "\\log" + wrapParen(bareSeq(args, parent));
+    return (
+      `\\log_{${childNodeToString(args[args.length - 1], parent)}}` +
+      wrapParen(bareSeq(args.slice(0, args.length - 1), parent))
+    );
   } else {
-    return identifierToString(callee) + wrapParen(bareSeq(args));
+    return identifierToString(callee) + wrapParen(bareSeq(args, parent));
   }
+}
+
+export function isFactorialBang(
+  callee: Aug.Latex.Identifier,
+  args: Aug.Latex.AnyChild[]
+) {
+  return callee.symbol === "factorial" && args.length === 1;
 }
 
 /**

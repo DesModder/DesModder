@@ -331,14 +331,14 @@ function parseMaybeLatex(str: string | undefined) {
   return str !== undefined ? parseLatex(str) : undefined;
 }
 
-function parseLatex(str: string): Aug.Latex.AnyChild {
+export function parseLatex(str: string): Aug.Latex.AnyChild {
   if (str === "") return { type: "Constant", value: NaN };
   const res = parseDesmosLatex(str);
   // childNodeToTree throws an error if res is not a child node
   return childNodeToTree(res);
 }
 
-function parseRootLatex(str: string): Aug.Latex.AnyRootOrChild {
+export function parseRootLatex(str: string): Aug.Latex.AnyRootOrChild {
   const parsed = parseDesmosLatex(str);
   switch (parsed.type) {
     case "Equation":

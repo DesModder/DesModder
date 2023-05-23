@@ -565,6 +565,8 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         rightOp: e.rightOperator,
         right: childLatexToAST(e.right),
       };
+    case "AssignmentExpression":
+      return assignmentExprToAST(e);
     default:
       e satisfies never;
       throw new Error(

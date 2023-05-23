@@ -27,7 +27,7 @@
     "eslint": "eslint",
     "lint:eslint": "eslint .",
     "test": "npm run test:jest",
-    "test:jest": "jest --config jest.config.js"
+    "test:jest": "./scripts/test-jest.sh"
   },
   "repository": {
     "type": "git",
