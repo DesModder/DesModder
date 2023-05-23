@@ -71,5 +71,5 @@ function applyCaptureFrame() {
 
 export function updateView() {
   applyCaptureFrame();
-  desModderController.updateMenuView();
+  desModderController.updateExtraComponents();
 }

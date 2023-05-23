@@ -19,5 +19,5 @@ export function destroyView() {
 }
 
 export function updateView() {
-  desModderController.updateMenuView();
+  desModderController.updateExtraComponents();
 }

@@ -1,4 +1,4 @@
-import { DCGView } from "../DCGView";
+import { DCGView, MountedComponent } from "../DCGView";
 import { PillboxContainer } from "../components";
 import PillboxMenu from "../components/PillboxMenu";
 import { createTipElement } from "../plugins/show-tips/Tip";
@@ -62,8 +62,8 @@ export default class Controller {
 
   // string if open, null if none are open
   pillboxMenuOpen: string | null = null;
-
   pillboxMenuPinned: boolean = false;
+  extraMountedComponents = new Map<HTMLElement, MountedComponent>();
 
   constructor() {
     // default values
@@ -178,9 +178,20 @@ export default class Controller {
   }
 
   pillboxMenuView(horizontal: boolean) {
-    return DCGView.createElement(PillboxMenu as any, {
-      controller: () => this,
-      horizontal: DCGView.const(horizontal),
+    return DCGView.createElement("div", {
+      didMount: (div: HTMLElement) => {
+        this.extraMountedComponents.set(
+          div,
+          DCGView.mountToNode(PillboxMenu, div, {
+            controller: () => this,
+            horizontal: DCGView.const(horizontal),
+          })
+        );
+      },
+      willUnmount: (div: HTMLElement) => {
+        this.extraMountedComponents.delete(div);
+        DCGView.unmountFromNode(div);
+      },
     });
   }
 
@@ -188,7 +199,12 @@ export default class Controller {
     return createTipElement();
   }
 
+  updateExtraComponents() {
+    this.extraMountedComponents.forEach((view) => view.update());
+  }
+
   updateMenuView() {
+    this.updateExtraComponents();
     Calc.controller.updateViews();
   }
 

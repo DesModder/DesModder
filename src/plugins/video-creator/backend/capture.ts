@@ -170,9 +170,9 @@ function forceReloadMenu() {
   // A proper implementation is needed if we ever allow pinning the vc menu.
   if (desModderController.pillboxMenuOpen === "dsm-vc-menu") {
     desModderController.pillboxMenuOpen = null;
-    desModderController.updateMenuView();
+    desModderController.updateExtraComponents();
     desModderController.pillboxMenuOpen = "dsm-vc-menu";
-    desModderController.updateMenuView();
+    desModderController.updateExtraComponents();
   }
 }
 

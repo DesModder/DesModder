@@ -5,7 +5,7 @@ import { Calc } from "globals/window";
 import Controller from "main/Controller";
 import { jquery, keys } from "utils/depUtils";
 
-export default class PillboxContainer extends Component<{
+export default class PillboxMenu extends Component<{
   controller: Controller;
   horizontal: boolean;
 }> {
