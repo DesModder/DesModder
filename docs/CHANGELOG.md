@@ -1,5 +1,21 @@
 # DesModder Changelog
 
+## 0.10.4
+
+New: translations for Spanish!
+
+Enables DesModder for Geometry Beta.
+
+Bug fixes and improvements:
+
+- (GLesmos) Fix loading error
+- (GLesmos) Warning text for "lines" is no longer too wide
+- (Set Primary Color) Now works nicely with the Dark Reader extension
+- (Text Mode) Your text does not get overwritten as you're writing it
+- (Text Mode) Requires double-newlines between expressions
+- (Text Mode) Reduced parentheses emitted to LaTeX
+- (Text Mode) Many other fixes: most graphs should work the same after converting through Text Mode
+
 ## 0.10.3
 
 New: translations for French!
