@@ -102,6 +102,9 @@ function parseBlock(
     } else if (token.tag === "emph" && token.command === "worker_only") {
       workerOnly = true;
       i++;
+    } else if (token.tag === "emph" && token.command === "plugin") {
+      plugins = token.args;
+      i++;
     } else if (token.tag === "emph") {
       const nextToken = tokens[i + 1];
       const code = nextToken?.tag === "code" ? nextToken : undefined;

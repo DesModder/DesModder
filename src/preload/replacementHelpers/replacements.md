@@ -27,9 +27,9 @@ Then the pattern argument to `*Find*` is the sequence of tokens `[".", "getSecti
 
 ## Builtin commands
 
-There are only two builtin commands:
+There are four builtin commands:
 
-### `*Find*`
+### Command `*Find*`
 
 `*Find*` takes zero or one range arguments, and one pattern argument. The command searches for substrings of the code matching that pattern. If one range argument is passed, the search is narrowed to that range.
 
@@ -99,7 +99,11 @@ return $DCGView.createElement(
 
 Note that the return value is not specified (there is no `` => `name`  ``). The point of this code block is to find what the `__rest__` pattern matches.
 
-### `*Replace*`
+### Command `*Find_surrounding_template*`
+
+`*Find_surrounding_template*` takes one range argument. The command searches for a `.template=function(){ ____ }` containing the range argument.
+
+### Command `*Replace*`
 
 `*Replace*` takes one range arguments, and one pattern argument. The command replaces the range with the pattern. This must be the last command in a Module block, and it cannot occur elsewhere.
 
@@ -140,6 +144,12 @@ var $r = $e.hasClass('dcg-all')
 ````
 
 Demonstrates the variables carrying over: the value of `e` is used in the `*Replace*` after being found in the `*Find*`.
+
+### Command `*Plugin*`
+
+`*Plugin*` takes one or more arguments which are the names of patterns. They only matter for error handling and force-disabled plugins.
+
+Later `*plugin*` calls completely replace (shadow) the plugins of the parent heading.
 
 ## Blocks
 

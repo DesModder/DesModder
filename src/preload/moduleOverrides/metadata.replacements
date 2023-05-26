@@ -35,6 +35,8 @@ Allows correct checking of the .glesmos metadata; otherwise, we run into `Calc.o
 
 *Description* `Check GLesmos metatata before calculating a statement`
 
+*plugin* `GLesmos`
+
 *Find*
 ```js
 requestParseForAllItems() {__body__}
