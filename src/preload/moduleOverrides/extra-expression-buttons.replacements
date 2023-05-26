@@ -4,62 +4,6 @@
 
 TODO: work this into an API so it doesn't need a ton of injected code.
 
-## Action Create Helper
-
-*Description* `Add helper necessary to show buttons like "pin" and "merge folder."`
-
-*Find* => `dcg-string`
-```js
-"dcg-expression-edit-actions"
-```
-
-*Find_surrounding_template* `dcg-string` => `template`
-
-*Find* inside `template` => `start`
-```js
-return $.createElement
-```
-
-*Find*
-```js
-createElement(
-  $Tooltip,
-  {
-    tooltip: $.bindFn($.getConvertTooltip),
-    gravity: $.const('s')
-  },
-  $DCGView.createElement
-```
-
-*Replace* `start` with
-```js
-function dsm_actionCreate(tooltip, buttonClass, iconClass, onTap) {
-  return () => $DCGView.createElement(
-    $Tooltip,
-    {
-      tooltip: $DCGView.const(DesModder.controller.format(tooltip)),
-      gravity: $DCGView.const("s")
-    },
-    $DCGView.createElement(
-      "span",
-      {
-        class: $DCGView.const(
-          buttonClass + " dsm-stay-edit-list-mode dcg-exp-action-button"
-        ),
-        handleEvent: $DCGView.const("true"),
-        role: $DCGView.const("button"),
-        tabindex: $DCGView.const("0"),
-        onTap: onTap
-      },
-      $DCGView.createElement("i", {
-        class: $DCGView.const(iconClass + " dsm-stay-edit-list-mode"),
-      })
-    )
-  )
-}
-__start__
-```
-
 ## Insert extra buttons
 
 Insert before the delete button but after the other buttons.
@@ -96,13 +40,13 @@ $DCGView.createElement(
   () => $DCGView.Components.IfElse(
     () => window.DesModder?.controller?.isExpressionPinned(this.model().id),
     {
-      false: dsm_actionCreate(
+      false: DesModder?.controller?.createAction(
         "pin-expressions-pin",
         "dsm-pin-button",
         "dsm-icon-bookmark",
         () => window.DesModder.controller.pinExpression(this.model().id)
       ),
-      true: dsm_actionCreate(
+      true: DesModder?.controller?.createAction(
         "pin-expressions-unpin",
         "dsm-unpin-button dcg-selected",
         "dsm-icon-bookmark",
@@ -117,7 +61,7 @@ $DCGView.createElement(
   {
     predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && this.model().type === "text"
   },
-  dsm_actionCreate(
+  DesModder?.controller?.createAction(
     "folder-tools-enclose",
     "dsm-note-enclose-button",
     "dsm-icon-folder-plus",
@@ -131,7 +75,7 @@ $DCGView.createElement(
     predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && this.model().type === "folder"
       && window.Calc.controller.getItemModelByIndex(this.model().index + 1)?.folderId === this.model().id
   },
-  dsm_actionCreate(
+  DesModder?.controller?.createAction(
     "folder-tools-dump",
     "dsm-folder-dump-button",
     "dsm-icon-folder-minus",
@@ -144,7 +88,7 @@ $DCGView.createElement(
   {
     predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && this.model().type === "folder"
   },
-  dsm_actionCreate(
+  DesModder?.controller?.createAction(
     "folder-tools-merge",
     "dsm-folder-merge-button",
     "dsm-icon-folder-plus",

@@ -1,5 +1,6 @@
 import { DCGView, MountedComponent } from "../DCGView";
 import { PillboxContainer } from "../components";
+import ExpressionActionButton from "../components/ExpressionActionButton";
 import PillboxMenu from "../components/PillboxMenu";
 import { createTipElement } from "../plugins/show-tips/Tip";
 import { List } from "../utils/depUtils";
@@ -714,5 +715,20 @@ export default class Controller {
       this.isPluginEnabled("text-mode") &&
       this.exposedPlugins["text-mode"]?.inTextMode
     );
+  }
+
+  createAction(
+    tooltip: string,
+    buttonClass: string,
+    iconClass: string,
+    onTap: () => void
+  ) {
+    return () =>
+      DCGView.createElement(ExpressionActionButton as any, {
+        tooltip: DCGView.const(tooltip),
+        buttonClass: DCGView.const(buttonClass),
+        iconClass: DCGView.const(iconClass),
+        onTap,
+      });
   }
 }
