@@ -2,28 +2,6 @@
 
 *plugin* `pin-expressions`
 
-## Allow pin/unpin without exiting ELM
-
-*Description* `Stay in "Edit List" mode after pinning/unpinning an expression`
-
-*Find* => `outer`
-```js
-if (this.controller.isInEditListMode() && !$uee($e)) {
-    this.exitEditListMode();
-    return
-}
-```
-
-*Find* inside `outer` => `from`
-```js
-this.exitEditListMode()
-```
-
-*Replace* `from` with
-```js
-(event.target.closest(".dsm-stay-edit-list-mode") || this.exitEditListMode())
-```
-
 ## Disable pinned expressions from appearing in the unpinned section.
 
 *Description* `Remove pinned expressions from the regular (unpinned) expressions list`

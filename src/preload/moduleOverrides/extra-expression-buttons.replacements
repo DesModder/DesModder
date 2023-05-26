@@ -153,3 +153,25 @@ $DCGView.createElement(
 ),
 __delete_button__
 ```
+
+## Allow pin/unpin and dump/merge without exiting ELM
+
+*Description* `Stay in "Edit List" mode after unpinning an expression or dumping a folder`
+
+*Find* => `outer`
+```js
+if (this.controller.isInEditListMode() && !$uee($e)) {
+    this.exitEditListMode();
+    return
+}
+```
+
+*Find* inside `outer` => `from`
+```js
+this.exitEditListMode()
+```
+
+*Replace* `from` with
+```js
+(event.target.closest(".dsm-stay-edit-list-mode") || this.exitEditListMode())
+```
