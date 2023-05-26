@@ -107,11 +107,8 @@ return $DCGView.createElement("div", {
     style: this.bindFn(this.getContainerStyle),
     didMount: this.bindFn(this.didMountContainer),
     didUnmount: this.bindFn(this.didUnmountContainer)
-}, $DCGView.createElement("div", {
-    class: $DCGView.const("dcg-popover-interior"),
-    role: $DCGView.const("complementary"),
-    "aria-label": () => this.controller.s("graphing-calculator-label-tooltip-geometry-settings")
-}, __children__
+}, $DCGView.createElement("div", { ____ },
+  __children__
 ))
 ```
 
