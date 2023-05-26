@@ -4,7 +4,7 @@
 
 ## Hide the keypad when in text mode
 
-*module* `graphing-calc/keypads/main`
+*Description* `Hide the on-screen keypad in Text Mode`
 
 *Find* => `from`
 
@@ -22,7 +22,7 @@ isShowKeypadButtonVisible () {
 
 ## Add text mode toggle button
 
-*module* `expressions/expressions-header`
+*Description* `Add toggle button to enable Text Mode`
 
 *Find* => `element`
 ```js
@@ -83,7 +83,7 @@ __children__
 
 ## Add Text Mode class for styling
 
-*Module* `expressions/list-view`
+*Description* `Style expressions list differently in Text Mode`
 
 *Find* => `from`
 

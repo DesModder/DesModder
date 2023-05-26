@@ -4,7 +4,7 @@
 
 ## Allow pin/unpin without exiting ELM
 
-*Module* `expressions/abstract-item-view`
+*Description* `Stay in "Edit List" mode after pinning/unpinning an expression`
 
 *Find* => `outer`
 ```js
@@ -26,7 +26,7 @@ this.exitEditListMode()
 
 ## Disable pinned expressions from appearing in the unpinned section.
 
-*Module* `graphing-calc/models/abstract-item`
+*Description* `Remove pinned expressions from the regular (unpinned) expressions list`
 
 Completely rewrites function `getDisplayState(e)` to also set an item as hidden if it is pinned
 
@@ -56,7 +56,7 @@ exports.getDisplayState = function (e) {
 
 Since pinned expressions have `isDragDrop=true`, they have `model.dcgView = undefined`, which otherwise prevents the delete animation from occurring.
 
-*Module* `main/controller`
+*Description* `Allow deleting pinned expressions`
 
 *Find*
 ```js

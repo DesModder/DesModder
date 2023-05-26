@@ -4,7 +4,7 @@
 
 ## Replace branding to show tips
 
-*Module* `expressions/list-view`
+*Description* `Replace "powered by desmos" with tips`
 
 *Find* => `from`
 ```js

@@ -4,7 +4,7 @@
 
 ## Override evaluation view
 
-*Module* `expressions/evaluation-view`
+*Description* `Override the evaluation view`
 
 Bindings
 
@@ -164,7 +164,7 @@ rgbcolor: () => $Dcgview.createElement(
 
 ## Return more info from numericLabels
 
-*Module* `core/lib/label`
+*Description* `Distinguish 0 vs -0 and NaN vs -∞ vs +∞`
 
 Add a value field to "undefined" labels
 

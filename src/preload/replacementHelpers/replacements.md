@@ -145,13 +145,15 @@ Demonstrates the variables carrying over: the value of `e` is used in the `*Repl
 
 A block is the basic unit of a replacement. A block starts at a block-starter command. The block-starter command must be immediately after a heading. The block continues until the next heading of equal or shallower depth (fewer `#`s).
 
-The one block-starter command are `*Module*`
+The one block-starter command is `*Description*`
 
-### `*Module*`
+### `*Description*`
 
-`*Module*` takes at least one argument, the module names to apply this block's replacements to. Example usage:
+`*Description*` takes exactly one argument, a short user-readable description of what it does (in English; translation would be too much work for a string that should never appear). It will only appear in the Loading Errors Manager in a context that also shows the relevant plugin (if any).
+
+The description should complete the sentence "This plugin will \_\_\_\_." and the first letter should be capitalized.
 
 <!-- prettier-ignore -->
 ```md
-_Module_ `main/calc_desktop`
+*Description* `Change the style of pillbox buttons (buttons over the graph paper)`
 ```

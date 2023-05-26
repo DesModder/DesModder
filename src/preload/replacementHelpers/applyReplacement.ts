@@ -168,6 +168,7 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
   }
 
   const blockSucceededSymbols = new Map<Block, boolean>();
+  const blockPanickedSymbols = new Map<Block, boolean>();
 
   const table = new SymbolTable(str);
   function applySymbolsForTable(r: Block) {
@@ -179,7 +180,8 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
       if (r.alternative !== undefined) applySymbolsForTable(r.alternative);
       else {
         Console.warn(e);
-        r.plugins.forEach(addPanic);
+        blockPanickedSymbols.set(r, true);
+        addPanic(r);
       }
     }
   }
@@ -192,7 +194,7 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
     if (!blockSucceededSymbols.get(r)) {
       if (r.alternative) return getReplacement(r.alternative);
       else {
-        r.plugins.forEach(addPanic);
+        if (!blockPanickedSymbols.get(r)) addPanic(r);
         return [];
       }
     }
@@ -202,7 +204,7 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
       if (r.alternative !== undefined) return getReplacement(r.alternative);
       else {
         Console.warn(e);
-        r.plugins.forEach(addPanic);
+        addPanic(r);
         return [];
       }
     }

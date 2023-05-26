@@ -6,9 +6,7 @@ TODO: work this into an API so it doesn't need a ton of injected code.
 
 ## Action Create Helper
 
-Adds a helper function for use below.
-
-*module* `expressions/expression-edit-actions`
+*Description* `Add helper necessary to show buttons like "pin" and "merge folder."`
 
 *Find* => `dcg-string`
 ```js
@@ -66,7 +64,7 @@ __start__
 
 Insert before the delete button but after the other buttons.
 
-*module* `expressions/expression-edit-actions`
+*Description* `Show buttons like "pin" and "merge folder."`
 
 *Find* => `element`
 ```js

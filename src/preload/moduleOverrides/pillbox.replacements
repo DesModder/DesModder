@@ -1,12 +1,12 @@
-# Core Replacements
+# Pillbox Replacements
 
-*plugin* `pin-expressions`
+*plugin* `video-creator` `performance-info`
 
 <!-- TODO: this should really be plugin "core", or "all", but that is disallowed. -->
 
 ## Insert spot for extra pillbox buttons in geometry toolbar
 
-*Module* `geometry-toolbar`
+*Description* `Add pillbox buttons (like the DesModder button) in the geometry calculator`
 
 *Find* => `from`
 ```js
@@ -29,7 +29,7 @@ $DCGView.Components.IfElse(
 
 ## Insert spot for extra pillbox buttons in regular pillbox view
 
-*Module* `pillbox`
+*Description* `Add pillbox buttons (like the DesModder button) in the graphing calculator`
 
 *Find* => `from`
 ```js
@@ -51,7 +51,7 @@ $DCGView.Components.IfElse(
 
 ## Bottom zero for our pillbox menus
 
-*Module* `pillbox`
+*Description* `Fix scrolling of pillbox menus (like the video creator menu)`
 
 *Find* => `from`
 ```js
@@ -66,7 +66,7 @@ this.controller.isGraphSettingsOpen() || window.DesModder?.controller?.isSomePil
 
 ## Add popover view for geometry
 
-*Module* `pillbox`
+*Description* `Allow showing pillbox menus (like the video creator menu) in the geometry calculator`
 
 *Find* => `from`
 ```js
@@ -90,9 +90,9 @@ $DCGView.Components.IfElse(
 )
 ```
 
-## Tweak placement of existing settings menu
+## Tweak placement of existing settings menu in geometry
 
-*Module* `pillbox`
+*Description* `Move settings menu left in the geometry calculator (so it doesn't cover DesModder buttons)`
 
 It should be on the left to avoid covering up all the DesModder config stuff.
 
@@ -129,7 +129,7 @@ __classes__,
 
 ## Show pillbox container even without zoom buttons
 
-*module* `pillbox`
+*Description* `Show pillbox buttons (like the DesModder button) even with zoom disabled`
 
 *Find*
 ```js

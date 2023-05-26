@@ -1,39 +1,11 @@
-# Core Replacements
+# Insert Panels replacements
 
-*plugin* `pin-expressions` `hide-errors` `text-mode` `GLesmos`
+*plugin* `pin-expressions` `text-mode`
 
-Replacements that apply to more than one plugin.
-
-## Duplicate metadata when an expression is duplicated
-
-*module* `main/controller`
-
-*Find*
-```js
-copyExpressionToIndex(____) { __body__ }
-```
-
-*Find* inside `body`:
-```js
-let $to = this.createItemModel(
-```
-
-*Find*
-```js
-case "expression": $from =
-```
-
-*Replace* `body` with
-```js
-__body__;
-window.DesModder?.controller?.duplicateMetadata($to.id, $from.id)
-```
 
 ## Insert panels on the expressions list
 
-This is relevant to both pin-expressions and text-mode.
-
-*module* `expressions/list-view`
+*Description* `Insert panels to show Text Mode and pinned expressions`
 
 *Find* => `element`
 ```js

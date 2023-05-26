@@ -1,5 +1,6 @@
 import { Console } from "../globals/window";
 import { format } from "../i18n/i18n-core";
+import { Block } from "../preload/replacementHelpers/parse";
 import { postMessageUp } from "../utils/messages";
 import panicHTML from "./panic.html";
 
@@ -21,11 +22,11 @@ function insertPanicElement() {
       });
       location.reload();
     });
-  document
-    .getElementById("dsm-panic-close-button")!
-    .addEventListener("click", () => {
+  document.querySelectorAll(".dsm-panic-close-button").forEach((n) =>
+    n.addEventListener("click", () => {
       document.body.classList.add("dsm-panic-closed");
-    });
+    })
+  );
   document
     .getElementById("dsm-panic-reopen-button")!
     .addEventListener("click", () => {
@@ -60,16 +61,27 @@ function addLabelledCheckboxItem(list: Element, plugin: string) {
   return li;
 }
 
-export const existingPanics = new Set<string>();
-export function addPanic(plugin: string) {
+export const panickedPlugins = new Set<string>();
+function addPanickedPlugin(plugin: string) {
   Console.warn("Panicking for plugin", plugin);
   const panicPopover = ensurePanicPopover();
-  document.getElementById("dsm-encountered-errors")!.style.display = "unset";
-  if (!existingPanics.has(plugin)) {
+  document
+    .querySelectorAll(".dsm-encountered-errors")
+    .forEach((n) => ((n as HTMLElement).style.display = "unset"));
+  if (!panickedPlugins.has(plugin)) {
     const list = panicPopover.querySelector("ul#dsm-panic-list")!;
     addLabelledCheckboxItem(list, plugin);
   }
-  existingPanics.add(plugin);
+  panickedPlugins.add(plugin);
+}
+
+export function addPanic(block: Block) {
+  block.plugins.forEach(addPanickedPlugin);
+  const description = document.createElement("li");
+  description.innerText = block.description;
+  document
+    .getElementById("dsm-patch-description-list")!
+    .appendChild(description);
 }
 
 export function addForceDisabled(plugin: string) {

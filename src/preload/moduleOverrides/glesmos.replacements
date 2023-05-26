@@ -7,7 +7,7 @@
 Warning: this is duplicated below ("Add a lines menu option...") rather than
 adding an extra section to the menu view.
 
-*Module* `expressions/expression-menus/fill`
+*Description* `Add toggle in "fill" menu to enable GLesmos`
 
 *Find* => `element`
 ```js
@@ -71,7 +71,7 @@ $DCGView.createElement(
 
 Warning: this is duplicated above ("Add a fill menu option...").
 
-*Module* `expressions/expression-menus/lines`
+*Description* `Add toggle in "lines" menu to enable GLesmos`
 
 *Find* => `key`
 ```js
@@ -121,7 +121,7 @@ $DCGView.createElement(
 
 ## Add a lines menu option for confirming GLesmos lines
 
-*Module* `expressions/expression-menus/lines`
+*Description* `Add toggle to confirm GLesmos lines`
 
 *Find* => `options`
 ```js
@@ -178,7 +178,7 @@ __options__
 
 ## Replace main renderer with glesmos rendering when necessary
 
-*Module* `graphing/graphslayer`
+*Description* `Draw GLesmos code`
 
 *Find*
 
@@ -208,26 +208,9 @@ for (const branch of $sketch.branches) {
 }
 ```
 
-## Check/update DesModder metadata before allowing statements to update.
-
-Allows correct checking of the .glesmos metadata; otherwise, we run into `Calc.observeEvent("change")` triggering after addStatement sends the data to the worker. We need the correct `.glesmos` property before addStatement.
-
-*Module* `main/controller`
-
-*Find*
-```js
-requestParseForAllItems() {__body__}
-```
-
-*Replace* `body` with
-```js
-window.DesModder?.controller?.checkForMetadataChange();
-__body__
-```
-
 ## Pass GLesmos flag to worker
 
-*Module* `main/evaluator`
+*Description* `Pass GLesmos flag to the web worker`
 
 *Find*
 ```js
@@ -247,7 +230,7 @@ __body__
 
 ## Replace quadtree implicit tracing with glesmos compilation
 
-*module* `core/math/features/graph`
+*Description* `Compile GLesmos code instead of running implicit plotter`
 
 *worker_only*
 

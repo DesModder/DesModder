@@ -1,4 +1,4 @@
-import { existingPanics } from "../../panic/panic";
+import { panickedPlugins } from "../../panic/panic";
 import workerAppend from "../../worker/append.inline";
 import { applyReplacements } from "./applyReplacement";
 import { Block } from "./parse";
@@ -32,7 +32,7 @@ export async function fullReplacementCached(
   // cache miss :(
   const result = fullReplacement(calcDesktop, enabledReplacements);
   // cache if there's no panics
-  if (existingPanics.size === 0)
+  if (panickedPlugins.size === 0)
     void set(k, {
       hashRepls,
       hashFile,
