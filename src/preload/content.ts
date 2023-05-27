@@ -112,13 +112,7 @@ listenToMessageUp((message) => {
       getPluginsForceDisabled();
       break;
     case "get-initial-data": {
-      // prep to send data back down
       getInitialData();
-      // but also insert style sheet
-      const s = document.createElement("link");
-      s.rel = "stylesheet";
-      s.href = chrome.runtime.getURL("script.css");
-      document.head.appendChild(s);
       break;
     }
     case "set-plugins-enabled":
@@ -150,4 +144,11 @@ listenToMessageUp((message) => {
   return false;
 });
 
+// insert style sheet
+const s = document.createElement("link");
+s.rel = "stylesheet";
+s.href = chrome.runtime.getURL("script.css");
+(document.head || document.documentElement).appendChild(s);
+
+// run preload code, which handles replacements then calls the main code
 injectScript(chrome.runtime.getURL("preload/script.js"));
