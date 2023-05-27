@@ -73,13 +73,13 @@
   #dsm-panic-reopen-button:hover {
     color: black;
   }
-  body.dsm-panic-closed #dsm-panic-popover {
+  body:not(.dsm-panic-open) #dsm-panic-popover {
     display: none;
   }
-  body:not(.dsm-panic-closed) #dsm-panic-reopen-button {
+  body.dsm-panic-open #dsm-panic-reopen-button {
     display: none;
   }
-  body.dsm-panic-closed .dcg-header .dcg-home-link {
+  body:not(.dsm-panic-open) .dcg-header .dcg-home-link {
     pointer-events: none;
     cursor: default;
   }

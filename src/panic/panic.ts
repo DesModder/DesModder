@@ -24,13 +24,13 @@ function insertPanicElement() {
     });
   document.querySelectorAll(".dsm-panic-close-button").forEach((n) =>
     n.addEventListener("click", () => {
-      document.body.classList.add("dsm-panic-closed");
+      document.body.classList.remove("dsm-panic-open");
     })
   );
   document
     .getElementById("dsm-panic-reopen-button")!
     .addEventListener("click", () => {
-      document.body.classList.remove("dsm-panic-closed");
+      document.body.classList.add("dsm-panic-open");
     });
 }
 
