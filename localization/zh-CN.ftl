@@ -19,7 +19,7 @@ category-integrations-name = 对外集成
 
 ## GLesmos
 GLesmos-name = GLesmos
-GLesmos-desc = 使用GPU渲染隐函数等图象。刷新页面后此功能将自动关闭。极少数情况下此功能可能会导致UI运行卡顿或卡死; 若出现问题请刷新网页重试。
+GLesmos-desc = 使用GPU渲染隐函数等图象。刷新页面后此功能将自动关闭。极少数情况下此功能可能会导致界面卡顿或卡死; 若出现问题请刷新网页重试。
 GLesmos-label-toggle-glesmos = 使用 GLesmos 渲染
 GLesmos-confirm-lines = 确认开启？
 GLesmos-confirm-lines-body = 使用 GLesmos 渲染线条可能会很慢。请谨慎使用，尤其是在使用列表绘制一系列图象的时候。
@@ -31,14 +31,14 @@ show-tips-desc = 在表达式列表的底部显示小贴士
 # Missing: all tips. Is it worthwhile?
 
 ## Text Mode
-text-mode-name = 文本模式 BETA
-text-mode-desc = 可能会出现一些bug。临时的使用文档请参见：
+text-mode-name = 文本模式（测试版）
+text-mode-desc = 可能会出现故障。临时的使用文档请参见：
 text-mode-toggle = 启用文本模式
 # Missing: error messages
 
 ## Debug Mode
 debug-mode-name = 调试模式
-debug-mode-desc = 显示每个表达式的ID，而非行号
+debug-mode-desc = 显示每个表达式的内部ID，而非行号
 
 ## Find and Replace
 find-and-replace-name = 查找与替换
@@ -95,7 +95,7 @@ right-click-tray-desc = 除了长按表达式左侧圆形图标之外，也可�
 
 ## Set Primary Color
 set-primary-color-name = 设置主色调
-set-primary-color-desc = 自定义UI主色调
+set-primary-color-desc = 自定义界面主色调
 set-primary-color-opt-primaryColor-name = 主色调
 set-primary-color-opt-primaryColor-desc = 整个图形计算器的主色调
 set-primary-color-opt-doFavicon-name = 更新网站图标
@@ -155,7 +155,7 @@ wakatime-opt-secretKey-desc = WakaTime 服务器使用的API密钥
 wakatime-opt-splitProjects-name = 按图表划分项目
 wakatime-opt-splitProjects-desc = 将每张图表记录为单独的项目，而非作为一个统一 Desmos 项目下的不同分支
 wakatime-opt-projectName-name = 项目名称
-wakatime-opt-projectName-desc = 名称在 WakaTime 中可见，并且为所有 Desmos 所项目共享
+wakatime-opt-projectName-desc = 此名称在 WakaTime 中可见，并且为所有 Desmos 所项目共享
 
 ## Performance Display
 performance-info-name = 性能信息
