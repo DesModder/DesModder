@@ -83,7 +83,7 @@ const exprDefaults = {
   displayEvaluationAsFraction: false,
   slider: {},
   vizProps: {},
-};
+} as const;
 
 const columnDefaults = {
   type: "column",
@@ -91,14 +91,14 @@ const columnDefaults = {
   hidden: false,
   values: [],
   color: colors[0],
-};
+} as const;
 
 const tableDefaults = {
   type: "table",
   id: "__dsm-auto-1",
   pinned: false,
   secret: false,
-};
+} as const;
 
 const folderDefaults = {
   type: "folder",
@@ -106,7 +106,7 @@ const folderDefaults = {
   collapsed: false,
   hidden: false,
   secret: false,
-};
+} as const;
 
 const defaultSettings: Aug.GraphSettings = {
   viewport: {
@@ -132,14 +132,22 @@ function testSettings(desc: string, s: string, expected: any) {
   });
 }
 
-function testStmt(desc: string, s: string, ...expected: any[]) {
+type DeepReadonly<T> = {
+  readonly [P in keyof T]: DeepReadonly<T[P]>;
+};
+
+function testStmt(
+  desc: string,
+  s: string,
+  ...expected: DeepReadonly<Aug.ItemAug | Aug.TickerAug>[]
+) {
   test(getTestName(desc, s), () => {
     const [{ diagnostics }, res] = textToAug(s);
     expect(diagnostics).toEqual([]);
     expect(res).not.toBeNull();
     if (res === null) return;
     expected.forEach((e, i) => {
-      if (e.handlerLatex) {
+      if ("handlerLatex" in e) {
         expect(res.expressions.ticker).toEqual(e);
       } else {
         const augStmt = res.expressions.list[i];
@@ -1302,4 +1310,21 @@ describe("Operator precedence", () => {
     binop("Add", id("x"), binop("Multiply", id("y"), id("z")))
   );
   // TODO: some of the more arcane ones: derivative, and lower
+});
+
+describe("Funny spacing", () => {
+  testStmt(
+    "space before double-newline",
+    "y=x \n\nx=3",
+    {
+      ...exprDefaults,
+      latex: comparator("=", id("y"), id("x")),
+    },
+    {
+      ...exprDefaults,
+      id: "__dsm-auto-2",
+      color: "#2d70b3",
+      latex: comparator("=", id("x"), number(3)),
+    }
+  );
 });

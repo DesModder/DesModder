@@ -36,7 +36,7 @@ const rules = {
   },
   string: /"(?:[^"\\]|\\.)*?"/,
   prime: /'+/,
-  semi: { match: /;|\n[ \t\n]*\n/, lineBreaks: true },
+  semi: { match: /;|[ \t\n]*\n[ \t\n]*\n[ \t\n]*/, lineBreaks: true },
   space: { match: /[ \t\n]+/, lineBreaks: true },
   invalid: { match: /[^]/, lineBreaks: true },
 };
