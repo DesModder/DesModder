@@ -18,12 +18,14 @@ export function format(
 ): string {
   const lang = currentLanguage();
   const bundle = locales.get(lang);
-  const message = bundle?.getMessage(key);
-  if (message?.value != null) {
-    return bundle!.formatPattern(message.value, args);
+  if (bundle) {
+    const message = bundle.getMessage(key);
+    if (message?.value != null) {
+      return bundle.formatPattern(message.value, args);
+    }
+    if (missingReplacement === undefined)
+      Console.warn("[DesModder] Error formatting key", key, "in locale", lang);
   }
-  if (missingReplacement === undefined)
-    Console.warn("[DesModder] Error formatting key", key, "in locale", lang);
   const englishBundle = locales.get("en")!;
   const englishMessage = englishBundle.getMessage(key);
   if (englishMessage?.value != null) {
