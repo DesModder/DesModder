@@ -1,5 +1,17 @@
 # DesModder Changelog
 
+## 0.10.5
+
+New: translations for Chinese (Simplified, PRC; zh-CN)
+
+Bug fixes and improvements:
+
+- Fix main loading error
+- Show brief description of problem on loading error
+- Collapse loading error menu by default
+- Load CSS earlier, preventing interface "jumping"
+- (Text Mode) Minimize parentheses emitted to LaTeX
+
 ## 0.10.4
 
 New: translations for Spanish!
