@@ -35,9 +35,10 @@ export default function needsParens(path: NodePath): boolean {
       return name === "expr";
     case "CallExpression":
       return (
-        name === "callee" &&
-        node.type !== "Identifier" &&
-        node.type !== "MemberExpression"
+        (name === "callee" &&
+          node.type !== "Identifier" &&
+          node.type !== "MemberExpression") ||
+        node.type === "Substitution"
       );
     case "ListExpression":
       return node.type === "Substitution";

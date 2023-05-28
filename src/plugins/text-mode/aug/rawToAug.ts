@@ -370,7 +370,7 @@ export function parseRootLatex(str: string): Aug.Latex.AnyRootOrChild {
         type: "Visualization",
         callee: {
           type: "Identifier",
-          symbol: parsed.type,
+          symbol: vizSymbol[parsed.type],
         },
         args: parsed.args.map(childNodeToTree),
       };
@@ -384,6 +384,15 @@ export function parseRootLatex(str: string): Aug.Latex.AnyRootOrChild {
       return childNodeToTree(parsed);
   }
 }
+
+const vizSymbol = {
+  Stats: "stats",
+  BoxPlot: "boxplot",
+  DotPlot: "dotplot",
+  Histogram: "histogram",
+  IndependentTTest: "IndependentTTest",
+  TTest: "TTest",
+} as const;
 
 function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
   switch (node.type) {

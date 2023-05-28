@@ -68,10 +68,10 @@ export interface Visualization {
   callee: {
     type: "Identifier";
     symbol:
-      | "Stats"
-      | "BoxPlot"
-      | "DotPlot"
-      | "Histogram"
+      | "stats"
+      | "boxplot"
+      | "dotplot"
+      | "histogram"
       | "IndependentTTest"
       | "TTest";
   };

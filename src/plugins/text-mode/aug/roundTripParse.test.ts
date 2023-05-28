@@ -13,7 +13,8 @@ function leftRight(s: string) {
   return s
     .replace(/[[(]|\\{/g, (x) => "\\left" + x)
     .replace(/[\])]|\\}/g, (x) => "\\right" + x)
-    .replace(/\*/g, "\\cdot ");
+    .replace(/\*/g, "\\cdot ")
+    .replace(/\\o/g, "\\operatorname");
 }
 
 function testRoundTripIdentical(raw: string) {
@@ -34,29 +35,166 @@ function testRoundTripParsesSame(raw: string) {
   });
 }
 
-const raw = String.raw;
-
 describe("Identical round trips", () => {
   const cases: string[] = [
-    "2+3",
+    /// parent = Integral
+    "\\int_{a}^{b}f(x)dx",
+    /// parent = ListAcccess
+    "L[x]",
+    "L^{2}[x]",
+    "L![x]",
+    "(-L)[x]",
+    "(L*M)[x]",
+    "L[1,2,3]",
+    "L[[1,2,3]+4]",
+    "L[1...5]",
+    "L[L>3]",
+    "L[f(M)]",
+    /// parent = DotAccess
+    "L.\\o{random}(5)",
+    "L^{2}.\\o{unique}",
+    "L!.\\o{unique}",
+    "(-L).\\o{unique}",
+    "(L*M).\\o{unique}",
+    /// parent = OrderedPairAccess
+    "L.x",
+    "L[5].x",
+    "(-L).y",
+    /// parent = RepeatedOperator
+    "\\sum_{n=a}^{b}(m\\o{with}m=n)",
+    "\\sum_{n=a}^{b}(n+5)",
+    "\\sum_{n=a}^{b}n*5",
+    "\\sum_{n=a}^{b}-n",
+    "\\sum_{n=a+1}^{b+2}n+5",
+    "\\prod_{n=a}^{b}(m\\o{with}m=n)",
+    "\\prod_{n=a}^{b}(n+5)",
+    "\\prod_{n=a}^{b}n*5",
+    "\\prod_{n=a}^{b}-n",
+    "\\prod_{n=a+1}^{b+2}n+5",
+    /// parent = Derivative
+    "\\frac{d}{dx}(x+5)",
+    "\\frac{d}{dx}(x-5)",
+    "\\frac{d}{dx}-x",
+    "\\frac{d}{dx}x*5",
+    "\\frac{d}{dx}\\frac{d}{dx}x^{3}",
+    /// parent = Comparator
+    "x<(b\\o{with}b=3)",
+    "(b\\o{with}b=3)\\le x",
+    "1+x<2*y",
+    "A=a\\to a+1",
+    "A=a\\to a+1,b\\to b-a",
+    /// parent = DoubleInequality
+    "x<y<x+1",
+    "(b\\o{with}b=3)\\le y\\le x+3",
+    /// parent = BinaryOperator
+    // parent = Exponent
     "x^{2}",
+    "4^{2}",
     "(-5)^{2}",
-    "(x)!",
+    "f(x)^{2}",
+    "P.x^{2}",
+    "L[5]^{4}",
+    "(2^{3})^{4}",
+    "x!^{4}",
+    "2^{3^{4}}",
+    "2^{a\\o{with}a=3}",
+    "\\frac{1}{2}^{\\frac{3}{4}}",
+    // parent = Multiply
+    "x*y*z",
+    "x*(y*z)",
+    "(x+y)*z",
+    "x*(y+z)",
+    "-x*y",
+    "x*-y",
+    "x!*y",
+    "x*y!",
+    "x^{2}*y^{2}",
+    "4*\\frac{2}{3}",
+    // parent = Divide
+    "\\frac{a\\o{with}a=3}{b\\o{with}b=2}+4",
+    "\\frac{\\frac{1}{2}}{\\frac{3}{4}}",
+    "\\frac{1+2}{3*4}",
+    // parent = Add
+    "x+y+z",
+    "x+(y+z)",
+    "x+y*z",
+    "x*y+z",
+    "(b\\o{with}b=3)+x",
+    "\\frac{2}{3}+4",
+    // parent = Subtract
+    "1-2-3",
+    "1-(2-3)",
+    "1+2-3",
+    "1-(2+3)",
+    "(b\\o{with}b=3)-x",
+    "-x-y",
+    "x--y",
+    "x*y-z",
+    "x-y*z",
+    /// parent = Negative
+    "-(x-y)",
+    "-(b\\o{with}b=3)",
+    "-(x*y)",
+    "-5",
+    "-x!",
+    "-x^{2}",
+    "-L.x",
+    /// parent = FunctionCall
+    "f((b\\o{with}b=3),4+5,b\\o{with}b=3)",
+    "f(2*3,L[5])",
+    // parent = factorial
+    "x!!!",
+    "L[x]!",
+    "x^{2}!",
+    "(-x)!",
     "(x+2)!",
+    /// parent = ListComprehension
+    "[a+b\\o{for}a=[1...5]]",
+    "[a+b\\o{for}a=[2...6],b=[-3...4]]",
+    "[a\\o{with}a=b+3\\o{for}b=[-3...4]]",
+    /// parent = Substitution
+    "a+(1,1)\\o{with}a=(1,2)",
+    "(b\\to a+1,c\\to a-1)\\o{with}a=3",
+    "b\\to 4,(c\\to a-1)\\o{with}a=3",
+    "b\\to 4,c\\to a-1\\o{with}a=3",
+    /// parent = Seq
+    "a\\to a+1,b\\to b-1",
+    "((a\\o{with}a=3),x+3)",
+    "(5*x,b\\o{with}b=3)",
+    /// parent = Prime
     "f''(x)",
-    "(P).x",
-    raw`(L).\operatorname{random}(5)`,
-    "(2+3)*4",
-    "2*3+4",
-    "(0,4)",
-    raw`\frac{(2)}{(3)}*4`,
-    raw`[a+b\operatorname{for}a=[1...5],b=[-3...4]]`,
-    raw`\int_{a}^{b}f(x)dx`,
+    "f''(2*3)",
+    "f'(b\\o{with}b=3)",
+    /// parent = Visualization
+    "\\o{stats}([1,2,3])",
+    "\\o{boxplot}([1,2,3,5,4]+L)",
+    "\\o{dotplot}(L*M)",
+    "\\o{histogram}([1,2,3],4)",
+    "\\o{IndependentTTest}((b\\o{with}b=[1,2,3]),[4,5,6])",
+    "\\o{TTest}([i+j\\o{for}i=[1...5],j=L])",
+    /// parent = List
+    "[1,2,3]",
+    "[(b\\o{with}b=3),2,b\\o{with}b=3]",
+    "[b\\o{with}b=3]",
+    /// parent = Piecewise
+    "\\{x>1:3+x,5*y\\}",
+    "\\{x>1:5\\}",
+    "\\{x>1\\}",
+    "\\{x>1:5,x<0:3,45\\}",
+    "\\{x>1:(b\\o{with}b=3),x<0:(b\\o{with}b=3),b\\o{with}b=3\\}",
+    "\\{x>1:(b\\o{with}b=3),x<0:b\\o{with}b=3\\}",
+    /// parent = Range
+    "[1...5]",
+    "[1,2,3...9,10,11]",
+    "[1+2,(b\\o{with}b=3)...(b\\o{with}b=4),b\\o{with}b=5]",
+    /// parent = ???? default
   ];
   cases.forEach(testRoundTripIdentical);
 });
 
 describe("Same-parse round trips", () => {
+  const raw = String.raw;
+
   const cases: string[] = [
     raw`A_{main}\left(d\right)=A_{T}\left(d\right),\ A_{horizScroll}\left(0\right),\ A_{vertScroll}\left(0\right),\left\{Q_{pauseEval}=0:\ \left\{Q_{landscape}=1:\ A_{E}\left(0\right)\right\}\right\},\ A_{drag}\left(0\right),\ A_{scrollbarWidth}\left(0\right)`,
     raw`x_{1}\left(y\right)=1-4^{\operatorname{round}\left(\log_{4}\left(\left|3y-1\right|\right)-0.5b\right)+0.5b}`,

@@ -367,11 +367,15 @@ function childNodeToStringNoParen(e: Aug.Latex.AnyChild): string {
     case "List":
       return wrapBracket(bareSeq(e.args, e));
     case "Range":
-      return wrapBracket(bareSeq(e.start, e) + "..." + bareSeq(e.end, e));
+      return wrapBracket(
+        bareSeq(e.start, e, { alwaysBeforeComma: true }) +
+          "..." +
+          bareSeq(e.end, e)
+      );
     case "ListAccess":
       return (
         childNodeToString(e.list, e, "list") +
-        (e.index.type === "Range"
+        (e.index.type === "Range" || e.index.type === "List"
           ? childNodeToString(e.index, e)
           : wrapBracket(childNodeToString(e.index, e)))
       );
@@ -396,13 +400,13 @@ function childNodeToStringNoParen(e: Aug.Latex.AnyChild): string {
       return wrapBracket(
         childNodeToString(e.expr, e) +
           "\\operatorname{for}" +
-          e.assignments.map(assignmentExprToRaw).join(",")
+          bareSeq(e.assignments, e)
       );
     case "Substitution":
       return (
         childNodeToString(e.body, e) +
         "\\operatorname{with}" +
-        e.assignments.map(assignmentExprToRaw).join(",")
+        bareSeq(e.assignments, e)
       );
     case "Piecewise": {
       const piecewiseParts: string[] = [];
@@ -414,7 +418,16 @@ function childNodeToStringNoParen(e: Aug.Latex.AnyChild): string {
         }
         let part = childNodeToString(curr.condition, curr);
         if (!Aug.Latex.isConstant(curr.consequent, 1)) {
-          part += ":" + childNodeToString(curr.consequent, curr);
+          part +=
+            ":" +
+            childNodeToString(
+              curr.consequent,
+              curr,
+              beforeComma(
+                curr.alternate.type === "Piecewise" ||
+                  !Aug.Latex.isConstant(curr.alternate, NaN)
+              )
+            );
         }
         piecewiseParts.push(part);
         curr = curr.alternate;
@@ -469,19 +482,17 @@ function childNodeToStringNoParen(e: Aug.Latex.AnyChild): string {
         childNodeToString(e.right, e)
       );
     case "AssignmentExpression":
-      return assignmentExprToRaw(e);
+      return (
+        identifierToString(e.variable) +
+        "=" +
+        childNodeToString(e.expression, e)
+      );
     default:
       e satisfies never;
       throw new Error(
         `Programming Error: Unexpected Aug node ${(e as any).type}`
       );
   }
-}
-
-function assignmentExprToRaw(e: Aug.Latex.AssignmentExpression): string {
-  return (
-    identifierToString(e.variable) + "=" + childNodeToString(e.expression, e)
-  );
 }
 
 const comparatorMap = {
@@ -494,9 +505,22 @@ const comparatorMap = {
 
 function bareSeq(
   e: Aug.Latex.AnyChild[],
-  parent: Aug.Latex.AnyRootOrChild
+  parent: Aug.Latex.AnyRootOrChild,
+  { alwaysBeforeComma } = { alwaysBeforeComma: false }
 ): string {
-  return e.map((f) => childNodeToString(f, parent)).join(",");
+  return e
+    .map((f, i) =>
+      childNodeToString(
+        f,
+        parent,
+        beforeComma(alwaysBeforeComma || i < e.length - 1)
+      )
+    )
+    .join(",");
+}
+
+function beforeComma(beforeComma: boolean) {
+  return beforeComma ? "before-comma" : "last-element";
 }
 
 function funcToString(

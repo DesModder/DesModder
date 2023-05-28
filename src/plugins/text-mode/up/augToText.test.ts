@@ -462,4 +462,12 @@ describe("Parens", () => {
       binop("Exponent", id("a"), binop("Exponent", id("b"), id("c")))
     );
   });
+  testExpr(
+    "call(substitution,arg)",
+    "f((c with c = 4), 6)",
+    functionCall(id("f"), [
+      substitution(id("c"), assignmentExpr(id("c"), number(4))),
+      number(6),
+    ])
+  );
 });
