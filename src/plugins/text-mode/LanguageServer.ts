@@ -14,7 +14,7 @@ import { Program, Statement } from "./down/TextAST";
 import textToRaw from "./down/textToRaw";
 import { RelevantEvent, eventSequenceChanges } from "./modify";
 import { Diagnostic } from "@codemirror/lint";
-import { Transaction } from "@codemirror/state";
+import { StateField, Text, Transaction } from "@codemirror/state";
 import { EditorView, ViewUpdate } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
 
@@ -34,10 +34,8 @@ export default class LanguageServer {
     this.parse(false);
   }
 
-  async doLint(): Promise<Diagnostic[]> {
-    return await new Promise((resolve) => {
-      resolve(this.analysis.diagnostics);
-    });
+  doLint(): Diagnostic[] {
+    return this.analysis.diagnostics;
   }
 
   parse(nextEditDueToGraph: boolean) {
@@ -61,6 +59,7 @@ export default class LanguageServer {
    * slider value change, or viewport move) which affects the text
    */
   onCalcEvent(event: RelevantEvent) {
+    // should this be a state effect?
     if (event.type === "set-selected-id") {
       if (event.dsmFromTextModeSelection) return;
       const stmt = this.analysis.mapIDstmt[event.id];
@@ -81,3 +80,14 @@ export default class LanguageServer {
     this.view.dispatch(transaction);
   }
 }
+
+export function parseAndReturnAnalysis(doc: Text) {
+  const s = doc.sliceString(0);
+  const [analysis, _rawGraphState] = textToRaw(s);
+  return analysis;
+}
+
+export const analysisStateField = StateField.define<ProgramAnalysis>({
+  create: (state) => parseAndReturnAnalysis(state.doc),
+  update: (_value, transaction) => parseAndReturnAnalysis(transaction.newDoc),
+});

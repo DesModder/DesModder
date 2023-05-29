@@ -1,8 +1,10 @@
 import Controller from "../Controller";
+import { analysisStateField } from "../LanguageServer";
 // Language extension
 import { TextMode } from "../lezer/index";
 import "./editor.css";
 import { checkboxPlugin } from "./plugins/checkboxWidget";
+import { stmtNumbers } from "./plugins/stmtNumbers";
 import { styleMappingPlugin } from "./plugins/styleMappingWidgets";
 import {
   closeBrackets,
@@ -34,7 +36,6 @@ import {
   dropCursor,
   highlightActiveLine,
   keymap,
-  lineNumbers,
   highlightActiveLineGutter,
 } from "@codemirror/view";
 
@@ -51,12 +52,13 @@ export function startState(controller: Controller, text: string) {
   return EditorState.create({
     doc: text,
     extensions: [
+      analysisStateField,
       EditorView.updateListener.of(controller.onEditorUpdate.bind(controller)),
       // linter, showing errors
       // The linter is also the entry point to evaluation
       linter(controller.doLint.bind(controller), { delay: 250 }),
       // line numbers and gutter
-      lineNumbers(),
+      stmtNumbers(),
       highlightActiveLineGutter(),
       // undo/redo history
       history(),
