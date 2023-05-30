@@ -26,9 +26,9 @@ jest.mock("utils/depUtils");
 jest.mock("globals/window");
 
 function textToAug(text: string) {
-  const [diagnostics, program] = parse(text);
-  testPosNesting(program);
-  return astToAug(diagnostics, program);
+  const analysis = parse(text);
+  testPosNesting(analysis.program);
+  return astToAug(analysis);
 }
 
 _expect.extend({
@@ -55,10 +55,10 @@ function testPosNesting(node: TextAST.Node, okNoPos = false) {
     .filter((x) => x);
   if (!okNoPos) expect(node.pos).ok(`Type ${node.type} should have a pos`);
   if (node.pos) {
-    expect(childPos.every((x) => x.from >= node.pos!.from)).ok(
+    expect(childPos.every((x) => x.from >= node.pos.from)).ok(
       `Type ${node.type} .pos.from should not exceed child.pos.from`
     );
-    expect(childPos.every((x) => x.to <= node.pos!.to)).ok(
+    expect(childPos.every((x) => x.to <= node.pos.to)).ok(
       `Type ${node.type} .pos.to should not be less than child.pos.to`
     );
   }
@@ -71,7 +71,7 @@ const colors = ["#c74440", "#2d70b3", "#388c46", "#6042a6", "#000000"];
 
 const exprDefaults = {
   type: "expression",
-  id: "__dsm-auto-1",
+  id: "1",
   latex: number(1),
   color: colors[0],
   hidden: false,
@@ -87,7 +87,7 @@ const exprDefaults = {
 
 const columnDefaults = {
   type: "column",
-  id: "__dsm-auto-2",
+  id: "2",
   hidden: false,
   values: [],
   color: colors[0],
@@ -95,14 +95,14 @@ const columnDefaults = {
 
 const tableDefaults = {
   type: "table",
-  id: "__dsm-auto-1",
+  id: "1",
   pinned: false,
   secret: false,
 } as const;
 
 const folderDefaults = {
   type: "folder",
-  id: "__dsm-auto-1",
+  id: "1",
   collapsed: false,
   hidden: false,
   secret: false,
@@ -176,9 +176,12 @@ function testExpr(desc: string, s: string, expected: any) {
 }
 
 function testString(desc: string, s: string, expected: string) {
-  testStmt(desc, `1 @{id:${s}}`, {
+  testStmt(desc, `1@{onClick:A,clickDescription:${s}}`, {
     ...exprDefaults,
-    id: expected,
+    clickableInfo: {
+      description: expected,
+      latex: id("A"),
+    },
   });
 }
 
@@ -309,7 +312,7 @@ describe("Basic exprs", () => {
     ]);
   });
   describe("Piecewise", () => {
-    testExpr("trivial (else-only) piecewise", "{else:1}", {
+    testExpr("trivial piecewise", "{}", {
       type: "Piecewise",
       condition: true,
       consequent: number(1),
@@ -356,7 +359,7 @@ describe("Basic exprs", () => {
         alternate: number(NaN),
       },
     });
-    testExpr("two conditions and else", "{x>1:2,y>3:4,else:5}", {
+    testExpr("two conditions and else", "{x>1:2,y>3:4,5}", {
       type: "Piecewise",
       condition: comparator(">", id("x"), number(1)),
       consequent: number(2),
@@ -386,11 +389,17 @@ describe("Basic exprs", () => {
     ]);
   });
   describe("Action", () => {
-    testExpr("update rule", "a->7", {
+    const rule = {
       type: "UpdateRule",
       variable: id("a"),
       expression: number(7),
-    });
+    } as const;
+    testExpr("update rule", "a->7", rule);
+    testExpr(
+      "update rule assignment",
+      "A=a->7",
+      comparator("=", id("A"), rule)
+    );
   });
   describe("PrefixExpression", () => {
     testExpr("negative number", "-5.0", negative(number(5)));
@@ -791,7 +800,7 @@ describe("Regressions", () => {
 describe("Text", () => {
   testStmt("Text", `"abc"`, {
     type: "text",
-    id: "__dsm-auto-1",
+    id: "1",
     pinned: false,
     secret: false,
     text: "abc",
@@ -812,7 +821,7 @@ describe("Semicolons", () => {
     },
     {
       ...exprDefaults,
-      id: "__dsm-auto-2",
+      id: "2",
       color: "#2d70b3",
       latex: comparator("=", id("x"), number(1)),
     }
@@ -823,13 +832,13 @@ describe("Semicolons", () => {
     children: [
       {
         ...exprDefaults,
-        id: "__dsm-auto-2",
+        id: "2",
         color: "#c74440",
         latex: comparator("=", id("y"), id("x")),
       },
       {
         ...exprDefaults,
-        id: "__dsm-auto-3",
+        id: "3",
         color: "#2d70b3",
         latex: comparator("=", id("x"), number(1)),
       },
@@ -841,12 +850,12 @@ describe("Semicolons", () => {
     children: [
       {
         ...exprDefaults,
-        id: "__dsm-auto-2",
+        id: "2",
         latex: comparator("=", id("y"), id("x")),
       },
       {
         ...exprDefaults,
-        id: "__dsm-auto-3",
+        id: "3",
         color: "#2d70b3",
         latex: comparator("=", id("x"), number(1)),
       },
@@ -869,7 +878,7 @@ describe("Semicolons", () => {
 describe("Image", () => {
   testStmt("Plain image", `image "name" @{ url: "data:image/png,stub" }`, {
     type: "image",
-    id: "__dsm-auto-1",
+    id: "1",
     pinned: false,
     secret: false,
     name: "name",
@@ -899,7 +908,7 @@ describe("Image", () => {
       }`,
     {
       type: "image",
-      id: "__dsm-auto-1",
+      id: "1",
       pinned: true,
       secret: true,
       name: "name",
@@ -927,7 +936,7 @@ describe("Folder", () => {
       children: [
         {
           ...exprDefaults,
-          id: "__dsm-auto-2",
+          id: "2",
         },
       ],
     }
@@ -938,7 +947,7 @@ describe("Folder", () => {
       @{collapsed:true,secret:true,hidden:true}`,
     {
       type: "folder",
-      id: "__dsm-auto-1",
+      id: "1",
       title: "Title",
       collapsed: true,
       hidden: true,
@@ -993,7 +1002,7 @@ describe("Automatic IDs", () => {
         {
           ...columnDefaults,
           latex: id("b"),
-          id: "__dsm-auto-3",
+          id: "3",
           color: colors[1],
         },
       ],
@@ -1001,7 +1010,7 @@ describe("Automatic IDs", () => {
     expect(exprs[1]).toEqual({
       ...exprDefaults,
       latex: number(1),
-      id: "__dsm-auto-4",
+      id: "4",
       color: colors[2],
     });
   });
@@ -1025,13 +1034,13 @@ describe("Automatic IDs", () => {
         {
           ...exprDefaults,
           latex: id("a"),
-          id: "__dsm-auto-2",
+          id: "2",
         },
         {
           ...exprDefaults,
           color: colors[1],
           latex: id("b"),
-          id: "__dsm-auto-3",
+          id: "3",
         },
       ],
     });
@@ -1039,7 +1048,7 @@ describe("Automatic IDs", () => {
       ...exprDefaults,
       latex: number(1),
       color: colors[2],
-      id: "__dsm-auto-4",
+      id: "4",
     });
   });
 });
@@ -1208,8 +1217,8 @@ describe("Diagnostics", () => {
     testDiagnostics("Settings in folder", `folder "title" { settings @{} }`, [
       error("Settings may not be in a folder", pos(17, 29)),
     ]);
-    testDiagnostics("Invalid id", `y=x @{id: "__dsm-auto-1"}`, [
-      error("ID may not start with '__'", pos(10, 24)),
+    testDiagnostics("Invalid id", `y=x @{id: "1"}`, [
+      warning("Property id unexpected on expression", pos(6, 8)),
     ]);
   });
   describe("Parse errors", () => {
@@ -1322,7 +1331,7 @@ describe("Funny spacing", () => {
     },
     {
       ...exprDefaults,
-      id: "__dsm-auto-2",
+      id: "2",
       color: "#2d70b3",
       latex: comparator("=", id("x"), number(3)),
     }

@@ -112,13 +112,13 @@ function settingsChange(
 ): ChangeSpec {
   const newSettingsText = graphSettingsToText(rawToAugSettings(state));
   const settingsNode = findStatement(
-    analysis.ast.children,
+    analysis.program.children,
     (stmt): stmt is Settings => stmt.type === "Settings"
   );
   return settingsNode
     ? {
-        from: settingsNode.pos!.from,
-        to: settingsNode.pos!.to,
+        from: settingsNode.pos.from,
+        to: settingsNode.pos.to,
         insert: newSettingsText,
       }
     : {
@@ -180,7 +180,7 @@ function itemChange(
       return oldNode.columns.map((e, i) =>
         insertWithIndentation(
           view,
-          e.expr.pos!,
+          e.expr.pos,
           exprToTextString(new NodePath(ast.columns[i].expr, null))
         )
       );
@@ -200,7 +200,7 @@ function itemChange(
       return [
         insertWithIndentation(
           view,
-          oldNode.expr.pos!,
+          oldNode.expr.pos,
           exprToTextString(new NodePath(ast.expr, null))
         ),
       ];
@@ -232,9 +232,9 @@ function itemChange(
           const text = docToString(
             styleEntryToText(new NodePath(newEntry, null))
           );
-          if (oldEntry) return insertWithIndentation(view, oldEntry.pos!, text);
+          if (oldEntry) return insertWithIndentation(view, oldEntry.pos, text);
           else {
-            const prevEnd = oldEntries[oldEntries.length - 1].pos!.to;
+            const prevEnd = oldEntries[oldEntries.length - 1].pos.to;
             const isComma = view.state.sliceDoc(prevEnd, prevEnd + 1) === ",";
             const insertPos = prevEnd + (isComma ? 1 : 0);
             return insertWithIndentation(
@@ -258,10 +258,10 @@ function itemChange(
       const params = "#{" + text.split("#{")[1];
       // only modify the parameters
       if (!oldNode.parameters) {
-        const to = oldNode.pos!.to;
+        const to = oldNode.pos.to;
         return [insertWithIndentation(view, { from: to, to }, " " + params)];
       } else {
-        return [insertWithIndentation(view, oldNode.parameters.pos!, params)];
+        return [insertWithIndentation(view, oldNode.parameters.pos, params)];
       }
     }
   }

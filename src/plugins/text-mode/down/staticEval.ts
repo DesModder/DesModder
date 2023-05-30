@@ -1,10 +1,10 @@
-import TextAST from "./TextAST";
+import TextAST, { Concrete, Synthetic } from "./TextAST";
 import { error } from "./diagnostics";
 import { Diagnostic } from "@codemirror/lint";
 
 export function evalExpr(
   diagnostics: Diagnostic[],
-  expr: TextAST.Expression
+  expr: TextAST.Expression<Concrete | Synthetic>
 ): number | string | boolean | null {
   switch (expr.type) {
     case "Number":
@@ -22,7 +22,10 @@ export function evalExpr(
         return builtinMap[expr.name];
       } else {
         diagnostics.push(
-          error(`Undefined identifier: ${expr.name.replace("_", "")}`, expr.pos)
+          error(
+            `Undefined identifier: ${expr.name.replace("_", "")}`,
+            "pos" in expr ? expr.pos : undefined
+          )
         );
         return null;
       }
@@ -30,7 +33,7 @@ export function evalExpr(
       diagnostics.push(
         error(
           `Static evaluation of ${expr.type} has not yet been implemented`,
-          expr.pos
+          "pos" in expr ? expr.pos : undefined
         )
       );
       return null;

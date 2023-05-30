@@ -1,7 +1,8 @@
 import { ProgramAnalysis } from "../LanguageServer";
-import { Identifier } from "../aug/AugLatex";
+import { Identifier, constant } from "../aug/AugLatex";
 import Aug from "../aug/AugState";
-import TextAST, { number } from "./TextAST";
+import { childLatexToAST } from "../up/augToAST";
+import TextAST from "./TextAST";
 import { DiagnosticsState } from "./diagnostics";
 import { evalExpr } from "./staticEval";
 import * as Hydrated from "./style/Hydrated";
@@ -14,26 +15,11 @@ import { Calc } from "globals/window";
 import { everyNonNull } from "utils/utils";
 
 export class DownState extends DiagnosticsState {
-  mapIDstmt: Record<string, TextAST.Statement> = {};
-  maxCustomID = 0;
   hasBlockingError = false;
-
-  generateID() {
-    // TODO: incremental updates, so later IDs don't get destroyed when a new
-    // expression is added in the middle of the code
-    return `__dsm-auto-${++this.maxCustomID}`;
-  }
-
-  ensureID(tryID: string, stmt: TextAST.Statement) {
-    const id = tryID === "" ? this.generateID() : tryID;
-    this.mapIDstmt[id] = stmt;
-    return id;
-  }
 }
 
 export default function astToAug(
-  parseErrors: Diagnostic[],
-  program: TextAST.Program
+  analysis: ProgramAnalysis
 ): [ProgramAnalysis, Aug.State | null] {
   const state: Aug.State = {
     version: 9,
@@ -49,6 +35,7 @@ export default function astToAug(
       list: [],
     },
   };
+  const { diagnostics: parseErrors, program, mapIDstmt } = analysis;
   const diagnostics: Diagnostic[] = [...parseErrors];
   const ds = new DownState(diagnostics);
   for (const stmt of program.children) {
@@ -70,8 +57,8 @@ export default function astToAug(
   return [
     {
       diagnostics,
-      ast: program,
-      mapIDstmt: ds.mapIDstmt,
+      program,
+      mapIDstmt,
     },
     ds.hasBlockingError ? null : state,
   ];
@@ -153,7 +140,7 @@ function textToAug(
   const style = hydrate(ds, styleMapping, Default.text, Schema.text, "text");
   return style !== null
     ? {
-        ...exprBase(ds, style, stmt),
+        ...exprBase(style, stmt),
         type: "text",
         text: stmt.text,
       }
@@ -195,7 +182,7 @@ function regressionToAug(
   if (!everyNonNull(params)) return null;
   return {
     type: "expression",
-    ...exprBase(ds, style, stmt),
+    ...exprBase(style, stmt),
     latex: expr,
     regression: {
       isLogMode: style.logMode,
@@ -241,20 +228,20 @@ function expressionToAug(
   return {
     type: "expression",
     // Use empty string as an ID placeholder. These will get filled in at the end
-    ...exprBase(ds, style, stmt),
+    ...exprBase(style, stmt),
     latex: expr,
     label:
       style.label && style.label.text !== ""
         ? {
             ...style.label,
-            size: childExprToAug(style.label.size),
-            angle: childExprToAug(style.label.angle),
+            size: style.label.size,
+            angle: style.label.angle,
           }
         : undefined,
     // hidden from common
     errorHidden: style.errorHidden,
     glesmos: style.glesmos,
-    fillOpacity: style.fill ? childExprToAug(style.fill) : undefined,
+    fillOpacity: style.fill,
     displayEvaluationAsFraction: style.displayEvaluationAsFraction,
     slider: style.slider
       ? {
@@ -262,31 +249,31 @@ function expressionToAug(
           loopMode: style.slider.loopMode,
           playDirection: style.slider.reversed ? -1 : 1,
           isPlaying: style.slider.playing,
-          min: style.slider.min && childExprToAug(style.slider.min),
-          max: style.slider.max && childExprToAug(style.slider.max),
-          step: style.slider.step && childExprToAug(style.slider.step),
+          min: style.slider.min,
+          max: style.slider.max,
+          step: style.slider.step,
         }
       : {},
     polarDomain:
       style.domain && isPolar
         ? {
-            min: style.domain.min && childExprToAug(style.domain.min),
-            max: style.domain.max && childExprToAug(style.domain.max),
+            min: style.domain.min,
+            max: style.domain.max,
           }
         : undefined,
     parametricDomain:
       style.domain && !isPolar
         ? {
-            min: style.domain.min && childExprToAug(style.domain.min),
-            max: style.domain.max && childExprToAug(style.domain.max),
+            min: style.domain.min,
+            max: style.domain.max,
           }
         : undefined,
     cdf:
       style.cdf &&
       !exprEvalSameDeep(style.cdf, { min: -Infinity, max: Infinity })
         ? {
-            min: style.cdf.min && childExprToAug(style.cdf.min),
-            max: style.cdf.max && childExprToAug(style.cdf.max),
+            min: style.cdf.min,
+            max: style.cdf.max,
           }
         : undefined,
     // TODO: vizProps
@@ -294,7 +281,7 @@ function expressionToAug(
     clickableInfo: style.onClick
       ? {
           description: style.clickDescription,
-          latex: childExprToAug(style.onClick),
+          latex: style.onClick,
         }
       : undefined,
     ...columnExpressionCommonStyle(style),
@@ -318,7 +305,7 @@ function tickerToAug(
     type: "ticker",
     ticker: {
       handlerLatex: childExprToAug(handler),
-      minStepLatex: childExprToAug(hydrated.minStep),
+      minStepLatex: hydrated.minStep,
       playing: hydrated.playing,
     },
   };
@@ -350,8 +337,8 @@ function columnExpressionCommonStyle(style: Hydrated.ColumnExpressionCommon) {
       typeof style.color === "string"
         ? style.color
         : (style.color.type === "Identifier" &&
-            Calc.colors[style.color.name.replace("_", "")]) ||
-          childExprToAug(style.color),
+            Calc.colors[style.color.symbol.replace("_", "")]) ||
+          style.color,
     hidden: style.hidden,
     points:
       style.points === true
@@ -363,8 +350,8 @@ function columnExpressionCommonStyle(style: Hydrated.ColumnExpressionCommon) {
           exprEvalSame(style.points.size, 0)
           ? { size: constant(0) }
           : {
-              opacity: childExprToAug(style.points.opacity),
-              size: childExprToAug(style.points.size),
+              opacity: style.points.opacity,
+              size: style.points.size,
               style: style.points.style,
               dragMode: style.points.drag,
             }
@@ -379,8 +366,8 @@ function columnExpressionCommonStyle(style: Hydrated.ColumnExpressionCommon) {
           exprEvalSame(style.lines.width, 0)
           ? { width: constant(0) }
           : {
-              opacity: childExprToAug(style.lines.opacity),
-              width: childExprToAug(style.lines.width),
+              opacity: style.lines.opacity,
+              width: style.lines.width,
               style: style.lines.style,
             }
         : undefined,
@@ -388,13 +375,9 @@ function columnExpressionCommonStyle(style: Hydrated.ColumnExpressionCommon) {
   return res;
 }
 
-function exprBase(
-  ds: DownState,
-  style: Hydrated.NonFolderBase,
-  stmt: TextAST.Statement
-) {
+function exprBase(style: Hydrated.NonFolderBase, stmt: TextAST.Statement) {
   return {
-    id: ds.ensureID(style.id, stmt),
+    id: stmt.id,
     secret: style.secret,
     pinned: style.pinned,
   };
@@ -407,7 +390,7 @@ function tableToAug(
 ): Aug.TableAug | null {
   const style = hydrate(ds, styleMapping, Default.table, Schema.table, "table");
   if (style === null) return null;
-  const base = exprBase(ds, style, stmt);
+  const base = exprBase(style, stmt);
   const resultColumns = stmt.columns.map((col) => tableColumnToAug(ds, col));
   if (!everyNonNull(resultColumns)) return null;
   return {
@@ -432,7 +415,7 @@ function tableColumnToAug(
   const expr = column.expr;
   const base = {
     type: "column" as const,
-    id: ds.ensureID(style.id, column),
+    id: column.id,
     ...columnExpressionCommonStyle(style),
   };
 
@@ -457,21 +440,21 @@ function tableColumnToAug(
       };
     }
   } else {
+    const list = childExprToAug(expr);
     return {
       ...base,
       values: [],
-      latex: childExprToAug(
+      latex:
         expr.type === "ListExpression"
           ? // Desmos complains about a plain list expression as latex
             // so placate it by adding zero
             {
-              type: "BinaryExpression",
-              op: "+",
-              left: number(0),
-              right: expr,
+              type: "BinaryOperator",
+              name: "Add",
+              left: constant(0),
+              right: list,
             }
-          : expr
-      ),
+          : list,
     };
   }
 }
@@ -485,20 +468,20 @@ function imageToAug(
   if (style === null) return null;
   const res: Aug.ImageAug = {
     type: "image",
-    ...exprBase(ds, style, expr),
+    ...exprBase(style, expr),
     image_url: style.url,
     name: expr.name,
-    width: childExprToAug(style.width),
-    height: childExprToAug(style.height),
-    center: childExprToAug(style.center),
-    angle: childExprToAug(style.angle),
-    opacity: childExprToAug(style.opacity),
+    width: style.width,
+    height: style.height,
+    center: style.center,
+    angle: style.angle,
+    opacity: style.opacity,
     foreground: style.foreground,
     draggable: style.draggable,
     clickableInfo: style.onClick
       ? {
           description: style.clickDescription,
-          latex: childExprToAug(style.onClick),
+          latex: style.onClick,
           hoveredImage: style.hoveredImage,
           depressedImage: style.depressedImage,
         }
@@ -522,7 +505,6 @@ function folderToAug(
     "folder"
   );
   if (style === null) return null;
-  const id = ds.ensureID(style.id ?? "", expr);
   for (const child of expr.children) {
     const stmtAug = statementToAug(ds, state, child);
     if (stmtAug !== null) {
@@ -542,7 +524,7 @@ function folderToAug(
   }
   return {
     type: "folder",
-    id,
+    id: expr.id,
     secret: style.secret,
     hidden: style.hidden,
     collapsed: style.collapsed,
@@ -551,12 +533,12 @@ function folderToAug(
   };
 }
 
-function exprEvalSame(expr: TextAST.Expression, expected: number) {
-  const evaluated = evalExpr([], expr);
+function exprEvalSame(expr: Aug.Latex.AnyChild, expected: number) {
+  const evaluated = evalExpr([], childLatexToAST(expr));
   return evaluated === null ? false : evaluated === expected;
 }
 
-function exprEvalSameDeep<T extends Record<string, TextAST.Expression>>(
+function exprEvalSameDeep<T extends Record<string, Aug.Latex.AnyChild>>(
   exprMap: T,
   expected: { [K in keyof T]: number }
 ) {
@@ -775,17 +757,15 @@ const binopMap: Record<string, string> = {
 function piecewiseToAug(
   branches: TextAST.PiecewiseBranch[]
 ): Aug.Latex.AnyChild {
-  const res = piecewiseInnerToAug(branches);
-  if (res.type === "Constant" && res.value === 1) {
+  if (branches.length === 0) {
     return {
       type: "Piecewise",
       condition: true,
       consequent: constant(1),
       alternate: constant(NaN),
     };
-  } else {
-    return res;
   }
+  return piecewiseInnerToAug(branches);
 }
 
 function piecewiseInnerToAug(
@@ -793,11 +773,9 @@ function piecewiseInnerToAug(
 ): Aug.Latex.AnyChild {
   const firstBranch = branches[0];
   if (firstBranch === undefined) return constant(NaN);
-  const firstCond = childExprToAug(firstBranch.condition);
-  if (firstCond.type === "Identifier" && firstCond.symbol === "else") {
-    // Rudimentary variable inlining
+  if (firstBranch.condition === null)
     return childExprToAug(firstBranch.consequent);
-  }
+  const firstCond = childExprToAug(firstBranch.condition);
   if (
     firstCond.type !== "DoubleInequality" &&
     firstCond.type !== "Comparator"
@@ -807,8 +785,11 @@ function piecewiseInnerToAug(
   return {
     type: "Piecewise" as const,
     condition: firstCond,
-    consequent: childExprToAug(firstBranch.consequent),
-    alternate: piecewiseToAug(branches.slice(1)),
+    consequent:
+      firstBranch.consequent === null
+        ? constant(1)
+        : childExprToAug(firstBranch.consequent),
+    alternate: piecewiseInnerToAug(branches.slice(1)),
   };
 }
 
@@ -817,8 +798,4 @@ function identifierToAug(expr: TextAST.Identifier) {
     type: "Identifier" as const,
     symbol: expr.name,
   };
-}
-
-function constant(value: number) {
-  return { type: "Constant" as const, value };
 }

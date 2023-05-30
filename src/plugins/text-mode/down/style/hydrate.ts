@@ -1,5 +1,6 @@
+import Aug from "../../aug/AugState";
 import TextAST from "../TextAST";
-import { DownState } from "../astToAug";
+import { DownState, childExprToAug } from "../astToAug";
 import { evalExpr } from "../staticEval";
 import { Schema } from "./schema";
 
@@ -32,7 +33,7 @@ export function hydrate<T>(
   // now we know style's keys are a subset of schema's keys
   // ensure `res` gets an entry for each of schema's keys
   const res: {
-    [Key in keyof T]?: TextAST.Expression | number | string | boolean;
+    [Key in keyof T]?: Aug.Latex.AnyChild | number | string | boolean;
   } = {};
   let hasNull = false;
   for (const _key in schema) {
@@ -92,12 +93,12 @@ export function hydrate<T>(
       if (givenValue.type === "StyleMapping") {
         pushError(`Expected ${errPath} to be primitive, but got style mapping`);
       } else if (schemaType === "expr") {
-        res[key] = givenValue;
+        res[key] = childExprToAug(givenValue);
       } else if (schemaType === "color") {
         if (givenValue.type === "String") {
           res[key] = givenValue.value;
         } else {
-          res[key] = givenValue;
+          res[key] = childExprToAug(givenValue);
         }
       } else {
         const evaluated = evalExpr(ds.diagnostics, givenValue);
@@ -121,14 +122,6 @@ export function hydrate<T>(
             pushError(
               `Expected ${errPath} to evaluate to ${schemaType}, but got ${typeof evaluated}`
             );
-        }
-        if (
-          key === "id" &&
-          typeof evaluated === "string" &&
-          evaluated.startsWith("__")
-        ) {
-          // We don't want conflicts with auto-generated IDs
-          pushError("ID may not start with '__'");
         }
         if (evaluated !== null) res[key] = evaluated;
       }

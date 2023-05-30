@@ -147,9 +147,9 @@ function getSelectedItem(
   if (ls.analysis) {
     const containingPairs = Object.entries(ls.analysis.mapIDstmt).filter(
       ([_id, stmt]) =>
-        stmt!.type !== "Folder" &&
-        stmt!.pos!.from <= selection.from &&
-        stmt!.pos!.to >= selection.to
+        stmt.type !== "Folder" &&
+        stmt.pos.from <= selection.from &&
+        stmt.pos.to >= selection.to
     );
     return containingPairs[0]?.[0];
   }

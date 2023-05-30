@@ -9,16 +9,16 @@ import { GraphState } from "@desmodder/graph-state";
 export default function textToRaw(
   text: string
 ): [ProgramAnalysis, GraphState | null] {
-  const [parseErrors, ast] = parse(text);
+  const analysis = parse(text);
   try {
-    const [analysis, aug] = astToAug(parseErrors, ast);
-    return [analysis, aug ? augToRaw(aug) : null];
+    const [analysis2, aug] = astToAug(analysis);
+    return [analysis2, aug ? augToRaw(aug) : null];
   } catch (err) {
     Console.warn("Error while compiling to Desmos:\n", err);
     return [
       {
         diagnostics: [error(`Fatal error: ${err}`, undefined)],
-        ast,
+        program: analysis.program,
         mapIDstmt: {},
       },
       null,

@@ -1,5 +1,5 @@
 import Aug from "./AugState";
-import { isFactorialBang } from "./augToRaw";
+import { isFactorialBang } from "./augLatexToRaw";
 
 export default function augNeedsParens(
   node: Aug.Latex.AnyChild,
@@ -26,7 +26,9 @@ export default function augNeedsParens(
       return power(node) <= POWERS.add;
     case "Comparator":
     case "DoubleInequality":
-      return power(node) <= POWERS.compare;
+      return (
+        power(node) <= (path === "top-level-eq" ? POWERS.top : POWERS.compare)
+      );
     case "BinaryOperator":
       return binopNeedsParens(node, parent.name, path!);
     case "Negative":

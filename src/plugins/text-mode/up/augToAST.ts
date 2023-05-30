@@ -1,5 +1,5 @@
 import Aug from "../aug/AugState";
-import TextAST from "../down/TextAST";
+import TextAST from "../down/TextASTSynthetic";
 
 export function graphSettingsToAST(
   settings: Aug.GraphSettings
@@ -374,7 +374,7 @@ function functionCallToAST(e: Aug.Latex.FunctionCall): TextAST.CallExpression {
   };
 }
 
-function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
+export function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
   switch (e.type) {
     case "Constant":
       return numberToASTmaybe(e.value)!;
@@ -498,11 +498,17 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         curr = curr.alternate;
       }
       if (!Aug.Latex.isConstant(curr, NaN)) {
-        piecewiseBranches.push({
-          type: "PiecewiseBranch",
-          condition: identifierToAST({ symbol: "else" }),
-          consequent: childLatexToAST(curr),
-        });
+        if (piecewiseBranches.length === 0) {
+          if (!Aug.Latex.isConstant(curr, 1))
+            throw new Error(
+              "Programming error: first branch in Aug piecewise is unconditional but not 1."
+            );
+        } else
+          piecewiseBranches.push({
+            type: "PiecewiseBranch",
+            condition: null,
+            consequent: childLatexToAST(curr),
+          });
       }
       return {
         type: "PiecewiseExpression",
@@ -570,7 +576,7 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
     default:
       e satisfies never;
       throw new Error(
-        `Programming Error: Unexpected Aug node ${(e as any).type}`
+        `Programming Error in augToAST: Unexpected Aug node ${(e as any).type}`
       );
   }
 }
@@ -593,7 +599,9 @@ function assignmentExprToAST(
   };
 }
 
-function rootLatexToAST(e: Aug.Latex.AnyRootOrChild): TextAST.Expression {
+export function rootLatexToAST(
+  e: Aug.Latex.AnyRootOrChild
+): TextAST.Expression {
   switch (e.type) {
     case "Equation":
     case "Assignment":

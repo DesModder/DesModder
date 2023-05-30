@@ -1,12 +1,13 @@
+import { ProgramAnalysis } from "../LanguageServer";
 import TextAST, {
   Node,
   Expression,
   isExpression,
   Pos,
   isStatement,
+  Statement,
 } from "./TextAST";
 import { DiagnosticsState } from "./diagnostics";
-import { Diagnostic } from "@codemirror/lint";
 import * as moo from "moo";
 import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
 
@@ -78,6 +79,9 @@ class ParseState extends DiagnosticsState {
   private curr: Token | null = null;
   private prevToken?: Token;
   private readonly lexer;
+  mapIDstmt: Record<string, Statement> = {};
+  private currentID = 0;
+  private currentIndex = 0;
 
   constructor(input: string) {
     super();
@@ -165,11 +169,43 @@ class ParseState extends DiagnosticsState {
     this.pushError(message, pos);
     return new ParseError(message);
   }
+
+  nextID() {
+    return `${++this.currentID}`;
+  }
+
+  nextIndex() {
+    return ++this.currentIndex;
+  }
+
+  statementCommon(): Pick<Statement, StatementFinishKeys> {
+    return {
+      style: null,
+      id: this.nextID(),
+      index: this.nextIndex(),
+    };
+  }
+
+  finishStatement<T extends Statement>(
+    stmt: DistributiveOmit<T, StatementFinishKeys>,
+    info = this.statementCommon()
+  ): T {
+    Object.assign(stmt, info);
+    this.mapIDstmt[info.id] = stmt as T;
+    return stmt as T;
+  }
 }
+
+type StatementFinishKeys = "id" | "style" | "index";
+
+// https://davidgomes.com/pick-omit-over-union-types-in-typescript/
+type DistributiveOmit<T, K extends string> = T extends unknown
+  ? Omit<T, K>
+  : unknown;
 
 class ParseError extends Error {}
 
-export function parse(input: string): [Diagnostic[], TextAST.Program] {
+export function parse(input: string): ProgramAnalysis {
   const ps = new ParseState(input);
   const children = parseStatements(ps, { isTop: true });
   if (children.length === 0 && ps.diagnostics.length === 0)
@@ -179,13 +215,20 @@ export function parse(input: string): [Diagnostic[], TextAST.Program] {
   const program: TextAST.Program = {
     type: "Program",
     children,
-    pos: posMany(children.map((x) => x.pos).filter((p) => p) as Pos[], {
-      from: 0,
-      to: 0,
-    }),
+    pos: posMany(
+      children.map((x) => x.pos),
+      {
+        from: 0,
+        to: 0,
+      }
+    ),
   };
 
-  return [ps.diagnostics, program];
+  return {
+    diagnostics: ps.diagnostics,
+    program,
+    mapIDstmt: ps.mapIDstmt,
+  };
 }
 
 /** Returns either a node or array of errors */
@@ -290,6 +333,15 @@ const initialParselets: TokenMap<InitialParselet> = {
     "[": parseList,
     "{": (ps, token): Node => {
       const branches: TextAST.PiecewiseBranch[] = [];
+      const next = ps.peek();
+      if (next.value === "}") {
+        const next = ps.consume();
+        return {
+          type: "PiecewiseExpression",
+          branches,
+          pos: pos(token, next),
+        };
+      }
       while (true) {
         const curr = parseExpr(
           ps,
@@ -301,13 +353,21 @@ const initialParselets: TokenMap<InitialParselet> = {
         if (next.value === "}") {
           const first = branches.length === 0;
           if (first) assertComparison(ps, curr);
-          const bool = first || isComparison(curr);
-          branches.push({
-            type: "PiecewiseBranch",
-            condition: bool ? curr : { type: "Identifier", name: "else" },
-            consequent: bool ? { type: "Number", value: 1 } : curr,
-            pos: pos(curr),
-          });
+          branches.push(
+            first || isComparison(curr)
+              ? {
+                  type: "PiecewiseBranch",
+                  condition: curr,
+                  consequent: null,
+                  pos: pos(curr),
+                }
+              : {
+                  type: "PiecewiseBranch",
+                  condition: null,
+                  consequent: curr,
+                  pos: pos(curr),
+                }
+          );
           return {
             type: "PiecewiseExpression",
             branches,
@@ -344,7 +404,7 @@ const initialParselets: TokenMap<InitialParselet> = {
           branches.push({
             type: "PiecewiseBranch",
             condition: curr,
-            consequent: { type: "Number", value: 1 },
+            consequent: null,
             pos: pos(curr),
           });
         } else {
@@ -369,6 +429,8 @@ const initialParselets: TokenMap<InitialParselet> = {
     product: repeatedOperatorParselet("product"),
     integral: repeatedOperatorParselet("integral"),
     table: (ps, token) => {
+      // statementCommon must be calculated at top to get index before children
+      const common = ps.statementCommon();
       ps.consume("{");
       const columns = parseStatements(ps).flatMap((stmt) => {
         if (stmt.type !== "ExprStatement") {
@@ -380,50 +442,53 @@ const initialParselets: TokenMap<InitialParselet> = {
         } else return [stmt];
       });
       const end = ps.consume("}");
-      return {
-        type: "Table",
-        columns,
-        pos: pos(token, end),
-        style: null,
-      };
+      return ps.finishStatement(
+        {
+          type: "Table",
+          columns,
+          pos: pos(token, end),
+        },
+        common
+      );
     },
     folder: (ps, token): Node => {
+      // statementCommon must be calculated at top to get index before children
+      const common = ps.statementCommon();
       const title = stringParselet(ps, ps.consumeType("string"));
       ps.consume("{");
       const children = parseStatements(ps);
       const end = ps.consume("}");
-      return {
-        type: "Folder",
-        children,
-        title: title.value,
-        pos: pos(token, end),
-        style: null,
-      };
+      return ps.finishStatement(
+        {
+          type: "Folder",
+          children,
+          title: title.value,
+          pos: pos(token, end),
+        },
+        common
+      );
     },
     image: (ps, token): Node => {
       const name = stringParselet(ps, ps.consumeType("string"));
-      return {
+      return ps.finishStatement({
         type: "Image",
         name: name.value,
         pos: pos(token, name),
-        style: null,
-      };
+      });
     },
-    settings: (_ps, token): Node => {
-      return {
+    settings: (ps, token): Node => {
+      return ps.finishStatement({
         type: "Settings",
-        style: null,
         pos: pos(token),
-      };
+      });
     },
     ticker: (ps, token): Node => {
       const handler = parseExpr(ps, Power.meta, "ticker handler", "a -> a+1");
-      return {
+      return ps.finishStatement({
         type: "Ticker",
         handler,
         pos: pos(token, handler),
-        style: null,
-      };
+      });
     },
   },
 };
@@ -438,8 +503,7 @@ function assertComparison(ps: ParseState, node: TextAST.Expression) {
 function isComparison(node: TextAST.Expression) {
   return (
     node.type === "DoubleInequality" ||
-    (node.type === "BinaryExpression" && comparisonOps.includes(node.op)) ||
-    (node.type === "Identifier" && node.name === "else")
+    (node.type === "BinaryExpression" && comparisonOps.includes(node.op))
   );
 }
 
@@ -470,7 +534,7 @@ const fragileNames = [
   "hypot",
 ];
 
-const desModderNames = ["else", "true", "false"];
+const desModderNames = ["true", "false"];
 
 const dontSubscriptIdentifiers = new Set([
   ...autoOperatorNames.split(" ").map((e) => e.split("|")[0]),
@@ -685,11 +749,13 @@ const consequentParselets: Record<
   "@{": consequentParselet(Power.meta, (ps, left, token): Node => {
     const stmt = finalizeStatement(ps, left);
     const style = parseStyleMapping(ps, token);
-    return {
+    const stmt2 = {
       ...stmt,
       style,
       pos: pos(stmt, style),
     };
+    ps.mapIDstmt[stmt2.id] = stmt2;
+    return stmt2;
   }),
   "~": consequentParselet(Power.sim, (ps, left, token): Node => {
     const ex = "y1 ~ m * x1 + b";
@@ -887,12 +953,11 @@ function finalizeStatement(ps: ParseState, expr: Node): TextAST.Statement {
 
 function exprToStatement(ps: ParseState, expr: Expression): TextAST.Statement {
   if (expr.type === "String")
-    return {
+    return ps.finishStatement({
       type: "Text",
       text: expr.value,
       pos: expr.pos,
-      style: null,
-    };
+    });
   let residualVariable: TextAST.Identifier | undefined;
   // Convert `residualVariable = (LHS ~ RHS)` to appropriate form
   if (
@@ -912,17 +977,16 @@ function exprToStatement(ps: ParseState, expr: Expression): TextAST.Statement {
     residualVariable = left;
   }
   const isRegression = expr.type === "BinaryExpression" && expr.op === "~";
-  return {
+  return ps.finishStatement({
     type: "ExprStatement",
     expr,
-    style: null,
     pos:
       isRegression && residualVariable
         ? pos(residualVariable, expr)
         : pos(expr),
     parameters: undefined,
     residualVariable: isRegression ? residualVariable : undefined,
-  };
+  });
 }
 
 function parseBareSeq(ps: ParseState, example: string): TextAST.Expression[] {
@@ -1041,17 +1105,13 @@ function assertLeftIsExpression(
     );
 }
 
-function pos(
-  start: { pos?: Pos; offset?: number },
-  end: { pos?: Pos; offset?: number; text?: string } = start
-): Pos | undefined {
-  const from = start.pos?.from ?? start.offset;
-  const to =
-    end.pos?.to ??
-    (end.offset !== undefined && end.text !== undefined
-      ? end.offset + end.text.length
-      : undefined);
-  return from !== undefined && to !== undefined ? { from, to } : undefined;
+type PositionedOrToken = { pos: Pos } | { offset: number; text: string };
+
+function pos(start: PositionedOrToken, end: PositionedOrToken = start): Pos {
+  return {
+    from: "pos" in start ? start.pos.from : start.offset,
+    to: "pos" in end ? end.pos.to : end.offset + end.text.length,
+  };
 }
 
 function posMany(arr: Pos[], initial: Pos) {

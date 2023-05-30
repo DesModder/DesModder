@@ -62,13 +62,7 @@ export const ticker: Schema = {
   playing: "boolean",
 };
 
-const base: Schema = {
-  // empty ID will be filled in later in the process
-  id: "string",
-};
-
 const itemBase: Schema = {
-  ...base,
   secret: "boolean",
 };
 
@@ -177,7 +171,6 @@ export const regression: Schema = {
 export const table: Schema = nonFolderBase;
 
 export const column: Schema = {
-  ...base,
   ...columnExpressionCommon,
 };
 

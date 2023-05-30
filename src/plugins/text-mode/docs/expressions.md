@@ -7,7 +7,6 @@ Notes to avoid confusion:
 - Juxtaposed (implicit) multiplication like `ab` or `a b` is not allowed; it must be `a*b`.
 - Equality is currently single-equals like `a = b`, unlike some other programming languages
 - In a derivative, the `d/d` must have no spaces, and there must be a space after it, e.g. `(d/d x)`
-- Default "else" conditions are not yet supported. Write `{x > 0: 5, else: 0}`, not `{x > 0: 5, 0}`
 - Decimal values must not have a trailing decimal point. Write `123`, not `123.`
 
 ```js
@@ -57,6 +56,6 @@ a -> a+1, b -> b+1
 // Piecewise
 {a > 5}
 {a > 5: 7}
-{a > 5: 7, else: 0}
+{a > 5: 7, 0}
 {a > 5: 7, b > 3: 4}
 ```

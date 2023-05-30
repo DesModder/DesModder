@@ -263,3 +263,7 @@ export function isConstant(e: AnyRootOrChild | undefined, v: number) {
     (e.value === v || (isNaN(e.value) && isNaN(v)))
   );
 }
+
+export function constant(value: number): Constant {
+  return { type: "Constant", value };
+}

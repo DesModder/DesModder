@@ -19,9 +19,9 @@ import { EditorView, ViewUpdate } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
 
 export interface ProgramAnalysis {
-  ast: Program;
-  diagnostics: Diagnostic[];
-  mapIDstmt: Record<string, Statement | undefined>;
+  program: Program;
+  diagnostics: readonly Diagnostic[];
+  mapIDstmt: Record<string, Statement>;
 }
 
 export default class LanguageServer {
@@ -34,7 +34,7 @@ export default class LanguageServer {
     this.parse(false);
   }
 
-  doLint(): Diagnostic[] {
+  doLint(): readonly Diagnostic[] {
     return this.analysis.diagnostics;
   }
 
@@ -63,7 +63,6 @@ export default class LanguageServer {
     if (event.type === "set-selected-id") {
       if (event.dsmFromTextModeSelection) return;
       const stmt = this.analysis.mapIDstmt[event.id];
-      if (!stmt?.pos) return;
       const transaction = this.view.state.update({
         scrollIntoView: true,
         selection: { anchor: stmt.pos.from },
