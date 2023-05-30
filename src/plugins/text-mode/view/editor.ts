@@ -4,6 +4,7 @@ import { analysisStateField } from "../LanguageServer";
 import { TextMode } from "../lezer/index";
 import "./editor.css";
 import { checkboxPlugin } from "./plugins/checkboxWidget";
+import { activeStmtGutterHighlighter } from "./plugins/highlightActiveStmtGutter";
 import { stmtNumbers } from "./plugins/stmtNumbers";
 import { styleMappingPlugin } from "./plugins/styleMappingWidgets";
 import {
@@ -36,7 +37,6 @@ import {
   dropCursor,
   highlightActiveLine,
   keymap,
-  highlightActiveLineGutter,
 } from "@codemirror/view";
 
 const scrollTheme = EditorView.theme({
@@ -59,7 +59,7 @@ export function startState(controller: Controller, text: string) {
       linter(controller.doLint.bind(controller), { delay: 250 }),
       // line numbers and gutter
       stmtNumbers(),
-      highlightActiveLineGutter(),
+      activeStmtGutterHighlighter,
       // undo/redo history
       history(),
       // fold using arrow in the gutter
