@@ -255,8 +255,7 @@ function funcToString(
       [...args.slice(0, 1), ...args.slice(2)],
       parent
     )}}`;
-  } else if (callee.symbol === "l_ogbase" && [1, 2].includes(args.length)) {
-    if (args.length === 1) return "\\log" + wrapParen(bareSeq(args, parent));
+  } else if (callee.symbol === "logbase" && args.length === 2) {
     return (
       `\\log_{${childNodeToString(args[args.length - 1], parent)}}` +
       wrapParen(bareSeq(args.slice(0, args.length - 1), parent))

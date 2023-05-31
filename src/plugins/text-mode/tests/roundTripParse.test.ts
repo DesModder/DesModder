@@ -12,6 +12,8 @@ function leftRight(s: string) {
   return s
     .replace(/[[(]|\\{/g, (x) => "\\left" + x)
     .replace(/[\])]|\\}/g, (x) => "\\right" + x)
+    .replace(/\\\\left/g, "")
+    .replace(/\\\\right/g, "")
     .replace(/\*/g, "\\cdot ")
     .replace(/\\o/g, "\\operatorname");
 }
@@ -176,7 +178,22 @@ describe("Identical round trips", () => {
     /// parent = FunctionCall
     "f((b\\o{with}b=3),4+5,b\\o{with}b=3)",
     "f(2*3,L[5])",
-    // parent = factorial
+    // special cases of FunctionCall
+    "\\left|x+y\\right|",
+    "\\sqrt{x}",
+    "\\sqrt\\[5\\]{x}",
+    "\\o{log}(x)",
+    "\\log_{x+y}(x-y)",
+    "\\o{sin}(x)",
+    // fragile names
+    "\\o{polyGamma}(x,2)",
+    "\\o{argmin}([1,2,x])",
+    "\\o{argmax}([1,2,x])",
+    "\\o{uniquePerm}([1,2,x])",
+    "\\o{rtxsqpone}(x)",
+    "\\o{rtxsqmone}(x)",
+    "\\o{hypot}(x,y)",
+    /// parent = factorial
     "x!!!",
     "L[x]!",
     "x^{2}!",

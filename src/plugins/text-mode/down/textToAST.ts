@@ -532,6 +532,8 @@ const fragileNames = [
   "rtxsqpone",
   "rtxsqmone",
   "hypot",
+  // special case
+  "logbase",
 ];
 
 const desModderNames = ["true", "false"];
