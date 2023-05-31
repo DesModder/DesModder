@@ -136,10 +136,10 @@ describe("Basic exprs", () => {
       "[1, 2, x]",
       list(number(1), number(2), id("x"))
     );
-    testExpr("simple range", "[1...10]", range([number(1)], [number(10)]));
+    testExpr("simple range", "[1 ... 10]", range([number(1)], [number(10)]));
     testExpr(
       "range with three start and end elements",
-      "[1, 2, 3...10, 11, 12]",
+      "[1, 2, 3 ... 10, 11, 12]",
       range(
         [number(1), number(2), number(3)],
         [number(10), number(11), number(12)]
@@ -152,7 +152,7 @@ describe("Basic exprs", () => {
       expr: binop("Add", id("i"), number(1)),
       assignments: [assignmentExpr(id("i"), id("L"))],
     });
-    testExpr("double nesting", "[i + j for i = L, j = [1...5]]", {
+    testExpr("double nesting", "[i + j for i = L, j = [1 ... 5]]", {
       type: "ListComprehension",
       expr: binop("Add", id("i"), id("j")),
       assignments: [
@@ -162,9 +162,10 @@ describe("Basic exprs", () => {
     });
   });
   describe("Substitution", () => {
+    // A few too many parens in this section, revisit sometime.
     testExpr(
       "simple sub",
-      "a with a = 3",
+      "(a with a = 3)",
       substitution(id("a"), assignmentExpr(id("a"), number(3)))
     );
     testExpr(
@@ -178,7 +179,7 @@ describe("Basic exprs", () => {
     );
     testExpr(
       "multiple subs",
-      "a with a = 3, b = 3",
+      "(a with a = 3, b = 3)",
       substitution(
         id("a"),
         assignmentExpr(id("a"), number(3)),
@@ -196,14 +197,39 @@ describe("Basic exprs", () => {
         )
       )
     );
+    testExpr(
+      "sub precedence with leq",
+      "((b with b = 3) <= 4)",
+      comparator(
+        "<=",
+        substitution(id("b"), assignmentExpr(id("b"), number(3))),
+        number(4)
+      )
+    );
     testExpr("sub precedence with derivative", "((d/d x) (f with b = 3))", {
       type: "Derivative",
       arg: substitution(id("f"), assignmentExpr(id("b"), number(3))),
       variable: id("x"),
     });
+    testExpr(
+      "sub precedence with list",
+      "[(a with a = 3), (b with b = 4)]",
+      list(
+        substitution(id("a"), assignmentExpr(id("a"), number(3))),
+        substitution(id("b"), assignmentExpr(id("b"), number(4)))
+      )
+    );
+    testExpr(
+      "sub precedence with range",
+      "[(a with a = 3) ... (b with b = 4)]",
+      range(
+        [substitution(id("a"), assignmentExpr(id("a"), number(3)))],
+        [substitution(id("b"), assignmentExpr(id("b"), number(4)))]
+      )
+    );
   });
   describe("Piecewise", () => {
-    testExpr("empty piecewise", "{else: 1}", {
+    testExpr("empty piecewise", "{}", {
       type: "Piecewise",
       condition: true,
       consequent: number(1),
@@ -221,7 +247,7 @@ describe("Basic exprs", () => {
       consequent: number(2),
       alternate: number(NaN),
     });
-    testExpr("two conditions and else", "{x > 1: 2, y > 3: 4, else: 5}", {
+    testExpr("two conditions and else", "{x > 1: 2, y > 3: 4, 5}", {
       type: "Piecewise",
       condition: comparator(">", id("x"), number(1)),
       consequent: number(2),
@@ -284,7 +310,7 @@ describe("Basic exprs", () => {
       "A = a -> b",
       comparator("=", id("A"), updateRule(id("a"), id("b")))
     );
-    testExpr("Piecewise UpdateRule", "{a = b: a -> 3, else: a -> b}", {
+    testExpr("Piecewise UpdateRule", "{a = b: a -> 3, a -> b}", {
       type: "Piecewise",
       condition: comparator("=", id("a"), id("b")),
       consequent: updateRule(id("a"), number(3)),
@@ -332,7 +358,7 @@ describe("Basic exprs", () => {
     );
     testExpr(
       "range",
-      "L[1...5]",
+      "L[1 ... 5]",
       listAccess(id("L"), range([number(1)], [number(5)]))
     );
   });

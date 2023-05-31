@@ -4,7 +4,7 @@ import {
   NodePath,
   NonExprNode,
   Statement,
-} from "../down/TextAST";
+} from "../down/TextASTSynthetic";
 
 /**
  * Errs on the side of too many parens instead of not enough.
@@ -17,13 +17,15 @@ export default function needsParens(path: NodePath): boolean {
   const node = path.node;
   const name = path.name;
 
+  if (node.type === "SequenceExpression" && node.parenWrapped) return true;
+
   /* istanbul ignore if */
   if (parent === null) return false;
 
   if (node.type === "SequenceExpression")
     // sequence expressions will only ever be unwrapped when their parent
     // is a statement or style mapping (onClick event)
-    return node.parenWrapped || parent.type === "MappingEntry";
+    return parent.type === "MappingEntry";
 
   if (isNonExpression(node) || isNonExpression(parent)) return false;
 
@@ -41,8 +43,8 @@ export default function needsParens(path: NodePath): boolean {
         node.type === "Substitution"
       );
     case "ListExpression":
-      return node.type === "Substitution";
     case "RangeExpression":
+      return node.type === "Substitution";
     case "ListComprehension":
     case "Substitution":
       return false;
@@ -62,8 +64,6 @@ export default function needsParens(path: NodePath): boolean {
       switch (parent.type) {
         case "UpdateRule":
           return false;
-        case "BinaryExpression":
-          return !comparisonOps.includes(parent.op);
         default:
           return true;
       }

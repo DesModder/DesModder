@@ -1,4 +1,4 @@
-import TextAST, { NodePath } from "../down/TextAST";
+import TextAST, { NodePath } from "../down/TextASTSynthetic";
 import needsParens from "./needsParens";
 import { builders, printer } from "prettier/doc";
 import * as DocNS from "prettier/doc";
@@ -240,7 +240,9 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
             )
           )
         ),
+        line,
         "...",
+        line,
         group(
           join(
             ", ",
@@ -317,11 +319,19 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
             [",", line],
             e.branches.map((branch) =>
               group([
-                exprToText(path.withChild(branch.condition, "condition")),
-                ":",
+                branch.condition === null
+                  ? [softline]
+                  : [
+                      exprToText(path.withChild(branch.condition, "condition")),
+                      ":",
+                      line,
+                    ],
                 indent([
-                  line,
-                  exprToText(path.withChild(branch.consequent, "consequent")),
+                  branch.consequent === null
+                    ? "1"
+                    : exprToText(
+                        path.withChild(branch.consequent, "consequent")
+                      ),
                 ]),
               ])
             )

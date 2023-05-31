@@ -1,8 +1,11 @@
 import Controller from "../Controller";
+import { analysisStateField, doLint } from "../LanguageServer";
 // Language extension
 import { TextMode } from "../lezer/index";
 import "./editor.css";
 import { checkboxPlugin } from "./plugins/checkboxWidget";
+import { activeStmtGutterHighlighter } from "./plugins/highlightActiveStmtGutter";
+import { stmtNumbers } from "./plugins/stmtNumbers";
 import { styleMappingPlugin } from "./plugins/styleMappingWidgets";
 import {
   closeBrackets,
@@ -34,8 +37,6 @@ import {
   dropCursor,
   highlightActiveLine,
   keymap,
-  lineNumbers,
-  highlightActiveLineGutter,
 } from "@codemirror/view";
 
 const scrollTheme = EditorView.theme({
@@ -51,13 +52,14 @@ export function startState(controller: Controller, text: string) {
   return EditorState.create({
     doc: text,
     extensions: [
+      analysisStateField,
       EditorView.updateListener.of(controller.onEditorUpdate.bind(controller)),
       // linter, showing errors
       // The linter is also the entry point to evaluation
-      linter(controller.doLint.bind(controller), { delay: 250 }),
+      linter(doLint, { delay: 0 }),
       // line numbers and gutter
-      lineNumbers(),
-      highlightActiveLineGutter(),
+      stmtNumbers(),
+      activeStmtGutterHighlighter,
       // undo/redo history
       history(),
       // fold using arrow in the gutter
@@ -101,7 +103,7 @@ export function startState(controller: Controller, text: string) {
         indentWithTab,
       ]),
       scrollTheme,
-      // language support
+      // syntax highlighting
       TextMode(controller),
       // Text mode plugins
       checkboxPlugin,

@@ -1,17 +1,15 @@
-import LanguageServer from "./LanguageServer";
+import { onCalcEvent, analysisStateField } from "./LanguageServer";
 import { RelevantEvent, relevantEventTypes } from "./modify";
 import getText from "./up/getText";
 import { initView, startState } from "./view/editor";
 import { EditorView, ViewUpdate } from "@codemirror/view";
-import { GraphState } from "@desmodder/graph-state";
 import { Calc } from "globals/window";
-import { jquery, keys } from "utils/depUtils";
+import { keys } from "utils/depUtils";
 
 export default class Controller {
   inTextMode: boolean = false;
   view: EditorView | null = null;
   dispatchListenerID: string | null = null;
-  languageServer: LanguageServer | null = null;
 
   toggleTextMode() {
     this.inTextMode = !this.inTextMode;
@@ -39,37 +37,26 @@ export default class Controller {
   mountEditor(container: HTMLDivElement) {
     const [hasError, text] = getText();
     this.view = initView(this, text);
-    this.languageServer = new LanguageServer(this.view, (state: GraphState) => {
-      // Prevent Desmos from blurring the currently active element via
-      //   jquery(document.activeElement).trigger("blur")
-      // Alternative method this.view.focus() after setState does not prevent
-      //   the current autocomplete tooltip from disappearing
-      const trigger = jquery.prototype.trigger;
-      jquery.prototype.trigger = () => [];
-      Calc.setState(state, { allowUndo: true, fromTextMode: true } as any);
-      jquery.prototype.trigger = trigger;
-    });
     if (hasError) this.conversionError(() => this.toggleTextMode());
     container.appendChild(this.view.dom);
     this.preventPropagation(container);
     this.dispatchListenerID = Calc.controller.dispatcher.register((event) => {
       if (event.type === "set-state" && !event.opts.fromTextMode)
-        this.setState();
+        this.onSetState();
       if ((relevantEventTypes as readonly string[]).includes(event.type)) {
         // setTimeout to avoid dispatch-in-dispatch from handlers responding to
         // calc state changing by dispatching an event
         setTimeout(
-          () => this.languageServer!.onCalcEvent(event as RelevantEvent),
+          () => this.view && onCalcEvent(this.view, event as RelevantEvent),
           0
         );
       }
     });
   }
 
-  setState() {
+  onSetState() {
     const [hasError, text] = getText();
     this.view?.setState(startState(this, text));
-    this.languageServer?.parse(true);
     if (hasError) this.conversionError();
   }
 
@@ -108,22 +95,14 @@ export default class Controller {
     );
   }
 
-  doLint() {
-    if (!this.languageServer) return [];
-    return this.languageServer.doLint();
-  }
-
   onEditorUpdate(update: ViewUpdate) {
-    if (!this.languageServer) return;
-    if (update.docChanged || update.selectionSet)
-      selectFromText(update.view, this.languageServer);
-    this.languageServer.onEditorUpdate(update);
+    if (update.docChanged || update.selectionSet) selectFromText(update.view);
   }
 }
 
-function selectFromText(view: EditorView, ls: LanguageServer) {
+function selectFromText(view: EditorView) {
   const currSelected = Calc.selectedExpressionId as string | undefined;
-  const newSelected = getSelectedItem(view, ls);
+  const newSelected = getSelectedItem(view);
   if (newSelected !== currSelected) {
     if (view.hasFocus && newSelected !== undefined) {
       Calc.controller.dispatch({
@@ -139,17 +118,15 @@ function selectFromText(view: EditorView, ls: LanguageServer) {
   }
 }
 
-function getSelectedItem(
-  view: EditorView,
-  ls: LanguageServer
-): string | undefined {
+function getSelectedItem(view: EditorView): string | undefined {
+  const analysis = view.state.field(analysisStateField);
   const selection = view.state.selection.main;
-  if (ls.analysis) {
-    const containingPairs = Object.entries(ls.analysis.mapIDstmt).filter(
+  if (analysis) {
+    const containingPairs = Object.entries(analysis.mapIDstmt).filter(
       ([_id, stmt]) =>
-        stmt!.type !== "Folder" &&
-        stmt!.pos!.from <= selection.from &&
-        stmt!.pos!.to >= selection.to
+        stmt.type !== "Folder" &&
+        stmt.pos.from <= selection.from &&
+        stmt.pos.to >= selection.to
     );
     return containingPairs[0]?.[0];
   }

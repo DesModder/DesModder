@@ -1,4 +1,4 @@
-import { Expression as Expr } from "../TextAST";
+import { AnyChild as Expr } from "../../aug/AugLatex";
 import { LabelOrientation } from "@desmodder/graph-state";
 
 export interface Settings {
@@ -35,11 +35,7 @@ export interface Ticker {
   playing: boolean;
 }
 
-export interface Base {
-  id: string;
-}
-
-export interface ItemBase extends Base {
+export interface ItemBase {
   secret: boolean;
 }
 
@@ -122,7 +118,7 @@ export interface Regression extends NonFolderBase {
 
 export interface Table extends NonFolderBase {}
 
-export interface Column extends Base, ColumnExpressionCommon {}
+export interface Column extends ColumnExpressionCommon {}
 
 export interface Image extends NonFolderBase, Clickable {
   width: Expr;
