@@ -3,16 +3,18 @@ import { Command, Block } from "./parse";
 import { PatternToken, patternTokens } from "./tokenize";
 import jsTokens, { Token } from "js-tokens";
 
+export interface ReplacementResult {
+  successful: Set<Block>;
+  failed: Map<Block, string>;
+  value: string;
+}
+
 /** Apply a list of replacements to a source file. The main return is the .value,
  * We keep track of .failed and .successful */
 export function applyReplacements(
   repls: Block[],
   file: string
-): {
-  successful: Set<Block>;
-  failed: Map<Block, Error>;
-  value: string;
-} {
+): ReplacementResult {
   const replaced = applyStringReplacements(repls, Array.from(jsTokens(file)));
   return { ...replaced, value: replaced.value.map((t) => t.value).join("") };
 }
@@ -170,7 +172,7 @@ function applyStringReplacements(
   str: Token[]
 ): {
   successful: Set<Block>;
-  failed: Map<Block, Error>;
+  failed: Map<Block, string>;
   value: Token[];
 } {
   const idTable = new Map<Block, string>();
@@ -181,7 +183,11 @@ function applyStringReplacements(
   }
 
   const blockSucceededSymbols = new Set<Block>();
-  const blockFailedSymbols = new Map<Block, Error>();
+  const blockFailedSymbols = new Map<Block, string>();
+  const failBlock = (b: Block, e: any) => {
+    const msg = e instanceof Error ? e.message : JSON.stringify(e);
+    blockFailedSymbols.set(b, msg);
+  };
 
   const table = new SymbolTable(str);
   function applySymbolsForTable(r: Block) {
@@ -191,9 +197,7 @@ function applyStringReplacements(
       blockSucceededSymbols.add(r);
     } catch (e) {
       if (r.alternative !== undefined) applySymbolsForTable(r.alternative);
-      else if (e instanceof Error) {
-        blockFailedSymbols.set(r, e);
-      }
+      else failBlock(r, e);
     }
   }
 
@@ -210,7 +214,7 @@ function applyStringReplacements(
       return blockReplacements(r, getPrefix, table);
     } catch (e) {
       if (r.alternative !== undefined) return getReplacement(r.alternative);
-      else if (e instanceof Error) blockFailedSymbols.set(r, e);
+      else failBlock(r, e);
       return [];
     }
   }

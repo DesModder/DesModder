@@ -1,7 +1,7 @@
 import { Console } from "../../globals/window";
 import { addPanic, panickedPlugins } from "../../panic/panic";
 import workerAppend from "../../worker/append.inline";
-import { applyReplacements } from "./applyReplacement";
+import { ReplacementResult, applyReplacements } from "./applyReplacement";
 import { Block } from "./parse";
 import { get, set } from "idb-keyval";
 import jsTokens from "js-tokens";
@@ -54,21 +54,34 @@ function fullReplacement(calcDesktop: string, enabledReplacements: Block[]) {
       // improvements in minification.
       x.value.includes("&&")
   );
+  let workerResult: ReplacementResult;
   if (sharedModuleTokens.length !== 1) {
-    throw new Error(
+    Console.warn(
       "More than one large JS string found, which is the shared module?"
     );
+    // no-op
+    workerResult = {
+      successful: new Set(),
+      failed: new Map(
+        enabledReplacements.map(
+          (b) =>
+            [b, `Not reached: ${b.heading}. Maybe no worker builder?`] as const
+        )
+      ),
+      value: calcDesktop,
+    };
+  } else {
+    const sharedModuleToken = sharedModuleTokens[0];
+    workerResult = applyReplacements(
+      enabledReplacements,
+      // JSON.parse doesn't work because this is a single-quoted string.
+      // js-tokens tokenized this as a string anyway, so it should be
+      // safely eval'able to a string.
+      // eslint-disable-next-line no-eval
+      (0, eval)(sharedModuleToken.value) as string
+    );
+    sharedModuleToken.value = JSON.stringify(workerResult.value);
   }
-  const sharedModuleToken = sharedModuleTokens[0];
-  const workerResult = applyReplacements(
-    enabledReplacements,
-    // JSON.parse doesn't work because this is a single-quoted string.
-    // js-tokens tokenized this as a string anyway, so it should be
-    // safely eval'able to a string.
-    // eslint-disable-next-line no-eval
-    (0, eval)(sharedModuleToken.value) as string
-  );
-  sharedModuleToken.value = JSON.stringify(workerResult.value);
   const wbTokenHead = tokens.find(
     (x) =>
       x.type === "NoSubstitutionTemplate" &&
@@ -94,22 +107,19 @@ function fullReplacement(calcDesktop: string, enabledReplacements: Block[]) {
     enabledReplacements,
     srcWithWorkerAppend
   );
-  const successful = new Set([
-    ...workerResult.successful,
-    ...mainResult.successful,
-  ]);
-  const failed = new Map([...workerResult.failed, ...mainResult.failed]);
-  logFailed(failed, successful);
-  return mainResult.value;
-}
+  const workerFailed = [...workerResult.failed].filter(
+    ([b]) => !mainResult.successful.has(b)
+  );
+  const mainFailed = [...mainResult.failed].filter(
+    ([b]) => !workerResult.successful.has(b)
+  );
+  const failed = new Map(workerFailed.concat(mainFailed));
 
-function logFailed(failed: Map<Block, Error>, successful: Set<Block>) {
   for (const [b, e] of failed) {
-    if (!successful.has(b)) {
-      Console.warn(e.message);
-      addPanic(b);
-    }
+    Console.warn(e);
+    addPanic(b);
   }
+  return mainResult.value;
 }
 
 // https://github.com/bryc/code/blob/fed42df9db547493452e32375c93d7854383e480/jshash/experimental/cyrb53.js
