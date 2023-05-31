@@ -1,15 +1,15 @@
-import { Console } from "../../globals/window";
-import { addPanic } from "../../panic/panic";
 import { ReplacementError } from "./errors";
 import { Command, Block } from "./parse";
 import { PatternToken, patternTokens } from "./tokenize";
 import jsTokens, { Token } from "js-tokens";
 
+/** Apply a list of replacements to a source file. The main return is the .value,
+ * We keep track of .failed and .successful */
 export function applyReplacements(
   repls: Block[],
   file: string
 ): {
-  successful: Map<Block, boolean>;
+  successful: Set<Block>;
   failed: Map<Block, Error>;
   value: string;
 } {
@@ -169,7 +169,7 @@ function applyStringReplacements(
   repls: Block[],
   str: Token[]
 ): {
-  successful: Map<Block, boolean>;
+  successful: Set<Block>;
   failed: Map<Block, Error>;
   value: Token[];
 } {
@@ -180,23 +180,18 @@ function applyStringReplacements(
     return idTable.get(r)!;
   }
 
-  const blockSucceededSymbols = new Map<Block, boolean>();
+  const blockSucceededSymbols = new Set<Block>();
   const blockFailedSymbols = new Map<Block, Error>();
-  const blockPanickedSymbols = new Map<Block, boolean>();
 
   const table = new SymbolTable(str);
   function applySymbolsForTable(r: Block) {
     try {
       const prefix = getPrefix(r);
       table.merge(getSymbols(r.commands, str).prefix(prefix));
-      blockSucceededSymbols.set(r, true);
+      blockSucceededSymbols.add(r);
     } catch (e) {
       if (r.alternative !== undefined) applySymbolsForTable(r.alternative);
-      else if (e instanceof ReplacementError) {
-        Console.warn(e);
-        blockPanickedSymbols.set(r, true);
-        addPanic(r);
-      } else if (e instanceof Error) {
+      else if (e instanceof Error) {
         blockFailedSymbols.set(r, e);
       }
     }
@@ -207,23 +202,16 @@ function applyStringReplacements(
   }
 
   function getReplacement(r: Block): Replacement[] {
-    if (!blockSucceededSymbols.get(r)) {
+    if (!blockSucceededSymbols.has(r)) {
       if (r.alternative) return getReplacement(r.alternative);
-      else {
-        if (!blockPanickedSymbols.get(r) && !blockFailedSymbols.get(r))
-          addPanic(r);
-        return [];
-      }
+      else return [];
     }
     try {
       return blockReplacements(r, getPrefix, table);
     } catch (e) {
       if (r.alternative !== undefined) return getReplacement(r.alternative);
-      else {
-        Console.warn(e);
-        addPanic(r);
-        return [];
-      }
+      else if (e instanceof Error) blockFailedSymbols.set(r, e);
+      return [];
     }
   }
   const finalRepls = repls.flatMap(getReplacement);
@@ -369,7 +357,7 @@ function findPattern(
           .concat({ value: " … " } as any)
           .concat(str.slice(s + len - 20, s + len))
           .filter((v) => v.type !== "MultiLineComment")
-          .map((v) => v.value)
+          .map((v) => (v.value.length < 100 ? v.value : "[long token]"))
           .join("")
           .replace(/\n{2,}/g, "\n")
     );

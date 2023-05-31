@@ -1,3 +1,4 @@
+import { Console } from "../../globals/window";
 import { addPanic, panickedPlugins } from "../../panic/panic";
 import workerAppend from "../../worker/append.inline";
 import { applyReplacements } from "./applyReplacement";
@@ -59,12 +60,15 @@ function fullReplacement(calcDesktop: string, enabledReplacements: Block[]) {
     );
   }
   const sharedModuleToken = sharedModuleTokens[0];
-  const { value: newSharedModule, failed } = applyReplacements(
+  const workerResult = applyReplacements(
     enabledReplacements,
+    // JSON.parse doesn't work because this is a single-quoted string.
+    // js-tokens tokenized this as a string anyway, so it should be
+    // safely eval'able to a string.
     // eslint-disable-next-line no-eval
     (0, eval)(sharedModuleToken.value) as string
   );
-  sharedModuleToken.value = JSON.stringify(newSharedModule);
+  sharedModuleToken.value = JSON.stringify(workerResult.value);
   const wbTokenHead = tokens.find(
     (x) =>
       x.type === "NoSubstitutionTemplate" &&
@@ -86,15 +90,26 @@ function fullReplacement(calcDesktop: string, enabledReplacements: Block[]) {
   wbTokenTail.value =
     wbTokenTail.value.slice(0, -1) + "\n loadDesModderWorker();`";
   const srcWithWorkerAppend = tokens.map((x) => x.value).join("");
-  const result = applyReplacements(enabledReplacements, srcWithWorkerAppend);
+  const mainResult = applyReplacements(
+    enabledReplacements,
+    srcWithWorkerAppend
+  );
+  const successful = new Set([
+    ...workerResult.successful,
+    ...mainResult.successful,
+  ]);
+  const failed = new Map([...workerResult.failed, ...mainResult.failed]);
+  logFailed(failed, successful);
+  return mainResult.value;
+}
+
+function logFailed(failed: Map<Block, Error>, successful: Set<Block>) {
   for (const [b, e] of failed) {
-    if (!result.successful.has(b)) {
-      // eslint-disable-next-line no-console
-      console.warn(e.message);
+    if (!successful.has(b)) {
+      Console.warn(e.message);
       addPanic(b);
     }
   }
-  return result.value;
 }
 
 // https://github.com/bryc/code/blob/fed42df9db547493452e32375c93d7854383e480/jshash/experimental/cyrb53.js
