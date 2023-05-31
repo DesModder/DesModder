@@ -5,10 +5,16 @@ import { Command, Block } from "./parse";
 import { PatternToken, patternTokens } from "./tokenize";
 import jsTokens, { Token } from "js-tokens";
 
-export function applyReplacements(repls: Block[], file: string): string {
-  return applyStringReplacements(repls, Array.from(jsTokens(file)))
-    .map((t) => t.value)
-    .join("");
+export function applyReplacements(
+  repls: Block[],
+  file: string
+): {
+  successful: Map<Block, boolean>;
+  failed: Map<Block, Error>;
+  value: string;
+} {
+  const replaced = applyStringReplacements(repls, Array.from(jsTokens(file)));
+  return { ...replaced, value: replaced.value.map((t) => t.value).join("") };
 }
 
 interface Range {
@@ -159,7 +165,14 @@ function getSymbols(commands: Command[], str: Token[]): SymbolTable {
 }
 
 /** Apply replacement to `str`, and returned the changed value */
-function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
+function applyStringReplacements(
+  repls: Block[],
+  str: Token[]
+): {
+  successful: Map<Block, boolean>;
+  failed: Map<Block, Error>;
+  value: Token[];
+} {
   const idTable = new Map<Block, string>();
   function getPrefix(r: Block): string {
     if (!idTable.has(r))
@@ -168,6 +181,7 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
   }
 
   const blockSucceededSymbols = new Map<Block, boolean>();
+  const blockFailedSymbols = new Map<Block, Error>();
   const blockPanickedSymbols = new Map<Block, boolean>();
 
   const table = new SymbolTable(str);
@@ -178,10 +192,12 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
       blockSucceededSymbols.set(r, true);
     } catch (e) {
       if (r.alternative !== undefined) applySymbolsForTable(r.alternative);
-      else {
+      else if (e instanceof ReplacementError) {
         Console.warn(e);
         blockPanickedSymbols.set(r, true);
         addPanic(r);
+      } else if (e instanceof Error) {
+        blockFailedSymbols.set(r, e);
       }
     }
   }
@@ -194,7 +210,8 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
     if (!blockSucceededSymbols.get(r)) {
       if (r.alternative) return getReplacement(r.alternative);
       else {
-        if (!blockPanickedSymbols.get(r)) addPanic(r);
+        if (!blockPanickedSymbols.get(r) && !blockFailedSymbols.get(r))
+          addPanic(r);
         return [];
       }
     }
@@ -211,7 +228,11 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
   }
   const finalRepls = repls.flatMap(getReplacement);
 
-  return Array.from(withReplacements(table.str, finalRepls));
+  return {
+    successful: blockSucceededSymbols,
+    failed: blockFailedSymbols,
+    value: Array.from(withReplacements(table.str, finalRepls)),
+  };
 }
 
 function blockReplacements(
@@ -340,7 +361,7 @@ function findPattern(
   if (found === null) {
     const s = inside.start;
     const len = inside.length;
-    throw new ReplacementError(
+    throw new Error(
       `Pattern not found: ${fullPattern.map((v) => v.value).join("")} ` +
         `in {start: ${s}, length: ${len}}\n` +
         str

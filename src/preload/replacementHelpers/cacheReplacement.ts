@@ -1,9 +1,9 @@
-import { panickedPlugins } from "../../panic/panic";
+import { addPanic, panickedPlugins } from "../../panic/panic";
 import workerAppend from "../../worker/append.inline";
 import { applyReplacements } from "./applyReplacement";
 import { Block } from "./parse";
 import { get, set } from "idb-keyval";
-import jsTokens, { Token } from "js-tokens";
+import jsTokens from "js-tokens";
 
 /**
  * Replacements are slow, so we cache the result. We optimize for the common
@@ -58,9 +58,10 @@ function fullReplacement(calcDesktop: string, enabledReplacements: Block[]) {
       "More than one large JS string found, which is the shared module?"
     );
   }
-  let sharedModuleToken = sharedModuleTokens[0];
-  const newSharedModule = applyReplacements(
+  const sharedModuleToken = sharedModuleTokens[0];
+  const { value: newSharedModule, failed } = applyReplacements(
     enabledReplacements,
+    // eslint-disable-next-line no-eval
     (0, eval)(sharedModuleToken.value) as string
   );
   sharedModuleToken.value = JSON.stringify(newSharedModule);
@@ -85,7 +86,15 @@ function fullReplacement(calcDesktop: string, enabledReplacements: Block[]) {
   wbTokenTail.value =
     wbTokenTail.value.slice(0, -1) + "\n loadDesModderWorker();`";
   const srcWithWorkerAppend = tokens.map((x) => x.value).join("");
-  return applyReplacements(enabledReplacements, srcWithWorkerAppend);
+  const result = applyReplacements(enabledReplacements, srcWithWorkerAppend);
+  for (const [b, e] of failed) {
+    if (!result.successful.has(b)) {
+      // eslint-disable-next-line no-console
+      console.warn(e.message);
+      addPanic(b);
+    }
+  }
+  return result.value;
 }
 
 // https://github.com/bryc/code/blob/fed42df9db547493452e32375c93d7854383e480/jshash/experimental/cyrb53.js
