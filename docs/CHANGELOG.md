@@ -1,5 +1,13 @@
 # DesModder Changelog
 
+## 0.10.6
+
+Bug fixes and improvements:
+
+- Fix loading error
+- (Text Mode) show statement number instead of line number
+- (Text Mode) remove "else" from piecewises, moving closer to Desmos sytnax
+
 ## 0.10.5
 
 New: translations for Chinese (Simplified, PRC; zh-CN)
