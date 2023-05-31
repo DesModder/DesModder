@@ -1,9 +1,10 @@
-import { panickedPlugins } from "../../panic/panic";
+import { Console } from "../../globals/window";
+import { addPanic, panickedPlugins } from "../../panic/panic";
 import workerAppend from "../../worker/append.inline";
-import { applyReplacements } from "./applyReplacement";
+import { ReplacementResult, applyReplacements } from "./applyReplacement";
 import { Block } from "./parse";
 import { get, set } from "idb-keyval";
-import jsTokens, { Token } from "js-tokens";
+import jsTokens from "js-tokens";
 
 /**
  * Replacements are slow, so we cache the result. We optimize for the common
@@ -42,15 +43,9 @@ export async function fullReplacementCached(
   return result;
 }
 
-function fullReplacement(
-  calcDesktop: string,
-  enabledReplacements: Block[]
-): string {
-  // Apply replacements to the worker. This could also be done by tweaking the
-  // Worker constructor, but currently all of these replacements could be
-  // performed outside the main page
+function fullReplacement(calcDesktop: string, enabledReplacements: Block[]) {
   const tokens = Array.from(jsTokens(calcDesktop));
-  const workerCodeTokens = tokens.filter(
+  const sharedModuleTokens = tokens.filter(
     (x) =>
       x.type === "StringLiteral" &&
       x.value.length > 200000 &&
@@ -59,31 +54,45 @@ function fullReplacement(
       // improvements in minification.
       x.value.includes("&&")
   );
-  if (workerCodeTokens.length === 0) {
-    return newFullReplacement(tokens, enabledReplacements);
-  } else if (workerCodeTokens.length === 1) {
-    return oldFullReplacement(
-      tokens,
-      workerAppend,
-      enabledReplacements,
-      workerCodeTokens[0]
+  let workerResult: ReplacementResult;
+  if (sharedModuleTokens.length !== 1) {
+    Console.warn(
+      "More than one large JS string found, which is the shared module?"
     );
+    // no-op
+    workerResult = {
+      successful: new Set(),
+      failed: new Map(
+        enabledReplacements.map(
+          (b) =>
+            [b, `Not reached: ${b.heading}. Maybe no worker builder?`] as const
+        )
+      ),
+      value: calcDesktop,
+    };
   } else {
-    throw new Error("More than one worker code found");
+    const sharedModuleToken = sharedModuleTokens[0];
+    workerResult = applyReplacements(
+      enabledReplacements,
+      // JSON.parse doesn't work because this is a single-quoted string.
+      // js-tokens tokenized this as a string anyway, so it should be
+      // safely eval'able to a string.
+      // eslint-disable-next-line no-eval
+      (0, eval)(sharedModuleToken.value) as string
+    );
+    sharedModuleToken.value = JSON.stringify(workerResult.value);
   }
-}
-
-function newFullReplacement(tokens: Token[], enabledReplacements: Block[]) {
-  // post-esbuild
   const wbTokenHead = tokens.find(
     (x) =>
-      x.type === "TemplateHead" &&
-      x.value.includes("const __dcg_shared_module__ =")
+      x.type === "NoSubstitutionTemplate" &&
+      x.value.includes("const __dcg_worker_module__ =")
   );
   const wbTokenTail = tokens.find(
     (x) =>
       x.type === "TemplateTail" &&
-      x.value.includes("__dcg_worker_module__(__dcg_shared_module__());")
+      x.value.includes(
+        "__dcg_worker_module__(__dcg_worker_shared_module_exports__);"
+      )
   );
   if (wbTokenTail === undefined || wbTokenHead === undefined)
     throw new Error("Failed to find valid worker builder.");
@@ -94,35 +103,23 @@ function newFullReplacement(tokens: Token[], enabledReplacements: Block[]) {
   wbTokenTail.value =
     wbTokenTail.value.slice(0, -1) + "\n loadDesModderWorker();`";
   const srcWithWorkerAppend = tokens.map((x) => x.value).join("");
-  return applyReplacements(enabledReplacements, srcWithWorkerAppend);
-}
+  const mainResult = applyReplacements(
+    enabledReplacements,
+    srcWithWorkerAppend
+  );
+  const workerFailed = [...workerResult.failed].filter(
+    ([b]) => !mainResult.successful.has(b)
+  );
+  const mainFailed = [...mainResult.failed].filter(
+    ([b]) => !workerResult.successful.has(b)
+  );
+  const failed = new Map(workerFailed.concat(mainFailed));
 
-function oldFullReplacement(
-  tokens: Token[],
-  workerAppend: string,
-  enabledReplacements: Block[],
-  wcToken: Token
-): string {
-  // pre-esbuild
-  const newWorker = applyReplacements(
-    enabledReplacements.filter((r) => r.workerOnly),
-    // JSON.parse doesn't work because this is a single-quoted string.
-    // js-tokens tokenized this as a string anyway, so it should be
-    // safely eval'able to a string.
-    // eslint-disable-next-line no-eval
-    (0, eval)(wcToken.value) as string
-  );
-  workerAppend = workerAppend.replace(/\/\/# sourceMappingURL=.*/, "");
-  wcToken.value = JSON.stringify(
-    // Call immediately after Fragile is defined
-    `function loadDesModderWorker(){${workerAppend}\n}` +
-      newWorker.replace(/(\.Fragile ?= ?{[^}]+})/, "$1, loadDesModderWorker()")
-  );
-  const srcWithWorkerReplacements = tokens.map((x) => x.value).join("");
-  return applyReplacements(
-    enabledReplacements.filter((r) => !r.workerOnly),
-    srcWithWorkerReplacements
-  );
+  for (const [b, e] of failed) {
+    Console.warn(e);
+    addPanic(b);
+  }
+  return mainResult.value;
 }
 
 // https://github.com/bryc/code/blob/fed42df9db547493452e32375c93d7854383e480/jshash/experimental/cyrb53.js

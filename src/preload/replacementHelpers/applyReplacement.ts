@@ -1,14 +1,22 @@
-import { Console } from "../../globals/window";
-import { addPanic } from "../../panic/panic";
 import { ReplacementError } from "./errors";
 import { Command, Block } from "./parse";
 import { PatternToken, patternTokens } from "./tokenize";
 import jsTokens, { Token } from "js-tokens";
 
-export function applyReplacements(repls: Block[], file: string): string {
-  return applyStringReplacements(repls, Array.from(jsTokens(file)))
-    .map((t) => t.value)
-    .join("");
+export interface ReplacementResult {
+  successful: Set<Block>;
+  failed: Map<Block, string>;
+  value: string;
+}
+
+/** Apply a list of replacements to a source file. The main return is the .value,
+ * We keep track of .failed and .successful */
+export function applyReplacements(
+  repls: Block[],
+  file: string
+): ReplacementResult {
+  const replaced = applyStringReplacements(repls, Array.from(jsTokens(file)));
+  return { ...replaced, value: replaced.value.map((t) => t.value).join("") };
 }
 
 interface Range {
@@ -159,7 +167,14 @@ function getSymbols(commands: Command[], str: Token[]): SymbolTable {
 }
 
 /** Apply replacement to `str`, and returned the changed value */
-function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
+function applyStringReplacements(
+  repls: Block[],
+  str: Token[]
+): {
+  successful: Set<Block>;
+  failed: Map<Block, string>;
+  value: Token[];
+} {
   const idTable = new Map<Block, string>();
   function getPrefix(r: Block): string {
     if (!idTable.has(r))
@@ -167,22 +182,22 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
     return idTable.get(r)!;
   }
 
-  const blockSucceededSymbols = new Map<Block, boolean>();
-  const blockPanickedSymbols = new Map<Block, boolean>();
+  const blockSucceededSymbols = new Set<Block>();
+  const blockFailedSymbols = new Map<Block, string>();
+  const failBlock = (b: Block, e: any) => {
+    const msg = e instanceof Error ? e.message : JSON.stringify(e);
+    blockFailedSymbols.set(b, msg);
+  };
 
   const table = new SymbolTable(str);
   function applySymbolsForTable(r: Block) {
     try {
       const prefix = getPrefix(r);
       table.merge(getSymbols(r.commands, str).prefix(prefix));
-      blockSucceededSymbols.set(r, true);
+      blockSucceededSymbols.add(r);
     } catch (e) {
       if (r.alternative !== undefined) applySymbolsForTable(r.alternative);
-      else {
-        Console.warn(e);
-        blockPanickedSymbols.set(r, true);
-        addPanic(r);
-      }
+      else failBlock(r, e);
     }
   }
 
@@ -191,27 +206,25 @@ function applyStringReplacements(repls: Block[], str: Token[]): Token[] {
   }
 
   function getReplacement(r: Block): Replacement[] {
-    if (!blockSucceededSymbols.get(r)) {
+    if (!blockSucceededSymbols.has(r)) {
       if (r.alternative) return getReplacement(r.alternative);
-      else {
-        if (!blockPanickedSymbols.get(r)) addPanic(r);
-        return [];
-      }
+      else return [];
     }
     try {
       return blockReplacements(r, getPrefix, table);
     } catch (e) {
       if (r.alternative !== undefined) return getReplacement(r.alternative);
-      else {
-        Console.warn(e);
-        addPanic(r);
-        return [];
-      }
+      else failBlock(r, e);
+      return [];
     }
   }
   const finalRepls = repls.flatMap(getReplacement);
 
-  return Array.from(withReplacements(table.str, finalRepls));
+  return {
+    successful: blockSucceededSymbols,
+    failed: blockFailedSymbols,
+    value: Array.from(withReplacements(table.str, finalRepls)),
+  };
 }
 
 function blockReplacements(
@@ -340,7 +353,7 @@ function findPattern(
   if (found === null) {
     const s = inside.start;
     const len = inside.length;
-    throw new ReplacementError(
+    throw new Error(
       `Pattern not found: ${fullPattern.map((v) => v.value).join("")} ` +
         `in {start: ${s}, length: ${len}}\n` +
         str
@@ -348,7 +361,7 @@ function findPattern(
           .concat({ value: " … " } as any)
           .concat(str.slice(s + len - 20, s + len))
           .filter((v) => v.type !== "MultiLineComment")
-          .map((v) => v.value)
+          .map((v) => (v.value.length < 100 ? v.value : "[long token]"))
           .join("")
           .replace(/\n{2,}/g, "\n")
     );

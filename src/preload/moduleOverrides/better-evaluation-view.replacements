@@ -45,32 +45,6 @@ undefined: () => $Dcgview.Components.IfElse(
   )
 ```
 
-*Find* => `truncatedLatexLabelDef`
-```js
-function $truncatedLatexLabel($e, $t) {
-    let $r = $numericLabel($e, $t);
-    switch ($r.type) {
-    case "undefined":
-        return "undefined";
-    case "decimal":
-        return $r.value;
-    case "scientific":
-        return $r.mantissa + "\\times10^{" + $r.exponent + "}";
-```
-
-*Replace* `truncatedLatexLabelDef` with
-```js
-function $truncatedLatexLabel($e, $t) {
-    let $r = $numericLabel($e, $t);
-    switch ($r.type) {
-    case "undefined":
-        return window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view") ? $r.value : 'undefined';
-    case "decimal":
-        return $r.value;
-    case "scientific":
-        return $r.mantissa + "\\times10^{" + $r.exponent + "}";
-```
-
 Show list elements
 
 *Find* => `list`
