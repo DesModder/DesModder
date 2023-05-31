@@ -1,5 +1,5 @@
 import Controller from "../Controller";
-import { analysisStateField } from "../LanguageServer";
+import { analysisStateField, doLint } from "../LanguageServer";
 // Language extension
 import { TextMode } from "../lezer/index";
 import "./editor.css";
@@ -56,7 +56,7 @@ export function startState(controller: Controller, text: string) {
       EditorView.updateListener.of(controller.onEditorUpdate.bind(controller)),
       // linter, showing errors
       // The linter is also the entry point to evaluation
-      linter(controller.doLint.bind(controller), { delay: 250 }),
+      linter(doLint, { delay: 0 }),
       // line numbers and gutter
       stmtNumbers(),
       activeStmtGutterHighlighter,
@@ -103,7 +103,7 @@ export function startState(controller: Controller, text: string) {
         indentWithTab,
       ]),
       scrollTheme,
-      // language support
+      // syntax highlighting
       TextMode(controller),
       // Text mode plugins
       checkboxPlugin,

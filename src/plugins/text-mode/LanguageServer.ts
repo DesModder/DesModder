@@ -1,22 +1,17 @@
 /**
- * Language server, handling the AST and program analysis stuff for text mode.
- *
- * All state regarding parsing and program analysis should be managed through
- * the LanguageServer.
- *
- * The LanguageServer should not mutate or read the Calc state or other
- * unrelated state.
- *
- * This can maybe be moved to a worker at some point? But codemirror isn't in a
- * worker, so not sure.
+ * This isn't really a language server anymore, but it's a reasonable analogy.
+ * The functions in this file manage the interface between codemirror and
+ * the Text Mode compiler.
  */
 import { Program, Statement } from "./down/TextAST";
 import textToRaw from "./down/textToRaw";
 import { RelevantEvent, eventSequenceChanges } from "./modify";
 import { Diagnostic } from "@codemirror/lint";
 import { StateField, Text, Transaction } from "@codemirror/state";
-import { EditorView, ViewUpdate } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
+import { Calc } from "globals/window";
+import { jquery } from "utils/depUtils";
 
 export interface ProgramAnalysis {
   program: Program;
@@ -24,69 +19,67 @@ export interface ProgramAnalysis {
   mapIDstmt: Record<string, Statement>;
 }
 
-export default class LanguageServer {
-  analysis!: ProgramAnalysis;
-
-  constructor(
-    private readonly view: EditorView,
-    private readonly setCalcState: (state: GraphState) => void
-  ) {
-    this.parse(false);
-  }
-
-  doLint(): readonly Diagnostic[] {
-    return this.analysis.diagnostics;
-  }
-
-  parse(nextEditDueToGraph: boolean) {
-    // Parse and set tree
-    const s = this.view.state.doc.sliceString(0);
-    const [analysis, rawGraphState] = textToRaw(s);
-    this.analysis = analysis;
-    if (!nextEditDueToGraph && rawGraphState !== null)
-      this.setCalcState(rawGraphState);
-  }
-
-  onEditorUpdate(update: ViewUpdate) {
-    if (update.docChanged)
-      this.parse(
-        update.transactions.every((x) => x.annotation(Transaction.remote))
-      );
-  }
-
-  /**
-   * onCalcEvent: when we receive a new event dispatched via Calc (such as a
-   * slider value change, or viewport move) which affects the text
-   */
-  onCalcEvent(event: RelevantEvent) {
-    // should this be a state effect?
-    if (event.type === "set-selected-id") {
-      if (event.dsmFromTextModeSelection) return;
-      const stmt = this.analysis.mapIDstmt[event.id];
-      const transaction = this.view.state.update({
-        scrollIntoView: true,
-        selection: { anchor: stmt.pos.from },
-      });
-      this.view.dispatch(transaction);
-      return;
-    }
-    const changes = eventSequenceChanges(this.view, [event], this.analysis);
-    if (changes.length === 0) return;
-    const transaction = this.view.state.update({
-      changes,
-      annotations: [Transaction.remote.of(true)],
+/**
+ * onCalcEvent: when we receive a new event dispatched via Calc (such as a
+ * slider value change, or viewport move) which affects the text
+ */
+export function onCalcEvent(view: EditorView, event: RelevantEvent) {
+  // should this be a state effect?
+  const analysis = view.state.field(analysisStateField);
+  if (event.type === "set-selected-id") {
+    if (event.dsmFromTextModeSelection) return;
+    const stmt = analysis.mapIDstmt[event.id];
+    const transaction = view.state.update({
+      scrollIntoView: true,
+      selection: { anchor: stmt.pos.from },
     });
-    this.view.dispatch(transaction);
+    view.dispatch(transaction);
+    return;
   }
+  const changes = eventSequenceChanges(view, [event], analysis);
+  if (changes.length === 0) return;
+  const transaction = view.state.update({
+    changes,
+    annotations: [Transaction.remote.of(true)],
+  });
+  view.dispatch(transaction);
 }
 
-export function parseAndReturnAnalysis(doc: Text) {
+export function parseAndReturnAnalysis(doc: Text, nextEditDueToGraph: boolean) {
   const s = doc.sliceString(0);
-  const [analysis, _rawGraphState] = textToRaw(s);
+  const [analysis, rawGraphState] = textToRaw(s);
+  if (!nextEditDueToGraph && rawGraphState !== null)
+    setCalcState(rawGraphState);
   return analysis;
 }
 
+/** This field is stored on the state and gets updated every time the document
+ * is edited. So the analysis always stays perfectly in sync. This may not be
+ * the best for performance, but it's huge for simplicity and correctness. */
 export const analysisStateField = StateField.define<ProgramAnalysis>({
-  create: (state) => parseAndReturnAnalysis(state.doc),
-  update: (_value, transaction) => parseAndReturnAnalysis(transaction.newDoc),
+  create: (state) => parseAndReturnAnalysis(state.doc, false),
+  update: (value, transaction) => {
+    if (transaction.docChanged) {
+      // This is where you would handle incremental updates in the input.
+      return parseAndReturnAnalysis(
+        transaction.newDoc,
+        transaction.annotation(Transaction.remote) ?? false
+      );
+    } else return value;
+  },
 });
+
+function setCalcState(state: GraphState) {
+  // Prevent Desmos from blurring the currently active element via
+  //   jquery(document.activeElement).trigger("blur")
+  // Alternative method this.view.focus() after setState does not prevent
+  //   the current autocomplete tooltip from disappearing
+  const trigger = jquery.prototype.trigger;
+  jquery.prototype.trigger = () => [];
+  Calc.setState(state, { allowUndo: true, fromTextMode: true } as any);
+  jquery.prototype.trigger = trigger;
+}
+
+export function doLint(view: EditorView) {
+  return view.state.field(analysisStateField).diagnostics;
+}
