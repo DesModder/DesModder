@@ -5,6 +5,7 @@ import {
   binop,
   comparator,
   doubleInequality,
+  factorial,
   functionCall,
   id,
   list,
@@ -517,7 +518,8 @@ describe("Basic exprs", () => {
     testExpr("exponents", "2^3", binop("Exponent", number(2), number(3)));
   });
   describe("PostfixExpression", () => {
-    testExpr("factorial", "x!", functionCall(id("factorial"), [id("x")]));
+    testExpr("factorial", "x!", factorial(id("x")));
+    testExpr("factorial", "factorial(x)", factorial(id("x")));
   });
   describe("CallExpression", () => {
     testExpr("single arg", "f(x)", functionCall(id("f"), [id("x")]));
@@ -1301,7 +1303,7 @@ describe("Operator precedence", () => {
   testExpr(
     "postfix > exp",
     "x^y!",
-    binop("Exponent", id("x"), functionCall(id("factorial"), [id("y")]))
+    binop("Exponent", id("x"), factorial(id("y")))
   );
   testExpr(
     "exp > prefix",

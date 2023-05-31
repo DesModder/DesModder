@@ -40,6 +40,7 @@ export type AnyChild =
   | RepeatedOperator
   | BinaryOperator
   | Negative
+  | Factorial
   | Comparator
   | DoubleInequality
   | AssignmentExpression;
@@ -109,7 +110,7 @@ export interface Identifier {
 }
 
 export interface FunctionCall {
-  // absolute value and factorial are both included in FunctionCall
+  // absolute value is included in FunctionCall
   type: "FunctionCall";
   callee: Identifier;
   args: AnyChild[];
@@ -235,6 +236,11 @@ export interface BinaryOperator {
 
 export interface Negative {
   type: "Negative";
+  arg: AnyChild;
+}
+
+export interface Factorial {
+  type: "Factorial";
   arg: AnyChild;
 }
 

@@ -555,6 +555,15 @@ export function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         op: "-",
         expr: childLatexToAST(e.arg),
       };
+    case "Factorial":
+      return childLatexToAST({
+        type: "FunctionCall",
+        callee: {
+          type: "Identifier",
+          symbol: "factorial",
+        },
+        args: [e.arg],
+      });
     case "Comparator":
       return {
         type: "BinaryExpression",

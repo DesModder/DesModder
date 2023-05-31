@@ -419,6 +419,8 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         args: [childNodeToTree(node.args[0])],
       };
     case "FunctionCall":
+      if (node._symbol === "factorial" && node.args.length === 1)
+        return { type: "Factorial", arg: childNodeToTree(node.args[0]) };
       return {
         type: "FunctionCall",
         callee: parseIdentifier(node._symbol),
@@ -449,18 +451,12 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
       };
     case "FunctionFactorial":
       return {
-        type: "FunctionCall",
-        callee: {
-          type: "Identifier",
-          symbol: "factorial",
+        type: "Factorial",
+        arg: {
+          type: "FunctionCall",
+          callee: nodeToIdentifier(node.args[0]),
+          args: [childNodeToTree(node.args[1])],
         },
-        args: [
-          {
-            type: "FunctionCall",
-            callee: nodeToIdentifier(node.args[0]),
-            args: [childNodeToTree(node.args[1])],
-          },
-        ],
       };
     case "Integral":
       return {

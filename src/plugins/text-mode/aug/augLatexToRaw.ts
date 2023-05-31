@@ -178,6 +178,8 @@ function childNodeToStringNoParen(
     // eslint-disable-next-line no-fallthrough
     case "Negative":
       return "-" + childNodeToString(e.arg, e);
+    case "Factorial":
+      return childNodeToString(e.arg, e, "factorial") + "!";
     case "Comparator":
       return (
         childNodeToString(e.left, e) +
@@ -243,9 +245,7 @@ function funcToString(
   args: Aug.Latex.AnyChild[],
   parent: Aug.Latex.AnyRootOrChild
 ): string {
-  if (isFactorialBang(callee, args)) {
-    return childNodeToString(args[0], parent, "factorial") + "!";
-  } else if (callee.symbol === "abs" && args.length === 1) {
+  if (callee.symbol === "abs" && args.length === 1) {
     return `\\left|${bareSeq(args, parent)}\\right|`;
   } else if (callee.symbol === "sqrt" && args.length === 1) {
     return `\\sqrt{${bareSeq(args, parent)}}`;
@@ -264,13 +264,6 @@ function funcToString(
   } else {
     return identifierToString(callee) + wrapParen(bareSeq(args, parent));
   }
-}
-
-export function isFactorialBang(
-  callee: Aug.Latex.Identifier,
-  args: Aug.Latex.AnyChild[]
-) {
-  return callee.symbol === "factorial" && args.length === 1;
 }
 
 /**

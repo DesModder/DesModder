@@ -245,6 +245,7 @@ describe("Same-parse round trips", () => {
     raw`r_{otate}\left(p,\theta\right)=\left(p.x\cos\left(\tau\theta\right)+p.y\sin\left(\tau\theta\right),-p.x\sin\left(\tau\theta\right)+p.y\cos\left(\tau\theta\right)\right)`,
     raw`\left[\operatorname{polygon}\left(\left(\frac{\left(-2\right)^{i-1}-1}{3},\frac{2-2^{i}3}{2}+2b_{ounce}\left(t+1.1-1.1^{-i}\right)\right)+\frac{\left(\left[-1,1,1,-1\right],\left[-1,-1,1,1\right]\right)}{2^{1-i}}\right)\operatorname{for}i=-\left[0...7\right],t=T+\frac{l}{2}\right]`,
     raw`x=-0.4y-24\left\{0<0.6y-73\right\}\left\{1.2x>0.6y-166\right\}\left\{x<-0.4y-12.3\right\}\left\{\right\}`,
+    raw`\o{factorial}(x)`,
   ];
   cases.forEach(testRoundTripParsesSame);
 });

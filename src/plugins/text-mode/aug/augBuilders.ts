@@ -113,6 +113,13 @@ export function negative(arg: Aug.Latex.AnyChild): Aug.Latex.Negative {
   };
 }
 
+export function factorial(arg: Aug.Latex.AnyChild): Aug.Latex.Factorial {
+  return {
+    type: "Factorial",
+    arg,
+  };
+}
+
 export function listAccess(
   list: Aug.Latex.AnyChild,
   index: Aug.Latex.AnyChild

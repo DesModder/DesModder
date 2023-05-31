@@ -1,5 +1,4 @@
 import Aug from "./AugState";
-import { isFactorialBang } from "./augLatexToRaw";
 
 export default function augNeedsParens(
   node: Aug.Latex.AnyChild,
@@ -34,8 +33,8 @@ export default function augNeedsParens(
     case "Negative":
       if (node.type === "Constant" && node.value > 0) return false;
       return power(node) <= POWERS.prefix;
-    case "FunctionCall":
-      return path === "factorial" && power(node) < POWERS.power;
+    case "Factorial":
+      return power(node) < POWERS.power;
     case "AssignmentExpression":
       return node.type === "Substitution";
     case "ListComprehension":
@@ -43,6 +42,7 @@ export default function augNeedsParens(
     case "UpdateRule":
       return power(node) <= POWERS.update;
     // List of things, including function args
+    case "FunctionCall":
     case "Seq":
     case "Prime":
     case "Visualization":
@@ -141,10 +141,10 @@ function power(node: Aug.Latex.AnyChild): number {
     case "ListComprehension":
     case "Piecewise":
       return POWERS.atom;
+    case "Factorial":
+      return POWERS.factorial;
     case "FunctionCall":
-      return isFactorialBang(node.callee, node.args)
-        ? POWERS.factorial
-        : POWERS.call;
+      return POWERS.call;
     case "Prime":
       return POWERS.call;
     case "ListAccess":

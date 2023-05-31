@@ -674,14 +674,20 @@ export function childExprToAug(
           };
     case "PostfixExpression":
       return {
-        type: "FunctionCall",
-        callee: {
-          type: "Identifier",
-          symbol: "factorial",
-        },
-        args: [childExprToAug(expr.expr)],
+        type: "Factorial",
+        arg: childExprToAug(expr.expr),
       };
     case "CallExpression":
+      if (
+        expr.callee.type === "Identifier" &&
+        expr.callee.name === "f_actorial" &&
+        expr.arguments.length === 1
+      ) {
+        return {
+          type: "Factorial",
+          arg: childExprToAug(expr.arguments[0]),
+        };
+      }
       return callExpressionToAug(expr);
     case "PrimeExpression": {
       const child = callExpressionToAug(expr.expr);
