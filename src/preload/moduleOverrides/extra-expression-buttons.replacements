@@ -10,9 +10,9 @@ Insert before the delete button but after the other buttons.
 
 *Description* `Show buttons like "pin" and "merge folder."`
 
-*Find* => `element`
+*Find*
 ```js
-createElement(
+.createElement(
   'span',
   {
     class: () => ({

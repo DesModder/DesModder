@@ -27,7 +27,7 @@ export default function parseFile(
   fileString: string,
   filename: string
 ): Block[] {
-  const tokens = tokenizeReplacement(fileString);
+  const tokens = tokenizeReplacement(fileString, filename);
   if (tokens[0].tag !== "heading" || tokens[0].depth !== 1)
     throw new ReplacementError("First line must be a # Heading");
   if (tokens[1].tag !== "emph" || tokens[1].command !== "plugin")

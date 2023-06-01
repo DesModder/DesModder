@@ -133,7 +133,7 @@ function getSymbols(commands: Command[], str: Token[]): SymbolTable {
         try {
           // pre-esbuild
           const found = findPattern(
-            patternTokens(".template=function(){__return__}"),
+            patternTokens(".template=function(){__return__}", ""),
             table.str,
             { start: ts, length: table.str.length - ts - 1 },
             true
@@ -145,7 +145,7 @@ function getSymbols(commands: Command[], str: Token[]): SymbolTable {
         } catch {
           // post-esbuild
           const found = findPattern(
-            patternTokens("template() {__return__}"),
+            patternTokens("template() {__return__}", ""),
             table.str,
             { start: ts, length: table.str.length - ts - 1 },
             true

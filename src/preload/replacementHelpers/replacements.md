@@ -27,7 +27,11 @@ Then the pattern argument to `*Find*` is the sequence of tokens `[".", "getSecti
 
 ## Builtin commands
 
-There are four builtin commands:
+There are five builtin commands:
+
+### Command `*worker_only*`
+
+Specifies the replacement to occur only in the worker, rather than only in the main frame.
 
 ### Command `*Find*`
 

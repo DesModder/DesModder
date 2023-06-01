@@ -1,3 +1,4 @@
+import { Console } from "../../globals/window";
 import { ReplacementError } from "./errors";
 import jsTokens, { Token } from "js-tokens";
 
@@ -16,7 +17,10 @@ function errorOnLine(msg: string, lineIndex: number, line: string): never {
   throw new ReplacementError(`${msg} (line ${lineIndex + 1}): ${line}`);
 }
 
-export function tokenizeReplacement(replacementString: string) {
+export function tokenizeReplacement(
+  replacementString: string,
+  filename: string
+) {
   replacementString = replacementString.replace(/\r/g, "");
   if (!replacementString.startsWith("#"))
     throw new ReplacementError("File is missing heading (line 1)");
@@ -71,7 +75,10 @@ export function tokenizeReplacement(replacementString: string) {
           );
         tokens.push({
           tag: "code",
-          value: patternTokens(lines.slice(codeStartLine + 1, i).join("\n")),
+          value: patternTokens(
+            lines.slice(codeStartLine + 1, i).join("\n"),
+            filename
+          ),
         });
         codeStartLine = null;
       }
@@ -81,17 +88,64 @@ export function tokenizeReplacement(replacementString: string) {
   return tokens;
 }
 
-export function patternTokens(str: string): PatternToken[] {
-  return [...jsTokens(str.trim().replace(/\s*<(\w+)>\s*/, "__$1__"))].map(
-    (token) =>
-      token.type !== "IdentifierName"
-        ? token
-        : /^__\w*__$/.test(token.value)
-        ? { type: "PatternBalanced", value: token.value }
-        : token.value.startsWith("$")
-        ? { type: "PatternIdentifier", value: token.value }
-        : token
-  );
+export function patternTokens(str: string, msg: string) {
+  return [..._patternTokens(str, msg)];
+}
+
+const allowIDs = "allow-ids:";
+const keywords = ["do", "if", "for", "in", "let", "new", "null", "try", "var"];
+const defaultAllowedIDs = ["window", "DesModder"].concat(keywords);
+
+function* _patternTokens(str: string, msg: string): Generator<PatternToken> {
+  const allowedIDs = new Set<string>(defaultAllowedIDs);
+  const tokens = [..._patternTokensRaw(str)];
+  for (const [i, token] of tokens.entries()) {
+    const comment = commentInner(token);
+    if (comment !== undefined) {
+      if (comment.startsWith(allowIDs)) {
+        comment
+          .slice(allowIDs.length)
+          .split(",")
+          .forEach((s) => allowedIDs.add(s.trim()));
+      }
+      continue;
+    }
+    if (token.type === "IdentifierName" && token.value.length <= 3) {
+      const dotAccessName = ["?.", "."].includes(tokens[i - 1]?.value);
+      const propertyName = tokens[i + 1]?.value === ":";
+      const probablyFine = dotAccessName || propertyName;
+      // This may be a global/local variable, and it might be brittle
+      if (!probablyFine && !allowedIDs.has(token.value)) {
+        Console.warn(
+          `Identifier '${token.value}' in '${msg}' may depend on specific minified naming. ` +
+            "Prepend a '$' to indicate you want to match any identifier, or " +
+            "lengthen it to longer than 3 letters, or " +
+            `write '// ${allowIDs} ${token.value}' to indicate this is a ` +
+            "global or local variable with a fixed name."
+        );
+      }
+    }
+    yield token;
+  }
+}
+
+function* _patternTokensRaw(str: string): Generator<PatternToken> {
+  for (const token of jsTokens(str.trim())) {
+    yield token.type !== "IdentifierName"
+      ? token
+      : /^__\w*__$/.test(token.value)
+      ? { type: "PatternBalanced", value: token.value }
+      : token.value.startsWith("$")
+      ? { type: "PatternIdentifier", value: token.value }
+      : token;
+  }
+}
+
+function commentInner(token: PatternToken) {
+  if (token.type === "SingleLineComment")
+    return token.value.replace(/^\/+/, "").trim();
+  else if (token.type === "MultiLineComment")
+    return token.value.replace(/\/\*+/, "").replace(/\*\//, "").trim();
 }
 
 function normalizeCommand(command: string) {

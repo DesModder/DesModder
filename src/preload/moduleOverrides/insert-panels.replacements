@@ -31,7 +31,7 @@ $DCGView.createElement(
     each: () => window.DesModder?.controller?.inTextMode?.()
         ? [] 
         : this.controller?.getAllItemModels?.() ?? [],
-    key: e => e.guid
+    key: model => model.guid
   },
   $DCGView.createElement(
     "div",
@@ -41,15 +41,15 @@ $DCGView.createElement(
         background: this.controller.getBackgroundColor()
       })
     },
-    t => $DCGView.createElement(
+    model => $DCGView.createElement(
         $DCGView.Components.If,
         {
-          predicate: () => window.DesModder?.controller?.isExpressionPinned(t.id)
+          predicate: () => window.DesModder?.controller?.isExpressionPinned(model.id)
         },
         // marking as a drag copy causes it not to affect the render shells calcuations
         // (all the logic is present already because if the top expression is dragged
         // to the bottom, it shouldn't cause all expressions to render from the top)
-        () => this.makeDragCopyViewForModel(t)
+        () => this.makeDragCopyViewForModel(model)
       )
   )
 ),
@@ -62,6 +62,7 @@ $DCGView.createElement(
   () => $DCGView.createElement(
     "div",
     {
+      // allow-ids: div
       class: $DCGView.const("dsm-text-editor-container"),
       didMount: div => window.DesModder?.controller?.exposedPlugins["text-mode"].mountEditor(div),
       willUnmount: div => window.DesModder?.controller?.exposedPlugins["text-mode"].unmountEditor(div)

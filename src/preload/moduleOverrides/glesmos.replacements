@@ -61,7 +61,7 @@ $DCGView.createElement(
     $DCGView.createElement($ToggleView, {
       ariaLabel: () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
       toggled: () => window.DesModder?.controller?.isGlesmosMode?.(this.id),
-      onChange: (a) => window.DesModder?.controller?.toggleGlesmos?.(this.id),
+      onChange: () => window.DesModder?.controller?.toggleGlesmos?.(this.id),
     })
   )
 )
@@ -113,7 +113,7 @@ $DCGView.createElement(
     $DCGView.createElement($ToggleView, {
       ariaLabel: () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
       toggled: () => window.DesModder?.controller?.isGlesmosMode?.(this.id),
-      onChange: (a) => window.DesModder?.controller?.toggleGlesmos?.(this.id),
+      onChange: () => window.DesModder?.controller?.toggleGlesmos?.(this.id),
     })
   )
 )
@@ -159,7 +159,7 @@ $DCGView.createElement(
     $DCGView.createElement($ToggleView, {
       ariaLabel: () => DesModder.controller.format("GLesmos-confirm-lines"),
       toggled: () => window.DesModder?.controller?.isGLesmosLinesConfirmed?.(this.id),
-      onChange: (a) => window.DesModder?.controller?.toggleGLesmosLinesConfirmed?.(this.id),
+      onChange: () => window.DesModder?.controller?.toggleGLesmosLinesConfirmed?.(this.id),
     }),
     $DCGView.createElement(
       $DCGView.Components.If,
@@ -199,6 +199,7 @@ if (!$ee.branches || !$ee.branches.length) return;
 
 ```js
 __guard__
+// allow-ids: of
 for (const branch of $sketch.branches) {
   if (branch.graphMode === "GLesmos") {
     window.DesModder?.controller?.exposedPlugins[
@@ -270,7 +271,7 @@ if ($W !== void 0 && $X !== void 0 && isFinite($W) && isFinite($X)) {
 
 *Find* inside `body` => `if2d`
 ```js
-if (!$is3d(T.graphMode) || $) {
+if (!$is3d($T.graphMode) || $) {
 ```
 
 *Replace* `if2d` with
@@ -284,7 +285,7 @@ if (this.userData.glesmos) {
     try {
       derivativeX = $ir.takeDerivative('x');
       derivativeY = $ir.takeDerivative('y');
-    } catch(e) {}
+    } catch {}
   }
   const newCompiled = self.dsm_compileGLesmos(
     $ir, $styles.color, $styles.fillOpacity ?? 0, $styles.lineOpacity, this.userData.lines !== false ? $styles.lineWidth : 0.0,
@@ -295,6 +296,7 @@ if (this.userData.glesmos) {
     // merge GLesmos graphs when possible
     newCompiled.hasOutlines = newCompiled.hasOutlines && prev.hasOutlines
     const prevGL = prev.compiledGL;
+    // allow-ids: of, dep
     for (let dep of newCompiled.deps) {
       if (!prevGL.deps.includes(dep)) {
         prevGL.deps.push(dep);

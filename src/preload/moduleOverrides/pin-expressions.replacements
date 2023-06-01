@@ -21,10 +21,10 @@ $e.isHiddenFromUI || $e.filteredBySearch || window.DesModder?.controller?.isExpr
 Replacement appears in
 
 ```js
-exports.getDisplayState = function (e) {
-    return e.isHiddenFromUI || e.filteredBySearch
+exports.getDisplayState = function ($e) {
+    return $e.isHiddenFromUI || $e.filteredBySearch
       ? 'none'
-      : e.renderShell
+      : $e.renderShell
       ? 'shell'
       : 'render'
   }

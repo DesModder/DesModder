@@ -18,12 +18,7 @@ import { ItemModel } from "globals/models";
 import window, { Calc } from "globals/window";
 import { format } from "i18n/i18n-core";
 import { plugins, pluginList, PluginID, GenericSettings } from "plugins";
-import {
-  listenToMessageDown,
-  postMessageUp,
-  mapToRecord,
-  recordToMap,
-} from "utils/messages";
+import { postMessageUp, mapToRecord, recordToMap } from "utils/messages";
 
 interface PillboxButton {
   id: string;

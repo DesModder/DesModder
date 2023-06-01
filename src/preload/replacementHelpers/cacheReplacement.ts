@@ -73,7 +73,7 @@ function fullReplacement(calcDesktop: string, enabledReplacements: Block[]) {
   } else {
     const sharedModuleToken = sharedModuleTokens[0];
     workerResult = applyReplacements(
-      enabledReplacements,
+      enabledReplacements.filter((x) => x.workerOnly),
       // JSON.parse doesn't work because this is a single-quoted string.
       // js-tokens tokenized this as a string anyway, so it should be
       // safely eval'able to a string.
@@ -104,16 +104,10 @@ function fullReplacement(calcDesktop: string, enabledReplacements: Block[]) {
     wbTokenTail.value.slice(0, -1) + "\n loadDesModderWorker();`";
   const srcWithWorkerAppend = tokens.map((x) => x.value).join("");
   const mainResult = applyReplacements(
-    enabledReplacements,
+    enabledReplacements.filter((x) => !x.workerOnly),
     srcWithWorkerAppend
   );
-  const workerFailed = [...workerResult.failed].filter(
-    ([b]) => !mainResult.successful.has(b)
-  );
-  const mainFailed = [...mainResult.failed].filter(
-    ([b]) => !workerResult.successful.has(b)
-  );
-  const failed = new Map(workerFailed.concat(mainFailed));
+  const failed = [...workerResult.failed].concat([...mainResult.failed]);
 
   for (const [b, e] of failed) {
     Console.warn(e);

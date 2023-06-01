@@ -9,7 +9,7 @@
 *Find*
 
 ```js
-onKeydownEvent(e) {__onKeydownEvent__}
+onKeydownEvent($) {__onKeydownEvent__}
 ```
 
 *Find* inside `onKeydownEvent` => `from`

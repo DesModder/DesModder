@@ -47,8 +47,8 @@ $this.bindFn($this.getIconMode)
 error: () => $DCGView.createElement(
   "div",
   {
-    onTap: evt => (
-      evt.shiftKey &&
+    onTap: event => (
+      event.shiftKey &&
       window.DesModder?.controller.toggleErrorHidden($this.model.id)
     ),
     style: () => (

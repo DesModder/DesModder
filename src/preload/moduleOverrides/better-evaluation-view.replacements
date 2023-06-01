@@ -71,7 +71,7 @@ list: () => $Dcgview.Components.IfElse(
               displayAsFraction: false
             }
             let length = 20
-            let labels = values.slice(0,length).map(e => Desmos.Private.Mathtools.Label.truncatedLatexLabel(e,labelOptions))
+            let labels = values.slice(0,length).map(label => Desmos.Private.Mathtools.Label.truncatedLatexLabel(label, labelOptions))
             return "\\left[" + labels.join(",") + (values.length > length ? `\\textcolor{gray}{...\\mathit{${values.length - length}\\ more}}` : "") + "\\right]"
           },
           config: $Dcgview.const({})
@@ -109,6 +109,7 @@ rgbcolor: () => $Dcgview.createElement(
         $StaticMathquillViewDefault,
         {
           latex: () => {
+            // allow-ids: rgb, hex
             let color = this.props.val()
             // https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
             function rgb(hex) {
@@ -122,7 +123,7 @@ rgbcolor: () => $Dcgview.createElement(
             let length = 6
             if (Array.isArray(color)) {
               color = color.map(rgb)
-              return "\\operatorname{rgb}\\left(\\left[" + color.slice(0,length).map(c=>`\\left(${c.join(",")}\\right)`).join(",") + (color.length > length ? `\\textcolor{gray}{...\\mathit{${color.length - length}\\ more}}` : "") + "\\right]\\right)"
+              return "\\operatorname{rgb}\\left(\\left[" + color.slice(0,length).map(clist=>`\\left(${clist.join(",")}\\right)`).join(",") + (color.length > length ? `\\textcolor{gray}{...\\mathit{${color.length - length}\\ more}}` : "") + "\\right]\\right)"
             } else {
               color = rgb(color)
               return "\\operatorname{rgb}\\left(" + color.join(",") + "\\right)"
@@ -139,6 +140,8 @@ rgbcolor: () => $Dcgview.createElement(
 ## Return more info from numericLabels
 
 *Description* `Distinguish 0 vs -0 and NaN vs -∞ vs +∞`
+
+*worker_only*
 
 Add a value field to "undefined" labels
 
