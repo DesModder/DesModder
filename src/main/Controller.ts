@@ -73,8 +73,7 @@ export default class Controller {
         (plugin) => [plugin.id, this.getDefaultConfig(plugin.id)] as const
       )
     );
-    this.forceDisabled = window.DesModderForceDisabled!;
-    delete window.DesModderForceDisabled;
+    this.forceDisabled = window.DesModderPreload!.pluginsForceDisabled;
     if (Calc.controller.isGeometry()) this.forceDisabled.add("text-mode");
     this.pluginsEnabled = new Map(
       pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
@@ -129,36 +128,15 @@ export default class Controller {
   }
 
   init() {
-    // async
-    let numFulfilled = 0;
-    listenToMessageDown((message) => {
-      if (message.type === "apply-plugin-settings") {
-        this.applyStoredSettings(recordToMap(message.value));
-      } else if (message.type === "apply-plugins-enabled") {
-        this.applyStoredEnabled(recordToMap(message.value));
-      } else {
-        return false;
-      }
-      // I'm not sure if the messages are guaranteed to be in the expected
-      // order. Doesn't matter except for making sure we only
-      // enable once
-      numFulfilled += 1;
-      if (numFulfilled === 2) {
-        for (const { id } of pluginList) {
-          if (this.isPluginEnabled(id)) {
-            this._enablePlugin(id, true);
-          }
-        }
-        this.updateMenuView();
-        // cancel listener
-        return true;
-      }
-      return false;
-    });
-    // fire GET after starting listener in case it gets resolved before the listener begins
-    postMessageUp({
-      type: "get-initial-data",
-    });
+    const dsmPreload = window.DesModderPreload!;
+    this.applyStoredSettings(recordToMap(dsmPreload.pluginSettings));
+    this.applyStoredEnabled(recordToMap(dsmPreload.pluginsEnabled));
+    delete window.DesModderPreload;
+
+    for (const { id } of pluginList) {
+      if (this.isPluginEnabled(id)) this._enablePlugin(id, true);
+    }
+    this.updateMenuView();
     // metadata stuff
     Calc.observeEvent("change.dsm-main-controller", () => {
       this.checkForMetadataChange();

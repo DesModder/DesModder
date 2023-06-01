@@ -22,16 +22,7 @@ type MessageWindowToContent =
       value: Record<PluginID, GenericSettings>;
     }
   | {
-      type: "get-plugins-force-disabled";
-    }
-  | {
       type: "get-initial-data";
-    }
-  | {
-      type: "get-preload-enabled";
-    }
-  | {
-      type: "get-script-url";
     }
   | {
       type: "send-heartbeat";
@@ -40,20 +31,11 @@ type MessageWindowToContent =
 
 type MessageContentToWindow =
   | {
-      type: "apply-plugins-enabled";
-      value: Record<PluginID, boolean>;
-    }
-  | {
-      type: "apply-plugins-force-disabled";
-      value: PluginID[];
-    }
-  | {
-      type: "apply-plugin-settings";
-      value: Record<PluginID, GenericSettings>;
-    }
-  | {
-      type: "set-script-url";
-      value: string;
+      type: "apply-initial-data";
+      pluginsEnabled: Record<PluginID, boolean>;
+      pluginsForceDisabled: PluginID[];
+      pluginSettings: Record<PluginID, GenericSettings>;
+      scriptURL: string;
     }
   | HeartbeatError;
 

@@ -8,13 +8,18 @@ import {
   SegmentedControlComponent,
   TooltipComponent,
 } from "../components/desmosComponents";
+import { GenericSettings } from "../plugins";
 import CalcType from "./Calc";
 import { ItemModel } from "./models";
 
 interface windowConfig extends Window {
   Calc: CalcType;
   DesModder: any;
-  DesModderForceDisabled?: Set<string>;
+  DesModderPreload?: {
+    pluginsForceDisabled: Set<string>;
+    pluginsEnabled: Record<string, boolean>;
+    pluginSettings: Record<string, GenericSettings>;
+  };
 }
 
 declare let window: windowConfig;

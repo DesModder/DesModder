@@ -7,65 +7,67 @@ import {
 import injectScript from "utils/injectScript";
 import { listenToMessageUp, postMessageDown } from "utils/messages";
 
-const StorageKeys = {
-  pluginsEnabled: "_plugins-enabled",
-  forceDisabled: "_force-disabled",
-  forceDisabledVersion: "_force-disabled-version",
-  pluginSettings: "_plugin-settings",
-} as const;
-
-function getInitialData() {
-  chrome.storage.sync.get(
-    {
-      [StorageKeys.pluginsEnabled]: {}, // default: do not know which are enabled
-      [StorageKeys.pluginSettings]: {}, // default: no settings known
-    },
-    (items) => {
-      const settingsDown: Record<PluginID, GenericSettings> = structuredClone(
-        items?.[StorageKeys.pluginSettings] ?? {}
-      );
-      // Hide secret key from web page
-      if (settingsDown.wakatime?.secretKey) {
-        settingsDown.wakatime.secretKey =
-          "????????-????-????-????-????????????";
-      }
-      postMessageDown({
-        type: "apply-plugin-settings",
-        value: settingsDown,
-      });
-      const pluginsEnabled: Record<PluginID, boolean> =
-        items?.[StorageKeys.pluginsEnabled] ?? {};
-      postMessageDown({
-        type: "apply-plugins-enabled",
-        value: pluginsEnabled,
-      });
-    }
-  );
+enum StorageKeys {
+  pluginsEnabled = "_plugins-enabled",
+  forceDisabled = "_force-disabled",
+  forceDisabledVersion = "_force-disabled-version",
+  pluginSettings = "_plugin-settings",
 }
 
-function getPluginsForceDisabled() {
-  chrome.storage.sync.get(
-    {
-      [StorageKeys.forceDisabled]: [], // default: no plugins force-disabled
-      [StorageKeys.forceDisabledVersion]: "",
-    },
-    (items) => {
-      let forceDisabled: PluginID[] = items?.[StorageKeys.forceDisabled] ?? [];
-      const forceDisabledVersion: string =
-        items?.[StorageKeys.forceDisabledVersion] ?? "";
-      if (forceDisabledVersion !== VERSION) {
-        forceDisabled = [];
-        void chrome.storage.sync.set({
-          [StorageKeys.forceDisabled]: [],
-          [StorageKeys.forceDisabledVersion]: VERSION,
-        });
-      }
-      postMessageDown({
-        type: "apply-plugins-force-disabled",
-        value: forceDisabled,
-      });
-    }
+interface InitialData {
+  [StorageKeys.forceDisabled]: PluginID[];
+  [StorageKeys.forceDisabledVersion]: string;
+  [StorageKeys.pluginsEnabled]: Record<PluginID, boolean>;
+  [StorageKeys.pluginSettings]: Record<PluginID, GenericSettings>;
+}
+
+const initialDataDefaults: InitialData = {
+  [StorageKeys.forceDisabled]: [], // default: no plugins force-disabled
+  [StorageKeys.forceDisabledVersion]: "",
+  [StorageKeys.pluginsEnabled]: {},
+  [StorageKeys.pluginSettings]: {}, // default: no settings known
+};
+
+type UntrustedInitialData = Partial<InitialData> | undefined;
+
+function getInitialData() {
+  chrome.storage.sync.get(initialDataDefaults, (_items) => {
+    const items = _items as UntrustedInitialData;
+    postMessageDown({
+      type: "apply-initial-data",
+      pluginsEnabled: getItem(items, StorageKeys.pluginsEnabled),
+      pluginsForceDisabled: pluginsForceDisabled(items),
+      pluginSettings: pluginSettings(items),
+      scriptURL: chrome.runtime.getURL("script.js"),
+    });
+  });
+}
+
+type KID = keyof InitialData;
+function getItem<T extends KID>(items: UntrustedInitialData, key: T) {
+  return items?.[key] ?? initialDataDefaults[key];
+}
+
+function pluginsForceDisabled(items: UntrustedInitialData) {
+  const forceDisabledVersion = getItem(items, StorageKeys.forceDisabledVersion);
+  if (forceDisabledVersion !== VERSION) {
+    void chrome.storage.sync.set({
+      [StorageKeys.forceDisabled]: [],
+      [StorageKeys.forceDisabledVersion]: VERSION,
+    });
+    return [];
+  }
+  return getItem(items, StorageKeys.forceDisabled);
+}
+
+function pluginSettings(items: UntrustedInitialData) {
+  const settingsDown: Record<PluginID, GenericSettings> = structuredClone(
+    getItem(items, StorageKeys.pluginSettings)
   );
+  // Hide secret key from web page
+  if (settingsDown.wakatime?.secretKey)
+    settingsDown.wakatime.secretKey = "????????-????-????-????-????????????";
+  return settingsDown;
 }
 
 function _sendHeartbeat(options: WindowHeartbeatOptions) {
@@ -108,13 +110,9 @@ function _sendHeartbeat(options: WindowHeartbeatOptions) {
 
 listenToMessageUp((message) => {
   switch (message.type) {
-    case "get-plugins-force-disabled":
-      getPluginsForceDisabled();
-      break;
-    case "get-initial-data": {
+    case "get-initial-data":
       getInitialData();
       break;
-    }
     case "set-plugins-enabled":
       void chrome.storage.sync.set({
         [StorageKeys.pluginsEnabled]: message.value,
@@ -131,15 +129,11 @@ listenToMessageUp((message) => {
         [StorageKeys.pluginSettings]: message.value,
       });
       break;
-    case "get-script-url":
-      postMessageDown({
-        type: "set-script-url",
-        value: chrome.runtime.getURL("script.js"),
-      });
-      break;
     case "send-heartbeat":
       _sendHeartbeat(message.options);
       break;
+    default:
+      message satisfies never;
   }
   return false;
 });

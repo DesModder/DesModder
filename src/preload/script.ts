@@ -17,18 +17,10 @@ function tryRunDesModder() {
   else setTimeout(tryRunDesModder, 10);
 }
 
+let scriptURL: string;
+
 function runDesModder() {
-  listenToMessageDown((message) => {
-    if (message.type === "set-script-url") {
-      injectScript(message.value);
-      // cancel listener
-      return true;
-    }
-    return false;
-  });
-  postMessageUp({
-    type: "get-script-url",
-  });
+  injectScript(scriptURL);
 }
 
 function getCalcDesktopURL() {
@@ -59,16 +51,21 @@ async function load(pluginsForceDisabled: Set<string>) {
 }
 
 listenToMessageDown((message) => {
-  if (message.type === "apply-plugins-force-disabled") {
-    message.value.forEach((disabledPlugin) => addForceDisabled(disabledPlugin));
-    window.DesModderForceDisabled = arrayToSet(message.value);
-    void load(arrayToSet(message.value));
+  if (message.type === "apply-initial-data") {
+    message.pluginsForceDisabled.forEach((disabledPlugin) =>
+      addForceDisabled(disabledPlugin)
+    );
+    scriptURL = message.scriptURL;
+    window.DesModderPreload = {
+      pluginsForceDisabled: arrayToSet(message.pluginsForceDisabled),
+      pluginsEnabled: message.pluginsEnabled,
+      pluginSettings: message.pluginSettings,
+    };
+    void load(arrayToSet(message.pluginsForceDisabled));
     // cancel listener
     return true;
   }
   return false;
 });
 
-postMessageUp({
-  type: "get-plugins-force-disabled",
-});
+postMessageUp({ type: "get-initial-data" });
