@@ -276,7 +276,7 @@ if (!$is3d($T.graphMode) || $) {
 
 *Replace* `if2d` with
 ```js
-if (this.userData.glesmos) {
+if (this.userData.glesmos && self.dsm_compileGLesmos) {
   const lines =
     this.userData.lines !== false &&
     (!this.isInequality() || this.userData.glesmosLinesConfirmed);

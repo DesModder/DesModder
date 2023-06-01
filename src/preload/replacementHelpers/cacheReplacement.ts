@@ -94,14 +94,16 @@ function fullReplacement(calcDesktop: string, enabledReplacements: Block[]) {
         "__dcg_worker_module__(__dcg_worker_shared_module_exports__);"
       )
   );
-  if (wbTokenTail === undefined || wbTokenHead === undefined)
-    throw new Error("Failed to find valid worker builder.");
-  wbTokenHead.value =
-    // eslint-disable-next-line no-template-curly-in-string
-    "`function loadDesModderWorker(){${window.dsm_workerAppend}}" +
-    wbTokenHead.value.slice(1);
-  wbTokenTail.value =
-    wbTokenTail.value.slice(0, -1) + "\n loadDesModderWorker();`";
+  if (wbTokenTail === undefined || wbTokenHead === undefined) {
+    Console.warn("Failed to find valid worker builder.");
+  } else {
+    wbTokenHead.value =
+      // eslint-disable-next-line no-template-curly-in-string
+      "`function loadDesModderWorker(){${window.dsm_workerAppend}}" +
+      wbTokenHead.value.slice(1);
+    wbTokenTail.value =
+      wbTokenTail.value.slice(0, -1) + "\n loadDesModderWorker();`";
+  }
   const srcWithWorkerAppend = tokens.map((x) => x.value).join("");
   const mainResult = applyReplacements(
     enabledReplacements.filter((x) => !x.workerOnly),
