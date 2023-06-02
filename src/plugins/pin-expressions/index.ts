@@ -4,10 +4,12 @@ import { Plugin } from "plugins";
 
 const pinExpressions: Plugin = {
   id: "pin-expressions",
+  key: "pinExpressions",
   // Controller handles enable/disable by changing the results of isPinned
   // (used in modified module definitions), but we need to update views
   onEnable: () => {
     Calc.controller.updateViews();
+    return undefined;
   },
   onDisable: () => {
     Calc.controller.updateViews();

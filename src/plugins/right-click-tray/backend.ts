@@ -12,6 +12,7 @@ export function onEnable() {
     document.addEventListener("contextmenu", onContextMenu);
     window.addEventListener("mousedown", onMouseDown);
   }
+  return undefined;
 }
 
 export function onDisable() {

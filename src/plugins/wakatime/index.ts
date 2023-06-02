@@ -62,6 +62,7 @@ listenToMessageDown((msg) => {
 
 const wakatime: Plugin = {
   id: "wakatime",
+  key: "wakatime",
   onEnable,
   onDisable,
   config: configList,

@@ -19,6 +19,7 @@ function onDisable() {
 
 const glesmos: Plugin = {
   id: "GLesmos",
+  key: "glesmos",
   onEnable,
   onDisable,
   enabledByDefault: false,

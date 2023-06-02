@@ -68,6 +68,7 @@ export function onDisable() {
 
 const w2d: Plugin = {
   id: "wolfram2desmos",
+  key: "wolframToDesmos",
   onEnable,
   onDisable,
   enabledByDefault: true,

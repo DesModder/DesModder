@@ -8,13 +8,14 @@ import {
   SegmentedControlComponent,
   TooltipComponent,
 } from "../components/desmosComponents";
-import { GenericSettings } from "../plugins";
+import { GenericSettings, PluginKey } from "../plugins";
 import CalcType from "./Calc";
 import { ItemModel } from "./models";
 
 interface windowConfig extends Window {
   Calc: CalcType;
   DesModder: any;
+  DSM: Record<PluginKey, Record<string, any> | undefined>;
   DesModderPreload?: {
     pluginsForceDisabled: Set<string>;
     pluginsEnabled: Record<string, boolean>;

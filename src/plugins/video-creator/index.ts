@@ -16,6 +16,7 @@ function onDisable() {
 
 const videoCreator: Plugin = {
   id: "video-creator",
+  key: "videoCreator",
   onEnable,
   onDisable,
   enabledByDefault: true,

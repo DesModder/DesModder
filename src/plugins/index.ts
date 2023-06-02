@@ -39,21 +39,22 @@ export interface ConfigItemString extends ConfigItemGeneric {
 export type ConfigItem = ConfigItemBoolean | ConfigItemString;
 
 export type GenericSettings = Record<string, any>;
+export type PluginEnableResult = Record<string, any> | undefined;
 
 export interface Plugin<Settings extends GenericSettings = GenericSettings> {
-  // the id is fixed permanently, even for future releases
-  // where you might change the plugin's name
-  // and can help handle migrating save state if the display name changes
+  /** The ID is fixed permanently, even for future releases. It is kebab
+   * case. If you rename the plugin, keep the ID the same for settings sync */
   id: string;
+  /** The key is used for dot access syntax and should be camelCase */
+  key: string;
   // display name and descriptions are managed in a translations file
   descriptionLearnMore?: string;
-  onEnable(config?: unknown): any;
-  onDisable?(): void;
+  onEnable(config?: unknown): PluginEnableResult;
+  onDisable(): void;
   afterDisable?(): void;
   enabledByDefault: boolean;
   config?: readonly ConfigItem[];
   onConfigChange?(config: Settings): void;
-  enableRequiresReload?: boolean;
   moduleOverrides?: unknown; // should be used only in preload code, not in main code
 }
 
@@ -79,5 +80,6 @@ export const pluginList: Plugin[] = [
 ];
 
 export type PluginID = string;
+export type PluginKey = string;
 
 export const plugins = new Map(pluginList.map((plugin) => [plugin.id, plugin]));

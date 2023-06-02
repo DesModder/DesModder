@@ -6,9 +6,11 @@ export let controller: Controller;
 
 const performanceInfo: Plugin = {
   id: "performance-info",
+  key: "performanceInfo",
   onEnable: () => {
     controller = new Controller();
     initView();
+    return undefined;
   },
   onDisable: () => {
     controller.stop();

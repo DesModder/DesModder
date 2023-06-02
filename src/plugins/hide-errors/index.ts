@@ -32,6 +32,7 @@ function initPromptSlider() {
 
 const hideErrors: Plugin = {
   id: "hide-errors",
+  key: "hideErrors",
   // Still need to declare empty onEnable and onDisable to get the right UI
   onEnable: () => {
     if (!initOnce) {
@@ -40,6 +41,7 @@ const hideErrors: Plugin = {
     }
     enabled = true;
     Calc.controller.updateViews();
+    return undefined;
   },
   onDisable: () => {
     enabled = false;

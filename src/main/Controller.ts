@@ -40,7 +40,9 @@ export default class Controller {
   private expandedCategory: string | null = null;
   pluginSettings: Map<PluginID, GenericSettings>;
 
-  exposedPlugins: Record<PluginID, any> = {};
+  /** Note that `enabledPlugins[key]` is truthy if and only if `key` is of
+   * an enabled plugins. Otherwise, `enabledPlugins[key]` is undefined */
+  enabledPlugins: typeof window.DSM = {};
 
   graphMetadata: GraphMetadata = getBlankMetadata();
 
@@ -129,7 +131,7 @@ export default class Controller {
     delete window.DesModderPreload;
 
     for (const { id } of pluginList) {
-      if (this.isPluginEnabled(id)) this._enablePlugin(id, true);
+      if (this.isPluginEnabled(id)) this._enablePlugin(id);
     }
     this.updateMenuView();
     // metadata stuff
@@ -265,12 +267,10 @@ export default class Controller {
     const plugin = plugins.get(id);
     if (plugin && this.isPluginToggleable(id)) {
       if (this.isPluginEnabled(id)) {
-        if (plugin.onDisable) {
-          plugin.onDisable();
-          this.pluginsEnabled.delete(id);
-        } else {
-          this.warnReload();
-        }
+        plugin.onDisable();
+        this.pluginsEnabled.delete(id);
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete this.enabledPlugins[plugin.key];
         this.setPluginEnabled(id, false);
         this.updateMenuView();
         plugin.afterDisable?.();
@@ -278,17 +278,11 @@ export default class Controller {
     }
   }
 
-  _enablePlugin(id: PluginID, isReload: boolean) {
+  _enablePlugin(id: PluginID) {
     const plugin = plugins.get(id);
     if (plugin !== undefined) {
-      if (plugin.enableRequiresReload && !isReload) {
-        this.warnReload();
-      } else {
-        const res = plugin.onEnable(this.pluginSettings.get(id));
-        if (res !== undefined) {
-          this.exposedPlugins[id] = res;
-        }
-      }
+      const res = plugin.onEnable(this.pluginSettings.get(id));
+      this.enabledPlugins[plugin.key] = res ?? {};
       this.setPluginEnabled(id, true);
       this.updateMenuView();
     }
@@ -297,7 +291,7 @@ export default class Controller {
   enablePlugin(id: PluginID) {
     if (this.isPluginToggleable(id) && !this.isPluginEnabled(id)) {
       this.setPluginEnabled(id, true);
-      this._enablePlugin(id, false);
+      this._enablePlugin(id);
     }
   }
 
@@ -680,14 +674,11 @@ export default class Controller {
   }
 
   toggleTextMode() {
-    this.exposedPlugins["text-mode"].toggleTextMode();
+    this.enabledPlugins.textMode?.toggleTextMode();
   }
 
   inTextMode() {
-    return (
-      this.isPluginEnabled("text-mode") &&
-      this.exposedPlugins["text-mode"]?.inTextMode
-    );
+    return !!this.enabledPlugins.textMode?.inTextMode;
   }
 
   createAction(

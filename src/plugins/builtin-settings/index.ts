@@ -39,6 +39,7 @@ function onEnable(config: Config) {
     }
   }
   updateSettings(config);
+  return undefined;
 }
 
 function onDisable() {
@@ -49,6 +50,7 @@ function onDisable() {
 
 const builtinSettings: Plugin = {
   id: "builtin-settings",
+  key: "builtinSettings",
   onEnable,
   onDisable,
   enabledByDefault: true,

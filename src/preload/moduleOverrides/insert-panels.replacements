@@ -64,8 +64,8 @@ $DCGView.createElement(
     {
       // allow-ids: div
       class: $DCGView.const("dsm-text-editor-container"),
-      didMount: div => window.DesModder?.controller?.exposedPlugins["text-mode"].mountEditor(div),
-      willUnmount: div => window.DesModder?.controller?.exposedPlugins["text-mode"].unmountEditor(div)
+      didMount: div => DSM.textMode.mountEditor(div),
+      willUnmount: div => DSM.textMode.unmountEditor(div)
     }
   )
 )

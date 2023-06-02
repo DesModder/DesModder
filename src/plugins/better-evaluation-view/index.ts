@@ -5,8 +5,10 @@ import { Plugin } from "plugins";
 
 const betterEvaluationView: Plugin = {
   id: "better-evaluation-view",
+  key: "betterEvaluationView",
   onEnable: () => {
     Calc.controller.updateViews();
+    return undefined;
   },
   onDisable: () => {},
   afterDisable: () => {

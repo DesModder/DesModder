@@ -61,6 +61,7 @@ listenToMessageDown((message) => {
       pluginsEnabled: message.pluginsEnabled,
       pluginSettings: message.pluginSettings,
     };
+    window.DSM = {};
     void load(arrayToSet(message.pluginsForceDisabled));
     // cancel listener
     return true;

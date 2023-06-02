@@ -19,6 +19,7 @@ function onEnable() {
       }
     }
   );
+  return undefined;
 }
 
 function onDisable() {
@@ -27,6 +28,7 @@ function onDisable() {
 
 const duplicateHotkey: Plugin = {
   id: "duplicate-expression-hotkey",
+  key: "duplicateHotkey",
   onEnable,
   onDisable,
   enabledByDefault: true,

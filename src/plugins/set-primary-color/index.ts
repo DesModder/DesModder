@@ -84,6 +84,7 @@ function onEnable(config: Config) {
   applyConfig(config);
   apiContainer.classList.add("dsm-set-primary-color");
   senseDarkReader(config);
+  return undefined;
 }
 
 /** Wait for up to 5 seconds for Dark Reader to add its own style. Immediately
@@ -128,6 +129,7 @@ function onDisable() {
 
 const setPrimaryColor: Plugin = {
   id: "set-primary-color",
+  key: "setPrimaryColor",
   onEnable,
   onDisable,
   enabledByDefault: false,

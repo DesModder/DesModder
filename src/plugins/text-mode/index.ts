@@ -6,6 +6,7 @@ const controller = new Controller();
 
 const textMode: Plugin = {
   id: "text-mode",
+  key: "textMode",
   descriptionLearnMore:
     "https://github.com/DesModder/DesModder/tree/main/src/plugins/text-mode/docs/intro.md",
   onEnable: () => {
