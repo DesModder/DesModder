@@ -124,7 +124,7 @@ this.controller.isExpressionListFocused()
 
 *Replace* `from` with
 ```js
-!window.DesModder?.controller?.inTextMode?.()
+!DSM.textMode?.inTextMode
 ```
 ````
 

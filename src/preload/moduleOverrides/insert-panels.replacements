@@ -28,7 +28,7 @@ __children__,
 $DCGView.createElement(
   $DCGView.Components.For,
   {
-    each: () => window.DesModder?.controller?.inTextMode?.()
+    each: () => DSM.textMode?.inTextMode
         ? [] 
         : this.controller?.getAllItemModels?.() ?? [],
     key: model => model.guid
@@ -57,7 +57,7 @@ $DCGView.createElement(
 $DCGView.createElement(
   $DCGView.Components.If,
   {
-    predicate: () => window.DesModder?.controller?.inTextMode?.()
+    predicate: () => DSM.textMode?.inTextMode
   },
   () => $DCGView.createElement(
     "div",

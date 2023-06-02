@@ -428,14 +428,6 @@ export default class Controller {
     }));
   }
 
-  toggleTextMode() {
-    this.enabledPlugins.textMode?.toggleTextMode();
-  }
-
-  inTextMode() {
-    return !!this.enabledPlugins.textMode?.inTextMode;
-  }
-
   createAction(
     tooltip: string,
     buttonClass: string,
