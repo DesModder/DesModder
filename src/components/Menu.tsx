@@ -6,15 +6,14 @@ import {
   PluginID,
   plugins,
 } from "../plugins";
-import { DesModderController } from "../script";
 import "./Menu.less";
 import Toggle from "./Toggle";
 import { If, Switch, Checkbox, Tooltip, For } from "./desmosComponents";
 import { Component, jsx } from "DCGView";
 import { format } from "i18n/i18n-core";
-import Controller from "main/Controller";
+import MainController from "main/Controller";
 
-export function MenuFunc(controller: Controller) {
+export function MenuFunc(controller: MainController) {
   return <Menu controller={controller} />;
 }
 
@@ -43,9 +42,9 @@ const categoryPlugins: Record<string, PluginID[]> = {
 const categories = ["core", "utility", "visual", "integrations"];
 
 export default class Menu extends Component<{
-  controller: Controller;
+  controller: MainController;
 }> {
-  controller!: Controller;
+  controller!: MainController;
 
   init() {
     this.controller = this.props.controller();
@@ -180,7 +179,7 @@ export default class Menu extends Component<{
 }
 
 function booleanOption(
-  controller: DesModderController,
+  controller: MainController,
   item: ConfigItem,
   plugin: Plugin,
   settings: GenericSettings
@@ -206,7 +205,7 @@ function booleanOption(
 }
 
 function stringOption(
-  controller: DesModderController,
+  controller: MainController,
   item: ConfigItem,
   plugin: Plugin,
   settings: GenericSettings
@@ -250,10 +249,10 @@ function stringOption(
 }
 
 class ResetButton extends Component<{
-  controller: Controller;
+  controller: MainController;
   key: string;
 }> {
-  controller!: Controller;
+  controller!: MainController;
   key!: string;
 
   init() {

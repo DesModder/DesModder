@@ -1,14 +1,14 @@
-import { DesModderController } from "../../script";
 import { PluginController } from "../PluginController";
 import ViewportTransforms from "./ViewportTransforms";
 import { initGLesmosCanvas, GLesmosCanvas } from "./glesmosCanvas";
 import { glesmosError, GLesmosShaderPackage } from "./shaders";
 import { Calc } from "globals/window";
+import MainController from "main/Controller";
 
 export default class Controller extends PluginController {
   canvas: GLesmosCanvas | null = null;
 
-  constructor(controller: DesModderController) {
+  constructor(controller: MainController) {
     super(controller);
     this.canvas = initGLesmosCanvas();
   }

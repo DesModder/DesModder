@@ -7,14 +7,14 @@ export let controller: Controller;
 const performanceInfo: Plugin = {
   id: "performance-info",
   key: "performanceInfo",
-  onEnable: () => {
-    controller = new Controller();
-    initView();
+  onEnable: (c) => {
+    controller = new Controller(c);
+    initView(c);
     return undefined;
   },
-  onDisable: () => {
+  onDisable: (c) => {
     controller.stop();
-    destroyView();
+    destroyView(c);
   },
   enabledByDefault: false,
 } as const;

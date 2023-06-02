@@ -1,5 +1,5 @@
 import { Calc, Console } from "../../globals/window";
-import { desModderController } from "../../script";
+import MainController from "../../main/Controller";
 import { getCurrentGraphTitle } from "../../utils/depUtils";
 import { configList } from "./config";
 import { Plugin } from "plugins";
@@ -9,6 +9,7 @@ const heartbeatInterval = 120 * 1000;
 let lastUpdate = performance.now() - heartbeatInterval;
 
 let handler: string;
+let controller: MainController;
 
 async function maybeSendHeartbeat(isWrite: boolean) {
   if (!(performance.now() - lastUpdate > heartbeatInterval || isWrite)) return;
@@ -47,7 +48,7 @@ function onDisable() {
 listenToMessageDown((msg) => {
   if (msg.type === "heartbeat-error") {
     if (msg.isAuthError) {
-      desModderController.disablePlugin("wakatime");
+      controller.disablePlugin("wakatime");
       Calc.controller._showToast({
         message:
           "WakaTime heartbeat error: check your secret key. Plugin has been deactivated.",

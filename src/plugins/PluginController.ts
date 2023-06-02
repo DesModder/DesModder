@@ -1,5 +1,5 @@
-import { DesModderController } from "../script";
+import MainController from "main/Controller";
 
 export class PluginController {
-  constructor(readonly controller: DesModderController) {}
+  constructor(readonly controller: MainController) {}
 }

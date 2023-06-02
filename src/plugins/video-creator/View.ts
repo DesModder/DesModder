@@ -1,11 +1,11 @@
 import { MainPopupFunc } from "./components/MainPopup";
 import { controller } from "./index";
 import { Calc } from "globals/window";
-import { desModderController } from "script";
+import MainController from "main/Controller";
 import { jquery, keys } from "utils/depUtils";
 
-export function initView() {
-  desModderController.addPillboxButton({
+export function initView(mainController: MainController) {
+  mainController.addPillboxButton({
     id: "dsm-vc-menu",
     tooltip: "video-creator-menu",
     iconClass: "dcg-icon-film",
@@ -19,8 +19,8 @@ export function initView() {
   });
 }
 
-export function destroyView() {
-  desModderController.removePillboxButton("dsm-vc-menu");
+export function destroyView(mainController: MainController) {
+  mainController.removePillboxButton("dsm-vc-menu");
   jquery(document).off(".expanded-menu-view");
 }
 
@@ -69,7 +69,7 @@ function applyCaptureFrame() {
   }
 }
 
-export function updateView() {
+export function updateView(mainController: MainController) {
   applyCaptureFrame();
-  desModderController.updateExtraComponents();
+  mainController.updateExtraComponents();
 }

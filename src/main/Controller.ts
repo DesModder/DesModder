@@ -22,10 +22,10 @@ interface PillboxButton {
   iconClass: string;
   pinned?: boolean;
   // popup should return a JSX element. Not sure of type
-  popup: (desmodderController: Controller) => unknown;
+  popup: (c: MainController) => unknown;
 }
 
-export default class Controller {
+export default class MainController {
   /**
    * pluginsEnabled keeps track of what plugins the user wants enabled,
    * regardless of forceDisabled settings.
@@ -236,7 +236,7 @@ export default class Controller {
     const plugin = plugins.get(id);
     if (plugin && this.isPluginToggleable(id)) {
       if (this.isPluginEnabled(id)) {
-        plugin.onDisable();
+        plugin.onDisable(this);
         this.pluginsEnabled.delete(id);
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete this.enabledPlugins[plugin.key];

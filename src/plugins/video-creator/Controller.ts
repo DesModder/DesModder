@@ -1,9 +1,11 @@
+import { PluginController } from "../PluginController";
 import { updateView } from "./View";
 import { CaptureMethod, SliderSettings, capture } from "./backend/capture";
 import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
 import { isValidNumber, isValidLength, escapeRegex } from "./backend/utils";
 import { ExpressionModel } from "globals/models";
 import { Calc } from "globals/window";
+import MainController from "main/Controller";
 import {
   jquery,
   keys,
@@ -25,7 +27,7 @@ type FocusedMQ =
 
 const DEFAULT_FILENAME = "DesModder_Video_Creator";
 
-export default class Controller {
+export default class Controller extends PluginController {
   ffmpegLoaded = false;
   frames: string[] = [];
   isCapturing = false;
@@ -69,7 +71,8 @@ export default class Controller {
   playPreviewTimeout: number | null = null;
   isPlayPreviewExpanded = false;
 
-  constructor() {
+  constructor(controller: MainController) {
+    super(controller);
     Calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
     this._applyDefaultCaptureSize();
   }
@@ -79,7 +82,7 @@ export default class Controller {
   }
 
   updateView() {
-    updateView();
+    updateView(this.controller);
   }
 
   async tryInitFFmpeg() {

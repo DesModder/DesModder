@@ -1,23 +1,22 @@
 import { MainPopupFunc } from "./PerformanceView";
 import { controller } from "./index";
-import { desModderController } from "script";
+import MainController from "main/Controller";
 import { jquery } from "utils/depUtils";
 
-export function initView() {
-  desModderController.addPillboxButton({
+export function initView(mainController: MainController) {
+  mainController.addPillboxButton({
     id: "dsm-pi-menu",
     tooltip: "performance-info-name",
     iconClass: "dsm-icon-pie-chart",
-    popup: (desModderController) =>
-      MainPopupFunc(controller, desModderController),
+    popup: () => MainPopupFunc(controller, mainController),
   });
 }
 
-export function destroyView() {
-  desModderController.removePillboxButton("dsm-pi-menu");
+export function destroyView(controller: MainController) {
+  controller.removePillboxButton("dsm-pi-menu");
   jquery(document).off(".expanded-menu-view");
 }
 
-export function updateView() {
-  desModderController.updateExtraComponents();
+export function updateView(controller: MainController) {
+  controller.updateExtraComponents();
 }

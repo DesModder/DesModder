@@ -1,11 +1,9 @@
 import { format } from "./i18n/i18n-core";
 import "fonts/style.css";
 import window from "globals/window";
-import Controller from "main/Controller";
+import MainController from "main/Controller";
 
-const controller = new Controller();
-export { controller as desModderController, Controller as DesModderController };
-export const DSM = controller.enabledPlugins;
+const controller = new MainController();
 
 window.DesModder = {
   controller,
@@ -14,6 +12,6 @@ window.DesModder = {
   // Not used by DesModder, but some external scripts may still reference this
   exposedPlugins: controller.enabledPlugins,
 };
-window.DSM = DSM;
+window.DSM = controller.enabledPlugins;
 
 controller.init();

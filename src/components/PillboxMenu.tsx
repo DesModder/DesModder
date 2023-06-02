@@ -2,14 +2,14 @@ import "./PillboxMenu.less";
 import { If, Switch } from "./desmosComponents";
 import { Component, jsx } from "DCGView";
 import { Calc } from "globals/window";
-import Controller from "main/Controller";
+import MainController from "main/Controller";
 import { jquery, keys } from "utils/depUtils";
 
 export default class PillboxMenu extends Component<{
-  controller: Controller;
+  controller: MainController;
   horizontal: boolean;
 }> {
-  controller!: Controller;
+  controller!: MainController;
   horizontal!: boolean;
 
   init() {

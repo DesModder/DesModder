@@ -1,8 +1,8 @@
-import { DesModderController } from "../../script";
 import Controller from "./Controller";
 import { Config, configList } from "./config";
 import { wolfram2desmos, isIllegalASCIIMath } from "./wolfram2desmos";
 import { Calc } from "globals/window";
+import MainController from "main/Controller";
 import { Plugin } from "plugins";
 
 // initialize controller and observe textarea and input tags
@@ -57,7 +57,7 @@ function pasteHandler(e: ClipboardEvent) {
   }
 }
 
-export function onEnable(_controller: DesModderController, config: Config) {
+export function onEnable(_controller: MainController, config: Config) {
   controller.applyConfigFlags(config);
   controller.enable();
   return controller;

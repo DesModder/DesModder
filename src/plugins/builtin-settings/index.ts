@@ -1,6 +1,6 @@
-import { DesModderController } from "../../script";
 import { Config, configList } from "./config";
 import { Calc } from "globals/window";
+import MainController from "main/Controller";
 import { Plugin } from "plugins";
 import { getQueryParams } from "utils/depUtils";
 
@@ -18,7 +18,7 @@ function updateSettings(config: Config) {
   Calc.updateSettings({ ...config, zoomButtons, graphpaper });
 }
 
-function onEnable(_controller: DesModderController, config: Config) {
+function onEnable(_controller: MainController, config: Config) {
   initialSettings = { ...config };
   const queryParams = getQueryParams();
   for (const key of managedKeys) {

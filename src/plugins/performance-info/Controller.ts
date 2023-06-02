@@ -1,3 +1,5 @@
+import MainController from "../../main/Controller";
+import { PluginController } from "../PluginController";
 import { updateView } from "./View";
 import { DispatchedEvent, TimingData } from "globals/Calc";
 import { Calc } from "globals/window";
@@ -17,11 +19,12 @@ const defaultTimingData: TimingData = {
   updateIntersections: 0,
 };
 
-export default class Controller {
+export default class Controller extends PluginController {
   timingDataHistory: TimingData[] = [];
   dispatchListenerID: string;
 
-  constructor() {
+  constructor(mainController: MainController) {
+    super(mainController);
     this.dispatchListenerID = Calc.controller.dispatcher.register((e) => {
       if (e.type === "on-evaluator-changes") {
         this.onEvaluatorChanges(e);
@@ -33,7 +36,7 @@ export default class Controller {
     if (e.type !== "on-evaluator-changes") return;
     this.timingDataHistory?.push(e.timingData);
     if (this.timingDataHistory.length > 10) this.timingDataHistory.shift();
-    updateView();
+    updateView(this.controller);
   }
 
   getTimingData() {

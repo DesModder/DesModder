@@ -1,7 +1,7 @@
 import { Calc } from "../../globals/window";
-import { DesModderController } from "../../script";
 import "./_overrides.less";
 import "./custom-overrides.less";
+import MainController from "main/Controller";
 import { Plugin } from "plugins";
 import { getHSVfromRGB, parseCSSHex } from "plugins/GLesmos/colorParsing";
 
@@ -80,7 +80,7 @@ function applyHexToOldFavicon(hex: string) {
 
 let apiContainer!: HTMLElement;
 
-function onEnable(_controller: DesModderController, config: Config) {
+function onEnable(_controller: MainController, config: Config) {
   apiContainer = document.querySelector(".dcg-calculator-api-container")!;
   applyConfig(config);
   apiContainer.classList.add("dsm-set-primary-color");
