@@ -1,12 +1,19 @@
 # DesModder Changelog
 
+## 0.10.7
+
+Bug fixes and improvements:
+
+- (GLesmos) Fix loading error.
+- Internal improvements to handle future loading errors more gracefully
+
 ## 0.10.6
 
 Bug fixes and improvements:
 
 - Fix loading error
-- (Text Mode) show statement number instead of line number
-- (Text Mode) remove "else" from piecewises, moving closer to Desmos sytnax
+- (Text Mode) Show statement number instead of line number
+- (Text Mode) Remove "else" from piecewises, moving closer to Desmos syntax
 
 ## 0.10.5
 
