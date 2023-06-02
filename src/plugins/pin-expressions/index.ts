@@ -27,9 +27,9 @@ class Controller extends PluginController {
 
   applyPinnedStyle() {
     const el = document.querySelector(".dcg-exppanel-container");
-    const hasPinnedExpressions = Object.keys(
-      this.controller.graphMetadata.expressions
-    ).some((id) => this.controller.getDsmItemModel(id).pinned);
+    const hasPinnedExpressions = this.controller
+      .getDsmItemModels()
+      .some((v) => v.pinned);
     el?.classList.toggle("dsm-has-pinned-expressions", hasPinnedExpressions);
   }
 }

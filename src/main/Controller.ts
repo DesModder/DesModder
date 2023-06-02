@@ -136,11 +136,9 @@ export default class Controller {
       this.checkForMetadataChange();
     });
     this.checkForMetadataChange();
-    if (this.isPluginEnabled("GLesmos")) {
-      // The graph loaded before DesModder loaded, so DesModder was not available to
-      // return true when asked isGlesmosMode. Refresh those expressions now
-      this.checkGLesmos();
-    }
+    // The graph loaded before DesModder loaded, so DesModder was not available to
+    // return true when asked isGlesmosMode. Refresh those expressions now
+    this.enabledPlugins.glesmos?.checkGLesmos();
   }
 
   pillboxButtonsView(horizontal: boolean) {
@@ -232,7 +230,7 @@ export default class Controller {
     this.pluginsEnabled.set(id, isEnabled);
     if (id === "GLesmos") {
       // Need to refresh glesmos expressions
-      this.checkGLesmos();
+      this.enabledPlugins.glesmos?.checkGLesmos();
     }
     if (!same)
       postMessageUp({
@@ -376,7 +374,8 @@ export default class Controller {
     if (!this.isPluginEnabled("GLesmos")) {
       if (
         Object.entries(newMetadata.expressions).some(
-          ([id, e]) => e.glesmos && !this.graphMetadata.expressions[id]?.glesmos
+          ([id, e]) =>
+            e?.glesmos && !this.graphMetadata.expressions[id]?.glesmos
         )
       ) {
         // list of glesmos expressions changed
@@ -396,7 +395,8 @@ export default class Controller {
   }
 
   duplicateMetadata(toID: string, fromID: string) {
-    this._updateExprMetadata(toID, this.getDsmItemModel(fromID));
+    const model = this.getDsmItemModel(fromID);
+    if (model) this._updateExprMetadata(toID, model);
   }
 
   updateExprMetadata(id: string, obj: Partial<MetadataExpression>) {
@@ -421,84 +421,11 @@ export default class Controller {
     return this.graphMetadata.expressions[id];
   }
 
-  checkGLesmos() {
-    const glesmosIDs = Object.keys(this.graphMetadata.expressions).filter(
-      (id) => this.graphMetadata.expressions[id].glesmos
-    );
-    if (glesmosIDs.length > 0) {
-      glesmosIDs.map((id) => this.toggleExpr(id));
-      this.killWorker();
-    }
-  }
-
-  canBeGLesmos(id: string) {
-    let model;
-    return (
-      this.isPluginEnabled("GLesmos") &&
-      (model = Calc.controller.getItemModel(id)) &&
-      model.type === "expression" &&
-      model.formula &&
-      model.formula.expression_type === "IMPLICIT"
-    );
-  }
-
-  isGlesmosMode(id: string) {
-    if (!this.isPluginEnabled("GLesmos")) return false;
-    this.checkForMetadataChange();
-    return this.graphMetadata.expressions[id]?.glesmos ?? false;
-  }
-
-  toggleGlesmos(id: string) {
-    this.updateExprMetadata(id, {
-      glesmos: !this.isGlesmosMode(id),
-    });
-    this.forceWorkerUpdate(id);
-  }
-
-  forceWorkerUpdate(id: string) {
-    // force the worker to revisit the expression
-    this.toggleExpr(id);
-    this.killWorker();
-  }
-
-  /** Returns boolean or undefined (representing "worker has not told me yet") */
-  isInequality(id: string) {
-    const model = Calc.controller.getItemModel(id);
-    if (model?.type !== "expression") return false;
-    return model.formula?.is_inequality;
-  }
-
-  isGLesmosLinesConfirmed(id: string) {
-    this.checkForMetadataChange();
-    return this.graphMetadata.expressions[id]?.glesmosLinesConfirmed ?? false;
-  }
-
-  toggleGLesmosLinesConfirmed(id: string) {
-    this.updateExprMetadata(id, {
-      glesmosLinesConfirmed: !this.isGLesmosLinesConfirmed(id),
-    });
-    this.forceWorkerUpdate(id);
-  }
-
-  /**
-   * Force the worker to revisit this expression by toggling it hidden then
-   * un-hidden
-   */
-  toggleExpr(id: string) {
-    const model = Calc.controller.getItemModel(id);
-    if (!model || model.type !== "expression" || !model.shouldGraph) return;
-    Calc.controller.dispatch({
-      type: "toggle-item-hidden",
+  getDsmItemModels() {
+    return Object.entries(this.graphMetadata.expressions).map(([id, v]) => ({
+      ...v,
       id,
-    });
-    Calc.controller.dispatch({
-      type: "toggle-item-hidden",
-      id,
-    });
-  }
-
-  killWorker() {
-    Calc.controller.evaluator.workerPoolConnection.killWorker();
+    }));
   }
 
   toggleTextMode() {
