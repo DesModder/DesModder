@@ -1,3 +1,4 @@
+import { createTipElement } from "./Tip";
 import { Calc } from "globals/window";
 import { Plugin } from "plugins";
 
@@ -11,7 +12,7 @@ const showTips: Plugin = {
   onEnable: () => {
     apiContainer()?.classList.add("dsm-show-tips");
     Calc.controller.updateViews();
-    return undefined;
+    return { createTipElement };
   },
   onDisable: () => {},
   afterDisable: () => {

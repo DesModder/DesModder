@@ -2,7 +2,6 @@ import { DCGView, MountedComponent } from "../DCGView";
 import { PillboxContainer } from "../components";
 import ExpressionActionButton from "../components/ExpressionActionButton";
 import PillboxMenu from "../components/PillboxMenu";
-import { createTipElement } from "../plugins/show-tips/Tip";
 import { List } from "../utils/depUtils";
 import GraphMetadata, {
   Expression as MetadataExpression,
@@ -171,10 +170,6 @@ export default class Controller {
     });
   }
 
-  createTipElement() {
-    return createTipElement();
-  }
-
   updateExtraComponents() {
     this.extraMountedComponents.forEach((view) => view.update());
   }
@@ -233,14 +228,6 @@ export default class Controller {
     );
   }
 
-  getPlugin(id: PluginID) {
-    return plugins.get(id);
-  }
-
-  getPluginsList() {
-    return pluginList;
-  }
-
   setPluginEnabled(id: PluginID, isEnabled: boolean) {
     if (isEnabled && this.isPluginForceDisabled(id)) return;
     const same = isEnabled === this.pluginsEnabled.get(id);
@@ -254,13 +241,6 @@ export default class Controller {
         type: "set-plugins-enabled",
         value: mapToRecord(this.pluginsEnabled),
       });
-  }
-
-  warnReload() {
-    // TODO: proper UI, maybe similar to the "Opened graph '...'. Press Ctrl+Z to undo. <a>Undo</a>"
-    // or equivalently (but within the calculator-api): "New graph created. Press Ctrl+Z to undo. <a>Undo</a>"
-    // `location.reload()` allows reload directly from page JS
-    alert("You must reload the page (Ctrl+R) for that change to take effect.");
   }
 
   disablePlugin(id: PluginID) {
@@ -281,7 +261,7 @@ export default class Controller {
   _enablePlugin(id: PluginID) {
     const plugin = plugins.get(id);
     if (plugin !== undefined) {
-      const res = plugin.onEnable(this.pluginSettings.get(id));
+      const res = plugin.onEnable(this, this.pluginSettings.get(id));
       this.enabledPlugins[plugin.key] = res ?? {};
       this.setPluginEnabled(id, true);
       this.updateMenuView();
@@ -409,7 +389,7 @@ export default class Controller {
       }
     }
     this.graphMetadata = newMetadata;
-    this.applyPinnedStyle();
+    this.enabledPlugins.pinExpressions?.applyPinnedStyle();
   }
 
   _updateExprMetadata(id: string, obj: Partial<MetadataExpression>) {
@@ -435,34 +415,12 @@ export default class Controller {
   }
 
   finishUpdateMetadata() {
-    this.applyPinnedStyle();
+    this.enabledPlugins.pinExpressions?.applyPinnedStyle();
     this.commitStateChange(false);
   }
 
   getDsmItemModel(id: string) {
     return this.graphMetadata.expressions[id];
-  }
-
-  pinExpression(id: string) {
-    if (Calc.controller.getItemModel(id)?.type !== "folder")
-      this.updateExprMetadata(id, {
-        pinned: true,
-      });
-  }
-
-  unpinExpression(id: string) {
-    this.updateExprMetadata(id, {
-      pinned: false,
-    });
-  }
-
-  isExpressionPinned(id: string) {
-    return (
-      this.isPluginEnabled("pin-expressions") &&
-      !Calc.controller.getExpressionSearchOpen() &&
-      Calc.controller.getItemModel(id)?.type !== "folder" &&
-      this.graphMetadata.expressions[id]?.pinned
-    );
   }
 
   hideError(id: string) {
@@ -482,14 +440,6 @@ export default class Controller {
   isErrorHidden(id: string) {
     if (!this.isPluginEnabled("hide-errors")) return false;
     return this.graphMetadata.expressions[id]?.errorHidden;
-  }
-
-  applyPinnedStyle() {
-    const el = document.querySelector(".dcg-exppanel-container");
-    const hasPinnedExpressions = Object.keys(
-      this.graphMetadata.expressions
-    ).some((id) => this.graphMetadata.expressions[id].pinned);
-    el?.classList.toggle("dsm-has-pinned-expressions", hasPinnedExpressions);
   }
 
   folderDump(folderIndex: number) {

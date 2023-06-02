@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/method-signature-style */
+import { DesModderController } from "../script";
 import betterEvaluationView from "./better-evaluation-view";
 import GLesmos from "plugins/GLesmos";
 import builtinSettings from "plugins/builtin-settings";
@@ -49,7 +50,10 @@ export interface Plugin<Settings extends GenericSettings = GenericSettings> {
   key: string;
   // display name and descriptions are managed in a translations file
   descriptionLearnMore?: string;
-  onEnable(config?: unknown): PluginEnableResult;
+  onEnable(
+    controller: DesModderController,
+    config?: unknown
+  ): PluginEnableResult;
   onDisable(): void;
   afterDisable?(): void;
   enabledByDefault: boolean;

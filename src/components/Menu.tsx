@@ -152,7 +152,7 @@ export default class Menu extends Component<{
 
   getExpandedSettings() {
     if (this.controller.expandedPlugin === null) return null;
-    const plugin = this.controller.getPlugin(this.controller.expandedPlugin);
+    const plugin = plugins.get(this.controller.expandedPlugin);
     if (plugin?.config === undefined) return null;
     const pluginSettings = this.controller.pluginSettings.get(
       this.controller.expandedPlugin

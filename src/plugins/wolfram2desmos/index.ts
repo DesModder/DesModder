@@ -1,3 +1,4 @@
+import { DesModderController } from "../../script";
 import Controller from "./Controller";
 import { Config, configList } from "./config";
 import { wolfram2desmos, isIllegalASCIIMath } from "./wolfram2desmos";
@@ -56,7 +57,7 @@ function pasteHandler(e: ClipboardEvent) {
   }
 }
 
-export function onEnable(config: Config) {
+export function onEnable(_controller: DesModderController, config: Config) {
   controller.applyConfigFlags(config);
   controller.enable();
   return controller;
