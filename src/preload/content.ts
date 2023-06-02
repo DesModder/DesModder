@@ -108,11 +108,20 @@ function _sendHeartbeat(options: WindowHeartbeatOptions) {
   );
 }
 
+function injectStyle() {
+  const s = document.createElement("link");
+  s.rel = "stylesheet";
+  s.href = chrome.runtime.getURL("script.css");
+  (document.head || document.documentElement).appendChild(s);
+}
+
 listenToMessageUp((message) => {
   switch (message.type) {
-    case "get-initial-data":
+    case "get-initial-data": {
+      injectStyle();
       getInitialData();
       break;
+    }
     case "set-plugins-enabled":
       void chrome.storage.sync.set({
         [StorageKeys.pluginsEnabled]: message.value,
@@ -137,12 +146,6 @@ listenToMessageUp((message) => {
   }
   return false;
 });
-
-// insert style sheet
-const s = document.createElement("link");
-s.rel = "stylesheet";
-s.href = chrome.runtime.getURL("script.css");
-(document.head || document.documentElement).appendChild(s);
 
 // run preload code, which handles replacements then calls the main code
 injectScript(chrome.runtime.getURL("preload/script.js"));
