@@ -27,7 +27,7 @@ undefined: () =>  $.createElement(
 *Replace* `undefined` with
 ```js
 undefined: () => $Dcgview.Components.IfElse(
-    () => window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view"),
+    () => DSM.betterEvaluationView,
     {
       true: () => $Dcgview.createElement(
         $StaticMathquillViewDefault,
@@ -57,7 +57,7 @@ list: () => $.createElement(__oldList__)
 ```js
 ()=>this.getEvaluationType(), {
 list: () => $Dcgview.Components.IfElse(
-    () => window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view") && window.DesModder?.controller?.pluginSettings.get("better-evaluation-view").lists,
+    () => DSM.betterEvaluationView && window.DesModder?.controller?.pluginSettings.get("better-evaluation-view").lists,
     {
       true: () => $Dcgview.createElement(
         $StaticMathquillViewDefault,
@@ -99,7 +99,7 @@ rgbcolor: () => $Dcgview.createElement(
       $Dcgview.Components.If,
       {
         predicate: () => {
-          let isEnabled = window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view")
+          let isEnabled = DSM.betterEvaluationView
           let pluginSettings = window.DesModder?.controller?.pluginSettings.get("better-evaluation-view")
           let isArray = Array.isArray(this.props.val())
           return isEnabled && pluginSettings.colors && (!isArray || pluginSettings.lists && pluginSettings.colorLists)
@@ -169,7 +169,7 @@ if ($ === 0 || $.zeroCutoff && Math.abs($) < $.zeroCutoff)
 *Replace* `zero` with
 ```js
 if ($val === 0) {
-  if (!window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view") || Object.is($val, 0)) {
+  if (!DSM.betterEvaluationView || Object.is($val, 0)) {
     return {
       type: "decimal",
       value: "0"
@@ -181,7 +181,7 @@ if ($val === 0) {
     }
   }
 } else if ($options.zeroCutoff && Math.abs($val) < $options.zeroCutoff) {
-  if (!window.DesModder?.controller?.isPluginEnabled?.("better-evaluation-view") || Math.sign($val) === 1) {
+  if (!DSM.betterEvaluationView || Math.sign($val) === 1) {
     return {
       type: "decimal",
       value: "0"

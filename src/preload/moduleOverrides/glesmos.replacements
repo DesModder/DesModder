@@ -57,9 +57,9 @@ $DCGView.createElement(
   () => $DCGView.createElement(
     "div",
     { class: $DCGView.const("dcg-options-menu-section-title dsm-gl-fill-title") },
-    () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
+    () => DesModder.format("GLesmos-label-toggle-glesmos"),
     $DCGView.createElement($ToggleView, {
-      ariaLabel: () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
+      ariaLabel: () => DesModder.format("GLesmos-label-toggle-glesmos"),
       toggled: () => DSM.glesmos?.isGlesmosMode?.(this.id),
       onChange: () => DSM.glesmos?.toggleGlesmos?.(this.id),
     })
@@ -109,9 +109,9 @@ $DCGView.createElement(
   () => $DCGView.createElement(
     "div",
     { class: $DCGView.const("dcg-options-menu-section-title dsm-gl-fill-title") },
-    () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
+    () => DesModder.format("GLesmos-label-toggle-glesmos"),
     $DCGView.createElement($ToggleView, {
-      ariaLabel: () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
+      ariaLabel: () => DesModder.format("GLesmos-label-toggle-glesmos"),
       toggled: () => DSM.glesmos?.isGlesmosMode?.(this.id),
       onChange: () => DSM.glesmos?.toggleGlesmos?.(this.id),
     })
@@ -155,9 +155,9 @@ $DCGView.createElement(
   () => $DCGView.createElement(
     "div",
     { class: $DCGView.const("dcg-options-menu-section-title dsm-gl-lines-confirm") },
-    () => DesModder.controller.format("GLesmos-confirm-lines"),
+    () => DesModder.format("GLesmos-confirm-lines"),
     $DCGView.createElement($ToggleView, {
-      ariaLabel: () => DesModder.controller.format("GLesmos-confirm-lines"),
+      ariaLabel: () => DesModder.format("GLesmos-confirm-lines"),
       toggled: () => DSM.glesmos?.isGLesmosLinesConfirmed?.(this.id),
       onChange: () => DSM.glesmos?.toggleGLesmosLinesConfirmed?.(this.id),
     }),
@@ -168,7 +168,7 @@ $DCGView.createElement(
       },
       () => $DCGView.createElement("div",
         { class: $DCGView.const("dsm-gl-lines-confirm-body") },
-        () => DesModder.controller.format("GLesmos-confirm-lines-body")
+        () => DesModder.format("GLesmos-confirm-lines-body")
       )
     )
   )

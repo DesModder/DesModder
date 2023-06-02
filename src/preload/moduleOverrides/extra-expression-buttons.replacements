@@ -40,13 +40,13 @@ $DCGView.createElement(
   () => $DCGView.Components.IfElse(
     () => DSM.pinExpressions?.isExpressionPinned(this.model().id),
     {
-      false: DesModder?.controller?.createAction(
+      false: DesModder.createAction(
         "pin-expressions-pin",
         "dsm-pin-button",
         "dsm-icon-bookmark",
         () => DSM.pinExpressions?.pinExpression(this.model().id)
       ),
-      true: DesModder?.controller?.createAction(
+      true: DesModder.createAction(
         "pin-expressions-unpin",
         "dsm-unpin-button dcg-selected",
         "dsm-icon-bookmark",
@@ -61,7 +61,7 @@ $DCGView.createElement(
   {
     predicate: () => DSM.folderTools && this.model().type === "text"
   },
-  DesModder?.controller?.createAction(
+  DesModder.createAction(
     "folder-tools-enclose",
     "dsm-note-enclose-button",
     "dsm-icon-folder-plus",
@@ -75,7 +75,7 @@ $DCGView.createElement(
     predicate: () => DSM.folderTools && this.model().type === "folder"
       && window.Calc.controller.getItemModelByIndex(this.model().index + 1)?.folderId === this.model().id
   },
-  DesModder?.controller?.createAction(
+  DesModder.createAction(
     "folder-tools-dump",
     "dsm-folder-dump-button",
     "dsm-icon-folder-minus",
@@ -88,7 +88,7 @@ $DCGView.createElement(
   {
     predicate: () => DSM.folderTools && this.model().type === "folder"
   },
-  DesModder?.controller?.createAction(
+  DesModder.createAction(
     "folder-tools-merge",
     "dsm-folder-merge-button",
     "dsm-icon-folder-plus",

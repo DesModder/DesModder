@@ -47,13 +47,12 @@ isShowKeypadButtonVisible () {
 $DCGView.createElement(
   $DCGView.Components.If,
   {
-    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("text-mode") &&
-      !this.controller.isInEditListMode()
+    predicate: () => DSM.textMode && !this.controller.isInEditListMode()
   },
   () => $DCGView.createElement(
       $Tooltip,
       {
-        tooltip: () => DesModder.controller.format("text-mode-toggle"),
+        tooltip: () => DesModder.format("text-mode-toggle"),
         gravity: () => this.controller.isNarrow() ? 'n' : 's'
       },
       $DCGView.createElement(
@@ -74,7 +73,7 @@ $DCGView.createElement(
 $DCGView.Components.IfElse(
   () => !this.controller.getGraphSettings().config.graphpaper && window.DesModder,
   {
-    true: () => window.DesModder.controller.pillboxButtonsView(true),
+    true: () => window.DesModder?.controller.pillboxButtonsView(true),
     false: null
   }
 ),

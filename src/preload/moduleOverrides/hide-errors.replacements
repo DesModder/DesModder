@@ -105,7 +105,7 @@ $DCGView.createElement(
   {
     predicate: () => (
       this.model.type !== "ticker" &&
-      window.DesModder?.controller?.isPluginEnabled("hide-errors")
+      DSM.hideErrors
     ),
   },
   () => $DCGView.createElement(
@@ -120,7 +120,7 @@ $DCGView.createElement(
         tabindex: $DCGView.const("0"),
         class: $DCGView.const("dcg-btn-slider dcg-btn-light-gray")
       },
-      () => window.DesModder?.controller.format("hide-errors-hide")
+      () => window.DesModder.format("hide-errors-hide")
     )
   )
 )

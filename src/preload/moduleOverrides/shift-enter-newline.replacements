@@ -21,7 +21,7 @@ $n === $enterKey && !$e.metaKey
 *Replace* `from` with
 ```js
 $n === $enterKey && !$e.metaKey
-  && !($e.shiftKey && window.DesModder?.controller?.isPluginEnabled?.("shift-enter-newline"))
+  && !($e.shiftKey && DSM.shiftEnterNewline)
   ? ($e.preventDefault(), this.props.onSpecialKey("Enter"))
 ```
 

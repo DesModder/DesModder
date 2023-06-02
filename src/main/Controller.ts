@@ -13,7 +13,6 @@ import {
 } from "./metadata/manage";
 import { MenuFunc } from "components/Menu";
 import window, { Calc } from "globals/window";
-import { format } from "i18n/i18n-core";
 import { plugins, pluginList, PluginID, GenericSettings } from "plugins";
 import { postMessageUp, mapToRecord, recordToMap } from "utils/messages";
 
@@ -78,12 +77,6 @@ export default class Controller {
         this.closeMenu();
       }
     });
-    // Provide an access point to translations for replacements
-    // But not as a method, so it can't be used in TS
-    (this as any).format = (key: string, args?: any) => {
-      // eslint-disable-next-line rulesdir/no-format-in-ts
-      return format(key, args);
-    };
   }
 
   getDefaultConfig(id: PluginID) {

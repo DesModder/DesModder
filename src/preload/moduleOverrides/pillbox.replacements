@@ -140,5 +140,5 @@ shouldShowContainer() {
 
 *Replace* `ret` with
 ```js
-__ret__ || (DesModder?.controller && !DesModder.controller.showHorizontalPillboxMenu())
+__ret__ || (DesModder?.controller && !DesModder?.controller.showHorizontalPillboxMenu())
 ```
