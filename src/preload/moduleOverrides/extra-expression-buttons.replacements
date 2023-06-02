@@ -65,7 +65,7 @@ $DCGView.createElement(
     "folder-tools-enclose",
     "dsm-note-enclose-button",
     "dsm-icon-folder-plus",
-    () => window.DesModder.controller.noteEnclose(this.model().index)
+    () => DSM.folderTools?.noteEnclose(this.model().index)
   )
 ),
 // dump folder
@@ -79,7 +79,7 @@ $DCGView.createElement(
     "folder-tools-dump",
     "dsm-folder-dump-button",
     "dsm-icon-folder-minus",
-    () => window.DesModder.controller.folderDump(this.model().index)
+    () => DSM.folderTools?.folderDump(this.model().index)
   )
 ),
 // merge folder
@@ -92,7 +92,7 @@ $DCGView.createElement(
     "folder-tools-merge",
     "dsm-folder-merge-button",
     "dsm-icon-folder-plus",
-    () => window.DesModder.controller.folderMerge(this.model().index)
+    () => DSM.folderTools?.folderMerge(this.model().index)
   )
 ),
 __delete_button__
