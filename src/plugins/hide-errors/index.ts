@@ -1,4 +1,5 @@
 import { Calc, Fragile } from "../../globals/window";
+import { PluginController } from "../PluginController";
 import "./hide-errors.less";
 import { Plugin } from "plugins";
 
@@ -30,18 +31,35 @@ function initPromptSlider() {
   };
 }
 
+class Controller extends PluginController {
+  hideError(id: string) {
+    this.controller.updateExprMetadata(id, {
+      errorHidden: true,
+    });
+  }
+
+  toggleErrorHidden(id: string) {
+    this.controller.updateExprMetadata(id, {
+      errorHidden: !this.isErrorHidden(id),
+    });
+  }
+
+  isErrorHidden(id: string) {
+    return this.controller.getDsmItemModel(id)?.errorHidden;
+  }
+}
+
 const hideErrors: Plugin = {
   id: "hide-errors",
   key: "hideErrors",
-  // Still need to declare empty onEnable and onDisable to get the right UI
-  onEnable: () => {
+  onEnable: (controller) => {
     if (!initOnce) {
       initOnce = true;
       initPromptSlider();
     }
     enabled = true;
     Calc.controller.updateViews();
-    return undefined;
+    return new Controller(controller);
   },
   onDisable: () => {
     enabled = false;

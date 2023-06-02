@@ -1,11 +1,9 @@
-import { DesModderController } from "../../script";
+import { PluginController } from "../PluginController";
 import "./pinExpressions.less";
 import { Calc } from "globals/window";
 import { Plugin } from "plugins";
 
-class Controller {
-  constructor(private readonly controller: DesModderController) {}
-
+class Controller extends PluginController {
   pinExpression(id: string) {
     if (Calc.controller.getItemModel(id)?.type !== "folder")
       this.controller.updateExprMetadata(id, {
@@ -17,7 +15,7 @@ class Controller {
     return (
       !Calc.controller.getExpressionSearchOpen() &&
       Calc.controller.getItemModel(id)?.type !== "folder" &&
-      this.metaExprs[id]?.pinned
+      this.controller.getDsmItemModel(id)?.pinned
     );
   }
 
@@ -29,14 +27,10 @@ class Controller {
 
   applyPinnedStyle() {
     const el = document.querySelector(".dcg-exppanel-container");
-    const hasPinnedExpressions = Object.keys(this.metaExprs).some(
-      (id) => this.metaExprs[id].pinned
-    );
+    const hasPinnedExpressions = Object.keys(
+      this.controller.graphMetadata.expressions
+    ).some((id) => this.controller.getDsmItemModel(id).pinned);
     el?.classList.toggle("dsm-has-pinned-expressions", hasPinnedExpressions);
-  }
-
-  get metaExprs() {
-    return this.controller.graphMetadata.expressions;
   }
 }
 

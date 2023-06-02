@@ -423,25 +423,6 @@ export default class Controller {
     return this.graphMetadata.expressions[id];
   }
 
-  hideError(id: string) {
-    if (!this.isPluginEnabled("hide-errors")) return;
-    this.updateExprMetadata(id, {
-      errorHidden: true,
-    });
-  }
-
-  toggleErrorHidden(id: string) {
-    if (!this.isPluginEnabled("hide-errors")) return;
-    this.updateExprMetadata(id, {
-      errorHidden: !this.isErrorHidden(id),
-    });
-  }
-
-  isErrorHidden(id: string) {
-    if (!this.isPluginEnabled("hide-errors")) return false;
-    return this.graphMetadata.expressions[id]?.errorHidden;
-  }
-
   folderDump(folderIndex: number) {
     const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
     if (!folderModel || folderModel.type !== "folder") return;
