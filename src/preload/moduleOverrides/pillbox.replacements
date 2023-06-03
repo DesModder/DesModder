@@ -1,8 +1,6 @@
 # Pillbox Replacements
 
-*plugin* `video-creator` `performance-info`
-
-<!-- TODO: this should really be plugin "core", or "all", but that is disallowed. -->
+*plugin* `pillbox-menus`
 
 ## Insert spot for extra pillbox buttons in geometry toolbar
 
