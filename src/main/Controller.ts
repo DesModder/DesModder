@@ -1,7 +1,5 @@
-import { DCGView, MountedComponent } from "../DCGView";
-import { PillboxContainer } from "../components";
+import { DCGView } from "../DCGView";
 import ExpressionActionButton from "../components/ExpressionActionButton";
-import PillboxMenu from "../components/PillboxMenu";
 import GraphMetadata, {
   Expression as MetadataExpression,
 } from "./metadata/interface";
@@ -11,19 +9,9 @@ import {
   getBlankMetadata,
   changeExprInMetadata,
 } from "./metadata/manage";
-import { MenuFunc } from "components/Menu";
 import window, { Calc } from "globals/window";
 import { plugins, pluginList, PluginID, GenericSettings } from "plugins";
 import { postMessageUp, mapToRecord, recordToMap } from "utils/messages";
-
-interface PillboxButton {
-  id: string;
-  tooltip: string;
-  iconClass: string;
-  pinned?: boolean;
-  // popup should return a JSX element. Not sure of type
-  popup: (c: MainController) => unknown;
-}
 
 export default class MainController {
   /**
@@ -32,8 +20,6 @@ export default class MainController {
    */
   private readonly pluginsEnabled: Map<PluginID, boolean>;
   private readonly forceDisabled: Set<string>;
-  expandedPlugin: string | null = null;
-  private expandedCategory: string | null = null;
   pluginSettings: Map<PluginID, GenericSettings>;
 
   /** Note that `enabledPlugins[key]` is truthy if and only if `key` is of
@@ -41,23 +27,6 @@ export default class MainController {
   enabledPlugins: typeof window.DSM = {};
 
   graphMetadata: GraphMetadata = getBlankMetadata();
-
-  // array of IDs
-  pillboxButtonsOrder: string[] = ["main-menu"];
-  // map button ID to setup
-  pillboxButtons: Record<string, PillboxButton> = {
-    "main-menu": {
-      id: "main-menu",
-      tooltip: "menu-desmodder-tooltip",
-      iconClass: "dsm-icon-desmodder",
-      popup: MenuFunc,
-    },
-  };
-
-  // string if open, null if none are open
-  pillboxMenuOpen: string | null = null;
-  pillboxMenuPinned: boolean = false;
-  extraMountedComponents = new Map<HTMLElement, MountedComponent>();
 
   constructor() {
     // default values
@@ -71,12 +40,6 @@ export default class MainController {
     this.pluginsEnabled = new Map(
       pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
     );
-    Calc.controller.dispatcher.register((e) => {
-      if (e.type === "toggle-graph-settings") {
-        this.pillboxMenuPinned = false;
-        this.closeMenu();
-      }
-    });
   }
 
   getDefaultConfig(id: PluginID) {
@@ -123,7 +86,7 @@ export default class MainController {
     for (const { id } of pluginList) {
       if (this.isPluginEnabled(id)) this._enablePlugin(id);
     }
-    this.updateMenuView();
+    this.enabledPlugins.pillboxMenus?.updateMenuView();
     // metadata stuff
     Calc.observeEvent("change.dsm-main-controller", () => {
       this.checkForMetadataChange();
@@ -132,89 +95,6 @@ export default class MainController {
     // The graph loaded before DesModder loaded, so DesModder was not available to
     // return true when asked isGlesmosMode. Refresh those expressions now
     this.enabledPlugins.glesmos?.checkGLesmos();
-  }
-
-  pillboxButtonsView(horizontal: boolean) {
-    return DCGView.createElement(PillboxContainer as any, {
-      controller: () => this,
-      horizontal: DCGView.const(horizontal),
-    });
-  }
-
-  pillboxMenuView(horizontal: boolean) {
-    return DCGView.createElement("div", {
-      didMount: (div: HTMLElement) => {
-        this.extraMountedComponents.set(
-          div,
-          DCGView.mountToNode(PillboxMenu, div, {
-            controller: () => this,
-            horizontal: DCGView.const(horizontal),
-          })
-        );
-      },
-      willUnmount: (div: HTMLElement) => {
-        this.extraMountedComponents.delete(div);
-        DCGView.unmountFromNode(div);
-      },
-    });
-  }
-
-  updateExtraComponents() {
-    this.extraMountedComponents.forEach((view) => view.update());
-  }
-
-  updateMenuView() {
-    this.updateExtraComponents();
-    Calc.controller.updateViews();
-  }
-
-  addPillboxButton(info: PillboxButton) {
-    this.pillboxButtons[info.id] = info;
-    this.pillboxButtonsOrder.push(info.id);
-    this.updateMenuView();
-  }
-
-  removePillboxButton(id: string) {
-    this.pillboxButtonsOrder.splice(this.pillboxButtonsOrder.indexOf(id), 1);
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-    delete this.pillboxButtons[id];
-    if (this.pillboxMenuOpen === id) {
-      this.pillboxMenuOpen = null;
-    }
-    this.updateMenuView();
-  }
-
-  isSomePillboxMenuOpen() {
-    return this.pillboxMenuOpen !== null;
-  }
-
-  toggleMenu(id: string) {
-    this.pillboxMenuOpen = this.pillboxMenuOpen === id ? null : id;
-    this.pillboxMenuPinned = false;
-    this.updateMenuView();
-  }
-
-  closeMenu() {
-    if (this.pillboxMenuPinned) return;
-    this.pillboxMenuOpen = null;
-    this.updateMenuView();
-  }
-
-  toggleMenuPinned() {
-    this.pillboxMenuPinned = !this.pillboxMenuPinned;
-    this.updateMenuView();
-  }
-
-  showHorizontalPillboxMenu() {
-    // Constant threshold, independent of this.controller.pillboxButtonsOrder.length
-    // Maybe want to tweak the threshold if a fourth possible pillbox button is
-    // added, or figure out a better layout at that point because it's starting
-    // to be a lot of pillbox threshold.
-    return (
-      !Calc.settings.graphpaper ||
-      (Calc.controller.isGeoUIActive() &&
-        Calc.controller.computeMajorLayout().grapher.width > 500)
-    );
   }
 
   setPluginEnabled(id: PluginID, isEnabled: boolean) {
@@ -235,13 +115,13 @@ export default class MainController {
   disablePlugin(id: PluginID) {
     const plugin = plugins.get(id);
     if (plugin && this.isPluginToggleable(id)) {
-      if (this.isPluginEnabled(id)) {
+      if (plugin.onDisable && this.isPluginEnabled(id)) {
         plugin.onDisable(this);
         this.pluginsEnabled.delete(id);
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete this.enabledPlugins[plugin.key];
         this.setPluginEnabled(id, false);
-        this.updateMenuView();
+        this.enabledPlugins.pillboxMenus?.updateMenuView();
         plugin.afterDisable?.();
       }
     }
@@ -253,7 +133,7 @@ export default class MainController {
       const res = plugin.onEnable(this, this.pluginSettings.get(id));
       this.enabledPlugins[plugin.key] = res ?? {};
       this.setPluginEnabled(id, true);
-      this.updateMenuView();
+      this.enabledPlugins.pillboxMenus?.updateMenuView();
     }
   }
 
@@ -272,40 +152,22 @@ export default class MainController {
     }
   }
 
-  isPluginForceDisabled(id: PluginID) {
-    return this.forceDisabled.has(id);
-  }
-
   isPluginEnabled(id: PluginID) {
     return (
       !this.isPluginForceDisabled(id) && (this.pluginsEnabled.get(id) ?? false)
     );
   }
 
+  isPluginForceDisabled(id: PluginID) {
+    return this.forceDisabled.has(id);
+  }
+
+  isPluginForceEnabled(id: PluginID) {
+    return plugins.get(id)?.onDisable === null;
+  }
+
   isPluginToggleable(id: PluginID) {
-    return !this.isPluginForceDisabled(id);
-  }
-
-  togglePluginExpanded(i: PluginID) {
-    if (this.expandedPlugin === i) {
-      this.expandedPlugin = null;
-    } else {
-      this.expandedPlugin = i;
-    }
-    this.updateMenuView();
-  }
-
-  toggleCategoryExpanded(category: string) {
-    if (this.expandedCategory === category) {
-      this.expandedCategory = null;
-    } else {
-      this.expandedCategory = category;
-    }
-    this.updateMenuView();
-  }
-
-  isCategoryExpanded(category: string) {
-    return this.expandedCategory === category;
+    return !this.isPluginForceDisabled(id) && !this.isPluginForceEnabled(id);
   }
 
   togglePluginSettingBoolean(pluginID: PluginID, key: string) {
@@ -332,34 +194,7 @@ export default class MainController {
       const onConfigChange = plugins.get(pluginID)?.onConfigChange;
       if (onConfigChange !== undefined) onConfigChange(pluginSettings);
     }
-    this.updateMenuView();
-  }
-
-  getDefaultSetting(key: string) {
-    return (
-      this.expandedPlugin &&
-      plugins.get(this.expandedPlugin)?.config?.find((e) => e.key === key)
-        ?.default
-    );
-  }
-
-  canResetSetting(key: string) {
-    if (!this.expandedPlugin) return false;
-    const defaultValue = this.getDefaultSetting(key);
-    return (
-      defaultValue !== undefined &&
-      this.pluginSettings.get(this.expandedPlugin)?.[key] !== defaultValue
-    );
-  }
-
-  resetSetting(key: string) {
-    this.expandedPlugin &&
-      this.canResetSetting(key) &&
-      this.setPluginSetting(
-        this.expandedPlugin,
-        key,
-        this.getDefaultSetting(key)!
-      );
+    this.enabledPlugins.pillboxMenus?.updateMenuView();
   }
 
   checkForMetadataChange() {

@@ -1,5 +1,6 @@
+import { jquery, keys } from "../../utils/depUtils";
 import Controller from "./Controller";
-import { initView, destroyView } from "./View";
+import { MainPopupFunc } from "./components/MainPopup";
 import MainController from "main/Controller";
 import { Plugin } from "plugins";
 
@@ -7,12 +8,26 @@ export let controller: Controller;
 
 function onEnable(c: MainController) {
   controller = new Controller(c);
-  initView(c); // async
+  c.enabledPlugins.pillboxMenus?.addPillboxButton({
+    id: "dsm-vc-menu",
+    tooltip: "video-creator-menu",
+    iconClass: "dcg-icon-film",
+    popup: () => MainPopupFunc(controller),
+  });
+  jquery(document).on("keydown.expanded-menu-view", (e: KeyboardEvent) => {
+    if (keys.lookup(e) === "Esc" && controller.isPlayPreviewExpanded) {
+      e.stopImmediatePropagation();
+      controller.togglePreviewExpanded();
+    }
+  });
   return controller;
 }
 
 function onDisable() {
-  destroyView(controller.controller);
+  controller.controller.enabledPlugins.pillboxMenus?.removePillboxButton(
+    "dsm-vc-menu"
+  );
+  jquery(document).off(".expanded-menu-view");
 }
 
 const videoCreator: Plugin = {

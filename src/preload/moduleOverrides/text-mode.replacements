@@ -73,7 +73,7 @@ $DCGView.createElement(
 $DCGView.Components.IfElse(
   () => !this.controller.getGraphSettings().config.graphpaper && window.DesModder,
   {
-    true: () => window.DesModder?.controller.pillboxButtonsView(true),
+    true: () => DSM.pluginsEnabled?.pillboxMenus.pillboxButtonsView(true),
     false: null
   }
 ),

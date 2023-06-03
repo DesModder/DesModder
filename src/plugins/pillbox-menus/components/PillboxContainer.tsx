@@ -1,15 +1,15 @@
-import { format } from "../i18n/i18n-core";
+import { PillboxController } from "..";
 import "./PillboxContainer.less";
-import { If, Tooltip, For } from "./desmosComponents";
 import { Component, jsx } from "DCGView";
+import { If, Tooltip, For } from "components/desmosComponents";
 import { Calc } from "globals/window";
-import MainController from "main/Controller";
+import { format } from "i18n/i18n-core";
 
 export default class PillboxContainer extends Component<{
-  controller: MainController;
+  controller: PillboxController;
   horizontal: boolean;
 }> {
-  controller!: MainController;
+  controller!: PillboxController;
   horizontal!: boolean;
 
   init() {

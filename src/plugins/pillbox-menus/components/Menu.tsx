@@ -1,3 +1,15 @@
+import { PillboxController } from "..";
+import "./Menu.less";
+import { Component, jsx } from "DCGView";
+import Toggle from "components/Toggle";
+import {
+  If,
+  Switch,
+  Checkbox,
+  Tooltip,
+  For,
+} from "components/desmosComponents";
+import { format } from "i18n/i18n-core";
 import {
   ConfigItem,
   ConfigItemString,
@@ -5,15 +17,9 @@ import {
   Plugin,
   PluginID,
   plugins,
-} from "../plugins";
-import "./Menu.less";
-import Toggle from "./Toggle";
-import { If, Switch, Checkbox, Tooltip, For } from "./desmosComponents";
-import { Component, jsx } from "DCGView";
-import { format } from "i18n/i18n-core";
-import MainController from "main/Controller";
+} from "plugins";
 
-export function MenuFunc(controller: MainController) {
+export function MenuFunc(controller: PillboxController) {
   return <Menu controller={controller} />;
 }
 
@@ -42,9 +48,9 @@ const categoryPlugins: Record<string, PluginID[]> = {
 const categories = ["core", "utility", "visual", "integrations"];
 
 export default class Menu extends Component<{
-  controller: MainController;
+  controller: PillboxController;
 }> {
-  controller!: MainController;
+  controller!: PillboxController;
 
   init() {
     this.controller = this.props.controller();
@@ -114,9 +120,13 @@ export default class Menu extends Component<{
             <div>{pluginDisplayName(plugin)}</div>
           </div>
           <Toggle
-            toggled={() => this.controller.isPluginEnabled(plugin.id)}
-            disabled={() => !this.controller.isPluginToggleable(plugin.id)}
-            onChange={() => this.controller.togglePlugin(plugin.id)}
+            toggled={() =>
+              this.controller.controller.isPluginEnabled(plugin.id)
+            }
+            disabled={() =>
+              !this.controller.controller.isPluginToggleable(plugin.id)
+            }
+            onChange={() => this.controller.controller.togglePlugin(plugin.id)}
           />
         </div>
         {
@@ -153,7 +163,7 @@ export default class Menu extends Component<{
     if (this.controller.expandedPlugin === null) return null;
     const plugin = plugins.get(this.controller.expandedPlugin);
     if (plugin?.config === undefined) return null;
-    const pluginSettings = this.controller.pluginSettings.get(
+    const pluginSettings = this.controller.controller.pluginSettings.get(
       this.controller.expandedPlugin
     );
     if (pluginSettings === undefined) return null;
@@ -179,14 +189,17 @@ export default class Menu extends Component<{
 }
 
 function booleanOption(
-  controller: MainController,
+  controller: PillboxController,
   item: ConfigItem,
   plugin: Plugin,
   settings: GenericSettings
 ) {
   const toggle = () =>
     controller.expandedPlugin &&
-    controller.togglePluginSettingBoolean(controller.expandedPlugin, item.key);
+    controller.controller.togglePluginSettingBoolean(
+      controller.expandedPlugin,
+      item.key
+    );
   return (
     <div class="dsm-settings-item dsm-settings-boolean">
       <Checkbox
@@ -205,7 +218,7 @@ function booleanOption(
 }
 
 function stringOption(
-  controller: MainController,
+  controller: PillboxController,
   item: ConfigItem,
   plugin: Plugin,
   settings: GenericSettings
@@ -222,7 +235,7 @@ function stringOption(
         }
         onChange={(evt: Event) =>
           controller.expandedPlugin &&
-          controller.setPluginSetting(
+          controller.controller.setPluginSetting(
             controller.expandedPlugin,
             item.key,
             (evt.target as HTMLInputElement).value
@@ -230,7 +243,7 @@ function stringOption(
         }
         onInput={(evt: Event) =>
           controller.expandedPlugin &&
-          controller.setPluginSetting(
+          controller.controller.setPluginSetting(
             controller.expandedPlugin,
             item.key,
             (evt.target as HTMLInputElement).value,
@@ -249,10 +262,10 @@ function stringOption(
 }
 
 class ResetButton extends Component<{
-  controller: MainController;
+  controller: PillboxController;
   key: string;
 }> {
-  controller!: MainController;
+  controller!: PillboxController;
   key!: string;
 
   init() {

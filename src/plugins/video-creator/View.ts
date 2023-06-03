@@ -1,28 +1,6 @@
-import { MainPopupFunc } from "./components/MainPopup";
 import { controller } from "./index";
 import { Calc } from "globals/window";
 import MainController from "main/Controller";
-import { jquery, keys } from "utils/depUtils";
-
-export function initView(mainController: MainController) {
-  mainController.addPillboxButton({
-    id: "dsm-vc-menu",
-    tooltip: "video-creator-menu",
-    iconClass: "dcg-icon-film",
-    popup: () => MainPopupFunc(controller),
-  });
-  jquery(document).on("keydown.expanded-menu-view", (e: KeyboardEvent) => {
-    if (keys.lookup(e) === "Esc" && controller.isPlayPreviewExpanded) {
-      e.stopImmediatePropagation();
-      controller.togglePreviewExpanded();
-    }
-  });
-}
-
-export function destroyView(mainController: MainController) {
-  mainController.removePillboxButton("dsm-vc-menu");
-  jquery(document).off(".expanded-menu-view");
-}
 
 const captureFrameID = "dsm-vc-capture-frame";
 
@@ -71,5 +49,5 @@ function applyCaptureFrame() {
 
 export function updateView(mainController: MainController) {
   applyCaptureFrame();
-  mainController.updateExtraComponents();
+  mainController.enabledPlugins.pillboxMenus?.updateExtraComponents();
 }

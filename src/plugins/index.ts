@@ -9,6 +9,7 @@ import findReplace from "plugins/find-replace";
 import folderTools from "plugins/folder-tools";
 import hideErrors from "plugins/hide-errors";
 import performanceInfo from "plugins/performance-info";
+import pillboxMenus from "plugins/pillbox-menus";
 import pinExpressions from "plugins/pin-expressions";
 import rightClickTray from "plugins/right-click-tray";
 import setPrimaryColor from "plugins/set-primary-color";
@@ -42,7 +43,7 @@ export type ConfigItem = ConfigItemBoolean | ConfigItemString;
 export type GenericSettings = Record<string, any>;
 export type PluginEnableResult = Record<string, any> | undefined;
 
-export interface Plugin<Settings extends GenericSettings = GenericSettings> {
+export type Plugin<Settings extends GenericSettings = GenericSettings> = {
   /** The ID is fixed permanently, even for future releases. It is kebab
    * case. If you rename the plugin, keep the ID the same for settings sync */
   id: string;
@@ -51,15 +52,23 @@ export interface Plugin<Settings extends GenericSettings = GenericSettings> {
   // display name and descriptions are managed in a translations file
   descriptionLearnMore?: string;
   onEnable(controller: MainController, config?: unknown): PluginEnableResult;
-  onDisable(controller: MainController): void;
-  afterDisable?(): void;
-  enabledByDefault: boolean;
   config?: readonly ConfigItem[];
   onConfigChange?(config: Settings): void;
-  moduleOverrides?: unknown; // should be used only in preload code, not in main code
-}
+} & (
+  | {
+      onDisable(controller: MainController): void;
+      afterDisable?(): void;
+      enabledByDefault: boolean;
+    }
+  | {
+      // A core plugin, which can't be disabled
+      onDisable: null;
+      enabledByDefault: true;
+    }
+);
 
 export const pluginList: Plugin[] = [
+  pillboxMenus,
   builtinSettings,
   betterEvaluationView,
   setPrimaryColor,

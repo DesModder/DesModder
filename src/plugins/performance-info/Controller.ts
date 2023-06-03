@@ -1,6 +1,5 @@
 import MainController from "../../main/Controller";
 import { PluginController } from "../PluginController";
-import { updateView } from "./View";
 import { DispatchedEvent, TimingData } from "globals/Calc";
 import { Calc } from "globals/window";
 
@@ -36,7 +35,7 @@ export default class Controller extends PluginController {
     if (e.type !== "on-evaluator-changes") return;
     this.timingDataHistory?.push(e.timingData);
     if (this.timingDataHistory.length > 10) this.timingDataHistory.shift();
-    updateView(this.controller);
+    this.controller.enabledPlugins.pillboxMenus?.updateExtraComponents();
   }
 
   getTimingData() {
