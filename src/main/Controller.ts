@@ -1,14 +1,5 @@
 import { DCGView } from "../DCGView";
 import ExpressionActionButton from "../components/ExpressionActionButton";
-import GraphMetadata, {
-  Expression as MetadataExpression,
-} from "./metadata/interface";
-import {
-  getMetadata,
-  setMetadata,
-  getBlankMetadata,
-  changeExprInMetadata,
-} from "./metadata/manage";
 import window, { Calc } from "globals/window";
 import {
   plugins,
@@ -27,8 +18,6 @@ export default class MainController extends TransparentPlugins {
   private readonly pluginsEnabled: Map<PluginID, boolean>;
   private readonly forceDisabled: Set<string>;
   pluginSettings: Map<PluginID, GenericSettings>;
-
-  graphMetadata: GraphMetadata = getBlankMetadata();
 
   constructor() {
     super();
@@ -92,11 +81,6 @@ export default class MainController extends TransparentPlugins {
       if (this.isPluginEnabled(id)) this._enablePlugin(id);
     }
     this.pillboxMenus?.updateMenuView();
-    // metadata stuff
-    Calc.observeEvent("change.dsm-main-controller", () => {
-      this.checkForMetadataChange();
-    });
-    this.checkForMetadataChange();
     // The graph loaded before DesModder loaded, so DesModder was not available to
     // return true when asked isGlesmosMode. Refresh those expressions now
     this.glesmos?.checkGLesmos();
@@ -202,63 +186,12 @@ export default class MainController extends TransparentPlugins {
     this.pillboxMenus?.updateMenuView();
   }
 
-  checkForMetadataChange() {
-    const newMetadata = getMetadata();
-    if (!this.isPluginEnabled("GLesmos")) {
-      if (
-        Object.entries(newMetadata.expressions).some(
-          ([id, e]) =>
-            e?.glesmos && !this.graphMetadata.expressions[id]?.glesmos
-        )
-      ) {
-        // list of glesmos expressions changed
-        Calc.controller._showToast({
-          message:
-            "Enable the GLesmos plugin to improve the performance of some implicits in this graph",
-        });
-      }
-    }
-    this.graphMetadata = newMetadata;
-    this.pinExpressions?.applyPinnedStyle();
-  }
-
-  _updateExprMetadata(id: string, obj: Partial<MetadataExpression>) {
-    changeExprInMetadata(this.graphMetadata, id, obj);
-    setMetadata(this.graphMetadata);
-  }
-
-  duplicateMetadata(toID: string, fromID: string) {
-    const model = this.getDsmItemModel(fromID);
-    if (model) this._updateExprMetadata(toID, model);
-  }
-
-  updateExprMetadata(id: string, obj: Partial<MetadataExpression>) {
-    this._updateExprMetadata(id, obj);
-    this.finishUpdateMetadata();
-  }
-
   commitStateChange(allowUndo: boolean) {
     Calc.controller.updateTheComputedWorld();
     if (allowUndo) {
       Calc.controller.commitUndoRedoSynchronously({ type: "dsm-blank" });
     }
     Calc.controller.updateViews();
-  }
-
-  finishUpdateMetadata() {
-    this.pinExpressions?.applyPinnedStyle();
-    this.commitStateChange(false);
-  }
-
-  getDsmItemModel(id: string) {
-    return this.graphMetadata.expressions[id];
-  }
-
-  getDsmItemModels() {
-    return Object.entries(this.graphMetadata.expressions).map(([id, v]) => ({
-      ...v,
-      id,
-    }));
   }
 
   createAction(

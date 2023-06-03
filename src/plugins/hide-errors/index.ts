@@ -47,19 +47,19 @@ export default class HideErrors extends PluginController {
   }
 
   hideError(id: string) {
-    this.controller.updateExprMetadata(id, {
+    this.controller.metadata?.updateExprMetadata(id, {
       errorHidden: true,
     });
   }
 
   toggleErrorHidden(id: string) {
-    this.controller.updateExprMetadata(id, {
+    this.controller.metadata?.updateExprMetadata(id, {
       errorHidden: !this.isErrorHidden(id),
     });
   }
 
   isErrorHidden(id: string) {
-    return this.controller.getDsmItemModel(id)?.errorHidden;
+    return this.controller.metadata?.getDsmItemModel(id)?.errorHidden;
   }
 }
 HideErrors satisfies Plugin;

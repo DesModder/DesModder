@@ -9,7 +9,7 @@ export default class PinExpressions extends PluginController {
 
   pinExpression(id: string) {
     if (Calc.controller.getItemModel(id)?.type !== "folder")
-      this.controller.updateExprMetadata(id, {
+      this.controller.metadata?.updateExprMetadata(id, {
         pinned: true,
       });
   }
@@ -18,20 +18,20 @@ export default class PinExpressions extends PluginController {
     return (
       !Calc.controller.getExpressionSearchOpen() &&
       Calc.controller.getItemModel(id)?.type !== "folder" &&
-      this.controller.getDsmItemModel(id)?.pinned
+      this.controller.metadata?.getDsmItemModel(id)?.pinned
     );
   }
 
   unpinExpression(id: string) {
-    this.controller.updateExprMetadata(id, {
+    this.controller.metadata?.updateExprMetadata(id, {
       pinned: false,
     });
   }
 
   applyPinnedStyle() {
     const el = document.querySelector(".dcg-exppanel-container");
-    const hasPinnedExpressions = this.controller
-      .getDsmItemModels()
+    const hasPinnedExpressions = this.controller.metadata
+      ?.getDsmItemModels()
       .some((v) => v.pinned);
     el?.classList.toggle("dsm-has-pinned-expressions", hasPinnedExpressions);
   }

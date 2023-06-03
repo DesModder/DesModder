@@ -65,11 +65,11 @@ export default class GLesmos extends PluginController {
   }
 
   checkGLesmos() {
-    const glesmosIDs = this.controller
-      .getDsmItemModels()
+    const glesmosIDs = this.controller.metadata
+      ?.getDsmItemModels()
       .filter((v) => v.glesmos)
       .map((v) => v.id);
-    if (glesmosIDs.length > 0) {
+    if (glesmosIDs && glesmosIDs.length > 0) {
       glesmosIDs.map((id) => this.toggleExpr(id));
       killWorker();
     }
@@ -86,12 +86,12 @@ export default class GLesmos extends PluginController {
   }
 
   isGlesmosMode(id: string) {
-    this.controller.checkForMetadataChange();
-    return this.controller.getDsmItemModel(id)?.glesmos ?? false;
+    this.controller.metadata?.checkForMetadataChange();
+    return this.controller.metadata?.getDsmItemModel(id)?.glesmos ?? false;
   }
 
   toggleGlesmos(id: string) {
-    this.controller.updateExprMetadata(id, {
+    this.controller.metadata?.updateExprMetadata(id, {
       glesmos: !this.isGlesmosMode(id),
     });
     this.forceWorkerUpdate(id);
@@ -111,12 +111,15 @@ export default class GLesmos extends PluginController {
   }
 
   isGLesmosLinesConfirmed(id: string) {
-    this.controller.checkForMetadataChange();
-    return this.controller.getDsmItemModel(id)?.glesmosLinesConfirmed ?? false;
+    this.controller.metadata?.checkForMetadataChange();
+    return (
+      this.controller.metadata?.getDsmItemModel(id)?.glesmosLinesConfirmed ??
+      false
+    );
   }
 
   toggleGLesmosLinesConfirmed(id: string) {
-    this.controller.updateExprMetadata(id, {
+    this.controller.metadata?.updateExprMetadata(id, {
       glesmosLinesConfirmed: !this.isGLesmosLinesConfirmed(id),
     });
     this.forceWorkerUpdate(id);

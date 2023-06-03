@@ -7,6 +7,7 @@ import DuplicateHotkey from "./duplicate-hotkey";
 import FindReplace from "./find-replace";
 import FolderTools from "./folder-tools";
 import HideErrors from "./hide-errors";
+import ManageMetadata from "./manage-metadata";
 import PerformanceInfo from "./performance-info";
 import PillboxMenus from "./pillbox-menus";
 import PinExpressions from "./pin-expressions";
@@ -84,6 +85,7 @@ export const keyToPlugin = {
   folderTools: FolderTools,
   textMode: TextMode,
   performanceInfo: PerformanceInfo,
+  metadata: ManageMetadata,
 } satisfies Record<string, Plugin>;
 
 export const pluginList = Object.values(keyToPlugin);
@@ -130,4 +132,5 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get folderTools () { return this.ep["folder-tools"]; }
   get textMode () { return this.ep["text-mode"]; }
   get performanceInfo () { return this.ep["performance-info"]; }
+  get metadata () { return this.ep["manage-metadata"]; }
 }

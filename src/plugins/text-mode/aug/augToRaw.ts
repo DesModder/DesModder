@@ -2,8 +2,11 @@ import { isConstant } from "./AugLatex";
 import Aug from "./AugState";
 import { latexTreeToString } from "./augLatexToRaw";
 import * as Graph from "@desmodder/graph-state";
-import Metadata from "main/metadata/interface";
-import { changeExprInMetadata, isBlankMetadata } from "main/metadata/manage";
+import Metadata from "plugins/manage-metadata/interface";
+import {
+  changeExprInMetadata,
+  isBlankMetadata,
+} from "plugins/manage-metadata/manage";
 
 export default function augToRaw(aug: Aug.State): Graph.GraphState {
   const list = [];

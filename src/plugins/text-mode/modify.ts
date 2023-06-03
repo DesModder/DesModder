@@ -18,7 +18,7 @@ import { EditorView } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
 import { DispatchedEvent } from "globals/Calc";
 import { Calc } from "globals/window";
-import Metadata from "main/metadata/interface";
+import Metadata from "plugins/manage-metadata/interface";
 
 export const relevantEventTypes = [
   // @settings related
