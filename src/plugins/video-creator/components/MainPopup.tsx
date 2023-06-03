@@ -1,4 +1,4 @@
-import Controller from "../Controller";
+import VideoCreator from "..";
 import { OutFileType, cancelExport } from "../backend/export";
 import CaptureMethod from "./CaptureMethod";
 import LoadingPie from "./LoadingPie";
@@ -18,14 +18,14 @@ import { jquery } from "utils/depUtils";
 
 const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng"];
 
-export function MainPopupFunc(videoCreatorController: Controller) {
+export function MainPopupFunc(videoCreatorController: VideoCreator) {
   return <MainPopup controller={videoCreatorController} />;
 }
 
 export default class MainPopup extends Component<{
-  controller: Controller;
+  controller: VideoCreator;
 }> {
-  controller!: Controller;
+  controller!: VideoCreator;
 
   init() {
     this.controller = this.props.controller();

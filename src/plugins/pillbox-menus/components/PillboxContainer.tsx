@@ -1,4 +1,4 @@
-import { PillboxMenus } from "..";
+import PillboxMenus from "..";
 import "./PillboxContainer.less";
 import { Component, jsx } from "DCGView";
 import { If, Tooltip, For } from "components/desmosComponents";

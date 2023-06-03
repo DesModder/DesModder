@@ -1,4 +1,4 @@
-import { controller } from "./index";
+import { Config } from "./config";
 
 // IMPORTANT
 // isIllegalASCIIMath() is REQUIRED BEFORE executing wolfram2desmos()
@@ -51,7 +51,7 @@ export function isIllegalASCIIMath(input: string) {
   return true;
 }
 
-export function wolfram2desmos(input: string) {
+export function wolfram2desmos(input: string, config: Config) {
   // FUNCTIONS
   // returns the first match's index
   function find(expr: RegExp) {
@@ -589,7 +589,7 @@ export function wolfram2desmos(input: string) {
 
   // convert reciprocal exponents to surd
   while (
-    controller.configFlags.reciprocalExponents2Surds &&
+    config.reciprocalExponents2Surds &&
     findFinal(/\^\{\\frac\{1\}\{[A-z\d\s.\t+\-*]*\}\}/g) !== -1
   ) {
     startingIndex = findFinal(/\^\{\\frac\{1\}\{[A-z\d\s.+\-*]*\}\}/g);
@@ -744,7 +744,7 @@ export function wolfram2desmos(input: string) {
     }
     if (selection.search(/[^\d]*/g) !== -1) {
       const selectionNum = parseInt(selection);
-      if (selectionNum <= 10 && controller.configFlags.derivativeLoopLimit) {
+      if (selectionNum <= 10 && config.derivativeLoopLimit) {
         replace(/Ｍ/, "");
         for (i = 0; i < selectionNum; i++) {
           insert(startingIndex, "\\frac{d}{dx}");

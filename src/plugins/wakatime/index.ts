@@ -1,71 +1,69 @@
 import { Calc, Console } from "../../globals/window";
-import MainController from "../../main/Controller";
 import { getCurrentGraphTitle } from "../../utils/depUtils";
+import { PluginController } from "../PluginController";
 import { configList } from "./config";
 import { Plugin } from "plugins";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
 
 const heartbeatInterval = 120 * 1000;
-let lastUpdate = performance.now() - heartbeatInterval;
 
-let handler: string;
-let controller: MainController;
+export default class Wakatime extends PluginController {
+  static id = "wakatime" as const;
+  static config = configList;
+  static enabledByDefault = false;
 
-async function maybeSendHeartbeat(isWrite: boolean) {
-  if (!(performance.now() - lastUpdate > heartbeatInterval || isWrite)) return;
-  const graphName = getCurrentGraphTitle() ?? "Untitled Graph";
-  const graphURL = window.location.href;
-  const lineCount = Calc.getExpressions().length;
+  lastUpdate = performance.now() - heartbeatInterval;
+  handler!: string;
 
-  Console.debug("[WakaTime] Sending heartbeat at:", new Date());
-  postMessageUp({
-    type: "send-heartbeat",
-    options: {
-      graphName,
-      graphURL,
-      lineCount,
-      isWrite,
-    },
-  });
-  lastUpdate = performance.now();
-}
-
-async function onEnable() {
-  handler = Calc.controller.dispatcher.register((e) => {
-    if (
-      e.type === "on-evaluator-changes" ||
-      e.type === "clear-unsaved-changes"
-    ) {
-      void maybeSendHeartbeat(e.type === "clear-unsaved-changes");
-    }
-  });
-}
-
-function onDisable() {
-  Calc.controller.dispatcher.unregister(handler);
-}
-
-listenToMessageDown((msg) => {
-  if (msg.type === "heartbeat-error") {
-    if (msg.isAuthError) {
-      controller.disablePlugin("wakatime");
-      Calc.controller._showToast({
-        message:
-          "WakaTime heartbeat error: check your secret key. Plugin has been deactivated.",
-        toastStyle: "error",
-        hideAfter: 0,
-      });
-    }
-    Console.error("Wakatime heartbeat error:", msg.message);
+  afterEnable() {
+    this.handler = Calc.controller.dispatcher.register((e) => {
+      if (
+        e.type === "on-evaluator-changes" ||
+        e.type === "clear-unsaved-changes"
+      ) {
+        this.maybeSendHeartbeat(e.type === "clear-unsaved-changes");
+      }
+    });
+    // TODO: avoid double-listen on disable-re-enable
+    listenToMessageDown((msg) => {
+      if (msg.type === "heartbeat-error") {
+        if (msg.isAuthError) {
+          this.controller.disablePlugin("wakatime");
+          Calc.controller._showToast({
+            message:
+              "WakaTime heartbeat error: check your secret key. Plugin has been deactivated.",
+            toastStyle: "error",
+            hideAfter: 0,
+          });
+        }
+        Console.error("Wakatime heartbeat error:", msg.message);
+      }
+      return false;
+    });
   }
-  return false;
-});
 
-const wakatime: Plugin = {
-  id: "wakatime",
-  onEnable,
-  onDisable,
-  config: configList,
-  enabledByDefault: false,
-};
-export default wakatime;
+  afterDisable() {
+    Calc.controller.dispatcher.unregister(this.handler);
+  }
+
+  maybeSendHeartbeat(isWrite: boolean) {
+    if (!(performance.now() - this.lastUpdate > heartbeatInterval || isWrite))
+      return;
+    const graphName = getCurrentGraphTitle() ?? "Untitled Graph";
+    const graphURL = window.location.href;
+    const lineCount = Calc.getExpressions().length;
+
+    Console.debug("[WakaTime] Sending heartbeat at:", new Date());
+    postMessageUp({
+      type: "send-heartbeat",
+      options: {
+        graphName,
+        graphURL,
+        lineCount,
+        isWrite,
+      },
+    });
+    this.lastUpdate = performance.now();
+  }
+}
+Wakatime satisfies Plugin;

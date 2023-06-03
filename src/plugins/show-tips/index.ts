@@ -1,24 +1,25 @@
+import { PluginController } from "../PluginController";
 import { createTipElement } from "./Tip";
-import { Calc } from "globals/window";
 import { Plugin } from "plugins";
 
 function apiContainer() {
   return document.querySelector(".dcg-calculator-api-container");
 }
 
-const showTips: Plugin = {
-  id: "show-tips",
-  onEnable: () => {
+export default class ShowTips extends PluginController {
+  static id = "show-tips" as const;
+  static enabledByDefault = true;
+
+  afterEnable() {
     apiContainer()?.classList.add("dsm-show-tips");
-    Calc.controller.updateViews();
-    return { createTipElement };
-  },
-  onDisable: () => {},
-  afterDisable: () => {
+  }
+
+  afterDisable() {
     apiContainer()?.classList.remove("dsm-show-tips");
-    Calc.controller.updateViews();
-  },
-  enabledByDefault: true,
-  /* Has moduleOverride */
-};
-export default showTips;
+  }
+
+  createTipElement() {
+    return createTipElement();
+  }
+}
+ShowTips satisfies Plugin;

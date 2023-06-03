@@ -5,10 +5,12 @@ import PillboxContainer from "./components/PillboxContainer";
 import PillboxMenu from "./components/PillboxMenu";
 import { DCGView, MountedComponent } from "DCGView";
 import { Calc } from "globals/window";
-import { plugins, Plugin, PluginID } from "plugins";
+import { plugins, Plugin, PluginID, ConfigItem } from "plugins";
 
-export class PillboxMenus extends PluginController {
-  expandedPlugin: string | null = null;
+export default class PillboxMenus extends PluginController {
+  static id = "pillbox-menus" as const;
+  static enabledByDefault = true;
+  expandedPlugin: PluginID | null = null;
   private expandedCategory: string | null = null;
 
   constructor(mainController: MainController) {
@@ -37,6 +39,12 @@ export class PillboxMenus extends PluginController {
   pillboxMenuOpen: string | null = null;
   pillboxMenuPinned: boolean = false;
   extraMountedComponents = new Map<HTMLElement, MountedComponent>();
+
+  beforeDisable() {
+    throw new Error(
+      "Programming Error: core plugin Pillbox Menus should not be disableable"
+    );
+  }
 
   pillboxButtonsView(horizontal: boolean) {
     return DCGView.createElement(PillboxContainer as any, {
@@ -124,8 +132,9 @@ export class PillboxMenus extends PluginController {
   getDefaultSetting(key: string) {
     return (
       this.expandedPlugin &&
-      plugins.get(this.expandedPlugin)?.config?.find((e) => e.key === key)
-        ?.default
+      (
+        plugins.get(this.expandedPlugin)?.config as ConfigItem[] | undefined
+      )?.find((e) => e.key === key)?.default
     );
   }
 
@@ -171,6 +180,7 @@ export class PillboxMenus extends PluginController {
     return this.expandedCategory === category;
   }
 }
+PillboxMenus satisfies Plugin;
 
 interface PillboxButton {
   id: string;
@@ -180,13 +190,3 @@ interface PillboxButton {
   // popup should return a JSX element. Not sure of type
   popup: (c: PillboxMenus) => unknown;
 }
-
-const pillboxMenus: Plugin = {
-  id: "pillbox-menus",
-  onEnable: (c) => {
-    return new PillboxMenus(c);
-  },
-  onDisable: null,
-  enabledByDefault: true,
-} as const;
-export default pillboxMenus;

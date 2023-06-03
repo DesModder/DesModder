@@ -56,7 +56,7 @@ export default class MainController extends TransparentPlugins {
     return out;
   }
 
-  applyStoredEnabled(storedEnabled: Map<PluginID, boolean>) {
+  applyStoredEnabled(storedEnabled: Map<PluginID, boolean | undefined>) {
     for (const { id } of pluginList) {
       const stored = storedEnabled.get(id);
       if (stored !== undefined && id !== "GLesmos") {
@@ -65,7 +65,9 @@ export default class MainController extends TransparentPlugins {
     }
   }
 
-  applyStoredSettings(storedSettings: Map<PluginID, GenericSettings>) {
+  applyStoredSettings(
+    storedSettings: Map<PluginID, GenericSettings | undefined>
+  ) {
     for (const { id } of pluginList) {
       const stored = storedSettings.get(id);
       if (stored !== undefined) {
@@ -104,10 +106,6 @@ export default class MainController extends TransparentPlugins {
     if (isEnabled && this.isPluginForceDisabled(id)) return;
     const same = isEnabled === this.pluginsEnabled.get(id);
     this.pluginsEnabled.set(id, isEnabled);
-    if (id === "GLesmos") {
-      // Need to refresh glesmos expressions
-      this.glesmos?.checkGLesmos();
-    }
     if (!same)
       postMessageUp({
         type: "set-plugins-enabled",
@@ -118,25 +116,29 @@ export default class MainController extends TransparentPlugins {
   disablePlugin(id: PluginID) {
     const plugin = plugins.get(id);
     if (plugin && this.isPluginToggleable(id)) {
-      if (plugin.onDisable && this.isPluginEnabled(id)) {
-        plugin.onDisable(this);
+      if (this.isPluginEnabled(id)) {
+        const plugin = this.enabledPlugins[id];
+        plugin?.beforeDisable();
         this.pluginsEnabled.delete(id);
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete this.enabledPlugins[plugin.id];
+        delete this.enabledPlugins[id];
         this.setPluginEnabled(id, false);
         this.pillboxMenus?.updateMenuView();
-        plugin.afterDisable?.();
+        plugin?.afterDisable();
+        Calc.controller.updateViews();
       }
     }
   }
 
   _enablePlugin(id: PluginID) {
-    const plugin = plugins.get(id);
-    if (plugin !== undefined) {
-      const res = plugin.onEnable(this, this.pluginSettings.get(id));
-      this.enabledPlugins[plugin.id] = res ?? {};
+    const Plugin = plugins.get(id);
+    if (Plugin !== undefined) {
+      const res = new Plugin(this);
+      this.enabledPlugins[Plugin.id] = res;
       this.setPluginEnabled(id, true);
+      res.afterEnable(this.pluginSettings.get(id));
       this.pillboxMenus?.updateMenuView();
+      Calc.controller.updateViews();
     }
   }
 
@@ -166,7 +168,7 @@ export default class MainController extends TransparentPlugins {
   }
 
   isPluginForceEnabled(id: PluginID) {
-    return plugins.get(id)?.onDisable === null;
+    return !!plugins.get(id)?.forceEnabled;
   }
 
   isPluginToggleable(id: PluginID) {
@@ -194,8 +196,8 @@ export default class MainController extends TransparentPlugins {
         value: mapToRecord(this.pluginSettings),
       });
     if (this.isPluginEnabled(pluginID)) {
-      const onConfigChange = plugins.get(pluginID)?.onConfigChange;
-      if (onConfigChange !== undefined) onConfigChange(pluginSettings);
+      this.enabledPlugins[pluginID]?.onConfigChange?.(pluginSettings);
+      Calc.controller.updateViews();
     }
     this.pillboxMenus?.updateMenuView();
   }

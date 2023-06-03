@@ -1,4 +1,4 @@
-import Controller from "../Controller";
+import VideoCreator from "..";
 import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 
 type FFmpeg = ReturnType<typeof createFFmpeg>;
@@ -34,7 +34,7 @@ async function exportAll(ffmpeg: FFmpeg, fileType: OutFileType, fps: number) {
   return outFilename;
 }
 
-export async function cancelExport(controller: Controller) {
+export async function cancelExport(controller: VideoCreator) {
   try {
     // ffmpeg.exit() always throws an error `exit(1)`,
     // which is reasonable behavior because ffmpeg would throw an error when sigkilled
@@ -47,7 +47,7 @@ export async function cancelExport(controller: Controller) {
   }
 }
 
-export async function initFFmpeg(controller: Controller) {
+export async function initFFmpeg(controller: VideoCreator) {
   if (ffmpeg === null) {
     ffmpeg = createFFmpeg({
       log: false,
@@ -75,7 +75,7 @@ export async function initFFmpeg(controller: Controller) {
   return ffmpeg;
 }
 
-export async function exportFrames(controller: Controller) {
+export async function exportFrames(controller: VideoCreator) {
   controller.isExporting = true;
   controller.setExportProgress(-1);
   controller.updateView();

@@ -1,4 +1,4 @@
-import TextMode from "../Controller";
+import TextMode from "..";
 import { completions } from "./completions";
 import parser from "./syntax.grammar";
 import { CompletionContext } from "@codemirror/autocomplete";

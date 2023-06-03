@@ -1,26 +1,24 @@
-/* eslint-disable @typescript-eslint/method-signature-style */
-import GLesmos from "./GLesmos/Controller";
-import betterEvaluationView from "./better-evaluation-view";
-import TextMode from "./text-mode/Controller";
+/* eslint-disable @typescript-eslint/method-signature-style, @typescript-eslint/dot-notation */
+import GLesmos from "./GLesmos";
+import BetterEvaluationView from "./better-evaluation-view";
+import BuiltinSettings from "./builtin-settings";
+import DebugMode from "./debug-mode";
+import DuplicateHotkey from "./duplicate-hotkey";
+import FindReplace from "./find-replace";
+import FolderTools from "./folder-tools";
+import HideErrors from "./hide-errors";
+import PerformanceInfo from "./performance-info";
+import PillboxMenus from "./pillbox-menus";
+import PinExpressions from "./pin-expressions";
+import RightClickTray from "./right-click-tray";
+import SetPrimaryColor from "./set-primary-color";
+import ShiftEnterNewline from "./shift-enter-newline";
+import ShowTips from "./show-tips";
+import TextMode from "./text-mode";
+import VideoCreator from "./video-creator";
+import Wakatime from "./wakatime";
+import WolframToDesmos from "./wolfram2desmos";
 import MainController from "main/Controller";
-import glesmos from "plugins/GLesmos";
-import builtinSettings from "plugins/builtin-settings";
-import debugMode from "plugins/debug-mode";
-import duplicateHotkey from "plugins/duplicate-hotkey";
-import findReplace from "plugins/find-replace";
-import folderTools, { FolderTools } from "plugins/folder-tools";
-import hideErrors, { HideErrors } from "plugins/hide-errors";
-import performanceInfo from "plugins/performance-info";
-import pillboxMenus, { PillboxMenus } from "plugins/pillbox-menus";
-import pinExpressions, { PinExpressions } from "plugins/pin-expressions";
-import rightClickTray from "plugins/right-click-tray";
-import setPrimaryColor from "plugins/set-primary-color";
-import shiftEnterNewline from "plugins/shift-enter-newline";
-import showTips from "plugins/show-tips";
-import textMode from "plugins/text-mode";
-import videoCreator from "plugins/video-creator";
-import wakatime from "plugins/wakatime";
-import wolfram2desmos from "plugins/wolfram2desmos";
 
 interface ConfigItemGeneric {
   key: string;
@@ -43,74 +41,93 @@ export interface ConfigItemString extends ConfigItemGeneric {
 export type ConfigItem = ConfigItemBoolean | ConfigItemString;
 
 export type GenericSettings = Record<string, any>;
-export type PluginEnableResult = Record<string, any> | undefined;
 
-export type Plugin<Settings extends GenericSettings = GenericSettings> = {
+export interface PluginInstance<
+  Settings extends GenericSettings = GenericSettings
+> {
+  afterEnable(config?: unknown): void;
+  beforeDisable(): void;
+  // Force plugins to consider afterDisable
+  afterDisable(): void;
+  onConfigChange(config: Settings): void;
+}
+
+export interface Plugin<Settings extends GenericSettings = GenericSettings> {
   /** The ID is fixed permanently, even for future releases. It is kebab
    * case. If you rename the plugin, keep the ID the same for settings sync */
   id: string;
-  /** The key is used for dot access syntax and should be camelCase */
-  key?: undefined;
   // display name and descriptions are managed in a translations file
   descriptionLearnMore?: string;
-  onEnable(controller: MainController, config?: unknown): PluginEnableResult;
+  enabledByDefault: boolean;
+  forceEnabled?: boolean;
+  new (controller: MainController, config?: unknown): PluginInstance<Settings>;
   config?: readonly ConfigItem[];
-  onConfigChange?(config: Settings): void;
-} & (
-  | {
-      onDisable(controller: MainController): void;
-      afterDisable?(): void;
-      enabledByDefault: boolean;
-    }
-  | {
-      // A core plugin, which can't be disabled
-      onDisable: null;
-      enabledByDefault: true;
-    }
-);
+}
 
-export const pluginList: Plugin[] = [
-  pillboxMenus,
-  builtinSettings,
-  betterEvaluationView,
-  setPrimaryColor,
-  wolfram2desmos,
-  pinExpressions,
-  videoCreator,
-  wakatime,
-  findReplace,
-  debugMode,
-  showTips,
-  rightClickTray,
-  duplicateHotkey,
-  glesmos,
-  shiftEnterNewline,
-  hideErrors,
-  folderTools,
-  textMode,
-  performanceInfo,
-];
+export const keyToPlugin = {
+  pillboxMenus: PillboxMenus,
+  builtinSettings: BuiltinSettings,
+  betterEvaluationView: BetterEvaluationView,
+  setPrimaryColor: SetPrimaryColor,
+  wolframToDesmos: WolframToDesmos,
+  pinExpressions: PinExpressions,
+  videoCreator: VideoCreator,
+  wakatime: Wakatime,
+  findReplace: FindReplace,
+  debugMode: DebugMode,
+  showTips: ShowTips,
+  rightClickTray: RightClickTray,
+  duplicateHotkey: DuplicateHotkey,
+  glesmos: GLesmos,
+  shiftEnterNewline: ShiftEnterNewline,
+  hideErrors: HideErrors,
+  folderTools: FolderTools,
+  textMode: TextMode,
+  performanceInfo: PerformanceInfo,
+} satisfies Record<string, Plugin>;
 
-export type PluginID = string;
+export const pluginList = Object.values(keyToPlugin);
 
 export const plugins = new Map(pluginList.map((plugin) => [plugin.id, plugin]));
 
-type U<T> = T | undefined;
+type KP = typeof keyToPlugin;
+type KeyToPluginInstance = {
+  readonly [K in keyof KP]: undefined | InstanceType<KP[K]>;
+};
+type IDToPluginInstance = {
+  [K in keyof KP as KP[K]["id"]]?: InstanceType<KP[K]>;
+};
+export type PluginID = keyof IDToPluginInstance;
+export type SpecificPlugin = KP[keyof KP];
+
 // prettier-ignore
-export class TransparentPlugins {
+export class TransparentPlugins implements KeyToPluginInstance {
   /** Note that `enabledPlugins[id]` is truthy if and only if `id` is of
    * an enabled plugin. Otherwise, `enabledPlugins[id]` is undefined */
-  enabledPlugins: Record<PluginID, Record<string, any> | undefined> = {};
+  private readonly ep: IDToPluginInstance = {};
 
-  private get ep () { return this.enabledPlugins; }
-  get pillboxMenus         () { return this.ep["pillbox-menus"]          as U<PillboxMenus>; }
-  get betterEvaluationView () { return this.ep["better-evaluation-view"] as U<object>; }
-  get debugMode            () { return this.ep["debug-mode"]             as U<object>; }
-  get pinExpressions       () { return this.ep["pin-expressions"]        as U<PinExpressions>; }
-  get folderTools          () { return this.ep["folder-tools"]           as U<FolderTools>; }
-  get textMode             () { return this.ep["text-mode"]              as U<TextMode>; }
-  get glesmos              () { return this.ep.GLesmos                   as U<GLesmos>; }
-  get hideErrors           () { return this.ep["hide-errors"]            as U<HideErrors>; }
-  get shiftEnterNewline    () { return this.ep["shift-enter-newline"]    as U<object>; }
-  get showTips             () { return this.ep["show-tips"]              as U<object>; }
+  readonly enabledPlugins = this.ep as Record<
+    PluginID,
+    PluginInstance | undefined
+  >;
+
+  get pillboxMenus () { return this.ep["pillbox-menus"]; }
+  get builtinSettings () { return this.ep["builtin-settings"]; }
+  get betterEvaluationView () { return this.ep["better-evaluation-view"]; }
+  get setPrimaryColor () { return this.ep["set-primary-color"]; }
+  get wolframToDesmos () { return this.ep["wolfram2desmos"]; }
+  get pinExpressions () { return this.ep["pin-expressions"]; }
+  get videoCreator () { return this.ep["video-creator"]; }
+  get wakatime () { return this.ep["wakatime"]; }
+  get findReplace () { return this.ep["find-and-replace"]; }
+  get debugMode () { return this.ep["debug-mode"]; }
+  get showTips () { return this.ep["show-tips"]; }
+  get rightClickTray () { return this.ep["right-click-tray"]; }
+  get duplicateHotkey () { return this.ep["duplicate-expression-hotkey"]; }
+  get glesmos () { return this.ep["GLesmos"]; }
+  get shiftEnterNewline () { return this.ep["shift-enter-newline"]; }
+  get hideErrors () { return this.ep["hide-errors"]; }
+  get folderTools () { return this.ep["folder-tools"]; }
+  get textMode () { return this.ep["text-mode"]; }
+  get performanceInfo () { return this.ep["performance-info"]; }
 }

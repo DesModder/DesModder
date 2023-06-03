@@ -1,4 +1,4 @@
-import Controller from "../Controller";
+import VideoCreator from "..";
 import { cancelCapture, CaptureMethod } from "../backend/capture";
 import "./CaptureMethod.css";
 import { Component, jsx } from "DCGView";
@@ -17,9 +17,9 @@ import { For } from "components/desmosComponents";
 import { format } from "i18n/i18n-core";
 
 export default class SelectCapture extends Component<{
-  controller: Controller;
+  controller: VideoCreator;
 }> {
-  controller!: Controller;
+  controller!: VideoCreator;
 
   init() {
     this.controller = this.props.controller();

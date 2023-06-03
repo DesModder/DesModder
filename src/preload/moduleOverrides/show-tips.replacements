@@ -32,7 +32,7 @@ $DCGView.createElement(
     {
       predicate: () => DSM.showTips,
     },
-    () => DSM.showTips.createTipElement()
+    () => DSM.showTips?.createTipElement()
   )
 )
 ```

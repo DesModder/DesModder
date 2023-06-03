@@ -1,7 +1,7 @@
 import { Calc } from "../../globals/window";
+import { PluginController } from "../PluginController";
 import "./_overrides.less";
 import "./custom-overrides.less";
-import MainController from "main/Controller";
 import { Plugin } from "plugins";
 import { getHSVfromRGB, parseCSSHex } from "plugins/GLesmos/colorParsing";
 
@@ -10,14 +10,7 @@ interface Config {
   doFavicon: boolean;
 }
 
-let wiggle = 0;
-
-function scaleColor(hex: string, s: number) {
-  const parsed = parseCSSHex(hex);
-  const [r, g, b] = parsed ?? [0, 0, 0];
-  s *= 255;
-  return `${r * s + wiggle}, ${g * s}, ${b * s}`;
-}
+const DEFAULT_COLOR = "#2f72dc";
 
 const colorMapping = {
   "--dsm-primary-dark-5": 0.5,
@@ -29,125 +22,132 @@ const colorMapping = {
   "--dsm-primary-light-1": 1.11,
 };
 
-function applyColor(hex: string) {
-  wiggle = 0.1 - wiggle;
-  for (const [key, scale] of Object.entries(colorMapping)) {
-    const s = scaleColor(hex, scale);
-    apiContainer.style.setProperty(key, `rgb(${s})`);
-    apiContainer.style.setProperty(key + "-rgb", `${s}`);
-  }
-}
+const configList = [
+  {
+    key: "primaryColor",
+    type: "string",
+    variant: "color",
+    default: DEFAULT_COLOR,
+  },
+  {
+    key: "doFavicon",
+    type: "boolean",
+    default: true,
+  },
+] as const;
 
-let originalImage: HTMLImageElement | null = null;
 const faviconLink = document.querySelector(
   "link[rel~='icon'][type]"
 ) as HTMLLinkElement;
 const originalHref = faviconLink.href;
 
-function applyHexToFavicon(hex: string) {
-  if (originalImage) {
-    applyHexToOldFavicon(hex);
-  } else {
-    const image = new Image();
-    image.onload = () => {
-      originalImage = image;
-      applyHexToOldFavicon(hex);
-    };
-    image.src = faviconLink.href;
+export default class SetPrimaryColor extends PluginController {
+  static id = "set-primary-color" as const;
+  static enabledByDefault = false;
+  static config = configList;
+  wiggle = 0;
+  originalImage: HTMLImageElement | null = null;
+  apiContainer!: HTMLElement;
+
+  afterEnable(config: Config) {
+    this.apiContainer = document.querySelector(
+      ".dcg-calculator-api-container"
+    )!;
+    this.applyConfig(config);
+    this.apiContainer.classList.add("dsm-set-primary-color");
+    this.senseDarkReader(config);
   }
-}
 
-function applyHexToOldFavicon(hex: string) {
-  const [r, g, b] = parseCSSHex(hex) ?? [0, 0, 0];
-  const [hue, sat, li] = getHSVfromRGB(r, g, b);
-
-  if (!originalImage) return;
-  const canvas = document.createElement("canvas");
-  canvas.width = originalImage.naturalWidth;
-  canvas.height = originalImage.naturalHeight;
-  const ctx = canvas.getContext("2d");
-  if (ctx === null) return;
-  const [bsat, bli, bhue] = Calc.controller.isGeometry()
-    ? [0.67, 0.8, 285]
-    : [1, 0.73, 130];
-  ctx.filter = `saturate(${sat / bsat})
-    brightness(${li / bli})
-    hue-rotate(${hue - bhue}deg)`;
-  ctx.drawImage(originalImage, 0, 0);
-  faviconLink.href = canvas.toDataURL("image/png");
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
-let apiContainer!: HTMLElement;
-
-function onEnable(_controller: MainController, config: Config) {
-  apiContainer = document.querySelector(".dcg-calculator-api-container")!;
-  applyConfig(config);
-  apiContainer.classList.add("dsm-set-primary-color");
-  senseDarkReader(config);
-  return undefined;
-}
-
-/** Wait for up to 5 seconds for Dark Reader to add its own style. Immediately
- * re-update the colors since Dark Reader sometimes does some funny stuff. */
-function senseDarkReader(config: Config) {
-  const observer = new MutationObserver((mutations) => {
-    for (const m of mutations) {
-      if (
-        [...m.addedNodes].some((x) =>
-          (x as HTMLElement).classList.contains("darkreader")
-        )
-      ) {
-        applyColor(config.primaryColor);
-        observer.disconnect();
-      }
-    }
-  });
-  observer.observe(document.head, {
-    attributes: false,
-    childList: true,
-    subtree: false,
-  });
-  setTimeout(() => observer.disconnect(), 5000);
-}
-
-function applyConfig(config: Config) {
-  applyColor(config.primaryColor);
-  if (config.doFavicon) {
-    applyHexToFavicon(config.primaryColor);
-  } else {
+  afterDisable() {
+    this.applyColor(DEFAULT_COLOR);
+    this.apiContainer.classList.remove("dsm-set-primary-color");
     faviconLink.href = originalHref;
   }
-}
 
-const DEFAULT_COLOR = "#2f72dc";
-
-function onDisable() {
-  applyColor(DEFAULT_COLOR);
-  apiContainer.classList.remove("dsm-set-primary-color");
-  faviconLink.href = originalHref;
-}
-
-const setPrimaryColor: Plugin = {
-  id: "set-primary-color",
-  onEnable,
-  onDisable,
-  enabledByDefault: false,
-  config: [
-    {
-      key: "primaryColor",
-      type: "string",
-      variant: "color",
-      default: DEFAULT_COLOR,
-    },
-    {
-      key: "doFavicon",
-      type: "boolean",
-      default: true,
-    },
-  ],
   onConfigChange(config: Config) {
-    applyConfig(config);
-  },
-} as const;
-export default setPrimaryColor;
+    this.applyConfig(config);
+  }
+
+  scaleColor(hex: string, s: number) {
+    const parsed = parseCSSHex(hex);
+    const [r, g, b] = parsed ?? [0, 0, 0];
+    s *= 255;
+    return `${r * s + this.wiggle}, ${g * s}, ${b * s}`;
+  }
+
+  applyColor(hex: string) {
+    this.wiggle = 0.1 - this.wiggle;
+    for (const [key, scale] of Object.entries(colorMapping)) {
+      const s = this.scaleColor(hex, scale);
+      this.apiContainer.style.setProperty(key, `rgb(${s})`);
+      this.apiContainer.style.setProperty(key + "-rgb", `${s}`);
+    }
+  }
+
+  applyHexToFavicon(hex: string) {
+    if (this.originalImage) {
+      this.applyHexToOldFavicon(hex);
+    } else {
+      const image = new Image();
+      image.onload = () => {
+        this.originalImage = image;
+        this.applyHexToOldFavicon(hex);
+      };
+      image.src = faviconLink.href;
+    }
+  }
+
+  applyHexToOldFavicon(hex: string) {
+    const [r, g, b] = parseCSSHex(hex) ?? [0, 0, 0];
+    const [hue, sat, li] = getHSVfromRGB(r, g, b);
+
+    if (!this.originalImage) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = this.originalImage.naturalWidth;
+    canvas.height = this.originalImage.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    if (ctx === null) return;
+    const [bsat, bli, bhue] = Calc.controller.isGeometry()
+      ? [0.67, 0.8, 285]
+      : [1, 0.73, 130];
+    ctx.filter = `saturate(${sat / bsat})
+    brightness(${li / bli})
+    hue-rotate(${hue - bhue}deg)`;
+    ctx.drawImage(this.originalImage, 0, 0);
+    faviconLink.href = canvas.toDataURL("image/png");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  /** Wait for up to 5 seconds for Dark Reader to add its own style. Immediately
+   * re-update the colors since Dark Reader sometimes does some funny stuff. */
+  senseDarkReader(config: Config) {
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (
+          [...m.addedNodes].some((x) =>
+            (x as HTMLElement).classList.contains("darkreader")
+          )
+        ) {
+          this.applyColor(config.primaryColor);
+          observer.disconnect();
+        }
+      }
+    });
+    observer.observe(document.head, {
+      attributes: false,
+      childList: true,
+      subtree: false,
+    });
+    setTimeout(() => observer.disconnect(), 5000);
+  }
+
+  applyConfig(config: Config) {
+    this.applyColor(config.primaryColor);
+    if (config.doFavicon) {
+      this.applyHexToFavicon(config.primaryColor);
+    } else {
+      faviconLink.href = originalHref;
+    }
+  }
+}
+SetPrimaryColor satisfies Plugin;

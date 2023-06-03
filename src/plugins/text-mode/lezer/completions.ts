@@ -1,4 +1,4 @@
-import TextMode from "../Controller";
+import TextMode from "..";
 import TextAST, { NodePath } from "../down/TextAST";
 import * as Defaults from "../down/style/defaults";
 import { getIndentation } from "../modify";

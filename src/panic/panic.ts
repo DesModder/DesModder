@@ -1,5 +1,6 @@
 import { Console } from "../globals/window";
 import { format } from "../i18n/i18n-core";
+import { PluginID } from "../plugins";
 import { Block } from "../preload/replacementHelpers/parse";
 import { postMessageUp } from "../utils/messages";
 import panicHTML from "./panic.html";
@@ -18,7 +19,7 @@ function insertPanicElement() {
         value: inputs
           .filter((el) => el.checked)
           .map((el) => el.dataset.plugin)
-          .filter((n): n is string => n !== undefined),
+          .filter((n): n is PluginID => n !== undefined),
       });
       location.reload();
     });

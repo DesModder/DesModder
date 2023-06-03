@@ -1,4 +1,4 @@
-import TextMode from "../Controller";
+import TextMode from "..";
 import { analysisStateField, doLint } from "../LanguageServer";
 // Language extension
 import { textMode } from "../lezer/index";

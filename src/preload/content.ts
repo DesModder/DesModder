@@ -17,15 +17,20 @@ enum StorageKeys {
 interface InitialData {
   [StorageKeys.forceDisabled]: PluginID[];
   [StorageKeys.forceDisabledVersion]: string;
-  [StorageKeys.pluginsEnabled]: Record<PluginID, boolean>;
-  [StorageKeys.pluginSettings]: Record<PluginID, GenericSettings>;
+  [StorageKeys.pluginsEnabled]: Record<PluginID, boolean | undefined>;
+  [StorageKeys.pluginSettings]: Record<PluginID, GenericSettings | undefined>;
 }
 
 const initialDataDefaults: InitialData = {
   [StorageKeys.forceDisabled]: [], // default: no plugins force-disabled
   [StorageKeys.forceDisabledVersion]: "",
-  [StorageKeys.pluginsEnabled]: {},
-  [StorageKeys.pluginSettings]: {}, // default: no settings known
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  [StorageKeys.pluginsEnabled]: {} as Record<PluginID, boolean | undefined>,
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  [StorageKeys.pluginSettings]: {} as Record<
+    PluginID,
+    GenericSettings | undefined
+  >, // default: no settings known
 };
 
 type UntrustedInitialData = Partial<InitialData> | undefined;

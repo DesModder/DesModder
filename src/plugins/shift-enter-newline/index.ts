@@ -1,11 +1,8 @@
+import { PluginController } from "../PluginController";
 import { Plugin } from "plugins";
 
-const shiftEnterNewline: Plugin = {
-  id: "shift-enter-newline",
-  // Still need to declare empty onEnable and onDisable to get the right UI
-  onEnable: () => undefined,
-  onDisable: () => {},
-  enabledByDefault: true,
-  /* Has module overrides */
-} as const;
-export default shiftEnterNewline;
+export default class ShiftEnterNewline extends PluginController {
+  static id = "shift-enter-newline" as const;
+  static enabledByDefault = true;
+}
+ShiftEnterNewline satisfies Plugin;

@@ -1,4 +1,4 @@
-import { PillboxMenus } from "..";
+import PillboxMenus from "..";
 import "./Menu.less";
 import { Component, jsx } from "DCGView";
 import Toggle from "components/Toggle";
@@ -14,7 +14,7 @@ import {
   ConfigItem,
   ConfigItemString,
   GenericSettings,
-  Plugin,
+  SpecificPlugin,
   PluginID,
   plugins,
 } from "plugins";
@@ -89,7 +89,9 @@ export default class Menu extends Component<{
               {() => (
                 <For each={() => categoryPlugins[category]} key={(id) => id}>
                   <div class="dsm-category-container">
-                    {(pluginID: string) => this.plugin(plugins.get(pluginID)!)}
+                    {(pluginID: PluginID) =>
+                      this.plugin(plugins.get(pluginID)!)
+                    }
                   </div>
                 </For>
               )}
@@ -100,7 +102,7 @@ export default class Menu extends Component<{
     );
   }
 
-  plugin(plugin: Plugin) {
+  plugin(plugin: SpecificPlugin) {
     return (
       <div class="dcg-options-menu-section dsm-plugin-section" key={plugin.id}>
         <div class="dcg-options-menu-section-title dsm-plugin-title-bar">
@@ -169,7 +171,7 @@ export default class Menu extends Component<{
     if (pluginSettings === undefined) return null;
     return (
       <div>
-        {plugin.config.map((item) => (
+        {plugin.config.map((item: ConfigItem) => (
           <If predicate={() => item.shouldShow?.(pluginSettings) ?? true}>
             {() => (
               <Switch key={() => item.type}>
@@ -191,7 +193,7 @@ export default class Menu extends Component<{
 function booleanOption(
   controller: PillboxMenus,
   item: ConfigItem,
-  plugin: Plugin,
+  plugin: SpecificPlugin,
   settings: GenericSettings
 ) {
   const toggle = () =>
@@ -220,7 +222,7 @@ function booleanOption(
 function stringOption(
   controller: PillboxMenus,
   item: ConfigItem,
-  plugin: Plugin,
+  plugin: SpecificPlugin,
   settings: GenericSettings
 ) {
   return (
@@ -294,18 +296,18 @@ function categoryDisplayName(id: string) {
   return format("category-" + id + "-name");
 }
 
-function pluginDisplayName(plugin: Plugin) {
+function pluginDisplayName(plugin: SpecificPlugin) {
   return format(plugin.id + "-name");
 }
 
-function pluginDesc(plugin: Plugin) {
+function pluginDesc(plugin: SpecificPlugin) {
   return format(plugin.id + "-desc");
 }
 
-function configItemDesc(plugin: Plugin, item: ConfigItem) {
+function configItemDesc(plugin: SpecificPlugin, item: ConfigItem) {
   return format(plugin.id + "-opt-" + item.key + "-desc");
 }
 
-function configItemName(plugin: Plugin, item: ConfigItem) {
+function configItemName(plugin: SpecificPlugin, item: ConfigItem) {
   return format(plugin.id + "-opt-" + item.key + "-name");
 }

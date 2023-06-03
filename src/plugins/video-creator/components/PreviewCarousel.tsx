@@ -1,12 +1,12 @@
-import Controller from "../Controller";
+import VideoCreator from "..";
 import "./PreviewCarousel.less";
 import { Component, jsx } from "DCGView";
 import { If } from "components";
 
 export default class PreviewCarousel extends Component<{
-  controller: Controller;
+  controller: VideoCreator;
 }> {
-  controller!: Controller;
+  controller!: VideoCreator;
 
   init() {
     this.controller = this.props.controller();

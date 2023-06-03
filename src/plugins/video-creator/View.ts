@@ -1,6 +1,5 @@
-import { controller } from "./index";
+import VideoCreator from ".";
 import { Calc } from "globals/window";
-import MainController from "main/Controller";
 
 const captureFrameID = "dsm-vc-capture-frame";
 
@@ -8,7 +7,7 @@ function percentage(x: number) {
   return `${100 * x}%`;
 }
 
-function applyCaptureFrame() {
+function applyCaptureFrame(controller: VideoCreator) {
   let frame = document.getElementById(captureFrameID);
   if (
     controller.focusedMQ === "capture-height" ||
@@ -47,7 +46,7 @@ function applyCaptureFrame() {
   }
 }
 
-export function updateView(mainController: MainController) {
-  applyCaptureFrame();
-  mainController.pillboxMenus?.updateExtraComponents();
+export function updateView(vc: VideoCreator) {
+  applyCaptureFrame(vc);
+  vc.controller.pillboxMenus?.updateExtraComponents();
 }
