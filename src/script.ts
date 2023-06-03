@@ -12,6 +12,6 @@ window.DesModder = {
   // Not used by DesModder, but some external scripts may still reference this
   exposedPlugins: controller.enabledPlugins,
 };
-window.DSM = controller.enabledPlugins;
+window.DSM = controller;
 
 controller.init();

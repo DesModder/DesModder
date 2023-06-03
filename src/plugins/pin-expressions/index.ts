@@ -3,7 +3,7 @@ import "./pinExpressions.less";
 import { Calc } from "globals/window";
 import { Plugin } from "plugins";
 
-class Controller extends PluginController {
+export class PinExpressions extends PluginController {
   pinExpression(id: string) {
     if (Calc.controller.getItemModel(id)?.type !== "folder")
       this.controller.updateExprMetadata(id, {
@@ -36,12 +36,11 @@ class Controller extends PluginController {
 
 const pinExpressions: Plugin = {
   id: "pin-expressions",
-  key: "pinExpressions",
   // Controller handles enable/disable by changing the results of isPinned
   // (used in modified module definitions), but we need to update views
   onEnable: (controller) => {
     Calc.controller.updateViews();
-    return new Controller(controller);
+    return new PinExpressions(controller);
   },
   onDisable: () => {
     Calc.controller.updateViews();

@@ -5,7 +5,7 @@ import { glesmosError, GLesmosShaderPackage } from "./shaders";
 import { Calc } from "globals/window";
 import MainController from "main/Controller";
 
-export default class Controller extends PluginController {
+export default class GLesmos extends PluginController {
   canvas: GLesmosCanvas | null = null;
 
   constructor(controller: MainController) {

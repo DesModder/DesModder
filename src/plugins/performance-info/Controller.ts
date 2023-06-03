@@ -35,7 +35,7 @@ export default class Controller extends PluginController {
     if (e.type !== "on-evaluator-changes") return;
     this.timingDataHistory?.push(e.timingData);
     if (this.timingDataHistory.length > 10) this.timingDataHistory.shift();
-    this.controller.enabledPlugins.pillboxMenus?.updateExtraComponents();
+    this.controller.pillboxMenus?.updateExtraComponents();
   }
 
   getTimingData() {

@@ -51,7 +51,6 @@ function onDisable() {
 
 const builtinSettings: Plugin = {
   id: "builtin-settings",
-  key: "builtinSettings",
   onEnable,
   onDisable,
   enabledByDefault: true,

@@ -1,16 +1,18 @@
 /* eslint-disable @typescript-eslint/method-signature-style */
+import GLesmos from "./GLesmos/Controller";
 import betterEvaluationView from "./better-evaluation-view";
+import TextMode from "./text-mode/Controller";
 import MainController from "main/Controller";
-import GLesmos from "plugins/GLesmos";
+import glesmos from "plugins/GLesmos";
 import builtinSettings from "plugins/builtin-settings";
 import debugMode from "plugins/debug-mode";
 import duplicateHotkey from "plugins/duplicate-hotkey";
 import findReplace from "plugins/find-replace";
-import folderTools from "plugins/folder-tools";
-import hideErrors from "plugins/hide-errors";
+import folderTools, { FolderTools } from "plugins/folder-tools";
+import hideErrors, { HideErrors } from "plugins/hide-errors";
 import performanceInfo from "plugins/performance-info";
-import pillboxMenus from "plugins/pillbox-menus";
-import pinExpressions from "plugins/pin-expressions";
+import pillboxMenus, { PillboxMenus } from "plugins/pillbox-menus";
+import pinExpressions, { PinExpressions } from "plugins/pin-expressions";
 import rightClickTray from "plugins/right-click-tray";
 import setPrimaryColor from "plugins/set-primary-color";
 import shiftEnterNewline from "plugins/shift-enter-newline";
@@ -48,7 +50,7 @@ export type Plugin<Settings extends GenericSettings = GenericSettings> = {
    * case. If you rename the plugin, keep the ID the same for settings sync */
   id: string;
   /** The key is used for dot access syntax and should be camelCase */
-  key: string;
+  key?: undefined;
   // display name and descriptions are managed in a translations file
   descriptionLearnMore?: string;
   onEnable(controller: MainController, config?: unknown): PluginEnableResult;
@@ -81,7 +83,7 @@ export const pluginList: Plugin[] = [
   showTips,
   rightClickTray,
   duplicateHotkey,
-  GLesmos,
+  glesmos,
   shiftEnterNewline,
   hideErrors,
   folderTools,
@@ -90,6 +92,25 @@ export const pluginList: Plugin[] = [
 ];
 
 export type PluginID = string;
-export type PluginKey = string;
 
 export const plugins = new Map(pluginList.map((plugin) => [plugin.id, plugin]));
+
+type U<T> = T | undefined;
+// prettier-ignore
+export class TransparentPlugins {
+  /** Note that `enabledPlugins[id]` is truthy if and only if `id` is of
+   * an enabled plugin. Otherwise, `enabledPlugins[id]` is undefined */
+  enabledPlugins: Record<PluginID, Record<string, any> | undefined> = {};
+
+  private get ep () { return this.enabledPlugins; }
+  get pillboxMenus         () { return this.ep["pillbox-menus"]          as U<PillboxMenus>; }
+  get betterEvaluationView () { return this.ep["better-evaluation-view"] as U<object>; }
+  get debugMode            () { return this.ep["debug-mode"]             as U<object>; }
+  get pinExpressions       () { return this.ep["pin-expressions"]        as U<PinExpressions>; }
+  get folderTools          () { return this.ep["folder-tools"]           as U<FolderTools>; }
+  get textMode             () { return this.ep["text-mode"]              as U<TextMode>; }
+  get glesmos              () { return this.ep.GLesmos                   as U<GLesmos>; }
+  get hideErrors           () { return this.ep["hide-errors"]            as U<HideErrors>; }
+  get shiftEnterNewline    () { return this.ep["shift-enter-newline"]    as U<object>; }
+  get showTips             () { return this.ep["show-tips"]              as U<object>; }
+}

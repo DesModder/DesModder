@@ -8,7 +8,7 @@ export let controller: Controller;
 
 function onEnable(c: MainController) {
   controller = new Controller(c);
-  c.enabledPlugins.pillboxMenus?.addPillboxButton({
+  c.pillboxMenus?.addPillboxButton({
     id: "dsm-vc-menu",
     tooltip: "video-creator-menu",
     iconClass: "dcg-icon-film",
@@ -24,15 +24,12 @@ function onEnable(c: MainController) {
 }
 
 function onDisable() {
-  controller.controller.enabledPlugins.pillboxMenus?.removePillboxButton(
-    "dsm-vc-menu"
-  );
+  controller.controller.pillboxMenus?.removePillboxButton("dsm-vc-menu");
   jquery(document).off(".expanded-menu-view");
 }
 
 const videoCreator: Plugin = {
   id: "video-creator",
-  key: "videoCreator",
   onEnable,
   onDisable,
   enabledByDefault: true,

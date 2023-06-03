@@ -7,7 +7,7 @@ import { DCGView, MountedComponent } from "DCGView";
 import { Calc } from "globals/window";
 import { plugins, Plugin, PluginID } from "plugins";
 
-export class PillboxController extends PluginController {
+export class PillboxMenus extends PluginController {
   expandedPlugin: string | null = null;
   private expandedCategory: string | null = null;
 
@@ -178,14 +178,13 @@ interface PillboxButton {
   iconClass: string;
   pinned?: boolean;
   // popup should return a JSX element. Not sure of type
-  popup: (c: PillboxController) => unknown;
+  popup: (c: PillboxMenus) => unknown;
 }
 
 const pillboxMenus: Plugin = {
   id: "pillbox-menus",
-  key: "pillboxMenus",
   onEnable: (c) => {
-    return new PillboxController(c);
+    return new PillboxMenus(c);
   },
   onDisable: null,
   enabledByDefault: true,

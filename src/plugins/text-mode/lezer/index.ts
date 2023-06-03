@@ -1,4 +1,4 @@
-import Controller from "../Controller";
+import TextMode from "../Controller";
 import { completions } from "./completions";
 import parser from "./syntax.grammar";
 import { CompletionContext } from "@codemirror/autocomplete";
@@ -12,7 +12,7 @@ import {
 } from "@codemirror/language";
 import { styleTags, tags as t } from "@lezer/highlight";
 
-export const TextModeLanguage = (controller: Controller) =>
+export const TextModeLanguage = (controller: TextMode) =>
   LRLanguage.define({
     parser: parser.configure({
       props: [
@@ -47,6 +47,6 @@ export const TextModeLanguage = (controller: Controller) =>
     },
   });
 
-export function TextMode(controller: Controller) {
+export function textMode(controller: TextMode) {
   return new LanguageSupport(TextModeLanguage(controller));
 }

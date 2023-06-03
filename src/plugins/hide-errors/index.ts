@@ -31,7 +31,7 @@ function initPromptSlider() {
   };
 }
 
-class Controller extends PluginController {
+export class HideErrors extends PluginController {
   hideError(id: string) {
     this.controller.updateExprMetadata(id, {
       errorHidden: true,
@@ -51,7 +51,6 @@ class Controller extends PluginController {
 
 const hideErrors: Plugin = {
   id: "hide-errors",
-  key: "hideErrors",
   onEnable: (controller) => {
     if (!initOnce) {
       initOnce = true;
@@ -59,7 +58,7 @@ const hideErrors: Plugin = {
     }
     enabled = true;
     Calc.controller.updateViews();
-    return new Controller(controller);
+    return new HideErrors(controller);
   },
   onDisable: () => {
     enabled = false;

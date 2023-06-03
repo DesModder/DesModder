@@ -1,12 +1,11 @@
-import Controller from "./Controller";
+import TextMode from "./Controller";
 import { Calc } from "globals/window";
 import { Plugin } from "plugins";
 
-const controller = new Controller();
+const controller = new TextMode();
 
 const textMode: Plugin = {
   id: "text-mode",
-  key: "textMode",
   descriptionLearnMore:
     "https://github.com/DesModder/DesModder/tree/main/src/plugins/text-mode/docs/intro.md",
   onEnable: () => {

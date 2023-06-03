@@ -1,4 +1,4 @@
-import { PillboxController } from "..";
+import { PillboxMenus } from "..";
 import "./Menu.less";
 import { Component, jsx } from "DCGView";
 import Toggle from "components/Toggle";
@@ -19,7 +19,7 @@ import {
   plugins,
 } from "plugins";
 
-export function MenuFunc(controller: PillboxController) {
+export function MenuFunc(controller: PillboxMenus) {
   return <Menu controller={controller} />;
 }
 
@@ -48,9 +48,9 @@ const categoryPlugins: Record<string, PluginID[]> = {
 const categories = ["core", "utility", "visual", "integrations"];
 
 export default class Menu extends Component<{
-  controller: PillboxController;
+  controller: PillboxMenus;
 }> {
-  controller!: PillboxController;
+  controller!: PillboxMenus;
 
   init() {
     this.controller = this.props.controller();
@@ -189,7 +189,7 @@ export default class Menu extends Component<{
 }
 
 function booleanOption(
-  controller: PillboxController,
+  controller: PillboxMenus,
   item: ConfigItem,
   plugin: Plugin,
   settings: GenericSettings
@@ -218,7 +218,7 @@ function booleanOption(
 }
 
 function stringOption(
-  controller: PillboxController,
+  controller: PillboxMenus,
   item: ConfigItem,
   plugin: Plugin,
   settings: GenericSettings
@@ -262,10 +262,10 @@ function stringOption(
 }
 
 class ResetButton extends Component<{
-  controller: PillboxController;
+  controller: PillboxMenus;
   key: string;
 }> {
-  controller!: PillboxController;
+  controller!: PillboxMenus;
   key!: string;
 
   init() {

@@ -22,15 +22,13 @@ export class PerformanceView extends Component<{
               <IconButton
                 iconClass={"dsm-icon-bookmark"}
                 onTap={() => {
-                  this.props
-                    .mainController()
-                    .enabledPlugins.pillboxMenus?.toggleMenuPinned();
+                  this.props.mainController().pillboxMenus?.toggleMenuPinned();
                 }}
                 btnClass={() => ({
                   "dsm-pi-pin-menu-button": true,
                   "dsm-selected":
-                    this.props.mainController().enabledPlugins.pillboxMenus
-                      ?.pillboxMenuPinned,
+                    this.props.mainController().pillboxMenus
+                      ?.pillboxMenuPinned ?? false,
                 })}
               />
             </Tooltip>

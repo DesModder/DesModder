@@ -8,7 +8,6 @@ function apiContainer() {
 
 const showTips: Plugin = {
   id: "show-tips",
-  key: "showTips",
   onEnable: () => {
     apiContainer()?.classList.add("dsm-show-tips");
     Calc.controller.updateViews();

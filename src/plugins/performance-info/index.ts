@@ -7,11 +7,9 @@ let controller: Controller;
 
 const performanceInfo: Plugin = {
   id: "performance-info",
-  key: "performanceInfo",
   onEnable: (c) => {
     controller = new Controller(c);
-    const pm = c.enabledPlugins.pillboxMenus;
-    pm?.addPillboxButton({
+    c.pillboxMenus?.addPillboxButton({
       id: "dsm-pi-menu",
       tooltip: "performance-info-name",
       iconClass: "dsm-icon-pie-chart",
@@ -21,8 +19,7 @@ const performanceInfo: Plugin = {
   },
   onDisable: (c) => {
     controller.stop();
-    const pm = c.enabledPlugins.pillboxMenus;
-    pm?.removePillboxButton("dsm-pi-menu");
+    c.pillboxMenus?.removePillboxButton("dsm-pi-menu");
     jquery(document).off(".expanded-menu-view");
   },
   enabledByDefault: false,

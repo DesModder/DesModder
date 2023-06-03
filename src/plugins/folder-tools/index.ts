@@ -4,7 +4,7 @@ import { Calc } from "globals/window";
 import { Plugin } from "plugins";
 import { List } from "utils/depUtils";
 
-class Controller extends PluginController {
+export class FolderTools extends PluginController {
   folderDump(folderIndex: number) {
     const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
     if (!folderModel || folderModel.type !== "folder") return;
@@ -109,8 +109,7 @@ class Controller extends PluginController {
 
 const folderTools: Plugin = {
   id: "folder-tools",
-  key: "folderTools",
-  onEnable: (controller) => new Controller(controller),
+  onEnable: (controller) => new FolderTools(controller),
   onDisable: () => {},
   enabledByDefault: true,
   /* Has module overrides */

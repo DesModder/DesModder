@@ -130,7 +130,6 @@ function onDisable() {
 
 const setPrimaryColor: Plugin = {
   id: "set-primary-color",
-  key: "setPrimaryColor",
   onEnable,
   onDisable,
   enabledByDefault: false,

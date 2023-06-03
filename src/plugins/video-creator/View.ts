@@ -49,5 +49,5 @@ function applyCaptureFrame() {
 
 export function updateView(mainController: MainController) {
   applyCaptureFrame();
-  mainController.enabledPlugins.pillboxMenus?.updateExtraComponents();
+  mainController.pillboxMenus?.updateExtraComponents();
 }

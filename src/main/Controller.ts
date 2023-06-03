@@ -10,10 +10,16 @@ import {
   changeExprInMetadata,
 } from "./metadata/manage";
 import window, { Calc } from "globals/window";
-import { plugins, pluginList, PluginID, GenericSettings } from "plugins";
+import {
+  plugins,
+  pluginList,
+  PluginID,
+  GenericSettings,
+  TransparentPlugins,
+} from "plugins";
 import { postMessageUp, mapToRecord, recordToMap } from "utils/messages";
 
-export default class MainController {
+export default class MainController extends TransparentPlugins {
   /**
    * pluginsEnabled keeps track of what plugins the user wants enabled,
    * regardless of forceDisabled settings.
@@ -22,13 +28,10 @@ export default class MainController {
   private readonly forceDisabled: Set<string>;
   pluginSettings: Map<PluginID, GenericSettings>;
 
-  /** Note that `enabledPlugins[key]` is truthy if and only if `key` is of
-   * an enabled plugins. Otherwise, `enabledPlugins[key]` is undefined */
-  enabledPlugins: typeof window.DSM = {};
-
   graphMetadata: GraphMetadata = getBlankMetadata();
 
   constructor() {
+    super();
     // default values
     this.pluginSettings = new Map(
       pluginList.map(
@@ -86,7 +89,7 @@ export default class MainController {
     for (const { id } of pluginList) {
       if (this.isPluginEnabled(id)) this._enablePlugin(id);
     }
-    this.enabledPlugins.pillboxMenus?.updateMenuView();
+    this.pillboxMenus?.updateMenuView();
     // metadata stuff
     Calc.observeEvent("change.dsm-main-controller", () => {
       this.checkForMetadataChange();
@@ -94,7 +97,7 @@ export default class MainController {
     this.checkForMetadataChange();
     // The graph loaded before DesModder loaded, so DesModder was not available to
     // return true when asked isGlesmosMode. Refresh those expressions now
-    this.enabledPlugins.glesmos?.checkGLesmos();
+    this.glesmos?.checkGLesmos();
   }
 
   setPluginEnabled(id: PluginID, isEnabled: boolean) {
@@ -103,7 +106,7 @@ export default class MainController {
     this.pluginsEnabled.set(id, isEnabled);
     if (id === "GLesmos") {
       // Need to refresh glesmos expressions
-      this.enabledPlugins.glesmos?.checkGLesmos();
+      this.glesmos?.checkGLesmos();
     }
     if (!same)
       postMessageUp({
@@ -119,9 +122,9 @@ export default class MainController {
         plugin.onDisable(this);
         this.pluginsEnabled.delete(id);
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete this.enabledPlugins[plugin.key];
+        delete this.enabledPlugins[plugin.id];
         this.setPluginEnabled(id, false);
-        this.enabledPlugins.pillboxMenus?.updateMenuView();
+        this.pillboxMenus?.updateMenuView();
         plugin.afterDisable?.();
       }
     }
@@ -131,9 +134,9 @@ export default class MainController {
     const plugin = plugins.get(id);
     if (plugin !== undefined) {
       const res = plugin.onEnable(this, this.pluginSettings.get(id));
-      this.enabledPlugins[plugin.key] = res ?? {};
+      this.enabledPlugins[plugin.id] = res ?? {};
       this.setPluginEnabled(id, true);
-      this.enabledPlugins.pillboxMenus?.updateMenuView();
+      this.pillboxMenus?.updateMenuView();
     }
   }
 
@@ -194,7 +197,7 @@ export default class MainController {
       const onConfigChange = plugins.get(pluginID)?.onConfigChange;
       if (onConfigChange !== undefined) onConfigChange(pluginSettings);
     }
-    this.enabledPlugins.pillboxMenus?.updateMenuView();
+    this.pillboxMenus?.updateMenuView();
   }
 
   checkForMetadataChange() {
@@ -214,7 +217,7 @@ export default class MainController {
       }
     }
     this.graphMetadata = newMetadata;
-    this.enabledPlugins.pinExpressions?.applyPinnedStyle();
+    this.pinExpressions?.applyPinnedStyle();
   }
 
   _updateExprMetadata(id: string, obj: Partial<MetadataExpression>) {
@@ -241,7 +244,7 @@ export default class MainController {
   }
 
   finishUpdateMetadata() {
-    this.enabledPlugins.pinExpressions?.applyPinnedStyle();
+    this.pinExpressions?.applyPinnedStyle();
     this.commitStateChange(false);
   }
 

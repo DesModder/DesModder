@@ -1,4 +1,4 @@
-import Controller from "../Controller";
+import TextMode from "../Controller";
 import TextAST, { NodePath } from "../down/TextAST";
 import * as Defaults from "../down/style/defaults";
 import { getIndentation } from "../modify";
@@ -78,10 +78,7 @@ const PROGRAM_COMPLETIONS: Completion[] = [
   ...FOLDER_COMPLETIONS,
 ];
 
-export function completions(
-  controller: Controller,
-  context: CompletionContext
-) {
+export function completions(controller: TextMode, context: CompletionContext) {
   const word = context.matchBefore(/\w*/);
   if (word === null || (word.from === word.to && !context.explicit))
     return null;
@@ -113,7 +110,7 @@ export function completions(
  *   StyleMapping . MappingEntry
  */
 function styleCompletions(
-  controller: Controller,
+  controller: TextMode,
   node: SyntaxNode
 ): Completion[] {
   const defaults =
@@ -123,7 +120,7 @@ function styleCompletions(
   return styleCompletionsFromDefaults(defaults);
 }
 
-function styleDefaults(controller: Controller, node: SyntaxNode): any {
+function styleDefaults(controller: TextMode, node: SyntaxNode): any {
   if (
     node.name === "ExprStatement" &&
     node.parent?.name === "BlockInner" &&

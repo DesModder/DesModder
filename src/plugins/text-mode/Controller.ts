@@ -6,7 +6,7 @@ import { EditorView, ViewUpdate } from "@codemirror/view";
 import { Calc } from "globals/window";
 import { keys } from "utils/depUtils";
 
-export default class Controller {
+export default class TextMode {
   inTextMode: boolean = false;
   view: EditorView | null = null;
   dispatchListenerID: string | null = null;

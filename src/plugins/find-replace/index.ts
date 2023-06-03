@@ -41,7 +41,6 @@ function onDisable() {
 
 const findAndReplace: Plugin = {
   id: "find-and-replace",
-  key: "findReplace",
   onEnable,
   onDisable,
   enabledByDefault: true,

@@ -168,7 +168,7 @@ async function captureActionOrSliderTicks(
 function forceReloadMenu(controller: MainController) {
   // XXX: it would be better if SegmentedControl actually re-loaded options
   // A proper implementation is needed if we ever allow pinning the vc menu.
-  const pm = controller.enabledPlugins.pillboxMenus;
+  const pm = controller.pillboxMenus;
   if (!pm) return;
   if (pm.pillboxMenuOpen === "dsm-vc-menu") {
     pm.pillboxMenuOpen = null;

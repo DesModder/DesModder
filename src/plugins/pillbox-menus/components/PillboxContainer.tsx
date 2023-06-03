@@ -1,4 +1,4 @@
-import { PillboxController } from "..";
+import { PillboxMenus } from "..";
 import "./PillboxContainer.less";
 import { Component, jsx } from "DCGView";
 import { If, Tooltip, For } from "components/desmosComponents";
@@ -6,10 +6,10 @@ import { Calc } from "globals/window";
 import { format } from "i18n/i18n-core";
 
 export default class PillboxContainer extends Component<{
-  controller: PillboxController;
+  controller: PillboxMenus;
   horizontal: boolean;
 }> {
-  controller!: PillboxController;
+  controller!: PillboxMenus;
   horizontal!: boolean;
 
   init() {
