@@ -8,7 +8,7 @@ let canvas: GLesmosCanvas | null = null;
 /** This can't be on the GLesmos controller because it needs to be accessed
  * not just when the plugin is enabled, but also the time when the plugin
  * has just been disabled but the new sketch has not been received */
-export function drawGlesmosSketchToCtx(
+export function drawGLesmosSketchToCtx(
   compiledGL: GLesmosShaderPackage, // comes from exportAsGLesmos
   ctx: CanvasRenderingContext2D,
   transforms: ViewportTransforms,

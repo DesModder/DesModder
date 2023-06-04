@@ -1,5 +1,3 @@
-import { DCGView } from "../DCGView";
-import ExpressionActionButton from "../components/ExpressionActionButton";
 import window, { Calc } from "globals/window";
 import {
   plugins,
@@ -184,21 +182,6 @@ export default class MainController extends TransparentPlugins {
       Calc.controller.commitUndoRedoSynchronously({ type: "dsm-blank" });
     }
     Calc.controller.updateViews();
-  }
-
-  createAction(
-    tooltip: string,
-    buttonClass: string,
-    iconClass: string,
-    onTap: () => void
-  ) {
-    return () =>
-      DCGView.createElement(ExpressionActionButton as any, {
-        tooltip: DCGView.const(tooltip),
-        buttonClass: DCGView.const(buttonClass),
-        iconClass: DCGView.const(iconClass),
-        onTap,
-      });
   }
 }
 

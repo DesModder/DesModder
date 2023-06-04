@@ -202,7 +202,7 @@ __guard__
 // allow-ids: of
 for (const branch of $sketch.branches) {
   if (branch.graphMode === "GLesmos") {
-    DSM.drawGlesmosSketchToCtx?.(branch.compiledGL, $ctx, $projection, $sketch.id);
+    DesModder.drawGLesmosSketchToCtx?.(branch.compiledGL, $ctx, $projection, $sketch.id);
   }
 }
 ```
