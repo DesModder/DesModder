@@ -1,7 +1,6 @@
 import { Fragile } from "../../globals/window";
 import { PluginController } from "../PluginController";
 import "./hide-errors.less";
-import { Plugin } from "plugins";
 
 let enabled: boolean = false;
 let initOnce: boolean = false;
@@ -62,4 +61,3 @@ export default class HideErrors extends PluginController {
     return this.controller.metadata?.getDsmItemModel(id)?.errorHidden;
   }
 }
-HideErrors satisfies Plugin;

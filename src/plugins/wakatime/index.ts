@@ -1,13 +1,12 @@
 import { Calc, Console } from "../../globals/window";
 import { getCurrentGraphTitle } from "../../utils/depUtils";
 import { PluginController } from "../PluginController";
-import { configList } from "./config";
-import { Plugin } from "plugins";
+import { Config, configList } from "./config";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
 
 const heartbeatInterval = 120 * 1000;
 
-export default class Wakatime extends PluginController {
+export default class Wakatime extends PluginController<Config> {
   static id = "wakatime" as const;
   static config = configList;
   static enabledByDefault = false;
@@ -66,4 +65,3 @@ export default class Wakatime extends PluginController {
     this.lastUpdate = performance.now();
   }
 }
-Wakatime satisfies Plugin;

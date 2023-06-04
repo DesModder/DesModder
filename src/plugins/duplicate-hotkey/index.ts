@@ -1,6 +1,5 @@
 import { PluginController } from "../PluginController";
 import { Calc } from "globals/window";
-import { Plugin } from "plugins";
 import { jquery, keys } from "utils/depUtils";
 
 export default class DuplicateHotkey extends PluginController {
@@ -30,4 +29,3 @@ export default class DuplicateHotkey extends PluginController {
     jquery(".dcg-exppanel-outer").off(".duplicateHotkey");
   }
 }
-DuplicateHotkey satisfies Plugin;

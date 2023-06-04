@@ -1,5 +1,4 @@
 import { PluginController } from "../PluginController";
-import { Plugin } from "plugins";
 import { jquery } from "utils/depUtils";
 
 export default class RightClickTray extends PluginController {
@@ -82,7 +81,6 @@ export default class RightClickTray extends PluginController {
     }
   }
 }
-RightClickTray satisfies Plugin;
 
 function seekParent(src: HTMLElement | null, level: number) {
   if (level <= 0) return src;

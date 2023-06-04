@@ -2,7 +2,6 @@ import { PluginController } from "../PluginController";
 import { MainPopupFunc } from "./PerformanceView";
 import { DispatchedEvent, TimingData } from "globals/Calc";
 import { Calc } from "globals/window";
-import { Plugin } from "plugins";
 import { jquery } from "utils/depUtils";
 
 export default class PerformanceInfo extends PluginController {
@@ -51,7 +50,6 @@ export default class PerformanceInfo extends PluginController {
     Calc.setState(Calc.getState());
   }
 }
-PerformanceInfo satisfies Plugin;
 
 const defaultTimingData: TimingData = {
   cacheHits: 0,

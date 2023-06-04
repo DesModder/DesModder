@@ -1,6 +1,5 @@
 import { PluginController } from "../PluginController";
 import { Calc } from "globals/window";
-import { Plugin } from "plugins";
 
 export default class DebugMode extends PluginController {
   static id = "debug-mode" as const;
@@ -16,4 +15,3 @@ export default class DebugMode extends PluginController {
     Calc.controller.updateTheComputedWorld();
   }
 }
-DebugMode satisfies Plugin;

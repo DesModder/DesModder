@@ -57,7 +57,7 @@ list: () => $.createElement(__oldList__)
 ```js
 ()=>this.getEvaluationType(), {
 list: () => $Dcgview.Components.IfElse(
-    () => DSM.betterEvaluationView && window.DesModder?.controller?.pluginSettings.get("better-evaluation-view").lists,
+    () => DSM.betterEvaluationView?.settings.lists,
     {
       true: () => $Dcgview.createElement(
         $StaticMathquillViewDefault,
@@ -100,7 +100,7 @@ rgbcolor: () => $Dcgview.createElement(
       {
         predicate: () => {
           let isEnabled = DSM.betterEvaluationView
-          let pluginSettings = window.DesModder?.controller?.pluginSettings.get("better-evaluation-view")
+          let pluginSettings = DSM.betterEvaluationView?.settings
           let isArray = Array.isArray(this.props.val())
           return isEnabled && pluginSettings.colors && (!isArray || pluginSettings.lists && pluginSettings.colorLists)
         }

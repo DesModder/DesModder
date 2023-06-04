@@ -2,7 +2,6 @@ import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
 import { wolfram2desmos, isIllegalASCIIMath } from "./wolfram2desmos";
 import { Calc } from "globals/window";
-import { Plugin } from "plugins";
 
 // https://stackoverflow.com/a/34278578
 function typeInTextArea(
@@ -22,36 +21,26 @@ function typeInTextArea(
 
 // This controller manages the focus events of Expression panel
 
-export default class WolframToDesmos extends PluginController {
+export default class WolframToDesmos extends PluginController<Config> {
   static id = "wolfram2desmos" as const;
   static enabledByDefault = true;
   static config = configList;
-
-  configFlags = {
-    reciprocalExponents2Surds: false, // converts ^(1/#) to surd
-    derivativeLoopLimit: true, // converts (d^#/dx^#) to (d/dx)... # times, limited to 10 iterations
-  };
 
   panel: HTMLElement | null = null;
   enabled = true;
   focusHandler = this._focusHandler.bind(this);
   pasteHandler = this._pasteHandler.bind(this);
 
-  afterEnable(config: Config) {
+  afterEnable() {
     this.panel = document.querySelector(".dcg-exppanel-outer");
     this.panel?.addEventListener("focusin", this.focusHandler, false);
     this.panel?.addEventListener("focusout", this.focusHandler, false);
-    this.applyConfigFlags(config);
   }
 
   afterDisable() {
     this.panel?.removeEventListener("focusin", this.focusHandler, false);
     this.panel?.removeEventListener("focusout", this.focusHandler, false);
     this.enabled = false;
-  }
-
-  onConfigChange(config: Config) {
-    this.applyConfigFlags(config);
   }
 
   _focusHandler(e: FocusEvent) {
@@ -74,10 +63,6 @@ export default class WolframToDesmos extends PluginController {
     }
   }
 
-  applyConfigFlags(config: Config) {
-    this.configFlags = config;
-  }
-
   _pasteHandler(e: ClipboardEvent) {
     const elem = e.target as HTMLElement;
     const pasteData = e.clipboardData?.getData("Text");
@@ -92,8 +77,7 @@ export default class WolframToDesmos extends PluginController {
     ) {
       e.stopPropagation();
       e.preventDefault();
-      typeInTextArea(wolfram2desmos(pasteData, this.configFlags));
+      typeInTextArea(wolfram2desmos(pasteData, this.settings));
     }
   }
 }
-WolframToDesmos satisfies Plugin;

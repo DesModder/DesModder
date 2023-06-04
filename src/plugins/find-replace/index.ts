@@ -2,7 +2,6 @@ import { PluginController } from "../PluginController";
 import Controller from "./Controller";
 import View from "./View";
 import { Calc, Console } from "globals/window";
-import { Plugin } from "plugins";
 
 const controller = new Controller();
 const view = new View();
@@ -43,4 +42,3 @@ export default class FindReplace extends PluginController {
     view.destroyView();
   }
 }
-FindReplace satisfies Plugin;

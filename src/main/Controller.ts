@@ -7,6 +7,8 @@ import {
   PluginID,
   GenericSettings,
   TransparentPlugins,
+  IDToPluginSettings,
+  PluginInstance,
 } from "plugins";
 import { postMessageUp, mapToRecord, recordToMap } from "utils/messages";
 
@@ -17,32 +19,20 @@ export default class MainController extends TransparentPlugins {
    */
   private readonly pluginsEnabled: Map<PluginID, boolean>;
   private readonly forceDisabled: Set<string>;
-  pluginSettings: Map<PluginID, GenericSettings>;
+  readonly pluginSettings = Object.fromEntries(
+    pluginList.map(
+      (plugin) => [plugin.id, getDefaultConfig(plugin.id)] as const
+    )
+  ) as IDToPluginSettings;
 
   constructor() {
     super();
     // default values
-    this.pluginSettings = new Map(
-      pluginList.map(
-        (plugin) => [plugin.id, this.getDefaultConfig(plugin.id)] as const
-      )
-    );
     this.forceDisabled = window.DesModderPreload!.pluginsForceDisabled;
     if (Calc.controller.isGeometry()) this.forceDisabled.add("text-mode");
     this.pluginsEnabled = new Map(
       pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
     );
-  }
-
-  getDefaultConfig(id: PluginID) {
-    const out: GenericSettings = {};
-    const config = plugins.get(id)?.config;
-    if (config !== undefined) {
-      for (const configItem of config) {
-        out[configItem.key] = configItem.default;
-      }
-    }
-    return out;
   }
 
   applyStoredEnabled(storedEnabled: Map<PluginID, boolean | undefined>) {
@@ -60,7 +50,7 @@ export default class MainController extends TransparentPlugins {
     for (const { id } of pluginList) {
       const stored = storedSettings.get(id);
       if (stored !== undefined) {
-        const settings = this.pluginSettings.get(id);
+        const settings = this.pluginSettings[id];
         for (const key in settings) {
           const storedValue = stored[key];
           if (storedValue !== undefined) {
@@ -117,10 +107,11 @@ export default class MainController extends TransparentPlugins {
   _enablePlugin(id: PluginID) {
     const Plugin = plugins.get(id);
     if (Plugin !== undefined) {
-      const res = new Plugin(this);
-      this.enabledPlugins[Plugin.id] = res;
+      const res = new Plugin(this, this.pluginSettings[id] as any as never);
+      (this.enabledPlugins as Record<PluginID, any>)[Plugin.id] = res;
+      (res as PluginInstance<any>).settings = this.pluginSettings[id];
       this.setPluginEnabled(id, true);
-      res.afterEnable(this.pluginSettings.get(id));
+      res.afterEnable();
       this.pillboxMenus?.updateMenuView();
       Calc.controller.updateViews();
     }
@@ -160,9 +151,8 @@ export default class MainController extends TransparentPlugins {
   }
 
   togglePluginSettingBoolean(pluginID: PluginID, key: string) {
-    const pluginSettings = this.pluginSettings.get(pluginID);
-    if (pluginSettings === undefined) return;
-    this.setPluginSetting(pluginID, key, !pluginSettings[key]);
+    const pluginSettings = this.pluginSettings[pluginID] as Record<string, any>;
+    this.setPluginSetting(pluginID, key, !(pluginSettings[key] as boolean));
   }
 
   setPluginSetting(
@@ -171,16 +161,19 @@ export default class MainController extends TransparentPlugins {
     value: boolean | string,
     temporary: boolean = false
   ) {
-    const pluginSettings = this.pluginSettings.get(pluginID);
-    if (pluginSettings === undefined) return;
+    const pluginSettings = this.pluginSettings[pluginID];
+    if (!pluginSettings) return;
     pluginSettings[key] = value;
     if (!temporary)
       postMessageUp({
         type: "set-plugin-settings",
-        value: mapToRecord(this.pluginSettings),
+        value: this.pluginSettings,
       });
-    if (this.isPluginEnabled(pluginID)) {
-      this.enabledPlugins[pluginID]?.onConfigChange?.(pluginSettings);
+    const plugin = this.enabledPlugins[pluginID];
+    if (plugin) {
+      plugin.beforeConfigChange();
+      plugin.settings = pluginSettings;
+      plugin.afterConfigChange();
       Calc.controller.updateViews();
     }
     this.pillboxMenus?.updateMenuView();
@@ -208,4 +201,15 @@ export default class MainController extends TransparentPlugins {
         onTap,
       });
   }
+}
+
+function getDefaultConfig(id: PluginID) {
+  const out: GenericSettings = {};
+  const config = plugins.get(id)?.config;
+  if (config !== undefined) {
+    for (const configItem of config) {
+      out[configItem.key] = configItem.default;
+    }
+  }
+  return out;
 }

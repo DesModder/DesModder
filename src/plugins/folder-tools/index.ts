@@ -1,7 +1,6 @@
 import { PluginController } from "../PluginController";
 import { ItemModel } from "globals/models";
 import { Calc } from "globals/window";
-import { Plugin } from "plugins";
 import { List } from "utils/depUtils";
 
 export default class FolderTools extends PluginController {
@@ -109,4 +108,3 @@ export default class FolderTools extends PluginController {
     this.controller.commitStateChange(true);
   }
 }
-FolderTools satisfies Plugin;

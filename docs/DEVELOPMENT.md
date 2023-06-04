@@ -45,8 +45,6 @@ All the code changes are visible at https://github.com/DesModder/DesModder/compa
 3. In the directory `src/plugins`, add a new directory called `change-username` and a file `src/plugins/change-username/index.ts` with the following contents:
 
    ```ts
-   import { Plugin } from "plugins";
-
    function getHeaderElement(): HTMLElement | null {
      return document.querySelector(".header-account-name");
    }

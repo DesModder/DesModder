@@ -7,7 +7,6 @@ import {
   getBlankMetadata,
   changeExprInMetadata,
 } from "./manage";
-import { Plugin } from "plugins";
 
 export default class ManageMetadata extends PluginController {
   static id = "manage-metadata" as const;
@@ -79,4 +78,3 @@ export default class ManageMetadata extends PluginController {
     }));
   }
 }
-ManageMetadata satisfies Plugin;

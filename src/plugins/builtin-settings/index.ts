@@ -1,7 +1,6 @@
 import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
 import { Calc } from "globals/window";
-import { Plugin } from "plugins";
 import { getQueryParams } from "utils/depUtils";
 
 const managedKeys = configList.map((e) => e.key);
@@ -16,14 +15,14 @@ function updateSettings(config: Config) {
   Calc.updateSettings({ ...config, zoomButtons, graphpaper });
 }
 
-export default class BuiltinSettings extends PluginController {
+export default class BuiltinSettings extends PluginController<Config> {
   static id = "builtin-settings" as const;
   static enabledByDefault = true;
   static config = configList;
   initialSettings: null | Config = null;
 
-  afterEnable(config: Config) {
-    this.initialSettings = { ...config };
+  afterEnable() {
+    this.initialSettings = { ...this.settings };
     const queryParams = getQueryParams();
     for (const key of managedKeys) {
       this.initialSettings[key] =
@@ -43,15 +42,14 @@ export default class BuiltinSettings extends PluginController {
         queryConfig[key] = false;
       }
     }
-    updateSettings(config);
+    updateSettings(this.settings);
   }
 
   afterDisable() {
     if (this.initialSettings !== null) updateSettings(this.initialSettings);
   }
 
-  onConfigChange(config: Config) {
-    updateSettings(config);
+  afterConfigChange() {
+    updateSettings(this.settings);
   }
 }
-BuiltinSettings satisfies Plugin;

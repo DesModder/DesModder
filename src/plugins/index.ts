@@ -43,17 +43,33 @@ export type ConfigItem = ConfigItemBoolean | ConfigItemString;
 
 export type GenericSettings = Record<string, any>;
 
+/**
+ * Life cycle:
+ *
+ * (.settings gets set before afterEnable)
+ * afterEnable
+ *
+ * beforeConfigChange
+ * (.settings gets updated between before and after)
+ * afterConfigChange
+ *
+ * beforeDisable
+ * afterDisable
+ */
 export interface PluginInstance<
-  Settings extends GenericSettings = GenericSettings
+  Settings extends GenericSettings | undefined = GenericSettings | undefined
 > {
-  afterEnable(config?: unknown): void;
+  afterEnable(): void;
+  beforeConfigChange(): void;
+  afterConfigChange(): void;
   beforeDisable(): void;
-  // Force plugins to consider afterDisable
   afterDisable(): void;
-  onConfigChange(config: Settings): void;
+  settings: Settings;
 }
 
-export interface Plugin<Settings extends GenericSettings = GenericSettings> {
+export interface Plugin<
+  Settings extends GenericSettings | undefined = GenericSettings | undefined
+> {
   /** The ID is fixed permanently, even for future releases. It is kebab
    * case. If you rename the plugin, keep the ID the same for settings sync */
   id: string;
@@ -61,7 +77,7 @@ export interface Plugin<Settings extends GenericSettings = GenericSettings> {
   descriptionLearnMore?: string;
   enabledByDefault: boolean;
   forceEnabled?: boolean;
-  new (controller: MainController, config?: unknown): PluginInstance<Settings>;
+  new (controller: MainController, config: Settings): PluginInstance<Settings>;
   config?: readonly ConfigItem[];
 }
 
@@ -86,7 +102,7 @@ export const keyToPlugin = {
   textMode: TextMode,
   performanceInfo: PerformanceInfo,
   metadata: ManageMetadata,
-} satisfies Record<string, Plugin>;
+} satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);
 
@@ -134,3 +150,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get performanceInfo () { return this.ep["performance-info"]; }
   get metadata () { return this.ep["manage-metadata"]; }
 }
+
+export type IDToPluginSettings = {
+  readonly [K in keyof KP as KP[K]["id"]]: GenericSettings | undefined;
+};

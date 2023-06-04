@@ -2,7 +2,6 @@ import { Calc } from "../../globals/window";
 import { PluginController } from "../PluginController";
 import "./_overrides.less";
 import "./custom-overrides.less";
-import { Plugin } from "plugins";
 import { getHSVfromRGB, parseCSSHex } from "plugins/GLesmos/colorParsing";
 
 interface Config {
@@ -41,7 +40,7 @@ const faviconLink = document.querySelector(
 ) as HTMLLinkElement;
 const originalHref = faviconLink.href;
 
-export default class SetPrimaryColor extends PluginController {
+export default class SetPrimaryColor extends PluginController<Config> {
   static id = "set-primary-color" as const;
   static enabledByDefault = false;
   static config = configList;
@@ -49,13 +48,13 @@ export default class SetPrimaryColor extends PluginController {
   originalImage: HTMLImageElement | null = null;
   apiContainer!: HTMLElement;
 
-  afterEnable(config: Config) {
+  afterEnable() {
     this.apiContainer = document.querySelector(
       ".dcg-calculator-api-container"
     )!;
-    this.applyConfig(config);
+    this.applyConfig();
     this.apiContainer.classList.add("dsm-set-primary-color");
-    this.senseDarkReader(config);
+    this.senseDarkReader();
   }
 
   afterDisable() {
@@ -64,8 +63,8 @@ export default class SetPrimaryColor extends PluginController {
     faviconLink.href = originalHref;
   }
 
-  onConfigChange(config: Config) {
-    this.applyConfig(config);
+  afterConfigChange() {
+    this.applyConfig();
   }
 
   scaleColor(hex: string, s: number) {
@@ -120,7 +119,7 @@ export default class SetPrimaryColor extends PluginController {
 
   /** Wait for up to 5 seconds for Dark Reader to add its own style. Immediately
    * re-update the colors since Dark Reader sometimes does some funny stuff. */
-  senseDarkReader(config: Config) {
+  senseDarkReader() {
     const observer = new MutationObserver((mutations) => {
       for (const m of mutations) {
         if (
@@ -128,7 +127,7 @@ export default class SetPrimaryColor extends PluginController {
             (x as HTMLElement).classList.contains("darkreader")
           )
         ) {
-          this.applyColor(config.primaryColor);
+          this.applyColor(this.settings.primaryColor);
           observer.disconnect();
         }
       }
@@ -141,13 +140,12 @@ export default class SetPrimaryColor extends PluginController {
     setTimeout(() => observer.disconnect(), 5000);
   }
 
-  applyConfig(config: Config) {
-    this.applyColor(config.primaryColor);
-    if (config.doFavicon) {
-      this.applyHexToFavicon(config.primaryColor);
+  applyConfig() {
+    this.applyColor(this.settings.primaryColor);
+    if (this.settings.doFavicon) {
+      this.applyHexToFavicon(this.settings.primaryColor);
     } else {
       faviconLink.href = originalHref;
     }
   }
 }
-SetPrimaryColor satisfies Plugin;

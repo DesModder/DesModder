@@ -4,7 +4,6 @@ import { initGLesmosCanvas, GLesmosCanvas } from "./glesmosCanvas";
 import { glesmosError, GLesmosShaderPackage } from "./shaders";
 import "glesmos.less";
 import { Calc } from "globals/window";
-import { Plugin } from "plugins";
 
 let canvas: GLesmosCanvas | null = null;
 
@@ -142,7 +141,6 @@ export default class GLesmos extends PluginController {
     });
   }
 }
-GLesmos satisfies Plugin;
 
 function killWorker() {
   Calc.controller.evaluator.workerPoolConnection.killWorker();

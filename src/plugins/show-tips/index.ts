@@ -1,6 +1,5 @@
 import { PluginController } from "../PluginController";
 import { createTipElement } from "./Tip";
-import { Plugin } from "plugins";
 
 function apiContainer() {
   return document.querySelector(".dcg-calculator-api-container");
@@ -22,4 +21,3 @@ export default class ShowTips extends PluginController {
     return createTipElement();
   }
 }
-ShowTips satisfies Plugin;

@@ -19,7 +19,7 @@ type MessageWindowToContent =
     }
   | {
       type: "set-plugin-settings";
-      value: Record<PluginID, GenericSettings>;
+      value: Record<PluginID, GenericSettings | undefined>;
     }
   | {
       type: "get-initial-data";

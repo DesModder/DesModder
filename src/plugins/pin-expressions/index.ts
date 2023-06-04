@@ -1,7 +1,6 @@
 import { PluginController } from "../PluginController";
 import "./pinExpressions.less";
 import { Calc } from "globals/window";
-import { Plugin } from "plugins";
 
 export default class PinExpressions extends PluginController {
   static id = "pin-expressions" as const;
@@ -36,4 +35,3 @@ export default class PinExpressions extends PluginController {
     el?.classList.toggle("dsm-has-pinned-expressions", hasPinnedExpressions);
   }
 }
-PinExpressions satisfies Plugin;

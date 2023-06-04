@@ -5,7 +5,6 @@ import getText from "./up/getText";
 import { initView, startState } from "./view/editor";
 import { EditorView, ViewUpdate } from "@codemirror/view";
 import { Calc } from "globals/window";
-import { Plugin } from "plugins";
 import { keys } from "utils/depUtils";
 
 export default class TextMode extends PluginController {
@@ -142,4 +141,3 @@ function getSelectedItem(view: EditorView): string | undefined {
     return containingPairs[0]?.[0];
   }
 }
-TextMode satisfies Plugin;

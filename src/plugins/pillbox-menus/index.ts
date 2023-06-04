@@ -1,20 +1,18 @@
-import MainController from "../../main/Controller";
 import { PluginController } from "../PluginController";
 import { MenuFunc } from "./components/Menu";
 import PillboxContainer from "./components/PillboxContainer";
 import PillboxMenu from "./components/PillboxMenu";
 import { DCGView, MountedComponent } from "DCGView";
 import { Calc } from "globals/window";
-import { plugins, Plugin, PluginID, ConfigItem } from "plugins";
+import { plugins, PluginID, ConfigItem } from "plugins";
 
-export default class PillboxMenus extends PluginController {
+export default class PillboxMenus extends PluginController<undefined> {
   static id = "pillbox-menus" as const;
   static enabledByDefault = true;
   expandedPlugin: PluginID | null = null;
   private expandedCategory: string | null = null;
 
-  constructor(mainController: MainController) {
-    super(mainController);
+  afterEnable() {
     Calc.controller.dispatcher.register((e) => {
       if (e.type === "toggle-graph-settings") {
         this.pillboxMenuPinned = false;
@@ -143,7 +141,7 @@ export default class PillboxMenus extends PluginController {
     const defaultValue = this.getDefaultSetting(key);
     return (
       defaultValue !== undefined &&
-      this.controller.pluginSettings.get(this.expandedPlugin)?.[key] !==
+      this.controller.pluginSettings[this.expandedPlugin]?.[key] !==
         defaultValue
     );
   }
@@ -180,7 +178,6 @@ export default class PillboxMenus extends PluginController {
     return this.expandedCategory === category;
   }
 }
-PillboxMenus satisfies Plugin;
 
 interface PillboxButton {
   id: string;

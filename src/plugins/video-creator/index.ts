@@ -6,7 +6,6 @@ import { isValidNumber, isValidLength, escapeRegex } from "./backend/utils";
 import { MainPopupFunc } from "./components/MainPopup";
 import { ExpressionModel } from "globals/models";
 import { Calc } from "globals/window";
-import { Plugin } from "plugins";
 import {
   jquery,
   keys,
@@ -458,4 +457,3 @@ export default class VideoCreator extends PluginController {
     return this.focusedMQ === location;
   }
 }
-VideoCreator satisfies Plugin;
