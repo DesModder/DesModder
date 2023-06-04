@@ -6,6 +6,7 @@ import "./editor.css";
 import { checkboxPlugin } from "./plugins/checkboxWidget";
 import { activeStmtGutterHighlighter } from "./plugins/highlightActiveStmtGutter";
 import { stmtNumbers } from "./plugins/stmtNumbers";
+import { styleCircles } from "./plugins/styleCircles";
 import { styleMappingPlugin } from "./plugins/styleMappingWidgets";
 import {
   closeBrackets,
@@ -59,6 +60,7 @@ export function startState(controller: TextMode, text: string) {
       linter(doLint, { delay: 0 }),
       // line numbers and gutter
       stmtNumbers(),
+      styleCircles(),
       activeStmtGutterHighlighter,
       // undo/redo history
       history(),

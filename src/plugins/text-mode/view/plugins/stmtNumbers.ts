@@ -1,14 +1,13 @@
 import { analysisStateField } from "../../LanguageServer";
 import { Folder, Program, Table } from "../../down/TextAST";
-import { statementIndexContainingLine } from "../statementIntersection";
-import { EditorState, Extension } from "@codemirror/state";
+import { statementsIntersecting } from "../statementIntersection";
+import { EditorState, Extension, RangeSet } from "@codemirror/state";
 import {
   EditorView,
   GutterMarker,
   ViewUpdate,
   gutter,
   gutters,
-  lineNumberMarkers,
 } from "@codemirror/view";
 
 export function stmtNumbers(): Extension {
@@ -19,15 +18,19 @@ const stmtNumberGutter = gutter({
   class: "cm-lineNumbers",
   renderEmptyElements: false,
   markers(view: EditorView) {
-    return view.state.facet(lineNumberMarkers);
+    const program = view.state.field(analysisStateField).program;
+    const { from, to } = view.viewport;
+    const ranges = [];
+    let last = -1;
+    for (const stmt of statementsIntersecting(program, from, to)) {
+      const pos = view.lineBlockAt(stmt.pos.from).from;
+      if (pos > last) {
+        last = pos;
+        ranges.push(new NumberMarker(stmt.index.toString()).range(pos));
+      }
+    }
+    return RangeSet.of(ranges);
   },
-  lineMarker(view, line, others) {
-    if (others.some((m) => m.toDOM)) return null;
-    const analysis = view.state.field(analysisStateField);
-    const num = statementIndexContainingLine(analysis, line) ?? "";
-    return new NumberMarker(num.toString());
-  },
-  widgetMarker: () => null,
   initialSpacer(view: EditorView) {
     return new NumberMarker(maxNumber(view.state));
   },

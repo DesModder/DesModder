@@ -96,3 +96,18 @@ __children__
 "dcg-exppanel-container": !0,
 "dsm-in-text-mode": DSM.textMode?.inTextMode
 ```
+
+## Extract ExpressionIconView class
+
+*Description* `Show style circles for Text Mode statements`
+
+*Find*
+
+```js
+$ = "#000", $ = "#fff", $ExpressionIconView = class
+```
+
+*Replace* `ExpressionIconView` with
+```js
+$ExpressionIconView = (window.DesModderFragile ??= {}).ExpressionIconView
+```
