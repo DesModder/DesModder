@@ -171,7 +171,6 @@ export default class MainController extends TransparentPlugins {
       });
     const plugin = this.enabledPlugins[pluginID];
     if (plugin) {
-      plugin.beforeConfigChange();
       plugin.settings = pluginSettings;
       plugin.afterConfigChange();
       Calc.controller.updateViews();

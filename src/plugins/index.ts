@@ -49,8 +49,7 @@ export type GenericSettings = Record<string, any>;
  * (.settings gets set before afterEnable)
  * afterEnable
  *
- * beforeConfigChange
- * (.settings gets updated between before and after)
+ * (.settings gets updated befre afterConfigChange)
  * afterConfigChange
  *
  * beforeDisable
@@ -60,7 +59,6 @@ export interface PluginInstance<
   Settings extends GenericSettings | undefined = GenericSettings | undefined
 > {
   afterEnable(): void;
-  beforeConfigChange(): void;
   afterConfigChange(): void;
   beforeDisable(): void;
   afterDisable(): void;

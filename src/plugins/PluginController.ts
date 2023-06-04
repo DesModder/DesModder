@@ -11,7 +11,6 @@ export class PluginController<
   constructor(readonly controller: MainController, public settings: Settings) {}
 
   afterEnable() {}
-  beforeConfigChange() {}
   afterConfigChange() {}
   beforeDisable() {}
   afterDisable() {}
