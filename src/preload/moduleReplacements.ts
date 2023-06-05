@@ -58,6 +58,8 @@ const pluginNames = [
   "text-mode",
   "performance-info",
   "better-evaluation-view",
+  "manage-metadata",
+  "pillbox-menus",
 ];
 
 replacements.forEach((r) => {

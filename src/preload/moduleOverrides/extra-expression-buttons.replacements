@@ -35,22 +35,22 @@ Insert before the delete button but after the other buttons.
 $DCGView.createElement(
   $DCGView.Components.If,
   {
-    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("pin-expressions") && this.model().type !== "folder"
+    predicate: () => DSM.pinExpressions && this.model().type !== "folder"
   },
   () => $DCGView.Components.IfElse(
-    () => window.DesModder?.controller?.isExpressionPinned(this.model().id),
+    () => DSM.pinExpressions?.isExpressionPinned(this.model().id),
     {
-      false: DesModder?.controller?.createAction(
+      false: DesModder.createAction(
         "pin-expressions-pin",
         "dsm-pin-button",
         "dsm-icon-bookmark",
-        () => window.DesModder.controller.pinExpression(this.model().id)
+        () => DSM.pinExpressions?.pinExpression(this.model().id)
       ),
-      true: DesModder?.controller?.createAction(
+      true: DesModder.createAction(
         "pin-expressions-unpin",
         "dsm-unpin-button dcg-selected",
         "dsm-icon-bookmark",
-        () => window.DesModder.controller.unpinExpression(this.model().id)
+        () => DSM.pinExpressions?.unpinExpression(this.model().id)
       )
     }
   )
@@ -59,40 +59,40 @@ $DCGView.createElement(
 $DCGView.createElement(
   $DCGView.Components.If,
   {
-    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && this.model().type === "text"
+    predicate: () => DSM.folderTools && this.model().type === "text"
   },
-  DesModder?.controller?.createAction(
+  DesModder.createAction(
     "folder-tools-enclose",
     "dsm-note-enclose-button",
     "dsm-icon-folder-plus",
-    () => window.DesModder.controller.noteEnclose(this.model().index)
+    () => DSM.folderTools?.noteEnclose(this.model().index)
   )
 ),
 // dump folder
 $DCGView.createElement(
   $DCGView.Components.If,
   {
-    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && this.model().type === "folder"
+    predicate: () => DSM.folderTools && this.model().type === "folder"
       && window.Calc.controller.getItemModelByIndex(this.model().index + 1)?.folderId === this.model().id
   },
-  DesModder?.controller?.createAction(
+  DesModder.createAction(
     "folder-tools-dump",
     "dsm-folder-dump-button",
     "dsm-icon-folder-minus",
-    () => window.DesModder.controller.folderDump(this.model().index)
+    () => DSM.folderTools?.folderDump(this.model().index)
   )
 ),
 // merge folder
 $DCGView.createElement(
   $DCGView.Components.If,
   {
-    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && this.model().type === "folder"
+    predicate: () => DSM.folderTools && this.model().type === "folder"
   },
-  DesModder?.controller?.createAction(
+  DesModder.createAction(
     "folder-tools-merge",
     "dsm-folder-merge-button",
     "dsm-icon-folder-plus",
-    () => window.DesModder.controller.folderMerge(this.model().index)
+    () => DSM.folderTools?.folderMerge(this.model().index)
   )
 ),
 __delete_button__

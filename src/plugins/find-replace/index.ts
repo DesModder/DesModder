@@ -1,7 +1,7 @@
+import { PluginController } from "../PluginController";
 import Controller from "./Controller";
 import View from "./View";
 import { Calc, Console } from "globals/window";
-import { Plugin } from "plugins";
 
 const controller = new Controller();
 const view = new View();
@@ -19,30 +19,26 @@ function tryInitView() {
   }
 }
 
-function onEnable() {
-  if (Calc.controller.getExpressionSearchOpen()) {
-    tryInitView();
-  }
-  dispatchListenerID = Calc.controller.dispatcher.register(({ type }) => {
-    if (type === "open-expression-search") {
+export default class FindReplace extends PluginController {
+  static id = "find-and-replace" as const;
+  static enabledByDefault = true;
+
+  afterEnable() {
+    if (Calc.controller.getExpressionSearchOpen()) {
       tryInitView();
-    } else if (type === "close-expression-search") {
-      view.destroyView();
     }
-    // may want to listen to update-expression-search-str
-  });
-  return controller;
-}
+    dispatchListenerID = Calc.controller.dispatcher.register(({ type }) => {
+      if (type === "open-expression-search") {
+        tryInitView();
+      } else if (type === "close-expression-search") {
+        view.destroyView();
+      }
+      // may want to listen to update-expression-search-str
+    });
+  }
 
-function onDisable() {
-  Calc.controller.dispatcher.unregister(dispatchListenerID);
-  view.destroyView();
+  afterDisable() {
+    Calc.controller.dispatcher.unregister(dispatchListenerID);
+    view.destroyView();
+  }
 }
-
-const findAndReplace: Plugin = {
-  id: "find-and-replace",
-  onEnable,
-  onDisable,
-  enabledByDefault: true,
-};
-export default findAndReplace;

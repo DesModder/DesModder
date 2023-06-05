@@ -124,7 +124,7 @@ this.controller.isExpressionListFocused()
 
 *Replace* `from` with
 ```js
-!window.DesModder?.controller?.inTextMode?.()
+!DSM.textMode?.inTextMode
 ```
 ````
 
@@ -140,7 +140,7 @@ var $r = $e.hasClass('dcg-all')
 *Replace* `from` with
 ```js
 if ($e.hasClass("dsm-hide-errors")) {
-  DesModder.controller?.hideError(this.model.id)
+  DSM.hideErrors?.hideError(this.model.id)
   return;
 }
 var $r = $e.hasClass('dcg-all')

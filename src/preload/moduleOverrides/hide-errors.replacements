@@ -16,7 +16,7 @@
 ```js
   $getMissingVariablesForItem($l).length &&
   $e.areSlidersEnabled() &&
-  !window.DesModder?.controller.isErrorHidden($l.id)
+  !DSM.hideErrors?.isErrorHidden($l.id)
 )
   return $e.createSlidersForItem(
 ```
@@ -49,10 +49,10 @@ error: () => $DCGView.createElement(
   {
     onTap: event => (
       event.shiftKey &&
-      window.DesModder?.controller.toggleErrorHidden($this.model.id)
+      DSM.hideErrors?.toggleErrorHidden($this.model.id)
     ),
     style: () => (
-      window.DesModder?.controller.isErrorHidden($this.model.id)
+      DSM.hideErrors?.isErrorHidden($this.model.id)
         ? "opacity: 0.5"
         : ""
     )
@@ -76,7 +76,7 @@ let $r = $e.hasClass('dcg-all')
 *Replace* `from` with
 ```js
 if ($e.hasClass("dsm-hide-errors")) {
-  DesModder.controller?.hideError(this.model.id)
+  DSM.hideErrors?.hideError(this.model.id)
   return;
 }
 __from__
@@ -105,7 +105,7 @@ $DCGView.createElement(
   {
     predicate: () => (
       this.model.type !== "ticker" &&
-      window.DesModder?.controller?.isPluginEnabled("hide-errors")
+      DSM.hideErrors
     ),
   },
   () => $DCGView.createElement(
@@ -120,7 +120,7 @@ $DCGView.createElement(
         tabindex: $DCGView.const("0"),
         class: $DCGView.const("dcg-btn-slider dcg-btn-light-gray")
       },
-      () => window.DesModder?.controller.format("hide-errors-hide")
+      () => window.DesModder.format("hide-errors-hide")
     )
   )
 )
@@ -139,7 +139,7 @@ shouldShowSliderPrompt() {
 
 *Replace* `__ret__` with
 ```js
-(__ret__) && !window.DesModder?.controller.isErrorHidden(this.model?.id)
+(__ret__) && !DSM.hideErrors?.isErrorHidden(this.model?.id)
 ```
 
 ## Allow shift-enter to create a new expression and hide errors on the old expression
@@ -157,7 +157,7 @@ if ($e === "Enter")
 ```js
 __from__
 else if ("Shift-Enter" === $e) {
-  window.DesModder.controller.hideError(this.model.id);
+  DSM.hideErrors?.hideError(this.model.id);
   return this.controller.dispatch({
     type: "on-special-key-pressed",
     key: "Enter"

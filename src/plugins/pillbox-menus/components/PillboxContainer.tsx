@@ -1,16 +1,15 @@
-import { format } from "../i18n/i18n-core";
-import { desModderController } from "../script";
+import PillboxMenus from "..";
 import "./PillboxContainer.less";
-import { If, Tooltip, For } from "./desmosComponents";
 import { Component, jsx } from "DCGView";
+import { If, Tooltip, For } from "components/desmosComponents";
 import { Calc } from "globals/window";
-import Controller from "main/Controller";
+import { format } from "i18n/i18n-core";
 
 export default class PillboxContainer extends Component<{
-  controller: Controller;
+  controller: PillboxMenus;
   horizontal: boolean;
 }> {
-  controller!: Controller;
+  controller!: PillboxMenus;
   horizontal!: boolean;
 
   init() {
@@ -76,7 +75,7 @@ export default class PillboxContainer extends Component<{
           </div>
         </For>
         <If predicate={() => this.controller.pillboxMenuOpen !== null}>
-          {() => desModderController.pillboxMenuView(false)}
+          {() => this.controller.pillboxMenuView(false)}
         </If>
       </div>
     );

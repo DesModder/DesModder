@@ -1,20 +1,25 @@
+import PillboxMenus from "..";
+import "./Menu.less";
+import { Component, jsx } from "DCGView";
+import Toggle from "components/Toggle";
+import {
+  If,
+  Switch,
+  Checkbox,
+  Tooltip,
+  For,
+} from "components/desmosComponents";
+import { format } from "i18n/i18n-core";
 import {
   ConfigItem,
   ConfigItemString,
   GenericSettings,
-  Plugin,
+  SpecificPlugin,
   PluginID,
   plugins,
-} from "../plugins";
-import { DesModderController } from "../script";
-import "./Menu.less";
-import Toggle from "./Toggle";
-import { If, Switch, Checkbox, Tooltip, For } from "./desmosComponents";
-import { Component, jsx } from "DCGView";
-import { format } from "i18n/i18n-core";
-import Controller from "main/Controller";
+} from "plugins";
 
-export function MenuFunc(controller: Controller) {
+export function MenuFunc(controller: PillboxMenus) {
   return <Menu controller={controller} />;
 }
 
@@ -43,9 +48,9 @@ const categoryPlugins: Record<string, PluginID[]> = {
 const categories = ["core", "utility", "visual", "integrations"];
 
 export default class Menu extends Component<{
-  controller: Controller;
+  controller: PillboxMenus;
 }> {
-  controller!: Controller;
+  controller!: PillboxMenus;
 
   init() {
     this.controller = this.props.controller();
@@ -84,7 +89,9 @@ export default class Menu extends Component<{
               {() => (
                 <For each={() => categoryPlugins[category]} key={(id) => id}>
                   <div class="dsm-category-container">
-                    {(pluginID: string) => this.plugin(plugins.get(pluginID)!)}
+                    {(pluginID: PluginID) =>
+                      this.plugin(plugins.get(pluginID)!)
+                    }
                   </div>
                 </For>
               )}
@@ -95,7 +102,7 @@ export default class Menu extends Component<{
     );
   }
 
-  plugin(plugin: Plugin) {
+  plugin(plugin: SpecificPlugin) {
     return (
       <div class="dcg-options-menu-section dsm-plugin-section" key={plugin.id}>
         <div class="dcg-options-menu-section-title dsm-plugin-title-bar">
@@ -115,9 +122,13 @@ export default class Menu extends Component<{
             <div>{pluginDisplayName(plugin)}</div>
           </div>
           <Toggle
-            toggled={() => this.controller.isPluginEnabled(plugin.id)}
-            disabled={() => !this.controller.isPluginToggleable(plugin.id)}
-            onChange={() => this.controller.togglePlugin(plugin.id)}
+            toggled={() =>
+              this.controller.controller.isPluginEnabled(plugin.id)
+            }
+            disabled={() =>
+              !this.controller.controller.isPluginToggleable(plugin.id)
+            }
+            onChange={() => this.controller.controller.togglePlugin(plugin.id)}
           />
         </div>
         {
@@ -152,15 +163,14 @@ export default class Menu extends Component<{
 
   getExpandedSettings() {
     if (this.controller.expandedPlugin === null) return null;
-    const plugin = this.controller.getPlugin(this.controller.expandedPlugin);
+    const plugin = plugins.get(this.controller.expandedPlugin);
     if (plugin?.config === undefined) return null;
-    const pluginSettings = this.controller.pluginSettings.get(
-      this.controller.expandedPlugin
-    );
+    const pluginSettings =
+      this.controller.controller.pluginSettings[this.controller.expandedPlugin];
     if (pluginSettings === undefined) return null;
     return (
       <div>
-        {plugin.config.map((item) => (
+        {plugin.config.map((item: ConfigItem) => (
           <If predicate={() => item.shouldShow?.(pluginSettings) ?? true}>
             {() => (
               <Switch key={() => item.type}>
@@ -180,14 +190,17 @@ export default class Menu extends Component<{
 }
 
 function booleanOption(
-  controller: DesModderController,
+  controller: PillboxMenus,
   item: ConfigItem,
-  plugin: Plugin,
+  plugin: SpecificPlugin,
   settings: GenericSettings
 ) {
   const toggle = () =>
     controller.expandedPlugin &&
-    controller.togglePluginSettingBoolean(controller.expandedPlugin, item.key);
+    controller.controller.togglePluginSettingBoolean(
+      controller.expandedPlugin,
+      item.key
+    );
   return (
     <div class="dsm-settings-item dsm-settings-boolean">
       <Checkbox
@@ -206,9 +219,9 @@ function booleanOption(
 }
 
 function stringOption(
-  controller: DesModderController,
+  controller: PillboxMenus,
   item: ConfigItem,
-  plugin: Plugin,
+  plugin: SpecificPlugin,
   settings: GenericSettings
 ) {
   return (
@@ -223,7 +236,7 @@ function stringOption(
         }
         onChange={(evt: Event) =>
           controller.expandedPlugin &&
-          controller.setPluginSetting(
+          controller.controller.setPluginSetting(
             controller.expandedPlugin,
             item.key,
             (evt.target as HTMLInputElement).value
@@ -231,7 +244,7 @@ function stringOption(
         }
         onInput={(evt: Event) =>
           controller.expandedPlugin &&
-          controller.setPluginSetting(
+          controller.controller.setPluginSetting(
             controller.expandedPlugin,
             item.key,
             (evt.target as HTMLInputElement).value,
@@ -250,10 +263,10 @@ function stringOption(
 }
 
 class ResetButton extends Component<{
-  controller: Controller;
+  controller: PillboxMenus;
   key: string;
 }> {
-  controller!: Controller;
+  controller!: PillboxMenus;
   key!: string;
 
   init() {
@@ -282,18 +295,18 @@ function categoryDisplayName(id: string) {
   return format("category-" + id + "-name");
 }
 
-function pluginDisplayName(plugin: Plugin) {
+function pluginDisplayName(plugin: SpecificPlugin) {
   return format(plugin.id + "-name");
 }
 
-function pluginDesc(plugin: Plugin) {
+function pluginDesc(plugin: SpecificPlugin) {
   return format(plugin.id + "-desc");
 }
 
-function configItemDesc(plugin: Plugin, item: ConfigItem) {
+function configItemDesc(plugin: SpecificPlugin, item: ConfigItem) {
   return format(plugin.id + "-opt-" + item.key + "-desc");
 }
 
-function configItemName(plugin: Plugin, item: ConfigItem) {
+function configItemName(plugin: SpecificPlugin, item: ConfigItem) {
   return format(plugin.id + "-opt-" + item.key + "-name");
 }

@@ -52,16 +52,16 @@ __rest__,
 $DCGView.createElement(
   $DCGView.Components.If,
   {
-    predicate: () => DesModder.controller.canBeGLesmos(this.id),
+    predicate: () => DSM.glesmos?.canBeGLesmos(this.id),
   },
   () => $DCGView.createElement(
     "div",
     { class: $DCGView.const("dcg-options-menu-section-title dsm-gl-fill-title") },
-    () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
+    () => DesModder.format("GLesmos-label-toggle-glesmos"),
     $DCGView.createElement($ToggleView, {
-      ariaLabel: () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
-      toggled: () => window.DesModder?.controller?.isGlesmosMode?.(this.id),
-      onChange: () => window.DesModder?.controller?.toggleGlesmos?.(this.id),
+      ariaLabel: () => DesModder.format("GLesmos-label-toggle-glesmos"),
+      toggled: () => DSM.glesmos?.isGlesmosMode?.(this.id),
+      onChange: () => DSM.glesmos?.toggleGlesmos?.(this.id),
     })
   )
 )
@@ -103,17 +103,17 @@ __rest__,
 $DCGView.createElement(
   $DCGView.Components.If,
   {
-    predicate: () => DesModder.controller.canBeGLesmos(this.id) &&
-      !DesModder.controller.isInequality(this.id)
+    predicate: () => DSM.glesmos?.canBeGLesmos(this.id) &&
+      !DSM.glesmos?.isInequality(this.id)
   },
   () => $DCGView.createElement(
     "div",
     { class: $DCGView.const("dcg-options-menu-section-title dsm-gl-fill-title") },
-    () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
+    () => DesModder.format("GLesmos-label-toggle-glesmos"),
     $DCGView.createElement($ToggleView, {
-      ariaLabel: () => DesModder.controller.format("GLesmos-label-toggle-glesmos"),
-      toggled: () => window.DesModder?.controller?.isGlesmosMode?.(this.id),
-      onChange: () => window.DesModder?.controller?.toggleGlesmos?.(this.id),
+      ariaLabel: () => DesModder.format("GLesmos-label-toggle-glesmos"),
+      toggled: () => DSM.glesmos?.isGlesmosMode?.(this.id),
+      onChange: () => DSM.glesmos?.toggleGlesmos?.(this.id),
     })
   )
 )
@@ -149,26 +149,26 @@ $DCGView.createElement(
   $DCGView.Components.If,
   {
     predicate: () =>
-      DesModder.controller.isGlesmosMode(this.id) &&
-      DesModder.controller.isInequality(this.id),
+      DSM.glesmos?.isGlesmosMode(this.id) &&
+      DSM.glesmos?.isInequality(this.id),
   },
   () => $DCGView.createElement(
     "div",
     { class: $DCGView.const("dcg-options-menu-section-title dsm-gl-lines-confirm") },
-    () => DesModder.controller.format("GLesmos-confirm-lines"),
+    () => DesModder.format("GLesmos-confirm-lines"),
     $DCGView.createElement($ToggleView, {
-      ariaLabel: () => DesModder.controller.format("GLesmos-confirm-lines"),
-      toggled: () => window.DesModder?.controller?.isGLesmosLinesConfirmed?.(this.id),
-      onChange: () => window.DesModder?.controller?.toggleGLesmosLinesConfirmed?.(this.id),
+      ariaLabel: () => DesModder.format("GLesmos-confirm-lines"),
+      toggled: () => DSM.glesmos?.isGLesmosLinesConfirmed?.(this.id),
+      onChange: () => DSM.glesmos?.toggleGLesmosLinesConfirmed?.(this.id),
     }),
     $DCGView.createElement(
       $DCGView.Components.If,
       {
-        predicate: () => !DesModder?.controller?.isGLesmosLinesConfirmed?.(this.id)
+        predicate: () => !DSM.glesmos?.isGLesmosLinesConfirmed?.(this.id)
       },
       () => $DCGView.createElement("div",
         { class: $DCGView.const("dsm-gl-lines-confirm-body") },
-        () => DesModder.controller.format("GLesmos-confirm-lines-body")
+        () => DesModder.format("GLesmos-confirm-lines-body")
       )
     )
   )
@@ -202,9 +202,7 @@ __guard__
 // allow-ids: of
 for (const branch of $sketch.branches) {
   if (branch.graphMode === "GLesmos") {
-    window.DesModder?.controller?.exposedPlugins[
-      "GLesmos"
-    ]?.drawGlesmosSketchToCtx?.(branch.compiledGL, $ctx, $projection, $sketch.id);
+    DesModder.drawGLesmosSketchToCtx?.(branch.compiledGL, $ctx, $projection, $sketch.id);
   }
 }
 ```
@@ -223,8 +221,8 @@ addStatement($stmt) {
 *Replace* `body` with
 ```js
 if ($stmt.type === "statement") {
-  $stmt.glesmos = window.DesModder?.controller?.isGlesmosMode($stmt.id);
-  $stmt.glesmosLinesConfirmed = window.DesModder?.controller?.isGLesmosLinesConfirmed($stmt.id);
+  $stmt.glesmos = DSM.glesmos?.isGlesmosMode($stmt.id);
+  $stmt.glesmosLinesConfirmed = DSM.glesmos?.isGLesmosLinesConfirmed($stmt.id);
 }
 __body__
 ```

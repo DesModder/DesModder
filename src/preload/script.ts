@@ -61,6 +61,8 @@ listenToMessageDown((message) => {
       pluginsEnabled: message.pluginsEnabled,
       pluginSettings: message.pluginSettings,
     };
+    // Helps with the case of replacements ran before initialization
+    window.DSM = {} as any;
     void load(arrayToSet(message.pluginsForceDisabled));
     // cancel listener
     return true;

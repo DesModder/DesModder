@@ -1,7 +1,7 @@
-import { desModderController } from "../../../script";
-import Controller from "../Controller";
+import VideoCreator from "..";
 import { scaleBoundsAboutCenter } from "./utils";
 import { Calc } from "globals/window";
+import MainController from "main/Controller";
 import { EvaluateSingleExpression } from "utils/depUtils";
 
 let dispatchListenerID: string | null = null;
@@ -9,17 +9,17 @@ let callbackIfCancel: (() => void) | null = null;
 
 export type CaptureMethod = "once" | "action" | "slider" | "ticks";
 
-export function cancelCapture(controller: Controller) {
+export function cancelCapture(controller: VideoCreator) {
   controller.captureCancelled = true;
   callbackIfCancel?.();
 }
 
-async function captureAndApplyFrame(controller: Controller) {
+async function captureAndApplyFrame(controller: VideoCreator) {
   const frame = await captureFrame(controller);
   controller.pushFrame(frame);
 }
 
-export async function captureFrame(controller: Controller) {
+export async function captureFrame(controller: VideoCreator) {
   const width = controller.getCaptureWidthNumber();
   const height = controller.getCaptureHeightNumber();
   const targetPixelRatio = controller.getTargetPixelRatio();
@@ -66,7 +66,7 @@ export interface SliderSettings {
   stepLatex: string;
 }
 
-export async function captureSlider(controller: Controller) {
+export async function captureSlider(controller: VideoCreator) {
   const sliderSettings = controller.sliderSettings;
   const variable = sliderSettings.variable;
   const min = EvaluateSingleExpression(sliderSettings.minLatex);
@@ -104,7 +104,7 @@ function slidersLatexJoined() {
     .join(";");
 }
 
-async function captureActionFrame(controller: Controller, step: () => void) {
+async function captureActionFrame(controller: VideoCreator, step: () => void) {
   let stepped = false;
   try {
     const tickCountRemaining = controller.getTickCountNumber();
@@ -140,7 +140,7 @@ async function captureActionFrame(controller: Controller, step: () => void) {
 }
 
 async function captureActionOrSliderTicks(
-  controller: Controller,
+  controller: VideoCreator,
   step: () => void
 ) {
   await new Promise<void>((resolve) => {
@@ -165,18 +165,20 @@ async function captureActionOrSliderTicks(
  * force-reload the list of options by closing and re-opening the menu.
  * This is needed when action-capture stops sliders, so the slider-ticks
  * capture method option gets disabled. */
-function forceReloadMenu() {
+function forceReloadMenu(controller: MainController) {
   // XXX: it would be better if SegmentedControl actually re-loaded options
   // A proper implementation is needed if we ever allow pinning the vc menu.
-  if (desModderController.pillboxMenuOpen === "dsm-vc-menu") {
-    desModderController.pillboxMenuOpen = null;
-    desModderController.updateExtraComponents();
-    desModderController.pillboxMenuOpen = "dsm-vc-menu";
-    desModderController.updateExtraComponents();
+  const pm = controller.pillboxMenus;
+  if (!pm) return;
+  if (pm.pillboxMenuOpen === "dsm-vc-menu") {
+    pm.pillboxMenuOpen = null;
+    pm.updateExtraComponents();
+    pm.pillboxMenuOpen = "dsm-vc-menu";
+    pm.updateExtraComponents();
   }
 }
 
-export async function capture(controller: Controller) {
+export async function capture(controller: VideoCreator) {
   controller.isCapturing = true;
   controller.updateView();
   const tickSliders = Calc.controller._tickSliders.bind(Calc.controller);
@@ -189,7 +191,7 @@ export async function capture(controller: Controller) {
       Calc.controller._tickSliders = () => {};
     } else if (Calc.controller.getPlayingSliders().length > 0) {
       Calc.controller.stopAllSliders();
-      forceReloadMenu();
+      forceReloadMenu(controller.controller);
     }
   }
   switch (controller.captureMethod) {

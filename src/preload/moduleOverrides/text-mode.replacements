@@ -16,7 +16,7 @@ isShowKeypadButtonVisible () { return __curr__ }
 
 ```js
 isShowKeypadButtonVisible () {
-  return (__curr__) && !window.DesModder?.controller?.inTextMode?.()
+  return (__curr__) && !DSM.textMode?.inTextMode
 }
 ```
 
@@ -47,13 +47,12 @@ isShowKeypadButtonVisible () {
 $DCGView.createElement(
   $DCGView.Components.If,
   {
-    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("text-mode") &&
-      !this.controller.isInEditListMode()
+    predicate: () => DSM.textMode && !this.controller.isInEditListMode()
   },
   () => $DCGView.createElement(
       $Tooltip,
       {
-        tooltip: () => DesModder.controller.format("text-mode-toggle"),
+        tooltip: () => DesModder.format("text-mode-toggle"),
         gravity: () => this.controller.isNarrow() ? 'n' : 's'
       },
       $DCGView.createElement(
@@ -63,7 +62,7 @@ $DCGView.createElement(
           handleEvent: $DCGView.const('true'),
           role: $DCGView.const('button'),
           tabindex: $DCGView.const('0'),
-          onTap: () => window.DesModder.controller.toggleTextMode()
+          onTap: () => DSM.textMode?.toggleTextMode()
         },
         $DCGView.createElement('i', {
           class: $DCGView.const('dcg-icon-title')
@@ -74,7 +73,7 @@ $DCGView.createElement(
 $DCGView.Components.IfElse(
   () => !this.controller.getGraphSettings().config.graphpaper && window.DesModder,
   {
-    true: () => window.DesModder.controller.pillboxButtonsView(true),
+    true: () => DSM.pillboxMenus.pillboxButtonsView(true),
     false: null
   }
 ),
@@ -95,5 +94,5 @@ __children__
 
 ```js
 "dcg-exppanel-container": !0,
-"dsm-in-text-mode": window.DesModder?.controller?.inTextMode?.()
+"dsm-in-text-mode": DSM.textMode?.inTextMode
 ```

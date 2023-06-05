@@ -1,18 +1,37 @@
+import { PluginController } from "../PluginController";
 import "./pinExpressions.less";
 import { Calc } from "globals/window";
-import { Plugin } from "plugins";
 
-const pinExpressions: Plugin = {
-  id: "pin-expressions",
-  // Controller handles enable/disable by changing the results of isPinned
-  // (used in modified module definitions), but we need to update views
-  onEnable: () => {
-    Calc.controller.updateViews();
-  },
-  onDisable: () => {
-    Calc.controller.updateViews();
-  },
-  enabledByDefault: true,
-  /* Has module overrides */
-};
-export default pinExpressions;
+export default class PinExpressions extends PluginController {
+  static id = "pin-expressions" as const;
+  static enabledByDefault = true;
+
+  pinExpression(id: string) {
+    if (Calc.controller.getItemModel(id)?.type !== "folder")
+      this.controller.metadata?.updateExprMetadata(id, {
+        pinned: true,
+      });
+  }
+
+  isExpressionPinned(id: string) {
+    return (
+      !Calc.controller.getExpressionSearchOpen() &&
+      Calc.controller.getItemModel(id)?.type !== "folder" &&
+      this.controller.metadata?.getDsmItemModel(id)?.pinned
+    );
+  }
+
+  unpinExpression(id: string) {
+    this.controller.metadata?.updateExprMetadata(id, {
+      pinned: false,
+    });
+  }
+
+  applyPinnedStyle() {
+    const el = document.querySelector(".dcg-exppanel-container");
+    const hasPinnedExpressions = this.controller.metadata
+      ?.getDsmItemModels()
+      .some((v) => v.pinned);
+    el?.classList.toggle("dsm-has-pinned-expressions", hasPinnedExpressions);
+  }
+}

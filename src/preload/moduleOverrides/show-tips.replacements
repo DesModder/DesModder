@@ -30,10 +30,9 @@ $DCGView.createElement(
   $DCGView.createElement(
     $DCGView.Components.If,
     {
-      predicate: () =>
-        window.DesModder?.controller?.isPluginEnabled?.("show-tips"),
+      predicate: () => DSM.showTips,
     },
-    () => window.DesModder?.controller.createTipElement()
+    () => DSM.showTips?.createTipElement()
   )
 )
 ```

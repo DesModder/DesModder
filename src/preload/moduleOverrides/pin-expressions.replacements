@@ -15,7 +15,7 @@ $e.isHiddenFromUI || $e.filteredBySearch
 
 *Replace* `from` with
 ```js
-$e.isHiddenFromUI || $e.filteredBySearch || window.DesModder?.controller?.isExpressionPinned($e.id)
+$e.isHiddenFromUI || $e.filteredBySearch || DSM.pinExpressions?.isExpressionPinned($e.id)
 ```
 
 Replacement appears in

@@ -1,7 +1,7 @@
-import Controller from "../Controller";
+import TextMode from "..";
 import { analysisStateField, doLint } from "../LanguageServer";
 // Language extension
-import { TextMode } from "../lezer/index";
+import { textMode } from "../lezer/index";
 import "./editor.css";
 import { checkboxPlugin } from "./plugins/checkboxWidget";
 import { activeStmtGutterHighlighter } from "./plugins/highlightActiveStmtGutter";
@@ -48,7 +48,7 @@ const scrollTheme = EditorView.theme({
   },
 });
 
-export function startState(controller: Controller, text: string) {
+export function startState(controller: TextMode, text: string) {
   return EditorState.create({
     doc: text,
     extensions: [
@@ -104,7 +104,7 @@ export function startState(controller: Controller, text: string) {
       ]),
       scrollTheme,
       // syntax highlighting
-      TextMode(controller),
+      textMode(controller),
       // Text mode plugins
       checkboxPlugin,
       styleMappingPlugin,
@@ -112,7 +112,7 @@ export function startState(controller: Controller, text: string) {
   });
 }
 
-export function initView(controller: Controller, text: string) {
+export function initView(controller: TextMode, text: string) {
   return new EditorView({
     state: startState(controller, text),
     parent: document.body,

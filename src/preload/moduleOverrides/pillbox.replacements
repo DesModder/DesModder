@@ -1,8 +1,6 @@
 # Pillbox Replacements
 
-*plugin* `video-creator` `performance-info`
-
-<!-- TODO: this should really be plugin "core", or "all", but that is disallowed. -->
+*plugin* `pillbox-menus`
 
 ## Insert spot for extra pillbox buttons in geometry toolbar
 
@@ -21,7 +19,7 @@ __from__
 $DCGView.Components.IfElse(
     () => window.DesModder,
     {
-      true: () => window.DesModder?.controller.pillboxButtonsView(true),
+      true: () => DSM.pillboxMenus?.pillboxButtonsView(true),
       false: null
     }
 ),
@@ -43,7 +41,7 @@ $DCGView.createElement($, {
 $DCGView.Components.IfElse(
     () => window.DesModder,
     {
-      true: () => window.DesModder?.controller.pillboxButtonsView(false),
+      true: () => DSM.pillboxMenus?.pillboxButtonsView(false),
       false: null
     }
 ), __from__
@@ -60,7 +58,7 @@ this.controller.isGraphSettingsOpen() ? `bottom: ${$e}px;` : "bottom: auto"
 
 *Replace* `from` with
 ```js
-this.controller.isGraphSettingsOpen() || window.DesModder?.controller?.isSomePillboxMenuOpen()
+this.controller.isGraphSettingsOpen() || DSM.pillboxMenus?.isSomePillboxMenuOpen()
   ? `bottom: ${$e}px;` : "bottom: auto;"
 ```
 
@@ -84,7 +82,7 @@ __from__,
 $DCGView.Components.IfElse(
     () => window.DesModder,
     {
-      true: () => window.DesModder?.controller.pillboxMenuView(true),
+      true: () => DSM.pillboxMenus?.pillboxMenuView(true),
       false: null
     }
 )
@@ -140,5 +138,5 @@ shouldShowContainer() {
 
 *Replace* `ret` with
 ```js
-__ret__ || (DesModder?.controller && !DesModder.controller.showHorizontalPillboxMenu())
+__ret__ || (!DSM.pillboxMenus?.showHorizontalPillboxMenu())
 ```

@@ -28,7 +28,7 @@ __children__,
 $DCGView.createElement(
   $DCGView.Components.For,
   {
-    each: () => window.DesModder?.controller?.inTextMode?.()
+    each: () => DSM.textMode?.inTextMode
         ? [] 
         : this.controller?.getAllItemModels?.() ?? [],
     key: model => model.guid
@@ -44,7 +44,7 @@ $DCGView.createElement(
     model => $DCGView.createElement(
         $DCGView.Components.If,
         {
-          predicate: () => window.DesModder?.controller?.isExpressionPinned(model.id)
+          predicate: () => DSM.pinExpressions?.isExpressionPinned(model.id)
         },
         // marking as a drag copy causes it not to affect the render shells calcuations
         // (all the logic is present already because if the top expression is dragged
@@ -57,15 +57,15 @@ $DCGView.createElement(
 $DCGView.createElement(
   $DCGView.Components.If,
   {
-    predicate: () => window.DesModder?.controller?.inTextMode?.()
+    predicate: () => DSM.textMode?.inTextMode
   },
   () => $DCGView.createElement(
     "div",
     {
       // allow-ids: div
       class: $DCGView.const("dsm-text-editor-container"),
-      didMount: div => window.DesModder?.controller?.exposedPlugins["text-mode"].mountEditor(div),
-      willUnmount: div => window.DesModder?.controller?.exposedPlugins["text-mode"].unmountEditor(div)
+      didMount: div => DSM.textMode.mountEditor(div),
+      willUnmount: div => DSM.textMode.unmountEditor(div)
     }
   )
 )

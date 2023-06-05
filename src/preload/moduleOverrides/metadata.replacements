@@ -1,6 +1,6 @@
 # Metadata Replacements
 
-*plugin* `pin-expressions` `hide-errors` `GLesmos`
+*plugin* `manage-metadata`
 
 Replacements that apply to more than one plugin.
 
@@ -26,7 +26,7 @@ case "expression": $from =
 *Replace* `body` with
 ```js
 __body__;
-window.DesModder?.controller?.duplicateMetadata($to.id, $from.id)
+DSM.metadata?.duplicateMetadata($to.id, $from.id)
 ```
 
 ## Check/update DesModder metadata before allowing statements to update.
@@ -44,6 +44,6 @@ requestParseForAllItems() {__body__}
 
 *Replace* `body` with
 ```js
-window.DesModder?.controller?.checkForMetadataChange();
+DSM.metadata?.checkForMetadataChange();
 __body__
 ```

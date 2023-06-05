@@ -94,7 +94,7 @@ export function patternTokens(str: string, msg: string) {
 
 const allowIDs = "allow-ids:";
 const keywords = ["do", "if", "for", "in", "let", "new", "null", "try", "var"];
-const defaultAllowedIDs = ["window", "DesModder"].concat(keywords);
+const defaultAllowedIDs = ["window", "DesModder", "DSM"].concat(keywords);
 
 function* _patternTokens(str: string, msg: string): Generator<PatternToken> {
   const allowedIDs = new Set<string>(defaultAllowedIDs);
