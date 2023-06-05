@@ -1,6 +1,28 @@
 import { AnyChild as Expr } from "../../aug/AugLatex";
 import { LabelOrientation } from "@desmodder/graph-state";
 
+export type AnyHydrated =
+  | Settings
+  | Ticker
+  | ItemBase
+  | NonFolderBase
+  | ColumnExpressionCommon
+  | Clickable
+  | Expression
+  | Regression
+  | Table
+  | Column
+  | Image
+  | Folder;
+
+export type AnyHydratedValue =
+  | number
+  | boolean
+  | string
+  | Expr
+  | undefined
+  | null;
+
 export interface Settings {
   viewport: {
     xmin: number;

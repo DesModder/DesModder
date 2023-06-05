@@ -2,7 +2,7 @@ import "../../text-mode/tests/run_calc_for_tests";
 // Following imports must go after Desmos loads.
 import { latexTreeToString } from "../aug/augLatexToRaw";
 import { parseRootLatex } from "../aug/rawToAug";
-import { Expression, NodePath, Concrete } from "../down/TextAST";
+import { Expression, Concrete } from "../down/TextAST";
 import { childExprToAug } from "../down/astToAug";
 import { parse } from "../down/textToAST";
 import { exprToTextString } from "../up/astToText";
@@ -44,7 +44,7 @@ function testRoundTripIdenticalViaText(raw: string) {
     const raw1 = leftRight(raw);
     const aug = parseRootLatex(raw1);
     const ast = rootLatexToAST(aug);
-    const text = exprToTextString(new NodePath(ast, null));
+    const text = exprToTextString(ast);
     const analysis = parse(text);
     expect(analysis.diagnostics).toEqual([]);
     const children = analysis.program.children;

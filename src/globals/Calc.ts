@@ -1,6 +1,81 @@
 import { ItemModel } from "./models";
 import { GraphState } from "@desmodder/graph-state";
-import "desmos";
+
+export const exprMetadata = [
+  "set-expression-properties-from-api",
+  "set-slider-isplaying",
+  "set-slider-dragging",
+  "set-slider-minlatex",
+  "set-slider-maxlatex",
+  "set-slider-steplatex",
+  "set-slider-animationperiod",
+  "set-image-name",
+  "set-image-draggable",
+  "set-image-opacity",
+  "set-image-in-foreground",
+  "set-item-dragmode",
+  "set-item-points",
+  "set-item-pointstyle",
+  "set-item-lines",
+  "set-item-linestyle",
+  "set-item-arrow-mode",
+  "set-item-labelSize",
+  "set-item-labelangle",
+  "set-item-label-orientation",
+  "set-suppress-text-outline",
+  "set-item-interactive-label",
+  "set-item-editable-label-mode",
+  "set-show-cdf",
+  "set-cdf-min",
+  "set-cdf-max",
+  "toggle-item-hidden",
+  "set-item-label",
+  "set-item-showlabel",
+  "set-item-color",
+  "set-item-description",
+  "set-item-fill",
+  "set-item-fillopacity",
+  "set-item-lineopacity",
+  "set-item-pointopacity",
+  "set-item-pointsize",
+  "set-item-linewidth",
+  "set-item-colorlatex",
+  "set-item-secret",
+  "set-item-readonly",
+  "set-visualization-prop",
+  "set-clickableinfo-rule-latex",
+  "set-hovered-image",
+  "set-depressed-image",
+] as const;
+
+// Text Mode TODO (completionism):
+//   | "add-item-to-end-from-api"
+//   | "set-expression-properties"
+//   | "insert-several-expressions"
+//   | "set-folder-collapsed"
+//   | "set-all-folders-collapsed"
+// Text Mode TODO (tables):
+//   | "set-tablecolumn-color"
+//   | "set-tablecolumn-colorlatex"
+//   | "toggle-tablecolumn-hidden"
+//   | "set-tablecolumn-dragmode"
+//   | "set-tablecolumn-lines"
+//   | "set-tablecolumn-points"
+//   | "set-tablecolumn-linestyle"
+//   | "set-tablecolumn-linewidth"
+//   | "set-tablecolumn-lineopacity"
+//   | "set-tablecolumn-pointsize"
+//   | "set-tablecolumn-pointopacity"
+//   | "set-tablecolumn-pointstyle"
+// Text Mode TODO (images):
+// | "set-image-mq-attribute"
+// Text Mode TODO (Geometry?):
+//   | "update-all-selected-items"
+//   | "toggle-label-for-all-selected-points"
+// Text Mode TODO (maybe more reliable than on-evaluator-changes?):
+//   | "on-move-points"
+//   | "start-moving-points"
+//   | "stop-moving-points"
 
 export type DispatchedEvent =
   | {
@@ -27,7 +102,8 @@ export type DispatchedEvent =
         | "action-single-step"
         | "toggle-item-hidden"
         | "duplicate-folder"
-        | "duplicate-expression";
+        | "duplicate-expression"
+        | (typeof exprMetadata)[number];
       id: string;
     }
   | {
