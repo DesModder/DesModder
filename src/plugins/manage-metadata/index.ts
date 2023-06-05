@@ -1,4 +1,3 @@
-import { Calc } from "../../globals/window";
 import { PluginController } from "../PluginController";
 import GraphMetadata, { Expression as MetadataExpression } from "./interface";
 import {
@@ -7,6 +6,7 @@ import {
   getBlankMetadata,
   changeExprInMetadata,
 } from "./manage";
+import { Calc } from "globals/window";
 
 export default class ManageMetadata extends PluginController {
   static id = "manage-metadata" as const;

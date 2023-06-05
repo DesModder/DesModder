@@ -4,26 +4,29 @@ import { jquery } from "utils/depUtils";
 export default class RightClickTray extends PluginController {
   static id = "right-click-tray" as const;
   static enabledByDefault = true;
-  showContextMenu = true;
+
+  private showContextMenu = true;
+  private readonly onContextMenu = this._onContextMenu.bind(this);
+  private readonly onMouseDown = this._onMouseDown.bind(this);
 
   afterEnable() {
-    document.addEventListener("contextmenu", this.onContextMenu.bind(this));
-    window.addEventListener("mousedown", this.onMouseDown.bind(this));
+    document.addEventListener("contextmenu", this.onContextMenu);
+    window.addEventListener("mousedown", this.onMouseDown);
   }
 
   afterDisable() {
-    document.removeEventListener("contextmenu", this.onContextMenu.bind(this));
-    window.removeEventListener("mousedown", this.onMouseDown.bind(this));
+    document.removeEventListener("contextmenu", this.onContextMenu);
+    window.removeEventListener("mousedown", this.onMouseDown);
   }
 
-  onContextMenu(e: MouseEvent) {
+  _onContextMenu(e: MouseEvent) {
     if (!this.showContextMenu) {
       this.showContextMenu = true;
       e.preventDefault();
     }
   }
 
-  onMouseDown(e: MouseEvent) {
+  _onMouseDown(e: MouseEvent) {
     if (e.button === 2) {
       if (e.target === null) {
         return;

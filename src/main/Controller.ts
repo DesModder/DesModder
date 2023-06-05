@@ -106,8 +106,9 @@ export default class MainController extends TransparentPlugins {
     const Plugin = plugins.get(id);
     if (Plugin !== undefined) {
       const res = new Plugin(this, this.pluginSettings[id] as any as never);
-      (this.enabledPlugins as Record<PluginID, any>)[Plugin.id] = res;
-      (res as PluginInstance<any>).settings = this.pluginSettings[id];
+      const ep = this.enabledPlugins as Record<PluginID, PluginInstance>;
+      ep[Plugin.id] = res;
+      (res as PluginInstance).settings = this.pluginSettings[id];
       this.setPluginEnabled(id, true);
       res.afterEnable();
       this.pillboxMenus?.updateMenuView();
@@ -149,8 +150,9 @@ export default class MainController extends TransparentPlugins {
   }
 
   togglePluginSettingBoolean(pluginID: PluginID, key: string) {
-    const pluginSettings = this.pluginSettings[pluginID] as Record<string, any>;
-    this.setPluginSetting(pluginID, key, !(pluginSettings[key] as boolean));
+    const pluginSettings = this.pluginSettings[pluginID];
+    if (pluginSettings)
+      this.setPluginSetting(pluginID, key, !(pluginSettings[key] as boolean));
   }
 
   setPluginSetting(

@@ -16,21 +16,19 @@ First follow the instructions above in "Setup Environment".
 
 1. You will want the Prettier and Typescript packages installed for your editor.
    - VS Code comes bundled with Typescript support. Its Prettier extension is called "Prettier - Code Formatter," and I suggest the settings
-   ```
-   "editor.formatOnSave": true,
-   "editor.defaultFormatter": "esbenp.prettier-vscode"
-   ```
-   (or else you'll have to run `npm run fix:prettier` to fix prettier errors)
+     ```json
+     "editor.formatOnSave": true,
+     "editor.defaultFormatter": "esbenp.prettier-vscode"
+     ```
+     (or else you'll have to run `npm run fix:prettier` to fix prettier errors)
 2. [Fork](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) the DesModder repository to your GitHub account
 3. Repeat the [Setup](#Setup) directions with your forked repository instead of the main GitHub repository
 4. Clone and open your fork of the DesModder directory in your editor.
 5. For this example, open the file `src/plugins/index.ts`.
-6. To test Prettier, indent some line by a few spaces. Prettier should automatically remove those spaces on save.
+6. To test Prettier, indent some line by a few spaces. Prettier should automatically remove those spaces when you save the file.
 7. To test Typescript, mess with one of the lines in `keyToPlugin`, e.g. replace `glesmos: GLesmos,` with ` glesmos: "GLesmos"`. You should get red squiggles under the key name `glesmos` and elsewhere in the file.
 8. If both of these worked, then you are ready to start development. Run `npm run dev` in the DesModder directory to start the development server. There should hopefully be no errors.
 9. You should have loaded the unpacked extension based on the instructions in "Setup Environment." Check that it works by opening https://desmos.com/calculator and seeing the buttons that DesModder adds
-10. Back in `src/plugins.ts`, delete one of the lines declaring a plugin, for example delete `glesmos: GLesmos,`
-11. Refresh the Desmos page. The plugin should now be removed from the list.
 
 ## Example: Creating a plugin
 

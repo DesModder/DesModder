@@ -41,8 +41,6 @@ export function drawGLesmosSketchToCtx(
     }
   } catch (e) {
     const model = Calc.controller.getItemModel(id);
-    if (model) {
-      model.error = e instanceof Error ? e.message : e;
-    }
+    if (model) model.error = e instanceof Error ? e.message : e;
   }
 }
