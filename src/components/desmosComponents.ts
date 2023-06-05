@@ -103,9 +103,11 @@ export abstract class TooltipComponent extends ClassComponent<{
 
 export const Tooltip = Fragile.Tooltip;
 
-export abstract class ExpressionIconViewComponent extends ClassComponent<{
+export abstract class IconViewComponent extends ClassComponent<{
   model: ItemModel;
   controller: typeof Calc.controller;
 }> {}
 
 export const ExpressionIconView = window.DesModderFragile.ExpressionIconView;
+
+export const ImageIconView = window.DesModderFragile.ImageIconView;

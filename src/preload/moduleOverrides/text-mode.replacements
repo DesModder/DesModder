@@ -111,3 +111,23 @@ $ = "#000", $ = "#fff", $ExpressionIconView = class
 ```js
 $ExpressionIconView = (window.DesModderFragile ??= {}).ExpressionIconView
 ```
+
+## Extract ImageIconView class
+
+*Description* `Show style circles for Text Mode images`
+
+*Find*
+
+```js
+$ImageIconView = class extends $.Class {
+  init() { ____ }
+  template() {
+      return $.createElement("div", {
+          class: $.const("dcg-expression-icon-container dcg-image-icon-container")
+      }
+```
+
+*Replace* `ImageIconView` with
+```js
+$ImageIconView = (window.DesModderFragile ??= {}).ImageIconView
+```

@@ -2,7 +2,7 @@ import { DCGViewModule } from "../DCGView";
 import {
   CheckboxComponent,
   DStaticMathquillViewComponent,
-  ExpressionIconViewComponent,
+  IconViewComponent,
   InlineMathInputViewComponent,
   MathQuillField,
   MathQuillViewComponent,
@@ -23,7 +23,8 @@ interface windowConfig extends Window {
     pluginSettings: Record<PluginID, GenericSettings | undefined>;
   };
   DesModderFragile: {
-    ExpressionIconView: typeof ExpressionIconViewComponent;
+    ExpressionIconView: typeof IconViewComponent;
+    ImageIconView: typeof IconViewComponent;
   };
 }
 

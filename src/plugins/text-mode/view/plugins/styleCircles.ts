@@ -20,7 +20,7 @@ const styleCircleGutter = gutter({
     let last = -1;
     for (const stmt of statementsIntersecting(program, from, to)) {
       const model = Calc.controller.getItemModel(stmt.id);
-      if (model?.type === "expression") {
+      if (model?.type === "expression" || model?.type === "image") {
         const pos = view.lineBlockAt(stmt.pos.from).from;
         if (pos > last) {
           last = pos;

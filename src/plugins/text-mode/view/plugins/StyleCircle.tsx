@@ -1,6 +1,6 @@
 import "./StyleCircle.less";
 import { Component, DCGView, jsx } from "DCGView";
-import { ExpressionIconView } from "components";
+import { ExpressionIconView, ImageIconView } from "components";
 import { ItemModel } from "globals/models";
 import { Calc } from "globals/window";
 
@@ -9,11 +9,25 @@ export default class StyleCircle extends Component<{
   model: ItemModel;
 }> {
   template() {
-    return (
-      <ExpressionIconView
-        model={DCGView.const(this.props.model())}
-        controller={DCGView.const(Calc.controller)}
-      />
-    );
+    const model = this.props.model();
+    const type = model.type;
+    switch (type) {
+      case "expression":
+        return (
+          <ExpressionIconView
+            model={DCGView.const(model)}
+            controller={DCGView.const(Calc.controller)}
+          />
+        );
+      case "image":
+        return (
+          <ImageIconView
+            model={DCGView.const(model)}
+            controller={DCGView.const(Calc.controller)}
+          />
+        );
+      default:
+        return <div></div>;
+    }
   }
 }

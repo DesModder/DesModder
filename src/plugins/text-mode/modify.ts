@@ -164,7 +164,7 @@ function metadataChange(
   )
     return [];
   const expr = state.expressions.list.find((x) => x.id === id);
-  if (!expr || expr.type !== "expression") return [];
+  if (!expr || (expr.type !== "expression" && expr.type !== "image")) return [];
   const itemAug = rawNonFolderToAug(expr, dsmMetadata);
   const afterEnd = oldNode.pos.to;
   const pos = oldNode.style?.pos ?? { from: afterEnd, to: afterEnd };
