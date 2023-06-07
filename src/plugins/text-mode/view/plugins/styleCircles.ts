@@ -34,6 +34,9 @@ const styleCircleGutter = gutter({
     // const id = statementContainingLine(analysis, line)?.id;
     // return id ? new StyleCircleMarker(id) : null;
   },
+  initialSpacer() {
+    return new StyleCircleSpacer();
+  },
   // TODO intelligence
   lineMarkerChange: () => true,
 });
@@ -53,6 +56,18 @@ class StyleCircleMarker extends GutterMarker {
       id: DCGView.const(this.id),
       model: DCGView.const(this.model),
     });
+    return div;
+  }
+}
+
+class StyleCircleSpacer extends GutterMarker {
+  eq() {
+    return true;
+  }
+
+  toDOM() {
+    const div = document.createElement("div");
+    div.style.width = "29px";
     return div;
   }
 }
