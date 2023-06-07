@@ -53,6 +53,10 @@ export default class TextMode extends PluginController {
     this.dispatchListenerID = Calc.controller.dispatcher.register((event) => {
       if (event.type === "set-state" && !event.opts.fromTextMode)
         this.onSetState();
+      if (event.type === "convert-image-to-draggable")
+        this.toastErrorGraphUndo(
+          "Text Mode cannot handle converting image to draggable."
+        );
       if ((relevantEventTypes as readonly string[]).includes(event.type)) {
         // setTimeout to avoid dispatch-in-dispatch from handlers responding to
         // calc state changing by dispatching an event
@@ -71,9 +75,19 @@ export default class TextMode extends PluginController {
   }
 
   conversionError(undoCallback?: () => void) {
+    this.toastError(
+      "Automatic conversion to text encountered errors in some expressions.",
+      undoCallback
+    );
+  }
+
+  toastErrorGraphUndo(msg: string) {
+    this.toastError(msg, () => Calc.controller.dispatch({ type: "undo" }));
+  }
+
+  toastError(msg: string, undoCallback?: () => void) {
     Calc.controller._showToast({
-      message:
-        "Automatic conversion to text encountered errors in some expressions.",
+      message: msg,
       // `undoCallback: undefined` still adds the "Press Ctrl+Z" message
       ...(undoCallback ? { undoCallback } : {}),
     });

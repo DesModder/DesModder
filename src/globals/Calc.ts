@@ -95,14 +95,15 @@ export type DispatchedEvent =
         | "resize-exp-list"
         | "set-none-selected"
         | "toggle-graph-settings"
-        | "clear-unsaved-changes";
+        | "clear-unsaved-changes"
+        | "undo";
     }
   | {
       type:
         | "action-single-step"
-        | "toggle-item-hidden"
         | "duplicate-folder"
         | "duplicate-expression"
+        | "convert-image-to-draggable"
         | (typeof exprMetadata)[number];
       id: string;
     }
