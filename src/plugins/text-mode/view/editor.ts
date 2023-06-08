@@ -4,6 +4,7 @@ import { analysisStateField, doLint } from "../LanguageServer";
 import { textMode } from "../lezer/index";
 import "./editor.css";
 import { checkboxPlugin } from "./plugins/checkboxWidget";
+import { collapseStylesAtStart } from "./plugins/collapseStylesAtStart";
 import { activeStmtGutterHighlighter } from "./plugins/highlightActiveStmtGutter";
 import { stmtNumbers } from "./plugins/stmtNumbers";
 import { styleCircles } from "./plugins/styleCircles";
@@ -50,7 +51,7 @@ const scrollTheme = EditorView.theme({
 });
 
 export function startState(controller: TextMode, text: string) {
-  return EditorState.create({
+  const state = EditorState.create({
     doc: text,
     extensions: [
       analysisStateField,
@@ -112,6 +113,7 @@ export function startState(controller: TextMode, text: string) {
       styleMappingPlugin,
     ],
   });
+  return state.update(collapseStylesAtStart(state)).state;
 }
 
 export function initView(controller: TextMode, text: string) {
