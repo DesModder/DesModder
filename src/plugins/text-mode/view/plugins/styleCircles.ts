@@ -42,21 +42,31 @@ const styleCircleGutter = gutter({
 });
 
 class StyleCircleMarker extends GutterMarker {
+  unsub: (() => void) | undefined;
+  div: HTMLElement | undefined;
+
   constructor(readonly id: string, readonly model: ItemModel) {
     super();
   }
 
-  eq(_other: StyleCircleMarker) {
-    return false;
+  eq(other: StyleCircleMarker) {
+    return this.model === other.model;
   }
 
   toDOM() {
-    const div = document.createElement("div");
-    DCGView.mountToNode(StyleCircle, div, {
+    this.div = document.createElement("div");
+    // somehow we need to let updateView update this mount point.
+    const view = DCGView.mountToNode(StyleCircle, this.div, {
       id: DCGView.const(this.id),
       model: DCGView.const(this.model),
     });
-    return div;
+    this.unsub = Calc.controller.subToChanges(() => view.update());
+    return this.div;
+  }
+
+  destroy() {
+    this.unsub?.();
+    if (this.div) DCGView.unmountFromNode(this.div);
   }
 }
 

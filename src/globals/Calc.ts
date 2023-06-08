@@ -265,6 +265,8 @@ interface CalcPrivate {
     isGeoUIActive: () => boolean;
     isNarrowGeometryHeader: () => boolean;
     expressionSearchOpen: boolean;
+    /** Returns a function to call to unsubscribe */
+    subToChanges: (cb: () => void) => () => void;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;
