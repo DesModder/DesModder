@@ -1,8 +1,9 @@
 import TextMode from "..";
-import TextAST, { NodePath } from "../down/TextAST";
+import { AnyHydrated, AnyHydratedValue } from "../down/style/Hydrated";
 import * as Defaults from "../down/style/defaults";
 import { getIndentation } from "../modify";
 import { exprToTextString } from "../up/astToText";
+import { childLatexToAST } from "../up/augToAST";
 import {
   Completion,
   CompletionContext,
@@ -120,7 +121,7 @@ function styleCompletions(
   return styleCompletionsFromDefaults(defaults);
 }
 
-function styleDefaults(controller: TextMode, node: SyntaxNode): any {
+function styleDefaults(controller: TextMode, node: SyntaxNode): AnyHydrated {
   if (
     node.name === "ExprStatement" &&
     node.parent?.name === "BlockInner" &&
@@ -148,19 +149,18 @@ function styleDefaults(controller: TextMode, node: SyntaxNode): any {
       return styleDefaults(controller, node.parent!);
     case "MappingEntry": {
       const id = node.getChild("Identifier")!;
-      return styleDefaults(controller, node.parent!)[
-        controller.view!.state.doc.sliceString(id.from, id.to)
-      ];
+      const key = controller.view!.state.doc.sliceString(id.from, id.to);
+      return styleDefaults(controller, node.parent!)[key as keyof AnyHydrated];
     }
     default:
       throw Error(`Unexpected node type as parent of style: ${node.name}`);
   }
 }
 
-function styleCompletionsFromDefaults(defaults: any): Completion[] {
+function styleCompletionsFromDefaults(defaults: AnyHydrated): Completion[] {
   const completions = [];
   for (const key in defaults) {
-    const value = defaults[key];
+    const value = defaults[key as keyof AnyHydrated] as AnyHydratedValue;
     completions.push({
       type: "property",
       label: key,
@@ -171,9 +171,7 @@ function styleCompletionsFromDefaults(defaults: any): Completion[] {
           ? "type" in value
             ? macroExpandWithSelection(
                 key + ": ",
-                exprToTextString(
-                  new NodePath(value as TextAST.Expression, null)
-                ),
+                exprToTextString(childLatexToAST(value)),
                 ","
               )
             : macroExpandWithSelection(key + ": @{ ", "", " },")

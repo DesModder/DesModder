@@ -1,4 +1,4 @@
-import { NodePath, Statement } from "../down/TextAST";
+import { Statement } from "../down/TextAST";
 import { parse } from "../down/textToAST";
 import { astItemToTextString } from "../up/astToText";
 import { statementsIntersecting } from "./statementIntersection";
@@ -15,7 +15,7 @@ function positionsAndProgram(s: string) {
 }
 
 function toString(s: Statement) {
-  return astItemToTextString(new NodePath(s, null)).replace(/ /g, "");
+  return astItemToTextString(s).replace(/ /g, "");
 }
 
 function testIntersection(s: string, stmts: string[]) {

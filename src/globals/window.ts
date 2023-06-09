@@ -2,6 +2,7 @@ import { DCGViewModule } from "../DCGView";
 import {
   CheckboxComponent,
   DStaticMathquillViewComponent,
+  IconViewComponent,
   InlineMathInputViewComponent,
   MathQuillField,
   MathQuillViewComponent,
@@ -20,6 +21,10 @@ interface windowConfig extends Window {
     pluginsForceDisabled: Set<PluginID>;
     pluginsEnabled: Record<PluginID, boolean | undefined>;
     pluginSettings: Record<PluginID, GenericSettings | undefined>;
+  };
+  DesModderFragile: {
+    ExpressionIconView: typeof IconViewComponent;
+    ImageIconView: typeof IconViewComponent;
   };
 }
 
@@ -124,3 +129,5 @@ declare global {
  * Use `/* eslint-disable no-console` and lowercase `console.log` on node scripts
  */
 export const Console = ((globalThis ?? window) as any).console;
+
+export const DesModderFragile = window.DesModderFragile;

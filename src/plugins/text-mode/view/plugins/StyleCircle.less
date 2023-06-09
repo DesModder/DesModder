@@ -1,0 +1,40 @@
+.dsm-text-editor-container .cm-editor {
+  .dcg-expression-icon-container {
+    position: static;
+    margin: 0;
+  }
+
+  .dcg-tooltipped-error.dcg-white {
+    color: #e66b3c;
+  }
+
+  .dcg-circular-icon {
+    // Reset styles for white icons, rather than passing in whiteIcon={false}
+    &.dcg-thick-outline.dcg-white-icon {
+      color: #000;
+      border-color: #000;
+      opacity: 0.5;
+
+      &.dcg-hovered {
+        opacity: 0.7;
+      }
+
+      &.dcg-depressed {
+        opacity: 0.9;
+      }
+    }
+
+    &.dcg-hidden.dcg-white-icon {
+      &:before {
+        border-color: #999;
+        opacity: 0.25;
+      }
+      &.dcg-hovered:before {
+        opacity: 0.3125;
+      }
+      &.dcg-depressed:before {
+        opacity: 0.375;
+      }
+    }
+  }
+}

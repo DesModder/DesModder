@@ -7,6 +7,7 @@ import {
 import TextAST, { NodePath, Settings, Statement } from "./down/TextAST";
 import { childExprToAug } from "./down/astToAug";
 import {
+  astItemToTextString,
   docToString,
   exprToTextString,
   styleEntryToText,
@@ -16,12 +17,12 @@ import { graphSettingsToText, itemToText } from "./up/augToText";
 import { ChangeSpec } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
-import { DispatchedEvent } from "globals/Calc";
+import { DispatchedEvent, exprMetadata } from "globals/Calc";
 import { Calc } from "globals/window";
 import Metadata from "plugins/manage-metadata/interface";
 
-export const relevantEventTypes = [
-  // @settings related
+// @settings related
+const settingsEvents = [
   "set-axis-limit-latex",
   "re-randomize",
   "toggle-lock-viewport",
@@ -30,6 +31,11 @@ export const relevantEventTypes = [
   "set-graph-settings",
   "zoom",
   "resize-exp-list", // resize-exp-list can update viewport size
+] as const;
+
+export const relevantEventTypes = [
+  ...settingsEvents,
+  ...exprMetadata,
   // sliders, draggable points, action updates, etc.
   "on-evaluator-changes",
   // only should affect selection
@@ -44,58 +50,59 @@ type ToChange = "table-columns" | "latex-only" | "image-pos" | "regression";
 
 export function eventSequenceChanges(
   view: EditorView,
-  events: RelevantEvent[],
+  event: RelevantEvent,
   analysis: ProgramAnalysis
 ): ChangeSpec[] {
-  let settingsChanged: boolean = false;
-  const itemsChanged: Record<string, ToChange> = {};
   const state = Calc.getState();
-  for (const event of events) {
-    switch (event.type) {
-      case "re-randomize":
-      case "set-axis-limit-latex":
-      case "toggle-lock-viewport":
-      case "commit-user-requested-viewport":
-      case "set-graph-settings":
-      case "zoom":
-      case "grapher/drag-end":
-      case "resize-exp-list":
-        settingsChanged = true;
-        break;
-      case "on-evaluator-changes":
-        for (const [changeID, change] of Object.entries(event.changes)) {
-          if (
-            change.raw_slider_latex !== undefined ||
-            change.zero_values !== undefined
-          ) {
-            // change.raw_slider_latex e.g. a slider was played.
-            // This is also triggered on first update of a slider
-            // Filtering out unnecessary re-writes is done later in itemChange
-            // change.zero_values is for lists: action updates
-            itemsChanged[changeID] = "latex-only";
-          } else if (
-            // TODO: move_strategy also gets emitted when the viewport is panned
-            // even if the point was not dragged. Only difference in the events
-            // seem to be the coordinates to update, so check that
-            // TODO: ignore the first move_strategy after an update from
-            // the text because it's always no change
-            change.move_strategy !== undefined
-          )
-            // length 2 corresponds to dragging a point, which is latex only
-            // otherwise (length 4), it is dragging an image
-            itemsChanged[changeID] =
-              change.move_strategy?.length === 2 ? "latex-only" : "image-pos";
-          else if (change.regression !== undefined)
-            itemsChanged[changeID] = "regression";
-          else if (change.column_data !== undefined)
-            itemsChanged[changeID] = "table-columns";
-        }
-        break;
-    }
+  if (event.type === "on-evaluator-changes") {
+    return evaluatorChange(analysis, state, view, event);
+  } else if ((settingsEvents as readonly string[]).includes(event.type)) {
+    return [settingsChange(analysis, state)];
+  } else if ((exprMetadata as readonly string[]).includes(event.type)) {
+    const id = (
+      event as RelevantEvent & { type: (typeof exprMetadata)[number] }
+    ).id;
+    const dsmMetadata = rawToDsmMetadata(state);
+    return [metadataChange(analysis, state, dsmMetadata, view, id)];
+  } else {
+    return [];
   }
+}
+
+function evaluatorChange(
+  analysis: ProgramAnalysis,
+  state: GraphState,
+  view: EditorView,
+  event: RelevantEvent & { type: "on-evaluator-changes" }
+): ChangeSpec[] {
   const changes: ChangeSpec[] = [];
-  if (settingsChanged) {
-    changes.push(settingsChange(analysis, state));
+  const itemsChanged: Record<string, ToChange> = {};
+  for (const [changeID, change] of Object.entries(event.changes)) {
+    if (
+      change.raw_slider_latex !== undefined ||
+      change.zero_values !== undefined
+    ) {
+      // change.raw_slider_latex e.g. a slider was played.
+      // This is also triggered on first update of a slider
+      // Filtering out unnecessary re-writes is done later in itemChange
+      // change.zero_values is for lists: action updates
+      itemsChanged[changeID] = "latex-only";
+    } else if (
+      // TODO: move_strategy also gets emitted when the viewport is panned
+      // even if the point was not dragged. Only difference in the events
+      // seem to be the coordinates to update, so check that
+      // TODO: ignore the first move_strategy after an update from
+      // the text because it's always no change
+      change.move_strategy !== undefined
+    )
+      // length 2 corresponds to dragging a point, which is latex only
+      // otherwise (length 4), it is dragging an image
+      itemsChanged[changeID] =
+        change.move_strategy?.length === 2 ? "latex-only" : "image-pos";
+    else if (change.regression !== undefined)
+      itemsChanged[changeID] = "regression";
+    else if (change.column_data !== undefined)
+      itemsChanged[changeID] = "table-columns";
   }
   const dsmMetadata = rawToDsmMetadata(state);
   for (const [changeID, toChange] of Object.entries(itemsChanged)) {
@@ -142,6 +149,32 @@ function findStatement<T extends Statement>(
   return null;
 }
 
+function metadataChange(
+  analysis: ProgramAnalysis,
+  state: GraphState,
+  dsmMetadata: Metadata,
+  view: EditorView,
+  id: string
+): ChangeSpec {
+  const oldNode = analysis.mapIDstmt[id];
+  if (
+    !oldNode ||
+    (oldNode.type !== "ExprStatement" && oldNode.type !== "Image")
+  )
+    return [];
+  const expr = state.expressions.list.find((x) => x.id === id);
+  if (!expr || (expr.type !== "expression" && expr.type !== "image")) return [];
+  const itemAug = rawNonFolderToAug(expr, dsmMetadata);
+  const afterEnd = oldNode.pos.to;
+  const pos = oldNode.style?.pos ?? { from: afterEnd, to: afterEnd };
+  const ast = itemAugToAST(itemAug);
+  if (!ast) return [];
+  const fullItem = astItemToTextString(ast);
+  const newStyle = /@\{[^]*/m.exec(fullItem)?.[0];
+  const insert = (!oldNode.style && newStyle ? " " : "") + (newStyle ?? "");
+  return insertWithIndentation(view, pos, insert);
+}
+
 function itemChange(
   analysis: ProgramAnalysis,
   state: GraphState,
@@ -155,7 +188,7 @@ function itemChange(
   const oldNode = analysis.mapIDstmt[changeID];
   if (oldNode === undefined) return [];
   const itemAug = rawNonFolderToAug(newStateItem, dsmMetadata);
-  if (itemAug.error) throw new Error("Expected valid itemAug in modify");
+  if (itemAug.error) return [];
   switch (toChange) {
     case "table-columns": {
       // Table column updates from dragging a point
@@ -181,7 +214,7 @@ function itemChange(
         insertWithIndentation(
           view,
           e.expr.pos,
-          exprToTextString(new NodePath(ast.columns[i].expr, null))
+          exprToTextString(ast.columns[i].expr)
         )
       );
     }
@@ -201,7 +234,7 @@ function itemChange(
         insertWithIndentation(
           view,
           oldNode.expr.pos,
-          exprToTextString(new NodePath(ast.expr, null))
+          exprToTextString(ast.expr)
         ),
       ];
     }

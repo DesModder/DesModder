@@ -1,6 +1,52 @@
 import { ItemModel } from "./models";
 import { GraphState } from "@desmodder/graph-state";
-import "desmos";
+
+export const exprMetadata = [
+  "set-expression-properties-from-api",
+  "set-slider-isplaying",
+  "set-slider-dragging",
+  "set-slider-minlatex",
+  "set-slider-maxlatex",
+  "set-slider-steplatex",
+  "set-slider-animationperiod",
+  "set-image-name",
+  "set-image-draggable",
+  "set-image-opacity",
+  "set-image-in-foreground",
+  "set-item-dragmode",
+  "set-item-points",
+  "set-item-pointstyle",
+  "set-item-lines",
+  "set-item-linestyle",
+  "set-item-arrow-mode",
+  "set-item-labelSize",
+  "set-item-labelangle",
+  "set-item-label-orientation",
+  "set-suppress-text-outline",
+  "set-item-interactive-label",
+  "set-item-editable-label-mode",
+  "set-show-cdf",
+  "set-cdf-min",
+  "set-cdf-max",
+  "toggle-item-hidden",
+  "set-item-label",
+  "set-item-showlabel",
+  "set-item-color",
+  "set-item-description",
+  "set-item-fill",
+  "set-item-fillopacity",
+  "set-item-lineopacity",
+  "set-item-pointopacity",
+  "set-item-pointsize",
+  "set-item-linewidth",
+  "set-item-colorlatex",
+  "set-item-secret",
+  "set-item-readonly",
+  "set-visualization-prop",
+  "set-clickableinfo-rule-latex",
+  "set-hovered-image",
+  "set-depressed-image",
+] as const;
 
 export type DispatchedEvent =
   | {
@@ -20,14 +66,16 @@ export type DispatchedEvent =
         | "resize-exp-list"
         | "set-none-selected"
         | "toggle-graph-settings"
-        | "clear-unsaved-changes";
+        | "clear-unsaved-changes"
+        | "undo";
     }
   | {
       type:
         | "action-single-step"
-        | "toggle-item-hidden"
         | "duplicate-folder"
-        | "duplicate-expression";
+        | "duplicate-expression"
+        | "convert-image-to-draggable"
+        | (typeof exprMetadata)[number];
       id: string;
     }
   | {
@@ -188,6 +236,8 @@ interface CalcPrivate {
     isGeoUIActive: () => boolean;
     isNarrowGeometryHeader: () => boolean;
     expressionSearchOpen: boolean;
+    /** Returns a function to call to unsubscribe */
+    subToChanges: (cb: () => void) => () => void;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;

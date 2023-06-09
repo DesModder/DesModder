@@ -14,8 +14,8 @@ export function docToString(doc: Doc): string {
   }).formatted;
 }
 
-export function astItemToTextString(path: NodePath<TextAST.Statement>): string {
-  return docToString(astItemToText(path));
+export function astItemToTextString(item: TextAST.Statement): string {
+  return docToString(astItemToText(new NodePath(item, null)));
 }
 
 function astItemToText(path: NodePath<TextAST.Statement>): Doc {
@@ -170,8 +170,8 @@ function primeOrCallToText(
   ]);
 }
 
-export function exprToTextString(path: NodePath<TextAST.Expression>): string {
-  return docToString(exprToText(path));
+export function exprToTextString(expr: TextAST.Expression): string {
+  return docToString(exprToText(new NodePath(expr, null)));
 }
 
 function exprToText(path: NodePath<TextAST.Expression>): Doc {

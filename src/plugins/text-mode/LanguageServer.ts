@@ -36,8 +36,10 @@ export function onCalcEvent(view: EditorView, event: RelevantEvent) {
     view.dispatch(transaction);
     return;
   }
-  const changes = eventSequenceChanges(view, [event], analysis);
-  if (changes.length === 0) return;
+  const changes = eventSequenceChanges(view, event, analysis);
+  // on-evaluator-changes could mean some item model changes, which affects
+  // style circles. Keep the transaction to update style circles.
+  if (changes.length === 0 && event.type !== "on-evaluator-changes") return;
   const transaction = view.state.update({
     changes,
     annotations: [Transaction.remote.of(true)],

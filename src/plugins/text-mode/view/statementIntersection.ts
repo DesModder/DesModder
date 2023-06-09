@@ -2,13 +2,13 @@ import { ProgramAnalysis } from "../LanguageServer";
 import { Positioned, Program, Statement } from "../down/TextAST";
 import { BlockInfo } from "@codemirror/view";
 
-export function statementIndexContainingLine(
+export function statementContainingLine(
   analysis: ProgramAnalysis,
   b: BlockInfo
 ) {
   const stmts = statementsIntersecting(analysis.program, b.from, b.to);
   for (const stmt of stmts) {
-    if (b.from <= stmt.pos.from) return stmt.index;
+    if (b.from <= stmt.pos.from) return stmt;
   }
 }
 
