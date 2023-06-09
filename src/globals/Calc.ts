@@ -48,35 +48,6 @@ export const exprMetadata = [
   "set-depressed-image",
 ] as const;
 
-// Text Mode TODO (completionism):
-//   | "add-item-to-end-from-api"
-//   | "set-expression-properties"
-//   | "insert-several-expressions"
-//   | "set-folder-collapsed"
-//   | "set-all-folders-collapsed"
-// Text Mode TODO (tables):
-//   | "set-tablecolumn-color"
-//   | "set-tablecolumn-colorlatex"
-//   | "toggle-tablecolumn-hidden"
-//   | "set-tablecolumn-dragmode"
-//   | "set-tablecolumn-lines"
-//   | "set-tablecolumn-points"
-//   | "set-tablecolumn-linestyle"
-//   | "set-tablecolumn-linewidth"
-//   | "set-tablecolumn-lineopacity"
-//   | "set-tablecolumn-pointsize"
-//   | "set-tablecolumn-pointopacity"
-//   | "set-tablecolumn-pointstyle"
-// Text Mode TODO (images):
-// | "set-image-mq-attribute"
-// Text Mode TODO (Geometry?):
-//   | "update-all-selected-items"
-//   | "toggle-label-for-all-selected-points"
-// Text Mode TODO (maybe more reliable than on-evaluator-changes?):
-//   | "on-move-points"
-//   | "start-moving-points"
-//   | "stop-moving-points"
-
 export type DispatchedEvent =
   | {
       type:

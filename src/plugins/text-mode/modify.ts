@@ -118,7 +118,6 @@ function settingsChange(
   state: GraphState
 ): ChangeSpec {
   const newSettingsText = graphSettingsToText(rawToAugSettings(state));
-  // TODO: this fails if Settings is a child of a folder. Disallow?
   const settingsNode = findStatement(
     analysis.program.children,
     (stmt): stmt is Settings => stmt.type === "Settings"

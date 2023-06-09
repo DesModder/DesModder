@@ -129,3 +129,5 @@ declare global {
  * Use `/* eslint-disable no-console` and lowercase `console.log` on node scripts
  */
 export const Console = ((globalThis ?? window) as any).console;
+
+export const DesModderFragile = window.DesModderFragile;

@@ -1,6 +1,6 @@
 import { ItemModel } from "../globals/models";
 import { ClassComponent, DCGView } from "DCGView";
-import window, { Calc, Fragile } from "globals/window";
+import { DesModderFragile, Calc, Fragile } from "globals/window";
 
 export abstract class CheckboxComponent extends ClassComponent<{
   checked: boolean;
@@ -108,6 +108,6 @@ export abstract class IconViewComponent extends ClassComponent<{
   controller: typeof Calc.controller;
 }> {}
 
-export const ExpressionIconView = window.DesModderFragile.ExpressionIconView;
+export const ExpressionIconView = DesModderFragile.ExpressionIconView;
 
-export const ImageIconView = window.DesModderFragile.ImageIconView;
+export const ImageIconView = DesModderFragile.ImageIconView;

@@ -29,16 +29,10 @@ const styleCircleGutter = gutter({
       }
     }
     return RangeSet.of(ranges);
-    // if (others.some((m) => m.toDOM)) return null;
-    // const analysis = view.state.field(analysisStateField);
-    // const id = statementContainingLine(analysis, line)?.id;
-    // return id ? new StyleCircleMarker(id) : null;
   },
   initialSpacer() {
     return new StyleCircleSpacer();
   },
-  // TODO intelligence
-  lineMarkerChange: () => true,
 });
 
 class StyleCircleMarker extends GutterMarker {
@@ -55,7 +49,6 @@ class StyleCircleMarker extends GutterMarker {
 
   toDOM() {
     this.div = document.createElement("div");
-    // somehow we need to let updateView update this mount point.
     const view = DCGView.mountToNode(StyleCircle, this.div, {
       id: DCGView.const(this.id),
       model: DCGView.const(this.model),
