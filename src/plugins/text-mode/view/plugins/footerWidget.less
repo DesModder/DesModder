@@ -1,0 +1,54 @@
+.dsm-text-editor-container .cm-editor .dsm-tm-footer-wrapper {
+  // The container is the div.dcg-exppanel-container.dsm-in-text-mode
+  width: calc(100cqw - var(--dsm-tm-gutter-width));
+  padding-inline: 15px;
+
+  // Unset some codemirror stuff;
+  font-family: arial, sans-serif;
+  word-wrap: normal;
+  white-space: normal;
+
+  .dsm-slider {
+    margin-left: 0;
+  }
+
+  .dcg-display-domain {
+    padding: 0 0 4px;
+  }
+
+  .dcg-visualization-parameters-container,
+  .dcg-cdf-footer-container,
+  .dcg-display-domain,
+  .dcg-evaluation-container {
+    // Codemirror block widgets can't have margin
+    margin: 0;
+  }
+
+  .dcg-parameter-suggestion-container {
+    display: none;
+  }
+
+  .dcg-unresolved {
+    font-size: 80%;
+    color: #666;
+    cursor: default;
+
+    i {
+      font-size: 85%;
+    }
+
+    a {
+      color: #666;
+      margin-left: 5px;
+      text-decoration: underline;
+      &.dcg-hovered {
+        color: #000;
+      }
+    }
+
+    .dcg-btn {
+      padding: 2px 5px;
+      margin-top: 4px;
+    }
+  }
+}

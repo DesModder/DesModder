@@ -35,6 +35,8 @@ const styleCircleGutter = gutter({
   },
 });
 
+// Compare to StyleCircleMarker. Similar mount/div handling
+// If a third similar thing appears, consider some shared logic
 class StyleCircleMarker extends GutterMarker {
   unsub: (() => void) | undefined;
   div: HTMLElement | undefined;
