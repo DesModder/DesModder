@@ -3,9 +3,10 @@
  * The functions in this file manage the interface between codemirror and
  * the Text Mode compiler.
  */
+import { DispatchedEvent } from "../../globals/Calc";
 import { Program, Statement } from "./down/TextAST";
 import textToRaw from "./down/textToRaw";
-import { RelevantEvent, eventSequenceChanges } from "./modify";
+import { eventSequenceChanges } from "./modify";
 import { Diagnostic } from "@codemirror/lint";
 import { StateField, Text, Transaction } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
@@ -23,7 +24,7 @@ export interface ProgramAnalysis {
  * onCalcEvent: when we receive a new event dispatched via Calc (such as a
  * slider value change, or viewport move) which affects the text
  */
-export function onCalcEvent(view: EditorView, event: RelevantEvent) {
+export function onCalcEvent(view: EditorView, event: DispatchedEvent) {
   // should this be a state effect?
   const analysis = view.state.field(analysisStateField);
   if (event.type === "set-selected-id") {
