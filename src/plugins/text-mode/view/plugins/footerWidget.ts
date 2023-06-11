@@ -56,7 +56,13 @@ class FooterWidget extends WidgetType {
   }
 
   eq(other: FooterWidget) {
-    return this.model === other.model;
+    // TODO-incremental: We need to be stricter than this. This should really
+    // be like GUID or full object equality this.model === other.model.
+    // But the GUID gets updated every setState(), and the model objects
+    // are fairly complicated.
+    return (
+      this.model.id === other.model.id && this.model.latex === other.model.latex
+    );
   }
 
   toDOM() {
