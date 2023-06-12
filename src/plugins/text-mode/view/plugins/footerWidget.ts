@@ -60,9 +60,12 @@ class FooterWidget extends WidgetType {
     // be like GUID or full object equality this.model === other.model.
     // But the GUID gets updated every setState(), and the model objects
     // are fairly complicated.
-    return (
-      this.model.id === other.model.id && this.model.latex === other.model.latex
-    );
+    const a = this.model;
+    const b = other.model;
+    // Comparing a === getItemModel(a.id) overwrites the widget too often.
+    // This is probably not good since it relies on the order of Codemirror
+    // running the eq() call, but it seems to be a=old, b=new.
+    return a.id === b.id && b === Calc.controller.getItemModel(b.id);
   }
 
   toDOM() {
