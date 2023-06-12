@@ -28,6 +28,7 @@ export type DispatchedEvent =
         | "duplicate-folder"
         | "duplicate-expression"
         | "convert-image-to-draggable"
+        | "create-sliders-for-item"
         | "toggle-item-hidden";
       id: string;
     }

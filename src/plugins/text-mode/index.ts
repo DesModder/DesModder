@@ -55,10 +55,6 @@ export default class TextMode extends PluginController {
       setTimeout(() => {
         if (event.type === "set-state" && !event.opts.fromTextMode)
           this.onSetState();
-        if (event.type === "convert-image-to-draggable")
-          this.toastErrorGraphUndo(
-            "Text Mode cannot handle converting image to draggable."
-          );
         if (this.view) onCalcEvent(this.view, event);
       });
     });

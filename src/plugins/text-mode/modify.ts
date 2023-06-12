@@ -51,6 +51,12 @@ export function eventSequenceChanges(
     if ("id" in event && event.id !== undefined) {
       const dsmMetadata = rawToDsmMetadata(state);
       res.push(metadataChange(analysis, state, dsmMetadata, view, event.id));
+      if (
+        event.type === "convert-image-to-draggable" ||
+        event.type === "create-sliders-for-item"
+      ) {
+        res.push(newItemsChange(analysis, state, dsmMetadata, view));
+      }
     }
     return res;
   }
@@ -160,6 +166,31 @@ function metadataChange(
   const newStyle = /@\{[^]*/m.exec(fullItem)?.[0];
   const insert = (!oldNode.style && newStyle ? " " : "") + (newStyle ?? "");
   return insertWithIndentation(view, pos, insert);
+}
+
+/** Used for convert-image-to-draggable and add-sliders-to-item. */
+function newItemsChange(
+  analysis: ProgramAnalysis,
+  state: GraphState,
+  dsmMetadata: Metadata,
+  view: EditorView
+): ChangeSpec {
+  let pos = 0;
+  const out: ChangeSpec[] = [];
+  for (const item of state.expressions.list) {
+    if (item.type === "folder") continue;
+    const stmt = analysis.mapIDstmt[item.id];
+    if (stmt) {
+      pos = stmt.pos.to;
+    } else {
+      const aug = rawNonFolderToAug(item, dsmMetadata);
+      const ast = itemAugToAST(aug);
+      if (!ast) continue;
+      const insert = "\n\n" + astItemToTextString(ast);
+      out.push(insertWithIndentation(view, { from: pos, to: pos }, insert));
+    }
+  }
+  return out;
 }
 
 function itemChange(
