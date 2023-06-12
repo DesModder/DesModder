@@ -51,6 +51,7 @@ class StyleCircleMarker extends GutterMarker {
 
   toDOM() {
     this.div = document.createElement("div");
+    this.div.classList.add("dsm-style-circle");
     const view = DCGView.mountToNode(StyleCircle, this.div, {
       id: DCGView.const(this.id),
       model: DCGView.const(this.model),
