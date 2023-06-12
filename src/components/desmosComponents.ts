@@ -1,5 +1,5 @@
-import { ItemModel } from "../globals/models";
-import { ClassComponent, DCGView } from "DCGView";
+import { ExpressionModel, ItemModel } from "../globals/models";
+import { ClassComponent, Component, DCGView } from "DCGView";
 import { DesModderFragile, Calc, Fragile } from "globals/window";
 
 export abstract class CheckboxComponent extends ClassComponent<{
@@ -103,11 +103,55 @@ export abstract class TooltipComponent extends ClassComponent<{
 
 export const Tooltip = Fragile.Tooltip;
 
+export abstract class ExpressionViewComponent extends ClassComponent<
+  ModelAndController & {
+    onDragPending: () => void;
+    isDragCopy: () => boolean;
+  }
+> {}
+
+const ExpressionView = DesModderFragile.ExpressionView;
+
 export abstract class IconViewComponent extends ClassComponent<{
   model: ItemModel;
   controller: typeof Calc.controller;
 }> {}
 
-export const ExpressionIconView = DesModderFragile.ExpressionIconView;
-
 export const ImageIconView = DesModderFragile.ImageIconView;
+
+interface ModelAndController {
+  model: ExpressionModel;
+  controller: typeof Calc.controller;
+}
+
+// <ExpressionIconView ... >
+export class ExpressionIconView extends Component<ModelAndController> {
+  template() {
+    const template = exprTemplate(this);
+    return template.children[1].children[1].children[0];
+  }
+}
+
+// <If predicate={this.shouldShowFooter}>
+//   {() => <div class={this.getFooterClass()}> ...
+export class FooterView extends Component<ModelAndController> {
+  template() {
+    const template = exprTemplate(this);
+    return template.children[0].children[2];
+  }
+}
+
+function exprTemplate(
+  self: InstanceType<typeof Component<ModelAndController>>
+) {
+  const n = new (ExpressionView as any)(
+    {
+      model: () => self.props.model(),
+      controller: () => self.props.controller(),
+      onDragPending: () => {},
+      isDragCopy: () => false,
+    },
+    []
+  );
+  return n.template();
+}

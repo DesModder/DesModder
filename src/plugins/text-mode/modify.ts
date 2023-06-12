@@ -17,7 +17,7 @@ import { graphSettingsToText, itemToText } from "./up/augToText";
 import { ChangeSpec } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
-import { DispatchedEvent, exprMetadata } from "globals/Calc";
+import { DispatchedEvent } from "globals/Calc";
 import { Calc } from "globals/window";
 import Metadata from "plugins/manage-metadata/interface";
 
@@ -33,39 +33,32 @@ const settingsEvents = [
   "resize-exp-list", // resize-exp-list can update viewport size
 ] as const;
 
-export const relevantEventTypes = [
-  ...settingsEvents,
-  ...exprMetadata,
-  // sliders, draggable points, action updates, etc.
-  "on-evaluator-changes",
-  // only should affect selection
-  "set-selected-id",
-] as const;
-
-export type RelevantEvent = DispatchedEvent & {
-  type: (typeof relevantEventTypes)[number];
-};
-
 type ToChange = "table-columns" | "latex-only" | "image-pos" | "regression";
 
 export function eventSequenceChanges(
   view: EditorView,
-  event: RelevantEvent,
+  event: DispatchedEvent,
   analysis: ProgramAnalysis
 ): ChangeSpec[] {
   const state = Calc.getState();
   if (event.type === "on-evaluator-changes") {
+    // sliders, draggable points, action updates, etc.
     return evaluatorChange(analysis, state, view, event);
   } else if ((settingsEvents as readonly string[]).includes(event.type)) {
     return [settingsChange(analysis, state)];
-  } else if ((exprMetadata as readonly string[]).includes(event.type)) {
-    const id = (
-      event as RelevantEvent & { type: (typeof exprMetadata)[number] }
-    ).id;
-    const dsmMetadata = rawToDsmMetadata(state);
-    return [metadataChange(analysis, state, dsmMetadata, view, id)];
   } else {
-    return [];
+    const res = [];
+    if ("id" in event && event.id !== undefined) {
+      const dsmMetadata = rawToDsmMetadata(state);
+      res.push(metadataChange(analysis, state, dsmMetadata, view, event.id));
+      if (
+        event.type === "convert-image-to-draggable" ||
+        event.type === "create-sliders-for-item"
+      ) {
+        res.push(newItemsChange(analysis, state, dsmMetadata, view));
+      }
+    }
+    return res;
   }
 }
 
@@ -73,7 +66,7 @@ function evaluatorChange(
   analysis: ProgramAnalysis,
   state: GraphState,
   view: EditorView,
-  event: RelevantEvent & { type: "on-evaluator-changes" }
+  event: DispatchedEvent & { type: "on-evaluator-changes" }
 ): ChangeSpec[] {
   const changes: ChangeSpec[] = [];
   const itemsChanged: Record<string, ToChange> = {};
@@ -173,6 +166,31 @@ function metadataChange(
   const newStyle = /@\{[^]*/m.exec(fullItem)?.[0];
   const insert = (!oldNode.style && newStyle ? " " : "") + (newStyle ?? "");
   return insertWithIndentation(view, pos, insert);
+}
+
+/** Used for convert-image-to-draggable and add-sliders-to-item. */
+function newItemsChange(
+  analysis: ProgramAnalysis,
+  state: GraphState,
+  dsmMetadata: Metadata,
+  view: EditorView
+): ChangeSpec {
+  let pos = 0;
+  const out: ChangeSpec[] = [];
+  for (const item of state.expressions.list) {
+    if (item.type === "folder") continue;
+    const stmt = analysis.mapIDstmt[item.id];
+    if (stmt) {
+      pos = stmt.pos.to;
+    } else {
+      const aug = rawNonFolderToAug(item, dsmMetadata);
+      const ast = itemAugToAST(aug);
+      if (!ast) continue;
+      const insert = "\n\n" + astItemToTextString(ast);
+      out.push(insertWithIndentation(view, { from: pos, to: pos }, insert));
+    }
+  }
+  return out;
 }
 
 function itemChange(

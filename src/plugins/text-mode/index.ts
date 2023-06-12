@@ -1,6 +1,5 @@
 import { PluginController } from "../PluginController";
 import { onCalcEvent, analysisStateField } from "./LanguageServer";
-import { RelevantEvent, relevantEventTypes } from "./modify";
 import getText from "./up/getText";
 import { initView, startState } from "./view/editor";
 import { EditorView, ViewUpdate } from "@codemirror/view";
@@ -51,20 +50,13 @@ export default class TextMode extends PluginController {
     container.appendChild(this.view.dom);
     this.preventPropagation(container);
     this.dispatchListenerID = Calc.controller.dispatcher.register((event) => {
-      if (event.type === "set-state" && !event.opts.fromTextMode)
-        this.onSetState();
-      if (event.type === "convert-image-to-draggable")
-        this.toastErrorGraphUndo(
-          "Text Mode cannot handle converting image to draggable."
-        );
-      if ((relevantEventTypes as readonly string[]).includes(event.type)) {
-        // setTimeout to avoid dispatch-in-dispatch from handlers responding to
-        // calc state changing by dispatching an event
-        setTimeout(
-          () => this.view && onCalcEvent(this.view, event as RelevantEvent),
-          0
-        );
-      }
+      // setTimeout to avoid dispatch-in-dispatch from handlers responding to
+      // calc state changing by dispatching an event
+      setTimeout(() => {
+        if (event.type === "set-state" && !event.opts.fromTextMode)
+          this.onSetState();
+        if (this.view) onCalcEvent(this.view, event);
+      });
     });
   }
 

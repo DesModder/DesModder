@@ -4,8 +4,14 @@
   grid-column: 1/2;
 }
 
-.dsm-in-text-mode .dcg-ticker {
-  display: none;
+.dsm-in-text-mode {
+  // used for cqw unit in footerWidget.less: .dsm-tm-footer-wrapper
+  container-type: size;
+
+  .dcg-ticker,
+  .dcg-exppanel {
+    display: none;
+  }
 }
 
 .cm-tooltip {

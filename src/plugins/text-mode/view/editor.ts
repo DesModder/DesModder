@@ -2,9 +2,10 @@ import TextMode from "..";
 import { analysisStateField, doLint } from "../LanguageServer";
 // Language extension
 import { textMode } from "../lezer/index";
-import "./editor.css";
+import "./editor.less";
 import { checkboxPlugin } from "./plugins/checkboxWidget";
 import { collapseStylesAtStart } from "./plugins/collapseStylesAtStart";
+import { footerPlugin } from "./plugins/footerWidget";
 import { activeStmtGutterHighlighter } from "./plugins/highlightActiveStmtGutter";
 import { stmtNumbers } from "./plugins/stmtNumbers";
 import { styleCircles } from "./plugins/styleCircles";
@@ -15,12 +16,7 @@ import {
   completionKeymap,
   closeBracketsKeymap,
 } from "@codemirror/autocomplete";
-import {
-  history,
-  defaultKeymap,
-  historyKeymap,
-  indentWithTab,
-} from "@codemirror/commands";
+import { history, defaultKeymap, historyKeymap } from "@codemirror/commands";
 import {
   indentOnInput,
   foldGutter,
@@ -57,7 +53,6 @@ export function startState(controller: TextMode, text: string) {
       analysisStateField,
       EditorView.updateListener.of(controller.onEditorUpdate.bind(controller)),
       // linter, showing errors
-      // The linter is also the entry point to evaluation
       linter(doLint, { delay: 0 }),
       // line numbers and gutter
       stmtNumbers(),
@@ -103,7 +98,6 @@ export function startState(controller: TextMode, text: string) {
         ...foldKeymap,
         // Ctrl+Space to start completion
         ...completionKeymap,
-        indentWithTab,
       ]),
       scrollTheme,
       // syntax highlighting
@@ -111,6 +105,7 @@ export function startState(controller: TextMode, text: string) {
       // Text mode plugins
       checkboxPlugin,
       styleMappingPlugin,
+      footerPlugin(),
     ],
   });
   return state.update(collapseStylesAtStart(state)).state;

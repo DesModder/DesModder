@@ -35,6 +35,8 @@ const styleCircleGutter = gutter({
   },
 });
 
+// Compare to StyleCircleMarker. Similar mount/div handling
+// If a third similar thing appears, consider some shared logic
 class StyleCircleMarker extends GutterMarker {
   unsub: (() => void) | undefined;
   div: HTMLElement | undefined;
@@ -49,6 +51,7 @@ class StyleCircleMarker extends GutterMarker {
 
   toDOM() {
     this.div = document.createElement("div");
+    this.div.classList.add("dsm-style-circle");
     const view = DCGView.mountToNode(StyleCircle, this.div, {
       id: DCGView.const(this.id),
       model: DCGView.const(this.model),

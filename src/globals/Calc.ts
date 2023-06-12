@@ -1,53 +1,6 @@
 import { ItemModel } from "./models";
 import { GraphState } from "@desmodder/graph-state";
 
-export const exprMetadata = [
-  "set-expression-properties-from-api",
-  "set-slider-isplaying",
-  "set-slider-dragging",
-  "set-slider-minlatex",
-  "set-slider-maxlatex",
-  "set-slider-steplatex",
-  "set-slider-animationperiod",
-  "set-image-name",
-  "set-image-draggable",
-  "set-image-opacity",
-  "set-image-in-foreground",
-  "set-item-dragmode",
-  "set-item-points",
-  "set-item-pointstyle",
-  "set-item-lines",
-  "set-item-linestyle",
-  "set-item-arrow-mode",
-  "set-item-labelSize",
-  "set-item-labelangle",
-  "set-item-label-orientation",
-  "set-suppress-text-outline",
-  "set-item-interactive-label",
-  "set-item-editable-label-mode",
-  "set-show-cdf",
-  "set-cdf-min",
-  "set-cdf-max",
-  "toggle-item-hidden",
-  "set-item-label",
-  "set-item-showlabel",
-  "set-item-color",
-  "set-item-description",
-  "set-item-fill",
-  "set-item-fillopacity",
-  "set-item-lineopacity",
-  "set-item-pointopacity",
-  "set-item-pointsize",
-  "set-item-linewidth",
-  "set-item-colorlatex",
-  "set-item-secret",
-  "set-item-readonly",
-  "set-visualization-prop",
-  "set-clickableinfo-rule-latex",
-  "set-hovered-image",
-  "set-depressed-image",
-] as const;
-
 export type DispatchedEvent =
   | {
       type:
@@ -75,8 +28,18 @@ export type DispatchedEvent =
         | "duplicate-folder"
         | "duplicate-expression"
         | "convert-image-to-draggable"
-        | (typeof exprMetadata)[number];
+        | "create-sliders-for-item"
+        | "toggle-item-hidden";
       id: string;
+    }
+  | {
+      /** This is somewhat a super type of all the `DispatchedEvent`s. It's here
+       * to avoid annotating tons of types for modify.ts. This should really be
+       * `type: "set-slider-minlatex" | (100 others)`, but that's unmaintainable.
+       * A second best would be `type: "string"`, but that screws with the
+       * other types being useful. */
+      type: "__dummy-IDEvent";
+      id?: string;
     }
   | {
       type: "set-selected-id";
