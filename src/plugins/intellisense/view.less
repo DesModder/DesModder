@@ -1,0 +1,27 @@
+#intellisense-container {
+  position: absolute;
+  background-color: white;
+  z-index: 999999;
+  border-radius: 5px;
+  filter: drop-shadow(#00000044 3px 3px 3px);
+  padding: 5px;
+  border: 1px solid #bbbbbb;
+  max-height: 35vh;
+  overflow: auto;
+}
+
+.intellisense-option {
+  z-index: 999999;
+}
+
+.intellisense-option:hover,
+.selected-intellisense-option {
+  > * {
+    cursor: pointer;
+  }
+  background-color: #eeeeee;
+}
+
+.intellisense-options-table {
+  border-spacing: 0;
+}
