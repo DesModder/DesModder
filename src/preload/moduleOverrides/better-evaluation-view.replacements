@@ -169,7 +169,7 @@ if ($ === 0 || $.zeroCutoff && Math.abs($) < $.zeroCutoff)
 *Replace* `zero` with
 ```js
 if ($val === 0) {
-  if (!globalThis?.DSM?.betterEvaluationView || Object.is($val, 0)) {
+  if (!DSM.betterEvaluationView || Object.is($val, 0)) {
     return {
       type: "decimal",
       value: "0"
@@ -181,7 +181,7 @@ if ($val === 0) {
     }
   }
 } else if ($options.zeroCutoff && Math.abs($val) < $options.zeroCutoff) {
-  if (!globalThis?.DSM?.betterEvaluationView || Math.sign($val) === 1) {
+  if (!DSM.betterEvaluationView || Math.sign($val) === 1) {
     return {
       type: "decimal",
       value: "0"
