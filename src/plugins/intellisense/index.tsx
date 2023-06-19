@@ -122,7 +122,7 @@ function getExpressionBoundGlobalIdentifiers(
   return [];
 }
 
-const identRegex = /[a-zA-Z]|\\[a-zA-Z]+ *(_\{[a-zA-Z0-9 ]*\})?/g;
+const identRegex = /([a-zA-Z]|\\[a-zA-Z]+) *(_\{[a-zA-Z0-9 ]*\})?/g;
 
 export interface MQController {
   cursor: MQCursor;
@@ -174,6 +174,7 @@ function tryGetMathquilIdentFromWithinSubscript(
   const subscript = ctrlr.cursor.parent?.parent?.latex?.();
   if (varName && subscript) {
     const candidate = varName + subscript;
+    console.log("candidate", candidate);
     if (isIdentStr(candidate)) {
       return {
         goToEndOfIdent: () => {
@@ -203,7 +204,6 @@ function tryGetMathquillIdentFromAfterSubscript(
   const subscript = ctrlr.cursor?.[-1]?.latex?.();
   if (varName && subscript) {
     const candidate = varName + subscript;
-    console.log("candidate", candidate);
     if (isIdentStr(candidate)) {
       return {
         goToEndOfIdent: () => {},
@@ -489,7 +489,7 @@ export default class Intellisense extends PluginController {
         e.preventDefault();
 
         // force close autocomplete with escape
-      } else if (e.key === "Escape") {
+      } else if (e.key === "Escape" && this.intellisenseIndex >= 0) {
         // @ts-expect-error focus is part of the mathquill api
         this.intellisenseReturnMQ?.focus();
         this.isInIntellisenseMenu = false;
