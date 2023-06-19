@@ -19,9 +19,16 @@ import astToAug, { childExprToAug } from "plugins/text-mode/down/astToAug";
 import { parse } from "plugins/text-mode/down/textToAST";
 
 export function addBracketsToIdent(str: string) {
-  if (str.length === 1) return str;
+  // if (str.length === 1) return str;
 
-  return str[0] + "_{" + str.slice(2) + "}";
+  // return str[0] + "_{" + str.slice(2) + "}";
+  const [str1, str2] = str.split("_");
+
+  const varStart = str1.length === 1 ? str1 : "\\" + str1;
+
+  if (!str2) return varStart;
+
+  return varStart + `_{${str2}}`;
 }
 
 export class IdentifierSymbol extends Component<{

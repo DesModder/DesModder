@@ -122,7 +122,7 @@ function getExpressionBoundGlobalIdentifiers(
   return [];
 }
 
-const identRegex = /[a-zA-Z]|\\[a-zA-Z]+(_\{[a-zA-Z0-9 ]*\})?/g;
+const identRegex = /[a-zA-Z]|\\[a-zA-Z]+ *(_\{[a-zA-Z0-9 ]*\})?/g;
 
 export interface MQController {
   cursor: MQCursor;
@@ -203,6 +203,7 @@ function tryGetMathquillIdentFromAfterSubscript(
   const subscript = ctrlr.cursor?.[-1]?.latex?.();
   if (varName && subscript) {
     const candidate = varName + subscript;
+    console.log("candidate", candidate);
     if (isIdentStr(candidate)) {
       return {
         goToEndOfIdent: () => {},
@@ -294,7 +295,6 @@ function getPartialFunctionCall(
     if (cursor[-1]) {
       cursor = cursor[-1];
     } else {
-      console.log("fncall is in parent", cursor);
       const oldCursor = cursor;
       cursor = cursor.parent?.parent?.[-1];
       const ltx = cursor?.latex?.();
@@ -357,6 +357,8 @@ export default class Intellisense extends PluginController {
       .map((e) => getExpressionBoundGlobalIdentifiers(e))
       .flat()
       .map((e, i) => ({ ...e, id: this.idcounter++ }));
+
+    console.log(this.allBoundIdentifiers);
   }
 
   updateIntellisense() {
@@ -364,6 +366,10 @@ export default class Intellisense extends PluginController {
     this.intellisenseOpts = [];
     if (focusedMQ) {
       this.latestIdent = getMathquillIdentifierAtCursorPosition(focusedMQ);
+      if (this.latestIdent)
+        this.latestIdent.ident = this.latestIdent.ident.replace(/ /g, "");
+
+      console.log("latestident str", this.latestIdent?.ident);
       this.latestMQ = focusedMQ;
 
       this.partialFunctionCall = getPartialFunctionCall(focusedMQ);
@@ -388,7 +394,6 @@ export default class Intellisense extends PluginController {
           ) {
             this.partialFunctionCallDoc = current.text;
             found = true;
-            //console.log("doc", exprlist[i]);
           }
         }
         if (!found) this.partialFunctionCallDoc = undefined;
@@ -402,9 +407,10 @@ export default class Intellisense extends PluginController {
       this.y = bbox?.top ?? 0;
 
       if (this.latestIdent) {
+        console.log("latestident", this.latestIdent);
         this.intellisenseOpts = this.allBoundIdentifiers.filter((g) =>
           g.variableName.startsWith(
-            this.latestIdent?.ident.replace(/[{|}| ]/g, "") ?? ""
+            this.latestIdent?.ident.replace(/[{} \\]/g, "") ?? ""
           )
         );
       }
