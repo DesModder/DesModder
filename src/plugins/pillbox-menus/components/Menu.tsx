@@ -34,6 +34,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "duplicate-expression-hotkey",
     "shift-enter-newline",
     "folder-tools",
+    "intellisense",
   ],
   visual: [
     "set-primary-color",

@@ -8,18 +8,27 @@ import { State, ExpressionAug, ItemAug } from "plugins/text-mode/aug/AugState";
 import rawToAug from "plugins/text-mode/aug/rawToAug";
 import { updateView } from "plugins/video-creator/View";
 
-export interface ExpressionBoundIdentifier {
+export type ExpressionBoundIdentifier =
+  | {
+      exprId: string;
+      variableName: string;
+      type:
+        | "variable"
+        | "function-param"
+        | "listcomp-param"
+        | "substitution"
+        | "derivative"
+        | "repeated-operator";
+      id: number;
+    }
+  | ExpressionBoundIdentifierFunction;
+
+export interface ExpressionBoundIdentifierFunction {
   exprId: string;
   variableName: string;
-  type:
-    | "variable"
-    | "function"
-    | "function-param"
-    | "listcomp-param"
-    | "substitution"
-    | "derivative"
-    | "repeated-operator";
+  type: "function";
   id: number;
+  params: string[];
 }
 
 function mapAugAST(
@@ -88,14 +97,17 @@ function getExpressionBoundGlobalIdentifiers(
       });
     }
     if (expr.latex.type === "FunctionDefinition") {
+      const fndef: ExpressionBoundIdentifier = {
+        exprId: expr.id,
+        variableName: expr.latex.symbol.symbol,
+        type: "function",
+        params: expr.latex.argSymbols.map((s) => s.symbol),
+        id: -1,
+      };
       idents.push(
-        {
-          exprId: expr.id,
-          variableName: expr.latex.symbol.symbol,
-          type: "function",
-        },
+        fndef,
         ...expr.latex.argSymbols.map((arg) => {
-          const x: ExpressionBoundIdentifier = {
+          const x: Omit<ExpressionBoundIdentifier, "id"> = {
             exprId: expr.id,
             variableName: arg.symbol,
             type: "function-param",
@@ -110,7 +122,7 @@ function getExpressionBoundGlobalIdentifiers(
   return [];
 }
 
-const identRegex = /[a-zA-Z](_\{[a-zA-Z0-9 ]*\})?/g;
+const identRegex = /[a-zA-Z]|\\[a-zA-Z]+(_\{[a-zA-Z0-9 ]*\})?/g;
 
 export interface MQController {
   cursor: MQCursor;
@@ -122,6 +134,7 @@ export interface MQCursor {
   [-1]: MQCursor | undefined;
   [1]: MQCursor | undefined;
   cursorElement?: HTMLElement;
+  ctrlSeq?: string;
 }
 
 function getController(mq: MathQuillField) {
@@ -265,6 +278,38 @@ function getMathquillIdentifierAtCursorPosition(
   );
 }
 
+export interface PartialFunctionCall {
+  ident: string;
+  paramIndex: number;
+}
+
+function getPartialFunctionCall(
+  mq: MathQuillField
+): PartialFunctionCall | undefined {
+  let cursor: MQCursor | undefined = getController(mq).cursor;
+  let paramIndex = 0;
+  while (cursor) {
+    const ltx = cursor?.latex?.();
+    if (ltx === ",") paramIndex++;
+    if (cursor[-1]) {
+      cursor = cursor[-1];
+    } else {
+      console.log("fncall is in parent", cursor);
+      const oldCursor = cursor;
+      cursor = cursor.parent?.parent?.[-1];
+      const ltx = cursor?.latex?.();
+      const ltx2 = cursor?.[-1]?.latex?.();
+      if (ltx && isIdentStr(ltx) && cursor?.[1]?.ctrlSeq === "\\left(") {
+        return { ident: ltx, paramIndex };
+      } else if (ltx2 && ltx && isIdentStr(ltx2 + ltx)) {
+        return { ident: ltx2 + ltx, paramIndex };
+      }
+      paramIndex = 0;
+      cursor = oldCursor.parent;
+    }
+  }
+}
+
 export function getMQCursorPosition(focusedMQ: MathQuillField) {
   return getController(
     focusedMQ
@@ -298,9 +343,16 @@ export default class Intellisense extends PluginController {
 
   idcounter = 0;
 
+  partialFunctionCall: PartialFunctionCall | undefined;
+
+  partialFunctionCallIdent: ExpressionBoundIdentifier | undefined;
+
+  partialFunctionCallDoc: string | undefined;
+
   reloadState() {
     this.aug = rawToAug(Calc.getState());
 
+    // @ts-expect-error stupid type inference
     this.allBoundIdentifiers = this.aug.expressions.list
       .map((e) => getExpressionBoundGlobalIdentifiers(e))
       .flat()
@@ -314,36 +366,35 @@ export default class Intellisense extends PluginController {
       this.latestIdent = getMathquillIdentifierAtCursorPosition(focusedMQ);
       this.latestMQ = focusedMQ;
 
-      // console.log(this.latestMQ);
+      this.partialFunctionCall = getPartialFunctionCall(focusedMQ);
+      this.partialFunctionCallIdent = this.allBoundIdentifiers.find(
+        (i) =>
+          addBracketsToIdent(i.variableName) ===
+            this.partialFunctionCall?.ident && i.type === "function"
+      );
 
-      // Calc.controller.dispatcher.register((e) => {
-      //   console.log(e.type, e);
-      // });
+      const exprlist = this.aug?.expressions.list ?? [];
 
-      // @ts-expect-error retaining original downOutOf functionality
-      const originalDownOutOf = focusedMQ.__options.handlers.fns.downOutOf;
+      const findDoc = (exprlist: ItemAug[]) => {
+        let found = false;
+        for (let i = 0; i < exprlist.length; i++) {
+          const current = exprlist[i];
+          if (current.type === "folder") findDoc(current.children);
+          if (
+            this.partialFunctionCallIdent &&
+            current.type === "text" &&
+            exprlist[i + 1]?.type === "expression" &&
+            this.partialFunctionCallIdent.exprId === exprlist[i + 1]?.id
+          ) {
+            this.partialFunctionCallDoc = current.text;
+            found = true;
+            //console.log("doc", exprlist[i]);
+          }
+        }
+        if (!found) this.partialFunctionCallDoc = undefined;
+      };
 
-      // @ts-expect-error this is part of the API
-      // focusedMQ.config({
-      //   handlers: {
-      //     downOutOf: (mq: any) => {
-      //       originalDownOutOf?.(mq);
-      //       if (this.intellisenseIndex === -1) {
-      //         if (this.latestMQ) {
-      //           const ctrl = getController(this.latestMQ);
-      //         }
-
-      //         // @ts-expect-error blur is part of the mathquill api
-      //         this.latestMQ?.blur();
-      //         this.intellisenseReturnMQ = this.latestMQ;
-      //         Calc.controller.dispatch({
-      //           type: "set-none-selected",
-      //         });
-      //         intellisenseMountPoint.focus();
-      //       }
-      //     },
-      //   },
-      // });
+      findDoc(exprlist);
 
       const bbox = getMQCursorPosition(focusedMQ);
 
@@ -376,7 +427,6 @@ export default class Intellisense extends PluginController {
         // @ts-expect-error this is an event type in desmos
         e.key === "Down"
       ) {
-        console.log("GOT HERE");
         if (this.intellisenseOpts.length > 0 && this.intellisenseIndex === -1) {
           // @ts-expect-error blur is part of the mathquill api
           this.latestMQ?.blur();
@@ -399,7 +449,9 @@ export default class Intellisense extends PluginController {
       if (
         e.key === "ArrowDown" &&
         this.intellisenseOpts.length > 0 &&
-        this.isInIntellisenseMenu
+        this.isInIntellisenseMenu &&
+        addBracketsToIdent(this.intellisenseOpts[0].variableName) !==
+          this.latestIdent?.ident
       ) {
         this.intellisenseIndex = Math.min(
           this.intellisenseIndex + 1,
@@ -429,16 +481,34 @@ export default class Intellisense extends PluginController {
       ) {
         this.doAutocomplete(this.intellisenseOpts[this.intellisenseIndex]);
         e.preventDefault();
+
+        // force close autocomplete with escape
       } else if (e.key === "Escape") {
         // @ts-expect-error focus is part of the mathquill api
         this.intellisenseReturnMQ?.focus();
         this.isInIntellisenseMenu = false;
         this.intellisenseIndex = -1;
       }
+
+      // Jump to definition
+      if (e.key === "F9") {
+        const identDst = this.allBoundIdentifiers.find((id) => {
+          return (
+            (id.type === "function" || id.type === "variable") &&
+            addBracketsToIdent(id.variableName) === this.latestIdent?.ident
+          );
+        });
+
+        if (identDst) {
+          Calc.controller.dispatch({
+            type: "set-selected-id",
+            id: identDst.exprId,
+          });
+        }
+      }
     });
 
     document.addEventListener("keyup", () => {
-      console.log("intellisense index", this.intellisenseIndex);
       if (!MathQuillView.getFocusedMathquill()) return;
       this.updateIntellisense();
     });
@@ -467,6 +537,9 @@ export default class Intellisense extends PluginController {
       idents: () => this.intellisenseOpts,
       autocomplete: (ident) => this.doAutocomplete(ident),
       index: () => this.intellisenseIndex,
+      partialFunctionCall: () => this.partialFunctionCall,
+      partialFunctionCallIdent: () => this.partialFunctionCallIdent,
+      partialFunctionCallDoc: () => this.partialFunctionCallDoc,
     });
 
     this.reloadState();
@@ -477,8 +550,6 @@ export default class Intellisense extends PluginController {
   }
 
   doAutocomplete(opt: ExpressionBoundIdentifier) {
-    console.log("autocompleting", opt.variableName);
-
     if (this.latestIdent && this.latestMQ) {
       this.latestIdent.goToEndOfIdent();
       this.latestIdent.deleteIdent();
@@ -487,7 +558,6 @@ export default class Intellisense extends PluginController {
 
       // add parens to function
       if (opt.type === "function") {
-        console.log("fn params");
         // @ts-expect-error latex can take one param
         this.latestMQ.latex(formattedIdentLatex + "\\left(\\right)");
         // @ts-expect-error keystroke can take one param
