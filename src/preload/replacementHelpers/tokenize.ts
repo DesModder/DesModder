@@ -98,8 +98,10 @@ const defaultAllowedIDs = ["window", "DesModder", "DSM"].concat(keywords);
 
 function* _patternTokens(str: string, msg: string): Generator<PatternToken> {
   const allowedIDs = new Set<string>(defaultAllowedIDs);
+  str = safeDSM(str);
   const tokens = [..._patternTokensRaw(str)];
   for (const [i, token] of tokens.entries()) {
+    // check if there's an "allow-ids:" comment
     const comment = commentInner(token);
     if (comment !== undefined) {
       if (comment.startsWith(allowIDs)) {
@@ -110,6 +112,7 @@ function* _patternTokens(str: string, msg: string): Generator<PatternToken> {
       }
       continue;
     }
+    // disallow long IDs
     if (token.type === "IdentifierName" && token.value.length <= 3) {
       const dotAccessName = ["?.", "."].includes(tokens[i - 1]?.value);
       const propertyName = tokens[i + 1]?.value === ":";
@@ -146,6 +149,10 @@ function commentInner(token: PatternToken) {
     return token.value.replace(/^\/+/, "").trim();
   else if (token.type === "MultiLineComment")
     return token.value.replace(/\/\*+/, "").replace(/\*\//, "").trim();
+}
+
+function safeDSM(str: string) {
+  return str.replace(/(?<!\.)DSM\??\./g, "globalThis.DSM?.");
 }
 
 function normalizeCommand(command: string) {
