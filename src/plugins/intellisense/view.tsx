@@ -1,7 +1,22 @@
-import { ExpressionBoundIdentifier, getMQCursorPosition } from ".";
+import {
+  ExpressionBoundIdentifier,
+  ExpressionBoundIdentifierFunction,
+  PartialFunctionCall,
+  getMQCursorPosition,
+} from ".";
+import {
+  DStaticMathquillView,
+  If,
+  IfElse,
+} from "../../components/desmosComponents";
 import "./view.less";
 import { ClassComponent, Component, DCGView, jsx } from "DCGView";
 import { For, MathQuillView, StaticMathQuillView, Switch } from "components";
+import { latexTreeToString } from "plugins/text-mode/aug/augLatexToRaw";
+import augToRaw from "plugins/text-mode/aug/augToRaw";
+import { isExpression } from "plugins/text-mode/down/TextAST";
+import astToAug, { childExprToAug } from "plugins/text-mode/down/astToAug";
+import { parse } from "plugins/text-mode/down/textToAST";
 
 export function addBracketsToIdent(str: string) {
   if (str.length === 1) return str;
@@ -38,12 +53,317 @@ export class IdentifierSymbol extends Component<{
   }
 }
 
+const lastof = function <T>(arr: T[]) {
+  return arr[arr.length - 1];
+};
+function tokenizeDocstring2(str: string) {
+  const tokens: {
+    str: string;
+    type: "text" | "math";
+  }[] = [{ str: "", type: "text" }];
+
+  for (const char of str) {
+    if (char === "`") {
+      if (lastof(tokens).type === "text") {
+        tokens.push({ str: "", type: "math" });
+
+        // end of math mode string
+      } else {
+        const parsedTextMode = parse(lastof(tokens).str);
+        const parsedExpr = parsedTextMode.mapIDstmt[1];
+        if (parsedExpr && parsedExpr.type === "ExprStatement") {
+          const aug = childExprToAug(parsedExpr.expr);
+          const latex = latexTreeToString(aug);
+          lastof(tokens).str = latex;
+        }
+
+        tokens.push({ str: "", type: "text" });
+      }
+    } else {
+      lastof(tokens).str += char;
+    }
+  }
+
+  return tokens;
+}
+
+function tokenizeDocstring(str: string): DocStringToken[] {
+  const tokens: DocStringToken[] = [
+    {
+      str: "",
+      type: "text",
+    },
+  ];
+
+  let i = 0;
+
+  const match = (rgx: RegExp) => {
+    const match = str.slice(i).match(rgx);
+    if (match) {
+      i += match[0].length - 1;
+      return match[0];
+    }
+    return undefined;
+  };
+
+  for (i = 0; i < str.length; i++) {
+    const mathStr = match(/^`[^`]+`/g);
+    if (mathStr) {
+      tokens.push(
+        {
+          str: mathStr.slice(1, -1),
+          type: "math",
+        },
+        { str: "", type: "text" }
+      );
+      continue;
+    }
+
+    const paramStr = match(/^@\w+/g);
+    if (paramStr) {
+      tokens.push(
+        {
+          str: paramStr.slice(1),
+          type: "param",
+        },
+        { str: "", type: "text" }
+      );
+      continue;
+    }
+
+    lastof(tokens).str += str[i];
+  }
+
+  return tokens;
+}
+
+function textModeExprToLatex(tmExpr: string) {
+  const parsedTextMode = parse(tmExpr);
+  const parsedExpr = parsedTextMode.mapIDstmt[1];
+  if (parsedExpr && parsedExpr.type === "ExprStatement") {
+    const aug = childExprToAug(parsedExpr.expr);
+    const latex = latexTreeToString(aug);
+    return latex;
+  }
+}
+
+function parseDocstring(tokens: DocStringToken[]): DocStringRenderable[] {
+  const renderables: DocStringRenderable[] = [];
+
+  function getNoParamRenderable(t: DocStringToken): DocStringRenderableNoParam {
+    switch (t.type) {
+      case "text":
+        return t as { type: "text"; str: string };
+      case "math":
+        return { type: "math", latex: t.str };
+      case "param":
+        throw new Error("unreachable");
+    }
+  }
+
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    switch (t.type) {
+      case "text":
+      case "math":
+        renderables.push(getNoParamRenderable(t));
+        break;
+      case "param": {
+        const paramBody: DocStringRenderableNoParam[] = [];
+        while (i < tokens.length - 1) {
+          i++;
+          const t2 = tokens[i];
+          if (t2.type === "param") {
+            i--;
+            break;
+          }
+          paramBody.push(getNoParamRenderable(t2));
+        }
+        renderables.push({
+          type: "param",
+          latex: t.str,
+          renderables: paramBody,
+        });
+      }
+    }
+  }
+
+  return renderables;
+}
+
+type DocStringRenderableNoParam =
+  | {
+      str: string;
+      type: "text";
+    }
+  | {
+      latex: string;
+      type: "math";
+    };
+
+type DocStringRenderable =
+  | {
+      type: "param";
+      latex: string;
+      renderables: DocStringRenderableNoParam[];
+    }
+  | DocStringRenderableNoParam;
+
+interface DocStringToken {
+  str: string;
+  type: "text" | "math" | "param";
+}
+
+let counter = 0;
+
+export class FormattedDocstring extends Component<{
+  docstring: () => DocStringRenderable[];
+  selectedParam: () => string;
+}> {
+  template() {
+    return (
+      <For
+        each={() => this.props.docstring().map((e, i) => [e, i] as const)}
+        key={([e, i]) => counter++}
+      >
+        <div style={{ display: "inline" }}>
+          {([r, index]: [DocStringRenderable, number]) => (
+            <Switch key={() => r}>
+              {() => {
+                switch (r.type) {
+                  case "param": {
+                    const ltx = () => textModeExprToLatex(r.latex) ?? r.latex;
+
+                    if (
+                      addBracketsToIdent(this.props.selectedParam()) !== ltx()
+                    ) {
+                      return <span></span>;
+                    }
+                    return (
+                      <div class="pfc-doc-param">
+                        <DStaticMathquillView
+                          latex={ltx}
+                          config={{}}
+                        ></DStaticMathquillView>{" "}
+                        -
+                        <FormattedDocstring
+                          selectedParam={this.props.selectedParam}
+                          docstring={() => r.renderables}
+                        ></FormattedDocstring>
+                      </div>
+                    );
+                  }
+                  case "text":
+                    return <span>{() => r.str}</span>;
+                  case "math":
+                    return (
+                      <DStaticMathquillView
+                        latex={() => textModeExprToLatex(r.latex) ?? r.latex}
+                        config={{}}
+                      ></DStaticMathquillView>
+                    );
+                }
+              }}
+            </Switch>
+          )}
+        </div>
+      </For>
+    );
+  }
+}
+
+export class PartialFunctionCallView extends Component<{
+  partialFunctionCall: () => PartialFunctionCall | undefined;
+  partialFunctionCallIdent: () => ExpressionBoundIdentifierFunction | undefined;
+  partialFunctionCallDoc: () => string | undefined;
+}> {
+  init() {}
+
+  template() {
+    return (
+      <div
+        style={() => ({
+          display: this.props.partialFunctionCall() ? undefined : "none",
+        })}
+        class="partial-function-call-container"
+      >
+        <If predicate={() => this.props.partialFunctionCallDoc()}>
+          {() => (
+            <FormattedDocstring
+              docstring={() =>
+                parseDocstring(
+                  tokenizeDocstring(
+                    this.props.partialFunctionCallDoc() as string
+                  )
+                )
+              }
+              selectedParam={() =>
+                this.props.partialFunctionCallIdent()?.params?.[
+                  this.props.partialFunctionCall()?.paramIndex ?? 0
+                ] ?? ""
+              }
+            ></FormattedDocstring>
+          )}
+        </If>
+        <div class="pfc-latex">
+          <DStaticMathquillView
+            latex={() => {
+              return this.props.partialFunctionCall()?.ident ?? "";
+            }}
+            config={{}}
+          ></DStaticMathquillView>
+          <StaticMathQuillView latex="("></StaticMathQuillView>
+          <For
+            each={() =>
+              this.props
+                .partialFunctionCallIdent()
+                ?.params.map((e, i) => [e, i] as const) ?? []
+            }
+            key={(e) => e[0]}
+          >
+            <div class="pfc-params">
+              {(p: [string, number]) => {
+                return (
+                  <div
+                    class={() =>
+                      this.props.partialFunctionCall()?.paramIndex === p[1]
+                        ? "pfc-param-selected"
+                        : "pfc-param"
+                    }
+                  >
+                    <DStaticMathquillView
+                      config={{}}
+                      latex={() =>
+                        addBracketsToIdent(p[0]) +
+                        (p[1] ===
+                        (this.props.partialFunctionCallIdent()?.params
+                          ?.length ?? 0) -
+                          1
+                          ? ""
+                          : ",")
+                      }
+                    ></DStaticMathquillView>
+                  </div>
+                );
+              }}
+            </div>
+          </For>
+          <StaticMathQuillView latex=")"></StaticMathQuillView>
+        </div>
+      </div>
+    );
+  }
+}
+
 export class View extends Component<{
   x: () => number;
   y: () => number;
   idents: () => ExpressionBoundIdentifier[];
   autocomplete: (option: ExpressionBoundIdentifier) => void;
   index: () => number;
+  partialFunctionCall: () => PartialFunctionCall | undefined;
+  partialFunctionCallIdent: () => ExpressionBoundIdentifierFunction | undefined;
+  partialFunctionCallDoc: () => string | undefined;
 }> {
   init() {}
 
@@ -56,7 +376,10 @@ export class View extends Component<{
         style={() => ({
           top: (this.props.y() + 30).toString() + "px",
           left: this.props.x().toString() + "px",
-          display: this.props.idents().length > 0 ? "block" : "none",
+          display:
+            this.props.idents().length > 0 || this.props.partialFunctionCall()
+              ? "block"
+              : "none",
           transform:
             this.props.y() > window.innerHeight / 2
               ? `translateY(calc(-100% - 50px))`
@@ -66,6 +389,11 @@ export class View extends Component<{
           e.stopPropagation();
         }}
       >
+        <PartialFunctionCallView
+          partialFunctionCall={() => this.props.partialFunctionCall()}
+          partialFunctionCallIdent={() => this.props.partialFunctionCallIdent()}
+          partialFunctionCallDoc={() => this.props.partialFunctionCallDoc()}
+        ></PartialFunctionCallView>
         <For
           each={() =>
             this.props.idents().map((ident, index) => ({ ...ident, index }))
@@ -77,8 +405,6 @@ export class View extends Component<{
               const reformattedIdent = addBracketsToIdent(ident.variableName);
 
               const isSelected = () => ident.index === this.props.index();
-
-              console.log(ident.variableName);
 
               const opt = (
                 <tr
@@ -98,7 +424,7 @@ export class View extends Component<{
                     this.props.autocomplete(ident);
                   }}
                 >
-                  <td>
+                  <td style={{ color: "#AAAAAA" }}>
                     <IdentifierSymbol
                       symbol={() => ident.type}
                     ></IdentifierSymbol>

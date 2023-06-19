@@ -185,3 +185,7 @@ pillbox-menus-desc = Show the buttons on the right side, such as the Video Creat
 ## Manage Metadata
 manage-metadata-name = Manage Metadata (Core)
 manage-metadata-desc = Manage Metadata, such as GLesmos or pinned/unpinned status
+
+## Intellisense
+intellisense-name = Intellisense
+intellisense-desc = Brings several common IDE features to Desmos, including autocompletion suggestions, function call help, and jump to definition (F9).
