@@ -20,7 +20,10 @@ export type DispatchedEvent =
         | "set-none-selected"
         | "toggle-graph-settings"
         | "clear-unsaved-changes"
-        | "undo";
+        | "undo"
+        | "tick"
+        | "redo"
+        | "tick-ticker";
     }
   | {
       type:
