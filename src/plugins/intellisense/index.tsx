@@ -1,14 +1,22 @@
+import {
+  PartialFunctionCall,
+  TryFindMQIdentResult,
+  getController,
+  getMathquillIdentifierAtCursorPosition,
+  getPartialFunctionCall,
+  mapAugAST,
+} from "./latex-parsing";
+import { IntellisenseState } from "./state";
 import { View, addBracketsToIdent } from "./view";
-import { GraphState } from "@desmodder/graph-state";
-import { DCGView, MountedComponent, jsx } from "DCGView";
+import { DCGView, MountedComponent } from "DCGView";
 import { MathQuillField, MathQuillView } from "components";
 import { Calc } from "globals/window";
 import { PluginController } from "plugins/PluginController";
+import { getMetadata } from "plugins/manage-metadata/manage";
 import { State, ExpressionAug, ItemAug } from "plugins/text-mode/aug/AugState";
 import rawToAug from "plugins/text-mode/aug/rawToAug";
-import { updateView } from "plugins/video-creator/View";
 
-export type ExpressionBoundIdentifier =
+export type BoundIdentifier =
   | {
       exprId: string;
       variableName: string;
@@ -21,9 +29,9 @@ export type ExpressionBoundIdentifier =
         | "repeated-operator";
       id: number;
     }
-  | ExpressionBoundIdentifierFunction;
+  | BoundIdentifierFunction;
 
-export interface ExpressionBoundIdentifierFunction {
+export interface BoundIdentifierFunction {
   exprId: string;
   variableName: string;
   type: "function";
@@ -31,38 +39,15 @@ export interface ExpressionBoundIdentifierFunction {
   params: string[];
 }
 
-function mapAugAST(
-  node: ExpressionAug["latex"],
-  callback: (node: ExpressionAug["latex"]) => void
-) {
-  function map(x: any) {
-    if (Array.isArray(x)) {
-      for (const child of x) {
-        map(child);
-      }
-    }
-
-    if (typeof x === "object") {
-      if (typeof x.type === "string") callback(x);
-
-      for (const [k, v] of Object.entries(x)) {
-        map(v);
-      }
-    }
-  }
-
-  map(node);
-}
-
 function getExpressionBoundGlobalIdentifiers(
   expr: ItemAug
-): Omit<ExpressionBoundIdentifier, "id">[] {
+): Omit<BoundIdentifier, "id">[] {
   if (expr.type === "folder") {
     return expr.children
       .map((c) => getExpressionBoundGlobalIdentifiers(c))
       .flat();
   } else if (expr.type === "expression" && expr.latex) {
-    const idents: Omit<ExpressionBoundIdentifier, "id">[] = [];
+    const idents: Omit<BoundIdentifier, "id">[] = [];
 
     mapAugAST(expr.latex, (node) => {
       if (!node) return;
@@ -97,7 +82,7 @@ function getExpressionBoundGlobalIdentifiers(
       });
     }
     if (expr.latex.type === "FunctionDefinition") {
-      const fndef: ExpressionBoundIdentifier = {
+      const fndef: BoundIdentifier = {
         exprId: expr.id,
         variableName: expr.latex.symbol.symbol,
         type: "function",
@@ -107,7 +92,7 @@ function getExpressionBoundGlobalIdentifiers(
       idents.push(
         fndef,
         ...expr.latex.argSymbols.map((arg) => {
-          const x: Omit<ExpressionBoundIdentifier, "id"> = {
+          const x: Omit<BoundIdentifier, "id"> = {
             exprId: expr.id,
             variableName: arg.symbol,
             type: "function-param",
@@ -120,194 +105,6 @@ function getExpressionBoundGlobalIdentifiers(
     return idents;
   }
   return [];
-}
-
-const identRegex = /([a-zA-Z]|\\[a-zA-Z]+) *(_\{[a-zA-Z0-9 ]*\})?/g;
-
-export interface MQController {
-  cursor: MQCursor;
-}
-
-export interface MQCursor {
-  parent?: MQCursor;
-  latex?: () => string;
-  [-1]: MQCursor | undefined;
-  [1]: MQCursor | undefined;
-  cursorElement?: HTMLElement;
-  ctrlSeq?: string;
-}
-
-function getController(mq: MathQuillField) {
-  // @ts-expect-error mq controller exists
-  return mq.__controller as MQController;
-}
-
-function getOptions(mq: MathQuillField) {
-  // @ts-expect-error mq options exists
-  return mq.__options as MQOptions;
-}
-
-function mqKeystroke(mq: MathQuillField, keystroke: string) {
-  // @ts-expect-error keystroke can take only one param
-  mq.keystroke(keystroke);
-}
-
-function isIdentStr(str: string) {
-  const match = str.match(identRegex);
-  if (!match) return false;
-  return match[0].length === str.length;
-}
-
-interface TryFindMQIdentResult {
-  goToEndOfIdent: () => void;
-  deleteIdent: () => void;
-  ident: string;
-  type: string;
-}
-
-function tryGetMathquilIdentFromWithinSubscript(
-  mq: MathQuillField
-): TryFindMQIdentResult | undefined {
-  const ctrlr = getController(mq);
-
-  const varName = ctrlr.cursor.parent?.parent?.[-1]?.latex?.();
-  const subscript = ctrlr.cursor.parent?.parent?.latex?.();
-  if (varName && subscript) {
-    const candidate = varName + subscript;
-    console.log("candidate", candidate);
-    if (isIdentStr(candidate)) {
-      return {
-        goToEndOfIdent: () => {
-          while (ctrlr.cursor[1]) {
-            mqKeystroke(mq, "Right");
-          }
-          mqKeystroke(mq, "Right");
-        },
-        deleteIdent: () => {
-          for (let i = 0; i < candidate.length - 3; i++) {
-            mqKeystroke(mq, "Backspace");
-          }
-        },
-        ident: candidate,
-        type: "within-subscript",
-      };
-    }
-  }
-}
-
-function tryGetMathquillIdentFromAfterSubscript(
-  mq: MathQuillField
-): TryFindMQIdentResult | undefined {
-  const ctrlr = getController(mq);
-
-  const varName = ctrlr.cursor?.[-1]?.[-1]?.latex?.();
-  const subscript = ctrlr.cursor?.[-1]?.latex?.();
-  if (varName && subscript) {
-    const candidate = varName + subscript;
-    if (isIdentStr(candidate)) {
-      return {
-        goToEndOfIdent: () => {},
-        ident: candidate,
-        deleteIdent: () => {
-          for (let i = 0; i < candidate.length - 3; i++) {
-            mqKeystroke(mq, "Backspace");
-          }
-        },
-        type: "after-subscript",
-      };
-    }
-  }
-}
-
-function tryGetMathquillIdentFromBeforeSubscript(
-  mq: MathQuillField
-): TryFindMQIdentResult | undefined {
-  const ctrlr = getController(mq);
-
-  const varName = ctrlr.cursor?.[-1]?.latex?.();
-  const subscript = ctrlr.cursor?.[1]?.latex?.();
-  if (varName && subscript) {
-    const candidate = varName + subscript;
-    if (isIdentStr(candidate)) {
-      return {
-        goToEndOfIdent: () => {
-          mqKeystroke(mq, "Right");
-        },
-        ident: candidate,
-        deleteIdent: () => {
-          for (let i = 0; i < candidate.length - 3; i++) {
-            mqKeystroke(mq, "Backspace");
-          }
-        },
-        type: "before-subscript",
-      };
-    }
-  }
-}
-
-function tryGetMathquillIdentFromVariableOnly(
-  mq: MathQuillField
-): TryFindMQIdentResult | undefined {
-  const ctrlr = getController(mq);
-
-  const varName = ctrlr.cursor?.[-1]?.latex?.();
-  if (varName) {
-    if (isIdentStr(varName)) {
-      return {
-        goToEndOfIdent: () => {},
-        ident: varName,
-        deleteIdent: () => {
-          mqKeystroke(mq, "Backspace");
-        },
-        type: "variable-only",
-      };
-    }
-  }
-}
-
-function getMathquillIdentifierAtCursorPosition(
-  mq: MathQuillField
-): TryFindMQIdentResult | undefined {
-  // try to get an identifier from a mathquill input
-  // at the cursor position in various different ways
-  // pick the first one that succeeds
-  return (
-    tryGetMathquilIdentFromWithinSubscript(mq) ??
-    tryGetMathquillIdentFromAfterSubscript(mq) ??
-    tryGetMathquillIdentFromBeforeSubscript(mq) ??
-    tryGetMathquillIdentFromVariableOnly(mq)
-  );
-}
-
-export interface PartialFunctionCall {
-  ident: string;
-  paramIndex: number;
-}
-
-function getPartialFunctionCall(
-  mq: MathQuillField
-): PartialFunctionCall | undefined {
-  let cursor: MQCursor | undefined = getController(mq).cursor;
-  let paramIndex = 0;
-  while (cursor) {
-    const ltx = cursor?.latex?.();
-    if (ltx === ",") paramIndex++;
-    if (cursor[-1]) {
-      cursor = cursor[-1];
-    } else {
-      const oldCursor = cursor;
-      cursor = cursor.parent?.parent?.[-1];
-      const ltx = cursor?.latex?.();
-      const ltx2 = cursor?.[-1]?.latex?.();
-      if (ltx && isIdentStr(ltx) && cursor?.[1]?.ctrlSeq === "\\left(") {
-        return { ident: ltx, paramIndex };
-      } else if (ltx2 && ltx && isIdentStr(ltx2 + ltx)) {
-        return { ident: ltx2 + ltx, paramIndex };
-      }
-      paramIndex = 0;
-      cursor = oldCursor.parent;
-    }
-  }
 }
 
 export function getMQCursorPosition(focusedMQ: MathQuillField) {
@@ -323,16 +120,13 @@ export default class Intellisense extends PluginController {
   static id = "intellisense" as const;
   static enabledByDefault = true;
 
-  aug: State | undefined = undefined;
   view: MountedComponent | undefined;
 
   x: number = 0;
   y: number = 0;
 
-  intellisenseOpts: ExpressionBoundIdentifier[] = [];
+  intellisenseOpts: BoundIdentifier[] = [];
   intellisenseIndex: number = -1;
-
-  allBoundIdentifiers: ExpressionBoundIdentifier[] = [];
 
   latestIdent: TryFindMQIdentResult | undefined;
   latestMQ: MathQuillField | undefined;
@@ -344,81 +138,76 @@ export default class Intellisense extends PluginController {
   idcounter = 0;
 
   partialFunctionCall: PartialFunctionCall | undefined;
-
-  partialFunctionCallIdent: ExpressionBoundIdentifier | undefined;
-
+  partialFunctionCallIdent: BoundIdentifier | undefined;
   partialFunctionCallDoc: string | undefined;
 
-  reloadState() {
-    this.aug = rawToAug(Calc.getState());
-
-    // @ts-expect-error stupid type inference
-    this.allBoundIdentifiers = this.aug.expressions.list
-      .map((e) => getExpressionBoundGlobalIdentifiers(e))
-      .flat()
-      .map((e, i) => ({ ...e, id: this.idcounter++ }));
-
-    console.log(this.allBoundIdentifiers);
-  }
+  intellisenseState = new IntellisenseState(getMetadata());
 
   updateIntellisense() {
     const focusedMQ = MathQuillView.getFocusedMathquill();
     this.intellisenseOpts = [];
+
+    // is there actually a focused mathquill window?
     if (focusedMQ) {
+      // find the identifier the cursor is at
       this.latestIdent = getMathquillIdentifierAtCursorPosition(focusedMQ);
       if (this.latestIdent)
         this.latestIdent.ident = this.latestIdent.ident.replace(/ /g, "");
 
-      console.log("latestident str", this.latestIdent?.ident);
       this.latestMQ = focusedMQ;
 
+      // determine if the user is in a partial function call
       this.partialFunctionCall = getPartialFunctionCall(focusedMQ);
-      this.partialFunctionCallIdent = this.allBoundIdentifiers.find(
+      this.partialFunctionCallIdent = Array.from(
+        this.intellisenseState.boundIdentifiers()
+      ).find(
         (i) =>
           addBracketsToIdent(i.variableName) ===
             this.partialFunctionCall?.ident && i.type === "function"
       );
 
-      const exprlist = this.aug?.expressions.list ?? [];
-
-      const findDoc = (exprlist: ItemAug[]) => {
-        let found = false;
-        for (let i = 0; i < exprlist.length; i++) {
-          const current = exprlist[i];
-          if (current.type === "folder") findDoc(current.children);
-          if (
-            this.partialFunctionCallIdent &&
-            current.type === "text" &&
-            exprlist[i + 1]?.type === "expression" &&
-            this.partialFunctionCallIdent.exprId === exprlist[i + 1]?.id
-          ) {
-            this.partialFunctionCallDoc = current.text;
-            found = true;
-          }
+      // if the user is in a partial function call,
+      // find its documentation if it exists
+      const models = Calc.controller.getAllItemModels();
+      let found = false;
+      for (let i = 0; i < models.length; i++) {
+        const current = models[i];
+        if (
+          this.partialFunctionCallIdent &&
+          current.type === "text" &&
+          models[i + 1]?.type === "expression" &&
+          this.partialFunctionCallIdent.exprId === models[i + 1]?.id
+        ) {
+          this.partialFunctionCallDoc = current.text;
+          found = true;
         }
-        if (!found) this.partialFunctionCallDoc = undefined;
-      };
+      }
+      if (!found) this.partialFunctionCallDoc = undefined;
 
-      findDoc(exprlist);
-
+      // determine where to put intellisense window
       const bbox = getMQCursorPosition(focusedMQ);
-
       this.x = bbox?.left ?? 0;
       this.y = bbox?.top ?? 0;
 
+      // create filtered list of valid intellisense options
       if (this.latestIdent) {
-        console.log("latestident", this.latestIdent);
-        this.intellisenseOpts = this.allBoundIdentifiers.filter((g) =>
+        this.intellisenseOpts = Array.from(
+          this.intellisenseState.boundIdentifiers()
+        ).filter((g) =>
           g.variableName.startsWith(
             this.latestIdent?.ident.replace(/[{} \\]/g, "") ?? ""
           )
         );
       }
+
+      // if there isn't, just get rid of the intellisense window
     } else {
       this.latestIdent = undefined;
       this.latestMQ = undefined;
       this.intellisenseIndex = -1;
     }
+
+    // update intellisense window
     this.view?.update();
   }
 
@@ -469,16 +258,19 @@ export default class Intellisense extends PluginController {
 
         // navigating upward in the intellisense menu
       } else if (e.key === "ArrowUp" && this.intellisenseOpts.length > 0) {
+        const oldIntellisenseIndex = this.intellisenseIndex;
         this.intellisenseIndex = Math.max(this.intellisenseIndex - 1, -1);
         if (this.intellisenseIndex >= 0) {
           this.view?.update();
           e.preventDefault();
+          return false;
         } else {
-          // @ts-expect-error focus is part of the mathquill api
-          this.intellisenseReturnMQ?.focus();
-          this.isInIntellisenseMenu = false;
+          if (oldIntellisenseIndex === 0) {
+            // @ts-expect-error focus is part of the mathquill api
+            this.intellisenseReturnMQ?.focus();
+            this.isInIntellisenseMenu = false;
+          }
         }
-        return false;
 
         // choose autocomplete option with tab or enter
       } else if (
@@ -498,7 +290,9 @@ export default class Intellisense extends PluginController {
 
       // Jump to definition
       if (e.key === "F9") {
-        const identDst = this.allBoundIdentifiers.find((id) => {
+        const identDst = Array.from(
+          this.intellisenseState.boundIdentifiers()
+        ).find((id) => {
           return (
             (id.type === "function" || id.type === "variable") &&
             addBracketsToIdent(id.variableName) === this.latestIdent?.ident
@@ -547,15 +341,9 @@ export default class Intellisense extends PluginController {
       partialFunctionCallIdent: () => this.partialFunctionCallIdent,
       partialFunctionCallDoc: () => this.partialFunctionCallDoc,
     });
-
-    this.reloadState();
-
-    Calc.observeEvent("change", () => {
-      this.reloadState();
-    });
   }
 
-  doAutocomplete(opt: ExpressionBoundIdentifier) {
+  doAutocomplete(opt: BoundIdentifier) {
     if (this.latestIdent && this.latestMQ) {
       this.latestIdent.goToEndOfIdent();
       this.latestIdent.deleteIdent();
@@ -584,3 +372,30 @@ export default class Intellisense extends PluginController {
     console.log("Disabled");
   }
 }
+
+// const verticalCommas = (node: Node) => {
+//   if (node instanceof HTMLElement) {
+//     if (node.tagName === "SPAN" && node.innerText === ",") {
+//       node.dataset.isComma = "true";
+//     }
+//   }
+// };
+
+// const allElements = document.querySelectorAll("*");
+
+// for (const e of allElements) verticalCommas(e);
+
+// const observer = new MutationObserver((e) => {
+//   for (const mut of e) {
+//     for (const node of mut.addedNodes) {
+//       verticalCommas(node);
+//     }
+//   }
+// });
+
+// observer.observe(document.body, {
+//   characterData: true,
+//   childList: true,
+//   attributes: true,
+//   subtree: true,
+// });

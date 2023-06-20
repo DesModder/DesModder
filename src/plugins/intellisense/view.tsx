@@ -1,21 +1,11 @@
-import {
-  ExpressionBoundIdentifier,
-  ExpressionBoundIdentifierFunction,
-  PartialFunctionCall,
-  getMQCursorPosition,
-} from ".";
-import {
-  DStaticMathquillView,
-  If,
-  IfElse,
-} from "../../components/desmosComponents";
+import { BoundIdentifier, BoundIdentifierFunction } from ".";
+import { DStaticMathquillView, If } from "../../components/desmosComponents";
+import { PartialFunctionCall } from "./latex-parsing";
 import "./view.less";
-import { ClassComponent, Component, DCGView, jsx } from "DCGView";
-import { For, MathQuillView, StaticMathQuillView, Switch } from "components";
+import { Component, jsx } from "DCGView";
+import { For, StaticMathQuillView, Switch } from "components";
 import { latexTreeToString } from "plugins/text-mode/aug/augLatexToRaw";
-import augToRaw from "plugins/text-mode/aug/augToRaw";
-import { isExpression } from "plugins/text-mode/down/TextAST";
-import astToAug, { childExprToAug } from "plugins/text-mode/down/astToAug";
+import { childExprToAug } from "plugins/text-mode/down/astToAug";
 import { parse } from "plugins/text-mode/down/textToAST";
 
 export function addBracketsToIdent(str: string) {
@@ -32,7 +22,7 @@ export function addBracketsToIdent(str: string) {
 }
 
 export class IdentifierSymbol extends Component<{
-  symbol: () => ExpressionBoundIdentifier["type"];
+  symbol: () => BoundIdentifier["type"];
 }> {
   template() {
     switch (this.props.symbol()) {
@@ -63,36 +53,6 @@ export class IdentifierSymbol extends Component<{
 const lastof = function <T>(arr: T[]) {
   return arr[arr.length - 1];
 };
-function tokenizeDocstring2(str: string) {
-  const tokens: {
-    str: string;
-    type: "text" | "math";
-  }[] = [{ str: "", type: "text" }];
-
-  for (const char of str) {
-    if (char === "`") {
-      if (lastof(tokens).type === "text") {
-        tokens.push({ str: "", type: "math" });
-
-        // end of math mode string
-      } else {
-        const parsedTextMode = parse(lastof(tokens).str);
-        const parsedExpr = parsedTextMode.mapIDstmt[1];
-        if (parsedExpr && parsedExpr.type === "ExprStatement") {
-          const aug = childExprToAug(parsedExpr.expr);
-          const latex = latexTreeToString(aug);
-          lastof(tokens).str = latex;
-        }
-
-        tokens.push({ str: "", type: "text" });
-      }
-    } else {
-      lastof(tokens).str += char;
-    }
-  }
-
-  return tokens;
-}
 
 function tokenizeDocstring(str: string): DocStringToken[] {
   const tokens: DocStringToken[] = [
@@ -231,10 +191,10 @@ export class FormattedDocstring extends Component<{
     return (
       <For
         each={() => this.props.docstring().map((e, i) => [e, i] as const)}
-        key={([e, i]) => counter++}
+        key={() => counter++}
       >
         <div style={{ display: "inline" }}>
-          {([r, index]: [DocStringRenderable, number]) => (
+          {([r, _]: [DocStringRenderable, number]) => (
             <Switch key={() => r}>
               {() => {
                 switch (r.type) {
@@ -281,7 +241,7 @@ export class FormattedDocstring extends Component<{
 
 export class PartialFunctionCallView extends Component<{
   partialFunctionCall: () => PartialFunctionCall | undefined;
-  partialFunctionCallIdent: () => ExpressionBoundIdentifierFunction | undefined;
+  partialFunctionCallIdent: () => BoundIdentifierFunction | undefined;
   partialFunctionCallDoc: () => string | undefined;
 }> {
   init() {}
@@ -365,21 +325,22 @@ export class PartialFunctionCallView extends Component<{
 export class View extends Component<{
   x: () => number;
   y: () => number;
-  idents: () => ExpressionBoundIdentifier[];
-  autocomplete: (option: ExpressionBoundIdentifier) => void;
+  idents: () => BoundIdentifier[];
+  autocomplete: (option: BoundIdentifier) => void;
   index: () => number;
   partialFunctionCall: () => PartialFunctionCall | undefined;
-  partialFunctionCallIdent: () => ExpressionBoundIdentifierFunction | undefined;
+  partialFunctionCallIdent: () => BoundIdentifierFunction | undefined;
   partialFunctionCallDoc: () => string | undefined;
 }> {
   init() {}
 
   template() {
-    let div: HTMLDivElement;
-
     return (
       <div
         id="intellisense-container"
+        class={() =>
+          this.props.index() >= 0 ? "selected-intellisense-container" : ""
+        }
         style={() => ({
           top: (this.props.y() + 30).toString() + "px",
           left: this.props.x().toString() + "px",
@@ -408,7 +369,7 @@ export class View extends Component<{
           key={(e) => e.id}
         >
           <table class="intellisense-options-table">
-            {(ident: ExpressionBoundIdentifier & { index: number }) => {
+            {(ident: BoundIdentifier & { index: number }) => {
               const reformattedIdent = addBracketsToIdent(ident.variableName);
 
               const isSelected = () => ident.index === this.props.index();
@@ -427,7 +388,7 @@ export class View extends Component<{
                         "selected-intellisense-option")
                       : "intellisense-option"
                   }
-                  onClick={(e: MouseEvent) => {
+                  onClick={() => {
                     this.props.autocomplete(ident);
                   }}
                 >

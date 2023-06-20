@@ -10,6 +10,10 @@
   overflow: auto;
 }
 
+.selected-intellisense-container {
+  border: 2px solid #6a93d2 !important;
+}
+
 .intellisense-option {
   z-index: 999999;
 }
@@ -32,6 +36,8 @@
 
 .pfc-params {
   display: flex;
+  flex-wrap: wrap;
+  max-width: 60vw;
 }
 
 .pfc-param-selected {
@@ -46,4 +52,9 @@
 .pfc-doc-param {
   border-bottom: 1px solid #bbbbbb;
   border-top: 1px solid #bbbbbb;
+}
+
+span[data-is-comma="true"]::after {
+  content: " ";
+  display: block;
 }
