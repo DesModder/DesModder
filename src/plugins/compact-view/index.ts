@@ -33,13 +33,15 @@ export default class CompactView extends PluginController {
 
     Calc.controller.dispatcher.register((e) => {
       if (e.type === "set-focus-location") {
-        focusedmq = MathQuillView.getFocusedMathquill();
+        setTimeout(
+          () => (focusedmq = MathQuillView.getFocusedMathquill()),
+          100
+        );
       }
 
-      if (
-        // @ts-expect-error this is an event type in desmos
-        e.type === "on-special-key-pressed"
-      ) {
+      if (e.type === "on-special-key-pressed") {
+        if (e.forceSwitchExpr) return;
+
         // next mathquill input that would've been navigated to
         // if it weren't for vertical nav
         const nextmq = MathQuillView.getFocusedMathquill();
@@ -48,46 +50,63 @@ export default class CompactView extends PluginController {
         if (!focusedmq) return;
 
         // arrow nav down arrow
-        if (
-          // @ts-expect-error this is an event type in desmos
-          e.key === "Down" ||
-          // @ts-expect-error this is an event type in desmos
-          e.key === "Up"
-        ) {
-          // @ts-expect-error this is an event type in desmos
+        if (e.key === "Down" || e.key === "Up") {
           const up = e.key === "Up";
           const arrowdir = up ? "Left" : "Right";
           // focus the mq element that was focused before hitting up/down
           focusmq(focusedmq);
 
-          // keep on moving the cursor backward/forward
-          while (true) {
-            // if the prev/next element is a line break or paren enclosing multiline,
-            // go pass it to reach next line and then stop moving
-            const cursor = document.querySelector(".dcg-mq-cursor");
-            const next = up
-              ? cursor?.previousElementSibling
-              : cursor?.nextElementSibling;
-            if (
-              next instanceof HTMLElement &&
-              // is the element a line break?
-              (next.dataset.isLineBreak !== undefined ||
-                // is the element a multiline bracket expression?
-                (next.children[1] instanceof HTMLElement &&
-                  next.children[1].dataset.isMultiline))
-            ) {
+          setTimeout(() => {
+            // keep on moving the cursor backward/forward
+            while (true) {
+              // if the prev/next element is a line break or paren enclosing multiline,
+              // go pass it to reach next line and then stop moving
+              const cursor = document.querySelector(".dcg-mq-cursor");
+              const next = up
+                ? cursor?.nextElementSibling
+                : cursor?.previousElementSibling;
+              if (i < 10) console.log(next);
+              if (
+                i !== 0 &&
+                next instanceof HTMLElement &&
+                // is the element a line break?
+                (next.dataset.isLineBreak !== undefined ||
+                  // is the element a multiline bracket expression?
+                  (next.children[1] instanceof HTMLElement &&
+                    next.children[1].dataset.isMultiline))
+              ) {
+                console.log("up to", next);
+                break;
+              }
               mqKeystroke(focusedmq, arrowdir);
-              break;
-            }
-            mqKeystroke(focusedmq, arrowdir);
-            i++;
+              i++;
 
-            // if we can't find a comma, navigate to next expression as normal
-            if (i > 1000) {
-              focusmq(nextmq);
-              break;
+              // if we can't find a comma, navigate to next expression as normal
+              if (
+                i > 1000 ||
+                (cursor?.parentElement?.classList.contains(
+                  "dcg-mq-root-block"
+                ) &&
+                  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                  cursor === cursor?.parentElement?.lastChild) ||
+                (cursor?.parentElement?.classList.contains(
+                  "dcg-mq-root-block"
+                ) &&
+                  cursor === cursor?.parentElement?.firstChild)
+              ) {
+                console.log("should focus next/prev");
+
+                // force it to go to the next expression
+                setTimeout(
+                  () =>
+                    Calc.controller.dispatch({ ...e, forceSwitchExpr: true }),
+                  0
+                );
+                //focusmq(nextmq);
+                break;
+              }
             }
-          }
+          }, 0);
         }
       }
     });
@@ -98,7 +117,7 @@ export default class CompactView extends PluginController {
 
 export interface VerticalifyContext {
   containerType: "other" | "piecewise" | "function";
-  enclosingBracketType: "paren" | "square" | "curly" | undefined;
+  enclosingBracketType: "paren" | "square" | "curly" | "abs" | undefined;
 }
 
 function isVarNameElem(elem: Element) {
@@ -119,7 +138,7 @@ function outOfDateError(str: string) {
 // given a right dcg-mq-paren element, gets the type of bracket it represents
 function getBracketType(
   elem: Element
-): "paren" | "square" | "curly" | undefined {
+): "paren" | "square" | "curly" | "abs" | undefined {
   const svgPath = elem?.children?.[0]?.children?.[0];
   if (!(svgPath instanceof SVGPathElement)) {
     outOfDateError(
@@ -141,6 +160,8 @@ function getBracketType(
       return "paren";
     case "3":
       return "square";
+    case "4":
+      return "abs";
     case "6":
       return "curly";
     default:
@@ -154,7 +175,6 @@ function verticalify(elem: Element, context: VerticalifyContext) {
   // just handle the "center" element of bracket containers
   if (elem.classList.contains("dcg-mq-bracket-container")) {
     const bracketType = getBracketType(elem.children[2]);
-    console.log(bracketType);
     verticalify(elem.children[1], {
       enclosingBracketType: bracketType,
       containerType:
