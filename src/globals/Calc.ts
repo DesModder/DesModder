@@ -29,7 +29,8 @@ export type DispatchedEvent =
         | "duplicate-expression"
         | "convert-image-to-draggable"
         | "create-sliders-for-item"
-        | "toggle-item-hidden";
+        | "toggle-item-hidden"
+        | "delete-item-and-animate-out";
       id: string;
     }
   | {
@@ -64,6 +65,10 @@ export type DispatchedEvent =
         fromTextMode?: boolean;
       };
       state: GraphState;
+    }
+  | {
+      // Note: this has more parameters. I just haven't found a need for them yet.
+      type: "set-item-latex";
     };
 
 /**
