@@ -1,4 +1,5 @@
 import { PluginController } from "../PluginController";
+import "./compact.less";
 import { MathQuillField, MathQuillView } from "components";
 import { Calc } from "globals/window";
 import { mqKeystroke } from "plugins/intellisense/latex-parsing";
@@ -20,75 +21,8 @@ export default class CompactView extends PluginController {
   static enabledByDefault = true;
 
   afterEnable() {
-    document.styleSheets[0].insertRule(`.dcg-mq-bracket-container {
-      vertical-align: middle;
-  }`);
-    document.styleSheets[0].insertRule(`.dcg-mq-bracket-middle {
-      font-size: calc(max(10px, 0.9em)) !important;
-  }`);
-    document.styleSheets[0].insertRule(`.dcg-main {
-  padding: 0 35px !important;
-  margin-left: 4px !important;
-  font-size: 12px !important;
-}`);
-    document.styleSheets[0].insertRule(`.dcg-inFolder .dcg-main {
-        margin-left: 30px !important;
-}`);
-    document.styleSheets[0].insertRule(`.dcg-caret-container {
-padding: 7px !important;
-margin-left: -8px !important;
-transform: scale(0.8);
-margin-top: -5px;
-}`);
-    document.styleSheets[0].insertRule(`.dcg-fade-container {
-padding-bottom: 0 !important;
-}`);
-    document.styleSheets[0].insertRule(`.dcg-circular-icon-container {
-transform: translate(11px, -18px) scale(0.5) !important;
-}`);
-    document.styleSheets[0].insertRule(`.dcg-icon-remove {
-transform: translate(7px, -7px) scale(0.6);
-}`);
-    document.styleSheets[0].insertRule(`.dcg-expressionitem {
-border-color: #666666;
-}`);
-    document.styleSheets[0].insertRule(`.dcg-smart-textarea-container {
-font-size: 12px !important;
-}`);
-    document.styleSheets[0].insertRule(`.dcg-slider-container {
-min-height: 0 !important;
-}`);
-    document.styleSheets[0].insertRule(`.dcg-track .dcg-graphic {
-height: 2px !important;
-background-color: #999999 !important;
-}`);
-    //     document.styleSheets[0].insertRule(`.dcg-expression-bottom {
-    // height: 12px !important;
-    // }`);
-
-    document.styleSheets[0].insertRule(`.dcg-thumb .dcg-graphic {
-    width: 0 !important;
-    height: 0 !important;
-    }`);
-    document.styleSheets[0].insertRule(`.dcg-thumb .dcg-center {
-        transform: translateY(-2px) scale(0.4) !important;
-        }`);
-    document.styleSheets[0].insertRule(`.dcg-thumb:hover .dcg-center {
-                transform: translateY(-2px) scale(0.8) !important;
-                }`);
-    document.styleSheets[0].insertRule(`.dcg-evaluation-container {
-                                    position: absolute;
-                                    right: 15px;
-                                    top: 5px;
-                                    font-size: 10px !important;
-                                    max-width: 10% !important;
-                                    overflow: hidden !important;
-                                    transition: max-width 0.25s, overflow 0.25s;
-                                    }`);
-    document.styleSheets[0].insertRule(`.dcg-evaluation-container:hover {
-                                                        max-width: 100% !important;
-                                                        overflow: auto !important;
-                                                        }`);
+    document.body.classList.add("compact-view-enabled");
+    document.body.classList.add("multiline-expression-enabled");
 
     Calc.controller.dispatcher.register((e) => {
       if (
@@ -98,17 +32,33 @@ background-color: #999999 !important;
         e.type === "tick" ||
         e.type === "tick-ticker"
       ) {
+        // get all latex exprs
         const mathfields = document.querySelectorAll(".dcg-mq-root-block");
         for (const f of mathfields) {
           if (!(f instanceof HTMLElement)) continue;
 
+          // don't re-verticalify everything unless editing
           if (f.dataset.isVerticalified && e.type !== "set-item-latex")
             continue;
-          if (childWidthSum(f) < 500) continue;
-          verticalify(f, {
-            enclosingBracketType: undefined,
-            containerType: "other",
-          });
+
+          // don't re-verticalify short, unverticalified expressions
+          if (!f.dataset.isVerticalified && childWidthSum(f) < 500) continue;
+
+          // unverticalify expression so it's possible to retrieve accurate width info
+          unverticalify(f);
+          verticalify(
+            f,
+            {
+              enclosingBracketType: undefined,
+              containerType: "root",
+            },
+            {
+              alwaysCollapseSymbols: [","],
+              collapseAtWidthSymbols: ["+", "-"],
+              collapseWidth: 380,
+              collapseLists: true,
+            }
+          );
 
           f.dataset.isVerticalified = "true";
         }
@@ -140,7 +90,6 @@ background-color: #999999 !important;
 
           // focus the mq element that was focused before hitting up/down
           focusmq(focusedmq);
-          console.log(focusedmq);
 
           // we need a timeout here so the cursor position can update
           // (without this, it breaks for up but works fine for down)
@@ -169,7 +118,6 @@ background-color: #999999 !important;
               ) {
                 break;
               }
-              mqKeystroke(focusedmq, arrowdir);
               i++;
 
               // if we can't find a comma, navigate to next expression as normal
@@ -185,15 +133,13 @@ background-color: #999999 !important;
                 ) &&
                   cursor === cursor?.parentElement?.firstChild)
               ) {
-                console.log("should focus next/prev");
-
                 // force it to go to the next expression
+                // timeout is needed because dispatches can't trigger one another
                 setTimeout(
                   () =>
                     Calc.controller.dispatch({ ...e, forceSwitchExpr: true }),
                   0
                 );
-                //focusmq(nextmq);
                 break;
               }
             }
@@ -207,9 +153,14 @@ background-color: #999999 !important;
 }
 
 export interface VerticalifyContext {
-  containerType: "other" | "piecewise" | "function";
+  containerType:
+    | "other"
+    | "piecewise"
+    | "function"
+    | "list"
+    | "root"
+    | "function-def";
   enclosingBracketType: "paren" | "square" | "curly" | "abs" | undefined;
-  possiblyFunctionSignature?: boolean;
 }
 
 function isVarNameElem(elem: Element) {
@@ -263,16 +214,55 @@ function getBracketType(
   }
 }
 
-function verticalify(elem: Element, context: VerticalifyContext) {
+interface VerticalifyOptions {
+  alwaysCollapseSymbols: string[];
+  collapseAtWidthSymbols: string[];
+  collapseWidth: number;
+  collapseLists: boolean;
+}
+
+function startsWithAnyOf(src: string, match: string[]) {
+  for (const m of match) {
+    if (src.startsWith(m)) return m;
+  }
+  return undefined;
+}
+
+function unverticalify(elem: Element) {
+  // get all children
+  const children = elem.querySelectorAll("*");
+
+  for (const child of children) {
+    if (child instanceof HTMLElement) {
+      delete child.dataset.isMultiline;
+
+      // revert linebreaks to original symbol to get rid of <br>
+      if (child.dataset.isLineBreak) {
+        child.innerHTML = child.dataset.originalSymbol ?? "";
+      }
+      delete child.dataset.isLineBreak;
+    }
+  }
+}
+
+function verticalify(
+  elem: Element,
+  context: VerticalifyContext,
+  options: VerticalifyOptions
+) {
   // just handle the "center" element of bracket containers
   if (elem.classList.contains("dcg-mq-bracket-container")) {
     const bracketType = getBracketType(elem.children[2]);
-    verticalify(elem.children[1], {
-      ...context,
-      enclosingBracketType: bracketType,
-      containerType:
-        bracketType === "curly" ? "piecewise" : context.containerType,
-    });
+    verticalify(
+      elem.children[1],
+      {
+        ...context,
+        enclosingBracketType: bracketType,
+        containerType:
+          bracketType === "curly" ? "piecewise" : context.containerType,
+      },
+      options
+    );
     return;
   }
 
@@ -284,63 +274,88 @@ function verticalify(elem: Element, context: VerticalifyContext) {
   let hadSubscriptLast = false;
   if (elem instanceof HTMLElement) delete elem.dataset.isMultiline;
 
-  let hasEquals = false;
+  let beforeEquals = false;
 
-  if (elem.classList.contains("dcg-mq-root-block")) {
+  // detect if root element has an equals sign
+  // so we can specifically handle fn calls
+  if (context.containerType === "root") {
     for (const child of children) {
-      if (child.innerHTML.startsWith("=")) hasEquals = true;
+      if (child.innerHTML.startsWith("=")) beforeEquals = true;
     }
   }
 
-  const totalWidth =
-    elem.classList.contains("dcg-mq-root-block") && elem instanceof HTMLElement
-      ? childWidthSum(elem)
-      : elem.getBoundingClientRect().width;
+  // get width to decide whether to collapse in the first place
+  //   const totalWidth =
+  //     context.containerType === "root" && elem instanceof HTMLElement
+  //       ? childWidthSum(elem)
+  //       : elem.getBoundingClientRect().width;
+  //   if (totalWidth < options.collapseWidth) return;
 
-  if (totalWidth < 380) return;
-
+  let accumulatedWidth = 0;
+  // collapse children
   for (const child of children) {
-    if (
-      elem.classList.contains("dcg-mq-root-block") &&
-      child.innerHTML.startsWith("=")
-    )
-      hasEquals = false;
+    // indicate that we've reached the equals sign
+    if (context.containerType === "root" && child.innerHTML.startsWith("="))
+      beforeEquals = false;
+
+    // accumulate width so we know when to break
+    accumulatedWidth += child.getBoundingClientRect().width;
+
+    // only html elements can become line breaks
+    if (child instanceof HTMLElement) {
+      //   if (
+      //     // can break in piecewises or fn calls
+      //     (context.containerType === "piecewise" ||
+      //       context.containerType === "function" ||
+      //       // can break in lists if enabled
+      //       (context.enclosingBracketType === "square" &&
+      //         accumulatedWidth > options.collapseWidth &&
+      //         options.collapseLists) ||
+      //       // can break in the root if we're not in a function signature
+      //       context.containerType === "root") &&
+      //     context.containerType !== "function-def"
+      //   ) {
+      //     // see if child is a symbol that will always be collapsed
+      //     let collapsibleSymbol = startsWithAnyOf(child.innerHTML, [
+      //       ...options.alwaysCollapseSymbols,
+      //       ...(context.containerType === "root" ? ["="] : []),
+      //     ]);
+      //     // see if child is a symbol that is only collapsed at max width
+      //     if (
+      //       collapsibleSymbol === undefined &&
+      //       accumulatedWidth > options.collapseWidth
+      //     ) {
+      //       collapsibleSymbol = startsWithAnyOf(
+      //         child.innerHTML,
+      //         options.collapseAtWidthSymbols
+      //       );
+      //     }
+      //     if (collapsibleSymbol !== undefined) {
+      //       child.style.display = "inline";
+      //       child.dataset.isLineBreak = "true";
+      //       child.dataset.originalSymbol = collapsibleSymbol;
+      //       child.innerHTML = collapsibleSymbol + "<br />";
+      //       if (elem instanceof HTMLElement) elem.dataset.isMultiline = "true";
+      //       accumulatedWidth = 0;
+      //     }
+      //   } else {
+      //     if (child.dataset.isLineBreak) {
+      //       child.innerHTML = child.dataset.originalSymbol ?? "";
+      //       delete child.dataset.isLineBreak;
+      //     }
+      //   }
+    }
+
+    // verticalify child
     verticalify(
       child,
-      hasEquals ? { ...context, possiblyFunctionSignature: true } : newContext
+      beforeEquals ? { ...context, containerType: "function-def" } : newContext,
+      options
     );
-
-    if (child instanceof HTMLElement) {
-      if (
-        (context.containerType === "piecewise" ||
-          context.containerType === "function" ||
-          elem.classList.contains("dcg-mq-root-block")) &&
-        !context.possiblyFunctionSignature
-      ) {
-        if (
-          (child.classList.length === 0 &&
-            child.tagName.toUpperCase() === "SPAN" &&
-            child.innerHTML === ",") ||
-          (elem.classList.contains("dcg-mq-root-block") &&
-            child.innerHTML === "=")
-        ) {
-          child.style.display = "inline";
-          child.dataset.isLineBreak = "true";
-          child.innerHTML = child.innerHTML + "<br />";
-          if (elem instanceof HTMLElement) elem.dataset.isMultiline = "true";
-        }
-      } else {
-        if (child.dataset.isLineBreak) {
-          child.innerHTML = child.innerHTML[0];
-          delete child.dataset.isLineBreak;
-        }
-      }
-    }
 
     if (isVarNameElem(child)) {
       newContext.containerType = "function";
-    }
-    if (isSubscriptElem(child)) {
+    } else if (isSubscriptElem(child)) {
       if (hadSubscriptLast) {
         newContext.containerType = "other";
       } else {
@@ -348,6 +363,7 @@ function verticalify(elem: Element, context: VerticalifyContext) {
       }
       hadSubscriptLast = true;
     } else {
+      newContext.containerType = "other";
       hadSubscriptLast = false;
     }
   }
