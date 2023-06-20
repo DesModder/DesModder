@@ -69,6 +69,12 @@ export type DispatchedEvent =
   | {
       // Note: this has more parameters. I just haven't found a need for them yet.
       type: "set-item-latex";
+    }
+  | {
+      type: "on-special-key-pressed";
+      key: string;
+      // used in compact-view plugin
+      forceSwitchExpr?: boolean;
     };
 
 /**
