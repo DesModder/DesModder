@@ -282,7 +282,7 @@ export default class CompactView extends PluginController<Config> {
               }
 
               // if the next elem is the same as the one from before, we've reached a dead end
-              if (next === nextFromBefore) {
+              if (next === nextFromBefore && linesPassed === 0) {
                 // force it to go to the next expression
                 // timeout is needed because dispatches can't trigger one another
                 setTimeout(
@@ -292,7 +292,6 @@ export default class CompactView extends PluginController<Config> {
                 );
                 break;
               }
-              nextFromBefore = next;
 
               if (!catchup) mqKeystroke(focusedmq, arrowdir);
               catchup = false;
@@ -310,19 +309,17 @@ export default class CompactView extends PluginController<Config> {
               // if the next/prev element is a line break or paren enclosing multiline,
               // then we've reached the next line
               if (
-                next instanceof HTMLElement &&
-                // is the element a line break?
-                next.dataset.isLineBreak !== undefined // ||
-                // is the element a multiline bracket expression?
-                // (!up &&
-                //   next?.children[1] instanceof HTMLElement &&
-                //   next?.children[1].dataset.isMultiline)
+                (next instanceof HTMLElement &&
+                  // is the element a line break?
+                  next.dataset.isLineBreak !== undefined) ||
+                next === nextFromBefore
               ) {
                 mqKeystroke(focusedmq, arrowdir);
                 if (linesPassed === 1) break;
                 linesPassed++;
               }
               i++;
+              nextFromBefore = next;
 
               // failsafe prevent any infinite loop bugs
               if (
