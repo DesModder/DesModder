@@ -239,23 +239,46 @@ export default class CompactView extends PluginController<Config> {
               return this;
             };
 
+            let catchup = false;
+
             while (true) {
               // get cursor and adjacent element so we can figure out
               // if it's a line break
-              // const cursor = document.querySelector(".dcg-mq-cursor");
               const ctrlr = getController(focusedmq);
-              let next = up ? ctrlr.cursor?.[1]?._el : ctrlr.cursor?.[-1]?._el;
+              let next = ctrlr.cursor?.[up ? -1 : 1]?._el; //up ? ctrlr.cursor?.[-1]?._el : ctrlr.cursor?.[1]?._el;
 
+              let isNextRight = up;
+
+              // if (next?.classList.contains("dcg-mq-bracket-container")) {
+              //   mqKeystroke(focusedmq, arrowdir);
+              //   next = ctrlr.cursor?.[up ? -1 : 1]?._el;
+              //   mqKeystroke(focusedmq, oppositeArrowdir);
+              // }
+
+              // // if we can't directly get the next element,
+              // // shift the cursor so that we can get access to it from the "other side"
               if (!next) {
-                if (up) {
-                  mqKeystroke(focusedmq, "Right");
-                  next = ctrlr.cursor?.[-1]?._el;
-                  mqKeystroke(focusedmq, "Left");
-                } else {
-                  mqKeystroke(focusedmq, "Left");
-                  next = ctrlr.cursor?.[1]?._el;
-                  mqKeystroke(focusedmq, "Right");
-                }
+                // next = ctrlr.cursor?.[1]?._el;
+                mqKeystroke(focusedmq, arrowdir);
+                // if (next === nextFromBefore) {
+                next = ctrlr.cursor?.[up ? 1 : -1]?._el;
+                isNextRight = !isNextRight;
+                catchup = true;
+                // }
+                // //console.log("oldnext", next);
+                // if (up) {
+                //   next = ctrlr.cursor?.parent?.parent?._el;
+                //   mqKeystroke(focusedmq, "Left");
+                //   //mqKeystroke(focusedmq, "Right");
+                //   //console.log("newnext", next);
+                // } else {
+                //   next = ctrlr.cursor?.parent?.parent?._el;
+                //   mqKeystroke(focusedmq, "Right");
+                //   //mqKeystroke(focusedmq, "Left");
+                // }
+                // if (!next?.classList.contains("dcg-mq-bracket-container")) {
+                //   next = ctrlr.cursor?.[up ? -1 : 1]?._el;
+                // }
               }
 
               // if the next elem is the same as the one from before, we've reached a dead end
@@ -269,44 +292,52 @@ export default class CompactView extends PluginController<Config> {
                 );
                 break;
               }
-
               nextFromBefore = next;
+
+              if (!catchup) mqKeystroke(focusedmq, arrowdir);
+              catchup = false;
+
+              // now that we're on the next line, keep track of element bounding rects
+              // we'll need them later to find the best place to put the cursor
+              if (linesPassed === 1) {
+                cursorPositions.push(
+                  isNextRight
+                    ? next?.getBoundingClientRect().right ?? 0
+                    : next?.getBoundingClientRect().left ?? 0
+                );
+              }
 
               // if the next/prev element is a line break or paren enclosing multiline,
               // then we've reached the next line
               if (
-                // don't stop the loop at iteration zero because we need to move at least
-                // one space to switch lines
-                i !== 0 &&
                 next instanceof HTMLElement &&
                 // is the element a line break?
-                (next.dataset.isLineBreak !== undefined ||
-                  // is the element a multiline bracket expression?
-                  (next.children[1] instanceof HTMLElement &&
-                    next.children[1].dataset.isMultiline))
+                next.dataset.isLineBreak !== undefined // ||
+                // is the element a multiline bracket expression?
+                // (!up &&
+                //   next?.children[1] instanceof HTMLElement &&
+                //   next?.children[1].dataset.isMultiline)
               ) {
+                mqKeystroke(focusedmq, arrowdir);
                 if (linesPassed === 1) break;
                 linesPassed++;
               }
-              if (linesPassed === 1) {
-                cursorPositions.push(next?.getBoundingClientRect().left ?? 0);
-              }
-              mqKeystroke(focusedmq, arrowdir);
               i++;
 
-              // if we can't find a comma, navigate to next expression as normal
+              // failsafe prevent any infinite loop bugs
               if (
-                (i > 1000 ||
-                  (cursor?.parentElement?.classList.contains(
-                    "dcg-mq-root-block"
-                  ) &&
-                    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-                    cursor === cursor?.parentElement?.lastChild) ||
-                  (cursor?.parentElement?.classList.contains(
-                    "dcg-mq-root-block"
-                  ) &&
-                    cursor === cursor?.parentElement?.firstChild)) &&
-                linesPassed === 0
+                // (i > 1000 ||
+                //   (cursor?.parentElement?.classList.contains(
+                //     "dcg-mq-root-block"
+                //   ) &&
+                //     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                //     cursor === cursor?.parentElement?.lastChild) ||
+                //   (cursor?.parentElement?.classList.contains(
+                //     "dcg-mq-root-block"
+                //   ) &&
+                //     cursor === cursor?.parentElement?.firstChild)) &&
+                // linesPassed === 0
+                i > 1000
               ) {
                 // force it to go to the next expression
                 // timeout is needed because dispatches can't trigger one another
@@ -341,7 +372,7 @@ export default class CompactView extends PluginController<Config> {
             };
             mqKeystroke(
               focusedmq,
-              new Array(bestIndex).fill(oppositeArrowdir).join(" ")
+              new Array(bestIndex + 1).fill(oppositeArrowdir).join(" ")
             );
 
             // return the domfrag prototype to normal
