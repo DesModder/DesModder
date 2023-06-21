@@ -1,6 +1,8 @@
 import { PluginController } from "../PluginController";
 import "./compact.less";
+import { Config, configList } from "./config";
 import { MathQuillField, MathQuillView } from "components";
+import { DispatchedEvent } from "globals/Calc";
 import { Calc } from "globals/window";
 import { mqKeystroke } from "plugins/intellisense/latex-parsing";
 
@@ -16,15 +18,109 @@ function childWidthSum(elem: HTMLElement) {
   );
 }
 
-export default class CompactView extends PluginController {
+enum CollapseMode {
+  AtMaxWidth,
+  Always,
+}
+
+export default class CompactView extends PluginController<Config> {
   static id = "compact-view" as const;
   static enabledByDefault = true;
+  static config = configList;
+
+  afterConfigChange(): void {
+    if (this.settings.multilineExpressions) {
+      this.multilineExpressions({ type: "tick" });
+      document.body.classList.add("multiline-expression-enabled");
+    } else {
+      this.unmultilineExpressions();
+      document.body.classList.remove("multiline-expression-enabled");
+    }
+
+    if (this.settings.compactMode) {
+      document.body.classList.add("compact-view-enabled");
+    } else {
+      document.body.classList.remove("compact-view-enabled");
+    }
+  }
+
+  unmultilineExpressions() {
+    const mathfields = document.querySelectorAll(".dcg-mq-root-block");
+    for (const f of mathfields) {
+      if (!(f instanceof HTMLElement)) continue;
+      unverticalify(f);
+      delete f.dataset.isVerticalified;
+    }
+  }
+
+  multilineExpressions(e: DispatchedEvent) {
+    // get all latex exprs
+    let mathfields: NodeListOf<Element>;
+
+    if (e.type === "set-item-latex") {
+      mathfields = document.querySelectorAll(
+        ".dcg-selected .dcg-mq-root-block"
+      );
+    } else {
+      mathfields = document.querySelectorAll(".dcg-mq-root-block");
+    }
+
+    for (const f of mathfields) {
+      if (!(f instanceof HTMLElement)) continue;
+
+      // don't re-verticalify everything unless editing
+      if (f.dataset.isVerticalified && e.type !== "set-item-latex") continue;
+
+      // don't re-verticalify short, unverticalified expressions
+      if (!f.dataset.isVerticalified && childWidthSum(f) < 500) continue;
+
+      // unverticalify expression so it's possible to retrieve accurate width info
+      unverticalify(f);
+      const commaBreaker = {
+        symbol: ",",
+        minWidth: 380,
+        mode: CollapseMode.Always,
+      };
+      const equalsBreaker = {
+        symbol: "=",
+        minWidth: 380,
+        mode: CollapseMode.Always,
+      };
+      const arithmeticBreakers = ["+", "-"].map((s) => ({
+        symbol: s,
+        minWidth: 380,
+        mode: CollapseMode.AtMaxWidth,
+      }));
+      verticalify(
+        f,
+        {
+          enclosingBracketType: undefined,
+          containerType: "root",
+        },
+        {
+          collapse: {
+            functionCall: { symbols: [commaBreaker] },
+            functionDef: { symbols: [] },
+            all: { symbols: [...arithmeticBreakers] },
+            root: { symbols: [equalsBreaker] },
+            other: { symbols: [] },
+            list: {
+              symbols: [{ ...commaBreaker, mode: CollapseMode.AtMaxWidth }],
+            },
+            piecewise: { symbols: [commaBreaker] },
+          },
+        }
+      );
+
+      f.dataset.isVerticalified = "true";
+    }
+  }
 
   afterEnable() {
-    document.body.classList.add("compact-view-enabled");
-    document.body.classList.add("multiline-expression-enabled");
+    this.afterConfigChange();
 
     Calc.controller.dispatcher.register((e) => {
+      if (!this.settings.multilineExpressions) return;
       if (
         e.type === "set-item-latex" ||
         e.type === "undo" ||
@@ -32,36 +128,7 @@ export default class CompactView extends PluginController {
         e.type === "tick" ||
         e.type === "tick-ticker"
       ) {
-        // get all latex exprs
-        const mathfields = document.querySelectorAll(".dcg-mq-root-block");
-        for (const f of mathfields) {
-          if (!(f instanceof HTMLElement)) continue;
-
-          // don't re-verticalify everything unless editing
-          if (f.dataset.isVerticalified && e.type !== "set-item-latex")
-            continue;
-
-          // don't re-verticalify short, unverticalified expressions
-          if (!f.dataset.isVerticalified && childWidthSum(f) < 500) continue;
-
-          // unverticalify expression so it's possible to retrieve accurate width info
-          unverticalify(f);
-          verticalify(
-            f,
-            {
-              enclosingBracketType: undefined,
-              containerType: "root",
-            },
-            {
-              alwaysCollapseSymbols: [","],
-              collapseAtWidthSymbols: ["+", "-"],
-              collapseWidth: 380,
-              collapseLists: true,
-            }
-          );
-
-          f.dataset.isVerticalified = "true";
-        }
+        this.multilineExpressions(e);
       }
     });
 
@@ -69,6 +136,8 @@ export default class CompactView extends PluginController {
       MathQuillView.getFocusedMathquill();
 
     Calc.controller.dispatcher.register((e) => {
+      if (!this.settings.multilineExpressions) return;
+
       if (e.type === "set-focus-location") {
         setTimeout(
           () => (focusedmq = MathQuillView.getFocusedMathquill()),
@@ -81,7 +150,6 @@ export default class CompactView extends PluginController {
         if (e.forceSwitchExpr) return;
 
         let i = 0;
-        if (!focusedmq) return;
 
         // vertical arrow nav
         if (e.key === "Down" || e.key === "Up") {
@@ -94,6 +162,7 @@ export default class CompactView extends PluginController {
           // we need a timeout here so the cursor position can update
           // (without this, it breaks for up but works fine for down)
           setTimeout(() => {
+            if (!focusedmq) return;
             // keep on moving the cursor backward/forward
             while (true) {
               // get cursor and adjacent element so we can figure out
@@ -118,6 +187,7 @@ export default class CompactView extends PluginController {
               ) {
                 break;
               }
+              mqKeystroke(focusedmq, arrowdir);
               i++;
 
               // if we can't find a comma, navigate to next expression as normal
@@ -156,10 +226,10 @@ export interface VerticalifyContext {
   containerType:
     | "other"
     | "piecewise"
-    | "function"
+    | "functionCall"
     | "list"
     | "root"
-    | "function-def";
+    | "functionDef";
   enclosingBracketType: "paren" | "square" | "curly" | "abs" | undefined;
 }
 
@@ -215,10 +285,16 @@ function getBracketType(
 }
 
 interface VerticalifyOptions {
-  alwaysCollapseSymbols: string[];
-  collapseAtWidthSymbols: string[];
-  collapseWidth: number;
-  collapseLists: boolean;
+  collapse: Record<
+    VerticalifyContext["containerType"] | "all",
+    {
+      symbols: {
+        symbol: string;
+        minWidth: number;
+        mode: CollapseMode;
+      }[];
+    }
+  >;
 }
 
 function startsWithAnyOf(src: string, match: string[]) {
@@ -259,7 +335,11 @@ function verticalify(
         ...context,
         enclosingBracketType: bracketType,
         containerType:
-          bracketType === "curly" ? "piecewise" : context.containerType,
+          bracketType === "curly"
+            ? "piecewise"
+            : bracketType === "square"
+            ? "list"
+            : context.containerType,
       },
       options
     );
@@ -285,10 +365,10 @@ function verticalify(
   }
 
   // get width to decide whether to collapse in the first place
-  //   const totalWidth =
-  //     context.containerType === "root" && elem instanceof HTMLElement
-  //       ? childWidthSum(elem)
-  //       : elem.getBoundingClientRect().width;
+  const totalWidth =
+    context.containerType === "root" && elem instanceof HTMLElement
+      ? childWidthSum(elem)
+      : elem.getBoundingClientRect().width;
   //   if (totalWidth < options.collapseWidth) return;
 
   let accumulatedWidth = 0;
@@ -303,63 +383,53 @@ function verticalify(
 
     // only html elements can become line breaks
     if (child instanceof HTMLElement) {
-      //   if (
-      //     // can break in piecewises or fn calls
-      //     (context.containerType === "piecewise" ||
-      //       context.containerType === "function" ||
-      //       // can break in lists if enabled
-      //       (context.enclosingBracketType === "square" &&
-      //         accumulatedWidth > options.collapseWidth &&
-      //         options.collapseLists) ||
-      //       // can break in the root if we're not in a function signature
-      //       context.containerType === "root") &&
-      //     context.containerType !== "function-def"
-      //   ) {
-      //     // see if child is a symbol that will always be collapsed
-      //     let collapsibleSymbol = startsWithAnyOf(child.innerHTML, [
-      //       ...options.alwaysCollapseSymbols,
-      //       ...(context.containerType === "root" ? ["="] : []),
-      //     ]);
-      //     // see if child is a symbol that is only collapsed at max width
-      //     if (
-      //       collapsibleSymbol === undefined &&
-      //       accumulatedWidth > options.collapseWidth
-      //     ) {
-      //       collapsibleSymbol = startsWithAnyOf(
-      //         child.innerHTML,
-      //         options.collapseAtWidthSymbols
-      //       );
-      //     }
-      //     if (collapsibleSymbol !== undefined) {
-      //       child.style.display = "inline";
-      //       child.dataset.isLineBreak = "true";
-      //       child.dataset.originalSymbol = collapsibleSymbol;
-      //       child.innerHTML = collapsibleSymbol + "<br />";
-      //       if (elem instanceof HTMLElement) elem.dataset.isMultiline = "true";
-      //       accumulatedWidth = 0;
-      //     }
-      //   } else {
-      //     if (child.dataset.isLineBreak) {
-      //       child.innerHTML = child.dataset.originalSymbol ?? "";
-      //       delete child.dataset.isLineBreak;
-      //     }
-      //   }
+      const containerOptions = options.collapse[context.containerType];
+
+      // try all symbols from current context
+      // and also from the "all" context
+      for (const s of [
+        ...containerOptions.symbols,
+        ...options.collapse.all.symbols,
+      ]) {
+        // can this element cause a line break?
+        if (
+          child.innerHTML.startsWith(s.symbol) &&
+          ((s.mode === CollapseMode.Always && totalWidth > s.minWidth) ||
+            (s.mode === CollapseMode.AtMaxWidth &&
+              accumulatedWidth > s.minWidth))
+        ) {
+          child.style.display = "inline";
+          child.dataset.isLineBreak = "true";
+          child.dataset.originalSymbol = s.symbol;
+          child.innerHTML = s.symbol + "<br />";
+          if (elem instanceof HTMLElement) elem.dataset.isMultiline = "true";
+          accumulatedWidth = 0;
+          break;
+
+          // if it can't and it is a line break somehow, make it not a line break
+        } else {
+          if (child.dataset.isLineBreak) {
+            child.innerHTML = child.dataset.originalSymbol ?? "";
+            delete child.dataset.isLineBreak;
+          }
+        }
+      }
     }
 
     // verticalify child
     verticalify(
       child,
-      beforeEquals ? { ...context, containerType: "function-def" } : newContext,
+      beforeEquals ? { ...context, containerType: "functionDef" } : newContext,
       options
     );
 
     if (isVarNameElem(child)) {
-      newContext.containerType = "function";
+      newContext.containerType = "functionCall";
     } else if (isSubscriptElem(child)) {
       if (hadSubscriptLast) {
         newContext.containerType = "other";
       } else {
-        newContext.containerType = "function";
+        newContext.containerType = "functionCall";
       }
       hadSubscriptLast = true;
     } else {

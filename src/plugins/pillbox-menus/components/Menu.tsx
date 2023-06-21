@@ -42,6 +42,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "better-evaluation-view",
     "show-tips",
     "hide-errors",
+    "compact-view",
   ],
   integrations: ["wakatime"],
 };
