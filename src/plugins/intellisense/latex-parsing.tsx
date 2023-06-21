@@ -45,6 +45,7 @@ export interface MQCursor {
   [1]: MQCursor | undefined;
   cursorElement?: HTMLElement;
   ctrlSeq?: string;
+  _el?: HTMLElement;
 }
 
 export const identRegex = /([a-zA-Z]|\\[a-zA-Z]+) *(_\{[a-zA-Z0-9 ]*\})?/g;

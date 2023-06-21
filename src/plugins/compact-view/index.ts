@@ -4,7 +4,7 @@ import { Config, configList } from "./config";
 import { MathQuillField, MathQuillView } from "components";
 import { DispatchedEvent } from "globals/Calc";
 import { Calc } from "globals/window";
-import { mqKeystroke } from "plugins/intellisense/latex-parsing";
+import { getController, mqKeystroke } from "plugins/intellisense/latex-parsing";
 
 function focusmq(mq: MathQuillField | undefined) {
   // @ts-expect-error this works
@@ -206,6 +206,8 @@ export default class CompactView extends PluginController<Config> {
           // focus the mq element that was focused before hitting up/down
           focusmq(focusedmq);
 
+          let nextFromBefore: Element | undefined | null;
+
           // we need a timeout here so the cursor position can update
           // (without this, it breaks for up but works fine for down)
           setTimeout(() => {
@@ -214,17 +216,55 @@ export default class CompactView extends PluginController<Config> {
             const cursor = document.querySelector(".dcg-mq-cursor");
             const originalCursorX =
               this.lastRememberedCursorX ??
-              cursor?.getBoundingClientRect().left;
+              cursor?.getBoundingClientRect().left ??
+              0;
             const cursorPositions: number[] = [];
             // keep on moving the cursor backward/forward until we find the next line
             const start = Date.now();
+
+            const ctrlr = getController(focusedmq);
+            // @ts-expect-error domfrag exists
+            const domfragProto = Object.getPrototypeOf(ctrlr.cursor.domFrag());
+
+            // prevent the cursor from updating html elements
+            // by monkey patching the domfrag prototype
+            const insDirOf = domfragProto.insDirOf;
+            domfragProto.insDirOf = function () {
+              return this;
+            };
+
             while (true) {
               // get cursor and adjacent element so we can figure out
               // if it's a line break
-              const cursor = document.querySelector(".dcg-mq-cursor");
-              const next = up
-                ? cursor?.nextElementSibling
-                : cursor?.previousElementSibling;
+              // const cursor = document.querySelector(".dcg-mq-cursor");
+              const ctrlr = getController(focusedmq);
+              let next = up ? ctrlr.cursor?.[1]?._el : ctrlr.cursor?.[-1]?._el;
+
+              if (!next) {
+                if (up) {
+                  mqKeystroke(focusedmq, "Right");
+                  next = ctrlr.cursor?.[-1]?._el;
+                  mqKeystroke(focusedmq, "Left");
+                } else {
+                  mqKeystroke(focusedmq, "Left");
+                  next = ctrlr.cursor?.[1]?._el;
+                  mqKeystroke(focusedmq, "Right");
+                }
+              }
+
+              // if the next elem is the same as the one from before, we've reached a dead end
+              if (next === nextFromBefore) {
+                // force it to go to the next expression
+                // timeout is needed because dispatches can't trigger one another
+                setTimeout(
+                  () =>
+                    Calc.controller.dispatch({ ...e, forceSwitchExpr: true }),
+                  0
+                );
+                break;
+              }
+
+              nextFromBefore = next;
 
               // if the next/prev element is a line break or paren enclosing multiline,
               // then we've reached the next line
@@ -243,7 +283,7 @@ export default class CompactView extends PluginController<Config> {
                 linesPassed++;
               }
               if (linesPassed === 1) {
-                cursorPositions.push(cursor?.getBoundingClientRect().left ?? 0);
+                cursorPositions.push(next?.getBoundingClientRect().left ?? 0);
               }
               mqKeystroke(focusedmq, arrowdir);
               i++;
@@ -272,6 +312,7 @@ export default class CompactView extends PluginController<Config> {
                 break;
               }
             }
+            domfragProto.insDirOf = insDirOf;
 
             // find the place along the next line that best aligns with the cursor on the x-axis
             let lowestDiff = Infinity;
@@ -285,11 +326,24 @@ export default class CompactView extends PluginController<Config> {
               }
             }
 
-            // shift the cursor back to that best-aligned position
+            const start2 = Date.now();
+
+            // turn insDirOf into a no-op so the cursor can't change the HTML
+            // and cause a ton of lag
+            domfragProto.insDirOf = function () {
+              return this;
+            };
             mqKeystroke(
               focusedmq,
-              new Array(bestIndex + 1).fill(oppositeArrowdir).join(" ")
+              new Array(bestIndex).fill(oppositeArrowdir).join(" ")
             );
+
+            // return the domfrag prototype to normal
+            domfragProto.insDirOf = insDirOf;
+            mqKeystroke(focusedmq, oppositeArrowdir);
+
+            const end2 = Date.now();
+            console.log("only cursor movement perf", end2 - start2);
 
             const end = Date.now();
             console.log("cursor move perf", end - start);
