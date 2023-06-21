@@ -110,6 +110,12 @@ export default class CompactView extends PluginController<Config> {
         if (cursor) {
           this.lastRememberedCursorX = cursor.getBoundingClientRect().left;
         }
+
+        const focusedmq = MathQuillView.getFocusedMathquill();
+        if (focusedmq) {
+          const ctrlr = getController(focusedmq);
+          console.log("cursor", ctrlr.cursor);
+        }
       });
     });
 
@@ -340,6 +346,7 @@ export default class CompactView extends PluginController<Config> {
 
             // return the domfrag prototype to normal
             domfragProto.insDirOf = insDirOf;
+            focusmq(focusedmq);
             mqKeystroke(focusedmq, oppositeArrowdir);
 
             const end2 = Date.now();
