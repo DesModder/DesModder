@@ -12,10 +12,16 @@ function focusmq(mq: MathQuillField | undefined) {
 }
 
 function childWidthSum(elem: HTMLElement) {
-  return Array.from(elem.children).reduce(
-    (prev, curr) => prev + curr.getBoundingClientRect().width,
-    0
-  );
+  //   return Array.from(elem.children).reduce(
+  //     (prev, curr) => prev + curr.getBoundingClientRect().width,
+  //     0
+  //   );
+
+  if (!elem.firstChild || !elem.lastChild) return 0;
+  const range = document.createRange();
+  range.setStartBefore(elem.firstChild);
+  range.setEndAfter(elem.lastChild);
+  return range.getBoundingClientRect().width;
 }
 
 enum CollapseMode {
@@ -27,6 +33,10 @@ export default class CompactView extends PluginController<Config> {
   static id = "compact-view" as const;
   static enabledByDefault = true;
   static config = configList;
+
+  pendingMultilinifications = new Set<HTMLElement>();
+
+  lastRememberedCursorX: number | undefined = 0;
 
   afterConfigChange(): void {
     if (this.settings.multilineExpressions) {
@@ -53,6 +63,10 @@ export default class CompactView extends PluginController<Config> {
     }
   }
 
+  enqueueVerticalifyOperation(root: HTMLElement) {
+    this.pendingMultilinifications.add(root);
+  }
+
   multilineExpressions(e: DispatchedEvent) {
     // get all latex exprs
     let mathfields: NodeListOf<Element>;
@@ -74,50 +88,81 @@ export default class CompactView extends PluginController<Config> {
       // don't re-verticalify short, unverticalified expressions
       if (!f.dataset.isVerticalified && childWidthSum(f) < 500) continue;
 
-      // unverticalify expression so it's possible to retrieve accurate width info
-      unverticalify(f);
-      const commaBreaker = {
-        symbol: ",",
-        minWidth: 380,
-        mode: CollapseMode.Always,
-      };
-      const equalsBreaker = {
-        symbol: "=",
-        minWidth: 380,
-        mode: CollapseMode.Always,
-      };
-      const arithmeticBreakers = ["+", "-"].map((s) => ({
-        symbol: s,
-        minWidth: 380,
-        mode: CollapseMode.AtMaxWidth,
-      }));
-      verticalify(
-        f,
-        {
-          enclosingBracketType: undefined,
-          containerType: "root",
-        },
-        {
-          collapse: {
-            functionCall: { symbols: [commaBreaker] },
-            functionDef: { symbols: [] },
-            all: { symbols: [...arithmeticBreakers] },
-            root: { symbols: [equalsBreaker] },
-            other: { symbols: [] },
-            list: {
-              symbols: [{ ...commaBreaker, mode: CollapseMode.AtMaxWidth }],
-            },
-            piecewise: { symbols: [commaBreaker] },
-          },
-        }
-      );
+      // add to a queue of expressions that need to be verticalified
+      this.enqueueVerticalifyOperation(f);
 
       f.dataset.isVerticalified = "true";
     }
   }
 
   afterEnable() {
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        const cursor = document.querySelector(".dcg-mq-cursor");
+        if (cursor) {
+          this.lastRememberedCursorX = cursor.getBoundingClientRect().left;
+        }
+      }
+    });
+    document.addEventListener("mousedown", (e) => {
+      setTimeout(() => {
+        const cursor = document.querySelector(".dcg-mq-cursor");
+        if (cursor) {
+          this.lastRememberedCursorX = cursor.getBoundingClientRect().left;
+        }
+      });
+    });
+
     this.afterConfigChange();
+
+    setInterval(() => {
+      const start = Date.now();
+      for (const f of this.pendingMultilinifications) {
+        unverticalify(f);
+        const domManipHandlers: (() => void)[] = [];
+        const commaBreaker = {
+          symbol: ",",
+          minWidth: 380,
+          mode: CollapseMode.Always,
+        };
+        const equalsBreaker = {
+          symbol: "=",
+          minWidth: 380,
+          mode: CollapseMode.Always,
+        };
+        const arithmeticBreakers = ["+", "−"].map((s) => ({
+          symbol: s,
+          minWidth: 380,
+          mode: CollapseMode.AtMaxWidth,
+        }));
+        verticalify(
+          f,
+          {
+            enclosingBracketType: undefined,
+            containerType: "root",
+            domManipHandlers,
+          },
+          {
+            collapse: {
+              functionCall: { symbols: [commaBreaker] },
+              functionDef: { symbols: [] },
+              all: { symbols: [...arithmeticBreakers] },
+              root: { symbols: [equalsBreaker] },
+              other: { symbols: [] },
+              list: {
+                symbols: [{ ...commaBreaker, mode: CollapseMode.AtMaxWidth }],
+              },
+              piecewise: { symbols: [commaBreaker] },
+            },
+            skipWidth: 380,
+          }
+        );
+        for (const h of domManipHandlers) h();
+      }
+      this.pendingMultilinifications = new Set();
+      const end = Date.now();
+      console.log("time", end - start);
+    }, 50);
 
     Calc.controller.dispatcher.register((e) => {
       if (!this.settings.multilineExpressions) return;
@@ -150,11 +195,13 @@ export default class CompactView extends PluginController<Config> {
         if (e.forceSwitchExpr) return;
 
         let i = 0;
+        let linesPassed = 0;
 
         // vertical arrow nav
         if (e.key === "Down" || e.key === "Up") {
           const up = e.key === "Up";
           const arrowdir = up ? "Left" : "Right";
+          const oppositeArrowdir = !up ? "Left" : "Right";
 
           // focus the mq element that was focused before hitting up/down
           focusmq(focusedmq);
@@ -163,7 +210,14 @@ export default class CompactView extends PluginController<Config> {
           // (without this, it breaks for up but works fine for down)
           setTimeout(() => {
             if (!focusedmq) return;
-            // keep on moving the cursor backward/forward
+
+            const cursor = document.querySelector(".dcg-mq-cursor");
+            const originalCursorX =
+              this.lastRememberedCursorX ??
+              cursor?.getBoundingClientRect().left;
+            const cursorPositions: number[] = [];
+            // keep on moving the cursor backward/forward until we find the next line
+            const start = Date.now();
             while (true) {
               // get cursor and adjacent element so we can figure out
               // if it's a line break
@@ -185,23 +239,28 @@ export default class CompactView extends PluginController<Config> {
                   (next.children[1] instanceof HTMLElement &&
                     next.children[1].dataset.isMultiline))
               ) {
-                break;
+                if (linesPassed === 1) break;
+                linesPassed++;
+              }
+              if (linesPassed === 1) {
+                cursorPositions.push(cursor?.getBoundingClientRect().left ?? 0);
               }
               mqKeystroke(focusedmq, arrowdir);
               i++;
 
               // if we can't find a comma, navigate to next expression as normal
               if (
-                i > 1000 ||
-                (cursor?.parentElement?.classList.contains(
-                  "dcg-mq-root-block"
-                ) &&
-                  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-                  cursor === cursor?.parentElement?.lastChild) ||
-                (cursor?.parentElement?.classList.contains(
-                  "dcg-mq-root-block"
-                ) &&
-                  cursor === cursor?.parentElement?.firstChild)
+                (i > 1000 ||
+                  (cursor?.parentElement?.classList.contains(
+                    "dcg-mq-root-block"
+                  ) &&
+                    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                    cursor === cursor?.parentElement?.lastChild) ||
+                  (cursor?.parentElement?.classList.contains(
+                    "dcg-mq-root-block"
+                  ) &&
+                    cursor === cursor?.parentElement?.firstChild)) &&
+                linesPassed === 0
               ) {
                 // force it to go to the next expression
                 // timeout is needed because dispatches can't trigger one another
@@ -213,6 +272,27 @@ export default class CompactView extends PluginController<Config> {
                 break;
               }
             }
+
+            // find the place along the next line that best aligns with the cursor on the x-axis
+            let lowestDiff = Infinity;
+            let bestIndex = 0;
+            cursorPositions.reverse();
+            for (let i = 0; i < cursorPositions.length; i++) {
+              const diff = Math.abs(cursorPositions[i] - originalCursorX);
+              if (diff < lowestDiff) {
+                lowestDiff = diff;
+                bestIndex = i;
+              }
+            }
+
+            // shift the cursor back to that best-aligned position
+            mqKeystroke(
+              focusedmq,
+              new Array(bestIndex + 1).fill(oppositeArrowdir).join(" ")
+            );
+
+            const end = Date.now();
+            console.log("cursor move perf", end - start);
           }, 0);
         }
       }
@@ -231,6 +311,7 @@ export interface VerticalifyContext {
     | "root"
     | "functionDef";
   enclosingBracketType: "paren" | "square" | "curly" | "abs" | undefined;
+  domManipHandlers: (() => void)[];
 }
 
 function isVarNameElem(elem: Element) {
@@ -252,7 +333,10 @@ function outOfDateError(str: string) {
 function getBracketType(
   elem: Element
 ): "paren" | "square" | "curly" | "abs" | undefined {
+  // get the svg path
   const svgPath = elem?.children?.[0]?.children?.[0];
+
+  // make sure it's an svg path
   if (!(svgPath instanceof SVGPathElement)) {
     outOfDateError(
       "Attempted to determine bracket type but could not identify it because SVG path does not exist."
@@ -260,6 +344,7 @@ function getBracketType(
     return;
   }
 
+  // make sure it has a "d" attribute
   const disambiguator = svgPath.getAttribute("d")?.[1];
   if (!disambiguator) {
     outOfDateError(
@@ -268,6 +353,8 @@ function getBracketType(
     return;
   }
 
+  // each bracket has its own unique svg that also lets you tell exactly
+  // what kind of bracket it is
   switch (disambiguator) {
     case "2":
       return "paren";
@@ -285,16 +372,19 @@ function getBracketType(
 }
 
 interface VerticalifyOptions {
+  // maps contexts to what should be collapsed, and how
   collapse: Record<
     VerticalifyContext["containerType"] | "all",
     {
       symbols: {
-        symbol: string;
-        minWidth: number;
-        mode: CollapseMode;
+        symbol: string; // text to be collapsed
+        minWidth: number; // min width for collapsing to be considered
+        mode: CollapseMode; // normal word wrap, or collapse after every instance if too long?
       }[];
     }
   >;
+  // skip parsing if width is less than this
+  skipWidth: number;
 }
 
 function startsWithAnyOf(src: string, match: string[]) {
@@ -310,6 +400,7 @@ function unverticalify(elem: Element) {
 
   for (const child of children) {
     if (child instanceof HTMLElement) {
+      if (child.dataset.safeToReuse) break;
       delete child.dataset.isMultiline;
 
       // revert linebreaks to original symbol to get rid of <br>
@@ -326,6 +417,9 @@ function verticalify(
   context: VerticalifyContext,
   options: VerticalifyOptions
 ) {
+  // skip processing elements that are safe to reuse
+  if (elem instanceof HTMLElement && elem.dataset.safeToReuse) return;
+
   // just handle the "center" element of bracket containers
   if (elem.classList.contains("dcg-mq-bracket-container")) {
     const bracketType = getBracketType(elem.children[2]);
@@ -348,6 +442,7 @@ function verticalify(
 
   const children = Array.from(elem.children);
   const newContext: VerticalifyContext = {
+    ...context,
     containerType: "other",
     enclosingBracketType: undefined,
   };
@@ -378,8 +473,10 @@ function verticalify(
     if (context.containerType === "root" && child.innerHTML.startsWith("="))
       beforeEquals = false;
 
+    const width = child.getBoundingClientRect().width;
+
     // accumulate width so we know when to break
-    accumulatedWidth += child.getBoundingClientRect().width;
+    accumulatedWidth += width;
 
     // only html elements can become line breaks
     if (child instanceof HTMLElement) {
@@ -398,30 +495,38 @@ function verticalify(
             (s.mode === CollapseMode.AtMaxWidth &&
               accumulatedWidth > s.minWidth))
         ) {
-          child.style.display = "inline";
-          child.dataset.isLineBreak = "true";
-          child.dataset.originalSymbol = s.symbol;
-          child.innerHTML = s.symbol + "<br />";
-          if (elem instanceof HTMLElement) elem.dataset.isMultiline = "true";
+          context.domManipHandlers.push(() => {
+            child.style.display = "inline";
+            child.dataset.isLineBreak = "true";
+            child.dataset.originalSymbol = s.symbol;
+            child.innerHTML = s.symbol + "<br />";
+            if (elem instanceof HTMLElement) elem.dataset.isMultiline = "true";
+          });
           accumulatedWidth = 0;
           break;
 
           // if it can't and it is a line break somehow, make it not a line break
         } else {
           if (child.dataset.isLineBreak) {
-            child.innerHTML = child.dataset.originalSymbol ?? "";
-            delete child.dataset.isLineBreak;
+            context.domManipHandlers.push(() => {
+              child.innerHTML = child.dataset.originalSymbol ?? "";
+              delete child.dataset.isLineBreak;
+            });
           }
         }
       }
     }
 
     // verticalify child
-    verticalify(
-      child,
-      beforeEquals ? { ...context, containerType: "functionDef" } : newContext,
-      options
-    );
+    if (width > options.skipWidth) {
+      verticalify(
+        child,
+        beforeEquals
+          ? { ...context, containerType: "functionDef" }
+          : newContext,
+        options
+      );
+    }
 
     if (isVarNameElem(child)) {
       newContext.containerType = "functionCall";
@@ -437,4 +542,22 @@ function verticalify(
       hadSubscriptLast = false;
     }
   }
+
+  // element should be considered "safe to reuse" until children change
+  context.domManipHandlers.push(() => {
+    if (elem instanceof HTMLElement) {
+      elem.dataset.safeToReuse = "true";
+      const observer = new MutationObserver(() => {
+        observer.disconnect();
+        delete elem.dataset.safeToReuse;
+      });
+
+      observer.observe(elem, {
+        attributes: true,
+        characterData: true,
+        subtree: true,
+        childList: true,
+      });
+    }
+  });
 }
