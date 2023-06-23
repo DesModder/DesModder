@@ -8,6 +8,13 @@
   .dcg-mq-bracket-middle {
     font-size: calc(max(10px, 0.9em)) !important;
   }
+
+  // hide the cursor if it's not in a selected expression
+  // this is to stop multiline vertical nav from
+  // appearing in the wrong expression
+  .dcg-mathitem:not(.dcg-selected) .dcg-mq-cursor {
+    display: none;
+  }
 }
 
 .compact-view-enabled {
