@@ -12,9 +12,9 @@ import { DCGView, MountedComponent } from "DCGView";
 import { MathQuillField, MathQuillView } from "components";
 import { Calc } from "globals/window";
 import { PluginController } from "plugins/PluginController";
+import { registerCustomDispatchOverridingHandler } from "plugins/compact-view/override-dispatch";
 import { getMetadata } from "plugins/manage-metadata/manage";
-import { State, ExpressionAug, ItemAug } from "plugins/text-mode/aug/AugState";
-import rawToAug from "plugins/text-mode/aug/rawToAug";
+import { ItemAug } from "plugins/text-mode/aug/AugState";
 
 export type BoundIdentifier =
   | {
@@ -115,6 +115,7 @@ export function getMQCursorPosition(focusedMQ: MathQuillField) {
 
 const intellisenseMountPoint = document.createElement("div");
 document.body.appendChild(intellisenseMountPoint);
+intellisenseMountPoint.tabIndex = -1;
 
 export default class Intellisense extends PluginController {
   static id = "intellisense" as const;
@@ -132,8 +133,7 @@ export default class Intellisense extends PluginController {
   latestMQ: MathQuillField | undefined;
 
   intellisenseReturnMQ: MathQuillField | undefined;
-
-  isInIntellisenseMenu: boolean = false;
+  prevCursorElem: Element | undefined;
 
   idcounter = 0;
 
@@ -211,40 +211,61 @@ export default class Intellisense extends PluginController {
     this.view?.update();
   }
 
+  leaveIntellisenseMenu() {
+    // @ts-expect-error focus is part of the mathquill api
+    this.intellisenseReturnMQ?.focus();
+    console.log(this.intellisenseReturnMQ);
+
+    if (this.prevCursorElem instanceof HTMLElement) {
+      console.log("clicking prev cursor elem", this.prevCursorElem);
+      this.prevCursorElem?.dispatchEvent(
+        new MouseEvent("mousedown", { bubbles: true })
+      );
+      this.prevCursorElem?.dispatchEvent(
+        new MouseEvent("mouseup", { bubbles: true })
+      );
+    }
+  }
+
   afterEnable() {
     // eslint-disable-next-line no-console
     console.log("Intellisense Enabled!");
 
-    Calc.controller.dispatcher.register((e) => {
-      if (
-        // @ts-expect-error this is an event type in desmos
-        e.type === "on-special-key-pressed" &&
-        // @ts-expect-error this is an event type in desmos
-        e.key === "Down"
-      ) {
-        if (this.intellisenseOpts.length > 0 && this.intellisenseIndex === -1) {
+    registerCustomDispatchOverridingHandler((evt) => {
+      if (evt.type === "on-special-key-pressed" && evt.key === "Down") {
+        if (this.intellisenseOpts.length > 1) {
           // @ts-expect-error blur is part of the mathquill api
           this.latestMQ?.blur();
+          if (this.latestMQ)
+            this.prevCursorElem = getController(
+              this.latestMQ
+            )?.cursor?.[1]?._el;
           this.intellisenseReturnMQ = this.latestMQ;
-          setTimeout(
-            () =>
-              Calc.controller.dispatch({
-                type: "set-none-selected",
-              }),
-            0
-          );
-          intellisenseMountPoint.focus();
-          this.isInIntellisenseMenu = true;
+          setTimeout(() => {
+            Calc.controller.dispatch({
+              type: "set-none-selected",
+            });
+            intellisenseMountPoint.focus();
+            console.log(
+              document.activeElement,
+              intellisenseMountPoint,
+              document.activeElement === intellisenseMountPoint
+            );
+          }, 0);
+          this.intellisenseIndex = 0;
+          this.view?.update();
+          return false;
         }
       }
-    });
+    }, 1);
 
     document.addEventListener("keydown", (e) => {
       // navigating downward in the intellisense menu
+      console.log("subsequent arrow", this.intellisenseIndex);
       if (
         e.key === "ArrowDown" &&
         this.intellisenseOpts.length > 0 &&
-        this.isInIntellisenseMenu &&
+        document.activeElement === intellisenseMountPoint &&
         addBracketsToIdent(this.intellisenseOpts[0].variableName) !==
           this.latestIdent?.ident
       ) {
@@ -259,17 +280,18 @@ export default class Intellisense extends PluginController {
         // navigating upward in the intellisense menu
       } else if (e.key === "ArrowUp" && this.intellisenseOpts.length > 0) {
         const oldIntellisenseIndex = this.intellisenseIndex;
-        this.intellisenseIndex = Math.max(this.intellisenseIndex - 1, -1);
+        this.intellisenseIndex = Math.max(this.intellisenseIndex - 1, 0);
+
+        if (oldIntellisenseIndex === 0) {
+          this.leaveIntellisenseMenu();
+
+          return;
+        }
+
         if (this.intellisenseIndex >= 0) {
           this.view?.update();
           e.preventDefault();
           return false;
-        } else {
-          if (oldIntellisenseIndex === 0) {
-            // @ts-expect-error focus is part of the mathquill api
-            this.intellisenseReturnMQ?.focus();
-            this.isInIntellisenseMenu = false;
-          }
         }
 
         // choose autocomplete option with tab or enter
@@ -283,8 +305,7 @@ export default class Intellisense extends PluginController {
         // force close autocomplete with escape
       } else if (e.key === "Escape" && this.intellisenseIndex >= 0) {
         // @ts-expect-error focus is part of the mathquill api
-        this.intellisenseReturnMQ?.focus();
-        this.isInIntellisenseMenu = false;
+        this.leaveIntellisenseMenu();
         this.intellisenseIndex = -1;
       }
 
@@ -326,7 +347,6 @@ export default class Intellisense extends PluginController {
       }
 
       this.intellisenseIndex = -1;
-      this.isInIntellisenseMenu = false;
 
       this.updateIntellisense();
     });
@@ -344,6 +364,7 @@ export default class Intellisense extends PluginController {
   }
 
   doAutocomplete(opt: BoundIdentifier) {
+    this.leaveIntellisenseMenu();
     if (this.latestIdent && this.latestMQ) {
       this.latestIdent.goToEndOfIdent();
       this.latestIdent.deleteIdent();
@@ -353,12 +374,16 @@ export default class Intellisense extends PluginController {
       // add parens to function
       if (opt.type === "function") {
         // @ts-expect-error latex can take one param
-        this.latestMQ.latex(formattedIdentLatex + "\\left(\\right)");
+        this.latestMQ.typedText(formattedIdentLatex.replace(/\{|\}/g, ""));
+        // @ts-expect-error keystroke can take one param
+        this.latestMQ.keystroke("Right");
+        // @ts-expect-error typedText exists
+        this.latestMQ.typedText("()");
         // @ts-expect-error keystroke can take one param
         this.latestMQ.keystroke("Left");
       } else {
         // @ts-expect-error latex can take one param
-        this.latestMQ.latex(formattedIdentLatex);
+        this.latestMQ.typedText(formattedIdentLatex.replace(/\{|\}/g, ""));
       }
     }
 
