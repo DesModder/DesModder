@@ -119,7 +119,6 @@ export default class CompactView extends PluginController<Config> {
         const focusedmq = MathQuillView.getFocusedMathquill();
         if (focusedmq) {
           const ctrlr = getController(focusedmq);
-          console.log("cursor", ctrlr.cursor);
         }
       });
     });
@@ -187,23 +186,14 @@ export default class CompactView extends PluginController<Config> {
       }
     });
 
-    console.log("thing", MathQuillView);
-
-    // const prevFocusedMQs: (MathQuillField | undefined)[] = [];
-    // setInterval(() => {
-    //   prevFocusedMQs.push(MathQuillView.getFocusedMathquill());
-    // }, 0);
-
     // @ts-expect-error this exists
     const old = Calc.controller.handleDispatchedAction;
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     // @ts-expect-error this exists
     Calc.controller.handleDispatchedAction = function (evt) {
-      console.log("handling evt", evt);
       if (evt.type === "on-special-key-pressed") {
         if (evt.key === "Up" || evt.key === "Down") {
-          console.log("got here", evt.key);
           if (!self.doMultilineVerticalNav(evt.key)) return;
         }
       }
@@ -214,15 +204,9 @@ export default class CompactView extends PluginController<Config> {
   afterDisable() {}
 
   doMultilineVerticalNav(key: "Up" | "Down") {
-    console.log("on special key pressed!", key, Date.now());
-
     const up = key === "Up";
 
     const focusedmq = MathQuillView.getFocusedMathquill();
-
-    console.log("mathquillfield class", focusedmq);
-
-    console.log("focusedmq after", focusedmq);
 
     let i = 0;
     let linesPassed = 0;
@@ -254,12 +238,17 @@ export default class CompactView extends PluginController<Config> {
 
       // prevent the cursor from updating html elements
       // by monkey patching the domfrag prototype
+
+      const insAtDirEnd = domfragProto.insAtDirEnd;
       const insDirOf = domfragProto.insDirOf;
+      const removeClass = domfragProto.removeClass;
+      const addClass = domfragProto.addClass;
+      domfragProto.insAtDirEnd = function () {
+        return this;
+      };
       domfragProto.insDirOf = function () {
         return this;
       };
-      const removeClass = domfragProto.removeClass;
-      const addClass = domfragProto.addClass;
       domfragProto.removeClass = function () {
         return this;
       };
@@ -269,6 +258,7 @@ export default class CompactView extends PluginController<Config> {
 
       const cleanup = () => {
         // return the domfrag prototype to normal
+        domfragProto.insAtDirEnd = insAtDirEnd;
         domfragProto.removeClass = removeClass;
         domfragProto.addClass = addClass;
         domfragProto.insDirOf = insDirOf;
@@ -352,44 +342,33 @@ export default class CompactView extends PluginController<Config> {
       // console.log("bestindex", bestIndex);
 
       const start2 = Date.now();
-      cleanup();
 
-      mqKeystroke(
-        focusedmq,
-        new Array(
-          Math.max(0, Math.min(bestIndex + 1, cursorPositions.length - 1))
-        )
-          .fill(oppositeArrowdir)
-          .join(" ")
+      const loopCount = Math.max(
+        0,
+        Math.min(bestIndex + 1, cursorPositions.length - 1)
       );
 
-      //focusmq(focusedmq);
+      for (let i = 0; i < loopCount; i++) {
+        mqKeystroke(focusedmq, oppositeArrowdir);
+      }
+
+      // mqKeystroke(
+      //   focusedmq,
+      //   new Array(
+      //     loopCount
+      //   )
+      //     .fill(oppositeArrowdir)
+      //     .join(" ")
+      // );
+      cleanup();
+
       mqKeystroke(focusedmq, oppositeArrowdir);
 
       const end2 = Date.now();
-      // console.log("only cursor movement perf", end2 - start2);
+      console.log("only cursor movement perf", end2 - start2);
 
       const end = Date.now();
-      // console.log("cursor move perf", end - start);
-      //}, 0);
-
-      // @ts-expect-error this exists
-      // const proto = Object.getPrototypeOf(Calc.focusedMathQuill);
-      // const mqfocus = proto.focus;
-      // proto.focus = function () {
-      //   proto.focus = mqfocus;
-      //   return this;
-      // };
-
-      // let focusesleft = 3;
-
-      // const elemfocus = HTMLElement.prototype.focus;
-      // HTMLElement.prototype.focus = function () {
-      //   // elemfocus.call(this);
-      //   console.log("element focused", this);
-      //   console.trace();
-      //   HTMLElement.prototype.focus = elemfocus;
-      // };
+      console.log("cursor move perf", end - start);
     }
   }
 }
