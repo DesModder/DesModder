@@ -16,12 +16,15 @@ Supercharge your Desmos graph creation and sharing experience with many convenie
   - Duplicate any expression with hotkey Ctrl+Q
   - Use Shift+Enter to write newlines in notes
   - Quickly dump a folder's entire contents, and merge expressions into a folder
+  - Autocomplete variable names, jump to definition, and add documentation to functions.
 - Visual
   - Change the primary color from blue to any color
   - Toggle display of expression IDs
   - Display list elements, colors, and undefined values in expression list
   - View tips including lesser-known features of Desmos
   - Hide and ignore unwanted slider suggestions
+  - Collapse large expressions onto multiple, easily-navigable lines.
+  - Optional compact mode for seeing more on the screen at once.
 - Integration
   - Integration with WakaTime
 - More to come!

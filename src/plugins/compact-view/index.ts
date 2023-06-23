@@ -12,11 +12,6 @@ function focusmq(mq: MathQuillField | undefined) {
 }
 
 function childWidthSum(elem: HTMLElement) {
-  //   return Array.from(elem.children).reduce(
-  //     (prev, curr) => prev + curr.getBoundingClientRect().width,
-  //     0
-  //   );
-
   if (!elem.firstChild || !elem.lastChild) return 0;
   const range = document.createRange();
   range.setStartBefore(elem.firstChild);
@@ -27,11 +22,6 @@ function childWidthSum(elem: HTMLElement) {
 enum CollapseMode {
   AtMaxWidth,
   Always,
-}
-
-function htmlToMathField(element: Element): MathQuillField | undefined {
-  // @ts-expect-error this property is added to mq html elems
-  return element._mqMathFieldInstance;
 }
 
 export default class CompactView extends PluginController<Config> {
@@ -109,16 +99,11 @@ export default class CompactView extends PluginController<Config> {
         }
       }
     });
-    document.addEventListener("mousedown", (e) => {
+    document.addEventListener("mousedown", (_) => {
       setTimeout(() => {
         const cursor = document.querySelector(".dcg-mq-cursor");
         if (cursor) {
           this.lastRememberedCursorX = cursor.getBoundingClientRect().left;
-        }
-
-        const focusedmq = MathQuillView.getFocusedMathquill();
-        if (focusedmq) {
-          const ctrlr = getController(focusedmq);
         }
       });
     });
@@ -126,7 +111,6 @@ export default class CompactView extends PluginController<Config> {
     this.afterConfigChange();
 
     setInterval(() => {
-      const start = Date.now();
       for (const f of this.pendingMultilinifications) {
         unverticalify(f);
         const domManipHandlers: (() => void)[] = [];
@@ -170,7 +154,6 @@ export default class CompactView extends PluginController<Config> {
         for (const h of domManipHandlers) h();
       }
       this.pendingMultilinifications = new Set();
-      const end = Date.now();
     }, 50);
 
     Calc.controller.dispatcher.register((e) => {
@@ -203,6 +186,9 @@ export default class CompactView extends PluginController<Config> {
 
   afterDisable() {}
 
+  // navigates up/down through a multiline expression
+  // returns false or undefined if successful
+  // returns true if at the start/end of a multiline expression
   doMultilineVerticalNav(key: "Up" | "Down") {
     const up = key === "Up";
 
@@ -212,164 +198,146 @@ export default class CompactView extends PluginController<Config> {
     let linesPassed = 0;
 
     // vertical arrow nav
-    if (key === "Down" || key === "Up") {
-      const arrowdir = up ? "Left" : "Right";
-      const oppositeArrowdir = !up ? "Left" : "Right";
 
-      // focus the mq element that was focused before hitting up/down
-      focusmq(focusedmq);
+    const arrowdir = up ? "Left" : "Right";
+    const oppositeArrowdir = !up ? "Left" : "Right";
 
-      let nextFromBefore: Element | undefined | null;
+    // focus the mq element that was focused before hitting up/down
+    focusmq(focusedmq);
 
-      // we need a timeout here so the cursor position can update
-      // (without this, it breaks for up but works fine for down)
-      if (!focusedmq) return;
+    let nextFromBefore: Element | undefined | null;
 
-      const cursor = document.querySelector(".dcg-mq-cursor");
-      const originalCursorX =
-        this.lastRememberedCursorX ?? cursor?.getBoundingClientRect().left ?? 0;
-      const cursorPositions: number[] = [];
-      // keep on moving the cursor backward/forward until we find the next line
-      const start = Date.now();
+    // no need to do anything if there's no focused mathquill input
+    if (!focusedmq) return;
 
+    // get the original cursor horizontal position
+    // so we can snap to it later
+    const cursor = document.querySelector(".dcg-mq-cursor");
+    const originalCursorX =
+      this.lastRememberedCursorX ?? cursor?.getBoundingClientRect().left ?? 0;
+    const cursorPositions: number[] = [];
+
+    const ctrlr = getController(focusedmq);
+    // @ts-expect-error domfrag exists
+    const domfragProto = Object.getPrototypeOf(ctrlr.cursor.domFrag());
+
+    // prevent the cursor from updating html elements
+    // by monkey patching the domfrag prototype
+    const insAtDirEnd = domfragProto.insAtDirEnd;
+    const insDirOf = domfragProto.insDirOf;
+    const removeClass = domfragProto.removeClass;
+    const addClass = domfragProto.addClass;
+    domfragProto.insAtDirEnd = function () {
+      return this;
+    };
+    domfragProto.insDirOf = function () {
+      return this;
+    };
+    domfragProto.removeClass = function () {
+      return this;
+    };
+    domfragProto.addClass = function () {
+      return this;
+    };
+
+    // return the domfrag prototype to normal
+    const cleanup = () => {
+      domfragProto.insAtDirEnd = insAtDirEnd;
+      domfragProto.removeClass = removeClass;
+      domfragProto.addClass = addClass;
+      domfragProto.insDirOf = insDirOf;
+    };
+
+    // ended with break statements
+    while (true) {
+      // get cursor and adjacent element so we can figure out
+      // if it's a line break
       const ctrlr = getController(focusedmq);
-      // @ts-expect-error domfrag exists
-      const domfragProto = Object.getPrototypeOf(ctrlr.cursor.domFrag());
+      let next = ctrlr.cursor?.[up ? -1 : 1]?._el;
 
-      // prevent the cursor from updating html elements
-      // by monkey patching the domfrag prototype
+      // are we getting the right side or the left side
+      // of the element? (e.g. the bounding client rect "left" or "right" property)
+      let isNextRight = up;
 
-      const insAtDirEnd = domfragProto.insAtDirEnd;
-      const insDirOf = domfragProto.insDirOf;
-      const removeClass = domfragProto.removeClass;
-      const addClass = domfragProto.addClass;
-      domfragProto.insAtDirEnd = function () {
-        return this;
-      };
-      domfragProto.insDirOf = function () {
-        return this;
-      };
-      domfragProto.removeClass = function () {
-        return this;
-      };
-      domfragProto.addClass = function () {
-        return this;
-      };
+      // go to next element
+      mqKeystroke(focusedmq, arrowdir);
 
-      const cleanup = () => {
-        // return the domfrag prototype to normal
-        domfragProto.insAtDirEnd = insAtDirEnd;
-        domfragProto.removeClass = removeClass;
-        domfragProto.addClass = addClass;
-        domfragProto.insDirOf = insDirOf;
-      };
+      // if we can't directly get the next element (e.g. end of a parenthesis block),
+      // shift the cursor so that we can get access to it from the "other side"
+      if (!next) {
+        next = ctrlr.cursor?.[up ? 1 : -1]?._el;
+        isNextRight = !isNextRight;
+      }
 
-      while (true) {
-        // get cursor and adjacent element so we can figure out
-        // if it's a line break
-        const ctrlr = getController(focusedmq);
-        let next = ctrlr.cursor?.[up ? -1 : 1]?._el;
+      // if the next elem is the same as the one from before, we've reached a dead end
+      // we only need to switch to next/prev expr if we haven't passed a line yet
+      // because if we've already passed a line, we're just using it for searching for
+      // an optimal x-position
+      if (next === nextFromBefore && linesPassed === 0) {
+        cleanup();
+        return true;
+      }
 
-        // are we getting the right side or the left side
-        // of the element?
-        let isNextRight = up;
+      // now that we're on the next line, keep track of element bounding rects
+      // we'll need them later to find the best place to put the cursor
+      if (linesPassed === 1) {
+        cursorPositions.push(
+          isNextRight
+            ? next?.getBoundingClientRect().right ?? 0
+            : next?.getBoundingClientRect().left ?? 0
+        );
+      }
 
-        // go to next element
+      // if the next/prev element is a line break or if it hasn't changed,
+      // then we've reached the next line
+      if (
+        (next instanceof HTMLElement &&
+          // is the element a line break?
+          next.dataset.isLineBreak !== undefined) ||
+        next === nextFromBefore
+      ) {
         mqKeystroke(focusedmq, arrowdir);
-
-        // // if we can't directly get the next element,
-        // // shift the cursor so that we can get access to it from the "other side"
-        if (!next) {
-          next = ctrlr.cursor?.[up ? 1 : -1]?._el;
-          isNextRight = !isNextRight;
-        }
-
-        // if the next elem is the same as the one from before, we've reached a dead end
-        if (next === nextFromBefore && linesPassed === 0) {
-          console.log("stuck");
-          // force it to go to the next expression
-          // timeout is needed because dispatches can't trigger one another
-          cleanup();
-          return true;
-        }
-
-        // now that we're on the next line, keep track of element bounding rects
-        // we'll need them later to find the best place to put the cursor
-        if (linesPassed === 1) {
-          cursorPositions.push(
-            isNextRight
-              ? next?.getBoundingClientRect().right ?? 0
-              : next?.getBoundingClientRect().left ?? 0
-          );
-        }
-
-        // if the next/prev element is a line break or paren enclosing multiline,
-        // then we've reached the next line
-        if (
-          (next instanceof HTMLElement &&
-            // is the element a line break?
-            next.dataset.isLineBreak !== undefined) ||
-          next === nextFromBefore
-        ) {
-          mqKeystroke(focusedmq, arrowdir);
-          if (linesPassed === 1) break;
-          linesPassed++;
-        }
-        i++;
-        nextFromBefore = next;
-
-        // failsafe prevent any infinite loop bugs
-        if (i > 1000) {
-          // force it to go to the next expression
-          // timeout is needed because dispatches can't trigger one another
-          cleanup();
-          return true;
-        }
+        if (linesPassed === 1) break;
+        linesPassed++;
       }
+      i++;
+      nextFromBefore = next;
 
-      // find the place along the next line that best aligns with the cursor on the x-axis
-      let lowestDiff = Infinity;
-      let bestIndex = 0;
-      cursorPositions.reverse();
-      for (let i = 0; i < cursorPositions.length; i++) {
-        const diff = Math.abs(cursorPositions[i] - originalCursorX);
-        if (diff < lowestDiff) {
-          lowestDiff = diff;
-          bestIndex = i;
-        }
+      // failsafe to prevent any infinite loop bugs
+      if (i > 1000) {
+        cleanup();
+        return true;
       }
-
-      // console.log("bestindex", bestIndex);
-
-      const start2 = Date.now();
-
-      const loopCount = Math.max(
-        0,
-        Math.min(bestIndex + 1, cursorPositions.length - 1)
-      );
-
-      for (let i = 0; i < loopCount; i++) {
-        mqKeystroke(focusedmq, oppositeArrowdir);
-      }
-
-      // mqKeystroke(
-      //   focusedmq,
-      //   new Array(
-      //     loopCount
-      //   )
-      //     .fill(oppositeArrowdir)
-      //     .join(" ")
-      // );
-      cleanup();
-
-      mqKeystroke(focusedmq, oppositeArrowdir);
-
-      const end2 = Date.now();
-      console.log("only cursor movement perf", end2 - start2);
-
-      const end = Date.now();
-      console.log("cursor move perf", end - start);
     }
+
+    // find the place along the next line that best aligns with the cursor on the x-axis
+    let lowestDiff = Infinity;
+    let bestIndex = 0;
+    cursorPositions.reverse();
+    for (let i = 0; i < cursorPositions.length; i++) {
+      const diff = Math.abs(cursorPositions[i] - originalCursorX);
+      if (diff < lowestDiff) {
+        lowestDiff = diff;
+        bestIndex = i;
+      }
+    }
+
+    // figure out how much we'll have to reverse to get there
+    const loopCount = Math.max(
+      0,
+      Math.min(bestIndex + 1, cursorPositions.length - 1)
+    );
+
+    // go back to the optimal x-position
+    for (let i = 0; i < loopCount; i++) {
+      mqKeystroke(focusedmq, oppositeArrowdir);
+    }
+
+    // fix the domfrag prototype so the last keystroke will render the cursor
+    cleanup();
+
+    // go to final position and rerender cursor
+    mqKeystroke(focusedmq, oppositeArrowdir);
   }
 }
 
@@ -456,13 +424,6 @@ interface VerticalifyOptions {
   >;
   // skip parsing if width is less than this
   skipWidth: number;
-}
-
-function startsWithAnyOf(src: string, match: string[]) {
-  for (const m of match) {
-    if (src.startsWith(m)) return m;
-  }
-  return undefined;
 }
 
 function unverticalify(elem: Element) {
