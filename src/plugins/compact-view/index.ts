@@ -1,6 +1,7 @@
 import { PluginController } from "../PluginController";
 import "./compact.less";
 import { Config, configList } from "./config";
+import { registerCustomDispatchOverridingHandler } from "./override-dispatch";
 import { MathQuillField, MathQuillView } from "components";
 import { DispatchedEvent } from "globals/Calc";
 import { Calc } from "globals/window";
@@ -32,6 +33,8 @@ export default class CompactView extends PluginController<Config> {
   pendingMultilinifications = new Set<HTMLElement>();
 
   lastRememberedCursorX: number | undefined = 0;
+
+  multilineIntervalID: ReturnType<typeof setInterval> | undefined;
 
   afterConfigChange(): void {
     if (this.settings.multilineExpressions) {
@@ -80,9 +83,6 @@ export default class CompactView extends PluginController<Config> {
       // don't re-verticalify everything unless editing
       if (f.dataset.isVerticalified && e.type !== "set-item-latex") continue;
 
-      // don't re-verticalify short, unverticalified expressions
-      if (!f.dataset.isVerticalified && childWidthSum(f) < 500) continue;
-
       // add to a queue of expressions that need to be verticalified
       this.enqueueVerticalifyOperation(f);
 
@@ -92,6 +92,7 @@ export default class CompactView extends PluginController<Config> {
 
   afterEnable() {
     document.addEventListener("keydown", (e) => {
+      if (!this.settings.multilineExpressions) return;
       if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
         const cursor = document.querySelector(".dcg-mq-cursor");
         if (cursor) {
@@ -100,6 +101,7 @@ export default class CompactView extends PluginController<Config> {
       }
     });
     document.addEventListener("mousedown", (_) => {
+      if (!this.settings.multilineExpressions) return;
       setTimeout(() => {
         const cursor = document.querySelector(".dcg-mq-cursor");
         if (cursor) {
@@ -110,9 +112,12 @@ export default class CompactView extends PluginController<Config> {
 
     this.afterConfigChange();
 
-    setInterval(() => {
+    this.multilineIntervalID = setInterval(() => {
       for (const f of this.pendingMultilinifications) {
+        // revert everything to its original state so we have proper width calculations
         unverticalify(f);
+
+        // settings for where and how to put line breaks
         const domManipHandlers: (() => void)[] = [];
         const commaBreaker = {
           symbol: ",",
@@ -129,6 +134,8 @@ export default class CompactView extends PluginController<Config> {
           minWidth: 380,
           mode: CollapseMode.AtMaxWidth,
         }));
+
+        // add line breaks
         verticalify(
           f,
           {
@@ -151,8 +158,12 @@ export default class CompactView extends PluginController<Config> {
             skipWidth: 380,
           }
         );
+
+        // perform all dom writing (to prevent getBoundingClientRect-related slowdowns)
         for (const h of domManipHandlers) h();
       }
+
+      // clear multilinification cache
       this.pendingMultilinifications = new Set();
     }, 50);
 
@@ -169,22 +180,32 @@ export default class CompactView extends PluginController<Config> {
       }
     });
 
-    // @ts-expect-error this exists
-    const old = Calc.controller.handleDispatchedAction;
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const self = this;
-    // @ts-expect-error this exists
-    Calc.controller.handleDispatchedAction = function (evt) {
+    // // @ts-expect-error this exists
+    // const old = Calc.controller.handleDispatchedAction;
+    // // eslint-disable-next-line @typescript-eslint/no-this-alias
+    // const self = this;
+    // // @ts-expect-error this exists
+    // Calc.controller.handleDispatchedAction = function (evt) {
+    //   if (evt.type === "on-special-key-pressed") {
+    //     if (evt.key === "Up" || evt.key === "Down") {
+    //       if (!self.doMultilineVerticalNav(evt.key)) return;
+    //     }
+    //   }
+    //   old.call(this, evt);
+    // };
+    registerCustomDispatchOverridingHandler((evt) => {
       if (evt.type === "on-special-key-pressed") {
         if (evt.key === "Up" || evt.key === "Down") {
-          if (!self.doMultilineVerticalNav(evt.key)) return;
+          if (!this.doMultilineVerticalNav(evt.key)) return false;
         }
       }
-      old.call(this, evt);
-    };
+    }, 0);
   }
 
-  afterDisable() {}
+  afterDisable() {
+    if (this.multilineIntervalID !== undefined)
+      clearInterval(this.multilineIntervalID);
+  }
 
   // navigates up/down through a multiline expression
   // returns false or undefined if successful
@@ -208,7 +229,8 @@ export default class CompactView extends PluginController<Config> {
     let nextFromBefore: Element | undefined | null;
 
     // no need to do anything if there's no focused mathquill input
-    if (!focusedmq) return;
+    // return true to make sure it does normal behavior
+    if (!focusedmq) return true;
 
     // get the original cursor horizontal position
     // so we can snap to it later
@@ -484,7 +506,8 @@ function verticalify(
   let beforeEquals = false;
 
   // detect if root element has an equals sign
-  // so we can specifically handle fn calls
+  // so we can specifically handle function signatures
+  // separately from function calls
   if (context.containerType === "root") {
     for (const child of children) {
       if (child.innerHTML.startsWith("=")) beforeEquals = true;
@@ -496,7 +519,6 @@ function verticalify(
     context.containerType === "root" && elem instanceof HTMLElement
       ? childWidthSum(elem)
       : elem.getBoundingClientRect().width;
-  //   if (totalWidth < options.collapseWidth) return;
 
   let accumulatedWidth = 0;
   // collapse children
@@ -527,6 +549,7 @@ function verticalify(
             (s.mode === CollapseMode.AtMaxWidth &&
               accumulatedWidth > s.minWidth))
         ) {
+          // add a line break to this element
           context.domManipHandlers.push(() => {
             child.style.display = "inline";
             child.dataset.isLineBreak = "true";
@@ -539,6 +562,7 @@ function verticalify(
 
           // if it can't and it is a line break somehow, make it not a line break
         } else {
+          // remove a line break from this element
           if (child.dataset.isLineBreak) {
             context.domManipHandlers.push(() => {
               child.innerHTML = child.dataset.originalSymbol ?? "";
@@ -560,22 +584,28 @@ function verticalify(
       );
     }
 
+    // if there's a variable name, any inner context immediately afterwards
+    // which is surrounded by parentheses must be a function call
     if (isVarNameElem(child)) {
       newContext.containerType = "functionCall";
+
+      // function names can also have exactly one subscript following a var name
     } else if (isSubscriptElem(child)) {
       if (hadSubscriptLast) {
         newContext.containerType = "other";
-      } else {
+      } else if (newContext.containerType === "functionCall") {
         newContext.containerType = "functionCall";
       }
       hadSubscriptLast = true;
+
+      // other cases don't have special meaning
     } else {
       newContext.containerType = "other";
       hadSubscriptLast = false;
     }
   }
 
-  // element should be considered "safe to reuse" until children change
+  // element should be considered "safe to reuse" until it or its children change
   context.domManipHandlers.push(() => {
     if (elem instanceof HTMLElement) {
       elem.dataset.safeToReuse = "true";

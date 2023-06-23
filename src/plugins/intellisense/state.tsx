@@ -1,16 +1,10 @@
 import { BoundIdentifier } from ".";
 import { mapAugAST } from "./latex-parsing";
-import { ItemState } from "@desmodder/graph-state";
 import { ItemModel } from "globals/models";
 import { Calc } from "globals/window";
 import { rootKeys } from "plugins/find-replace/backend";
 import Metadata from "plugins/manage-metadata/interface";
-import rawToAug, {
-  parseLatex,
-  parseRootLatex,
-  rawNonFolderToAug,
-} from "plugins/text-mode/aug/rawToAug";
-import { parseDesmosLatex } from "utils/depUtils";
+import { parseRootLatex } from "plugins/text-mode/aug/rawToAug";
 
 export function get<T extends object, K extends string | symbol | number>(
   t: T,
