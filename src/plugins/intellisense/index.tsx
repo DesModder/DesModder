@@ -372,30 +372,3 @@ export default class Intellisense extends PluginController {
     console.log("Disabled");
   }
 }
-
-// const verticalCommas = (node: Node) => {
-//   if (node instanceof HTMLElement) {
-//     if (node.tagName === "SPAN" && node.innerText === ",") {
-//       node.dataset.isComma = "true";
-//     }
-//   }
-// };
-
-// const allElements = document.querySelectorAll("*");
-
-// for (const e of allElements) verticalCommas(e);
-
-// const observer = new MutationObserver((e) => {
-//   for (const mut of e) {
-//     for (const node of mut.addedNodes) {
-//       verticalCommas(node);
-//     }
-//   }
-// });
-
-// observer.observe(document.body, {
-//   characterData: true,
-//   childList: true,
-//   attributes: true,
-//   subtree: true,
-// });
