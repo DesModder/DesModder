@@ -105,6 +105,10 @@ declare global {
       tr: any;
       th: any;
       td: any;
+      button: any;
+      svg: any;
+      title: any;
+      path: any;
     }
   }
 }
