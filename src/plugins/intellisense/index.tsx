@@ -76,6 +76,8 @@ export default class Intellisense extends PluginController {
 
   intellisenseState = new IntellisenseState(getMetadata());
 
+  canHaveIntellisense = false;
+
   updateIntellisense() {
     const focusedMQ = MathQuillView.getFocusedMathquill();
     this.intellisenseOpts = [];
@@ -162,10 +164,20 @@ export default class Intellisense extends PluginController {
     // eslint-disable-next-line no-console
     console.log("Intellisense Enabled!");
 
+    document.addEventListener("focusout", (e) => {
+      console.log(e.target, e.relatedTarget);
+      if (
+        e.target !== intellisenseMountPoint &&
+        e.relatedTarget !== intellisenseMountPoint
+      ) {
+        this.canHaveIntellisense = false;
+        console.log("asdasdasd");
+      }
+    });
+
     registerCustomDispatchOverridingHandler((evt) => {
       if (evt.type === "on-special-key-pressed" && evt.key === "Down") {
-        if (this.intellisenseOpts.length > 1) {
-          this.latestMQ?.blur();
+        if (this.intellisenseOpts.length > 1 && this.canHaveIntellisense) {
           if (this.latestMQ) {
             this.prevCursorElem = getController(
               this.latestMQ
@@ -180,10 +192,10 @@ export default class Intellisense extends PluginController {
           }
           this.intellisenseReturnMQ = this.latestMQ;
           setTimeout(() => {
+            intellisenseMountPoint.focus();
             Calc.controller.dispatch({
               type: "set-none-selected",
             });
-            intellisenseMountPoint.focus();
           }, 0);
           this.intellisenseIndex = 0;
           this.view?.update();
@@ -193,6 +205,10 @@ export default class Intellisense extends PluginController {
     }, 1);
 
     document.addEventListener("keydown", (e) => {
+      if (!e.key.startsWith("Arrow")) {
+        this.canHaveIntellisense = true;
+      }
+
       // navigating downward in the intellisense menu
       if (
         e.key === "ArrowDown" &&
@@ -234,11 +250,14 @@ export default class Intellisense extends PluginController {
       ) {
         this.doAutocomplete(this.intellisenseOpts[this.intellisenseIndex]);
         e.preventDefault();
+        this.view?.update();
 
         // force close autocomplete with escape
-      } else if (e.key === "Escape" && this.intellisenseIndex >= 0) {
-        this.leaveIntellisenseMenu();
+      } else if (e.key === "Escape") {
         this.intellisenseIndex = -1;
+        this.canHaveIntellisense = false;
+        this.leaveIntellisenseMenu();
+        this.view?.update();
       }
 
       // Jump to definition
@@ -292,6 +311,7 @@ export default class Intellisense extends PluginController {
       partialFunctionCall: () => this.partialFunctionCall,
       partialFunctionCallIdent: () => this.partialFunctionCallIdent,
       partialFunctionCallDoc: () => this.partialFunctionCallDoc,
+      show: () => this.canHaveIntellisense,
     });
   }
 

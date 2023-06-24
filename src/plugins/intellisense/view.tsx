@@ -331,6 +331,7 @@ export class View extends Component<{
   partialFunctionCall: () => PartialFunctionCall | undefined;
   partialFunctionCallIdent: () => BoundIdentifierFunction | undefined;
   partialFunctionCallDoc: () => string | undefined;
+  show: () => boolean;
 }> {
   init() {}
 
@@ -345,7 +346,9 @@ export class View extends Component<{
           top: (this.props.y() + 30).toString() + "px",
           left: this.props.x().toString() + "px",
           display:
-            this.props.idents().length > 0 || this.props.partialFunctionCall()
+            (this.props.idents().length > 0 ||
+              this.props.partialFunctionCall()) &&
+            this.props.show()
               ? "block"
               : "none",
           transform:
