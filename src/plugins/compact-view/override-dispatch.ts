@@ -16,7 +16,7 @@ let dispatchOverridingHandlerId = 0;
 export function registerCustomDispatchOverridingHandler(
   handler: (evt: DispatchedEvent) => boolean | undefined,
   priority: number
-) {
+): number {
   const id = dispatchOverridingHandlerId++;
   // add the handler
   dispatchOverridingHandlers.push([handler, priority, id]);
@@ -30,7 +30,7 @@ export function registerCustomDispatchOverridingHandler(
 
 // deregisters a function created with registerCustomDispatchOverridingHandler
 // uses the id that the former function returns
-export function deregisterCustomDispatchOverridingHandler(id: number) {
+export function deregisterCustomDispatchOverridingHandler(id: number): void {
   // find the handler by id
   const firstIndex = dispatchOverridingHandlers.findIndex(
     ([_, __, id2]) => id2 === id

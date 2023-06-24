@@ -8,7 +8,6 @@ import { Calc } from "globals/window";
 import { getController, mqKeystroke } from "plugins/intellisense/latex-parsing";
 
 function focusmq(mq: MathQuillField | undefined) {
-  // @ts-expect-error this works
   mq?.focus();
 }
 
@@ -148,7 +147,7 @@ export default class CompactView extends PluginController<Config> {
               functionCall: { symbols: [commaBreaker] },
               functionDef: { symbols: [] },
               all: { symbols: [...arithmeticBreakers] },
-              root: { symbols: [equalsBreaker] },
+              root: { symbols: [equalsBreaker, commaBreaker] },
               other: { symbols: [] },
               list: {
                 symbols: [{ ...commaBreaker, mode: CollapseMode.AtMaxWidth }],
@@ -180,19 +179,6 @@ export default class CompactView extends PluginController<Config> {
       }
     });
 
-    // // @ts-expect-error this exists
-    // const old = Calc.controller.handleDispatchedAction;
-    // // eslint-disable-next-line @typescript-eslint/no-this-alias
-    // const self = this;
-    // // @ts-expect-error this exists
-    // Calc.controller.handleDispatchedAction = function (evt) {
-    //   if (evt.type === "on-special-key-pressed") {
-    //     if (evt.key === "Up" || evt.key === "Down") {
-    //       if (!self.doMultilineVerticalNav(evt.key)) return;
-    //     }
-    //   }
-    //   old.call(this, evt);
-    // };
     registerCustomDispatchOverridingHandler((evt) => {
       if (evt.type === "on-special-key-pressed") {
         if (evt.key === "Up" || evt.key === "Down") {
@@ -497,9 +483,13 @@ function verticalify(
   const children = Array.from(elem.children);
   const newContext: VerticalifyContext = {
     ...context,
-    containerType: "other",
+    containerType:
+      context.containerType === "piecewise" ? "piecewise" : "other",
     enclosingBracketType: undefined,
   };
+
+  const originalNewContainerType = newContext.containerType;
+
   let hadSubscriptLast = false;
   if (elem instanceof HTMLElement) delete elem.dataset.isMultiline;
 
@@ -592,7 +582,7 @@ function verticalify(
       // function names can also have exactly one subscript following a var name
     } else if (isSubscriptElem(child)) {
       if (hadSubscriptLast) {
-        newContext.containerType = "other";
+        newContext.containerType = originalNewContainerType;
       } else if (newContext.containerType === "functionCall") {
         newContext.containerType = "functionCall";
       }
@@ -600,7 +590,7 @@ function verticalify(
 
       // other cases don't have special meaning
     } else {
-      newContext.containerType = "other";
+      newContext.containerType = originalNewContainerType;
       hadSubscriptLast = false;
     }
   }

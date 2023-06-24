@@ -30,7 +30,6 @@ export function getController(mq: MathQuillField) {
 }
 
 export function mqKeystroke(mq: MathQuillField, keystroke: string) {
-  // @ts-expect-error keystroke can take only one param
   mq.keystroke(keystroke);
 }
 
