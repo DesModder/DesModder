@@ -3,7 +3,7 @@ import { DStaticMathquillView, If } from "../../components/desmosComponents";
 import { PartialFunctionCall } from "./latex-parsing";
 import "./view.less";
 import { Component, jsx } from "DCGView";
-import { For, StaticMathQuillView, Switch } from "components";
+import { For, IconButton, StaticMathQuillView, Switch } from "components";
 import { latexTreeToString } from "plugins/text-mode/aug/augLatexToRaw";
 import { childExprToAug } from "plugins/text-mode/down/astToAug";
 import { parse } from "plugins/text-mode/down/textToAST";
@@ -332,6 +332,7 @@ export class View extends Component<{
   partialFunctionCallIdent: () => BoundIdentifierFunction | undefined;
   partialFunctionCallDoc: () => string | undefined;
   show: () => boolean;
+  jumpToDefinition: (str: string) => void;
 }> {
   init() {}
 
@@ -391,22 +392,52 @@ export class View extends Component<{
                         "selected-intellisense-option")
                       : "intellisense-option"
                   }
-                  onClick={() => {
-                    this.props.autocomplete(ident);
-                  }}
                 >
                   <td style={{ color: "#AAAAAA" }}>
                     <IdentifierSymbol
                       symbol={() => ident.type}
                     ></IdentifierSymbol>
                   </td>
-                  <td>
+                  <td
+                    onClick={() => {
+                      this.props.autocomplete(ident);
+                    }}
+                  >
                     <StaticMathQuillView
                       latex={
                         reformattedIdent +
                         (ident.type === "function" ? "\\left(\\right)" : "")
                       }
                     ></StaticMathQuillView>
+                  </td>
+                  <td>
+                    {/* <button
+                      style={{ width: "18px", height: "18px" }}
+                      onClick={() => {
+                        this.props.jumpToDefinition(reformattedIdent);
+                      }}
+                      innerHTML={`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>open-in-new</title><path d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z" /></svg>`}
+                    >
+                      {/* <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        style={{
+                          position: "absolute",
+                          zIndex: "99",
+                          transform: `translate(-50%, -50%)`,
+                        }}
+                      >
+                        <title>open-in-new</title>
+                        <path d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z" />
+                      </svg> 
+                      e
+                    </button> */}
+                    <i
+                      onClick={() => {
+                        this.props.jumpToDefinition(reformattedIdent);
+                      }}
+                      class="dsm-icon-compass2 jump-to-def-btn"
+                    ></i>
                   </td>
                 </tr>
               );

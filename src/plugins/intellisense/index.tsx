@@ -261,22 +261,8 @@ export default class Intellisense extends PluginController {
       }
 
       // Jump to definition
-      if (e.key === "F9") {
-        const identDst = Array.from(
-          this.intellisenseState.boundIdentifiers()
-        ).find((id) => {
-          return (
-            (id.type === "function" || id.type === "variable") &&
-            addBracketsToIdent(id.variableName) === this.latestIdent?.ident
-          );
-        });
-
-        if (identDst) {
-          Calc.controller.dispatch({
-            type: "set-selected-id",
-            id: identDst.exprId,
-          });
-        }
+      if (e.key === "F9" && this.latestIdent) {
+        this.jumpToDefinition(this.latestIdent.ident);
       }
     });
 
@@ -312,7 +298,26 @@ export default class Intellisense extends PluginController {
       partialFunctionCallIdent: () => this.partialFunctionCallIdent,
       partialFunctionCallDoc: () => this.partialFunctionCallDoc,
       show: () => this.canHaveIntellisense,
+      jumpToDefinition: (name) => this.jumpToDefinition(name),
     });
+  }
+
+  jumpToDefinition(name: string) {
+    const identDst = Array.from(this.intellisenseState.boundIdentifiers()).find(
+      (id) => {
+        return (
+          (id.type === "function" || id.type === "variable") &&
+          addBracketsToIdent(id.variableName) === name
+        );
+      }
+    );
+
+    if (identDst) {
+      Calc.controller.dispatch({
+        type: "set-selected-id",
+        id: identDst.exprId,
+      });
+    }
   }
 
   doAutocomplete(opt: BoundIdentifier) {
