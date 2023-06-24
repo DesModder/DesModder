@@ -263,6 +263,9 @@ export default class Intellisense extends PluginController {
       // Jump to definition
       if (e.key === "F9" && this.latestIdent) {
         this.jumpToDefinition(this.latestIdent.ident);
+        this.canHaveIntellisense = false;
+        this.leaveIntellisenseMenu();
+        this.view?.update();
       }
     });
 
@@ -318,6 +321,8 @@ export default class Intellisense extends PluginController {
         id: identDst.exprId,
       });
     }
+    this.canHaveIntellisense = false;
+    this.view?.update();
   }
 
   doAutocomplete(opt: BoundIdentifier) {
