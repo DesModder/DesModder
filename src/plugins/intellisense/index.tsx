@@ -39,74 +39,6 @@ export interface BoundIdentifierFunction {
   params: string[];
 }
 
-function getExpressionBoundGlobalIdentifiers(
-  expr: ItemAug
-): Omit<BoundIdentifier, "id">[] {
-  if (expr.type === "folder") {
-    return expr.children
-      .map((c) => getExpressionBoundGlobalIdentifiers(c))
-      .flat();
-  } else if (expr.type === "expression" && expr.latex) {
-    const idents: Omit<BoundIdentifier, "id">[] = [];
-
-    mapAugAST(expr.latex, (node) => {
-      if (!node) return;
-      if (node.type === "ListComprehension" || node.type === "Substitution") {
-        for (const ass of node.assignments) {
-          idents.push({
-            exprId: expr.id,
-            variableName: ass.variable.symbol,
-            type: "listcomp-param",
-          });
-        }
-      } else if (node.type === "Derivative") {
-        idents.push({
-          exprId: expr.id,
-          variableName: node.variable.symbol,
-          type: "derivative",
-        });
-      } else if (node.type === "RepeatedOperator") {
-        idents.push({
-          exprId: expr.id,
-          variableName: node.index.symbol,
-          type: "repeated-operator",
-        });
-      }
-    });
-
-    if (expr.latex.type === "Assignment") {
-      idents.push({
-        exprId: expr.id,
-        variableName: expr.latex.left.symbol,
-        type: "variable",
-      });
-    }
-    if (expr.latex.type === "FunctionDefinition") {
-      const fndef: BoundIdentifier = {
-        exprId: expr.id,
-        variableName: expr.latex.symbol.symbol,
-        type: "function",
-        params: expr.latex.argSymbols.map((s) => s.symbol),
-        id: -1,
-      };
-      idents.push(
-        fndef,
-        ...expr.latex.argSymbols.map((arg) => {
-          const x: Omit<BoundIdentifier, "id"> = {
-            exprId: expr.id,
-            variableName: arg.symbol,
-            type: "function-param",
-          };
-          return x;
-        })
-      );
-    }
-
-    return idents;
-  }
-  return [];
-}
-
 export function getMQCursorPosition(focusedMQ: MathQuillField) {
   return getController(
     focusedMQ
@@ -134,6 +66,7 @@ export default class Intellisense extends PluginController {
 
   intellisenseReturnMQ: MathQuillField | undefined;
   prevCursorElem: Element | undefined;
+  goRightBeforeReturningToMQ: boolean = false;
 
   idcounter = 0;
 
@@ -212,18 +145,16 @@ export default class Intellisense extends PluginController {
   }
 
   leaveIntellisenseMenu() {
-    // @ts-expect-error focus is part of the mathquill api
     this.intellisenseReturnMQ?.focus();
-    console.log(this.intellisenseReturnMQ);
 
     if (this.prevCursorElem instanceof HTMLElement) {
-      console.log("clicking prev cursor elem", this.prevCursorElem);
       this.prevCursorElem?.dispatchEvent(
         new MouseEvent("mousedown", { bubbles: true })
       );
       this.prevCursorElem?.dispatchEvent(
         new MouseEvent("mouseup", { bubbles: true })
       );
+      if (this.goRightBeforeReturningToMQ) this.latestMQ?.keystroke("Right");
     }
   }
 
@@ -234,23 +165,25 @@ export default class Intellisense extends PluginController {
     registerCustomDispatchOverridingHandler((evt) => {
       if (evt.type === "on-special-key-pressed" && evt.key === "Down") {
         if (this.intellisenseOpts.length > 1) {
-          // @ts-expect-error blur is part of the mathquill api
           this.latestMQ?.blur();
-          if (this.latestMQ)
+          if (this.latestMQ) {
             this.prevCursorElem = getController(
               this.latestMQ
             )?.cursor?.[1]?._el;
+            this.goRightBeforeReturningToMQ = false;
+            if (!this.prevCursorElem) {
+              this.prevCursorElem = getController(this.latestMQ)?.cursor?.[
+                -1
+              ]?._el;
+              this.goRightBeforeReturningToMQ = true;
+            }
+          }
           this.intellisenseReturnMQ = this.latestMQ;
           setTimeout(() => {
             Calc.controller.dispatch({
               type: "set-none-selected",
             });
             intellisenseMountPoint.focus();
-            console.log(
-              document.activeElement,
-              intellisenseMountPoint,
-              document.activeElement === intellisenseMountPoint
-            );
           }, 0);
           this.intellisenseIndex = 0;
           this.view?.update();
@@ -261,13 +194,13 @@ export default class Intellisense extends PluginController {
 
     document.addEventListener("keydown", (e) => {
       // navigating downward in the intellisense menu
-      console.log("subsequent arrow", this.intellisenseIndex);
       if (
         e.key === "ArrowDown" &&
         this.intellisenseOpts.length > 0 &&
         document.activeElement === intellisenseMountPoint &&
-        addBracketsToIdent(this.intellisenseOpts[0].variableName) !==
-          this.latestIdent?.ident
+        (addBracketsToIdent(this.intellisenseOpts[0].variableName) !==
+          this.latestIdent?.ident ||
+          this.intellisenseOpts.length > 1)
       ) {
         this.intellisenseIndex = Math.min(
           this.intellisenseIndex + 1,
@@ -304,7 +237,6 @@ export default class Intellisense extends PluginController {
 
         // force close autocomplete with escape
       } else if (e.key === "Escape" && this.intellisenseIndex >= 0) {
-        // @ts-expect-error focus is part of the mathquill api
         this.leaveIntellisenseMenu();
         this.intellisenseIndex = -1;
       }
@@ -373,21 +305,15 @@ export default class Intellisense extends PluginController {
 
       // add parens to function
       if (opt.type === "function") {
-        // @ts-expect-error latex can take one param
         this.latestMQ.typedText(formattedIdentLatex.replace(/\{|\}/g, ""));
-        // @ts-expect-error keystroke can take one param
         this.latestMQ.keystroke("Right");
-        // @ts-expect-error typedText exists
         this.latestMQ.typedText("()");
-        // @ts-expect-error keystroke can take one param
         this.latestMQ.keystroke("Left");
       } else {
-        // @ts-expect-error latex can take one param
         this.latestMQ.typedText(formattedIdentLatex.replace(/\{|\}/g, ""));
       }
     }
 
-    // @ts-expect-error focus is part of the mathquill api
     this.intellisenseReturnMQ?.focus();
     this.updateIntellisense();
   }
