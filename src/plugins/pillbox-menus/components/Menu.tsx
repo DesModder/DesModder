@@ -35,6 +35,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "shift-enter-newline",
     "folder-tools",
     "intellisense",
+    "my-expressions-library",
   ],
   visual: [
     "set-primary-color",

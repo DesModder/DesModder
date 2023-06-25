@@ -4,7 +4,6 @@ import { GraphState } from "@desmodder/graph-state";
 export type DispatchedEvent =
   | {
       type:
-        | "keypad/set-minimized"
         | "close-graph-settings"
         | "open-expression-search"
         | "close-expression-search"
@@ -23,7 +22,12 @@ export type DispatchedEvent =
         | "undo"
         | "tick"
         | "redo"
-        | "tick-ticker";
+        | "tick-ticker"
+        | "keypad/functions";
+    }
+  | {
+      type: "keypad/set-minimized";
+      minimized: boolean;
     }
   | {
       type:
@@ -78,7 +82,8 @@ export type DispatchedEvent =
       key: string;
       // used in compact-view plugin
       forceSwitchExpr?: boolean;
-    };
+    }
+  | { type: "set-folder-collapsed"; id: string; isCollapsed: boolean };
 
 /**
  * Evaluator change: a change set associated with a single id, passed back from
@@ -193,7 +198,14 @@ interface CalcPrivate {
         killWorker: () => void;
       };
     };
-    listModel: unknown;
+    listModel: {
+      selectedItemMap: Record<number, boolean | undefined>;
+      __itemModelArray: {
+        id: string;
+        controller: Calc["controller"];
+      }[];
+      __itemIdToModel: Record<string, ItemModel>;
+    };
     _addItemToEndFromAPI: (item: ItemModel) => void;
     _showToast: (toast: Toast) => void;
     getViewState: () => {

@@ -109,6 +109,7 @@ declare global {
       svg: any;
       title: any;
       path: any;
+      br: any;
     }
   }
 }

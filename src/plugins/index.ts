@@ -10,6 +10,7 @@ import FolderTools from "./folder-tools";
 import HideErrors from "./hide-errors";
 import Intellisense from "./intellisense";
 import ManageMetadata from "./manage-metadata";
+import MyExpressionsLibrary from "./my-expressions-library";
 import PerformanceInfo from "./performance-info";
 import PillboxMenus from "./pillbox-menus";
 import PinExpressions from "./pin-expressions";
@@ -104,6 +105,7 @@ export const keyToPlugin = {
   metadata: ManageMetadata,
   intellisense: Intellisense,
   compactView: CompactView,
+  myExpressionsLibrary: MyExpressionsLibrary,
 } satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);
@@ -153,6 +155,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get metadata () { return this.ep["manage-metadata"]; }
   get intellisense () { return this.ep["intellisense"]; }
   get compactView () { return this.ep["compact-view"] }
+  get myExpressionsLibrary () { return this.ep["my-expressions-library"] }
 }
 
 export type IDToPluginSettings = {
