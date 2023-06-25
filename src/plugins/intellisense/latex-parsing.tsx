@@ -80,7 +80,7 @@ function tryGetMathquilIdentFromWithinSubscript(
           mqKeystroke(mq, "Right");
         },
         deleteIdent: () => {
-          for (let i = 0; i < candidate.length - 3; i++) {
+          for (let i = 0; i < Math.max(candidate.length - 3, 2); i++) {
             mqKeystroke(mq, "Backspace");
           }
         },
@@ -105,7 +105,7 @@ function tryGetMathquillIdentFromAfterSubscript(
         goToEndOfIdent: () => {},
         ident: candidate,
         deleteIdent: () => {
-          for (let i = 0; i < candidate.length - 3; i++) {
+          for (let i = 0; i < Math.max(candidate.length - 3, 2); i++) {
             mqKeystroke(mq, "Backspace");
           }
         },
@@ -131,7 +131,7 @@ function tryGetMathquillIdentFromBeforeSubscript(
         },
         ident: candidate,
         deleteIdent: () => {
-          for (let i = 0; i < candidate.length - 3; i++) {
+          for (let i = 0; i < Math.max(candidate.length - 3, 2); i++) {
             mqKeystroke(mq, "Backspace");
           }
         },
@@ -147,8 +147,10 @@ function tryGetMathquillIdentFromVariableOnly(
   const ctrlr = getController(mq);
 
   const varName = ctrlr.cursor?.[-1]?.latex?.();
+  console.log("varonly", varName);
   if (varName) {
     if (isIdentStr(varName)) {
+      console.log("this shouldrun");
       return {
         goToEndOfIdent: () => {},
         ident: varName,

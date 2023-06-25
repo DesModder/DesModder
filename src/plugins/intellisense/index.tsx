@@ -8,13 +8,12 @@ import {
 } from "./latex-parsing";
 import { IntellisenseState } from "./state";
 import { View, addBracketsToIdent } from "./view";
-import { DCGView, MountedComponent } from "DCGView";
+import { DCGView, MountedComponent, jsx } from "DCGView";
 import { MathQuillField, MathQuillView } from "components";
 import { Calc } from "globals/window";
 import { PluginController } from "plugins/PluginController";
 import { registerCustomDispatchOverridingHandler } from "plugins/compact-view/override-dispatch";
 import { getMetadata } from "plugins/manage-metadata/manage";
-import { ItemAug } from "plugins/text-mode/aug/AugState";
 
 export type BoundIdentifier =
   | {
@@ -146,8 +145,12 @@ export default class Intellisense extends PluginController {
     this.view?.update();
   }
 
+  // leave an intellisense menu and return to whatever expression
+  // you were previously in
   leaveIntellisenseMenu() {
+    console.log("prevcusrorelem", this.prevCursorElem);
     this.intellisenseReturnMQ?.focus();
+    this.latestMQ = this.intellisenseReturnMQ;
 
     if (this.prevCursorElem instanceof HTMLElement) {
       this.prevCursorElem?.dispatchEvent(
@@ -156,7 +159,28 @@ export default class Intellisense extends PluginController {
       this.prevCursorElem?.dispatchEvent(
         new MouseEvent("mouseup", { bubbles: true })
       );
-      if (this.goRightBeforeReturningToMQ) this.latestMQ?.keystroke("Right");
+      if (this.goRightBeforeReturningToMQ) {
+        console.log("had to go right.");
+        this.latestMQ?.keystroke("Right");
+      }
+    }
+  }
+
+  saveCursorState() {
+    this.latestMQ = MathQuillView.getFocusedMathquill();
+    if (this.latestMQ) {
+      console.log(getController(this.latestMQ).cursor);
+      this.prevCursorElem = getController(this.latestMQ)?.cursor?.[1]?._el;
+      this.goRightBeforeReturningToMQ = false;
+      if (!this.prevCursorElem) {
+        this.prevCursorElem = getController(this.latestMQ)?.cursor?.[-1]?._el;
+        this.goRightBeforeReturningToMQ = true;
+      }
+      if (!this.prevCursorElem) {
+        this.prevCursorElem = getController(this.latestMQ)?.cursor?.parent?._el;
+        this.goRightBeforeReturningToMQ = false;
+      }
+      console.log("PREVCURSORELEM", this.prevCursorElem);
     }
   }
 
@@ -164,32 +188,21 @@ export default class Intellisense extends PluginController {
     // eslint-disable-next-line no-console
     console.log("Intellisense Enabled!");
 
+    // disable intellisense when switching expressions
     document.addEventListener("focusout", (e) => {
-      console.log(e.target, e.relatedTarget);
       if (
         e.target !== intellisenseMountPoint &&
         e.relatedTarget !== intellisenseMountPoint
       ) {
         this.canHaveIntellisense = false;
-        console.log("asdasdasd");
       }
     });
 
+    // activate intellisense menu
     registerCustomDispatchOverridingHandler((evt) => {
       if (evt.type === "on-special-key-pressed" && evt.key === "Down") {
         if (this.intellisenseOpts.length > 1 && this.canHaveIntellisense) {
-          if (this.latestMQ) {
-            this.prevCursorElem = getController(
-              this.latestMQ
-            )?.cursor?.[1]?._el;
-            this.goRightBeforeReturningToMQ = false;
-            if (!this.prevCursorElem) {
-              this.prevCursorElem = getController(this.latestMQ)?.cursor?.[
-                -1
-              ]?._el;
-              this.goRightBeforeReturningToMQ = true;
-            }
-          }
+          this.saveCursorState();
           this.intellisenseReturnMQ = this.latestMQ;
           setTimeout(() => {
             intellisenseMountPoint.focus();
@@ -204,7 +217,11 @@ export default class Intellisense extends PluginController {
       }
     }, 1);
 
+    // general intellisense keyboard handler
     document.addEventListener("keydown", (e) => {
+      this.saveCursorState();
+      // if a non arrow key is pressed in an expression,
+      // we enable the intellisense window
       if (!e.key.startsWith("Arrow")) {
         this.canHaveIntellisense = true;
       }
@@ -269,11 +286,18 @@ export default class Intellisense extends PluginController {
       }
     });
 
+    // update the intellisense on key pressed in a mathquill
     document.addEventListener("keyup", () => {
       if (!MathQuillView.getFocusedMathquill()) return;
       this.updateIntellisense();
+      this.saveCursorState();
     });
 
+    document.addEventListener("mousedown", (e) => {
+      // this.saveCursorState();
+    });
+
+    // close intellisense when clicking outside the intellisense window
     document.addEventListener("mouseup", (e) => {
       let elem = e.target;
 
@@ -288,9 +312,11 @@ export default class Intellisense extends PluginController {
 
       this.intellisenseIndex = -1;
 
-      this.updateIntellisense();
+      // this.updateIntellisense();
+      // this.saveCursorState();
     });
 
+    // create initial intellisense window
     this.view = DCGView.mountToNode(View, intellisenseMountPoint, {
       x: () => this.x,
       y: () => this.y,
@@ -305,6 +331,7 @@ export default class Intellisense extends PluginController {
     });
   }
 
+  // given an identifier name, jump to its definition
   jumpToDefinition(name: string) {
     const identDst = Array.from(this.intellisenseState.boundIdentifiers()).find(
       (id) => {
@@ -320,13 +347,32 @@ export default class Intellisense extends PluginController {
         type: "set-selected-id",
         id: identDst.exprId,
       });
+
+      const model = Calc.controller.listModel.__itemIdToModel[identDst.exprId];
+
+      if (model && model.type !== "folder" && model.folderId) {
+        Calc.controller.dispatch({
+          type: "set-folder-collapsed",
+          id: model.folderId,
+          isCollapsed: false,
+        });
+
+        document
+          .querySelector(".dcg-expressionitem.dcg-selected")
+          ?.scrollIntoView({ block: "center" });
+
+        const dcgcontainer = document.querySelector(".dcg-container");
+        if (dcgcontainer) dcgcontainer.scrollTop = 0;
+      }
     }
     this.canHaveIntellisense = false;
     this.view?.update();
   }
 
+  // delete an identifier and then replace it with something
   doAutocomplete(opt: BoundIdentifier) {
     this.leaveIntellisenseMenu();
+    console.log("doing autocomplete?", this.latestIdent, this.latestMQ);
     if (this.latestIdent && this.latestMQ) {
       this.latestIdent.goToEndOfIdent();
       this.latestIdent.deleteIdent();
@@ -335,10 +381,14 @@ export default class Intellisense extends PluginController {
 
       // add parens to function
       if (opt.type === "function") {
+        // .latex() seems to just delete everything from the input
+        // so we have to use .typedText()
         this.latestMQ.typedText(formattedIdentLatex.replace(/\{|\}/g, ""));
         this.latestMQ.keystroke("Right");
         this.latestMQ.typedText("()");
         this.latestMQ.keystroke("Left");
+
+        // add back in variable
       } else {
         this.latestMQ.typedText(formattedIdentLatex.replace(/\{|\}/g, ""));
       }
@@ -346,6 +396,7 @@ export default class Intellisense extends PluginController {
 
     this.intellisenseReturnMQ?.focus();
     this.updateIntellisense();
+    this.view?.update();
   }
 
   afterDisable() {
