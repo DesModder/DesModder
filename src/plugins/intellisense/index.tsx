@@ -241,6 +241,7 @@ export default class Intellisense extends PluginController {
         );
         this.view?.update();
         e.preventDefault();
+        console.log("isindex", this.intellisenseIndex);
         return false;
 
         // navigating upward in the intellisense menu
