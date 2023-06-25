@@ -322,6 +322,8 @@ export class PartialFunctionCallView extends Component<{
   }
 }
 
+let counter2 = 0;
+
 export class View extends Component<{
   x: () => number;
   y: () => number;
@@ -370,25 +372,21 @@ export class View extends Component<{
           each={() =>
             this.props.idents().map((ident, index) => ({ ...ident, index }))
           }
-          key={(e) => e.id}
+          key={(e) => counter2++}
         >
           <table class="intellisense-options-table">
-            {(ident: BoundIdentifier & { index: number }) => {
+            {(ident: BoundIdentifier & { index: number }, idx: number) => {
               const reformattedIdent = addBracketsToIdent(ident.variableName);
-
-              const isSelected = () => ident.index === this.props.index();
 
               const opt = (
                 <tr
                   class={() =>
-                    isSelected()
-                      ? (setTimeout(
-                          () =>
-                            opt._domNode?.scrollIntoView({
-                              block: "center",
-                            }),
-                          0
-                        ),
+                    ident.index === this.props.index()
+                      ? (setTimeout(() => {
+                          opt._domNode?.scrollIntoView({
+                            block: "center",
+                          });
+                        }, 0),
                         "selected-intellisense-option")
                       : "intellisense-option"
                   }
@@ -411,27 +409,6 @@ export class View extends Component<{
                     ></StaticMathQuillView>
                   </td>
                   <td>
-                    {/* <button
-                      style={{ width: "18px", height: "18px" }}
-                      onClick={() => {
-                        this.props.jumpToDefinition(reformattedIdent);
-                      }}
-                      innerHTML={`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>open-in-new</title><path d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z" /></svg>`}
-                    >
-                      {/* <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        style={{
-                          position: "absolute",
-                          zIndex: "99",
-                          transform: `translate(-50%, -50%)`,
-                        }}
-                      >
-                        <title>open-in-new</title>
-                        <path d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z" />
-                      </svg> 
-                      e
-                    </button> */}
                     <i
                       onClick={() => {
                         this.props.jumpToDefinition(reformattedIdent);
