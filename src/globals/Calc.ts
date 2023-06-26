@@ -83,7 +83,8 @@ export type DispatchedEvent =
       // used in compact-view plugin
       forceSwitchExpr?: boolean;
     }
-  | { type: "set-folder-collapsed"; id: string; isCollapsed: boolean };
+  | { type: "set-folder-collapsed"; id: string; isCollapsed: boolean }
+  | { type: "set-item-colorLatex"; id: string; colorLatex: string };
 
 /**
  * Evaluator change: a change set associated with a single id, passed back from
@@ -203,6 +204,7 @@ interface CalcPrivate {
       __itemModelArray: {
         id: string;
         controller: Calc["controller"];
+        colorLatex: string;
       }[];
       __itemIdToModel: Record<string, ItemModel>;
     };

@@ -104,7 +104,7 @@ function tokenizeDocstring(str: string): DocStringToken[] {
   return tokens;
 }
 
-function textModeExprToLatex(tmExpr: string) {
+export function textModeExprToLatex(tmExpr: string) {
   const parsedTextMode = parse(tmExpr);
   const parsedExpr = parsedTextMode.mapIDstmt[1];
   if (parsedExpr && parsedExpr.type === "ExprStatement") {
