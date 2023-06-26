@@ -176,7 +176,6 @@ export default class MyExpressionsLibrary extends PluginController<{
         return (
           <LibrarySearchView
             plugin={() => {
-              console.log("using plugin");
               return this;
             }}
           ></LibrarySearchView>
@@ -215,7 +214,6 @@ export default class MyExpressionsLibrary extends PluginController<{
   searchStr: string = "";
 
   refineSearch(searchStr: string) {
-    console.log(searchStr, this.view);
     this.searchStr = searchStr;
     this.controller.pillboxMenus?.updateExtraComponents();
   }
@@ -260,6 +258,12 @@ export default class MyExpressionsLibrary extends PluginController<{
           (Object.keys(Calc.controller.listModel.selectedItemMap)[0] ?? "0")
       ) + 1;
 
+    const startItem =
+      Calc.controller.listModel.__itemModelArray[startIndex - 1];
+
+    const startFolder: string | undefined =
+      startItem?.type === "folder" ? startItem?.id : startItem?.folderId;
+
     const idsBefore = new Set(
       Calc.controller.listModel.__itemModelArray.map((e) => e.id)
     );
@@ -268,7 +272,9 @@ export default class MyExpressionsLibrary extends PluginController<{
       // @ts-expect-error todo: fix type safety later
       Array.from(loaded).map((e) => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const copy: Partial<ExpressionState> = { ...e.raw } as ExpressionState;
+        const copy: Partial<ExpressionState> = {
+          ...e.raw,
+        } as ExpressionState;
         delete copy.id;
         return copy;
       })
@@ -296,13 +302,15 @@ export default class MyExpressionsLibrary extends PluginController<{
       const itemToMove = Calc.controller.listModel.__itemModelArray[idIndex];
 
       const expr = loadedArray[i];
+
+      itemToMove.folderId = startFolder ?? "";
       if (expr && expr.raw.type === "expression" && expr.raw.colorLatex) {
         itemToMove.colorLatex = expr.raw.colorLatex;
       }
 
       Calc.controller.listModel.__itemModelArray.splice(idIndex, 1);
 
-      if (startIndex >= idIndex) startIndex--;
+      if (startIndex > idIndex) startIndex--;
 
       Calc.controller.listModel.__itemModelArray.splice(
         startIndex,
@@ -362,8 +370,6 @@ export default class MyExpressionsLibrary extends PluginController<{
           augs.set(expr.id, rawNonFolderToAug(expr, getMetadata()));
         }
       }
-
-      console.log(augs);
 
       for (const [id, aug] of augs) {
         if (aug.type === "expression" && aug.latex) {

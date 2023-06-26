@@ -201,10 +201,14 @@ interface CalcPrivate {
     };
     listModel: {
       selectedItemMap: Record<number, boolean | undefined>;
+
+      // add properties as needed
       __itemModelArray: {
         id: string;
         controller: Calc["controller"];
         colorLatex: string;
+        folderId: string;
+        type: "folder" | "expression";
       }[];
       __itemIdToModel: Record<string, ItemModel>;
     };
