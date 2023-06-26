@@ -147,10 +147,8 @@ function tryGetMathquillIdentFromVariableOnly(
   const ctrlr = getController(mq);
 
   const varName = ctrlr.cursor?.[-1]?.latex?.();
-  console.log("varonly", varName);
   if (varName) {
     if (isIdentStr(varName)) {
-      console.log("this shouldrun");
       return {
         goToEndOfIdent: () => {},
         ident: varName,

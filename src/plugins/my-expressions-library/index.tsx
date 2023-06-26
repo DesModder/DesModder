@@ -1,16 +1,15 @@
 import { getGraphState } from "./library-search-controller";
 import { LibrarySearchView } from "./library-search-view";
-import { LibraryPillboxView } from "./pillbox-view";
 import { ExpressionState, GraphState, ItemState } from "@desmodder/graph-state";
 import { Component, DCGView, MountedComponent, jsx } from "DCGView";
 import { MathQuillField, MathQuillView } from "components";
 import { Calc } from "globals/window";
 import { PluginController } from "plugins/PluginController";
 import { mapAugAST } from "plugins/intellisense/latex-parsing";
+import { textModeExprToLatex } from "plugins/intellisense/view";
 import { getMetadata } from "plugins/manage-metadata/manage";
-import { AnyRoot } from "plugins/text-mode/aug/AugLatex";
 import Aug from "plugins/text-mode/aug/AugState";
-import { parseLatex, rawNonFolderToAug } from "plugins/text-mode/aug/rawToAug";
+import { rawNonFolderToAug } from "plugins/text-mode/aug/rawToAug";
 
 export interface ExpressionLibraryExpression {
   aug: Aug.ItemAug;
@@ -29,6 +28,87 @@ export interface ExpressionLibraryGraph {
 
 export interface ExpressionsLibraryGraphs {
   graphs: ExpressionLibraryGraph[];
+}
+
+type Exhaustive<T, Obj> = keyof Obj extends T ? T[] : never;
+
+type X = Exhaustive<"a" | "b" | "c", { a: 1; b: 2; c: 3 }>;
+
+type LatexKeysOnly<O> = {
+  [K in keyof O as Aug.Latex.AnyRoot extends O[K]
+    ? K
+    : Aug.Latex.AnyChild extends O[K]
+    ? K
+    : never]: undefined;
+};
+
+function allLatexKeys<Obj>() {
+  return function <T>(x: readonly T[]): Exhaustive<T, LatexKeysOnly<Obj>> {
+    return x as Exhaustive<T, LatexKeysOnly<Obj>>;
+  };
+}
+
+type Y = LatexKeysOnly<Aug.ExpressionAug>;
+
+function forAllLatexSources(
+  item: Aug.ItemAug,
+  handler: (ltx: Aug.Latex.AnyRootOrChild) => void
+) {
+  function runHandler(ltx: string | Aug.Latex.AnyRootOrChild | undefined) {
+    if (ltx && typeof ltx === "object") handler(ltx);
+  }
+
+  switch (item.type) {
+    case "expression":
+      for (const key of allLatexKeys<Aug.ExpressionAug>()([
+        "latex",
+        "color",
+        "fillOpacity",
+      ] as const)) {
+        runHandler(item[key]);
+      }
+      runHandler(item?.points?.opacity);
+      runHandler(item?.points?.size);
+      runHandler(item?.lines?.opacity);
+      runHandler(item?.lines?.width);
+      runHandler(item?.label?.size);
+      runHandler(item?.label?.angle);
+      runHandler(item?.regression?.residualVariable);
+      for (const [k, v] of item.regression?.regressionParameters ?? new Map()) {
+        runHandler(k);
+      }
+      runHandler(item?.cdf?.min);
+      runHandler(item?.cdf?.max);
+      runHandler(item?.vizProps?.boxplot?.breadth);
+      runHandler(item?.vizProps?.boxplot?.axisOffset);
+
+      runHandler(item?.clickableInfo?.latex);
+      break;
+    case "image":
+      for (const key of allLatexKeys<Aug.ImageAug>()([
+        "width",
+        "height",
+        "center",
+        "angle",
+        "opacity",
+      ] as const)) {
+        runHandler(item[key]);
+      }
+      runHandler(item?.clickableInfo?.latex);
+      break;
+    case "table":
+      for (const col of item.columns) {
+        for (const key of allLatexKeys<Aug.TableColumnAug>()([
+          "color",
+          "latex",
+        ] as const)) {
+          runHandler(col[key]);
+        }
+        for (const v of col.values) {
+          runHandler(v);
+        }
+      }
+  }
 }
 
 function getExprWithDependencies(state: Aug.State, expr: Aug.ExpressionAug) {
@@ -93,7 +173,14 @@ export default class MyExpressionsLibrary extends PluginController<{
       tooltip: "my-expressions-library-pillbox-menu",
       iconClass: "dsm-icon-bookmark",
       popup: () => {
-        return <LibrarySearchView plugin={() => this}></LibrarySearchView>;
+        return (
+          <LibrarySearchView
+            plugin={() => {
+              console.log("using plugin");
+              return this;
+            }}
+          ></LibrarySearchView>
+        );
       },
     });
 
@@ -128,8 +215,9 @@ export default class MyExpressionsLibrary extends PluginController<{
   searchStr: string = "";
 
   refineSearch(searchStr: string) {
+    console.log(searchStr, this.view);
     this.searchStr = searchStr;
-    this.view?.update();
+    this.controller.pillboxMenus?.updateExtraComponents();
   }
 
   view: MountedComponent | undefined;
@@ -198,11 +286,20 @@ export default class MyExpressionsLibrary extends PluginController<{
       }
     }
 
+    const loadedArray = Array.from(loaded);
+
+    let i = 0;
     for (const id of idsNew) {
       const idIndex = Calc.controller.listModel.__itemModelArray.findIndex(
         (e) => e.id === id
       );
       const itemToMove = Calc.controller.listModel.__itemModelArray[idIndex];
+
+      const expr = loadedArray[i];
+      if (expr && expr.raw.type === "expression" && expr.raw.colorLatex) {
+        itemToMove.colorLatex = expr.raw.colorLatex;
+      }
+
       Calc.controller.listModel.__itemModelArray.splice(idIndex, 1);
 
       if (startIndex >= idIndex) startIndex--;
@@ -212,9 +309,31 @@ export default class MyExpressionsLibrary extends PluginController<{
         0,
         itemToMove
       );
+      i++;
     }
 
     Calc.controller.updateTheComputedWorld();
+
+    // setTimeout(() => {
+    //   let i = 0;
+    //   for (const expr of loaded) {
+    //     const myid = idsNew[i];
+
+    //     if (
+    //       myid !== undefined &&
+    //       expr.raw.type === "expression" &&
+    //       expr.raw.colorLatex
+    //     ) {
+    //       Calc.controller.dispatch({
+    //         type: "set-item-colorLatex",
+    //         id: myid,
+    //         colorLatex: expr.raw.colorLatex,
+    //       });
+    //     }
+
+    //     i++;
+    //   }
+    // }, 1000);
   }
 
   async loadGraphs() {
@@ -230,6 +349,8 @@ export default class MyExpressionsLibrary extends PluginController<{
       graphs: [],
     };
 
+    let uniqueID = 0;
+
     for (const g of graphs) {
       // maps ident names to expression ids
       const dependencymap = new Map<string, string>();
@@ -242,6 +363,8 @@ export default class MyExpressionsLibrary extends PluginController<{
         }
       }
 
+      console.log(augs);
+
       for (const [id, aug] of augs) {
         if (aug.type === "expression" && aug.latex) {
           const root = aug.latex;
@@ -252,10 +375,6 @@ export default class MyExpressionsLibrary extends PluginController<{
           }
         }
       }
-
-      console.log(dependencymap);
-
-      let uniqueID = 0;
 
       const newGraph: Partial<ExpressionLibraryGraph> = {};
 
@@ -271,8 +390,9 @@ export default class MyExpressionsLibrary extends PluginController<{
             if (!aug) return undefined;
 
             const dependsOn = new Set<string>();
-            if (aug.type === "expression" && aug.latex) {
-              mapAugAST(aug.latex, (node) => {
+
+            forAllLatexSources(aug, (ltx) => {
+              mapAugAST(ltx, (node) => {
                 if (node && node.type === "Identifier") {
                   const dep = dependencymap.get(node.symbol);
                   if (dep) {
@@ -280,7 +400,7 @@ export default class MyExpressionsLibrary extends PluginController<{
                   }
                 }
               });
-            }
+            });
 
             return [
               e.id,
@@ -302,10 +422,22 @@ export default class MyExpressionsLibrary extends PluginController<{
   }
 
   getLibraryExpressions() {
+    console.log("got here!!!");
     const exprs: ExpressionLibraryExpression[] = [];
     for (const graph of this.graphs?.graphs ?? []) {
       for (const [id, expr] of graph.expressions) {
-        exprs.push(expr);
+        if (
+          expr.raw.type === "expression" &&
+          (expr.raw.latex?.startsWith(
+            (() => {
+              let ltx = textModeExprToLatex(this.searchStr) ?? "";
+              if (ltx[ltx.length - 1] === "}") ltx = ltx?.slice(0, -1);
+              return ltx;
+            })() ?? ""
+          ) ??
+            true)
+        )
+          exprs.push(expr);
       }
     }
     return exprs;

@@ -38,7 +38,10 @@ export class LibrarySearchView extends Component<{
             ></input>
           </div>
           <For
-            each={() => this.props.plugin().getLibraryExpressions()}
+            each={() => {
+              console.log("reran each ( this should run ffs)");
+              return this.props.plugin().getLibraryExpressions();
+            }}
             key={(expr) => expr.uniqueID}
           >
             <ul class="dsm-library-search-exprlist">
@@ -46,7 +49,6 @@ export class LibrarySearchView extends Component<{
                 const container = (
                   <li
                     onClick={(e: MouseEvent) => {
-                      console.log("loading expr..");
                       void this.props.plugin().loadExpression(expr);
                       // e.stopPropagation();
                       // e.preventDefault();

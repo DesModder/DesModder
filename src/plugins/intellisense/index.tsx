@@ -148,7 +148,6 @@ export default class Intellisense extends PluginController {
   // leave an intellisense menu and return to whatever expression
   // you were previously in
   leaveIntellisenseMenu() {
-    console.log("prevcusrorelem", this.prevCursorElem);
     this.intellisenseReturnMQ?.focus();
     this.latestMQ = this.intellisenseReturnMQ;
 
@@ -160,7 +159,6 @@ export default class Intellisense extends PluginController {
         new MouseEvent("mouseup", { bubbles: true })
       );
       if (this.goRightBeforeReturningToMQ) {
-        console.log("had to go right.");
         this.latestMQ?.keystroke("Right");
       }
     }
@@ -169,7 +167,6 @@ export default class Intellisense extends PluginController {
   saveCursorState() {
     this.latestMQ = MathQuillView.getFocusedMathquill();
     if (this.latestMQ) {
-      console.log(getController(this.latestMQ).cursor);
       this.prevCursorElem = getController(this.latestMQ)?.cursor?.[1]?._el;
       this.goRightBeforeReturningToMQ = false;
       if (!this.prevCursorElem) {
@@ -180,7 +177,6 @@ export default class Intellisense extends PluginController {
         this.prevCursorElem = getController(this.latestMQ)?.cursor?.parent?._el;
         this.goRightBeforeReturningToMQ = false;
       }
-      console.log("PREVCURSORELEM", this.prevCursorElem);
     }
   }
 
@@ -241,7 +237,6 @@ export default class Intellisense extends PluginController {
         );
         this.view?.update();
         e.preventDefault();
-        console.log("isindex", this.intellisenseIndex);
         return false;
 
         // navigating upward in the intellisense menu
@@ -373,7 +368,6 @@ export default class Intellisense extends PluginController {
   // delete an identifier and then replace it with something
   doAutocomplete(opt: BoundIdentifier) {
     this.leaveIntellisenseMenu();
-    console.log("doing autocomplete?", this.latestIdent, this.latestMQ);
     if (this.latestIdent && this.latestMQ) {
       this.latestIdent.goToEndOfIdent();
       this.latestIdent.deleteIdent();
