@@ -16,7 +16,10 @@ Supercharge your Desmos graph creation and sharing experience with many convenie
   - Duplicate any expression with hotkey Ctrl+Q
   - Use Shift+Enter to write newlines in notes
   - Quickly dump a folder's entire contents, and merge expressions into a folder
-  - Autocomplete variable names, jump to definition, and add documentation to functions.
+  - Autocomplete variable and function names
+  - Jump to variable/function definitions with F9
+  - Document functions and use said documentation
+  - Create and use a reusable library of expressions
 - Visual
   - Change the primary color from blue to any color
   - Toggle display of expression IDs
