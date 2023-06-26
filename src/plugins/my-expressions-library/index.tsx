@@ -146,6 +146,41 @@ function swap<T>(arr: T[], i: number, j: number) {
 // const searchContainer = document.createElement("div");
 // document.body.appendChild(searchContainer);
 
+function jsonEqual(a: any, b: any): boolean {
+  // check if both arrays are equal if arrays
+  if (Array.isArray(a)) {
+    if (!Array.isArray(b)) return false;
+    if (a.length !== b.length) return false;
+    return a.every((e, i) => jsonEqual(e, b[i]));
+  }
+
+  // a and b must have same type
+  if (typeof a !== typeof b) return false;
+
+  switch (typeof a) {
+    // primitives
+    case "string":
+    case "boolean":
+    case "number":
+    case "undefined":
+      return a === b;
+
+    // object
+    case "object": {
+      // null
+      if (a === null && b === null) return true;
+
+      // get the union of both objects' keys and compare them
+      const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+      return Array.from(keys).every((k) => jsonEqual(a[k], b[k]));
+    }
+  }
+
+  return false;
+}
+
+window.jsonEqual = jsonEqual;
+
 export default class MyExpressionsLibrary extends PluginController<{
   libraryGraphHashes: string; // probably a temporary fix
 }> {
@@ -251,6 +286,21 @@ export default class MyExpressionsLibrary extends PluginController<{
 
     loadExpressionInner(expr);
 
+    let loadedArray = Array.from(loaded);
+
+    const state = Calc.getState();
+
+    // deduplicate redundant expressions
+    loadedArray = loadedArray.filter(
+      (loadExpr) =>
+        !state.expressions.list.some((graphExpr) =>
+          jsonEqual(
+            { ...graphExpr, id: "", folderId: "" },
+            { ...loadExpr.raw, id: "", folderId: "" }
+          )
+        )
+    );
+
     let startIndex =
       Calc.controller.listModel.__itemModelArray.findIndex(
         (e) =>
@@ -258,9 +308,9 @@ export default class MyExpressionsLibrary extends PluginController<{
           (Object.keys(Calc.controller.listModel.selectedItemMap)[0] ?? "0")
       ) + 1;
 
+    // figure out what folder to put expressions into
     const startItem =
       Calc.controller.listModel.__itemModelArray[startIndex - 1];
-
     const startFolder: string | undefined =
       startItem?.type === "folder" ? startItem?.id : startItem?.folderId;
 
@@ -270,7 +320,7 @@ export default class MyExpressionsLibrary extends PluginController<{
 
     Calc.setExpressions(
       // @ts-expect-error todo: fix type safety later
-      Array.from(loaded).map((e) => {
+      loadedArray.map((e) => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const copy: Partial<ExpressionState> = {
           ...e.raw,
@@ -292,8 +342,6 @@ export default class MyExpressionsLibrary extends PluginController<{
       }
     }
 
-    const loadedArray = Array.from(loaded);
-
     let i = 0;
     for (const id of idsNew) {
       const idIndex = Calc.controller.listModel.__itemModelArray.findIndex(
@@ -303,6 +351,7 @@ export default class MyExpressionsLibrary extends PluginController<{
 
       const expr = loadedArray[i];
 
+      // set folderid and colorlatex
       itemToMove.folderId = startFolder ?? "";
       if (expr && expr.raw.type === "expression" && expr.raw.colorLatex) {
         itemToMove.colorLatex = expr.raw.colorLatex;
@@ -321,27 +370,6 @@ export default class MyExpressionsLibrary extends PluginController<{
     }
 
     Calc.controller.updateTheComputedWorld();
-
-    // setTimeout(() => {
-    //   let i = 0;
-    //   for (const expr of loaded) {
-    //     const myid = idsNew[i];
-
-    //     if (
-    //       myid !== undefined &&
-    //       expr.raw.type === "expression" &&
-    //       expr.raw.colorLatex
-    //     ) {
-    //       Calc.controller.dispatch({
-    //         type: "set-item-colorLatex",
-    //         id: myid,
-    //         colorLatex: expr.raw.colorLatex,
-    //       });
-    //     }
-
-    //     i++;
-    //   }
-    // }, 1000);
   }
 
   async loadGraphs() {
