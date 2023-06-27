@@ -4,16 +4,15 @@ import {
   getController,
   getMathquillIdentifierAtCursorPosition,
   getPartialFunctionCall,
-  mapAugAST,
 } from "./latex-parsing";
 import { IntellisenseState } from "./state";
 import { View, addBracketsToIdent } from "./view";
-import { DCGView, MountedComponent, jsx } from "DCGView";
+import { DCGView, MountedComponent } from "DCGView";
 import { MathQuillField, MathQuillView } from "components";
 import { Calc } from "globals/window";
 import { PluginController } from "plugins/PluginController";
-import { registerCustomDispatchOverridingHandler } from "plugins/compact-view/override-dispatch";
 import { getMetadata } from "plugins/manage-metadata/manage";
+import { registerCustomDispatchOverridingHandler } from "utils/listenerHelpers";
 
 export type BoundIdentifier =
   | {
@@ -289,7 +288,7 @@ export default class Intellisense extends PluginController {
       this.saveCursorState();
     });
 
-    document.addEventListener("mousedown", (e) => {
+    document.addEventListener("mousedown", () => {
       // this.saveCursorState();
     });
 

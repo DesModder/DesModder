@@ -1,6 +1,5 @@
 import { Console } from "../globals/window";
 import betterEvaluationView from "./moduleOverrides/better-evaluation-view.replacements";
-import compactView from "./moduleOverrides/compact-view.replacements";
 import debugMode from "./moduleOverrides/debug-mode.replacements";
 import extraExpressionButtons from "./moduleOverrides/extra-expression-buttons.replacements";
 import findReplace from "./moduleOverrides/find-replace.replacements";
@@ -29,7 +28,6 @@ const replacementStrings = [
   debugMode,
   extraExpressionButtons,
   showTips,
-  compactView,
 ];
 
 const replacements: Block[] = [];
@@ -62,7 +60,6 @@ const pluginNames = [
   "better-evaluation-view",
   "manage-metadata",
   "pillbox-menus",
-  "compact-view",
 ];
 
 replacements.forEach((r) => {
