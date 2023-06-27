@@ -193,6 +193,8 @@ export default class Intellisense extends PluginController {
       }
     });
 
+    // override the mathquill keystroke handler so that it opens the
+    // intellisense menu when I want it to
     document.addEventListener("focusin", () => {
       const mqopts = Calc.focusedMathQuill?.mq?.__controller?.options;
 
@@ -226,12 +228,6 @@ export default class Intellisense extends PluginController {
         (mqopts.overrideKeystroke as any).isMonkeypatchedIn = true;
       }
     });
-
-    // activate intellisense menu
-    // registerCustomDispatchOverridingHandler((evt) => {
-    //   if (evt.type === "on-special-key-pressed" && evt.key === "Down") {
-    //   }
-    // }, 1);
 
     // general intellisense keyboard handler
     document.addEventListener("keydown", (e) => {
@@ -316,10 +312,6 @@ export default class Intellisense extends PluginController {
       this.saveCursorState();
     });
 
-    document.addEventListener("mousedown", () => {
-      // this.saveCursorState();
-    });
-
     // close intellisense when clicking outside the intellisense window
     document.addEventListener("mouseup", (e) => {
       let elem = e.target;
@@ -334,9 +326,6 @@ export default class Intellisense extends PluginController {
       }
 
       this.intellisenseIndex = -1;
-
-      // this.updateIntellisense();
-      // this.saveCursorState();
     });
 
     // create initial intellisense window
