@@ -146,31 +146,44 @@ export default class Intellisense extends PluginController {
   // leave an intellisense menu and return to whatever expression
   // you were previously in
   leaveIntellisenseMenu() {
-    this.intellisenseReturnMQ?.focus();
-    this.latestMQ = this.intellisenseReturnMQ;
+    if (this.intellisenseReturnMQ) {
+      this.intellisenseReturnMQ?.focus();
+      this.latestMQ = this.intellisenseReturnMQ;
+    }
 
     if (this.prevCursorElem instanceof HTMLElement) {
+      // simulate a click to get cursor in the right spot
       this.prevCursorElem?.dispatchEvent(
         new MouseEvent("mousedown", { bubbles: true })
       );
       this.prevCursorElem?.dispatchEvent(
         new MouseEvent("mouseup", { bubbles: true })
       );
+
+      // go right if necessary to properly align cursor
       if (this.goRightBeforeReturningToMQ) {
         this.latestMQ?.keystroke("Right");
       }
     }
   }
 
+  // keep track of where the cursor is so we can return to it
+  // once we refocus the mathquill input
   saveCursorState() {
-    this.latestMQ = MathQuillView.getFocusedMathquill();
+    const focusedmq = MathQuillView.getFocusedMathquill();
+    if (focusedmq) this.latestMQ = focusedmq;
     if (this.latestMQ) {
+      // try the element to the right
       this.prevCursorElem = getController(this.latestMQ)?.cursor?.[1]?._el;
       this.goRightBeforeReturningToMQ = false;
+
+      // if that doesn't exist, try the element to the left
       if (!this.prevCursorElem) {
         this.prevCursorElem = getController(this.latestMQ)?.cursor?.[-1]?._el;
         this.goRightBeforeReturningToMQ = true;
       }
+
+      // if neither exist, try the parent element
       if (!this.prevCursorElem) {
         this.prevCursorElem = getController(this.latestMQ)?.cursor?.parent?._el;
         this.goRightBeforeReturningToMQ = false;
@@ -326,6 +339,7 @@ export default class Intellisense extends PluginController {
       }
 
       this.intellisenseIndex = -1;
+      //this.canHaveIntellisense = false;
     });
 
     // create initial intellisense window
@@ -388,6 +402,7 @@ export default class Intellisense extends PluginController {
   // delete an identifier and then replace it with something
   doAutocomplete(opt: BoundIdentifier) {
     this.leaveIntellisenseMenu();
+    console.log(this.latestIdent, this.latestMQ);
     if (this.latestIdent && this.latestMQ) {
       this.latestIdent.goToEndOfIdent();
       this.latestIdent.deleteIdent();
