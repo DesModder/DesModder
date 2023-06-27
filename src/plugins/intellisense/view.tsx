@@ -3,7 +3,7 @@ import { DStaticMathquillView, If } from "../../components/desmosComponents";
 import { PartialFunctionCall } from "./latex-parsing";
 import "./view.less";
 import { Component, jsx } from "DCGView";
-import { For, IconButton, StaticMathQuillView, Switch } from "components";
+import { For, StaticMathQuillView, Switch } from "components";
 import { latexTreeToString } from "plugins/text-mode/aug/augLatexToRaw";
 import { childExprToAug } from "plugins/text-mode/down/astToAug";
 import { parse } from "plugins/text-mode/down/textToAST";
@@ -372,10 +372,10 @@ export class View extends Component<{
           each={() =>
             this.props.idents().map((ident, index) => ({ ...ident, index }))
           }
-          key={(e) => counter2++}
+          key={() => counter2++}
         >
           <table class="intellisense-options-table">
-            {(ident: BoundIdentifier & { index: number }, idx: number) => {
+            {(ident: BoundIdentifier & { index: number }) => {
               const reformattedIdent = addBracketsToIdent(ident.variableName);
 
               const opt = (

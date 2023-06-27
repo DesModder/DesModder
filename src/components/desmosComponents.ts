@@ -39,6 +39,11 @@ export interface MathQuillField {
   typedText: (input: string) => void;
   focus: () => void;
   blur: () => void;
+  __controller: {
+    options: {
+      overrideKeystroke: (key: string, evt: KeyboardEvent) => void;
+    };
+  };
 }
 
 export abstract class MathQuillViewComponent extends ClassComponent<{

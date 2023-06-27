@@ -12,7 +12,6 @@ import { MathQuillField, MathQuillView } from "components";
 import { Calc } from "globals/window";
 import { PluginController } from "plugins/PluginController";
 import { getMetadata } from "plugins/manage-metadata/manage";
-import { registerCustomDispatchOverridingHandler } from "utils/listenerHelpers";
 
 export type BoundIdentifier =
   | {
@@ -187,30 +186,52 @@ export default class Intellisense extends PluginController {
     document.addEventListener("focusout", (e) => {
       if (
         e.target !== intellisenseMountPoint &&
-        e.relatedTarget !== intellisenseMountPoint
+        e.relatedTarget !== intellisenseMountPoint &&
+        e.relatedTarget !== null
       ) {
         this.canHaveIntellisense = false;
       }
     });
 
-    // activate intellisense menu
-    registerCustomDispatchOverridingHandler((evt) => {
-      if (evt.type === "on-special-key-pressed" && evt.key === "Down") {
-        if (this.intellisenseOpts.length > 1 && this.canHaveIntellisense) {
-          this.saveCursorState();
-          this.intellisenseReturnMQ = this.latestMQ;
-          setTimeout(() => {
-            intellisenseMountPoint.focus();
+    document.addEventListener("focusin", () => {
+      const mqopts = Calc.focusedMathQuill?.mq?.__controller?.options;
+
+      // done because the monkeypatch has different a different this value
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
+      const self = this;
+
+      if (mqopts && !(mqopts.overrideKeystroke as any).isMonkeypatchedIn) {
+        const ovks = mqopts?.overrideKeystroke;
+        mqopts.overrideKeystroke = function (key: string, evt: KeyboardEvent) {
+          if (
+            self.intellisenseOpts.length > 1 &&
+            self.canHaveIntellisense &&
+            key === "Down"
+          ) {
+            self.saveCursorState();
+            self.intellisenseReturnMQ = self.latestMQ;
             Calc.controller.dispatch({
               type: "set-none-selected",
             });
-          }, 0);
-          this.intellisenseIndex = 0;
-          this.view?.update();
-          return false;
-        }
+            intellisenseMountPoint.focus();
+            self.intellisenseIndex = -1;
+            self.view?.update();
+            return false;
+          } else {
+            ovks(key, evt);
+          }
+        };
+
+        // prevent repeatedly monkeypatching overrideKeystroke (could cause stack overflow)
+        (mqopts.overrideKeystroke as any).isMonkeypatchedIn = true;
       }
-    }, 1);
+    });
+
+    // activate intellisense menu
+    // registerCustomDispatchOverridingHandler((evt) => {
+    //   if (evt.type === "on-special-key-pressed" && evt.key === "Down") {
+    //   }
+    // }, 1);
 
     // general intellisense keyboard handler
     document.addEventListener("keydown", (e) => {
@@ -222,21 +243,26 @@ export default class Intellisense extends PluginController {
       }
 
       // navigating downward in the intellisense menu
-      if (
-        e.key === "ArrowDown" &&
-        this.intellisenseOpts.length > 0 &&
-        document.activeElement === intellisenseMountPoint &&
-        (addBracketsToIdent(this.intellisenseOpts[0].variableName) !==
-          this.latestIdent?.ident ||
-          this.intellisenseOpts.length > 1)
-      ) {
-        this.intellisenseIndex = Math.min(
-          this.intellisenseIndex + 1,
-          this.intellisenseOpts.length - 1
-        );
-        this.view?.update();
-        e.preventDefault();
-        return false;
+      if (e.key === "ArrowDown") {
+        // is the intellisense menu focused?
+        if (document.activeElement === intellisenseMountPoint) {
+          if (
+            this.intellisenseOpts.length > 0 &&
+            (addBracketsToIdent(this.intellisenseOpts[0].variableName) !==
+              this.latestIdent?.ident ||
+              this.intellisenseOpts.length > 1)
+          ) {
+            this.intellisenseIndex = Math.min(
+              this.intellisenseIndex + 1,
+              this.intellisenseOpts.length - 1
+            );
+            this.view?.update();
+            e.preventDefault();
+            return false;
+          }
+
+          // try to open the intellisense menu
+        }
 
         // navigating upward in the intellisense menu
       } else if (e.key === "ArrowUp" && this.intellisenseOpts.length > 0) {
@@ -274,10 +300,12 @@ export default class Intellisense extends PluginController {
 
       // Jump to definition
       if (e.key === "F9" && this.latestIdent) {
+        this.leaveIntellisenseMenu();
         this.jumpToDefinition(this.latestIdent.ident);
         this.canHaveIntellisense = false;
-        this.leaveIntellisenseMenu();
         this.view?.update();
+        e.preventDefault();
+        return false;
       }
     });
 
@@ -330,10 +358,7 @@ export default class Intellisense extends PluginController {
   jumpToDefinition(name: string) {
     const identDst = Array.from(this.intellisenseState.boundIdentifiers()).find(
       (id) => {
-        return (
-          (id.type === "function" || id.type === "variable") &&
-          addBracketsToIdent(id.variableName) === name
-        );
+        return addBracketsToIdent(id.variableName) === name;
       }
     );
 
@@ -341,6 +366,13 @@ export default class Intellisense extends PluginController {
       Calc.controller.dispatch({
         type: "set-selected-id",
         id: identDst.exprId,
+      });
+      Calc.controller.dispatch({
+        type: "set-focus-location",
+        location: {
+          type: "expression",
+          id: identDst.exprId,
+        },
       });
 
       const model = Calc.controller.listModel.__itemIdToModel[identDst.exprId];
@@ -389,6 +421,7 @@ export default class Intellisense extends PluginController {
     }
 
     this.intellisenseReturnMQ?.focus();
+    this.canHaveIntellisense = false;
     this.updateIntellisense();
     this.view?.update();
   }

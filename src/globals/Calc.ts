@@ -1,5 +1,6 @@
 import { ItemModel } from "./models";
 import { GraphState } from "@desmodder/graph-state";
+import { MathQuillField } from "components";
 
 export type DispatchedEvent =
   | {
@@ -57,7 +58,7 @@ export type DispatchedEvent =
     }
   | {
       type: "set-focus-location";
-      location: { type: string };
+      location: { type: "expression"; id: string } | { type: string };
     }
   | {
       type: "on-evaluator-changes";
@@ -160,6 +161,9 @@ interface Toast {
 }
 
 interface CalcPrivate {
+  focusedMathQuill: {
+    mq: MathQuillField;
+  };
   /// / undocumented, may break
   controller: {
     // _removeExpressionSynchronously(model: ItemModel): void;
