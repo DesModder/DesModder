@@ -137,14 +137,13 @@ export default class Intellisense extends PluginController {
           )
         );
 
+        // sort the intellisense options so that closer ones appear first
         const listModel = Calc.controller.listModel;
         const orderMap = new Map<string, number>();
         for (let i = 0; i < listModel.drawOrder.length; i++) {
           orderMap.set(listModel.drawOrder[i], i);
         }
-
         const selectedId = getSelectedExpressionID();
-
         if (selectedId) {
           const myindex = orderMap.get(selectedId) ?? 0;
           this.intellisenseOpts.sort((a, b) => {
@@ -255,6 +254,7 @@ export default class Intellisense extends PluginController {
       const self = this;
 
       if (mqopts && !(mqopts.overrideKeystroke as any).isMonkeypatchedIn) {
+        // monkeypatch in a function to wrap overrideKeystroke
         const remove = attach<(key: string, evt: KeyboardEvent) => void>(
           ...propGetSet(mqopts, "overrideKeystroke"),
           function (key: string, _: KeyboardEvent) {
@@ -265,6 +265,7 @@ export default class Intellisense extends PluginController {
               addBracketsToIdent(self.intellisenseOpts[0].variableName) ===
                 self.latestIdent?.ident
             )
+              // return nothing to ensure the actual overrideKeystroke runs
               return;
 
             // navigating downward in the intellisense menu
@@ -400,6 +401,7 @@ export default class Intellisense extends PluginController {
     );
 
     if (identDst) {
+      // jump to definition
       Calc.controller.dispatch({
         type: "set-selected-id",
         id: identDst.exprId,
@@ -412,8 +414,9 @@ export default class Intellisense extends PluginController {
         },
       });
 
+      // if we jumped to an expression with a folder, open the folder
+      // and then re-scroll the expression into view
       const model = Calc.controller.listModel.__itemIdToModel[identDst.exprId];
-
       if (model && model.type !== "folder" && model.folderId) {
         Calc.controller.dispatch({
           type: "set-folder-collapsed",
@@ -429,6 +432,8 @@ export default class Intellisense extends PluginController {
         if (dcgcontainer) dcgcontainer.scrollTop = 0;
       }
     }
+
+    // disable intellisense
     this.canHaveIntellisense = false;
     this.view?.update();
   }

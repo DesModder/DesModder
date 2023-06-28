@@ -146,6 +146,11 @@ function tryGetMathquillIdentFromVariableOnly(
   const ctrlr = getController(mq);
 
   const varName = ctrlr.cursor?.[-1]?.latex?.();
+  const potentiallyADot = ctrlr.cursor?.[-1]?.[-1]?.latex?.();
+
+  // don't open intellisense for point member access
+  if ((varName === "x" || varName === "y") && potentiallyADot === ".") return;
+
   if (varName) {
     if (isIdentStr(varName)) {
       return {

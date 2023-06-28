@@ -65,8 +65,9 @@ const interval = setInterval(() => {
   };
 }, 0);
 
-// attach a function onto an existing function.
-// acts as a decorator that can be disabled later.
+// "attach" a function onto an existing function, performing some functionality
+// and then optionally triggering the existing function.
+// Returns an "unsubscribe" function that resets the attached function to its prior state
 export function attach<F extends (...args: any) => any>(
   getTarget: () => F,
   setTarget: (f: F) => void,
@@ -87,7 +88,7 @@ export function attach<F extends (...args: any) => any>(
   return () => setTarget(oldTarget);
 }
 
-// helper function for attach
+// helper function for attach; makes a getter/setter for an object property
 export function propGetSet<Obj extends object, Key extends keyof Obj>(
   obj: Obj,
   key: Key
