@@ -25,7 +25,6 @@ export function mapAugAST(
 }
 
 export function getController(mq: MathQuillField) {
-  // @ts-expect-error mq controller exists
   return mq.__controller as MQController;
 }
 

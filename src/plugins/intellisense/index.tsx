@@ -46,6 +46,10 @@ const intellisenseMountPoint = document.createElement("div");
 document.body.appendChild(intellisenseMountPoint);
 intellisenseMountPoint.tabIndex = -1;
 
+export function getSelectedExpressionID(): string | undefined {
+  return Object.keys(Calc.controller.listModel.selectedItemMap)[0];
+}
+
 export default class Intellisense extends PluginController {
   static id = "intellisense" as const;
   static enabledByDefault = true;
@@ -62,7 +66,7 @@ export default class Intellisense extends PluginController {
   latestMQ: MathQuillField | undefined;
 
   intellisenseReturnMQ: MathQuillField | undefined;
-  prevCursorElem: Element | undefined;
+  prevCursorPos: { x: number; y: number } | undefined;
   goRightBeforeReturningToMQ: boolean = false;
 
   idcounter = 0;
@@ -77,6 +81,7 @@ export default class Intellisense extends PluginController {
 
   updateIntellisense() {
     const focusedMQ = MathQuillView.getFocusedMathquill();
+    this.saveCursorState();
     this.intellisenseOpts = [];
 
     // is there actually a focused mathquill window?
@@ -130,10 +135,13 @@ export default class Intellisense extends PluginController {
             this.latestIdent?.ident.replace(/[{} \\]/g, "") ?? ""
           )
         );
+      } else {
+        this.intellisenseOpts = [];
       }
 
       // if there isn't, just get rid of the intellisense window
     } else {
+      this.intellisenseOpts = [];
       this.latestIdent = undefined;
       this.latestMQ = undefined;
       this.intellisenseIndex = -1;
@@ -151,19 +159,30 @@ export default class Intellisense extends PluginController {
       this.latestMQ = this.intellisenseReturnMQ;
     }
 
-    if (this.prevCursorElem instanceof HTMLElement) {
-      // simulate a click to get cursor in the right spot
-      this.prevCursorElem?.dispatchEvent(
-        new MouseEvent("mousedown", { bubbles: true })
-      );
-      this.prevCursorElem?.dispatchEvent(
-        new MouseEvent("mouseup", { bubbles: true })
-      );
+    if (this.prevCursorPos && this.latestMQ) {
+      const mqRootBlock =
+        this.latestMQ.__controller.container.querySelector(
+          ".dcg-mq-root-block"
+        );
 
-      // go right if necessary to properly align cursor
-      if (this.goRightBeforeReturningToMQ) {
-        this.latestMQ?.keystroke("Right");
-      }
+      if (!mqRootBlock) return;
+
+      const mqRootBlockRect = mqRootBlock.getBoundingClientRect();
+
+      // simulate a click to get cursor in the right spot
+      const eventHandlerSettings = {
+        bubbles: true,
+        clientX:
+          this.prevCursorPos.x - mqRootBlock.scrollLeft + mqRootBlockRect.x,
+        clientY:
+          this.prevCursorPos.y - mqRootBlock.scrollTop + mqRootBlockRect.y,
+      };
+      this.latestMQ.__controller.container.dispatchEvent(
+        new MouseEvent("mousedown", eventHandlerSettings)
+      );
+      this.latestMQ.__controller.container.dispatchEvent(
+        new MouseEvent("mouseup", eventHandlerSettings)
+      );
     }
   }
 
@@ -172,22 +191,24 @@ export default class Intellisense extends PluginController {
   saveCursorState() {
     const focusedmq = MathQuillView.getFocusedMathquill();
     if (focusedmq) this.latestMQ = focusedmq;
-    if (this.latestMQ) {
-      // try the element to the right
-      this.prevCursorElem = getController(this.latestMQ)?.cursor?.[1]?._el;
-      this.goRightBeforeReturningToMQ = false;
+    if (
+      this.latestMQ &&
+      document.body.contains(this.latestMQ.__controller.cursor.cursorElement)
+    ) {
+      // get cursor pos relative to the top left of the mathquill's root element
+      const mqRootBlock =
+        this.latestMQ.__controller.container.querySelector(
+          ".dcg-mq-root-block"
+        );
 
-      // if that doesn't exist, try the element to the left
-      if (!this.prevCursorElem) {
-        this.prevCursorElem = getController(this.latestMQ)?.cursor?.[-1]?._el;
-        this.goRightBeforeReturningToMQ = true;
-      }
-
-      // if neither exist, try the parent element
-      if (!this.prevCursorElem) {
-        this.prevCursorElem = getController(this.latestMQ)?.cursor?.parent?._el;
-        this.goRightBeforeReturningToMQ = false;
-      }
+      if (!mqRootBlock) return;
+      const mqRootBlockRect = mqRootBlock.getBoundingClientRect();
+      const rect =
+        this.latestMQ.__controller.cursor.cursorElement.getBoundingClientRect();
+      this.prevCursorPos = {
+        x: rect.x + mqRootBlock.scrollLeft - mqRootBlockRect.x,
+        y: rect.y + mqRootBlock.scrollTop - mqRootBlockRect.y,
+      };
     }
   }
 
@@ -219,7 +240,7 @@ export default class Intellisense extends PluginController {
         const ovks = mqopts?.overrideKeystroke;
         mqopts.overrideKeystroke = function (key: string, evt: KeyboardEvent) {
           if (
-            self.intellisenseOpts.length > 1 &&
+            self.intellisenseOpts.length > 0 &&
             self.canHaveIntellisense &&
             key === "Down"
           ) {
@@ -295,8 +316,8 @@ export default class Intellisense extends PluginController {
         (e.key === "Enter" || e.key === "Tab") &&
         this.intellisenseIndex >= 0
       ) {
-        this.doAutocomplete(this.intellisenseOpts[this.intellisenseIndex]);
         e.preventDefault();
+        this.doAutocomplete(this.intellisenseOpts[this.intellisenseIndex]);
         this.view?.update();
 
         // force close autocomplete with escape
@@ -319,7 +340,8 @@ export default class Intellisense extends PluginController {
     });
 
     // update the intellisense on key pressed in a mathquill
-    document.addEventListener("keyup", () => {
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "Enter") return;
       if (!MathQuillView.getFocusedMathquill()) return;
       this.updateIntellisense();
       this.saveCursorState();
@@ -339,7 +361,6 @@ export default class Intellisense extends PluginController {
       }
 
       this.intellisenseIndex = -1;
-      //this.canHaveIntellisense = false;
     });
 
     // create initial intellisense window
@@ -402,7 +423,7 @@ export default class Intellisense extends PluginController {
   // delete an identifier and then replace it with something
   doAutocomplete(opt: BoundIdentifier) {
     this.leaveIntellisenseMenu();
-    console.log(this.latestIdent, this.latestMQ);
+
     if (this.latestIdent && this.latestMQ) {
       this.latestIdent.goToEndOfIdent();
       this.latestIdent.deleteIdent();
@@ -428,6 +449,16 @@ export default class Intellisense extends PluginController {
     this.canHaveIntellisense = false;
     this.updateIntellisense();
     this.view?.update();
+
+    const selectedid = getSelectedExpressionID();
+
+    if (this.intellisenseReturnMQ && selectedid) {
+      Calc.controller.dispatch({
+        type: "set-item-latex",
+        id: selectedid,
+        latex: this.intellisenseReturnMQ.latex(),
+      });
+    }
   }
 
   afterDisable() {
