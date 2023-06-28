@@ -217,6 +217,8 @@ interface CalcPrivate {
         type: "folder" | "expression";
       }[];
       __itemIdToModel: Record<string, ItemModel>;
+
+      drawOrder: string[];
     };
     _addItemToEndFromAPI: (item: ItemModel) => void;
     _showToast: (toast: Toast) => void;

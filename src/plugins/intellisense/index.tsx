@@ -45,7 +45,6 @@ export function getMQCursorPosition(focusedMQ: MathQuillField) {
 
 const intellisenseMountPoint = document.createElement("div");
 document.body.appendChild(intellisenseMountPoint);
-intellisenseMountPoint.tabIndex = -1;
 
 export function getSelectedExpressionID(): string | undefined {
   return Object.keys(Calc.controller.listModel.selectedItemMap)[0];
@@ -137,8 +136,29 @@ export default class Intellisense extends PluginController {
             this.latestIdent?.ident.replace(/[{} \\]/g, "") ?? ""
           )
         );
+
+        const listModel = Calc.controller.listModel;
+        const orderMap = new Map<string, number>();
+        for (let i = 0; i < listModel.drawOrder.length; i++) {
+          orderMap.set(listModel.drawOrder[i], i);
+        }
+
+        const selectedId = getSelectedExpressionID();
+
+        if (selectedId) {
+          const myindex = orderMap.get(selectedId) ?? 0;
+          this.intellisenseOpts.sort((a, b) => {
+            return (
+              Math.abs((orderMap.get(a.exprId) ?? 0) - myindex) -
+              Math.abs((orderMap.get(b.exprId) ?? 0) - myindex)
+            );
+          });
+        }
+
+        if (this.intellisenseIndex === -1) this.intellisenseIndex = 0;
       } else {
         this.intellisenseOpts = [];
+        this.intellisenseIndex = -1;
       }
 
       // if there isn't, just get rid of the intellisense window
@@ -238,18 +258,41 @@ export default class Intellisense extends PluginController {
         const remove = attach<(key: string, evt: KeyboardEvent) => void>(
           ...propGetSet(mqopts, "overrideKeystroke"),
           function (key: string, _: KeyboardEvent) {
+            // the only intellisense option is already complete
+            // so don't bother using it
             if (
-              self.intellisenseOpts.length > 0 &&
-              self.canHaveIntellisense &&
-              key === "Down"
+              self.intellisenseOpts.length === 1 &&
+              addBracketsToIdent(self.intellisenseOpts[0].variableName) ===
+                self.latestIdent?.ident
+            )
+              return;
+
+            // navigating downward in the intellisense menu
+            if (key === "Down") {
+              if (self.intellisenseOpts.length > 0) {
+                self.intellisenseIndex = Math.min(
+                  self.intellisenseIndex + 1,
+                  self.intellisenseOpts.length - 1
+                );
+                self.view?.update();
+                return [false, undefined];
+              }
+
+              // navigating upward in the intellisense menu
+            } else if (key === "Up" && self.intellisenseOpts.length > 0) {
+              self.intellisenseIndex = Math.max(self.intellisenseIndex - 1, 0);
+
+              self.view?.update();
+              return [false, undefined];
+
+              // selecting and autocompleting an intellisense selection
+            } else if (
+              (key === "Enter" || key === "Tab") &&
+              self.intellisenseIndex >= 0
             ) {
-              self.saveCursorState();
-              self.intellisenseReturnMQ = self.latestMQ;
-              Calc.controller.dispatch({
-                type: "set-none-selected",
-              });
-              intellisenseMountPoint.focus();
-              self.intellisenseIndex = -1;
+              self.doAutocomplete(
+                self.intellisenseOpts[self.intellisenseIndex]
+              );
               self.view?.update();
               return [false, undefined];
             }
@@ -272,63 +315,15 @@ export default class Intellisense extends PluginController {
       this.canHaveIntellisense = true;
     }
 
-    // navigating downward in the intellisense menu
-    if (e.key === "ArrowDown") {
-      // is the intellisense menu focused?
-      if (document.activeElement === intellisenseMountPoint) {
-        if (
-          this.intellisenseOpts.length > 0 &&
-          (addBracketsToIdent(this.intellisenseOpts[0].variableName) !==
-            this.latestIdent?.ident ||
-            this.intellisenseOpts.length > 1)
-        ) {
-          this.intellisenseIndex = Math.min(
-            this.intellisenseIndex + 1,
-            this.intellisenseOpts.length - 1
-          );
-          this.view?.update();
-          e.preventDefault();
-          return false;
-        }
-      }
-
-      // navigating upward in the intellisense menu
-    } else if (e.key === "ArrowUp" && this.intellisenseOpts.length > 0) {
-      const oldIntellisenseIndex = this.intellisenseIndex;
-      this.intellisenseIndex = Math.max(this.intellisenseIndex - 1, 0);
-
-      if (oldIntellisenseIndex === 0) {
-        this.leaveIntellisenseMenu();
-
-        return;
-      }
-
-      if (this.intellisenseIndex >= 0) {
-        this.view?.update();
-        e.preventDefault();
-        return false;
-      }
-
-      // choose autocomplete option with tab or enter
-    } else if (
-      (e.key === "Enter" || e.key === "Tab") &&
-      this.intellisenseIndex >= 0
-    ) {
-      e.preventDefault();
-      this.doAutocomplete(this.intellisenseOpts[this.intellisenseIndex]);
-      this.view?.update();
-
-      // force close autocomplete with escape
-    } else if (e.key === "Escape") {
+    // close intellisense menu
+    if (e.key === "Escape") {
       this.intellisenseIndex = -1;
       this.canHaveIntellisense = false;
-      this.leaveIntellisenseMenu();
       this.view?.update();
     }
 
     // Jump to definition
     if (e.key === "F9" && this.latestIdent) {
-      this.leaveIntellisenseMenu();
       this.jumpToDefinition(this.latestIdent.ident);
       this.canHaveIntellisense = false;
       this.view?.update();
@@ -383,7 +378,10 @@ export default class Intellisense extends PluginController {
       x: () => this.x,
       y: () => this.y,
       idents: () => this.intellisenseOpts,
-      autocomplete: (ident) => this.doAutocomplete(ident),
+      autocomplete: (ident) => {
+        this.leaveIntellisenseMenu();
+        this.doAutocomplete(ident);
+      },
       index: () => this.intellisenseIndex,
       partialFunctionCall: () => this.partialFunctionCall,
       partialFunctionCallIdent: () => this.partialFunctionCallIdent,
@@ -437,8 +435,6 @@ export default class Intellisense extends PluginController {
 
   // delete an identifier and then replace it with something
   doAutocomplete(opt: BoundIdentifier) {
-    this.leaveIntellisenseMenu();
-
     if (this.latestIdent && this.latestMQ) {
       this.latestIdent.goToEndOfIdent();
       this.latestIdent.deleteIdent();
@@ -457,6 +453,7 @@ export default class Intellisense extends PluginController {
         // add back in variable
       } else {
         this.latestMQ.typedText(formattedIdentLatex.replace(/\{|\}/g, ""));
+        this.latestMQ.keystroke("Right");
       }
     }
 
@@ -467,6 +464,7 @@ export default class Intellisense extends PluginController {
 
     const selectedid = getSelectedExpressionID();
 
+    // force calc to realize something's changed
     if (this.intellisenseReturnMQ && selectedid) {
       Calc.controller.dispatch({
         type: "set-item-latex",
