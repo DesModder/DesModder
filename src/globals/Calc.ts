@@ -77,6 +77,8 @@ export type DispatchedEvent =
   | {
       // Note: this has more parameters. I just haven't found a need for them yet.
       type: "set-item-latex";
+      latex: string;
+      id: string;
     }
   | {
       type: "on-special-key-pressed";

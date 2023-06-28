@@ -1,6 +1,7 @@
 import { ExpressionModel, ItemModel } from "../globals/models";
 import { ClassComponent, Component, DCGView } from "DCGView";
 import { DesModderFragile, Calc, Fragile } from "globals/window";
+import { MQCursor } from "plugins/intellisense/latex-parsing";
 
 export abstract class CheckboxComponent extends ClassComponent<{
   checked: boolean;
@@ -43,6 +44,12 @@ export interface MathQuillField {
     options: {
       overrideKeystroke: (key: string, evt: KeyboardEvent) => void;
     };
+    cursor: {
+      [-1]: MQCursor;
+      [1]: MQCursor;
+      cursorElement: HTMLElement;
+    };
+    container: HTMLElement;
   };
 }
 
