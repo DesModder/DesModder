@@ -1,12 +1,18 @@
 import VideoCreator from "..";
 import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
+import { downloadZip } from "client-zip";
 
 type FFmpeg = ReturnType<typeof createFFmpeg>;
-export type OutFileType = "gif" | "mp4" | "webm" | "apng";
+type FFmpegFileType = "gif" | "mp4" | "webm" | "apng";
+export type OutFileType = FFmpegFileType | "zip";
 
 let ffmpeg: null | FFmpeg = null;
 
-async function exportAll(ffmpeg: FFmpeg, fileType: OutFileType, fps: number) {
+async function exportAll(
+  ffmpeg: FFmpeg,
+  fileType: FFmpegFileType,
+  fps: number
+) {
   const outFilename = "out." + fileType;
 
   const outFlags = {
@@ -72,34 +78,42 @@ export async function initFFmpeg(controller: VideoCreator) {
   return ffmpeg;
 }
 
-export async function exportFrames(controller: VideoCreator) {
-  controller.isExporting = true;
-  controller.setExportProgress(-1);
-  controller.updateView();
+async function* files(frames: string[]) {
+  const len = frames.length.toString().length;
+  let i = 1;
+  for (const dataURI of frames) {
+    const raw = i.toString();
+    // glob orders lexicographically, but we want numerically
+    const padded = "0".repeat(len - raw.length) + raw;
+    const blob = await (await fetch(dataURI)).blob();
+    yield { name: `img-${padded}.png`, input: blob };
+    i++;
+  }
+}
 
+async function exportFFmpeg(
+  controller: VideoCreator,
+  fileType: FFmpegFileType,
+  ext: "png" | "gif" | "mp4" | "webm"
+) {
   const ffmpeg = await initFFmpeg(controller);
 
   const filenames: string[] = [];
 
-  async function writeFile(filename: string, frame: string) {
+  async function writeFile(filename: string, frame: Blob) {
     if (ffmpeg !== null)
       ffmpeg.FS("writeFile", filename, await fetchFile(frame));
   }
 
-  const len = (controller.frames.length - 1).toString().length;
-  controller.frames.forEach((frame, i) => {
-    const raw = i.toString();
-    // glob orders lexicographically, but we want numerically
-    const padded = "0".repeat(len - raw.length) + raw;
-    const filename = `desmos.${padded}.png`;
+  for await (const { name, input } of files(controller.frames)) {
+    filenames.push(name);
     // filenames may be pushed out of order because async, but doesn't matter
-    filenames.push(filename);
-    void writeFile(filename, frame);
-  });
+    void writeFile(name, input);
+  }
 
   const outFilename = await exportAll(
     ffmpeg,
-    controller.fileType,
+    fileType,
     controller.getFPSNumber()
   );
 
@@ -108,19 +122,41 @@ export async function exportFrames(controller: VideoCreator) {
     ffmpeg.FS("unlink", filename);
   }
   ffmpeg.FS("unlink", outFilename);
-  const ext = controller.fileType === "apng" ? "png" : controller.fileType;
   const metaExt = { png: "image", gif: "image", mp4: "video", webm: "video" }[
     ext
   ];
-  const url = URL.createObjectURL(
-    new Blob([data.buffer as ArrayBuffer], { type: `${metaExt}/${ext}` })
-  );
+
+  return new Blob([data.buffer as ArrayBuffer], { type: `${metaExt}/${ext}` });
+}
+
+async function exportZip(controller: VideoCreator) {
+  return await downloadZip(files(controller.frames)).blob();
+}
+
+export async function exportFrames(controller: VideoCreator) {
+  controller.isExporting = true;
+  controller.setExportProgress(-1);
+  controller.updateView();
+
+  const fileType = controller.fileType;
+  const ext = fileType === "apng" ? "png" : fileType;
+  const blob =
+    fileType === "zip"
+      ? await exportZip(controller)
+      : await exportFFmpeg(
+          controller,
+          fileType,
+          ext as Exclude<typeof ext, "zip">
+        );
+
+  const url = URL.createObjectURL(blob);
 
   let humanOutFilename = controller.getOutfileName();
   if (!humanOutFilename.endsWith("." + ext)) {
     humanOutFilename += "." + ext;
   }
   download(url, humanOutFilename);
+  URL.revokeObjectURL(url);
 
   controller.isExporting = false;
   controller.updateView();

@@ -71,6 +71,7 @@
     "@lezer/common": "^1.0.2",
     "@lezer/lr": "^1.3.3",
     "@types/desmos": "^1.6.0",
+    "client-zip": "^2.4.4",
     "eslint-plugin-rulesdir": "^0.2.2",
     "idb-keyval": "^6.2.0",
     "js-tokens": "^8.0.1",
