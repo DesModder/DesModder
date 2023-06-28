@@ -49,10 +49,7 @@ export async function cancelExport(controller: VideoCreator) {
 
 export async function initFFmpeg(controller: VideoCreator) {
   if (ffmpeg === null) {
-    ffmpeg = createFFmpeg({
-      log: false,
-      corePath: "https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js",
-    });
+    ffmpeg = createFFmpeg({ log: false });
     ffmpeg.setLogger(({ type, message }) => {
       if (type === "fferr") {
         const match = message.match(/frame=\s*(?<frame>\d+)/);
