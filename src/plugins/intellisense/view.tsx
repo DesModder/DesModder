@@ -190,7 +190,7 @@ export class FormattedDocstring extends Component<{
         each={() => this.props.docstring().map((e, i) => [e, i] as const)}
         key={() => counter++}
       >
-        <div style={{ display: "inline" }}>
+        <div style={{ display: "inline" }} class="dsm-intellisense-docstring">
           {([r, _]: [DocStringRenderable, number]) => (
             <Switch key={() => r}>
               {() => {
