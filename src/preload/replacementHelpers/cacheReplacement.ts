@@ -16,8 +16,7 @@ export async function fullReplacementCached(
   enabledReplacements: Block[]
 ): Promise<string> {
   (window as any).dsm_workerAppend = workerAppend;
-  const k = "replacement_cached";
-  const cached = await get(k);
+  const cached = await getCache();
   const hashRepls = cyrb53(JSON.stringify(enabledReplacements));
   const hashFile = cyrb53(calcDesktop);
   const hashAppend = cyrb53(workerAppend);
@@ -34,13 +33,36 @@ export async function fullReplacementCached(
   const result = fullReplacement(calcDesktop, enabledReplacements);
   // cache if there's no panics
   if (panickedPlugins.size === 0)
-    void set(k, {
-      hashRepls,
-      hashFile,
-      hashAppend,
-      result,
-    });
+    void setCache({ hashRepls, hashFile, hashAppend, result });
   return result;
+}
+
+interface Cached {
+  hashRepls: number;
+  hashFile: number;
+  hashAppend: number;
+  result: string;
+}
+
+const CACHE_KEY = "replacement_cached";
+
+async function getCache(): Promise<Cached | undefined> {
+  try {
+    return await get(CACHE_KEY);
+  } catch {
+    return undefined;
+  }
+}
+
+async function setCache(obj: Cached) {
+  try {
+    await set(CACHE_KEY, obj);
+  } catch {
+    Console.warn(
+      "Failed to cache replacement. This is expected in a Private Window " +
+        "but could indicate a problem in a regular window"
+    );
+  }
 }
 
 function fullReplacement(calcDesktop: string, enabledReplacements: Block[]) {
