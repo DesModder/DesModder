@@ -64,3 +64,33 @@ const interval = setInterval(() => {
     old.call(this, evt);
   };
 }, 0);
+
+// attach a function onto an existing function.
+// acts as a decorator that can be disabled later.
+export function attach<F extends (...args: any) => any>(
+  getTarget: () => F,
+  setTarget: (f: F) => void,
+  handler: (...params: Parameters<F>) => [false, ReturnType<F>] | undefined
+): () => void {
+  const oldTarget = getTarget();
+
+  // @ts-expect-error go away
+  setTarget((...args) => {
+    const ret = handler(...args);
+
+    // intentional
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-boolean-literal-compare
+    if (ret?.[0] === false) return ret[1];
+    return oldTarget(...args);
+  });
+
+  return () => setTarget(oldTarget);
+}
+
+// helper function for attach
+export function propGetSet<Obj extends object, Key extends keyof Obj>(
+  obj: Obj,
+  key: Key
+) {
+  return [() => obj[key], (v: Obj[Key]) => (obj[key] = v)] as const;
+}

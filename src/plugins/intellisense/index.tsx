@@ -7,11 +7,12 @@ import {
 } from "./latex-parsing";
 import { IntellisenseState } from "./state";
 import { View, addBracketsToIdent } from "./view";
-import { DCGView, MountedComponent } from "DCGView";
+import { DCGView, MountedComponent, unmountFromNode } from "DCGView";
 import { MathQuillField, MathQuillView } from "components";
 import { Calc } from "globals/window";
 import { PluginController } from "plugins/PluginController";
 import { getMetadata } from "plugins/manage-metadata/manage";
+import { attach, propGetSet } from "utils/listenerHelpers";
 
 export type BoundIdentifier =
   | {
@@ -79,6 +80,7 @@ export default class Intellisense extends PluginController {
 
   canHaveIntellisense = false;
 
+  // recalculate the intellisense
   updateIntellisense() {
     const focusedMQ = MathQuillView.getFocusedMathquill();
     this.saveCursorState();
@@ -212,24 +214,20 @@ export default class Intellisense extends PluginController {
     }
   }
 
-  afterEnable() {
-    // eslint-disable-next-line no-console
-    console.log("Intellisense Enabled!");
+  focusOutHandler = (e: FocusEvent) => {
+    if (
+      e.target !== intellisenseMountPoint &&
+      e.relatedTarget !== intellisenseMountPoint &&
+      e.relatedTarget !== null
+    ) {
+      this.canHaveIntellisense = false;
+    }
+  };
 
-    // disable intellisense when switching expressions
-    document.addEventListener("focusout", (e) => {
-      if (
-        e.target !== intellisenseMountPoint &&
-        e.relatedTarget !== intellisenseMountPoint &&
-        e.relatedTarget !== null
-      ) {
-        this.canHaveIntellisense = false;
-      }
-    });
+  modifiedOverrideKeystrokeUnsubbers: (() => void)[] = [];
 
-    // override the mathquill keystroke handler so that it opens the
-    // intellisense menu when I want it to
-    document.addEventListener("focusin", () => {
+  focusInHandler = () => {
+    setTimeout(() => {
       const mqopts = Calc.focusedMathQuill?.mq?.__controller?.options;
 
       // done because the monkeypatch has different a different this value
@@ -237,131 +235,148 @@ export default class Intellisense extends PluginController {
       const self = this;
 
       if (mqopts && !(mqopts.overrideKeystroke as any).isMonkeypatchedIn) {
-        const ovks = mqopts?.overrideKeystroke;
-        mqopts.overrideKeystroke = function (key: string, evt: KeyboardEvent) {
-          if (
-            self.intellisenseOpts.length > 0 &&
-            self.canHaveIntellisense &&
-            key === "Down"
-          ) {
-            self.saveCursorState();
-            self.intellisenseReturnMQ = self.latestMQ;
-            Calc.controller.dispatch({
-              type: "set-none-selected",
-            });
-            intellisenseMountPoint.focus();
-            self.intellisenseIndex = -1;
-            self.view?.update();
-            return false;
-          } else {
-            ovks(key, evt);
+        const remove = attach<(key: string, evt: KeyboardEvent) => void>(
+          ...propGetSet(mqopts, "overrideKeystroke"),
+          function (key: string, _: KeyboardEvent) {
+            if (
+              self.intellisenseOpts.length > 0 &&
+              self.canHaveIntellisense &&
+              key === "Down"
+            ) {
+              self.saveCursorState();
+              self.intellisenseReturnMQ = self.latestMQ;
+              Calc.controller.dispatch({
+                type: "set-none-selected",
+              });
+              intellisenseMountPoint.focus();
+              self.intellisenseIndex = -1;
+              self.view?.update();
+              return [false, undefined];
+            }
           }
-        };
+        );
+
+        this.modifiedOverrideKeystrokeUnsubbers.push(remove);
 
         // prevent repeatedly monkeypatching overrideKeystroke (could cause stack overflow)
         (mqopts.overrideKeystroke as any).isMonkeypatchedIn = true;
       }
     });
+  };
 
-    // general intellisense keyboard handler
-    document.addEventListener("keydown", (e) => {
-      this.saveCursorState();
-      // if a non arrow key is pressed in an expression,
-      // we enable the intellisense window
-      if (!e.key.startsWith("Arrow")) {
-        this.canHaveIntellisense = true;
-      }
+  keyDownHandler = (e: KeyboardEvent) => {
+    this.saveCursorState();
+    // if a non arrow key is pressed in an expression,
+    // we enable the intellisense window
+    if (!e.key.startsWith("Arrow")) {
+      this.canHaveIntellisense = true;
+    }
 
-      // navigating downward in the intellisense menu
-      if (e.key === "ArrowDown") {
-        // is the intellisense menu focused?
-        if (document.activeElement === intellisenseMountPoint) {
-          if (
-            this.intellisenseOpts.length > 0 &&
-            (addBracketsToIdent(this.intellisenseOpts[0].variableName) !==
-              this.latestIdent?.ident ||
-              this.intellisenseOpts.length > 1)
-          ) {
-            this.intellisenseIndex = Math.min(
-              this.intellisenseIndex + 1,
-              this.intellisenseOpts.length - 1
-            );
-            this.view?.update();
-            e.preventDefault();
-            return false;
-          }
-
-          // try to open the intellisense menu
-        }
-
-        // navigating upward in the intellisense menu
-      } else if (e.key === "ArrowUp" && this.intellisenseOpts.length > 0) {
-        const oldIntellisenseIndex = this.intellisenseIndex;
-        this.intellisenseIndex = Math.max(this.intellisenseIndex - 1, 0);
-
-        if (oldIntellisenseIndex === 0) {
-          this.leaveIntellisenseMenu();
-
-          return;
-        }
-
-        if (this.intellisenseIndex >= 0) {
+    // navigating downward in the intellisense menu
+    if (e.key === "ArrowDown") {
+      // is the intellisense menu focused?
+      if (document.activeElement === intellisenseMountPoint) {
+        if (
+          this.intellisenseOpts.length > 0 &&
+          (addBracketsToIdent(this.intellisenseOpts[0].variableName) !==
+            this.latestIdent?.ident ||
+            this.intellisenseOpts.length > 1)
+        ) {
+          this.intellisenseIndex = Math.min(
+            this.intellisenseIndex + 1,
+            this.intellisenseOpts.length - 1
+          );
           this.view?.update();
           e.preventDefault();
           return false;
         }
-
-        // choose autocomplete option with tab or enter
-      } else if (
-        (e.key === "Enter" || e.key === "Tab") &&
-        this.intellisenseIndex >= 0
-      ) {
-        e.preventDefault();
-        this.doAutocomplete(this.intellisenseOpts[this.intellisenseIndex]);
-        this.view?.update();
-
-        // force close autocomplete with escape
-      } else if (e.key === "Escape") {
-        this.intellisenseIndex = -1;
-        this.canHaveIntellisense = false;
-        this.leaveIntellisenseMenu();
-        this.view?.update();
       }
 
-      // Jump to definition
-      if (e.key === "F9" && this.latestIdent) {
+      // navigating upward in the intellisense menu
+    } else if (e.key === "ArrowUp" && this.intellisenseOpts.length > 0) {
+      const oldIntellisenseIndex = this.intellisenseIndex;
+      this.intellisenseIndex = Math.max(this.intellisenseIndex - 1, 0);
+
+      if (oldIntellisenseIndex === 0) {
         this.leaveIntellisenseMenu();
-        this.jumpToDefinition(this.latestIdent.ident);
-        this.canHaveIntellisense = false;
+
+        return;
+      }
+
+      if (this.intellisenseIndex >= 0) {
         this.view?.update();
         e.preventDefault();
         return false;
       }
-    });
+
+      // choose autocomplete option with tab or enter
+    } else if (
+      (e.key === "Enter" || e.key === "Tab") &&
+      this.intellisenseIndex >= 0
+    ) {
+      e.preventDefault();
+      this.doAutocomplete(this.intellisenseOpts[this.intellisenseIndex]);
+      this.view?.update();
+
+      // force close autocomplete with escape
+    } else if (e.key === "Escape") {
+      this.intellisenseIndex = -1;
+      this.canHaveIntellisense = false;
+      this.leaveIntellisenseMenu();
+      this.view?.update();
+    }
+
+    // Jump to definition
+    if (e.key === "F9" && this.latestIdent) {
+      this.leaveIntellisenseMenu();
+      this.jumpToDefinition(this.latestIdent.ident);
+      this.canHaveIntellisense = false;
+      this.view?.update();
+      e.preventDefault();
+      return false;
+    }
+  };
+
+  keyUpHandler = () => {
+    if (!MathQuillView.getFocusedMathquill()) return;
+    this.updateIntellisense();
+    this.saveCursorState();
+  };
+
+  mouseUpHandler = (e: MouseEvent) => {
+    let elem = e.target;
+
+    // don't update the intellisense if the user is selecting an intellisense result
+    while (elem instanceof HTMLElement) {
+      // element has intellisense mount point as an ancestor
+      if (elem === intellisenseMountPoint) {
+        return;
+      }
+      elem = elem.parentElement;
+    }
+
+    this.intellisenseIndex = -1;
+  };
+
+  afterEnable() {
+    // eslint-disable-next-line no-console
+    console.log("Intellisense Enabled!");
+
+    // disable intellisense when switching expressions
+    document.addEventListener("focusout", this.focusOutHandler);
+
+    // override the mathquill keystroke handler so that it opens the
+    // intellisense menu when I want it to
+    document.addEventListener("focusin", this.focusInHandler);
+
+    // general intellisense keyboard handler
+    document.addEventListener("keydown", this.keyDownHandler);
 
     // update the intellisense on key pressed in a mathquill
-    document.addEventListener("keyup", (e) => {
-      if (e.key === "Enter") return;
-      if (!MathQuillView.getFocusedMathquill()) return;
-      this.updateIntellisense();
-      this.saveCursorState();
-    });
+    document.addEventListener("keyup", this.keyUpHandler);
 
     // close intellisense when clicking outside the intellisense window
-    document.addEventListener("mouseup", (e) => {
-      let elem = e.target;
-
-      // don't update the intellisense if the user is selecting an intellisense result
-      while (elem instanceof HTMLElement) {
-        // element has intellisense mount point as an ancestor
-        if (elem === intellisenseMountPoint) {
-          return;
-        }
-        elem = elem.parentElement;
-      }
-
-      this.intellisenseIndex = -1;
-    });
+    document.addEventListener("mouseup", this.mouseUpHandler);
 
     // create initial intellisense window
     this.view = DCGView.mountToNode(View, intellisenseMountPoint, {
@@ -462,7 +477,21 @@ export default class Intellisense extends PluginController {
   }
 
   afterDisable() {
+    // clear event listeners
+    document.removeEventListener("focusout", this.focusOutHandler);
+    document.removeEventListener("focusin", this.focusInHandler);
+    document.removeEventListener("keydown", this.keyDownHandler);
+    document.removeEventListener("keyup", this.keyUpHandler);
+    document.removeEventListener("mouseup", this.mouseUpHandler);
+
     // eslint-disable-next-line no-console
     console.log("Disabled");
+
+    // unmodify any remaining keystroke functions
+    for (const unsub of this.modifiedOverrideKeystrokeUnsubbers) {
+      unsub();
+    }
+
+    unmountFromNode(intellisenseMountPoint);
   }
 }
