@@ -297,8 +297,6 @@ export class PartialFunctionCallView extends Component<{
   partialFunctionCallIdent: () => BoundIdentifierFunction | undefined;
   partialFunctionCallDoc: () => string | undefined;
 }> {
-  init() {}
-
   template() {
     return (
       <div
