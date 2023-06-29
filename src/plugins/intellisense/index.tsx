@@ -45,9 +45,6 @@ export function getMQCursorPosition(focusedMQ: MathQuillField) {
   ).cursor?.cursorElement?.getBoundingClientRect();
 }
 
-const intellisenseMountPoint = document.createElement("div");
-document.body.appendChild(intellisenseMountPoint);
-
 export function getSelectedExpressionID(): string | undefined {
   return Object.keys(Calc.controller.listModel.selectedItemMap)[0];
 }
@@ -80,6 +77,8 @@ export default class Intellisense extends PluginController {
   intellisenseState = new IntellisenseState(getMetadata());
 
   canHaveIntellisense = false;
+
+  intellisenseMountPoint: HTMLElement | undefined;
 
   // recalculate the intellisense
   updateIntellisense() {
@@ -312,7 +311,8 @@ export default class Intellisense extends PluginController {
               // selecting and autocompleting an intellisense selection
             } else if (
               (key === "Enter" || key === "Tab") &&
-              self.intellisenseIndex >= 0
+              self.intellisenseIndex >= 0 &&
+              self.intellisenseOpts[self.intellisenseIndex] !== undefined
             ) {
               self.doAutocomplete(
                 self.intellisenseOpts[self.intellisenseIndex].idents[0]
@@ -362,13 +362,16 @@ export default class Intellisense extends PluginController {
     this.saveCursorState();
   };
 
+  lastExppanelScrollTop = 0;
+
   mouseUpHandler = (e: MouseEvent) => {
     const elem = e.target;
 
     // don't update the intellisense if the user is selecting an intellisense result
     if (
       elem instanceof HTMLElement &&
-      isDescendant(elem, intellisenseMountPoint)
+      this.intellisenseMountPoint &&
+      isDescendant(elem, this.intellisenseMountPoint)
     )
       return;
 
@@ -376,6 +379,12 @@ export default class Intellisense extends PluginController {
   };
 
   afterEnable() {
+    this.intellisenseMountPoint = document.createElement("div");
+    document.body.appendChild(this.intellisenseMountPoint);
+
+    const exppanel = document.querySelector(".dcg-exppanel");
+    this.lastExppanelScrollTop = exppanel?.scrollTop ?? 0;
+
     // disable intellisense when switching expressions
     document.addEventListener("focusout", this.focusOutHandler);
 
@@ -393,7 +402,7 @@ export default class Intellisense extends PluginController {
     document.addEventListener("mouseup", this.mouseUpHandler);
 
     // create initial intellisense window
-    this.view = DCGView.mountToNode(View, intellisenseMountPoint, {
+    this.view = DCGView.mountToNode(View, this.intellisenseMountPoint, {
       x: () => this.x,
       y: () => this.y,
       idents: () => this.intellisenseOpts,
@@ -417,6 +426,14 @@ export default class Intellisense extends PluginController {
             this.view?.update();
           }
         }, 100);
+      }
+
+      if (e.type === "tick") {
+        const exppanel = document.querySelector(".dcg-exppanel");
+        const newExppanelScrollTop = exppanel?.scrollTop ?? 0;
+        this.y += this.lastExppanelScrollTop - newExppanelScrollTop;
+        this.view?.update();
+        this.lastExppanelScrollTop = newExppanelScrollTop;
       }
     });
   }
@@ -521,6 +538,7 @@ export default class Intellisense extends PluginController {
       unsub();
     }
 
-    unmountFromNode(intellisenseMountPoint);
+    if (this.intellisenseMountPoint)
+      unmountFromNode(this.intellisenseMountPoint);
   }
 }

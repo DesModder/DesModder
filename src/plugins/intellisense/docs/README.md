@@ -2,6 +2,8 @@
 
 ## Function Documentation
 
+[See an example here.](https://www.desmos.com/calculator/3hkfwd6cqw)
+
 DesModder Intellisense supports documentation for functions. Function documentation will appear while you are filling out the parameters for a function.
 
 Put a text expression (either through the expression dropdown or by hitting the `"` key in an empty expression) directly before a function and put text in it to provide documentation for that function.
@@ -14,7 +16,7 @@ You can provide documentation for specific function parameters by typing `@param
 
 ## Jump to Definition
 
-Press F9 while the cursor is hovering over an identifier to jump to that identifier's definition.
+Press F9 while the text cursor (caret) is hovering over an identifier to jump to that identifier's definition. Alternatively, while the intellisense menu is open, you can click the compass button while hovering over an autocomplete suggestion to jump to its definition.
 
 ## Autocomplete
 

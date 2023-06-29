@@ -112,86 +112,84 @@ export class IntellisenseState {
 
     const newIdentifiersReferenced = new Set<string>();
 
-    if (expression.type !== "folder") {
-      if (expression.type === "expression") {
-        for (const key of rootKeys) {
-          const ltxStr = get(expression, key);
-          if (typeof ltxStr !== "string") continue;
+    if (expression.type === "expression") {
+      for (const key of rootKeys) {
+        const ltxStr = get(expression, key);
+        if (typeof ltxStr !== "string") continue;
 
-          const ltx = undefinedIfErr(() => parseRootLatex(ltxStr));
+        const ltx = undefinedIfErr(() => parseRootLatex(ltxStr));
 
-          if (!ltx) continue;
+        if (!ltx) continue;
 
-          // add assignments to bound ident list
-          if (ltx.type === "Assignment") {
-            newBoundIdentifiers.push({
-              type: "variable",
-              variableName: ltx.left.symbol,
+        // add assignments to bound ident list
+        if (ltx.type === "Assignment") {
+          newBoundIdentifiers.push({
+            type: "variable",
+            variableName: ltx.left.symbol,
+            exprId: expression.id,
+            id: this.counter++,
+          });
+
+          // add fn def and params to bound ident list
+        } else if (ltx.type === "FunctionDefinition") {
+          newBoundIdentifiers.push({
+            type: "function",
+            variableName: ltx.symbol.symbol,
+            exprId: expression.id,
+            id: this.counter++,
+            params: ltx.argSymbols.map((s) => s.symbol),
+          });
+          newBoundIdentifiers.push(
+            ...ltx.argSymbols.map((s) => ({
+              type: "function-param" as const,
+              variableName: s.symbol,
               exprId: expression.id,
               id: this.counter++,
-            });
+            }))
+          );
+        }
 
-            // add fn def and params to bound ident list
-          } else if (ltx.type === "FunctionDefinition") {
-            newBoundIdentifiers.push({
-              type: "function",
-              variableName: ltx.symbol.symbol,
-              exprId: expression.id,
-              id: this.counter++,
-              params: ltx.argSymbols.map((s) => s.symbol),
-            });
-            newBoundIdentifiers.push(
-              ...ltx.argSymbols.map((s) => ({
-                type: "function-param" as const,
-                variableName: s.symbol,
-                exprId: expression.id,
-                id: this.counter++,
-              }))
-            );
+        mapAugAST(ltx, (node) => {
+          if (!node) return;
+
+          // add referenced identifier
+          if (node.type === "Identifier") {
+            this.addIdentifierReference(node.symbol, expression.id);
+            newIdentifiersReferenced.add(node.symbol);
           }
 
-          mapAugAST(ltx, (node) => {
-            if (!node) return;
-
-            // add referenced identifier
-            if (node.type === "Identifier") {
-              this.addIdentifierReference(node.symbol, expression.id);
-              newIdentifiersReferenced.add(node.symbol);
-            }
-
-            // add listcomps, substitutions, derivatives, and repeated ops (e.g. sum)
-            if (
-              node.type === "ListComprehension" ||
-              node.type === "Substitution"
-            ) {
-              for (const ass of node.assignments) {
-                newBoundIdentifiers.push({
-                  exprId: expression.id,
-                  variableName: ass.variable.symbol,
-                  type:
-                    node.type === "ListComprehension"
-                      ? "listcomp-param"
-                      : "substitution",
-                  id: this.counter++,
-                });
-              }
-            } else if (node.type === "Derivative") {
+          // add listcomps, substitutions, derivatives, and repeated ops (e.g. sum)
+          if (
+            node.type === "ListComprehension" ||
+            node.type === "Substitution"
+          ) {
+            for (const ass of node.assignments) {
               newBoundIdentifiers.push({
                 exprId: expression.id,
-                variableName: node.variable.symbol,
-                type: "derivative",
-                id: this.counter++,
-              });
-            } else if (node.type === "RepeatedOperator") {
-              newBoundIdentifiers.push({
-                exprId: expression.id,
-                variableName: node.index.symbol,
-                type: "repeated-operator",
+                variableName: ass.variable.symbol,
+                type:
+                  node.type === "ListComprehension"
+                    ? "listcomp-param"
+                    : "substitution",
                 id: this.counter++,
               });
             }
-          });
-        }
+          } else if (node.type === "Derivative") {
+            newBoundIdentifiers.push({
+              exprId: expression.id,
+              variableName: node.variable.symbol,
+              type: "derivative",
+              id: this.counter++,
+            });
+          } else if (node.type === "RepeatedOperator") {
+            newBoundIdentifiers.push({
+              exprId: expression.id,
+              variableName: node.index.symbol,
+              type: "repeated-operator",
+              id: this.counter++,
+            });
+          }
+        });
       }
     }
 

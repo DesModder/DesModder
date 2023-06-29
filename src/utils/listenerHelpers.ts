@@ -1,5 +1,5 @@
 import { DispatchedEvent } from "globals/Calc";
-import { Calc } from "globals/window";
+import { Calc, Console } from "globals/window";
 
 const dispatchOverridingHandlers: [
   (evt: DispatchedEvent) => boolean | undefined,
@@ -36,8 +36,7 @@ export function deregisterCustomDispatchOverridingHandler(id: number): void {
     ([_, __, id2]) => id2 === id
   );
   if (firstIndex === -1) {
-    // eslint-disable-next-line no-console
-    console.error(
+    Console.error(
       `Failed to deregister the dispatch overriding handler '${id}'.`
     );
   }
@@ -48,13 +47,8 @@ export function deregisterCustomDispatchOverridingHandler(id: number): void {
 
 // once Calc is defined, change handleDispatchedAction to first
 // run a set of custom handlers
-const interval = setInterval(() => {
-  if (!Calc) return;
-  clearInterval(interval);
-
-  // @ts-expect-error this exists
+export function setupDispatchOverride() {
   const old = Calc.controller.handleDispatchedAction;
-  // @ts-expect-error this exists
   Calc.controller.handleDispatchedAction = function (evt) {
     for (const [handler] of dispatchOverridingHandlers) {
       const keepGoing = handler(evt);
@@ -63,7 +57,7 @@ const interval = setInterval(() => {
 
     old.call(this, evt);
   };
-}, 0);
+}
 
 // "attach" a function onto an existing function, performing some functionality
 // and then optionally triggering the existing function.

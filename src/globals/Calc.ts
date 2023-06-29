@@ -169,6 +169,7 @@ interface CalcPrivate {
   /// / undocumented, may break
   controller: {
     // _removeExpressionSynchronously(model: ItemModel): void;
+    handleDispatchedAction: (evt: DispatchedEvent) => void;
     _toplevelReplaceItemAt: (
       index: number,
       model: ItemModel,

@@ -1,5 +1,10 @@
 import { BoundIdentifier, BoundIdentifierFunction } from ".";
 import { DStaticMathquillView, If } from "../../components/desmosComponents";
+import {
+  DocStringRenderable,
+  parseDocstring,
+  tokenizeDocstring,
+} from "./docstring";
 import { PartialFunctionCall } from "./latex-parsing";
 import "./view.less";
 import { Component, jsx } from "DCGView";
@@ -60,6 +65,18 @@ export function addBracketsToIdent(str: string) {
   return varStart + `_{${str2}}`;
 }
 
+function latexForType(type: BoundIdentifier["type"]) {
+  return {
+    variable: "x=",
+    function: "f",
+    "function-param": "\\leftx\\right)",
+    "listcomp-param": "\\left[\\operatorname{for}\\right",
+    derivative: "\\frac{d}{dx}",
+    "repeated-operator": "\\Sigma",
+    substitution: "\\operatorname{with}",
+  }[type];
+}
+
 export class IdentifierSymbol extends Component<{
   symbol: () => { idents: BoundIdentifier[] };
 }> {
@@ -72,89 +89,12 @@ export class IdentifierSymbol extends Component<{
       );
     }
 
-    switch (this.props.symbol().idents[0].type) {
-      case "variable":
-        return <StaticMathQuillView latex={"x="}></StaticMathQuillView>;
-      case "function":
-        return <StaticMathQuillView latex={"f"}></StaticMathQuillView>;
-      case "function-param":
-        return (
-          <StaticMathQuillView latex={"\\left(x\\right)"}></StaticMathQuillView>
-        );
-      case "listcomp-param":
-        return (
-          <StaticMathQuillView
-            latex={"\\left[\\operatorname{for}\\right]"}
-          ></StaticMathQuillView>
-        );
-      case "derivative":
-        return (
-          <StaticMathQuillView latex={"\\frac{d}{dx}"}></StaticMathQuillView>
-        );
-      case "repeated-operator":
-        return <StaticMathQuillView latex={"\\sigma"}></StaticMathQuillView>;
-      case "substitution":
-        return (
-          <StaticMathQuillView
-            latex={"\\operatorname{with}"}
-          ></StaticMathQuillView>
-        );
-    }
+    return (
+      <StaticMathQuillView
+        latex={latexForType(this.props.symbol().idents[0].type)}
+      ></StaticMathQuillView>
+    );
   }
-}
-
-const lastof = function <T>(arr: T[]) {
-  return arr[arr.length - 1];
-};
-
-function tokenizeDocstring(str: string): DocStringToken[] {
-  const tokens: DocStringToken[] = [
-    {
-      str: "",
-      type: "text",
-    },
-  ];
-
-  let i = 0;
-
-  const match = (rgx: RegExp) => {
-    const match = str.slice(i).match(rgx);
-    if (match) {
-      i += match[0].length - 1;
-      return match[0];
-    }
-    return undefined;
-  };
-
-  for (i = 0; i < str.length; i++) {
-    const mathStr = match(/^`[^`]+`/g);
-    if (mathStr) {
-      tokens.push(
-        {
-          str: mathStr.slice(1, -1),
-          type: "math",
-        },
-        { str: "", type: "text" }
-      );
-      continue;
-    }
-
-    const paramStr = match(/^@param=\w+/g);
-    if (paramStr) {
-      tokens.push(
-        {
-          str: paramStr.slice(7),
-          type: "param",
-        },
-        { str: "", type: "text" }
-      );
-      continue;
-    }
-
-    lastof(tokens).str += str[i];
-  }
-
-  return tokens;
 }
 
 export function textModeExprToLatex(tmExpr: string) {
@@ -165,73 +105,6 @@ export function textModeExprToLatex(tmExpr: string) {
     const latex = latexTreeToString(aug);
     return latex;
   }
-}
-
-function parseDocstring(tokens: DocStringToken[]): DocStringRenderable[] {
-  const renderables: DocStringRenderable[] = [];
-
-  function getNoParamRenderable(t: DocStringToken): DocStringRenderableNoParam {
-    switch (t.type) {
-      case "text":
-        return t as { type: "text"; str: string };
-      case "math":
-        return { type: "math", latex: t.str };
-      case "param":
-        throw new Error("unreachable");
-    }
-  }
-
-  for (let i = 0; i < tokens.length; i++) {
-    const t = tokens[i];
-    switch (t.type) {
-      case "text":
-      case "math":
-        renderables.push(getNoParamRenderable(t));
-        break;
-      case "param": {
-        const paramBody: DocStringRenderableNoParam[] = [];
-        while (i < tokens.length - 1) {
-          i++;
-          const t2 = tokens[i];
-          if (t2.type === "param") {
-            i--;
-            break;
-          }
-          paramBody.push(getNoParamRenderable(t2));
-        }
-        renderables.push({
-          type: "param",
-          latex: t.str,
-          renderables: paramBody,
-        });
-      }
-    }
-  }
-
-  return renderables;
-}
-
-type DocStringRenderableNoParam =
-  | {
-      str: string;
-      type: "text";
-    }
-  | {
-      latex: string;
-      type: "math";
-    };
-
-type DocStringRenderable =
-  | {
-      type: "param";
-      latex: string;
-      renderables: DocStringRenderableNoParam[];
-    }
-  | DocStringRenderableNoParam;
-
-interface DocStringToken {
-  str: string;
-  type: "text" | "math" | "param";
 }
 
 let counter = 0;
