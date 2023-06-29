@@ -17,13 +17,19 @@ div:focus #intellisense-container {
 
 .intellisense-option {
   z-index: 999999;
+  .dcg-static-mathquill-view * {
+    pointer-events: none;
+  }
+
+  * {
+    cursor: pointer !important;
+  }
+
+  cursor: pointer !important;
 }
 
 .intellisense-option:hover,
 .selected-intellisense-option {
-  > * {
-    cursor: pointer;
-  }
   background-color: #eeeeee;
 }
 

@@ -240,6 +240,7 @@ export default class Intellisense extends PluginController {
       e.relatedTarget !== null
     ) {
       this.canHaveIntellisense = false;
+      this.view?.update();
     }
   };
 
@@ -389,6 +390,17 @@ export default class Intellisense extends PluginController {
       partialFunctionCallDoc: () => this.partialFunctionCallDoc,
       show: () => this.canHaveIntellisense,
       jumpToDefinition: (name) => this.jumpToDefinition(name),
+    });
+
+    Calc.controller.dispatcher.register((e) => {
+      if (e.type === "set-focus-location" || e.type === "set-none-selected") {
+        setTimeout(() => {
+          if (!Calc.focusedMathQuill) {
+            this.canHaveIntellisense = false;
+            this.view?.update();
+          }
+        }, 100);
+      }
     });
   }
 
