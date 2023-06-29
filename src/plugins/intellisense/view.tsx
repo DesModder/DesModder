@@ -43,6 +43,12 @@ export class IdentifierSymbol extends Component<{
         );
       case "repeated-operator":
         return <StaticMathQuillView latex={"\\sigma"}></StaticMathQuillView>;
+      case "substitution":
+        return (
+          <StaticMathQuillView
+            latex={"\\operatorname{with}"}
+          ></StaticMathQuillView>
+        );
     }
   }
 }

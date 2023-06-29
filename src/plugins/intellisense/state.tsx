@@ -6,18 +6,6 @@ import { rootKeys } from "plugins/find-replace/backend";
 import Metadata from "plugins/manage-metadata/interface";
 import { parseRootLatex } from "plugins/text-mode/aug/rawToAug";
 
-export function get<T extends object, K extends string | symbol | number>(
-  t: T,
-  prop: K
-): K extends keyof T ? T[K] : undefined {
-  // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
-  const obj2 = t as {
-    [Key in string | symbol | number]: Key extends keyof T ? T[Key] : undefined;
-  };
-
-  return obj2[prop];
-}
-
 function getOrMakeKey<K, V>(map: Map<K, V>, k: K, v: () => V) {
   if (map.has(k)) {
     return map.get(k) as V;
@@ -175,7 +163,10 @@ export class IntellisenseState {
                 newBoundIdentifiers.push({
                   exprId: expression.id,
                   variableName: ass.variable.symbol,
-                  type: "listcomp-param",
+                  type:
+                    node.type === "ListComprehension"
+                      ? "listcomp-param"
+                      : "substitution",
                   id: this.counter++,
                 });
               }
