@@ -356,9 +356,6 @@ export default class Intellisense extends PluginController {
   };
 
   afterEnable() {
-    // eslint-disable-next-line no-console
-    console.log("Intellisense Enabled!");
-
     // disable intellisense when switching expressions
     document.addEventListener("focusout", this.focusOutHandler);
 
