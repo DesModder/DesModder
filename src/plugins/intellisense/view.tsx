@@ -83,11 +83,11 @@ function tokenizeDocstring(str: string): DocStringToken[] {
       continue;
     }
 
-    const paramStr = match(/^@\w+/g);
+    const paramStr = match(/^@param=\w+/g);
     if (paramStr) {
       tokens.push(
         {
-          str: paramStr.slice(1),
+          str: paramStr.slice(7),
           type: "param",
         },
         { str: "", type: "text" }
