@@ -8,6 +8,48 @@ import { latexTreeToString } from "plugins/text-mode/aug/augLatexToRaw";
 import { childExprToAug } from "plugins/text-mode/down/astToAug";
 import { parse } from "plugins/text-mode/down/textToAST";
 
+export interface JumpToDefinitionMenuInfo {
+  idents: {
+    ident: BoundIdentifier;
+    sourceExprLatex: string;
+    sourceExprIndex: number;
+    sourceExprId: string;
+  }[];
+}
+
+export class JumpToDefinitionMenu extends Component<{
+  info: () => JumpToDefinitionMenuInfo;
+  jumpToDefinition: (id: string) => void;
+}> {
+  template() {
+    return (
+      <div>
+        <For
+          each={() => this.props.info().idents}
+          key={(e) => e.sourceExprIndex}
+        >
+          <ul>
+            {(e: JumpToDefinitionMenuInfo["idents"][number]) => {
+              return (
+                <li
+                  onClick={() => {
+                    this.props.jumpToDefinition(e.sourceExprId);
+                  }}
+                >
+                  <DStaticMathquillView
+                    latex={() => e.sourceExprLatex}
+                    config={{}}
+                  ></DStaticMathquillView>
+                </li>
+              );
+            }}
+          </ul>
+        </For>
+      </div>
+    );
+  }
+}
+
 export function addBracketsToIdent(str: string) {
   const [str1, str2] = str.split("_");
 
@@ -19,10 +61,18 @@ export function addBracketsToIdent(str: string) {
 }
 
 export class IdentifierSymbol extends Component<{
-  symbol: () => BoundIdentifier["type"];
+  symbol: () => { idents: BoundIdentifier[] };
 }> {
   template() {
-    switch (this.props.symbol()) {
+    if (this.props.symbol().idents.length > 1) {
+      return (
+        <StaticMathQuillView
+          latex={`${this.props.symbol().idents.length}\\ \\mathrm{defs}`}
+        ></StaticMathQuillView>
+      );
+    }
+
+    switch (this.props.symbol().idents[0].type) {
       case "variable":
         return <StaticMathQuillView latex={"x="}></StaticMathQuillView>;
       case "function":
@@ -330,7 +380,7 @@ let counter2 = 0;
 export class View extends Component<{
   x: () => number;
   y: () => number;
-  idents: () => BoundIdentifier[];
+  idents: () => { idents: BoundIdentifier[] }[];
   autocomplete: (option: BoundIdentifier) => void;
   index: () => number;
   partialFunctionCall: () => PartialFunctionCall | undefined;
@@ -378,8 +428,10 @@ export class View extends Component<{
           key={() => counter2++}
         >
           <table class="intellisense-options-table">
-            {(ident: BoundIdentifier & { index: number }) => {
-              const reformattedIdent = addBracketsToIdent(ident.variableName);
+            {(ident: { idents: BoundIdentifier[] } & { index: number }) => {
+              const reformattedIdent = addBracketsToIdent(
+                ident.idents[0].variableName
+              );
 
               const opt = (
                 <tr
@@ -395,19 +447,20 @@ export class View extends Component<{
                     " intellisense-option"
                   }
                   onClick={() => {
-                    this.props.autocomplete(ident);
+                    this.props.autocomplete(ident.idents[0]);
                   }}
                 >
                   <td style={{ color: "#AAAAAA" }}>
-                    <IdentifierSymbol
-                      symbol={() => ident.type}
-                    ></IdentifierSymbol>
+                    <IdentifierSymbol symbol={() => ident}></IdentifierSymbol>
                   </td>
                   <td>
                     <StaticMathQuillView
                       latex={
                         reformattedIdent +
-                        (ident.type === "function" ? "\\left(\\right)" : "")
+                        (ident.idents.length === 1 &&
+                        ident.idents[0].type === "function"
+                          ? "\\left(\\right)"
+                          : "")
                       }
                     ></StaticMathQuillView>
                   </td>
