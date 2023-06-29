@@ -378,26 +378,26 @@ export class View extends Component<{
               const opt = (
                 <tr
                   class={() =>
-                    ident.index === this.props.index()
+                    (ident.index === this.props.index()
                       ? (setTimeout(() => {
                           opt._domNode?.scrollIntoView({
                             block: "center",
                           });
                         }, 0),
                         "selected-intellisense-option")
-                      : "intellisense-option"
+                      : "not-selected-intellisense-option") +
+                    " intellisense-option"
                   }
+                  onClick={() => {
+                    this.props.autocomplete(ident);
+                  }}
                 >
                   <td style={{ color: "#AAAAAA" }}>
                     <IdentifierSymbol
                       symbol={() => ident.type}
                     ></IdentifierSymbol>
                   </td>
-                  <td
-                    onClick={() => {
-                      this.props.autocomplete(ident);
-                    }}
-                  >
+                  <td>
                     <StaticMathQuillView
                       latex={
                         reformattedIdent +
@@ -407,8 +407,9 @@ export class View extends Component<{
                   </td>
                   <td>
                     <i
-                      onClick={() => {
+                      onClick={(e: MouseEvent) => {
                         this.props.jumpToDefinition(reformattedIdent);
+                        e.stopPropagation();
                       }}
                       class="dsm-icon-compass2 jump-to-def-btn"
                     ></i>
