@@ -9,6 +9,7 @@ import { IntellisenseState } from "./state";
 import { View, addBracketsToIdent } from "./view";
 import { DCGView, MountedComponent, unmountFromNode } from "DCGView";
 import { MathQuillField, MathQuillView } from "components";
+import { TextModel } from "globals/models";
 import { Calc } from "globals/window";
 import { PluginController } from "plugins/PluginController";
 import { getMetadata } from "plugins/manage-metadata/manage";
@@ -107,20 +108,19 @@ export default class Intellisense extends PluginController {
       // if the user is in a partial function call,
       // find its documentation if it exists
       const models = Calc.controller.getAllItemModels();
-      let found = false;
-      for (let i = 0; i < models.length; i++) {
-        const current = models[i];
-        if (
-          this.partialFunctionCallIdent &&
-          current.type === "text" &&
-          models[i + 1]?.type === "expression" &&
-          this.partialFunctionCallIdent.exprId === models[i + 1]?.id
-        ) {
-          this.partialFunctionCallDoc = current.text;
-          found = true;
-        }
-      }
-      if (!found) this.partialFunctionCallDoc = undefined;
+      this.partialFunctionCallDoc = (
+        models.find((current, i) => {
+          if (
+            this.partialFunctionCallIdent &&
+            current.type === "text" &&
+            models[i + 1]?.type === "expression" &&
+            this.partialFunctionCallIdent.exprId === models[i + 1]?.id
+          ) {
+            return true;
+          }
+          return false;
+        }) as TextModel | undefined
+      )?.text;
 
       // determine where to put intellisense window
       const bbox = getMQCursorPosition(focusedMQ);
