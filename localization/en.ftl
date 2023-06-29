@@ -189,16 +189,3 @@ manage-metadata-desc = Manage Metadata, such as GLesmos or pinned/unpinned statu
 ## Intellisense
 intellisense-name = Intellisense
 intellisense-desc = Brings several common IDE features to Desmos, including autocompletion suggestions, function call help, and jump to definition (hotkey F9).
-
-## Compact View
-compact-view-name = Compact View
-compact-view-desc = See more on the screen at once.
-compact-view-opt-multilineExpressions-name = Multiline Expressions
-compact-view-opt-multilineExpressions-desc = In certain contexts (e.g. large piecewises and function calls) expressions can take up more than one line.
-compact-view-opt-compactMode-name = Compact Mode
-compact-view-opt-compactMode-desc = Changes the UI to make it fit in the space provided more efficiently.
-
-## My Expressions Library
-my-expressions-library-name = My Expressions Library
-my-expressions-library-desc = Add graphs to your own personal "standard library" of reusable expressions. You can access all expressions in the library from the on-screen keyboard.
-my-expressions-library-pillbox-menu = Intellisense settings.
