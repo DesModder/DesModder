@@ -14,6 +14,7 @@ import { Calc } from "globals/window";
 import { PluginController } from "plugins/PluginController";
 import { getMetadata } from "plugins/manage-metadata/manage";
 import { attach, propGetSet } from "utils/listenerHelpers";
+import { isDescendant } from "utils/utils";
 
 export type BoundIdentifier =
   | {
@@ -256,7 +257,7 @@ export default class Intellisense extends PluginController {
 
       if (mqopts && !(mqopts.overrideKeystroke as any).isMonkeypatchedIn) {
         // monkeypatch in a function to wrap overrideKeystroke
-        const remove = attach<(key: string, evt: KeyboardEvent) => void>(
+        const remove = attach(
           ...propGetSet(mqopts, "overrideKeystroke"),
           function (key: string, _: KeyboardEvent) {
             // the only intellisense option is already complete
@@ -341,16 +342,14 @@ export default class Intellisense extends PluginController {
   };
 
   mouseUpHandler = (e: MouseEvent) => {
-    let elem = e.target;
+    const elem = e.target;
 
     // don't update the intellisense if the user is selecting an intellisense result
-    while (elem instanceof HTMLElement) {
-      // element has intellisense mount point as an ancestor
-      if (elem === intellisenseMountPoint) {
-        return;
-      }
-      elem = elem.parentElement;
-    }
+    if (
+      elem instanceof HTMLElement &&
+      isDescendant(elem, intellisenseMountPoint)
+    )
+      return;
 
     this.intellisenseIndex = -1;
   };
