@@ -425,7 +425,7 @@ export default class Intellisense extends PluginController {
 
       // if we jumped to an expression with a folder, open the folder
       // and then re-scroll the expression into view
-      const model = Calc.controller.listModel.__itemIdToModel[identDst.exprId];
+      const model = Calc.controller.getItemModel(identDst.exprId);
       if (model && model.type !== "folder" && model.folderId) {
         Calc.controller.dispatch({
           type: "set-folder-collapsed",
