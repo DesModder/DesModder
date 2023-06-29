@@ -1,38 +1,78 @@
 import Aug from "../aug/AugState";
 import {
   assignmentExpr,
+  bareSeq,
   binop,
   comparator,
+  doubleInequality,
+  factorial,
   functionCall,
   id,
   list,
   listAccess,
   negative,
   number,
+  substitution,
   updateRule,
+  wrappedSeq,
 } from "../aug/augBuilders";
-import parser from "../lezer/syntax.grammar";
+import * as TextAST from "./TextAST";
 import astToAug from "./astToAug";
-import { cstToAST } from "./cstToAST";
 import { error, warning } from "./diagnostics";
+import { parse } from "./textToAST";
 import { Diagnostic } from "@codemirror/lint";
-import { Text } from "@codemirror/state";
-import { test, expect, describe } from "@jest/globals";
+import { test, expect as _expect, describe } from "@jest/globals";
 
 jest.mock("utils/depUtils");
 jest.mock("globals/window");
 
 function textToAug(text: string) {
-  const cst = parser.parse(text);
-  const [diagnostics, program] = cstToAST(cst, Text.of(text.split("\n")));
-  return astToAug(diagnostics, program);
+  const analysis = parse(text);
+  testPosNesting(analysis.program);
+  return astToAug(analysis);
+}
+
+_expect.extend({
+  ok(received, message) {
+    return {
+      pass: !!received,
+      message: () => message,
+    };
+  },
+});
+
+declare module "expect" {
+  interface Matchers<R> {
+    ok: (message: string) => R;
+  }
+}
+
+const expect = _expect as typeof _expect & (() => { ok: (s: string) => void });
+
+function testPosNesting(node: TextAST.Node, okNoPos = false) {
+  if (node?.type === undefined) return;
+  const childPos = Object.values(node)
+    .map((x) => x?.pos as TextAST.Pos)
+    .filter((x) => x);
+  if (!okNoPos) expect(node.pos).ok(`Type ${node.type} should have a pos`);
+  if (node.pos) {
+    expect(childPos.every((x) => x.from >= node.pos.from)).ok(
+      `Type ${node.type} .pos.from should not exceed child.pos.from`
+    );
+    expect(childPos.every((x) => x.to <= node.pos.to)).ok(
+      `Type ${node.type} .pos.to should not be less than child.pos.to`
+    );
+  }
+  Object.values(node)
+    .flat(1)
+    .forEach((x) => testPosNesting(x, node.type === "PiecewiseBranch"));
 }
 
 const colors = ["#c74440", "#2d70b3", "#388c46", "#6042a6", "#000000"];
 
 const exprDefaults = {
   type: "expression",
-  id: "__dsm-auto-1",
+  id: "1",
   latex: number(1),
   color: colors[0],
   hidden: false,
@@ -40,34 +80,34 @@ const exprDefaults = {
   glesmos: false,
   pinned: false,
   secret: false,
-  fillOpacity: number(0),
+  fillOpacity: undefined,
   displayEvaluationAsFraction: false,
   slider: {},
   vizProps: {},
-};
+} as const;
 
 const columnDefaults = {
   type: "column",
-  id: "__dsm-auto-2",
+  id: "2",
   hidden: false,
   values: [],
   color: colors[0],
-};
+} as const;
 
 const tableDefaults = {
   type: "table",
-  id: "__dsm-auto-1",
+  id: "1",
   pinned: false,
   secret: false,
-};
+} as const;
 
 const folderDefaults = {
   type: "folder",
-  id: "__dsm-auto-1",
+  id: "1",
   collapsed: false,
   hidden: false,
   secret: false,
-};
+} as const;
 
 const defaultSettings: Aug.GraphSettings = {
   viewport: {
@@ -93,15 +133,27 @@ function testSettings(desc: string, s: string, expected: any) {
   });
 }
 
-function testStmt(desc: string, s: string, ...expected: any[]) {
+type DeepReadonly<T> = {
+  readonly [P in keyof T]: DeepReadonly<T[P]>;
+};
+
+function testStmt(
+  desc: string,
+  s: string,
+  ...expected: DeepReadonly<Aug.ItemAug | Aug.TickerAug>[]
+) {
   test(getTestName(desc, s), () => {
     const [{ diagnostics }, res] = textToAug(s);
     expect(diagnostics).toEqual([]);
     expect(res).not.toBeNull();
     if (res === null) return;
     expected.forEach((e, i) => {
-      const augStmt = res.expressions.list[i];
-      expect(augStmt).toEqual(e);
+      if ("handlerLatex" in e) {
+        expect(res.expressions.ticker).toEqual(e);
+      } else {
+        const augStmt = res.expressions.list[i];
+        expect(augStmt).toEqual(e);
+      }
     });
   });
 }
@@ -125,9 +177,12 @@ function testExpr(desc: string, s: string, expected: any) {
 }
 
 function testString(desc: string, s: string, expected: string) {
-  testStmt(desc, `1 @{id:${s}}`, {
+  testStmt(desc, `1@{onClick:A,clickDescription:${s}}`, {
     ...exprDefaults,
-    id: expected,
+    clickableInfo: {
+      description: expected,
+      latex: id("A"),
+    },
   });
 }
 
@@ -142,6 +197,24 @@ describe("Basic exprs", () => {
   describe("Identifier", () => {
     testExpr("one character", "a", id("a"));
     testExpr("multiple characters", "abcd", id("a_bcd"));
+    testExpr("multiple characters with subscript", "a_bcd", id("a_bcd"));
+    testExpr("backslash command broken by subscript", "t_heta", id("t_heta"));
+    testExpr("backslash command", "theta", id("theta"));
+    testExpr("backslash command with subscript", "theta_xy", id("theta_xy"));
+    testExpr("operatorname", "min", id("min"));
+    testExpr("operatorname with subscript", "min_xy", id("min_xy"));
+    testExpr("fragile", "hypot", id("hypot"));
+    testExpr("dt", "dt", id("dt"));
+    testExpr("index", "index", id("index"));
+    testDiagnostics("digits before sub", "a0_xy", [
+      error("Digits are not allowed before '_'", pos(0, 5)),
+    ]);
+    testDiagnostics("trailing sub", "theta_", [
+      error("Cannot end with '_'", pos(0, 6)),
+    ]);
+    testDiagnostics("multiple sub", "theta_x_y", [
+      error("Too many '_' in identifier", pos(0, 9)),
+    ]);
   });
   describe("String", () => {
     testString("simple", `"abc"`, "abc");
@@ -210,8 +283,38 @@ describe("Basic exprs", () => {
       ],
     });
   });
+  describe("Substitution", () => {
+    testExpr(
+      "simple sub",
+      "a with a=3",
+      substitution(id("a"), assignmentExpr(id("a"), number(3)))
+    );
+    testExpr(
+      "multiple subs",
+      "a with a=3, b=3",
+      substitution(
+        id("a"),
+        assignmentExpr(id("a"), number(3)),
+        assignmentExpr(id("b"), number(3))
+      )
+    );
+    testExpr(
+      "sub precedence with arrow",
+      "a->b, c->b with b=3",
+      bareSeq(
+        updateRule(id("a"), id("b")),
+        updateRule(
+          id("c"),
+          substitution(id("b"), assignmentExpr(id("b"), number(3)))
+        )
+      )
+    );
+    testDiagnostics("substitution precedence with comma", "[b with b=3, 5]", [
+      error("List comprehension must set variable = identifier", pos(13, 14)),
+    ]);
+  });
   describe("Piecewise", () => {
-    testExpr("trivial (else-only) piecewise", "{else:1}", {
+    testExpr("trivial piecewise", "{}", {
       type: "Piecewise",
       condition: true,
       consequent: number(1),
@@ -223,11 +326,23 @@ describe("Basic exprs", () => {
       consequent: number(1),
       alternate: number(NaN),
     });
+    testExpr("implicit consequent double inequality", "{1<x<5}", {
+      type: "Piecewise",
+      condition: doubleInequality(number(1), "<", id("x"), "<", number(5)),
+      consequent: number(1),
+      alternate: number(NaN),
+    });
     testExpr("single condition", "{x>1:2}", {
       type: "Piecewise",
       condition: comparator(">", id("x"), number(1)),
       consequent: number(2),
       alternate: number(NaN),
+    });
+    testExpr("implicit consequent and implicit else", "{x>1,5}", {
+      type: "Piecewise",
+      condition: comparator(">", id("x"), number(1)),
+      consequent: number(1),
+      alternate: number(5),
     });
     testExpr("single condition and implicit else", "{x>1:2,5}", {
       type: "Piecewise",
@@ -235,7 +350,18 @@ describe("Basic exprs", () => {
       consequent: number(2),
       alternate: number(5),
     });
-    testExpr("two conditions and else", "{x>1:2,y>3:4,else:5}", {
+    testExpr("implicit consequent twice", "{x<1,x>1}", {
+      type: "Piecewise",
+      condition: comparator("<", id("x"), number(1)),
+      consequent: number(1),
+      alternate: {
+        type: "Piecewise",
+        condition: comparator(">", id("x"), number(1)),
+        consequent: number(1),
+        alternate: number(NaN),
+      },
+    });
+    testExpr("two conditions and else", "{x>1:2,y>3:4,5}", {
       type: "Piecewise",
       condition: comparator(">", id("x"), number(1)),
       consequent: number(2),
@@ -247,12 +373,35 @@ describe("Basic exprs", () => {
       },
     });
   });
+  describe("Piecewise Diagnostics", () => {
+    testDiagnostics("not a condition: bad binop", "{x+3}", [
+      error("Condition must be a comparison", pos(1, 4)),
+    ]);
+    testDiagnostics("not a condition: bad id", "{abc}", [
+      error("Condition must be a comparison", pos(1, 4)),
+    ]);
+    testDiagnostics("not a condition on left of ':'", "{x+3:2}", [
+      error("Condition must be a comparison", pos(1, 4)),
+    ]);
+    testDiagnostics("not a condition in implicit pos", "{abc,2}", [
+      error("Condition must be a comparison", pos(1, 4)),
+    ]);
+    testDiagnostics("not comma", "{abc 2}", [
+      error("Unexpected character in Piecewise", pos(5, 6)),
+    ]);
+  });
   describe("Action", () => {
-    testExpr("update rule", "a->7", {
+    const rule = {
       type: "UpdateRule",
       variable: id("a"),
       expression: number(7),
-    });
+    } as const;
+    testExpr("update rule", "a->7", rule);
+    testExpr(
+      "update rule assignment",
+      "A=a->7",
+      comparator("=", id("A"), rule)
+    );
   });
   describe("PrefixExpression", () => {
     testExpr("negative number", "-5.0", negative(number(5)));
@@ -260,25 +409,31 @@ describe("Basic exprs", () => {
   });
   describe("ParenthesizedExpression", () => {
     testExpr("parenthesized number", "(5)", number(5));
-    testExpr("point", "(2,3)", {
-      type: "Seq",
-      parenWrapped: true,
-      args: [number(2), number(3)],
-    });
-    testExpr("unwrapped action sequence", "a->2,b->3,c->4", {
-      type: "Seq",
-      parenWrapped: false,
-      args: [
-        updateRule(id("a"), number(2)),
-        updateRule(id("b"), number(3)),
-        updateRule(id("c"), number(4)),
-      ],
-    });
-    testExpr("wrapped action sequence", "(a->2,b->3)", {
-      type: "Seq",
-      parenWrapped: true,
-      args: [updateRule(id("a"), number(2)), updateRule(id("b"), number(3))],
-    });
+    testExpr("point", "(2,3)", wrappedSeq(number(2), number(3)));
+    const abc = bareSeq(
+      updateRule(id("a"), number(2)),
+      updateRule(id("b"), number(3)),
+      updateRule(id("c"), number(4))
+    );
+    testExpr("unwrapped action sequence", "a->2,b->3,c->4", abc);
+    testExpr(
+      "unwrapped action sequence on RHS of equality",
+      "A=a->2,b->3,c->4",
+      comparator("=", id("A"), abc)
+    );
+    testExpr(
+      "wrapped action sequence",
+      "(a->2,b->3)",
+      wrappedSeq(updateRule(id("a"), number(2)), updateRule(id("b"), number(3)))
+    );
+    testExpr(
+      "function on points",
+      "polygon((1,2),(3,4))",
+      functionCall(id("polygon"), [
+        wrappedSeq(number(1), number(2)),
+        wrappedSeq(number(3), number(4)),
+      ])
+    );
   });
   describe("MemberExpression", () => {
     testExpr("point access", "P.y", {
@@ -296,12 +451,32 @@ describe("Basic exprs", () => {
       object: id("L"),
       property: functionCall(id("random"), [number(5)]),
     });
+    testExpr("dot access call on a function", "f(x).total()", {
+      type: "DotAccess",
+      object: functionCall(id("f"), [id("x")]),
+      property: functionCall(id("total"), []),
+    });
+    testExpr("dot access call on a list", "[1,2,3,4,5,6].random(3)", {
+      type: "DotAccess",
+      object: list(...[1, 2, 3, 4, 5, 6].map(number)),
+      property: functionCall(id("random"), [number(3)]),
+    });
   });
   describe("ListAccessExpression", () => {
     testExpr("numeric index", "L[1]", {
       type: "ListAccess",
       list: id("L"),
       index: number(1),
+    });
+    testExpr("multiple numbers index", "L[1,2,3]", {
+      type: "ListAccess",
+      list: id("L"),
+      index: list(number(1), number(2), number(3)),
+    });
+    testExpr("list index", "L[[1,2,3]]", {
+      type: "ListAccess",
+      list: id("L"),
+      index: list(number(1), number(2), number(3)),
     });
     testExpr("filter", "L[L>5]", {
       type: "ListAccess",
@@ -317,6 +492,24 @@ describe("Basic exprs", () => {
         end: [number(5)],
       },
     });
+    testExpr("range in brackets", "L[[1...5]]", {
+      type: "ListAccess",
+      list: id("L"),
+      index: {
+        type: "Range",
+        start: [number(1)],
+        end: [number(5)],
+      },
+    });
+    testExpr("list comprehension", "L[i+1 for i=M]", {
+      type: "ListAccess",
+      list: id("L"),
+      index: {
+        type: "ListComprehension",
+        expr: binop("Add", id("i"), number(1)),
+        assignments: [assignmentExpr(id("i"), id("M"))],
+      },
+    });
   });
   describe("BinaryExpression", () => {
     testExpr("addition", "2+3", binop("Add", number(2), number(3)));
@@ -326,7 +519,8 @@ describe("Basic exprs", () => {
     testExpr("exponents", "2^3", binop("Exponent", number(2), number(3)));
   });
   describe("PostfixExpression", () => {
-    testExpr("factorial", "x!", functionCall(id("factorial"), [id("x")]));
+    testExpr("factorial", "x!", factorial(id("x")));
+    testExpr("factorial", "factorial(x)", factorial(id("x")));
   });
   describe("CallExpression", () => {
     testExpr("single arg", "f(x)", functionCall(id("f"), [id("x")]));
@@ -351,6 +545,10 @@ describe("Statement metadata", () => {
     testStmt("Identifier color", `1 @{color:C}`, {
       ...exprDefaults,
       color: id("C"),
+    });
+    testStmt("RGB color", `1 @{color: rgb(a,b,c)}`, {
+      ...exprDefaults,
+      color: functionCall(id("rgb"), [id("a"), id("b"), id("c")]),
     });
     testStmt("Identifier color from color set", `1 @{color:BLUE}`, {
       ...exprDefaults,
@@ -435,9 +633,6 @@ describe("Statement metadata", () => {
         loopMode: "LOOP_FORWARD_REVERSE",
         playDirection: 1,
         isPlaying: false,
-        min: number(-10),
-        max: number(10),
-        step: number(0),
       },
     });
     testStmt(
@@ -468,7 +663,10 @@ describe("Statement metadata", () => {
     );
   });
   describe("Fill", () => {
-    testStmt("Zero fill", `1 @{fill: 0}`, exprDefaults);
+    testStmt("Zero fill", `1 @{fill: 0}`, {
+      ...exprDefaults,
+      fillOpacity: number(0),
+    });
     testStmt("Nonzero fill", `1 @{fill: 0.5}`, {
       ...exprDefaults,
       fillOpacity: number(0.5),
@@ -605,7 +803,7 @@ describe("Regressions", () => {
 describe("Text", () => {
   testStmt("Text", `"abc"`, {
     type: "text",
-    id: "__dsm-auto-1",
+    id: "1",
     pinned: false,
     secret: false,
     text: "abc",
@@ -613,37 +811,37 @@ describe("Text", () => {
 });
 
 describe("Semicolons", () => {
-  testStmt("No insertion inside unclosed expressions", `1 + \nx`, {
+  testStmt("No insertion in single-newline", `1 + \nx`, {
     ...exprDefaults,
     latex: binop("Add", number(1), id("x")),
   });
   testStmt(
-    "Simple semi insertion",
-    `y=x\nx=1`,
+    "Simple semi",
+    `y=x\n\nx=1`,
     {
       ...exprDefaults,
       latex: comparator("=", id("y"), id("x")),
     },
     {
       ...exprDefaults,
-      id: "__dsm-auto-2",
+      id: "2",
       color: "#2d70b3",
       latex: comparator("=", id("x"), number(1)),
     }
   );
-  testStmt("Insertion inside folder", `folder "" {\ny=x\nx=1}`, {
+  testStmt("Insertion inside folder", `folder "" {\ny=x\n\nx=1}`, {
     ...folderDefaults,
     title: "",
     children: [
       {
         ...exprDefaults,
-        id: "__dsm-auto-2",
+        id: "2",
         color: "#c74440",
         latex: comparator("=", id("y"), id("x")),
       },
       {
         ...exprDefaults,
-        id: "__dsm-auto-3",
+        id: "3",
         color: "#2d70b3",
         latex: comparator("=", id("x"), number(1)),
       },
@@ -655,75 +853,42 @@ describe("Semicolons", () => {
     children: [
       {
         ...exprDefaults,
-        id: "__dsm-auto-2",
+        id: "2",
         latex: comparator("=", id("y"), id("x")),
       },
       {
         ...exprDefaults,
-        id: "__dsm-auto-3",
+        id: "3",
         color: "#2d70b3",
         latex: comparator("=", id("x"), number(1)),
       },
     ],
   });
-  testStmt(
-    "Force semicolon to avoid multi-line CallExpression",
-    `y=x\n(x)^2`,
-    {
-      ...exprDefaults,
-      latex: comparator("=", id("y"), id("x")),
-    },
-    {
-      ...exprDefaults,
-      id: "__dsm-auto-2",
-      color: "#2d70b3",
-      latex: binop("Exponent", id("x"), number(2)),
-    }
-  );
-  testStmt(
-    "Force semicolon to avoid multi-line ListExpression",
-    `[x,2,3]\n[1,2]+x`,
-    {
-      ...exprDefaults,
-      latex: list(id("x"), number(2), number(3)),
-    },
-    {
-      ...exprDefaults,
-      id: "__dsm-auto-2",
-      color: "#2d70b3",
-      latex: binop("Add", list(number(1), number(2)), id("x")),
-    }
-  );
-  testStmt(
-    "Force semicolon to avoid multi-line subtraction",
-    `x\n-x`,
-    {
-      ...exprDefaults,
-      latex: id("x"),
-    },
-    {
-      ...exprDefaults,
-      id: "__dsm-auto-2",
-      color: "#2d70b3",
-      latex: negative(id("x")),
-    }
-  );
+  testStmt("Newline gets ignored, even in CallExpression", `y=x\n(x)`, {
+    ...exprDefaults,
+    latex: comparator("=", id("y"), functionCall(id("x"), [id("x")])),
+  });
+  testStmt("Newline gets ignored, even in ListExpression", `[x,2]\n[x,1]`, {
+    ...exprDefaults,
+    latex: listAccess(list(id("x"), number(2)), list(id("x"), number(1))),
+  });
+  testStmt("Newline gets ignored, even in subtraction", `x\n-x`, {
+    ...exprDefaults,
+    latex: binop("Subtract", id("x"), id("x")),
+  });
 });
+
 describe("Image", () => {
   testStmt("Plain image", `image "name" @{ url: "data:image/png,stub" }`, {
     type: "image",
-    id: "__dsm-auto-1",
+    id: "1",
     pinned: false,
     secret: false,
     name: "name",
     image_url: "data:image/png,stub",
     width: number(10),
     height: number(10),
-    center: {
-      type: "Seq",
-      parenWrapped: true,
-      args: [number(0), number(0)],
-    },
+    center: wrappedSeq(number(0), number(0)),
     angle: number(0),
     opacity: number(1),
     foreground: false,
@@ -746,7 +911,7 @@ describe("Image", () => {
       }`,
     {
       type: "image",
-      id: "__dsm-auto-1",
+      id: "1",
       pinned: true,
       secret: true,
       name: "name",
@@ -774,7 +939,7 @@ describe("Folder", () => {
       children: [
         {
           ...exprDefaults,
-          id: "__dsm-auto-2",
+          id: "2",
         },
       ],
     }
@@ -785,7 +950,7 @@ describe("Folder", () => {
       @{collapsed:true,secret:true,hidden:true}`,
     {
       type: "folder",
-      id: "__dsm-auto-1",
+      id: "1",
       title: "Title",
       collapsed: true,
       hidden: true,
@@ -794,13 +959,37 @@ describe("Folder", () => {
     }
   );
 });
+
+describe("Ticker", () => {
+  testStmt("Basic ticker", `ticker a -> a+1`, {
+    handlerLatex: updateRule(id("a"), binop("Add", id("a"), number(1))),
+    minStepLatex: number(0),
+    playing: false,
+  });
+  testStmt("Ticker with comma", `ticker a -> a+1, A`, {
+    handlerLatex: bareSeq(
+      updateRule(id("a"), binop("Add", id("a"), number(1))),
+      id("A")
+    ),
+    minStepLatex: number(0),
+    playing: false,
+  });
+  testStmt("Styled ticker", `ticker a -> a+1 @{minStep: 100, playing: true}`, {
+    handlerLatex: updateRule(id("a"), binop("Add", id("a"), number(1))),
+    minStepLatex: number(100),
+    playing: true,
+  });
+});
+
 describe("Automatic IDs", () => {
   test("IDs are correctly managed with tables", () => {
     const [_analysis, res] = textToAug(`
       table {
         a=[]
+
         b=[]
       }
+
       1
     `);
     expect(res).not.toBeNull();
@@ -816,7 +1005,7 @@ describe("Automatic IDs", () => {
         {
           ...columnDefaults,
           latex: id("b"),
-          id: "__dsm-auto-3",
+          id: "3",
           color: colors[1],
         },
       ],
@@ -824,7 +1013,7 @@ describe("Automatic IDs", () => {
     expect(exprs[1]).toEqual({
       ...exprDefaults,
       latex: number(1),
-      id: "__dsm-auto-4",
+      id: "4",
       color: colors[2],
     });
   });
@@ -832,8 +1021,10 @@ describe("Automatic IDs", () => {
     const [_errors, res] = textToAug(`
       folder "Title" {
         a
+
         b
       }
+
       1
     `);
     expect(res).not.toBeNull();
@@ -846,13 +1037,13 @@ describe("Automatic IDs", () => {
         {
           ...exprDefaults,
           latex: id("a"),
-          id: "__dsm-auto-2",
+          id: "2",
         },
         {
           ...exprDefaults,
           color: colors[1],
           latex: id("b"),
-          id: "__dsm-auto-3",
+          id: "3",
         },
       ],
     });
@@ -860,7 +1051,7 @@ describe("Automatic IDs", () => {
       ...exprDefaults,
       latex: number(1),
       color: colors[2],
-      id: "__dsm-auto-4",
+      id: "4",
     });
   });
 });
@@ -951,7 +1142,7 @@ describe("Diagnostics", () => {
     );
     testDiagnostics(
       "Expected primitive, got style mapping",
-      `y=1 @{color: "#FFF"}\ny=2 @{color: @{}}`,
+      `y=1 @{color: "#FFF"};y=2 @{color: @{}}`,
       [
         error(
           "Expected expression.color to be primitive, but got style mapping",
@@ -974,16 +1165,6 @@ describe("Diagnostics", () => {
       ]
     );
     // TODO: variable scoping, so `true` resolves to boolean
-    testDiagnostics(
-      "Expected color, got other",
-      `y=1 @{color: "abc"}\ny=2 @{color: BLUE}\ny=3 @{color: 5}\ny=4 @{color: true}`,
-      [
-        error(
-          "Expected expression.color to evaluate to string or identifier, but got number",
-          pos(52, 53)
-        ),
-      ]
-    );
     testDiagnostics(
       "Expected string,boolean,number got other",
       `settings @{randomSeed: 1, squareAxes: "abc", xAxisStep: true}`,
@@ -1039,39 +1220,38 @@ describe("Diagnostics", () => {
     testDiagnostics("Settings in folder", `folder "title" { settings @{} }`, [
       error("Settings may not be in a folder", pos(17, 29)),
     ]);
-    testDiagnostics("Invalid id", `y=x @{id: "__dsm-auto-1"}`, [
-      error("ID may not start with '__'", pos(10, 24)),
+    testDiagnostics("Invalid id", `y=x @{id: "1"}`, [
+      warning("Property id unexpected on expression", pos(6, 8)),
     ]);
   });
   describe("Parse errors", () => {
     testDiagnostics("Empty program", `\n\n`, [
       warning("Program is empty. Try typing: y=x", undefined),
     ]);
-    testDiagnostics("Binary op without indication of continuation", `1\n+ x`, [
-      error("Syntax error; unexpected text: +", pos(2, 3)),
-    ]);
-    testDiagnostics("Skip node", `y=x @{} @#!# y=x^2`, [
-      error("Syntax error; unexpected text: @#!#", pos(8, 12)),
+    testDiagnostics("Skip node", `y=x @{} @! y=x^2`, [
+      error("Invalid character @", pos(8, 9)),
+      error(
+        "Unexpected '!'. Did you mean to precede it by an expression, such as 'x!'?",
+        pos(9, 10)
+      ),
     ]);
     testDiagnostics("Multiple skips", `y=)x]`, [
-      error("Syntax error; unexpected text: )", pos(2, 3)),
-      error("Syntax error; unexpected text: ]", pos(4, 5)),
+      error("Unexpected text: ')'.", pos(2, 3)),
     ]);
     testDiagnostics("Multiple insertions", `y=(1+)*(5+)`, [
-      error("Syntax error; expected something here", pos(5, 5)),
-      error("Syntax error; expected something here", pos(10, 10)),
+      error("Unexpected text: ')'.", pos(5, 6)),
     ]);
     testDiagnostics("Non-identifier callee", `y = 7(x)`, [
-      error(
-        "Invalid callee; expected identifier or member expression",
-        pos(4, 5)
-      ),
+      error("Function call must be an identifier", pos(4, 5)),
     ]);
     testDiagnostics("Non-simple statement in table", `table { "note" }`, [
       error("Expected a valid table column. Try: x1 = [1, 2, 3]", pos(8, 14)),
     ]);
     testDiagnostics("Invalid regression body", `a ~ 5 #{ "note" }`, [
-      error("Invalid regression body", pos(9, 15)),
+      error(
+        "Regression mapping entry must be of the form 'name = 123'",
+        pos(9, 15)
+      ),
     ]);
     testDiagnostics("Non-identifier residual variable", `f(x) = a ~ b`, [
       error(
@@ -1083,6 +1263,24 @@ describe("Diagnostics", () => {
       error(
         "Left side of update rule must be Identifier, but got CallExpression",
         pos(0, 4)
+      ),
+    ]);
+    testDiagnostics("Non-expression dot access", `table{}.x`, [
+      error(
+        "Unexpected '.'. Did you mean to precede it by an expression, such as '(2,3).x'?",
+        pos(7, 8)
+      ),
+    ]);
+    testDiagnostics("Non-expression list", `[table{}]`, [
+      error(
+        "Expected item in sequence to be an expression. Did you mean to write something like '[1,2,3]'?",
+        pos(1, 8)
+      ),
+    ]);
+    testDiagnostics("Non-expression piecewise", `{x>5:table{}}`, [
+      error(
+        "Expected branch of piecewise to be an expression. Did you mean to write something like '{x>3:5}'?",
+        pos(5, 12)
       ),
     ]);
   });
@@ -1106,7 +1304,7 @@ describe("Operator precedence", () => {
   testExpr(
     "postfix > exp",
     "x^y!",
-    binop("Exponent", id("x"), functionCall(id("factorial"), [id("y")]))
+    binop("Exponent", id("x"), factorial(id("y")))
   );
   testExpr(
     "exp > prefix",
@@ -1124,4 +1322,21 @@ describe("Operator precedence", () => {
     binop("Add", id("x"), binop("Multiply", id("y"), id("z")))
   );
   // TODO: some of the more arcane ones: derivative, and lower
+});
+
+describe("Funny spacing", () => {
+  testStmt(
+    "space before double-newline",
+    "y=x \n\nx=3",
+    {
+      ...exprDefaults,
+      latex: comparator("=", id("y"), id("x")),
+    },
+    {
+      ...exprDefaults,
+      id: "2",
+      color: "#2d70b3",
+      latex: comparator("=", id("x"), number(3)),
+    }
+  );
 });

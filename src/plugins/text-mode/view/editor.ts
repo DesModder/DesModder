@@ -1,8 +1,14 @@
-import Controller from "../Controller";
+import TextMode from "..";
+import { analysisStateField, doLint } from "../LanguageServer";
 // Language extension
-import { TextMode } from "../lezer/index";
-import "./editor.css";
+import { textMode } from "../lezer/index";
+import "./editor.less";
 import { checkboxPlugin } from "./plugins/checkboxWidget";
+import { collapseStylesAtStart } from "./plugins/collapseStylesAtStart";
+import { footerPlugin } from "./plugins/footerWidget";
+import { activeStmtGutterHighlighter } from "./plugins/highlightActiveStmtGutter";
+import { stmtNumbers } from "./plugins/stmtNumbers";
+import { styleCircles } from "./plugins/styleCircles";
 import { styleMappingPlugin } from "./plugins/styleMappingWidgets";
 import {
   closeBrackets,
@@ -10,12 +16,7 @@ import {
   completionKeymap,
   closeBracketsKeymap,
 } from "@codemirror/autocomplete";
-import {
-  history,
-  defaultKeymap,
-  historyKeymap,
-  indentWithTab,
-} from "@codemirror/commands";
+import { history, defaultKeymap, historyKeymap } from "@codemirror/commands";
 import {
   indentOnInput,
   foldGutter,
@@ -34,8 +35,6 @@ import {
   dropCursor,
   highlightActiveLine,
   keymap,
-  lineNumbers,
-  highlightActiveLineGutter,
 } from "@codemirror/view";
 
 const scrollTheme = EditorView.theme({
@@ -47,17 +46,18 @@ const scrollTheme = EditorView.theme({
   },
 });
 
-export function initView(controller: Controller, text: string) {
-  const startState = EditorState.create({
+export function startState(controller: TextMode, text: string) {
+  const state = EditorState.create({
     doc: text,
     extensions: [
+      analysisStateField,
       EditorView.updateListener.of(controller.onEditorUpdate.bind(controller)),
       // linter, showing errors
-      // The linter is also the entry point to evaluation
-      linter(controller.doLint.bind(controller), { delay: 250 }),
+      linter(doLint, { delay: 0 }),
       // line numbers and gutter
-      lineNumbers(),
-      highlightActiveLineGutter(),
+      stmtNumbers(),
+      styleCircles(),
+      activeStmtGutterHighlighter,
       // undo/redo history
       history(),
       // fold using arrow in the gutter
@@ -98,19 +98,22 @@ export function initView(controller: Controller, text: string) {
         ...foldKeymap,
         // Ctrl+Space to start completion
         ...completionKeymap,
-        indentWithTab,
       ]),
       scrollTheme,
-      // language support
-      TextMode(controller),
+      // syntax highlighting
+      textMode(controller),
       // Text mode plugins
       checkboxPlugin,
       styleMappingPlugin,
+      footerPlugin(),
     ],
   });
+  return state.update(collapseStylesAtStart(state)).state;
+}
 
+export function initView(controller: TextMode, text: string) {
   return new EditorView({
-    state: startState,
+    state: startState(controller, text),
     parent: document.body,
   });
 }

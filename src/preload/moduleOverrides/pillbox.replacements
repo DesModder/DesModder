@@ -1,12 +1,10 @@
-# Core Replacements
+# Pillbox Replacements
 
-*plugin* `pin-expressions`
-
-<!-- TODO: this should really be plugin "core", or "all", but that is disallowed. -->
+*plugin* `pillbox-menus`
 
 ## Insert spot for extra pillbox buttons in geometry toolbar
 
-*Module* `geometry-toolbar`
+*Description* `Add pillbox buttons (like the DesModder button) in the geometry calculator`
 
 *Find* => `from`
 ```js
@@ -21,7 +19,7 @@ __from__
 $DCGView.Components.IfElse(
     () => window.DesModder,
     {
-      true: () => window.DesModder?.controller.pillboxButtonsView(true),
+      true: () => DSM.pillboxMenus?.pillboxButtonsView(true),
       false: null
     }
 ),
@@ -29,7 +27,7 @@ $DCGView.Components.IfElse(
 
 ## Insert spot for extra pillbox buttons in regular pillbox view
 
-*Module* `pillbox`
+*Description* `Add pillbox buttons (like the DesModder button) in the graphing calculator`
 
 *Find* => `from`
 ```js
@@ -43,7 +41,7 @@ $DCGView.createElement($, {
 $DCGView.Components.IfElse(
     () => window.DesModder,
     {
-      true: () => window.DesModder?.controller.pillboxButtonsView(false),
+      true: () => DSM.pillboxMenus?.pillboxButtonsView(false),
       false: null
     }
 ), __from__
@@ -51,7 +49,7 @@ $DCGView.Components.IfElse(
 
 ## Bottom zero for our pillbox menus
 
-*Module* `pillbox`
+*Description* `Fix scrolling of pillbox menus (like the video creator menu)`
 
 *Find* => `from`
 ```js
@@ -60,13 +58,13 @@ this.controller.isGraphSettingsOpen() ? `bottom: ${$e}px;` : "bottom: auto"
 
 *Replace* `from` with
 ```js
-this.controller.isGraphSettingsOpen() || window.DesModder?.controller?.isSomePillboxMenuOpen()
+this.controller.isGraphSettingsOpen() || DSM.pillboxMenus?.isSomePillboxMenuOpen()
   ? `bottom: ${$e}px;` : "bottom: auto;"
 ```
 
 ## Add popover view for geometry
 
-*Module* `pillbox`
+*Description* `Allow showing pillbox menus (like the video creator menu) in the geometry calculator`
 
 *Find* => `from`
 ```js
@@ -84,15 +82,15 @@ __from__,
 $DCGView.Components.IfElse(
     () => window.DesModder,
     {
-      true: () => window.DesModder?.controller.pillboxMenuView(true),
+      true: () => DSM.pillboxMenus?.pillboxMenuView(true),
       false: null
     }
 )
 ```
 
-## Tweak placement of existing settings menu
+## Tweak placement of existing settings menu in geometry
 
-*Module* `pillbox`
+*Description* `Move settings menu left in the geometry calculator (so it doesn't cover DesModder buttons)`
 
 It should be on the left to avoid covering up all the DesModder config stuff.
 
@@ -107,11 +105,8 @@ return $DCGView.createElement("div", {
     style: this.bindFn(this.getContainerStyle),
     didMount: this.bindFn(this.didMountContainer),
     didUnmount: this.bindFn(this.didUnmountContainer)
-}, $DCGView.createElement("div", {
-    class: $DCGView.const("dcg-popover-interior"),
-    role: $DCGView.const("complementary"),
-    "aria-label": () => this.controller.s("graphing-calculator-label-tooltip-geometry-settings")
-}, __children__
+}, $DCGView.createElement("div", { ____ },
+  __children__
 ))
 ```
 
@@ -132,7 +127,7 @@ __classes__,
 
 ## Show pillbox container even without zoom buttons
 
-*module* `pillbox`
+*Description* `Show pillbox buttons (like the DesModder button) even with zoom disabled`
 
 *Find*
 ```js
@@ -143,5 +138,5 @@ shouldShowContainer() {
 
 *Replace* `ret` with
 ```js
-__ret__ || (DesModder?.controller && !DesModder.controller.showHorizontalPillboxMenu())
+__ret__ || (!DSM.pillboxMenus?.showHorizontalPillboxMenu())
 ```

@@ -1,5 +1,27 @@
-import { Expression as Expr, Identifier } from "../TextAST";
+import { AnyChild as Expr } from "../../aug/AugLatex";
 import { LabelOrientation } from "@desmodder/graph-state";
+
+export type AnyHydrated =
+  | Settings
+  | Ticker
+  | ItemBase
+  | NonFolderBase
+  | ColumnExpressionCommon
+  | Clickable
+  | Expression
+  | Regression
+  | Table
+  | Column
+  | Image
+  | Folder;
+
+export type AnyHydratedValue =
+  | number
+  | boolean
+  | string
+  | Expr
+  | undefined
+  | null;
 
 export interface Settings {
   viewport: {
@@ -35,11 +57,7 @@ export interface Ticker {
   playing: boolean;
 }
 
-export interface Base {
-  id: string;
-}
-
-export interface ItemBase extends Base {
+export interface ItemBase {
   secret: boolean;
 }
 
@@ -48,19 +66,23 @@ export interface NonFolderBase extends ItemBase {
 }
 
 export interface ColumnExpressionCommon {
-  color: Identifier | string;
+  color: Expr | string;
   hidden: boolean;
-  points?: {
-    opacity: Expr;
-    size: Expr;
-    style: "POINT" | "OPEN" | "CROSS";
-    drag: "NONE" | "X" | "Y" | "XY" | "AUTO";
-  };
-  lines?: {
-    opacity: Expr;
-    width: Expr;
-    style: "SOLID" | "DASHED" | "DOTTED";
-  };
+  points?:
+    | {
+        opacity: Expr;
+        size: Expr;
+        style: "POINT" | "OPEN" | "CROSS";
+        drag: "NONE" | "X" | "Y" | "XY" | "AUTO";
+      }
+    | boolean;
+  lines?:
+    | {
+        opacity: Expr;
+        width: Expr;
+        style: "SOLID" | "DASHED" | "DOTTED";
+      }
+    | boolean;
 }
 
 export interface Clickable {
@@ -84,7 +106,7 @@ export interface Expression
   };
   errorHidden: boolean;
   glesmos: boolean;
-  fill: Expr;
+  fill?: Expr;
   displayEvaluationAsFraction: boolean;
   slider?: {
     playing: boolean;
@@ -95,17 +117,17 @@ export interface Expression
       | "PLAY_ONCE"
       | "PLAY_INDEFINITELY";
     period: number;
-    min: Expr;
-    max: Expr;
-    step: Expr;
+    min?: Expr;
+    max?: Expr;
+    step?: Expr;
   };
   domain?: {
-    min: Expr;
-    max: Expr;
+    min?: Expr;
+    max?: Expr;
   };
   cdf?: {
-    min: Expr;
-    max: Expr;
+    min?: Expr;
+    max?: Expr;
   };
   // TODO vizProps
   // vizProps:
@@ -118,7 +140,7 @@ export interface Regression extends NonFolderBase {
 
 export interface Table extends NonFolderBase {}
 
-export interface Column extends Base, ColumnExpressionCommon {}
+export interface Column extends ColumnExpressionCommon {}
 
 export interface Image extends NonFolderBase, Clickable {
   width: Expr;

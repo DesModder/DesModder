@@ -14,7 +14,7 @@ module.exports = {
     sourceType: "module",
     project: "tsconfig.json",
   },
-  ignorePatterns: ["src/frontend/grammar*"],
+  ignorePatterns: ["src/frontend/grammar*", "coverage", "node_modules", "dist"],
   parser: "@typescript-eslint/parser",
   rules: {
     "rulesdir/no-format-in-ts": "error",
@@ -35,5 +35,6 @@ module.exports = {
     ],
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": "off",
+    "no-console": "error",
   },
 };

@@ -1,28 +1,5 @@
-import { MainPopupFunc } from "./components/MainPopup";
-import { controller } from "./index";
+import VideoCreator from ".";
 import { Calc } from "globals/window";
-import { desModderController } from "script";
-import { jquery, keys } from "utils/depUtils";
-
-export function initView() {
-  desModderController.addPillboxButton({
-    id: "dsm-vc-menu",
-    tooltip: "video-creator-menu",
-    iconClass: "dcg-icon-film",
-    popup: () => MainPopupFunc(controller),
-  });
-  jquery(document).on("keydown.expanded-menu-view", (e: KeyboardEvent) => {
-    if (keys.lookup(e) === "Esc" && controller.isPlayPreviewExpanded) {
-      e.stopImmediatePropagation();
-      controller.togglePreviewExpanded();
-    }
-  });
-}
-
-export function destroyView() {
-  desModderController.removePillboxButton("dsm-vc-menu");
-  jquery(document).off(".expanded-menu-view");
-}
 
 const captureFrameID = "dsm-vc-capture-frame";
 
@@ -30,7 +7,7 @@ function percentage(x: number) {
   return `${100 * x}%`;
 }
 
-function applyCaptureFrame() {
+function applyCaptureFrame(controller: VideoCreator) {
   let frame = document.getElementById(captureFrameID);
   if (
     controller.focusedMQ === "capture-height" ||
@@ -69,7 +46,7 @@ function applyCaptureFrame() {
   }
 }
 
-export function updateView() {
-  applyCaptureFrame();
-  desModderController.updateMenuView();
+export function updateView(vc: VideoCreator) {
+  applyCaptureFrame(vc);
+  vc.controller.pillboxMenus?.updateExtraComponents();
 }

@@ -1,7 +1,5 @@
 import Aug from "../aug/AugState";
-import TextAST from "../down/TextAST";
-import { Calc } from "globals/window";
-import { getSections } from "utils/depUtils";
+import TextAST from "../down/TextASTSynthetic";
 
 export function graphSettingsToAST(
   settings: Aug.GraphSettings
@@ -63,9 +61,7 @@ export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
   if (item.error)
     return {
       type: "Text",
-      text: `(Error in automatic conversion${
-        item.type === "text" ? ": " + item.text : ""
-      })`,
+      text: `Conversion error${item.type === "text" ? ": " + item.text : ""}`,
       style: null,
     };
   const base = {
@@ -91,21 +87,19 @@ export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
             errorHidden: booleanToAST(item.errorHidden, false),
             logMode: booleanToAST(item.regression?.isLogMode, false),
           }),
-          regression: {
-            parameters: {
-              type: "RegressionParameters",
-              entries: [...item.regression.regressionParameters.entries()].map(
-                ([id, value]) => ({
-                  type: "RegressionEntry",
-                  variable: identifierToAST(id),
-                  value: { type: "Number", value },
-                })
-              ),
-            },
-            residualVariable:
-              item.regression.residualVariable &&
-              identifierToAST(item.regression.residualVariable),
+          parameters: {
+            type: "RegressionParameters",
+            entries: [...item.regression.regressionParameters.entries()].map(
+              ([id, value]) => ({
+                type: "RegressionEntry",
+                variable: identifierToAST(id),
+                value: { type: "Number", value },
+              })
+            ),
           },
+          residualVariable:
+            item.regression.residualVariable &&
+            identifierToAST(item.regression.residualVariable),
         };
       }
       return {
@@ -148,7 +142,7 @@ export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
     case "table":
       return {
         type: "Table",
-        columns: item.columns.map((e, i) => columnToAST(e, item, i)),
+        columns: item.columns.map(columnToAST),
         style: styleMapping(base),
       };
     case "text":
@@ -177,28 +171,21 @@ function expressionStyle(
   item: Aug.ExpressionAug
 ): Parameters<typeof styleMapping>[0] {
   const domain = item.parametricDomain ?? item.polarDomain;
-  const model = Calc.controller.getItemModel(item.id);
-  const sections: ReturnType<typeof getSections> = model
-    ? getSections(model)
-    : // model not found. Just show everything we have data for
-      ["points", "label", "fill", "lines", "drag"];
+
   return {
-    ...columnExpressionCommonStyle(item, sections),
-    fill: sections.includes("fill")
-      ? childLatexToASTmaybe(item.fillOpacity)
-      : undefined,
-    label: sections.includes("label")
-      ? item.label &&
-        styleMapping({
-          text: stringToASTmaybe(item.label.text),
-          size: childLatexToASTmaybe(item.label.size),
-          orientation: stringToASTmaybe(item.label.orientation),
-          angle: childLatexToASTmaybe(item.label.angle),
-          outline: booleanToAST(item.label.outline, true),
-          showOnHover: booleanToAST(item.label.showOnHover, false),
-          editableMode: stringToASTmaybe(item.label.editableMode),
-        })
-      : undefined,
+    ...columnExpressionCommonStyle(item),
+    fill: childLatexToASTmaybe(item.fillOpacity),
+    label:
+      item.label &&
+      styleMapping({
+        text: stringToASTmaybe(item.label.text),
+        size: childLatexToASTmaybe(item.label.size),
+        orientation: stringToASTmaybe(item.label.orientation),
+        angle: childLatexToASTmaybe(item.label.angle),
+        outline: booleanToAST(item.label.outline, true),
+        showOnHover: booleanToAST(item.label.showOnHover, false),
+        editableMode: stringToASTmaybe(item.label.editableMode),
+      }),
     errorHidden: booleanToAST(item.errorHidden, false),
     glesmos: booleanToAST(item.glesmos, false),
     fractionDisplay: booleanToAST(item.displayEvaluationAsFraction, false),
@@ -248,49 +235,42 @@ function expressionStyle(
 }
 
 function columnExpressionCommonStyle(
-  item: Aug.TableColumnAug | Aug.ExpressionAug,
-  sections: ReturnType<typeof getSections>
+  item: Aug.TableColumnAug | Aug.ExpressionAug
 ) {
-  const res: Parameters<typeof styleMapping>[0] =
-    sections.length > 0
-      ? {
-          color:
-            typeof item.color === "string"
-              ? stringToASTmaybe(item.color)
-              : identifierToAST(item.color),
-          hidden: booleanToAST(item.hidden, false),
-        }
-      : {};
-  if (sections.includes("lines") && item.lines) {
-    res.lines = styleMapping({
-      opacity: childLatexToASTmaybe(item.lines.opacity),
-      width: childLatexToASTmaybe(item.lines.width),
-      style: stringToASTmaybe(item.lines.style),
-    });
+  const res: Parameters<typeof styleMapping>[0] = {
+    color:
+      typeof item.color === "string"
+        ? stringToASTmaybe(item.color)
+        : childLatexToASTmaybe(item.color),
+    hidden: booleanToAST(item.hidden, false),
+  };
+  if (item.lines) {
+    res.lines = item.lines
+      ? styleMapping(
+          {
+            opacity: childLatexToASTmaybe(item.lines.opacity),
+            width: childLatexToASTmaybe(item.lines.width),
+            style: stringToASTmaybe(item.lines.style),
+          },
+          { includeEmpty: true }
+        )
+      : undefined;
   }
-  if (sections.includes("points") && item.points) {
-    res.points = styleMapping({
-      opacity: childLatexToASTmaybe(item.points.opacity),
-      size: childLatexToASTmaybe(item.points.size),
-      style: stringToASTmaybe(item.points.style),
-      drag: sections.includes("drag")
-        ? stringToASTmaybe(item.points.dragMode)
-        : undefined,
-    });
+  if (item.points) {
+    res.points = styleMapping(
+      {
+        opacity: childLatexToASTmaybe(item.points.opacity),
+        size: childLatexToASTmaybe(item.points.size),
+        style: stringToASTmaybe(item.points.style),
+        drag: stringToASTmaybe(item.points.dragMode),
+      },
+      { includeEmpty: true }
+    );
   }
   return res;
 }
 
-function columnToAST(
-  col: Aug.TableColumnAug,
-  parentTable: Aug.TableAug,
-  colIndex: number
-): TextAST.TableColumn {
-  const model = Calc.controller.getItemModel(parentTable.id);
-  const draggable =
-    model && model.type === "table"
-      ? model.columnModels[colIndex].draggable
-      : true;
+function columnToAST(col: Aug.TableColumnAug): TextAST.TableColumn {
   return {
     type: "ExprStatement",
     expr:
@@ -312,12 +292,7 @@ function columnToAST(
         : childLatexToAST(col.latex),
     style: styleMapping({
       id: idToString(col.id),
-      ...columnExpressionCommonStyle(
-        col,
-        colIndex === 0
-          ? []
-          : ["points", "lines", ...(draggable ? ["drag" as const] : [])]
-      ),
+      ...columnExpressionCommonStyle(col),
     }),
   };
 }
@@ -326,12 +301,13 @@ function styleMapping(
   from: Record<
     string,
     TextAST.Expression | TextAST.StyleMapping | null | undefined
-  >
+  >,
+  { includeEmpty } = { includeEmpty: false }
 ): TextAST.StyleMapping | null {
   const nonemptyEntries = Object.entries(from).filter(
     ([_, value]) => value != null
   ) as [string, TextAST.Expression | TextAST.StyleMapping][];
-  return nonemptyEntries.length > 0
+  return nonemptyEntries.length > 0 || includeEmpty
     ? {
         type: "StyleMapping",
         entries: nonemptyEntries.map(([prop, value]) => ({
@@ -353,10 +329,9 @@ function booleanToAST(bool: boolean | undefined, defaultValue: boolean) {
 }
 
 function identifierToAST(name: { symbol: string }): TextAST.Identifier {
-  // TODO: avoid collisions from underscore removal
   return {
     type: "Identifier",
-    name: name.symbol.replace("_", ""),
+    name: name.symbol,
   };
 }
 
@@ -399,7 +374,7 @@ function functionCallToAST(e: Aug.Latex.FunctionCall): TextAST.CallExpression {
   };
 }
 
-function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
+export function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
   switch (e.type) {
     case "Constant":
       return numberToASTmaybe(e.value)!;
@@ -501,6 +476,12 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         expr: childLatexToAST(e.expr),
         assignments: e.assignments.map(assignmentExprToAST),
       };
+    case "Substitution":
+      return {
+        type: "Substitution",
+        body: childLatexToAST(e.body),
+        assignments: e.assignments.map(assignmentExprToAST),
+      };
     case "Piecewise": {
       const piecewiseBranches: TextAST.PiecewiseBranch[] = [];
       let curr: Aug.Latex.AnyChild = e;
@@ -517,11 +498,17 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         curr = curr.alternate;
       }
       if (!Aug.Latex.isConstant(curr, NaN)) {
-        piecewiseBranches.push({
-          type: "PiecewiseBranch",
-          condition: identifierToAST({ symbol: "else" }),
-          consequent: childLatexToAST(curr),
-        });
+        if (piecewiseBranches.length === 0) {
+          if (!Aug.Latex.isConstant(curr, 1))
+            throw new Error(
+              "Programming error: first branch in Aug piecewise is unconditional but not 1."
+            );
+        } else
+          piecewiseBranches.push({
+            type: "PiecewiseBranch",
+            condition: null,
+            consequent: childLatexToAST(curr),
+          });
       }
       return {
         type: "PiecewiseExpression",
@@ -568,6 +555,15 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         op: "-",
         expr: childLatexToAST(e.arg),
       };
+    case "Factorial":
+      return childLatexToAST({
+        type: "FunctionCall",
+        callee: {
+          type: "Identifier",
+          symbol: "factorial",
+        },
+        args: [e.arg],
+      });
     case "Comparator":
       return {
         type: "BinaryExpression",
@@ -584,6 +580,13 @@ function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         rightOp: e.rightOperator,
         right: childLatexToAST(e.right),
       };
+    case "AssignmentExpression":
+      return assignmentExprToAST(e);
+    default:
+      e satisfies never;
+      throw new Error(
+        `Programming Error in augToAST: Unexpected Aug node ${(e as any).type}`
+      );
   }
 }
 
@@ -605,7 +608,9 @@ function assignmentExprToAST(
   };
 }
 
-function rootLatexToAST(e: Aug.Latex.AnyRootOrChild): TextAST.Expression {
+export function rootLatexToAST(
+  e: Aug.Latex.AnyRootOrChild
+): TextAST.Expression {
   switch (e.type) {
     case "Equation":
     case "Assignment":

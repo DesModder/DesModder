@@ -1,8 +1,12 @@
+import { isConstant } from "./AugLatex";
 import Aug from "./AugState";
+import { latexTreeToString } from "./augLatexToRaw";
 import * as Graph from "@desmodder/graph-state";
-import Metadata from "main/metadata/interface";
-import { changeExprInMetadata, isBlankMetadata } from "main/metadata/manage";
-import { autoCommandNames } from "utils/depUtils";
+import Metadata from "plugins/manage-metadata/interface";
+import {
+  changeExprInMetadata,
+  isBlankMetadata,
+} from "plugins/manage-metadata/manage";
 
 export default function augToRaw(aug: Aug.State): Graph.GraphState {
   const list = [];
@@ -112,7 +116,7 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
     case "expression": {
       const shouldFill = item.fillOpacity
         ? !Aug.Latex.isConstant(item.fillOpacity, 0)
-        : false;
+        : undefined;
       return {
         ...base,
         type: "expression",
@@ -126,7 +130,7 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
         ),
         regressionParameters: Object.fromEntries(
           [...(item.regression?.regressionParameters.entries() ?? [])].map(
-            ([k, v]) => [identifierToString(k), v]
+            ([k, v]) => [latexTreeToString(k), v]
           )
         ),
         isLogModeRegression: item.regression?.isLogMode,
@@ -150,16 +154,19 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
           loopMode: item.slider.loopMode,
           playDirection: item.slider.playDirection,
           isPlaying: item.slider.isPlaying,
-          hardMin: !!item.slider.min,
+          hardMin:
+            !!item.slider.min && item.slider.loopMode !== "PLAY_INDEFINITELY",
           min: latexTreeToStringMaybe(item.slider.min),
-          hardMax: !!item.slider.max,
+          hardMax:
+            !!item.slider.max && item.slider.loopMode !== "PLAY_INDEFINITELY",
           max: latexTreeToStringMaybe(item.slider.max),
           step: latexTreeToStringMaybe(item.slider.step),
         },
         displayEvaluationAsFraction: item.displayEvaluationAsFraction,
-        polarDomain: latexMapDomain(item.polarDomain),
-        parametricDomain: latexMapDomain(item.parametricDomain),
-        domain: latexMapDomain(item.parametricDomain),
+        polarDomain: item.polarDomain && latexMapDomain(item.polarDomain),
+        parametricDomain:
+          item.parametricDomain && latexMapDomain(item.parametricDomain),
+        domain: item.parametricDomain && latexMapDomain(item.parametricDomain),
         cdf: item.cdf && {
           show: true,
           min: latexTreeToStringMaybe(item.cdf.min),
@@ -207,15 +214,24 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
       return {
         ...base,
         type: "table",
-        columns: item.columns.map((column) => ({
-          values:
-            // Desmos expects at least one row
-            column.values.length > 0
-              ? column.values.map(columnEntryToString)
-              : [""],
-          id: column.id,
-          ...columnExpressionCommon(column),
-        })),
+        columns: item.columns
+          .map((column) => ({
+            values:
+              // Desmos expects at least one row
+              column.values.length > 0
+                ? column.values.map(columnEntryToString)
+                : [""],
+            id: column.id,
+            ...columnExpressionCommon(column),
+          }))
+          // Desmos expects at least two columns
+          .concat(
+            Array.from({ length: 2 - item.columns.length }).map(() => ({
+              id: "dsm-blank-" + Math.random().toString().slice(2, 16),
+              values: [""],
+              color: "#2D70B3",
+            }))
+          ),
       };
     case "text":
       return {
@@ -231,8 +247,8 @@ function latexMapDomain(domain: Aug.DomainAug | undefined) {
     return undefined;
   } else {
     return {
-      min: latexTreeToString(domain.min),
-      max: latexTreeToString(domain.max),
+      min: domain.min ? latexTreeToString(domain.min) : "",
+      max: domain.max ? latexTreeToString(domain.max) : "",
     };
   }
 }
@@ -248,30 +264,26 @@ function columnExpressionCommon(item: Aug.TableColumnAug | Aug.ExpressionAug) {
   } else {
     // default to red if latex
     res.color = "#c74440";
-    res.colorLatex = identifierToString(item.color);
+    res.colorLatex = latexTreeToString(item.color);
   }
   if (item.points) {
-    res.points = true;
-    res.pointOpacity = latexTreeToString(item.points.opacity);
-    res.pointSize = latexTreeToString(item.points.size);
+    res.points =
+      !isConstant(item.points.opacity, 0) && !isConstant(item.points.size, 0);
+    if (item.points.opacity)
+      res.pointOpacity = latexTreeToString(item.points.opacity);
+    if (item.points.size) res.pointSize = latexTreeToString(item.points.size);
     res.pointStyle = item.points.style;
     res.dragMode = item.points.dragMode;
   }
   if (item.lines) {
-    res.lines = true;
-    res.lineOpacity = latexTreeToString(item.lines.opacity);
-    res.lineWidth = latexTreeToString(item.lines.width);
+    res.lines =
+      !isConstant(item.lines.opacity, 0) && !isConstant(item.lines.width, 0);
+    if (item.lines.opacity)
+      res.lineOpacity = latexTreeToString(item.lines.opacity);
+    if (item.lines.width) res.lineWidth = latexTreeToString(item.lines.width);
     res.lineStyle = item.lines.style;
   }
   return res;
-}
-
-function wrapParen(s: string) {
-  return "\\left(" + s + "\\right)";
-}
-
-function wrapBracket(s: string) {
-  return "\\left[" + s + "\\right]";
 }
 
 function latexTreeToStringMaybe(e: Aug.Latex.AnyRootOrChild | undefined) {
@@ -279,229 +291,7 @@ function latexTreeToStringMaybe(e: Aug.Latex.AnyRootOrChild | undefined) {
   return latexTreeToString(e);
 }
 
-function latexTreeToString(e: Aug.Latex.AnyRootOrChild) {
-  switch (e.type) {
-    case "Equation":
-    case "Assignment":
-      return childNodeToString(e.left) + "=" + childNodeToString(e.right);
-    case "FunctionDefinition":
-      return (
-        funcToString(e.symbol, e.argSymbols) +
-        "=" +
-        childNodeToString(e.definition)
-      );
-    case "Visualization":
-      // Lower case handles "Stats" → "stats" etc
-      return funcToString(e.callee, e.args);
-    case "Regression":
-      return childNodeToString(e.left) + "\\sim " + childNodeToString(e.right);
-    default:
-      return childNodeToString(e);
-  }
-}
-
 function columnEntryToString(e: Aug.Latex.AnyRootOrChild): string {
   if (e.type === "Identifier" && e.symbol === "N_aN") return "";
   return latexTreeToString(e);
-}
-
-function childNodeToString(e: Aug.Latex.AnyChild): string {
-  switch (e.type) {
-    case "Constant": {
-      const res = e.value.toString();
-      return res.includes("e") ? "(" + res.replace("e", "*10^{") + "})" : res;
-    }
-    case "Identifier":
-      return identifierToString(e);
-    case "FunctionCall":
-      return funcToString(e.callee, e.args);
-    case "Integral":
-      return (
-        `\\int_{${childNodeToString(e.start)}}` +
-        `^{${childNodeToString(e.end)}}` +
-        wrapParen(childNodeToString(e.integrand)) +
-        "d" +
-        identifierToString(e.differential)
-      );
-    case "Derivative":
-      return (
-        `\\left(\\frac{d}{d${identifierToString(e.variable)}}` +
-        childNodeToString(e.arg) +
-        "\\right)"
-      );
-    case "Prime":
-      return (
-        identifierToString(e.arg.callee) +
-        "'".repeat(e.order) +
-        wrapParen(childNodeToString(e.arg.args[0]))
-      );
-    case "List":
-      return wrapBracket(bareSeq(e.args));
-    case "Range":
-      return wrapBracket(bareSeq(e.start) + "..." + bareSeq(e.end));
-    case "ListAccess":
-      return (
-        wrapParen(childNodeToString(e.list)) +
-        (e.index.type === "Range"
-          ? childNodeToString(e.index)
-          : wrapBracket(childNodeToString(e.index)))
-      );
-    case "DotAccess":
-      return (
-        wrapParen(childNodeToString(e.object)) +
-        "." +
-        childNodeToString(e.property)
-      );
-    case "OrderedPairAccess":
-      return wrapParen(childNodeToString(e.point)) + "." + e.index;
-    case "Seq":
-      return e.parenWrapped ? wrapParen(bareSeq(e.args)) : bareSeq(e.args);
-    case "UpdateRule":
-      return (
-        identifierToString(e.variable) +
-        "\\to " +
-        childNodeToString(e.expression)
-      );
-    case "ListComprehension":
-      return wrapBracket(
-        childNodeToString(e.expr) +
-          "\\operatorname{for}" +
-          e.assignments.map(assignmentExprToRaw).join(",")
-      );
-    case "Piecewise": {
-      const piecewiseParts: string[] = [];
-      let curr: Aug.Latex.AnyChild = e;
-      while (curr.type === "Piecewise") {
-        if (curr.condition === true) {
-          curr = curr.consequent;
-          break;
-        }
-        let part = childNodeToString(curr.condition);
-        if (!Aug.Latex.isConstant(curr.consequent, 1)) {
-          part += ":" + childNodeToString(curr.consequent);
-        }
-        piecewiseParts.push(part);
-        curr = curr.alternate;
-      }
-      if (!Aug.Latex.isConstant(curr, NaN)) {
-        // check handles trivial piecewise such as {else: 1}
-        if (piecewiseParts.length === 0) return childNodeToString(curr);
-        piecewiseParts.push(childNodeToString(curr));
-      }
-      return "\\left\\{" + piecewiseParts.join(",") + "\\right\\}";
-    }
-    case "RepeatedOperator": {
-      const prefix = e.name === "Product" ? "\\prod" : "\\sum";
-      return (
-        prefix +
-        `_{${identifierToString(e.index)}=${childNodeToString(e.start)}}` +
-        `^{${childNodeToString(e.end)}}` +
-        wrapParen(childNodeToString(e.expression))
-      );
-    }
-    case "BinaryOperator": {
-      const binopLeft = childNodeToString(e.left);
-      const binopRight = childNodeToString(e.right);
-      switch (e.name) {
-        case "Add":
-          return wrapParen(binopLeft) + "+" + wrapParen(binopRight);
-        case "Subtract":
-          return wrapParen(binopLeft) + "-" + wrapParen(binopRight);
-        case "Multiply":
-          return wrapParen(binopLeft) + "\\cdot " + wrapParen(binopRight);
-        case "Divide":
-          return `\\frac{${binopLeft}}{${binopRight}}`;
-        case "Exponent":
-          return wrapParen(binopLeft) + "^{" + binopRight + "}";
-      }
-    }
-    // eslint-disable-next-line no-fallthrough
-    case "Negative":
-      if (e.arg.type === "Constant" && e.arg.value > 0)
-        return "-" + childNodeToString(e.arg);
-      return "-" + wrapParen(childNodeToString(e.arg));
-    case "Comparator":
-      return (
-        childNodeToString(e.left) +
-        comparatorMap[e.operator] +
-        childNodeToString(e.right)
-      );
-    case "DoubleInequality":
-      return (
-        childNodeToString(e.left) +
-        comparatorMap[e.leftOperator] +
-        childNodeToString(e.middle) +
-        comparatorMap[e.rightOperator] +
-        childNodeToString(e.right)
-      );
-  }
-}
-
-function assignmentExprToRaw(e: Aug.Latex.AssignmentExpression): string {
-  return identifierToString(e.variable) + "=" + childNodeToString(e.expression);
-}
-
-const comparatorMap = {
-  "<": "<",
-  "<=": "\\le ",
-  "=": "=",
-  ">=": "\\ge ",
-  ">": ">",
-};
-
-function bareSeq(e: Aug.Latex.AnyChild[]): string {
-  return e.map(childNodeToString).join(",");
-}
-
-function funcToString(
-  callee: Aug.Latex.Identifier,
-  args: Aug.Latex.AnyChild[]
-): string {
-  if (callee.symbol === "factorial") {
-    return `\\left(${bareSeq(args)}\\right)!`;
-  } else if (callee.symbol === "abs") {
-    return `\\left|${bareSeq(args)}\\right|`;
-  } else if (callee.symbol === "sqrt") {
-    return `\\sqrt{${bareSeq(args)}}`;
-  } else if (callee.symbol === "nthroot") {
-    if (args.length === 1) return `\\sqrt{${bareSeq(args)}}`;
-    return `\\sqrt[${childNodeToString(args[1])}]{${bareSeq([
-      ...args.slice(0, 1),
-      ...args.slice(2),
-    ])}}`;
-  } else if (callee.symbol === "l_ogbase") {
-    if (args.length === 1) return `\\log\\left(${bareSeq(args)}\\right)`;
-    return `\\log_{${childNodeToString(args[args.length - 1])}}\\left(${bareSeq(
-      args.slice(0, args.length - 1)
-    )}\\right)`;
-  } else {
-    return identifierToString(callee) + wrapParen(bareSeq(args));
-  }
-}
-
-/**
- * The backslash commands are \alpha, \beta ... \infty
- */
-const backslashCommands = new Set(autoCommandNames.split(" "));
-
-function identifierToString(id: Aug.Latex.Identifier): string {
-  const symbol = id.symbol.replace(/[{}]/g, "");
-  let main = symbol;
-  let subscript;
-  const uIndex = symbol.indexOf("_");
-  if (uIndex >= 0) {
-    main = symbol.substring(0, uIndex);
-    subscript = symbol.substring(uIndex + 1);
-    if (!/^[a-zA-Z]+$/.test(main) || !/^[a-zA-Z0-9]+$/.test(subscript)) {
-      throw Error(`Unexpected character in ${symbol}`);
-    }
-  }
-  const start =
-    main.length === 1
-      ? main
-      : backslashCommands.has(main)
-      ? "\\" + main
-      : `\\operatorname{${main}}`;
-  const end = subscript ? `_{${subscript}}` : "";
-  return start + end;
 }

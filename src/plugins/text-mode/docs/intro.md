@@ -80,9 +80,5 @@ If you want a more guided tutorial than playing around with converting graphs to
 
 - The existing undo and redo buttons do not edit text code
   - for now, avoid using the undo and redo buttons or corresponding hotkey
-- When a regression or table gets new values calculated, the entire item's code gets replaced.
-  - for now, unfortunately just deal with it
-  - this also happens if a statement evaluates to a number, like `y = 3`
 - An object with 0 fill opacity gets set to have fill disabled
-  - this means you can't have invisible buttons
   - if you want an invisible button, set opacity to a small number like 0.0000001

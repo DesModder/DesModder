@@ -1,6 +1,6 @@
-import { Calc, Fragile } from "../../globals/window";
+import { Fragile } from "../../globals/window";
+import { PluginController } from "../PluginController";
 import "./hide-errors.less";
-import { Plugin } from "plugins";
 
 let enabled: boolean = false;
 let initOnce: boolean = false;
@@ -30,22 +30,35 @@ function initPromptSlider() {
   };
 }
 
-const hideErrors: Plugin = {
-  id: "hide-errors",
-  // Still need to declare empty onEnable and onDisable to get the right UI
-  onEnable: () => {
+export default class HideErrors extends PluginController {
+  static id = "hide-errors" as const;
+  static enabledByDefault = true;
+
+  afterEnable() {
     if (!initOnce) {
       initOnce = true;
       initPromptSlider();
     }
     enabled = true;
-    Calc.controller.updateViews();
-  },
-  onDisable: () => {
+  }
+
+  afterDisable() {
     enabled = false;
-    Calc.controller.updateViews();
-  },
-  enabledByDefault: true,
-  /* Has module overrides */
-};
-export default hideErrors;
+  }
+
+  hideError(id: string) {
+    this.controller.metadata?.updateExprMetadata(id, {
+      errorHidden: true,
+    });
+  }
+
+  toggleErrorHidden(id: string) {
+    this.controller.metadata?.updateExprMetadata(id, {
+      errorHidden: !this.isErrorHidden(id),
+    });
+  }
+
+  isErrorHidden(id: string) {
+    return this.controller.metadata?.getDsmItemModel(id)?.errorHidden;
+  }
+}

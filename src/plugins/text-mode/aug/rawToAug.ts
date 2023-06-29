@@ -1,9 +1,9 @@
 import Aug from "./AugState";
 import * as Graph from "@desmodder/graph-state";
-import Metadata from "main/metadata/interface";
-import migrateToLatest from "main/metadata/migrate";
 import { ChildExprNode, evalMaybeRational, AnyNode } from "parsing/parsenode";
-import { getReconciledExpressionProps, parseDesmosLatex } from "utils/depUtils";
+import Metadata from "plugins/manage-metadata/interface";
+import migrateToLatest from "plugins/manage-metadata/migrate";
+import { parseDesmosLatex } from "utils/depUtils";
 
 export default function rawToAug(raw: Graph.GraphState): Aug.State {
   const dsmMetadata = rawToDsmMetadata(raw);
@@ -112,17 +112,25 @@ function tryRawNonFolderToAug(
   };
   switch (item.type) {
     case "expression": {
-      // TODO: make this pure instead of relying on Calc.controller.getItemModel
-      // to inflate defaults. Unfortunately
-      //   desmosRequire("core/graphing-calc/json/expression").inflateDefaults()
-      // doesn't take into account the worker analysis points vs lines etc.
-      const { points, lines, fill } = getReconciledExpressionProps(item.id);
+      let latex;
+      if (item.latex) {
+        try {
+          latex = parseRootLatex(item.latex);
+        } catch {
+          return {
+            ...base,
+            type: "text",
+            text: item.latex,
+            error: true,
+          };
+        }
+      }
       return {
         ...base,
         type: "expression",
-        ...columnExpressionCommon(item, points, lines),
-        ...(item.latex ? { latex: parseRootLatex(item.latex) } : {}),
-        ...(item.labelSize !== "0" && item.label
+        ...columnExpressionCommon(item),
+        ...(latex ? { latex } : {}),
+        ...(item.labelSize !== "0" && item.label && item.showLabel
           ? {
               label: {
                 text: item.label,
@@ -135,9 +143,14 @@ function tryRawNonFolderToAug(
               },
             }
           : {}),
-        fillOpacity: fill
-          ? parseLatex(item.fillOpacity ?? "0.4")
-          : parseLatex("0"),
+        fillOpacity:
+          item.fill === false
+            ? parseLatex("0")
+            : parseMaybeLatex(
+                item.fillOpacity === "0"
+                  ? "2^{-99}"
+                  : item.fillOpacity ?? (item.fill ? "0.4" : undefined)
+              ),
         regression: item.residualVariable
           ? {
               residualVariable: parseLatex(
@@ -195,7 +208,7 @@ function tryRawNonFolderToAug(
         center: parseLatex(item.center ?? "(0,0)"),
         angle: parseLatex(item.angle ?? "0"),
         // opacity = 0 corresponds to hidden: true
-        opacity: parseLatex(item.opacity ?? "1"),
+        opacity: parseLatex(item.hidden ? "0" : item.opacity ?? "1"),
         foreground: item.foreground ?? false,
         draggable: item.draggable ?? false,
         clickableInfo: item.clickableInfo?.latex
@@ -224,11 +237,7 @@ function tryRawNonFolderToAug(
             values: column.values
               .slice(0, longestColumnLength + 1)
               .map(parseLatex),
-            ...columnExpressionCommon(
-              column,
-              column.points !== false,
-              column.lines === true
-            ),
+            ...columnExpressionCommon(column),
             latex: parseLatex(column.latex!),
           })),
       };
@@ -281,47 +290,55 @@ function parseMapDomain(
 }
 
 function columnExpressionCommon(
-  item: Graph.TableColumn | Graph.ExpressionState,
-  points: boolean,
-  lines: boolean
+  item: Graph.TableColumn | Graph.ExpressionState
 ) {
   const color = item.colorLatex ? parseLatex(item.colorLatex) : item.color;
-  if (typeof color !== "string" && color.type !== "Identifier") {
-    throw Error("Expected colorLatex to be an identifier");
-  }
   return {
     color,
     hidden: item.hidden ?? false,
-    // TODO: don't include points property by default for curves and polygons
-    // Rely on Desmos's automatic detection?
     points:
-      points && item.pointOpacity !== "0" && item.pointSize !== "0"
+      item.points === false ||
+      item.pointOpacity === "0" ||
+      item.pointSize === "0"
+        ? { size: parseLatex("0") }
+        : item.points === true ||
+          item.pointOpacity !== undefined ||
+          item.pointSize !== undefined ||
+          item.dragMode !== undefined
         ? {
-            opacity: parseLatex(item.pointOpacity ?? "0.9"),
-            size: parseLatex(item.pointSize ?? "9"),
-            style: item.pointStyle ?? "POINT",
-            dragMode: item.dragMode ?? "AUTO",
+            opacity: parseMaybeLatex(item.pointOpacity),
+            size: parseMaybeLatex(item.pointSize),
+            style: item.pointStyle,
+            dragMode: item.dragMode,
           }
         : undefined,
     lines:
-      lines && item.lineOpacity !== "0" && item.lineWidth !== "0"
+      item.lines === false || item.lineOpacity === "0" || item.lineWidth === "0"
+        ? { width: parseLatex("0") }
+        : item.lines === true ||
+          item.lineOpacity !== undefined ||
+          item.lineWidth !== undefined
         ? {
-            opacity: parseLatex(item.lineOpacity ?? "0.9"),
-            width: parseLatex(item.lineWidth ?? "2.5"),
-            style: item.lineStyle ?? "SOLID",
+            opacity: parseMaybeLatex(item.lineOpacity),
+            width: parseMaybeLatex(item.lineWidth),
+            style: item.lineStyle,
           }
         : undefined,
   };
 }
 
-function parseLatex(str: string): Aug.Latex.AnyChild {
+function parseMaybeLatex(str: string | undefined) {
+  return str !== undefined ? parseLatex(str) : undefined;
+}
+
+export function parseLatex(str: string): Aug.Latex.AnyChild {
   if (str === "") return { type: "Constant", value: NaN };
   const res = parseDesmosLatex(str);
   // childNodeToTree throws an error if res is not a child node
   return childNodeToTree(res);
 }
 
-function parseRootLatex(str: string): Aug.Latex.AnyRootOrChild {
+export function parseRootLatex(str: string): Aug.Latex.AnyRootOrChild {
   const parsed = parseDesmosLatex(str);
   switch (parsed.type) {
     case "Equation":
@@ -353,7 +370,7 @@ function parseRootLatex(str: string): Aug.Latex.AnyRootOrChild {
         type: "Visualization",
         callee: {
           type: "Identifier",
-          symbol: parsed.type,
+          symbol: vizSymbol[parsed.type],
         },
         args: parsed.args.map(childNodeToTree),
       };
@@ -367,6 +384,15 @@ function parseRootLatex(str: string): Aug.Latex.AnyRootOrChild {
       return childNodeToTree(parsed);
   }
 }
+
+const vizSymbol = {
+  Stats: "stats",
+  BoxPlot: "boxplot",
+  DotPlot: "dotplot",
+  Histogram: "histogram",
+  IndependentTTest: "IndependentTTest",
+  TTest: "TTest",
+} as const;
 
 function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
   switch (node.type) {
@@ -383,7 +409,18 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
       };
     case "Identifier":
       return parseIdentifier(node._symbol);
+    case "Norm":
+      return {
+        type: "FunctionCall",
+        callee: {
+          type: "Identifier",
+          symbol: "abs",
+        },
+        args: [childNodeToTree(node.args[0])],
+      };
     case "FunctionCall":
+      if (node._symbol === "factorial" && node.args.length === 1)
+        return { type: "Factorial", arg: childNodeToTree(node.args[0]) };
       return {
         type: "FunctionCall",
         callee: parseIdentifier(node._symbol),
@@ -414,18 +451,12 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
       };
     case "FunctionFactorial":
       return {
-        type: "FunctionCall",
-        callee: {
-          type: "Identifier",
-          symbol: "factorial",
+        type: "Factorial",
+        arg: {
+          type: "FunctionCall",
+          callee: nodeToIdentifier(node.args[0]),
+          args: [childNodeToTree(node.args[1])],
         },
-        args: [
-          {
-            type: "FunctionCall",
-            callee: nodeToIdentifier(node.args[0]),
-            args: [childNodeToTree(node.args[1])],
-          },
-        ],
       };
     case "Integral":
       return {
@@ -482,20 +513,11 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         property: prop,
       };
     }
-    case "OrderedPairAccess": {
-      if (typeof node.index._constantValue === "boolean") {
-        throw Error(
-          "Ordered pair index is boolean, but expected rational or number"
-        );
-      }
-      const indexValue = evalMaybeRational(node.index._constantValue);
-      if (indexValue !== 1 && indexValue !== 2) {
-        throw Error("Ordered pair index is neither 1 nor 2");
-      }
+    case "NamedCoordinateAccess": {
       return {
         type: "OrderedPairAccess",
-        point: childNodeToTree(node.point),
-        index: indexValue === 1 ? "x" : "y",
+        point: childNodeToTree(node.args[0]),
+        index: node.symbol,
       };
     }
     case "BareSeq":
@@ -515,9 +537,13 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
       return {
         type: "ListComprehension",
         expr: childNodeToTree(node.args[1]),
-        assignments: node.args.slice(2).map((n) => {
-          return assignmentExprToTree(n);
-        }),
+        assignments: node.args.slice(2).map(assignmentExprToTree),
+      };
+    case "Substitution":
+      return {
+        type: "Substitution",
+        body: childNodeToTree(node.args[0]),
+        assignments: node.args.slice(1).map(assignmentExprToTree),
       };
     case "Piecewise": {
       const conditionNode = node.args[0];
@@ -555,11 +581,16 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
     case "Add":
     case "Subtract":
     case "Multiply":
+    case "DotMultiply":
+    case "CrossMultiply":
     case "Divide":
     case "Exponent":
       return {
         type: "BinaryOperator",
-        name: node.type,
+        name:
+          node.type === "DotMultiply" || node.type === "CrossMultiply"
+            ? "Multiply"
+            : node.type,
         left: childNodeToTree(node.args[0]),
         right: childNodeToTree(node.args[1]),
       };
@@ -599,9 +630,36 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         right: childNodeToTree(node.args[1]),
       };
     case "Error":
-      throw Error("Parsing threw an error");
+      throw new Error("Parsing threw an error");
+    case "Equation":
+    case "Assignment":
+    case "FunctionDefinition":
+    case "Stats":
+    case "AssignmentExpression":
+    case "Ans":
+    case "DotPlot":
+    case "BoxPlot":
+    case "Histogram":
+    case "IndependentTTest":
+    case "TTest":
+    case "Regression":
+    case "RGBColor":
+    case "Image":
+    case "Ticker":
+    case "SolvedEquation":
+    case "Slider":
+    case "OptimizedRegression":
+    case "IRExpression":
+    case "Table":
+    case "TableColumn":
+      throw new Error(
+        `Programming Error: Expected parsenode ${node.type} to not be created`
+      );
     default:
-      throw Error(`Programming Error: Unexpected raw node ${node.type}`);
+      node satisfies never;
+      throw new Error(
+        `Programming Error: Unexpected raw node ${(node as any).type}`
+      );
   }
 }
 

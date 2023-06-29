@@ -35,12 +35,15 @@ export type AnyChild =
   | Seq
   | UpdateRule
   | ListComprehension
+  | Substitution
   | Piecewise
   | RepeatedOperator
   | BinaryOperator
   | Negative
+  | Factorial
   | Comparator
-  | DoubleInequality;
+  | DoubleInequality
+  | AssignmentExpression;
 
 export interface Equation {
   type: "Equation";
@@ -66,10 +69,10 @@ export interface Visualization {
   callee: {
     type: "Identifier";
     symbol:
-      | "Stats"
-      | "BoxPlot"
-      | "DotPlot"
-      | "Histogram"
+      | "stats"
+      | "boxplot"
+      | "dotplot"
+      | "histogram"
       | "IndependentTTest"
       | "TTest";
   };
@@ -94,8 +97,8 @@ export interface Identifier {
   /**
    * Symbols are stored as a symbol. Three main cases:
    *  - one-character name like "a"
-   *  - long name like "random" that becomes \\operatorname{random}
-   *  - greek name like "delta" that becomes \delta
+   *  - operatorname, e.g. "random" -> \operatorname{random}
+   *  - backslash command, e.g. "theta" -> \theta, and "min" -> \min
    * Each of these can be optionally followed by an underscore
    * and one or more letters/digits. Sometimes there are curly braces
    * (example?), but these should be ignored
@@ -107,7 +110,7 @@ export interface Identifier {
 }
 
 export interface FunctionCall {
-  // absolute value and factorial are both included in FunctionCall
+  // absolute value is included in FunctionCall
   type: "FunctionCall";
   callee: Identifier;
   args: AnyChild[];
@@ -201,6 +204,12 @@ export interface ListComprehension {
   assignments: AssignmentExpression[];
 }
 
+export interface Substitution {
+  type: "Substitution";
+  body: AnyChild;
+  assignments: AssignmentExpression[];
+}
+
 export interface Piecewise {
   // A large piecewise is represented by another piecewise in the alternate
   type: "Piecewise";
@@ -230,6 +239,11 @@ export interface Negative {
   arg: AnyChild;
 }
 
+export interface Factorial {
+  type: "Factorial";
+  arg: AnyChild;
+}
+
 type ComparatorSymbol = "<" | "<=" | "=" | ">=" | ">";
 
 export interface DoubleInequality {
@@ -248,8 +262,14 @@ export interface Comparator {
   right: AnyChild;
 }
 
-export function isConstant(e: AnyRootOrChild, v: number) {
+export function isConstant(e: AnyRootOrChild | undefined, v: number) {
   return (
-    e.type === "Constant" && (e.value === v || (isNaN(e.value) && isNaN(v)))
+    e &&
+    e.type === "Constant" &&
+    (e.value === v || (isNaN(e.value) && isNaN(v)))
   );
+}
+
+export function constant(value: number): Constant {
+  return { type: "Constant", value };
 }

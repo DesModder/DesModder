@@ -1,7 +1,8 @@
 import { ProgramAnalysis } from "../LanguageServer";
-import { Identifier } from "../aug/AugLatex";
+import { Identifier, constant } from "../aug/AugLatex";
 import Aug from "../aug/AugState";
-import TextAST, { number } from "./TextAST";
+import { childLatexToAST } from "../up/augToAST";
+import TextAST from "./TextAST";
 import { DiagnosticsState } from "./diagnostics";
 import { evalExpr } from "./staticEval";
 import * as Hydrated from "./style/Hydrated";
@@ -11,30 +12,14 @@ import * as Schema from "./style/schema";
 import { Diagnostic } from "@codemirror/lint";
 import { GrapherState } from "@desmodder/graph-state";
 import { Calc } from "globals/window";
-import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
 import { everyNonNull } from "utils/utils";
 
 export class DownState extends DiagnosticsState {
-  mapIDstmt: Record<string, TextAST.Statement> = {};
-  maxCustomID = 0;
   hasBlockingError = false;
-
-  generateID() {
-    // TODO: incremental updates, so later IDs don't get destroyed when a new
-    // expression is added in the middle of the code
-    return `__dsm-auto-${++this.maxCustomID}`;
-  }
-
-  ensureID(tryID: string, stmt: TextAST.Statement) {
-    const id = tryID === "" ? this.generateID() : tryID;
-    this.mapIDstmt[id] = stmt;
-    return id;
-  }
 }
 
 export default function astToAug(
-  parseErrors: Diagnostic[],
-  program: TextAST.Program
+  analysis: ProgramAnalysis
 ): [ProgramAnalysis, Aug.State | null] {
   const state: Aug.State = {
     version: 9,
@@ -50,6 +35,7 @@ export default function astToAug(
       list: [],
     },
   };
+  const { diagnostics: parseErrors, program, mapIDstmt } = analysis;
   const diagnostics: Diagnostic[] = [...parseErrors];
   const ds = new DownState(diagnostics);
   for (const stmt of program.children) {
@@ -71,8 +57,8 @@ export default function astToAug(
   return [
     {
       diagnostics,
-      ast: program,
-      mapIDstmt: ds.mapIDstmt,
+      program,
+      mapIDstmt,
     },
     ds.hasBlockingError ? null : state,
   ];
@@ -154,7 +140,7 @@ function textToAug(
   const style = hydrate(ds, styleMapping, Default.text, Schema.text, "text");
   return style !== null
     ? {
-        ...exprBase(ds, style, stmt),
+        ...exprBase(style, stmt),
         type: "text",
         text: stmt.text,
       }
@@ -165,7 +151,6 @@ function regressionToAug(
   ds: DownState,
   styleMapping: TextAST.StyleMapping | null,
   stmt: TextAST.ExprStatement,
-  regressionData: TextAST.RegressionData,
   exprAST: TextAST.BinaryExpression
 ): Aug.ExpressionAug | null {
   const expr: Aug.Latex.Regression = {
@@ -181,7 +166,7 @@ function regressionToAug(
     "regression"
   );
   if (style === null) return null;
-  const params = regressionData.parameters.entries.map(
+  const params = (stmt.parameters?.entries ?? []).map(
     ({ variable, value }): [Identifier, number] | null => {
       const evaluated = evalExpr(ds.diagnostics, value);
       if (typeof evaluated !== "number") {
@@ -197,20 +182,19 @@ function regressionToAug(
   if (!everyNonNull(params)) return null;
   return {
     type: "expression",
-    ...exprBase(ds, style, stmt),
+    ...exprBase(style, stmt),
     latex: expr,
     regression: {
       isLogMode: style.logMode,
       residualVariable:
-        regressionData.residualVariable &&
-        identifierToAug(regressionData.residualVariable),
+        stmt.residualVariable && identifierToAug(stmt.residualVariable),
       regressionParameters: new Map(params),
     },
     color: "",
     errorHidden: style.errorHidden,
     hidden: false,
     glesmos: false,
-    fillOpacity: constant(0),
+    fillOpacity: undefined,
     displayEvaluationAsFraction: false,
     slider: {},
     vizProps: {},
@@ -222,12 +206,8 @@ function expressionToAug(
   styleMapping: TextAST.StyleMapping | null,
   stmt: TextAST.ExprStatement
 ): Aug.ExpressionAug | null {
-  if (
-    stmt.expr.type === "BinaryExpression" &&
-    stmt.expr.op === "~" &&
-    stmt.regression !== undefined
-  ) {
-    return regressionToAug(ds, styleMapping, stmt, stmt.regression, stmt.expr);
+  if (stmt.expr.type === "BinaryExpression" && stmt.expr.op === "~") {
+    return regressionToAug(ds, styleMapping, stmt, stmt.expr);
   }
   const expr = childExprToAug(stmt.expr);
   // is the expr polar for the purposes of domain?
@@ -248,20 +228,20 @@ function expressionToAug(
   return {
     type: "expression",
     // Use empty string as an ID placeholder. These will get filled in at the end
-    ...exprBase(ds, style, stmt),
+    ...exprBase(style, stmt),
     latex: expr,
     label:
       style.label && style.label.text !== ""
         ? {
             ...style.label,
-            size: childExprToAug(style.label.size),
-            angle: childExprToAug(style.label.angle),
+            size: style.label.size,
+            angle: style.label.angle,
           }
         : undefined,
     // hidden from common
     errorHidden: style.errorHidden,
     glesmos: style.glesmos,
-    fillOpacity: childExprToAug(style.fill),
+    fillOpacity: style.fill,
     displayEvaluationAsFraction: style.displayEvaluationAsFraction,
     slider: style.slider
       ? {
@@ -269,35 +249,31 @@ function expressionToAug(
           loopMode: style.slider.loopMode,
           playDirection: style.slider.reversed ? -1 : 1,
           isPlaying: style.slider.playing,
-          min: childExprToAug(style.slider.min),
-          max: childExprToAug(style.slider.max),
-          step: childExprToAug(style.slider.step),
+          min: style.slider.min,
+          max: style.slider.max,
+          step: style.slider.step,
         }
       : {},
     polarDomain:
-      style.domain &&
-      isPolar &&
-      !exprEvalSameDeep(style.domain, { min: 0, max: 12 * Math.PI })
+      style.domain && isPolar
         ? {
-            min: childExprToAug(style.domain.min),
-            max: childExprToAug(style.domain.max),
+            min: style.domain.min,
+            max: style.domain.max,
           }
         : undefined,
     parametricDomain:
-      style.domain &&
-      !isPolar &&
-      !exprEvalSameDeep(style.domain, { min: 0, max: 1 })
+      style.domain && !isPolar
         ? {
-            min: childExprToAug(style.domain.min),
-            max: childExprToAug(style.domain.max),
+            min: style.domain.min,
+            max: style.domain.max,
           }
         : undefined,
     cdf:
       style.cdf &&
       !exprEvalSameDeep(style.cdf, { min: -Infinity, max: Infinity })
         ? {
-            min: childExprToAug(style.cdf.min),
-            max: childExprToAug(style.cdf.max),
+            min: style.cdf.min,
+            max: style.cdf.max,
           }
         : undefined,
     // TODO: vizProps
@@ -305,7 +281,7 @@ function expressionToAug(
     clickableInfo: style.onClick
       ? {
           description: style.clickDescription,
-          latex: childExprToAug(style.onClick),
+          latex: style.onClick,
         }
       : undefined,
     ...columnExpressionCommonStyle(style),
@@ -329,7 +305,7 @@ function tickerToAug(
     type: "ticker",
     ticker: {
       handlerLatex: childExprToAug(handler),
-      minStepLatex: childExprToAug(hydrated.minStep),
+      minStepLatex: hydrated.minStep,
       playing: hydrated.playing,
     },
   };
@@ -360,40 +336,48 @@ function columnExpressionCommonStyle(style: Hydrated.ColumnExpressionCommon) {
     color:
       typeof style.color === "string"
         ? style.color
-        : Calc.colors[style.color.name] ?? identifierToAug(style.color),
+        : (style.color.type === "Identifier" &&
+            Calc.colors[style.color.symbol.replace("_", "")]) ||
+          style.color,
     hidden: style.hidden,
     points:
-      style.points &&
-      !exprEvalSame(style.points.opacity, 0) &&
-      !exprEvalSame(style.points.size, 0)
-        ? {
-            opacity: childExprToAug(style.points.opacity),
-            size: childExprToAug(style.points.size),
-            style: style.points.style,
-            dragMode: style.points.drag,
-          }
+      style.points === true
+        ? {}
+        : style.points === false
+        ? { size: constant(0) }
+        : style.points
+        ? exprEvalSame(style.points.opacity, 0) ||
+          exprEvalSame(style.points.size, 0)
+          ? { size: constant(0) }
+          : {
+              opacity: style.points.opacity,
+              size: style.points.size,
+              style: style.points.style,
+              dragMode: style.points.drag,
+            }
         : undefined,
     lines:
-      style.lines &&
-      !exprEvalSame(style.lines.opacity, 0) &&
-      !exprEvalSame(style.lines.width, 0)
-        ? {
-            opacity: childExprToAug(style.lines.opacity),
-            width: childExprToAug(style.lines.width),
-            style: style.lines.style,
-          }
+      style.lines === true
+        ? {}
+        : style.lines === false
+        ? { width: constant(0) }
+        : style.lines
+        ? exprEvalSame(style.lines.opacity, 0) ||
+          exprEvalSame(style.lines.width, 0)
+          ? { width: constant(0) }
+          : {
+              opacity: style.lines.opacity,
+              width: style.lines.width,
+              style: style.lines.style,
+            }
         : undefined,
   };
   return res;
 }
 
-function exprBase(
-  ds: DownState,
-  style: Hydrated.NonFolderBase,
-  stmt: TextAST.Statement
-) {
+function exprBase(style: Hydrated.NonFolderBase, stmt: TextAST.Statement) {
   return {
-    id: ds.ensureID(style.id, stmt),
+    id: stmt.id,
     secret: style.secret,
     pinned: style.pinned,
   };
@@ -406,7 +390,7 @@ function tableToAug(
 ): Aug.TableAug | null {
   const style = hydrate(ds, styleMapping, Default.table, Schema.table, "table");
   if (style === null) return null;
-  const base = exprBase(ds, style, stmt);
+  const base = exprBase(style, stmt);
   const resultColumns = stmt.columns.map((col) => tableColumnToAug(ds, col));
   if (!everyNonNull(resultColumns)) return null;
   return {
@@ -431,7 +415,7 @@ function tableColumnToAug(
   const expr = column.expr;
   const base = {
     type: "column" as const,
-    id: ds.ensureID(style.id, column),
+    id: column.id,
     ...columnExpressionCommonStyle(style),
   };
 
@@ -456,21 +440,21 @@ function tableColumnToAug(
       };
     }
   } else {
+    const list = childExprToAug(expr);
     return {
       ...base,
       values: [],
-      latex: childExprToAug(
+      latex:
         expr.type === "ListExpression"
           ? // Desmos complains about a plain list expression as latex
             // so placate it by adding zero
             {
-              type: "BinaryExpression",
-              op: "+",
-              left: number(0),
-              right: expr,
+              type: "BinaryOperator",
+              name: "Add",
+              left: constant(0),
+              right: list,
             }
-          : expr
-      ),
+          : list,
     };
   }
 }
@@ -484,20 +468,20 @@ function imageToAug(
   if (style === null) return null;
   const res: Aug.ImageAug = {
     type: "image",
-    ...exprBase(ds, style, expr),
+    ...exprBase(style, expr),
     image_url: style.url,
     name: expr.name,
-    width: childExprToAug(style.width),
-    height: childExprToAug(style.height),
-    center: childExprToAug(style.center),
-    angle: childExprToAug(style.angle),
-    opacity: childExprToAug(style.opacity),
+    width: style.width,
+    height: style.height,
+    center: style.center,
+    angle: style.angle,
+    opacity: style.opacity,
     foreground: style.foreground,
     draggable: style.draggable,
     clickableInfo: style.onClick
       ? {
           description: style.clickDescription,
-          latex: childExprToAug(style.onClick),
+          latex: style.onClick,
           hoveredImage: style.hoveredImage,
           depressedImage: style.depressedImage,
         }
@@ -521,7 +505,6 @@ function folderToAug(
     "folder"
   );
   if (style === null) return null;
-  const id = ds.ensureID(style.id ?? "", expr);
   for (const child of expr.children) {
     const stmtAug = statementToAug(ds, state, child);
     if (stmtAug !== null) {
@@ -541,7 +524,7 @@ function folderToAug(
   }
   return {
     type: "folder",
-    id,
+    id: expr.id,
     secret: style.secret,
     hidden: style.hidden,
     collapsed: style.collapsed,
@@ -550,12 +533,12 @@ function folderToAug(
   };
 }
 
-function exprEvalSame(expr: TextAST.Expression, expected: number) {
-  const evaluated = evalExpr([], expr);
+function exprEvalSame(expr: Aug.Latex.AnyChild, expected: number) {
+  const evaluated = evalExpr([], childLatexToAST(expr));
   return evaluated === null ? false : evaluated === expected;
 }
 
-function exprEvalSameDeep<T extends Record<string, TextAST.Expression>>(
+function exprEvalSameDeep<T extends Record<string, Aug.Latex.AnyChild>>(
   exprMap: T,
   expected: { [K in keyof T]: number }
 ) {
@@ -609,11 +592,13 @@ export function childExprToAug(
       return {
         type: "ListComprehension",
         expr: childExprToAug(expr.expr),
-        assignments: expr.assignments.map((assignment) => ({
-          type: "AssignmentExpression",
-          variable: identifierToAug(assignment.variable),
-          expression: childExprToAug(assignment.expr),
-        })),
+        assignments: expr.assignments.map(assignment),
+      };
+    case "Substitution":
+      return {
+        type: "Substitution",
+        body: childExprToAug(expr.body),
+        assignments: expr.assignments.map(assignment),
       };
     case "PiecewiseExpression":
       return piecewiseToAug(expr.branches);
@@ -689,14 +674,20 @@ export function childExprToAug(
           };
     case "PostfixExpression":
       return {
-        type: "FunctionCall",
-        callee: {
-          type: "Identifier",
-          symbol: "factorial",
-        },
-        args: [childExprToAug(expr.expr)],
+        type: "Factorial",
+        arg: childExprToAug(expr.expr),
       };
     case "CallExpression":
+      if (
+        expr.callee.type === "Identifier" &&
+        expr.callee.name === "f_actorial" &&
+        expr.arguments.length === 1
+      ) {
+        return {
+          type: "Factorial",
+          arg: childExprToAug(expr.arguments[0]),
+        };
+      }
       return callExpressionToAug(expr);
     case "PrimeExpression": {
       const child = callExpressionToAug(expr.expr);
@@ -715,7 +706,24 @@ export function childExprToAug(
         arg: childExprToAug(expr.expr),
         variable: identifierToAug(expr.variable),
       };
+    case "AssignmentExpression":
+      return assignment(expr);
+    default:
+      expr satisfies never;
+      throw new Error(
+        `Programming Error: Unexpected AST node ${(expr as any).type}`
+      );
   }
+}
+
+function assignment(
+  e: TextAST.AssignmentExpression
+): Aug.Latex.AssignmentExpression {
+  return {
+    type: "AssignmentExpression",
+    variable: identifierToAug(e.variable),
+    expression: childExprToAug(e.expr),
+  };
 }
 
 function callExpressionToAug(
@@ -729,13 +737,12 @@ function callExpressionToAug(
     };
   else if (
     expr.callee.type === "MemberExpression" &&
-    expr.callee.object.type === "Identifier" &&
     expr.callee.property.type === "Identifier"
   )
-    // Case e.g. L.random(5)
+    // Case e.g. L.random(5) or f(x).total()
     return {
       type: "DotAccess",
-      object: identifierToAug(expr.callee.object),
+      object: childExprToAug(expr.callee.object),
       property: {
         type: "FunctionCall",
         callee: identifierToAug(expr.callee.property),
@@ -756,17 +763,15 @@ const binopMap: Record<string, string> = {
 function piecewiseToAug(
   branches: TextAST.PiecewiseBranch[]
 ): Aug.Latex.AnyChild {
-  const res = piecewiseInnerToAug(branches);
-  if (res.type === "Constant" && res.value === 1) {
+  if (branches.length === 0) {
     return {
       type: "Piecewise",
       condition: true,
       consequent: constant(1),
       alternate: constant(NaN),
     };
-  } else {
-    return res;
   }
+  return piecewiseInnerToAug(branches);
 }
 
 function piecewiseInnerToAug(
@@ -774,11 +779,9 @@ function piecewiseInnerToAug(
 ): Aug.Latex.AnyChild {
   const firstBranch = branches[0];
   if (firstBranch === undefined) return constant(NaN);
-  const firstCond = childExprToAug(firstBranch.condition);
-  if (firstCond.type === "Identifier" && firstCond.symbol === "e_lse") {
-    // Rudimentary variable inlining
+  if (firstBranch.condition === null)
     return childExprToAug(firstBranch.consequent);
-  }
+  const firstCond = childExprToAug(firstBranch.condition);
   if (
     firstCond.type !== "DoubleInequality" &&
     firstCond.type !== "Comparator"
@@ -788,48 +791,17 @@ function piecewiseInnerToAug(
   return {
     type: "Piecewise" as const,
     condition: firstCond,
-    consequent: childExprToAug(firstBranch.consequent),
-    alternate: piecewiseToAug(branches.slice(1)),
+    consequent:
+      firstBranch.consequent === null
+        ? constant(1)
+        : childExprToAug(firstBranch.consequent),
+    alternate: piecewiseInnerToAug(branches.slice(1)),
   };
 }
-
-/**
- * Fragile names. Subset of those given by the following script:
- *
- *     const {BuiltInTable, CompilerFunctionTable} = require("core/math/ir/builtin-table")
- *     const builtins = Object.keys({...BuiltInTable, ...CompilerFunctionTable})
- *     const {getAutoOperators, getAutoCommands}  = require("main/mathquill-operators")
- *     const operators = new Set((getAutoOperators()+" "+getAutoCommands()).split(/[ |]/));
- *     console.log(builtins.filter(name => !operators.has(name)))
- */
-const fragileNames = [
-  "polyGamma",
-  "argmin",
-  "argmax",
-  "uniquePerm",
-  "rtxsqpone",
-  "rtxsqmone",
-  "hypot",
-];
-
-const dontSubscriptIdentifiers = new Set([
-  ...autoOperatorNames.split(" ").map((e) => e.split("|")[0]),
-  ...autoCommandNames.split(" "),
-  ...fragileNames,
-  "index",
-  "dt",
-]);
 
 function identifierToAug(expr: TextAST.Identifier) {
   return {
     type: "Identifier" as const,
-    symbol:
-      expr.name.length > 1 && !dontSubscriptIdentifiers.has(expr.name)
-        ? expr.name[0] + "_" + expr.name.substring(1)
-        : expr.name,
+    symbol: expr.name,
   };
-}
-
-function constant(value: number) {
-  return { type: "Constant" as const, value };
 }

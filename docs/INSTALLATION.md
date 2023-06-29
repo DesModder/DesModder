@@ -8,7 +8,7 @@ DesModder is currently only supported for Google Chrome, Chromium-based browsers
 
 The extension updates every few weeks (see DesModder releases page for a history).
 
-### Latest
+### Latest Stable Build
 
 Sometimes the chrome web store takes a few days to approve new extension releases, where hotfixes that have yet to be applied might cause Desmos to not load.
 
@@ -16,6 +16,6 @@ Sometimes the chrome web store takes a few days to approve new extension release
 
 **Firefox**: Go to [Releases](https://github.com/DesModder/DesModder/releases), download the latest dist-ff.zip. Then go to `about:addons` in the browser address bar. Click the cogwheel to the right of Manage Your Extensions, find and select dist-ff.zip, and click open.
 
-### Git Version
+### Latest Nightly Build
 
-If you want to get new features even earlier, follow the instructions in https://github.com/DesModder/DesModder/wiki/Development#Setup, keeping in mind these may not always work at all times.
+If you want to get new features even earlier, follow the instructions in [Run Prerelease](/docs/RUN_PRERELEASE.md), keeping in mind these may not always work at all times.

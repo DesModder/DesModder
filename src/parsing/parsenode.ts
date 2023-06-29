@@ -107,12 +107,17 @@ export interface DotAccess extends Expression {
   args: [ChildExprNode, Identifier | FunctionCall | SeededFunctionCall];
 }
 
-export interface OrderedPairAccess extends Expression {
-  // "a.x"
-  type: "OrderedPairAccess";
-  args: [ChildExprNode, Constant];
-  point: ChildExprNode;
-  index: Constant;
+export interface NamedCoordinateAccess extends Expression {
+  // "p.x"
+  type: "NamedCoordinateAccess";
+  args: [ChildExprNode];
+  symbol: "x" | "y";
+}
+
+export interface Norm extends Expression {
+  // \left|x\right|
+  type: "Norm";
+  args: [ChildExprNode];
 }
 
 interface UpperFunctionCall extends Expression {
@@ -285,6 +290,11 @@ interface ListComprehension extends Expression {
   args: [Identifier, ChildExprNode, ...AssignmentExpression[]];
 }
 
+interface Substitution extends Expression {
+  type: "Substitution";
+  args: [ChildExprNode, ...AssignmentExpression[]];
+}
+
 /* Repeated Operators */
 
 interface RepeatedOperator extends Expression {
@@ -321,9 +331,19 @@ export interface Subtract extends Expression {
   type: "Subtract";
 }
 export interface Multiply extends Expression {
-  // "1\\cdot 2"
+  // "1*2"
   args: [ChildExprNode, ChildExprNode];
   type: "Multiply";
+}
+export interface DotMultiply extends Expression {
+  // "1\\cdot 2"
+  args: [ChildExprNode, ChildExprNode];
+  type: "DotMultiply";
+}
+export interface CrossMultiply extends Expression {
+  // "1\\times 2"
+  args: [ChildExprNode, ChildExprNode];
+  type: "CrossMultiply";
 }
 export interface Divide extends Expression {
   // "\\frac{1}{2}"
@@ -621,7 +641,9 @@ export type ChildExprNode =
   | UpdateRule
   | AssignmentExpression
   | ListComprehension
-  | OrderedPairAccess
+  | Substitution
+  | Norm
+  | NamedCoordinateAccess
   | Piecewise
   | Product
   | Sum
@@ -629,6 +651,8 @@ export type ChildExprNode =
   | Add
   | Subtract
   | Multiply
+  | DotMultiply
+  | CrossMultiply
   | Divide
   | Exponent
   | Negative

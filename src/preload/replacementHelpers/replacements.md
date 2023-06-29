@@ -27,9 +27,13 @@ Then the pattern argument to `*Find*` is the sequence of tokens `[".", "getSecti
 
 ## Builtin commands
 
-There are only two builtin commands:
+There are five builtin commands:
 
-### `*Find*`
+### Command `*worker_only*`
+
+Specifies the replacement to occur only in the worker, rather than only in the main frame.
+
+### Command `*Find*`
 
 `*Find*` takes zero or one range arguments, and one pattern argument. The command searches for substrings of the code matching that pattern. If one range argument is passed, the search is narrowed to that range.
 
@@ -99,7 +103,11 @@ return $DCGView.createElement(
 
 Note that the return value is not specified (there is no `` => `name`  ``). The point of this code block is to find what the `__rest__` pattern matches.
 
-### `*Replace*`
+### Command `*Find_surrounding_template*`
+
+`*Find_surrounding_template*` takes one range argument. The command searches for a `.template=function(){ ____ }` containing the range argument.
+
+### Command `*Replace*`
 
 `*Replace*` takes one range arguments, and one pattern argument. The command replaces the range with the pattern. This must be the last command in a Module block, and it cannot occur elsewhere.
 
@@ -116,7 +124,7 @@ this.controller.isExpressionListFocused()
 
 *Replace* `from` with
 ```js
-!window.DesModder?.controller?.inTextMode?.()
+!DSM.textMode?.inTextMode
 ```
 ````
 
@@ -132,7 +140,7 @@ var $r = $e.hasClass('dcg-all')
 *Replace* `from` with
 ```js
 if ($e.hasClass("dsm-hide-errors")) {
-  DesModder.controller?.hideError(this.model.id)
+  DSM.hideErrors?.hideError(this.model.id)
   return;
 }
 var $r = $e.hasClass('dcg-all')
@@ -141,17 +149,25 @@ var $r = $e.hasClass('dcg-all')
 
 Demonstrates the variables carrying over: the value of `e` is used in the `*Replace*` after being found in the `*Find*`.
 
+### Command `*Plugin*`
+
+`*Plugin*` takes one or more arguments which are the names of patterns. They only matter for error handling and force-disabled plugins.
+
+Later `*plugin*` calls completely replace (shadow) the plugins of the parent heading.
+
 ## Blocks
 
 A block is the basic unit of a replacement. A block starts at a block-starter command. The block-starter command must be immediately after a heading. The block continues until the next heading of equal or shallower depth (fewer `#`s).
 
-The one block-starter command are `*Module*`
+The one block-starter command is `*Description*`
 
-### `*Module*`
+### `*Description*`
 
-`*Module*` takes at least one argument, the module names to apply this block's replacements to. Example usage:
+`*Description*` takes exactly one argument, a short user-readable description of what it does (in English; translation would be too much work for a string that should never appear). It will only appear in the Loading Errors Manager in a context that also shows the relevant plugin (if any).
+
+The description should complete the sentence "This plugin will \_\_\_\_." and the first letter should be capitalized.
 
 <!-- prettier-ignore -->
 ```md
-_Module_ `main/calc_desktop`
+*Description* `Change the style of pillbox buttons (buttons over the graph paper)`
 ```

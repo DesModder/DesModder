@@ -4,7 +4,7 @@ import {
   NodePath,
   NonExprNode,
   Statement,
-} from "../down/TextAST";
+} from "../down/TextASTSynthetic";
 
 /**
  * Errs on the side of too many parens instead of not enough.
@@ -17,13 +17,15 @@ export default function needsParens(path: NodePath): boolean {
   const node = path.node;
   const name = path.name;
 
-  if (node.type === "SequenceExpression")
-    // sequence expressions will only ever be unwrapped when their parent
-    // is a statement
-    return node.parenWrapped;
+  if (node.type === "SequenceExpression" && node.parenWrapped) return true;
 
   /* istanbul ignore if */
   if (parent === null) return false;
+
+  if (node.type === "SequenceExpression")
+    // sequence expressions will only ever be unwrapped when their parent
+    // is a statement or style mapping (onClick event)
+    return parent.type === "MappingEntry";
 
   if (isNonExpression(node) || isNonExpression(parent)) return false;
 
@@ -35,13 +37,16 @@ export default function needsParens(path: NodePath): boolean {
       return name === "expr";
     case "CallExpression":
       return (
-        name === "callee" &&
-        node.type !== "Identifier" &&
-        node.type !== "MemberExpression"
+        (name === "callee" &&
+          node.type !== "Identifier" &&
+          node.type !== "MemberExpression") ||
+        node.type === "Substitution"
       );
-    case "RangeExpression":
     case "ListExpression":
+    case "RangeExpression":
+      return node.type === "Substitution";
     case "ListComprehension":
+    case "Substitution":
       return false;
     case "MemberExpression":
       return name !== "object" || node.type !== "Identifier";
@@ -49,19 +54,28 @@ export default function needsParens(path: NodePath): boolean {
   }
 
   switch (node.type) {
-    case "Number":
     case "Identifier":
     case "String":
       return false;
     case "RepeatedExpression":
       // TODO: better logic for RepeatedExpression
       return true;
+    case "Substitution":
+      switch (parent.type) {
+        case "UpdateRule":
+          return false;
+        default:
+          return true;
+      }
     case "RangeExpression":
     case "ListExpression":
     case "ListComprehension":
     case "PiecewiseExpression":
       // They come with their own grouping ([] or {}), no need to add parens
       return false;
+    case "Number":
+      if (node.value >= 0) return false;
+    // fall through since "-1" parses like a prefix
     case "PrefixExpression":
       // Currently the only prefix expression is unary minus
       switch (parent.type) {
@@ -130,6 +144,12 @@ export default function needsParens(path: NodePath): boolean {
     case "DerivativeExpression":
       // TODO: don't always need parens
       return true;
+    /* istanbul ignore next */
+    default:
+      node satisfies never;
+      throw new Error(
+        `Programming Error: Unexpected Text node ${(node as any).type}`
+      );
   }
 }
 

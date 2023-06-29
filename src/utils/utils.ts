@@ -34,10 +34,6 @@ export function mergeClass(c1: MaybeClassDict, c2: MaybeClassDict) {
   return out;
 }
 
-export type OptionalProperties<T> = {
-  [K in keyof T]?: T[K];
-};
-
 export function everyNonNull<T>(arr: (T | null)[]): arr is T[] {
   return arr.every((e) => e !== null);
 }
@@ -69,4 +65,27 @@ export function jsx(
   element.append(...children.flat().filter((e) => e != null));
 
   return element;
+}
+
+export function get<T extends object, K extends string | symbol | number>(
+  t: T,
+  prop: K
+): K extends keyof T ? T[K] : undefined {
+  // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
+  const obj2 = t as {
+    [Key in string | symbol | number]: Key extends keyof T ? T[Key] : undefined;
+  };
+
+  return obj2[prop];
+}
+
+export function isDescendant(elem: HTMLElement | null, target: HTMLElement) {
+  while (elem instanceof HTMLElement) {
+    // element has intellisense mount point as an ancestor
+    if (elem === target) {
+      return true;
+    }
+    elem = elem.parentElement;
+  }
+  return false;
 }

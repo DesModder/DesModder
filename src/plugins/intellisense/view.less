@@ -1,0 +1,83 @@
+#intellisense-container {
+  position: absolute;
+  background-color: white;
+  z-index: 999999;
+  border-radius: 5px;
+  filter: drop-shadow(#00000044 3px 3px 3px);
+  padding: 5px;
+  border: 1px solid #bbbbbb;
+  max-height: 35vh;
+  max-width: 35vw;
+  overflow: auto;
+}
+
+div:focus #intellisense-container {
+  border: 2px solid #6a93d2 !important;
+}
+
+.intellisense-option {
+  z-index: 999999;
+  .dcg-static-mathquill-view * {
+    pointer-events: none;
+  }
+
+  * {
+    cursor: pointer !important;
+  }
+
+  cursor: pointer !important;
+}
+
+.intellisense-option:hover,
+.selected-intellisense-option {
+  background-color: #eeeeee;
+}
+
+.intellisense-options-table {
+  border-spacing: 0;
+}
+
+.partial-function-call-container {
+  border-bottom: 1px solid #bbbbbb;
+}
+
+.pfc-params {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 60vw;
+}
+
+.pfc-param-selected {
+  background: #ff8800;
+  border-radius: 5px;
+}
+
+.pfc-latex {
+  display: flex;
+}
+
+.pfc-doc-param {
+  border-bottom: 1px solid #bbbbbb;
+  border-top: 1px solid #bbbbbb;
+}
+
+span[data-is-comma="true"]::after {
+  content: " ";
+  display: block;
+}
+
+.jump-to-def-btn {
+  border-radius: 5px;
+  padding: 2px;
+  transition: background-color 0.15s;
+  cursor: pointer;
+  background-color: #00000044;
+  opacity: 0;
+}
+tr:hover .jump-to-def-btn {
+  opacity: 1;
+}
+
+.dsm-intellisense-docstring {
+  white-space: pre-line;
+}

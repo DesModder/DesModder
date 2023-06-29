@@ -4,7 +4,7 @@
 
 ## Replace branding to show tips
 
-*Module* `expressions/list-view`
+*Description* `Replace "powered by desmos" with tips`
 
 *Find* => `from`
 ```js
@@ -30,10 +30,9 @@ $DCGView.createElement(
   $DCGView.createElement(
     $DCGView.Components.If,
     {
-      predicate: () =>
-        window.DesModder?.controller?.isPluginEnabled?.("show-tips"),
+      predicate: () => DSM.showTips,
     },
-    () => window.DesModder?.controller.createTipElement()
+    () => DSM.showTips?.createTipElement()
   )
 )
 ```

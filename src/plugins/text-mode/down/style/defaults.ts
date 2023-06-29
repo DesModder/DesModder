@@ -1,4 +1,4 @@
-import { number } from "../TextAST";
+import { constant } from "../../aug/AugLatex";
 import * as Hydrated from "./Hydrated";
 
 export const settings: Hydrated.Settings = {
@@ -32,17 +32,11 @@ export const settings: Hydrated.Settings = {
 };
 
 export const ticker: Hydrated.Ticker = {
-  minStep: number(0),
+  minStep: constant(0),
   playing: false,
 };
 
-const base: Hydrated.Base = {
-  // empty ID will be filled in later in the process
-  id: "",
-};
-
 const itemBase: Hydrated.ItemBase = {
-  ...base,
   secret: false,
 };
 
@@ -56,14 +50,14 @@ const columnExpressionCommon: Hydrated.ColumnExpressionCommon = {
   color: "",
   hidden: false,
   points: {
-    opacity: number(0.9),
-    size: number(9),
+    opacity: constant(0.9),
+    size: constant(9),
     style: "POINT",
     drag: "NONE",
   },
   lines: {
-    opacity: number(0.9),
-    width: number(2.5),
+    opacity: constant(0.9),
+    width: constant(2.5),
     style: "SOLID",
   },
 };
@@ -79,16 +73,16 @@ const expression = {
   ...clickable,
   label: {
     text: "",
-    size: number(1),
+    size: constant(1),
     orientation: "default",
-    angle: number(0),
+    angle: constant(0),
     outline: true,
     showOnHover: false,
     editableMode: "NONE",
   },
   errorHidden: false,
   glesmos: false,
-  fill: number(0),
+  fill: undefined,
   logMode: false,
   displayEvaluationAsFraction: false,
   slider: {
@@ -96,17 +90,13 @@ const expression = {
     reversed: false,
     loopMode: "LOOP_FORWARD_REVERSE",
     period: 4000,
-    min: number(-10),
-    max: number(10),
-    step: number(0),
+    min: undefined,
+    max: undefined,
+    step: undefined,
   },
   cdf: {
-    min: {
-      type: "PrefixExpression",
-      op: "-",
-      expr: { type: "Identifier", name: "infty" },
-    },
-    max: { type: "Identifier", name: "infty" },
+    min: undefined,
+    max: undefined,
   },
   // TODO vizProps
   // vizProps
@@ -115,21 +105,16 @@ const expression = {
 export const polarExpression: Hydrated.Expression = {
   ...expression,
   domain: {
-    min: number(0),
-    max: {
-      type: "BinaryExpression",
-      op: "*",
-      left: number(12),
-      right: { type: "Identifier", name: "pi" },
-    },
+    min: undefined,
+    max: undefined,
   },
 };
 
 export const nonpolarExpression: Hydrated.Expression = {
   ...expression,
   domain: {
-    min: number(0),
-    max: number(1),
+    min: undefined,
+    max: undefined,
   },
 };
 
@@ -142,23 +127,21 @@ export const regression: Hydrated.Regression = {
 export const table: Hydrated.Table = nonFolderBase;
 
 export const column: Hydrated.Column = {
-  ...base,
   ...columnExpressionCommon,
 };
 
 export const image: Hydrated.Image = {
   ...nonFolderBase,
   ...clickable,
-  width: number(10),
-  height: number(10),
+  width: constant(10),
+  height: constant(10),
   center: {
-    type: "SequenceExpression",
-    left: number(0),
-    right: number(0),
+    type: "Seq",
+    args: [constant(0), constant(0)],
     parenWrapped: true,
   },
-  angle: number(0),
-  opacity: number(1),
+  angle: constant(0),
+  opacity: constant(1),
   foreground: false,
   draggable: false,
   url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjYGBg+A8AAQQBAHAgZQsAAAAASUVORK5CYII=",

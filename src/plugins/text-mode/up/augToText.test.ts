@@ -1,6 +1,7 @@
 import Aug from "../aug/AugState";
 import {
   assignmentExpr,
+  bareSeq,
   binop,
   comparator,
   functionCall,
@@ -10,12 +11,21 @@ import {
   negative,
   number,
   range,
+  substitution,
   updateRule,
+  wrappedSeq,
 } from "../aug/augBuilders";
 import { itemToText } from "./augToText";
 
 jest.mock("utils/depUtils");
 jest.mock("globals/window");
+
+function testStmtWithStyle(desc: string, item: Aug.ItemAug, expected: string) {
+  test(desc, () => {
+    const text = itemToText(item);
+    expect(text).toEqual(expected);
+  });
+}
 
 function testStmt(desc: string, item: Aug.ItemAug, expected: string) {
   test(desc, () => {
@@ -24,30 +34,47 @@ function testStmt(desc: string, item: Aug.ItemAug, expected: string) {
   });
 }
 
+const stmtDefaults = {
+  id: "1",
+  hidden: false,
+  errorHidden: false,
+} as const;
+
+const exprDefaults = {
+  ...stmtDefaults,
+  type: "expression",
+  color: "",
+  pinned: false,
+  secret: false,
+  glesmos: false,
+  fillOpacity: number(0),
+  displayEvaluationAsFraction: false,
+  slider: {},
+  vizProps: {},
+} as const;
+
+const imageDefaults = {
+  ...stmtDefaults,
+  type: "image",
+  name: "image.png",
+  image_url: "data:example",
+  width: number(10),
+  height: number(10),
+  center: wrappedSeq(number(0), number(0)),
+  angle: number(0),
+  opacity: number(1),
+  foreground: false,
+  draggable: false,
+  pinned: false,
+  secret: false,
+} as const;
+
 function testExprPlain(
   desc: string,
   expected: string,
   expr: Aug.Latex.AnyRootOrChild
 ) {
-  testStmt(
-    desc,
-    {
-      type: "expression",
-      id: "1",
-      latex: expr,
-      color: "",
-      hidden: false,
-      errorHidden: false,
-      pinned: false,
-      secret: false,
-      glesmos: false,
-      fillOpacity: number(0),
-      displayEvaluationAsFraction: false,
-      slider: {},
-      vizProps: {},
-    },
-    expected
-  );
+  testStmt(desc, { ...exprDefaults, latex: expr }, expected);
 }
 
 function testExpr(desc: string, expected: string, expr: Aug.Latex.AnyChild) {
@@ -69,7 +96,11 @@ describe("Basic exprs", () => {
   });
   describe("Identifier", () => {
     testExpr("one character", "a", id("a"));
-    testExpr("multiple characters", "abcd", id("a_bcd"));
+    testExpr("multiple characters", "a_bcd", id("a_bcd"));
+    testExpr("backslash command", "theta", id("theta"));
+    testExpr("backslash command with subscript", "theta_xy", id("theta_xy"));
+    testExpr("operatorname", "min", id("min"));
+    testExpr("operatorname with subscript", "min_xy", id("min_xy"));
   });
   describe("RepeatedExpression", () => {
     // TODO: don't need parens for any of these
@@ -105,10 +136,10 @@ describe("Basic exprs", () => {
       "[1, 2, x]",
       list(number(1), number(2), id("x"))
     );
-    testExpr("simple range", "[1...10]", range([number(1)], [number(10)]));
+    testExpr("simple range", "[1 ... 10]", range([number(1)], [number(10)]));
     testExpr(
       "range with three start and end elements",
-      "[1, 2, 3...10, 11, 12]",
+      "[1, 2, 3 ... 10, 11, 12]",
       range(
         [number(1), number(2), number(3)],
         [number(10), number(11), number(12)]
@@ -116,12 +147,12 @@ describe("Basic exprs", () => {
     );
   });
   describe("ListComprehension", () => {
-    testExpr("single nest", "[i + 1 for i=L]", {
+    testExpr("single nest", "[i + 1 for i = L]", {
       type: "ListComprehension",
       expr: binop("Add", id("i"), number(1)),
       assignments: [assignmentExpr(id("i"), id("L"))],
     });
-    testExpr("double nesting", "[i + j for i=L, j=[1...5]]", {
+    testExpr("double nesting", "[i + j for i = L, j = [1 ... 5]]", {
       type: "ListComprehension",
       expr: binop("Add", id("i"), id("j")),
       assignments: [
@@ -130,8 +161,75 @@ describe("Basic exprs", () => {
       ],
     });
   });
+  describe("Substitution", () => {
+    // A few too many parens in this section, revisit sometime.
+    testExpr(
+      "simple sub",
+      "(a with a = 3)",
+      substitution(id("a"), assignmentExpr(id("a"), number(3)))
+    );
+    testExpr(
+      "simple sub",
+      "2 + (a with a = 3)",
+      binop(
+        "Add",
+        number(2),
+        substitution(id("a"), assignmentExpr(id("a"), number(3)))
+      )
+    );
+    testExpr(
+      "multiple subs",
+      "(a with a = 3, b = 3)",
+      substitution(
+        id("a"),
+        assignmentExpr(id("a"), number(3)),
+        assignmentExpr(id("b"), number(3))
+      )
+    );
+    testExpr(
+      "sub precedence with arrow",
+      "a -> b, c -> b with b = 3",
+      bareSeq(
+        updateRule(id("a"), id("b")),
+        updateRule(
+          id("c"),
+          substitution(id("b"), assignmentExpr(id("b"), number(3)))
+        )
+      )
+    );
+    testExpr(
+      "sub precedence with leq",
+      "((b with b = 3) <= 4)",
+      comparator(
+        "<=",
+        substitution(id("b"), assignmentExpr(id("b"), number(3))),
+        number(4)
+      )
+    );
+    testExpr("sub precedence with derivative", "((d/d x) (f with b = 3))", {
+      type: "Derivative",
+      arg: substitution(id("f"), assignmentExpr(id("b"), number(3))),
+      variable: id("x"),
+    });
+    testExpr(
+      "sub precedence with list",
+      "[(a with a = 3), (b with b = 4)]",
+      list(
+        substitution(id("a"), assignmentExpr(id("a"), number(3))),
+        substitution(id("b"), assignmentExpr(id("b"), number(4)))
+      )
+    );
+    testExpr(
+      "sub precedence with range",
+      "[(a with a = 3) ... (b with b = 4)]",
+      range(
+        [substitution(id("a"), assignmentExpr(id("a"), number(3)))],
+        [substitution(id("b"), assignmentExpr(id("b"), number(4)))]
+      )
+    );
+  });
   describe("Piecewise", () => {
-    testExpr("empty piecewise", "{else: 1}", {
+    testExpr("empty piecewise", "{}", {
       type: "Piecewise",
       condition: true,
       consequent: number(1),
@@ -149,7 +247,7 @@ describe("Basic exprs", () => {
       consequent: number(2),
       alternate: number(NaN),
     });
-    testExpr("two conditions and else", "{x > 1: 2, y > 3: 4, else: 5}", {
+    testExpr("two conditions and else", "{x > 1: 2, y > 3: 4, 5}", {
       type: "Piecewise",
       condition: comparator(">", id("x"), number(1)),
       consequent: number(2),
@@ -212,12 +310,27 @@ describe("Basic exprs", () => {
       "A = a -> b",
       comparator("=", id("A"), updateRule(id("a"), id("b")))
     );
-    testExpr("Piecewise UpdateRule", "{a = b: a -> 3, else: a -> b}", {
+    testExpr("Piecewise UpdateRule", "{a = b: a -> 3, a -> b}", {
       type: "Piecewise",
       condition: comparator("=", id("a"), id("b")),
       consequent: updateRule(id("a"), number(3)),
       alternate: updateRule(id("a"), id("b")),
     });
+    testStmtWithStyle(
+      "UpdateRule in assignment",
+      {
+        ...exprDefaults,
+        latex: id("P"),
+        clickableInfo: {
+          description: "",
+          latex: bareSeq(
+            updateRule(id("a"), number(3)),
+            updateRule(id("b"), number(5))
+          ),
+        },
+      },
+      'P @{ color: "", fill: 0, onClick: (a -> 3, b -> 5), clickDescription: "" }'
+    );
   });
   describe("MemberExpression", () => {
     testExpr("point access", "P.y", {
@@ -245,7 +358,7 @@ describe("Basic exprs", () => {
     );
     testExpr(
       "range",
-      "L[1...5]",
+      "L[1 ... 5]",
       listAccess(id("L"), range([number(1)], [number(5)]))
     );
   });
@@ -283,6 +396,25 @@ describe("Basic exprs", () => {
     arg: functionCall(id("f"), [id("x")]),
     order: 3,
   });
+});
+
+describe("Styles", () => {
+  testStmtWithStyle(
+    "Hidden image",
+    {
+      ...imageDefaults,
+      opacity: number(0),
+    },
+    [
+      'image "image.png" @{',
+      '  url: "data:example",',
+      "  width: 10,",
+      "  height: 10,",
+      "  center: (0, 0),",
+      "  opacity: 0,",
+      "}",
+    ].join("\n")
+  );
 });
 
 describe("Parens", () => {
@@ -356,4 +488,12 @@ describe("Parens", () => {
       binop("Exponent", id("a"), binop("Exponent", id("b"), id("c")))
     );
   });
+  testExpr(
+    "call(substitution,arg)",
+    "f((c with c = 4), 6)",
+    functionCall(id("f"), [
+      substitution(id("c"), assignmentExpr(id("c"), number(4))),
+      number(6),
+    ])
+  );
 });

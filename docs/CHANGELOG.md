@@ -1,5 +1,48 @@
 # DesModder Changelog
 
+## 0.10.7
+
+Bug fixes and improvements:
+
+- (GLesmos) Fix loading error.
+- Internal improvements to handle future loading errors more gracefully
+
+## 0.10.6
+
+Bug fixes and improvements:
+
+- Fix loading error
+- (Text Mode) Show statement number instead of line number
+- (Text Mode) Remove "else" from piecewises, moving closer to Desmos syntax
+
+## 0.10.5
+
+New: translations for Chinese (Simplified, PRC; zh-CN)
+
+Bug fixes and improvements:
+
+- Fix main loading error
+- Show brief description of problem on loading error
+- Collapse loading error menu by default
+- Load CSS earlier, preventing interface "jumping"
+- (Text Mode) Minimize parentheses emitted to LaTeX
+
+## 0.10.4
+
+New: translations for Spanish!
+
+Enables DesModder for Geometry Beta.
+
+Bug fixes and improvements:
+
+- (GLesmos) Fix loading error
+- (GLesmos) Warning text for "lines" is no longer too wide
+- (Set Primary Color) Now works nicely with the Dark Reader extension
+- (Text Mode) Your text does not get overwritten as you're writing it
+- (Text Mode) Requires double-newlines between expressions
+- (Text Mode) Reduced parentheses emitted to LaTeX
+- (Text Mode) Many other fixes: most graphs should work the same after converting through Text Mode
+
 ## 0.10.3
 
 New: translations for French!

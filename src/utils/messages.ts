@@ -19,19 +19,10 @@ type MessageWindowToContent =
     }
   | {
       type: "set-plugin-settings";
-      value: Record<PluginID, GenericSettings>;
-    }
-  | {
-      type: "get-plugins-force-disabled";
+      value: Record<PluginID, GenericSettings | undefined>;
     }
   | {
       type: "get-initial-data";
-    }
-  | {
-      type: "get-preload-enabled";
-    }
-  | {
-      type: "get-script-url";
     }
   | {
       type: "send-heartbeat";
@@ -40,20 +31,11 @@ type MessageWindowToContent =
 
 type MessageContentToWindow =
   | {
-      type: "apply-plugins-enabled";
-      value: Record<PluginID, boolean>;
-    }
-  | {
-      type: "apply-plugins-force-disabled";
-      value: PluginID[];
-    }
-  | {
-      type: "apply-plugin-settings";
-      value: Record<PluginID, GenericSettings>;
-    }
-  | {
-      type: "set-script-url";
-      value: string;
+      type: "apply-initial-data";
+      pluginsEnabled: Record<PluginID, boolean | undefined>;
+      pluginsForceDisabled: PluginID[];
+      pluginSettings: Record<PluginID, GenericSettings | undefined>;
+      scriptURL: string;
     }
   | HeartbeatError;
 
@@ -106,14 +88,14 @@ export function listenToMessageDown(
 
 /** Security issue on Firefox with posting a Map, so use this to convert a
  * Map to a Record (plain JS object). */
-export function mapToRecord<V>(x: Map<string, V>): Record<string, V> {
-  return Object.fromEntries(x.entries());
+export function mapToRecord<K extends string, V>(x: Map<K, V>): Record<K, V> {
+  return Object.fromEntries(x.entries()) as Record<K, V>;
 }
 
 /** Security issue on Firefox with posting a Map, so use this to convert a
  * Record (plain JS object) back to a Map. */
-export function recordToMap<V>(x: Record<string, V>): Map<string, V> {
-  return new Map(Object.entries(x));
+export function recordToMap<K extends string, V>(x: Record<K, V>): Map<K, V> {
+  return new Map(Object.entries(x)) as Map<K, V>;
 }
 
 /** Security issue on Firefox with posting a Set, so use this to convert a

@@ -1,4 +1,4 @@
-import Controller from "../Controller";
+import VideoCreator from "..";
 import { OutFileType, cancelExport } from "../backend/export";
 import CaptureMethod from "./CaptureMethod";
 import LoadingPie from "./LoadingPie";
@@ -16,16 +16,16 @@ import {
 import { format } from "i18n/i18n-core";
 import { jquery } from "utils/depUtils";
 
-const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng"];
+const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng", "zip"];
 
-export function MainPopupFunc(videoCreatorController: Controller) {
+export function MainPopupFunc(videoCreatorController: VideoCreator) {
   return <MainPopup controller={videoCreatorController} />;
 }
 
 export default class MainPopup extends Component<{
-  controller: Controller;
+  controller: VideoCreator;
 }> {
-  controller!: Controller;
+  controller!: VideoCreator;
 
   init() {
     this.controller = this.props.controller();
@@ -171,19 +171,27 @@ export default class MainPopup extends Component<{
                     })
                   }
                 </Button>
-                <div class="dsm-vc-fps-settings">
-                  {format("video-creator-fps")}
-                  <InlineMathInputView
-                    ariaLabel="fps"
-                    handleLatexChanged={(s) => this.controller.setFPSLatex(s)}
-                    hasError={() => !this.controller.isFPSValid()}
-                    latex={() => this.controller.fpsLatex}
-                    isFocused={() => this.controller.isFocused("export-fps")}
-                    handleFocusChanged={(b) =>
-                      this.controller.updateFocus("export-fps", b)
-                    }
-                  />
-                </div>
+                <If predicate={() => this.controller.fileType !== "zip"}>
+                  {() => (
+                    <div class="dsm-vc-fps-settings">
+                      {format("video-creator-fps")}
+                      <InlineMathInputView
+                        ariaLabel="fps"
+                        handleLatexChanged={(s) =>
+                          this.controller.setFPSLatex(s)
+                        }
+                        hasError={() => !this.controller.isFPSValid()}
+                        latex={() => this.controller.fpsLatex}
+                        isFocused={() =>
+                          this.controller.isFocused("export-fps")
+                        }
+                        handleFocusChanged={(b) =>
+                          this.controller.updateFocus("export-fps", b)
+                        }
+                      />
+                    </div>
+                  )}
+                </If>
               </div>
             </div>
           )}

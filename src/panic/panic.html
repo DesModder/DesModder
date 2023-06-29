@@ -18,8 +18,9 @@
     box-shadow: 0 5px 10px rgb(0 0 0 / 20%);
     user-select: text;
   }
-  #dsm-panic-popover ul {
+  #dsm-panic-popover ul.dsm-checkbox-list {
     list-style-type: none;
+    padding-left: 16px;
   }
   #dsm-panic-popover input[type="checkbox"] {
     cursor: pointer;
@@ -29,7 +30,7 @@
     padding: 3px 10px;
   }
   #dsm-plugins-disabled,
-  #dsm-encountered-errors {
+  .dsm-encountered-errors {
     /* Don't show until something gets added to this list */
     display: none;
   }
@@ -37,13 +38,26 @@
     position: absolute;
     top: 4px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(60px);
     z-index: 999;
     width: 37px;
     height: 37px;
     line-height: 34px;
     font-size: 20px;
     color: #5f5f5f;
+  }
+  @media only screen and (max-width: 800px) {
+    #dsm-panic-reopen-button {
+      transform: unset;
+    }
+  }
+  @media only screen and (max-width: 450px) {
+    #dsm-panic-reopen-button {
+      top: unset;
+      left: unset;
+      bottom: 173px;
+      right: 4px;
+    }
   }
   .dsm-panic-button {
     text-align: center;
@@ -53,7 +67,12 @@
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 5px;
   }
-  #dsm-panic-close-button {
+  .dsm-panic-buttons-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 20px;
+  }
+  #dsm-panic-x-button {
     border: none;
     background: transparent;
     position: absolute;
@@ -63,37 +82,45 @@
     font-size: 25px;
     color: #5f5f5f;
   }
-  #dsm-panic-close-button:hover,
+  #dsm-panic-x-button:hover,
   #dsm-panic-reopen-button:hover {
     color: black;
   }
-  body.dsm-panic-closed #dsm-panic-popover {
+  body:not(.dsm-panic-open) #dsm-panic-popover {
     display: none;
   }
-  body:not(.dsm-panic-closed) #dsm-panic-reopen-button {
+  body.dsm-panic-open #dsm-panic-reopen-button {
     display: none;
   }
-  body.dsm-panic-closed .dcg-header .dcg-home-link {
+  body:not(.dsm-panic-open) .dcg-header .dcg-home-link {
     pointer-events: none;
     cursor: default;
   }
 </style>
 <div id="dsm-panic-popover">
-  <button id="dsm-panic-close-button">✖</button>
+  <button class="dsm-panic-close-button" id="dsm-panic-x-button">✖</button>
   <h2>DesModder Loading Errors Manager</h2>
-  <p id="dsm-encountered-errors">
+  <p class="dsm-encountered-errors">
     Looks like some Desmos change happened to break some of DesModder's patches.
     <br />
+    The patches are for the following purposes. Some may be critical, some may
+    just be styling:
+  </p>
+  <ul id="dsm-patch-description-list"></ul>
+  <p class="dsm-encountered-errors">
     The following plugins are affected: (check box to disable plugin)
   </p>
-  <ul id="dsm-panic-list"></ul>
+  <ul class="dsm-checkbox-list" id="dsm-panic-list"></ul>
   <p id="dsm-plugins-disabled">
     The following plugins are currently disabled from loading: (uncheck box to
     allow enabling plugin)
   </p>
-  <ul id="dsm-disabled-list"></ul>
-  <button class="dsm-panic-button" id="dsm-panic-apply-reload-btn">
-    Apply and Reload
-  </button>
+  <ul class="dsm-checkbox-list" id="dsm-disabled-list"></ul>
+  <div class="dsm-panic-buttons-row">
+    <button class="dsm-panic-button dsm-panic-close-button">Ignore</button>
+    <button class="dsm-panic-button" id="dsm-panic-apply-reload-btn">
+      Apply and Reload
+    </button>
+  </div>
 </div>
 <button class="dsm-panic-button" id="dsm-panic-reopen-button">!</button>

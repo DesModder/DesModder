@@ -1,11 +1,10 @@
 import { ItemModel } from "./models";
 import { GraphState } from "@desmodder/graph-state";
-import "desmos";
+import { MathQuillField } from "components";
 
 export type DispatchedEvent =
   | {
       type:
-        | "keypad/set-minimized"
         | "close-graph-settings"
         | "open-expression-search"
         | "close-expression-search"
@@ -20,26 +19,75 @@ export type DispatchedEvent =
         | "resize-exp-list"
         | "set-none-selected"
         | "toggle-graph-settings"
-        | "clear-unsaved-changes";
+        | "clear-unsaved-changes"
+        | "undo"
+        | "tick"
+        | "redo"
+        | "tick-ticker"
+        | "keypad/functions";
+    }
+  | {
+      type: "keypad/set-minimized";
+      minimized: boolean;
     }
   | {
       type:
         | "action-single-step"
-        | "toggle-item-hidden"
         | "duplicate-folder"
         | "duplicate-expression"
-        | "set-selected-id";
+        | "convert-image-to-draggable"
+        | "create-sliders-for-item"
+        | "toggle-item-hidden"
+        | "delete-item-and-animate-out";
       id: string;
     }
   | {
+      /** This is somewhat a super type of all the `DispatchedEvent`s. It's here
+       * to avoid annotating tons of types for modify.ts. This should really be
+       * `type: "set-slider-minlatex" | (100 others)`, but that's unmaintainable.
+       * A second best would be `type: "string"`, but that screws with the
+       * other types being useful. */
+      type: "__dummy-IDEvent";
+      id?: string;
+    }
+  | {
+      type: "set-selected-id";
+      id: string;
+      // Added to avoid feedback loop. Desmos will pass this through ignored.
+      dsmFromTextModeSelection?: boolean;
+    }
+  | {
       type: "set-focus-location";
-      location: { type: string };
+      location: { type: "expression"; id: string } | { type: string };
     }
   | {
       type: "on-evaluator-changes";
       changes: Record<string, EvaluatorChange>;
       timingData: TimingData;
-    };
+    }
+  | {
+      type: "set-state";
+      opts: {
+        allowUndo?: boolean;
+        // Added to avoid feedback loop. Desmos will pass this through ignored.
+        fromTextMode?: boolean;
+      };
+      state: GraphState;
+    }
+  | {
+      // Note: this has more parameters. I just haven't found a need for them yet.
+      type: "set-item-latex";
+      latex: string;
+      id: string;
+    }
+  | {
+      type: "on-special-key-pressed";
+      key: string;
+      // used in compact-view plugin
+      forceSwitchExpr?: boolean;
+    }
+  | { type: "set-folder-collapsed"; id: string; isCollapsed: boolean }
+  | { type: "set-item-colorLatex"; id: string; colorLatex: string };
 
 /**
  * Evaluator change: a change set associated with a single id, passed back from
@@ -115,6 +163,9 @@ interface Toast {
 }
 
 interface CalcPrivate {
+  focusedMathQuill: {
+    mq: MathQuillField;
+  };
   /// / undocumented, may break
   controller: {
     // _removeExpressionSynchronously(model: ItemModel): void;
@@ -154,7 +205,20 @@ interface CalcPrivate {
         killWorker: () => void;
       };
     };
-    listModel: unknown;
+    listModel: {
+      selectedItemMap: Record<number, boolean | undefined>;
+
+      // add properties as needed
+      __itemModelArray: {
+        id: string;
+        colorLatex: string;
+        folderId: string;
+        type: "folder" | "expression";
+      }[];
+      __itemIdToModel: Record<string, ItemModel>;
+
+      drawOrder: string[];
+    };
     _addItemToEndFromAPI: (item: ItemModel) => void;
     _showToast: (toast: Toast) => void;
     getViewState: () => {
@@ -173,6 +237,9 @@ interface CalcPrivate {
     isGeometry: () => boolean;
     isGeoUIActive: () => boolean;
     isNarrowGeometryHeader: () => boolean;
+    expressionSearchOpen: boolean;
+    /** Returns a function to call to unsubscribe */
+    subToChanges: (cb: () => void) => () => void;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;

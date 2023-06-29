@@ -4,228 +4,15 @@
 
 TODO: work this into an API so it doesn't need a ton of injected code.
 
-## Action Create Helper
-
-Adds a helper function for use below.
-
-*module* `expressions/expression-edit-actions`
-
-*Find* => `start`
-```js
-"use strict";
-Object.defineProperty($, "__esModule", { value: !0 }),
-  $.ExpressionEditActions = void 0;
-```
-
-*Find*
-```js
-createElement(
-  $Tooltip.Tooltip,
-  {
-    tooltip: $.bindFn($.getConvertTooltip),
-    gravity: $.const('s')
-  },
-  $DCGView.createElement
-```
-
-*Replace* `start` with
-```js
-__start__
-function dsm_actionCreate(tooltip, buttonClass, iconClass, onTap) {
-  return () => $DCGView.createElement(
-    $Tooltip.Tooltip,
-    {
-      tooltip: $DCGView.const(DesModder.controller.format(tooltip)),
-      gravity: $DCGView.const("s")
-    },
-    $DCGView.createElement(
-      "span",
-      {
-        class: $DCGView.const(
-          buttonClass + " dsm-stay-edit-list-mode dcg-exp-action-button"
-        ),
-        handleEvent: $DCGView.const("true"),
-        role: $DCGView.const("button"),
-        tabindex: $DCGView.const("0"),
-        onTap: onTap
-      },
-      $DCGView.createElement("i", {
-        class: $DCGView.const(iconClass + " dsm-stay-edit-list-mode"),
-      })
-    )
-  )
-}
-```
-
-### Alternative
-
-Adds a helper function for use below.
-
-*module* `expressions/expression-edit-actions`
-
-*Find* => `dcg-string`
-```js
-"dcg-expression-edit-actions"
-```
-
-*Find_surrounding_template* `dcg-string` => `template`
-
-*Find* inside `template` => `start`
-```js
-return $.createElement
-```
-
-*Find*
-```js
-createElement(
-  $Tooltip,
-  {
-    tooltip: $.bindFn($.getConvertTooltip),
-    gravity: $.const('s')
-  },
-  $DCGView.createElement
-```
-
-*Replace* `start` with
-```js
-function dsm_actionCreate(tooltip, buttonClass, iconClass, onTap) {
-  return () => $DCGView.createElement(
-    $Tooltip,
-    {
-      tooltip: $DCGView.const(DesModder.controller.format(tooltip)),
-      gravity: $DCGView.const("s")
-    },
-    $DCGView.createElement(
-      "span",
-      {
-        class: $DCGView.const(
-          buttonClass + " dsm-stay-edit-list-mode dcg-exp-action-button"
-        ),
-        handleEvent: $DCGView.const("true"),
-        role: $DCGView.const("button"),
-        tabindex: $DCGView.const("0"),
-        onTap: onTap
-      },
-      $DCGView.createElement("i", {
-        class: $DCGView.const(iconClass + " dsm-stay-edit-list-mode"),
-      })
-    )
-  )
-}
-__start__
-```
-
 ## Insert extra buttons
 
-Insert before the delete button but before the other buttons.
+Insert before the delete button but after the other buttons.
 
-*module* `expressions/expression-edit-actions`
+*Description* `Show buttons like "pin" and "merge folder."`
 
-*Find* => `element`
+*Find*
 ```js
-createElement(
-  'span',
-  {
-    class: function () {
-      return {
-        'dcg-expression-edit-actions' ____
-      }
-    },
-    ____
-  },
-  $DCGView.createElement(____),
-  $DCGView.createElement(____),
-  $DCGView.createElement(____),
-  $DCGView.createElement(____),
-  __delete_button__
-)
-```
-
-*Find_surrounding_template* `element` => `template`
-
-*Find* inside `template`
-```js
-var $this = this;
-```
-
-*Replace* `delete_button` with
-```js
-// pin-unpin
-$DCGView.createElement(
-  $DCGView.Components.If,
-  {
-    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("pin-expressions") && $this.model().type !== "folder"
-  },
-  () => $DCGView.Components.IfElse(
-    () => window.DesModder?.controller?.isExpressionPinned($this.model().id),
-    {
-      false: dsm_actionCreate(
-        "pin-expressions-pin",
-        "dsm-pin-button",
-        "dsm-icon-bookmark",
-        () => window.DesModder.controller.pinExpression($this.model().id)
-      ),
-      true: dsm_actionCreate(
-        "pin-expressions-unpin",
-        "dsm-unpin-button dcg-selected",
-        "dsm-icon-bookmark",
-        () => window.DesModder.controller.unpinExpression($this.model().id)
-      )
-    }
-  )
-),
-// enclose note
-$DCGView.createElement(
-  $DCGView.Components.If,
-  {
-    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && $this.model().type === "text"
-  },
-  dsm_actionCreate(
-    "folder-tools-enclose",
-    "dsm-note-enclose-button",
-    "dsm-icon-folder-plus",
-    () => window.DesModder.controller.noteEnclose($this.model().index)
-  )
-),
-// dump folder
-$DCGView.createElement(
-  $DCGView.Components.If,
-  {
-    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && $this.model().type === "folder"
-      && window.Calc.controller.getItemModelByIndex($this.model().index + 1)?.folderId === $this.model().id
-  },
-  dsm_actionCreate(
-    "folder-tools-dump",
-    "dsm-folder-dump-button",
-    "dsm-icon-folder-minus",
-    () => window.DesModder.controller.folderDump($this.model().index)
-  )
-),
-// merge folder
-$DCGView.createElement(
-  $DCGView.Components.If,
-  {
-    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && $this.model().type === "folder"
-  },
-  dsm_actionCreate(
-    "folder-tools-merge",
-    "dsm-folder-merge-button",
-    "dsm-icon-folder-plus",
-    () => window.DesModder.controller.folderMerge($this.model().index)
-  )
-),
-__delete_button__
-```
-
-### Alternative
-
-Insert before the delete button but before the other buttons.
-
-*module* `expressions/expression-edit-actions`
-
-*Find* => `element`
-```js
-createElement(
+.createElement(
   'span',
   {
     class: () => ({
@@ -248,22 +35,22 @@ createElement(
 $DCGView.createElement(
   $DCGView.Components.If,
   {
-    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("pin-expressions") && this.model().type !== "folder"
+    predicate: () => DSM.pinExpressions && this.model().type !== "folder"
   },
   () => $DCGView.Components.IfElse(
-    () => window.DesModder?.controller?.isExpressionPinned(this.model().id),
+    () => DSM.pinExpressions?.isExpressionPinned(this.model().id),
     {
-      false: dsm_actionCreate(
+      false: DesModder.createAction(
         "pin-expressions-pin",
         "dsm-pin-button",
         "dsm-icon-bookmark",
-        () => window.DesModder.controller.pinExpression(this.model().id)
+        () => DSM.pinExpressions?.pinExpression(this.model().id)
       ),
-      true: dsm_actionCreate(
+      true: DesModder.createAction(
         "pin-expressions-unpin",
         "dsm-unpin-button dcg-selected",
         "dsm-icon-bookmark",
-        () => window.DesModder.controller.unpinExpression(this.model().id)
+        () => DSM.pinExpressions?.unpinExpression(this.model().id)
       )
     }
   )
@@ -272,41 +59,63 @@ $DCGView.createElement(
 $DCGView.createElement(
   $DCGView.Components.If,
   {
-    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && this.model().type === "text"
+    predicate: () => DSM.folderTools && this.model().type === "text"
   },
-  dsm_actionCreate(
+  DesModder.createAction(
     "folder-tools-enclose",
     "dsm-note-enclose-button",
     "dsm-icon-folder-plus",
-    () => window.DesModder.controller.noteEnclose(this.model().index)
+    () => DSM.folderTools?.noteEnclose(this.model().index)
   )
 ),
 // dump folder
 $DCGView.createElement(
   $DCGView.Components.If,
   {
-    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && this.model().type === "folder"
+    predicate: () => DSM.folderTools && this.model().type === "folder"
       && window.Calc.controller.getItemModelByIndex(this.model().index + 1)?.folderId === this.model().id
   },
-  dsm_actionCreate(
+  DesModder.createAction(
     "folder-tools-dump",
     "dsm-folder-dump-button",
     "dsm-icon-folder-minus",
-    () => window.DesModder.controller.folderDump(this.model().index)
+    () => DSM.folderTools?.folderDump(this.model().index)
   )
 ),
 // merge folder
 $DCGView.createElement(
   $DCGView.Components.If,
   {
-    predicate: () => window.DesModder?.controller?.isPluginEnabled?.("folder-tools") && this.model().type === "folder"
+    predicate: () => DSM.folderTools && this.model().type === "folder"
   },
-  dsm_actionCreate(
+  DesModder.createAction(
     "folder-tools-merge",
     "dsm-folder-merge-button",
     "dsm-icon-folder-plus",
-    () => window.DesModder.controller.folderMerge(this.model().index)
+    () => DSM.folderTools?.folderMerge(this.model().index)
   )
 ),
 __delete_button__
+```
+
+## Allow pin/unpin and dump/merge without exiting ELM
+
+*Description* `Stay in "Edit List" mode after unpinning an expression or dumping a folder`
+
+*Find* => `outer`
+```js
+if (this.controller.isInEditListMode() && !$uee($e)) {
+    this.exitEditListMode();
+    return
+}
+```
+
+*Find* inside `outer` => `from`
+```js
+this.exitEditListMode()
+```
+
+*Replace* `from` with
+```js
+(event.target.closest(".dsm-stay-edit-list-mode") || this.exitEditListMode())
 ```

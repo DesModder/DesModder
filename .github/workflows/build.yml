@@ -1,0 +1,29 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: npm install and build
+        run: |
+          npm ci
+          node ./esbuild.mjs --browser=chrome --outdir=dist-chrome
+          node ./esbuild.mjs --browser=firefox --outdir=dist-ff
+      - name: Upload Chrome
+        uses: actions/upload-artifact@v3
+        with:
+          name: DesModder-Chrome-${{ github.sha }}
+          path: dist-chrome
+      - name: Upload Firefox
+        uses: actions/upload-artifact@v3
+        with:
+          name: DesModder-Firefox-${{ github.sha }}
+          path: dist-ff

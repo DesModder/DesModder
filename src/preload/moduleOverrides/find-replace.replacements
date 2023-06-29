@@ -4,7 +4,7 @@
 
 ## Allow find-replace to appear, even if the expression list is not focused
 
-*Module* `main/instancehotkeys`
+*Description* `Allow find-replace to appear, even if the expression list is not focused`
 
 *Find* => `from`
 
@@ -15,5 +15,5 @@ this.controller.isExpressionListFocused()
 *Replace* `from` with
 
 ```js
-!window.DesModder?.controller?.inTextMode?.()
+!DSM.textMode?.inTextMode
 ```

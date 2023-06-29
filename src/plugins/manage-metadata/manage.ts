@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 import Metadata, { Expression } from "./interface";
 import migrateToLatest from "./migrate";
-import { ItemModel } from "globals/models";
-import { Calc } from "globals/window";
+import { FolderModel, TextModel } from "globals/models";
+import { Calc, Console } from "globals/window";
 import { List } from "utils/depUtils";
-import { OptionalProperties } from "utils/utils";
 
 /*
 This file manages the metadata expressions. These are stored on the graph state as expressions and consist of:
@@ -40,11 +39,13 @@ export function getMetadata() {
     const parsed = JSON.parse(expr.text);
     return migrateToLatest(parsed);
   }
-  console.warn("Invalid dsm-metadata. Ignoring");
+  Console.warn("Invalid dsm-metadata. Ignoring");
   return getBlankMetadata();
 }
 
-function addItemToEnd(state: ItemModel) {
+function addItemToEnd(
+  state: Omit<FolderModel, "index"> | Omit<TextModel, "index">
+) {
   Calc.controller._addItemToEndFromAPI(Calc.controller.createItemModel(state));
 }
 
@@ -94,7 +95,7 @@ function cleanMetadata(metadata: Metadata) {
 export function changeExprInMetadata(
   metadata: Metadata,
   id: string,
-  obj: OptionalProperties<Expression>
+  obj: Partial<Expression>
 ) {
   /* Mutates metadata by spreading obj into metadata.expressions[id],
   with default values deleted */

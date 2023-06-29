@@ -2,282 +2,361 @@ import * as TextAST from "./TextAST";
 
 export default TextAST;
 
-export interface Program extends Positioned {
+/* Generic */
+
+/**
+ * We maintain effectively two ASTs. One is intended for ASTs sourced from
+ * string/CST; this holds positions and more. Another is is for synthetic nodes
+ * etc. The branching is based on type argument. The first type argument is C.
+ * If C is "concrete", then add in the concrete properties. Otherwise don't.
+ */
+
+const synthetic = "synthetic";
+export type Synthetic = typeof synthetic;
+const concrete = "concrete";
+export type Concrete = typeof concrete;
+type S = Synthetic | Concrete;
+
+/* Nodes */
+
+export type Program<C extends S = Concrete> = Positioned<C> & {
   type: "Program";
-  children: Statement[];
-}
+  children: Statement<C>[];
+};
 
-export type Statement =
-  | ExprStatement
-  | Table
-  | Image
-  | Text
-  | Folder
-  | Settings
-  | Ticker;
+type StatementBase<C extends S = Concrete> = Positioned<C> &
+  Styled<C> &
+  (C extends Concrete
+    ? {
+        id: string;
+        index: number;
+      }
+    : // eslint-disable-next-line @typescript-eslint/ban-types
+      {});
 
-export interface ExprStatement extends Positioned, Styled {
+export type Statement<C extends S = Concrete> =
+  | ExprStatement<C>
+  | Table<C>
+  | Image<C>
+  | Text<C>
+  | Folder<C>
+  | Settings<C>
+  | Ticker<C>;
+
+export type ExprStatement<C extends S = Concrete> = StatementBase<C> & {
   type: "ExprStatement";
-  expr: Expression;
+  expr: Expression<C>;
   /**
    * Data for regression. Not in style mapping because identifiers get
    * evaluated in style mapping. Also mapping keys are strings, not identifiers
    */
-  regression?: RegressionData;
-}
+  parameters?: RegressionParameters<C>;
+  residualVariable?: Identifier<C>;
+};
 
-export interface RegressionData {
-  parameters: RegressionParameters;
-  residualVariable?: Identifier;
-}
-
-export interface Table extends Positioned, Styled {
+export type Table<C extends S = Concrete> = StatementBase<C> & {
   type: "Table";
-  columns: TableColumn[];
-}
+  columns: TableColumn<C>[];
+};
 
-export type TableColumn = ExprStatement;
+export type TableColumn<C extends S = Concrete> = ExprStatement<C>;
 
-export interface Image extends Positioned, Styled {
+export type Image<C extends S = Concrete> = StatementBase<C> & {
   type: "Image";
   name: string;
-}
+};
 
-export interface Text extends Positioned, Styled {
+export type Text<C extends S = Concrete> = StatementBase<C> & {
   type: "Text";
   text: string;
-}
+};
 
-export interface Folder extends Positioned, Styled {
+export type Folder<C extends S = Concrete> = StatementBase<C> & {
   type: "Folder";
   title: string;
-  children: Statement[];
-}
+  children: Statement<C>[];
+};
 
-export interface Settings extends Positioned, Styled {
+export type Settings<C extends S = Concrete> = StatementBase<C> & {
   type: "Settings";
-}
+};
 
-export interface Ticker extends Positioned, Styled {
+export type Ticker<C extends S = Concrete> = StatementBase<C> & {
   type: "Ticker";
-  handler: Expression;
-}
+  handler: Expression<C>;
+};
 
-export interface RegressionParameters extends Positioned {
+export type RegressionParameters<C extends S = Concrete> = Positioned<C> & {
   type: "RegressionParameters";
-  entries: RegressionEntry[];
-}
+  entries: RegressionEntry<C>[];
+};
 
-export interface RegressionEntry extends Positioned {
+export type RegressionEntry<C extends S = Concrete> = Positioned<C> & {
   type: "RegressionEntry";
-  variable: Identifier;
-  value: Expression;
-}
+  variable: Identifier<C>;
+  value: Expression<C>;
+};
 
-export interface StyleMapping extends Positioned {
+export type StyleMapping<C extends S = Concrete> = Positioned<C> & {
   type: "StyleMapping";
-  entries: MappingEntry[];
-}
+  entries: MappingEntry<C>[];
+};
 
-export interface MappingEntry extends Positioned {
+export type MappingEntry<C extends S = Concrete> = Positioned<C> & {
   type: "MappingEntry";
-  property: StringNode;
-  expr: Expression | StyleMapping;
-}
+  property: StringNode<C>;
+  expr: Expression<C> | StyleMapping<C>;
+};
 
-export type Expression =
-  | NumberNode
-  | Identifier
-  | StringNode
-  | RepeatedExpression
-  | RangeExpression
-  | ListExpression
-  | ListComprehension
-  | PiecewiseExpression
-  | PrefixExpression
-  | SequenceExpression
-  | UpdateRule
-  | MemberExpression
-  | ListAccessExpression
-  | BinaryExpression
-  | DoubleInequality
-  | PostfixExpression
-  | CallExpression
-  | PrimeExpression
-  | DerivativeExpression;
+export type Expression<C extends S = Concrete> =
+  | NumberNode<C>
+  | Identifier<C>
+  | StringNode<C>
+  | RepeatedExpression<C>
+  | RangeExpression<C>
+  | ListExpression<C>
+  | ListComprehension<C>
+  | Substitution<C>
+  | AssignmentExpression<C>
+  | PiecewiseExpression<C>
+  | PrefixExpression<C>
+  | SequenceExpression<C>
+  | UpdateRule<C>
+  | MemberExpression<C>
+  | ListAccessExpression<C>
+  | BinaryExpression<C>
+  | DoubleInequality<C>
+  | PostfixExpression<C>
+  | CallExpression<C>
+  | PrimeExpression<C>
+  | DerivativeExpression<C>;
 
-export interface NumberNode extends Positioned {
+export type NumberNode<C extends S = Concrete> = Positioned<C> & {
   type: "Number";
   value: number;
-}
+};
 
-export interface Identifier extends Positioned {
+export type Identifier<C extends S = Concrete> = Positioned<C> & {
   type: "Identifier";
   name: string;
-}
+};
 
-export interface StringNode extends Positioned {
+export type StringNode<C extends S = Concrete> = Positioned<C> & {
   type: "String";
   value: string;
-}
+};
 
-export interface RepeatedExpression extends Positioned {
+export type RepeatedExpression<C extends S = Concrete> = Positioned<C> & {
   type: "RepeatedExpression";
   name: "integral" | "sum" | "product";
-  index: Identifier;
-  start: Expression;
-  end: Expression;
-  expr: Expression;
-}
+  index: Identifier<C>;
+  start: Expression<C>;
+  end: Expression<C>;
+  expr: Expression<C>;
+};
 
-export interface RangeExpression extends Positioned {
+export type RangeExpression<C extends S = Concrete> = Positioned<C> & {
   type: "RangeExpression";
-  startValues: Expression[];
-  endValues: Expression[];
-}
+  startValues: Expression<C>[];
+  endValues: Expression<C>[];
+};
 
-export interface ListExpression extends Positioned {
+export type ListExpression<C extends S = Concrete> = Positioned<C> & {
   type: "ListExpression";
-  values: Expression[];
-}
+  values: Expression<C>[];
+};
 
-export interface ListComprehension extends Positioned {
+export type ListComprehension<C extends S = Concrete> = Positioned<C> & {
   type: "ListComprehension";
-  expr: Expression;
-  assignments: AssignmentExpression[];
-}
+  expr: Expression<C>;
+  assignments: AssignmentExpression<C>[];
+};
 
-export interface AssignmentExpression extends Positioned {
+export type Substitution<C extends S = Concrete> = Positioned<C> & {
+  type: "Substitution";
+  body: Expression<C>;
+  assignments: AssignmentExpression<C>[];
+};
+
+export type AssignmentExpression<C extends S = Concrete> = Positioned<C> & {
   type: "AssignmentExpression";
-  variable: Identifier;
-  expr: Expression;
-}
+  variable: Identifier<C>;
+  expr: Expression<C>;
+};
 
-export interface PiecewiseExpression extends Positioned {
+export type PiecewiseExpression<C extends S = Concrete> = Positioned<C> & {
   type: "PiecewiseExpression";
-  branches: PiecewiseBranch[];
-}
+  branches: PiecewiseBranch<C>[];
+};
 
-export interface PiecewiseBranch extends Positioned {
+export type PiecewiseBranch<C extends S = Concrete> = Positioned<C> & {
   type: "PiecewiseBranch";
-  condition: Expression;
-  consequent: Expression;
-}
+} & (
+    | {
+        condition: Expression<C>;
+        consequent: Expression<C>;
+      }
+    | {
+        /** null represents "else"/"otherwise"/"always" */
+        condition: null;
+        consequent: Expression<C>;
+      }
+    | {
+        condition: Expression<C>;
+        /** null represents 1 */
+        consequent: null;
+      }
+  );
 
-export interface PrefixExpression extends Positioned {
+export type PrefixExpression<C extends S = Concrete> = Positioned<C> & {
   type: "PrefixExpression";
   op: "-";
-  expr: Expression;
-}
+  expr: Expression<C>;
+};
 
-export interface UpdateRule extends Positioned {
+export type UpdateRule<C extends S = Concrete> = Positioned<C> & {
   type: "UpdateRule";
-  variable: Identifier;
-  expr: Expression;
-}
+  variable: Identifier<C>;
+  expr: Expression<C>;
+};
 
-export interface SequenceExpression extends Positioned {
+export type SequenceExpression<C extends S = Concrete> = Positioned<C> & {
   type: "SequenceExpression";
-  left: Expression;
-  right: Expression;
+  left: Expression<C>;
+  right: Expression<C>;
   parenWrapped: boolean;
-}
+};
 
-export interface MemberExpression extends Positioned {
+export type MemberExpression<C extends S = Concrete> = Positioned<C> & {
   type: "MemberExpression";
-  object: Expression;
-  property: Identifier;
-}
+  object: Expression<C>;
+  property: Identifier<C>;
+};
 
-export interface ListAccessExpression extends Positioned {
+export type ListAccessExpression<C extends S = Concrete> = Positioned<C> & {
   type: "ListAccessExpression";
-  expr: Expression;
-  index: Expression;
-}
+  expr: Expression<C>;
+  index: Expression<C>;
+};
 
-type CompareOp = "<" | "<=" | ">=" | ">" | "=";
+export type CompareOp = "<" | "<=" | ">=" | ">" | "=";
 
-export interface BinaryExpression extends Positioned {
+export type BinaryExpression<C extends S = Concrete> = Positioned<C> & {
   type: "BinaryExpression";
   op: "~" | "^" | "/" | "*" | "+" | "-" | CompareOp;
-  left: Expression;
-  right: Expression;
-}
+  left: Expression<C>;
+  right: Expression<C>;
+};
 
-export interface DoubleInequality extends Positioned {
+export type DoubleInequality<C extends S = Concrete> = Positioned<C> & {
   type: "DoubleInequality";
-  left: Expression;
+  left: Expression<C>;
   leftOp: CompareOp;
-  middle: Expression;
+  middle: Expression<C>;
   rightOp: CompareOp;
-  right: Expression;
-}
+  right: Expression<C>;
+};
 
-export interface PostfixExpression extends Positioned {
+export type PostfixExpression<C extends S = Concrete> = Positioned<C> & {
   type: "PostfixExpression";
   op: "factorial";
-  expr: Expression;
-}
+  expr: Expression<C>;
+};
 
-export interface CallExpression extends Positioned {
+export type CallExpression<C extends S = Concrete> = Positioned<C> & {
   type: "CallExpression";
-  callee: Expression;
-  arguments: Expression[];
-}
+  callee: Expression<C>;
+  arguments: Expression<C>[];
+};
 
-export interface PrimeExpression extends Positioned {
+export type PrimeExpression<C extends S = Concrete> = Positioned<C> & {
   type: "PrimeExpression";
-  expr: CallExpression;
+  expr: CallExpression<C>;
   order: number;
-}
+};
 
-export interface DerivativeExpression extends Positioned {
+export type DerivativeExpression<C extends S = Concrete> = Positioned<C> & {
   type: "DerivativeExpression";
-  expr: Expression;
-  variable: Identifier;
-}
+  expr: Expression<C>;
+  variable: Identifier<C>;
+};
 
-interface Positioned {
-  /** pos should be defined for all nodes that come from the text via the CST */
-  pos?: Pos;
-}
+export type Positioned<C extends S = Concrete> = C extends Concrete
+  ? {
+      pos: Pos;
+    }
+  : // eslint-disable-next-line @typescript-eslint/ban-types
+    {};
 
 export interface Pos {
   from: number;
   to: number;
 }
 
-interface Styled {
-  style: StyleMapping | null;
-}
-
-/* Builders */
-
-export function number(val: number): NumberNode {
-  return {
-    type: "Number",
-    value: val,
-  };
+interface Styled<C extends S = Concrete> {
+  style: StyleMapping<C> | null;
 }
 
 /* Path */
 
-export type NonExprNode =
-  | Program
-  | Statement
-  | RegressionParameters
-  | RegressionEntry
-  | StyleMapping
-  | MappingEntry
-  | AssignmentExpression
-  | PiecewiseBranch;
+export type NonExprNode<C extends S = Concrete> =
+  | Statement<C>
+  | NonExprNonStatementNode<C>;
 
-export type Node = NonExprNode | Expression;
+export type NonExprNonStatementNode<C extends S = Concrete> =
+  | Program<C>
+  | RegressionParameters<C>
+  | RegressionEntry<C>
+  | StyleMapping<C>
+  | MappingEntry<C>
+  | AssignmentExpression<C>
+  | PiecewiseBranch<C>;
 
-export class NodePath<T extends Node = Node> {
+export type Node<C extends S = Concrete> = NonExprNode<C> | Expression<C>;
+
+export function isExpression<C extends S = Concrete>(
+  n: Node<C>
+): n is Expression<C> {
+  if (isStatement(n)) return false;
+  switch (n.type) {
+    case "Program":
+    case "RegressionParameters":
+    case "RegressionEntry":
+    case "StyleMapping":
+    case "MappingEntry":
+    case "AssignmentExpression":
+    case "PiecewiseBranch":
+      n satisfies NonExprNode<C>;
+      return false;
+    default:
+      n satisfies Expression<C>;
+      return true;
+  }
+}
+
+export function isStatement<C extends S = Concrete>(
+  n: Node<C>
+): n is Statement<C> {
+  switch (n.type) {
+    case "ExprStatement":
+    case "Table":
+    case "Image":
+    case "Text":
+    case "Folder":
+    case "Settings":
+    case "Ticker":
+      n satisfies Statement<C>;
+      return true;
+    default:
+      n satisfies NonExprNonStatementNode<C> | Expression<C>;
+      return false;
+  }
+}
+
+export class NodePath<C extends S = Concrete, T extends Node<C> = Node<C>> {
   constructor(
     public node: T,
-    public parentPath: NodePath | null,
+    public parentPath: NodePath<C> | null,
     public name?: string | number
   ) {}
 
@@ -285,7 +364,7 @@ export class NodePath<T extends Node = Node> {
     return this.parentPath ? this.parentPath.node : null;
   }
 
-  withChild<U extends Node>(node: U, name: string | number): NodePath<U> {
-    return new NodePath<U>(node, this, name);
+  withChild<U extends Node<C>>(node: U, name: string | number): NodePath<C, U> {
+    return new NodePath<C, U>(node, this, name);
   }
 }

@@ -1,41 +1,31 @@
-Each plugin lives in its own folder in `src/plugins/plugin-name`, and its main file should be `src/plugins/plugin-name/index.ts`. The `index.ts` file is where the plugin is set up and must export a single object that looks like the following:
+Each plugin lives in its own folder in `src/plugins/plugin-name`, and its main file should be `src/plugins/plugin-name/index.ts`. The `index.ts` file is where the plugin is set up and must export a single class. A minimal plugin is
 
 ```ts
-interface Plugin<Settings extends GenericBooleanSettings = {}> {
-  id: string;
-  name: string;
-  description: string;
-  onEnable(config?: unknown): void;
-  onDisable(): void;
-  enabledByDefault: boolean;
-  config?: readonly ConfigItem[];
-  onConfigChange?(changes: Settings): void;
-  manageConfigChange?(current: Settings, next: Settings): Settings;
+export default class ExampleLogger extends PluginController {
+  static id = "example-logger" as const;
+  static enabledByDefault = false;
+
+  afterEnable() {
+    console.log("Enabled");
+  }
+
+  afterDisable() {
+    console.log("Disabled");
+  }
 }
 ```
 
-Based on this interface, a minimum plugin looks like
+## Name and Description
 
-```ts
-export default {
-  id: "example-logger",
-  name: "Example Logger Plugin",
-  description: "Logs some information",
-  onEnable: () => console.log("Enabled"),
-  onDisable: () => console.log("Disabled"),
-  enabledByDefault: true,
-} as const;
+Each plugin must have a name and description. These are specified by adding two translation entries to `localization/en.ftl` with `ID-name` and `ID-desc`, e.g.
+
+```ftl
+## Example Logger
+example-logger-name = Example Logger
+example-logger-desc = Logs a message when enabled or disabled
 ```
 
-## ID vs Name
-
-The ID of a plugin should stay the same after it is first published to keep track of settings (such as if it is enabled).
-
-The name should be human-readable and can change, if needed, for clarity.
-
-## Description
-
-Descriptions should complete the sentence "When installed, this plugin ..."
+Descriptions (at least in English) should complete the sentence "When installed, this plugin ..."
 
 - first letter should be capitalized, and the description should end in a period.
 
@@ -43,21 +33,26 @@ For example,
 
 (When installed, Video Creator) Lets you export videos and GIFs of your graphs based on simulations or sliders.
 
-## `onEnable` and `onDisable`
+### ID vs Name
 
-Each plugin consists of an `onEnable` and `onDisable` hook. The `onDisable` function is only called when the plugin was enabled but the user taps the toggle to switch it to disabled.
+The ID of a plugin should stay the same after it is first published to keep track of settings (such as if it is enabled).
 
-Examples:
+The name should be human-readable and can change, if needed, for clarity.
 
-- If the plugin is disabled, `index.ts` is run at page load, but neither `onEnable` nor `onDisable` are called. If the user then toggles it on, `onEnable` is run.
-- If the plugin is enabled, `index.ts` and `onEnable` are run at page load. If the user then toggles it off, `onDisable` is run.
+## Lifetimes hooks: `afterEnable`, and `afterDisable`
+
+The `afterEnable` method is called whenever the plugin starts up: either on page load or after the user enables the plugin after it was disabled.
+
+The `afterDisable` method is only called when the plugin was enabled but the user taps the toggle to switch it to disabled.
 
 The setting `enabledByDefault` only affects users when they first use DesModder.
 
-## Configuration
+## Settings: `afterConfigChange`
 
-The plugin builtin-settings is the only one that currently uses the configuration object, so look at its code if you want to use persistent settings. Take note that only boolean settings are currently supported.
+Plugin settings are managed by the main DesModder controller. Specify the static `config` property to determine what settings are shown to the user. Then the main controller will ensure that the instance `.settings` field is always updated to the current value of the settings.
+
+Use the `afterConfigChange` method if you need to do something when the settings changes.
 
 ## Graph dependencies?
 
-DesModder currently has no [graph dependency](https://github.com/jared-hughes/DesModder/issues/58) plugins, so all graphs created through the extension are compatible with vanilla Desmos. A partial exception is GLesmos.
+DesModder has no "graph dependency" plugins, so all graphs created through the extension are compatible with vanilla Desmos. A partial exception is GLesmos.

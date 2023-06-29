@@ -1,10 +1,12 @@
+import { Console } from "../globals/window";
 import betterEvaluationView from "./moduleOverrides/better-evaluation-view.replacements";
-import core from "./moduleOverrides/core.replacements";
 import debugMode from "./moduleOverrides/debug-mode.replacements";
 import extraExpressionButtons from "./moduleOverrides/extra-expression-buttons.replacements";
 import findReplace from "./moduleOverrides/find-replace.replacements";
 import glesmos from "./moduleOverrides/glesmos.replacements";
 import hideErrors from "./moduleOverrides/hide-errors.replacements";
+import insertPanels from "./moduleOverrides/insert-panels.replacements";
+import metadata from "./moduleOverrides/metadata.replacements";
 import pillbox from "./moduleOverrides/pillbox.replacements";
 import pinExpressions from "./moduleOverrides/pin-expressions.replacements";
 import shiftEnterNewline from "./moduleOverrides/shift-enter-newline.replacements";
@@ -13,7 +15,8 @@ import textMode from "./moduleOverrides/text-mode.replacements";
 import parseFile, { Block } from "./replacementHelpers/parse";
 
 const replacementStrings = [
-  core,
+  insertPanels,
+  metadata,
   pillbox,
   betterEvaluationView,
   findReplace,
@@ -55,12 +58,14 @@ const pluginNames = [
   "text-mode",
   "performance-info",
   "better-evaluation-view",
+  "manage-metadata",
+  "pillbox-menus",
 ];
 
 replacements.forEach((r) => {
   r.plugins.forEach((plugin) => {
     if (!pluginNames.includes(plugin))
-      console.warn(
+      Console.warn(
         "Plugin",
         plugin,
         "specified in replacement",

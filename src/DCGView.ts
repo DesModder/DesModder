@@ -34,7 +34,7 @@ type ComponentArgument = ClassComponent | (() => string);
 
 export type LooseProps = Record<string, any>;
 
-export type Props = Record<string, () => unknown>;
+export type Props = Record<string, (...args: any[]) => any>;
 
 export interface MountedComponent {
   update: () => void;
@@ -65,7 +65,7 @@ export interface DCGViewModule {
   Class: typeof ClassComponent;
   const: <T>(v: T) => () => T;
   createElement: (
-    el: ComponentArgument,
+    el: ComponentArgument | string,
     props: Props,
     ...children: ComponentArgument[]
   ) => unknown;
@@ -101,6 +101,12 @@ declare global {
       strong: any;
       ul: any;
       li: any;
+      table: any;
+      tr: any;
+      th: any;
+      td: any;
+      button: any;
+      br: any;
     }
   }
 }

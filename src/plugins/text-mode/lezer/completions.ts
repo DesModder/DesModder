@@ -1,9 +1,9 @@
-import Controller from "../Controller";
-import TextAST, { NodePath } from "../down/TextAST";
-import { identifierToStringAST, TextAndDiagnostics } from "../down/cstToAST";
+import TextMode from "..";
+import { AnyHydrated, AnyHydratedValue } from "../down/style/Hydrated";
 import * as Defaults from "../down/style/defaults";
 import { getIndentation } from "../modify";
 import { exprToTextString } from "../up/astToText";
+import { childLatexToAST } from "../up/augToAST";
 import {
   Completion,
   CompletionContext,
@@ -49,7 +49,7 @@ const FOLDER_COMPLETIONS: Completion[] = [
     apply: macroExpandWithSelection(
       "table {\n  ",
       "x1",
-      " = [ ]\n  y1 = [ ]\n}"
+      " = []\n  \n  y1 = []\n}"
     ),
   },
   {
@@ -66,7 +66,7 @@ const FOLDER_COMPLETIONS: Completion[] = [
   {
     type: "keyword",
     label: "ticker",
-    apply: macroExpandWithSelection("ticker ", "action", `" @{ minStep: 0 }`),
+    apply: macroExpandWithSelection("ticker ", "a -> a+1", ` @{ minStep: 0 }`),
   },
 ];
 
@@ -79,10 +79,7 @@ const PROGRAM_COMPLETIONS: Completion[] = [
   ...FOLDER_COMPLETIONS,
 ];
 
-export function completions(
-  controller: Controller,
-  context: CompletionContext
-) {
+export function completions(controller: TextMode, context: CompletionContext) {
   const word = context.matchBefore(/\w*/);
   if (word === null || (word.from === word.to && !context.explicit))
     return null;
@@ -114,7 +111,7 @@ export function completions(
  *   StyleMapping . MappingEntry
  */
 function styleCompletions(
-  controller: Controller,
+  controller: TextMode,
   node: SyntaxNode
 ): Completion[] {
   const defaults =
@@ -124,7 +121,7 @@ function styleCompletions(
   return styleCompletionsFromDefaults(defaults);
 }
 
-function styleDefaults(controller: Controller, node: SyntaxNode): any {
+function styleDefaults(controller: TextMode, node: SyntaxNode): AnyHydrated {
   if (
     node.name === "ExprStatement" &&
     node.parent?.name === "BlockInner" &&
@@ -150,22 +147,20 @@ function styleDefaults(controller: Controller, node: SyntaxNode): any {
       return Defaults.ticker;
     case "StyleMapping":
       return styleDefaults(controller, node.parent!);
-    case "MappingEntry":
-      return styleDefaults(controller, node.parent!)[
-        identifierToStringAST(
-          new TextAndDiagnostics(controller.view!.state.doc, []),
-          node.getChild("Identifier")
-        ).value
-      ];
+    case "MappingEntry": {
+      const id = node.getChild("Identifier")!;
+      const key = controller.view!.state.doc.sliceString(id.from, id.to);
+      return styleDefaults(controller, node.parent!)[key as keyof AnyHydrated];
+    }
     default:
       throw Error(`Unexpected node type as parent of style: ${node.name}`);
   }
 }
 
-function styleCompletionsFromDefaults(defaults: any): Completion[] {
+function styleCompletionsFromDefaults(defaults: AnyHydrated): Completion[] {
   const completions = [];
   for (const key in defaults) {
-    const value = defaults[key];
+    const value = defaults[key as keyof AnyHydrated] as AnyHydratedValue;
     completions.push({
       type: "property",
       label: key,
@@ -176,13 +171,19 @@ function styleCompletionsFromDefaults(defaults: any): Completion[] {
           ? "type" in value
             ? macroExpandWithSelection(
                 key + ": ",
-                exprToTextString(
-                  new NodePath(value as TextAST.Expression, null)
-                ),
+                exprToTextString(childLatexToAST(value)),
                 ","
               )
             : macroExpandWithSelection(key + ": @{ ", "", " },")
-          : macroExpandWithSelection(key + ": ", JSON.stringify(value), ","),
+          : typeof value === "string"
+          ? macroExpandWithSelection(
+              key + ': "',
+              // string stringify will always start and end with `"`
+              JSON.stringify(value).slice(1, -1),
+              '",'
+            )
+          : // I don't know if this last case is reachable
+            macroExpandWithSelection(key + ": ", JSON.stringify(value), ","),
     });
   }
   return completions;

@@ -4,7 +4,7 @@
 
 ## Replace expression index with expression id.
 
-*Module* `graphing-calc/models/list`
+*Description* `Show expression ID instead of index`
 
 *Find* => `from`
 ```js
@@ -13,7 +13,7 @@ $o.displayIndex=$r
 
 *Replace* `from` with
 ```js
-$o.displayIndex=window.DesModder?.controller?.isPluginEnabled("debug-mode")
+$o.displayIndex = DSM.debugMode
   ? $o.id.length <= 6
     ? $o.id
     : $o.id.substring(0, 4) + "…"
@@ -22,7 +22,7 @@ $o.displayIndex=window.DesModder?.controller?.isPluginEnabled("debug-mode")
 
 ## Replace blank expression index with expression id.
 
-*Module* `graphing-calc/models/list`
+*Description* `Hide blank expression index`
 
 *Find* => `from`
 ```js
@@ -31,5 +31,5 @@ $e.nextDisplayIndex=$r
 
 *Replace* `from` with
 ```js
-$e.nextDisplayIndex = window.DesModder?.controller?.isPluginEnabled("debug-mode") ? "" : $r
+$e.nextDisplayIndex = DSM.debugMode ? "" : $r
 ```

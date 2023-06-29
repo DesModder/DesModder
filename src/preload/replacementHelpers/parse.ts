@@ -9,7 +9,7 @@ export interface Block {
   filename: string;
   heading: string;
   commands: Command[];
-  modules: string[];
+  description: string;
   plugins: string[];
   replaceCommands: Command[];
   workerOnly: boolean;
@@ -27,7 +27,7 @@ export default function parseFile(
   fileString: string,
   filename: string
 ): Block[] {
-  const tokens = tokenizeReplacement(fileString);
+  const tokens = tokenizeReplacement(fileString, filename);
   if (tokens[0].tag !== "heading" || tokens[0].depth !== 1)
     throw new ReplacementError("First line must be a # Heading");
   if (tokens[1].tag !== "emph" || tokens[1].command !== "plugin")
@@ -36,11 +36,11 @@ export default function parseFile(
   const rules: Block[] = [];
   for (let i = 2; i < tokens.length; i++) {
     const token = tokens[i];
-    if (token.tag === "emph" && token.command === "module") {
+    if (token.tag === "emph" && token.command === "description") {
       const prevToken = tokens[i - 1];
       if (prevToken.tag !== "heading")
         throw new ReplacementError(
-          `*module* command must be preceded by a heading`
+          `*description* command must be preceded by a heading`
         );
       const nextHeadingIndex = tokens.findIndex(
         (t, j) => j > i && t.tag === "heading" && t.depth <= prevToken.depth
@@ -53,7 +53,7 @@ export default function parseFile(
     } else if (token.tag === "emph") {
       throw new ReplacementError(
         `Command out of place: *${token.command}*.` +
-          ` Did you forget a *module* command?`
+          ` Did you forget a *description* command?`
       );
     }
   }
@@ -74,9 +74,9 @@ function parseBlock(
   plugins: string[],
   filename: string
 ): Block {
-  if (start.args.length === 0)
+  if (start.args.length !== 1)
     throw new ReplacementError(
-      `Command *module* must have at least one argument`
+      `Command *description* must have exactly one argument`
     );
   const commands: Command[] = [];
   let alternative: Block | undefined;
@@ -88,7 +88,7 @@ function parseBlock(
       if (
         token.text.includes("Alternative") &&
         next.tag === "emph" &&
-        next.command === "module"
+        next.command === "description"
       ) {
         alternative = parseBlock(
           token,
@@ -101,6 +101,9 @@ function parseBlock(
       } else throw new ReplacementError("Subheadings not yet implemented");
     } else if (token.tag === "emph" && token.command === "worker_only") {
       workerOnly = true;
+      i++;
+    } else if (token.tag === "emph" && token.command === "plugin") {
+      plugins = token.args;
       i++;
     } else if (token.tag === "emph") {
       const nextToken = tokens[i + 1];
@@ -117,7 +120,7 @@ function parseBlock(
     commands: commands.filter((x) => x.command !== "replace"),
     replaceCommands: commands.filter((x) => x.command === "replace"),
     plugins,
-    modules: start.args,
+    description: start.args[0],
     workerOnly,
     alternative,
   };

@@ -1,5 +1,7 @@
-import { ClassComponent, DCGView } from "DCGView";
-import { Calc, Fragile } from "globals/window";
+import { ExpressionModel, ItemModel } from "../globals/models";
+import { ClassComponent, Component, DCGView } from "DCGView";
+import { DesModderFragile, Calc, Fragile } from "globals/window";
+import { MQCursor } from "plugins/intellisense/latex-parsing";
 
 export abstract class CheckboxComponent extends ClassComponent<{
   checked: boolean;
@@ -33,8 +35,22 @@ export abstract class SegmentedControlComponent extends ClassComponent<{
 export const DesmosSegmentedControl = Fragile.SegmentedControl;
 
 export interface MathQuillField {
-  keystroke: (key: string, e: KeyboardEvent) => void;
-  latex: () => string;
+  keystroke: (key: string, e?: KeyboardEvent) => void;
+  latex: (input?: string) => string;
+  typedText: (input: string) => void;
+  focus: () => void;
+  blur: () => void;
+  __controller: {
+    options: {
+      overrideKeystroke: (key: string, evt: KeyboardEvent) => void;
+    };
+    cursor: {
+      [-1]: MQCursor;
+      [1]: MQCursor;
+      cursorElement: HTMLElement;
+    };
+    container: HTMLElement;
+  };
 }
 
 export abstract class MathQuillViewComponent extends ClassComponent<{
@@ -101,3 +117,56 @@ export abstract class TooltipComponent extends ClassComponent<{
 }> {}
 
 export const Tooltip = Fragile.Tooltip;
+
+export abstract class ExpressionViewComponent extends ClassComponent<
+  ModelAndController & {
+    onDragPending: () => void;
+    isDragCopy: () => boolean;
+  }
+> {}
+
+const ExpressionView = DesModderFragile.ExpressionView;
+
+export abstract class IconViewComponent extends ClassComponent<{
+  model: ItemModel;
+  controller: typeof Calc.controller;
+}> {}
+
+export const ImageIconView = DesModderFragile.ImageIconView;
+
+interface ModelAndController {
+  model: ExpressionModel;
+  controller: typeof Calc.controller;
+}
+
+// <ExpressionIconView ... >
+export class ExpressionIconView extends Component<ModelAndController> {
+  template() {
+    const template = exprTemplate(this);
+    return template.children[1].children[1].children[0];
+  }
+}
+
+// <If predicate={this.shouldShowFooter}>
+//   {() => <div class={this.getFooterClass()}> ...
+export class FooterView extends Component<ModelAndController> {
+  template() {
+    const template = exprTemplate(this);
+    return template.children[0].children[2];
+  }
+}
+
+function exprTemplate(
+  self: InstanceType<typeof Component<ModelAndController>>
+) {
+  const n = new (ExpressionView as any)(
+    {
+      model: () => self.props.model(),
+      controller: () => self.props.controller(),
+      onDragPending: () => {},
+      isDragCopy: () => false,
+    },
+    []
+  );
+  return n.template();
+}

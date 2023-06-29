@@ -2,19 +2,31 @@ import { DCGViewModule } from "../DCGView";
 import {
   CheckboxComponent,
   DStaticMathquillViewComponent,
+  ExpressionViewComponent,
+  IconViewComponent,
   InlineMathInputViewComponent,
   MathQuillField,
   MathQuillViewComponent,
   SegmentedControlComponent,
   TooltipComponent,
 } from "../components/desmosComponents";
+import { GenericSettings, PluginID, TransparentPlugins } from "../plugins";
 import CalcType from "./Calc";
 import { ItemModel } from "./models";
 
 interface windowConfig extends Window {
   Calc: CalcType;
   DesModder: any;
-  DesModderForceDisabled?: Set<string>;
+  DSM: TransparentPlugins;
+  DesModderPreload?: {
+    pluginsForceDisabled: Set<PluginID>;
+    pluginsEnabled: Record<PluginID, boolean | undefined>;
+    pluginSettings: Record<PluginID, GenericSettings | undefined>;
+  };
+  DesModderFragile: {
+    ExpressionView: ExpressionViewComponent;
+    ImageIconView: typeof IconViewComponent;
+  };
 }
 
 declare let window: windowConfig;
@@ -74,14 +86,6 @@ export const Fragile = new Proxy(
   };
   jQuery: any;
   getQueryParams: () => Record<string, string | true>;
-  getReconciledExpressionProps: (
-    type: string,
-    model?: ItemModel
-  ) => {
-    points: boolean;
-    lines: boolean;
-    fill: boolean;
-  };
   List: {
     removeItemById: (listModel: any, id: string) => void;
     moveItemsTo: (listModel: any, from: number, to: number, n: number) => void;
@@ -119,3 +123,12 @@ declare global {
     fromEntries<T>(obj: T): FromEntriesWithReadOnly<T>;
   }
 }
+
+/**
+ * Use `Console.warn` and related methods for logs that should be released
+ * Use `console.log` (lowercase) when you're debugging, to avoid accidental commit
+ * Use `/* eslint-disable no-console` and lowercase `console.log` on node scripts
+ */
+export const Console = ((globalThis ?? window) as any).console;
+
+export const DesModderFragile = window.DesModderFragile;

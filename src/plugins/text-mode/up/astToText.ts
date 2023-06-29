@@ -1,4 +1,4 @@
-import TextAST, { NodePath } from "../down/TextAST";
+import TextAST, { NodePath } from "../down/TextASTSynthetic";
 import needsParens from "./needsParens";
 import { builders, printer } from "prettier/doc";
 import * as DocNS from "prettier/doc";
@@ -14,8 +14,8 @@ export function docToString(doc: Doc): string {
   }).formatted;
 }
 
-export function astItemToTextString(path: NodePath<TextAST.Statement>): string {
-  return docToString(astItemToText(path));
+export function astItemToTextString(item: TextAST.Statement): string {
+  return docToString(astItemToText(new NodePath(item, null)));
 }
 
 function astItemToText(path: NodePath<TextAST.Statement>): Doc {
@@ -24,13 +24,11 @@ function astItemToText(path: NodePath<TextAST.Statement>): Doc {
     case "ExprStatement":
       // TODO fix Regression Statement
       return [
-        item.regression?.residualVariable
-          ? item.regression.residualVariable.name + " = "
-          : "",
+        item.residualVariable ? item.residualVariable.name + " = " : "",
         exprToText(path.withChild(item.expr, "expr")),
-        item.regression
+        item.parameters
           ? trailingRegressionParams(
-              path.withChild(item.regression.parameters, "parameters")
+              path.withChild(item.parameters, "parameters")
             )
           : "",
         trailingStyleMap(path, item.style),
@@ -47,7 +45,7 @@ function astItemToText(path: NodePath<TextAST.Statement>): Doc {
         indent([
           hardline,
           join(
-            hardline,
+            [hardline, hardline],
             item.columns.map((col, i) =>
               columnToText(path.withChild(col, "column." + i.toString()))
             )
@@ -172,8 +170,8 @@ function primeOrCallToText(
   ]);
 }
 
-export function exprToTextString(path: NodePath<TextAST.Expression>): string {
-  return docToString(exprToText(path));
+export function exprToTextString(expr: TextAST.Expression): string {
+  return docToString(exprToText(new NodePath(expr, null)));
 }
 
 function exprToText(path: NodePath<TextAST.Expression>): Doc {
@@ -242,7 +240,9 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
             )
           )
         ),
+        line,
         "...",
+        line,
         group(
           join(
             ", ",
@@ -296,6 +296,20 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
           )
         ),
       ]);
+    case "Substitution":
+      return [
+        exprToText(path.withChild(e.body, "body")),
+        line,
+        "with ",
+        join(
+          ", ",
+          e.assignments.map((assignment, i) =>
+            assignmentExpressionToText(
+              path.withChild(assignment, `assignments.${i}`)
+            )
+          )
+        ),
+      ];
     case "PiecewiseExpression":
       return group([
         "{",
@@ -305,11 +319,19 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
             [",", line],
             e.branches.map((branch) =>
               group([
-                exprToText(path.withChild(branch.condition, "condition")),
-                ":",
+                branch.condition === null
+                  ? [softline]
+                  : [
+                      exprToText(path.withChild(branch.condition, "condition")),
+                      ":",
+                      line,
+                    ],
                 indent([
-                  line,
-                  exprToText(path.withChild(branch.consequent, "consequent")),
+                  branch.consequent === null
+                    ? "1"
+                    : exprToText(
+                        path.withChild(branch.consequent, "consequent")
+                      ),
                 ]),
               ])
             )
@@ -345,6 +367,15 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
       return [exprToText(path.withChild(e.expr, "expr")), "!"];
     case "String":
       return stringToText(e.value);
+    case "AssignmentExpression":
+      return assignmentExpressionToText(
+        path as NodePath<TextAST.AssignmentExpression>
+      );
+    default:
+      e satisfies never;
+      throw new Error(
+        `Programming Error: Unexpected AST node ${(e as any).type}`
+      );
   }
 }
 
@@ -353,7 +384,7 @@ function assignmentExpressionToText(
 ): Doc {
   return group([
     path.node.variable.name,
-    "=",
+    " = ",
     exprToText(path.withChild(path.node.expr, "expr")),
   ]);
 }

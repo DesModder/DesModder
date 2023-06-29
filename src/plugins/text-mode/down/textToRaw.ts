@@ -1,26 +1,24 @@
+import { Console } from "../../../globals/window";
 import { ProgramAnalysis } from "../LanguageServer";
 import augToRaw from "../aug/augToRaw";
 import astToAug from "./astToAug";
-import { cstToAST } from "./cstToAST";
 import { error } from "./diagnostics";
-import { Text } from "@codemirror/state";
+import { parse } from "./textToAST";
 import { GraphState } from "@desmodder/graph-state";
-import { Tree } from "@lezer/common";
 
-export default function cstToRaw(
-  cst: Tree,
-  text: Text
+export default function textToRaw(
+  text: string
 ): [ProgramAnalysis, GraphState | null] {
-  const [parseErrors, ast] = cstToAST(cst, text);
+  const analysis = parse(text);
   try {
-    const [analysis, aug] = astToAug(parseErrors, ast);
-    return [analysis, aug ? augToRaw(aug) : null];
+    const [analysis2, aug] = astToAug(analysis);
+    return [analysis2, aug ? augToRaw(aug) : null];
   } catch (err) {
-    console.error("Error while compiling to Desmos:\n", err);
+    Console.warn("Error while compiling to Desmos:\n", err);
     return [
       {
         diagnostics: [error(`Fatal error: ${err}`, undefined)],
-        ast,
+        program: analysis.program,
         mapIDstmt: {},
       },
       null,
