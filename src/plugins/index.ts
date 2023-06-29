@@ -9,6 +9,7 @@ import FolderTools from "./folder-tools";
 import HideErrors from "./hide-errors";
 import Intellisense from "./intellisense";
 import ManageMetadata from "./manage-metadata";
+import Multiline from "./multiline";
 import PerformanceInfo from "./performance-info";
 import PillboxMenus from "./pillbox-menus";
 import PinExpressions from "./pin-expressions";
@@ -40,7 +41,18 @@ export interface ConfigItemString extends ConfigItemGeneric {
   default: string;
 }
 
-export type ConfigItem = ConfigItemBoolean | ConfigItemString;
+export interface ConfigItemNumber extends ConfigItemGeneric {
+  type: "number";
+  default: number;
+  min: number;
+  max: number;
+  step: number;
+}
+
+export type ConfigItem =
+  | ConfigItemBoolean
+  | ConfigItemString
+  | ConfigItemNumber;
 
 export type GenericSettings = Record<string, any>;
 
@@ -102,6 +114,7 @@ export const keyToPlugin = {
   performanceInfo: PerformanceInfo,
   metadata: ManageMetadata,
   intellisense: Intellisense,
+  multiline: Multiline,
 } satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);
@@ -150,6 +163,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get performanceInfo () { return this.ep["performance-info"]; }
   get metadata () { return this.ep["manage-metadata"]; }
   get intellisense () { return this.ep["intellisense"]; }
+  get multiline () { return this.ep["multiline"]; }
 }
 
 export type IDToPluginSettings = {

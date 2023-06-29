@@ -158,7 +158,7 @@ export default class MainController extends TransparentPlugins {
   setPluginSetting(
     pluginID: PluginID,
     key: string,
-    value: boolean | string,
+    value: boolean | string | number,
     temporary: boolean = false
   ) {
     const pluginSettings = this.pluginSettings[pluginID];

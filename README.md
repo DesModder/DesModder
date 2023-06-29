@@ -23,6 +23,7 @@ Supercharge your Desmos graph creation and sharing experience with many convenie
   - Display list elements, colors, and undefined values in expression list
   - View tips including lesser-known features of Desmos
   - Hide and ignore unwanted slider suggestions
+  - Split expressions onto multiple lines.
 - Integration
   - Integration with WakaTime
 - More to come!

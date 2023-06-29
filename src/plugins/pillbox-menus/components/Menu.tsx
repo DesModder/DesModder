@@ -17,6 +17,7 @@ import {
   SpecificPlugin,
   PluginID,
   plugins,
+  ConfigItemNumber,
 } from "plugins";
 
 export function MenuFunc(controller: PillboxMenus) {
@@ -47,6 +48,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "better-evaluation-view",
     "show-tips",
     "hide-errors",
+    "multiline",
   ],
   integrations: ["wakatime"],
 };
@@ -184,6 +186,7 @@ export default class Menu extends Component<{
                   ({
                     boolean: booleanOption,
                     string: stringOption,
+                    number: numberOption,
                   }[item.type](this.controller, item, plugin, pluginSettings))
                 }
               </Switch>
@@ -193,6 +196,48 @@ export default class Menu extends Component<{
       </div>
     );
   }
+}
+
+function numberOption(
+  controller: PillboxMenus,
+  item: ConfigItem,
+  plugin: SpecificPlugin,
+  settings: GenericSettings
+) {
+  const numItem = item as ConfigItemNumber;
+
+  const inputHandler = (e: InputEvent) => {
+    const value = Number((e.target as HTMLInputElement)?.value);
+    if (!isNaN(value)) {
+      controller.expandedPlugin &&
+        controller.controller.setPluginSetting(
+          controller.expandedPlugin,
+          item.key,
+          value
+        );
+    }
+  };
+
+  return (
+    <div class="dsm-settings-item dsm-settings-number">
+      <input
+        type="number"
+        min={() => numItem.min}
+        max={() => numItem.max}
+        step={() => numItem.step}
+        value={settings[item.key]}
+        onChange={inputHandler}
+        onInput={inputHandler}
+        id={`dsm-settings-item__input-${item.key}`}
+      ></input>
+      <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
+        <label for={`dsm-settings-item__input-${item.key}`}>
+          {configItemName(plugin, item)}
+        </label>
+      </Tooltip>
+      <ResetButton controller={controller} key={item.key} />
+    </div>
+  );
 }
 
 function booleanOption(
