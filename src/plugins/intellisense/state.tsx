@@ -65,6 +65,10 @@ export class IntellisenseState {
     }
   }
 
+  boundIdentifiersArray() {
+    return Array.from(this.boundIdentifiers());
+  }
+
   setAllState() {
     const models = Calc.controller.getAllItemModels();
     for (const model of models) {
