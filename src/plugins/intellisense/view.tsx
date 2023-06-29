@@ -285,11 +285,7 @@ export class View extends Component<{
           e.stopPropagation();
         }}
       >
-        <PartialFunctionCallView
-          partialFunctionCall={() => this.props.partialFunctionCall()}
-          partialFunctionCallIdent={() => this.props.partialFunctionCallIdent()}
-          partialFunctionCallDoc={() => this.props.partialFunctionCallDoc()}
-        ></PartialFunctionCallView>
+        <PartialFunctionCallView {...this.props}/>`
         <For
           each={() =>
             this.props.idents().map((ident, index) => ({ ...ident, index }))
