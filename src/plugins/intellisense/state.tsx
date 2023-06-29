@@ -5,6 +5,7 @@ import { Calc } from "globals/window";
 import { rootKeys } from "plugins/find-replace/backend";
 import Metadata from "plugins/manage-metadata/interface";
 import { parseRootLatex } from "plugins/text-mode/aug/rawToAug";
+import { get } from "utils/utils";
 
 function getOrMakeKey<K, V>(map: Map<K, V>, k: K, v: () => V) {
   if (map.has(k)) {
