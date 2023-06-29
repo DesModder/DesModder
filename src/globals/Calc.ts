@@ -211,7 +211,6 @@ interface CalcPrivate {
       // add properties as needed
       __itemModelArray: {
         id: string;
-        controller: Calc["controller"];
         colorLatex: string;
         folderId: string;
         type: "folder" | "expression";
