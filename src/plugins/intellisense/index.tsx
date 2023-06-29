@@ -251,7 +251,7 @@ export default class Intellisense extends PluginController {
     setTimeout(() => {
       const mqopts = Calc.focusedMathQuill?.mq?.__controller?.options;
 
-      // done because the monkeypatch has different a different this value
+      // done because the monkeypatch has a different this value
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const self = this;
 
@@ -355,9 +355,6 @@ export default class Intellisense extends PluginController {
   };
 
   afterEnable() {
-    // eslint-disable-next-line no-console
-    console.log("Intellisense Enabled!");
-
     // disable intellisense when switching expressions
     document.addEventListener("focusout", this.focusOutHandler);
 
@@ -427,7 +424,7 @@ export default class Intellisense extends PluginController {
 
       // if we jumped to an expression with a folder, open the folder
       // and then re-scroll the expression into view
-      const model = Calc.controller.listModel.__itemIdToModel[identDst.exprId];
+      const model = Calc.controller.getItemModel(identDst.exprId);
       if (model && model.type !== "folder" && model.folderId) {
         Calc.controller.dispatch({
           type: "set-folder-collapsed",
