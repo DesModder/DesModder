@@ -9,9 +9,7 @@ import { PartialFunctionCall } from "./latex-parsing";
 import "./view.less";
 import { Component, jsx } from "DCGView";
 import { For, StaticMathQuillView, Switch } from "components";
-import { latexTreeToString } from "plugins/text-mode/aug/augLatexToRaw";
-import { childExprToAug } from "plugins/text-mode/down/astToAug";
-import { parse } from "plugins/text-mode/down/textToAST";
+import { textModeExprToLatex } from "plugins/text-mode/down/textToRaw";
 
 export interface JumpToDefinitionMenuInfo {
   idents: {
@@ -97,16 +95,6 @@ export class IdentifierSymbol extends Component<{
   }
 }
 
-export function textModeExprToLatex(tmExpr: string) {
-  const parsedTextMode = parse(tmExpr);
-  const parsedExpr = parsedTextMode.mapIDstmt[1];
-  if (parsedExpr && parsedExpr.type === "ExprStatement") {
-    const aug = childExprToAug(parsedExpr.expr);
-    const latex = latexTreeToString(aug);
-    return latex;
-  }
-}
-
 let counter = 0;
 
 export class FormattedDocstring extends Component<{
@@ -172,76 +160,75 @@ export class PartialFunctionCallView extends Component<{
 }> {
   template() {
     return (
-      <div
-        style={() => ({
-          display: this.props.partialFunctionCall() ? undefined : "none",
-        })}
-        class="partial-function-call-container"
-      >
-        <If predicate={() => this.props.partialFunctionCallDoc()}>
-          {() => (
-            <FormattedDocstring
-              docstring={() =>
-                parseDocstring(
-                  tokenizeDocstring(
-                    this.props.partialFunctionCallDoc() as string
-                  )
-                )
-              }
-              selectedParam={() =>
-                this.props.partialFunctionCallIdent()?.params?.[
-                  this.props.partialFunctionCall()?.paramIndex ?? 0
-                ] ?? ""
-              }
-            ></FormattedDocstring>
-          )}
-        </If>
-        <div class="pfc-latex">
-          <DStaticMathquillView
-            latex={() => {
-              return this.props.partialFunctionCall()?.ident ?? "";
-            }}
-            config={{}}
-          ></DStaticMathquillView>
-          <StaticMathQuillView latex="("></StaticMathQuillView>
-          <For
-            each={() =>
-              this.props
-                .partialFunctionCallIdent()
-                ?.params.map((e, i) => [e, i] as const) ?? []
-            }
-            key={(e) => e[0]}
-          >
-            <div class="pfc-params">
-              {(p: [string, number]) => {
-                return (
-                  <div
-                    class={() =>
-                      this.props.partialFunctionCall()?.paramIndex === p[1]
-                        ? "pfc-param-selected"
-                        : "pfc-param"
-                    }
-                  >
-                    <DStaticMathquillView
-                      config={{}}
-                      latex={() =>
-                        addBracketsToIdent(p[0]) +
-                        (p[1] ===
-                        (this.props.partialFunctionCallIdent()?.params
-                          ?.length ?? 0) -
-                          1
-                          ? ""
-                          : ",")
-                      }
-                    ></DStaticMathquillView>
-                  </div>
-                );
-              }}
+      <If predicate={() => this.props.partialFunctionCall()}>
+        {() => (
+          <div>
+            <If predicate={() => this.props.partialFunctionCallDoc()}>
+              {() => (
+                <FormattedDocstring
+                  docstring={() =>
+                    parseDocstring(
+                      tokenizeDocstring(
+                        this.props.partialFunctionCallDoc() as string
+                      )
+                    )
+                  }
+                  selectedParam={() =>
+                    this.props.partialFunctionCallIdent()?.params?.[
+                      this.props.partialFunctionCall()?.paramIndex ?? 0
+                    ] ?? ""
+                  }
+                ></FormattedDocstring>
+              )}
+            </If>
+            <div class="pfc-latex">
+              <DStaticMathquillView
+                latex={() => {
+                  return this.props.partialFunctionCall()?.ident ?? "";
+                }}
+                config={{}}
+              ></DStaticMathquillView>
+              <StaticMathQuillView latex="("></StaticMathQuillView>
+              <For
+                each={() =>
+                  this.props
+                    .partialFunctionCallIdent()
+                    ?.params.map((e, i) => [e, i] as const) ?? []
+                }
+                key={(e) => e[0]}
+              >
+                <div class="pfc-params">
+                  {(p: [string, number]) => {
+                    return (
+                      <div
+                        class={() =>
+                          this.props.partialFunctionCall()?.paramIndex === p[1]
+                            ? "pfc-param-selected"
+                            : "pfc-param"
+                        }
+                      >
+                        <DStaticMathquillView
+                          config={{}}
+                          latex={() =>
+                            addBracketsToIdent(p[0]) +
+                            (p[1] ===
+                            (this.props.partialFunctionCallIdent()?.params
+                              ?.length ?? 0) -
+                              1
+                              ? ""
+                              : ",")
+                          }
+                        ></DStaticMathquillView>
+                      </div>
+                    );
+                  }}
+                </div>
+              </For>
+              <StaticMathQuillView latex=")"></StaticMathQuillView>
             </div>
-          </For>
-          <StaticMathQuillView latex=")"></StaticMathQuillView>
-        </div>
-      </div>
+          </div>
+        )}
+      </If>
     );
   }
 }
@@ -296,7 +283,7 @@ export class View extends Component<{
           each={() =>
             this.props.idents().map((ident, index) => ({ ...ident, index }))
           }
-          key={() => counter2++}
+          key={(e) => counter2++}
         >
           <table class="intellisense-options-table">
             {(ident: { idents: BoundIdentifier[] } & { index: number }) => {
