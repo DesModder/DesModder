@@ -106,9 +106,6 @@ declare global {
       th: any;
       td: any;
       button: any;
-      svg: any;
-      title: any;
-      path: any;
       br: any;
     }
   }

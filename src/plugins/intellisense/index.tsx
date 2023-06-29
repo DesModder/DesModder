@@ -96,13 +96,13 @@ export default class Intellisense extends PluginController {
 
       // determine if the user is in a partial function call
       this.partialFunctionCall = getPartialFunctionCall(focusedMQ);
-      this.partialFunctionCallIdent = Array.from(
-        this.intellisenseState.boundIdentifiers()
-      ).find(
-        (i) =>
-          addBracketsToIdent(i.variableName) ===
-            this.partialFunctionCall?.ident && i.type === "function"
-      );
+      this.partialFunctionCallIdent = this.intellisenseState
+        .boundIdentifiersArray()
+        .find(
+          (i) =>
+            addBracketsToIdent(i.variableName) ===
+              this.partialFunctionCall?.ident && i.type === "function"
+        );
 
       // if the user is in a partial function call,
       // find its documentation if it exists
@@ -129,13 +129,13 @@ export default class Intellisense extends PluginController {
 
       // create filtered list of valid intellisense options
       if (this.latestIdent) {
-        this.intellisenseOpts = Array.from(
-          this.intellisenseState.boundIdentifiers()
-        ).filter((g) =>
-          g.variableName.startsWith(
-            this.latestIdent?.ident.replace(/[{} \\]/g, "") ?? ""
-          )
-        );
+        this.intellisenseOpts = this.intellisenseState
+          .boundIdentifiersArray()
+          .filter((g) =>
+            g.variableName.startsWith(
+              this.latestIdent?.ident.replace(/[{} \\]/g, "") ?? ""
+            )
+          );
 
         // sort the intellisense options so that closer ones appear first
         const listModel = Calc.controller.listModel;
@@ -406,11 +406,11 @@ export default class Intellisense extends PluginController {
 
   // given an identifier name, jump to its definition
   jumpToDefinition(name: string) {
-    const identDst = Array.from(this.intellisenseState.boundIdentifiers()).find(
-      (id) => {
+    const identDst = this.intellisenseState
+      .boundIdentifiersArray()
+      .find((id) => {
         return addBracketsToIdent(id.variableName) === name;
-      }
-    );
+      });
 
     if (identDst) {
       // jump to definition
