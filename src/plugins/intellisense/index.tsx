@@ -250,7 +250,7 @@ export default class Intellisense extends PluginController {
     setTimeout(() => {
       const mqopts = Calc.focusedMathQuill?.mq?.__controller?.options;
 
-      // done because the monkeypatch has different a different this value
+      // done because the monkeypatch has a different this value
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const self = this;
 
