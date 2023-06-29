@@ -198,6 +198,7 @@ describe("Basic exprs", () => {
     testExpr("one character", "a", id("a"));
     testExpr("multiple characters", "abcd", id("a_bcd"));
     testExpr("multiple characters with subscript", "a_bcd", id("a_bcd"));
+    testExpr("backslash command broken by subscript", "t_heta", id("t_heta"));
     testExpr("backslash command", "theta", id("theta"));
     testExpr("backslash command with subscript", "theta_xy", id("theta_xy"));
     testExpr("operatorname", "min", id("min"));

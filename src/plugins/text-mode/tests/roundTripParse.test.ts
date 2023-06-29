@@ -67,11 +67,7 @@ function testRoundTripParsesSame(raw: string) {
   });
 }
 
-describe("boop", () => {
-  testRoundTripIdenticalViaText("(5*x,b\\o{with}b=3)");
-});
-
-describe("Identical round trips", () => {
+describe("Operator Precedence round-trip", () => {
   const cases: string[] = [
     /// parent = Integral
     "\\int_{a}^{b}f(x)dx",
@@ -244,10 +240,30 @@ describe("Identical round trips", () => {
     "[1+2,(b\\o{with}b=3)...(b\\o{with}b=4),b\\o{with}b=5]",
     /// parent = ???? default
   ];
+  roundTrips(cases);
+});
+
+describe("Identifiers round-trip", () => {
+  const cases = [
+    "a_{bcd}",
+    "t_{heta}",
+    "\\theta",
+    // Bit surprsing that it's \operatorname{sin} instead of just \sin.
+    "\\o{sin}(x)",
+    "\\o{min}",
+    "\\o{min}_{xy}",
+    "\\o{hypot}",
+    "\\o{dt}",
+    "\\o{index}",
+  ];
+  roundTrips(cases);
+});
+
+function roundTrips(cases: string[]) {
   describe("via Aug", () => cases.forEach(testRoundTripIdenticalViaAug));
   describe("via AST", () => cases.forEach(testRoundTripIdenticalViaAST));
   describe("via Text", () => cases.forEach(testRoundTripIdenticalViaText));
-});
+}
 
 describe("Same-parse round trips", () => {
   const raw = String.raw;
