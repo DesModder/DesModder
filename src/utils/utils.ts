@@ -81,7 +81,6 @@ export function get<T extends object, K extends string | symbol | number>(
 
 export function isDescendant(elem: HTMLElement | null, target: HTMLElement) {
   while (elem instanceof HTMLElement) {
-    // element has intellisense mount point as an ancestor
     if (elem === target) {
       return true;
     }
