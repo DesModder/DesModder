@@ -499,9 +499,6 @@ export default class Intellisense extends PluginController {
     document.removeEventListener("keyup", this.keyUpHandler);
     document.removeEventListener("mouseup", this.mouseUpHandler);
 
-    // eslint-disable-next-line no-console
-    console.log("Disabled");
-
     // unmodify any remaining keystroke functions
     for (const unsub of this.modifiedOverrideKeystrokeUnsubbers) {
       unsub();
