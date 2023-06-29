@@ -144,9 +144,8 @@ export default class Intellisense extends PluginController {
         for (let i = 0; i < listModel.drawOrder.length; i++) {
           orderMap.set(listModel.drawOrder[i], i);
         }
-        const selectedId = getSelectedExpressionID();
-        if (selectedId) {
-          const myindex = orderMap.get(selectedId) ?? 0;
+        const myindex = Calc.controller.getSelectedItem()?.index;
+        if (myindex !== undefined) {
           this.intellisenseOpts.sort((a, b) => {
             return (
               Math.abs((orderMap.get(a.exprId) ?? 0) - myindex) -
@@ -235,11 +234,7 @@ export default class Intellisense extends PluginController {
   }
 
   focusOutHandler = (e: FocusEvent) => {
-    if (
-      e.target !== intellisenseMountPoint &&
-      e.relatedTarget !== intellisenseMountPoint &&
-      e.relatedTarget !== null
-    ) {
+    if (e.relatedTarget !== null) {
       this.canHaveIntellisense = false;
       this.view?.update();
     }
