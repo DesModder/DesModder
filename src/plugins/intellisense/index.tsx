@@ -61,7 +61,7 @@ export default class Intellisense extends PluginController {
   x: number = 0;
   y: number = 0;
 
-  intellisenseOpts: BoundIdentifier[] = [];
+  intellisenseOpts: { idents: BoundIdentifier[] }[] = [];
   intellisenseIndex: number = -1;
 
   latestIdent: TryFindMQIdentResult | undefined;
@@ -130,13 +130,31 @@ export default class Intellisense extends PluginController {
 
       // create filtered list of valid intellisense options
       if (this.latestIdent) {
-        this.intellisenseOpts = this.intellisenseState
+        const noRepeatIntellisenseOpts = this.intellisenseState
           .boundIdentifiersArray()
           .filter((g) =>
             g.variableName.startsWith(
               this.latestIdent?.ident.replace(/[{} \\]/g, "") ?? ""
             )
           );
+
+        const intellisenseOptsMap = new Map<string, BoundIdentifier[]>();
+        for (const opt of noRepeatIntellisenseOpts) {
+          const entry = intellisenseOptsMap.get(opt.variableName);
+          if (entry) {
+            entry.push(opt);
+          } else {
+            intellisenseOptsMap.set(opt.variableName, [opt]);
+          }
+        }
+
+        this.intellisenseOpts = Array.from(intellisenseOptsMap.entries()).map(
+          ([_, idents]) => {
+            return {
+              idents,
+            };
+          }
+        );
 
         // sort the intellisense options so that closer ones appear first
         const listModel = Calc.controller.listModel;
@@ -147,10 +165,17 @@ export default class Intellisense extends PluginController {
         const myindex = Calc.controller.getSelectedItem()?.index;
         if (myindex !== undefined) {
           this.intellisenseOpts.sort((a, b) => {
-            return (
-              Math.abs((orderMap.get(a.exprId) ?? 0) - myindex) -
-              Math.abs((orderMap.get(b.exprId) ?? 0) - myindex)
+            const aMin = Math.min(
+              ...a.idents.map((e) =>
+                Math.abs((orderMap.get(e.exprId) ?? 0) - myindex)
+              )
             );
+            const bMin = Math.min(
+              ...b.idents.map((e) =>
+                Math.abs((orderMap.get(e.exprId) ?? 0) - myindex)
+              )
+            );
+            return aMin - bMin;
           });
         }
 
@@ -259,8 +284,9 @@ export default class Intellisense extends PluginController {
             // so don't bother using it
             if (
               self.intellisenseOpts.length === 1 &&
-              addBracketsToIdent(self.intellisenseOpts[0].variableName) ===
-                self.latestIdent?.ident
+              addBracketsToIdent(
+                self.intellisenseOpts[0].idents[0].variableName
+              ) === self.latestIdent?.ident
             )
               // return nothing to ensure the actual overrideKeystroke runs
               return;
@@ -289,7 +315,7 @@ export default class Intellisense extends PluginController {
               self.intellisenseIndex >= 0
             ) {
               self.doAutocomplete(
-                self.intellisenseOpts[self.intellisenseIndex]
+                self.intellisenseOpts[self.intellisenseIndex].idents[0]
               );
               self.view?.update();
               return [false, undefined];
