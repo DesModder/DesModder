@@ -260,8 +260,6 @@ export class View extends Component<{
   show: () => boolean;
   jumpToDefinition: (str: string) => void;
 }> {
-  init() {}
-
   template() {
     return (
       <div
