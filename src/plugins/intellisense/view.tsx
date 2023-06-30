@@ -11,6 +11,7 @@ import { Component, jsx } from "DCGView";
 import { For, StaticMathQuillView, Switch } from "components";
 import { identifierToString } from "plugins/text-mode/aug/augLatexToRaw";
 import { textModeExprToLatex } from "plugins/text-mode/down/textToRaw";
+import { IndexFor } from "utils/utilComponents";
 
 export interface JumpToDefinitionMenuInfo {
   idents: {
@@ -268,8 +269,6 @@ export class PartialFunctionCallView extends Component<{
   }
 }
 
-let counter2 = 0;
-
 export class View extends Component<{
   x: () => number;
   y: () => number;
@@ -320,68 +319,74 @@ export class View extends Component<{
             e.stopPropagation();
           }}
         >
-          <PartialFunctionCallView {...this.props} />`
-          <For
+          <PartialFunctionCallView {...this.props} />
+          <IndexFor
             each={() =>
               this.props.idents().map((ident, index) => ({ ...ident, index }))
             }
-            key={() => counter2++}
+            key={(e) => e.idents[0].variableName}
+            innerComponent={intellisenseOptionsTable}
           >
-            <table class="intellisense-options-table">
-              {(ident: { idents: BoundIdentifier[] } & { index: number }) => {
-                const reformattedIdent = identifierStringToLatexString(
-                  ident.idents[0].variableName
-                );
+            {(
+              ident: { idents: BoundIdentifier[] } & { index: number },
+              idx: () => number
+            ) => {
+              const reformattedIdent = identifierStringToLatexString(
+                ident.idents[0].variableName
+              );
 
-                const opt = (
-                  <tr
-                    class={() =>
-                      (ident.index === this.props.index()
-                        ? (setTimeout(() => {
-                            opt._domNode?.scrollIntoView({
-                              block: "center",
-                            });
-                          }, 0),
-                          "selected-intellisense-option")
-                        : "not-selected-intellisense-option") +
-                      " intellisense-option"
-                    }
-                    onClick={() => {
-                      this.props.autocomplete(ident.idents[0]);
-                    }}
-                  >
-                    <td style={{ color: "#AAAAAA" }}>
-                      <IdentifierSymbol symbol={() => ident}></IdentifierSymbol>
-                    </td>
-                    <td>
-                      <StaticMathQuillView
-                        latex={
-                          reformattedIdent +
-                          (ident.idents.length === 1 &&
-                          ident.idents[0].type === "function"
-                            ? "\\left(\\right)"
-                            : "")
-                        }
-                      ></StaticMathQuillView>
-                    </td>
-                    <td>
-                      <i
-                        onClick={(e: MouseEvent) => {
-                          this.props.jumpToDefinition(reformattedIdent);
-                          e.stopPropagation();
-                        }}
-                        class="dsm-icon-compass2 jump-to-def-btn"
-                      ></i>
-                    </td>
-                  </tr>
-                );
+              const opt = (
+                <tr
+                  class={() =>
+                    (idx() === this.props.index()
+                      ? (setTimeout(() => {
+                          opt._domNode?.scrollIntoView({
+                            block: "center",
+                          });
+                        }, 0),
+                        "selected-intellisense-option")
+                      : "not-selected-intellisense-option") +
+                    " intellisense-option"
+                  }
+                  onClick={() => {
+                    this.props.autocomplete(ident.idents[0]);
+                  }}
+                >
+                  <td style={{ color: "#AAAAAA" }}>
+                    <IdentifierSymbol symbol={() => ident}></IdentifierSymbol>
+                  </td>
+                  <td>
+                    <StaticMathQuillView
+                      latex={
+                        reformattedIdent +
+                        (ident.idents.length === 1 &&
+                        ident.idents[0].type === "function"
+                          ? "\\left(\\right)"
+                          : "")
+                      }
+                    ></StaticMathQuillView>
+                  </td>
+                  <td>
+                    <i
+                      onClick={(e: MouseEvent) => {
+                        this.props.jumpToDefinition(reformattedIdent);
+                        e.stopPropagation();
+                      }}
+                      class="dsm-icon-compass2 jump-to-def-btn"
+                    ></i>
+                  </td>
+                </tr>
+              );
 
-                return opt;
-              }}
-            </table>
-          </For>
+              return opt;
+            }}
+          </IndexFor>
         </div>
       </div>
     );
   }
+}
+
+function intellisenseOptionsTable(children: unknown) {
+  return <table class="intellisense-options-table">{children}</table>;
 }

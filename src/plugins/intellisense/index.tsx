@@ -367,6 +367,7 @@ export default class Intellisense extends PluginController {
     // if a non arrow key is pressed in an expression,
     // we enable the intellisense window
     if (!e.key.startsWith("Arrow")) {
+      if (this.intellisenseIndex > 0) this.intellisenseIndex = 0;
       this.canHaveIntellisense = true;
     }
 
