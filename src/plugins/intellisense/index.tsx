@@ -363,12 +363,16 @@ export default class Intellisense extends PluginController {
                 );
                 self.view?.update();
               } else {
-                self.jumpToDefinition(
-                  identifierStringToLatexString(
-                    self.intellisenseOpts[self.intellisenseIndex].idents[0]
-                      .variableName
-                  )
+                const str = identifierStringToLatexString(
+                  self.intellisenseOpts[self.intellisenseIndex].idents[0]
+                    .variableName
                 );
+
+                // need a delay so that Enter key doesn't immediately close
+                // the jump2def window
+                setTimeout(() => {
+                  self.jumpToDefinition(str);
+                });
               }
               return [false, undefined];
 
@@ -436,10 +440,10 @@ export default class Intellisense extends PluginController {
 
     // jump to def menu kb nav and selection
     if (this.jumpToDefState) {
-      if (e.key === "ArrowUp") {
+      if (e.key === "ArrowUp" || (e.key === "Tab" && e.shiftKey)) {
         this.jumpToDefIndex = Math.max(0, this.jumpToDefIndex - 1);
         this.view?.update();
-      } else if (e.key === "ArrowDown") {
+      } else if (e.key === "ArrowDown" || e.key === "Tab") {
         this.jumpToDefIndex = Math.min(
           this.jumpToDefState.idents.length - 1,
           this.jumpToDefIndex + 1
@@ -526,6 +530,8 @@ export default class Intellisense extends PluginController {
       Calc.controller.dispatch({
         type: "set-none-selected",
       });
+
+      (document.activeElement as HTMLElement)?.blur?.();
 
       this.jumpToDefState = {
         varName: identDsts[0].variableName,

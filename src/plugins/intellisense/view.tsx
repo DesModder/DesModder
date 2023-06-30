@@ -7,7 +7,7 @@ import {
 } from "./docstring";
 import { PartialFunctionCall } from "./latex-parsing";
 import "./view.less";
-import { Component, jsx } from "DCGView";
+import { ClassComponent, Component, jsx } from "DCGView";
 import { For, StaticMathQuillView, Switch } from "components";
 import { identifierToString } from "plugins/text-mode/aug/augLatexToRaw";
 import { textModeExprToLatex } from "plugins/text-mode/down/textToRaw";
@@ -32,59 +32,69 @@ export class JumpToDefinitionMenu extends Component<{
   template() {
     return (
       <If predicate={() => this.props.info()}>
-        {() => (
-          <div class="dsm-intellisense-jump-to-def-menu">
-            <div class="dsm-intellisense-header">
-              <span>
-                <DStaticMathquillView
-                  config={{}}
-                  latex={() =>
-                    identifierToString({
-                      type: "Identifier",
-                      symbol: this.props.info()?.varName ?? "",
-                    })
-                  }
-                ></DStaticMathquillView>{" "}
-                has multiple definitions. Pick one to jump to below.
-              </span>
-              <button
-                onClick={() => {
-                  this.props.closeJumpToDefinitionMenu();
-                }}
-                class="dcg-icon-remove"
-              ></button>
+        {() => {
+          const elt = (
+            <div class="dsm-intellisense-jump-to-def-menu" tabindex={-1}>
+              <div class="dsm-intellisense-header">
+                <span>
+                  <DStaticMathquillView
+                    config={{}}
+                    latex={() =>
+                      identifierToString({
+                        type: "Identifier",
+                        symbol: this.props.info()?.varName ?? "",
+                      })
+                    }
+                  ></DStaticMathquillView>{" "}
+                  has multiple definitions. Pick one to jump to below. Press ESC
+                  to close this menu.
+                </span>
+                <button
+                  onClick={() => {
+                    this.props.closeJumpToDefinitionMenu();
+                  }}
+                  class="dcg-icon-remove"
+                ></button>
+              </div>
+              <For
+                each={() =>
+                  this.props.info()?.idents?.map((e, i) => [e, i] as const) ??
+                  []
+                }
+                key={(e) => e[0].sourceExprIndex}
+              >
+                <ul>
+                  {([e, i]: [
+                    JumpToDefinitionMenuInfo["idents"][number],
+                    number
+                  ]) => {
+                    return (
+                      <li
+                        onClick={() => {
+                          this.props.jumpToDefinitionById(e.sourceExprId);
+                        }}
+                        class={() =>
+                          i === this.props.jumpToDefIndex() ? "selected" : ""
+                        }
+                      >
+                        <DStaticMathquillView
+                          latex={() => e.sourceExprLatex}
+                          config={{}}
+                        ></DStaticMathquillView>
+                      </li>
+                    );
+                  }}
+                </ul>
+              </For>
             </div>
-            <For
-              each={() =>
-                this.props.info()?.idents?.map((e, i) => [e, i] as const) ?? []
-              }
-              key={(e) => e[0].sourceExprIndex}
-            >
-              <ul>
-                {([e, i]: [
-                  JumpToDefinitionMenuInfo["idents"][number],
-                  number
-                ]) => {
-                  return (
-                    <li
-                      onClick={() => {
-                        this.props.jumpToDefinitionById(e.sourceExprId);
-                      }}
-                      class={() =>
-                        i === this.props.jumpToDefIndex() ? "selected" : ""
-                      }
-                    >
-                      <DStaticMathquillView
-                        latex={() => e.sourceExprLatex}
-                        config={{}}
-                      ></DStaticMathquillView>
-                    </li>
-                  );
-                }}
-              </ul>
-            </For>
-          </div>
-        )}
+          );
+
+          setTimeout(() => {
+            elt._domNode?.focus?.();
+          });
+
+          return elt;
+        }}
       </If>
     );
   }
@@ -197,73 +207,77 @@ export class PartialFunctionCallView extends Component<{
   template() {
     return (
       <If predicate={() => this.props.partialFunctionCall()}>
-        {() => (
-          <div>
-            <If predicate={() => this.props.partialFunctionCallDoc()}>
-              {() => (
-                <FormattedDocstring
-                  docstring={() =>
-                    parseDocstring(
-                      tokenizeDocstring(
-                        this.props.partialFunctionCallDoc() as string
+        {() => {
+          const elt: ClassComponent = (
+            <div>
+              <If predicate={() => this.props.partialFunctionCallDoc()}>
+                {() => (
+                  <FormattedDocstring
+                    docstring={() =>
+                      parseDocstring(
+                        tokenizeDocstring(
+                          this.props.partialFunctionCallDoc() as string
+                        )
                       )
-                    )
-                  }
-                  selectedParam={() =>
-                    this.props.partialFunctionCallIdent()?.params?.[
-                      this.props.partialFunctionCall()?.paramIndex ?? 0
-                    ] ?? ""
-                  }
-                ></FormattedDocstring>
-              )}
-            </If>
-            <div class="pfc-latex">
-              <DStaticMathquillView
-                latex={() => {
-                  return this.props.partialFunctionCall()?.ident ?? "";
-                }}
-                config={{}}
-              ></DStaticMathquillView>
-              <StaticMathQuillView latex="("></StaticMathQuillView>
-              <For
-                each={() =>
-                  this.props
-                    .partialFunctionCallIdent()
-                    ?.params.map((e, i) => [e, i] as const) ?? []
-                }
-                key={(e) => e[0]}
-              >
-                <div class="pfc-params">
-                  {(p: [string, number]) => {
-                    return (
-                      <div
-                        class={() =>
-                          this.props.partialFunctionCall()?.paramIndex === p[1]
-                            ? "pfc-param-selected"
-                            : "pfc-param"
-                        }
-                      >
-                        <DStaticMathquillView
-                          config={{}}
-                          latex={() =>
-                            identifierStringToLatexString(p[0]) +
-                            (p[1] ===
-                            (this.props.partialFunctionCallIdent()?.params
-                              ?.length ?? 0) -
-                              1
-                              ? ""
-                              : ",")
-                          }
-                        ></DStaticMathquillView>
-                      </div>
-                    );
+                    }
+                    selectedParam={() =>
+                      this.props.partialFunctionCallIdent()?.params?.[
+                        this.props.partialFunctionCall()?.paramIndex ?? 0
+                      ] ?? ""
+                    }
+                  ></FormattedDocstring>
+                )}
+              </If>
+              <div class="pfc-latex">
+                <DStaticMathquillView
+                  latex={() => {
+                    return this.props.partialFunctionCall()?.ident ?? "";
                   }}
-                </div>
-              </For>
-              <StaticMathQuillView latex=")"></StaticMathQuillView>
+                  config={{}}
+                ></DStaticMathquillView>
+                <StaticMathQuillView latex="("></StaticMathQuillView>
+                <For
+                  each={() =>
+                    this.props
+                      .partialFunctionCallIdent()
+                      ?.params.map((e, i) => [e, i] as const) ?? []
+                  }
+                  key={(e) => e[0]}
+                >
+                  <div class="pfc-params">
+                    {(p: [string, number]) => {
+                      return (
+                        <div
+                          class={() =>
+                            this.props.partialFunctionCall()?.paramIndex ===
+                            p[1]
+                              ? "pfc-param-selected"
+                              : "pfc-param"
+                          }
+                        >
+                          <DStaticMathquillView
+                            config={{}}
+                            latex={() =>
+                              identifierStringToLatexString(p[0]) +
+                              (p[1] ===
+                              (this.props.partialFunctionCallIdent()?.params
+                                ?.length ?? 0) -
+                                1
+                                ? ""
+                                : ",")
+                            }
+                          ></DStaticMathquillView>
+                        </div>
+                      );
+                    }}
+                  </div>
+                </For>
+                <StaticMathQuillView latex=")"></StaticMathQuillView>
+              </div>
             </div>
-          </div>
-        )}
+          );
+          return elt;
+        }}
       </If>
     );
   }
@@ -351,10 +365,6 @@ export class View extends Component<{
                         "selected-intellisense-row intellisense-option")
                       : "intellisense-option"
                   }
-                  onClick={() => {
-                    this.props.plugin().leaveIntellisenseMenu();
-                    this.props.plugin().doAutocomplete(ident.idents[0]);
-                  }}
                 >
                   <td style={{ color: "#AAAAAA" }}>
                     <IdentifierSymbol symbol={() => ident}></IdentifierSymbol>
@@ -363,8 +373,12 @@ export class View extends Component<{
                     class={() =>
                       selected() && this.props.plugin().intellisenseRow === 0
                         ? "selected-intellisense-option"
-                        : ""
+                        : "intellisense-clickable"
                     }
+                    onClick={() => {
+                      this.props.plugin().leaveIntellisenseMenu();
+                      this.props.plugin().doAutocomplete(ident.idents[0]);
+                    }}
                   >
                     <StaticMathQuillView
                       latex={
@@ -380,7 +394,7 @@ export class View extends Component<{
                     class={() =>
                       selected() && this.props.plugin().intellisenseRow === 1
                         ? "selected-intellisense-option"
-                        : ""
+                        : "intellisense-clickable"
                     }
                   >
                     <i
