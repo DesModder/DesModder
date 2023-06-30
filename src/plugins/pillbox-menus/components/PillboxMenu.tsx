@@ -60,6 +60,14 @@ export default class PillboxMenu extends Component<{
     return ".dsm-menu-view" + (this.horizontal ? "-horizontal" : "");
   }
 
+  onKeydown = this._onKeydown.bind(this);
+  _onKeydown(e: KeyboardEvent) {
+    if (keys.lookup(e) === "Esc") {
+      e.stopImmediatePropagation();
+      this.controller.closeMenu();
+    }
+  }
+
   didMountContainer() {
     if (Calc.controller.isGraphSettingsOpen()) {
       Calc.controller.dispatch({
@@ -74,15 +82,12 @@ export default class PillboxMenu extends Component<{
         }
       }
     );
-    jquery(document).on(`keydown${this.suffix()}`, (e: KeyboardEvent) => {
-      if (keys.lookup(e) === "Esc") {
-        this.controller.closeMenu();
-      }
-    });
+    document.addEventListener("keydown", this.onKeydown);
   }
 
   didUnmountContainer() {
     jquery(document).off(this.suffix());
+    document.removeEventListener("keydown", this.onKeydown);
   }
 
   index() {
@@ -114,11 +119,12 @@ export default class PillboxMenu extends Component<{
 
   eventShouldCloseMenu(e: Event) {
     // this.node refers to the generated node from DCGView
-    const el = jquery(e.target);
+    const el = e.target;
+    if (!(el instanceof Element)) return false;
     return (
-      !el.closest(".dsm-menu-container").length &&
-      !el.closest(".dsm-pillbox-and-popover").length &&
-      !el.closest(".dsm-action-menu").length
+      !el.closest(".dsm-menu-container") &&
+      !el.closest(".dsm-pillbox-and-popover") &&
+      !el.closest(".dsm-action-menu")
     );
   }
 }

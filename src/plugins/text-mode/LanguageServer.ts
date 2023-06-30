@@ -12,7 +12,6 @@ import { StateField, Text, Transaction } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
 import { Calc } from "globals/window";
-import { jquery } from "utils/depUtils";
 
 export interface ProgramAnalysis {
   program: Program;
@@ -77,10 +76,11 @@ function setCalcState(state: GraphState) {
   //   jquery(document.activeElement).trigger("blur")
   // Alternative method this.view.focus() after setState does not prevent
   //   the current autocomplete tooltip from disappearing
-  const trigger = jquery.prototype.trigger;
-  jquery.prototype.trigger = () => [];
+  const ae = document.activeElement as HTMLElement | undefined;
+  const oldBlur = ae?.blur;
+  if (ae) ae.blur = () => {};
   Calc.setState(state, { allowUndo: true, fromTextMode: true } as any);
-  jquery.prototype.trigger = trigger;
+  if (ae) ae.blur = oldBlur!;
 }
 
 export function doLint(view: EditorView) {
