@@ -77,6 +77,7 @@ export default class Intellisense extends PluginController {
 
   intellisenseOpts: { idents: BoundIdentifier[] }[] = [];
   intellisenseIndex: number = -1;
+  intellisenseRow = 0;
 
   latestIdent: TryFindMQIdentResult | undefined;
   latestMQ: MathQuillField | undefined;
@@ -88,7 +89,7 @@ export default class Intellisense extends PluginController {
   idcounter = 0;
 
   partialFunctionCall: PartialFunctionCall | undefined;
-  partialFunctionCallIdent: BoundIdentifier | undefined;
+  partialFunctionCallIdent: BoundIdentifierFunction | undefined;
   partialFunctionCallDoc: string | undefined;
 
   intellisenseState = new IntellisenseState(getMetadata());
@@ -108,6 +109,8 @@ export default class Intellisense extends PluginController {
     this.saveCursorState();
     this.intellisenseOpts = [];
 
+    const lastIdentStr = this.latestIdent?.ident;
+
     // is there actually a focused mathquill window?
     if (focusedMQ) {
       // find the identifier the cursor is at
@@ -125,7 +128,7 @@ export default class Intellisense extends PluginController {
           (i) =>
             identifierStringToLatexString(i.variableName) ===
               this.partialFunctionCall?.ident && i.type === "function"
-        );
+        ) as BoundIdentifierFunction;
 
       // if the user is in a partial function call,
       // find its documentation if it exists
@@ -200,7 +203,7 @@ export default class Intellisense extends PluginController {
           });
         }
 
-        if (this.intellisenseIndex === -1) this.intellisenseIndex = 0;
+        if (this.latestIdent.ident !== lastIdentStr) this.intellisenseIndex = 0;
       } else {
         this.intellisenseOpts = [];
         this.intellisenseIndex = -1;
@@ -288,6 +291,17 @@ export default class Intellisense extends PluginController {
 
   modifiedOverrideKeystrokeUnsubbers: (() => void)[] = [];
 
+  goToNextIntellisenseCol() {
+    this.intellisenseIndex = Math.min(
+      this.intellisenseIndex + 1,
+      this.intellisenseOpts.length - 1
+    );
+  }
+
+  goToPrevIntellisenseCol() {
+    this.intellisenseIndex = Math.max(this.intellisenseIndex - 1, 0);
+  }
+
   focusInHandler = () => {
     setTimeout(() => {
       if (Calc.focusedMathQuill && this.specialIdentifierNames.length === 0) {
@@ -307,7 +321,7 @@ export default class Intellisense extends PluginController {
         // monkeypatch in a function to wrap overrideKeystroke
         const remove = attach(
           ...propGetSet(mqopts, "overrideKeystroke"),
-          function (key: string, _: KeyboardEvent) {
+          function (key: string, evt: KeyboardEvent) {
             if (
               // the only intellisense option is already complete
               // so don't bother using it
@@ -324,30 +338,58 @@ export default class Intellisense extends PluginController {
             // navigating downward in the intellisense menu
             if (key === "Down") {
               if (self.intellisenseOpts.length > 0) {
-                self.intellisenseIndex = Math.min(
-                  self.intellisenseIndex + 1,
-                  self.intellisenseOpts.length - 1
-                );
+                self.goToNextIntellisenseCol();
                 self.view?.update();
                 return [false, undefined];
               }
 
               // navigating upward in the intellisense menu
             } else if (key === "Up" && self.intellisenseOpts.length > 0) {
-              self.intellisenseIndex = Math.max(self.intellisenseIndex - 1, 0);
+              self.goToPrevIntellisenseCol();
 
               self.view?.update();
               return [false, undefined];
 
               // selecting and autocompleting an intellisense selection
+              // or jump to def if in row 1
             } else if (
               key === "Enter" &&
               self.intellisenseIndex >= 0 &&
               self.intellisenseOpts[self.intellisenseIndex] !== undefined
             ) {
-              self.doAutocomplete(
-                self.intellisenseOpts[self.intellisenseIndex].idents[0]
-              );
+              if (self.intellisenseRow === 0) {
+                self.doAutocomplete(
+                  self.intellisenseOpts[self.intellisenseIndex].idents[0]
+                );
+                self.view?.update();
+              } else {
+                self.jumpToDefinition(
+                  identifierStringToLatexString(
+                    self.intellisenseOpts[self.intellisenseIndex].idents[0]
+                      .variableName
+                  )
+                );
+              }
+              return [false, undefined];
+
+              // navigate by row
+            } else if (key === "Tab") {
+              self.intellisenseRow++;
+              if (self.intellisenseRow > 1) {
+                self.intellisenseRow = 0;
+                self.goToNextIntellisenseCol();
+              }
+
+              self.view?.update();
+
+              return [false, undefined];
+            } else if (key === "Shift-Tab") {
+              self.intellisenseRow--;
+              if (self.intellisenseRow < 0) {
+                self.intellisenseRow = 1;
+                self.goToPrevIntellisenseCol();
+              }
+
               self.view?.update();
               return [false, undefined];
             }
@@ -364,10 +406,14 @@ export default class Intellisense extends PluginController {
 
   keyDownHandler = (e: KeyboardEvent) => {
     this.saveCursorState();
+
+    if (e.key === "Tab" && this.canHaveIntellisense) {
+      e.preventDefault();
+    }
+
     // if a non arrow key is pressed in an expression,
     // we enable the intellisense window
     if (!e.key.startsWith("Arrow")) {
-      if (this.intellisenseIndex > 0) this.intellisenseIndex = 0;
       this.canHaveIntellisense = true;
     }
 
@@ -541,6 +587,10 @@ export default class Intellisense extends PluginController {
     }
   }
 
+  closeJumpToDefMenu() {
+    this.jumpToDefState = undefined;
+  }
+
   dispatcher: string | undefined;
 
   afterEnable() {
@@ -567,23 +617,7 @@ export default class Intellisense extends PluginController {
     this.intellisenseMountPoint = document.createElement("div");
     document.body.appendChild(this.intellisenseMountPoint);
     this.view = DCGView.mountToNode(View, this.intellisenseMountPoint, {
-      x: () => this.x,
-      y: () => this.y,
-      idents: () => this.intellisenseOpts,
-      autocomplete: (ident) => {
-        this.leaveIntellisenseMenu();
-        this.doAutocomplete(ident);
-      },
-      index: () => this.intellisenseIndex,
-      partialFunctionCall: () => this.partialFunctionCall,
-      partialFunctionCallIdent: () => this.partialFunctionCallIdent,
-      partialFunctionCallDoc: () => this.partialFunctionCallDoc,
-      show: () => this.canHaveIntellisense,
-      jumpToDefinition: (name) => this.jumpToDefinition(name),
-      jumpToDefinitionById: (id) => this.jumpToDefinitionById(id),
-      jumpToDefState: () => this.jumpToDefState,
-      closeJumpToDefinitionMenu: () => (this.jumpToDefState = undefined),
-      jumpToDefIndex: () => this.jumpToDefIndex,
+      plugin: () => this,
     });
 
     this.dispatcher = Calc.controller.dispatcher.register((e) => {

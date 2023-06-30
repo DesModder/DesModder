@@ -1,4 +1,4 @@
-import { BoundIdentifier, BoundIdentifierFunction } from ".";
+import Intellisense, { BoundIdentifier, BoundIdentifierFunction } from ".";
 import { DStaticMathquillView, If } from "../../components/desmosComponents";
 import {
   DocStringRenderable,
@@ -270,48 +270,39 @@ export class PartialFunctionCallView extends Component<{
 }
 
 export class View extends Component<{
-  x: () => number;
-  y: () => number;
-  idents: () => { idents: BoundIdentifier[] }[];
-  autocomplete: (option: BoundIdentifier) => void;
-  index: () => number;
-  partialFunctionCall: () => PartialFunctionCall | undefined;
-  partialFunctionCallIdent: () => BoundIdentifierFunction | undefined;
-  partialFunctionCallDoc: () => string | undefined;
-  show: () => boolean;
-  jumpToDefinition: (str: string) => void;
-  jumpToDefinitionById: (str: string) => void;
-  jumpToDefState: () => JumpToDefinitionMenuInfo;
-  closeJumpToDefinitionMenu: () => void;
-  jumpToDefIndex: () => number;
+  plugin: () => Intellisense;
 }> {
   template() {
     return (
       <div>
         <JumpToDefinitionMenu
-          info={() => this.props.jumpToDefState()}
+          info={() => this.props.plugin().jumpToDefState}
           jumpToDefinitionById={(id: string) =>
-            this.props.jumpToDefinitionById(id)
+            this.props.plugin().jumpToDefinitionById(id)
           }
-          closeJumpToDefinitionMenu={this.props.closeJumpToDefinitionMenu}
-          jumpToDefIndex={() => this.props.jumpToDefIndex()}
+          closeJumpToDefinitionMenu={() =>
+            this.props.plugin().closeJumpToDefMenu()
+          }
+          jumpToDefIndex={() => this.props.plugin().jumpToDefIndex}
         ></JumpToDefinitionMenu>
         <div
           id="intellisense-container"
           class={() =>
-            this.props.index() >= 0 ? "selected-intellisense-container" : ""
+            this.props.plugin().intellisenseIndex >= 0
+              ? "selected-intellisense-container"
+              : ""
           }
           style={() => ({
-            top: (this.props.y() + 30).toString() + "px",
-            left: this.props.x().toString() + "px",
+            top: (this.props.plugin().y + 30).toString() + "px",
+            left: this.props.plugin().x.toString() + "px",
             display:
-              (this.props.idents().length > 0 ||
-                this.props.partialFunctionCall()) &&
-              this.props.show()
+              (this.props.plugin().intellisenseOpts.length > 0 ||
+                this.props.plugin().partialFunctionCall) &&
+              this.props.plugin().canHaveIntellisense
                 ? "block"
                 : "none",
             transform:
-              this.props.y() > window.innerHeight / 2
+              this.props.plugin().y > window.innerHeight / 2
                 ? `translateY(calc(-100% - 50px))`
                 : "",
           })}
@@ -319,10 +310,20 @@ export class View extends Component<{
             e.stopPropagation();
           }}
         >
-          <PartialFunctionCallView {...this.props} />
+          <PartialFunctionCallView
+            partialFunctionCall={() => this.props.plugin().partialFunctionCall}
+            partialFunctionCallDoc={() =>
+              this.props.plugin().partialFunctionCallDoc
+            }
+            partialFunctionCallIdent={() =>
+              this.props.plugin().partialFunctionCallIdent
+            }
+          />
           <IndexFor
             each={() =>
-              this.props.idents().map((ident, index) => ({ ...ident, index }))
+              this.props
+                .plugin()
+                .intellisenseOpts.map((ident, index) => ({ ...ident, index }))
             }
             key={(e) => e.idents[0].variableName}
             innerComponent={intellisenseOptionsTable}
@@ -335,27 +336,36 @@ export class View extends Component<{
                 ident.idents[0].variableName
               );
 
+              const selected = () =>
+                idx() === this.props.plugin().intellisenseIndex;
+
               const opt = (
                 <tr
                   class={() =>
-                    (idx() === this.props.index()
+                    selected()
                       ? (setTimeout(() => {
                           opt._domNode?.scrollIntoView({
                             block: "center",
                           });
                         }, 0),
-                        "selected-intellisense-option")
-                      : "not-selected-intellisense-option") +
-                    " intellisense-option"
+                        "selected-intellisense-row intellisense-option")
+                      : "intellisense-option"
                   }
                   onClick={() => {
-                    this.props.autocomplete(ident.idents[0]);
+                    this.props.plugin().leaveIntellisenseMenu();
+                    this.props.plugin().doAutocomplete(ident.idents[0]);
                   }}
                 >
                   <td style={{ color: "#AAAAAA" }}>
                     <IdentifierSymbol symbol={() => ident}></IdentifierSymbol>
                   </td>
-                  <td>
+                  <td
+                    class={() =>
+                      selected() && this.props.plugin().intellisenseRow === 0
+                        ? "selected-intellisense-option"
+                        : ""
+                    }
+                  >
                     <StaticMathQuillView
                       latex={
                         reformattedIdent +
@@ -366,10 +376,16 @@ export class View extends Component<{
                       }
                     ></StaticMathQuillView>
                   </td>
-                  <td>
+                  <td
+                    class={() =>
+                      selected() && this.props.plugin().intellisenseRow === 1
+                        ? "selected-intellisense-option"
+                        : ""
+                    }
+                  >
                     <i
                       onClick={(e: MouseEvent) => {
-                        this.props.jumpToDefinition(reformattedIdent);
+                        this.props.plugin().jumpToDefinition(reformattedIdent);
                         e.stopPropagation();
                       }}
                       class="dsm-icon-compass2 jump-to-def-btn"
