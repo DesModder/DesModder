@@ -61,6 +61,119 @@ export interface TryFindMQIdentResult {
   type: string;
 }
 
+// is an MQ node a subscript?
+function isSubscript(cursor: MQCursor) {
+  const ltx = cursor.latex?.();
+  return ltx?.[0] === "_" && ltx[1] === "{" && ltx[ltx.length - 1] === "}";
+}
+
+// is an MQ node an operator name?
+function isOperatorName(cursor: MQCursor) {
+  return cursor._el?.classList.contains("dcg-mq-operator-name") ?? false;
+}
+
+// is an MQ node the start of an operator name?
+function isStartingOperatorName(cursor: MQCursor) {
+  return isOperatorName(cursor) && cursor.latex?.()?.[0] === "\\";
+}
+
+// is an MQ node a variable name
+function isVarName(cursor: MQCursor) {
+  return cursor._el?.tagName.toUpperCase() === "VAR" && !isOperatorName(cursor);
+}
+
+function isIdentifierSegment(cursor?: MQCursor): cursor is MQCursor {
+  return (
+    (cursor ?? false) &&
+    (isSubscript(cursor as MQCursor) ||
+      isOperatorName(cursor as MQCursor) ||
+      isStartingOperatorName(cursor as MQCursor) ||
+      isVarName(cursor as MQCursor))
+  );
+}
+
+// identifiers are composed of the following structure:
+// (operatorname* | varname) subscript?
+
+function tryGetMathquillIdent(
+  mq: MathQuillField
+): TryFindMQIdentResult | undefined {
+  const ctrlr = getController(mq);
+
+  const latexSegments: (string | undefined)[] = [];
+
+  let node = ctrlr.cursor[-1];
+
+  const isInSubscript =
+    ctrlr.cursor?.parent?._el?.classList.contains("dcg-mq-sub");
+
+  let goToEnd = 0;
+
+  if (isInSubscript) {
+    node = ctrlr.cursor;
+    goToEnd++;
+    while (node?.[1]) {
+      goToEnd++;
+      node = node?.[1];
+    }
+    node = node?.parent?.parent;
+  }
+
+  while (node && !isStartingOperatorName(node) && !isVarName(node)) {
+    if (!isIdentifierSegment(node)) return;
+    node = node[-1];
+    goToEnd--;
+  }
+  if (!node) return;
+
+  let backspaces = 0;
+
+  // get starting variable name
+  if (isVarName(node)) {
+    latexSegments.push(node.latex?.());
+    node = node[1];
+    goToEnd++;
+    backspaces++;
+
+    // try to get sequence of operatorname characters.
+  } else if (isStartingOperatorName(node)) {
+    while (node && isOperatorName(node)) {
+      latexSegments.push(node.latex?.());
+      node = node[1];
+      goToEnd++;
+      backspaces++;
+    }
+  }
+
+  // get optional subscript
+  if (node && isSubscript(node)) {
+    latexSegments.push(node.latex?.());
+
+    backspaces += (node.latex?.()?.length ?? 4) - 3;
+
+    goToEnd++;
+  }
+
+  const identString = latexSegments.filter((e) => e).join("");
+
+  if (identString.match(identRegex)) {
+    return {
+      ident: identString,
+      type: "",
+      goToEndOfIdent: () => {
+        for (let i = 0; i < goToEnd; i++) {
+          mq.keystroke("Right");
+        }
+      },
+      deleteIdent: () => {
+        for (let i = 0; i < backspaces; i++) {
+          mq.keystroke("Backspace");
+        }
+      },
+    };
+  }
+}
+
 function tryGetMathquilIdentFromWithinSubscript(
   mq: MathQuillField
 ): TryFindMQIdentResult | undefined {
@@ -171,12 +284,14 @@ export function getMathquillIdentifierAtCursorPosition(
   // try to get an identifier from a mathquill input
   // at the cursor position in various different ways
   // pick the first one that succeeds
-  return (
-    tryGetMathquilIdentFromWithinSubscript(mq) ??
-    tryGetMathquillIdentFromAfterSubscript(mq) ??
-    tryGetMathquillIdentFromBeforeSubscript(mq) ??
-    tryGetMathquillIdentFromVariableOnly(mq)
-  );
+  // return (
+  //   tryGetMathquilIdentFromWithinSubscript(mq) ??
+  //   tryGetMathquillIdentFromAfterSubscript(mq) ??
+  //   tryGetMathquillIdentFromBeforeSubscript(mq) ??
+  //   tryGetMathquillIdentFromVariableOnly(mq)
+  // );
+
+  return tryGetMathquillIdent(mq);
 }
 
 export interface PartialFunctionCall {

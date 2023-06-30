@@ -6,10 +6,14 @@ import {
   getPartialFunctionCall,
 } from "./latex-parsing";
 import { IntellisenseState } from "./state";
-import { View, addBracketsToIdent } from "./view";
+import {
+  JumpToDefinitionMenuInfo,
+  View,
+  identifierStringToLatexString,
+} from "./view";
 import { DCGView, MountedComponent, unmountFromNode } from "DCGView";
 import { MathQuillField, MathQuillView } from "components";
-import { TextModel } from "globals/models";
+import { ItemModel, TextModel } from "globals/models";
 import { Calc } from "globals/window";
 import { PluginController } from "plugins/PluginController";
 import { getMetadata } from "plugins/manage-metadata/manage";
@@ -49,6 +53,17 @@ export function getSelectedExpressionID(): string | undefined {
   return Object.keys(Calc.controller.listModel.selectedItemMap)[0];
 }
 
+export function getExpressionIndex(id: string): number | undefined {
+  return Calc.controller.listModel.__itemIdToModel[id]?.index;
+}
+export function getExpressionLatex(id: string): string | undefined {
+  return (
+    Calc.controller.listModel.__itemIdToModel[id] as ItemModel & {
+      latex: string | undefined;
+    }
+  ).latex;
+}
+
 export default class Intellisense extends PluginController {
   static id = "intellisense" as const;
   static enabledByDefault = true;
@@ -80,6 +95,11 @@ export default class Intellisense extends PluginController {
 
   intellisenseMountPoint: HTMLElement | undefined;
 
+  jumpToDefState: JumpToDefinitionMenuInfo | undefined;
+  jumpToDefIndex: number = 0;
+
+  specialIdentifierNames: string[] = [];
+
   // recalculate the intellisense
   updateIntellisense() {
     const focusedMQ = MathQuillView.getFocusedMathquill();
@@ -101,7 +121,7 @@ export default class Intellisense extends PluginController {
         .boundIdentifiersArray()
         .find(
           (i) =>
-            addBracketsToIdent(i.variableName) ===
+            identifierStringToLatexString(i.variableName) ===
               this.partialFunctionCall?.ident && i.type === "function"
         );
 
@@ -268,6 +288,13 @@ export default class Intellisense extends PluginController {
 
   focusInHandler = () => {
     setTimeout(() => {
+      if (Calc.focusedMathQuill && this.specialIdentifierNames.length === 0) {
+        this.specialIdentifierNames = [
+          ...Object.keys(Calc.focusedMathQuill.mq.__options.autoOperatorNames),
+          ...Object.keys(Calc.focusedMathQuill.mq.__options.autoCommands),
+        ];
+      }
+
       const mqopts = Calc.focusedMathQuill?.mq?.__controller?.options;
 
       // done because the monkeypatch has a different this value
@@ -279,13 +306,15 @@ export default class Intellisense extends PluginController {
         const remove = attach(
           ...propGetSet(mqopts, "overrideKeystroke"),
           function (key: string, _: KeyboardEvent) {
-            // the only intellisense option is already complete
-            // so don't bother using it
             if (
-              self.intellisenseOpts.length === 1 &&
-              addBracketsToIdent(
-                self.intellisenseOpts[0].idents[0].variableName
-              ) === self.latestIdent?.ident
+              // the only intellisense option is already complete
+              // so don't bother using it
+              (self.intellisenseOpts.length === 1 &&
+                identifierStringToLatexString(
+                  self.intellisenseOpts[0].idents[0].variableName
+                ) === self.latestIdent?.ident) ||
+              // don't bother overriding keystroke if intellisense is offline
+              !self.canHaveIntellisense
             )
               // return nothing to ensure the actual overrideKeystroke runs
               return;
@@ -310,7 +339,7 @@ export default class Intellisense extends PluginController {
 
               // selecting and autocompleting an intellisense selection
             } else if (
-              (key === "Enter" || key === "Tab") &&
+              key === "Enter" &&
               self.intellisenseIndex >= 0 &&
               self.intellisenseOpts[self.intellisenseIndex] !== undefined
             ) {
@@ -340,9 +369,11 @@ export default class Intellisense extends PluginController {
     }
 
     // close intellisense menu
+    // or jump2def menu
     if (e.key === "Escape") {
       this.intellisenseIndex = -1;
       this.canHaveIntellisense = false;
+      this.jumpToDefState = undefined;
       this.view?.update();
     }
 
@@ -353,6 +384,24 @@ export default class Intellisense extends PluginController {
       this.view?.update();
       e.preventDefault();
       return false;
+    }
+
+    // jump to def menu kb nav and selection
+    if (this.jumpToDefState) {
+      if (e.key === "ArrowUp") {
+        this.jumpToDefIndex = Math.max(0, this.jumpToDefIndex - 1);
+        this.view?.update();
+      } else if (e.key === "ArrowDown") {
+        this.jumpToDefIndex = Math.min(
+          this.jumpToDefState.idents.length - 1,
+          this.jumpToDefIndex + 1
+        );
+        this.view?.update();
+      } else if (e.key === "Enter") {
+        const id =
+          this.jumpToDefState.idents[this.jumpToDefIndex]?.sourceExprId;
+        if (id) this.jumpToDefinitionById(id);
+      }
     }
   };
 
@@ -379,9 +428,6 @@ export default class Intellisense extends PluginController {
   };
 
   afterEnable() {
-    this.intellisenseMountPoint = document.createElement("div");
-    document.body.appendChild(this.intellisenseMountPoint);
-
     const exppanel = document.querySelector(".dcg-exppanel");
     this.lastExppanelScrollTop = exppanel?.scrollTop ?? 0;
 
@@ -402,6 +448,8 @@ export default class Intellisense extends PluginController {
     document.addEventListener("mouseup", this.mouseUpHandler);
 
     // create initial intellisense window
+    this.intellisenseMountPoint = document.createElement("div");
+    document.body.appendChild(this.intellisenseMountPoint);
     this.view = DCGView.mountToNode(View, this.intellisenseMountPoint, {
       x: () => this.x,
       y: () => this.y,
@@ -416,6 +464,10 @@ export default class Intellisense extends PluginController {
       partialFunctionCallDoc: () => this.partialFunctionCallDoc,
       show: () => this.canHaveIntellisense,
       jumpToDefinition: (name) => this.jumpToDefinition(name),
+      jumpToDefinitionById: (id) => this.jumpToDefinitionById(id),
+      jumpToDefState: () => this.jumpToDefState,
+      closeJumpToDefinitionMenu: () => (this.jumpToDefState = undefined),
+      jumpToDefIndex: () => this.jumpToDefIndex,
     });
 
     Calc.controller.dispatcher.register((e) => {
@@ -438,45 +490,69 @@ export default class Intellisense extends PluginController {
     });
   }
 
+  jumpToDefinitionById(id: string) {
+    this.jumpToDefState = undefined;
+
+    // jump to definition
+    Calc.controller.dispatch({
+      type: "set-selected-id",
+      id,
+    });
+    Calc.controller.dispatch({
+      type: "set-focus-location",
+      location: {
+        type: "expression",
+        id,
+      },
+    });
+
+    // if we jumped to an expression with a folder, open the folder
+    // and then re-scroll the expression into view
+    const model = Calc.controller.getItemModel(id);
+    if (model && model.type !== "folder" && model.folderId) {
+      Calc.controller.dispatch({
+        type: "set-folder-collapsed",
+        id: model.folderId,
+        isCollapsed: false,
+      });
+
+      document
+        .querySelector(".dcg-expressionitem.dcg-selected")
+        ?.scrollIntoView({ block: "center" });
+
+      const dcgcontainer = document.querySelector(".dcg-container");
+      if (dcgcontainer) dcgcontainer.scrollTop = 0;
+    }
+
+    this.view?.update();
+  }
+
   // given an identifier name, jump to its definition
   jumpToDefinition(name: string) {
-    const identDst = this.intellisenseState
+    const identDsts = this.intellisenseState
       .boundIdentifiersArray()
-      .find((id) => {
-        return addBracketsToIdent(id.variableName) === name;
+      .filter((id) => {
+        return identifierStringToLatexString(id.variableName) === name;
       });
 
-    if (identDst) {
-      // jump to definition
+    if (identDsts.length === 1) {
+      this.jumpToDefinitionById(identDsts[0].exprId);
+    } else if (identDsts.length > 1) {
       Calc.controller.dispatch({
-        type: "set-selected-id",
-        id: identDst.exprId,
-      });
-      Calc.controller.dispatch({
-        type: "set-focus-location",
-        location: {
-          type: "expression",
-          id: identDst.exprId,
-        },
+        type: "set-none-selected",
       });
 
-      // if we jumped to an expression with a folder, open the folder
-      // and then re-scroll the expression into view
-      const model = Calc.controller.getItemModel(identDst.exprId);
-      if (model && model.type !== "folder" && model.folderId) {
-        Calc.controller.dispatch({
-          type: "set-folder-collapsed",
-          id: model.folderId,
-          isCollapsed: false,
-        });
-
-        document
-          .querySelector(".dcg-expressionitem.dcg-selected")
-          ?.scrollIntoView({ block: "center" });
-
-        const dcgcontainer = document.querySelector(".dcg-container");
-        if (dcgcontainer) dcgcontainer.scrollTop = 0;
-      }
+      this.jumpToDefState = {
+        varName: identDsts[0].variableName,
+        idents: identDsts.map((dst) => {
+          return {
+            ident: dst,
+            sourceExprId: dst.exprId,
+            sourceExprIndex: getExpressionIndex(dst.exprId) ?? 0,
+            sourceExprLatex: getExpressionLatex(dst.exprId) ?? "",
+          };
+        }),
+      };
     }
 
     // disable intellisense
@@ -490,7 +566,7 @@ export default class Intellisense extends PluginController {
       this.latestIdent.goToEndOfIdent();
       this.latestIdent.deleteIdent();
 
-      const formattedIdentLatex = addBracketsToIdent(opt.variableName);
+      const formattedIdentLatex = opt.variableName;
 
       // add parens to function
       if (opt.type === "function") {

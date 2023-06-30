@@ -9,6 +9,7 @@ import { PartialFunctionCall } from "./latex-parsing";
 import "./view.less";
 import { Component, jsx } from "DCGView";
 import { For, StaticMathQuillView, Switch } from "components";
+import { identifierToString } from "plugins/text-mode/aug/augLatexToRaw";
 import { textModeExprToLatex } from "plugins/text-mode/down/textToRaw";
 
 export interface JumpToDefinitionMenuInfo {
@@ -18,49 +19,81 @@ export interface JumpToDefinitionMenuInfo {
     sourceExprIndex: number;
     sourceExprId: string;
   }[];
+  varName: string;
 }
 
 export class JumpToDefinitionMenu extends Component<{
-  info: () => JumpToDefinitionMenuInfo;
-  jumpToDefinition: (id: string) => void;
+  info: () => JumpToDefinitionMenuInfo | undefined;
+  jumpToDefinitionById: (id: string) => void;
+  closeJumpToDefinitionMenu: () => void;
+  jumpToDefIndex: () => number;
 }> {
   template() {
     return (
-      <div>
-        <For
-          each={() => this.props.info().idents}
-          key={(e) => e.sourceExprIndex}
-        >
-          <ul>
-            {(e: JumpToDefinitionMenuInfo["idents"][number]) => {
-              return (
-                <li
-                  onClick={() => {
-                    this.props.jumpToDefinition(e.sourceExprId);
-                  }}
-                >
-                  <DStaticMathquillView
-                    latex={() => e.sourceExprLatex}
-                    config={{}}
-                  ></DStaticMathquillView>
-                </li>
-              );
-            }}
-          </ul>
-        </For>
-      </div>
+      <If predicate={() => this.props.info()}>
+        {() => (
+          <div class="dsm-intellisense-jump-to-def-menu">
+            <div class="dsm-intellisense-header">
+              <span>
+                <DStaticMathquillView
+                  config={{}}
+                  latex={() =>
+                    identifierToString({
+                      type: "Identifier",
+                      symbol: this.props.info()?.varName ?? "",
+                    })
+                  }
+                ></DStaticMathquillView>{" "}
+                has multiple definitions. Pick one to jump to below.
+              </span>
+              <button
+                onClick={() => {
+                  this.props.closeJumpToDefinitionMenu();
+                }}
+                class="dcg-icon-remove"
+              ></button>
+            </div>
+            <For
+              each={() =>
+                this.props.info()?.idents?.map((e, i) => [e, i] as const) ?? []
+              }
+              key={(e) => e[0].sourceExprIndex}
+            >
+              <ul>
+                {([e, i]: [
+                  JumpToDefinitionMenuInfo["idents"][number],
+                  number
+                ]) => {
+                  return (
+                    <li
+                      onClick={() => {
+                        this.props.jumpToDefinitionById(e.sourceExprId);
+                      }}
+                      class={() =>
+                        i === this.props.jumpToDefIndex() ? "selected" : ""
+                      }
+                    >
+                      <DStaticMathquillView
+                        latex={() => e.sourceExprLatex}
+                        config={{}}
+                      ></DStaticMathquillView>
+                    </li>
+                  );
+                }}
+              </ul>
+            </For>
+          </div>
+        )}
+      </If>
     );
   }
 }
 
-export function addBracketsToIdent(str: string) {
-  const [str1, str2] = str.split("_");
-
-  const varStart = str1.length === 1 ? str1 : "\\" + str1;
-
-  if (!str2) return varStart;
-
-  return varStart + `_{${str2}}`;
+export function identifierStringToLatexString(str: string) {
+  return identifierToString({
+    symbol: str,
+    type: "Identifier",
+  });
 }
 
 function latexForType(type: BoundIdentifier["type"]) {
@@ -116,7 +149,9 @@ export class FormattedDocstring extends Component<{
                     const ltx = () => textModeExprToLatex(r.latex) ?? r.latex;
 
                     if (
-                      addBracketsToIdent(this.props.selectedParam()) !== ltx()
+                      identifierStringToLatexString(
+                        this.props.selectedParam()
+                      ) !== ltx()
                     ) {
                       return <span></span>;
                     }
@@ -210,7 +245,7 @@ export class PartialFunctionCallView extends Component<{
                         <DStaticMathquillView
                           config={{}}
                           latex={() =>
-                            addBracketsToIdent(p[0]) +
+                            identifierStringToLatexString(p[0]) +
                             (p[1] ===
                             (this.props.partialFunctionCallIdent()?.params
                               ?.length ?? 0) -
@@ -246,92 +281,106 @@ export class View extends Component<{
   partialFunctionCallDoc: () => string | undefined;
   show: () => boolean;
   jumpToDefinition: (str: string) => void;
+  jumpToDefinitionById: (str: string) => void;
+  jumpToDefState: () => JumpToDefinitionMenuInfo;
+  closeJumpToDefinitionMenu: () => void;
+  jumpToDefIndex: () => number;
 }> {
   template() {
     return (
-      <div
-        id="intellisense-container"
-        class={() =>
-          this.props.index() >= 0 ? "selected-intellisense-container" : ""
-        }
-        style={() => ({
-          top: (this.props.y() + 30).toString() + "px",
-          left: this.props.x().toString() + "px",
-          display:
-            (this.props.idents().length > 0 ||
-              this.props.partialFunctionCall()) &&
-            this.props.show()
-              ? "block"
-              : "none",
-          transform:
-            this.props.y() > window.innerHeight / 2
-              ? `translateY(calc(-100% - 50px))`
-              : "",
-        })}
-        onClick={(e: MouseEvent) => {
-          e.stopPropagation();
-        }}
-      >
-        <PartialFunctionCallView {...this.props}/>`
-        <For
-          each={() =>
-            this.props.idents().map((ident, index) => ({ ...ident, index }))
+      <div>
+        <JumpToDefinitionMenu
+          info={() => this.props.jumpToDefState()}
+          jumpToDefinitionById={(id: string) =>
+            this.props.jumpToDefinitionById(id)
           }
-          key={(e) => counter2++}
+          closeJumpToDefinitionMenu={this.props.closeJumpToDefinitionMenu}
+          jumpToDefIndex={() => this.props.jumpToDefIndex()}
+        ></JumpToDefinitionMenu>
+        <div
+          id="intellisense-container"
+          class={() =>
+            this.props.index() >= 0 ? "selected-intellisense-container" : ""
+          }
+          style={() => ({
+            top: (this.props.y() + 30).toString() + "px",
+            left: this.props.x().toString() + "px",
+            display:
+              (this.props.idents().length > 0 ||
+                this.props.partialFunctionCall()) &&
+              this.props.show()
+                ? "block"
+                : "none",
+            transform:
+              this.props.y() > window.innerHeight / 2
+                ? `translateY(calc(-100% - 50px))`
+                : "",
+          })}
+          onClick={(e: MouseEvent) => {
+            e.stopPropagation();
+          }}
         >
-          <table class="intellisense-options-table">
-            {(ident: { idents: BoundIdentifier[] } & { index: number }) => {
-              const reformattedIdent = addBracketsToIdent(
-                ident.idents[0].variableName
-              );
+          <PartialFunctionCallView {...this.props} />`
+          <For
+            each={() =>
+              this.props.idents().map((ident, index) => ({ ...ident, index }))
+            }
+            key={() => counter2++}
+          >
+            <table class="intellisense-options-table">
+              {(ident: { idents: BoundIdentifier[] } & { index: number }) => {
+                const reformattedIdent = identifierStringToLatexString(
+                  ident.idents[0].variableName
+                );
 
-              const opt = (
-                <tr
-                  class={() =>
-                    (ident.index === this.props.index()
-                      ? (setTimeout(() => {
-                          opt._domNode?.scrollIntoView({
-                            block: "center",
-                          });
-                        }, 0),
-                        "selected-intellisense-option")
-                      : "not-selected-intellisense-option") +
-                    " intellisense-option"
-                  }
-                  onClick={() => {
-                    this.props.autocomplete(ident.idents[0]);
-                  }}
-                >
-                  <td style={{ color: "#AAAAAA" }}>
-                    <IdentifierSymbol symbol={() => ident}></IdentifierSymbol>
-                  </td>
-                  <td>
-                    <StaticMathQuillView
-                      latex={
-                        reformattedIdent +
-                        (ident.idents.length === 1 &&
-                        ident.idents[0].type === "function"
-                          ? "\\left(\\right)"
-                          : "")
-                      }
-                    ></StaticMathQuillView>
-                  </td>
-                  <td>
-                    <i
-                      onClick={(e: MouseEvent) => {
-                        this.props.jumpToDefinition(reformattedIdent);
-                        e.stopPropagation();
-                      }}
-                      class="dsm-icon-compass2 jump-to-def-btn"
-                    ></i>
-                  </td>
-                </tr>
-              );
+                const opt = (
+                  <tr
+                    class={() =>
+                      (ident.index === this.props.index()
+                        ? (setTimeout(() => {
+                            opt._domNode?.scrollIntoView({
+                              block: "center",
+                            });
+                          }, 0),
+                          "selected-intellisense-option")
+                        : "not-selected-intellisense-option") +
+                      " intellisense-option"
+                    }
+                    onClick={() => {
+                      this.props.autocomplete(ident.idents[0]);
+                    }}
+                  >
+                    <td style={{ color: "#AAAAAA" }}>
+                      <IdentifierSymbol symbol={() => ident}></IdentifierSymbol>
+                    </td>
+                    <td>
+                      <StaticMathQuillView
+                        latex={
+                          reformattedIdent +
+                          (ident.idents.length === 1 &&
+                          ident.idents[0].type === "function"
+                            ? "\\left(\\right)"
+                            : "")
+                        }
+                      ></StaticMathQuillView>
+                    </td>
+                    <td>
+                      <i
+                        onClick={(e: MouseEvent) => {
+                          this.props.jumpToDefinition(reformattedIdent);
+                          e.stopPropagation();
+                        }}
+                        class="dsm-icon-compass2 jump-to-def-btn"
+                      ></i>
+                    </td>
+                  </tr>
+                );
 
-              return opt;
-            }}
-          </table>
-        </For>
+                return opt;
+              }}
+            </table>
+          </For>
+        </div>
       </div>
     );
   }

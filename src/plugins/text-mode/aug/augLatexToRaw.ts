@@ -270,7 +270,7 @@ function funcToString(
  */
 const backslashCommands = new Set(autoCommandNames.split(" "));
 
-function identifierToString(id: Aug.Latex.Identifier): string {
+export function identifierToString(id: Aug.Latex.Identifier): string {
   const symbol = id.symbol.replace(/[{}]/g, "");
   let main = symbol;
   let subscript;

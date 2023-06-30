@@ -66,7 +66,6 @@ div:focus #intellisense-container {
   padding: 2px;
   transition: background-color 0.15s;
   cursor: pointer;
-  background-color: #00000044;
   opacity: 0;
 }
 tr:hover .jump-to-def-btn {
@@ -75,4 +74,59 @@ tr:hover .jump-to-def-btn {
 
 .dsm-intellisense-docstring {
   white-space: pre-line;
+}
+
+.dsm-intellisense-jump-to-def-menu {
+  overflow-x: hidden;
+  background-color: white;
+  border-radius: 5px;
+  padding: 10px;
+  position: absolute;
+  top: 30vh;
+  left: 30vw;
+  width: 40vw;
+  height: 40vh;
+  z-index: 1;
+  border: 1px solid #bbbbbb;
+  filter: drop-shadow(#00000044 3px 3px 3px);
+
+  ul {
+    list-style: none;
+    padding-inline-start: 0px;
+  }
+
+  li,
+  li * {
+    cursor: pointer !important;
+  }
+
+  li {
+    border-top: 1px solid #bbbbbb;
+  }
+
+  li:hover,
+  li.selected {
+    background-color: #eeeeee;
+  }
+
+  .dsm-intellisense-header {
+    display: flex;
+    margin: 0;
+
+    button {
+      background: none;
+      border: none;
+      width: 50px;
+      font-size: 25px;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: opacity 0.25s;
+      color: black;
+      opacity: 0.2;
+    }
+
+    button:hover {
+      opacity: 0.6;
+    }
+  }
 }
