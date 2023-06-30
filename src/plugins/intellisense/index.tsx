@@ -430,69 +430,6 @@ export default class Intellisense extends PluginController {
     this.intellisenseIndex = -1;
   };
 
-  afterEnable() {
-    const exppanel = document.querySelector(".dcg-exppanel");
-    this.lastExppanelScrollTop = exppanel?.scrollTop ?? 0;
-
-    // disable intellisense when switching expressions
-    document.addEventListener("focusout", this.focusOutHandler);
-
-    // override the mathquill keystroke handler so that it opens the
-    // intellisense menu when I want it to
-    document.addEventListener("focusin", this.focusInHandler);
-
-    // general intellisense keyboard handler
-    document.addEventListener("keydown", this.keyDownHandler);
-
-    // update the intellisense on key pressed in a mathquill
-    document.addEventListener("keyup", this.keyUpHandler);
-
-    // close intellisense when clicking outside the intellisense window
-    document.addEventListener("mouseup", this.mouseUpHandler);
-
-    // create initial intellisense window
-    this.intellisenseMountPoint = document.createElement("div");
-    document.body.appendChild(this.intellisenseMountPoint);
-    this.view = DCGView.mountToNode(View, this.intellisenseMountPoint, {
-      x: () => this.x,
-      y: () => this.y,
-      idents: () => this.intellisenseOpts,
-      autocomplete: (ident) => {
-        this.leaveIntellisenseMenu();
-        this.doAutocomplete(ident);
-      },
-      index: () => this.intellisenseIndex,
-      partialFunctionCall: () => this.partialFunctionCall,
-      partialFunctionCallIdent: () => this.partialFunctionCallIdent,
-      partialFunctionCallDoc: () => this.partialFunctionCallDoc,
-      show: () => this.canHaveIntellisense,
-      jumpToDefinition: (name) => this.jumpToDefinition(name),
-      jumpToDefinitionById: (id) => this.jumpToDefinitionById(id),
-      jumpToDefState: () => this.jumpToDefState,
-      closeJumpToDefinitionMenu: () => (this.jumpToDefState = undefined),
-      jumpToDefIndex: () => this.jumpToDefIndex,
-    });
-
-    Calc.controller.dispatcher.register((e) => {
-      if (e.type === "set-focus-location" || e.type === "set-none-selected") {
-        setTimeout(() => {
-          if (!Calc.focusedMathQuill) {
-            this.canHaveIntellisense = false;
-            this.view?.update();
-          }
-        }, 100);
-      }
-
-      if (e.type === "tick") {
-        const exppanel = document.querySelector(".dcg-exppanel");
-        const newExppanelScrollTop = exppanel?.scrollTop ?? 0;
-        this.y += this.lastExppanelScrollTop - newExppanelScrollTop;
-        this.view?.update();
-        this.lastExppanelScrollTop = newExppanelScrollTop;
-      }
-    });
-  }
-
   jumpToDefinitionById(id: string) {
     this.jumpToDefState = undefined;
 
@@ -604,6 +541,71 @@ export default class Intellisense extends PluginController {
     }
   }
 
+  dispatcher: string | undefined;
+
+  afterEnable() {
+    const exppanel = document.querySelector(".dcg-exppanel");
+    this.lastExppanelScrollTop = exppanel?.scrollTop ?? 0;
+
+    // disable intellisense when switching expressions
+    document.addEventListener("focusout", this.focusOutHandler);
+
+    // override the mathquill keystroke handler so that it opens the
+    // intellisense menu when I want it to
+    document.addEventListener("focusin", this.focusInHandler);
+
+    // general intellisense keyboard handler
+    document.addEventListener("keydown", this.keyDownHandler);
+
+    // update the intellisense on key pressed in a mathquill
+    document.addEventListener("keyup", this.keyUpHandler);
+
+    // close intellisense when clicking outside the intellisense window
+    document.addEventListener("mouseup", this.mouseUpHandler);
+
+    // create initial intellisense window
+    this.intellisenseMountPoint = document.createElement("div");
+    document.body.appendChild(this.intellisenseMountPoint);
+    this.view = DCGView.mountToNode(View, this.intellisenseMountPoint, {
+      x: () => this.x,
+      y: () => this.y,
+      idents: () => this.intellisenseOpts,
+      autocomplete: (ident) => {
+        this.leaveIntellisenseMenu();
+        this.doAutocomplete(ident);
+      },
+      index: () => this.intellisenseIndex,
+      partialFunctionCall: () => this.partialFunctionCall,
+      partialFunctionCallIdent: () => this.partialFunctionCallIdent,
+      partialFunctionCallDoc: () => this.partialFunctionCallDoc,
+      show: () => this.canHaveIntellisense,
+      jumpToDefinition: (name) => this.jumpToDefinition(name),
+      jumpToDefinitionById: (id) => this.jumpToDefinitionById(id),
+      jumpToDefState: () => this.jumpToDefState,
+      closeJumpToDefinitionMenu: () => (this.jumpToDefState = undefined),
+      jumpToDefIndex: () => this.jumpToDefIndex,
+    });
+
+    this.dispatcher = Calc.controller.dispatcher.register((e) => {
+      if (e.type === "set-focus-location" || e.type === "set-none-selected") {
+        setTimeout(() => {
+          if (!Calc.focusedMathQuill) {
+            this.canHaveIntellisense = false;
+            this.view?.update();
+          }
+        }, 100);
+      }
+
+      if (e.type === "tick") {
+        const exppanel = document.querySelector(".dcg-exppanel");
+        const newExppanelScrollTop = exppanel?.scrollTop ?? 0;
+        this.y += this.lastExppanelScrollTop - newExppanelScrollTop;
+        this.view?.update();
+        this.lastExppanelScrollTop = newExppanelScrollTop;
+      }
+    });
+  }
+
   afterDisable() {
     // clear event listeners
     document.removeEventListener("focusout", this.focusOutHandler);
@@ -617,7 +619,11 @@ export default class Intellisense extends PluginController {
       unsub();
     }
 
-    if (this.intellisenseMountPoint)
+    if (this.intellisenseMountPoint) {
       unmountFromNode(this.intellisenseMountPoint);
+      document.body.removeChild(this.intellisenseMountPoint);
+    }
+
+    if (this.dispatcher) Calc.controller.dispatcher.unregister(this.dispatcher);
   }
 }
