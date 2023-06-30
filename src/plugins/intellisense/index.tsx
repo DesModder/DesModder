@@ -50,7 +50,7 @@ export function getMQCursorPosition(focusedMQ: MathQuillField) {
 }
 
 export function getSelectedExpressionID(): string | undefined {
-  return Object.keys(Calc.controller.listModel.selectedItemMap)[0];
+  return Calc.controller.getSelectedItem()?.id;
 }
 
 export function getExpressionIndex(id: string): number | undefined {

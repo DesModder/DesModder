@@ -207,8 +207,6 @@ interface CalcPrivate {
       };
     };
     listModel: {
-      selectedItemMap: Record<number, boolean | undefined>;
-
       // add properties as needed
       __itemModelArray: {
         id: string;
