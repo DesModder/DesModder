@@ -72,8 +72,7 @@ export const analysisStateField = StateField.define<ProgramAnalysis>({
 });
 
 function setCalcState(state: GraphState) {
-  // Prevent Desmos from blurring the currently active element via
-  //   jquery(document.activeElement).trigger("blur")
+  // Prevent Desmos from blurring the currently active element.
   // Alternative method this.view.focus() after setState does not prevent
   //   the current autocomplete tooltip from disappearing
   const ae = document.activeElement as HTMLElement | undefined;

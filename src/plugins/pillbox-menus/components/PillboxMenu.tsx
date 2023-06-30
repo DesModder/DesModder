@@ -3,7 +3,7 @@ import "./PillboxMenu.less";
 import { Component, jsx } from "DCGView";
 import { If, Switch } from "components/desmosComponents";
 import { Calc } from "globals/window";
-import { jquery, keys } from "utils/depUtils";
+import { keys } from "utils/depUtils";
 
 export default class PillboxMenu extends Component<{
   controller: PillboxMenus;
@@ -68,25 +68,41 @@ export default class PillboxMenu extends Component<{
     }
   }
 
+  generalEventHandler = this._generalEventHandler.bind(this);
+  _generalEventHandler(e: Event) {
+    if (e.type === "keydown") {
+      const ek = e as KeyboardEvent;
+      if (ek.key !== "Enter" && ek.key !== " ") return;
+    }
+    if (this.eventShouldCloseMenu(e)) {
+      this.controller.closeMenu();
+    }
+  }
+
+  generalEventNames = [
+    "keydown",
+    "mousedown",
+    "pointerdown",
+    "touchstart",
+    "wheel",
+  ];
+
   didMountContainer() {
     if (Calc.controller.isGraphSettingsOpen()) {
       Calc.controller.dispatch({
         type: "close-graph-settings",
       });
     }
-    jquery(document).on(
-      `dcg-tapstart${this.suffix()} wheel${this.suffix()}`,
-      (e: Event) => {
-        if (this.eventShouldCloseMenu(e)) {
-          this.controller.closeMenu();
-        }
-      }
+    this.generalEventNames.forEach((name) =>
+      document.addEventListener(name, this.generalEventHandler)
     );
     document.addEventListener("keydown", this.onKeydown);
   }
 
   didUnmountContainer() {
-    jquery(document).off(this.suffix());
+    this.generalEventNames.forEach((name) =>
+      document.removeEventListener(name, this.generalEventHandler)
+    );
     document.removeEventListener("keydown", this.onKeydown);
   }
 

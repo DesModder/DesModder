@@ -3,7 +3,6 @@ import { Calc, Fragile, Private } from "globals/window";
 
 const evaluateLatex = Fragile.evaluateLatex;
 
-export const jquery = Fragile.jQuery;
 export const keys = Fragile.Keys;
 export const parseDesmosLatexRaw = Private.Parser.parse as (
   s: string,
