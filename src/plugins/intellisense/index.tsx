@@ -76,7 +76,7 @@ export default class Intellisense extends PluginController {
   y: number = 0;
 
   intellisenseOpts: { idents: BoundIdentifier[] }[] = [];
-  intellisenseIndex: number = -1;
+  intellisenseIndex: number = 0;
   intellisenseRow = 0;
 
   latestIdent: TryFindMQIdentResult | undefined;
@@ -206,7 +206,7 @@ export default class Intellisense extends PluginController {
         if (this.latestIdent.ident !== lastIdentStr) this.intellisenseIndex = 0;
       } else {
         this.intellisenseOpts = [];
-        this.intellisenseIndex = -1;
+        this.canHaveIntellisense = false;
       }
 
       // if there isn't, just get rid of the intellisense window
@@ -214,7 +214,7 @@ export default class Intellisense extends PluginController {
       this.intellisenseOpts = [];
       this.latestIdent = undefined;
       this.latestMQ = undefined;
-      this.intellisenseIndex = -1;
+      this.canHaveIntellisense = false;
     }
 
     // update intellisense window
@@ -423,7 +423,6 @@ export default class Intellisense extends PluginController {
     // close intellisense menu
     // or jump2def menu
     if (e.key === "Escape") {
-      this.intellisenseIndex = -1;
       this.canHaveIntellisense = false;
       this.jumpToDefState = undefined;
       this.view?.update();
@@ -476,7 +475,7 @@ export default class Intellisense extends PluginController {
     )
       return;
 
-    this.intellisenseIndex = -1;
+    this.canHaveIntellisense = false;
   };
 
   jumpToDefinitionById(id: string) {
