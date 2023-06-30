@@ -9,6 +9,7 @@ import { PartialFunctionCall } from "./latex-parsing";
 import "./view.less";
 import { ClassComponent, Component, jsx } from "DCGView";
 import { For, StaticMathQuillView, Switch } from "components";
+import { format } from "i18n/i18n-core";
 import { identifierToString } from "plugins/text-mode/aug/augLatexToRaw";
 import { textModeExprToLatex } from "plugins/text-mode/down/textToRaw";
 import { IndexFor } from "utils/utilComponents";
@@ -46,8 +47,7 @@ export class JumpToDefinitionMenu extends Component<{
                       })
                     }
                   ></DStaticMathquillView>{" "}
-                  has multiple definitions. Pick one to jump to below. Press ESC
-                  to close this menu.
+                  {format("intellisense-jump2def-menu-instructions")}
                 </span>
                 <button
                   onClick={() => {
