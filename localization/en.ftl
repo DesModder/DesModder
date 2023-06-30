@@ -188,4 +188,4 @@ manage-metadata-desc = Manage Metadata, such as GLesmos or pinned/unpinned statu
 
 ## Intellisense
 intellisense-name = Intellisense
-intellisense-desc = Brings several common IDE features to Desmos, including autocompletion suggestions, function call help, and jump to definition (hotkey F9).
+intellisense-desc = Brings several common IDE features to Desmos, including autocompletion suggestions, function call help, and jump to definition. Documentation here:
