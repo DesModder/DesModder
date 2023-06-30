@@ -321,7 +321,7 @@ export default class Intellisense extends PluginController {
         // monkeypatch in a function to wrap overrideKeystroke
         const remove = attach(
           ...propGetSet(mqopts, "overrideKeystroke"),
-          function (key: string, evt: KeyboardEvent) {
+          function (key: string, _: KeyboardEvent) {
             if (
               // the only intellisense option is already complete
               // so don't bother using it
@@ -372,24 +372,23 @@ export default class Intellisense extends PluginController {
               }
               return [false, undefined];
 
-              // navigate by row
+              // navigate by row up
             } else if (key === "Tab") {
               self.intellisenseRow++;
               if (self.intellisenseRow > 1) {
                 self.intellisenseRow = 0;
                 self.goToNextIntellisenseCol();
               }
-
               self.view?.update();
-
               return [false, undefined];
+
+              // navigate by row down
             } else if (key === "Shift-Tab") {
               self.intellisenseRow--;
               if (self.intellisenseRow < 0) {
                 self.intellisenseRow = 1;
                 self.goToPrevIntellisenseCol();
               }
-
               self.view?.update();
               return [false, undefined];
             }
