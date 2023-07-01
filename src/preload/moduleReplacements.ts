@@ -9,6 +9,7 @@ import insertPanels from "./moduleOverrides/insert-panels.replacements";
 import metadata from "./moduleOverrides/metadata.replacements";
 import pillbox from "./moduleOverrides/pillbox.replacements";
 import pinExpressions from "./moduleOverrides/pin-expressions.replacements";
+import rightClickTray from "./moduleOverrides/right-click-tray.replacements";
 import shiftEnterNewline from "./moduleOverrides/shift-enter-newline.replacements";
 import showTips from "./moduleOverrides/show-tips.replacements";
 import textMode from "./moduleOverrides/text-mode.replacements";
@@ -28,6 +29,7 @@ const replacementStrings = [
   debugMode,
   extraExpressionButtons,
   showTips,
+  rightClickTray,
 ];
 
 const replacements: Block[] = [];

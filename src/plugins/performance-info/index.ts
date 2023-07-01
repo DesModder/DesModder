@@ -2,7 +2,6 @@ import { PluginController } from "../PluginController";
 import { MainPopupFunc } from "./PerformanceView";
 import { DispatchedEvent, TimingData } from "globals/Calc";
 import { Calc } from "globals/window";
-import { jquery } from "utils/depUtils";
 
 export default class PerformanceInfo extends PluginController {
   static id = "performance-info" as const;
@@ -28,7 +27,6 @@ export default class PerformanceInfo extends PluginController {
   afterDisable() {
     Calc.controller.dispatcher.unregister(this.dispatchListenerID);
     this.controller.pillboxMenus?.removePillboxButton("dsm-pi-menu");
-    jquery(document).off(".expanded-menu-view");
   }
 
   onEvaluatorChanges(e: DispatchedEvent) {

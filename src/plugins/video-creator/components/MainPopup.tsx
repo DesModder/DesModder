@@ -14,7 +14,6 @@ import {
   InlineMathInputView,
 } from "components";
 import { format } from "i18n/i18n-core";
-import { jquery } from "utils/depUtils";
 
 const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng", "zip"];
 
@@ -212,7 +211,8 @@ export default class MainPopup extends Component<{
   }
 
   eventShouldCloseExpanded(e: Event) {
-    const el = jquery(e.target);
-    return !el.closest(".dsm-vc-preview-inner").length;
+    const el = e.target;
+    if (!(el instanceof Element)) return false;
+    return !el.closest(".dsm-vc-preview-inner");
   }
 }
