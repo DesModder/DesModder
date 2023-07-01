@@ -5,7 +5,6 @@ import { CollapseMode, unverticalify, verticalify } from "./verticalify";
 import { MathQuillField, MathQuillView } from "components";
 import { DispatchedEvent } from "globals/Calc";
 import { Calc } from "globals/window";
-import { getController, mqKeystroke } from "plugins/intellisense/latex-parsing";
 import {
   deregisterCustomDispatchOverridingHandler,
   registerCustomDispatchOverridingHandler,
@@ -13,6 +12,14 @@ import {
 
 function focusmq(mq: MathQuillField | undefined) {
   mq?.focus();
+}
+
+function getController(mq: MathQuillField) {
+  return mq.__controller;
+}
+
+function mqKeystroke(mq: MathQuillField, key: string) {
+  mq.keystroke(key);
 }
 
 export default class Multiline extends PluginController<Config> {

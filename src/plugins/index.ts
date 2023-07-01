@@ -7,7 +7,6 @@ import DuplicateHotkey from "./duplicate-hotkey";
 import FindReplace from "./find-replace";
 import FolderTools from "./folder-tools";
 import HideErrors from "./hide-errors";
-import Intellisense from "./intellisense";
 import ManageMetadata from "./manage-metadata";
 import Multiline from "./multiline";
 import PerformanceInfo from "./performance-info";
@@ -113,7 +112,6 @@ export const keyToPlugin = {
   textMode: TextMode,
   performanceInfo: PerformanceInfo,
   metadata: ManageMetadata,
-  intellisense: Intellisense,
   multiline: Multiline,
 } satisfies Record<string, Plugin<any>>;
 
@@ -162,7 +160,6 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get textMode () { return this.ep["text-mode"]; }
   get performanceInfo () { return this.ep["performance-info"]; }
   get metadata () { return this.ep["manage-metadata"]; }
-  get intellisense () { return this.ep["intellisense"]; }
   get multiline () { return this.ep["multiline"]; }
 }
 
