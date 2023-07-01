@@ -12,6 +12,7 @@ import { For, StaticMathQuillView, Switch } from "components";
 import { format } from "i18n/i18n-core";
 import { identifierToString } from "plugins/text-mode/aug/augLatexToRaw";
 import { textModeExprToLatex } from "plugins/text-mode/down/textToRaw";
+import { parseDesmosLatex } from "utils/depUtils";
 import { IndexFor } from "utils/utilComponents";
 
 export interface JumpToDefinitionMenuInfo {
@@ -105,6 +106,12 @@ export function identifierStringToLatexString(str: string) {
     symbol: str,
     type: "Identifier",
   });
+}
+
+export function latexStringToIdentifierString(str: string) {
+  const ltx = parseDesmosLatex(str);
+  if (ltx.type === "Identifier") return ltx._symbol;
+  return undefined;
 }
 
 function latexForType(type: BoundIdentifier["type"]) {
@@ -346,9 +353,7 @@ export class View extends Component<{
               ident: { idents: BoundIdentifier[] } & { index: number },
               idx: () => number
             ) => {
-              const reformattedIdent = identifierStringToLatexString(
-                ident.idents[0].variableName
-              );
+              const reformattedIdent = ident.idents[0].variableName;
 
               const selected = () =>
                 idx() === this.props.plugin().intellisenseIndex;
@@ -382,7 +387,7 @@ export class View extends Component<{
                   >
                     <StaticMathQuillView
                       latex={
-                        reformattedIdent +
+                        identifierStringToLatexString(reformattedIdent) +
                         (ident.idents.length === 1 &&
                         ident.idents[0].type === "function"
                           ? "\\left(\\right)"

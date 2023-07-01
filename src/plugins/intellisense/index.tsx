@@ -6,11 +6,7 @@ import {
   getPartialFunctionCall,
 } from "./latex-parsing";
 import { IntellisenseState } from "./state";
-import {
-  JumpToDefinitionMenuInfo,
-  View,
-  identifierStringToLatexString,
-} from "./view";
+import { JumpToDefinitionMenuInfo, View } from "./view";
 import { DCGView, MountedComponent, unmountFromNode } from "DCGView";
 import { MathQuillField, MathQuillView } from "components";
 import { ItemModel, TextModel } from "globals/models";
@@ -126,8 +122,8 @@ export default class Intellisense extends PluginController {
         .boundIdentifiersArray()
         .find(
           (i) =>
-            identifierStringToLatexString(i.variableName) ===
-              this.partialFunctionCall?.ident && i.type === "function"
+            i.variableName === this.partialFunctionCall?.ident &&
+            i.type === "function"
         ) as BoundIdentifierFunction;
 
       // if the user is in a partial function call,
@@ -327,9 +323,8 @@ export default class Intellisense extends PluginController {
               // the only intellisense option is already complete
               // so don't bother using it
               (self.intellisenseOpts.length === 1 &&
-                identifierStringToLatexString(
-                  self.intellisenseOpts[0].idents[0].variableName
-                ) === self.latestIdent?.ident) ||
+                self.intellisenseOpts[0].idents[0].variableName ===
+                  self.latestIdent?.ident) ||
               // don't bother overriding keystroke if intellisense is offline
               !self.canHaveIntellisense
             )
@@ -364,10 +359,9 @@ export default class Intellisense extends PluginController {
                 );
                 self.view?.update();
               } else {
-                const str = identifierStringToLatexString(
+                const str =
                   self.intellisenseOpts[self.intellisenseIndex].idents[0]
-                    .variableName
-                );
+                    .variableName;
 
                 // need a delay so that Enter key doesn't immediately close
                 // the jump2def window
@@ -521,7 +515,7 @@ export default class Intellisense extends PluginController {
     const identDsts = this.intellisenseState
       .boundIdentifiersArray()
       .filter((id) => {
-        return identifierStringToLatexString(id.variableName) === name;
+        return id.variableName === name;
       });
 
     if (identDsts.length === 1) {

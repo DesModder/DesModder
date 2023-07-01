@@ -1,3 +1,4 @@
+import { latexStringToIdentifierString } from "./view";
 import { MQCursor, MathQuillField } from "components";
 import { ExpressionAug } from "plugins/text-mode/aug/AugState";
 
@@ -34,10 +35,14 @@ export function mqKeystroke(mq: MathQuillField, keystroke: string) {
 
 export const identRegex = /([a-zA-Z]|\\[a-zA-Z]+) *(_\{[a-zA-Z0-9 ]*\})?/g;
 
-export function isIdentStr(str: string) {
+export function isIdentStr2(str: string) {
   const match = str.match(identRegex);
   if (!match) return false;
   return match[0].length === str.length;
+}
+
+export function isIdentStr(str: string) {
+  return latexStringToIdentifierString(str) !== undefined;
 }
 
 export interface TryFindMQIdentResult {
@@ -142,9 +147,11 @@ function tryGetMathquillIdent(
 
   const identString = latexSegments.filter((e) => e).join("");
 
-  if (identString.match(identRegex)) {
+  const normalizedIdentStr = latexStringToIdentifierString(identString);
+
+  if (normalizedIdentStr) {
     return {
-      ident: identString,
+      ident: normalizedIdentStr,
       type: "",
       goToEndOfIdent: () => {
         for (let i = 0; i < goToEnd; i++) {
@@ -184,12 +191,21 @@ export function getPartialFunctionCall(
     } else {
       const oldCursor = cursor;
       cursor = cursor.parent?.parent?.[-1];
+
+      // TODO: maybe add support for cursed operatornames in the future?
+      // or more likely builtins
       const ltx = cursor?.latex?.();
       const ltx2 = cursor?.[-1]?.latex?.();
       if (ltx && isIdentStr(ltx) && cursor?.[1]?.ctrlSeq === "\\left(") {
-        return { ident: ltx, paramIndex };
+        return {
+          ident: latexStringToIdentifierString(ltx) as string,
+          paramIndex,
+        };
       } else if (ltx2 && ltx && isIdentStr(ltx2 + ltx)) {
-        return { ident: ltx2 + ltx, paramIndex };
+        return {
+          ident: latexStringToIdentifierString(ltx2 + ltx) as string,
+          paramIndex,
+        };
       }
       paramIndex = 0;
       cursor = oldCursor.parent;
