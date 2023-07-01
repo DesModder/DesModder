@@ -1,5 +1,5 @@
 import { DispatchedEvent } from "globals/Calc";
-import { Calc, Console } from "globals/window";
+import { Calc } from "globals/window";
 
 let dispatchOverridingHandlers: {
   handler: (evt: DispatchedEvent) => boolean | undefined;
