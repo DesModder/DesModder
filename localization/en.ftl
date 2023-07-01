@@ -206,3 +206,5 @@ compact-view-opt-removeSpacing-name = Remove Spacing
 compact-view-opt-removeSpacing-desc = Removes lots of empty space in the expressions list.
 compact-view-opt-noSeparatingLines-name = No Separating lines
 compact-view-opt-noSeparatingLines-desc = Remove the separating lines between expressions and replace them with alternating colors.
+compact-view-opt-highlightAlternatingLines-name = Highlight Alternating Lines
+compact-view-opt-highlightAlternatingLines-desc = Highlight alternating expressions so they can be easily distinguished from one another.

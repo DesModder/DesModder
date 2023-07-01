@@ -2,23 +2,22 @@
   .dcg-smart-textarea-container {
     font-size: var(--text-font-size) !important;
   }
-  .dcg-main,
-  .dcg-evaluation-container {
-    padding: 0 35px !important;
-    margin-left: 4px !important;
+  .dcg-mq-bracket-container {
     font-size: calc(
-      max(var(--text-font-size), var(--minimum-font-size))
+      max(var(--bracket-font-size-factor), var(--minimum-font-size))
     ) !important;
   }
-  .dcg-mq-bracket-container {
-    font-size: var(--bracket-font-size-factor) !important;
+  .dcg-main,
+  .dcg-evaluation-container {
+    font-size: var(--math-font-size) !important;
   }
 
   &.compact-view-no-separating-lines {
     .dcg-expressionitem:not(.dcg-selected) {
       border: none;
     }
-    .dcg-expressionitem:not(.dcg-expressionfolder):nth-child(2n) {
+    &.compact-view-highlight-alternating-lines
+      .dcg-expressionitem:not(.dcg-expressionfolder):nth-child(2n) {
       background-color: #f5f5f5;
     }
     .dcg-expressionfolder {
@@ -31,6 +30,18 @@
     .dcg-mq-cursor {
       border: 1.5px solid black;
       margin: 0 -1.5px;
+    }
+
+    .dcg-container .dcg-mq-editable-field:not(.dcg-no-fadeout):after {
+      width: 25px !important;
+      right: -12.5px !important;
+      background: linear-gradient(to right, #ffffff00, #ffffffff 50%);
+    }
+    .dcg-main,
+    .dcg-evaluation-container {
+      padding: 0 35px !important;
+      padding-right: 12.5px !important;
+      margin-left: 4px !important;
     }
 
     // expressions in general
@@ -46,28 +57,28 @@
     .dcg-fade-container {
       padding-bottom: 0 !important;
     }
-    .dcg-tab .dcg-circular-icon-container {
-      transform: translate(11px, -18px) scale(0.5) !important;
-    }
-    .dcg-icon-remove {
-      transform: translate(10px, -10px) scale(0.6);
-    }
     &:not(.compact-view-no-separating-lines) {
       .dcg-expressionitem:not(.dcg-selected) {
         border-top-color: #777777;
       }
     }
-    .dcg-icon-text {
-      left: initial !important;
-      right: 5% !important;
-    }
     .dcg-expressionitem.dcg-inFolder .dcg-fade-container:after {
       border-left-color: #000000aa;
     }
+
+    // icons to the left of the expressions bar
     .dcg-expression-icon-container {
       right: 0 !important;
-      top: 50% !important;
-      transform: scale(0.7);
+      top: 30% !important;
+      transform: scale(0.5);
+      .dcg-tooltip-hit-area-container {
+        transform: scale(1.3);
+      }
+    }
+
+    // "x" icon to the right of the expressions
+    .dcg-icon-remove {
+      transform: translate(10px, -10px) scale(0.6);
     }
 
     // slider
@@ -91,24 +102,31 @@
 
     // evaluation box
     .dcg-evaluation-container {
-      position: absolute;
-      right: 15px;
-      top: 2px;
-      max-width: 10% !important;
-      overflow: hidden !important;
-      transition: max-width 0.25s, overflow 0.25s;
+      .dcg-typeset-math {
+        padding: 0 !important;
+      }
+
+      margin-top: -5px;
     }
-    .dcg-evaluation-container:hover {
-      max-width: 100% !important;
-      overflow: auto !important;
-    }
-    .dcg-color-evaluation {
-      width: 12px !important;
-      height: 12px !important;
-    }
-    .dcg-typeset-math {
-      padding: 0px !important;
-    }
+    // .dcg-evaluation-container {
+    //   position: absolute;
+    //   right: 15px;
+    //   top: 2px;
+    //   max-width: 10% !important;
+    //   overflow: hidden !important;
+    //   transition: max-width 0.25s, overflow 0.25s;
+    // }
+    // .dcg-evaluation-container:hover {
+    //   max-width: 100% !important;
+    //   overflow: auto !important;
+    // }
+    // .dcg-color-evaluation {
+    //   width: 12px !important;
+    //   height: 12px !important;
+    // }
+    // .dcg-typeset-math {
+    //   padding: 0px !important;
+    // }
 
     // tables
     .dcg-cell {
@@ -121,7 +139,7 @@
     }
 
     // settings
-    .dcg-exp-action-button {
+    .dcg-expression-edit-actions .dcg-exp-action-button {
       padding: 0 !important;
       width: 14px !important;
       height: 14px !important;

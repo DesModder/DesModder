@@ -43,6 +43,12 @@ export const configList = [
     key: "noSeparatingLines",
     default: false,
   },
+  {
+    type: "boolean",
+    key: "highlightAlternatingLines",
+    default: true,
+    shouldShow: (config) => config.noSeparatingLines,
+  },
 ] satisfies readonly ConfigItem[];
 
 export interface Config {
@@ -52,4 +58,5 @@ export interface Config {
   minimumFontSize: number;
   removeSpacing: boolean;
   noSeparatingLines: boolean;
+  highlightAlternatingLines: boolean;
 }

@@ -25,6 +25,10 @@ export default class CompactView extends PluginController<Config> {
       "compact-view-no-separating-lines",
       this.settings.noSeparatingLines
     );
+    toggleBodyClass(
+      "compact-view-highlight-alternating-lines",
+      this.settings.highlightAlternatingLines
+    );
 
     document.body.style.setProperty(
       "--math-font-size",
