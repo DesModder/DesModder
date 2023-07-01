@@ -21,9 +21,9 @@ export interface DocStringToken {
   type: "text" | "math" | "param";
 }
 
-const lastof = function <T>(arr: T[]) {
+function lastof<T>(arr: T[]) {
   return arr[arr.length - 1];
-};
+}
 
 export function tokenizeDocstring(str: string): DocStringToken[] {
   const tokens: DocStringToken[] = [

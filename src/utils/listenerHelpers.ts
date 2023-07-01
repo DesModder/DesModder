@@ -1,11 +1,11 @@
 import { DispatchedEvent } from "globals/Calc";
 import { Calc, Console } from "globals/window";
 
-const dispatchOverridingHandlers: [
-  (evt: DispatchedEvent) => boolean | undefined,
-  number,
-  number
-][] = [];
+let dispatchOverridingHandlers: {
+  handler: (evt: DispatchedEvent) => boolean | undefined;
+  priority: number;
+  id: number;
+}[] = [];
 
 let dispatchOverridingHandlerId = 0;
 
@@ -19,11 +19,11 @@ export function registerCustomDispatchOverridingHandler(
 ): number {
   const id = dispatchOverridingHandlerId++;
   // add the handler
-  dispatchOverridingHandlers.push([handler, priority, id]);
+  dispatchOverridingHandlers.push({ handler, priority, id });
 
   // sort the handlers so that higher priorities are first
   // could easily be optimized but prob not a bottleneck
-  dispatchOverridingHandlers.sort((a, b) => b[1] - a[1]);
+  dispatchOverridingHandlers.sort((a, b) => b.priority - a.priority);
 
   return id;
 }
@@ -31,18 +31,10 @@ export function registerCustomDispatchOverridingHandler(
 // deregisters a function created with registerCustomDispatchOverridingHandler
 // uses the id that the former function returns
 export function deregisterCustomDispatchOverridingHandler(id: number): void {
-  // find the handler by id
-  const firstIndex = dispatchOverridingHandlers.findIndex(
-    ([_, __, id2]) => id2 === id
+  // remove all handlers with matching IDs
+  dispatchOverridingHandlers = dispatchOverridingHandlers.filter(
+    (entry) => entry.id !== id
   );
-  if (firstIndex === -1) {
-    Console.error(
-      `Failed to deregister the dispatch overriding handler '${id}'.`
-    );
-  }
-
-  // remove the handler
-  dispatchOverridingHandlers.splice(firstIndex, 1);
 }
 
 // once Calc is defined, change handleDispatchedAction to first
@@ -50,7 +42,7 @@ export function deregisterCustomDispatchOverridingHandler(id: number): void {
 export function setupDispatchOverride() {
   const old = Calc.controller.handleDispatchedAction;
   Calc.controller.handleDispatchedAction = function (evt) {
-    for (const [handler] of dispatchOverridingHandlers) {
+    for (const { handler } of dispatchOverridingHandlers) {
       const keepGoing = handler(evt);
       if (keepGoing === false) return;
     }
