@@ -142,6 +142,10 @@ function tryGetMathquillIdent(
   const normalizedIdentStr = latexStringToIdentifierString(identString);
 
   if (normalizedIdentStr) {
+    if (normalizedIdentStr.length === 1) {
+      goToEnd = 0;
+      backspaces = 1;
+    }
     return {
       ident: normalizedIdentStr,
       type: "",

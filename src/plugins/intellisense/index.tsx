@@ -565,7 +565,8 @@ export default class Intellisense extends PluginController {
         // add back in variable
       } else {
         this.latestMQ.typedText(formattedIdentLatex.replace(/\{|\}/g, ""));
-        this.latestMQ.keystroke("Right");
+        // if we have a subscript, leave it by going right
+        if (formattedIdentLatex.includes("_")) this.latestMQ.keystroke("Right");
       }
     }
 
