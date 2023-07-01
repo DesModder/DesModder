@@ -190,3 +190,17 @@ manage-metadata-desc = Manage Metadata, such as GLesmos or pinned/unpinned statu
 intellisense-name = Intellisense
 intellisense-desc = Brings several common IDE features to Desmos, including autocompletion suggestions, function call help, and jump to definition. Documentation here:
 intellisense-jump2def-menu-instructions = has multiple definitions. Pick one to jump to below.
+
+## Compact View
+compact-view-name = Compact View
+compact-view-desc = A variety of options for condensing the UI so you can see more on the screen at once.
+compact-view-opt-textFontSize-name = Text Font Size
+compact-view-opt-textFontSize-desc = Size of the font in text expressions.
+compact-view-opt-mathFontSize-name = Math Font Size
+compact-view-opt-mathFontSize-desc = Size of the font in mathematical expressions.
+compact-view-opt-bracketFontSizeFactor-name = Bracket Font Size Factor
+compact-view-opt-bracketFontSizeFactor-desc = Text inside of brackets (parentheses, curly braces, etc.) decreases in size by this factor.
+compact-view-opt-minimumFontSize-name = Min Font Size
+compact-view-opt-minimumFontSize-desc = The minimum possible math font size. Overrides Bracket Font Size Factor.
+compact-view-opt-removeSpacing-name = Remove Spacing
+compact-view-opt-removeSpacing-desc = Removes lots of empty space in the expressions list.

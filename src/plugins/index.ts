@@ -2,6 +2,7 @@
 import GLesmos from "./GLesmos";
 import BetterEvaluationView from "./better-evaluation-view";
 import BuiltinSettings from "./builtin-settings";
+import CompactView from "./compact-view";
 import DebugMode from "./debug-mode";
 import DuplicateHotkey from "./duplicate-hotkey";
 import FindReplace from "./find-replace";
@@ -39,8 +40,18 @@ export interface ConfigItemString extends ConfigItemGeneric {
   variant: "color" | "password" | "text";
   default: string;
 }
+export interface ConfigItemNumber extends ConfigItemGeneric {
+  type: "number";
+  default: number;
+  min: number;
+  max: number;
+  step: number;
+}
 
-export type ConfigItem = ConfigItemBoolean | ConfigItemString;
+export type ConfigItem =
+  | ConfigItemBoolean
+  | ConfigItemString
+  | ConfigItemNumber;
 
 export type GenericSettings = Record<string, any>;
 
@@ -102,6 +113,7 @@ export const keyToPlugin = {
   performanceInfo: PerformanceInfo,
   metadata: ManageMetadata,
   intellisense: Intellisense,
+  compactView: CompactView,
 } satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);
@@ -150,6 +162,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get performanceInfo () { return this.ep["performance-info"]; }
   get metadata () { return this.ep["manage-metadata"]; }
   get intellisense () { return this.ep["intellisense"]; }
+  get compactView () { return this.ep["compact-view"]; }
 }
 
 export type IDToPluginSettings = {
