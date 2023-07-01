@@ -119,8 +119,8 @@ function latexForType(type: BoundIdentifier["type"]) {
   return {
     variable: "x=",
     function: "f",
-    "function-param": "\\leftx\\right)",
-    "listcomp-param": "\\left[\\operatorname{for}\\right",
+    "function-param": "\\left(x\\right)",
+    "listcomp-param": "\\left[\\operatorname{for}\\right]",
     derivative: "\\frac{d}{dx}",
     "repeated-operator": "\\Sigma",
     substitution: "\\operatorname{with}",
