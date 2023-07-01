@@ -33,14 +33,6 @@ export function mqKeystroke(mq: MathQuillField, keystroke: string) {
   mq.keystroke(keystroke);
 }
 
-export const identRegex = /([a-zA-Z]|\\[a-zA-Z]+) *(_\{[a-zA-Z0-9 ]*\})?/g;
-
-export function isIdentStr2(str: string) {
-  const match = str.match(identRegex);
-  if (!match) return false;
-  return match[0].length === str.length;
-}
-
 export function isIdentStr(str: string) {
   return latexStringToIdentifierString(str) !== undefined;
 }
