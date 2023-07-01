@@ -230,10 +230,9 @@ export default class Intellisense extends PluginController {
     }
 
     if (this.prevCursorPos && this.latestMQ) {
-      const mqRootBlock =
-        this.latestMQ.__controller.container.querySelector(
-          ".dcg-mq-root-block"
-        );
+      const mqRootBlock = getController(this.latestMQ).container.querySelector(
+        ".dcg-mq-root-block"
+      );
 
       if (!mqRootBlock) return;
 
@@ -247,10 +246,10 @@ export default class Intellisense extends PluginController {
         clientY:
           this.prevCursorPos.y - mqRootBlock.scrollTop + mqRootBlockRect.y,
       };
-      this.latestMQ.__controller.container.dispatchEvent(
+      getController(this.latestMQ).container.dispatchEvent(
         new MouseEvent("mousedown", eventHandlerSettings)
       );
-      this.latestMQ.__controller.container.dispatchEvent(
+      getController(this.latestMQ).container.dispatchEvent(
         new MouseEvent("mouseup", eventHandlerSettings)
       );
     }
@@ -263,18 +262,18 @@ export default class Intellisense extends PluginController {
     if (focusedmq) this.latestMQ = focusedmq;
     if (
       this.latestMQ &&
-      document.body.contains(this.latestMQ.__controller.cursor.cursorElement)
+      document.body.contains(getController(this.latestMQ).cursor.cursorElement)
     ) {
       // get cursor pos relative to the top left of the mathquill's root element
-      const mqRootBlock =
-        this.latestMQ.__controller.container.querySelector(
-          ".dcg-mq-root-block"
-        );
+      const mqRootBlock = getController(this.latestMQ).container.querySelector(
+        ".dcg-mq-root-block"
+      );
 
       if (!mqRootBlock) return;
       const mqRootBlockRect = mqRootBlock.getBoundingClientRect();
-      const rect =
-        this.latestMQ.__controller.cursor.cursorElement.getBoundingClientRect();
+      const rect = getController(
+        this.latestMQ
+      ).cursor.cursorElement.getBoundingClientRect();
       this.prevCursorPos = {
         x: rect.x + mqRootBlock.scrollLeft - mqRootBlockRect.x,
         y: rect.y + mqRootBlock.scrollTop - mqRootBlockRect.y,
@@ -311,7 +310,9 @@ export default class Intellisense extends PluginController {
         ];
       }
 
-      const mqopts = Calc.focusedMathQuill?.mq?.__controller?.options;
+      const mqopts = Calc.focusedMathQuill?.mq
+        ? getController(Calc.focusedMathQuill?.mq)?.options
+        : undefined;
 
       // done because the monkeypatch has a different this value
       // eslint-disable-next-line @typescript-eslint/no-this-alias

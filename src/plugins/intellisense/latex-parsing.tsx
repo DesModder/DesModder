@@ -1,4 +1,4 @@
-import { MathQuillField } from "components";
+import { MQCursor, MathQuillField } from "components";
 import { ExpressionAug } from "plugins/text-mode/aug/AugState";
 
 export function mapAugAST(
@@ -25,25 +25,11 @@ export function mapAugAST(
 }
 
 export function getController(mq: MathQuillField) {
-  return mq.__controller as MQController;
+  return mq.__controller;
 }
 
 export function mqKeystroke(mq: MathQuillField, keystroke: string) {
   mq.keystroke(keystroke);
-}
-
-export interface MQController {
-  cursor: MQCursor;
-}
-
-export interface MQCursor {
-  parent?: MQCursor;
-  latex?: () => string;
-  [-1]: MQCursor | undefined;
-  [1]: MQCursor | undefined;
-  cursorElement?: HTMLElement;
-  ctrlSeq?: string;
-  _el?: HTMLElement;
 }
 
 export const identRegex = /([a-zA-Z]|\\[a-zA-Z]+) *(_\{[a-zA-Z0-9 ]*\})?/g;
@@ -110,7 +96,7 @@ function tryGetMathquillIdent(
   let goToEnd = 0;
 
   if (isInSubscript) {
-    node = ctrlr.cursor;
+    node = ctrlr.cursor as MQCursor;
     goToEnd++;
     while (node?.[1]) {
       goToEnd++;
@@ -126,7 +112,7 @@ function tryGetMathquillIdent(
   }
   if (!node) return;
 
-  let backspaces = 0;
+  let backspaces = 1;
 
   // get starting variable name
   if (isVarName(node)) {
@@ -188,7 +174,7 @@ export interface PartialFunctionCall {
 export function getPartialFunctionCall(
   mq: MathQuillField
 ): PartialFunctionCall | undefined {
-  let cursor: MQCursor | undefined = getController(mq).cursor;
+  let cursor: MQCursor | undefined = getController(mq).cursor as MQCursor;
   let paramIndex = 0;
   while (cursor) {
     const ltx = cursor?.latex?.();
