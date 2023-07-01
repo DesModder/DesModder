@@ -320,11 +320,6 @@ export default class Intellisense extends PluginController {
           ...propGetSet(mqopts, "overrideKeystroke"),
           function (key: string, _: KeyboardEvent) {
             if (
-              // the only intellisense option is already complete
-              // so don't bother using it
-              (self.intellisenseOpts.length === 1 &&
-                self.intellisenseOpts[0].idents[0].variableName ===
-                  self.latestIdent?.ident) ||
               // don't bother overriding keystroke if intellisense is offline
               !self.canHaveIntellisense
             )
@@ -411,7 +406,7 @@ export default class Intellisense extends PluginController {
 
     // if a non arrow key is pressed in an expression,
     // we enable the intellisense window
-    if (!e.key.startsWith("Arrow")) {
+    if (!e.key.startsWith("Arrow") && e.key !== "Enter") {
       this.canHaveIntellisense = true;
     }
 
