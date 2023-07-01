@@ -109,6 +109,7 @@ export function identifierStringToLatexString(str: string) {
 }
 
 export function latexStringToIdentifierString(str: string) {
+  if (str.slice(1, 5) === "_{ }") return str[0];
   const ltx = parseDesmosLatex(str);
   if (ltx.type === "Identifier") return ltx._symbol;
   return undefined;
