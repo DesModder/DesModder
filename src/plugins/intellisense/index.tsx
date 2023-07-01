@@ -386,6 +386,12 @@ export default class Intellisense extends PluginController {
               self.view?.update();
               return [false, undefined];
             }
+            // close intellisense menu
+            // or jump2def menu
+            else if (key === "Esc") {
+              self.canHaveIntellisense = false;
+              self.view?.update();
+            }
           }
         );
 
@@ -404,18 +410,15 @@ export default class Intellisense extends PluginController {
       e.preventDefault();
     }
 
+    if (e.key === "Escape") {
+      this.jumpToDefState = undefined;
+      this.view?.update();
+    }
+
     // if a non arrow key is pressed in an expression,
     // we enable the intellisense window
     if (!e.key.startsWith("Arrow") && e.key !== "Enter") {
       this.canHaveIntellisense = true;
-    }
-
-    // close intellisense menu
-    // or jump2def menu
-    if (e.key === "Escape") {
-      this.canHaveIntellisense = false;
-      this.jumpToDefState = undefined;
-      this.view?.update();
     }
 
     // Jump to definition
