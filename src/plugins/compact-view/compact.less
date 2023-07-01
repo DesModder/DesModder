@@ -1,107 +1,131 @@
-.dcg-smart-textarea-container {
-  font-size: var(--text-font-size) !important;
-}
-.dcg-main,
-.dcg-evaluation-container {
-  padding: 0 35px !important;
-  margin-left: 4px !important;
-  font-size: calc(
-    max(var(--text-font-size), var(--minimum-font-size))
-  ) !important;
-}
-.dcg-mq-bracket-container {
-  font-size: var(--bracket-font-size-factor) !important;
-}
-
-.compact-view-remove-spacing-enabled {
-  // make cursor/caret more obvious since it'll be smaller
-  .dcg-mq-cursor {
-    border: 1.5px solid black;
-    margin: 0 -1.5px;
+.compact-view-enabled {
+  .dcg-smart-textarea-container {
+    font-size: var(--text-font-size) !important;
   }
-
-  // expressions in general
-  .dcg-inFolder .dcg-main {
-    margin-left: 30px !important;
-  }
-  .dcg-caret-container {
-    padding: 7px !important;
-    margin-left: -8px !important;
-    transform: scale(0.8);
-    margin-top: -5px;
-  }
-  .dcg-fade-container {
-    padding-bottom: 0 !important;
-  }
-  .dcg-tab .dcg-circular-icon-container {
-    transform: translate(11px, -18px) scale(0.5) !important;
-  }
-  .dcg-icon-remove {
-    transform: translate(10px, -10px) scale(0.6);
-  }
-  .dcg-expressionitem {
-    border-color: #666666;
-  }
-  .dcg-icon-text {
-    left: initial !important;
-    right: 5% !important;
-  }
-
-  // slider
-  .dcg-slider-container {
-    min-height: 0 !important;
-  }
-  .dcg-track .dcg-graphic {
-    height: 2px !important;
-    background-color: #999999 !important;
-  }
-  .dcg-thumb .dcg-graphic {
-    width: 0 !important;
-    height: 0 !important;
-  }
-  .dcg-thumb .dcg-center {
-    transform: translateY(-2px) scale(0.4) !important;
-  }
-  .dcg-thumb:hover .dcg-center {
-    transform: translateY(-2px) scale(0.8) !important;
-  }
-
-  // evaluation box
+  .dcg-main,
   .dcg-evaluation-container {
-    position: absolute;
-    right: 15px;
-    top: 2px;
-    max-width: 10% !important;
-    overflow: hidden !important;
-    transition: max-width 0.25s, overflow 0.25s;
+    padding: 0 35px !important;
+    margin-left: 4px !important;
+    font-size: calc(
+      max(var(--text-font-size), var(--minimum-font-size))
+    ) !important;
   }
-  .dcg-evaluation-container:hover {
-    max-width: 100% !important;
-    overflow: auto !important;
-  }
-  .dcg-color-evaluation {
-    width: 12px !important;
-    height: 12px !important;
-  }
-  .dcg-typeset-math {
-    padding: 0px !important;
+  .dcg-mq-bracket-container {
+    font-size: var(--bracket-font-size-factor) !important;
   }
 
-  // tables
-  .dcg-cell {
-    padding: 0px !important;
-  }
-  .dcg-table-icon-container {
-    transform: scale(0.5);
-    margin-left: -10px !important;
-    z-index: 2;
+  &.compact-view-no-separating-lines {
+    .dcg-expressionitem:not(.dcg-selected) {
+      border: none;
+    }
+    .dcg-expressionitem:not(.dcg-expressionfolder):nth-child(2n) {
+      background-color: #f5f5f5;
+    }
+    .dcg-expressionfolder {
+      background-color: #e9e8f8;
+    }
   }
 
-  // settings
-  .dcg-exp-action-button {
-    padding: 0 !important;
-    width: 14px !important;
-    height: 14px !important;
-    transform: scale(0.7) translateY(-5px);
+  &.compact-view-remove-spacing-enabled {
+    // make cursor/caret more obvious since it'll be smaller
+    .dcg-mq-cursor {
+      border: 1.5px solid black;
+      margin: 0 -1.5px;
+    }
+
+    // expressions in general
+    .dcg-inFolder .dcg-main {
+      margin-left: 30px !important;
+    }
+    .dcg-caret-container {
+      padding: 7px !important;
+      margin-left: -8px !important;
+      transform: scale(0.8);
+      margin-top: -5px;
+    }
+    .dcg-fade-container {
+      padding-bottom: 0 !important;
+    }
+    .dcg-tab .dcg-circular-icon-container {
+      transform: translate(11px, -18px) scale(0.5) !important;
+    }
+    .dcg-icon-remove {
+      transform: translate(10px, -10px) scale(0.6);
+    }
+    &:not(.compact-view-no-separating-lines) {
+      .dcg-expressionitem:not(.dcg-selected) {
+        border-top-color: #777777;
+      }
+    }
+    .dcg-icon-text {
+      left: initial !important;
+      right: 5% !important;
+    }
+    .dcg-expressionitem.dcg-inFolder .dcg-fade-container:after {
+      border-left-color: #000000aa;
+    }
+    .dcg-expression-icon-container {
+      right: 0 !important;
+      top: 50% !important;
+      transform: scale(0.7);
+    }
+
+    // slider
+    .dcg-slider-container {
+      min-height: 0 !important;
+    }
+    .dcg-track .dcg-graphic {
+      height: 2px !important;
+      background-color: #999999 !important;
+    }
+    .dcg-thumb .dcg-graphic {
+      width: 0 !important;
+      height: 0 !important;
+    }
+    .dcg-thumb .dcg-center {
+      transform: translateY(-2px) scale(0.4) !important;
+    }
+    .dcg-thumb:hover .dcg-center {
+      transform: translateY(-2px) scale(0.8) !important;
+    }
+
+    // evaluation box
+    .dcg-evaluation-container {
+      position: absolute;
+      right: 15px;
+      top: 2px;
+      max-width: 10% !important;
+      overflow: hidden !important;
+      transition: max-width 0.25s, overflow 0.25s;
+    }
+    .dcg-evaluation-container:hover {
+      max-width: 100% !important;
+      overflow: auto !important;
+    }
+    .dcg-color-evaluation {
+      width: 12px !important;
+      height: 12px !important;
+    }
+    .dcg-typeset-math {
+      padding: 0px !important;
+    }
+
+    // tables
+    .dcg-cell {
+      padding: 0px !important;
+    }
+    .dcg-table-icon-container {
+      transform: scale(0.5);
+      margin-left: -10px !important;
+      z-index: 2;
+    }
+
+    // settings
+    .dcg-exp-action-button {
+      padding: 0 !important;
+      width: 14px !important;
+      height: 14px !important;
+      transform: scale(0.7) translateY(-5px);
+    }
   }
 }

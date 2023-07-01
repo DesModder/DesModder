@@ -204,3 +204,5 @@ compact-view-opt-minimumFontSize-name = Min Font Size
 compact-view-opt-minimumFontSize-desc = The minimum possible math font size. Overrides Bracket Font Size Factor.
 compact-view-opt-removeSpacing-name = Remove Spacing
 compact-view-opt-removeSpacing-desc = Removes lots of empty space in the expressions list.
+compact-view-opt-noSeparatingLines-name = No Separating lines
+compact-view-opt-noSeparatingLines-desc = Remove the separating lines between expressions and replace them with alternating colors.

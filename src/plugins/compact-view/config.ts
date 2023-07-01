@@ -38,6 +38,11 @@ export const configList = [
     key: "removeSpacing",
     default: true,
   },
+  {
+    type: "boolean",
+    key: "noSeparatingLines",
+    default: false,
+  },
 ] satisfies readonly ConfigItem[];
 
 export interface Config {
@@ -46,4 +51,5 @@ export interface Config {
   bracketFontSizeFactor: number;
   minimumFontSize: number;
   removeSpacing: boolean;
+  noSeparatingLines: boolean;
 }
