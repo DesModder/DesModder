@@ -229,6 +229,10 @@ function numberOption(
         onChange={inputHandler}
         onInput={inputHandler}
         id={`dsm-settings-item__input-${item.key}`}
+        onUpdate={(e: HTMLInputElement) =>
+          !e.classList.contains("dcg-hovered") &&
+          (e.value = settings[item.key].toString())
+        }
       ></input>
       <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
         <label for={`dsm-settings-item__input-${item.key}`}>
