@@ -101,6 +101,12 @@ declare global {
       strong: any;
       ul: any;
       li: any;
+      table: any;
+      tr: any;
+      th: any;
+      td: any;
+      button: any;
+      br: any;
     }
   }
 }

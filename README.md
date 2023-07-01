@@ -7,6 +7,7 @@ Supercharge your Desmos graph creation and sharing experience with many convenie
   - Render implicit-filled expressions on the GPU
   - Export videos and GIFs of your graphs based on actions or sliders
   - View expressions in a text editor (Beta)
+  - Autocomplete variable names, jump to definitions, and create/use your own documentation.
 - Utility
   - Paste ASCIIMath (such as the results of Wolfram Alpha queries) into Desmos
   - Pin expressions to the top

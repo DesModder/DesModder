@@ -33,9 +33,39 @@ export abstract class SegmentedControlComponent extends ClassComponent<{
 
 export const DesmosSegmentedControl = Fragile.SegmentedControl;
 
+export interface MathQuillFieldOptions {
+  overrideKeystroke: (key: string, evt: KeyboardEvent) => void;
+  autoOperatorNames: Record<string, string>;
+  autoCommands: Record<string, number>;
+}
+
+export interface MQCursor {
+  parent?: MQCursor;
+  latex?: () => string;
+  [-1]: MQCursor | undefined;
+  [1]: MQCursor | undefined;
+  cursorElement?: HTMLElement;
+  ctrlSeq?: string;
+  _el?: HTMLElement;
+}
+
 export interface MathQuillField {
-  keystroke: (key: string, e: KeyboardEvent) => void;
-  latex: () => string;
+  keystroke: (key: string, e?: KeyboardEvent) => void;
+  latex: (input?: string) => string;
+  typedText: (input: string) => void;
+  focus: () => void;
+  blur: () => void;
+  __controller: {
+    options: MathQuillFieldOptions;
+    cursor: {
+      [-1]?: MQCursor;
+      [1]?: MQCursor;
+      cursorElement: HTMLElement;
+      parent?: MQCursor;
+    };
+    container: HTMLElement;
+  };
+  __options: MathQuillFieldOptions;
 }
 
 export abstract class MathQuillViewComponent extends ClassComponent<{

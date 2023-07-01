@@ -7,6 +7,7 @@ import DuplicateHotkey from "./duplicate-hotkey";
 import FindReplace from "./find-replace";
 import FolderTools from "./folder-tools";
 import HideErrors from "./hide-errors";
+import Intellisense from "./intellisense";
 import ManageMetadata from "./manage-metadata";
 import PerformanceInfo from "./performance-info";
 import PillboxMenus from "./pillbox-menus";
@@ -100,6 +101,7 @@ export const keyToPlugin = {
   textMode: TextMode,
   performanceInfo: PerformanceInfo,
   metadata: ManageMetadata,
+  intellisense: Intellisense,
 } satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);
@@ -147,6 +149,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get textMode () { return this.ep["text-mode"]; }
   get performanceInfo () { return this.ep["performance-info"]; }
   get metadata () { return this.ep["manage-metadata"]; }
+  get intellisense () { return this.ep["intellisense"]; }
 }
 
 export type IDToPluginSettings = {

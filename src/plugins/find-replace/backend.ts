@@ -4,6 +4,36 @@ import { Identifier } from "parsing/parsenode";
 import traverse, { Path } from "parsing/traverse";
 import { parseDesmosLatex } from "utils/depUtils";
 
+export const simpleKeys = [
+  "latex",
+  "colorLatex",
+  "pointOpacity",
+  "lineOpacity",
+  "pointSize",
+  "lineWidth",
+] as const;
+export const rootKeys = [
+  ...simpleKeys,
+  "labelSize",
+  "labelAngle",
+  "center",
+  "opacity",
+  "width",
+  "height",
+  "angle",
+  "fillOpacity",
+  "residualVariable",
+  "fps",
+] as const;
+
+export const nestedKeyContainers = [
+  "slider",
+  "parametricDomain",
+  "polarDomain",
+] as const;
+
+export const nestedKeys = ["max", "min", "step"] as const;
+
 function replace(replaceLatex: (s: string) => string) {
   // replaceString is applied to stuff like labels
   // middle group in regex accounts for 1 layer of braces, sufficient for `Print ${a+2}`
@@ -11,26 +41,6 @@ function replace(replaceLatex: (s: string) => string) {
     // `from` should have "global" flag enabled in order to replace all
     return s.replace(/(?<=\$\{)((?:[^{}]|\{[^}]*\})+)(?=\})/g, replaceLatex);
   }
-  const simpleKeys = [
-    "latex",
-    "colorLatex",
-    "pointOpacity",
-    "lineOpacity",
-    "pointSize",
-    "lineWidth",
-  ];
-  const rootKeys = simpleKeys.concat([
-    "labelSize",
-    "labelAngle",
-    "center",
-    "opacity",
-    "width",
-    "height",
-    "angle",
-    "fillOpacity",
-    "residualVariable",
-    "fps",
-  ]);
   const state = Calc.getState();
   const ticker = state.expressions.ticker;
   if (ticker?.handlerLatex !== undefined) {
@@ -45,9 +55,9 @@ function replace(replaceLatex: (s: string) => string) {
         expr[k] = replaceLatex(expr[k]);
       }
     });
-    for (const sub of ["slider", "parametricDomain", "polarDomain"]) {
+    for (const sub of nestedKeyContainers) {
       if (expr[sub]) {
-        ["max", "min", "step"].forEach((k) => {
+        nestedKeys.forEach((k) => {
           if (k in expr[sub]) {
             expr[sub][k] = replaceLatex(expr[sub][k]);
           }
