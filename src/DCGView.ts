@@ -105,6 +105,8 @@ declare global {
       tr: any;
       th: any;
       td: any;
+      button: any;
+      br: any;
     }
   }
 }

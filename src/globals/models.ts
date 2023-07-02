@@ -22,6 +22,7 @@ interface BasicSetExpression {
 }
 
 interface ItemModelBase {
+  index: number;
   id: string;
   folderId?: string;
   secret?: boolean;
@@ -133,6 +134,7 @@ export interface FolderModel {
   title?: string;
   secret?: boolean;
   error?: any;
+  index: number;
 }
 
 export type ItemModel =

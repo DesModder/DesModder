@@ -66,3 +66,25 @@ export function jsx(
 
   return element;
 }
+
+export function get<T extends object, K extends string | symbol | number>(
+  t: T,
+  prop: K
+): K extends keyof T ? T[K] : undefined {
+  // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
+  const obj2 = t as {
+    [Key in string | symbol | number]: Key extends keyof T ? T[Key] : undefined;
+  };
+
+  return obj2[prop];
+}
+
+export function isDescendant(elem: HTMLElement | null, target: HTMLElement) {
+  while (elem instanceof HTMLElement) {
+    if (elem === target) {
+      return true;
+    }
+    elem = elem.parentElement;
+  }
+  return false;
+}

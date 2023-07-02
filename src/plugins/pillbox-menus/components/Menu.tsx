@@ -24,7 +24,13 @@ export function MenuFunc(controller: PillboxMenus) {
 }
 
 const categoryPlugins: Record<string, PluginID[]> = {
-  core: ["builtin-settings", "GLesmos", "video-creator", "text-mode"],
+  core: [
+    "builtin-settings",
+    "GLesmos",
+    "video-creator",
+    "text-mode",
+    "intellisense",
+  ],
   utility: [
     "wolfram2desmos",
     "pin-expressions",

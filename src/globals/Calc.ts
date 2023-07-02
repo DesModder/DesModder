@@ -1,10 +1,10 @@
 import { ItemModel } from "./models";
 import { GraphState } from "@desmodder/graph-state";
+import { MathQuillField } from "components";
 
 export type DispatchedEvent =
   | {
       type:
-        | "keypad/set-minimized"
         | "close-graph-settings"
         | "open-expression-search"
         | "close-expression-search"
@@ -20,7 +20,15 @@ export type DispatchedEvent =
         | "set-none-selected"
         | "toggle-graph-settings"
         | "clear-unsaved-changes"
-        | "undo";
+        | "undo"
+        | "tick"
+        | "redo"
+        | "tick-ticker"
+        | "keypad/functions";
+    }
+  | {
+      type: "keypad/set-minimized";
+      minimized: boolean;
     }
   | {
       type:
@@ -29,7 +37,8 @@ export type DispatchedEvent =
         | "duplicate-expression"
         | "convert-image-to-draggable"
         | "create-sliders-for-item"
-        | "toggle-item-hidden";
+        | "toggle-item-hidden"
+        | "delete-item-and-animate-out";
       id: string;
     }
   | {
@@ -49,7 +58,7 @@ export type DispatchedEvent =
     }
   | {
       type: "set-focus-location";
-      location: { type: string };
+      location: { type: "expression"; id: string } | { type: string };
     }
   | {
       type: "on-evaluator-changes";
@@ -64,7 +73,21 @@ export type DispatchedEvent =
         fromTextMode?: boolean;
       };
       state: GraphState;
-    };
+    }
+  | {
+      // Note: this has more parameters. I just haven't found a need for them yet.
+      type: "set-item-latex";
+      latex: string;
+      id: string;
+    }
+  | {
+      type: "on-special-key-pressed";
+      key: string;
+      // used in compact-view plugin
+      forceSwitchExpr?: boolean;
+    }
+  | { type: "set-folder-collapsed"; id: string; isCollapsed: boolean }
+  | { type: "set-item-colorLatex"; id: string; colorLatex: string };
 
 /**
  * Evaluator change: a change set associated with a single id, passed back from
@@ -140,9 +163,13 @@ interface Toast {
 }
 
 interface CalcPrivate {
+  focusedMathQuill: {
+    mq: MathQuillField;
+  };
   /// / undocumented, may break
   controller: {
     // _removeExpressionSynchronously(model: ItemModel): void;
+    handleDispatchedAction: (evt: DispatchedEvent) => void;
     _toplevelReplaceItemAt: (
       index: number,
       model: ItemModel,
@@ -179,7 +206,18 @@ interface CalcPrivate {
         killWorker: () => void;
       };
     };
-    listModel: unknown;
+    listModel: {
+      // add properties as needed
+      __itemModelArray: {
+        id: string;
+        colorLatex: string;
+        folderId: string;
+        type: "folder" | "expression";
+      }[];
+      __itemIdToModel: Record<string, ItemModel>;
+
+      drawOrder: string[];
+    };
     _addItemToEndFromAPI: (item: ItemModel) => void;
     _showToast: (toast: Toast) => void;
     getViewState: () => {

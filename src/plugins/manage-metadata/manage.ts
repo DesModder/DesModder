@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 import Metadata, { Expression } from "./interface";
 import migrateToLatest from "./migrate";
-import { ItemModel } from "globals/models";
+import { FolderModel, TextModel } from "globals/models";
 import { Calc, Console } from "globals/window";
 import { List } from "utils/depUtils";
 
@@ -43,7 +43,9 @@ export function getMetadata() {
   return getBlankMetadata();
 }
 
-function addItemToEnd(state: ItemModel) {
+function addItemToEnd(
+  state: Omit<FolderModel, "index"> | Omit<TextModel, "index">
+) {
   Calc.controller._addItemToEndFromAPI(Calc.controller.createItemModel(state));
 }
 

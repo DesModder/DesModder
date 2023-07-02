@@ -1,7 +1,8 @@
 import { Console } from "../../../globals/window";
 import { ProgramAnalysis } from "../LanguageServer";
+import { latexTreeToString } from "../aug/augLatexToRaw";
 import augToRaw from "../aug/augToRaw";
-import astToAug from "./astToAug";
+import astToAug, { childExprToAug } from "./astToAug";
 import { error } from "./diagnostics";
 import { parse } from "./textToAST";
 import { GraphState } from "@desmodder/graph-state";
@@ -23,5 +24,15 @@ export default function textToRaw(
       },
       null,
     ];
+  }
+}
+
+export function textModeExprToLatex(tmExpr: string) {
+  const parsedTextMode = parse(tmExpr);
+  const parsedExpr = parsedTextMode.mapIDstmt[1];
+  if (parsedExpr && parsedExpr.type === "ExprStatement") {
+    const aug = childExprToAug(parsedExpr.expr);
+    const latex = latexTreeToString(aug);
+    return latex;
   }
 }
