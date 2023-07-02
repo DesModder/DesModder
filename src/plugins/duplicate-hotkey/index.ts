@@ -1,31 +1,34 @@
 import { PluginController } from "../PluginController";
 import { Calc } from "globals/window";
-import { jquery, keys } from "utils/depUtils";
+import { keys } from "utils/depUtils";
 
 export default class DuplicateHotkey extends PluginController {
   static id = "duplicate-expression-hotkey" as const;
   static enabledByDefault = true;
 
+  exppanel: HTMLElement | null = null;
+
+  onKeydown = this._onKeydown.bind(this);
+  _onKeydown(e: KeyboardEvent) {
+    if (e.ctrlKey && keys.lookupChar(e) === "Q") {
+      const selectedItem = Calc.controller.getSelectedItem();
+      if (!selectedItem) return;
+      Calc.controller.dispatch({
+        type:
+          selectedItem.type === "folder"
+            ? "duplicate-folder"
+            : "duplicate-expression",
+        id: Calc.selectedExpressionId,
+      });
+    }
+  }
+
   afterEnable() {
-    jquery(".dcg-exppanel-outer").on(
-      "keydown.duplicateHotkey",
-      (e: KeyboardEvent) => {
-        if (e.ctrlKey && keys.lookupChar(e) === "Q") {
-          const selectedItem = Calc.controller.getSelectedItem();
-          if (!selectedItem) return;
-          Calc.controller.dispatch({
-            type:
-              selectedItem.type === "folder"
-                ? "duplicate-folder"
-                : "duplicate-expression",
-            id: Calc.selectedExpressionId,
-          });
-        }
-      }
-    );
+    this.exppanel = document.querySelector(".dcg-exppanel-outer");
+    this.exppanel?.addEventListener("keydown", this.onKeydown);
   }
 
   afterDisable() {
-    jquery(".dcg-exppanel-outer").off(".duplicateHotkey");
+    this.exppanel?.removeEventListener("keydown", this.onKeydown);
   }
 }

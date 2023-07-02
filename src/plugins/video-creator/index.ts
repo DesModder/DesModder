@@ -7,7 +7,6 @@ import { MainPopupFunc } from "./components/MainPopup";
 import { ExpressionModel } from "globals/models";
 import { Calc } from "globals/window";
 import {
-  jquery,
   keys,
   EvaluateSingleExpression,
   getCurrentGraphTitle,
@@ -74,6 +73,14 @@ export default class VideoCreator extends PluginController {
   playPreviewTimeout: number | null = null;
   isPlayPreviewExpanded = false;
 
+  onKeydown = this._onKeydown.bind(this);
+  _onKeydown(e: KeyboardEvent) {
+    if (keys.lookup(e) === "Esc" && this.isPlayPreviewExpanded) {
+      e.stopImmediatePropagation();
+      this.togglePreviewExpanded();
+    }
+  }
+
   afterEnable() {
     Calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
     this._applyDefaultCaptureSize();
@@ -83,17 +90,12 @@ export default class VideoCreator extends PluginController {
       iconClass: "dcg-icon-film",
       popup: () => MainPopupFunc(this),
     });
-    jquery(document).on("keydown.expanded-menu-view", (e: KeyboardEvent) => {
-      if (keys.lookup(e) === "Esc" && this.isPlayPreviewExpanded) {
-        e.stopImmediatePropagation();
-        this.togglePreviewExpanded();
-      }
-    });
+    document.addEventListener("keydown", this.onKeydown);
   }
 
   afterDisable() {
     this.controller.pillboxMenus?.removePillboxButton("dsm-vc-menu");
-    jquery(document).off(".expanded-menu-view");
+    document.removeEventListener("keydown", this.onKeydown);
   }
 
   graphpaperBoundsChanged() {
@@ -402,18 +404,6 @@ export default class VideoCreator extends PluginController {
 
   togglePreviewExpanded() {
     this.isPlayPreviewExpanded = !this.isPlayPreviewExpanded;
-    if (this.isPlayPreviewExpanded) {
-      jquery(document).on(
-        "keydown.dsm-vc-preview-expanded",
-        (e: KeyboardEvent) => {
-          if (keys.lookup(e) === "Esc") {
-            this.togglePreviewExpanded();
-          }
-        }
-      );
-    } else {
-      jquery(document).off("keydown.dsm-vc-preview-expanded");
-    }
     this.updateView();
   }
 

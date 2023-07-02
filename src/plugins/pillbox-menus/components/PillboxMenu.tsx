@@ -3,7 +3,7 @@ import "./PillboxMenu.less";
 import { Component, jsx } from "DCGView";
 import { If, Switch } from "components/desmosComponents";
 import { Calc } from "globals/window";
-import { jquery, keys } from "utils/depUtils";
+import { keys } from "utils/depUtils";
 
 export default class PillboxMenu extends Component<{
   controller: PillboxMenus;
@@ -60,29 +60,50 @@ export default class PillboxMenu extends Component<{
     return ".dsm-menu-view" + (this.horizontal ? "-horizontal" : "");
   }
 
+  onKeydown = this._onKeydown.bind(this);
+  _onKeydown(e: KeyboardEvent) {
+    if (keys.lookup(e) === "Esc") {
+      e.stopImmediatePropagation();
+      this.controller.closeMenu();
+    }
+  }
+
+  generalEventHandler = this._generalEventHandler.bind(this);
+  _generalEventHandler(e: Event) {
+    if (e.type === "keydown") {
+      const ek = e as KeyboardEvent;
+      if (ek.key !== "Enter" && ek.key !== " ") return;
+    }
+    if (this.eventShouldCloseMenu(e)) {
+      this.controller.closeMenu();
+    }
+  }
+
+  generalEventNames = [
+    "keydown",
+    "mousedown",
+    "pointerdown",
+    "touchstart",
+    "wheel",
+  ];
+
   didMountContainer() {
     if (Calc.controller.isGraphSettingsOpen()) {
       Calc.controller.dispatch({
         type: "close-graph-settings",
       });
     }
-    jquery(document).on(
-      `dcg-tapstart${this.suffix()} wheel${this.suffix()}`,
-      (e: Event) => {
-        if (this.eventShouldCloseMenu(e)) {
-          this.controller.closeMenu();
-        }
-      }
+    this.generalEventNames.forEach((name) =>
+      document.addEventListener(name, this.generalEventHandler)
     );
-    jquery(document).on(`keydown${this.suffix()}`, (e: KeyboardEvent) => {
-      if (keys.lookup(e) === "Esc") {
-        this.controller.closeMenu();
-      }
-    });
+    document.addEventListener("keydown", this.onKeydown);
   }
 
   didUnmountContainer() {
-    jquery(document).off(this.suffix());
+    this.generalEventNames.forEach((name) =>
+      document.removeEventListener(name, this.generalEventHandler)
+    );
+    document.removeEventListener("keydown", this.onKeydown);
   }
 
   index() {
@@ -114,11 +135,12 @@ export default class PillboxMenu extends Component<{
 
   eventShouldCloseMenu(e: Event) {
     // this.node refers to the generated node from DCGView
-    const el = jquery(e.target);
+    const el = e.target;
+    if (!(el instanceof Element)) return false;
     return (
-      !el.closest(".dsm-menu-container").length &&
-      !el.closest(".dsm-pillbox-and-popover").length &&
-      !el.closest(".dsm-action-menu").length
+      !el.closest(".dsm-menu-container") &&
+      !el.closest(".dsm-pillbox-and-popover") &&
+      !el.closest(".dsm-action-menu")
     );
   }
 }
