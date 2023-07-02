@@ -145,6 +145,7 @@ export default class Multiline extends PluginController<Config> {
   };
 
   mousedownHandler = () => {
+    // get the mathquill cursor position x
     setTimeout(() => {
       const cursor = document.querySelector(".dcg-mq-cursor");
       if (cursor) {
