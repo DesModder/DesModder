@@ -14,7 +14,7 @@ import { GenericSettings, PluginID, TransparentPlugins } from "../plugins";
 import CalcType from "./Calc";
 import { ItemModel } from "./models";
 
-interface windowConfig extends Window {
+export interface DWindow extends Window {
   Calc: CalcType;
   DesModder: any;
   DSM: TransparentPlugins;
@@ -29,7 +29,7 @@ interface windowConfig extends Window {
   };
 }
 
-declare let window: windowConfig;
+declare let window: DWindow;
 
 export default window;
 
