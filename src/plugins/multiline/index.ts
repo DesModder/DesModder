@@ -87,16 +87,22 @@ export default class Multiline extends PluginController<Config> {
         symbol: ",",
         minWidth: this.settings.widthBeforeMultiline,
         mode: CollapseMode.Always,
+        priority: 1,
+        indent: 0,
       };
       const equalsBreaker = {
         symbol: "=",
         minWidth: this.settings.widthBeforeMultiline,
         mode: CollapseMode.Always,
+        priority: 1,
+        indent: 20,
       };
       const arithmeticBreakers = ["+", "−", "·"].map((s) => ({
         symbol: s,
         minWidth: this.settings.widthBeforeMultiline,
         mode: CollapseMode.AtMaxWidth,
+        priority: 0,
+        indent: 20,
       }));
 
       // add line breaks

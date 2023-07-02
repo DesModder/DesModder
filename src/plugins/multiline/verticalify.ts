@@ -88,6 +88,8 @@ interface VerticalifyOptions {
         symbol: string; // text to be collapsed
         minWidth: number; // min width for collapsing to be considered
         mode: CollapseMode; // normal word wrap, or collapse after every instance if too long?
+        priority: number; // where should breaks occur first?
+        indent: number; // amount to indent after the line break
       }[];
     }
   >;
@@ -206,6 +208,7 @@ export function verticalify(
             child.dataset.isLineBreak = "true";
             child.dataset.originalSymbol = s.symbol;
             child.innerHTML = s.symbol + "<br />";
+            child.style.setProperty("--line-break-indent", `${s.indent}px`);
             if (elem instanceof HTMLElement) elem.dataset.isMultiline = "true";
           });
           accumulatedWidth = 0;

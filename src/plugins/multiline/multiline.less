@@ -10,4 +10,10 @@
   .dcg-mathitem:not(.dcg-selected) .dcg-mq-cursor {
     display: none;
   }
+
+  [data-is-line-break]::after {
+    content: "";
+    display: inline-block;
+    width: var(--line-break-indent);
+  }
 }
