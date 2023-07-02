@@ -7,7 +7,7 @@ export const configList = [
     default: 12,
     min: 0,
     max: 100,
-    step: 0.001,
+    step: 1,
   },
   {
     type: "number",
@@ -15,7 +15,7 @@ export const configList = [
     default: 14,
     min: 0,
     max: 100,
-    step: 0.001,
+    step: 1,
   },
   {
     type: "number",
@@ -31,7 +31,7 @@ export const configList = [
     default: 10,
     min: 0,
     max: 100,
-    step: 0.001,
+    step: 1,
   },
   {
     type: "boolean",

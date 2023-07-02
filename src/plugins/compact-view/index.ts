@@ -4,11 +4,7 @@ import "./compact.less";
 import { Config, configList } from "./config";
 
 function toggleBodyClass(className: string, bool: boolean) {
-  if (bool) {
-    document.body.classList.add(className);
-  } else {
-    document.body.classList.remove(className);
-  }
+  document.body.classList.toggle(className, bool);
 }
 
 export default class CompactView extends PluginController<Config> {
