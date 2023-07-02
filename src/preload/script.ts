@@ -21,7 +21,6 @@ function tryRunDesModder() {
 let scriptURL: string;
 
 function runDesModder() {
-  setupDispatchOverride();
   injectScript(scriptURL);
 }
 

@@ -6,7 +6,7 @@ export const configList = [
     default: 300,
     min: 0,
     max: Infinity,
-    step: 0.001,
+    step: 1,
     key: "widthBeforeMultiline",
   },
   {
@@ -19,7 +19,7 @@ export const configList = [
     default: 1000,
     min: 0,
     max: Infinity,
-    step: 0.001,
+    step: 1,
     key: "multilinifyDelayAfterEdit",
     shouldShow(current) {
       return current.automaticallyMultilinify;
