@@ -22,6 +22,8 @@ Options have to be after an alone `--` to get passed to jest instead of npm.
 
 Create an integration test with `[name].int.test.ts`.
 
+If you get an error "TargetCloseError: Protocol error (Runtime.callFunctionOn): Target closed," you probably forgot an `await` somewhere.
+
 Integration tests are ran in the "node" environment, since they control a browser from a node process but are not inside the browser.
 
 If you want to see what happens during the tests, edit `headless: "new"` to `headless: false` in [`puppeteer-utils.ts`](./puppeteer-utils.ts).
