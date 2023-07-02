@@ -1,3 +1,7 @@
+.lerp2(@a, @b) {
+  @r: calc((@a) + ((@b) - (@a)) * var(--dsm-compact-mode-multiplier));
+}
+
 // force an increase in specificity
 .compact-view-enabled.compact-view-enabled.compact-view-enabled.compact-view-enabled.compact-view-enabled {
   .dcg-smart-textarea-container {
@@ -40,20 +44,21 @@
     }
     .dcg-main,
     .dcg-evaluation-container {
-      padding: 0 35px;
-      padding-right: 12.5px;
+      padding-top: .lerp2(15px, 0px) [];
+      padding-left: .lerp2(53px, 35px) [];
+      padding-bottom: .lerp2(9px, 0px) [];
+      padding-right: .lerp2(35px, 12.5px) [];
       margin-left: 4px;
     }
 
     // expressions in general
     .dcg-inFolder .dcg-main {
-      margin-left: 30px;
+      margin-left: .lerp2(20px, 30px) [];
     }
     .dcg-caret-container {
-      padding: 7px;
-      margin-left: -8px;
-      transform: scale(0.8);
-      margin-top: -5px;
+      transform: scale(.lerp2(1, 0.8) []);
+      padding-left: .lerp2(10px, 0px) [];
+      padding-top: .lerp2(18px, 4px) [];
     }
     .dcg-fade-container {
       padding-bottom: 0;
@@ -69,12 +74,12 @@
 
     // icons to the left of the expressions bar
     .dcg-expression-icon-container {
-      right: -10%;
+      right: .lerp2(0%, -10%) [];
       left: unset;
       top: 50%;
-      transform: scale(0.5);
+      transform: scale(.lerp2(1, 0.5) []);
       .dcg-tooltip-hit-area-container {
-        transform: scale(1.3);
+        transform: scale(.lerp2(1, 1.3) []);
       }
     }
     .dcg-icon-text {
@@ -84,7 +89,8 @@
 
     // "x" icon to the right of the expressions
     .dcg-icon-remove {
-      transform: translate(10px, -10px) scale(0.6);
+      transform: translate(.lerp2(0px, 10px) [], .lerp2(0px, -10px) [])
+        scale(.lerp2(1, 0.6) []);
     }
 
     // slider
@@ -127,10 +133,10 @@
 
     // settings
     .dcg-expression-edit-actions .dcg-exp-action-button {
-      padding: 0;
-      width: 14px;
-      height: 14px;
-      transform: scale(0.7) translateY(-5px);
+      padding: .lerp2(12px, 0px) [] .lerp2(10px, 0px) [];
+      width: .lerp2(44px, 14px) [];
+      height: .lerp2(44px, 14px) [];
+      transform: scale(.lerp2(1, 0.7) []) translateY(.lerp2(0px, -5px) []);
     }
   }
 }

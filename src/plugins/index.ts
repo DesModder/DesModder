@@ -46,6 +46,7 @@ export interface ConfigItemNumber extends ConfigItemGeneric {
   min: number;
   max: number;
   step: number;
+  variant?: "range" | "number";
 }
 
 export type ConfigItem =

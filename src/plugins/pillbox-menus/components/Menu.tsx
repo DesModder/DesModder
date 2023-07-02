@@ -221,7 +221,7 @@ function numberOption(
   return (
     <div class="dsm-settings-item dsm-settings-number">
       <input
-        type="number"
+        type={numItem.variant ?? "number"}
         min={() => numItem.min}
         max={() => numItem.max}
         step={() => numItem.step}

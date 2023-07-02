@@ -36,11 +36,6 @@ export const configList = [
   },
   {
     type: "boolean",
-    key: "removeSpacing",
-    default: true,
-  },
-  {
-    type: "boolean",
     key: "noSeparatingLines",
     default: false,
   },
@@ -50,6 +45,15 @@ export const configList = [
     default: true,
     shouldShow: (config) => config.noSeparatingLines,
   },
+  {
+    type: "number",
+    min: 0,
+    max: 1,
+    step: 0.001,
+    default: 1,
+    key: "compactFactor",
+    variant: "range",
+  },
 ] satisfies readonly ConfigItem[];
 
 export interface Config {
@@ -57,7 +61,7 @@ export interface Config {
   mathFontSize: number;
   bracketFontSizeFactor: number;
   minimumFontSize: number;
-  removeSpacing: boolean;
   noSeparatingLines: boolean;
   highlightAlternatingLines: boolean;
+  compactFactor: number;
 }

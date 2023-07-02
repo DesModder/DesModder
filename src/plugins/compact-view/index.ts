@@ -15,7 +15,7 @@ export default class CompactView extends PluginController<Config> {
   afterConfigChange(): void {
     toggleBodyClass(
       "compact-view-remove-spacing-enabled",
-      this.settings.removeSpacing
+      this.settings.compactFactor > 0
     );
     toggleBodyClass(
       "compact-view-no-separating-lines",
@@ -42,6 +42,10 @@ export default class CompactView extends PluginController<Config> {
     document.body.style.setProperty(
       "--minimum-font-size",
       `${this.settings.minimumFontSize}px`
+    );
+    document.body.style.setProperty(
+      "--dsm-compact-mode-multiplier",
+      `${this.settings.compactFactor}`
     );
   }
 
