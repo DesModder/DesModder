@@ -125,11 +125,6 @@ export default class Intellisense extends PluginController {
             i.variableName === this.partialFunctionCall?.ident &&
             i.type === "function"
         ) as BoundIdentifierFunction;
-      console.log(
-        "pfc",
-        this.partialFunctionCall,
-        this.partialFunctionCallIdent
-      );
 
       // if the user is in a partial function call,
       // find its documentation if it exists

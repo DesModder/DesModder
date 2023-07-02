@@ -147,8 +147,6 @@ function tryGetMathquillIdent(
     identString.replace(" _{ }", "")
   );
 
-  console.log(identString, normalizedIdentStr);
-
   if (normalizedIdentStr) {
     if (!hasSubscript) {
       goToEnd = 0;
@@ -215,7 +213,6 @@ export function getPartialFunctionCall(
         cursor?.[1]?.ctrlSeq === "\\left("
       ) {
         const str = latexStringToIdentifierString(ltx2 + ltx);
-        console.log(str, paramIndex);
         return {
           ident: str as string,
           paramIndex,
