@@ -128,24 +128,33 @@ function tryGetMathquillIdent(
     }
   }
 
+  let hasSubscript = false;
+
   // get optional subscript
   if (node && isSubscript(node)) {
     latexSegments.push(node.latex?.());
 
     backspaces += (node.latex?.()?.length ?? 4) - 3;
 
+    hasSubscript = true;
+
     goToEnd++;
   }
 
   const identString = latexSegments.filter((e) => e).join("");
 
-  const normalizedIdentStr = latexStringToIdentifierString(identString);
+  const normalizedIdentStr = latexStringToIdentifierString(
+    identString.replace(" _{ }", "")
+  );
 
   if (normalizedIdentStr) {
-    if (normalizedIdentStr.length === 1) {
+    if (!hasSubscript) {
       goToEnd = 0;
       backspaces = 1;
+    } else {
+      backspaces = Math.max(backspaces, 2);
     }
+
     return {
       ident: normalizedIdentStr,
       type: "",
@@ -197,9 +206,15 @@ export function getPartialFunctionCall(
           ident: latexStringToIdentifierString(ltx) as string,
           paramIndex,
         };
-      } else if (ltx2 && ltx && isIdentStr(ltx2 + ltx)) {
+      } else if (
+        ltx2 &&
+        ltx &&
+        isIdentStr(ltx2 + ltx) &&
+        cursor?.[1]?.ctrlSeq === "\\left("
+      ) {
+        const str = latexStringToIdentifierString(ltx2 + ltx);
         return {
-          ident: latexStringToIdentifierString(ltx2 + ltx) as string,
+          ident: str as string,
           paramIndex,
         };
       }
