@@ -194,3 +194,38 @@ if ($val === 0) {
   }
 }
 ```
+
+## Distinguish NaN, +∞, -∞ in lists.
+
+*Description* `Distinguish NaN, +∞, -∞ in lists.`
+
+I'm really confused. The match doesn't work without *worker_only*, but the code
+runs on the main page, not the worker.
+
+*worker_only*
+
+*Find* => `truncatedLatexLabelDef`
+```js
+function $truncatedLatexLabel($e, $t) {
+    let $r = $numericLabel($e, $t);
+    switch ($r.type) {
+    case "undefined":
+        return "undefined";
+    case "decimal":
+        return $r.value;
+    case "scientific":
+        return $r.mantissa + "\\times10^{" + $r.exponent + "}";
+```
+
+*Replace* `truncatedLatexLabelDef` with
+```js
+function $truncatedLatexLabel($e, $t) {
+    let $r = $numericLabel($e, $t);
+    switch ($r.type) {
+    case "undefined":
+        return DSM.betterEvaluationView ? $r.value : 'undefined';
+    case "decimal":
+        return $r.value;
+    case "scientific":
+        return $r.mantissa + "\\times10^{" + $r.exponent + "}";
+```
