@@ -81,23 +81,27 @@ export default class Multiline extends PluginController<Config> {
       // revert everything to its original state so we have proper width calculations
       unverticalify(f);
 
+      const minWidth =
+        ((window.innerWidth * this.settings.widthBeforeMultiline) / 100) *
+        (window.innerWidth > 450 ? 1 : 3);
+
       // settings for where and how to put line breaks
       const domManipHandlers: (() => void)[] = [];
       const commaBreaker = {
         symbol: ",",
-        minWidth: this.settings.widthBeforeMultiline,
+        minWidth,
         mode: CollapseMode.Always,
         indent: 0,
       };
       const equalsBreaker = {
         symbol: "=",
-        minWidth: this.settings.widthBeforeMultiline,
+        minWidth,
         mode: CollapseMode.Always,
         indent: 20,
       };
       const arithmeticBreakers = ["+", "−", "·"].map((s) => ({
         symbol: s,
-        minWidth: this.settings.widthBeforeMultiline,
+        minWidth,
         mode: CollapseMode.AtMaxWidth,
         indent: 20,
       }));
@@ -122,7 +126,7 @@ export default class Multiline extends PluginController<Config> {
             },
             piecewise: { symbols: [commaBreaker] },
           },
-          skipWidth: this.settings.widthBeforeMultiline,
+          skipWidth: minWidth,
           minPriority: 0,
           maxPriority: 1,
         }
@@ -159,6 +163,10 @@ export default class Multiline extends PluginController<Config> {
     });
   };
 
+  resizeHandler = () => {
+    this.afterConfigChange();
+  };
+
   dispatcherID: string | undefined;
 
   customDispatcherID: number | undefined;
@@ -166,6 +174,7 @@ export default class Multiline extends PluginController<Config> {
   afterEnable() {
     document.addEventListener("keydown", this.keydownHandler);
     document.addEventListener("mousedown", this.mousedownHandler);
+    document.addEventListener("resize", this.resizeHandler);
 
     this.afterConfigChange();
 
@@ -212,6 +221,7 @@ export default class Multiline extends PluginController<Config> {
   afterDisable() {
     document.removeEventListener("keydown", this.keydownHandler);
     document.removeEventListener("mousedown", this.mousedownHandler);
+    document.removeEventListener("resize", this.resizeHandler);
 
     this.unmultilineExpressions();
     document.body.classList.remove("multiline-expression-enabled");

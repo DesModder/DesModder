@@ -3,7 +3,7 @@ import { ConfigItem } from "plugins";
 export const configList = [
   {
     type: "number",
-    default: 300,
+    default: 100,
     min: 0,
     max: Infinity,
     step: 1,
