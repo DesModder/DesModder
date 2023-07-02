@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const rulesDirPlugin = require("eslint-plugin-rulesdir");
 rulesDirPlugin.RULES_DIR = "scripts/eslint-rules";
 

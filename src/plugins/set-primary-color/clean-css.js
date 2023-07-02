@@ -10,6 +10,7 @@
  *   npx prettier --write _overrides.less
  */
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const fs = require("fs");
 
 let css = fs.readFileSync("raw.css").toString();

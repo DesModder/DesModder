@@ -66,9 +66,8 @@ function pluginsForceDisabled(items: UntrustedInitialData) {
 }
 
 function pluginSettings(items: UntrustedInitialData) {
-  const settingsDown: Record<PluginID, GenericSettings> = structuredClone(
-    getItem(items, StorageKeys.pluginSettings)
-  );
+  const settingsDown: Record<PluginID, GenericSettings | undefined> =
+    structuredClone(getItem(items, StorageKeys.pluginSettings));
   // Hide secret key from web page
   if (settingsDown.wakatime?.secretKey)
     settingsDown.wakatime.secretKey = "????????-????-????-????-????????????";
