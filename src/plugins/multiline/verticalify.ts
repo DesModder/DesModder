@@ -88,13 +88,14 @@ interface VerticalifyOptions {
         symbol: string; // text to be collapsed
         minWidth: number; // min width for collapsing to be considered
         mode: CollapseMode; // normal word wrap, or collapse after every instance if too long?
-        priority: number; // where should breaks occur first?
         indent: number; // amount to indent after the line break
       }[];
     }
   >;
   // skip parsing if width is less than this
   skipWidth: number;
+  minPriority: number;
+  maxPriority: number;
 }
 
 export function unverticalify(elem: Element) {
@@ -156,30 +157,35 @@ export function verticalify(
   let hadSubscriptLast = false;
   if (elem instanceof HTMLElement) delete elem.dataset.isMultiline;
 
-  let beforeEquals = false;
-
-  // detect if root element has an equals sign
-  // so we can specifically handle function signatures
-  // separately from function calls
-  if (context.containerType === "root") {
-    for (const child of children) {
-      if (child.innerHTML.startsWith("=")) beforeEquals = true;
-    }
-  }
-
   // get width to decide whether to collapse in the first place
   const totalWidth =
     context.containerType === "root" && elem instanceof HTMLElement
       ? childWidthSum(elem)
       : elem.getBoundingClientRect().width;
 
-  let accumulatedWidth = 0;
-  // collapse children
+  // remove all the line breaks to prevent width wrapping issues and whatnot
   for (const child of children) {
-    // indicate that we've reached the equals sign
-    if (context.containerType === "root" && child.innerHTML.startsWith("="))
-      beforeEquals = false;
+    if (child instanceof HTMLElement && child.dataset.isLineBreak) {
+      context.domManipHandlers.push(() => {
+        child.innerHTML = child.dataset.originalSymbol ?? "";
+        delete child.dataset.isLineBreak;
+      });
+    }
+  }
 
+  let approxListSize = 0;
+  if (context.containerType === "list") {
+    for (const child of children) {
+      if (child.innerHTML.startsWith(",")) {
+        approxListSize++;
+      }
+    }
+  }
+
+  let accumulatedWidth = 0;
+
+  // add line breaks
+  for (const child of children) {
     const width = child.getBoundingClientRect().width;
 
     // accumulate width so we know when to break
@@ -198,7 +204,9 @@ export function verticalify(
         // can this element cause a line break?
         if (
           child.innerHTML.startsWith(s.symbol) &&
-          ((s.mode === CollapseMode.Always && totalWidth > s.minWidth) ||
+          (((s.mode === CollapseMode.Always ||
+            (context.containerType === "list" && approxListSize < 20)) &&
+            totalWidth > s.minWidth) ||
             (s.mode === CollapseMode.AtMaxWidth &&
               accumulatedWidth > s.minWidth))
         ) {
@@ -213,19 +221,28 @@ export function verticalify(
           });
           accumulatedWidth = 0;
           break;
-
-          // if it can't and it is a line break somehow, make it not a line break
-        } else {
-          // remove a line break from this element
-          if (child.dataset.isLineBreak) {
-            context.domManipHandlers.push(() => {
-              child.innerHTML = child.dataset.originalSymbol ?? "";
-              delete child.dataset.isLineBreak;
-            });
-          }
         }
       }
     }
+  }
+
+  // detect if root element has an equals sign
+  // so we can specifically handle function defs
+  // separately from function calls
+  let beforeEquals = false;
+  if (context.containerType === "root") {
+    for (const child of children) {
+      if (child.innerHTML.startsWith("=")) beforeEquals = true;
+    }
+  }
+
+  // collapse children
+  for (const child of children) {
+    // indicate that we've reached the equals sign
+    if (context.containerType === "root" && child.innerHTML.startsWith("="))
+      beforeEquals = false;
+
+    const width = child.getBoundingClientRect().width;
 
     // verticalify child
     if (width > options.skipWidth) {
