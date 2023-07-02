@@ -4,7 +4,7 @@ export const configList = [
   {
     type: "number",
     key: "textFontSize",
-    default: 12,
+    default: 16,
     min: 0,
     max: 100,
     step: 1,
@@ -12,7 +12,7 @@ export const configList = [
   {
     type: "number",
     key: "mathFontSize",
-    default: 14,
+    default: 18,
     min: 0,
     max: 100,
     step: 1,
@@ -20,7 +20,7 @@ export const configList = [
   {
     type: "number",
     key: "bracketFontSizeFactor",
-    default: 0.9,
+    default: 1,
     min: 0,
     max: 1,
     step: 0.001,
@@ -32,6 +32,7 @@ export const configList = [
     min: 0,
     max: 100,
     step: 1,
+    shouldShow: (config) => config.bracketFontSizeFactor !== 1,
   },
   {
     type: "boolean",
