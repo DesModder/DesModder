@@ -1,6 +1,6 @@
 @font-face {
   font-family: "dsm-icons";
-  src: url("fonts/dsm-icons.woff?ha34ee") format("woff");
+  src: url("fonts/dsm-icons.woff?7audmw") format("woff");
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -22,6 +22,9 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.dsm-icon-magic:before {
+  content: "\e900";
+}
 .dsm-icon-compass2:before {
   content: "\e94a";
 }

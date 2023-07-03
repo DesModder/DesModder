@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const rulesDirPlugin = require("eslint-plugin-rulesdir");
 rulesDirPlugin.RULES_DIR = "scripts/eslint-rules";
 
@@ -18,6 +19,7 @@ module.exports = {
   parser: "@typescript-eslint/parser",
   rules: {
     "rulesdir/no-format-in-ts": "error",
+    "rulesdir/no-expect-promise": "error",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/array-type": "off",
     "@typescript-eslint/strict-boolean-expressions": "off",

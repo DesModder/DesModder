@@ -239,7 +239,9 @@ export class PartialFunctionCallView extends Component<{
               <div class="pfc-latex">
                 <DStaticMathquillView
                   latex={() => {
-                    return this.props.partialFunctionCall()?.ident ?? "";
+                    return identifierStringToLatexString(
+                      this.props.partialFunctionCall()?.ident ?? ""
+                    );
                   }}
                   config={{}}
                 ></DStaticMathquillView>

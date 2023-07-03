@@ -1,5 +1,5 @@
 import { PluginController } from "../PluginController";
-import "glesmos.less";
+import "./glesmos.less";
 import { Calc } from "globals/window";
 
 export default class GLesmos extends PluginController {

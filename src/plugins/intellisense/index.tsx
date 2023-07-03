@@ -202,7 +202,6 @@ export default class Intellisense extends PluginController {
         if (this.latestIdent.ident !== lastIdentStr) this.intellisenseIndex = 0;
       } else {
         this.intellisenseOpts = [];
-        this.canHaveIntellisense = false;
       }
 
       // if there isn't, just get rid of the intellisense window

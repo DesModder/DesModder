@@ -217,7 +217,7 @@ export default class SelectCapture extends Component<{
                 color="light-gray"
                 onTap={() => this.controller.applyDefaultCaptureSize()}
               >
-                <i class="dcg-icon-magic" />
+                <i class="dsm-icon-magic" />
               </Button>
             )}
           </If>
