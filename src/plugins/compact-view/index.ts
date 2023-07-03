@@ -63,11 +63,18 @@ export default class CompactView extends PluginController<Config> {
       ".dcg-mathitem.dcg-expressionitem"
     );
 
+    // go through all math expressions
     for (const item of mathitems) {
       if (item instanceof HTMLElement) {
+        // make sure the math expression has an evaluation in it
+        const evaluation = item.querySelector(".dcg-evaluation");
+        if (!evaluation || !(evaluation instanceof HTMLElement)) continue;
+
+        // get the width of the expression
         const rootblock = item.querySelector(".dcg-main .dcg-mq-root-block");
         const rootBlockWidth = rootblock?.getBoundingClientRect().width ?? 0;
 
+        // get the width of the actual math in the expression
         let rootblockInnerWidth = 0;
         if (rootblock?.firstChild && rootblock?.lastChild) {
           const range = new Range();
@@ -76,16 +83,19 @@ export default class CompactView extends PluginController<Config> {
           rootblockInnerWidth = range.getBoundingClientRect().width;
         }
 
+        // figure out the remaining width that can be used for the evaluation
         const evalMaxWidth = rootBlockWidth - rootblockInnerWidth;
-        const evaluation = item.querySelector(".dcg-evaluation");
-        if (evaluation && evaluation instanceof HTMLElement)
-          evaluation.style.maxWidth = `${Math.max(evalMaxWidth - 5, 20)}px`;
+
+        // set the evaluation's max width so that it fills the available space
+        evaluation.style.maxWidth = `${Math.max(evalMaxWidth - 5, 20)}px`;
       }
     }
   }
 
+  dispatcherID: string | undefined;
+
   afterEnable() {
-    Calc.controller.dispatcher.register((e) => {
+    this.dispatcherID = Calc.controller.dispatcher.register(() => {
       if (!this.settings.hideEvaluations) return;
       this.updateHiddenEvaluations();
     });
@@ -94,6 +104,8 @@ export default class CompactView extends PluginController<Config> {
   }
 
   afterDisable() {
+    if (this.dispatcherID)
+      Calc.controller.dispatcher.unregister(this.dispatcherID);
     document.body.classList.remove("compact-view-enabled");
   }
 }

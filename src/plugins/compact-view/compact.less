@@ -49,6 +49,17 @@
         transition: transform 0.125s, max-width 0.125s;
         transition-delay: overflow 0.25s;
         overflow: hidden;
+        font-size: 0.8em;
+        scrollbar-width: 2px;
+        scrollbar-track-color: black;
+      }
+
+      .dcg-evaluation::-webkit-scrollbar {
+        height: 2px;
+      }
+      .dcg-evaluation::-webkit-scrollbar-thumb {
+        height: 2px;
+        background-color: black;
       }
     }
 
@@ -66,6 +77,7 @@
       }
     }
 
+    // decrease remove icon hitbox so that evaluations can be easily hovered
     .dcg-icon-remove {
       padding-bottom: 0;
       padding-left: 0;
