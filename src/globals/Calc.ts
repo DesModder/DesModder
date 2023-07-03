@@ -169,6 +169,7 @@ interface CalcPrivate {
   };
   /// / undocumented, may break
   controller: {
+    isNarrow: () => boolean;
     // _removeExpressionSynchronously(model: ItemModel): void;
     handleDispatchedAction: (evt: DispatchedEvent) => void;
     _toplevelReplaceItemAt: (
