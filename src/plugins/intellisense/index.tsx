@@ -257,7 +257,9 @@ export default class Intellisense extends PluginController {
     if (focusedmq) this.latestMQ = focusedmq;
     if (
       this.latestMQ &&
-      document.body.contains(getController(this.latestMQ).cursor.cursorElement)
+      document.body.contains(
+        getController(this.latestMQ).cursor.cursorElement ?? null
+      )
     ) {
       // get cursor pos relative to the top left of the mathquill's root element
       const mqRootBlock = getController(this.latestMQ).container.querySelector(
@@ -268,10 +270,10 @@ export default class Intellisense extends PluginController {
       const mqRootBlockRect = mqRootBlock.getBoundingClientRect();
       const rect = getController(
         this.latestMQ
-      ).cursor.cursorElement.getBoundingClientRect();
+      ).cursor.cursorElement?.getBoundingClientRect();
       this.prevCursorPos = {
-        x: rect.x + mqRootBlock.scrollLeft - mqRootBlockRect.x,
-        y: rect.y + mqRootBlock.scrollTop - mqRootBlockRect.y,
+        x: rect?.x ?? 0 + mqRootBlock.scrollLeft - mqRootBlockRect.x,
+        y: rect?.y ?? 0 + mqRootBlock.scrollTop - mqRootBlockRect.y,
       };
     }
   }

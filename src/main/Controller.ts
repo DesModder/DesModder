@@ -155,20 +155,48 @@ export default class MainController extends TransparentPlugins {
       this.setPluginSetting(pluginID, key, !(pluginSettings[key] as boolean));
   }
 
+  postSetPluginSettingsMessage() {
+    postMessageUp({
+      type: "set-plugin-settings",
+      value: this.pluginSettings,
+    });
+  }
+
+  delaySetPluginSettings = false;
+  isPluginSettingsUpToDate = true;
+
+  enqueueSetPluginSettingsMessage() {
+    // return early if setting the plugin settings is currently delayed.
+    if (this.delaySetPluginSettings) {
+      this.isPluginSettingsUpToDate = false;
+      return;
+    }
+
+    // post a message to set the plugin settings
+    this.postSetPluginSettingsMessage();
+    this.delaySetPluginSettings = true;
+
+    // after a second, mark the delay as over
+    // and re-post the plugin settings if necessary
+    setTimeout(() => {
+      this.delaySetPluginSettings = false;
+      if (!this.isPluginSettingsUpToDate) {
+        this.postSetPluginSettingsMessage();
+        this.isPluginSettingsUpToDate = true;
+      }
+    }, 1000);
+  }
+
   setPluginSetting(
     pluginID: PluginID,
     key: string,
-    value: boolean | string,
+    value: boolean | string | number,
     temporary: boolean = false
   ) {
     const pluginSettings = this.pluginSettings[pluginID];
     if (!pluginSettings) return;
     pluginSettings[key] = value;
-    if (!temporary)
-      postMessageUp({
-        type: "set-plugin-settings",
-        value: this.pluginSettings,
-      });
+    if (!temporary) this.enqueueSetPluginSettingsMessage();
     const plugin = this.enabledPlugins[pluginID];
     if (plugin) {
       plugin.settings = pluginSettings;

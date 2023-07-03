@@ -3,7 +3,6 @@ import moduleReplacements from "./moduleReplacements";
 import { fullReplacementCached } from "./replacementHelpers/cacheReplacement";
 import window from "globals/window";
 import injectScript from "utils/injectScript";
-import { setupDispatchOverride } from "utils/listenerHelpers";
 import { postMessageUp, listenToMessageDown, arrayToSet } from "utils/messages";
 import { pollForValue } from "utils/utils";
 
@@ -21,7 +20,6 @@ function tryRunDesModder() {
 let scriptURL: string;
 
 function runDesModder() {
-  setupDispatchOverride();
   injectScript(scriptURL);
 }
 

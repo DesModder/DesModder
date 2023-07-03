@@ -24,7 +24,8 @@ export type DispatchedEvent =
         | "tick"
         | "redo"
         | "tick-ticker"
-        | "keypad/functions";
+        | "keypad/functions"
+        | "ui/container-resized";
     }
   | {
       type: "keypad/set-minimized";
@@ -168,6 +169,7 @@ interface CalcPrivate {
   };
   /// / undocumented, may break
   controller: {
+    isNarrow: () => boolean;
     // _removeExpressionSynchronously(model: ItemModel): void;
     handleDispatchedAction: (evt: DispatchedEvent) => void;
     _toplevelReplaceItemAt: (
