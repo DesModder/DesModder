@@ -39,6 +39,13 @@ export interface MathQuillFieldOptions {
   autoCommands: Record<string, number>;
 }
 
+export interface DomFrag {
+  insAtDirEnd: () => DomFrag;
+  insDirOf: () => DomFrag;
+  removeClass: (cls: string) => DomFrag;
+  addClass: (cls: string) => DomFrag;
+}
+
 export interface MQCursor {
   parent?: MQCursor;
   latex?: () => string;
@@ -47,6 +54,7 @@ export interface MQCursor {
   cursorElement?: HTMLElement;
   ctrlSeq?: string;
   _el?: HTMLElement;
+  domFrag: () => DomFrag;
 }
 
 export interface MathQuillField {
@@ -57,12 +65,7 @@ export interface MathQuillField {
   blur: () => void;
   __controller: {
     options: MathQuillFieldOptions;
-    cursor: {
-      [-1]?: MQCursor;
-      [1]?: MQCursor;
-      cursorElement: HTMLElement;
-      parent?: MQCursor;
-    };
+    cursor: MQCursor;
     container: HTMLElement;
   };
   __options: MathQuillFieldOptions;

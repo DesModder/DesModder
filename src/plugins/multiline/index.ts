@@ -268,7 +268,6 @@ export default class Multiline extends PluginController<Config> {
     const cursorPositions: number[] = [];
 
     const ctrlr = getController(focusedmq);
-    // @ts-expect-error domfrag exists
     const domfragProto = Object.getPrototypeOf(ctrlr.cursor.domFrag());
 
     // prevent the cursor from updating html elements
