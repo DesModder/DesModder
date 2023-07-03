@@ -70,6 +70,9 @@ export class IntellisenseState {
   }
 
   setAllState() {
+    this.boundIdentifiersInExpressions = new Map();
+    this.identifierReferences = new Map();
+    this.identifiersReferencedInExpression = new Map();
     const models = Calc.controller.getAllItemModels();
     for (const model of models) {
       this.handleStateChange(model);
