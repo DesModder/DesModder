@@ -195,4 +195,4 @@ intellisense-jump2def-menu-instructions = has multiple definitions. Pick one to 
 my-expressions-library-name = My Expressions Library
 my-expressions-library-desc = Create and use a reusable library of expressions in multiple graphs.
 my-expressions-library-opt-libraryGraphHashes-name = Library Graph Hashes
-my-expressions-library-opt-libraryGraphHashes-name = A comma-separated list of graph hashes from which to source My Expressions Library expressions.
+my-expressions-library-opt-libraryGraphHashes-desc = A comma-separated list of graph hashes from which to source My Expressions Library expressions.

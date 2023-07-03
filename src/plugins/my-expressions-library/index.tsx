@@ -284,12 +284,32 @@ export default class MyExpressionsLibrary extends PluginController<{
   }
 
   async loadFolder(expr: ExpressionLibraryFolder) {
+    Calc.controller.dispatch({ type: "new-folder" });
+
+    const idx = Calc.controller.getSelectedItem()?.index;
+    if (idx !== undefined) {
+      const folder = Calc.controller.listModel.__itemModelArray[idx];
+      if (folder.type === "folder") {
+        folder.title = expr.text;
+      }
+    }
+
+    Calc.controller.updateTheComputedWorld();
+
     for (const id of expr.expressions) {
       const e = expr.graph.expressions.get(id);
       if (e && e.type !== "folder") {
         await this.loadMathExpression(e);
       }
     }
+  }
+
+  getInsertionStartIndex() {
+    return (
+      Calc.controller.listModel.__itemModelArray.findIndex(
+        (e) => e.id === (Calc.controller.getSelectedItem()?.id ?? "0")
+      ) + 1
+    );
   }
 
   async loadMathExpression(expr: ExpressionLibraryMathExpression) {
@@ -324,10 +344,7 @@ export default class MyExpressionsLibrary extends PluginController<{
         )
     );
 
-    let startIndex =
-      Calc.controller.listModel.__itemModelArray.findIndex(
-        (e) => e.id === (Calc.controller.getSelectedItem()?.id ?? "0")
-      ) + 1;
+    let startIndex = this.getInsertionStartIndex();
 
     // figure out what folder to put expressions into
     const startItem =

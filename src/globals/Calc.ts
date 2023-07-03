@@ -24,7 +24,8 @@ export type DispatchedEvent =
         | "tick"
         | "redo"
         | "tick-ticker"
-        | "keypad/functions";
+        | "keypad/functions"
+        | "new-folder";
     }
   | {
       type: "keypad/set-minimized";
@@ -211,6 +212,7 @@ interface CalcPrivate {
       __itemModelArray: {
         id: string;
         colorLatex: string;
+        title: string;
         folderId: string;
         type: "folder" | "expression";
       }[];
