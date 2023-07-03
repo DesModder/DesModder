@@ -190,3 +190,9 @@ manage-metadata-desc = Manage Metadata, such as GLesmos or pinned/unpinned statu
 intellisense-name = Intellisense
 intellisense-desc = Brings several common IDE features to Desmos, including autocompletion suggestions, function call help, and jump to definition. Documentation here:
 intellisense-jump2def-menu-instructions = has multiple definitions. Pick one to jump to below.
+
+## My Expressions Library
+my-expressions-library-name = My Expressions Library
+my-expressions-library-desc = Create and use a reusable library of expressions in multiple graphs.
+my-expressions-library-opt-libraryGraphHashes-name = Library Graph Hashes
+my-expressions-library-opt-libraryGraphHashes-name = A comma-separated list of graph hashes from which to source My Expressions Library expressions.
