@@ -6,5 +6,7 @@ const config = require("./jest-base.config");
 module.exports = {
   ...config,
   testPathIgnorePatterns: config.testPathIgnorePatterns.concat("\\.unit\\."),
-  testEnvironment: "node",
+  testEnvironment: "./src/tests/puppeteer-environment.js",
+  globalSetup: "./src/tests/setup.js",
+  globalTeardown: "./src/tests/teardown.js",
 };

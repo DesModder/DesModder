@@ -1,26 +1,25 @@
 import { DWindow } from "../globals/window";
-import { join } from "path";
-import puppeteer, { Browser, Page } from "puppeteer";
+import { Page } from "puppeteer";
 
 /** Calc is only available inside evaluate() callbacks and friends, since those
  * stringify the function and evaluate it inside the browser */
 declare let Calc: DWindow["Calc"];
 declare let Desmos: DWindow["Desmos"];
 
-let browser!: Browser;
-
 /** A clean page is one that is equivalent (for all purposes) to a just-opened
  * calculator tab. We introduce this state to avoid a bunch of reloads.
- * But that requires running all tests sequentially. */
+ * But it's slightly risky, if a page isn't quite cleaned up. */
 let cleanPage: Page | undefined;
 
 beforeAll(async () => {
-  browser = await getBrowser();
   cleanPage = await getPage();
-});
+}, 10000);
 
 afterAll(async () => {
-  await browser.close();
+  if (cleanPage) {
+    await cleanPage.close();
+    cleanPage = undefined;
+  }
 });
 
 /** Use if the page is expected to be clean */
@@ -51,29 +50,16 @@ export function testWithPage(
 }
 
 async function getPage() {
-  if (!browser) cleanPage = undefined;
   if (cleanPage) {
     const page = cleanPage;
     // The test can dirty the page immediately.
     cleanPage = undefined;
     return page;
   }
-  browser ??= await getBrowser();
-  const page = await browser.newPage();
+  const page = await (globalThis as any).__BROWSER_GLOBAL__.newPage();
   await page.goto("https://desmos.com/calculator");
   await page.waitForSelector(".dsm-pillbox-and-popover");
   return page;
-}
-
-async function getBrowser() {
-  const pathToExtension = join(process.cwd(), "dist");
-  return await puppeteer.launch({
-    headless: "new",
-    args: [
-      `--disable-extensions-except=${pathToExtension}`,
-      `--load-extension=${pathToExtension}`,
-    ],
-  });
 }
 
 export class Driver {
