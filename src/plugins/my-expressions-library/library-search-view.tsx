@@ -1,9 +1,32 @@
-import MyExpressionsLibrary, { ExpressionLibraryExpression } from ".";
+import MyExpressionsLibrary, {
+  ExpressionLibraryExpression,
+  ExpressionLibraryMathExpression,
+} from ".";
 import "./library-search.less";
 import { ExpressionState } from "@desmodder/graph-state";
-import { Component, jsx, mountToNode } from "DCGView";
+import { ClassComponent, Component, jsx, mountToNode } from "DCGView";
 import { DStaticMathquillView, For } from "components";
 import StaticMathquillView from "components/StaticMathQuillView";
+
+export function expressionLibraryMathExpressionView(
+  expr: ExpressionLibraryMathExpression,
+  observer: IntersectionObserver,
+  container: any
+) {
+  // has to happen in a timeout since dom nodes aren't created immediately
+  setTimeout(() => {
+    const domNode = container._domNode as HTMLLIElement;
+    // @ts-expect-error convenient way of passing handler into intersectionobserver
+    domNode._onEnterView = () => {
+      mountToNode(StaticMathquillView, domNode, {
+        latex: () => expr.latex ?? "",
+      });
+      observer.unobserve(domNode);
+    };
+
+    observer.observe(domNode);
+  }, 0);
+}
 
 export class LibrarySearchView extends Component<{
   plugin: () => MyExpressionsLibrary;
@@ -45,31 +68,39 @@ export class LibrarySearchView extends Component<{
           >
             <ul class="dsm-library-search-exprlist">
               {(expr: ExpressionLibraryExpression) => {
-                const container = (
-                  <li
-                    onClick={(e: MouseEvent) => {
-                      void this.props.plugin().loadExpression(expr);
-                      // e.stopPropagation();
-                      // e.preventDefault();
-                    }}
-                    style={{ "min-height": "20px", "overflow-x": "hidden" }}
-                  ></li>
-                );
-
-                // has to happen in a timeout since dom nodes aren't created immediately
-                setTimeout(() => {
-                  const domNode = container._domNode as HTMLDivElement;
-                  // @ts-expect-error convenient way of passing handler into intersectionobserver
-                  domNode._onEnterView = () => {
-                    mountToNode(StaticMathquillView, domNode, {
-                      latex: () => expr.latex ?? "",
-                    });
-                    observer.unobserve(domNode);
-                  };
-
-                  observer.observe(domNode);
-                }, 0);
-                return container;
+                switch (expr.type) {
+                  case "expression": {
+                    const container = (
+                      <li
+                        onClick={(e: MouseEvent) => {
+                          void this.props.plugin().loadMathExpression(expr);
+                          // e.stopPropagation();
+                          // e.preventDefault();
+                        }}
+                        style={{ "min-height": "20px", "overflow-x": "hidden" }}
+                      ></li>
+                    );
+                    expressionLibraryMathExpressionView(
+                      expr,
+                      observer,
+                      container
+                    );
+                    return container;
+                  }
+                  case "folder": {
+                    return (
+                      <li
+                        class="dsm-library-search-folder"
+                        onClick={() => {
+                          void this.props.plugin().loadFolder(expr);
+                        }}
+                      >
+                        <i class="dcg-icon-new-folder"></i>
+                        {expr.text}
+                      </li>
+                    );
+                  }
+                }
               }}
             </ul>
           </For>

@@ -27,6 +27,7 @@ export interface ExpressionLibraryFolder {
   expressions: Set<string>;
   text: string;
   uniqueID: number;
+  graph: ExpressionLibraryGraph;
 }
 
 export type ExpressionLibraryExpression =
@@ -214,11 +215,6 @@ export default class MyExpressionsLibrary extends PluginController<{
   focusedmq: MathQuillField | undefined;
 
   afterEnable(): void {
-    this.controller.setPluginSetting(
-      "my-expressions-library",
-      "libraryGraphHashes",
-      [["jeiurgihkb", 0]]
-    );
     // add pillbox menu
     this.controller.pillboxMenus?.addPillboxButton({
       id: "dsm-library-menu",
@@ -285,6 +281,15 @@ export default class MyExpressionsLibrary extends PluginController<{
     // this.view = DCGView.mountToNode(LibrarySearchView, searchContainer, {
     //   plugin: () => this,
     // });
+  }
+
+  async loadFolder(expr: ExpressionLibraryFolder) {
+    for (const id of expr.expressions) {
+      const e = expr.graph.expressions.get(id);
+      if (e && e.type !== "folder") {
+        await this.loadMathExpression(e);
+      }
+    }
   }
 
   async loadMathExpression(expr: ExpressionLibraryMathExpression) {
@@ -404,6 +409,8 @@ export default class MyExpressionsLibrary extends PluginController<{
     let uniqueID = 0;
 
     for (const g of graphs) {
+      const newGraph: Partial<ExpressionLibraryGraph> = {};
+
       // maps ident names to expression ids
       const dependencymap = new Map<string, string>();
 
@@ -420,6 +427,7 @@ export default class MyExpressionsLibrary extends PluginController<{
             expressions: new Set(),
             type: "folder",
             uniqueID: uniqueID++,
+            graph: newGraph as ExpressionLibraryGraph,
           });
         }
       }
@@ -439,8 +447,6 @@ export default class MyExpressionsLibrary extends PluginController<{
           }
         }
       }
-
-      const newGraph: Partial<ExpressionLibraryGraph> = {};
 
       newGraph.expressions = new Map(
         (
