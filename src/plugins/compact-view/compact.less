@@ -38,9 +38,7 @@
     }
 
     .dcg-container .dcg-mq-editable-field:not(.dcg-no-fadeout):after {
-      width: 25px;
-      right: -12.5px;
-      background: linear-gradient(to right, #ffffff00, #ffffffff 50%);
+      background: none;
     }
     .dcg-main,
     .dcg-evaluation-container {
@@ -91,6 +89,10 @@
     .dcg-icon-remove {
       transform: translate(.lerp2(0px, 10px) [], .lerp2(0px, -10px) [])
         scale(.lerp2(1, 0.6) []);
+      opacity: 0.5;
+    }
+    .dcg-icon-remove:hover {
+      opacity: 1;
     }
 
     // slider
