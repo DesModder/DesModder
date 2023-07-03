@@ -17,7 +17,9 @@ import {
   SpecificPlugin,
   PluginID,
   plugins,
+  ConfigItemStringArray,
 } from "plugins";
+import { IndexFor } from "utils/utilComponents";
 
 export function MenuFunc(controller: PillboxMenus) {
   return <Menu controller={controller} />;
@@ -185,6 +187,7 @@ export default class Menu extends Component<{
                   ({
                     boolean: booleanOption,
                     string: stringOption,
+                    stringArray: stringArrayOption,
                   }[item.type](this.controller, item, plugin, pluginSettings))
                 }
               </Switch>
@@ -194,6 +197,111 @@ export default class Menu extends Component<{
       </div>
     );
   }
+}
+
+let counter = 0;
+function stringArrayOption(
+  controller: PillboxMenus,
+  item: ConfigItem,
+  plugin: SpecificPlugin,
+  settings: GenericSettings
+) {
+  const option = item as ConfigItemStringArray;
+
+  function set(newValue: readonly (readonly [string, number])[]) {
+    controller.expandedPlugin &&
+      controller.controller.setPluginSetting(
+        controller.expandedPlugin,
+        item.key,
+        newValue
+      );
+  }
+
+  function get() {
+    return settings[item.key] as [string, number][];
+  }
+
+  const inputHandler = (index: () => number) => (evt: InputEvent) => {
+    const newValue = get().map((e, i) =>
+      i === index()
+        ? ([(evt.target as HTMLTextAreaElement).value, e[1]] as const)
+        : e
+    );
+    set(newValue);
+  };
+
+  const keydownHandler = (index: () => number) => (evt: KeyboardEvent) => {
+    if (evt.key === "Enter") {
+      const val = get();
+      set([
+        ...val.slice(0, index() + 1),
+        ["", val.reduce((prev, [_, key]) => Math.max(prev, key), 0) + 1],
+        ...val.slice(index() + 1),
+      ]);
+      evt.preventDefault();
+      evt.target?.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowDown" })
+      );
+      return false;
+    }
+
+    if (evt.key === "ArrowDown") {
+      const elem = evt.target;
+      if (
+        elem instanceof HTMLElement &&
+        elem.nextElementSibling instanceof HTMLTextAreaElement
+      )
+        elem.nextElementSibling.focus();
+    }
+
+    if (evt.key === "ArrowUp") {
+      const elem = evt.target;
+      if (
+        elem instanceof HTMLElement &&
+        elem.previousElementSibling instanceof HTMLTextAreaElement
+      )
+        elem.previousElementSibling.focus();
+    }
+
+    if (
+      evt.key === "Backspace" &&
+      evt.target instanceof HTMLTextAreaElement &&
+      evt.target.value === ""
+    ) {
+      const val = get();
+      evt.target?.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowUp" })
+      );
+      set([...val.slice(0, index()), ...val.slice(index() + 1)]);
+    }
+  };
+
+  return (
+    // not worrying about keys bc strings are cheap
+    <div class="dsm-settings-item dsm-settings-string-array">
+      <IndexFor
+        each={() => get()}
+        key={(e) => e[1]}
+        innerComponent={(children) => <div>{children}</div>}
+      >
+        {(e: [string, number], i: () => number) => {
+          return (
+            <textarea
+              rows={1}
+              onChange={inputHandler(i)}
+              onKeydown={keydownHandler(i)}
+            >
+              {() => e[0]}
+            </textarea>
+          );
+        }}
+      </IndexFor>
+      <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
+        <div class="dsm-settings-label">{configItemName(plugin, item)}</div>
+      </Tooltip>
+      <ResetButton controller={controller} key={item.key} />
+    </div>
+  );
 }
 
 function booleanOption(

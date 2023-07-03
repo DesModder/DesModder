@@ -41,7 +41,15 @@ export interface ConfigItemString extends ConfigItemGeneric {
   default: string;
 }
 
-export type ConfigItem = ConfigItemBoolean | ConfigItemString;
+export interface ConfigItemStringArray extends ConfigItemGeneric {
+  type: "stringArray";
+  default: readonly (readonly [string, number])[];
+}
+
+export type ConfigItem =
+  | ConfigItemBoolean
+  | ConfigItemString
+  | ConfigItemStringArray;
 
 export type GenericSettings = Record<string, any>;
 

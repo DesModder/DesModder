@@ -11,7 +11,8 @@ import Aug from "plugins/text-mode/aug/AugState";
 import { rawNonFolderToAug } from "plugins/text-mode/aug/rawToAug";
 import { textModeExprToLatex } from "plugins/text-mode/down/textToRaw";
 
-export interface ExpressionLibraryExpression {
+export interface ExpressionLibraryMathExpression {
+  type: "expression";
   aug: Aug.ItemAug;
   latex: string;
   // so importing wackscopes works
@@ -20,6 +21,17 @@ export interface ExpressionLibraryExpression {
   graph: ExpressionLibraryGraph;
   raw: ItemState;
 }
+
+export interface ExpressionLibraryFolder {
+  type: "folder";
+  expressions: Set<string>;
+  text: string;
+  uniqueID: number;
+}
+
+export type ExpressionLibraryExpression =
+  | ExpressionLibraryMathExpression
+  | ExpressionLibraryFolder;
 
 export interface ExpressionLibraryGraph {
   // maps expression IDs to expressions
@@ -183,15 +195,14 @@ function jsonEqual(a: any, b: any): boolean {
 window.jsonEqual = jsonEqual;
 
 export default class MyExpressionsLibrary extends PluginController<{
-  libraryGraphHashes: string; // probably a temporary fix
+  libraryGraphHashes: [string, number][]; // probably a temporary fix
 }> {
   static id = "my-expressions-library" as const;
   static enabledByDefault = true;
   static config = [
     {
-      type: "string",
-      variant: "text",
-      default: "",
+      type: "stringArray",
+      default: [["jeiurgihkb", 0]],
       key: "libraryGraphHashes",
     },
   ] as const;
@@ -203,6 +214,11 @@ export default class MyExpressionsLibrary extends PluginController<{
   focusedmq: MathQuillField | undefined;
 
   afterEnable(): void {
+    this.controller.setPluginSetting(
+      "my-expressions-library",
+      "libraryGraphHashes",
+      [["jeiurgihkb", 0]]
+    );
     // add pillbox menu
     this.controller.pillboxMenus?.addPillboxButton({
       id: "dsm-library-menu",
@@ -271,17 +287,18 @@ export default class MyExpressionsLibrary extends PluginController<{
     // });
   }
 
-  async loadExpression(expr: ExpressionLibraryExpression) {
+  async loadMathExpression(expr: ExpressionLibraryMathExpression) {
     this.focusedmq?.focus();
-    const loaded = new Set<ExpressionLibraryExpression>();
+    const loaded = new Set<ExpressionLibraryMathExpression>();
 
-    const loadExpressionInner = (expr: ExpressionLibraryExpression) => {
+    const loadExpressionInner = (expr: ExpressionLibraryMathExpression) => {
       if (loaded.has(expr)) return;
       loaded.add(expr);
 
       for (const childexprID of expr.dependsOn) {
         const childExpr = expr.graph.expressions.get(childexprID);
-        if (childExpr) loadExpressionInner(childExpr);
+        if (childExpr)
+          loadExpressionInner(childExpr as ExpressionLibraryMathExpression);
       }
     };
 
@@ -374,9 +391,9 @@ export default class MyExpressionsLibrary extends PluginController<{
   async loadGraphs() {
     const graphs = (
       await Promise.all(
-        this.settings.libraryGraphHashes
-          .split(",")
-          .map(async (s) => await getGraphState(s))
+        this.settings.libraryGraphHashes.map(
+          async (s) => await getGraphState(s[0])
+        )
       )
     ).filter((e) => e) as { state: GraphState }[];
 
@@ -392,10 +409,24 @@ export default class MyExpressionsLibrary extends PluginController<{
 
       const augs = new Map<string, Aug.NonFolderAug>();
 
+      const folders = new Map<string, ExpressionLibraryFolder>();
+
       for (const expr of g.state.expressions.list) {
         if (expr.type !== "folder") {
           augs.set(expr.id, rawNonFolderToAug(expr, getMetadata()));
+        } else {
+          folders.set(expr.id, {
+            text: expr.title ?? "Untitled Folder",
+            expressions: new Set(),
+            type: "folder",
+            uniqueID: uniqueID++,
+          });
         }
+      }
+
+      for (const expr of g.state.expressions.list) {
+        if (expr.type === "folder") continue;
+        folders.get(expr.folderId ?? "")?.expressions?.add(expr.id);
       }
 
       for (const [id, aug] of augs) {
@@ -444,11 +475,16 @@ export default class MyExpressionsLibrary extends PluginController<{
                 uniqueID: uniqueID++,
                 graph: newGraph,
                 raw: e,
+                type: "expression",
               },
             ];
           })
           .filter((e) => e) as [string, ExpressionLibraryExpression][]
       );
+
+      for (const [k, v] of folders) {
+        newGraph.expressions.set(k, v);
+      }
 
       this.graphs.graphs.push(newGraph as ExpressionLibraryGraph);
     }
@@ -458,18 +494,22 @@ export default class MyExpressionsLibrary extends PluginController<{
     const exprs: ExpressionLibraryExpression[] = [];
     for (const graph of this.graphs?.graphs ?? []) {
       for (const [id, expr] of graph.expressions) {
-        if (
-          expr.raw.type === "expression" &&
-          (expr.raw.latex?.startsWith(
-            (() => {
-              let ltx = textModeExprToLatex(this.searchStr) ?? "";
-              if (ltx[ltx.length - 1] === "}") ltx = ltx?.slice(0, -1);
-              return ltx;
-            })() ?? ""
-          ) ??
-            true)
-        )
-          exprs.push(expr);
+        if (expr.type === "expression") {
+          if (
+            expr.raw.type === "expression" &&
+            (expr.raw.latex?.startsWith(
+              (() => {
+                let ltx = textModeExprToLatex(this.searchStr) ?? "";
+                if (ltx[ltx.length - 1] === "}") ltx = ltx?.slice(0, -1);
+                return ltx;
+              })() ?? ""
+            ) ??
+              true)
+          )
+            exprs.push(expr);
+        } else if (expr.type === "folder") {
+          if (expr.text.includes(this.searchStr)) exprs.push(expr);
+        }
       }
     }
     return exprs;
