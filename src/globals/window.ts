@@ -27,6 +27,11 @@ export interface DWindow extends Window {
     ExpressionView: ExpressionViewComponent;
     ImageIconView: typeof IconViewComponent;
   };
+  Desmos: {
+    Private: {
+      Fragile: typeof Fragile;
+    };
+  };
 }
 
 declare let window: DWindow;
@@ -63,7 +68,6 @@ export const Fragile = new Proxy(
   Checkbox: typeof CheckboxComponent;
   SegmentedControl: typeof SegmentedControlComponent;
   MathquillView: typeof MathQuillViewComponent & {
-    // static abstract getFocusedMathquill()
     getFocusedMathquill: () => MathQuillField;
   };
   InlineMathInputView: typeof InlineMathInputViewComponent;

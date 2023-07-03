@@ -5,6 +5,7 @@ import puppeteer, { Browser, Page } from "puppeteer";
 /** Calc is only available inside evaluate() callbacks and friends, since those
  * stringify the function and evaluate it inside the browser */
 declare let Calc: DWindow["Calc"];
+declare let Desmos: DWindow["Desmos"];
 
 let browser!: Browser;
 
@@ -76,16 +77,59 @@ async function getBrowser() {
 }
 
 export class Driver {
-  constructor(public page: Page) {}
+  constructor(public readonly page: Page) {}
 
-  async assertSelector(sel: string) {
-    const el = await this.page.$(sel);
-    expect(el).toBeTruthy();
+  /** Passthrough */
+  click = this.page.click.bind(this.page);
+  waitForFunction = this.page.waitForFunction.bind(this.page);
+  evaluate = this.page.evaluate.bind(this.page);
+  setBlank = async () => await this.evaluate(() => Calc.setBlank());
+  keyboard = this.page.keyboard;
+
+  /** Helpers */
+  async getState() {
+    return await this.evaluate(() => Calc.getState());
   }
 
-  async assertSelectorNot(sel: string) {
-    const el = await this.page.$(sel);
-    expect(el).toBeFalsy();
+  async focusIndex(index: number) {
+    await this.evaluate((index) => {
+      const expression = Calc.getState().expressions.list[index];
+      Calc.controller.dispatch({
+        type: "move-focus-to-item",
+        id: expression.id,
+      });
+    }, index);
+  }
+
+  async setLatex(latex: string) {
+    await this.evaluate((latex) => {
+      Calc.controller.dispatch({
+        type: "set-item-latex",
+        id: Calc.controller.getSelectedItem()!.id,
+        latex,
+      });
+    }, latex);
+  }
+
+  async waitForFocusedMathquill() {
+    return await this.waitForFunction(() => {
+      return Desmos.Private.Fragile.MathquillView.getFocusedMathquill();
+    });
+  }
+
+  /** Assertions */
+  async assertSelector(...selectors: string[]) {
+    for (const sel of selectors) {
+      const el = await this.page.$(sel);
+      expect(el ? sel : "[missing]").toEqual(sel);
+    }
+  }
+
+  async assertSelectorNot(...selectors: string[]) {
+    for (const sel of selectors) {
+      const el = await this.page.$(sel);
+      expect(el ? sel : "[missing]").toEqual("[missing]");
+    }
   }
 
   async assertSelectorEventually(sel: string) {
@@ -93,23 +137,21 @@ export class Driver {
     expect(el).toBeTruthy();
   }
 
-  async getState() {
-    return await this.page.evaluate(() => Calc.getState());
-  }
-
   async assertClean() {
     // State is same
     const stateOld = await this.getState();
-    await this.page.evaluate(() => Calc.setBlank());
+    await this.setBlank();
     const stateNew = await this.getState();
     stateOld.randomSeed = stateNew.randomSeed;
     expect(stateOld).toEqual(stateNew);
     // Sidebar isn't open
     await this.assertSelectorNot(".dcg-resources-cover");
-    // Open-keypad button is visible
-    await this.assertSelector(".dcg-show-keypad-container");
-    // Keypad isn't open
-    await this.assertSelector(".dcg-keys-container[aria-hidden]");
+    await this.assertSelector(
+      // Open-keypad button is visible
+      ".dcg-show-keypad-container",
+      // Keypad isn't open
+      ".dcg-keys-container[aria-hidden]"
+    );
     // There's no visible mathquill, except those that are children of keypad
     // (which don't get removed rom the DOM tree)
     const allMathquillAreInKeypad = await this.page.$$eval(
@@ -118,10 +160,14 @@ export class Driver {
     );
     expect(allMathquillAreInKeypad).toBeTruthy();
     // Menus aren't open
-    await this.assertSelectorNot(".dsm-menu-container");
-    await this.assertSelectorNot(".dsm-vc-capture-menu");
-    await this.assertSelectorNot(".dcg-shared-modal-container");
-    await this.assertSelectorNot(".dcg-popover-interior");
-    await this.assertSelectorNot(".dcg-modal-container div *");
+    await this.assertSelectorNot(
+      ".dsm-menu-container",
+      ".dsm-vc-capture-menu",
+      ".dcg-shared-modal-container",
+      ".dcg-popover-interior",
+      ".dcg-modal-container div *",
+      // Edit List Mode is off
+      ".dcg-action-clearall"
+    );
   }
 }

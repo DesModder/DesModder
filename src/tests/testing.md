@@ -22,8 +22,15 @@ Options have to be after an alone `--` to get passed to jest instead of npm.
 
 Create an integration test with `[name].int.test.ts`.
 
-If you get an error "TargetCloseError: Protocol error (Runtime.callFunctionOn): Target closed," you probably forgot an `await` somewhere.
+Do not import anything from files other than [`puppeteer-utils.ts`](./puppeteer-utils.ts), since the code runs in a node process, not inside the browser page. The exception is code inside functions like `driver.evaluate(() => Calc.setBlank())`. The callback gets stringified and ran inside the page.
+
+Return `clean` if you've cleaned up the page (closed all the menus etc). This serves two purposes:
+
+1. Makes sure that the UI can be cleaned up
+2. Avoids the need to reload the page (saving some testing time). (Note: this only currently works within files. Separate test files are currently fully isolated).
 
 Integration tests are ran in the "node" environment, since they control a browser from a node process but are not inside the browser.
 
 If you want to see what happens during the tests, edit `headless: "new"` to `headless: false` in [`puppeteer-utils.ts`](./puppeteer-utils.ts).
+
+If you get an error "TargetCloseError: Protocol error (Runtime.callFunctionOn): Target closed," you probably forgot an `await` somewhere.

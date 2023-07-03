@@ -35,13 +35,12 @@ case "$mode" in
     exit 1
 esac
 
+echo
 echo "Running Jest $mode tests."
 
 CONFIG_FILE="jest-config/jest-$CONFIG.config.js"
 
 echo "Config file: $CONFIG_FILE"
-
-echo "$@"
 
 # For some reason, node does not respect the "exports" option. Remove the src
 # directory so it does not find (and break on) the TS files.
