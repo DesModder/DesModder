@@ -102,65 +102,109 @@ export function hookIntoOverrideKeystroke(
   // unique key to prevent adding duplicate hooks
   key: string
 ) {
-  // @ts-expect-error adding properties to functions
-  if (!mq.__options.overrideKeystroke.isMonkeypatchedIn) {
-    const unsub = attach(
-      ...propGetSet(mq.__options, "overrideKeystroke"),
-      (key, evt) => {
-        // @ts-expect-error adding properties to functions
-        for (const h of mq.__options.overrideKeystroke.handlers as {
-          fn: (key: string, evt: KeyboardEvent) => boolean | undefined;
-          priority: number;
-        }[]) {
-          if (h.fn(key, evt) === false) return [false, undefined];
-        }
+  return hookIntoFunction(
+    mq.__options,
+    "overrideKeystroke",
+    key,
+    priority,
+    (stop, k, e) => {
+      const cont = fn(k, e);
+      if (cont === false) {
+        stop();
       }
-    );
-
-    // @ts-expect-error adding properties to functions
-    mq.__options.overrideKeystroke.unsub = unsub;
-    // @ts-expect-error adding properties to functions
-    mq.__options.overrideKeystroke.isMonkeypatchedIn = true;
-    // @ts-expect-error adding properties to functions
-    mq.__options.overrideKeystroke.handlers = [];
-  }
-
-  const handler = { priority, fn, key };
-
-  const overrideKeystroke = mq.__options
-    .overrideKeystroke as typeof mq.__options.overrideKeystroke & {
-    handlers: {
-      priority: number;
-      fn: (key: string, evt: KeyboardEvent) => boolean | undefined;
-      key: string;
-    }[];
-    unsub: () => void;
-  };
-
-  // if a handler with the key already exists, return nothing
-  // to prevent duplicate unsub functions from being created
-  const h = overrideKeystroke.handlers.find((h) => h.key === key);
-  if (h) {
-    h.priority = priority;
-    h.fn = fn;
-    // add the handler normally
-  } else {
-    overrideKeystroke.handlers.push(handler);
-  }
-
-  // sort by priority properly
-  overrideKeystroke.handlers.sort(
-    (a: { priority: number }, b: { priority: number }) =>
-      b.priority - a.priority
+    }
   );
+}
 
-  // return a function that removes the handler
+type HookedFunctionCallback<Fn extends (...args: any[]) => any> = (
+  stop: (ret: ReturnType<Fn>) => void,
+  ...args: Parameters<Fn>
+) => void;
+
+type HookedFunction<Fn extends (...args: any[]) => any> = Fn & {
+  __isMonkeypatchedIn: true;
+  handlers: {
+    key: string;
+    fn: HookedFunctionCallback<Fn>;
+    priority: number;
+  }[];
+  revert: () => void;
+};
+
+type MaybeHookedFunction<Fn extends (...args: any[]) => any> =
+  | HookedFunction<Fn>
+  | (Fn & {
+      __isMonkeypatchedIn: undefined;
+    });
+
+export function hookIntoFunction<
+  Obj extends { [K in Key]: (...args: any[]) => any },
+  Fn extends Obj[Key],
+  Key extends keyof Obj
+>(
+  obj: Obj,
+  prop: Key,
+  key: string,
+  priority: number,
+  fn: HookedFunctionCallback<Fn>
+) {
+  const oldfn = obj[prop] as MaybeHookedFunction<Fn>;
+
+  // monkeypatch the function if it isn't monkeypatched already
+  if (!oldfn.__isMonkeypatchedIn) {
+    const monkeypatchedFunction = function (
+      ...args: Parameters<Fn>
+    ): ReturnType<Fn> {
+      const handlersArray = (obj[prop] as HookedFunction<Fn>).handlers;
+
+      for (const h of handlersArray) {
+        let stop = false;
+        let ret: ReturnType<Fn> | undefined;
+        h.fn((r: ReturnType<Fn>) => {
+          stop = true;
+          ret = r;
+        }, ...args);
+        if (stop) return ret as ReturnType<Fn>;
+      }
+
+      return oldfn(...args);
+    };
+    monkeypatchedFunction.__isMonkeypatchedIn = true;
+    monkeypatchedFunction.handlers = [] as HookedFunction<Fn>["handlers"];
+    monkeypatchedFunction.revert = () => {
+      obj[prop] = oldfn;
+    };
+
+    obj[prop] = monkeypatchedFunction as unknown as any;
+  }
+
+  const monkeypatchedFn = obj[prop] as HookedFunction<Fn>;
+
+  // if theres already a handler with this key, update it
+  const handler = monkeypatchedFn.handlers.find((h) => h.key === key);
+  if (handler) {
+    handler.priority = priority;
+    handler.fn = fn;
+    return;
+  }
+
+  // if there isn't one, add a new one
+  monkeypatchedFn.handlers.push({
+    key,
+    priority,
+    fn,
+  });
+
+  monkeypatchedFn.handlers.sort((a, b) => b.priority - a.priority);
+
+  // function for removing this handler
   return () => {
-    overrideKeystroke.handlers = overrideKeystroke.handlers.filter(
+    monkeypatchedFn.handlers = monkeypatchedFn.handlers.filter(
       (h) => h.key !== key
     );
 
-    // completely revert overrideKeystroke if there's no handlers registered anymore
-    if (overrideKeystroke.handlers.length === 0) overrideKeystroke.unsub();
+    if (monkeypatchedFn.handlers.length === 0) {
+      monkeypatchedFn.revert();
+    }
   };
 }
