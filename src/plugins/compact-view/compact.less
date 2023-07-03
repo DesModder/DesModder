@@ -33,25 +33,42 @@
   &.compact-view-hide-evaluations-enabled {
     // evaluation box
     .dcg-evaluation-container {
+      margin-right: -10px;
+      padding-right: .lerp2(35px, 13px) [];
       .dcg-typeset-math {
         padding: 0;
       }
-      width: calc(100% - 45px);
       position: absolute;
       right: 0;
+      z-index: 2;
       overflow: hidden;
       margin-top: -5px;
       transform: translate(0%, -85%);
       .dcg-evaluation {
         background-color: #f5f5f5;
-        transform: translateX(calc(100% - 45px));
-        transition: transform 0.25s;
+        transition: transform 0.125s, max-width 0.125s;
+        transition-delay: overflow 0.25s;
+        overflow: hidden;
+      }
+    }
+
+    // animation is used to delay overflow activation
+    .dcg-evaluation:hover,
+    .dcg-evaluation:focus {
+      animation: activate-overflow 0.5s;
+      animation-fill-mode: both;
+      max-width: 100% !important;
+    }
+
+    @keyframes activate-overflow {
+      to {
         overflow: auto;
       }
     }
-    .dcg-evaluation:hover,
-    .dcg-evaluation:focus {
-      transform: translateX(0%);
+
+    .dcg-icon-remove {
+      padding-bottom: 0;
+      padding-left: 0;
     }
   }
 
@@ -70,7 +87,7 @@
       padding-top: .lerp2(15px, 0px) [];
       padding-left: .lerp2(53px, 35px) [];
       padding-bottom: .lerp2(9px, 0px) [];
-      padding-right: .lerp2(35px, 12.5px) [];
+      padding-right: .lerp2(35px, 25px) [];
       margin-left: 4px;
     }
 
