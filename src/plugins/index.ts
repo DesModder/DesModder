@@ -10,6 +10,7 @@ import FolderTools from "./folder-tools";
 import HideErrors from "./hide-errors";
 import Intellisense from "./intellisense";
 import ManageMetadata from "./manage-metadata";
+import Multiline from "./multiline";
 import PerformanceInfo from "./performance-info";
 import PillboxMenus from "./pillbox-menus";
 import PinExpressions from "./pin-expressions";
@@ -113,6 +114,7 @@ export const keyToPlugin = {
   textMode: TextMode,
   performanceInfo: PerformanceInfo,
   metadata: ManageMetadata,
+  multiline: Multiline,
   intellisense: Intellisense,
   compactView: CompactView,
 } satisfies Record<string, Plugin<any>>;
@@ -164,6 +166,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get metadata () { return this.ep["manage-metadata"]; }
   get intellisense () { return this.ep["intellisense"]; }
   get compactView () { return this.ep["compact-view"]; }
+  get multiline () { return this.ep["multiline"]; }
 }
 
 export type IDToPluginSettings = {

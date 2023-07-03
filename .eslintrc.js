@@ -19,6 +19,7 @@ module.exports = {
   parser: "@typescript-eslint/parser",
   rules: {
     "rulesdir/no-format-in-ts": "error",
+    "rulesdir/no-expect-promise": "error",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/array-type": "off",
     "@typescript-eslint/strict-boolean-expressions": "off",

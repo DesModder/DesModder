@@ -210,3 +210,13 @@ compact-view-opt-highlightAlternatingLines-name = Highlight Alternating Lines
 compact-view-opt-highlightAlternatingLines-desc = Highlight alternating expressions so they can be easily distinguished from one another.
 compact-view-opt-hideEvaluations-name = Collapse Evaluations
 compact-view-opt-hideEvaluations-desc = Put evaluations off to the side. They can be focused or hovered to be shown. 
+
+## Multiline
+multiline-name = Multiline Expressions
+multiline-desc = Split expressions onto multiple lines to better make use of available space. Can be done manually with Ctrl+M.
+multiline-opt-widthBeforeMultiline-name = Width Threshold (%)
+multiline-opt-widthBeforeMultiline-desc = Minimum width (as a percent of the viewport size) at which point wrapping will occur. On mobile, this value is tripled.
+multiline-opt-automaticallyMultilinify-desc = If enabled, automatically split expressions onto multiple lines.
+multiline-opt-automaticallyMultilinify-name = Automatically Multilinify
+multiline-opt-multilinifyDelayAfterEdit-desc = Multiline expressions should be updated after no edits are made for this number of milliseconds.
+multiline-opt-multilinifyDelayAfterEdit-name = Edit Delay (ms)

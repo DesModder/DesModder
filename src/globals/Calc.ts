@@ -24,7 +24,8 @@ export type DispatchedEvent =
         | "tick"
         | "redo"
         | "tick-ticker"
-        | "keypad/functions";
+        | "keypad/functions"
+        | "ui/container-resized";
     }
   | {
       type: "keypad/set-minimized";
@@ -38,7 +39,8 @@ export type DispatchedEvent =
         | "convert-image-to-draggable"
         | "create-sliders-for-item"
         | "toggle-item-hidden"
-        | "delete-item-and-animate-out";
+        | "delete-item-and-animate-out"
+        | "move-focus-to-item";
       id: string;
     }
   | {
@@ -168,6 +170,7 @@ interface CalcPrivate {
   };
   /// / undocumented, may break
   controller: {
+    isNarrow: () => boolean;
     // _removeExpressionSynchronously(model: ItemModel): void;
     handleDispatchedAction: (evt: DispatchedEvent) => void;
     _toplevelReplaceItemAt: (

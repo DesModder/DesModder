@@ -14,7 +14,7 @@ import { GenericSettings, PluginID, TransparentPlugins } from "../plugins";
 import CalcType from "./Calc";
 import { ItemModel } from "./models";
 
-interface windowConfig extends Window {
+export interface DWindow extends Window {
   Calc: CalcType;
   DesModder: any;
   DSM: TransparentPlugins;
@@ -27,9 +27,14 @@ interface windowConfig extends Window {
     ExpressionView: ExpressionViewComponent;
     ImageIconView: typeof IconViewComponent;
   };
+  Desmos: {
+    Private: {
+      Fragile: typeof Fragile;
+    };
+  };
 }
 
-declare let window: windowConfig;
+declare let window: DWindow;
 
 export default window;
 
@@ -63,7 +68,6 @@ export const Fragile = new Proxy(
   Checkbox: typeof CheckboxComponent;
   SegmentedControl: typeof SegmentedControlComponent;
   MathquillView: typeof MathQuillViewComponent & {
-    // static abstract getFocusedMathquill()
     getFocusedMathquill: () => MathQuillField;
   };
   InlineMathInputView: typeof InlineMathInputViewComponent;

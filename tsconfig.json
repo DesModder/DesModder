@@ -22,6 +22,6 @@
     "./loaders/",
     "./esbuild.mjs",
     "./.eslintrc.js",
-    "./jest.config.js"
+    "./jest-config/"
   ]
 }
