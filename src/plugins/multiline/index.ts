@@ -9,6 +9,7 @@ import { getController, mqKeystroke } from "plugins/intellisense/latex-parsing";
 import {
   attach,
   deregisterCustomDispatchOverridingHandler,
+  hookIntoOverrideKeystroke,
   propGetSet,
   registerCustomDispatchOverridingHandler,
 } from "utils/listenerHelpers";
@@ -77,6 +78,8 @@ export default class Multiline extends PluginController<Config> {
       f.dataset.isVerticalified = "true";
     }
   }
+
+  customHandlerRemovers: (() => void)[] = [];
 
   dequeueAllMultilinifications() {
     for (const f of this.pendingMultilinifications) {
@@ -154,20 +157,19 @@ export default class Multiline extends PluginController<Config> {
       this.dequeueAllMultilinifications();
     }
 
-    const mqopts = Calc.focusedMathQuill?.mq
-      ? getController(Calc.focusedMathQuill?.mq)?.options
-      : undefined;
-
-    if (mqopts) {
-      const unsub = attach(
-        ...propGetSet(mqopts, "overrideKeystroke"),
+    if (Calc.focusedMathQuill) {
+      const remove = hookIntoOverrideKeystroke(
+        Calc.focusedMathQuill.mq,
         (key, evt) => {
           if (key === "Shift-Up" || key === "Shift-Down") {
             this.doMultilineVerticalNav(key);
-            return [false, undefined];
+            return false;
           }
-        }
+        },
+        0,
+        "multiline"
       );
+      if (remove) this.customHandlerRemovers.push(remove);
     }
   };
 
@@ -251,6 +253,10 @@ export default class Multiline extends PluginController<Config> {
 
     if (this.customDispatcherID)
       deregisterCustomDispatchOverridingHandler(this.customDispatcherID);
+
+    for (const remover of this.customHandlerRemovers) {
+      remover();
+    }
   }
 
   // navigates up/down through a multiline expression
