@@ -54,6 +54,11 @@ export const configList = [
     key: "compactFactor",
     variant: "range",
   },
+  {
+    type: "boolean",
+    key: "hideEvaluations",
+    default: false,
+  },
 ] satisfies readonly ConfigItem[];
 
 export interface Config {
@@ -64,4 +69,5 @@ export interface Config {
   noSeparatingLines: boolean;
   highlightAlternatingLines: boolean;
   compactFactor: number;
+  hideEvaluations: boolean;
 }

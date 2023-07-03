@@ -25,6 +25,10 @@ export default class CompactView extends PluginController<Config> {
       "compact-view-highlight-alternating-lines",
       this.settings.highlightAlternatingLines
     );
+    toggleBodyClass(
+      "compact-view-hide-evaluations-enabled",
+      this.settings.hideEvaluations
+    );
 
     document.body.style.setProperty(
       "--math-font-size",
@@ -48,6 +52,8 @@ export default class CompactView extends PluginController<Config> {
       `${this.settings.compactFactor}`
     );
   }
+
+  updateHiddenEvaluations() {}
 
   afterEnable() {
     this.afterConfigChange();

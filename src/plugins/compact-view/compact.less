@@ -30,6 +30,31 @@
     }
   }
 
+  &.compact-view-hide-evaluations-enabled {
+    // evaluation box
+    .dcg-evaluation-container {
+      .dcg-typeset-math {
+        padding: 0;
+      }
+      width: calc(100% - 45px);
+      position: absolute;
+      right: 0;
+      overflow: hidden;
+      margin-top: -5px;
+      transform: translate(0%, -85%);
+      .dcg-evaluation {
+        background-color: #f5f5f5;
+        transform: translateX(calc(100% - 45px));
+        transition: transform 0.25s;
+        overflow: auto;
+      }
+    }
+    .dcg-evaluation:hover,
+    .dcg-evaluation:focus {
+      transform: translateX(0%);
+    }
+  }
+
   &.compact-view-remove-spacing-enabled {
     // make cursor/caret more obvious since it'll be smaller
     .dcg-mq-cursor {
@@ -119,7 +144,6 @@
       .dcg-typeset-math {
         padding: 0;
       }
-
       margin-top: -5px;
     }
 
