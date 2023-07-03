@@ -31,7 +31,6 @@ export default class Multiline extends PluginController<Config> {
   afterConfigChange(): void {
     this.unmultilineExpressions(true);
     this.multilineExpressions({ type: "tick" });
-    //this.dequeueAllMultilinifications();
     document.body.classList.add("multiline-expression-enabled");
   }
 
