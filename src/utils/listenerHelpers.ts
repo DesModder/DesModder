@@ -154,8 +154,6 @@ export function hookIntoOverrideKeystroke(
       b.priority - a.priority
   );
 
-  console.log(overrideKeystroke);
-
   // return a function that removes the handler
   return () => {
     overrideKeystroke.handlers = overrideKeystroke.handlers.filter(

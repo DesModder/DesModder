@@ -13,11 +13,7 @@ import { ItemModel, TextModel } from "globals/models";
 import { Calc } from "globals/window";
 import { PluginController } from "plugins/PluginController";
 import { getMetadata } from "plugins/manage-metadata/manage";
-import {
-  attach,
-  hookIntoOverrideKeystroke,
-  propGetSet,
-} from "utils/listenerHelpers";
+import { hookIntoOverrideKeystroke } from "utils/listenerHelpers";
 import { isDescendant } from "utils/utils";
 
 export type BoundIdentifier =
@@ -310,10 +306,6 @@ export default class Intellisense extends PluginController {
           ...Object.keys(Calc.focusedMathQuill.mq.__options.autoCommands),
         ];
       }
-
-      const mqopts = Calc.focusedMathQuill?.mq
-        ? getController(Calc.focusedMathQuill?.mq)?.options
-        : undefined;
 
       // done because the monkeypatch has a different this value
       // eslint-disable-next-line @typescript-eslint/no-this-alias

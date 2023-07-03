@@ -7,10 +7,8 @@ import { DispatchedEvent } from "globals/Calc";
 import { Calc } from "globals/window";
 import { getController, mqKeystroke } from "plugins/intellisense/latex-parsing";
 import {
-  attach,
   deregisterCustomDispatchOverridingHandler,
   hookIntoOverrideKeystroke,
-  propGetSet,
   registerCustomDispatchOverridingHandler,
 } from "utils/listenerHelpers";
 
@@ -160,7 +158,7 @@ export default class Multiline extends PluginController<Config> {
     if (Calc.focusedMathQuill) {
       const remove = hookIntoOverrideKeystroke(
         Calc.focusedMathQuill.mq,
-        (key, evt) => {
+        (key, _) => {
           if (key === "Shift-Up" || key === "Shift-Down") {
             this.doMultilineVerticalNav(key);
             return false;
