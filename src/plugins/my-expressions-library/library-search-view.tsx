@@ -39,7 +39,6 @@ export class LibrarySearchView extends Component<{
           </div>
           <For
             each={() => {
-              console.log("reran each ( this should run ffs)");
               return this.props.plugin().getLibraryExpressions();
             }}
             key={(expr) => expr.uniqueID}

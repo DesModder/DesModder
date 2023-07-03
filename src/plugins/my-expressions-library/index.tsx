@@ -185,7 +185,7 @@ window.jsonEqual = jsonEqual;
 export default class MyExpressionsLibrary extends PluginController<{
   libraryGraphHashes: string; // probably a temporary fix
 }> {
-  static id = "my-expressions-library";
+  static id = "my-expressions-library" as const;
   static enabledByDefault = true;
   static config = [
     {
