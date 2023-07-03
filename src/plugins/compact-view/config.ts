@@ -3,6 +3,31 @@ import { ConfigItem } from "plugins";
 export const configList = [
   {
     type: "number",
+    min: 0,
+    max: 1,
+    step: 0.001,
+    default: 1,
+    key: "compactFactor",
+    variant: "range",
+  },
+  {
+    type: "boolean",
+    key: "noSeparatingLines",
+    default: false,
+  },
+  {
+    type: "boolean",
+    key: "highlightAlternatingLines",
+    default: true,
+    shouldShow: (config) => config.noSeparatingLines,
+  },
+  {
+    type: "boolean",
+    key: "hideEvaluations",
+    default: false,
+  },
+  {
+    type: "number",
     key: "textFontSize",
     default: 16,
     min: 0,
@@ -33,31 +58,6 @@ export const configList = [
     max: 100,
     step: 1,
     shouldShow: (config) => config.bracketFontSizeFactor !== 1,
-  },
-  {
-    type: "boolean",
-    key: "noSeparatingLines",
-    default: false,
-  },
-  {
-    type: "boolean",
-    key: "highlightAlternatingLines",
-    default: true,
-    shouldShow: (config) => config.noSeparatingLines,
-  },
-  {
-    type: "number",
-    min: 0,
-    max: 1,
-    step: 0.001,
-    default: 1,
-    key: "compactFactor",
-    variant: "range",
-  },
-  {
-    type: "boolean",
-    key: "hideEvaluations",
-    default: false,
   },
 ] satisfies readonly ConfigItem[];
 
