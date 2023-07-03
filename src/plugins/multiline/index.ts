@@ -83,7 +83,7 @@ export default class Multiline extends PluginController<Config> {
 
       const minWidth =
         ((window.innerWidth * this.settings.widthBeforeMultiline) / 100) *
-        (window.innerWidth > 450 ? 1 : 3);
+        (Calc.controller.isNarrow() ? 3 : 1);
 
       // settings for where and how to put line breaks
       const domManipHandlers: (() => void)[] = [];
