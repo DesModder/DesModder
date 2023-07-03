@@ -98,12 +98,13 @@ interface VerticalifyOptions {
   maxPriority: number;
 }
 
-export function unverticalify(elem: Element) {
+export function unverticalify(elem: Element, force?: boolean) {
   // get all children
   const children = elem.querySelectorAll("*");
 
   for (const child of children) {
     if (child instanceof HTMLElement) {
+      if (force) delete child.dataset.safeToReuse;
       if (child.dataset.safeToReuse) break;
       delete child.dataset.isMultiline;
 

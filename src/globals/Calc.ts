@@ -24,7 +24,8 @@ export type DispatchedEvent =
         | "tick"
         | "redo"
         | "tick-ticker"
-        | "keypad/functions";
+        | "keypad/functions"
+        | "ui/container-resized";
     }
   | {
       type: "keypad/set-minimized";

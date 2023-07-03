@@ -29,18 +29,19 @@ export default class Multiline extends PluginController<Config> {
   lastEditTime: number = Date.now();
 
   afterConfigChange(): void {
-    this.unmultilineExpressions();
+    this.unmultilineExpressions(true);
     this.multilineExpressions({ type: "tick" });
+    //this.dequeueAllMultilinifications();
     document.body.classList.add("multiline-expression-enabled");
   }
 
-  unmultilineExpressions() {
+  unmultilineExpressions(force?: boolean) {
     const mathfields = document.querySelectorAll(
       ".dcg-expressionitem .dcg-mq-root-block"
     );
     for (const f of mathfields) {
       if (!(f instanceof HTMLElement)) continue;
-      unverticalify(f);
+      unverticalify(f, force);
       delete f.dataset.isVerticalified;
     }
   }
@@ -163,10 +164,6 @@ export default class Multiline extends PluginController<Config> {
     });
   };
 
-  resizeHandler = () => {
-    this.afterConfigChange();
-  };
-
   dispatcherID: string | undefined;
 
   customDispatcherID: number | undefined;
@@ -174,7 +171,6 @@ export default class Multiline extends PluginController<Config> {
   afterEnable() {
     document.addEventListener("keydown", this.keydownHandler);
     document.addEventListener("mousedown", this.mousedownHandler);
-    document.addEventListener("resize", this.resizeHandler);
 
     this.afterConfigChange();
 
@@ -193,7 +189,8 @@ export default class Multiline extends PluginController<Config> {
       if (
         e.type === "set-item-latex" ||
         e.type === "undo" ||
-        e.type === "redo"
+        e.type === "redo" ||
+        e.type === "ui/container-resized"
       ) {
         this.lastEditTime = Date.now();
       }
@@ -206,6 +203,10 @@ export default class Multiline extends PluginController<Config> {
         e.type === "tick-ticker"
       ) {
         this.multilineExpressions(e);
+      }
+
+      if (e.type === "ui/container-resized") {
+        this.afterConfigChange();
       }
     });
 
@@ -221,7 +222,6 @@ export default class Multiline extends PluginController<Config> {
   afterDisable() {
     document.removeEventListener("keydown", this.keydownHandler);
     document.removeEventListener("mousedown", this.mousedownHandler);
-    document.removeEventListener("resize", this.resizeHandler);
 
     this.unmultilineExpressions();
     document.body.classList.remove("multiline-expression-enabled");
