@@ -7,7 +7,9 @@ import { DispatchedEvent } from "globals/Calc";
 import { Calc } from "globals/window";
 import { getController, mqKeystroke } from "plugins/intellisense/latex-parsing";
 import {
+  attach,
   deregisterCustomDispatchOverridingHandler,
+  propGetSet,
   registerCustomDispatchOverridingHandler,
 } from "utils/listenerHelpers";
 
@@ -150,6 +152,22 @@ export default class Multiline extends PluginController<Config> {
 
     if (e.key.toUpperCase() === "M" && e.ctrlKey) {
       this.dequeueAllMultilinifications();
+    }
+
+    const mqopts = Calc.focusedMathQuill?.mq
+      ? getController(Calc.focusedMathQuill?.mq)?.options
+      : undefined;
+
+    if (mqopts) {
+      const unsub = attach(
+        ...propGetSet(mqopts, "overrideKeystroke"),
+        (key, evt) => {
+          if (key === "Shift-Up" || key === "Shift-Down") {
+            this.doMultilineVerticalNav(key);
+            return [false, undefined];
+          }
+        }
+      );
     }
   };
 
@@ -295,6 +313,10 @@ export default class Multiline extends PluginController<Config> {
       domfragProto.removeClass = removeClass;
       domfragProto.addClass = addClass;
       domfragProto.insDirOf = insDirOf;
+      if (select) {
+        mqKeystroke(focusedmq, oppositeArrowdir);
+        mqKeystroke(focusedmq, arrowdir);
+      }
     };
 
     // ended with break statements
