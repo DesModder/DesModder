@@ -174,14 +174,14 @@ export default class Multiline extends PluginController<Config> {
       this.lastRememberedCursorX = cursor.getBoundingClientRect().left;
     } else {
       let xpos =
-        Calc.focusedMathQuill.mq.__controller.cursor?.[
+        Calc.focusedMathQuill?.mq.__controller.cursor?.[
           -1
         ]?._el?.getBoundingClientRect()?.right;
       if (xpos !== undefined) {
         this.lastRememberedCursorX = xpos;
       } else {
         xpos =
-          Calc.focusedMathQuill.mq.__controller.cursor?.[1]?._el?.getBoundingClientRect()
+          Calc.focusedMathQuill?.mq.__controller.cursor?.[1]?._el?.getBoundingClientRect()
             ?.left;
         this.lastRememberedCursorX = xpos;
       }
