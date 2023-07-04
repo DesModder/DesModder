@@ -44,38 +44,13 @@ isShowKeypadButtonVisible () {
 
 *Replace* `__children__` with
 ```js
-$DCGView.createElement(
-  $DCGView.Components.If,
-  {
-    predicate: () => DSM.textMode && !this.controller.isInEditListMode()
-  },
-  () => $DCGView.createElement(
-      $Tooltip,
-      {
-        tooltip: () => DesModder.format("text-mode-toggle"),
-        gravity: () => this.controller.isNarrow() ? 'n' : 's'
-      },
-      $DCGView.createElement(
-        'span',
-        {
-          class: $DCGView.const('dcg-icon-btn'),
-          handleEvent: $DCGView.const('true'),
-          role: $DCGView.const('button'),
-          tabindex: $DCGView.const('0'),
-          onTap: () => DSM.textMode?.toggleTextMode()
-        },
-        $DCGView.createElement('i', {
-          class: $DCGView.const('dcg-icon-title')
-        })
-      )
-    )
-),
-$DCGView.Components.IfElse(
-  () => !this.controller.getGraphSettings().config.graphpaper && window.DesModder,
-  {
-    true: () => DSM.pillboxMenus.pillboxButtonsView(true),
-    false: null
-  }
+DSM.insertElement(() => DSM.textMode?.textModeToggle()),
+// This is for pillbox-menus, not text-mode
+DSM.insertElement(
+  () => (
+    !this.controller.getGraphSettings().config.graphpaper
+      && DSM.pillboxMenus.pillboxButtonsView(true)
+  )
 ),
 __children__
 ```

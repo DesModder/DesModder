@@ -31,6 +31,6 @@ Return `clean` if you've cleaned up the page (closed all the menus etc). This se
 
 Integration tests are ran in the "node" environment, since they control a browser from a node process but are not inside the browser.
 
-If you want to see what happens during the tests, edit `headless: "new"` to `headless: false` in [`puppeteer-utils.ts`](./puppeteer-utils.ts).
+If you want to see what happens during the tests, edit `headless: "new"` to `headless: false` in setup.js.
 
 If you get an error "TargetCloseError: Protocol error (Runtime.callFunctionOn): Target closed," you probably forgot an `await` somewhere.

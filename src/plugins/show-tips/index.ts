@@ -1,5 +1,6 @@
-import { PluginController } from "../PluginController";
-import { createTipElement } from "./Tip";
+import { DCGView } from "../../DCGView";
+import { Inserter, PluginController } from "../PluginController";
+import Tip from "./Tip";
 
 function apiContainer() {
   return document.querySelector(".dcg-calculator-api-container");
@@ -17,7 +18,7 @@ export default class ShowTips extends PluginController {
     apiContainer()?.classList.remove("dsm-show-tips");
   }
 
-  createTipElement() {
-    return createTipElement();
+  tipView(): Inserter {
+    return () => DCGView.createElement(Tip as any, {});
   }
 }

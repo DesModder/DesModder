@@ -208,6 +208,7 @@ interface CalcPrivate {
       workerPoolConnection: {
         killWorker: () => void;
       };
+      notifyWhenSynced: (cb: () => void) => void;
     };
     listModel: {
       // add properties as needed
@@ -242,6 +243,8 @@ interface CalcPrivate {
     expressionSearchOpen: boolean;
     /** Returns a function to call to unsubscribe */
     subToChanges: (cb: () => void) => () => void;
+    getBackgroundColor: () => string;
+    isInEditListMode: () => boolean;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;

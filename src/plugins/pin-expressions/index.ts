@@ -1,4 +1,5 @@
-import { PluginController } from "../PluginController";
+import { Inserter, PluginController } from "../PluginController";
+import { ListView, PinnedPanel } from "./components/PinnedPanel";
 import "./pinExpressions.less";
 import { Calc } from "globals/window";
 
@@ -33,5 +34,9 @@ export default class PinExpressions extends PluginController {
       ?.getDsmItemModels()
       .some((v) => v.pinned);
     el?.classList.toggle("dsm-has-pinned-expressions", hasPinnedExpressions);
+  }
+
+  pinnedPanel(listView: ListView): Inserter {
+    return () => PinnedPanel(this, listView);
   }
 }

@@ -10,14 +10,15 @@ import {
   SegmentedControlComponent,
   TooltipComponent,
 } from "../components/desmosComponents";
-import { GenericSettings, PluginID, TransparentPlugins } from "../plugins";
+import MainController from "../main/Controller";
+import { GenericSettings, PluginID } from "../plugins";
 import CalcType from "./Calc";
 import { ItemModel } from "./models";
 
 export interface DWindow extends Window {
   Calc: CalcType;
   DesModder: any;
-  DSM: TransparentPlugins;
+  DSM: MainController;
   DesModderPreload?: {
     pluginsForceDisabled: Set<PluginID>;
     pluginsEnabled: Record<PluginID, boolean | undefined>;
@@ -30,7 +31,22 @@ export interface DWindow extends Window {
   Desmos: {
     Private: {
       Fragile: typeof Fragile;
+      Mathtools: Mathtools;
     };
+  };
+}
+
+interface Mathtools {
+  Label: {
+    truncatedLatexLabel: (
+      label: string,
+      labelOptions: {
+        smallCutoff: 0.00001;
+        bigCutoff: 1000000;
+        digits: 5;
+        displayAsFraction: false;
+      }
+    ) => string;
   };
 }
 

@@ -1,10 +1,12 @@
 import { DWindow } from "../globals/window";
+import { PluginID } from "../plugins";
 import { Page } from "puppeteer";
 
 /** Calc is only available inside evaluate() callbacks and friends, since those
  * stringify the function and evaluate it inside the browser */
 declare let Calc: DWindow["Calc"];
 declare let Desmos: DWindow["Desmos"];
+declare let DSM: DWindow["DSM"];
 
 /** A clean page is one that is equivalent (for all purposes) to a just-opened
  * calculator tab. We introduce this state to avoid a bunch of reloads.
@@ -37,6 +39,7 @@ export function testWithPage(
     async () => {
       const page = await getPage();
       const driver = new Driver(page);
+      await driver.init();
       const cleanliness = await cb(driver);
       if (cleanliness === clean) {
         await driver.assertClean();
@@ -62,8 +65,19 @@ async function getPage() {
   return page;
 }
 
+const ENTER_ELM = ".dcg-action-toggle-edit.dcg-icon-btn";
+const EXIT_ELM = ".dcg-action-toggle-edit.dcg-btn-primary";
+
 export class Driver {
+  enabledPluginsStart!: string[];
+  pluginSettingsStart!: any;
+
   constructor(public readonly page: Page) {}
+
+  async init() {
+    this.enabledPluginsStart = await this.getEnabledPlugins();
+    this.pluginSettingsStart = await this.getPluginSettings();
+  }
 
   /** Passthrough */
   click = this.page.click.bind(this.page);
@@ -71,10 +85,22 @@ export class Driver {
   evaluate = this.page.evaluate.bind(this.page);
   setBlank = async () => await this.evaluate(() => Calc.setBlank());
   keyboard = this.page.keyboard;
+  $ = this.page.$.bind(this.page);
+  $$ = this.page.$$.bind(this.page);
+  $eval = this.page.$eval.bind(this.page);
+  $$eval = this.page.$$eval.bind(this.page);
 
   /** Helpers */
   async getState() {
     return await this.evaluate(() => Calc.getState());
+  }
+
+  async getEnabledPlugins() {
+    return await this.evaluate(() => Object.keys(DSM.enabledPlugins));
+  }
+
+  async getPluginSettings() {
+    return await this.evaluate(() => DSM.pluginSettings);
   }
 
   async focusIndex(index: number) {
@@ -87,7 +113,7 @@ export class Driver {
     }, index);
   }
 
-  async setLatex(latex: string) {
+  async setLatexAndSync(latex: string) {
     await this.evaluate((latex) => {
       Calc.controller.dispatch({
         type: "set-item-latex",
@@ -95,12 +121,62 @@ export class Driver {
         latex,
       });
     }, latex);
+    await this.waitForSync();
   }
 
   async waitForFocusedMathquill() {
     return await this.waitForFunction(() => {
       return Desmos.Private.Fragile.MathquillView.getFocusedMathquill();
     });
+  }
+
+  async enablePlugin(id: PluginID) {
+    await this.evaluate((id) => DSM.enablePlugin(id), id);
+  }
+
+  async disablePlugin(id: PluginID) {
+    await this.evaluate((id) => DSM.disablePlugin(id), id);
+  }
+
+  async setPluginSetting(id: PluginID, key: string, value: any) {
+    await this.evaluate(
+      (id, key, value) => DSM.setPluginSetting(id, key, value),
+      id,
+      key,
+      value
+    );
+  }
+
+  async waitForSync() {
+    await this.evaluate(
+      async () =>
+        await new Promise<void>((resolve) => {
+          Calc.controller.evaluator.notifyWhenSynced(() => resolve());
+        })
+    );
+  }
+
+  async enterEditListMode() {
+    await this.click(ENTER_ELM);
+  }
+
+  async exitEditListMode() {
+    await this.click(EXIT_ELM);
+  }
+
+  async clean() {
+    await this.setBlank();
+    await this.evaluate(
+      (settings) => DSM.setAllPluginSettings(settings),
+      this.pluginSettingsStart
+    );
+    await this.evaluate(
+      (enabled) => DSM.togglePluginsTo(enabled),
+      this.enabledPluginsStart
+    );
+    await this.evaluate(() => DSM.metadata?.checkForMetadataChange());
+    const exitELM = await this.page.$(EXIT_ELM);
+    if (exitELM) await exitELM.click();
   }
 
   /** Assertions */
@@ -130,6 +206,12 @@ export class Driver {
     const stateNew = await this.getState();
     stateOld.randomSeed = stateNew.randomSeed;
     expect(stateOld).toEqual(stateNew);
+    // Enabled plugins are same
+    const enabledPluginsNew = await this.getEnabledPlugins();
+    expect(enabledPluginsNew).toEqual(this.enabledPluginsStart);
+    // Plugin settings are same
+    const pluginSettingsNew = await this.getPluginSettings();
+    expect(pluginSettingsNew).toEqual(this.pluginSettingsStart);
     // Sidebar isn't open
     await this.assertSelectorNot(".dcg-resources-cover");
     await this.assertSelector(

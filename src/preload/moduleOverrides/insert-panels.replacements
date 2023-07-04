@@ -24,49 +24,6 @@ $DCGView.createElement(
 *Replace* `children` with
 ```js
 __children__,
-// pinned expressions
-$DCGView.createElement(
-  $DCGView.Components.For,
-  {
-    each: () => DSM.textMode?.inTextMode
-        ? [] 
-        : this.controller?.getAllItemModels?.() ?? [],
-    key: model => model.guid
-  },
-  $DCGView.createElement(
-    "div",
-    {
-      class: $DCGView.const("dsm-pinned-expressions dcg-exppanel"),
-      style: () => ({
-        background: this.controller.getBackgroundColor()
-      })
-    },
-    model => $DCGView.createElement(
-        $DCGView.Components.If,
-        {
-          predicate: () => DSM.pinExpressions?.isExpressionPinned(model.id)
-        },
-        // marking as a drag copy causes it not to affect the render shells calcuations
-        // (all the logic is present already because if the top expression is dragged
-        // to the bottom, it shouldn't cause all expressions to render from the top)
-        () => this.makeDragCopyViewForModel(model)
-      )
-  )
-),
-// text mode panel
-$DCGView.createElement(
-  $DCGView.Components.If,
-  {
-    predicate: () => DSM.textMode?.inTextMode
-  },
-  () => $DCGView.createElement(
-    "div",
-    {
-      // allow-ids: div
-      class: $DCGView.const("dsm-text-editor-container"),
-      didMount: div => DSM.textMode.mountEditor(div),
-      willUnmount: div => DSM.textMode.unmountEditor(div)
-    }
-  )
-)
+DSM.insertElement(() => DSM.pinExpressions?.pinnedPanel(this)),
+DSM.insertElement(() => DSM.textMode?.editorPanel(this)),
 ```
