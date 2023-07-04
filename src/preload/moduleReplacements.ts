@@ -1,36 +1,6 @@
 import { Console } from "../globals/window";
-import betterEvaluationView from "./moduleOverrides/better-evaluation-view.replacements";
-import debugMode from "./moduleOverrides/debug-mode.replacements";
-import extraExpressionButtons from "./moduleOverrides/extra-expression-buttons.replacements";
-import findReplace from "./moduleOverrides/find-replace.replacements";
-import glesmos from "./moduleOverrides/glesmos.replacements";
-import hideErrors from "./moduleOverrides/hide-errors.replacements";
-import insertPanels from "./moduleOverrides/insert-panels.replacements";
-import metadata from "./moduleOverrides/metadata.replacements";
-import pillbox from "./moduleOverrides/pillbox.replacements";
-import pinExpressions from "./moduleOverrides/pin-expressions.replacements";
-import rightClickTray from "./moduleOverrides/right-click-tray.replacements";
-import shiftEnterNewline from "./moduleOverrides/shift-enter-newline.replacements";
-import showTips from "./moduleOverrides/show-tips.replacements";
-import textMode from "./moduleOverrides/text-mode.replacements";
 import parseFile, { Block } from "./replacementHelpers/parse";
-
-const replacementStrings = [
-  insertPanels,
-  metadata,
-  pillbox,
-  betterEvaluationView,
-  findReplace,
-  glesmos,
-  hideErrors,
-  pinExpressions,
-  shiftEnterNewline,
-  textMode,
-  debugMode,
-  extraExpressionButtons,
-  showTips,
-  rightClickTray,
-];
+import replacementStrings from "plugins/index-replacements";
 
 const replacements: Block[] = [];
 
