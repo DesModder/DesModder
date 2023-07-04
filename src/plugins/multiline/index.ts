@@ -8,6 +8,7 @@ import { Calc } from "globals/window";
 import { getController, mqKeystroke } from "plugins/intellisense/latex-parsing";
 import {
   deregisterCustomDispatchOverridingHandler,
+  hookIntoOverrideKeystroke,
   registerCustomDispatchOverridingHandler,
 } from "utils/listenerHelpers";
 
@@ -76,6 +77,8 @@ export default class Multiline extends PluginController<Config> {
     }
   }
 
+  customHandlerRemovers: (() => void)[] = [];
+
   dequeueAllMultilinifications() {
     for (const f of this.pendingMultilinifications) {
       // revert everything to its original state so we have proper width calculations
@@ -142,24 +145,53 @@ export default class Multiline extends PluginController<Config> {
 
   keydownHandler = (e: KeyboardEvent) => {
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-      const cursor = document.querySelector(".dcg-mq-cursor");
-      if (cursor) {
-        this.lastRememberedCursorX = cursor.getBoundingClientRect().left;
-      }
+      this.findCursorX();
     }
 
     if (e.key.toUpperCase() === "M" && e.ctrlKey) {
       this.dequeueAllMultilinifications();
     }
+
+    if (Calc.focusedMathQuill) {
+      const remove = hookIntoOverrideKeystroke(
+        Calc.focusedMathQuill.mq,
+        (key, _) => {
+          if (key === "Shift-Up" || key === "Shift-Down") {
+            this.doMultilineVerticalNav(key);
+            return false;
+          }
+        },
+        0,
+        "multiline"
+      );
+      if (remove) this.customHandlerRemovers.push(remove);
+    }
   };
+
+  findCursorX() {
+    const cursor = document.querySelector(".dcg-mq-cursor");
+    if (cursor) {
+      this.lastRememberedCursorX = cursor.getBoundingClientRect().left;
+    } else {
+      let xpos =
+        Calc.focusedMathQuill?.mq.__controller.cursor?.[
+          -1
+        ]?._el?.getBoundingClientRect()?.right;
+      if (xpos !== undefined) {
+        this.lastRememberedCursorX = xpos;
+      } else {
+        xpos =
+          Calc.focusedMathQuill?.mq.__controller.cursor?.[1]?._el?.getBoundingClientRect()
+            ?.left;
+        this.lastRememberedCursorX = xpos;
+      }
+    }
+  }
 
   mousedownHandler = () => {
     // get the mathquill cursor position x
     setTimeout(() => {
-      const cursor = document.querySelector(".dcg-mq-cursor");
-      if (cursor) {
-        this.lastRememberedCursorX = cursor.getBoundingClientRect().left;
-      }
+      this.findCursorX();
     });
   };
 
@@ -233,6 +265,10 @@ export default class Multiline extends PluginController<Config> {
 
     if (this.customDispatcherID)
       deregisterCustomDispatchOverridingHandler(this.customDispatcherID);
+
+    for (const remover of this.customHandlerRemovers) {
+      remover();
+    }
   }
 
   // navigates up/down through a multiline expression
@@ -263,6 +299,7 @@ export default class Multiline extends PluginController<Config> {
     // get the original cursor horizontal position
     // so we can snap to it later
     const cursor = document.querySelector(".dcg-mq-cursor");
+    this.findCursorX();
     const originalCursorX =
       this.lastRememberedCursorX ?? cursor?.getBoundingClientRect().left ?? 0;
     const cursorPositions: number[] = [];
@@ -295,6 +332,10 @@ export default class Multiline extends PluginController<Config> {
       domfragProto.removeClass = removeClass;
       domfragProto.addClass = addClass;
       domfragProto.insDirOf = insDirOf;
+      if (select) {
+        mqKeystroke(focusedmq, oppositeArrowdir);
+        mqKeystroke(focusedmq, arrowdir);
+      }
     };
 
     // ended with break statements

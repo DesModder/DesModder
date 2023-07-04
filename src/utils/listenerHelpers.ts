@@ -1,4 +1,5 @@
 import { pollForValue } from "./utils";
+import { MathQuillField } from "components";
 import { DispatchedEvent } from "globals/Calc";
 import { Calc } from "globals/window";
 
@@ -86,4 +87,124 @@ export function propGetSet<Obj extends object, Key extends keyof Obj>(
   key: Key
 ) {
   return [() => obj[key], (v: Obj[Key]) => (obj[key] = v)] as const;
+}
+
+// override all keyboard inputs entering a MathQuill field
+// and optionally prevent them from doing their default behavior
+export function hookIntoOverrideKeystroke(
+  // field for which to override kb inputs
+  mq: MathQuillField,
+  // callback function
+  // return false to override all other events
+  fn: (key: string, evt: KeyboardEvent) => boolean | undefined,
+  // higher priority --> runs first
+  priority: number,
+  // unique key to prevent adding duplicate hooks
+  key: string
+) {
+  return hookIntoFunction(
+    mq.__options,
+    "overrideKeystroke",
+    key,
+    priority,
+    (stop, k, e) => {
+      const cont = fn(k, e);
+      if (cont === false) {
+        stop();
+      }
+    }
+  );
+}
+
+type HookedFunctionCallback<Fn extends (...args: any[]) => any> = (
+  stop: (ret: ReturnType<Fn>) => void,
+  ...args: Parameters<Fn>
+) => void;
+
+type HookedFunction<Fn extends (...args: any[]) => any> = Fn & {
+  __isMonkeypatchedIn: true;
+  handlers: {
+    key: string;
+    fn: HookedFunctionCallback<Fn>;
+    priority: number;
+  }[];
+  revert: () => void;
+};
+
+type MaybeHookedFunction<Fn extends (...args: any[]) => any> =
+  | HookedFunction<Fn>
+  | (Fn & {
+      __isMonkeypatchedIn: undefined;
+    });
+
+export function hookIntoFunction<
+  Obj extends { [K in Key]: (...args: any[]) => any },
+  Fn extends Obj[Key],
+  Key extends keyof Obj
+>(
+  obj: Obj,
+  prop: Key,
+  key: string,
+  priority: number,
+  fn: HookedFunctionCallback<Fn>
+) {
+  const oldfn = obj[prop] as MaybeHookedFunction<Fn>;
+
+  // monkeypatch the function if it isn't monkeypatched already
+  if (!oldfn.__isMonkeypatchedIn) {
+    const monkeypatchedFunction = function (
+      ...args: Parameters<Fn>
+    ): ReturnType<Fn> {
+      const handlersArray = (obj[prop] as HookedFunction<Fn>).handlers;
+
+      for (const h of handlersArray) {
+        let stop = false;
+        let ret: ReturnType<Fn> | undefined;
+        h.fn((r: ReturnType<Fn>) => {
+          stop = true;
+          ret = r;
+        }, ...args);
+        if (stop) return ret as ReturnType<Fn>;
+      }
+
+      return oldfn(...args);
+    };
+    monkeypatchedFunction.__isMonkeypatchedIn = true;
+    monkeypatchedFunction.handlers = [] as HookedFunction<Fn>["handlers"];
+    monkeypatchedFunction.revert = () => {
+      obj[prop] = oldfn;
+    };
+
+    obj[prop] = monkeypatchedFunction as unknown as any;
+  }
+
+  const monkeypatchedFn = obj[prop] as HookedFunction<Fn>;
+
+  // if theres already a handler with this key, update it
+  const handler = monkeypatchedFn.handlers.find((h) => h.key === key);
+  if (handler) {
+    handler.priority = priority;
+    handler.fn = fn;
+    return;
+  }
+
+  // if there isn't one, add a new one
+  monkeypatchedFn.handlers.push({
+    key,
+    priority,
+    fn,
+  });
+
+  monkeypatchedFn.handlers.sort((a, b) => b.priority - a.priority);
+
+  // function for removing this handler
+  return () => {
+    monkeypatchedFn.handlers = monkeypatchedFn.handlers.filter(
+      (h) => h.key !== key
+    );
+
+    if (monkeypatchedFn.handlers.length === 0) {
+      monkeypatchedFn.revert();
+    }
+  };
 }

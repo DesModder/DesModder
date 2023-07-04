@@ -86,7 +86,7 @@ export const Fragile = new Proxy(
   Checkbox: typeof CheckboxComponent;
   SegmentedControl: typeof SegmentedControlComponent;
   MathquillView: typeof MathQuillViewComponent & {
-    getFocusedMathquill: () => MathQuillField;
+    getFocusedMathquill: () => MathQuillField | undefined;
   };
   InlineMathInputView: typeof InlineMathInputViewComponent;
   StaticMathquillView: typeof DStaticMathquillViewComponent;

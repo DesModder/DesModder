@@ -165,9 +165,11 @@ interface Toast {
 }
 
 interface CalcPrivate {
-  focusedMathQuill: {
-    mq: MathQuillField;
-  };
+  focusedMathQuill:
+    | {
+        mq: MathQuillField;
+      }
+    | undefined;
   /// / undocumented, may break
   controller: {
     isNarrow: () => boolean;
