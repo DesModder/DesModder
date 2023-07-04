@@ -1,5 +1,6 @@
 import { DWindow } from "../globals/window";
 import { PluginID } from "../plugins";
+import { GraphState } from "@desmodder/graph-state";
 import { Page } from "puppeteer";
 
 /** Calc is only available inside evaluate() callbacks and friends, since those
@@ -93,6 +94,16 @@ export class Driver {
   /** Helpers */
   async getState() {
     return await this.evaluate(() => Calc.getState());
+  }
+
+  async setState(state: GraphState) {
+    await this.evaluate((state) => Calc.setState(state), state);
+  }
+
+  async assertExprsList(state: GraphState) {
+    const expected = state.expressions.list;
+    const actual = (await this.getState()).expressions.list;
+    expect(actual).toEqual(expected);
   }
 
   async getEnabledPlugins() {

@@ -14,6 +14,7 @@ import {
 import { GenericSettings, PluginID } from "../plugins";
 import CalcType from "./Calc";
 import { ItemModel } from "./models";
+import { GraphState } from "@desmodder/graph-state";
 
 export interface DWindow extends Window {
   Calc: CalcType;
@@ -48,6 +49,7 @@ interface Mathtools {
       }
     ) => string;
   };
+  migrateToLatest: (s: GraphState) => GraphState;
 }
 
 declare let window: DWindow;

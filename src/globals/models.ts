@@ -129,7 +129,7 @@ export interface ImageModel extends ItemModelBase {
 
 export interface FolderModel {
   type: "folder";
-  // cannot have a folderId
+  folderId?: undefined;
   id: string;
   title?: string;
   secret?: boolean;

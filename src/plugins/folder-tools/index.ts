@@ -1,4 +1,5 @@
 import { PluginController } from "../PluginController";
+import { ActionButton } from "../expr-action-buttons";
 import { ItemModel } from "globals/models";
 import { Calc } from "globals/window";
 import { List } from "utils/depUtils";
@@ -6,6 +7,33 @@ import { List } from "utils/depUtils";
 export default class FolderTools extends PluginController {
   static id = "folder-tools" as const;
   static enabledByDefault = true;
+
+  actionButtons: ActionButton[] = [
+    {
+      tooltip: "folder-tools-enclose",
+      buttonClass: "dsm-note-enclose-button",
+      iconClass: "dsm-icon-folder-plus",
+      onTap: (model) => this.noteEnclose(model.index),
+      predicate: (model) => model.type === "text",
+    },
+    {
+      tooltip: "folder-tools-dump",
+      buttonClass: "dsm-folder-dump-button",
+      iconClass: "dsm-icon-folder-minus",
+      onTap: (model) => this.folderDump(model.index),
+      predicate: (model) =>
+        model.type === "folder" &&
+        Calc.controller.getItemModelByIndex(model.index + 1)?.folderId ===
+          model.id,
+    },
+    {
+      tooltip: "folder-tools-merge",
+      buttonClass: "dsm-folder-merge-button",
+      iconClass: "dsm-icon-folder-plus",
+      onTap: (model) => this.folderMerge(model.index),
+      predicate: (model) => model.type === "folder",
+    },
+  ];
 
   folderDump(folderIndex: number) {
     const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
@@ -58,7 +86,7 @@ export default class FolderTools extends PluginController {
       // If authorFeatures is disabled, skip secret folders
       if (skipAuthors) {
         while (currExpr?.type === "folder" && currExpr.secret) {
-          const secretID = currExpr.id;
+          const secretID: string = currExpr.id;
           do {
             currIndex++;
             currExpr = Calc.controller.getItemModelByIndex(currIndex);
