@@ -40,8 +40,10 @@ export default class ReplaceBar extends Component<{
                 this.controller.focusSearch();
               } else {
                 const focusedMQ = MathQuillView.getFocusedMathquill();
-                focusedMQ.keystroke(key, e);
-                this.controller.setReplaceLatex(focusedMQ.latex());
+                if (focusedMQ) {
+                  focusedMQ.keystroke(key, e);
+                  this.controller.setReplaceLatex(focusedMQ.latex());
+                }
               }
             }}
             onFocusedChanged={() => {}}
