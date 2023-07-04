@@ -219,7 +219,6 @@ function stringArrayOption(
   let currentValue = get().join("\n");
 
   const inputHandler = (evt: InputEvent) => {
-    console.log("innertext:\n", evt.target.innerText);
     currentValue = (evt.target as HTMLDivElement).innerText;
     set(currentValue.split("\n"));
   };
