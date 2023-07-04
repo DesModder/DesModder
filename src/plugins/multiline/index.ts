@@ -171,7 +171,6 @@ export default class Multiline extends PluginController<Config> {
   findCursorX() {
     const cursor = document.querySelector(".dcg-mq-cursor");
     if (cursor) {
-      console.log("cursor exists");
       this.lastRememberedCursorX = cursor.getBoundingClientRect().left;
     } else {
       let xpos =
