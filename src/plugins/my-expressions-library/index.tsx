@@ -183,7 +183,7 @@ function jsonEqual(a: any, b: any): boolean {
 window.jsonEqual = jsonEqual;
 
 export default class MyExpressionsLibrary extends PluginController<{
-  libraryGraphHashes: [string, number][]; // probably a temporary fix
+  libraryGraphHashes: string[]; // probably a temporary fix
 }> {
   static id = "my-expressions-library" as const;
   static enabledByDefault = true;
@@ -202,12 +202,6 @@ export default class MyExpressionsLibrary extends PluginController<{
   focusedmq: MathQuillField | undefined;
 
   afterEnable(): void {
-    this.controller.setPluginSetting(
-      "my-expressions-library",
-      "libraryGraphHashes",
-      ["jeiurgihkb"]
-    );
-
     // add pillbox menu
     this.controller.pillboxMenus?.addPillboxButton({
       id: "dsm-library-menu",
@@ -390,7 +384,7 @@ export default class MyExpressionsLibrary extends PluginController<{
     const graphs = (
       await Promise.all(
         this.settings.libraryGraphHashes.map(
-          async (s) => await getGraphState(s[0])
+          async (s) => await getGraphState(s)
         )
       )
     ).filter((e) => e) as { state: GraphState }[];
