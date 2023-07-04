@@ -3,9 +3,8 @@ import MyExpressionsLibrary, {
   ExpressionLibraryMathExpression,
 } from ".";
 import "./library-search.less";
-import { ExpressionState } from "@desmodder/graph-state";
-import { ClassComponent, Component, jsx, mountToNode } from "DCGView";
-import { DStaticMathquillView, For } from "components";
+import { Component, jsx, mountToNode } from "DCGView";
+import { For } from "components";
 import StaticMathquillView from "components/StaticMathQuillView";
 
 export function expressionLibraryMathExpressionView(
@@ -72,10 +71,8 @@ export class LibrarySearchView extends Component<{
                   case "expression": {
                     const container = (
                       <li
-                        onClick={(e: MouseEvent) => {
+                        onClick={(_: MouseEvent) => {
                           void this.props.plugin().loadMathExpression(expr);
-                          // e.stopPropagation();
-                          // e.preventDefault();
                         }}
                         style={{ "min-height": "20px", "overflow-x": "hidden" }}
                       ></li>

@@ -1,13 +1,15 @@
-import { getGraphState } from "./library-search-controller";
+import { getGraphState } from "./library-search-utils";
 import { LibrarySearchView } from "./library-search-view";
 import { ExpressionState, GraphState, ItemState } from "@desmodder/graph-state";
 import { Component, DCGView, MountedComponent, jsx } from "DCGView";
 import { MathQuillField, MathQuillView } from "components";
 import { Calc } from "globals/window";
 import { PluginController } from "plugins/PluginController";
-import { mapAugAST } from "plugins/intellisense/latex-parsing";
+import { mapAllAugLatex, mapAugAST } from "plugins/intellisense/latex-parsing";
+import { IdentifierTrackingState } from "plugins/intellisense/state";
 import { getMetadata } from "plugins/manage-metadata/manage";
-import Aug from "plugins/text-mode/aug/AugState";
+import Aug, { ExpressionAug } from "plugins/text-mode/aug/AugState";
+import augToRaw, { augNonFolderToRaw } from "plugins/text-mode/aug/augToRaw";
 import { rawNonFolderToAug } from "plugins/text-mode/aug/rawToAug";
 import { textModeExprToLatex } from "plugins/text-mode/down/textToRaw";
 
@@ -179,6 +181,19 @@ function jsonEqual(a: any, b: any): boolean {
   return false;
 }
 
+// get rid of keys from a destination object that aren't in a source object
+// runs recursively
+function pruneKeys<T extends Record<string, unknown>>(dst: T, src: T) {
+  for (const [k, v] of Object.entries(dst)) {
+    if (!Object.prototype.hasOwnProperty.call(src, k)) {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete dst[k as keyof T];
+      if (typeof src[k] === "object" && typeof dst[k] === "object")
+        pruneKeys((dst as any)[k], (src as any)[k]);
+    }
+  }
+}
+
 // @ts-expect-error window can have anything on it
 window.jsonEqual = jsonEqual;
 
@@ -200,6 +215,10 @@ export default class MyExpressionsLibrary extends PluginController<{
   keypadRow: HTMLElement | undefined;
 
   focusedmq: MathQuillField | undefined;
+
+  identTracker: IdentifierTrackingState = new IdentifierTrackingState(
+    getMetadata()
+  );
 
   afterEnable(): void {
     // add pillbox menu
@@ -313,6 +332,54 @@ export default class MyExpressionsLibrary extends PluginController<{
           )
         )
     );
+
+    const boundIdentsInImportedExprs = [];
+
+    for (const expr of loadedArray) {
+      boundIdentsInImportedExprs.push(
+        ...this.identTracker.getExpressionBoundIdentifiers(expr.raw)
+      );
+    }
+
+    const symbolNameRemapper = new Map<string, string>();
+
+    for (const ident of boundIdentsInImportedExprs) {
+      const renamedVersion = this.identTracker.getRenamedIdentifierName(
+        ident.variableName
+      );
+      if (renamedVersion !== ident.variableName) {
+        symbolNameRemapper.set(ident.variableName, renamedVersion);
+      }
+    }
+
+    loadedArray = loadedArray.map((e) => {
+      const augCopy = structuredClone(e.aug);
+      mapAllAugLatex(augCopy, (node) => {
+        if (!node) return;
+        if (node.type === "Identifier") {
+          node.symbol = symbolNameRemapper.get(node.symbol) ?? node.symbol;
+        }
+      });
+
+      const rawCopy = augNonFolderToRaw(augCopy as ExpressionAug);
+      for (const [k, v] of Object.entries(rawCopy)) {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        if (v === undefined) delete rawCopy[k as keyof typeof rawCopy];
+      }
+
+      pruneKeys(rawCopy, e.raw);
+
+      console.log("diff", e.raw, rawCopy);
+
+      return {
+        ...e,
+        // need to change .aug and .raw to rename vars
+        aug: augCopy,
+        raw: rawCopy,
+      };
+    });
+
+    console.log(loadedArray);
 
     let startIndex = this.getInsertionStartIndex();
 

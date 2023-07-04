@@ -107,7 +107,9 @@ function augFolderToRaw(expr: Aug.FolderAug): Graph.FolderState {
   };
 }
 
-function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
+export function augNonFolderToRaw(
+  item: Aug.NonFolderAug
+): Graph.NonFolderState {
   const base = {
     id: item.id,
     secret: item.secret,

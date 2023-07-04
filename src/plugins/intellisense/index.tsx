@@ -5,7 +5,7 @@ import {
   getMathquillIdentifierAtCursorPosition,
   getPartialFunctionCall,
 } from "./latex-parsing";
-import { IntellisenseState } from "./state";
+import { IdentifierTrackingState } from "./state";
 import { JumpToDefinitionMenuInfo, View } from "./view";
 import { DCGView, MountedComponent, unmountFromNode } from "DCGView";
 import { MathQuillField, MathQuillView } from "components";
@@ -88,7 +88,7 @@ export default class Intellisense extends PluginController {
   partialFunctionCallIdent: BoundIdentifierFunction | undefined;
   partialFunctionCallDoc: string | undefined;
 
-  intellisenseState = new IntellisenseState(getMetadata());
+  intellisenseState = new IdentifierTrackingState(getMetadata());
 
   canHaveIntellisense = false;
 

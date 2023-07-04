@@ -1,6 +1,11 @@
 import { latexStringToIdentifierString } from "./view";
 import { MQCursor, MathQuillField } from "components";
-import { ExpressionAug } from "plugins/text-mode/aug/AugState";
+import {
+  nestedKeyContainers,
+  nestedKeys,
+  rootKeys,
+} from "plugins/find-replace/backend";
+import { ExpressionAug, ItemAug, Latex } from "plugins/text-mode/aug/AugState";
 
 export function mapAugAST(
   node: ExpressionAug["latex"],
@@ -23,6 +28,27 @@ export function mapAugAST(
   }
 
   map(node);
+}
+
+// TODO: Find a more robust solution for this.
+export function mapAllAugLatex(
+  item: ItemAug,
+  callback: (node: ExpressionAug["latex"]) => void
+) {
+  if (item.type === "expression") {
+    function map(v: any) {
+      if (typeof v === "object") {
+        for (const key of Object.keys(v)) {
+          const prop = v[key];
+          map(prop);
+        }
+        if (typeof v.type === "string" && v.type !== "expression") {
+          mapAugAST(v, callback);
+        }
+      }
+    }
+    map(item);
+  }
 }
 
 export function getController(mq: MathQuillField) {
