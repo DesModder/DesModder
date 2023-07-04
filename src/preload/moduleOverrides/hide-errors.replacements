@@ -44,42 +44,13 @@ $this.bindFn($this.getIconMode)
 
 *Replace* `from` with
 ```js
-error: () => $DCGView.createElement(
-  "div",
-  {
-    onTap: event => (
-      event.shiftKey &&
-      DSM.hideErrors?.toggleErrorHidden($this.model.id)
-    ),
-    style: () => (
-      DSM.hideErrors?.isErrorHidden($this.model.id)
-        ? "opacity: 0.5"
-        : ""
-    )
-  },
-  $DCGView.createElement($TooltippedError, {
-    error: $e.bindFn($e.getErrorMsg),
-    __opts__
-  })
+error: () => DSM.replaceElement(
+  () => $DCGView.createElement($TooltippedError, {
+      error: $e.bindFn($e.getErrorMsg),
+      __opts__,
+    }),
+  () => DSM.hideErrors?.errorTriangle($this.model.id)
 )
-```
-
-## Trigger DesModder hide instead of `create-sliders-for-item` on tap
-
-*Description* `Run correct code when "hide" button is clicked`
-
-*Find* => `from`
-```js
-let $r = $e.hasClass('dcg-all')
-```
-
-*Replace* `from` with
-```js
-if ($e.hasClass("dsm-hide-errors")) {
-  DSM.hideErrors?.hideError(this.model.id)
-  return;
-}
-__from__
 ```
 
 ## Add a "hide" button to the slider prompts
@@ -100,30 +71,7 @@ Add one more child for the hide button
 *Replace* `children` with
 ```js
 __children__,
-$DCGView.createElement(
-  $DCGView.Components.If,
-  {
-    predicate: () => (
-      this.model.type !== "ticker" &&
-      DSM.hideErrors
-    ),
-  },
-  () => $DCGView.createElement(
-    "div",
-    {
-      class: $DCGView.const("dcg-slider-btn-container dsm-hide-errors")
-    },
-    $DCGView.createElement(
-      "div",
-      {
-        role: $DCGView.const("button"),
-        tabindex: $DCGView.const("0"),
-        class: $DCGView.const("dcg-btn-slider dcg-btn-light-gray")
-      },
-      () => window.DesModder.format("hide-errors-hide")
-    )
-  )
-)
+DSM.insertElement(() => DSM.hideErrors?.hideButton(() => this.model))
 ```
 
 ## Disable slider creation prompt if error is hidden

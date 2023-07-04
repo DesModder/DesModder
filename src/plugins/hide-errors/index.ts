@@ -1,5 +1,7 @@
 import { Fragile } from "../../globals/window";
-import { PluginController } from "../PluginController";
+import { Inserter, PluginController, Replacer } from "../PluginController";
+import { ErrorTriangle } from "./components/ErrorTriangle";
+import { HideButton } from "./components/HideButton";
 import "./hide-errors.less";
 
 let enabled: boolean = false;
@@ -60,5 +62,13 @@ export default class HideErrors extends PluginController {
 
   isErrorHidden(id: string) {
     return this.controller.metadata?.getDsmItemModel(id)?.errorHidden;
+  }
+
+  hideButton(getModel: () => any): Inserter {
+    return () => HideButton(this, getModel);
+  }
+
+  errorTriangle(id: string): Replacer {
+    return (inner: any) => ErrorTriangle(this, id, inner);
   }
 }

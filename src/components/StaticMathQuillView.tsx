@@ -5,6 +5,8 @@ export default class StaticMathquillView extends Component<{
   latex: string;
 }> {
   template() {
-    return <DStaticMathquillView latex={this.props.latex()} config={{}} />;
+    return (
+      <DStaticMathquillView latex={() => this.props.latex()} config={{}} />
+    );
   }
 }

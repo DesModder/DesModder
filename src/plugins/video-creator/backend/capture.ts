@@ -172,9 +172,9 @@ function forceReloadMenu(controller: MainController) {
   if (!pm) return;
   if (pm.pillboxMenuOpen === "dsm-vc-menu") {
     pm.pillboxMenuOpen = null;
-    pm.updateExtraComponents();
+    Calc.controller.updateViews();
     pm.pillboxMenuOpen = "dsm-vc-menu";
-    pm.updateExtraComponents();
+    Calc.controller.updateViews();
   }
 }
 

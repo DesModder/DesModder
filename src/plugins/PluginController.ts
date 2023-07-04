@@ -15,3 +15,6 @@ export class PluginController<
   beforeDisable() {}
   afterDisable() {}
 }
+
+export type Replacer<T = any> = undefined | ((old: T) => any);
+export type Inserter = undefined | (() => any);

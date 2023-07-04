@@ -48,5 +48,5 @@ function applyCaptureFrame(controller: VideoCreator) {
 
 export function updateView(vc: VideoCreator) {
   applyCaptureFrame(vc);
-  vc.controller.pillboxMenus?.updateExtraComponents();
+  Calc.controller.updateViews();
 }

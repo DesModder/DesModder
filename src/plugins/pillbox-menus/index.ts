@@ -1,8 +1,8 @@
-import { PluginController } from "../PluginController";
+import { Inserter, PluginController } from "../PluginController";
 import { MenuFunc } from "./components/Menu";
 import PillboxContainer from "./components/PillboxContainer";
 import PillboxMenu from "./components/PillboxMenu";
-import { DCGView, MountedComponent } from "DCGView";
+import { DCGView } from "DCGView";
 import { Calc } from "globals/window";
 import { plugins, PluginID, ConfigItem } from "plugins";
 
@@ -36,7 +36,6 @@ export default class PillboxMenus extends PluginController<undefined> {
   // string if open, null if none are open
   pillboxMenuOpen: string | null = null;
   pillboxMenuPinned: boolean = false;
-  extraMountedComponents = new Map<HTMLElement, MountedComponent>();
 
   beforeDisable() {
     throw new Error(
@@ -44,37 +43,24 @@ export default class PillboxMenus extends PluginController<undefined> {
     );
   }
 
-  pillboxButtonsView(horizontal: boolean) {
-    return DCGView.createElement(PillboxContainer as any, {
-      controller: () => this,
-      horizontal: DCGView.const(horizontal),
-    });
+  pillboxButtonsView(horizontal: boolean): Inserter {
+    return () =>
+      DCGView.createElement(PillboxContainer as any, {
+        controller: () => this,
+        horizontal: DCGView.const(horizontal),
+      });
   }
 
-  pillboxMenuView(horizontal: boolean) {
-    return DCGView.createElement("div", {
-      didMount: (div: HTMLElement) => {
-        this.extraMountedComponents.set(
-          div,
-          DCGView.mountToNode(PillboxMenu, div, {
-            controller: () => this,
-            horizontal: DCGView.const(horizontal),
-          })
-        );
-      },
-      willUnmount: (div: HTMLElement) => {
-        this.extraMountedComponents.delete(div);
-        DCGView.unmountFromNode(div);
-      },
-    });
-  }
-
-  updateExtraComponents() {
-    this.extraMountedComponents.forEach((view) => view.update());
+  pillboxMenuView(horizontal: boolean): Inserter {
+    if (this.pillboxMenuOpen === null) return undefined;
+    return () =>
+      DCGView.createElement(PillboxMenu as any, {
+        controller: () => this,
+        horizontal: DCGView.const(horizontal),
+      });
   }
 
   updateMenuView() {
-    this.updateExtraComponents();
     Calc.controller.updateViews();
   }
 

@@ -74,9 +74,9 @@ export default class PillboxContainer extends Component<{
             )}
           </div>
         </For>
-        <If predicate={() => this.controller.pillboxMenuOpen !== null}>
-          {() => this.controller.pillboxMenuView(false)}
-        </If>
+        {this.controller.controller.insertElement(() =>
+          this.controller.pillboxMenuView(false)
+        )}
       </div>
     );
   }

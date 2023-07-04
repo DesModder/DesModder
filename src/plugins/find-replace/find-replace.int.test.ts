@@ -4,7 +4,7 @@ describe("Find-replace", () => {
   testWithPage("Basic find-replace", async (driver) => {
     // Init an expression
     await driver.focusIndex(0);
-    await driver.setLatex("a+b+a");
+    await driver.setLatexAndSync("a+b+a");
     const latex = ((await driver.getState()).expressions.list[0] as any).latex;
     expect(latex).toBe("a+b+a");
 

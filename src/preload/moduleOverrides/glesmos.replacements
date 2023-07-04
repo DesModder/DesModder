@@ -49,22 +49,7 @@ Just add one more child.
 *Replace* `__rest__` with
 ```js
 __rest__,
-$DCGView.createElement(
-  $DCGView.Components.If,
-  {
-    predicate: () => DSM.glesmos?.canBeGLesmos(this.id),
-  },
-  () => $DCGView.createElement(
-    "div",
-    { class: $DCGView.const("dcg-options-menu-section-title dsm-gl-fill-title") },
-    () => DesModder.format("GLesmos-label-toggle-glesmos"),
-    $DCGView.createElement($ToggleView, {
-      ariaLabel: () => DesModder.format("GLesmos-label-toggle-glesmos"),
-      toggled: () => DSM.glesmos?.isGlesmosMode?.(this.id),
-      onChange: () => DSM.glesmos?.toggleGlesmos?.(this.id),
-    })
-  )
-)
+DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.id, $ToggleView, true))
 ```
 
 ## Add a lines menu option for switching an expression to glesmos rendering mode
@@ -100,23 +85,7 @@ Just add one more child.
 *Replace* `__rest__` with
 ```js
 __rest__,
-$DCGView.createElement(
-  $DCGView.Components.If,
-  {
-    predicate: () => DSM.glesmos?.canBeGLesmos(this.id) &&
-      !DSM.glesmos?.isInequality(this.id)
-  },
-  () => $DCGView.createElement(
-    "div",
-    { class: $DCGView.const("dcg-options-menu-section-title dsm-gl-fill-title") },
-    () => DesModder.format("GLesmos-label-toggle-glesmos"),
-    $DCGView.createElement($ToggleView, {
-      ariaLabel: () => DesModder.format("GLesmos-label-toggle-glesmos"),
-      toggled: () => DSM.glesmos?.isGlesmosMode?.(this.id),
-      onChange: () => DSM.glesmos?.toggleGlesmos?.(this.id),
-    })
-  )
-)
+DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.id, $ToggleView, false))
 ```
 
 ## Add a lines menu option for confirming GLesmos lines
@@ -145,34 +114,7 @@ Prefix with a child
 
 *Replace* `options` with
 ```js
-$DCGView.createElement(
-  $DCGView.Components.If,
-  {
-    predicate: () =>
-      DSM.glesmos?.isGlesmosMode(this.id) &&
-      DSM.glesmos?.isInequality(this.id),
-  },
-  () => $DCGView.createElement(
-    "div",
-    { class: $DCGView.const("dcg-options-menu-section-title dsm-gl-lines-confirm") },
-    () => DesModder.format("GLesmos-confirm-lines"),
-    $DCGView.createElement($ToggleView, {
-      ariaLabel: () => DesModder.format("GLesmos-confirm-lines"),
-      toggled: () => DSM.glesmos?.isGLesmosLinesConfirmed?.(this.id),
-      onChange: () => DSM.glesmos?.toggleGLesmosLinesConfirmed?.(this.id),
-    }),
-    $DCGView.createElement(
-      $DCGView.Components.If,
-      {
-        predicate: () => !DSM.glesmos?.isGLesmosLinesConfirmed?.(this.id)
-      },
-      () => $DCGView.createElement("div",
-        { class: $DCGView.const("dsm-gl-lines-confirm-body") },
-        () => DesModder.format("GLesmos-confirm-lines-body")
-      )
-    )
-  )
-),
+DSM.insertElement(() => DSM.glesmos?.confirmLines(this.id, $ToggleView)),
 __options__
 ```
 

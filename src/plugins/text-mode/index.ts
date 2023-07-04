@@ -1,5 +1,7 @@
-import { PluginController } from "../PluginController";
+import { DCGView } from "../../DCGView";
+import { Inserter, PluginController } from "../PluginController";
 import { onCalcEvent, analysisStateField } from "./LanguageServer";
+import { TextModeToggle } from "./components/TextModeToggle";
 import getText from "./up/getText";
 import { initView, startState } from "./view/editor";
 import { EditorView, ViewUpdate } from "@codemirror/view";
@@ -58,6 +60,21 @@ export default class TextMode extends PluginController {
         if (this.view) onCalcEvent(this.view, event);
       });
     });
+  }
+
+  editorPanel(): Inserter {
+    if (!this.inTextMode) return undefined;
+    return () =>
+      DCGView.createElement("div", {
+        class: DCGView.const("dsm-text-editor-container"),
+        didMount: (div) => this.mountEditor(div),
+        willUnmount: () => this.unmountEditor(),
+      });
+  }
+
+  textModeToggle(): Inserter {
+    if (Calc.controller.isInEditListMode()) return undefined;
+    return () => TextModeToggle(this);
   }
 
   onSetState() {

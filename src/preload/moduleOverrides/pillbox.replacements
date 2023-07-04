@@ -16,13 +16,7 @@ $DCGView.createElement("div", {
 *Replace* `from` with
 ```js
 __from__
-$DCGView.Components.IfElse(
-    () => window.DesModder,
-    {
-      true: () => DSM.pillboxMenus?.pillboxButtonsView(true),
-      false: null
-    }
-),
+DSM.insertElement(() => DSM.pillboxMenus?.pillboxButtonsView(true)),
 ```
 
 ## Insert spot for extra pillbox buttons in regular pillbox view
@@ -38,13 +32,8 @@ $DCGView.createElement($, {
 
 *Replace* `from` with
 ```js
-$DCGView.Components.IfElse(
-    () => window.DesModder,
-    {
-      true: () => DSM.pillboxMenus?.pillboxButtonsView(false),
-      false: null
-    }
-), __from__
+DSM.insertElement(() => DSM.pillboxMenus?.pillboxButtonsView(false)),
+__from__
 ```
 
 ## Bottom zero for our pillbox menus
@@ -79,13 +68,7 @@ $DCGView.createElement($If, {
 *Replace* `from` with
 ```js
 __from__,
-$DCGView.Components.IfElse(
-    () => window.DesModder,
-    {
-      true: () => DSM.pillboxMenus?.pillboxMenuView(true),
-      false: null
-    }
-)
+DSM.insertElement(() => DSM.pillboxMenus?.pillboxMenuView(true))
 ```
 
 ## Tweak placement of existing settings menu in geometry
