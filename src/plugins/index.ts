@@ -22,7 +22,7 @@ import TextMode from "./text-mode";
 import VideoCreator from "./video-creator";
 import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
-import MainController from "main/Controller";
+import MainController from "MainController";
 
 interface ConfigItemGeneric {
   key: string;

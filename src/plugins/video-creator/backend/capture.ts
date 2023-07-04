@@ -1,7 +1,7 @@
 import VideoCreator from "..";
 import { scaleBoundsAboutCenter } from "./utils";
+import MainController from "MainController";
 import { Calc } from "globals/window";
-import MainController from "main/Controller";
 import { EvaluateSingleExpression } from "utils/depUtils";
 
 let dispatchListenerID: string | null = null;

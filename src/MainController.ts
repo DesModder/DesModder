@@ -1,4 +1,4 @@
-import { insertElement, replaceElement } from "../preload/replaceElement";
+import { insertElement, replaceElement } from "./preload/replaceElement";
 import window, { Calc } from "globals/window";
 import {
   plugins,

@@ -1,9 +1,9 @@
 import PerformanceInfo from ".";
 import "./PerformanceView.less";
 import { Component, jsx } from "DCGView";
+import MainController from "MainController";
 import { Button, IconButton, Tooltip } from "components";
 import { format } from "i18n/i18n-core";
-import MainController from "main/Controller";
 
 export class PerformanceView extends Component<{
   controller: () => PerformanceInfo;

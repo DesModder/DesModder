@@ -1,4 +1,5 @@
 import { DCGViewModule } from "../DCGView";
+import MainController from "../MainController";
 import {
   CheckboxComponent,
   DStaticMathquillViewComponent,
@@ -10,7 +11,6 @@ import {
   SegmentedControlComponent,
   TooltipComponent,
 } from "../components/desmosComponents";
-import MainController from "../main/Controller";
 import { GenericSettings, PluginID } from "../plugins";
 import CalcType from "./Calc";
 import { ItemModel } from "./models";

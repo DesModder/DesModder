@@ -1,10 +1,10 @@
 import { format } from "./i18n/i18n-core";
 import { drawGLesmosSketchToCtx } from "./plugins/GLesmos/drawGLesmosSketchToCtx";
 import { DCGView } from "DCGView";
+import MainController from "MainController";
 import ExpressionActionButton from "components/ExpressionActionButton";
 import "fonts/style.css";
 import window from "globals/window";
-import MainController from "main/Controller";
 
 const controller = new MainController();
 
