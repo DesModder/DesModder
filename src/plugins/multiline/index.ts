@@ -145,10 +145,7 @@ export default class Multiline extends PluginController<Config> {
 
   keydownHandler = (e: KeyboardEvent) => {
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-      const cursor = document.querySelector(".dcg-mq-cursor");
-      if (cursor) {
-        this.lastRememberedCursorX = cursor.getBoundingClientRect().left;
-      }
+      this.findCursorX();
     }
 
     if (e.key.toUpperCase() === "M" && e.ctrlKey) {
@@ -171,13 +168,31 @@ export default class Multiline extends PluginController<Config> {
     }
   };
 
+  findCursorX() {
+    const cursor = document.querySelector(".dcg-mq-cursor");
+    if (cursor) {
+      console.log("cursor exists");
+      this.lastRememberedCursorX = cursor.getBoundingClientRect().left;
+    } else {
+      let xpos =
+        Calc.focusedMathQuill.mq.__controller.cursor?.[
+          -1
+        ]?._el?.getBoundingClientRect()?.right;
+      if (xpos !== undefined) {
+        this.lastRememberedCursorX = xpos;
+      } else {
+        xpos =
+          Calc.focusedMathQuill.mq.__controller.cursor?.[1]?._el?.getBoundingClientRect()
+            ?.left;
+        this.lastRememberedCursorX = xpos;
+      }
+    }
+  }
+
   mousedownHandler = () => {
     // get the mathquill cursor position x
     setTimeout(() => {
-      const cursor = document.querySelector(".dcg-mq-cursor");
-      if (cursor) {
-        this.lastRememberedCursorX = cursor.getBoundingClientRect().left;
-      }
+      this.findCursorX();
     });
   };
 
@@ -285,6 +300,7 @@ export default class Multiline extends PluginController<Config> {
     // get the original cursor horizontal position
     // so we can snap to it later
     const cursor = document.querySelector(".dcg-mq-cursor");
+    this.findCursorX();
     const originalCursorX =
       this.lastRememberedCursorX ?? cursor?.getBoundingClientRect().left ?? 0;
     const cursorPositions: number[] = [];
