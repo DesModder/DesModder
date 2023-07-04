@@ -189,7 +189,27 @@ manage-metadata-desc = Manage Metadata, such as GLesmos or pinned/unpinned statu
 ## Intellisense
 intellisense-name = Intellisense
 intellisense-desc = Brings several common IDE features to Desmos, including autocompletion suggestions, function call help, and jump to definition. Documentation here:
-intellisense-jump2def-menu-instructions = has multiple definitions. Pick one to jump to below. Press ESC to close this menu.
+intellisense-jump2def-menu-instructions = has multiple definitions. Pick one to jump to below.
+
+## Compact View
+compact-view-name = Compact View
+compact-view-desc = A variety of options for condensing the UI so you can see more on the screen at once.
+compact-view-opt-textFontSize-name = Text Font Size
+compact-view-opt-textFontSize-desc = Size of the font in notes.
+compact-view-opt-mathFontSize-name = Math Font Size
+compact-view-opt-mathFontSize-desc = Size of the font in mathematical expressions.
+compact-view-opt-bracketFontSizeFactor-name = Bracket Multiplier
+compact-view-opt-bracketFontSizeFactor-desc = Text inside of brackets (parentheses, curly braces, etc.) decreases in size by this factor.
+compact-view-opt-minimumFontSize-name = Min Font Size
+compact-view-opt-minimumFontSize-desc = The minimum possible math font size. Overrides Bracket Font Size Factor.
+compact-view-opt-compactFactor-name = Remove Spacing
+compact-view-opt-compactFactor-desc = Removes lots of empty space in the expressions list.
+compact-view-opt-noSeparatingLines-name = No Separating lines
+compact-view-opt-noSeparatingLines-desc = Remove the separating lines between expressions and replace them with alternating colors.
+compact-view-opt-highlightAlternatingLines-name = Highlight Alternating Lines
+compact-view-opt-highlightAlternatingLines-desc = Highlight alternating expressions so they can be easily distinguished from one another.
+compact-view-opt-hideEvaluations-name = Collapse Evaluations
+compact-view-opt-hideEvaluations-desc = Put evaluations off to the side. They can be focused or hovered to be shown. 
 
 ## Multiline
 multiline-name = Multiline Expressions
