@@ -17,9 +17,7 @@ import {
   SpecificPlugin,
   PluginID,
   plugins,
-  ConfigItemStringArray,
 } from "plugins";
-import { IndexFor } from "utils/utilComponents";
 
 export function MenuFunc(controller: PillboxMenus) {
   return <Menu controller={controller} />;
@@ -199,16 +197,13 @@ export default class Menu extends Component<{
   }
 }
 
-let counter = 0;
 function stringArrayOption(
   controller: PillboxMenus,
   item: ConfigItem,
   plugin: SpecificPlugin,
   settings: GenericSettings
 ) {
-  const option = item as ConfigItemStringArray;
-
-  function set(newValue: readonly (readonly [string, number])[]) {
+  function set(newValue: string[]) {
     controller.expandedPlugin &&
       controller.controller.setPluginSetting(
         controller.expandedPlugin,
@@ -218,84 +213,33 @@ function stringArrayOption(
   }
 
   function get() {
-    return settings[item.key] as [string, number][];
+    return settings[item.key] as string[];
   }
 
-  const inputHandler = (index: () => number) => (evt: InputEvent) => {
-    const newValue = get().map((e, i) =>
-      i === index()
-        ? ([(evt.target as HTMLTextAreaElement).value, e[1]] as const)
-        : e
-    );
-    set(newValue);
-  };
+  let currentValue = get().join("\n");
 
-  const keydownHandler = (index: () => number) => (evt: KeyboardEvent) => {
-    if (evt.key === "Enter") {
-      const val = get();
-      set([
-        ...val.slice(0, index() + 1),
-        ["", val.reduce((prev, [_, key]) => Math.max(prev, key), 0) + 1],
-        ...val.slice(index() + 1),
-      ]);
-      evt.preventDefault();
-      evt.target?.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "ArrowDown" })
-      );
-      return false;
-    }
-
-    if (evt.key === "ArrowDown") {
-      const elem = evt.target;
-      if (
-        elem instanceof HTMLElement &&
-        elem.nextElementSibling instanceof HTMLTextAreaElement
-      )
-        elem.nextElementSibling.focus();
-    }
-
-    if (evt.key === "ArrowUp") {
-      const elem = evt.target;
-      if (
-        elem instanceof HTMLElement &&
-        elem.previousElementSibling instanceof HTMLTextAreaElement
-      )
-        elem.previousElementSibling.focus();
-    }
-
-    if (
-      evt.key === "Backspace" &&
-      evt.target instanceof HTMLTextAreaElement &&
-      evt.target.value === ""
-    ) {
-      const val = get();
-      evt.target?.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "ArrowUp" })
-      );
-      set([...val.slice(0, index()), ...val.slice(index() + 1)]);
-    }
+  const inputHandler = (evt: InputEvent) => {
+    console.log("innertext:\n", evt.target.innerText);
+    currentValue = (evt.target as HTMLDivElement).innerText;
+    set(currentValue.split("\n"));
   };
 
   return (
     // not worrying about keys bc strings are cheap
     <div class="dsm-settings-item dsm-settings-string-array">
-      <IndexFor
-        each={() => get()}
-        key={(e) => e[1]}
-        innerComponent={(children) => <div>{children}</div>}
-      >
-        {(e: [string, number], i: () => number) => {
-          return (
-            <textarea
-              rows={1}
-              onChange={inputHandler(i)}
-              onKeydown={keydownHandler(i)}
-            >
-              {() => e[0]}
-            </textarea>
-          );
+      <div
+        contenteditable={true}
+        onInput={inputHandler}
+        onChange={inputHandler}
+        onUpdate={(e: HTMLDivElement) => {
+          currentValue = get().join("\n");
+          if (currentValue === e.innerText) return;
+          e.innerText = currentValue;
         }}
-      </IndexFor>
+        class="dsm-settings-string-array-input-box"
+      >
+        {get().join("\n")}
+      </div>
       <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
         <div class="dsm-settings-label">{configItemName(plugin, item)}</div>
       </Tooltip>

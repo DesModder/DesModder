@@ -45,8 +45,6 @@ export interface ExpressionsLibraryGraphs {
 
 type Exhaustive<T, Obj> = keyof Obj extends T ? T[] : never;
 
-type X = Exhaustive<"a" | "b" | "c", { a: 1; b: 2; c: 3 }>;
-
 type LatexKeysOnly<O> = {
   [K in keyof O as Aug.Latex.AnyRoot extends O[K]
     ? K
@@ -60,8 +58,6 @@ function allLatexKeys<Obj>() {
     return x as Exhaustive<T, LatexKeysOnly<Obj>>;
   };
 }
-
-type Y = LatexKeysOnly<Aug.ExpressionAug>;
 
 function forAllLatexSources(
   item: Aug.ItemAug,
@@ -87,7 +83,7 @@ function forAllLatexSources(
       runHandler(item?.label?.size);
       runHandler(item?.label?.angle);
       runHandler(item?.regression?.residualVariable);
-      for (const [k, v] of item.regression?.regressionParameters ?? new Map()) {
+      for (const [k, _] of item.regression?.regressionParameters ?? new Map()) {
         runHandler(k);
       }
       runHandler(item?.cdf?.min);
@@ -124,10 +120,6 @@ function forAllLatexSources(
   }
 }
 
-function getExprWithDependencies(state: Aug.State, expr: Aug.ExpressionAug) {
-  if (!expr.latex) return expr;
-}
-
 class MyExpressionsLibraryButton extends Component<{
   plugin: () => MyExpressionsLibrary;
 }> {
@@ -137,10 +129,8 @@ class MyExpressionsLibraryButton extends Component<{
         <span
           onClick={(e: MouseEvent) => {
             if (e.target instanceof HTMLElement) {
-              const rect = e.target?.getBoundingClientRect();
-              this.props
-                .plugin()
-                .openSearch((rect.left + rect.right) / 2, rect.top);
+              // const rect = e.target?.getBoundingClientRect();
+              this.props.plugin().openSearch();
             }
           }}
           class="dcg-keypad-btn dcg-btn-dark-on-gray"
@@ -152,12 +142,9 @@ class MyExpressionsLibraryButton extends Component<{
   }
 }
 
-function swap<T>(arr: T[], i: number, j: number) {
+export function swap<T>(arr: T[], i: number, j: number) {
   [arr[i], arr[j]] = [arr[j], arr[i]];
 }
-
-// const searchContainer = document.createElement("div");
-// document.body.appendChild(searchContainer);
 
 function jsonEqual(a: any, b: any): boolean {
   // check if both arrays are equal if arrays
@@ -203,7 +190,7 @@ export default class MyExpressionsLibrary extends PluginController<{
   static config = [
     {
       type: "stringArray",
-      default: [["jeiurgihkb", 0]],
+      default: ["jeiurgihkb"],
       key: "libraryGraphHashes",
     },
   ] as const;
@@ -215,6 +202,12 @@ export default class MyExpressionsLibrary extends PluginController<{
   focusedmq: MathQuillField | undefined;
 
   afterEnable(): void {
+    this.controller.setPluginSetting(
+      "my-expressions-library",
+      "libraryGraphHashes",
+      ["jeiurgihkb"]
+    );
+
     // add pillbox menu
     this.controller.pillboxMenus?.addPillboxButton({
       id: "dsm-library-menu",
@@ -244,16 +237,6 @@ export default class MyExpressionsLibrary extends PluginController<{
           });
         }
       }
-
-      // const dcgKeysContainer = document.querySelector(".dcg-keys-container");
-
-      // if (dcgKeysContainer?.ariaHidden === "true") {
-      //   this.keypadRow?.parentElement?.removeChild(this.keypadRow);
-      //   this.keypadRow = undefined;
-      //   if (searchContainer.children.length > 0)
-      //     DCGView.unmountFromNode(searchContainer);
-      //   console.log("got here");
-      // }
     });
 
     void this.loadGraphs();
@@ -272,15 +255,8 @@ export default class MyExpressionsLibrary extends PluginController<{
     this.focusedmq = MathQuillView.getFocusedMathquill();
   }
 
-  openSearch(x: number, y: number) {
+  openSearch() {
     this.updateFocusedMathquill();
-    // searchContainer.style.position = "absolute";
-    // searchContainer.style.left = x.toString() + "px";
-    // searchContainer.style.top = y.toString() + "px";
-    // searchContainer.style.zIndex = "99";
-    // this.view = DCGView.mountToNode(LibrarySearchView, searchContainer, {
-    //   plugin: () => this,
-    // });
   }
 
   async loadFolder(expr: ExpressionLibraryFolder) {
@@ -516,7 +492,7 @@ export default class MyExpressionsLibrary extends PluginController<{
   getLibraryExpressions() {
     const exprs: ExpressionLibraryExpression[] = [];
     for (const graph of this.graphs?.graphs ?? []) {
-      for (const [id, expr] of graph.expressions) {
+      for (const [_, expr] of graph.expressions) {
         if (expr.type === "expression") {
           if (
             expr.raw.type === "expression" &&

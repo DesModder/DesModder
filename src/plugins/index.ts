@@ -43,7 +43,7 @@ export interface ConfigItemString extends ConfigItemGeneric {
 
 export interface ConfigItemStringArray extends ConfigItemGeneric {
   type: "stringArray";
-  default: readonly (readonly [string, number])[];
+  default: readonly string[];
 }
 
 export type ConfigItem =
