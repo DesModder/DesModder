@@ -48,6 +48,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "better-evaluation-view",
     "show-tips",
     "hide-errors",
+    "compact-view",
     "multiline",
   ],
   integrations: ["wakatime"],
@@ -221,7 +222,7 @@ function numberOption(
   return (
     <div class="dsm-settings-item dsm-settings-number">
       <input
-        type="number"
+        type={numItem.variant ?? "number"}
         min={() => numItem.min}
         max={() => numItem.max}
         step={() => numItem.step}
@@ -229,6 +230,10 @@ function numberOption(
         onChange={inputHandler}
         onInput={inputHandler}
         id={`dsm-settings-item__input-${item.key}`}
+        onUpdate={(e: HTMLInputElement) =>
+          !e.classList.contains("dcg-hovered") &&
+          (e.value = settings[item.key].toString())
+        }
       ></input>
       <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
         <label for={`dsm-settings-item__input-${item.key}`}>

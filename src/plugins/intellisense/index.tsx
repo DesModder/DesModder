@@ -318,21 +318,20 @@ export default class Intellisense extends PluginController {
           function (key: string, _: KeyboardEvent) {
             if (
               // don't bother overriding keystroke if intellisense is offline
-              !self.canHaveIntellisense
+              !self.canHaveIntellisense ||
+              self.intellisenseOpts.length === 0
             )
               // return nothing to ensure the actual overrideKeystroke runs
               return;
 
             // navigating downward in the intellisense menu
             if (key === "Down") {
-              if (self.intellisenseOpts.length > 0) {
-                self.goToNextIntellisenseCol();
-                self.view?.update();
-                return false;
-              }
+              self.goToNextIntellisenseCol();
+              self.view?.update();
+              return false;
 
               // navigating upward in the intellisense menu
-            } else if (key === "Up" && self.intellisenseOpts.length > 0) {
+            } else if (key === "Up") {
               self.goToPrevIntellisenseCol();
 
               self.view?.update();
@@ -342,7 +341,6 @@ export default class Intellisense extends PluginController {
               // or jump to def if in row 1
             } else if (
               key === "Enter" &&
-              self.intellisenseIndex >= 0 &&
               self.intellisenseOpts[self.intellisenseIndex] !== undefined
             ) {
               if (self.intellisenseRow === 0) {
@@ -403,7 +401,11 @@ export default class Intellisense extends PluginController {
   keyDownHandler = (e: KeyboardEvent) => {
     this.saveCursorState();
 
-    if (e.key === "Tab" && this.canHaveIntellisense) {
+    if (
+      e.key === "Tab" &&
+      this.canHaveIntellisense &&
+      this.intellisenseOpts.length !== 0
+    ) {
       e.preventDefault();
     }
 
