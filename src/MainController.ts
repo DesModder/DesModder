@@ -1,4 +1,13 @@
 import { insertElement, replaceElement } from "./preload/replaceElement";
+import { mainEditorView } from "./state";
+import {
+  pluginsEnabled,
+  pluginsForceDisabled,
+  setPluginEnabled,
+  setPluginsEnabled,
+} from "./state/pluginsEnabled";
+import { StateEffect } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
 import window, { Calc } from "globals/window";
 import {
   plugins,
@@ -9,38 +18,39 @@ import {
   IDToPluginSettings,
   PluginInstance,
 } from "plugins";
-import { postMessageUp, mapToRecord, recordToMap } from "utils/messages";
+import { postMessageUp, recordToMap } from "utils/messages";
 
 export default class MainController extends TransparentPlugins {
-  /**
-   * pluginsEnabled keeps track of what plugins the user wants enabled,
-   * regardless of forceDisabled settings.
-   */
-  private readonly pluginsEnabled: Map<PluginID, boolean>;
-  private readonly forceDisabled: Set<string>;
   readonly pluginSettings = Object.fromEntries(
     pluginList.map(
       (plugin) => [plugin.id, getDefaultConfig(plugin.id)] as const
     )
   ) as IDToPluginSettings;
 
+  private readonly view: EditorView;
+
   constructor() {
     super();
-    // default values
-    this.forceDisabled = window.DesModderPreload!.pluginsForceDisabled;
-    if (Calc.controller.isGeometry()) this.forceDisabled.add("text-mode");
-    this.pluginsEnabled = new Map(
-      pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
-    );
+    const forceDisabled = window.DesModderPreload!.pluginsForceDisabled;
+    if (Calc.controller.isGeometry()) forceDisabled.add("text-mode");
+    this.view = mainEditorView([pluginsForceDisabled.of(forceDisabled)]);
+  }
+
+  dispatch(...effects: StateEffect<any>[]) {
+    this.view.dispatch({ effects });
   }
 
   applyStoredEnabled(storedEnabled: Map<PluginID, boolean | undefined>) {
+    const pluginsEnabled = new Map(
+      pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
+    );
     for (const { id } of pluginList) {
       const stored = storedEnabled.get(id);
       if (stored !== undefined && id !== "GLesmos") {
-        this.pluginsEnabled.set(id, stored);
+        pluginsEnabled.set(id, stored);
       }
     }
+    this.dispatch(setPluginsEnabled.of(pluginsEnabled));
   }
 
   applyStoredSettings(
@@ -75,15 +85,11 @@ export default class MainController extends TransparentPlugins {
     this.glesmos?.checkGLesmos();
   }
 
-  setPluginEnabled(id: PluginID, isEnabled: boolean) {
-    if (isEnabled && this.isPluginForceDisabled(id)) return;
-    const same = isEnabled === this.pluginsEnabled.get(id);
-    this.pluginsEnabled.set(id, isEnabled);
-    if (!same)
-      postMessageUp({
-        type: "set-plugins-enabled",
-        value: mapToRecord(this.pluginsEnabled),
-      });
+  setPluginEnabled(id: PluginID, enable: boolean) {
+    if (enable && this.isPluginForceDisabled(id)) return;
+    const pe = this.view.state.field(pluginsEnabled);
+    if (enable === pe.get(id)) return;
+    this.dispatch(setPluginEnabled.of({ id, enable }));
   }
 
   disablePlugin(id: PluginID) {
@@ -92,7 +98,6 @@ export default class MainController extends TransparentPlugins {
       if (this.isPluginEnabled(id)) {
         const plugin = this.enabledPlugins[id];
         plugin?.beforeDisable();
-        this.pluginsEnabled.delete(id);
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete this.enabledPlugins[id];
         this.setPluginEnabled(id, false);
@@ -144,21 +149,16 @@ export default class MainController extends TransparentPlugins {
   }
 
   isPluginEnabled(id: PluginID) {
-    return (
-      !this.isPluginForceDisabled(id) && (this.pluginsEnabled.get(id) ?? false)
-    );
+    const pe = this.view.state.field(pluginsEnabled);
+    return !this.isPluginForceDisabled(id) && (pe.get(id) ?? false);
   }
 
   isPluginForceDisabled(id: PluginID) {
-    return this.forceDisabled.has(id);
-  }
-
-  isPluginForceEnabled(id: PluginID) {
-    return !!plugins.get(id)?.forceEnabled;
+    return this.view.state.facet(pluginsForceDisabled).has(id);
   }
 
   isPluginToggleable(id: PluginID) {
-    return !this.isPluginForceDisabled(id) && !this.isPluginForceEnabled(id);
+    return !this.isPluginForceDisabled(id);
   }
 
   togglePluginSettingBoolean(pluginID: PluginID, key: string) {

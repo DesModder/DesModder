@@ -91,7 +91,6 @@ export interface Plugin<
   // display name and descriptions are managed in a translations file
   descriptionLearnMore?: string;
   enabledByDefault: boolean;
-  forceEnabled?: boolean;
   new (controller: MainController, config: Settings): PluginInstance<Settings>;
   config?: readonly ConfigItem[];
 }

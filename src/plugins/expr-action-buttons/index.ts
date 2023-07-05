@@ -39,6 +39,6 @@ export interface ActionButton {
   onTap: (m: ItemModel) => void;
 }
 
-interface ActionButtonWithKey extends ActionButton {
+export interface ActionButtonWithKey extends ActionButton {
   key: string;
 }
