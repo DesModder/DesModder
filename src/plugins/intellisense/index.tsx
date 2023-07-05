@@ -611,6 +611,11 @@ export default class Intellisense extends PluginController {
   dispatcher: string | undefined;
 
   afterEnable() {
+    // remove lines between docstrings and their expressions
+    this.updateCSSForAllDocstringExpressions();
+
+    document.body.classList.toggle("intellisense-enabled", true);
+
     const exppanel = document.querySelector(".dcg-exppanel");
     this.lastExppanelScrollTop = exppanel?.scrollTop ?? 0;
 
@@ -660,7 +665,18 @@ export default class Intellisense extends PluginController {
           Calc.controller.getSelectedItem() as TextModel | undefined
         );
       }
+
+      if (e.type === "set-state") {
+        this.updateCSSForAllDocstringExpressions();
+      }
     });
+  }
+
+  updateCSSForAllDocstringExpressions() {
+    for (const m of Calc.controller.getAllItemModels()) {
+      if (m.type !== "text") continue;
+      this.updateCSSForDocstringExpression(m);
+    }
   }
 
   updateCSSForDocstringExpression(model: TextModel | undefined) {
@@ -675,6 +691,8 @@ export default class Intellisense extends PluginController {
   }
 
   afterDisable() {
+    document.body.classList.toggle("intellisense-enabled", false);
+
     // clear event listeners
     document.removeEventListener("focusout", this.focusOutHandler);
     document.removeEventListener("focusin", this.focusInHandler);
