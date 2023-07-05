@@ -34,12 +34,16 @@ export interface ExpressionLibraryFolder {
 
 export type ExpressionLibraryExpression =
   | ExpressionLibraryMathExpression
-  | ExpressionLibraryFolder;
+  | ExpressionLibraryFolder
+  | ExpressionLibraryGraph;
 
 export interface ExpressionLibraryGraph {
   // maps expression IDs to expressions
   expressions: Map<string, ExpressionLibraryExpression>;
   hash: string;
+  uniqueID: number;
+  type: "graph";
+  title?: string;
 }
 
 export interface ExpressionsLibraryGraphs {
@@ -221,41 +225,6 @@ export default class MyExpressionsLibrary extends PluginController<{
     getMetadata()
   );
 
-  afterEnable(): void {
-    // add pillbox menu
-    this.controller.pillboxMenus?.addPillboxButton({
-      id: "dsm-library-menu",
-      tooltip: "my-expressions-library-pillbox-menu",
-      iconClass: "dsm-icon-bookmark",
-      popup: () => {
-        return (
-          <LibrarySearchView
-            plugin={() => {
-              return this;
-            }}
-          ></LibrarySearchView>
-        );
-      },
-    });
-
-    // inject library search into functions keypad
-    Calc.controller.dispatcher.register((evt) => {
-      if (evt.type === "keypad/set-minimized") {
-        if (!evt.minimized && !this.keypadRow) {
-          const keypad = document.querySelector(".dcg-keys .dcg-basic-keypad");
-          this.keypadRow = document.createElement("div");
-          this.keypadRow.className = "dcg-keypad-row";
-          keypad?.insertBefore(this.keypadRow, keypad.firstElementChild);
-          DCGView.mountToNode(MyExpressionsLibraryButton, this.keypadRow, {
-            plugin: () => this,
-          });
-        }
-      }
-    });
-
-    void this.loadGraphs();
-  }
-
   searchStr: string = "";
 
   refineSearch(searchStr: string) {
@@ -274,22 +243,26 @@ export default class MyExpressionsLibrary extends PluginController<{
     this.updateFocusedMathquill();
   }
 
-  async loadFolder(expr: ExpressionLibraryFolder) {
+  createEmptyFolder(title: string) {
     Calc.controller.dispatch({ type: "new-folder" });
 
     const idx = Calc.controller.getSelectedItem()?.index;
     if (idx !== undefined) {
       const folder = Calc.controller.listModel.__itemModelArray[idx];
       if (folder.type === "folder") {
-        folder.title = expr.text;
+        folder.title = title;
       }
     }
 
     Calc.controller.updateTheComputedWorld();
+  }
+
+  async loadFolder(expr: ExpressionLibraryFolder) {
+    this.createEmptyFolder(expr.text);
 
     for (const id of expr.expressions) {
       const e = expr.graph.expressions.get(id);
-      if (e && e.type !== "folder") {
+      if (e && e.type === "expression") {
         await this.loadMathExpression(e);
       }
     }
@@ -303,13 +276,18 @@ export default class MyExpressionsLibrary extends PluginController<{
     );
   }
 
-  async loadMathExpression(expr: ExpressionLibraryMathExpression) {
+  async loadMathExpression(
+    expr: ExpressionLibraryMathExpression,
+    dontLoadDependencies?: boolean
+  ) {
     this.focusedmq?.focus();
     const loaded = new Set<ExpressionLibraryMathExpression>();
 
     const loadExpressionInner = (expr: ExpressionLibraryMathExpression) => {
       if (loaded.has(expr)) return;
       loaded.add(expr);
+
+      if (dontLoadDependencies) return;
 
       for (const childexprID of expr.dependsOn) {
         const childExpr = expr.graph.expressions.get(childexprID);
@@ -462,6 +440,18 @@ export default class MyExpressionsLibrary extends PluginController<{
     Calc.controller.updateTheComputedWorld();
   }
 
+  async loadEntireGraph(graph: ExpressionLibraryGraph) {
+    this.createEmptyFolder(`Graph: ${graph.title}`);
+
+    for (const [id, expr] of Array.from(
+      graph.expressions.entries()
+    ).reverse()) {
+      if (expr.type === "expression") {
+        await this.loadMathExpression(expr, true);
+      }
+    }
+  }
+
   async loadGraphs() {
     const graphs = await Promise.all(
       this.settings.libraryGraphHashes.map(async (s) => await getGraphState(s))
@@ -517,42 +507,49 @@ export default class MyExpressionsLibrary extends PluginController<{
 
       newGraph.expressions = new Map(
         (
-          g.state.expressions.list as (ItemState & {
-            latex: string | undefined;
-          })[]
-        )
-          .filter((e) => e.latex !== undefined)
-          .map((e) => {
-            const aug = augs.get(e.id);
-            if (!aug) return undefined;
+          Array.from(folders.entries()) as [
+            string,
+            ExpressionLibraryExpression
+          ][]
+        ).concat(
+          (
+            g.state.expressions.list as (ItemState & {
+              latex: string | undefined;
+            })[]
+          )
+            .filter((e) => e.latex !== undefined)
+            .map((e) => {
+              const aug = augs.get(e.id);
+              if (!aug) return undefined;
 
-            const dependsOn = new Set<string>();
+              const dependsOn = new Set<string>();
 
-            forAllLatexSources(aug, (ltx) => {
-              mapAugAST(ltx, (node) => {
-                if (node && node.type === "Identifier") {
-                  const dep = dependencymap.get(node.symbol);
-                  if (dep) {
-                    dependsOn.add(dep);
+              forAllLatexSources(aug, (ltx) => {
+                mapAugAST(ltx, (node) => {
+                  if (node && node.type === "Identifier") {
+                    const dep = dependencymap.get(node.symbol);
+                    if (dep) {
+                      dependsOn.add(dep);
+                    }
                   }
-                }
+                });
               });
-            });
 
-            return [
-              e.id,
-              {
-                aug,
-                latex: e.latex,
-                dependsOn,
-                uniqueID: uniqueID++,
-                graph: newGraph,
-                raw: e,
-                type: "expression",
-              },
-            ];
-          })
-          .filter((e) => e) as [string, ExpressionLibraryExpression][]
+              return [
+                e.id,
+                {
+                  aug,
+                  latex: e.latex,
+                  dependsOn,
+                  uniqueID: uniqueID++,
+                  graph: newGraph,
+                  raw: e,
+                  type: "expression",
+                },
+              ];
+            })
+            .filter((e) => e) as [string, ExpressionLibraryExpression][]
+        )
       );
 
       for (const [k, v] of folders) {
@@ -560,14 +557,19 @@ export default class MyExpressionsLibrary extends PluginController<{
       }
 
       newGraph.hash = g.hash;
+      newGraph.uniqueID = uniqueID++;
+      newGraph.title = g.title ?? "Untitled Graph";
+      newGraph.type = "graph";
 
       this.graphs.graphs.push(newGraph as ExpressionLibraryGraph);
     }
+    this.controller.pillboxMenus?.updateMenuView();
   }
 
   getLibraryExpressions() {
     const exprs: ExpressionLibraryExpression[] = [];
     for (const graph of this.graphs?.graphs ?? []) {
+      exprs.push(graph);
       for (const [_, expr] of graph.expressions) {
         if (expr.type === "expression") {
           if (
@@ -588,6 +590,45 @@ export default class MyExpressionsLibrary extends PluginController<{
       }
     }
     return exprs;
+  }
+
+  async afterConfigChange() {
+    void this.loadGraphs();
+  }
+
+  afterEnable(): void {
+    // add pillbox menu
+    this.controller.pillboxMenus?.addPillboxButton({
+      id: "dsm-library-menu",
+      tooltip: "my-expressions-library-pillbox-menu",
+      iconClass: "dsm-icon-bookmark",
+      popup: () => {
+        return (
+          <LibrarySearchView
+            plugin={() => {
+              return this;
+            }}
+          ></LibrarySearchView>
+        );
+      },
+    });
+
+    // inject library search into functions keypad
+    Calc.controller.dispatcher.register((evt) => {
+      if (evt.type === "keypad/set-minimized") {
+        if (!evt.minimized && !this.keypadRow) {
+          const keypad = document.querySelector(".dcg-keys .dcg-basic-keypad");
+          this.keypadRow = document.createElement("div");
+          this.keypadRow.className = "dcg-keypad-row";
+          keypad?.insertBefore(this.keypadRow, keypad.firstElementChild);
+          DCGView.mountToNode(MyExpressionsLibraryButton, this.keypadRow, {
+            plugin: () => this,
+          });
+        }
+      }
+    });
+
+    void this.loadGraphs();
   }
 
   afterDisable(): void {}

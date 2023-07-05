@@ -6,6 +6,7 @@ import "./library-search.less";
 import { Component, jsx, mountToNode } from "DCGView";
 import { For } from "components";
 import StaticMathquillView from "components/StaticMathQuillView";
+import { format } from "i18n/i18n-core";
 
 export function expressionLibraryMathExpressionView(
   expr: ExpressionLibraryMathExpression,
@@ -47,7 +48,7 @@ export class LibrarySearchView extends Component<{
       <div class="dcg-popover-interior">
         <div class="dsm-library-search">
           <div class="libsearch-header" role="heading">
-            My Expressions Library
+            {format("my-expressions-library-pillbox-menu")}
             <br></br>
             <input
               onClick={(evt: MouseEvent) => {
@@ -94,6 +95,19 @@ export class LibrarySearchView extends Component<{
                       >
                         <i class="dcg-icon-new-folder"></i>
                         {expr.text}
+                      </li>
+                    );
+                  }
+                  case "graph": {
+                    return (
+                      <li
+                        class="dsm-library-search-graph"
+                        onClick={() => {
+                          void this.props.plugin().loadEntireGraph(expr);
+                        }}
+                      >
+                        <i class="dcg-icon-cartesian"></i>
+                        {expr.title}
                       </li>
                     );
                   }

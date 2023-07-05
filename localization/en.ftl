@@ -196,6 +196,7 @@ my-expressions-library-name = My Expressions Library
 my-expressions-library-desc = Create and use a reusable library of expressions in multiple graphs.
 my-expressions-library-opt-libraryGraphHashes-name = Library Graph Hashes
 my-expressions-library-opt-libraryGraphHashes-desc = A list of graph hashes from which to source expressions. Each hash should be on its own line.
+my-expressions-library-pillbox-menu = My Expressions Library
 
 ## Compact View
 compact-view-name = Compact View
