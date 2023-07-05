@@ -1,4 +1,3 @@
-import { insertElement, replaceElement } from "./preload/replaceElement";
 import window, { Calc } from "globals/window";
 import {
   plugins,
@@ -9,6 +8,7 @@ import {
   IDToPluginSettings,
   PluginInstance,
 } from "plugins";
+import { insertElement, replaceElement } from "preload/replaceElement";
 import { postMessageUp, mapToRecord, recordToMap } from "utils/messages";
 
 export default class MainController extends TransparentPlugins {

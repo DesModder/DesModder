@@ -250,8 +250,9 @@ function stringArrayOption(
       </Tooltip>
       <ResetButton controller={controller} key={item.key} />
     </div>
+  );
 }
-        
+
 function numberOption(
   controller: PillboxMenus,
   item: ConfigItem,
