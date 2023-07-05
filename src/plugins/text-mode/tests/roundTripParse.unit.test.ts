@@ -71,6 +71,9 @@ describe("Operator Precedence round-trip", () => {
   const cases: string[] = [
     /// parent = Integral
     "\\int_{a}^{b}f(x)dx",
+    "\\int_{x-1}^{x+1}(f(t)-1)dt",
+    "\\int_{5*x}^{5*x}5*tdt",
+    "\\int_{a\\o{with}a=1}^{a\\o{with}a=3}(a\\o{with}a=t)dt",
     /// parent = ListAcccess
     "L[x]",
     "L^{2}[x]",

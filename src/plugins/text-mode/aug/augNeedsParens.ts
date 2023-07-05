@@ -12,7 +12,7 @@ export default function augNeedsParens(
 
   switch (parent.type) {
     case "Integral":
-      return false;
+      return path === "integrand" && power(node) <= POWERS.add;
     case "ListAccess":
       // weird, index is not threshold
       return path === "list" && power(node) < POWERS.power;
