@@ -1,6 +1,6 @@
 # DesModder Intellisense Docs
 
-## Function Documentation
+## Documentation in Desmos
 
 [See an example here.](https://www.desmos.com/calculator/3hkfwd6cqw)
 
@@ -13,6 +13,14 @@ Function documentation can also contain rendered LaTeX mathematical expressions,
 ### Parameter Documentation
 
 You can provide documentation for specific function parameters by typing `@param=PARAMNAME`, where `PARAMNAME` is the name of the function parameter as if it were written in [Text Mode](../../text-mode/docs/intro.md) format.
+
+### Private and Public Expressions
+
+- **Public expressions** are displayed in the intellisense menu.
+- **Private expressions** are _not_ displayed in the intellisense menu.
+
+- `@private`: All expressions are public by default. You can put `@private` in a text expression above an expression to make it a private expression. You can also use `@private` in the text for a folder to make every expression in that folder private. However, when making edits within the same folder, you will still see its contents in the intellisense menu. Think of it like a scoping system, with the folder as a scope.
+- `@public`: Inside a folder marked as `@private`, you can make an expression public by placing a text expression immediately before it containing the string `@public`.
 
 ## Jump to Definition
 
