@@ -1,11 +1,12 @@
-import pluginsEnabledExtensions from "./pluginsEnabled";
+import pluginSettings from "./pluginSettings";
+import pluginsEnabled from "./pluginsEnabled";
 import { EditorState, Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 
 export function mainEditorView(extraExtensions: Extension[]) {
   const state = EditorState.create({
     doc: "",
-    extensions: [pluginsEnabledExtensions, extraExtensions],
+    extensions: [pluginsEnabled, pluginSettings, extraExtensions],
   });
   return new EditorView({ state });
 }

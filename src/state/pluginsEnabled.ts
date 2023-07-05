@@ -12,10 +12,11 @@ export const setPluginEnabled = StateEffect.define<{
 export const pluginsEnabled = StateField.define<Map<PluginID, boolean>>({
   create: () => new Map(),
   update: (value, transaction) => {
-    value = new Map(value);
     for (const e of transaction.effects) {
       if (e.is(setPluginsEnabled)) value = new Map(e.value);
-      if (e.is(setPluginEnabled)) value.set(e.value.id, e.value.enable);
+      if (e.is(setPluginEnabled)) {
+        value = new Map([...value, [e.value.id, e.value.enable]]);
+      }
     }
     return value;
   },

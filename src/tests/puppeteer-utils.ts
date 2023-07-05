@@ -111,7 +111,7 @@ export class Driver {
   }
 
   async getPluginSettings() {
-    return await this.evaluate(() => DSM.pluginSettings);
+    return await this.evaluate(() => DSM.getAllPluginSettings());
   }
 
   async focusIndex(index: number) {

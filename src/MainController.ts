@@ -1,6 +1,11 @@
 import { insertElement, replaceElement } from "./preload/replaceElement";
 import { mainEditorView } from "./state";
 import {
+  applyStoredSettings,
+  pluginSettings,
+  updatePluginSettings,
+} from "./state/pluginSettings";
+import {
   pluginsEnabled,
   pluginsForceDisabled,
   setPluginEnabled,
@@ -18,15 +23,9 @@ import {
   IDToPluginSettings,
   PluginInstance,
 } from "plugins";
-import { postMessageUp, recordToMap } from "utils/messages";
+import { recordToMap } from "utils/messages";
 
 export default class MainController extends TransparentPlugins {
-  readonly pluginSettings = Object.fromEntries(
-    pluginList.map(
-      (plugin) => [plugin.id, getDefaultConfig(plugin.id)] as const
-    )
-  ) as IDToPluginSettings;
-
   private readonly view: EditorView;
 
   constructor() {
@@ -56,18 +55,7 @@ export default class MainController extends TransparentPlugins {
   applyStoredSettings(
     storedSettings: Map<PluginID, GenericSettings | undefined>
   ) {
-    for (const { id } of pluginList) {
-      const stored = storedSettings.get(id);
-      if (stored !== undefined) {
-        const settings = this.pluginSettings[id];
-        for (const key in settings) {
-          const storedValue = stored[key];
-          if (storedValue !== undefined) {
-            settings[key] = storedValue;
-          }
-        }
-      }
-    }
+    this.dispatch(applyStoredSettings.of(storedSettings));
   }
 
   init() {
@@ -111,10 +99,11 @@ export default class MainController extends TransparentPlugins {
   _enablePlugin(id: PluginID) {
     const Plugin = plugins.get(id);
     if (Plugin !== undefined) {
-      const res = new Plugin(this, this.pluginSettings[id] as any as never);
+      const settings = this.getPluginSettings(id);
+      const res = new Plugin(this, settings as any as never);
       const ep = this.enabledPlugins as Record<PluginID, PluginInstance>;
       ep[Plugin.id] = res;
-      (res as PluginInstance).settings = this.pluginSettings[id];
+      (res as PluginInstance).settings = settings;
       this.setPluginEnabled(id, true);
       res.afterEnable();
       this.pillboxMenus?.updateMenuView();
@@ -162,41 +151,9 @@ export default class MainController extends TransparentPlugins {
   }
 
   togglePluginSettingBoolean(pluginID: PluginID, key: string) {
-    const pluginSettings = this.pluginSettings[pluginID];
-    if (pluginSettings)
-      this.setPluginSetting(pluginID, key, !(pluginSettings[key] as boolean));
-  }
-
-  postSetPluginSettingsMessage() {
-    postMessageUp({
-      type: "set-plugin-settings",
-      value: this.pluginSettings,
-    });
-  }
-
-  delaySetPluginSettings = false;
-  isPluginSettingsUpToDate = true;
-
-  enqueueSetPluginSettingsMessage() {
-    // return early if setting the plugin settings is currently delayed.
-    if (this.delaySetPluginSettings) {
-      this.isPluginSettingsUpToDate = false;
-      return;
-    }
-
-    // post a message to set the plugin settings
-    this.postSetPluginSettingsMessage();
-    this.delaySetPluginSettings = true;
-
-    // after a second, mark the delay as over
-    // and re-post the plugin settings if necessary
-    setTimeout(() => {
-      this.delaySetPluginSettings = false;
-      if (!this.isPluginSettingsUpToDate) {
-        this.postSetPluginSettingsMessage();
-        this.isPluginSettingsUpToDate = true;
-      }
-    }, 1000);
+    const settings = this.getPluginSettings(pluginID);
+    if (settings)
+      this.setPluginSetting(pluginID, key, !(settings[key] as boolean));
   }
 
   setPluginSetting(
@@ -213,17 +170,22 @@ export default class MainController extends TransparentPlugins {
     value: any,
     temporary: boolean
   ) {
-    const pluginSettings = this.pluginSettings[pluginID];
-    if (!pluginSettings) return;
-    Object.assign(pluginSettings, value);
-    if (!temporary) this.enqueueSetPluginSettingsMessage();
+    this.dispatch(updatePluginSettings.of({ pluginID, value, temporary }));
     const plugin = this.enabledPlugins[pluginID];
     if (plugin) {
-      plugin.settings = pluginSettings;
+      plugin.settings = this.getPluginSettings(pluginID);
       plugin.afterConfigChange();
       Calc.controller.updateViews();
     }
     this.pillboxMenus?.updateMenuView();
+  }
+
+  getAllPluginSettings() {
+    return this.view.state.field(pluginSettings).settings;
+  }
+
+  getPluginSettings(pluginID: PluginID) {
+    return this.getAllPluginSettings()[pluginID];
   }
 
   /** Tests only */
@@ -243,15 +205,4 @@ export default class MainController extends TransparentPlugins {
 
   insertElement = insertElement;
   replaceElement = replaceElement;
-}
-
-function getDefaultConfig(id: PluginID) {
-  const out: GenericSettings = {};
-  const config = plugins.get(id)?.config;
-  if (config !== undefined) {
-    for (const configItem of config) {
-      out[configItem.key] = configItem.default;
-    }
-  }
-  return out;
 }

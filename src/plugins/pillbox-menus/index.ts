@@ -127,7 +127,7 @@ export default class PillboxMenus extends PluginController<undefined> {
     const defaultValue = this.getDefaultSetting(key);
     return (
       defaultValue !== undefined &&
-      this.controller.pluginSettings[this.expandedPlugin]?.[key] !==
+      this.controller.getPluginSettings(this.expandedPlugin)?.[key] !==
         defaultValue
     );
   }

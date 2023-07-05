@@ -3,6 +3,7 @@ import { Facet, StateField } from "@codemirror/state";
 const voidFacet = Facet.define<unknown>();
 
 export function onStateChange<T>(field: StateField<T>, cb: (value: T) => void) {
+  // TODO-facet: skip-once is really just skipping non-userEvent
   return voidFacet.compute(
     [field],
     // skip once since this also applies to the initial value
