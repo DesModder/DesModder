@@ -1,5 +1,20 @@
 # DesModder Changelog
 
+## 0.11.0
+
+New Features:
+
+- Intellisense plugin
+- Multiline plugin
+- Compact View plugin
+
+Bug fixes and improvements:
+
+- (Video Creator) Support ZIP export
+- (Text Mode) Show style circles and expression footers
+- (GLesmos) Fix canvas flashing when the plugin is enabled and disabled
+- (Video Creator) Fix wand icon
+
 ## 0.10.7
 
 Bug fixes and improvements:
