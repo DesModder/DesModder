@@ -2,7 +2,7 @@ import { GraphState } from "@desmodder/graph-state";
 
 export async function getGraphState(
   hash: string
-): Promise<{ state: GraphState } | undefined> {
+): Promise<{ state: GraphState; hash: string } | undefined> {
   try {
     const result = await (
       await fetch(`/calculator/${hash}`, {

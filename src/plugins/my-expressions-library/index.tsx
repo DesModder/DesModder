@@ -1,15 +1,15 @@
 import { getGraphState } from "./library-search-utils";
 import { LibrarySearchView } from "./library-search-view";
-import { ExpressionState, GraphState, ItemState } from "@desmodder/graph-state";
+import { ExpressionState, ItemState } from "@desmodder/graph-state";
 import { Component, DCGView, MountedComponent, jsx } from "DCGView";
 import { MathQuillField, MathQuillView } from "components";
 import { Calc } from "globals/window";
 import { PluginController } from "plugins/PluginController";
 import { mapAllAugLatex, mapAugAST } from "plugins/intellisense/latex-parsing";
 import { IdentifierTrackingState } from "plugins/intellisense/state";
-import { getMetadata } from "plugins/manage-metadata/manage";
+import { getMetadata, setMetadata } from "plugins/manage-metadata/manage";
 import Aug, { ExpressionAug } from "plugins/text-mode/aug/AugState";
-import augToRaw, { augNonFolderToRaw } from "plugins/text-mode/aug/augToRaw";
+import { augNonFolderToRaw } from "plugins/text-mode/aug/augToRaw";
 import { rawNonFolderToAug } from "plugins/text-mode/aug/rawToAug";
 import { textModeExprToLatex } from "plugins/text-mode/down/textToRaw";
 
@@ -39,6 +39,7 @@ export type ExpressionLibraryExpression =
 export interface ExpressionLibraryGraph {
   // maps expression IDs to expressions
   expressions: Map<string, ExpressionLibraryExpression>;
+  hash: string;
 }
 
 export interface ExpressionsLibraryGraphs {
@@ -183,16 +184,16 @@ function jsonEqual(a: any, b: any): boolean {
 
 // get rid of keys from a destination object that aren't in a source object
 // runs recursively
-function pruneKeys<T extends Record<string, unknown>>(dst: T, src: T) {
-  for (const [k, v] of Object.entries(dst)) {
-    if (!Object.prototype.hasOwnProperty.call(src, k)) {
-      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-      delete dst[k as keyof T];
-      if (typeof src[k] === "object" && typeof dst[k] === "object")
-        pruneKeys((dst as any)[k], (src as any)[k]);
-    }
-  }
-}
+// function pruneKeys<T extends Record<string, unknown>>(dst: T, src: T) {
+//   for (const [k, v] of Object.entries(dst)) {
+//     if (!Object.prototype.hasOwnProperty.call(src, k)) {
+//       // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+//       delete dst[k as keyof T];
+//       if (typeof src[k] === "object" && typeof dst[k] === "object")
+//         pruneKeys((dst as any)[k], (src as any)[k]);
+//     }
+//   }
+// }
 
 // @ts-expect-error window can have anything on it
 window.jsonEqual = jsonEqual;
@@ -259,7 +260,8 @@ export default class MyExpressionsLibrary extends PluginController<{
 
   refineSearch(searchStr: string) {
     this.searchStr = searchStr;
-    this.controller.pillboxMenus?.updateExtraComponents();
+    // this.controller.pillboxMenus?.updateExtraComponents();
+    this.controller.pillboxMenus?.updateMenuView();
   }
 
   view: MountedComponent | undefined;
@@ -318,19 +320,25 @@ export default class MyExpressionsLibrary extends PluginController<{
 
     loadExpressionInner(expr);
 
-    let loadedArray = Array.from(loaded);
-
-    const state = Calc.getState();
+    let loadedArray = Array.from(loaded).map((e) => {
+      const id = `dsm-mapped-${e.graph.hash}-${e.raw.id}`;
+      return {
+        ...e,
+        raw: {
+          ...e.raw,
+          id,
+        },
+        aug: {
+          ...e.aug,
+          id,
+        },
+        id,
+      };
+    });
 
     // deduplicate redundant expressions
     loadedArray = loadedArray.filter(
-      (loadExpr) =>
-        !state.expressions.list.some((graphExpr) =>
-          jsonEqual(
-            { ...graphExpr, id: "", folderId: "" },
-            { ...loadExpr.raw, id: "", folderId: "" }
-          )
-        )
+      (loadExpr) => !Calc.controller.getItemModel(loadExpr.raw.id)
     );
 
     const boundIdentsInImportedExprs = [];
@@ -341,23 +349,37 @@ export default class MyExpressionsLibrary extends PluginController<{
       );
     }
 
-    const symbolNameRemapper = new Map<string, string>();
+    const symbolNamesToRemap: Record<string, string> = {};
 
     for (const ident of boundIdentsInImportedExprs) {
       const renamedVersion = this.identTracker.getRenamedIdentifierName(
         ident.variableName
       );
       if (renamedVersion !== ident.variableName) {
-        symbolNameRemapper.set(ident.variableName, renamedVersion);
+        symbolNamesToRemap[ident.variableName] = renamedVersion;
       }
     }
+
+    setMetadata({
+      ...getMetadata(),
+      symbolRemappings: {
+        ...getMetadata().symbolRemappings,
+        [expr.graph.hash]: {
+          ...(getMetadata()?.symbolRemappings?.[expr.graph.hash] ?? {}),
+          ...symbolNamesToRemap,
+        },
+      },
+    });
+
+    const symbolNameRemapper =
+      getMetadata().symbolRemappings?.[expr.graph.hash] ?? {};
 
     loadedArray = loadedArray.map((e) => {
       const augCopy = structuredClone(e.aug);
       mapAllAugLatex(augCopy, (node) => {
         if (!node) return;
         if (node.type === "Identifier") {
-          node.symbol = symbolNameRemapper.get(node.symbol) ?? node.symbol;
+          node.symbol = symbolNameRemapper[node.symbol] ?? node.symbol;
         }
       });
 
@@ -367,10 +389,6 @@ export default class MyExpressionsLibrary extends PluginController<{
         if (v === undefined) delete rawCopy[k as keyof typeof rawCopy];
       }
 
-      pruneKeys(rawCopy, e.raw);
-
-      console.log("diff", e.raw, rawCopy);
-
       return {
         ...e,
         // need to change .aug and .raw to rename vars
@@ -378,8 +396,6 @@ export default class MyExpressionsLibrary extends PluginController<{
         raw: rawCopy,
       };
     });
-
-    console.log(loadedArray);
 
     let startIndex = this.getInsertionStartIndex();
 
@@ -400,7 +416,6 @@ export default class MyExpressionsLibrary extends PluginController<{
         const copy: Partial<ExpressionState> = {
           ...e.raw,
         } as ExpressionState;
-        delete copy.id;
         return copy;
       })
     );
@@ -448,13 +463,9 @@ export default class MyExpressionsLibrary extends PluginController<{
   }
 
   async loadGraphs() {
-    const graphs = (
-      await Promise.all(
-        this.settings.libraryGraphHashes.map(
-          async (s) => await getGraphState(s)
-        )
-      )
-    ).filter((e) => e) as { state: GraphState }[];
+    const graphs = await Promise.all(
+      this.settings.libraryGraphHashes.map(async (s) => await getGraphState(s))
+    );
 
     this.graphs = {
       graphs: [],
@@ -463,6 +474,8 @@ export default class MyExpressionsLibrary extends PluginController<{
     let uniqueID = 0;
 
     for (const g of graphs) {
+      if (!g) continue;
+
       const newGraph: Partial<ExpressionLibraryGraph> = {};
 
       // maps ident names to expression ids
@@ -545,6 +558,8 @@ export default class MyExpressionsLibrary extends PluginController<{
       for (const [k, v] of folders) {
         newGraph.expressions.set(k, v);
       }
+
+      newGraph.hash = g.hash;
 
       this.graphs.graphs.push(newGraph as ExpressionLibraryGraph);
     }
