@@ -3,6 +3,7 @@ import GLesmos from "./GLesmos";
 import BetterEvaluationView from "./better-evaluation-view";
 import BuiltinSettings from "./builtin-settings";
 import CompactView from "./compact-view";
+import CustomMathQuillConfig from "./custom-mathquill-config";
 import DebugMode from "./debug-mode";
 import DuplicateHotkey from "./duplicate-hotkey";
 import ExprActionButtons, { ActionButton } from "./expr-action-buttons";
@@ -108,6 +109,7 @@ export const keyToPlugin = {
   findReplace: FindReplace,
   debugMode: DebugMode,
   showTips: ShowTips,
+  customMathQuillConfig: CustomMathQuillConfig,
   rightClickTray: RightClickTray,
   duplicateHotkey: DuplicateHotkey,
   glesmos: GLesmos,
@@ -159,6 +161,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get findReplace () { return this.ep["find-and-replace"]; }
   get debugMode () { return this.ep["debug-mode"]; }
   get showTips () { return this.ep["show-tips"]; }
+  get customMathQuillConfig () { return this.ep["custom-mathquill-config"]; }
   get rightClickTray () { return this.ep["right-click-tray"]; }
   get duplicateHotkey () { return this.ep["duplicate-expression-hotkey"]; }
   get glesmos () { return this.ep["GLesmos"]; }

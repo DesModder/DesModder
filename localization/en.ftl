@@ -220,3 +220,7 @@ multiline-opt-automaticallyMultilinify-desc = If enabled, automatically split ex
 multiline-opt-automaticallyMultilinify-name = Automatically Multilinify
 multiline-opt-multilinifyDelayAfterEdit-desc = Multiline expressions should be updated after no edits are made for this number of milliseconds.
 multiline-opt-multilinifyDelayAfterEdit-name = Edit Delay (ms)
+
+## Custom MathQuill Config
+custom-mathquill-config-name = Custom MathQuill Config
+custom-mathquill-config-desc = Lets you edit MathQuill config options to change how equation input works. Does not save with graphs.
