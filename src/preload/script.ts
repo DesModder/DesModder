@@ -1,9 +1,9 @@
 import { addForceDisabled } from "../panic/panic";
 import moduleReplacements from "./moduleReplacements";
+import { insertElement, replaceElement } from "./replaceElement";
 import { fullReplacementCached } from "./replacementHelpers/cacheReplacement";
 import window from "globals/window";
 import injectScript from "utils/injectScript";
-import { setupDispatchOverride } from "utils/listenerHelpers";
 import { postMessageUp, listenToMessageDown, arrayToSet } from "utils/messages";
 import { pollForValue } from "utils/utils";
 
@@ -21,7 +21,6 @@ function tryRunDesModder() {
 let scriptURL: string;
 
 function runDesModder() {
-  setupDispatchOverride();
   injectScript(scriptURL);
 }
 
@@ -64,7 +63,10 @@ listenToMessageDown((message) => {
       pluginSettings: message.pluginSettings,
     };
     // Helps with the case of replacements ran before initialization
-    window.DSM = {} as any;
+    window.DSM = {
+      insertElement,
+      replaceElement,
+    } as any;
     void load(arrayToSet(message.pluginsForceDisabled));
     // cancel listener
     return true;

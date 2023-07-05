@@ -1,5 +1,5 @@
 import { ConfigItem, GenericSettings } from ".";
-import MainController from "main/Controller";
+import MainController from "MainController";
 
 export class PluginController<
   Settings extends GenericSettings | undefined = undefined
@@ -15,3 +15,6 @@ export class PluginController<
   beforeDisable() {}
   afterDisable() {}
 }
+
+export type Replacer<T = any> = undefined | ((old: T) => any);
+export type Inserter = undefined | (() => any);

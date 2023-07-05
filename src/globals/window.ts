@@ -1,4 +1,5 @@
 import { DCGViewModule } from "../DCGView";
+import MainController from "../MainController";
 import {
   CheckboxComponent,
   DStaticMathquillViewComponent,
@@ -10,14 +11,15 @@ import {
   SegmentedControlComponent,
   TooltipComponent,
 } from "../components/desmosComponents";
-import { GenericSettings, PluginID, TransparentPlugins } from "../plugins";
+import { GenericSettings, PluginID } from "../plugins";
 import CalcType from "./Calc";
 import { ItemModel } from "./models";
+import { GraphState } from "@desmodder/graph-state";
 
-interface windowConfig extends Window {
+export interface DWindow extends Window {
   Calc: CalcType;
   DesModder: any;
-  DSM: TransparentPlugins;
+  DSM: MainController;
   DesModderPreload?: {
     pluginsForceDisabled: Set<PluginID>;
     pluginsEnabled: Record<PluginID, boolean | undefined>;
@@ -27,9 +29,30 @@ interface windowConfig extends Window {
     ExpressionView: ExpressionViewComponent;
     ImageIconView: typeof IconViewComponent;
   };
+  Desmos: {
+    Private: {
+      Fragile: typeof Fragile;
+      Mathtools: Mathtools;
+    };
+  };
 }
 
-declare let window: windowConfig;
+interface Mathtools {
+  Label: {
+    truncatedLatexLabel: (
+      label: string,
+      labelOptions: {
+        smallCutoff: 0.00001;
+        bigCutoff: 1000000;
+        digits: 5;
+        displayAsFraction: false;
+      }
+    ) => string;
+  };
+  migrateToLatest: (s: GraphState) => GraphState;
+}
+
+declare let window: DWindow;
 
 export default window;
 
@@ -63,8 +86,7 @@ export const Fragile = new Proxy(
   Checkbox: typeof CheckboxComponent;
   SegmentedControl: typeof SegmentedControlComponent;
   MathquillView: typeof MathQuillViewComponent & {
-    // static abstract getFocusedMathquill()
-    getFocusedMathquill: () => MathQuillField;
+    getFocusedMathquill: () => MathQuillField | undefined;
   };
   InlineMathInputView: typeof InlineMathInputViewComponent;
   StaticMathquillView: typeof DStaticMathquillViewComponent;

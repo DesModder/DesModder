@@ -3,6 +3,7 @@
  */
 module.exports = {
   preset: "ts-jest",
+  rootDir: "../",
   coverageReporters: ["html", "lcov", "text"],
   coverageDirectory: "<rootDir>/coverage",
   transform: {
@@ -17,5 +18,4 @@ module.exports = {
   },
   testPathIgnorePatterns: ["<rootDir>/node_modules/"],
   moduleDirectories: ["node_modules", "src"],
-  testEnvironment: "jsdom",
 };

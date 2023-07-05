@@ -1,3 +1,4 @@
+import { insertElement, replaceElement } from "./preload/replaceElement";
 import window, { Calc } from "globals/window";
 import {
   plugins,
@@ -131,6 +132,17 @@ export default class MainController extends TransparentPlugins {
     }
   }
 
+  /** Tests only */
+  togglePluginsTo(enabled: string[]) {
+    const goalEnabled = new Set(enabled);
+    for (const id of Object.keys(this.enabledPlugins) as PluginID[]) {
+      if (!goalEnabled.has(id)) this.disablePlugin(id);
+    }
+    for (const id of enabled as PluginID[]) {
+      if (!this.isPluginEnabled(id)) this.enablePlugin(id);
+    }
+  }
+
   isPluginEnabled(id: PluginID) {
     return (
       !this.isPluginForceDisabled(id) && (this.pluginsEnabled.get(id) ?? false)
@@ -155,20 +167,56 @@ export default class MainController extends TransparentPlugins {
       this.setPluginSetting(pluginID, key, !(pluginSettings[key] as boolean));
   }
 
+  postSetPluginSettingsMessage() {
+    postMessageUp({
+      type: "set-plugin-settings",
+      value: this.pluginSettings,
+    });
+  }
+
+  delaySetPluginSettings = false;
+  isPluginSettingsUpToDate = true;
+
+  enqueueSetPluginSettingsMessage() {
+    // return early if setting the plugin settings is currently delayed.
+    if (this.delaySetPluginSettings) {
+      this.isPluginSettingsUpToDate = false;
+      return;
+    }
+
+    // post a message to set the plugin settings
+    this.postSetPluginSettingsMessage();
+    this.delaySetPluginSettings = true;
+
+    // after a second, mark the delay as over
+    // and re-post the plugin settings if necessary
+    setTimeout(() => {
+      this.delaySetPluginSettings = false;
+      if (!this.isPluginSettingsUpToDate) {
+        this.postSetPluginSettingsMessage();
+        this.isPluginSettingsUpToDate = true;
+      }
+    }, 1000);
+  }
+
   setPluginSetting(
     pluginID: PluginID,
     key: string,
-    value: boolean | string | readonly string[],
+    value: boolean | string | number | readonly string[],
     temporary: boolean = false
+  ) {
+    this.updatePluginSettings(pluginID, { [key]: value }, temporary);
+  }
+
+  private updatePluginSettings(
+    pluginID: PluginID,
+    value: any,
+    temporary: boolean
   ) {
     const pluginSettings = this.pluginSettings[pluginID];
     if (!pluginSettings) return;
-    pluginSettings[key] = value;
-    if (!temporary)
-      postMessageUp({
-        type: "set-plugin-settings",
-        value: this.pluginSettings,
-      });
+    Object.assign(pluginSettings, value);
+    if (!temporary) this.enqueueSetPluginSettingsMessage();
     const plugin = this.enabledPlugins[pluginID];
     if (plugin) {
       plugin.settings = pluginSettings;
@@ -178,6 +226,13 @@ export default class MainController extends TransparentPlugins {
     this.pillboxMenus?.updateMenuView();
   }
 
+  /** Tests only */
+  setAllPluginSettings(settings: IDToPluginSettings) {
+    for (const [key, value] of Object.entries(settings)) {
+      this.updatePluginSettings(key as PluginID, value, false);
+    }
+  }
+
   commitStateChange(allowUndo: boolean) {
     Calc.controller.updateTheComputedWorld();
     if (allowUndo) {
@@ -185,6 +240,9 @@ export default class MainController extends TransparentPlugins {
     }
     Calc.controller.updateViews();
   }
+
+  insertElement = insertElement;
+  replaceElement = replaceElement;
 }
 
 function getDefaultConfig(id: PluginID) {

@@ -41,7 +41,3 @@ export default class Tip extends Component {
     Calc.controller.updateViews();
   }
 }
-
-export function createTipElement() {
-  return <Tip></Tip>;
-}

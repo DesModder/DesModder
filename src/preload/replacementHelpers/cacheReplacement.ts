@@ -1,6 +1,6 @@
 import { Console } from "../../globals/window";
 import { addPanic, panickedPlugins } from "../../panic/panic";
-import workerAppend from "../../worker/append.inline";
+import workerAppend from "./append.inline";
 import { ReplacementResult, applyReplacements } from "./applyReplacement";
 import { Block } from "./parse";
 import { get, set } from "idb-keyval";

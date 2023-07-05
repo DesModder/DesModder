@@ -1,4 +1,6 @@
-import { PluginController } from "../PluginController";
+import { Inserter, PluginController } from "../PluginController";
+import { ConfirmLines } from "./components/ConfirmLines";
+import { GLesmosToggle } from "./components/GLesmosToggle";
 import "./glesmos.less";
 import { Calc } from "globals/window";
 
@@ -91,6 +93,18 @@ export default class GLesmos extends PluginController {
       type: "toggle-item-hidden",
       id,
     });
+  }
+
+  confirmLines(id: string, ToggleView: any): Inserter {
+    return () => ConfirmLines(this, id, ToggleView);
+  }
+
+  glesmosToggle(
+    id: string,
+    ToggleView: any,
+    allowInequality: boolean
+  ): Inserter {
+    return () => GLesmosToggle(this, id, ToggleView, allowInequality);
   }
 }
 

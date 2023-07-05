@@ -196,3 +196,33 @@ my-expressions-library-name = My Expressions Library
 my-expressions-library-desc = Create and use a reusable library of expressions in multiple graphs.
 my-expressions-library-opt-libraryGraphHashes-name = Library Graph Hashes
 my-expressions-library-opt-libraryGraphHashes-desc = A list of graph hashes from which to source expressions. Each hash should be on its own line.
+
+## Compact View
+compact-view-name = Compact View
+compact-view-desc = A variety of options for condensing the UI so you can see more on the screen at once.
+compact-view-opt-textFontSize-name = Text Font Size
+compact-view-opt-textFontSize-desc = Size of the font in notes.
+compact-view-opt-mathFontSize-name = Math Font Size
+compact-view-opt-mathFontSize-desc = Size of the font in mathematical expressions.
+compact-view-opt-bracketFontSizeFactor-name = Bracket Multiplier
+compact-view-opt-bracketFontSizeFactor-desc = Text inside of brackets (parentheses, curly braces, etc.) decreases in size by this factor.
+compact-view-opt-minimumFontSize-name = Min Font Size
+compact-view-opt-minimumFontSize-desc = The minimum possible math font size. Overrides Bracket Font Size Factor.
+compact-view-opt-compactFactor-name = Remove Spacing
+compact-view-opt-compactFactor-desc = Removes lots of empty space in the expressions list.
+compact-view-opt-noSeparatingLines-name = No Separating lines
+compact-view-opt-noSeparatingLines-desc = Remove the separating lines between expressions and replace them with alternating colors.
+compact-view-opt-highlightAlternatingLines-name = Highlight Alternating Lines
+compact-view-opt-highlightAlternatingLines-desc = Highlight alternating expressions so they can be easily distinguished from one another.
+compact-view-opt-hideEvaluations-name = Collapse Evaluations
+compact-view-opt-hideEvaluations-desc = Put evaluations off to the side. They can be focused or hovered to be shown. 
+
+## Multiline
+multiline-name = Multiline Expressions
+multiline-desc = Split expressions onto multiple lines to better make use of available space. Can be done manually with Ctrl+M.
+multiline-opt-widthBeforeMultiline-name = Width Threshold (%)
+multiline-opt-widthBeforeMultiline-desc = Minimum width (as a percent of the viewport size) at which point wrapping will occur. On mobile, this value is tripled.
+multiline-opt-automaticallyMultilinify-desc = If enabled, automatically split expressions onto multiple lines.
+multiline-opt-automaticallyMultilinify-name = Automatically Multilinify
+multiline-opt-multilinifyDelayAfterEdit-desc = Multiline expressions should be updated after no edits are made for this number of milliseconds.
+multiline-opt-multilinifyDelayAfterEdit-name = Edit Delay (ms)

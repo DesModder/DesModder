@@ -22,4 +22,5 @@ export const configList: ConfigItem[] = [
 export interface Config {
   lists: boolean;
   colors: boolean;
+  colorLists: boolean;
 }

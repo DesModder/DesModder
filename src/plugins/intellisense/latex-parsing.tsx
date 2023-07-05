@@ -119,7 +119,7 @@ function tryGetMathquillIdent(
   let goToEnd = 0;
 
   if (isInSubscript) {
-    node = ctrlr.cursor as MQCursor;
+    node = ctrlr.cursor;
     goToEnd++;
     while (node?.[1]) {
       goToEnd++;
@@ -212,7 +212,7 @@ export interface PartialFunctionCall {
 export function getPartialFunctionCall(
   mq: MathQuillField
 ): PartialFunctionCall | undefined {
-  let cursor: MQCursor | undefined = getController(mq).cursor as MQCursor;
+  let cursor: MQCursor | undefined = getController(mq).cursor;
   let paramIndex = 0;
   while (cursor) {
     const ltx = cursor?.latex?.();

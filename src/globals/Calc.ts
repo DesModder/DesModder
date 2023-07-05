@@ -25,7 +25,8 @@ export type DispatchedEvent =
         | "redo"
         | "tick-ticker"
         | "keypad/functions"
-        | "new-folder";
+        | "new-folder"
+        | "ui/container-resized";
     }
   | {
       type: "keypad/set-minimized";
@@ -39,7 +40,8 @@ export type DispatchedEvent =
         | "convert-image-to-draggable"
         | "create-sliders-for-item"
         | "toggle-item-hidden"
-        | "delete-item-and-animate-out";
+        | "delete-item-and-animate-out"
+        | "move-focus-to-item";
       id: string;
     }
   | {
@@ -164,11 +166,14 @@ interface Toast {
 }
 
 interface CalcPrivate {
-  focusedMathQuill: {
-    mq: MathQuillField;
-  };
+  focusedMathQuill:
+    | {
+        mq: MathQuillField;
+      }
+    | undefined;
   /// / undocumented, may break
   controller: {
+    isNarrow: () => boolean;
     // _removeExpressionSynchronously(model: ItemModel): void;
     handleDispatchedAction: (evt: DispatchedEvent) => void;
     _toplevelReplaceItemAt: (
@@ -206,6 +211,7 @@ interface CalcPrivate {
       workerPoolConnection: {
         killWorker: () => void;
       };
+      notifyWhenSynced: (cb: () => void) => void;
     };
     listModel: {
       // add properties as needed
@@ -241,6 +247,8 @@ interface CalcPrivate {
     expressionSearchOpen: boolean;
     /** Returns a function to call to unsubscribe */
     subToChanges: (cb: () => void) => () => void;
+    getBackgroundColor: () => string;
+    isInEditListMode: () => boolean;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;

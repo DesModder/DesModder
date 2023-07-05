@@ -56,30 +56,10 @@ list: () => $.createElement(__oldList__)
 *Replace* `list` with
 ```js
 ()=>this.getEvaluationType(), {
-list: () => $Dcgview.Components.IfElse(
-    () => DSM.betterEvaluationView?.settings.lists,
-    {
-      true: () => $Dcgview.createElement(
-        $StaticMathquillViewDefault,
-        {
-          latex: () => {
-            let values = this.props.val()
-            let labelOptions = {
-              smallCutoff: 0.00001,
-              bigCutoff: 1000000,
-              digits: 5,
-              displayAsFraction: false
-            }
-            let length = 20
-            let labels = values.slice(0,length).map(label => Desmos.Private.Mathtools.Label.truncatedLatexLabel(label, labelOptions))
-            return "\\left[" + labels.join(",") + (values.length > length ? `\\textcolor{gray}{...\\mathit{${values.length - length}\\ more}}` : "") + "\\right]"
-          },
-          config: $Dcgview.const({})
-        }
-      ),
-      false: () => $Dcgview.createElement(__oldList__)
-    }
-  )
+list: () => DSM.replaceElement(
+  () => $Dcgview.createElement(__oldList__),
+  () => DSM.betterEvaluationView?.listEvaluation(() => this.props.val())
+)
 ```
 
 Show color values
@@ -90,51 +70,10 @@ rgbcolor: () => $.createElement(__swatch__)
 
 *Replace* `color` with
 ```js
-rgbcolor: () => $Dcgview.createElement(
-    "div",
-    {
-      class: $Dcgview.const("dsm-color-container")
-    },
-    $Dcgview.createElement(
-      $Dcgview.Components.If,
-      {
-        predicate: () => {
-          let isEnabled = DSM.betterEvaluationView
-          let pluginSettings = DSM.betterEvaluationView?.settings
-          let isArray = Array.isArray(this.props.val())
-          return isEnabled && pluginSettings.colors && (!isArray || pluginSettings.lists && pluginSettings.colorLists)
-        }
-      },
-      () => $Dcgview.createElement(
-        $StaticMathquillViewDefault,
-        {
-          latex: () => {
-            // allow-ids: rgb, hex
-            let color = this.props.val()
-            // https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
-            function rgb(hex) {
-              let result = /^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-              return [
-                parseInt(result[1], 16),
-                parseInt(result[2], 16),
-                parseInt(result[3], 16)
-              ]
-            }
-            let length = 6
-            if (Array.isArray(color)) {
-              color = color.map(rgb)
-              return "\\operatorname{rgb}\\left(\\left[" + color.slice(0,length).map(clist=>`\\left(${clist.join(",")}\\right)`).join(",") + (color.length > length ? `\\textcolor{gray}{...\\mathit{${color.length - length}\\ more}}` : "") + "\\right]\\right)"
-            } else {
-              color = rgb(color)
-              return "\\operatorname{rgb}\\left(" + color.join(",") + "\\right)"
-            }
-          },
-          config: $Dcgview.const({})
-        }
-      )
-    ),
-    $Dcgview.createElement(__swatch__)
-  )
+rgbcolor: () => DSM.replaceElement(
+  () => $Dcgview.createElement(__swatch__),
+  () => DSM.betterEvaluationView?.colorEvaluation(() => this.props.val())
+)
 ```
 
 ## Return more info from numericLabels

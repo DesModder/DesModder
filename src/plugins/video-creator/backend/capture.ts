@@ -1,7 +1,7 @@
 import VideoCreator from "..";
 import { scaleBoundsAboutCenter } from "./utils";
+import MainController from "MainController";
 import { Calc } from "globals/window";
-import MainController from "main/Controller";
 import { EvaluateSingleExpression } from "utils/depUtils";
 
 let dispatchListenerID: string | null = null;
@@ -172,9 +172,9 @@ function forceReloadMenu(controller: MainController) {
   if (!pm) return;
   if (pm.pillboxMenuOpen === "dsm-vc-menu") {
     pm.pillboxMenuOpen = null;
-    pm.updateExtraComponents();
+    Calc.controller.updateViews();
     pm.pillboxMenuOpen = "dsm-vc-menu";
-    pm.updateExtraComponents();
+    Calc.controller.updateViews();
   }
 }
 

@@ -13,7 +13,7 @@ import { ItemModel, TextModel } from "globals/models";
 import { Calc } from "globals/window";
 import { PluginController } from "plugins/PluginController";
 import { getMetadata } from "plugins/manage-metadata/manage";
-import { attach, propGetSet } from "utils/listenerHelpers";
+import { hookIntoOverrideKeystroke } from "utils/listenerHelpers";
 import { isDescendant } from "utils/utils";
 
 export type BoundIdentifier =
@@ -145,8 +145,14 @@ export default class Intellisense extends PluginController {
 
       // determine where to put intellisense window
       const bbox = getMQCursorPosition(focusedMQ);
-      this.x = bbox?.left ?? 0;
-      this.y = bbox?.top ?? 0;
+      if (bbox && bbox?.left !== 0 && bbox?.top !== 0) {
+        this.x = bbox.left;
+        this.y = bbox.top;
+      } else {
+        this.canHaveIntellisense = false;
+        this.view?.update();
+        return;
+      }
 
       // create filtered list of valid intellisense options
       if (this.latestIdent) {
@@ -257,7 +263,9 @@ export default class Intellisense extends PluginController {
     if (focusedmq) this.latestMQ = focusedmq;
     if (
       this.latestMQ &&
-      document.body.contains(getController(this.latestMQ).cursor.cursorElement)
+      document.body.contains(
+        getController(this.latestMQ).cursor.cursorElement ?? null
+      )
     ) {
       // get cursor pos relative to the top left of the mathquill's root element
       const mqRootBlock = getController(this.latestMQ).container.querySelector(
@@ -268,10 +276,10 @@ export default class Intellisense extends PluginController {
       const mqRootBlockRect = mqRootBlock.getBoundingClientRect();
       const rect = getController(
         this.latestMQ
-      ).cursor.cursorElement.getBoundingClientRect();
+      ).cursor.cursorElement?.getBoundingClientRect();
       this.prevCursorPos = {
-        x: rect.x + mqRootBlock.scrollLeft - mqRootBlockRect.x,
-        y: rect.y + mqRootBlock.scrollTop - mqRootBlockRect.y,
+        x: rect?.x ?? 0 + mqRootBlock.scrollLeft - mqRootBlockRect.x,
+        y: rect?.y ?? 0 + mqRootBlock.scrollTop - mqRootBlockRect.y,
       };
     }
   }
@@ -305,46 +313,40 @@ export default class Intellisense extends PluginController {
         ];
       }
 
-      const mqopts = Calc.focusedMathQuill?.mq
-        ? getController(Calc.focusedMathQuill?.mq)?.options
-        : undefined;
-
       // done because the monkeypatch has a different this value
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const self = this;
 
-      if (mqopts && !(mqopts.overrideKeystroke as any).isMonkeypatchedIn) {
+      if (Calc.focusedMathQuill) {
         // monkeypatch in a function to wrap overrideKeystroke
-        const remove = attach(
-          ...propGetSet(mqopts, "overrideKeystroke"),
+        const remove = hookIntoOverrideKeystroke(
+          Calc.focusedMathQuill.mq,
           function (key: string, _: KeyboardEvent) {
             if (
               // don't bother overriding keystroke if intellisense is offline
-              !self.canHaveIntellisense
+              !self.canHaveIntellisense ||
+              self.intellisenseOpts.length === 0
             )
               // return nothing to ensure the actual overrideKeystroke runs
               return;
 
             // navigating downward in the intellisense menu
             if (key === "Down") {
-              if (self.intellisenseOpts.length > 0) {
-                self.goToNextIntellisenseCol();
-                self.view?.update();
-                return [false, undefined];
-              }
+              self.goToNextIntellisenseCol();
+              self.view?.update();
+              return false;
 
               // navigating upward in the intellisense menu
-            } else if (key === "Up" && self.intellisenseOpts.length > 0) {
+            } else if (key === "Up") {
               self.goToPrevIntellisenseCol();
 
               self.view?.update();
-              return [false, undefined];
+              return false;
 
               // selecting and autocompleting an intellisense selection
               // or jump to def if in row 1
             } else if (
               key === "Enter" &&
-              self.intellisenseIndex >= 0 &&
               self.intellisenseOpts[self.intellisenseIndex] !== undefined
             ) {
               if (self.intellisenseRow === 0) {
@@ -363,7 +365,7 @@ export default class Intellisense extends PluginController {
                   self.jumpToDefinition(str);
                 });
               }
-              return [false, undefined];
+              return false;
 
               // navigate by row up
             } else if (key === "Tab") {
@@ -373,7 +375,7 @@ export default class Intellisense extends PluginController {
                 self.goToNextIntellisenseCol();
               }
               self.view?.update();
-              return [false, undefined];
+              return false;
 
               // navigate by row down
             } else if (key === "Shift-Tab") {
@@ -383,22 +385,21 @@ export default class Intellisense extends PluginController {
                 self.goToPrevIntellisenseCol();
               }
               self.view?.update();
-              return [false, undefined];
+              return false;
             }
             // close intellisense menu
             // or jump2def menu
             else if (key === "Esc") {
               self.canHaveIntellisense = false;
               self.view?.update();
-              return [false, undefined];
+              return false;
             }
-          }
+          },
+          0,
+          "intellisense"
         );
 
-        this.modifiedOverrideKeystrokeUnsubbers.push(remove);
-
-        // prevent repeatedly monkeypatching overrideKeystroke (could cause stack overflow)
-        (mqopts.overrideKeystroke as any).isMonkeypatchedIn = true;
+        if (remove) this.modifiedOverrideKeystrokeUnsubbers.push(remove);
       }
     });
   };
@@ -406,7 +407,11 @@ export default class Intellisense extends PluginController {
   keyDownHandler = (e: KeyboardEvent) => {
     this.saveCursorState();
 
-    if (e.key === "Tab" && this.canHaveIntellisense) {
+    if (
+      e.key === "Tab" &&
+      this.canHaveIntellisense &&
+      this.intellisenseOpts.length !== 0
+    ) {
       e.preventDefault();
     }
 

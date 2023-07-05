@@ -1,0 +1,19 @@
+.multiline-expression-enabled {
+  // make parenthesized things properly align
+  .dcg-mq-bracket-container {
+    vertical-align: middle;
+  }
+
+  // hide the cursor if it's not in a selected expression
+  // this is to stop multiline vertical nav from
+  // appearing in the wrong expression.
+  .dcg-mathitem:not(.dcg-selected) .dcg-mq-cursor {
+    display: none;
+  }
+
+  [data-is-line-break]::after {
+    content: "";
+    display: inline-block;
+    width: var(--line-break-indent);
+  }
+}

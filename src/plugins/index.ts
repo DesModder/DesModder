@@ -2,13 +2,16 @@
 import GLesmos from "./GLesmos";
 import BetterEvaluationView from "./better-evaluation-view";
 import BuiltinSettings from "./builtin-settings";
+import CompactView from "./compact-view";
 import DebugMode from "./debug-mode";
 import DuplicateHotkey from "./duplicate-hotkey";
+import ExprActionButtons, { ActionButton } from "./expr-action-buttons";
 import FindReplace from "./find-replace";
 import FolderTools from "./folder-tools";
 import HideErrors from "./hide-errors";
 import Intellisense from "./intellisense";
 import ManageMetadata from "./manage-metadata";
+import Multiline from "./multiline";
 import MyExpressionsLibrary from "./my-expressions-library";
 import PerformanceInfo from "./performance-info";
 import PillboxMenus from "./pillbox-menus";
@@ -21,7 +24,7 @@ import TextMode from "./text-mode";
 import VideoCreator from "./video-creator";
 import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
-import MainController from "main/Controller";
+import MainController from "MainController";
 
 interface ConfigItemGeneric {
   key: string;
@@ -40,6 +43,14 @@ export interface ConfigItemString extends ConfigItemGeneric {
   variant: "color" | "password" | "text";
   default: string;
 }
+export interface ConfigItemNumber extends ConfigItemGeneric {
+  type: "number";
+  default: number;
+  min: number;
+  max: number;
+  step: number;
+  variant?: "range" | "number";
+}
 
 export interface ConfigItemStringArray extends ConfigItemGeneric {
   type: "stringArray";
@@ -49,7 +60,8 @@ export interface ConfigItemStringArray extends ConfigItemGeneric {
 export type ConfigItem =
   | ConfigItemBoolean
   | ConfigItemString
-  | ConfigItemStringArray;
+  | ConfigItemStringArray
+  | ConfigItemNumber;
 
 export type GenericSettings = Record<string, any>;
 
@@ -73,6 +85,8 @@ export interface PluginInstance<
   beforeDisable(): void;
   afterDisable(): void;
   settings: Settings;
+  /** Consumed by expr-action-buttons. This should really be a facet a la Codemirror. */
+  actionButtons?: ActionButton[];
 }
 
 export interface Plugin<
@@ -110,8 +124,11 @@ export const keyToPlugin = {
   textMode: TextMode,
   performanceInfo: PerformanceInfo,
   metadata: ManageMetadata,
+  multiline: Multiline,
   intellisense: Intellisense,
   myExpressionsLibrary: MyExpressionsLibrary,
+  compactView: CompactView,
+  exprActionButtons: ExprActionButtons,
 } satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);
@@ -161,6 +178,9 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get metadata () { return this.ep["manage-metadata"]; }
   get intellisense () { return this.ep["intellisense"]; }
   get myExpressionsLibrary () { return this.ep["my-expressions-library"];}
+  get compactView () { return this.ep["compact-view"]; }
+  get multiline () { return this.ep["multiline"]; }
+  get exprActionButtons () { return this.ep["expr-action-buttons"]; }
 }
 
 export type IDToPluginSettings = {

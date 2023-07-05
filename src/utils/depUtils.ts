@@ -31,6 +31,8 @@ export const autoCommandNames: string =
 export const autoOperatorNames: string =
   Private.MathquillConfig?.getAutoOperators?.();
 
+export const truncatedLatexLabel = Private.Mathtools.Label.truncatedLatexLabel;
+
 export function getCurrentGraphTitle(): string | undefined {
   return Calc._calc.globalHotkeys?.headerController?.graphsController?.getCurrentGraphTitle?.();
 }
