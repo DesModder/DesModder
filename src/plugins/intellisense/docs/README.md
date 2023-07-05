@@ -2,6 +2,8 @@
 
 ## Documentation in Desmos
 
+### Function Documentation
+
 [See an example here.](https://www.desmos.com/calculator/3hkfwd6cqw)
 
 DesModder Intellisense supports documentation for functions. Function documentation will appear while you are filling out the parameters for a function.
