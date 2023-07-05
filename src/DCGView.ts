@@ -24,6 +24,7 @@ export abstract class ClassComponent<PropsType = Props> {
         _domNode: HTMLElement;
       }
     | {
+        _domNode: undefined;
         _element: {
           _domNode: HTMLElement;
         };
