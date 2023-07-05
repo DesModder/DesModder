@@ -48,12 +48,12 @@ rm -rf ./node_modules/@puppeteer/browsers/src
 
 if [ ! -f $CALC_DESKTOP ]; then
   echo "Downloading '$SERVER/calculator' calculator_desktop URL"
-  build=$(wget -nv -O - "$SERVER/calculator" | grep "$PREFIX" | cut -d\" -f 2)
+  build=$(curl -L "$SERVER/calculator" | grep "$PREFIX" | cut -d\" -f 2)
   js="$SERVER$build"
   echo "Mkdir cache folder"
   mkdir -p "$CACHE_FOLDER"
   echo "Downloading latest calculator_desktop: '$js'"
-  wget "$js" -O "$CALC_DESKTOP"
+  curl -L "$js" -o "$CALC_DESKTOP"
   echo "Download finished"
 fi
 
