@@ -411,7 +411,6 @@ export default class Intellisense extends PluginController {
     let ancestor: Element | null = activeElement;
     while (ancestor) {
       ancestor = ancestor.parentElement;
-      console.log(ancestor);
       if (
         (ancestor?.classList.contains("no-intellisense") ?? false) ||
         (ancestor?.classList.contains("dcg-settings-view-container") ?? false)
