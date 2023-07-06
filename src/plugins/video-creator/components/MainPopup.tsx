@@ -49,7 +49,7 @@ export default class MainPopup extends Component<{
     return IfElse(() => this.controller.isExporting, {
       false: () => this.templateNormal(),
       true: () => (
-        <div class="dcg-popover-interior">
+        <div class="dcg-popover-interior no-intellisense">
           <div class="dsm-vc-export-in-progress">
             {format("video-creator-exporting")}
             <LoadingPie
@@ -77,7 +77,7 @@ export default class MainPopup extends Component<{
 
   templateNormal() {
     return (
-      <div class="dcg-popover-interior">
+      <div class="dcg-popover-interior no-intellisense">
         <div class="dsm-vc-capture-menu">
           <div class="dcg-popover-title">{format("video-creator-capture")}</div>
           <CaptureMethod controller={this.controller} />

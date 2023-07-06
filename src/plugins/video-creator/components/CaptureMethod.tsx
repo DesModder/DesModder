@@ -47,22 +47,24 @@ export default class SelectCapture extends Component<{
               slider: () => (
                 <div>
                   <div class="dsm-vc-slider-settings">
-                    <InlineMathInputView
-                      ariaLabel="slider variable"
-                      handleLatexChanged={(v) =>
-                        this.controller.setSliderSetting("variable", v)
-                      }
-                      hasError={() =>
-                        !this.controller.isSliderSettingValid("variable")
-                      }
-                      latex={() => this.controller.sliderSettings.variable}
-                      isFocused={() =>
-                        this.controller.isFocused("capture-slider-var")
-                      }
-                      handleFocusChanged={(b) =>
-                        this.controller.updateFocus("capture-slider-var", b)
-                      }
-                    />
+                    <span class="yes-intellisense">
+                      <InlineMathInputView
+                        ariaLabel="slider variable"
+                        handleLatexChanged={(v) =>
+                          this.controller.setSliderSetting("variable", v)
+                        }
+                        hasError={() =>
+                          !this.controller.isSliderSettingValid("variable")
+                        }
+                        latex={() => this.controller.sliderSettings.variable}
+                        isFocused={() =>
+                          this.controller.isFocused("capture-slider-var")
+                        }
+                        handleFocusChanged={(b) =>
+                          this.controller.updateFocus("capture-slider-var", b)
+                        }
+                      />
+                    </span>
                     <StaticMathQuillView latex="=" />
                     <InlineMathInputView
                       ariaLabel="slider min"
