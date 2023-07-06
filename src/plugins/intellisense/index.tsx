@@ -640,6 +640,11 @@ export default class Intellisense extends PluginController {
         this.view?.update();
         this.lastExppanelScrollTop = newExppanelScrollTop;
       }
+
+      if (e.type === "delete-item-and-animate-out") {
+        this.canHaveIntellisense = false;
+        this.view?.update();
+      }
     });
   }
 
