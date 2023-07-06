@@ -406,19 +406,13 @@ export default class Intellisense extends PluginController {
 
   // allows mathquill inputs that only allow arithmetic to selectively disable intellisense
   isActiveElementValidForIntellisense() {
-    const activeElement = document.activeElement;
-    if (activeElement === null) return false;
-    let ancestor: Element | null = activeElement;
-    while (ancestor) {
-      ancestor = ancestor.parentElement;
-      if (
-        (ancestor?.classList.contains("no-intellisense") ?? false) ||
-        (ancestor?.classList.contains("dcg-settings-view-container") ?? false)
-      )
-        return false;
-      if (ancestor?.classList.contains("yes-intellisense")) return true;
-    }
-    return true;
+    return (
+      document.activeElement
+        ?.closest(
+          ".yes-intellisense, .no-intellisense, .dcg-settings-view-container"
+        )
+        ?.classList.contains("yes-intellisense") ?? true
+    );
   }
 
   keyDownHandler = (e: KeyboardEvent) => {
