@@ -10,4 +10,4 @@ const opts = {
   },
 };
 
-esbuild.build(opts);
+void esbuild.build(opts);

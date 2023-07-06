@@ -25,7 +25,7 @@
     "lint:formatting": "prettier --check .",
     "lint:types": "tsc --noEmit",
     "eslint": "eslint",
-    "lint:eslint": "eslint .",
+    "lint:eslint": "eslint \"**\"",
     "test": "./scripts/test-jest.sh both",
     "test:unit": "./scripts/test-jest.sh unit",
     "test:integration": "./scripts/test-jest.sh integration"
