@@ -669,6 +669,11 @@ export default class Intellisense extends PluginController {
       if (e.type === "set-state") {
         this.updateCSSForAllDocstringExpressions();
       }
+
+      if (e.type === "delete-item-and-animate-out") {
+        this.canHaveIntellisense = false;
+        this.view?.update();
+      }
     });
   }
 

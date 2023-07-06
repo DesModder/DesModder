@@ -254,7 +254,7 @@ export default class Multiline extends PluginController<Config> {
     document.removeEventListener("keydown", this.keydownHandler);
     document.removeEventListener("mousedown", this.mousedownHandler);
 
-    this.unmultilineExpressions();
+    this.unmultilineExpressions(true);
     document.body.classList.remove("multiline-expression-enabled");
 
     if (this.dispatcherID)
