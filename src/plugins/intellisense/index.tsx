@@ -404,6 +404,24 @@ export default class Intellisense extends PluginController {
     });
   };
 
+  // allows mathquill inputs that only allow arithmetic to selectively disable intellisense
+  isActiveElementValidForIntellisense() {
+    const activeElement = document.activeElement;
+    if (activeElement === null) return false;
+    let ancestor: Element | null = activeElement;
+    while (ancestor) {
+      ancestor = ancestor.parentElement;
+      console.log(ancestor);
+      if (
+        (ancestor?.classList.contains("no-intellisense") ?? false) ||
+        (ancestor?.classList.contains("dcg-settings-view-container") ?? false)
+      )
+        return false;
+      if (ancestor?.classList.contains("yes-intellisense")) return true;
+    }
+    return true;
+  }
+
   keyDownHandler = (e: KeyboardEvent) => {
     this.saveCursorState();
 
@@ -422,7 +440,12 @@ export default class Intellisense extends PluginController {
 
     // if a non arrow key is pressed in an expression,
     // we enable the intellisense window
-    if (!e.key.startsWith("Arrow") && e.key !== "Enter" && e.key !== "Escape") {
+    if (
+      !e.key.startsWith("Arrow") &&
+      e.key !== "Enter" &&
+      e.key !== "Escape" &&
+      this.isActiveElementValidForIntellisense()
+    ) {
       this.canHaveIntellisense = true;
     }
 
