@@ -62,7 +62,7 @@ export function getExpressionLatex(id: string): string | undefined {
 
 export default class Intellisense extends PluginController {
   static id = "intellisense" as const;
-  static enabledByDefault = true;
+  static enabledByDefault = false;
   static descriptionLearnMore =
     "https://github.com/DesModder/DesModder/tree/main/src/plugins/intellisense/docs/README.md";
 
