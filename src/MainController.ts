@@ -1,5 +1,4 @@
 import { insertElement, replaceElement } from "./preload/replaceElement";
-import { mainEditorView } from "./state";
 import {
   applyStoredSettings,
   pluginSettings,
@@ -12,7 +11,6 @@ import {
   setPluginsEnabled,
 } from "./state/pluginsEnabled";
 import { StateEffect } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
 import window, { Calc } from "globals/window";
 import {
   plugins,
@@ -26,15 +24,6 @@ import {
 import { recordToMap } from "utils/messages";
 
 export default class MainController extends TransparentPlugins {
-  private readonly view: EditorView;
-
-  constructor() {
-    super();
-    const forceDisabled = window.DesModderPreload!.pluginsForceDisabled;
-    if (Calc.controller.isGeometry()) forceDisabled.add("text-mode");
-    this.view = mainEditorView([pluginsForceDisabled.of(forceDisabled)]);
-  }
-
   dispatch(...effects: StateEffect<any>[]) {
     this.view.dispatch({ effects });
   }

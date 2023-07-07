@@ -131,13 +131,9 @@ export default class Menu extends Component<{
             <div>{pluginDisplayName(plugin)}</div>
           </div>
           <Toggle
-            toggled={() =>
-              this.controller.controller.isPluginEnabled(plugin.id)
-            }
-            disabled={() =>
-              !this.controller.controller.isPluginToggleable(plugin.id)
-            }
-            onChange={() => this.controller.controller.togglePlugin(plugin.id)}
+            toggled={() => this.controller.dsm.isPluginEnabled(plugin.id)}
+            disabled={() => !this.controller.dsm.isPluginToggleable(plugin.id)}
+            onChange={() => this.controller.dsm.togglePlugin(plugin.id)}
           />
         </div>
         {
@@ -174,15 +170,14 @@ export default class Menu extends Component<{
     if (this.controller.expandedPlugin === null) return null;
     const plugin = plugins.get(this.controller.expandedPlugin);
     if (plugin?.config === undefined) return null;
-    const pluginSettings = () =>
-      this.controller.controller.getPluginSettings(
-        this.controller.expandedPlugin!
-      )!;
-    if (!pluginSettings()) return null;
+    const pluginSettings = this.controller.dsm.getPluginSettings(
+      this.controller.expandedPlugin
+    );
+    if (pluginSettings === undefined) return null;
     return (
       <div>
         {plugin.config.map((item: ConfigItem) => (
-          <If predicate={() => item.shouldShow?.(pluginSettings()) ?? true}>
+          <If predicate={() => item.shouldShow?.(pluginSettings) ?? true}>
             {() => (
               <Switch key={() => item.type}>
                 {() =>
@@ -205,7 +200,7 @@ function numberOption(
   controller: PillboxMenus,
   item: ConfigItem,
   plugin: SpecificPlugin,
-  settings: () => GenericSettings
+  settings: GenericSettings
 ) {
   const numItem = item as ConfigItemNumber;
 
@@ -213,7 +208,7 @@ function numberOption(
     const value = Number((e.target as HTMLInputElement)?.value);
     if (!isNaN(value)) {
       controller.expandedPlugin &&
-        controller.controller.setPluginSetting(
+        controller.dsm.setPluginSetting(
           controller.expandedPlugin,
           item.key,
           value
@@ -228,13 +223,13 @@ function numberOption(
         min={() => numItem.min}
         max={() => numItem.max}
         step={() => numItem.step}
-        value={() => settings()[item.key]}
+        value={settings[item.key]}
         onChange={inputHandler}
         onInput={inputHandler}
         id={`dsm-settings-item__input-${item.key}`}
         onUpdate={(e: HTMLInputElement) =>
           !e.classList.contains("dcg-hovered") &&
-          (e.value = settings()[item.key].toString())
+          (e.value = settings[item.key].toString())
         }
       ></input>
       <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
@@ -251,11 +246,11 @@ function booleanOption(
   controller: PillboxMenus,
   item: ConfigItem,
   plugin: SpecificPlugin,
-  settings: () => GenericSettings
+  settings: GenericSettings
 ) {
   const toggle = () =>
     controller.expandedPlugin &&
-    controller.controller.togglePluginSettingBoolean(
+    controller.dsm.togglePluginSettingBoolean(
       controller.expandedPlugin,
       item.key
     );
@@ -263,7 +258,7 @@ function booleanOption(
     <div class="dsm-settings-item dsm-settings-boolean">
       <Checkbox
         onChange={toggle}
-        checked={() => (settings()[item.key] as boolean) ?? false}
+        checked={() => (settings[item.key] as boolean) ?? false}
         ariaLabel={() => item.key}
       ></Checkbox>
       <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
@@ -280,21 +275,21 @@ function stringOption(
   controller: PillboxMenus,
   item: ConfigItem,
   plugin: SpecificPlugin,
-  settings: () => GenericSettings
+  settings: GenericSettings
 ) {
   return (
     <div class="dsm-settings-item dsm-settings-color">
       <input
         type={(item as ConfigItemString).variant}
         id={`dsm-settings-item__input-${item.key}`}
-        value={() => settings()[item.key]}
+        value={settings[item.key]}
         onUpdate={(e: HTMLInputElement) =>
           !e.classList.contains("dcg-hovered") &&
-          (e.value = settings()[item.key] as string)
+          (e.value = settings[item.key] as string)
         }
         onChange={(evt: Event) =>
           controller.expandedPlugin &&
-          controller.controller.setPluginSetting(
+          controller.dsm.setPluginSetting(
             controller.expandedPlugin,
             item.key,
             (evt.target as HTMLInputElement).value
@@ -302,7 +297,7 @@ function stringOption(
         }
         onInput={(evt: Event) =>
           controller.expandedPlugin &&
-          controller.controller.setPluginSetting(
+          controller.dsm.setPluginSetting(
             controller.expandedPlugin,
             item.key,
             (evt.target as HTMLInputElement).value,

@@ -1,25 +1,17 @@
-import { Inserter, PluginController } from "../PluginController";
+import MainController from "../../MainController";
+import { Inserter } from "../../plugins/PluginController";
+import { CMPlugin } from "../CMPlugin";
 import { MenuFunc } from "./components/Menu";
 import PillboxContainer from "./components/PillboxContainer";
 import PillboxMenu from "./components/PillboxMenu";
+import { EditorView, ViewPlugin } from "@codemirror/view";
 import { DCGView } from "DCGView";
 import { Calc } from "globals/window";
 import { plugins, PluginID, ConfigItem } from "plugins";
 
-export default class PillboxMenus extends PluginController<undefined> {
-  static id = "pillbox-menus" as const;
-  static enabledByDefault = true;
+export default class PillboxMenus extends CMPlugin {
   expandedPlugin: PluginID | null = null;
   private expandedCategory: string | null = null;
-
-  afterEnable() {
-    Calc.controller.dispatcher.register((e) => {
-      if (e.type === "toggle-graph-settings") {
-        this.pillboxMenuPinned = false;
-        this.closeMenu();
-      }
-    });
-  }
 
   // array of IDs
   pillboxButtonsOrder: string[] = ["main-menu"];
@@ -37,7 +29,17 @@ export default class PillboxMenus extends PluginController<undefined> {
   pillboxMenuOpen: string | null = null;
   pillboxMenuPinned: boolean = false;
 
-  beforeDisable() {
+  constructor(view: EditorView, dsm: MainController) {
+    super(view, dsm);
+    Calc.controller.dispatcher.register((e) => {
+      if (e.type === "toggle-graph-settings") {
+        this.pillboxMenuPinned = false;
+        this.closeMenu();
+      }
+    });
+  }
+
+  destroy() {
     throw new Error(
       "Programming Error: core plugin Pillbox Menus should not be disableable"
     );
@@ -127,15 +129,14 @@ export default class PillboxMenus extends PluginController<undefined> {
     const defaultValue = this.getDefaultSetting(key);
     return (
       defaultValue !== undefined &&
-      this.controller.getPluginSettings(this.expandedPlugin)?.[key] !==
-        defaultValue
+      this.dsm.getPluginSettings(this.expandedPlugin)?.[key] !== defaultValue
     );
   }
 
   resetSetting(key: string) {
     this.expandedPlugin &&
       this.canResetSetting(key) &&
-      this.controller.setPluginSetting(
+      this.dsm.setPluginSetting(
         this.expandedPlugin,
         key,
         this.getDefaultSetting(key)!
@@ -172,4 +173,8 @@ interface PillboxButton {
   pinned?: boolean;
   // popup should return a JSX element. Not sure of type
   popup: (c: PillboxMenus) => unknown;
+}
+
+export function pillboxMenus(dsm: MainController) {
+  return ViewPlugin.define((view) => new PillboxMenus(view, dsm), {});
 }

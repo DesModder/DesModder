@@ -27,7 +27,7 @@ export const pluginSettings = StateField.define<{
       pluginList.map(
         (plugin) => [plugin.id, getDefaultConfig(plugin.id)] as const
       )
-    ) as IDToPluginSettings,
+    ) satisfies IDToPluginSettings,
     dirty: false,
   }),
   update: (value, transaction) => {
