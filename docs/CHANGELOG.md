@@ -1,5 +1,14 @@
 # DesModder Changelog
 
+## 0.11.1
+
+Bug fixes and improvements
+
+- Disable Intellisense by default
+- (Intellisense) Hide for fields that don't support graph variables
+- (Intellisense) Close menu when expression is deleted
+- Minor tweaks and bugfixes.
+
 ## 0.11.0
 
 New Features:
