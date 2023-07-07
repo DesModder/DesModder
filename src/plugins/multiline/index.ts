@@ -81,6 +81,8 @@ export default class Multiline extends PluginController<Config> {
 
   dequeueAllMultilinifications() {
     for (const f of this.pendingMultilinifications) {
+      if (f.closest(".dcg-evaluation")) continue;
+
       // revert everything to its original state so we have proper width calculations
       unverticalify(f);
 
