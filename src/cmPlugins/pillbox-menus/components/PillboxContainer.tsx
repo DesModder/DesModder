@@ -32,7 +32,10 @@ export default class PillboxContainer extends Component<{
   templateTrue() {
     return (
       <div class="dsm-pillbox-and-popover">
-        <For each={() => this.controller.pillboxButtonsOrder} key={(id) => id}>
+        <For
+          each={() => this.controller.getPillboxButtonsOrder()}
+          key={(id) => id}
+        >
           <div
             class={{
               "dsm-pillbox-buttons": true,
@@ -42,7 +45,7 @@ export default class PillboxContainer extends Component<{
             {(id: string) => (
               <Tooltip
                 tooltip={() =>
-                  format(this.controller.pillboxButtons[id].tooltip)
+                  format(this.controller.getPillboxButton(id).tooltip)
                 }
                 gravity={() => (this.horizontal ? "s" : "w")}
               >
@@ -66,7 +69,7 @@ export default class PillboxContainer extends Component<{
                 >
                   <i
                     class={() =>
-                      this.controller.pillboxButtons[id].iconClass ?? ""
+                      this.controller.getPillboxButton(id).iconClass ?? ""
                     }
                   />
                 </div>

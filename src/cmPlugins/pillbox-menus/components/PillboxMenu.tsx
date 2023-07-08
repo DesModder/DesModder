@@ -44,9 +44,10 @@ export default class PillboxMenu extends Component<{
           >
             <Switch key={() => this.controller.pillboxMenuOpen}>
               {() =>
-                this.controller.pillboxButtons[
-                  this.controller.pillboxMenuOpen as string
-                ]?.popup?.(this.controller)
+                this.controller.pillboxMenuOpen &&
+                this.controller
+                  .getPillboxButton(this.controller.pillboxMenuOpen)
+                  ?.popup?.(this.controller)
               }
             </Switch>
             <div class="dcg-arrow" />
@@ -107,9 +108,9 @@ export default class PillboxMenu extends Component<{
   }
 
   index() {
-    let index = this.controller.pillboxButtonsOrder.indexOf(
-      this.controller.pillboxMenuOpen as string
-    );
+    let index = this.controller
+      .getPillboxButtonsOrder()
+      .indexOf(this.controller.pillboxMenuOpen as string);
     if (
       Calc.settings.settingsMenu &&
       (!Calc.controller.isGeometry() ||

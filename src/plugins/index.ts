@@ -14,19 +14,20 @@ import HideErrors from "./hide-errors";
 import Intellisense from "./intellisense";
 import ManageMetadata from "./manage-metadata";
 import Multiline from "./multiline";
-import PerformanceInfo from "./performance-info";
 import PinExpressions from "./pin-expressions";
 import RightClickTray from "./right-click-tray";
 import SetPrimaryColor from "./set-primary-color";
 import ShiftEnterNewline from "./shift-enter-newline";
 import ShowTips from "./show-tips";
 import TextMode from "./text-mode";
-import VideoCreator from "./video-creator";
 import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
+import { Compartment } from "@codemirror/state";
 import { EditorView, ViewPlugin } from "@codemirror/view";
 import MainController from "MainController";
-import { pillboxMenus } from "cmPlugins/pillbox-menus";
+import PerformanceInfo, { performanceInfo } from "cmPlugins/performance-info";
+import PillboxMenus, { pillboxMenus } from "cmPlugins/pillbox-menus";
+import VideoCreator, { videoCreator } from "cmPlugins/video-creator";
 import window, { Calc } from "globals/window";
 
 interface ConfigItemGeneric {
@@ -101,7 +102,31 @@ export interface Plugin<
 
 export const keyToCMPlugin = {
   pillboxMenus,
+  videoCreator,
+  performanceInfo,
 };
+
+const keyToCMPluginConstructor = {
+  pillboxMenus: PillboxMenus,
+  videoCreator: VideoCreator,
+  performanceInfo: PerformanceInfo,
+};
+
+export const idToCMPluginConstructor = Object.fromEntries(
+  Object.entries(keyToCMPluginConstructor).map(([_, v]) => [v.id, v])
+) as Record<CMPluginID, KCPC[keyof KCPC]>;
+
+const cmKeyToID = Object.fromEntries(
+  Object.entries(keyToCMPluginConstructor).map(([k, v]) => [k, v.id])
+) as Record<keyof KCP, CMPluginID>;
+
+export const idToCMPlugin = Object.fromEntries(
+  Object.entries(keyToCMPlugin).map(([k, v]) => [cmKeyToID[k as keyof KCP], v])
+) as Record<CMPluginID, KCPC[keyof KCPC]>;
+
+export const cmPluginList = Object.values(keyToCMPluginConstructor);
+
+type KCPC = typeof keyToCMPluginConstructor;
 
 type KCP = typeof keyToCMPlugin;
 type KeyToCMPluginInstance = {
@@ -109,9 +134,15 @@ type KeyToCMPluginInstance = {
     | undefined
     | (ReturnType<KCP[K]> extends ViewPlugin<infer T> ? T : never);
 };
-type IDToPluginSpec = {
-  readonly [K in keyof KCP]: ReturnType<KCP[K]>;
+type IDToCMPluginInstance = {
+  readonly [K in keyof KCP as KCPC[K]["id"]]:
+    | undefined
+    | (ReturnType<KCP[K]> extends ViewPlugin<infer T> ? T : never);
 };
+type IDToPluginSpec = {
+  readonly [K in keyof KCP as KCPC[K]["id"]]: ReturnType<KCP[K]>;
+};
+export type CMPluginID = keyof IDToPluginSpec;
 
 export const keyToPlugin = {
   builtinSettings: BuiltinSettings,
@@ -119,7 +150,6 @@ export const keyToPlugin = {
   setPrimaryColor: SetPrimaryColor,
   wolframToDesmos: WolframToDesmos,
   pinExpressions: PinExpressions,
-  videoCreator: VideoCreator,
   wakatime: Wakatime,
   findReplace: FindReplace,
   debugMode: DebugMode,
@@ -131,7 +161,6 @@ export const keyToPlugin = {
   hideErrors: HideErrors,
   folderTools: FolderTools,
   textMode: TextMode,
-  performanceInfo: PerformanceInfo,
   metadata: ManageMetadata,
   multiline: Multiline,
   intellisense: Intellisense,
@@ -139,9 +168,16 @@ export const keyToPlugin = {
   exprActionButtons: ExprActionButtons,
 } satisfies Record<string, Plugin<any>>;
 
-export const pluginList = Object.values(keyToPlugin);
+const legacyPluginList = Object.values(keyToPlugin);
 
-export const plugins = new Map(pluginList.map((plugin) => [plugin.id, plugin]));
+export const pluginList = cmPluginList.concat(legacyPluginList as any) as (
+  | (typeof legacyPluginList)[number]
+  | (typeof cmPluginList)[number]
+)[];
+
+export const plugins = new Map(
+  legacyPluginList.map((plugin) => [plugin.id, plugin])
+);
 
 type KP = typeof keyToPlugin;
 type KeyToPluginInstance = {
@@ -150,20 +186,26 @@ type KeyToPluginInstance = {
 type IDToPluginInstance = {
   [K in keyof KP as KP[K]["id"]]?: InstanceType<KP[K]>;
 };
-export type PluginID = keyof IDToPluginInstance;
-export type SpecificPlugin = KP[keyof KP];
+export type PluginID = keyof IDToPluginInstance | keyof IDToPluginSpec;
+export type SpecificPlugin = KP[keyof KP] | KCPC[keyof KCPC];
 
 type KeyToAnyPluginInstance = KeyToPluginInstance & KeyToCMPluginInstance;
 
-// prettier-ignore
+export type IDToPluginSettings = Record<PluginID, GenericSettings | undefined>;
+
+export function getPlugin(id: PluginID): SpecificPlugin {
+  return plugins.get(id as any) ?? idToCMPluginConstructor[id as CMPluginID];
+}
+
 /** Note the point of TransparentPlugins is just to implement parts of
  * MainController in this file, since TS makes it hard to split a class
  * implementation while ensuring type safety. */
-export class TransparentPlugins implements KeyToAnyPluginInstance {
+class _TransparentPlugins {
   /** Note that `enabledPlugins[id]` is truthy if and only if `id` is of
    * an enabled plugin. Otherwise, `enabledPlugins[id]` is undefined */
-  private readonly ep: IDToPluginInstance = {};
-  private readonly ips: IDToPluginSpec;
+  protected readonly ep: IDToPluginInstance = {};
+  protected readonly ips: IDToPluginSpec;
+  protected readonly compartments: Record<CMPluginID, Compartment>;
   readonly view: EditorView;
 
   constructor() {
@@ -171,11 +213,18 @@ export class TransparentPlugins implements KeyToAnyPluginInstance {
     if (Calc.controller.isGeometry()) forceDisabled.add("text-mode");
     const dsm = this as any as MainController;
     this.ips = Object.fromEntries(
-      Object.entries(keyToCMPlugin).map(([k, v]) => [k, v(dsm)]),
+      Object.entries(keyToCMPlugin).map(([k, v]) => [
+        cmKeyToID[k as keyof KCP],
+        v(dsm),
+      ])
     ) as IDToPluginSpec;
+    this.compartments = Object.fromEntries(
+      Object.keys(idToCMPluginConstructor).map((id) => [id, new Compartment()])
+    ) as Record<keyof typeof idToCMPluginConstructor, Compartment>;
     this.view = mainEditorView([
       pluginsForceDisabled.of(forceDisabled),
-      Object.values(this.ips),
+      this.ips["pillbox-menus"],
+      ...Object.values(this.compartments).map((c) => c.of([])),
     ]);
   }
 
@@ -184,17 +233,22 @@ export class TransparentPlugins implements KeyToAnyPluginInstance {
     PluginInstance | undefined
   >;
 
-  cmPlugin<K extends keyof IDToPluginSpec>(s: K): KeyToCMPluginInstance[K] | undefined {
-    return this.view.plugin(this.ips[s]) ?? undefined;
+  cmPlugin<K extends CMPluginID>(id: K) {
+    return (
+      (this.view.plugin(this.ips[id]) as IDToCMPluginInstance[K]) ?? undefined
+    );
   }
+}
 
-  get pillboxMenus () { return this.cmPlugin("pillboxMenus") }
+// prettier-ignore
+export class TransparentPlugins extends _TransparentPlugins implements KeyToAnyPluginInstance  {
+  get pillboxMenus () { return this.cmPlugin("pillbox-menus") }
   get builtinSettings () { return this.ep["builtin-settings"]; }
   get betterEvaluationView () { return this.ep["better-evaluation-view"]; }
   get setPrimaryColor () { return this.ep["set-primary-color"]; }
   get wolframToDesmos () { return this.ep["wolfram2desmos"]; }
   get pinExpressions () { return this.ep["pin-expressions"]; }
-  get videoCreator () { return this.ep["video-creator"]; }
+  get videoCreator () { return this.cmPlugin("video-creator"); }
   get wakatime () { return this.ep["wakatime"]; }
   get findReplace () { return this.ep["find-and-replace"]; }
   get debugMode () { return this.ep["debug-mode"]; }
@@ -206,14 +260,10 @@ export class TransparentPlugins implements KeyToAnyPluginInstance {
   get hideErrors () { return this.ep["hide-errors"]; }
   get folderTools () { return this.ep["folder-tools"]; }
   get textMode () { return this.ep["text-mode"]; }
-  get performanceInfo () { return this.ep["performance-info"]; }
+  get performanceInfo () { return this.cmPlugin("performance-info"); }
   get metadata () { return this.ep["manage-metadata"]; }
   get intellisense () { return this.ep["intellisense"]; }
   get compactView () { return this.ep["compact-view"]; }
   get multiline () { return this.ep["multiline"]; }
   get exprActionButtons () { return this.ep["expr-action-buttons"]; }
 }
-
-export type IDToPluginSettings = {
-  readonly [K in keyof KP as KP[K]["id"]]: GenericSettings | undefined;
-};

@@ -20,6 +20,9 @@ import {
   TransparentPlugins,
   IDToPluginSettings,
   PluginInstance,
+  getPlugin,
+  idToCMPluginConstructor,
+  CMPluginID,
 } from "plugins";
 import { recordToMap } from "utils/messages";
 
@@ -39,6 +42,7 @@ export default class MainController extends TransparentPlugins {
       }
     }
     this.dispatch(setPluginsEnabled.of(pluginsEnabled));
+    this.dispatch(setPluginEnabled.of({ id: "pillbox-menus", enable: true }));
   }
 
   applyStoredSettings(
@@ -56,7 +60,6 @@ export default class MainController extends TransparentPlugins {
     for (const { id } of pluginList) {
       if (this.isPluginEnabled(id)) this._enablePlugin(id);
     }
-    this.pillboxMenus?.updateMenuView();
     // The graph loaded before DesModder loaded, so DesModder was not available to
     // return true when asked isGlesmosMode. Refresh those expressions now
     this.glesmos?.checkGLesmos();
@@ -70,34 +73,53 @@ export default class MainController extends TransparentPlugins {
   }
 
   disablePlugin(id: PluginID) {
-    const plugin = plugins.get(id);
+    const plugin = getPlugin(id);
     if (plugin && this.isPluginToggleable(id)) {
       if (this.isPluginEnabled(id)) {
-        const plugin = this.enabledPlugins[id];
-        plugin?.beforeDisable();
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete this.enabledPlugins[id];
+        const Plugin = plugins.get(id as any);
+        if (Plugin !== undefined) {
+          const plugin = this.enabledPlugins[id];
+          plugin?.beforeDisable();
+          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+          delete this.enabledPlugins[id];
+          plugin?.afterDisable();
+        }
+        const CMPlugin = idToCMPluginConstructor[id as CMPluginID];
+        if (CMPlugin !== undefined) {
+          id = id as CMPluginID;
+          this.view.dispatch({
+            effects: [this.compartments[id].reconfigure([])],
+          });
+        }
         this.setPluginEnabled(id, false);
-        this.pillboxMenus?.updateMenuView();
-        plugin?.afterDisable();
         Calc.controller.updateViews();
       }
     }
   }
 
   _enablePlugin(id: PluginID) {
-    const Plugin = plugins.get(id);
+    const Plugin = plugins.get(id as any);
     if (Plugin !== undefined) {
       const settings = this.getPluginSettings(id);
       const res = new Plugin(this, settings as any as never);
       const ep = this.enabledPlugins as Record<PluginID, PluginInstance>;
-      ep[Plugin.id] = res;
+      ep[Plugin.id as PluginID] = res;
       (res as PluginInstance).settings = settings;
       this.setPluginEnabled(id, true);
       res.afterEnable();
-      this.pillboxMenus?.updateMenuView();
-      Calc.controller.updateViews();
     }
+    const CMPlugin = idToCMPluginConstructor[id as CMPluginID];
+    if (CMPlugin !== undefined) {
+      id = id as CMPluginID;
+      this.view.dispatch({
+        effects: [this.compartments[id].reconfigure([this.ips[id]])],
+      });
+      const ep = this.enabledPlugins as Record<PluginID, PluginInstance>;
+      const p = this.cmPlugin(CMPlugin.id);
+      if (p) ep[CMPlugin.id as PluginID] = p as any;
+      this.setPluginEnabled(id, true);
+    }
+    Calc.controller.updateViews();
   }
 
   enablePlugin(id: PluginID) {
@@ -163,10 +185,9 @@ export default class MainController extends TransparentPlugins {
     const plugin = this.enabledPlugins[pluginID];
     if (plugin) {
       plugin.settings = this.getPluginSettings(pluginID);
-      plugin.afterConfigChange();
+      if (!("destroy" in plugin)) plugin.afterConfigChange();
       Calc.controller.updateViews();
     }
-    this.pillboxMenus?.updateMenuView();
   }
 
   getAllPluginSettings() {

@@ -1,22 +1,20 @@
-import { PluginController } from "../PluginController";
+import MainController from "../../MainController";
+import { CMPlugin } from "../CMPlugin";
 import { MainPopupFunc } from "./PerformanceView";
+import { EditorView, ViewPlugin } from "@codemirror/view";
+import { pillboxButton } from "cmPlugins/pillbox-menus/pillboxButtons";
 import { DispatchedEvent, TimingData } from "globals/Calc";
 import { Calc } from "globals/window";
 
-export default class PerformanceInfo extends PluginController {
+export default class PerformanceInfo extends CMPlugin {
   static id = "performance-info" as const;
   static enabledByDefault = false;
 
   timingDataHistory: TimingData[] = [];
   dispatchListenerID!: string;
 
-  afterEnable() {
-    this.controller.pillboxMenus?.addPillboxButton({
-      id: "dsm-pi-menu",
-      tooltip: "performance-info-name",
-      iconClass: "dsm-icon-pie-chart",
-      popup: () => MainPopupFunc(this, this.controller),
-    });
+  constructor(view: EditorView, dsm: MainController) {
+    super(view, dsm);
     this.dispatchListenerID = Calc.controller.dispatcher.register((e) => {
       if (e.type === "on-evaluator-changes") {
         this.onEvaluatorChanges(e);
@@ -24,9 +22,8 @@ export default class PerformanceInfo extends PluginController {
     });
   }
 
-  afterDisable() {
+  destroy() {
     Calc.controller.dispatcher.unregister(this.dispatchListenerID);
-    this.controller.pillboxMenus?.removePillboxButton("dsm-pi-menu");
   }
 
   onEvaluatorChanges(e: DispatchedEvent) {
@@ -63,3 +60,16 @@ const defaultTimingData: TimingData = {
   publishAllStatuses: 0,
   updateIntersections: 0,
 };
+
+export function performanceInfo(dsm: MainController) {
+  return ViewPlugin.define((view) => new PerformanceInfo(view, dsm), {
+    provide: (plugin) => [
+      pillboxButton.of({
+        id: "dsm-pi-menu",
+        tooltip: "performance-info-name",
+        iconClass: "dsm-icon-pie-chart",
+        popup: () => MainPopupFunc(dsm.view.plugin(plugin)!, dsm),
+      }),
+    ],
+  });
+}

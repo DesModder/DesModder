@@ -5,7 +5,7 @@ import {
   IDToPluginSettings,
   pluginList,
   GenericSettings,
-  plugins,
+  getPlugin,
 } from "plugins";
 import { postMessageUp } from "utils/messages";
 
@@ -87,7 +87,7 @@ function enqueueSetPluginSettingsMessage(view: EditorView) {
 
 function getDefaultConfig(id: PluginID) {
   const out: GenericSettings = {};
-  const config = plugins.get(id)?.config;
+  const config = getPlugin(id)?.config;
   if (config !== undefined) {
     for (const configItem of config) {
       out[configItem.key] = configItem.default;

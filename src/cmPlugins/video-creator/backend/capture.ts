@@ -191,7 +191,7 @@ export async function capture(controller: VideoCreator) {
       Calc.controller._tickSliders = () => {};
     } else if (Calc.controller.getPlayingSliders().length > 0) {
       Calc.controller.stopAllSliders();
-      forceReloadMenu(controller.controller);
+      forceReloadMenu(controller.dsm);
     }
   }
   switch (controller.captureMethod) {

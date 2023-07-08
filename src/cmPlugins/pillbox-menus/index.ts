@@ -4,26 +4,17 @@ import { CMPlugin } from "../CMPlugin";
 import { MenuFunc } from "./components/Menu";
 import PillboxContainer from "./components/PillboxContainer";
 import PillboxMenu from "./components/PillboxMenu";
+import { pillboxButton } from "./pillboxButtons";
 import { EditorView, ViewPlugin } from "@codemirror/view";
 import { DCGView } from "DCGView";
 import { Calc } from "globals/window";
-import { plugins, PluginID, ConfigItem } from "plugins";
+import { PluginID, ConfigItem, getPlugin } from "plugins";
 
 export default class PillboxMenus extends CMPlugin {
+  static id = "pillbox-menus" as const;
   expandedPlugin: PluginID | null = null;
   private expandedCategory: string | null = null;
-
-  // array of IDs
-  pillboxButtonsOrder: string[] = ["main-menu"];
-  // map button ID to setup
-  pillboxButtons: Record<string, PillboxButton> = {
-    "main-menu": {
-      id: "main-menu",
-      tooltip: "menu-desmodder-tooltip",
-      iconClass: "dsm-icon-desmodder",
-      popup: MenuFunc,
-    },
-  };
+  static enabledByDefault = false;
 
   // string if open, null if none are open
   pillboxMenuOpen: string | null = null;
@@ -43,6 +34,10 @@ export default class PillboxMenus extends CMPlugin {
     throw new Error(
       "Programming Error: core plugin Pillbox Menus should not be disableable"
     );
+  }
+
+  update() {
+    this.updateMenuView();
   }
 
   pillboxButtonsView(horizontal: boolean): Inserter {
@@ -66,20 +61,17 @@ export default class PillboxMenus extends CMPlugin {
     Calc.controller.updateViews();
   }
 
-  addPillboxButton(info: PillboxButton) {
-    this.pillboxButtons[info.id] = info;
-    this.pillboxButtonsOrder.push(info.id);
-    this.updateMenuView();
+  private getPillboxButtons() {
+    return this.view.state.facet(pillboxButton);
   }
 
-  removePillboxButton(id: string) {
-    this.pillboxButtonsOrder.splice(this.pillboxButtonsOrder.indexOf(id), 1);
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-    delete this.pillboxButtons[id];
-    if (this.pillboxMenuOpen === id) {
-      this.pillboxMenuOpen = null;
-    }
-    this.updateMenuView();
+  getPillboxButtonsOrder() {
+    return this.getPillboxButtons().map((x) => x.id);
+  }
+
+  /** Assumes `id` is an id of some plugin. Linear search, so accidentally quadratic. */
+  getPillboxButton(id: string) {
+    return this.getPillboxButtons().find((x) => x.id === id)!;
   }
 
   isSomePillboxMenuOpen() {
@@ -119,7 +111,7 @@ export default class PillboxMenus extends CMPlugin {
     return (
       this.expandedPlugin &&
       (
-        plugins.get(this.expandedPlugin)?.config as ConfigItem[] | undefined
+        getPlugin(this.expandedPlugin)?.config as ConfigItem[] | undefined
       )?.find((e) => e.key === key)?.default
     );
   }
@@ -166,7 +158,7 @@ export default class PillboxMenus extends CMPlugin {
   }
 }
 
-interface PillboxButton {
+export interface PillboxButton {
   id: string;
   tooltip: string;
   iconClass: string;
@@ -176,5 +168,14 @@ interface PillboxButton {
 }
 
 export function pillboxMenus(dsm: MainController) {
-  return ViewPlugin.define((view) => new PillboxMenus(view, dsm), {});
+  return ViewPlugin.define((view) => new PillboxMenus(view, dsm), {
+    provide: () => [
+      pillboxButton.of({
+        id: "main-menu",
+        tooltip: "menu-desmodder-tooltip",
+        iconClass: "dsm-icon-desmodder",
+        popup: MenuFunc,
+      }),
+    ],
+  });
 }

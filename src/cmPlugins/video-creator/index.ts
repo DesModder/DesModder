@@ -1,9 +1,12 @@
-import { PluginController } from "../PluginController";
+import MainController from "../../MainController";
+import { CMPlugin } from "../CMPlugin";
 import { updateView } from "./View";
 import { CaptureMethod, SliderSettings, capture } from "./backend/capture";
 import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
 import { isValidNumber, isValidLength, escapeRegex } from "./backend/utils";
 import { MainPopupFunc } from "./components/MainPopup";
+import { EditorView, ViewPlugin } from "@codemirror/view";
+import { pillboxButton } from "cmPlugins/pillbox-menus/pillboxButtons";
 import { ExpressionModel } from "globals/models";
 import { Calc } from "globals/window";
 import {
@@ -26,7 +29,7 @@ type FocusedMQ =
 
 const DEFAULT_FILENAME = "DesModder_Video_Creator";
 
-export default class VideoCreator extends PluginController {
+export default class VideoCreator extends CMPlugin {
   static id = "video-creator" as const;
   static enabledByDefault = true;
 
@@ -73,29 +76,23 @@ export default class VideoCreator extends PluginController {
   playPreviewTimeout: number | null = null;
   isPlayPreviewExpanded = false;
 
+  constructor(view: EditorView, dsm: MainController) {
+    super(view, dsm);
+    Calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
+    this._applyDefaultCaptureSize();
+    document.addEventListener("keydown", this.onKeydown);
+  }
+
+  destroy() {
+    document.removeEventListener("keydown", this.onKeydown);
+  }
+
   onKeydown = this._onKeydown.bind(this);
   _onKeydown(e: KeyboardEvent) {
     if (keys.lookup(e) === "Esc" && this.isPlayPreviewExpanded) {
       e.stopImmediatePropagation();
       this.togglePreviewExpanded();
     }
-  }
-
-  afterEnable() {
-    Calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
-    this._applyDefaultCaptureSize();
-    this.controller.pillboxMenus?.addPillboxButton({
-      id: "dsm-vc-menu",
-      tooltip: "video-creator-menu",
-      iconClass: "dcg-icon-film",
-      popup: () => MainPopupFunc(this),
-    });
-    document.addEventListener("keydown", this.onKeydown);
-  }
-
-  afterDisable() {
-    this.controller.pillboxMenus?.removePillboxButton("dsm-vc-menu");
-    document.removeEventListener("keydown", this.onKeydown);
   }
 
   graphpaperBoundsChanged() {
@@ -446,4 +443,17 @@ export default class VideoCreator extends PluginController {
   isFocused(location: FocusedMQ) {
     return this.focusedMQ === location;
   }
+}
+
+export function videoCreator(dsm: MainController) {
+  return ViewPlugin.define((view) => new VideoCreator(view, dsm), {
+    provide: (plugin) => [
+      pillboxButton.of({
+        id: "dsm-vc-menu",
+        tooltip: "video-creator-menu",
+        iconClass: "dcg-icon-film",
+        popup: () => MainPopupFunc(dsm.view.plugin(plugin)!),
+      }),
+    ],
+  });
 }
