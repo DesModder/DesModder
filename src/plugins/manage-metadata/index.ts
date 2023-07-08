@@ -11,6 +11,7 @@ import { Calc } from "globals/window";
 export default class ManageMetadata extends PluginController {
   static id = "manage-metadata" as const;
   static enabledByDefault = true;
+  static category = "core-core";
 
   graphMetadata: GraphMetadata = getBlankMetadata();
 

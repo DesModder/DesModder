@@ -25,6 +25,7 @@ export default class WolframToDesmos extends PluginController<Config> {
   static id = "wolfram2desmos" as const;
   static enabledByDefault = true;
   static config = configList;
+  static category = "utility";
 
   panel: HTMLElement | null = null;
   enabled = true;

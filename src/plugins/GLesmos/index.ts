@@ -7,6 +7,7 @@ import { Calc } from "globals/window";
 export default class GLesmos extends PluginController {
   static id = "GLesmos" as const;
   static enabledByDefault = false;
+  static category = "core";
 
   afterEnable() {
     this.checkGLesmos();

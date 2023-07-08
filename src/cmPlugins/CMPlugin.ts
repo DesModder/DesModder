@@ -1,10 +1,8 @@
 import MainController from "../MainController";
-import { ConfigItem } from "../plugins";
 import { EditorView, ViewUpdate } from "@codemirror/view";
 
 export class CMPlugin {
   static descriptionLearnMore?: string = undefined;
-  static config: readonly ConfigItem[] | undefined = undefined;
 
   constructor(public view: EditorView, public dsm: MainController) {}
 

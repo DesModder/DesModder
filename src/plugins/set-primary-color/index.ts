@@ -44,6 +44,7 @@ export default class SetPrimaryColor extends PluginController<Config> {
   static id = "set-primary-color" as const;
   static enabledByDefault = false;
   static config = configList;
+  static category = "visual";
   wiggle = 0;
   originalImage: HTMLImageElement | null = null;
   apiContainer!: HTMLElement;

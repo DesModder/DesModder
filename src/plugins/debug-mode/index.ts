@@ -4,6 +4,7 @@ import { Calc } from "globals/window";
 export default class DebugMode extends PluginController {
   static id = "debug-mode" as const;
   static enabledByDefault = false;
+  static category = "visual";
 
   afterEnable() {
     // The displayed indexes are stored in some state somewhere, so

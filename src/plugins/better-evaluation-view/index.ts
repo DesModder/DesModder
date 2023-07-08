@@ -8,6 +8,7 @@ export default class BetterEvaluationView extends PluginController<Config> {
   static id = "better-evaluation-view" as const;
   static enabledByDefault = true;
   static config = configList;
+  static category = "visual";
 
   listEvaluation(val: () => string[]): Inserter {
     if (!this.settings.lists) return undefined;

@@ -9,6 +9,7 @@ function apiContainer() {
 export default class ShowTips extends PluginController {
   static id = "show-tips" as const;
   static enabledByDefault = true;
+  static category = "visual";
 
   afterEnable() {
     apiContainer()?.classList.add("dsm-show-tips");

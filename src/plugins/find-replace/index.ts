@@ -22,6 +22,7 @@ function tryInitView() {
 export default class FindReplace extends PluginController {
   static id = "find-and-replace" as const;
   static enabledByDefault = true;
+  static category = "utility";
 
   afterEnable() {
     if (Calc.controller.getExpressionSearchOpen()) {

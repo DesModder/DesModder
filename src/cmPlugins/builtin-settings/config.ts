@@ -61,7 +61,6 @@ export const configList = [
 ] as const;
 
 export interface Config {
-  clickableObjects: boolean;
   advancedStyling: boolean;
   graphpaper: boolean;
   authorFeatures: boolean;

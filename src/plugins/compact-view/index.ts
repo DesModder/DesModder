@@ -12,6 +12,7 @@ export default class CompactView extends PluginController<Config> {
   static id = "compact-view" as const;
   static enabledByDefault = false;
   static config = configList;
+  static category = "visual";
 
   afterConfigChange(): void {
     toggleBodyClass(

@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/method-signature-style, @typescript-eslint/dot-notation */
+import { pluginConfig } from "../cmPlugins/pillbox-menus/facets/pluginConfig";
 import { mainEditorView } from "../state";
 import { pluginsForceDisabled } from "../state/pluginsEnabled";
 import GLesmos from "./GLesmos";
 import BetterEvaluationView from "./better-evaluation-view";
-import BuiltinSettings from "./builtin-settings";
 import CompactView from "./compact-view";
 import DebugMode from "./debug-mode";
 import DuplicateHotkey from "./duplicate-hotkey";
@@ -22,9 +22,10 @@ import ShowTips from "./show-tips";
 import TextMode from "./text-mode";
 import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
-import { Compartment } from "@codemirror/state";
-import { EditorView, ViewPlugin } from "@codemirror/view";
+import { Compartment, Extension } from "@codemirror/state";
+import { EditorView, PluginValue, ViewPlugin } from "@codemirror/view";
 import MainController from "MainController";
+import BuiltinSettings, { builtinSettings } from "cmPlugins/builtin-settings";
 import PerformanceInfo, { performanceInfo } from "cmPlugins/performance-info";
 import PillboxMenus, { pillboxMenus } from "cmPlugins/pillbox-menus";
 import VideoCreator, { videoCreator } from "cmPlugins/video-creator";
@@ -100,16 +101,23 @@ export interface Plugin<
   config?: readonly ConfigItem[];
 }
 
+export interface CMPluginSpec<T extends PluginValue> {
+  plugin: ViewPlugin<T>;
+  extensions: Extension;
+}
+
 export const keyToCMPlugin = {
   pillboxMenus,
   videoCreator,
   performanceInfo,
+  builtinSettings,
 };
 
 const keyToCMPluginConstructor = {
   pillboxMenus: PillboxMenus,
   videoCreator: VideoCreator,
   performanceInfo: PerformanceInfo,
+  builtinSettings: BuiltinSettings,
 };
 
 export const idToCMPluginConstructor = Object.fromEntries(
@@ -132,20 +140,19 @@ type KCP = typeof keyToCMPlugin;
 type KeyToCMPluginInstance = {
   readonly [K in keyof KCP]:
     | undefined
-    | (ReturnType<KCP[K]> extends ViewPlugin<infer T> ? T : never);
+    | (ReturnType<KCP[K]>["plugin"] extends ViewPlugin<infer T> ? T : never);
 };
 type IDToCMPluginInstance = {
   readonly [K in keyof KCP as KCPC[K]["id"]]:
     | undefined
-    | (ReturnType<KCP[K]> extends ViewPlugin<infer T> ? T : never);
+    | (ReturnType<KCP[K]>["plugin"] extends ViewPlugin<infer T> ? T : never);
 };
 type IDToPluginSpec = {
-  readonly [K in keyof KCP as KCPC[K]["id"]]: ReturnType<KCP[K]>;
+  readonly [K in keyof KCP as KCPC[K]["id"]]: ReturnType<KCP[K]>["plugin"];
 };
 export type CMPluginID = keyof IDToPluginSpec;
 
 export const keyToPlugin = {
-  builtinSettings: BuiltinSettings,
   betterEvaluationView: BetterEvaluationView,
   setPrimaryColor: SetPrimaryColor,
   wolframToDesmos: WolframToDesmos,
@@ -212,11 +219,11 @@ class _TransparentPlugins {
     const forceDisabled = window.DesModderPreload!.pluginsForceDisabled;
     if (Calc.controller.isGeometry()) forceDisabled.add("text-mode");
     const dsm = this as any as MainController;
+    const bits = Object.entries(keyToCMPlugin).map(
+      ([k, v]) => [k, v(dsm)] as const
+    );
     this.ips = Object.fromEntries(
-      Object.entries(keyToCMPlugin).map(([k, v]) => [
-        cmKeyToID[k as keyof KCP],
-        v(dsm),
-      ])
+      bits.map(([k, v]) => [cmKeyToID[k as keyof KCP], v.plugin])
     ) as IDToPluginSpec;
     this.compartments = Object.fromEntries(
       Object.keys(idToCMPluginConstructor).map((id) => [id, new Compartment()])
@@ -224,6 +231,16 @@ class _TransparentPlugins {
     this.view = mainEditorView([
       pluginsForceDisabled.of(forceDisabled),
       this.ips["pillbox-menus"],
+      ...bits.map(([_, v]) => v.extensions),
+      ...legacyPluginList.flatMap((x) =>
+        x.category === "core-core"
+          ? []
+          : pluginConfig.of({
+              id: x.id,
+              category: x.category,
+              config: x.config ?? [],
+            })
+      ),
       ...Object.values(this.compartments).map((c) => c.of([])),
     ]);
   }
@@ -243,7 +260,7 @@ class _TransparentPlugins {
 // prettier-ignore
 export class TransparentPlugins extends _TransparentPlugins implements KeyToAnyPluginInstance  {
   get pillboxMenus () { return this.cmPlugin("pillbox-menus") }
-  get builtinSettings () { return this.ep["builtin-settings"]; }
+  get builtinSettings () { return this.cmPlugin("builtin-settings"); }
   get betterEvaluationView () { return this.ep["better-evaluation-view"]; }
   get setPrimaryColor () { return this.ep["set-primary-color"]; }
   get wolframToDesmos () { return this.ep["wolfram2desmos"]; }

@@ -24,38 +24,6 @@ export function MenuFunc(controller: PillboxMenus) {
   return <Menu controller={controller} />;
 }
 
-const categoryPlugins: Record<string, PluginID[]> = {
-  core: [
-    "builtin-settings",
-    "GLesmos",
-    "video-creator",
-    "text-mode",
-    "intellisense",
-  ],
-  utility: [
-    "wolfram2desmos",
-    "pin-expressions",
-    "find-and-replace",
-    "performance-info",
-    "right-click-tray",
-    "duplicate-expression-hotkey",
-    "shift-enter-newline",
-    "folder-tools",
-  ],
-  visual: [
-    "set-primary-color",
-    "debug-mode",
-    "better-evaluation-view",
-    "show-tips",
-    "hide-errors",
-    "compact-view",
-    "multiline",
-  ],
-  integrations: ["wakatime"],
-};
-
-const categories = ["core", "utility", "visual", "integrations"];
-
 export default class Menu extends Component<{
   controller: PillboxMenus;
 }> {
@@ -69,7 +37,7 @@ export default class Menu extends Component<{
     return (
       <div class="dcg-popover-interior">
         <div class="dcg-popover-title">{format("menu-desmodder-plugins")}</div>
-        {categories.map((category) => (
+        {this.controller.getCategories().map((category) => (
           <div
             class="dcg-options-menu-section dsm-category-section"
             key={category}
@@ -96,7 +64,10 @@ export default class Menu extends Component<{
             </div>
             <If predicate={() => this.controller.isCategoryExpanded(category)}>
               {() => (
-                <For each={() => categoryPlugins[category]} key={(id) => id}>
+                <For
+                  each={() => this.controller.getCategoryPlugins(category)}
+                  key={(id) => id}
+                >
                   <div class="dsm-category-container">
                     {(pluginID: PluginID) => this.plugin(getPlugin(pluginID)!)}
                   </div>
@@ -165,17 +136,19 @@ export default class Menu extends Component<{
   }
 
   getExpandedSettings() {
-    if (this.controller.expandedPlugin === null) return null;
-    const plugin = getPlugin(this.controller.expandedPlugin);
-    if (plugin?.config === undefined) return null;
-    const settings = () =>
-      this.controller.dsm.getPluginSettings(
-        this.controller.expandedPlugin! // TODO. Bad assertion?
-      )!;
+    const expanded = this.controller.expandedPlugin;
+    if (expanded === null) return null;
+    const plugin = getPlugin(expanded);
+    const config = this.controller.getPluginConfig(expanded);
+    // TODO JARED MORNING:
+    // This works great for CM plugins but doesn't have back-compat
+    // for Legacy plugins. Don't worry? Or fix up. I think fix up.
+    if (config === undefined) return null;
+    const settings = () => this.controller.dsm.getPluginSettings(expanded)!;
     if (settings() === undefined) return null;
     return (
       <div>
-        {plugin.config.map((item: ConfigItem) => (
+        {config.map((item: ConfigItem) => (
           <If predicate={() => item.shouldShow?.(settings()) ?? true}>
             {() => (
               <Switch key={() => item.type}>

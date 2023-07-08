@@ -6,6 +6,7 @@ import { ItemModel } from "globals/models";
 export default class ExprActionButtons extends PluginController<undefined> {
   static id = "expr-action-buttons" as const;
   static enabledByDefault = true;
+  static category = "core-core";
 
   beforeDisable() {
     throw new Error(

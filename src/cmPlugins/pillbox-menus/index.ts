@@ -1,14 +1,15 @@
 import MainController from "../../MainController";
 import { Inserter } from "../../plugins/PluginController";
+import { getConfigTree, getPluginConfig } from "../../state/pluginSettings";
 import { CMPlugin } from "../CMPlugin";
 import { MenuFunc } from "./components/Menu";
 import PillboxContainer from "./components/PillboxContainer";
 import PillboxMenu from "./components/PillboxMenu";
-import { pillboxButton } from "./pillboxButtons";
+import { pillboxButton } from "./facets/pillboxButtons";
 import { EditorView, ViewPlugin } from "@codemirror/view";
 import { DCGView } from "DCGView";
 import { Calc } from "globals/window";
-import { PluginID, ConfigItem, getPlugin } from "plugins";
+import { CMPluginSpec, PluginID } from "plugins";
 
 export default class PillboxMenus extends CMPlugin {
   static id = "pillbox-menus" as const;
@@ -107,12 +108,27 @@ export default class PillboxMenus extends CMPlugin {
     );
   }
 
+  getCategories() {
+    return Object.keys(this.getConfigTree());
+  }
+
+  getCategoryPlugins(category: string) {
+    return Object.keys(this.getConfigTree()[category]);
+  }
+
+  private getConfigTree() {
+    return getConfigTree(this.view.state);
+  }
+
+  getPluginConfig(id: PluginID) {
+    return getPluginConfig(this.view.state, id);
+  }
+
   getDefaultSetting(key: string) {
     return (
       this.expandedPlugin &&
-      (
-        getPlugin(this.expandedPlugin)?.config as ConfigItem[] | undefined
-      )?.find((e) => e.key === key)?.default
+      this.getPluginConfig(this.expandedPlugin)?.find((e) => e.key === key)
+        ?.default
     );
   }
 
@@ -167,15 +183,18 @@ export interface PillboxButton {
   popup: (c: PillboxMenus) => unknown;
 }
 
-export function pillboxMenus(dsm: MainController) {
-  return ViewPlugin.define((view) => new PillboxMenus(view, dsm), {
-    provide: () => [
-      pillboxButton.of({
-        id: "main-menu",
-        tooltip: "menu-desmodder-tooltip",
-        iconClass: "dsm-icon-desmodder",
-        popup: MenuFunc,
-      }),
-    ],
-  });
+export function pillboxMenus(dsm: MainController): CMPluginSpec<PillboxMenus> {
+  return {
+    plugin: ViewPlugin.define((view) => new PillboxMenus(view, dsm), {
+      provide: () => [
+        pillboxButton.of({
+          id: "main-menu",
+          tooltip: "menu-desmodder-tooltip",
+          iconClass: "dsm-icon-desmodder",
+          popup: MenuFunc,
+        }),
+      ],
+    }),
+    extensions: [],
+  };
 }

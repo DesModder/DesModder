@@ -20,6 +20,7 @@ export default class Multiline extends PluginController<Config> {
   static id = "multiline" as const;
   static enabledByDefault = false;
   static config = configList;
+  static category = "visual";
 
   pendingMultilinifications = new Set<HTMLElement>();
 

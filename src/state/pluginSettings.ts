@@ -1,4 +1,5 @@
-import { StateEffect, StateField } from "@codemirror/state";
+import { pluginConfig } from "../cmPlugins/pillbox-menus/facets/pluginConfig";
+import { EditorState, StateEffect, StateField } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import {
   PluginID,
@@ -22,10 +23,10 @@ export const pluginSettings = StateField.define<{
   settings: IDToPluginSettings;
   dirty: boolean;
 }>({
-  create: () => ({
+  create: (state) => ({
     settings: Object.fromEntries(
       pluginList.map(
-        (plugin) => [plugin.id, getDefaultConfig(plugin.id)] as const
+        (plugin) => [plugin.id, getDefaultConfig(state, plugin.id)] as const
       )
     ) satisfies IDToPluginSettings,
     dirty: false,
@@ -85,9 +86,19 @@ function enqueueSetPluginSettingsMessage(view: EditorView) {
   }
 }
 
-function getDefaultConfig(id: PluginID) {
+export function getConfigTree(state: EditorState) {
+  return state.facet(pluginConfig);
+}
+
+export function getPluginConfig(state: EditorState, id: PluginID) {
+  return Object.values(getConfigTree(state))
+    .map((category) => category[id])
+    .find((x) => x !== undefined);
+}
+
+function getDefaultConfig(state: EditorState, id: PluginID) {
   const out: GenericSettings = {};
-  const config = getPlugin(id)?.config;
+  const config = (getPlugin(id) as any)?.config ?? getPluginConfig(state, id);
   if (config !== undefined) {
     for (const configItem of config) {
       out[configItem.key] = configItem.default;

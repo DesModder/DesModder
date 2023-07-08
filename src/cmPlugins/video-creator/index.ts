@@ -1,12 +1,13 @@
 import MainController from "../../MainController";
+import { CMPluginSpec } from "../../plugins";
 import { CMPlugin } from "../CMPlugin";
+import { pillboxButton } from "../pillbox-menus/facets/pillboxButtons";
 import { updateView } from "./View";
 import { CaptureMethod, SliderSettings, capture } from "./backend/capture";
 import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
 import { isValidNumber, isValidLength, escapeRegex } from "./backend/utils";
 import { MainPopupFunc } from "./components/MainPopup";
 import { EditorView, ViewPlugin } from "@codemirror/view";
-import { pillboxButton } from "cmPlugins/pillbox-menus/pillboxButtons";
 import { ExpressionModel } from "globals/models";
 import { Calc } from "globals/window";
 import {
@@ -32,6 +33,7 @@ const DEFAULT_FILENAME = "DesModder_Video_Creator";
 export default class VideoCreator extends CMPlugin {
   static id = "video-creator" as const;
   static enabledByDefault = true;
+  static category = "core";
 
   ffmpegLoaded = false;
   frames: string[] = [];
@@ -445,15 +447,18 @@ export default class VideoCreator extends CMPlugin {
   }
 }
 
-export function videoCreator(dsm: MainController) {
-  return ViewPlugin.define((view) => new VideoCreator(view, dsm), {
-    provide: (plugin) => [
-      pillboxButton.of({
-        id: "dsm-vc-menu",
-        tooltip: "video-creator-menu",
-        iconClass: "dcg-icon-film",
-        popup: () => MainPopupFunc(dsm.view.plugin(plugin)!),
-      }),
-    ],
-  });
+export function videoCreator(dsm: MainController): CMPluginSpec<VideoCreator> {
+  return {
+    plugin: ViewPlugin.define((view) => new VideoCreator(view, dsm), {
+      provide: (plugin) => [
+        pillboxButton.of({
+          id: "dsm-vc-menu",
+          tooltip: "video-creator-menu",
+          iconClass: "dcg-icon-film",
+          popup: () => MainPopupFunc(dsm.view.plugin(plugin)!),
+        }),
+      ],
+    }),
+    extensions: [],
+  };
 }

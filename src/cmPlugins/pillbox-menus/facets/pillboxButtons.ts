@@ -1,4 +1,4 @@
-import { PillboxButton } from ".";
+import { PillboxButton } from "..";
 import { Facet } from "@codemirror/state";
 
 export const pillboxButton = Facet.define<

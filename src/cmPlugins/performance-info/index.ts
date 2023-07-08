@@ -1,8 +1,9 @@
 import MainController from "../../MainController";
+import { CMPluginSpec } from "../../plugins";
 import { CMPlugin } from "../CMPlugin";
+import { pillboxButton } from "../pillbox-menus/facets/pillboxButtons";
 import { MainPopupFunc } from "./PerformanceView";
 import { EditorView, ViewPlugin } from "@codemirror/view";
-import { pillboxButton } from "cmPlugins/pillbox-menus/pillboxButtons";
 import { DispatchedEvent, TimingData } from "globals/Calc";
 import { Calc } from "globals/window";
 
@@ -61,15 +62,20 @@ const defaultTimingData: TimingData = {
   updateIntersections: 0,
 };
 
-export function performanceInfo(dsm: MainController) {
-  return ViewPlugin.define((view) => new PerformanceInfo(view, dsm), {
-    provide: (plugin) => [
-      pillboxButton.of({
-        id: "dsm-pi-menu",
-        tooltip: "performance-info-name",
-        iconClass: "dsm-icon-pie-chart",
-        popup: () => MainPopupFunc(dsm.view.plugin(plugin)!, dsm),
-      }),
-    ],
-  });
+export function performanceInfo(
+  dsm: MainController
+): CMPluginSpec<PerformanceInfo> {
+  return {
+    plugin: ViewPlugin.define((view) => new PerformanceInfo(view, dsm), {
+      provide: (plugin) => [
+        pillboxButton.of({
+          id: "dsm-pi-menu",
+          tooltip: "performance-info-name",
+          iconClass: "dsm-icon-pie-chart",
+          popup: () => MainPopupFunc(dsm.view.plugin(plugin)!, dsm),
+        }),
+      ],
+    }),
+    extensions: [],
+  };
 }

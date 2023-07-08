@@ -10,6 +10,7 @@ export default class Wakatime extends PluginController<Config> {
   static id = "wakatime" as const;
   static config = configList;
   static enabledByDefault = false;
+  static category = "integrations";
 
   lastUpdate = performance.now() - heartbeatInterval;
   handler!: string;

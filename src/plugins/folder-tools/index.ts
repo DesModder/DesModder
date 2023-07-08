@@ -7,6 +7,7 @@ import { List } from "utils/depUtils";
 export default class FolderTools extends PluginController {
   static id = "folder-tools" as const;
   static enabledByDefault = true;
+  static category = "utility";
 
   actionButtons: ActionButton[] = [
     {
