@@ -223,3 +223,59 @@ export function getPartialFunctionCall(
     }
   }
 }
+
+export function getCorrectableIdentifier(mq: MathQuillField): {
+  ident: string;
+  back: () => void;
+} {
+  let cursor: MQCursor | undefined = mq.__controller.cursor[-1];
+
+  const isInSubscript =
+    mq.__controller.cursor?.parent?._el?.classList.contains("dcg-mq-sub");
+
+  if (isInSubscript) {
+    cursor = cursor?.parent?.parent as MQCursor;
+  }
+
+  const identifierSegments: string[] = [];
+
+  let goBack = 0;
+
+  while (cursor) {
+    const subscript = isSubscript(cursor);
+    const isValid = isOperatorName(cursor) || isVarName(cursor) || subscript;
+    if (!isValid) break;
+
+    const ltx = cursor?.latex?.();
+    if (ltx === undefined) break;
+    identifierSegments.push(ltx.replace(/[^a-zA-Z]/g, ""));
+
+    if (subscript) {
+      goBack += ltx === "_{ }" ? 1 : ltx.length - 3;
+    } else {
+      goBack++;
+    }
+
+    cursor = cursor[-1];
+  }
+
+  identifierSegments.reverse();
+
+  const back = () => {
+    for (let i = 0; i < goBack; i++) mq.keystroke("Backspace");
+  };
+
+  if (identifierSegments.length === 1) {
+    return {
+      ident: identifierSegments[0],
+      back,
+    };
+  } else if (identifierSegments.length > 1) {
+    return {
+      ident: identifierSegments[0] + "_" + identifierSegments.slice(1).join(""),
+      back,
+    };
+  } else {
+    return { ident: "", back: () => {} };
+  }
+}

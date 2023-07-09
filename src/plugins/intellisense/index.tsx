@@ -2,6 +2,7 @@ import {
   PartialFunctionCall,
   TryFindMQIdentResult,
   getController,
+  getCorrectableIdentifier,
   getMathquillIdentifierAtCursorPosition,
   getPartialFunctionCall,
 } from "./latex-parsing";
@@ -60,11 +61,21 @@ export function getExpressionLatex(id: string): string | undefined {
   ).latex;
 }
 
-export default class Intellisense extends PluginController {
+export default class Intellisense extends PluginController<{
+  subscriptify: boolean;
+}> {
   static id = "intellisense" as const;
   static enabledByDefault = false;
   static descriptionLearnMore =
     "https://github.com/DesModder/DesModder/tree/main/src/plugins/intellisense/docs/README.md";
+
+  static config = [
+    {
+      type: "boolean",
+      key: "subscriptify",
+      default: false,
+    },
+  ] as const;
 
   view: MountedComponent | undefined;
 
@@ -109,6 +120,22 @@ export default class Intellisense extends PluginController {
 
     // is there actually a focused mathquill window?
     if (focusedMQ) {
+      if (this.settings.subscriptify) {
+        const ident = getCorrectableIdentifier(focusedMQ);
+
+        const match = this.intellisenseState
+          .boundIdentifiersArray()
+          .find((e) => e.variableName === ident.ident);
+
+        console.log("correctableidentifier", ident, match);
+
+        if (match) {
+          ident.back();
+          focusedMQ.typedText(match.variableName);
+          focusedMQ.keystroke("Right");
+        }
+      }
+
       // find the identifier the cursor is at
       this.latestIdent = getMathquillIdentifierAtCursorPosition(focusedMQ);
       if (this.latestIdent)
