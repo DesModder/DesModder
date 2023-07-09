@@ -3,7 +3,6 @@ import Intellisense, { intellisense } from "../cmPlugins/intellisense";
 import { mainEditorView } from "../state";
 import { pluginsForceDisabled } from "../state/pluginsEnabled";
 import ManageMetadata from "./manage-metadata";
-import TextMode from "./text-mode";
 import { Compartment, Extension } from "@codemirror/state";
 import { EditorView, PluginValue, ViewPlugin } from "@codemirror/view";
 import MainController from "MainController";
@@ -36,6 +35,7 @@ import ShiftEnterNewline, {
   shiftEnterNewline,
 } from "cmPlugins/shift-enter-newline";
 import ShowTips, { showTips } from "cmPlugins/show-tips";
+import TextMode, { textMode } from "cmPlugins/text-mode";
 import VideoCreator, { videoCreator } from "cmPlugins/video-creator";
 import Wakatime, { wakatime } from "cmPlugins/wakatime";
 import WolframToDesmos, { wolframToDesmos } from "cmPlugins/wolfram2desmos";
@@ -142,6 +142,7 @@ export const keyToCMPlugin = {
   pinExpressions,
   folderTools,
   exprActionButtons,
+  textMode,
 };
 
 const keyToCMPluginConstructor = {
@@ -167,6 +168,7 @@ const keyToCMPluginConstructor = {
   pinExpressions: PinExpressions,
   folderTools: FolderTools,
   exprActionButtons: ExprActionButtons,
+  textMode: TextMode,
 };
 
 export const idToCMPluginConstructor = Object.fromEntries(
@@ -202,7 +204,6 @@ type IDToPluginSpec = {
 export type CMPluginID = keyof IDToPluginSpec;
 
 export const keyToPlugin = {
-  textMode: TextMode,
   metadata: ManageMetadata,
 } satisfies Record<string, Plugin<any>>;
 
@@ -309,7 +310,7 @@ export class TransparentPlugins extends _TransparentPlugins implements KeyToAnyP
   get shiftEnterNewline () { return this.cmPlugin("shift-enter-newline"); }
   get hideErrors () { return this.cmPlugin("hide-errors") }
   get folderTools () { return this.cmPlugin("folder-tools"); }
-  get textMode () { return this.ep["text-mode"]; }
+  get textMode () { return this.cmPlugin("text-mode"); }
   get performanceInfo () { return this.cmPlugin("performance-info"); }
   get metadata () { return this.ep["manage-metadata"]; }
   get intellisense () { return this.cmPlugin("intellisense"); }

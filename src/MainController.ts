@@ -87,6 +87,8 @@ export default class MainController extends TransparentPlugins {
         const CMPlugin = idToCMPluginConstructor[id as CMPluginID];
         if (CMPlugin !== undefined) {
           id = id as CMPluginID;
+          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+          delete this.enabledPlugins[id];
           this.view.dispatch({
             effects: [this.compartments[id].reconfigure([])],
           });

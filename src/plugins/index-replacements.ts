@@ -9,8 +9,8 @@ import pinExpressions from "cmPlugins/pin-expressions/pin-expressions.replacemen
 import rightClickTray from "cmPlugins/right-click-tray/right-click-tray.replacements";
 import shiftEnterNewline from "cmPlugins/shift-enter-newline/shift-enter-newline.replacements";
 import showTips from "cmPlugins/show-tips/show-tips.replacements";
+import textMode from "cmPlugins/text-mode/text-mode.replacements";
 import metadata from "plugins/manage-metadata/manage-metadata.replacements";
-import textMode from "plugins/text-mode/text-mode.replacements";
 import insertPanels from "preload/moduleOverrides/insert-panels.replacements";
 
 export default [

@@ -8,10 +8,10 @@ import {
 import { PartialFunctionCall } from "./latex-parsing";
 import "./view.less";
 import { ClassComponent, Component, jsx } from "DCGView";
+import { identifierToString } from "cmPlugins/text-mode/aug/augLatexToRaw";
+import { textModeExprToLatex } from "cmPlugins/text-mode/down/textToRaw";
 import { For, StaticMathQuillView, Switch } from "components";
 import { format } from "i18n/i18n-core";
-import { identifierToString } from "plugins/text-mode/aug/augLatexToRaw";
-import { textModeExprToLatex } from "plugins/text-mode/down/textToRaw";
 import { parseDesmosLatex } from "utils/depUtils";
 import { IndexFor } from "utils/utilComponents";
 

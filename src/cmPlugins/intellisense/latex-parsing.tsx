@@ -1,6 +1,6 @@
 import { latexStringToIdentifierString } from "./view";
+import { ExpressionAug } from "cmPlugins/text-mode/aug/AugState";
 import { MQCursor, MathQuillField } from "components";
-import { ExpressionAug } from "plugins/text-mode/aug/AugState";
 
 export function mapAugAST(
   node: ExpressionAug["latex"],

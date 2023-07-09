@@ -149,7 +149,7 @@ function styleDefaults(controller: TextMode, node: SyntaxNode): AnyHydrated {
       return styleDefaults(controller, node.parent!);
     case "MappingEntry": {
       const id = node.getChild("Identifier")!;
-      const key = controller.view!.state.doc.sliceString(id.from, id.to);
+      const key = controller.editorView!.state.doc.sliceString(id.from, id.to);
       return styleDefaults(controller, node.parent!)[key as keyof AnyHydrated];
     }
     default:

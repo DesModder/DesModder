@@ -1,25 +1,27 @@
 import { DCGView } from "../../DCGView";
-import { Inserter, PluginController } from "../PluginController";
+import MainController from "../../MainController";
+import { CMPluginSpec } from "../../plugins";
+import { Inserter } from "../../plugins/PluginController";
+import { CMPlugin } from "../CMPlugin";
 import { onCalcEvent, analysisStateField } from "./LanguageServer";
 import { TextModeToggle } from "./components/TextModeToggle";
 import getText from "./up/getText";
 import { initView, startState } from "./view/editor";
-import { EditorView, ViewUpdate } from "@codemirror/view";
+import { EditorView, ViewPlugin, ViewUpdate } from "@codemirror/view";
 import { Calc } from "globals/window";
 import { keys } from "utils/depUtils";
 
-export default class TextMode extends PluginController {
+export default class TextMode extends CMPlugin {
   static id = "text-mode" as const;
   static enabledByDefault = false;
-  static category = "core";
   static descriptionLearnMore =
     "https://github.com/DesModder/DesModder/tree/main/src/plugins/text-mode/docs/intro.md";
 
   inTextMode: boolean = false;
-  view: EditorView | null = null;
+  editorView: EditorView | null = null;
   dispatchListenerID: string | null = null;
 
-  afterDisable() {
+  destroy() {
     if (this.inTextMode) this.toggleTextMode();
   }
 
@@ -48,9 +50,9 @@ export default class TextMode extends PluginController {
    */
   mountEditor(container: HTMLDivElement) {
     const [hasError, text] = getText();
-    this.view = initView(this, text);
+    this.editorView = initView(this, text);
     if (hasError) this.conversionError(() => this.toggleTextMode());
-    container.appendChild(this.view.dom);
+    container.appendChild(this.editorView.dom);
     this.preventPropagation(container);
     this.dispatchListenerID = Calc.controller.dispatcher.register((event) => {
       // setTimeout to avoid dispatch-in-dispatch from handlers responding to
@@ -58,7 +60,7 @@ export default class TextMode extends PluginController {
       setTimeout(() => {
         if (event.type === "set-state" && !event.opts.fromTextMode)
           this.onSetState();
-        if (this.view) onCalcEvent(this.view, event);
+        if (this.editorView) onCalcEvent(this.editorView, event);
       });
     });
   }
@@ -80,7 +82,7 @@ export default class TextMode extends PluginController {
 
   onSetState() {
     const [hasError, text] = getText();
-    this.view?.setState(startState(this, text));
+    this.editorView?.setState(startState(this, text));
     if (hasError) this.conversionError();
   }
 
@@ -110,9 +112,9 @@ export default class TextMode extends PluginController {
     if (this.dispatchListenerID !== null) {
       Calc.controller.dispatcher.unregister(this.dispatchListenerID);
     }
-    if (this.view) {
-      this.view.destroy();
-      this.view = null;
+    if (this.editorView) {
+      this.editorView.destroy();
+      this.editorView = null;
     }
   }
 
@@ -164,4 +166,14 @@ function getSelectedItem(view: EditorView): string | undefined {
     );
     return containingPairs[0]?.[0];
   }
+}
+
+export function textMode(dsm: MainController): CMPluginSpec<TextMode> {
+  return {
+    id: TextMode.id,
+    category: "core",
+    config: [],
+    plugin: ViewPlugin.define((view) => new TextMode(view, dsm)),
+    extensions: [],
+  };
 }
