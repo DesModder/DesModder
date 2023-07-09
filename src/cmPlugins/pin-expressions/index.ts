@@ -3,9 +3,11 @@ import { CMPluginSpec } from "../../plugins";
 import { Inserter } from "../../plugins/PluginController";
 import { CMPlugin } from "../CMPlugin";
 import { actionButtons } from "../expr-action-buttons/facets/actionButton";
+import { getDsmItemModels } from "../manage-metadata";
 import { ListView, PinnedPanel } from "./components/PinnedPanel";
 import "./pinExpressions.less";
 import { ViewPlugin } from "@codemirror/view";
+import GraphMetadata from "cmPlugins/manage-metadata/interface";
 import { Calc } from "globals/window";
 
 export default class PinExpressions extends CMPlugin {
@@ -33,11 +35,11 @@ export default class PinExpressions extends CMPlugin {
     });
   }
 
-  applyPinnedStyle() {
+  applyPinnedStyle(metadata: GraphMetadata) {
     const el = document.querySelector(".dcg-exppanel-container");
-    const hasPinnedExpressions = this.dsm.metadata
-      ?.getDsmItemModels()
-      .some((v) => v.pinned);
+    const hasPinnedExpressions = getDsmItemModels(metadata).some(
+      (v) => v.pinned
+    );
     el?.classList.toggle("dsm-has-pinned-expressions", hasPinnedExpressions);
   }
 

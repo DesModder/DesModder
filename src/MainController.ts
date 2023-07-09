@@ -13,7 +13,6 @@ import {
 import { StateEffect } from "@codemirror/state";
 import window, { Calc } from "globals/window";
 import {
-  plugins,
   pluginList,
   PluginID,
   GenericSettings,
@@ -22,7 +21,6 @@ import {
   PluginInstance,
   getPlugin,
   idToCMPluginConstructor,
-  CMPluginID,
 } from "plugins";
 import { recordToMap } from "utils/messages";
 
@@ -76,17 +74,8 @@ export default class MainController extends TransparentPlugins {
     const plugin = getPlugin(id);
     if (plugin && this.isPluginToggleable(id)) {
       if (this.isPluginEnabled(id)) {
-        const Plugin = plugins.get(id as any);
+        const Plugin = idToCMPluginConstructor[id];
         if (Plugin !== undefined) {
-          const plugin = this.enabledPlugins[id];
-          plugin?.beforeDisable();
-          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-          delete this.enabledPlugins[id];
-          plugin?.afterDisable();
-        }
-        const CMPlugin = idToCMPluginConstructor[id as CMPluginID];
-        if (CMPlugin !== undefined) {
-          id = id as CMPluginID;
           // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
           delete this.enabledPlugins[id];
           this.view.dispatch({
@@ -100,25 +89,14 @@ export default class MainController extends TransparentPlugins {
   }
 
   _enablePlugin(id: PluginID) {
-    const Plugin = plugins.get(id as any);
+    const Plugin = idToCMPluginConstructor[id];
     if (Plugin !== undefined) {
-      const settings = this.getPluginSettings(id);
-      const res = new Plugin(this, settings as any as never);
-      const ep = this.enabledPlugins as Record<PluginID, PluginInstance>;
-      ep[Plugin.id as PluginID] = res;
-      (res as PluginInstance).settings = settings;
-      this.setPluginEnabled(id, true);
-      res.afterEnable();
-    }
-    const CMPlugin = idToCMPluginConstructor[id as CMPluginID];
-    if (CMPlugin !== undefined) {
-      id = id as CMPluginID;
       this.view.dispatch({
         effects: [this.compartments[id].reconfigure([this.ips[id]])],
       });
       const ep = this.enabledPlugins as Record<PluginID, PluginInstance>;
-      const p = this.cmPlugin(CMPlugin.id);
-      if (p) ep[CMPlugin.id as PluginID] = p as any;
+      const p = this.cmPlugin(Plugin.id);
+      if (p) ep[Plugin.id] = p as any;
       this.setPluginEnabled(id, true);
     }
     Calc.controller.updateViews();

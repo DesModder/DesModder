@@ -2,7 +2,6 @@
 import Intellisense, { intellisense } from "../cmPlugins/intellisense";
 import { mainEditorView } from "../state";
 import { pluginsForceDisabled } from "../state/pluginsEnabled";
-import ManageMetadata from "./manage-metadata";
 import { Compartment, Extension } from "@codemirror/state";
 import { EditorView, PluginValue, ViewPlugin } from "@codemirror/view";
 import MainController from "MainController";
@@ -21,6 +20,7 @@ import ExprActionButtons, {
 import FindReplace, { findReplace } from "cmPlugins/find-replace";
 import FolderTools, { folderTools } from "cmPlugins/folder-tools";
 import HideErrors, { hideErrors } from "cmPlugins/hide-errors";
+import ManageMetadata, { manageMetadata } from "cmPlugins/manage-metadata";
 import Multiline, { multiline } from "cmPlugins/multiline";
 import PerformanceInfo, { performanceInfo } from "cmPlugins/performance-info";
 import PillboxMenus, { pillboxMenus } from "cmPlugins/pillbox-menus";
@@ -143,6 +143,7 @@ export const keyToCMPlugin = {
   folderTools,
   exprActionButtons,
   textMode,
+  metadata: manageMetadata,
 };
 
 const keyToCMPluginConstructor = {
@@ -169,21 +170,22 @@ const keyToCMPluginConstructor = {
   folderTools: FolderTools,
   exprActionButtons: ExprActionButtons,
   textMode: TextMode,
+  metadata: ManageMetadata,
 };
 
 export const idToCMPluginConstructor = Object.fromEntries(
   Object.entries(keyToCMPluginConstructor).map(([_, v]) => [v.id, v])
-) as Record<CMPluginID, KCPC[keyof KCPC]>;
+) as Record<PluginID, KCPC[keyof KCPC]>;
 
 const cmKeyToID = Object.fromEntries(
   Object.entries(keyToCMPluginConstructor).map(([k, v]) => [k, v.id])
-) as Record<keyof KCP, CMPluginID>;
+) as Record<keyof KCP, PluginID>;
 
 export const idToCMPlugin = Object.fromEntries(
   Object.entries(keyToCMPlugin).map(([k, v]) => [cmKeyToID[k as keyof KCP], v])
-) as Record<CMPluginID, KCPC[keyof KCPC]>;
+) as Record<PluginID, KCPC[keyof KCPC]>;
 
-export const cmPluginList = Object.values(keyToCMPluginConstructor);
+export const pluginList = Object.values(keyToCMPluginConstructor);
 
 type KCPC = typeof keyToCMPluginConstructor;
 
@@ -201,39 +203,16 @@ type IDToCMPluginInstance = {
 type IDToPluginSpec = {
   readonly [K in keyof KCP as KCPC[K]["id"]]: ReturnType<KCP[K]>["plugin"];
 };
-export type CMPluginID = keyof IDToPluginSpec;
+export type PluginID = keyof IDToPluginSpec;
 
-export const keyToPlugin = {
-  metadata: ManageMetadata,
-} satisfies Record<string, Plugin<any>>;
+type KeyToAnyPluginInstance = KeyToCMPluginInstance;
 
-const legacyPluginList = Object.values(keyToPlugin);
-
-export const pluginList = cmPluginList.concat(legacyPluginList as any) as (
-  | (typeof legacyPluginList)[number]
-  | (typeof cmPluginList)[number]
-)[];
-
-export const plugins = new Map(
-  legacyPluginList.map((plugin) => [plugin.id, plugin])
-);
-
-type KP = typeof keyToPlugin;
-type KeyToPluginInstance = {
-  readonly [K in keyof KP]: undefined | InstanceType<KP[K]>;
-};
-type IDToPluginInstance = {
-  [K in keyof KP as KP[K]["id"]]?: InstanceType<KP[K]>;
-};
-export type PluginID = keyof IDToPluginInstance | keyof IDToPluginSpec;
-export type SpecificPlugin = KP[keyof KP] | KCPC[keyof KCPC];
-
-type KeyToAnyPluginInstance = KeyToPluginInstance & KeyToCMPluginInstance;
+export type SpecificPlugin = KCPC[keyof KCPC];
 
 export type IDToPluginSettings = Record<PluginID, GenericSettings | undefined>;
 
 export function getPlugin(id: PluginID): SpecificPlugin {
-  return plugins.get(id as any) ?? idToCMPluginConstructor[id as CMPluginID];
+  return idToCMPluginConstructor[id];
 }
 
 /** Note the point of TransparentPlugins is just to implement parts of
@@ -242,9 +221,9 @@ export function getPlugin(id: PluginID): SpecificPlugin {
 class _TransparentPlugins {
   /** Note that `enabledPlugins[id]` is truthy if and only if `id` is of
    * an enabled plugin. Otherwise, `enabledPlugins[id]` is undefined */
-  protected readonly ep: IDToPluginInstance = {};
+  protected readonly ep: Partial<IDToCMPluginInstance> = {};
   protected readonly ips: IDToPluginSpec;
-  protected readonly compartments: Record<CMPluginID, Compartment>;
+  protected readonly compartments: Record<PluginID, Compartment>;
   readonly view: EditorView;
 
   constructor() {
@@ -264,7 +243,6 @@ class _TransparentPlugins {
       pluginsForceDisabled.of(forceDisabled),
       this.ips["pillbox-menus"],
       ...bits.flatMap(([_, v]) => [v.extensions].concat([configExtension(v)])),
-      ...legacyPluginList.flatMap((x) => configExtension(x)),
       ...Object.values(this.compartments).map((c) => c.of([])),
     ]);
   }
@@ -274,7 +252,7 @@ class _TransparentPlugins {
     PluginInstance | undefined
   >;
 
-  cmPlugin<K extends CMPluginID>(id: K) {
+  cmPlugin<K extends PluginID>(id: K) {
     return (
       (this.view.plugin(this.ips[id]) as IDToCMPluginInstance[K]) ?? undefined
     );
@@ -312,7 +290,7 @@ export class TransparentPlugins extends _TransparentPlugins implements KeyToAnyP
   get folderTools () { return this.cmPlugin("folder-tools"); }
   get textMode () { return this.cmPlugin("text-mode"); }
   get performanceInfo () { return this.cmPlugin("performance-info"); }
-  get metadata () { return this.ep["manage-metadata"]; }
+  get metadata () { return this.cmPlugin("manage-metadata"); }
   get intellisense () { return this.cmPlugin("intellisense"); }
   get compactView () { return this.cmPlugin("compact-view"); }
   get multiline () { return this.cmPlugin("multiline"); }

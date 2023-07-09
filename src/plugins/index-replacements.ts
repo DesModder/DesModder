@@ -4,13 +4,13 @@ import debugMode from "cmPlugins/debug-mode/debug-mode.replacements";
 import extraExpressionButtons from "cmPlugins/expr-action-buttons/expr-action-buttons.replacements";
 import findReplace from "cmPlugins/find-replace/find-replace.replacements";
 import hideErrors from "cmPlugins/hide-errors/hide-errors.replacements";
+import metadata from "cmPlugins/manage-metadata/manage-metadata.replacements";
 import pillbox from "cmPlugins/pillbox-menus/pillbox-menus.replacements";
 import pinExpressions from "cmPlugins/pin-expressions/pin-expressions.replacements";
 import rightClickTray from "cmPlugins/right-click-tray/right-click-tray.replacements";
 import shiftEnterNewline from "cmPlugins/shift-enter-newline/shift-enter-newline.replacements";
 import showTips from "cmPlugins/show-tips/show-tips.replacements";
 import textMode from "cmPlugins/text-mode/text-mode.replacements";
-import metadata from "plugins/manage-metadata/manage-metadata.replacements";
 import insertPanels from "preload/moduleOverrides/insert-panels.replacements";
 
 export default [

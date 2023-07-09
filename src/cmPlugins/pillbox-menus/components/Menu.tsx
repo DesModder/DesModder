@@ -140,9 +140,6 @@ export default class Menu extends Component<{
     if (expanded === null) return null;
     const plugin = getPlugin(expanded);
     const config = this.controller.getPluginConfig(expanded);
-    // TODO JARED MORNING:
-    // This works great for CM plugins but doesn't have back-compat
-    // for Legacy plugins. Don't worry? Or fix up. I think fix up.
     if (config === undefined) return null;
     const settings = () => this.controller.dsm.getPluginSettings(expanded)!;
     if (settings() === undefined) return null;

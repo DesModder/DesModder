@@ -12,10 +12,10 @@ import { IntellisenseState } from "./state";
 import { JumpToDefinitionMenuInfo, View } from "./view";
 import { EditorView, ViewPlugin } from "@codemirror/view";
 import { DCGView, MountedComponent, unmountFromNode } from "DCGView";
+import { getMetadata } from "cmPlugins/manage-metadata/manage";
 import { MathQuillField, MathQuillView } from "components";
 import { ItemModel, TextModel } from "globals/models";
 import { Calc } from "globals/window";
-import { getMetadata } from "plugins/manage-metadata/manage";
 import { hookIntoOverrideKeystroke } from "utils/listenerHelpers";
 import { isDescendant } from "utils/utils";
 

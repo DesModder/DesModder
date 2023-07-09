@@ -17,9 +17,9 @@ import { graphSettingsToText, itemToText } from "./up/augToText";
 import { ChangeSpec } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
+import Metadata from "cmPlugins/manage-metadata/interface";
 import { DispatchedEvent } from "globals/Calc";
 import { Calc } from "globals/window";
-import Metadata from "plugins/manage-metadata/interface";
 
 // @settings related
 const settingsEvents = [

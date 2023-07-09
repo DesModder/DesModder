@@ -1,10 +1,10 @@
 import { BoundIdentifier } from ".";
 import { mapAugAST } from "./latex-parsing";
 import { rootKeys } from "cmPlugins/find-replace/backend";
+import Metadata from "cmPlugins/manage-metadata/interface";
 import { parseRootLatex } from "cmPlugins/text-mode/aug/rawToAug";
 import { ItemModel } from "globals/models";
 import { Calc } from "globals/window";
-import Metadata from "plugins/manage-metadata/interface";
 import { get } from "utils/utils";
 
 function getOrMakeKey<K, V>(map: Map<K, V>, k: K, v: () => V) {
