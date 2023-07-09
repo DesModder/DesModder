@@ -127,8 +127,6 @@ export default class Intellisense extends PluginController<{
           .boundIdentifiersArray()
           .find((e) => e.variableName === ident.ident);
 
-        console.log("correctableidentifier", ident, match);
-
         if (match) {
           ident.back();
           focusedMQ.typedText(match.variableName);
