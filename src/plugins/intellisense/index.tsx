@@ -120,20 +120,6 @@ export default class Intellisense extends PluginController<{
 
     // is there actually a focused mathquill window?
     if (focusedMQ) {
-      if (this.settings.subscriptify) {
-        const ident = getCorrectableIdentifier(focusedMQ);
-
-        const match = this.intellisenseState
-          .boundIdentifiersArray()
-          .find((e) => e.variableName === ident.ident);
-
-        if (match) {
-          ident.back();
-          focusedMQ.typedText(match.variableName);
-          focusedMQ.keystroke("Right");
-        }
-      }
-
       // find the identifier the cursor is at
       this.latestIdent = getMathquillIdentifierAtCursorPosition(focusedMQ);
       if (this.latestIdent)
@@ -685,6 +671,31 @@ export default class Intellisense extends PluginController<{
       if (e.type === "delete-item-and-animate-out") {
         this.canHaveIntellisense = false;
         this.view?.update();
+      }
+
+      if (e.type === "set-item-latex") {
+        if (this.settings.subscriptify && this.latestMQ) {
+          const ident = getCorrectableIdentifier(this.latestMQ);
+
+          if (
+            this.latestMQ.__options.autoOperatorNames[
+              ident.ident.replace(/_/g, "")
+            ] ||
+            this.latestMQ.__options.autoCommands[ident.ident.replace(/_/g, "")]
+          ) {
+            return;
+          }
+
+          const match = this.intellisenseState
+            .boundIdentifiersArray()
+            .find((e) => e.variableName === ident.ident);
+
+          if (match) {
+            ident.back();
+            this.latestMQ.typedText(match.variableName);
+            this.latestMQ.keystroke("Right");
+          }
+        }
       }
     });
   }

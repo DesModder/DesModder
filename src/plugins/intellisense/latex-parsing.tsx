@@ -55,6 +55,11 @@ function isOperatorName(cursor: MQCursor) {
   return cursor._el?.classList.contains("dcg-mq-operator-name") ?? false;
 }
 
+// is am MQ node a digit?
+function isDigit(cursor: MQCursor) {
+  return cursor._el?.classList.contains("dcg-mq-digit") ?? false;
+}
+
 // is an MQ node the start of an operator name?
 function isStartingOperatorName(cursor: MQCursor) {
   return isOperatorName(cursor) && cursor.latex?.()?.[0] === "\\";
@@ -233,8 +238,9 @@ export function getCorrectableIdentifier(mq: MathQuillField): {
   const isInSubscript =
     mq.__controller.cursor?.parent?._el?.classList.contains("dcg-mq-sub");
 
+  // don't bother if you're in a subscript
   if (isInSubscript) {
-    cursor = cursor?.parent?.parent as MQCursor;
+    return { ident: "", back: () => {} };
   }
 
   const identifierSegments: string[] = [];
@@ -243,12 +249,16 @@ export function getCorrectableIdentifier(mq: MathQuillField): {
 
   while (cursor) {
     const subscript = isSubscript(cursor);
-    const isValid = isOperatorName(cursor) || isVarName(cursor) || subscript;
+    const isValid =
+      isOperatorName(cursor) ||
+      isVarName(cursor) ||
+      subscript ||
+      isDigit(cursor);
     if (!isValid) break;
 
     const ltx = cursor?.latex?.();
     if (ltx === undefined) break;
-    identifierSegments.push(ltx.replace(/[^a-zA-Z]/g, ""));
+    identifierSegments.push(ltx.replace(/[^a-zA-Z0-9]/g, ""));
 
     if (subscript) {
       goBack += ltx === "_{ }" ? 1 : ltx.length - 3;
@@ -259,7 +269,14 @@ export function getCorrectableIdentifier(mq: MathQuillField): {
     cursor = cursor[-1];
   }
 
+  if (isInSubscript) goBack++;
+
   identifierSegments.reverse();
+
+  // remove all leading numbers from the identifier
+  while (identifierSegments[0]?.match(/^[0-9]+$/g)) {
+    identifierSegments.splice(0, 1);
+  }
 
   const back = () => {
     for (let i = 0; i < goBack; i++) mq.keystroke("Backspace");
