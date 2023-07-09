@@ -1,4 +1,4 @@
-import { pluginConfig } from "../cmPlugins/pillbox-menus/facets/pluginConfig";
+import { pluginConfig } from "../plugins/pillbox-menus/facets/pluginConfig";
 import { EditorState, StateEffect, StateField } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import {

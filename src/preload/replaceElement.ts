@@ -1,5 +1,5 @@
 /** This file runs before Desmos is loaded */
-import { Replacer } from "../plugins/PluginController";
+import { Replacer } from "../plugins/CMPlugin";
 
 export function insertElement(creator: () => undefined | (() => any)) {
   const DCGView = (Desmos as any).Private.Fragile.DCGView;

@@ -1,45 +1,45 @@
 /* eslint-disable @typescript-eslint/method-signature-style, @typescript-eslint/dot-notation */
-import Intellisense, { intellisense } from "../cmPlugins/intellisense";
+import Intellisense, { intellisense } from "../plugins/intellisense";
 import { mainEditorView } from "../state";
 import { pluginsForceDisabled } from "../state/pluginsEnabled";
 import { Compartment, Extension } from "@codemirror/state";
 import { EditorView, PluginValue, ViewPlugin } from "@codemirror/view";
 import MainController from "MainController";
-import GLesmos, { glesmos } from "cmPlugins/GLesmos";
+import window, { Calc } from "globals/window";
+import GLesmos, { glesmos } from "plugins/GLesmos";
 import BetterEvaluationView, {
   betterEvaluationView,
-} from "cmPlugins/better-evaluation-view";
-import BuiltinSettings, { builtinSettings } from "cmPlugins/builtin-settings";
-import CompactView, { compactView } from "cmPlugins/compact-view";
-import DebugMode, { debugMode } from "cmPlugins/debug-mode";
-import DuplicateHotkey, { duplicateHotkey } from "cmPlugins/duplicate-hotkey";
+} from "plugins/better-evaluation-view";
+import BuiltinSettings, { builtinSettings } from "plugins/builtin-settings";
+import CompactView, { compactView } from "plugins/compact-view";
+import DebugMode, { debugMode } from "plugins/debug-mode";
+import DuplicateHotkey, { duplicateHotkey } from "plugins/duplicate-hotkey";
 import ExprActionButtons, {
   ActionButton,
   exprActionButtons,
-} from "cmPlugins/expr-action-buttons";
-import FindReplace, { findReplace } from "cmPlugins/find-replace";
-import FolderTools, { folderTools } from "cmPlugins/folder-tools";
-import HideErrors, { hideErrors } from "cmPlugins/hide-errors";
-import ManageMetadata, { manageMetadata } from "cmPlugins/manage-metadata";
-import Multiline, { multiline } from "cmPlugins/multiline";
-import PerformanceInfo, { performanceInfo } from "cmPlugins/performance-info";
-import PillboxMenus, { pillboxMenus } from "cmPlugins/pillbox-menus";
+} from "plugins/expr-action-buttons";
+import FindReplace, { findReplace } from "plugins/find-replace";
+import FolderTools, { folderTools } from "plugins/folder-tools";
+import HideErrors, { hideErrors } from "plugins/hide-errors";
+import ManageMetadata, { manageMetadata } from "plugins/manage-metadata";
+import Multiline, { multiline } from "plugins/multiline";
+import PerformanceInfo, { performanceInfo } from "plugins/performance-info";
+import PillboxMenus, { pillboxMenus } from "plugins/pillbox-menus";
 import {
   PluginConfig,
   pluginConfig,
-} from "cmPlugins/pillbox-menus/facets/pluginConfig";
-import PinExpressions, { pinExpressions } from "cmPlugins/pin-expressions";
-import RightClickTray, { rightClickTray } from "cmPlugins/right-click-tray";
-import SetPrimaryColor, { setPrimaryColor } from "cmPlugins/set-primary-color";
+} from "plugins/pillbox-menus/facets/pluginConfig";
+import PinExpressions, { pinExpressions } from "plugins/pin-expressions";
+import RightClickTray, { rightClickTray } from "plugins/right-click-tray";
+import SetPrimaryColor, { setPrimaryColor } from "plugins/set-primary-color";
 import ShiftEnterNewline, {
   shiftEnterNewline,
-} from "cmPlugins/shift-enter-newline";
-import ShowTips, { showTips } from "cmPlugins/show-tips";
-import TextMode, { textMode } from "cmPlugins/text-mode";
-import VideoCreator, { videoCreator } from "cmPlugins/video-creator";
-import Wakatime, { wakatime } from "cmPlugins/wakatime";
-import WolframToDesmos, { wolframToDesmos } from "cmPlugins/wolfram2desmos";
-import window, { Calc } from "globals/window";
+} from "plugins/shift-enter-newline";
+import ShowTips, { showTips } from "plugins/show-tips";
+import TextMode, { textMode } from "plugins/text-mode";
+import VideoCreator, { videoCreator } from "plugins/video-creator";
+import Wakatime, { wakatime } from "plugins/wakatime";
+import WolframToDesmos, { wolframToDesmos } from "plugins/wolfram2desmos";
 
 interface ConfigItemGeneric {
   key: string;
