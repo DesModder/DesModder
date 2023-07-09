@@ -1,40 +1,15 @@
-import { PluginController } from "../PluginController";
-import { ActionButton } from "../expr-action-buttons";
+import MainController from "../../MainController";
+import { CMPluginSpec } from "../../plugins";
+import { CMPlugin } from "../CMPlugin";
+import { actionButtons } from "../expr-action-buttons/facets/actionButton";
+import { ViewPlugin } from "@codemirror/view";
 import { ItemModel } from "globals/models";
 import { Calc } from "globals/window";
 import { List } from "utils/depUtils";
 
-export default class FolderTools extends PluginController {
+export default class FolderTools extends CMPlugin {
   static id = "folder-tools" as const;
   static enabledByDefault = true;
-  static category = "utility";
-
-  actionButtons: ActionButton[] = [
-    {
-      tooltip: "folder-tools-enclose",
-      buttonClass: "dsm-note-enclose-button",
-      iconClass: "dsm-icon-folder-plus",
-      onTap: (model) => this.noteEnclose(model.index),
-      predicate: (model) => model.type === "text",
-    },
-    {
-      tooltip: "folder-tools-dump",
-      buttonClass: "dsm-folder-dump-button",
-      iconClass: "dsm-icon-folder-minus",
-      onTap: (model) => this.folderDump(model.index),
-      predicate: (model) =>
-        model.type === "folder" &&
-        Calc.controller.getItemModelByIndex(model.index + 1)?.folderId ===
-          model.id,
-    },
-    {
-      tooltip: "folder-tools-merge",
-      buttonClass: "dsm-folder-merge-button",
-      iconClass: "dsm-icon-folder-plus",
-      onTap: (model) => this.folderMerge(model.index),
-      predicate: (model) => model.type === "folder",
-    },
-  ];
 
   folderDump(folderIndex: number) {
     const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
@@ -59,7 +34,7 @@ export default class FolderTools extends PluginController {
     });
     Calc.controller._toplevelReplaceItemAt(folderIndex, T, true);
 
-    this.controller.commitStateChange(true);
+    this.dsm.commitStateChange(true);
   }
 
   folderMerge(folderIndex: number) {
@@ -118,7 +93,7 @@ export default class FolderTools extends PluginController {
     if (toDeleteFolderID)
       List.removeItemById(Calc.controller.listModel, toDeleteFolderID);
 
-    this.controller.commitStateChange(true);
+    this.dsm.commitStateChange(true);
   }
 
   noteEnclose(noteIndex: number) {
@@ -134,6 +109,51 @@ export default class FolderTools extends PluginController {
     Calc.controller._toplevelReplaceItemAt(noteIndex, T, true);
     this.folderMerge(noteIndex);
 
-    this.controller.commitStateChange(true);
+    this.dsm.commitStateChange(true);
   }
+}
+
+export function folderTools(dsm: MainController): CMPluginSpec<FolderTools> {
+  return {
+    id: FolderTools.id,
+    category: "utility",
+    config: [],
+    plugin: ViewPlugin.define((view) => new FolderTools(view, dsm), {
+      provide: () => [
+        actionButtons.of({
+          plugin: "folder-tools",
+          buttons: [
+            {
+              tooltip: "folder-tools-enclose",
+              buttonClass: "dsm-note-enclose-button",
+              iconClass: "dsm-icon-folder-plus",
+              onTap: (model) =>
+                dsm.cmPlugin("folder-tools")?.noteEnclose(model.index),
+              predicate: (model) => model.type === "text",
+            },
+            {
+              tooltip: "folder-tools-dump",
+              buttonClass: "dsm-folder-dump-button",
+              iconClass: "dsm-icon-folder-minus",
+              onTap: (model) =>
+                dsm.cmPlugin("folder-tools")?.folderDump(model.index),
+              predicate: (model) =>
+                model.type === "folder" &&
+                Calc.controller.getItemModelByIndex(model.index + 1)
+                  ?.folderId === model.id,
+            },
+            {
+              tooltip: "folder-tools-merge",
+              buttonClass: "dsm-folder-merge-button",
+              iconClass: "dsm-icon-folder-plus",
+              onTap: (model) =>
+                dsm.cmPlugin("folder-tools")?.folderMerge(model.index),
+              predicate: (model) => model.type === "folder",
+            },
+          ],
+        }),
+      ],
+    }),
+    extensions: [],
+  };
 }

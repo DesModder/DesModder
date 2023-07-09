@@ -2,10 +2,7 @@
 import Intellisense, { intellisense } from "../cmPlugins/intellisense";
 import { mainEditorView } from "../state";
 import { pluginsForceDisabled } from "../state/pluginsEnabled";
-import ExprActionButtons, { ActionButton } from "./expr-action-buttons";
-import FolderTools from "./folder-tools";
 import ManageMetadata from "./manage-metadata";
-import PinExpressions from "./pin-expressions";
 import TextMode from "./text-mode";
 import { Compartment, Extension } from "@codemirror/state";
 import { EditorView, PluginValue, ViewPlugin } from "@codemirror/view";
@@ -18,7 +15,12 @@ import BuiltinSettings, { builtinSettings } from "cmPlugins/builtin-settings";
 import CompactView, { compactView } from "cmPlugins/compact-view";
 import DebugMode, { debugMode } from "cmPlugins/debug-mode";
 import DuplicateHotkey, { duplicateHotkey } from "cmPlugins/duplicate-hotkey";
+import ExprActionButtons, {
+  ActionButton,
+  exprActionButtons,
+} from "cmPlugins/expr-action-buttons";
 import FindReplace, { findReplace } from "cmPlugins/find-replace";
+import FolderTools, { folderTools } from "cmPlugins/folder-tools";
 import HideErrors, { hideErrors } from "cmPlugins/hide-errors";
 import Multiline, { multiline } from "cmPlugins/multiline";
 import PerformanceInfo, { performanceInfo } from "cmPlugins/performance-info";
@@ -27,6 +29,7 @@ import {
   PluginConfig,
   pluginConfig,
 } from "cmPlugins/pillbox-menus/facets/pluginConfig";
+import PinExpressions, { pinExpressions } from "cmPlugins/pin-expressions";
 import RightClickTray, { rightClickTray } from "cmPlugins/right-click-tray";
 import SetPrimaryColor, { setPrimaryColor } from "cmPlugins/set-primary-color";
 import ShiftEnterNewline, {
@@ -136,6 +139,9 @@ export const keyToCMPlugin = {
   showTips,
   wolframToDesmos,
   wakatime,
+  pinExpressions,
+  folderTools,
+  exprActionButtons,
 };
 
 const keyToCMPluginConstructor = {
@@ -158,6 +164,9 @@ const keyToCMPluginConstructor = {
   showTips: ShowTips,
   wolframToDesmos: WolframToDesmos,
   wakatime: Wakatime,
+  pinExpressions: PinExpressions,
+  folderTools: FolderTools,
+  exprActionButtons: ExprActionButtons,
 };
 
 export const idToCMPluginConstructor = Object.fromEntries(
@@ -193,11 +202,8 @@ type IDToPluginSpec = {
 export type CMPluginID = keyof IDToPluginSpec;
 
 export const keyToPlugin = {
-  pinExpressions: PinExpressions,
-  folderTools: FolderTools,
   textMode: TextMode,
   metadata: ManageMetadata,
-  exprActionButtons: ExprActionButtons,
 } satisfies Record<string, Plugin<any>>;
 
 const legacyPluginList = Object.values(keyToPlugin);
@@ -291,7 +297,7 @@ export class TransparentPlugins extends _TransparentPlugins implements KeyToAnyP
   get betterEvaluationView () { return this.cmPlugin("better-evaluation-view"); }
   get setPrimaryColor () { return this.cmPlugin("set-primary-color"); }
   get wolframToDesmos () { return this.cmPlugin("wolfram2desmos"); }
-  get pinExpressions () { return this.ep["pin-expressions"]; }
+  get pinExpressions () { return this.cmPlugin("pin-expressions"); }
   get videoCreator () { return this.cmPlugin("video-creator"); }
   get wakatime () { return this.cmPlugin("wakatime"); }
   get findReplace () { return this.cmPlugin("find-and-replace"); }
@@ -302,12 +308,12 @@ export class TransparentPlugins extends _TransparentPlugins implements KeyToAnyP
   get glesmos () { return this.cmPlugin("GLesmos"); }
   get shiftEnterNewline () { return this.cmPlugin("shift-enter-newline"); }
   get hideErrors () { return this.cmPlugin("hide-errors") }
-  get folderTools () { return this.ep["folder-tools"]; }
+  get folderTools () { return this.cmPlugin("folder-tools"); }
   get textMode () { return this.ep["text-mode"]; }
   get performanceInfo () { return this.cmPlugin("performance-info"); }
   get metadata () { return this.ep["manage-metadata"]; }
   get intellisense () { return this.cmPlugin("intellisense"); }
   get compactView () { return this.cmPlugin("compact-view"); }
   get multiline () { return this.cmPlugin("multiline"); }
-  get exprActionButtons () { return this.ep["expr-action-buttons"]; }
+  get exprActionButtons () { return this.cmPlugin("expr-action-buttons"); }
 }
