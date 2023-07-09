@@ -1,8 +1,12 @@
+import MainController from "../../MainController";
 import { Fragile } from "../../globals/window";
-import { Inserter, PluginController, Replacer } from "../PluginController";
+import { CMPluginSpec } from "../../plugins";
+import { Inserter, Replacer } from "../../plugins/PluginController";
+import { CMPlugin } from "../CMPlugin";
 import { ErrorTriangle } from "./components/ErrorTriangle";
 import { HideButton } from "./components/HideButton";
 import "./hide-errors.less";
+import { EditorView, ViewPlugin } from "@codemirror/view";
 
 let enabled: boolean = false;
 let initOnce: boolean = false;
@@ -32,12 +36,12 @@ function initPromptSlider() {
   };
 }
 
-export default class HideErrors extends PluginController {
+export default class HideErrors extends CMPlugin {
   static id = "hide-errors" as const;
   static enabledByDefault = true;
-  static category = "visual";
 
-  afterEnable() {
+  constructor(view: EditorView, dsm: MainController) {
+    super(view, dsm);
     if (!initOnce) {
       initOnce = true;
       initPromptSlider();
@@ -45,24 +49,24 @@ export default class HideErrors extends PluginController {
     enabled = true;
   }
 
-  afterDisable() {
+  destroy() {
     enabled = false;
   }
 
   hideError(id: string) {
-    this.controller.metadata?.updateExprMetadata(id, {
+    this.dsm.metadata?.updateExprMetadata(id, {
       errorHidden: true,
     });
   }
 
   toggleErrorHidden(id: string) {
-    this.controller.metadata?.updateExprMetadata(id, {
+    this.dsm.metadata?.updateExprMetadata(id, {
       errorHidden: !this.isErrorHidden(id),
     });
   }
 
   isErrorHidden(id: string) {
-    return this.controller.metadata?.getDsmItemModel(id)?.errorHidden;
+    return this.dsm.metadata?.getDsmItemModel(id)?.errorHidden;
   }
 
   hideButton(getModel: () => any): Inserter {
@@ -72,4 +76,14 @@ export default class HideErrors extends PluginController {
   errorTriangle(id: string): Replacer {
     return (inner: any) => ErrorTriangle(this, id, inner);
   }
+}
+
+export function hideErrors(dsm: MainController): CMPluginSpec<HideErrors> {
+  return {
+    id: HideErrors.id,
+    category: "visual",
+    config: [],
+    plugin: ViewPlugin.define((view) => new HideErrors(view, dsm)),
+    extensions: [],
+  };
 }

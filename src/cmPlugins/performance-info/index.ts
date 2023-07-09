@@ -66,6 +66,9 @@ export function performanceInfo(
   dsm: MainController
 ): CMPluginSpec<PerformanceInfo> {
   return {
+    id: PerformanceInfo.id,
+    config: [],
+    category: "utility",
     plugin: ViewPlugin.define((view) => new PerformanceInfo(view, dsm), {
       provide: (plugin) => [
         pillboxButton.of({

@@ -1,9 +1,9 @@
-import { GenericSettings, PluginID } from "../plugins";
 import {
   HeartbeatOptions,
   sendHeartbeat,
   WindowHeartbeatOptions,
-} from "../plugins/wakatime/heartbeat";
+} from "../cmPlugins/wakatime/heartbeat";
+import { GenericSettings, PluginID } from "../plugins";
 import injectScript from "utils/injectScript";
 import { listenToMessageUp, postMessageDown } from "utils/messages";
 

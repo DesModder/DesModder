@@ -1,34 +1,41 @@
 /* eslint-disable @typescript-eslint/method-signature-style, @typescript-eslint/dot-notation */
-import { pluginConfig } from "../cmPlugins/pillbox-menus/facets/pluginConfig";
+import Intellisense, { intellisense } from "../cmPlugins/intellisense";
 import { mainEditorView } from "../state";
 import { pluginsForceDisabled } from "../state/pluginsEnabled";
-import GLesmos from "./GLesmos";
-import BetterEvaluationView from "./better-evaluation-view";
-import CompactView from "./compact-view";
-import DebugMode from "./debug-mode";
-import DuplicateHotkey from "./duplicate-hotkey";
 import ExprActionButtons, { ActionButton } from "./expr-action-buttons";
-import FindReplace from "./find-replace";
 import FolderTools from "./folder-tools";
-import HideErrors from "./hide-errors";
-import Intellisense from "./intellisense";
 import ManageMetadata from "./manage-metadata";
-import Multiline from "./multiline";
 import PinExpressions from "./pin-expressions";
-import RightClickTray from "./right-click-tray";
-import SetPrimaryColor from "./set-primary-color";
-import ShiftEnterNewline from "./shift-enter-newline";
-import ShowTips from "./show-tips";
 import TextMode from "./text-mode";
-import Wakatime from "./wakatime";
-import WolframToDesmos from "./wolfram2desmos";
 import { Compartment, Extension } from "@codemirror/state";
 import { EditorView, PluginValue, ViewPlugin } from "@codemirror/view";
 import MainController from "MainController";
+import GLesmos, { glesmos } from "cmPlugins/GLesmos";
+import BetterEvaluationView, {
+  betterEvaluationView,
+} from "cmPlugins/better-evaluation-view";
 import BuiltinSettings, { builtinSettings } from "cmPlugins/builtin-settings";
+import CompactView, { compactView } from "cmPlugins/compact-view";
+import DebugMode, { debugMode } from "cmPlugins/debug-mode";
+import DuplicateHotkey, { duplicateHotkey } from "cmPlugins/duplicate-hotkey";
+import FindReplace, { findReplace } from "cmPlugins/find-replace";
+import HideErrors, { hideErrors } from "cmPlugins/hide-errors";
+import Multiline, { multiline } from "cmPlugins/multiline";
 import PerformanceInfo, { performanceInfo } from "cmPlugins/performance-info";
 import PillboxMenus, { pillboxMenus } from "cmPlugins/pillbox-menus";
+import {
+  PluginConfig,
+  pluginConfig,
+} from "cmPlugins/pillbox-menus/facets/pluginConfig";
+import RightClickTray, { rightClickTray } from "cmPlugins/right-click-tray";
+import SetPrimaryColor, { setPrimaryColor } from "cmPlugins/set-primary-color";
+import ShiftEnterNewline, {
+  shiftEnterNewline,
+} from "cmPlugins/shift-enter-newline";
+import ShowTips, { showTips } from "cmPlugins/show-tips";
 import VideoCreator, { videoCreator } from "cmPlugins/video-creator";
+import Wakatime, { wakatime } from "cmPlugins/wakatime";
+import WolframToDesmos, { wolframToDesmos } from "cmPlugins/wolfram2desmos";
 import window, { Calc } from "globals/window";
 
 interface ConfigItemGeneric {
@@ -102,6 +109,9 @@ export interface Plugin<
 }
 
 export interface CMPluginSpec<T extends PluginValue> {
+  id: PluginID;
+  category: string;
+  config: PluginConfig["config"];
   plugin: ViewPlugin<T>;
   extensions: Extension;
 }
@@ -111,6 +121,21 @@ export const keyToCMPlugin = {
   videoCreator,
   performanceInfo,
   builtinSettings,
+  duplicateHotkey,
+  betterEvaluationView,
+  compactView,
+  debugMode,
+  findReplace,
+  glesmos,
+  hideErrors,
+  intellisense,
+  multiline,
+  rightClickTray,
+  setPrimaryColor,
+  shiftEnterNewline,
+  showTips,
+  wolframToDesmos,
+  wakatime,
 };
 
 const keyToCMPluginConstructor = {
@@ -118,6 +143,21 @@ const keyToCMPluginConstructor = {
   videoCreator: VideoCreator,
   performanceInfo: PerformanceInfo,
   builtinSettings: BuiltinSettings,
+  duplicateHotkey: DuplicateHotkey,
+  betterEvaluationView: BetterEvaluationView,
+  compactView: CompactView,
+  debugMode: DebugMode,
+  findReplace: FindReplace,
+  glesmos: GLesmos,
+  hideErrors: HideErrors,
+  intellisense: Intellisense,
+  multiline: Multiline,
+  rightClickTray: RightClickTray,
+  setPrimaryColor: SetPrimaryColor,
+  shiftEnterNewline: ShiftEnterNewline,
+  showTips: ShowTips,
+  wolframToDesmos: WolframToDesmos,
+  wakatime: Wakatime,
 };
 
 export const idToCMPluginConstructor = Object.fromEntries(
@@ -153,25 +193,10 @@ type IDToPluginSpec = {
 export type CMPluginID = keyof IDToPluginSpec;
 
 export const keyToPlugin = {
-  betterEvaluationView: BetterEvaluationView,
-  setPrimaryColor: SetPrimaryColor,
-  wolframToDesmos: WolframToDesmos,
   pinExpressions: PinExpressions,
-  wakatime: Wakatime,
-  findReplace: FindReplace,
-  debugMode: DebugMode,
-  showTips: ShowTips,
-  rightClickTray: RightClickTray,
-  duplicateHotkey: DuplicateHotkey,
-  glesmos: GLesmos,
-  shiftEnterNewline: ShiftEnterNewline,
-  hideErrors: HideErrors,
   folderTools: FolderTools,
   textMode: TextMode,
   metadata: ManageMetadata,
-  multiline: Multiline,
-  intellisense: Intellisense,
-  compactView: CompactView,
   exprActionButtons: ExprActionButtons,
 } satisfies Record<string, Plugin<any>>;
 
@@ -231,16 +256,8 @@ class _TransparentPlugins {
     this.view = mainEditorView([
       pluginsForceDisabled.of(forceDisabled),
       this.ips["pillbox-menus"],
-      ...bits.map(([_, v]) => v.extensions),
-      ...legacyPluginList.flatMap((x) =>
-        x.category === "core-core"
-          ? []
-          : pluginConfig.of({
-              id: x.id,
-              category: x.category,
-              config: x.config ?? [],
-            })
-      ),
+      ...bits.flatMap(([_, v]) => [v.extensions].concat([configExtension(v)])),
+      ...legacyPluginList.flatMap((x) => configExtension(x)),
       ...Object.values(this.compartments).map((c) => c.of([])),
     ]);
   }
@@ -257,30 +274,40 @@ class _TransparentPlugins {
   }
 }
 
+function configExtension(x: PluginConfig) {
+  return x.category === "core-core"
+    ? []
+    : pluginConfig.of({
+        id: x.id,
+        category: x.category,
+        config: x.config ?? [],
+      });
+}
+
 // prettier-ignore
 export class TransparentPlugins extends _TransparentPlugins implements KeyToAnyPluginInstance  {
   get pillboxMenus () { return this.cmPlugin("pillbox-menus") }
   get builtinSettings () { return this.cmPlugin("builtin-settings"); }
-  get betterEvaluationView () { return this.ep["better-evaluation-view"]; }
-  get setPrimaryColor () { return this.ep["set-primary-color"]; }
-  get wolframToDesmos () { return this.ep["wolfram2desmos"]; }
+  get betterEvaluationView () { return this.cmPlugin("better-evaluation-view"); }
+  get setPrimaryColor () { return this.cmPlugin("set-primary-color"); }
+  get wolframToDesmos () { return this.cmPlugin("wolfram2desmos"); }
   get pinExpressions () { return this.ep["pin-expressions"]; }
   get videoCreator () { return this.cmPlugin("video-creator"); }
-  get wakatime () { return this.ep["wakatime"]; }
-  get findReplace () { return this.ep["find-and-replace"]; }
-  get debugMode () { return this.ep["debug-mode"]; }
-  get showTips () { return this.ep["show-tips"]; }
-  get rightClickTray () { return this.ep["right-click-tray"]; }
-  get duplicateHotkey () { return this.ep["duplicate-expression-hotkey"]; }
-  get glesmos () { return this.ep["GLesmos"]; }
-  get shiftEnterNewline () { return this.ep["shift-enter-newline"]; }
-  get hideErrors () { return this.ep["hide-errors"]; }
+  get wakatime () { return this.cmPlugin("wakatime"); }
+  get findReplace () { return this.cmPlugin("find-and-replace"); }
+  get debugMode () { return this.cmPlugin("debug-mode"); }
+  get showTips () { return this.cmPlugin("show-tips"); }
+  get rightClickTray () { return this.cmPlugin("right-click-tray"); }
+  get duplicateHotkey () { return this.cmPlugin("duplicate-expression-hotkey"); }
+  get glesmos () { return this.cmPlugin("GLesmos"); }
+  get shiftEnterNewline () { return this.cmPlugin("shift-enter-newline"); }
+  get hideErrors () { return this.cmPlugin("hide-errors") }
   get folderTools () { return this.ep["folder-tools"]; }
   get textMode () { return this.ep["text-mode"]; }
   get performanceInfo () { return this.cmPlugin("performance-info"); }
   get metadata () { return this.ep["manage-metadata"]; }
-  get intellisense () { return this.ep["intellisense"]; }
-  get compactView () { return this.ep["compact-view"]; }
-  get multiline () { return this.ep["multiline"]; }
+  get intellisense () { return this.cmPlugin("intellisense"); }
+  get compactView () { return this.cmPlugin("compact-view"); }
+  get multiline () { return this.cmPlugin("multiline"); }
   get exprActionButtons () { return this.ep["expr-action-buttons"]; }
 }

@@ -16,7 +16,7 @@ export const pluginConfig = Facet.define<PluginConfig, ConfigTree>({
 export interface PluginConfig {
   id: PluginID;
   category: string;
-  config: readonly ConfigItem[];
+  config: readonly ConfigItem[] | undefined;
 }
 
 /** string -> id -> config */

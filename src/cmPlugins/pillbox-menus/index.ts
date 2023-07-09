@@ -59,7 +59,9 @@ export default class PillboxMenus extends CMPlugin {
   }
 
   updateMenuView() {
-    Calc.controller.updateViews();
+    setTimeout(() => {
+      Calc.controller.updateViews();
+    });
   }
 
   private getPillboxButtons() {
@@ -185,6 +187,9 @@ export interface PillboxButton {
 
 export function pillboxMenus(dsm: MainController): CMPluginSpec<PillboxMenus> {
   return {
+    id: "pillbox-menus",
+    category: "core-core",
+    config: [],
     plugin: ViewPlugin.define((view) => new PillboxMenus(view, dsm), {
       provide: () => [
         pillboxButton.of({

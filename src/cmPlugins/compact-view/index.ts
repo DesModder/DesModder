@@ -1,20 +1,23 @@
-import { PluginController } from "../PluginController";
+import MainController from "../../MainController";
+import { CMPluginSpec } from "../../plugins";
+import { pluginSettings } from "../../state/pluginSettings";
+import { onState } from "../../state/utils";
+import { CMPlugin } from "../CMPlugin";
 import "./compact.css";
 import "./compact.less";
 import { Config, configList } from "./config";
+import { EditorView, ViewPlugin } from "@codemirror/view";
 import { Calc } from "globals/window";
 
 function toggleBodyClass(className: string, bool: boolean) {
   document.body.classList.toggle(className, bool);
 }
 
-export default class CompactView extends PluginController<Config> {
+export default class CompactView extends CMPlugin<Config> {
   static id = "compact-view" as const;
   static enabledByDefault = false;
-  static config = configList;
-  static category = "visual";
 
-  afterConfigChange(): void {
+  onConfigChange(): void {
     toggleBodyClass(
       "compact-view-remove-spacing-enabled",
       this.settings.compactFactor > 0
@@ -95,18 +98,35 @@ export default class CompactView extends PluginController<Config> {
 
   dispatcherID: string | undefined;
 
-  afterEnable() {
+  constructor(view: EditorView, dsm: MainController) {
+    super(view, dsm);
     this.dispatcherID = Calc.controller.dispatcher.register(() => {
       if (!this.settings.hideEvaluations) return;
       this.updateHiddenEvaluations();
     });
-    this.afterConfigChange();
+    this.onConfigChange();
     document.body.classList.add("compact-view-enabled");
   }
 
-  afterDisable() {
+  destroy() {
     if (this.dispatcherID)
       Calc.controller.dispatcher.unregister(this.dispatcherID);
     document.body.classList.remove("compact-view-enabled");
   }
+}
+
+export function compactView(dsm: MainController): CMPluginSpec<CompactView> {
+  return {
+    id: CompactView.id,
+    category: "visual",
+    config: configList,
+    plugin: ViewPlugin.define((view) => new CompactView(view, dsm), {
+      provide: () => [
+        onState(pluginSettings, () => {
+          dsm.cmPlugin("compact-view")?.onConfigChange();
+        }),
+      ],
+    }),
+    extensions: [],
+  };
 }

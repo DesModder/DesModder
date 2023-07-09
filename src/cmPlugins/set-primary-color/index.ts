@@ -1,8 +1,13 @@
+import MainController from "../../MainController";
 import { Calc } from "../../globals/window";
-import { PluginController } from "../PluginController";
+import { CMPluginSpec } from "../../plugins";
+import { pluginSettings } from "../../state/pluginSettings";
+import { onState } from "../../state/utils";
+import { CMPlugin } from "../CMPlugin";
 import "./_overrides.less";
 import "./custom-overrides.less";
-import { getHSVfromRGB, parseCSSHex } from "plugins/GLesmos/colorParsing";
+import { EditorView, ViewPlugin } from "@codemirror/view";
+import { getHSVfromRGB, parseCSSHex } from "cmPlugins/GLesmos/colorParsing";
 
 interface Config {
   primaryColor: string;
@@ -40,16 +45,15 @@ const faviconLink = document.querySelector(
 ) as HTMLLinkElement;
 const originalHref = faviconLink.href;
 
-export default class SetPrimaryColor extends PluginController<Config> {
+export default class SetPrimaryColor extends CMPlugin<Config> {
   static id = "set-primary-color" as const;
   static enabledByDefault = false;
-  static config = configList;
-  static category = "visual";
   wiggle = 0;
   originalImage: HTMLImageElement | null = null;
   apiContainer!: HTMLElement;
 
-  afterEnable() {
+  constructor(view: EditorView, dsm: MainController) {
+    super(view, dsm);
     this.apiContainer = document.querySelector(
       ".dcg-calculator-api-container"
     )!;
@@ -58,14 +62,10 @@ export default class SetPrimaryColor extends PluginController<Config> {
     this.senseDarkReader();
   }
 
-  afterDisable() {
+  destroy() {
     this.applyColor(DEFAULT_COLOR);
     this.apiContainer.classList.remove("dsm-set-primary-color");
     faviconLink.href = originalHref;
-  }
-
-  afterConfigChange() {
-    this.applyConfig();
   }
 
   scaleColor(hex: string, s: number) {
@@ -149,4 +149,22 @@ export default class SetPrimaryColor extends PluginController<Config> {
       faviconLink.href = originalHref;
     }
   }
+}
+
+export function setPrimaryColor(
+  dsm: MainController
+): CMPluginSpec<SetPrimaryColor> {
+  return {
+    id: SetPrimaryColor.id,
+    category: "visual",
+    config: configList,
+    plugin: ViewPlugin.define((view) => new SetPrimaryColor(view, dsm), {
+      provide: () => [
+        onState(pluginSettings, () => {
+          dsm.cmPlugin("set-primary-color")?.applyConfig();
+        }),
+      ],
+    }),
+    extensions: [],
+  };
 }

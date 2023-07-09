@@ -1,8 +1,8 @@
 import { BoundIdentifier } from ".";
 import { mapAugAST } from "./latex-parsing";
+import { rootKeys } from "cmPlugins/find-replace/backend";
 import { ItemModel } from "globals/models";
 import { Calc } from "globals/window";
-import { rootKeys } from "plugins/find-replace/backend";
 import Metadata from "plugins/manage-metadata/interface";
 import { parseRootLatex } from "plugins/text-mode/aug/rawToAug";
 import { get } from "utils/utils";

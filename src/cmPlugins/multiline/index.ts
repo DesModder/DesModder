@@ -1,11 +1,19 @@
-import { PluginController } from "../PluginController";
+import MainController from "../../MainController";
+import { CMPluginSpec } from "../../plugins";
+import { pluginSettings } from "../../state/pluginSettings";
+import { onState } from "../../state/utils";
+import { CMPlugin } from "../CMPlugin";
 import { Config, configList } from "./config";
 import "./multiline.less";
 import { CollapseMode, unverticalify, verticalify } from "./verticalify";
+import { EditorView, ViewPlugin } from "@codemirror/view";
+import {
+  getController,
+  mqKeystroke,
+} from "cmPlugins/intellisense/latex-parsing";
 import { MathQuillField, MathQuillView } from "components";
 import { DispatchedEvent } from "globals/Calc";
 import { Calc } from "globals/window";
-import { getController, mqKeystroke } from "plugins/intellisense/latex-parsing";
 import {
   deregisterCustomDispatchOverridingHandler,
   hookIntoOverrideKeystroke,
@@ -16,11 +24,9 @@ function focusmq(mq: MathQuillField | undefined) {
   mq?.focus();
 }
 
-export default class Multiline extends PluginController<Config> {
+export default class Multiline extends CMPlugin<Config> {
   static id = "multiline" as const;
   static enabledByDefault = false;
-  static config = configList;
-  static category = "visual";
 
   pendingMultilinifications = new Set<HTMLElement>();
 
@@ -30,7 +36,7 @@ export default class Multiline extends PluginController<Config> {
 
   lastEditTime: number = Date.now();
 
-  afterConfigChange(): void {
+  onConfigChange(): void {
     this.unmultilineExpressions(true);
     this.multilineExpressions({ type: "tick" });
     document.body.classList.add("multiline-expression-enabled");
@@ -200,11 +206,12 @@ export default class Multiline extends PluginController<Config> {
 
   customDispatcherID: number | undefined;
 
-  afterEnable() {
+  constructor(view: EditorView, dsm: MainController) {
+    super(view, dsm);
     document.addEventListener("keydown", this.keydownHandler);
     document.addEventListener("mousedown", this.mousedownHandler);
 
-    this.afterConfigChange();
+    this.onConfigChange();
 
     this.multilineIntervalID = setInterval(() => {
       if (
@@ -238,7 +245,7 @@ export default class Multiline extends PluginController<Config> {
       }
 
       if (e.type === "ui/container-resized") {
-        this.afterConfigChange();
+        this.onConfigChange();
       }
     });
 
@@ -251,7 +258,7 @@ export default class Multiline extends PluginController<Config> {
     }, 0);
   }
 
-  afterDisable() {
+  destroy() {
     document.removeEventListener("keydown", this.keydownHandler);
     document.removeEventListener("mousedown", this.mousedownHandler);
 
@@ -430,4 +437,20 @@ export default class Multiline extends PluginController<Config> {
     // go to final position and rerender cursor
     mqKeystroke(focusedmq, oppositeArrowdir);
   }
+}
+
+export function multiline(dsm: MainController): CMPluginSpec<Multiline> {
+  return {
+    id: Multiline.id,
+    category: "visual",
+    config: configList,
+    plugin: ViewPlugin.define((view) => new Multiline(view, dsm), {
+      provide: () => [
+        onState(pluginSettings, () => {
+          dsm.cmPlugin("multiline")?.onConfigChange();
+        }),
+      ],
+    }),
+    extensions: [],
+  };
 }

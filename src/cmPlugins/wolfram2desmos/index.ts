@@ -1,6 +1,9 @@
-import { PluginController } from "../PluginController";
+import MainController from "../../MainController";
+import { CMPluginSpec } from "../../plugins";
+import { CMPlugin } from "../CMPlugin";
 import { Config, configList } from "./config";
 import { wolfram2desmos, isIllegalASCIIMath } from "./wolfram2desmos";
+import { EditorView, ViewPlugin } from "@codemirror/view";
 import { Calc } from "globals/window";
 
 // https://stackoverflow.com/a/34278578
@@ -21,24 +24,23 @@ function typeInTextArea(
 
 // This controller manages the focus events of Expression panel
 
-export default class WolframToDesmos extends PluginController<Config> {
+export default class WolframToDesmos extends CMPlugin<Config> {
   static id = "wolfram2desmos" as const;
   static enabledByDefault = true;
-  static config = configList;
-  static category = "utility";
 
   panel: HTMLElement | null = null;
   enabled = true;
   focusHandler = this._focusHandler.bind(this);
   pasteHandler = this._pasteHandler.bind(this);
 
-  afterEnable() {
+  constructor(view: EditorView, dsm: MainController) {
+    super(view, dsm);
     this.panel = document.querySelector(".dcg-exppanel-outer");
     this.panel?.addEventListener("focusin", this.focusHandler, false);
     this.panel?.addEventListener("focusout", this.focusHandler, false);
   }
 
-  afterDisable() {
+  destroy() {
     this.panel?.removeEventListener("focusin", this.focusHandler, false);
     this.panel?.removeEventListener("focusout", this.focusHandler, false);
     this.enabled = false;
@@ -81,4 +83,16 @@ export default class WolframToDesmos extends PluginController<Config> {
       typeInTextArea(wolfram2desmos(pasteData, this.settings));
     }
   }
+}
+
+export function wolframToDesmos(
+  dsm: MainController
+): CMPluginSpec<WolframToDesmos> {
+  return {
+    id: WolframToDesmos.id,
+    category: "utility",
+    config: configList,
+    plugin: ViewPlugin.define((view) => new WolframToDesmos(view, dsm)),
+    extensions: [],
+  };
 }

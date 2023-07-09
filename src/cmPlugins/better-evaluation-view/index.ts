@@ -1,14 +1,16 @@
-import { Inserter, PluginController } from "../PluginController";
+import MainController from "../../MainController";
+import { CMPluginSpec } from "../../plugins";
+import { Inserter } from "../../plugins/PluginController";
+import { CMPlugin } from "../CMPlugin";
 import "./better-evaluation-view.less";
 import { ColorEvaluation } from "./components/ColorEvaluation";
 import { ListEvaluation } from "./components/ListEvaluation";
 import { Config, configList } from "./config";
+import { ViewPlugin } from "@codemirror/view";
 
-export default class BetterEvaluationView extends PluginController<Config> {
+export default class BetterEvaluationView extends CMPlugin<Config> {
   static id = "better-evaluation-view" as const;
   static enabledByDefault = true;
-  static config = configList;
-  static category = "visual";
 
   listEvaluation(val: () => string[]): Inserter {
     if (!this.settings.lists) return undefined;
@@ -22,4 +24,16 @@ export default class BetterEvaluationView extends PluginController<Config> {
     if (isArray && !(settings.lists && settings.colorLists)) return undefined;
     return () => ColorEvaluation(val);
   }
+}
+
+export function betterEvaluationView(
+  dsm: MainController
+): CMPluginSpec<BetterEvaluationView> {
+  return {
+    id: BetterEvaluationView.id,
+    category: "visual",
+    config: configList,
+    plugin: ViewPlugin.define((view) => new BetterEvaluationView(view, dsm)),
+    extensions: [],
+  };
 }

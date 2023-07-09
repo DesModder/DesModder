@@ -1,3 +1,6 @@
+import MainController from "../../MainController";
+import { CMPluginSpec } from "../../plugins";
+import { CMPlugin } from "../CMPlugin";
 import {
   PartialFunctionCall,
   TryFindMQIdentResult,
@@ -7,11 +10,11 @@ import {
 } from "./latex-parsing";
 import { IntellisenseState } from "./state";
 import { JumpToDefinitionMenuInfo, View } from "./view";
+import { EditorView, ViewPlugin } from "@codemirror/view";
 import { DCGView, MountedComponent, unmountFromNode } from "DCGView";
 import { MathQuillField, MathQuillView } from "components";
 import { ItemModel, TextModel } from "globals/models";
 import { Calc } from "globals/window";
-import { PluginController } from "plugins/PluginController";
 import { getMetadata } from "plugins/manage-metadata/manage";
 import { hookIntoOverrideKeystroke } from "utils/listenerHelpers";
 import { isDescendant } from "utils/utils";
@@ -60,14 +63,13 @@ export function getExpressionLatex(id: string): string | undefined {
   ).latex;
 }
 
-export default class Intellisense extends PluginController {
+export default class Intellisense extends CMPlugin {
   static id = "intellisense" as const;
   static enabledByDefault = true;
-  static category = "core";
   static descriptionLearnMore =
     "https://github.com/DesModder/DesModder/tree/main/src/plugins/intellisense/docs/README.md";
 
-  view: MountedComponent | undefined;
+  mountedPopup: MountedComponent | undefined;
 
   x: number = 0;
   y: number = 0;
@@ -151,7 +153,7 @@ export default class Intellisense extends PluginController {
         this.y = bbox.top;
       } else {
         this.canHaveIntellisense = false;
-        this.view?.update();
+        this.mountedPopup?.update();
         return;
       }
 
@@ -220,7 +222,7 @@ export default class Intellisense extends PluginController {
     }
 
     // update intellisense window
-    this.view?.update();
+    this.mountedPopup?.update();
   }
 
   // leave an intellisense menu and return to whatever expression
@@ -288,7 +290,7 @@ export default class Intellisense extends PluginController {
   focusOutHandler = (e: FocusEvent) => {
     if (e.relatedTarget !== null) {
       this.canHaveIntellisense = false;
-      this.view?.update();
+      this.mountedPopup?.update();
     }
   };
 
@@ -334,14 +336,14 @@ export default class Intellisense extends PluginController {
             // navigating downward in the intellisense menu
             if (key === "Down") {
               self.goToNextIntellisenseCol();
-              self.view?.update();
+              self.mountedPopup?.update();
               return false;
 
               // navigating upward in the intellisense menu
             } else if (key === "Up") {
               self.goToPrevIntellisenseCol();
 
-              self.view?.update();
+              self.mountedPopup?.update();
               return false;
 
               // selecting and autocompleting an intellisense selection
@@ -354,7 +356,7 @@ export default class Intellisense extends PluginController {
                 self.doAutocomplete(
                   self.intellisenseOpts[self.intellisenseIndex].idents[0]
                 );
-                self.view?.update();
+                self.mountedPopup?.update();
               } else {
                 const str =
                   self.intellisenseOpts[self.intellisenseIndex].idents[0]
@@ -375,7 +377,7 @@ export default class Intellisense extends PluginController {
                 self.intellisenseRow = 0;
                 self.goToNextIntellisenseCol();
               }
-              self.view?.update();
+              self.mountedPopup?.update();
               return false;
 
               // navigate by row down
@@ -385,14 +387,14 @@ export default class Intellisense extends PluginController {
                 self.intellisenseRow = 1;
                 self.goToPrevIntellisenseCol();
               }
-              self.view?.update();
+              self.mountedPopup?.update();
               return false;
             }
             // close intellisense menu
             // or jump2def menu
             else if (key === "Esc") {
               self.canHaveIntellisense = false;
-              self.view?.update();
+              self.mountedPopup?.update();
               return false;
             }
           },
@@ -418,7 +420,7 @@ export default class Intellisense extends PluginController {
 
     if (e.key === "Escape") {
       this.jumpToDefState = undefined;
-      this.view?.update();
+      this.mountedPopup?.update();
     }
 
     // if a non arrow key is pressed in an expression,
@@ -431,7 +433,7 @@ export default class Intellisense extends PluginController {
     if (e.key === "F9" && this.latestIdent) {
       this.jumpToDefinition(this.latestIdent.ident);
       this.canHaveIntellisense = false;
-      this.view?.update();
+      this.mountedPopup?.update();
       e.preventDefault();
       return false;
     }
@@ -440,13 +442,13 @@ export default class Intellisense extends PluginController {
     if (this.jumpToDefState) {
       if (e.key === "ArrowUp" || (e.key === "Tab" && e.shiftKey)) {
         this.jumpToDefIndex = Math.max(0, this.jumpToDefIndex - 1);
-        this.view?.update();
+        this.mountedPopup?.update();
       } else if (e.key === "ArrowDown" || e.key === "Tab") {
         this.jumpToDefIndex = Math.min(
           this.jumpToDefState.idents.length - 1,
           this.jumpToDefIndex + 1
         );
-        this.view?.update();
+        this.mountedPopup?.update();
       } else if (e.key === "Enter") {
         const id =
           this.jumpToDefState.idents[this.jumpToDefIndex]?.sourceExprId;
@@ -511,7 +513,7 @@ export default class Intellisense extends PluginController {
       if (dcgcontainer) dcgcontainer.scrollTop = 0;
     }
 
-    this.view?.update();
+    this.mountedPopup?.update();
   }
 
   // given an identifier name, jump to its definition
@@ -546,7 +548,7 @@ export default class Intellisense extends PluginController {
 
     // disable intellisense
     this.canHaveIntellisense = false;
-    this.view?.update();
+    this.mountedPopup?.update();
   }
 
   // delete an identifier and then replace it with something
@@ -577,7 +579,7 @@ export default class Intellisense extends PluginController {
     this.intellisenseReturnMQ?.focus();
     this.canHaveIntellisense = false;
     this.updateIntellisense();
-    this.view?.update();
+    this.mountedPopup?.update();
 
     const selectedid = getSelectedExpressionID();
 
@@ -597,7 +599,8 @@ export default class Intellisense extends PluginController {
 
   dispatcher: string | undefined;
 
-  afterEnable() {
+  constructor(view: EditorView, dsm: MainController) {
+    super(view, dsm);
     const exppanel = document.querySelector(".dcg-exppanel");
     this.lastExppanelScrollTop = exppanel?.scrollTop ?? 0;
 
@@ -620,7 +623,7 @@ export default class Intellisense extends PluginController {
     // create initial intellisense window
     this.intellisenseMountPoint = document.createElement("div");
     document.body.appendChild(this.intellisenseMountPoint);
-    this.view = DCGView.mountToNode(View, this.intellisenseMountPoint, {
+    this.mountedPopup = DCGView.mountToNode(View, this.intellisenseMountPoint, {
       plugin: () => this,
     });
 
@@ -629,7 +632,7 @@ export default class Intellisense extends PluginController {
         setTimeout(() => {
           if (!Calc.focusedMathQuill) {
             this.canHaveIntellisense = false;
-            this.view?.update();
+            this.mountedPopup?.update();
           }
         }, 100);
       }
@@ -638,13 +641,13 @@ export default class Intellisense extends PluginController {
         const exppanel = document.querySelector(".dcg-exppanel");
         const newExppanelScrollTop = exppanel?.scrollTop ?? 0;
         this.y += this.lastExppanelScrollTop - newExppanelScrollTop;
-        this.view?.update();
+        this.mountedPopup?.update();
         this.lastExppanelScrollTop = newExppanelScrollTop;
       }
     });
   }
 
-  afterDisable() {
+  destroy() {
     // clear event listeners
     document.removeEventListener("focusout", this.focusOutHandler);
     document.removeEventListener("focusin", this.focusInHandler);
@@ -664,4 +667,14 @@ export default class Intellisense extends PluginController {
 
     if (this.dispatcher) Calc.controller.dispatcher.unregister(this.dispatcher);
   }
+}
+
+export function intellisense(dsm: MainController): CMPluginSpec<Intellisense> {
+  return {
+    id: Intellisense.id,
+    category: "core",
+    config: [],
+    plugin: ViewPlugin.define((view) => new Intellisense(view, dsm)),
+    extensions: [],
+  };
 }

@@ -33,7 +33,6 @@ const DEFAULT_FILENAME = "DesModder_Video_Creator";
 export default class VideoCreator extends CMPlugin {
   static id = "video-creator" as const;
   static enabledByDefault = true;
-  static category = "core";
 
   ffmpegLoaded = false;
   frames: string[] = [];
@@ -449,6 +448,9 @@ export default class VideoCreator extends CMPlugin {
 
 export function videoCreator(dsm: MainController): CMPluginSpec<VideoCreator> {
   return {
+    id: "video-creator",
+    category: "core",
+    config: [],
     plugin: ViewPlugin.define((view) => new VideoCreator(view, dsm), {
       provide: (plugin) => [
         pillboxButton.of({

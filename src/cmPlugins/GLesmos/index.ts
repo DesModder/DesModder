@@ -1,25 +1,29 @@
-import { Inserter, PluginController } from "../PluginController";
+import MainController from "../../MainController";
+import { CMPluginSpec } from "../../plugins";
+import { Inserter } from "../../plugins/PluginController";
+import { CMPlugin } from "../CMPlugin";
 import { ConfirmLines } from "./components/ConfirmLines";
 import { GLesmosToggle } from "./components/GLesmosToggle";
 import "./glesmos.less";
+import { EditorView, ViewPlugin } from "@codemirror/view";
 import { Calc } from "globals/window";
 
-export default class GLesmos extends PluginController {
+export default class GLesmos extends CMPlugin {
   static id = "GLesmos" as const;
   static enabledByDefault = false;
-  static category = "core";
 
-  afterEnable() {
+  constructor(view: EditorView, dsm: MainController) {
+    super(view, dsm);
     this.checkGLesmos();
   }
 
-  afterDisable() {
+  destroy() {
     this.checkGLesmos();
     // Don't delete the canvas
   }
 
   checkGLesmos() {
-    const glesmosIDs = this.controller.metadata
+    const glesmosIDs = this.dsm.metadata
       ?.getDsmItemModels()
       .filter((v) => v.glesmos)
       .map((v) => v.id);
@@ -40,12 +44,12 @@ export default class GLesmos extends PluginController {
   }
 
   isGlesmosMode(id: string) {
-    this.controller.metadata?.checkForMetadataChange();
-    return this.controller.metadata?.getDsmItemModel(id)?.glesmos ?? false;
+    this.dsm.metadata?.checkForMetadataChange();
+    return this.dsm.metadata?.getDsmItemModel(id)?.glesmos ?? false;
   }
 
   toggleGlesmos(id: string) {
-    this.controller.metadata?.updateExprMetadata(id, {
+    this.dsm.metadata?.updateExprMetadata(id, {
       glesmos: !this.isGlesmosMode(id),
     });
     this.forceWorkerUpdate(id);
@@ -65,15 +69,14 @@ export default class GLesmos extends PluginController {
   }
 
   isGLesmosLinesConfirmed(id: string) {
-    this.controller.metadata?.checkForMetadataChange();
+    this.dsm.metadata?.checkForMetadataChange();
     return (
-      this.controller.metadata?.getDsmItemModel(id)?.glesmosLinesConfirmed ??
-      false
+      this.dsm.metadata?.getDsmItemModel(id)?.glesmosLinesConfirmed ?? false
     );
   }
 
   toggleGLesmosLinesConfirmed(id: string) {
-    this.controller.metadata?.updateExprMetadata(id, {
+    this.dsm.metadata?.updateExprMetadata(id, {
       glesmosLinesConfirmed: !this.isGLesmosLinesConfirmed(id),
     });
     this.forceWorkerUpdate(id);
@@ -111,4 +114,14 @@ export default class GLesmos extends PluginController {
 
 function killWorker() {
   Calc.controller.evaluator.workerPoolConnection.killWorker();
+}
+
+export function glesmos(dsm: MainController): CMPluginSpec<GLesmos> {
+  return {
+    id: GLesmos.id,
+    category: "core",
+    config: [],
+    plugin: ViewPlugin.define((view) => new GLesmos(view, dsm)),
+    extensions: [],
+  };
 }

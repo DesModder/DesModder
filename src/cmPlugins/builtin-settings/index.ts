@@ -3,7 +3,6 @@ import { CMPluginSpec } from "../../plugins";
 import { pluginSettings } from "../../state/pluginSettings";
 import { onState } from "../../state/utils";
 import { CMPlugin } from "../CMPlugin";
-import { pluginConfig } from "../pillbox-menus/facets/pluginConfig";
 import { Config, configList } from "./config";
 import { EditorView, ViewPlugin } from "@codemirror/view";
 import { Calc } from "globals/window";
@@ -63,6 +62,9 @@ export function builtinSettings(
   dsm: MainController
 ): CMPluginSpec<BuiltinSettings> {
   return {
+    id: BuiltinSettings.id,
+    category: "core",
+    config: configList,
     plugin: ViewPlugin.define((view) => new BuiltinSettings(view, dsm), {
       provide: () => [
         onState(pluginSettings, (value) => {
@@ -73,12 +75,6 @@ export function builtinSettings(
         }),
       ],
     }),
-    extensions: [
-      pluginConfig.of({
-        id: BuiltinSettings.id,
-        category: "core",
-        config: configList,
-      }),
-    ],
+    extensions: [],
   };
 }

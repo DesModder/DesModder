@@ -184,8 +184,10 @@ export default class MainController extends TransparentPlugins {
     this.dispatch(updatePluginSettings.of({ pluginID, value, temporary }));
     const plugin = this.enabledPlugins[pluginID];
     if (plugin) {
-      plugin.settings = this.getPluginSettings(pluginID);
-      if (!("destroy" in plugin)) plugin.afterConfigChange();
+      if (!("destroy" in plugin)) {
+        plugin.settings = this.getPluginSettings(pluginID);
+        plugin.afterConfigChange();
+      }
       Calc.controller.updateViews();
     }
   }

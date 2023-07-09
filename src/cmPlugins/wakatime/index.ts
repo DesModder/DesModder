@@ -1,21 +1,23 @@
+import MainController from "../../MainController";
 import { Calc, Console } from "../../globals/window";
+import { CMPluginSpec } from "../../plugins";
 import { getCurrentGraphTitle } from "../../utils/depUtils";
-import { PluginController } from "../PluginController";
+import { CMPlugin } from "../CMPlugin";
 import { Config, configList } from "./config";
+import { EditorView, ViewPlugin } from "@codemirror/view";
 import { listenToMessageDown, postMessageUp } from "utils/messages";
 
 const heartbeatInterval = 120 * 1000;
 
-export default class Wakatime extends PluginController<Config> {
+export default class Wakatime extends CMPlugin<Config> {
   static id = "wakatime" as const;
-  static config = configList;
   static enabledByDefault = false;
-  static category = "integrations";
 
   lastUpdate = performance.now() - heartbeatInterval;
   handler!: string;
 
-  afterEnable() {
+  constructor(view: EditorView, dsm: MainController) {
+    super(view, dsm);
     this.handler = Calc.controller.dispatcher.register((e) => {
       if (
         e.type === "on-evaluator-changes" ||
@@ -28,7 +30,7 @@ export default class Wakatime extends PluginController<Config> {
     listenToMessageDown((msg) => {
       if (msg.type === "heartbeat-error") {
         if (msg.isAuthError) {
-          this.controller.disablePlugin("wakatime");
+          this.dsm.disablePlugin("wakatime");
           Calc.controller._showToast({
             message:
               "WakaTime heartbeat error: check your secret key. Plugin has been deactivated.",
@@ -42,7 +44,7 @@ export default class Wakatime extends PluginController<Config> {
     });
   }
 
-  afterDisable() {
+  destroy() {
     Calc.controller.dispatcher.unregister(this.handler);
   }
 
@@ -65,4 +67,14 @@ export default class Wakatime extends PluginController<Config> {
     });
     this.lastUpdate = performance.now();
   }
+}
+
+export function wakatime(dsm: MainController): CMPluginSpec<Wakatime> {
+  return {
+    id: Wakatime.id,
+    category: "integrations",
+    config: configList,
+    plugin: ViewPlugin.define((view) => new Wakatime(view, dsm)),
+    extensions: [],
+  };
 }

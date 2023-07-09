@@ -1,6 +1,9 @@
-import { PluginController } from "../PluginController";
+import MainController from "../../MainController";
+import { CMPluginSpec } from "../../plugins";
+import { CMPlugin } from "../CMPlugin";
 import Controller from "./Controller";
 import View from "./View";
+import { EditorView, ViewPlugin } from "@codemirror/view";
 import { Calc, Console } from "globals/window";
 
 const controller = new Controller();
@@ -19,12 +22,12 @@ function tryInitView() {
   }
 }
 
-export default class FindReplace extends PluginController {
+export default class FindReplace extends CMPlugin {
   static id = "find-and-replace" as const;
   static enabledByDefault = true;
-  static category = "utility";
 
-  afterEnable() {
+  constructor(_view: EditorView, dsm: MainController) {
+    super(_view, dsm);
     if (Calc.controller.getExpressionSearchOpen()) {
       tryInitView();
     }
@@ -38,8 +41,18 @@ export default class FindReplace extends PluginController {
     });
   }
 
-  afterDisable() {
+  destroy() {
     Calc.controller.dispatcher.unregister(dispatchListenerID);
     view.destroyView();
   }
+}
+
+export function findReplace(dsm: MainController): CMPluginSpec<FindReplace> {
+  return {
+    id: FindReplace.id,
+    category: "utility",
+    config: [],
+    plugin: ViewPlugin.define((view) => new FindReplace(view, dsm)),
+    extensions: [],
+  };
 }

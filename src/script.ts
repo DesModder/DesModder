@@ -1,6 +1,6 @@
 import { format } from "./i18n/i18n-core";
-import { drawGLesmosSketchToCtx } from "./plugins/GLesmos/drawGLesmosSketchToCtx";
 import MainController from "MainController";
+import { drawGLesmosSketchToCtx } from "cmPlugins/GLesmos/drawGLesmosSketchToCtx";
 import "fonts/style.css";
 import window from "globals/window";
 
