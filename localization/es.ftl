@@ -201,3 +201,23 @@ intellisense-name = Intellisense
 intellisense-desc = Brinda varias funciones esenciales de una IDE en Desmos incluyendo sugerencias de autocompletado, visualización de parámetros, e ir a definición. Sigue el enlace para la documentación:
 intellisense-jump2def-menu-instructions = tiene múltiples definiciones. Elije a cuál quieres navegar.
 
+## Compact View
+compact-view-name = Vista Compacta
+compact-view-desc = Permite personalizar la interfaz gráfica con énfasis en mostrar más información de manera compacta.
+compact-view-opt-textFontSize-name = Tamaño de fuente (texto)
+compact-view-opt-textFontSize-desc = Tamaño del texto en notas y carpetas
+compact-view-opt-mathFontSize-name = Tamaño de fuente (matemática)
+compact-view-opt-mathFontSize-desc = Tamaño de texto de expresiones y ecuaciones
+compact-view-opt-bracketFontSizeFactor-name = Factor de paréntesis
+compact-view-opt-bracketFontSizeFactor-desc = El tamaño del texto encerrado en paréntesis (o corchetes) disminuye por este factor.
+compact-view-opt-minimumFontSize-name = Mínimo tamaño de fuente
+compact-view-opt-minimumFontSize-desc = El mínimo tamaño de fuente posible. Sobrescribe el factor de paréntesis.
+compact-view-opt-compactFactor-name = Remover espacio
+compact-view-opt-compactFactor-desc = Remueve el espacio entre las expresiones y notas en la lista.
+compact-view-opt-noSeparatingLines-name = Sin líneas de separación
+compact-view-opt-noSeparatingLines-desc = Remueve las líneas de separación entre el medio de las expresiones.
+compact-view-opt-highlightAlternatingLines-name = Realzar líneas alternas
+compact-view-opt-highlightAlternatingLines-desc = Realza con colores alternos las expresiones para que puedan distinguirse con más facilidad.
+compact-view-opt-hideEvaluations-name = Colapsar evaluaciones
+compact-view-opt-hideEvaluations-desc = Mueve evaluaciones de listas fuera de la vista y las muestra solo cuando colocas el cursor sobre ellas.
+
