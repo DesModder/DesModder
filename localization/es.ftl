@@ -221,3 +221,12 @@ compact-view-opt-highlightAlternatingLines-desc = Realza con colores alternos la
 compact-view-opt-hideEvaluations-name = Colapsar evaluaciones
 compact-view-opt-hideEvaluations-desc = Mueve evaluaciones de listas fuera de la vista y las muestra solo cuando colocas el cursor sobre ellas.
 
+## Multiline
+multiline-name = Expresiones Multilínea
+multiline-desc = Divide expresiones largas en múltiples líneas. Puedes activar esta función manualmente presionando Ctrl+M.
+multiline-opt-widthBeforeMultiline-name = Límite de largo (%)
+multiline-opt-widthBeforeMultiline-desc = Este es un porcentaje de la pantalla al cual el largo de la expresión provoca ajuste de líneas. En móvil este valor es triplicado.
+multiline-opt-automaticallyMultilinify-name = Ajuste de línea automático
+multiline-opt-automaticallyMultilinify-desc = Automáticamente divide las expresiones en múltiples líneas.
+multiline-opt-multilinifyDelayAfterEdit-name = Retraso de ajuste (ms)
+multiline-opt-multilinifyDelayAfterEdit-desc = Retrasa el ajuste de líneas en la expresión que estas editando cuando transcurren este número de milisegundos.
