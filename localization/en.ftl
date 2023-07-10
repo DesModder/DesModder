@@ -178,7 +178,7 @@ better-evaluation-view-opt-colors-desc = Show colors as rgb values
 better-evaluation-view-opt-colorLists-name = Show lists of colors
 better-evaluation-view-opt-colorLists-desc = Show lists of colors as lists of rgb values
 
-## Manage Metadata
+## Pillbox Menus
 pillbox-menus-name = Pillbox Menus (Core)
 pillbox-menus-desc = Show the buttons on the right side, such as the Video Creator or DesModder main menu
 
