@@ -1,6 +1,5 @@
+import { parseText, astItemToTextString } from "../../../../text-mode-core";
 import { Statement } from "../../../../text-mode-core/TextAST";
-import { parse } from "../../../../text-mode-core/down/textToAST";
-import { astItemToTextString } from "../../../../text-mode-core/up/astToText";
 import { statementsIntersecting } from "./statementIntersection";
 
 jest.mock("utils/depUtils");
@@ -11,7 +10,7 @@ function positionsAndProgram(s: string) {
   let pos = 0;
   const positions: number[] = [];
   split.slice(0, -1).forEach((x) => positions.push((pos += x.length)));
-  return [positions, parse(split.join("")).program] as const;
+  return [positions, parseText(split.join("")).program] as const;
 }
 
 function toString(s: Statement) {

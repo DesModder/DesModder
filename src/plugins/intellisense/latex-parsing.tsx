@@ -1,4 +1,4 @@
-import { ExpressionAug } from "../../../text-mode-core/aug/AugState";
+import { ExpressionAug } from "../../../text-mode-core";
 import { latexStringToIdentifierString } from "./view";
 import { MQCursor, MathQuillField } from "components";
 

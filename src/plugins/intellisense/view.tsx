@@ -1,6 +1,8 @@
 import Intellisense, { BoundIdentifier, BoundIdentifierFunction } from ".";
-import { identifierToString } from "../../../text-mode-core/aug/augLatexToRaw";
-import { textModeExprToLatex } from "../../../text-mode-core/down/textToRaw";
+import {
+  identifierToString,
+  textModeExprToLatex,
+} from "../../../text-mode-core";
 import { DStaticMathquillView, If } from "../../components/desmosComponents";
 import {
   DocStringRenderable,

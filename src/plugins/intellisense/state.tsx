@@ -1,5 +1,5 @@
 import { BoundIdentifier } from ".";
-import { parseRootLatex } from "../../../text-mode-core/aug/rawToAug";
+import { parseRootLatex } from "../../../text-mode-core";
 import { mapAugAST } from "./latex-parsing";
 import { ItemModel } from "globals/models";
 import { Calc } from "globals/window";

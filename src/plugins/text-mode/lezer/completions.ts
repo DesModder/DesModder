@@ -1,11 +1,11 @@
 import TextMode from "..";
 import {
+  exprToTextString,
+  childLatexToAST,
+  StyleDefaults as Defaults,
   AnyHydrated,
   AnyHydratedValue,
-} from "../../../../text-mode-core/down/style/Hydrated";
-import * as Defaults from "../../../../text-mode-core/down/style/defaults";
-import { exprToTextString } from "../../../../text-mode-core/up/astToText";
-import { childLatexToAST } from "../../../../text-mode-core/up/augToAST";
+} from "../../../../text-mode-core";
 import { getIndentation } from "../modify";
 import {
   Completion,

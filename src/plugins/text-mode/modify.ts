@@ -3,24 +3,20 @@ import {
   rawToAugSettings,
   rawToDsmMetadata,
   ProgramAnalysis,
+  astItemToTextString,
+  docToString,
+  exprToTextString,
+  styleEntryToText,
+  childExprToAug,
+  itemAugToAST,
+  graphSettingsToText,
+  itemToText,
 } from "../../../text-mode-core";
 import TextAST, {
   NodePath,
   Settings,
   Statement,
 } from "../../../text-mode-core/TextAST";
-import { childExprToAug } from "../../../text-mode-core/down/astToAug";
-import {
-  astItemToTextString,
-  docToString,
-  exprToTextString,
-  styleEntryToText,
-} from "../../../text-mode-core/up/astToText";
-import { itemAugToAST } from "../../../text-mode-core/up/augToAST";
-import {
-  graphSettingsToText,
-  itemToText,
-} from "../../../text-mode-core/up/augToText";
 import { ChangeSpec } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";

@@ -1,6 +1,11 @@
 {
   "name": "text-mode-core",
   "version": "0.1.0",
+  "exports": {
+    ".": "./index.ts",
+    "./TextAST": "./TextAST/index.ts",
+    "./TextAST/Synthetic": "./TextAST/Synthetic.ts"
+  },
   "scripts": {},
   "dependencies": {}
 }

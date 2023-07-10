@@ -1,4 +1,4 @@
-import getText from "../../../text-mode-core/up/getText";
+import { rawToText } from "../../../text-mode-core";
 import { DCGView } from "../../DCGView";
 import { Inserter, PluginController } from "../PluginController";
 import { onCalcEvent, analysisStateField } from "./LanguageServer";
@@ -131,6 +131,10 @@ export default class TextMode extends PluginController {
   onEditorUpdate(update: ViewUpdate) {
     if (update.docChanged || update.selectionSet) selectFromText(update.view);
   }
+}
+
+function getText() {
+  return rawToText(Calc.getState());
 }
 
 function selectFromText(view: EditorView) {

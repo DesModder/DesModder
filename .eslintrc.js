@@ -41,6 +41,7 @@ module.exports = {
   rules: {
     "rulesdir/no-format-in-ts": "error",
     "rulesdir/no-expect-promise": "error",
+    "rulesdir/no-reach-past-exports": "error",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/array-type": "off",
     "@typescript-eslint/strict-boolean-expressions": "off",

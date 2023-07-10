@@ -1,14 +1,13 @@
 import Aug from "../aug/AugState";
 import rawToAug from "../aug/rawToAug";
 import augToText from "./augToText";
-import { Calc } from "globals/window";
+import { GraphState } from "@desmodder/graph-state";
 
 /**
  * @returns [boolean hasError, string text]
  */
-export default function getText(): [boolean, string] {
+export function rawToText(state: GraphState): [boolean, string] {
   try {
-    const state = Calc.getState();
     const aug = rawToAug(state);
     const augHasError = aug.expressions.list.some(itemHasError);
     const text = augToText(aug);
