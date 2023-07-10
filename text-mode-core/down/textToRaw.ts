@@ -1,11 +1,11 @@
-import { Console } from "../../../globals/window";
-import { ProgramAnalysis } from "../LanguageServer";
+import { ProgramAnalysis } from "../ProgramAnalysis";
 import { latexTreeToString } from "../aug/augLatexToRaw";
 import augToRaw from "../aug/augToRaw";
 import astToAug, { childExprToAug } from "./astToAug";
 import { error } from "./diagnostics";
 import { parse } from "./textToAST";
 import { GraphState } from "@desmodder/graph-state";
+import { Console } from "globals/window";
 
 export default function textToRaw(
   text: string

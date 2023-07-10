@@ -1,4 +1,4 @@
-import TextAST, { NodePath } from "../down/TextASTSynthetic";
+import TextAST, { NodePath } from "../TextAST/Synthetic";
 import needsParens from "./needsParens";
 import { builders, printer } from "prettier/doc";
 import * as DocNS from "prettier/doc";

@@ -1,4 +1,6 @@
 import Intellisense, { BoundIdentifier, BoundIdentifierFunction } from ".";
+import { identifierToString } from "../../../text-mode-core/aug/augLatexToRaw";
+import { textModeExprToLatex } from "../../../text-mode-core/down/textToRaw";
 import { DStaticMathquillView, If } from "../../components/desmosComponents";
 import {
   DocStringRenderable,
@@ -10,8 +12,6 @@ import "./view.less";
 import { ClassComponent, Component, jsx } from "DCGView";
 import { For, StaticMathQuillView, Switch } from "components";
 import { format } from "i18n/i18n-core";
-import { identifierToString } from "plugins/text-mode/aug/augLatexToRaw";
-import { textModeExprToLatex } from "plugins/text-mode/down/textToRaw";
 import { parseDesmosLatex } from "utils/depUtils";
 import { IndexFor } from "utils/utilComponents";
 

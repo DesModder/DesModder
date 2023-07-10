@@ -1,19 +1,26 @@
-import { ProgramAnalysis } from "./LanguageServer";
 import {
   rawNonFolderToAug,
   rawToAugSettings,
   rawToDsmMetadata,
-} from "./aug/rawToAug";
-import TextAST, { NodePath, Settings, Statement } from "./down/TextAST";
-import { childExprToAug } from "./down/astToAug";
+  ProgramAnalysis,
+} from "../../../text-mode-core";
+import TextAST, {
+  NodePath,
+  Settings,
+  Statement,
+} from "../../../text-mode-core/TextAST";
+import { childExprToAug } from "../../../text-mode-core/down/astToAug";
 import {
   astItemToTextString,
   docToString,
   exprToTextString,
   styleEntryToText,
-} from "./up/astToText";
-import { itemAugToAST } from "./up/augToAST";
-import { graphSettingsToText, itemToText } from "./up/augToText";
+} from "../../../text-mode-core/up/astToText";
+import { itemAugToAST } from "../../../text-mode-core/up/augToAST";
+import {
+  graphSettingsToText,
+  itemToText,
+} from "../../../text-mode-core/up/augToText";
 import { ChangeSpec } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";

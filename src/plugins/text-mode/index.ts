@@ -1,8 +1,8 @@
+import getText from "../../../text-mode-core/up/getText";
 import { DCGView } from "../../DCGView";
 import { Inserter, PluginController } from "../PluginController";
 import { onCalcEvent, analysisStateField } from "./LanguageServer";
 import { TextModeToggle } from "./components/TextModeToggle";
-import getText from "./up/getText";
 import { initView, startState } from "./view/editor";
 import { EditorView, ViewUpdate } from "@codemirror/view";
 import { Calc } from "globals/window";

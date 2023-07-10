@@ -1,4 +1,4 @@
-import { ProgramAnalysis } from "../LanguageServer";
+import { ProgramAnalysis } from "../ProgramAnalysis";
 import TextAST, {
   Node,
   Expression,
@@ -6,7 +6,7 @@ import TextAST, {
   Pos,
   isStatement,
   Statement,
-} from "./TextAST";
+} from "../TextAST";
 import { DiagnosticsState } from "./diagnostics";
 import * as moo from "moo";
 import { autoCommandNames, autoOperatorNames } from "utils/depUtils";

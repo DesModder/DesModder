@@ -1,3 +1,4 @@
+import TextAST from "../TextAST";
 import Aug from "../aug/AugState";
 import {
   assignmentExpr,
@@ -16,7 +17,6 @@ import {
   updateRule,
   wrappedSeq,
 } from "../aug/augBuilders";
-import * as TextAST from "./TextAST";
 import astToAug from "./astToAug";
 import { error, warning } from "./diagnostics";
 import { parse } from "./textToAST";

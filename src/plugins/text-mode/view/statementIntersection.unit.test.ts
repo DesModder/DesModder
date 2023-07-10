@@ -1,6 +1,6 @@
-import { Statement } from "../down/TextAST";
-import { parse } from "../down/textToAST";
-import { astItemToTextString } from "../up/astToText";
+import { Statement } from "../../../../text-mode-core/TextAST";
+import { parse } from "../../../../text-mode-core/down/textToAST";
+import { astItemToTextString } from "../../../../text-mode-core/up/astToText";
 import { statementsIntersecting } from "./statementIntersection";
 
 jest.mock("utils/depUtils");

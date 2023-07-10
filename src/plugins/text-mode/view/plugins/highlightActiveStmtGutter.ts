@@ -1,5 +1,5 @@
+import { Statement } from "../../../../../text-mode-core/TextAST";
 import { analysisStateField } from "../../LanguageServer";
-import { Statement } from "../../down/TextAST";
 import { statementsIntersecting } from "../statementIntersection";
 import { RangeSet } from "@codemirror/state";
 import { GutterMarker, gutterLineClass } from "@codemirror/view";

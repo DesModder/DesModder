@@ -1,8 +1,8 @@
-import "../../text-mode/tests/run_calc_for_tests";
 // Following imports must go after Desmos loads.
+import "../../text-mode-core/tests/run_calc_for_tests";
+import { Expression, Concrete } from "../TextAST";
 import { latexTreeToString } from "../aug/augLatexToRaw";
 import { parseRootLatex } from "../aug/rawToAug";
-import { Expression, Concrete } from "../down/TextAST";
 import { childExprToAug } from "../down/astToAug";
 import { parse } from "../down/textToAST";
 import { exprToTextString } from "../up/astToText";

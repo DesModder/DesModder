@@ -4,7 +4,7 @@ import {
   NodePath,
   NonExprNode,
   Statement,
-} from "../down/TextASTSynthetic";
+} from "../TextAST/Synthetic";
 
 /**
  * Errs on the side of too many parens instead of not enough.

@@ -1,8 +1,8 @@
-import { ProgramAnalysis } from "../LanguageServer";
+import { ProgramAnalysis } from "../ProgramAnalysis";
+import TextAST from "../TextAST";
 import { Identifier, constant } from "../aug/AugLatex";
 import Aug from "../aug/AugState";
 import { childLatexToAST } from "../up/augToAST";
-import TextAST from "./TextAST";
 import { DiagnosticsState } from "./diagnostics";
 import { evalExpr } from "./staticEval";
 import * as Hydrated from "./style/Hydrated";

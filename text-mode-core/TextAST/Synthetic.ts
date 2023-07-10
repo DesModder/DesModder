@@ -1,5 +1,5 @@
-import TextAST, { Synthetic } from "./TextAST";
-import * as TextASTSynthetic from "./TextASTSynthetic";
+import TextAST, { Synthetic } from ".";
+import * as TextASTSynthetic from "./Synthetic";
 
 export default TextASTSynthetic;
 

@@ -1,4 +1,4 @@
-import * as TextAST from "./TextAST";
+import * as TextAST from ".";
 
 export default TextAST;
 

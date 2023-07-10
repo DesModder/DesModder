@@ -1,5 +1,5 @@
+import TextAST from "../TextAST/Synthetic";
 import Aug from "../aug/AugState";
-import TextAST from "../down/TextASTSynthetic";
 
 export function graphSettingsToAST(
   settings: Aug.GraphSettings

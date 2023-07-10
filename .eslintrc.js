@@ -13,7 +13,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: "latest",
     sourceType: "module",
-    project: "tsconfig.json",
+    project: "tsconfig-eslint.json",
   },
   ignorePatterns: [
     "coverage",
@@ -35,6 +35,7 @@ module.exports = {
     "*.html",
     "*.woff",
     "*.svg",
+    ".eslintrc.js",
   ],
   parser: "@typescript-eslint/parser",
   rules: {
