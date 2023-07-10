@@ -192,3 +192,7 @@ better-evaluation-view-opt-colorLists-desc = Mostrar listas de colores como list
 pillbox-menus-name = Menú de botones (Funciones Principales)
 pillbox-menus-desc = Mostrar botones al lado derecho, así como el Creador de Video o el menú principal de DesModder
 
+## Manage Metadata
+manage-metadata-name = Administrar Metadatos (Funciones Principales)
+manage-metadata-desc = Permite administrar metadatos, así como las extensiones GLesmos o Fijar Expresiones
+
