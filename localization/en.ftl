@@ -217,6 +217,6 @@ multiline-desc = Splits expressions onto multiple lines to better make use of av
 multiline-opt-widthBeforeMultiline-name = Width Threshold (%)
 multiline-opt-widthBeforeMultiline-desc = Minimum width (as a percent of the viewport size) at which point wrapping will occur. On mobile, this value is tripled.
 multiline-opt-automaticallyMultilinify-name = Automatically Multilinify
-multiline-opt-automaticallyMultilinify-desc = If enabled, automatically split expressions onto multiple lines.
+multiline-opt-automaticallyMultilinify-desc = Automatically splits expressions onto multiple lines.
 multiline-opt-multilinifyDelayAfterEdit-name = Edit Delay (ms)
 multiline-opt-multilinifyDelayAfterEdit-desc = Multiline expressions should be updated after no edits are made for this number of milliseconds.
