@@ -193,7 +193,7 @@ intellisense-jump2def-menu-instructions = has multiple definitions. Pick one to 
 
 ## Compact View
 compact-view-name = Compact View
-compact-view-desc = A variety of options for condensing the UI so you can see more on the screen at once.
+compact-view-desc = Offers a variety of options for condensing the UI so you can see more on the screen at once.
 compact-view-opt-textFontSize-name = Text Font Size
 compact-view-opt-textFontSize-desc = Size of the font in notes.
 compact-view-opt-mathFontSize-name = Math Font Size
@@ -213,7 +213,7 @@ compact-view-opt-hideEvaluations-desc = Put evaluations off to the side. They ca
 
 ## Multiline
 multiline-name = Multiline Expressions
-multiline-desc = Split expressions onto multiple lines to better make use of available space. Can be done manually with Ctrl+M.
+multiline-desc = Splits expressions onto multiple lines to better make use of available space. Can be done manually with Ctrl+M.
 multiline-opt-widthBeforeMultiline-name = Width Threshold (%)
 multiline-opt-widthBeforeMultiline-desc = Minimum width (as a percent of the viewport size) at which point wrapping will occur. On mobile, this value is tripled.
 multiline-opt-automaticallyMultilinify-desc = If enabled, automatically split expressions onto multiple lines.
