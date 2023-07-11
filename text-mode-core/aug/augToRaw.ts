@@ -1,12 +1,9 @@
+import type Metadata from "#manage-metadata/interface";
+import { changeExprInMetadata, isBlankMetadata } from "#manage-metadata/manage";
 import { isConstant } from "./AugLatex";
 import Aug from "./AugState";
 import { latexTreeToString } from "./augLatexToRaw";
-import * as Graph from "@desmodder/graph-state";
-import Metadata from "plugins/manage-metadata/interface";
-import {
-  changeExprInMetadata,
-  isBlankMetadata,
-} from "plugins/manage-metadata/manage";
+import type * as Graph from "@desmodder/graph-state";
 
 export default function augToRaw(aug: Aug.State): Graph.GraphState {
   const list = [];

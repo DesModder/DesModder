@@ -1,7 +1,7 @@
 import Aug from "../aug/AugState";
 import rawToAug from "../aug/rawToAug";
 import augToText from "./augToText";
-import { GraphState } from "@desmodder/graph-state";
+import type { GraphState } from "@desmodder/graph-state";
 
 /**
  * @returns [boolean hasError, string text]

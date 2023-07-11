@@ -1,3 +1,4 @@
+import { everyNonNull } from "#utils/utils";
 import { ProgramAnalysis } from "../ProgramAnalysis";
 import TextAST from "../TextAST";
 import { Identifier, constant } from "../aug/AugLatex";
@@ -9,10 +10,9 @@ import * as Hydrated from "./style/Hydrated";
 import * as Default from "./style/defaults";
 import { StyleValue, hydrate } from "./style/hydrate";
 import * as Schema from "./style/schema";
-import { Diagnostic } from "@codemirror/lint";
-import { GrapherState } from "@desmodder/graph-state";
+import type { Diagnostic } from "@codemirror/lint";
+import type { GrapherState } from "@desmodder/graph-state";
 import { Calc } from "globals/window";
-import { everyNonNull } from "utils/utils";
 
 export class DownState extends DiagnosticsState {
   hasBlockingError = false;

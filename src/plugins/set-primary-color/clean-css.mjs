@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+
 /**
  * This is a script that takes the contents of raw.css and generates
  * overrides.less, replacing primary-based colors with var(--variable) and
@@ -6,14 +7,12 @@
  *
  * Usage:
  *   cd src/plugins/set-primary-color/
- *   node clean-css.js > _overrides.less
+ *   node clean-css.mjs > _overrides.less
  *   npx prettier --write _overrides.less
  */
+import { readFileSync } from "fs";
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const fs = require("fs");
-
-let css = fs.readFileSync("raw.css").toString();
+let css = readFileSync("raw.css").toString();
 
 const colorMapping = {
   // secondary btn depressed, primary link depressed, show more rows in table, braille

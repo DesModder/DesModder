@@ -1,3 +1,4 @@
+import * as moo from "#moo";
 import { ProgramAnalysis } from "../ProgramAnalysis";
 import TextAST, {
   Node,
@@ -8,7 +9,6 @@ import TextAST, {
   Statement,
 } from "../TextAST";
 import { DiagnosticsState } from "./diagnostics";
-import * as moo from "moo";
 import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
 
 // prettier-ignore

@@ -1,3 +1,4 @@
+import { test, expect as _expect, describe } from "#jest/globals";
 import TextAST from "../TextAST";
 import Aug from "../aug/AugState";
 import {
@@ -20,8 +21,7 @@ import {
 import astToAug from "./astToAug";
 import { error, warning } from "./diagnostics";
 import { parse } from "./textToAST";
-import { Diagnostic } from "@codemirror/lint";
-import { test, expect as _expect, describe } from "@jest/globals";
+import type { Diagnostic } from "@codemirror/lint";
 
 jest.mock("utils/depUtils");
 jest.mock("globals/window");

@@ -1,8 +1,8 @@
+import Metadata from "#manage-metadata/interface";
+import migrateToLatest from "#manage-metadata/migrate";
+import { ChildExprNode, evalMaybeRational, AnyNode } from "#parsing/parsenode";
 import Aug from "./AugState";
-import * as Graph from "@desmodder/graph-state";
-import { ChildExprNode, evalMaybeRational, AnyNode } from "parsing/parsenode";
-import Metadata from "plugins/manage-metadata/interface";
-import migrateToLatest from "plugins/manage-metadata/migrate";
+import type * as Graph from "@desmodder/graph-state";
 import { parseDesmosLatex } from "utils/depUtils";
 
 export default function rawToAug(raw: Graph.GraphState): Aug.State {

@@ -4,8 +4,7 @@ import augToRaw from "../aug/augToRaw";
 import astToAug, { childExprToAug } from "./astToAug";
 import { error } from "./diagnostics";
 import { parse } from "./textToAST";
-import { GraphState } from "@desmodder/graph-state";
-import { Console } from "globals/window";
+import type { GraphState } from "@desmodder/graph-state";
 
 export default function textToRaw(
   text: string
@@ -15,7 +14,8 @@ export default function textToRaw(
     const [analysis2, aug] = astToAug(analysis);
     return [analysis2, aug ? augToRaw(aug) : null];
   } catch (err) {
-    Console.warn("Error while compiling to Desmos:\n", err);
+    // eslint-disable-next-line no-console
+    console.warn("Error while compiling to Desmos:\n", err);
     return [
       {
         diagnostics: [error(`Fatal error: ${err}`, undefined)],

@@ -1,5 +1,5 @@
 import { Program, Statement } from "./TextAST";
-import { Diagnostic } from "@codemirror/lint";
+import type { Diagnostic } from "@codemirror/lint";
 
 export interface ProgramAnalysis {
   program: Program;

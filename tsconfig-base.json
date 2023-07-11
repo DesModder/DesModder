@@ -4,7 +4,7 @@
     "sourceMap": true,
     "strictNullChecks": true,
     "module": "es6",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "jsx": "react",
     "jsxFactory": "jsx",
