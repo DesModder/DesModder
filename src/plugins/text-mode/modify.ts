@@ -1,3 +1,4 @@
+import { getTextModeConfig } from ".";
 import {
   rawNonFolderToAug,
   rawToAugSettings,
@@ -160,7 +161,7 @@ function metadataChange(
     return [];
   const expr = state.expressions.list.find((x) => x.id === id);
   if (!expr || (expr.type !== "expression" && expr.type !== "image")) return [];
-  const itemAug = rawNonFolderToAug(expr, dsmMetadata);
+  const itemAug = rawNonFolderToAug(getTextModeConfig(), expr, dsmMetadata);
   const afterEnd = oldNode.pos.to;
   const pos = oldNode.style?.pos ?? { from: afterEnd, to: afterEnd };
   const ast = itemAugToAST(itemAug);
@@ -186,7 +187,7 @@ function newItemsChange(
     if (stmt) {
       pos = stmt.pos.to;
     } else {
-      const aug = rawNonFolderToAug(item, dsmMetadata);
+      const aug = rawNonFolderToAug(getTextModeConfig(), item, dsmMetadata);
       const ast = itemAugToAST(aug);
       if (!ast) continue;
       const insert = "\n\n" + astItemToTextString(ast);
@@ -208,7 +209,11 @@ function itemChange(
   if (!newStateItem || newStateItem.type === "folder") return [];
   const oldNode = analysis.mapIDstmt[changeID];
   if (oldNode === undefined) return [];
-  const itemAug = rawNonFolderToAug(newStateItem, dsmMetadata);
+  const itemAug = rawNonFolderToAug(
+    getTextModeConfig(),
+    newStateItem,
+    dsmMetadata
+  );
   if (itemAug.error) return [];
   switch (toChange) {
     case "table-columns": {

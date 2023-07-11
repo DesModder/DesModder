@@ -1,5 +1,6 @@
 import { BoundIdentifier } from ".";
 import { parseRootLatex } from "../../../text-mode-core";
+import { getTextModeConfig } from "../text-mode";
 import { mapAugAST } from "./latex-parsing";
 import { ItemModel } from "globals/models";
 import { Calc } from "globals/window";
@@ -36,6 +37,8 @@ export class IntellisenseState {
   metadata: Metadata;
 
   counter = 0;
+
+  readonly cfg = getTextModeConfig();
 
   constructor(metadata: Metadata) {
     this.metadata = metadata;
@@ -120,7 +123,7 @@ export class IntellisenseState {
         const ltxStr = get(expression, key);
         if (typeof ltxStr !== "string") continue;
 
-        const ltx = undefinedIfErr(() => parseRootLatex(ltxStr));
+        const ltx = undefinedIfErr(() => parseRootLatex(this.cfg, ltxStr));
 
         if (!ltx) continue;
 

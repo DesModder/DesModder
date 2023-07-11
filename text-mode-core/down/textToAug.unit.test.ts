@@ -1,5 +1,5 @@
-import { test, expect as _expect, describe } from "#jest/globals";
 import TextAST from "../TextAST";
+import { buildConfig } from "../TextModeConfig";
 import Aug from "../aug/AugState";
 import {
   assignmentExpr,
@@ -22,14 +22,21 @@ import astToAug from "./astToAug";
 import { error, warning } from "./diagnostics";
 import { parse } from "./textToAST";
 import type { Diagnostic } from "@codemirror/lint";
+// eslint-disable-next-line rulesdir/no-external-imports
+import { test, expect as _expect, describe } from "@jest/globals";
 
-jest.mock("utils/depUtils");
-jest.mock("globals/window");
+const cfg = buildConfig({
+  parse: function () {
+    throw new Error(
+      "Test Error: parseDesmosLatex() called in textToAug.unit.test.ts"
+    );
+  },
+});
 
 function textToAug(text: string) {
-  const analysis = parse(text);
+  const analysis = parse(cfg, text);
   testPosNesting(analysis.program);
-  return astToAug(analysis);
+  return astToAug(cfg, analysis);
 }
 
 _expect.extend({

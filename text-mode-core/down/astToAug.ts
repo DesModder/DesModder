@@ -1,6 +1,7 @@
 import { everyNonNull } from "#utils/utils";
 import { ProgramAnalysis } from "../ProgramAnalysis";
 import TextAST from "../TextAST";
+import { Config } from "../TextModeConfig";
 import { Identifier, constant } from "../aug/AugLatex";
 import Aug from "../aug/AugState";
 import { childLatexToAST } from "../up/augToAST";
@@ -12,13 +13,17 @@ import { StyleValue, hydrate } from "./style/hydrate";
 import * as Schema from "./style/schema";
 import type { Diagnostic } from "@codemirror/lint";
 import type { GrapherState } from "@desmodder/graph-state";
-import { Calc } from "globals/window";
 
 export class DownState extends DiagnosticsState {
+  constructor(public readonly cfg: Config, diagnostics: Diagnostic[]) {
+    super(diagnostics);
+  }
+
   hasBlockingError = false;
 }
 
 export default function astToAug(
+  cfg: Config,
   analysis: ProgramAnalysis
 ): [ProgramAnalysis, Aug.State | null] {
   const state: Aug.State = {
@@ -37,7 +42,7 @@ export default function astToAug(
   };
   const { diagnostics: parseErrors, program, mapIDstmt } = analysis;
   const diagnostics: Diagnostic[] = [...parseErrors];
-  const ds = new DownState(diagnostics);
+  const ds = new DownState(cfg, diagnostics);
   for (const stmt of program.children) {
     // TODO: throw if there are multiple settings expressions
     const stmtAug = statementToAug(ds, state, stmt);
@@ -53,7 +58,7 @@ export default function astToAug(
       state.expressions.list.push(stmtAug);
     }
   }
-  fixEmptyColors(state);
+  fixEmptyColors(ds.cfg, state);
   return [
     {
       diagnostics,
@@ -67,9 +72,8 @@ export default function astToAug(
 /**
  * Convert colors with value "" (empty string) to valid colors
  */
-function fixEmptyColors(state: Aug.State) {
-  // TODO: use Calc.colors instead of fixed colors
-  const colors = ["#c74440", "#2d70b3", "#388c46", "#6042a6", "#000000"];
+function fixEmptyColors(cfg: Config, state: Aug.State) {
+  const colors = Object.values(cfg.colors);
   // colorIndex will be the index of the next color filled
   let colorIndex = 0;
   forEachExpr(state.expressions.list, (item) => {
@@ -284,7 +288,7 @@ function expressionToAug(
           latex: style.onClick,
         }
       : undefined,
-    ...columnExpressionCommonStyle(style),
+    ...columnExpressionCommonStyle(ds, style),
   };
 }
 
@@ -331,13 +335,16 @@ function settingsToAug(
   return { type: "settings", settings: res };
 }
 
-function columnExpressionCommonStyle(style: Hydrated.ColumnExpressionCommon) {
+function columnExpressionCommonStyle(
+  ds: DownState,
+  style: Hydrated.ColumnExpressionCommon
+) {
   const res = {
     color:
       typeof style.color === "string"
         ? style.color
         : (style.color.type === "Identifier" &&
-            Calc.colors[style.color.symbol.replace("_", "")]) ||
+            ds.cfg.colors[style.color.symbol.replace("_", "")]) ||
           style.color,
     hidden: style.hidden,
     points:
@@ -416,7 +423,7 @@ function tableColumnToAug(
   const base = {
     type: "column" as const,
     id: column.id,
-    ...columnExpressionCommonStyle(style),
+    ...columnExpressionCommonStyle(ds, style),
   };
 
   if (expr.type === "BinaryExpression" && expr.op === "=") {

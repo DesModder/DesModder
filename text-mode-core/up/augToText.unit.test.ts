@@ -17,9 +17,6 @@ import {
 } from "../aug/augBuilders";
 import { itemToText } from "./augToText";
 
-jest.mock("utils/depUtils");
-jest.mock("globals/window");
-
 function testStmtWithStyle(desc: string, item: Aug.ItemAug, expected: string) {
   test(desc, () => {
     const text = itemToText(item);

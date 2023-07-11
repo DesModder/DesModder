@@ -42,7 +42,7 @@ module.exports = {
     "rulesdir/no-format-in-ts": "error",
     "rulesdir/no-expect-promise": "error",
     "rulesdir/no-reach-past-exports": "error",
-    // "rulesdir/no-external-imports": "error",
+    "rulesdir/no-external-imports": "error",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/array-type": "off",
     "@typescript-eslint/strict-boolean-expressions": "off",

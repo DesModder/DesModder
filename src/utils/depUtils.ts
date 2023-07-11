@@ -4,7 +4,8 @@ import { Calc, Fragile, Private } from "globals/window";
 const evaluateLatex = Fragile.evaluateLatex;
 
 export const keys = Fragile.Keys;
-export const parseDesmosLatexRaw = Private.Parser.parse as (
+
+export type Parse = (
   s: string,
   config?: {
     allowDt?: boolean;
@@ -16,6 +17,7 @@ export const parseDesmosLatexRaw = Private.Parser.parse as (
 ) => Node;
 
 export function parseDesmosLatex(s: string) {
+  const parseDesmosLatexRaw = Private.Parser.parse as Parse;
   return parseDesmosLatexRaw(s, { allowDt: true, allowIndex: true });
 }
 
@@ -31,7 +33,9 @@ export const autoCommandNames: string =
 export const autoOperatorNames: string =
   Private.MathquillConfig?.getAutoOperators?.();
 
-export const truncatedLatexLabel = Private.Mathtools.Label.truncatedLatexLabel;
+export function truncatedLatexLabel(label: any, labelOptions: any) {
+  return Private.Mathtools.Label.truncatedLatexLabel(label, labelOptions);
+}
 
 export function getCurrentGraphTitle(): string | undefined {
   return Calc._calc.globalHotkeys?.headerController?.graphsController?.getCurrentGraphTitle?.();

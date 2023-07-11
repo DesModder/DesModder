@@ -8,8 +8,8 @@ import TextAST, {
   isStatement,
   Statement,
 } from "../TextAST";
+import { Config } from "../TextModeConfig";
 import { DiagnosticsState } from "./diagnostics";
-import { autoCommandNames, autoOperatorNames } from "utils/depUtils";
 
 // prettier-ignore
 const punct = [
@@ -83,7 +83,7 @@ class ParseState extends DiagnosticsState {
   private currentID = 0;
   private currentIndex = 0;
 
-  constructor(input: string) {
+  constructor(public cfg: Config, input: string) {
     super();
     this.lexer = moo.compile(rules);
     this.lexer.reset(input);
@@ -205,8 +205,8 @@ type DistributiveOmit<T, K extends string> = T extends unknown
 
 class ParseError extends Error {}
 
-export function parse(input: string): ProgramAnalysis {
-  const ps = new ParseState(input);
+export function parse(cfg: Config, input: string): ProgramAnalysis {
+  const ps = new ParseState(cfg, input);
   const children = parseStatements(ps, { isTop: true });
   if (children.length === 0 && ps.diagnostics.length === 0)
     ps.pushWarning("Program is empty. Try typing: y=x", { from: 0, to: 0 });
@@ -516,38 +516,6 @@ function id(ps: ParseState, token: Token): TextAST.Identifier {
 }
 
 /**
- * Fragile names. Subset of those given by the following script:
- *
- *     const {BuiltInTable, CompilerFunctionTable} = require("core/math/ir/builtin-table")
- *     const builtins = Object.keys({...BuiltInTable, ...CompilerFunctionTable})
- *     const {getAutoOperators, getAutoCommands}  = require("main/mathquill-operators")
- *     const operators = new Set((getAutoOperators()+" "+getAutoCommands()).split(/[ |]/));
- *     console.log(builtins.filter(name => !operators.has(name)))
- */
-const fragileNames = [
-  "polyGamma",
-  "argmin",
-  "argmax",
-  "uniquePerm",
-  "rtxsqpone",
-  "rtxsqmone",
-  "hypot",
-  // special case
-  "logbase",
-];
-
-const desModderNames = ["true", "false"];
-
-const dontSubscriptIdentifiers = new Set([
-  ...autoOperatorNames.split(" ").map((e) => e.split("|")[0]),
-  ...autoCommandNames.split(" "),
-  ...fragileNames,
-  "index",
-  "dt",
-  ...desModderNames,
-]);
-
-/**
  * Pre-condition: expr.name matches:
  *  - [a-zA-Z][a-zA-Z0-9_]*
  *
@@ -563,7 +531,12 @@ function normalizeID(ps: ParseState, token: Token): string {
   const parts = token.value.split("_");
   if (parts.length === 1) {
     const [p] = parts;
-    if (p.length === 1 || dontSubscriptIdentifiers.has(p)) return p;
+    if (
+      p.length === 1 ||
+      ps.cfg.commandNames.has(p) ||
+      ps.cfg.operatorNames.has(p)
+    )
+      return p;
     return p[0] + "_" + p.slice(1);
   } else if (parts.length === 2) {
     const [main, subscript] = parts;

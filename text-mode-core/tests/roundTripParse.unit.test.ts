@@ -1,12 +1,28 @@
 // Following imports must go after Desmos loads.
-import "../../text-mode-core/tests/run_calc_for_tests";
+import { buildConfigFromGlobals } from "..";
 import { Expression, Concrete } from "../TextAST";
-import { latexTreeToString } from "../aug/augLatexToRaw";
-import { parseRootLatex } from "../aug/rawToAug";
+import { AnyRootOrChild } from "../aug/AugLatex";
+import { latexTreeToString as _latexTreeToString } from "../aug/augLatexToRaw";
+import { parseRootLatex as _parseRootLatex } from "../aug/rawToAug";
 import { childExprToAug } from "../down/astToAug";
-import { parse } from "../down/textToAST";
+import { parse as _parse } from "../down/textToAST";
 import { exprToTextString } from "../up/astToText";
 import { rootLatexToAST } from "../up/augToAST";
+import "./run_calc_for_tests";
+
+const cfg = buildConfigFromGlobals(window.Desmos, (window as any).Calc);
+
+function parseRootLatex(s: string) {
+  return _parseRootLatex(cfg, s);
+}
+
+function latexTreeToString(n: AnyRootOrChild) {
+  return _latexTreeToString(cfg, n);
+}
+
+function parse(s: string) {
+  return _parse(cfg, s);
+}
 
 function leftRight(s: string) {
   return s

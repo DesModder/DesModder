@@ -1,45 +1,49 @@
+import { Config } from "../TextModeConfig";
 import Aug from "./AugState";
 import rawNeedsParens from "./augNeedsParens";
-import { autoCommandNames } from "utils/depUtils";
 
-export function latexTreeToString(e: Aug.Latex.AnyRootOrChild) {
+export function latexTreeToString(cfg: Config, e: Aug.Latex.AnyRootOrChild) {
   switch (e.type) {
     case "Equation":
     case "Assignment":
       return (
-        childNodeToString(e.left, e) +
+        childNodeToString(cfg, e.left, e) +
         "=" +
-        childNodeToString(e.right, e, "top-level-eq")
+        childNodeToString(cfg, e.right, e, "top-level-eq")
       );
     case "FunctionDefinition":
       return (
-        funcToString(e.symbol, e.argSymbols, e) +
+        funcToString(cfg, e.symbol, e.argSymbols, e) +
         "=" +
-        childNodeToString(e.definition, e, "top-level-eq")
+        childNodeToString(cfg, e.definition, e, "top-level-eq")
       );
     case "Visualization":
       // Lower case handles "Stats" → "stats" etc
-      return funcToString(e.callee, e.args, e);
+      return funcToString(cfg, e.callee, e.args, e);
     case "Regression":
       return (
-        childNodeToString(e.left, e) + "\\sim " + childNodeToString(e.right, e)
+        childNodeToString(cfg, e.left, e) +
+        "\\sim " +
+        childNodeToString(cfg, e.right, e)
       );
     default:
-      return childNodeToString(e, null, "top");
+      return childNodeToString(cfg, e, null, "top");
   }
 }
 
 function childNodeToString(
+  cfg: Config,
   e: Aug.Latex.AnyChild,
   parent: Aug.Latex.AnyRootOrChild | null,
   path?: string | undefined
 ): string {
-  const inner = childNodeToStringNoParen(e, path);
+  const inner = childNodeToStringNoParen(cfg, e, path);
   if (rawNeedsParens(e, parent, path)) return wrapParen(inner);
   return inner;
 }
 
 function childNodeToStringNoParen(
+  cfg: Config,
   e: Aug.Latex.AnyChild,
   path: string | undefined
 ): string {
@@ -49,71 +53,71 @@ function childNodeToStringNoParen(
       return res.includes("e") ? "(" + res.replace("e", "*10^{") + "})" : res;
     }
     case "Identifier":
-      return identifierToString(e);
+      return identifierToString(cfg, e);
     case "FunctionCall":
-      return funcToString(e.callee, e.args, e);
+      return funcToString(cfg, e.callee, e.args, e);
     case "Integral":
       return (
-        `\\int_{${childNodeToString(e.start, e)}}` +
-        `^{${childNodeToString(e.end, e)}}` +
-        childNodeToString(e.integrand, e, "integrand") +
+        `\\int_{${childNodeToString(cfg, e.start, e)}}` +
+        `^{${childNodeToString(cfg, e.end, e)}}` +
+        childNodeToString(cfg, e.integrand, e, "integrand") +
         "d" +
-        identifierToString(e.differential)
+        identifierToString(cfg, e.differential)
       );
     case "Derivative":
       return (
-        `\\frac{d}{d${identifierToString(e.variable)}}` +
-        childNodeToString(e.arg, e)
+        `\\frac{d}{d${identifierToString(cfg, e.variable)}}` +
+        childNodeToString(cfg, e.arg, e)
       );
     case "Prime":
       return (
-        identifierToString(e.arg.callee) +
+        identifierToString(cfg, e.arg.callee) +
         "'".repeat(e.order) +
-        wrapParen(bareSeq(e.arg.args, e.arg))
+        wrapParen(bareSeq(cfg, e.arg.args, e.arg))
       );
     case "List":
-      return wrapBracket(bareSeq(e.args, e));
+      return wrapBracket(bareSeq(cfg, e.args, e));
     case "Range":
       return wrapBracket(
-        bareSeq(e.start, e, { alwaysBeforeComma: true }) +
+        bareSeq(cfg, e.start, e, { alwaysBeforeComma: true }) +
           "..." +
-          bareSeq(e.end, e)
+          bareSeq(cfg, e.end, e)
       );
     case "ListAccess":
       return (
-        childNodeToString(e.list, e, "list") +
+        childNodeToString(cfg, e.list, e, "list") +
         (e.index.type === "Range" || e.index.type === "List"
-          ? childNodeToString(e.index, e)
-          : wrapBracket(childNodeToString(e.index, e)))
+          ? childNodeToString(cfg, e.index, e)
+          : wrapBracket(childNodeToString(cfg, e.index, e)))
       );
     case "DotAccess":
       return (
-        childNodeToString(e.object, e, "object") +
+        childNodeToString(cfg, e.object, e, "object") +
         "." +
-        childNodeToString(e.property, e)
+        childNodeToString(cfg, e.property, e)
       );
     case "OrderedPairAccess":
-      return childNodeToString(e.point, e, "object") + "." + e.index;
+      return childNodeToString(cfg, e.point, e, "object") + "." + e.index;
     case "Seq":
       // needsParen handles wrapping in paren for parenWrapped
-      return bareSeq(e.args, e);
+      return bareSeq(cfg, e.args, e);
     case "UpdateRule":
       return (
-        identifierToString(e.variable) +
+        identifierToString(cfg, e.variable) +
         "\\to " +
-        childNodeToString(e.expression, e)
+        childNodeToString(cfg, e.expression, e)
       );
     case "ListComprehension":
       return wrapBracket(
-        childNodeToString(e.expr, e) +
+        childNodeToString(cfg, e.expr, e) +
           "\\operatorname{for}" +
-          bareSeq(e.assignments, e)
+          bareSeq(cfg, e.assignments, e)
       );
     case "Substitution":
       return (
-        childNodeToString(e.body, e) +
+        childNodeToString(cfg, e.body, e) +
         "\\operatorname{with}" +
-        bareSeq(e.assignments, e)
+        bareSeq(cfg, e.assignments, e)
       );
     case "Piecewise": {
       const piecewiseParts: string[] = [];
@@ -123,11 +127,12 @@ function childNodeToStringNoParen(
           curr = curr.consequent;
           break;
         }
-        let part = childNodeToString(curr.condition, curr);
+        let part = childNodeToString(cfg, curr.condition, curr);
         if (!Aug.Latex.isConstant(curr.consequent, 1)) {
           part +=
             ":" +
             childNodeToString(
+              cfg,
               curr.consequent,
               curr,
               beforeComma(
@@ -146,7 +151,7 @@ function childNodeToStringNoParen(
             throw new Error(
               "Programming error: first branch in Aug piecewise is unconditional but not 1."
             );
-        } else piecewiseParts.push(childNodeToString(curr, e));
+        } else piecewiseParts.push(childNodeToString(cfg, curr, e));
       }
       return "\\left\\{" + piecewiseParts.join(",") + "\\right\\}";
     }
@@ -154,14 +159,18 @@ function childNodeToStringNoParen(
       const prefix = e.name === "Product" ? "\\prod" : "\\sum";
       return (
         prefix +
-        `_{${identifierToString(e.index)}=${childNodeToString(e.start, e)}}` +
-        `^{${childNodeToString(e.end, e)}}` +
-        childNodeToString(e.expression, e, "term")
+        `_{${identifierToString(cfg, e.index)}=${childNodeToString(
+          cfg,
+          e.start,
+          e
+        )}}` +
+        `^{${childNodeToString(cfg, e.end, e)}}` +
+        childNodeToString(cfg, e.expression, e, "term")
       );
     }
     case "BinaryOperator": {
-      const binopLeft = childNodeToString(e.left, e, "left");
-      const binopRight = childNodeToString(e.right, e, "right");
+      const binopLeft = childNodeToString(cfg, e.left, e, "left");
+      const binopRight = childNodeToString(cfg, e.right, e, "right");
       switch (e.name) {
         case "Add":
           return binopLeft + "+" + binopRight;
@@ -177,14 +186,15 @@ function childNodeToStringNoParen(
     }
     // eslint-disable-next-line no-fallthrough
     case "Negative":
-      return "-" + childNodeToString(e.arg, e);
+      return "-" + childNodeToString(cfg, e.arg, e);
     case "Factorial":
-      return childNodeToString(e.arg, e, "factorial") + "!";
+      return childNodeToString(cfg, e.arg, e, "factorial") + "!";
     case "Comparator":
       return (
-        childNodeToString(e.left, e) +
+        childNodeToString(cfg, e.left, e) +
         comparatorMap[e.operator] +
         childNodeToString(
+          cfg,
           e.right,
           e,
           path === "top" && e.operator === "=" ? "top-level-eq" : undefined
@@ -192,17 +202,17 @@ function childNodeToStringNoParen(
       );
     case "DoubleInequality":
       return (
-        childNodeToString(e.left, e) +
+        childNodeToString(cfg, e.left, e) +
         comparatorMap[e.leftOperator] +
-        childNodeToString(e.middle, e) +
+        childNodeToString(cfg, e.middle, e) +
         comparatorMap[e.rightOperator] +
-        childNodeToString(e.right, e)
+        childNodeToString(cfg, e.right, e)
       );
     case "AssignmentExpression":
       return (
-        identifierToString(e.variable) +
+        identifierToString(cfg, e.variable) +
         "=" +
-        childNodeToString(e.expression, e)
+        childNodeToString(cfg, e.expression, e)
       );
     default:
       e satisfies never;
@@ -221,6 +231,7 @@ const comparatorMap = {
 };
 
 function bareSeq(
+  cfg: Config,
   e: Aug.Latex.AnyChild[],
   parent: Aug.Latex.AnyRootOrChild,
   { alwaysBeforeComma } = { alwaysBeforeComma: false }
@@ -228,6 +239,7 @@ function bareSeq(
   return e
     .map((f, i) =>
       childNodeToString(
+        cfg,
         f,
         parent,
         beforeComma(alwaysBeforeComma || i < e.length - 1)
@@ -241,36 +253,38 @@ function beforeComma(beforeComma: boolean) {
 }
 
 function funcToString(
+  cfg: Config,
   callee: Aug.Latex.Identifier,
   args: Aug.Latex.AnyChild[],
   parent: Aug.Latex.AnyRootOrChild
 ): string {
   if (callee.symbol === "abs" && args.length === 1) {
-    return `\\left|${bareSeq(args, parent)}\\right|`;
+    return `\\left|${bareSeq(cfg, args, parent)}\\right|`;
   } else if (callee.symbol === "sqrt" && args.length === 1) {
-    return `\\sqrt{${bareSeq(args, parent)}}`;
+    return `\\sqrt{${bareSeq(cfg, args, parent)}}`;
   } else if (callee.symbol === "nthroot" && [1, 2].includes(args.length)) {
-    if (args.length === 1) return `\\sqrt{${bareSeq(args, parent)}}`;
-    return `\\sqrt[${childNodeToString(args[1], parent)}]{${bareSeq(
+    if (args.length === 1) return `\\sqrt{${bareSeq(cfg, args, parent)}}`;
+    return `\\sqrt[${childNodeToString(cfg, args[1], parent)}]{${bareSeq(
+      cfg,
       [...args.slice(0, 1), ...args.slice(2)],
       parent
     )}}`;
   } else if (callee.symbol === "logbase" && args.length === 2) {
     return (
-      `\\log_{${childNodeToString(args[args.length - 1], parent)}}` +
-      wrapParen(bareSeq(args.slice(0, args.length - 1), parent))
+      `\\log_{${childNodeToString(cfg, args[args.length - 1], parent)}}` +
+      wrapParen(bareSeq(cfg, args.slice(0, args.length - 1), parent))
     );
   } else {
-    return identifierToString(callee) + wrapParen(bareSeq(args, parent));
+    return (
+      identifierToString(cfg, callee) + wrapParen(bareSeq(cfg, args, parent))
+    );
   }
 }
 
-/**
- * The backslash commands are \alpha, \beta ... \infty
- */
-const backslashCommands = new Set(autoCommandNames.split(" "));
-
-export function identifierToString(id: Aug.Latex.Identifier): string {
+export function identifierToString(
+  cfg: Config,
+  id: Aug.Latex.Identifier
+): string {
   const symbol = id.symbol.replace(/[{}]/g, "");
   let main = symbol;
   let subscript;
@@ -285,7 +299,7 @@ export function identifierToString(id: Aug.Latex.Identifier): string {
   const start =
     main.length === 1
       ? main
-      : backslashCommands.has(main)
+      : cfg.commandNames.has(main)
       ? "\\" + main
       : `\\operatorname{${main}}`;
   const end = subscript ? `_{${subscript}}` : "";

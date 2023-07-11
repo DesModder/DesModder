@@ -3,6 +3,7 @@
  * The functions in this file manage the interface between codemirror and
  * the Text Mode compiler.
  */
+import { getTextModeConfig } from ".";
 import { ProgramAnalysis, textToRaw } from "../../../text-mode-core";
 import { DispatchedEvent } from "../../globals/Calc";
 import { eventSequenceChanges } from "./modify";
@@ -40,8 +41,9 @@ export function onCalcEvent(view: EditorView, event: DispatchedEvent) {
 }
 
 export function parseAndReturnAnalysis(doc: Text, nextEditDueToGraph: boolean) {
+  const cfg = getTextModeConfig();
   const s = doc.sliceString(0);
-  const [analysis, rawGraphState] = textToRaw(s);
+  const [analysis, rawGraphState] = textToRaw(cfg, s);
   if (!nextEditDueToGraph && rawGraphState !== null)
     setCalcState(rawGraphState);
   return analysis;

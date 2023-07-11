@@ -1,5 +1,6 @@
 import Intellisense, { BoundIdentifier, BoundIdentifierFunction } from ".";
 import {
+  Config,
   identifierToString,
   textModeExprToLatex,
 } from "../../../text-mode-core";
@@ -32,6 +33,7 @@ export class JumpToDefinitionMenu extends Component<{
   jumpToDefinitionById: (id: string) => void;
   closeJumpToDefinitionMenu: () => void;
   jumpToDefIndex: () => number;
+  cfg: () => Config;
 }> {
   template() {
     return (
@@ -44,10 +46,10 @@ export class JumpToDefinitionMenu extends Component<{
                   <DStaticMathquillView
                     config={{}}
                     latex={() =>
-                      identifierToString({
-                        type: "Identifier",
-                        symbol: this.props.info()?.varName ?? "",
-                      })
+                      identifierStringToLatexString(
+                        this.props.cfg(),
+                        this.props.info()?.varName ?? ""
+                      )
                     }
                   ></DStaticMathquillView>{" "}
                   {format("intellisense-jump2def-menu-instructions")}
@@ -103,8 +105,8 @@ export class JumpToDefinitionMenu extends Component<{
   }
 }
 
-export function identifierStringToLatexString(str: string) {
-  return identifierToString({
+function identifierStringToLatexString(cfg: Config, str: string) {
+  return identifierToString(cfg, {
     symbol: str,
     type: "Identifier",
   });
@@ -154,6 +156,7 @@ let counter = 0;
 export class FormattedDocstring extends Component<{
   docstring: () => DocStringRenderable[];
   selectedParam: () => string;
+  cfg: () => Config;
 }> {
   template() {
     return (
@@ -167,10 +170,12 @@ export class FormattedDocstring extends Component<{
               {() => {
                 switch (r.type) {
                   case "param": {
-                    const ltx = () => textModeExprToLatex(r.latex) ?? r.latex;
+                    const ltx = () =>
+                      textModeExprToLatex(this.props.cfg(), r.latex) ?? r.latex;
 
                     if (
                       identifierStringToLatexString(
+                        this.props.cfg(),
                         this.props.selectedParam()
                       ) !== ltx()
                     ) {
@@ -186,6 +191,7 @@ export class FormattedDocstring extends Component<{
                         <FormattedDocstring
                           selectedParam={this.props.selectedParam}
                           docstring={() => r.renderables}
+                          cfg={this.props.cfg}
                         ></FormattedDocstring>
                       </div>
                     );
@@ -195,7 +201,10 @@ export class FormattedDocstring extends Component<{
                   case "math":
                     return (
                       <DStaticMathquillView
-                        latex={() => textModeExprToLatex(r.latex) ?? r.latex}
+                        latex={() =>
+                          textModeExprToLatex(this.props.cfg(), r.latex) ??
+                          r.latex
+                        }
                         config={{}}
                       ></DStaticMathquillView>
                     );
@@ -213,6 +222,7 @@ export class PartialFunctionCallView extends Component<{
   partialFunctionCall: () => PartialFunctionCall | undefined;
   partialFunctionCallIdent: () => BoundIdentifierFunction | undefined;
   partialFunctionCallDoc: () => string | undefined;
+  cfg: () => Config;
 }> {
   template() {
     return (
@@ -235,6 +245,7 @@ export class PartialFunctionCallView extends Component<{
                         this.props.partialFunctionCall()?.paramIndex ?? 0
                       ] ?? ""
                     }
+                    cfg={this.props.cfg}
                   ></FormattedDocstring>
                 )}
               </If>
@@ -242,6 +253,7 @@ export class PartialFunctionCallView extends Component<{
                 <DStaticMathquillView
                   latex={() => {
                     return identifierStringToLatexString(
+                      this.props.cfg(),
                       this.props.partialFunctionCall()?.ident ?? ""
                     );
                   }}
@@ -270,7 +282,10 @@ export class PartialFunctionCallView extends Component<{
                           <DStaticMathquillView
                             config={{}}
                             latex={() =>
-                              identifierStringToLatexString(p[0]) +
+                              identifierStringToLatexString(
+                                this.props.cfg(),
+                                p[0]
+                              ) +
                               (p[1] ===
                               (this.props.partialFunctionCallIdent()?.params
                                 ?.length ?? 0) -
@@ -310,6 +325,7 @@ export class View extends Component<{
             this.props.plugin().closeJumpToDefMenu()
           }
           jumpToDefIndex={() => this.props.plugin().jumpToDefIndex}
+          cfg={() => this.props.plugin().intellisenseState.cfg}
         ></JumpToDefinitionMenu>
         <div
           id="intellisense-container"
@@ -344,6 +360,7 @@ export class View extends Component<{
             partialFunctionCallIdent={() =>
               this.props.plugin().partialFunctionCallIdent
             }
+            cfg={() => this.props.plugin().intellisenseState.cfg}
           />
           <IndexFor
             each={() =>
@@ -392,7 +409,10 @@ export class View extends Component<{
                   >
                     <StaticMathQuillView
                       latex={
-                        identifierStringToLatexString(reformattedIdent) +
+                        identifierStringToLatexString(
+                          this.props.plugin().intellisenseState.cfg,
+                          reformattedIdent
+                        ) +
                         (ident.idents.length === 1 &&
                         ident.idents[0].type === "function"
                           ? "\\left(\\right)"

@@ -1,16 +1,25 @@
-import { parseText, astItemToTextString } from "../../../../text-mode-core";
+import {
+  parseText,
+  astItemToTextString,
+  buildConfig,
+} from "../../../../text-mode-core";
 import { Statement } from "../../../../text-mode-core/TextAST";
 import { statementsIntersecting } from "./statementIntersection";
 
-jest.mock("utils/depUtils");
-jest.mock("globals/window");
+const cfg = buildConfig({
+  parse: function () {
+    throw new Error(
+      "Test Error: parseDesmosLatex() called in statementIntersection.unit.test.ts"
+    );
+  },
+});
 
 function positionsAndProgram(s: string) {
   const split = s.split("|");
   let pos = 0;
   const positions: number[] = [];
   split.slice(0, -1).forEach((x) => positions.push((pos += x.length)));
-  return [positions, parseText(split.join("")).program] as const;
+  return [positions, parseText(cfg, split.join("")).program] as const;
 }
 
 function toString(s: Statement) {

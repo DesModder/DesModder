@@ -23,3 +23,5 @@ export type { AnyHydrated, AnyHydratedValue } from "./down/style/Hydrated";
 export { rawToText } from "./up/rawToText";
 export { identifierToString } from "./aug/augLatexToRaw";
 export type { ExpressionAug } from "./aug/AugState";
+export type { PublicConfig, Config } from "./TextModeConfig";
+export { buildConfig, buildConfigFromGlobals } from "./TextModeConfig";

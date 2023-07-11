@@ -1,24 +1,27 @@
 import Metadata from "#manage-metadata/interface";
 import migrateToLatest from "#manage-metadata/migrate";
 import { ChildExprNode, evalMaybeRational, AnyNode } from "#parsing/parsenode";
+import { Config } from "../TextModeConfig";
 import Aug from "./AugState";
 import type * as Graph from "@desmodder/graph-state";
-import { parseDesmosLatex } from "utils/depUtils";
 
-export default function rawToAug(raw: Graph.GraphState): Aug.State {
+export default function rawToAug(
+  cfg: Config,
+  raw: Graph.GraphState
+): Aug.State {
   const dsmMetadata = rawToDsmMetadata(raw);
   const res: Aug.State = {
     version: 9,
     settings: rawToAugSettings(raw),
     expressions: {
-      list: rawListToAug(raw.expressions.list, dsmMetadata),
+      list: rawListToAug(cfg, raw.expressions.list, dsmMetadata),
     },
   };
   const ticker = raw.expressions.ticker;
   if (ticker?.handlerLatex) {
     res.expressions.ticker = {
-      handlerLatex: parseLatex(ticker.handlerLatex),
-      minStepLatex: parseLatex(ticker.minStepLatex ?? "0"),
+      handlerLatex: parseLatex(cfg, ticker.handlerLatex),
+      minStepLatex: parseLatex(cfg, ticker.minStepLatex ?? "0"),
       playing: ticker.playing ?? false,
     };
   }
@@ -44,6 +47,7 @@ export function rawToDsmMetadata(raw: Graph.GraphState) {
 }
 
 function rawListToAug(
+  cfg: Config,
   list: Graph.ItemState[],
   dsmMetadata: Metadata
 ): Aug.ItemAug[] {
@@ -57,7 +61,7 @@ function rawListToAug(
       currentFolder = rawFolderToAug(item);
       res.push(currentFolder);
     } else {
-      const augItem = rawNonFolderToAug(item, dsmMetadata);
+      const augItem = rawNonFolderToAug(cfg, item, dsmMetadata);
       if (item.folderId) {
         if (!currentFolder || item.folderId !== currentFolder.id) {
           throw Error("Folder ID inconsistent");
@@ -84,11 +88,12 @@ function rawFolderToAug(item: Graph.FolderState): Aug.FolderAug {
 }
 
 export function rawNonFolderToAug(
+  cfg: Config,
   item: Graph.NonFolderState,
   dsmMetadata: Metadata
 ): Aug.NonFolderAug {
   try {
-    return tryRawNonFolderToAug(item, dsmMetadata);
+    return tryRawNonFolderToAug(cfg, item, dsmMetadata);
   } catch {
     return {
       id: item.id,
@@ -102,6 +107,7 @@ export function rawNonFolderToAug(
 }
 
 function tryRawNonFolderToAug(
+  cfg: Config,
   item: Graph.NonFolderState,
   dsmMetadata: Metadata
 ): Aug.NonFolderAug {
@@ -115,7 +121,7 @@ function tryRawNonFolderToAug(
       let latex;
       if (item.latex) {
         try {
-          latex = parseRootLatex(item.latex);
+          latex = parseRootLatex(cfg, item.latex);
         } catch {
           return {
             ...base,
@@ -128,15 +134,15 @@ function tryRawNonFolderToAug(
       return {
         ...base,
         type: "expression",
-        ...columnExpressionCommon(item),
+        ...columnExpressionCommon(cfg, item),
         ...(latex ? { latex } : {}),
         ...(item.labelSize !== "0" && item.label && item.showLabel
           ? {
               label: {
                 text: item.label,
-                size: parseLatex(item.labelSize ?? "1"),
+                size: parseLatex(cfg, item.labelSize ?? "1"),
                 orientation: item.labelOrientation ?? "default",
-                angle: parseLatex(item.labelAngle ?? "0"),
+                angle: parseLatex(cfg, item.labelAngle ?? "0"),
                 outline: !item.suppressTextOutline,
                 showOnHover: item.interactiveLabel ?? false,
                 editableMode: item.editableLabelMode ?? "NONE",
@@ -145,8 +151,9 @@ function tryRawNonFolderToAug(
           : {}),
         fillOpacity:
           item.fill === false
-            ? parseLatex("0")
+            ? parseLatex(cfg, "0")
             : parseMaybeLatex(
+                cfg,
                 item.fillOpacity === "0"
                   ? "2^{-99}"
                   : item.fillOpacity ?? (item.fill ? "0.4" : undefined)
@@ -154,12 +161,13 @@ function tryRawNonFolderToAug(
         regression: item.residualVariable
           ? {
               residualVariable: parseLatex(
+                cfg,
                 item.residualVariable
               ) as Aug.Latex.Identifier,
               regressionParameters: new Map(
                 Object.entries(item.regressionParameters ?? {}).map(
                   ([key, value]) => [
-                    parseLatex(key) as Aug.Latex.Identifier,
+                    parseLatex(cfg, key) as Aug.Latex.Identifier,
                     value,
                   ]
                 )
@@ -172,26 +180,28 @@ function tryRawNonFolderToAug(
           loopMode: item.slider?.loopMode,
           playDirection: item.slider?.playDirection,
           isPlaying: item.slider?.isPlaying,
-          min: item.slider?.min ? parseLatex(item.slider?.min) : undefined,
-          max: item.slider?.max ? parseLatex(item.slider?.max) : undefined,
-          step: item.slider?.step ? parseLatex(item.slider?.step) : undefined,
+          min: item.slider?.min ? parseLatex(cfg, item.slider?.min) : undefined,
+          max: item.slider?.max ? parseLatex(cfg, item.slider?.max) : undefined,
+          step: item.slider?.step
+            ? parseLatex(cfg, item.slider?.step)
+            : undefined,
         },
         glesmos: dsmMetadata.expressions[item.id]?.glesmos ?? false,
         errorHidden: dsmMetadata.expressions[item.id]?.errorHidden ?? false,
         displayEvaluationAsFraction: item.displayEvaluationAsFraction ?? false,
-        polarDomain: parseMapDomain(item.polarDomain, "0", "12\\pi"),
-        parametricDomain: parseMapDomain(item.parametricDomain, "0", "1"),
+        polarDomain: parseMapDomain(cfg, item.polarDomain, "0", "12\\pi"),
+        parametricDomain: parseMapDomain(cfg, item.parametricDomain, "0", "1"),
         cdf: item.cdf?.show
           ? {
-              min: item.cdf.min ? parseLatex(item.cdf.min) : undefined,
-              max: item.cdf.max ? parseLatex(item.cdf.max) : undefined,
+              min: item.cdf.min ? parseLatex(cfg, item.cdf.min) : undefined,
+              max: item.cdf.max ? parseLatex(cfg, item.cdf.max) : undefined,
             }
           : undefined,
-        vizProps: vizPropsAug(item),
+        vizProps: vizPropsAug(cfg, item),
         clickableInfo: item.clickableInfo?.latex
           ? {
               description: item.clickableInfo.description ?? "",
-              latex: parseLatex(item.clickableInfo.latex),
+              latex: parseLatex(cfg, item.clickableInfo.latex),
             }
           : undefined,
       };
@@ -202,19 +212,19 @@ function tryRawNonFolderToAug(
         type: "image",
         image_url: item.image_url,
         name: item.name ?? "",
-        width: parseLatex(item.width ?? "10"),
+        width: parseLatex(cfg, item.width ?? "10"),
         // The height is not actually 10 by default
-        height: parseLatex(item.height ?? "10"),
-        center: parseLatex(item.center ?? "(0,0)"),
-        angle: parseLatex(item.angle ?? "0"),
+        height: parseLatex(cfg, item.height ?? "10"),
+        center: parseLatex(cfg, item.center ?? "(0,0)"),
+        angle: parseLatex(cfg, item.angle ?? "0"),
         // opacity = 0 corresponds to hidden: true
-        opacity: parseLatex(item.hidden ? "0" : item.opacity ?? "1"),
+        opacity: parseLatex(cfg, item.hidden ? "0" : item.opacity ?? "1"),
         foreground: item.foreground ?? false,
         draggable: item.draggable ?? false,
         clickableInfo: item.clickableInfo?.latex
           ? {
               description: item.clickableInfo.description ?? "",
-              latex: parseLatex(item.clickableInfo.latex),
+              latex: parseLatex(cfg, item.clickableInfo.latex),
               hoveredImage: item.clickableInfo.hoveredImage,
               depressedImage: item.clickableInfo.depressedImage,
             }
@@ -236,9 +246,9 @@ function tryRawNonFolderToAug(
             id: column.id,
             values: column.values
               .slice(0, longestColumnLength + 1)
-              .map(parseLatex),
-            ...columnExpressionCommon(column),
-            latex: parseLatex(column.latex!),
+              .map((s) => parseLatex(cfg, s)),
+            ...columnExpressionCommon(cfg, column),
+            latex: parseLatex(cfg, column.latex!),
           })),
       };
     }
@@ -252,6 +262,7 @@ function tryRawNonFolderToAug(
 }
 
 function vizPropsAug(
+  cfg: Config,
   item: Graph.ExpressionState
 ): Aug.ExpressionAug["vizProps"] {
   const viz = item.vizProps ?? {};
@@ -268,8 +279,8 @@ function vizPropsAug(
     viz.showBoxplotOutliers
   ) {
     res.boxplot = {
-      breadth: parseLatex(viz.breadth ?? "1"),
-      axisOffset: parseLatex(viz.axisOffset ?? "1"),
+      breadth: parseLatex(cfg, viz.breadth ?? "1"),
+      axisOffset: parseLatex(cfg, viz.axisOffset ?? "1"),
       alignedAxis: viz.alignedAxis ?? "x",
       showOutliers: viz.showBoxplotOutliers ?? false,
     };
@@ -278,21 +289,23 @@ function vizPropsAug(
 }
 
 function parseMapDomain(
+  cfg: Config,
   domain: Graph.Domain | undefined,
   fallbackMin: string,
   fallbackMax: string
 ): Aug.DomainAug | undefined {
   if (!domain) return undefined;
   return {
-    min: parseLatex(domain.min || fallbackMin),
-    max: parseLatex(domain.max || fallbackMax),
+    min: parseLatex(cfg, domain.min || fallbackMin),
+    max: parseLatex(cfg, domain.max || fallbackMax),
   };
 }
 
 function columnExpressionCommon(
+  cfg: Config,
   item: Graph.TableColumn | Graph.ExpressionState
 ) {
-  const color = item.colorLatex ? parseLatex(item.colorLatex) : item.color;
+  const color = item.colorLatex ? parseLatex(cfg, item.colorLatex) : item.color;
   return {
     color,
     hidden: item.hidden ?? false,
@@ -300,46 +313,49 @@ function columnExpressionCommon(
       item.points === false ||
       item.pointOpacity === "0" ||
       item.pointSize === "0"
-        ? { size: parseLatex("0") }
+        ? { size: parseLatex(cfg, "0") }
         : item.points === true ||
           item.pointOpacity !== undefined ||
           item.pointSize !== undefined ||
           item.dragMode !== undefined
         ? {
-            opacity: parseMaybeLatex(item.pointOpacity),
-            size: parseMaybeLatex(item.pointSize),
+            opacity: parseMaybeLatex(cfg, item.pointOpacity),
+            size: parseMaybeLatex(cfg, item.pointSize),
             style: item.pointStyle,
             dragMode: item.dragMode,
           }
         : undefined,
     lines:
       item.lines === false || item.lineOpacity === "0" || item.lineWidth === "0"
-        ? { width: parseLatex("0") }
+        ? { width: parseLatex(cfg, "0") }
         : item.lines === true ||
           item.lineOpacity !== undefined ||
           item.lineWidth !== undefined
         ? {
-            opacity: parseMaybeLatex(item.lineOpacity),
-            width: parseMaybeLatex(item.lineWidth),
+            opacity: parseMaybeLatex(cfg, item.lineOpacity),
+            width: parseMaybeLatex(cfg, item.lineWidth),
             style: item.lineStyle,
           }
         : undefined,
   };
 }
 
-function parseMaybeLatex(str: string | undefined) {
-  return str !== undefined ? parseLatex(str) : undefined;
+function parseMaybeLatex(cfg: Config, str: string | undefined) {
+  return str !== undefined ? parseLatex(cfg, str) : undefined;
 }
 
-export function parseLatex(str: string): Aug.Latex.AnyChild {
+export function parseLatex(cfg: Config, str: string): Aug.Latex.AnyChild {
   if (str === "") return { type: "Constant", value: NaN };
-  const res = parseDesmosLatex(str);
+  const res = cfg.parse(str);
   // childNodeToTree throws an error if res is not a child node
   return childNodeToTree(res);
 }
 
-export function parseRootLatex(str: string): Aug.Latex.AnyRootOrChild {
-  const parsed = parseDesmosLatex(str);
+export function parseRootLatex(
+  cfg: Config,
+  str: string
+): Aug.Latex.AnyRootOrChild {
+  const parsed = cfg.parse(str);
   switch (parsed.type) {
     case "Equation":
       return {

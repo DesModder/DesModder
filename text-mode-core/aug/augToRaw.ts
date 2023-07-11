@@ -1,11 +1,15 @@
 import type Metadata from "#manage-metadata/interface";
 import { changeExprInMetadata, isBlankMetadata } from "#manage-metadata/manage";
+import { Config } from "../TextModeConfig";
 import { isConstant } from "./AugLatex";
 import Aug from "./AugState";
 import { latexTreeToString } from "./augLatexToRaw";
 import type * as Graph from "@desmodder/graph-state";
 
-export default function augToRaw(aug: Aug.State): Graph.GraphState {
+export default function augToRaw(
+  cfg: Config,
+  aug: Aug.State
+): Graph.GraphState {
   const list = [];
   const dsmMetadata = {
     version: 2 as const,
@@ -18,12 +22,12 @@ export default function augToRaw(aug: Aug.State): Graph.GraphState {
       for (const child of expr.children) {
         updateDsmMetadata(dsmMetadata, child);
         list.push({
-          ...augNonFolderToRaw(child),
+          ...augNonFolderToRaw(cfg, child),
           folderId: expr.id,
         });
       }
     } else {
-      list.push(augNonFolderToRaw(expr));
+      list.push(augNonFolderToRaw(cfg, expr));
     }
   }
   if (!isBlankMetadata(dsmMetadata)) {
@@ -50,7 +54,8 @@ export default function augToRaw(aug: Aug.State): Graph.GraphState {
     graph: aug.settings,
     expressions: {
       list,
-      ticker: aug.expressions.ticker && augTickerToRaw(aug.expressions.ticker),
+      ticker:
+        aug.expressions.ticker && augTickerToRaw(cfg, aug.expressions.ticker),
     },
   };
   cleanUndefined(res);
@@ -70,10 +75,10 @@ function cleanUndefined(obj: any): void {
   }
 }
 
-function augTickerToRaw(ticker: Aug.TickerAug) {
+function augTickerToRaw(cfg: Config, ticker: Aug.TickerAug) {
   return {
-    handlerLatex: latexTreeToString(ticker.handlerLatex),
-    minStepLatex: latexTreeToString(ticker.minStepLatex),
+    handlerLatex: latexTreeToString(cfg, ticker.handlerLatex),
+    minStepLatex: latexTreeToString(cfg, ticker.minStepLatex),
     playing: ticker.playing,
     open: true,
   };
@@ -104,7 +109,10 @@ function augFolderToRaw(expr: Aug.FolderAug): Graph.FolderState {
   };
 }
 
-function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
+function augNonFolderToRaw(
+  cfg: Config,
+  item: Aug.NonFolderAug
+): Graph.NonFolderState {
   const base = {
     id: item.id,
     secret: item.secret,
@@ -117,17 +125,18 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
       return {
         ...base,
         type: "expression",
-        ...columnExpressionCommon(item),
+        ...columnExpressionCommon(cfg, item),
         fill: shouldFill,
         fillOpacity: shouldFill
-          ? latexTreeToStringMaybe(item.fillOpacity)
+          ? latexTreeToStringMaybe(cfg, item.fillOpacity)
           : undefined,
         residualVariable: latexTreeToStringMaybe(
+          cfg,
           item.regression?.residualVariable
         ),
         regressionParameters: Object.fromEntries(
           [...(item.regression?.regressionParameters.entries() ?? [])].map(
-            ([k, v]) => [latexTreeToString(k), v]
+            ([k, v]) => [latexTreeToString(cfg, k), v]
           )
         ),
         isLogModeRegression: item.regression?.isLogMode,
@@ -135,9 +144,9 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
           ? {
               label: item.label.text,
               showLabel: true,
-              labelSize: latexTreeToString(item.label.size),
+              labelSize: latexTreeToString(cfg, item.label.size),
               labelOrientation: item.label.orientation,
-              labelAngle: latexTreeToString(item.label.angle),
+              labelAngle: latexTreeToString(cfg, item.label.angle),
               suppressTextOutline: !item.label.outline,
               interactiveLabel: item.label.showOnHover,
               editableLabelMode:
@@ -153,25 +162,29 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
           isPlaying: item.slider.isPlaying,
           hardMin:
             !!item.slider.min && item.slider.loopMode !== "PLAY_INDEFINITELY",
-          min: latexTreeToStringMaybe(item.slider.min),
+          min: latexTreeToStringMaybe(cfg, item.slider.min),
           hardMax:
             !!item.slider.max && item.slider.loopMode !== "PLAY_INDEFINITELY",
-          max: latexTreeToStringMaybe(item.slider.max),
-          step: latexTreeToStringMaybe(item.slider.step),
+          max: latexTreeToStringMaybe(cfg, item.slider.max),
+          step: latexTreeToStringMaybe(cfg, item.slider.step),
         },
         displayEvaluationAsFraction: item.displayEvaluationAsFraction,
-        polarDomain: item.polarDomain && latexMapDomain(item.polarDomain),
+        polarDomain: item.polarDomain && latexMapDomain(cfg, item.polarDomain),
         parametricDomain:
-          item.parametricDomain && latexMapDomain(item.parametricDomain),
-        domain: item.parametricDomain && latexMapDomain(item.parametricDomain),
+          item.parametricDomain && latexMapDomain(cfg, item.parametricDomain),
+        domain:
+          item.parametricDomain && latexMapDomain(cfg, item.parametricDomain),
         cdf: item.cdf && {
           show: true,
-          min: latexTreeToStringMaybe(item.cdf.min),
-          max: latexTreeToStringMaybe(item.cdf.max),
+          min: latexTreeToStringMaybe(cfg, item.cdf.min),
+          max: latexTreeToStringMaybe(cfg, item.cdf.max),
         },
         vizProps: {
-          breadth: latexTreeToStringMaybe(item.vizProps.boxplot?.breadth),
-          axisOffset: latexTreeToStringMaybe(item.vizProps.boxplot?.axisOffset),
+          breadth: latexTreeToStringMaybe(cfg, item.vizProps.boxplot?.breadth),
+          axisOffset: latexTreeToStringMaybe(
+            cfg,
+            item.vizProps.boxplot?.axisOffset
+          ),
           alignedAxis: item.vizProps.boxplot?.alignedAxis,
           showBoxplotOutliers: item.vizProps.boxplot?.showOutliers,
           dotplotXMode: item.vizProps.dotplotMode,
@@ -181,7 +194,7 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
         clickableInfo: item.clickableInfo && {
           enabled: true,
           description: item.clickableInfo.description,
-          latex: latexTreeToString(item.clickableInfo.latex),
+          latex: latexTreeToString(cfg, item.clickableInfo.latex),
         },
       };
     }
@@ -191,18 +204,18 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
         type: "image",
         image_url: item.image_url,
         name: item.name,
-        width: latexTreeToString(item.width),
-        height: latexTreeToString(item.height),
+        width: latexTreeToString(cfg, item.width),
+        height: latexTreeToString(cfg, item.height),
         hidden: Aug.Latex.isConstant(item.opacity, 0),
-        center: latexTreeToString(item.center),
-        angle: latexTreeToString(item.angle),
-        opacity: latexTreeToString(item.opacity),
+        center: latexTreeToString(cfg, item.center),
+        angle: latexTreeToString(cfg, item.angle),
+        opacity: latexTreeToString(cfg, item.opacity),
         foreground: item.foreground,
         draggable: item.draggable,
         clickableInfo: item.clickableInfo && {
           enabled: true,
           description: item.clickableInfo.description,
-          latex: latexTreeToString(item.clickableInfo.latex),
+          latex: latexTreeToString(cfg, item.clickableInfo.latex),
           hoveredImage: item.clickableInfo.hoveredImage,
           depressedImage: item.clickableInfo.depressedImage,
         },
@@ -216,10 +229,10 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
             values:
               // Desmos expects at least one row
               column.values.length > 0
-                ? column.values.map(columnEntryToString)
+                ? column.values.map((e) => columnEntryToString(cfg, e))
                 : [""],
             id: column.id,
-            ...columnExpressionCommon(column),
+            ...columnExpressionCommon(cfg, column),
           }))
           // Desmos expects at least two columns
           .concat(
@@ -239,36 +252,40 @@ function augNonFolderToRaw(item: Aug.NonFolderAug): Graph.NonFolderState {
   }
 }
 
-function latexMapDomain(domain: Aug.DomainAug | undefined) {
+function latexMapDomain(cfg: Config, domain: Aug.DomainAug | undefined) {
   if (!domain) {
     return undefined;
   } else {
     return {
-      min: domain.min ? latexTreeToString(domain.min) : "",
-      max: domain.max ? latexTreeToString(domain.max) : "",
+      min: domain.min ? latexTreeToString(cfg, domain.min) : "",
+      max: domain.max ? latexTreeToString(cfg, domain.max) : "",
     };
   }
 }
 
-function columnExpressionCommon(item: Aug.TableColumnAug | Aug.ExpressionAug) {
+function columnExpressionCommon(
+  cfg: Config,
+  item: Aug.TableColumnAug | Aug.ExpressionAug
+) {
   const res: Graph.ColumnExpressionShared = {
     color: "",
     hidden: item.hidden,
-    latex: latexTreeToStringMaybe(item.latex),
+    latex: latexTreeToStringMaybe(cfg, item.latex),
   };
   if (typeof item.color === "string") {
     res.color = item.color;
   } else {
     // default to red if latex
     res.color = "#c74440";
-    res.colorLatex = latexTreeToString(item.color);
+    res.colorLatex = latexTreeToString(cfg, item.color);
   }
   if (item.points) {
     res.points =
       !isConstant(item.points.opacity, 0) && !isConstant(item.points.size, 0);
     if (item.points.opacity)
-      res.pointOpacity = latexTreeToString(item.points.opacity);
-    if (item.points.size) res.pointSize = latexTreeToString(item.points.size);
+      res.pointOpacity = latexTreeToString(cfg, item.points.opacity);
+    if (item.points.size)
+      res.pointSize = latexTreeToString(cfg, item.points.size);
     res.pointStyle = item.points.style;
     res.dragMode = item.points.dragMode;
   }
@@ -276,19 +293,23 @@ function columnExpressionCommon(item: Aug.TableColumnAug | Aug.ExpressionAug) {
     res.lines =
       !isConstant(item.lines.opacity, 0) && !isConstant(item.lines.width, 0);
     if (item.lines.opacity)
-      res.lineOpacity = latexTreeToString(item.lines.opacity);
-    if (item.lines.width) res.lineWidth = latexTreeToString(item.lines.width);
+      res.lineOpacity = latexTreeToString(cfg, item.lines.opacity);
+    if (item.lines.width)
+      res.lineWidth = latexTreeToString(cfg, item.lines.width);
     res.lineStyle = item.lines.style;
   }
   return res;
 }
 
-function latexTreeToStringMaybe(e: Aug.Latex.AnyRootOrChild | undefined) {
+function latexTreeToStringMaybe(
+  cfg: Config,
+  e: Aug.Latex.AnyRootOrChild | undefined
+) {
   if (!e) return undefined;
-  return latexTreeToString(e);
+  return latexTreeToString(cfg, e);
 }
 
-function columnEntryToString(e: Aug.Latex.AnyRootOrChild): string {
+function columnEntryToString(cfg: Config, e: Aug.Latex.AnyRootOrChild): string {
   if (e.type === "Identifier" && e.symbol === "N_aN") return "";
-  return latexTreeToString(e);
+  return latexTreeToString(cfg, e);
 }
