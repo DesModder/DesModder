@@ -6,7 +6,7 @@ export interface PublicConfig {
   /** commandNames affects subscripting *and* gives the difference between \alpha and \\operatorname{total} */
   commandNames?: string;
   colors?: Colors;
-  parse: Parse;
+  parseDesmosLatex?: Parse;
 }
 
 export function buildConfigFromGlobals(Desmos: any, Calc: any) {
@@ -14,7 +14,7 @@ export function buildConfigFromGlobals(Desmos: any, Calc: any) {
     operatorNames: Desmos.Private.MathquillConfig?.getAutoOperators?.(),
     commandNames: Desmos.Private.MathquillConfig?.getAutoCommands?.(),
     colors: Calc?.colors,
-    parse: Desmos.Private.Parser.parse,
+    parseDesmosLatex: Desmos.Private.Parser.parse,
   });
 }
 
@@ -25,8 +25,12 @@ export function buildConfig(config: PublicConfig): Config {
     operatorNames,
     commandNames: split(config.commandNames ?? defaultCommandNames),
     colors: config.colors ?? defaultColors,
-    parse: function (s) {
-      return config.parse(s, { allowDt: true, allowIndex: true });
+    parseDesmosLatex: function (s: string) {
+      if (!config.parseDesmosLatex)
+        throw new Error(
+          "Test Error: trying to parse LaTeX from Desmos, but the config does not define `parseDesmosLatex`."
+        );
+      return config.parseDesmosLatex(s, { allowDt: true, allowIndex: true });
     },
   };
 }
@@ -58,7 +62,7 @@ export interface Config {
   operatorNames: Set<string>;
   commandNames: Set<string>;
   colors: Colors;
-  parse: Parse;
+  parseDesmosLatex: Parse;
 }
 
 type Colors = { [key in string]: string };

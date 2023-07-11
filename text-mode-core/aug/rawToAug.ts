@@ -346,7 +346,7 @@ function parseMaybeLatex(cfg: Config, str: string | undefined) {
 
 export function parseLatex(cfg: Config, str: string): Aug.Latex.AnyChild {
   if (str === "") return { type: "Constant", value: NaN };
-  const res = cfg.parse(str);
+  const res = cfg.parseDesmosLatex(str);
   // childNodeToTree throws an error if res is not a child node
   return childNodeToTree(res);
 }
@@ -355,7 +355,7 @@ export function parseRootLatex(
   cfg: Config,
   str: string
 ): Aug.Latex.AnyRootOrChild {
-  const parsed = cfg.parse(str);
+  const parsed = cfg.parseDesmosLatex(str);
   switch (parsed.type) {
     case "Equation":
       return {

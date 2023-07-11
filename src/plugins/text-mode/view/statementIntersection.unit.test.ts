@@ -6,13 +6,7 @@ import {
 import { Statement } from "../../../../text-mode-core/TextAST";
 import { statementsIntersecting } from "./statementIntersection";
 
-const cfg = buildConfig({
-  parse: function () {
-    throw new Error(
-      "Test Error: parseDesmosLatex() called in statementIntersection.unit.test.ts"
-    );
-  },
-});
+const cfg = buildConfig({});
 
 function positionsAndProgram(s: string) {
   const split = s.split("|");

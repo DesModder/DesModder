@@ -25,13 +25,7 @@ import type { Diagnostic } from "@codemirror/lint";
 // eslint-disable-next-line rulesdir/no-external-imports
 import { test, expect as _expect, describe } from "@jest/globals";
 
-const cfg = buildConfig({
-  parse: function () {
-    throw new Error(
-      "Test Error: parseDesmosLatex() called in textToAug.unit.test.ts"
-    );
-  },
-});
+const cfg = buildConfig({});
 
 function textToAug(text: string) {
   const analysis = parse(cfg, text);

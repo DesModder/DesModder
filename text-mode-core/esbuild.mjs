@@ -23,6 +23,9 @@ const opts = {
       },
     }),
   ],
+  define: {
+    window: "globalThis",
+  },
   format: "esm",
   loader: { ".ts": "ts" },
   logLevel: "info",
