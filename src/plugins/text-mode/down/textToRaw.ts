@@ -30,8 +30,7 @@ export default function textToRaw(
 export function textModeExprToLatex(tmExpr: string) {
   const parsedTextMode = parse(tmExpr);
   if (
-    parsedTextMode.program.children.length > 1 ||
-    parsedTextMode.program.children.length === 0 ||
+    parsedTextMode.program.children.length !== 1 ||
     parsedTextMode.diagnostics.length > 0
   )
     return;
