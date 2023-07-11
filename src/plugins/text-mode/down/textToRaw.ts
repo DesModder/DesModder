@@ -29,7 +29,12 @@ export default function textToRaw(
 
 export function textModeExprToLatex(tmExpr: string) {
   const parsedTextMode = parse(tmExpr);
-  const parsedExpr = parsedTextMode.mapIDstmt[1];
+  if (
+    parsedTextMode.program.children.length !== 1 ||
+    parsedTextMode.diagnostics.length > 0
+  )
+    return;
+  const parsedExpr = parsedTextMode.program.children[0];
   if (parsedExpr && parsedExpr.type === "ExprStatement") {
     const aug = childExprToAug(parsedExpr.expr);
     const latex = latexTreeToString(aug);
