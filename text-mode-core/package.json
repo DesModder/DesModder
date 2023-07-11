@@ -1,7 +1,7 @@
 {
   "name": "@desmodder/text-mode-core",
   "description": "Core library for DesModder's Text Mode",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "./index.js",
   "scripts": {
     "build": "node esbuild.mjs"

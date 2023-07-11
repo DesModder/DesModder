@@ -3,7 +3,6 @@
 /* eslint-disable rulesdir/no-reach-past-exports */
 import { loadFile } from "../loaders/utils.mjs";
 import esbuild from "esbuild";
-import { copy } from "esbuild-plugin-copy";
 import { promises as fs } from "fs";
 import path from "path";
 
@@ -14,15 +13,7 @@ const opts = {
   sourcemap: false,
   bundle: true,
   outdir,
-  plugins: [
-    copy({
-      resolveFrom: "cwd",
-      assets: {
-        from: ["./LICENSE", "./README.md"],
-        to: outdir,
-      },
-    }),
-  ],
+  plugins: [],
   define: {
     window: "globalThis",
   },
@@ -57,3 +48,6 @@ await fs.writeFile(
   path.join(outdir, "package.json"),
   JSON.stringify(pkg, null, 2)
 );
+
+await fs.cp("./README.md", "./dist/README.md");
+await fs.cp("./LICENSE", "./dist/LICENSE");
