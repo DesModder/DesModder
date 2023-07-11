@@ -1,6 +1,11 @@
 {
-  "name": "text-mode-core",
+  "name": "@desmodder/text-mode-core",
+  "description": "Core library for DesModder's Text Mode",
   "version": "0.1.0",
+  "main": "./index.js",
+  "scripts": {
+    "build": "node esbuild.mjs"
+  },
   "exports": {
     ".": "./index.ts",
     "./TextAST": "./TextAST/index.ts",
@@ -13,5 +18,13 @@
     "#moo": "moo",
     "#parsing/*": "parsing/*",
     "#manage-metadata/*": "plugins/manage-metadata/*"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DesModder/DesModder"
+  },
+  "license": "MIT",
+  "keywords": [
+    "desmos"
+  ]
 }
