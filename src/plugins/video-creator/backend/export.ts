@@ -1,6 +1,7 @@
 import VideoCreator from "..";
 import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 import { downloadZip } from "client-zip";
+import { Console } from "globals/window";
 
 type FFmpeg = ReturnType<typeof createFFmpeg>;
 type FFmpegFileType = "gif" | "mp4" | "webm" | "apng";
@@ -65,6 +66,8 @@ export async function initFFmpeg(controller: VideoCreator) {
           if (denom === 0) denom = 1;
           const ratio = parseInt(frame) / denom;
           controller.setExportProgress(ratio);
+        } else {
+          Console.debug(message);
         }
       }
     });
