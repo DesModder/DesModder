@@ -1,5 +1,5 @@
+import { Folder, Program, Table } from "../../../../../text-mode-core/TextAST";
 import { analysisStateField } from "../../LanguageServer";
-import { Folder, Program, Table } from "../../down/TextAST";
 import { statementsIntersecting } from "../statementIntersection";
 import { EditorState, Extension, RangeSet } from "@codemirror/state";
 import {

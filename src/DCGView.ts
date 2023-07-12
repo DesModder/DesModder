@@ -45,7 +45,7 @@ abstract class ForComponent<T> extends ClassComponent<{
   key: (t: T) => string | number;
 }> {}
 
-interface IfElseSecondParam {
+export interface IfElseSecondParam {
   true: () => typeof ClassComponent;
   false: () => typeof ClassComponent;
 }

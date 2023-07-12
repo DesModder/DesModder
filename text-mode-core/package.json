@@ -1,0 +1,30 @@
+{
+  "name": "@desmodder/text-mode-core",
+  "description": "Core library for DesModder's Text Mode",
+  "version": "0.1.1",
+  "main": "./index.js",
+  "scripts": {
+    "build": "node esbuild.mjs"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./TextAST": "./TextAST/index.ts",
+    "./TextAST/Synthetic": "./TextAST/Synthetic.ts"
+  },
+  "imports": {
+    "#utils/utils": "utils/utils",
+    "#prettier/doc": "prettier/doc",
+    "#jest/globals": "@jest/globals",
+    "#moo": "moo",
+    "#parsing/*": "parsing/*",
+    "#manage-metadata/*": "plugins/manage-metadata/*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DesModder/DesModder"
+  },
+  "license": "MIT",
+  "keywords": [
+    "desmos"
+  ]
+}
