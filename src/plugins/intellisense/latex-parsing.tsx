@@ -11,13 +11,16 @@ export function mapAugAST(
       for (const child of x) {
         map(child);
       }
+      return;
     }
 
     if (typeof x === "object") {
-      if (typeof x.type === "string") callback(x);
+      if (typeof x.type === "string") {
+        callback(x);
 
-      for (const [_, v] of Object.entries(x)) {
-        map(v);
+        for (const [_, v] of Object.entries(x)) {
+          map(v);
+        }
       }
     }
   }
