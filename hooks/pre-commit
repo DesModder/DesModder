@@ -1,26 +1,26 @@
 #!/bin/bash
 
-# set -euo pipefail
+set -euo pipefail
 
-# FILES=$(git diff --cached --name-only --diff-filter=d)
+FILES=$(git diff --cached --name-only --diff-filter=d)
 
-# [ -z "$FILES" ] && { echo "No staged files. Looks good!"; exit 0; }
+[ -z "$FILES" ] && { echo "No staged files. Looks good!"; exit 0; }
 
-# echo "$FILES" | xargs npm run prettier -- --ignore-unknown --cache --check || {
-# 	echo "To run prettier: npm run fix:prettier"
-# 	exit 1
-# }
+echo "$FILES" | xargs npm run prettier -- --ignore-unknown --cache --check || {
+	echo "To run prettier: npm run fix:prettier"
+	exit 1
+}
 
-# # '|| [[ $? == 1 ]];' handles not erroring if grep does not find anything
-# # https://unix.stackexchange.com/a/427598
-# JS_FILES=$(echo "$FILES" | { grep -E '\.[tj]sx?$' || [[ $? == 1 ]]; })
+# '|| [[ $? == 1 ]];' handles not erroring if grep does not find anything
+# https://unix.stackexchange.com/a/427598
+JS_FILES=$(echo "$FILES" | { grep -E '\.[tj]sx?$' || [[ $? == 1 ]]; })
 
-# [ -z "$JS_FILES" ] && { echo "No staged JS/TS files. Looks good!"; exit 0; }
+[ -z "$JS_FILES" ] && { echo "No staged JS/TS files. Looks good!"; exit 0; }
 
-# echo "$JS_FILES" | xargs npm run eslint -- || {
-# 	echo "To run eslint: npm run fix:eslint"
-# 	exit 1
-# }
+echo "$JS_FILES" | xargs npm run eslint -- || {
+	echo "To run eslint: npm run fix:eslint"
+	exit 1
+}
 
 # Checking types is slow. It would be nice to check with an active tsserver, or
 # only typecheck changed files, but I haven't figured out how
