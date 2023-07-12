@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
 import { Config, configList } from "./config";
 import "./custom-mathquill-config.less";
 import { MathQuillField } from "components";
@@ -26,7 +27,7 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
     " gamma Gamma delta Delta epsilon zeta eta Theta iota kappa lambda Lambda mu nu Xi xi Pi rho sigma Sigma upsilon Upsilon Phi chi psi Psi omega Omega";
 
   updateConfig(config: Config) {
-    if (config.commaDelimeter) {
+    if (config.commaDelimiter) {
       Calc.controller.rootElt.classList.add("commaizer");
     } else {
       Calc.controller.rootElt.classList.remove("commaizer");
@@ -35,11 +36,11 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
     this.doAutoCommandInjections = config.extendedGreek;
 
     document.documentElement.style.setProperty(
-      "--delimeter-override",
-      `\"${CSS.escape(config.delimeterOverride)}\"`
+      "--delimiter-override",
+      `"${CSS.escape(config.delimiterOverride)}"`
     );
 
-    let settingsObj: Desmos.MathQuillConfig = {
+    const settingsObj = {
       charsThatBreakOutOfSupSub: config.superscriptOperators
         ? "=<>"
         : defaultConfig.charsThatBreakOutOfSupSub,
@@ -70,14 +71,12 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
   }
 
   afterEnable() {
-    Calc.controller.getMathquillConfig = (e: {
-      additionalOperators?: string[];
-    }) => {
-      let config = this.oldConfig.call(Calc.controller, e);
+    Calc.controller.getMathquillConfig = (e) => {
+      const currentConfig = this.oldConfig.call(Calc.controller, e);
       if (this.doAutoCommandInjections) {
-        config.autoCommands += this.autoCommandInjections;
+        currentConfig.autoCommands += this.autoCommandInjections;
       }
-      return config;
+      return currentConfig;
     };
     this.updateConfig(this.settings);
     this.updateAllMathquill();
@@ -96,17 +95,17 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
   }
 
   updateAllMathquill() {
-    for (let mqField of document.querySelectorAll(
-      ".dcg-math-field"
-    ) as NodeListOf<Element & { _mqMathFieldInstance: MathQuillField }>) {
-      let currentMQ = mqField._mqMathFieldInstance;
-      let injectionList = this.autoCommandInjections.substring(1).split(" ");
+    for (const mqField of document.querySelectorAll(".dcg-math-field")) {
+      const currentMQ = (
+        mqField as Element & { _mqMathFieldInstance: MathQuillField }
+      )._mqMathFieldInstance;
+      const injectionList = this.autoCommandInjections.substring(1).split(" ");
       if (this.doAutoCommandInjections) {
-        for (let injection of injectionList) {
+        for (const injection of injectionList) {
           currentMQ.__options.autoCommands[injection] = 1;
         }
       } else {
-        for (let injection of injectionList) {
+        for (const injection of injectionList) {
           delete currentMQ.__options.autoCommands[injection];
         }
       }

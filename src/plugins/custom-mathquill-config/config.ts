@@ -7,17 +7,17 @@ export const configList = [
     default: false,
   },
   {
-    key: "commaDelimeter",
+    key: "commaDelimiter",
     type: "boolean",
     default: false,
   },
   {
-    key: "delimeterOverride",
+    key: "delimiterOverride",
     type: "string",
     variant: "text",
     default: ",",
     shouldShow(current) {
-      return current.commaDelimeter;
+      return current.commaDelimiter;
     },
   },
   {
@@ -66,8 +66,8 @@ export const configList = [
 
 export interface Config {
   superscriptOperators: boolean;
-  commaDelimeter: boolean;
-  delimeterOverride: string;
+  commaDelimiter: boolean;
+  delimiterOverride: string;
   extendedGreek: boolean;
   subscriptReplacements: boolean;
   noAutoSubscript: boolean;
