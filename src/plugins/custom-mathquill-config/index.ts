@@ -35,7 +35,7 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
 
     this.doAutoCommandInjections = config.extendedGreek;
 
-    document.documentElement.style.setProperty(
+    Calc.controller.rootElt.style.setProperty(
       "--delimiter-override",
       `"${CSS.escape(config.delimiterOverride)}"`
     );
