@@ -61,6 +61,7 @@ export interface MathQuillField {
   keystroke: (key: string, e?: KeyboardEvent) => void;
   latex: (input?: string) => string;
   typedText: (input: string) => void;
+  config: (input: Desmos.MathQuillConfig) => MathQuillField;
   focus: () => void;
   blur: () => void;
   __controller: {

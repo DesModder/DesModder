@@ -223,4 +223,26 @@ multiline-opt-multilinifyDelayAfterEdit-name = Edit Delay (ms)
 
 ## Custom MathQuill Config
 custom-mathquill-config-name = Custom MathQuill Config
-custom-mathquill-config-desc = Lets you edit MathQuill config options to change how equation input works. Does not save with graphs.
+custom-mathquill-config-desc = Lets you edit MathQuill config options to change how equation input works.
+custom-mathquill-config-opt-superscriptOperators-name = Operators in Superscripts
+custom-mathquill-config-opt-superscriptOperators-desc = Make typing an operator keep the cursor inside the current superscript
+custom-mathquill-config-opt-noAutoSubscript-name = Disable Auto Subscripts
+custom-mathquill-config-opt-noAutoSubscript-desc = Disable automatically putting numbers typed after variable names in subscripts
+custom-mathquill-config-opt-noNEquals-name = Disable n= Sums
+custom-mathquill-config-opt-noNEquals-desc = Disable sums automatically placing 'n=' in the lower bound
+custom-mathquill-config-opt-subSupWithoutOp-name = Subscripts/Superscripts Without Operand
+custom-mathquill-config-opt-subSupWithoutOp-desc = Allows subscripts and superscripts to be made even if not preceded by anything
+custom-mathquill-config-opt-allowMixedBrackets-name = Allow Mismatched Brackets
+custom-mathquill-config-opt-allowMixedBrackets-desc = Allows curly brackets to match with parenthesis and square brackets
+custom-mathquill-config-opt-subscriptReplacements-name = Allow Replacements in Subscripts
+custom-mathquill-config-opt-subscriptReplacements-desc = Allows for symbols and function names to be typed into subscripts
+custom-mathquill-config-opt-noPercentOf-name = Disable % of
+custom-mathquill-config-opt-noPercentOf-desc = Makes typing '%' insert the percent character instead of '% of'
+custom-mathquill-config-opt-commaDelimeter-name = Comma Separators
+custom-mathquill-config-opt-commaDelimeter-desc = Inserts commas as delimeters in numbers (purely visual)
+custom-mathquill-config-opt-delimeterOverride-name = Custom Delimeter
+custom-mathquill-config-opt-delimeterOverride-desc = Set the string to be used as number delimeters
+custom-mathquill-config-opt-leftIntoSubscript-name = Left/Right into Subscripts
+custom-mathquill-config-opt-leftIntoSubscript-desc = Moving the cursor left or right will go into subscript instead of superscript
+custom-mathquill-config-opt-extendedGreek-name = More Greek Letters
+custom-mathquill-config-opt-extendedGreek-desc = Enables replacements for all supported greek letters
