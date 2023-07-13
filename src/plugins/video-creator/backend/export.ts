@@ -1,12 +1,15 @@
 import VideoCreator from "..";
 import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 import { downloadZip } from "client-zip";
+import { Console } from "globals/window";
 
 type FFmpeg = ReturnType<typeof createFFmpeg>;
 type FFmpegFileType = "gif" | "mp4" | "webm" | "apng";
 export type OutFileType = FFmpegFileType | "zip";
 
 let ffmpeg: null | FFmpeg = null;
+
+const CROP_EVEN = ["-vf", "crop=floor(iw/2)*2:floor(ih/2)*2"];
 
 async function exportAll(
   ffmpeg: FFmpeg,
@@ -16,7 +19,8 @@ async function exportAll(
   const outFilename = "out." + fileType;
 
   const outFlags = {
-    mp4: ["-vcodec", "libx264"],
+    // mp4s have to have even dimensions, so crop it to be even
+    mp4: ["-vcodec", "libx264", ...CROP_EVEN, "-pix_fmt", "yuv420p"],
     webm: ["-vcodec", "libvpx-vp9", "-quality", "realtime", "-speed", "8"],
     // generate fresh palette on every frame (higher quality)
     // https://superuser.com/a/1239082
@@ -65,6 +69,8 @@ export async function initFFmpeg(controller: VideoCreator) {
           if (denom === 0) denom = 1;
           const ratio = parseInt(frame) / denom;
           controller.setExportProgress(ratio);
+        } else {
+          Console.debug(message);
         }
       }
     });
