@@ -13,7 +13,10 @@ describe("Intellisense", () => {
         typedPrefix: string,
         latexPrefix: string,
         varname: string,
-        subscriptname?: string
+        subscriptname: string | undefined,
+        typedSuffix: string,
+        latexSuffix: string,
+        suffixLeft: number
       ) => {
         let typedIdentifierSample = `${varname}`;
 
@@ -55,14 +58,16 @@ describe("Intellisense", () => {
 
             // type out str and go left
             await driver.keyboard.type(typedPrefix + str);
-            for (let k = 0; k < j; k++) {
+            await driver.keyboard.press("ArrowRight");
+            await driver.keyboard.type(typedSuffix);
+            for (let k = 0; k < j + suffixLeft; k++) {
               await driver.keyboard.press("ArrowLeft");
             }
 
             // try autocomplete
             await driver.keyboard.press("Enter");
             await driver.assertSelectedItemLatex(
-              latexPrefix + expectedLatex,
+              latexPrefix + expectedLatex + latexSuffix,
               `Testing Identifier '${typedIdentifierSample}', autocompleting from '${str}', going left ${j} characters.`
             );
 
@@ -73,16 +78,16 @@ describe("Intellisense", () => {
       };
 
       await driver.focusIndex(0);
-      await testIdentSample("1+", "1+", "A", "1a3");
+      await testIdentSample("1+", "1+", "B", undefined, "+1", "+1", 2);
       await driver.setState(blankState);
       await driver.focusIndex(0);
-      await testIdentSample("1+", "1+", "alpha", "4b6");
+      await testIdentSample("1+", "1+", "A", "1a3", "+1", "+1", 2);
       await driver.setState(blankState);
       await driver.focusIndex(0);
-      await testIdentSample("1+", "1+", "beta", "7c9");
+      await testIdentSample("1+", "1+", "alpha", "4b6", "+1", "+1", 2);
       await driver.setState(blankState);
       await driver.focusIndex(0);
-      await testIdentSample("1+", "1+", "B");
+      await testIdentSample("1+", "1+", "beta", "7c9", "+1", "+1", 2);
 
       await driver.clean();
       return clean;
