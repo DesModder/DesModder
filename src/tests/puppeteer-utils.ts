@@ -218,8 +218,8 @@ export class Driver {
     stateOld.randomSeed = stateNew.randomSeed;
     expect(stateOld).toEqual(stateNew);
     // Enabled plugins are same
-    const enabledPluginsNew = await this.getEnabledPlugins();
-    expect(enabledPluginsNew).toEqual(this.enabledPluginsStart);
+    const enabledPluginsNew = (await this.getEnabledPlugins()).sort();
+    expect(enabledPluginsNew).toEqual([...this.enabledPluginsStart].sort());
     // Plugin settings are same
     const pluginSettingsNew = await this.getPluginSettings();
     expect(pluginSettingsNew).toEqual(this.pluginSettingsStart);
