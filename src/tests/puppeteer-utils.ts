@@ -60,7 +60,7 @@ async function getPage() {
     cleanPage = undefined;
     return page;
   }
-  const page = await (globalThis as any).__BROWSER_GLOBAL__.newPage();
+  const page = (await (globalThis as any).__BROWSER_GLOBAL__.newPage()) as Page;
   await page.goto("https://desmos.com/calculator");
   await page.waitForSelector(".dsm-pillbox-and-popover");
   return page;
@@ -188,6 +188,9 @@ export class Driver {
     await this.evaluate(() => DSM.metadata?.checkForMetadataChange());
     const exitELM = await this.page.$(EXIT_ELM);
     if (exitELM) await exitELM.click();
+    // Wait for settings to get sent back to the extension storage
+    // TODO-testing: some way to clear extension sync storage
+    await this.page.waitForFunction(() => !DSM.delaySetPluginSettings);
   }
 
   /** Assertions */
@@ -211,6 +214,10 @@ export class Driver {
   }
 
   async assertClean() {
+    const waitingToSendMessage = await this.page.evaluate(
+      () => DSM.delaySetPluginSettings
+    );
+    expect(waitingToSendMessage).toBeFalsy();
     // State is same
     const stateOld = await this.getState();
     await this.setBlank();
