@@ -100,6 +100,14 @@ export class Driver {
     await this.evaluate((state) => Calc.setState(state), state);
   }
 
+  async assertSelectedItemLatex(latex: string | undefined, msg?: string) {
+    const actualLatex = await this.evaluate(
+      () =>
+        (Calc.controller.getSelectedItem() as any)?.latex as string | undefined
+    );
+    expect(actualLatex, msg).toEqual(latex);
+  }
+
   async assertExprsList(state: GraphState) {
     const expected = state.expressions.list;
     const actual = (await this.getState()).expressions.list;

@@ -7,4 +7,5 @@ module.exports = {
   testEnvironment: "./src/tests/puppeteer-environment.js",
   globalSetup: "./src/tests/setup.js",
   globalTeardown: "./src/tests/teardown.js",
+  setupFilesAfterEnv: ["jest-expect-message"],
 };
