@@ -79,7 +79,6 @@ export interface DCGViewModule {
 }
 
 export const Component = DCGView.Class;
-export const constArg = DCGView.const;
 export const mountToNode = DCGView.mountToNode;
 export const unmountFromNode = DCGView.unmountFromNode;
 

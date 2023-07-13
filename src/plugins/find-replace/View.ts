@@ -1,22 +1,17 @@
-import Controller from "./Controller";
+import FindReplace from ".";
 import ReplaceBar from "./ReplaceBar";
 import {
+  DCGView,
   MountedComponent,
-  constArg,
   mountToNode,
   unmountFromNode,
 } from "DCGView";
 
 export default class View {
-  controller!: Controller;
   mountNode: HTMLElement | null = null;
   replaceView: MountedComponent | null = null;
 
-  init(controller: Controller) {
-    this.controller = controller;
-  }
-
-  initView() {
+  initView(fr: FindReplace) {
     if (this.mountNode !== null) {
       // already open
       return;
@@ -37,7 +32,7 @@ export default class View {
     this.mountNode.className = "dsm-find-replace-expression-replace-bar";
     searchContainer.appendChild(this.mountNode);
     this.replaceView = mountToNode(ReplaceBar, this.mountNode, {
-      controller: constArg(this.controller),
+      fr: DCGView.const(fr),
     });
   }
 
