@@ -97,7 +97,6 @@ function tryGetMathquillIdent(
 
   if (isInSubscript) {
     node = ctrlr.cursor;
-    goToEnd++;
     while (node?.[1]) {
       goToEnd++;
       node = node?.[1];
@@ -141,7 +140,7 @@ function tryGetMathquillIdent(
 
     hasSubscript = true;
 
-    goToEnd++;
+    if (isInSubscript) goToEnd++;
   }
 
   const identString = latexSegments.filter((e) => e).join("");
