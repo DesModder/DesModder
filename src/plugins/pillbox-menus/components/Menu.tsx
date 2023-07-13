@@ -131,13 +131,9 @@ export default class Menu extends Component<{
             <div>{pluginDisplayName(plugin)}</div>
           </div>
           <Toggle
-            toggled={() =>
-              this.controller.controller.isPluginEnabled(plugin.id)
-            }
-            disabled={() =>
-              !this.controller.controller.isPluginToggleable(plugin.id)
-            }
-            onChange={() => this.controller.controller.togglePlugin(plugin.id)}
+            toggled={() => this.controller.dsm.isPluginEnabled(plugin.id)}
+            disabled={() => !this.controller.dsm.isPluginToggleable(plugin.id)}
+            onChange={() => this.controller.dsm.togglePlugin(plugin.id)}
           />
         </div>
         {
@@ -175,7 +171,7 @@ export default class Menu extends Component<{
     const plugin = plugins.get(this.controller.expandedPlugin);
     if (plugin?.config === undefined) return null;
     const pluginSettings =
-      this.controller.controller.pluginSettings[this.controller.expandedPlugin];
+      this.controller.dsm.pluginSettings[this.controller.expandedPlugin];
     if (pluginSettings === undefined) return null;
     return (
       <div>
@@ -211,7 +207,7 @@ function numberOption(
     const value = Number((e.target as HTMLInputElement)?.value);
     if (!isNaN(value)) {
       controller.expandedPlugin &&
-        controller.controller.setPluginSetting(
+        controller.dsm.setPluginSetting(
           controller.expandedPlugin,
           item.key,
           value
@@ -253,7 +249,7 @@ function booleanOption(
 ) {
   const toggle = () =>
     controller.expandedPlugin &&
-    controller.controller.togglePluginSettingBoolean(
+    controller.dsm.togglePluginSettingBoolean(
       controller.expandedPlugin,
       item.key
     );
@@ -292,7 +288,7 @@ function stringOption(
         }
         onChange={(evt: Event) =>
           controller.expandedPlugin &&
-          controller.controller.setPluginSetting(
+          controller.dsm.setPluginSetting(
             controller.expandedPlugin,
             item.key,
             (evt.target as HTMLInputElement).value
@@ -300,7 +296,7 @@ function stringOption(
         }
         onInput={(evt: Event) =>
           controller.expandedPlugin &&
-          controller.controller.setPluginSetting(
+          controller.dsm.setPluginSetting(
             controller.expandedPlugin,
             item.key,
             (evt.target as HTMLInputElement).value,

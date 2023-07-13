@@ -74,7 +74,7 @@ export default class PillboxContainer extends Component<{
             )}
           </div>
         </For>
-        {this.controller.controller.insertElement(() =>
+        {this.controller.dsm.insertElement(() =>
           this.controller.pillboxMenuView(false)
         )}
       </div>

@@ -1,13 +1,13 @@
 import PerformanceInfo from ".";
 import "./PerformanceView.less";
 import { Component, jsx } from "DCGView";
-import MainController from "MainController";
+import DSM from "MainController";
 import { Button, IconButton, Tooltip } from "components";
 import { format } from "i18n/i18n-core";
 
 export class PerformanceView extends Component<{
   controller: () => PerformanceInfo;
-  mainController: () => MainController;
+  dsm: () => DSM;
 }> {
   template() {
     return (
@@ -22,13 +22,12 @@ export class PerformanceView extends Component<{
               <IconButton
                 iconClass={"dsm-icon-bookmark"}
                 onTap={() => {
-                  this.props.mainController().pillboxMenus?.toggleMenuPinned();
+                  this.props.dsm().pillboxMenus?.toggleMenuPinned();
                 }}
                 btnClass={() => ({
                   "dsm-pi-pin-menu-button": true,
                   "dsm-selected":
-                    this.props.mainController().pillboxMenus
-                      ?.pillboxMenuPinned ?? false,
+                    this.props.dsm().pillboxMenus?.pillboxMenuPinned ?? false,
                 })}
               />
             </Tooltip>
@@ -90,12 +89,12 @@ export class PerformanceView extends Component<{
 
 export function MainPopupFunc(
   performanceViewController: PerformanceInfo,
-  mainController: MainController
+  mainController: DSM
 ): PerformanceView {
   return (
     <PerformanceView
       controller={() => performanceViewController}
-      mainController={() => mainController}
+      dsm={() => mainController}
     />
   );
 }

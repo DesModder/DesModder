@@ -1,6 +1,6 @@
 import VideoCreator from "..";
 import { scaleBoundsAboutCenter } from "./utils";
-import MainController from "MainController";
+import DSM from "MainController";
 import { Calc } from "globals/window";
 import { EvaluateSingleExpression } from "utils/depUtils";
 
@@ -165,10 +165,10 @@ async function captureActionOrSliderTicks(
  * force-reload the list of options by closing and re-opening the menu.
  * This is needed when action-capture stops sliders, so the slider-ticks
  * capture method option gets disabled. */
-function forceReloadMenu(controller: MainController) {
+function forceReloadMenu(dsm: DSM) {
   // XXX: it would be better if SegmentedControl actually re-loaded options
   // A proper implementation is needed if we ever allow pinning the vc menu.
-  const pm = controller.pillboxMenus;
+  const pm = dsm.pillboxMenus;
   if (!pm) return;
   if (pm.pillboxMenuOpen === "dsm-vc-menu") {
     pm.pillboxMenuOpen = null;
@@ -191,7 +191,7 @@ export async function capture(controller: VideoCreator) {
       Calc.controller._tickSliders = () => {};
     } else if (Calc.controller.getPlayingSliders().length > 0) {
       Calc.controller.stopAllSliders();
-      forceReloadMenu(controller.controller);
+      forceReloadMenu(controller.dsm);
     }
   }
   switch (controller.captureMethod) {
