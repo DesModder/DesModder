@@ -137,7 +137,7 @@ function tryGetMathquillIdent(
   if (node && isSubscript(node)) {
     latexSegments.push(node.latex?.());
 
-    backspaces += (node.latex?.()?.length ?? 4) - 3;
+    backspaces += (node.latex?.()?.length ?? 4) - 4;
 
     hasSubscript = true;
 
