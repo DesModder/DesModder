@@ -6,7 +6,7 @@ import { Button, IconButton, Tooltip } from "components";
 import { format } from "i18n/i18n-core";
 
 export class PerformanceView extends Component<{
-  controller: () => PerformanceInfo;
+  pi: () => PerformanceInfo;
   dsm: () => DSM;
 }> {
   template() {
@@ -36,31 +36,23 @@ export class PerformanceView extends Component<{
         <ul>
           <li>
             <strong>{format("performance-info-time-in-worker")}: </strong>
-            {() =>
-              Math.round(this.props.controller().getTimingData().timeInWorker)
-            }
+            {() => Math.round(this.props.pi().getTimingData().timeInWorker)}
             ms
           </li>
           <li>
             <strong>{format("performance-info-compiling")}: </strong>
-            {() =>
-              Math.round(this.props.controller().getTimingData().updateAnalysis)
-            }
+            {() => Math.round(this.props.pi().getTimingData().updateAnalysis)}
             ms
           </li>
           <li>
             <strong>{format("performance-info-rendering")}: </strong>
-            {() =>
-              Math.round(
-                this.props.controller().getTimingData().graphAllChanges
-              )
-            }
+            {() => Math.round(this.props.pi().getTimingData().graphAllChanges)}
             ms
           </li>
           <li>
             <strong>{format("performance-info-other")}: </strong>
             {() => {
-              const timingData = this.props.controller().getTimingData();
+              const timingData = this.props.pi().getTimingData();
               return Math.round(
                 timingData.timeInWorker -
                   (timingData.updateAnalysis + timingData.graphAllChanges)
@@ -75,7 +67,7 @@ export class PerformanceView extends Component<{
               color="primary"
               class="dsm-pi-refresh-state-button"
               onTap={() => {
-                this.props.controller().refreshState();
+                this.props.pi().refreshState();
               }}
             >
               {format("performance-info-refresh-graph")}
@@ -87,14 +79,6 @@ export class PerformanceView extends Component<{
   }
 }
 
-export function MainPopupFunc(
-  performanceViewController: PerformanceInfo,
-  mainController: DSM
-): PerformanceView {
-  return (
-    <PerformanceView
-      controller={() => performanceViewController}
-      dsm={() => mainController}
-    />
-  );
+export function MainPopupFunc(pi: PerformanceInfo, dsm: DSM): PerformanceView {
+  return <PerformanceView pi={() => pi} dsm={() => dsm} />;
 }
