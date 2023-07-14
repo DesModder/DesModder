@@ -20,8 +20,8 @@ import {
   ConfigItemNumber,
 } from "plugins";
 
-export function MenuFunc(controller: PillboxMenus) {
-  return <Menu controller={controller} />;
+export function MenuFunc(pm: PillboxMenus) {
+  return <Menu pm={pm} />;
 }
 
 const categoryPlugins: Record<string, PluginID[]> = {
@@ -57,12 +57,12 @@ const categoryPlugins: Record<string, PluginID[]> = {
 const categories = ["core", "utility", "visual", "integrations"];
 
 export default class Menu extends Component<{
-  controller: PillboxMenus;
+  pm: PillboxMenus;
 }> {
-  controller!: PillboxMenus;
+  pm!: PillboxMenus;
 
   init() {
-    this.controller = this.props.controller();
+    this.pm = this.props.pm();
   }
 
   template() {
@@ -78,15 +78,14 @@ export default class Menu extends Component<{
               <div
                 class={() => ({
                   "dsm-category-header": true,
-                  "dsm-expanded": this.controller.isCategoryExpanded(category),
+                  "dsm-expanded": this.pm.isCategoryExpanded(category),
                 })}
-                onClick={() => this.controller.toggleCategoryExpanded(category)}
+                onClick={() => this.pm.toggleCategoryExpanded(category)}
               >
                 <div
                   class={() => ({
                     "dsm-caret-container": true,
-                    "dsm-caret-expanded":
-                      this.controller.isCategoryExpanded(category),
+                    "dsm-caret-expanded": this.pm.isCategoryExpanded(category),
                   })}
                 >
                   <i class="dcg-icon-caret-down" />
@@ -94,7 +93,7 @@ export default class Menu extends Component<{
                 <div>{categoryDisplayName(category)}</div>
               </div>
             </div>
-            <If predicate={() => this.controller.isCategoryExpanded(category)}>
+            <If predicate={() => this.pm.isCategoryExpanded(category)}>
               {() => (
                 <For each={() => categoryPlugins[category]} key={(id) => id}>
                   <div class="dsm-category-container">
@@ -117,13 +116,12 @@ export default class Menu extends Component<{
         <div class="dcg-options-menu-section-title dsm-plugin-title-bar">
           <div
             class="dsm-plugin-header"
-            onClick={() => this.controller.togglePluginExpanded(plugin.id)}
+            onClick={() => this.pm.togglePluginExpanded(plugin.id)}
           >
             <div
               class={() => ({
                 "dsm-caret-container": true,
-                "dsm-caret-expanded":
-                  plugin.id === this.controller.expandedPlugin,
+                "dsm-caret-expanded": plugin.id === this.pm.expandedPlugin,
               })}
             >
               <i class="dcg-icon-caret-down" />
@@ -131,17 +129,13 @@ export default class Menu extends Component<{
             <div>{pluginDisplayName(plugin)}</div>
           </div>
           <Toggle
-            toggled={() =>
-              this.controller.controller.isPluginEnabled(plugin.id)
-            }
-            disabled={() =>
-              !this.controller.controller.isPluginToggleable(plugin.id)
-            }
-            onChange={() => this.controller.controller.togglePlugin(plugin.id)}
+            toggled={() => this.pm.dsm.isPluginEnabled(plugin.id)}
+            disabled={() => !this.pm.dsm.isPluginToggleable(plugin.id)}
+            onChange={() => this.pm.dsm.togglePlugin(plugin.id)}
           />
         </div>
         {
-          <If predicate={() => plugin.id === this.controller.expandedPlugin}>
+          <If predicate={() => plugin.id === this.pm.expandedPlugin}>
             {() => (
               <div class="dsm-plugin-info-body">
                 <div class="dsm-plugin-description">
@@ -171,11 +165,10 @@ export default class Menu extends Component<{
   }
 
   getExpandedSettings() {
-    if (this.controller.expandedPlugin === null) return null;
-    const plugin = plugins.get(this.controller.expandedPlugin);
+    if (this.pm.expandedPlugin === null) return null;
+    const plugin = plugins.get(this.pm.expandedPlugin);
     if (plugin?.config === undefined) return null;
-    const pluginSettings =
-      this.controller.controller.pluginSettings[this.controller.expandedPlugin];
+    const pluginSettings = this.pm.dsm.pluginSettings[this.pm.expandedPlugin];
     if (pluginSettings === undefined) return null;
     return (
       <div>
@@ -188,7 +181,7 @@ export default class Menu extends Component<{
                     boolean: booleanOption,
                     string: stringOption,
                     number: numberOption,
-                  }[item.type](this.controller, item, plugin, pluginSettings))
+                  }[item.type](this.pm, item, plugin, pluginSettings))
                 }
               </Switch>
             )}
@@ -200,7 +193,7 @@ export default class Menu extends Component<{
 }
 
 function numberOption(
-  controller: PillboxMenus,
+  pm: PillboxMenus,
   item: ConfigItem,
   plugin: SpecificPlugin,
   settings: GenericSettings
@@ -210,12 +203,8 @@ function numberOption(
   const inputHandler = (e: InputEvent) => {
     const value = Number((e.target as HTMLInputElement)?.value);
     if (!isNaN(value)) {
-      controller.expandedPlugin &&
-        controller.controller.setPluginSetting(
-          controller.expandedPlugin,
-          item.key,
-          value
-        );
+      pm.expandedPlugin &&
+        pm.dsm.setPluginSetting(pm.expandedPlugin, item.key, value);
     }
   };
 
@@ -240,23 +229,20 @@ function numberOption(
           {configItemName(plugin, item)}
         </label>
       </Tooltip>
-      <ResetButton controller={controller} key={item.key} />
+      <ResetButton pm={pm} key={item.key} />
     </div>
   );
 }
 
 function booleanOption(
-  controller: PillboxMenus,
+  pm: PillboxMenus,
   item: ConfigItem,
   plugin: SpecificPlugin,
   settings: GenericSettings
 ) {
   const toggle = () =>
-    controller.expandedPlugin &&
-    controller.controller.togglePluginSettingBoolean(
-      controller.expandedPlugin,
-      item.key
-    );
+    pm.expandedPlugin &&
+    pm.dsm.togglePluginSettingBoolean(pm.expandedPlugin, item.key);
   return (
     <div class="dsm-settings-item dsm-settings-boolean">
       <Checkbox
@@ -269,13 +255,13 @@ function booleanOption(
           {configItemName(plugin, item)}
         </div>
       </Tooltip>
-      <ResetButton controller={controller} key={item.key} />
+      <ResetButton pm={pm} key={item.key} />
     </div>
   );
 }
 
 function stringOption(
-  controller: PillboxMenus,
+  pm: PillboxMenus,
   item: ConfigItem,
   plugin: SpecificPlugin,
   settings: GenericSettings
@@ -291,17 +277,17 @@ function stringOption(
           (e.value = settings[item.key] as string)
         }
         onChange={(evt: Event) =>
-          controller.expandedPlugin &&
-          controller.controller.setPluginSetting(
-            controller.expandedPlugin,
+          pm.expandedPlugin &&
+          pm.dsm.setPluginSetting(
+            pm.expandedPlugin,
             item.key,
             (evt.target as HTMLInputElement).value
           )
         }
         onInput={(evt: Event) =>
-          controller.expandedPlugin &&
-          controller.controller.setPluginSetting(
-            controller.expandedPlugin,
+          pm.expandedPlugin &&
+          pm.dsm.setPluginSetting(
+            pm.expandedPlugin,
             item.key,
             (evt.target as HTMLInputElement).value,
             true
@@ -313,31 +299,31 @@ function stringOption(
           {configItemName(plugin, item)}
         </label>
       </Tooltip>
-      <ResetButton controller={controller} key={item.key} />
+      <ResetButton pm={pm} key={item.key} />
     </div>
   );
 }
 
 class ResetButton extends Component<{
-  controller: PillboxMenus;
+  pm: PillboxMenus;
   key: string;
 }> {
-  controller!: PillboxMenus;
+  pm!: PillboxMenus;
   key!: string;
 
   init() {
-    this.controller = this.props.controller();
+    this.pm = this.props.pm();
     this.key = this.props.key();
   }
 
   template() {
     return (
-      <If predicate={() => this.controller.canResetSetting(this.key)}>
+      <If predicate={() => this.pm.canResetSetting(this.key)}>
         {() => (
           <div
             class="dsm-reset-btn"
             role="button"
-            onTap={() => this.controller.resetSetting(this.key)}
+            onTap={() => this.pm.resetSetting(this.key)}
           >
             <i class="dcg-icon-reset" />
           </div>

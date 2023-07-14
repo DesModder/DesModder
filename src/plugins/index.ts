@@ -23,7 +23,7 @@ import TextMode from "./text-mode";
 import VideoCreator from "./video-creator";
 import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
-import MainController from "MainController";
+import DSM from "MainController";
 
 interface ConfigItemGeneric {
   key: string;
@@ -92,7 +92,7 @@ export interface Plugin<
   descriptionLearnMore?: string;
   enabledByDefault: boolean;
   forceEnabled?: boolean;
-  new (controller: MainController, config: Settings): PluginInstance<Settings>;
+  new (dsm: DSM, config: Settings): PluginInstance<Settings>;
   config?: readonly ConfigItem[];
 }
 
