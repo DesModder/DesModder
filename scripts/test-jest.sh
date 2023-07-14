@@ -53,7 +53,9 @@ if [ ! -f $CALC_DESKTOP ]; then
   echo "Mkdir cache folder"
   mkdir -p "$CACHE_FOLDER"
   echo "Downloading latest calculator_desktop: '$js'"
-  curl -L "$js" -o "$CALC_DESKTOP"
+  # Insert some newlines, so lines are shorter if any errors get logged.
+  # Skip the first 50 lines since those are worker code
+  curl -L "$js" | sed -re '1,50 ! s/(![01])/\1\n/g' > "$CALC_DESKTOP"
   echo "Download finished"
 fi
 
