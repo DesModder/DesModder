@@ -12,7 +12,7 @@ Function documentation can also contain rendered LaTeX mathematical expressions,
 
 ### Parameter Documentation
 
-You can provide documentation for specific function parameters by typing `@param=PARAMNAME`, where `PARAMNAME` is the name of the function parameter as if it were written in [Text Mode](../../text-mode/docs/intro.md) format.
+You can provide documentation for specific function parameters by typing `@param PARAMNAME`, where `PARAMNAME` is the name of the function parameter as if it were written in [Text Mode](../../text-mode/docs/intro.md) format.
 
 ## Jump to Definition
 
