@@ -1,7 +1,7 @@
 import { DWindow } from "../globals/window";
 import { PluginID } from "../plugins";
 import { GraphState } from "@desmodder/graph-state";
-import { Page } from "puppeteer";
+import { Browser, Page } from "puppeteer";
 
 /** Calc is only available inside evaluate() callbacks and friends, since those
  * stringify the function and evaluate it inside the browser */
@@ -12,18 +12,12 @@ declare let DSM: DWindow["DSM"];
 /** A clean page is one that is equivalent (for all purposes) to a just-opened
  * calculator tab. We introduce this state to avoid a bunch of reloads.
  * But it's slightly risky, if a page isn't quite cleaned up. */
-let cleanPage: Page | undefined;
 
-beforeAll(async () => {
-  cleanPage = await getPage();
+beforeEach(async () => {
+  // Ensure at least one page is clean, so the reload time is not counted
+  // as part of the test time (being unclean is the fault of an earlier test)
+  await getPage();
 }, 10000);
-
-afterAll(async () => {
-  if (cleanPage) {
-    await cleanPage.close();
-    cleanPage = undefined;
-  }
-});
 
 /** Use if the page is expected to be clean */
 export const clean = Symbol("clean");
@@ -44,8 +38,8 @@ export function testWithPage(
       const cleanliness = await cb(driver);
       if (cleanliness === clean) {
         await driver.assertClean();
-        cleanPage = page;
       } else {
+        // If the page is not clean, close it.
         await page.close();
       }
     },
@@ -53,14 +47,21 @@ export function testWithPage(
   );
 }
 
+const browser = (globalThis as any).__BROWSER_GLOBAL__ as Browser;
+
 async function getPage() {
-  if (cleanPage) {
-    const page = cleanPage;
-    // The test can dirty the page immediately.
-    cleanPage = undefined;
-    return page;
-  }
-  const page = (await (globalThis as any).__BROWSER_GLOBAL__.newPage()) as Page;
+  const pages = await browser.pages();
+  // Assume that all Desmos pages are clean
+  const isClean = await Promise.all(
+    pages.map(async (x) => (await x.title()).includes("Desmos"))
+  );
+  const cleanPages = pages.filter((_, i) => isClean[i]);
+  const page = cleanPages.pop();
+  return page ?? (await makeNewPage());
+}
+
+async function makeNewPage() {
+  const page = await browser.newPage();
   await page.goto("https://desmos.com/calculator");
   await page.waitForSelector(".dsm-pillbox-and-popover");
   return page;
