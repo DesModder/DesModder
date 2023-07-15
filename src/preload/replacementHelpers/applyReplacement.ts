@@ -100,13 +100,7 @@ function getSymbols(commands: Command[], str: Token[]): SymbolTable {
         const inside = command.args[0]
           ? table.getRequired(command.args[0])
           : { start: 0, length: table.str.length };
-        const found = findPattern(
-          command.patternArg,
-          table.str,
-          inside,
-          // if the first arg is blank, duplicates are allowed
-          command.returns === undefined || symbolName(command.returns) === ""
-        );
+        const found = findPattern(command.patternArg, table.str, inside, false);
         table.merge(found.newBindings);
         if (command.returns)
           table.set(command.returns, {
