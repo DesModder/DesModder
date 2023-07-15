@@ -27,11 +27,10 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
     " gamma Gamma delta Delta epsilon zeta eta Theta iota kappa lambda Lambda mu nu Xi xi Pi rho sigma Sigma upsilon Upsilon Phi chi psi Psi omega Omega";
 
   updateConfig(config: Config) {
-    if (config.commaDelimiter) {
-      Calc.controller.rootElt.classList.add("commaizer");
-    } else {
-      Calc.controller.rootElt.classList.remove("commaizer");
-    }
+    Calc.controller.rootElt.classList.toggle(
+      "commaizer",
+      config.commaDelimiter
+    );
 
     this.doAutoCommandInjections = config.extendedGreek;
 
