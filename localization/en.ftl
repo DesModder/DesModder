@@ -223,9 +223,9 @@ multiline-opt-multilinifyDelayAfterEdit-name = Edit Delay (ms)
 
 ## Custom MathQuill Config
 custom-mathquill-config-name = Custom MathQuill Config
-custom-mathquill-config-desc = Lets you edit MathQuill config options to change how equation input works.
-custom-mathquill-config-opt-superscriptOperators-name = Operators in Superscripts
-custom-mathquill-config-opt-superscriptOperators-desc = Make typing an operator keep the cursor inside the current superscript
+custom-mathquill-config-desc = Changes how equation input works.
+custom-mathquill-config-opt-superscriptOperators-name = Operators in Exponents
+custom-mathquill-config-opt-superscriptOperators-desc = Allows you to type operators like '+' in exponents
 custom-mathquill-config-opt-noAutoSubscript-name = Disable Auto Subscripts
 custom-mathquill-config-opt-noAutoSubscript-desc = Disable automatically putting numbers typed after variable names in subscripts
 custom-mathquill-config-opt-noNEquals-name = Disable n= Sums
@@ -235,7 +235,7 @@ custom-mathquill-config-opt-subSupWithoutOp-desc = Allows subscripts and supersc
 custom-mathquill-config-opt-allowMixedBrackets-name = Allow Mismatched Brackets
 custom-mathquill-config-opt-allowMixedBrackets-desc = Allows all brackets to match with each other (includes absolute value)
 custom-mathquill-config-opt-subscriptReplacements-name = Allow Replacements in Subscripts
-custom-mathquill-config-opt-subscriptReplacements-desc = Allows for symbols and function names to be typed into subscripts
+custom-mathquill-config-opt-subscriptReplacements-desc = Allows symbols and function names to be typed into subscripts
 custom-mathquill-config-opt-noPercentOf-name = Disable % of
 custom-mathquill-config-opt-noPercentOf-desc = Makes typing '%' insert the percent character instead of '% of'
 custom-mathquill-config-opt-commaDelimiter-name = Comma Separators
