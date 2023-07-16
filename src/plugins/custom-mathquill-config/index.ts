@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 import { Config, configList } from "./config";
 import "./custom-mathquill-config.less";
-import { MathQuillField } from "components";
-import { Calc } from "globals/window";
+import { MathQuillConfig, MathQuillField } from "components";
+import { Calc, DWindow } from "globals/window";
 import { PluginController } from "plugins/PluginController";
 
-const defaultConfig: Desmos.MathQuillConfig = {
+const defaultConfig: MathQuillConfig = {
   charsThatBreakOutOfSupSub: "+-=<>*",
   disableAutoSubstitutionInSubscripts: true,
   autoSubscriptNumerals: true,
@@ -65,7 +65,7 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
         ? false
         : defaultConfig.typingPercentWritesPercentOf,
     };
-    Desmos.MathQuill.config(settingsObj);
+    (window as any as DWindow).Desmos.MathQuill.config(settingsObj);
     this.updateAllMathquill();
   }
 
@@ -84,7 +84,7 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
   afterDisable() {
     this.doAutoCommandInjections = false;
     Calc.controller.rootElt.classList.remove("commaizer");
-    Desmos.MathQuill.config(defaultConfig);
+    (window as any as DWindow).Desmos.MathQuill.config(defaultConfig);
     Calc.controller.getMathquillConfig = this.oldConfig;
     this.updateAllMathquill();
   }

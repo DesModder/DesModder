@@ -57,11 +57,24 @@ export interface MQCursor {
   domFrag: () => DomFrag;
 }
 
+export interface MathQuillConfig {
+  autoOperatorNames?: string;
+  disableAutoSubstitutionInSubscripts?: boolean;
+  autoCommands?: string;
+  charsThatBreakOutOfSupSub?: string;
+  autoSubscriptNumerals?: boolean;
+  sumStartsWithNEquals?: boolean;
+  leftRightIntoCmdGoes?: string;
+  supSubsRequireOperand?: boolean;
+  restrictMismatchedBrackets?: boolean;
+  typingPercentWritesPercentOf?: boolean;
+}
+
 export interface MathQuillField {
   keystroke: (key: string, e?: KeyboardEvent) => void;
   latex: (input?: string) => string;
   typedText: (input: string) => void;
-  config: (input: Desmos.MathQuillConfig) => MathQuillField;
+  config: (input: MathQuillConfig) => MathQuillField;
   focus: () => void;
   blur: () => void;
   __controller: {

@@ -10,6 +10,7 @@ import {
   MathQuillViewComponent,
   SegmentedControlComponent,
   TooltipComponent,
+  MathQuillConfig,
 } from "../components/desmosComponents";
 import { GenericSettings, PluginID } from "../plugins";
 import CalcType from "./Calc";
@@ -33,6 +34,9 @@ export interface DWindow extends Window {
     Private: {
       Fragile: typeof Fragile;
       Mathtools: Mathtools;
+    };
+    MathQuill: {
+      config: (config: MathQuillConfig) => DWindow["Desmos"]["MathQuill"];
     };
   };
 }
