@@ -41,6 +41,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "duplicate-expression-hotkey",
     "shift-enter-newline",
     "folder-tools",
+    "custom-mathquill-config",
   ],
   visual: [
     "set-primary-color",
