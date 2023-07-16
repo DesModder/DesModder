@@ -17,22 +17,22 @@ import { format } from "i18n/i18n-core";
 
 const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng", "zip"];
 
-export function MainPopupFunc(videoCreatorController: VideoCreator) {
-  return <MainPopup controller={videoCreatorController} />;
+export function MainPopupFunc(vc: VideoCreator) {
+  return <MainPopup vc={vc} />;
 }
 
 export default class MainPopup extends Component<{
-  controller: VideoCreator;
+  vc: VideoCreator;
 }> {
-  controller!: VideoCreator;
+  vc!: VideoCreator;
 
   init() {
-    this.controller = this.props.controller();
-    void this.controller.tryInitFFmpeg();
+    this.vc = this.props.vc();
+    void this.vc.tryInitFFmpeg();
   }
 
   template() {
-    return IfElse(() => this.controller.ffmpegLoaded, {
+    return IfElse(() => this.vc.ffmpegLoaded, {
       true: () => this.templateFFmpegLoaded(),
       false: () => (
         <div class="dcg-popover-interior">
@@ -46,17 +46,16 @@ export default class MainPopup extends Component<{
   }
 
   templateFFmpegLoaded() {
-    return IfElse(() => this.controller.isExporting, {
+    return IfElse(() => this.vc.isExporting, {
       false: () => this.templateNormal(),
       true: () => (
-        <div class="dcg-popover-interior">
+        <div class="dcg-popover-interior no-intellisense">
           <div class="dsm-vc-export-in-progress">
             {format("video-creator-exporting")}
             <LoadingPie
-              progress={() => this.controller.exportProgress}
+              progress={() => this.vc.exportProgress}
               isPending={() =>
-                this.controller.exportProgress < 0 ||
-                this.controller.exportProgress > 0.99
+                this.vc.exportProgress < 0 || this.vc.exportProgress > 0.99
               }
             />
           </div>
@@ -64,7 +63,7 @@ export default class MainPopup extends Component<{
             <Button
               color="red"
               onTap={() => {
-                void cancelExport(this.controller);
+                void cancelExport(this.vc);
               }}
             >
               {format("video-creator-cancel-export")}
@@ -77,12 +76,12 @@ export default class MainPopup extends Component<{
 
   templateNormal() {
     return (
-      <div class="dcg-popover-interior">
+      <div class="dcg-popover-interior no-intellisense">
         <div class="dsm-vc-capture-menu">
           <div class="dcg-popover-title">{format("video-creator-capture")}</div>
-          <CaptureMethod controller={this.controller} />
+          <CaptureMethod vc={this.vc} />
         </div>
-        <If predicate={() => this.controller.frames.length > 0}>
+        <If predicate={() => this.vc.frames.length > 0}>
           {() => (
             <div class="dsm-vc-preview-menu">
               <div class="dsm-vc-delete-all-row">
@@ -90,10 +89,7 @@ export default class MainPopup extends Component<{
                   {format("video-creator-preview")}
                 </div>
                 <div class="dsm-vc-delete-all">
-                  <Button
-                    color="light-gray"
-                    onTap={() => this.controller.deleteAll()}
-                  >
+                  <Button color="light-gray" onTap={() => this.vc.deleteAll()}>
                     {format("video-creator-delete-all")}
                   </Button>
                 </div>
@@ -101,22 +97,21 @@ export default class MainPopup extends Component<{
               <div
                 class={() => ({
                   "dsm-vc-preview-outer": true,
-                  "dsm-vc-preview-expanded":
-                    this.controller.isPlayPreviewExpanded,
+                  "dsm-vc-preview-expanded": this.vc.isPlayPreviewExpanded,
                 })}
                 onTapEnd={(e: Event) =>
-                  this.controller.isPlayPreviewExpanded &&
+                  this.vc.isPlayPreviewExpanded &&
                   this.eventShouldCloseExpanded(e) &&
-                  this.controller.togglePreviewExpanded()
+                  this.vc.togglePreviewExpanded()
                 }
               >
                 <div class="dsm-vc-preview-inner">
-                  <PreviewCarousel controller={this.controller} />
-                  <If predicate={() => this.controller.isPlayPreviewExpanded}>
+                  <PreviewCarousel vc={this.vc} />
+                  <If predicate={() => this.vc.isPlayPreviewExpanded}>
                     {() => (
                       <div
                         class="dsm-vc-exit-expanded"
-                        onTap={() => this.controller.togglePreviewExpanded()}
+                        onTap={() => this.vc.togglePreviewExpanded()}
                       >
                         <i class="dcg-icon-remove" />
                       </div>
@@ -127,7 +122,7 @@ export default class MainPopup extends Component<{
             </div>
           )}
         </If>
-        <If predicate={() => this.controller.frames.length > 0}>
+        <If predicate={() => this.vc.frames.length > 0}>
           {() => (
             <div class="dsm-vc-export-menu">
               <div class="dcg-popover-title">
@@ -143,8 +138,8 @@ export default class MainPopup extends Component<{
               </div>
               <Input
                 class="dsm-vc-outfile-name"
-                value={() => this.controller.getOutfileName()}
-                onInput={(s: string) => this.controller.setOutfileName(s)}
+                value={() => this.vc.getOutfileName()}
+                onInput={(s: string) => this.vc.setOutfileName(s)}
                 required={() => true}
                 placeholder={() => format("video-creator-filename-placeholder")}
                 // Avoid red squiggles throughout filename
@@ -155,37 +150,33 @@ export default class MainPopup extends Component<{
                   color="primary"
                   class="dsm-vc-export-frames-button"
                   onTap={() => {
-                    void this.controller.exportFrames();
+                    void this.vc.exportFrames();
                   }}
                   disabled={() =>
-                    this.controller.frames.length === 0 ||
-                    this.controller.isCapturing ||
-                    this.controller.isExporting ||
-                    !this.controller.isFPSValid()
+                    this.vc.frames.length === 0 ||
+                    this.vc.isCapturing ||
+                    this.vc.isExporting ||
+                    !this.vc.isFPSValid()
                   }
                 >
                   {() =>
                     format("video-creator-export-as", {
-                      fileType: this.controller.fileType,
+                      fileType: this.vc.fileType,
                     })
                   }
                 </Button>
-                <If predicate={() => this.controller.fileType !== "zip"}>
+                <If predicate={() => this.vc.fileType !== "zip"}>
                   {() => (
                     <div class="dsm-vc-fps-settings">
                       {format("video-creator-fps")}
                       <InlineMathInputView
                         ariaLabel="fps"
-                        handleLatexChanged={(s) =>
-                          this.controller.setFPSLatex(s)
-                        }
-                        hasError={() => !this.controller.isFPSValid()}
-                        latex={() => this.controller.fpsLatex}
-                        isFocused={() =>
-                          this.controller.isFocused("export-fps")
-                        }
+                        handleLatexChanged={(s) => this.vc.setFPSLatex(s)}
+                        hasError={() => !this.vc.isFPSValid()}
+                        latex={() => this.vc.fpsLatex}
+                        isFocused={() => this.vc.isFocused("export-fps")}
                         handleFocusChanged={(b) =>
-                          this.controller.updateFocus("export-fps", b)
+                          this.vc.updateFocus("export-fps", b)
                         }
                       />
                     </div>
@@ -200,13 +191,13 @@ export default class MainPopup extends Component<{
   }
 
   getSelectedFileTypeIndex() {
-    return fileTypeNames.indexOf(this.controller.fileType);
+    return fileTypeNames.indexOf(this.vc.fileType);
   }
 
   setSelectedFileTypeIndex(i: number) {
     const name = fileTypeNames[i];
     if (name !== undefined) {
-      this.controller.setOutputFiletype(name);
+      this.vc.setOutputFiletype(name);
     }
   }
 

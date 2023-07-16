@@ -46,7 +46,7 @@ export default class PillboxMenus extends PluginController<undefined> {
   pillboxButtonsView(horizontal: boolean): Inserter {
     return () =>
       DCGView.createElement(PillboxContainer as any, {
-        controller: () => this,
+        pm: () => this,
         horizontal: DCGView.const(horizontal),
       });
   }
@@ -55,7 +55,7 @@ export default class PillboxMenus extends PluginController<undefined> {
     if (this.pillboxMenuOpen === null) return undefined;
     return () =>
       DCGView.createElement(PillboxMenu as any, {
-        controller: () => this,
+        pm: () => this,
         horizontal: DCGView.const(horizontal),
       });
   }
@@ -102,7 +102,7 @@ export default class PillboxMenus extends PluginController<undefined> {
   }
 
   showHorizontalPillboxMenu() {
-    // Constant threshold, independent of this.controller.pillboxButtonsOrder.length
+    // Constant threshold, independent of this.pillboxButtonsOrder.length
     // Maybe want to tweak the threshold if a fourth possible pillbox button is
     // added, or figure out a better layout at that point because it's starting
     // to be a lot of pillbox threshold.
@@ -127,15 +127,14 @@ export default class PillboxMenus extends PluginController<undefined> {
     const defaultValue = this.getDefaultSetting(key);
     return (
       defaultValue !== undefined &&
-      this.controller.pluginSettings[this.expandedPlugin]?.[key] !==
-        defaultValue
+      this.dsm.pluginSettings[this.expandedPlugin]?.[key] !== defaultValue
     );
   }
 
   resetSetting(key: string) {
     this.expandedPlugin &&
       this.canResetSetting(key) &&
-      this.controller.setPluginSetting(
+      this.dsm.setPluginSetting(
         this.expandedPlugin,
         key,
         this.getDefaultSetting(key)!

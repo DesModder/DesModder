@@ -6,14 +6,14 @@ import { Calc } from "globals/window";
 import { keys } from "utils/depUtils";
 
 export default class PillboxMenu extends Component<{
-  controller: PillboxMenus;
+  pm: PillboxMenus;
   horizontal: boolean;
 }> {
-  controller!: PillboxMenus;
+  pm!: PillboxMenus;
   horizontal!: boolean;
 
   init() {
-    this.controller = this.props.controller();
+    this.pm = this.props.pm();
     this.horizontal = this.props.horizontal();
   }
 
@@ -21,8 +21,8 @@ export default class PillboxMenu extends Component<{
     return (
       <If
         predicate={() =>
-          this.controller.pillboxMenuOpen !== null &&
-          this.controller.showHorizontalPillboxMenu() === this.horizontal
+          this.pm.pillboxMenuOpen !== null &&
+          this.pm.showHorizontalPillboxMenu() === this.horizontal
         }
       >
         {() => (
@@ -42,11 +42,11 @@ export default class PillboxMenu extends Component<{
               ...this.getPopoverPosition(),
             })}
           >
-            <Switch key={() => this.controller.pillboxMenuOpen}>
+            <Switch key={() => this.pm.pillboxMenuOpen}>
               {() =>
-                this.controller.pillboxButtons[
-                  this.controller.pillboxMenuOpen as string
-                ]?.popup?.(this.controller)
+                this.pm.pillboxButtons[
+                  this.pm.pillboxMenuOpen as string
+                ]?.popup?.(this.pm)
               }
             </Switch>
             <div class="dcg-arrow" />
@@ -64,7 +64,7 @@ export default class PillboxMenu extends Component<{
   _onKeydown(e: KeyboardEvent) {
     if (keys.lookup(e) === "Esc") {
       e.stopImmediatePropagation();
-      this.controller.closeMenu();
+      this.pm.closeMenu();
     }
   }
 
@@ -75,7 +75,7 @@ export default class PillboxMenu extends Component<{
       if (ek.key !== "Enter" && ek.key !== " ") return;
     }
     if (this.eventShouldCloseMenu(e)) {
-      this.controller.closeMenu();
+      this.pm.closeMenu();
     }
   }
 
@@ -107,8 +107,8 @@ export default class PillboxMenu extends Component<{
   }
 
   index() {
-    let index = this.controller.pillboxButtonsOrder.indexOf(
-      this.controller.pillboxMenuOpen as string
+    let index = this.pm.pillboxButtonsOrder.indexOf(
+      this.pm.pillboxMenuOpen as string
     );
     if (
       Calc.settings.settingsMenu &&

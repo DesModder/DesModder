@@ -1,7 +1,7 @@
 {
   "name": "desmodder",
   "description": "Supercharge your Desmos graph creation and sharing experience with many convenient features",
-  "version": "0.11.0",
+  "version": "0.11.2",
   "author": {
     "name": "Jared Hughes"
   },
@@ -15,7 +15,7 @@
     "build-ff": "node ./esbuild.mjs --browser=firefox",
     "dev": "node ./esbuild.mjs --watch --browser=chrome",
     "dev-ff": "node ./esbuild.mjs --watch --browser=firefox",
-    "audit-langs": "npm run build-scripts && node ./dist/audit-langs.js",
+    "audit-langs": "npm run build-scripts && node --enable-source-maps ./dist/audit-langs.js",
     "build-scripts": "node ./scripts/build-scripts.mjs",
     "fix:prettier": "prettier --cache --write .",
     "fix:eslint": "eslint --fix src",
@@ -25,7 +25,7 @@
     "lint:formatting": "prettier --check .",
     "lint:types": "tsc --noEmit",
     "eslint": "eslint",
-    "lint:eslint": "eslint .",
+    "lint:eslint": "eslint \"**\"",
     "test": "./scripts/test-jest.sh both",
     "test:unit": "./scripts/test-jest.sh unit",
     "test:integration": "./scripts/test-jest.sh integration"

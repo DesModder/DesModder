@@ -6,14 +6,14 @@ import { Calc } from "globals/window";
 import { format } from "i18n/i18n-core";
 
 export default class PillboxContainer extends Component<{
-  controller: PillboxMenus;
+  pm: PillboxMenus;
   horizontal: boolean;
 }> {
-  controller!: PillboxMenus;
+  pm!: PillboxMenus;
   horizontal!: boolean;
 
   init() {
-    this.controller = this.props.controller();
+    this.pm = this.props.pm();
     this.horizontal = this.props.horizontal();
   }
 
@@ -21,7 +21,7 @@ export default class PillboxContainer extends Component<{
     return (
       <If
         predicate={() =>
-          this.horizontal === this.controller.showHorizontalPillboxMenu()
+          this.horizontal === this.pm.showHorizontalPillboxMenu()
         }
       >
         {() => this.templateTrue()}
@@ -32,7 +32,7 @@ export default class PillboxContainer extends Component<{
   templateTrue() {
     return (
       <div class="dsm-pillbox-and-popover">
-        <For each={() => this.controller.pillboxButtonsOrder} key={(id) => id}>
+        <For each={() => this.pm.pillboxButtonsOrder} key={(id) => id}>
           <div
             class={{
               "dsm-pillbox-buttons": true,
@@ -41,9 +41,7 @@ export default class PillboxContainer extends Component<{
           >
             {(id: string) => (
               <Tooltip
-                tooltip={() =>
-                  format(this.controller.pillboxButtons[id].tooltip)
-                }
+                tooltip={() => format(this.pm.pillboxButtons[id].tooltip)}
                 gravity={() => (this.horizontal ? "s" : "w")}
               >
                 <div
@@ -64,24 +62,18 @@ export default class PillboxContainer extends Component<{
                         }
                   }
                 >
-                  <i
-                    class={() =>
-                      this.controller.pillboxButtons[id].iconClass ?? ""
-                    }
-                  />
+                  <i class={() => this.pm.pillboxButtons[id].iconClass ?? ""} />
                 </div>
               </Tooltip>
             )}
           </div>
         </For>
-        {this.controller.controller.insertElement(() =>
-          this.controller.pillboxMenuView(false)
-        )}
+        {this.pm.dsm.insertElement(() => this.pm.pillboxMenuView(false))}
       </div>
     );
   }
 
   onTapMenuButton(id: string) {
-    this.controller.toggleMenu(id);
+    this.pm.toggleMenu(id);
   }
 }

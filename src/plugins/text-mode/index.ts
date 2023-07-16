@@ -1,8 +1,8 @@
+import { buildConfigFromGlobals, rawToText } from "../../../text-mode-core";
 import { DCGView } from "../../DCGView";
 import { Inserter, PluginController } from "../PluginController";
 import { onCalcEvent, analysisStateField } from "./LanguageServer";
 import { TextModeToggle } from "./components/TextModeToggle";
-import getText from "./up/getText";
 import { initView, startState } from "./view/editor";
 import { EditorView, ViewUpdate } from "@codemirror/view";
 import { Calc } from "globals/window";
@@ -131,6 +131,14 @@ export default class TextMode extends PluginController {
   onEditorUpdate(update: ViewUpdate) {
     if (update.docChanged || update.selectionSet) selectFromText(update.view);
   }
+}
+
+function getText() {
+  return rawToText(getTextModeConfig(), Calc.getState());
+}
+
+export function getTextModeConfig() {
+  return buildConfigFromGlobals(Desmos, Calc);
 }
 
 function selectFromText(view: EditorView) {

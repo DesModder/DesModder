@@ -3,21 +3,14 @@
  * The functions in this file manage the interface between codemirror and
  * the Text Mode compiler.
  */
+import { getTextModeConfig } from ".";
+import { ProgramAnalysis, textToRaw } from "../../../text-mode-core";
 import { DispatchedEvent } from "../../globals/Calc";
-import { Program, Statement } from "./down/TextAST";
-import textToRaw from "./down/textToRaw";
 import { eventSequenceChanges } from "./modify";
-import { Diagnostic } from "@codemirror/lint";
 import { StateField, Text, Transaction } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
 import { Calc } from "globals/window";
-
-export interface ProgramAnalysis {
-  program: Program;
-  diagnostics: readonly Diagnostic[];
-  mapIDstmt: Record<string, Statement>;
-}
 
 /**
  * onCalcEvent: when we receive a new event dispatched via Calc (such as a
@@ -48,8 +41,9 @@ export function onCalcEvent(view: EditorView, event: DispatchedEvent) {
 }
 
 export function parseAndReturnAnalysis(doc: Text, nextEditDueToGraph: boolean) {
+  const cfg = getTextModeConfig();
   const s = doc.sliceString(0);
-  const [analysis, rawGraphState] = textToRaw(s);
+  const [analysis, rawGraphState] = textToRaw(cfg, s);
   if (!nextEditDueToGraph && rawGraphState !== null)
     setCalcState(rawGraphState);
   return analysis;

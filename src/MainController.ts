@@ -11,7 +11,7 @@ import {
 } from "plugins";
 import { postMessageUp, mapToRecord, recordToMap } from "utils/messages";
 
-export default class MainController extends TransparentPlugins {
+export default class DSM extends TransparentPlugins {
   /**
    * pluginsEnabled keeps track of what plugins the user wants enabled,
    * regardless of forceDisabled settings.

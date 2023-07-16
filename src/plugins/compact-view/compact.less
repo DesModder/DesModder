@@ -130,6 +130,11 @@
       border-left-color: #000000aa;
     }
 
+    // fix authorfeatures toggle problem
+    .dcg-component-checkbox.dcg-action-toggle-secret-folder.dcg-do-not-blur {
+      margin-bottom: .lerp2(-5px, 0px) [];
+    }
+
     // icons to the left of the expressions bar
     .dcg-expression-icon-container {
       right: .lerp2(0%, -10%) [];
@@ -147,11 +152,16 @@
 
     // "x" icon to the right of the expressions
     .dcg-icon-remove {
-      transform: translate(.lerp2(0px, 5px) [], .lerp2(0px, -5px) [])
-        scale(.lerp2(1, 0.6) []);
+      padding: 0;
       opacity: 0.5;
+      margin-top: 3px;
+      margin-right: 3px;
+      &::before {
+        font-size: var(--math-font-size) !important;
+        vertical-align: top;
+      }
     }
-    .dcg-icon-remove:hover {
+    .dcg-top-level-icon:hover .dcg-icon-remove {
       opacity: 1;
     }
 

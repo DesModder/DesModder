@@ -18,7 +18,7 @@ export function isValidNumber(s: string) {
 
 export function isValidLength(s: string) {
   const evaluated = EvaluateSingleExpression(s);
-  return !isNaN(evaluated) && evaluated > 0;
+  return !isNaN(evaluated) && evaluated >= 2;
 }
 
 export function scaleBoundsAboutCenter(b: Bounds, r: number) {
