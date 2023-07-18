@@ -49,26 +49,43 @@ describe("Intellisense", () => {
         // try autocompleting from the first i "parts" of the identifier sample
         for (let i = 1; i < segmentsLength; i++) {
           // go left j segments to validate it works at any position
-          for (let j = 0; j < i - 1; j++) {
+          for (let j = 0; j < i; j++) {
             // generate partial identifier string
             let str = varname;
             if (i > 1 && subscriptname !== undefined) {
               str += `_${subscriptname.slice(0, i - 2)}`;
             }
 
-            // type out str and go left
-            await driver.keyboard.type(typedPrefix + str);
-            await driver.keyboard.press("ArrowRight");
+            // type out prefix znd suffix
+            await driver.keyboard.type(typedPrefix);
             await driver.keyboard.type(typedSuffix);
-            for (let k = 0; k < j + suffixLeft; k++) {
+
+            // go between prefix and suffix
+            for (let k = 0; k < suffixLeft; k++) {
+              await driver.keyboard.press("ArrowLeft");
+            }
+
+            // type out identifier to test
+            await driver.keyboard.type(str);
+            if (j === 0 && i > 1) await driver.keyboard.press("ArrowRight");
+
+            // go back a few spaces to test autocomplete
+            // from the middle of an identifier
+            for (let k = 0; k < j - 1; k++) {
               await driver.keyboard.press("ArrowLeft");
             }
 
             // try autocomplete
             await driver.keyboard.press("Enter");
+            await driver.page.waitForSelector("#intellisense-container", {
+              hidden: true,
+            });
             await driver.assertSelectedItemLatex(
               latexPrefix + expectedLatex + latexSuffix,
-              `Testing Identifier '${typedIdentifierSample}', autocompleting from '${str}', going left ${j} characters.`
+              `Testing Identifier '${typedIdentifierSample}', autocompleting from '${str}', going left ${Math.min(
+                j - 1,
+                0
+              )} characters, ${j === 0 ? "out of subscript" : "in subscript"}.`
             );
 
             // go to next expr
