@@ -27,7 +27,7 @@ export default class Wakatime extends PluginController<Config> {
     listenToMessageDown((msg) => {
       if (msg.type === "heartbeat-error") {
         if (msg.isAuthError) {
-          this.controller.disablePlugin("wakatime");
+          this.dsm.disablePlugin("wakatime");
           Calc.controller._showToast({
             message:
               "WakaTime heartbeat error: check your secret key. Plugin has been deactivated.",

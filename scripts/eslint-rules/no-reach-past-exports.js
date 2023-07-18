@@ -42,12 +42,12 @@ function bad(filename, source) {
   // TODO: handle absolutes.
   if (source[0] !== ".") return false;
   const p = path.resolve(path.dirname(filename), source);
-  if (allowed.some((a) => source.endsWith(a))) return false;
+  if (allowed.some((a) => p.endsWith(a))) return false;
   return packageDir(filename) !== packageDir(p);
 }
 
 const allowed = Object.keys(tmExports.exports).map((a) =>
-  path.join("/text-mode-core", a)
+  path.resolve("text-mode-core", a)
 );
 
 function packageDir(file) {

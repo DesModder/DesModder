@@ -7,12 +7,9 @@ function percentage(x: number) {
   return `${100 * x}%`;
 }
 
-function applyCaptureFrame(controller: VideoCreator) {
+function applyCaptureFrame(vc: VideoCreator) {
   let frame = document.getElementById(captureFrameID);
-  if (
-    controller.focusedMQ === "capture-height" ||
-    controller.focusedMQ === "capture-width"
-  ) {
+  if (vc.focusedMQ === "capture-height" || vc.focusedMQ === "capture-width") {
     if (frame === null) {
       frame = document.createElement("div");
       frame.id = captureFrameID;
@@ -25,8 +22,8 @@ function applyCaptureFrame(controller: VideoCreator) {
 
     const pixelBounds = Calc.graphpaperBounds.pixelCoordinates;
     const ratio =
-      controller.getCaptureHeightNumber() /
-      controller.getCaptureWidthNumber() /
+      vc.getCaptureHeightNumber() /
+      vc.getCaptureWidthNumber() /
       (pixelBounds.height / pixelBounds.width);
     let width = 1;
     let height = 1;
