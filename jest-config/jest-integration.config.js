@@ -5,7 +5,7 @@ module.exports = {
   ...config,
   testPathIgnorePatterns: config.testPathIgnorePatterns.concat("\\.unit\\."),
   testEnvironment: "./src/tests/puppeteer-environment.js",
-  globalSetup: "./src/tests/setup.js",
+  globalSetup: "./src/tests/setup-integration.js",
   globalTeardown: "./src/tests/teardown.js",
   setupFilesAfterEnv: ["jest-expect-message"],
 };
