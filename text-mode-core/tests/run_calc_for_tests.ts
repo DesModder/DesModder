@@ -9,6 +9,7 @@ document.body.innerHTML = `
 
   <div id="mygraphs-container"></div>
   <div id="dcg-modal-container"></div>
+  <div class="dcg-loading-div-container"></div>
 `
 
 HTMLCanvasElement.prototype.getContext = () => ({
