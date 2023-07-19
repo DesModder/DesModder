@@ -82,7 +82,7 @@ describe("Intellisense", () => {
             });
             await driver.assertSelectedItemLatex(
               latexPrefix + expectedLatex + latexSuffix,
-              `Testing Identifier '${typedIdentifierSample}', autocompleting from '${str}', going left ${Math.min(
+              `Testing Identifier '${typedIdentifierSample}', autocompleting from '${str}', going left ${Math.max(
                 j - 1,
                 0
               )} characters, ${j === 0 ? "out of subscript" : "in subscript"}.`
