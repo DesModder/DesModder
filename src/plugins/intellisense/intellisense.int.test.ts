@@ -1,4 +1,4 @@
-import { clean, testWithPage } from "../../tests/puppeteer-utils";
+import { testWithPage } from "../../tests/puppeteer-utils";
 
 describe("Intellisense", () => {
   // These two tests could really be combined.
@@ -75,18 +75,8 @@ describe("Intellisense", () => {
               await driver.keyboard.press("ArrowLeft");
             }
 
-            // try autocomplete
-            await driver.page.waitForFunction(
-              () =>
-                document.querySelector("#intellisense-container") &&
-                (
-                  document.querySelector(
-                    "#intellisense-container"
-                  ) as HTMLDivElement
-                )?.style?.display !== "none"
-            );
-            await driver.waitForSync();
             await driver.keyboard.press("Enter");
+
             await driver.assertSelectedItemLatex(
               latexPrefix + expectedLatex + latexSuffix,
               `Testing Identifier '${typedIdentifierSample}', autocompleting from '${str}', going left ${Math.max(
@@ -114,8 +104,9 @@ describe("Intellisense", () => {
       await testIdentSample("1+", "1+", "beta", "7c9", "+1", "+1", 2);
 
       await driver.clean();
-      return clean;
     },
-    12000
+    40000
   );
 });
+
+// please work

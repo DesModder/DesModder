@@ -6,6 +6,7 @@ import {
   getPartialFunctionCall,
 } from "./latex-parsing";
 import { IntellisenseState } from "./state";
+import { pendingIntellisenseTimeouts, setIntellisenseTimeout } from "./utils";
 import { JumpToDefinitionMenuInfo, View } from "./view";
 import { DCGView, MountedComponent, unmountFromNode } from "DCGView";
 import { MathQuillField, MathQuillView } from "components";
@@ -98,6 +99,22 @@ export default class Intellisense extends PluginController {
   jumpToDefIndex: number = 0;
 
   specialIdentifierNames: string[] = [];
+
+  async waitForCurrentIntellisenseTimeoutsToFinish() {
+    await new Promise<void>((resolve) => {
+      const currentTimeouts = Array.from(pendingIntellisenseTimeouts.entries());
+      const interval = setInterval(() => {
+        // only continue if all timeouts have been finished
+        for (const timeout of currentTimeouts) {
+          if (pendingIntellisenseTimeouts.has(timeout)) return;
+        }
+
+        // resolve the promise when timeouts have finished
+        clearInterval(interval);
+        resolve();
+      });
+    });
+  }
 
   // recalculate the intellisense
   updateIntellisense() {
@@ -305,7 +322,7 @@ export default class Intellisense extends PluginController {
   }
 
   focusInHandler = () => {
-    setTimeout(() => {
+    setIntellisenseTimeout(() => {
       if (Calc.focusedMathQuill && this.specialIdentifierNames.length === 0) {
         this.specialIdentifierNames = [
           ...Object.keys(Calc.focusedMathQuill.mq.__options.autoOperatorNames),
@@ -361,7 +378,7 @@ export default class Intellisense extends PluginController {
 
                 // need a delay so that Enter key doesn't immediately close
                 // the jump2def window
-                setTimeout(() => {
+                setIntellisenseTimeout(() => {
                   self.jumpToDefinition(str);
                 });
               }
@@ -641,7 +658,7 @@ export default class Intellisense extends PluginController {
 
     this.dispatcher = Calc.controller.dispatcher.register((e) => {
       if (e.type === "set-focus-location" || e.type === "set-none-selected") {
-        setTimeout(() => {
+        setIntellisenseTimeout(() => {
           if (!Calc.focusedMathQuill) {
             this.canHaveIntellisense = false;
             this.view?.update();

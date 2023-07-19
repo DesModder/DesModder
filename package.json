@@ -28,7 +28,8 @@
     "lint:eslint": "eslint \"**\"",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "jest --config ./jest-config/jest-unit.config.js",
-    "test:integration": "jest --config ./jest-config/jest-integration.config.js --run-in-band"
+    "test:integration": "jest --config ./jest-config/jest-integration.config.js --run-in-band",
+    "test:integration-local": "jest --config ./jest-config/jest-integration-local.config.js --run-in-band"
   },
   "repository": {
     "type": "git",

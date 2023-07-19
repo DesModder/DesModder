@@ -1,6 +1,7 @@
 import { DWindow } from "../globals/window";
 import { PluginID } from "../plugins";
 import { GraphState } from "@desmodder/graph-state";
+import Intellisense from "plugins/intellisense";
 import { Browser, Page } from "puppeteer";
 
 /** Calc is only available inside evaluate() callbacks and friends, since those
@@ -99,6 +100,15 @@ export class Driver {
 
   async setState(state: GraphState) {
     await this.evaluate((state) => Calc.setState(state), state);
+  }
+
+  async waitForIntellisenseTimeoutsToFinish() {
+    await this.evaluate(
+      async () =>
+        await (
+          DSM.enabledPlugins.intellisense as Intellisense | undefined
+        )?.waitForCurrentIntellisenseTimeoutsToFinish()
+    );
   }
 
   async assertSelectedItemLatex(latex: string | undefined, msg?: string) {

@@ -11,6 +11,7 @@ import {
   tokenizeDocstring,
 } from "./docstring";
 import { PartialFunctionCall } from "./latex-parsing";
+import { setIntellisenseTimeout } from "./utils";
 import "./view.less";
 import { ClassComponent, Component, jsx } from "DCGView";
 import { For, StaticMathQuillView, Switch } from "components";
@@ -94,7 +95,7 @@ export class JumpToDefinitionMenu extends Component<{
             </div>
           );
 
-          setTimeout(() => {
+          setIntellisenseTimeout(() => {
             elt._domNode?.focus?.();
           });
 
@@ -384,7 +385,7 @@ export class View extends Component<{
                 <tr
                   class={() =>
                     selected()
-                      ? (setTimeout(() => {
+                      ? (setIntellisenseTimeout(() => {
                           opt._domNode?.scrollIntoView({
                             block: "center",
                           });
