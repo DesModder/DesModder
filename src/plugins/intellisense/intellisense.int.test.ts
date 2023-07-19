@@ -76,10 +76,17 @@ describe("Intellisense", () => {
             }
 
             // try autocomplete
+            await driver.page.waitForFunction(
+              () =>
+                document.querySelector("#intellisense-container") &&
+                (
+                  document.querySelector(
+                    "#intellisense-container"
+                  ) as HTMLDivElement
+                )?.style?.display !== "none"
+            );
+            await driver.waitForSync();
             await driver.keyboard.press("Enter");
-            await driver.page.waitForSelector("#intellisense-container", {
-              hidden: true,
-            });
             await driver.assertSelectedItemLatex(
               latexPrefix + expectedLatex + latexSuffix,
               `Testing Identifier '${typedIdentifierSample}', autocompleting from '${str}', going left ${Math.max(
@@ -109,6 +116,6 @@ describe("Intellisense", () => {
       await driver.clean();
       return clean;
     },
-    20000
+    12000
   );
 });
