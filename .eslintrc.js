@@ -43,6 +43,7 @@ module.exports = {
     "rulesdir/no-expect-promise": "error",
     "rulesdir/no-reach-past-exports": "error",
     "rulesdir/no-external-imports": "error",
+    "rulesdir/no-timeouts-in-intellisense": "error",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/array-type": "off",
     "@typescript-eslint/strict-boolean-expressions": "off",
