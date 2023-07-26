@@ -232,13 +232,13 @@ multiline-opt-multilinifyDelayAfterEdit-desc = Retrasa el ajuste de líneas en l
 
 ## Custom MathQuill Config
 custom-mathquill-config-name = Configuración de MathQuill
-custom-mathquill-config-desc = Te permite expandir y cambiar la edición de ecuaciones
+custom-mathquill-config-desc = Te permite expandir y personalizar la edición de ecuaciones
 custom-mathquill-config-opt-superscriptOperators-name = Operadores en exponentes
-custom-mathquill-config-opt-superscriptOperators-desc = Permite teclear operadores, asi como '+' en los exponentes
+custom-mathquill-config-opt-superscriptOperators-desc = Permite teclear operadores, asi como '+', en los exponentes
 custom-mathquill-config-opt-noAutoSubscript-name = Deshabilita subíndices automáticos
 custom-mathquill-config-opt-noAutoSubscript-desc = Deshabilita subíndices automáticos en números cuando estos son escritos después de una variable
 custom-mathquill-config-opt-noNEquals-name = Deshabilita n= en sumatorio
-custom-mathquill-config-opt-noNEquals-desc = Deshabilita la 'n=' en el límite inferior de los sumatorios
+custom-mathquill-config-opt-noNEquals-desc = Deshabilita 'n=' en el límite inferior de los sumatorios
 custom-mathquill-config-opt-subSupWithoutOp-name = Subíndices y exponentes sin base
 custom-mathquill-config-opt-subSupWithoutOp-desc = Permite crear subíndices y exponentes sin que estos estén precedidos de un símbolo
 custom-mathquill-config-opt-allowMixedBrackets-name = Permitir paréntesis mezclados
@@ -248,7 +248,7 @@ custom-mathquill-config-opt-subscriptReplacements-desc = Permite símbolos y nom
 custom-mathquill-config-opt-noPercentOf-name = Deshabilita % of
 custom-mathquill-config-opt-noPercentOf-desc = Permite teclear el carácter '%' sin la inserción automática de '% of'
 custom-mathquill-config-opt-commaDelimiter-name = Coma de separación
-custom-mathquill-config-opt-commaDelimiter-desc = Inserta comas de separación en números (visual solamente)
+custom-mathquill-config-opt-commaDelimiter-desc = Inserta comas de separación en números (sólo visualmente)
 custom-mathquill-config-opt-delimiterOverride-name = Separador personalizado
 custom-mathquill-config-opt-delimiterOverride-desc = Carácter que va a ser usado como separador de millares
 custom-mathquill-config-opt-leftIntoSubscript-name = Navegación hacia subíndices
