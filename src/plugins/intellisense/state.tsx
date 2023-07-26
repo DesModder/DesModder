@@ -56,14 +56,6 @@ export class IntellisenseState {
     return Calc.controller.getItemModel(ident.exprId)?.folderId;
   }
 
-  getFolderModel(model: ItemModel) {
-    const folder =
-      model.folderId !== undefined
-        ? Calc.controller.getItemModel(model.folderId)
-        : undefined;
-    return folder as FolderModel;
-  }
-
   readonly cfg = getTextModeConfig();
 
   constructor(metadata: Metadata) {
