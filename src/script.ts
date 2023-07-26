@@ -1,18 +1,18 @@
 import { format } from "./i18n/i18n-core";
 import { drawGLesmosSketchToCtx } from "./plugins/GLesmos/drawGLesmosSketchToCtx";
-import MainController from "MainController";
+import DSM from "MainController";
 import "fonts/style.css";
 import window from "globals/window";
 
-const controller = new MainController();
+const dsm = new DSM();
 
 window.DesModder = {
-  controller,
+  controller: dsm,
   format,
   drawGLesmosSketchToCtx,
   // Not used by DesModder, but some external scripts may still reference this
-  exposedPlugins: controller.enabledPlugins,
+  exposedPlugins: dsm.enabledPlugins,
 };
-window.DSM = controller;
+window.DSM = dsm;
 
-controller.init();
+dsm.init();

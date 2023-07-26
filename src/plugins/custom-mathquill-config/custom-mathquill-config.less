@@ -1,0 +1,18 @@
+.commaizer {
+  .dcg-calculator-api-container .dcg-mq-root-block .dcg-mq-group-start,
+  .dcg-calculator-api-container
+    .dcg-mq-math-mode
+    .dcg-mq-root-block
+    .dcg-mq-group-start::before {
+    content: var(--delimiter-override);
+  }
+
+  .dcg-calculator-api-container .dcg-mq-root-block .dcg-mq-group-start,
+  .dcg-calculator-api-container
+    .dcg-mq-math-mode
+    .dcg-mq-root-block
+    .dcg-mq-group-start {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}

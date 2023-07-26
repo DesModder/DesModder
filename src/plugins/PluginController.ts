@@ -1,5 +1,5 @@
 import { ConfigItem, GenericSettings } from ".";
-import MainController from "MainController";
+import DSM from "MainController";
 
 export class PluginController<
   Settings extends GenericSettings | undefined = undefined
@@ -8,7 +8,7 @@ export class PluginController<
   static forceEnabled?: boolean = undefined;
   static config: readonly ConfigItem[] | undefined = undefined;
 
-  constructor(readonly controller: MainController, public settings: Settings) {}
+  constructor(readonly dsm: DSM, public settings: Settings) {}
 
   afterEnable() {}
   afterConfigChange() {}

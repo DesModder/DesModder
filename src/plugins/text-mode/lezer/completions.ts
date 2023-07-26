@@ -1,9 +1,12 @@
 import TextMode from "..";
-import { AnyHydrated, AnyHydratedValue } from "../down/style/Hydrated";
-import * as Defaults from "../down/style/defaults";
+import {
+  exprToTextString,
+  childLatexToAST,
+  StyleDefaults as Defaults,
+  AnyHydrated,
+  AnyHydratedValue,
+} from "../../../../text-mode-core";
 import { getIndentation } from "../modify";
-import { exprToTextString } from "../up/astToText";
-import { childLatexToAST } from "../up/augToAST";
 import {
   Completion,
   CompletionContext,
@@ -79,7 +82,7 @@ const PROGRAM_COMPLETIONS: Completion[] = [
   ...FOLDER_COMPLETIONS,
 ];
 
-export function completions(controller: TextMode, context: CompletionContext) {
+export function completions(tm: TextMode, context: CompletionContext) {
   const word = context.matchBefore(/\w*/);
   if (word === null || (word.from === word.to && !context.explicit))
     return null;
@@ -94,7 +97,7 @@ export function completions(controller: TextMode, context: CompletionContext) {
         : parent.name === "Program"
         ? PROGRAM_COMPLETIONS
         : parent.name === "StyleMapping" || parent.name === "MappingEntry"
-        ? styleCompletions(controller, parent)
+        ? styleCompletions(tm, parent)
         : [],
   };
 }
@@ -110,18 +113,15 @@ export function completions(controller: TextMode, context: CompletionContext) {
  *   Settings
  *   StyleMapping . MappingEntry
  */
-function styleCompletions(
-  controller: TextMode,
-  node: SyntaxNode
-): Completion[] {
+function styleCompletions(tm: TextMode, node: SyntaxNode): Completion[] {
   const defaults =
     node.name === "MappingEntry"
-      ? styleDefaults(controller, node.parent!)
-      : styleDefaults(controller, node);
+      ? styleDefaults(tm, node.parent!)
+      : styleDefaults(tm, node);
   return styleCompletionsFromDefaults(defaults);
 }
 
-function styleDefaults(controller: TextMode, node: SyntaxNode): AnyHydrated {
+function styleDefaults(tm: TextMode, node: SyntaxNode): AnyHydrated {
   if (
     node.name === "ExprStatement" &&
     node.parent?.name === "BlockInner" &&
@@ -146,11 +146,11 @@ function styleDefaults(controller: TextMode, node: SyntaxNode): AnyHydrated {
     case "Ticker":
       return Defaults.ticker;
     case "StyleMapping":
-      return styleDefaults(controller, node.parent!);
+      return styleDefaults(tm, node.parent!);
     case "MappingEntry": {
       const id = node.getChild("Identifier")!;
-      const key = controller.view!.state.doc.sliceString(id.from, id.to);
-      return styleDefaults(controller, node.parent!)[key as keyof AnyHydrated];
+      const key = tm.view!.state.doc.sliceString(id.from, id.to);
+      return styleDefaults(tm, node.parent!)[key as keyof AnyHydrated];
     }
     default:
       throw Error(`Unexpected node type as parent of style: ${node.name}`);

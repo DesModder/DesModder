@@ -1,5 +1,9 @@
-import { ProgramAnalysis } from "../LanguageServer";
-import { Positioned, Program, Statement } from "../down/TextAST";
+import { ProgramAnalysis } from "../../../../text-mode-core";
+import {
+  Positioned,
+  Program,
+  Statement,
+} from "../../../../text-mode-core/TextAST";
 import { BlockInfo } from "@codemirror/view";
 
 export function statementContainingLine(

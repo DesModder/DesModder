@@ -4,12 +4,12 @@ import { Component, jsx } from "DCGView";
 import { If } from "components";
 
 export default class PreviewCarousel extends Component<{
-  controller: VideoCreator;
+  vc: VideoCreator;
 }> {
-  controller!: VideoCreator;
+  vc!: VideoCreator;
 
   init() {
-    this.controller = this.props.controller();
+    this.vc = this.props.vc();
   }
 
   template() {
@@ -21,7 +21,7 @@ export default class PreviewCarousel extends Component<{
             "dsm-vc-preview-wrapped-frame":
               this.getFrameIndex(-1) > this.getFrameIndex(0),
           })}
-          onTap={() => this.controller.addToPreviewIndex(-1)}
+          onTap={() => this.vc.addToPreviewIndex(-1)}
         >
           <img src={() => this.getFrame(-1)} draggable={false} />
           <div class="dsm-vc-preview-index">
@@ -34,7 +34,7 @@ export default class PreviewCarousel extends Component<{
             "dsm-vc-preview-wrapped-frame":
               this.getFrameIndex(1) < this.getFrameIndex(0),
           })}
-          onTap={() => this.controller.addToPreviewIndex(1)}
+          onTap={() => this.vc.addToPreviewIndex(1)}
         >
           <img src={() => this.getFrame(1)} draggable={false} />
           <div class="dsm-vc-preview-index">
@@ -44,13 +44,13 @@ export default class PreviewCarousel extends Component<{
         <div
           class="dsm-vc-preview-current-frame"
           onTap={() =>
-            this.controller.isPlayPreviewExpanded
-              ? this.controller.togglePlayingPreview()
-              : this.controller.togglePreviewExpanded()
+            this.vc.isPlayPreviewExpanded
+              ? this.vc.togglePlayingPreview()
+              : this.vc.togglePreviewExpanded()
           }
         >
           <img src={() => this.getFrame(0)} draggable={false} />
-          <If predicate={() => !this.controller.isPlayPreviewExpanded}>
+          <If predicate={() => !this.vc.isPlayPreviewExpanded}>
             {() => (
               <div
                 class="dsm-vc-preview-expand"
@@ -61,7 +61,7 @@ export default class PreviewCarousel extends Component<{
                       "dsm-vc-preview-expand"
                     )
                   ) {
-                    this.controller.togglePreviewExpanded();
+                    this.vc.togglePreviewExpanded();
                     e.stopPropagation();
                   }
                 }}
@@ -73,30 +73,28 @@ export default class PreviewCarousel extends Component<{
           <div
             class="dsm-vc-remove-frame"
             onTap={(e: Event) => {
-              this.controller.removeSelectedFrame();
+              this.vc.removeSelectedFrame();
               e.stopPropagation();
             }}
           >
             <i class="dcg-icon-delete" />
           </div>
           <div class="dsm-vc-preview-index">
-            {() =>
-              `${this.getFrameIndex(0) + 1} / ${this.controller.frames.length}`
-            }
+            {() => `${this.getFrameIndex(0) + 1} / ${this.vc.frames.length}`}
           </div>
-          <If predicate={() => this.controller.frames.length > 1}>
+          <If predicate={() => this.vc.frames.length > 1}>
             {() => (
               <div
                 class="dsm-vc-preview-play-pause"
                 onTap={(e: Event) => {
-                  this.controller.togglePlayingPreview();
+                  this.vc.togglePlayingPreview();
                   e.stopPropagation();
                 }}
               >
                 <i
                   class={() => ({
-                    "dcg-icon-play": !this.controller.isPlayingPreview,
-                    "dcg-icon-pause": this.controller.isPlayingPreview,
+                    "dcg-icon-play": !this.vc.isPlayingPreview,
+                    "dcg-icon-pause": this.vc.isPlayingPreview,
                   })}
                 />
               </div>
@@ -108,11 +106,11 @@ export default class PreviewCarousel extends Component<{
   }
 
   getFrameIndex(dx: number) {
-    const L = this.controller.frames.length;
-    return (((this.controller.previewIndex + dx) % L) + L) % L;
+    const L = this.vc.frames.length;
+    return (((this.vc.previewIndex + dx) % L) + L) % L;
   }
 
   getFrame(dx: number) {
-    return this.controller.frames[this.getFrameIndex(dx)];
+    return this.vc.frames[this.getFrameIndex(dx)];
   }
 }

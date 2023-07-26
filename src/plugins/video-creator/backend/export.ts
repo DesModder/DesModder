@@ -1,12 +1,15 @@
 import VideoCreator from "..";
 import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 import { downloadZip } from "client-zip";
+import { Console } from "globals/window";
 
 type FFmpeg = ReturnType<typeof createFFmpeg>;
 type FFmpegFileType = "gif" | "mp4" | "webm" | "apng";
 export type OutFileType = FFmpegFileType | "zip";
 
 let ffmpeg: null | FFmpeg = null;
+
+const CROP_EVEN = ["-vf", "crop=floor(iw/2)*2:floor(ih/2)*2"];
 
 async function exportAll(
   ffmpeg: FFmpeg,
@@ -16,7 +19,8 @@ async function exportAll(
   const outFilename = "out." + fileType;
 
   const outFlags = {
-    mp4: ["-vcodec", "libx264"],
+    // mp4s have to have even dimensions, so crop it to be even
+    mp4: ["-vcodec", "libx264", ...CROP_EVEN, "-pix_fmt", "yuv420p"],
     webm: ["-vcodec", "libvpx-vp9", "-quality", "realtime", "-speed", "8"],
     // generate fresh palette on every frame (higher quality)
     // https://superuser.com/a/1239082
@@ -40,20 +44,20 @@ async function exportAll(
   return outFilename;
 }
 
-export async function cancelExport(controller: VideoCreator) {
+export async function cancelExport(vc: VideoCreator) {
   try {
     // ffmpeg.exit() always throws an error `exit(1)`,
     // which is reasonable behavior because ffmpeg would throw an error when sigkilled
     ffmpeg?.exit();
   } catch {
     ffmpeg = null;
-    await initFFmpeg(controller);
-    controller.isExporting = false;
-    controller.updateView();
+    await initFFmpeg(vc);
+    vc.isExporting = false;
+    vc.updateView();
   }
 }
 
-export async function initFFmpeg(controller: VideoCreator) {
+export async function initFFmpeg(vc: VideoCreator) {
   if (ffmpeg === null) {
     ffmpeg = createFFmpeg({ log: false });
     ffmpeg.setLogger(({ type, message }) => {
@@ -61,10 +65,12 @@ export async function initFFmpeg(controller: VideoCreator) {
         const match = message.match(/frame=\s*(?<frame>\d+)/);
         if (match !== null) {
           const frame = (match.groups as { frame: string }).frame;
-          let denom = controller.frames.length - 1;
+          let denom = vc.frames.length - 1;
           if (denom === 0) denom = 1;
           const ratio = parseInt(frame) / denom;
-          controller.setExportProgress(ratio);
+          vc.setExportProgress(ratio);
+        } else {
+          Console.debug(message);
         }
       }
     });
@@ -92,11 +98,11 @@ async function* files(frames: string[]) {
 }
 
 async function exportFFmpeg(
-  controller: VideoCreator,
+  vc: VideoCreator,
   fileType: FFmpegFileType,
   ext: "png" | "gif" | "mp4" | "webm"
 ) {
-  const ffmpeg = await initFFmpeg(controller);
+  const ffmpeg = await initFFmpeg(vc);
 
   const filenames: string[] = [];
 
@@ -105,17 +111,13 @@ async function exportFFmpeg(
       ffmpeg.FS("writeFile", filename, await fetchFile(frame));
   }
 
-  for await (const { name, input } of files(controller.frames)) {
+  for await (const { name, input } of files(vc.frames)) {
     filenames.push(name);
     // filenames may be pushed out of order because async, but doesn't matter
     void writeFile(name, input);
   }
 
-  const outFilename = await exportAll(
-    ffmpeg,
-    fileType,
-    controller.getFPSNumber()
-  );
+  const outFilename = await exportAll(ffmpeg, fileType, vc.getFPSNumber());
 
   const data = ffmpeg.FS("readFile", outFilename);
   for (const filename of filenames) {
@@ -129,37 +131,33 @@ async function exportFFmpeg(
   return new Blob([data.buffer as ArrayBuffer], { type: `${metaExt}/${ext}` });
 }
 
-async function exportZip(controller: VideoCreator) {
-  return await downloadZip(files(controller.frames)).blob();
+async function exportZip(vc: VideoCreator) {
+  return await downloadZip(files(vc.frames)).blob();
 }
 
-export async function exportFrames(controller: VideoCreator) {
-  controller.isExporting = true;
-  controller.setExportProgress(-1);
-  controller.updateView();
+export async function exportFrames(vc: VideoCreator) {
+  vc.isExporting = true;
+  vc.setExportProgress(-1);
+  vc.updateView();
 
-  const fileType = controller.fileType;
+  const fileType = vc.fileType;
   const ext = fileType === "apng" ? "png" : fileType;
   const blob =
     fileType === "zip"
-      ? await exportZip(controller)
-      : await exportFFmpeg(
-          controller,
-          fileType,
-          ext as Exclude<typeof ext, "zip">
-        );
+      ? await exportZip(vc)
+      : await exportFFmpeg(vc, fileType, ext as Exclude<typeof ext, "zip">);
 
   const url = URL.createObjectURL(blob);
 
-  let humanOutFilename = controller.getOutfileName();
+  let humanOutFilename = vc.getOutfileName();
   if (!humanOutFilename.endsWith("." + ext)) {
     humanOutFilename += "." + ext;
   }
   download(url, humanOutFilename);
   URL.revokeObjectURL(url);
 
-  controller.isExporting = false;
-  controller.updateView();
+  vc.isExporting = false;
+  vc.updateView();
 }
 
 function download(url: string, filename: string) {

@@ -211,7 +211,7 @@ if ($W !== void 0 && $X !== void 0 && isFinite($W) && isFinite($X)) {
 
 *Find* inside `body` => `if2d`
 ```js
-if (!$is3d($T.graphMode) || $) {
+if (!$is3d($T.graphMode) || ____) {
 ```
 
 *Replace* `if2d` with

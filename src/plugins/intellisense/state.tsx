@@ -1,10 +1,11 @@
 import { BoundIdentifier } from ".";
+import { parseRootLatex } from "../../../text-mode-core";
+import { getTextModeConfig } from "../text-mode";
 import { mapAugAST } from "./latex-parsing";
 import { FolderModel, ItemModel } from "globals/models";
 import { Calc } from "globals/window";
 import { rootKeys } from "plugins/find-replace/backend";
 import Metadata from "plugins/manage-metadata/interface";
-import { parseRootLatex } from "plugins/text-mode/aug/rawToAug";
 import { get } from "utils/utils";
 
 function getOrMakeKey<K, V>(map: Map<K, V>, k: K, v: () => V) {
@@ -62,6 +63,8 @@ export class IntellisenseState {
         : undefined;
     return folder as FolderModel;
   }
+
+  readonly cfg = getTextModeConfig();
 
   constructor(metadata: Metadata) {
     this.metadata = metadata;
@@ -146,7 +149,7 @@ export class IntellisenseState {
         const ltxStr = get(expression, key);
         if (typeof ltxStr !== "string") continue;
 
-        const ltx = undefinedIfErr(() => parseRootLatex(ltxStr));
+        const ltx = undefinedIfErr(() => parseRootLatex(this.cfg, ltxStr));
 
         if (!ltx) continue;
 

@@ -1,6 +1,6 @@
 import { ExpressionModel, ItemModel } from "../globals/models";
 import { ClassComponent, Component, DCGView } from "DCGView";
-import { DesModderFragile, Calc, Fragile } from "globals/window";
+import window, { Calc, Fragile } from "globals/window";
 
 export abstract class CheckboxComponent extends ClassComponent<{
   checked: boolean;
@@ -57,10 +57,24 @@ export interface MQCursor {
   domFrag: () => DomFrag;
 }
 
+export interface MathQuillConfig {
+  autoOperatorNames?: string;
+  disableAutoSubstitutionInSubscripts?: boolean;
+  autoCommands?: string;
+  charsThatBreakOutOfSupSub?: string;
+  autoSubscriptNumerals?: boolean;
+  sumStartsWithNEquals?: boolean;
+  leftRightIntoCmdGoes?: string;
+  supSubsRequireOperand?: boolean;
+  restrictMismatchedBrackets?: boolean;
+  typingPercentWritesPercentOf?: boolean;
+}
+
 export interface MathQuillField {
   keystroke: (key: string, e?: KeyboardEvent) => void;
   latex: (input?: string) => string;
   typedText: (input: string) => void;
+  config: (input: MathQuillConfig) => MathQuillField;
   focus: () => void;
   blur: () => void;
   __controller: {
@@ -143,14 +157,14 @@ export abstract class ExpressionViewComponent extends ClassComponent<
   }
 > {}
 
-const ExpressionView = DesModderFragile.ExpressionView;
+const ExpressionView = window.DesModderFragile.ExpressionView;
 
 export abstract class IconViewComponent extends ClassComponent<{
   model: ItemModel;
   controller: typeof Calc.controller;
 }> {}
 
-export const ImageIconView = DesModderFragile.ImageIconView;
+export const ImageIconView = window.DesModderFragile.ImageIconView;
 
 interface ModelAndController {
   model: ExpressionModel;

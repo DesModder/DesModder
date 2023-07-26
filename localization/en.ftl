@@ -178,7 +178,7 @@ better-evaluation-view-opt-colors-desc = Show colors as rgb values
 better-evaluation-view-opt-colorLists-name = Show lists of colors
 better-evaluation-view-opt-colorLists-desc = Show lists of colors as lists of rgb values
 
-## Manage Metadata
+## Pillbox Menus
 pillbox-menus-name = Pillbox Menus (Core)
 pillbox-menus-desc = Show the buttons on the right side, such as the Video Creator or DesModder main menu
 
@@ -189,34 +189,60 @@ manage-metadata-desc = Manage Metadata, such as GLesmos or pinned/unpinned statu
 ## Intellisense
 intellisense-name = Intellisense
 intellisense-desc = Brings several common IDE features to Desmos, including autocompletion suggestions, function call help, and jump to definition. Documentation here:
-intellisense-jump2def-menu-instructions = has multiple definitions. Pick one to jump to below.
+intellisense-jump2def-menu-instructions = has multiple definitions. Pick one from below to jump to.
 
 ## Compact View
 compact-view-name = Compact View
-compact-view-desc = A variety of options for condensing the UI so you can see more on the screen at once.
+compact-view-desc = Offers a variety of options for condensing the UI so you can see more on the screen at once.
 compact-view-opt-textFontSize-name = Text Font Size
-compact-view-opt-textFontSize-desc = Size of the font in notes.
+compact-view-opt-textFontSize-desc = Size of the font in notes
 compact-view-opt-mathFontSize-name = Math Font Size
-compact-view-opt-mathFontSize-desc = Size of the font in mathematical expressions.
+compact-view-opt-mathFontSize-desc = Size of the font in mathematical expressions
 compact-view-opt-bracketFontSizeFactor-name = Bracket Multiplier
 compact-view-opt-bracketFontSizeFactor-desc = Text inside of brackets (parentheses, curly braces, etc.) decreases in size by this factor.
 compact-view-opt-minimumFontSize-name = Min Font Size
-compact-view-opt-minimumFontSize-desc = The minimum possible math font size. Overrides Bracket Font Size Factor.
+compact-view-opt-minimumFontSize-desc = Minimum possible math font size (overrides Bracket Font Size Factor)
 compact-view-opt-compactFactor-name = Remove Spacing
 compact-view-opt-compactFactor-desc = Removes lots of empty space in the expressions list.
 compact-view-opt-noSeparatingLines-name = No Separating lines
-compact-view-opt-noSeparatingLines-desc = Remove the separating lines between expressions and replace them with alternating colors.
+compact-view-opt-noSeparatingLines-desc = Removes the separating lines between expressions and replaces them with alternating colors.
 compact-view-opt-highlightAlternatingLines-name = Highlight Alternating Lines
-compact-view-opt-highlightAlternatingLines-desc = Highlight alternating expressions so they can be easily distinguished from one another.
+compact-view-opt-highlightAlternatingLines-desc = Highlights alternating expressions so that they can be easily distinguished from one another.
 compact-view-opt-hideEvaluations-name = Collapse Evaluations
-compact-view-opt-hideEvaluations-desc = Put evaluations off to the side. They can be focused or hovered to be shown. 
+compact-view-opt-hideEvaluations-desc = Puts evaluations off to the side. They can be focused or hovered to be shown. 
 
 ## Multiline
 multiline-name = Multiline Expressions
-multiline-desc = Split expressions onto multiple lines to better make use of available space. Can be done manually with Ctrl+M.
+multiline-desc = Splits expressions onto multiple lines to better make use of available space. Can be done manually with Ctrl+M.
 multiline-opt-widthBeforeMultiline-name = Width Threshold (%)
 multiline-opt-widthBeforeMultiline-desc = Minimum width (as a percent of the viewport size) at which point wrapping will occur. On mobile, this value is tripled.
-multiline-opt-automaticallyMultilinify-desc = If enabled, automatically split expressions onto multiple lines.
 multiline-opt-automaticallyMultilinify-name = Automatically Multilinify
-multiline-opt-multilinifyDelayAfterEdit-desc = Multiline expressions should be updated after no edits are made for this number of milliseconds.
+multiline-opt-automaticallyMultilinify-desc = Automatically splits expressions onto multiple lines.
 multiline-opt-multilinifyDelayAfterEdit-name = Edit Delay (ms)
+multiline-opt-multilinifyDelayAfterEdit-desc = Multiline expressions should be updated after no edits are made for this number of milliseconds.
+
+## Custom MathQuill Config
+custom-mathquill-config-name = Custom MathQuill Config
+custom-mathquill-config-desc = Changes how equation input works.
+custom-mathquill-config-opt-superscriptOperators-name = Operators in Exponents
+custom-mathquill-config-opt-superscriptOperators-desc = Allows you to type operators like '+' in exponents
+custom-mathquill-config-opt-noAutoSubscript-name = Disable Auto Subscripts
+custom-mathquill-config-opt-noAutoSubscript-desc = Disable automatically putting numbers typed after variable names in subscripts
+custom-mathquill-config-opt-noNEquals-name = Disable n= Sums
+custom-mathquill-config-opt-noNEquals-desc = Disable sums automatically placing 'n=' in the lower bound
+custom-mathquill-config-opt-subSupWithoutOp-name = Subscripts/Superscripts Without Operand
+custom-mathquill-config-opt-subSupWithoutOp-desc = Allows subscripts and superscripts to be made even if not preceded by anything
+custom-mathquill-config-opt-allowMixedBrackets-name = Allow Mismatched Brackets
+custom-mathquill-config-opt-allowMixedBrackets-desc = Allows all brackets to match with each other (includes absolute value)
+custom-mathquill-config-opt-subscriptReplacements-name = Allow Replacements in Subscripts
+custom-mathquill-config-opt-subscriptReplacements-desc = Allows symbols and function names to be typed into subscripts
+custom-mathquill-config-opt-noPercentOf-name = Disable % of
+custom-mathquill-config-opt-noPercentOf-desc = Makes typing '%' insert the percent character instead of '% of'
+custom-mathquill-config-opt-commaDelimiter-name = Comma Separators
+custom-mathquill-config-opt-commaDelimiter-desc = Inserts commas as delimiters in numbers (purely visual)
+custom-mathquill-config-opt-delimiterOverride-name = Custom Delimiter
+custom-mathquill-config-opt-delimiterOverride-desc = Set the string to be used as number delimiters
+custom-mathquill-config-opt-leftIntoSubscript-name = Left/Right into Subscripts
+custom-mathquill-config-opt-leftIntoSubscript-desc = Moving the cursor left or right will go into subscript instead of superscript
+custom-mathquill-config-opt-extendedGreek-name = More Greek Letters
+custom-mathquill-config-opt-extendedGreek-desc = Enables replacements for all supported greek letters

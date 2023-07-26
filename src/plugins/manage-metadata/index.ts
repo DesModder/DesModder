@@ -29,7 +29,7 @@ export default class ManageMetadata extends PluginController {
 
   checkForMetadataChange() {
     const newMetadata = getMetadata();
-    if (!this.controller.glesmos) {
+    if (!this.dsm.glesmos) {
       if (
         Object.entries(newMetadata.expressions).some(
           ([id, e]) =>
@@ -44,7 +44,7 @@ export default class ManageMetadata extends PluginController {
       }
     }
     this.graphMetadata = newMetadata;
-    this.controller.pinExpressions?.applyPinnedStyle();
+    this.dsm.pinExpressions?.applyPinnedStyle();
   }
 
   _updateExprMetadata(id: string, obj: Partial<MetadataExpression>) {
@@ -63,8 +63,8 @@ export default class ManageMetadata extends PluginController {
   }
 
   finishUpdateMetadata() {
-    this.controller.pinExpressions?.applyPinnedStyle();
-    this.controller.commitStateChange(false);
+    this.dsm.pinExpressions?.applyPinnedStyle();
+    this.dsm.commitStateChange(false);
   }
 
   getDsmItemModel(id: string) {

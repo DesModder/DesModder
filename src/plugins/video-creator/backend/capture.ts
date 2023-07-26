@@ -1,6 +1,6 @@
 import VideoCreator from "..";
 import { scaleBoundsAboutCenter } from "./utils";
-import MainController from "MainController";
+import DSM from "MainController";
 import { Calc } from "globals/window";
 import { EvaluateSingleExpression } from "utils/depUtils";
 
@@ -9,25 +9,25 @@ let callbackIfCancel: (() => void) | null = null;
 
 export type CaptureMethod = "once" | "action" | "slider" | "ticks";
 
-export function cancelCapture(controller: VideoCreator) {
-  controller.captureCancelled = true;
+export function cancelCapture(vc: VideoCreator) {
+  vc.captureCancelled = true;
   callbackIfCancel?.();
 }
 
-async function captureAndApplyFrame(controller: VideoCreator) {
-  const frame = await captureFrame(controller);
-  controller.pushFrame(frame);
+async function captureAndApplyFrame(vc: VideoCreator) {
+  const frame = await captureFrame(vc);
+  vc.pushFrame(frame);
 }
 
-export async function captureFrame(controller: VideoCreator) {
-  const width = controller.getCaptureWidthNumber();
-  const height = controller.getCaptureHeightNumber();
-  const targetPixelRatio = controller.getTargetPixelRatio();
+export async function captureFrame(vc: VideoCreator) {
+  const width = vc.getCaptureWidthNumber();
+  const height = vc.getCaptureHeightNumber();
+  const targetPixelRatio = vc.getTargetPixelRatio();
   // resolves the screenshot as a data URI
   return await new Promise<string>((resolve, reject) => {
     const tryCancel = () => {
-      if (controller.captureCancelled) {
-        controller.captureCancelled = false;
+      if (vc.captureCancelled) {
+        vc.captureCancelled = false;
         reject(new Error("cancelled"));
       }
     };
@@ -66,13 +66,13 @@ export interface SliderSettings {
   stepLatex: string;
 }
 
-export async function captureSlider(controller: VideoCreator) {
-  const sliderSettings = controller.sliderSettings;
+export async function captureSlider(vc: VideoCreator) {
+  const sliderSettings = vc.sliderSettings;
   const variable = sliderSettings.variable;
   const min = EvaluateSingleExpression(sliderSettings.minLatex);
   const max = EvaluateSingleExpression(sliderSettings.maxLatex);
   const step = EvaluateSingleExpression(sliderSettings.stepLatex);
-  const slider = controller.getMatchingSlider();
+  const slider = vc.getMatchingSlider();
   if (slider === undefined) {
     return;
   }
@@ -89,7 +89,7 @@ export async function captureSlider(controller: VideoCreator) {
       latex: `${variable}=${value}`,
     });
     try {
-      await captureAndApplyFrame(controller);
+      await captureAndApplyFrame(vc);
     } catch {
       // should be paused due to cancellation
       break;
@@ -104,27 +104,27 @@ function slidersLatexJoined() {
     .join(";");
 }
 
-async function captureActionFrame(controller: VideoCreator, step: () => void) {
+async function captureActionFrame(vc: VideoCreator, step: () => void) {
   let stepped = false;
   try {
-    const tickCountRemaining = controller.getTickCountNumber();
+    const tickCountRemaining = vc.getTickCountNumber();
     if (tickCountRemaining > 0) {
-      controller.actionCaptureState = "waiting-for-screenshot";
-      await captureAndApplyFrame(controller);
-      controller.setTickCountLatex(String(tickCountRemaining - 1));
-      controller.actionCaptureState = "waiting-for-update";
+      vc.actionCaptureState = "waiting-for-screenshot";
+      await captureAndApplyFrame(vc);
+      vc.setTickCountLatex(String(tickCountRemaining - 1));
+      vc.actionCaptureState = "waiting-for-update";
       if (tickCountRemaining - 1 > 0) {
         const slidersBefore = slidersLatexJoined();
         step();
         stepped = true;
         if (
-          controller.captureMethod === "ticks" &&
+          vc.captureMethod === "ticks" &&
           slidersLatexJoined() === slidersBefore
         ) {
           // Due to rounding, this slider tick does not actually change the state,
           // so don't expect an event update. Just move to the next frame now.
           setTimeout(() => {
-            void captureActionFrame(controller, step);
+            void captureActionFrame(vc, step);
           }, 0);
         }
       }
@@ -139,10 +139,7 @@ async function captureActionFrame(controller: VideoCreator, step: () => void) {
   }
 }
 
-async function captureActionOrSliderTicks(
-  controller: VideoCreator,
-  step: () => void
-) {
+async function captureActionOrSliderTicks(vc: VideoCreator, step: () => void) {
   await new Promise<void>((resolve) => {
     callbackIfCancel = resolve;
     dispatchListenerID = Calc.controller.dispatcher.register((e) => {
@@ -151,13 +148,13 @@ async function captureActionOrSliderTicks(
         // but event "change" is not triggered for slider playing movement
         e.type === "on-evaluator-changes" &&
         // check waiting-for-update in case there is more than one update before the screenshot finishes
-        controller.actionCaptureState === "waiting-for-update"
+        vc.actionCaptureState === "waiting-for-update"
       ) {
-        void captureActionFrame(controller, step);
+        void captureActionFrame(vc, step);
       }
     });
 
-    void captureActionFrame(controller, step);
+    void captureActionFrame(vc, step);
   });
 }
 
@@ -165,10 +162,10 @@ async function captureActionOrSliderTicks(
  * force-reload the list of options by closing and re-opening the menu.
  * This is needed when action-capture stops sliders, so the slider-ticks
  * capture method option gets disabled. */
-function forceReloadMenu(controller: MainController) {
+function forceReloadMenu(dsm: DSM) {
   // XXX: it would be better if SegmentedControl actually re-loaded options
   // A proper implementation is needed if we ever allow pinning the vc menu.
-  const pm = controller.pillboxMenus;
+  const pm = dsm.pillboxMenus;
   if (!pm) return;
   if (pm.pillboxMenuOpen === "dsm-vc-menu") {
     pm.pillboxMenuOpen = null;
@@ -178,67 +175,67 @@ function forceReloadMenu(controller: MainController) {
   }
 }
 
-export async function capture(controller: VideoCreator) {
-  controller.isCapturing = true;
-  controller.updateView();
+export async function capture(vc: VideoCreator) {
+  vc.isCapturing = true;
+  vc.updateView();
   const tickSliders = Calc.controller._tickSliders.bind(Calc.controller);
-  if (controller.captureMethod !== "once") {
+  if (vc.captureMethod !== "once") {
     if (Calc.controller.getTickerPlaying?.()) {
       Calc.controller.dispatch({ type: "toggle-ticker" });
     }
-    if (controller.captureMethod === "ticks") {
+    if (vc.captureMethod === "ticks") {
       // prevent the current slider ticking since we will manually tick the sliders.
       Calc.controller._tickSliders = () => {};
     } else if (Calc.controller.getPlayingSliders().length > 0) {
       Calc.controller.stopAllSliders();
-      forceReloadMenu(controller.controller);
+      forceReloadMenu(vc.dsm);
     }
   }
-  switch (controller.captureMethod) {
+  switch (vc.captureMethod) {
     case "action": {
       const step = () => {
-        if (controller.currentActionID !== null)
+        if (vc.currentActionID !== null)
           Calc.controller.dispatch({
             type: "action-single-step",
-            id: controller.currentActionID,
+            id: vc.currentActionID,
           });
       };
-      await captureActionOrSliderTicks(controller, step);
+      await captureActionOrSliderTicks(vc, step);
       break;
     }
     case "ticks": {
       let currTime = performance.now();
       const step = () => {
-        currTime += controller.getTickTimeStepNumber();
+        currTime += vc.getTickTimeStepNumber();
         tickSliders(currTime);
       };
-      await captureActionOrSliderTicks(controller, step);
+      await captureActionOrSliderTicks(vc, step);
       // restore the typical handling of slider ticking
       Calc.controller._tickSliders = tickSliders;
       break;
     }
     case "once":
       try {
-        await captureAndApplyFrame(controller);
+        await captureAndApplyFrame(vc);
       } catch {
         // math bounds mismatch, irrelevant
       }
       break;
     case "slider":
-      await captureSlider(controller);
+      await captureSlider(vc);
       break;
     default: {
-      const exhaustiveCheck: never = controller.captureMethod;
+      const exhaustiveCheck: never = vc.captureMethod;
       return exhaustiveCheck;
     }
   }
-  controller.isCapturing = false;
-  controller.actionCaptureState = "none";
-  controller.updateView();
+  vc.isCapturing = false;
+  vc.actionCaptureState = "none";
+  vc.updateView();
   if (dispatchListenerID !== null) {
     Calc.controller.dispatcher.unregister(dispatchListenerID);
     dispatchListenerID = null;
   }
   // no need to retain a pending cancellation, if any; capture is already finished
-  controller.captureCancelled = false;
+  vc.captureCancelled = false;
 }

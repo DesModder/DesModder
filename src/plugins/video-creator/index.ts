@@ -84,7 +84,7 @@ export default class VideoCreator extends PluginController {
   afterEnable() {
     Calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
     this._applyDefaultCaptureSize();
-    this.controller.pillboxMenus?.addPillboxButton({
+    this.dsm.pillboxMenus?.addPillboxButton({
       id: "dsm-vc-menu",
       tooltip: "video-creator-menu",
       iconClass: "dcg-icon-film",
@@ -94,7 +94,7 @@ export default class VideoCreator extends PluginController {
   }
 
   afterDisable() {
-    this.controller.pillboxMenus?.removePillboxButton("dsm-vc-menu");
+    this.dsm.pillboxMenus?.removePillboxButton("dsm-vc-menu");
     document.removeEventListener("keydown", this.onKeydown);
   }
 

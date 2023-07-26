@@ -17,12 +17,12 @@ import { For } from "components/desmosComponents";
 import { format } from "i18n/i18n-core";
 
 export default class SelectCapture extends Component<{
-  controller: VideoCreator;
+  vc: VideoCreator;
 }> {
-  controller!: VideoCreator;
+  vc!: VideoCreator;
 
   init() {
-    this.controller = this.props.controller();
+    this.vc = this.props.vc();
   }
 
   template() {
@@ -37,81 +37,73 @@ export default class SelectCapture extends Component<{
             }
             selectedIndex={() => this.getSelectedCaptureMethodIndex()}
             setSelectedIndex={(i) => this.setSelectedCaptureMethodIndex(i)}
-            allowChange={() => !this.controller.isCapturing}
+            allowChange={() => !this.vc.isCapturing}
             ariaGroupLabel={"Select capture method"}
           />
         </div>
-        <Switch key={() => this.controller.captureMethod}>
+        <Switch key={() => this.vc.captureMethod}>
           {() =>
             ({
               slider: () => (
                 <div>
                   <div class="dsm-vc-slider-settings">
-                    <InlineMathInputView
-                      ariaLabel="slider variable"
-                      handleLatexChanged={(v) =>
-                        this.controller.setSliderSetting("variable", v)
-                      }
-                      hasError={() =>
-                        !this.controller.isSliderSettingValid("variable")
-                      }
-                      latex={() => this.controller.sliderSettings.variable}
-                      isFocused={() =>
-                        this.controller.isFocused("capture-slider-var")
-                      }
-                      handleFocusChanged={(b) =>
-                        this.controller.updateFocus("capture-slider-var", b)
-                      }
-                    />
+                    <span class="yes-intellisense">
+                      <InlineMathInputView
+                        ariaLabel="slider variable"
+                        handleLatexChanged={(v) =>
+                          this.vc.setSliderSetting("variable", v)
+                        }
+                        hasError={() =>
+                          !this.vc.isSliderSettingValid("variable")
+                        }
+                        latex={() => this.vc.sliderSettings.variable}
+                        isFocused={() =>
+                          this.vc.isFocused("capture-slider-var")
+                        }
+                        handleFocusChanged={(b) =>
+                          this.vc.updateFocus("capture-slider-var", b)
+                        }
+                      />
+                    </span>
                     <StaticMathQuillView latex="=" />
                     <InlineMathInputView
                       ariaLabel="slider min"
                       handleLatexChanged={(v) =>
-                        this.controller.setSliderSetting("minLatex", v)
+                        this.vc.setSliderSetting("minLatex", v)
                       }
-                      hasError={() =>
-                        !this.controller.isSliderSettingValid("minLatex")
-                      }
-                      latex={() => this.controller.sliderSettings.minLatex}
-                      isFocused={() =>
-                        this.controller.isFocused("capture-slider-min")
-                      }
+                      hasError={() => !this.vc.isSliderSettingValid("minLatex")}
+                      latex={() => this.vc.sliderSettings.minLatex}
+                      isFocused={() => this.vc.isFocused("capture-slider-min")}
                       handleFocusChanged={(b) =>
-                        this.controller.updateFocus("capture-slider-min", b)
+                        this.vc.updateFocus("capture-slider-min", b)
                       }
                     />
                     {format("video-creator-to")}
                     <InlineMathInputView
                       ariaLabel="slider max"
                       handleLatexChanged={(v) =>
-                        this.controller.setSliderSetting("maxLatex", v)
+                        this.vc.setSliderSetting("maxLatex", v)
                       }
-                      hasError={() =>
-                        !this.controller.isSliderSettingValid("maxLatex")
-                      }
-                      latex={() => this.controller.sliderSettings.maxLatex}
-                      isFocused={() =>
-                        this.controller.isFocused("capture-slider-max")
-                      }
+                      hasError={() => !this.vc.isSliderSettingValid("maxLatex")}
+                      latex={() => this.vc.sliderSettings.maxLatex}
+                      isFocused={() => this.vc.isFocused("capture-slider-max")}
                       handleFocusChanged={(b) =>
-                        this.controller.updateFocus("capture-slider-max", b)
+                        this.vc.updateFocus("capture-slider-max", b)
                       }
                     />
                     {format("video-creator-step")}
                     <InlineMathInputView
                       ariaLabel="slider step"
                       handleLatexChanged={(v) =>
-                        this.controller.setSliderSetting("stepLatex", v)
+                        this.vc.setSliderSetting("stepLatex", v)
                       }
                       hasError={() =>
-                        !this.controller.isSliderSettingValid("stepLatex")
+                        !this.vc.isSliderSettingValid("stepLatex")
                       }
-                      latex={() => this.controller.sliderSettings.stepLatex}
-                      isFocused={() =>
-                        this.controller.isFocused("capture-slider-step")
-                      }
+                      latex={() => this.vc.sliderSettings.stepLatex}
+                      isFocused={() => this.vc.isFocused("capture-slider-step")}
                       handleFocusChanged={(b) =>
-                        this.controller.updateFocus("capture-slider-step", b)
+                        this.vc.updateFocus("capture-slider-step", b)
                       }
                     />
                   </div>
@@ -119,20 +111,20 @@ export default class SelectCapture extends Component<{
               ),
               action: () => (
                 <div>
-                  <If predicate={() => this.controller.getActions().length > 1}>
+                  <If predicate={() => this.vc.getActions().length > 1}>
                     {() => (
                       <div class="dsm-vc-action-navigate-container">
                         <Button
                           color="primary"
-                          onTap={() => this.controller.addToActionIndex(-1)}
-                          disabled={() => this.controller.isCapturing}
+                          onTap={() => this.vc.addToActionIndex(-1)}
+                          disabled={() => this.vc.isCapturing}
                         >
                           {format("video-creator-prev-action")}
                         </Button>
                         <Button
                           color="primary"
-                          onTap={() => this.controller.addToActionIndex(+1)}
-                          disabled={() => this.controller.isCapturing}
+                          onTap={() => this.vc.addToActionIndex(+1)}
+                          disabled={() => this.vc.isCapturing}
                         >
                           {format("video-creator-next-action")}
                         </Button>
@@ -143,8 +135,8 @@ export default class SelectCapture extends Component<{
                     each={
                       // using an <If> here doesn't work because it doesn't update the StaticMathQuillView
                       () =>
-                        this.controller.getCurrentAction()?.latex !== undefined
-                          ? [this.controller.getCurrentAction()]
+                        this.vc.getCurrentAction()?.latex !== undefined
+                          ? [this.vc.getCurrentAction()]
                           : []
                     }
                     key={(action) => action.id}
@@ -153,7 +145,7 @@ export default class SelectCapture extends Component<{
                       {() => (
                         <StaticMathQuillView
                           latex={() =>
-                            this.controller.getCurrentAction()?.latex as string
+                            this.vc.getCurrentAction()?.latex as string
                           }
                         />
                       )}
@@ -166,56 +158,46 @@ export default class SelectCapture extends Component<{
                   {format("video-creator-ticks-step")}
                   <InlineMathInputView
                     ariaLabel="time step (ms)"
-                    handleLatexChanged={(v) =>
-                      this.controller.setTickTimeStepLatex(v)
-                    }
-                    hasError={() => !this.controller.isTickTimeStepValid()}
-                    latex={() => this.controller.tickTimeStepLatex}
+                    handleLatexChanged={(v) => this.vc.setTickTimeStepLatex(v)}
+                    hasError={() => !this.vc.isTickTimeStepValid()}
+                    latex={() => this.vc.tickTimeStepLatex}
                     isFocused={() =>
-                      this.controller.isFocused("capture-tick-time-step")
+                      this.vc.isFocused("capture-tick-time-step")
                     }
                     handleFocusChanged={(b) =>
-                      this.controller.updateFocus("capture-tick-time-step", b)
+                      this.vc.updateFocus("capture-tick-time-step", b)
                     }
                   />
                 </div>
               ),
               once: () => null,
-            }[this.controller.captureMethod]())
+            }[this.vc.captureMethod]())
           }
         </Switch>
         <div class="dsm-vc-capture-size">
           {format("video-creator-size")}
           <InlineMathInputView
             ariaLabel="capture width"
-            handleLatexChanged={(latex) =>
-              this.controller.setCaptureWidthLatex(latex)
-            }
-            latex={() => this.controller.captureWidthLatex}
-            hasError={() => !this.controller.isCaptureWidthValid()}
-            handleFocusChanged={(b) =>
-              this.controller.updateFocus("capture-width", b)
-            }
-            isFocused={() => this.controller.isFocused("capture-width")}
+            handleLatexChanged={(latex) => this.vc.setCaptureWidthLatex(latex)}
+            latex={() => this.vc.captureWidthLatex}
+            hasError={() => !this.vc.isCaptureWidthValid()}
+            handleFocusChanged={(b) => this.vc.updateFocus("capture-width", b)}
+            isFocused={() => this.vc.isFocused("capture-width")}
           />
           ×
           <InlineMathInputView
             ariaLabel="capture height"
-            handleLatexChanged={(latex) =>
-              this.controller.setCaptureHeightLatex(latex)
-            }
-            latex={() => this.controller.captureHeightLatex}
-            hasError={() => !this.controller.isCaptureHeightValid()}
-            handleFocusChanged={(b) =>
-              this.controller.updateFocus("capture-height", b)
-            }
-            isFocused={() => this.controller.isFocused("capture-height")}
+            handleLatexChanged={(latex) => this.vc.setCaptureHeightLatex(latex)}
+            latex={() => this.vc.captureHeightLatex}
+            hasError={() => !this.vc.isCaptureHeightValid()}
+            handleFocusChanged={(b) => this.vc.updateFocus("capture-height", b)}
+            isFocused={() => this.vc.isFocused("capture-height")}
           />
-          <If predicate={() => this.controller.isDefaultCaptureSizeDifferent()}>
+          <If predicate={() => this.vc.isDefaultCaptureSizeDifferent()}>
             {() => (
               <Button
                 color="light-gray"
-                onTap={() => this.controller.applyDefaultCaptureSize()}
+                onTap={() => this.vc.applyDefaultCaptureSize()}
               >
                 <i class="dsm-icon-magic" />
               </Button>
@@ -223,16 +205,14 @@ export default class SelectCapture extends Component<{
           </If>
         </div>
         <If
-          predicate={() =>
-            Math.abs(this.controller._getTargetPixelRatio() - 1) > 0.001
-          }
+          predicate={() => Math.abs(this.vc._getTargetPixelRatio() - 1) > 0.001}
         >
           {() => (
             <div class="dsm-vc-pixel-ratio">
               <Checkbox
-                checked={() => this.controller.samePixelRatio}
+                checked={() => this.vc.samePixelRatio}
                 onChange={(checked: boolean) =>
-                  this.controller.setSamePixelRatio(checked)
+                  this.vc.setSamePixelRatio(checked)
                 }
                 ariaLabel="Target same pixel ratio"
               >
@@ -250,21 +230,19 @@ export default class SelectCapture extends Component<{
         </If>
         <div class="dsm-vc-capture">
           {IfElse(
-            () =>
-              !this.controller.isCapturing ||
-              this.controller.captureMethod === "once",
+            () => !this.vc.isCapturing || this.vc.captureMethod === "once",
             {
               true: () => (
                 <Button
                   color="primary"
                   class="dsm-vc-capture-frame-button"
                   disabled={() =>
-                    this.controller.isCapturing ||
-                    this.controller.isExporting ||
-                    !this.controller.areCaptureSettingsValid()
+                    this.vc.isCapturing ||
+                    this.vc.isExporting ||
+                    !this.vc.areCaptureSettingsValid()
                   }
                   onTap={() => {
-                    void this.controller.capture();
+                    void this.vc.capture();
                   }}
                 >
                   {format("video-creator-capture")}
@@ -274,7 +252,7 @@ export default class SelectCapture extends Component<{
                 <Button
                   color="light-gray"
                   class="dsm-vc-cancel-capture-button"
-                  onTap={() => cancelCapture(this.controller)}
+                  onTap={() => cancelCapture(this.vc)}
                 >
                   {format("video-creator-cancel-capture")}
                 </Button>
@@ -283,8 +261,8 @@ export default class SelectCapture extends Component<{
           )}
           <If
             predicate={() =>
-              this.controller.captureMethod === "action" ||
-              this.controller.captureMethod === "ticks"
+              this.vc.captureMethod === "action" ||
+              this.vc.captureMethod === "ticks"
             }
           >
             {() => (
@@ -292,16 +270,12 @@ export default class SelectCapture extends Component<{
                 {format("video-creator-step-count")}
                 <InlineMathInputView
                   ariaLabel="step count"
-                  handleLatexChanged={(v) =>
-                    this.controller.setTickCountLatex(v)
-                  }
-                  hasError={() => !this.controller.isTickCountValid()}
-                  latex={() => this.controller.tickCountLatex}
-                  isFocused={() =>
-                    this.controller.isFocused("capture-tick-count")
-                  }
+                  handleLatexChanged={(v) => this.vc.setTickCountLatex(v)}
+                  hasError={() => !this.vc.isTickCountValid()}
+                  latex={() => this.vc.tickCountLatex}
+                  isFocused={() => this.vc.isFocused("capture-tick-count")}
                   handleFocusChanged={(b) =>
-                    this.controller.updateFocus("capture-tick-count", b)
+                    this.vc.updateFocus("capture-tick-count", b)
                   }
                 />
               </div>
@@ -319,21 +293,17 @@ export default class SelectCapture extends Component<{
       "action",
       "ticks",
     ];
-    return captureMethodNames.filter((s) =>
-      this.controller.isCaptureMethodValid(s)
-    );
+    return captureMethodNames.filter((s) => this.vc.isCaptureMethodValid(s));
   }
 
   getSelectedCaptureMethodIndex() {
-    return this.validCaptureMethodNames().indexOf(
-      this.controller.captureMethod
-    );
+    return this.validCaptureMethodNames().indexOf(this.vc.captureMethod);
   }
 
   setSelectedCaptureMethodIndex(i: number) {
     const name = this.validCaptureMethodNames()[i];
     if (name !== undefined) {
-      this.controller.captureMethod = name;
+      this.vc.captureMethod = name;
     }
   }
 }
