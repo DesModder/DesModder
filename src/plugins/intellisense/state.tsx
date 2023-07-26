@@ -2,7 +2,7 @@ import { BoundIdentifier } from ".";
 import { parseRootLatex } from "../../../text-mode-core";
 import { getTextModeConfig } from "../text-mode";
 import { mapAugAST } from "./latex-parsing";
-import { FolderModel, ItemModel } from "globals/models";
+import { ItemModel } from "globals/models";
 import { Calc } from "globals/window";
 import { rootKeys } from "plugins/find-replace/backend";
 import Metadata from "plugins/manage-metadata/interface";
