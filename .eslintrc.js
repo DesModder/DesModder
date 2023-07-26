@@ -13,7 +13,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: "latest",
     sourceType: "module",
-    project: "tsconfig.json",
+    project: "tsconfig-eslint.json",
   },
   ignorePatterns: [
     "coverage",
@@ -35,11 +35,15 @@ module.exports = {
     "*.html",
     "*.woff",
     "*.svg",
+    ".eslintrc.js",
   ],
   parser: "@typescript-eslint/parser",
   rules: {
     "rulesdir/no-format-in-ts": "error",
     "rulesdir/no-expect-promise": "error",
+    "rulesdir/no-reach-past-exports": "error",
+    "rulesdir/no-external-imports": "error",
+    "rulesdir/no-timeouts-in-intellisense": "error",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/array-type": "off",
     "@typescript-eslint/strict-boolean-expressions": "off",
@@ -51,10 +55,7 @@ module.exports = {
         ignoreArrowShorthand: true,
       },
     ],
-    "@typescript-eslint/consistent-type-imports": [
-      "error",
-      { prefer: "no-type-imports" },
-    ],
+    "@typescript-eslint/consistent-type-imports": "off",
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": "off",
     "no-console": "error",

@@ -1,5 +1,11 @@
 # DesModder Changelog
 
+## 0.11.2
+
+Bug fixes:
+
+- (GLesmos) Fix loading error.
+
 ## 0.11.1
 
 Bug fixes and improvements

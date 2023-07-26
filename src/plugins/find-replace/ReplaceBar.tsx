@@ -1,4 +1,4 @@
-import Controller from "./Controller";
+import FindReplace from ".";
 import "./ReplaceBar.less";
 import { Component, jsx } from "DCGView";
 import { MathQuillView } from "components";
@@ -7,12 +7,12 @@ import { format } from "i18n/i18n-core";
 import { autoOperatorNames } from "utils/depUtils";
 
 export default class ReplaceBar extends Component<{
-  controller: Controller;
+  fr: FindReplace;
 }> {
-  controller!: Controller;
+  fr!: FindReplace;
 
   init() {
-    this.controller = this.props.controller();
+    this.fr = this.props.fr();
   }
 
   template() {
@@ -20,29 +20,25 @@ export default class ReplaceBar extends Component<{
       <div class="dcg-expression-search-bar">
         <div class="dcg-search-mathquill-container">
           <MathQuillView
-            latex={() => this.controller.getReplaceLatex()}
+            latex={() => this.fr.getReplaceLatex()}
             capExpressionSize={false}
-            config={{
-              autoOperatorNames,
-            }}
+            config={{ autoOperatorNames }}
             isFocused={false}
             getAriaLabel="expression replace"
             getAriaPostLabel=""
-            onUserChangedLatex={(e: string) =>
-              this.controller.setReplaceLatex(e)
-            }
+            onUserChangedLatex={(e: string) => this.fr.setReplaceLatex(e)}
             onUserPressedKey={(key: string, e: KeyboardEvent) => {
               if (key === "Enter") {
-                this.controller.refactorAll();
+                this.fr.refactorAll();
               } else if (key === "Esc") {
                 this.closeReplace();
               } else if (key === "Ctrl-F") {
-                this.controller.focusSearch();
+                this.fr.focusSearch();
               } else {
                 const focusedMQ = MathQuillView.getFocusedMathquill();
                 if (focusedMQ) {
                   focusedMQ.keystroke(key, e);
-                  this.controller.setReplaceLatex(focusedMQ.latex());
+                  this.fr.setReplaceLatex(focusedMQ.latex());
                 }
               }
             }}
@@ -59,7 +55,7 @@ export default class ReplaceBar extends Component<{
         <div
           class="dsm-find-replace-replace-all"
           role="button"
-          onTap={() => this.controller.refactorAll()}
+          onTap={() => this.fr.refactorAll()}
         >
           {format("find-and-replace-replace-all")}
         </div>
@@ -74,6 +70,6 @@ export default class ReplaceBar extends Component<{
   }
 
   didMount() {
-    this.controller.focusSearch();
+    this.fr.focusSearch();
   }
 }

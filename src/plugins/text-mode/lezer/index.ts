@@ -12,7 +12,7 @@ import {
 } from "@codemirror/language";
 import { styleTags, tags as t } from "@lezer/highlight";
 
-export const TextModeLanguage = (controller: TextMode) =>
+export const TextModeLanguage = (tm: TextMode) =>
   LRLanguage.define({
     parser: parser.configure({
       props: [
@@ -42,11 +42,10 @@ export const TextModeLanguage = (controller: TextMode) =>
     languageData: {
       commentTokens: { line: "//" },
       indentOnInput: /^\s*[})\]]$/,
-      autocomplete: (context: CompletionContext) =>
-        completions(controller, context),
+      autocomplete: (context: CompletionContext) => completions(tm, context),
     },
   });
 
-export function textMode(controller: TextMode) {
-  return new LanguageSupport(TextModeLanguage(controller));
+export function textMode(tm: TextMode) {
+  return new LanguageSupport(TextModeLanguage(tm));
 }

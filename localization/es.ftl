@@ -166,7 +166,6 @@ wakatime-opt-splitProjects-desc = Guarda cada gráfica como su propio proyecto y
 wakatime-opt-projectName-name = Nombre de Proyecto
 wakatime-opt-projectName-desc = Visible en WakaTime y es compartido por todos tus proyectos de Desmos.
 
-
 ## Performance Display
 performance-info-name = Monitor de Rendimiento
 performance-info-desc = Visualiza información sobre el rendimiento del gráfico.
@@ -187,3 +186,46 @@ better-evaluation-view-opt-colors-name = Mostrar colores
 better-evaluation-view-opt-colors-desc = Mostrar colores como valores RGB
 better-evaluation-view-opt-colorLists-name = Mostrar listas de colores
 better-evaluation-view-opt-colorLists-desc = Mostrar listas de colores como listas de valores RGB
+
+## Pillbox Menus
+pillbox-menus-name = Menú de botones (Funciones Principales)
+pillbox-menus-desc = Mostrar botones al lado derecho, así como el Creador de Video o el menú principal de DesModder
+
+## Manage Metadata
+manage-metadata-name = Administrar Metadatos (Funciones Principales)
+manage-metadata-desc = Permite administrar metadatos, así como las extensiones GLesmos o Fijar Expresiones
+
+## Intellisense
+intellisense-name = Intellisense
+intellisense-desc = Brinda varias funciones esenciales de una IDE en Desmos incluyendo sugerencias de autocompletado, visualización de parámetros, e ir a definición. Sigue el enlace para la documentación:
+intellisense-jump2def-menu-instructions = tiene múltiples definiciones. Elije a cuál quieres navegar.
+
+## Compact View
+compact-view-name = Vista Compacta
+compact-view-desc = Permite personalizar la interfaz gráfica con énfasis en mostrar más información de manera compacta.
+compact-view-opt-textFontSize-name = Tamaño de fuente (texto)
+compact-view-opt-textFontSize-desc = Tamaño del texto en notas y carpetas
+compact-view-opt-mathFontSize-name = Tamaño de fuente (matemática)
+compact-view-opt-mathFontSize-desc = Tamaño de texto de expresiones y ecuaciones
+compact-view-opt-bracketFontSizeFactor-name = Factor de paréntesis
+compact-view-opt-bracketFontSizeFactor-desc = Este factor ajusta el tamaño del texto encerrado en paréntesis (o corchetes).
+compact-view-opt-minimumFontSize-name = Mínimo tamaño de fuente
+compact-view-opt-minimumFontSize-desc = El mínimo tamaño de fuente posible. Sobrescribe el factor de paréntesis.
+compact-view-opt-compactFactor-name = Remover espacio
+compact-view-opt-compactFactor-desc = Remueve el espacio entre las expresiones y notas en la lista.
+compact-view-opt-noSeparatingLines-name = Sin líneas de separación
+compact-view-opt-noSeparatingLines-desc = Remueve las líneas de separación entre el medio de las expresiones.
+compact-view-opt-highlightAlternatingLines-name = Realzar líneas alternas
+compact-view-opt-highlightAlternatingLines-desc = Realza con colores alternos las expresiones para que estas puedan distinguirse con más facilidad.
+compact-view-opt-hideEvaluations-name = Colapsar evaluaciones
+compact-view-opt-hideEvaluations-desc = Mueve evaluaciones de listas fuera de la vista y las muestra solo cuando colocas el cursor sobre ellas.
+
+## Multiline
+multiline-name = Expresiones Multilínea
+multiline-desc = Divide expresiones largas en múltiples líneas. Puedes activar esta función manualmente presionando Ctrl+M.
+multiline-opt-widthBeforeMultiline-name = Límite de ancho (%)
+multiline-opt-widthBeforeMultiline-desc = Este es un porcentaje de la pantalla al cual el largo de la expresión provoca ajuste de líneas. En móvil este valor es triplicado.
+multiline-opt-automaticallyMultilinify-name = Ajuste de línea automático
+multiline-opt-automaticallyMultilinify-desc = Automáticamente divide las expresiones en múltiples líneas.
+multiline-opt-multilinifyDelayAfterEdit-name = Retraso de ajuste (ms)
+multiline-opt-multilinifyDelayAfterEdit-desc = Retrasa el ajuste de líneas en la expresión que estás editando por el número milisegundos especificado.

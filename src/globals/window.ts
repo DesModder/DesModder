@@ -1,5 +1,5 @@
 import { DCGViewModule } from "../DCGView";
-import MainController from "../MainController";
+import DSM from "../MainController";
 import {
   CheckboxComponent,
   DStaticMathquillViewComponent,
@@ -10,6 +10,7 @@ import {
   MathQuillViewComponent,
   SegmentedControlComponent,
   TooltipComponent,
+  MathQuillConfig,
 } from "../components/desmosComponents";
 import { GenericSettings, PluginID } from "../plugins";
 import CalcType from "./Calc";
@@ -19,7 +20,7 @@ import { GraphState } from "@desmodder/graph-state";
 export interface DWindow extends Window {
   Calc: CalcType;
   DesModder: any;
-  DSM: MainController;
+  DSM: DSM;
   DesModderPreload?: {
     pluginsForceDisabled: Set<PluginID>;
     pluginsEnabled: Record<PluginID, boolean | undefined>;
@@ -33,6 +34,9 @@ export interface DWindow extends Window {
     Private: {
       Fragile: typeof Fragile;
       Mathtools: Mathtools;
+    };
+    MathQuill: {
+      config: (config: MathQuillConfig) => DWindow["Desmos"]["MathQuill"];
     };
   };
 }
@@ -151,5 +155,3 @@ declare global {
  * Use `/* eslint-disable no-console` and lowercase `console.log` on node scripts
  */
 export const Console = ((globalThis ?? window) as any).console;
-
-export const DesModderFragile = window.DesModderFragile;

@@ -15,7 +15,7 @@ export function PinnedPanel(
   return (
     <For
       each={() =>
-        pinExpressions.controller.textMode?.inTextMode
+        pinExpressions.dsm.textMode?.inTextMode
           ? []
           : Calc.controller?.getAllItemModels?.() ?? []
       }

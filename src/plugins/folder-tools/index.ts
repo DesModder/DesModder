@@ -58,7 +58,7 @@ export default class FolderTools extends PluginController {
     });
     Calc.controller._toplevelReplaceItemAt(folderIndex, T, true);
 
-    this.controller.commitStateChange(true);
+    this.dsm.commitStateChange(true);
   }
 
   folderMerge(folderIndex: number) {
@@ -117,7 +117,7 @@ export default class FolderTools extends PluginController {
     if (toDeleteFolderID)
       List.removeItemById(Calc.controller.listModel, toDeleteFolderID);
 
-    this.controller.commitStateChange(true);
+    this.dsm.commitStateChange(true);
   }
 
   noteEnclose(noteIndex: number) {
@@ -133,6 +133,6 @@ export default class FolderTools extends PluginController {
     Calc.controller._toplevelReplaceItemAt(noteIndex, T, true);
     this.folderMerge(noteIndex);
 
-    this.controller.commitStateChange(true);
+    this.dsm.commitStateChange(true);
   }
 }

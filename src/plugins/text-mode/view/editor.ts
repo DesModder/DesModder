@@ -46,12 +46,12 @@ const scrollTheme = EditorView.theme({
   },
 });
 
-export function startState(controller: TextMode, text: string) {
+export function startState(tm: TextMode, text: string) {
   const state = EditorState.create({
     doc: text,
     extensions: [
       analysisStateField,
-      EditorView.updateListener.of(controller.onEditorUpdate.bind(controller)),
+      EditorView.updateListener.of(tm.onEditorUpdate.bind(tm)),
       // linter, showing errors
       linter(doLint, { delay: 0 }),
       // line numbers and gutter
@@ -101,7 +101,7 @@ export function startState(controller: TextMode, text: string) {
       ]),
       scrollTheme,
       // syntax highlighting
-      textMode(controller),
+      textMode(tm),
       // Text mode plugins
       checkboxPlugin,
       styleMappingPlugin,
@@ -111,9 +111,9 @@ export function startState(controller: TextMode, text: string) {
   return state.update(collapseStylesAtStart(state)).state;
 }
 
-export function initView(controller: TextMode, text: string) {
+export function initView(tm: TextMode, text: string) {
   return new EditorView({
-    state: startState(controller, text),
+    state: startState(tm, text),
     parent: document.body,
   });
 }
