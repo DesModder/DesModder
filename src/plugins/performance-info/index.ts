@@ -33,7 +33,8 @@ export default class PerformanceInfo extends PluginController {
     if (e.type !== "on-evaluator-changes") return;
     this.timingDataHistory?.push(e.timingData);
     if (this.timingDataHistory.length > 10) this.timingDataHistory.shift();
-    Calc.controller.updateViews();
+    // Don't Calc.controller.updateViews here. This is inside a dispatched event,
+    // so it will update views anyways.
   }
 
   getTimingData() {
