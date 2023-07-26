@@ -153,12 +153,12 @@ video-creator-method-ticks = contador
 
 ## Shift+Enter Newline
 shift-enter-newline-name = Nueva línea con Shift+Entrar
-shift-enter-newline-desc = Teclea Shift+Entrar para añadir líneas nuevas en las notas y en los títulos de imágenes/carpetas.
+shift-enter-newline-desc = Permite teclear Shift+Entrar para añadir líneas nuevas en las notas y en los títulos de imágenes/carpetas.
 
 ## Wakatime
 # Unchanged
 wakatime-name = WakaTime
-wakatime-desc = Dale seguimiento a tu actividad de Desmos en WakaTime.com
+wakatime-desc = Le da seguimiento a tu actividad de Desmos en WakaTime.com
 wakatime-opt-secretKey-name = Llave Secreta
 wakatime-opt-secretKey-desc = Llave API usada para los servidores de WakaTime
 wakatime-opt-splitProjects-name = Separa los proyectos por gráficas individuales
@@ -189,7 +189,7 @@ better-evaluation-view-opt-colorLists-desc = Mostrar listas de colores como list
 
 ## Pillbox Menus
 pillbox-menus-name = Menú de botones (Funciones Principales)
-pillbox-menus-desc = Mostrar botones al lado derecho, así como el Creador de Video o el menú principal de DesModder
+pillbox-menus-desc = Muestra botones al lado derecho, así como el Creador de Video o el menú principal de DesModder
 
 ## Manage Metadata
 manage-metadata-name = Administrar Metadatos (Funciones Principales)
@@ -229,3 +229,29 @@ multiline-opt-automaticallyMultilinify-name = Ajuste de línea automático
 multiline-opt-automaticallyMultilinify-desc = Automáticamente divide las expresiones en múltiples líneas.
 multiline-opt-multilinifyDelayAfterEdit-name = Retraso de ajuste (ms)
 multiline-opt-multilinifyDelayAfterEdit-desc = Retrasa el ajuste de líneas en la expresión que estás editando por el número milisegundos especificado.
+
+## Custom MathQuill Config
+custom-mathquill-config-name = Configuración de MathQuill
+custom-mathquill-config-desc = Te permite expandir y cambiar la edición de ecuaciones
+custom-mathquill-config-opt-superscriptOperators-name = Operadores en exponentes
+custom-mathquill-config-opt-superscriptOperators-desc = Permite teclear operadores, asi como '+' en los exponentes
+custom-mathquill-config-opt-noAutoSubscript-name = Deshabilita subíndices automáticos
+custom-mathquill-config-opt-noAutoSubscript-desc = Deshabilita subíndices automáticos en números cuando estos son escritos después de una variable
+custom-mathquill-config-opt-noNEquals-name = Deshabilita n= en sumatorio
+custom-mathquill-config-opt-noNEquals-desc = Deshabilita la 'n=' en el límite inferior de los sumatorios
+custom-mathquill-config-opt-subSupWithoutOp-name = Subíndices y exponentes sin base
+custom-mathquill-config-opt-subSupWithoutOp-desc = Permite crear subíndices y exponentes sin que estos estén precedidos de un símbolo
+custom-mathquill-config-opt-allowMixedBrackets-name = Permitir paréntesis mezclados
+custom-mathquill-config-opt-allowMixedBrackets-desc = Permite mezclar paréntesis de distinto tipo (incluyendo el valor absoluto)
+custom-mathquill-config-opt-subscriptReplacements-name = Permite reemplazos en subíndices
+custom-mathquill-config-opt-subscriptReplacements-desc = Permite símbolos y nombres de funciones dentro de los subíndices
+custom-mathquill-config-opt-noPercentOf-name = Deshabilita % of
+custom-mathquill-config-opt-noPercentOf-desc = Permite teclear el carácter '%' sin la inserción automática de '% of'
+custom-mathquill-config-opt-commaDelimiter-name = Coma de separación
+custom-mathquill-config-opt-commaDelimiter-desc = Inserta comas de separación en números (visual solamente)
+custom-mathquill-config-opt-delimiterOverride-name = Separador personalizado
+custom-mathquill-config-opt-delimiterOverride-desc = Carácter que va a ser usado como separador de millares
+custom-mathquill-config-opt-leftIntoSubscript-name = Navegación hacia subíndices
+custom-mathquill-config-opt-leftIntoSubscript-desc = Prioriza subíndices sobre exponentes al navegar con las flechas del teclado
+custom-mathquill-config-opt-extendedGreek-name = Más letras griegas
+custom-mathquill-config-opt-extendedGreek-desc = Habilita reemplazos para todas las letras griegas
