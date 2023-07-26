@@ -49,6 +49,7 @@ export default function augNeedsParens(
     case "List":
     case "Piecewise":
     case "Range":
+    case "Norm":
       return false;
     // Top-level cases
     case "Equation":
@@ -144,8 +145,8 @@ function power(node: Aug.Latex.AnyChild): number {
     case "Factorial":
       return POWERS.factorial;
     case "FunctionCall":
-      return POWERS.call;
     case "Prime":
+    case "Norm":
       return POWERS.call;
     case "ListAccess":
     case "DotAccess":

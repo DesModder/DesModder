@@ -40,6 +40,7 @@ export type AnyChild =
   | RepeatedOperator
   | BinaryOperator
   | Negative
+  | Norm
   | Factorial
   | Comparator
   | DoubleInequality
@@ -236,6 +237,11 @@ export interface BinaryOperator {
 
 export interface Negative {
   type: "Negative";
+  arg: AnyChild;
+}
+
+export interface Norm {
+  type: "Norm";
   arg: AnyChild;
 }
 

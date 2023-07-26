@@ -120,6 +120,7 @@ export type Expression<C extends S = Concrete> =
   | AssignmentExpression<C>
   | PiecewiseExpression<C>
   | PrefixExpression<C>
+  | Norm<C>
   | SequenceExpression<C>
   | UpdateRule<C>
   | MemberExpression<C>
@@ -211,6 +212,11 @@ export type PiecewiseBranch<C extends S = Concrete> = Positioned<C> & {
 export type PrefixExpression<C extends S = Concrete> = Positioned<C> & {
   type: "PrefixExpression";
   op: "-";
+  expr: Expression<C>;
+};
+
+export type Norm<C extends S = Concrete> = Positioned<C> & {
+  type: "Norm";
   expr: Expression<C>;
 };
 

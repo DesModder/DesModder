@@ -447,6 +447,7 @@ describe("Parens", () => {
     testExpr("(-x)[any]", "(-a)[b]", listAccess(negative(id("a")), id("b")));
     testExpr("-(-x)", "-(-x)", negative(negative(id("x"))));
     testExpr("a -> -a", "a -> -a", updateRule(id("a"), negative(id("a"))));
+    testExpr("|x|", "|x|", { type: "Norm", arg: id("x") });
   });
   describe("Binary Expressions", () => {
     testExpr(

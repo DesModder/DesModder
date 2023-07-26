@@ -190,11 +190,16 @@ describe("Operator Precedence round-trip", () => {
     "-x!",
     "-x^{2}",
     "-L.x",
+    /// parent = Norm
+    "\\left|x+y\\right|",
+    "\\left|b\\o{with}b=3\\right|",
+    "\\left|(3,4)\\right|",
+    // From TETH
+    "\\left|x-y\\right|+\\left|\\left|x+y+\\left|x\\right|\\right|-x\\right|=1",
     /// parent = FunctionCall
     "f((b\\o{with}b=3),4+5,b\\o{with}b=3)",
     "f(2*3,L[5])",
     // special cases of FunctionCall
-    "\\left|x+y\\right|",
     "\\sqrt{x}",
     "\\sqrt\\[5\\]{x}",
     "\\o{log}(x)",

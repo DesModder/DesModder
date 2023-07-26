@@ -182,11 +182,15 @@ function childNodeToStringNoParen(
           return `\\frac{${binopLeft}}{${binopRight}}`;
         case "Exponent":
           return binopLeft + "^{" + binopRight + "}";
+        default:
+          e satisfies never;
+          throw new Error(`Unexpected BinaryOperator ${(e as any).name}`);
       }
     }
-    // eslint-disable-next-line no-fallthrough
     case "Negative":
       return "-" + childNodeToString(cfg, e.arg, e);
+    case "Norm":
+      return "\\left|" + childNodeToString(cfg, e.arg, e) + "\\right|";
     case "Factorial":
       return childNodeToString(cfg, e.arg, e, "factorial") + "!";
     case "Comparator":
@@ -258,9 +262,7 @@ function funcToString(
   args: Aug.Latex.AnyChild[],
   parent: Aug.Latex.AnyRootOrChild
 ): string {
-  if (callee.symbol === "abs" && args.length === 1) {
-    return `\\left|${bareSeq(cfg, args, parent)}\\right|`;
-  } else if (callee.symbol === "sqrt" && args.length === 1) {
+  if (callee.symbol === "sqrt" && args.length === 1) {
     return `\\sqrt{${bareSeq(cfg, args, parent)}}`;
   } else if (callee.symbol === "nthroot" && [1, 2].includes(args.length)) {
     if (args.length === 1) return `\\sqrt{${bareSeq(cfg, args, parent)}}`;

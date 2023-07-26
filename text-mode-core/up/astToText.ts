@@ -363,6 +363,8 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
       ]);
     case "PrefixExpression":
       return ["-", exprToText(path.withChild(e.expr, "expr"))];
+    case "Norm":
+      return ["|", exprToText(path.withChild(e.expr, "expr")), "|"];
     case "PostfixExpression":
       return [exprToText(path.withChild(e.expr, "expr")), "!"];
     case "String":

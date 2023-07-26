@@ -14,7 +14,7 @@ import { DiagnosticsState } from "./diagnostics";
 // prettier-ignore
 const punct = [
   "<", "<=", "=", ">=", ">", "~",
-  "->", ",", ":", "...", ".", "'",
+  "->", ",", ":", "...", ".", "'", "|",
   "+", "-", "*", "/", "^", "!", "d/d", // '% of' TODO
   "@{", "#{", "(",  ")", "[", "]", "{", "}",
 ] as const
@@ -318,6 +318,15 @@ const initialParselets: TokenMap<InitialParselet> = {
       return {
         ...inner,
         pos: pos(token, closeParen),
+      };
+    },
+    "|": (ps, token): Node => {
+      const inner = parseExpr(ps, Power.top, "Argument of norm", "|x|");
+      const closeAbs = ps.consume("|");
+      return {
+        type: "Norm",
+        expr: inner,
+        pos: pos(token, closeAbs),
       };
     },
     "-": (ps, token): Node => {
@@ -820,6 +829,7 @@ const consequentParselets: Record<
   ":": undefined,
   "d/d": undefined,
   ")": undefined,
+  "|": undefined,
 };
 
 type ListOrRange =

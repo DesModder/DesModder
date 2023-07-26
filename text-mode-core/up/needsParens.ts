@@ -138,6 +138,7 @@ export default function needsParens(path: NodePath): boolean {
       }
     case "PostfixExpression":
       return parent.type === "PrefixExpression";
+    case "Norm":
     case "CallExpression":
     case "PrimeExpression":
       return false;

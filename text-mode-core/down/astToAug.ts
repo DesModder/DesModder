@@ -614,6 +614,11 @@ export function childExprToAug(
         type: "Negative",
         arg: childExprToAug(expr.expr),
       };
+    case "Norm":
+      return {
+        type: "Norm",
+        arg: childExprToAug(expr.expr),
+      };
     case "UpdateRule":
       if (expr.variable.type !== "Identifier") {
         throw Error("Update rule may only assign to a variable");
