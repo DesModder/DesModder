@@ -44,6 +44,7 @@ testWithPage("Color", async (driver) => {
 
   // It doesn't get reset on disabling color lists
   await driver.setPluginSetting("better-evaluation-view", "colorLists", false);
+  await driver.assertSelector(COLOR_SWATCH);
   await expectEval(driver, exp);
 
   // It gets reset on disabling colors
@@ -61,6 +62,7 @@ testWithPage("Color List", async (driver) => {
   const exp =
     "\\operatorname{rgb}\\left(\\left[\\left(1,2,3\\right),\\left(1,2,4\\right)\\right]\\right)";
   await expectEval(driver, exp);
+  await driver.assertSelector(COLOR_SWATCH);
 
   // It gets reset on disabling color lists
   await driver.setPluginSetting("better-evaluation-view", "colorLists", false);

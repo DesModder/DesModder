@@ -1,4 +1,4 @@
-import { Inserter, PluginController } from "../PluginController";
+import { Inserter, PluginController, Replacer } from "../PluginController";
 import "./better-evaluation-view.less";
 import { ColorEvaluation } from "./components/ColorEvaluation";
 import { ListEvaluation } from "./components/ListEvaluation";
@@ -14,11 +14,11 @@ export default class BetterEvaluationView extends PluginController<Config> {
     return () => ListEvaluation(val);
   }
 
-  colorEvaluation(val: () => string | string[]): Inserter {
+  colorEvaluation(val: () => string | string[]): Replacer {
     const settings = this.settings;
     if (!settings.colors) return undefined;
     const isArray = Array.isArray(val());
     if (isArray && !(settings.lists && settings.colorLists)) return undefined;
-    return () => ColorEvaluation(val);
+    return (swatch) => ColorEvaluation(val, swatch);
   }
 }
