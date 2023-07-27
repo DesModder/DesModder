@@ -1,5 +1,9 @@
 import { testWithPage } from "../../tests/puppeteer-utils";
 
+const delay = async (ms: number) =>
+  // eslint-disable-next-line rulesdir/no-timeouts-in-intellisense
+  await new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 describe("Intellisense", () => {
   // These two tests could really be combined.
   //  I'm just trying two simple tests to make sure the browser remains.
@@ -75,7 +79,11 @@ describe("Intellisense", () => {
               await driver.keyboard.press("ArrowLeft");
             }
 
+            await delay(50);
+
             await driver.keyboard.press("Enter");
+
+            await delay(50);
 
             await driver.assertSelectedItemLatex(
               latexPrefix + expectedLatex + latexSuffix,
@@ -84,6 +92,8 @@ describe("Intellisense", () => {
                 0
               )} characters, ${j === 0 ? "out of subscript" : "in subscript"}.`
             );
+
+            await delay(50);
 
             // go to next expr
             await driver.keyboard.press("Enter");
