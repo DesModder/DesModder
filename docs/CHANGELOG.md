@@ -1,5 +1,17 @@
 # DesModder Changelog
 
+## 0.11.3
+
+New Features:
+
+- Custom MathQuill Config plugin
+- (Text Mode) absolute value with `|x|`
+
+Bug fixes:
+
+- (Video Creator) MP4s are now readable across most programs
+- (Intellisense) Various edge case fixes
+
 ## 0.11.2
 
 Bug fixes:
