@@ -126,7 +126,7 @@ __options__
 
 ```js
 drawSketchToCtx({
-  sketch: $sketch, ctx: $ctx, projection: $projection, poiLabelsLayer: $n,
+  sketch: $sketch, drawContext: $drawCtx, poiLabelsLayer: $n,
   clickableObjectsLayer: $o, geometryContext: $a, showMovablePoints: $l
 }) {__body__}
 ```
@@ -144,7 +144,7 @@ __guard__
 // allow-ids: of
 for (const branch of $sketch.branches) {
   if (branch.graphMode === "GLesmos") {
-    DesModder.drawGLesmosSketchToCtx?.(branch.compiledGL, $ctx, $projection, $sketch.id);
+    DesModder.drawGLesmosSketchToCtx?.(branch.compiledGL, $drawCtx.ctx, $drawCtx.projection, $sketch.id);
   }
 }
 ```
