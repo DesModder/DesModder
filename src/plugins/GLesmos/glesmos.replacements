@@ -142,11 +142,7 @@ if (!$ee.branches || !$ee.branches.length) return;
 ```js
 __guard__
 // allow-ids: of
-for (const branch of $sketch.branches) {
-  if (branch.graphMode === "GLesmos") {
-    DesModder.drawGLesmosSketchToCtx?.(branch.compiledGL, $drawCtx.ctx, $drawCtx.projection, $sketch.id);
-  }
-}
+DesModder.drawGLesmosSketchToCtx?.($drawCtx, $sketch);
 ```
 
 ## Pass GLesmos flag to worker
@@ -231,25 +227,69 @@ if (this.userData.glesmos && self.dsm_compileGLesmos) {
     $ir, $styles.color, $styles.fillOpacity ?? 0, $styles.lineOpacity, this.userData.lines !== false ? $styles.lineWidth : 0.0,
     derivativeX, derivativeY
   );
-  const prev =  $graphs[$graphs.length - 1];
-  if (prev?.graphMode === "GLesmos") {
-    // merge GLesmos graphs when possible
-    newCompiled.hasOutlines = newCompiled.hasOutlines && prev.hasOutlines
-    const prevGL = prev.compiledGL;
-    // allow-ids: of, dep
-    for (let dep of newCompiled.deps) {
-      if (!prevGL.deps.includes(dep)) {
-        prevGL.deps.push(dep);
-      }
-    }
-    prevGL.chunks.push(...newCompiled.chunks);
-  } else {
-    $graphs.push({
-      graphMode: "GLesmos",
-      compiledGL: newCompiled,
-      segments: [],
-      poi: {}
-    })
-  }
+  $graphs.push({
+    graphMode: "GLesmos",
+    compiledGL: newCompiled,
+    segments: [],
+    poi: {}
+  })
 } else __if2d__
+```
+
+### Alternative
+
+*Description* `Compile GLesmos code instead of running implicit plotter`
+
+*worker_only*
+
+*Find* 
+```js
+._graph = $_graphFunc;
+function $_graphFunc(____) {
+  __graph__
+}
+```
+
+The code loops over the different IR objects `$ir`.
+
+*Find* inside `graph` => `compute2d`
+```js
+let $branch = $c({
+  viewState: $viewState,
+  graphInfo: $graphInfo,
+  compiled: $compiled,
+  derivative: $derivative
+})
+```
+
+*Find* inside `graph`
+```js
+$ = $ir.getCompiledFunction($)
+```
+
+*Replace* `compute2d` with
+```js
+if (this.userData.glesmos && self.dsm_compileGLesmos) {
+  const lines =
+    this.userData.lines !== false &&
+    (!this.isInequality() || this.userData.glesmosLinesConfirmed);
+  let derivativeX, derivativeY;
+  if (lines) {
+    try {
+      derivativeX = $ir.takeDerivative('x');
+      derivativeY = $ir.takeDerivative('y');
+    } catch {}
+  }
+  const newCompiled = self.dsm_compileGLesmos(
+    $ir, $graphInfo.color, $graphInfo.fillOpacity ?? 0, $graphInfo.lineOpacity, this.userData.lines !== false ? $graphInfo.lineWidth : 0.0,
+    derivativeX, derivativeY
+  );
+  return [{
+    graphMode: "GLesmos",
+    compiledGL: newCompiled,
+    segments: [],
+    poi: {}
+  }]
+}
+__compute2d__
 ```
