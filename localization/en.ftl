@@ -256,3 +256,5 @@ syntax-highlighting-opt-bracketPairColorizationColors-name = Bracket Pair Colori
 syntax-highlighting-opt-bracketPairColorizationColors-desc = Sets the number and order of colors that are used for bracket pair colorization.
 syntax-highlighting-opt-bpcColorInText-name = Color In Text
 syntax-highlighting-opt-bpcColorInText-desc = Applies Bracket Pair Colorization colors to text.
+syntax-highlighting-opt-thickenBrackets-name = Thicken Brackets
+syntax-highlighting-opt-thickenBrackets-desc = Add additional thickness to brackets to assist in bracket colorization.

@@ -10,6 +10,7 @@ import {
   Checkbox,
   Tooltip,
   For,
+  IfElse,
 } from "components/desmosComponents";
 import { format } from "i18n/i18n-core";
 import {
@@ -221,51 +222,67 @@ function colorListOption(
             {configItemName(plugin, item)}
           </label>
         </Tooltip>
-        <div class="flex">
-          <For
-            each={() => (settings[item.key] as string[]).map((e, i) => [e, i])}
-            // TODO: find a better way of dealing with this
-            key={(e) => counter++}
-          >
-            <ol class="dsm-settings-color-list">
-              {([v, i]: [string, number]) => (
-                <div class="dsm-settings-color-list-item-container">
-                  <input
-                    type="color"
-                    value={v}
-                    onChange={(e: InputEvent) => {
-                      const newValue = (e.target as HTMLInputElement).value;
-                      setValue(
-                        (settings[item.key] as string[]).map((e, j) =>
-                          j === i ? newValue : e
-                        )
-                      );
-                    }}
-                  ></input>
-                  <div class="add-remove-buttons">
-                    <IconButton
-                      onTap={() => {
-                        setValue([
-                          ...value().slice(0, i + 1),
-                          "#FF0000",
-                          ...value().slice(i + 1),
-                        ]);
-                      }}
-                      iconClass={"dcg-icon-plus"}
-                    ></IconButton>
-                    <IconButton
-                      onTap={() => {
-                        setValue(value().filter((e, j) => j !== i));
-                      }}
-                      iconClass={"dcg-icon-remove"}
-                    ></IconButton>
-                  </div>
-                </div>
-              )}
-            </ol>
-          </For>
-          <ResetButton pm={pm} key={item.key} />
-        </div>
+        {IfElse(() => value().length > 0, {
+          true: () => (
+            <div class="flex">
+              <For
+                each={() =>
+                  (settings[item.key] as string[]).map((e, i) => [e, i])
+                }
+                // TODO: find a better way of dealing with this
+                key={(e) => counter++}
+              >
+                <ol class="dsm-settings-color-list">
+                  {([v, i]: [string, number]) => (
+                    <div class="dsm-settings-color-list-item-container">
+                      <input
+                        type="color"
+                        value={v}
+                        onChange={(e: InputEvent) => {
+                          const newValue = (e.target as HTMLInputElement).value;
+                          setValue(
+                            (settings[item.key] as string[]).map((e, j) =>
+                              j === i ? newValue : e
+                            )
+                          );
+                        }}
+                      ></input>
+                      <div class="add-remove-buttons">
+                        <IconButton
+                          onTap={() => {
+                            setValue([
+                              ...value().slice(0, i + 1),
+                              "#FF0000",
+                              ...value().slice(i + 1),
+                            ]);
+                          }}
+                          iconClass={"dcg-icon-plus"}
+                        ></IconButton>
+                        <IconButton
+                          onTap={() => {
+                            setValue(value().filter((e, j) => j !== i));
+                          }}
+                          iconClass={"dcg-icon-remove"}
+                        ></IconButton>
+                      </div>
+                    </div>
+                  )}
+                </ol>
+              </For>
+              <ResetButton pm={pm} key={item.key} />
+            </div>
+          ),
+          false: () => (
+            <div class="flex">
+              <IconButton
+                iconClass="dcg-icon-plus"
+                onTap={() => {
+                  setValue(["#FF0000"]);
+                }}
+              ></IconButton>
+            </div>
+          ),
+        })}
       </div>
     </div>
   );

@@ -2,13 +2,16 @@ import { toggleRules } from ".";
 
 export function generateBracketPairColorizationCSS(
   colors: [number, number, number][],
-  colorInText: boolean
+  colorInText: boolean,
+  thickenBrackets: number
 ) {
   //   const colors = [
   //     [192, 96, 0],
   //     [0, 192, 96],
   //     [96, 0, 192],
   //   ];
+
+  if (!colors[0]) return [];
 
   const colorMaker = `rgb(${colors[0]
     .map((e, i) => {
@@ -33,8 +36,14 @@ export function generateBracketPairColorizationCSS(
     `
     .dcg-mq-bracket-container {
         --test2: var(--test1);
-        color: ${colorMaker}
+        color: ${colorMaker};
     }
+    `,
+    `
+    .dcg-mq-bracket-l path, .dcg-mq-bracket-r path {
+        stroke-width: ${thickenBrackets}%;
+        stroke: ${colorMaker};
+    } 
     `,
     `
     .dcg-mq-bracket-middle {
