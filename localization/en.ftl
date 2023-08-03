@@ -246,3 +246,13 @@ custom-mathquill-config-opt-leftIntoSubscript-name = Left/Right into Subscripts
 custom-mathquill-config-opt-leftIntoSubscript-desc = Moving the cursor left or right will go into subscript instead of superscript
 custom-mathquill-config-opt-extendedGreek-name = More Greek Letters
 custom-mathquill-config-opt-extendedGreek-desc = Enables replacements for all supported greek letters
+
+## Syntax highlightAlternatingLines
+syntax-highlighting-name = Syntax Highlighting
+syntax-highlighting-desc = Color in various parts of expressions to make them easier to reason about.
+syntax-highlighting-opt-bracketPairColorization-name = Bracket Pair Colorization
+syntax-highlighting-opt-bracketPairColorization-desc = Applies a set of alternating colors to brackets (e.g. ()[]{}||) to make matching bracket pairs easy to spot.
+syntax-highlighting-opt-bracketPairColorizationColors-name = Bracket Pair Colorization Colors
+syntax-highlighting-opt-bracketPairColorizationColors-desc = Sets the number and order of colors that are used for bracket pair colorization.
+syntax-highlighting-opt-bpcColorInText-name = Color In Text
+syntax-highlighting-opt-bpcColorInText-desc = Applies Bracket Pair Colorization colors to text.
