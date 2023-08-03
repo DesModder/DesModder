@@ -21,7 +21,6 @@ import {
   PluginID,
   plugins,
   ConfigItemNumber,
-  ConfigItemColorList,
 } from "plugins";
 
 export function MenuFunc(pm: PillboxMenus) {
@@ -230,7 +229,7 @@ function colorListOption(
                   (settings[item.key] as string[]).map((e, i) => [e, i])
                 }
                 // TODO: find a better way of dealing with this
-                key={(e) => counter++}
+                key={() => counter++}
               >
                 <ol class="dsm-settings-color-list">
                   {([v, i]: [string, number]) => (
@@ -260,7 +259,7 @@ function colorListOption(
                         ></IconButton>
                         <IconButton
                           onTap={() => {
-                            setValue(value().filter((e, j) => j !== i));
+                            setValue(value().filter((_, j) => j !== i));
                           }}
                           iconClass={"dcg-icon-remove"}
                         ></IconButton>

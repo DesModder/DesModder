@@ -42,6 +42,14 @@ export default class SyntaxHighlighting extends PluginController<Config> {
     for (const rule of bpcCss) {
       this.styles.sheet?.insertRule(rule);
     }
+
+    if (this.settings.highlightBracketBlocks) {
+      document.addEventListener("mouseover", this.onMouseOver);
+    } else {
+      document.removeEventListener("mouseover", this.onMouseOver);
+      delete this.mouseBracketContainer?.dataset.isDirectlyHovered;
+      delete this.caretBracketContainer?.dataset.containsCaret;
+    }
   }
 
   onMouseOver = (e: MouseEvent) => {

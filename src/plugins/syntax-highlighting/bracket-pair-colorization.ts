@@ -1,26 +1,18 @@
-import { toggleRules } from ".";
-
 export function generateBracketPairColorizationCSS(
   colors: [number, number, number][],
   colorInText: boolean,
   thickenBrackets: number
 ) {
-  //   const colors = [
-  //     [192, 96, 0],
-  //     [0, 192, 96],
-  //     [96, 0, 192],
-  //   ];
-
   if (!colors[0]) return [];
 
   const colorMaker = `rgb(${colors[0]
-    .map((e, i) => {
+    .map((_, i) => {
       return `calc(${colors
         .map((col, colindex) => {
           const channel = col[i];
-          return `${channel} * max(0, cos(
+          return `${channel} * max(0, 10000 * cos(
             2 * 3.14159265358979323 * (var(--test2) - ${colindex}) / ${colors.length}
-            ))`;
+            ) - 9999)`;
         })
         .join(" + ")})`;
     })
