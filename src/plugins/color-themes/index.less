@@ -1,0 +1,251 @@
+:root {
+  --dsm-settings-menu-separator: #333333; // default #dddddd
+  --dsm-settings-axis-label-label-color: #666666; // default #666666
+  --dsm-settings-axis-label-input-color: #666666; // default #666666
+
+  --dsm-tooltip-background: #000000; // #000000
+  --dsm-tooltip-foreground: #ffffff; // #ffffff
+
+  --dsm-toggle-switch: #666666; // default #666666
+  --dsm-toggle-view: #dddddd; // default #dddddd
+
+  --dsm-red-button-background: #ce4945; // ce4945
+  --dsm-red-button-border: #aa3a37; // default aa3a37
+  --dsm-button-text: #ffffff; // ffffff
+
+  --dsm-desmodder-category-separator: #e2e2e2; // default e2e2e2
+}
+
+// artificially increase CSS specificity so these styles override the defaults
+#graph-container#graph-container#graph-container#graph-container {
+  color: var(--dsm-foreground);
+
+  // toggles
+  .dcg-toggle-switch {
+    background: var(--dsm-toggle-switch);
+  }
+
+  .dcg-toggle-view {
+    background: var(--dsm-toggle-view);
+  }
+
+  // exppanel top
+  .dcg-btn-red {
+    background: var(--dsm-red-button-background);
+    border-color: var(--dsm-red-button-border);
+    color: var(--dsm-button-text);
+  }
+
+  .dcg-btn-primary {
+    color: var(--dsm-button-text);
+  }
+
+  .dcg-expression-top-bar {
+    background: linear-gradient(
+      var(--dsm-expr-top-bar-background-1),
+      var(--dsm-expr-top-bar-background-2)
+    );
+  }
+
+  // exppanel
+  .dcg-exppanel {
+    background: var(--dsm-background) !important;
+  }
+
+  .dcg-btn-flat-gray {
+    text-shadow: 0 1px var(--dsm-background);
+    background: var(--dsm-pillbox-button-background) !important;
+  }
+
+  .dcg-grapher {
+    background: white;
+  }
+
+  .dcg-mq-math-mode {
+    border-color: var(--dsm-foreground);
+  }
+
+  .dcg-tap-container {
+    color: var(--dsm-foreground) !important;
+    background: var(--dsm-background) !important;
+  }
+
+  .dcg-popover-interior,
+  .dcg-section-heading,
+  .dcg-popover-title,
+  .dcg-options-menu {
+    background: var(--dsm-background);
+  }
+
+  .dcg-action-drag,
+  .dcg-new-expression .dcg-tab {
+    background: var(--dsm-exppanel-dragger-background);
+  }
+
+  .dcg-tooltipped-error {
+    color: var(--dsm-error);
+  }
+
+  .dcg-container .dcg-mq-editable-field:not(.dcg-no-fadeout):after {
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0),
+      var(--dsm-background)
+    );
+  }
+
+  .dcg-new-expression-fade {
+    background: linear-gradient(
+      to top,
+      var(--dsm-background),
+      rgba(255, 255, 255, 0) 50%
+    );
+  }
+
+  .dcg-expressionitem {
+    border-top-color: rgba(var(--dsm-exppanel-border-rgb), 0.8);
+  }
+
+  .dcg-expression-edit-actions {
+    background: var(--dsm-background) !important;
+
+    .dcg-graphic {
+      background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0),
+        var(--dsm-background)
+      );
+    }
+  }
+
+  .dcg-container
+    .dcg-mq-editable-field:not(.dcg-no-fadeout)
+    .dcg-mq-root-block.dcg-mq-editing-overflow-left:before {
+    background: linear-gradient(
+      to left,
+      rgba(255, 255, 255, 0),
+      var(--dsm-background)
+    );
+  }
+
+  .dcg-calculator-api-container
+    .dcg-mq-math-mode
+    .dcg-mq-empty.dcg-mq-root-block,
+  .dcg-calculator-api-container
+    .dcg-mq-math-mode
+    .dcg-mq-empty.dcg-mq-quiet-delimiter,
+  .dcg-calculator-api-container .dcg-mq-math-mode.dcg-mq-empty {
+    background: transparent;
+  }
+
+  .dcg-mq-math-mode .dcg-mq-empty {
+    background: rgba(var(--dsm-foreground-rgb), 0.2);
+  }
+
+  .dcg-label-input {
+    background: var(--dsm-background);
+    color: var(--dsm-foreground);
+  }
+
+  // evaluation
+
+  .dcg-evaluation {
+    .dcg-typeset-math {
+      background: rgba(var(--dsm-foreground-rgb), 0.04);
+      border-color: rgba(var(--dsm-exppanel-border-rgb), 0.8);
+    }
+  }
+
+  // keypad
+  .dcg-keys-background {
+    background: var(--dsm-keypad-background) !important;
+  }
+
+  .dcg-btn-light-on-gray {
+    background: linear-gradient(
+      var(--dsm-keypad-light-button-background-1),
+      var(--dsm-keypad-light-button-background-2)
+    );
+  }
+
+  .dcg-btn-light-gray {
+    background: linear-gradient(
+      var(--dsm-keypad-light-gray-button-background-1),
+      var(--dsm-keypad-light-gray-button-background-2)
+    );
+  }
+
+  .dcg-keypad .dcg-keys-background .dcg-minimize-keypad {
+    color: rgba(var(--dsm-foreground-rgb), 180);
+    background: var(--dsm-pillbox-button-background) !important;
+  }
+
+  .dcg-keypad .dcg-functions-popover .dcg-section-heading {
+    color: var(--dsm-keypad-function-menu-section-heading);
+  }
+
+  // settings menu
+  .dcg-advanced-viewport-settings-view .dcg-advanced-toggle {
+    color: var(--dsm-foreground);
+  }
+
+  .dcg-segmented-control-container .dcg-segmented-control-btn {
+    color: var(--dsm-foreground);
+  }
+
+  .dcg-segmented-control-container .dcg-segmented-control-btn {
+    border-color: rgba(var(--dsm-foreground-rgb), 0.42);
+  }
+  .dcg-segmented-control-container
+    .dcg-segmented-control-btn.dcg-theme-default.dcg-selected {
+    background-color: rgba(var(--dsm-foreground-rgb), 0.65);
+    border-color: rgba(var(--dsm-foreground-rgb), 0.65);
+  }
+
+  .dcg-visual-settings,
+  .dcg-axes-settings-container,
+  .dcg-dimensiongroup,
+  .dcg-radiangroup {
+    border-color: var(--dsm-settings-menu-separator);
+  }
+
+  .dcg-axis-label input,
+  .dcg-axis-label label {
+    background: var(--dsm-background);
+  }
+
+  .dcg-axis-label input {
+    border-color: rgba(var(--dsm-foreground-rgb), 0.42);
+    color: var(--dsm-settings-axis-label-input-color);
+  }
+  .dcg-axis-label label {
+    color: var(--dsm-settings-axis-label-label-color);
+  }
+
+  .dcg-left .dcg-arrow {
+    border-left-color: var(--dsm-background);
+  }
+
+  .dcg-top .dcg-arrow {
+    border-top-color: var(--dsm-background);
+  }
+
+  .dcg-tooltip-arrow.dcg-tooltip-gravity-w {
+    border-left-color: var(--dsm-tooltip-background) !important;
+  }
+
+  .dcg-tooltip-arrow.dcg-tooltip-gravity-n {
+    border-top-color: var(--dsm-tooltip-background) !important;
+  }
+  .dcg-tooltip-message {
+    background: var(--dsm-tooltip-background) !important;
+    color: var(--dsm-tooltip-foreground);
+  }
+
+  .dcg-btn-dark-on-gray {
+    background: linear-gradient(
+      rgba(var(--dsm-foreground-rgb), 0.13),
+      rgba(var(--dsm-foreground-rgb), 0.16)
+    );
+  }
+}

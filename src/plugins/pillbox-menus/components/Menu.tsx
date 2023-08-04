@@ -51,6 +51,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "hide-errors",
     "compact-view",
     "multiline",
+    "color-themes",
   ],
   integrations: ["wakatime"],
 };

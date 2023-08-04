@@ -1,6 +1,6 @@
 .dsm-plugin-section,
 .dsm-category-section {
-  border-top: 1px solid #e2e2e2;
+  border-top: 1px solid var(--dsm-desmodder-category-separator);
 }
 
 .dsm-category-section:nth-child(2) {
@@ -26,7 +26,7 @@
 }
 
 .dsm-plugin-title-bar {
-  color: #222;
+  color: var(--dsm-desmodder-menu-title);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -80,7 +80,7 @@
 
 .dsm-plugin-info-body {
   padding: 5px 0;
-  color: #444;
+  color: var(--dsm-desmodder-menu-description);
 
   a {
     color: var(--dsm-primary-color);
@@ -92,6 +92,12 @@
   padding-right: 10px;
   display: flex;
   align-items: center;
+
+  input {
+    background-color: var(--dsm-background);
+    color: var(--dsm-foreground);
+    border-color: var(--dsm-desmodder-input-border);
+  }
 
   label {
     cursor: pointer;
