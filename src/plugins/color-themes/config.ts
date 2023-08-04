@@ -1,126 +1,102 @@
 import { ConfigItem } from "plugins";
 
-export const ConfigList = [
-  {
-    type: "string",
-    variant: "color",
-    default: "#000000",
-    key: "foreground",
-  },
-  {
-    type: "string",
-    variant: "color",
-    default: "#ffffff",
-    key: "background",
-  },
-  {
-    type: "string",
-    variant: "color",
-    default: "#ededed",
-    key: "pillboxButtonBackground",
-  },
-  {
-    type: "string",
-    variant: "color",
-    default: "#fcfcfc",
-    key: "exprTopBarBackground1",
-  },
-  {
-    type: "string",
-    variant: "color",
-    default: "#eaeaea",
-    key: "exprTopBarBackground2",
-  },
-  {
-    type: "string",
-    variant: "color",
-    default: "#eeeeee",
-    key: "exppanelDraggerBackground",
-  },
-  {
-    type: "string",
-    variant: "color",
-    default: "#CECECE",
-    key: "exppanelBorder",
-  },
-  {
-    type: "string",
-    variant: "color",
-    default: "#e66b3c",
-    key: "error",
-  },
-  {
-    type: "string",
-    variant: "color",
-    default: "#222222",
-    key: "desmodderMenuTitle",
-  },
-  {
-    type: "string",
-    variant: "color",
-    default: "#444444",
-    key: "desmodderMenuDescription",
-  },
-  {
-    type: "string",
-    variant: "color",
-    default: "#aaaaaa",
-    key: "desmodderInputBorder",
-  },
-  {
-    type: "string",
-    variant: "color",
-    default: "#ededed",
-    key: "keypadBackground",
-  },
-  {
-    type: "string",
-    variant: "color",
-    default: "#ffffff",
-    key: "keypadLightButtonBackground1",
-  },
-  {
-    type: "string",
-    variant: "color",
-    default: "#fafafa",
-    key: "keypadLightButtonBackground2",
-  },
-  {
-    type: "string",
-    variant: "color",
-    default: "#f6f6f6",
-    key: "keypadLightGrayButtonBackground1",
-  },
-  {
-    type: "string",
-    variant: "color",
-    default: "#f0f0f0",
-    key: "keypadLightGrayButtonBackground2",
-  },
-  {
-    type: "string",
-    variant: "color",
-    default: "#666666",
-    key: "keypadFunctionMenuSectionHeading",
-  },
-] satisfies ConfigItem[];
+export const ConfigDefaultsSimple = {
+  // ===================== SIMPLE MODE =====================
 
-export interface Config {
-  foreground: string;
-  background: string;
-  pillboxButtonBackground: string;
-  exprTopBarBackground1: string;
-  exprTopBarBackground2: string;
-  exppanelDraggerBackground: string;
-  error: string;
-  desmodderMenuTitle: string;
-  desmodderMenuDescription: string;
-  desmodderInputBorder: string;
-  exppanelBorder: string;
-  keypadBackground: string;
-  keypadLightButtonBackground1: string;
-  keypadLightButtonBackground2: string;
-  keypadLightGrayButtonBackground1: string;
-  keypadLightGrayButtonBackground2: string;
-  keypadFunctionMenuSectionHeading: string;
-}
+  // general
+  simpleForeground: "#000000",
+  simpleBackground: "#ffffff",
+  simpleBackground2: "#ededed",
+  simpleBorder: "#cecece",
+
+  simpleButtonLight: "#ffffff",
+  simpleButtonGray: "#f6f6f6",
+
+  simpleToggleSwitch: "#666666",
+  simpleToggleView: "#dddddd",
+};
+
+export const ConfigDefaultsAdvanced = {
+  // =================== ADVANCED MODE ===================
+
+  // general
+  foreground: "#000000",
+  background: "#ffffff",
+  pillboxButtonBackground: "#ededed",
+  sectionHeading: "#666666",
+
+  // exppanel
+  exppanelDraggerBackground: "#eeeeee",
+  error: "#e66b3c",
+  exppanelBorder: "#cecece",
+
+  // exppanel top
+  exprTopBarBackground1: "#fcfcfc",
+  exprTopBarBackground2: "#eaeaea",
+  redButtonBackground: "#ce4945",
+  redButtonBorder: "#aa3a37",
+  buttonText: "#ffffff",
+
+  // settings
+  settingsMenuSeparator: "#dddddd",
+  settingsAxisLabelLabelColor: "#666666",
+  settingsAxisLabelInputColor: "#666666",
+
+  // tooltips
+  tooltipBackground: "#000000",
+  tooltipForeground: "#ffffff",
+
+  // toggles
+  toggleSwitch: "#666666",
+  toggleView: "#dddddd",
+
+  // desmodder menu
+  desmodderMenuTitle: "#222222",
+  desmodderMenuDescription: "#444444",
+  desmodderInputBorder: "#aaaaaa",
+  desmodderCategorySeparator: "#e2e2e2",
+
+  // keypad
+  keypadBackground: "#ededed",
+  keypadLightButtonBackground1: "#ffffff",
+  keypadLightButtonBackground2: "#fafafa",
+  keypadLightButtonBorder: "#d8d8d8",
+  keypadLightGrayButtonBackground1: "#f6f6f6",
+  keypadLightGrayButtonBackground2: "#f0f0f0",
+  keypadDarkButtonBorder: "#bbbbbb",
+};
+
+export const ConfigDefaultsColors = {
+  ...ConfigDefaultsSimple,
+  ...ConfigDefaultsAdvanced,
+};
+
+export const ConfigDefaults = {
+  simpleModeEnabled: true,
+  ...ConfigDefaultsColors,
+};
+
+export const ConfigList: ConfigItem[] = (
+  [
+    {
+      type: "boolean",
+      default: true,
+      key: "simpleModeEnabled",
+    },
+  ] as ConfigItem[]
+).concat(
+  Array.from(Object.entries(ConfigDefaultsColors)).map(([k, v]) => {
+    const ci: ConfigItem = {
+      type: "string",
+      variant: "color",
+      default: v,
+      key: k,
+      shouldShow: (ConfigDefaultsSimple as Record<string, string | undefined>)[
+        k
+      ]
+        ? (s) => s.simpleModeEnabled
+        : (s) => !s.simpleModeEnabled,
+    };
+    return ci as ConfigItem;
+  })
+);

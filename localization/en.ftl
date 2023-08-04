@@ -250,28 +250,91 @@ custom-mathquill-config-opt-extendedGreek-desc = Enables replacements for all su
 ## Color Themes
 color-themes-name = Color Themes
 color-themes-desc = Change all the colors of the Graphing Calculator.
+
+color-themes-opt-simpleModeEnabled-name = Simple Mode
+color-themes-opt-simpleModeEnabled-desc = Use a simplified set of colors for theming to make things easier.
+
+## SIMPLE MODE
+color-themes-opt-simpleForeground-name = Foreground
+color-themes-opt-simpleForeground-desc = Default foreground (text, icons, etc.) color.
+color-themes-opt-simpleBackground-name = Background
+color-themes-opt-simpleBackground-desc = Default background color.
+color-themes-opt-simpleBackground2-name = Background 2
+color-themes-opt-simpleBackground2-desc = Second background color, to help distinguish parts of the UI next to one another.
+color-themes-opt-simpleBorder-name = Border
+color-themes-opt-simpleBorder-desc = Color for most UI borders and horizontal dividers.
+
+color-themes-opt-simpleButtonLight-name = Light Button
+color-themes-opt-simpleButtonLight-desc = Color for lightly-colored buttons (e.g. the numeric ones in the keypad).
+color-themes-opt-simpleButtonGray-name = Gray Button
+color-themes-opt-simpleButtonGray-desc = Color for light-ish gray buttons (e.g. the ones in the functions menu in the keypad).
+
+color-themes-opt-simpleToggleSwitch-name = Toggle Switch
+color-themes-opt-simpleToggleSwitch-desc = Color of the circular switch of toggles.
+color-themes-opt-simpleToggleView-name = Toggle Body
+color-themes-opt-simpleToggleView-desc = Color of the body of toggles.
+
+## ADVANCED MODE
+
+## General
 color-themes-opt-foreground-name = Foreground
 color-themes-opt-foreground-desc = Default foreground (e.g. text, icons, etc.) color.
 color-themes-opt-background-name = Background (BG)
 color-themes-opt-background-desc = Default background color.
 color-themes-opt-pillboxButtonBackground-name = Pillbox Button BG
 color-themes-opt-pillboxButtonBackground-desc = Background color for elements near the edges (pillbox buttons, expression panel sidebar, etc).
-color-themes-opt-exprTopBarBackground1-name = Exppanel Top BG 1 
-color-themes-opt-exprTopBarBackground1-desc = Color of the top of the background of the top panel of the expressions panel.
-color-themes-opt-exprTopBarBackground2-name = Exppanel Top BG 2 
-color-themes-opt-exprTopBarBackground2-desc = Color of the bottom of the background of the top panel of the expressions panel.
+
+## Exppanel
 color-themes-opt-exppanelDraggerBackground-name = Expr Dragger BG
 color-themes-opt-exppanelDraggerBackground-desc = Background of the tab that lets you drag expressions with the mouse.
 color-themes-opt-exppanelBorder-name = Expression Border
 color-themes-opt-exppanelBorder-desc = Border surrounding each expression in the expression panel.
 color-themes-opt-error-name = Error
 color-themes-opt-error-desc = Color of the error triangles.
+
+## Exppanel Top
+color-themes-opt-exprTopBarBackground1-name = Exppanel Top BG 1 
+color-themes-opt-exprTopBarBackground1-desc = Color of the top of the background of the top panel of the expressions panel.
+color-themes-opt-exprTopBarBackground2-name = Exppanel Top BG 2 
+color-themes-opt-exprTopBarBackground2-desc = Color of the bottom of the background of the top panel of the expressions panel.
+color-themes-opt-redButtonBackground-name = Red Button BG 
+color-themes-opt-redButtonBackground-desc = Color of the red "Delete All" button found by pressing on the gear icon.
+color-themes-opt-redButtonBorder-name = Red Button Border
+color-themes-opt-redButtonBorder-desc = Color of the border of the red "Delete All" button found by pressing on the gear icon
+color-themes-opt-buttonText-name = Button Text 
+color-themes-opt-buttonText-desc = Text color for the buttons at the top of the exppanel.
+
+## Settings
+color-themes-opt-settingsMenuSeparator-name = Settings Separator
+color-themes-opt-settingsMenuSeparator-desc = Color for the horizontal lines separating sections in the settings menu.
+color-themes-opt-settingsAxisLabelLabelColor-name = Axis Label Label 
+color-themes-opt-settingsAxisLabelLabelColor-desc = Color for the labels for the axis label boxes.
+color-themes-opt-settingsAxisLabelInputColor-name = Axis Label Input 
+color-themes-opt-settingsAxisLabelInputColor-desc = Color for the inputs for the axis label boxes.
+
+## Tooltips
+color-themes-opt-tooltipBackground-name = Tooltip Background
+color-themes-opt-tooltipBackground-desc = Background color for tooltips (boxes that appear when hovering over something).
+color-themes-opt-tooltipForeground-name = Tooltip Foreground
+color-themes-opt-tooltipForeground-desc = Foreground color for tooltips (boxes that appear when hovering over something).
+
+## Toggles
+color-themes-opt-toggleSwitch-name = Toggle Switch
+color-themes-opt-toggleSwitch-desc = Color of the circular switch of toggles.
+color-themes-opt-toggleView-name = Toggle Body
+color-themes-opt-toggleView-desc = Color of the body of toggles.
+
+## DesModder Menu
 color-themes-opt-desmodderMenuTitle-name = DSM Menu Title 
 color-themes-opt-desmodderMenuTitle-desc = Color of the titles in this menu.
 color-themes-opt-desmodderMenuDescription-name = DSM Menu Desc
 color-themes-opt-desmodderMenuDescription-desc = Color of the descriptions in this menu.
 color-themes-opt-desmodderInputBorder-name = DSM Input Border
 color-themes-opt-desmodderInputBorder-desc = Color of the inputs' borders in the DesModder menu inputs.
+color-themes-opt-desmodderCategorySeparator-name = DSM Menu Separator
+color-themes-opt-desmodderCategorySeparator-desc = Color of the horizontal lines separating parts of the DesModder Menu.
+
+## Keypad
 color-themes-opt-keypadBackground-name = Keypad Background
 color-themes-opt-keypadBackground-desc = Background color for the flyout keyboard used for onscreen typing.
 color-themes-opt-keypadLightButtonBackground1-name = Keypad Light Btn BG 1

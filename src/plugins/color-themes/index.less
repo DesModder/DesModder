@@ -1,21 +1,3 @@
-:root {
-  --dsm-settings-menu-separator: #333333; // default #dddddd
-  --dsm-settings-axis-label-label-color: #666666; // default #666666
-  --dsm-settings-axis-label-input-color: #666666; // default #666666
-
-  --dsm-tooltip-background: #000000; // #000000
-  --dsm-tooltip-foreground: #ffffff; // #ffffff
-
-  --dsm-toggle-switch: #666666; // default #666666
-  --dsm-toggle-view: #dddddd; // default #dddddd
-
-  --dsm-red-button-background: #ce4945; // ce4945
-  --dsm-red-button-border: #aa3a37; // default aa3a37
-  --dsm-button-text: #ffffff; // ffffff
-
-  --dsm-desmodder-category-separator: #e2e2e2; // default e2e2e2
-}
-
 // artificially increase CSS specificity so these styles override the defaults
 #graph-container#graph-container#graph-container#graph-container {
   color: var(--dsm-foreground);
@@ -147,6 +129,35 @@
     color: var(--dsm-foreground);
   }
 
+  .dcg-options-menu .dcg-component-checkbox .dcg-checkbox-children {
+    color: var(--dsm-checkbox-label);
+  }
+
+  // "drag" icons for points
+  .dcg-options-menu-section .dcg-circular-icon.dcg-colored-icon {
+    background: var(--dsm-foreground) !important;
+    .dcg-layered-icon::before {
+      color: var(--dsm-background) !important;
+    }
+  }
+
+  // image exppanel item
+  .dcg-action-changeimage,
+  .dcg-image-input-grid {
+    color: rgba(var(--dsm-foreground-rgb), 0.5);
+  }
+  .dcg-smart-textarea-container textarea.dcg-smart-textarea,
+  .dcg-calculator-api-container
+    .dcg-smart-textarea-container
+    .dcg-displayTextarea {
+    color: var(--dsm-foreground);
+  }
+  .dcg-expressionitem.dcg-expressionimage.dcg-input-focused
+    .dcg-image-input-grid,
+  .dcg-expressionitem.dcg-expressionimage.dcg-input-focused .dcg-braille-input {
+    color: var(--dsm-foreground);
+  }
+
   // evaluation
 
   .dcg-evaluation {
@@ -166,6 +177,7 @@
       var(--dsm-keypad-light-button-background-1),
       var(--dsm-keypad-light-button-background-2)
     );
+    border-color: var(--dsm-keypad-light-button-border);
   }
 
   .dcg-btn-light-gray {
@@ -180,8 +192,9 @@
     background: var(--dsm-pillbox-button-background) !important;
   }
 
-  .dcg-keypad .dcg-functions-popover .dcg-section-heading {
-    color: var(--dsm-keypad-function-menu-section-heading);
+  .dcg-keypad .dcg-functions-popover .dcg-section-heading,
+  .dcg-options-menu-section-title {
+    color: var(--dsm-section-heading);
   }
 
   // settings menu
@@ -247,5 +260,6 @@
       rgba(var(--dsm-foreground-rgb), 0.13),
       rgba(var(--dsm-foreground-rgb), 0.16)
     );
+    border-color: var(--dsm-keypad-dark-button-border);
   }
 }
