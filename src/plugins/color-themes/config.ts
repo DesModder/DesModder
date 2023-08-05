@@ -26,6 +26,8 @@ export const ConfigDefaultsAdvanced = {
   sectionHeading: "#666666",
   checkboxLabel: "#333333",
   caretIcon: "#999999",
+  scrollbar: "#ffffff",
+  scrollbarThumb: "#999999",
 
   // exppanel
   exppanelDraggerBackground: "#eeeeee",

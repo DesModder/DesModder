@@ -1,3 +1,15 @@
+*::-webkit-scrollbar {
+  background-color: var(--dsm-scrollbar);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--dsm-scrollbar-thumb);
+}
+
+* {
+  scrollbar-color: var(--dsm-scrollbar-thumb) var(--dsm-scrollbar);
+}
+
 // artificially increase CSS specificity so these styles override the defaults
 #graph-container#graph-container#graph-container#graph-container {
   color: var(--dsm-foreground);

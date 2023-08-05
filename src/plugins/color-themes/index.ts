@@ -95,6 +95,8 @@ export default class ColorThemes extends PluginController<
               sectionHeading: this.settings.simpleForeground,
               checkboxLabel: this.settings.simpleForeground,
               caretIcon: this.settings.simpleToggleSwitch,
+              scrollbar: this.settings.simpleBackground,
+              scrollbarThumb: this.settings.simpleBorder,
 
               expressionSettingsBorder: this.settings.simpleBorder,
               exppanelDraggerBackground: this.settings.simpleBackground2,
