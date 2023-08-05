@@ -11,11 +11,11 @@ export default class PerformanceInfo extends PluginController {
   dispatchListenerID!: string;
 
   afterEnable() {
-    this.controller.pillboxMenus?.addPillboxButton({
+    this.dsm.pillboxMenus?.addPillboxButton({
       id: "dsm-pi-menu",
       tooltip: "performance-info-name",
       iconClass: "dsm-icon-pie-chart",
-      popup: () => MainPopupFunc(this, this.controller),
+      popup: () => MainPopupFunc(this, this.dsm),
     });
     this.dispatchListenerID = Calc.controller.dispatcher.register((e) => {
       if (e.type === "on-evaluator-changes") {
@@ -26,14 +26,15 @@ export default class PerformanceInfo extends PluginController {
 
   afterDisable() {
     Calc.controller.dispatcher.unregister(this.dispatchListenerID);
-    this.controller.pillboxMenus?.removePillboxButton("dsm-pi-menu");
+    this.dsm.pillboxMenus?.removePillboxButton("dsm-pi-menu");
   }
 
   onEvaluatorChanges(e: DispatchedEvent) {
     if (e.type !== "on-evaluator-changes") return;
     this.timingDataHistory?.push(e.timingData);
     if (this.timingDataHistory.length > 10) this.timingDataHistory.shift();
-    Calc.controller.updateViews();
+    // Don't Calc.controller.updateViews here. This is inside a dispatched event,
+    // so it will update views anyways.
   }
 
   getTimingData() {

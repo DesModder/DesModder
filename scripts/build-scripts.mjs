@@ -3,6 +3,7 @@ import esbuild from "esbuild";
 const opts = {
   entryPoints: ["scripts/audit-langs.ts"],
   bundle: true,
+  sourcemap: "linked",
   outdir: "dist",
   platform: "node",
   loader: {
@@ -10,4 +11,4 @@ const opts = {
   },
 };
 
-esbuild.build(opts);
+void esbuild.build(opts);

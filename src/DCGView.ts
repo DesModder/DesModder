@@ -45,7 +45,7 @@ abstract class ForComponent<T> extends ClassComponent<{
   key: (t: T) => string | number;
 }> {}
 
-interface IfElseSecondParam {
+export interface IfElseSecondParam {
   true: () => typeof ClassComponent;
   false: () => typeof ClassComponent;
 }
@@ -79,7 +79,6 @@ export interface DCGViewModule {
 }
 
 export const Component = DCGView.Class;
-export const constArg = DCGView.const;
 export const mountToNode = DCGView.mountToNode;
 export const unmountFromNode = DCGView.unmountFromNode;
 

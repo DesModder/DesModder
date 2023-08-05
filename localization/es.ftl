@@ -153,19 +153,18 @@ video-creator-method-ticks = contador
 
 ## Shift+Enter Newline
 shift-enter-newline-name = Nueva línea con Shift+Entrar
-shift-enter-newline-desc = Teclea Shift+Entrar para añadir líneas nuevas en las notas y en los títulos de imágenes/carpetas.
+shift-enter-newline-desc = Permite teclear Shift+Entrar para añadir líneas nuevas en las notas y en los títulos de imágenes/carpetas.
 
 ## Wakatime
 # Unchanged
 wakatime-name = WakaTime
-wakatime-desc = Dale seguimiento a tu actividad de Desmos en WakaTime.com
+wakatime-desc = Le da seguimiento a tu actividad de Desmos en WakaTime.com
 wakatime-opt-secretKey-name = Llave Secreta
 wakatime-opt-secretKey-desc = Llave API usada para los servidores de WakaTime
 wakatime-opt-splitProjects-name = Separa los proyectos por gráficas individuales
 wakatime-opt-splitProjects-desc = Guarda cada gráfica como su propio proyecto y no como ramificaciones de un solo proyecto de Desmos.
 wakatime-opt-projectName-name = Nombre de Proyecto
 wakatime-opt-projectName-desc = Visible en WakaTime y es compartido por todos tus proyectos de Desmos.
-
 
 ## Performance Display
 performance-info-name = Monitor de Rendimiento
@@ -187,3 +186,72 @@ better-evaluation-view-opt-colors-name = Mostrar colores
 better-evaluation-view-opt-colors-desc = Mostrar colores como valores RGB
 better-evaluation-view-opt-colorLists-name = Mostrar listas de colores
 better-evaluation-view-opt-colorLists-desc = Mostrar listas de colores como listas de valores RGB
+
+## Pillbox Menus
+pillbox-menus-name = Menú de botones (Funciones Principales)
+pillbox-menus-desc = Muestra botones al lado derecho, así como el Creador de Video o el menú principal de DesModder
+
+## Manage Metadata
+manage-metadata-name = Administrar Metadatos (Funciones Principales)
+manage-metadata-desc = Permite administrar metadatos, así como las extensiones GLesmos o Fijar Expresiones
+
+## Intellisense
+intellisense-name = Intellisense
+intellisense-desc = Brinda varias funciones esenciales de una IDE en Desmos incluyendo sugerencias de autocompletado, visualización de parámetros, e ir a definición. Sigue el enlace para la documentación:
+intellisense-jump2def-menu-instructions = tiene múltiples definiciones. Elije a cuál quieres navegar.
+
+## Compact View
+compact-view-name = Vista Compacta
+compact-view-desc = Permite personalizar la interfaz gráfica con énfasis en mostrar más información de manera compacta.
+compact-view-opt-textFontSize-name = Tamaño de fuente (texto)
+compact-view-opt-textFontSize-desc = Tamaño del texto en notas y carpetas
+compact-view-opt-mathFontSize-name = Tamaño de fuente (matemática)
+compact-view-opt-mathFontSize-desc = Tamaño de texto de expresiones y ecuaciones
+compact-view-opt-bracketFontSizeFactor-name = Factor de paréntesis
+compact-view-opt-bracketFontSizeFactor-desc = Este factor ajusta el tamaño del texto encerrado en paréntesis (o corchetes).
+compact-view-opt-minimumFontSize-name = Mínimo tamaño de fuente
+compact-view-opt-minimumFontSize-desc = El mínimo tamaño de fuente posible. Sobrescribe el factor de paréntesis.
+compact-view-opt-compactFactor-name = Remover espacio
+compact-view-opt-compactFactor-desc = Remueve el espacio entre las expresiones y notas en la lista.
+compact-view-opt-noSeparatingLines-name = Sin líneas de separación
+compact-view-opt-noSeparatingLines-desc = Remueve las líneas de separación entre el medio de las expresiones.
+compact-view-opt-highlightAlternatingLines-name = Realzar líneas alternas
+compact-view-opt-highlightAlternatingLines-desc = Realza con colores alternos las expresiones para que estas puedan distinguirse con más facilidad.
+compact-view-opt-hideEvaluations-name = Colapsar evaluaciones
+compact-view-opt-hideEvaluations-desc = Mueve evaluaciones de listas fuera de la vista y las muestra solo cuando colocas el cursor sobre ellas.
+
+## Multiline
+multiline-name = Expresiones Multilínea
+multiline-desc = Divide expresiones largas en múltiples líneas. Puedes activar esta función manualmente presionando Ctrl+M.
+multiline-opt-widthBeforeMultiline-name = Límite de ancho (%)
+multiline-opt-widthBeforeMultiline-desc = Este es un porcentaje de la pantalla al cual el largo de la expresión provoca ajuste de líneas. En móvil este valor es triplicado.
+multiline-opt-automaticallyMultilinify-name = Ajuste de línea automático
+multiline-opt-automaticallyMultilinify-desc = Automáticamente divide las expresiones en múltiples líneas.
+multiline-opt-multilinifyDelayAfterEdit-name = Retraso de ajuste (ms)
+multiline-opt-multilinifyDelayAfterEdit-desc = Retrasa el ajuste de líneas en la expresión que estás editando por el número milisegundos especificado.
+
+## Custom MathQuill Config
+custom-mathquill-config-name = Configuración de MathQuill
+custom-mathquill-config-desc = Te permite expandir y personalizar la edición de ecuaciones
+custom-mathquill-config-opt-superscriptOperators-name = Operadores en exponentes
+custom-mathquill-config-opt-superscriptOperators-desc = Permite teclear operadores, asi como '+', en los exponentes
+custom-mathquill-config-opt-noAutoSubscript-name = Deshabilita subíndices automáticos
+custom-mathquill-config-opt-noAutoSubscript-desc = Deshabilita subíndices automáticos en números cuando estos son escritos después de una variable
+custom-mathquill-config-opt-noNEquals-name = Deshabilita n= en sumatorio
+custom-mathquill-config-opt-noNEquals-desc = Deshabilita 'n=' en el límite inferior de los sumatorios
+custom-mathquill-config-opt-subSupWithoutOp-name = Subíndices y exponentes sin base
+custom-mathquill-config-opt-subSupWithoutOp-desc = Permite crear subíndices y exponentes sin que estos estén precedidos de un símbolo
+custom-mathquill-config-opt-allowMixedBrackets-name = Permitir paréntesis mezclados
+custom-mathquill-config-opt-allowMixedBrackets-desc = Permite mezclar paréntesis de distinto tipo (incluyendo el valor absoluto)
+custom-mathquill-config-opt-subscriptReplacements-name = Permite reemplazos en subíndices
+custom-mathquill-config-opt-subscriptReplacements-desc = Permite símbolos y nombres de funciones dentro de los subíndices
+custom-mathquill-config-opt-noPercentOf-name = Deshabilita % of
+custom-mathquill-config-opt-noPercentOf-desc = Permite teclear el carácter '%' sin la inserción automática de '% of'
+custom-mathquill-config-opt-commaDelimiter-name = Coma de separación
+custom-mathquill-config-opt-commaDelimiter-desc = Inserta comas de separación en números (sólo visualmente)
+custom-mathquill-config-opt-delimiterOverride-name = Separador personalizado
+custom-mathquill-config-opt-delimiterOverride-desc = Carácter que va a ser usado como separador de millares
+custom-mathquill-config-opt-leftIntoSubscript-name = Navegación hacia subíndices
+custom-mathquill-config-opt-leftIntoSubscript-desc = Prioriza subíndices sobre exponentes al navegar con las flechas del teclado
+custom-mathquill-config-opt-extendedGreek-name = Más letras griegas
+custom-mathquill-config-opt-extendedGreek-desc = Habilita reemplazos para todas las letras griegas

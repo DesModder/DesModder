@@ -1,20 +1,7 @@
 {
+  "extends": "./tsconfig-base.json",
   "compilerOptions": {
-    "outDir": "./dist/",
-    "sourceMap": true,
-    "strictNullChecks": true,
-    "module": "es6",
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
-    "jsx": "react",
-    "jsxFactory": "jsx",
-    "target": "es2020",
-    "allowJs": true,
-    "strict": true,
-    "baseUrl": "src",
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "skipLibCheck": true
+    "composite": true
   },
   "include": [
     "./src/",
@@ -22,6 +9,8 @@
     "./loaders/",
     "./esbuild.mjs",
     "./.eslintrc.js",
-    "./jest-config/"
-  ]
+    "./jest-config/",
+    "./text-mode-core"
+  ],
+  "files": ["node_modules/jest-expect-message/types/index.d.ts"]
 }

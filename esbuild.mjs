@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { esbuildPluginInline } from "./loaders/esbuild-plugin-inline.mjs";
 import { esbuildPluginLezer } from "./loaders/esbuild-plugin-lezer.mjs";
 import { esbuildPluginReplacements } from "./loaders/esbuild-plugin-replacements.mjs";
@@ -105,5 +106,5 @@ if (watch) {
   await ctx.rebuild();
   await ctx.watch();
 } else {
-  esbuild.build(opts);
+  void esbuild.build(opts);
 }

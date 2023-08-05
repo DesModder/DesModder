@@ -1,17 +1,19 @@
-import { Statement } from "../down/TextAST";
-import { parse } from "../down/textToAST";
-import { astItemToTextString } from "../up/astToText";
+import {
+  parseText,
+  astItemToTextString,
+  buildConfig,
+} from "../../../../text-mode-core";
+import { Statement } from "../../../../text-mode-core/TextAST";
 import { statementsIntersecting } from "./statementIntersection";
 
-jest.mock("utils/depUtils");
-jest.mock("globals/window");
+const cfg = buildConfig({});
 
 function positionsAndProgram(s: string) {
   const split = s.split("|");
   let pos = 0;
   const positions: number[] = [];
   split.slice(0, -1).forEach((x) => positions.push((pos += x.length)));
-  return [positions, parse(split.join("")).program] as const;
+  return [positions, parseText(cfg, split.join("")).program] as const;
 }
 
 function toString(s: Statement) {

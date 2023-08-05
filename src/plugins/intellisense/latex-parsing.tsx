@@ -1,11 +1,6 @@
+import { ExpressionAug } from "../../../text-mode-core";
 import { latexStringToIdentifierString } from "./view";
 import { MQCursor, MathQuillField } from "components";
-import {
-  nestedKeyContainers,
-  nestedKeys,
-  rootKeys,
-} from "plugins/find-replace/backend";
-import { ExpressionAug, ItemAug, Latex } from "plugins/text-mode/aug/AugState";
 
 export function mapAugAST(
   node: ExpressionAug["latex"],
@@ -16,39 +11,21 @@ export function mapAugAST(
       for (const child of x) {
         map(child);
       }
+      return;
     }
 
     if (typeof x === "object") {
-      if (typeof x.type === "string") callback(x);
+      if (typeof x.type === "string") {
+        callback(x);
 
-      for (const [_, v] of Object.entries(x)) {
-        map(v);
+        for (const [_, v] of Object.entries(x)) {
+          map(v);
+        }
       }
     }
   }
 
   map(node);
-}
-
-// TODO: Find a more robust solution for this.
-export function mapAllAugLatex(
-  item: ItemAug,
-  callback: (node: ExpressionAug["latex"]) => void
-) {
-  if (item.type === "expression") {
-    function map(v: any) {
-      if (typeof v === "object") {
-        for (const key of Object.keys(v)) {
-          const prop = v[key];
-          map(prop);
-        }
-        if (typeof v.type === "string" && v.type !== "expression") {
-          mapAugAST(v, callback);
-        }
-      }
-    }
-    map(item);
-  }
 }
 
 export function getController(mq: MathQuillField) {
@@ -120,7 +97,6 @@ function tryGetMathquillIdent(
 
   if (isInSubscript) {
     node = ctrlr.cursor;
-    goToEnd++;
     while (node?.[1]) {
       goToEnd++;
       node = node?.[1];
@@ -160,11 +136,11 @@ function tryGetMathquillIdent(
   if (node && isSubscript(node)) {
     latexSegments.push(node.latex?.());
 
-    backspaces += (node.latex?.()?.length ?? 4) - 3;
+    backspaces += (node.latex?.()?.length ?? 4) - 4;
 
     hasSubscript = true;
 
-    goToEnd++;
+    if (isInSubscript) goToEnd++;
   }
 
   const identString = latexSegments.filter((e) => e).join("");

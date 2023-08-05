@@ -1,12 +1,11 @@
 import { BoundIdentifier } from ".";
+import { parseRootLatex } from "../../../text-mode-core";
+import { getTextModeConfig } from "../text-mode";
 import { mapAugAST } from "./latex-parsing";
-import { ItemState } from "@desmodder/graph-state";
 import { ItemModel } from "globals/models";
 import { Calc } from "globals/window";
 import { rootKeys } from "plugins/find-replace/backend";
 import Metadata from "plugins/manage-metadata/interface";
-import Aug from "plugins/text-mode/aug/AugState";
-import { parseRootLatex } from "plugins/text-mode/aug/rawToAug";
 import { get } from "utils/utils";
 
 function getOrMakeKey<K, V>(map: Map<K, V>, k: K, v: () => V) {
@@ -25,7 +24,7 @@ function undefinedIfErr<T>(cb: () => T): T | undefined {
   } catch {}
 }
 
-export class IdentifierTrackingState {
+export class IntellisenseState {
   // maps an expression ID to every bound identifier in that expression
   boundIdentifiersInExpressions = new Map<string, BoundIdentifier[]>();
 
@@ -38,6 +37,8 @@ export class IdentifierTrackingState {
   metadata: Metadata;
 
   counter = 0;
+
+  readonly cfg = getTextModeConfig();
 
   constructor(metadata: Metadata) {
     this.metadata = metadata;
@@ -97,20 +98,6 @@ export class IdentifierTrackingState {
     }
   }
 
-  getRenamedIdentifierName(name: string): string {
-    let suffixedName = name;
-    let n = 1;
-    while (true) {
-      n++;
-      const conflictingName = this.identifierReferences.get(suffixedName);
-      if (conflictingName) {
-        suffixedName = name + (name.includes("_") ? "" : "_") + n.toString();
-      } else {
-        return suffixedName;
-      }
-    }
-  }
-
   handleStateRemoval(id: string) {
     // remove all references to this identifier
     const oldIdentifiersReferencedInExpression =
@@ -123,15 +110,20 @@ export class IdentifierTrackingState {
     this.identifiersReferencedInExpression.delete(id);
   }
 
-  getExpressionBoundIdentifiers(expression: ItemModel | ItemState) {
+  // handle a change to one expression
+  handleStateChange(expression: ItemModel) {
+    this.handleStateRemoval(expression.id);
+
     const newBoundIdentifiers: BoundIdentifier[] = [];
+
+    const newIdentifiersReferenced = new Set<string>();
 
     if (expression.type === "expression") {
       for (const key of rootKeys) {
         const ltxStr = get(expression, key);
         if (typeof ltxStr !== "string") continue;
 
-        const ltx = undefinedIfErr(() => parseRootLatex(ltxStr));
+        const ltx = undefinedIfErr(() => parseRootLatex(this.cfg, ltxStr));
 
         if (!ltx) continue;
 
@@ -166,6 +158,12 @@ export class IdentifierTrackingState {
         mapAugAST(ltx, (node) => {
           if (!node) return;
 
+          // add referenced identifier
+          if (node.type === "Identifier") {
+            this.addIdentifierReference(node.symbol, expression.id);
+            newIdentifiersReferenced.add(node.symbol);
+          }
+
           // add listcomps, substitutions, derivatives, and repeated ops (e.g. sum)
           if (
             node.type === "ListComprehension" ||
@@ -196,42 +194,6 @@ export class IdentifierTrackingState {
               type: "repeated-operator",
               id: this.counter++,
             });
-          }
-        });
-      }
-    }
-
-    return newBoundIdentifiers;
-  }
-
-  // handle a change to one expression
-  handleStateChange(expression: ItemModel) {
-    this.handleStateRemoval(expression.id);
-
-    const newBoundIdentifiers: BoundIdentifier[] = [];
-
-    const newIdentifiersReferenced = new Set<string>();
-
-    if (expression.type === "expression") {
-      for (const key of rootKeys) {
-        const ltxStr = get(expression, key);
-        if (typeof ltxStr !== "string") continue;
-
-        const ltx = undefinedIfErr(() => parseRootLatex(ltxStr));
-
-        if (!ltx) continue;
-
-        newBoundIdentifiers.push(
-          ...this.getExpressionBoundIdentifiers(expression)
-        );
-
-        mapAugAST(ltx, (node) => {
-          if (!node) return;
-
-          // add referenced identifier
-          if (node.type === "Identifier") {
-            this.addIdentifierReference(node.symbol, expression.id);
-            newIdentifiersReferenced.add(node.symbol);
           }
         });
       }

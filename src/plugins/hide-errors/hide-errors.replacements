@@ -78,16 +78,19 @@ DSM.insertElement(() => DSM.hideErrors?.hideButton(() => this.model))
 
 *Description* `Disable slider prompts if error is hidden`
 
-*Find*
+*Find* => `from`
 ```js
 shouldShowSliderPrompt() {
-  return __ret__
+    return this.controller.areSlidersEnabled() ? $s(this.model).length > 0 : !1
 }
 ```
 
-*Replace* `__ret__` with
+*Replace* `from` with
 ```js
-(__ret__) && !DSM.hideErrors?.isErrorHidden(this.model?.id)
+shouldShowSliderPrompt() {
+    if (DSM.hideErrors?.isErrorHidden(this.model?.id)) return false;
+    return this.controller.areSlidersEnabled() ? $s(this.model).length > 0 : !1
+}
 ```
 
 ## Allow shift-enter to create a new expression and hide errors on the old expression

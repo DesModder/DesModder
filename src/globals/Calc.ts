@@ -173,6 +173,7 @@ interface CalcPrivate {
     | undefined;
   /// / undocumented, may break
   controller: {
+    rootElt: HTMLElement;
     isNarrow: () => boolean;
     // _removeExpressionSynchronously(model: ItemModel): void;
     handleDispatchedAction: (evt: DispatchedEvent) => void;
@@ -249,6 +250,10 @@ interface CalcPrivate {
     subToChanges: (cb: () => void) => () => void;
     getBackgroundColor: () => string;
     isInEditListMode: () => boolean;
+    getMathquillConfig: (e: { additionalOperators?: string[] }) => {
+      autoOperatorNames: string;
+      autoCommands: string;
+    };
   };
   _calc: {
     globalHotkeys: TopLevelComponents;
