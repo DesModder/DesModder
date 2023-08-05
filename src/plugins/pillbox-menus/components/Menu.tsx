@@ -182,6 +182,7 @@ export default class Menu extends Component<{
                     boolean: booleanOption,
                     string: stringOption,
                     number: numberOption,
+                    stringArray: stringArrayOption,
                   }[item.type](this.pm, item, plugin, pluginSettings))
                 }
               </Switch>
@@ -191,6 +192,58 @@ export default class Menu extends Component<{
       </div>
     );
   }
+}
+
+function stringArrayOption(
+  controller: PillboxMenus,
+  item: ConfigItem,
+  plugin: SpecificPlugin,
+  settings: GenericSettings
+) {
+  function set(newValue: string[]) {
+    controller.expandedPlugin &&
+      controller.dsm.setPluginSetting(
+        controller.expandedPlugin,
+        item.key,
+        newValue
+      );
+  }
+
+  function get() {
+    return settings[item.key] as string[];
+  }
+
+  let currentValue = get().join("\n");
+
+  const inputHandler = (evt: InputEvent) => {
+    currentValue = (evt.target as HTMLDivElement).innerText;
+    set(currentValue.split("\n"));
+  };
+
+  return (
+    // not worrying about keys bc strings are cheap
+    <div class="dsm-settings-item dsm-settings-string-array">
+      <div
+        contenteditable={true}
+        onInput={inputHandler}
+        onChange={inputHandler}
+        onUpdate={(e: HTMLDivElement) => {
+          currentValue = get().join("\n");
+          if (currentValue === e.innerText) return;
+          e.innerText = currentValue;
+        }}
+        class="dsm-settings-string-array-input-box"
+      >
+        {get().join("\n")}
+      </div>
+      <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
+        <label for={`dsm-settings-item__input-${item.key}`}>
+          {configItemName(plugin, item)}
+        </label>
+      </Tooltip>
+      <ResetButton pm={controller} key={item.key} />
+    </div>
+  );
 }
 
 function numberOption(
