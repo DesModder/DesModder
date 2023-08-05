@@ -11,6 +11,13 @@ menu-learn-more = Learn more
 menu-desmodder-plugins = DesModder Plugins
 menu-desmodder-tooltip = DesModder Menu
 
+## Import/Export Settings
+import-export-settings-copy-to-clipboard = Copy Settings to Clipboard
+import-export-settings-import = Import Settings
+import-export-settings-incompatible-types = Some imported settings had incompatible types and were ignored. All other settings were imported as normal.
+import-export-settings-failed-to-load = Failed to load settings for the { $pluginName } plugin
+import-export-settings-placeholder = Paste settings data or a link here.
+
 ## Category names
 category-core-name = Core
 category-utility-name = Utility
@@ -250,9 +257,11 @@ custom-mathquill-config-opt-extendedGreek-desc = Enables replacements for all su
 ## Color Themes
 color-themes-name = Color Themes
 color-themes-desc = Change all the colors of the Graphing Calculator.
+color-themes-copy-to-clipboard = Copy Theme Data to Clipboard
+color-themes-import = Import Theme
 
-color-themes-opt-simpleModeEnabled-name = Simple Mode
-color-themes-opt-simpleModeEnabled-desc = Use a simplified set of colors for theming to make things easier.
+color-themes-opt-advancedModeEnabled-name = Advanced Mode
+color-themes-opt-advancedModeEnabled-desc = Lets you specify an alternate, larger set of colors for theming, giving you more control at the cost of being more cumbersome.
 
 ## SIMPLE MODE
 color-themes-opt-simpleForeground-name = Foreground
@@ -283,6 +292,8 @@ color-themes-opt-background-name = Background (BG)
 color-themes-opt-background-desc = Default background color.
 color-themes-opt-pillboxButtonBackground-name = Pillbox Button BG
 color-themes-opt-pillboxButtonBackground-desc = Background color for elements near the edges (pillbox buttons, expression panel sidebar, etc).
+color-themes-opt-caretIcon-name = Caret Icon
+color-themes-opt-caretIcon-desc = Color of the caret icon used for dropdowns.
 
 ## Exppanel
 color-themes-opt-exppanelDraggerBackground-name = Expr Dragger BG

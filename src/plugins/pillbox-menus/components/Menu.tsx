@@ -9,6 +9,7 @@ import {
   Tooltip,
   For,
 } from "components/desmosComponents";
+import { Calc } from "globals/window";
 import { format } from "i18n/i18n-core";
 import {
   ConfigItem,
@@ -157,6 +158,23 @@ export default class Menu extends Component<{
                     )}
                   </If>
                 </div>
+                {plugin.hasSettingsImportExportWidget &&
+                this.pm.expandedPlugin ? (
+                  <SettingsImportExportWidget
+                    pm={() => this.pm}
+                    plugin={() => plugin}
+                    settings={() =>
+                      this.pm.dsm.pluginSettings[
+                        this.pm.expandedPlugin as Exclude<
+                          typeof this.pm.expandedPlugin,
+                          null
+                        >
+                      ] ?? {}
+                    }
+                  ></SettingsImportExportWidget>
+                ) : (
+                  ""
+                )}
                 {this.getExpandedSettings()}
               </div>
             )}
@@ -189,6 +207,108 @@ export default class Menu extends Component<{
             )}
           </If>
         ))}
+      </div>
+    );
+  }
+}
+
+function assertUnreachable(): never {
+  throw new Error("Unreachable!");
+}
+
+class SettingsImportExportWidget extends Component<{
+  pm: () => PillboxMenus;
+  plugin: () => SpecificPlugin;
+  settings: () => GenericSettings;
+}> {
+  settingsInClipboard: string = "";
+
+  template() {
+    return (
+      <div class="dsm-settings-import-export-widget">
+        <div class="copy-to-clipboard-section">
+          <button
+            class="dcg-btn-dark-on-gray"
+            onClick={() => {
+              void navigator.clipboard.writeText(
+                JSON.stringify(this.props.settings())
+              );
+            }}
+          >
+            {format(
+              this.props.plugin().settingsImportWidgetData.copyToClipboardButton
+            )}
+          </button>
+        </div>
+        <div class="import-section">
+          <textarea
+            value={() => this.settingsInClipboard}
+            onChange={(evt: InputEvent) => {
+              this.settingsInClipboard = (
+                evt.target as HTMLTextAreaElement
+              ).value;
+            }}
+            placeholder={format("import-export-settings-placeholder")}
+          ></textarea>
+          <button
+            class="dcg-btn-dark-on-gray"
+            onClick={async () => {
+              const ep = this.props.pm().expandedPlugin;
+              if (!ep) return;
+
+              try {
+                const settingsString = this.settingsInClipboard;
+
+                let settingsData: any;
+
+                if (settingsString.startsWith("http")) {
+                  settingsData = await (await fetch(settingsString)).json();
+                } else {
+                  settingsData = JSON.parse(settingsString);
+                }
+
+                const showIncompatibleTypesWarning = () => {
+                  Calc.controller._showToast({
+                    message: format(
+                      "import-export-settings-incompatible-types"
+                    ),
+                  });
+                };
+
+                for (const configItem of this.props.plugin().config ?? []) {
+                  const data = settingsData[configItem.key];
+
+                  switch (configItem.type) {
+                    case "string":
+                    case "number":
+                    case "boolean":
+                      // eslint-disable-next-line valid-typeof
+                      if (typeof data === configItem.type) {
+                        this.props
+                          .pm()
+                          .dsm.setPluginSetting(ep, configItem.key, data);
+                      } else {
+                        showIncompatibleTypesWarning();
+                      }
+                      break;
+                    default:
+                      return assertUnreachable();
+                  }
+                }
+              } catch (err) {
+                Calc.controller._showToast({
+                  message: format("import-export-settings-failed-to-load", {
+                    pluginName: format(this.props.plugin().id + "-name"),
+                  }),
+                });
+                // eslint-disable-next-line no-console
+                console.error("Error loading plugin settings:", err);
+              }
+            }}
+          >
+            {format(this.props.plugin().settingsImportWidgetData.importButton)}
+          </button>
+        </div>
       </div>
     );
   }

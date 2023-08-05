@@ -106,6 +106,7 @@ declare global {
       td: any;
       button: any;
       br: any;
+      textarea: any;
     }
   }
 }

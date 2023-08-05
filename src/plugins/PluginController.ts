@@ -7,6 +7,11 @@ export class PluginController<
   static descriptionLearnMore?: string = undefined;
   static forceEnabled?: boolean = undefined;
   static config: readonly ConfigItem[] | undefined = undefined;
+  static hasSettingsImportExportWidget: boolean = false;
+  static settingsImportWidgetData = {
+    copyToClipboardButton: "import-export-settings-copy-to-clipboard",
+    importButton: "import-export-settings-import",
+  };
 
   constructor(readonly dsm: DSM, public settings: Settings) {}
 

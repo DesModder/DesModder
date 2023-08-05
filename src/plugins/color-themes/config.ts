@@ -24,6 +24,8 @@ export const ConfigDefaultsAdvanced = {
   background: "#ffffff",
   pillboxButtonBackground: "#ededed",
   sectionHeading: "#666666",
+  checkboxLabel: "#333333",
+  caretIcon: "#999999",
 
   // exppanel
   exppanelDraggerBackground: "#eeeeee",
@@ -36,6 +38,9 @@ export const ConfigDefaultsAdvanced = {
   redButtonBackground: "#ce4945",
   redButtonBorder: "#aa3a37",
   buttonText: "#ffffff",
+
+  // expression settings menu
+  expressionSettingsBorder: "#d3d3d3",
 
   // settings
   settingsMenuSeparator: "#dddddd",
@@ -72,7 +77,7 @@ export const ConfigDefaultsColors = {
 };
 
 export const ConfigDefaults = {
-  simpleModeEnabled: true,
+  advancedModeEnabled: false,
   ...ConfigDefaultsColors,
 };
 
@@ -80,8 +85,8 @@ export const ConfigList: ConfigItem[] = (
   [
     {
       type: "boolean",
-      default: true,
-      key: "simpleModeEnabled",
+      default: false,
+      key: "advancedModeEnabled",
     },
   ] as ConfigItem[]
 ).concat(
@@ -94,8 +99,8 @@ export const ConfigList: ConfigItem[] = (
       shouldShow: (ConfigDefaultsSimple as Record<string, string | undefined>)[
         k
       ]
-        ? (s) => s.simpleModeEnabled
-        : (s) => !s.simpleModeEnabled,
+        ? (s) => !s.advancedModeEnabled
+        : (s) => s.advancedModeEnabled,
     };
     return ci as ConfigItem;
   })

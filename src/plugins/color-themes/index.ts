@@ -49,6 +49,10 @@ function multiplyColor(hex: string, factor: number) {
   );
 }
 
+function addColor(hex: string, b: number) {
+  return rgb2hex(hex2rgb(hex).map((e) => e + b) as [number, number, number]);
+}
+
 function getColorSchemeStyleRule(settings: typeof ConfigDefaultsAdvanced) {
   return `
     :root {
@@ -67,6 +71,11 @@ export default class ColorThemes extends PluginController<
   static config = ConfigList;
   static id = "color-themes" as const;
   static enabledByDefault = true;
+  static hasSettingsImportExportWidget = true;
+  static settingsImportWidgetData = {
+    copyToClipboardButton: "color-themes-copy-to-clipboard",
+    importButton: "color-themes-import",
+  };
 
   styles = document.createElement("style");
 
@@ -77,21 +86,24 @@ export default class ColorThemes extends PluginController<
 
     this.styles.sheet?.insertRule(
       getColorSchemeStyleRule(
-        this.settings.simpleModeEnabled
-          ? {
+        this.settings.advancedModeEnabled
+          ? this.settings
+          : {
               foreground: this.settings.simpleForeground,
               background: this.settings.simpleBackground,
               pillboxButtonBackground: this.settings.simpleButtonGray,
               sectionHeading: this.settings.simpleForeground,
               checkboxLabel: this.settings.simpleForeground,
+              caretIcon: this.settings.simpleToggleSwitch,
 
+              expressionSettingsBorder: this.settings.simpleBorder,
               exppanelDraggerBackground: this.settings.simpleBackground2,
               error: "#e66b3c",
-              exppanelBorder: this.settings.simpleBackground2,
+              exppanelBorder: this.settings.simpleBorder,
 
-              exprTopBarBackground1: multiplyColor(
+              exprTopBarBackground1: addColor(
                 this.settings.simpleBackground2,
-                1.05
+                -10
               ),
               exprTopBarBackground2: this.settings.simpleBackground2,
               redButtonBackground: "#ce4945",
@@ -115,19 +127,18 @@ export default class ColorThemes extends PluginController<
 
               keypadBackground: this.settings.simpleBackground2,
               keypadLightButtonBackground1: this.settings.simpleButtonLight,
-              keypadLightButtonBackground2: multiplyColor(
+              keypadLightButtonBackground2: addColor(
                 this.settings.simpleButtonLight,
-                0.95
+                -10
               ),
               keypadLightGrayButtonBackground1: this.settings.simpleButtonGray,
-              keypadLightGrayButtonBackground2: multiplyColor(
+              keypadLightGrayButtonBackground2: addColor(
                 this.settings.simpleButtonGray,
-                0.95
+                -10
               ),
               keypadLightButtonBorder: this.settings.simpleBorder,
               keypadDarkButtonBorder: this.settings.simpleBorder,
             }
-          : this.settings
       )
     );
 

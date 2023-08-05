@@ -2,6 +2,10 @@
 #graph-container#graph-container#graph-container#graph-container {
   color: var(--dsm-foreground);
 
+  .dcg-icon-caret-down {
+    color: var(--dsm-caret-icon);
+  }
+
   // toggles
   .dcg-toggle-switch {
     background: var(--dsm-toggle-switch);
@@ -30,8 +34,32 @@
   }
 
   // exppanel
+  .dcg-circular-icon.dcg-thick-outline {
+    border-color: var(--dsm-foreground);
+    color: var(--dsm-foreground);
+  }
+
+  .dcg-options-menu {
+    border-color: var(--dsm-expression-settings-border);
+  }
+
+  .dcg-label-container {
+    color: rgba(var(--dsm-foreground-rgb), 0.5);
+  }
+
   .dcg-exppanel {
     background: var(--dsm-background) !important;
+  }
+
+  .dcg-exppanel .dcg-expressionitem .dcg-tab {
+    color: rgba(var(--dsm-foreground-rgb), 0.5);
+  }
+  .dcg-exppanel .dcg-expressionitem.dcg-selected .dcg-tab {
+    color: var(--dsm-foreground);
+  }
+
+  .dcg-action-toggle-secret-folder {
+    color: rgba(var(--dsm-foreground-rgb), 0.5);
   }
 
   .dcg-btn-flat-gray {
@@ -43,8 +71,8 @@
     background: white;
   }
 
-  .dcg-mq-math-mode {
-    border-color: var(--dsm-foreground);
+  .dcg-inline-math-input-view .dcg-mq-math-mode:not(.dcg-focus) {
+    border-bottom-color: rgba(var(--dsm-foreground-rgb), 0.2);
   }
 
   .dcg-tap-container {
@@ -84,7 +112,7 @@
     );
   }
 
-  .dcg-expressionitem {
+  .dcg-expressionitem:not(.dcg-selected) {
     border-top-color: rgba(var(--dsm-exppanel-border-rgb), 0.8);
   }
 
@@ -131,6 +159,10 @@
 
   .dcg-options-menu .dcg-component-checkbox .dcg-checkbox-children {
     color: var(--dsm-checkbox-label);
+  }
+
+  .dcg-mq-placeholder {
+    color: rgba(var(--dsm-foreground-rgb), 0.46875);
   }
 
   // "drag" icons for points
