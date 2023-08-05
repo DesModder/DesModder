@@ -14,8 +14,24 @@
 #graph-container#graph-container#graph-container#graph-container {
   color: var(--dsm-foreground);
 
+  .dcg-ticker {
+    background: var(--dsm-ticker-background);
+
+    .dcg-mq-root-block {
+      color: var(--dsm-foreground);
+    }
+
+    .dcg-mq-math-mode:not(.dcg-focus) {
+      border-bottom-color: rgba(var(--dsm-foreground-rgb), 0.2);
+    }
+  }
+
   .dcg-icon-caret-down {
     color: var(--dsm-caret-icon);
+  }
+
+  .dcg-evaluation .dcg-mq-root-block {
+    color: var(--dsm-foreground);
   }
 
   // toggles

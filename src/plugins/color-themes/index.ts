@@ -98,6 +98,8 @@ export default class ColorThemes extends PluginController<
               scrollbar: this.settings.simpleBackground,
               scrollbarThumb: this.settings.simpleBorder,
 
+              tickerBackground: this.settings.simpleBackground2,
+
               expressionSettingsBorder: this.settings.simpleBorder,
               exppanelDraggerBackground: this.settings.simpleBackground2,
               error: "#e66b3c",

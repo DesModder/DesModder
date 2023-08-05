@@ -29,6 +29,9 @@ export const ConfigDefaultsAdvanced = {
   scrollbar: "#ffffff",
   scrollbarThumb: "#999999",
 
+  // ticker panel
+  tickerBackground: "#eeeeee",
+
   // exppanel
   exppanelDraggerBackground: "#eeeeee",
   error: "#e66b3c",

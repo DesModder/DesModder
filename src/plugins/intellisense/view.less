@@ -1,14 +1,22 @@
 #intellisense-container {
   position: absolute;
-  background-color: white;
+  background-color: var(--dsm-background);
   z-index: 999999;
   border-radius: 5px;
   filter: drop-shadow(#00000044 3px 3px 3px);
   padding: 5px;
-  border: 1px solid #bbbbbb;
+  border: 1px solid var(--dsm-exppanel-border);
   max-height: 35vh;
   max-width: 35vw;
   overflow: auto;
+
+  .dcg-mq-root-block * {
+    color: var(--dsm-foreground);
+  }
+
+  .dsm-icon-compass2 {
+    color: var(--dsm-foreground);
+  }
 }
 
 div:focus #intellisense-container {
@@ -30,7 +38,7 @@ div:focus #intellisense-container {
 
 .intellisense-clickable:hover,
 .selected-intellisense-option {
-  background-color: #eeeeee;
+  background-color: rgba(var(--dsm-foreground-rgb), 0.1);
 }
 
 .intellisense-options-table {
@@ -38,7 +46,7 @@ div:focus #intellisense-container {
 }
 
 .partial-function-call-container {
-  border-bottom: 1px solid #bbbbbb;
+  border-bottom: 1px solid var(--dsm-exppanel-border);
 }
 
 .pfc-params {
@@ -48,7 +56,7 @@ div:focus #intellisense-container {
 }
 
 .pfc-param-selected {
-  background: #ff8800;
+  background: var(--dsm-primary-color);
   border-radius: 5px;
 }
 
@@ -57,8 +65,8 @@ div:focus #intellisense-container {
 }
 
 .pfc-doc-param {
-  border-bottom: 1px solid #bbbbbb;
-  border-top: 1px solid #bbbbbb;
+  border-bottom: 1px solid var(--dsm-exppanel-border);
+  border-top: 1px solid var(--dsm-exppanel-border);
 }
 
 .jump-to-def-btn {
@@ -75,11 +83,12 @@ tr:hover .jump-to-def-btn,
 
 .dsm-intellisense-docstring {
   white-space: pre-line;
+  color: var(--dsm-foreground);
 }
 
 .dsm-intellisense-jump-to-def-menu {
   overflow-x: hidden;
-  background-color: white;
+  background-color: var(--dsm-background);
   border-radius: 5px;
   padding: 10px;
   position: absolute;
@@ -88,8 +97,9 @@ tr:hover .jump-to-def-btn,
   width: 40vw;
   height: 40vh;
   z-index: 1;
-  border: 1px solid #bbbbbb;
+  border: 1px solid var(--dsm-exppanel-border);
   filter: drop-shadow(#00000044 3px 3px 3px);
+  color: var(--dsm-foreground);
 
   ul {
     list-style: none;
@@ -102,12 +112,12 @@ tr:hover .jump-to-def-btn,
   }
 
   li {
-    border-top: 1px solid #bbbbbb;
+    border-top: 1px solid var(--dsm-exppanel-border);
   }
 
   li:hover,
   li.selected {
-    background-color: #eeeeee;
+    background-color: rgba(var(--dsm-foreground-rgb), 0.1);
   }
 
   .dsm-intellisense-header {
@@ -122,7 +132,7 @@ tr:hover .jump-to-def-btn,
       cursor: pointer;
       border-radius: 5px;
       transition: opacity 0.25s;
-      color: black;
+      color: var(--dsm-foreground);
       opacity: 0.2;
     }
 
