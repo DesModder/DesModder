@@ -46,11 +46,14 @@ export default class DSM extends TransparentPlugins {
   applyStoredSettings(
     storedSettings: Map<PluginID, GenericSettings | undefined>
   ) {
+    console.log("applystoredsettings", storedSettings);
     for (const { id } of pluginList) {
       const stored = storedSettings.get(id);
       if (stored !== undefined) {
         const settings = this.pluginSettings[id];
+        console.log("settings", settings, structuredClone(settings));
         for (const key in settings) {
+          console.log(id, key, stored[key]);
           const storedValue = stored[key];
           if (storedValue !== undefined) {
             settings[key] = storedValue;
@@ -62,6 +65,11 @@ export default class DSM extends TransparentPlugins {
 
   init() {
     const dsmPreload = window.DesModderPreload!;
+    console.log(
+      "dsmpreload",
+      dsmPreload,
+      recordToMap(dsmPreload.pluginSettings)
+    );
     this.applyStoredSettings(recordToMap(dsmPreload.pluginSettings));
     this.applyStoredEnabled(recordToMap(dsmPreload.pluginsEnabled));
     delete window.DesModderPreload;
@@ -247,11 +255,17 @@ export default class DSM extends TransparentPlugins {
 
 function getDefaultConfig(id: PluginID) {
   const out: GenericSettings = {};
-  const config = plugins.get(id)?.config;
+  const plugin = plugins.get(id);
+  const config = plugin?.config;
   if (config !== undefined) {
     for (const configItem of config) {
       out[configItem.key] = configItem.default;
     }
   }
+  if (plugin?.settingsSavedStatesWidget) {
+    const savedState = plugin?.settingsSavedStatesWidget;
+    out[savedState.savedStatesKey] = {};
+  }
+
   return out;
 }

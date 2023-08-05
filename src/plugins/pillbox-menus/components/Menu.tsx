@@ -1,6 +1,8 @@
 import PillboxMenus from "..";
 import "./Menu.less";
+import { parseSavedState, serializeSavedState } from "./saved-state-utils";
 import { Component, jsx } from "DCGView";
+import { IconButton } from "components";
 import Toggle from "components/Toggle";
 import {
   If,
@@ -175,6 +177,22 @@ export default class Menu extends Component<{
                 ) : (
                   ""
                 )}
+                {plugin.settingsSavedStatesWidget.enabled ? (
+                  <SavedStatesWidget
+                    pm={() => this.pm}
+                    plugin={() => plugin}
+                    settings={() =>
+                      this.pm.dsm.pluginSettings[
+                        this.pm.expandedPlugin as Exclude<
+                          typeof this.pm.expandedPlugin,
+                          null
+                        >
+                      ] ?? {}
+                    }
+                  ></SavedStatesWidget>
+                ) : (
+                  ""
+                )}
                 {this.getExpandedSettings()}
               </div>
             )}
@@ -216,6 +234,184 @@ function assertUnreachable(): never {
   throw new Error("Unreachable!");
 }
 
+function tryLoadingPotentiallyInvalidSettings(
+  props: {
+    pm: () => PillboxMenus;
+    plugin: () => SpecificPlugin;
+    settings: () => GenericSettings;
+  },
+  settingsData: any
+) {
+  const ep = props.pm().expandedPlugin;
+  if (!ep) return;
+
+  try {
+    const showIncompatibleTypesWarning = () => {
+      Calc.controller._showToast({
+        message: format("import-export-settings-incompatible-types"),
+      });
+    };
+
+    for (const configItem of props.plugin().config ?? []) {
+      const data = settingsData[configItem.key];
+
+      switch (configItem.type) {
+        case "string":
+        case "number":
+        case "boolean":
+          // eslint-disable-next-line valid-typeof
+          if (typeof data === configItem.type) {
+            props.pm().dsm.setPluginSetting(ep, configItem.key, data);
+          } else {
+            showIncompatibleTypesWarning();
+          }
+          break;
+        default:
+          return assertUnreachable();
+      }
+    }
+  } catch (err) {
+    Calc.controller._showToast({
+      message: format("import-export-settings-failed-to-load", {
+        pluginName: format(props.plugin().id + "-name"),
+      }),
+    });
+    // eslint-disable-next-line no-console
+    console.error("Error loading plugin settings:", err);
+  }
+}
+
+class SavedStatesWidget extends Component<{
+  pm: () => PillboxMenus;
+  plugin: () => SpecificPlugin;
+  settings: () => GenericSettings;
+}> {
+  template() {
+    const getSavedStates = () => {
+      const ep = this.props.pm().expandedPlugin;
+      if (!ep) return {};
+      return parseSavedState(
+        this.props.settings()[
+          this.props.plugin().settingsSavedStatesWidget.savedStatesKey
+        ]
+      );
+    };
+
+    return (
+      <div class="dsm-saved-states-widget">
+        <span>{format(this.props.plugin().id + "-settings-saved-states")}</span>
+        <For each={() => Object.keys(getSavedStates())} key={(e) => e}>
+          <ul>
+            {(key: string) => {
+              return (
+                <li>
+                  <button
+                    onClick={() => {
+                      tryLoadingPotentiallyInvalidSettings(
+                        this.props,
+                        getSavedStates()[key]
+                      );
+                    }}
+                  >
+                    {key}
+                  </button>
+                  <IconButton
+                    iconClass={"dcg-icon-remove"}
+                    onTap={() => {
+                      const ep = this.props.pm().expandedPlugin;
+
+                      if (!ep) return;
+
+                      const savedStatesKey =
+                        this.props.plugin().settingsSavedStatesWidget
+                          .savedStatesKey;
+
+                      const savedStates = parseSavedState(
+                        this.props.settings()[savedStatesKey]
+                      );
+
+                      const newSavedStates = {
+                        ...(typeof savedStates === "object" ? savedStates : {}),
+                      };
+
+                      delete newSavedStates[key];
+
+                      this.props
+                        .pm()
+                        .dsm.setPluginSetting(
+                          ep,
+                          savedStatesKey,
+                          serializeSavedState(newSavedStates)
+                        );
+                    }}
+                  ></IconButton>
+                </li>
+              );
+            }}
+          </ul>
+        </For>
+        <button
+          class="dcg-btn-dark-on-gray dsm-settings-button"
+          onClick={() => {
+            const ep = this.props.pm().expandedPlugin;
+
+            if (!ep) return;
+
+            const newSavedState = {
+              ...this.props.settings(),
+            };
+
+            const savedStatesKey =
+              this.props.plugin().settingsSavedStatesWidget.savedStatesKey;
+            newSavedState[savedStatesKey] = undefined;
+            delete newSavedState[savedStatesKey];
+
+            const savedStates = parseSavedState(
+              this.props.settings()[savedStatesKey]
+            );
+
+            const newSavedStates = {
+              ...(savedStates && typeof savedStates === "object"
+                ? savedStates
+                : {}),
+            };
+
+            newSavedStates[
+              newSavedState[
+                this.props.plugin().settingsSavedStatesWidget.nameKey
+              ]
+            ] = {
+              ...newSavedState,
+              [savedStatesKey]: {},
+            };
+
+            console.log(newSavedStates, JSON.stringify(newSavedStates));
+
+            try {
+              this.props
+                .pm()
+                .dsm.setPluginSetting(
+                  ep,
+                  savedStatesKey,
+                  serializeSavedState(newSavedStates)
+                );
+            } catch {
+              Calc.controller._showToast({
+                message: format(
+                  this.props.plugin().id + "-failed-to-save-settings"
+                ),
+                hideAfter: -1,
+              });
+            }
+          }}
+        >
+          {format(this.props.plugin().id + "-settings-save-current-state")}
+        </button>
+      </div>
+    );
+  }
+}
+
 class SettingsImportExportWidget extends Component<{
   pm: () => PillboxMenus;
   plugin: () => SpecificPlugin;
@@ -228,7 +424,7 @@ class SettingsImportExportWidget extends Component<{
       <div class="dsm-settings-import-export-widget">
         <div class="copy-to-clipboard-section">
           <button
-            class="dcg-btn-dark-on-gray"
+            class="dcg-btn-dark-on-gray dsm-settings-button"
             onClick={() => {
               void navigator.clipboard.writeText(
                 JSON.stringify(this.props.settings())
@@ -251,59 +447,19 @@ class SettingsImportExportWidget extends Component<{
             placeholder={format("import-export-settings-placeholder")}
           ></textarea>
           <button
-            class="dcg-btn-dark-on-gray"
+            class="dcg-btn-dark-on-gray dsm-settings-button"
             onClick={async () => {
-              const ep = this.props.pm().expandedPlugin;
-              if (!ep) return;
+              const settingsString = this.settingsInClipboard;
 
-              try {
-                const settingsString = this.settingsInClipboard;
+              let settingsData: any;
 
-                let settingsData: any;
-
-                if (settingsString.startsWith("http")) {
-                  settingsData = await (await fetch(settingsString)).json();
-                } else {
-                  settingsData = JSON.parse(settingsString);
-                }
-
-                const showIncompatibleTypesWarning = () => {
-                  Calc.controller._showToast({
-                    message: format(
-                      "import-export-settings-incompatible-types"
-                    ),
-                  });
-                };
-
-                for (const configItem of this.props.plugin().config ?? []) {
-                  const data = settingsData[configItem.key];
-
-                  switch (configItem.type) {
-                    case "string":
-                    case "number":
-                    case "boolean":
-                      // eslint-disable-next-line valid-typeof
-                      if (typeof data === configItem.type) {
-                        this.props
-                          .pm()
-                          .dsm.setPluginSetting(ep, configItem.key, data);
-                      } else {
-                        showIncompatibleTypesWarning();
-                      }
-                      break;
-                    default:
-                      return assertUnreachable();
-                  }
-                }
-              } catch (err) {
-                Calc.controller._showToast({
-                  message: format("import-export-settings-failed-to-load", {
-                    pluginName: format(this.props.plugin().id + "-name"),
-                  }),
-                });
-                // eslint-disable-next-line no-console
-                console.error("Error loading plugin settings:", err);
+              if (settingsString.startsWith("http")) {
+                settingsData = await (await fetch(settingsString)).json();
+              } else {
+                settingsData = JSON.parse(settingsString);
               }
+
+              tryLoadingPotentiallyInvalidSettings(this.props, settingsData);
             }}
           >
             {format(this.props.plugin().settingsImportWidgetData.importButton)}

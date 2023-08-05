@@ -89,6 +89,11 @@ export const ConfigDefaults = {
 export const ConfigList: ConfigItem[] = (
   [
     {
+      type: "string",
+      default: "Default",
+      key: "themeName",
+    },
+    {
       type: "boolean",
       default: false,
       key: "advancedModeEnabled",

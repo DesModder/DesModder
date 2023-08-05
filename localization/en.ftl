@@ -18,6 +18,9 @@ import-export-settings-incompatible-types = Some imported settings had incompati
 import-export-settings-failed-to-load = Failed to load settings for the { $pluginName } plugin
 import-export-settings-placeholder = Paste settings data or a link here.
 
+## Saved States
+settings-saved-states = Saved States
+
 ## Category names
 category-core-name = Core
 category-utility-name = Utility
@@ -259,6 +262,10 @@ color-themes-name = Color Themes
 color-themes-desc = Change all the colors of the Graphing Calculator.
 color-themes-copy-to-clipboard = Copy Theme Data to Clipboard
 color-themes-import = Import Theme
+color-themes-settings-saved-states = Saved Themes
+color-themes-settings-save-current-state = Save Current Theme
+
+color-themes-failed-to-save-settings = Failed to save this theme! It will disappear upon reloading the page. This error likely happened because you are using too much storage.
 
 color-themes-opt-advancedModeEnabled-name = Advanced Mode
 color-themes-opt-advancedModeEnabled-desc = Lets you specify an alternate, larger set of colors for theming, giving you more control at the cost of being more cumbersome.
