@@ -109,7 +109,7 @@ function augFolderToRaw(expr: Aug.FolderAug): Graph.FolderState {
   };
 }
 
-function augNonFolderToRaw(
+export function augNonFolderToRaw(
   cfg: Config,
   item: Aug.NonFolderAug
 ): Graph.NonFolderState {

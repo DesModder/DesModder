@@ -1,3 +1,7 @@
+import Aug, { ExpressionAug } from "../../../text-mode-core/aug/AugState";
+import { augNonFolderToRaw } from "../../../text-mode-core/aug/augToRaw";
+import { rawNonFolderToAug } from "../../../text-mode-core/aug/rawToAug";
+import { textModeExprToLatex } from "../../../text-mode-core/down/textToRaw";
 import { getGraphState } from "./library-search-utils";
 import { LibrarySearchView } from "./library-search-view";
 import { ExpressionState, ItemState } from "@desmodder/graph-state";
@@ -6,12 +10,8 @@ import { MathQuillField, MathQuillView } from "components";
 import { Calc } from "globals/window";
 import { PluginController } from "plugins/PluginController";
 import { mapAllAugLatex, mapAugAST } from "plugins/intellisense/latex-parsing";
-import { IdentifierTrackingState } from "plugins/intellisense/state";
+import { IntellisenseState } from "plugins/intellisense/state";
 import { getMetadata, setMetadata } from "plugins/manage-metadata/manage";
-import Aug, { ExpressionAug } from "plugins/text-mode/aug/AugState";
-import { augNonFolderToRaw } from "plugins/text-mode/aug/augToRaw";
-import { rawNonFolderToAug } from "plugins/text-mode/aug/rawToAug";
-import { textModeExprToLatex } from "plugins/text-mode/down/textToRaw";
 
 export interface ExpressionLibraryMathExpression {
   type: "expression";
@@ -221,9 +221,7 @@ export default class MyExpressionsLibrary extends PluginController<{
 
   focusedmq: MathQuillField | undefined;
 
-  identTracker: IdentifierTrackingState = new IdentifierTrackingState(
-    getMetadata()
-  );
+  identTracker: IntellisenseState = new IntellisenseState(getMetadata());
 
   searchStr: string = "";
 
