@@ -1,6 +1,7 @@
 import { DCGView } from "../../DCGView";
 import { Inserter, PluginController } from "../PluginController";
 import Tip from "./Tip";
+import { getMessageNames } from "i18n/i18n-core";
 
 function apiContainer() {
   return document.querySelector(".dcg-calculator-api-container");

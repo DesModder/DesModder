@@ -5,7 +5,7 @@ import zhCNFTL from "../../localization/zh-CN.ftl";
 import { FluentBundle, FluentResource, FluentVariable } from "@fluent/bundle";
 import { Console, Fragile } from "globals/window";
 
-function currentLanguage() {
+export function currentLanguage() {
   return Fragile?.currentLanguage?.() ?? "en";
 }
 
@@ -46,6 +46,13 @@ function addLanguage(locale: string, ftl: string) {
     Console.warn("FTL translation file errors for locale " + locale, errors);
   }
   locales.set(locale, bundle);
+}
+
+export function getMessageNames(query: RegExp) {
+  const lang = currentLanguage();
+  const bundle = locales.get(lang) ?? (locales.get("en") as FluentBundle);
+
+  return Array.from(bundle._messages.keys()).filter((e) => e.match(query));
 }
 
 addLanguage("en", enFTL);
