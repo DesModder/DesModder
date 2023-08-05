@@ -21,7 +21,7 @@ export function getTipData(): {
   learnMore: Record<string, string | undefined>;
 } {
   return {
-    tipKeys: getMessageNames(/show-tips-tip/g).sort(
+    tipKeys: getMessageNames(/^show-tips-tip/g).sort(
       (a, b) => hashString(a) - hashString(b)
     ),
     learnMore: {
