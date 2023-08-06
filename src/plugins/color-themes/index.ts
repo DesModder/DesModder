@@ -1,9 +1,4 @@
-import {
-  ConfigDefaults,
-  ConfigDefaultsAdvanced,
-  ConfigDefaultsColors,
-  ConfigList,
-} from "./config";
+import { ConfigDefaults, ConfigList } from "./config";
 import { hex2rgb, getColorSchemeStyleRule } from "./generate-css";
 import "./index.less";
 import DSM from "MainController";
@@ -20,12 +15,6 @@ function rgb2hex(rgb: [number, number, number]) {
           .padStart(2, "0")
       )
       .join("")
-  );
-}
-
-function multiplyColor(hex: string, factor: number) {
-  return rgb2hex(
-    hex2rgb(hex).map((e) => e * factor) as [number, number, number]
   );
 }
 
