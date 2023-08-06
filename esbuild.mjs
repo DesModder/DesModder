@@ -3,11 +3,65 @@ import { esbuildPluginInline } from "./loaders/esbuild-plugin-inline.mjs";
 import { esbuildPluginLezer } from "./loaders/esbuild-plugin-lezer.mjs";
 import { esbuildPluginReplacements } from "./loaders/esbuild-plugin-replacements.mjs";
 import { loadFile } from "./loaders/utils.mjs";
+import { btoa } from "buffer";
 import esbuild from "esbuild";
 import { copy } from "esbuild-plugin-copy";
 import { lessLoader } from "esbuild-plugin-less";
 import { promises as fs } from "fs";
 import parseArgs from "minimist-lite";
+import ts from "typescript";
+
+// plugin for loading the default theme colors
+const defaultColorThemeLoader = {
+  name: "default-color-theme-loader",
+  setup(build) {
+    // build.onResolve({ filter: /\?.*raw/ }, (args) => {
+    //   return {
+    //     path: path.join(args.resolveDir, args.path),
+    //     namespace: "raw-ns",
+    //   };
+    // });
+    // build.onLoad({ filter: /.*/, namespace: "raw-ns" }, async (args) => {
+    //   return {
+    //     contents: (
+    //       await fs.readFile(args.path.replace(/\?.*$/, ""))
+    //     ).toString(),
+    //     loader: "text",
+    //   };
+    // });
+    build.onResolve(
+      { filter: /^compile-time-default-color-theme$/ },
+      (args) => {
+        return {
+          path: "./src/plugins/color-themes/generate-css.ts",
+          namespace: "default-color-theme-ns",
+        };
+      }
+    );
+    build.onLoad(
+      { filter: /.*/, namespace: "default-color-theme-ns" },
+      async (args) => {
+        const transpiledModule = ts.transpileModule(
+          (await fs.readFile(args.path)).toString(),
+          {
+            compilerOptions: {
+              module: "es6",
+            },
+          }
+        );
+        // console.log("MODULE", transpiledModule);
+        const outputText = transpiledModule.outputText;
+        const mod = await import(
+          `data:text/javascript;base64,${btoa(outputText)}`
+        );
+        return {
+          contents: mod.getColorSchemeStyleRule(mod.ConfigDefaultsAdvanced),
+          loader: "css",
+        };
+      }
+    );
+  },
+};
 
 const argv = parseArgs(process.argv.slice(2));
 
@@ -58,6 +112,7 @@ const opts = {
   bundle: true,
   outdir,
   plugins: [
+    defaultColorThemeLoader,
     lessLoader(),
     esbuildPluginInline(),
     esbuildPluginLezer(),

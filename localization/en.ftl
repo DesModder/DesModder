@@ -267,6 +267,8 @@ color-themes-settings-save-current-state = Save Current Theme
 
 color-themes-failed-to-save-settings = Failed to save this theme! It will disappear upon reloading the page. This error likely happened because you are using too much storage.
 
+color-themes-opt-themeName-name = Name
+color-themes-opt-themeName-desc = All color theme names must be unique. If you save a color theme with the same name as an existing one, it will be overwritten.
 color-themes-opt-advancedModeEnabled-name = Advanced Mode
 color-themes-opt-advancedModeEnabled-desc = Lets you specify an alternate, larger set of colors for theming, giving you more control at the cost of being more cumbersome.
 
@@ -299,16 +301,29 @@ color-themes-opt-background-name = Background (BG)
 color-themes-opt-background-desc = Default background color.
 color-themes-opt-pillboxButtonBackground-name = Pillbox Button BG
 color-themes-opt-pillboxButtonBackground-desc = Background color for elements near the edges (pillbox buttons, expression panel sidebar, etc).
+color-themes-opt-sectionHeading-name = Section Heading
+color-themes-opt-sectionHeading-desc = Headers in various submenus.
+color-themes-opt-checkboxLabel-name = Checkbox Label
+color-themes-opt-checkboxLabel-desc = Color of the text labels next to checkboxes.
 color-themes-opt-caretIcon-name = Caret Icon
 color-themes-opt-caretIcon-desc = Color of the caret icon used for dropdowns.
+color-themes-opt-scrollbar-name = Scrollbar
+color-themes-opt-scrollbar-desc = Color of the scrollbar background.
+color-themes-opt-scrollbarThumb-name = Scrollbar Thumb
+color-themes-opt-scrollbarThumb-desc = Color of the sliding part of the scrollbar.
+
+color-themes-opt-tickerBackground-name = Ticker Background
+color-themes-opt-tickerBackground-desc = Background of the ticker panel.
 
 ## Exppanel
+color-themes-opt-expressionSettingsBorder-name = Expr Settings Border
+color-themes-opt-expressionSettingsBorder-desc = Border of the popup window for editing expression settings (e.g. color, line width).
 color-themes-opt-exppanelDraggerBackground-name = Expr Dragger BG
 color-themes-opt-exppanelDraggerBackground-desc = Background of the tab that lets you drag expressions with the mouse.
-color-themes-opt-exppanelBorder-name = Expression Border
-color-themes-opt-exppanelBorder-desc = Border surrounding each expression in the expression panel.
 color-themes-opt-error-name = Error
 color-themes-opt-error-desc = Color of the error triangles.
+color-themes-opt-exppanelBorder-name = Expression Border
+color-themes-opt-exppanelBorder-desc = Border surrounding each expression in the expression panel.
 
 ## Exppanel Top
 color-themes-opt-exprTopBarBackground1-name = Exppanel Top BG 1 
@@ -365,3 +380,7 @@ color-themes-opt-keypadLightGrayButtonBackground2-name = Keypad LG Btn BG 2
 color-themes-opt-keypadLightGrayButtonBackground2-desc = Color of the bottom of the background of the light gray buttons in the keypad.
 color-themes-opt-keypadFunctionMenuSectionHeading-name = Keypad Menu Header
 color-themes-opt-keypadFunctionMenuSectionHeading-desc = Color of the headers in the keypad functions menu.
+color-themes-opt-keypadLightButtonBorder-name = KP L Btn Border
+color-themes-opt-keypadLightButtonBorder-desc = Color of the border of the light buttons in the keypad.
+color-themes-opt-keypadDarkButtonBorder-name = KP LG Btn Border
+color-themes-opt-keypadDarkButtonBorder-desc = Color of the border of the light gray buttons in the keypad.

@@ -4,16 +4,11 @@ import {
   ConfigDefaultsColors,
   ConfigList,
 } from "./config";
+import { hex2rgb, getColorSchemeStyleRule } from "./generate-css";
 import "./index.less";
+import DSM from "MainController";
+import "compile-time-default-color-theme";
 import { PluginController } from "plugins/PluginController";
-
-function hex2rgb(hex: string) {
-  return [
-    parseInt(hex.slice(1, 3), 16),
-    parseInt(hex.slice(3, 5), 16),
-    parseInt(hex.slice(5, 7), 16),
-  ];
-}
 
 function rgb2hex(rgb: [number, number, number]) {
   return (
@@ -28,21 +23,6 @@ function rgb2hex(rgb: [number, number, number]) {
   );
 }
 
-function colorToRule(key: string, hex: string) {
-  const rgb = hex2rgb(hex);
-
-  let kebabCase = "";
-  for (const char of key) {
-    if (char.toUpperCase() === char) {
-      kebabCase += "-" + char.toLowerCase();
-    } else {
-      kebabCase += char;
-    }
-  }
-
-  return `--dsm-${kebabCase}: ${hex};\n--dsm-${kebabCase}-rgb: ${rgb};\n`;
-}
-
 function multiplyColor(hex: string, factor: number) {
   return rgb2hex(
     hex2rgb(hex).map((e) => e * factor) as [number, number, number]
@@ -51,18 +31,6 @@ function multiplyColor(hex: string, factor: number) {
 
 function addColor(hex: string, b: number) {
   return rgb2hex(hex2rgb(hex).map((e) => e + b) as [number, number, number]);
-}
-
-function getColorSchemeStyleRule(settings: typeof ConfigDefaultsAdvanced) {
-  return `
-    :root {
-        ${Object.keys(ConfigDefaultsAdvanced)
-          .map((k) =>
-            colorToRule(k, settings[k as keyof typeof ConfigDefaultsAdvanced])
-          )
-          .join("")}
-    }
-`;
 }
 
 export default class ColorThemes extends PluginController<
@@ -83,6 +51,11 @@ export default class ColorThemes extends PluginController<
   };
 
   styles = document.createElement("style");
+
+  constructor(readonly dsm: DSM, public settings: typeof ConfigDefaults) {
+    super(dsm, settings);
+    console.log("does this run even if disabled?");
+  }
 
   afterConfigChange(): void {
     while ((this.styles.sheet?.cssRules?.length ?? 0) > 0) {
@@ -153,7 +126,13 @@ export default class ColorThemes extends PluginController<
   }
 
   afterEnable() {
+    document.body.classList.add("dsm-color-themes-enabled");
     document.head.appendChild(this.styles);
     this.afterConfigChange();
+  }
+
+  afterDisable(): void {
+    document.body.classList.remove("dsm-color-themes-enabled");
+    document.head.removeChild(this.styles);
   }
 }

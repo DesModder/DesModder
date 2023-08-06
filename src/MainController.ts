@@ -46,14 +46,11 @@ export default class DSM extends TransparentPlugins {
   applyStoredSettings(
     storedSettings: Map<PluginID, GenericSettings | undefined>
   ) {
-    console.log("applystoredsettings", storedSettings);
     for (const { id } of pluginList) {
       const stored = storedSettings.get(id);
       if (stored !== undefined) {
         const settings = this.pluginSettings[id];
-        console.log("settings", settings, structuredClone(settings));
         for (const key in settings) {
-          console.log(id, key, stored[key]);
           const storedValue = stored[key];
           if (storedValue !== undefined) {
             settings[key] = storedValue;
