@@ -25,7 +25,9 @@ export const ConfigDefaultsColors = {
 };
 
 export const ConfigDefaults = {
+  themeName: "Default",
   advancedModeEnabled: false,
+  isDarkTheme: false,
   ...ConfigDefaultsColors,
 };
 
@@ -40,6 +42,11 @@ export const ConfigList: ConfigItem[] = (
       type: "boolean",
       default: false,
       key: "advancedModeEnabled",
+    },
+    {
+      type: "boolean",
+      default: false,
+      key: "isDarkTheme",
     },
   ] as ConfigItem[]
 ).concat(

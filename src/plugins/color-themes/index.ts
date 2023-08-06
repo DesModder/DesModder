@@ -112,12 +112,18 @@ export default class ColorThemes extends PluginController<
             }
       )
     );
+
+    localStorage.setItem(
+      "isDarkTheme",
+      this.settings.isDarkTheme ? "true" : ""
+    );
   }
 
   afterEnable() {
     document.body.classList.add("dsm-color-themes-enabled");
     document.head.appendChild(this.styles);
     this.afterConfigChange();
+    if (this.settings.isDarkTheme) document.body.style.filter = "";
   }
 
   afterDisable(): void {

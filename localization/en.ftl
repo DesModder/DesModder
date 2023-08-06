@@ -271,6 +271,8 @@ color-themes-opt-themeName-name = Name
 color-themes-opt-themeName-desc = All color theme names must be unique. If you save a color theme with the same name as an existing one, it will be overwritten.
 color-themes-opt-advancedModeEnabled-name = Advanced Mode
 color-themes-opt-advancedModeEnabled-desc = Lets you specify an alternate, larger set of colors for theming, giving you more control at the cost of being more cumbersome.
+color-themes-opt-isDarkTheme-name = Is Dark Theme?
+color-themes-opt-isDarkTheme-desc = Is this theme a "dark" theme? If enabled, this will immediately invert Desmos's colors before the page loads so you aren't hit with a bright flash of unstyled content.
 
 ## SIMPLE MODE
 color-themes-opt-simpleForeground-name = Foreground
