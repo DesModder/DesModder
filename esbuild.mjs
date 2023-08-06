@@ -15,21 +15,8 @@ import ts from "typescript";
 const defaultColorThemeLoader = {
   name: "default-color-theme-loader",
   setup(build) {
-    // build.onResolve({ filter: /\?.*raw/ }, (args) => {
-    //   return {
-    //     path: path.join(args.resolveDir, args.path),
-    //     namespace: "raw-ns",
-    //   };
-    // });
-    // build.onLoad({ filter: /.*/, namespace: "raw-ns" }, async (args) => {
-    //   return {
-    //     contents: (
-    //       await fs.readFile(args.path.replace(/\?.*$/, ""))
-    //     ).toString(),
-    //     loader: "text",
-    //   };
-    // });
     build.onResolve(
+      // use the file name "compile-time-default-color-theme" to load the css
       { filter: /^compile-time-default-color-theme$/ },
       (args) => {
         return {
@@ -41,6 +28,7 @@ const defaultColorThemeLoader = {
     build.onLoad(
       { filter: /.*/, namespace: "default-color-theme-ns" },
       async (args) => {
+        // transpile the typescript to javascript
         const transpiledModule = ts.transpileModule(
           (await fs.readFile(args.path)).toString(),
           {
@@ -49,8 +37,10 @@ const defaultColorThemeLoader = {
             },
           }
         );
-        // console.log("MODULE", transpiledModule);
         const outputText = transpiledModule.outputText;
+
+        // dynamically import() the js as a data URL to avoid
+        // having to create a temporary file
         const mod = await import(
           `data:text/javascript;base64,${btoa(outputText)}`
         );
