@@ -38,6 +38,24 @@ export class IntellisenseState {
 
   counter = 0;
 
+  getIdentDoc(ident: BoundIdentifier) {
+    const mdl = Calc.controller.getItemModelByIndex(
+      (Calc.controller.getItemModel(ident.exprId)?.index ?? 0) - 1
+    );
+    return mdl?.type === "text" ? mdl.text : undefined;
+  }
+
+  getIdentFolderDoc(ident: BoundIdentifier) {
+    const mdl = Calc.controller.getItemModel(ident.exprId);
+    if (!mdl?.folderId) return undefined;
+    const folderModel = Calc.controller.getItemModel(mdl.folderId);
+    return folderModel?.type === "folder" ? folderModel?.title : undefined;
+  }
+
+  getIdentFolderId(ident: BoundIdentifier) {
+    return Calc.controller.getItemModel(ident.exprId)?.folderId;
+  }
+
   readonly cfg = getTextModeConfig();
 
   constructor(metadata: Metadata) {
@@ -77,8 +95,8 @@ export class IntellisenseState {
     this.identifierReferences = new Map();
     this.identifiersReferencedInExpression = new Map();
     const models = Calc.controller.getAllItemModels();
-    for (const model of models) {
-      this.handleStateChange(model);
+    for (let i = 0; i < models.length; i++) {
+      this.handleStateChange(models[i]);
     }
   }
 

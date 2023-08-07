@@ -38,6 +38,9 @@ export interface BoundIdentifierFunction {
   type: "function";
   id: number;
   params: string[];
+  doc?: string;
+  folderDoc?: string;
+  folderId?: string;
 }
 
 export function getMQCursorPosition(focusedMQ: MathQuillField) {
@@ -175,10 +178,21 @@ export default class Intellisense extends PluginController {
       if (this.latestIdent) {
         const noRepeatIntellisenseOpts = this.intellisenseState
           .boundIdentifiersArray()
-          .filter((g) =>
-            g.variableName.startsWith(
-              this.latestIdent?.ident.replace(/[{} \\]/g, "") ?? ""
-            )
+          .filter(
+            (g) =>
+              g.variableName.startsWith(
+                this.latestIdent?.ident.replace(/[{} \\]/g, "") ?? ""
+              ) &&
+              // don't include private expressions based on per-expression docs
+              !this.intellisenseState.getIdentDoc(g)?.includes("@private") &&
+              // don't include private expressions based on per-folder docs
+              // unless you're in the same folder
+              (Calc.controller.getSelectedItem()?.folderId ===
+                this.intellisenseState.getIdentFolderId(g) ||
+                !this.intellisenseState
+                  .getIdentFolderDoc(g)
+                  ?.includes("@private") ||
+                this.intellisenseState.getIdentDoc(g)?.includes("@public"))
           );
 
         const intellisenseOptsMap = new Map<string, BoundIdentifier[]>();
@@ -630,6 +644,11 @@ export default class Intellisense extends PluginController {
   dispatcher: string | undefined;
 
   afterEnable() {
+    // remove lines between docstrings and their expressions
+    this.updateCSSForAllDocstringExpressions();
+
+    document.body.classList.toggle("intellisense-enabled", true);
+
     const exppanel = document.querySelector(".dcg-exppanel");
     this.lastExppanelScrollTop = exppanel?.scrollTop ?? 0;
 
@@ -674,6 +693,16 @@ export default class Intellisense extends PluginController {
         this.lastExppanelScrollTop = newExppanelScrollTop;
       }
 
+      if (e.type === "set-note-text") {
+        this.updateCSSForDocstringExpression(
+          Calc.controller.getSelectedItem() as TextModel | undefined
+        );
+      }
+
+      if (e.type === "set-state") {
+        this.updateCSSForAllDocstringExpressions();
+      }
+
       if (e.type === "delete-item-and-animate-out") {
         this.canHaveIntellisense = false;
         this.view?.update();
@@ -681,7 +710,27 @@ export default class Intellisense extends PluginController {
     });
   }
 
+  updateCSSForAllDocstringExpressions() {
+    for (const m of Calc.controller.getAllItemModels()) {
+      if (m.type !== "text") continue;
+      this.updateCSSForDocstringExpression(m);
+    }
+  }
+
+  updateCSSForDocstringExpression(model: TextModel | undefined) {
+    const noteElement = model?.dcgView?._element._domNode;
+    if (noteElement) {
+      if (model?.text?.includes("@")) {
+        noteElement.dataset.isDoc = "true";
+      } else {
+        delete noteElement.dataset.isDoc;
+      }
+    }
+  }
+
   afterDisable() {
+    document.body.classList.toggle("intellisense-enabled", false);
+
     // clear event listeners
     document.removeEventListener("focusout", this.focusOutHandler);
     document.removeEventListener("focusin", this.focusInHandler);

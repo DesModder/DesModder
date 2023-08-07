@@ -89,7 +89,8 @@ export type DispatchedEvent =
       forceSwitchExpr?: boolean;
     }
   | { type: "set-folder-collapsed"; id: string; isCollapsed: boolean }
-  | { type: "set-item-colorLatex"; id: string; colorLatex: string };
+  | { type: "set-item-colorLatex"; id: string; colorLatex: string }
+  | { type: "set-note-text"; id: string; text: string };
 
 /**
  * Evaluator change: a change set associated with a single id, passed back from
