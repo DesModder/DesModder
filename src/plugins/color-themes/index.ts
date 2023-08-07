@@ -33,6 +33,7 @@ export default class ColorThemes extends PluginController<
     copyToClipboardButton: "color-themes-copy-to-clipboard",
     importButton: "color-themes-import",
   };
+
   static settingsSavedStatesWidget = {
     enabled: true,
     nameKey: "themeName",
@@ -43,7 +44,6 @@ export default class ColorThemes extends PluginController<
 
   constructor(readonly dsm: DSM, public settings: typeof ConfigDefaults) {
     super(dsm, settings);
-    console.log("does this run even if disabled?");
   }
 
   afterConfigChange(): void {
@@ -59,8 +59,8 @@ export default class ColorThemes extends PluginController<
               foreground: this.settings.simpleForeground,
               background: this.settings.simpleBackground,
               pillboxButtonBackground: this.settings.simpleButtonGray,
-              sectionHeading: this.settings.simpleForeground,
-              checkboxLabel: this.settings.simpleForeground,
+              sectionHeading: this.settings.simpleForeground2,
+              checkboxLabel: this.settings.simpleForeground2,
               caretIcon: this.settings.simpleToggleSwitch,
               scrollbar: this.settings.simpleBackground,
               scrollbarThumb: this.settings.simpleBorder,
@@ -82,8 +82,8 @@ export default class ColorThemes extends PluginController<
               buttonText: "#ffffff",
 
               settingsMenuSeparator: this.settings.simpleBorder,
-              settingsAxisLabelLabelColor: this.settings.simpleForeground,
-              settingsAxisLabelInputColor: this.settings.simpleForeground,
+              settingsAxisLabelLabelColor: this.settings.simpleForeground2,
+              settingsAxisLabelInputColor: this.settings.simpleForeground2,
 
               tooltipBackground: this.settings.simpleForeground,
               tooltipForeground: this.settings.simpleBackground,
@@ -92,7 +92,7 @@ export default class ColorThemes extends PluginController<
               toggleView: this.settings.simpleToggleView,
 
               desmodderMenuTitle: this.settings.simpleForeground,
-              desmodderMenuDescription: this.settings.simpleForeground,
+              desmodderMenuDescription: this.settings.simpleForeground2,
               desmodderInputBorder: this.settings.simpleBorder,
               desmodderCategorySeparator: this.settings.simpleBorder,
 
@@ -109,6 +109,8 @@ export default class ColorThemes extends PluginController<
               ),
               keypadLightButtonBorder: this.settings.simpleBorder,
               keypadDarkButtonBorder: this.settings.simpleBorder,
+
+              modalForeground: this.settings.simpleForeground2,
             }
       )
     );

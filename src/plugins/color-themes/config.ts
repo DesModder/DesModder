@@ -8,6 +8,7 @@ export const ConfigDefaultsSimple = {
 
   // general
   simpleForeground: "#000000",
+  simpleForeground2: "#444444",
   simpleBackground: "#ffffff",
   simpleBackground2: "#ededed",
   simpleBorder: "#cecece",

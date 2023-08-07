@@ -1,4 +1,4 @@
-body.dsm-color-themes-enabled {
+body.dsm-color-themes-enabled.dsm-color-themes-enabled.dsm-color-themes-enabled.dsm-color-themes-enabled {
   *::-webkit-scrollbar {
     background-color: var(--dsm-scrollbar);
   }
@@ -264,19 +264,6 @@ body.dsm-color-themes-enabled {
       color: var(--dsm-foreground);
     }
 
-    .dcg-segmented-control-container .dcg-segmented-control-btn {
-      color: var(--dsm-foreground);
-    }
-
-    .dcg-segmented-control-container .dcg-segmented-control-btn {
-      border-color: rgba(var(--dsm-foreground-rgb), 0.42);
-    }
-    .dcg-segmented-control-container
-      .dcg-segmented-control-btn.dcg-theme-default.dcg-selected {
-      background-color: rgba(var(--dsm-foreground-rgb), 0.65);
-      border-color: rgba(var(--dsm-foreground-rgb), 0.65);
-    }
-
     .dcg-visual-settings,
     .dcg-axes-settings-container,
     .dcg-dimensiongroup,
@@ -324,5 +311,27 @@ body.dsm-color-themes-enabled {
       );
       border-color: var(--dsm-keypad-dark-button-border);
     }
+  }
+  // keyboard shortcuts modal
+  .dcg-state-modals {
+    color: var(--dsm-modal-foreground);
+    background: var(--dsm-background);
+
+    h1 {
+      color: var(--dsm-section-heading);
+    }
+  }
+
+  .dcg-segmented-control-container .dcg-segmented-control-btn {
+    color: var(--dsm-foreground);
+  }
+
+  .dcg-segmented-control-container .dcg-segmented-control-btn {
+    border-color: rgba(var(--dsm-foreground-rgb), 0.42);
+  }
+  .dcg-segmented-control-container
+    .dcg-segmented-control-btn.dcg-theme-default.dcg-selected {
+    background-color: rgba(var(--dsm-foreground-rgb), 0.65);
+    border-color: rgba(var(--dsm-foreground-rgb), 0.65);
   }
 }

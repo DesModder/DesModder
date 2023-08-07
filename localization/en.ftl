@@ -277,6 +277,8 @@ color-themes-opt-isDarkTheme-desc = Is this theme a "dark" theme? If enabled, th
 ## SIMPLE MODE
 color-themes-opt-simpleForeground-name = Foreground
 color-themes-opt-simpleForeground-desc = Default foreground (text, icons, etc.) color.
+color-themes-opt-simpleForeground2-name = Foreground 2
+color-themes-opt-simpleForeground2-desc = Another, less contrasting foreground color for less emphasis.
 color-themes-opt-simpleBackground-name = Background
 color-themes-opt-simpleBackground-desc = Default background color.
 color-themes-opt-simpleBackground2-name = Background 2

@@ -56,6 +56,9 @@ export const ConfigDefaultsAdvanced = {
   keypadLightGrayButtonBackground1: "#f6f6f6",
   keypadLightGrayButtonBackground2: "#f0f0f0",
   keypadDarkButtonBorder: "#bbbbbb",
+
+  // modals
+  modalForeground: "#444444",
 };
 
 export function hex2rgb(hex: string) {
