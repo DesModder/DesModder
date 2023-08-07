@@ -334,6 +334,7 @@ class SavedStatesWidget extends Component<{
                         ...(typeof savedStates === "object" ? savedStates : {}),
                       };
 
+                      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                       delete newSavedStates[key];
 
                       this.props
@@ -364,6 +365,7 @@ class SavedStatesWidget extends Component<{
             const savedStatesKey =
               this.props.plugin().settingsSavedStatesWidget.savedStatesKey;
             newSavedState[savedStatesKey] = undefined;
+            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
             delete newSavedState[savedStatesKey];
 
             const savedStates = parseSavedState(
@@ -384,8 +386,6 @@ class SavedStatesWidget extends Component<{
               ...newSavedState,
               [savedStatesKey]: {},
             };
-
-            console.log(newSavedStates, JSON.stringify(newSavedStates));
 
             try {
               this.props

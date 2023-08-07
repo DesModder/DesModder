@@ -12,6 +12,7 @@ export class PluginController<
     copyToClipboardButton: "import-export-settings-copy-to-clipboard",
     importButton: "import-export-settings-import",
   };
+
   static settingsSavedStatesWidget = {
     enabled: false,
     nameKey: "name",

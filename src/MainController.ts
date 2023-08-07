@@ -62,11 +62,6 @@ export default class DSM extends TransparentPlugins {
 
   init() {
     const dsmPreload = window.DesModderPreload!;
-    console.log(
-      "dsmpreload",
-      dsmPreload,
-      recordToMap(dsmPreload.pluginSettings)
-    );
     this.applyStoredSettings(recordToMap(dsmPreload.pluginSettings));
     this.applyStoredEnabled(recordToMap(dsmPreload.pluginsEnabled));
     delete window.DesModderPreload;
