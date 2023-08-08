@@ -9,7 +9,7 @@ export const configList = [
   {
     type: "color-list",
     key: "bracketPairColorizationColors",
-    default: ["#000000", "#fb9937", "#4e886b", "#d34545", "#652c8c"],
+    default: ["#000000", "#4e886b", "#d34545", "#652c8c"],
     shouldShow: (config) => config.bracketPairColorization,
   },
   {
@@ -22,9 +22,9 @@ export const configList = [
     type: "number",
     variant: "range",
     min: 0,
-    max: 20,
+    max: 10,
     step: 1,
-    default: 5,
+    default: 0,
     key: "thickenBrackets",
     shouldShow: (config) => config.bracketPairColorization,
   },
@@ -32,6 +32,11 @@ export const configList = [
     type: "boolean",
     key: "highlightBracketBlocks",
     default: true,
+  },
+  {
+    type: "boolean",
+    key: "highlightBracketBlocksHover",
+    default: false,
   },
 ] satisfies readonly ConfigItem[];
 
@@ -41,4 +46,5 @@ export interface Config {
   bpcColorInText: boolean;
   thickenBrackets: number;
   highlightBracketBlocks: boolean;
+  highlightBracketBlocksHover: boolean;
 }

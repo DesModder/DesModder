@@ -23,6 +23,8 @@ export default class SyntaxHighlighting extends PluginController<Config> {
   mouseBracketContainer: HTMLElement | null = null;
 
   afterConfigChange(): void {
+    this.resetHighlightedRanges();
+
     const bpcCss = this.settings.bracketPairColorization
       ? generateBracketPairColorizationCSS(
           this.settings.bracketPairColorizationColors.map((c) => hex2rgb(c)),
@@ -38,47 +40,56 @@ export default class SyntaxHighlighting extends PluginController<Config> {
     for (const rule of bpcCss) {
       this.styles.sheet?.insertRule(rule);
     }
+  }
 
-    if (this.settings.highlightBracketBlocks) {
-      document.addEventListener("mouseover", this.onMouseOver);
-    } else {
-      document.removeEventListener("mouseover", this.onMouseOver);
-      delete this.mouseBracketContainer?.dataset.isDirectlyHovered;
-      delete this.caretBracketContainer?.dataset.containsCaret;
+  resetHighlightedRanges() {
+    this.changeCaretElement(null);
+    this.changeMouseOverElement(null);
+  }
+
+  changeCaretElement(el: HTMLElement | null) {
+    const oldcaretBracketContainer = this.caretBracketContainer;
+    this.caretBracketContainer = el;
+
+    if (oldcaretBracketContainer !== this.caretBracketContainer) {
+      if (oldcaretBracketContainer)
+        delete oldcaretBracketContainer.dataset.containsCaret;
+      if (this.caretBracketContainer)
+        this.caretBracketContainer.dataset.containsCaret = "true";
     }
   }
 
+  changeMouseOverElement(el: HTMLElement | null) {
+    delete this.mouseBracketContainer?.dataset.isDirectlyHovered;
+    this.mouseBracketContainer = el;
+    if (this.mouseBracketContainer)
+      this.mouseBracketContainer.dataset.isDirectlyHovered = "true";
+  }
+
   onMouseOver = (e: MouseEvent) => {
+    if (!this.settings.highlightBracketBlocksHover) return;
+
     const el = e.target;
 
     if (!(el instanceof Element)) return;
 
     const closestMQBC = el.closest(".dcg-mq-bracket-container");
-
-    delete this.mouseBracketContainer?.dataset.isDirectlyHovered;
-    this.mouseBracketContainer = closestMQBC as HTMLElement | null;
-    if (this.mouseBracketContainer)
-      this.mouseBracketContainer.dataset.isDirectlyHovered = "true";
+    this.changeMouseOverElement(closestMQBC as HTMLElement | null);
   };
+
+  highlightedRangeInterval!: ReturnType<typeof setInterval>;
 
   afterEnable(): void {
     document.head.appendChild(this.styles);
     this.afterConfigChange();
 
-    setInterval(() => {
+    this.highlightedRangeInterval = setInterval(() => {
+      if (!this.settings.highlightBracketBlocks) return;
+
       const cursor = document.querySelector(".dcg-mq-cursor");
       if (cursor) {
-        const oldcaretBracketContainer = this.caretBracketContainer;
-        this.caretBracketContainer = cursor.closest(
-          ".dcg-mq-bracket-container"
-        );
-
-        if (oldcaretBracketContainer !== this.caretBracketContainer) {
-          if (oldcaretBracketContainer)
-            delete oldcaretBracketContainer.dataset.containsCaret;
-          if (this.caretBracketContainer)
-            this.caretBracketContainer.dataset.containsCaret = "true";
-        }
+        const newCursorEl = cursor.closest(".dcg-mq-bracket-container");
+        this.changeCaretElement(newCursorEl as HTMLElement | null);
       }
     });
 
@@ -86,7 +97,9 @@ export default class SyntaxHighlighting extends PluginController<Config> {
   }
 
   afterDisable(): void {
+    clearInterval(this.highlightedRangeInterval);
     document.head.removeChild(this.styles);
     document.removeEventListener("mouseover", this.onMouseOver);
+    this.resetHighlightedRanges();
   }
 }

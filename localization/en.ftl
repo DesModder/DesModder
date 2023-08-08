@@ -259,4 +259,6 @@ syntax-highlighting-opt-bpcColorInText-desc = Applies Bracket Pair Colorization 
 syntax-highlighting-opt-thickenBrackets-name = Thicken Brackets
 syntax-highlighting-opt-thickenBrackets-desc = Add additional thickness to brackets to assist in bracket colorization.
 syntax-highlighting-opt-highlightBracketBlocks-name = Highlight Bracket Blocks
-syntax-highlighting-opt-highlightBracketBlocks-desc = Highlight the smallest enclosing bracket pair containing the text cursor and the mouse.
+syntax-highlighting-opt-highlightBracketBlocks-desc = Highlight the smallest enclosing bracket pair containing the text cursor.
+syntax-highlighting-opt-highlightBracketBlocksHover-name = Highlight on Hover
+syntax-highlighting-opt-highlightBracketBlocksHover-desc = Highlight the smallest enclosing bracket pair containing the mouse.
