@@ -48,13 +48,6 @@ function addLanguage(locale: string, ftl: string) {
   locales.set(locale, bundle);
 }
 
-export function getMessageNames(query: RegExp) {
-  const lang = currentLanguage();
-  const bundle = locales.get(lang) ?? (locales.get("en") as FluentBundle);
-
-  return Array.from(bundle._messages.keys()).filter((e) => e.match(query));
-}
-
 addLanguage("en", enFTL);
 addLanguage("es", esFTL);
 addLanguage("fr", frFTL);

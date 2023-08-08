@@ -11,19 +11,17 @@ export default class Tip extends Component {
 
   init() {
     this.tips = getTipData();
-    this.currentTipIndex = Math.floor(Math.random() * this.tips.tipKeys.length);
+    this.currentTipIndex = Math.floor(Math.random() * this.tips.length);
   }
 
   template() {
-    if (this.tips.tipKeys.length === 0) return <div></div>;
-
     return (
       <div class="dsm-usage-tip" onTap={() => this.nextTip()}>
-        <div>{() => format(this.getCurrentTipKey())}</div>
-        <If predicate={() => this.getCurrentLearnMore() !== undefined}>
+        <div>{() => format(this.getCurrentTip().tip)}</div>
+        <If predicate={() => this.getCurrentTip().learnMore !== ""}>
           {() => (
             <a
-              href={() => this.getCurrentLearnMore()}
+              href={() => this.getCurrentTip().learnMore}
               target="_blank"
               onTap={(e: MouseEvent) => e.stopPropagation()}
             >
@@ -35,17 +33,13 @@ export default class Tip extends Component {
     );
   }
 
-  getCurrentTipKey() {
-    return this.tips.tipKeys[this.currentTipIndex];
-  }
-
-  getCurrentLearnMore() {
-    return this.tips.learnMore[this.tips.tipKeys[this.currentTipIndex]];
+  getCurrentTip() {
+    return this.tips[this.currentTipIndex];
   }
 
   nextTip() {
     this.currentTipIndex += 1;
-    this.currentTipIndex %= this.tips.tipKeys.length;
+    this.currentTipIndex %= this.tips.length;
     Calc.controller.updateViews();
   }
 }
