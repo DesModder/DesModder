@@ -82,6 +82,18 @@ export default class SyntaxHighlighting extends PluginController<Config> {
     this.changeMouseOverElement(closestMQBC as HTMLElement | null);
   };
 
+  onKeyDown = () => {
+    this.changeMouseOverElement(null);
+  };
+
+  onWheel = () => {
+    this.changeMouseOverElement(null);
+  };
+
+  onClick = () => {
+    this.changeMouseOverElement(null);
+  };
+
   highlightedRangeInterval!: ReturnType<typeof setInterval>;
 
   afterEnable(): void {
@@ -95,16 +107,24 @@ export default class SyntaxHighlighting extends PluginController<Config> {
       if (cursor) {
         const newCursorEl = cursor.closest(".dcg-mq-bracket-container");
         this.changeCaretElement(newCursorEl as HTMLElement | null);
+      } else {
+        this.changeCaretElement(null);
       }
     });
 
     document.addEventListener("mouseover", this.onMouseOver);
+    document.addEventListener("keydown", this.onKeyDown);
+    document.addEventListener("wheel", this.onWheel);
+    document.addEventListener("click", this.onClick);
   }
 
   afterDisable(): void {
     clearInterval(this.highlightedRangeInterval);
     document.head.removeChild(this.styles);
     document.removeEventListener("mouseover", this.onMouseOver);
+    document.removeEventListener("keydown", this.onKeyDown);
+    document.removeEventListener("wheel", this.onWheel);
+    document.removeEventListener("click", this.onClick);
     this.resetHighlightedRanges();
   }
 }
