@@ -1,5 +1,4 @@
 import PillboxMenus from "..";
-import "./Menu.css";
 import "./Menu.less";
 import { Component, jsx } from "DCGView";
 import { IconButton } from "components";
