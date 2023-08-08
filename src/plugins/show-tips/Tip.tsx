@@ -15,6 +15,8 @@ export default class Tip extends Component {
   }
 
   template() {
+    if (this.tips.tipKeys.length === 0) return <div></div>;
+
     return (
       <div class="dsm-usage-tip" onTap={() => this.nextTip()}>
         <div>{() => format(this.getCurrentTipKey())}</div>
