@@ -205,8 +205,6 @@ function colorListOption(
   plugin: SpecificPlugin,
   settings: GenericSettings
 ) {
-  // const clItem = item as ConfigItemColorList;
-
   const setValue = (newValue: string[]) =>
     pm.expandedPlugin &&
     pm.dsm.setPluginSetting(pm.expandedPlugin, item.key, newValue);
