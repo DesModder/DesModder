@@ -10,8 +10,17 @@ export function generateBracketPairColorizationCSS(
       return `calc(${colors
         .map((col, colindex) => {
           const channel = col[i];
+          // Uses the periodic nature of cosine to only color every Nth bracket a given color
+
+          // All colors are multiplied by this "cosine factor" and then added together
+          // to only "pick" the correct color.
+
+          // The "max(0, 10000 * cos(whatever) - 9999)" thing is done to *only* pick
+          // values where cosine is 1 (i.e. where bracketdepth - index = 0)
+
+          // I'm not using better options like abs() or mod() due to browser compatibility
           return `${channel} * max(0, 10000 * cos(
-            2 * 3.14159265358979323 * (var(--test2) - ${colindex}) / ${colors.length}
+            2 * 3.14159265358979323 * (var(--bracket-depth2) - ${colindex}) / ${colors.length}
             ) - 9999)`;
         })
         .join(" + ")})`;
@@ -21,13 +30,13 @@ export function generateBracketPairColorizationCSS(
   return [
     `
     .dcg-mq-root-block {
-        --test1: 0;
-        --test2: 0;
+        --bracket-depth1: 0;
+        --bracket-depth2: 0;
     }
     `,
     `
     .dcg-mq-bracket-container {
-        --test2: var(--test1);
+        --bracket-depth2: var(--bracket-depth1);
         color: ${colorMaker};
     }
     `,
@@ -39,7 +48,7 @@ export function generateBracketPairColorizationCSS(
     `,
     `
     .dcg-mq-bracket-middle {
-        --test1: calc(var(--test2) + 1);
+        --bracket-depth1: calc(var(--bracket-depth2) + 1);
         ${colorInText ? "" : "color: black;"}
     }
     `,

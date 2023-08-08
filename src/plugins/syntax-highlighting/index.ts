@@ -12,10 +12,6 @@ export function hex2rgb(hex: string): [number, number, number] {
   ];
 }
 
-export function toggleRules(rules: string[], toggle: boolean) {
-  return toggle ? rules : [];
-}
-
 export default class SyntaxHighlighting extends PluginController<Config> {
   static id = "syntax-highlighting" as const;
   static enabledByDefault = false;
