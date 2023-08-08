@@ -262,3 +262,5 @@ syntax-highlighting-opt-highlightBracketBlocks-name = Highlight Bracket Blocks
 syntax-highlighting-opt-highlightBracketBlocks-desc = Highlight the smallest enclosing bracket pair containing the text cursor.
 syntax-highlighting-opt-highlightBracketBlocksHover-name = Highlight on Hover
 syntax-highlighting-opt-highlightBracketBlocksHover-desc = Highlight the smallest enclosing bracket pair containing the mouse.
+syntax-highlighting-opt-underlineHighlightedRanges-name = Underline Highlighted Ranges
+syntax-highlighting-opt-underlineHighlightedRanges-desc = Puts a dark underline under highlighted ranges for better visibility.

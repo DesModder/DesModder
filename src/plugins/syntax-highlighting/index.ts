@@ -40,6 +40,11 @@ export default class SyntaxHighlighting extends PluginController<Config> {
     for (const rule of bpcCss) {
       this.styles.sheet?.insertRule(rule);
     }
+
+    document.body.classList.toggle(
+      "dsm-syntax-highlighting-underline-highlighted-ranges",
+      this.settings.underlineHighlightedRanges
+    );
   }
 
   resetHighlightedRanges() {

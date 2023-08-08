@@ -38,6 +38,13 @@ export const configList = [
     key: "highlightBracketBlocksHover",
     default: false,
   },
+  {
+    type: "boolean",
+    key: "underlineHighlightedRanges",
+    default: false,
+    shouldShow: (config) =>
+      config.highlightBracketBlocks || config.highlightBracketBlocksHover,
+  },
 ] satisfies readonly ConfigItem[];
 
 export interface Config {
@@ -47,4 +54,5 @@ export interface Config {
   thickenBrackets: number;
   highlightBracketBlocks: boolean;
   highlightBracketBlocksHover: boolean;
+  underlineHighlightedRanges: boolean;
 }
