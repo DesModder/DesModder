@@ -1,8 +1,11 @@
 /*
 HOW TO ADD NEW TIPS:
 Go to the localization file (e.g. en.ftl for English) and add a new message
-beginning with "show-tips-tip". These will automatically be added to the selection of tips.
-To add a "learn more" link, simply add it to the table below.
+beginning with "show-tips-tip". Then, to make sure that your tip shows up
+in the list, add the message WITHOUT the "show-tips-tip" part as a key of 
+the object down below (it will be added automatically). If you want a 
+"Learn More" link, simply add it as a value of the object. If you don't
+want one, just put an empty string as the value.
 */
 
 function hashString(str: string) {
