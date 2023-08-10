@@ -29,59 +29,60 @@ GLesmos-confirm-lines-body = Generar líneas con GLesmos puede ser lento. Sé es
 ## Tips
 show-tips-name = Mostrar consejos
 show-tips-desc = Te muestra consejos en la parte de abajo de la lista de expresiones
-show-tips-tip-export-videos = Cuando exportas videos es preferible escojer MP4 o APNG sobre GIF
-show-tips-tip-disable-graphpaper = Cuando necesitas escribir ecuaciones largas, es útil deshabilitar el área del gráfico en la Configuración de Calculadora
+show-tips-tip-export-videos = Cuando exportas videos es preferible escoger MP4 o APNG sobre GIF
+show-tips-tip-disable-graphpaper = Cuando necesites escribir ecuaciones largas, es útil deshabilitar el área del gráfico en la Configuración de Calculadora
 show-tips-tip-paste-asciimath = Puedes pegar ecuaciones en formato ASCII directamente en Desmos
-show-tips-tip-pin = Fija expresiones que uses bastante para no perderlas de vista
+show-tips-tip-pin = Fija expresiones que uses frecuentemente para no perderlas de vista
 show-tips-tip-long-video-capture = Antes de empezar a capturar un vídeo largo, es una buena idea exportar un vídeo corto de prueba
 show-tips-tip-find-replace = Buscar y reemplazar es ideal para renombrar variables
-show-tips-tip-duplicate = Pressiona Ctrl+Q ó Ctrl+Shift+Q para duplicar la expression seleccionada
+show-tips-tip-duplicate = Presiona Ctrl+Q ó Ctrl+Shift+Q para duplicar la expresión seleccionada
 show-tips-tip-note-newline = Teclea Shift+Entrar para añadir líneas nuevas en las notas y en los títulos de imágenes/carpetas
-show-tips-tip-hide-errors = Haz clic a los triángulos de advertencia para desvanecerlos (o teclea Shift+Entrar)
-show-tips-tip-note-folder = Para crear una nota puedes teclear " o escribir "folder" para crear una carpeta
-show-tips-tip-arctan = Utiliza arctan(y, x) en lugar de arctan(y/x) para obtener el angulo de un punto
+show-tips-tip-hide-errors = Haz clic a los triángulos de advertencia para desvanecerlos (o presiona Shift+Entrar)
+show-tips-tip-note-folder = Para crear una nota puedes teclear una comilla doble o escribir "folder" para crear una carpeta
+show-tips-tip-arctan = Utiliza arctan(y, x) en lugar de arctan(y / x) para obtener el ángulo de un punto
 show-tips-tip-indefinite-integral = Puedes utilizar límites infinitos en integrales
 show-tips-tip-random = La función "random" puede tomar muestras de una distribución
 show-tips-tip-two-argument-round = La función "round" con su segundo argumento es ideal para redondear números para rótulos
-show-tips-tip-two-argument-sort = Es posible reordernar una lista con la clasificación de otra usando "sort(A, B)"
+show-tips-tip-two-argument-sort = Es posible reordenar una lista con la clasificación de otra usando "sort(A, B)"
 show-tips-tip-custom-colors = Crea colores personalizados usando las funciones "rgb" y "hsv"
-show-tips-tip-ctrl-f = Teclea Ctrl+F para buscar expresiones
-show-tips-tip-derivatives = Toma derivadas usando notación de Lagrange. Por ejemplo f`(x)
-show-tips-tip-unbounded-list-slices = Los limites the listas no tienen que estar acotados. Por ejemplo L[1...]
+show-tips-tip-ctrl-f = Presiona Ctrl+F para buscar expresiones
+show-tips-tip-derivatives = Toma derivadas usando notación de Lagrange o notación de Leibniz
+show-tips-tip-unbounded-list-slices = Los límites de listas no tienen que estar acotados
 show-tips-tip-dataviz-plots = Para visualizar datos puedes utilizar las funciones "histogram", "boxplot", y más
-show-tips-tip-statistics = Desmos tiene muchisimas funciones para estadística
+show-tips-tip-statistics = Desmos tiene muchísimas funciones para estadística
 show-tips-tip-table-draggable-points = Una tabla te permite crear una lista de puntos interactivos
-show-tips-tip-polygon = Utiliza la función "polygon" para crear poligones con facilidad
-show-tips-tip-point-arithmetic = Point (vector) arithmetic works as expected (e.g. (1, 2) + (3, 4) is (4, 6))
-show-tips-tip-shift-drag = Shift-mouse drag over an axis to scale only that axis
-show-tips-tip-action-ticker = Use actions and tickers to run simulations
-show-tips-tip-latex-copy-paste = The math from Desmos can be directly copy-pasted into LaTeX editors
-show-tips-tip-time-in-worker = To test how fast your graph runs, use ?timeInWorker or enable the Performance Display plugin
-show-tips-tip-format-labels = Use backticks to math-format point labels
-show-tips-tip-dynamic-labels = Use ${"{"} {"}"} for dynamic point labels based on a variable
-show-tips-tip-disable-text-outline = Disabling text outline can sometimes make labels more readable
-show-tips-tip-regression-power = Regressions are more powerful than you can imagine
-show-tips-tip-spreadsheet-table = Paste spreadsheet data to make a table
-show-tips-tip-keyboard-shortcuts = Type Ctrl+/ or Cmd+/ to open the list of keyboard shortcuts
-show-tips-tip-listcomps = List comprehensions are great for grids of points or lists of polygons
-show-tips-tip-list-filters = List filters can be used to filter for positive elements, even elements, and more
+show-tips-tip-polygon = Utiliza la función "polygon" para crear polígonos con facilidad
+show-tips-tip-point-arithmetic = Puedes aplicar aritmética a puntos (o vectores). Por ejemplo, (1, 2) + (3, 4) es (4, 6)
+show-tips-tip-shift-drag = Shift+click izquierdo sobre un eje te permite cambiar el tamaño de ese eje independientemente
+show-tips-tip-action-ticker = Utiliza acciones y contadores para correr simulaciones
+show-tips-tip-latex-copy-paste = Expresiones copiadas en Desmos pueden ser pegadas en editores de composición de texto así como LaTeX
+show-tips-tip-time-in-worker = Para monitorear el rendimiento del gráfico añade "?timeInWorker" a la URL o activa el Monitor de Rendimiento
+show-tips-tip-format-labels = Enmarca el texto de rótulos entre ` para darles formato de expresión
+show-tips-tip-dynamic-labels = Puedes enmarcar nombres de variables en ${"{"} {"}"} para mostrar su valor en rótulos
+show-tips-tip-disable-text-outline = Deshabilitar el borde de texto puede hacer rótulos más legibles en algunos casos
+show-tips-tip-regression-power = La utilidad de regresiones en Desmos te puede sorprender
+show-tips-tip-spreadsheet-table = Pega datos de una hoja de cálculo (como Excel) para crear una tabla
+show-tips-tip-keyboard-shortcuts = Presiona Ctrl+/ ó Cmd+/ para mostrar la lista de atajos de teclado
+show-tips-tip-listcomps = Las listas por comprensión son ideales para crear cuadrículas de puntos o listas de polígonos
+show-tips-tip-list-filters = Puedes utilizar filtrado de listas para filtrar elementos positivos, pares y más
+# Unchanged
 show-tips-tip-bernard = Bernard
-show-tips-tip-new-desmos = What's new at Desmos
-show-tips-tip-simultaneous-actions = Action assignments are simultaneous, not sequential
-show-tips-tip-share-permalink = You can share graphs via permalink without signing in
-show-tips-tip-point-coordinate = Extract the x or y coordinate of points by appending .x or .y to your point variable
-show-tips-tip-audiotrace = Listen to your graphs using Audio Trace!
-show-tips-tip-audiotrace-note-frequency = Note frequencies for audio trace depend on how high or low they are located in the viewport
-show-tips-tip-audiotrace-range = Audio Trace range starts on an E4 (329.63Hz) and ends on E5 (659.25Hz)
-show-tips-tip-other-calculators = Desmos also has other calculators!
-show-tips-tip-lock-viewport = Don't want your viewport to be moved? Lock it in the graph settings!
-show-tips-tip-glesmos = Enable the GLesmos plugin to make some implicits run faster
-show-tips-tip-disable-show-tips = Tired of seeing me? Disable the "Show Tips" plugin in the Desmodder settings
-show-tips-tip-compact-view-multiline = Sick of scrolling the expressions panel? Try enabling Compact View and/or Multiline Expressions to see more at once
-show-tips-tip-intellisense = Too many long variable names? Enable Intellisense to make dealing with them easier
-show-tips-tip-youre-doing-great = You're doing great :)
-show-tips-tip-youre-superb = You're superb <3
-show-tips-tip-huggy = Huggy!
+show-tips-tip-new-desmos = ¡Lo nuevo en Desmos!
+show-tips-tip-simultaneous-actions = Las reglas de una acción son simultáneas no secuenciales
+show-tips-tip-share-permalink = Puedes compartir gráficos por medio de un permalink sin necesidad de iniciar sesión
+show-tips-tip-point-coordinate = Puedes acceder las coordenadas de x ó y de un punto añadiendo .x ó .y a la variable de tu punto
+show-tips-tip-audiotrace = ¡Escucha tus gráficos utilizando el modo Seguimiento de Audio!
+show-tips-tip-audiotrace-note-frequency = Las frecuencias de sonido del seguimiento de audio son relativas a la posición del gráfico en la pantalla.
+show-tips-tip-audiotrace-range = El rango del seguimiento de audio empieza en Mi 4ª (329.63 hz) y termina en Mi 5ª (659.25 Hz)
+show-tips-tip-other-calculators = ¡Desmos también ofrece otros tipos de calculadores!
+show-tips-tip-lock-viewport = ¿No quieres que el área del gráfico se mueva? ¡Fíjala en la configuración del gráfico!
+show-tips-tip-glesmos = Habilita la extensión GLesmos para que tus expresiones implícitas sean más rápidas
+show-tips-tip-disable-show-tips = ¿Cansado de verme? Deshabilita "Mostrar Consejos" en la configuración de Desmodder
+show-tips-tip-compact-view-multiline = ¿Harto de navegar largas listas de expresiones? Prueba la Vista Compacta y/o Expresiones Multilínea para ver más contenido
+show-tips-tip-intellisense = ¿Los nombres de tus variables son muy largos? Habilita Intellisense para lidiar con estos más fácilmente
+show-tips-tip-youre-doing-great = ¡Vamos! Tu puedes :)
+show-tips-tip-youre-superb = Eres increible <3
+show-tips-tip-huggy = ¡Un abrazo de oso!
 
 ## Text Mode
 text-mode-name = Modo Texto BETA
@@ -102,7 +103,7 @@ find-and-replace-replace-all = reemplazar todo
 wolfram2desmos-name = Wolfram a Desmos
 wolfram2desmos-desc = Te permite pegar texto de ecuaciones en formato ASCII (así como las búsquedas en Wolfram Alpha) en Desmos.
 wolfram2desmos-opt-reciprocalExponents2Surds-name = Notación Radical
-wolfram2desmos-opt-reciprocalExponents2Surds-desc = Convierte exponentes fraccionales menor que uno a su equivalente en radical.
+wolfram2desmos-opt-reciprocalExponents2Surds-desc = Convierte exponentes fraccionarios menores que uno a su equivalente en radical.
 wolfram2desmos-opt-derivativeLoopLimit-name = Expandir derivadas
 wolfram2desmos-opt-derivativeLoopLimit-desc = Expande las derivadas de orden superior en notación de Leibniz en forma de derivadas anidadas (límite de 10).
 
@@ -114,10 +115,10 @@ pin-expressions-unpin = Desfijar
 
 ## Builtin Settings
 builtin-settings-name = Configuración de Calculadora
-builtin-settings-desc = Te permite configurar las funciones integradas en Desmos. La mayoría de las opciones aplican solamente a tu navegador y son ignoradas cuando compartes tu gráfica con otras personas.
+builtin-settings-desc = Te permite configurar las funciones integradas en Desmos. La mayoría de las opciones aplican solamente a tu navegador y son ignoradas cuando compartes tu gráfico con otras personas.
 builtin-settings-opt-advancedStyling-name = Diseño avanzado
-builtin-settings-opt-advancedStyling-desc = Permite editar rótulos, mostrar el rótulo al pasar el mouse, añadir contorno de texto y mostrar un solo cuadrante de cuadrícula.
-builtin-settings-opt-graphpaper-name = Área de Gráfica
+builtin-settings-opt-advancedStyling-desc = Permite editar rótulos así como mostrar éstos cuando el cursor está encima, añadir contorno de texto y mostrar un solo cuadrante de cuadrícula.
+builtin-settings-opt-graphpaper-name = Área del Gráfico
 # Unchanged
 builtin-settings-opt-graphpaper-desc = {""}
 builtin-settings-opt-authorFeatures-name = Funciones para autores 
@@ -146,7 +147,7 @@ builtin-settings-opt-qwertyKeyboard-desc = {""}
 
 ## Duplicate Expression Hotkey
 duplicate-expression-hotkey-name = Atajo de teclado para Duplicar Expresión
-duplicate-expression-hotkey-desc = Teclea Ctrl+Q ó Ctrl+Shift+Q para replicar la expresión seleccionada.
+duplicate-expression-hotkey-desc = Presiona Ctrl+Q ó Ctrl+Shift+Q para replicar la expresión seleccionada.
 
 ## Right Click Tray
 right-click-tray-name = Color con clic Derecho
@@ -154,7 +155,7 @@ right-click-tray-desc = Permite abrir el menú para configurar expresiones con e
 
 ## Set Primary Color
 set-primary-color-name = Cambiar Color de Aplicación
-set-primary-color-desc = Elije el color principal para la interfaz de usuario.
+set-primary-color-desc = Elige el color principal para la interfaz de usuario.
 set-primary-color-opt-primaryColor-name = Color principal
 set-primary-color-opt-primaryColor-desc = Cambia el color principal en toda la calculadora.
 set-primary-color-opt-doFavicon-name = Actualizar el icono del sitio web.
@@ -174,7 +175,7 @@ folder-tools-enclose = Encerrar
 
 ## Video Creator
 video-creator-name = Creador de Video
-video-creator-desc = Te permite exportar videos y GIFs de tu gráfica con acciones o controles deslizantes.
+video-creator-desc = Te permite exportar videos y GIFs de tu gráfico usando acciones o controles deslizantes.
 video-creator-menu = Menú del Creador de Video
 video-creator-to = hasta
 video-creator-step = , paso
@@ -213,8 +214,8 @@ wakatime-name = WakaTime
 wakatime-desc = Le da seguimiento a tu actividad de Desmos en WakaTime.com
 wakatime-opt-secretKey-name = Llave Secreta
 wakatime-opt-secretKey-desc = Llave API usada para los servidores de WakaTime
-wakatime-opt-splitProjects-name = Separa los proyectos por gráficas individuales
-wakatime-opt-splitProjects-desc = Guarda cada gráfica como su propio proyecto y no como ramificaciones de un solo proyecto de Desmos.
+wakatime-opt-splitProjects-name = Separa los proyectos por gráficos individuales
+wakatime-opt-splitProjects-desc = Guarda cada gráfico como su propio proyecto y no como ramificaciones de un solo proyecto de Desmos.
 wakatime-opt-projectName-name = Nombre de Proyecto
 wakatime-opt-projectName-desc = Visible en WakaTime y es compartido por todos tus proyectos de Desmos.
 
@@ -251,7 +252,7 @@ manage-metadata-desc = Permite administrar metadatos, así como las extensiones 
 # Unchanged
 intellisense-name = Intellisense
 intellisense-desc = Brinda varias funciones esenciales de una IDE en Desmos incluyendo sugerencias de autocompletado, visualización de parámetros, e ir a definición. Sigue el enlace para la documentación:
-intellisense-jump2def-menu-instructions = tiene múltiples definiciones. Elije a cuál quieres navegar.
+intellisense-jump2def-menu-instructions = tiene múltiples definiciones. Elige a cuál quieres navegar.
 
 ## Compact View
 compact-view-name = Vista Compacta
@@ -281,17 +282,17 @@ multiline-opt-widthBeforeMultiline-desc = Este es un porcentaje de la pantalla a
 multiline-opt-automaticallyMultilinify-name = Ajuste de línea automático
 multiline-opt-automaticallyMultilinify-desc = Automáticamente divide las expresiones en múltiples líneas.
 multiline-opt-multilinifyDelayAfterEdit-name = Retraso de ajuste (ms)
-multiline-opt-multilinifyDelayAfterEdit-desc = Retrasa el ajuste de líneas en la expresión que estás editando por el número milisegundos especificado.
+multiline-opt-multilinifyDelayAfterEdit-desc = Retrasa el ajuste de líneas en la expresión que estás editando por el número de milisegundos especificado.
 
 ## Custom MathQuill Config
 custom-mathquill-config-name = Configuración de MathQuill
 custom-mathquill-config-desc = Te permite expandir y personalizar la edición de ecuaciones
 custom-mathquill-config-opt-superscriptOperators-name = Operadores en exponentes
-custom-mathquill-config-opt-superscriptOperators-desc = Permite teclear operadores, asi como '+', en los exponentes
+custom-mathquill-config-opt-superscriptOperators-desc = Permite teclear operadores, así como "+", en los exponentes
 custom-mathquill-config-opt-noAutoSubscript-name = Deshabilita subíndices automáticos
 custom-mathquill-config-opt-noAutoSubscript-desc = Deshabilita subíndices automáticos en números cuando estos son escritos después de una variable
 custom-mathquill-config-opt-noNEquals-name = Deshabilita n= en sumatorio
-custom-mathquill-config-opt-noNEquals-desc = Deshabilita 'n=' en el límite inferior de los sumatorios
+custom-mathquill-config-opt-noNEquals-desc = Deshabilita "n=" en el límite inferior de los sumatorios
 custom-mathquill-config-opt-subSupWithoutOp-name = Subíndices y exponentes sin base
 custom-mathquill-config-opt-subSupWithoutOp-desc = Permite crear subíndices y exponentes sin que estos estén precedidos de un símbolo
 custom-mathquill-config-opt-allowMixedBrackets-name = Permitir paréntesis mezclados
@@ -299,7 +300,7 @@ custom-mathquill-config-opt-allowMixedBrackets-desc = Permite mezclar paréntesi
 custom-mathquill-config-opt-subscriptReplacements-name = Permite reemplazos en subíndices
 custom-mathquill-config-opt-subscriptReplacements-desc = Permite símbolos y nombres de funciones dentro de los subíndices
 custom-mathquill-config-opt-noPercentOf-name = Deshabilita % of
-custom-mathquill-config-opt-noPercentOf-desc = Permite teclear el carácter '%' sin la inserción automática de '% of'
+custom-mathquill-config-opt-noPercentOf-desc = Permite teclear el carácter "%" sin la inserción automática de "% of"
 custom-mathquill-config-opt-commaDelimiter-name = Coma de separación
 custom-mathquill-config-opt-commaDelimiter-desc = Inserta comas de separación en números (sólo visualmente)
 custom-mathquill-config-opt-delimiterOverride-name = Separador personalizado
