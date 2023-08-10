@@ -5,7 +5,7 @@ import zhCNFTL from "../../localization/zh-CN.ftl";
 import { FluentBundle, FluentResource, FluentVariable } from "@fluent/bundle";
 import { Console, Fragile } from "globals/window";
 
-function currentLanguage() {
+export function currentLanguage() {
   return Fragile?.currentLanguage?.() ?? "en";
 }
 
