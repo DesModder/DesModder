@@ -28,8 +28,7 @@ GLesmos-confirm-lines-body = Generar líneas con GLesmos puede ser lento. Sé es
 
 ## Tips
 show-tips-name = Mostrar consejos
-show-tips-desc = Muestra consejos hasta abajo de la lista de expresiones.
-# Missing: all tips. Is it worthwhile?
+show-tips-desc = Te muestra consejos en la parte de abajo de la lista de expresiones
 
 ## Text Mode
 text-mode-name = Modo Texto BETA
@@ -73,7 +72,7 @@ builtin-settings-opt-authorFeatures-desc = Permite esconder carpetas, expresione
 builtin-settings-opt-pointsOfInterest-name = Muestra puntos de interés.
 builtin-settings-opt-pointsOfInterest-desc = Cortes de eje x/y, discontinuidades, intersecciones, etc.
 builtin-settings-opt-trace-name = Trazar sobre curvas
-builtin-settings-opt-trace-desc = Permite hacer click en curvas para obtener coordenadas.
+builtin-settings-opt-trace-desc = Permite hacer clic en curvas para obtener coordenadas.
 builtin-settings-opt-expressions-name = Mostrar Expresiones
 # Unchanged
 builtin-settings-opt-expressions-desc = {""}
@@ -97,8 +96,8 @@ duplicate-expression-hotkey-name = Atajo de teclado para Duplicar Expresión
 duplicate-expression-hotkey-desc = Teclea Ctrl+Q ó Ctrl+Shift+Q para replicar la expresión seleccionada.
 
 ## Right Click Tray
-right-click-tray-name = Color con Click Derecho
-right-click-tray-desc = Permite abrir el menú para configurar expresiones con el click derecho.
+right-click-tray-name = Color con clic Derecho
+right-click-tray-desc = Permite abrir el menú para configurar expresiones con el clic derecho.
 
 ## Set Primary Color
 set-primary-color-name = Cambiar Color de Aplicación
@@ -110,7 +109,7 @@ set-primary-color-opt-doFavicon-desc = Alternar el color del icono del sitio web
 
 ## Hide Errors
 hide-errors-name = Esconder los Errores
-hide-errors-desc = Permite hacer click a los triángulos de error para desvanecerlos y esconde las sugerencias de controles deslizantes.
+hide-errors-desc = Permite hacer clic en los triángulos de advertencia para desvanecerlos y esconder las sugerencias de controles deslizantes.
 hide-errors-hide = esconder
 
 ## Folder Tools
@@ -196,6 +195,7 @@ manage-metadata-name = Administrar Metadatos (Funciones Principales)
 manage-metadata-desc = Permite administrar metadatos, así como las extensiones GLesmos o Fijar Expresiones
 
 ## Intellisense
+# Unchanged
 intellisense-name = Intellisense
 intellisense-desc = Brinda varias funciones esenciales de una IDE en Desmos incluyendo sugerencias de autocompletado, visualización de parámetros, e ir a definición. Sigue el enlace para la documentación:
 intellisense-jump2def-menu-instructions = tiene múltiples definiciones. Elije a cuál quieres navegar.

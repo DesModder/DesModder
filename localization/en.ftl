@@ -27,10 +27,10 @@ GLesmos-confirm-lines-body = GLesmos line rendering can be slow. Be careful, esp
 
 ## Tips
 show-tips-name = Show Tips
-show-tips-desc = Show tips at the bottom of the expressions list.
-show-tips-tip-export-videos = When exporting videos, prefer MP4 or APNG over GIF.
+show-tips-desc = Show tips at the bottom of the expressions list
+show-tips-tip-export-videos = When exporting videos, prefer MP4 or APNG over GIF
 show-tips-tip-disable-graphpaper = Disabling graphpaper in Calculator Settings is useful for writing a sequence of equations
-show-tips-tip-paste-asciimath = Past ASCII Math directly into Desmos
+show-tips-tip-paste-asciimath = Paste ASCII Math directly into Desmos
 show-tips-tip-pin = Pin (bookmark) commonly-used expressions for easy access
 show-tips-tip-long-video-capture = Before starting a long video capture, it's safest to test the beginning of an export
 show-tips-tip-find-replace = Find and Replace is great for renaming variables
@@ -43,7 +43,7 @@ show-tips-tip-indefinite-integral = Integrals can have infinite bounds
 show-tips-tip-random = The random function can sample from a distribution
 show-tips-tip-two-argument-round = Two-argument round is great for rounding labels
 show-tips-tip-two-argument-sort = Sort one list using keys of another list with sort(A, B)
-show-tips-tip-custom-colors = Create custom colors and re-use them using variables
+show-tips-tip-custom-colors = Create custom colors with the functions rgb and hsv
 show-tips-tip-ctrl-f = Press Ctrl+F to search through expressions
 show-tips-tip-derivatives = Take derivatives using prime notation or Leibniz notation
 show-tips-tip-unbounded-list-slices = List slices do not have to be bounded
