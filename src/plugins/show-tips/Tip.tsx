@@ -25,7 +25,7 @@ export default class Tip extends Component {
               target="_blank"
               onTap={(e: MouseEvent) => e.stopPropagation()}
             >
-              {format("menu-learn-more")}
+              {() => format("menu-learn-more")}
             </a>
           )}
         </If>
