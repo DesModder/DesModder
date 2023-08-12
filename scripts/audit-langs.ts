@@ -26,7 +26,7 @@ async function getUntranslatable(lang: string) {
   const langFTL = (await fs.readFile(`localization/${lang}.ftl`)).toString();
   return new Set(
     langFTL
-      .split(/#\s*unchanged.*\n/gi)
+      .split(/#\s*unchanged.*\r?\n/gi)
       .slice(1)
       .map((block) => block.split(/\n/)[0].split("=")[0].trim())
   );
