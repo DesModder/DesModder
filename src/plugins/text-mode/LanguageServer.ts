@@ -11,8 +11,6 @@ import {
   StateField,
   StateEffect,
   Transaction,
-  RangeSet,
-  RangeValue,
   EditorState,
 } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
@@ -54,26 +52,14 @@ export function onCalcEvent(view: EditorView, event: DispatchedEvent) {
   view.dispatch(transaction);
 }
 
-function rawIDRangesFromState(state: EditorState) {
-  const cursor = state.field(rawIDStateField).iter();
-  const rawIDRanges = [];
-  while (cursor.value !== null) {
-    const { value, from, to } = cursor;
-    rawIDRanges.push({ id: value.id, from, to });
-    cursor.next();
-  }
-  return rawIDRanges;
-}
-
 export function parseAndReturnAnalysis(
   state: EditorState,
-  nextEditDueToGraph: boolean
+  nextEditDueToGraph: boolean,
+  rawIDs: RawIDRange[]
 ) {
   const cfg = getTextModeConfig();
   const s = state.doc.sliceString(0);
-  const [analysis, rawGraphState] = textToRaw(cfg, s, {
-    rawIDs: rawIDRangesFromState(state),
-  });
+  const [analysis, rawGraphState] = textToRaw(cfg, s, { rawIDs });
   if (!nextEditDueToGraph && rawGraphState !== null)
     setCalcState(rawGraphState);
   return analysis;
@@ -83,63 +69,54 @@ export function parseAndReturnAnalysis(
  * is edited. So the analysis always stays perfectly in sync. This may not be
  * the best for performance, but it's huge for simplicity and correctness. */
 export const analysisStateField = StateField.define<ProgramAnalysis>({
-  create: (state) => parseAndReturnAnalysis(state, false),
+  create: (state) => parseAndReturnAnalysis(state, false, []),
   update: (value, transaction) => {
+    function mapID({ from, to, id }: RawIDRange) {
+      return {
+        from: transaction.changes.mapPos(from, -1),
+        to: transaction.changes.mapPos(to, 1),
+        id,
+      };
+    }
     if (transaction.docChanged) {
       // This is where you would handle incremental updates in the input.
+      const oldIDs = Object.values(value.mapIDstmt)
+        .map((s) => {
+          const to =
+            s.type === "Folder"
+              ? s.children[0].pos.from - 1
+              : s.type === "Table"
+              ? s.columns[0].pos.from - 1
+              : s.pos.to;
+          return { from: s.pos.from, to, id: s.id };
+        })
+        .map(mapID);
+      const rawIDs = transaction.effects
+        .filter((e): e is ReturnType<(typeof addRawID)["of"]> => e.is(addRawID))
+        .map(({ value }) => mapID(value));
       return parseAndReturnAnalysis(
         transaction.state,
-        transaction.annotation(Transaction.remote) ?? false
+        transaction.annotation(Transaction.remote) ?? false,
+        rawIDs.concat(oldIDs)
       );
     } else return value;
   },
 });
 
-class RawID extends RangeValue {
-  startSide = -1;
-  endSide = 1;
-  // I don't understand point
-  point = true;
-
-  constructor(public id: string) {
-    super();
-  }
-
-  eq(other: RawID) {
-    return other.id === this.id;
-  }
+interface RawIDRange {
+  from: number;
+  to: number;
+  id: string;
 }
 
 /** addRawID expects `{from,to}` positions from *before* any text
  * changes in the same transaction. */
-export const addRawID = StateEffect.define<{
-  from: number;
-  to: number;
-  id: string;
-}>({
+export const addRawID = StateEffect.define<RawIDRange>({
   map: ({ from, to, id }, change) => ({
     from: change.mapPos(from),
     to: change.mapPos(to),
     id,
   }),
-});
-
-/** Keep track of the IDs as expected by Desmos, so it can insert a
- * statement in the middle without breaking the ids of later things. */
-export const rawIDStateField = StateField.define<RangeSet<RawID>>({
-  create() {
-    return RangeSet.of([]);
-  },
-  update(rawIDs, tr) {
-    for (const e of tr.effects)
-      if (e.is(addRawID)) {
-        rawIDs = rawIDs.update({
-          add: [new RawID(e.value.id).range(e.value.from, e.value.to)],
-        });
-      }
-    rawIDs = rawIDs.map(tr.changes);
-    return rawIDs;
-  },
 });
 
 function setCalcState(state: GraphState) {
