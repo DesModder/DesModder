@@ -72,6 +72,10 @@ function setCalcState(state: GraphState) {
   const ae = document.activeElement as HTMLElement | undefined;
   const oldBlur = ae?.blur;
   if (ae) ae.blur = () => {};
+  // Just marking state as any for now. Eventually we'll want to pull
+  // @desmodder/graph-state into this repository (like @desmodder/text-mode-core),
+  // to avoid needing to deal with npm back-and-forth.
+  (state.graph as any).product = Calc.controller.graphSettings.config.product;
   Calc.setState(state, { allowUndo: true, fromTextMode: true } as any);
   if (ae) ae.blur = oldBlur!;
 }

@@ -185,6 +185,11 @@ interface CalcPrivate {
     createItemModel: (modelTemplate: any) => ItemModel;
     getPillboxBackgroundColor: () => string;
     isGraphSettingsOpen: () => boolean;
+    graphSettings: {
+      config: {
+        product: string;
+      };
+    };
     dispatch: (e: DispatchedEvent) => void;
     getExpressionSearchStr: () => string;
     dispatcher: {
