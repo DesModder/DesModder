@@ -30,6 +30,7 @@ export function drawGLesmosSketchToCtx(
   branches = branches.filter((b) => b.graphMode === "GLesmos");
 
   const glBranches = branches.map((b) => b.compiledGL);
+  if (glBranches.length === 0) return;
   const compiledGL: GLesmosShaderPackage = {
     chunks: glBranches.flatMap((b) => b.chunks),
     deps: glBranches.reduce<string[]>(
@@ -56,7 +57,7 @@ function drawOneGLesmosSketchToCtx(
   const deps = compiledGL.deps.join("\n");
 
   try {
-    if (!canvas.element) glesmosError("WebGL Context Lost!");
+    if (!canvas?.element) glesmosError("WebGL Context Lost!");
 
     canvas.updateTransforms(projection); // only do this once
 

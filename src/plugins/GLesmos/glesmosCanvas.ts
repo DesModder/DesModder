@@ -31,12 +31,13 @@ export function initGLesmosCanvas() {
   //= ================ INIT ELEMENTS =======================
 
   const c: HTMLCanvasElement = document.createElement("canvas");
-  const gl: WebGL2RenderingContext = c.getContext("webgl2", {
+  const gl: WebGL2RenderingContext | null = c.getContext("invalid", {
     // Disable premultiplied alpha
     // Thanks to <https://stackoverflow.com/a/12290551/7481517>
     premultipliedAlpha: false,
     antialias: true,
   }) as WebGL2RenderingContext;
+  if (!gl) return undefined;
 
   //= ================ INIT WEBGL STUFF ================
 
