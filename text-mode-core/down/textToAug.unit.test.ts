@@ -1262,12 +1262,12 @@ describe("Diagnostics", () => {
     ]);
     testDiagnostics("Invalid id: digits", `y=x @{id: "1"}`, [
       error(
-        "Specified ID must include a character other than a digit",
+        "Specified id must include a character other than a digit",
         pos(10, 13)
       ),
     ]);
     testDiagnostics("Invalid id: dunder", `y=x @{id: "__thing"}`, [
-      error("Specified ID must not start with '__'", pos(10, 19)),
+      error("Specified id must not start with '__'", pos(10, 19)),
     ]);
   });
   describe("Parse errors", () => {

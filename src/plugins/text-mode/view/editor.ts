@@ -1,5 +1,5 @@
 import TextMode from "..";
-import { analysisStateField, doLint } from "../LanguageServer";
+import { analysisStateField, doLint, rawIDStateField } from "../LanguageServer";
 // Language extension
 import { textMode } from "../lezer/index";
 import "./editor.less";
@@ -51,6 +51,7 @@ export function startState(tm: TextMode, text: string) {
     doc: text,
     extensions: [
       analysisStateField,
+      rawIDStateField,
       EditorView.updateListener.of(tm.onEditorUpdate.bind(tm)),
       // linter, showing errors
       linter(doLint, { delay: 0 }),

@@ -25,6 +25,7 @@ export type DispatchedEvent =
         | "redo"
         | "tick-ticker"
         | "keypad/functions"
+        | "commit-geo-objects"
         | "ui/container-resized";
     }
   | {

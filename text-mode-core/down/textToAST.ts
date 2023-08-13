@@ -9,6 +9,7 @@ import TextAST, {
   Statement,
 } from "../TextAST";
 import { Config } from "../TextModeConfig";
+import { ignoredID } from "../up/augToAST";
 import { DiagnosticsState } from "./diagnostics";
 
 // prettier-ignore
@@ -82,11 +83,16 @@ class ParseState extends DiagnosticsState {
   mapIDstmt: Record<string, Statement> = {};
   private currentID = 0;
   private currentIndex = 0;
+  /** After a raw ID is used up, it is removed by setting it to undefined. */
+  private readonly rawIDs: (RawIDRange | undefined)[];
+  private readonly rawIDsAll: Set<string>;
 
-  constructor(public cfg: Config, input: string) {
+  constructor(public cfg: Config, input: string, incr: IncrementalState) {
     super();
     this.lexer = moo.compile(rules);
     this.lexer.reset(input);
+    this.rawIDs = incr.rawIDs;
+    this.rawIDsAll = new Set(incr.rawIDs.map((r) => r.id));
   }
 
   private _next() {
@@ -171,25 +177,45 @@ class ParseState extends DiagnosticsState {
   }
 
   nextID() {
-    return `${++this.currentID}`;
+    while (true) {
+      const s = `${++this.currentID}`;
+      if (!this.rawIDsAll.has(s)) return s;
+    }
+  }
+
+  idForRange(pos: TextAST.Pos) {
+    for (let i = 0; i < this.rawIDs.length; i++) {
+      const r = this.rawIDs[i];
+      if (!r) continue;
+      if (r.to >= pos.from && r.from <= pos.to) {
+        // Intersects! Mark the ID as used, then return it.
+        this.rawIDs[i] = undefined;
+        return r.id;
+      }
+    }
   }
 
   nextIndex() {
     return ++this.currentIndex;
   }
 
-  statementCommon(): Pick<Statement, StatementFinishKeys> {
+  statementCommon(
+    index: number,
+    pos: TextAST.Pos,
+    defaultID: string
+  ): Pick<Statement, StatementFinishKeys> {
     return {
       style: null,
-      id: this.nextID(),
-      index: this.nextIndex(),
+      id: this.idForRange(pos) ?? defaultID,
+      index,
     };
   }
 
   finishStatement<T extends Statement>(
     stmt: DistributiveOmit<T, StatementFinishKeys>,
-    info = this.statementCommon()
+    { index, defaultID } = { index: this.nextIndex(), defaultID: this.nextID() }
   ): T {
+    const info = this.statementCommon(index, stmt.pos, defaultID);
     Object.assign(stmt, info);
     this.mapIDstmt[info.id] = stmt as T;
     return stmt as T;
@@ -205,8 +231,35 @@ type DistributiveOmit<T, K extends string> = T extends unknown
 
 class ParseError extends Error {}
 
-export function parse(cfg: Config, input: string): ProgramAnalysis {
-  const ps = new ParseState(cfg, input);
+interface RawIDRange {
+  from: number;
+  to: number;
+  id: string;
+}
+export interface IncrementalState {
+  /** Assume the statement containing `from` to `to` has the given ID,
+   * instead of letting the ID be whatever based on text order.
+   * If a statement intersects more than one range, pick the first range.
+   * If a range intersects more than one statement, then it is only applied to
+   * the first statement. */
+  rawIDs: RawIDRange[];
+}
+
+function hydrateIncremental(
+  incr: Partial<IncrementalState> | undefined
+): IncrementalState {
+  incr ??= {};
+  return {
+    rawIDs: incr.rawIDs ?? [],
+  };
+}
+
+export function parse(
+  cfg: Config,
+  input: string,
+  incr?: Partial<IncrementalState>
+): ProgramAnalysis {
+  const ps = new ParseState(cfg, input, hydrateIncremental(incr));
   const children = parseStatements(ps, { isTop: true });
   if (children.length === 0 && ps.diagnostics.length === 0)
     ps.pushWarning("Program is empty. Try typing: y=x", { from: 0, to: 0 });
@@ -217,10 +270,7 @@ export function parse(cfg: Config, input: string): ProgramAnalysis {
     children,
     pos: posMany(
       children.map((x) => x.pos),
-      {
-        from: 0,
-        to: 0,
-      }
+      { from: 0, to: 0 }
     ),
   };
 
@@ -438,8 +488,9 @@ const initialParselets: TokenMap<InitialParselet> = {
     product: repeatedOperatorParselet("product"),
     integral: repeatedOperatorParselet("integral"),
     table: (ps, token) => {
-      // statementCommon must be calculated at top to get index before children
-      const common = ps.statementCommon();
+      // index must be calculated at top to get index before children
+      const index = ps.nextIndex();
+      const defaultID = ps.nextID();
       ps.consume("{");
       const columns = parseStatements(ps).flatMap((stmt) => {
         if (stmt.type !== "ExprStatement") {
@@ -457,12 +508,13 @@ const initialParselets: TokenMap<InitialParselet> = {
           columns,
           pos: pos(token, end),
         },
-        common
+        { index, defaultID }
       );
     },
     folder: (ps, token): Node => {
-      // statementCommon must be calculated at top to get index before children
-      const common = ps.statementCommon();
+      // index must be calculated at top to get index before children
+      const index = ps.nextIndex();
+      const defaultID = ps.nextID();
       const title = stringParselet(ps, ps.consumeType("string"));
       ps.consume("{");
       const children = parseStatements(ps);
@@ -474,7 +526,7 @@ const initialParselets: TokenMap<InitialParselet> = {
           title: title.value,
           pos: pos(token, end),
         },
-        common
+        { index, defaultID }
       );
     },
     image: (ps, token): Node => {
@@ -738,6 +790,7 @@ const consequentParselets: Record<
     const style = parseStyleMapping(ps, token);
     const stmt2 = {
       ...stmt,
+      id: getIDOverride(ps, style) ?? stmt.id,
       style,
       pos: pos(stmt, style),
     };
@@ -895,6 +948,43 @@ function parseList(ps: ParseState, token: Token): ListOrRange {
   } else {
     throw ps.pushFatalError("Expected ']'", pos(next));
   }
+}
+
+function getIDOverride(
+  ps: ParseState,
+  style: TextAST.StyleMapping
+): string | undefined {
+  let cnt = 0;
+  let id: string | undefined;
+  for (const {
+    property: { value: key },
+    expr,
+  } of style.entries) {
+    if (key === "id") {
+      cnt++;
+      if (cnt > 1) {
+        ps.pushError("Duplicate id field", expr.pos);
+      } else if (expr.type === "String") {
+        if (ignoredID(expr.value)) {
+          if (expr.value.startsWith("__"))
+            ps.pushError(`Specified id must not start with '__'`, expr.pos);
+          else
+            ps.pushError(
+              `Specified id must include a character other than a digit`,
+              expr.pos
+            );
+        } else {
+          id = expr.value;
+        }
+      } else {
+        ps.pushError(
+          `Expected id to be a string, but got ${expr.type}`,
+          expr.pos
+        );
+      }
+    }
+  }
+  if (cnt === 1) return id;
 }
 
 /** Assumes last token read is token "@{" */

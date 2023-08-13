@@ -1,6 +1,5 @@
 import TextAST from "../../TextAST";
 import Aug from "../../aug/AugState";
-import { ignoredID } from "../../up/augToAST";
 import { DownState, childExprToAug } from "../astToAug";
 import { evalExpr } from "../staticEval";
 import { Schema } from "./schema";
@@ -116,19 +115,6 @@ export function hydrate<T>(
                 `${JSON.stringify(evaluated)} instead`
             );
         } else {
-          if (
-            key === "id" &&
-            schemaType === "string" &&
-            typeof evaluated === "string" &&
-            ignoredID(evaluated)
-          ) {
-            if (evaluated.startsWith("__"))
-              pushError(`Specified ID must not start with '__'`);
-            else
-              pushError(
-                `Specified ID must include a character other than a digit`
-              );
-          }
           // eslint-disable-next-line valid-typeof
           if (typeof evaluated !== schemaType)
             pushError(

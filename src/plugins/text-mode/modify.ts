@@ -18,7 +18,8 @@ import TextAST, {
   Settings,
   Statement,
 } from "../../../text-mode-core/TextAST";
-import { ChangeSpec } from "@codemirror/state";
+import { addRawID } from "./LanguageServer";
+import { ChangeSpec, StateEffect } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
 import { DispatchedEvent } from "globals/Calc";
@@ -43,26 +44,36 @@ export function eventSequenceChanges(
   view: EditorView,
   event: DispatchedEvent,
   analysis: ProgramAnalysis
-): ChangeSpec[] {
+): { changes: ChangeSpec[]; effects?: StateEffect<any>[] } {
   const state = Calc.getState();
   if (event.type === "on-evaluator-changes") {
     // sliders, draggable points, action updates, etc.
-    return evaluatorChange(analysis, state, view, event);
+    return { changes: evaluatorChange(analysis, state, view, event) };
   } else if ((settingsEvents as readonly string[]).includes(event.type)) {
-    return [settingsChange(analysis, state)];
+    return { changes: [settingsChange(analysis, state)] };
   } else {
     const res = [];
+    const effects = [];
     if ("id" in event && event.id !== undefined) {
       const dsmMetadata = rawToDsmMetadata(state);
       res.push(metadataChange(analysis, state, dsmMetadata, view, event.id));
-      if (
-        event.type === "convert-image-to-draggable" ||
-        event.type === "create-sliders-for-item"
-      ) {
-        res.push(newItemsChange(analysis, state, dsmMetadata, view));
-      }
     }
-    return res;
+    if (
+      event.type === "convert-image-to-draggable" ||
+      event.type === "create-sliders-for-item" ||
+      event.type === "commit-geo-objects"
+    ) {
+      const dsmMetadata = rawToDsmMetadata(state);
+      const { changes, effects: effects1 } = newItemsChange(
+        analysis,
+        state,
+        dsmMetadata,
+        view
+      );
+      res.push(...changes);
+      effects.push(...effects1);
+    }
+    return { changes: res, effects };
   }
 }
 
@@ -172,29 +183,32 @@ function metadataChange(
   return insertWithIndentation(view, pos, insert);
 }
 
-/** Used for convert-image-to-draggable and add-sliders-to-item. */
+/** Used for add-sliders-to-item, among others. */
 function newItemsChange(
   analysis: ProgramAnalysis,
   state: GraphState,
   dsmMetadata: Metadata,
   view: EditorView
-): ChangeSpec {
-  let pos = 0;
+) {
+  let lastPos = 0;
   const out: ChangeSpec[] = [];
+  const effects = [];
   for (const item of state.expressions.list) {
     if (item.type === "folder") continue;
     const stmt = analysis.mapIDstmt[item.id];
     if (stmt) {
-      pos = stmt.pos.to;
+      lastPos = stmt.pos.to;
     } else {
       const aug = rawNonFolderToAug(getTextModeConfig(), item, dsmMetadata);
       const ast = itemAugToAST(aug);
       if (!ast) continue;
       const insert = "\n\n" + astItemToTextString(ast);
-      out.push(insertWithIndentation(view, { from: pos, to: pos }, insert));
+      const pos = { from: lastPos, to: lastPos };
+      out.push(insertWithIndentation(view, pos, insert));
+      effects.push(addRawID.of({ ...pos, id: item.id }));
     }
   }
-  return out;
+  return { changes: out, effects };
 }
 
 function itemChange(
