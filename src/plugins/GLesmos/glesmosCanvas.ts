@@ -9,7 +9,7 @@ import {
   glesmosGetFastFillShader,
   setUniform,
 } from "./shaders";
-import { Calc } from "globals/window";
+import window, { Calc } from "globals/window";
 import { format } from "i18n/i18n-core";
 
 export type GLesmosCanvas = ReturnType<typeof initGLesmosCanvas>;
@@ -44,6 +44,7 @@ export function initGLesmosCanvas() {
       // eslint-disable-next-line rulesdir/no-format-in-ts
       message: format("GLesmos-no-support"),
     });
+    window.DSM?.setPluginEnabled?.("GLesmos", false);
     return undefined;
   }
 
