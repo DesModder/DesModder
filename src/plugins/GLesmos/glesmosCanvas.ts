@@ -9,6 +9,8 @@ import {
   glesmosGetFastFillShader,
   setUniform,
 } from "./shaders";
+import window, { Calc } from "globals/window";
+import { format } from "i18n/i18n-core";
 
 export type GLesmosCanvas = ReturnType<typeof initGLesmosCanvas>;
 
@@ -37,7 +39,14 @@ export function initGLesmosCanvas() {
     premultipliedAlpha: false,
     antialias: true,
   }) as WebGL2RenderingContext;
-  if (!gl) return undefined;
+  if (!gl) {
+    Calc.controller._showToast({
+      // eslint-disable-next-line rulesdir/no-format-in-ts
+      message: format("GLesmos-no-support"),
+    });
+    window.DSM?.setPluginEnabled?.("GLesmos", false);
+    return undefined;
+  }
 
   //= ================ INIT WEBGL STUFF ================
 
