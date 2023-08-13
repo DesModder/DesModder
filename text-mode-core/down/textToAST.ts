@@ -26,7 +26,7 @@ const rules = {
   number: /(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?/,
   punct: [...punct],
   id: {
-    match: /[a-zA-Z][a-zA-Z0-9_]*/,
+    match: /\$\d+|[a-zA-Z][a-zA-Z0-9_]*/,
     type: moo.keywords({
       // prettier-ignore
       keyword: [
@@ -525,18 +525,21 @@ function id(ps: ParseState, token: Token): TextAST.Identifier {
 }
 
 /**
- * Pre-condition: expr.name matches:
+ * Pre-condition: expr.name fully matches either:
  *  - [a-zA-Z][a-zA-Z0-9_]*
+ *  - \$[0-9]+
  *
- * Post-condition: expr.name matches either:
+ * Post-condition: expr.name fully matches any of:
  *  - [a-zA-Z][a-zA-Z]*
  *  - [a-zA-Z][a-zA-Z]*_[a-zA-Z0-9]+
+ *  - \$[0-9]+
  */
 function normalizeID(ps: ParseState, token: Token): string {
   const error = (msg: string) => {
     ps.pushError(msg, pos(token));
     return "error";
   };
+  if (/^\$\d+$/.test(token.value)) return token.value;
   const parts = token.value.split("_");
   if (parts.length === 1) {
     const [p] = parts;

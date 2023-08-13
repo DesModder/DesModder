@@ -279,6 +279,7 @@ describe("Identifiers round-trip", () => {
     "\\o{hypot}",
     "\\o{dt}",
     "\\o{index}",
+    "\\token{123}",
   ];
   roundTrips(cases);
 });
