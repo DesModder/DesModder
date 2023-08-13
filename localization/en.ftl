@@ -23,6 +23,7 @@ GLesmos-desc = Render implicits on the GPU. Disabled on tab reload. Can cause th
 GLesmos-label-toggle-glesmos = Render with GLesmos
 GLesmos-confirm-lines = Confirm lines
 GLesmos-confirm-lines-body = GLesmos line rendering can be slow. Be careful, especially for a list of layers.
+GLesmos-no-support = Unfortunately, your browser does not support GLesmos because it does not support WebGL2.
 # Missing: error messages
 
 ## Tips
