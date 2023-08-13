@@ -1055,6 +1055,45 @@ describe("Automatic IDs", () => {
       id: "4",
     });
   });
+  test("Custom IDs work", () => {
+    const [_errors, res] = textToAug(`
+      folder "Title" {
+        a @{ id: "custom-1" }
+      } @{ id: "**dcg_geo_folder**" }
+
+      table {
+        x_1 = [1, 2, 3] @{ id: "_col-1" }
+      } @{ id: "mytable" }
+    `);
+    expect(res).not.toBeNull();
+    if (res === null) return;
+    const exprs = res.expressions.list;
+    expect(exprs[0]).toEqual({
+      ...folderDefaults,
+      id: "**dcg_geo_folder**",
+      title: "Title",
+      children: [
+        {
+          ...exprDefaults,
+          latex: id("a"),
+          id: "custom-1",
+        },
+      ],
+    });
+    expect(exprs[1]).toEqual({
+      ...tableDefaults,
+      id: "mytable",
+      columns: [
+        {
+          ...columnDefaults,
+          id: "_col-1",
+          color: "#2d70b3",
+          latex: id("x_1"),
+          values: [number(1), number(2), number(3)],
+        },
+      ],
+    });
+  });
 });
 
 describe("Settings", () => {
@@ -1221,8 +1260,14 @@ describe("Diagnostics", () => {
     testDiagnostics("Settings in folder", `folder "title" { settings @{} }`, [
       error("Settings may not be in a folder", pos(17, 29)),
     ]);
-    testDiagnostics("Invalid id", `y=x @{id: "1"}`, [
-      warning("Property id unexpected on expression", pos(6, 8)),
+    testDiagnostics("Invalid id: digits", `y=x @{id: "1"}`, [
+      error(
+        "Specified ID must include a character other than a digit",
+        pos(10, 13)
+      ),
+    ]);
+    testDiagnostics("Invalid id: dunder", `y=x @{id: "__thing"}`, [
+      error("Specified ID must not start with '__'", pos(10, 19)),
     ]);
   });
   describe("Parse errors", () => {

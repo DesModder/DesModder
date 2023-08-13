@@ -62,7 +62,13 @@ export const ticker: Schema = {
   playing: "boolean",
 };
 
+const base: Schema = {
+  // empty ID will be filled in later in the process
+  id: "string",
+};
+
 const itemBase: Schema = {
+  ...base,
   secret: "boolean",
 };
 
@@ -72,6 +78,7 @@ const nonFolderBase: Schema = {
 };
 
 const columnExpressionCommon: Schema = {
+  id: "string",
   // empty color will be filled in later in the process
   color: "color",
   hidden: "boolean",
@@ -171,6 +178,7 @@ export const regression: Schema = {
 export const table: Schema = nonFolderBase;
 
 export const column: Schema = {
+  ...base,
   ...columnExpressionCommon,
 };
 

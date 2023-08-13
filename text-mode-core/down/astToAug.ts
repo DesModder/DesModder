@@ -384,7 +384,7 @@ function columnExpressionCommonStyle(
 
 function exprBase(style: Hydrated.NonFolderBase, stmt: TextAST.Statement) {
   return {
-    id: stmt.id,
+    id: style.id ?? stmt.id,
     secret: style.secret,
     pinned: style.pinned,
   };
@@ -422,7 +422,7 @@ function tableColumnToAug(
   const expr = column.expr;
   const base = {
     type: "column" as const,
-    id: column.id,
+    id: style.id ?? column.id,
     ...columnExpressionCommonStyle(ds, style),
   };
 
@@ -531,7 +531,7 @@ function folderToAug(
   }
   return {
     type: "folder",
-    id: expr.id,
+    id: style.id ?? expr.id,
     secret: style.secret,
     hidden: style.hidden,
     collapsed: style.collapsed,
