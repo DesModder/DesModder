@@ -26,6 +26,8 @@ export type DispatchedEvent =
         | "tick-ticker"
         | "keypad/functions"
         | "commit-geo-objects"
+        | "upward-delete-selected-expression"
+        | "downward-delete-selected-expression"
         | "ui/container-resized";
     }
   | {

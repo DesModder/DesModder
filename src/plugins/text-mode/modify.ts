@@ -21,7 +21,7 @@ import TextAST, {
 import { addRawID } from "./LanguageServer";
 import { ChangeSpec, StateEffect } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { GraphState } from "@desmodder/graph-state";
+import { GraphState, NonFolderState } from "@desmodder/graph-state";
 import { DispatchedEvent } from "globals/Calc";
 import { Calc } from "globals/window";
 import Metadata from "plugins/manage-metadata/interface";
@@ -72,6 +72,12 @@ export function eventSequenceChanges(
       );
       res.push(...changes);
       effects.push(...effects1);
+    } else if (
+      event.type === "upward-delete-selected-expression" ||
+      event.type === "downward-delete-selected-expression"
+    ) {
+      // E.g. backspace on a polygon in geometry
+      res.push(deletedItemsChange(analysis, state, view));
     }
     return { changes: res, effects };
   }
@@ -190,25 +196,81 @@ function newItemsChange(
   dsmMetadata: Metadata,
   view: EditorView
 ) {
-  let lastPos = 0;
+  let lastItem: NonFolderState | undefined;
   const out: ChangeSpec[] = [];
   const effects = [];
   for (const item of state.expressions.list) {
-    if (item.type === "folder") continue;
+    if (item.type === "folder") {
+      lastItem = undefined;
+      continue;
+    }
     const stmt = analysis.mapIDstmt[item.id];
     if (stmt) {
-      lastPos = stmt.pos.to;
+      lastItem = item;
     } else {
       const aug = rawNonFolderToAug(getTextModeConfig(), item, dsmMetadata);
       const ast = itemAugToAST(aug);
       if (!ast) continue;
-      const insert = "\n\n" + astItemToTextString(ast);
-      const pos = { from: lastPos, to: lastPos };
+      const body = astItemToTextString(ast);
+      function insertPos(item: NonFolderState) {
+        if (item.folderId && lastItem?.folderId !== item.folderId) {
+          const folder = analysis.mapIDstmt[item.folderId];
+          if (folder.type === "Folder") {
+            return { pos: folder.afterOpen, insert: "\n" + body + "\n" };
+          }
+        } else if (!item.folderId && lastItem?.folderId) {
+          const folder = analysis.mapIDstmt[lastItem.folderId];
+          return { pos: folder.pos.to, insert: "\n\n" + body };
+        } else if (lastItem) {
+          const stmt = analysis.mapIDstmt[lastItem.id];
+          return { pos: stmt.pos.to, insert: "\n\n" + body };
+        }
+        // Should never happen, but might as well do something reasonable
+        return { pos: analysis.program.pos.to, insert: "\n\n" + body };
+      }
+      const { pos: p, insert } = insertPos(item);
+      const pos = { from: p, to: p };
       out.push(insertWithIndentation(view, pos, insert));
       effects.push(addRawID.of({ ...pos, id: item.id }));
     }
   }
   return { changes: out, effects };
+}
+
+/** E.g. deleted a polygon in geometry */
+function deletedItemsChange(
+  analysis: ProgramAnalysis,
+  state: GraphState,
+  view: EditorView
+) {
+  const out: ChangeSpec[] = [];
+  const unremoved = new Set(
+    state.expressions.list
+      .map((e) => e.id)
+      .concat(
+        state.expressions.list.flatMap((x) =>
+          x.type === "table" ? x.columns.map((c) => c.id) : []
+        )
+      )
+  );
+  for (const [id, stmt] of Object.entries(analysis.mapIDstmt)) {
+    if (
+      !unremoved.has(id) &&
+      stmt.type !== "Settings" &&
+      stmt.type !== "Ticker" &&
+      stmt.type !== "Table"
+    ) {
+      let from = stmt.pos.from;
+      while (/^[ \t\n]$/.test(view.state.sliceDoc(from - 1, from))) {
+        --from;
+      }
+      if (view.state.sliceDoc(from - 1, from) === ";") {
+        --from;
+      }
+      out.push({ from, to: stmt.pos.to, insert: "" });
+    }
+  }
+  return out;
 }
 
 function itemChange(

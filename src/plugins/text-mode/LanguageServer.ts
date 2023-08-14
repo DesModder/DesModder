@@ -83,11 +83,7 @@ export const analysisStateField = StateField.define<ProgramAnalysis>({
       const oldIDs = Object.values(value.mapIDstmt)
         .map((s) => {
           const to =
-            s.type === "Folder"
-              ? s.children[0].pos.from - 1
-              : s.type === "Table"
-              ? s.columns[0].pos.from - 1
-              : s.pos.to;
+            s.type === "Folder" || s.type === "Table" ? s.afterOpen : s.pos.to;
           return { from: s.pos.from, to, id: s.id };
         })
         .map(mapID);

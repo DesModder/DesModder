@@ -491,7 +491,7 @@ const initialParselets: TokenMap<InitialParselet> = {
       // index must be calculated at top to get index before children
       const index = ps.nextIndex();
       const defaultID = ps.nextID();
-      ps.consume("{");
+      const open = ps.consume("{");
       const columns = parseStatements(ps).flatMap((stmt) => {
         if (stmt.type !== "ExprStatement") {
           ps.pushError(
@@ -507,6 +507,7 @@ const initialParselets: TokenMap<InitialParselet> = {
           type: "Table",
           columns,
           pos: pos(token, end),
+          afterOpen: pos(open).to,
         },
         { index, defaultID }
       );
@@ -516,7 +517,7 @@ const initialParselets: TokenMap<InitialParselet> = {
       const index = ps.nextIndex();
       const defaultID = ps.nextID();
       const title = stringParselet(ps, ps.consumeType("string"));
-      ps.consume("{");
+      const open = ps.consume("{");
       const children = parseStatements(ps);
       const end = ps.consume("}");
       return ps.finishStatement(
@@ -525,6 +526,7 @@ const initialParselets: TokenMap<InitialParselet> = {
           children,
           title: title.value,
           pos: pos(token, end),
+          afterOpen: pos(open).to,
         },
         { index, defaultID }
       );
@@ -794,6 +796,8 @@ const consequentParselets: Record<
       style,
       pos: pos(stmt, style),
     };
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    delete ps.mapIDstmt[stmt.id];
     ps.mapIDstmt[stmt2.id] = stmt2;
     return stmt2;
   }),
