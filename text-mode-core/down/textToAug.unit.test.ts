@@ -20,15 +20,15 @@ import {
 } from "../aug/augBuilders";
 import astToAug from "./astToAug";
 import { error, warning } from "./diagnostics";
-import { parse } from "./textToAST";
+import { IncrementalState, parse } from "./textToAST";
 import type { Diagnostic } from "@codemirror/lint";
 // eslint-disable-next-line rulesdir/no-external-imports
 import { test, expect as _expect, describe } from "@jest/globals";
 
 const cfg = buildConfig({});
 
-function textToAug(text: string) {
-  const analysis = parse(cfg, text);
+function textToAug(text: string, incr?: Partial<IncrementalState>) {
+  const analysis = parse(cfg, text, incr);
   testPosNesting(analysis.program);
   return astToAug(cfg, analysis);
 }
@@ -1093,6 +1093,54 @@ describe("Automatic IDs", () => {
         },
       ],
     });
+  });
+  test("Incremental IDs work", () => {
+    const s = `
+      |folder "a"| {
+        |x|
+      }
+
+      |folder "Title" {|
+        |y=x|
+
+        |y=sin(x)| @{ id: "ee" }
+      } @{ id: "**dcg_geo_folder**" }
+
+      |table {|
+        |x_1 = [1, 2, 3] @{ id: "_col-1" }|
+
+        |x_2 = [3, 2, 1]|
+      }
+    `;
+    const text = s.replace(/\|/g, "");
+    const positions = [...s.matchAll(/\|/g)].map((m, i) => m.index! - i);
+    const rawIDs = positions
+      .filter((_, i) => i % 2 === 0)
+      .map((x, i) => ({ from: x, to: positions[2 * i + 1], id: `raw-${i}` }));
+    const [_errors, res] = textToAug(text, { rawIDs });
+    expect(res).not.toBeNull();
+    if (res === null) return;
+    const exprs = res.expressions.list;
+    expect(
+      exprs.flatMap((e) => {
+        const arr: (string | string[])[] = [e.id];
+        arr.push(
+          e.type === "folder"
+            ? e.children.map((f) => f.id)
+            : e.type === "table"
+            ? e.columns.map((f) => f.id)
+            : []
+        );
+        return arr;
+      })
+    ).toEqual([
+      "raw-0",
+      ["raw-1"],
+      "**dcg_geo_folder**",
+      ["raw-3", "ee"],
+      "raw-5",
+      ["_col-1", "raw-7"],
+    ]);
   });
 });
 

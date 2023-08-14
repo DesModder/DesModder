@@ -91,7 +91,7 @@ class ParseState extends DiagnosticsState {
     super();
     this.lexer = moo.compile(rules);
     this.lexer.reset(input);
-    this.rawIDs = incr.rawIDs;
+    this.rawIDs = [...incr.rawIDs];
     this.rawIDsAll = new Set(incr.rawIDs.map((r) => r.id));
   }
 
@@ -242,7 +242,7 @@ export interface IncrementalState {
    * If a statement intersects more than one range, pick the first range.
    * If a range intersects more than one statement, then it is only applied to
    * the first statement. */
-  rawIDs: RawIDRange[];
+  rawIDs: readonly RawIDRange[];
 }
 
 function hydrateIncremental(
