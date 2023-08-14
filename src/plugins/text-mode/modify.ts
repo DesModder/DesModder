@@ -54,16 +54,19 @@ export function eventSequenceChanges(
   } else {
     const res = [];
     const effects = [];
+    const dsmMetadata = rawToDsmMetadata(state);
     if ("id" in event && event.id !== undefined) {
-      const dsmMetadata = rawToDsmMetadata(state);
       res.push(metadataChange(analysis, state, dsmMetadata, view, event.id));
+    } else if (event.type === "update-all-selected-items") {
+      for (const { id } of Calc.controller.getAllSelectedItems())
+        res.push(metadataChange(analysis, state, dsmMetadata, view, id));
     }
+
     if (
       event.type === "convert-image-to-draggable" ||
       event.type === "create-sliders-for-item" ||
       event.type === "commit-geo-objects"
     ) {
-      const dsmMetadata = rawToDsmMetadata(state);
       const { changes, effects: effects1 } = newItemsChange(
         analysis,
         state,

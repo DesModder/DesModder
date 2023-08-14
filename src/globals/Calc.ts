@@ -91,6 +91,14 @@ export type DispatchedEvent =
       // used in compact-view plugin
       forceSwitchExpr?: boolean;
     }
+  | {
+      type: "update-all-selected-items";
+      update: {
+        // folderId is 'move these objects to folder'
+        // Everything else is simply styling
+        prop: "folderId" | string;
+      };
+    }
   | { type: "set-folder-collapsed"; id: string; isCollapsed: boolean }
   | { type: "set-item-colorLatex"; id: string; colorLatex: string }
   | { type: "set-note-text"; id: string; text: string };
@@ -203,6 +211,7 @@ interface CalcPrivate {
     // The item models returned are actually much more detailed
     getSelectedItem: () => ItemModel | undefined;
     getItemModel: (id: any) => ItemModel | undefined;
+    getAllSelectedItems: () => ItemModel[];
     getItemModelByIndex: (index: number) => ItemModel | undefined;
     getAllItemModels: () => ItemModel[];
     stopAllSliders: () => void;
