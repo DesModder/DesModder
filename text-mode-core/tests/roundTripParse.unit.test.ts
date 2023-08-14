@@ -10,7 +10,10 @@ import { exprToTextString } from "../up/astToText";
 import { rootLatexToAST } from "../up/augToAST";
 import "./run_calc_for_tests";
 
-const cfg = buildConfigFromGlobals(window.Desmos, (window as any).Calc);
+const Calc = window.Desmos.GraphingCalculator(
+  document.getElementById("graph-container")!
+);
+const cfg = buildConfigFromGlobals(window.Desmos, Calc);
 
 function parseRootLatex(s: string) {
   return _parseRootLatex(cfg, s);

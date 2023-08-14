@@ -10,9 +10,10 @@ export interface PublicConfig {
 }
 
 export function buildConfigFromGlobals(Desmos: any, Calc: any) {
+  const config = Calc.controller.getMathquillConfig({});
   return buildConfig({
-    operatorNames: Desmos.Private.MathquillConfig?.getAutoOperators?.(),
-    commandNames: Desmos.Private.MathquillConfig?.getAutoCommands?.(),
+    operatorNames: config.autoOperatorNames,
+    commandNames: config.autoCommands,
     colors: Calc?.colors,
     parseDesmosLatex: Desmos.Private.Parser.parse,
   });
