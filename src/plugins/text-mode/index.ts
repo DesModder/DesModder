@@ -3,7 +3,8 @@ import { DCGView } from "../../DCGView";
 import { Inserter, PluginController } from "../PluginController";
 import { onCalcEvent, analysisStateField } from "./LanguageServer";
 import { TextModeToggle } from "./components/TextModeToggle";
-import { initView, startState } from "./view/editor";
+import { initView, setDebugMode, startState } from "./view/editor";
+import { TransactionSpec } from "@codemirror/state";
 import { EditorView, ViewUpdate } from "@codemirror/view";
 import { Calc } from "globals/window";
 import { keys } from "utils/depUtils";
@@ -17,6 +18,16 @@ export default class TextMode extends PluginController {
   inTextMode: boolean = false;
   view: EditorView | null = null;
   dispatchListenerID: string | null = null;
+
+  updateDebugMode() {
+    this.view?.dispatch(this.updateDebugModeTransaction());
+  }
+
+  updateDebugModeTransaction(): TransactionSpec {
+    return {
+      effects: setDebugMode.of(this.dsm.isPluginEnabled("debug-mode")),
+    };
+  }
 
   afterDisable() {
     if (this.inTextMode) this.toggleTextMode();
