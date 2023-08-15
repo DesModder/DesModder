@@ -1,4 +1,5 @@
 import { ConfigItem, GenericSettings } from ".";
+import { DFFacet, FacetSource } from "./dataflow";
 import DSM from "MainController";
 
 export class PluginController<
@@ -14,6 +15,9 @@ export class PluginController<
   afterConfigChange() {}
   beforeDisable() {}
   afterDisable() {}
+
+  facets: DFFacet<any, any>[] = [];
+  facetSources: FacetSource[] = [];
 }
 
 export type Replacer<T = any> = undefined | ((old: T) => any);

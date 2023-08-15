@@ -1,4 +1,3 @@
-import { PluginID } from "..";
 import { Inserter, PluginController } from "../PluginController";
 import { ActionButtons } from "./components/ActionButtons";
 import { ItemModel } from "globals/models";
@@ -6,6 +5,19 @@ import { ItemModel } from "globals/models";
 export default class ExprActionButtons extends PluginController<undefined> {
   static id = "expr-action-buttons" as const;
   static enabledByDefault = true;
+
+  facets = [
+    {
+      facetID: "expr-action-buttons",
+      combine: (
+        values: readonly { plugin: string; buttons: ActionButton[] }[]
+      ): ActionButtonWithKey[] => {
+        return values.flatMap(({ plugin, buttons }) =>
+          buttons.map((b, i) => ({ ...b, key: `${plugin}:${i}` }))
+        );
+      },
+    },
+  ];
 
   beforeDisable() {
     throw new Error(
@@ -18,16 +30,7 @@ export default class ExprActionButtons extends PluginController<undefined> {
   }
 
   order() {
-    const enabled = Object.keys(this.dsm.enabledPlugins) as PluginID[];
-    enabled.sort();
-    return enabled.flatMap((pluginID) =>
-      (this.dsm.enabledPlugins[pluginID]!.actionButtons ?? []).map(
-        (eab, i): ActionButtonWithKey => ({
-          ...eab,
-          key: `${pluginID}:${i}`,
-        })
-      )
-    );
+    return this.dsm.getFacetValue("expr-action-buttons");
   }
 }
 

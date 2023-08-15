@@ -97,6 +97,7 @@ export default class DSM extends TransparentPlugins {
         this.setPluginEnabled(id, false);
         this.pillboxMenus?.updateMenuView();
         plugin?.afterDisable();
+        this.removeDFPlugin(id);
         Calc.controller.updateViews();
       }
     }
@@ -110,6 +111,11 @@ export default class DSM extends TransparentPlugins {
       ep[Plugin.id] = res;
       (res as PluginInstance).settings = this.pluginSettings[id];
       this.setPluginEnabled(id, true);
+      this.addDFPlugin({
+        id,
+        facets: res.facets,
+        facetSources: res.facetSources,
+      });
       res.afterEnable();
       this.pillboxMenus?.updateMenuView();
       Calc.controller.updateViews();

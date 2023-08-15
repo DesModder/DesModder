@@ -4,9 +4,10 @@ import BetterEvaluationView from "./better-evaluation-view";
 import BuiltinSettings from "./builtin-settings";
 import CompactView from "./compact-view";
 import CustomMathQuillConfig from "./custom-mathquill-config";
+import { Dataflow } from "./dataflow";
 import DebugMode from "./debug-mode";
 import DuplicateHotkey from "./duplicate-hotkey";
-import ExprActionButtons, { ActionButton } from "./expr-action-buttons";
+import ExprActionButtons from "./expr-action-buttons";
 import FindReplace from "./find-replace";
 import FolderTools from "./folder-tools";
 import HideErrors from "./hide-errors";
@@ -79,8 +80,6 @@ export interface PluginInstance<
   beforeDisable(): void;
   afterDisable(): void;
   settings: Settings;
-  /** Consumed by expr-action-buttons. This should really be a facet a la Codemirror. */
-  actionButtons?: ActionButton[];
 }
 
 export interface Plugin<
@@ -140,7 +139,7 @@ export type PluginID = keyof IDToPluginInstance;
 export type SpecificPlugin = KP[keyof KP];
 
 // prettier-ignore
-export class TransparentPlugins implements KeyToPluginInstance {
+export class TransparentPlugins extends Dataflow implements KeyToPluginInstance {
   /** Note that `enabledPlugins[id]` is truthy if and only if `id` is of
    * an enabled plugin. Otherwise, `enabledPlugins[id]` is undefined */
   private readonly ep: IDToPluginInstance = {};

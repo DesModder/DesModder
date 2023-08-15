@@ -1,4 +1,5 @@
 import { PluginController } from "../PluginController";
+import { FacetSource } from "../dataflow";
 import { ActionButton } from "../expr-action-buttons";
 import { ItemModel } from "globals/models";
 import { Calc } from "globals/window";
@@ -32,6 +33,17 @@ export default class FolderTools extends PluginController {
       iconClass: "dsm-icon-folder-plus",
       onTap: (model) => this.folderMerge(model.index),
       predicate: (model) => model.type === "folder",
+    },
+  ];
+
+  facetSources: FacetSource[] = [
+    {
+      facetID: "expr-action-buttons",
+      deps: [],
+      compute: () => ({
+        plugin: FolderTools.id,
+        buttons: this.actionButtons,
+      }),
     },
   ];
 

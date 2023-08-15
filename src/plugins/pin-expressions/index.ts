@@ -1,4 +1,5 @@
 import { Inserter, PluginController } from "../PluginController";
+import { FacetSource } from "../dataflow";
 import { ActionButton } from "../expr-action-buttons";
 import { ListView, PinnedPanel } from "./components/PinnedPanel";
 import "./pinExpressions.less";
@@ -24,6 +25,17 @@ export default class PinExpressions extends PluginController {
       onTap: (model) => this.unpinExpression(model.id),
       predicate: (model) =>
         model.type !== "folder" && this.isExpressionPinned(model.id),
+    },
+  ];
+
+  facetSources: FacetSource[] = [
+    {
+      facetID: "expr-action-buttons",
+      deps: [],
+      compute: () => ({
+        plugin: PinExpressions.id,
+        buttons: this.actionButtons,
+      }),
     },
   ];
 
