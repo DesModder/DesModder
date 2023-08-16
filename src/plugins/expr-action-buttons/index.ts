@@ -30,7 +30,9 @@ export default class ExprActionButtons extends PluginController<undefined> {
   }
 
   order() {
-    return this.dsm.getFacetValue("expr-action-buttons");
+    return this.dsm.getFacetValue(
+      "expr-action-buttons"
+    ) as ActionButtonWithKey[];
   }
 }
 

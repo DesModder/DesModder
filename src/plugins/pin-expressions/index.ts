@@ -9,7 +9,7 @@ export default class PinExpressions extends PluginController {
   static id = "pin-expressions" as const;
   static enabledByDefault = true;
 
-  actionButtons: ActionButton[] = [
+  private readonly actionButtons: ActionButton[] = [
     {
       tooltip: "pin-expressions-pin",
       buttonClass: "dsm-pin-button",

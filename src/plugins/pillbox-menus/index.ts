@@ -1,4 +1,5 @@
 import { Inserter, PluginController } from "../PluginController";
+import { FacetSource } from "../dataflow";
 import { MenuFunc } from "./components/Menu";
 import PillboxContainer from "./components/PillboxContainer";
 import PillboxMenu from "./components/PillboxMenu";
@@ -12,6 +13,29 @@ export default class PillboxMenus extends PluginController<undefined> {
   expandedPlugin: PluginID | null = null;
   private expandedCategory: string | null = null;
 
+  facets = [
+    {
+      facetID: "pillbox-buttons",
+      combine: (values: readonly PillboxButton[]): readonly PillboxButton[] => {
+        return values;
+      },
+    },
+  ];
+
+  facetSources: FacetSource[] = [
+    {
+      facetID: "pillbox-buttons",
+      deps: [],
+      precedence: "highest",
+      compute: () => ({
+        id: "main-menu",
+        tooltip: "menu-desmodder-tooltip",
+        iconClass: "dsm-icon-desmodder",
+        popup: MenuFunc,
+      }),
+    },
+  ];
+
   afterEnable() {
     Calc.controller.dispatcher.register((e) => {
       if (e.type === "toggle-graph-settings") {
@@ -21,18 +45,6 @@ export default class PillboxMenus extends PluginController<undefined> {
     });
   }
 
-  // array of IDs
-  pillboxButtonsOrder: string[] = ["main-menu"];
-  // map button ID to setup
-  pillboxButtons: Record<string, PillboxButton> = {
-    "main-menu": {
-      id: "main-menu",
-      tooltip: "menu-desmodder-tooltip",
-      iconClass: "dsm-icon-desmodder",
-      popup: MenuFunc,
-    },
-  };
-
   // string if open, null if none are open
   pillboxMenuOpen: string | null = null;
   pillboxMenuPinned: boolean = false;
@@ -41,6 +53,19 @@ export default class PillboxMenus extends PluginController<undefined> {
     throw new Error(
       "Programming Error: core plugin Pillbox Menus should not be disableable"
     );
+  }
+
+  private getPillboxButtons() {
+    return this.dsm.getFacetValue("pillbox-buttons") as PillboxButton[];
+  }
+
+  getPillboxButtonsOrder() {
+    return this.getPillboxButtons().map((x) => x.id);
+  }
+
+  /** Assumes `id` is an id of some menu. Linear search, so accidentally quadratic. */
+  getPillboxButton(id: string) {
+    return this.getPillboxButtons().find((x) => x.id === id)!;
   }
 
   pillboxButtonsView(horizontal: boolean): Inserter {
@@ -62,22 +87,6 @@ export default class PillboxMenus extends PluginController<undefined> {
 
   updateMenuView() {
     Calc.controller.updateViews();
-  }
-
-  addPillboxButton(info: PillboxButton) {
-    this.pillboxButtons[info.id] = info;
-    this.pillboxButtonsOrder.push(info.id);
-    this.updateMenuView();
-  }
-
-  removePillboxButton(id: string) {
-    this.pillboxButtonsOrder.splice(this.pillboxButtonsOrder.indexOf(id), 1);
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-    delete this.pillboxButtons[id];
-    if (this.pillboxMenuOpen === id) {
-      this.pillboxMenuOpen = null;
-    }
-    this.updateMenuView();
   }
 
   isSomePillboxMenuOpen() {

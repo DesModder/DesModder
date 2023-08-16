@@ -1,4 +1,4 @@
-import { Compartment, EditorState, Facet } from "@codemirror/state";
+import { Compartment, EditorState, Facet, Prec } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 
 const compartment = new Compartment();
@@ -66,12 +66,35 @@ export class Dataflow {
       for (const source of plugin.facetSources) {
         const field = this.facets.get(source.facetID);
         if (!field) continue;
-        sources.push(field.compute(source.deps, () => source.compute([])));
+        const prec = getPrecedence(source.precedence ?? "default");
+        const ext = field.compute(source.deps, () => source.compute([]));
+        sources.push(prec(ext));
       }
     }
     this.ev.dispatch({
       effects: [compartment.reconfigure(sources)],
     });
+  }
+}
+
+function getPrecedence(prec: Precedence) {
+  switch (prec) {
+    case "lowest":
+      return Prec.lowest;
+    case "low":
+      return Prec.low;
+    case "default":
+      return Prec.default;
+    case "high":
+      return Prec.high;
+    case "highest":
+      return Prec.highest;
+    default:
+      prec satisfies never;
+      throw new Error(
+        `Invalid prec: ${prec}. Must be one of: ` +
+          `"lowest" | "low" | "default" | "high" | "highest"`
+      );
   }
 }
 
@@ -82,8 +105,11 @@ export interface DFPlugin {
   facetSources: FacetSource[];
 }
 
+export type Precedence = "lowest" | "low" | "default" | "high" | "highest";
+
 export interface FacetSource {
   facetID: string;
+  precedence?: Precedence;
   deps: [];
   compute: (values: unknown[]) => any;
 }

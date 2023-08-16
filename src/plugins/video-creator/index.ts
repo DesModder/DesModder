@@ -1,4 +1,5 @@
 import { PluginController } from "../PluginController";
+import { FacetSource } from "../dataflow";
 import { updateView } from "./View";
 import { CaptureMethod, SliderSettings, capture } from "./backend/capture";
 import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
@@ -81,20 +82,27 @@ export default class VideoCreator extends PluginController {
     }
   }
 
+  facetSources: FacetSource[] = [
+    {
+      facetID: "pillbox-buttons",
+      deps: [],
+      precedence: "high",
+      compute: () => ({
+        id: "dsm-vc-menu",
+        tooltip: "video-creator-menu",
+        iconClass: "dcg-icon-film",
+        popup: () => MainPopupFunc(this),
+      }),
+    },
+  ];
+
   afterEnable() {
     Calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
     this._applyDefaultCaptureSize();
-    this.dsm.pillboxMenus?.addPillboxButton({
-      id: "dsm-vc-menu",
-      tooltip: "video-creator-menu",
-      iconClass: "dcg-icon-film",
-      popup: () => MainPopupFunc(this),
-    });
     document.addEventListener("keydown", this.onKeydown);
   }
 
   afterDisable() {
-    this.dsm.pillboxMenus?.removePillboxButton("dsm-vc-menu");
     document.removeEventListener("keydown", this.onKeydown);
   }
 

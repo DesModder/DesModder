@@ -9,7 +9,7 @@ export default class FolderTools extends PluginController {
   static id = "folder-tools" as const;
   static enabledByDefault = true;
 
-  actionButtons: ActionButton[] = [
+  private readonly actionButtons: ActionButton[] = [
     {
       tooltip: "folder-tools-enclose",
       buttonClass: "dsm-note-enclose-button",

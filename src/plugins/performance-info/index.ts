@@ -1,4 +1,5 @@
 import { PluginController } from "../PluginController";
+import { FacetSource } from "../dataflow";
 import { MainPopupFunc } from "./PerformanceView";
 import { DispatchedEvent, TimingData } from "globals/Calc";
 import { Calc } from "globals/window";
@@ -10,13 +11,20 @@ export default class PerformanceInfo extends PluginController {
   timingDataHistory: TimingData[] = [];
   dispatchListenerID!: string;
 
+  facetSources: FacetSource[] = [
+    {
+      facetID: "pillbox-buttons",
+      deps: [],
+      compute: () => ({
+        id: "dsm-pi-menu",
+        tooltip: "performance-info-name",
+        iconClass: "dsm-icon-pie-chart",
+        popup: () => MainPopupFunc(this, this.dsm),
+      }),
+    },
+  ];
+
   afterEnable() {
-    this.dsm.pillboxMenus?.addPillboxButton({
-      id: "dsm-pi-menu",
-      tooltip: "performance-info-name",
-      iconClass: "dsm-icon-pie-chart",
-      popup: () => MainPopupFunc(this, this.dsm),
-    });
     this.dispatchListenerID = Calc.controller.dispatcher.register((e) => {
       if (e.type === "on-evaluator-changes") {
         this.onEvaluatorChanges(e);
@@ -26,7 +34,6 @@ export default class PerformanceInfo extends PluginController {
 
   afterDisable() {
     Calc.controller.dispatcher.unregister(this.dispatchListenerID);
-    this.dsm.pillboxMenus?.removePillboxButton("dsm-pi-menu");
   }
 
   onEvaluatorChanges(e: DispatchedEvent) {
