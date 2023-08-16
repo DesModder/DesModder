@@ -1,5 +1,5 @@
+import { facetSourcesSpec } from "../../dataflow";
 import { Inserter, PluginController } from "../PluginController";
-import { FacetSource } from "../dataflow";
 import { ActionButton } from "../expr-action-buttons";
 import { ListView, PinnedPanel } from "./components/PinnedPanel";
 import "./pinExpressions.less";
@@ -28,16 +28,14 @@ export default class PinExpressions extends PluginController {
     },
   ];
 
-  facetSources: FacetSource[] = [
-    {
-      facetID: "expr-action-buttons",
-      deps: [],
-      compute: () => ({
+  facetSources = facetSourcesSpec({
+    "expr-action-buttons": {
+      value: {
         plugin: PinExpressions.id,
         buttons: this.actionButtons,
-      }),
+      },
     },
-  ];
+  });
 
   pinExpression(id: string) {
     if (Calc.controller.getItemModel(id)?.type !== "folder")

@@ -42,7 +42,7 @@ abstract class IfComponent extends ClassComponent<{
 }> {}
 
 abstract class ForComponent<T> extends ClassComponent<{
-  each: () => Array<T>;
+  each: () => ReadonlyArray<T>;
   key: (t: T) => string | number;
 }> {}
 

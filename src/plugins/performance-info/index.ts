@@ -1,5 +1,5 @@
+import { facetSourcesSpec } from "../../dataflow";
 import { PluginController } from "../PluginController";
-import { FacetSource } from "../dataflow";
 import { MainPopupFunc } from "./PerformanceView";
 import { DispatchedEvent, TimingData } from "globals/Calc";
 import { Calc } from "globals/window";
@@ -11,18 +11,16 @@ export default class PerformanceInfo extends PluginController {
   timingDataHistory: TimingData[] = [];
   dispatchListenerID!: string;
 
-  facetSources: FacetSource[] = [
-    {
-      facetID: "pillbox-buttons",
-      deps: [],
-      compute: () => ({
+  facetSources = facetSourcesSpec({
+    "pillbox-buttons": {
+      value: {
         id: "dsm-pi-menu",
         tooltip: "performance-info-name",
         iconClass: "dsm-icon-pie-chart",
         popup: () => MainPopupFunc(this, this.dsm),
-      }),
+      },
     },
-  ];
+  });
 
   afterEnable() {
     this.dispatchListenerID = Calc.controller.dispatcher.register((e) => {

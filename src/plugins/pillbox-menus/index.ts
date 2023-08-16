@@ -1,5 +1,5 @@
+import { facetSourcesSpec, facetsSpec } from "../../dataflow";
 import { Inserter, PluginController } from "../PluginController";
-import { FacetSource } from "../dataflow";
 import { MenuFunc } from "./components/Menu";
 import PillboxContainer from "./components/PillboxContainer";
 import PillboxMenu from "./components/PillboxMenu";
@@ -7,34 +7,38 @@ import { DCGView } from "DCGView";
 import { Calc } from "globals/window";
 import { plugins, PluginID, ConfigItem } from "plugins";
 
+declare module "dataflow" {
+  interface Facets {
+    "pillbox-buttons": {
+      input: PillboxButton;
+      output: readonly PillboxButton[];
+    };
+  }
+}
+
 export default class PillboxMenus extends PluginController<undefined> {
   static id = "pillbox-menus" as const;
   static enabledByDefault = true;
   expandedPlugin: PluginID | null = null;
   private expandedCategory: string | null = null;
 
-  facets = [
-    {
-      facetID: "pillbox-buttons",
-      combine: (values: readonly PillboxButton[]): readonly PillboxButton[] => {
-        return values;
-      },
+  facets = facetsSpec({
+    "pillbox-buttons": {
+      combine: (values) => values,
     },
-  ];
+  });
 
-  facetSources: FacetSource[] = [
-    {
-      facetID: "pillbox-buttons",
-      deps: [],
+  facetSources = facetSourcesSpec({
+    "pillbox-buttons": {
       precedence: "highest",
-      compute: () => ({
+      value: {
         id: "main-menu",
         tooltip: "menu-desmodder-tooltip",
         iconClass: "dsm-icon-desmodder",
         popup: MenuFunc,
-      }),
+      },
     },
-  ];
+  });
 
   afterEnable() {
     Calc.controller.dispatcher.register((e) => {
@@ -56,7 +60,7 @@ export default class PillboxMenus extends PluginController<undefined> {
   }
 
   private getPillboxButtons() {
-    return this.dsm.getFacetValue("pillbox-buttons") as PillboxButton[];
+    return this.dsm.getFacetValue("pillbox-buttons");
   }
 
   getPillboxButtonsOrder() {

@@ -1,5 +1,5 @@
+import { facetSourcesSpec } from "../../dataflow";
 import { PluginController } from "../PluginController";
-import { FacetSource } from "../dataflow";
 import { updateView } from "./View";
 import { CaptureMethod, SliderSettings, capture } from "./backend/capture";
 import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
@@ -82,19 +82,17 @@ export default class VideoCreator extends PluginController {
     }
   }
 
-  facetSources: FacetSource[] = [
-    {
-      facetID: "pillbox-buttons",
-      deps: [],
+  facetSources = facetSourcesSpec({
+    "pillbox-buttons": {
       precedence: "high",
-      compute: () => ({
+      value: {
         id: "dsm-vc-menu",
         tooltip: "video-creator-menu",
         iconClass: "dcg-icon-film",
         popup: () => MainPopupFunc(this),
-      }),
+      },
     },
-  ];
+  });
 
   afterEnable() {
     Calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());

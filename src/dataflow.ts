@@ -3,6 +3,25 @@ import { EditorView } from "@codemirror/view";
 
 const compartment = new Compartment();
 
+/**
+ * This Facets interface is intended to be extended through module
+ * augmentation and interface merging, e.g.
+ *
+ *   declare module "dataflow" {
+ *     interface Facets {
+ *       "expr-action-buttons": {
+ *         input: ActionButtonSpec;
+ *         output: ActionButtonWithKey[];
+ *       };
+ *     }
+ *   }
+ *
+ * By doing this, plugins do not depend on each others' types (opening the door
+ * to external plugins), but we're still typesafe within this main repo.
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface Facets {}
+
 /** Manage data flow between plugins. */
 export class Dataflow {
   private readonly ev = new EditorView({
@@ -14,7 +33,20 @@ export class Dataflow {
   private readonly dfPlugins = new Map<string, DFPlugin>();
   private readonly facets = new Map<string, Facet<any, any>>();
 
-  addDFPlugin(plugin: DFPlugin) {
+  addDFPlugin(pluginSpec: DFPluginSpec) {
+    const plugin: DFPlugin = {
+      id: pluginSpec.id,
+      facets: Object.entries(pluginSpec.facets).map(([k, v]) => ({
+        facetID: k,
+        ...v,
+      })),
+      facetSources: Object.entries(pluginSpec.facetSources).map(([k, v]) => ({
+        precedence: v.precedence ?? "default",
+        facetID: k,
+        deps: [],
+        compute: () => v.value,
+      })),
+    };
     if (this.dfPlugins.has(plugin.id)) {
       throw new Error(`Dataflow Plugin '${plugin.id}' already present.`);
     }
@@ -41,7 +73,8 @@ export class Dataflow {
     this.afterPluginChange();
   }
 
-  getFacetValue(facetID: string) {
+  getFacetValue<T extends keyof Facets>(facetID: T): Facets[T]["output"];
+  getFacetValue(facetID: string): unknown {
     const field = this.facets.get(facetID);
     if (!field) return undefined;
     return this.ev.state.facet(field) as unknown;
@@ -66,7 +99,7 @@ export class Dataflow {
       for (const source of plugin.facetSources) {
         const field = this.facets.get(source.facetID);
         if (!field) continue;
-        const prec = getPrecedence(source.precedence ?? "default");
+        const prec = getPrecedence(source.precedence);
         const ext = field.compute(source.deps, () => source.compute([]));
         sources.push(prec(ext));
       }
@@ -98,25 +131,57 @@ function getPrecedence(prec: Precedence) {
   }
 }
 
-export interface DFPlugin {
+export interface DFPluginSpec {
   /** Plugin ID, such as "text-mode" */
   id: string;
+  facets: FacetsSpec;
+  facetSources: FacetSourcesSpec;
+}
+
+interface DFPlugin {
+  id: string;
   facets: DFFacet<any, any>[];
-  facetSources: FacetSource[];
+  facetSources: FacetSource<any>[];
 }
 
 export type Precedence = "lowest" | "low" | "default" | "high" | "highest";
 
-export interface FacetSource {
+export interface FacetSource<Input> {
   facetID: string;
-  precedence?: Precedence;
+  precedence: Precedence;
   deps: [];
-  compute: (values: unknown[]) => any;
+  compute: (values: unknown[]) => Input;
+}
+
+interface FacetSourceSpec<Input> {
+  precedence?: Precedence;
+  value: Input;
+}
+
+export type FacetSourcesSpec = {
+  [Key in keyof Facets]?: FacetSourceSpec<Facets[Key]["input"]>;
+};
+
+/** Identity function, used to trick Typescript into bidi type inference */
+export function facetSourcesSpec(facetsSpec: FacetSourcesSpec) {
+  return facetsSpec;
+}
+
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
+export type FacetsSpec = {
+  [Key in keyof Facets]?: FacetSpec<
+    Facets[Key]["input"],
+    Facets[Key]["output"]
+  >;
+};
+
+/** Identity function, used to trick Typescript into bidi type inference */
+export function facetsSpec(facetsSpec: FacetsSpec) {
+  return facetsSpec;
 }
 
 // Similar to FacetConfig from @codemirror/state.
-export interface DFFacet<Input, Output> {
-  facetID: string;
+interface FacetSpec<Input, Output> {
   /**
    * How to combine the input values into a single output value. When
    * not given, the array of input values becomes the output. This
@@ -137,4 +202,8 @@ export interface DFFacet<Input, Output> {
    * value when no inputs changed. Defaults to comparing with `===`.
    */
   compareInput?: (a: Input, b: Input) => boolean;
+}
+
+interface DFFacet<Input, Output> extends FacetSpec<Input, Output> {
+  facetID: string;
 }

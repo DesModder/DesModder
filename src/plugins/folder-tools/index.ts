@@ -1,5 +1,5 @@
+import { facetSourcesSpec } from "../../dataflow";
 import { PluginController } from "../PluginController";
-import { FacetSource } from "../dataflow";
 import { ActionButton } from "../expr-action-buttons";
 import { ItemModel } from "globals/models";
 import { Calc } from "globals/window";
@@ -36,16 +36,14 @@ export default class FolderTools extends PluginController {
     },
   ];
 
-  facetSources: FacetSource[] = [
-    {
-      facetID: "expr-action-buttons",
-      deps: [],
-      compute: () => ({
+  facetSources = facetSourcesSpec({
+    "expr-action-buttons": {
+      value: {
         plugin: FolderTools.id,
         buttons: this.actionButtons,
-      }),
+      },
     },
-  ];
+  });
 
   folderDump(folderIndex: number) {
     const folderModel = Calc.controller.getItemModelByIndex(folderIndex);

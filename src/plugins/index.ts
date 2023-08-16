@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/method-signature-style, @typescript-eslint/dot-notation */
+import { Dataflow } from "../dataflow";
 import GLesmos from "./GLesmos";
 import BetterEvaluationView from "./better-evaluation-view";
 import BuiltinSettings from "./builtin-settings";
 import CompactView from "./compact-view";
 import CustomMathQuillConfig from "./custom-mathquill-config";
-import { Dataflow } from "./dataflow";
 import DebugMode from "./debug-mode";
 import DuplicateHotkey from "./duplicate-hotkey";
 import ExprActionButtons from "./expr-action-buttons";

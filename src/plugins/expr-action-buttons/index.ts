@@ -1,23 +1,34 @@
 import { Inserter, PluginController } from "../PluginController";
 import { ActionButtons } from "./components/ActionButtons";
+import { facetsSpec } from "dataflow";
 import { ItemModel } from "globals/models";
+
+declare module "dataflow" {
+  interface Facets {
+    "expr-action-buttons": {
+      input: ActionButtonSpec;
+      output: readonly ActionButtonWithKey[];
+    };
+  }
+}
+
+interface ActionButtonSpec {
+  plugin: string;
+  buttons: ActionButton[];
+}
 
 export default class ExprActionButtons extends PluginController<undefined> {
   static id = "expr-action-buttons" as const;
   static enabledByDefault = true;
 
-  facets = [
-    {
-      facetID: "expr-action-buttons",
-      combine: (
-        values: readonly { plugin: string; buttons: ActionButton[] }[]
-      ): ActionButtonWithKey[] => {
-        return values.flatMap(({ plugin, buttons }) =>
+  facets = facetsSpec({
+    "expr-action-buttons": {
+      combine: (values) =>
+        values.flatMap(({ plugin, buttons }) =>
           buttons.map((b, i) => ({ ...b, key: `${plugin}:${i}` }))
-        );
-      },
+        ),
     },
-  ];
+  });
 
   beforeDisable() {
     throw new Error(
@@ -30,9 +41,7 @@ export default class ExprActionButtons extends PluginController<undefined> {
   }
 
   order() {
-    return this.dsm.getFacetValue(
-      "expr-action-buttons"
-    ) as ActionButtonWithKey[];
+    return this.dsm.getFacetValue("expr-action-buttons");
   }
 }
 
