@@ -9,7 +9,7 @@ export const configList = [
   {
     type: "color-list",
     key: "bracketPairColorizationColors",
-    default: ["#000000", "#4e886b", "#d34545", "#652c8c"],
+    default: ["#000000", "#2d70b3", "#6042a6", "#388c46"],
     shouldShow: (config) => config.bracketPairColorization,
   },
   {
