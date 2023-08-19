@@ -47,6 +47,18 @@ export function generateBracketPairColorizationCSS(
     } 
     `,
     `
+    .dsm-mq-syntax-comma {
+        color: ${colorMaker};
+    }
+    `,
+    // Reset color on standalone commas, like in `(0,0),(1,2)`. Otherwise they
+    // would get the color of the first color in the list.
+    `
+    .dcg-mq-root-block > .dsm-mq-syntax-comma {
+        color: unset
+    }
+    `,
+    `
     .dcg-mq-bracket-middle {
         --bracket-depth1: calc(var(--bracket-depth2) + 1);
         ${colorInText ? "" : "color: black;"}

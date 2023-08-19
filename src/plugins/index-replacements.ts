@@ -10,6 +10,7 @@ import pinExpressions from "plugins/pin-expressions/pin-expressions.replacements
 import rightClickTray from "plugins/right-click-tray/right-click-tray.replacements";
 import shiftEnterNewline from "plugins/shift-enter-newline/shift-enter-newline.replacements";
 import showTips from "plugins/show-tips/show-tips.replacements";
+import syntaxHighlighting from "plugins/syntax-highlighting/syntax-highlighting.replacements";
 import textMode from "plugins/text-mode/text-mode.replacements";
 import insertPanels from "preload/moduleOverrides/insert-panels.replacements";
 
@@ -23,6 +24,7 @@ export default [
   hideErrors,
   pinExpressions,
   shiftEnterNewline,
+  syntaxHighlighting,
   textMode,
   debugMode,
   extraExpressionButtons,
