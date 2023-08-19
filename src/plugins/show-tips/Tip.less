@@ -19,23 +19,23 @@
   }
 
   .dsm-usage-tip {
-    background: white;
+    background: var(--dsm-background);
     position: relative;
     transition: bottom 0.4s, height 0.4s;
     bottom: 0px;
 
     // Color and font-size matching unresolved detail warning
-    color: #666;
+    color: var(--dsm-foreground);
     font-size: 12.8;
 
-    opacity: 0.3;
+    opacity: 0.25;
     line-height: 1.25;
     overflow: hidden;
 
     height: 46px;
 
     &:hover {
-      opacity: 1;
+      opacity: 0.8;
       bottom: 55px;
       // extra pixel to prevent hover-jiggle from a mouse at the bottom of the screen
       height: 101px;
@@ -43,11 +43,12 @@
 
     a {
       // Color and text-decoration matching unresolved detail warning
-      color: #666;
+      color: var(--dsm-foreground);
+      opacity: 0.6;
       text-decoration: underline;
 
       &:hover {
-        color: #000;
+        opacity: 1;
         text-decoration: underline;
       }
 

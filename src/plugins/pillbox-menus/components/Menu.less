@@ -1,6 +1,6 @@
 .dsm-plugin-section,
 .dsm-category-section {
-  border-top: 1px solid #e2e2e2;
+  border-top: 1px solid var(--dsm-desmodder-category-separator);
 }
 
 .dsm-category-section:nth-child(2) {
@@ -26,7 +26,7 @@
 }
 
 .dsm-plugin-title-bar {
-  color: #222;
+  color: var(--dsm-desmodder-menu-title);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -80,7 +80,7 @@
 
 .dsm-plugin-info-body {
   padding: 5px 0;
-  color: #444;
+  color: var(--dsm-desmodder-menu-description);
 
   a {
     color: var(--dsm-primary-color);
@@ -92,6 +92,12 @@
   padding-right: 10px;
   display: flex;
   align-items: center;
+
+  input {
+    background-color: var(--dsm-background);
+    color: var(--dsm-foreground);
+    border-color: var(--dsm-desmodder-input-border);
+  }
 
   label {
     cursor: pointer;
@@ -129,5 +135,75 @@
   .dcg-tooltip-hit-area-container {
     // Desmos uses important, so we must use important to override it
     cursor: pointer !important;
+  }
+}
+
+.dsm-settings-button {
+  border-radius: 5px;
+  border: 1px solid var(--dsm-desmodder-input-border);
+  background-color: var(--dsm-background);
+  color: var(--dsm-foreground);
+}
+
+.dsm-settings-import-export-widget {
+  textarea {
+    border-radius: 10px;
+    background: var(--dsm-background);
+    color: var(--dsm-foreground);
+    border-color: var(--dsm-desmodder-input-border);
+    margin-right: 10px;
+    padding: 5px;
+
+    &::placeholder {
+      color: rgba(var(--dsm-foreground-rgb), 0.5);
+    }
+  }
+  margin-top: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-top: 1px solid var(--dsm-desmodder-category-separator);
+  border-bottom: 1px solid var(--dsm-desmodder-category-separator);
+
+  .copy-to-clipboard-section {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--dsm-desmodder-category-separator);
+  }
+
+  .import-section {
+    display: flex;
+  }
+}
+
+.dsm-saved-states-widget {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--dsm-desmodder-category-separator);
+
+  ul {
+    list-style: none;
+    padding: 0;
+
+    border: 1px solid var(--dsm-desmodder-input-border);
+    border-radius: 5px;
+
+    li {
+      border-top: 1px solid var(--dsm-desmodder-input-border);
+      display: flex;
+      justify-content: space-between;
+
+      button {
+        background-color: rgba(var(--dsm-foreground-rgb), 0.1);
+        color: var(--dsm-foreground);
+        border: none;
+        flex-grow: 1;
+        text-align: start;
+      }
+    }
+
+    li:nth-child(1) {
+      border: none;
+    }
   }
 }

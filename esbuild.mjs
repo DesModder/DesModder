@@ -3,11 +3,55 @@ import { esbuildPluginInline } from "./loaders/esbuild-plugin-inline.mjs";
 import { esbuildPluginLezer } from "./loaders/esbuild-plugin-lezer.mjs";
 import { esbuildPluginReplacements } from "./loaders/esbuild-plugin-replacements.mjs";
 import { loadFile } from "./loaders/utils.mjs";
+import { btoa } from "buffer";
 import esbuild from "esbuild";
 import { copy } from "esbuild-plugin-copy";
 import { lessLoader } from "esbuild-plugin-less";
 import { promises as fs } from "fs";
 import parseArgs from "minimist-lite";
+import ts from "typescript";
+
+// plugin for loading the default theme colors
+const defaultColorThemeLoader = {
+  name: "default-color-theme-loader",
+  setup(build) {
+    build.onResolve(
+      // use the file name "compile-time-default-color-theme" to load the css
+      { filter: /^compile-time-default-color-theme$/ },
+      (args) => {
+        return {
+          path: "./src/plugins/color-themes/generate-css.ts",
+          namespace: "default-color-theme-ns",
+        };
+      }
+    );
+    build.onLoad(
+      { filter: /.*/, namespace: "default-color-theme-ns" },
+      async (args) => {
+        // transpile the typescript to javascript
+        const transpiledModule = ts.transpileModule(
+          (await fs.readFile(args.path)).toString(),
+          {
+            compilerOptions: {
+              module: "es6",
+            },
+          }
+        );
+        const outputText = transpiledModule.outputText;
+
+        // dynamically import() the js as a data URL to avoid
+        // having to create a temporary file
+        const mod = await import(
+          `data:text/javascript;base64,${btoa(outputText)}`
+        );
+        return {
+          contents: mod.getColorSchemeStyleRule(mod.ConfigDefaultsAdvanced),
+          loader: "css",
+        };
+      }
+    );
+  },
+};
 
 const argv = parseArgs(process.argv.slice(2));
 
@@ -58,6 +102,7 @@ const opts = {
   bundle: true,
   outdir,
   plugins: [
+    defaultColorThemeLoader,
     lessLoader(),
     esbuildPluginInline(),
     esbuildPluginLezer(),

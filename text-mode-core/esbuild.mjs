@@ -5,6 +5,7 @@ import { loadFile } from "../loaders/utils.mjs";
 import esbuild from "esbuild";
 import { promises as fs } from "fs";
 import path from "path";
+import * as ts from "typescript";
 
 const outdir = "dist";
 

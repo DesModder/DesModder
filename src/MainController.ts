@@ -246,11 +246,17 @@ export default class DSM extends TransparentPlugins {
 
 function getDefaultConfig(id: PluginID) {
   const out: GenericSettings = {};
-  const config = plugins.get(id)?.config;
+  const plugin = plugins.get(id);
+  const config = plugin?.config;
   if (config !== undefined) {
     for (const configItem of config) {
       out[configItem.key] = configItem.default;
     }
   }
+  if (plugin?.settingsSavedStatesWidget) {
+    const savedState = plugin?.settingsSavedStatesWidget;
+    out[savedState.savedStatesKey] = {};
+  }
+
   return out;
 }

@@ -7,6 +7,9 @@ import injectScript from "utils/injectScript";
 import { postMessageUp, listenToMessageDown, arrayToSet } from "utils/messages";
 import { pollForValue } from "utils/utils";
 
+const isDarkTheme = localStorage.getItem("isDarkTheme") === "true";
+if (isDarkTheme) document.body.style.filter = "invert(1)";
+
 /* This script is loaded at document_start, before the page's scripts */
 
 /** The calculator is not loaded as soon as toplevel/calculator_desktop is

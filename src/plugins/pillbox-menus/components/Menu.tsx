@@ -1,6 +1,8 @@
 import PillboxMenus from "..";
 import "./Menu.less";
+import { parseSavedState, serializeSavedState } from "./saved-state-utils";
 import { Component, jsx } from "DCGView";
+import { IconButton } from "components";
 import Toggle from "components/Toggle";
 import {
   If,
@@ -9,6 +11,7 @@ import {
   Tooltip,
   For,
 } from "components/desmosComponents";
+import { Calc } from "globals/window";
 import { format } from "i18n/i18n-core";
 import {
   ConfigItem,
@@ -51,6 +54,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "hide-errors",
     "compact-view",
     "multiline",
+    "color-themes",
   ],
   integrations: ["wakatime"],
 };
@@ -156,6 +160,39 @@ export default class Menu extends Component<{
                     )}
                   </If>
                 </div>
+                {plugin.hasSettingsImportExportWidget &&
+                this.pm.expandedPlugin ? (
+                  <SettingsImportExportWidget
+                    pm={() => this.pm}
+                    plugin={() => plugin}
+                    settings={() =>
+                      this.pm.dsm.pluginSettings[
+                        this.pm.expandedPlugin as Exclude<
+                          typeof this.pm.expandedPlugin,
+                          null
+                        >
+                      ] ?? {}
+                    }
+                  ></SettingsImportExportWidget>
+                ) : (
+                  ""
+                )}
+                {plugin.settingsSavedStatesWidget.enabled ? (
+                  <SavedStatesWidget
+                    pm={() => this.pm}
+                    plugin={() => plugin}
+                    settings={() =>
+                      this.pm.dsm.pluginSettings[
+                        this.pm.expandedPlugin as Exclude<
+                          typeof this.pm.expandedPlugin,
+                          null
+                        >
+                      ] ?? {}
+                    }
+                  ></SavedStatesWidget>
+                ) : (
+                  ""
+                )}
                 {this.getExpandedSettings()}
               </div>
             )}
@@ -188,6 +225,246 @@ export default class Menu extends Component<{
             )}
           </If>
         ))}
+      </div>
+    );
+  }
+}
+
+function assertUnreachable(): never {
+  throw new Error("Unreachable!");
+}
+
+function tryLoadingPotentiallyInvalidSettings(
+  props: {
+    pm: () => PillboxMenus;
+    plugin: () => SpecificPlugin;
+    settings: () => GenericSettings;
+  },
+  settingsData: any
+) {
+  const ep = props.pm().expandedPlugin;
+  if (!ep) return;
+
+  try {
+    const showIncompatibleTypesWarning = () => {
+      Calc.controller._showToast({
+        message: format("import-export-settings-incompatible-types"),
+      });
+    };
+
+    for (const configItem of props.plugin().config ?? []) {
+      const data = settingsData[configItem.key];
+
+      switch (configItem.type) {
+        case "string":
+        case "number":
+        case "boolean":
+          // eslint-disable-next-line valid-typeof
+          if (typeof data === configItem.type) {
+            props.pm().dsm.setPluginSetting(ep, configItem.key, data);
+          } else {
+            showIncompatibleTypesWarning();
+          }
+          break;
+        default:
+          return assertUnreachable();
+      }
+    }
+  } catch (err) {
+    Calc.controller._showToast({
+      message: format("import-export-settings-failed-to-load", {
+        pluginName: format(props.plugin().id + "-name"),
+      }),
+    });
+    // eslint-disable-next-line no-console
+    console.error("Error loading plugin settings:", err);
+  }
+}
+
+class SavedStatesWidget extends Component<{
+  pm: () => PillboxMenus;
+  plugin: () => SpecificPlugin;
+  settings: () => GenericSettings;
+}> {
+  template() {
+    const getSavedStates = () => {
+      const ep = this.props.pm().expandedPlugin;
+      if (!ep) return {};
+      return parseSavedState(
+        this.props.settings()[
+          this.props.plugin().settingsSavedStatesWidget.savedStatesKey
+        ]
+      );
+    };
+
+    return (
+      <div class="dsm-saved-states-widget">
+        <span>{format(this.props.plugin().id + "-settings-saved-states")}</span>
+        <For each={() => Object.keys(getSavedStates())} key={(e) => e}>
+          <ul>
+            {(key: string) => {
+              return (
+                <li>
+                  <button
+                    onClick={() => {
+                      tryLoadingPotentiallyInvalidSettings(
+                        this.props,
+                        getSavedStates()[key]
+                      );
+                    }}
+                  >
+                    {key}
+                  </button>
+                  <IconButton
+                    iconClass={"dcg-icon-remove"}
+                    onTap={() => {
+                      const ep = this.props.pm().expandedPlugin;
+
+                      if (!ep) return;
+
+                      const savedStatesKey =
+                        this.props.plugin().settingsSavedStatesWidget
+                          .savedStatesKey;
+
+                      const savedStates = parseSavedState(
+                        this.props.settings()[savedStatesKey]
+                      );
+
+                      const newSavedStates = {
+                        ...(typeof savedStates === "object" ? savedStates : {}),
+                      };
+
+                      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                      delete newSavedStates[key];
+
+                      this.props
+                        .pm()
+                        .dsm.setPluginSetting(
+                          ep,
+                          savedStatesKey,
+                          serializeSavedState(newSavedStates)
+                        );
+                    }}
+                  ></IconButton>
+                </li>
+              );
+            }}
+          </ul>
+        </For>
+        <button
+          class="dcg-btn-dark-on-gray dsm-settings-button"
+          onClick={() => {
+            const ep = this.props.pm().expandedPlugin;
+
+            if (!ep) return;
+
+            const newSavedState = {
+              ...this.props.settings(),
+            };
+
+            const savedStatesKey =
+              this.props.plugin().settingsSavedStatesWidget.savedStatesKey;
+            newSavedState[savedStatesKey] = undefined;
+            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+            delete newSavedState[savedStatesKey];
+
+            const savedStates = parseSavedState(
+              this.props.settings()[savedStatesKey]
+            );
+
+            const newSavedStates = {
+              ...(savedStates && typeof savedStates === "object"
+                ? savedStates
+                : {}),
+            };
+
+            newSavedStates[
+              newSavedState[
+                this.props.plugin().settingsSavedStatesWidget.nameKey
+              ]
+            ] = {
+              ...newSavedState,
+              [savedStatesKey]: {},
+            };
+
+            try {
+              this.props
+                .pm()
+                .dsm.setPluginSetting(
+                  ep,
+                  savedStatesKey,
+                  serializeSavedState(newSavedStates)
+                );
+            } catch {
+              Calc.controller._showToast({
+                message: format(
+                  this.props.plugin().id + "-failed-to-save-settings"
+                ),
+                hideAfter: -1,
+              });
+            }
+          }}
+        >
+          {format(this.props.plugin().id + "-settings-save-current-state")}
+        </button>
+      </div>
+    );
+  }
+}
+
+class SettingsImportExportWidget extends Component<{
+  pm: () => PillboxMenus;
+  plugin: () => SpecificPlugin;
+  settings: () => GenericSettings;
+}> {
+  settingsInClipboard: string = "";
+
+  template() {
+    return (
+      <div class="dsm-settings-import-export-widget">
+        <div class="copy-to-clipboard-section">
+          <button
+            class="dcg-btn-dark-on-gray dsm-settings-button"
+            onClick={() => {
+              void navigator.clipboard.writeText(
+                JSON.stringify(this.props.settings())
+              );
+            }}
+          >
+            {format(
+              this.props.plugin().settingsImportWidgetData.copyToClipboardButton
+            )}
+          </button>
+        </div>
+        <div class="import-section">
+          <textarea
+            value={() => this.settingsInClipboard}
+            onChange={(evt: InputEvent) => {
+              this.settingsInClipboard = (
+                evt.target as HTMLTextAreaElement
+              ).value;
+            }}
+            placeholder={format("import-export-settings-placeholder")}
+          ></textarea>
+          <button
+            class="dcg-btn-dark-on-gray dsm-settings-button"
+            onClick={async () => {
+              const settingsString = this.settingsInClipboard;
+
+              let settingsData: any;
+
+              if (settingsString.startsWith("http")) {
+                settingsData = await (await fetch(settingsString)).json();
+              } else {
+                settingsData = JSON.parse(settingsString);
+              }
+
+              tryLoadingPotentiallyInvalidSettings(this.props, settingsData);
+            }}
+          >
+            {format(this.props.plugin().settingsImportWidgetData.importButton)}
+          </button>
+        </div>
       </div>
     );
   }
