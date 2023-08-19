@@ -5,7 +5,7 @@ import { ItemModel } from "globals/models";
 
 declare module "dataflow" {
   interface Facets {
-    "expr-action-buttons": {
+    exprActionButtons: {
       input: ActionButtonSpec;
       output: readonly ActionButtonWithKey[];
     };
@@ -22,7 +22,7 @@ export default class ExprActionButtons extends PluginController<undefined> {
   static enabledByDefault = true;
 
   facets = facetsSpec({
-    "expr-action-buttons": {
+    exprActionButtons: {
       combine: (values) =>
         values.flatMap(({ plugin, buttons }) =>
           buttons.map((b, i) => ({ ...b, key: `${plugin}:${i}` }))
@@ -41,7 +41,7 @@ export default class ExprActionButtons extends PluginController<undefined> {
   }
 
   order() {
-    return this.dsm.facet("expr-action-buttons");
+    return this.dsm.facet("exprActionButtons") ?? [];
   }
 }
 

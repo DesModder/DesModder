@@ -9,7 +9,7 @@ const compartment = new Compartment();
  *
  *   declare module "dataflow" {
  *     interface Facets {
- *       "expr-action-buttons": {
+ *       exprActionButtons: {
  *         input: ActionButtonSpec;
  *         output: ActionButtonWithKey[];
  *       };

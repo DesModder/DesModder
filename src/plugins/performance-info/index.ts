@@ -12,7 +12,7 @@ export default class PerformanceInfo extends PluginController {
   dispatchListenerID!: string;
 
   facetSources = facetSourcesSpec({
-    "pillbox-buttons": {
+    pillboxButtons: {
       value: {
         id: "dsm-pi-menu",
         tooltip: "performance-info-name",

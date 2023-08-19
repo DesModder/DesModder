@@ -9,7 +9,7 @@ import { plugins, PluginID, ConfigItem } from "plugins";
 
 declare module "dataflow" {
   interface Facets {
-    "pillbox-buttons": {
+    pillboxButtons: {
       input: PillboxButton;
       output: readonly PillboxButton[];
     };
@@ -23,13 +23,13 @@ export default class PillboxMenus extends PluginController<undefined> {
   private expandedCategory: string | null = null;
 
   facets = facetsSpec({
-    "pillbox-buttons": {
+    pillboxButtons: {
       combine: (values) => values,
     },
   });
 
   facetSources = facetSourcesSpec({
-    "pillbox-buttons": {
+    pillboxButtons: {
       precedence: "highest",
       value: {
         id: "main-menu",
@@ -60,7 +60,7 @@ export default class PillboxMenus extends PluginController<undefined> {
   }
 
   private getPillboxButtons() {
-    return this.dsm.facet("pillbox-buttons");
+    return this.dsm.facet("pillboxButtons") ?? [];
   }
 
   getPillboxButtonsOrder() {

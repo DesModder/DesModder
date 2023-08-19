@@ -4,7 +4,7 @@ import { Calc } from "globals/window";
 
 declare module "dataflow" {
   interface Facets {
-    "label-with-ids": {
+    labelWithIds: {
       input: boolean;
       output: boolean;
     };
@@ -16,13 +16,13 @@ export default class DebugMode extends PluginController {
   static enabledByDefault = false;
 
   facets = facetsSpec({
-    "label-with-ids": {
+    labelWithIds: {
       combine: (value) => value[0] ?? false,
     },
   });
 
   facetSources = facetSourcesSpec({
-    "label-with-ids": { value: true },
+    labelWithIds: { value: true },
   });
 
   afterEnable() {

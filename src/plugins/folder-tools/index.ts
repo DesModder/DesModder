@@ -37,7 +37,7 @@ export default class FolderTools extends PluginController {
   ];
 
   facetSources = facetSourcesSpec({
-    "expr-action-buttons": {
+    exprActionButtons: {
       value: {
         plugin: FolderTools.id,
         buttons: this.actionButtons,

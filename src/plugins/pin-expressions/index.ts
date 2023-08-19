@@ -29,7 +29,7 @@ export default class PinExpressions extends PluginController {
   ];
 
   facetSources = facetSourcesSpec({
-    "expr-action-buttons": {
+    exprActionButtons: {
       value: {
         plugin: PinExpressions.id,
         buttons: this.actionButtons,

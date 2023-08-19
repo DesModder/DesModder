@@ -125,7 +125,7 @@ export function startState(tm: TextMode, text: string) {
   });
   state = state.update(collapseStylesAtStart(state)).state;
   state = state.update(
-    tm.updateDebugModeTransaction(tm.dsm.facet("label-with-ids") ?? false)
+    tm.updateDebugModeTransaction(tm.dsm.facet("labelWithIds") ?? false)
   ).state;
   return state;
 }

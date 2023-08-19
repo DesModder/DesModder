@@ -83,7 +83,7 @@ export default class VideoCreator extends PluginController {
   }
 
   facetSources = facetSourcesSpec({
-    "pillbox-buttons": {
+    pillboxButtons: {
       precedence: "high",
       value: {
         id: "dsm-vc-menu",
