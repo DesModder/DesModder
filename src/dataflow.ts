@@ -20,7 +20,12 @@ const compartment = new Compartment();
  * to external plugins), but we're still typesafe within this main repo.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface Facets {}
+export interface Facets {
+  sink: {
+    input: undefined;
+    output: undefined;
+  };
+}
 
 /** Manage data flow between plugins. */
 export class Dataflow {
@@ -33,6 +38,18 @@ export class Dataflow {
   private readonly dfPlugins = new Map<string, DFPlugin>();
   private readonly facets = new Map<string, Facet<any, any>>();
 
+  constructor() {
+    this.addDFPlugin({
+      id: "df-core",
+      facets: facetsSpec({
+        sink: {
+          combine: () => undefined,
+        },
+      }),
+      facetSources: {},
+    });
+  }
+
   addDFPlugin(pluginSpec: DFPluginSpec) {
     const plugin: DFPlugin = {
       id: pluginSpec.id,
@@ -40,12 +57,9 @@ export class Dataflow {
         facetID: k,
         ...v,
       })),
-      facetSources: Object.entries(pluginSpec.facetSources).map(([k, v]) => ({
-        precedence: v.precedence ?? "default",
-        facetID: k,
-        deps: [],
-        compute: () => v.value,
-      })),
+      facetSources: Object.entries(pluginSpec.facetSources).map(([k, v]) =>
+        hydrateFacetSource(k, v)
+      ),
     };
     if (this.dfPlugins.has(plugin.id)) {
       throw new Error(`Dataflow Plugin '${plugin.id}' already present.`);
@@ -73,8 +87,11 @@ export class Dataflow {
     this.afterPluginChange();
   }
 
-  getFacetValue<T extends keyof Facets>(facetID: T): Facets[T]["output"];
-  getFacetValue(facetID: string): unknown {
+  /** Warning: If you're currently inside a callback for computing a new facet
+   * value, then .facet(id) will return the old facet value. If you're
+   * in those callbacks, make sure to use the argument to compute(values). */
+  facet<T extends keyof Facets>(facetID: T): Facets[T]["output"] | undefined;
+  facet(facetID: string): unknown {
     const field = this.facets.get(facetID);
     if (!field) return undefined;
     return this.ev.state.facet(field) as unknown;
@@ -94,13 +111,24 @@ export class Dataflow {
         this.facets.set(facetSpec.facetID, facet);
       }
     }
+    const undefinedFacet = Facet.define<undefined, undefined>({
+      combine: () => undefined,
+    });
     const sources = [];
     for (const plugin of plugins) {
+      // if (plugin.facetSources.length) console.log(plugin);
       for (const source of plugin.facetSources) {
         const field = this.facets.get(source.facetID);
         if (!field) continue;
         const prec = getPrecedence(source.precedence);
-        const ext = field.compute(source.deps, () => source.compute([]));
+        const deps = source.deps.map((d) => {
+          const facet = this.facets.get(d);
+          if (!facet) return undefinedFacet;
+          return facet;
+        });
+        const ext = field.compute(deps, (state) =>
+          source.compute(deps.map((d) => state.facet(d)))
+        );
         sources.push(prec(ext));
       }
     }
@@ -149,13 +177,40 @@ export type Precedence = "lowest" | "low" | "default" | "high" | "highest";
 export interface FacetSource<Input> {
   facetID: string;
   precedence: Precedence;
-  deps: [];
-  compute: (values: unknown[]) => Input;
+  deps: (keyof Facets)[];
+  compute: (values: any[]) => Input;
 }
 
-interface FacetSourceSpec<Input> {
+interface FacetSourceBase {
   precedence?: Precedence;
-  value: Input;
+}
+
+interface FacetSourceConst<Value> extends FacetSourceBase {
+  value: Value;
+}
+
+interface FacetSourceCompute<Value, A extends keyof Facets>
+  extends FacetSourceBase {
+  deps: [A];
+  compute: (value: [Facets[A]["input"]]) => Value;
+}
+
+type FacetSourceSpec<Value> =
+  | FacetSourceConst<Value>
+  | FacetSourceCompute<Value, keyof Facets>;
+
+function hydrateFacetSource(
+  facetID: string,
+  v: FacetSourceSpec<unknown>
+): FacetSource<unknown> {
+  const { deps, compute } =
+    "value" in v ? { deps: [], compute: () => v.value } : v;
+  return {
+    precedence: v.precedence ?? "default",
+    facetID,
+    deps,
+    compute: compute as (values: any[]) => unknown,
+  };
 }
 
 export type FacetSourcesSpec = {

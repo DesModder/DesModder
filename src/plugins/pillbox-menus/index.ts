@@ -60,7 +60,7 @@ export default class PillboxMenus extends PluginController<undefined> {
   }
 
   private getPillboxButtons() {
-    return this.dsm.getFacetValue("pillbox-buttons");
+    return this.dsm.facet("pillbox-buttons");
   }
 
   getPillboxButtonsOrder() {

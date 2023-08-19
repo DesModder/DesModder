@@ -6,6 +6,7 @@ import { TextModeToggle } from "./components/TextModeToggle";
 import { initView, setDebugMode, startState } from "./view/editor";
 import { TransactionSpec } from "@codemirror/state";
 import { EditorView, ViewUpdate } from "@codemirror/view";
+import { facetSourcesSpec } from "dataflow";
 import { Calc } from "globals/window";
 import { keys } from "utils/depUtils";
 
@@ -18,13 +19,22 @@ export default class TextMode extends PluginController {
   view: EditorView | null = null;
   dispatchListenerID: string | null = null;
 
-  updateDebugMode() {
-    this.view?.dispatch(this.updateDebugModeTransaction());
-  }
+  facetSources = facetSourcesSpec({
+    sink: {
+      deps: ["label-with-ids"],
+      compute: ([labelWithIds]) => {
+        this.view?.dispatch(
+          this.updateDebugModeTransaction(
+            (labelWithIds as boolean | undefined) ?? false
+          )
+        );
+      },
+    },
+  });
 
-  updateDebugModeTransaction(): TransactionSpec {
+  updateDebugModeTransaction(labelWithIds: boolean): TransactionSpec {
     return {
-      effects: setDebugMode.of(this.dsm.isPluginEnabled("debug-mode")),
+      effects: setDebugMode.of(labelWithIds),
     };
   }
 

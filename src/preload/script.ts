@@ -66,6 +66,7 @@ listenToMessageDown((message) => {
     window.DSM = {
       insertElement,
       replaceElement,
+      facet() {},
     } as any;
     void load(arrayToSet(message.pluginsForceDisabled));
     // cancel listener

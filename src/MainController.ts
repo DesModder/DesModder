@@ -98,7 +98,7 @@ export default class DSM extends TransparentPlugins {
         this.pillboxMenus?.updateMenuView();
         plugin?.afterDisable();
         this.removeDFPlugin(id);
-        Calc.controller.updateViews();
+        Calc.controller.dispatch({ type: "tick" });
       }
     }
   }
@@ -118,7 +118,7 @@ export default class DSM extends TransparentPlugins {
       });
       res.afterEnable();
       this.pillboxMenus?.updateMenuView();
-      Calc.controller.updateViews();
+      Calc.controller.dispatch({ type: "tick" });
     }
   }
 
