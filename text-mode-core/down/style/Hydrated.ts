@@ -57,7 +57,11 @@ export interface Ticker {
   playing: boolean;
 }
 
-export interface ItemBase {
+export interface Base {
+  id?: string;
+}
+
+export interface ItemBase extends Base {
   secret: boolean;
 }
 
@@ -65,7 +69,7 @@ export interface NonFolderBase extends ItemBase {
   pinned: boolean;
 }
 
-export interface ColumnExpressionCommon {
+export interface ColumnExpressionCommon extends Base {
   color: Expr | string;
   hidden: boolean;
   points?:

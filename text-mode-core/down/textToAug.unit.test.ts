@@ -20,15 +20,15 @@ import {
 } from "../aug/augBuilders";
 import astToAug from "./astToAug";
 import { error, warning } from "./diagnostics";
-import { parse } from "./textToAST";
+import { IncrementalState, parse } from "./textToAST";
 import type { Diagnostic } from "@codemirror/lint";
 // eslint-disable-next-line rulesdir/no-external-imports
 import { test, expect as _expect, describe } from "@jest/globals";
 
 const cfg = buildConfig({});
 
-function textToAug(text: string) {
-  const analysis = parse(cfg, text);
+function textToAug(text: string, incr?: Partial<IncrementalState>) {
+  const analysis = parse(cfg, text, incr);
   testPosNesting(analysis.program);
   return astToAug(cfg, analysis);
 }
@@ -1055,6 +1055,93 @@ describe("Automatic IDs", () => {
       id: "4",
     });
   });
+  test("Custom IDs work", () => {
+    const [_errors, res] = textToAug(`
+      folder "Title" {
+        a @{ id: "custom-1" }
+      } @{ id: "**dcg_geo_folder**" }
+
+      table {
+        x_1 = [1, 2, 3] @{ id: "_col-1" }
+      } @{ id: "mytable" }
+    `);
+    expect(res).not.toBeNull();
+    if (res === null) return;
+    const exprs = res.expressions.list;
+    expect(exprs[0]).toEqual({
+      ...folderDefaults,
+      id: "**dcg_geo_folder**",
+      title: "Title",
+      children: [
+        {
+          ...exprDefaults,
+          latex: id("a"),
+          id: "custom-1",
+        },
+      ],
+    });
+    expect(exprs[1]).toEqual({
+      ...tableDefaults,
+      id: "mytable",
+      columns: [
+        {
+          ...columnDefaults,
+          id: "_col-1",
+          color: "#2d70b3",
+          latex: id("x_1"),
+          values: [number(1), number(2), number(3)],
+        },
+      ],
+    });
+  });
+  test("Incremental IDs work", () => {
+    const s = `
+      |folder "a"| {
+        |x|
+      }
+
+      |folder "Title" {|
+        |y=x|
+
+        |y=sin(x)| @{ id: "ee" }
+      } @{ id: "**dcg_geo_folder**" }
+
+      |table {|
+        |x_1 = [1, 2, 3] @{ id: "_col-1" }|
+
+        |x_2 = [3, 2, 1]|
+      }
+    `;
+    const text = s.replace(/\|/g, "");
+    const positions = [...s.matchAll(/\|/g)].map((m, i) => m.index! - i);
+    const rawIDs = positions
+      .filter((_, i) => i % 2 === 0)
+      .map((x, i) => ({ from: x, to: positions[2 * i + 1], id: `raw-${i}` }));
+    const [_errors, res] = textToAug(text, { rawIDs });
+    expect(res).not.toBeNull();
+    if (res === null) return;
+    const exprs = res.expressions.list;
+    expect(
+      exprs.flatMap((e) => {
+        const arr: (string | string[])[] = [e.id];
+        arr.push(
+          e.type === "folder"
+            ? e.children.map((f) => f.id)
+            : e.type === "table"
+            ? e.columns.map((f) => f.id)
+            : []
+        );
+        return arr;
+      })
+    ).toEqual([
+      "raw-0",
+      ["raw-1"],
+      "**dcg_geo_folder**",
+      ["raw-3", "ee"],
+      "raw-5",
+      ["_col-1", "raw-7"],
+    ]);
+  });
 });
 
 describe("Settings", () => {
@@ -1221,8 +1308,14 @@ describe("Diagnostics", () => {
     testDiagnostics("Settings in folder", `folder "title" { settings @{} }`, [
       error("Settings may not be in a folder", pos(17, 29)),
     ]);
-    testDiagnostics("Invalid id", `y=x @{id: "1"}`, [
-      warning("Property id unexpected on expression", pos(6, 8)),
+    testDiagnostics("Invalid id: digits", `y=x @{id: "1"}`, [
+      error(
+        "Specified id must include a character other than a digit",
+        pos(10, 13)
+      ),
+    ]);
+    testDiagnostics("Invalid id: dunder", `y=x @{id: "__thing"}`, [
+      error("Specified id must not start with '__'", pos(10, 19)),
     ]);
   });
   describe("Parse errors", () => {

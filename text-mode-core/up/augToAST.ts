@@ -51,10 +51,12 @@ export function tickerToAST(ticker: Aug.TickerAug): TextAST.Ticker {
   };
 }
 
+export function ignoredID(id: string) {
+  return id.startsWith("__") || /^\d+$/.test(id);
+}
+
 function idToString(id: string) {
-  return id.startsWith("__") || /\d+/.test(id)
-    ? undefined
-    : stringToASTmaybe(id);
+  return ignoredID(id) ? undefined : stringToASTmaybe(id);
 }
 
 export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {

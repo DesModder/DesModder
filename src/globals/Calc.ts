@@ -25,6 +25,9 @@ export type DispatchedEvent =
         | "redo"
         | "tick-ticker"
         | "keypad/functions"
+        | "commit-geo-objects"
+        | "upward-delete-selected-expression"
+        | "downward-delete-selected-expression"
         | "ui/container-resized";
     }
   | {
@@ -87,6 +90,14 @@ export type DispatchedEvent =
       key: string;
       // used in compact-view plugin
       forceSwitchExpr?: boolean;
+    }
+  | {
+      type: "update-all-selected-items";
+      update: {
+        // folderId is 'move these objects to folder'
+        // Everything else is simply styling
+        prop: "folderId" | string;
+      };
     }
   | { type: "set-folder-collapsed"; id: string; isCollapsed: boolean }
   | { type: "set-item-colorLatex"; id: string; colorLatex: string }
@@ -185,6 +196,11 @@ interface CalcPrivate {
     createItemModel: (modelTemplate: any) => ItemModel;
     getPillboxBackgroundColor: () => string;
     isGraphSettingsOpen: () => boolean;
+    graphSettings: {
+      config: {
+        product: string;
+      };
+    };
     dispatch: (e: DispatchedEvent) => void;
     getExpressionSearchStr: () => string;
     dispatcher: {
@@ -195,6 +211,7 @@ interface CalcPrivate {
     // The item models returned are actually much more detailed
     getSelectedItem: () => ItemModel | undefined;
     getItemModel: (id: any) => ItemModel | undefined;
+    getAllSelectedItems: () => ItemModel[];
     getItemModelByIndex: (index: number) => ItemModel | undefined;
     getAllItemModels: () => ItemModel[];
     stopAllSliders: () => void;

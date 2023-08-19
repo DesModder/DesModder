@@ -14,7 +14,7 @@ function getFooters(state: EditorState) {
   const { from, to } = program.pos;
   for (const stmt of statementsIntersecting(program, from, to)) {
     const model = Calc.controller.getItemModel(stmt.id);
-    if (model?.type === "expression") {
+    if (stmt.type === "ExprStatement" && model?.type === "expression") {
       const widget = Decoration.widget({
         widget: new FooterWidget(model),
         side: 1,

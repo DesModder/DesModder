@@ -18,9 +18,10 @@ import TextAST, {
   Settings,
   Statement,
 } from "../../../text-mode-core/TextAST";
-import { ChangeSpec } from "@codemirror/state";
+import { addRawID } from "./LanguageServer";
+import { ChangeSpec, StateEffect } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { GraphState } from "@desmodder/graph-state";
+import { GraphState, NonFolderState } from "@desmodder/graph-state";
 import { DispatchedEvent } from "globals/Calc";
 import { Calc } from "globals/window";
 import Metadata from "plugins/manage-metadata/interface";
@@ -43,26 +44,45 @@ export function eventSequenceChanges(
   view: EditorView,
   event: DispatchedEvent,
   analysis: ProgramAnalysis
-): ChangeSpec[] {
+): { changes: ChangeSpec[]; effects?: StateEffect<any>[] } {
   const state = Calc.getState();
   if (event.type === "on-evaluator-changes") {
     // sliders, draggable points, action updates, etc.
-    return evaluatorChange(analysis, state, view, event);
+    return { changes: evaluatorChange(analysis, state, view, event) };
   } else if ((settingsEvents as readonly string[]).includes(event.type)) {
-    return [settingsChange(analysis, state)];
+    return { changes: [settingsChange(analysis, state)] };
   } else {
     const res = [];
+    const effects = [];
+    const dsmMetadata = rawToDsmMetadata(state);
     if ("id" in event && event.id !== undefined) {
-      const dsmMetadata = rawToDsmMetadata(state);
       res.push(metadataChange(analysis, state, dsmMetadata, view, event.id));
-      if (
-        event.type === "convert-image-to-draggable" ||
-        event.type === "create-sliders-for-item"
-      ) {
-        res.push(newItemsChange(analysis, state, dsmMetadata, view));
-      }
+    } else if (event.type === "update-all-selected-items") {
+      for (const { id } of Calc.controller.getAllSelectedItems())
+        res.push(metadataChange(analysis, state, dsmMetadata, view, id));
     }
-    return res;
+
+    if (
+      event.type === "convert-image-to-draggable" ||
+      event.type === "create-sliders-for-item" ||
+      event.type === "commit-geo-objects"
+    ) {
+      const { changes, effects: effects1 } = newItemsChange(
+        analysis,
+        state,
+        dsmMetadata,
+        view
+      );
+      res.push(...changes);
+      effects.push(...effects1);
+    } else if (
+      event.type === "upward-delete-selected-expression" ||
+      event.type === "downward-delete-selected-expression"
+    ) {
+      // E.g. backspace on a polygon in geometry
+      res.push(deletedItemsChange(analysis, state, view));
+    }
+    return { changes: res, effects };
   }
 }
 
@@ -172,26 +192,85 @@ function metadataChange(
   return insertWithIndentation(view, pos, insert);
 }
 
-/** Used for convert-image-to-draggable and add-sliders-to-item. */
+/** Used for add-sliders-to-item, among others. */
 function newItemsChange(
   analysis: ProgramAnalysis,
   state: GraphState,
   dsmMetadata: Metadata,
   view: EditorView
-): ChangeSpec {
-  let pos = 0;
+) {
+  let lastItem: NonFolderState | undefined;
   const out: ChangeSpec[] = [];
+  const effects = [];
   for (const item of state.expressions.list) {
-    if (item.type === "folder") continue;
+    if (item.type === "folder") {
+      lastItem = undefined;
+      continue;
+    }
     const stmt = analysis.mapIDstmt[item.id];
     if (stmt) {
-      pos = stmt.pos.to;
+      lastItem = item;
     } else {
       const aug = rawNonFolderToAug(getTextModeConfig(), item, dsmMetadata);
       const ast = itemAugToAST(aug);
       if (!ast) continue;
-      const insert = "\n\n" + astItemToTextString(ast);
-      out.push(insertWithIndentation(view, { from: pos, to: pos }, insert));
+      const body = astItemToTextString(ast);
+      function insertPos(item: NonFolderState) {
+        if (item.folderId && lastItem?.folderId !== item.folderId) {
+          const folder = analysis.mapIDstmt[item.folderId];
+          if (folder.type === "Folder") {
+            return { pos: folder.afterOpen, insert: "\n" + body + "\n" };
+          }
+        } else if (!item.folderId && lastItem?.folderId) {
+          const folder = analysis.mapIDstmt[lastItem.folderId];
+          return { pos: folder.pos.to, insert: "\n\n" + body };
+        } else if (lastItem) {
+          const stmt = analysis.mapIDstmt[lastItem.id];
+          return { pos: stmt.pos.to, insert: "\n\n" + body };
+        }
+        // Should never happen, but might as well do something reasonable
+        return { pos: analysis.program.pos.to, insert: "\n\n" + body };
+      }
+      const { pos: p, insert } = insertPos(item);
+      const pos = { from: p, to: p };
+      out.push(insertWithIndentation(view, pos, insert));
+      effects.push(addRawID.of({ ...pos, id: item.id }));
+    }
+  }
+  return { changes: out, effects };
+}
+
+/** E.g. deleted a polygon in geometry */
+function deletedItemsChange(
+  analysis: ProgramAnalysis,
+  state: GraphState,
+  view: EditorView
+) {
+  const out: ChangeSpec[] = [];
+  const unremoved = new Set(
+    state.expressions.list
+      .map((e) => e.id)
+      .concat(
+        state.expressions.list.flatMap((x) =>
+          x.type === "table" ? x.columns.map((c) => c.id) : []
+        )
+      )
+  );
+  for (const [id, stmt] of Object.entries(analysis.mapIDstmt)) {
+    if (
+      !unremoved.has(id) &&
+      stmt.type !== "Settings" &&
+      stmt.type !== "Ticker" &&
+      stmt.type !== "Table"
+    ) {
+      let from = stmt.pos.from;
+      while (/^[ \t\n]$/.test(view.state.sliceDoc(from - 1, from))) {
+        --from;
+      }
+      if (view.state.sliceDoc(from - 1, from) === ";") {
+        --from;
+      }
+      out.push({ from, to: stmt.pos.to, insert: "" });
     }
   }
   return out;

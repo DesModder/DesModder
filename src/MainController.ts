@@ -28,7 +28,6 @@ export default class DSM extends TransparentPlugins {
     super();
     // default values
     this.forceDisabled = window.DesModderPreload!.pluginsForceDisabled;
-    if (Calc.controller.isGeometry()) this.forceDisabled.add("text-mode");
     this.pluginsEnabled = new Map(
       pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
     );

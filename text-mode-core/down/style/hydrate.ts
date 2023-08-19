@@ -20,8 +20,6 @@ export function hydrate<T>(
   path = ""
 ): T | null {
   const smEntries = styleMapping?.entries ?? [];
-  // const styleValue = evalStyle(styleMapping);
-  // const style = styleValue.props;
   for (const entry of smEntries) {
     if (!(entry.property.value in schema)) {
       ds.pushWarning(
