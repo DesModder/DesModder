@@ -197,7 +197,6 @@ export default class Menu extends Component<{
   }
 }
 
-let counter = 0;
 function colorListOption(
   pm: PillboxMenus,
   item: ConfigItem,
@@ -225,8 +224,7 @@ function colorListOption(
                 each={() =>
                   (settings[item.key] as string[]).map((e, i) => [e, i])
                 }
-                // TODO: find a better way of dealing with this
-                key={() => counter++}
+                key={([e, i]) => `${e}:${i}`}
               >
                 <ol class="dsm-settings-color-list">
                   {([v, i]: [string, number]) => (
