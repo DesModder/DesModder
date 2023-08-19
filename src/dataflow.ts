@@ -126,9 +126,13 @@ export class Dataflow {
           if (!facet) return undefinedFacet;
           return facet;
         });
-        const ext = field.compute(deps, (state) =>
-          source.compute(deps.map((d) => state.facet(d)))
-        );
+        const ext = field.compute(deps, (state) => {
+          const obj: any = {};
+          for (let i = 0; i < deps.length; i++) {
+            obj[source.deps[i]] = state.facet(deps[i]);
+          }
+          return source.compute(obj);
+        });
         sources.push(prec(ext));
       }
     }
@@ -177,8 +181,8 @@ export type Precedence = "lowest" | "low" | "default" | "high" | "highest";
 export interface FacetSource<Input> {
   facetID: string;
   precedence: Precedence;
-  deps: (keyof Facets)[];
-  compute: (values: any[]) => Input;
+  deps: readonly (keyof Facets)[];
+  compute: (values: any) => Input;
 }
 
 interface FacetSourceBase {
@@ -189,15 +193,25 @@ interface FacetSourceConst<Value> extends FacetSourceBase {
   value: Value;
 }
 
-interface FacetSourceCompute<Value, A extends keyof Facets>
-  extends FacetSourceBase {
-  deps: [A];
-  compute: (value: [Facets[A]["input"]]) => Value;
+interface FacetSourceCompute<Value> extends FacetSourceBase {
+  deps: readonly (keyof Facets)[];
+  compute: (value: any) => Value;
+}
+
+type MapInput<Deps extends readonly (keyof Facets)[]> = {
+  [Dep in Deps[number]]: Facets[Dep]["input"];
+};
+
+export function compute<Value, Deps extends readonly (keyof Facets)[]>(
+  deps: Deps,
+  compute: (value: MapInput<Deps>) => Value
+): FacetSourceCompute<Value> {
+  return { deps, compute };
 }
 
 type FacetSourceSpec<Value> =
   | FacetSourceConst<Value>
-  | FacetSourceCompute<Value, keyof Facets>;
+  | FacetSourceCompute<Value>;
 
 function hydrateFacetSource(
   facetID: string,
