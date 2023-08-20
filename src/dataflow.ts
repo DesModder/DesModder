@@ -60,6 +60,10 @@ export class Dataflow {
         hydrateFacetSource(k, v)
       ),
     };
+    plugin.facets.push({
+      facetID: `${pluginSpec.id}/enabled`,
+      combine: () => true,
+    });
     if (this.dfPlugins.has(plugin.id)) {
       throw new Error(`Dataflow Plugin '${plugin.id}' already present.`);
     }
@@ -198,7 +202,7 @@ interface FacetSourceCompute<Value> extends FacetSourceBase {
 }
 
 type MapInput<Deps extends readonly (keyof Facets)[]> = {
-  [Dep in Deps[number]]: Facets[Dep]["input"];
+  [Dep in Deps[number]]: Facets[Dep]["output"];
 };
 
 export function compute<Value, Deps extends readonly (keyof Facets)[]>(

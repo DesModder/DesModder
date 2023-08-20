@@ -135,6 +135,16 @@ type IDToPluginInstance = {
 export type PluginID = keyof IDToPluginInstance;
 export type SpecificPlugin = KP[keyof KP];
 
+declare module "dataflow" {
+  type M = {
+    [key in PluginID as `${key}/enabled`]: {
+      output: true;
+      input: unknown;
+    };
+  };
+  interface Facets extends M {}
+}
+
 // prettier-ignore
 export class TransparentPlugins extends Dataflow  {
   /** Note that `enabledPlugins[id]` is truthy if and only if `id` is of
@@ -154,7 +164,6 @@ export class TransparentPlugins extends Dataflow  {
   protected get showTips () { return this.ep["show-tips"]; }
   protected get rightClickTray () { return this.ep["right-click-tray"]; }
   get glesmos () { return this.ep["GLesmos"]; }
-  protected get shiftEnterNewline () { return this.ep["shift-enter-newline"]; }
   protected get hideErrors () { return this.ep["hide-errors"]; }
   get textMode () { return this.ep["text-mode"]; }
   get metadata () { return this.ep["manage-metadata"]; }

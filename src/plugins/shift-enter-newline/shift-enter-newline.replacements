@@ -21,7 +21,7 @@ $n === $enterKey && !$e.metaKey
 *Replace* `from` with
 ```js
 $n === $enterKey && !$e.metaKey
-  && !($e.shiftKey && DSM.shiftEnterNewline)
+  && !($e.shiftKey && DSM.facet("shift-enter-newline/enabled"))
   ? ($e.preventDefault(), this.props.onSpecialKey("Enter"))
 ```
 

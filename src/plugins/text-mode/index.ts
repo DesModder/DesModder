@@ -20,17 +20,15 @@ export default class TextMode extends PluginController {
   dispatchListenerID: string | null = null;
 
   facetSources = facetSourcesSpec({
-    sink: compute(["labelWithIds"], ({ labelWithIds }) => {
-      this.view?.dispatch(
-        this.updateDebugModeTransaction(labelWithIds ?? false)
-      );
+    sink: compute(["debug-mode/enabled"], ({ "debug-mode/enabled": d }) => {
+      this.view?.dispatch(this.updateDebugModeTransaction(!!d));
       return undefined;
     }),
   });
 
-  updateDebugModeTransaction(labelWithIds: boolean): TransactionSpec {
+  updateDebugModeTransaction(debugModeEnabled: boolean): TransactionSpec {
     return {
-      effects: setDebugMode.of(labelWithIds),
+      effects: setDebugMode.of(debugModeEnabled),
     };
   }
 
