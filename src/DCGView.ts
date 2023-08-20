@@ -47,8 +47,8 @@ abstract class ForComponent<T> extends ClassComponent<{
 }> {}
 
 export interface IfElseSecondParam {
-  true: () => typeof ClassComponent;
-  false: () => typeof ClassComponent;
+  true: () => ComponentChild;
+  false: () => ComponentChild;
 }
 
 abstract class InputComponent extends ClassComponent<{
@@ -68,11 +68,13 @@ export interface DCGViewModule {
   Components: {
     For: typeof ForComponent;
     If: typeof IfComponent;
-    IfElse: (p: () => boolean, v: IfElseSecondParam) => typeof ClassComponent;
     Input: typeof InputComponent;
     Switch: typeof SwitchComponent;
-    // TODO: We can use SwitchUnion in most places Switch is currently used
-    SwitchUnion: typeof ClassComponent;
+    SwitchUnion: <Key extends string>(
+      discriminant: () => Key,
+      branches: { [k in Key]: () => ComponentChild }
+    ) => ComponentTemplate;
+    IfElse: (p: () => boolean, v: IfElseSecondParam) => ComponentTemplate;
   };
   Class: typeof ClassComponent;
   const: <T>(v: T) => () => T;
@@ -101,10 +103,10 @@ interface CommonProps {
   willUnmount?: () => void;
 }
 type WithCommonProps<T> = Omit<T, keyof CommonProps> & CommonProps;
-interface ComponentTemplate {
+export interface ComponentTemplate {
   __nominallyComponentTemplate: undefined;
 }
-type ComponentChild = ComponentTemplate | string | (() => string);
+export type ComponentChild = ComponentTemplate | null | string | (() => string);
 
 export const Component = DCGView.Class;
 export const mountToNode = DCGView.mountToNode;
