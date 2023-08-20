@@ -45,7 +45,7 @@ export default class TextMode extends PluginController {
   /**
    * mountEditor: called from module overrides when the DCGView node mounts
    */
-  mountEditor(container: HTMLDivElement) {
+  mountEditor(container: HTMLElement) {
     const [hasError, text] = getText();
     this.view = initView(this, text);
     if (hasError) this.conversionError(() => this.toggleTextMode());
@@ -119,7 +119,7 @@ export default class TextMode extends PluginController {
    * Codemirror handles undo, redo, and Ctrl+/; we don't want Desmos to receive
    * these, so we stop their propagation at the container
    */
-  preventPropagation(container: HTMLDivElement) {
+  preventPropagation(container: HTMLElement) {
     container.addEventListener(
       "keydown",
       (e) =>

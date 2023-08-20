@@ -3,16 +3,18 @@ import { Fragile } from "globals/window";
 export const DCGView = Fragile.DCGView;
 
 type OrConst<T> = {
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  [K in keyof T]: T[K] extends Function ? T[K] : T[K] | (() => T[K]);
+  [K in keyof T]: T[K] extends (...args: any[]) => any
+    ? T[K]
+    : T[K] | (() => T[K]);
 };
 
 type ToFunc<T> = {
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  [K in keyof T]: T[K] extends Function ? T[K] : () => T[K];
+  [K in keyof T]: T[K] extends (...args: any[]) => any ? T[K] : () => T[K];
 };
 
-export abstract class ClassComponent<PropsType = Props> {
+export abstract class ClassComponent<
+  PropsType extends GenericProps = Record<string, unknown>
+> {
   props!: ToFunc<PropsType>;
   children!: unknown;
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -31,18 +33,12 @@ export abstract class ClassComponent<PropsType = Props> {
       };
 }
 
-type ComponentArgument = ClassComponent | (() => string);
-
-export type LooseProps = Record<string, any>;
-
-export type Props = Record<string, (...args: any[]) => any>;
-
 export interface MountedComponent {
   update: () => void;
 }
 
 abstract class ForComponent<T> extends ClassComponent<{
-  each: Array<T>;
+  each: () => Array<T>;
   key: (t: T) => string | number;
 }> {}
 
@@ -65,19 +61,35 @@ export interface DCGViewModule {
   };
   Class: typeof ClassComponent;
   const: <T>(v: T) => () => T;
-  createElement: (
-    el: ComponentArgument | string,
-    props: Props,
-    ...children: ComponentArgument[]
-  ) => unknown;
+  createElement: <Props extends GenericProps>(
+    comp: ComponentConstructor<Props>,
+    props: WithCommonProps<ToFunc<Props>>,
+    ...children: ComponentChild[]
+  ) => ComponentTemplate;
   // couldn't figure out type for `comp`, so I just put | any
-  mountToNode: (
-    comp: ClassComponent | any,
+  mountToNode: <Props extends GenericProps>(
+    comp: ComponentConstructor<Props>,
     el: HTMLElement,
-    props: Props
+    props: WithCommonProps<ToFunc<Props>>
   ) => MountedComponent;
   unmountFromNode: (el: HTMLElement) => void;
 }
+
+export type ComponentConstructor<Props extends GenericProps> =
+  | string
+  | typeof ClassComponent<Props>;
+// export type GenericProps = Record<string, (...args: any[]) => any>;
+type GenericProps = any;
+interface CommonProps {
+  class?: () => string;
+  didMount?: (elem: HTMLElement) => void;
+  willUnmount?: () => void;
+}
+type WithCommonProps<T> = Omit<T, keyof CommonProps> & CommonProps;
+interface ComponentTemplate {
+  __nominallyComponentTemplate: undefined;
+}
+type ComponentChild = ComponentTemplate | string | (() => string);
 
 export const Component = DCGView.Class;
 export const mountToNode = DCGView.mountToNode;
@@ -132,10 +144,10 @@ declare global {
  * stateless anyway (state control in Model.js)
  */
 
-export function jsx(
-  el: ComponentArgument,
-  props: LooseProps,
-  ...children: ComponentArgument[]
+export function jsx<Props extends GenericProps>(
+  el: ComponentConstructor<Props>,
+  props: OrConst<Props>,
+  ...children: ComponentChild[]
 ) {
   /* Handle differences between typescript's expectation and DCGView */
   if (!Array.isArray(children)) {
@@ -145,11 +157,14 @@ export function jsx(
   children = children.map((e) =>
     typeof e === "string" ? DCGView.const(e) : e
   );
+  const fnProps = {} as any;
   for (const k in props) {
     // DCGView.createElement also expects 0-argument functions
     if (typeof props[k] !== "function") {
-      props[k] = DCGView.const(props[k]);
+      fnProps[k] = DCGView.const(props[k]);
+    } else {
+      fnProps[k] = props[k] as (...args: any[]) => any;
     }
   }
-  return DCGView.createElement(el, props, ...children);
+  return DCGView.createElement(el, fnProps, ...children);
 }

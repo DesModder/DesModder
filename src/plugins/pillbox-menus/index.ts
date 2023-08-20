@@ -45,7 +45,7 @@ export default class PillboxMenus extends PluginController<undefined> {
 
   pillboxButtonsView(horizontal: boolean): Inserter {
     return () =>
-      DCGView.createElement(PillboxContainer as any, {
+      DCGView.createElement(PillboxContainer, {
         pm: () => this,
         horizontal: DCGView.const(horizontal),
       });
@@ -54,7 +54,7 @@ export default class PillboxMenus extends PluginController<undefined> {
   pillboxMenuView(horizontal: boolean): Inserter {
     if (this.pillboxMenuOpen === null) return undefined;
     return () =>
-      DCGView.createElement(PillboxMenu as any, {
+      DCGView.createElement(PillboxMenu, {
         pm: () => this,
         horizontal: DCGView.const(horizontal),
       });
