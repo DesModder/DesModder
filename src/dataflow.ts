@@ -16,10 +16,9 @@ const compartment = new Compartment();
  *     }
  *   }
  *
- * By doing this, plugins do not depend on each others' types (opening the door
- * to external plugins), but we're still typesafe within this main repo.
+ * By doing this, plugins do not depend on reference equality with each other
+ * (allowing for external plugins), but we're typesafe within this main repo.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface Facets {
   sink: {
     input: undefined;

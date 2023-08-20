@@ -129,9 +129,6 @@ export const pluginList = Object.values(keyToPlugin);
 export const plugins = new Map(pluginList.map((plugin) => [plugin.id, plugin]));
 
 type KP = typeof keyToPlugin;
-type KeyToPluginInstance = {
-  readonly [K in keyof KP]: undefined | InstanceType<KP[K]>;
-};
 type IDToPluginInstance = {
   [K in keyof KP as KP[K]["id"]]?: InstanceType<KP[K]>;
 };
@@ -139,7 +136,7 @@ export type PluginID = keyof IDToPluginInstance;
 export type SpecificPlugin = KP[keyof KP];
 
 // prettier-ignore
-export class TransparentPlugins extends Dataflow implements KeyToPluginInstance {
+export class TransparentPlugins extends Dataflow  {
   /** Note that `enabledPlugins[id]` is truthy if and only if `id` is of
    * an enabled plugin. Otherwise, `enabledPlugins[id]` is undefined */
   private readonly ep: IDToPluginInstance = {};
@@ -149,31 +146,19 @@ export class TransparentPlugins extends Dataflow implements KeyToPluginInstance 
     PluginInstance | undefined
   >;
 
+  // protected = only appears in replacements
+
   get pillboxMenus () { return this.ep["pillbox-menus"]; }
-  get builtinSettings () { return this.ep["builtin-settings"]; }
-  get betterEvaluationView () { return this.ep["better-evaluation-view"]; }
-  get setPrimaryColor () { return this.ep["set-primary-color"]; }
-  get wolframToDesmos () { return this.ep["wolfram2desmos"]; }
+  protected get betterEvaluationView () { return this.ep["better-evaluation-view"]; }
   get pinExpressions () { return this.ep["pin-expressions"]; }
-  get videoCreator () { return this.ep["video-creator"]; }
-  get wakatime () { return this.ep["wakatime"]; }
-  get findReplace () { return this.ep["find-and-replace"]; }
-  get debugMode () { return this.ep["debug-mode"]; }
-  get showTips () { return this.ep["show-tips"]; }
-  get customMathQuillConfig () { return this.ep["custom-mathquill-config"]; }
-  get rightClickTray () { return this.ep["right-click-tray"]; }
-  get duplicateHotkey () { return this.ep["duplicate-expression-hotkey"]; }
+  protected get showTips () { return this.ep["show-tips"]; }
+  protected get rightClickTray () { return this.ep["right-click-tray"]; }
   get glesmos () { return this.ep["GLesmos"]; }
-  get shiftEnterNewline () { return this.ep["shift-enter-newline"]; }
-  get hideErrors () { return this.ep["hide-errors"]; }
-  get folderTools () { return this.ep["folder-tools"]; }
+  protected get shiftEnterNewline () { return this.ep["shift-enter-newline"]; }
+  protected get hideErrors () { return this.ep["hide-errors"]; }
   get textMode () { return this.ep["text-mode"]; }
-  get performanceInfo () { return this.ep["performance-info"]; }
   get metadata () { return this.ep["manage-metadata"]; }
-  get intellisense () { return this.ep["intellisense"]; }
-  get compactView () { return this.ep["compact-view"]; }
-  get multiline () { return this.ep["multiline"]; }
-  get exprActionButtons () { return this.ep["expr-action-buttons"]; }
+  protected get exprActionButtons () { return this.ep["expr-action-buttons"]; }
 }
 
 export type IDToPluginSettings = {
