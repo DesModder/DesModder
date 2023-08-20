@@ -31,7 +31,7 @@ Insert before the delete button but after the other buttons.
 
 *Replace* `delete_button` with
 ```js
-DSM.insertElement(() => DSM.exprActionButtons.actionButtonsView(this.model())),
+DSM.insertFacetElement("exprActionButtons", () => ({ m: this.model() })),
 __delete_button__
 ```
 

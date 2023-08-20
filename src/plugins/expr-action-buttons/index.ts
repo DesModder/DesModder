@@ -1,4 +1,5 @@
-import { Inserter, PluginController } from "../PluginController";
+import { Inserter } from "../../preload/replaceElement";
+import { PluginController } from "../PluginController";
 import { ActionButtons } from "./components/ActionButtons";
 import { facetsSpec } from "dataflow";
 import { ItemModel } from "globals/models";
@@ -7,7 +8,7 @@ declare module "dataflow" {
   interface Facets {
     exprActionButtons: {
       input: ActionButtonSpec;
-      output: readonly ActionButtonWithKey[];
+      output: Inserter<{ m: ItemModel }>;
     };
   }
 }
@@ -23,10 +24,12 @@ export default class ExprActionButtons extends PluginController<undefined> {
 
   facets = facetsSpec({
     exprActionButtons: {
-      combine: (values) =>
-        values.flatMap(({ plugin, buttons }) =>
+      combine: (values) => {
+        const order = values.flatMap(({ plugin, buttons }) =>
           buttons.map((b, i) => ({ ...b, key: `${plugin}:${i}` }))
-        ),
+        );
+        return ({ m }) => ActionButtons(order, m);
+      },
     },
   });
 
@@ -34,14 +37,6 @@ export default class ExprActionButtons extends PluginController<undefined> {
     throw new Error(
       "Programming Error: core plugin Expression Action Buttons should not be disableable"
     );
-  }
-
-  actionButtonsView(m: ItemModel): Inserter {
-    return () => ActionButtons(this, m);
-  }
-
-  order() {
-    return this.dsm.facet("exprActionButtons") ?? [];
   }
 }
 
@@ -53,6 +48,6 @@ export interface ActionButton {
   onTap: (m: ItemModel) => void;
 }
 
-interface ActionButtonWithKey extends ActionButton {
+export interface ActionButtonWithKey extends ActionButton {
   key: string;
 }

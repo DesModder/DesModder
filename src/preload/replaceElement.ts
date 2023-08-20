@@ -1,5 +1,6 @@
 /** This file runs before Desmos is loaded */
 import { Replacer } from "../plugins/PluginController";
+import { FacetNamesWithOutput } from "dataflow";
 
 export function insertElement(creator: () => undefined | (() => any)) {
   const DCGView = (Desmos as any).Private.Fragile.DCGView;
@@ -16,4 +17,27 @@ export function replaceElement<T>(old: () => T, replacer: () => Replacer<T>) {
     true: () => replacer()!(old()),
     false: () => old(),
   });
+}
+
+export type Inserter<ExtraOpts = undefined> = (extraOpts: ExtraOpts) => any;
+
+export interface InserterFacet<ExtraOpts = undefined> {
+  input: Inserter<ExtraOpts>;
+  output: Inserter<ExtraOpts>;
+}
+
+export function inserterFacet<ExtraOpts>(fn: Inserter<ExtraOpts>) {
+  return { combine: () => fn };
+}
+
+export function insertFacetElement<ExtraOpts = undefined>(
+  facet: FacetNamesWithOutput<Inserter<ExtraOpts>>,
+  extraOpts?: () => ExtraOpts
+) {
+  const DCGView = (Desmos as any).Private.Fragile.DCGView;
+  return DCGView.createElement(
+    DCGView.Components.Switch,
+    { key: () => (window as any).DSM.facet(facet) },
+    (elem: any) => elem?.(extraOpts?.())
+  );
 }

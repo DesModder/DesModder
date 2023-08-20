@@ -1,4 +1,8 @@
-import { insertElement, replaceElement } from "./preload/replaceElement";
+import {
+  insertElement,
+  insertFacetElement,
+  replaceElement,
+} from "./preload/replaceElement";
 import window, { Calc } from "globals/window";
 import {
   plugins,
@@ -247,6 +251,7 @@ export default class DSM extends TransparentPlugins {
   }
 
   insertElement = insertElement;
+  insertFacetElement = insertFacetElement;
   replaceElement = replaceElement;
 }
 

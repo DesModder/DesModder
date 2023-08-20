@@ -1,13 +1,26 @@
-import { facetSourcesSpec } from "../../dataflow";
-import { Inserter, PluginController } from "../PluginController";
+import { facetSourcesSpec, facetsSpec } from "../../dataflow";
+import { InserterFacet, inserterFacet } from "../../preload/replaceElement";
+import { PluginController } from "../PluginController";
 import { ActionButton } from "../expr-action-buttons";
 import { ListView, PinnedPanel } from "./components/PinnedPanel";
 import "./pinExpressions.less";
 import { Calc } from "globals/window";
 
+declare module "dataflow" {
+  interface Facets {
+    pinnedPanel: InserterFacet<ListView>;
+  }
+}
+
 export default class PinExpressions extends PluginController {
   static id = "pin-expressions" as const;
   static enabledByDefault = true;
+
+  facets = facetsSpec({
+    pinnedPanel: inserterFacet((listView: ListView) =>
+      PinnedPanel(this, listView)
+    ),
+  });
 
   private readonly actionButtons: ActionButton[] = [
     {
@@ -64,9 +77,5 @@ export default class PinExpressions extends PluginController {
       ?.getDsmItemModels()
       .some((v) => v.pinned);
     el?.classList.toggle("dsm-has-pinned-expressions", hasPinnedExpressions);
-  }
-
-  pinnedPanel(listView: ListView): Inserter {
-    return () => PinnedPanel(this, listView);
   }
 }

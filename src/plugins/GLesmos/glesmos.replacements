@@ -49,7 +49,9 @@ Just add one more child.
 *Replace* `__rest__` with
 ```js
 __rest__,
-DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.id, $ToggleView, true))
+DSM.insertFacetElement("glesmosToggle", () => ({
+  id: this.id, ToggleView: $ToggleView, allowInequality: true
+}))
 ```
 
 ## Add a lines menu option for switching an expression to glesmos rendering mode
@@ -85,7 +87,9 @@ Just add one more child.
 *Replace* `__rest__` with
 ```js
 __rest__,
-DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.id, $ToggleView, false))
+DSM.insertFacetElement("glesmosToggle", () => ({
+  id: this.id, ToggleView: $ToggleView, allowInequality: false
+}))
 ```
 
 ## Add a lines menu option for confirming GLesmos lines
@@ -114,7 +118,7 @@ Prefix with a child
 
 *Replace* `options` with
 ```js
-DSM.insertElement(() => DSM.glesmos?.confirmLines(this.id, $ToggleView)),
+DSM.insertFacetElement("glesmosConfirmLines", () => ({id: this.id, ToggleView: $ToggleView})),
 __options__
 ```
 

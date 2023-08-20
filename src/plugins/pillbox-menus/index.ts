@@ -1,5 +1,7 @@
+import { If } from "../../components";
 import { facetSourcesSpec, facetsSpec } from "../../dataflow";
-import { Inserter, PluginController } from "../PluginController";
+import { InserterFacet } from "../../preload/replaceElement";
+import { PluginController } from "../PluginController";
 import { MenuFunc } from "./components/Menu";
 import PillboxContainer from "./components/PillboxContainer";
 import PillboxMenu from "./components/PillboxMenu";
@@ -13,6 +15,8 @@ declare module "dataflow" {
       input: PillboxButton;
       output: readonly PillboxButton[];
     };
+    pillboxButtonsView: InserterFacet<{ horizontal: boolean }>;
+    pillboxMenuView: InserterFacet<{ horizontal: boolean }>;
   }
 }
 
@@ -24,8 +28,10 @@ export default class PillboxMenus extends PluginController<undefined> {
 
   facets = facetsSpec({
     pillboxButtons: {
-      combine: (values) => values,
+      combine: (buttons) => buttons,
     },
+    pillboxButtonsView: { combine: (values) => values[0] },
+    pillboxMenuView: { combine: (values) => values[0] },
   });
 
   facetSources = facetSourcesSpec({
@@ -36,6 +42,33 @@ export default class PillboxMenus extends PluginController<undefined> {
         tooltip: "menu-desmodder-tooltip",
         iconClass: "dsm-icon-desmodder",
         popup: MenuFunc,
+      },
+    },
+    pillboxButtonsView: {
+      deps: ["pillboxButtons"],
+      compute: ({ pillboxButtons }) => {
+        return ({ horizontal }) =>
+          DCGView.createElement(PillboxContainer, {
+            pm: DCGView.const(this),
+            horizontal: DCGView.const(horizontal),
+            buttons: DCGView.const(pillboxButtons),
+          });
+      },
+    },
+    pillboxMenuView: {
+      deps: ["pillboxButtons"],
+      compute: ({ pillboxButtons }) => {
+        return ({ horizontal }) =>
+          (DCGView.createElement as any)(
+            If,
+            { predicate: () => !!this.pillboxMenuOpen },
+            () =>
+              DCGView.createElement(PillboxMenu, {
+                pm: DCGView.const(this),
+                horizontal: DCGView.const(horizontal),
+                buttons: DCGView.const(pillboxButtons),
+              })
+          );
       },
     },
   });
@@ -57,36 +90,6 @@ export default class PillboxMenus extends PluginController<undefined> {
     throw new Error(
       "Programming Error: core plugin Pillbox Menus should not be disableable"
     );
-  }
-
-  private getPillboxButtons() {
-    return this.dsm.facet("pillboxButtons") ?? [];
-  }
-
-  getPillboxButtonsOrder() {
-    return this.getPillboxButtons().map((x) => x.id);
-  }
-
-  /** Assumes `id` is an id of some menu. Linear search, so accidentally quadratic. */
-  getPillboxButton(id: string) {
-    return this.getPillboxButtons().find((x) => x.id === id)!;
-  }
-
-  pillboxButtonsView(horizontal: boolean): Inserter {
-    return () =>
-      DCGView.createElement(PillboxContainer, {
-        pm: () => this,
-        horizontal: DCGView.const(horizontal),
-      });
-  }
-
-  pillboxMenuView(horizontal: boolean): Inserter {
-    if (this.pillboxMenuOpen === null) return undefined;
-    return () =>
-      DCGView.createElement(PillboxMenu, {
-        pm: () => this,
-        horizontal: DCGView.const(horizontal),
-      });
   }
 
   updateMenuView() {
@@ -177,7 +180,7 @@ export default class PillboxMenus extends PluginController<undefined> {
   }
 }
 
-interface PillboxButton {
+export interface PillboxButton {
   id: string;
   tooltip: string;
   iconClass: string;

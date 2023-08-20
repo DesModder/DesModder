@@ -1,4 +1,4 @@
-import PillboxMenus from "..";
+import PillboxMenus, { PillboxButton } from "..";
 import "./PillboxMenu.less";
 import { Component, jsx } from "DCGView";
 import { If, Switch } from "components/desmosComponents";
@@ -7,6 +7,7 @@ import { keys } from "utils/depUtils";
 
 export default class PillboxMenu extends Component<{
   pm: PillboxMenus;
+  buttons: readonly PillboxButton[];
   horizontal: boolean;
 }> {
   pm!: PillboxMenus;
@@ -45,8 +46,9 @@ export default class PillboxMenu extends Component<{
             <Switch key={() => this.pm.pillboxMenuOpen}>
               {() =>
                 this.pm.pillboxMenuOpen &&
-                this.pm
-                  .getPillboxButton(this.pm.pillboxMenuOpen)
+                this.props
+                  .buttons()
+                  .find(({ id }) => id === this.pm.pillboxMenuOpen)
                   ?.popup?.(this.pm)
               }
             </Switch>
@@ -108,9 +110,9 @@ export default class PillboxMenu extends Component<{
   }
 
   index() {
-    let index = this.pm
-      .getPillboxButtonsOrder()
-      .indexOf(this.pm.pillboxMenuOpen ?? "");
+    let index = this.props
+      .buttons()
+      .findIndex(({ id }) => id === this.pm.pillboxMenuOpen);
     if (
       Calc.settings.settingsMenu &&
       (!Calc.controller.isGeometry() ||

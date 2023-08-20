@@ -1,13 +1,16 @@
-import ExprActionButtons, { ActionButton } from "..";
+import { ActionButton, ActionButtonWithKey } from "..";
 import "./ActionButtons.less";
 import { jsx } from "DCGView";
 import { For, If, Tooltip } from "components";
 import { ItemModel } from "globals/models";
 import { format } from "i18n/i18n-core";
 
-export function ActionButtons(eab: ExprActionButtons, m: ItemModel) {
+export function ActionButtons(
+  order: readonly ActionButtonWithKey[],
+  m: ItemModel
+) {
   return (
-    <For each={() => eab.order()} key={(b) => b.key}>
+    <For each={() => order} key={(b) => b.key}>
       <div class="dsm-action-buttons">
         {(b: ActionButton) => (
           <If predicate={() => b.predicate(m)}>

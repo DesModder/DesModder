@@ -21,5 +21,5 @@ $DCGView.createElement(
 *Replace* `children` with
 ```js
 __children__,
-DSM.insertElement(() => DSM.showTips?.tipView())
+DSM.insertFacetElement("tipView")
 ```

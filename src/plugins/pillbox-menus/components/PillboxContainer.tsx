@@ -1,4 +1,4 @@
-import PillboxMenus from "..";
+import PillboxMenus, { PillboxButton } from "..";
 import "./PillboxContainer.less";
 import { Component, jsx } from "DCGView";
 import { If, Tooltip, For } from "components/desmosComponents";
@@ -7,6 +7,7 @@ import { format } from "i18n/i18n-core";
 
 export default class PillboxContainer extends Component<{
   pm: PillboxMenus;
+  buttons: readonly PillboxButton[];
   horizontal: boolean;
 }> {
   pm!: PillboxMenus;
@@ -32,16 +33,16 @@ export default class PillboxContainer extends Component<{
   templateTrue() {
     return (
       <div class="dsm-pillbox-and-popover">
-        <For each={() => this.pm.getPillboxButtonsOrder()} key={(id) => id}>
+        <For each={() => this.props.buttons()} key={({ id }) => id}>
           <div
             class={{
               "dsm-pillbox-buttons": true,
               "dsm-horizontal-pillbox": this.horizontal,
             }}
           >
-            {(id: string) => (
+            {(btn: PillboxButton) => (
               <Tooltip
-                tooltip={() => format(this.pm.getPillboxButton(id).tooltip)}
+                tooltip={() => format(btn.tooltip)}
                 gravity={() => (this.horizontal ? "s" : "w")}
               >
                 <div
@@ -51,7 +52,7 @@ export default class PillboxContainer extends Component<{
                       : "dcg-btn-flat-gray dcg-settings-pillbox dcg-action-settings dsm-action-menu"
                   }
                   role="button"
-                  onTap={() => this.onTapMenuButton(id)}
+                  onTap={() => this.onTapMenuButton(btn.id)}
                   // TODO: manageFocus?
                   style={() =>
                     this.horizontal
@@ -62,15 +63,15 @@ export default class PillboxContainer extends Component<{
                         }
                   }
                 >
-                  <i
-                    class={() => this.pm.getPillboxButton(id).iconClass ?? ""}
-                  />
+                  <i class={() => btn.iconClass ?? ""} />
                 </div>
               </Tooltip>
             )}
           </div>
         </For>
-        {this.pm.dsm.insertElement(() => this.pm.pillboxMenuView(false))}
+        {this.pm.dsm.insertFacetElement("pillboxMenuView", () => ({
+          horizontal: false,
+        }))}
       </div>
     );
   }

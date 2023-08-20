@@ -1,14 +1,22 @@
 import { buildConfigFromGlobals, rawToText } from "../../../text-mode-core";
 import { DCGView } from "../../DCGView";
+import { If } from "../../components";
+import { InserterFacet, inserterFacet } from "../../preload/replaceElement";
 import { Inserter, PluginController } from "../PluginController";
 import { onCalcEvent, analysisStateField } from "./LanguageServer";
 import { TextModeToggle } from "./components/TextModeToggle";
 import { initView, setDebugMode, startState } from "./view/editor";
 import { TransactionSpec } from "@codemirror/state";
 import { EditorView, ViewUpdate } from "@codemirror/view";
-import { compute, facetSourcesSpec } from "dataflow";
+import { compute, facetSourcesSpec, facetsSpec } from "dataflow";
 import { Calc } from "globals/window";
 import { keys } from "utils/depUtils";
+
+declare module "dataflow" {
+  interface Facets {
+    textModePanel: InserterFacet;
+  }
+}
 
 export default class TextMode extends PluginController {
   static id = "text-mode" as const;
@@ -18,6 +26,21 @@ export default class TextMode extends PluginController {
   inTextMode: boolean = false;
   view: EditorView | null = null;
   dispatchListenerID: string | null = null;
+
+  facets = facetsSpec({
+    textModePanel: inserterFacet(() =>
+      (DCGView.createElement as any)(
+        If,
+        { predicate: () => this.inTextMode },
+        () =>
+          DCGView.createElement("div", {
+            class: DCGView.const("dsm-text-editor-container"),
+            didMount: (div) => this.mountEditor(div),
+            willUnmount: () => this.unmountEditor(),
+          })
+      )
+    ),
+  });
 
   facetSources = facetSourcesSpec({
     sink: compute(["debug-mode/enabled"], ({ "debug-mode/enabled": d }) => {
@@ -74,16 +97,6 @@ export default class TextMode extends PluginController {
         if (this.view) onCalcEvent(this.view, event);
       });
     });
-  }
-
-  editorPanel(): Inserter {
-    if (!this.inTextMode) return undefined;
-    return () =>
-      DCGView.createElement("div", {
-        class: DCGView.const("dsm-text-editor-container"),
-        didMount: (div) => this.mountEditor(div),
-        willUnmount: () => this.unmountEditor(),
-      });
   }
 
   textModeToggle(): Inserter {

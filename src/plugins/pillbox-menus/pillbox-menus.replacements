@@ -16,7 +16,7 @@ $DCGView.createElement("div", {
 *Replace* `from` with
 ```js
 __from__
-DSM.insertElement(() => DSM.pillboxMenus?.pillboxButtonsView(true)),
+DSM.insertFacetElement("pillboxButtonsView", () => ({horizontal: true})),
 ```
 
 ## Insert spot for extra pillbox buttons in regular pillbox view
@@ -32,7 +32,7 @@ $DCGView.createElement($, {
 
 *Replace* `from` with
 ```js
-DSM.insertElement(() => DSM.pillboxMenus?.pillboxButtonsView(false)),
+DSM.insertFacetElement("pillboxButtonsView", () => ({horizontal: false})),
 __from__
 ```
 
@@ -68,7 +68,7 @@ $DCGView.createElement($If, {
 *Replace* `from` with
 ```js
 __from__,
-DSM.insertElement(() => DSM.pillboxMenus?.pillboxMenuView(true))
+DSM.insertFacetElement("pillboxMenuView", () => ({horizontal: true}))
 ```
 
 ## Tweak placement of existing settings menu in geometry

@@ -1,12 +1,37 @@
-import { Inserter, PluginController } from "../PluginController";
+import { InserterFacet, inserterFacet } from "../../preload/replaceElement";
+import { PluginController } from "../PluginController";
 import { ConfirmLines } from "./components/ConfirmLines";
 import { GLesmosToggle } from "./components/GLesmosToggle";
 import "./glesmos.less";
+import { facetsSpec } from "dataflow";
 import { Calc } from "globals/window";
+
+declare module "dataflow" {
+  interface Facets {
+    glesmosToggle: InserterFacet<{
+      id: string;
+      ToggleView: unknown;
+      allowInequality: boolean;
+    }>;
+    glesmosConfirmLines: InserterFacet<{
+      id: string;
+      ToggleView: unknown;
+    }>;
+  }
+}
 
 export default class GLesmos extends PluginController {
   static id = "GLesmos" as const;
   static enabledByDefault = false;
+
+  facets = facetsSpec({
+    glesmosToggle: inserterFacet(({ id, ToggleView, allowInequality }) =>
+      GLesmosToggle(this, id, ToggleView, allowInequality)
+    ),
+    glesmosConfirmLines: inserterFacet(({ id, ToggleView }) =>
+      ConfirmLines(this, id, ToggleView)
+    ),
+  });
 
   afterEnable() {
     this.checkGLesmos();
@@ -92,18 +117,6 @@ export default class GLesmos extends PluginController {
       type: "toggle-item-hidden",
       id,
     });
-  }
-
-  confirmLines(id: string, ToggleView: any): Inserter {
-    return () => ConfirmLines(this, id, ToggleView);
-  }
-
-  glesmosToggle(
-    id: string,
-    ToggleView: any,
-    allowInequality: boolean
-  ): Inserter {
-    return () => GLesmosToggle(this, id, ToggleView, allowInequality);
   }
 }
 

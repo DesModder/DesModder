@@ -167,7 +167,6 @@ export class TransparentPlugins extends Dataflow  {
   protected get hideErrors () { return this.ep["hide-errors"]; }
   get textMode () { return this.ep["text-mode"]; }
   get metadata () { return this.ep["manage-metadata"]; }
-  protected get exprActionButtons () { return this.ep["expr-action-buttons"]; }
 }
 
 export type IDToPluginSettings = {

@@ -24,6 +24,6 @@ $DCGView.createElement(
 *Replace* `children` with
 ```js
 __children__,
-DSM.insertElement(() => DSM.pinExpressions?.pinnedPanel(this)),
-DSM.insertElement(() => DSM.textMode?.editorPanel(this)),
+DSM.insertFacetElement("pinnedPanel", () => this),
+DSM.insertFacetElement("textModePanel"),
 ```

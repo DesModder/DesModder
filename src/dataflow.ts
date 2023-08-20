@@ -26,6 +26,10 @@ export interface Facets {
   };
 }
 
+export type FacetNamesWithOutput<T> = {
+  [K in keyof Facets]: Facets[K]["output"] extends T ? K : never;
+}[keyof Facets];
+
 /** Manage data flow between plugins. */
 export class Dataflow {
   private readonly ev = new EditorView({
