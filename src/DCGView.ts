@@ -37,6 +37,10 @@ export interface MountedComponent {
   update: () => void;
 }
 
+abstract class IfComponent extends ClassComponent<{
+  predicate: () => boolean;
+}> {}
+
 abstract class ForComponent<T> extends ClassComponent<{
   each: () => Array<T>;
   key: (t: T) => string | number;
@@ -47,17 +51,28 @@ export interface IfElseSecondParam {
   false: () => typeof ClassComponent;
 }
 
+abstract class InputComponent extends ClassComponent<{
+  value: () => string;
+  onInput: (s: string) => void;
+  required: boolean;
+  placeholder: string;
+  spellcheck: boolean;
+}> {}
+
+/** Switch expects one child which is a function returning a component */
+abstract class SwitchComponent extends ClassComponent<{
+  key: () => any;
+}> {}
+
 export interface DCGViewModule {
   Components: {
     For: typeof ForComponent;
-    If: typeof ClassComponent;
+    If: typeof IfComponent;
     IfElse: (p: () => boolean, v: IfElseSecondParam) => typeof ClassComponent;
-    // I don't know how to use the rest of these
-    IfDefined: typeof ClassComponent;
-    Input: typeof ClassComponent;
-    Switch: typeof ClassComponent;
+    Input: typeof InputComponent;
+    Switch: typeof SwitchComponent;
+    // TODO: We can use SwitchUnion in most places Switch is currently used
     SwitchUnion: typeof ClassComponent;
-    Textarea: typeof ClassComponent;
   };
   Class: typeof ClassComponent;
   const: <T>(v: T) => () => T;

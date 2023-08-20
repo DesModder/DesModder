@@ -38,7 +38,7 @@ export class JumpToDefinitionMenu extends Component<{
 }> {
   template() {
     return (
-      <If predicate={() => this.props.info()}>
+      <If predicate={() => !!this.props.info()}>
         {() => {
           const elt = (
             <div class="dsm-intellisense-jump-to-def-menu" tabindex={-1}>
@@ -227,11 +227,11 @@ export class PartialFunctionCallView extends Component<{
 }> {
   template() {
     return (
-      <If predicate={() => this.props.partialFunctionCall()}>
+      <If predicate={() => !!this.props.partialFunctionCall()}>
         {() => {
           const elt: ClassComponent = (
             <div>
-              <If predicate={() => this.props.partialFunctionCallDoc()}>
+              <If predicate={() => !!this.props.partialFunctionCallDoc()}>
                 {() => (
                   <FormattedDocstring
                     docstring={() =>
