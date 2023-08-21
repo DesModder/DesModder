@@ -2,11 +2,11 @@ import { truncatedLatexLabel } from "../../../utils/depUtils";
 import { jsx } from "DCGView";
 import { StaticMathQuillView } from "components";
 
-export function ListEvaluation(val: () => string[]) {
+export function ListEvaluation(val: string[]) {
   return (
     <StaticMathQuillView
       latex={() => {
-        const values = val();
+        const values = val;
         const labelOptions = {
           smallCutoff: 0.00001,
           bigCutoff: 1000000,

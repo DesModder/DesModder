@@ -44,12 +44,13 @@ $this.bindFn($this.getIconMode)
 
 *Replace* `from` with
 ```js
-error: () => DSM.replaceElement(
+error: () => DSM.replaceFacetElement(
   () => $DCGView.createElement($TooltippedError, {
       error: $e.bindFn($e.getErrorMsg),
       __opts__,
     }),
-  () => DSM.hideErrors?.errorTriangle($this.model.id)
+  "hideErrorsErrorTriangle",
+  () => $this.model.id
 )
 ```
 

@@ -1,6 +1,6 @@
 import { addForceDisabled } from "../panic/panic";
 import moduleReplacements from "./moduleReplacements";
-import { insertFacetElement, replaceElement } from "./replaceElement";
+import { insertFacetElement, replaceFacetElement } from "./replaceElement";
 import { fullReplacementCached } from "./replacementHelpers/cacheReplacement";
 import window from "globals/window";
 import injectScript from "utils/injectScript";
@@ -65,7 +65,7 @@ listenToMessageDown((message) => {
     // Helps with the case of replacements ran before initialization
     window.DSM = {
       insertFacetElement,
-      replaceElement,
+      replaceFacetElement,
       facet() {},
     } as any;
     void load(arrayToSet(message.pluginsForceDisabled));

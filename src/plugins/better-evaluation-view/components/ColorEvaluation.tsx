@@ -1,11 +1,11 @@
 import { jsx } from "DCGView";
 import { StaticMathQuillView } from "components";
 
-function _ColorEvaluation(val: () => string | string[]) {
+function _ColorEvaluation(val: string | string[]) {
   return (
     <StaticMathQuillView
       latex={() => {
-        const value = val();
+        const value = val;
         const length = 6;
         if (Array.isArray(value)) {
           const color = value.map(rgb);
@@ -31,7 +31,7 @@ function _ColorEvaluation(val: () => string | string[]) {
   );
 }
 
-export function ColorEvaluation(val: () => string | string[], swatch: any) {
+export function ColorEvaluation(val: string | string[], swatch: any) {
   return (
     <span class="dsm-color-container">
       {_ColorEvaluation(val)}

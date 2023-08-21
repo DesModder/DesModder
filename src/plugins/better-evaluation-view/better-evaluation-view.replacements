@@ -56,9 +56,10 @@ list: () => $.createElement(__oldList__)
 *Replace* `list` with
 ```js
 ()=>this.getEvaluationType(), {
-list: () => DSM.replaceElement(
+list: () => DSM.replaceFacetElement(
   () => $Dcgview.createElement(__oldList__),
-  () => DSM.betterEvaluationView?.listEvaluation(() => this.props.val())
+  "bevListEvaluation",
+  () => this.props.val()
 )
 ```
 
@@ -70,9 +71,10 @@ rgbcolor: () => $.createElement(__swatch__)
 
 *Replace* `color` with
 ```js
-rgbcolor: () => DSM.replaceElement(
+rgbcolor: () => DSM.replaceFacetElement(
   () => $Dcgview.createElement(__swatch__),
-  () => DSM.betterEvaluationView?.colorEvaluation(() => this.props.val())
+  "bevColorEvaluation",
+  () => this.props.val()
 )
 ```
 

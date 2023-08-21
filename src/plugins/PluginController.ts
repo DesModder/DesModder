@@ -21,6 +21,3 @@ export class PluginController<
   // computed is the same as facetSources but also adds an `x => x[0]` entry in `facets`
   computed: FacetSourcesSpec = {};
 }
-
-export type Replacer<T = any> = undefined | ((old: T) => any);
-export type Inserter = undefined | (() => any);
