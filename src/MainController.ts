@@ -1,8 +1,4 @@
-import {
-  insertElement,
-  insertFacetElement,
-  replaceElement,
-} from "./preload/replaceElement";
+import { insertFacetElement, replaceElement } from "./preload/replaceElement";
 import window, { Calc } from "globals/window";
 import {
   plugins,
@@ -258,7 +254,6 @@ export default class DSM extends TransparentPlugins {
     Calc.controller.updateViews();
   }
 
-  insertElement = insertElement;
   insertFacetElement = insertFacetElement;
   replaceElement = replaceElement;
 }

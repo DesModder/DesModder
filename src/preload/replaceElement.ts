@@ -2,15 +2,6 @@
 import { Replacer } from "../plugins/PluginController";
 import { FacetNamesWithOutput } from "dataflow";
 
-export function insertElement(creator: () => undefined | (() => any)) {
-  const DCGView = (Desmos as any).Private.Fragile.DCGView;
-  return DCGView.createElement(
-    DCGView.Components.If,
-    { predicate: () => !!creator() },
-    () => creator()!()
-  );
-}
-
 export function replaceElement<T>(old: () => T, replacer: () => Replacer<T>) {
   const DCGView = (Desmos as any).Private.Fragile.DCGView;
   return DCGView.Components.IfElse(() => !!replacer(), {

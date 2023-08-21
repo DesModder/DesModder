@@ -45,13 +45,12 @@ isShowKeypadButtonVisible () {
 *Replace* `center` with
 ```js
 __center__,
-DSM.insertElement(() => DSM.textMode?.textModeToggle()),
+DSM.insertFacetElement("textModeToggle"),
 // This is for pillbox-menus, not text-mode
-DSM.insertElement(
-  () => (
-    !this.controller.getGraphSettings().config.graphpaper
-      && DSM.pillboxMenus?.pillboxButtonsView(true)
-  )
+Desmos.Private.Fragile.DCGView.createElement(
+  Desmos.Private.Fragile.DCGView.Components.If,
+  { predicate: () => !this.controller.getGraphSettings().config.graphpaper },
+  () => DSM.insertFacetElement("pillboxButtonsView", () => ({ horizontal: true }))
 )
 ```
 

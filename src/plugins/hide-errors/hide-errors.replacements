@@ -71,7 +71,7 @@ Add one more child for the hide button
 *Replace* `children` with
 ```js
 __children__,
-DSM.insertElement(() => DSM.hideErrors?.hideButton(() => this.model))
+DSM.insertFacetElement("hideErrorsButton", () => this.model)
 ```
 
 ## Disable slider creation prompt if error is hidden

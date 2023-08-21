@@ -1,8 +1,10 @@
 import { Fragile } from "../../globals/window";
-import { Inserter, PluginController, Replacer } from "../PluginController";
+import { Inserter } from "../../preload/replaceElement";
+import { PluginController, Replacer } from "../PluginController";
 import { ErrorTriangle } from "./components/ErrorTriangle";
 import { HideButton } from "./components/HideButton";
 import "./hide-errors.less";
+import { facetSourcesSpec } from "dataflow";
 
 let enabled: boolean = false;
 let initOnce: boolean = false;
@@ -32,9 +34,21 @@ function initPromptSlider() {
   };
 }
 
+declare module "dataflow" {
+  interface Computed {
+    hideErrorsButton: Inserter<any>; // Some type of model
+  }
+}
+
 export default class HideErrors extends PluginController {
   static id = "hide-errors" as const;
   static enabledByDefault = true;
+
+  computed = facetSourcesSpec({
+    hideErrorsButton: {
+      value: (model) => HideButton(this, () => model),
+    },
+  });
 
   afterEnable() {
     if (!initOnce) {
@@ -62,10 +76,6 @@ export default class HideErrors extends PluginController {
 
   isErrorHidden(id: string) {
     return this.dsm.metadata?.getDsmItemModel(id)?.errorHidden;
-  }
-
-  hideButton(getModel: () => any): Inserter {
-    return () => HideButton(this, getModel);
   }
 
   errorTriangle(id: string): Replacer {

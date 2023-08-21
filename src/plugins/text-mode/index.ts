@@ -2,7 +2,7 @@ import { buildConfigFromGlobals, rawToText } from "../../../text-mode-core";
 import { DCGView } from "../../DCGView";
 import { If } from "../../components";
 import { Inserter } from "../../preload/replaceElement";
-import { Inserter as OldInserter, PluginController } from "../PluginController";
+import { PluginController } from "../PluginController";
 import { onCalcEvent, analysisStateField } from "./LanguageServer";
 import { TextModeToggle } from "./components/TextModeToggle";
 import { initView, setDebugMode, startState } from "./view/editor";
@@ -15,6 +15,7 @@ import { keys } from "utils/depUtils";
 declare module "dataflow" {
   interface Computed {
     textModePanel: Inserter;
+    textModeToggle: Inserter;
   }
 }
 
@@ -39,6 +40,14 @@ export default class TextMode extends PluginController {
               didMount: (div) => this.mountEditor(div),
               willUnmount: () => this.unmountEditor(),
             })
+        ),
+    },
+    textModeToggle: {
+      value: () =>
+        (DCGView.createElement as any)(
+          If,
+          { predicate: () => !Calc.controller.isInEditListMode() },
+          () => TextModeToggle(this)
         ),
     },
   });
@@ -98,11 +107,6 @@ export default class TextMode extends PluginController {
         if (this.view) onCalcEvent(this.view, event);
       });
     });
-  }
-
-  textModeToggle(): OldInserter {
-    if (Calc.controller.isInEditListMode()) return undefined;
-    return () => TextModeToggle(this);
   }
 
   onSetState() {
