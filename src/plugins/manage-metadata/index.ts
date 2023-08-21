@@ -29,7 +29,7 @@ export default class ManageMetadata extends PluginController {
 
   checkForMetadataChange() {
     const newMetadata = getMetadata();
-    if (!this.dsm.glesmos) {
+    if (!this.dsm.facet("GLesmos/enabled")) {
       if (
         Object.entries(newMetadata.expressions).some(
           ([id, e]) =>

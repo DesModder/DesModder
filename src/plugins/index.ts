@@ -159,9 +159,7 @@ export class TransparentPlugins extends Dataflow  {
   // protected = only appears in replacements
 
   get pillboxMenus () { return this.ep["pillbox-menus"]; }
-  protected get betterEvaluationView () { return this.ep["better-evaluation-view"]; }
   get pinExpressions () { return this.ep["pin-expressions"]; }
-  protected get showTips () { return this.ep["show-tips"]; }
   protected get rightClickTray () { return this.ep["right-click-tray"]; }
   get glesmos () { return this.ep["GLesmos"]; }
   protected get hideErrors () { return this.ep["hide-errors"]; }
