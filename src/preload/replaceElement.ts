@@ -21,15 +21,6 @@ export function replaceElement<T>(old: () => T, replacer: () => Replacer<T>) {
 
 export type Inserter<ExtraOpts = undefined> = (extraOpts: ExtraOpts) => any;
 
-export interface InserterFacet<ExtraOpts = undefined> {
-  input: Inserter<ExtraOpts>;
-  output: Inserter<ExtraOpts>;
-}
-
-export function inserterFacet<ExtraOpts>(fn: Inserter<ExtraOpts>) {
-  return { combine: () => fn };
-}
-
 export function insertFacetElement<ExtraOpts = undefined>(
   facet: FacetNamesWithOutput<Inserter<ExtraOpts>>,
   extraOpts?: () => ExtraOpts

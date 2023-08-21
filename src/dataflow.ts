@@ -19,12 +19,18 @@ const compartment = new Compartment();
  * By doing this, plugins do not depend on reference equality with each other
  * (allowing for external plugins), but we're typesafe within this main repo.
  */
-export interface Facets {
+export interface Facets extends ComputedFacets {
   sink: {
     input: undefined;
     output: undefined;
   };
 }
+/** Computed is similar to Facets. */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface Computed {}
+type ComputedFacets = {
+  [K in keyof Computed]: { input: Computed[K]; output: Computed[K] };
+};
 
 export type FacetNamesWithOutput<T> = {
   [K in keyof Facets]: Facets[K]["output"] extends T ? K : never;

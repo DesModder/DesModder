@@ -1,5 +1,5 @@
-import { facetSourcesSpec, facetsSpec } from "../../dataflow";
-import { InserterFacet, inserterFacet } from "../../preload/replaceElement";
+import { facetSourcesSpec } from "../../dataflow";
+import { Inserter } from "../../preload/replaceElement";
 import { PluginController } from "../PluginController";
 import { ActionButton } from "../expr-action-buttons";
 import { ListView, PinnedPanel } from "./components/PinnedPanel";
@@ -7,8 +7,8 @@ import "./pinExpressions.less";
 import { Calc } from "globals/window";
 
 declare module "dataflow" {
-  interface Facets {
-    pinnedPanel: InserterFacet<ListView>;
+  interface Computed {
+    pinnedPanel: Inserter<ListView>;
   }
 }
 
@@ -16,10 +16,10 @@ export default class PinExpressions extends PluginController {
   static id = "pin-expressions" as const;
   static enabledByDefault = true;
 
-  facets = facetsSpec({
-    pinnedPanel: inserterFacet((listView: ListView) =>
-      PinnedPanel(this, listView)
-    ),
+  computed = facetSourcesSpec({
+    pinnedPanel: {
+      value: (listView: ListView) => PinnedPanel(this, listView),
+    },
   });
 
   private readonly actionButtons: ActionButton[] = [

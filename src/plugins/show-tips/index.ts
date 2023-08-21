@@ -1,16 +1,16 @@
 import { DCGView } from "../../DCGView";
-import { InserterFacet, inserterFacet } from "../../preload/replaceElement";
+import { Inserter } from "../../preload/replaceElement";
 import { PluginController } from "../PluginController";
 import Tip from "./Tip";
-import { facetsSpec } from "dataflow";
+import { facetSourcesSpec } from "dataflow";
 
 function apiContainer() {
   return document.querySelector(".dcg-calculator-api-container");
 }
 
 declare module "dataflow" {
-  interface Facets {
-    tipView: InserterFacet;
+  interface Computed {
+    tipView: Inserter;
   }
 }
 
@@ -18,8 +18,10 @@ export default class ShowTips extends PluginController {
   static id = "show-tips" as const;
   static enabledByDefault = true;
 
-  facets = facetsSpec({
-    tipView: inserterFacet(() => DCGView.createElement(Tip, {})),
+  computed = facetSourcesSpec({
+    tipView: {
+      value: () => DCGView.createElement(Tip, {}),
+    },
   });
 
   afterEnable() {

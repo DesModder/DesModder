@@ -117,8 +117,16 @@ export default class DSM extends TransparentPlugins {
       this.setPluginEnabled(id, true);
       this.addDFPlugin({
         id,
-        facets: res.facets,
-        facetSources: res.facetSources,
+        facets: {
+          ...Object.fromEntries(
+            Object.keys(res.computed).map((k) => [
+              k,
+              { combine: (v: any[]) => v[0] },
+            ])
+          ),
+          ...res.facets,
+        },
+        facetSources: { ...res.computed, ...res.facetSources },
       });
       res.afterEnable();
       this.pillboxMenus?.updateMenuView();

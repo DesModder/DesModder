@@ -1,6 +1,6 @@
 import { If } from "../../components";
 import { facetSourcesSpec, facetsSpec } from "../../dataflow";
-import { InserterFacet } from "../../preload/replaceElement";
+import { Inserter } from "../../preload/replaceElement";
 import { PluginController } from "../PluginController";
 import { MenuFunc } from "./components/Menu";
 import PillboxContainer from "./components/PillboxContainer";
@@ -15,8 +15,10 @@ declare module "dataflow" {
       input: PillboxButton;
       output: readonly PillboxButton[];
     };
-    pillboxButtonsView: InserterFacet<{ horizontal: boolean }>;
-    pillboxMenuView: InserterFacet<{ horizontal: boolean }>;
+  }
+  interface Computed {
+    pillboxButtonsView: Inserter<{ horizontal: boolean }>;
+    pillboxMenuView: Inserter<{ horizontal: boolean }>;
   }
 }
 
@@ -30,8 +32,6 @@ export default class PillboxMenus extends PluginController<undefined> {
     pillboxButtons: {
       combine: (buttons) => buttons,
     },
-    pillboxButtonsView: { combine: (values) => values[0] },
-    pillboxMenuView: { combine: (values) => values[0] },
   });
 
   facetSources = facetSourcesSpec({
@@ -44,6 +44,9 @@ export default class PillboxMenus extends PluginController<undefined> {
         popup: MenuFunc,
       },
     },
+  });
+
+  computed = facetSourcesSpec({
     pillboxButtonsView: {
       deps: ["pillboxButtons"],
       compute: ({ pillboxButtons }) => {
