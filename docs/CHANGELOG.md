@@ -1,5 +1,12 @@
 # DesModder Changelog
 
+## 0.11.7
+
+Bug fixes:
+
+- Fix loading on https://desmos.com/geometry
+- (Text Mode) Show IDs instead of line numbers in debug mode
+
 ## 0.11.6
 
 New Features:
