@@ -11,8 +11,7 @@ import { keys } from "utils/depUtils";
 export default class TextMode extends PluginController {
   static id = "text-mode" as const;
   static enabledByDefault = false;
-  static descriptionLearnMore =
-    "https://github.com/DesModder/DesModder/tree/main/src/plugins/text-mode/docs/intro.md";
+  static descriptionLearnMore = "https://www.desmodder.com/text-mode";
 
   inTextMode: boolean = false;
   view: EditorView | null = null;

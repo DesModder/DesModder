@@ -24,16 +24,16 @@ isShowKeypadButtonVisible () {
 
 *Description* `Add toggle button to enable Text Mode`
 
-*Find* => `element`
+*Find* => `center`
 ```js
 .createElement(
   'div',
-  { class: $DCGView.const('dcg-right-buttons') },
-  __children__
+  { class: $DCGView.const('dcg-center-buttons') },
+  ____
 )
 ```
 
-*Find_surrounding_template* `element` => `template`
+*Find_surrounding_template* `center` => `template`
 
 *Find* inside `template`
 
@@ -42,17 +42,17 @@ isShowKeypadButtonVisible () {
   tooltip: () => this.controller.s("graphing-calculator-label-edit-list-tooltip")
 ```
 
-*Replace* `__children__` with
+*Replace* `center` with
 ```js
+__center__,
 DSM.insertElement(() => DSM.textMode?.textModeToggle()),
 // This is for pillbox-menus, not text-mode
 DSM.insertElement(
   () => (
     !this.controller.getGraphSettings().config.graphpaper
-      && DSM.pillboxMenus.pillboxButtonsView(true)
+      && DSM.pillboxMenus?.pillboxButtonsView(true)
   )
-),
-__children__
+)
 ```
 
 ## Add Text Mode class for styling
