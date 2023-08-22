@@ -15,7 +15,14 @@ export function replaceFacetElement<ExtraOpts = undefined>(
   return DCGView.createElement(
     DCGView.Components.Switch,
     { key: () => (window as any).DSM.facet(facet) },
-    (replacer: any) => (replacer ? replacer(old, extraOpts?.()) : old())
+    (replacer: any) =>
+      replacer
+        ? DCGView.createElement(
+            DCGView.Components.Switch,
+            { key: () => extraOpts?.() },
+            (extraOpts: any) => replacer(old, extraOpts)
+          )
+        : old()
   );
 }
 
