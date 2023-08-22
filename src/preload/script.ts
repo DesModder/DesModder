@@ -34,6 +34,8 @@ function getCalcDesktopURL() {
 }
 
 async function load(pluginsForceDisabled: Set<string>) {
+  if (window.location.href.includes("geometry-legacy")) return;
+
   const srcURL = await pollForValue(getCalcDesktopURL);
   /* we blocked calculator_desktop.js earlier to ensure that the preload/override script runs first.
   Now we load it, but with '?' appended to prevent the web request rules from blocking it */

@@ -59,7 +59,7 @@ if (BROWSER === "firefox") {
     {
       urls: [
         "https://*.desmos.com/calculator*",
-        "https://*.desmos.com/geometry-beta*",
+        "https://*.desmos.com/geometry*",
       ],
     },
     ["blocking", "responseHeaders"]

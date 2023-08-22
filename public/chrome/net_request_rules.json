@@ -41,7 +41,7 @@
       ]
     },
     "condition": {
-      "urlFilter": "https://*.desmos.com/geometry-beta*",
+      "urlFilter": "https://*.desmos.com/geometry*",
       "resourceTypes": ["main_frame", "script"]
     }
   },
