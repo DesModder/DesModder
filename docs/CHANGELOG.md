@@ -1,5 +1,19 @@
 # DesModder Changelog
 
+## 0.11.6
+
+New Features:
+
+- (Intellisense) Mark expressions as `@private`.
+- (Intellisense) Fixes to update handling.
+- (Text Mode) Enabled for https://desmos.com/geometry-beta.
+
+Bug fixes:
+
+- Various localization improvements.
+- (GLesmos) Avoid crashing the whole page if WebGL canvas is unsupported.
+- Flag `?nographpaper` no longer crashes the page.
+
 ## 0.11.5
 
 Bug fixes:
