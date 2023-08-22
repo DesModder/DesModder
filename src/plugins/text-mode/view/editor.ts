@@ -27,7 +27,7 @@ import {
 } from "@codemirror/language";
 import { linter } from "@codemirror/lint";
 import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
-import { EditorState } from "@codemirror/state";
+import { EditorState, StateEffect, StateField } from "@codemirror/state";
 // Basic editor extensions
 import {
   EditorView,
@@ -46,11 +46,26 @@ const scrollTheme = EditorView.theme({
   },
 });
 
+export const setDebugMode = StateEffect.define<boolean>();
+
+export const debugModeStateField = StateField.define<boolean>({
+  create: () => false,
+  update: (value, transaction) => {
+    for (const effect of transaction.effects) {
+      if (effect.is(setDebugMode)) {
+        value = effect.value;
+      }
+    }
+    return value;
+  },
+});
+
 export function startState(tm: TextMode, text: string) {
-  const state = EditorState.create({
+  let state = EditorState.create({
     doc: text,
     extensions: [
       analysisStateField,
+      debugModeStateField,
       EditorView.updateListener.of(tm.onEditorUpdate.bind(tm)),
       // linter, showing errors
       linter(doLint, { delay: 0 }),
@@ -108,7 +123,9 @@ export function startState(tm: TextMode, text: string) {
       footerPlugin(),
     ],
   });
-  return state.update(collapseStylesAtStart(state)).state;
+  state = state.update(collapseStylesAtStart(state)).state;
+  state = state.update(tm.updateDebugModeTransaction()).state;
+  return state;
 }
 
 export function initView(tm: TextMode, text: string) {
