@@ -13,7 +13,7 @@ export {
   astItemToTextString,
   docToString,
   exprToTextString,
-  styleEntryToText,
+  styleEntryToTextString,
 } from "./up/astToText";
 export { childExprToAug } from "./down/astToAug";
 export { itemAugToAST, childLatexToAST } from "./up/augToAST";

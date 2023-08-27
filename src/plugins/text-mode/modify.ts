@@ -5,19 +5,14 @@ import {
   rawToDsmMetadata,
   ProgramAnalysis,
   astItemToTextString,
-  docToString,
   exprToTextString,
-  styleEntryToText,
+  styleEntryToTextString,
   childExprToAug,
   itemAugToAST,
   graphSettingsToText,
   itemToText,
 } from "../../../text-mode-core";
-import TextAST, {
-  NodePath,
-  Settings,
-  Statement,
-} from "../../../text-mode-core/TextAST";
+import TextAST, { Settings, Statement } from "../../../text-mode-core/TextAST";
 import { addRawID } from "./LanguageServer";
 import { ChangeSpec, StateEffect } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
@@ -366,9 +361,7 @@ function itemChange(
           const oldEntry = oldEntries.find(
             (e) => e.property.value === newEntry.property.value
           );
-          const text = docToString(
-            styleEntryToText(new NodePath(newEntry, null))
-          );
+          const text = styleEntryToTextString(newEntry);
           if (oldEntry) return insertWithIndentation(view, oldEntry.pos, text);
           else {
             const prevEnd = oldEntries[oldEntries.length - 1].pos.to;

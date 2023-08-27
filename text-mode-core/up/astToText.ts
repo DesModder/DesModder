@@ -39,6 +39,13 @@ export function exprToTextString(
   return docToString(exprToText(new NodePath(expr, null)), emitOpts);
 }
 
+export function styleEntryToTextString(
+  entry: TextAST.MappingEntry,
+  emitOpts?: TextEmitOptions
+) {
+  return docToString(styleEntryToText(new NodePath(entry, null)), emitOpts);
+}
+
 function required(doc: Doc) {
   return label(REQUIRED, doc);
 }
@@ -143,7 +150,7 @@ function styleMapToText(path: NodePath<TextAST.StyleMapping>): Doc {
   return group(["@{", indent([line, join(line, lines)]), line, "}"]);
 }
 
-export function styleEntryToText(path: NodePath<TextAST.MappingEntry>) {
+function styleEntryToText(path: NodePath<TextAST.MappingEntry>) {
   const entry = path.node;
   return [
     entry.property.value,
