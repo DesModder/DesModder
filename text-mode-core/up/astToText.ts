@@ -4,9 +4,20 @@ import TextAST, { NodePath } from "../TextAST/Synthetic";
 import needsParens from "./needsParens";
 
 type Doc = DocNS.builders.Doc;
-const { group, indent, join, line, softline, hardline, ifBreak } = builders;
+const { group, indent, join, line, softline, hardline, ifBreak, label } =
+  builders;
 
-export function docToString(doc: Doc): string {
+const REQUIRED = "required";
+const REQUIRED_OR_SEMI = "required-or-semi";
+
+export interface TextEmitOptions {
+  keepOptionalSpaces?: boolean;
+}
+
+export function docToString(doc: Doc, emitOpts?: TextEmitOptions): string {
+  const keepOptionalSpaces = emitOpts?.keepOptionalSpaces ?? true;
+  if (!keepOptionalSpaces) doc = removeUnrequiredSpaces(doc);
+
   return printer.printDocToString(doc, {
     printWidth: 80,
     tabWidth: 2,
@@ -14,8 +25,26 @@ export function docToString(doc: Doc): string {
   }).formatted;
 }
 
-export function astItemToTextString(item: TextAST.Statement): string {
-  return docToString(astItemToText(new NodePath(item, null)));
+export function astItemToTextString(
+  item: TextAST.Statement,
+  emitOpts?: TextEmitOptions
+): string {
+  return docToString(astItemToText(new NodePath(item, null)), emitOpts);
+}
+
+export function exprToTextString(
+  expr: TextAST.Expression,
+  emitOpts?: TextEmitOptions
+): string {
+  return docToString(exprToText(new NodePath(expr, null)), emitOpts);
+}
+
+function required(doc: Doc) {
+  return label(REQUIRED, doc);
+}
+
+function requiredOrSemicolon(doc: Doc) {
+  return label(REQUIRED_OR_SEMI, doc);
 }
 
 function astItemToText(path: NodePath<TextAST.Statement>): Doc {
@@ -45,7 +74,7 @@ function astItemToText(path: NodePath<TextAST.Statement>): Doc {
         indent([
           hardline,
           join(
-            [hardline, hardline],
+            requiredOrSemicolon([hardline, hardline]),
             item.columns.map((col, i) =>
               columnToText(path.withChild(col, "column." + i.toString()))
             )
@@ -65,7 +94,7 @@ function astItemToText(path: NodePath<TextAST.Statement>): Doc {
         indent([
           hardline,
           join(
-            [hardline, hardline],
+            requiredOrSemicolon([hardline, hardline]),
             item.children.map((child, i) =>
               astItemToText(path.withChild(child, "child." + i.toString()))
             )
@@ -79,8 +108,11 @@ function astItemToText(path: NodePath<TextAST.Statement>): Doc {
       return ["settings", trailingStyleMap(path, item.style)];
     case "Ticker":
       return [
-        "ticker ",
-        exprToText(path.withChild(item.handler, "handler")),
+        maybeRequiredSpace(
+          "ticker",
+          " ",
+          exprToText(path.withChild(item.handler, "handler"))
+        ),
         trailingStyleMap(path, item.style),
       ];
   }
@@ -149,7 +181,7 @@ function regressionEntryToText(path: NodePath<TextAST.RegressionEntry>): Doc {
 }
 
 function stringToText(str: string): Doc {
-  return JSON.stringify(str);
+  return required(JSON.stringify(str));
 }
 
 function primeOrCallToText(
@@ -168,10 +200,6 @@ function primeOrCallToText(
       )
     ),
   ]);
-}
-
-export function exprToTextString(expr: TextAST.Expression): string {
-  return docToString(exprToText(new NodePath(expr, null)));
 }
 
 function exprToText(path: NodePath<TextAST.Expression>): Doc {
@@ -193,6 +221,14 @@ function exprToText(path: NodePath<TextAST.Expression>): Doc {
   return inner;
 }
 
+function maybeRequiredSpace(left: Doc, space: Doc, right: Doc) {
+  if (endsWithWord(left) && startsWithWord(right)) {
+    return [left, required(space), right];
+  } else {
+    return [left, space, right];
+  }
+}
+
 function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
   const e = path.node;
   switch (e.type) {
@@ -208,7 +244,8 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
       return primeOrCallToText(path.withChild(e.expr, "expr"), e.order);
     case "DerivativeExpression":
       return group([
-        "(d/d ",
+        "(d/d",
+        required(" "),
         exprToText(path.withChild(e.variable, "variable")),
         ")",
         line,
@@ -217,7 +254,7 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
     case "RepeatedExpression":
       return group([
         e.name,
-        " ",
+        required(" "),
         e.index.name,
         "=",
         parenthesize([
@@ -285,8 +322,12 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
       ]);
     case "ListComprehension":
       return bracketize([
-        exprToText(path.withChild(e.expr, "expr")),
-        " for ",
+        maybeRequiredSpace(
+          exprToText(path.withChild(e.expr, "expr")),
+          " ",
+          "for"
+        ),
+        required(" "),
         join(
           ", ",
           e.assignments.map((assignment, i) =>
@@ -297,10 +338,13 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
         ),
       ]);
     case "Substitution":
-      return [
-        exprToText(path.withChild(e.body, "body")),
-        line,
-        "with ",
+      return group([
+        maybeRequiredSpace(
+          exprToText(path.withChild(e.body, "body")),
+          line,
+          "with"
+        ),
+        required(" "),
         join(
           ", ",
           e.assignments.map((assignment, i) =>
@@ -309,7 +353,7 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
             )
           )
         ),
-      ];
+      ]);
     case "PiecewiseExpression":
       return group([
         "{",
@@ -447,3 +491,96 @@ function isUnsignedNumericLikeLiteral(node: TextAST.Expression) {
       (node.name === "infty" || node.name === "NaN"))
   );
 }
+
+function removeUnrequiredSpaces(doc: Doc): Doc {
+  if (typeof doc === "string") {
+    // Space removal!
+    return doc.replace(/\s/g, "");
+  }
+  if (Array.isArray(doc)) return doc.map((d) => removeUnrequiredSpaces(d));
+
+  switch (doc.type) {
+    case "fill":
+    case "concat":
+      return removeUnrequiredSpaces(doc.parts);
+    case "if-break":
+      return removeUnrequiredSpaces(doc.flatContents);
+    case "group":
+    case "align":
+    case "indent":
+    case "line-suffix":
+      return removeUnrequiredSpaces(doc.contents);
+    case "label":
+      if ((doc as any).label === REQUIRED) return (doc as any).contents;
+      if ((doc as any).label === REQUIRED_OR_SEMI) return ";";
+      // The type for Label does not currently include "contents" or "label".
+      // This was fixed a few days ago, waiting for release.
+      // https://github.com/prettier/prettier/commit/347c60730e12d6e9e52aaa360526d8792fb818e8
+      return removeUnrequiredSpaces((doc as any).contents);
+    case "indent-if-break":
+    case "cursor":
+    case "trim":
+    case "line-suffix-boundary":
+    case "break-parent":
+      // no children
+      return doc;
+    case "line":
+      // Space removal!
+      return [];
+
+    default:
+      doc satisfies never;
+      throw new Error(`Invalid doc type: ${(doc as any)?.type}.`);
+  }
+}
+
+/** dir: 0 = starts with word. -1 = ends with word.
+ * Assumes there's nothing with empty children. */
+function startsOrEndsWithWord(dir: 0 | -1) {
+  function fn(doc: Doc | undefined): boolean {
+    if (!doc) return false;
+    if (typeof doc === "string")
+      return /[a-zA-Z0-9_]/.test(dir === 0 ? doc[0] : doc[doc.length - 1]);
+    if (Array.isArray(doc)) return fn(doc.at(dir));
+
+    switch (doc.type) {
+      case "fill":
+      case "concat":
+        return fn(doc.parts.at(dir));
+      case "if-break":
+        return fn(doc.flatContents) || fn(doc.breakContents);
+      case "group":
+        if (doc.expandedStates) {
+          return doc.expandedStates.some((d) => fn(d));
+        } else {
+          return fn(doc.contents);
+        }
+
+      case "align":
+      case "indent":
+      case "label":
+      case "line-suffix":
+        // The type for Label does not currently include "contents".
+        // This was fixed a few days ago, waiting for release.
+        // https://github.com/prettier/prettier/commit/347c60730e12d6e9e52aaa360526d8792fb818e8
+        return fn((doc as any).contents);
+
+      case "indent-if-break":
+      case "cursor":
+      case "trim":
+      case "line-suffix-boundary":
+      case "line":
+      case "break-parent":
+        // no children
+        return false;
+
+      default:
+        doc satisfies never;
+        throw new Error(`Invalid doc type: ${(doc as any)?.type}.`);
+    }
+  }
+  return fn;
+}
+
+const startsWithWord = startsOrEndsWithWord(0);
+const endsWithWord = startsOrEndsWithWord(-1);
