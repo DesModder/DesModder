@@ -1,6 +1,6 @@
 import VideoCreator from "..";
 import { scaleBoundsAboutCenter } from "./utils";
-import DSM from "MainController";
+import DSM from "#DSM";
 import { Calc } from "#globals";
 import { EvaluateSingleExpression } from "#utils/depUtils.ts";
 

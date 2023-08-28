@@ -1,5 +1,5 @@
 import { ConfigItem, GenericSettings } from ".";
-import DSM from "MainController";
+import DSM from "#DSM";
 
 export class PluginController<
   Settings extends GenericSettings | undefined = undefined
