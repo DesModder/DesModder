@@ -11,7 +11,7 @@ import {
   PluginID,
   plugins,
   ConfigItemNumber,
-} from "plugins";
+} from "#plugins/index.ts";
 
 export function MenuFunc(pm: PillboxMenus) {
   return <Menu pm={pm} />;

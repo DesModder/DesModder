@@ -4,7 +4,7 @@ import PillboxContainer from "./components/PillboxContainer";
 import PillboxMenu from "./components/PillboxMenu";
 import { DCGView } from "#DCGView";
 import { Calc } from "#globals";
-import { plugins, PluginID, ConfigItem } from "plugins";
+import { plugins, PluginID, ConfigItem } from "#plugins/index.ts";
 
 export default class PillboxMenus extends PluginController<undefined> {
   static id = "pillbox-menus" as const;

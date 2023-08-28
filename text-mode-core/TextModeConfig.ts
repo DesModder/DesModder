@@ -1,4 +1,4 @@
-import type { Parse } from "#utils/depUtils.ts";
+import type { Parse } from "utils/depUtils";
 
 export interface PublicConfig {
   /** operatorNames affects subscripting */
