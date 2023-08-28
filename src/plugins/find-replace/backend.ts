@@ -1,7 +1,7 @@
 import { Calc } from "globals/window";
-import { satisfiesType } from "parsing/nodeTypes";
-import { Identifier } from "parsing/parsenode";
-import traverse, { Path } from "parsing/traverse";
+import { satisfiesType } from "#parsing/nodeTypes.ts";
+import { Identifier } from "#parsing/parsenode.ts";
+import traverse, { Path } from "#parsing/traverse.ts";
 import { parseDesmosLatex } from "utils/depUtils";
 
 export const simpleKeys = [

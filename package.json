@@ -7,7 +7,8 @@
   },
   "browserslist": "defaults",
   "imports": {
-    "#plugins/*": "./src/plugins/*"
+    "#plugins/*": "./src/plugins/*",
+    "#parsing/*": "./src/parsing/*"
   },
   "eslintIgnore": [
     "dist/*.js"
