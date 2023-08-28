@@ -1,15 +1,16 @@
-import enFTL from "../../localization/en.ftl";
-import esFTL from "../../localization/es.ftl";
-import frFTL from "../../localization/fr.ftl";
-import zhCNFTL from "../../localization/zh-CN.ftl";
+import enFTL from "./en.ftl";
+import esFTL from "./es.ftl";
+import frFTL from "./fr.ftl";
+import zhCNFTL from "./zh-CN.ftl";
 import { FluentBundle, FluentResource, FluentVariable } from "@fluent/bundle";
-import { Console, Fragile } from "#globals";
 
 export function currentLanguage() {
-  return Fragile?.currentLanguage?.() ?? "en";
+  return (window as any).Desmos?.Private?.Fragile?.currentLanguage?.() ?? "en";
 }
 
 export const locales = new Map<string, FluentBundle>();
+
+const Console = console;
 
 export function format(
   key: string,

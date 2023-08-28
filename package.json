@@ -7,7 +7,7 @@
   },
   "browserslist": "defaults",
   "imports": {
-    "#i18n": "./src/i18n/i18n-core.ts",
+    "#i18n": "./localization/i18n-core.ts",
     "#utils/*": "./src/utils/*",
     "#DSM": "./src/MainController.ts",
     "#globals": "./src/globals/index.ts",
