@@ -1,6 +1,6 @@
 import FindReplace from ".";
 import "./ReplaceBar.less";
-import { Component, jsx } from "DCGView";
+import { Component, jsx } from "#DCGView";
 import { MathQuillView } from "components";
 import { Calc } from "#globals";
 import { format } from "#i18n";

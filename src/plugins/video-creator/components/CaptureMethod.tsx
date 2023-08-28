@@ -1,7 +1,7 @@
 import VideoCreator from "..";
 import { cancelCapture, CaptureMethod } from "../backend/capture";
 import "./CaptureMethod.css";
-import { Component, jsx } from "DCGView";
+import { Component, jsx } from "#DCGView";
 import {
   SegmentedControl,
   If,

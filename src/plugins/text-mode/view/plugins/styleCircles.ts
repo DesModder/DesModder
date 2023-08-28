@@ -3,7 +3,7 @@ import { statementsIntersecting } from "../statementIntersection";
 import StyleCircle from "./StyleCircle";
 import { RangeSet, Extension } from "@codemirror/state";
 import { GutterMarker, gutter, gutters } from "@codemirror/view";
-import { DCGView } from "DCGView";
+import { DCGView } from "#DCGView";
 import { Calc, ItemModel } from "#globals";
 
 export function styleCircles(): Extension {

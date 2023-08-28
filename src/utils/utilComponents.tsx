@@ -1,4 +1,4 @@
-import { Component, jsx } from "DCGView";
+import { Component, jsx } from "#DCGView";
 import { For } from "components/desmosComponents";
 
 export class IndexFor<T> extends Component<{

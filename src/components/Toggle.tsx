@@ -1,5 +1,5 @@
 import "./Toggle.less";
-import { Component, jsx } from "DCGView";
+import { Component, jsx } from "#DCGView";
 
 export default class Toggle extends Component<{
   toggled: () => boolean;

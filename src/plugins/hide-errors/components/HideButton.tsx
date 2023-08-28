@@ -1,5 +1,5 @@
 import HideErrors from "..";
-import { jsx } from "DCGView";
+import { jsx } from "#DCGView";
 import { If } from "components";
 import { format } from "#i18n";
 

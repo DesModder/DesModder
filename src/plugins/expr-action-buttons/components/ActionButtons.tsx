@@ -1,6 +1,6 @@
 import ExprActionButtons, { ActionButton } from "..";
 import "./ActionButtons.less";
-import { jsx } from "DCGView";
+import { jsx } from "#DCGView";
 import { For, If, Tooltip } from "components";
 import { ItemModel } from "#globals";
 import { format } from "#i18n";

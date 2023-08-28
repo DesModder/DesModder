@@ -1,5 +1,5 @@
 import PinExpressions from "..";
-import { jsx } from "DCGView";
+import { jsx } from "#DCGView";
 import { For, If } from "components";
 import { Calc, ItemModel } from "#globals";
 

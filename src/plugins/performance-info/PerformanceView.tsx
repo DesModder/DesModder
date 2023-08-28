@@ -1,6 +1,6 @@
 import PerformanceInfo from ".";
 import "./PerformanceView.less";
-import { Component, jsx } from "DCGView";
+import { Component, jsx } from "#DCGView";
 import DSM from "#DSM";
 import { Button, IconButton, Tooltip } from "components";
 import { format } from "#i18n";

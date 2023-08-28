@@ -11,6 +11,7 @@
     "#utils/*": "./src/utils/*",
     "#DSM": "./src/MainController.ts",
     "#globals": "./src/globals/index.ts",
+    "#DCGView": "./src/DCGView.ts",
     "#plugins/*": "./src/plugins/*",
     "#parsing/*": "./src/parsing/*"
   },

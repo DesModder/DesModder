@@ -4,7 +4,7 @@ import CaptureMethod from "./CaptureMethod";
 import LoadingPie from "./LoadingPie";
 import "./MainPopup.less";
 import PreviewCarousel from "./PreviewCarousel";
-import { Component, jsx } from "DCGView";
+import { Component, jsx } from "#DCGView";
 import {
   SegmentedControl,
   If,

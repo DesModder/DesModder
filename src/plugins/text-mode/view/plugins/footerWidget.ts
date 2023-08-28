@@ -3,7 +3,7 @@ import { statementsIntersecting } from "../statementIntersection";
 import "./footerWidget.less";
 import { EditorState, RangeSet } from "@codemirror/state";
 import { EditorView, Decoration, WidgetType } from "@codemirror/view";
-import { DCGView } from "DCGView";
+import { DCGView } from "#DCGView";
 import { FooterView } from "components";
 import { Calc, ExpressionModel } from "#globals";
 

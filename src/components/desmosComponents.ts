@@ -5,7 +5,7 @@ import {
   ComponentChild,
   ComponentTemplate,
   DCGView,
-} from "DCGView";
+} from "#DCGView";
 import window, { Calc, Fragile } from "#globals";
 
 export abstract class CheckboxComponent extends ClassComponent<{
