@@ -2,7 +2,7 @@ import PillboxMenus from "..";
 import "./PillboxMenu.less";
 import { Component, jsx } from "DCGView";
 import { If, Switch } from "components/desmosComponents";
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 import { keys } from "utils/depUtils";
 
 export default class PillboxMenu extends Component<{

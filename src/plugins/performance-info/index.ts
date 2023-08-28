@@ -1,7 +1,6 @@
 import { PluginController } from "../PluginController";
 import { MainPopupFunc } from "./PerformanceView";
-import { DispatchedEvent, TimingData } from "globals/Calc";
-import { Calc } from "globals/window";
+import { Calc, DispatchedEvent, TimingData } from "#globals";
 
 export default class PerformanceInfo extends PluginController {
   static id = "performance-info" as const;

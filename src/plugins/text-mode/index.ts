@@ -6,7 +6,7 @@ import { TextModeToggle } from "./components/TextModeToggle";
 import { initView, setDebugMode, startState } from "./view/editor";
 import { TransactionSpec } from "@codemirror/state";
 import { EditorView, ViewUpdate } from "@codemirror/view";
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 import { keys } from "utils/depUtils";
 
 export default class TextMode extends PluginController {

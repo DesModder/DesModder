@@ -2,7 +2,7 @@ import { format } from "#i18n";
 import { drawGLesmosSketchToCtx } from "./plugins/GLesmos/drawGLesmosSketchToCtx";
 import DSM from "MainController";
 import "fonts/style.css";
-import window from "globals/window";
+import window from "#globals";
 
 const dsm = new DSM();
 

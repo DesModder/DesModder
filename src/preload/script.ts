@@ -2,7 +2,7 @@ import { addForceDisabled } from "../panic/panic";
 import moduleReplacements from "./moduleReplacements";
 import { insertElement, replaceElement } from "./replaceElement";
 import { fullReplacementCached } from "./replacementHelpers/cacheReplacement";
-import window from "globals/window";
+import window from "#globals";
 import injectScript from "utils/injectScript";
 import { postMessageUp, listenToMessageDown, arrayToSet } from "utils/messages";
 import { pollForValue } from "utils/utils";

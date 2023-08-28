@@ -1,7 +1,6 @@
 import { PluginController } from "../PluginController";
 import { ActionButton } from "../expr-action-buttons";
-import { ItemModel } from "globals/models";
-import { Calc } from "globals/window";
+import { Calc, ItemModel } from "#globals";
 import { List } from "utils/depUtils";
 
 export default class FolderTools extends PluginController {

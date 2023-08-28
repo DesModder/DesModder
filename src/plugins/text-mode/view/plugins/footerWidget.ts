@@ -5,8 +5,7 @@ import { EditorState, RangeSet } from "@codemirror/state";
 import { EditorView, Decoration, WidgetType } from "@codemirror/view";
 import { DCGView } from "DCGView";
 import { FooterView } from "components";
-import { ExpressionModel } from "globals/models";
-import { Calc } from "globals/window";
+import { Calc, ExpressionModel } from "#globals";
 
 function getFooters(state: EditorState) {
   const program = state.field(analysisStateField).program;

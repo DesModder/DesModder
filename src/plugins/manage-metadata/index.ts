@@ -6,7 +6,7 @@ import {
   getBlankMetadata,
   changeExprInMetadata,
 } from "./manage";
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 
 export default class ManageMetadata extends PluginController {
   static id = "manage-metadata" as const;

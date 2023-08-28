@@ -22,8 +22,7 @@ import { addRawID } from "./LanguageServer";
 import { ChangeSpec, StateEffect } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState, NonFolderState } from "@desmodder/graph-state";
-import { DispatchedEvent } from "globals/Calc";
-import { Calc } from "globals/window";
+import { Calc, DispatchedEvent } from "#globals";
 import Metadata from "#plugins/manage-metadata/interface.ts";
 
 // @settings related

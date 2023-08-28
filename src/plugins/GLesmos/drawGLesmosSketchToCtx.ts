@@ -1,7 +1,7 @@
 import ViewportTransforms from "./ViewportTransforms";
 import { initGLesmosCanvas, GLesmosCanvas } from "./glesmosCanvas";
 import { glesmosError, GLesmosShaderPackage } from "./shaders";
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 
 let canvas: GLesmosCanvas | null = null;
 

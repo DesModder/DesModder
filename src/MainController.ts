@@ -1,5 +1,5 @@
 import { insertElement, replaceElement } from "./preload/replaceElement";
-import window, { Calc } from "globals/window";
+import window, { Calc } from "#globals";
 import {
   plugins,
   pluginList,

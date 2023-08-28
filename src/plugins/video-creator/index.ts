@@ -4,8 +4,7 @@ import { CaptureMethod, SliderSettings, capture } from "./backend/capture";
 import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
 import { isValidNumber, isValidLength, escapeRegex } from "./backend/utils";
 import { MainPopupFunc } from "./components/MainPopup";
-import { ExpressionModel } from "globals/models";
-import { Calc } from "globals/window";
+import { Calc, ExpressionModel } from "#globals";
 import {
   keys,
   EvaluateSingleExpression,

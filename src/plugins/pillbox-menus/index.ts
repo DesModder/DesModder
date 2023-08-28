@@ -3,7 +3,7 @@ import { MenuFunc } from "./components/Menu";
 import PillboxContainer from "./components/PillboxContainer";
 import PillboxMenu from "./components/PillboxMenu";
 import { DCGView } from "DCGView";
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 import { plugins, PluginID, ConfigItem } from "plugins";
 
 export default class PillboxMenus extends PluginController<undefined> {

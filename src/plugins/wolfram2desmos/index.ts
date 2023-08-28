@@ -1,7 +1,7 @@
 import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
 import { wolfram2desmos, isIllegalASCIIMath } from "./wolfram2desmos";
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 
 // https://stackoverflow.com/a/34278578
 function typeInTextArea(

@@ -2,7 +2,7 @@
 import { Config, configList } from "./config";
 import "./custom-mathquill-config.less";
 import { MathQuillConfig, MathQuillField } from "components";
-import { Calc, DWindow } from "globals/window";
+import { Calc, DWindow } from "#globals";
 import { PluginController } from "#plugins/PluginController.ts";
 
 const defaultConfig: MathQuillConfig = {

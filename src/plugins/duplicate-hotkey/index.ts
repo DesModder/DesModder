@@ -1,5 +1,5 @@
 import { PluginController } from "../PluginController";
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 import { keys } from "utils/depUtils";
 
 export default class DuplicateHotkey extends PluginController {

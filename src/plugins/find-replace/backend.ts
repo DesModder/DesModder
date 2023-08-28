@@ -1,4 +1,4 @@
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 import { satisfiesType } from "#parsing/nodeTypes.ts";
 import { Identifier } from "#parsing/parsenode.ts";
 import traverse, { Path } from "#parsing/traverse.ts";

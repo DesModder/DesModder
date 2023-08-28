@@ -1,6 +1,6 @@
 import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 import { getQueryParams } from "utils/depUtils";
 
 const managedKeys = configList.map((e) => e.key);

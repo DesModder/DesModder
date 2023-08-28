@@ -2,7 +2,7 @@ import { Inserter, PluginController } from "../PluginController";
 import { ConfirmLines } from "./components/ConfirmLines";
 import { GLesmosToggle } from "./components/GLesmosToggle";
 import "./glesmos.less";
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 
 export default class GLesmos extends PluginController {
   static id = "GLesmos" as const;

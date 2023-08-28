@@ -2,7 +2,7 @@ import "./Tip.less";
 import { getTipData } from "./tips";
 import { Component, jsx } from "DCGView";
 import { If } from "components";
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 import { format } from "#i18n";
 
 export default class Tip extends Component {

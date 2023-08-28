@@ -3,7 +3,7 @@ import esFTL from "../../localization/es.ftl";
 import frFTL from "../../localization/fr.ftl";
 import zhCNFTL from "../../localization/zh-CN.ftl";
 import { FluentBundle, FluentResource, FluentVariable } from "@fluent/bundle";
-import { Console, Fragile } from "globals/window";
+import { Console, Fragile } from "#globals";
 
 export function currentLanguage() {
   return Fragile?.currentLanguage?.() ?? "en";

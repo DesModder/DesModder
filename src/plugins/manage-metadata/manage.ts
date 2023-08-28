@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 import Metadata, { Expression } from "./interface";
 import migrateToLatest from "./migrate";
-import { FolderModel, TextModel } from "globals/models";
-import { Calc, Console } from "globals/window";
+import { Calc, Console, FolderModel, TextModel } from "#globals";
 import { List } from "utils/depUtils";
 
 /*

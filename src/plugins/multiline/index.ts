@@ -3,8 +3,7 @@ import { Config, configList } from "./config";
 import "./multiline.less";
 import { CollapseMode, unverticalify, verticalify } from "./verticalify";
 import { MathQuillField, MathQuillView } from "components";
-import { DispatchedEvent } from "globals/Calc";
-import { Calc } from "globals/window";
+import { Calc, DispatchedEvent } from "#globals";
 import {
   getController,
   mqKeystroke,

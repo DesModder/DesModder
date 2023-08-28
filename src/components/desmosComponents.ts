@@ -6,7 +6,7 @@ import {
   ComponentTemplate,
   DCGView,
 } from "DCGView";
-import window, { Calc, Fragile } from "globals/window";
+import window, { Calc, Fragile } from "#globals";
 
 export abstract class CheckboxComponent extends ClassComponent<{
   checked: boolean;

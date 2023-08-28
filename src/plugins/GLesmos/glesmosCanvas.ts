@@ -9,7 +9,7 @@ import {
   glesmosGetFastFillShader,
   setUniform,
 } from "./shaders";
-import window, { Calc } from "globals/window";
+import window, { Calc } from "#globals";
 import { format } from "#i18n";
 
 export type GLesmosCanvas = ReturnType<typeof initGLesmosCanvas>;
