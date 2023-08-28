@@ -9,7 +9,7 @@ export {
 } from "./aug/rawToAug";
 export type { ProgramAnalysis } from "./ProgramAnalysis";
 export { parse as parseText } from "./down/textToAST";
-export { astToText } from "./up/astToText";
+export { astToText, type TextEmitOptions } from "./up/astToText";
 export { childExprToAug } from "./down/astToAug";
 export { itemAugToAST, childLatexToAST } from "./up/augToAST";
 export { graphSettingsToText, itemToText, augToText } from "./up/augToText";

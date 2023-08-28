@@ -87,7 +87,9 @@ show-tips-tip-huggy = Huggy!
 text-mode-name = Text Mode BETA
 text-mode-desc = Expect bugs. Temporary documentation:
 text-mode-toggle = Toggle Text Mode
-# Missing: error messages
+text-mode-toggle-spaces = Spaces
+text-mode-toggle-newlines = Newlines
+text-mode-format = Format
 
 ## Debug Mode
 debug-mode-name = Debug Mode
