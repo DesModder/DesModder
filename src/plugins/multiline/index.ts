@@ -5,7 +5,10 @@ import { CollapseMode, unverticalify, verticalify } from "./verticalify";
 import { MathQuillField, MathQuillView } from "components";
 import { DispatchedEvent } from "globals/Calc";
 import { Calc } from "globals/window";
-import { getController, mqKeystroke } from "plugins/intellisense/latex-parsing";
+import {
+  getController,
+  mqKeystroke,
+} from "#plugins/intellisense/latex-parsing.tsx";
 import {
   deregisterCustomDispatchOverridingHandler,
   hookIntoOverrideKeystroke,

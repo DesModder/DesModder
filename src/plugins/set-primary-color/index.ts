@@ -2,7 +2,7 @@ import { Calc } from "../../globals/window";
 import { PluginController } from "../PluginController";
 import "./_overrides.less";
 import "./custom-overrides.less";
-import { getHSVfromRGB, parseCSSHex } from "plugins/GLesmos/colorParsing";
+import { getHSVfromRGB, parseCSSHex } from "#plugins/GLesmos/colorParsing.ts";
 
 interface Config {
   primaryColor: string;

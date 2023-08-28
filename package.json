@@ -6,6 +6,9 @@
     "name": "Jared Hughes"
   },
   "browserslist": "defaults",
+  "imports": {
+    "#plugins/*": "./src/plugins/*"
+  },
   "eslintIgnore": [
     "dist/*.js"
   ],

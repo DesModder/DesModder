@@ -4,8 +4,8 @@ import { getTextModeConfig } from "../text-mode";
 import { mapAugAST } from "./latex-parsing";
 import { ItemModel } from "globals/models";
 import { Calc } from "globals/window";
-import { rootKeys } from "plugins/find-replace/backend";
-import Metadata from "plugins/manage-metadata/interface";
+import { rootKeys } from "#plugins/find-replace/backend.ts";
+import Metadata from "#plugins/manage-metadata/interface.ts";
 import { get } from "utils/utils";
 
 function getOrMakeKey<K, V>(map: Map<K, V>, k: K, v: () => V) {

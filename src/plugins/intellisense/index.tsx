@@ -13,8 +13,8 @@ import { DCGView, MountedComponent, unmountFromNode } from "DCGView";
 import { MathQuillField, MathQuillView } from "components";
 import { ItemModel, TextModel } from "globals/models";
 import { Calc } from "globals/window";
-import { PluginController } from "plugins/PluginController";
-import { getMetadata } from "plugins/manage-metadata/manage";
+import { PluginController } from "#plugins/PluginController.ts";
+import { getMetadata } from "#plugins/manage-metadata/manage.ts";
 import { hookIntoOverrideKeystroke } from "utils/listenerHelpers";
 import { isDescendant } from "utils/utils";
 
