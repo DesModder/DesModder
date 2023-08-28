@@ -1,6 +1,6 @@
 import { ItemModel } from "./models";
 import { GraphState } from "@desmodder/graph-state";
-import { MathQuillField } from "components";
+import { MathQuillField } from "#components";
 
 export type DispatchedEvent =
   | {

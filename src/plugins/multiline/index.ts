@@ -2,7 +2,7 @@ import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
 import "./multiline.less";
 import { CollapseMode, unverticalify, verticalify } from "./verticalify";
-import { MathQuillField, MathQuillView } from "components";
+import { MathQuillField, MathQuillView } from "#components";
 import { Calc, DispatchedEvent } from "#globals";
 import {
   getController,

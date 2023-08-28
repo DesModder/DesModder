@@ -12,7 +12,7 @@ import {
   Button,
   IfElse,
   InlineMathInputView,
-} from "components";
+} from "#components";
 import { format } from "#i18n";
 
 const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng", "zip"];

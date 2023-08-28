@@ -1,7 +1,7 @@
 import TextMode from "..";
 import { format } from "#i18n";
 import { jsx } from "#DCGView";
-import { Tooltip } from "components";
+import { Tooltip } from "#components";
 import { Calc } from "#globals";
 
 export function TextModeToggle(textMode: TextMode) {

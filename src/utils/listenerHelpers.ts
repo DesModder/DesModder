@@ -1,5 +1,5 @@
 import { pollForValue } from "./utils";
-import { MathQuillField } from "components";
+import { MathQuillField } from "#components";
 import { Calc, DispatchedEvent } from "#globals";
 
 let dispatchOverridingHandlers: {

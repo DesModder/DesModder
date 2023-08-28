@@ -1,6 +1,6 @@
 import GLesmos from "..";
 import { jsx } from "#DCGView";
-import { If } from "components";
+import { If } from "#components";
 import { format } from "#i18n";
 
 export function GLesmosToggle(

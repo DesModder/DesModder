@@ -1,7 +1,7 @@
 import PillboxMenus from "..";
 import "./PillboxContainer.less";
 import { Component, jsx } from "#DCGView";
-import { If, Tooltip, For } from "components/desmosComponents";
+import { If, Tooltip, For } from "#components";
 import { Calc } from "#globals";
 import { format } from "#i18n";
 

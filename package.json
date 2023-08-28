@@ -13,7 +13,8 @@
     "#globals": "./src/globals/index.ts",
     "#DCGView": "./src/DCGView.ts",
     "#plugins/*": "./src/plugins/*",
-    "#parsing/*": "./src/parsing/*"
+    "#parsing/*": "./src/parsing/*",
+    "#components": "./src/components/index.ts"
   },
   "eslintIgnore": [
     "dist/*.js"

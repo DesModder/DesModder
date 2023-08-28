@@ -12,8 +12,8 @@ import {
   Checkbox,
   Tooltip,
   InlineMathInputView,
-} from "components";
-import { For } from "components/desmosComponents";
+  For,
+} from "#components";
 import { format } from "#i18n";
 
 export default class SelectCapture extends Component<{

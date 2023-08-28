@@ -1,8 +1,7 @@
 import PillboxMenus from "..";
 import "./Menu.less";
 import { Component, jsx } from "#DCGView";
-import Toggle from "components/Toggle";
-import { If, Checkbox, Tooltip, For, Match } from "components/desmosComponents";
+import { Toggle, If, Checkbox, Tooltip, For, Match } from "#components";
 import { format } from "#i18n";
 import {
   ConfigItem,
