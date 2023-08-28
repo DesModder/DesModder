@@ -2,6 +2,7 @@ import {
   PartialFunctionCall,
   TryFindMQIdentResult,
   getController,
+  getCorrectableIdentifier,
   getMathquillIdentifierAtCursorPosition,
   getPartialFunctionCall,
 } from "./latex-parsing";
@@ -64,10 +65,20 @@ export function getExpressionLatex(id: string): string | undefined {
   ).latex;
 }
 
-export default class Intellisense extends PluginController {
+export default class Intellisense extends PluginController<{
+  subscriptify: boolean;
+}> {
   static id = "intellisense" as const;
   static enabledByDefault = false;
   static descriptionLearnMore = "https://www.desmodder.com/intellisense";
+
+  static config = [
+    {
+      type: "boolean",
+      key: "subscriptify",
+      default: false,
+    },
+  ] as const;
 
   view: MountedComponent | undefined;
 
@@ -705,6 +716,31 @@ export default class Intellisense extends PluginController {
       if (e.type === "delete-item-and-animate-out") {
         this.canHaveIntellisense = false;
         this.view?.update();
+      }
+
+      if (e.type === "set-item-latex") {
+        if (this.settings.subscriptify && this.latestMQ) {
+          const ident = getCorrectableIdentifier(this.latestMQ);
+
+          if (
+            this.latestMQ.__options.autoOperatorNames[
+              ident.ident.replace(/_/g, "")
+            ] ||
+            this.latestMQ.__options.autoCommands[ident.ident.replace(/_/g, "")]
+          ) {
+            return;
+          }
+
+          const match = this.intellisenseState
+            .boundIdentifiersArray()
+            .find((e) => e.variableName === ident.ident);
+
+          if (match) {
+            ident.back();
+            this.latestMQ.typedText(match.variableName);
+            this.latestMQ.keystroke("Right");
+          }
+        }
       }
     });
   }
