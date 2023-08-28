@@ -1,4 +1,4 @@
-import { Fragile } from "globals/window";
+import { Fragile } from "#globals";
 
 export const DCGView = Fragile.DCGView;
 

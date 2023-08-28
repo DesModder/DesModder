@@ -2,10 +2,14 @@ import { addForceDisabled } from "../panic/panic";
 import moduleReplacements from "./moduleReplacements";
 import { insertElement, replaceElement } from "./replaceElement";
 import { fullReplacementCached } from "./replacementHelpers/cacheReplacement";
-import window from "globals/window";
-import injectScript from "utils/injectScript";
-import { postMessageUp, listenToMessageDown, arrayToSet } from "utils/messages";
-import { pollForValue } from "utils/utils";
+import window from "#globals";
+import injectScript from "#utils/injectScript.ts";
+import {
+  postMessageUp,
+  listenToMessageDown,
+  arrayToSet,
+} from "#utils/messages.ts";
+import { pollForValue } from "#utils/utils.ts";
 
 /* This script is loaded at document_start, before the page's scripts */
 

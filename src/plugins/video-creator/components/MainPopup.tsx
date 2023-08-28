@@ -4,7 +4,7 @@ import CaptureMethod from "./CaptureMethod";
 import LoadingPie from "./LoadingPie";
 import "./MainPopup.less";
 import PreviewCarousel from "./PreviewCarousel";
-import { Component, jsx } from "DCGView";
+import { Component, jsx } from "#DCGView";
 import {
   SegmentedControl,
   If,
@@ -12,8 +12,8 @@ import {
   Button,
   IfElse,
   InlineMathInputView,
-} from "components";
-import { format } from "i18n/i18n-core";
+} from "#components";
+import { format } from "#i18n";
 
 const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng", "zip"];
 

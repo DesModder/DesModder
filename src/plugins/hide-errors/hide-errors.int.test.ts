@@ -1,4 +1,4 @@
-import { Driver, clean, testWithPage } from "tests/puppeteer-utils";
+import { Driver, clean, testWithPage } from "#tests";
 
 const ERROR = ".dcg-icon-error";
 const ERROR_HIDDEN = ".dsm-he-error-hidden";

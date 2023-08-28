@@ -2,15 +2,17 @@ import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
 import "./multiline.less";
 import { CollapseMode, unverticalify, verticalify } from "./verticalify";
-import { MathQuillField, MathQuillView } from "components";
-import { DispatchedEvent } from "globals/Calc";
-import { Calc } from "globals/window";
-import { getController, mqKeystroke } from "plugins/intellisense/latex-parsing";
+import { MathQuillField, MathQuillView } from "#components";
+import { Calc, DispatchedEvent } from "#globals";
+import {
+  getController,
+  mqKeystroke,
+} from "#plugins/intellisense/latex-parsing.tsx";
 import {
   deregisterCustomDispatchOverridingHandler,
   hookIntoOverrideKeystroke,
   registerCustomDispatchOverridingHandler,
-} from "utils/listenerHelpers";
+} from "#utils/listenerHelpers.ts";
 
 function focusmq(mq: MathQuillField | undefined) {
   mq?.focus();

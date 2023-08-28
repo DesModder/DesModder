@@ -1,7 +1,7 @@
 import HideErrors from "..";
-import { jsx } from "DCGView";
-import { If } from "components";
-import { format } from "i18n/i18n-core";
+import { jsx } from "#DCGView";
+import { If } from "#components";
+import { format } from "#i18n";
 
 export function HideButton(hideErrors: HideErrors, getModel: () => any) {
   return (

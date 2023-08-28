@@ -1,8 +1,7 @@
 import "./StyleCircle.less";
-import { Component, DCGView, jsx } from "DCGView";
-import { ExpressionIconView, ImageIconView } from "components";
-import { ItemModel } from "globals/models";
-import { Calc } from "globals/window";
+import { Component, DCGView, jsx } from "#DCGView";
+import { ExpressionIconView, ImageIconView } from "#components";
+import { Calc, ItemModel } from "#globals";
 
 export default class StyleCircle extends Component<{
   id: string;

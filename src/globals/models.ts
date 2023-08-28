@@ -2,7 +2,7 @@
  * This file includes type definition for internal graph state models.
  * These have more information than the graph state related to getState and setState.
  */
-import { ClassComponent } from "DCGView";
+import { ClassComponent } from "#DCGView";
 
 interface BasicSetExpression {
   id: string;

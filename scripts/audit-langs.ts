@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { Message } from "@fluent/bundle";
 import fs from "fs/promises";
-import { locales } from "i18n/i18n-core";
+import { locales } from "#i18n";
 
 void main();
 

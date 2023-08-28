@@ -1,5 +1,5 @@
-import { DWindow } from "globals/window";
-import { Driver, clean, testWithPage } from "tests/puppeteer-utils";
+import { DWindow } from "#globals";
+import { Driver, clean, testWithPage } from "#tests";
 
 declare let Calc: DWindow["Calc"];
 

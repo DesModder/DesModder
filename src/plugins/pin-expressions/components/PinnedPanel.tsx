@@ -1,8 +1,7 @@
 import PinExpressions from "..";
-import { jsx } from "DCGView";
-import { For, If } from "components";
-import { ItemModel } from "globals/models";
-import { Calc } from "globals/window";
+import { jsx } from "#DCGView";
+import { For, If } from "#components";
+import { Calc, ItemModel } from "#globals";
 
 export interface ListView {
   makeDragCopyViewForModel: (model: ItemModel) => void;

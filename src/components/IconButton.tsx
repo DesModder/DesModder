@@ -1,6 +1,6 @@
 import "./IconButton.less";
-import { Component, jsx } from "DCGView";
-import { mergeClass, MaybeClassDict } from "utils/utils";
+import { Component, jsx } from "#DCGView";
+import { mergeClass, MaybeClassDict } from "#utils/utils.ts";
 
 export default class IconButton extends Component<{
   iconClass: string;

@@ -1,5 +1,5 @@
 import { PluginController } from "../PluginController";
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 
 export default class DebugMode extends PluginController {
   static id = "debug-mode" as const;

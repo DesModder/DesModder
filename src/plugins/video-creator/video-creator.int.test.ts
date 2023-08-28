@@ -1,4 +1,4 @@
-import { clean, testWithPage } from "tests/puppeteer-utils";
+import { clean, testWithPage } from "#tests";
 
 const CAPTURE = ".dsm-menu-container .dsm-vc-capture-menu";
 const PREVIEW = ".dsm-menu-container .dsm-vc-preview-menu";

@@ -1,4 +1,4 @@
-import { Driver, clean, testWithPage } from "tests/puppeteer-utils";
+import { Driver, clean, testWithPage } from "#tests";
 
 async function expectEval(driver: Driver, latexExpected: string) {
   const latexFound = await driver.$eval(

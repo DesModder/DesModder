@@ -1,9 +1,8 @@
 import PillboxMenus from "..";
 import "./Menu.less";
-import { Component, jsx } from "DCGView";
-import Toggle from "components/Toggle";
-import { If, Checkbox, Tooltip, For, Match } from "components/desmosComponents";
-import { format } from "i18n/i18n-core";
+import { Component, jsx } from "#DCGView";
+import { Toggle, If, Checkbox, Tooltip, For, Match } from "#components";
+import { format } from "#i18n";
 import {
   ConfigItem,
   ConfigItemString,
@@ -12,7 +11,7 @@ import {
   PluginID,
   plugins,
   ConfigItemNumber,
-} from "plugins";
+} from "#plugins/index.ts";
 
 export function MenuFunc(pm: PillboxMenus) {
   return <Menu pm={pm} />;

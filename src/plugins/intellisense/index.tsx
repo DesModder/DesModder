@@ -9,14 +9,13 @@ import {
 import { IntellisenseState } from "./state";
 import { pendingIntellisenseTimeouts, setIntellisenseTimeout } from "./utils";
 import { JumpToDefinitionMenuInfo, View } from "./view";
-import { DCGView, MountedComponent, unmountFromNode } from "DCGView";
-import { MathQuillField, MathQuillView } from "components";
-import { ItemModel, TextModel } from "globals/models";
-import { Calc } from "globals/window";
-import { PluginController } from "plugins/PluginController";
-import { getMetadata } from "plugins/manage-metadata/manage";
-import { hookIntoOverrideKeystroke } from "utils/listenerHelpers";
-import { isDescendant } from "utils/utils";
+import { DCGView, MountedComponent, unmountFromNode } from "#DCGView";
+import { MathQuillField, MathQuillView } from "#components";
+import { ItemModel, TextModel, Calc } from "#globals";
+import { PluginController } from "#plugins/PluginController.ts";
+import { getMetadata } from "#plugins/manage-metadata/manage.ts";
+import { hookIntoOverrideKeystroke } from "#utils/listenerHelpers.ts";
+import { isDescendant } from "#utils/utils.ts";
 
 export type BoundIdentifier =
   | {

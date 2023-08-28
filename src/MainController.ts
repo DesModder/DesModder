@@ -1,5 +1,5 @@
 import { insertElement, replaceElement } from "./preload/replaceElement";
-import window, { Calc } from "globals/window";
+import window, { Calc } from "#globals";
 import {
   plugins,
   pluginList,
@@ -8,8 +8,8 @@ import {
   TransparentPlugins,
   IDToPluginSettings,
   PluginInstance,
-} from "plugins";
-import { postMessageUp, mapToRecord, recordToMap } from "utils/messages";
+} from "./plugins";
+import { postMessageUp, mapToRecord, recordToMap } from "#utils/messages.ts";
 
 export default class DSM extends TransparentPlugins {
   /**

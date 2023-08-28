@@ -1,7 +1,7 @@
 import VideoCreator from "..";
 import { cancelCapture, CaptureMethod } from "../backend/capture";
 import "./CaptureMethod.css";
-import { Component, jsx } from "DCGView";
+import { Component, jsx } from "#DCGView";
 import {
   SegmentedControl,
   If,
@@ -12,9 +12,9 @@ import {
   Checkbox,
   Tooltip,
   InlineMathInputView,
-} from "components";
-import { For } from "components/desmosComponents";
-import { format } from "i18n/i18n-core";
+  For,
+} from "#components";
+import { format } from "#i18n";
 
 export default class SelectCapture extends Component<{
   vc: VideoCreator;

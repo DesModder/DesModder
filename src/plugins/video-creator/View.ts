@@ -1,5 +1,5 @@
 import VideoCreator from ".";
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 
 const captureFrameID = "dsm-vc-capture-frame";
 

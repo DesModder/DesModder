@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 import Metadata, { Expression } from "./interface";
 import migrateToLatest from "./migrate";
-import { FolderModel, TextModel } from "globals/models";
-import { Calc, Console } from "globals/window";
-import { List } from "utils/depUtils";
+import { Calc, Console, FolderModel, TextModel } from "#globals";
+import { List } from "#utils/depUtils.ts";
 
 /*
 This file manages the metadata expressions. These are stored on the graph state as expressions and consist of:

@@ -15,7 +15,7 @@ import {
 } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 
 /**
  * onCalcEvent: when we receive a new event dispatched via Calc (such as a

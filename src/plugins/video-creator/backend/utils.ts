@@ -1,4 +1,4 @@
-import { EvaluateSingleExpression } from "utils/depUtils";
+import { EvaluateSingleExpression } from "#utils/depUtils.ts";
 
 interface Bounds {
   left: number;

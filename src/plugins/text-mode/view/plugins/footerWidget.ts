@@ -3,10 +3,9 @@ import { statementsIntersecting } from "../statementIntersection";
 import "./footerWidget.less";
 import { EditorState, RangeSet } from "@codemirror/state";
 import { EditorView, Decoration, WidgetType } from "@codemirror/view";
-import { DCGView } from "DCGView";
-import { FooterView } from "components";
-import { ExpressionModel } from "globals/models";
-import { Calc } from "globals/window";
+import { DCGView } from "#DCGView";
+import { FooterView } from "#components";
+import { Calc, ExpressionModel } from "#globals";
 
 function getFooters(state: EditorState) {
   const program = state.field(analysisStateField).program;

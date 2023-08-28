@@ -1,8 +1,8 @@
 import VideoCreator from "..";
 import { scaleBoundsAboutCenter } from "./utils";
-import DSM from "MainController";
-import { Calc } from "globals/window";
-import { EvaluateSingleExpression } from "utils/depUtils";
+import DSM from "#DSM";
+import { Calc } from "#globals";
+import { EvaluateSingleExpression } from "#utils/depUtils.ts";
 
 let dispatchListenerID: string | null = null;
 let callbackIfCancel: (() => void) | null = null;

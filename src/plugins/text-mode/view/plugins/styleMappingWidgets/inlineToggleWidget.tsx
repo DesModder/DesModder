@@ -1,7 +1,7 @@
 import { toggleString } from ".";
 import "./inlineToggleWidget.less";
 import { EditorView, WidgetType } from "@codemirror/view";
-import { jsx } from "utils/utils";
+import { jsx } from "#utils/utils.ts";
 
 class InlineToggleWidget extends WidgetType {
   constructor(readonly value: string, readonly path: string) {

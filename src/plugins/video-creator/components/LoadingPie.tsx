@@ -1,5 +1,5 @@
 import "./LoadingPie.less";
-import { Component, jsx } from "DCGView";
+import { Component, jsx } from "#DCGView";
 
 export default class LoadingPie extends Component<{
   // progress 0 to 1 when not pending
