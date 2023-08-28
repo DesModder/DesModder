@@ -11,7 +11,7 @@
     "target": "es2020",
     "allowJs": true,
     "strict": true,
-    "baseUrl": "src",
+    "baseUrl": ".",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "skipLibCheck": true
