@@ -6,7 +6,7 @@ import { latexTreeToString as _latexTreeToString } from "../aug/augLatexToRaw";
 import { parseRootLatex as _parseRootLatex } from "../aug/rawToAug";
 import { childExprToAug } from "../down/astToAug";
 import { parse as _parse } from "../down/textToAST";
-import { TextEmitOptions, exprToTextString } from "../up/astToText";
+import { TextEmitOptions, astToText } from "../up/astToText";
 import { rootLatexToAST } from "../up/augToAST";
 import "./run_calc_for_tests";
 
@@ -63,7 +63,7 @@ function testRoundTripIdenticalViaText(raw: string, emitOpts: TextEmitOptions) {
     const raw1 = leftRight(raw);
     const aug = parseRootLatex(raw1);
     const ast = rootLatexToAST(aug);
-    const text = exprToTextString(ast, emitOpts);
+    const text = astToText(ast, emitOpts);
     const analysis = parse(text);
     expect(analysis.diagnostics).toEqual([]);
     const children = analysis.program.children;

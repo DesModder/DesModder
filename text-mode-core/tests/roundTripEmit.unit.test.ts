@@ -1,4 +1,4 @@
-import { astItemToTextString, buildConfig } from "..";
+import { astToText, buildConfig } from "..";
 import { parse } from "../down/textToAST";
 import { TextEmitOptions } from "../up/astToText";
 
@@ -10,7 +10,7 @@ function testRoundTripIdenticalViaAST(text: string, emitOpts: TextEmitOptions) {
     const children = analysis.program.children;
     expect(children.length).toEqual(1);
     const item = children[0];
-    const emitted = astItemToTextString(item, emitOpts);
+    const emitted = astToText(item, emitOpts);
     expect(emitted).toBe(text);
   });
 }

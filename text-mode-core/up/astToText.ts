@@ -37,28 +37,66 @@ class EmitContext {
   }
 }
 
-export function astItemToTextString(
-  item: TextAST.Statement,
-  emitOpts?: TextEmitOptions
-): string {
+export function astToText(item: TextAST.Node, emitOpts?: TextEmitOptions) {
   const ctx = new EmitContext(emitOpts);
-  return ctx.docToString(astItemToText(ctx, new NodePath(item, null)));
+  const path = new NodePath(item, null);
+  return ctx.docToString(astToTextDoc(ctx, path));
 }
 
-export function exprToTextString(
-  expr: TextAST.Expression,
-  emitOpts?: TextEmitOptions
-): string {
-  const ctx = new EmitContext(emitOpts);
-  return ctx.docToString(exprToText(new NodePath(expr, null)));
-}
-
-export function styleEntryToTextString(
-  entry: TextAST.MappingEntry,
-  emitOpts?: TextEmitOptions
-) {
-  const ctx = new EmitContext(emitOpts);
-  return ctx.docToString(styleEntryToText(new NodePath(entry, null)));
+function astToTextDoc(ctx: EmitContext, path: TextAST.NodePath) {
+  switch (path.node.type) {
+    case "Program":
+      return join(
+        ctx.statementSep,
+        path.node.children.map((child, i) =>
+          astItemToText(ctx, path.withChild(child, "child." + i.toString()))
+        )
+      );
+    case "ExprStatement":
+    case "Table":
+    case "Image":
+    case "Text":
+    case "Folder":
+    case "Settings":
+    case "Ticker":
+      return astItemToText(ctx, path as TextAST.NodePath<typeof path.node>);
+    case "RegressionParameters":
+      return regressionParamsToText(path as TextAST.NodePath<typeof path.node>);
+    case "RegressionEntry":
+      return regressionEntryToText(path as TextAST.NodePath<typeof path.node>);
+    case "StyleMapping":
+      return styleMapToText(path as TextAST.NodePath<typeof path.node>);
+    case "MappingEntry":
+      return styleEntryToText(path as TextAST.NodePath<typeof path.node>);
+    case "PiecewiseBranch":
+      return piecewiseBranchToText(path as TextAST.NodePath<typeof path.node>);
+    case "Identifier":
+    case "Number":
+    case "String":
+    case "AssignmentExpression":
+    case "RepeatedExpression":
+    case "RangeExpression":
+    case "ListExpression":
+    case "ListComprehension":
+    case "Substitution":
+    case "PiecewiseExpression":
+    case "PrefixExpression":
+    case "Norm":
+    case "SequenceExpression":
+    case "UpdateRule":
+    case "MemberExpression":
+    case "ListAccessExpression":
+    case "BinaryExpression":
+    case "DoubleInequality":
+    case "PostfixExpression":
+    case "CallExpression":
+    case "PrimeExpression":
+    case "DerivativeExpression":
+      return exprToText(path as TextAST.NodePath<typeof path.node>);
+    default:
+      path.node satisfies never;
+      throw new Error(`Invalid node: ${(path.node as any)?.type}`);
+  }
 }
 
 const REQUIRED = "required";
@@ -383,23 +421,8 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
           softline,
           join(
             [",", line],
-            e.branches.map((branch) =>
-              group([
-                branch.condition === null
-                  ? [softline]
-                  : [
-                      exprToText(path.withChild(branch.condition, "condition")),
-                      ":",
-                      line,
-                    ],
-                indent([
-                  branch.consequent === null
-                    ? "1"
-                    : exprToText(
-                        path.withChild(branch.consequent, "consequent")
-                      ),
-                ]),
-              ])
+            e.branches.map((branch, i) =>
+              piecewiseBranchToText(path.withChild(branch, `branches.${i}`))
             )
           ),
         ]),
@@ -445,6 +468,20 @@ function exprToTextNoParen(path: NodePath<TextAST.Expression>): Doc {
         `Programming Error: Unexpected AST node ${(e as any).type}`
       );
   }
+}
+
+function piecewiseBranchToText(path: NodePath<TextAST.PiecewiseBranch>): Doc {
+  const branch = path.node;
+  return group([
+    branch.condition === null
+      ? [softline]
+      : [exprToText(path.withChild(branch.condition, "condition")), ":", line],
+    indent([
+      branch.consequent === null
+        ? "1"
+        : exprToText(path.withChild(branch.consequent, "consequent")),
+    ]),
+  ]);
 }
 
 function assignmentExpressionToText(

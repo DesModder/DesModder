@@ -4,9 +4,7 @@ import {
   rawToAugSettings,
   rawToDsmMetadata,
   ProgramAnalysis,
-  astItemToTextString,
-  exprToTextString,
-  styleEntryToTextString,
+  astToText,
   childExprToAug,
   itemAugToAST,
   graphSettingsToText,
@@ -180,7 +178,7 @@ function metadataChange(
   const pos = oldNode.style?.pos ?? { from: afterEnd, to: afterEnd };
   const ast = itemAugToAST(itemAug);
   if (!ast) return [];
-  const fullItem = astItemToTextString(ast);
+  const fullItem = astToText(ast);
   const newStyle = /@\{[^]*/m.exec(fullItem)?.[0];
   const insert = (!oldNode.style && newStyle ? " " : "") + (newStyle ?? "");
   return insertWithIndentation(view, pos, insert);
@@ -208,7 +206,7 @@ function newItemsChange(
       const aug = rawNonFolderToAug(getTextModeConfig(), item, dsmMetadata);
       const ast = itemAugToAST(aug);
       if (!ast) continue;
-      const body = astItemToTextString(ast);
+      const body = astToText(ast);
       function insertPos(item: NonFolderState) {
         if (item.folderId && lastItem?.folderId !== item.folderId) {
           const folder = analysis.mapIDstmt[item.folderId];
@@ -310,11 +308,7 @@ function itemChange(
           "Programming error: expect no fewer new table columns than old"
         );
       return oldNode.columns.map((e, i) =>
-        insertWithIndentation(
-          view,
-          e.expr.pos,
-          exprToTextString(ast.columns[i].expr)
-        )
+        insertWithIndentation(view, e.expr.pos, astToText(ast.columns[i].expr))
       );
     }
     case "latex-only": {
@@ -330,11 +324,7 @@ function itemChange(
       if (childExprAugString(oldNode.expr) === childExprAugString(ast.expr))
         return [];
       return [
-        insertWithIndentation(
-          view,
-          oldNode.expr.pos,
-          exprToTextString(ast.expr)
-        ),
+        insertWithIndentation(view, oldNode.expr.pos, astToText(ast.expr)),
       ];
     }
     case "image-pos": {
@@ -361,7 +351,7 @@ function itemChange(
           const oldEntry = oldEntries.find(
             (e) => e.property.value === newEntry.property.value
           );
-          const text = styleEntryToTextString(newEntry);
+          const text = astToText(newEntry);
           if (oldEntry) return insertWithIndentation(view, oldEntry.pos, text);
           else {
             const prevEnd = oldEntries[oldEntries.length - 1].pos.to;

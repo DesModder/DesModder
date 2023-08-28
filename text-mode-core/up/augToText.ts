@@ -1,5 +1,5 @@
 import Aug from "../aug/AugState";
-import { astItemToTextString } from "./astToText";
+import { astToText } from "./astToText";
 import { graphSettingsToAST, itemAugToAST, tickerToAST } from "./augToAST";
 
 export default function augToText(aug: Aug.State): string {
@@ -16,15 +16,15 @@ export default function augToText(aug: Aug.State): string {
 }
 
 export function graphSettingsToText(settings: Aug.GraphSettings) {
-  return astItemToTextString(graphSettingsToAST(settings));
+  return astToText(graphSettingsToAST(settings));
 }
 
 export function tickerToText(ticker: Aug.TickerAug) {
-  return astItemToTextString(tickerToAST(ticker));
+  return astToText(tickerToAST(ticker));
 }
 
 export function itemToText(item: Aug.ItemAug): string {
   const ast = itemAugToAST(item);
   if (ast === null) return "";
-  return astItemToTextString(ast);
+  return astToText(ast);
 }

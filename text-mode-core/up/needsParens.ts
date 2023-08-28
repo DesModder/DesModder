@@ -27,7 +27,11 @@ export default function needsParens(path: NodePath): boolean {
     // is a statement or style mapping (onClick event)
     return parent.type === "MappingEntry";
 
-  if (isNonExpression(node) || isNonExpression(parent)) return false;
+  if (
+    isNonExpression(node) ||
+    (isNonExpression(parent) && parent.type !== "PiecewiseBranch")
+  )
+    return false;
 
   switch (parent.type) {
     // TODO
@@ -96,6 +100,7 @@ export default function needsParens(path: NodePath): boolean {
           // parent should never be arithmetic, but be safe
           return isArithmetic(parent);
         case "PiecewiseExpression":
+        case "PiecewiseBranch":
           // This one can be contentious.
           // {x > 1: x -> 0, x -> 2} is NOT {x > 1: (x -> 0, x -> 2)}
           return false;
