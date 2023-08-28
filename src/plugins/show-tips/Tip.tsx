@@ -3,7 +3,7 @@ import { getTipData } from "./tips";
 import { Component, jsx } from "DCGView";
 import { If } from "components";
 import { Calc } from "globals/window";
-import { format } from "i18n/i18n-core";
+import { format } from "#i18n";
 
 export default class Tip extends Component {
   currentTipIndex!: number;

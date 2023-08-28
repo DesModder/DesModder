@@ -3,7 +3,7 @@ import "./ActionButtons.less";
 import { jsx } from "DCGView";
 import { For, If, Tooltip } from "components";
 import { ItemModel } from "globals/models";
-import { format } from "i18n/i18n-core";
+import { format } from "#i18n";
 
 export function ActionButtons(eab: ExprActionButtons, m: ItemModel) {
   return (

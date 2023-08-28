@@ -14,7 +14,7 @@ import {
   InlineMathInputView,
 } from "components";
 import { For } from "components/desmosComponents";
-import { format } from "i18n/i18n-core";
+import { format } from "#i18n";
 
 export default class SelectCapture extends Component<{
   vc: VideoCreator;

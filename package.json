@@ -7,6 +7,7 @@
   },
   "browserslist": "defaults",
   "imports": {
+    "#i18n": "./src/i18n/i18n-core.ts",
     "#plugins/*": "./src/plugins/*",
     "#parsing/*": "./src/parsing/*"
   },

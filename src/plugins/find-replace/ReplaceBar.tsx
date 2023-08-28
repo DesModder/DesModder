@@ -3,7 +3,7 @@ import "./ReplaceBar.less";
 import { Component, jsx } from "DCGView";
 import { MathQuillView } from "components";
 import { Calc } from "globals/window";
-import { format } from "i18n/i18n-core";
+import { format } from "#i18n";
 import { autoOperatorNames } from "utils/depUtils";
 
 export default class ReplaceBar extends Component<{

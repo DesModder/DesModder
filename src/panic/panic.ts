@@ -1,5 +1,5 @@
 import { Console } from "../globals/window";
-import { format } from "../i18n/i18n-core";
+import { format } from "#i18n";
 import { PluginID } from "../plugins";
 import { Block } from "../preload/replacementHelpers/parse";
 import { postMessageUp } from "../utils/messages";

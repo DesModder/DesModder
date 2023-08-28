@@ -1,4 +1,4 @@
-import { format } from "./i18n/i18n-core";
+import { format } from "#i18n";
 import { drawGLesmosSketchToCtx } from "./plugins/GLesmos/drawGLesmosSketchToCtx";
 import DSM from "MainController";
 import "fonts/style.css";

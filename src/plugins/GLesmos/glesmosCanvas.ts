@@ -10,7 +10,7 @@ import {
   setUniform,
 } from "./shaders";
 import window, { Calc } from "globals/window";
-import { format } from "i18n/i18n-core";
+import { format } from "#i18n";
 
 export type GLesmosCanvas = ReturnType<typeof initGLesmosCanvas>;
 

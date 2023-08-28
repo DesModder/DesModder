@@ -3,7 +3,7 @@ import "./Menu.less";
 import { Component, jsx } from "DCGView";
 import Toggle from "components/Toggle";
 import { If, Checkbox, Tooltip, For, Match } from "components/desmosComponents";
-import { format } from "i18n/i18n-core";
+import { format } from "#i18n";
 import {
   ConfigItem,
   ConfigItemString,

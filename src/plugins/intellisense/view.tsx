@@ -19,7 +19,7 @@ import { setIntellisenseTimeout } from "./utils";
 import "./view.less";
 import { ClassComponent, Component, jsx } from "DCGView";
 import { For, StaticMathQuillView } from "components";
-import { format } from "i18n/i18n-core";
+import { format } from "#i18n";
 import { parseDesmosLatex } from "utils/depUtils";
 import { IndexFor } from "utils/utilComponents";
 
