@@ -1,17 +1,23 @@
 import Aug from "../aug/AugState";
-import { astToText } from "./astToText";
+import { TextEmitOptions, astToText } from "./astToText";
 import { augToTextAST, graphSettingsToAST, itemAugToAST } from "./augToAST";
 
-export function augToText(aug: Aug.State): string {
-  return astToText(augToTextAST(aug));
+export function augToText(aug: Aug.State, emitOpts?: TextEmitOptions): string {
+  return astToText(augToTextAST(aug), emitOpts);
 }
 
-export function graphSettingsToText(settings: Aug.GraphSettings) {
-  return astToText(graphSettingsToAST(settings));
+export function graphSettingsToText(
+  settings: Aug.GraphSettings,
+  emitOpts?: TextEmitOptions
+) {
+  return astToText(graphSettingsToAST(settings), emitOpts);
 }
 
-export function itemToText(item: Aug.ItemAug): string {
+export function itemToText(
+  item: Aug.ItemAug,
+  emitOpts?: TextEmitOptions
+): string {
   const ast = itemAugToAST(item);
   if (ast === null) return "";
-  return astToText(ast);
+  return astToText(ast, emitOpts);
 }
