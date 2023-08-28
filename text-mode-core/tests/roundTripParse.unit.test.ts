@@ -295,7 +295,20 @@ function roundTrips(cases: string[]) {
   describe("via Text without optional spaces", () =>
     cases.forEach((r) =>
       testRoundTripIdenticalViaText(r, {
-        keepOptionalSpaces: false,
+        noOptionalSpaces: true,
+      })
+    ));
+  describe("via Text without newlines", () =>
+    cases.forEach((r) =>
+      testRoundTripIdenticalViaText(r, {
+        noNewlines: true,
+      })
+    ));
+  describe("via Text without newlines or optional spaces", () =>
+    cases.forEach((r) =>
+      testRoundTripIdenticalViaText(r, {
+        noNewlines: true,
+        noOptionalSpaces: true,
       })
     ));
 }
