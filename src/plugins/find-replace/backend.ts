@@ -2,7 +2,7 @@ import { Calc } from "#globals";
 import { satisfiesType } from "#parsing/nodeTypes.ts";
 import { Identifier } from "#parsing/parsenode.ts";
 import traverse, { Path } from "#parsing/traverse.ts";
-import { parseDesmosLatex } from "utils/depUtils";
+import { parseDesmosLatex } from "#utils/depUtils.ts";
 
 export const simpleKeys = [
   "latex",

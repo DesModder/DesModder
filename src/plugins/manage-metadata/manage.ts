@@ -2,7 +2,7 @@
 import Metadata, { Expression } from "./interface";
 import migrateToLatest from "./migrate";
 import { Calc, Console, FolderModel, TextModel } from "#globals";
-import { List } from "utils/depUtils";
+import { List } from "#utils/depUtils.ts";
 
 /*
 This file manages the metadata expressions. These are stored on the graph state as expressions and consist of:

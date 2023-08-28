@@ -12,7 +12,7 @@
     "./TextAST/Synthetic": "./TextAST/Synthetic.ts"
   },
   "imports": {
-    "#utils/utils": "utils/utils",
+    "#utils/utils.ts": "utils/utils",
     "#prettier/doc": "prettier/doc",
     "#jest/globals": "@jest/globals",
     "#moo": "moo",

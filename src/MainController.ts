@@ -9,7 +9,7 @@ import {
   IDToPluginSettings,
   PluginInstance,
 } from "plugins";
-import { postMessageUp, mapToRecord, recordToMap } from "utils/messages";
+import { postMessageUp, mapToRecord, recordToMap } from "#utils/messages.ts";
 
 export default class DSM extends TransparentPlugins {
   /**

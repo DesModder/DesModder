@@ -9,7 +9,7 @@ import {
   keys,
   EvaluateSingleExpression,
   getCurrentGraphTitle,
-} from "utils/depUtils";
+} from "#utils/depUtils.ts";
 
 type FocusedMQ =
   | "none"

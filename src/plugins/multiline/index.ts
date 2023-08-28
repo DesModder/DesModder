@@ -12,7 +12,7 @@ import {
   deregisterCustomDispatchOverridingHandler,
   hookIntoOverrideKeystroke,
   registerCustomDispatchOverridingHandler,
-} from "utils/listenerHelpers";
+} from "#utils/listenerHelpers.ts";
 
 function focusmq(mq: MathQuillField | undefined) {
   mq?.focus();

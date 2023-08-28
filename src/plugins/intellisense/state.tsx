@@ -5,7 +5,7 @@ import { mapAugAST } from "./latex-parsing";
 import { Calc, ItemModel } from "#globals";
 import { rootKeys } from "#plugins/find-replace/backend.ts";
 import Metadata from "#plugins/manage-metadata/interface.ts";
-import { get } from "utils/utils";
+import { get } from "#utils/utils.ts";
 
 function getOrMakeKey<K, V>(map: Map<K, V>, k: K, v: () => V) {
   if (map.has(k)) {

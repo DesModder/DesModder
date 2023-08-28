@@ -1,6 +1,6 @@
 import { PluginController } from "../PluginController";
 import { Calc } from "#globals";
-import { keys } from "utils/depUtils";
+import { keys } from "#utils/depUtils.ts";
 
 export default class DuplicateHotkey extends PluginController {
   static id = "duplicate-expression-hotkey" as const;

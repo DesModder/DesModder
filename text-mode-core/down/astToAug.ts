@@ -1,4 +1,4 @@
-import { everyNonNull } from "#utils/utils";
+import { everyNonNull } from "#utils/utils.ts";
 import { ProgramAnalysis } from "../ProgramAnalysis";
 import TextAST from "../TextAST";
 import { Config } from "../TextModeConfig";

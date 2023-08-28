@@ -14,8 +14,8 @@ import { MathQuillField, MathQuillView } from "components";
 import { ItemModel, TextModel, Calc } from "#globals";
 import { PluginController } from "#plugins/PluginController.ts";
 import { getMetadata } from "#plugins/manage-metadata/manage.ts";
-import { hookIntoOverrideKeystroke } from "utils/listenerHelpers";
-import { isDescendant } from "utils/utils";
+import { hookIntoOverrideKeystroke } from "#utils/listenerHelpers.ts";
+import { isDescendant } from "#utils/utils.ts";
 
 export type BoundIdentifier =
   | {
