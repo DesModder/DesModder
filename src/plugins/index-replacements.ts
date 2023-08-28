@@ -11,7 +11,7 @@ import rightClickTray from "#plugins/right-click-tray/right-click-tray.replaceme
 import shiftEnterNewline from "#plugins/shift-enter-newline/shift-enter-newline.replacements";
 import showTips from "#plugins/show-tips/show-tips.replacements";
 import textMode from "#plugins/text-mode/text-mode.replacements";
-import insertPanels from "preload/moduleOverrides/insert-panels.replacements";
+import insertPanels from "../preload/moduleOverrides/insert-panels.replacements";
 
 export default [
   insertPanels,
