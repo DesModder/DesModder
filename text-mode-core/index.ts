@@ -11,7 +11,6 @@ export type { ProgramAnalysis } from "./ProgramAnalysis";
 export { parse as parseText } from "./down/textToAST";
 export {
   astItemToTextString,
-  docToString,
   exprToTextString,
   styleEntryToTextString,
 } from "./up/astToText";

@@ -7,54 +7,69 @@ type Doc = DocNS.builders.Doc;
 const { group, indent, join, line, softline, hardline, ifBreak, label } =
   builders;
 
-const REQUIRED = "required";
-const REQUIRED_OR_SEMI = "required-or-semi";
-
 export interface TextEmitOptions {
   keepOptionalSpaces?: boolean;
 }
 
-export function docToString(doc: Doc, emitOpts?: TextEmitOptions): string {
-  const keepOptionalSpaces = emitOpts?.keepOptionalSpaces ?? true;
-  if (!keepOptionalSpaces) doc = removeUnrequiredSpaces(doc);
+class EmitContext {
+  opts: Required<TextEmitOptions>;
+  statementSep: Doc;
 
-  return printer.printDocToString(doc, {
-    printWidth: 80,
-    tabWidth: 2,
-    useTabs: false,
-  }).formatted;
+  constructor(optsConfig: TextEmitOptions = {}) {
+    this.opts = {
+      keepOptionalSpaces: optsConfig.keepOptionalSpaces ?? true,
+    };
+    this.statementSep = this.opts.keepOptionalSpaces
+      ? [hardline, hardline]
+      : ";";
+  }
+
+  docToString(doc: Doc) {
+    if (!this.opts.keepOptionalSpaces) {
+      doc = removeUnrequiredSpaces(doc);
+    }
+
+    return printer.printDocToString(doc, {
+      printWidth: 80,
+      tabWidth: 2,
+      useTabs: false,
+    }).formatted;
+  }
 }
 
 export function astItemToTextString(
   item: TextAST.Statement,
   emitOpts?: TextEmitOptions
 ): string {
-  return docToString(astItemToText(new NodePath(item, null)), emitOpts);
+  const ctx = new EmitContext(emitOpts);
+  return ctx.docToString(astItemToText(ctx, new NodePath(item, null)));
 }
 
 export function exprToTextString(
   expr: TextAST.Expression,
   emitOpts?: TextEmitOptions
 ): string {
-  return docToString(exprToText(new NodePath(expr, null)), emitOpts);
+  const ctx = new EmitContext(emitOpts);
+  return ctx.docToString(exprToText(new NodePath(expr, null)));
 }
 
 export function styleEntryToTextString(
   entry: TextAST.MappingEntry,
   emitOpts?: TextEmitOptions
 ) {
-  return docToString(styleEntryToText(new NodePath(entry, null)), emitOpts);
+  const ctx = new EmitContext(emitOpts);
+  return ctx.docToString(styleEntryToText(new NodePath(entry, null)));
 }
 
+const REQUIRED = "required";
 function required(doc: Doc) {
   return label(REQUIRED, doc);
 }
 
-function requiredOrSemicolon(doc: Doc) {
-  return label(REQUIRED_OR_SEMI, doc);
-}
-
-function astItemToText(path: NodePath<TextAST.Statement>): Doc {
+function astItemToText(
+  ctx: EmitContext,
+  path: NodePath<TextAST.Statement>
+): Doc {
   const item = path.node;
   switch (item.type) {
     case "ExprStatement":
@@ -81,7 +96,7 @@ function astItemToText(path: NodePath<TextAST.Statement>): Doc {
         indent([
           hardline,
           join(
-            requiredOrSemicolon([hardline, hardline]),
+            ctx.statementSep,
             item.columns.map((col, i) =>
               columnToText(path.withChild(col, "column." + i.toString()))
             )
@@ -101,9 +116,9 @@ function astItemToText(path: NodePath<TextAST.Statement>): Doc {
         indent([
           hardline,
           join(
-            requiredOrSemicolon([hardline, hardline]),
+            ctx.statementSep,
             item.children.map((child, i) =>
-              astItemToText(path.withChild(child, "child." + i.toString()))
+              astItemToText(ctx, path.withChild(child, "child." + i.toString()))
             )
           ),
         ]),
@@ -519,7 +534,6 @@ function removeUnrequiredSpaces(doc: Doc): Doc {
       return removeUnrequiredSpaces(doc.contents);
     case "label":
       if ((doc as any).label === REQUIRED) return (doc as any).contents;
-      if ((doc as any).label === REQUIRED_OR_SEMI) return ";";
       // The type for Label does not currently include "contents" or "label".
       // This was fixed a few days ago, waiting for release.
       // https://github.com/prettier/prettier/commit/347c60730e12d6e9e52aaa360526d8792fb818e8
