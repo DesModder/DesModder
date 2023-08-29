@@ -16,7 +16,7 @@
     "#jest/globals": "@jest/globals",
     "#moo": "moo",
     "#parsing/*": "src/parsing/*",
-    "#manage-metadata/*": "src/plugins/manage-metadata/*",
+    "#metadata/*": "metadata/*",
     "#utils/*": "src/utils/*"
   },
   "repository": {

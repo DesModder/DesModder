@@ -3,7 +3,8 @@
   "compilerOptions": {},
   "references": [
     { "path": "../text-mode-core" },
-    { "path": "../localization" }
+    { "path": "../localization" },
+    { "path": "../metadata" }
   ],
   "include": ["**/*"]
 }

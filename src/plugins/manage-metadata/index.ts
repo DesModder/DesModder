@@ -1,11 +1,9 @@
 import { PluginController } from "../PluginController";
-import GraphMetadata, { Expression as MetadataExpression } from "./interface";
-import {
-  getMetadata,
-  setMetadata,
-  getBlankMetadata,
-  changeExprInMetadata,
-} from "./manage";
+import GraphMetadata, {
+  Expression as MetadataExpression,
+} from "#metadata/interface.ts";
+import { getBlankMetadata, changeExprInMetadata } from "#metadata/manage.ts";
+import { getMetadata, setMetadata } from "./sync";
 import { Calc } from "#globals";
 
 export default class ManageMetadata extends PluginController {

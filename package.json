@@ -15,6 +15,7 @@
     "#plugins/*": "./src/plugins/*",
     "#parsing/*": "./src/parsing/*",
     "#tests": "./src/tests/puppeteer-utils.ts",
+    "#metadata/*": "./metadata/*",
     "#components": "./src/components/index.ts"
   },
   "eslintIgnore": [
