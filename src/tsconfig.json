@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig-base.json",
+  "compilerOptions": {},
+  "references": [
+    { "path": "../text-mode-core" },
+    { "path": "../localization" },
+    { "path": "../metadata" }
+  ],
+  "include": ["**/*"]
+}
