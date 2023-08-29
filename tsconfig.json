@@ -1,4 +1,5 @@
 {
+  "extends": "./tsconfig-base",
   "include": ["./esbuild.mjs", "./.eslintrc.js"],
   "references": [
     { "path": "./scripts" },
