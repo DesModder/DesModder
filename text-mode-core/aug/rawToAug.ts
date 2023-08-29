@@ -7,7 +7,7 @@ import {
   evalMaybeRational,
   AnyNode,
   // eslint-disable-next-line rulesdir/no-reach-past-exports
-} from "../../src/parsing/parsenode";
+} from "../../parsing/parsenode";
 import { Config } from "../TextModeConfig";
 import Aug from "./AugState";
 import type * as Graph from "@desmodder/graph-state";

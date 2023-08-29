@@ -4,6 +4,7 @@
   "references": [
     { "path": "../text-mode-core" },
     { "path": "../localization" },
+    { "path": "../parsing" },
     { "path": "../metadata" }
   ],
   "include": ["**/*"]

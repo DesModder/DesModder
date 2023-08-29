@@ -13,7 +13,7 @@
     "#globals": "./src/globals/index.ts",
     "#DCGView": "./src/DCGView.ts",
     "#plugins/*": "./src/plugins/*",
-    "#parsing/*": "./src/parsing/*",
+    "#parsing/*": "./parsing/*",
     "#tests": "./src/tests/puppeteer-utils.ts",
     "#metadata/*": "./metadata/*",
     "#components": "./src/components/index.ts"

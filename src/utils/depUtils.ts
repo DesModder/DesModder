@@ -1,4 +1,4 @@
-import Node from "../parsing/parsenode";
+import Node from "#parsing/parsenode.ts";
 import { Calc, Fragile, Private } from "#globals";
 
 const evaluateLatex = Fragile.evaluateLatex;
