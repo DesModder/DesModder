@@ -1,4 +1,4 @@
-import TextMode from "..";
+import { TextModeEditor } from "..";
 import { analysisStateField, doLint } from "../LanguageServer";
 // Language extension
 import { textMode } from "../lezer/index";
@@ -60,7 +60,7 @@ export const debugModeStateField = StateField.define<boolean>({
   },
 });
 
-export function startState(tm: TextMode, text: string) {
+export function startState(tm: TextModeEditor, text: string) {
   let state = EditorState.create({
     doc: text,
     extensions: [
@@ -124,11 +124,11 @@ export function startState(tm: TextMode, text: string) {
     ],
   });
   state = state.update(collapseStylesAtStart(state)).state;
-  state = state.update(tm.updateDebugModeTransaction()).state;
+  state = state.update(tm.setDebugModeTransaction()).state;
   return state;
 }
 
-export function initView(tm: TextMode, text: string) {
+export function initView(tm: TextModeEditor, text: string) {
   return new EditorView({
     state: startState(tm, text),
     parent: document.body,

@@ -1,11 +1,11 @@
-import TextMode from "..";
+import { TextModeEditor } from "..";
 import {
   exprToTextString,
   childLatexToAST,
   StyleDefaults as Defaults,
   AnyHydrated,
   AnyHydratedValue,
-} from "../../../../text-mode-core";
+} from "#text-mode-core";
 import { getIndentation } from "../modify";
 import {
   Completion,
@@ -82,7 +82,7 @@ const PROGRAM_COMPLETIONS: Completion[] = [
   ...FOLDER_COMPLETIONS,
 ];
 
-export function completions(tm: TextMode, context: CompletionContext) {
+export function completions(tm: TextModeEditor, context: CompletionContext) {
   const word = context.matchBefore(/\w*/);
   if (word === null || (word.from === word.to && !context.explicit))
     return null;
@@ -113,7 +113,7 @@ export function completions(tm: TextMode, context: CompletionContext) {
  *   Settings
  *   StyleMapping . MappingEntry
  */
-function styleCompletions(tm: TextMode, node: SyntaxNode): Completion[] {
+function styleCompletions(tm: TextModeEditor, node: SyntaxNode): Completion[] {
   const defaults =
     node.name === "MappingEntry"
       ? styleDefaults(tm, node.parent!)
@@ -121,7 +121,7 @@ function styleCompletions(tm: TextMode, node: SyntaxNode): Completion[] {
   return styleCompletionsFromDefaults(defaults);
 }
 
-function styleDefaults(tm: TextMode, node: SyntaxNode): AnyHydrated {
+function styleDefaults(tm: TextModeEditor, node: SyntaxNode): AnyHydrated {
   if (
     node.name === "ExprStatement" &&
     node.parent?.name === "BlockInner" &&

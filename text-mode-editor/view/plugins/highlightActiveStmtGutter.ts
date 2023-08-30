@@ -1,4 +1,4 @@
-import { Statement } from "../../../../../text-mode-core/TextAST";
+import { TextAST } from "#text-mode-core";
 import { analysisStateField } from "../../LanguageServer";
 import { statementsIntersecting } from "../statementIntersection";
 import { RangeSet } from "@codemirror/state";
@@ -30,7 +30,7 @@ export const activeStmtGutterHighlighter = gutterLineClass.compute(
   }
 );
 
-function highlightLineStarts(stmt: Statement) {
+function highlightLineStarts(stmt: TextAST.Statement) {
   if (stmt.type === "Folder" || stmt.type === "Table") {
     const children = stmt.type === "Folder" ? stmt.children : stmt.columns;
     if (children.length > 0) return [stmt.pos.from, stmt.pos.to];

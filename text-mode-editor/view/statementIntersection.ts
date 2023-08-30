@@ -1,10 +1,9 @@
-import { ProgramAnalysis } from "../../../../text-mode-core";
-import {
-  Positioned,
-  Program,
-  Statement,
-} from "../../../../text-mode-core/TextAST";
+import { TextAST, ProgramAnalysis } from "#text-mode-core";
 import { BlockInfo } from "@codemirror/view";
+
+type Statement = TextAST.Statement;
+type Positioned = TextAST.Positioned;
+type Program = TextAST.Program;
 
 export function statementContainingLine(
   analysis: ProgramAnalysis,

@@ -1,4 +1,4 @@
-import { Folder, Program, Table } from "../../../../../text-mode-core/TextAST";
+import { TextAST } from "#text-mode-core";
 import { analysisStateField } from "../../LanguageServer";
 import { debugModeStateField } from "../editor";
 import { statementsIntersecting } from "../statementIntersection";
@@ -10,6 +10,8 @@ import {
   gutter,
   gutters,
 } from "@codemirror/view";
+
+type HasChildrenStatements = TextAST.Folder | TextAST.Table | TextAST.Program;
 
 export function stmtNumbers(): Extension {
   return [gutters(), stmtNumberGutter];
@@ -54,7 +56,7 @@ function maxNumber(state: EditorState) {
     );
     return "9".repeat(numDigits);
   }
-  function _maxNumber(stmt: Folder | Table | Program): number {
+  function _maxNumber(stmt: HasChildrenStatements): number {
     const children = stmt.type === "Table" ? stmt.columns : stmt.children;
     const last = children[children.length - 1];
     if (!last) return stmt.type === "Program" ? 1 : stmt.index;

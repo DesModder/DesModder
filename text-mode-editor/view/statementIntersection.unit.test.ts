@@ -2,9 +2,11 @@ import {
   parseText,
   astItemToTextString,
   buildConfig,
-} from "../../../../text-mode-core";
-import { Statement } from "../../../../text-mode-core/TextAST";
+  TextAST,
+} from "#text-mode-core";
 import { statementsIntersecting } from "./statementIntersection";
+
+type Statement = TextAST.Statement;
 
 const cfg = buildConfig({});
 

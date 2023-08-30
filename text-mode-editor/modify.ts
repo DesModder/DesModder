@@ -12,18 +12,16 @@ import {
   itemAugToAST,
   graphSettingsToText,
   itemToText,
-} from "../../../text-mode-core";
-import TextAST, {
-  NodePath,
-  Settings,
-  Statement,
-} from "../../../text-mode-core/TextAST";
+  TextAST,
+} from "#text-mode-core";
 import { addRawID } from "./LanguageServer";
 import { ChangeSpec, StateEffect } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState, NonFolderState } from "@desmodder/graph-state";
 import { Calc, DispatchedEvent } from "#globals";
 import Metadata from "metadata/interface";
+
+type Statement = TextAST.Statement;
 
 // @settings related
 const settingsEvents = [
@@ -136,7 +134,7 @@ function settingsChange(
   const newSettingsText = graphSettingsToText(rawToAugSettings(state));
   const settingsNode = findStatement(
     analysis.program.children,
-    (stmt): stmt is Settings => stmt.type === "Settings"
+    (stmt): stmt is TextAST.Settings => stmt.type === "Settings"
   );
   return settingsNode
     ? {
@@ -367,7 +365,7 @@ function itemChange(
             (e) => e.property.value === newEntry.property.value
           );
           const text = docToString(
-            styleEntryToText(new NodePath(newEntry, null))
+            styleEntryToText(new TextAST.NodePath(newEntry, null))
           );
           if (oldEntry) return insertWithIndentation(view, oldEntry.pos, text);
           else {

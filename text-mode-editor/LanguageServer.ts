@@ -4,8 +4,7 @@
  * the Text Mode compiler.
  */
 import { getTextModeConfig } from ".";
-import { ProgramAnalysis, textToRaw } from "../../../text-mode-core";
-import { DispatchedEvent } from "../../globals/Calc";
+import { ProgramAnalysis, textToRaw } from "#text-mode-core";
 import { eventSequenceChanges } from "./modify";
 import {
   StateField,
@@ -15,7 +14,7 @@ import {
 } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
-import { Calc } from "#globals";
+import { Calc, DispatchedEvent } from "#globals";
 
 /**
  * onCalcEvent: when we receive a new event dispatched via Calc (such as a

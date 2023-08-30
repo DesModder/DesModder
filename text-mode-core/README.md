@@ -13,9 +13,11 @@ import {
 
 const cfg = buildConfigFromGlobals(Desmos, Calc);
 
-console.log(textToRaw(cfg, "y = sin(x)"));
+const [diagnostics, graphState] = textToRaw(cfg, "y = sin(x)");
+Calc.setState(graphState);
 
-console.log(rawToText(cfg, Calc.getState()));
+const [hasError, text] = rawToText(cfg, Calc.getState());
+console.log(text);
 ```
 
 If you don't have access to those, then text-mode-core can assume good defaults for most options found in the config. However, it does not have its own LaTeX parser, so you cannot convert from raw graph states to other formats.

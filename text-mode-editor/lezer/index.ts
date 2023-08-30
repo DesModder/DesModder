@@ -1,4 +1,4 @@
-import TextMode from "..";
+import { TextModeEditor } from "..";
 import { completions } from "./completions";
 import parser from "./syntax.grammar";
 import { CompletionContext } from "@codemirror/autocomplete";
@@ -12,7 +12,7 @@ import {
 } from "@codemirror/language";
 import { styleTags, tags as t } from "@lezer/highlight";
 
-export const TextModeLanguage = (tm: TextMode) =>
+export const TextModeLanguage = (tm: TextModeEditor) =>
   LRLanguage.define({
     parser: parser.configure({
       props: [
@@ -46,6 +46,6 @@ export const TextModeLanguage = (tm: TextMode) =>
     },
   });
 
-export function textMode(tm: TextMode) {
+export function textMode(tm: TextModeEditor) {
   return new LanguageSupport(TextModeLanguage(tm));
 }
