@@ -3,7 +3,7 @@ import { buildConfigFromGlobals, parseRootLatex } from "#text-mode-core";
 import { mapAugAST } from "./latex-parsing";
 import { Calc, ItemModel } from "#globals";
 import { rootKeys } from "#plugins/find-replace/backend.ts";
-import Metadata from "metadata/interface";
+import Metadata from "#metadata/interface.ts";
 import { get } from "#utils/utils.ts";
 
 function getOrMakeKey<K, V>(map: Map<K, V>, k: K, v: () => V) {

@@ -1,7 +1,5 @@
-// eslint-disable-next-line rulesdir/no-reach-past-exports
-import Metadata from "../../metadata/interface";
-// eslint-disable-next-line rulesdir/no-reach-past-exports
-import migrateToLatest from "../../metadata/migrate";
+import Metadata from "#metadata/interface";
+import migrateToLatest from "#metadata/migrate";
 import {
   ChildExprNode,
   evalMaybeRational,

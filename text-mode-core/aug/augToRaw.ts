@@ -1,7 +1,5 @@
-// eslint-disable-next-line rulesdir/no-reach-past-exports
-import type Metadata from "../../metadata/interface";
-// eslint-disable-next-line rulesdir/no-reach-past-exports
-import { changeExprInMetadata, isBlankMetadata } from "../../metadata/manage";
+import type Metadata from "#metadata/interface";
+import { changeExprInMetadata, isBlankMetadata } from "#metadata/manage";
 import { Config } from "../TextModeConfig";
 import { isConstant } from "./AugLatex";
 import Aug from "./AugState";

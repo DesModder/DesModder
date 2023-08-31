@@ -1,10 +1,6 @@
 {
   "extends": "../tsconfig-base.json",
   "compilerOptions": {},
-  "references": [
-    { "path": "../localization" },
-    { "path": "../metadata" },
-    { "path": "../common" }
-  ],
+  "references": [{ "path": "../localization" }, { "path": "../common" }],
   "include": ["**/*"]
 }

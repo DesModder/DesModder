@@ -16,7 +16,7 @@
     "#jest/globals": "@jest/globals",
     "#moo": "moo",
     "#parsing/*": "@desmodder/common/parsing/*",
-    "#metadata/*": "metadata/*",
+    "#metadata/*": "@desmodder/common/metadata/*",
     "#utils/*": "@desmodder/common/utils/*"
   },
   "repository": {

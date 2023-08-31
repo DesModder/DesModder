@@ -19,7 +19,7 @@ import { ChangeSpec, StateEffect } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState, NonFolderState } from "@desmodder/graph-state";
 import { Calc, DispatchedEvent } from "#globals";
-import Metadata from "metadata/interface";
+import Metadata from "#metadata/interface.ts";
 
 type Statement = TextAST.Statement;
 
