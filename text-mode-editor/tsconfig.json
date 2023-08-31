@@ -1,5 +1,9 @@
 {
   "extends": "../tsconfig-base.json",
-  "references": [{ "path": "../text-mode-core" }, { "path": "../common" }],
+  "references": [
+    { "path": "../text-mode-core" },
+    { "path": "../common" },
+    { "path": "../tests" }
+  ],
   "include": ["**/*"]
 }

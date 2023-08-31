@@ -1,0 +1,25 @@
+{
+  "name": "@desmodder/text-mode-editor",
+  "description": "Editor component for DesModder's Text Mode",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DesModder/DesModder"
+  },
+  "imports": {
+    "#utils/*": "@desmodder/common/utils/*",
+    "#globals": "@desmodder/common/globals",
+    "#DCGView": "@desmodder/common/globals/DCGView",
+    "#components": "@desmodder/common/globals/components/index",
+    "#metadata/*": "@desmodder/common/metadata/*",
+    "#text-mode-core": "@desmodder/text-mode-core"
+  },
+  "dependencies": {
+    "@desmodder/common": "file:../common",
+    "@desmodder/text-mode-core": "file:../text-mode-core"
+  },
+  "license": "MIT",
+  "keywords": [
+    "desmos"
+  ]
+}

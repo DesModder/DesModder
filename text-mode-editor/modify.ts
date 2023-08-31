@@ -18,8 +18,8 @@ import { addRawID } from "./LanguageServer";
 import { ChangeSpec, StateEffect } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState, NonFolderState } from "@desmodder/graph-state";
-import { Calc, DispatchedEvent } from "#globals";
-import Metadata from "#metadata/interface.ts";
+import { Calc, DispatchedEvent } from "@desmodder/common/globals";
+import Metadata from "#metadata/interface";
 
 type Statement = TextAST.Statement;
 

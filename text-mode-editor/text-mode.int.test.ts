@@ -1,4 +1,5 @@
-import { clean, testWithPage } from "#tests";
+// eslint-disable-next-line rulesdir/no-reach-past-exports
+import { clean, testWithPage } from "../tests/puppeteer-utils";
 
 const TOGGLE = ".dsm-text-mode-toggle";
 const EDITOR = ".cm-editor";
