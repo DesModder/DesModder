@@ -1,5 +1,5 @@
 // This script gets used in content and background scripts
-import { HeartbeatError } from "../../utils/messages";
+import { HeartbeatError } from "#messages";
 
 export interface WindowHeartbeatOptions {
   graphName: string;

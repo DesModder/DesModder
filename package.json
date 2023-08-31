@@ -8,9 +8,10 @@
   "browserslist": "defaults",
   "imports": {
     "#i18n": "./localization/i18n-core.ts",
-    "#utils/*": "./src/utils/*",
+    "#utils/*": "./utils/*",
     "#DSM": "./src/MainController.ts",
     "#globals": "./globals/index.ts",
+    "#messages": "./src/messages.ts",
     "#DCGView": "./globals/DCGView.ts",
     "#plugins/*": "./src/plugins/*",
     "#parsing/*": "./parsing/*",

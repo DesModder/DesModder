@@ -4,6 +4,7 @@
   "references": [
     { "path": "../localization" },
     { "path": "../metadata" },
+    { "path": "../utils" },
     { "path": "../parsing" }
   ],
   "include": ["**/*"]

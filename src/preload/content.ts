@@ -5,7 +5,7 @@ import {
   WindowHeartbeatOptions,
 } from "../plugins/wakatime/heartbeat";
 import injectScript from "#utils/injectScript.ts";
-import { listenToMessageUp, postMessageDown } from "#utils/messages.ts";
+import { listenToMessageUp, postMessageDown } from "#messages";
 
 enum StorageKeys {
   pluginsEnabled = "_plugins-enabled",

@@ -6,6 +6,7 @@
     { "path": "../localization" },
     { "path": "../parsing" },
     { "path": "../globals" },
+    { "path": "../utils" },
     { "path": "../metadata" }
   ],
   "include": ["**/*"]

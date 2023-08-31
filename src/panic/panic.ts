@@ -2,7 +2,7 @@ import { Console } from "#globals";
 import { format } from "#i18n";
 import { PluginID } from "../plugins";
 import { Block } from "../preload/replacementHelpers/parse";
-import { postMessageUp } from "../utils/messages";
+import { postMessageUp } from "#messages";
 import panicHTML from "./panic.html";
 
 function insertPanicElement() {

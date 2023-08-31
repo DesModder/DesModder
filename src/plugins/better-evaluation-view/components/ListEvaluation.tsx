@@ -1,4 +1,4 @@
-import { truncatedLatexLabel } from "../../../utils/depUtils";
+import { truncatedLatexLabel } from "#utils/depUtils.ts";
 import { jsx } from "#DCGView";
 import { StaticMathQuillView } from "#components";
 

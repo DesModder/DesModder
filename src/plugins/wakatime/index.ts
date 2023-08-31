@@ -1,8 +1,8 @@
 import { Calc, Console } from "#globals";
-import { getCurrentGraphTitle } from "../../utils/depUtils";
+import { getCurrentGraphTitle } from "#utils/depUtils.ts";
 import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
-import { listenToMessageDown, postMessageUp } from "#utils/messages.ts";
+import { listenToMessageDown, postMessageUp } from "#messages";
 
 const heartbeatInterval = 120 * 1000;
 
