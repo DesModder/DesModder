@@ -8,5 +8,5 @@ module.exports = {
   ...config,
   testPathIgnorePatterns: config.testPathIgnorePatterns.concat("\\.int\\."),
   testEnvironment: "jsdom",
-  globalSetup: "./src/tests/setup-unit.js",
+  globalSetup: "./tests/setup-unit.js",
 };

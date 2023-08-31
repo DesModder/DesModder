@@ -7,7 +7,7 @@
     { "path": "./text-mode-core" },
     { "path": "./text-mode-editor" },
     { "path": "./localization" },
-    { "path": "./common" },
-    { "path": "./metadata" }
+    { "path": "./tests" },
+    { "path": "./common" }
   ]
 }

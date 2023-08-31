@@ -15,7 +15,7 @@
     "#DCGView": "./common/globals/DCGView.ts",
     "#plugins/*": "./src/plugins/*",
     "#parsing/*": "./common/parsing/*",
-    "#tests": "./src/tests/puppeteer-utils.ts",
+    "#tests": "./tests/puppeteer-utils.ts",
     "#metadata/*": "./common/metadata/*",
     "#text-mode-core": "./text-mode-core/index.ts",
     "#text-mode-editor": "./text-mode-editor/index.ts",

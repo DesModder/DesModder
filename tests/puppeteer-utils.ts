@@ -1,8 +1,9 @@
 import { DWindow } from "#globals";
-import { PluginID } from "../plugins";
 import { GraphState } from "@desmodder/graph-state";
 import Intellisense from "#plugins/intellisense/index.tsx";
 import { Browser, Page } from "puppeteer";
+// import { PluginID } from "../plugins";
+type PluginID = string;
 
 /** Calc is only available inside evaluate() callbacks and friends, since those
  * stringify the function and evaluate it inside the browser */

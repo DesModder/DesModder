@@ -4,7 +4,8 @@
   "references": [
     { "path": "../text-mode-core" },
     { "path": "../localization" },
-    { "path": "../common" }
+    { "path": "../common" },
+    { "path": "../tests" }
   ],
   "include": ["**/*"]
 }

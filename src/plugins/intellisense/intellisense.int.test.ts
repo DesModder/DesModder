@@ -1,4 +1,4 @@
-import { testWithPage } from "../../tests/puppeteer-utils";
+import { testWithPage } from "#tests";
 
 const delay = async (ms: number) =>
   // eslint-disable-next-line rulesdir/no-timeouts-in-intellisense
