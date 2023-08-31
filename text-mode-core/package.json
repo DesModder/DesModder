@@ -24,6 +24,9 @@
     "url": "https://github.com/DesModder/DesModder"
   },
   "license": "MIT",
+  "dependencies": {
+    "moo": "^0.5.2"
+  },
   "keywords": [
     "desmos"
   ]
