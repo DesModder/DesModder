@@ -1,4 +1,4 @@
-import { Console } from "../globals/window";
+import { Console } from "#globals";
 import parseFile, { Block } from "./replacementHelpers/parse";
 import replacementStrings from "#plugins/index-replacements.ts";
 

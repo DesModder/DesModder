@@ -1,5 +1,5 @@
-import { Component, jsx } from "../DCGView";
-import { Calc } from "../globals/window";
+import { Component, jsx } from "#DCGView";
+import { Calc } from "#globals";
 import { InlineMathInputViewGeneral } from "./desmosComponents";
 
 /** InlineMathInputViewGeneral, but fills in defaults

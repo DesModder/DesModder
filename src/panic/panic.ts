@@ -1,4 +1,4 @@
-import { Console } from "../globals/window";
+import { Console } from "#globals";
 import { format } from "#i18n";
 import { PluginID } from "../plugins";
 import { Block } from "../preload/replacementHelpers/parse";

@@ -1,4 +1,4 @@
-import { Fragile } from "../../globals/window";
+import { Fragile } from "#globals";
 import { Inserter, PluginController, Replacer } from "../PluginController";
 import { ErrorTriangle } from "./components/ErrorTriangle";
 import { HideButton } from "./components/HideButton";

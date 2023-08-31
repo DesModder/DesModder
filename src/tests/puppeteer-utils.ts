@@ -1,4 +1,4 @@
-import { DWindow } from "../globals/window";
+import { DWindow } from "#globals";
 import { PluginID } from "../plugins";
 import { GraphState } from "@desmodder/graph-state";
 import Intellisense from "#plugins/intellisense/index.tsx";

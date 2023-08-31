@@ -1,4 +1,4 @@
-import { ExpressionModel, ItemModel } from "../globals/models";
+import { ExpressionModel, ItemModel } from "../models";
 import {
   ClassComponent,
   Component,

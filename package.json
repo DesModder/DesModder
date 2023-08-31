@@ -10,15 +10,15 @@
     "#i18n": "./localization/i18n-core.ts",
     "#utils/*": "./src/utils/*",
     "#DSM": "./src/MainController.ts",
-    "#globals": "./src/globals/index.ts",
-    "#DCGView": "./src/DCGView.ts",
+    "#globals": "./globals/index.ts",
+    "#DCGView": "./globals/DCGView.ts",
     "#plugins/*": "./src/plugins/*",
     "#parsing/*": "./parsing/*",
     "#tests": "./src/tests/puppeteer-utils.ts",
     "#metadata/*": "./metadata/*",
     "#text-mode-core": "./text-mode-core/index.ts",
     "#text-mode-editor": "./text-mode-editor/index.ts",
-    "#components": "./src/components/index.ts"
+    "#components": "./globals/components/index.ts"
   },
   "eslintIgnore": [
     "dist/*.js"
@@ -37,7 +37,7 @@
     "lint": "npm run lint:formatting && npm run lint:types && npm run lint:eslint",
     "prettier": "prettier",
     "lint:formatting": "prettier --check .",
-    "lint:types": "tsc --noEmit",
+    "lint:types": "tsc --noEmit --project tsconfig-eslint.json",
     "eslint": "eslint",
     "lint:eslint": "eslint \"**\"",
     "test": "npm run test:unit && npm run test:integration",

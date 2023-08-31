@@ -1,4 +1,4 @@
-import { DCGView } from "../../DCGView";
+import { DCGView } from "#DCGView";
 import { Inserter, PluginController } from "../PluginController";
 import Tip from "./Tip";
 

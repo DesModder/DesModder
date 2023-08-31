@@ -1,4 +1,4 @@
-import { DCGViewModule } from "../DCGView";
+import { DCGViewModule } from "#DCGView";
 import DSM from "#DSM";
 import {
   CheckboxComponent,
@@ -11,11 +11,14 @@ import {
   SegmentedControlComponent,
   TooltipComponent,
   MathQuillConfig,
-} from "../components/desmosComponents";
-import { GenericSettings, PluginID } from "../plugins";
+} from "#components";
 import CalcType from "./Calc";
 import { ItemModel } from "./models";
 import { GraphState } from "@desmodder/graph-state";
+// Removed to avoid circular import:
+// import { GenericSettings, PluginID } from "../plugins";
+type PluginID = any;
+type GenericSettings = any;
 
 export interface DWindow extends Window {
   Calc: CalcType;

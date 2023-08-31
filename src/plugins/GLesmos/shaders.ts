@@ -1,4 +1,4 @@
-import { Console } from "../../globals/window";
+import { Console } from "#globals";
 
 export function glesmosError(msg: string): never {
   Console.error(`[GLesmos Error] ${msg}`);

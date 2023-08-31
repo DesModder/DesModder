@@ -1,4 +1,4 @@
-import { Console } from "../../globals/window";
+import { Console } from "#globals";
 import { addPanic, panickedPlugins } from "../../panic/panic";
 import workerAppend from "./append.inline";
 import { ReplacementResult, applyReplacements } from "./applyReplacement";

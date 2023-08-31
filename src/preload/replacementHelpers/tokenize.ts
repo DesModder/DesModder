@@ -1,4 +1,4 @@
-import { Console } from "../../globals/window";
+import { Console } from "#globals";
 import { ReplacementError } from "./errors";
 import jsTokens, { Token } from "js-tokens";
 

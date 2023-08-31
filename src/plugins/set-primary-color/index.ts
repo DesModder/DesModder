@@ -1,4 +1,4 @@
-import { Calc } from "../../globals/window";
+import { Calc } from "#globals";
 import { PluginController } from "../PluginController";
 import "./_overrides.less";
 import "./custom-overrides.less";
