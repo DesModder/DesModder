@@ -5,8 +5,7 @@
     { "path": "../text-mode-core" },
     { "path": "../localization" },
     { "path": "../parsing" },
-    { "path": "../globals" },
-    { "path": "../utils" },
+    { "path": "../common" },
     { "path": "../metadata" }
   ],
   "include": ["**/*"]

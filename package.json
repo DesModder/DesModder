@@ -8,18 +8,18 @@
   "browserslist": "defaults",
   "imports": {
     "#i18n": "./localization/i18n-core.ts",
-    "#utils/*": "./utils/*",
+    "#utils/*": "./common/utils/*",
     "#DSM": "./src/MainController.ts",
-    "#globals": "./globals/index.ts",
+    "#globals": "./common/globals/index.ts",
     "#messages": "./src/messages.ts",
-    "#DCGView": "./globals/DCGView.ts",
+    "#DCGView": "./common/globals/DCGView.ts",
     "#plugins/*": "./src/plugins/*",
-    "#parsing/*": "./parsing/*",
+    "#parsing/*": "./common/parsing/*",
     "#tests": "./src/tests/puppeteer-utils.ts",
     "#metadata/*": "./metadata/*",
     "#text-mode-core": "./text-mode-core/index.ts",
     "#text-mode-editor": "./text-mode-editor/index.ts",
-    "#components": "./globals/components/index.ts"
+    "#components": "./common/globals/components/index.ts"
   },
   "eslintIgnore": [
     "dist/*.js"

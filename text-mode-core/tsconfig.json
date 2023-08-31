@@ -4,8 +4,7 @@
   "references": [
     { "path": "../localization" },
     { "path": "../metadata" },
-    { "path": "../utils" },
-    { "path": "../parsing" }
+    { "path": "../common" }
   ],
   "include": ["**/*"]
 }

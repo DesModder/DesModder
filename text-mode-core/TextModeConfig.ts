@@ -1,5 +1,5 @@
 // eslint-disable-next-line rulesdir/no-reach-past-exports
-import type { Parse } from "../utils/depUtils";
+import type { Parse } from "../common/utils/depUtils";
 
 export interface PublicConfig {
   /** operatorNames affects subscripting */
