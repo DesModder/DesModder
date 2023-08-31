@@ -15,9 +15,9 @@
     "#prettier/doc": "prettier/doc",
     "#jest/globals": "@jest/globals",
     "#moo": "moo",
-    "#parsing/*": "src/parsing/*",
+    "#parsing/*": "@desmodder/common/parsing/*",
     "#metadata/*": "metadata/*",
-    "#utils/*": "src/utils/*"
+    "#utils/*": "@desmodder/common/utils/*"
   },
   "repository": {
     "type": "git",
@@ -25,7 +25,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "moo": "^0.5.2"
+    "moo": "^0.5.2",
+    "@desmodder/common": "file:../common"
   },
   "keywords": [
     "desmos"

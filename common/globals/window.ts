@@ -1,5 +1,4 @@
 import { DCGViewModule } from "#DCGView";
-import DSM from "#DSM";
 import {
   CheckboxComponent,
   DStaticMathquillViewComponent,
@@ -19,6 +18,7 @@ import { GraphState } from "@desmodder/graph-state";
 // import { GenericSettings, PluginID } from "../plugins";
 type PluginID = any;
 type GenericSettings = any;
+type DSM = any;
 
 export interface DWindow extends Window {
   Calc: CalcType;

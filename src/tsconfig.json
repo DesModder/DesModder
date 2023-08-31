@@ -4,7 +4,6 @@
   "references": [
     { "path": "../text-mode-core" },
     { "path": "../localization" },
-    { "path": "../parsing" },
     { "path": "../common" },
     { "path": "../metadata" }
   ],

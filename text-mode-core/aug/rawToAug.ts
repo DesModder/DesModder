@@ -6,8 +6,8 @@ import {
   ChildExprNode,
   evalMaybeRational,
   AnyNode,
-  // eslint-disable-next-line rulesdir/no-reach-past-exports
-} from "../../common/parsing/parsenode";
+  // eslint-disable-next-line rulesdir/no-external-imports
+} from "@desmodder/common/parsing/parsenode";
 import { Config } from "../TextModeConfig";
 import Aug from "./AugState";
 import type * as Graph from "@desmodder/graph-state";

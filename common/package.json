@@ -1,0 +1,20 @@
+{
+  "name": "@desmodder/common",
+  "description": "Internal package: Common utilities and global typings",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DesModder/DesModder"
+  },
+  "imports": {
+    "#utils/*": "./utils/*",
+    "#globals": "./globals/index.ts",
+    "#DCGView": "./globals/DCGView.ts",
+    "#parsing/*": "./parsing/*",
+    "#components": "./globals/components/index.ts"
+  },
+  "license": "MIT",
+  "keywords": [
+    "desmos"
+  ]
+}
