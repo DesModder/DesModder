@@ -29,10 +29,6 @@ export interface DWindow extends Window {
     pluginsEnabled: Record<PluginID, boolean | undefined>;
     pluginSettings: Record<PluginID, GenericSettings | undefined>;
   };
-  DesModderFragile: {
-    ExpressionView: ExpressionViewComponent;
-    ImageIconView: typeof IconViewComponent;
-  };
   Desmos: {
     Private: {
       Fragile: typeof Fragile;
@@ -98,6 +94,8 @@ export const Fragile = new Proxy(
   InlineMathInputView: typeof InlineMathInputViewComponent;
   StaticMathquillView: typeof DStaticMathquillViewComponent;
   Tooltip: typeof TooltipComponent;
+  ExpressionView: typeof ExpressionViewComponent;
+  ImageIconView: typeof IconViewComponent;
   ExpressionOptionsMenuView: {
     prototype: {
       getSections: {
