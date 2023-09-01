@@ -2,6 +2,9 @@
   "name": "@desmodder/text-mode-editor",
   "description": "Editor component for DesModder's Text Mode",
   "version": "0.1.0",
+  "scripts": {
+    "build": "node ../loaders/build-package.mjs"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/DesModder/DesModder"
@@ -14,7 +17,7 @@
     "#metadata/*": "@desmodder/common/metadata/*",
     "#text-mode-core": "@desmodder/text-mode-core"
   },
-  "dependencies": {
+  "devDependencies": {
     "@desmodder/common": "file:../common",
     "@desmodder/text-mode-core": "file:../text-mode-core"
   },

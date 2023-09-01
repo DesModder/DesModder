@@ -4,7 +4,7 @@
   "version": "0.1.1",
   "main": "./index.js",
   "scripts": {
-    "build": "node esbuild.mjs"
+    "build": "node ../loaders/build-package.mjs"
   },
   "exports": {
     ".": "./index.ts",
@@ -24,7 +24,7 @@
     "url": "https://github.com/DesModder/DesModder"
   },
   "license": "MIT",
-  "dependencies": {
+  "devDependencies": {
     "moo": "^0.5.2",
     "@desmodder/common": "file:../common"
   },

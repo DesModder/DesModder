@@ -1,7 +1,6 @@
-/* eslint-disable rulesdir/no-external-imports */
-
-/* eslint-disable rulesdir/no-reach-past-exports */
-import { loadFile } from "../loaders/utils.mjs";
+import { esbuildPluginLezer } from "./esbuild-plugin-lezer.mjs";
+import { lessLoader } from "esbuild-plugin-less";
+import { loadFile } from "./utils.mjs";
 import esbuild from "esbuild";
 import { promises as fs } from "fs";
 import path from "path";
@@ -13,7 +12,7 @@ const opts = {
   sourcemap: false,
   bundle: true,
   outdir,
-  plugins: [],
+  plugins: [lessLoader(), esbuildPluginLezer()],
   define: {
     window: "globalThis",
   },
@@ -36,10 +35,11 @@ const pkg = JSON.parse(await loadFile("./package.json"));
 delete pkg.exports;
 delete pkg.imports;
 delete pkg.scripts;
+// The devDependencies are bundled in currently.
+delete pkg.devDependencies;
 Object.assign(pkg, {
   browser: "index.js",
   module: "index.js",
-  types: "index.d.ts",
   type: "module",
   exports: { ".": "./index.js" },
 });
