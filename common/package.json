@@ -13,6 +13,9 @@
     "#parsing/*": "./parsing/*",
     "#components": "./globals/components/index.ts"
   },
+  "devDependencies": {
+    "@desmodder/graph-state": "^0.2.3"
+  },
   "license": "MIT",
   "keywords": [
     "desmos"

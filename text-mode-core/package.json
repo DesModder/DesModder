@@ -12,7 +12,6 @@
     "./TextAST/Synthetic": "./TextAST/Synthetic.ts"
   },
   "imports": {
-    "#prettier/doc": "prettier/doc",
     "#jest/globals": "@jest/globals",
     "#moo": "moo",
     "#parsing/*": "@desmodder/common/parsing/*",
@@ -25,8 +24,13 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "moo": "^0.5.2",
-    "@desmodder/common": "file:../common"
+    "@jest/globals": "^29.6.4",
+    "@types/prettier": "^2.7.3"
+  },
+  "dependencies": {
+    "@desmodder/common": "file:../common",
+    "prettier": "^2.8.8",
+    "moo": "^0.5.2"
   },
   "keywords": [
     "desmos"

@@ -35,8 +35,9 @@ const pkg = JSON.parse(await loadFile("./package.json"));
 delete pkg.exports;
 delete pkg.imports;
 delete pkg.scripts;
-// The devDependencies are bundled in currently.
+// All dependencies are bundled in currently.
 delete pkg.devDependencies;
+delete pkg.dependencies;
 Object.assign(pkg, {
   browser: "index.js",
   module: "index.js",

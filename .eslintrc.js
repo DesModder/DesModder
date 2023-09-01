@@ -40,6 +40,7 @@ module.exports = {
   ],
   parser: "@typescript-eslint/parser",
   rules: {
+    "import/no-extraneous-dependencies": "error",
     "rulesdir/no-format-in-ts": "error",
     "rulesdir/no-expect-promise": "error",
     "rulesdir/no-reach-past-exports": "error",

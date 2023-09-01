@@ -18,8 +18,21 @@
     "#text-mode-core": "@desmodder/text-mode-core"
   },
   "devDependencies": {
+    "@desmodder/graph-state": "^0.2.3"
+  },
+  "dependencies": {
     "@desmodder/common": "file:../common",
-    "@desmodder/text-mode-core": "file:../text-mode-core"
+    "@desmodder/text-mode-core": "file:../text-mode-core",
+    "@codemirror/view": "^6.14.0",
+    "@codemirror/autocomplete": "^6.8.1",
+    "@codemirror/commands": "^6.2.4",
+    "@codemirror/language": "^6.8.0",
+    "@codemirror/lint": "^6.3.0",
+    "@codemirror/search": "^6.5.0",
+    "@codemirror/state": "^6.2.1",
+    "@lezer/common": "^1.0.3",
+    "@lezer/lr": "^1.3.7",
+    "@lezer/highlight": "^1.1.6"
   },
   "license": "MIT",
   "keywords": [
