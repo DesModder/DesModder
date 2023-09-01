@@ -1,4 +1,4 @@
-import * as moo from "#moo";
+import * as moo from "moo";
 import { ProgramAnalysis } from "../ProgramAnalysis";
 import TextAST, {
   Node,

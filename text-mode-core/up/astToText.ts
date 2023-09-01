@@ -1,4 +1,3 @@
-// eslint-disable-next-line rulesdir/no-external-imports
 import { builders, printer } from "prettier/doc";
 import type * as DocNS from "prettier/doc";
 import TextAST, { NodePath } from "../TextAST/Synthetic";

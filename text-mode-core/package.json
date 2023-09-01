@@ -12,8 +12,6 @@
     "./TextAST/Synthetic": "./TextAST/Synthetic.ts"
   },
   "imports": {
-    "#jest/globals": "@jest/globals",
-    "#moo": "moo",
     "#parsing/*": "@desmodder/common/parsing/*",
     "#metadata/*": "@desmodder/common/metadata/*",
     "#utils/*": "@desmodder/common/utils/*"
