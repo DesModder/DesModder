@@ -24,7 +24,7 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
   oldConfig = Calc.controller.getMathquillConfig;
   doAutoCommandInjections = false;
   autoCommandInjections =
-    " gamma Gamma delta Delta epsilon zeta eta Theta iota kappa lambda Lambda mu nu Xi xi Pi rho sigma Sigma upsilon Upsilon Phi chi psi Psi omega Omega";
+    " gamma Gamma delta Delta epsilon zeta eta Theta iota kappa lambda Lambda mu Xi xi Pi rho sigma Sigma upsilon Upsilon Phi chi psi Psi omega Omega";
 
   updateConfig(config: Config) {
     Calc.controller.rootElt.classList.toggle(
