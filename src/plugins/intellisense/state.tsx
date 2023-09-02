@@ -1,7 +1,7 @@
 import { BoundIdentifier } from ".";
 import { buildConfigFromGlobals, parseRootLatex } from "#text-mode-core";
 import { mapAugAST } from "./latex-parsing";
-import { Calc, ItemModel } from "#globals";
+import { CalcType, ItemModel } from "#globals";
 import { rootKeys } from "#plugins/find-replace/backend.ts";
 import Metadata from "#metadata/interface.ts";
 import { get } from "#utils/utils.ts";
@@ -35,33 +35,34 @@ export class IntellisenseState {
   metadata: Metadata;
 
   counter = 0;
+  cc = this.calc.controller;
 
   getIdentDoc(ident: BoundIdentifier) {
-    const mdl = Calc.controller.getItemModelByIndex(
-      (Calc.controller.getItemModel(ident.exprId)?.index ?? 0) - 1
+    const mdl = this.cc.getItemModelByIndex(
+      (this.cc.getItemModel(ident.exprId)?.index ?? 0) - 1
     );
     return mdl?.type === "text" ? mdl.text : undefined;
   }
 
   getIdentFolderDoc(ident: BoundIdentifier) {
-    const mdl = Calc.controller.getItemModel(ident.exprId);
+    const mdl = this.cc.getItemModel(ident.exprId);
     if (!mdl?.folderId) return undefined;
-    const folderModel = Calc.controller.getItemModel(mdl.folderId);
+    const folderModel = this.cc.getItemModel(mdl.folderId);
     return folderModel?.type === "folder" ? folderModel?.title : undefined;
   }
 
   getIdentFolderId(ident: BoundIdentifier) {
-    return Calc.controller.getItemModel(ident.exprId)?.folderId;
+    return this.cc.getItemModel(ident.exprId)?.folderId;
   }
 
-  readonly cfg = buildConfigFromGlobals(Desmos, Calc);
+  readonly cfg = buildConfigFromGlobals(Desmos, this.calc);
 
-  constructor(metadata: Metadata) {
+  constructor(metadata: Metadata, public calc: CalcType) {
     this.metadata = metadata;
-    Calc.controller.dispatcher.register((e) => {
+    this.cc.dispatcher.register((e) => {
       if (e.type === "on-evaluator-changes") {
         for (const id of Object.keys(e.changes)) {
-          const model = Calc.controller.getItemModel(id);
+          const model = this.cc.getItemModel(id);
           if (model) {
             this.handleStateChange(model);
           }
@@ -92,7 +93,7 @@ export class IntellisenseState {
     this.boundIdentifiersInExpressions = new Map();
     this.identifierReferences = new Map();
     this.identifiersReferencedInExpression = new Map();
-    const models = Calc.controller.getAllItemModels();
+    const models = this.cc.getAllItemModels();
     for (let i = 0; i < models.length; i++) {
       this.handleStateChange(models[i]);
     }

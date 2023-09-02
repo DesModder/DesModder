@@ -1,6 +1,6 @@
 import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
-import { Calc } from "#globals";
+import { Calc, CalcType } from "#globals";
 import { getQueryParams } from "#utils/depUtils.ts";
 
 const managedKeys = configList.map((e) => e.key);
@@ -27,7 +27,7 @@ export default class BuiltinSettings extends PluginController<Config> {
     for (const key of managedKeys) {
       this.initialSettings[key] =
         (
-          Calc.settings as typeof Calc.settings & {
+          this.calc.settings as CalcType["settings"] & {
             advancedStyling: boolean;
             authorFeatures: boolean;
           }

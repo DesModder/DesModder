@@ -3,7 +3,7 @@
  * These have more information than the graph state related to getState and setState.
  */
 import { ClassComponent } from "#DCGView";
-import { CalcType } from ".";
+import { CalcController } from ".";
 
 interface BasicSetExpression {
   id: string;
@@ -49,7 +49,7 @@ interface ItemModelBase {
     is_inequality: boolean;
     action_value?: Record<string, string>;
   };
-  controller: CalcType["controller"];
+  controller: CalcController;
   dcgView?: ClassComponent;
 }
 
@@ -139,7 +139,7 @@ export interface FolderModel {
   secret?: boolean;
   error?: any;
   index: number;
-  controller: CalcType["controller"];
+  controller: CalcController;
 }
 
 export type ItemModel =

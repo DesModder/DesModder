@@ -10,6 +10,7 @@ export class TextModeEditor {
   view: EditorView;
   dispatchListenerID: string | null = null;
   debugMode: boolean = false;
+  cc = this.calc.controller;
 
   constructor(public calc: CalcType) {
     // TODO: cleanup API so we don't need this dummy view.
@@ -36,23 +37,21 @@ export class TextModeEditor {
     if (hasError) this.conversionError(() => conversionErrorUndo?.());
     container.appendChild(this.view.dom);
     this.preventPropagation(container);
-    this.dispatchListenerID = this.calc.controller.dispatcher.register(
-      (event) => {
-        // setTimeout to avoid dispatch-in-dispatch from handlers responding to
-        // calc state changing by dispatching an event
-        setTimeout(() => {
-          if (event.type === "set-state" && !event.opts.fromTextMode)
-            this.onSetState();
-          if (this.view) onCalcEvent(this.view, event);
-        });
-      }
-    );
+    this.dispatchListenerID = this.cc.dispatcher.register((event) => {
+      // setTimeout to avoid dispatch-in-dispatch from handlers responding to
+      // calc state changing by dispatching an event
+      setTimeout(() => {
+        if (event.type === "set-state" && !event.opts.fromTextMode)
+          this.onSetState();
+        if (this.view) onCalcEvent(this.view, event);
+      });
+    });
   }
 
   // TODO-cleanup: Symbol.dispose :) "using"
   unmount() {
     if (this.dispatchListenerID !== null) {
-      this.calc.controller.dispatcher.unregister(this.dispatchListenerID);
+      this.cc.dispatcher.unregister(this.dispatchListenerID);
     }
     this.view.destroy();
     this.view = new EditorView();
@@ -72,11 +71,11 @@ export class TextModeEditor {
   }
 
   toastErrorGraphUndo(msg: string) {
-    this.toastError(msg, () => this.calc.controller.dispatch({ type: "undo" }));
+    this.toastError(msg, () => this.cc.dispatch({ type: "undo" }));
   }
 
   toastError(msg: string, undoCallback?: () => void) {
-    this.calc.controller._showToast({
+    this.cc._showToast({
       message: msg,
       // `undoCallback: undefined` still adds the "Press Ctrl+Z" message
       ...(undoCallback ? { undoCallback } : {}),
@@ -116,13 +115,13 @@ export class TextModeEditor {
     const newSelected = getSelectedItem(view);
     if (newSelected !== currSelected) {
       if (view.hasFocus && newSelected !== undefined) {
-        this.calc.controller.dispatch({
+        this.cc.dispatch({
           type: "set-selected-id",
           id: newSelected,
           dsmFromTextModeSelection: true,
         });
       } else {
-        this.calc.controller.dispatch({
+        this.cc.dispatch({
           type: "set-none-selected",
         });
       }

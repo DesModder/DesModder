@@ -1,7 +1,6 @@
 import { DCGView } from "#DCGView";
 import { Inserter, PluginController } from "../PluginController";
 import { TextModeToggle } from "./components/TextModeToggle";
-import { Calc } from "#globals";
 import { TextModeEditor } from "#text-mode-editor";
 
 export default class TextMode extends PluginController {
@@ -27,10 +26,10 @@ export default class TextMode extends PluginController {
     // expression UI doesn't render in text mode, we replace markTickRequiredNextFrame
     // with a version that calls markTickRequiredNextFrame only when sliders are playing
     if (!this.editor) {
-      this.editor = new TextModeEditor(Calc);
+      this.editor = new TextModeEditor(this.calc);
       this.updateDebugMode();
-      Calc.controller.expressionSearchOpen = false;
-      Calc.controller.markTickRequiredNextFrame = function () {
+      this.cc.expressionSearchOpen = false;
+      this.cc.markTickRequiredNextFrame = function () {
         if (this.getPlayingSliders().length > 0) {
           // eslint-disable-next-line no-proto
           (this as any).__proto__.markTickRequiredNextFrame.apply(this);
@@ -38,11 +37,11 @@ export default class TextMode extends PluginController {
       };
     } else {
       // Revert back to the old markTickRequiredNextFrame given by prototype
-      delete (Calc.controller as any).markTickRequiredNextFrame;
+      delete (this.cc as any).markTickRequiredNextFrame;
       this.editor.unmount();
       this.editor = undefined;
     }
-    Calc.controller.updateViews();
+    this.cc.updateViews();
   }
 
   editorPanel(): Inserter {
@@ -59,7 +58,7 @@ export default class TextMode extends PluginController {
   }
 
   textModeToggle(): Inserter {
-    if (Calc.controller.isInEditListMode()) return undefined;
+    if (this.cc.isInEditListMode()) return undefined;
     return () => TextModeToggle(this);
   }
 }

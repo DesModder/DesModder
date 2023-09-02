@@ -11,7 +11,7 @@ import { pendingIntellisenseTimeouts, setIntellisenseTimeout } from "./utils";
 import { JumpToDefinitionMenuInfo, View } from "./view";
 import { DCGView, MountedComponent, unmountFromNode } from "#DCGView";
 import { MathQuillField, MathQuillView } from "#components";
-import { ItemModel, TextModel, Calc } from "#globals";
+import { Calc, ItemModel, TextModel } from "#globals";
 import { PluginController } from "#plugins/PluginController.ts";
 import { getMetadata } from "#plugins/manage-metadata/sync.ts";
 import { hookIntoOverrideKeystroke } from "#utils/listenerHelpers.ts";
@@ -101,7 +101,7 @@ export default class Intellisense extends PluginController<{
   partialFunctionCallIdent: BoundIdentifierFunction | undefined;
   partialFunctionCallDoc: string | undefined;
 
-  intellisenseState = new IntellisenseState(getMetadata());
+  intellisenseState = new IntellisenseState(getMetadata(), this.calc);
 
   canHaveIntellisense = false;
 
@@ -157,7 +157,7 @@ export default class Intellisense extends PluginController<{
 
       // if the user is in a partial function call,
       // find its documentation if it exists
-      const models = Calc.controller.getAllItemModels();
+      const models = this.cc.getAllItemModels();
       this.partialFunctionCallDoc = (
         models.find((current, i) => {
           if (
@@ -196,7 +196,7 @@ export default class Intellisense extends PluginController<{
               !this.intellisenseState.getIdentDoc(g)?.includes("@private") &&
               // don't include private expressions based on per-folder docs
               // unless you're in the same folder
-              (Calc.controller.getSelectedItem()?.folderId ===
+              (this.cc.getSelectedItem()?.folderId ===
                 this.intellisenseState.getIdentFolderId(g) ||
                 !this.intellisenseState
                   .getIdentFolderDoc(g)
@@ -223,12 +223,12 @@ export default class Intellisense extends PluginController<{
         );
 
         // sort the intellisense options so that closer ones appear first
-        const listModel = Calc.controller.listModel;
+        const listModel = this.cc.listModel;
         const orderMap = new Map<string, number>();
         for (let i = 0; i < listModel.drawOrder.length; i++) {
           orderMap.set(listModel.drawOrder[i], i);
         }
-        const myindex = Calc.controller.getSelectedItem()?.index;
+        const myindex = this.cc.getSelectedItem()?.index;
         if (myindex !== undefined) {
           this.intellisenseOpts.sort((a, b) => {
             const aMin = Math.min(
@@ -346,10 +346,15 @@ export default class Intellisense extends PluginController<{
 
   focusInHandler = () => {
     setIntellisenseTimeout(() => {
-      if (Calc.focusedMathQuill && this.specialIdentifierNames.length === 0) {
+      if (
+        this.calc.focusedMathQuill &&
+        this.specialIdentifierNames.length === 0
+      ) {
         this.specialIdentifierNames = [
-          ...Object.keys(Calc.focusedMathQuill.mq.__options.autoOperatorNames),
-          ...Object.keys(Calc.focusedMathQuill.mq.__options.autoCommands),
+          ...Object.keys(
+            this.calc.focusedMathQuill.mq.__options.autoOperatorNames
+          ),
+          ...Object.keys(this.calc.focusedMathQuill.mq.__options.autoCommands),
         ];
       }
 
@@ -357,10 +362,10 @@ export default class Intellisense extends PluginController<{
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const self = this;
 
-      if (Calc.focusedMathQuill) {
+      if (this.calc.focusedMathQuill) {
         // monkeypatch in a function to wrap overrideKeystroke
         const remove = hookIntoOverrideKeystroke(
-          Calc.focusedMathQuill.mq,
+          this.calc.focusedMathQuill.mq,
           function (key: string, _: KeyboardEvent) {
             if (
               // don't bother overriding keystroke if intellisense is offline
@@ -536,11 +541,11 @@ export default class Intellisense extends PluginController<{
     this.jumpToDefState = undefined;
 
     // jump to definition
-    Calc.controller.dispatch({
+    this.cc.dispatch({
       type: "set-selected-id",
       id,
     });
-    Calc.controller.dispatch({
+    this.cc.dispatch({
       type: "set-focus-location",
       location: {
         type: "expression",
@@ -550,9 +555,9 @@ export default class Intellisense extends PluginController<{
 
     // if we jumped to an expression with a folder, open the folder
     // and then re-scroll the expression into view
-    const model = Calc.controller.getItemModel(id);
+    const model = this.cc.getItemModel(id);
     if (model && model.type !== "folder" && model.folderId) {
-      Calc.controller.dispatch({
+      this.cc.dispatch({
         type: "set-folder-collapsed",
         id: model.folderId,
         isCollapsed: false,
@@ -580,7 +585,7 @@ export default class Intellisense extends PluginController<{
     if (identDsts.length === 1) {
       this.jumpToDefinitionById(identDsts[0].exprId);
     } else if (identDsts.length > 1) {
-      Calc.controller.dispatch({
+      this.cc.dispatch({
         type: "set-none-selected",
       });
 
@@ -638,7 +643,7 @@ export default class Intellisense extends PluginController<{
 
     // force calc to realize something's changed
     if (this.intellisenseReturnMQ && selectedid) {
-      Calc.controller.dispatch({
+      this.cc.dispatch({
         type: "set-item-latex",
         id: selectedid,
         latex: this.intellisenseReturnMQ.latex(),
@@ -684,10 +689,10 @@ export default class Intellisense extends PluginController<{
       plugin: () => this,
     });
 
-    this.dispatcher = Calc.controller.dispatcher.register((e) => {
+    this.dispatcher = this.cc.dispatcher.register((e) => {
       if (e.type === "set-focus-location" || e.type === "set-none-selected") {
         setIntellisenseTimeout(() => {
-          if (!Calc.focusedMathQuill) {
+          if (!this.calc.focusedMathQuill) {
             this.canHaveIntellisense = false;
             this.view?.update();
           }
@@ -704,7 +709,7 @@ export default class Intellisense extends PluginController<{
 
       if (e.type === "set-note-text") {
         this.updateCSSForDocstringExpression(
-          Calc.controller.getSelectedItem() as TextModel | undefined
+          this.cc.getSelectedItem() as TextModel | undefined
         );
       }
 
@@ -745,7 +750,7 @@ export default class Intellisense extends PluginController<{
   }
 
   updateCSSForAllDocstringExpressions() {
-    for (const m of Calc.controller.getAllItemModels()) {
+    for (const m of this.cc.getAllItemModels()) {
       if (m.type !== "text") continue;
       this.updateCSSForDocstringExpression(m);
     }
@@ -782,6 +787,6 @@ export default class Intellisense extends PluginController<{
       document.body.removeChild(this.intellisenseMountPoint);
     }
 
-    if (this.dispatcher) Calc.controller.dispatcher.unregister(this.dispatcher);
+    if (this.dispatcher) this.cc.dispatcher.unregister(this.dispatcher);
   }
 }

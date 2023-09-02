@@ -2,7 +2,7 @@
 import { Config, configList } from "./config";
 import "./custom-mathquill-config.less";
 import { MathQuillConfig, MathQuillField } from "#components";
-import { Calc, DWindow } from "#globals";
+import { DWindow } from "#globals";
 import { PluginController } from "#plugins/PluginController.ts";
 
 const defaultConfig: MathQuillConfig = {
@@ -21,20 +21,17 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
   static enabledByDefault = false;
   static config = configList;
 
-  oldConfig = Calc.controller.getMathquillConfig;
+  oldConfig = this.cc.getMathquillConfig;
   doAutoCommandInjections = false;
   autoCommandInjections =
     " gamma Gamma delta Delta epsilon zeta eta Theta iota kappa lambda Lambda mu nu Xi xi Pi rho sigma Sigma upsilon Upsilon Phi chi psi Psi omega Omega";
 
   updateConfig(config: Config) {
-    Calc.controller.rootElt.classList.toggle(
-      "commaizer",
-      config.commaDelimiter
-    );
+    this.cc.rootElt.classList.toggle("commaizer", config.commaDelimiter);
 
     this.doAutoCommandInjections = config.extendedGreek;
 
-    Calc.controller.rootElt.style.setProperty(
+    this.cc.rootElt.style.setProperty(
       "--delimiter-override",
       `"${CSS.escape(config.delimiterOverride)}"`
     );
@@ -70,8 +67,8 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
   }
 
   afterEnable() {
-    Calc.controller.getMathquillConfig = (e) => {
-      const currentConfig = this.oldConfig.call(Calc.controller, e);
+    this.cc.getMathquillConfig = (e) => {
+      const currentConfig = this.oldConfig.call(this.cc, e);
       if (this.doAutoCommandInjections) {
         currentConfig.autoCommands += this.autoCommandInjections;
       }
@@ -83,9 +80,9 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
 
   afterDisable() {
     this.doAutoCommandInjections = false;
-    Calc.controller.rootElt.classList.remove("commaizer");
+    this.cc.rootElt.classList.remove("commaizer");
     (window as any as DWindow).Desmos.MathQuill.config(defaultConfig);
-    Calc.controller.getMathquillConfig = this.oldConfig;
+    this.cc.getMathquillConfig = this.oldConfig;
     this.updateAllMathquill();
   }
 

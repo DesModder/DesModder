@@ -4,7 +4,6 @@ import GraphMetadata, {
 } from "#metadata/interface.ts";
 import { getBlankMetadata, changeExprInMetadata } from "#metadata/manage.ts";
 import { getMetadata, setMetadata } from "./sync";
-import { Calc } from "#globals";
 
 export default class ManageMetadata extends PluginController {
   static id = "manage-metadata" as const;
@@ -13,7 +12,7 @@ export default class ManageMetadata extends PluginController {
   graphMetadata: GraphMetadata = getBlankMetadata();
 
   afterEnable() {
-    Calc.observeEvent("change.dsm-main-controller", () => {
+    this.calc.observeEvent("change.dsm-main-controller", () => {
       this.checkForMetadataChange();
     });
     this.checkForMetadataChange();
@@ -35,7 +34,7 @@ export default class ManageMetadata extends PluginController {
         )
       ) {
         // list of glesmos expressions changed
-        Calc.controller._showToast({
+        this.cc._showToast({
           message:
             "Enable the GLesmos plugin to improve the performance of some implicits in this graph",
         });

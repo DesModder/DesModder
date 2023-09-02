@@ -4,7 +4,7 @@ import DSM from "#DSM";
 import "./fonts/style.css";
 import window from "#globals";
 
-const dsm = new DSM();
+const dsm = new DSM(window.Calc);
 
 window.DesModder = {
   controller: dsm,

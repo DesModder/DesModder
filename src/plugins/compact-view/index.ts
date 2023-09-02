@@ -2,7 +2,6 @@ import { PluginController } from "../PluginController";
 import "./compact.css";
 import "./compact.less";
 import { Config, configList } from "./config";
-import { Calc } from "#globals";
 
 function toggleBodyClass(className: string, bool: boolean) {
   document.body.classList.toggle(className, bool);
@@ -95,7 +94,7 @@ export default class CompactView extends PluginController<Config> {
   dispatcherID: string | undefined;
 
   afterEnable() {
-    this.dispatcherID = Calc.controller.dispatcher.register(() => {
+    this.dispatcherID = this.cc.dispatcher.register(() => {
       if (!this.settings.hideEvaluations) return;
       this.updateHiddenEvaluations();
     });
@@ -104,8 +103,7 @@ export default class CompactView extends PluginController<Config> {
   }
 
   afterDisable() {
-    if (this.dispatcherID)
-      Calc.controller.dispatcher.unregister(this.dispatcherID);
+    if (this.dispatcherID) this.cc.dispatcher.unregister(this.dispatcherID);
     document.body.classList.remove("compact-view-enabled");
   }
 }

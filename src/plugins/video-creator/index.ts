@@ -4,7 +4,7 @@ import { CaptureMethod, SliderSettings, capture } from "./backend/capture";
 import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
 import { isValidNumber, isValidLength, escapeRegex } from "./backend/utils";
 import { MainPopupFunc } from "./components/MainPopup";
-import { Calc, ExpressionModel } from "#globals";
+import { ExpressionModel } from "#globals";
 import {
   keys,
   EvaluateSingleExpression,
@@ -81,7 +81,7 @@ export default class VideoCreator extends PluginController {
   }
 
   afterEnable() {
-    Calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
+    this.calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
     this._applyDefaultCaptureSize();
     this.dsm.pillboxMenus?.addPillboxButton({
       id: "dsm-vc-menu",
@@ -172,7 +172,7 @@ export default class VideoCreator extends PluginController {
     return method === "action"
       ? this.hasAction()
       : method === "ticks"
-      ? Calc.controller.getPlayingSliders().length > 0
+      ? this.cc.getPlayingSliders().length > 0
       : true;
   }
 
@@ -190,7 +190,7 @@ export default class VideoCreator extends PluginController {
   }
 
   _applyDefaultCaptureSize() {
-    const size = Calc.graphpaperBounds.pixelCoordinates;
+    const size = this.calc.graphpaperBounds.pixelCoordinates;
     this.captureWidthLatex = size.width.toFixed(0);
     this.captureHeightLatex = size.height.toFixed(0);
   }
@@ -201,7 +201,7 @@ export default class VideoCreator extends PluginController {
   }
 
   isDefaultCaptureSizeDifferent() {
-    const size = Calc.graphpaperBounds.pixelCoordinates;
+    const size = this.calc.graphpaperBounds.pixelCoordinates;
     return (
       this.captureWidthLatex !== size.width.toFixed(0) ||
       this.captureHeightLatex !== size.height.toFixed(0)
@@ -229,7 +229,7 @@ export default class VideoCreator extends PluginController {
   _getTargetPixelRatio() {
     return (
       this.getCaptureWidthNumber() /
-      Calc.graphpaperBounds.pixelCoordinates.width
+      this.calc.graphpaperBounds.pixelCoordinates.width
     );
   }
 
@@ -268,12 +268,14 @@ export default class VideoCreator extends PluginController {
     const regex = new RegExp(
       `^(\\\\?\\s)*${escapeRegex(this.sliderSettings.variable)}(\\\\?\\s)*=`
     );
-    return Calc.getState().expressions.list.find(
-      (e) =>
-        e.type === "expression" &&
-        typeof e.latex === "string" &&
-        regex.test(e.latex)
-    );
+    return this.calc
+      .getState()
+      .expressions.list.find(
+        (e) =>
+          e.type === "expression" &&
+          typeof e.latex === "string" &&
+          regex.test(e.latex)
+      );
   }
 
   isSliderSettingValid<T extends keyof SliderSettings>(key: T) {
@@ -323,7 +325,7 @@ export default class VideoCreator extends PluginController {
   }
 
   getActions() {
-    return Calc.controller
+    return this.cc
       .getAllItemModels()
       .filter(
         (e) => e.type === "expression" && e.formula?.action_value !== undefined
@@ -335,7 +337,7 @@ export default class VideoCreator extends PluginController {
   }
 
   getCurrentAction() {
-    const model = Calc.controller.getItemModel(this.currentActionID);
+    const model = this.cc.getItemModel(this.currentActionID);
     if (model === undefined) {
       const action = this.getActions()[0];
       if (action !== undefined) {
