@@ -1,5 +1,4 @@
 import VideoCreator from ".";
-import { Calc } from "#globals";
 
 const captureFrameID = "dsm-vc-capture-frame";
 
@@ -20,7 +19,7 @@ function applyCaptureFrame(vc: VideoCreator) {
       canvas?.parentNode?.appendChild(frame);
     }
 
-    const pixelBounds = Calc.graphpaperBounds.pixelCoordinates;
+    const pixelBounds = vc.calc.graphpaperBounds.pixelCoordinates;
     const ratio =
       vc.getCaptureHeightNumber() /
       vc.getCaptureWidthNumber() /
@@ -45,5 +44,5 @@ function applyCaptureFrame(vc: VideoCreator) {
 
 export function updateView(vc: VideoCreator) {
   applyCaptureFrame(vc);
-  Calc.controller.updateViews();
+  vc.cc.updateViews();
 }

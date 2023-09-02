@@ -7,8 +7,6 @@ Here's what you probably want to use for now, assuming a global Desmos API insta
 ```ts
 const graphContainer = document.getElementById("graph-container");
 const Calc = Desmos.GraphingCalculator(graphContainer);
-// We're mid-migration in removing the need for a global variable Calc.
-window.Calc = Calc;
 
 // The text-mode-editor API still requires "Desmos" to be a global variable
 const textModeContainer = document.getElementById("text-mode-container");

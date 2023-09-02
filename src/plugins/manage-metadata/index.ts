@@ -25,7 +25,7 @@ export default class ManageMetadata extends PluginController {
   }
 
   checkForMetadataChange() {
-    const newMetadata = getMetadata();
+    const newMetadata = getMetadata(this.calc);
     if (!this.dsm.glesmos) {
       if (
         Object.entries(newMetadata.expressions).some(
@@ -46,7 +46,7 @@ export default class ManageMetadata extends PluginController {
 
   _updateExprMetadata(id: string, obj: Partial<MetadataExpression>) {
     changeExprInMetadata(this.graphMetadata, id, obj);
-    setMetadata(this.graphMetadata);
+    setMetadata(this.calc, this.graphMetadata);
   }
 
   duplicateMetadata(toID: string, fromID: string) {

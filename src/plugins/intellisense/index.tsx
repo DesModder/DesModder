@@ -13,7 +13,6 @@ import { DCGView, MountedComponent, unmountFromNode } from "#DCGView";
 import { MathQuillField, MathQuillView } from "#components";
 import { TextModel } from "#globals";
 import { PluginController } from "#plugins/PluginController.ts";
-import { getMetadata } from "#plugins/manage-metadata/sync.ts";
 import { hookIntoOverrideKeystroke } from "#utils/listenerHelpers.ts";
 import { isDescendant } from "#utils/utils.ts";
 
@@ -86,7 +85,7 @@ export default class Intellisense extends PluginController<{
   partialFunctionCallIdent: BoundIdentifierFunction | undefined;
   partialFunctionCallDoc: string | undefined;
 
-  intellisenseState = new IntellisenseState(getMetadata(), this.calc);
+  intellisenseState = new IntellisenseState(this.calc);
 
   canHaveIntellisense = false;
 

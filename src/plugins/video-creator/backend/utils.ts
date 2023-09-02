@@ -1,5 +1,3 @@
-import { EvaluateSingleExpression } from "#utils/depUtils.ts";
-
 interface Bounds {
   left: number;
   right: number;
@@ -10,15 +8,6 @@ interface Bounds {
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
 export function escapeRegex(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-export function isValidNumber(s: string) {
-  return !isNaN(EvaluateSingleExpression(s));
-}
-
-export function isValidLength(s: string) {
-  const evaluated = EvaluateSingleExpression(s);
-  return !isNaN(evaluated) && evaluated >= 2;
 }
 
 export function scaleBoundsAboutCenter(b: Bounds, r: number) {

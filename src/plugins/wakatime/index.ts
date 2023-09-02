@@ -48,7 +48,7 @@ export default class Wakatime extends PluginController<Config> {
   maybeSendHeartbeat(isWrite: boolean) {
     if (!(performance.now() - this.lastUpdate > heartbeatInterval || isWrite))
       return;
-    const graphName = getCurrentGraphTitle() ?? "Untitled Graph";
+    const graphName = getCurrentGraphTitle(this.calc) ?? "Untitled Graph";
     const graphURL = window.location.href;
     const lineCount = this.calc.getExpressions().length;
 

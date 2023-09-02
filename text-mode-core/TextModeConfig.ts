@@ -9,12 +9,12 @@ export interface PublicConfig {
   parseDesmosLatex?: Parse;
 }
 
-export function buildConfigFromGlobals(Desmos: any, Calc: any) {
-  const config = Calc.controller.getMathquillConfig({});
+export function buildConfigFromGlobals(Desmos: any, calc: any) {
+  const config = calc.controller.getMathquillConfig({});
   return buildConfig({
     operatorNames: config.autoOperatorNames,
     commandNames: config.autoCommands,
-    colors: Calc?.colors,
+    colors: calc?.colors,
     parseDesmosLatex: Desmos.Private.Parser.parse,
   });
 }

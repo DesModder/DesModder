@@ -21,6 +21,8 @@ type GenericSettings = any;
 type DSM = any;
 
 export interface DWindow extends Window {
+  /** @deprecated Don't use Calc directly, unless you're doing global setup for
+   * the whole extension. Reference a specific `calc` object instead. */
   Calc: CalcType;
   DesModder: any;
   DSM: DSM;
@@ -58,20 +60,6 @@ interface Mathtools {
 declare let window: DWindow;
 
 export default window;
-
-// defer access of Calc.controller, Calc.observe, etc. to when they are called
-// avoid Calc === undefined but window.Calc !== undefined
-export const Calc = new Proxy(
-  {},
-  {
-    get(_target, prop) {
-      if (window.Calc === undefined) return undefined;
-      if (prop in window.Calc) {
-        return window.Calc[prop as keyof typeof window.Calc];
-      }
-    },
-  }
-) as CalcType;
 
 export const Fragile = new Proxy(
   {},

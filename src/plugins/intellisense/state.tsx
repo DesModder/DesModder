@@ -5,6 +5,7 @@ import { CalcType, ItemModel } from "#globals";
 import { rootKeys } from "#plugins/find-replace/backend.ts";
 import Metadata from "#metadata/interface.ts";
 import { get } from "#utils/utils.ts";
+import { getMetadata } from "../manage-metadata/sync";
 
 function getOrMakeKey<K, V>(map: Map<K, V>, k: K, v: () => V) {
   if (map.has(k)) {
@@ -57,8 +58,8 @@ export class IntellisenseState {
 
   readonly cfg = buildConfigFromGlobals(Desmos, this.calc);
 
-  constructor(metadata: Metadata, public calc: CalcType) {
-    this.metadata = metadata;
+  constructor(public calc: CalcType) {
+    this.metadata = getMetadata(calc);
     this.cc.dispatcher.register((e) => {
       if (e.type === "on-evaluator-changes") {
         for (const id of Object.keys(e.changes)) {

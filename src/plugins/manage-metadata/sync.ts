@@ -1,7 +1,7 @@
 import Metadata from "#metadata/interface.ts";
 import migrateToLatest from "#metadata/migrate.ts";
 import { getBlankMetadata, isBlankMetadata } from "#metadata/manage.ts";
-import { Calc, Console, FolderModel, TextModel } from "#globals";
+import { CalcType, Console, FolderModel, TextModel } from "#globals";
 import { List } from "#utils/depUtils.ts";
 
 /*
@@ -27,12 +27,12 @@ The text content of dsm-metadata is in JSON format
 const ID_METADATA = "dsm-metadata";
 const ID_METADATA_FOLDER = "dsm-metadata-folder";
 
-function getMetadataExpr() {
-  return Calc.controller.getItemModel(ID_METADATA);
+function getMetadataExpr(calc: CalcType) {
+  return calc.controller.getItemModel(ID_METADATA);
 }
 
-export function getMetadata() {
-  const expr = getMetadataExpr();
+export function getMetadata(calc: CalcType) {
+  const expr = getMetadataExpr(calc);
   if (expr === undefined) return getBlankMetadata();
   if (expr.type === "text" && expr.text !== undefined) {
     const parsed = JSON.parse(expr.text);
@@ -43,25 +43,26 @@ export function getMetadata() {
 }
 
 function addItemToEnd(
+  calc: CalcType,
   state:
     | Omit<FolderModel, "index" | "controller">
     | Omit<TextModel, "index" | "controller">
 ) {
-  Calc.controller._addItemToEndFromAPI(Calc.controller.createItemModel(state));
+  calc.controller._addItemToEndFromAPI(calc.controller.createItemModel(state));
 }
 
-export function setMetadata(metadata: Metadata) {
-  cleanMetadata(metadata);
-  List.removeItemById(Calc.controller.listModel, ID_METADATA);
-  List.removeItemById(Calc.controller.listModel, ID_METADATA_FOLDER);
+export function setMetadata(calc: CalcType, metadata: Metadata) {
+  cleanMetadata(calc, metadata);
+  List.removeItemById(calc.controller.listModel, ID_METADATA);
+  List.removeItemById(calc.controller.listModel, ID_METADATA_FOLDER);
   if (!isBlankMetadata(metadata)) {
-    addItemToEnd({
+    addItemToEnd(calc, {
       type: "folder",
       id: ID_METADATA_FOLDER,
       secret: true,
       title: "DesModder Metadata",
     });
-    addItemToEnd({
+    addItemToEnd(calc, {
       type: "text",
       id: ID_METADATA,
       folderId: ID_METADATA_FOLDER,
@@ -70,10 +71,10 @@ export function setMetadata(metadata: Metadata) {
   }
 }
 
-function cleanMetadata(metadata: Metadata) {
-  /* Mutates metadata by removing expressions that no longer exist */
+/* Mutate metadata by removing expressions that no longer exist */
+function cleanMetadata(calc: CalcType, metadata: Metadata) {
   for (const id in metadata.expressions) {
-    if (Calc.controller.getItemModel(id) === undefined) {
+    if (calc.controller.getItemModel(id) === undefined) {
       // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete metadata.expressions[id];
     }

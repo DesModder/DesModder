@@ -2,7 +2,7 @@ import { PluginController } from "../PluginController";
 import { updateView } from "./View";
 import { CaptureMethod, SliderSettings, capture } from "./backend/capture";
 import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
-import { isValidNumber, isValidLength, escapeRegex } from "./backend/utils";
+import { escapeRegex } from "./backend/utils";
 import { MainPopupFunc } from "./components/MainPopup";
 import { ExpressionModel } from "#globals";
 import {
@@ -129,7 +129,7 @@ export default class VideoCreator extends PluginController {
   }
 
   isFPSValid() {
-    return isValidNumber(this.fpsLatex);
+    return this.isValidNumber(this.fpsLatex);
   }
 
   setFPSLatex(latex: string) {
@@ -141,7 +141,7 @@ export default class VideoCreator extends PluginController {
   }
 
   getFPSNumber() {
-    return EvaluateSingleExpression(this.fpsLatex);
+    return this.eval(this.fpsLatex);
   }
 
   setOutputFiletype(type: OutFileType) {
@@ -154,7 +154,9 @@ export default class VideoCreator extends PluginController {
   }
 
   getOutfileName() {
-    return this.outfileName ?? getCurrentGraphTitle() ?? DEFAULT_FILENAME;
+    return (
+      this.outfileName ?? getCurrentGraphTitle(this.calc) ?? DEFAULT_FILENAME
+    );
   }
 
   set captureMethod(method: CaptureMethod) {
@@ -177,7 +179,7 @@ export default class VideoCreator extends PluginController {
   }
 
   isCaptureWidthValid() {
-    return isValidLength(this.captureWidthLatex);
+    return this.isValidLength(this.captureWidthLatex);
   }
 
   setCaptureWidthLatex(latex: string) {
@@ -186,7 +188,20 @@ export default class VideoCreator extends PluginController {
   }
 
   isCaptureHeightValid() {
-    return isValidLength(this.captureHeightLatex);
+    return this.isValidLength(this.captureHeightLatex);
+  }
+
+  private isValidLength(s: string) {
+    const evaluated = this.eval(s);
+    return !isNaN(evaluated) && evaluated >= 2;
+  }
+
+  private isValidNumber(s: string) {
+    return !isNaN(this.eval(s));
+  }
+
+  eval(s: string) {
+    return EvaluateSingleExpression(this.calc, s);
   }
 
   _applyDefaultCaptureSize() {
@@ -214,11 +229,11 @@ export default class VideoCreator extends PluginController {
   }
 
   getCaptureWidthNumber() {
-    return EvaluateSingleExpression(this.captureWidthLatex);
+    return this.eval(this.captureWidthLatex);
   }
 
   getCaptureHeightNumber() {
-    return EvaluateSingleExpression(this.captureHeightLatex);
+    return this.eval(this.captureHeightLatex);
   }
 
   setSamePixelRatio(samePixelRatio: boolean) {
@@ -256,7 +271,7 @@ export default class VideoCreator extends PluginController {
   }
 
   getTickTimeStepNumber() {
-    return EvaluateSingleExpression(this.tickTimeStepLatex);
+    return this.eval(this.tickTimeStepLatex);
   }
 
   isTickTimeStepValid() {
@@ -282,12 +297,12 @@ export default class VideoCreator extends PluginController {
     if (key === "variable") {
       return this.getMatchingSlider() !== undefined;
     } else {
-      return isValidNumber(this.sliderSettings[key]);
+      return this.isValidNumber(this.sliderSettings[key]);
     }
   }
 
   getTickCountNumber() {
-    return EvaluateSingleExpression(this.tickCountLatex);
+    return this.eval(this.tickCountLatex);
   }
 
   isTickCountValid() {

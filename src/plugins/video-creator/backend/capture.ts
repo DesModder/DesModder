@@ -1,7 +1,6 @@
 import VideoCreator from "..";
 import { scaleBoundsAboutCenter } from "./utils";
 import DSM from "#DSM";
-import { EvaluateSingleExpression } from "#utils/depUtils.ts";
 
 let dispatchListenerID: string | null = null;
 let callbackIfCancel: (() => void) | null = null;
@@ -68,9 +67,9 @@ export interface SliderSettings {
 export async function captureSlider(vc: VideoCreator) {
   const sliderSettings = vc.sliderSettings;
   const variable = sliderSettings.variable;
-  const min = EvaluateSingleExpression(sliderSettings.minLatex);
-  const max = EvaluateSingleExpression(sliderSettings.maxLatex);
-  const step = EvaluateSingleExpression(sliderSettings.stepLatex);
+  const min = vc.eval(sliderSettings.minLatex);
+  const max = vc.eval(sliderSettings.maxLatex);
+  const step = vc.eval(sliderSettings.stepLatex);
   const slider = vc.getMatchingSlider();
   if (slider === undefined) {
     return;
