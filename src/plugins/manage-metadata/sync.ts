@@ -1,7 +1,7 @@
 import Metadata from "#metadata/interface.ts";
 import migrateToLatest from "#metadata/migrate.ts";
 import { getBlankMetadata, isBlankMetadata } from "#metadata/manage.ts";
-import { CalcType, Console, FolderModel, TextModel } from "#globals";
+import { Calc, Console, FolderModel, TextModel } from "#globals";
 import { List } from "#utils/depUtils.ts";
 
 /*
@@ -27,11 +27,11 @@ The text content of dsm-metadata is in JSON format
 const ID_METADATA = "dsm-metadata";
 const ID_METADATA_FOLDER = "dsm-metadata-folder";
 
-function getMetadataExpr(calc: CalcType) {
+function getMetadataExpr(calc: Calc) {
   return calc.controller.getItemModel(ID_METADATA);
 }
 
-export function getMetadata(calc: CalcType) {
+export function getMetadata(calc: Calc) {
   const expr = getMetadataExpr(calc);
   if (expr === undefined) return getBlankMetadata();
   if (expr.type === "text" && expr.text !== undefined) {
@@ -43,7 +43,7 @@ export function getMetadata(calc: CalcType) {
 }
 
 function addItemToEnd(
-  calc: CalcType,
+  calc: Calc,
   state:
     | Omit<FolderModel, "index" | "controller">
     | Omit<TextModel, "index" | "controller">
@@ -51,7 +51,7 @@ function addItemToEnd(
   calc.controller._addItemToEndFromAPI(calc.controller.createItemModel(state));
 }
 
-export function setMetadata(calc: CalcType, metadata: Metadata) {
+export function setMetadata(calc: Calc, metadata: Metadata) {
   cleanMetadata(calc, metadata);
   List.removeItemById(calc.controller.listModel, ID_METADATA);
   List.removeItemById(calc.controller.listModel, ID_METADATA_FOLDER);
@@ -72,7 +72,7 @@ export function setMetadata(calc: CalcType, metadata: Metadata) {
 }
 
 /* Mutate metadata by removing expressions that no longer exist */
-function cleanMetadata(calc: CalcType, metadata: Metadata) {
+function cleanMetadata(calc: Calc, metadata: Metadata) {
   for (const id in metadata.expressions) {
     if (calc.controller.getItemModel(id) === undefined) {
       // eslint-disable-next-line @typescript-eslint/no-dynamic-delete

@@ -11,7 +11,7 @@ import {
   TooltipComponent,
   MathQuillConfig,
 } from "#components";
-import CalcType from "./Calc";
+import { Calc } from "./Calc";
 import { ItemModel } from "./models";
 import { GraphState } from "@desmodder/graph-state";
 // Removed to avoid circular import:
@@ -23,7 +23,7 @@ type DSM = any;
 export interface DWindow extends Window {
   /** @deprecated Don't use Calc directly, unless you're doing global setup for
    * the whole extension. Reference a specific `calc` object instead. */
-  Calc: CalcType;
+  Calc: Calc;
   DesModder: any;
   DSM: DSM;
   DesModderPreload?: {

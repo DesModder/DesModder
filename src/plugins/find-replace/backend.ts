@@ -1,4 +1,4 @@
-import { CalcType } from "#globals";
+import { Calc } from "#globals";
 import { satisfiesType } from "#parsing/nodeTypes.ts";
 import { Identifier } from "#parsing/parsenode.ts";
 import traverse, { Path } from "#parsing/traverse.ts";
@@ -34,7 +34,7 @@ export const nestedKeyContainers = [
 
 export const nestedKeys = ["max", "min", "step"] as const;
 
-function replace(calc: CalcType, replaceLatex: (s: string) => string) {
+function replace(calc: Calc, replaceLatex: (s: string) => string) {
   // replaceString is applied to stuff like labels
   // middle group in regex accounts for 1 layer of braces, sufficient for `Print ${a+2}`
   function replaceString(s: string) {
@@ -169,7 +169,7 @@ function getReplacements(
   return [];
 }
 
-export function refactor(calc: CalcType, from: string, to: string) {
+export function refactor(calc: Calc, from: string, to: string) {
   const fromParsed = parseDesmosLatex(from.trim());
   if (satisfiesType(fromParsed, "Identifier")) {
     // trim `from` to prevent inputs such as "  a" messing up matches that depend on `from` itself.

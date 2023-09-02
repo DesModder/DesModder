@@ -1,5 +1,5 @@
 import { MathQuillField } from "#components";
-import { CalcType, DispatchedEvent } from "#globals";
+import { Calc, DispatchedEvent } from "#globals";
 
 interface DispatchOverridingHandler {
   handler: (evt: DispatchedEvent) => boolean | undefined;
@@ -8,7 +8,7 @@ interface DispatchOverridingHandler {
 }
 
 const calcDispatchOverrideHandlers = new WeakMap<
-  CalcType,
+  Calc,
   DispatchOverridingHandler[]
 >();
 
@@ -19,7 +19,7 @@ let dispatchOverridingHandlerId = 0;
 // the handler can return false to force the dispatcher to stop early
 // (e.g. to stop desmos from doing a default action upon pressing a key)
 export function registerCustomDispatchOverridingHandler(
-  calc: CalcType,
+  calc: Calc,
   handler: (evt: DispatchedEvent) => boolean | undefined,
   priority: number
 ): number {
@@ -38,7 +38,7 @@ export function registerCustomDispatchOverridingHandler(
 // deregisters a function created with registerCustomDispatchOverridingHandler
 // uses the id that the former function returns
 export function deregisterCustomDispatchOverridingHandler(
-  calc: CalcType,
+  calc: Calc,
   id: number
 ): void {
   const handlers = getDispatchOverrideHandlers(calc);
@@ -51,7 +51,7 @@ export function deregisterCustomDispatchOverridingHandler(
   }
 }
 
-function getDispatchOverrideHandlers(calc: CalcType) {
+function getDispatchOverrideHandlers(calc: Calc) {
   const curr = calcDispatchOverrideHandlers.get(calc);
   if (curr) return curr;
   const newHandlers = setupDispatchOverride(calc);
@@ -60,7 +60,7 @@ function getDispatchOverrideHandlers(calc: CalcType) {
 }
 
 // Change calc.handleDispatchedAction to first run a set of custom handlers
-export function setupDispatchOverride(calc: CalcType) {
+export function setupDispatchOverride(calc: Calc) {
   const old = calc.controller.handleDispatchedAction;
   const handlers: DispatchOverridingHandler[] = [];
   calc.controller.handleDispatchedAction = function (evt) {

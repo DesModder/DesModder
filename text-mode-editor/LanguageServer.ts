@@ -14,7 +14,7 @@ import {
 } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
-import type { CalcType, DispatchedEvent } from "#globals";
+import type { Calc, DispatchedEvent } from "#globals";
 import { TextModeEditor } from ".";
 
 /**
@@ -119,7 +119,7 @@ export const addRawID = StateEffect.define<RawIDRange>({
   }),
 });
 
-function setCalcState(calc: CalcType, state: GraphState) {
+function setCalcState(calc: Calc, state: GraphState) {
   // Prevent Desmos from blurring the currently active element.
   // Alternative method this.view.focus() after setState does not prevent
   //   the current autocomplete tooltip from disappearing

@@ -3,7 +3,7 @@ import { onCalcEvent, analysisStateField } from "./LanguageServer";
 import { initView, setDebugMode, startState } from "./view/editor";
 import { TransactionSpec } from "@codemirror/state";
 import { EditorView, ViewUpdate } from "@codemirror/view";
-import type { CalcType } from "#globals";
+import type { Calc } from "#globals";
 import { keys } from "#utils/depUtils";
 
 export class TextModeEditor {
@@ -12,7 +12,7 @@ export class TextModeEditor {
   debugMode: boolean = false;
   cc = this.calc.controller;
 
-  constructor(public calc: CalcType) {
+  constructor(public calc: Calc) {
     // TODO: cleanup API so we don't need this dummy view.
     this.view = new EditorView();
   }
