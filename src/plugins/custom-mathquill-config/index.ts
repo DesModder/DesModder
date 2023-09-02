@@ -24,7 +24,7 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
   oldConfig = Calc.controller.getMathquillConfig;
   doAutoCommandInjections = false;
   autoCommandInjections =
-    " gamma Gamma delta Delta epsilon zeta eta Theta iota kappa lambda Lambda mu nu Xi xi Pi rho sigma Sigma upsilon Upsilon Phi chi psi Psi omega Omega";
+    " gamma Gamma delta Delta epsilon zeta eta Theta iota kappa lambda Lambda mu Xi xi Pi rho sigma Sigma upsilon Upsilon Phi chi psi Psi omega Omega";
 
   updateConfig(config: Config) {
     Calc.controller.rootElt.classList.toggle(
@@ -95,6 +95,8 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
 
   updateAllMathquill() {
     for (const mqField of document.querySelectorAll(".dcg-math-field")) {
+      if (mqField.classList.contains("dcg-static-mathquill-view")) continue;
+
       const currentMQ = (
         mqField as Element & { _mqMathFieldInstance: MathQuillField }
       )._mqMathFieldInstance;
