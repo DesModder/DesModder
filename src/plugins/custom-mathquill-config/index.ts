@@ -95,6 +95,8 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
 
   updateAllMathquill() {
     for (const mqField of document.querySelectorAll(".dcg-math-field")) {
+      if (mqField.classList.contains("dcg-static-mathquill-view")) continue;
+
       const currentMQ = (
         mqField as Element & { _mqMathFieldInstance: MathQuillField }
       )._mqMathFieldInstance;
