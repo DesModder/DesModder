@@ -3,7 +3,6 @@
  * The functions in this file manage the interface between codemirror and
  * the Text Mode compiler.
  */
-import { getTextModeConfig } from ".";
 import { ProgramAnalysis, textToRaw } from "#text-mode-core";
 import { eventSequenceChanges } from "./modify";
 import {
@@ -11,10 +10,12 @@ import {
   StateEffect,
   Transaction,
   EditorState,
+  Facet,
 } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
-import { Calc, DispatchedEvent } from "#globals";
+import type { CalcType, DispatchedEvent } from "#globals";
+import { TextModeEditor } from ".";
 
 /**
  * onCalcEvent: when we receive a new event dispatched via Calc (such as a
@@ -56,13 +57,17 @@ export function parseAndReturnAnalysis(
   nextEditDueToGraph: boolean,
   rawIDs: RawIDRange[]
 ) {
-  const cfg = getTextModeConfig();
+  const cfg = state.facet(tmEditor).getTextModeConfig();
   const s = state.doc.sliceString(0);
   const [analysis, rawGraphState] = textToRaw(cfg, s, { rawIDs });
   if (!nextEditDueToGraph && rawGraphState !== null)
-    setCalcState(rawGraphState);
+    setCalcState(state.facet(tmEditor).calc, rawGraphState);
   return analysis;
 }
+
+export const tmEditor = Facet.define<TextModeEditor, TextModeEditor>({
+  combine: (vals) => vals[0],
+});
 
 /** This field is stored on the state and gets updated every time the document
  * is edited. So the analysis always stays perfectly in sync. This may not be
@@ -114,7 +119,7 @@ export const addRawID = StateEffect.define<RawIDRange>({
   }),
 });
 
-function setCalcState(state: GraphState) {
+function setCalcState(calc: CalcType, state: GraphState) {
   // Prevent Desmos from blurring the currently active element.
   // Alternative method this.view.focus() after setState does not prevent
   //   the current autocomplete tooltip from disappearing
@@ -124,8 +129,8 @@ function setCalcState(state: GraphState) {
   // Just marking state as any for now. Eventually we'll want to pull
   // @desmodder/graph-state into this repository (like @desmodder/text-mode-core),
   // to avoid needing to deal with npm back-and-forth.
-  (state.graph as any).product = Calc.controller.graphSettings.config.product;
-  Calc.setState(state, { allowUndo: true, fromTextMode: true } as any);
+  (state.graph as any).product = calc.controller.graphSettings.config.product;
+  calc.setState(state, { allowUndo: true, fromTextMode: true } as any);
   if (ae) ae.blur = oldBlur!;
 }
 

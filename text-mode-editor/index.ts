@@ -3,13 +3,18 @@ import { onCalcEvent, analysisStateField } from "./LanguageServer";
 import { initView, setDebugMode, startState } from "./view/editor";
 import { TransactionSpec } from "@codemirror/state";
 import { EditorView, ViewUpdate } from "@codemirror/view";
-import { Calc } from "#globals";
+import type { CalcType } from "#globals";
 import { keys } from "#utils/depUtils";
 
 export class TextModeEditor {
-  view: EditorView | null = null;
+  view: EditorView;
   dispatchListenerID: string | null = null;
   debugMode: boolean = false;
+
+  constructor(public calc: CalcType) {
+    // TODO: cleanup API so we don't need this dummy view.
+    this.view = new EditorView();
+  }
 
   setDebugMode(debugMode: boolean) {
     this.debugMode = debugMode;
@@ -26,34 +31,35 @@ export class TextModeEditor {
     container: HTMLElement,
     { conversionErrorUndo }: { conversionErrorUndo?: () => void } = {}
   ) {
-    const [hasError, text] = getText();
+    const [hasError, text] = this.getText();
     this.view = initView(this, text);
     if (hasError) this.conversionError(() => conversionErrorUndo?.());
     container.appendChild(this.view.dom);
     this.preventPropagation(container);
-    this.dispatchListenerID = Calc.controller.dispatcher.register((event) => {
-      // setTimeout to avoid dispatch-in-dispatch from handlers responding to
-      // calc state changing by dispatching an event
-      setTimeout(() => {
-        if (event.type === "set-state" && !event.opts.fromTextMode)
-          this.onSetState();
-        if (this.view) onCalcEvent(this.view, event);
-      });
-    });
+    this.dispatchListenerID = this.calc.controller.dispatcher.register(
+      (event) => {
+        // setTimeout to avoid dispatch-in-dispatch from handlers responding to
+        // calc state changing by dispatching an event
+        setTimeout(() => {
+          if (event.type === "set-state" && !event.opts.fromTextMode)
+            this.onSetState();
+          if (this.view) onCalcEvent(this.view, event);
+        });
+      }
+    );
   }
 
+  // TODO-cleanup: Symbol.dispose :) "using"
   unmount() {
     if (this.dispatchListenerID !== null) {
-      Calc.controller.dispatcher.unregister(this.dispatchListenerID);
+      this.calc.controller.dispatcher.unregister(this.dispatchListenerID);
     }
-    if (this.view) {
-      this.view.destroy();
-      this.view = null;
-    }
+    this.view.destroy();
+    this.view = new EditorView();
   }
 
   onSetState() {
-    const [hasError, text] = getText();
+    const [hasError, text] = this.getText();
     this.view?.setState(startState(this, text));
     if (hasError) this.conversionError();
   }
@@ -66,11 +72,11 @@ export class TextModeEditor {
   }
 
   toastErrorGraphUndo(msg: string) {
-    this.toastError(msg, () => Calc.controller.dispatch({ type: "undo" }));
+    this.toastError(msg, () => this.calc.controller.dispatch({ type: "undo" }));
   }
 
   toastError(msg: string, undoCallback?: () => void) {
-    Calc.controller._showToast({
+    this.calc.controller._showToast({
       message: msg,
       // `undoCallback: undefined` still adds the "Press Ctrl+Z" message
       ...(undoCallback ? { undoCallback } : {}),
@@ -92,32 +98,34 @@ export class TextModeEditor {
   }
 
   onEditorUpdate(update: ViewUpdate) {
-    if (update.docChanged || update.selectionSet) selectFromText(update.view);
+    if (update.docChanged || update.selectionSet)
+      this.selectFromText(update.view);
   }
-}
 
-function getText() {
-  return rawToText(getTextModeConfig(), Calc.getState());
-}
+  getText() {
+    return rawToText(this.getTextModeConfig(), this.calc.getState());
+  }
 
-export function getTextModeConfig() {
-  return buildConfigFromGlobals(Desmos, Calc);
-}
+  getTextModeConfig() {
+    return buildConfigFromGlobals(Desmos, this.calc);
+  }
 
-function selectFromText(view: EditorView) {
-  const currSelected = Calc.selectedExpressionId as string | undefined;
-  const newSelected = getSelectedItem(view);
-  if (newSelected !== currSelected) {
-    if (view.hasFocus && newSelected !== undefined) {
-      Calc.controller.dispatch({
-        type: "set-selected-id",
-        id: newSelected,
-        dsmFromTextModeSelection: true,
-      });
-    } else {
-      Calc.controller.dispatch({
-        type: "set-none-selected",
-      });
+  // TODO-cleanup: view doesn't need to be passed? It's just this.view.
+  selectFromText(view: EditorView) {
+    const currSelected = this.calc.selectedExpressionId as string | undefined;
+    const newSelected = getSelectedItem(view);
+    if (newSelected !== currSelected) {
+      if (view.hasFocus && newSelected !== undefined) {
+        this.calc.controller.dispatch({
+          type: "set-selected-id",
+          id: newSelected,
+          dsmFromTextModeSelection: true,
+        });
+      } else {
+        this.calc.controller.dispatch({
+          type: "set-none-selected",
+        });
+      }
     }
   }
 }

@@ -27,7 +27,7 @@ export default class TextMode extends PluginController {
     // expression UI doesn't render in text mode, we replace markTickRequiredNextFrame
     // with a version that calls markTickRequiredNextFrame only when sliders are playing
     if (!this.editor) {
-      this.editor = new TextModeEditor();
+      this.editor = new TextModeEditor(Calc);
       this.updateDebugMode();
       Calc.controller.expressionSearchOpen = false;
       Calc.controller.markTickRequiredNextFrame = function () {

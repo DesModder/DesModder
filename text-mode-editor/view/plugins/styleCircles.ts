@@ -1,10 +1,10 @@
-import { analysisStateField } from "../../LanguageServer";
+import { analysisStateField, tmEditor } from "../../LanguageServer";
 import { statementsIntersecting } from "../statementIntersection";
 import StyleCircle from "./StyleCircle";
 import { RangeSet, Extension } from "@codemirror/state";
 import { GutterMarker, gutter, gutters } from "@codemirror/view";
 import { DCGView } from "#DCGView";
-import { Calc, ItemModel } from "#globals";
+import type { ItemModel } from "#globals";
 
 export function styleCircles(): Extension {
   return [gutters(), styleCircleGutter];
@@ -17,8 +17,9 @@ const styleCircleGutter = gutter({
     const { from, to } = view.viewport;
     const ranges = [];
     let last = -1;
+    const calc = view.state.facet(tmEditor).calc;
     for (const stmt of statementsIntersecting(program, from, to)) {
-      const model = Calc.controller.getItemModel(stmt.id);
+      const model = calc.controller.getItemModel(stmt.id);
       if (model?.type === "expression" || model?.type === "image") {
         const pos = view.lineBlockAt(stmt.pos.from).from;
         if (pos > last) {
@@ -55,7 +56,7 @@ class StyleCircleMarker extends GutterMarker {
       id: DCGView.const(this.id),
       model: DCGView.const(this.model),
     });
-    this.unsub = Calc.controller.subToChanges(() => view.update());
+    this.unsub = this.model.controller.subToChanges(() => view.update());
     return this.div;
   }
 

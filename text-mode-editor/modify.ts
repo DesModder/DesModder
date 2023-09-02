@@ -1,4 +1,3 @@
-import { getTextModeConfig } from ".";
 import {
   rawNonFolderToAug,
   rawToAugSettings,
@@ -14,11 +13,11 @@ import {
   itemToText,
   TextAST,
 } from "#text-mode-core";
-import { addRawID } from "./LanguageServer";
+import { addRawID, tmEditor } from "./LanguageServer";
 import { ChangeSpec, StateEffect } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState, NonFolderState } from "@desmodder/graph-state";
-import { Calc, DispatchedEvent } from "@desmodder/common/globals";
+import type { DispatchedEvent } from "@desmodder/common/globals";
 import Metadata from "#metadata/interface";
 
 type Statement = TextAST.Statement;
@@ -42,7 +41,8 @@ export function eventSequenceChanges(
   event: DispatchedEvent,
   analysis: ProgramAnalysis
 ): { changes: ChangeSpec[]; effects?: StateEffect<any>[] } {
-  const state = Calc.getState();
+  const calc = view.state.facet(tmEditor).calc;
+  const state = calc.getState();
   if (event.type === "on-evaluator-changes") {
     // sliders, draggable points, action updates, etc.
     return { changes: evaluatorChange(analysis, state, view, event) };
@@ -55,7 +55,7 @@ export function eventSequenceChanges(
     if ("id" in event && event.id !== undefined) {
       res.push(metadataChange(analysis, state, dsmMetadata, view, event.id));
     } else if (event.type === "update-all-selected-items") {
-      for (const { id } of Calc.controller.getAllSelectedItems())
+      for (const { id } of calc.controller.getAllSelectedItems())
         res.push(metadataChange(analysis, state, dsmMetadata, view, id));
     }
 
@@ -178,7 +178,11 @@ function metadataChange(
     return [];
   const expr = state.expressions.list.find((x) => x.id === id);
   if (!expr || (expr.type !== "expression" && expr.type !== "image")) return [];
-  const itemAug = rawNonFolderToAug(getTextModeConfig(), expr, dsmMetadata);
+  const itemAug = rawNonFolderToAug(
+    view.state.facet(tmEditor).getTextModeConfig(),
+    expr,
+    dsmMetadata
+  );
   const afterEnd = oldNode.pos.to;
   const pos = oldNode.style?.pos ?? { from: afterEnd, to: afterEnd };
   const ast = itemAugToAST(itemAug);
@@ -208,7 +212,11 @@ function newItemsChange(
     if (stmt) {
       lastItem = item;
     } else {
-      const aug = rawNonFolderToAug(getTextModeConfig(), item, dsmMetadata);
+      const aug = rawNonFolderToAug(
+        view.state.facet(tmEditor).getTextModeConfig(),
+        item,
+        dsmMetadata
+      );
       const ast = itemAugToAST(aug);
       if (!ast) continue;
       const body = astItemToTextString(ast);
@@ -286,7 +294,7 @@ function itemChange(
   const oldNode = analysis.mapIDstmt[changeID];
   if (oldNode === undefined) return [];
   const itemAug = rawNonFolderToAug(
-    getTextModeConfig(),
+    view.state.facet(tmEditor).getTextModeConfig(),
     newStateItem,
     dsmMetadata
   );

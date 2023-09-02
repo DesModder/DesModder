@@ -43,7 +43,9 @@ export function getMetadata() {
 }
 
 function addItemToEnd(
-  state: Omit<FolderModel, "index"> | Omit<TextModel, "index">
+  state:
+    | Omit<FolderModel, "index" | "controller">
+    | Omit<TextModel, "index" | "controller">
 ) {
   Calc.controller._addItemToEndFromAPI(Calc.controller.createItemModel(state));
 }

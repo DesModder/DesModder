@@ -149,7 +149,7 @@ function styleDefaults(tm: TextModeEditor, node: SyntaxNode): AnyHydrated {
       return styleDefaults(tm, node.parent!);
     case "MappingEntry": {
       const id = node.getChild("Identifier")!;
-      const key = tm.view!.state.doc.sliceString(id.from, id.to);
+      const key = tm.view.state.doc.sliceString(id.from, id.to);
       return styleDefaults(tm, node.parent!)[key as keyof AnyHydrated];
     }
     default:

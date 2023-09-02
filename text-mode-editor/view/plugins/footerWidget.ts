@@ -1,18 +1,19 @@
-import { analysisStateField } from "../../LanguageServer";
+import { analysisStateField, tmEditor } from "../../LanguageServer";
 import { statementsIntersecting } from "../statementIntersection";
 import "./footerWidget.less";
 import { EditorState, RangeSet } from "@codemirror/state";
 import { EditorView, Decoration, WidgetType } from "@codemirror/view";
 import { DCGView } from "#DCGView";
 import { FooterView } from "#components";
-import { Calc, ExpressionModel } from "#globals";
+import type { ExpressionModel } from "#globals";
 
 function getFooters(state: EditorState) {
   const program = state.field(analysisStateField).program;
   const decorations = [];
   const { from, to } = program.pos;
+  const calc = state.facet(tmEditor).calc;
   for (const stmt of statementsIntersecting(program, from, to)) {
-    const model = Calc.controller.getItemModel(stmt.id);
+    const model = calc.controller.getItemModel(stmt.id);
     if (stmt.type === "ExprStatement" && model?.type === "expression") {
       const widget = Decoration.widget({
         widget: new FooterWidget(model),
@@ -64,7 +65,7 @@ class FooterWidget extends WidgetType {
     // Comparing a === getItemModel(a.id) overwrites the widget too often.
     // This is probably not good since it relies on the order of Codemirror
     // running the eq() call, but it seems to be a=old, b=new.
-    return a.id === b.id && b === Calc.controller.getItemModel(b.id);
+    return a.id === b.id && b === a.controller.getItemModel(b.id);
   }
 
   toDOM() {
@@ -72,9 +73,9 @@ class FooterWidget extends WidgetType {
     this.div.classList.add("dsm-tm-footer-wrapper");
     const view = DCGView.mountToNode(FooterView, this.div, {
       model: DCGView.const(this.model),
-      controller: DCGView.const(Calc.controller),
+      controller: DCGView.const(this.model.controller),
     });
-    this.unsub = Calc.controller.subToChanges(() => view.update());
+    this.unsub = this.model.controller.subToChanges(() => view.update());
     return this.div;
   }
 

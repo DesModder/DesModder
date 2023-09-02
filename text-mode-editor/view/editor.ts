@@ -1,5 +1,5 @@
 import { TextModeEditor } from "..";
-import { analysisStateField, doLint } from "../LanguageServer";
+import { analysisStateField, doLint, tmEditor } from "../LanguageServer";
 // Language extension
 import { textMode } from "../lezer/index";
 import "./editor.less";
@@ -121,6 +121,8 @@ export function startState(tm: TextModeEditor, text: string) {
       checkboxPlugin,
       styleMappingPlugin,
       footerPlugin(),
+      // Expose the tm editor to functions that only have a state.
+      tmEditor.of(tm),
     ],
   });
   state = state.update(collapseStylesAtStart(state)).state;
