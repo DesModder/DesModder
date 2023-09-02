@@ -11,7 +11,7 @@ import { pendingIntellisenseTimeouts, setIntellisenseTimeout } from "./utils";
 import { JumpToDefinitionMenuInfo, View } from "./view";
 import { DCGView, MountedComponent, unmountFromNode } from "#DCGView";
 import { MathQuillField, MathQuillView } from "#components";
-import { Calc, ItemModel, TextModel } from "#globals";
+import { TextModel } from "#globals";
 import { PluginController } from "#plugins/PluginController.ts";
 import { getMetadata } from "#plugins/manage-metadata/sync.ts";
 import { hookIntoOverrideKeystroke } from "#utils/listenerHelpers.ts";
@@ -47,21 +47,6 @@ export function getMQCursorPosition(focusedMQ: MathQuillField) {
   return getController(
     focusedMQ
   ).cursor?.cursorElement?.getBoundingClientRect();
-}
-
-export function getSelectedExpressionID(): string | undefined {
-  return Calc.controller.getSelectedItem()?.id;
-}
-
-export function getExpressionIndex(id: string): number | undefined {
-  return Calc.controller.listModel.__itemIdToModel[id]?.index;
-}
-export function getExpressionLatex(id: string): string | undefined {
-  return (
-    Calc.controller.listModel.__itemIdToModel[id] as ItemModel & {
-      latex: string | undefined;
-    }
-  ).latex;
 }
 
 export default class Intellisense extends PluginController<{
@@ -594,11 +579,12 @@ export default class Intellisense extends PluginController<{
       this.jumpToDefState = {
         varName: identDsts[0].variableName,
         idents: identDsts.map((dst) => {
+          const model = this.cc.getItemModel(dst.exprId);
           return {
             ident: dst,
             sourceExprId: dst.exprId,
-            sourceExprIndex: getExpressionIndex(dst.exprId) ?? 0,
-            sourceExprLatex: getExpressionLatex(dst.exprId) ?? "",
+            sourceExprIndex: model?.index ?? 0,
+            sourceExprLatex: model && "latex" in model ? model.latex ?? "" : "",
           };
         }),
       };
@@ -639,7 +625,7 @@ export default class Intellisense extends PluginController<{
     this.updateIntellisense();
     this.view?.update();
 
-    const selectedid = getSelectedExpressionID();
+    const selectedid = this.cc.getSelectedItem()?.id;
 
     // force calc to realize something's changed
     if (this.intellisenseReturnMQ && selectedid) {

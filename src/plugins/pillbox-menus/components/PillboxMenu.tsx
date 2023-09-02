@@ -2,7 +2,6 @@ import PillboxMenus from "..";
 import "./PillboxMenu.less";
 import { Component, jsx } from "#DCGView";
 import { If, Switch } from "#components";
-import { Calc } from "#globals";
 import { keys } from "#utils/depUtils.ts";
 
 export default class PillboxMenu extends Component<{
@@ -88,8 +87,8 @@ export default class PillboxMenu extends Component<{
   ];
 
   didMountContainer() {
-    if (Calc.controller.isGraphSettingsOpen()) {
-      Calc.controller.dispatch({
+    if (this.pm.cc.isGraphSettingsOpen()) {
+      this.pm.cc.dispatch({
         type: "close-graph-settings",
       });
     }
@@ -111,9 +110,9 @@ export default class PillboxMenu extends Component<{
       this.pm.pillboxMenuOpen as string
     );
     if (
-      Calc.settings.settingsMenu &&
-      (!Calc.controller.isGeometry() ||
-        this.horizontal !== Calc.controller.isNarrowGeometryHeader())
+      this.pm.calc.settings.settingsMenu &&
+      (!this.pm.calc.controller.isGeometry() ||
+        this.horizontal !== this.pm.calc.controller.isNarrowGeometryHeader())
     )
       index += 1;
     return index;

@@ -2,7 +2,6 @@ import PillboxMenus from "..";
 import "./PillboxContainer.less";
 import { Component, jsx } from "#DCGView";
 import { If, Tooltip, For } from "#components";
-import { Calc } from "#globals";
 import { format } from "#i18n";
 
 export default class PillboxContainer extends Component<{
@@ -56,10 +55,7 @@ export default class PillboxContainer extends Component<{
                   style={() =>
                     this.horizontal
                       ? {}
-                      : {
-                          background:
-                            Calc.controller.getPillboxBackgroundColor(),
-                        }
+                      : { background: this.pm.cc.getPillboxBackgroundColor() }
                   }
                 >
                   <i class={() => this.pm.pillboxButtons[id].iconClass ?? ""} />

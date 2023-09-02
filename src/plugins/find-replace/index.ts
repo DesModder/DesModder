@@ -51,7 +51,7 @@ export default class FindReplace extends PluginController {
   }
 
   refactorAll() {
-    refactor(this.cc.getExpressionSearchStr(), this.replaceLatex);
+    refactor(this.calc, this.cc.getExpressionSearchStr(), this.replaceLatex);
   }
 
   focusSearch() {

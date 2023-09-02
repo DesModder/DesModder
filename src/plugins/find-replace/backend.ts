@@ -1,4 +1,4 @@
-import { Calc } from "#globals";
+import { CalcType } from "#globals";
 import { satisfiesType } from "#parsing/nodeTypes.ts";
 import { Identifier } from "#parsing/parsenode.ts";
 import traverse, { Path } from "#parsing/traverse.ts";
@@ -34,14 +34,14 @@ export const nestedKeyContainers = [
 
 export const nestedKeys = ["max", "min", "step"] as const;
 
-function replace(replaceLatex: (s: string) => string) {
+function replace(calc: CalcType, replaceLatex: (s: string) => string) {
   // replaceString is applied to stuff like labels
   // middle group in regex accounts for 1 layer of braces, sufficient for `Print ${a+2}`
   function replaceString(s: string) {
     // `from` should have "global" flag enabled in order to replace all
     return s.replace(/(?<=\$\{)((?:[^{}]|\{[^}]*\})+)(?=\})/g, replaceLatex);
   }
-  const state = Calc.getState();
+  const state = calc.getState();
   const ticker = state.expressions.ticker;
   if (ticker?.handlerLatex !== undefined) {
     ticker.handlerLatex = replaceLatex(ticker.handlerLatex);
@@ -81,7 +81,7 @@ function replace(replaceLatex: (s: string) => string) {
       expr.clickableInfo.latex = replaceLatex(expr.clickableInfo.latex);
     }
   });
-  Calc.setState(state, {
+  calc.setState(state, {
     allowUndo: true,
   });
 }
@@ -169,12 +169,12 @@ function getReplacements(
   return [];
 }
 
-export function refactor(from: string, to: string) {
+export function refactor(calc: CalcType, from: string, to: string) {
   const fromParsed = parseDesmosLatex(from.trim());
   if (satisfiesType(fromParsed, "Identifier")) {
     // trim `from` to prevent inputs such as "  a" messing up matches that depend on `from` itself.
     from = from.trim();
-    replace((s: string) => {
+    replace(calc, (s: string) => {
       const node = parseDesmosLatex(s);
       if (satisfiesType(node, "Error")) {
         return s;
@@ -207,6 +207,6 @@ export function refactor(from: string, to: string) {
     });
   } else {
     const regex = RegExp(escapeRegExp(from), "g");
-    replace((s: string) => s.replace(regex, to));
+    replace(calc, (s: string) => s.replace(regex, to));
   }
 }

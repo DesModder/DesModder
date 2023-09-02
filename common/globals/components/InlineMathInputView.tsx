@@ -1,22 +1,13 @@
 import { Component, jsx } from "#DCGView";
-import { Calc } from "#globals";
 import { InlineMathInputViewGeneral } from "./desmosComponents";
 
-/** InlineMathInputViewGeneral, but fills in defaults
- * readonly: false, controller: Calc.controller */
+/** InlineMathInputViewGeneral, but fills in default readonly: false */
 export default class InlineMathInputView extends Component<
-  Omit<
-    ConstructorParameters<typeof InlineMathInputViewGeneral>[0],
-    "readonly" | "controller"
-  >
+  Omit<ConstructorParameters<typeof InlineMathInputViewGeneral>[0], "readonly">
 > {
   template() {
     return (
-      <InlineMathInputViewGeneral
-        {...(this.props as any)}
-        readonly={false}
-        controller={Calc.controller}
-      />
+      <InlineMathInputViewGeneral {...(this.props as any)} readonly={false} />
     );
   }
 }
