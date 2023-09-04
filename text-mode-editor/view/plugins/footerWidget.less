@@ -1,7 +1,9 @@
-.dsm-text-editor-container .cm-editor .dsm-tm-footer-wrapper {
+.dsm-text-editor.cm-editor .dsm-tm-footer-wrapper {
   // The container is the div.dcg-exppanel-container.dsm-in-text-mode
-  width: calc(100cqw - var(--dsm-tm-gutter-width));
-  padding-inline: 15px;
+  // Width reduced by 16px to not cause a horizontal scrollbar when vertical
+  // scrollbar appears (assuming a vertical scrollbar less than 16px wide).
+  width: calc(100cqw - 16px - var(--dsm-tm-gutter-width));
+  padding-left: 16px;
 
   // Unset some codemirror stuff;
   font-family: arial, sans-serif;

@@ -1,3 +1,4 @@
+import "./text-mode.less";
 import { DCGView } from "#DCGView";
 import { Inserter, PluginController } from "../PluginController";
 import { TextModeToggle } from "./components/TextModeToggle";

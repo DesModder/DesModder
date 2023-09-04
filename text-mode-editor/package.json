@@ -3,7 +3,7 @@
   "description": "Editor component for DesModder's Text Mode",
   "version": "0.1.0",
   "scripts": {
-    "build": "node ../loaders/build-package.mjs"
+    "build": "node ../loaders/build-package.mjs --inline-insert-css"
   },
   "repository": {
     "type": "git",

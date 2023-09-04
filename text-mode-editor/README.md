@@ -6,6 +6,7 @@ The public interface is currently:
 
 - Make sure `Desmos` is a global variable.
 - `editor = new TextModeEditor({calc: Calc, parent: div})` to mount to a node.
+  - Note the parent div needs an explicit height, e.g. `height: 300px`. Otherwise, it will be treated as zero-height for layout purposes.
 - `editor.dispose()` to remove the view.
 
 Example:

@@ -2,7 +2,6 @@ import { TextModeEditor } from "..";
 import { analysisStateField, doLint, tmEditor } from "../LanguageServer";
 // Language extension
 import { textMode } from "../lezer/index";
-import "./editor.less";
 import { checkboxPlugin } from "./plugins/checkboxWidget";
 import { collapseStylesAtStart } from "./plugins/collapseStylesAtStart";
 import { footerPlugin } from "./plugins/footerWidget";
@@ -35,14 +34,22 @@ import {
   dropCursor,
   highlightActiveLine,
   keymap,
+  tooltips,
 } from "@codemirror/view";
 
-const scrollTheme = EditorView.theme({
+const theme = EditorView.theme({
   "&": {
     height: "100%",
+    // used for cqw unit in footerWidget.less: .dsm-tm-footer-wrapper
+    "container-type": "size",
   },
   ".cm-scroller": {
     overflow: "auto",
+  },
+  ".cm-lineNumbers": {
+    // This should only come into play with debug mode. Long IDs like `**dcg_geo_folder**`
+    "max-width": "80px",
+    "overflow-x": "auto",
   },
 });
 
@@ -67,6 +74,13 @@ export function startState(tm: TextModeEditor, text: string) {
       analysisStateField,
       debugModeStateField,
       EditorView.updateListener.of(tm.onEditorUpdate.bind(tm)),
+      tooltips({
+        // Position absolute (instead of fixed) avoids:
+        //  - `container: size` (used for sizing footers) resetting the container origin
+        //  - There's also something inside Desmos that is a problem
+        // Another option would be to set a parent that's outside these problem containers.
+        position: "absolute",
+      }),
       // linter, showing errors
       linter(doLint, { delay: 0 }),
       // line numbers and gutter
@@ -114,7 +128,12 @@ export function startState(tm: TextModeEditor, text: string) {
         // Ctrl+Space to start completion
         ...completionKeymap,
       ]),
-      scrollTheme,
+      // Desmos styling needs a class .dcg-calculator-api-container to enclose everything.
+      // We additionally add .dsm-text-editor to differentiate from any other .cm-editor.
+      EditorView.editorAttributes.of({
+        class: "dcg-calculator-api-container dsm-text-editor",
+      }),
+      theme,
       // syntax highlighting
       textMode(tm),
       // Text mode plugins

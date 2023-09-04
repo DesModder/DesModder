@@ -35,9 +35,7 @@ export function footerPlugin() {
         const rect = x(view.view);
         width += (rect?.left ?? 0) + (rect?.right ?? 0);
       });
-      const container = document.querySelector(".dsm-text-editor-container");
-      if (!container) return;
-      (container as HTMLElement).style.setProperty(
+      view.view.dom.style.setProperty(
         "--dsm-tm-gutter-width",
         width.toFixed(1) + "px"
       );
