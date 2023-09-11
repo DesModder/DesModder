@@ -263,7 +263,7 @@ interface CalcPrivate {
     isNarrowGeometryHeader: () => boolean;
     expressionSearchOpen: boolean;
     /** Returns a function to call to unsubscribe */
-    subToChanges: (cb: () => void) => () => void;
+    subscribeToChanges: (cb: () => void) => () => void;
     getBackgroundColor: () => string;
     isInEditListMode: () => boolean;
     getMathquillConfig: (e: { additionalOperators?: string[] }) => {
