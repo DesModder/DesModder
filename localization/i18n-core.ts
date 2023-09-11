@@ -53,5 +53,5 @@ function addLanguage(locale: string, ftl: string) {
 addLanguage("en", enFTL);
 addLanguage("es", esFTL);
 addLanguage("fr", frFTL);
-addLanguage("fr", jaFTL);
+addLanguage("ja", jaFTL);
 addLanguage("zh-CN", zhCNFTL);
