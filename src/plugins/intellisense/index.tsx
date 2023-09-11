@@ -721,6 +721,10 @@ export default class Intellisense extends PluginController<{
         if (this.settings.subscriptify && this.latestMQ) {
           const ident = getCorrectableIdentifier(this.latestMQ);
 
+          // Don't want to auto-subscriptify a length-1 id like "x";
+          // no change but breaks cursor position
+          if (ident.ident.length === 1) return;
+
           if (
             this.latestMQ.__options.autoOperatorNames[
               ident.ident.replace(/_/g, "")
