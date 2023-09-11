@@ -1,5 +1,20 @@
 # DesModder Changelog
 
+## 0.11.8
+
+New Features:
+
+- (Intellisense) Auto-subscriptify
+
+Bug fixes:
+
+- (Custom MathQuill Config) Remove `nu` from "More greek letters"
+- (Custom MathQuill Config) Error no longer happens when changing settings with a table on the page.
+- (Pin Expressions) Fix loading error.
+- (GLesmos) No longer re-renders highlighted expressions at the screen refresh rate
+- (Text Mode) Fix loading issue.
+- "Learn More" links now have color again.
+
 ## 0.11.7
 
 Bug fixes:
