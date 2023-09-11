@@ -74,7 +74,7 @@ class FooterWidget extends WidgetType {
       model: DCGView.const(this.model),
       controller: DCGView.const(Calc.controller),
     });
-    this.unsub = Calc.controller.subToChanges(() => view.update());
+    this.unsub = Calc.controller.subscribeToChanges(() => view.update());
     return this.div;
   }
 

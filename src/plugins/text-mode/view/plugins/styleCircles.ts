@@ -55,7 +55,7 @@ class StyleCircleMarker extends GutterMarker {
       id: DCGView.const(this.id),
       model: DCGView.const(this.model),
     });
-    this.unsub = Calc.controller.subToChanges(() => view.update());
+    this.unsub = Calc.controller.subscribeToChanges(() => view.update());
     return this.div;
   }
 
