@@ -155,6 +155,11 @@ describe("Intellisense", () => {
       await driver.keyboard.press("Escape");
       await driver.keyboard.press("Enter");
 
+      await driver.keyboard.type("c(x)=rgb(x,x,x)");
+      await driver.assertSelectedItemLatex(
+        "c\\left(x\\right)=\\operatorname{rgb}\\left(x,x,x\\right)"
+      );
+
       await driver.clean();
     },
     40000
