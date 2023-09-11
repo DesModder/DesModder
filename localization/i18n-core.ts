@@ -1,6 +1,7 @@
 import enFTL from "./en.ftl";
 import esFTL from "./es.ftl";
 import frFTL from "./fr.ftl";
+import jaFTL from "./ja.ftl";
 import zhCNFTL from "./zh-CN.ftl";
 import { FluentBundle, FluentResource, FluentVariable } from "@fluent/bundle";
 
@@ -52,4 +53,5 @@ function addLanguage(locale: string, ftl: string) {
 addLanguage("en", enFTL);
 addLanguage("es", esFTL);
 addLanguage("fr", frFTL);
+addLanguage("fr", jaFTL);
 addLanguage("zh-CN", zhCNFTL);
