@@ -109,8 +109,8 @@ wolfram2desmos-opt-derivativeLoopLimit-desc = ライプニッツ記法のn階微
 ## Pin Expressions
 pin-expressions-name = ブックマーク表現
 pin-expressions-desc = リスト編集モードからのブックマーク表現
-pin-expressions-pin = ブックマーク追加
-pin-expressions-unpin = ブックマーク削除
+pin-expressions-pin = 固定
+pin-expressions-unpin = 外す
 
 ## Builtin Settings
 builtin-settings-name = 電卓の設定
