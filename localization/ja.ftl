@@ -12,10 +12,10 @@ menu-desmodder-plugins = DesModderプラグイン
 menu-desmodder-tooltip = DesModderメニュー
 
 ## Category names
-category-core-name = カテゴリ名
-category-utility-name = カテゴリ用途名
-category-visual-name = カテゴリ表示名
-category-integrations-name = カテゴリ統合名
+category-core-name = コア
+category-utility-name = 用途
+category-visual-name = 表示
+category-integrations-name = 統合
 
 ## GLesmos
 GLesmos-name = GLesmos
