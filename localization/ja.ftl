@@ -107,10 +107,10 @@ wolfram2desmos-opt-derivativeLoopLimit-name = デリバティブの拡大
 wolfram2desmos-opt-derivativeLoopLimit-desc = ライプニッツ記法のn階微分を反復微分に展開する。（10回まで）
 
 ## Pin Expressions
-pin-expressions-name = pinの表現
-pin-expressions-desc = リスト編集モードからのpin式
-pin-expressions-pin = Pin
-pin-expressions-unpin = Unpin
+pin-expressions-name = ブックマーク表現
+pin-expressions-desc = リスト編集モードからのブックマーク表現
+pin-expressions-pin = ブックマーク追加
+pin-expressions-unpin = ブックマーク削除
 
 ## Builtin Settings
 builtin-settings-name = 電卓の設定
