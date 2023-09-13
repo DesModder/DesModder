@@ -43,7 +43,7 @@ async function load(pluginsForceDisabled: Set<string>) {
   Console.warn(
     BROWSER === "firefox"
       ? `%cThe warning above (Loading failed for the <script> with source...) is intentional and does not indicate a bug.`
-      : `%cThe error above (GET https://... net::ERR_BLOCKED_BY_CLIENT) is intentional and does not indicate a bug.`,
+      : `%cThe error above (net::ERR_BLOCKED_BY_CLIENT) is intentional and does not indicate a bug.`,
     "font-weight: bold;"
   );
 
