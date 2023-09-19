@@ -1,5 +1,14 @@
 # DesModder Changelog
 
+## 0.11.9
+
+New: translations for Japanese!
+
+Bug fixes and improvements:
+
+- (GLesmos) Fix loading error.
+- Add message in console explaining the unavoidable error.
+
 ## 0.11.8
 
 New Features:
