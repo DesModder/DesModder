@@ -254,7 +254,7 @@ manage-metadata-desc = Permite administrar metadatos, así como las extensiones 
 intellisense-name = Intellisense
 intellisense-desc = Brinda varias funciones esenciales de una IDE en Desmos incluyendo sugerencias de autocompletado, visualización de parámetros, e ir a definición. Sigue el enlace para la documentación:
 intellisense-opt-subscriptify-name = Predecir Subíndices
-intellisense-opt-subscriptify-desc = Automáticamente predice nombres de funciones o variables con subíndices aunque los escribas sin estos.
+intellisense-opt-subscriptify-desc = Automáticamente convierte nombres de funciones o variables con subíndices aunque los escribas sin estos.
 intellisense-jump2def-menu-instructions = tiene múltiples definiciones. Elige a cuál quieres navegar.
 
 ## Compact View
