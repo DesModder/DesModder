@@ -191,12 +191,8 @@ let $branch = $c({
   graphInfo: $graphInfo,
   compiled: $compiled,
   derivative: $derivative
-})
-```
-
-*Find* inside `graph`
-```js
-$ = $ir.getCompiledFunction($)
+}),
+  $box = $($(this), $ir)
 ```
 
 *Replace* `compute2d` with
