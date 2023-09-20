@@ -264,7 +264,7 @@ compact-view-opt-noSeparatingLines-desc = Removes the separating lines between e
 compact-view-opt-highlightAlternatingLines-name = Highlight Alternating Lines
 compact-view-opt-highlightAlternatingLines-desc = Highlights alternating expressions so that they can be easily distinguished from one another.
 compact-view-opt-hideEvaluations-name = Collapse Evaluations
-compact-view-opt-hideEvaluations-desc = Puts evaluations off to the side. They can be focused or hovered to be shown. 
+compact-view-opt-hideEvaluations-desc = Puts evaluations off to the side. They can be focused or hovered to be shown.
 
 ## Multiline
 multiline-name = Multiline Expressions
@@ -301,3 +301,5 @@ custom-mathquill-config-opt-leftIntoSubscript-name = Left/Right into Subscripts
 custom-mathquill-config-opt-leftIntoSubscript-desc = Moving the cursor left or right will go into subscript instead of superscript
 custom-mathquill-config-opt-extendedGreek-name = More Greek Letters
 custom-mathquill-config-opt-extendedGreek-desc = Enables replacements for all supported greek letters
+custom-mathquill-config-opt-lessFSpacing-name = Less F spacing
+custom-mathquill-config-opt-lessFSpacing-desc = Reduces extra spacing around "f" characters

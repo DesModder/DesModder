@@ -32,6 +32,11 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
       config.commaDelimiter
     );
 
+    Calc.controller.rootElt.classList.toggle(
+      "less-f-spacing",
+      config.lessFSpacing
+    );
+
     this.doAutoCommandInjections = config.extendedGreek;
 
     Calc.controller.rootElt.style.setProperty(
