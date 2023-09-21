@@ -280,11 +280,11 @@ multiline-opt-multilinifyDelayAfterEdit-desc = Multiline expressions should be u
 custom-mathquill-config-name = Custom MathQuill Config
 custom-mathquill-config-desc = Changes how equation input works.
 custom-mathquill-config-opt-superscriptOperators-name = Operators in Exponents
-custom-mathquill-config-opt-superscriptOperators-desc = Allows you to type operators like '+' in exponents
+custom-mathquill-config-opt-superscriptOperators-desc = Allows you to type operators like "+" in exponents
 custom-mathquill-config-opt-noAutoSubscript-name = Disable Auto Subscripts
 custom-mathquill-config-opt-noAutoSubscript-desc = Disable automatically putting numbers typed after variable names in subscripts
 custom-mathquill-config-opt-noNEquals-name = Disable n= Sums
-custom-mathquill-config-opt-noNEquals-desc = Disable sums automatically placing 'n=' in the lower bound
+custom-mathquill-config-opt-noNEquals-desc = Disable sums automatically placing "n=" in the lower bound
 custom-mathquill-config-opt-subSupWithoutOp-name = Subscripts/Superscripts Without Operand
 custom-mathquill-config-opt-subSupWithoutOp-desc = Allows subscripts and superscripts to be made even if not preceded by anything
 custom-mathquill-config-opt-allowMixedBrackets-name = Allow Mismatched Brackets
@@ -292,7 +292,7 @@ custom-mathquill-config-opt-allowMixedBrackets-desc = Allows all brackets to mat
 custom-mathquill-config-opt-subscriptReplacements-name = Allow Replacements in Subscripts
 custom-mathquill-config-opt-subscriptReplacements-desc = Allows symbols and function names to be typed into subscripts
 custom-mathquill-config-opt-noPercentOf-name = Disable % of
-custom-mathquill-config-opt-noPercentOf-desc = Makes typing '%' insert the percent character instead of '% of'
+custom-mathquill-config-opt-noPercentOf-desc = Makes typing "%" insert the percent character instead of "% of"
 custom-mathquill-config-opt-commaDelimiter-name = Comma Separators
 custom-mathquill-config-opt-commaDelimiter-desc = Inserts commas as delimiters in numbers (purely visual)
 custom-mathquill-config-opt-delimiterOverride-name = Custom Delimiter
@@ -301,5 +301,5 @@ custom-mathquill-config-opt-leftIntoSubscript-name = Left/Right into Subscripts
 custom-mathquill-config-opt-leftIntoSubscript-desc = Moving the cursor left or right will go into subscript instead of superscript
 custom-mathquill-config-opt-extendedGreek-name = More Greek Letters
 custom-mathquill-config-opt-extendedGreek-desc = Enables replacements for all supported greek letters
-custom-mathquill-config-opt-lessFSpacing-name = Less F spacing
-custom-mathquill-config-opt-lessFSpacing-desc = Reduces extra spacing around "f" characters
+custom-mathquill-config-opt-lessFSpacing-name = Less Spacing Around "f"
+custom-mathquill-config-opt-lessFSpacing-desc = Reduces extra spacing around the letter "f"
