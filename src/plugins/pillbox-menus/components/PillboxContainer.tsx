@@ -48,7 +48,7 @@ export default class PillboxContainer extends Component<{
                   class={() =>
                     this.horizontal
                       ? "dcg-icon-btn"
-                      : "dcg-btn-flat-gray dcg-settings-pillbox dcg-action-settings dsm-action-menu"
+                      : "dcg-btn-flat-gray dcg-settings-pillbox dcg-action-settings dcg-pillbox-btn-interior dsm-action-menu"
                   }
                   role="button"
                   onTap={() => this.onTapMenuButton(id)}
