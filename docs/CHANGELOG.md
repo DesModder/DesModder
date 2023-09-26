@@ -1,5 +1,16 @@
 # DesModder Changelog
 
+## 0.11.10
+
+New Features:
+
+- (Custom Mathquill Config) Option to reduce kerning of "f".
+- (Text Mode) Press a button to auto-format; toggle whitespace and newlines.
+
+Bug fixes:
+
+- Fix sizing and spacing of pillbox buttons.
+
 ## 0.11.9
 
 New: translations for Japanese!
