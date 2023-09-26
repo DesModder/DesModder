@@ -6,6 +6,7 @@ import "./editor.less";
 import { checkboxPlugin } from "./plugins/checkboxWidget";
 import { collapseStylesAtStart } from "./plugins/collapseStylesAtStart";
 import { footerPlugin } from "./plugins/footerWidget";
+import { formatPanelPlugin } from "./plugins/formatPanelPlugin";
 import { activeStmtGutterHighlighter } from "./plugins/highlightActiveStmtGutter";
 import { stmtNumbers } from "./plugins/stmtNumbers";
 import { styleCircles } from "./plugins/styleCircles";
@@ -121,6 +122,7 @@ export function startState(tm: TextMode, text: string) {
       checkboxPlugin,
       styleMappingPlugin,
       footerPlugin(),
+      formatPanelPlugin(),
     ],
   });
   state = state.update(collapseStylesAtStart(state)).state;

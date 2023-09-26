@@ -9,15 +9,10 @@ export {
 } from "./aug/rawToAug";
 export type { ProgramAnalysis } from "./ProgramAnalysis";
 export { parse as parseText } from "./down/textToAST";
-export {
-  astItemToTextString,
-  docToString,
-  exprToTextString,
-  styleEntryToText,
-} from "./up/astToText";
+export { astToText, type TextEmitOptions } from "./up/astToText";
 export { childExprToAug } from "./down/astToAug";
 export { itemAugToAST, childLatexToAST } from "./up/augToAST";
-export { graphSettingsToText, itemToText } from "./up/augToText";
+export { graphSettingsToText, itemToText, augToText } from "./up/augToText";
 export * as StyleDefaults from "./down/style/defaults";
 export type { AnyHydrated, AnyHydratedValue } from "./down/style/Hydrated";
 export { rawToText } from "./up/rawToText";

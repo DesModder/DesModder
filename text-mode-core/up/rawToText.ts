@@ -1,7 +1,7 @@
 import { Config } from "../TextModeConfig";
 import Aug from "../aug/AugState";
 import rawToAug from "../aug/rawToAug";
-import augToText from "./augToText";
+import { augToText } from "./augToText";
 import type { GraphState } from "@desmodder/graph-state";
 
 /**

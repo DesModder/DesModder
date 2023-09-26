@@ -19,7 +19,7 @@ function getFooters(state: EditorState) {
         side: 1,
         block: true,
       });
-      decorations.push(widget.range(stmt.pos.to));
+      decorations.push(widget.range(state.doc.lineAt(stmt.pos.to).to));
     }
   }
   return RangeSet.of(decorations);

@@ -327,7 +327,10 @@ export type NonExprNonStatementNode<C extends S = Concrete> =
   | AssignmentExpression<C>
   | PiecewiseBranch<C>;
 
-export type Node<C extends S = Concrete> = NonExprNode<C> | Expression<C>;
+export type Node<C extends S = Concrete> =
+  | NonExprNode<C>
+  | NonExprNonStatementNode<C>
+  | Expression<C>;
 
 export function isExpression<C extends S = Concrete>(
   n: Node<C>

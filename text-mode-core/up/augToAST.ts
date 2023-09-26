@@ -1,6 +1,21 @@
 import TextAST from "../TextAST/Synthetic";
 import Aug from "../aug/AugState";
 
+export function augToTextAST(aug: Aug.State): TextAST.Program {
+  const stmts: TextAST.Statement[] = [graphSettingsToAST(aug.settings)];
+  if (aug.expressions.ticker) {
+    stmts.push(tickerToAST(aug.expressions.ticker));
+  }
+  for (const expr of aug.expressions.list) {
+    const item = itemAugToAST(expr);
+    if (item) stmts.push(item);
+  }
+  return {
+    type: "Program",
+    children: stmts,
+  };
+}
+
 export function graphSettingsToAST(
   settings: Aug.GraphSettings
 ): TextAST.Settings {
