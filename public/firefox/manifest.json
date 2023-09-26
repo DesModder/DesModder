@@ -14,7 +14,8 @@
     {
       "matches": [
         "https://*.desmos.com/calculator*",
-        "https://*.desmos.com/geometry*"
+        "https://*.desmos.com/geometry*",
+        "https://*.desmos.com/3d*"
       ],
       "run_at": "document_start",
       "js": ["preload/content.js"],
