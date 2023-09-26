@@ -247,7 +247,7 @@ manage-metadata-desc = Manage Metadata, such as GLesmos or pinned/unpinned statu
 intellisense-name = Intellisense
 intellisense-desc = Brings several common IDE features to Desmos, including autocompletion suggestions, function call help, and jump to definition. Documentation here:
 intellisense-opt-subscriptify-name = Auto-Subscriptify
-intellisense-opt-subscriptify-desc = Automatically add subscripts to variable/function names when they are typed without subscripts.
+intellisense-opt-subscriptify-desc = Automatically converts text of variables/functions with subscripts when they are typed without subscripts.
 intellisense-jump2def-menu-instructions = has multiple definitions. Pick one from below to jump to.
 
 ## Compact View

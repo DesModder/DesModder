@@ -24,10 +24,11 @@ GLesmos-desc = Genera funciones implícitas en la GPU. Se deshabilita cuando la 
 GLesmos-label-toggle-glesmos = Usar GLesmos
 GLesmos-confirm-lines = Confirmar líneas
 GLesmos-confirm-lines-body = Generar líneas con GLesmos puede ser lento. Sé especialmente cuidadoso cuando utilices listas.
+GLesmos-no-support = Desafortunadamente tu navegador no soporta GLesmos porque no provee soporte para WebGL2.
 # Missing: error messages
 
 ## Tips
-show-tips-name = Mostrar consejos
+show-tips-name = Mostrar Consejos
 show-tips-desc = Te muestra consejos en la parte de abajo de la lista de expresiones
 show-tips-tip-export-videos = Cuando exportas videos es preferible escoger MP4 o APNG sobre GIF
 show-tips-tip-disable-graphpaper = Cuando necesites escribir ecuaciones largas, es útil deshabilitar el área del gráfico en la Configuración de Calculadora
@@ -88,7 +89,11 @@ show-tips-tip-huggy = ¡Un abrazo de oso!
 text-mode-name = Modo Texto BETA
 text-mode-desc = Errores son esperados. Documentación temporal:
 text-mode-toggle = Alternar Modo Texto
-# Missing: error messages
+text-mode-toggle-spaces = Espacios
+text-mode-toggle-spaces-tooltip = Incluir espacios superfluos al aplicar formato
+text-mode-toggle-newlines = Nueva línea
+text-mode-toggle-newlines-tooltip = Incluir nueva línea y sangrado al aplicar formato
+text-mode-format = Dar Formato
 
 ## Debug Mode
 debug-mode-name = Modo de Depuración
@@ -104,7 +109,7 @@ wolfram2desmos-name = Wolfram a Desmos
 wolfram2desmos-desc = Te permite pegar texto de ecuaciones en formato ASCII (así como las búsquedas en Wolfram Alpha) en Desmos.
 wolfram2desmos-opt-reciprocalExponents2Surds-name = Notación Radical
 wolfram2desmos-opt-reciprocalExponents2Surds-desc = Convierte exponentes fraccionarios menores que uno a su equivalente en radical.
-wolfram2desmos-opt-derivativeLoopLimit-name = Expandir derivadas
+wolfram2desmos-opt-derivativeLoopLimit-name = Expandir Derivadas
 wolfram2desmos-opt-derivativeLoopLimit-desc = Expande las derivadas de orden superior en notación de Leibniz en forma de derivadas anidadas (límite de 10).
 
 ## Pin Expressions
@@ -146,11 +151,11 @@ builtin-settings-opt-qwertyKeyboard-name = Teclado QWERTY
 builtin-settings-opt-qwertyKeyboard-desc = {""}
 
 ## Duplicate Expression Hotkey
-duplicate-expression-hotkey-name = Atajo de teclado para Duplicar Expresión
+duplicate-expression-hotkey-name = Tecla Rápida para Duplicar Expresión
 duplicate-expression-hotkey-desc = Presiona Ctrl+Q ó Ctrl+Shift+Q para replicar la expresión seleccionada.
 
 ## Right Click Tray
-right-click-tray-name = Color con clic Derecho
+right-click-tray-name = Color con Clic Derecho
 right-click-tray-desc = Permite abrir el menú para configurar expresiones con el clic derecho.
 
 ## Set Primary Color
@@ -205,7 +210,7 @@ video-creator-method-action = acción
 video-creator-method-ticks = contador
 
 ## Shift+Enter Newline
-shift-enter-newline-name = Nueva línea con Shift+Entrar
+shift-enter-newline-name = Shift+Entrar para Nueva Línea
 shift-enter-newline-desc = Permite teclear Shift+Entrar para añadir líneas nuevas en las notas y en los títulos de imágenes/carpetas.
 
 ## Wakatime
@@ -241,7 +246,7 @@ better-evaluation-view-opt-colorLists-name = Mostrar listas de colores
 better-evaluation-view-opt-colorLists-desc = Mostrar listas de colores como listas de valores RGB
 
 ## Pillbox Menus
-pillbox-menus-name = Menú de botones (Funciones Principales)
+pillbox-menus-name = Menú de Botones (Funciones Principales)
 pillbox-menus-desc = Muestra botones al lado derecho, así como el Creador de Video o el menú principal de DesModder
 
 ## Manage Metadata
@@ -252,6 +257,8 @@ manage-metadata-desc = Permite administrar metadatos, así como las extensiones 
 # Unchanged
 intellisense-name = Intellisense
 intellisense-desc = Brinda varias funciones esenciales de una IDE en Desmos incluyendo sugerencias de autocompletado, visualización de parámetros, e ir a definición. Sigue el enlace para la documentación:
+intellisense-opt-subscriptify-name = Convertir Subíndices
+intellisense-opt-subscriptify-desc = Automáticamente convierte nombres de funciones o variables con subíndices aunque los escribas sin estos.
 intellisense-jump2def-menu-instructions = tiene múltiples definiciones. Elige a cuál quieres navegar.
 
 ## Compact View
@@ -309,3 +316,5 @@ custom-mathquill-config-opt-leftIntoSubscript-name = Navegación hacia subíndic
 custom-mathquill-config-opt-leftIntoSubscript-desc = Prioriza subíndices sobre exponentes al navegar con las flechas del teclado
 custom-mathquill-config-opt-extendedGreek-name = Más letras griegas
 custom-mathquill-config-opt-extendedGreek-desc = Habilita reemplazos para todas las letras griegas
+custom-mathquill-config-opt-lessFSpacing-name = Reducir interletraje en la "f"
+custom-mathquill-config-opt-lessFSpacing-desc = Reduce el espacio a los lados de la letra "f" en expresiones
