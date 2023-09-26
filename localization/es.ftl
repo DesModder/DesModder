@@ -89,7 +89,11 @@ show-tips-tip-huggy = ¡Un abrazo de oso!
 text-mode-name = Modo Texto BETA
 text-mode-desc = Errores son esperados. Documentación temporal:
 text-mode-toggle = Alternar Modo Texto
-# Missing: error messages
+text-mode-toggle-spaces = Espacios
+text-mode-toggle-spaces-tooltip = Incluir espacios superfluos al applicar formato
+text-mode-toggle-newlines = Nueva línea
+text-mode-toggle-newlines-tooltip = Incluir nueva línea y sangrado al aplicar formato
+text-mode-format = Dar Formato
 
 ## Debug Mode
 debug-mode-name = Modo de Depuración
@@ -253,7 +257,7 @@ manage-metadata-desc = Permite administrar metadatos, así como las extensiones 
 # Unchanged
 intellisense-name = Intellisense
 intellisense-desc = Brinda varias funciones esenciales de una IDE en Desmos incluyendo sugerencias de autocompletado, visualización de parámetros, e ir a definición. Sigue el enlace para la documentación:
-intellisense-opt-subscriptify-name = Predecir Subíndices
+intellisense-opt-subscriptify-name = Convertir Subíndices
 intellisense-opt-subscriptify-desc = Automáticamente convierte nombres de funciones o variables con subíndices aunque los escribas sin estos.
 intellisense-jump2def-menu-instructions = tiene múltiples definiciones. Elige a cuál quieres navegar.
 
@@ -312,3 +316,5 @@ custom-mathquill-config-opt-leftIntoSubscript-name = Navegación hacia subíndic
 custom-mathquill-config-opt-leftIntoSubscript-desc = Prioriza subíndices sobre exponentes al navegar con las flechas del teclado
 custom-mathquill-config-opt-extendedGreek-name = Más letras griegas
 custom-mathquill-config-opt-extendedGreek-desc = Habilita reemplazos para todas las letras griegas
+custom-mathquill-config-opt-lessFSpacing-name = Reducir interletraje en la "f"
+custom-mathquill-config-opt-lessFSpacing-desc = Reduce el espacio a los lados de la letra "f" en expresiones
