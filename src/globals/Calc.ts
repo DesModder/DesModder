@@ -198,7 +198,8 @@ interface CalcPrivate {
     isGraphSettingsOpen: () => boolean;
     graphSettings: {
       config: {
-        product: string;
+        // only includes products desmodder is enabled for
+        product: "graphing" | "geometry-calculator" | "graphing-3d";
       };
     };
     dispatch: (e: DispatchedEvent) => void;

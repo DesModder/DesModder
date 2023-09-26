@@ -96,7 +96,7 @@ export default class SetPrimaryColor extends PluginController<Config> {
 
   applyHexToOldFavicon(hex: string) {
     const [r, g, b] = parseCSSHex(hex) ?? [0, 0, 0];
-    const [hue, sat, li] = getHSVfromRGB(r, g, b);
+    const [hue, sat, val] = getHSVfromRGB(r, g, b);
 
     if (!this.originalImage) return;
     const canvas = document.createElement("canvas");
@@ -104,11 +104,15 @@ export default class SetPrimaryColor extends PluginController<Config> {
     canvas.height = this.originalImage.naturalHeight;
     const ctx = canvas.getContext("2d");
     if (ctx === null) return;
-    const [bsat, bli, bhue] = this.cc.isGeometry()
-      ? [0.67, 0.8, 285]
-      : [1, 0.73, 130];
+    const defaultHslValues = {
+      graphing: [285, 0.67, 0.8],
+      "geometry-calculator": [130, 1, 0.73],
+      "graphing-3d": [300, 0.69, 0.95],
+    };
+    const [bhue, bsat, bval] =
+      defaultHslValues[this.cc.graphSettings.config.product];
     ctx.filter = `saturate(${sat / bsat})
-    brightness(${li / bli})
+    brightness(${val / bval})
     hue-rotate(${hue - bhue}deg)`;
     ctx.drawImage(this.originalImage, 0, 0);
     faviconLink.href = canvas.toDataURL("image/png");
