@@ -99,7 +99,10 @@ export class ExpressionItemCostPanel extends Component<{
               const svgLen = [".dcg-mq-fraction", "svg", ".dcg-mq-token"]
                 .map((s) => el.querySelectorAll(s).length)
                 .reduce((a, b) => a + b);
-              return svgLen + (el.textContent?.length ?? 0);
+              return (
+                svgLen +
+                (el.textContent?.replace(/\s|\u200b/g, "")?.length ?? 0)
+              );
             }
 
             return format("code-golf-symbol-count", {
