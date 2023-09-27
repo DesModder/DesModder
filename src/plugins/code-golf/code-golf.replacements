@@ -14,13 +14,17 @@ $DCGView.createElement("div", {
         "dcg-expressionitem": !0,
         "dcg-mathitem": !0,
         __rest0__
-        })
+        }),
         __rest1__
-}, __rest2__)
+}, $DCGView.createElement("div", {
+                class: $DCGView.const("dcg-fade-container"),
+                onTapStart: this.bindFn(this.onMouseSelect),
+                onTap: this.bindFn(this.onMouseSelect)
+            }, __rest3__), __rest4__)
 ```
 
-*Replace* `__rest2__` with
+*Replace* `__rest3__` with
 ```js
-__rest2__,
+__rest3__,
 DSM.insertElement(() => ( DSM.codeGolf?.expressionItemCostPanel(this.model, this._rootNode)  ))
 ```

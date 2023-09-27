@@ -1,9 +1,9 @@
 import { Component, jsx } from "#DCGView";
-import { format } from "localization/i18n-core";
 import { Inserter, PluginController } from "../PluginController";
 import "./index.less";
-import { ExpressionModel } from "src/globals";
+import { format } from "localization/i18n-core";
 import { IfElse } from "src/components";
+import { ExpressionModel } from "src/globals";
 
 export class ExpressionItemCostPanel extends Component<{
   model: () => ExpressionModel;
@@ -18,13 +18,6 @@ export class ExpressionItemCostPanel extends Component<{
       true: () => (
         <div class="dsm-code-golf-char-count-container">
           <div class="dsm-code-golf-char-count">
-            <div>
-              {() =>
-                format("code-golf-char-count", {
-                  chars: chars().toString() ?? "0",
-                })
-              }
-            </div>
             <div>
               {() => {
                 const tempRootblock = this.props
