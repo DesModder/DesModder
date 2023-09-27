@@ -1,5 +1,3 @@
-import PillboxMenus from "..";
-import "./Menu.less";
 import { Component, jsx } from "#DCGView";
 import { Toggle, If, Checkbox, Tooltip, For, Match } from "#components";
 import { format } from "#i18n";
@@ -12,6 +10,8 @@ import {
   plugins,
   ConfigItemNumber,
 } from "#plugins/index.ts";
+import PillboxMenus from "..";
+import "./Menu.less";
 
 export function MenuFunc(pm: PillboxMenus) {
   return <Menu pm={pm} />;
@@ -35,6 +35,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "shift-enter-newline",
     "folder-tools",
     "custom-mathquill-config",
+    "code-golf",
   ],
   visual: [
     "set-primary-color",

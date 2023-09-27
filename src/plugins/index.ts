@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/method-signature-style, @typescript-eslint/dot-notation */
+import DSM from "#DSM";
 import GLesmos from "./GLesmos";
 import BetterEvaluationView from "./better-evaluation-view";
 import BuiltinSettings from "./builtin-settings";
+import CodeGolf from "./code-golf";
 import CompactView from "./compact-view";
 import CustomMathQuillConfig from "./custom-mathquill-config";
 import DebugMode from "./debug-mode";
@@ -24,7 +26,6 @@ import TextMode from "./text-mode";
 import VideoCreator from "./video-creator";
 import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
-import DSM from "#DSM";
 
 interface ConfigItemGeneric {
   key: string;
@@ -123,6 +124,7 @@ export const keyToPlugin = {
   intellisense: Intellisense,
   compactView: CompactView,
   exprActionButtons: ExprActionButtons,
+  codeGolf: CodeGolf,
 } satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);
@@ -175,6 +177,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get compactView () { return this.ep["compact-view"]; }
   get multiline () { return this.ep["multiline"]; }
   get exprActionButtons () { return this.ep["expr-action-buttons"]; }
+  get codeGolf () { return this.ep["code-golf"]; }
 }
 
 export type IDToPluginSettings = {

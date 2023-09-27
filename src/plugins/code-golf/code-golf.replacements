@@ -1,0 +1,26 @@
+# Replacements for Code Golf
+
+*plugin* `code-golf`
+
+## Add a character count to each expression in the exppanel
+
+*Description* `Show how many characters used by an expression in the exppanel`
+
+*Find* => `element`
+```js
+$DCGView.createElement("div", {
+    class: ()=>({
+        "dcg-do-not-blur": !0,
+        "dcg-expressionitem": !0,
+        "dcg-mathitem": !0,
+        __rest0__
+        })
+        __rest1__
+}, __rest2__)
+```
+
+*Replace* `__rest2__` with
+```js
+__rest2__,
+(console.log("got here", this)), DSM.insertElement(() => (console.log("dsmcodegolf", DSM.codeGolf), DSM.codeGolf?.expressionItemCostPanel(this.model, this.rootNode)  ))
+```
