@@ -109,9 +109,7 @@ export class ExpressionItemCostPanel extends Component<{
             }
 
             return format("code-golf-symbol-count", {
-              elements: this.rootblock
-                ? symbolCount2(this.rootblock) - (selected ? 1 : 0)
-                : 0,
+              elements: this.rootblock ? symbolCount2(this.rootblock) : 0,
             });
           }}
         </div>
