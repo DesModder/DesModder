@@ -2,9 +2,9 @@ import { Inserter, PluginController } from "../PluginController";
 import { MenuFunc } from "./components/Menu";
 import PillboxContainer from "./components/PillboxContainer";
 import PillboxMenu from "./components/PillboxMenu";
-import { DCGView } from "DCGView";
-import { Calc } from "globals/window";
-import { plugins, PluginID, ConfigItem } from "plugins";
+import { DCGView } from "#DCGView";
+import { Calc } from "#globals";
+import { plugins, PluginID, ConfigItem } from "#plugins/index.ts";
 
 export default class PillboxMenus extends PluginController<undefined> {
   static id = "pillbox-menus" as const;
@@ -45,7 +45,7 @@ export default class PillboxMenus extends PluginController<undefined> {
 
   pillboxButtonsView(horizontal: boolean): Inserter {
     return () =>
-      DCGView.createElement(PillboxContainer as any, {
+      DCGView.createElement(PillboxContainer, {
         pm: () => this,
         horizontal: DCGView.const(horizontal),
       });
@@ -54,7 +54,7 @@ export default class PillboxMenus extends PluginController<undefined> {
   pillboxMenuView(horizontal: boolean): Inserter {
     if (this.pillboxMenuOpen === null) return undefined;
     return () =>
-      DCGView.createElement(PillboxMenu as any, {
+      DCGView.createElement(PillboxMenu, {
         pm: () => this,
         horizontal: DCGView.const(horizontal),
       });

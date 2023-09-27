@@ -1,11 +1,15 @@
+import window, { Console } from "#globals";
+import injectScript from "#utils/injectScript.ts";
+import {
+  postMessageUp,
+  listenToMessageDown,
+  arrayToSet,
+} from "#utils/messages.ts";
+import { pollForValue } from "#utils/utils.ts";
 import { addForceDisabled } from "../panic/panic";
 import moduleReplacements from "./moduleReplacements";
 import { insertElement, replaceElement } from "./replaceElement";
 import { fullReplacementCached } from "./replacementHelpers/cacheReplacement";
-import window from "globals/window";
-import injectScript from "utils/injectScript";
-import { postMessageUp, listenToMessageDown, arrayToSet } from "utils/messages";
-import { pollForValue } from "utils/utils";
 
 /* This script is loaded at document_start, before the page's scripts */
 
@@ -34,6 +38,20 @@ function getCalcDesktopURL() {
 }
 
 async function load(pluginsForceDisabled: Set<string>) {
+  if (window.location.href.includes("geometry-legacy")) return;
+
+  Console.warn(
+    BROWSER === "firefox"
+      ? `%cThe warning above (Loading failed for the <script> with source...) is intentional and does not indicate a bug.`
+      : `%cThe error above (net::ERR_BLOCKED_BY_CLIENT) is intentional and does not indicate a bug.`,
+    "font-weight: bold;"
+  );
+
+  Console.log(
+    `%cDesModder is present! (Version ${VERSION})`,
+    "color: #388c46; font-weight: bold; font-size: 2em;"
+  );
+
   const srcURL = await pollForValue(getCalcDesktopURL);
   /* we blocked calculator_desktop.js earlier to ensure that the preload/override script runs first.
   Now we load it, but with '?' appended to prevent the web request rules from blocking it */

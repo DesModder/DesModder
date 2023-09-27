@@ -1,7 +1,7 @@
 import { PluginID } from "..";
 import { Inserter, PluginController } from "../PluginController";
 import { ActionButtons } from "./components/ActionButtons";
-import { ItemModel } from "globals/models";
+import { ItemModel } from "#globals";
 
 export default class ExprActionButtons extends PluginController<undefined> {
   static id = "expr-action-buttons" as const;

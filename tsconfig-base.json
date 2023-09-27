@@ -1,19 +1,29 @@
 {
   "compilerOptions": {
-    "outDir": "./dist/",
-    "sourceMap": true,
+    "rootDir": ".",
+    "outDir": "./dist-ts/",
+
+    "composite": true,
+    "declaration": true,
+    "sourceMap": false,
+
     "strictNullChecks": true,
-    "module": "es6",
-    "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true,
-    "jsx": "react",
-    "jsxFactory": "jsx",
-    "target": "es2020",
-    "allowJs": true,
     "strict": true,
-    "baseUrl": "src",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+
+    "target": "es2020",
+    "module": "es6",
+    "baseUrl": ".",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+
+    "jsx": "react",
+    "jsxFactory": "jsx",
+
+    "allowJs": false,
+
     "skipLibCheck": true
-  }
+  },
+  "files": ["node_modules/jest-expect-message/types/index.d.ts"]
 }

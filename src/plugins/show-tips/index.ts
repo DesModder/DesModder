@@ -19,6 +19,6 @@ export default class ShowTips extends PluginController {
   }
 
   tipView(): Inserter {
-    return () => DCGView.createElement(Tip as any, {});
+    return () => DCGView.createElement(Tip, {});
   }
 }

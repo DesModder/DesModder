@@ -3,10 +3,9 @@ import { statementsIntersecting } from "../statementIntersection";
 import "./footerWidget.less";
 import { EditorState, RangeSet } from "@codemirror/state";
 import { EditorView, Decoration, WidgetType } from "@codemirror/view";
-import { DCGView } from "DCGView";
-import { FooterView } from "components";
-import { ExpressionModel } from "globals/models";
-import { Calc } from "globals/window";
+import { DCGView } from "#DCGView";
+import { FooterView } from "#components";
+import { Calc, ExpressionModel } from "#globals";
 
 function getFooters(state: EditorState) {
   const program = state.field(analysisStateField).program;
@@ -14,13 +13,13 @@ function getFooters(state: EditorState) {
   const { from, to } = program.pos;
   for (const stmt of statementsIntersecting(program, from, to)) {
     const model = Calc.controller.getItemModel(stmt.id);
-    if (model?.type === "expression") {
+    if (stmt.type === "ExprStatement" && model?.type === "expression") {
       const widget = Decoration.widget({
         widget: new FooterWidget(model),
         side: 1,
         block: true,
       });
-      decorations.push(widget.range(stmt.pos.to));
+      decorations.push(widget.range(state.doc.lineAt(stmt.pos.to).to));
     }
   }
   return RangeSet.of(decorations);
@@ -75,7 +74,7 @@ class FooterWidget extends WidgetType {
       model: DCGView.const(this.model),
       controller: DCGView.const(Calc.controller),
     });
-    this.unsub = Calc.controller.subToChanges(() => view.update());
+    this.unsub = Calc.controller.subscribeToChanges(() => view.update());
     return this.div;
   }
 

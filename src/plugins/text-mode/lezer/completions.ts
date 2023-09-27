@@ -1,6 +1,6 @@
 import TextMode from "..";
 import {
-  exprToTextString,
+  astToText,
   childLatexToAST,
   StyleDefaults as Defaults,
   AnyHydrated,
@@ -171,7 +171,7 @@ function styleCompletionsFromDefaults(defaults: AnyHydrated): Completion[] {
           ? "type" in value
             ? macroExpandWithSelection(
                 key + ": ",
-                exprToTextString(childLatexToAST(value)),
+                astToText(childLatexToAST(value)),
                 ","
               )
             : macroExpandWithSelection(key + ": @{ ", "", " },")

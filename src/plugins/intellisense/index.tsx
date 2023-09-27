@@ -2,20 +2,20 @@ import {
   PartialFunctionCall,
   TryFindMQIdentResult,
   getController,
+  getCorrectableIdentifier,
   getMathquillIdentifierAtCursorPosition,
   getPartialFunctionCall,
 } from "./latex-parsing";
 import { IntellisenseState } from "./state";
 import { pendingIntellisenseTimeouts, setIntellisenseTimeout } from "./utils";
 import { JumpToDefinitionMenuInfo, View } from "./view";
-import { DCGView, MountedComponent, unmountFromNode } from "DCGView";
-import { MathQuillField, MathQuillView } from "components";
-import { ItemModel, TextModel } from "globals/models";
-import { Calc } from "globals/window";
-import { PluginController } from "plugins/PluginController";
-import { getMetadata } from "plugins/manage-metadata/manage";
-import { hookIntoOverrideKeystroke } from "utils/listenerHelpers";
-import { isDescendant } from "utils/utils";
+import { DCGView, MountedComponent, unmountFromNode } from "#DCGView";
+import { MathQuillField, MathQuillView } from "#components";
+import { ItemModel, TextModel, Calc } from "#globals";
+import { PluginController } from "#plugins/PluginController.ts";
+import { getMetadata } from "#plugins/manage-metadata/sync.ts";
+import { hookIntoOverrideKeystroke } from "#utils/listenerHelpers.ts";
+import { isDescendant } from "#utils/utils.ts";
 
 export type BoundIdentifier =
   | {
@@ -38,6 +38,9 @@ export interface BoundIdentifierFunction {
   type: "function";
   id: number;
   params: string[];
+  doc?: string;
+  folderDoc?: string;
+  folderId?: string;
 }
 
 export function getMQCursorPosition(focusedMQ: MathQuillField) {
@@ -61,11 +64,20 @@ export function getExpressionLatex(id: string): string | undefined {
   ).latex;
 }
 
-export default class Intellisense extends PluginController {
+export default class Intellisense extends PluginController<{
+  subscriptify: boolean;
+}> {
   static id = "intellisense" as const;
   static enabledByDefault = false;
-  static descriptionLearnMore =
-    "https://github.com/DesModder/DesModder/tree/main/src/plugins/intellisense/docs/README.md";
+  static descriptionLearnMore = "https://www.desmodder.com/intellisense";
+
+  static config = [
+    {
+      type: "boolean",
+      key: "subscriptify",
+      default: false,
+    },
+  ] as const;
 
   view: MountedComponent | undefined;
 
@@ -175,10 +187,21 @@ export default class Intellisense extends PluginController {
       if (this.latestIdent) {
         const noRepeatIntellisenseOpts = this.intellisenseState
           .boundIdentifiersArray()
-          .filter((g) =>
-            g.variableName.startsWith(
-              this.latestIdent?.ident.replace(/[{} \\]/g, "") ?? ""
-            )
+          .filter(
+            (g) =>
+              g.variableName.startsWith(
+                this.latestIdent?.ident.replace(/[{} \\]/g, "") ?? ""
+              ) &&
+              // don't include private expressions based on per-expression docs
+              !this.intellisenseState.getIdentDoc(g)?.includes("@private") &&
+              // don't include private expressions based on per-folder docs
+              // unless you're in the same folder
+              (Calc.controller.getSelectedItem()?.folderId ===
+                this.intellisenseState.getIdentFolderId(g) ||
+                !this.intellisenseState
+                  .getIdentFolderDoc(g)
+                  ?.includes("@private") ||
+                this.intellisenseState.getIdentDoc(g)?.includes("@public"))
           );
 
         const intellisenseOptsMap = new Map<string, BoundIdentifier[]>();
@@ -630,6 +653,11 @@ export default class Intellisense extends PluginController {
   dispatcher: string | undefined;
 
   afterEnable() {
+    // remove lines between docstrings and their expressions
+    this.updateCSSForAllDocstringExpressions();
+
+    document.body.classList.toggle("intellisense-enabled", true);
+
     const exppanel = document.querySelector(".dcg-exppanel");
     this.lastExppanelScrollTop = exppanel?.scrollTop ?? 0;
 
@@ -674,14 +702,73 @@ export default class Intellisense extends PluginController {
         this.lastExppanelScrollTop = newExppanelScrollTop;
       }
 
+      if (e.type === "set-note-text") {
+        this.updateCSSForDocstringExpression(
+          Calc.controller.getSelectedItem() as TextModel | undefined
+        );
+      }
+
+      if (e.type === "set-state") {
+        this.updateCSSForAllDocstringExpressions();
+      }
+
       if (e.type === "delete-item-and-animate-out") {
         this.canHaveIntellisense = false;
         this.view?.update();
       }
+
+      if (e.type === "set-item-latex") {
+        if (this.settings.subscriptify && this.latestMQ) {
+          const ident = getCorrectableIdentifier(this.latestMQ);
+
+          // Don't want to auto-subscriptify a length-1 id like "x";
+          // no change but breaks cursor position
+          if (ident.ident.length === 1) return;
+
+          if (
+            this.latestMQ.__options.autoOperatorNames[
+              ident.ident.replace(/_/g, "")
+            ] ||
+            this.latestMQ.__options.autoCommands[ident.ident.replace(/_/g, "")]
+          ) {
+            return;
+          }
+
+          const match = this.intellisenseState
+            .boundIdentifiersArray()
+            .find((e) => e.variableName === ident.ident);
+
+          if (match) {
+            ident.back();
+            this.latestMQ.typedText(match.variableName);
+            this.latestMQ.keystroke("Right");
+          }
+        }
+      }
     });
   }
 
+  updateCSSForAllDocstringExpressions() {
+    for (const m of Calc.controller.getAllItemModels()) {
+      if (m.type !== "text") continue;
+      this.updateCSSForDocstringExpression(m);
+    }
+  }
+
+  updateCSSForDocstringExpression(model: TextModel | undefined) {
+    const noteElement = model?.dcgView?._element._domNode;
+    if (noteElement) {
+      if (model?.text?.includes("@")) {
+        noteElement.dataset.isDoc = "true";
+      } else {
+        delete noteElement.dataset.isDoc;
+      }
+    }
+  }
+
   afterDisable() {
+    document.body.classList.toggle("intellisense-enabled", false);
+
     // clear event listeners
     document.removeEventListener("focusout", this.focusOutHandler);
     document.removeEventListener("focusin", this.focusInHandler);

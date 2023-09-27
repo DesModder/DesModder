@@ -1,7 +1,7 @@
 import { PluginController } from "../PluginController";
 import View from "./View";
 import { refactor } from "./backend";
-import { Calc, Console } from "globals/window";
+import { Calc, Console } from "#globals";
 
 export default class FindReplace extends PluginController {
   static id = "find-and-replace" as const;

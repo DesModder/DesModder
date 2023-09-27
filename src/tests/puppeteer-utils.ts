@@ -1,7 +1,7 @@
 import { DWindow } from "../globals/window";
 import { PluginID } from "../plugins";
 import { GraphState } from "@desmodder/graph-state";
-import Intellisense from "plugins/intellisense";
+import Intellisense from "#plugins/intellisense/index.tsx";
 import { Browser, Page } from "puppeteer";
 
 /** Calc is only available inside evaluate() callbacks and friends, since those

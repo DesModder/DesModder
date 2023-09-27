@@ -1,4 +1,4 @@
-import { ConfigItem } from "plugins";
+import { ConfigItem } from "#plugins/index.ts";
 
 export const configList = [
   {
@@ -60,8 +60,11 @@ export const configList = [
     type: "boolean",
     default: false,
   },
-  // `as const` ensures that the key values can be used as types
-  // instead of the type 'string'
+  {
+    key: "lessFSpacing",
+    type: "boolean",
+    default: false,
+  },
 ] satisfies ConfigItem[];
 
 export interface Config {
@@ -76,4 +79,5 @@ export interface Config {
   subSupWithoutOp: boolean;
   allowMixedBrackets: boolean;
   noPercentOf: boolean;
+  lessFSpacing: boolean;
 }

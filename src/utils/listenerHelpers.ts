@@ -1,7 +1,6 @@
 import { pollForValue } from "./utils";
-import { MathQuillField } from "components";
-import { DispatchedEvent } from "globals/Calc";
-import { Calc } from "globals/window";
+import { MathQuillField } from "#components";
+import { Calc, DispatchedEvent } from "#globals";
 
 let dispatchOverridingHandlers: {
   handler: (evt: DispatchedEvent) => boolean | undefined;

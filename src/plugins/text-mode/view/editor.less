@@ -18,3 +18,9 @@
   /* Tooltip position is miscalculated by the same height as the 42 px header */
   transform: translateY(-42px);
 }
+
+.cm-lineNumbers {
+  // This should only come into play with debug mode. Long IDs like `**dcg_geo_folder**`
+  max-width: 80px;
+  overflow-x: scroll;
+}

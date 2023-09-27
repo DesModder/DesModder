@@ -40,6 +40,13 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
+    <ellipse
+       style="fill:#fff;stroke:none"
+       id="white-disc"
+       cx="135.466665"
+       cy="135.466665"
+       rx="135.466665"
+       ry="135.466665" />
     <g
        transform="matrix(0.26458333,0,0,0.26458333,0.79374999,0.79374999)"
        id="g1013">

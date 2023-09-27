@@ -1,4 +1,4 @@
-import { ConfigItem } from "plugins";
+import { ConfigItem } from "#plugins/index.ts";
 
 export const configList = [
   {

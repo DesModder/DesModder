@@ -4,7 +4,11 @@ import {
   identifierToString,
   textModeExprToLatex,
 } from "../../../text-mode-core";
-import { DStaticMathquillView, If } from "../../components/desmosComponents";
+import {
+  Match,
+  DStaticMathquillView,
+  If,
+} from "../../components/desmosComponents";
 import {
   DocStringRenderable,
   parseDocstring,
@@ -13,11 +17,11 @@ import {
 import { PartialFunctionCall } from "./latex-parsing";
 import { setIntellisenseTimeout } from "./utils";
 import "./view.less";
-import { ClassComponent, Component, jsx } from "DCGView";
-import { For, StaticMathQuillView, Switch } from "components";
-import { format } from "i18n/i18n-core";
-import { parseDesmosLatex } from "utils/depUtils";
-import { IndexFor } from "utils/utilComponents";
+import { ClassComponent, Component, jsx } from "#DCGView";
+import { For, StaticMathQuillView } from "#components";
+import { format } from "#i18n";
+import { parseDesmosLatex } from "#utils/depUtils.ts";
+import { IndexFor } from "#utils/utilComponents.tsx";
 
 export interface JumpToDefinitionMenuInfo {
   idents: {
@@ -38,7 +42,7 @@ export class JumpToDefinitionMenu extends Component<{
 }> {
   template() {
     return (
-      <If predicate={() => this.props.info()}>
+      <If predicate={() => !!this.props.info()}>
         {() => {
           const elt = (
             <div class="dsm-intellisense-jump-to-def-menu" tabindex={-1}>
@@ -166,53 +170,46 @@ export class FormattedDocstring extends Component<{
         key={() => counter++}
       >
         <div style={{ display: "inline" }} class="dsm-intellisense-docstring">
-          {([r, _]: [DocStringRenderable, number]) => (
-            <Switch key={() => r}>
-              {() => {
-                switch (r.type) {
-                  case "param": {
-                    const ltx = () =>
-                      textModeExprToLatex(this.props.cfg(), r.latex) ?? r.latex;
+          {([r, _]: [DocStringRenderable, number]) =>
+            Match(() => r, {
+              param: (r) => {
+                const ltx = () =>
+                  textModeExprToLatex(this.props.cfg(), r.latex) ?? r.latex;
 
-                    if (
-                      identifierStringToLatexString(
-                        this.props.cfg(),
-                        this.props.selectedParam()
-                      ) !== ltx()
-                    ) {
-                      return <span></span>;
-                    }
-                    return (
-                      <div class="pfc-doc-param">
-                        <DStaticMathquillView
-                          latex={ltx}
-                          config={{}}
-                        ></DStaticMathquillView>{" "}
-                        -
-                        <FormattedDocstring
-                          selectedParam={this.props.selectedParam}
-                          docstring={() => r.renderables}
-                          cfg={this.props.cfg}
-                        ></FormattedDocstring>
-                      </div>
-                    );
-                  }
-                  case "text":
-                    return <span>{() => r.str}</span>;
-                  case "math":
-                    return (
-                      <DStaticMathquillView
-                        latex={() =>
-                          textModeExprToLatex(this.props.cfg(), r.latex) ??
-                          r.latex
-                        }
-                        config={{}}
-                      ></DStaticMathquillView>
-                    );
+                if (
+                  identifierStringToLatexString(
+                    this.props.cfg(),
+                    this.props.selectedParam()
+                  ) !== ltx()
+                ) {
+                  return <span></span>;
                 }
-              }}
-            </Switch>
-          )}
+                return (
+                  <div class="pfc-doc-param">
+                    <DStaticMathquillView
+                      latex={ltx}
+                      config={{}}
+                    ></DStaticMathquillView>{" "}
+                    -
+                    <FormattedDocstring
+                      selectedParam={this.props.selectedParam}
+                      docstring={() => r.renderables}
+                      cfg={this.props.cfg}
+                    ></FormattedDocstring>
+                  </div>
+                );
+              },
+              text: (r) => <span>{() => r.str}</span>,
+              math: (r) => (
+                <DStaticMathquillView
+                  latex={() =>
+                    textModeExprToLatex(this.props.cfg(), r.latex) ?? r.latex
+                  }
+                  config={{}}
+                ></DStaticMathquillView>
+              ),
+            })
+          }
         </div>
       </For>
     );
@@ -227,11 +224,11 @@ export class PartialFunctionCallView extends Component<{
 }> {
   template() {
     return (
-      <If predicate={() => this.props.partialFunctionCall()}>
+      <If predicate={() => !!this.props.partialFunctionCall()}>
         {() => {
           const elt: ClassComponent = (
             <div>
-              <If predicate={() => this.props.partialFunctionCallDoc()}>
+              <If predicate={() => !!this.props.partialFunctionCallDoc()}>
                 {() => (
                   <FormattedDocstring
                     docstring={() =>

@@ -19,8 +19,8 @@ import {
   IRChunk,
   IRInstruction,
   NativeFunction,
-} from "parsing/IR";
-import { evalMaybeRational, MaybeRational } from "parsing/parsenode";
+} from "#parsing/IR.ts";
+import { evalMaybeRational, MaybeRational } from "#parsing/parsenode.ts";
 
 function getIdentifier(index: number) {
   return `_${index}`;

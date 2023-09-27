@@ -12,6 +12,21 @@ document.body.innerHTML = `
   <div class="dcg-loading-div-container"></div>
 `
 
+// https://stackoverflow.com/a/53449595/7481517
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(), // Deprecated
+    removeListener: jest.fn(), // Deprecated
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
+
 HTMLCanvasElement.prototype.getContext = () => ({
   scale: () => {}
 } as any)

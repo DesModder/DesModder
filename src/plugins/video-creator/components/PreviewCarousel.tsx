@@ -1,7 +1,7 @@
 import VideoCreator from "..";
 import "./PreviewCarousel.less";
-import { Component, jsx } from "DCGView";
-import { If } from "components";
+import { Component, jsx } from "#DCGView";
+import { If } from "#components";
 
 export default class PreviewCarousel extends Component<{
   vc: VideoCreator;

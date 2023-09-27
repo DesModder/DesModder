@@ -1,6 +1,12 @@
 import { ExpressionModel, ItemModel } from "../globals/models";
-import { ClassComponent, Component, DCGView } from "DCGView";
-import window, { Calc, Fragile } from "globals/window";
+import {
+  ClassComponent,
+  Component,
+  ComponentChild,
+  ComponentTemplate,
+  DCGView,
+} from "#DCGView";
+import window, { Calc, Fragile } from "#globals";
 
 export abstract class CheckboxComponent extends ClassComponent<{
   checked: boolean;
@@ -125,16 +131,23 @@ export abstract class InlineMathInputViewComponent extends ClassComponent<{
 /** General InlineMathInputView, without any defaults filled in */
 export const InlineMathInputViewGeneral = Fragile.InlineMathInputView;
 
-export const {
-  If,
-  For,
-  IfDefined,
-  IfElse,
-  Input,
-  Switch,
-  SwitchUnion,
-  Textarea,
-} = DCGView.Components;
+export const { If, For, IfElse, Input, Switch, SwitchUnion } =
+  DCGView.Components;
+export function Match<Disc extends { type: string }>(
+  discriminant: () => Disc,
+  branches: {
+    [K in Disc["type"]]: (r: Disc & { type: K }) => ComponentChild;
+  }
+): ComponentTemplate {
+  return DCGView.createElement(
+    Switch,
+    { key: () => discriminant().type },
+    () => {
+      const d = discriminant();
+      return branches[d.type as Disc["type"]](d) as any;
+    }
+  );
+}
 
 export abstract class DStaticMathquillViewComponent extends ClassComponent<{
   latex: string;

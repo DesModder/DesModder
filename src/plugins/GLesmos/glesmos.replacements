@@ -158,85 +158,17 @@ addStatement($stmt) {
 
 *Replace* `body` with
 ```js
-if ($stmt.type === "statement") {
-  $stmt.glesmos = DSM.glesmos?.isGlesmosMode($stmt.id);
-  $stmt.glesmosLinesConfirmed = DSM.glesmos?.isGLesmosLinesConfirmed($stmt.id);
+if ($stmt.type === "statement" && DSM.glesmos?.isGlesmosMode($stmt.id)) {
+  $stmt = {
+    ...$stmt,
+    glesmos: true,
+    glesmosLinesConfirmed: DSM.glesmos?.isGLesmosLinesConfirmed($stmt.id)
+  }
 }
 __body__
 ```
 
 ## Replace quadtree implicit tracing with glesmos compilation
-
-*Description* `Compile GLesmos code instead of running implicit plotter`
-
-*worker_only*
-
-*Find* 
-```js
-._graph = $_graphFunc;
-function $_graphFunc(____) {
-  __graph__
-}
-```
-
-The code loops over the different IR objects `$ir`.
-
-*Find* inside `graph`
-```js
-.wrap($).eachElement(($ir, $) => {
-  __body__
-})
-```
-
-The `styles` object provides `styles.fillOpacity` and `styles.color`.
-
-*Find* inside `body`
-```js
-$styles.fillOpacity =
-```
-
-This is just for finding the `$graphs` list.
-
-*Find* inside `body`
-```js
-if ($W !== void 0 && $X !== void 0 && isFinite($W) && isFinite($X)) {
-  let $ie = $a(____);
-  $graphs.push(____)
-}
-```
-
-*Find* inside `body` => `if2d`
-```js
-if (!$is3d($T.graphMode) || ____) {
-```
-
-*Replace* `if2d` with
-```js
-if (this.userData.glesmos && self.dsm_compileGLesmos) {
-  const lines =
-    this.userData.lines !== false &&
-    (!this.isInequality() || this.userData.glesmosLinesConfirmed);
-  let derivativeX, derivativeY;
-  if (lines) {
-    try {
-      derivativeX = $ir.takeDerivative('x');
-      derivativeY = $ir.takeDerivative('y');
-    } catch {}
-  }
-  const newCompiled = self.dsm_compileGLesmos(
-    $ir, $styles.color, $styles.fillOpacity ?? 0, $styles.lineOpacity, this.userData.lines !== false ? $styles.lineWidth : 0.0,
-    derivativeX, derivativeY
-  );
-  $graphs.push({
-    graphMode: "GLesmos",
-    compiledGL: newCompiled,
-    segments: [],
-    poi: {}
-  })
-} else __if2d__
-```
-
-### Alternative
 
 *Description* `Compile GLesmos code instead of running implicit plotter`
 
@@ -259,12 +191,8 @@ let $branch = $c({
   graphInfo: $graphInfo,
   compiled: $compiled,
   derivative: $derivative
-})
-```
-
-*Find* inside `graph`
-```js
-$ = $ir.getCompiledFunction($)
+}),
+  $box = $($(this), $ir)
 ```
 
 *Replace* `compute2d` with

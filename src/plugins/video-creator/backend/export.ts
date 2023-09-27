@@ -1,7 +1,7 @@
 import VideoCreator from "..";
 import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 import { downloadZip } from "client-zip";
-import { Console } from "globals/window";
+import { Console } from "#globals";
 
 type FFmpeg = ReturnType<typeof createFFmpeg>;
 type FFmpegFileType = "gif" | "mp4" | "webm" | "apng";

@@ -1,7 +1,7 @@
 import GLesmos from "..";
-import { jsx } from "DCGView";
-import { If } from "components";
-import { format } from "i18n/i18n-core";
+import { jsx } from "#DCGView";
+import { If } from "#components";
+import { format } from "#i18n";
 
 export function GLesmosToggle(
   glesmos: GLesmos,

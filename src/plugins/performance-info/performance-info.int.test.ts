@@ -1,4 +1,4 @@
-import { clean, testWithPage } from "tests/puppeteer-utils";
+import { clean, testWithPage } from "#tests";
 
 const POPUP = ".dcg-popover-interior.dsm-performance-info-menu";
 const BUTTON = ".dsm-pillbox-buttons :nth-child(3)";

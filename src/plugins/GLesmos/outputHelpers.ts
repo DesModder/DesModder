@@ -1,7 +1,7 @@
 import getRGBPack from "./colorParsing";
 import { getConstantListLength, Types } from "./workerDeps";
-import { IRChunk, ValueType } from "parsing/IR";
-import { evalMaybeRational } from "parsing/parsenode";
+import { IRChunk, ValueType } from "#parsing/IR.ts";
+import { evalMaybeRational } from "#parsing/parsenode.ts";
 
 export function glslFloatify(x: number) {
   return Number.isInteger(x)

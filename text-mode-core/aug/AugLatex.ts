@@ -106,6 +106,7 @@ export interface Identifier {
    *  - "a_123"
    *  - "random_abc"
    *  - "delta_ABC"
+   * A fourth case is tokens, e.g. "$123" -> \token{123}
    */
   symbol: string;
 }

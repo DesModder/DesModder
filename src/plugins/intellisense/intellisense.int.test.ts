@@ -5,12 +5,12 @@ const delay = async (ms: number) =>
   await new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 describe("Intellisense", () => {
-  // These two tests could really be combined.
-  //  I'm just trying two simple tests to make sure the browser remains.
   testWithPage(
     "Intellisense Autocomplete",
     async (driver) => {
+      // AUTOCOMPLETE TESTS ========================================================
       await driver.enablePlugin("intellisense");
+      await driver.setPluginSetting("intellisense", "subscriptify", false);
       const blankState = await driver.getState();
 
       const testIdentSample = async (
@@ -101,6 +101,7 @@ describe("Intellisense", () => {
         }
       };
 
+      // SUBSCRIPTIFY TESTS =================================================
       await driver.focusIndex(0);
       await testIdentSample("1+", "1+", "B", undefined, "+1", "+1", 2);
       await driver.setState(blankState);
@@ -112,6 +113,52 @@ describe("Intellisense", () => {
       await driver.setState(blankState);
       await driver.focusIndex(0);
       await testIdentSample("1+", "1+", "beta", "7c9", "+1", "+1", 2);
+
+      await driver.setState(blankState);
+      await driver.setPluginSetting("intellisense", "subscriptify", true);
+      await driver.focusIndex(0);
+
+      const wiggle = async () => {
+        await driver.keyboard.press("ArrowLeft");
+        await driver.keyboard.press("ArrowRight");
+      };
+
+      // type out three expressions
+      await driver.keyboard.type("f_oo=1");
+      await driver.keyboard.press("Enter");
+      await driver.keyboard.type("b_ar=2");
+      await driver.keyboard.press("Enter");
+      await driver.keyboard.type("f_oobar=3");
+      await driver.keyboard.press("Enter");
+      await driver.keyboard.type("alpha_abc=4");
+      await driver.keyboard.press("Enter");
+
+      // see if they get autosubscriptified
+      await driver.keyboard.type("foo");
+      await wiggle();
+      await driver.assertSelectedItemLatex("f_{oo}");
+      await driver.keyboard.press("Escape");
+      await driver.keyboard.press("Enter");
+      await driver.keyboard.type("bar");
+      await wiggle();
+      await driver.assertSelectedItemLatex("b_{ar}");
+      await driver.keyboard.press("Escape");
+      await driver.keyboard.press("Enter");
+      await driver.keyboard.type("foobar");
+      await wiggle();
+      await driver.assertSelectedItemLatex("f_{oobar}");
+      await driver.keyboard.press("Escape");
+      await driver.keyboard.press("Enter");
+      await driver.keyboard.type("alphaabc");
+      await wiggle();
+      await driver.assertSelectedItemLatex("\\alpha_{abc}");
+      await driver.keyboard.press("Escape");
+      await driver.keyboard.press("Enter");
+
+      await driver.keyboard.type("c(x)=rgb(x,x,x)");
+      await driver.assertSelectedItemLatex(
+        "c\\left(x\\right)=\\operatorname{rgb}\\left(x,x,x\\right)"
+      );
 
       await driver.clean();
     },

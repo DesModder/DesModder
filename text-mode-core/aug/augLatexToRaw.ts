@@ -287,6 +287,8 @@ export function identifierToString(
   cfg: Config,
   id: Aug.Latex.Identifier
 ): string {
+  const tokenMatch = /^\$(\d+)$/.exec(id.symbol);
+  if (tokenMatch) return `\\token{${tokenMatch[1]}}`;
   const symbol = id.symbol.replace(/[{}]/g, "");
   let main = symbol;
   let subscript;
@@ -295,7 +297,7 @@ export function identifierToString(
     main = symbol.substring(0, uIndex);
     subscript = symbol.substring(uIndex + 1);
     if (!/^[a-zA-Z]+$/.test(main) || !/^[a-zA-Z0-9]+$/.test(subscript)) {
-      throw Error(`Unexpected character in ${symbol}`);
+      throw new Error(`Unexpected character in ${symbol}`);
     }
   }
   const start =

@@ -1,11 +1,23 @@
 {
   "name": "desmodder",
   "description": "Supercharge your Desmos graph creation and sharing experience with many convenient features",
-  "version": "0.11.5",
+  "version": "0.11.10",
   "author": {
     "name": "Jared Hughes"
   },
   "browserslist": "defaults",
+  "imports": {
+    "#i18n": "./localization/i18n-core.ts",
+    "#utils/*": "./src/utils/*",
+    "#DSM": "./src/MainController.ts",
+    "#globals": "./src/globals/index.ts",
+    "#DCGView": "./src/DCGView.ts",
+    "#plugins/*": "./src/plugins/*",
+    "#parsing/*": "./parsing/*",
+    "#tests": "./src/tests/puppeteer-utils.ts",
+    "#metadata/*": "./metadata/*",
+    "#components": "./src/components/index.ts"
+  },
   "eslintIgnore": [
     "dist/*.js"
   ],
@@ -38,7 +50,6 @@
   "devDependencies": {
     "@desmodder/graph-state": "^0.2.3",
     "@lezer/generator": "^1.3.0",
-    "@trivago/prettier-plugin-sort-imports": "^4.1.1",
     "@types/babel__core": "^7.20.1",
     "@types/babel__standalone": "^7.1.4",
     "@types/babel__template": "^7.4.1",

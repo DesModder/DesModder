@@ -19,6 +19,7 @@ module.exports = {
     "coverage",
     "node_modules",
     "dist",
+    "dist-ts",
     "hooks",
     "LICENSE",
     // Opt-out instead of opt-in to avoid forgetting to include some js file.

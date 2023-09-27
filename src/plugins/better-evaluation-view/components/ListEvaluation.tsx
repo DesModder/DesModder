@@ -1,6 +1,6 @@
 import { truncatedLatexLabel } from "../../../utils/depUtils";
-import { jsx } from "DCGView";
-import { StaticMathQuillView } from "components";
+import { jsx } from "#DCGView";
+import { StaticMathQuillView } from "#components";
 
 export function ListEvaluation(val: () => string[]) {
   return (

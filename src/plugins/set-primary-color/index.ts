@@ -2,7 +2,7 @@ import { Calc } from "../../globals/window";
 import { PluginController } from "../PluginController";
 import "./_overrides.less";
 import "./custom-overrides.less";
-import { getHSVfromRGB, parseCSSHex } from "plugins/GLesmos/colorParsing";
+import { getHSVfromRGB, parseCSSHex } from "#plugins/GLesmos/colorParsing.ts";
 
 interface Config {
   primaryColor: string;
@@ -78,7 +78,6 @@ export default class SetPrimaryColor extends PluginController<Config> {
     this.wiggle = 0.1 - this.wiggle;
     for (const [key, scale] of Object.entries(colorMapping)) {
       const s = this.scaleColor(hex, scale);
-      this.apiContainer.style.setProperty(key, `rgb(${s})`);
       this.apiContainer.style.setProperty(key + "-rgb", `${s}`);
     }
   }

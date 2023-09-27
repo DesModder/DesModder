@@ -1,8 +1,4 @@
-import {
-  parseText,
-  astItemToTextString,
-  buildConfig,
-} from "../../../../text-mode-core";
+import { parseText, astToText, buildConfig } from "../../../../text-mode-core";
 import { Statement } from "../../../../text-mode-core/TextAST";
 import { statementsIntersecting } from "./statementIntersection";
 
@@ -17,7 +13,7 @@ function positionsAndProgram(s: string) {
 }
 
 function toString(s: Statement) {
-  return astItemToTextString(s).replace(/ /g, "");
+  return astToText(s).replace(/ /g, "");
 }
 
 function testIntersection(s: string, stmts: string[]) {

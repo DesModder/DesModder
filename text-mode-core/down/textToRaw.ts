@@ -4,14 +4,15 @@ import { latexTreeToString } from "../aug/augLatexToRaw";
 import augToRaw from "../aug/augToRaw";
 import astToAug, { childExprToAug } from "./astToAug";
 import { error } from "./diagnostics";
-import { parse } from "./textToAST";
+import { IncrementalState, parse } from "./textToAST";
 import type { GraphState } from "@desmodder/graph-state";
 
 export default function textToRaw(
   cfg: Config,
-  text: string
+  text: string,
+  incr?: Partial<IncrementalState>
 ): [ProgramAnalysis, GraphState | null] {
-  const analysis = parse(cfg, text);
+  const analysis = parse(cfg, text, incr);
   try {
     const [analysis2, aug] = astToAug(cfg, analysis);
     return [analysis2, aug ? augToRaw(cfg, aug) : null];

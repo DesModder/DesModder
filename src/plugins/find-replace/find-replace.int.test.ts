@@ -1,4 +1,4 @@
-import { clean, testWithPage } from "tests/puppeteer-utils";
+import { clean, testWithPage } from "#tests";
 
 describe("Find-replace", () => {
   testWithPage("Basic find-replace", async (driver) => {

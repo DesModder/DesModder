@@ -25,7 +25,7 @@ import TextMode from "./text-mode";
 import VideoCreator from "./video-creator";
 import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
-import DSM from "MainController";
+import DSM from "#DSM";
 
 interface ConfigItemGeneric {
   key: string;

@@ -5,7 +5,7 @@ import {
   MountedComponent,
   mountToNode,
   unmountFromNode,
-} from "DCGView";
+} from "#DCGView";
 
 export default class View {
   mountNode: HTMLElement | null = null;

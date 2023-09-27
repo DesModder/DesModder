@@ -1,4 +1,4 @@
-import { Console } from "globals/window";
+import { Console } from "#globals";
 
 export interface VerticalifyContext {
   containerType:

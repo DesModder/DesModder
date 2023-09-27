@@ -1,5 +1,5 @@
 import { sendHeartbeat } from "./plugins/wakatime/heartbeat";
-import "globals/env";
+import "./globals/env";
 
 // Send requests that would otherwise be blocked by CORS if sent from a content script
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
@@ -59,7 +59,7 @@ if (BROWSER === "firefox") {
     {
       urls: [
         "https://*.desmos.com/calculator*",
-        "https://*.desmos.com/geometry-beta*",
+        "https://*.desmos.com/geometry*",
       ],
     },
     ["blocking", "responseHeaders"]

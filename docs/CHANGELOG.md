@@ -1,5 +1,61 @@
 # DesModder Changelog
 
+## 0.11.10
+
+New Features:
+
+- (Custom Mathquill Config) Option to reduce kerning of "f".
+- (Text Mode) Press a button to auto-format; toggle whitespace and newlines.
+
+Bug fixes:
+
+- Fix sizing and spacing of pillbox buttons.
+
+## 0.11.9
+
+New: translations for Japanese!
+
+Bug fixes and improvements:
+
+- (GLesmos) Fix loading error.
+- Add message in console explaining the unavoidable error.
+
+## 0.11.8
+
+New Features:
+
+- (Intellisense) Auto-subscriptify
+
+Bug fixes:
+
+- (Custom MathQuill Config) Remove `nu` from "More greek letters"
+- (Custom MathQuill Config) Error no longer happens when changing settings with a table on the page.
+- (Pin Expressions) Fix loading error.
+- (GLesmos) No longer re-renders highlighted expressions at the screen refresh rate
+- (Text Mode) Fix loading issue.
+- "Learn More" links now have color again.
+
+## 0.11.7
+
+Bug fixes:
+
+- Fix loading on https://desmos.com/geometry
+- (Text Mode) Show IDs instead of line numbers in debug mode
+
+## 0.11.6
+
+New Features:
+
+- (Intellisense) Mark expressions as `@private`.
+- (Intellisense) Fixes to update handling.
+- (Text Mode) Enabled for https://desmos.com/geometry-beta.
+
+Bug fixes:
+
+- Various localization improvements.
+- (GLesmos) Avoid crashing the whole page if WebGL canvas is unsupported.
+- Flag `?nographpaper` no longer crashes the page.
+
 ## 0.11.5
 
 Bug fixes:

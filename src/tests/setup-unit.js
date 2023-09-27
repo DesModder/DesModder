@@ -11,14 +11,12 @@ module.exports = async function () {
   const PREFIX = '<script src="/assets/build/calculator_desktop';
 
   const calculatorLink = `${SERVER}/calculator`;
-  const exists = (p) =>
-    fs
-      .access(p)
-      .then(() => true)
-      .catch(() => false);
+
+  const stats = await fs.stat(CALC_DESKTOP).catch(() => undefined);
 
   // download and cache calculator_desktop.js if it doesn't exist already
-  if (!(await exists(CALC_DESKTOP))) {
+  // or if it's more than a day old as measured by modified time (mtime).
+  if (!stats || Date.now() - stats.mtime > 1000 * 60 * 60 * 24) {
     console.log(
       `Downloading '${calculatorLink}' to find the calculator_desktop URL`
     );

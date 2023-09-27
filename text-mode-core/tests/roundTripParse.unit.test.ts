@@ -6,11 +6,14 @@ import { latexTreeToString as _latexTreeToString } from "../aug/augLatexToRaw";
 import { parseRootLatex as _parseRootLatex } from "../aug/rawToAug";
 import { childExprToAug } from "../down/astToAug";
 import { parse as _parse } from "../down/textToAST";
-import { exprToTextString } from "../up/astToText";
+import { TextEmitOptions, astToText } from "../up/astToText";
 import { rootLatexToAST } from "../up/augToAST";
 import "./run_calc_for_tests";
 
-const cfg = buildConfigFromGlobals(window.Desmos, (window as any).Calc);
+const Calc = window.Desmos.GraphingCalculator(
+  document.getElementById("graph-container")!
+);
+const cfg = buildConfigFromGlobals(window.Desmos, Calc);
 
 function parseRootLatex(s: string) {
   return _parseRootLatex(cfg, s);
@@ -55,12 +58,12 @@ function testRoundTripIdenticalViaAST(raw: string) {
   });
 }
 
-function testRoundTripIdenticalViaText(raw: string) {
+function testRoundTripIdenticalViaText(raw: string, emitOpts: TextEmitOptions) {
   test(raw, () => {
     const raw1 = leftRight(raw);
     const aug = parseRootLatex(raw1);
     const ast = rootLatexToAST(aug);
-    const text = exprToTextString(ast);
+    const text = astToText(ast, emitOpts);
     const analysis = parse(text);
     expect(analysis.diagnostics).toEqual([]);
     const children = analysis.program.children;
@@ -279,6 +282,7 @@ describe("Identifiers round-trip", () => {
     "\\o{hypot}",
     "\\o{dt}",
     "\\o{index}",
+    "\\token{123}",
   ];
   roundTrips(cases);
 });
@@ -286,7 +290,27 @@ describe("Identifiers round-trip", () => {
 function roundTrips(cases: string[]) {
   describe("via Aug", () => cases.forEach(testRoundTripIdenticalViaAug));
   describe("via AST", () => cases.forEach(testRoundTripIdenticalViaAST));
-  describe("via Text", () => cases.forEach(testRoundTripIdenticalViaText));
+  describe("via Text", () =>
+    cases.forEach((r) => testRoundTripIdenticalViaText(r, {})));
+  describe("via Text without optional spaces", () =>
+    cases.forEach((r) =>
+      testRoundTripIdenticalViaText(r, {
+        noOptionalSpaces: true,
+      })
+    ));
+  describe("via Text without newlines", () =>
+    cases.forEach((r) =>
+      testRoundTripIdenticalViaText(r, {
+        noNewlines: true,
+      })
+    ));
+  describe("via Text without newlines or optional spaces", () =>
+    cases.forEach((r) =>
+      testRoundTripIdenticalViaText(r, {
+        noNewlines: true,
+        noOptionalSpaces: true,
+      })
+    ));
 }
 
 describe("Same-parse round trips", () => {

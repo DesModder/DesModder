@@ -12,12 +12,12 @@
     "./TextAST/Synthetic": "./TextAST/Synthetic.ts"
   },
   "imports": {
-    "#utils/utils": "utils/utils",
     "#prettier/doc": "prettier/doc",
     "#jest/globals": "@jest/globals",
     "#moo": "moo",
-    "#parsing/*": "parsing/*",
-    "#manage-metadata/*": "plugins/manage-metadata/*"
+    "#parsing/*": "src/parsing/*",
+    "#metadata/*": "metadata/*",
+    "#utils/*": "src/utils/*"
   },
   "repository": {
     "type": "git",

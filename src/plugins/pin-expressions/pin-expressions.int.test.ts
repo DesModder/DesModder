@@ -1,4 +1,4 @@
-import { clean, testWithPage } from "tests/puppeteer-utils";
+import { clean, testWithPage } from "#tests";
 
 testWithPage("Pin", async (driver) => {
   await driver.focusIndex(0);
