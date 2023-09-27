@@ -101,7 +101,10 @@ export class ExpressionItemCostPanel extends Component<{
                 .reduce((a, b) => a + b);
               return (
                 svgLen +
-                (el.textContent?.replace(/\s|\u200b/g, "")?.length ?? 0)
+                (el.textContent?.replace(
+                  /\s|[\u00A0\u1680\u2000-\u200B\u202F\u205F\u3000]/g,
+                  ""
+                )?.length ?? 0)
               );
             }
 
