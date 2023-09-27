@@ -22,5 +22,5 @@ $DCGView.createElement("div", {
 *Replace* `__rest2__` with
 ```js
 __rest2__,
-(console.log("got here", this)), DSM.insertElement(() => (console.log("dsmcodegolf", DSM.codeGolf), DSM.codeGolf?.expressionItemCostPanel(this.model, this.rootNode)  ))
+DSM.insertElement(() => ( DSM.codeGolf?.expressionItemCostPanel(this.model, this._rootNode)  ))
 ```

@@ -45,6 +45,8 @@ export class ExpressionItemCostPanel extends Component<{
   model: () => ExpressionModel;
   el: () => HTMLDivElement;
 }> {
+  rootblock: Element | null | undefined = null;
+
   template() {
     return (
       <div class="dsm-code-golf-char-count">
@@ -57,22 +59,53 @@ export class ExpressionItemCostPanel extends Component<{
         </div>
         <div>
           {() => {
-            const rootblock = this.props
-              .el()
-              ?.querySelector(".dcg-main .dcg-mq-root-block");
+            const tempRootblock = this.props
+              .model()
+              .dcgView?._element._domNode?.querySelector(
+                ".dcg-main .dcg-mq-root-block"
+              );
 
-            if (!rootblock) return "0px";
+            console.log("temprootblock", tempRootblock);
+            if (tempRootblock) this.rootblock = tempRootblock;
 
-            if (!rootblock.lastChild || !rootblock.firstChild) return "0px";
+            if (!this.rootblock) return "0px";
+
+            if (!this.rootblock.lastChild || !this.rootblock.firstChild)
+              return "0px";
 
             const range = document.createRange();
-            range.setStartBefore(rootblock.firstChild);
-            range.setEndAfter(rootblock.lastChild);
+            range.setStartBefore(this.rootblock.firstChild);
+            range.setEndAfter(this.rootblock.lastChild);
 
             const width = range.getBoundingClientRect().width;
 
             return format("code-golf-width-in-pixels", {
               pixels: Math.round(width).toString(),
+            });
+          }}
+        </div>
+        <div>
+          {() => {
+            const el = this.props.model().dcgView?._element._domNode;
+
+            const selected = el?.classList?.contains?.("dcg-selected");
+
+            const tempRootblock = el?.querySelector(
+              ".dcg-main .dcg-mq-root-block"
+            );
+            if (tempRootblock) this.rootblock = tempRootblock;
+
+            function symbolCount2(el: Element) {
+              const svgLen = [".dcg-mq-fraction", "svg", ".dcg-mq-token"]
+                .map((s) => el.querySelectorAll(s).length)
+                .reduce((a, b) => a + b);
+              return svgLen + (el.textContent?.length ?? 0);
+            }
+
+            return format("code-golf-symbol-count", {
+              elements: this.rootblock
+                ? symbolCount2(this.rootblock) - (selected ? 1 : 0)
+                : 0,
             });
           }}
         </div>
