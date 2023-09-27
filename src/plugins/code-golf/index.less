@@ -1,9 +1,19 @@
 .dsm-code-golf-char-count {
-  transform: translate(5px, -5px);
-  background-color: white;
-  border: 1px solid #00000088;
+  transform: translate(-5px, -5px);
   border-radius: 3px;
   z-index: 9999;
   display: inline-block;
   padding: 0px 3px;
+
+  -webkit-user-select: text;
+  user-select: text;
+  border: 1px solid rgba(206, 206, 206, 0.8);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.04);
+  opacity: 0.75;
+}
+
+.dsm-code-golf-char-count-container {
+  display: flex;
+  justify-content: right;
 }

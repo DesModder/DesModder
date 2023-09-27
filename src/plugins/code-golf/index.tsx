@@ -12,66 +12,68 @@ export class ExpressionItemCostPanel extends Component<{
 
   template() {
     return (
-      <div class="dsm-code-golf-char-count">
-        <div>
-          {() =>
-            format("code-golf-char-count", {
-              chars: this.props.model().latex?.length?.toString() ?? "0",
-            })
-          }
-        </div>
-        <div>
-          {() => {
-            const tempRootblock = this.props
-              .model()
-              .dcgView?._element._domNode?.querySelector(
+      <div class="dsm-code-golf-char-count-container">
+        <div class="dsm-code-golf-char-count">
+          <div>
+            {() =>
+              format("code-golf-char-count", {
+                chars: this.props.model().latex?.length?.toString() ?? "0",
+              })
+            }
+          </div>
+          <div>
+            {() => {
+              const tempRootblock = this.props
+                .model()
+                .dcgView?._element._domNode?.querySelector(
+                  ".dcg-main .dcg-mq-root-block"
+                );
+
+              if (tempRootblock) this.rootblock = tempRootblock;
+
+              if (!this.rootblock) return "0px";
+
+              if (!this.rootblock.lastChild || !this.rootblock.firstChild)
+                return "0px";
+
+              const range = document.createRange();
+              range.setStartBefore(this.rootblock.firstChild);
+              range.setEndAfter(this.rootblock.lastChild);
+
+              const width = range.getBoundingClientRect().width;
+
+              return format("code-golf-width-in-pixels", {
+                pixels: Math.round(width).toString(),
+              });
+            }}
+          </div>
+          <div>
+            {() => {
+              const el = this.props.model().dcgView?._element._domNode;
+
+              const tempRootblock = el?.querySelector(
                 ".dcg-main .dcg-mq-root-block"
               );
+              if (tempRootblock) this.rootblock = tempRootblock;
 
-            if (tempRootblock) this.rootblock = tempRootblock;
+              function symbolCount2(el: Element) {
+                const svgLen = [".dcg-mq-fraction", "svg", ".dcg-mq-token"]
+                  .map((s) => el.querySelectorAll(s).length)
+                  .reduce((a, b) => a + b);
+                return (
+                  svgLen +
+                  (el.textContent?.replace(
+                    /\s|[\u00A0\u1680\u2000-\u200B\u202F\u205F\u3000]/g,
+                    ""
+                  )?.length ?? 0)
+                );
+              }
 
-            if (!this.rootblock) return "0px";
-
-            if (!this.rootblock.lastChild || !this.rootblock.firstChild)
-              return "0px";
-
-            const range = document.createRange();
-            range.setStartBefore(this.rootblock.firstChild);
-            range.setEndAfter(this.rootblock.lastChild);
-
-            const width = range.getBoundingClientRect().width;
-
-            return format("code-golf-width-in-pixels", {
-              pixels: Math.round(width).toString(),
-            });
-          }}
-        </div>
-        <div>
-          {() => {
-            const el = this.props.model().dcgView?._element._domNode;
-
-            const tempRootblock = el?.querySelector(
-              ".dcg-main .dcg-mq-root-block"
-            );
-            if (tempRootblock) this.rootblock = tempRootblock;
-
-            function symbolCount2(el: Element) {
-              const svgLen = [".dcg-mq-fraction", "svg", ".dcg-mq-token"]
-                .map((s) => el.querySelectorAll(s).length)
-                .reduce((a, b) => a + b);
-              return (
-                svgLen +
-                (el.textContent?.replace(
-                  /\s|[\u00A0\u1680\u2000-\u200B\u202F\u205F\u3000]/g,
-                  ""
-                )?.length ?? 0)
-              );
-            }
-
-            return format("code-golf-symbol-count", {
-              elements: this.rootblock ? symbolCount2(this.rootblock) : 0,
-            });
-          }}
+              return format("code-golf-symbol-count", {
+                elements: this.rootblock ? symbolCount2(this.rootblock) : 0,
+              });
+            }}
+          </div>
         </div>
       </div>
     );
@@ -96,14 +98,7 @@ export default class CodeGolf extends PluginController {
 
   afterConfigChange(): void {}
 
-  afterEnable() {
-    // this.dsm.pillboxMenus?.addPillboxButton({
-    //   id: "dsm-pi-menu",
-    //   tooltip: "code-golf-name",
-    //   iconClass: "dsm-icon-text",
-    //   popup: () => MainPopupFunc(this, this.dsm),
-    // });
-  }
+  afterEnable() {}
 
   afterDisable() {}
 }
