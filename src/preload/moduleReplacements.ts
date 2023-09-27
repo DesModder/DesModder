@@ -32,6 +32,7 @@ const pluginNames = [
   "better-evaluation-view",
   "manage-metadata",
   "pillbox-menus",
+  "syntax-highlighting",
 ];
 
 replacements.forEach((r) => {

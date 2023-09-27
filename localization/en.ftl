@@ -307,3 +307,21 @@ custom-mathquill-config-opt-extendedGreek-name = More Greek Letters
 custom-mathquill-config-opt-extendedGreek-desc = Enables replacements for all supported greek letters
 custom-mathquill-config-opt-lessFSpacing-name = Less Spacing Around "f"
 custom-mathquill-config-opt-lessFSpacing-desc = Reduces extra spacing around the letter "f"
+
+## Syntax highlightAlternatingLines
+syntax-highlighting-name = Syntax Highlighting
+syntax-highlighting-desc = Color in various parts of expressions to make them easier to reason about.
+syntax-highlighting-opt-bracketPairColorization-name = Bracket Pair Colorization
+syntax-highlighting-opt-bracketPairColorization-desc = Applies a set of alternating colors to brackets (e.g. ()[]{"{"}{"}"}||) to make matching bracket pairs easy to spot.
+syntax-highlighting-opt-bracketPairColorizationColors-name = Bracket Pair Colors
+syntax-highlighting-opt-bracketPairColorizationColors-desc = Sets the number and order of colors that are used for bracket pair colorization.
+syntax-highlighting-opt-bpcColorInText-name = Colorize Text in Brackets
+syntax-highlighting-opt-bpcColorInText-desc = Applies Bracket Pair Colors to the text within the brackets.
+syntax-highlighting-opt-thickenBrackets-name = Thicken Brackets
+syntax-highlighting-opt-thickenBrackets-desc = Add additional thickness to brackets to assist in bracket colorization.
+syntax-highlighting-opt-highlightBracketBlocks-name = Highlight Bracket Blocks
+syntax-highlighting-opt-highlightBracketBlocks-desc = Highlight the smallest enclosing bracket pair containing the text cursor.
+syntax-highlighting-opt-highlightBracketBlocksHover-name = Highlight on Hover
+syntax-highlighting-opt-highlightBracketBlocksHover-desc = Highlight the smallest enclosing bracket pair containing the mouse.
+syntax-highlighting-opt-underlineHighlightedRanges-name = Underline Highlighted Ranges
+syntax-highlighting-opt-underlineHighlightedRanges-desc = Puts a dark underline under highlighted ranges for better visibility.
