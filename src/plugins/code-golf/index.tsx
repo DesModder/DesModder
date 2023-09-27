@@ -1,45 +1,8 @@
 import { Component, jsx } from "#DCGView";
 import { format } from "localization/i18n-core";
 import { Inserter, PluginController } from "../PluginController";
-import { Config, configList } from "./config";
 import "./index.less";
-import DSM from "src/MainController";
-import { Calc, ExpressionModel } from "src/globals";
-
-async function getGraphFromHash(hash: string) {
-  return await fetch("./" + hash, {
-    headers: {
-      Accept: "application/json",
-    },
-  }).then(async (data) => {
-    return await data.json();
-  });
-}
-
-async function getGraphHistory() {
-  const hash = window.location.pathname.split("/").slice(-1)[0];
-  let graph = await getGraphFromHash(hash);
-  const graphs = [graph];
-  while (graph.parent_hash) {
-    graph = await getGraphFromHash(graph.parent_hash);
-    graphs.push(graph);
-  }
-  return graphs;
-}
-
-export class CodeGolfMenu extends Component<{
-  cg: () => CodeGolf;
-  dsm: () => DSM;
-}> {
-  template() {
-    let num = 0;
-    const history = getGraphHistory().then(() => {
-      Calc.setState(Calc.getState());
-      num += 1;
-    });
-    return <div class="dcg-popover-interior">{() => num}</div>;
-  }
-}
+import { ExpressionModel } from "src/globals";
 
 export class ExpressionItemCostPanel extends Component<{
   model: () => ExpressionModel;
@@ -65,7 +28,6 @@ export class ExpressionItemCostPanel extends Component<{
                 ".dcg-main .dcg-mq-root-block"
               );
 
-            console.log("temprootblock", tempRootblock);
             if (tempRootblock) this.rootblock = tempRootblock;
 
             if (!this.rootblock) return "0px";
@@ -87,8 +49,6 @@ export class ExpressionItemCostPanel extends Component<{
         <div>
           {() => {
             const el = this.props.model().dcgView?._element._domNode;
-
-            const selected = el?.classList?.contains?.("dcg-selected");
 
             const tempRootblock = el?.querySelector(
               ".dcg-main .dcg-mq-root-block"
@@ -118,16 +78,9 @@ export class ExpressionItemCostPanel extends Component<{
   }
 }
 
-function MainPopupFunc(cg: CodeGolf, dsm: DSM) {
-  return <CodeGolfMenu cg={() => cg} dsm={() => dsm}></CodeGolfMenu>;
-}
-
-// $0.querySelector(".dcg-main .dcg-mq-root-block")
-
-export default class CodeGolf extends PluginController<Config> {
+export default class CodeGolf extends PluginController {
   static id = "code-golf" as const;
   static enabledByDefault = false;
-  static config = configList;
 
   expressionItemCostPanel(
     model: ExpressionModel,
