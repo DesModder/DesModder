@@ -91,7 +91,7 @@ export default class CodeGolf extends PluginController {
       <ExpressionItemCostPanel
         model={() => model}
         el={() => el}
-      ></ExpressionItemCostPanel>
+      />
     );
   }
 
