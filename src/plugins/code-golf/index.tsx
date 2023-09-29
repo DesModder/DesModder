@@ -126,6 +126,9 @@ export class FolderCostPanel extends Component<{
   totalWidth = 0;
   totalSymbols = 0;
 
+  enabled = true;
+  checkedStats = false;
+
   recalculate() {
     const exprs = Calc.controller
       .getAllItemModels()
@@ -135,6 +138,20 @@ export class FolderCostPanel extends Component<{
 
     this.totalWidth = 0;
     this.totalSymbols = 0;
+
+    if (!this.checkedStats) {
+      const chars = exprs.reduce(
+        (prev, curr) => prev + (curr.latex?.length ?? 0),
+        0
+      );
+
+      if (chars > 2000) {
+        this.enabled = false;
+        this.checkedStats = true;
+        this.update();
+        return;
+      }
+    }
 
     for (const e of exprs) {
       const { width, symbols } = getGolfStats(e.latex ?? "");
@@ -156,28 +173,43 @@ export class FolderCostPanel extends Component<{
       this.recalculate();
     }, 0);
 
-    this.dispatcher = Calc.controller.dispatcher.register((e) => {
+    this.dispatcher = Calc.controller.dispatcher.register(() => {
       this.recalculate();
     });
 
     return (
-      <div class="dsm-code-golf-char-count-container">
-        <div class="dsm-code-golf-char-count">
-          <div>
-            {() =>
-              format("code-golf-width-in-pixels", {
-                pixels: Math.round(this.totalWidth),
-              })
-            }
-          </div>
-          <div>
-            {() =>
-              format("code-golf-symbol-count", {
-                elements: this.totalSymbols,
-              })
-            }
-          </div>
-        </div>
+      <div
+        class="dsm-code-golf-char-count-container"
+        onClick={() => {
+          this.enabled = true;
+          this.recalculate();
+        }}
+      >
+        {IfElse(() => this.enabled, {
+          true: () => (
+            <div class="dsm-code-golf-char-count">
+              <div>
+                {() =>
+                  format("code-golf-width-in-pixels", {
+                    pixels: Math.round(this.totalWidth),
+                  })
+                }
+              </div>
+              <div>
+                {() =>
+                  format("code-golf-symbol-count", {
+                    elements: this.totalSymbols,
+                  })
+                }
+              </div>
+            </div>
+          ),
+          false: () => (
+            <div class="dsm-code-golf-char-count dsm-clickable">
+              {format("code-golf-click-to-enable-folder")}
+            </div>
+          ),
+        })}
       </div>
     );
   }
