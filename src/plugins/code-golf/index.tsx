@@ -60,11 +60,6 @@ function getGolfStats(latex: string): {
     hasError: () => false,
     handleFocusChanged: () => () => false,
     ariaLabel: () => "",
-    // getAriaLabel: () => "",
-    // getAriaPostLabel: () => "",
-    // capExpressionSize: () => false as false,
-    // onUserChangedLatex: () => {},
-    // config: () => ({ autoOperatorNames: "" }),
   });
 
   const stats = {
