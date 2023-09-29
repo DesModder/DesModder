@@ -39,7 +39,15 @@ function calcSymbolCount(el?: HTMLElement) {
   return rootblock ? symbolCount(rootblock) : 0;
 }
 
-function getGolfStats(latex: string) {
+const cachedGolfStatsPool = new Map<string, ReturnType<typeof getGolfStats>>();
+
+function getGolfStats(latex: string): {
+  width: number;
+  symbols: number;
+} {
+  const cached = cachedGolfStatsPool.get(latex);
+  if (cached) return cached;
+
   const fakeContainer = document.createElement("div");
   document.body.appendChild(fakeContainer);
   fakeContainer.style.transform = `scale(${1 / 0.75})`;
@@ -63,6 +71,12 @@ function getGolfStats(latex: string) {
     width: calcWidthInPixels(fakeContainer),
     symbols: calcSymbolCount(fakeContainer),
   };
+
+  cachedGolfStatsPool.set(latex, stats);
+
+  if (cachedGolfStatsPool.size > 10000) {
+    cachedGolfStatsPool.delete(cachedGolfStatsPool.keys().next().value);
+  }
 
   document.body.removeChild(fakeContainer);
 
@@ -131,12 +145,18 @@ export class FolderCostPanel extends Component<{
     this.update();
   }
 
+  dispatcher!: string;
+
+  willUnmount() {
+    Calc.controller.dispatcher.unregister(this.dispatcher);
+  }
+
   template() {
     setTimeout(() => {
       this.recalculate();
     }, 0);
 
-    Calc.controller.dispatcher.register((e) => {
+    this.dispatcher = Calc.controller.dispatcher.register((e) => {
       this.recalculate();
     });
 
