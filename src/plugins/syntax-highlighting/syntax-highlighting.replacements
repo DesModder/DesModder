@@ -1,0 +1,33 @@
+# Replacements for Syntax Highlighting
+
+*plugin* `syntax-highlighting`
+
+## Add a class for commas
+
+*Description* `Allow commas (',') to be highlighted.`
+
+*Find* => `from`
+
+https://github.com/desmosinc/mathquill/blob/5ba5994282a6e7cbec5426b8837ed8089ff0e0d9/src/dom.ts#L56-L83
+
+```js
+for (var $prop in $opts) {
+    var $val = $opts[$prop];
+    $val !== void 0 && $elem.setAttribute(
+      $prop,
+      typeof $val == "string" ? $val : String($val)
+    )
+}
+if ($children)
+    for (var $i = 0; $i < $children.length; $i++)
+        $elem.appendChild($children[$i]);
+```
+
+*Replace* `from` with
+
+```js
+__from__
+if ($children?.length === 1 && $children[0]?.textContent === ",") {
+  $elem.classList.add("dsm-mq-syntax-comma");
+}
+```

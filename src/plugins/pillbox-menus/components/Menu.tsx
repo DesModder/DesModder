@@ -1,5 +1,14 @@
 import { Component, jsx } from "#DCGView";
-import { Toggle, If, Checkbox, Tooltip, For, Match } from "#components";
+import {
+  Toggle,
+  If,
+  Checkbox,
+  Tooltip,
+  For,
+  Match,
+  IfElse,
+  IconButton,
+} from "#components";
 import { format } from "#i18n";
 import {
   ConfigItem,
@@ -45,6 +54,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "hide-errors",
     "compact-view",
     "multiline",
+    "syntax-highlighting",
   ],
   integrations: ["wakatime"],
 };
@@ -177,6 +187,8 @@ export default class Menu extends Component<{
                   stringOption(this.pm, item, plugin, pluginSettings),
                 number: () =>
                   numberOption(this.pm, item, plugin, pluginSettings),
+                "color-list": () =>
+                  colorListOption(this.pm, item, plugin, pluginSettings),
               })
             }
           </If>
@@ -184,6 +196,91 @@ export default class Menu extends Component<{
       </div>
     );
   }
+}
+
+function colorListOption(
+  pm: PillboxMenus,
+  item: ConfigItem,
+  plugin: SpecificPlugin,
+  settings: GenericSettings
+) {
+  const setValue = (newValue: string[]) =>
+    pm.expandedPlugin &&
+    pm.dsm.setPluginSetting(pm.expandedPlugin, item.key, newValue);
+
+  const value = () => settings[item.key] as string[];
+
+  return (
+    <div class="dsm-settings-item">
+      <div class="dsm-settings-color-list-container">
+        <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
+          <label for={`dsm-settings-item__input-${item.key}`}>
+            {configItemName(plugin, item)}
+          </label>
+        </Tooltip>
+        {IfElse(() => value().length > 0, {
+          true: () => (
+            <div class="flex">
+              <For
+                each={() =>
+                  (settings[item.key] as string[]).map((e, i) => [e, i])
+                }
+                key={([e, i]) => `${e}:${i}`}
+              >
+                <ol class="dsm-settings-color-list">
+                  {([v, i]: [string, number]) => (
+                    <div class="dsm-settings-color-list-item-container">
+                      <input
+                        type="color"
+                        value={v}
+                        onChange={(e: InputEvent) => {
+                          const newValue = (e.target as HTMLInputElement).value;
+                          setValue(
+                            (settings[item.key] as string[]).map((e, j) =>
+                              j === i ? newValue : e
+                            )
+                          );
+                        }}
+                      ></input>
+                      <div class="add-remove-buttons">
+                        <IconButton
+                          onTap={() => {
+                            setValue([
+                              ...value().slice(0, i + 1),
+                              "#FF0000",
+                              ...value().slice(i + 1),
+                            ]);
+                          }}
+                          iconClass={"dcg-icon-plus"}
+                        ></IconButton>
+                        <IconButton
+                          onTap={() => {
+                            setValue(value().filter((_, j) => j !== i));
+                          }}
+                          iconClass={"dcg-icon-remove"}
+                        ></IconButton>
+                      </div>
+                    </div>
+                  )}
+                </ol>
+              </For>
+              <ResetButton pm={pm} key={item.key} />
+            </div>
+          ),
+          false: () => (
+            <div class="flex">
+              <IconButton
+                iconClass="dcg-icon-plus"
+                onTap={() => {
+                  setValue(["#FF0000"]);
+                }}
+              ></IconButton>
+            </div>
+          ),
+        })}
+      </div>
+    </div>
+  );
 }
 
 function numberOption(

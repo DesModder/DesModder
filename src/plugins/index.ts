@@ -22,6 +22,7 @@ import RightClickTray from "./right-click-tray";
 import SetPrimaryColor from "./set-primary-color";
 import ShiftEnterNewline from "./shift-enter-newline";
 import ShowTips from "./show-tips";
+import SyntaxHighlighting from "./syntax-highlighting";
 import TextMode from "./text-mode";
 import VideoCreator from "./video-creator";
 import Wakatime from "./wakatime";
@@ -52,11 +53,16 @@ export interface ConfigItemNumber extends ConfigItemGeneric {
   step: number;
   variant?: "range" | "number";
 }
+export interface ConfigItemColorList extends ConfigItemGeneric {
+  type: "color-list";
+  default: string[];
+}
 
 export type ConfigItem =
   | ConfigItemBoolean
   | ConfigItemString
-  | ConfigItemNumber;
+  | ConfigItemNumber
+  | ConfigItemColorList;
 
 export type GenericSettings = Record<string, any>;
 
@@ -125,6 +131,7 @@ export const keyToPlugin = {
   compactView: CompactView,
   exprActionButtons: ExprActionButtons,
   codeGolf: CodeGolf,
+  syntaxHighlighting: SyntaxHighlighting,
 } satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);
@@ -178,6 +185,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get multiline () { return this.ep["multiline"]; }
   get exprActionButtons () { return this.ep["expr-action-buttons"]; }
   get codeGolf () { return this.ep["code-golf"]; }
+  get syntaxHighlighting () { return this.ep["syntax-highlighting"]}
 }
 
 export type IDToPluginSettings = {

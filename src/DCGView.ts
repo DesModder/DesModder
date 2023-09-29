@@ -130,6 +130,7 @@ declare global {
       label: any;
       strong: any;
       ul: any;
+      ol: any;
       li: any;
       table: any;
       tr: any;

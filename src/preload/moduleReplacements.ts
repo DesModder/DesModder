@@ -33,6 +33,7 @@ const pluginNames = [
   "manage-metadata",
   "pillbox-menus",
   "code-golf",
+  "syntax-highlighting",
 ];
 
 replacements.forEach((r) => {
