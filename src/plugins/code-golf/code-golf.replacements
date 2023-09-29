@@ -2,9 +2,9 @@
 
 *plugin* `code-golf`
 
-## Add a character count to each expression in the exppanel
+## Add golfing stats to expressions in exppanel
 
-*Description* `Show how many characters used by an expression in the exppanel`
+*Description* `Show total expression width and symbol count`
 
 *Find* => `math expression item`
 ```js
@@ -29,7 +29,7 @@ __rest3__,
 DSM.insertElement(() => ( DSM.codeGolf?.expressionItemCostPanel(this.model, this._rootNode)  ))
 ```
 
-## Add total counts to folders in exppanel
+## Add total golf stats counts to folders in exppanel
 
 *Description* `Show golfing stats for an entire folder`
 
