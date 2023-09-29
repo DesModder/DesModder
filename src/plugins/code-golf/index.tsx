@@ -1,18 +1,9 @@
 import { Component, jsx, mountToNode } from "#DCGView";
-import { autoOperatorNames } from "src/utils/depUtils";
 import { Inserter, PluginController } from "../PluginController";
 import "./index.less";
 import { format } from "localization/i18n-core";
-import {
-  DStaticMathquillView,
-  If,
-  IfElse,
-  InlineMathInputView,
-  MathQuillView,
-  MathQuillViewComponent,
-  StaticMathQuillView,
-} from "src/components";
-import { Calc, ExpressionModel, FolderModel, Fragile } from "src/globals";
+import { IfElse, InlineMathInputView } from "src/components";
+import { Calc, ExpressionModel, FolderModel } from "src/globals";
 
 function calcWidthInPixels(domNode?: HTMLElement) {
   const rootblock = domNode?.querySelector(".dcg-mq-root-block");
@@ -121,28 +112,32 @@ export class FolderCostPanel extends Component<{
   totalWidth = 0;
   totalSymbols = 0;
 
+  recalculate() {
+    const exprs = Calc.controller
+      .getAllItemModels()
+      .filter(
+        (m) => m.type === "expression" && m.folderId === this.props.model().id
+      ) as ExpressionModel[];
+
+    this.totalWidth = 0;
+    this.totalSymbols = 0;
+
+    for (const e of exprs) {
+      const { width, symbols } = getGolfStats(e.latex ?? "");
+      this.totalWidth += width;
+      this.totalSymbols += symbols;
+    }
+
+    this.update();
+  }
+
   template() {
-    console.log("this", this);
+    setTimeout(() => {
+      this.recalculate();
+    }, 0);
 
     Calc.controller.dispatcher.register((e) => {
-      console.log("forceupadte");
-
-      const exprs = Calc.controller
-        .getAllItemModels()
-        .filter(
-          (m) => m.type === "expression" && m.folderId === this.props.model().id
-        ) as ExpressionModel[];
-
-      this.totalWidth = 0;
-      this.totalSymbols = 0;
-
-      for (const e of exprs) {
-        const { width, symbols } = getGolfStats(e.latex ?? "");
-        this.totalWidth += width;
-        this.totalSymbols += symbols;
-      }
-
-      this.update();
+      this.recalculate();
     });
 
     return (
