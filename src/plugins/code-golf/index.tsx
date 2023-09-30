@@ -4,13 +4,7 @@ import { Inserter, PluginController } from "../PluginController";
 import "./index.less";
 import { format } from "localization/i18n-core";
 import { IfElse, InlineMathInputView } from "src/components";
-import {
-  Calc,
-  ExpressionModel,
-  FolderModel,
-  ItemModel,
-  TextModel,
-} from "src/globals";
+import { Calc, ExpressionModel, FolderModel, TextModel } from "src/globals";
 
 function calcWidthInPixels(domNode?: HTMLElement) {
   const rootblock = domNode?.querySelector(".dcg-mq-root-block");
@@ -227,8 +221,6 @@ export class NoteCostPanel extends Component<{
   model: () => TextModel;
 }> {
   template() {
-    console.log(this.props.model());
-
     return (
       <div class="dsm-code-golf-char-count-container">
         {IfElse(
