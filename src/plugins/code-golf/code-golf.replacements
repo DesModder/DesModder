@@ -54,29 +54,3 @@ $DCGView2.createElement("div", {
 __rest2folder__,
 DSM.insertElement(() => (DSM.codeGolf?.folderCostPanel(this.model)))
 ```
-
-## Add character count stats to note expressions
-
-*Description* `Show golfing stats for a note representing codegolf`
-
-*Find* => `note expression item`
-```js
-$DCGView2.createElement("div", {
-    class: () => ({
-        "dcg-do-not-blur": !0,
-        "dcg-expressionitem": !0,
-        "dcg-readonly": this.controller.isItemReadonly(this.id),
-        "dcg-expressiontext": !0,
-        __classesAfterNote__
-    }),
-    __rest1note__
-}, $DCGView2.createElement("div", {
-    class: $DCGView2.const("dcg-fade-container")
-}, __rest2note__), __rest3note__)
-```
-
-*Replace* `__rest2note__` with
-```js
-__rest2note__,
-DSM.insertElement(() => (DSM.codeGolf?.noteCostPanel(this.model)))
-```
