@@ -4,7 +4,13 @@ import { Inserter, PluginController } from "../PluginController";
 import "./index.less";
 import { format } from "localization/i18n-core";
 import { IfElse, InlineMathInputView } from "src/components";
-import { Calc, ExpressionModel, FolderModel, TextModel } from "src/globals";
+import {
+  Calc,
+  ExpressionModel,
+  FolderModel,
+  ItemModel,
+  TextModel,
+} from "src/globals";
 
 function calcWidthInPixels(domNode?: HTMLElement) {
   const rootblock = domNode?.querySelector(".dcg-mq-root-block");
@@ -265,6 +271,16 @@ export default class CodeGolf extends PluginController {
 
   noteCostPanel(model: TextModel) {
     return () => <NoteCostPanel model={() => model}></NoteCostPanel>;
+  }
+
+  getDragCount(id: string, defaultCount: number) {
+    const model = Calc.controller.getItemModel(id) as ItemModel;
+
+    if (model.type === "text" && model.text?.startsWith("@codegolf")) {
+      return 2;
+    }
+
+    return defaultCount;
   }
 
   afterConfigChange(): void {}

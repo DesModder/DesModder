@@ -80,3 +80,22 @@ $DCGView2.createElement("div", {
 __rest2note__,
 DSM.insertElement(() => (DSM.codeGolf?.noteCostPanel(this.model)))
 ```
+
+*Description* `Override dragdrop to properly deal with note-expression pairs`
+
+*Find* => `handleDispatchedAction`
+```js
+handleDispatchedAction($DesmosEvent) {
+```
+
+*Find* => `dragdropHandlerParams`
+```js
+                        firstItemId: $firstItem.id,
+                        numberOfItems: $numOfItems,
+                        expandFolder: $shouldExpandFolder,
+```
+
+*Replace* `$numOfItems` with
+```js
+DSM.codeGolf?.getDragCount($firstItem.id, $numOfItems) ?? $numOfItems
+```
