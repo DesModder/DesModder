@@ -1,0 +1,56 @@
+# Replacements for Code Golf
+
+*plugin* `code-golf`
+
+## Add a character count to each expression in the exppanel
+
+*Description* `Show how many characters used by an expression in the exppanel`
+
+*Find* => `math expression item`
+```js
+$DCGView.createElement("div", {
+    class: ()=>({
+        "dcg-do-not-blur": !0,
+        "dcg-expressionitem": !0,
+        "dcg-mathitem": !0,
+        __rest0__
+        }),
+        __rest1__
+}, $DCGView.createElement("div", {
+                class: $DCGView.const("dcg-fade-container"),
+                onTapStart: this.bindFn(this.onMouseSelect),
+                onTap: this.bindFn(this.onMouseSelect)
+            }, __rest3__), __rest4__)
+```
+
+*Replace* `__rest3__` with
+```js
+__rest3__,
+DSM.insertElement(() => ( DSM.codeGolf?.expressionItemCostPanel(this.model, this._rootNode)  ))
+```
+
+## Add total counts to folders in exppanel
+
+*Description* `Show golfing stats for an entire folder`
+
+*Find* => `folder expression item`
+```js
+$DCGView2.createElement("div", {
+    class: () => ({
+        "dcg-do-not-blur": !0,
+        "dcg-expressionitem": !0,
+        "dcg-readonly": this.controller.isItemReadonly(this.id),
+        "dcg-expressionfolder": !0,
+        __classesAfter__
+    }),
+    __rest1folder__
+}, $DCGView2.createElement("div", {
+    class: $DCGView2.const("dcg-fade-container")
+}, __rest2folder__), __rest3folder__)
+```
+
+*Replace* `__rest2folder__` with
+```js
+__rest2folder__,
+DSM.insertElement(() => (DSM.codeGolf?.folderCostPanel(this.model)))
+```

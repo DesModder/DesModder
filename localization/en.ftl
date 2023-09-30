@@ -308,6 +308,14 @@ custom-mathquill-config-opt-extendedGreek-desc = Enables replacements for all su
 custom-mathquill-config-opt-lessFSpacing-name = Less Spacing Around "f"
 custom-mathquill-config-opt-lessFSpacing-desc = Reduces extra spacing around the letter "f"
 
+## Code Golf
+code-golf-name = Code Golf
+code-golf-desc = Tools for helping Desmos Code Golfers.
+code-golf-width-in-pixels = Width: { $pixels } px
+code-golf-symbol-count = Symbol Count: { $elements }
+code-golf-click-to-enable-folder = Click to enable code golf stats.
+code-golf-note-latex-byte-count = { $chars } LaTeX Bytes
+
 ## Syntax highlightAlternatingLines
 syntax-highlighting-name = Syntax Highlighting
 syntax-highlighting-desc = Color in various parts of expressions to make them easier to reason about.

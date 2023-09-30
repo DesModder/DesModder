@@ -44,6 +44,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "shift-enter-newline",
     "folder-tools",
     "custom-mathquill-config",
+    "code-golf",
   ],
   visual: [
     "set-primary-color",
