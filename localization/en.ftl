@@ -314,6 +314,7 @@ code-golf-desc = Tools for helping Desmos Code Golfers.
 code-golf-width-in-pixels = Width: { $pixels } px
 code-golf-symbol-count = Symbol Count: { $elements }
 code-golf-click-to-enable-folder = Click to enable code golf stats.
+code-golf-note-latex-byte-count = { $chars } LaTeX Bytes
 
 ## Syntax highlightAlternatingLines
 syntax-highlighting-name = Syntax Highlighting
