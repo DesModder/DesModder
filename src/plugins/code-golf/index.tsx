@@ -280,6 +280,16 @@ export default class CodeGolf extends PluginController {
       return 2;
     }
 
+    const prevModel = Calc.controller.getItemModelByIndex(model.index - 1);
+
+    if (
+      prevModel &&
+      prevModel.type === "text" &&
+      prevModel.text?.startsWith("@codegolf")
+    ) {
+      return 0;
+    }
+
     return defaultCount;
   }
 
@@ -335,6 +345,28 @@ export default class CodeGolf extends PluginController {
 
       if (e.type === "set-state") {
         this.updateTextExprGolfMappings(e.state);
+      }
+
+      if (e.type === "start-dragdrop") {
+        const model = Calc.controller.getItemModel(
+          e.dragTarget.calcId
+        ) as ItemModel;
+
+        if (model.type !== "expression") return;
+
+        const prevModel = Calc.controller.getItemModelByIndex(model.index - 1);
+
+        if (
+          prevModel &&
+          prevModel.type === "text" &&
+          prevModel.text?.startsWith("@codegolf")
+        ) {
+          setTimeout(() => {
+            Calc.controller.dispatch({
+              type: "stop-dragdrop",
+            });
+          });
+        }
       }
     });
   }

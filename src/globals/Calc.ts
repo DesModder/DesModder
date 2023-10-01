@@ -28,7 +28,8 @@ export type DispatchedEvent =
         | "commit-geo-objects"
         | "upward-delete-selected-expression"
         | "downward-delete-selected-expression"
-        | "ui/container-resized";
+        | "ui/container-resized"
+        | "stop-dragdrop";
     }
   | {
       type: "keypad/set-minimized";
@@ -101,7 +102,13 @@ export type DispatchedEvent =
     }
   | { type: "set-folder-collapsed"; id: string; isCollapsed: boolean }
   | { type: "set-item-colorLatex"; id: string; colorLatex: string }
-  | { type: "set-note-text"; id: string; text: string };
+  | { type: "set-note-text"; id: string; text: string }
+  | {
+      type: "start-dragdrop";
+      dragTarget: { type: "expression"; calcId: string };
+      grabPt: { x: number; y: number };
+      mousePt: { x: number; y: number };
+    };
 
 /**
  * Evaluator change: a change set associated with a single id, passed back from
