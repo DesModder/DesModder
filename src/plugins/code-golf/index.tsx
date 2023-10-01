@@ -282,15 +282,21 @@ export default class CodeGolf extends PluginController {
 
     const prevModel = Calc.controller.getItemModelByIndex(model.index - 1);
 
-    if (
-      prevModel &&
-      prevModel.type === "text" &&
-      prevModel.text?.startsWith("@codegolf")
-    ) {
+    if (this.isValidPair(prevModel, model)) {
       return 0;
     }
 
     return defaultCount;
+  }
+
+  isValidPair(note?: ItemModel, expr?: ItemModel) {
+    return (
+      note &&
+      expr?.type === "expression" &&
+      note.type === "text" &&
+      note.text?.startsWith("@codegolf") &&
+      this.prevNoteLatex.get(note.id) === expr?.latex
+    );
   }
 
   afterConfigChange(): void {}
@@ -298,6 +304,11 @@ export default class CodeGolf extends PluginController {
   dispatcher!: string;
 
   prevNoteLatex = new Map<string, string>();
+
+  knownNoteExprPairs: {
+    noteID: string;
+    exprID: string;
+  }[] = [];
 
   afterEnable() {
     this.updateTextExprGolfMappings(Calc.getState());
@@ -348,6 +359,25 @@ export default class CodeGolf extends PluginController {
       }
 
       if (e.type === "start-dragdrop") {
+        this.knownNoteExprPairs = [];
+
+        const models = Calc.controller.getAllItemModels();
+
+        for (const model of models) {
+          if (model.type === "text" && model.text?.startsWith("@codegolf")) {
+            const nextModel = Calc.controller.getItemModelByIndex(
+              model.index + 1
+            );
+
+            if (nextModel && nextModel.type === "expression") {
+              this.knownNoteExprPairs.push({
+                noteID: model.id,
+                exprID: nextModel.id,
+              });
+            }
+          }
+        }
+
         const model = Calc.controller.getItemModel(
           e.dragTarget.calcId
         ) as ItemModel;
@@ -356,17 +386,34 @@ export default class CodeGolf extends PluginController {
 
         const prevModel = Calc.controller.getItemModelByIndex(model.index - 1);
 
-        if (
-          prevModel &&
-          prevModel.type === "text" &&
-          prevModel.text?.startsWith("@codegolf")
-        ) {
+        // if trying to drag/drop a linked math expression in a pair,
+        // then force stop the operation by emitting a stop-dragdrop event
+        if (this.isValidPair(prevModel, model)) {
           setTimeout(() => {
             Calc.controller.dispatch({
               type: "stop-dragdrop",
             });
           });
         }
+      }
+
+      if (e.type === "stop-dragdrop") {
+        for (const { noteID, exprID } of this.knownNoteExprPairs) {
+          const note = Calc.controller.getItemModel(noteID);
+          const expr = Calc.controller.getItemModel(exprID);
+
+          if (!note || !expr) continue;
+
+          Calc.controller.listModel.__itemModelArray.splice(expr.index, 1);
+
+          Calc.controller.listModel.__itemModelArray.splice(
+            note.index + 1,
+            0,
+            expr
+          );
+        }
+
+        Calc.controller.updateTheComputedWorld();
       }
     });
   }
