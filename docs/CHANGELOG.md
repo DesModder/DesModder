@@ -1,5 +1,18 @@
 # DesModder Changelog
 
+## 0.11.11
+
+New Features:
+
+- Syntax Highlighting Plugin
+- Code Golf Plugin
+
+Bug fixes:
+
+- Fix Pillbox Buttons loading error.
+
+Thanks to SlimRunner for his continued support on Spanish translations.
+
 ## 0.11.10
 
 New Features:
