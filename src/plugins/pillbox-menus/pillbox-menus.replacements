@@ -23,17 +23,28 @@ DSM.insertElement(() => DSM.pillboxMenus?.pillboxButtonsView(true)),
 
 *Description* `Add pillbox buttons (like the DesModder button) in the graphing calculator`
 
-*Find* => `from`
+*Find* => `pushkey`
 ```js
-$DCGView.createElement($, {
-  predicate: this.bindFn(this.shouldShowResetButton)
-} ____)
+this.shouldShowGeometrySettings() && $right.push("settings-geo"),
 ```
 
-*Replace* `from` with
+*Replace* `pushkey` with
 ```js
-DSM.insertElement(() => DSM.pillboxMenus?.pillboxButtonsView(false)),
-__from__
+__pushkey__
+DSM.pillboxMenus && $right.push("dsm-pillbox-menus"),
+```
+
+*Find* => `case`
+```js
+case "settings2d":
+  return $.createElement($, ____);
+```
+
+*Replace* `case` with
+```js
+__case__
+case "dsm-pillbox-menus":
+  return DSM.insertElement(() => DSM.pillboxMenus?.pillboxButtonsView(false));
 ```
 
 ## Bottom zero for our pillbox menus
