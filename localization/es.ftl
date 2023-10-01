@@ -38,7 +38,7 @@ show-tips-tip-long-video-capture = Antes de empezar a capturar un vídeo largo, 
 show-tips-tip-find-replace = Buscar y reemplazar es ideal para renombrar variables
 show-tips-tip-duplicate = Presiona Ctrl+Q ó Ctrl+Shift+Q para duplicar la expresión seleccionada
 show-tips-tip-note-newline = Teclea Shift+Entrar para añadir líneas nuevas en las notas y en los títulos de imágenes/carpetas
-show-tips-tip-hide-errors = Haz clic a los triángulos de advertencia para desvanecerlos (o presiona Shift+Entrar)
+show-tips-tip-hide-errors = Has clic a los triángulos de advertencia para desvanecerlos (o presiona Shift+Entrar)
 show-tips-tip-note-folder = Para crear una nota puedes teclear una comilla doble o escribir "folder" para crear una carpeta
 show-tips-tip-arctan = Utiliza arctan(y, x) en lugar de arctan(y / x) para obtener el ángulo de un punto
 show-tips-tip-indefinite-integral = Puedes utilizar límites infinitos en integrales
@@ -122,7 +122,7 @@ pin-expressions-unpin = Desfijar
 builtin-settings-name = Configuración de Calculadora
 builtin-settings-desc = Te permite configurar las funciones integradas en Desmos. La mayoría de las opciones aplican solamente a tu navegador y son ignoradas cuando compartes tu gráfico con otras personas.
 builtin-settings-opt-advancedStyling-name = Diseño avanzado
-builtin-settings-opt-advancedStyling-desc = Permite editar rótulos así como mostrar éstos cuando el cursor está encima, añadir contorno de texto y mostrar un solo cuadrante de cuadrícula.
+builtin-settings-opt-advancedStyling-desc = Permite editar rótulos, así como mostrar éstos cuando el cursor está encima, añadir contorno de texto y mostrar un solo cuadrante de cuadrícula.
 builtin-settings-opt-graphpaper-name = Área del Gráfico
 # Unchanged
 builtin-settings-opt-graphpaper-desc = {""}
@@ -258,7 +258,7 @@ manage-metadata-desc = Permite administrar metadatos, así como las extensiones 
 intellisense-name = Intellisense
 intellisense-desc = Brinda varias funciones esenciales de una IDE en Desmos incluyendo sugerencias de autocompletado, visualización de parámetros, e ir a definición. Sigue el enlace para la documentación:
 intellisense-opt-subscriptify-name = Convertir Subíndices
-intellisense-opt-subscriptify-desc = Automáticamente convierte nombres de funciones o variables con subíndices aunque los escribas sin estos.
+intellisense-opt-subscriptify-desc = Automáticamente convierte nombres de funciones o variables con subíndices, aunque los escribas sin estos.
 intellisense-jump2def-menu-instructions = tiene múltiples definiciones. Elige a cuál quieres navegar.
 
 ## Compact View
@@ -318,3 +318,31 @@ custom-mathquill-config-opt-extendedGreek-name = Más letras griegas
 custom-mathquill-config-opt-extendedGreek-desc = Habilita reemplazos para todas las letras griegas
 custom-mathquill-config-opt-lessFSpacing-name = Reducir interletraje en la "f"
 custom-mathquill-config-opt-lessFSpacing-desc = Reduce el espacio a los lados de la letra "f" en expresiones
+
+## Code Golf
+# Unchanged
+code-golf-name = Code Golf
+code-golf-desc = Herramientas para ayudar con el code golf en Desmos.
+code-golf-width-in-pixels = Ancho: { $pixels } px
+code-golf-symbol-count = Cantidad de Símbolos: { $elements }
+code-golf-click-to-enable-folder = Has clic para habilitar estadísticas de tu golf.
+# Unchanged
+code-golf-note-latex-byte-count = { $chars } LaTeX Bytes
+
+## Syntax highlightAlternatingLines
+syntax-highlighting-name = Resaltado de Sintaxis
+syntax-highlighting-desc = Colorea distintas partes de una expresión para hacerlas más fácil de distinguir.
+syntax-highlighting-opt-bracketPairColorization-name = Colorear Pares de Paréntesis
+syntax-highlighting-opt-bracketPairColorization-desc = Aplica diferentes colores a cada par balanceado de paréntesis para hacerlos más fácil de emparejar visualmente.
+syntax-highlighting-opt-bracketPairColorizationColors-name = Colores de Pares
+syntax-highlighting-opt-bracketPairColorizationColors-desc = Especifica el número y el orden de los colores utilizados para colorear los paréntesis.
+syntax-highlighting-opt-bpcColorInText-name = Colorear Texto Encerrado
+syntax-highlighting-opt-bpcColorInText-desc = Aplica el mismo color de cada paréntesis al texto que este encierra.
+syntax-highlighting-opt-thickenBrackets-name = Ensanchar Paréntesis
+syntax-highlighting-opt-thickenBrackets-desc = Adherir ancho adicional a los paréntesis para asistir el coloreado de éstos.
+syntax-highlighting-opt-highlightBracketBlocks-name = Resaltar Bloques
+syntax-highlighting-opt-highlightBracketBlocks-desc = Resalta el grupo de paréntesis más pequeño que contiene el cursor de texto.
+syntax-highlighting-opt-highlightBracketBlocksHover-name = Resaltar con el Ratón
+syntax-highlighting-opt-highlightBracketBlocksHover-desc = Resalta el grupo de paréntesis más pequeño que contiene el cursor del ratón. 
+syntax-highlighting-opt-underlineHighlightedRanges-name = Subrayar Grupos Resaltados
+syntax-highlighting-opt-underlineHighlightedRanges-desc = Agrega subrayado debajo de los grupos resaltados para mejorar visibilidad.
