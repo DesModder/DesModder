@@ -5,6 +5,10 @@ import { hookIntoOverrideKeystroke } from "src/utils/listenerHelpers";
 import { MathQuillField, MathQuillView } from "src/components";
 import { getController } from "../intellisense/latex-parsing";
 
+function isSupSubscriptMQElem(el?: HTMLElement) {
+  return el?.classList.contains("dcg-mq-supsub");
+}
+
 function isWordMQElem(el?: HTMLElement) {
   return (
     el &&
@@ -92,7 +96,14 @@ export default class BetterNavigation extends PluginController {
               isWordMQElem(ctrlr.cursor?.[right ? 1 : -1]?._el) &&
               i < 1000
             ) {
-              mq.keystroke(arrowOp);
+              if (isSupSubscriptMQElem(ctrlr.cursor?.[right ? 1 : -1]?._el)) {
+                mq.keystroke(right ? "Shift-Right" : "Shift-Left");
+
+                // remove selection if not holding down shift
+                if (!shift) mq.keystroke(arrowOp);
+              } else {
+                mq.keystroke(arrowOp);
+              }
 
               // if at the start/end of a subscript/superscript block,
               // then escape it
