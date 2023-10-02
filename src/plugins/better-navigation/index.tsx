@@ -75,7 +75,9 @@ export default class BetterNavigation extends PluginController {
             next?._el?.classList.contains("dcg-mq-bracket-container") ||
             next?._el?.classList.contains("dcg-mq-fraction") ||
             next?._el?.classList.contains("dcg-mq-large-operator") ||
-            next?._el?.classList.contains("dcg-mq-int")
+            next?._el?.classList.contains("dcg-mq-int") ||
+            next?._el?.classList.contains("dcg-mq-sqrt-container") ||
+            next?._el?.classList.contains("dcg-mq-nthroot-container")
           ) {
             mq.keystroke(right ? "Shift-Right" : "Shift-Left");
 
