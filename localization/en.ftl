@@ -333,3 +333,7 @@ syntax-highlighting-opt-highlightBracketBlocksHover-name = Highlight on Hover
 syntax-highlighting-opt-highlightBracketBlocksHover-desc = Highlight the smallest enclosing bracket pair containing the mouse.
 syntax-highlighting-opt-underlineHighlightedRanges-name = Underline Highlighted Ranges
 syntax-highlighting-opt-underlineHighlightedRanges-desc = Puts a dark underline under highlighted ranges for better visibility.
+
+## Better Navigation
+better-navigation-name = Better Navigation
+better-navigation-desc = Adds Ctrl+Arrow Keys and Ctrl+Shift+Arrow Keys functionality.
