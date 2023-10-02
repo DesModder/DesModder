@@ -398,25 +398,23 @@ export default class CodeGolf extends PluginController {
       }
 
       if (e.type === "stop-dragdrop") {
-        setTimeout(() => {
-          for (const { noteID, exprID } of this.knownNoteExprPairs) {
-            const note = Calc.controller.getItemModel(noteID);
-            const expr = Calc.controller.getItemModel(exprID);
+        for (const { noteID, exprID } of this.knownNoteExprPairs) {
+          const note = Calc.controller.getItemModel(noteID);
+          const expr = Calc.controller.getItemModel(exprID);
 
-            if (!note || !expr) continue;
+          if (!note || !expr) continue;
 
-            Calc.controller.listModel.__itemModelArray.splice(expr.index, 1);
+          Calc.controller.listModel.__itemModelArray.splice(expr.index, 1);
 
-            Calc.controller.listModel.__itemModelArray.splice(
-              note.index + 1,
-              0,
-              expr
-            );
-          }
+          Calc.controller.listModel.__itemModelArray.splice(
+            note.index + 1,
+            0,
+            expr
+          );
 
           Calc.controller.updateTheComputedWorld();
-          Calc.controller.updateViews();
-        }, 0);
+        }
+        Calc.controller.updateViews();
       }
     });
   }
