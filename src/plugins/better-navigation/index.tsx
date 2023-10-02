@@ -67,7 +67,8 @@ export default class BetterNavigation extends PluginController {
           // don't do anything if there's nowhere we can go
           const next = ctrlr.cursor?.[right ? 1 : -1];
 
-          // if the next element is a bracket, fraction, or sum/prod/etc
+          // if the next element is one of the following:
+          // bracket, fraction, sum, product, integral, sqrt, nthroot
           // then skip over the entire thing when ctrl+arrowing (don't edit internals)
           // Shift-arrow already does this behavior perfectly so we first do that.
           // Then we do a normal arrow press to delete the selection.
@@ -98,6 +99,7 @@ export default class BetterNavigation extends PluginController {
               isWordMQElem(ctrlr.cursor?.[right ? 1 : -1]?._el) &&
               i < 1000
             ) {
+              // skip over super/subscript
               if (isSupSubscriptMQElem(ctrlr.cursor?.[right ? 1 : -1]?._el)) {
                 mq.keystroke(right ? "Shift-Right" : "Shift-Left");
 
