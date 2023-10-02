@@ -2,7 +2,7 @@
 import { Calc } from "src/globals";
 import { PluginController } from "../PluginController";
 import { hookIntoOverrideKeystroke } from "src/utils/listenerHelpers";
-import { MathQuillView } from "src/components";
+import { MathQuillField, MathQuillView } from "src/components";
 import { getController } from "../intellisense/latex-parsing";
 
 function isWordMQElem(el?: HTMLElement) {
@@ -11,6 +11,18 @@ function isWordMQElem(el?: HTMLElement) {
     (el.classList.contains("dcg-mq-digit") ||
       el.tagName.toUpperCase() === "VAR" ||
       el.classList.contains("dcg-mq-supsub"))
+  );
+}
+
+function isAtStartOrEndOfASubscriptOrSuperscript(
+  mq: MathQuillField,
+  right: boolean
+) {
+  const ctrlr = getController(mq);
+  return (
+    (ctrlr.cursor?.parent?._el?.classList.contains("dcg-mq-sup") ||
+      ctrlr.cursor?.parent?._el?.classList.contains("dcg-mq-sub")) &&
+    !ctrlr.cursor?.[right ? 1 : -1]
   );
 }
 
@@ -50,23 +62,27 @@ export default class BetterNavigation extends PluginController {
 
           // don't do anything if there's nowhere we can go
           const next = ctrlr.cursor?.[right ? 1 : -1];
-          if (!next) return;
 
           // if the next element is a bracket, fraction, or sum/prod/etc
           // then skip over the entire thing when ctrl+arrowing (don't edit internals)
           // Shift-arrow already does this behavior perfectly so we first do that.
           // Then we do a normal arrow press to delete the selection.
           if (
-            next._el?.classList.contains("dcg-mq-bracket-container") ||
-            next._el?.classList.contains("dcg-mq-fraction") ||
-            next._el?.classList.contains("dcg-mq-large-operator") ||
-            next._el?.classList.contains("dcg-mq-int")
+            next?._el?.classList.contains("dcg-mq-bracket-container") ||
+            next?._el?.classList.contains("dcg-mq-fraction") ||
+            next?._el?.classList.contains("dcg-mq-large-operator") ||
+            next?._el?.classList.contains("dcg-mq-int")
           ) {
             mq.keystroke(right ? "Shift-Right" : "Shift-Left");
+
+            // remove selection if not holding down shift
             if (!shift) mq.keystroke(arrowOp);
 
             // skip over entire variable names, numbers, and operatornames
-          } else if (isWordMQElem(next._el)) {
+          } else if (
+            isAtStartOrEndOfASubscriptOrSuperscript(mq, right) ||
+            (next && isWordMQElem(next._el))
+          ) {
             let i = 0;
             while (
               isWordMQElem(ctrlr.cursor?.[right ? 1 : -1]?._el) &&
@@ -76,13 +92,7 @@ export default class BetterNavigation extends PluginController {
 
               // if at the start/end of a subscript/superscript block,
               // then escape it
-              if (
-                (ctrlr.cursor?.parent?._el?.classList.contains("dcg-mq-sup") ||
-                  ctrlr.cursor?.parent?._el?.classList.contains(
-                    "dcg-mq-sub"
-                  )) &&
-                !ctrlr.cursor?.[right ? 1 : -1]
-              ) {
+              if (isAtStartOrEndOfASubscriptOrSuperscript(mq, right)) {
                 mq.keystroke(arrowOp);
               }
               i++;
