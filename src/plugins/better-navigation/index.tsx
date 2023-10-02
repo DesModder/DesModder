@@ -83,6 +83,10 @@ export default class BetterNavigation extends PluginController {
             isAtStartOrEndOfASubscriptOrSuperscript(mq, right) ||
             (next && isWordMQElem(next._el))
           ) {
+            // leave start/end of sub/sup
+            if (isAtStartOrEndOfASubscriptOrSuperscript(mq, right))
+              mq.keystroke(arrowOp);
+
             let i = 0;
             while (
               isWordMQElem(ctrlr.cursor?.[right ? 1 : -1]?._el) &&
