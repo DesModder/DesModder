@@ -3,6 +3,14 @@ import BetterNavigation from ".";
 import { Component, jsx } from "src/DCGView";
 import { For, IfElse } from "src/components";
 
+function cutoffWithEllipsis(str: string, cutoff: number) {
+  if (str.length > cutoff) {
+    return `${str.slice(0, cutoff)}...`;
+  }
+
+  return str;
+}
+
 export class Outline extends Component<{
   bn: () => BetterNavigation;
 }> {
@@ -33,49 +41,61 @@ export class Outline extends Component<{
       this.update();
     });
 
-    return IfElse(() => this.props.bn().settings.showOutline, {
-      true: () => (
-        <For
-          each={() =>
-            Calc.controller.getAllItemModels().filter((m) => {
-              return (
-                m.type === "folder" ||
-                (m.type === "text" &&
-                  this.props.bn().settings.showNotesInOutline)
-              );
-            })
-          }
-          key={(m) => m.id}
-        >
-          <ul class="dsm-better-nav-outline">
-            {(model: FolderModel | TextModel) => {
-              return IfElse(() => model.type === "folder", {
-                true: () => (
-                  <li
-                    onClick={() => {
-                      this.jumpTo(model.id);
-                    }}
-                  >
-                    <i class="dcg-icon-folder"></i>{" "}
-                    {() => (model as FolderModel).title ?? ""}
-                  </li>
-                ),
-                false: () => (
-                  <li
-                    onClick={() => {
-                      this.jumpTo(model.id);
-                    }}
-                  >
-                    <i class="dcg-icon-text"></i>{" "}
-                    {() => (model as TextModel).text ?? ""}
-                  </li>
-                ),
-              });
-            }}
-          </ul>
-        </For>
-      ),
-      false: () => <div></div>,
-    });
+    const validModels = () =>
+      Calc.controller.getAllItemModels().filter((m) => {
+        return (
+          m.type === "folder" ||
+          (m.type === "text" && this.props.bn().settings.showNotesInOutline)
+        );
+      });
+
+    const cutoff = () => this.props.bn().settings.outlineItemCharLimit;
+
+    return IfElse(
+      () => this.props.bn().settings.showOutline && validModels().length > 0,
+      {
+        true: () => (
+          <For each={() => validModels()} key={(m) => m.id}>
+            <ul class="dsm-better-nav-outline">
+              {(model: FolderModel | TextModel) => {
+                return IfElse(() => model.type === "folder", {
+                  true: () => (
+                    <li
+                      onClick={() => {
+                        this.jumpTo(model.id);
+                      }}
+                    >
+                      <i class="dcg-icon-folder"></i>{" "}
+                      {() =>
+                        cutoffWithEllipsis(
+                          (model as FolderModel).title ?? "",
+                          cutoff()
+                        )
+                      }
+                    </li>
+                  ),
+                  false: () => (
+                    <li
+                      onClick={() => {
+                        this.jumpTo(model.id);
+                      }}
+                    >
+                      <i class="dcg-icon-text"></i>{" "}
+                      {() =>
+                        cutoffWithEllipsis(
+                          (model as TextModel).text ?? "",
+                          cutoff()
+                        )
+                      }
+                    </li>
+                  ),
+                });
+              }}
+            </ul>
+          </For>
+        ),
+        false: () => <div></div>,
+      }
+    );
   }
 }

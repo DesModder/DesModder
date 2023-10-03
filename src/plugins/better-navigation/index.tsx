@@ -38,6 +38,7 @@ interface BetterNavSettings {
   scrollableExpressions: boolean;
   showOutline: boolean;
   showNotesInOutline: boolean;
+  outlineItemCharLimit: number;
 }
 
 export default class BetterNavigation extends PluginController<BetterNavSettings> {
@@ -58,6 +59,16 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
       type: "boolean",
       default: false,
       key: "showNotesInOutline",
+      shouldShow: (settings: BetterNavSettings) => settings.showOutline,
+    },
+    {
+      type: "number",
+      default: 30,
+      min: 0,
+      max: 10000,
+      step: 1,
+      variant: "number",
+      key: "outlineItemCharLimit",
       shouldShow: (settings: BetterNavSettings) => settings.showOutline,
     },
   ] as const;
