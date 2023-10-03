@@ -5,6 +5,8 @@ import { hookIntoOverrideKeystroke } from "src/utils/listenerHelpers";
 import { MathQuillField, MathQuillView } from "src/components";
 import { getController } from "../intellisense/latex-parsing";
 
+import "./index.less";
+
 function isSupSubscriptMQElem(el?: HTMLElement) {
   return el?.classList.contains("dcg-mq-supsub");
 }
@@ -30,11 +32,25 @@ function isAtStartOrEndOfASubscriptOrSuperscript(
   );
 }
 
-export default class BetterNavigation extends PluginController {
+export default class BetterNavigation extends PluginController<{
+  scrollableExpressions: boolean;
+}> {
   static id = "better-navigation" as const;
   static enabledByDefault = true;
+  static config = [
+    {
+      type: "boolean",
+      default: false,
+      key: "scrollableExpressions",
+    },
+  ] as const;
 
-  afterConfigChange(): void {}
+  afterConfigChange(): void {
+    document.body.classList.toggle(
+      "dsm-better-nav-scrollable-expressions",
+      this.settings.scrollableExpressions
+    );
+  }
 
   dispatcherID: string | undefined;
 
@@ -132,6 +148,7 @@ export default class BetterNavigation extends PluginController {
   };
 
   afterEnable() {
+    this.afterConfigChange();
     document.addEventListener("keydown", this.keydownHandler);
   }
 
