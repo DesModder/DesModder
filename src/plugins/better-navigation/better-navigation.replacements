@@ -1,0 +1,22 @@
+# Replacements for Better Navigation
+
+*plugin* `better-navigation`
+
+## Outline
+
+*Description* `Show an outline next to the exppanel for easy folder viewing.`
+
+*Find* => `exppanel outer`
+```js
+$DCGView.createElement("div", {
+                class: $DCGView.const("dcg-exppanel-outer"),
+                onDrop: this.bindFn(this.onDrop),
+                style: ()=>this.computeExppanelOuterStyle()
+            }, __exppanelOuterChildren__)
+```
+
+*Replace* `__exppanelOuterChildren__` 
+```js
+__exppanelOuterChildren__,
+DSM.insertElement(() => (DSM.betterNavigation?.outline()))
+```

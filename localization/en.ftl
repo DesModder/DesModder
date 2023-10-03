@@ -339,3 +339,7 @@ better-navigation-name = Better Navigation
 better-navigation-desc = Tools for making Desmos graphs easier to navigate. Includes Ctrl+Arrow and Ctrl+Shift+Arrow support. 
 better-navigation-opt-scrollableExpressions-name = Scrollable Expressions
 better-navigation-opt-scrollableExpressions-desc = Adds horizontal scrollbars to expressions. This is primarily intended to make scrolling easier on mobile.
+better-navigation-opt-showOutline-name = Show Outline
+better-navigation-opt-showOutline-desc = Show an outline next to the expressions panel showing the names of all the folders.
+better-navigation-opt-showNotesInOutline-name = Show Notes in Outline
+better-navigation-opt-showNotesInOutline-desc = Show text expressions (notes) in the outline as well.
