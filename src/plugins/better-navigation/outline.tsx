@@ -57,7 +57,7 @@ export class Outline extends Component<{
                     }}
                   >
                     <i class="dcg-icon-folder"></i>{" "}
-                    {() => (model as FolderModel).title ?? "Untitled Folder"}
+                    {() => (model as FolderModel).title ?? ""}
                   </li>
                 ),
                 false: () => (
@@ -67,7 +67,7 @@ export class Outline extends Component<{
                     }}
                   >
                     <i class="dcg-icon-text"></i>{" "}
-                    {() => (model as TextModel).text ?? "Untitled Note"}
+                    {() => (model as TextModel).text ?? ""}
                   </li>
                 ),
               });
