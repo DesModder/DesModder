@@ -336,6 +336,6 @@ syntax-highlighting-opt-underlineHighlightedRanges-desc = Puts a dark underline 
 
 ## Better Navigation
 better-navigation-name = Better Navigation
-better-navigation-desc = Adds Ctrl+Arrow Keys and Ctrl+Shift+Arrow Keys functionality.
+better-navigation-desc = Tools for making Desmos graphs easier to navigate. Includes Ctrl+Arrow and Ctrl+Shift+Arrow support. 
 better-navigation-opt-scrollableExpressions-name = Scrollable Expressions
-better-navigation-opt-scrollableExpressions-name = Adds scroll bars to expressions (primarily designed to enable scrolling expressions on mobile).
+better-navigation-opt-scrollableExpressions-desc = Adds horizontal scrollbars to expressions. This is primarily intended to make scrolling easier on mobile.
