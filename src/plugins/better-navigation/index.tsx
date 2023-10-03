@@ -96,7 +96,7 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
           const right = key === "Ctrl-Right" || key === "Ctrl-Shift-Right";
           const shift = key === "Ctrl-Shift-Left" || key === "Ctrl-Shift-Right";
 
-          // remove the "Ctrl-" to get the normal arrow op to emulate.
+          // remove the "Ctrl-" to get the normal arrow op to emulate
           const arrowOp = key.slice(5);
 
           const ctrlr = getController(mq);
