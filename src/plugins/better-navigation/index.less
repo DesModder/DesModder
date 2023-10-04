@@ -10,15 +10,32 @@ body.dsm-better-nav-scrollable-expressions {
   position: absolute;
   z-index: 1;
   border-right: 1px solid rgba(0, 0, 0, 0.2);
-  width: 100px;
+  width: 20px;
   margin: 0;
   padding: 0px;
-  right: -100px;
+  right: -20px;
   background-color: white;
   list-style: none;
   overflow: auto;
   box-shadow: 3px -4px 3px #0003;
   font-size: 80%;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  &.dsm-better-nav-thick-outline {
+    width: 100px;
+    right: -100px;
+    scrollbar-width: initial;
+
+    &::-webkit-scrollbar {
+      width: initial;
+      height: initial;
+    }
+  }
 
   li {
     word-wrap: anywhere;
@@ -42,12 +59,18 @@ body.dsm-better-nav-scrollable-expressions {
     margin-bottom: 0;
 
     &.dsm-better-nav-error {
-      border-left: 20px solid #e66b3c;
+      border-left: 5px solid #e66b3c;
 
       i {
         color: black !important;
         background-blend-mode: exclusion;
       }
     }
+  }
+
+  .dsm-better-nav-outline-selected-item.dsm-better-nav-outline-selected-item.dsm-better-nav-outline-selected-item {
+    outline: 3px solid #8888ff;
+    position: relative;
+    z-index: 3;
   }
 }

@@ -345,3 +345,5 @@ better-navigation-opt-showNotesInOutline-name = Show Notes in Outline
 better-navigation-opt-showNotesInOutline-desc = Show text expressions (notes) in the outline as well.
 better-navigation-opt-outlineItemCharLimit-name = Outline # of Chars
 better-navigation-opt-outlineItemCharLimit-desc = Only show the first N characters of each name in the outline.
+better-navigation-opt-showFoldersInOutline-name = Folder Names in Outline
+better-navigation-opt-showFoldersInOutline-desc = Prominently show folders' names in the outline.

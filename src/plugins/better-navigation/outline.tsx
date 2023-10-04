@@ -17,6 +17,13 @@ function cutoffWithEllipsis(str: string, cutoff: number) {
   return str;
 }
 
+function getSelectedClass(model: ItemModel) {
+  return {
+    "dsm-better-nav-outline-selected-item":
+      model.id === Calc.controller.getSelectedItem()?.id,
+  };
+}
+
 export class Outline extends Component<{
   bn: () => BetterNavigation;
 }> {
@@ -68,34 +75,74 @@ export class Outline extends Component<{
 
     const cutoff = () => this.props.bn().settings.outlineItemCharLimit;
 
+    const isThickOutline = () =>
+      this.props.bn().settings.showFoldersInOutline ||
+      this.props.bn().settings.showNotesInOutline;
+
     return IfElse(
       () => this.props.bn().settings.showOutline && validModels().length > 0,
       {
         true: () => (
           <For each={() => validModels()} key={(m) => m.id}>
-            <ul class="dsm-better-nav-outline">
+            <ul
+              class={() => ({
+                "dsm-better-nav-outline": true,
+                "dsm-better-nav-thick-outline": isThickOutline(),
+              })}
+            >
               {(model: ItemModel) => {
-                return (
-                  <Switch key={() => model.type}>
-                    {(key: ItemModel["type"]) => {
-                      if (key === "folder") {
+                const elem = (
+                  <Switch
+                    key={() =>
+                      (model.type ?? "") +
+                      (this.props.bn().settings.showFoldersInOutline
+                        ? "folders"
+                        : "") +
+                      (this.props.bn().settings.showNotesInOutline
+                        ? "notes"
+                        : "") +
+                      (
+                        model.id === Calc.controller.getSelectedItem()?.id
+                      ).toString()
+                    }
+                  >
+                    {() => {
+                      setTimeout(() => {
+                        const domNode = elem._element._element
+                          ._domNode as HTMLElement;
+
+                        if (
+                          model.id === Calc.controller.getSelectedItem()?.id
+                        ) {
+                          domNode.scrollIntoView({
+                            behavior: "smooth",
+                            block: "nearest",
+                            inline: "center",
+                          });
+                          console.log("scrolling into view!!!!");
+                        }
+                      });
+                      if (model.type === "folder") {
                         return (
                           <li
                             onClick={() => {
                               this.jumpTo(model.id);
                             }}
+                            class={() => getSelectedClass(model)}
                           >
                             <i class="dcg-icon-folder"></i>{" "}
                             {() =>
-                              cutoffWithEllipsis(
-                                (model as FolderModel).title ?? "",
-                                cutoff()
-                              )
+                              this.props.bn().settings.showFoldersInOutline
+                                ? cutoffWithEllipsis(
+                                    model.title ?? "",
+                                    cutoff()
+                                  )
+                                : ""
                             }
                           </li>
                         );
                       } else if (
-                        key === "text" &&
+                        model.type === "text" &&
                         this.props.bn().settings.showNotesInOutline
                       ) {
                         return (
@@ -103,18 +150,16 @@ export class Outline extends Component<{
                             onClick={() => {
                               this.jumpTo(model.id);
                             }}
+                            class={() => getSelectedClass(model)}
                           >
                             <i class="dcg-icon-text"></i>{" "}
                             {() =>
-                              cutoffWithEllipsis(
-                                (model as TextModel).text ?? "",
-                                cutoff()
-                              )
+                              cutoffWithEllipsis(model.text ?? "", cutoff())
                             }
                           </li>
                         );
-                      } else if (key === "expression") {
-                        const exprModel = model as ExpressionModel;
+                      } else if (model.type === "expression") {
+                        const exprModel = model;
                         const li = (
                           <li
                             onClick={() => {
@@ -123,6 +168,7 @@ export class Outline extends Component<{
                             class={() => ({
                               "dsm-better-nav-outline-default-expression": true,
                               "dsm-better-nav-error": !!model.error,
+                              ...getSelectedClass(model),
                             })}
                             style={() => {
                               const shouldBeColored =
@@ -168,12 +214,18 @@ export class Outline extends Component<{
                           onClick={() => {
                             this.jumpTo(model.id);
                           }}
-                          class="dsm-better-nav-outline-default-expression"
+                          class={() => ({
+                            "dsm-better-nav-outline-default-expression": true,
+
+                            ...getSelectedClass(model),
+                          })}
                         ></li>
                       );
                     }}
                   </Switch>
                 );
+
+                return elem;
               }}
             </ul>
           </For>

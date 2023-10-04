@@ -39,6 +39,7 @@ interface BetterNavSettings {
   showOutline: boolean;
   showNotesInOutline: boolean;
   outlineItemCharLimit: number;
+  showFoldersInOutline: boolean;
 }
 
 export default class BetterNavigation extends PluginController<BetterNavSettings> {
@@ -59,6 +60,12 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
       type: "boolean",
       default: false,
       key: "showNotesInOutline",
+      shouldShow: (settings: BetterNavSettings) => settings.showOutline,
+    },
+    {
+      type: "boolean",
+      default: true,
+      key: "showFoldersInOutline",
       shouldShow: (settings: BetterNavSettings) => settings.showOutline,
     },
     {
