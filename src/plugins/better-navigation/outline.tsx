@@ -124,13 +124,34 @@ export class Outline extends Component<{
                               "dsm-better-nav-outline-default-expression": true,
                               "dsm-better-nav-error": !!model.error,
                             })}
-                            style={() => ({
-                              "background-color":
-                                exprModel.formula?.is_graphable &&
-                                !exprModel.hidden
-                                  ? exprModel.color
+                            style={() => {
+                              const shouldBeColored =
+                                (exprModel.formula?.is_graphable &&
+                                  !exprModel.hidden) ??
+                                exprModel?.formula?.rgb_value;
+
+                              const colorLatexProperty =
+                                exprModel?.formula?.rgb_value ??
+                                exprModel?.formula?.color_latex_value;
+
+                              return {
+                                width: colorLatexProperty ? "30px" : undefined,
+                                transform: colorLatexProperty
+                                  ? `scaleX(calc(10/3))`
                                   : undefined,
-                            })}
+                                "transform-origin": "left",
+                                background: shouldBeColored
+                                  ? colorLatexProperty
+                                    ? Calc.getColorSwatchGradient({
+                                        type: Array.isArray(colorLatexProperty)
+                                          ? "color-array"
+                                          : "single-color",
+                                        value: colorLatexProperty,
+                                      })
+                                    : exprModel.color
+                                  : undefined,
+                              };
+                            }}
                           >
                             {/* {IfElse(() => model.error, {
                               true: () => <i class="dcg-icon-error"></i>,
