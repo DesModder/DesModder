@@ -18,6 +18,14 @@ function focusmq(mq: MathQuillField | undefined) {
   mq?.focus();
 }
 
+function isNextToTripleSpaceLineBreak(mq: MathQuillField, dir: 1 | -1) {
+  return (
+    getController(mq).cursor[dir]?._el?.dataset.isManualLineBreak &&
+    getController(mq).cursor[dir]?.[dir]?._el?.dataset.isManualLineBreak &&
+    getController(mq).cursor[dir]?.[dir]?.[dir]?._el?.dataset.isManualLineBreak
+  );
+}
+
 export default class Multiline extends PluginController<Config> {
   static id = "multiline" as const;
   static enabledByDefault = false;
@@ -179,6 +187,15 @@ export default class Multiline extends PluginController<Config> {
             return false;
           }
 
+          if (mq && key === "Backspace" && this.settings.spacesToNewlines) {
+            if (isNextToTripleSpaceLineBreak(mq, -1)) {
+              mq.keystroke("Backspace");
+              mq.keystroke("Backspace");
+              mq.keystroke("Backspace");
+              return false;
+            }
+          }
+
           // handle arrow nav with spaces2newlines
           if (
             mq &&
@@ -193,14 +210,7 @@ export default class Multiline extends PluginController<Config> {
             const dir = right ? 1 : -1;
 
             // check for three consecutive spaces
-            if (
-              getController(mq).cursor[dir]?._el?.dataset.isManualLineBreak &&
-              getController(mq).cursor[dir]?.[dir]?._el?.dataset
-                .isManualLineBreak &&
-              getController(mq).cursor[dir]?.[dir]?.[dir]?._el?.dataset
-                .isManualLineBreak
-            ) {
-              console.log("three conseuctive spaces");
+            if (isNextToTripleSpaceLineBreak(mq, dir)) {
               mq.keystroke(arrowDir);
               mq.keystroke(arrowDir);
               mq.keystroke(arrowDir);
