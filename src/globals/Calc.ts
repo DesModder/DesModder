@@ -184,6 +184,7 @@ interface CalcPrivate {
     | undefined;
   /// / undocumented, may break
   controller: {
+    authorFeaturesAvailable: () => boolean;
     rootElt: HTMLElement;
     isNarrow: () => boolean;
     // _removeExpressionSynchronously(model: ItemModel): void;

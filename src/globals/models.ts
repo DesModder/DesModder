@@ -27,7 +27,9 @@ interface ItemModelBase {
   id: string;
   folderId?: string;
   secret?: boolean;
-  error?: any;
+  error?: {
+    key?: string;
+  };
   formula?: {
     expression_type:
       | "X_OR_Y"

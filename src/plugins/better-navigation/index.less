@@ -24,7 +24,6 @@ body.dsm-better-nav-scrollable-expressions {
     word-wrap: anywhere;
     padding: 5px;
     margin: 0;
-    margin-bottom: 5px;
     padding-bottom: 5px;
     border-bottom: 1px solid #00000066;
     cursor: pointer;
@@ -33,6 +32,22 @@ body.dsm-better-nav-scrollable-expressions {
     i {
       color: #00000066;
       margin-right: 5px;
+    }
+  }
+
+  .dsm-better-nav-outline-default-expression {
+    height: 8px;
+    border-bottom: 1px solid #00000033;
+    padding-bottom: 0;
+    margin-bottom: 0;
+
+    &.dsm-better-nav-error {
+      border-left: 20px solid #e66b3c;
+
+      i {
+        color: black !important;
+        background-blend-mode: exclusion;
+      }
     }
   }
 }
