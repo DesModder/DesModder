@@ -25,10 +25,16 @@ export const configList = [
       return current.automaticallyMultilinify;
     },
   },
+  {
+    type: "boolean",
+    default: false,
+    key: "spacesToNewlines",
+  },
 ] satisfies ConfigItem[];
 
 export interface Config {
   widthBeforeMultiline: number;
   automaticallyMultilinify: boolean;
   multilinifyDelayAfterEdit: number;
+  spacesToNewlines: boolean;
 }

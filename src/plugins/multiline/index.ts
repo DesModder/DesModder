@@ -136,6 +136,7 @@ export default class Multiline extends PluginController<Config> {
           skipWidth: minWidth,
           minPriority: 0,
           maxPriority: 1,
+          spacesToNewlines: this.settings.spacesToNewlines,
         }
       );
 
@@ -160,6 +161,48 @@ export default class Multiline extends PluginController<Config> {
       const remove = hookIntoOverrideKeystroke(
         Calc.focusedMathQuill.mq,
         (key, _) => {
+          const mq = Calc.focusedMathQuill?.mq;
+
+          if (key === "Shift-Enter" && this.settings.spacesToNewlines) {
+            if (mq) {
+              mq.typedText("   ");
+              setTimeout(() => {
+                this.dequeueAllMultilinifications();
+              });
+            }
+
+            return false;
+          }
+
+          if (
+            mq &&
+            (key.endsWith("Left") || key.endsWith("Right")) &&
+            this.settings.spacesToNewlines
+          ) {
+            console.log("arrow keys");
+            const right = key.endsWith("Right");
+            const shift = key.startsWith("Shift");
+
+            const arrowDir =
+              (shift ? "Shift-" : "") + (right ? "Right" : "Left");
+            const dir = right ? 1 : -1;
+
+            // check for three consecutive spaces
+            if (
+              getController(mq).cursor[dir]?._el?.dataset.isManualLineBreak &&
+              getController(mq).cursor[dir]?.[dir]?._el?.dataset
+                .isManualLineBreak &&
+              getController(mq).cursor[dir]?.[dir]?.[dir]?._el?.dataset
+                .isManualLineBreak
+            ) {
+              console.log("three conseuctive spaces");
+              mq.keystroke(arrowDir);
+              mq.keystroke(arrowDir);
+              mq.keystroke(arrowDir);
+              return false;
+            }
+          }
+
           if (key === "Shift-Up" || key === "Shift-Down") {
             this.doMultilineVerticalNav(key);
             return false;
