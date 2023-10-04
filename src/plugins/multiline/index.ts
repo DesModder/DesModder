@@ -137,6 +137,8 @@ export default class Multiline extends PluginController<Config> {
           minPriority: 0,
           maxPriority: 1,
           spacesToNewlines: this.settings.spacesToNewlines,
+          determineLineBreaksAutomatically:
+            this.settings.automaticallyMultilinify,
         }
       );
 
@@ -166,6 +168,9 @@ export default class Multiline extends PluginController<Config> {
           if (key === "Shift-Enter" && this.settings.spacesToNewlines) {
             if (mq) {
               mq.typedText("   ");
+              this.enqueueVerticalifyOperation(
+                mq.__controller.container.querySelector(".dcg-mq-root-block")!
+              );
               setTimeout(() => {
                 this.dequeueAllMultilinifications();
               });
@@ -174,12 +179,12 @@ export default class Multiline extends PluginController<Config> {
             return false;
           }
 
+          // handle arrow nav with spaces2newlines
           if (
             mq &&
             (key.endsWith("Left") || key.endsWith("Right")) &&
             this.settings.spacesToNewlines
           ) {
-            console.log("arrow keys");
             const right = key.endsWith("Right");
             const shift = key.startsWith("Shift");
 
@@ -251,6 +256,7 @@ export default class Multiline extends PluginController<Config> {
     document.addEventListener("mousedown", this.mousedownHandler);
 
     this.afterConfigChange();
+    this.dequeueAllMultilinifications();
 
     this.multilineIntervalID = setInterval(() => {
       if (

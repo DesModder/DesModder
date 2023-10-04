@@ -12,6 +12,11 @@ export const configList = [
   {
     type: "boolean",
     default: true,
+    key: "determineLineBreaksAutomatically",
+  },
+  {
+    type: "boolean",
+    default: true,
     key: "automaticallyMultilinify",
   },
   {
@@ -35,6 +40,7 @@ export const configList = [
 export interface Config {
   widthBeforeMultiline: number;
   automaticallyMultilinify: boolean;
+  determineLineBreaksAutomatically: boolean;
   multilinifyDelayAfterEdit: number;
   spacesToNewlines: boolean;
 }

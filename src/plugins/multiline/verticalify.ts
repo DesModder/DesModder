@@ -99,6 +99,9 @@ interface VerticalifyOptions {
 
   // if true, groups of three spaces will be converted to newlines
   spacesToNewlines: boolean;
+
+  // whether to automatically find places to line break
+  determineLineBreaksAutomatically: boolean;
 }
 
 export function unverticalify(elem: Element, force?: boolean) {
@@ -203,14 +206,13 @@ export function verticalify(
         (e) =>
           e.tagName.toUpperCase() === "SPAN" &&
           e instanceof HTMLElement &&
-          e.innerText === "\u00A0"
+          (e.innerText === "\u00A0" || e.dataset.isManualLineBreak)
       );
 
-      console.log(window);
       if (!isThreeSpaces) continue;
 
       // skip the spaces so a group of four spaces doesn't add superfluous newlines
-      i += 3;
+      i += 2;
 
       const child = window[0] as HTMLElement;
 
@@ -232,53 +234,57 @@ export function verticalify(
       }
       for (const child2 of window) {
         const child = child2 as HTMLElement;
-        child.dataset.isManualLineBreak = "true";
+        context.domManipHandlers.push(() => {
+          child.dataset.isManualLineBreak = "true";
+        });
       }
     }
   }
 
   // add line breaks
-  for (const child of children) {
-    const width = child.getBoundingClientRect().width;
+  if (options.determineLineBreaksAutomatically) {
+    for (const child of children) {
+      const width = child.getBoundingClientRect().width;
 
-    // accumulate width so we know when to break
-    accumulatedWidth += width;
+      // accumulate width so we know when to break
+      accumulatedWidth += width;
 
-    // only html elements can become line breaks
-    if (child instanceof HTMLElement) {
-      const containerOptions = options.collapse[context.containerType];
+      // only html elements can become line breaks
+      if (child instanceof HTMLElement) {
+        const containerOptions = options.collapse[context.containerType];
 
-      // try all symbols from current context
-      // and also from the "all" context
-      for (const s of [
-        ...containerOptions.symbols,
-        ...options.collapse.all.symbols,
-      ]) {
-        // can this element cause a line break?
-        if (
-          child.innerHTML.startsWith(s.symbol) &&
-          (((s.mode === CollapseMode.Always ||
-            (context.containerType === "list" && approxListSize < 20)) &&
-            totalWidth > s.minWidth) ||
-            (s.mode === CollapseMode.AtMaxWidth &&
-              accumulatedWidth > s.minWidth))
-        ) {
-          // add a line break to this element
-          context.domManipHandlers.push(() => {
-            child.style.display = "inline";
-            child.dataset.isLineBreak = "true";
-            child.dataset.originalSymbol = s.symbol;
-            child.innerHTML = s.symbol + "<br />";
-            child.style.setProperty("--line-break-indent", `${s.indent}px`);
-            if (elem instanceof HTMLElement) elem.dataset.isMultiline = "true";
-          });
-          accumulatedWidth = 0;
-          break;
+        // try all symbols from current context
+        // and also from the "all" context
+        for (const s of [
+          ...containerOptions.symbols,
+          ...options.collapse.all.symbols,
+        ]) {
+          // can this element cause a line break?
+          if (
+            child.innerHTML.startsWith(s.symbol) &&
+            (((s.mode === CollapseMode.Always ||
+              (context.containerType === "list" && approxListSize < 20)) &&
+              totalWidth > s.minWidth) ||
+              (s.mode === CollapseMode.AtMaxWidth &&
+                accumulatedWidth > s.minWidth))
+          ) {
+            // add a line break to this element
+            context.domManipHandlers.push(() => {
+              child.style.display = "inline";
+              child.dataset.isLineBreak = "true";
+              child.dataset.originalSymbol = s.symbol;
+              child.innerHTML = s.symbol + "<br />";
+              child.style.setProperty("--line-break-indent", `${s.indent}px`);
+              if (elem instanceof HTMLElement)
+                elem.dataset.isMultiline = "true";
+            });
+            accumulatedWidth = 0;
+            break;
+          }
         }
       }
     }
   }
-
   // detect if root element has an equals sign
   // so we can specifically handle function defs
   // separately from function calls
@@ -298,7 +304,7 @@ export function verticalify(
     const width = child.getBoundingClientRect().width;
 
     // verticalify child
-    if (width > options.skipWidth) {
+    if (width > options.skipWidth || options.spacesToNewlines) {
       verticalify(
         child,
         beforeEquals
