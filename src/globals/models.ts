@@ -49,6 +49,8 @@ interface ItemModelBase {
     is_graphable: boolean;
     is_inequality: boolean;
     action_value?: Record<string, string>;
+    rgb_value?: string | string[];
+    color_latex_value?: string | string[];
   };
   dcgView?: ClassComponent;
 }

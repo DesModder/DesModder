@@ -177,6 +177,17 @@ interface Toast {
 }
 
 interface CalcPrivate {
+  getColorSwatchGradient: (
+    colors:
+      | {
+          type: "color-array";
+          value: string[];
+        }
+      | {
+          type: "single-color";
+          value: string;
+        }
+  ) => string;
   focusedMathQuill:
     | {
         mq: MathQuillField;

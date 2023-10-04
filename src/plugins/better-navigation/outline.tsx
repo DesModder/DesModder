@@ -1,13 +1,7 @@
-import {
-  Calc,
-  ExpressionModel,
-  FolderModel,
-  ItemModel,
-  TextModel,
-} from "src/globals";
+import { Calc, ItemModel } from "src/globals";
 import BetterNavigation from ".";
 import { Component, jsx } from "src/DCGView";
-import { For, IfElse, Switch, Tooltip } from "src/components";
+import { For, IfElse, Switch } from "src/components";
 
 function cutoffWithEllipsis(str: string, cutoff: number) {
   if (str.length > cutoff) {
@@ -119,7 +113,6 @@ export class Outline extends Component<{
                             block: "nearest",
                             inline: "center",
                           });
-                          console.log("scrolling into view!!!!");
                         }
                       });
                       if (model.type === "folder") {
@@ -188,22 +181,28 @@ export class Outline extends Component<{
                                 "transform-origin": "left",
                                 background: shouldBeColored
                                   ? colorLatexProperty
-                                    ? Calc.getColorSwatchGradient({
-                                        type: Array.isArray(colorLatexProperty)
-                                          ? "color-array"
-                                          : "single-color",
-                                        value: colorLatexProperty,
-                                      })
+                                    ? Calc.getColorSwatchGradient(
+                                        (() => {
+                                          if (
+                                            Array.isArray(colorLatexProperty)
+                                          ) {
+                                            return {
+                                              type: "color-array",
+                                              value: colorLatexProperty,
+                                            };
+                                          } else {
+                                            return {
+                                              type: "single-color",
+                                              value: colorLatexProperty,
+                                            };
+                                          }
+                                        })()
+                                      )
                                     : exprModel.color
                                   : undefined,
                               };
                             }}
-                          >
-                            {/* {IfElse(() => model.error, {
-                              true: () => <i class="dcg-icon-error"></i>,
-                              false: () => <span></span>,
-                            })} */}
-                          </li>
+                          ></li>
                         );
 
                         return li;
