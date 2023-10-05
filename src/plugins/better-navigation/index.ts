@@ -6,8 +6,6 @@ import { MathQuillField, MathQuillView } from "src/components";
 import { getController } from "../intellisense/latex-parsing";
 
 import "./index.less";
-import { Outline } from "./outline";
-import { jsx } from "src/DCGView";
 
 function isSupSubscriptMQElem(el?: HTMLElement) {
   return el?.classList.contains("dcg-mq-supsub");
@@ -36,10 +34,6 @@ function isAtStartOrEndOfASubscriptOrSuperscript(
 
 interface BetterNavSettings {
   scrollableExpressions: boolean;
-  showOutline: boolean;
-  showNotesInOutline: boolean;
-  outlineItemCharLimit: number;
-  showFoldersInOutline: boolean;
 }
 
 export default class BetterNavigation extends PluginController<BetterNavSettings> {
@@ -51,38 +45,7 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
       default: false,
       key: "scrollableExpressions",
     },
-    {
-      type: "boolean",
-      default: false,
-      key: "showOutline",
-    },
-    {
-      type: "boolean",
-      default: false,
-      key: "showNotesInOutline",
-      shouldShow: (settings: BetterNavSettings) => settings.showOutline,
-    },
-    {
-      type: "boolean",
-      default: true,
-      key: "showFoldersInOutline",
-      shouldShow: (settings: BetterNavSettings) => settings.showOutline,
-    },
-    {
-      type: "number",
-      default: 30,
-      min: 0,
-      max: 10000,
-      step: 1,
-      variant: "number",
-      key: "outlineItemCharLimit",
-      shouldShow: (settings: BetterNavSettings) => settings.showOutline,
-    },
   ] as const;
-
-  outline() {
-    return () => <Outline bn={() => this}></Outline>;
-  }
 
   afterConfigChange(): void {
     document.body.classList.toggle(

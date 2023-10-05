@@ -14,7 +14,6 @@ import showTips from "#plugins/show-tips/show-tips.replacements";
 import syntaxHighlighting from "#plugins/syntax-highlighting/syntax-highlighting.replacements";
 import textMode from "#plugins/text-mode/text-mode.replacements";
 import insertPanels from "../preload/moduleOverrides/insert-panels.replacements";
-import betterNavigation from "#plugins/better-navigation/better-navigation.replacements";
 
 export default [
   insertPanels,
@@ -33,5 +32,4 @@ export default [
   rightClickTray,
   codeGolf,
   syntaxHighlighting,
-  betterNavigation,
 ];
