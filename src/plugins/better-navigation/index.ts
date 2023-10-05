@@ -53,11 +53,16 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
     },
   ] as const;
 
+  removeHandlers() {
+    for (const handler of this.customRemoveHandlers) handler();
+  }
+
   afterConfigChange(): void {
     document.body.classList.toggle(
       "dsm-better-nav-scrollable-expressions",
       this.settings.scrollableExpressions
     );
+    this.removeHandlers();
   }
 
   dispatcherID: string | undefined;
@@ -65,7 +70,7 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
   customRemoveHandlers: (() => void)[] = [];
 
   keydownHandler = () => {
-    if (Calc.focusedMathQuill) {
+    if (Calc.focusedMathQuill && this.settings.ctrlArrow) {
       const remove = hookIntoOverrideKeystroke(
         Calc.focusedMathQuill.mq,
         (key, _) => {
@@ -162,6 +167,6 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
 
   afterDisable() {
     document.removeEventListener("keydown", this.keydownHandler);
-    for (const handler of this.customRemoveHandlers) handler();
+    this.removeHandlers();
   }
 }
