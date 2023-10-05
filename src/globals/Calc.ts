@@ -177,6 +177,18 @@ interface Toast {
 }
 
 interface CalcPrivate {
+  // added via a replacement with the outline plugin
+  getColorSwatchGradient?: (
+    colors:
+      | {
+          type: "color-array";
+          value: string[];
+        }
+      | {
+          type: "single-color";
+          value: string;
+        }
+  ) => string;
   focusedMathQuill:
     | {
         mq: MathQuillField;
@@ -184,6 +196,7 @@ interface CalcPrivate {
     | undefined;
   /// / undocumented, may break
   controller: {
+    authorFeaturesAvailable: () => boolean;
     rootElt: HTMLElement;
     isNarrow: () => boolean;
     // _removeExpressionSynchronously(model: ItemModel): void;

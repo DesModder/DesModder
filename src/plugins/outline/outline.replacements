@@ -1,0 +1,52 @@
+# Replacements for Outline
+
+*plugin* `outline`
+
+## Outline
+
+*Description* `Show an outline next to the exppanel for easy folder viewing.`
+
+*Find* => `exppanel outer`
+```js
+$DCGView.createElement("div", {
+                class: $DCGView.const("dcg-exppanel-outer"),
+                onDrop: this.bindFn(this.onDrop),
+                style: ()=>this.computeExppanelOuterStyle()
+            }, __exppanelOuterChildren__)
+```
+
+*Replace* `__exppanelOuterChildren__` 
+```js
+__exppanelOuterChildren__,
+DSM.insertElement(() => (DSM.outline?.outline()))
+```
+
+## Color Swatch Background 1
+
+*Description* `Find the function that generates the background of color swatches.`
+
+*Find* => `color gradient definition`
+```js
+background: $ColorGradient(this.props.color())
+```
+
+*Description* `Add the color swatch background function to Calc.`
+
+*Find* => `CalcDef`
+```js
+var $ = {
+    SMALL: "0.85",
+    MEDIUM: "1",
+    LARGE: "1.35"
+};
+function $GraphingCalculator2(...$gcalcargs) {
+    return new $GraphingCalculatorInner(...$gcalcargs)
+}
+$GraphingCalculator2.prototype = $GraphingCalculatorInner.prototype;
+```
+
+*Replace* `CalcDef` with
+```js
+$CalcDef
+$GraphingCalculator2.prototype.getColorSwatchGradient = $ColorGradient;
+``` 

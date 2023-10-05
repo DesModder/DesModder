@@ -333,3 +333,11 @@ syntax-highlighting-opt-highlightBracketBlocksHover-name = Highlight on Hover
 syntax-highlighting-opt-highlightBracketBlocksHover-desc = Highlight the smallest enclosing bracket pair containing the mouse.
 syntax-highlighting-opt-underlineHighlightedRanges-name = Underline Highlighted Ranges
 syntax-highlighting-opt-underlineHighlightedRanges-desc = Puts a dark underline under highlighted ranges for better visibility.
+
+## Outline
+outline-name = Outline
+outline-desc = Adds a VSCode-style outline to graphs for easier navigation.
+outline-opt-showNotesInOutline-name = Show Notes in Outline
+outline-opt-showNotesInOutline-desc = Show the content of text expressions (notes) in the outline.
+outline-opt-showFoldersInOutline-name = Show Folders in Outline
+outline-opt-showFoldersInOutline-desc = Show the names of folders in the outline instead of just an icon.

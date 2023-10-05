@@ -13,6 +13,7 @@ import shiftEnterNewline from "#plugins/shift-enter-newline/shift-enter-newline.
 import showTips from "#plugins/show-tips/show-tips.replacements";
 import syntaxHighlighting from "#plugins/syntax-highlighting/syntax-highlighting.replacements";
 import textMode from "#plugins/text-mode/text-mode.replacements";
+import outline from "#plugins/outline/outline.replacements";
 import insertPanels from "../preload/moduleOverrides/insert-panels.replacements";
 
 export default [
@@ -32,4 +33,5 @@ export default [
   rightClickTray,
   codeGolf,
   syntaxHighlighting,
+  outline,
 ];
