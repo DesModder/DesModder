@@ -18,6 +18,10 @@ export const configList = [
     type: "boolean",
     default: true,
     key: "automaticallyMultilinify",
+
+    shouldShow(current) {
+      return current.determineLineBreaksAutomatically;
+    },
   },
   {
     type: "number",
@@ -27,7 +31,10 @@ export const configList = [
     step: 1,
     key: "multilinifyDelayAfterEdit",
     shouldShow(current) {
-      return current.automaticallyMultilinify;
+      return (
+        current.automaticallyMultilinify &&
+        current.determineLineBreaksAutomatically
+      );
     },
   },
   {

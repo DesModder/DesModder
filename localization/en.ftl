@@ -281,6 +281,8 @@ multiline-opt-multilinifyDelayAfterEdit-name = Edit Delay (ms)
 multiline-opt-multilinifyDelayAfterEdit-desc = Multiline expressions should be updated after no edits are made for this number of milliseconds.
 multiline-opt-spacesToNewlines-name = Spaces to Newlines
 multiline-opt-spacesToNewlines-desc = Convert groups of 3 spaces into newlines. These can be automatically created with Shift+Enter. Enabling this will also disable automatic multilining!
+multiline-opt-determineLineBreaksAutomatically-name = Auto Determine Linebreaks 
+multiline-opt-determineLineBreaksAutomatically-desc = Automatically figure out where to put line breaks. 
 
 ## Custom MathQuill Config
 custom-mathquill-config-name = Custom MathQuill Config
