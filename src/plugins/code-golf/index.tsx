@@ -1,9 +1,16 @@
 import { Component, jsx, mountToNode } from "#DCGView";
+import { GraphState } from "@desmodder/graph-state";
 import { Inserter, PluginController } from "../PluginController";
 import "./index.less";
 import { format } from "localization/i18n-core";
 import { IfElse, InlineMathInputView } from "src/components";
-import { Calc, ExpressionModel, FolderModel } from "src/globals";
+import {
+  Calc,
+  ExpressionModel,
+  FolderModel,
+  ItemModel,
+  TextModel,
+} from "src/globals";
 
 function calcWidthInPixels(domNode?: HTMLElement) {
   const rootblock = domNode?.querySelector(".dcg-mq-root-block");
@@ -210,6 +217,43 @@ export class FolderCostPanel extends Component<{
   }
 }
 
+function extractCodegolfedTextString(text: string): string | undefined {
+  if (!text.startsWith("@codegolf")) return undefined;
+
+  return text.slice(text.match(/@codegolf\s*/g)?.[0]?.length ?? 0);
+}
+
+export class NoteCostPanel extends Component<{
+  model: () => TextModel;
+}> {
+  template() {
+    return (
+      <div class="dsm-code-golf-char-count-container">
+        {IfElse(
+          () => this.props.model().text?.startsWith("@codegolf") ?? false,
+          {
+            true: () => (
+              <div class="dsm-code-golf-char-count">
+                {() =>
+                  format("code-golf-note-latex-byte-count", {
+                    chars:
+                      (new Blob([this.props.model().text ?? ""])?.size ?? 0) -
+                      (new Blob([
+                        this.props.model().text?.match(/@codegolf\s*/g)?.[0] ??
+                          "",
+                      ]).size ?? 0),
+                  })
+                }
+              </div>
+            ),
+            false: () => <div></div>,
+          }
+        )}
+      </div>
+    );
+  }
+}
+
 export default class CodeGolf extends PluginController {
   static id = "code-golf" as const;
   static enabledByDefault = false;
@@ -225,11 +269,170 @@ export default class CodeGolf extends PluginController {
     return () => <FolderCostPanel model={() => model}></FolderCostPanel>;
   }
 
+  noteCostPanel(model: TextModel) {
+    return () => <NoteCostPanel model={() => model}></NoteCostPanel>;
+  }
+
+  getDragCount(id: string, defaultCount: number) {
+    const model = Calc.controller.getItemModel(id) as ItemModel;
+
+    if (model.type === "text" && model.text?.startsWith("@codegolf")) {
+      return 2;
+    }
+
+    const prevModel = Calc.controller.getItemModelByIndex(model.index - 1);
+
+    if (this.isValidPair(prevModel, model)) {
+      return 0;
+    }
+
+    return defaultCount;
+  }
+
+  isValidPair(note?: ItemModel, expr?: ItemModel) {
+    return (
+      note &&
+      expr?.type === "expression" &&
+      note.type === "text" &&
+      note.text?.startsWith("@codegolf") &&
+      this.prevNoteLatex.get(note.id) === expr?.latex
+    );
+  }
+
   afterConfigChange(): void {}
 
   dispatcher!: string;
 
-  afterEnable() {}
+  prevNoteLatex = new Map<string, string>();
 
-  afterDisable() {}
+  knownNoteExprPairs: {
+    noteID: string;
+    exprID: string;
+  }[] = [];
+
+  afterEnable() {
+    this.updateTextExprGolfMappings(Calc.getState());
+
+    this.dispatcher = Calc.controller.dispatcher.register((e) => {
+      if (e.type === "set-note-text") {
+        const latex = extractCodegolfedTextString(e.text);
+
+        if (!latex) return;
+
+        const model = Calc.controller.getItemModel(e.id) as TextModel;
+
+        const nextModel = Calc.controller.getItemModelByIndex(model.index + 1);
+
+        setTimeout(() => {
+          if (
+            !nextModel ||
+            nextModel.type !== "expression" ||
+            this.prevNoteLatex.get(e.id) !== nextModel.latex
+          ) {
+            Calc.setExpression({
+              type: "expression",
+              latex,
+            });
+
+            const newExpr = Calc.controller.listModel.__itemModelArray.pop();
+
+            Calc.controller.listModel.__itemModelArray.splice(
+              model.index + 1,
+              0,
+              newExpr as (typeof Calc.controller.listModel.__itemModelArray)[0]
+            );
+
+            Calc.controller.updateTheComputedWorld();
+          } else {
+            Calc.controller.dispatch({
+              type: "set-item-latex",
+              latex,
+              id: nextModel.id,
+            });
+          }
+          this.prevNoteLatex.set(e.id, latex);
+        });
+      }
+
+      if (e.type === "set-state") {
+        this.updateTextExprGolfMappings(e.state);
+      }
+
+      if (e.type === "start-dragdrop") {
+        this.knownNoteExprPairs = [];
+
+        const models = Calc.controller.getAllItemModels();
+
+        for (const model of models) {
+          if (model.type === "text" && model.text?.startsWith("@codegolf")) {
+            const nextModel = Calc.controller.getItemModelByIndex(
+              model.index + 1
+            );
+
+            if (nextModel && nextModel.type === "expression") {
+              this.knownNoteExprPairs.push({
+                noteID: model.id,
+                exprID: nextModel.id,
+              });
+            }
+          }
+        }
+
+        const model = Calc.controller.getItemModel(
+          e.dragTarget.calcId
+        ) as ItemModel;
+
+        if (model.type !== "expression") return;
+
+        const prevModel = Calc.controller.getItemModelByIndex(model.index - 1);
+
+        // if trying to drag/drop a linked math expression in a pair,
+        // then force stop the operation by emitting a stop-dragdrop event
+        if (this.isValidPair(prevModel, model)) {
+          setTimeout(() => {
+            Calc.controller.dispatch({
+              type: "stop-dragdrop",
+            });
+          });
+        }
+      }
+
+      if (e.type === "stop-dragdrop") {
+        for (const { noteID, exprID } of this.knownNoteExprPairs) {
+          const note = Calc.controller.getItemModel(noteID);
+          const expr = Calc.controller.getItemModel(exprID);
+
+          if (!note || !expr) continue;
+
+          Calc.controller.listModel.__itemModelArray.splice(expr.index, 1);
+
+          Calc.controller.listModel.__itemModelArray.splice(
+            note.index + 1,
+            0,
+            expr
+          );
+
+          Calc.controller.updateTheComputedWorld();
+        }
+        Calc.controller.updateViews();
+      }
+    });
+  }
+
+  updateTextExprGolfMappings(state: GraphState) {
+    const list = state.expressions.list;
+    for (let i = 0; i < list.length; i++) {
+      const note = list[i];
+      if (note.type === "text") {
+        const latex = extractCodegolfedTextString(note.text ?? "");
+        if (latex) {
+          this.prevNoteLatex.set(note.id, latex);
+        }
+      }
+    }
+  }
+
+  afterDisable() {
+    Calc.controller.dispatcher.unregister(this.dispatcher);
+  }
 }
