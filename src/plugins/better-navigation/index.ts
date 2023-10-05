@@ -20,6 +20,17 @@ function isWordMQElem(el?: HTMLElement) {
   );
 }
 
+function isCtrlArrowSkippableSymbolMQElem(el?: HTMLElement) {
+  return (
+    el?.classList.contains("dcg-mq-bracket-container") ||
+    el?.classList.contains("dcg-mq-fraction") ||
+    el?.classList.contains("dcg-mq-large-operator") ||
+    el?.classList.contains("dcg-mq-int") ||
+    el?.classList.contains("dcg-mq-sqrt-container") ||
+    el?.classList.contains("dcg-mq-nthroot-container")
+  );
+}
+
 function isAtStartOrEndOfASubscriptOrSuperscript(
   mq: MathQuillField,
   right: boolean
@@ -81,15 +92,18 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
             key !== "Ctrl-Left" &&
             key !== "Ctrl-Right" &&
             key !== "Ctrl-Shift-Left" &&
-            key !== "Ctrl-Shift-Right"
+            key !== "Ctrl-Shift-Right" &&
+            key !== "Ctrl-Backspace"
           )
             return true;
 
+          // backspace is implicitly "left"
           const right = key === "Ctrl-Right" || key === "Ctrl-Shift-Right";
           const shift = key === "Ctrl-Shift-Left" || key === "Ctrl-Shift-Right";
+          const backspace = key === "Ctrl-Backspace";
 
           // remove the "Ctrl-" to get the normal arrow op to emulate
-          const arrowOp = key.slice(5);
+          const arrowOp = backspace ? "Backspace" : key.slice(5);
 
           const ctrlr = getController(mq);
 
@@ -101,14 +115,7 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
           // then skip over the entire thing when ctrl+arrowing (don't edit internals)
           // Shift-arrow already does this behavior perfectly so we first do that.
           // Then we do a normal arrow press to delete the selection.
-          if (
-            next?._el?.classList.contains("dcg-mq-bracket-container") ||
-            next?._el?.classList.contains("dcg-mq-fraction") ||
-            next?._el?.classList.contains("dcg-mq-large-operator") ||
-            next?._el?.classList.contains("dcg-mq-int") ||
-            next?._el?.classList.contains("dcg-mq-sqrt-container") ||
-            next?._el?.classList.contains("dcg-mq-nthroot-container")
-          ) {
+          if (isCtrlArrowSkippableSymbolMQElem(next?._el)) {
             mq.keystroke(right ? "Shift-Right" : "Shift-Left");
 
             // remove selection if not holding down shift
