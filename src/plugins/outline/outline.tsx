@@ -10,6 +10,22 @@ function getSelectedClass(model: ItemModel) {
   };
 }
 
+export class OutlineIndicator extends Component<{
+  model: () => ItemModel;
+  o: () => Outline;
+}> {
+  template() {
+    return (
+      <div
+        class={() => ({
+          "dsm-outline-indicator": true,
+          "dsm-outline-indicator-error": !!this.props.model().error,
+        })}
+      ></div>
+    );
+  }
+}
+
 export class OutlineElement extends Component<{
   o: () => Outline;
 }> {
@@ -137,7 +153,6 @@ export class OutlineElement extends Component<{
                           }}
                           class={() => ({
                             "dsm-outline-outline-default-expression": true,
-                            "dsm-outline-error": !!model.error,
                             ...getSelectedClass(model),
                             "dsm-outline-color-latex": !!colorLatexProperty(),
                           })}
@@ -148,11 +163,6 @@ export class OutlineElement extends Component<{
                               exprModel?.formula?.rgb_value;
 
                             return {
-                              width: colorLatexProperty() ? "30px" : undefined,
-                              //   transform: colorLatexProperty
-                              //     ? `scaleX(calc(10/3))`
-                              //     : undefined,
-                              //   "transform-origin": "left",
                               background: shouldBeColored
                                 ? colorLatexProperty()
                                   ? Calc.getColorSwatchGradient?.(
@@ -173,12 +183,25 @@ export class OutlineElement extends Component<{
                                           };
                                         }
                                       })()
+                                    ).replace(
+                                      /[0-9.]+px/g,
+                                      (s) =>
+                                        `${
+                                          (Number(s.slice(0, -2)) *
+                                            (isThickOutline() ? 100 : 20)) /
+                                          30
+                                        }px`
                                     )
                                   : exprModel.color
                                 : undefined,
                             };
                           }}
-                        ></li>
+                        >
+                          <OutlineIndicator
+                            model={() => model}
+                            o={this.props.o}
+                          ></OutlineIndicator>
+                        </li>
                       );
 
                       return li;
@@ -194,7 +217,12 @@ export class OutlineElement extends Component<{
 
                           ...getSelectedClass(model),
                         })}
-                      ></li>
+                      >
+                        <OutlineIndicator
+                          model={() => model}
+                          o={this.props.o}
+                        ></OutlineIndicator>
+                      </li>
                     );
                   }}
                 </Switch>

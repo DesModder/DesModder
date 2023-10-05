@@ -27,7 +27,6 @@ export default class Outline extends PluginController<OutlineSettings> {
   ] as const;
 
   outline() {
-    console.log("running outline()");
     return () => <OutlineElement o={() => this}></OutlineElement>;
   }
 
