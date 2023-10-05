@@ -33,6 +33,7 @@ function isAtStartOrEndOfASubscriptOrSuperscript(
 }
 
 interface BetterNavSettings {
+  ctrlArrow: boolean;
   scrollableExpressions: boolean;
 }
 
@@ -40,6 +41,11 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
   static id = "better-navigation" as const;
   static enabledByDefault = true;
   static config = [
+    {
+      type: "boolean",
+      default: true,
+      key: "ctrlArrow",
+    },
     {
       type: "boolean",
       default: false,

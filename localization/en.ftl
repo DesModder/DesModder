@@ -337,13 +337,8 @@ syntax-highlighting-opt-underlineHighlightedRanges-desc = Puts a dark underline 
 ## Better Navigation
 better-navigation-name = Better Navigation
 better-navigation-desc = Tools for making Desmos graphs easier to navigate. Includes Ctrl+Arrow and Ctrl+Shift+Arrow support. 
+better-navigation-opt-scrollableExpressions-name = Ctrl+Arrow Support
+better-navigation-opt-scrollableExpressions-desc = Use Ctrl+ArrowKeys or Ctrl+Shift+ArrowKeys to skip over large blocks of text quickly.
 better-navigation-opt-scrollableExpressions-name = Scrollable Expressions
 better-navigation-opt-scrollableExpressions-desc = Adds horizontal scrollbars to expressions. This is primarily intended to make scrolling easier on mobile.
-better-navigation-opt-showOutline-name = Show Outline
-better-navigation-opt-showOutline-desc = Show an outline next to the expressions panel showing the names of all the folders. The outline will not appear until your graph contains at least one folder.
-better-navigation-opt-showNotesInOutline-name = Show Notes in Outline
-better-navigation-opt-showNotesInOutline-desc = Show text expressions (notes) in the outline as well.
-better-navigation-opt-outlineItemCharLimit-name = Outline # of Chars
-better-navigation-opt-outlineItemCharLimit-desc = Only show the first N characters of each name in the outline.
-better-navigation-opt-showFoldersInOutline-name = Folder Names in Outline
-better-navigation-opt-showFoldersInOutline-desc = Prominently show folders' names in the outline.
+
