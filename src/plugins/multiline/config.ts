@@ -17,6 +17,14 @@ export const configList = [
   {
     type: "boolean",
     default: true,
+    key: "disableAutomaticLineBreaksForHandAlignedExpressions",
+    shouldShow(current) {
+      return current.determineLineBreaksAutomatically;
+    },
+  },
+  {
+    type: "boolean",
+    default: true,
     key: "automaticallyMultilinify",
 
     shouldShow(current) {
@@ -39,7 +47,7 @@ export const configList = [
   },
   {
     type: "boolean",
-    default: false,
+    default: true,
     key: "spacesToNewlines",
   },
 ] satisfies ConfigItem[];
@@ -50,4 +58,5 @@ export interface Config {
   determineLineBreaksAutomatically: boolean;
   multilinifyDelayAfterEdit: number;
   spacesToNewlines: boolean;
+  disableAutomaticLineBreaksForHandAlignedExpressions: boolean;
 }

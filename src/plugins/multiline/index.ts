@@ -3,7 +3,7 @@ import { Config, configList } from "./config";
 import "./multiline.less";
 import { CollapseMode, unverticalify, verticalify } from "./verticalify";
 import { MathQuillField, MathQuillView } from "#components";
-import { Calc, DispatchedEvent } from "#globals";
+import { Calc, DispatchedEvent, ItemModel } from "#globals";
 import {
   getController,
   mqKeystroke,
@@ -146,7 +146,12 @@ export default class Multiline extends PluginController<Config> {
           maxPriority: 1,
           spacesToNewlines: this.settings.spacesToNewlines,
           determineLineBreaksAutomatically:
-            this.settings.automaticallyMultilinify,
+            this.settings.automaticallyMultilinify &&
+            (this.settings.disableAutomaticLineBreaksForHandAlignedExpressions
+              ? !(
+                  f?.parentElement?._mqMathFieldInstance?.latex?.() as string
+                ).match(/\\ \\ \\/g)
+              : true),
         }
       );
 
