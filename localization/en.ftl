@@ -272,7 +272,7 @@ compact-view-opt-hideEvaluations-desc = Puts evaluations off to the side. They c
 
 ## Multiline
 multiline-name = Multiline Expressions
-multiline-desc = Splits expressions onto multiple lines to better make use of available space. Can be done manually with Ctrl+M.
+multiline-desc = Splits expressions onto multiple lines to better make use of available space. Can be triggered manually with Ctrl+M.
 multiline-opt-widthBeforeMultiline-name = Width Threshold (%)
 multiline-opt-widthBeforeMultiline-desc = Minimum width (as a percent of the viewport size) at which point wrapping will occur. On mobile, this value is tripled.
 multiline-opt-automaticallyMultilinify-name = Automatically Multilinify
