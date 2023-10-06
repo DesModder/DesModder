@@ -304,7 +304,10 @@ export function verticalify(
     const width = child.getBoundingClientRect().width;
 
     // verticalify child
-    if (width > options.skipWidth || options.spacesToNewlines) {
+    if (
+      (options.determineLineBreaksAutomatically && width > options.skipWidth) ||
+      options.spacesToNewlines
+    ) {
       verticalify(
         child,
         beforeEquals
