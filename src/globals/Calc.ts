@@ -290,6 +290,5 @@ interface CalcPrivate {
   ) => void;
 }
 
-type Calc = CalcPrivate & Desmos.Calculator;
-export default Calc;
+export type Calc = CalcPrivate & Desmos.Calculator;
 export type CalcController = Calc["controller"];

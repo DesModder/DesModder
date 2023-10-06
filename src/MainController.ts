@@ -1,5 +1,5 @@
 import { insertElement, replaceElement } from "./preload/replaceElement";
-import window, { CalcType } from "#globals";
+import window, { type Calc } from "#globals";
 import {
   plugins,
   pluginList,
@@ -25,7 +25,7 @@ export default class DSM extends TransparentPlugins {
     )
   ) as IDToPluginSettings;
 
-  constructor(public calc: CalcType) {
+  constructor(public calc: Calc) {
     super();
     // default values
     this.forceDisabled = window.DesModderPreload!.pluginsForceDisabled;

@@ -4,7 +4,7 @@ import {
   parseRootLatex,
 } from "../../../text-mode-core";
 import { mapAugAST } from "./latex-parsing";
-import { CalcType, ItemModel } from "#globals";
+import type { Calc, ItemModel } from "#globals";
 import { rootKeys } from "#plugins/find-replace/backend.ts";
 import Metadata from "metadata/interface";
 import { get } from "#utils/utils.ts";
@@ -61,7 +61,7 @@ export class IntellisenseState {
 
   readonly cfg = buildConfigFromGlobals(Desmos, this.calc);
 
-  constructor(public calc: CalcType) {
+  constructor(public calc: Calc) {
     this.metadata = getMetadata(calc);
     this.cc.dispatcher.register((e) => {
       if (e.type === "on-evaluator-changes") {
