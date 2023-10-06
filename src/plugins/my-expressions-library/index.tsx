@@ -401,7 +401,7 @@ export default class MyExpressionsLibrary extends PluginController<{
 
       const newGraph: Partial<ExpressionLibraryGraph> = {};
 
-      // maps ident names to expression ids
+      // maps ident names to expression ids.
       const dependencymap = new Map<string, string>();
 
       const augs = new Map<string, Aug.NonFolderAug>();
