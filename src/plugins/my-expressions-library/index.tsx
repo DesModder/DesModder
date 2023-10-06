@@ -374,9 +374,9 @@ export default class MyExpressionsLibrary extends PluginController<{
   async loadGraphs() {
     const graphs = (
       await Promise.all(
-        this.settings.libraryGraphHashes.map(
-          async (s) => [s, await getGraphState(s)] as const
-        )
+        this.settings.libraryGraphHashes
+          .filter((s) => s)
+          .map(async (s) => [s, await getGraphState(s)] as const)
       ).then((state) => {
         Calc.controller._showToast({
           message: format("my-expressions-library-did-not-load", {
