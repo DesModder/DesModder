@@ -1,12 +1,11 @@
 import { buildConfigFromGlobals, rawToText } from "../../../text-mode-core";
 import { DCGView } from "../../DCGView";
 import { Inserter, PluginController } from "../PluginController";
-import { onCalcEvent, analysisStateField } from "./LanguageServer";
+import { onCalcEvent, analysisStateField, tmPlugin } from "./LanguageServer";
 import { TextModeToggle } from "./components/TextModeToggle";
 import { initView, setDebugMode, startState } from "./view/editor";
 import { TransactionSpec } from "@codemirror/state";
 import { EditorView, ViewUpdate } from "@codemirror/view";
-import { Calc } from "#globals";
 import { keys } from "#utils/depUtils.ts";
 
 export default class TextMode extends PluginController {
@@ -56,7 +55,7 @@ export default class TextMode extends PluginController {
    * mountEditor: called from module overrides when the DCGView node mounts
    */
   mountEditor(container: HTMLElement) {
-    const [hasError, text] = getText();
+    const [hasError, text] = this.getText();
     this.view = initView(this, text);
     if (hasError) this.conversionError(() => this.toggleTextMode());
     container.appendChild(this.view.dom);
@@ -88,9 +87,13 @@ export default class TextMode extends PluginController {
   }
 
   onSetState() {
-    const [hasError, text] = getText();
+    const [hasError, text] = this.getText();
     this.view?.setState(startState(this, text));
     if (hasError) this.conversionError();
+  }
+
+  getText() {
+    return rawToText(this.getTextModeConfig(), this.calc.getState());
   }
 
   conversionError(undoCallback?: () => void) {
@@ -141,28 +144,25 @@ export default class TextMode extends PluginController {
   onEditorUpdate(update: ViewUpdate) {
     if (update.docChanged || update.selectionSet) selectFromText(update.view);
   }
-}
 
-function getText() {
-  return rawToText(getTextModeConfig(), Calc.getState());
-}
-
-export function getTextModeConfig() {
-  return buildConfigFromGlobals(Desmos, Calc);
+  getTextModeConfig() {
+    return buildConfigFromGlobals(Desmos, this.calc);
+  }
 }
 
 function selectFromText(view: EditorView) {
-  const currSelected = Calc.selectedExpressionId as string | undefined;
+  const calc = view.state.facet(tmPlugin).calc;
+  const currSelected = calc.selectedExpressionId as string | undefined;
   const newSelected = getSelectedItem(view);
   if (newSelected !== currSelected) {
     if (view.hasFocus && newSelected !== undefined) {
-      Calc.controller.dispatch({
+      calc.controller.dispatch({
         type: "set-selected-id",
         id: newSelected,
         dsmFromTextModeSelection: true,
       });
     } else {
-      Calc.controller.dispatch({
+      calc.controller.dispatch({
         type: "set-none-selected",
       });
     }

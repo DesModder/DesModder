@@ -1,6 +1,8 @@
 import { BoundIdentifier } from ".";
-import { parseRootLatex } from "../../../text-mode-core";
-import { getTextModeConfig } from "../text-mode";
+import {
+  buildConfigFromGlobals,
+  parseRootLatex,
+} from "../../../text-mode-core";
 import { mapAugAST } from "./latex-parsing";
 import { CalcType, ItemModel } from "#globals";
 import { rootKeys } from "#plugins/find-replace/backend.ts";
@@ -57,7 +59,7 @@ export class IntellisenseState {
     return this.cc.getItemModel(ident.exprId)?.folderId;
   }
 
-  readonly cfg = getTextModeConfig();
+  readonly cfg = buildConfigFromGlobals(Desmos, this.calc);
 
   constructor(public calc: CalcType) {
     this.metadata = getMetadata(calc);
