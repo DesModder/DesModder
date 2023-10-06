@@ -12,6 +12,7 @@ import { mapAugAST } from "../intellisense/latex-parsing";
 import { IntellisenseState } from "../intellisense/state";
 import { getMetadata } from "../manage-metadata/sync";
 import { buildConfigFromGlobals } from "text-mode-core";
+import { format } from "localization/i18n-core";
 
 export interface ExpressionLibraryMathExpression {
   type: "expression";
@@ -371,9 +372,23 @@ export default class MyExpressionsLibrary extends PluginController<{
   }
 
   async loadGraphs() {
-    const graphs = await Promise.all(
-      this.settings.libraryGraphHashes.map(async (s) => await getGraphState(s))
-    );
+    const graphs = (
+      await Promise.all(
+        this.settings.libraryGraphHashes.map(
+          async (s) => [s, await getGraphState(s)] as const
+        )
+      ).then((state) => {
+        Calc.controller._showToast({
+          message: format("my-expressions-library-did-not-load", {
+            hashes: state
+              .filter((s) => !s[1])
+              .map((s) => `"${s[0]}"`)
+              .join(", "),
+          }),
+        });
+        return state.map((s) => s[1]);
+      })
+    ).filter((g) => g);
 
     this.graphs = {
       graphs: [],

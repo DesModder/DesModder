@@ -253,9 +253,10 @@ intellisense-jump2def-menu-instructions = has multiple definitions. Pick one fro
 ## My Expressions Library
 my-expressions-library-name = My Expressions Library
 my-expressions-library-desc = Create and use a reusable library of expressions in multiple graphs.
-my-expressions-library-opt-libraryGraphHashes-name = Library Graph Hashes
-my-expressions-library-opt-libraryGraphHashes-desc = A list of graph hashes from which to source expressions. Each hash should be on its own line.
+my-expressions-library-opt-libraryGraphHashes-name = Graph Hashes
+my-expressions-library-opt-libraryGraphHashes-desc = A list of graph hashes (those 10-digit sequences of letters and numbers that uniquely identify a graph) from which to source expressions. Each hash should be on its own line.
 my-expressions-library-pillbox-menu = My Expressions Library
+my-expressions-library-did-not-load = My Expressions Library: The graphs with the following hashes did not load: { $hashes }. 
 
 ## Compact View
 compact-view-name = Compact View

@@ -45,6 +45,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "folder-tools",
     "custom-mathquill-config",
     "code-golf",
+    "my-expressions-library",
   ],
   visual: [
     "set-primary-color",
@@ -217,26 +218,25 @@ function stringArrayOption(
   let currentValue = get().join("\n");
 
   const inputHandler = (evt: InputEvent) => {
-    currentValue = (evt.target as HTMLDivElement).innerText;
+    currentValue = (evt.target as HTMLTextAreaElement).value;
     setValue(currentValue.split("\n"));
   };
 
   return (
     // not worrying about keys bc strings are cheap
     <div class="dsm-settings-item dsm-settings-string-array">
-      <div
-        contenteditable={true}
+      <textarea
         onInput={inputHandler}
         onChange={inputHandler}
-        onUpdate={(e: HTMLDivElement) => {
+        onUpdate={(e: HTMLTextAreaElement) => {
           currentValue = get().join("\n");
-          if (currentValue === e.innerText) return;
-          e.innerText = currentValue;
+          if (currentValue === e.value) return;
+          e.value = currentValue;
         }}
         class="dsm-settings-string-array-input-box"
       >
         {get().join("\n")}
-      </div>
+      </textarea>
       <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
         <label for={`dsm-settings-item__input-${item.key}`}>
           {configItemName(plugin, item)}
