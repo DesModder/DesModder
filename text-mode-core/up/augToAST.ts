@@ -1,6 +1,21 @@
 import TextAST from "../TextAST/Synthetic";
 import Aug from "../aug/AugState";
 
+export function augToTextAST(aug: Aug.State): TextAST.Program {
+  const stmts: TextAST.Statement[] = [graphSettingsToAST(aug.settings)];
+  if (aug.expressions.ticker) {
+    stmts.push(tickerToAST(aug.expressions.ticker));
+  }
+  for (const expr of aug.expressions.list) {
+    const item = itemAugToAST(expr);
+    if (item) stmts.push(item);
+  }
+  return {
+    type: "Program",
+    children: stmts,
+  };
+}
+
 export function graphSettingsToAST(
   settings: Aug.GraphSettings
 ): TextAST.Settings {
@@ -51,10 +66,12 @@ export function tickerToAST(ticker: Aug.TickerAug): TextAST.Ticker {
   };
 }
 
+export function ignoredID(id: string) {
+  return id.startsWith("__") || /^\d+$/.test(id);
+}
+
 function idToString(id: string) {
-  return id.startsWith("__") || /\d+/.test(id)
-    ? undefined
-    : stringToASTmaybe(id);
+  return ignoredID(id) ? undefined : stringToASTmaybe(id);
 }
 
 export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {

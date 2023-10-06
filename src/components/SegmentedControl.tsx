@@ -1,6 +1,6 @@
 import "./SegmentedControl.less";
 import { DesmosSegmentedControl } from "./desmosComponents";
-import { Component, jsx } from "DCGView";
+import { Component, jsx } from "#DCGView";
 
 export default class SegmentedControl extends Component<{
   names: string[];

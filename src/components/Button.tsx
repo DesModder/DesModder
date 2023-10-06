@@ -1,6 +1,6 @@
 import "./Button.less";
-import { Component, jsx } from "DCGView";
-import { mergeClass, MaybeClassDict } from "utils/utils";
+import { Component, jsx } from "#DCGView";
+import { mergeClass, MaybeClassDict } from "#utils/utils.ts";
 
 export default class Button extends Component<{
   color: "primary" | "red" | "light-gray";

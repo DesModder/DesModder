@@ -1,4 +1,4 @@
-import { clean, testWithPage } from "tests/puppeteer-utils";
+import { clean, testWithPage } from "#tests";
 
 const STATE_BASE = {
   version: 10,

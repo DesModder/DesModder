@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/method-signature-style, @typescript-eslint/dot-notation */
+import DSM from "#DSM";
 import GLesmos from "./GLesmos";
 import BetterEvaluationView from "./better-evaluation-view";
 import BuiltinSettings from "./builtin-settings";
+import CodeGolf from "./code-golf";
 import CompactView from "./compact-view";
 import CustomMathQuillConfig from "./custom-mathquill-config";
 import DebugMode from "./debug-mode";
@@ -21,11 +23,11 @@ import RightClickTray from "./right-click-tray";
 import SetPrimaryColor from "./set-primary-color";
 import ShiftEnterNewline from "./shift-enter-newline";
 import ShowTips from "./show-tips";
+import SyntaxHighlighting from "./syntax-highlighting";
 import TextMode from "./text-mode";
 import VideoCreator from "./video-creator";
 import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
-import DSM from "MainController";
 
 interface ConfigItemGeneric {
   key: string;
@@ -52,6 +54,10 @@ export interface ConfigItemNumber extends ConfigItemGeneric {
   step: number;
   variant?: "range" | "number";
 }
+export interface ConfigItemColorList extends ConfigItemGeneric {
+  type: "color-list";
+  default: string[];
+}
 
 export interface ConfigItemStringArray extends ConfigItemGeneric {
   type: "stringArray";
@@ -62,7 +68,8 @@ export type ConfigItem =
   | ConfigItemBoolean
   | ConfigItemString
   | ConfigItemStringArray
-  | ConfigItemNumber;
+  | ConfigItemNumber
+  | ConfigItemColorList;
 
 export type GenericSettings = Record<string, any>;
 
@@ -131,6 +138,8 @@ export const keyToPlugin = {
   myExpressionsLibrary: MyExpressionsLibrary,
   compactView: CompactView,
   exprActionButtons: ExprActionButtons,
+  codeGolf: CodeGolf,
+  syntaxHighlighting: SyntaxHighlighting,
 } satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);
@@ -184,6 +193,8 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get compactView () { return this.ep["compact-view"]; }
   get multiline () { return this.ep["multiline"]; }
   get exprActionButtons () { return this.ep["expr-action-buttons"]; }
+  get codeGolf () { return this.ep["code-golf"]; }
+  get syntaxHighlighting () { return this.ep["syntax-highlighting"]}
 }
 
 export type IDToPluginSettings = {

@@ -2,7 +2,7 @@ import { PluginController } from "../PluginController";
 import "./compact.css";
 import "./compact.less";
 import { Config, configList } from "./config";
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 
 function toggleBodyClass(className: string, bool: boolean) {
   document.body.classList.toggle(className, bool);

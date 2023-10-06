@@ -1,6 +1,6 @@
 import HideErrors from "..";
 import "./ErrorTriangle.less";
-import { jsx } from "DCGView";
+import { jsx } from "#DCGView";
 
 export function ErrorTriangle(hideErrors: HideErrors, id: string, inner: any) {
   return (

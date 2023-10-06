@@ -83,7 +83,7 @@
   color: #444;
 
   a {
-    color: var(--dsm-primary-color);
+    color: rgb(var(--dsm-primary-color-rgb));
   }
 }
 
@@ -107,6 +107,69 @@
 
     input {
       width: 20%;
+    }
+  }
+
+  .dsm-settings-color-list-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+
+    .flex {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  .dsm-settings-color-list {
+    display: flex;
+    flex-direction: column;
+    border-radius: 10px;
+    padding: 0;
+    margin-right: 10px;
+    overflow: hidden;
+    border: 1px solid black;
+    min-width: 100px;
+    flex-grow: 999;
+
+    .dsm-settings-color-list-item-container {
+      position: relative;
+      display: flex;
+
+      .add-remove-buttons {
+        display: none;
+      }
+
+      &:hover .add-remove-buttons {
+        position: absolute;
+        display: block;
+        right: 0;
+        top: 0;
+        background-color: #ffffffaa;
+
+        .dsm-btn-icon {
+          width: 30px;
+          margin-top: -3px;
+        }
+      }
+    }
+
+    input[type="color"] {
+      border: none;
+      margin: 0;
+      padding: 0;
+      outline: none;
+      appearance: none;
+      width: 100%;
+    }
+
+    // for some reason these only work if separated
+    input[type="color"]::-webkit-color-swatch,
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      border: none;
+      margin: 0;
+      padding: 0;
+      outline: none;
     }
   }
 

@@ -1,5 +1,5 @@
 import { DCGViewModule } from "../DCGView";
-import DSM from "../MainController";
+import DSM from "#DSM";
 import {
   CheckboxComponent,
   DStaticMathquillViewComponent,

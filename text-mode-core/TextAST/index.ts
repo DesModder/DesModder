@@ -54,10 +54,11 @@ export type ExprStatement<C extends S = Concrete> = StatementBase<C> & {
   residualVariable?: Identifier<C>;
 };
 
-export type Table<C extends S = Concrete> = StatementBase<C> & {
-  type: "Table";
-  columns: TableColumn<C>[];
-};
+export type Table<C extends S = Concrete> = StatementBase<C> &
+  HasChildren<C> & {
+    type: "Table";
+    columns: TableColumn<C>[];
+  };
 
 export type TableColumn<C extends S = Concrete> = ExprStatement<C>;
 
@@ -71,11 +72,12 @@ export type Text<C extends S = Concrete> = StatementBase<C> & {
   text: string;
 };
 
-export type Folder<C extends S = Concrete> = StatementBase<C> & {
-  type: "Folder";
-  title: string;
-  children: Statement<C>[];
-};
+export type Folder<C extends S = Concrete> = StatementBase<C> &
+  HasChildren<C> & {
+    type: "Folder";
+    title: string;
+    children: Statement<C>[];
+  };
 
 export type Settings<C extends S = Concrete> = StatementBase<C> & {
   type: "Settings";
@@ -294,6 +296,13 @@ export type Positioned<C extends S = Concrete> = C extends Concrete
   : // eslint-disable-next-line @typescript-eslint/ban-types
     {};
 
+export type HasChildren<C extends S = Concrete> = C extends Concrete
+  ? {
+      afterOpen: number;
+    }
+  : // eslint-disable-next-line @typescript-eslint/ban-types
+    {};
+
 export interface Pos {
   from: number;
   to: number;
@@ -318,7 +327,10 @@ export type NonExprNonStatementNode<C extends S = Concrete> =
   | AssignmentExpression<C>
   | PiecewiseBranch<C>;
 
-export type Node<C extends S = Concrete> = NonExprNode<C> | Expression<C>;
+export type Node<C extends S = Concrete> =
+  | NonExprNode<C>
+  | NonExprNonStatementNode<C>
+  | Expression<C>;
 
 export function isExpression<C extends S = Concrete>(
   n: Node<C>

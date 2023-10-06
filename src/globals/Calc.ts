@@ -1,6 +1,6 @@
 import { ItemModel } from "./models";
 import { GraphState } from "@desmodder/graph-state";
-import { MathQuillField } from "components";
+import { MathQuillField } from "#components";
 
 export type DispatchedEvent =
   | {
@@ -26,6 +26,9 @@ export type DispatchedEvent =
         | "tick-ticker"
         | "keypad/functions"
         | "new-folder"
+        | "commit-geo-objects"
+        | "upward-delete-selected-expression"
+        | "downward-delete-selected-expression"
         | "ui/container-resized";
     }
   | {
@@ -89,8 +92,17 @@ export type DispatchedEvent =
       // used in compact-view plugin
       forceSwitchExpr?: boolean;
     }
+  | {
+      type: "update-all-selected-items";
+      update: {
+        // folderId is 'move these objects to folder'
+        // Everything else is simply styling
+        prop: "folderId" | string;
+      };
+    }
   | { type: "set-folder-collapsed"; id: string; isCollapsed: boolean }
-  | { type: "set-item-colorLatex"; id: string; colorLatex: string };
+  | { type: "set-item-colorLatex"; id: string; colorLatex: string }
+  | { type: "set-note-text"; id: string; text: string };
 
 /**
  * Evaluator change: a change set associated with a single id, passed back from
@@ -185,6 +197,11 @@ interface CalcPrivate {
     createItemModel: (modelTemplate: any) => ItemModel;
     getPillboxBackgroundColor: () => string;
     isGraphSettingsOpen: () => boolean;
+    graphSettings: {
+      config: {
+        product: string;
+      };
+    };
     dispatch: (e: DispatchedEvent) => void;
     getExpressionSearchStr: () => string;
     dispatcher: {
@@ -195,6 +212,7 @@ interface CalcPrivate {
     // The item models returned are actually much more detailed
     getSelectedItem: () => ItemModel | undefined;
     getItemModel: (id: any) => ItemModel | undefined;
+    getAllSelectedItems: () => ItemModel[];
     getItemModelByIndex: (index: number) => ItemModel | undefined;
     getAllItemModels: () => ItemModel[];
     stopAllSliders: () => void;
@@ -247,7 +265,7 @@ interface CalcPrivate {
     isNarrowGeometryHeader: () => boolean;
     expressionSearchOpen: boolean;
     /** Returns a function to call to unsubscribe */
-    subToChanges: (cb: () => void) => () => void;
+    subscribeToChanges: (cb: () => void) => () => void;
     getBackgroundColor: () => string;
     isInEditListMode: () => boolean;
     getMathquillConfig: (e: { additionalOperators?: string[] }) => {

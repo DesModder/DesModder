@@ -2,7 +2,7 @@ import { Inserter, PluginController } from "../PluginController";
 import { ConfirmLines } from "./components/ConfirmLines";
 import { GLesmosToggle } from "./components/GLesmosToggle";
 import "./glesmos.less";
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 
 export default class GLesmos extends PluginController {
   static id = "GLesmos" as const;
@@ -30,7 +30,7 @@ export default class GLesmos extends PluginController {
 
   canBeGLesmos(id: string) {
     let model;
-    return (
+    return !!(
       (model = Calc.controller.getItemModel(id)) &&
       model.type === "expression" &&
       model.formula &&
@@ -60,7 +60,7 @@ export default class GLesmos extends PluginController {
   isInequality(id: string) {
     const model = Calc.controller.getItemModel(id);
     if (model?.type !== "expression") return false;
-    return model.formula?.is_inequality;
+    return !!model.formula?.is_inequality;
   }
 
   isGLesmosLinesConfirmed(id: string) {

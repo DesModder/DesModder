@@ -3,20 +3,30 @@ import { DCGView } from "../../DCGView";
 import { Inserter, PluginController } from "../PluginController";
 import { onCalcEvent, analysisStateField } from "./LanguageServer";
 import { TextModeToggle } from "./components/TextModeToggle";
-import { initView, startState } from "./view/editor";
+import { initView, setDebugMode, startState } from "./view/editor";
+import { TransactionSpec } from "@codemirror/state";
 import { EditorView, ViewUpdate } from "@codemirror/view";
-import { Calc } from "globals/window";
-import { keys } from "utils/depUtils";
+import { Calc } from "#globals";
+import { keys } from "#utils/depUtils.ts";
 
 export default class TextMode extends PluginController {
   static id = "text-mode" as const;
   static enabledByDefault = false;
-  static descriptionLearnMore =
-    "https://github.com/DesModder/DesModder/tree/main/src/plugins/text-mode/docs/intro.md";
+  static descriptionLearnMore = "https://www.desmodder.com/text-mode";
 
   inTextMode: boolean = false;
   view: EditorView | null = null;
   dispatchListenerID: string | null = null;
+
+  updateDebugMode() {
+    this.view?.dispatch(this.updateDebugModeTransaction());
+  }
+
+  updateDebugModeTransaction(): TransactionSpec {
+    return {
+      effects: setDebugMode.of(this.dsm.isPluginEnabled("debug-mode")),
+    };
+  }
 
   afterDisable() {
     if (this.inTextMode) this.toggleTextMode();
@@ -45,7 +55,7 @@ export default class TextMode extends PluginController {
   /**
    * mountEditor: called from module overrides when the DCGView node mounts
    */
-  mountEditor(container: HTMLDivElement) {
+  mountEditor(container: HTMLElement) {
     const [hasError, text] = getText();
     this.view = initView(this, text);
     if (hasError) this.conversionError(() => this.toggleTextMode());
@@ -119,7 +129,7 @@ export default class TextMode extends PluginController {
    * Codemirror handles undo, redo, and Ctrl+/; we don't want Desmos to receive
    * these, so we stop their propagation at the container
    */
-  preventPropagation(container: HTMLDivElement) {
+  preventPropagation(container: HTMLElement) {
     container.addEventListener(
       "keydown",
       (e) =>

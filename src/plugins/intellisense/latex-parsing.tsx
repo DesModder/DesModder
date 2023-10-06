@@ -1,6 +1,6 @@
 import { ExpressionAug } from "../../../text-mode-core";
 import { latexStringToIdentifierString } from "./view";
-import { MQCursor, MathQuillField } from "components";
+import { MQCursor, MathQuillField } from "#components";
 
 export function mapAugAST(
   node: ExpressionAug["latex"],
@@ -56,6 +56,11 @@ function isSubscript(cursor: MQCursor) {
 // is an MQ node an operator name?
 function isOperatorName(cursor: MQCursor) {
   return cursor._el?.classList.contains("dcg-mq-operator-name") ?? false;
+}
+
+// is am MQ node a digit?
+function isDigit(cursor: MQCursor) {
+  return cursor._el?.classList.contains("dcg-mq-digit") ?? false;
 }
 
 // is an MQ node the start of an operator name?
@@ -223,5 +228,73 @@ export function getPartialFunctionCall(
       paramIndex = 0;
       cursor = oldCursor.parent;
     }
+  }
+}
+
+export function getCorrectableIdentifier(mq: MathQuillField): {
+  ident: string;
+  back: () => void;
+} {
+  let cursor: MQCursor | undefined = mq.__controller.cursor[-1];
+
+  const isInSubscript =
+    mq.__controller.cursor?.parent?._el?.classList.contains("dcg-mq-sub");
+
+  // don't bother if you're in a subscript
+  if (isInSubscript) {
+    return { ident: "", back: () => {} };
+  }
+
+  const identifierSegments: string[] = [];
+
+  let goBack = 0;
+
+  while (cursor) {
+    const subscript = isSubscript(cursor);
+    const isValid =
+      isOperatorName(cursor) ||
+      isVarName(cursor) ||
+      subscript ||
+      isDigit(cursor);
+    if (!isValid) break;
+
+    const ltx = cursor?.latex?.();
+    if (ltx === undefined) break;
+    identifierSegments.push(ltx.replace(/[^a-zA-Z0-9]/g, ""));
+
+    if (subscript) {
+      goBack += ltx === "_{ }" ? 1 : ltx.length - 3;
+    } else {
+      goBack++;
+    }
+
+    cursor = cursor[-1];
+  }
+
+  if (isInSubscript) goBack++;
+
+  identifierSegments.reverse();
+
+  // remove all leading numbers from the identifier
+  while (identifierSegments[0]?.match(/^[0-9]+$/g)) {
+    identifierSegments.splice(0, 1);
+  }
+
+  const back = () => {
+    for (let i = 0; i < goBack; i++) mq.keystroke("Backspace");
+  };
+
+  if (identifierSegments.length === 1) {
+    return {
+      ident: identifierSegments[0],
+      back,
+    };
+  } else if (identifierSegments.length > 1) {
+    return {
+      ident: identifierSegments[0] + "_" + identifierSegments.slice(1).join(""),
+      back,
+    };
+  } else {
+    return { ident: "", back: () => {} };
   }
 }

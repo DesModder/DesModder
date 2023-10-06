@@ -92,7 +92,7 @@ Before creating translations, figure out the language code for the language. At 
 The following examples will refer to the language code `fr` (French), but replace it with your language code.
 
 1. Create a new FTL (fluent) file by duplicating `localization/en.ftl` to `localization/fr.ftl`
-2. Add a line near the top of `src/i18n/i18n-core.ts` with an import statement, e.g. `import frFTL from "../../localization/fr.ftl";`
+2. Add a line near the top of `src/i18n/i18n-core.ts` with an import statement, e.g. `import frFTL from "./fr.ftl";`
 3. Add a line at the bottom of `src/i18n/18n-core.ts` adding the imported language, e.g. `addLanguage("fr", frFTL)`
 4. Edit some strings in the `localization/fr.ftl` file
 5. Follow the directions in "Making Changes" to run `npm run dev` to view changes on each reload of the page.

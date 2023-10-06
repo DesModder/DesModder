@@ -1,16 +1,12 @@
 {
-  "extends": "./tsconfig-base.json",
-  "compilerOptions": {
-    "composite": true
-  },
-  "include": [
-    "./src/",
-    "./scripts/",
-    "./loaders/",
-    "./esbuild.mjs",
-    "./.eslintrc.js",
-    "./jest-config/",
-    "./text-mode-core"
-  ],
-  "files": ["node_modules/jest-expect-message/types/index.d.ts"]
+  "extends": "./tsconfig-base",
+  "include": ["./esbuild.mjs", "./.eslintrc.js"],
+  "references": [
+    { "path": "./scripts" },
+    { "path": "./metadata" },
+    { "path": "./text-mode-core" },
+    { "path": "./localization" },
+    { "path": "./parsing" },
+    { "path": "./src" }
+  ]
 }

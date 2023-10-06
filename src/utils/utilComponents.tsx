@@ -1,5 +1,5 @@
-import { Component, jsx } from "DCGView";
-import { For } from "components/desmosComponents";
+import { Component, jsx } from "#DCGView";
+import { For } from "#components";
 
 export class IndexFor<T> extends Component<{
   each: () => T[];

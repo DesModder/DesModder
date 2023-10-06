@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { Message } from "@fluent/bundle";
 import fs from "fs/promises";
-import { locales } from "i18n/i18n-core";
+import { locales } from "#i18n";
 
 void main();
 
@@ -26,7 +26,7 @@ async function getUntranslatable(lang: string) {
   const langFTL = (await fs.readFile(`localization/${lang}.ftl`)).toString();
   return new Set(
     langFTL
-      .split(/#\s*unchanged.*\n/gi)
+      .split(/#\s*unchanged.*\r?\n/gi)
       .slice(1)
       .map((block) => block.split(/\n/)[0].split("=")[0].trim())
   );

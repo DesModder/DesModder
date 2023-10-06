@@ -1,6 +1,13 @@
-import Metadata from "#manage-metadata/interface";
-import migrateToLatest from "#manage-metadata/migrate";
-import { ChildExprNode, evalMaybeRational, AnyNode } from "#parsing/parsenode";
+// eslint-disable-next-line rulesdir/no-reach-past-exports
+import Metadata from "../../metadata/interface";
+// eslint-disable-next-line rulesdir/no-reach-past-exports
+import migrateToLatest from "../../metadata/migrate";
+import {
+  ChildExprNode,
+  evalMaybeRational,
+  AnyNode,
+  // eslint-disable-next-line rulesdir/no-reach-past-exports
+} from "../../parsing/parsenode";
 import { Config } from "../TextModeConfig";
 import Aug from "./AugState";
 import type * as Graph from "@desmodder/graph-state";

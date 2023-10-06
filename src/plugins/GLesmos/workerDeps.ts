@@ -1,5 +1,10 @@
-import { ParsenodeError as IParsenodeError } from "../../parsing/parsenode";
-import { IRChunk, Opcodes, ValueType, Types as ValueTypes } from "parsing/IR";
+import { ParsenodeError as IParsenodeError } from "#parsing/parsenode.ts";
+import {
+  IRChunk,
+  Opcodes,
+  ValueType,
+  Types as ValueTypes,
+} from "#parsing/IR.ts";
 
 export let countReferences: (c: IRChunk) => number[];
 export let opcodes: Opcodes;

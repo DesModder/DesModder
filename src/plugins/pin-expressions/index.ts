@@ -2,7 +2,7 @@ import { Inserter, PluginController } from "../PluginController";
 import { ActionButton } from "../expr-action-buttons";
 import { ListView, PinnedPanel } from "./components/PinnedPanel";
 import "./pinExpressions.less";
-import { Calc } from "globals/window";
+import { Calc } from "#globals";
 
 export default class PinExpressions extends PluginController {
   static id = "pin-expressions" as const;

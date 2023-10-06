@@ -1,5 +1,5 @@
-import { jsx } from "DCGView";
-import { StaticMathQuillView } from "components";
+import { jsx } from "#DCGView";
+import { StaticMathQuillView } from "#components";
 
 function _ColorEvaluation(val: () => string | string[]) {
   return (

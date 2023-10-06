@@ -1,29 +1,31 @@
 import "./Tip.less";
-import tips from "./tips";
-import { Component, jsx } from "DCGView";
-import { If } from "components";
-import { Calc } from "globals/window";
-import { format } from "i18n/i18n-core";
+import { getTipData } from "./tips";
+import { Component, jsx } from "#DCGView";
+import { If } from "#components";
+import { Calc } from "#globals";
+import { format } from "#i18n";
 
 export default class Tip extends Component {
   currentTipIndex!: number;
+  tips!: ReturnType<typeof getTipData>;
 
   init() {
-    this.currentTipIndex = Math.floor(Math.random() * tips.length);
+    this.tips = getTipData();
+    this.currentTipIndex = Math.floor(Math.random() * this.tips.length);
   }
 
   template() {
     return (
       <div class="dsm-usage-tip" onTap={() => this.nextTip()}>
-        <div>{() => this.getCurrentTip().desc}</div>
-        <If predicate={() => this.getCurrentTip().learnMore !== undefined}>
+        <div>{() => format(this.getCurrentTip().tip)}</div>
+        <If predicate={() => this.getCurrentTip().learnMore !== ""}>
           {() => (
             <a
               href={() => this.getCurrentTip().learnMore}
               target="_blank"
               onTap={(e: MouseEvent) => e.stopPropagation()}
             >
-              {format("menu-learn-more")}
+              {() => format("menu-learn-more")}
             </a>
           )}
         </If>
@@ -32,12 +34,12 @@ export default class Tip extends Component {
   }
 
   getCurrentTip() {
-    return tips[this.currentTipIndex];
+    return this.tips[this.currentTipIndex];
   }
 
   nextTip() {
     this.currentTipIndex += 1;
-    this.currentTipIndex %= tips.length;
+    this.currentTipIndex %= this.tips.length;
     Calc.controller.updateViews();
   }
 }

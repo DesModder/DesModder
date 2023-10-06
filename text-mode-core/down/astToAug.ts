@@ -1,4 +1,3 @@
-import { everyNonNull } from "#utils/utils";
 import { ProgramAnalysis } from "../ProgramAnalysis";
 import TextAST from "../TextAST";
 import { Config } from "../TextModeConfig";
@@ -816,4 +815,8 @@ function identifierToAug(expr: TextAST.Identifier) {
     type: "Identifier" as const,
     symbol: expr.name,
   };
+}
+
+function everyNonNull<T>(arr: (T | null)[]): arr is T[] {
+  return arr.every((e) => e !== null);
 }

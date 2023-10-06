@@ -43,7 +43,7 @@ _deleteItemAndAnimateOut ($e, $t) {__body__}
 
 *Find* inside `body`
 ```js
-$s = this.getItemSelectorById($)
+$s = this.getItemNodeById($)
 ```
 
 *Replace* `body` with

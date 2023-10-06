@@ -1,9 +1,9 @@
 import PillboxMenus from "..";
 import "./PillboxContainer.less";
-import { Component, jsx } from "DCGView";
-import { If, Tooltip, For } from "components/desmosComponents";
-import { Calc } from "globals/window";
-import { format } from "i18n/i18n-core";
+import { Component, jsx } from "#DCGView";
+import { If, Tooltip, For } from "#components";
+import { Calc } from "#globals";
+import { format } from "#i18n";
 
 export default class PillboxContainer extends Component<{
   pm: PillboxMenus;
@@ -48,7 +48,7 @@ export default class PillboxContainer extends Component<{
                   class={() =>
                     this.horizontal
                       ? "dcg-icon-btn"
-                      : "dcg-btn-flat-gray dcg-settings-pillbox dcg-action-settings dsm-action-menu"
+                      : "dcg-btn-flat-gray dcg-settings-pillbox dcg-action-settings dcg-pillbox-btn-interior dsm-action-menu"
                   }
                   role="button"
                   onTap={() => this.onTapMenuButton(id)}

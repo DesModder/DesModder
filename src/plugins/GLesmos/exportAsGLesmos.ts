@@ -3,7 +3,7 @@ import emitChunkGL from "./emitChunkGL";
 import { colorVec4 } from "./outputHelpers";
 import { GLesmosShaderPackage } from "./shaders";
 import { ParsenodeError } from "./workerDeps";
-import { IRExpression } from "parsing/parsenode";
+import { IRExpression } from "#parsing/parsenode.ts";
 
 function clampParam(input: number, min: number, max: number, def: number) {
   if (isNaN(input)) return def;

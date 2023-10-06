@@ -23,17 +23,28 @@ DSM.insertElement(() => DSM.pillboxMenus?.pillboxButtonsView(true)),
 
 *Description* `Add pillbox buttons (like the DesModder button) in the graphing calculator`
 
-*Find* => `from`
+*Find* => `pushkey`
 ```js
-$DCGView.createElement($, {
-  predicate: this.bindFn(this.shouldShowResetButton)
-} ____)
+this.shouldShowGeometrySettings() && $right.push("settings-geo"),
 ```
 
-*Replace* `from` with
+*Replace* `pushkey` with
 ```js
-DSM.insertElement(() => DSM.pillboxMenus?.pillboxButtonsView(false)),
-__from__
+__pushkey__
+DSM.pillboxMenus && $right.push("dsm-pillbox-menus"),
+```
+
+*Find* => `case`
+```js
+case "settings2d":
+  return $.createElement($, ____);
+```
+
+*Replace* `case` with
+```js
+__case__
+case "dsm-pillbox-menus":
+  return DSM.insertElement(() => DSM.pillboxMenus?.pillboxButtonsView(false));
 ```
 
 ## Bottom zero for our pillbox menus
@@ -106,20 +117,4 @@ $DCGView.createElement("div", {
 __classes__,
 "dcg-settings-container": this.controller.isNarrowGeometryHeader(),
 "dcg-left": this.controller.isNarrowGeometryHeader()
-```
-
-## Show pillbox container even without zoom buttons
-
-*Description* `Show pillbox buttons (like the DesModder button) even with zoom disabled`
-
-*Find*
-```js
-shouldShowContainer() {
-    return __ret__
-}
-```
-
-*Replace* `ret` with
-```js
-__ret__ || (!DSM.pillboxMenus?.showHorizontalPillboxMenu())
 ```
