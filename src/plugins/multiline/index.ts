@@ -245,13 +245,17 @@ export default class Multiline extends PluginController<Config> {
       }
     });
 
-    this.customDispatcherID = registerCustomDispatchOverridingHandler((evt) => {
-      if (evt.type === "on-special-key-pressed") {
-        if (evt.key === "Up" || evt.key === "Down") {
-          if (!this.doMultilineVerticalNav(evt.key)) return false;
+    this.customDispatcherID = registerCustomDispatchOverridingHandler(
+      this.calc,
+      (evt) => {
+        if (evt.type === "on-special-key-pressed") {
+          if (evt.key === "Up" || evt.key === "Down") {
+            if (!this.doMultilineVerticalNav(evt.key)) return false;
+          }
         }
-      }
-    }, 0);
+      },
+      0
+    );
   }
 
   afterDisable() {
@@ -267,7 +271,10 @@ export default class Multiline extends PluginController<Config> {
       clearInterval(this.multilineIntervalID);
 
     if (this.customDispatcherID)
-      deregisterCustomDispatchOverridingHandler(this.customDispatcherID);
+      deregisterCustomDispatchOverridingHandler(
+        this.calc,
+        this.customDispatcherID
+      );
 
     for (const remover of this.customHandlerRemovers) {
       remover();
