@@ -1,18 +1,17 @@
-import Aug, { ExpressionAug } from "text-mode-core/aug/AugState";
-import { augNonFolderToRaw } from "text-mode-core/aug/augToRaw";
+import Aug from "text-mode-core/aug/AugState";
 import { rawNonFolderToAug } from "text-mode-core/aug/rawToAug";
 import { textModeExprToLatex } from "text-mode-core/down/textToRaw";
 import { getGraphState } from "./library-search-utils";
 import { LibrarySearchView } from "./library-search-view";
 import { ExpressionState, ItemState } from "@desmodder/graph-state";
-import { Component, DCGView, MountedComponent, jsx } from "#DCGView";
+import { MountedComponent, jsx } from "#DCGView";
 import { MathQuillField, MathQuillView } from "#components";
 import { Calc } from "#globals";
 import { PluginController } from "../PluginController";
 import { mapAugAST } from "../intellisense/latex-parsing";
 import { IntellisenseState } from "../intellisense/state";
-import { getMetadata, setMetadata } from "../manage-metadata/sync";
-import { buildConfig, buildConfigFromGlobals } from "text-mode-core";
+import { getMetadata } from "../manage-metadata/sync";
+import { buildConfigFromGlobals } from "text-mode-core";
 
 export interface ExpressionLibraryMathExpression {
   type: "expression";
@@ -125,28 +124,6 @@ function forAllLatexSources(
           runHandler(v);
         }
       }
-  }
-}
-
-class MyExpressionsLibraryButton extends Component<{
-  plugin: () => MyExpressionsLibrary;
-}> {
-  template() {
-    return (
-      <div class="dcg-keypad-btn-container">
-        <span
-          onClick={(e: MouseEvent) => {
-            if (e.target instanceof HTMLElement) {
-              // const rect = e.target?.getBoundingClientRect();
-              this.props.plugin().openSearch();
-            }
-          }}
-          class="dcg-keypad-btn dcg-btn-dark-on-gray"
-        >
-          <span class="dcg-keypad-btn-content">my expressions library</span>
-        </span>
-      </div>
-    );
   }
 }
 
@@ -318,67 +295,6 @@ export default class MyExpressionsLibrary extends PluginController<{
       (loadExpr) => !Calc.controller.getItemModel(loadExpr.raw.id)
     );
 
-    console.log(loadedArray);
-
-    // const boundIdentsInImportedExprs = [];
-
-    // for (const expr of loadedArray) {
-    //   boundIdentsInImportedExprs.push(
-    //     ...this.identTracker.getExpressionBoundIdentifiers(expr.raw)
-    //   );
-    // }
-
-    // const symbolNamesToRemap: Record<string, string> = {};
-
-    // for (const ident of boundIdentsInImportedExprs) {
-    //   const renamedVersion = this.identTracker.getRenamedIdentifierName(
-    //     ident.variableName
-    //   );
-    //   if (renamedVersion !== ident.variableName) {
-    //     symbolNamesToRemap[ident.variableName] = renamedVersion;
-    //   }
-    // }
-
-    // setMetadata({
-    //   ...getMetadata(),
-    //   symbolRemappings: {
-    //     ...getMetadata().symbolRemappings,
-    //     [expr.graph.hash]: {
-    //       ...(getMetadata()?.symbolRemappings?.[expr.graph.hash] ?? {}),
-    //       ...symbolNamesToRemap,
-    //     },
-    //   },
-    // });
-
-    // const symbolNameRemapper =
-    //   getMetadata().symbolRemappings?.[expr.graph.hash] ?? {};
-
-    // loadedArray = loadedArray.map((e) => {
-    //   const augCopy = structuredClone(e.aug);
-    //   mapAugAST(augCopy, (node) => {
-    //     if (!node) return;
-    //     if (node.type === "Identifier") {
-    //       node.symbol = symbolNameRemapper[node.symbol] ?? node.symbol;
-    //     }
-    //   });
-
-    //   const rawCopy = augNonFolderToRaw(
-    //     buildConfig({}),
-    //     augCopy as ExpressionAug
-    //   );
-    //   for (const [k, v] of Object.entries(rawCopy)) {
-    //     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-    //     if (v === undefined) delete rawCopy[k as keyof typeof rawCopy];
-    //   }
-
-    //   return {
-    //     ...e,
-    //     // need to change .aug and .raw to rename vars
-    //     aug: augCopy,
-    //     raw: rawCopy,
-    //   };
-    // });
-
     let startIndex = this.getInsertionStartIndex();
 
     // figure out what folder to put expressions into
@@ -447,9 +363,7 @@ export default class MyExpressionsLibrary extends PluginController<{
   async loadEntireGraph(graph: ExpressionLibraryGraph) {
     this.createEmptyFolder(`Graph: ${graph.title}`);
 
-    for (const [id, expr] of Array.from(
-      graph.expressions.entries()
-    ).reverse()) {
+    for (const [_, expr] of Array.from(graph.expressions.entries()).reverse()) {
       if (expr.type === "expression") {
         await this.loadMathExpression(expr, true);
       }
@@ -574,7 +488,6 @@ export default class MyExpressionsLibrary extends PluginController<{
 
       this.graphs.graphs.push(newGraph as ExpressionLibraryGraph);
     }
-    console.log(this.graphs);
     this.dsm.pillboxMenus?.updateMenuView();
   }
 
@@ -627,21 +540,6 @@ export default class MyExpressionsLibrary extends PluginController<{
           ></LibrarySearchView>
         );
       },
-    });
-
-    // inject library search into functions keypad
-    Calc.controller.dispatcher.register((evt) => {
-      if (evt.type === "keypad/set-minimized") {
-        if (!evt.minimized && !this.keypadRow) {
-          const keypad = document.querySelector(".dcg-keys .dcg-basic-keypad");
-          this.keypadRow = document.createElement("div");
-          this.keypadRow.className = "dcg-keypad-row";
-          keypad?.insertBefore(this.keypadRow, keypad.firstElementChild);
-          DCGView.mountToNode(MyExpressionsLibraryButton, this.keypadRow, {
-            plugin: () => this,
-          });
-        }
-      }
     });
 
     void this.loadGraphs();
