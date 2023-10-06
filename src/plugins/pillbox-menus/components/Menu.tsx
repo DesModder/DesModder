@@ -206,14 +206,9 @@ function stringArrayOption(
   plugin: SpecificPlugin,
   settings: GenericSettings
 ) {
-  function set(newValue: string[]) {
-    controller.expandedPlugin &&
-      controller.dsm.setPluginSetting(
-        controller.expandedPlugin,
-        item.key,
-        newValue
-      );
-  }
+  const setValue = (newValue: string[]) =>
+    pm.expandedPlugin &&
+    pm.dsm.setPluginSetting(pm.expandedPlugin, item.key, newValue);
 
   function get() {
     return settings[item.key] as string[];
@@ -223,7 +218,7 @@ function stringArrayOption(
 
   const inputHandler = (evt: InputEvent) => {
     currentValue = (evt.target as HTMLDivElement).innerText;
-    set(currentValue.split("\n"));
+    setValue(currentValue.split("\n"));
   };
 
   return (
@@ -247,7 +242,7 @@ function stringArrayOption(
           {configItemName(plugin, item)}
         </label>
       </Tooltip>
-      <ResetButton pm={controller} key={item.key} />
+      <ResetButton pm={pm} key={item.key} />
     </div>
   );
 }

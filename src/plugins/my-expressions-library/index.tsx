@@ -12,7 +12,7 @@ import { PluginController } from "../PluginController";
 import { mapAugAST } from "../intellisense/latex-parsing";
 import { IntellisenseState } from "../intellisense/state";
 import { getMetadata, setMetadata } from "../manage-metadata/sync";
-import { buildConfig } from "text-mode-core";
+import { buildConfig, buildConfigFromGlobals } from "text-mode-core";
 
 export interface ExpressionLibraryMathExpression {
   type: "expression";
@@ -318,64 +318,66 @@ export default class MyExpressionsLibrary extends PluginController<{
       (loadExpr) => !Calc.controller.getItemModel(loadExpr.raw.id)
     );
 
-    const boundIdentsInImportedExprs = [];
+    console.log(loadedArray);
 
-    for (const expr of loadedArray) {
-      boundIdentsInImportedExprs.push(
-        ...this.identTracker.getExpressionBoundIdentifiers(expr.raw)
-      );
-    }
+    // const boundIdentsInImportedExprs = [];
 
-    const symbolNamesToRemap: Record<string, string> = {};
+    // for (const expr of loadedArray) {
+    //   boundIdentsInImportedExprs.push(
+    //     ...this.identTracker.getExpressionBoundIdentifiers(expr.raw)
+    //   );
+    // }
 
-    for (const ident of boundIdentsInImportedExprs) {
-      const renamedVersion = this.identTracker.getRenamedIdentifierName(
-        ident.variableName
-      );
-      if (renamedVersion !== ident.variableName) {
-        symbolNamesToRemap[ident.variableName] = renamedVersion;
-      }
-    }
+    // const symbolNamesToRemap: Record<string, string> = {};
 
-    setMetadata({
-      ...getMetadata(),
-      symbolRemappings: {
-        ...getMetadata().symbolRemappings,
-        [expr.graph.hash]: {
-          ...(getMetadata()?.symbolRemappings?.[expr.graph.hash] ?? {}),
-          ...symbolNamesToRemap,
-        },
-      },
-    });
+    // for (const ident of boundIdentsInImportedExprs) {
+    //   const renamedVersion = this.identTracker.getRenamedIdentifierName(
+    //     ident.variableName
+    //   );
+    //   if (renamedVersion !== ident.variableName) {
+    //     symbolNamesToRemap[ident.variableName] = renamedVersion;
+    //   }
+    // }
 
-    const symbolNameRemapper =
-      getMetadata().symbolRemappings?.[expr.graph.hash] ?? {};
+    // setMetadata({
+    //   ...getMetadata(),
+    //   symbolRemappings: {
+    //     ...getMetadata().symbolRemappings,
+    //     [expr.graph.hash]: {
+    //       ...(getMetadata()?.symbolRemappings?.[expr.graph.hash] ?? {}),
+    //       ...symbolNamesToRemap,
+    //     },
+    //   },
+    // });
 
-    loadedArray = loadedArray.map((e) => {
-      const augCopy = structuredClone(e.aug);
-      mapAugAST(augCopy, (node) => {
-        if (!node) return;
-        if (node.type === "Identifier") {
-          node.symbol = symbolNameRemapper[node.symbol] ?? node.symbol;
-        }
-      });
+    // const symbolNameRemapper =
+    //   getMetadata().symbolRemappings?.[expr.graph.hash] ?? {};
 
-      const rawCopy = augNonFolderToRaw(
-        buildConfig({}),
-        augCopy as ExpressionAug
-      );
-      for (const [k, v] of Object.entries(rawCopy)) {
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        if (v === undefined) delete rawCopy[k as keyof typeof rawCopy];
-      }
+    // loadedArray = loadedArray.map((e) => {
+    //   const augCopy = structuredClone(e.aug);
+    //   mapAugAST(augCopy, (node) => {
+    //     if (!node) return;
+    //     if (node.type === "Identifier") {
+    //       node.symbol = symbolNameRemapper[node.symbol] ?? node.symbol;
+    //     }
+    //   });
 
-      return {
-        ...e,
-        // need to change .aug and .raw to rename vars
-        aug: augCopy,
-        raw: rawCopy,
-      };
-    });
+    //   const rawCopy = augNonFolderToRaw(
+    //     buildConfig({}),
+    //     augCopy as ExpressionAug
+    //   );
+    //   for (const [k, v] of Object.entries(rawCopy)) {
+    //     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    //     if (v === undefined) delete rawCopy[k as keyof typeof rawCopy];
+    //   }
+
+    //   return {
+    //     ...e,
+    //     // need to change .aug and .raw to rename vars
+    //     aug: augCopy,
+    //     raw: rawCopy,
+    //   };
+    // });
 
     let startIndex = this.getInsertionStartIndex();
 
@@ -481,7 +483,11 @@ export default class MyExpressionsLibrary extends PluginController<{
         if (expr.type !== "folder") {
           augs.set(
             expr.id,
-            rawNonFolderToAug(buildConfig({}), expr, getMetadata())
+            rawNonFolderToAug(
+              buildConfigFromGlobals(Desmos, Calc),
+              expr,
+              getMetadata()
+            )
           );
         } else {
           folders.set(expr.id, {
@@ -568,6 +574,7 @@ export default class MyExpressionsLibrary extends PluginController<{
 
       this.graphs.graphs.push(newGraph as ExpressionLibraryGraph);
     }
+    console.log(this.graphs);
     this.dsm.pillboxMenus?.updateMenuView();
   }
 
@@ -582,7 +589,10 @@ export default class MyExpressionsLibrary extends PluginController<{
             (expr.raw.latex?.startsWith(
               (() => {
                 let ltx =
-                  textModeExprToLatex(buildConfig({}), this.searchStr) ?? "";
+                  textModeExprToLatex(
+                    buildConfigFromGlobals(Desmos, Calc),
+                    this.searchStr
+                  ) ?? "";
                 if (ltx[ltx.length - 1] === "}") ltx = ltx?.slice(0, -1);
                 return ltx;
               })() ?? ""
