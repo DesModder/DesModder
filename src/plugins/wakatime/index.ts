@@ -1,4 +1,4 @@
-import { Calc, Console } from "../../globals/window";
+import { Console } from "../../globals/window";
 import { getCurrentGraphTitle } from "../../utils/depUtils";
 import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
@@ -15,7 +15,7 @@ export default class Wakatime extends PluginController<Config> {
   handler!: string;
 
   afterEnable() {
-    this.handler = Calc.controller.dispatcher.register((e) => {
+    this.handler = this.cc.dispatcher.register((e) => {
       if (
         e.type === "on-evaluator-changes" ||
         e.type === "clear-unsaved-changes"
@@ -28,7 +28,7 @@ export default class Wakatime extends PluginController<Config> {
       if (msg.type === "heartbeat-error") {
         if (msg.isAuthError) {
           this.dsm.disablePlugin("wakatime");
-          Calc.controller._showToast({
+          this.cc._showToast({
             message:
               "WakaTime heartbeat error: check your secret key. Plugin has been deactivated.",
             toastStyle: "error",
@@ -42,15 +42,15 @@ export default class Wakatime extends PluginController<Config> {
   }
 
   afterDisable() {
-    Calc.controller.dispatcher.unregister(this.handler);
+    this.cc.dispatcher.unregister(this.handler);
   }
 
   maybeSendHeartbeat(isWrite: boolean) {
     if (!(performance.now() - this.lastUpdate > heartbeatInterval || isWrite))
       return;
-    const graphName = getCurrentGraphTitle() ?? "Untitled Graph";
+    const graphName = getCurrentGraphTitle(this.calc) ?? "Untitled Graph";
     const graphURL = window.location.href;
-    const lineCount = Calc.getExpressions().length;
+    const lineCount = this.calc.getExpressions().length;
 
     Console.debug("[WakaTime] Sending heartbeat at:", new Date());
     postMessageUp({

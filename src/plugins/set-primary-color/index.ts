@@ -1,4 +1,3 @@
-import { Calc } from "../../globals/window";
 import { PluginController } from "../PluginController";
 import "./_overrides.less";
 import "./custom-overrides.less";
@@ -105,7 +104,7 @@ export default class SetPrimaryColor extends PluginController<Config> {
     canvas.height = this.originalImage.naturalHeight;
     const ctx = canvas.getContext("2d");
     if (ctx === null) return;
-    const [bsat, bli, bhue] = Calc.controller.isGeometry()
+    const [bsat, bli, bhue] = this.cc.isGeometry()
       ? [0.67, 0.8, 285]
       : [1, 0.73, 130];
     ctx.filter = `saturate(${sat / bsat})

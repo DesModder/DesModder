@@ -141,8 +141,7 @@ if (!$ee.branches || !$ee.branches.length) return;
 
 ```js
 __guard__
-// allow-ids: of
-DesModder.drawGLesmosSketchToCtx?.($drawCtx, $sketch);
+DesModder.drawGLesmosSketchToCtx?.(window.Calc.controller, $drawCtx, $sketch);
 ```
 
 ## Pass GLesmos flag to worker

@@ -38,8 +38,8 @@ export default class TextMode extends PluginController {
     // expression UI doesn't render in text mode, we replace markTickRequiredNextFrame
     // with a version that calls markTickRequiredNextFrame only when sliders are playing
     if (this.inTextMode) {
-      Calc.controller.expressionSearchOpen = false;
-      Calc.controller.markTickRequiredNextFrame = function () {
+      this.cc.expressionSearchOpen = false;
+      this.cc.markTickRequiredNextFrame = function () {
         if (this.getPlayingSliders().length > 0) {
           // eslint-disable-next-line no-proto
           (this as any).__proto__.markTickRequiredNextFrame.apply(this);
@@ -47,9 +47,9 @@ export default class TextMode extends PluginController {
       };
     } else {
       // Revert back to the old markTickRequiredNextFrame given by prototype
-      delete (Calc.controller as any).markTickRequiredNextFrame;
+      delete (this.cc as any).markTickRequiredNextFrame;
     }
-    Calc.controller.updateViews();
+    this.cc.updateViews();
   }
 
   /**
@@ -61,7 +61,7 @@ export default class TextMode extends PluginController {
     if (hasError) this.conversionError(() => this.toggleTextMode());
     container.appendChild(this.view.dom);
     this.preventPropagation(container);
-    this.dispatchListenerID = Calc.controller.dispatcher.register((event) => {
+    this.dispatchListenerID = this.cc.dispatcher.register((event) => {
       // setTimeout to avoid dispatch-in-dispatch from handlers responding to
       // calc state changing by dispatching an event
       setTimeout(() => {
@@ -83,7 +83,7 @@ export default class TextMode extends PluginController {
   }
 
   textModeToggle(): Inserter {
-    if (Calc.controller.isInEditListMode()) return undefined;
+    if (this.cc.isInEditListMode()) return undefined;
     return () => TextModeToggle(this);
   }
 
@@ -101,11 +101,11 @@ export default class TextMode extends PluginController {
   }
 
   toastErrorGraphUndo(msg: string) {
-    this.toastError(msg, () => Calc.controller.dispatch({ type: "undo" }));
+    this.toastError(msg, () => this.cc.dispatch({ type: "undo" }));
   }
 
   toastError(msg: string, undoCallback?: () => void) {
-    Calc.controller._showToast({
+    this.cc._showToast({
       message: msg,
       // `undoCallback: undefined` still adds the "Press Ctrl+Z" message
       ...(undoCallback ? { undoCallback } : {}),
@@ -117,7 +117,7 @@ export default class TextMode extends PluginController {
    */
   unmountEditor() {
     if (this.dispatchListenerID !== null) {
-      Calc.controller.dispatcher.unregister(this.dispatchListenerID);
+      this.cc.dispatcher.unregister(this.dispatchListenerID);
     }
     if (this.view) {
       this.view.destroy();

@@ -6,7 +6,7 @@ import {
   ComponentTemplate,
   DCGView,
 } from "#DCGView";
-import window, { Calc, Fragile } from "#globals";
+import window, { CalcController, Fragile } from "#globals";
 
 export abstract class CheckboxComponent extends ClassComponent<{
   checked: boolean;
@@ -125,7 +125,7 @@ export abstract class InlineMathInputViewComponent extends ClassComponent<{
   handleFocusChanged?: (isFocused: boolean) => void;
   noFadeout?: boolean;
   readonly: boolean;
-  controller: typeof Calc.controller;
+  controller: CalcController;
 }> {}
 
 /** General InlineMathInputView, without any defaults filled in */
@@ -174,14 +174,14 @@ const ExpressionView = window.DesModderFragile.ExpressionView;
 
 export abstract class IconViewComponent extends ClassComponent<{
   model: ItemModel;
-  controller: typeof Calc.controller;
+  controller: CalcController;
 }> {}
 
 export const ImageIconView = window.DesModderFragile.ImageIconView;
 
 interface ModelAndController {
   model: ExpressionModel;
-  controller: typeof Calc.controller;
+  controller: CalcController;
 }
 
 // <ExpressionIconView ... >

@@ -1,5 +1,5 @@
 import { insertElement, replaceElement } from "./preload/replaceElement";
-import window, { Calc } from "#globals";
+import window, { CalcType } from "#globals";
 import {
   plugins,
   pluginList,
@@ -12,6 +12,7 @@ import {
 import { postMessageUp, mapToRecord, recordToMap } from "#utils/messages.ts";
 
 export default class DSM extends TransparentPlugins {
+  cc = this.calc.controller;
   /**
    * pluginsEnabled keeps track of what plugins the user wants enabled,
    * regardless of forceDisabled settings.
@@ -24,7 +25,7 @@ export default class DSM extends TransparentPlugins {
     )
   ) as IDToPluginSettings;
 
-  constructor() {
+  constructor(public calc: CalcType) {
     super();
     // default values
     this.forceDisabled = window.DesModderPreload!.pluginsForceDisabled;
@@ -97,7 +98,7 @@ export default class DSM extends TransparentPlugins {
         this.setPluginEnabled(id, false);
         this.pillboxMenus?.updateMenuView();
         plugin?.afterDisable();
-        Calc.controller.updateViews();
+        this.cc.updateViews();
       }
     }
   }
@@ -112,7 +113,7 @@ export default class DSM extends TransparentPlugins {
       this.setPluginEnabled(id, true);
       res.afterEnable();
       this.pillboxMenus?.updateMenuView();
-      Calc.controller.updateViews();
+      this.cc.updateViews();
     }
   }
 
@@ -220,7 +221,7 @@ export default class DSM extends TransparentPlugins {
     if (plugin) {
       plugin.settings = pluginSettings;
       plugin.afterConfigChange();
-      Calc.controller.updateViews();
+      this.cc.updateViews();
     }
     this.pillboxMenus?.updateMenuView();
   }
@@ -233,11 +234,11 @@ export default class DSM extends TransparentPlugins {
   }
 
   commitStateChange(allowUndo: boolean) {
-    Calc.controller.updateTheComputedWorld();
+    this.cc.updateTheComputedWorld();
     if (allowUndo) {
-      Calc.controller.commitUndoRedoSynchronously({ type: "dsm-blank" });
+      this.cc.commitUndoRedoSynchronously({ type: "dsm-blank" });
     }
-    Calc.controller.updateViews();
+    this.cc.updateViews();
   }
 
   insertElement = insertElement;
