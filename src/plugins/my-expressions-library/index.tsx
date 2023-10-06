@@ -189,7 +189,7 @@ export default class MyExpressionsLibrary extends PluginController<{
   static config = [
     {
       type: "stringArray",
-      default: ["jeiurgihkb"],
+      default: [],
       key: "libraryGraphHashes",
     },
   ] as const;
