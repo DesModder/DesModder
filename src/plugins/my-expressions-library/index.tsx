@@ -1,17 +1,18 @@
-import Aug, { ExpressionAug } from "../../../text-mode-core/aug/AugState";
-import { augNonFolderToRaw } from "../../../text-mode-core/aug/augToRaw";
-import { rawNonFolderToAug } from "../../../text-mode-core/aug/rawToAug";
-import { textModeExprToLatex } from "../../../text-mode-core/down/textToRaw";
+import Aug, { ExpressionAug } from "text-mode-core/aug/AugState";
+import { augNonFolderToRaw } from "text-mode-core/aug/augToRaw";
+import { rawNonFolderToAug } from "text-mode-core/aug/rawToAug";
+import { textModeExprToLatex } from "text-mode-core/down/textToRaw";
 import { getGraphState } from "./library-search-utils";
 import { LibrarySearchView } from "./library-search-view";
 import { ExpressionState, ItemState } from "@desmodder/graph-state";
-import { Component, DCGView, MountedComponent, jsx } from "DCGView";
-import { MathQuillField, MathQuillView } from "components";
-import { Calc } from "globals/window";
-import { PluginController } from "plugins/PluginController";
-import { mapAllAugLatex, mapAugAST } from "plugins/intellisense/latex-parsing";
-import { IntellisenseState } from "plugins/intellisense/state";
-import { getMetadata, setMetadata } from "plugins/manage-metadata/manage";
+import { Component, DCGView, MountedComponent, jsx } from "#DCGView";
+import { MathQuillField, MathQuillView } from "#components";
+import { Calc } from "#globals";
+import { PluginController } from "../PluginController";
+import { mapAugAST } from "../intellisense/latex-parsing";
+import { IntellisenseState } from "../intellisense/state";
+import { getMetadata, setMetadata } from "../manage-metadata/sync";
+import { buildConfig } from "text-mode-core";
 
 export interface ExpressionLibraryMathExpression {
   type: "expression";
@@ -228,7 +229,7 @@ export default class MyExpressionsLibrary extends PluginController<{
   refineSearch(searchStr: string) {
     this.searchStr = searchStr;
     // this.controller.pillboxMenus?.updateExtraComponents();
-    this.controller.pillboxMenus?.updateMenuView();
+    this.dsm.pillboxMenus?.updateMenuView();
   }
 
   view: MountedComponent | undefined;
@@ -352,14 +353,17 @@ export default class MyExpressionsLibrary extends PluginController<{
 
     loadedArray = loadedArray.map((e) => {
       const augCopy = structuredClone(e.aug);
-      mapAllAugLatex(augCopy, (node) => {
+      mapAugAST(augCopy, (node) => {
         if (!node) return;
         if (node.type === "Identifier") {
           node.symbol = symbolNameRemapper[node.symbol] ?? node.symbol;
         }
       });
 
-      const rawCopy = augNonFolderToRaw(augCopy as ExpressionAug);
+      const rawCopy = augNonFolderToRaw(
+        buildConfig({}),
+        augCopy as ExpressionAug
+      );
       for (const [k, v] of Object.entries(rawCopy)) {
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         if (v === undefined) delete rawCopy[k as keyof typeof rawCopy];
@@ -475,7 +479,10 @@ export default class MyExpressionsLibrary extends PluginController<{
 
       for (const expr of g.state.expressions.list) {
         if (expr.type !== "folder") {
-          augs.set(expr.id, rawNonFolderToAug(expr, getMetadata()));
+          augs.set(
+            expr.id,
+            rawNonFolderToAug(buildConfig({}), expr, getMetadata())
+          );
         } else {
           folders.set(expr.id, {
             text: expr.title ?? "Untitled Folder",
@@ -561,7 +568,7 @@ export default class MyExpressionsLibrary extends PluginController<{
 
       this.graphs.graphs.push(newGraph as ExpressionLibraryGraph);
     }
-    this.controller.pillboxMenus?.updateMenuView();
+    this.dsm.pillboxMenus?.updateMenuView();
   }
 
   getLibraryExpressions() {
@@ -574,7 +581,8 @@ export default class MyExpressionsLibrary extends PluginController<{
             expr.raw.type === "expression" &&
             (expr.raw.latex?.startsWith(
               (() => {
-                let ltx = textModeExprToLatex(this.searchStr) ?? "";
+                let ltx =
+                  textModeExprToLatex(buildConfig({}), this.searchStr) ?? "";
                 if (ltx[ltx.length - 1] === "}") ltx = ltx?.slice(0, -1);
                 return ltx;
               })() ?? ""
@@ -596,7 +604,7 @@ export default class MyExpressionsLibrary extends PluginController<{
 
   afterEnable(): void {
     // add pillbox menu
-    this.controller.pillboxMenus?.addPillboxButton({
+    this.dsm.pillboxMenus?.addPillboxButton({
       id: "dsm-library-menu",
       tooltip: "my-expressions-library-pillbox-menu",
       iconClass: "dsm-icon-bookmark",

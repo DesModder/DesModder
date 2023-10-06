@@ -3,10 +3,9 @@ import MyExpressionsLibrary, {
   ExpressionLibraryMathExpression,
 } from ".";
 import "./library-search.less";
-import { Component, jsx, mountToNode } from "DCGView";
-import { For } from "components";
-import StaticMathquillView from "components/StaticMathQuillView";
-import { format } from "i18n/i18n-core";
+import { Component, jsx, mountToNode } from "#DCGView";
+import { For, StaticMathQuillView } from "#components";
+import { format } from "#i18n";
 
 export function expressionLibraryMathExpressionView(
   expr: ExpressionLibraryMathExpression,
@@ -18,7 +17,7 @@ export function expressionLibraryMathExpressionView(
     const domNode = container._domNode as HTMLLIElement;
     // @ts-expect-error convenient way of passing handler into intersectionobserver
     domNode._onEnterView = () => {
-      mountToNode(StaticMathquillView, domNode, {
+      mountToNode(StaticMathQuillView, domNode, {
         latex: () => expr.latex ?? "",
       });
       observer.unobserve(domNode);
