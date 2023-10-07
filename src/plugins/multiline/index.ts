@@ -201,11 +201,24 @@ export default class Multiline extends PluginController<Config> {
             return false;
           }
 
-          if (mq && key === "Backspace" && this.settings.spacesToNewlines) {
+          if (
+            mq &&
+            key.endsWith("Backspace") &&
+            this.settings.spacesToNewlines
+          ) {
             if (isNextToTripleSpaceLineBreak(mq, L)) {
               mq.keystroke("Backspace");
               mq.keystroke("Backspace");
               mq.keystroke("Backspace");
+              return false;
+            }
+          }
+
+          if (mq && key.endsWith("Del") && this.settings.spacesToNewlines) {
+            if (isNextToTripleSpaceLineBreak(mq, R)) {
+              mq.keystroke("Del");
+              mq.keystroke("Del");
+              mq.keystroke("Del");
               return false;
             }
           }
@@ -217,7 +230,7 @@ export default class Multiline extends PluginController<Config> {
             this.settings.spacesToNewlines
           ) {
             const right = key.endsWith("Right");
-            const shift = key.startsWith("Shift");
+            const shift = key.includes("Shift");
 
             const arrowDir =
               (shift ? "Shift-" : "") + (right ? "Right" : "Left");
@@ -237,7 +250,7 @@ export default class Multiline extends PluginController<Config> {
             return false;
           }
         },
-        0,
+        1,
         "multiline"
       );
       if (remove) this.customHandlerRemovers.push(remove);
