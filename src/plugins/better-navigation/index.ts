@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-import { Calc } from "src/globals";
 import { PluginController } from "../PluginController";
 import { hookIntoOverrideKeystroke } from "src/utils/listenerHelpers";
 import { MathQuillField, MathQuillView } from "src/components";
@@ -94,9 +93,9 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
   customRemoveHandlers: (() => void)[] = [];
 
   keydownHandler = () => {
-    if (Calc.focusedMathQuill && this.settings.ctrlArrow) {
+    if (this.calc.focusedMathQuill && this.settings.ctrlArrow) {
       const remove = hookIntoOverrideKeystroke(
-        Calc.focusedMathQuill.mq,
+        this.calc.focusedMathQuill.mq,
         (key, _) => {
           const mq = MathQuillView.getFocusedMathquill();
 
