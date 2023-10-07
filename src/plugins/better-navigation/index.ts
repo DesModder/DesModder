@@ -7,6 +7,10 @@ import { getController } from "../intellisense/latex-parsing";
 
 import "./index.less";
 
+const R = +1;
+const L = -1;
+type Dir = 1 | -1;
+
 function isSupSubscriptMQElem(el?: HTMLElement) {
   return el?.classList.contains("dcg-mq-supsub");
 }
@@ -31,15 +35,12 @@ function isCtrlArrowSkippableSymbolMQElem(el?: HTMLElement) {
   );
 }
 
-function isAtStartOrEndOfASubscriptOrSuperscript(
-  mq: MathQuillField,
-  right: boolean
-) {
+function isAtStartOrEndOfASubscriptOrSuperscript(mq: MathQuillField, dir: Dir) {
   const ctrlr = getController(mq);
   return (
     (ctrlr.cursor?.parent?._el?.classList.contains("dcg-mq-sup") ||
       ctrlr.cursor?.parent?._el?.classList.contains("dcg-mq-sub")) &&
-    !ctrlr.cursor?.[right ? 1 : -1]
+    !ctrlr.cursor?.[dir]
   );
 }
 
@@ -47,6 +48,18 @@ interface BetterNavSettings {
   ctrlArrow: boolean;
   scrollableExpressions: boolean;
 }
+
+const NavigationTable: Record<
+  string,
+  { dir: Dir; mode: "move" | "extend-sel" | "delete" }
+> = {
+  "Ctrl-Left": { dir: L, mode: "move" },
+  "Ctrl-Right": { dir: R, mode: "move" },
+  "Ctrl-Shift-Left": { dir: L, mode: "extend-sel" },
+  "Ctrl-Shift-Right": { dir: R, mode: "extend-sel" },
+  "Ctrl-Backspace": { dir: L, mode: "delete" },
+  "Ctrl-Del": { dir: R, mode: "delete" },
+};
 
 export default class BetterNavigation extends PluginController<BetterNavSettings> {
   static id = "better-navigation" as const;
@@ -88,26 +101,19 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
           const mq = MathQuillView.getFocusedMathquill();
 
           if (!mq) return true;
-          if (
-            key !== "Ctrl-Left" &&
-            key !== "Ctrl-Right" &&
-            key !== "Ctrl-Shift-Left" &&
-            key !== "Ctrl-Shift-Right" &&
-            key !== "Ctrl-Backspace"
-          )
-            return true;
+          const navOption = NavigationTable[key];
+          if (!navOption) return true;
 
           // backspace is implicitly "left"
-          const right = key === "Ctrl-Right" || key === "Ctrl-Shift-Right";
-          const shift = key === "Ctrl-Shift-Left" || key === "Ctrl-Shift-Right";
-          const backspace = key === "Ctrl-Backspace";
+          const dir = navOption.dir;
+          const mode = navOption.mode;
 
           // remove the "Ctrl-" to get the normal arrow op to emulate
-          const arrowOp = backspace ? "Backspace" : key.slice(5);
+          const arrowOp = key.slice(5);
 
           const ctrlr = getController(mq);
 
-          const next = ctrlr.cursor?.[right ? 1 : -1];
+          const next = ctrlr.cursor?.[navOption.dir];
 
           // if the next element is one of the following:
           // bracket, fraction, sum, product, integral, sqrt, nthroot
@@ -115,38 +121,35 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
           // Shift-arrow already does this behavior perfectly so we first do that.
           // Then we do a normal arrow press to delete the selection.
           if (isCtrlArrowSkippableSymbolMQElem(next?._el)) {
-            mq.keystroke(right ? "Shift-Right" : "Shift-Left");
+            mq.keystroke(dir === R ? "Shift-Right" : "Shift-Left");
 
-            // remove selection if not holding down shift
-            if (!shift) mq.keystroke(arrowOp);
+            // remove selection if not extending a selection
+            if (mode !== "extend-sel") mq.keystroke(arrowOp);
 
             // skip over entire variable names, numbers, and operatornames
           } else if (
-            isAtStartOrEndOfASubscriptOrSuperscript(mq, right) ||
+            isAtStartOrEndOfASubscriptOrSuperscript(mq, dir) ||
             (next && isWordMQElem(next._el))
           ) {
             // leave start/end of sub/sup
-            if (isAtStartOrEndOfASubscriptOrSuperscript(mq, right))
+            if (isAtStartOrEndOfASubscriptOrSuperscript(mq, dir))
               mq.keystroke(arrowOp);
 
             let i = 0;
-            while (
-              isWordMQElem(ctrlr.cursor?.[right ? 1 : -1]?._el) &&
-              i < 1000
-            ) {
+            while (isWordMQElem(ctrlr.cursor?.[dir]?._el) && i < 1000) {
               // skip over super/subscript
-              if (isSupSubscriptMQElem(ctrlr.cursor?.[right ? 1 : -1]?._el)) {
-                mq.keystroke(right ? "Shift-Right" : "Shift-Left");
+              if (isSupSubscriptMQElem(ctrlr.cursor?.[dir]?._el)) {
+                mq.keystroke(dir === R ? "Shift-Right" : "Shift-Left");
 
-                // remove selection if not holding down shift
-                if (!shift) mq.keystroke(arrowOp);
+                // remove selection if not extending selection
+                if (mode !== "extend-sel") mq.keystroke(arrowOp);
               } else {
                 mq.keystroke(arrowOp);
               }
 
               // if at the start/end of a subscript/superscript block,
               // then escape it
-              if (isAtStartOrEndOfASubscriptOrSuperscript(mq, right)) {
+              if (isAtStartOrEndOfASubscriptOrSuperscript(mq, dir)) {
                 mq.keystroke(arrowOp);
               }
               i++;
