@@ -154,7 +154,7 @@ export default class Multiline extends PluginController<Config> {
           determineLineBreaksAutomatically:
             this.settings.automaticallyMultilinify &&
             (this.settings.disableAutomaticLineBreaksForHandAlignedExpressions
-              ? (mathfield?.latex?.() ?? "").includes("\\ \\ \\ ")
+              ? !(mathfield?.latex?.() ?? "").includes("\\ \\ \\ ")
               : true),
         }
       );
