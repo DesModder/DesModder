@@ -27,9 +27,7 @@ interface ItemModelBase {
   id: string;
   folderId?: string;
   secret?: boolean;
-  error?: {
-    key?: string;
-  };
+  error?: any;
   formula?: {
     expression_type:
       | "X_OR_Y"
@@ -49,8 +47,6 @@ interface ItemModelBase {
     is_graphable: boolean;
     is_inequality: boolean;
     action_value?: Record<string, string>;
-    rgb_value?: string | string[];
-    color_latex_value?: string | string[];
   };
   dcgView?: ClassComponent;
 }
