@@ -3,7 +3,7 @@ import { Config, configList } from "./config";
 import "./multiline.less";
 import { CollapseMode, unverticalify, verticalify } from "./verticalify";
 import { MathQuillField, MathQuillView } from "#components";
-import { Calc, DispatchedEvent } from "#globals";
+import { DispatchedEvent } from "#globals";
 import {
   getController,
   mqKeystroke,
@@ -90,7 +90,7 @@ export default class Multiline extends PluginController<Config> {
 
       const minWidth =
         ((window.innerWidth * this.settings.widthBeforeMultiline) / 100) *
-        (Calc.controller.isNarrow() ? 3 : 1);
+        (this.cc.isNarrow() ? 3 : 1);
 
       // settings for where and how to put line breaks
       const domManipHandlers: (() => void)[] = [];
@@ -156,9 +156,9 @@ export default class Multiline extends PluginController<Config> {
       this.dequeueAllMultilinifications();
     }
 
-    if (Calc.focusedMathQuill) {
+    if (this.calc.focusedMathQuill) {
       const remove = hookIntoOverrideKeystroke(
-        Calc.focusedMathQuill.mq,
+        this.calc.focusedMathQuill.mq,
         (key, _) => {
           if (key === "Shift-Up" || key === "Shift-Down") {
             this.doMultilineVerticalNav(key);
@@ -178,14 +178,14 @@ export default class Multiline extends PluginController<Config> {
       this.lastRememberedCursorX = cursor.getBoundingClientRect().left;
     } else {
       let xpos =
-        Calc.focusedMathQuill?.mq.__controller.cursor?.[
+        this.calc.focusedMathQuill?.mq.__controller.cursor?.[
           -1
         ]?._el?.getBoundingClientRect()?.right;
       if (xpos !== undefined) {
         this.lastRememberedCursorX = xpos;
       } else {
         xpos =
-          Calc.focusedMathQuill?.mq.__controller.cursor?.[1]?._el?.getBoundingClientRect()
+          this.calc.focusedMathQuill?.mq.__controller.cursor?.[1]?._el?.getBoundingClientRect()
             ?.left;
         this.lastRememberedCursorX = xpos;
       }
@@ -220,7 +220,7 @@ export default class Multiline extends PluginController<Config> {
       this.dequeueAllMultilinifications();
     }, 0);
 
-    this.dispatcherID = Calc.controller.dispatcher.register((e) => {
+    this.dispatcherID = this.cc.dispatcher.register((e) => {
       if (
         e.type === "set-item-latex" ||
         e.type === "undo" ||
@@ -245,13 +245,17 @@ export default class Multiline extends PluginController<Config> {
       }
     });
 
-    this.customDispatcherID = registerCustomDispatchOverridingHandler((evt) => {
-      if (evt.type === "on-special-key-pressed") {
-        if (evt.key === "Up" || evt.key === "Down") {
-          if (!this.doMultilineVerticalNav(evt.key)) return false;
+    this.customDispatcherID = registerCustomDispatchOverridingHandler(
+      this.calc,
+      (evt) => {
+        if (evt.type === "on-special-key-pressed") {
+          if (evt.key === "Up" || evt.key === "Down") {
+            if (!this.doMultilineVerticalNav(evt.key)) return false;
+          }
         }
-      }
-    }, 0);
+      },
+      0
+    );
   }
 
   afterDisable() {
@@ -261,14 +265,16 @@ export default class Multiline extends PluginController<Config> {
     this.unmultilineExpressions(true);
     document.body.classList.remove("multiline-expression-enabled");
 
-    if (this.dispatcherID)
-      Calc.controller.dispatcher.unregister(this.dispatcherID);
+    if (this.dispatcherID) this.cc.dispatcher.unregister(this.dispatcherID);
 
     if (this.multilineIntervalID !== undefined)
       clearInterval(this.multilineIntervalID);
 
     if (this.customDispatcherID)
-      deregisterCustomDispatchOverridingHandler(this.customDispatcherID);
+      deregisterCustomDispatchOverridingHandler(
+        this.calc,
+        this.customDispatcherID
+      );
 
     for (const remover of this.customHandlerRemovers) {
       remover();

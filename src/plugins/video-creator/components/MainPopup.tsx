@@ -178,6 +178,7 @@ export default class MainPopup extends Component<{
                         handleFocusChanged={(b) =>
                           this.vc.updateFocus("export-fps", b)
                         }
+                        controller={this.vc.cc}
                       />
                     </div>
                   )}

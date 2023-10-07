@@ -57,6 +57,7 @@ export default class SelectCapture extends Component<{
                     handleFocusChanged={(b) =>
                       this.vc.updateFocus("capture-slider-var", b)
                     }
+                    controller={this.vc.cc}
                   />
                 </span>
                 <StaticMathQuillView latex="=" />
@@ -71,6 +72,7 @@ export default class SelectCapture extends Component<{
                   handleFocusChanged={(b) =>
                     this.vc.updateFocus("capture-slider-min", b)
                   }
+                  controller={this.vc.cc}
                 />
                 {format("video-creator-to")}
                 <InlineMathInputView
@@ -84,6 +86,7 @@ export default class SelectCapture extends Component<{
                   handleFocusChanged={(b) =>
                     this.vc.updateFocus("capture-slider-max", b)
                   }
+                  controller={this.vc.cc}
                 />
                 {format("video-creator-step")}
                 <InlineMathInputView
@@ -97,6 +100,7 @@ export default class SelectCapture extends Component<{
                   handleFocusChanged={(b) =>
                     this.vc.updateFocus("capture-slider-step", b)
                   }
+                  controller={this.vc.cc}
                 />
               </div>
             </div>
@@ -155,6 +159,7 @@ export default class SelectCapture extends Component<{
                 handleFocusChanged={(b) =>
                   this.vc.updateFocus("capture-tick-time-step", b)
                 }
+                controller={this.vc.cc}
               />
             </div>
           ),
@@ -169,6 +174,7 @@ export default class SelectCapture extends Component<{
             hasError={() => !this.vc.isCaptureWidthValid()}
             handleFocusChanged={(b) => this.vc.updateFocus("capture-width", b)}
             isFocused={() => this.vc.isFocused("capture-width")}
+            controller={this.vc.cc}
           />
           ×
           <InlineMathInputView
@@ -178,6 +184,7 @@ export default class SelectCapture extends Component<{
             hasError={() => !this.vc.isCaptureHeightValid()}
             handleFocusChanged={(b) => this.vc.updateFocus("capture-height", b)}
             isFocused={() => this.vc.isFocused("capture-height")}
+            controller={this.vc.cc}
           />
           <If predicate={() => this.vc.isDefaultCaptureSizeDifferent()}>
             {() => (
@@ -263,6 +270,7 @@ export default class SelectCapture extends Component<{
                   handleFocusChanged={(b) =>
                     this.vc.updateFocus("capture-tick-count", b)
                   }
+                  controller={this.vc.cc}
                 />
               </div>
             )}

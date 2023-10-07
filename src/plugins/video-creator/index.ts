@@ -2,9 +2,9 @@ import { PluginController } from "../PluginController";
 import { updateView } from "./View";
 import { CaptureMethod, SliderSettings, capture } from "./backend/capture";
 import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
-import { isValidNumber, isValidLength, escapeRegex } from "./backend/utils";
+import { escapeRegex } from "./backend/utils";
 import { MainPopupFunc } from "./components/MainPopup";
-import { Calc, ExpressionModel } from "#globals";
+import { ExpressionModel } from "#globals";
 import {
   keys,
   EvaluateSingleExpression,
@@ -81,7 +81,7 @@ export default class VideoCreator extends PluginController {
   }
 
   afterEnable() {
-    Calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
+    this.calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
     this._applyDefaultCaptureSize();
     this.dsm.pillboxMenus?.addPillboxButton({
       id: "dsm-vc-menu",
@@ -129,7 +129,7 @@ export default class VideoCreator extends PluginController {
   }
 
   isFPSValid() {
-    return isValidNumber(this.fpsLatex);
+    return this.isValidNumber(this.fpsLatex);
   }
 
   setFPSLatex(latex: string) {
@@ -141,7 +141,7 @@ export default class VideoCreator extends PluginController {
   }
 
   getFPSNumber() {
-    return EvaluateSingleExpression(this.fpsLatex);
+    return this.eval(this.fpsLatex);
   }
 
   setOutputFiletype(type: OutFileType) {
@@ -154,7 +154,9 @@ export default class VideoCreator extends PluginController {
   }
 
   getOutfileName() {
-    return this.outfileName ?? getCurrentGraphTitle() ?? DEFAULT_FILENAME;
+    return (
+      this.outfileName ?? getCurrentGraphTitle(this.calc) ?? DEFAULT_FILENAME
+    );
   }
 
   set captureMethod(method: CaptureMethod) {
@@ -168,16 +170,29 @@ export default class VideoCreator extends PluginController {
       : "once";
   }
 
+  isValidNumber(s: string) {
+    return !isNaN(this.eval(s));
+  }
+
+  isValidLength(s: string) {
+    const evaluated = this.eval(s);
+    return !isNaN(evaluated) && evaluated >= 2;
+  }
+
+  eval(s: string) {
+    return EvaluateSingleExpression(this.calc, s);
+  }
+
   isCaptureMethodValid(method: CaptureMethod) {
     return method === "action"
       ? this.hasAction()
       : method === "ticks"
-      ? Calc.controller.getPlayingSliders().length > 0
+      ? this.cc.getPlayingSliders().length > 0
       : true;
   }
 
   isCaptureWidthValid() {
-    return isValidLength(this.captureWidthLatex);
+    return this.isValidLength(this.captureWidthLatex);
   }
 
   setCaptureWidthLatex(latex: string) {
@@ -186,11 +201,11 @@ export default class VideoCreator extends PluginController {
   }
 
   isCaptureHeightValid() {
-    return isValidLength(this.captureHeightLatex);
+    return this.isValidLength(this.captureHeightLatex);
   }
 
   _applyDefaultCaptureSize() {
-    const size = Calc.graphpaperBounds.pixelCoordinates;
+    const size = this.calc.graphpaperBounds.pixelCoordinates;
     this.captureWidthLatex = size.width.toFixed(0);
     this.captureHeightLatex = size.height.toFixed(0);
   }
@@ -201,7 +216,7 @@ export default class VideoCreator extends PluginController {
   }
 
   isDefaultCaptureSizeDifferent() {
-    const size = Calc.graphpaperBounds.pixelCoordinates;
+    const size = this.calc.graphpaperBounds.pixelCoordinates;
     return (
       this.captureWidthLatex !== size.width.toFixed(0) ||
       this.captureHeightLatex !== size.height.toFixed(0)
@@ -214,11 +229,11 @@ export default class VideoCreator extends PluginController {
   }
 
   getCaptureWidthNumber() {
-    return EvaluateSingleExpression(this.captureWidthLatex);
+    return this.eval(this.captureWidthLatex);
   }
 
   getCaptureHeightNumber() {
-    return EvaluateSingleExpression(this.captureHeightLatex);
+    return this.eval(this.captureHeightLatex);
   }
 
   setSamePixelRatio(samePixelRatio: boolean) {
@@ -229,7 +244,7 @@ export default class VideoCreator extends PluginController {
   _getTargetPixelRatio() {
     return (
       this.getCaptureWidthNumber() /
-      Calc.graphpaperBounds.pixelCoordinates.width
+      this.calc.graphpaperBounds.pixelCoordinates.width
     );
   }
 
@@ -256,7 +271,7 @@ export default class VideoCreator extends PluginController {
   }
 
   getTickTimeStepNumber() {
-    return EvaluateSingleExpression(this.tickTimeStepLatex);
+    return this.eval(this.tickTimeStepLatex);
   }
 
   isTickTimeStepValid() {
@@ -268,24 +283,26 @@ export default class VideoCreator extends PluginController {
     const regex = new RegExp(
       `^(\\\\?\\s)*${escapeRegex(this.sliderSettings.variable)}(\\\\?\\s)*=`
     );
-    return Calc.getState().expressions.list.find(
-      (e) =>
-        e.type === "expression" &&
-        typeof e.latex === "string" &&
-        regex.test(e.latex)
-    );
+    return this.calc
+      .getState()
+      .expressions.list.find(
+        (e) =>
+          e.type === "expression" &&
+          typeof e.latex === "string" &&
+          regex.test(e.latex)
+      );
   }
 
   isSliderSettingValid<T extends keyof SliderSettings>(key: T) {
     if (key === "variable") {
       return this.getMatchingSlider() !== undefined;
     } else {
-      return isValidNumber(this.sliderSettings[key]);
+      return this.isValidNumber(this.sliderSettings[key]);
     }
   }
 
   getTickCountNumber() {
-    return EvaluateSingleExpression(this.tickCountLatex);
+    return this.eval(this.tickCountLatex);
   }
 
   isTickCountValid() {
@@ -323,7 +340,7 @@ export default class VideoCreator extends PluginController {
   }
 
   getActions() {
-    return Calc.controller
+    return this.cc
       .getAllItemModels()
       .filter(
         (e) => e.type === "expression" && e.formula?.action_value !== undefined
@@ -335,7 +352,7 @@ export default class VideoCreator extends PluginController {
   }
 
   getCurrentAction() {
-    const model = Calc.controller.getItemModel(this.currentActionID);
+    const model = this.cc.getItemModel(this.currentActionID);
     if (model === undefined) {
       const action = this.getActions()[0];
       if (action !== undefined) {

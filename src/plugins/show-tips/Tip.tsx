@@ -2,10 +2,10 @@ import "./Tip.less";
 import { getTipData } from "./tips";
 import { Component, jsx } from "#DCGView";
 import { If } from "#components";
-import { Calc } from "#globals";
 import { format } from "#i18n";
+import ShowTips from ".";
 
-export default class Tip extends Component {
+export default class Tip extends Component<{ st: ShowTips }> {
   currentTipIndex!: number;
   tips!: ReturnType<typeof getTipData>;
 
@@ -40,6 +40,6 @@ export default class Tip extends Component {
   nextTip() {
     this.currentTipIndex += 1;
     this.currentTipIndex %= this.tips.length;
-    Calc.controller.updateViews();
+    this.props.st().cc.updateViews();
   }
 }

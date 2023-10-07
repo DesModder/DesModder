@@ -3,7 +3,7 @@ import { Inserter, PluginController } from "../PluginController";
 import "./index.less";
 import { format } from "localization/i18n-core";
 import { IfElse, InlineMathInputView } from "src/components";
-import { Calc, ExpressionModel, FolderModel } from "src/globals";
+import { CalcController, ExpressionModel, FolderModel } from "src/globals";
 
 function calcWidthInPixels(domNode?: HTMLElement) {
   const rootblock = domNode?.querySelector(".dcg-mq-root-block");
@@ -41,7 +41,10 @@ function calcSymbolCount(el?: HTMLElement) {
 
 const cachedGolfStatsPool = new Map<string, ReturnType<typeof getGolfStats>>();
 
-function getGolfStats(latex: string): {
+function getGolfStats(
+  cc: CalcController,
+  latex: string
+): {
   width: number;
   symbols: number;
 } {
@@ -60,6 +63,7 @@ function getGolfStats(latex: string): {
     hasError: () => false,
     handleFocusChanged: () => () => false,
     ariaLabel: () => "",
+    controller: () => cc,
   });
 
   const stats = {
@@ -79,6 +83,7 @@ function getGolfStats(latex: string): {
 }
 
 export class ExpressionItemCostPanel extends Component<{
+  cc: () => CalcController;
   model: () => ExpressionModel;
   el: () => HTMLDivElement;
 }> {
@@ -95,7 +100,10 @@ export class ExpressionItemCostPanel extends Component<{
               {() => {
                 return format("code-golf-width-in-pixels", {
                   pixels: Math.round(
-                    getGolfStats(this.props.model().latex ?? "").width
+                    getGolfStats(
+                      this.props.cc(),
+                      this.props.model().latex ?? ""
+                    ).width
                   ).toString(),
                 });
               }}
@@ -103,8 +111,10 @@ export class ExpressionItemCostPanel extends Component<{
             <div>
               {() => {
                 return format("code-golf-symbol-count", {
-                  elements: getGolfStats(this.props.model().latex ?? "")
-                    .symbols,
+                  elements: getGolfStats(
+                    this.props.cc(),
+                    this.props.model().latex ?? ""
+                  ).symbols,
                 });
               }}
             </div>
@@ -117,6 +127,7 @@ export class ExpressionItemCostPanel extends Component<{
 }
 export class FolderCostPanel extends Component<{
   model: () => FolderModel;
+  cc: () => CalcController;
 }> {
   totalWidth = 0;
   totalSymbols = 0;
@@ -124,8 +135,13 @@ export class FolderCostPanel extends Component<{
   enabled = true;
   checkedStats = false;
 
+  get cc() {
+    return this.props.cc();
+  }
+
   recalculate() {
-    const exprs = Calc.controller
+    const exprs = this.props
+      .cc()
       .getAllItemModels()
       .filter(
         (m) => m.type === "expression" && m.folderId === this.props.model().id
@@ -149,7 +165,7 @@ export class FolderCostPanel extends Component<{
     }
 
     for (const e of exprs) {
-      const { width, symbols } = getGolfStats(e.latex ?? "");
+      const { width, symbols } = getGolfStats(this.cc, e.latex ?? "");
       this.totalWidth += width;
       this.totalSymbols += symbols;
     }
@@ -160,7 +176,7 @@ export class FolderCostPanel extends Component<{
   dispatcher!: string;
 
   willUnmount() {
-    Calc.controller.dispatcher.unregister(this.dispatcher);
+    this.cc.dispatcher.unregister(this.dispatcher);
   }
 
   template() {
@@ -168,7 +184,7 @@ export class FolderCostPanel extends Component<{
       this.recalculate();
     }, 0);
 
-    this.dispatcher = Calc.controller.dispatcher.register(() => {
+    this.dispatcher = this.cc.dispatcher.register(() => {
       this.recalculate();
     });
 
@@ -218,11 +234,19 @@ export default class CodeGolf extends PluginController {
     model: ExpressionModel,
     el: HTMLDivElement
   ): Inserter {
-    return () => <ExpressionItemCostPanel model={() => model} el={() => el} />;
+    return () => (
+      <ExpressionItemCostPanel
+        cc={() => this.cc}
+        model={() => model}
+        el={() => el}
+      />
+    );
   }
 
   folderCostPanel(model: FolderModel) {
-    return () => <FolderCostPanel model={() => model}></FolderCostPanel>;
+    return () => (
+      <FolderCostPanel cc={() => this.cc} model={() => model}></FolderCostPanel>
+    );
   }
 
   afterConfigChange(): void {}
