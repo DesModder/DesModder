@@ -14,11 +14,16 @@ import {
   registerCustomDispatchOverridingHandler,
 } from "#utils/listenerHelpers.ts";
 
+export const R = 1;
+export const L = -1;
+
+type Dir = 1 | -1;
+
 function focusmq(mq: MathQuillField | undefined) {
   mq?.focus();
 }
 
-function isNextToTripleSpaceLineBreak(mq: MathQuillField, dir: 1 | -1) {
+function isNextToTripleSpaceLineBreak(mq: MathQuillField, dir: Dir) {
   return (
     getController(mq).cursor[dir]?._el?.dataset.isManualLineBreak &&
     getController(mq).cursor[dir]?.[dir]?._el?.dataset.isManualLineBreak &&
@@ -197,7 +202,7 @@ export default class Multiline extends PluginController<Config> {
           }
 
           if (mq && key === "Backspace" && this.settings.spacesToNewlines) {
-            if (isNextToTripleSpaceLineBreak(mq, -1)) {
+            if (isNextToTripleSpaceLineBreak(mq, L)) {
               mq.keystroke("Backspace");
               mq.keystroke("Backspace");
               mq.keystroke("Backspace");
@@ -216,7 +221,7 @@ export default class Multiline extends PluginController<Config> {
 
             const arrowDir =
               (shift ? "Shift-" : "") + (right ? "Right" : "Left");
-            const dir = right ? 1 : -1;
+            const dir = right ? R : L;
 
             // check for three consecutive spaces
             if (isNextToTripleSpaceLineBreak(mq, dir)) {
@@ -415,7 +420,7 @@ export default class Multiline extends PluginController<Config> {
       // get cursor and adjacent element so we can figure out
       // if it's a line break
       const ctrlr = getController(focusedmq);
-      let next = ctrlr.cursor?.[up ? -1 : 1]?._el;
+      let next = ctrlr.cursor?.[up ? L : R]?._el;
 
       // are we getting the right side or the left side
       // of the element? (e.g. the bounding client rect "left" or "right" property)
@@ -427,7 +432,7 @@ export default class Multiline extends PluginController<Config> {
       // if we can't directly get the next element (e.g. end of a parenthesis block),
       // shift the cursor so that we can get access to it from the "other side"
       if (!next) {
-        next = ctrlr.cursor?.[up ? 1 : -1]?._el;
+        next = ctrlr.cursor?.[up ? R : L]?._el;
         isNextRight = !isNextRight;
       }
 
