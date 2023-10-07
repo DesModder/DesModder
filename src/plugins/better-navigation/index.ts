@@ -107,7 +107,6 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
 
           const ctrlr = getController(mq);
 
-          // don't do anything if there's nowhere we can go
           const next = ctrlr.cursor?.[right ? 1 : -1];
 
           // if the next element is one of the following:
