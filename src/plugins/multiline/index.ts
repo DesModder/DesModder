@@ -326,6 +326,15 @@ export default class Multiline extends PluginController<Config> {
         this.multilineExpressions(e);
       }
 
+      // undo/redo operations should keep manually-added newlines multilined
+      if (
+        e.type === "undo" ||
+        (e.type === "redo" && this.settings.spacesToNewlines)
+      ) {
+        this.unmultilineExpressions();
+        this.dequeueAllMultilinifications();
+      }
+
       if (e.type === "ui/container-resized") {
         this.afterConfigChange();
       }
