@@ -83,7 +83,13 @@ export default class Multiline extends PluginController<Config> {
       if (!(f instanceof HTMLElement)) continue;
 
       // don't re-verticalify everything unless editing
-      if (f.dataset.isVerticalified && e.type !== "set-item-latex") continue;
+      if (
+        f.dataset.isVerticalified &&
+        e.type !== "set-item-latex" &&
+        e.type !== "undo" &&
+        e.type !== "redo"
+      )
+        continue;
 
       // add to a queue of expressions that need to be verticalified
       this.enqueueVerticalifyOperation(f);
@@ -331,8 +337,11 @@ export default class Multiline extends PluginController<Config> {
         e.type === "undo" ||
         (e.type === "redo" && this.settings.spacesToNewlines)
       ) {
-        this.unmultilineExpressions();
-        this.dequeueAllMultilinifications();
+        setTimeout(() => {
+          this.unmultilineExpressions(true);
+          this.multilineExpressions(e);
+          this.dequeueAllMultilinifications();
+        });
       }
 
       if (e.type === "ui/container-resized") {
