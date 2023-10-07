@@ -337,7 +337,14 @@ function findPattern(
         : null;
     if (match !== null) {
       if (allowDuplicates) return match;
-      if (found !== null) throw new ReplacementError("Duplicate pattern match");
+      if (found !== null)
+        throw new ReplacementError(
+          `Duplicate pattern match at ${match.startIndex} with length ${match.length}: \n` +
+            str
+              .slice(match.startIndex, match.startIndex + match.length)
+              .map((v) => v.value)
+              .join("")
+        );
       found = match;
       i += match.length;
     } else {
