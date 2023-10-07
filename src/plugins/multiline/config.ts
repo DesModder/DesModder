@@ -14,6 +14,9 @@ export const configList = [
     max: Infinity,
     step: 1,
     key: "widthBeforeMultiline",
+    shouldShow(current) {
+      return current.determineLineBreaksAutomatically;
+    },
   },
   {
     indentationLevel: 1,
