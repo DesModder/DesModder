@@ -154,11 +154,12 @@ class ParseState extends DiagnosticsState {
     }
   }
 
-  consumeType(expected: TokenType) {
+  consumeType(expected: TokenType | TokenType[]) {
+    if (!Array.isArray(expected)) expected = [expected];
     while (true) {
       const c = this._consume();
       this.assertNotEOF(c);
-      if (expected === c.type) return c;
+      if (expected.includes(c.type)) return c;
       this.pushError(
         `Expected ${expected} but got '${c.value}'. Skipping it.`,
         pos(c)
@@ -1003,7 +1004,7 @@ function parseStyleMapping(ps: ParseState, token: Token): TextAST.StyleMapping {
         pos: pos(token, close),
       };
     }
-    const key = ps.consumeType("id");
+    const key = ps.consumeType(["id", "keyword"]);
     ps.consume(":");
     const expr = parseMain(ps, Power.seq);
     if (!isExpression(expr) && expr.type !== "StyleMapping")

@@ -53,7 +53,11 @@ export default function augToRaw(
   const res: Graph.GraphState = {
     version: 9,
     randomSeed,
-    graph: aug.settings,
+    graph: {
+      ...aug.settings,
+      threeDMode: aug.settings.product === "graphing-3d",
+      // TODO-graph-state: bring @desmodder/graph-state in this repo, and specify threeDMode etc on it.
+    } as any,
     expressions: {
       list,
       ticker:

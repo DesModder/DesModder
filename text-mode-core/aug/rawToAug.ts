@@ -35,7 +35,7 @@ export default function rawToAug(
   return res;
 }
 
-export function rawToAugSettings(raw: Graph.GraphState) {
+export function rawToAugSettings(raw: Graph.GraphState): Aug.GraphSettings {
   return {
     ...raw.graph,
     randomSeed: raw.randomSeed,
