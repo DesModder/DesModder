@@ -1,7 +1,7 @@
 import ViewportTransforms from "./ViewportTransforms";
 import { initGLesmosCanvas, GLesmosCanvas } from "./glesmosCanvas";
 import { glesmosError, GLesmosShaderPackage } from "./shaders";
-import { Calc } from "#globals";
+import { CalcController } from "#globals";
 
 let canvas: GLesmosCanvas | null = null;
 
@@ -24,6 +24,7 @@ interface DrawCtx {
  * not just when the plugin is enabled, but also the time when the plugin
  * has just been disabled but the new sketch has not been received */
 export function drawGLesmosSketchToCtx(
+  cc: CalcController,
   drawCtx: DrawCtx,
   { id, branches }: GLesmosSketch
 ) {
@@ -40,10 +41,11 @@ export function drawGLesmosSketchToCtx(
     hasOutlines: glBranches.reduce((a, b) => a && b.hasOutlines, true),
   };
 
-  drawOneGLesmosSketchToCtx?.(drawCtx, compiledGL, id);
+  drawOneGLesmosSketchToCtx?.(cc, drawCtx, compiledGL, id);
 }
 
 function drawOneGLesmosSketchToCtx(
+  cc: CalcController,
   { ctx, projection }: DrawCtx,
   compiledGL: GLesmosShaderPackage,
   id: string
@@ -52,7 +54,7 @@ function drawOneGLesmosSketchToCtx(
   // re-use the old canvas on a re-enable. This is a hacky fix.
   // There should be a way to clean up the GLesmos code
   // to avoid needing this.
-  canvas = canvas ?? initGLesmosCanvas();
+  canvas = canvas ?? initGLesmosCanvas(cc);
 
   const deps = compiledGL.deps.join("\n");
 
@@ -74,7 +76,7 @@ function drawOneGLesmosSketchToCtx(
       ctx.drawImage(canvas?.element, 0, 0);
     }
   } catch (e) {
-    const model = Calc.controller.getItemModel(id);
+    const model = cc.getItemModel(id);
     if (model) model.error = e instanceof Error ? e.message : e;
   }
 }

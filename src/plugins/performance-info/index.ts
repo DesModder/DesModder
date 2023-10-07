@@ -1,6 +1,6 @@
 import { PluginController } from "../PluginController";
 import { MainPopupFunc } from "./PerformanceView";
-import { Calc, DispatchedEvent, TimingData } from "#globals";
+import { DispatchedEvent, TimingData } from "#globals";
 
 export default class PerformanceInfo extends PluginController {
   static id = "performance-info" as const;
@@ -16,7 +16,7 @@ export default class PerformanceInfo extends PluginController {
       iconClass: "dsm-icon-pie-chart",
       popup: () => MainPopupFunc(this, this.dsm),
     });
-    this.dispatchListenerID = Calc.controller.dispatcher.register((e) => {
+    this.dispatchListenerID = this.cc.dispatcher.register((e) => {
       if (e.type === "on-evaluator-changes") {
         this.onEvaluatorChanges(e);
       }
@@ -24,7 +24,7 @@ export default class PerformanceInfo extends PluginController {
   }
 
   afterDisable() {
-    Calc.controller.dispatcher.unregister(this.dispatchListenerID);
+    this.cc.dispatcher.unregister(this.dispatchListenerID);
     this.dsm.pillboxMenus?.removePillboxButton("dsm-pi-menu");
   }
 
@@ -32,7 +32,7 @@ export default class PerformanceInfo extends PluginController {
     if (e.type !== "on-evaluator-changes") return;
     this.timingDataHistory?.push(e.timingData);
     if (this.timingDataHistory.length > 10) this.timingDataHistory.shift();
-    // Don't Calc.controller.updateViews here. This is inside a dispatched event,
+    // Don't this.cc.updateViews here. This is inside a dispatched event,
     // so it will update views anyways.
   }
 
@@ -44,8 +44,8 @@ export default class PerformanceInfo extends PluginController {
   }
 
   refreshState() {
-    Calc.controller._showToast({ message: "Refreshing graph..." });
-    Calc.setState(Calc.getState());
+    this.cc._showToast({ message: "Refreshing graph..." });
+    this.calc.setState(this.calc.getState());
   }
 }
 

@@ -2,7 +2,6 @@ import { Inserter, PluginController } from "../PluginController";
 import { ActionButton } from "../expr-action-buttons";
 import { ListView, PinnedPanel } from "./components/PinnedPanel";
 import "./pinExpressions.less";
-import { Calc } from "#globals";
 
 export default class PinExpressions extends PluginController {
   static id = "pin-expressions" as const;
@@ -28,7 +27,7 @@ export default class PinExpressions extends PluginController {
   ];
 
   pinExpression(id: string) {
-    if (Calc.controller.getItemModel(id)?.type !== "folder")
+    if (this.cc.getItemModel(id)?.type !== "folder")
       this.dsm.metadata?.updateExprMetadata(id, {
         pinned: true,
       });
@@ -36,8 +35,8 @@ export default class PinExpressions extends PluginController {
 
   isExpressionPinned(id: string) {
     return (
-      !Calc.controller.getExpressionSearchOpen() &&
-      Calc.controller.getItemModel(id)?.type !== "folder" &&
+      !this.cc.getExpressionSearchOpen() &&
+      this.cc.getItemModel(id)?.type !== "folder" &&
       (this.dsm.metadata?.getDsmItemModel(id)?.pinned ?? false)
     );
   }

@@ -2,9 +2,9 @@ import { format } from "#i18n";
 import { drawGLesmosSketchToCtx } from "./plugins/GLesmos/drawGLesmosSketchToCtx";
 import DSM from "#DSM";
 import "./fonts/style.css";
-import window from "#globals";
+import window, { Calc } from "#globals";
 
-const dsm = new DSM();
+const dsm = new DSM((window as any).Calc as Calc);
 
 window.DesModder = {
   controller: dsm,

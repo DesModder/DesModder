@@ -7,6 +7,8 @@ export class PluginController<
   static descriptionLearnMore?: string = undefined;
   static forceEnabled?: boolean = undefined;
   static config: readonly ConfigItem[] | undefined = undefined;
+  calc = this.dsm.calc;
+  cc = this.calc.controller;
 
   constructor(readonly dsm: DSM, public settings: Settings) {}
 

@@ -168,7 +168,7 @@ export interface TopLevelComponents {
   };
 }
 
-interface Toast {
+export interface Toast {
   message: string;
   undoCallback?: () => void;
   toastStyle?: "error";
@@ -290,5 +290,5 @@ interface CalcPrivate {
   ) => void;
 }
 
-type Calc = CalcPrivate & Desmos.Calculator;
-export default Calc;
+export type Calc = CalcPrivate & Desmos.Calculator;
+export type CalcController = Calc["controller"];

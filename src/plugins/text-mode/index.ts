@@ -1,12 +1,11 @@
 import { buildConfigFromGlobals, rawToText } from "../../../text-mode-core";
 import { DCGView } from "../../DCGView";
 import { Inserter, PluginController } from "../PluginController";
-import { onCalcEvent, analysisStateField } from "./LanguageServer";
+import { onCalcEvent, analysisStateField, tmPlugin } from "./LanguageServer";
 import { TextModeToggle } from "./components/TextModeToggle";
 import { initView, setDebugMode, startState } from "./view/editor";
 import { TransactionSpec } from "@codemirror/state";
 import { EditorView, ViewUpdate } from "@codemirror/view";
-import { Calc } from "#globals";
 import { keys } from "#utils/depUtils.ts";
 
 export default class TextMode extends PluginController {
@@ -38,8 +37,8 @@ export default class TextMode extends PluginController {
     // expression UI doesn't render in text mode, we replace markTickRequiredNextFrame
     // with a version that calls markTickRequiredNextFrame only when sliders are playing
     if (this.inTextMode) {
-      Calc.controller.expressionSearchOpen = false;
-      Calc.controller.markTickRequiredNextFrame = function () {
+      this.cc.expressionSearchOpen = false;
+      this.cc.markTickRequiredNextFrame = function () {
         if (this.getPlayingSliders().length > 0) {
           // eslint-disable-next-line no-proto
           (this as any).__proto__.markTickRequiredNextFrame.apply(this);
@@ -47,21 +46,21 @@ export default class TextMode extends PluginController {
       };
     } else {
       // Revert back to the old markTickRequiredNextFrame given by prototype
-      delete (Calc.controller as any).markTickRequiredNextFrame;
+      delete (this.cc as any).markTickRequiredNextFrame;
     }
-    Calc.controller.updateViews();
+    this.cc.updateViews();
   }
 
   /**
    * mountEditor: called from module overrides when the DCGView node mounts
    */
   mountEditor(container: HTMLElement) {
-    const [hasError, text] = getText();
+    const [hasError, text] = this.getText();
     this.view = initView(this, text);
     if (hasError) this.conversionError(() => this.toggleTextMode());
     container.appendChild(this.view.dom);
     this.preventPropagation(container);
-    this.dispatchListenerID = Calc.controller.dispatcher.register((event) => {
+    this.dispatchListenerID = this.cc.dispatcher.register((event) => {
       // setTimeout to avoid dispatch-in-dispatch from handlers responding to
       // calc state changing by dispatching an event
       setTimeout(() => {
@@ -83,14 +82,18 @@ export default class TextMode extends PluginController {
   }
 
   textModeToggle(): Inserter {
-    if (Calc.controller.isInEditListMode()) return undefined;
+    if (this.cc.isInEditListMode()) return undefined;
     return () => TextModeToggle(this);
   }
 
   onSetState() {
-    const [hasError, text] = getText();
+    const [hasError, text] = this.getText();
     this.view?.setState(startState(this, text));
     if (hasError) this.conversionError();
+  }
+
+  getText() {
+    return rawToText(this.getTextModeConfig(), this.calc.getState());
   }
 
   conversionError(undoCallback?: () => void) {
@@ -101,11 +104,11 @@ export default class TextMode extends PluginController {
   }
 
   toastErrorGraphUndo(msg: string) {
-    this.toastError(msg, () => Calc.controller.dispatch({ type: "undo" }));
+    this.toastError(msg, () => this.cc.dispatch({ type: "undo" }));
   }
 
   toastError(msg: string, undoCallback?: () => void) {
-    Calc.controller._showToast({
+    this.cc._showToast({
       message: msg,
       // `undoCallback: undefined` still adds the "Press Ctrl+Z" message
       ...(undoCallback ? { undoCallback } : {}),
@@ -117,7 +120,7 @@ export default class TextMode extends PluginController {
    */
   unmountEditor() {
     if (this.dispatchListenerID !== null) {
-      Calc.controller.dispatcher.unregister(this.dispatchListenerID);
+      this.cc.dispatcher.unregister(this.dispatchListenerID);
     }
     if (this.view) {
       this.view.destroy();
@@ -141,28 +144,25 @@ export default class TextMode extends PluginController {
   onEditorUpdate(update: ViewUpdate) {
     if (update.docChanged || update.selectionSet) selectFromText(update.view);
   }
-}
 
-function getText() {
-  return rawToText(getTextModeConfig(), Calc.getState());
-}
-
-export function getTextModeConfig() {
-  return buildConfigFromGlobals(Desmos, Calc);
+  getTextModeConfig() {
+    return buildConfigFromGlobals(Desmos, this.calc);
+  }
 }
 
 function selectFromText(view: EditorView) {
-  const currSelected = Calc.selectedExpressionId as string | undefined;
+  const calc = view.state.facet(tmPlugin).calc;
+  const currSelected = calc.selectedExpressionId as string | undefined;
   const newSelected = getSelectedItem(view);
   if (newSelected !== currSelected) {
     if (view.hasFocus && newSelected !== undefined) {
-      Calc.controller.dispatch({
+      calc.controller.dispatch({
         type: "set-selected-id",
         id: newSelected,
         dsmFromTextModeSelection: true,
       });
     } else {
-      Calc.controller.dispatch({
+      calc.controller.dispatch({
         type: "set-none-selected",
       });
     }

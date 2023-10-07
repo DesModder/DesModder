@@ -1,7 +1,7 @@
 import "./StyleCircle.less";
 import { Component, DCGView, jsx } from "#DCGView";
 import { ExpressionIconView, ImageIconView } from "#components";
-import { Calc, ItemModel } from "#globals";
+import { ItemModel } from "#globals";
 
 export default class StyleCircle extends Component<{
   id: string;
@@ -15,14 +15,14 @@ export default class StyleCircle extends Component<{
         return (
           <ExpressionIconView
             model={DCGView.const(model)}
-            controller={DCGView.const(Calc.controller)}
+            controller={DCGView.const(model.controller)}
           />
         );
       case "image":
         return (
           <ImageIconView
             model={DCGView.const(model)}
-            controller={DCGView.const(Calc.controller)}
+            controller={DCGView.const(model.controller)}
           />
         );
       default:

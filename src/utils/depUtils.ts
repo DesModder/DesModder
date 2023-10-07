@@ -1,5 +1,5 @@
 import Node from "#parsing/parsenode.ts";
-import { Calc, Fragile, Private } from "#globals";
+import { type Calc, Fragile, Private } from "#globals";
 
 const evaluateLatex = Fragile.evaluateLatex;
 
@@ -21,9 +21,9 @@ export function parseDesmosLatex(s: string) {
   return parseDesmosLatexRaw(s, { allowDt: true, allowIndex: true });
 }
 
-export function EvaluateSingleExpression(s: string): number {
+export function EvaluateSingleExpression(calc: Calc, s: string): number {
   // may also return NaN (which is a number)
-  return evaluateLatex(s, Calc.controller.isDegreeMode());
+  return evaluateLatex(s, calc.controller.isDegreeMode());
 }
 
 export const getQueryParams = Fragile.getQueryParams;
@@ -37,8 +37,8 @@ export function truncatedLatexLabel(label: any, labelOptions: any) {
   return Private.Mathtools.Label.truncatedLatexLabel(label, labelOptions);
 }
 
-export function getCurrentGraphTitle(): string | undefined {
-  return Calc._calc.globalHotkeys?.headerController?.graphsController?.getCurrentGraphTitle?.();
+export function getCurrentGraphTitle(calc: Calc): string | undefined {
+  return calc._calc.globalHotkeys?.headerController?.graphsController?.getCurrentGraphTitle?.();
 }
 
 export const List = Fragile.List;
