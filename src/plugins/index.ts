@@ -29,6 +29,10 @@ import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
 
 interface ConfigItemGeneric {
+  // indentation level for hierarchical relationships in settings
+  // usually for when several settings only become relevant when another is enabled
+  // default 0
+  indentationLevel?: number;
   key: string;
   // TODO proper type here
   shouldShow?: (current: any) => boolean;

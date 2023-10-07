@@ -2,6 +2,12 @@ import { ConfigItem } from "#plugins/index.ts";
 
 export const configList = [
   {
+    type: "boolean",
+    default: true,
+    key: "determineLineBreaksAutomatically",
+  },
+  {
+    indentationLevel: 1,
     type: "number",
     default: 30,
     min: 0,
@@ -10,11 +16,7 @@ export const configList = [
     key: "widthBeforeMultiline",
   },
   {
-    type: "boolean",
-    default: true,
-    key: "determineLineBreaksAutomatically",
-  },
-  {
+    indentationLevel: 1,
     type: "boolean",
     default: true,
     key: "disableAutomaticLineBreaksForHandAlignedExpressions",
@@ -23,6 +25,7 @@ export const configList = [
     },
   },
   {
+    indentationLevel: 1,
     type: "boolean",
     default: true,
     key: "automaticallyMultilinify",
@@ -32,6 +35,7 @@ export const configList = [
     },
   },
   {
+    indentationLevel: 2,
     type: "number",
     default: 1000,
     min: 0,
