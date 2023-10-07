@@ -185,7 +185,7 @@ export default class Multiline extends PluginController<Config> {
       const remove = hookIntoOverrideKeystroke(
         this.calc.focusedMathQuill.mq,
         (key, _) => {
-          const mq = Calc.focusedMathQuill?.mq;
+          const mq = this.calc.focusedMathQuill?.mq;
 
           if (key === "Shift-Enter" && this.settings.spacesToNewlines) {
             if (mq) {
