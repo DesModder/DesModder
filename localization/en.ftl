@@ -272,13 +272,19 @@ compact-view-opt-hideEvaluations-desc = Puts evaluations off to the side. They c
 
 ## Multiline
 multiline-name = Multiline Expressions
-multiline-desc = Splits expressions onto multiple lines to better make use of available space. Can be triggered manually with Ctrl+M.
+multiline-desc = Splits expressions onto multiple lines to better make use of available space.
 multiline-opt-widthBeforeMultiline-name = Width Threshold (%)
 multiline-opt-widthBeforeMultiline-desc = Minimum width (as a percent of the viewport size) at which point wrapping will occur. On mobile, this value is tripled.
-multiline-opt-automaticallyMultilinify-name = Automatically Multilinify
-multiline-opt-automaticallyMultilinify-desc = Automatically splits expressions onto multiple lines.
+multiline-opt-automaticallyMultilinify-name = Insert Linebreaks while Typing
+multiline-opt-automaticallyMultilinify-desc = Automatically splits expressions onto multiple lines while you type, bypassing the need to use Ctrl+M.
 multiline-opt-multilinifyDelayAfterEdit-name = Edit Delay (ms)
 multiline-opt-multilinifyDelayAfterEdit-desc = Multiline expressions should be updated after no edits are made for this number of milliseconds.
+multiline-opt-spacesToNewlines-name = Spaces to Newlines
+multiline-opt-spacesToNewlines-desc = Convert groups of 3 spaces into newlines. These can be automatically created with Shift+Enter.
+multiline-opt-determineLineBreaksAutomatically-name = Auto Insert Linebreaks 
+multiline-opt-determineLineBreaksAutomatically-desc = Automatically figure out where to put line breaks. Use Ctrl+M to trigger this.
+multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-name = Skip expressions with triple spaces
+multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-desc = Don't automatically insert extra line breaks in expressions that have any manually-added line breaks (triple spaces). 
 
 ## Custom MathQuill Config
 custom-mathquill-config-name = Custom MathQuill Config

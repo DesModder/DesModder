@@ -30,6 +30,10 @@ import WolframToDesmos from "./wolfram2desmos";
 import BetterNavigation from "./better-navigation";
 
 interface ConfigItemGeneric {
+  // indentation level for hierarchical relationships in settings
+  // usually for when several settings only become relevant when another is enabled
+  // default 0
+  indentationLevel?: number;
   key: string;
   // TODO proper type here
   shouldShow?: (current: any) => boolean;

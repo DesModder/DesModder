@@ -14,8 +14,21 @@ import {
   registerCustomDispatchOverridingHandler,
 } from "#utils/listenerHelpers.ts";
 
+export const R = 1;
+export const L = -1;
+
+type Dir = 1 | -1;
+
 function focusmq(mq: MathQuillField | undefined) {
   mq?.focus();
+}
+
+function isNextToTripleSpaceLineBreak(mq: MathQuillField, dir: Dir) {
+  return (
+    getController(mq).cursor[dir]?._el?.dataset.isManualLineBreak &&
+    getController(mq).cursor[dir]?.[dir]?._el?.dataset.isManualLineBreak &&
+    getController(mq).cursor[dir]?.[dir]?.[dir]?._el?.dataset.isManualLineBreak
+  );
 }
 
 export default class Multiline extends PluginController<Config> {
@@ -70,7 +83,13 @@ export default class Multiline extends PluginController<Config> {
       if (!(f instanceof HTMLElement)) continue;
 
       // don't re-verticalify everything unless editing
-      if (f.dataset.isVerticalified && e.type !== "set-item-latex") continue;
+      if (
+        f.dataset.isVerticalified &&
+        e.type !== "set-item-latex" &&
+        e.type !== "undo" &&
+        e.type !== "redo"
+      )
+        continue;
 
       // add to a queue of expressions that need to be verticalified
       this.enqueueVerticalifyOperation(f);
@@ -113,6 +132,12 @@ export default class Multiline extends PluginController<Config> {
         indent: 20,
       }));
 
+      const mathfield = (
+        f?.parentElement as unknown as {
+          _mqMathFieldInstance: MathQuillField;
+        }
+      )?._mqMathFieldInstance;
+
       // add line breaks
       verticalify(
         f,
@@ -136,6 +161,12 @@ export default class Multiline extends PluginController<Config> {
           skipWidth: minWidth,
           minPriority: 0,
           maxPriority: 1,
+          spacesToNewlines: this.settings.spacesToNewlines,
+          determineLineBreaksAutomatically:
+            this.settings.automaticallyMultilinify &&
+            (this.settings.disableAutomaticLineBreaksForHandAlignedExpressions
+              ? !(mathfield?.latex?.() ?? "").includes("\\ \\ \\ ")
+              : true),
         }
       );
 
@@ -160,12 +191,72 @@ export default class Multiline extends PluginController<Config> {
       const remove = hookIntoOverrideKeystroke(
         this.calc.focusedMathQuill.mq,
         (key, _) => {
+          const mq = this.calc.focusedMathQuill?.mq;
+
+          if (key === "Shift-Enter" && this.settings.spacesToNewlines) {
+            if (mq) {
+              mq.typedText("   ");
+              this.enqueueVerticalifyOperation(
+                mq.__controller.container.querySelector(".dcg-mq-root-block")!
+              );
+              setTimeout(() => {
+                this.dequeueAllMultilinifications();
+              });
+            }
+
+            return false;
+          }
+
+          if (
+            mq &&
+            key.endsWith("Backspace") &&
+            this.settings.spacesToNewlines
+          ) {
+            if (isNextToTripleSpaceLineBreak(mq, L)) {
+              mq.keystroke("Backspace");
+              mq.keystroke("Backspace");
+              mq.keystroke("Backspace");
+              return false;
+            }
+          }
+
+          if (mq && key.endsWith("Del") && this.settings.spacesToNewlines) {
+            if (isNextToTripleSpaceLineBreak(mq, R)) {
+              mq.keystroke("Del");
+              mq.keystroke("Del");
+              mq.keystroke("Del");
+              return false;
+            }
+          }
+
+          // handle arrow nav with spaces2newlines
+          if (
+            mq &&
+            (key.endsWith("Left") || key.endsWith("Right")) &&
+            this.settings.spacesToNewlines
+          ) {
+            const right = key.endsWith("Right");
+            const shift = key.includes("Shift");
+
+            const arrowDir =
+              (shift ? "Shift-" : "") + (right ? "Right" : "Left");
+            const dir = right ? R : L;
+
+            // check for three consecutive spaces
+            if (isNextToTripleSpaceLineBreak(mq, dir)) {
+              mq.keystroke(arrowDir);
+              mq.keystroke(arrowDir);
+              mq.keystroke(arrowDir);
+              return false;
+            }
+          }
+
           if (key === "Shift-Up" || key === "Shift-Down") {
             this.doMultilineVerticalNav(key);
             return false;
           }
         },
-        0,
+        1,
         "multiline"
       );
       if (remove) this.customHandlerRemovers.push(remove);
@@ -208,6 +299,7 @@ export default class Multiline extends PluginController<Config> {
     document.addEventListener("mousedown", this.mousedownHandler);
 
     this.afterConfigChange();
+    this.dequeueAllMultilinifications();
 
     this.multilineIntervalID = setInterval(() => {
       if (
@@ -238,6 +330,18 @@ export default class Multiline extends PluginController<Config> {
         e.type === "tick-ticker"
       ) {
         this.multilineExpressions(e);
+      }
+
+      // undo/redo operations should keep manually-added newlines multilined
+      if (
+        e.type === "undo" ||
+        (e.type === "redo" && this.settings.spacesToNewlines)
+      ) {
+        setTimeout(() => {
+          this.unmultilineExpressions(true);
+          this.multilineExpressions(e);
+          this.dequeueAllMultilinifications();
+        });
       }
 
       if (e.type === "ui/container-resized") {
@@ -353,7 +457,7 @@ export default class Multiline extends PluginController<Config> {
       // get cursor and adjacent element so we can figure out
       // if it's a line break
       const ctrlr = getController(focusedmq);
-      let next = ctrlr.cursor?.[up ? -1 : 1]?._el;
+      let next = ctrlr.cursor?.[up ? L : R]?._el;
 
       // are we getting the right side or the left side
       // of the element? (e.g. the bounding client rect "left" or "right" property)
@@ -365,7 +469,7 @@ export default class Multiline extends PluginController<Config> {
       // if we can't directly get the next element (e.g. end of a parenthesis block),
       // shift the cursor so that we can get access to it from the "other side"
       if (!next) {
-        next = ctrlr.cursor?.[up ? 1 : -1]?._el;
+        next = ctrlr.cursor?.[up ? R : L]?._el;
         isNextRight = !isNextRight;
       }
 
@@ -393,7 +497,7 @@ export default class Multiline extends PluginController<Config> {
       if (
         (next instanceof HTMLElement &&
           // is the element a line break?
-          next.dataset.isLineBreak !== undefined) ||
+          next.dataset.isAutoLineBreak !== undefined) ||
         next === nextFromBefore
       ) {
         mqKeystroke(focusedmq, arrowdir);
