@@ -18,7 +18,7 @@ import { fullReplacementCached } from "./replacementHelpers/cacheReplacement";
  * returns before actually initializing the calculator. This leads to a race
  * condition, so poll for Calc being ready. */
 function tryRunDesModder() {
-  if (window.Calc !== undefined) runDesModder();
+  if ((window as any).Calc !== undefined) runDesModder();
   else setTimeout(tryRunDesModder, 10);
 }
 

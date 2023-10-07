@@ -13,14 +13,10 @@ import {
   MathQuillConfig,
 } from "../components/desmosComponents";
 import { GenericSettings, PluginID } from "../plugins";
-import type { Calc } from "./Calc";
 import { ItemModel } from "./models";
 import { GraphState } from "@desmodder/graph-state";
 
 export interface DWindow extends Window {
-  /** @deprecated Don't use Calc directly, unless you're doing global setup for
-   * the whole extension. Reference a specific `calc` object instead. */
-  Calc: Calc;
   DesModder: any;
   DSM: DSM;
   DesModderPreload?: {
