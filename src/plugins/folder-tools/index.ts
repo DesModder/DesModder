@@ -1,6 +1,6 @@
 import { PluginController } from "../PluginController";
 import { ActionButton } from "../expr-action-buttons";
-import { Calc, ItemModel } from "#globals";
+import { ItemModel } from "#globals";
 import { List } from "#utils/depUtils.ts";
 
 export default class FolderTools extends PluginController {
@@ -22,8 +22,7 @@ export default class FolderTools extends PluginController {
       onTap: (model) => this.folderDump(model.index),
       predicate: (model) =>
         model.type === "folder" &&
-        Calc.controller.getItemModelByIndex(model.index + 1)?.folderId ===
-          model.id,
+        this.cc.getItemModelByIndex(model.index + 1)?.folderId === model.id,
     },
     {
       tooltip: "folder-tools-merge",
@@ -35,37 +34,37 @@ export default class FolderTools extends PluginController {
   ];
 
   folderDump(folderIndex: number) {
-    const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
+    const folderModel = this.cc.getItemModelByIndex(folderIndex);
     if (!folderModel || folderModel.type !== "folder") return;
     const folderId = folderModel?.id;
 
     // Remove folderId on all of the contents of the folder
     for (
       let currIndex = folderIndex + 1,
-        currExpr = Calc.controller.getItemModelByIndex(currIndex);
+        currExpr = this.cc.getItemModelByIndex(currIndex);
       currExpr && currExpr.type !== "folder" && currExpr?.folderId === folderId;
-      currIndex++, currExpr = Calc.controller.getItemModelByIndex(currIndex)
+      currIndex++, currExpr = this.cc.getItemModelByIndex(currIndex)
     ) {
       currExpr.folderId = undefined;
     }
 
     // Replace the folder with text that has the same title
-    const T = Calc.controller.createItemModel({
-      id: Calc.controller.generateId(),
+    const T = this.cc.createItemModel({
+      id: this.cc.generateId(),
       type: "text",
       text: folderModel.title,
     });
-    Calc.controller._toplevelReplaceItemAt(folderIndex, T, true);
+    this.cc._toplevelReplaceItemAt(folderIndex, T, true);
 
     this.dsm.commitStateChange(true);
   }
 
   folderMerge(folderIndex: number) {
-    const folderModel = Calc.controller.getItemModelByIndex(folderIndex);
+    const folderModel = this.cc.getItemModelByIndex(folderIndex);
     const folderId = folderModel?.id;
 
     // type cast beacuse Desmos has not yet updated types for authorFeatures
-    const skipAuthors = !(Calc.settings as any).authorFeatures;
+    const skipAuthors = !(this.calc.settings as any).authorFeatures;
 
     let newIndex = folderIndex;
     let currIndex = folderIndex;
@@ -80,7 +79,7 @@ export default class FolderTools extends PluginController {
     while (true) {
       newIndex++;
       currIndex++;
-      currExpr = Calc.controller.getItemModelByIndex(currIndex);
+      currExpr = this.cc.getItemModelByIndex(currIndex);
       if (currExpr === undefined) break;
       // If authorFeatures is disabled, skip secret folders
       if (skipAuthors) {
@@ -88,7 +87,7 @@ export default class FolderTools extends PluginController {
           const secretID: string = currExpr.id;
           do {
             currIndex++;
-            currExpr = Calc.controller.getItemModelByIndex(currIndex);
+            currExpr = this.cc.getItemModelByIndex(currIndex);
           } while (
             currExpr &&
             currExpr.type !== "folder" &&
@@ -110,26 +109,26 @@ export default class FolderTools extends PluginController {
         movedAny = true;
         // Actually move the item into place
         currExpr.folderId = folderId;
-        List.moveItemsTo(Calc.controller.listModel, currIndex, newIndex, 1);
+        List.moveItemsTo(this.cc.listModel, currIndex, newIndex, 1);
       }
     }
     if (toDeleteFolderID)
-      List.removeItemById(Calc.controller.listModel, toDeleteFolderID);
+      List.removeItemById(this.cc.listModel, toDeleteFolderID);
 
     this.dsm.commitStateChange(true);
   }
 
   noteEnclose(noteIndex: number) {
     // Replace this note with a folder, then folderMerge
-    const noteModel = Calc.controller.getItemModelByIndex(noteIndex);
+    const noteModel = this.cc.getItemModelByIndex(noteIndex);
     if (!noteModel || noteModel.type !== "text") return;
 
-    const T = Calc.controller.createItemModel({
-      id: Calc.controller.generateId(),
+    const T = this.cc.createItemModel({
+      id: this.cc.generateId(),
       type: "folder",
       title: noteModel.text,
     });
-    Calc.controller._toplevelReplaceItemAt(noteIndex, T, true);
+    this.cc._toplevelReplaceItemAt(noteIndex, T, true);
     this.folderMerge(noteIndex);
 
     this.dsm.commitStateChange(true);

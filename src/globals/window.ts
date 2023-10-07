@@ -13,12 +13,10 @@ import {
   MathQuillConfig,
 } from "../components/desmosComponents";
 import { GenericSettings, PluginID } from "../plugins";
-import CalcType from "./Calc";
 import { ItemModel } from "./models";
 import { GraphState } from "@desmodder/graph-state";
 
 export interface DWindow extends Window {
-  Calc: CalcType;
   DesModder: any;
   DSM: DSM;
   DesModderPreload?: {
@@ -59,20 +57,6 @@ interface Mathtools {
 declare let window: DWindow;
 
 export default window;
-
-// defer access of Calc.controller, Calc.observe, etc. to when they are called
-// avoid Calc === undefined but window.Calc !== undefined
-export const Calc = new Proxy(
-  {},
-  {
-    get(_target, prop) {
-      if (window.Calc === undefined) return undefined;
-      if (prop in window.Calc) {
-        return window.Calc[prop as keyof typeof window.Calc];
-      }
-    },
-  }
-) as CalcType;
 
 export const Fragile = new Proxy(
   {},

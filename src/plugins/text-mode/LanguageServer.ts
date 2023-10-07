@@ -3,7 +3,7 @@
  * The functions in this file manage the interface between codemirror and
  * the Text Mode compiler.
  */
-import { getTextModeConfig } from ".";
+import TextMode from ".";
 import { ProgramAnalysis, textToRaw } from "../../../text-mode-core";
 import { DispatchedEvent } from "../../globals/Calc";
 import { eventSequenceChanges } from "./modify";
@@ -12,10 +12,10 @@ import {
   StateEffect,
   Transaction,
   EditorState,
+  Facet,
 } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { GraphState } from "@desmodder/graph-state";
-import { Calc } from "#globals";
 
 /**
  * onCalcEvent: when we receive a new event dispatched via Calc (such as a
@@ -57,13 +57,18 @@ export function parseAndReturnAnalysis(
   nextEditDueToGraph: boolean,
   rawIDs: RawIDRange[]
 ) {
-  const cfg = getTextModeConfig();
+  const tm = state.facet(tmPlugin);
+  const cfg = tm.getTextModeConfig();
   const s = state.doc.sliceString(0);
   const [analysis, rawGraphState] = textToRaw(cfg, s, { rawIDs });
   if (!nextEditDueToGraph && rawGraphState !== null)
-    setCalcState(rawGraphState);
+    setCalcState(tm, rawGraphState);
   return analysis;
 }
+
+export const tmPlugin = Facet.define<TextMode, TextMode>({
+  combine: (vals) => vals[0],
+});
 
 /** This field is stored on the state and gets updated every time the document
  * is edited. So the analysis always stays perfectly in sync. This may not be
@@ -115,7 +120,7 @@ export const addRawID = StateEffect.define<RawIDRange>({
   }),
 });
 
-function setCalcState(state: GraphState) {
+function setCalcState(tm: TextMode, state: GraphState) {
   // Prevent Desmos from blurring the currently active element.
   // Alternative method this.view.focus() after setState does not prevent
   //   the current autocomplete tooltip from disappearing
@@ -125,8 +130,8 @@ function setCalcState(state: GraphState) {
   // Just marking state as any for now. Eventually we'll want to pull
   // @desmodder/graph-state into this repository (like @desmodder/text-mode-core),
   // to avoid needing to deal with npm back-and-forth.
-  (state.graph as any).product = Calc.controller.graphSettings.config.product;
-  Calc.setState(state, { allowUndo: true, fromTextMode: true } as any);
+  (state.graph as any).product = tm.cc.graphSettings.config.product;
+  tm.calc.setState(state, { allowUndo: true, fromTextMode: true } as any);
   if (ae) ae.blur = oldBlur!;
 }
 

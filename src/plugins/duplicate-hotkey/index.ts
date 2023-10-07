@@ -1,5 +1,4 @@
 import { PluginController } from "../PluginController";
-import { Calc } from "#globals";
 import { keys } from "#utils/depUtils.ts";
 
 export default class DuplicateHotkey extends PluginController {
@@ -11,14 +10,14 @@ export default class DuplicateHotkey extends PluginController {
   onKeydown = this._onKeydown.bind(this);
   _onKeydown(e: KeyboardEvent) {
     if (e.ctrlKey && keys.lookupChar(e) === "Q") {
-      const selectedItem = Calc.controller.getSelectedItem();
+      const selectedItem = this.cc.getSelectedItem();
       if (!selectedItem) return;
-      Calc.controller.dispatch({
+      this.cc.dispatch({
         type:
           selectedItem.type === "folder"
             ? "duplicate-folder"
             : "duplicate-expression",
-        id: Calc.selectedExpressionId,
+        id: this.calc.selectedExpressionId,
       });
     }
   }

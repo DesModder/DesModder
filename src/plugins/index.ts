@@ -28,8 +28,13 @@ import TextMode from "./text-mode";
 import VideoCreator from "./video-creator";
 import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
+import BetterNavigation from "./better-navigation";
 
 interface ConfigItemGeneric {
+  // indentation level for hierarchical relationships in settings
+  // usually for when several settings only become relevant when another is enabled
+  // default 0
+  indentationLevel?: number;
   key: string;
   // TODO proper type here
   shouldShow?: (current: any) => boolean;
@@ -140,6 +145,7 @@ export const keyToPlugin = {
   exprActionButtons: ExprActionButtons,
   codeGolf: CodeGolf,
   syntaxHighlighting: SyntaxHighlighting,
+  betterNavigation: BetterNavigation,
 } satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);
@@ -195,6 +201,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get exprActionButtons () { return this.ep["expr-action-buttons"]; }
   get codeGolf () { return this.ep["code-golf"]; }
   get syntaxHighlighting () { return this.ep["syntax-highlighting"]}
+  get betterNavigation () { return this.ep["better-navigation"]} 
 }
 
 export type IDToPluginSettings = {

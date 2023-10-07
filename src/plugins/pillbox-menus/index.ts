@@ -3,7 +3,6 @@ import { MenuFunc } from "./components/Menu";
 import PillboxContainer from "./components/PillboxContainer";
 import PillboxMenu from "./components/PillboxMenu";
 import { DCGView } from "#DCGView";
-import { Calc } from "#globals";
 import { plugins, PluginID, ConfigItem } from "#plugins/index.ts";
 
 export default class PillboxMenus extends PluginController<undefined> {
@@ -13,7 +12,7 @@ export default class PillboxMenus extends PluginController<undefined> {
   private expandedCategory: string | null = null;
 
   afterEnable() {
-    Calc.controller.dispatcher.register((e) => {
+    this.cc.dispatcher.register((e) => {
       if (e.type === "toggle-graph-settings") {
         this.pillboxMenuPinned = false;
         this.closeMenu();
@@ -61,7 +60,7 @@ export default class PillboxMenus extends PluginController<undefined> {
   }
 
   updateMenuView() {
-    Calc.controller.updateViews();
+    this.cc.updateViews();
   }
 
   addPillboxButton(info: PillboxButton) {
@@ -107,9 +106,9 @@ export default class PillboxMenus extends PluginController<undefined> {
     // added, or figure out a better layout at that point because it's starting
     // to be a lot of pillbox threshold.
     return (
-      !Calc.settings.graphpaper ||
-      (Calc.controller.isGeoUIActive() &&
-        Calc.controller.computeMajorLayout().grapher.width > 500)
+      !this.calc.settings.graphpaper ||
+      (this.cc.isGeoUIActive() &&
+        this.cc.computeMajorLayout().grapher.width > 500)
     );
   }
 

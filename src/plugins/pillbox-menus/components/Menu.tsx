@@ -8,6 +8,7 @@ import {
   Match,
   IfElse,
   IconButton,
+  Switch,
 } from "#components";
 import { format } from "#i18n";
 import {
@@ -46,6 +47,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "custom-mathquill-config",
     "code-golf",
     "my-expressions-library",
+    "better-navigation",
   ],
   visual: [
     "set-primary-color",
@@ -181,18 +183,21 @@ export default class Menu extends Component<{
         {plugin.config.map((item: ConfigItem) => (
           <If predicate={() => item.shouldShow?.(pluginSettings) ?? true}>
             {() =>
-              Match(() => item, {
-                boolean: () =>
-                  booleanOption(this.pm, item, plugin, pluginSettings),
-                string: () =>
-                  stringOption(this.pm, item, plugin, pluginSettings),
-                number: () =>
-                  numberOption(this.pm, item, plugin, pluginSettings),
-                "color-list": () =>
-                  colorListOption(this.pm, item, plugin, pluginSettings),
-                stringArray: () =>
-                  stringArrayOption(this.pm, item, plugin, pluginSettings),
-              })
+              indentation(
+                item.indentationLevel ?? 0,
+                Match(() => item, {
+                  boolean: () =>
+                    booleanOption(this.pm, item, plugin, pluginSettings),
+                  string: () =>
+                    stringOption(this.pm, item, plugin, pluginSettings),
+                  number: () =>
+                    numberOption(this.pm, item, plugin, pluginSettings),
+                  "color-list": () =>
+                    colorListOption(this.pm, item, plugin, pluginSettings),
+                  stringArray: () =>
+                    stringArrayOption(this.pm, item, plugin, pluginSettings),
+                })
+              )
             }
           </If>
         ))}
@@ -244,6 +249,23 @@ function stringArrayOption(
       </Tooltip>
       <ResetButton pm={pm} key={item.key} />
     </div>
+  );
+}
+function indentation(level: number, inner: any) {
+  return (
+    <Switch key={() => level}>
+      {() => {
+        if (level === 0) {
+          return inner;
+        } else {
+          return (
+            <div class="dsm-settings-indentation">
+              {indentation(level - 1, inner)}
+            </div>
+          );
+        }
+      }}
+    </Switch>
   );
 }
 

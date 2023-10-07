@@ -3,7 +3,7 @@ import { Config, configList } from "./config";
 import "./multiline.less";
 import { CollapseMode, unverticalify, verticalify } from "./verticalify";
 import { MathQuillField, MathQuillView } from "#components";
-import { Calc, DispatchedEvent } from "#globals";
+import { DispatchedEvent } from "#globals";
 import {
   getController,
   mqKeystroke,
@@ -14,8 +14,21 @@ import {
   registerCustomDispatchOverridingHandler,
 } from "#utils/listenerHelpers.ts";
 
+export const R = 1;
+export const L = -1;
+
+type Dir = 1 | -1;
+
 function focusmq(mq: MathQuillField | undefined) {
   mq?.focus();
+}
+
+function isNextToTripleSpaceLineBreak(mq: MathQuillField, dir: Dir) {
+  return (
+    getController(mq).cursor[dir]?._el?.dataset.isManualLineBreak &&
+    getController(mq).cursor[dir]?.[dir]?._el?.dataset.isManualLineBreak &&
+    getController(mq).cursor[dir]?.[dir]?.[dir]?._el?.dataset.isManualLineBreak
+  );
 }
 
 export default class Multiline extends PluginController<Config> {
@@ -70,7 +83,13 @@ export default class Multiline extends PluginController<Config> {
       if (!(f instanceof HTMLElement)) continue;
 
       // don't re-verticalify everything unless editing
-      if (f.dataset.isVerticalified && e.type !== "set-item-latex") continue;
+      if (
+        f.dataset.isVerticalified &&
+        e.type !== "set-item-latex" &&
+        e.type !== "undo" &&
+        e.type !== "redo"
+      )
+        continue;
 
       // add to a queue of expressions that need to be verticalified
       this.enqueueVerticalifyOperation(f);
@@ -90,7 +109,7 @@ export default class Multiline extends PluginController<Config> {
 
       const minWidth =
         ((window.innerWidth * this.settings.widthBeforeMultiline) / 100) *
-        (Calc.controller.isNarrow() ? 3 : 1);
+        (this.cc.isNarrow() ? 3 : 1);
 
       // settings for where and how to put line breaks
       const domManipHandlers: (() => void)[] = [];
@@ -112,6 +131,12 @@ export default class Multiline extends PluginController<Config> {
         mode: CollapseMode.AtMaxWidth,
         indent: 20,
       }));
+
+      const mathfield = (
+        f?.parentElement as unknown as {
+          _mqMathFieldInstance: MathQuillField;
+        }
+      )?._mqMathFieldInstance;
 
       // add line breaks
       verticalify(
@@ -136,6 +161,12 @@ export default class Multiline extends PluginController<Config> {
           skipWidth: minWidth,
           minPriority: 0,
           maxPriority: 1,
+          spacesToNewlines: this.settings.spacesToNewlines,
+          determineLineBreaksAutomatically:
+            this.settings.automaticallyMultilinify &&
+            (this.settings.disableAutomaticLineBreaksForHandAlignedExpressions
+              ? !(mathfield?.latex?.() ?? "").includes("\\ \\ \\ ")
+              : true),
         }
       );
 
@@ -156,16 +187,76 @@ export default class Multiline extends PluginController<Config> {
       this.dequeueAllMultilinifications();
     }
 
-    if (Calc.focusedMathQuill) {
+    if (this.calc.focusedMathQuill) {
       const remove = hookIntoOverrideKeystroke(
-        Calc.focusedMathQuill.mq,
+        this.calc.focusedMathQuill.mq,
         (key, _) => {
+          const mq = this.calc.focusedMathQuill?.mq;
+
+          if (key === "Shift-Enter" && this.settings.spacesToNewlines) {
+            if (mq) {
+              mq.typedText("   ");
+              this.enqueueVerticalifyOperation(
+                mq.__controller.container.querySelector(".dcg-mq-root-block")!
+              );
+              setTimeout(() => {
+                this.dequeueAllMultilinifications();
+              });
+            }
+
+            return false;
+          }
+
+          if (
+            mq &&
+            key.endsWith("Backspace") &&
+            this.settings.spacesToNewlines
+          ) {
+            if (isNextToTripleSpaceLineBreak(mq, L)) {
+              mq.keystroke("Backspace");
+              mq.keystroke("Backspace");
+              mq.keystroke("Backspace");
+              return false;
+            }
+          }
+
+          if (mq && key.endsWith("Del") && this.settings.spacesToNewlines) {
+            if (isNextToTripleSpaceLineBreak(mq, R)) {
+              mq.keystroke("Del");
+              mq.keystroke("Del");
+              mq.keystroke("Del");
+              return false;
+            }
+          }
+
+          // handle arrow nav with spaces2newlines
+          if (
+            mq &&
+            (key.endsWith("Left") || key.endsWith("Right")) &&
+            this.settings.spacesToNewlines
+          ) {
+            const right = key.endsWith("Right");
+            const shift = key.includes("Shift");
+
+            const arrowDir =
+              (shift ? "Shift-" : "") + (right ? "Right" : "Left");
+            const dir = right ? R : L;
+
+            // check for three consecutive spaces
+            if (isNextToTripleSpaceLineBreak(mq, dir)) {
+              mq.keystroke(arrowDir);
+              mq.keystroke(arrowDir);
+              mq.keystroke(arrowDir);
+              return false;
+            }
+          }
+
           if (key === "Shift-Up" || key === "Shift-Down") {
             this.doMultilineVerticalNav(key);
             return false;
           }
         },
-        0,
+        1,
         "multiline"
       );
       if (remove) this.customHandlerRemovers.push(remove);
@@ -178,14 +269,14 @@ export default class Multiline extends PluginController<Config> {
       this.lastRememberedCursorX = cursor.getBoundingClientRect().left;
     } else {
       let xpos =
-        Calc.focusedMathQuill?.mq.__controller.cursor?.[
+        this.calc.focusedMathQuill?.mq.__controller.cursor?.[
           -1
         ]?._el?.getBoundingClientRect()?.right;
       if (xpos !== undefined) {
         this.lastRememberedCursorX = xpos;
       } else {
         xpos =
-          Calc.focusedMathQuill?.mq.__controller.cursor?.[1]?._el?.getBoundingClientRect()
+          this.calc.focusedMathQuill?.mq.__controller.cursor?.[1]?._el?.getBoundingClientRect()
             ?.left;
         this.lastRememberedCursorX = xpos;
       }
@@ -208,6 +299,7 @@ export default class Multiline extends PluginController<Config> {
     document.addEventListener("mousedown", this.mousedownHandler);
 
     this.afterConfigChange();
+    this.dequeueAllMultilinifications();
 
     this.multilineIntervalID = setInterval(() => {
       if (
@@ -220,7 +312,7 @@ export default class Multiline extends PluginController<Config> {
       this.dequeueAllMultilinifications();
     }, 0);
 
-    this.dispatcherID = Calc.controller.dispatcher.register((e) => {
+    this.dispatcherID = this.cc.dispatcher.register((e) => {
       if (
         e.type === "set-item-latex" ||
         e.type === "undo" ||
@@ -240,18 +332,34 @@ export default class Multiline extends PluginController<Config> {
         this.multilineExpressions(e);
       }
 
+      // undo/redo operations should keep manually-added newlines multilined
+      if (
+        e.type === "undo" ||
+        (e.type === "redo" && this.settings.spacesToNewlines)
+      ) {
+        setTimeout(() => {
+          this.unmultilineExpressions(true);
+          this.multilineExpressions(e);
+          this.dequeueAllMultilinifications();
+        });
+      }
+
       if (e.type === "ui/container-resized") {
         this.afterConfigChange();
       }
     });
 
-    this.customDispatcherID = registerCustomDispatchOverridingHandler((evt) => {
-      if (evt.type === "on-special-key-pressed") {
-        if (evt.key === "Up" || evt.key === "Down") {
-          if (!this.doMultilineVerticalNav(evt.key)) return false;
+    this.customDispatcherID = registerCustomDispatchOverridingHandler(
+      this.calc,
+      (evt) => {
+        if (evt.type === "on-special-key-pressed") {
+          if (evt.key === "Up" || evt.key === "Down") {
+            if (!this.doMultilineVerticalNav(evt.key)) return false;
+          }
         }
-      }
-    }, 0);
+      },
+      0
+    );
   }
 
   afterDisable() {
@@ -261,14 +369,16 @@ export default class Multiline extends PluginController<Config> {
     this.unmultilineExpressions(true);
     document.body.classList.remove("multiline-expression-enabled");
 
-    if (this.dispatcherID)
-      Calc.controller.dispatcher.unregister(this.dispatcherID);
+    if (this.dispatcherID) this.cc.dispatcher.unregister(this.dispatcherID);
 
     if (this.multilineIntervalID !== undefined)
       clearInterval(this.multilineIntervalID);
 
     if (this.customDispatcherID)
-      deregisterCustomDispatchOverridingHandler(this.customDispatcherID);
+      deregisterCustomDispatchOverridingHandler(
+        this.calc,
+        this.customDispatcherID
+      );
 
     for (const remover of this.customHandlerRemovers) {
       remover();
@@ -347,7 +457,7 @@ export default class Multiline extends PluginController<Config> {
       // get cursor and adjacent element so we can figure out
       // if it's a line break
       const ctrlr = getController(focusedmq);
-      let next = ctrlr.cursor?.[up ? -1 : 1]?._el;
+      let next = ctrlr.cursor?.[up ? L : R]?._el;
 
       // are we getting the right side or the left side
       // of the element? (e.g. the bounding client rect "left" or "right" property)
@@ -359,7 +469,7 @@ export default class Multiline extends PluginController<Config> {
       // if we can't directly get the next element (e.g. end of a parenthesis block),
       // shift the cursor so that we can get access to it from the "other side"
       if (!next) {
-        next = ctrlr.cursor?.[up ? 1 : -1]?._el;
+        next = ctrlr.cursor?.[up ? R : L]?._el;
         isNextRight = !isNextRight;
       }
 
@@ -387,7 +497,7 @@ export default class Multiline extends PluginController<Config> {
       if (
         (next instanceof HTMLElement &&
           // is the element a line break?
-          next.dataset.isLineBreak !== undefined) ||
+          next.dataset.isAutoLineBreak !== undefined) ||
         next === nextFromBefore
       ) {
         mqKeystroke(focusedmq, arrowdir);
