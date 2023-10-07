@@ -34,6 +34,7 @@ const pluginNames = [
   "pillbox-menus",
   "code-golf",
   "syntax-highlighting",
+  "better-navigation",
 ];
 
 replacements.forEach((r) => {
