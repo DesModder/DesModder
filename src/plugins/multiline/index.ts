@@ -460,7 +460,7 @@ export default class Multiline extends PluginController<Config> {
       if (
         (next instanceof HTMLElement &&
           // is the element a line break?
-          next.dataset.isLineBreak !== undefined) ||
+          next.dataset.isAutoLineBreak !== undefined) ||
         next === nextFromBefore
       ) {
         mqKeystroke(focusedmq, arrowdir);

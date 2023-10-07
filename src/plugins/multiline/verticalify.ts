@@ -115,10 +115,10 @@ export function unverticalify(elem: Element, force?: boolean) {
       delete child.dataset.isMultiline;
 
       // revert linebreaks to original symbol to get rid of <br>
-      if (child.dataset.isLineBreak ?? child.dataset.isManualLineBreak) {
+      if (child.dataset.isAutoLineBreak ?? child.dataset.isManualLineBreak) {
         child.innerHTML = child.dataset.originalSymbol ?? "";
       }
-      delete child.dataset.isLineBreak;
+      delete child.dataset.isAutoLineBreak;
       delete child.dataset.isManualLineBreak;
     }
   }
@@ -175,11 +175,11 @@ export function verticalify(
   for (const child of children) {
     if (
       child instanceof HTMLElement &&
-      (child.dataset.isLineBreak ?? child.dataset.isManualLineBreak)
+      (child.dataset.isAutoLineBreak ?? child.dataset.isManualLineBreak)
     ) {
       context.domManipHandlers.push(() => {
         child.innerHTML = child.dataset.originalSymbol ?? "";
-        delete child.dataset.isLineBreak;
+        delete child.dataset.isAutoLineBreak;
         delete child.dataset.isManualLineBreak;
       });
     }
@@ -218,7 +218,7 @@ export function verticalify(
 
       context.domManipHandlers.push(() => {
         child.style.display = "inline";
-        child.dataset.isLineBreak = "true";
+        child.dataset.isAutoLineBreak = "true";
         child.dataset.originalSymbol = "\u00A0";
         child.innerHTML = "<br />";
         child.style.setProperty("--line-break-indent", `0px`);
@@ -271,7 +271,7 @@ export function verticalify(
             // add a line break to this element
             context.domManipHandlers.push(() => {
               child.style.display = "inline";
-              child.dataset.isLineBreak = "true";
+              child.dataset.isAutoLineBreak = "true";
               child.dataset.originalSymbol = s.symbol;
               child.innerHTML = s.symbol + "<br />";
               child.style.setProperty("--line-break-indent", `${s.indent}px`);
