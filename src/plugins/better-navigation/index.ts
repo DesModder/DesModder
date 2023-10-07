@@ -65,7 +65,7 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
   ] as const;
 
   removeHandlers() {
-    for (const handler of this.customRemoveHandlers) handler();
+    for (const removeHandler of this.customRemoveHandlers) removeHandler();
   }
 
   afterConfigChange(): void {
