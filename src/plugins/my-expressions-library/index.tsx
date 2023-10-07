@@ -6,7 +6,6 @@ import { LibrarySearchView } from "./library-search-view";
 import { ExpressionState, ItemState } from "@desmodder/graph-state";
 import { MountedComponent, jsx } from "#DCGView";
 import { MathQuillField, MathQuillView } from "#components";
-import { Calc } from "#globals";
 import { PluginController } from "../PluginController";
 import { mapAugAST } from "../intellisense/latex-parsing";
 import { IntellisenseState } from "../intellisense/state";
@@ -200,7 +199,7 @@ export default class MyExpressionsLibrary extends PluginController<{
 
   focusedmq: MathQuillField | undefined;
 
-  identTracker: IntellisenseState = new IntellisenseState(getMetadata());
+  identTracker: IntellisenseState = new IntellisenseState(this.calc);
 
   searchStr: string = "";
 
@@ -221,17 +220,17 @@ export default class MyExpressionsLibrary extends PluginController<{
   }
 
   createEmptyFolder(title: string) {
-    Calc.controller.dispatch({ type: "new-folder" });
+    this.calc.controller.dispatch({ type: "new-folder" });
 
-    const idx = Calc.controller.getSelectedItem()?.index;
+    const idx = this.calc.controller.getSelectedItem()?.index;
     if (idx !== undefined) {
-      const folder = Calc.controller.listModel.__itemModelArray[idx];
+      const folder = this.calc.controller.listModel.__itemModelArray[idx];
       if (folder.type === "folder") {
         folder.title = title;
       }
     }
 
-    Calc.controller.updateTheComputedWorld();
+    this.calc.controller.updateTheComputedWorld();
   }
 
   async loadFolder(expr: ExpressionLibraryFolder) {
@@ -247,8 +246,8 @@ export default class MyExpressionsLibrary extends PluginController<{
 
   getInsertionStartIndex() {
     return (
-      Calc.controller.listModel.__itemModelArray.findIndex(
-        (e) => e.id === (Calc.controller.getSelectedItem()?.id ?? "0")
+      this.calc.controller.listModel.__itemModelArray.findIndex(
+        (e) => e.id === (this.calc.controller.getSelectedItem()?.id ?? "0")
       ) + 1
     );
   }
@@ -293,22 +292,22 @@ export default class MyExpressionsLibrary extends PluginController<{
 
     // deduplicate redundant expressions
     loadedArray = loadedArray.filter(
-      (loadExpr) => !Calc.controller.getItemModel(loadExpr.raw.id)
+      (loadExpr) => !this.calc.controller.getItemModel(loadExpr.raw.id)
     );
 
     let startIndex = this.getInsertionStartIndex();
 
     // figure out what folder to put expressions into
     const startItem =
-      Calc.controller.listModel.__itemModelArray[startIndex - 1];
+      this.calc.controller.listModel.__itemModelArray[startIndex - 1];
     const startFolder: string | undefined =
       startItem?.type === "folder" ? startItem?.id : startItem?.folderId;
 
     const idsBefore = new Set(
-      Calc.controller.listModel.__itemModelArray.map((e) => e.id)
+      this.calc.controller.listModel.__itemModelArray.map((e) => e.id)
     );
 
-    Calc.setExpressions(
+    this.calc.setExpressions(
       // @ts-expect-error todo: fix type safety later
       loadedArray.map((e) => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -319,7 +318,7 @@ export default class MyExpressionsLibrary extends PluginController<{
       })
     );
 
-    const idsAfter = Calc.controller.listModel.__itemModelArray.map(
+    const idsAfter = this.calc.controller.listModel.__itemModelArray.map(
       (e) => e.id
     );
 
@@ -333,10 +332,11 @@ export default class MyExpressionsLibrary extends PluginController<{
 
     let i = 0;
     for (const id of idsNew) {
-      const idIndex = Calc.controller.listModel.__itemModelArray.findIndex(
+      const idIndex = this.calc.controller.listModel.__itemModelArray.findIndex(
         (e) => e.id === id
       );
-      const itemToMove = Calc.controller.listModel.__itemModelArray[idIndex];
+      const itemToMove =
+        this.calc.controller.listModel.__itemModelArray[idIndex];
 
       const expr = loadedArray[i];
 
@@ -346,11 +346,11 @@ export default class MyExpressionsLibrary extends PluginController<{
         itemToMove.colorLatex = expr.raw.colorLatex;
       }
 
-      Calc.controller.listModel.__itemModelArray.splice(idIndex, 1);
+      this.calc.controller.listModel.__itemModelArray.splice(idIndex, 1);
 
       if (startIndex > idIndex) startIndex--;
 
-      Calc.controller.listModel.__itemModelArray.splice(
+      this.calc.controller.listModel.__itemModelArray.splice(
         startIndex,
         0,
         itemToMove
@@ -358,7 +358,7 @@ export default class MyExpressionsLibrary extends PluginController<{
       i++;
     }
 
-    Calc.controller.updateTheComputedWorld();
+    this.calc.controller.updateTheComputedWorld();
   }
 
   async loadEntireGraph(graph: ExpressionLibraryGraph) {
@@ -378,7 +378,7 @@ export default class MyExpressionsLibrary extends PluginController<{
           .filter((s) => s)
           .map(async (s) => [s, await getGraphState(s)] as const)
       ).then((state) => {
-        Calc.controller._showToast({
+        this.calc.controller._showToast({
           message: format("my-expressions-library-did-not-load", {
             hashes: state
               .filter((s) => !s[1])
@@ -413,9 +413,9 @@ export default class MyExpressionsLibrary extends PluginController<{
           augs.set(
             expr.id,
             rawNonFolderToAug(
-              buildConfigFromGlobals(Desmos, Calc),
+              buildConfigFromGlobals(Desmos, this.calc),
               expr,
-              getMetadata()
+              getMetadata(this.calc)
             )
           );
         } else {
@@ -518,7 +518,7 @@ export default class MyExpressionsLibrary extends PluginController<{
               (() => {
                 let ltx =
                   textModeExprToLatex(
-                    buildConfigFromGlobals(Desmos, Calc),
+                    buildConfigFromGlobals(Desmos, this.calc),
                     this.searchStr
                   ) ?? "";
                 if (ltx[ltx.length - 1] === "}") ltx = ltx?.slice(0, -1);
