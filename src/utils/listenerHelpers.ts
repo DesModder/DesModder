@@ -1,12 +1,16 @@
-import { pollForValue } from "./utils";
 import { MathQuillField } from "#components";
-import { Calc, DispatchedEvent } from "#globals";
+import type { Calc, DispatchedEvent } from "#globals";
 
-let dispatchOverridingHandlers: {
+interface DispatchOverridingHandler {
   handler: (evt: DispatchedEvent) => boolean | undefined;
   priority: number;
   id: number;
-}[] = [];
+}
+
+const calcDispatchOverrideHandlers = new WeakMap<
+  Calc,
+  DispatchOverridingHandler[]
+>();
 
 let dispatchOverridingHandlerId = 0;
 
@@ -15,47 +19,60 @@ let dispatchOverridingHandlerId = 0;
 // the handler can return false to force the dispatcher to stop early
 // (e.g. to stop desmos from doing a default action upon pressing a key)
 export function registerCustomDispatchOverridingHandler(
+  calc: Calc,
   handler: (evt: DispatchedEvent) => boolean | undefined,
   priority: number
 ): number {
+  const handlers = getDispatchOverrideHandlers(calc);
   const id = dispatchOverridingHandlerId++;
   // add the handler
-  dispatchOverridingHandlers.push({ handler, priority, id });
+  handlers.push({ handler, priority, id });
 
   // sort the handlers so that higher priorities are first
   // could easily be optimized but prob not a bottleneck
-  dispatchOverridingHandlers.sort((a, b) => b.priority - a.priority);
+  handlers.sort((a, b) => b.priority - a.priority);
 
   return id;
 }
 
 // deregisters a function created with registerCustomDispatchOverridingHandler
 // uses the id that the former function returns
-export function deregisterCustomDispatchOverridingHandler(id: number): void {
+export function deregisterCustomDispatchOverridingHandler(
+  calc: Calc,
+  id: number
+): void {
+  const handlers = getDispatchOverrideHandlers(calc);
   // remove all handlers with matching IDs
-  dispatchOverridingHandlers = dispatchOverridingHandlers.filter(
-    (entry) => entry.id !== id
-  );
+  // This is in general O(ND), but only one handler should be deleted typically.
+  for (let i = handlers.length - 1; i >= 0; i--) {
+    if (handlers[i].id === id) {
+      handlers.splice(i, 1);
+    }
+  }
 }
 
-// once Calc is defined, change handleDispatchedAction to first
-// run a set of custom handlers
-export function setupDispatchOverride() {
-  const old = Calc.controller.handleDispatchedAction;
-  Calc.controller.handleDispatchedAction = function (evt) {
-    for (const { handler } of dispatchOverridingHandlers) {
+function getDispatchOverrideHandlers(calc: Calc) {
+  const curr = calcDispatchOverrideHandlers.get(calc);
+  if (curr) return curr;
+  const newHandlers = setupDispatchOverride(calc);
+  calcDispatchOverrideHandlers.set(calc, newHandlers);
+  return newHandlers;
+}
+
+// Change calc.handleDispatchedAction to first run a set of custom handlers
+export function setupDispatchOverride(calc: Calc) {
+  const old = calc.controller.handleDispatchedAction;
+  const handlers: DispatchOverridingHandler[] = [];
+  calc.controller.handleDispatchedAction = function (evt) {
+    for (const { handler } of handlers) {
       const keepGoing = handler(evt);
       if (keepGoing === false) return;
     }
 
     old.call(this, evt);
   };
+  return handlers;
 }
-
-void (async () => {
-  await pollForValue(() => Calc);
-  setupDispatchOverride();
-})();
 
 // "attach" a function onto an existing function, performing some functionality
 // and then optionally triggering the existing function.

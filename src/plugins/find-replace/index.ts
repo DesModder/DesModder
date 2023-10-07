@@ -1,7 +1,7 @@
 import { PluginController } from "../PluginController";
 import View from "./View";
 import { refactor } from "./backend";
-import { Calc, Console } from "#globals";
+import { Console } from "#globals";
 
 export default class FindReplace extends PluginController {
   static id = "find-and-replace" as const;
@@ -11,24 +11,22 @@ export default class FindReplace extends PluginController {
   view = new View();
 
   afterEnable() {
-    if (Calc.controller.getExpressionSearchOpen()) {
+    if (this.cc.getExpressionSearchOpen()) {
       this.tryInitView();
     }
-    this.dispatchListenerID = Calc.controller.dispatcher.register(
-      ({ type }) => {
-        if (type === "open-expression-search") {
-          this.tryInitView();
-        } else if (type === "close-expression-search") {
-          this.view.destroyView();
-        }
-        // may want to listen to update-expression-search-str
+    this.dispatchListenerID = this.cc.dispatcher.register(({ type }) => {
+      if (type === "open-expression-search") {
+        this.tryInitView();
+      } else if (type === "close-expression-search") {
+        this.view.destroyView();
       }
-    );
+      // may want to listen to update-expression-search-str
+    });
   }
 
   afterDisable() {
     if (this.dispatchListenerID !== undefined)
-      Calc.controller.dispatcher.unregister(this.dispatchListenerID);
+      this.cc.dispatcher.unregister(this.dispatchListenerID);
     this.view.destroyView();
   }
 
@@ -53,11 +51,11 @@ export default class FindReplace extends PluginController {
   }
 
   refactorAll() {
-    refactor(Calc.controller.getExpressionSearchStr(), this.replaceLatex);
+    refactor(this.calc, this.cc.getExpressionSearchStr(), this.replaceLatex);
   }
 
   focusSearch() {
-    Calc.controller.dispatch({
+    this.cc.dispatch({
       type: "set-focus-location",
       location: { type: "search-expressions" },
     });

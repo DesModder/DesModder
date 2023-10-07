@@ -2,7 +2,6 @@ import { Inserter, PluginController } from "../PluginController";
 import { ConfirmLines } from "./components/ConfirmLines";
 import { GLesmosToggle } from "./components/GLesmosToggle";
 import "./glesmos.less";
-import { Calc } from "#globals";
 
 export default class GLesmos extends PluginController {
   static id = "GLesmos" as const;
@@ -24,14 +23,14 @@ export default class GLesmos extends PluginController {
       .map((v) => v.id);
     if (glesmosIDs && glesmosIDs.length > 0) {
       glesmosIDs.map((id) => this.toggleExpr(id));
-      killWorker();
+      this.killWorker();
     }
   }
 
   canBeGLesmos(id: string) {
     let model;
     return !!(
-      (model = Calc.controller.getItemModel(id)) &&
+      (model = this.cc.getItemModel(id)) &&
       model.type === "expression" &&
       model.formula &&
       model.formula.expression_type === "IMPLICIT"
@@ -53,12 +52,12 @@ export default class GLesmos extends PluginController {
   forceWorkerUpdate(id: string) {
     // force the worker to revisit the expression
     this.toggleExpr(id);
-    killWorker();
+    this.killWorker();
   }
 
   /** Returns boolean or undefined (representing "worker has not told me yet") */
   isInequality(id: string) {
-    const model = Calc.controller.getItemModel(id);
+    const model = this.cc.getItemModel(id);
     if (model?.type !== "expression") return false;
     return !!model.formula?.is_inequality;
   }
@@ -82,13 +81,13 @@ export default class GLesmos extends PluginController {
    * un-hidden
    */
   toggleExpr(id: string) {
-    const model = Calc.controller.getItemModel(id);
+    const model = this.cc.getItemModel(id);
     if (!model || model.type !== "expression" || !model.shouldGraph) return;
-    Calc.controller.dispatch({
+    this.cc.dispatch({
       type: "toggle-item-hidden",
       id,
     });
-    Calc.controller.dispatch({
+    this.cc.dispatch({
       type: "toggle-item-hidden",
       id,
     });
@@ -105,8 +104,8 @@ export default class GLesmos extends PluginController {
   ): Inserter {
     return () => GLesmosToggle(this, id, ToggleView, allowInequality);
   }
-}
 
-function killWorker() {
-  Calc.controller.evaluator.workerPoolConnection.killWorker();
+  killWorker() {
+    this.cc.evaluator.workerPoolConnection.killWorker();
+  }
 }

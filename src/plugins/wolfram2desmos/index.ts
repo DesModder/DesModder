@@ -1,7 +1,6 @@
 import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
 import { wolfram2desmos, isIllegalASCIIMath } from "./wolfram2desmos";
-import { Calc } from "#globals";
 
 // https://stackoverflow.com/a/34278578
 function typeInTextArea(
@@ -71,7 +70,7 @@ export default class WolframToDesmos extends PluginController<Config> {
       !(elem?.classList.contains("dcg-label-input") ?? true) &&
       pasteData !== undefined &&
       pasteData !== "" &&
-      Calc.controller.getItemModel(Calc.selectedExpressionId)?.type ===
+      this.cc.getItemModel(this.calc.selectedExpressionId)?.type ===
         "expression" &&
       isIllegalASCIIMath(pasteData)
     ) {

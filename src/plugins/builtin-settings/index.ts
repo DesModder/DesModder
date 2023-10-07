@@ -1,19 +1,8 @@
 import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
-import { Calc } from "#globals";
 import { getQueryParams } from "#utils/depUtils.ts";
 
 const managedKeys = configList.map((e) => e.key);
-
-function updateSettings(config: Config) {
-  let { graphpaper, zoomButtons } = config;
-  zoomButtons &&= graphpaper;
-  // Deal with zoomButtons needing to be off before graphpaper is disabled
-  // But graphpaper needs to be on before zoomButtons is enabled.
-  if (graphpaper) Calc.updateSettings({ graphpaper });
-  if (!zoomButtons) Calc.updateSettings({ zoomButtons });
-  Calc.updateSettings({ ...config, zoomButtons, graphpaper });
-}
 
 export default class BuiltinSettings extends PluginController<Config> {
   static id = "builtin-settings" as const;
@@ -27,7 +16,7 @@ export default class BuiltinSettings extends PluginController<Config> {
     for (const key of managedKeys) {
       this.initialSettings[key] =
         (
-          Calc.settings as typeof Calc.settings & {
+          this.calc.settings as typeof this.calc.settings & {
             advancedStyling: boolean;
             authorFeatures: boolean;
           }
@@ -42,14 +31,25 @@ export default class BuiltinSettings extends PluginController<Config> {
         queryConfig[key] = false;
       }
     }
-    updateSettings(this.settings);
+    this.updateSettings(this.settings);
   }
 
   afterDisable() {
-    if (this.initialSettings !== null) updateSettings(this.initialSettings);
+    if (this.initialSettings !== null)
+      this.updateSettings(this.initialSettings);
   }
 
   afterConfigChange() {
-    updateSettings(this.settings);
+    this.updateSettings(this.settings);
+  }
+
+  updateSettings(config: Config) {
+    let { graphpaper, zoomButtons } = config;
+    zoomButtons &&= graphpaper;
+    // Deal with zoomButtons needing to be off before graphpaper is disabled
+    // But graphpaper needs to be on before zoomButtons is enabled.
+    if (graphpaper) this.calc.updateSettings({ graphpaper });
+    if (!zoomButtons) this.calc.updateSettings({ zoomButtons });
+    this.calc.updateSettings({ ...config, zoomButtons, graphpaper });
   }
 }

@@ -1,5 +1,5 @@
 import TextMode from "..";
-import { analysisStateField, doLint } from "../LanguageServer";
+import { analysisStateField, doLint, tmPlugin } from "../LanguageServer";
 // Language extension
 import { textMode } from "../lezer/index";
 import "./editor.less";
@@ -123,6 +123,8 @@ export function startState(tm: TextMode, text: string) {
       styleMappingPlugin,
       footerPlugin(),
       formatPanelPlugin(),
+      // Expose the tm plugin to functions that only have a state.
+      tmPlugin.of(tm),
     ],
   });
   state = state.update(collapseStylesAtStart(state)).state;
