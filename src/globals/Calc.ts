@@ -273,6 +273,7 @@ interface CalcPrivate {
       autoOperatorNames: string;
       autoCommands: string;
     };
+    is3dProduct: () => boolean;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;
