@@ -1,5 +1,6 @@
 import MyExpressionsLibrary, {
   ExpressionLibraryExpression,
+  ExpressionLibraryGraph,
   ExpressionLibraryMathExpression,
   ExpressionsLibraryGraphs,
 } from ".";
@@ -26,6 +27,106 @@ export function expressionLibraryMathExpressionView(
 
     observer.observe(domNode);
   }, 0);
+}
+
+class LibrarySearchElement extends Component<{
+  plugin: () => MyExpressionsLibrary;
+  expr: () => ExpressionLibraryExpression;
+  graph: () => ExpressionLibraryGraph;
+  observer: () => IntersectionObserver;
+}> {
+  template() {
+    return (
+      <Switch key={() => this.props.expr().type}>
+        {() => {
+          const expr = this.props.expr();
+          if (expr.type === "graph") {
+            return (
+              <li class="dsm-library-search-graph">
+                <div
+                  class="dsm-library-search-graph-header"
+                  onClick={() => {
+                    void this.props.plugin().loadEntireGraph(expr);
+                  }}
+                >
+                  <i class="dcg-icon-cartesian"></i>
+                  {expr.title}
+                </div>
+
+                <For
+                  each={() => [...expr.expressions.entries()]}
+                  key={(e) => e[0]}
+                >
+                  <ol>
+                    {(e: [string, ExpressionLibraryExpression]) => (
+                      <LibrarySearchElement
+                        plugin={this.props.plugin}
+                        expr={() => e[1]}
+                        graph={this.props.graph}
+                        observer={this.props.observer}
+                      ></LibrarySearchElement>
+                    )}
+                  </ol>
+                </For>
+              </li>
+            );
+          } else if (expr.type === "folder") {
+            return (
+              <li class="dsm-library-search-folder">
+                <div
+                  class="dsm-library-search-folder-header"
+                  onClick={() => {
+                    void this.props.plugin().loadFolder(expr);
+                  }}
+                >
+                  <i class="dcg-icon-new-folder"></i>
+                  {expr.text}
+                </div>
+                <For
+                  each={() =>
+                    [...expr.expressions]
+                      .map((e) => this.props.graph().expressions.get(e))
+                      .filter((e) => e) as ExpressionLibraryExpression[]
+                  }
+                  key={(e) => e.uniqueID}
+                >
+                  <ol>
+                    {(e: ExpressionLibraryExpression) => (
+                      <LibrarySearchElement
+                        plugin={this.props.plugin}
+                        expr={() => e}
+                        graph={this.props.graph}
+                        observer={this.props.observer}
+                      ></LibrarySearchElement>
+                    )}
+                  </ol>
+                </For>
+              </li>
+            );
+          } else if (expr.type === "expression") {
+            const container = (
+              <li
+                class="dsm-library-search-math"
+                onClick={(_: MouseEvent) => {
+                  void this.props.plugin().loadMathExpression(expr);
+                }}
+                style={{
+                  "min-height": "20px",
+                  "overflow-x": "hidden",
+                }}
+              ></li>
+            );
+            expressionLibraryMathExpressionView(
+              expr,
+              this.props.observer(),
+              container
+            );
+            return container;
+          }
+        }}
+      </Switch>
+    );
+  }
 }
 
 export class LibrarySearchView extends Component<{
@@ -73,63 +174,20 @@ export class LibrarySearchView extends Component<{
                     </div>
                     <For
                       each={() => {
-                        return this.props.plugin().getLibraryExpressions();
+                        return this.props.plugin().graphs?.graphs ?? [];
                       }}
-                      key={(expr) => expr.uniqueID}
+                      key={(g) => g.uniqueID}
                     >
-                      <ul class="dsm-library-search-exprlist">
-                        {(expr: ExpressionLibraryExpression) => {
-                          switch (expr.type) {
-                            case "expression": {
-                              const container = (
-                                <li
-                                  onClick={(_: MouseEvent) => {
-                                    void this.props
-                                      .plugin()
-                                      .loadMathExpression(expr);
-                                  }}
-                                  style={{
-                                    "min-height": "20px",
-                                    "overflow-x": "hidden",
-                                  }}
-                                ></li>
-                              );
-                              expressionLibraryMathExpressionView(
-                                expr,
-                                observer,
-                                container
-                              );
-                              return container;
-                            }
-                            case "folder": {
-                              return (
-                                <li
-                                  class="dsm-library-search-folder"
-                                  onClick={() => {
-                                    void this.props.plugin().loadFolder(expr);
-                                  }}
-                                >
-                                  <i class="dcg-icon-new-folder"></i>
-                                  {expr.text}
-                                </li>
-                              );
-                            }
-                            case "graph": {
-                              return (
-                                <li
-                                  class="dsm-library-search-graph"
-                                  onClick={() => {
-                                    void this.props
-                                      .plugin()
-                                      .loadEntireGraph(expr);
-                                  }}
-                                >
-                                  <i class="dcg-icon-cartesian"></i>
-                                  {expr.title}
-                                </li>
-                              );
-                            }
-                          }
+                      <ul>
+                        {(g: ExpressionLibraryGraph) => {
+                          return (
+                            <LibrarySearchElement
+                              graph={() => g}
+                              expr={() => g}
+                              plugin={this.props.plugin}
+                              observer={() => observer}
+                            ></LibrarySearchElement>
+                          );
                         }}
                       </ul>
                     </For>

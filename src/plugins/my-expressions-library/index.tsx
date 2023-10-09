@@ -164,24 +164,11 @@ function jsonEqual(a: any, b: any): boolean {
   return false;
 }
 
-// get rid of keys from a destination object that aren't in a source object
-// runs recursively
-// function pruneKeys<T extends Record<string, unknown>>(dst: T, src: T) {
-//   for (const [k, v] of Object.entries(dst)) {
-//     if (!Object.prototype.hasOwnProperty.call(src, k)) {
-//       // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-//       delete dst[k as keyof T];
-//       if (typeof src[k] === "object" && typeof dst[k] === "object")
-//         pruneKeys((dst as any)[k], (src as any)[k]);
-//     }
-//   }
-// }
-
 // @ts-expect-error window can have anything on it
 window.jsonEqual = jsonEqual;
 
 export default class MyExpressionsLibrary extends PluginController<{
-  libraryGraphHashes: string[]; // probably a temporary fix
+  libraryGraphLinks: string[]; // probably a temporary fix
 }> {
   static id = "my-expressions-library" as const;
   static enabledByDefault = true;
@@ -189,7 +176,7 @@ export default class MyExpressionsLibrary extends PluginController<{
     {
       type: "stringArray",
       default: [],
-      key: "libraryGraphHashes",
+      key: "libraryGraphLinks",
     },
   ] as const;
 
@@ -374,18 +361,22 @@ export default class MyExpressionsLibrary extends PluginController<{
   async loadGraphs() {
     const graphs = (
       await Promise.all(
-        this.settings.libraryGraphHashes
+        this.settings.libraryGraphLinks
           .filter((s) => s)
           .map(async (s) => [s, await getGraphState(s)] as const)
       ).then((state) => {
-        this.calc.controller._showToast({
-          message: format("my-expressions-library-did-not-load", {
-            hashes: state
-              .filter((s) => !s[1])
-              .map((s) => `"${s[0]}"`)
-              .join(", "),
-          }),
-        });
+        if (state.some((s) => !s[1])) {
+          this.calc.controller._showToast({
+            message: format("my-expressions-library-did-not-load", {
+              links:
+                "\n" +
+                state
+                  .filter((s) => !s[1])
+                  .map((s) => `"${s[0]}"`)
+                  .join("\n"),
+            }),
+          });
+        }
         return state.map((s) => s[1]);
       })
     ).filter((g) => g);

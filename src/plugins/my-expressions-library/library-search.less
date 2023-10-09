@@ -3,6 +3,18 @@
   overflow-y: auto;
   overflow-x: hidden;
   max-width: 40vw;
+
+  ol {
+    list-style: none;
+    margin-left: 5px;
+    padding-left: 5px;
+    border-left: 1px solid #cccccc;
+  }
+
+  ul {
+    list-style: none;
+    padding-left: 0;
+  }
 }
 
 .dsm-library-search-exprlist {
@@ -43,6 +55,22 @@
   }
 }
 
-.dsm-library-search-graph {
+.dsm-library-search-folder .dsm-library-search-folder-header {
+  font-size: 1.1em;
+}
+
+.dsm-library-search-math {
+  font-size: 90%;
+}
+
+.dsm-library-search-graph .dsm-library-search-graph-header {
   font-size: 1.5em;
+  margin-top: 20px;
+}
+
+.dsm-library-search-folder-header:hover,
+.dsm-library-search-graph-header:hover,
+.dsm-library-search-math:hover {
+  background-color: #eeeeee;
+  cursor: pointer;
 }

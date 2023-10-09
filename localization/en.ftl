@@ -253,10 +253,10 @@ intellisense-jump2def-menu-instructions = has multiple definitions. Pick one fro
 ## My Expressions Library
 my-expressions-library-name = My Expressions Library
 my-expressions-library-desc = Create and use a reusable library of expressions in multiple graphs.
-my-expressions-library-opt-libraryGraphHashes-name = Graph Hashes
-my-expressions-library-opt-libraryGraphHashes-desc = A list of graph hashes (those 10-digit sequences of letters and numbers that uniquely identify a graph) from which to source expressions. Each hash should be on its own line.
+my-expressions-library-opt-libraryGraphLinks-name = Graph Links
+my-expressions-library-opt-libraryGraphLinks-desc = A list of graph links from which to source expressions. Each link should be on its own line. Provide the full link! (include the https://)
 my-expressions-library-pillbox-menu = My Expressions Library
-my-expressions-library-did-not-load = My Expressions Library: The graphs with the following hashes did not load: { $hashes }. 
+my-expressions-library-did-not-load = My Expressions Library: The graphs with the following links did not load: { $links }
 my-expressions-library-empty-library = Your library is currently empty. Add a graph to it in the DesModder menu under "My Expressions Library" in the "Utility" section in order to quickly have access to that graph's expressions elsewhere. 
 
 ## Compact View
