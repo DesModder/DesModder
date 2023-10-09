@@ -13,6 +13,7 @@ import {
   hookIntoOverrideKeystroke,
   registerCustomDispatchOverridingHandler,
 } from "#utils/listenerHelpers.ts";
+import { alignMatrix } from "./autoalign";
 
 export const R = 1;
 export const L = -1;
@@ -167,6 +168,8 @@ export default class Multiline extends PluginController<Config> {
             (this.settings.disableAutomaticLineBreaksForHandAlignedExpressions
               ? !(mathfield?.latex?.() ?? "").includes("\\ \\ \\ ")
               : true),
+          autoAlignMatrices:
+            this.settings.spacesToNewlines && this.settings.autoAlignMatrices,
         }
       );
 

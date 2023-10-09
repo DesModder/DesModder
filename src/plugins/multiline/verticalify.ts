@@ -1,4 +1,5 @@
 import { Console } from "#globals";
+import { alignMatrix, isMatrix } from "./autoalign";
 
 export interface VerticalifyContext {
   containerType:
@@ -102,6 +103,8 @@ interface VerticalifyOptions {
 
   // whether to automatically find places to line break
   determineLineBreaksAutomatically: boolean;
+
+  autoAlignMatrices: boolean;
 }
 
 export function unverticalify(elem: Element, force?: boolean) {
@@ -353,6 +356,18 @@ export function verticalify(
         subtree: true,
         childList: true,
       });
+    }
+  });
+
+  context.domManipHandlers.push(() => {
+    if (options.autoAlignMatrices && elem instanceof HTMLElement) {
+      const matrixInfo = isMatrix(elem);
+
+      console.log("matrix info", matrixInfo);
+
+      if (matrixInfo) {
+        alignMatrix(elem, matrixInfo);
+      }
     }
   });
 }

@@ -57,6 +57,15 @@ export const configList = [
     default: true,
     key: "spacesToNewlines",
   },
+  {
+    indentationLevel: 1,
+    type: "boolean",
+    default: true,
+    key: "autoAlignMatrices",
+    shouldShow(current) {
+      return current.spacesToNewlines;
+    },
+  },
 ] satisfies ConfigItem[];
 
 export interface Config {
@@ -66,4 +75,5 @@ export interface Config {
   multilinifyDelayAfterEdit: number;
   spacesToNewlines: boolean;
   disableAutomaticLineBreaksForHandAlignedExpressions: boolean;
+  autoAlignMatrices: boolean;
 }
