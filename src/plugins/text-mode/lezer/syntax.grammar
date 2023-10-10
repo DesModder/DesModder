@@ -26,12 +26,12 @@
 
 statement[@isGroup=Statement] {
   ExprStatement { expressionMaybeSeq RegressionBody? StyleMapping? } |
-  Table { kw<"table"> BlockInner StyleMapping? } |
-  Image { kw<"image"> String StyleMapping? } |
+  Table { Keyword<"table"> BlockInner StyleMapping? } |
+  Image { Keyword<"image"> String StyleMapping? } |
   Text { String StyleMapping? } |
-  Folder { kw<"folder"> String BlockInner StyleMapping? } |
-  Settings { kw<"settings"> StyleMapping } |
-  Ticker { kw<"ticker"> expressionMaybeSeq StyleMapping? }
+  Folder { Keyword<"folder"> String BlockInner StyleMapping? } |
+  Settings { Keyword<"settings"> StyleMapping } |
+  Ticker { Keyword<"ticker"> expressionMaybeSeq StyleMapping? }
 }
 
 RegressionBody {
@@ -56,11 +56,11 @@ expression {
   Identifier |
   RepeatedExpression |
   ListExpression |
-  ListComprehension { "[" expression kw<"for"> commaSep1<AssignmentExpression> "]" } |
+  ListComprehension { "[" expression KeywordOp<"for"> commaSep1<AssignmentExpression> "]" } |
   Piecewise { "{" commaSep<PiecewiseBranch> "}" } |
   UpdateRule { expression !updateRule "->" expression } |
   PrefixExpression { !prefix ArithOp<"-"> expression } |
-  DerivativeExpression { !derivative "(" "d/d" Identifier ")" expression } |
+  DerivativeExpression { !derivative "(" DD { "d/d" } Identifier ")" expression } |
   ParenthesizedExpression { "(" expressionMaybeSeq ")" } |
   MemberExpression { expression !member DotAccessIdentifier } |
   ListAccessExpression { expression !access ListExpression } |
@@ -88,7 +88,7 @@ mappingValue {
 }
 
 RepeatedExpression {
-  (kw<"integral"> | kw<"sum"> | kw<"product">)
+  (KeywordOp<"integral"> | KeywordOp<"sum"> | KeywordOp<"product">)
   Identifier "=" "(" expression "..." expression ")"
   "(" expression ")"
 }
@@ -99,7 +99,7 @@ ListExpression {
 
 BinaryExpression {
   expression !exp ArithOp<"^"> expression |
-  expression !times (divide | ArithOp<"*">) expression |
+  expression !times (divide | ArithOp<"*"> | KeywordOp<"cross">) expression |
   expression !plus ArithOp<"+" | "-"> expression |
   expression !sim CompareOp<"~"> expression |
   expression !rel CompareOp<"<" "="? | ">" "="? | "="> expression
@@ -113,6 +113,8 @@ commaSep1<content> {
   content ("," content)* ","?
 }
 
+Keyword<expr> { kw<expr> }
+KeywordOp<expr> { kw<expr> }
 ArithOp<expr> { expr }
 CompareOp<expr> { expr }
 

@@ -2,12 +2,7 @@ import { constant } from "../../aug/AugLatex";
 import * as Hydrated from "./Hydrated";
 
 export const settings: Hydrated.Settings = {
-  viewport: {
-    xmin: -10,
-    ymin: -10,
-    xmax: 10,
-    ymax: 10,
-  },
+  viewport: {},
   squareAxes: true,
   // empty randomSeed will be filled in later in the process
   randomSeed: "",
@@ -29,6 +24,15 @@ export const settings: Hydrated.Settings = {
   restrictGridToFirstQuadrant: false,
   polarMode: false,
   lockViewport: false,
+  // TODO-graph-state: Do we want the default to be empty, then filled in with grapher type?
+  product: "graphing",
+  axis3D: [0, 0, 1],
+  speed3D: 0,
+  worldRotation3D: [
+    -0.5132799671593364, -0.8314696123025455, -0.212607523691814,
+    0.7681777567114166, -0.555570233019602, 0.3181896451432085,
+    -0.3826834323650897, 0, 0.9238795325112867,
+  ],
 };
 
 export const ticker: Hydrated.Ticker = {

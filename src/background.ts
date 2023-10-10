@@ -32,6 +32,7 @@ if (BROWSER === "firefox") {
       urls: [
         "https://*.desmos.com/assets/build/calculator_desktop-*.js",
         "https://*.desmos.com/assets/build/calculator_geometry-*.js",
+        "https://*.desmos.com/assets/build/calculator_3d-*.js",
       ],
     },
     ["blocking"]
@@ -60,6 +61,7 @@ if (BROWSER === "firefox") {
       urls: [
         "https://*.desmos.com/calculator*",
         "https://*.desmos.com/geometry*",
+        "https://*.desmos.com/3d*",
       ],
     },
     ["blocking", "responseHeaders"]
@@ -81,6 +83,7 @@ if (BROWSER === "firefox") {
       urls: [
         "https://saved-work.desmos.com/calc_thumbs/**/*",
         "https://saved-work.desmos.com/calc-recovery-thumbs/**/*",
+        "https://saved-work.desmos.com/calc-3d-thumbs/**/*",
       ],
     },
     ["blocking", "responseHeaders"]

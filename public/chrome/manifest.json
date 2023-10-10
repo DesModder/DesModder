@@ -13,7 +13,11 @@
   "action": {},
   "content_scripts": [
     {
-      "matches": ["*://*.desmos.com/calculator*", "*://*.desmos.com/geometry*"],
+      "matches": [
+        "*://*.desmos.com/calculator*",
+        "*://*.desmos.com/geometry*",
+        "*://*.desmos.com/3d*"
+      ],
       "run_at": "document_start",
       "js": ["preload/content.js"],
       "all_frames": true
