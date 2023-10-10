@@ -111,12 +111,7 @@ const folderDefaults = {
 } as const;
 
 const defaultSettings: Aug.GraphSettings = {
-  viewport: {
-    xmin: -10,
-    ymin: -10,
-    xmax: 10,
-    ymax: 10,
-  },
+  viewport: {},
 };
 
 function getTestName(desc: string, s: string) {
@@ -1216,6 +1211,20 @@ describe("Diagnostics", () => {
       [
         warning("Property abc unexpected on settings", pos(17, 20)),
         warning("Property def unexpected on settings.viewport", pos(37, 40)),
+      ]
+    );
+    testDiagnostics(
+      "3D list settings",
+      `settings @{axis3D: [5], worldRotation3D: 7}`,
+      [
+        error(
+          "Expected settings.axis3D to evaluate to a list of 3 numbers, but got '[5]'",
+          pos(19, 22)
+        ),
+        error(
+          "Expected settings.worldRotation3D to evaluate to a list of 9 numbers, but got '7'",
+          pos(41, 42)
+        ),
       ]
     );
     testDiagnostics(

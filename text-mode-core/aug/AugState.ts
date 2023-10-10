@@ -27,6 +27,8 @@ export * as Latex from "./AugLatex";
 
 export default Aug;
 
+export type Product = "graphing" | "geometry-calculator" | "graphing-3d";
+
 export interface State {
   version: 9;
   settings: GraphSettings;
@@ -37,12 +39,15 @@ export interface State {
 }
 
 export interface GraphSettings {
+  product?: Product;
   randomSeed?: string;
   viewport: {
-    xmin: number;
-    ymin: number;
-    xmax: number;
-    ymax: number;
+    xmin?: number;
+    ymin?: number;
+    xmax?: number;
+    ymax?: number;
+    zmin?: number;
+    zmax?: number;
   };
   /**
    * Minor subdivisions should be from 0 to 5, inclusive
@@ -73,6 +78,9 @@ export interface GraphSettings {
   restrictGridToFirstQuadrant?: boolean;
   polarMode?: boolean;
   userLockedViewport?: boolean;
+  axis3D?: number[];
+  speed3D?: number;
+  worldRotation3D?: number[];
 }
 
 export type ArrowMode = "NONE" | "POSITIVE" | "BOTH";

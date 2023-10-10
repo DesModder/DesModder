@@ -46,6 +46,29 @@
     }
   },
   {
+    "id": 8,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "responseHeaders": [
+        {
+          "header": "Cross-Origin-Embedder-Policy",
+          "operation": "set",
+          "value": "require-corp"
+        },
+        {
+          "header": "Cross-Origin-Opener-Policy",
+          "operation": "set",
+          "value": "same-origin"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "https://*.desmos.com/3d*",
+      "resourceTypes": ["main_frame", "script"]
+    }
+  },
+  {
     "id": 2,
     "priority": 1,
     "action": {
@@ -101,6 +124,26 @@
     },
     "condition": {
       "urlFilter": "*://*.desmos.com:*/*/calculator_geometry-*.js|"
+    }
+  },
+  {
+    "id": 9,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "*://*.desmos.com/*/calculator_3d-*.js|"
+    }
+  },
+  {
+    "id": 10,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "*://*.desmos.com:*/*/calculator_3d-*.js|"
     }
   }
 ]

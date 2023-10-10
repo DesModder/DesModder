@@ -32,7 +32,7 @@ const rules = {
       // prettier-ignore
       keyword: [
         "table", "image", "settings", "folder", "ticker",
-        "for", "integral", "sum", "product", "of", "with"
+        "for", "integral", "sum", "product", "of", "with", "cross"
       ],
     }),
   },
@@ -154,11 +154,12 @@ class ParseState extends DiagnosticsState {
     }
   }
 
-  consumeType(expected: TokenType) {
+  consumeType(expected: TokenType | TokenType[]) {
+    if (!Array.isArray(expected)) expected = [expected];
     while (true) {
       const c = this._consume();
       this.assertNotEOF(c);
-      if (expected === c.type) return c;
+      if (expected.includes(c.type)) return c;
       this.pushError(
         `Expected ${expected} but got '${c.value}'. Skipping it.`,
         pos(c)
@@ -679,12 +680,13 @@ function repeatedOperatorParselet(
 }
 
 const consequentParselets: Record<
-  Punct | "with",
+  Punct | "cross" | "with",
   ConsequentParselet | undefined
 > = {
   "+": binaryParselet(Power.add, "+"),
   "-": binaryParselet(Power.add, "-"),
   "*": binaryParselet(Power.mul, "*"),
+  cross: binaryParselet(Power.mul, "cross"),
   "/": binaryParselet(Power.mul, "/"),
   // Subtract 1 from the binding power to make it right-associative
   "^": binaryParselet(minus1(Power.pow), "^"),
@@ -1003,7 +1005,7 @@ function parseStyleMapping(ps: ParseState, token: Token): TextAST.StyleMapping {
         pos: pos(token, close),
       };
     }
-    const key = ps.consumeType("id");
+    const key = ps.consumeType(["id", "keyword"]);
     ps.consume(":");
     const expr = parseMain(ps, Power.seq);
     if (!isExpression(expr) && expr.type !== "StyleMapping")
@@ -1161,7 +1163,7 @@ function consequentParselet(
 
 function binaryParselet(bp: BindingPower, op: TextAST.BinaryExpression["op"]) {
   return consequentParselet(bp, (ps, left, token): Node => {
-    const ex = `2 ${op} x`;
+    const ex = op === "cross" ? `v ${op} u` : `2 ${op} x`;
     assertLeftIsExpression(ps, left, token, ex);
     const right = parseExpr(ps, bp, `right side of ${op}`, ex);
     return {

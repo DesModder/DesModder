@@ -164,6 +164,12 @@ describe("Operator Precedence round-trip", () => {
     "x*y!",
     "x^{2}*y^{2}",
     "4*\\frac{2}{3}",
+    // CrossMultiply involvement
+    "(x*y)\\times z",
+    "x*(y\\times z)",
+    "x\\times (y*z)",
+    "(x\\times y)*z",
+    "\\frac{x\\times y}{3}",
     // parent = Divide
     "\\frac{a\\o{with}a=3}{b\\o{with}b=2}+4",
     "\\frac{\\frac{1}{2}}{\\frac{3}{4}}",

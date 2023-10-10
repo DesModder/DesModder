@@ -82,7 +82,7 @@ show-tips-tip-disable-show-tips = ¿Cansado de verme? Deshabilita "Mostrar Conse
 show-tips-tip-compact-view-multiline = ¿Harto de navegar largas listas de expresiones? Prueba la Vista Compacta y/o Expresiones Multilínea para ver más contenido
 show-tips-tip-intellisense = ¿Los nombres de tus variables son muy largos? Habilita Intellisense para lidiar con estos más fácilmente
 show-tips-tip-youre-doing-great = ¡Vamos! Tu puedes :)
-show-tips-tip-youre-superb = Eres increible <3
+show-tips-tip-youre-superb = Eres increíble <3
 show-tips-tip-huggy = ¡Un abrazo de oso!
 
 ## Text Mode
@@ -286,10 +286,16 @@ multiline-name = Expresiones Multilínea
 multiline-desc = Divide expresiones largas en múltiples líneas. Puedes activar esta función manualmente presionando Ctrl+M.
 multiline-opt-widthBeforeMultiline-name = Límite de ancho (%)
 multiline-opt-widthBeforeMultiline-desc = Este es un porcentaje de la pantalla al cual el largo de la expresión provoca ajuste de líneas. En móvil este valor es triplicado.
-multiline-opt-automaticallyMultilinify-name = Ajuste de línea automático
-multiline-opt-automaticallyMultilinify-desc = Automáticamente divide las expresiones en múltiples líneas.
+multiline-opt-automaticallyMultilinify-name = Ajuste de línea al teclear
+multiline-opt-automaticallyMultilinify-desc = Automáticamente divide las expresiones en múltiples líneas mientras escribes sin la necesidad the teclear Ctrl+M.
 multiline-opt-multilinifyDelayAfterEdit-name = Retraso de ajuste (ms)
 multiline-opt-multilinifyDelayAfterEdit-desc = Retrasa el ajuste de líneas en la expresión que estás editando por el número de milisegundos especificado.
+multiline-opt-spacesToNewlines-name = Espacios a Líneas Nuevas
+multiline-opt-spacesToNewlines-desc = Convierte grupos de 3 espacios a líneas nuevas. Puedes usar Shift+Entrar para el mismo efecto.
+multiline-opt-determineLineBreaksAutomatically-name = Ajuste de línea automático 
+multiline-opt-determineLineBreaksAutomatically-desc = Determina automáticamente en dónde utilizar ajuste de línea. Alternatívamente puedes utilizar Ctrl+M para insertar líneas nuevas.
+multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-name = Ignorar expresiones con tres espacios
+multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-desc = Previene el ajuste de línea en expresiones donde líneas nuevas han sido insertadas manualmente.
 
 ## Custom MathQuill Config
 custom-mathquill-config-name = Configuración de MathQuill
@@ -337,7 +343,7 @@ syntax-highlighting-opt-bracketPairColorization-desc = Aplica diferentes colores
 syntax-highlighting-opt-bracketPairColorizationColors-name = Colores de Pares
 syntax-highlighting-opt-bracketPairColorizationColors-desc = Especifica el número y el orden de los colores utilizados para colorear los paréntesis.
 syntax-highlighting-opt-bpcColorInText-name = Colorear Texto Encerrado
-syntax-highlighting-opt-bpcColorInText-desc = Aplica el mismo color de cada paréntesis al texto que este encierra.
+syntax-highlighting-opt-bpcColorInText-desc = Aplica el mismo color de cada paréntesis al texto que estos encierran.
 syntax-highlighting-opt-thickenBrackets-name = Ensanchar Paréntesis
 syntax-highlighting-opt-thickenBrackets-desc = Adherir ancho adicional a los paréntesis para asistir el coloreado de éstos.
 syntax-highlighting-opt-highlightBracketBlocks-name = Resaltar Bloques
@@ -346,3 +352,11 @@ syntax-highlighting-opt-highlightBracketBlocksHover-name = Resaltar con el Rató
 syntax-highlighting-opt-highlightBracketBlocksHover-desc = Resalta el grupo de paréntesis más pequeño que contiene el cursor del ratón. 
 syntax-highlighting-opt-underlineHighlightedRanges-name = Subrayar Grupos Resaltados
 syntax-highlighting-opt-underlineHighlightedRanges-desc = Agrega subrayado debajo de los grupos resaltados para mejorar visibilidad.
+
+## Better Navigation
+better-navigation-name = Navegación Mejorada
+better-navigation-desc = Te provee herramientas para facilitar la navegación en Desmos.
+better-navigation-opt-ctrlArrow-name = Atajo Ctrl+Flecha.
+better-navigation-opt-ctrlArrow-desc = Te permite utilizar Ctrl+Flecha y Ctrl+Shift+Flecha para avanzar bloques de texto más rápidamente. De manera similar puedes usar Ctrl+Retroceso para borrar bloques.
+better-navigation-opt-scrollableExpressions-name = Expresiones Desplazables
+better-navigation-opt-scrollableExpressions-desc = Añade una barra de desplazamiento horizontal. Mayormente destinado para facilitar la navegación en móvil.

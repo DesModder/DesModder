@@ -1,5 +1,14 @@
 # DesModder Changelog
 
+## 0.12.0
+
+New: support [https://desmos.com/3d](https://desmos.com/3d)!
+
+New Features:
+
+- Better Navigation plugin: use Ctrl+Arrow to jump along expression, and scroll expressions horizontally.
+- Multiline: support manual newline insertion.
+
 ## 0.11.11
 
 New Features:

@@ -40,20 +40,23 @@ export async function captureFrame(vc: VideoCreator) {
       mathBounds,
       Math.min(ratio, 1 / ratio)
     );
-    vc.calc.asyncScreenshot(
-      {
-        width: width / targetPixelRatio,
-        targetPixelRatio,
-        height: height / targetPixelRatio,
-        showLabels: true,
-        preserveAxisNumbers: true,
-        mathBounds: clampedMathBounds,
-      },
-      (data) => {
-        clearInterval(interval);
-        resolve(data);
-      }
-    );
+    const opts = {
+      width: width / targetPixelRatio,
+      targetPixelRatio,
+      height: height / targetPixelRatio,
+      showLabels: true,
+      preserveAxisNumbers: true,
+      mathBounds: clampedMathBounds,
+    };
+    if (vc.cc.is3dProduct()) {
+      // Suppress warnings here: 3d doesn't support showLabels and mathBounds.
+      delete (opts as any).showLabels;
+      delete (opts as any).mathBounds;
+    }
+    vc.calc.asyncScreenshot(opts, (data) => {
+      clearInterval(interval);
+      resolve(data);
+    });
   });
 }
 

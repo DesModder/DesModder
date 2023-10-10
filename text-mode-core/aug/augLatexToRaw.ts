@@ -178,6 +178,8 @@ function childNodeToStringNoParen(
           return binopLeft + "-" + binopRight;
         case "Multiply":
           return binopLeft + "\\cdot " + binopRight;
+        case "CrossMultiply":
+          return binopLeft + "\\times " + binopRight;
         case "Divide":
           return `\\frac{${binopLeft}}{${binopRight}}`;
         case "Exponent":

@@ -177,6 +177,8 @@ export interface Toast {
   hideAfter?: number;
 }
 
+type Product = "graphing" | "geometry-calculator" | "graphing-3d";
+
 interface CalcPrivate {
   focusedMathQuill:
     | {
@@ -199,7 +201,8 @@ interface CalcPrivate {
     isGraphSettingsOpen: () => boolean;
     graphSettings: {
       config: {
-        product: string;
+        // only includes products desmodder is enabled for
+        product: Product;
       };
     };
     dispatch: (e: DispatchedEvent) => void;
@@ -272,6 +275,7 @@ interface CalcPrivate {
       autoOperatorNames: string;
       autoCommands: string;
     };
+    is3dProduct: () => boolean;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;

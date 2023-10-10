@@ -231,7 +231,13 @@ export interface RepeatedOperator {
 
 export interface BinaryOperator {
   type: "BinaryOperator";
-  name: "Add" | "Subtract" | "Multiply" | "Divide" | "Exponent";
+  name:
+    | "Add"
+    | "Subtract"
+    | "Multiply"
+    | "CrossMultiply"
+    | "Divide"
+    | "Exponent";
   left: AnyChild;
   right: AnyChild;
 }
