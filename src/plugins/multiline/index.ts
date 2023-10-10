@@ -163,7 +163,7 @@ export default class Multiline extends PluginController<Config> {
           maxPriority: 1,
           spacesToNewlines: this.settings.spacesToNewlines,
           determineLineBreaksAutomatically:
-            this.settings.automaticallyMultilinify &&
+            this.settings.determineLineBreaksAutomatically &&
             (this.settings.disableAutomaticLineBreaksForHandAlignedExpressions
               ? !(mathfield?.latex?.() ?? "").includes("\\ \\ \\ ")
               : true),
