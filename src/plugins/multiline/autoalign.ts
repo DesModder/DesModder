@@ -43,7 +43,7 @@ function getNextNonLineBreakElement(child: HTMLElement) {
   return next;
 }
 
-// Align a matrix. Don't check for elements
+// Align a grid. Don't check for elements
 function alignGridNoCheck(container: HTMLElement) {
   const maxWidths: number[] = [];
 
@@ -92,7 +92,6 @@ function alignGridNoCheck(container: HTMLElement) {
       const nextNonLineBreak = getNextNonLineBreakElement(child);
       if (nextNonLineBreak) {
         currentRange.setStartBefore(nextNonLineBreak);
-        // console.log("nnlb", nextNonLineBreak);
         rangeStart = nextNonLineBreak;
       }
     }
