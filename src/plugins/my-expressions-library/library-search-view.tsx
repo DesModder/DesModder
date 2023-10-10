@@ -6,7 +6,7 @@ import MyExpressionsLibrary, {
 } from ".";
 import "./library-search.less";
 import { Component, jsx, mountToNode } from "#DCGView";
-import { For, If, IfElse, StaticMathQuillView, Switch } from "#components";
+import { For, If, StaticMathQuillView, Switch } from "#components";
 import { format } from "#i18n";
 import { ExpressionState } from "@desmodder/graph-state";
 
@@ -63,6 +63,7 @@ class LibrarySearchElement extends Component<{
                   <i class="dcg-icon-cartesian"></i>
                   {expr.title}
                   <button
+                    class="dsm-my-expr-lib-load-btn"
                     onClick={(e: MouseEvent) => {
                       void this.props.plugin().loadEntireGraph(expr);
                       e.stopPropagation();
@@ -128,6 +129,7 @@ class LibrarySearchElement extends Component<{
                   <i class="dcg-icon-new-folder"></i>
                   {expr.text}
                   <button
+                    class="dsm-my-expr-lib-load-btn"
                     onClick={(e: MouseEvent) => {
                       void this.props.plugin().loadFolder(expr);
                       e.stopPropagation();
@@ -236,25 +238,64 @@ export class LibrarySearchView extends Component<{
                         value={() => this.props.plugin().searchStr}
                       ></input>
                     </div>
-                    <For
-                      each={() => {
-                        return this.props.plugin().graphs?.graphs ?? [];
-                      }}
-                      key={(g) => g.uniqueID}
-                    >
-                      <ul>
-                        {(g: ExpressionLibraryGraph) => {
+                    <Switch key={() => this.props.plugin().searchStr}>
+                      {() => {
+                        if (this.props.plugin().searchStr === "") {
                           return (
-                            <LibrarySearchElement
-                              graph={() => g}
-                              expr={() => g}
-                              plugin={this.props.plugin}
-                              observer={() => observer}
-                            ></LibrarySearchElement>
+                            <For
+                              each={() => {
+                                return this.props.plugin().graphs?.graphs ?? [];
+                              }}
+                              key={(g) => g.uniqueID}
+                            >
+                              <ul>
+                                {(g: ExpressionLibraryGraph) => {
+                                  return (
+                                    <LibrarySearchElement
+                                      graph={() => g}
+                                      expr={() => g}
+                                      plugin={this.props.plugin}
+                                      observer={() => observer}
+                                    ></LibrarySearchElement>
+                                  );
+                                }}
+                              </ul>
+                            </For>
                           );
-                        }}
-                      </ul>
-                    </For>
+                        }
+                        return (
+                          <For
+                            each={() => {
+                              return this.props
+                                .plugin()
+                                .getLibraryExpressions()
+                                .filter((e) => e.type === "expression")
+                                .filter((e) => {
+                                  const expr =
+                                    e as ExpressionLibraryMathExpression;
+                                  return expr.textMode.includes(
+                                    this.props.plugin().searchStr
+                                  );
+                                });
+                            }}
+                            key={(e) => e.uniqueID}
+                          >
+                            <ul>
+                              {(e: ExpressionLibraryMathExpression) => {
+                                return (
+                                  <LibrarySearchElement
+                                    graph={() => e.graph}
+                                    expr={() => e}
+                                    plugin={this.props.plugin}
+                                    observer={() => observer}
+                                  ></LibrarySearchElement>
+                                );
+                              }}
+                            </ul>
+                          </For>
+                        );
+                      }}
+                    </Switch>
                   </div>
                 );
               } else {

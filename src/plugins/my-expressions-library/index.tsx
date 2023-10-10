@@ -1,5 +1,5 @@
 import Aug from "text-mode-core/aug/AugState";
-import { rawNonFolderToAug } from "text-mode-core/aug/rawToAug";
+import { parseRootLatex, rawNonFolderToAug } from "text-mode-core/aug/rawToAug";
 import { textModeExprToLatex } from "text-mode-core/down/textToRaw";
 import { getGraphState } from "./library-search-utils";
 import { LibrarySearchView } from "./library-search-view";
@@ -10,13 +10,15 @@ import { PluginController } from "../PluginController";
 import { mapAugAST } from "../intellisense/latex-parsing";
 import { IntellisenseState } from "../intellisense/state";
 import { getMetadata } from "../manage-metadata/sync";
-import { buildConfigFromGlobals } from "text-mode-core";
+import { astToText, buildConfigFromGlobals } from "text-mode-core";
 import { format } from "localization/i18n-core";
+import { rootLatexToAST } from "text-mode-core/up/augToAST";
 
 export interface ExpressionLibraryMathExpression {
   type: "expression";
   aug: Aug.ItemAug;
   latex: string;
+  textMode: string;
   // so importing wackscopes works
   dependsOn: Set<string>;
   uniqueID: number;
@@ -526,11 +528,29 @@ export default class MyExpressionsLibrary extends PluginController<{
                 });
               });
 
+              let textMode = "";
+
+              try {
+                textMode = astToText(
+                  rootLatexToAST(
+                    parseRootLatex(
+                      buildConfigFromGlobals(Desmos, this.calc),
+                      e.latex ?? ""
+                    )
+                  ),
+                  {
+                    noOptionalSpaces: true,
+                    noNewlines: true,
+                  }
+                );
+              } catch {}
+
               return [
                 e.id,
                 {
                   aug,
                   latex: e.latex,
+                  textMode,
                   dependsOn,
                   uniqueID: uniqueID++,
                   graph: newGraph,
