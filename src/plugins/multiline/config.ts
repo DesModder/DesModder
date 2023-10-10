@@ -4,7 +4,7 @@ export const configList = [
   {
     type: "boolean",
     default: true,
-    key: "determineLineBreaksAutomatically",
+    key: "autoInsertLinebreaks",
   },
   {
     indentationLevel: 1,
@@ -15,7 +15,7 @@ export const configList = [
     step: 1,
     key: "widthBeforeMultiline",
     shouldShow(current) {
-      return current.determineLineBreaksAutomatically;
+      return current.autoInsertLinebreaks;
     },
   },
   {
@@ -24,7 +24,7 @@ export const configList = [
     default: true,
     key: "disableAutomaticLineBreaksForHandAlignedExpressions",
     shouldShow(current) {
-      return current.determineLineBreaksAutomatically;
+      return current.autoInsertLinebreaks;
     },
   },
   {
@@ -36,7 +36,7 @@ export const configList = [
     indentationLevel: 1,
     type: "boolean",
     default: true,
-    key: "autoAlignMatrices",
+    key: "autoAlignGrids",
     shouldShow(current) {
       return current.spacesToNewlines;
     },
@@ -50,19 +50,17 @@ export const configList = [
     step: 1,
     key: "maxAutoAlignExpressionSize",
     shouldShow(current) {
-      return current.spacesToNewlines && current.autoAlignMatrices;
+      return current.spacesToNewlines && current.autoAlignGrids;
     },
   },
   {
     indentationLevel: 0,
     type: "boolean",
     default: true,
-    key: "automaticallyMultilinify",
+    key: "alterLayoutWhileTyping",
 
     shouldShow(current) {
-      return (
-        current.determineLineBreaksAutomatically || current.autoAlignMatrices
-      );
+      return current.autoInsertLinebreaks || current.autoAlignGrids;
     },
   },
   {
@@ -75,8 +73,8 @@ export const configList = [
     key: "multilinifyDelayAfterEdit",
     shouldShow(current) {
       return (
-        current.automaticallyMultilinify &&
-        (current.determineLineBreaksAutomatically || current.autoAlignMatrices)
+        current.alterLayoutWhileTyping &&
+        (current.autoInsertLinebreaks || current.autoAlignGrids)
       );
     },
   },
@@ -84,11 +82,11 @@ export const configList = [
 
 export interface Config {
   widthBeforeMultiline: number;
-  automaticallyMultilinify: boolean;
-  determineLineBreaksAutomatically: boolean;
+  alterLayoutWhileTyping: boolean;
+  autoInsertLinebreaks: boolean;
   multilinifyDelayAfterEdit: number;
   spacesToNewlines: boolean;
   disableAutomaticLineBreaksForHandAlignedExpressions: boolean;
-  autoAlignMatrices: boolean;
+  autoAlignGrids: boolean;
   maxAutoAlignExpressionSize: number;
 }

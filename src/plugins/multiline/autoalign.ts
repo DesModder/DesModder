@@ -2,7 +2,7 @@ function isComma(elem: HTMLElement) {
   return elem.tagName.toUpperCase() === "SPAN" && elem.innerText === ",";
 }
 
-export function isMatrix(container: HTMLElement) {
+export function isGrid(container: HTMLElement) {
   const children = container.children;
 
   let firstLine = true;
@@ -44,7 +44,7 @@ function getNextNonLineBreakElement(child: HTMLElement) {
 }
 
 // Align a matrix. Don't check for elements
-function alignMatrixNoCheck(container: HTMLElement) {
+function alignGridNoCheck(container: HTMLElement) {
   const maxWidths: number[] = [];
 
   const children = container.children;
@@ -111,7 +111,7 @@ function alignMatrixNoCheck(container: HTMLElement) {
   }
 }
 
-export function alignMatrix(container: HTMLElement) {
-  alignMatrixNoCheck(container);
+export function alignGrid(container: HTMLElement) {
+  alignGridNoCheck(container);
   container.dataset.isCenterAligned = "true";
 }

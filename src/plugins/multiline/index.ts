@@ -162,13 +162,13 @@ export default class Multiline extends PluginController<Config> {
           minPriority: 0,
           maxPriority: 1,
           spacesToNewlines: this.settings.spacesToNewlines,
-          determineLineBreaksAutomatically:
-            this.settings.determineLineBreaksAutomatically &&
+          autoInsertLinebreaks:
+            this.settings.autoInsertLinebreaks &&
             (this.settings.disableAutomaticLineBreaksForHandAlignedExpressions
               ? !(mathfield?.latex?.() ?? "").includes("\\ \\ \\ ")
               : true),
-          autoAlignMatrices:
-            this.settings.spacesToNewlines && this.settings.autoAlignMatrices,
+          autoAlignGrids:
+            this.settings.spacesToNewlines && this.settings.autoAlignGrids,
           maxAutoAlignExpressionSize: this.settings.maxAutoAlignExpressionSize,
         }
       );
@@ -308,7 +308,7 @@ export default class Multiline extends PluginController<Config> {
       if (
         Date.now() - this.lastEditTime <
           this.settings.multilinifyDelayAfterEdit ||
-        !this.settings.automaticallyMultilinify
+        !this.settings.alterLayoutWhileTyping
       )
         return;
 

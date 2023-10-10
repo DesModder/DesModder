@@ -1,5 +1,5 @@
 import { Console } from "#globals";
-import { alignMatrix, isMatrix } from "./autoalign";
+import { alignGrid, isGrid } from "./autoalign";
 
 export interface VerticalifyContext {
   containerType:
@@ -102,9 +102,9 @@ interface VerticalifyOptions {
   spacesToNewlines: boolean;
 
   // whether to automatically find places to line break
-  determineLineBreaksAutomatically: boolean;
+  autoInsertLinebreaks: boolean;
 
-  autoAlignMatrices: boolean;
+  autoAlignGrids: boolean;
 
   maxAutoAlignExpressionSize: number;
 }
@@ -247,7 +247,7 @@ export function verticalify(
   }
 
   // add line breaks
-  if (options.determineLineBreaksAutomatically) {
+  if (options.autoInsertLinebreaks) {
     for (const child of children) {
       const width = child.getBoundingClientRect().width;
 
@@ -310,7 +310,7 @@ export function verticalify(
 
     // verticalify child
     if (
-      (options.determineLineBreaksAutomatically && width > options.skipWidth) ||
+      (options.autoInsertLinebreaks && width > options.skipWidth) ||
       options.spacesToNewlines
     ) {
       verticalify(
@@ -362,12 +362,12 @@ export function verticalify(
   });
 
   context.domManipHandlers.push(() => {
-    if (options.autoAlignMatrices && elem instanceof HTMLElement) {
+    if (options.autoAlignGrids && elem instanceof HTMLElement) {
       if (elem.children.length < options.maxAutoAlignExpressionSize) {
-        const matrixInfo = isMatrix(elem);
+        const matrixInfo = isGrid(elem);
 
         if (matrixInfo) {
-          alignMatrix(elem);
+          alignGrid(elem);
         }
       } else {
         if (elem.dataset.isCenterAligned) {
