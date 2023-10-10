@@ -28,12 +28,7 @@ export default function astToAug(
   const state: Aug.State = {
     version: 9,
     settings: {
-      viewport: {
-        xmin: -10,
-        xmax: 10,
-        ymin: -10,
-        ymax: 10,
-      },
+      viewport: {},
     },
     expressions: {
       list: [],
@@ -326,11 +321,24 @@ function settingsToAug(
     "settings"
   );
   if (hydrated === null) return null;
-  const res: GrapherState = {
+  const res = {
     ...hydrated,
     userLockedViewport: hydrated.lockViewport,
-  };
-  delete (res as any).lockViewport;
+    // TODO-graph-state: allow xmin, ymin, etc to be undefined in the state.
+    // TODO-graph-state: allow product to be defined in the state
+  } as any;
+  delete res.lockViewport;
+  if (res.product !== "graphing-3d") {
+    res.viewport = { ...res.viewport };
+    delete res.viewport?.zmin;
+    delete res.viewport?.zmax;
+    delete res.axis3D;
+    delete res.speed3D;
+    delete res.worldRotation3D;
+  }
+  if (res.product === "graphing") {
+    delete res.product;
+  }
   return { type: "settings", settings: res };
 }
 
@@ -767,6 +775,7 @@ const binopMap: Record<string, string> = {
   "+": "Add",
   "-": "Subtract",
   "*": "Multiply",
+  cross: "CrossMultiply",
   "/": "Divide",
   "^": "Exponent",
 };

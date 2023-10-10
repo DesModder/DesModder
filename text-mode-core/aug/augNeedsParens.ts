@@ -94,6 +94,14 @@ function binopNeedsParens(
 ) {
   const parentPower =
     path === "left" ? binopLeftPower(parentName) : binopRightPower(parentName);
+  if (node.type === "BinaryOperator") {
+    if (
+      (node.name === "CrossMultiply" && parentName === "Multiply") ||
+      // For clarity, always parenthesize multiplication in cross product or vice versa etc.
+      (node.name === "Multiply" && parentName === "CrossMultiply")
+    )
+      return true;
+  }
   return power(node) <= parentPower;
 }
 
@@ -119,6 +127,7 @@ function binopPower(name: BinopName): number {
     case "Exponent":
       return POWERS.power;
     case "Multiply":
+    case "CrossMultiply":
       return POWERS.multiply;
     case "Divide":
       return POWERS.atom;

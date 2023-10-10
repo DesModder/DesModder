@@ -11,6 +11,7 @@
 export interface Schema {
   [key: string]:
     | "number"
+    | { type: "number[]"; length: number }
     | "boolean"
     | "string"
     | "expr"
@@ -25,12 +26,15 @@ export interface Schema {
 }
 
 export const settings: Schema = {
+  product: enumL(["graphing", "geometry-calculator", "graphing-3d"]),
   viewport: schemaL(
     {
       xmin: "number",
       ymin: "number",
+      zmin: "number",
       xmax: "number",
       ymax: "number",
+      zmax: "number",
     },
     { fillDefaults: true }
   ),
@@ -55,6 +59,12 @@ export const settings: Schema = {
   restrictGridToFirstQuadrant: "boolean",
   polarMode: "boolean",
   lockViewport: "boolean",
+  axis3D: {
+    type: "number[]",
+    length: 3,
+  },
+  speed3D: "number",
+  worldRotation3D: { type: "number[]", length: 9 },
 };
 
 export const ticker: Schema = {

@@ -1,7 +1,7 @@
 import TextAST from "../../TextAST";
 import Aug from "../../aug/AugState";
 import { DownState, childExprToAug } from "../astToAug";
-import { evalExpr } from "../staticEval";
+import { ComptimeValue, evalExpr } from "../staticEval";
 import { Schema } from "./schema";
 
 export interface StyleValue {
@@ -31,7 +31,7 @@ export function hydrate<T>(
   // now we know style's keys are a subset of schema's keys
   // ensure `res` gets an entry for each of schema's keys
   const res: {
-    [Key in keyof T]?: Aug.Latex.AnyChild | number | string | boolean;
+    [Key in keyof T]?: Aug.Latex.AnyChild | ComptimeValue;
   } = {};
   let hasNull = false;
   for (const _key in schema) {
@@ -103,17 +103,32 @@ export function hydrate<T>(
         if (evaluated === null) {
           hasNull = true;
         } else if (typeof schemaType !== "string") {
-          // enum type
-          if (typeof evaluated !== "string")
-            pushError(
-              `Expected ${errPath} to evaluate to string, but got ${typeof evaluated}`
-            );
-          else if (!schemaType.enum.includes(evaluated))
-            pushError(
-              `Expected ${errPath} to be one of ` +
-                `${JSON.stringify(schemaType.enum)}, but got ` +
-                `${JSON.stringify(evaluated)} instead`
-            );
+          switch (schemaType.type) {
+            case "number[]":
+              if (
+                !Array.isArray(evaluated) ||
+                evaluated.some((e) => typeof e !== "number") ||
+                evaluated.length !== schemaType.length
+              ) {
+                const j = JSON.stringify(evaluated);
+                pushError(
+                  `Expected ${errPath} to evaluate to a list of ${schemaType.length} numbers, but got '${j}'`
+                );
+              }
+              break;
+            case "enum":
+              if (typeof evaluated !== "string")
+                pushError(
+                  `Expected ${errPath} to evaluate to a string, but got ${typeof evaluated}`
+                );
+              else if (!schemaType.enum.includes(evaluated))
+                pushError(
+                  `Expected ${errPath} to be one of ` +
+                    `${JSON.stringify(schemaType.enum)}, but got ` +
+                    `${JSON.stringify(evaluated)} instead`
+                );
+              break;
+          }
         } else {
           // eslint-disable-next-line valid-typeof
           if (typeof evaluated !== schemaType)

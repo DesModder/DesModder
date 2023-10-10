@@ -129,8 +129,10 @@ export default function needsParens(path: NodePath): boolean {
             if (
               name === "right" ||
               parent.op === "^" ||
-              (parent.op === "*" && node.op === "/") ||
-              (parent.op === "/" && node.op === "*") ||
+              (getPrecedence(parent.op) === getPrecedence("*") &&
+                // For clarity, always parenthesize multiplication in division or cross product or vice versa etc.
+                getPrecedence(node.op) === getPrecedence("*") &&
+                parent.op !== node.op) ||
               (comparisonOps.includes(parent.op) &&
                 comparisonOps.includes(node.op))
             )
@@ -193,7 +195,13 @@ const comparisonOps = ["<", ">", "<=", ">=", "="];
 
 const PRECEDENCE = new Map(
   (
-    [["<", ">", "<=", ">=", "="], ["~"], ["+", "-"], ["*", "/"], ["^"]] as const
+    [
+      ["<", ">", "<=", ">=", "="],
+      ["~"],
+      ["+", "-"],
+      ["*", "cross", "/"],
+      ["^"],
+    ] as const
   ).flatMap((operators, index) => operators.map((op) => [op, index]))
 );
 

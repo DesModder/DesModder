@@ -22,12 +22,15 @@ export function graphSettingsToAST(
   return {
     type: "Settings",
     style: styleMapping({
+      product: stringToASTmaybe(settings.product),
       randomSeed: stringToASTmaybe(settings.randomSeed),
       viewport: styleMapping({
         xmin: numberToASTmaybe(settings.viewport.xmin),
         xmax: numberToASTmaybe(settings.viewport.xmax),
         ymin: numberToASTmaybe(settings.viewport.ymin),
         ymax: numberToASTmaybe(settings.viewport.ymax),
+        zmin: numberToASTmaybe(settings.viewport.zmin),
+        zmax: numberToASTmaybe(settings.viewport.zmax),
       }),
       xAxisMinorSubdivisions: numberToASTmaybe(settings.xAxisMinorSubdivisions),
       yAxisMinorSubdivisions: numberToASTmaybe(settings.yAxisMinorSubdivisions),
@@ -51,6 +54,9 @@ export function graphSettingsToAST(
       ),
       polarMode: booleanToAST(settings.polarMode, false),
       lockViewport: booleanToAST(settings.userLockedViewport, false),
+      axis3D: numberArrayToASTmaybe(settings.axis3D),
+      speed3D: numberToASTmaybe(settings.speed3D),
+      worldRotation3D: numberArrayToASTmaybe(settings.worldRotation3D),
     }),
   };
 }
@@ -352,6 +358,20 @@ function identifierToAST(name: { symbol: string }): TextAST.Identifier {
   };
 }
 
+function numberArrayToASTmaybe(
+  nums: number[] | undefined
+): TextAST.ListExpression | undefined {
+  return nums !== undefined
+    ? {
+        type: "ListExpression",
+        values: nums.map((num) => ({
+          type: "Number",
+          value: num,
+        })),
+      }
+    : undefined;
+}
+
 function numberToASTmaybe(
   num: number | undefined
 ): TextAST.NumberNode | undefined {
@@ -616,6 +636,7 @@ const binopMap = {
   Add: "+",
   Subtract: "-",
   Multiply: "*",
+  CrossMultiply: "cross",
   Divide: "/",
   Exponent: "^",
 } as const;

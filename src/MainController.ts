@@ -29,6 +29,7 @@ export default class DSM extends TransparentPlugins {
     super();
     // default values
     this.forceDisabled = window.DesModderPreload!.pluginsForceDisabled;
+    if (calc.controller.is3dProduct()) this.forceDisabled.add("GLesmos");
     this.pluginsEnabled = new Map(
       pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
     );
