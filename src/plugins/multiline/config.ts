@@ -42,6 +42,18 @@ export const configList = [
     },
   },
   {
+    indentationLevel: 2,
+    type: "number",
+    default: 3000,
+    min: 0,
+    max: Infinity,
+    step: 1,
+    key: "maxAutoAlignExpressionSize",
+    shouldShow(current) {
+      return current.spacesToNewlines && current.autoAlignMatrices;
+    },
+  },
+  {
     indentationLevel: 0,
     type: "boolean",
     default: true,
@@ -78,4 +90,5 @@ export interface Config {
   spacesToNewlines: boolean;
   disableAutomaticLineBreaksForHandAlignedExpressions: boolean;
   autoAlignMatrices: boolean;
+  maxAutoAlignExpressionSize: number;
 }

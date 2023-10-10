@@ -169,6 +169,7 @@ export default class Multiline extends PluginController<Config> {
               : true),
           autoAlignMatrices:
             this.settings.spacesToNewlines && this.settings.autoAlignMatrices,
+          maxAutoAlignExpressionSize: this.settings.maxAutoAlignExpressionSize,
         }
       );
 

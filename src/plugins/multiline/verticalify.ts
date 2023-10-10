@@ -105,6 +105,8 @@ interface VerticalifyOptions {
   determineLineBreaksAutomatically: boolean;
 
   autoAlignMatrices: boolean;
+
+  maxAutoAlignExpressionSize: number;
 }
 
 export function unverticalify(elem: Element, force?: boolean) {
@@ -361,10 +363,20 @@ export function verticalify(
 
   context.domManipHandlers.push(() => {
     if (options.autoAlignMatrices && elem instanceof HTMLElement) {
-      const matrixInfo = isMatrix(elem);
+      if (elem.children.length < options.maxAutoAlignExpressionSize) {
+        const matrixInfo = isMatrix(elem);
 
-      if (matrixInfo) {
-        alignMatrix(elem);
+        if (matrixInfo) {
+          alignMatrix(elem);
+        }
+      } else {
+        if (elem.dataset.isCenterAligned) {
+          for (const child of elem.children) {
+            if (!(child instanceof HTMLElement)) continue;
+            child.style.marginRight = "";
+            child.style.marginLeft = "";
+          }
+        }
       }
     }
   });

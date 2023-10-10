@@ -287,6 +287,9 @@ multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-name = Skip ex
 multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-desc = Don't automatically insert extra line breaks in expressions that have any manually-added line breaks (triple spaces). 
 multiline-opt-autoAlignMatrices-name = Auto-Align Grids
 multiline-opt-autoAlignMatrices-desc = Automatically center-align the elements in any multi-line list of comma-separated values, similar to how one would align a table or a matrix. Use Ctrl+M or "Alter Layout by Typing" to trigger this.
+multiline-opt-maxAutoAlignExpressionSize-name = Auto-Align Max Expr Size
+multiline-opt-maxAutoAlignExpressionSize-desc = To prevent lag, don't auto-align sub-expressions containing this many children or more.
+
 
 ## Custom MathQuill Config
 custom-mathquill-config-name = Custom MathQuill Config

@@ -113,4 +113,5 @@ function alignMatrixNoCheck(container: HTMLElement) {
 
 export function alignMatrix(container: HTMLElement) {
   alignMatrixNoCheck(container);
+  container.dataset.isCenterAligned = "true";
 }
