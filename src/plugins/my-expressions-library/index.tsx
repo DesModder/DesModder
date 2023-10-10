@@ -177,7 +177,7 @@ export default class MyExpressionsLibrary extends PluginController<{
   libraryGraphLinks: string[]; // probably a temporary fix
 }> {
   static id = "my-expressions-library" as const;
-  static enabledByDefault = true;
+  static enabledByDefault = false;
   static config = [
     {
       type: "stringArray",
