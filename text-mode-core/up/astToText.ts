@@ -516,13 +516,19 @@ function exprToTextNoParen(
         ctx.softline,
         "}",
       ]);
-    case "BinaryExpression":
-      return group([
-        exprToText(ctx, path.withChild(e.left, "left")),
-        ctx.optionalSpace,
-        e.op,
-        indent([ctx.line, exprToText(ctx, path.withChild(e.right, "right"))]),
-      ]);
+    case "BinaryExpression": {
+      const left = exprToText(ctx, path.withChild(e.left, "left"));
+      const right = exprToText(ctx, path.withChild(e.right, "right"));
+      if (e.op === "cross") {
+        return group([
+          left,
+          endsWithWord(left) ? " " : ctx.optionalSpace,
+          e.op,
+          indent([startsWithWord(right) ? " " : ctx.optionalSpace, right]),
+        ]);
+      }
+      return group([left, ctx.optionalSpace, e.op, indent([ctx.line, right])]);
+    }
     case "DoubleInequality":
       return group([
         exprToText(ctx, path.withChild(e.left, "left")),

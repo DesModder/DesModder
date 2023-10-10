@@ -775,6 +775,7 @@ const binopMap: Record<string, string> = {
   "+": "Add",
   "-": "Subtract",
   "*": "Multiply",
+  cross: "CrossMultiply",
   "/": "Divide",
   "^": "Exponent",
 };

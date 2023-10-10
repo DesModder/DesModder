@@ -636,6 +636,7 @@ const binopMap = {
   Add: "+",
   Subtract: "-",
   Multiply: "*",
+  CrossMultiply: "cross",
   Divide: "/",
   Exponent: "^",
 } as const;

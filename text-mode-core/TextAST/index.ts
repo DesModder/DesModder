@@ -251,7 +251,7 @@ export type CompareOp = "<" | "<=" | ">=" | ">" | "=";
 
 export type BinaryExpression<C extends S = Concrete> = Positioned<C> & {
   type: "BinaryExpression";
-  op: "~" | "^" | "/" | "*" | "+" | "-" | CompareOp;
+  op: "~" | "^" | "/" | "*" | "cross" | "+" | "-" | CompareOp;
   left: Expression<C>;
   right: Expression<C>;
 };

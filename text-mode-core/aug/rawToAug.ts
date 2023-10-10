@@ -606,10 +606,7 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
     case "Exponent":
       return {
         type: "BinaryOperator",
-        name:
-          node.type === "DotMultiply" || node.type === "CrossMultiply"
-            ? "Multiply"
-            : node.type,
+        name: node.type === "DotMultiply" ? "Multiply" : node.type,
         left: childNodeToTree(node.args[0]),
         right: childNodeToTree(node.args[1]),
       };
