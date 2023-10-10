@@ -6,6 +6,7 @@ const PIN_BUTTON = ".dsm-pi-pin-menu-button";
 
 describe("Performance info", () => {
   testWithPage("Menu opens and closes", async (driver) => {
+    await driver.disablePlugin("my-expressions-library");
     await driver.enablePlugin("performance-info");
     await driver.click(BUTTON);
 

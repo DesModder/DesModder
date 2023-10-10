@@ -638,5 +638,7 @@ export default class MyExpressionsLibrary extends PluginController<{
     } catch {}
   }
 
-  afterDisable(): void {}
+  afterDisable(): void {
+    this.dsm.pillboxMenus?.removePillboxButton("dsm-library-menu");
+  }
 }
