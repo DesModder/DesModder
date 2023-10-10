@@ -275,18 +275,18 @@ multiline-name = Multiline Expressions
 multiline-desc = Splits expressions onto multiple lines to better make use of available space.
 multiline-opt-widthBeforeMultiline-name = Width Threshold (%)
 multiline-opt-widthBeforeMultiline-desc = Minimum width (as a percent of the viewport size) at which point wrapping will occur. On mobile, this value is tripled.
-multiline-opt-automaticallyMultilinify-name = Insert Linebreaks while Typing
-multiline-opt-automaticallyMultilinify-desc = Automatically splits expressions onto multiple lines while you type, bypassing the need to use Ctrl+M.
+multiline-opt-automaticallyMultilinify-name = Alter Layout while Typing
+multiline-opt-automaticallyMultilinify-desc = Split expressions onto multiple lines and (if applicable) auto-align grids in response to typing.
 multiline-opt-multilinifyDelayAfterEdit-name = Edit Delay (ms)
-multiline-opt-multilinifyDelayAfterEdit-desc = Multiline expressions should be updated after no edits are made for this number of milliseconds.
+multiline-opt-multilinifyDelayAfterEdit-desc = Multiline expressions and alignment should be updated after no edits are made for this number of milliseconds.
 multiline-opt-spacesToNewlines-name = Spaces to Newlines
 multiline-opt-spacesToNewlines-desc = Convert groups of 3 spaces into newlines. These can be automatically created with Shift+Enter.
 multiline-opt-determineLineBreaksAutomatically-name = Auto Insert Linebreaks 
-multiline-opt-determineLineBreaksAutomatically-desc = Automatically figure out where to put line breaks. Use Ctrl+M to trigger this.
+multiline-opt-determineLineBreaksAutomatically-desc = Automatically figure out where to put line breaks. Use Ctrl+M or "Alter Layout by Typing" to trigger this.
 multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-name = Skip expressions with triple spaces
 multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-desc = Don't automatically insert extra line breaks in expressions that have any manually-added line breaks (triple spaces). 
 multiline-opt-autoAlignMatrices-name = Auto-Align Grids
-multiline-opt-autoAlignMatrices-desc = Automatically center-align the elements in any multi-line list of comma-separated values, similar to how one would align a table or a matrix.
+multiline-opt-autoAlignMatrices-desc = Automatically center-align the elements in any multi-line list of comma-separated values, similar to how one would align a table or a matrix. Use Ctrl+M or "Alter Layout by Typing" to trigger this.
 
 ## Custom MathQuill Config
 custom-mathquill-config-name = Custom MathQuill Config
