@@ -363,10 +363,8 @@ export function verticalify(
     if (options.autoAlignMatrices && elem instanceof HTMLElement) {
       const matrixInfo = isMatrix(elem);
 
-      console.log("matrix info", matrixInfo);
-
       if (matrixInfo) {
-        alignMatrix(elem, matrixInfo);
+        alignMatrix(elem);
       }
     }
   });

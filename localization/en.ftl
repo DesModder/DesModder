@@ -285,8 +285,8 @@ multiline-opt-determineLineBreaksAutomatically-name = Auto Insert Linebreaks
 multiline-opt-determineLineBreaksAutomatically-desc = Automatically figure out where to put line breaks. Use Ctrl+M to trigger this.
 multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-name = Skip expressions with triple spaces
 multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-desc = Don't automatically insert extra line breaks in expressions that have any manually-added line breaks (triple spaces). 
-multiline-opt-autoAlignMatrices-name = Auto-Align "Matrices"
-multiline-opt-autoAlignMatrices-desc = Automatically align the elements in any list of comma-separated values (e.g. lists and function calls) where there are an equal number of commas per line.
+multiline-opt-autoAlignMatrices-name = Auto-Align Grids
+multiline-opt-autoAlignMatrices-desc = Automatically center-align the elements in any multi-line list of comma-separated values, similar to how one would align a table or a matrix.
 
 ## Custom MathQuill Config
 custom-mathquill-config-name = Custom MathQuill Config

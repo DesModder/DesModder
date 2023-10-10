@@ -13,7 +13,6 @@ import {
   hookIntoOverrideKeystroke,
   registerCustomDispatchOverridingHandler,
 } from "#utils/listenerHelpers.ts";
-import { alignMatrix } from "./autoalign";
 
 export const R = 1;
 export const L = -1;

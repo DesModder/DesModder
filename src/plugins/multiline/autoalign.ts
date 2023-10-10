@@ -18,30 +18,34 @@ export function isMatrix(container: HTMLElement) {
     }
 
     if (child.dataset.isAutoLineBreak) {
-      if (!firstLine && commasInThisLine !== commasPerLine) {
-        return;
-      }
       firstLine = false;
-      commasPerLine = commasInThisLine;
+      commasPerLine = Math.max(commasPerLine, commasInThisLine);
       commasInThisLine = 0;
     }
   }
 
-  if (firstLine) return;
+  if (firstLine || commasPerLine < 2) return;
 
-  return {
-    commasPerLine,
-  };
+  return true;
+}
+
+function getNextNonLineBreakElement(child: HTMLElement) {
+  let next: Element | null = child.nextElementSibling;
+
+  while (
+    !(next instanceof HTMLElement) ||
+    !!next.dataset.isLineBreak ||
+    !!next.dataset.isManualLineBreak
+  ) {
+    if (!next) return;
+    next = next.nextElementSibling;
+  }
+  return next;
 }
 
 // Align a matrix. Don't check for elements
-function alignMatrixNoCheck(
-  container: HTMLElement,
-  settings: {
-    commasPerLine: number;
-  }
-) {
-  const maxWidths = new Array(settings.commasPerLine).fill(0);
+function alignMatrixNoCheck(container: HTMLElement) {
+  const maxWidths: number[] = [];
 
   const children = container.children;
 
@@ -51,29 +55,46 @@ function alignMatrixNoCheck(
 
   currentRange.setStartBefore(children[0]);
 
+  let rangeStart = children[0] as HTMLElement;
+
   const commas: {
+    start: HTMLElement;
     elem: HTMLElement;
     width: number;
+    index: number;
   }[] = [];
 
   for (const child of children) {
     if (!(child instanceof HTMLElement)) continue;
 
     child.style.marginRight = "";
+    child.style.marginLeft = "";
   }
 
   for (const child of children) {
     if (!(child instanceof HTMLElement)) continue;
 
-    if (isComma(child)) {
+    if (isComma(child) || child === container.lastElementChild) {
       currentRange.setEndAfter(child);
       const thisRangeWidth = currentRange.getBoundingClientRect().width;
-      maxWidths[commaIndex] = Math.max(maxWidths[commaIndex], thisRangeWidth);
+      maxWidths[commaIndex] = Math.max(
+        maxWidths[commaIndex] ?? 0,
+        thisRangeWidth
+      );
+      commas.push({
+        elem: child,
+        width: thisRangeWidth,
+        start: rangeStart,
+        index: commaIndex,
+      });
       commaIndex++;
       currentRange = document.createRange();
-      if (child.nextElementSibling)
-        currentRange.setStartAfter(child.nextElementSibling);
-      commas.push({ elem: child, width: thisRangeWidth });
+      const nextNonLineBreak = getNextNonLineBreakElement(child);
+      if (nextNonLineBreak) {
+        currentRange.setStartBefore(nextNonLineBreak);
+        // console.log("nnlb", nextNonLineBreak);
+        rangeStart = nextNonLineBreak;
+      }
     }
 
     if (child.dataset.isAutoLineBreak) {
@@ -84,17 +105,12 @@ function alignMatrixNoCheck(
   commaIndex = 0;
 
   for (const comma of commas) {
-    const padding = maxWidths[commaIndex] - comma.width;
-    comma.elem.style.marginRight = `${padding}px`;
-    commaIndex = (commaIndex + 1) % settings.commasPerLine;
+    const padding = maxWidths[comma.index] - comma.width + 5;
+    comma.elem.style.marginRight = `${padding / 2}px`;
+    comma.start.style.marginLeft = `${padding / 2}px`;
   }
 }
 
-export function alignMatrix(
-  container: HTMLElement,
-  settings: {
-    commasPerLine: number;
-  }
-) {
-  alignMatrixNoCheck(container, settings);
+export function alignMatrix(container: HTMLElement) {
+  alignMatrixNoCheck(container);
 }
