@@ -3,7 +3,8 @@ import { GraphState } from "@desmodder/graph-state";
 export async function getGraphState(
   link: string
 ): Promise<
-  { state: GraphState; hash: string; title: string | null } | undefined
+  | { state: GraphState; hash: string; title: string | null; link: string }
+  | undefined
 > {
   try {
     const result = await (
@@ -11,7 +12,7 @@ export async function getGraphState(
         headers: { Accept: "application/json" },
       })
     ).json();
-    return result;
+    return { ...result, link };
   } catch {
     return undefined;
   }

@@ -6,8 +6,9 @@ import MyExpressionsLibrary, {
 } from ".";
 import "./library-search.less";
 import { Component, jsx, mountToNode } from "#DCGView";
-import { For, StaticMathQuillView, Switch } from "#components";
+import { For, If, IfElse, StaticMathQuillView, Switch } from "#components";
 import { format } from "#i18n";
+import { ExpressionState } from "@desmodder/graph-state";
 
 export function expressionLibraryMathExpressionView(
   expr: ExpressionLibraryMathExpression,
@@ -17,6 +18,7 @@ export function expressionLibraryMathExpressionView(
   // has to happen in a timeout since dom nodes aren't created immediately
   setTimeout(() => {
     const domNode = container._domNode as HTMLLIElement;
+
     // @ts-expect-error convenient way of passing handler into intersectionobserver
     domNode._onEnterView = () => {
       mountToNode(StaticMathQuillView, domNode, {
@@ -46,28 +48,59 @@ class LibrarySearchElement extends Component<{
                 <div
                   class="dsm-library-search-graph-header"
                   onClick={() => {
-                    void this.props.plugin().loadEntireGraph(expr);
+                    this.props.plugin().toggleGraphExpanded(expr.link);
                   }}
                 >
+                  <i
+                    class="dcg-icon-caret-down"
+                    style={() => ({
+                      transform: this.props.plugin().isGraphExpanded(expr.link)
+                        ? ""
+                        : "rotate(-90deg)",
+                      display: "inline-block",
+                    })}
+                  />
                   <i class="dcg-icon-cartesian"></i>
                   {expr.title}
+                  <button
+                    onClick={(e: MouseEvent) => {
+                      void this.props.plugin().loadEntireGraph(expr);
+                      e.stopPropagation();
+                    }}
+                  >
+                    Load
+                  </button>
                 </div>
-
-                <For
-                  each={() => [...expr.expressions.entries()]}
-                  key={(e) => e[0]}
+                <If
+                  predicate={() =>
+                    this.props.plugin().isGraphExpanded(expr.link)
+                  }
                 >
-                  <ol>
-                    {(e: [string, ExpressionLibraryExpression]) => (
-                      <LibrarySearchElement
-                        plugin={this.props.plugin}
-                        expr={() => e[1]}
-                        graph={this.props.graph}
-                        observer={this.props.observer}
-                      ></LibrarySearchElement>
-                    )}
-                  </ol>
-                </For>
+                  {() => (
+                    <For
+                      each={() =>
+                        [...expr.expressions.values()].filter(
+                          (e) =>
+                            e.type === "folder" ||
+                            (e.type === "expression" &&
+                              !(e.raw as ExpressionState).folderId)
+                        )
+                      }
+                      key={(e) => e.uniqueID}
+                    >
+                      <ol>
+                        {(e: ExpressionLibraryExpression) => (
+                          <LibrarySearchElement
+                            plugin={this.props.plugin}
+                            expr={() => e}
+                            graph={this.props.graph}
+                            observer={this.props.observer}
+                          ></LibrarySearchElement>
+                        )}
+                      </ol>
+                    </For>
+                  )}
+                </If>
               </li>
             );
           } else if (expr.type === "folder") {
@@ -76,31 +109,62 @@ class LibrarySearchElement extends Component<{
                 <div
                   class="dsm-library-search-folder-header"
                   onClick={() => {
-                    void this.props.plugin().loadFolder(expr);
+                    this.props
+                      .plugin()
+                      .toggleFolderExpanded(this.props.graph().link, expr.id);
                   }}
                 >
+                  <i
+                    class="dcg-icon-caret-down"
+                    style={() => ({
+                      transform: this.props
+                        .plugin()
+                        .isFolderExpanded(this.props.graph().link, expr.id)
+                        ? ""
+                        : "rotate(-90deg)",
+                      display: "inline-block",
+                    })}
+                  />
                   <i class="dcg-icon-new-folder"></i>
                   {expr.text}
+                  <button
+                    onClick={(e: MouseEvent) => {
+                      void this.props.plugin().loadFolder(expr);
+                      e.stopPropagation();
+                    }}
+                  >
+                    Load
+                  </button>
                 </div>
-                <For
-                  each={() =>
-                    [...expr.expressions]
-                      .map((e) => this.props.graph().expressions.get(e))
-                      .filter((e) => e) as ExpressionLibraryExpression[]
+                <If
+                  predicate={() =>
+                    this.props
+                      .plugin()
+                      .isFolderExpanded(this.props.graph().link, expr.id)
                   }
-                  key={(e) => e.uniqueID}
                 >
-                  <ol>
-                    {(e: ExpressionLibraryExpression) => (
-                      <LibrarySearchElement
-                        plugin={this.props.plugin}
-                        expr={() => e}
-                        graph={this.props.graph}
-                        observer={this.props.observer}
-                      ></LibrarySearchElement>
-                    )}
-                  </ol>
-                </For>
+                  {() => (
+                    <For
+                      each={() =>
+                        [...expr.expressions]
+                          .map((e) => this.props.graph().expressions.get(e))
+                          .filter((e) => e) as ExpressionLibraryExpression[]
+                      }
+                      key={(e) => e.uniqueID}
+                    >
+                      <ol>
+                        {(e: ExpressionLibraryExpression) => (
+                          <LibrarySearchElement
+                            plugin={this.props.plugin}
+                            expr={() => e}
+                            graph={this.props.graph}
+                            observer={this.props.observer}
+                          ></LibrarySearchElement>
+                        )}
+                      </ol>
+                    </For>
+                  )}
+                </If>
               </li>
             );
           } else if (expr.type === "expression") {

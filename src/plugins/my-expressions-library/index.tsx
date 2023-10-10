@@ -29,6 +29,7 @@ export interface ExpressionLibraryFolder {
   expressions: Set<string>;
   text: string;
   uniqueID: number;
+  id: string;
   graph: ExpressionLibraryGraph;
 }
 
@@ -41,6 +42,7 @@ export interface ExpressionLibraryGraph {
   // maps expression IDs to expressions
   expressions: Map<string, ExpressionLibraryExpression>;
   hash: string;
+  link: string;
   uniqueID: number;
   type: "graph";
   title?: string;
@@ -164,6 +166,8 @@ function jsonEqual(a: any, b: any): boolean {
   return false;
 }
 
+export const EXPANSIONS_LOCALSTORAGE_KEY = "dsm-my-expr-lib-expansions";
+
 // @ts-expect-error window can have anything on it
 window.jsonEqual = jsonEqual;
 
@@ -189,6 +193,61 @@ export default class MyExpressionsLibrary extends PluginController<{
   identTracker: IntellisenseState = new IntellisenseState(this.calc);
 
   searchStr: string = "";
+
+  menuExpansionData: {
+    graphs: Record<
+      string,
+      {
+        expanded: boolean;
+        folders: Record<
+          string,
+          {
+            expanded: boolean;
+          }
+        >;
+      }
+    >;
+  } = { graphs: {} };
+
+  isGraphExpanded(link: string) {
+    return this.menuExpansionData.graphs[link]?.expanded ?? false;
+  }
+
+  updateLocalStorage() {
+    localStorage.setItem(
+      EXPANSIONS_LOCALSTORAGE_KEY,
+      JSON.stringify(this.menuExpansionData)
+    );
+  }
+
+  toggleGraphExpanded(link: string) {
+    if (!this.menuExpansionData.graphs[link]) {
+      this.menuExpansionData.graphs[link] = { expanded: true, folders: {} };
+    } else {
+      this.menuExpansionData.graphs[link].expanded =
+        !this.menuExpansionData.graphs[link].expanded;
+    }
+    this.updateLocalStorage();
+    this.dsm.pillboxMenus?.updateMenuView();
+  }
+
+  isFolderExpanded(link: string, id: string) {
+    return this.menuExpansionData.graphs[link]?.folders[id]?.expanded ?? false;
+  }
+
+  toggleFolderExpanded(link: string, id: string) {
+    if (!this.menuExpansionData.graphs[link]) {
+      this.menuExpansionData.graphs[link] = { expanded: true, folders: {} };
+    }
+    if (!this.menuExpansionData.graphs[link].folders[id]) {
+      this.menuExpansionData.graphs[link].folders[id] = { expanded: true };
+    } else {
+      this.menuExpansionData.graphs[link].folders[id].expanded =
+        !this.menuExpansionData.graphs[link].folders[id].expanded;
+    }
+    this.updateLocalStorage();
+    this.dsm.pillboxMenus?.updateMenuView();
+  }
 
   refineSearch(searchStr: string) {
     this.searchStr = searchStr;
@@ -416,6 +475,7 @@ export default class MyExpressionsLibrary extends PluginController<{
             type: "folder",
             uniqueID: uniqueID++,
             graph: newGraph as ExpressionLibraryGraph,
+            id: expr.id,
           });
         }
       }
@@ -487,6 +547,7 @@ export default class MyExpressionsLibrary extends PluginController<{
         newGraph.expressions.set(k, v);
       }
 
+      newGraph.link = g.link;
       newGraph.hash = g.hash;
       newGraph.uniqueID = uniqueID++;
       newGraph.title = g.title ?? "Untitled Graph";
@@ -549,6 +610,12 @@ export default class MyExpressionsLibrary extends PluginController<{
     });
 
     void this.loadGraphs();
+
+    try {
+      this.menuExpansionData = JSON.parse(
+        localStorage.getItem(EXPANSIONS_LOCALSTORAGE_KEY) ?? "{ 'graphs': {} }"
+      );
+    } catch {}
   }
 
   afterDisable(): void {}
