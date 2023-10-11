@@ -1,5 +1,6 @@
 .dsm-my-expr-lib-menu {
   max-height: 60vh;
+  overflow: auto;
 
   ol,
   ul {
@@ -45,5 +46,16 @@
 
   .dsm-my-expr-lib-math:hover {
     background-color: #eeeeee;
+  }
+
+  .dsm-my-expr-lib-main-header {
+    position: sticky;
+    border-bottom: 1px solid #aaaaaa;
+    top: 0;
+    background-color: white;
+    * {
+      margin: 3px;
+    }
+    z-index: 3;
   }
 }
