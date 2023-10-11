@@ -2,6 +2,12 @@
   max-height: 60vh;
   overflow: auto;
 
+  .dsm-my-expr-lib-item-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   ol,
   ul {
     list-style: none;
@@ -24,16 +30,19 @@
     margin-right: 5px;
   }
 
-  .dsm-my-expr-lib-load-btn {
+  .dsm-my-expr-lib-btn {
     display: none;
   }
 
-  .dsm-my-expr-lib-item-header:hover .dsm-my-expr-lib-load-btn {
+  .align-right {
+    margin-left: auto;
+  }
+
+  .dsm-my-expr-lib-item-header:hover .dsm-my-expr-lib-btn {
     padding-left: 5px;
     border: 1px solid #cccccc;
     border-radius: 3px;
     background-color: #eeeeee;
-    margin-left: auto;
     display: block;
   }
 

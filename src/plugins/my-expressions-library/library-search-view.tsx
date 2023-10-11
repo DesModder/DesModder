@@ -6,7 +6,7 @@ import MyExpressionsLibrary, {
 } from ".";
 import "./library-search.less";
 import { Component, jsx, mountToNode } from "#DCGView";
-import { For, If, StaticMathQuillView, Switch } from "#components";
+import { For, If, StaticMathQuillView, Switch, Tooltip } from "#components";
 import { format } from "#i18n";
 import { ExpressionState } from "@desmodder/graph-state";
 
@@ -64,24 +64,42 @@ class LibrarySearchElement extends Component<{
                       })}
                     />
                     <i class="dcg-icon-cartesian"></i>
-                    {expr.title}
-                    <If
-                      predicate={() =>
-                        this.props.plugin().isGraphExpanded(expr.link)
-                      }
+                    <div class="dsm-my-expr-lib-item-title">{expr.title}</div>
+                    <button
+                      class="dsm-my-expr-lib-btn align-right"
+                      onClick={(e: MouseEvent) => {
+                        void this.props.plugin().loadEntireGraph(expr);
+                        e.stopPropagation();
+                      }}
                     >
-                      {() => (
-                        <button
-                          class="dsm-my-expr-lib-load-btn"
-                          onClick={(e: MouseEvent) => {
-                            void this.props.plugin().loadEntireGraph(expr);
-                            e.stopPropagation();
-                          }}
-                        >
-                          Load
-                        </button>
-                      )}
-                    </If>
+                      {format("my-expressions-library-load")}
+                    </button>
+                    <button
+                      class="dsm-my-expr-lib-btn"
+                      onClick={() => {
+                        this.props.plugin().dsm.setPluginSetting(
+                          "my-expressions-library",
+                          "libraryGraphLinks",
+                          this.props
+                            .plugin()
+                            .settings.libraryGraphLinks.filter(
+                              (l) => l !== expr.link
+                            )
+                        );
+
+                        this.props.plugin().cc._showToast({
+                          message: format(
+                            "my-expressions-library-remove-graph-success",
+                            {
+                              link: expr.link,
+                              name: expr.title ?? "Untitled Graph",
+                            }
+                          ),
+                        });
+                      }}
+                    >
+                      <i class="dcg-icon-remove"></i>
+                    </button>
                   </div>
                   <If
                     predicate={() =>
@@ -142,26 +160,16 @@ class LibrarySearchElement extends Component<{
                       })}
                     />
                     <i class="dcg-icon-new-folder"></i>
-                    {expr.text}
-                    <If
-                      predicate={() =>
-                        this.props
-                          .plugin()
-                          .isFolderExpanded(this.props.graph().link, expr.id)
-                      }
+                    <div class="dsm-my-expr-lib-item-title">{expr.text}</div>
+                    <button
+                      class="dsm-my-expr-lib-btn"
+                      onClick={(e: MouseEvent) => {
+                        void this.props.plugin().loadFolder(expr);
+                        e.stopPropagation();
+                      }}
                     >
-                      {() => (
-                        <button
-                          class="dsm-my-expr-lib-load-btn"
-                          onClick={(e: MouseEvent) => {
-                            void this.props.plugin().loadFolder(expr);
-                            e.stopPropagation();
-                          }}
-                        >
-                          Load
-                        </button>
-                      )}
-                    </If>
+                      {format("my-expressions-library-load")}
+                    </button>
                   </div>
                   <If
                     predicate={() =>
@@ -239,8 +247,10 @@ export class LibrarySearchView extends Component<{
       { threshold: 0.5 }
     );
 
+    let graphlink = "";
+
     return (
-      <div class="dcg-popover-interior">
+      <div class="dcg-popover-interior dsm-my-expr-lib-popup">
         <Switch key={() => this.props.plugin().graphs?.graphs}>
           {() => {
             if (Array.isArray(this.props.plugin().graphs?.graphs)) {
@@ -264,7 +274,47 @@ export class LibrarySearchView extends Component<{
                           this.props.plugin().refineSearch(e.target.value);
                         }}
                         value={() => this.props.plugin().searchStr}
+                        placeholder={format("my-expressions-library-search")}
                       ></input>
+                      <br></br>
+                      <input
+                        onInput={(
+                          e: InputEvent & { target: HTMLInputElement }
+                        ) => {
+                          graphlink = e.target.value;
+                        }}
+                        value={() => graphlink}
+                        placeholder={format(
+                          "my-expressions-library-graph-link-here"
+                        )}
+                      ></input>
+                      <button
+                        onClick={() => {
+                          this.props.plugin().dsm.setPluginSetting(
+                            "my-expressions-library",
+                            "libraryGraphLinks",
+                            // this Array.from(new Set) stuff is to deduplicate
+                            Array.from(
+                              new Set([
+                                ...this.props.plugin().settings
+                                  .libraryGraphLinks,
+                                graphlink,
+                              ])
+                            )
+                          );
+                          this.props.plugin().cc._showToast({
+                            message: format(
+                              "my-expressions-library-add-graph-success",
+                              {
+                                link: graphlink,
+                              }
+                            ),
+                          });
+                          graphlink = "";
+                        }}
+                      >
+                        {format("my-expressions-library-add-graph")}
+                      </button>
                     </div>
                     <Switch key={() => this.props.plugin().searchStr}>
                       {() => {
