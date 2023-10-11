@@ -1,84 +1,49 @@
-.dsm-library-search {
-  max-height: 70vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  max-width: 40vw;
+.dsm-my-expr-lib-menu {
+  max-height: 60vh;
 
-  ol {
-    list-style: none;
-    margin-left: 5px;
-    padding-left: 5px;
-    border-left: 1px solid #cccccc;
-  }
-
+  ol,
   ul {
     list-style: none;
-    padding-left: 0;
+    padding-inline-start: 0;
   }
-}
 
-.dsm-library-search-exprlist {
-  padding-inline-start: 0;
-}
+  .dsm-my-expr-lib-folder,
+  .dsm-my-expr-lib-graph {
+    border-top: 1px solid #cccccc;
+  }
 
-.dsm-library-search-exprlist li {
-  border-bottom: 1px solid #cccccc;
-  transition: background-color 0.25s;
-  padding-top: 3px;
-  padding-bottom: 3px;
-}
+  .dsm-my-expr-lib-multi-item-inner {
+    border-left: 1px solid #cccccc;
+    padding-inline-start: 5px;
+    margin-inline-start: 5px;
+  }
 
-.dsm-library-search-exprlist li * {
-  cursor: pointer !important;
-}
-
-.dsm-library-search-exprlist li:hover {
-  border-bottom: 1px solid #cccccc;
-  background-color: #dddddd;
-}
-
-.libsearch-header {
-  position: sticky;
-  top: 0;
-  background-color: white;
-  border-bottom: 1px solid #cccccc;
-  z-index: 99;
-  padding-bottom: 10px;
-}
-
-.dsm-library-search-folder,
-.dsm-library-search-graph {
-  cursor: pointer;
   i {
-    margin-right: 10px;
-    opacity: 0.5;
+    color: #aaaaaa;
+    margin-right: 5px;
   }
-}
 
-.dsm-library-search-folder .dsm-library-search-folder-header {
-  font-size: 1.1em;
-  border-top: 1px solid #cccccc;
-  padding-top: 5px;
-  padding-bottom: 5px;
-}
+  .dsm-my-expr-lib-load-btn {
+    display: none;
+  }
 
-.dsm-library-search-math {
-  font-size: 90%;
-}
+  .dsm-my-expr-lib-item-header:hover .dsm-my-expr-lib-load-btn {
+    padding-left: 5px;
+    border: 1px solid #cccccc;
+    border-radius: 3px;
+    background-color: #eeeeee;
+    margin-left: auto;
+    display: block;
+  }
 
-.dsm-library-search-graph .dsm-library-search-graph-header {
-  font-size: 1.5em;
-  margin-top: 20px;
-  padding-bottom: 5px;
-}
+  .dsm-my-expr-lib-item-header,
+  .dsm-my-expr-lib-math {
+    cursor: pointer !important;
+    margin: 3px;
+    display: flex;
+  }
 
-.dsm-library-search-folder-header:hover,
-.dsm-library-search-graph-header:hover,
-.dsm-library-search-math:hover {
-  background-color: #eeeeee;
-  cursor: pointer;
-}
-
-.dsm-my-expr-lib-load-btn {
-  margin-left: 5px;
+  .dsm-my-expr-lib-math:hover {
+    background-color: #eeeeee;
+  }
 }
