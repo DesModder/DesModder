@@ -66,13 +66,13 @@ class LibrarySearchElement extends Component<{
                     <i class="dcg-icon-cartesian"></i>
                     <div class="dsm-my-expr-lib-item-title">{expr.title}</div>
                     <button
-                      class="dsm-my-expr-lib-btn align-right"
+                      class="dsm-my-expr-lib-btn align-right dsm-my-expr-lib-rescale-plus"
                       onClick={(e: MouseEvent) => {
                         void this.props.plugin().loadEntireGraph(expr);
                         e.stopPropagation();
                       }}
                     >
-                      {format("my-expressions-library-load")}
+                      <i class="dcg-icon-plus"></i>
                     </button>
                     <button
                       class="dsm-my-expr-lib-btn"
@@ -162,13 +162,13 @@ class LibrarySearchElement extends Component<{
                     <i class="dcg-icon-new-folder"></i>
                     <div class="dsm-my-expr-lib-item-title">{expr.text}</div>
                     <button
-                      class="dsm-my-expr-lib-btn"
+                      class="dsm-my-expr-lib-btn align-right dsm-my-expr-lib-rescale-plus"
                       onClick={(e: MouseEvent) => {
                         void this.props.plugin().loadFolder(expr);
                         e.stopPropagation();
                       }}
                     >
-                      {format("my-expressions-library-load")}
+                      <i class="dcg-icon-plus"></i>
                     </button>
                   </div>
                   <If
