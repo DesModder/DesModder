@@ -35,7 +35,8 @@ function getNextNonLineBreakElement(child: HTMLElement) {
   while (
     !(next instanceof HTMLElement) ||
     !!next.dataset.isLineBreak ||
-    !!next.dataset.isManualLineBreak
+    !!next.dataset.isManualLineBreak ||
+    next.classList.contains("dcg-mq-cursor")
   ) {
     if (!next) return;
     next = next.nextElementSibling;
@@ -74,7 +75,11 @@ function alignGridNoCheck(container: HTMLElement) {
   for (const child of children) {
     if (!(child instanceof HTMLElement)) continue;
 
-    if (isComma(child) || child === container.lastElementChild) {
+    if (
+      isComma(child) ||
+      child === container.lastElementChild ||
+      child.dataset.isAutoLineBreak
+    ) {
       currentRange.setEndAfter(child);
       const thisRangeWidth = currentRange.getBoundingClientRect().width;
       maxWidths[commaIndex] = Math.max(

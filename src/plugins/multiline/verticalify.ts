@@ -376,6 +376,7 @@ export function verticalify(
             child.style.marginRight = "";
             child.style.marginLeft = "";
           }
+          delete elem.dataset.isCenterAligned;
         }
       }
     }
