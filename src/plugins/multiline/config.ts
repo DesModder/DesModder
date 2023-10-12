@@ -57,7 +57,7 @@ export const configList = [
     indentationLevel: 0,
     type: "boolean",
     default: true,
-    key: "alterLayoutWhileTyping",
+    key: "updateLayoutWhileTyping",
 
     shouldShow(current) {
       return current.autoInsertLinebreaks || current.autoAlignGrids;
@@ -73,7 +73,7 @@ export const configList = [
     key: "multilinifyDelayAfterEdit",
     shouldShow(current) {
       return (
-        current.alterLayoutWhileTyping &&
+        current.updateLayoutWhileTyping &&
         (current.autoInsertLinebreaks || current.autoAlignGrids)
       );
     },
@@ -82,7 +82,7 @@ export const configList = [
 
 export interface Config {
   widthBeforeMultiline: number;
-  alterLayoutWhileTyping: boolean;
+  updateLayoutWhileTyping: boolean;
   autoInsertLinebreaks: boolean;
   multilinifyDelayAfterEdit: number;
   spacesToNewlines: boolean;

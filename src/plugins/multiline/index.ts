@@ -308,7 +308,7 @@ export default class Multiline extends PluginController<Config> {
       if (
         Date.now() - this.lastEditTime <
           this.settings.multilinifyDelayAfterEdit ||
-        !this.settings.alterLayoutWhileTyping
+        !this.settings.updateLayoutWhileTyping
       )
         return;
 
