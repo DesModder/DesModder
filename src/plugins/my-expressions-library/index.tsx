@@ -1,8 +1,8 @@
 import Aug from "text-mode-core/aug/AugState";
 import { parseRootLatex, rawNonFolderToAug } from "text-mode-core/aug/rawToAug";
 import { textModeExprToLatex } from "text-mode-core/down/textToRaw";
-import { getGraphState } from "./library-search-utils";
-import { LibrarySearchView } from "./library-search-view";
+import { getGraphState } from "./get-graph-state";
+import { LibrarySearchView } from "./view";
 import { ExpressionState, ItemState } from "@desmodder/graph-state";
 import { jsx } from "#DCGView";
 import { MathQuillField } from "#components";

@@ -1,5 +1,5 @@
 import MyExpressionsLibrary, { ExpressionLibraryGraph } from ".";
-import { getGraphState } from "./library-search-utils";
+import { getGraphState } from "./get-graph-state";
 
 export enum GraphValidity {
   Valid = "valid",

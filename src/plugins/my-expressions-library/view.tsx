@@ -4,7 +4,7 @@ import MyExpressionsLibrary, {
   ExpressionLibraryGraph,
   ExpressionLibraryMathExpression,
 } from ".";
-import "./library-search.less";
+import "./index.less";
 import { Component, jsx, mountToNode } from "#DCGView";
 import { For, If, IfElse, StaticMathQuillView, Switch } from "#components";
 import { format } from "#i18n";
@@ -32,6 +32,97 @@ export function expressionLibraryMathExpressionView(
   }, 0);
 }
 
+function folderView(
+  container: LibrarySearchElement,
+  expr: ExpressionLibraryFolder
+) {
+  return (
+    <li class="dsm-my-expr-lib-folder">
+      <div class="dsm-my-expr-lib-multi-item-inner">
+        <div
+          class="dsm-my-expr-lib-item-header"
+          onClick={() => {
+            // expand/contract folder
+            container.props
+              .plugin()
+              .toggleFolderExpanded(container.props.graph().link, expr.id);
+          }}
+        >
+          <i
+            class="dcg-icon-caret-down"
+            style={() => ({
+              transform: container.props
+                .plugin()
+                .isFolderExpanded(container.props.graph().link, expr.id)
+                ? ""
+                : "rotate(-90deg)",
+              display: "inline-block",
+            })}
+          />
+          <i class="dcg-icon-new-folder"></i>
+          <div class="dsm-my-expr-lib-item-title">{expr.text}</div>
+          <button
+            class="dsm-my-expr-lib-btn align-right dsm-my-expr-lib-rescale-plus"
+            onClick={(e: MouseEvent) => {
+              void container.props.plugin().loadFolder(expr);
+              e.stopPropagation();
+            }}
+          >
+            <i class="dcg-icon-plus"></i>
+          </button>
+        </div>
+        <If
+          predicate={() =>
+            container.props
+              .plugin()
+              .isFolderExpanded(container.props.graph().link, expr.id)
+          }
+        >
+          {() => {
+            const expressions = () =>
+              [...expr.expressions]
+                .map((e) => container.props.graph().expressions.get(e))
+                .filter((e) => e) as ExpressionLibraryExpression[];
+            return (
+              <Switch key={() => expressions().length}>
+                {() => {
+                  // show message indicating that a folder is empty
+                  // (and not just, say, loading (even though that makes no sense))
+                  if (expressions().length === 0) {
+                    return (
+                      <div>
+                        {format("my-expressions-library-this-folder-is-empty")}
+                      </div>
+                    );
+                  }
+
+                  // show contents of folder
+                  return (
+                    <div>
+                      <For each={() => expressions()} key={(e) => e.uniqueID}>
+                        <ol>
+                          {(e: ExpressionLibraryExpression) => (
+                            <LibrarySearchElement
+                              plugin={container.props.plugin}
+                              expr={() => e}
+                              graph={container.props.graph}
+                              observer={container.props.observer}
+                            ></LibrarySearchElement>
+                          )}
+                        </ol>
+                      </For>
+                    </div>
+                  );
+                }}
+              </Switch>
+            );
+          }}
+        </If>
+      </div>{" "}
+    </li>
+  );
+}
+
 class LibrarySearchElement extends Component<{
   plugin: () => MyExpressionsLibrary;
   expr: () => ExpressionLibraryMathExpression | ExpressionLibraryFolder;
@@ -46,92 +137,7 @@ class LibrarySearchElement extends Component<{
 
           // folder expression in the myexprlib menu
           if (expr.type === "folder") {
-            return (
-              <li class="dsm-my-expr-lib-folder">
-                <div class="dsm-my-expr-lib-multi-item-inner">
-                  <div
-                    class="dsm-my-expr-lib-item-header"
-                    onClick={() => {
-                      // expand/contract folder
-                      this.props
-                        .plugin()
-                        .toggleFolderExpanded(this.props.graph().link, expr.id);
-                    }}
-                  >
-                    <i
-                      class="dcg-icon-caret-down"
-                      style={() => ({
-                        transform: this.props
-                          .plugin()
-                          .isFolderExpanded(this.props.graph().link, expr.id)
-                          ? ""
-                          : "rotate(-90deg)",
-                        display: "inline-block",
-                      })}
-                    />
-                    <i class="dcg-icon-new-folder"></i>
-                    <div class="dsm-my-expr-lib-item-title">{expr.text}</div>
-                    <button
-                      class="dsm-my-expr-lib-btn align-right dsm-my-expr-lib-rescale-plus"
-                      onClick={(e: MouseEvent) => {
-                        void this.props.plugin().loadFolder(expr);
-                        e.stopPropagation();
-                      }}
-                    >
-                      <i class="dcg-icon-plus"></i>
-                    </button>
-                  </div>
-                  <If
-                    predicate={() =>
-                      this.props
-                        .plugin()
-                        .isFolderExpanded(this.props.graph().link, expr.id)
-                    }
-                  >
-                    {() => {
-                      const expressions = () =>
-                        [...expr.expressions]
-                          .map((e) => this.props.graph().expressions.get(e))
-                          .filter((e) => e) as ExpressionLibraryExpression[];
-                      return (
-                        <Switch key={() => expressions().length}>
-                          {() => {
-                            if (expressions().length === 0) {
-                              return (
-                                <div>
-                                  {format(
-                                    "my-expressions-library-this-folder-is-empty"
-                                  )}
-                                </div>
-                              );
-                            }
-                            return (
-                              <div>
-                                <For
-                                  each={() => expressions()}
-                                  key={(e) => e.uniqueID}
-                                >
-                                  <ol>
-                                    {(e: ExpressionLibraryExpression) => (
-                                      <LibrarySearchElement
-                                        plugin={this.props.plugin}
-                                        expr={() => e}
-                                        graph={this.props.graph}
-                                        observer={this.props.observer}
-                                      ></LibrarySearchElement>
-                                    )}
-                                  </ol>
-                                </For>
-                              </div>
-                            );
-                          }}
-                        </Switch>
-                      );
-                    }}
-                  </If>
-                </div>{" "}
-              </li>
-            );
+            return folderView(this, expr);
 
             // math expression in the myexprlib menu
           } else if (expr.type === "expression") {
