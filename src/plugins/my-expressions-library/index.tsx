@@ -4,8 +4,8 @@ import { textModeExprToLatex } from "text-mode-core/down/textToRaw";
 import { getGraphState } from "./library-search-utils";
 import { LibrarySearchView } from "./library-search-view";
 import { ExpressionState, ItemState } from "@desmodder/graph-state";
-import { MountedComponent, jsx } from "#DCGView";
-import { MathQuillField, MathQuillView } from "#components";
+import { jsx } from "#DCGView";
+import { MathQuillField } from "#components";
 import { PluginController } from "../PluginController";
 import { mapAugAST } from "../intellisense/latex-parsing";
 import { IntellisenseState } from "../intellisense/state";
@@ -14,6 +14,7 @@ import { astToText, buildConfigFromGlobals } from "text-mode-core";
 import { rootLatexToAST } from "text-mode-core/up/augToAST";
 import { GraphValidity, LazyLoadableGraph } from "./lazy-loadable-graph";
 
+// represents an easily searchable math expression with dependency graphing
 export interface ExpressionLibraryMathExpression {
   type: "expression";
   aug: Aug.ItemAug;
@@ -26,6 +27,7 @@ export interface ExpressionLibraryMathExpression {
   raw: ItemState;
 }
 
+// folder representation
 export interface ExpressionLibraryFolder {
   type: "folder";
   expressions: Set<string>;
@@ -39,9 +41,9 @@ export type ExpressionLibraryExpression =
   | ExpressionLibraryMathExpression
   | ExpressionLibraryFolder;
 
+// internal representation of a loaded graph
 export interface ExpressionLibraryGraph {
   // maps expression IDs to expressions
-  // optional to enable lazy loading
   expressions: Map<string, ExpressionLibraryExpression>;
   hash: string;
   link: string;
@@ -49,18 +51,6 @@ export interface ExpressionLibraryGraph {
   type: "graph";
   title?: string;
 }
-
-export interface MaybeLoadedGraph {
-  id: number;
-  title: string;
-  data?: ExpressionLibraryGraph | "nograph";
-  promise: Promise<ExpressionLibraryGraph | "nograph">;
-  type: "maybe-loaded-graph";
-  link: string;
-}
-
-// map graphlinks to data
-export type ExpressionsLibraryGraphs = Map<string, MaybeLoadedGraph>;
 
 type Exhaustive<T, Obj> = keyof Obj extends T ? T[] : never;
 
@@ -78,6 +68,7 @@ function allLatexKeys<Obj>() {
   };
 }
 
+// map over all latex sources for dependency tracking
 function forAllLatexSources(
   item: Aug.ItemAug,
   handler: (ltx: Aug.Latex.AnyRootOrChild) => void
@@ -176,6 +167,7 @@ function jsonEqual(a: any, b: any): boolean {
   return false;
 }
 
+// keys for local storage
 export const EXPANSIONS_LOCALSTORAGE_KEY = "dsm-my-expr-lib-expansions";
 export const LINK_TO_NAME_LOCALSTORAGE_KEY = "dsm-my-expr-lib-link2name";
 
@@ -222,10 +214,12 @@ export default class MyExpressionsLibrary extends PluginController<{
 
   linkToName: Record<string, string> = {};
 
+  // convert graph link to cached name
   getNameFromLink(link: string) {
     return this.linkToName[link];
   }
 
+  // associate a link with a graph name
   setNameFromLink(link: string, name: string) {
     this.linkToName[link] = name;
     localStorage.setItem(
@@ -234,6 +228,7 @@ export default class MyExpressionsLibrary extends PluginController<{
     );
   }
 
+  // is a graph expanded in the My Expressions Library menu?
   isGraphExpanded(link: string) {
     return this.menuExpansionData.graphs[link]?.expanded ?? false;
   }
@@ -245,6 +240,7 @@ export default class MyExpressionsLibrary extends PluginController<{
     );
   }
 
+  // toggle whether a graph is expanded in the MyExprLib menu
   toggleGraphExpanded(link: string) {
     if (!this.menuExpansionData.graphs[link]) {
       this.menuExpansionData.graphs[link] = { expanded: true, folders: {} };
@@ -256,10 +252,12 @@ export default class MyExpressionsLibrary extends PluginController<{
     this.dsm.pillboxMenus?.updateMenuView();
   }
 
+  // is a folder expanded in the menu?
   isFolderExpanded(link: string, id: string) {
     return this.menuExpansionData.graphs[link]?.folders[id]?.expanded ?? false;
   }
 
+  // toggle whether a folder's expanded in the MyExprLib menu
   toggleFolderExpanded(link: string, id: string) {
     if (!this.menuExpansionData.graphs[link]) {
       this.menuExpansionData.graphs[link] = { expanded: true, folders: {} };
@@ -274,22 +272,14 @@ export default class MyExpressionsLibrary extends PluginController<{
     this.dsm.pillboxMenus?.updateMenuView();
   }
 
+  // change the search string
   refineSearch(searchStr: string) {
     this.searchStr = searchStr;
     // this.controller.pillboxMenus?.updateExtraComponents();
     this.dsm.pillboxMenus?.updateMenuView();
   }
 
-  view: MountedComponent | undefined;
-
-  updateFocusedMathquill() {
-    this.focusedmq = MathQuillView.getFocusedMathquill();
-  }
-
-  openSearch() {
-    this.updateFocusedMathquill();
-  }
-
+  // create an empty folder after the currently selected expression
   createEmptyFolder(title: string) {
     this.calc.controller.dispatch({ type: "new-folder" });
 
@@ -304,6 +294,7 @@ export default class MyExpressionsLibrary extends PluginController<{
     this.calc.controller.updateTheComputedWorld();
   }
 
+  // load all the contents of a folder into the current graph
   async loadFolder(expr: ExpressionLibraryFolder) {
     this.createEmptyFolder(expr.text);
 
@@ -315,14 +306,12 @@ export default class MyExpressionsLibrary extends PluginController<{
     }
   }
 
+  // index of selected item
   getInsertionStartIndex() {
-    return (
-      this.calc.controller.listModel.__itemModelArray.findIndex(
-        (e) => e.id === (this.calc.controller.getSelectedItem()?.id ?? "0")
-      ) + 1
-    );
+    return (this.calc.controller.getSelectedItem()?.index ?? 0) + 1;
   }
 
+  // add a single math expression into the graph
   async loadMathExpression(
     expr: ExpressionLibraryMathExpression,
     dontLoadDependencies?: boolean
@@ -401,6 +390,7 @@ export default class MyExpressionsLibrary extends PluginController<{
       }
     }
 
+    // reorder expressions
     let i = 0;
     for (const id of idsNew) {
       const idIndex = this.calc.controller.listModel.__itemModelArray.findIndex(
@@ -432,6 +422,7 @@ export default class MyExpressionsLibrary extends PluginController<{
     this.calc.controller.updateTheComputedWorld();
   }
 
+  // load an entire graph into this graph
   async loadEntireGraph(graph: ExpressionLibraryGraph) {
     this.createEmptyFolder(`Graph: ${graph.title}`);
 
@@ -444,6 +435,7 @@ export default class MyExpressionsLibrary extends PluginController<{
 
   uniqueID = 0;
 
+  // convert the data returned from a raw graph fetch request into an ExpressionLibraryGraph
   async getGraph(
     g: Exclude<Awaited<ReturnType<typeof getGraphState>>, undefined>
   ) {
@@ -568,6 +560,8 @@ export default class MyExpressionsLibrary extends PluginController<{
     return newGraph as ExpressionLibraryGraph;
   }
 
+  // get all expressions from all loaded graphs
+  // this function also prompts all graphs to be force-loaded
   getLibraryExpressions() {
     // force load all graphs to enable searching
     for (const graph of this.graphs.values()) {

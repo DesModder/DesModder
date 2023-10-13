@@ -43,6 +43,8 @@ class LibrarySearchElement extends Component<{
       <Switch key={() => this.props.expr().type}>
         {() => {
           const expr = this.props.expr();
+
+          // folder expression in the myexprlib menu
           if (expr.type === "folder") {
             return (
               <li class="dsm-my-expr-lib-folder">
@@ -50,6 +52,7 @@ class LibrarySearchElement extends Component<{
                   <div
                     class="dsm-my-expr-lib-item-header"
                     onClick={() => {
+                      // expand/contract folder
                       this.props
                         .plugin()
                         .toggleFolderExpanded(this.props.graph().link, expr.id);
@@ -85,33 +88,52 @@ class LibrarySearchElement extends Component<{
                         .isFolderExpanded(this.props.graph().link, expr.id)
                     }
                   >
-                    {() => (
-                      <div>
-                        <For
-                          each={() =>
-                            [...expr.expressions]
-                              .map((e) => this.props.graph().expressions.get(e))
-                              .filter((e) => e) as ExpressionLibraryExpression[]
-                          }
-                          key={(e) => e.uniqueID}
-                        >
-                          <ol>
-                            {(e: ExpressionLibraryExpression) => (
-                              <LibrarySearchElement
-                                plugin={this.props.plugin}
-                                expr={() => e}
-                                graph={this.props.graph}
-                                observer={this.props.observer}
-                              ></LibrarySearchElement>
-                            )}
-                          </ol>
-                        </For>
-                      </div>
-                    )}
+                    {() => {
+                      const expressions = () =>
+                        [...expr.expressions]
+                          .map((e) => this.props.graph().expressions.get(e))
+                          .filter((e) => e) as ExpressionLibraryExpression[];
+                      return (
+                        <Switch key={() => expressions().length}>
+                          {() => {
+                            if (expressions().length === 0) {
+                              return (
+                                <div>
+                                  {format(
+                                    "my-expressions-library-this-folder-is-empty"
+                                  )}
+                                </div>
+                              );
+                            }
+                            return (
+                              <div>
+                                <For
+                                  each={() => expressions()}
+                                  key={(e) => e.uniqueID}
+                                >
+                                  <ol>
+                                    {(e: ExpressionLibraryExpression) => (
+                                      <LibrarySearchElement
+                                        plugin={this.props.plugin}
+                                        expr={() => e}
+                                        graph={this.props.graph}
+                                        observer={this.props.observer}
+                                      ></LibrarySearchElement>
+                                    )}
+                                  </ol>
+                                </For>
+                              </div>
+                            );
+                          }}
+                        </Switch>
+                      );
+                    }}
                   </If>
                 </div>{" "}
               </li>
             );
+
+            // math expression in the myexprlib menu
           } else if (expr.type === "expression") {
             const container = (
               <li
@@ -151,6 +173,7 @@ class LibrarySearchGraph extends Component<{
           <div
             class="dsm-my-expr-lib-item-header"
             onClick={() => {
+              // toggle graph expanded/closed
               if (!this.props.plugin().isGraphExpanded(graph().link)) {
                 void graph()
                   .load()
@@ -170,10 +193,12 @@ class LibrarySearchGraph extends Component<{
                 display: "inline-block",
               })}
             />
+
             {IfElse(() => graph().valid !== GraphValidity.Invalid, {
               true: () => <i class="dcg-icon-cartesian"></i>,
               false: () => <i class="dcg-icon-error"></i>,
             })}
+
             <div class="dsm-my-expr-lib-item-title">
               {() =>
                 graph().valid !== GraphValidity.Invalid
@@ -181,6 +206,7 @@ class LibrarySearchGraph extends Component<{
                   : format("my-expressions-library-invalid-graph")
               }
             </div>
+
             <div class="align-right dsm-my-expr-lib-btn-container">
               <If predicate={() => graph().valid !== GraphValidity.Invalid}>
                 {() => (
@@ -197,6 +223,7 @@ class LibrarySearchGraph extends Component<{
                   </button>
                 )}
               </If>
+
               <button
                 class="dsm-my-expr-lib-btn"
                 onClick={() => {
@@ -231,6 +258,8 @@ class LibrarySearchGraph extends Component<{
             {() => (
               <Switch key={() => graph().loading || !graph().data}>
                 {() => {
+                  // when the graph is invalid, show a message saying that the
+                  // graph at the given link failed to load when it's expanded
                   if (graph().valid === GraphValidity.Invalid) {
                     return (
                       <div>
@@ -244,11 +273,13 @@ class LibrarySearchGraph extends Component<{
                     );
                   }
 
+                  // show a loading message while expanded while the graph is loading
                   if (graph().loading || !graph().data)
                     return (
                       <div>{format("my-expressions-library-loading")}</div>
                     );
 
+                  // show the actual contents of the graph if it is loaded
                   return (
                     <div>
                       <For
@@ -361,6 +392,8 @@ export class LibrarySearchView extends Component<{
           </div>
           <Switch key={() => this.props.plugin().searchStr}>
             {() => {
+              // if search string is empty, display everything normally
+              // with collapsible sections for graphs/folders etc
               if (this.props.plugin().searchStr === "") {
                 return (
                   <For
@@ -383,6 +416,9 @@ export class LibrarySearchView extends Component<{
                   </For>
                 );
               }
+
+              // if there is a search string,
+              // just show all the expressions that match
               return (
                 <For
                   each={() => {
@@ -390,12 +426,6 @@ export class LibrarySearchView extends Component<{
                       .plugin()
                       .getLibraryExpressions()
                       .filter((e) => e.type === "expression");
-                    // .filter((e) => {
-                    //   const expr = e as ExpressionLibraryMathExpression;
-                    //   return expr.textMode.includes(
-                    //     this.props.plugin().searchStr
-                    //   );
-                    // });
                   }}
                   key={(e) => e.uniqueID}
                 >

@@ -37,6 +37,7 @@ export class LazyLoadableGraph {
     this.data = undefined;
   }
 
+  // attempt to fetch a graph from some server
   async load() {
     if (this.data) return this.data;
 

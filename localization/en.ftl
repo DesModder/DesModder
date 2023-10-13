@@ -266,6 +266,7 @@ my-expressions-library-remove-graph-success = My Expressions Library: Successful
 my-expressions-library-loading = Loading...
 my-expressions-library-invalid-graph-details = The graph at the link { $link } failed to load.
 my-expressions-library-invalid-graph = Invalid Graph
+my-expressions-library-this-folder-is-empty = This folder is empty.
 
 ## Compact View
 compact-view-name = Compact View
