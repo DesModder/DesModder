@@ -11,8 +11,8 @@ import { mapAugAST } from "../intellisense/latex-parsing";
 import { IntellisenseState } from "../intellisense/state";
 import { getMetadata } from "../manage-metadata/sync";
 import { astToText, buildConfigFromGlobals } from "text-mode-core";
-import { format } from "localization/i18n-core";
 import { rootLatexToAST } from "text-mode-core/up/augToAST";
+import { GraphValidity, LazyLoadableGraph } from "./lazy-loadable-graph";
 
 export interface ExpressionLibraryMathExpression {
   type: "expression";
@@ -37,11 +37,11 @@ export interface ExpressionLibraryFolder {
 
 export type ExpressionLibraryExpression =
   | ExpressionLibraryMathExpression
-  | ExpressionLibraryFolder
-  | ExpressionLibraryGraph;
+  | ExpressionLibraryFolder;
 
 export interface ExpressionLibraryGraph {
   // maps expression IDs to expressions
+  // optional to enable lazy loading
   expressions: Map<string, ExpressionLibraryExpression>;
   hash: string;
   link: string;
@@ -50,9 +50,17 @@ export interface ExpressionLibraryGraph {
   title?: string;
 }
 
-export interface ExpressionsLibraryGraphs {
-  graphs: ExpressionLibraryGraph[];
+export interface MaybeLoadedGraph {
+  id: number;
+  title: string;
+  data?: ExpressionLibraryGraph | "nograph";
+  promise: Promise<ExpressionLibraryGraph | "nograph">;
+  type: "maybe-loaded-graph";
+  link: string;
 }
+
+// map graphlinks to data
+export type ExpressionsLibraryGraphs = Map<string, MaybeLoadedGraph>;
 
 type Exhaustive<T, Obj> = keyof Obj extends T ? T[] : never;
 
@@ -169,6 +177,7 @@ function jsonEqual(a: any, b: any): boolean {
 }
 
 export const EXPANSIONS_LOCALSTORAGE_KEY = "dsm-my-expr-lib-expansions";
+export const LINK_TO_NAME_LOCALSTORAGE_KEY = "dsm-my-expr-lib-link2name";
 
 // @ts-expect-error window can have anything on it
 window.jsonEqual = jsonEqual;
@@ -186,7 +195,7 @@ export default class MyExpressionsLibrary extends PluginController<{
     },
   ] as const;
 
-  graphs: ExpressionsLibraryGraphs | undefined;
+  graphs = new Map<string, LazyLoadableGraph>();
 
   keypadRow: HTMLElement | undefined;
 
@@ -210,6 +219,20 @@ export default class MyExpressionsLibrary extends PluginController<{
       }
     >;
   } = { graphs: {} };
+
+  linkToName: Record<string, string> = {};
+
+  getNameFromLink(link: string) {
+    return this.linkToName[link];
+  }
+
+  setNameFromLink(link: string, name: string) {
+    this.linkToName[link] = name;
+    localStorage.setItem(
+      LINK_TO_NAME_LOCALSTORAGE_KEY,
+      JSON.stringify(this.linkToName)
+    );
+  }
 
   isGraphExpanded(link: string) {
     return this.menuExpansionData.graphs[link]?.expanded ?? false;
@@ -419,169 +442,147 @@ export default class MyExpressionsLibrary extends PluginController<{
     }
   }
 
-  async loadGraphs() {
-    const graphs = (
-      await Promise.all(
-        this.settings.libraryGraphLinks
-          .filter((s) => s)
-          .map(async (s) => [s, await getGraphState(s)] as const)
-      ).then((state) => {
-        if (state.some((s) => !s[1])) {
-          this.calc.controller._showToast({
-            message: format("my-expressions-library-did-not-load", {
-              links:
-                "\n" +
-                state
-                  .filter((s) => !s[1])
-                  .map((s) => `"${s[0]}"`)
-                  .join("\n"),
-            }),
-          });
-        }
-        return state.map((s) => s[1]);
-      })
-    ).filter((g) => g);
+  uniqueID = 0;
 
-    this.graphs = {
-      graphs: [],
-    };
+  async getGraph(
+    g: Exclude<Awaited<ReturnType<typeof getGraphState>>, undefined>
+  ) {
+    const newGraph: Partial<ExpressionLibraryGraph> = {};
 
-    let uniqueID = 0;
+    // maps ident names to expression ids.
+    const dependencymap = new Map<string, string>();
 
-    for (const g of graphs) {
-      if (!g) continue;
+    const augs = new Map<string, Aug.NonFolderAug>();
 
-      const newGraph: Partial<ExpressionLibraryGraph> = {};
+    const folders = new Map<string, ExpressionLibraryFolder>();
 
-      // maps ident names to expression ids.
-      const dependencymap = new Map<string, string>();
-
-      const augs = new Map<string, Aug.NonFolderAug>();
-
-      const folders = new Map<string, ExpressionLibraryFolder>();
-
-      for (const expr of g.state.expressions.list) {
-        if (expr.type !== "folder") {
-          augs.set(
-            expr.id,
-            rawNonFolderToAug(
-              buildConfigFromGlobals(Desmos, this.calc),
-              expr,
-              getMetadata(this.calc)
-            )
-          );
-        } else {
-          folders.set(expr.id, {
-            text: expr.title ?? "Untitled Folder",
-            expressions: new Set(),
-            type: "folder",
-            uniqueID: uniqueID++,
-            graph: newGraph as ExpressionLibraryGraph,
-            id: expr.id,
-          });
-        }
-      }
-
-      for (const expr of g.state.expressions.list) {
-        if (expr.type === "folder") continue;
-        folders.get(expr.folderId ?? "")?.expressions?.add(expr.id);
-      }
-
-      for (const [id, aug] of augs) {
-        if (aug.type === "expression" && aug.latex) {
-          const root = aug.latex;
-          if (root.type === "Assignment") {
-            dependencymap.set(root.left.symbol, id);
-          } else if (root.type === "FunctionDefinition") {
-            dependencymap.set(root.symbol.symbol, id);
-          }
-        }
-      }
-
-      newGraph.expressions = new Map(
-        (
-          Array.from(folders.entries()) as [
-            string,
-            ExpressionLibraryExpression
-          ][]
-        ).concat(
-          (
-            g.state.expressions.list as (ItemState & {
-              latex: string | undefined;
-            })[]
+    for (const expr of g.state.expressions.list) {
+      if (expr.type !== "folder") {
+        augs.set(
+          expr.id,
+          rawNonFolderToAug(
+            buildConfigFromGlobals(Desmos, this.calc),
+            expr,
+            getMetadata(this.calc)
           )
-            .filter((e) => e.latex !== undefined)
-            .map((e) => {
-              const aug = augs.get(e.id);
-              if (!aug) return undefined;
-
-              const dependsOn = new Set<string>();
-
-              forAllLatexSources(aug, (ltx) => {
-                mapAugAST(ltx, (node) => {
-                  if (node && node.type === "Identifier") {
-                    const dep = dependencymap.get(node.symbol);
-                    if (dep) {
-                      dependsOn.add(dep);
-                    }
-                  }
-                });
-              });
-
-              let textMode = "";
-
-              try {
-                textMode = astToText(
-                  rootLatexToAST(
-                    parseRootLatex(
-                      buildConfigFromGlobals(Desmos, this.calc),
-                      e.latex ?? ""
-                    )
-                  ),
-                  {
-                    noOptionalSpaces: true,
-                    noNewlines: true,
-                  }
-                );
-              } catch {}
-
-              return [
-                e.id,
-                {
-                  aug,
-                  latex: e.latex,
-                  textMode,
-                  dependsOn,
-                  uniqueID: uniqueID++,
-                  graph: newGraph,
-                  raw: e,
-                  type: "expression",
-                },
-              ];
-            })
-            .filter((e) => e) as [string, ExpressionLibraryExpression][]
-        )
-      );
-
-      for (const [k, v] of folders) {
-        newGraph.expressions.set(k, v);
+        );
+      } else {
+        folders.set(expr.id, {
+          text: expr.title ?? "Untitled Folder",
+          expressions: new Set(),
+          type: "folder",
+          uniqueID: this.uniqueID++,
+          graph: newGraph as ExpressionLibraryGraph,
+          id: expr.id,
+        });
       }
-
-      newGraph.link = g.link;
-      newGraph.hash = g.hash;
-      newGraph.uniqueID = uniqueID++;
-      newGraph.title = g.title ?? "Untitled Graph";
-      newGraph.type = "graph";
-
-      this.graphs.graphs.push(newGraph as ExpressionLibraryGraph);
     }
-    this.dsm.pillboxMenus?.updateMenuView();
+
+    for (const expr of g.state.expressions.list) {
+      if (expr.type === "folder") continue;
+      folders.get(expr.folderId ?? "")?.expressions?.add(expr.id);
+    }
+
+    for (const [id, aug] of augs) {
+      if (aug.type === "expression" && aug.latex) {
+        const root = aug.latex;
+        if (root.type === "Assignment") {
+          dependencymap.set(root.left.symbol, id);
+        } else if (root.type === "FunctionDefinition") {
+          dependencymap.set(root.symbol.symbol, id);
+        }
+      }
+    }
+
+    newGraph.expressions = new Map(
+      (
+        Array.from(folders.entries()) as [string, ExpressionLibraryExpression][]
+      ).concat(
+        (
+          g.state.expressions.list as (ItemState & {
+            latex: string | undefined;
+          })[]
+        )
+          .filter((e) => e.latex !== undefined)
+          .map((e) => {
+            const aug = augs.get(e.id);
+            if (!aug) return undefined;
+
+            const dependsOn = new Set<string>();
+
+            forAllLatexSources(aug, (ltx) => {
+              mapAugAST(ltx, (node) => {
+                if (node && node.type === "Identifier") {
+                  const dep = dependencymap.get(node.symbol);
+                  if (dep) {
+                    dependsOn.add(dep);
+                  }
+                }
+              });
+            });
+
+            let textMode = "";
+
+            try {
+              textMode = astToText(
+                rootLatexToAST(
+                  parseRootLatex(
+                    buildConfigFromGlobals(Desmos, this.calc),
+                    e.latex ?? ""
+                  )
+                ),
+                {
+                  noOptionalSpaces: true,
+                  noNewlines: true,
+                }
+              );
+            } catch {}
+
+            return [
+              e.id,
+              {
+                aug,
+                latex: e.latex,
+                textMode,
+                dependsOn,
+                uniqueID: this.uniqueID++,
+                graph: newGraph,
+                raw: e,
+                type: "expression",
+              },
+            ];
+          })
+          .filter((e) => e) as [string, ExpressionLibraryExpression][]
+      )
+    );
+
+    for (const [k, v] of folders) {
+      newGraph.expressions.set(k, v);
+    }
+
+    newGraph.link = g.link;
+    newGraph.hash = g.hash;
+    newGraph.uniqueID = this.uniqueID++;
+    newGraph.title = g.title ?? "Untitled Graph";
+    newGraph.type = "graph";
+    return newGraph as ExpressionLibraryGraph;
   }
 
   getLibraryExpressions() {
+    // force load all graphs to enable searching
+    for (const graph of this.graphs.values()) {
+      if (!!graph.data || graph.valid === GraphValidity.Invalid) continue;
+      void graph.load().then(() => {
+        this.updateViews();
+      });
+    }
+
     const exprs: ExpressionLibraryExpression[] = [];
-    for (const graph of this.graphs?.graphs ?? []) {
-      exprs.push(graph);
+    for (const graphData of this.graphs.values()) {
+      const graph = graphData.data;
+
+      if (!graph) continue;
+
       for (const [_, expr] of graph.expressions) {
         if (expr.type === "expression") {
           if (
@@ -609,10 +610,60 @@ export default class MyExpressionsLibrary extends PluginController<{
   }
 
   async afterConfigChange() {
-    void this.loadGraphs();
+    const links = new Set(this.settings.libraryGraphLinks);
+
+    for (const link of [...this.graphs.keys()]) {
+      if (!links.has(link)) this.graphs.delete(link);
+    }
+
+    for (const link of links) {
+      this.tryToAddNewGraph(link, true);
+    }
+  }
+
+  updateViews() {
+    this.dsm.pillboxMenus?.updateMenuView();
+  }
+
+  tryToAddNewGraph(link: string, forceLoad?: boolean) {
+    if (this.graphs.has(link)) return;
+
+    const llg = new LazyLoadableGraph({
+      link,
+      name: this.getNameFromLink(link),
+      plugin: this,
+    });
+    this.graphs.set(link, llg);
+
+    if (!llg.name || forceLoad) {
+      void llg.load().then(() => {
+        this.updateViews();
+      });
+    }
   }
 
   afterEnable(): void {
+    try {
+      this.menuExpansionData = JSON.parse(
+        localStorage.getItem(EXPANSIONS_LOCALSTORAGE_KEY) ?? "{ 'graphs': {} }"
+      );
+      this.linkToName = JSON.parse(
+        localStorage.getItem(LINK_TO_NAME_LOCALSTORAGE_KEY) ?? "{}"
+      );
+    } catch {}
+
+    const linksOfExpanded = new Set<string>();
+
+    for (const [k, v] of Object.entries(this.menuExpansionData.graphs)) {
+      if (v.expanded) {
+        linksOfExpanded.add(k);
+      }
+    }
+
+    for (const link of this.settings.libraryGraphLinks) {
+      this.tryToAddNewGraph(link, linksOfExpanded.has(link));
+    }
+
     // add pillbox menu
     this.dsm.pillboxMenus?.addPillboxButton({
       id: "dsm-library-menu",
@@ -628,14 +679,6 @@ export default class MyExpressionsLibrary extends PluginController<{
         );
       },
     });
-
-    void this.loadGraphs();
-
-    try {
-      this.menuExpansionData = JSON.parse(
-        localStorage.getItem(EXPANSIONS_LOCALSTORAGE_KEY) ?? "{ 'graphs': {} }"
-      );
-    } catch {}
   }
 
   afterDisable(): void {
