@@ -124,7 +124,6 @@ function alignGridNoCheck(container: HTMLElement) {
       }
 
       const prev = getPrevNonLineBreakElement(child);
-      console.log(prev, nextNonLineBreak);
 
       if (
         child.dataset.isAutoLineBreak &&
