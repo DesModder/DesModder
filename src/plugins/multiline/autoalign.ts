@@ -2,6 +2,10 @@ function isComma(elem: HTMLElement) {
   return elem.tagName.toUpperCase() === "SPAN" && elem.innerText === ",";
 }
 
+function isDigit(elem?: Element | null) {
+  return elem?.classList.contains("dcg-mq-digit") ?? false;
+}
+
 export function isGrid(container: HTMLElement) {
   const children = container.children;
 
@@ -29,8 +33,11 @@ export function isGrid(container: HTMLElement) {
   return true;
 }
 
-function getNextNonLineBreakElement(child: HTMLElement) {
-  let next: Element | null = child.nextElementSibling;
+function findNonLineBreakElement(
+  child: HTMLElement,
+  successor: (e: Element) => Element | null
+) {
+  let next: Element | null = successor(child);
 
   while (
     !(next instanceof HTMLElement) ||
@@ -39,9 +46,20 @@ function getNextNonLineBreakElement(child: HTMLElement) {
     next.classList.contains("dcg-mq-cursor")
   ) {
     if (!next) return;
-    next = next.nextElementSibling;
+    next = successor(next);
   }
   return next;
+}
+
+function getNextNonLineBreakElement(child: HTMLElement) {
+  return findNonLineBreakElement(child, (child) => child.nextElementSibling);
+}
+
+function getPrevNonLineBreakElement(child: HTMLElement) {
+  return findNonLineBreakElement(
+    child,
+    (child) => child.previousElementSibling
+  );
 }
 
 // Align a grid. Don't check for elements
@@ -70,6 +88,7 @@ function alignGridNoCheck(container: HTMLElement) {
 
     child.style.marginRight = "";
     child.style.marginLeft = "";
+    child.style.borderBottom = "";
   }
 
   for (const child of children) {
@@ -81,7 +100,9 @@ function alignGridNoCheck(container: HTMLElement) {
       child.dataset.isAutoLineBreak
     ) {
       currentRange.setEndAfter(child);
-      const thisRangeWidth = currentRange.getBoundingClientRect().width;
+      const thisRangeWidth = child.dataset.isAutoLineBreak
+        ? 0
+        : currentRange.getBoundingClientRect().width;
       maxWidths[commaIndex] = Math.max(
         maxWidths[commaIndex] ?? 0,
         thisRangeWidth
@@ -98,6 +119,20 @@ function alignGridNoCheck(container: HTMLElement) {
       if (nextNonLineBreak) {
         currentRange.setStartBefore(nextNonLineBreak);
         rangeStart = nextNonLineBreak;
+      } else {
+        break;
+      }
+
+      const prev = getPrevNonLineBreakElement(child);
+      console.log(prev, nextNonLineBreak);
+
+      if (
+        child.dataset.isAutoLineBreak &&
+        prev instanceof HTMLElement &&
+        isDigit(prev) &&
+        isDigit(nextNonLineBreak)
+      ) {
+        prev.style.borderBottom = "2px solid red";
       }
     }
 
