@@ -184,6 +184,7 @@ export default class MyExpressionsLibrary extends PluginController<{
       type: "stringArray",
       default: [],
       key: "libraryGraphLinks",
+      notInSettingsMenu: true,
     },
   ] as const;
 

@@ -181,7 +181,12 @@ export default class Menu extends Component<{
     return (
       <div>
         {plugin.config.map((item: ConfigItem) => (
-          <If predicate={() => item.shouldShow?.(pluginSettings) ?? true}>
+          <If
+            predicate={() =>
+              (!item.notInSettingsMenu && item.shouldShow?.(pluginSettings)) ??
+              true
+            }
+          >
             {() =>
               indentation(
                 item.indentationLevel ?? 0,

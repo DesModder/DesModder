@@ -38,6 +38,10 @@ interface ConfigItemGeneric {
   key: string;
   // TODO proper type here
   shouldShow?: (current: any) => boolean;
+  // if true, this config item won't be shown in the settings menu
+  // this is useful if for example the setting in question should be modified
+  // in a different menu
+  notInSettingsMenu?: boolean;
   // display name and descriptions are managed in a translations file
 }
 
