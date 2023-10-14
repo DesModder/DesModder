@@ -105,8 +105,8 @@ export default class SetPrimaryColor extends PluginController<Config> {
     const ctx = canvas.getContext("2d");
     if (ctx === null) return;
     const defaultHslValues = {
-      graphing: [285, 0.67, 0.8],
-      "geometry-calculator": [130, 1, 0.73],
+      graphing: [130, 1, 0.73],
+      "geometry-calculator": [285, 0.67, 0.8],
       "graphing-3d": [300, 0.69, 0.95],
     };
     const [bhue, bsat, bval] =

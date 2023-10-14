@@ -1,5 +1,17 @@
 # DesModder Changelog
 
+## 0.12.2
+
+Bug fixes:
+
+- (Better Navigation) Fix Ctrl+Backspace not triggering a graph update.
+
+## 0.12.1
+
+Bug fixes:
+
+- (Set Primary Color) Fix the hue for /calculator and /geometry.
+
 ## 0.12.0
 
 New: support [https://desmos.com/3d](https://desmos.com/3d)!

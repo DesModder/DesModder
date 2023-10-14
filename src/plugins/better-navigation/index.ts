@@ -103,6 +103,11 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
           const navOption = NavigationTable[key];
           if (!navOption) return true;
 
+          // type an empty string to force desmos to update
+          setTimeout(() => {
+            this.calc.focusedMathQuill?.typedText("");
+          }, 0);
+
           // backspace is implicitly "left"
           const dir = navOption.dir;
           const mode = navOption.mode;
@@ -158,6 +163,7 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
           } else {
             mq.keystroke(arrowOp);
           }
+
           return false;
         },
         0,

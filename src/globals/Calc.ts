@@ -182,6 +182,7 @@ interface CalcPrivate {
   focusedMathQuill:
     | {
         mq: MathQuillField;
+        typedText: (text: string) => void;
       }
     | undefined;
   /// / undocumented, may break
