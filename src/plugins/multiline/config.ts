@@ -35,7 +35,7 @@ export const configList = [
   {
     indentationLevel: 1,
     type: "boolean",
-    default: true,
+    default: false,
     key: "autoAlignGrids",
     shouldShow(current) {
       return current.spacesToNewlines;
