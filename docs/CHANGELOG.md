@@ -1,5 +1,11 @@
 # DesModder Changelog
 
+## 0.12.2
+
+Bug fixes:
+
+- (Better Navigation) Fix Ctrl+Backspace not triggering a graph update.
+
 ## 0.12.1
 
 Bug fixes:
