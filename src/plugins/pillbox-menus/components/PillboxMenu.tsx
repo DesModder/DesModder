@@ -109,12 +109,7 @@ export default class PillboxMenu extends Component<{
     let index = this.pm.pillboxButtonsOrder.indexOf(
       this.pm.pillboxMenuOpen as string
     );
-    if (
-      this.pm.calc.settings.settingsMenu &&
-      (!this.pm.cc.isGeometry() ||
-        this.horizontal !== this.pm.cc.isNarrowGeometryHeader())
-    )
-      index += 1;
+    if (this.pm.cc.graphSettings.config.settingsMenu) index += 1;
     return index;
   }
 

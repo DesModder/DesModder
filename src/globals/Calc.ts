@@ -203,6 +203,7 @@ interface CalcPrivate {
       config: {
         // only includes products desmodder is enabled for
         product: Product;
+        settingsMenu: boolean;
       };
     };
     dispatch: (e: DispatchedEvent) => void;
