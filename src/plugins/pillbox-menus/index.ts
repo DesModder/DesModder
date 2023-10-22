@@ -85,6 +85,13 @@ export default class PillboxMenus extends PluginController<undefined> {
 
   toggleMenu(id: string) {
     this.pillboxMenuOpen = this.pillboxMenuOpen === id ? null : id;
+    if (
+      this.pillboxMenuOpen &&
+      this.cc.geometryGettingStartedMessageState !== "hidden"
+    ) {
+      this.cc.geometryGettingStartedMessageState = "hidden";
+      this.cc.dispatch({ type: "tick" });
+    }
     this.pillboxMenuPinned = false;
     this.updateMenuView();
   }

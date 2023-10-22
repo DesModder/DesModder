@@ -264,6 +264,7 @@ interface CalcPrivate {
     _tickSliders: (nowTimestamp: number) => void;
     computeMajorLayout: () => { grapher: { width: number } };
     isGeometry: () => boolean;
+    geometryGettingStartedMessageState: string;
     isGeoUIActive: () => boolean;
     isNarrowGeometryHeader: () => boolean;
     expressionSearchOpen: boolean;
