@@ -201,6 +201,31 @@ export default class SelectCapture extends Component<{
             </div>
           )}
         </If>
+        <If predicate={() => this.vc.isCurrentOrientationRelevant()}>
+          {() => (
+            <div class="dsm-vc-orientation">
+              {format("video-creator-angle")}
+              <StaticMathQuillView latex="\ xy=" />
+              <ManagedNumberInput
+                focusID="current-xy-rot"
+                // TODO-localization
+                ariaLabel="current rotation in xy plane"
+                hasError={() => !this.vc.isCurrentXYRotValid()}
+                vc={this.vc}
+                data={this.vc.xyRot}
+              />
+              <StaticMathQuillView latex="\ z=" />
+              <ManagedNumberInput
+                focusID="current-z-tip"
+                // TODO-localization
+                ariaLabel="current rotation tipping z axis towards camera"
+                hasError={() => !this.vc.isCurrentZTipValid()}
+                vc={this.vc}
+                data={this.vc.zTip}
+              />
+            </div>
+          )}
+        </If>
         <div class="dsm-vc-capture">
           {IfElse(
             () => !this.vc.isCapturing || this.vc.captureMethod === "once",

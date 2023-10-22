@@ -164,7 +164,7 @@ export function hookIntoFunction<
   priority: number,
   fn: HookedFunctionCallback<Fn>
 ) {
-  const oldfn = obj[prop] as MaybeHookedFunction<Fn>;
+  const oldfn = obj[prop].bind(obj) as MaybeHookedFunction<Fn>;
 
   // monkeypatch the function if it isn't monkeypatched already
   if (!oldfn.__isMonkeypatchedIn) {

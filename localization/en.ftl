@@ -180,6 +180,7 @@ video-creator-ticks-step = Time step (ms):
 video-creator-prev-action = Prev
 video-creator-next-action = Next
 video-creator-size = Size:
+video-creator-angle = Angle:
 video-creator-step-count = Step count:
 video-creator-target-same-pixel-ratio = Target same pixel ratio
 video-creator-target-tooltip = Adjusts scaling of line width, point size, label size, etc.
@@ -347,4 +348,3 @@ better-navigation-opt-ctrlArrow-name = Ctrl+Arrow Support
 better-navigation-opt-ctrlArrow-desc = Use Ctrl+ArrowKeys or Ctrl+Shift+ArrowKeys to skip over large blocks of text quickly. Use Ctrl+Backspace to delete large blocks of text.
 better-navigation-opt-scrollableExpressions-name = Scrollable Expressions
 better-navigation-opt-scrollableExpressions-desc = Adds horizontal scrollbars to expressions. This is primarily intended to make scrolling easier on mobile.
-

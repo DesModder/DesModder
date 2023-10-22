@@ -15,6 +15,7 @@ interface ManagedNumberInputParams {
 
 export interface ManagedNumberInputModelOpts {
   afterLatexChanged?: () => void;
+  fixedDecimals?: () => number;
 }
 
 export class ManagedNumberInputModel {
@@ -38,7 +39,7 @@ export class ManagedNumberInputModel {
   }
 
   setValue(v: number) {
-    this.latex = v.toFixed(0);
+    this.latex = v.toFixed(this.opts?.fixedDecimals?.() ?? 0);
   }
 
   getValue() {

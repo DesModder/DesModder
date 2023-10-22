@@ -14,6 +14,15 @@ import {
   ManagedNumberInputModel,
   ManagedNumberInputModelOpts,
 } from "./components/ManagedNumberInput";
+import { hookIntoFunction } from "#utils/listenerHelpers.ts";
+import {
+  Matrix3,
+  approx3su,
+  eulerFromOrientation,
+  getOrientation,
+  orientationFromEuler,
+  setOrientation,
+} from "../../globals/matrix3";
 
 type FocusedMQ = string;
 
@@ -22,6 +31,7 @@ const DEFAULT_FILENAME = "DesModder_Video_Creator";
 export default class VideoCreator extends PluginController {
   static id = "video-creator" as const;
   static enabledByDefault = true;
+  readonly cleanupCallbacks: (() => void)[] = [];
 
   ffmpegLoaded = false;
   frames: string[] = [];
@@ -67,6 +77,16 @@ export default class VideoCreator extends PluginController {
   readonly captureWidth = this.managedNumberInputModel("");
   samePixelRatio = false;
 
+  // ** orientation
+  // TODO: number of fixed decimals should depend on radians vs degrees.
+  readonly currOrientationOpts = {
+    fixedDecimals: () => 3,
+    afterLatexChanged: () => this.updateOrientationFromLatex(),
+  };
+
+  readonly zTip = this.managedNumberInputModel("", this.currOrientationOpts);
+  readonly xyRot = this.managedNumberInputModel("", this.currOrientationOpts);
+
   // ** play preview
   previewIndex = 0;
   isPlayingPreview = false;
@@ -97,6 +117,7 @@ export default class VideoCreator extends PluginController {
   afterEnable() {
     this.calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
     this._applyDefaultCaptureSize();
+    this.applySpinningOrientation();
     this.dsm.pillboxMenus?.addPillboxButton({
       id: "dsm-vc-menu",
       tooltip: "video-creator-menu",
@@ -104,11 +125,23 @@ export default class VideoCreator extends PluginController {
       popup: () => MainPopupFunc(this),
     });
     document.addEventListener("keydown", this.onKeydown);
+    const controls = this.cc.grapher3d?.controls;
+    if (controls) {
+      const unhook = hookIntoFunction(
+        controls,
+        "copyWorldRotationToWorld",
+        "video-creator-rotation-listener",
+        0,
+        () => this.applySpinningOrientation()
+      );
+      if (unhook) this.cleanupCallbacks.push(unhook);
+    }
   }
 
   afterDisable() {
     this.dsm.pillboxMenus?.removePillboxButton("dsm-vc-menu");
     document.removeEventListener("keydown", this.onKeydown);
+    for (const cleanup of this.cleanupCallbacks) cleanup();
   }
 
   graphpaperBoundsChanged() {
@@ -293,11 +326,64 @@ export default class VideoCreator extends PluginController {
     return Number.isInteger(tc) && tc > 0;
   }
 
+  isAngleValid(v: number) {
+    return !isNaN(v) && Math.abs(v) < 2 ** 30;
+  }
+
+  isCurrentXYRotValid() {
+    return this.isAngleValid(this.xyRot.getValue());
+  }
+
+  isCurrentZTipValid() {
+    return this.isAngleValid(this.zTip.getValue());
+  }
+
+  isCurrentOrientationRelevant() {
+    return this.cc.is3dProduct();
+  }
+
+  _applyingSpinningOrientation = false;
+  applySpinningOrientation() {
+    const grapher3d = this.cc.grapher3d;
+    if (!grapher3d) return;
+    if (this._applyingSpinningOrientation) return;
+    const mat = getOrientation(grapher3d);
+    const tm = this._targetMatrixFromLatex;
+    if (tm && approx3su(mat, tm)) {
+      // Avoid a cycle where editing the latex changes the world changes the latex
+      return;
+    }
+    this._targetMatrixFromLatex = undefined;
+    const { zTip, xyRot } = eulerFromOrientation(mat);
+    this._applyingSpinningOrientation = true;
+    this.zTip.setValue(zTip);
+    this.xyRot.setValue(xyRot);
+    this._applyingSpinningOrientation = false;
+  }
+
+  _targetMatrixFromLatex: Matrix3 | undefined;
+  updateOrientationFromLatex() {
+    if (this._applyingSpinningOrientation) return;
+    const grapher3d = this.cc.grapher3d;
+    if (!grapher3d) return;
+    const zTip = this.zTip.getValue();
+    const xyRot = this.xyRot.getValue();
+    if (!this.isAngleValid(zTip) || !this.isAngleValid(xyRot)) return;
+    const mat = orientationFromEuler(grapher3d, zTip, xyRot);
+    this._targetMatrixFromLatex = mat;
+    setOrientation(grapher3d, mat);
+  }
+
   async capture() {
     await capture(this);
   }
 
   areCaptureSettingsValid() {
+    if (
+      this.isCurrentOrientationRelevant() &&
+      (!this.isCurrentXYRotValid() || !this.isCurrentZTipValid())
+    )
+      return false;
     if (!this.isCaptureWidthValid() || !this.isCaptureHeightValid()) {
       return false;
     }

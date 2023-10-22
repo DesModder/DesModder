@@ -105,6 +105,7 @@ export async function captureSlider(vc: VideoCreator) {
       id: slider.id,
       latex: `${variable}=${value}`,
     });
+    // TODO: set angle to desired
     try {
       await captureAndApplyFrame(vc);
     } catch {
@@ -192,6 +193,10 @@ function forceReloadMenu(dsm: DSM) {
   }
 }
 
+// const grapher3d = vc.cc.grapher3d;
+// if (!grapher3d) throw new Error("Programming error: 3d but no grapher3d");
+// setOrientation(grapher3d, orientationFromEuler(grapher3d, 1, ++a / 10));
+
 export async function capture(vc: VideoCreator) {
   vc.isCapturing = true;
   vc.updateView();
@@ -216,6 +221,7 @@ export async function capture(vc: VideoCreator) {
             type: "action-single-step",
             id: vc.currentActionID,
           });
+        // TODO: step by dAngle
       };
       await captureActionOrSliderTicks(vc, step);
       break;
@@ -224,6 +230,7 @@ export async function capture(vc: VideoCreator) {
       let currTime = performance.now();
       const step = () => {
         currTime += vc.getTickTimeStepNumber();
+        // TODO: step by dAngle.
         tickSliders(currTime);
       };
       await captureActionOrSliderTicks(vc, step);

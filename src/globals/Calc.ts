@@ -1,6 +1,7 @@
 import { ItemModel } from "./models";
 import { GraphState } from "@desmodder/graph-state";
 import { MathQuillField } from "#components";
+import { Matrix3 } from "./matrix3";
 
 export type DispatchedEvent =
   | {
@@ -178,6 +179,19 @@ export interface Toast {
 
 type Product = "graphing" | "geometry-calculator" | "graphing-3d";
 
+export interface Grapher3d {
+  controls: {
+    worldRotation3D: Matrix3;
+    copyWorldRotationToWorld: () => void;
+  };
+  viewportController: {
+    animateToOrientation: (m: Matrix3) => void;
+  };
+  transition: {
+    duration: number;
+  };
+}
+
 interface CalcPrivate {
   focusedMathQuill:
     | {
@@ -277,6 +291,7 @@ interface CalcPrivate {
       autoCommands: string;
     };
     is3dProduct: () => boolean;
+    grapher3d?: Grapher3d;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;
