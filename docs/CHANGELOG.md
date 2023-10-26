@@ -1,5 +1,12 @@
 # DesModder Changelog
 
+## 0.12.3
+
+Bug fixes:
+
+- Fix pillbox buttons on [https://desmos.com/geometry](https://desmos.com/geometry).
+- (Video Creator) Fix vertical stretching of captured frames in 3d.
+
 ## 0.12.2
 
 Bug fixes:
