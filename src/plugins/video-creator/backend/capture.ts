@@ -22,41 +22,57 @@ export async function captureFrame(vc: VideoCreator) {
   const height = vc.getCaptureHeightNumber();
   const targetPixelRatio = vc.getTargetPixelRatio();
   // resolves the screenshot as a data URI
-  return await new Promise<string>((resolve, reject) => {
-    const tryCancel = () => {
-      if (vc.captureCancelled) {
-        vc.captureCancelled = false;
-        reject(new Error("cancelled"));
-      }
-    };
-    tryCancel();
-    // poll for mid-screenshot cancellation (only affects UI)
-    const interval = window.setInterval(tryCancel, 50);
-    const pixelBounds = vc.calc.graphpaperBounds.pixelCoordinates;
-    const ratio = height / width / (pixelBounds.height / pixelBounds.width);
-    const mathBounds = vc.calc.graphpaperBounds.mathCoordinates;
-    // make the captured region entirely visible
-    const clampedMathBounds = scaleBoundsAboutCenter(
-      mathBounds,
-      Math.min(ratio, 1 / ratio)
-    );
-    const opts = {
-      width: width / targetPixelRatio,
-      targetPixelRatio,
-      height: height / targetPixelRatio,
-      showLabels: true,
-      preserveAxisNumbers: true,
-      mathBounds: clampedMathBounds,
-    };
-    if (vc.cc.is3dProduct()) {
-      // Suppress warnings here: 3d doesn't support showLabels and mathBounds.
-      delete (opts as any).showLabels;
-      delete (opts as any).mathBounds;
+  const tryCancel = () => {
+    if (vc.captureCancelled) {
+      vc.captureCancelled = false;
+      throw new Error("cancelled");
     }
-    vc.calc.asyncScreenshot(opts, (data) => {
-      clearInterval(interval);
-      resolve(data);
-    });
+  };
+  tryCancel();
+  // poll for mid-screenshot cancellation (only affects UI)
+  const interval = window.setInterval(tryCancel, 50);
+  const size = {
+    width: width / targetPixelRatio,
+    targetPixelRatio,
+    height: height / targetPixelRatio,
+    preserveAxisNumbers: true,
+  };
+  const screenshot = vc.cc.is3dProduct() ? screenshot3d : screenshot2d;
+  const data = await screenshot(vc, size);
+  clearInterval(interval);
+  return data;
+}
+
+interface ScreenshotOpts {
+  width: number;
+  height: number;
+  targetPixelRatio: number;
+  preserveAxisNumbers: boolean;
+}
+
+async function screenshot3d(vc: VideoCreator, size: ScreenshotOpts) {
+  return await new Promise<string>((resolve) => {
+    vc.cc.evaluator.notifyWhenSynced(() => resolve(vc.calc.screenshot(size)));
+  });
+}
+
+async function screenshot2d(vc: VideoCreator, size: ScreenshotOpts) {
+  // make the captured region entirely visible
+  const { width, height } = size;
+  const pixelBounds = vc.calc.graphpaperBounds.pixelCoordinates;
+  const ratio = height / width / (pixelBounds.height / pixelBounds.width);
+  const mathBounds = vc.calc.graphpaperBounds.mathCoordinates;
+  const clampedMathBounds = scaleBoundsAboutCenter(
+    mathBounds,
+    Math.min(ratio, 1 / ratio)
+  );
+  const opts = {
+    ...size,
+    showLabels: true,
+    mathBounds: clampedMathBounds,
+  };
+  return await new Promise<string>((resolve) => {
+    vc.calc.asyncScreenshot(opts, resolve);
   });
 }
 
