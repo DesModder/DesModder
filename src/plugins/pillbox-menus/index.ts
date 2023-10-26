@@ -85,6 +85,13 @@ export default class PillboxMenus extends PluginController<undefined> {
 
   toggleMenu(id: string) {
     this.pillboxMenuOpen = this.pillboxMenuOpen === id ? null : id;
+    if (
+      this.pillboxMenuOpen &&
+      this.cc.geometryGettingStartedMessageState !== "hidden"
+    ) {
+      this.cc.geometryGettingStartedMessageState = "hidden";
+      this.cc.dispatch({ type: "tick" });
+    }
     this.pillboxMenuPinned = false;
     this.updateMenuView();
   }
@@ -101,15 +108,7 @@ export default class PillboxMenus extends PluginController<undefined> {
   }
 
   showHorizontalPillboxMenu() {
-    // Constant threshold, independent of this.pillboxButtonsOrder.length
-    // Maybe want to tweak the threshold if a fourth possible pillbox button is
-    // added, or figure out a better layout at that point because it's starting
-    // to be a lot of pillbox threshold.
-    return (
-      !this.calc.settings.graphpaper ||
-      (this.cc.isGeoUIActive() &&
-        this.cc.computeMajorLayout().grapher.width > 500)
-    );
+    return !this.calc.settings.graphpaper;
   }
 
   getDefaultSetting(key: string) {

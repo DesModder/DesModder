@@ -203,6 +203,7 @@ interface CalcPrivate {
       config: {
         // only includes products desmodder is enabled for
         product: Product;
+        settingsMenu: boolean;
       };
     };
     dispatch: (e: DispatchedEvent) => void;
@@ -263,6 +264,7 @@ interface CalcPrivate {
     _tickSliders: (nowTimestamp: number) => void;
     computeMajorLayout: () => { grapher: { width: number } };
     isGeometry: () => boolean;
+    geometryGettingStartedMessageState: string;
     isGeoUIActive: () => boolean;
     isNarrowGeometryHeader: () => boolean;
     expressionSearchOpen: boolean;

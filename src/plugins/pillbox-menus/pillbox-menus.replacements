@@ -2,23 +2,6 @@
 
 *plugin* `pillbox-menus`
 
-## Insert spot for extra pillbox buttons in geometry toolbar
-
-*Description* `Add pillbox buttons (like the DesModder button) in the geometry calculator`
-
-*Find* => `from`
-```js
-$DCGView.createElement("div", {
-  class: $DCGView.const("dcg-header-right dcg-do-blur")
-},
-```
-
-*Replace* `from` with
-```js
-__from__
-DSM.insertElement(() => DSM.pillboxMenus?.pillboxButtonsView(true)),
-```
-
 ## Insert spot for extra pillbox buttons in regular pillbox view
 
 *Description* `Add pillbox buttons (like the DesModder button) in the graphing calculator`
