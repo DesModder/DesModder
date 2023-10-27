@@ -5,15 +5,9 @@ import LoadingPie from "./LoadingPie";
 import "./MainPopup.less";
 import PreviewCarousel from "./PreviewCarousel";
 import { Component, jsx } from "#DCGView";
-import {
-  SegmentedControl,
-  If,
-  Input,
-  Button,
-  IfElse,
-  InlineMathInputView,
-} from "#components";
+import { SegmentedControl, If, Input, Button, IfElse } from "#components";
 import { format } from "#i18n";
+import ManagedNumberInput from "./ManagedNumberInput";
 
 const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng", "zip"];
 
@@ -169,16 +163,13 @@ export default class MainPopup extends Component<{
                   {() => (
                     <div class="dsm-vc-fps-settings">
                       {format("video-creator-fps")}
-                      <InlineMathInputView
+                      <ManagedNumberInput
+                        focusID="export-fps"
+                        // TODO-localization
                         ariaLabel="fps"
-                        handleLatexChanged={(s) => this.vc.setFPSLatex(s)}
                         hasError={() => !this.vc.isFPSValid()}
-                        latex={() => this.vc.fpsLatex}
-                        isFocused={() => this.vc.isFocused("export-fps")}
-                        handleFocusChanged={(b) =>
-                          this.vc.updateFocus("export-fps", b)
-                        }
-                        controller={this.vc.cc}
+                        vc={this.vc}
+                        data={this.vc.fps}
                       />
                     </div>
                   )}

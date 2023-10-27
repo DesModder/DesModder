@@ -15,6 +15,7 @@ import {
   For,
 } from "#components";
 import { format } from "#i18n";
+import ManagedNumberInput from "./ManagedNumberInput";
 
 export default class SelectCapture extends Component<{
   vc: VideoCreator;
@@ -48,11 +49,9 @@ export default class SelectCapture extends Component<{
                 <span class="yes-intellisense">
                   <InlineMathInputView
                     ariaLabel="slider variable"
-                    handleLatexChanged={(v) =>
-                      this.vc.setSliderSetting("variable", v)
-                    }
-                    hasError={() => !this.vc.isSliderSettingValid("variable")}
-                    latex={() => this.vc.sliderSettings.variable}
+                    handleLatexChanged={(v) => this.vc.setSliderVariable(v)}
+                    hasError={() => !this.vc.isSliderVariableValid()}
+                    latex={() => this.vc.sliderVariable}
                     isFocused={() => this.vc.isFocused("capture-slider-var")}
                     handleFocusChanged={(b) =>
                       this.vc.updateFocus("capture-slider-var", b)
@@ -61,46 +60,31 @@ export default class SelectCapture extends Component<{
                   />
                 </span>
                 <StaticMathQuillView latex="=" />
-                <InlineMathInputView
+                <ManagedNumberInput
+                  focusID="capture-slider-min"
+                  // TODO-localization
                   ariaLabel="slider min"
-                  handleLatexChanged={(v) =>
-                    this.vc.setSliderSetting("minLatex", v)
-                  }
-                  hasError={() => !this.vc.isSliderSettingValid("minLatex")}
-                  latex={() => this.vc.sliderSettings.minLatex}
-                  isFocused={() => this.vc.isFocused("capture-slider-min")}
-                  handleFocusChanged={(b) =>
-                    this.vc.updateFocus("capture-slider-min", b)
-                  }
-                  controller={this.vc.cc}
+                  hasError={() => !this.vc.isSliderSettingValid("min")}
+                  vc={this.vc}
+                  data={this.vc.sliderSettings.min}
                 />
                 {format("video-creator-to")}
-                <InlineMathInputView
+                <ManagedNumberInput
+                  focusID="capture-slider-max"
+                  // TODO-localization
                   ariaLabel="slider max"
-                  handleLatexChanged={(v) =>
-                    this.vc.setSliderSetting("maxLatex", v)
-                  }
-                  hasError={() => !this.vc.isSliderSettingValid("maxLatex")}
-                  latex={() => this.vc.sliderSettings.maxLatex}
-                  isFocused={() => this.vc.isFocused("capture-slider-max")}
-                  handleFocusChanged={(b) =>
-                    this.vc.updateFocus("capture-slider-max", b)
-                  }
-                  controller={this.vc.cc}
+                  hasError={() => !this.vc.isSliderSettingValid("max")}
+                  vc={this.vc}
+                  data={this.vc.sliderSettings.max}
                 />
                 {format("video-creator-step")}
-                <InlineMathInputView
+                <ManagedNumberInput
+                  focusID="capture-slider-step"
+                  // TODO-localization
                   ariaLabel="slider step"
-                  handleLatexChanged={(v) =>
-                    this.vc.setSliderSetting("stepLatex", v)
-                  }
-                  hasError={() => !this.vc.isSliderSettingValid("stepLatex")}
-                  latex={() => this.vc.sliderSettings.stepLatex}
-                  isFocused={() => this.vc.isFocused("capture-slider-step")}
-                  handleFocusChanged={(b) =>
-                    this.vc.updateFocus("capture-slider-step", b)
-                  }
-                  controller={this.vc.cc}
+                  hasError={() => !this.vc.isSliderSettingValid("step")}
+                  vc={this.vc}
+                  data={this.vc.sliderSettings.step}
                 />
               </div>
             </div>
@@ -150,16 +134,14 @@ export default class SelectCapture extends Component<{
           ticks: () => (
             <div class="dsm-vc-ticks-settings">
               {format("video-creator-ticks-step")}
-              <InlineMathInputView
+
+              <ManagedNumberInput
+                focusID="capture-tick-time-step"
+                // TODO-localization
                 ariaLabel="time step (ms)"
-                handleLatexChanged={(v) => this.vc.setTickTimeStepLatex(v)}
                 hasError={() => !this.vc.isTickTimeStepValid()}
-                latex={() => this.vc.tickTimeStepLatex}
-                isFocused={() => this.vc.isFocused("capture-tick-time-step")}
-                handleFocusChanged={(b) =>
-                  this.vc.updateFocus("capture-tick-time-step", b)
-                }
-                controller={this.vc.cc}
+                vc={this.vc}
+                data={this.vc.tickTimeStep}
               />
             </div>
           ),
@@ -167,24 +149,22 @@ export default class SelectCapture extends Component<{
         })}
         <div class="dsm-vc-capture-size">
           {format("video-creator-size")}
-          <InlineMathInputView
+          <ManagedNumberInput
+            focusID="capture-width"
+            // TODO-localization
             ariaLabel="capture width"
-            handleLatexChanged={(latex) => this.vc.setCaptureWidthLatex(latex)}
-            latex={() => this.vc.captureWidthLatex}
             hasError={() => !this.vc.isCaptureWidthValid()}
-            handleFocusChanged={(b) => this.vc.updateFocus("capture-width", b)}
-            isFocused={() => this.vc.isFocused("capture-width")}
-            controller={this.vc.cc}
+            vc={this.vc}
+            data={this.vc.captureWidth}
           />
           ×
-          <InlineMathInputView
+          <ManagedNumberInput
+            focusID="capture-height"
+            // TODO-localization
             ariaLabel="capture height"
-            handleLatexChanged={(latex) => this.vc.setCaptureHeightLatex(latex)}
-            latex={() => this.vc.captureHeightLatex}
             hasError={() => !this.vc.isCaptureHeightValid()}
-            handleFocusChanged={(b) => this.vc.updateFocus("capture-height", b)}
-            isFocused={() => this.vc.isFocused("capture-height")}
-            controller={this.vc.cc}
+            vc={this.vc}
+            data={this.vc.captureHeight}
           />
           <If predicate={() => this.vc.isDefaultCaptureSizeDifferent()}>
             {() => (
@@ -261,16 +241,13 @@ export default class SelectCapture extends Component<{
             {() => (
               <div class="dsm-vc-end-condition-settings">
                 {format("video-creator-step-count")}
-                <InlineMathInputView
+                <ManagedNumberInput
+                  focusID="capture-tick-count"
+                  // TODO-localization
                   ariaLabel="step count"
-                  handleLatexChanged={(v) => this.vc.setTickCountLatex(v)}
                   hasError={() => !this.vc.isTickCountValid()}
-                  latex={() => this.vc.tickCountLatex}
-                  isFocused={() => this.vc.isFocused("capture-tick-count")}
-                  handleFocusChanged={(b) =>
-                    this.vc.updateFocus("capture-tick-count", b)
-                  }
-                  controller={this.vc.cc}
+                  vc={this.vc}
+                  data={this.vc.tickCount}
                 />
               </div>
             )}

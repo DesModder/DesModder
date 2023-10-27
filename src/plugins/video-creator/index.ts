@@ -10,18 +10,12 @@ import {
   EvaluateSingleExpression,
   getCurrentGraphTitle,
 } from "#utils/depUtils.ts";
+import {
+  ManagedNumberInputModel,
+  ManagedNumberInputModelOpts,
+} from "./components/ManagedNumberInput";
 
-type FocusedMQ =
-  | "none"
-  | "capture-slider-var"
-  | "capture-slider-min"
-  | "capture-slider-max"
-  | "capture-slider-step"
-  | "capture-tick-count"
-  | "capture-tick-time-step"
-  | "capture-width"
-  | "capture-height"
-  | "export-fps";
+type FocusedMQ = string;
 
 const DEFAULT_FILENAME = "DesModder_Video_Creator";
 
@@ -33,7 +27,14 @@ export default class VideoCreator extends PluginController {
   frames: string[] = [];
   isCapturing = false;
   captureCancelled = false;
-  fpsLatex = "30";
+  readonly fps = this.managedNumberInputModel("30", {
+    afterLatexChanged: () => {
+      // advancing here resets the timeout
+      // in case someone uses a low fps like 0.0001
+      this.advancePlayPreviewFrame(false);
+    },
+  });
+
   fileType: OutFileType = "mp4";
   outfileName: string | null = null;
 
@@ -47,23 +48,23 @@ export default class VideoCreator extends PluginController {
 
   // ** capture methods
   #captureMethod: CaptureMethod = "once";
-  sliderSettings: SliderSettings = {
-    variable: "a",
-    minLatex: "0",
-    maxLatex: "10",
-    stepLatex: "1",
+  sliderVariable = "a";
+  readonly sliderSettings: SliderSettings = {
+    min: this.managedNumberInputModel("0"),
+    max: this.managedNumberInputModel("10"),
+    step: this.managedNumberInputModel("1"),
   };
 
   actionCaptureState: "none" | "waiting-for-update" | "waiting-for-screenshot" =
     "none";
 
   currentActionID: string | null = null;
-  tickCountLatex: string = "10";
-  tickTimeStepLatex: string = "40";
+  readonly tickCount = this.managedNumberInputModel("10");
+  readonly tickTimeStep = this.managedNumberInputModel("40");
 
   // ** capture sizing
-  captureHeightLatex = "";
-  captureWidthLatex = "";
+  readonly captureHeight = this.managedNumberInputModel("");
+  readonly captureWidth = this.managedNumberInputModel("");
   samePixelRatio = false;
 
   // ** play preview
@@ -71,6 +72,19 @@ export default class VideoCreator extends PluginController {
   isPlayingPreview = false;
   playPreviewTimeout: number | null = null;
   isPlayPreviewExpanded = false;
+
+  managedNumberInputModel(
+    initLatex: string,
+    opts?: ManagedNumberInputModelOpts
+  ) {
+    return new ManagedNumberInputModel(initLatex, this.calc, {
+      ...opts,
+      afterLatexChanged: () => {
+        opts?.afterLatexChanged?.();
+        this.updateView();
+      },
+    });
+  }
 
   onKeydown = this._onKeydown.bind(this);
   _onKeydown(e: KeyboardEvent) {
@@ -129,19 +143,12 @@ export default class VideoCreator extends PluginController {
   }
 
   isFPSValid() {
-    return this.isValidNumber(this.fpsLatex);
-  }
-
-  setFPSLatex(latex: string) {
-    this.fpsLatex = latex;
-    // advancing here resets the timeout
-    // in case someone uses a low fps like 0.0001
-    this.advancePlayPreviewFrame(false);
-    this.updateView();
+    const v = this.fps.getValue();
+    return v >= 0;
   }
 
   getFPSNumber() {
-    return this.eval(this.fpsLatex);
+    return this.fps.getValue();
   }
 
   setOutputFiletype(type: OutFileType) {
@@ -192,22 +199,17 @@ export default class VideoCreator extends PluginController {
   }
 
   isCaptureWidthValid() {
-    return this.isValidLength(this.captureWidthLatex);
-  }
-
-  setCaptureWidthLatex(latex: string) {
-    this.captureWidthLatex = latex;
-    this.updateView();
+    return isValidLength(this.captureWidth.getValue());
   }
 
   isCaptureHeightValid() {
-    return this.isValidLength(this.captureHeightLatex);
+    return isValidLength(this.captureHeight.getValue());
   }
 
   _applyDefaultCaptureSize() {
     const size = this.calc.graphpaperBounds.pixelCoordinates;
-    this.captureWidthLatex = size.width.toFixed(0);
-    this.captureHeightLatex = size.height.toFixed(0);
+    this.captureWidth.setValue(size.width);
+    this.captureHeight.setValue(size.height);
   }
 
   applyDefaultCaptureSize() {
@@ -218,22 +220,17 @@ export default class VideoCreator extends PluginController {
   isDefaultCaptureSizeDifferent() {
     const size = this.calc.graphpaperBounds.pixelCoordinates;
     return (
-      this.captureWidthLatex !== size.width.toFixed(0) ||
-      this.captureHeightLatex !== size.height.toFixed(0)
+      this.captureWidth.latex !== size.width.toFixed(0) ||
+      this.captureHeight.latex !== size.height.toFixed(0)
     );
   }
 
-  setCaptureHeightLatex(latex: string) {
-    this.captureHeightLatex = latex;
-    this.updateView();
-  }
-
   getCaptureWidthNumber() {
-    return this.eval(this.captureWidthLatex);
+    return this.captureWidth.getValue();
   }
 
   getCaptureHeightNumber() {
-    return this.eval(this.captureHeightLatex);
+    return this.captureHeight.getValue();
   }
 
   setSamePixelRatio(samePixelRatio: boolean) {
@@ -243,7 +240,7 @@ export default class VideoCreator extends PluginController {
 
   _getTargetPixelRatio() {
     return (
-      this.getCaptureWidthNumber() /
+      this.captureWidth.getValue() /
       this.calc.graphpaperBounds.pixelCoordinates.width
     );
   }
@@ -252,26 +249,8 @@ export default class VideoCreator extends PluginController {
     return this.samePixelRatio ? 1 : this._getTargetPixelRatio();
   }
 
-  setSliderSetting<T extends keyof SliderSettings>(
-    key: T,
-    value: SliderSettings[T]
-  ) {
-    this.sliderSettings[key] = value;
-    this.updateView();
-  }
-
-  setTickCountLatex(value: string) {
-    this.tickCountLatex = value;
-    this.updateView();
-  }
-
-  setTickTimeStepLatex(value: string) {
-    this.tickTimeStepLatex = value;
-    this.updateView();
-  }
-
   getTickTimeStepNumber() {
-    return this.eval(this.tickTimeStepLatex);
+    return this.tickTimeStep.getValue();
   }
 
   isTickTimeStepValid() {
@@ -281,7 +260,7 @@ export default class VideoCreator extends PluginController {
 
   getMatchingSlider() {
     const regex = new RegExp(
-      `^(\\\\?\\s)*${escapeRegex(this.sliderSettings.variable)}(\\\\?\\s)*=`
+      `^(\\\\?\\s)*${escapeRegex(this.sliderVariable)}(\\\\?\\s)*=`
     );
     return this.calc
       .getState()
@@ -293,16 +272,20 @@ export default class VideoCreator extends PluginController {
       );
   }
 
+  setSliderVariable(s: string) {
+    this.sliderVariable = s;
+  }
+
+  isSliderVariableValid() {
+    return this.getMatchingSlider() !== undefined;
+  }
+
   isSliderSettingValid<T extends keyof SliderSettings>(key: T) {
-    if (key === "variable") {
-      return this.getMatchingSlider() !== undefined;
-    } else {
-      return this.isValidNumber(this.sliderSettings[key]);
-    }
+    return !isNaN(this.sliderSettings[key].getValue());
   }
 
   getTickCountNumber() {
-    return this.eval(this.tickCountLatex);
+    return this.tickCount.getValue();
   }
 
   isTickCountValid() {
@@ -323,10 +306,10 @@ export default class VideoCreator extends PluginController {
         return true;
       case "slider":
         return (
-          this.isSliderSettingValid("variable") &&
-          this.isSliderSettingValid("minLatex") &&
-          this.isSliderSettingValid("maxLatex") &&
-          this.isSliderSettingValid("stepLatex")
+          this.isSliderVariableValid() &&
+          this.isSliderSettingValid("min") &&
+          this.isSliderSettingValid("max") &&
+          this.isSliderSettingValid("step")
         );
       case "action":
         return this.isTickCountValid();
@@ -462,4 +445,8 @@ export default class VideoCreator extends PluginController {
   isFocused(location: FocusedMQ) {
     return this.focusedMQ === location;
   }
+}
+
+function isValidLength(v: number) {
+  return !isNaN(v) && v >= 2;
 }

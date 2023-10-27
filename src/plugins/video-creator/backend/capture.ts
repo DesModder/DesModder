@@ -1,6 +1,7 @@
 import VideoCreator from "..";
 import { scaleBoundsAboutCenter } from "./utils";
 import DSM from "#DSM";
+import { ManagedNumberInputModel } from "../components/ManagedNumberInput";
 
 let dispatchListenerID: string | null = null;
 let callbackIfCancel: (() => void) | null = null;
@@ -77,18 +78,17 @@ async function screenshot2d(vc: VideoCreator, size: ScreenshotOpts) {
 }
 
 export interface SliderSettings {
-  variable: string;
-  minLatex: string;
-  maxLatex: string;
-  stepLatex: string;
+  readonly min: ManagedNumberInputModel;
+  readonly max: ManagedNumberInputModel;
+  readonly step: ManagedNumberInputModel;
 }
 
 export async function captureSlider(vc: VideoCreator) {
   const sliderSettings = vc.sliderSettings;
-  const variable = sliderSettings.variable;
-  const min = vc.eval(sliderSettings.minLatex);
-  const max = vc.eval(sliderSettings.maxLatex);
-  const step = vc.eval(sliderSettings.stepLatex);
+  const variable = vc.sliderVariable;
+  const min = sliderSettings.min.getValue();
+  const max = sliderSettings.max.getValue();
+  const step = sliderSettings.step.getValue();
   const slider = vc.getMatchingSlider();
   if (slider === undefined) {
     return;
@@ -128,7 +128,7 @@ async function captureActionFrame(vc: VideoCreator, step: () => void) {
     if (tickCountRemaining > 0) {
       vc.actionCaptureState = "waiting-for-screenshot";
       await captureAndApplyFrame(vc);
-      vc.setTickCountLatex(String(tickCountRemaining - 1));
+      vc.tickCount.setValue(tickCountRemaining - 1);
       vc.actionCaptureState = "waiting-for-update";
       if (tickCountRemaining - 1 > 0) {
         const slidersBefore = slidersLatexJoined(vc);
