@@ -79,7 +79,11 @@ export default class VideoCreator extends PluginController {
 
   // ** orientation
   angleToString(n: number) {
-    return n.toFixed(this.cc.isDegreeMode() ? 1 : 3);
+    if (this.cc.isDegreeMode()) {
+      return n.toFixed(1);
+    } else {
+      return (n / (Math.PI * 2)).toFixed(3) + "\\tau";
+    }
   }
 
   readonly zTip = this.managedNumberInputModel("", {
