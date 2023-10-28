@@ -16,7 +16,6 @@ interface ManagedNumberInputParams {
 
 export interface ManagedNumberInputModelOpts {
   afterLatexChanged?: () => void;
-  fixedDecimals?: () => number;
   defaultLatex?: () => string;
 }
 
@@ -31,12 +30,16 @@ export class ManagedNumberInputModel {
     this.#latex = latex;
   }
 
-  set latex(latex: string) {
+  setLatexWithoutCallbacks(latex: string) {
     this.#latex = latex;
+  }
+
+  setLatexWithCallbacks(latex: string) {
+    this.setLatexWithoutCallbacks(latex);
     this.opts?.afterLatexChanged?.();
   }
 
-  get latex() {
+  getLatexPopulatingDefault() {
     if (this.isPopulatedByDefault())
       return this.opts?.defaultLatex?.() ?? this.#latex;
     return this.#latex;
@@ -46,12 +49,11 @@ export class ManagedNumberInputModel {
     return /^(\s|\\ )*$/.test(this.#latex) && !!this.opts?.defaultLatex;
   }
 
-  setValue(v: number) {
-    this.latex = v.toFixed(this.opts?.fixedDecimals?.() ?? 0);
-  }
-
   getValue() {
-    return EvaluateSingleExpression(this.calc, this.latex);
+    return EvaluateSingleExpression(
+      this.calc,
+      this.getLatexPopulatingDefault()
+    );
   }
 }
 
@@ -72,19 +74,18 @@ export default class ManagedNumberInput extends Component<ManagedNumberInputPara
         })}
         ariaLabel={() => this.props.ariaLabel()}
         handleLatexChanged={(latex) => {
-          this.props.data().latex = latex;
+          this.props.data().setLatexWithCallbacks(latex);
           // TODO-updateView: this should be a tick
           this.vc.updateView();
         }}
-        latex={() => this.props.data().latex}
+        latex={() => this.props.data().getLatexPopulatingDefault()}
         hasError={() => this.props.hasError(this.props.data().getValue())}
         handleFocusChanged={(b) => {
           this.vc.updateFocus(this.props.focusID(), b);
           if (b) {
             const d = this.props.data();
             // Overwrite fixed latex with placeholder latex.
-            // eslint-disable-next-line no-self-assign
-            d.latex = d.latex;
+            d.setLatexWithCallbacks(d.getLatexPopulatingDefault());
             // TODO-updateView: this should be a tick
             this.vc.updateView();
           }

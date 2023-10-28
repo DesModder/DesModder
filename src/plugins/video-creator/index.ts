@@ -78,30 +78,30 @@ export default class VideoCreator extends PluginController {
   samePixelRatio = false;
 
   // ** orientation
-  readonly orientationOpts = {
-    fixedDecimals: () => (this.cc.isDegreeMode() ? 1 : 3),
-  };
+  angleToString(n: number) {
+    return n.toFixed(this.cc.isDegreeMode() ? 1 : 3);
+  }
 
-  readonly currOrientationOpts = {
-    ...this.orientationOpts,
+  readonly zTip = this.managedNumberInputModel("", {
     afterLatexChanged: () => this.updateOrientationFromLatex(),
-  };
+    defaultLatex: () => this.angleToString(this.getEulerOrientation().zTip),
+  });
 
-  readonly zTip = this.managedNumberInputModel("", this.currOrientationOpts);
-  readonly xyRot = this.managedNumberInputModel("", this.currOrientationOpts);
+  readonly xyRot = this.managedNumberInputModel("", {
+    afterLatexChanged: () => this.updateOrientationFromLatex(),
+    defaultLatex: () => this.angleToString(this.getEulerOrientation().xyRot),
+  });
 
   readonly zTipTo = this.managedNumberInputModel("", {
-    ...this.orientationOpts,
-    defaultLatex: () => this.zTip.latex,
+    defaultLatex: () => this.zTip.getLatexPopulatingDefault(),
   });
 
   readonly xyRotTo = this.managedNumberInputModel("", {
-    ...this.orientationOpts,
-    defaultLatex: () => this.xyRot.latex,
+    defaultLatex: () => this.xyRot.getLatexPopulatingDefault(),
   });
 
-  readonly zTipStep = this.managedNumberInputModel("0", this.orientationOpts);
-  readonly xyRotStep = this.managedNumberInputModel("0", this.orientationOpts);
+  readonly zTipStep = this.managedNumberInputModel("0");
+  readonly xyRotStep = this.managedNumberInputModel("0");
 
   // ** play preview
   previewIndex = 0;
@@ -265,8 +265,8 @@ export default class VideoCreator extends PluginController {
 
   _applyDefaultCaptureSize() {
     const size = this.calc.graphpaperBounds.pixelCoordinates;
-    this.captureWidth.setValue(size.width);
-    this.captureHeight.setValue(size.height);
+    this.captureWidth.setLatexWithCallbacks(size.width.toFixed(0));
+    this.captureHeight.setLatexWithCallbacks(size.height.toFixed(0));
   }
 
   applyDefaultCaptureSize() {
@@ -277,8 +277,8 @@ export default class VideoCreator extends PluginController {
   isDefaultCaptureSizeDifferent() {
     const size = this.calc.graphpaperBounds.pixelCoordinates;
     return (
-      this.captureWidth.latex !== size.width.toFixed(0) ||
-      this.captureHeight.latex !== size.height.toFixed(0)
+      this.captureWidth.getValue() !== Math.round(size.width) ||
+      this.captureHeight.getValue() !== Math.round(size.height)
     );
   }
 
@@ -395,6 +395,18 @@ export default class VideoCreator extends PluginController {
     );
   }
 
+  getEulerOrientation() {
+    const grapher3d = this.cc.grapher3d;
+    if (!grapher3d) return { zTip: 0, xyRot: 0 };
+    const mat = getOrientation(grapher3d);
+    const { zTip, xyRot } = eulerFromOrientation(mat);
+    const trigAngleMultiplier = this.cc.isDegreeMode() ? Math.PI / 180 : 1;
+    return {
+      zTip: zTip / trigAngleMultiplier,
+      xyRot: xyRot / trigAngleMultiplier,
+    };
+  }
+
   _applyingSpinningOrientation = false;
   applySpinningOrientation() {
     const grapher3d = this.cc.grapher3d;
@@ -407,11 +419,12 @@ export default class VideoCreator extends PluginController {
       return;
     }
     this._targetMatrixFromLatex = undefined;
-    const { zTip, xyRot } = eulerFromOrientation(mat);
+    // TODO: _applyingSpinningOrientation still needed? We have setLatexWithoutCallbacks now.
     this._applyingSpinningOrientation = true;
-    const trigAngleMultiplier = this.cc.isDegreeMode() ? Math.PI / 180 : 1;
-    this.zTip.setValue(zTip / trigAngleMultiplier);
-    this.xyRot.setValue(xyRot / trigAngleMultiplier);
+    this.zTip.setLatexWithoutCallbacks("");
+    this.xyRot.setLatexWithoutCallbacks("");
+    // TODO-updateView: should be tick?
+    this.updateView();
     this._applyingSpinningOrientation = false;
   }
 

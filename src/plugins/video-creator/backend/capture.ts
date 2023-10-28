@@ -117,9 +117,9 @@ export async function captureSlider(vc: VideoCreator) {
       const numStepsRemaining = numSteps - i;
       const s = 1 / numStepsRemaining;
       const lerpXY = vc.xyRotTo.getValue() * s + vc.xyRot.getValue() * (1 - s);
-      vc.xyRot.setValue(lerpXY);
+      vc.xyRot.setLatexWithoutCallbacks(vc.angleToString(lerpXY));
       const lerpZ = vc.zTipTo.getValue() * s + vc.zTip.getValue() * (1 - s);
-      vc.zTip.setValue(lerpZ);
+      vc.zTip.setLatexWithoutCallbacks(vc.angleToString(lerpZ));
       vc.updateOrientationFromLatex();
     }
   }
@@ -139,7 +139,7 @@ async function captureActionFrame(vc: VideoCreator, step: () => void) {
     if (tickCountRemaining > 0) {
       vc.actionCaptureState = "waiting-for-screenshot";
       await captureAndApplyFrame(vc);
-      vc.tickCount.setValue(tickCountRemaining - 1);
+      vc.tickCount.setLatexWithCallbacks((tickCountRemaining - 1).toFixed(0));
       vc.actionCaptureState = "waiting-for-update";
       if (tickCountRemaining - 1 > 0) {
         const slidersBefore = slidersLatexJoined(vc);
@@ -224,8 +224,10 @@ export async function capture(vc: VideoCreator) {
     }
   }
   function stepOrientation() {
-    vc.xyRot.setValue(vc.xyRot.getValue() + vc.xyRotStep.getValue());
-    vc.zTip.setValue(vc.zTip.getValue() + vc.zTipStep.getValue());
+    const xyRot = vc.xyRot.getValue() + vc.xyRotStep.getValue();
+    vc.xyRot.setLatexWithoutCallbacks(vc.angleToString(xyRot));
+    const zTip = vc.zTip.getValue() + vc.zTipStep.getValue();
+    vc.zTip.setLatexWithoutCallbacks(vc.angleToString(zTip));
     vc.updateOrientationFromLatex();
   }
   switch (vc.captureMethod) {
