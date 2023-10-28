@@ -90,6 +90,16 @@ export default class VideoCreator extends PluginController {
   readonly zTip = this.managedNumberInputModel("", this.currOrientationOpts);
   readonly xyRot = this.managedNumberInputModel("", this.currOrientationOpts);
 
+  readonly zTipTo = this.managedNumberInputModel("", {
+    ...this.orientationOpts,
+    defaultLatex: () => this.zTip.latex,
+  });
+
+  readonly xyRotTo = this.managedNumberInputModel("", {
+    ...this.orientationOpts,
+    defaultLatex: () => this.xyRot.latex,
+  });
+
   readonly zTipStep = this.managedNumberInputModel("0", this.orientationOpts);
   readonly xyRotStep = this.managedNumberInputModel("0", this.orientationOpts);
 
@@ -360,8 +370,29 @@ export default class VideoCreator extends PluginController {
     return this.isAngleValid(this.zTipStep.getValue());
   }
 
+  isXYRotToValid() {
+    return this.isAngleValid(this.xyRotTo.getValue());
+  }
+
+  isZTipToValid() {
+    return this.isAngleValid(this.zTipTo.getValue());
+  }
+
   isCurrentOrientationRelevant() {
     return this.cc.is3dProduct();
+  }
+
+  isToOrientationRelevant() {
+    return (
+      this.isCurrentOrientationRelevant() && this.captureMethod === "slider"
+    );
+  }
+
+  isStepOrientationRelevant() {
+    return (
+      this.isCurrentOrientationRelevant() &&
+      (this.captureMethod === "action" || this.captureMethod === "ticks")
+    );
   }
 
   _applyingSpinningOrientation = false;
@@ -403,14 +434,15 @@ export default class VideoCreator extends PluginController {
   }
 
   areCaptureSettingsValid() {
-    if (
-      this.isCurrentOrientationRelevant() &&
-      (!this.isCurrentXYRotValid() || !this.isCurrentZTipValid())
-    )
+    if (this.isCurrentOrientationRelevant())
+      if (!this.isCurrentXYRotValid() || !this.isCurrentZTipValid())
+        return false;
+    if (this.isToOrientationRelevant())
+      if (!this.isXYRotToValid() || !this.isZTipToValid()) return false;
+    if (this.isStepOrientationRelevant())
+      if (!this.isXYRotStepValid() || !this.isZTipStepValid()) return false;
+    if (!this.isCaptureWidthValid() || !this.isCaptureHeightValid())
       return false;
-    if (!this.isCaptureWidthValid() || !this.isCaptureHeightValid()) {
-      return false;
-    }
     switch (this.captureMethod) {
       case "once":
         return true;

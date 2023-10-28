@@ -228,13 +228,34 @@ export default class SelectCapture extends Component<{
             </div>
           )}
         </If>
-        <If
-          predicate={() =>
-            this.vc.isCurrentOrientationRelevant() &&
-            (this.vc.captureMethod === "action" ||
-              this.vc.captureMethod === "ticks")
-          }
-        >
+        <If predicate={() => this.vc.isToOrientationRelevant()}>
+          {() => (
+            <div class="dsm-vc-orientation">
+              {format("video-creator-angle-to")}
+              <StaticMathQuillView latex="\ xy=" />
+              <ManagedNumberInput
+                focusID="to-xy-rot"
+                // TODO-localization
+                ariaLabel="to rotation in xy plane"
+                hasError={() => !this.vc.isXYRotToValid()}
+                vc={this.vc}
+                data={this.vc.xyRotTo}
+                numberUnits={this.vc.cc.isDegreeMode() ? "°" : "rad"}
+              />
+              <StaticMathQuillView latex="\ z=" />
+              <ManagedNumberInput
+                focusID="to-z-tip"
+                // TODO-localization
+                ariaLabel="to rotation tipping z axis towards camera"
+                hasError={() => !this.vc.isZTipToValid()}
+                vc={this.vc}
+                data={this.vc.zTipTo}
+                numberUnits={this.vc.cc.isDegreeMode() ? "°" : "rad"}
+              />
+            </div>
+          )}
+        </If>
+        <If predicate={() => this.vc.isStepOrientationRelevant()}>
           {() => (
             <div class="dsm-vc-orientation">
               {format("video-creator-angle-step")}

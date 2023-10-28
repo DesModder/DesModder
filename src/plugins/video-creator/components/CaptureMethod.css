@@ -58,3 +58,7 @@
 .dsm-vc-capture-menu .dcg-math-field.dcg-mq-math-mode {
   font-size: 90%;
 }
+
+.dsm-input-placeholder .dcg-mq-root-block > * {
+  opacity: 0.6;
+}

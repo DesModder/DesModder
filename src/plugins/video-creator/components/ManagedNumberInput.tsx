@@ -17,6 +17,7 @@ interface ManagedNumberInputParams {
 export interface ManagedNumberInputModelOpts {
   afterLatexChanged?: () => void;
   fixedDecimals?: () => number;
+  defaultLatex?: () => string;
 }
 
 export class ManagedNumberInputModel {
@@ -36,7 +37,13 @@ export class ManagedNumberInputModel {
   }
 
   get latex() {
+    if (this.isPopulatedByDefault())
+      return this.opts?.defaultLatex?.() ?? this.#latex;
     return this.#latex;
+  }
+
+  isPopulatedByDefault() {
+    return /^(\s|\\ )*$/.test(this.#latex) && !!this.opts?.defaultLatex;
   }
 
   setValue(v: number) {
@@ -61,6 +68,7 @@ export default class ManagedNumberInput extends Component<ManagedNumberInputPara
         containerClass={() => ({
           "dcg-suffix-degree": this.props.numberUnits?.() === "°",
           "dcg-suffix-radian": this.props.numberUnits?.() === "rad",
+          "dsm-input-placeholder": this.props.data().isPopulatedByDefault(),
         })}
         ariaLabel={() => this.props.ariaLabel()}
         handleLatexChanged={(latex) => {
@@ -70,7 +78,17 @@ export default class ManagedNumberInput extends Component<ManagedNumberInputPara
         }}
         latex={() => this.props.data().latex}
         hasError={() => this.props.hasError(this.props.data().getValue())}
-        handleFocusChanged={(b) => this.vc.updateFocus(this.props.focusID(), b)}
+        handleFocusChanged={(b) => {
+          this.vc.updateFocus(this.props.focusID(), b);
+          if (b) {
+            const d = this.props.data();
+            // Overwrite fixed latex with placeholder latex.
+            // eslint-disable-next-line no-self-assign
+            d.latex = d.latex;
+            // TODO-updateView: this should be a tick
+            this.vc.updateView();
+          }
+        }}
         isFocused={() => this.vc.isFocused(this.props.focusID())}
         controller={this.vc.cc}
         readonly={() => this.props.readonly?.() ?? false}

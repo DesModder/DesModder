@@ -105,12 +105,22 @@ export async function captureSlider(vc: VideoCreator) {
       id: slider.id,
       latex: `${variable}=${value}`,
     });
-    // TODO: set angle to desired
+
     try {
       await captureAndApplyFrame(vc);
     } catch {
       // should be paused due to cancellation
       break;
+    }
+
+    if (i < numSteps) {
+      const numStepsRemaining = numSteps - i;
+      const s = 1 / numStepsRemaining;
+      const lerpXY = vc.xyRotTo.getValue() * s + vc.xyRot.getValue() * (1 - s);
+      vc.xyRot.setValue(lerpXY);
+      const lerpZ = vc.zTipTo.getValue() * s + vc.zTip.getValue() * (1 - s);
+      vc.zTip.setValue(lerpZ);
+      vc.updateOrientationFromLatex();
     }
   }
 }
