@@ -213,15 +213,20 @@ export async function capture(vc: VideoCreator) {
       forceReloadMenu(vc.dsm);
     }
   }
+  function stepOrientation() {
+    vc.xyRot.setValue(vc.xyRot.getValue() + vc.xyRotStep.getValue());
+    vc.zTip.setValue(vc.zTip.getValue() + vc.zTipStep.getValue());
+    vc.updateOrientationFromLatex();
+  }
   switch (vc.captureMethod) {
     case "action": {
       const step = () => {
-        if (vc.currentActionID !== null)
-          vc.cc.dispatch({
-            type: "action-single-step",
-            id: vc.currentActionID,
-          });
-        // TODO: step by dAngle
+        if (vc.currentActionID === null) return;
+        stepOrientation();
+        vc.cc.dispatch({
+          type: "action-single-step",
+          id: vc.currentActionID,
+        });
       };
       await captureActionOrSliderTicks(vc, step);
       break;
@@ -230,7 +235,7 @@ export async function capture(vc: VideoCreator) {
       let currTime = performance.now();
       const step = () => {
         currTime += vc.getTickTimeStepNumber();
-        // TODO: step by dAngle.
+        stepOrientation();
         tickSliders(currTime);
       };
       await captureActionOrSliderTicks(vc, step);

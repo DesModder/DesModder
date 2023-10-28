@@ -78,13 +78,20 @@ export default class VideoCreator extends PluginController {
   samePixelRatio = false;
 
   // ** orientation
-  readonly currOrientationOpts = {
+  readonly orientationOpts = {
     fixedDecimals: () => (this.cc.isDegreeMode() ? 1 : 3),
+  };
+
+  readonly currOrientationOpts = {
+    ...this.orientationOpts,
     afterLatexChanged: () => this.updateOrientationFromLatex(),
   };
 
   readonly zTip = this.managedNumberInputModel("", this.currOrientationOpts);
   readonly xyRot = this.managedNumberInputModel("", this.currOrientationOpts);
+
+  readonly zTipStep = this.managedNumberInputModel("0", this.orientationOpts);
+  readonly xyRotStep = this.managedNumberInputModel("0", this.orientationOpts);
 
   // ** play preview
   previewIndex = 0;
@@ -343,6 +350,14 @@ export default class VideoCreator extends PluginController {
 
   isCurrentZTipValid() {
     return this.isAngleValid(this.zTip.getValue());
+  }
+
+  isXYRotStepValid() {
+    return this.isAngleValid(this.xyRotStep.getValue());
+  }
+
+  isZTipStepValid() {
+    return this.isAngleValid(this.zTipStep.getValue());
   }
 
   isCurrentOrientationRelevant() {
