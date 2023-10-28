@@ -50,3 +50,11 @@
 .dsm-vc-pixel-ratio-inner {
   cursor: pointer;
 }
+
+.dsm-vc-capture-menu .dcg-static-mathquill-view.dcg-mq-math-mode {
+  font-size: 100%;
+}
+
+.dsm-vc-capture-menu .dcg-math-field.dcg-mq-math-mode {
+  font-size: 90%;
+}

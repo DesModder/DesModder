@@ -11,6 +11,7 @@ interface ManagedNumberInputParams {
   hasError: (val: number) => boolean;
   vc: VideoCreator;
   data: ManagedNumberInputModel;
+  numberUnits?: "rad" | "°" | undefined;
 }
 
 export interface ManagedNumberInputModelOpts {
@@ -57,6 +58,10 @@ export default class ManagedNumberInput extends Component<ManagedNumberInputPara
   template() {
     return (
       <InlineMathInputViewGeneral
+        containerClass={() => ({
+          "dcg-suffix-degree": this.props.numberUnits?.() === "°",
+          "dcg-suffix-radian": this.props.numberUnits?.() === "rad",
+        })}
         ariaLabel={() => this.props.ariaLabel()}
         handleLatexChanged={(latex) => {
           this.props.data().latex = latex;

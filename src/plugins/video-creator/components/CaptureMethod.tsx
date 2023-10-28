@@ -213,6 +213,7 @@ export default class SelectCapture extends Component<{
                 hasError={() => !this.vc.isCurrentXYRotValid()}
                 vc={this.vc}
                 data={this.vc.xyRot}
+                numberUnits={this.vc.cc.isDegreeMode() ? "°" : "rad"}
               />
               <StaticMathQuillView latex="\ z=" />
               <ManagedNumberInput
@@ -222,6 +223,7 @@ export default class SelectCapture extends Component<{
                 hasError={() => !this.vc.isCurrentZTipValid()}
                 vc={this.vc}
                 data={this.vc.zTip}
+                numberUnits={this.vc.cc.isDegreeMode() ? "°" : "rad"}
               />
             </div>
           )}

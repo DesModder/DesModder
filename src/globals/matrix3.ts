@@ -102,6 +102,12 @@ export function eulerFromOrientation(m: Matrix3) {
     // Column-major, so this is atan2(sz, cz)
     zTip: Math.atan2(-m.elements[6], m.elements[8]),
     // Column-major, so this is atan2(sxy, cxy)
-    xyRot: Math.atan2(m.elements[4], -m.elements[1]),
+    xyRot: atan2positive(m.elements[4], -m.elements[1]),
   };
+}
+
+function atan2positive(y: number, x: number) {
+  let a = Math.atan2(y, x);
+  if (a < 0) a += 2 * Math.PI;
+  return a;
 }

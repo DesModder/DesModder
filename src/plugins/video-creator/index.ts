@@ -78,9 +78,8 @@ export default class VideoCreator extends PluginController {
   samePixelRatio = false;
 
   // ** orientation
-  // TODO: number of fixed decimals should depend on radians vs degrees.
   readonly currOrientationOpts = {
-    fixedDecimals: () => 3,
+    fixedDecimals: () => (this.cc.isDegreeMode() ? 1 : 3),
     afterLatexChanged: () => this.updateOrientationFromLatex(),
   };
 
@@ -136,6 +135,14 @@ export default class VideoCreator extends PluginController {
       );
       if (unhook) this.cleanupCallbacks.push(unhook);
     }
+    const dispatcherID = this.cc.dispatcher.register((evt) => {
+      if (evt.type === "set-graph-settings" && "degreeMode" in evt) {
+        this.applySpinningOrientation();
+      }
+    });
+    this.cleanupCallbacks.push(() =>
+      this.cc.dispatcher.unregister(dispatcherID)
+    );
   }
 
   afterDisable() {
@@ -356,8 +363,9 @@ export default class VideoCreator extends PluginController {
     this._targetMatrixFromLatex = undefined;
     const { zTip, xyRot } = eulerFromOrientation(mat);
     this._applyingSpinningOrientation = true;
-    this.zTip.setValue(zTip);
-    this.xyRot.setValue(xyRot);
+    const trigAngleMultiplier = this.cc.isDegreeMode() ? Math.PI / 180 : 1;
+    this.zTip.setValue(zTip / trigAngleMultiplier);
+    this.xyRot.setValue(xyRot / trigAngleMultiplier);
     this._applyingSpinningOrientation = false;
   }
 
@@ -366,8 +374,9 @@ export default class VideoCreator extends PluginController {
     if (this._applyingSpinningOrientation) return;
     const grapher3d = this.cc.grapher3d;
     if (!grapher3d) return;
-    const zTip = this.zTip.getValue();
-    const xyRot = this.xyRot.getValue();
+    const trigAngleMultiplier = this.cc.isDegreeMode() ? Math.PI / 180 : 1;
+    const zTip = this.zTip.getValue() * trigAngleMultiplier;
+    const xyRot = this.xyRot.getValue() * trigAngleMultiplier;
     if (!this.isAngleValid(zTip) || !this.isAngleValid(xyRot)) return;
     const mat = orientationFromEuler(grapher3d, zTip, xyRot);
     this._targetMatrixFromLatex = mat;
