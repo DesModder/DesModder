@@ -60,6 +60,7 @@ export function matrix3Rows(grapher3d: Grapher3d, a: Num3, b: Num3, c: Num3) {
 // Identity matrix for m is x-back, y-left, z-up.
 // If z points straight up, then top-left 2x2 is xy rotation only. m33 is 1, and it's row/column buddies are 0.
 export function setOrientation(grapher3d: Grapher3d, m: Matrix3) {
+  grapher3d.controls.worldRotation3D = m;
   grapher3d.viewportController.animateToOrientation(m);
   grapher3d.transition.duration = 0;
 }

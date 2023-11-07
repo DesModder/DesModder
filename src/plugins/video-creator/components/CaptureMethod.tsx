@@ -13,6 +13,7 @@ import {
   Tooltip,
   InlineMathInputView,
   For,
+  IconButton,
 } from "#components";
 import { format } from "#i18n";
 import ManagedNumberInput from "./ManagedNumberInput";
@@ -132,6 +133,10 @@ export default class SelectCapture extends Component<{
             </div>
           ),
           ticks: () => (
+            // TODO: For "ticks", display something like
+            //      Moving sliders: 5
+            // or   Moving sliders: a, b, c, d, f
+            // To make it clear that ticks refers to sliders.
             <div class="dsm-vc-ticks-settings">
               {format("video-creator-ticks-step")}
 
@@ -278,6 +283,52 @@ export default class SelectCapture extends Component<{
                 vc={this.vc}
                 data={this.vc.zTipStep}
                 numberUnits={this.vc.cc.isDegreeMode() ? "°" : "rad"}
+              />
+            </div>
+          )}
+        </If>
+        <If predicate={() => this.vc.isSpeedOrientationRelevant()}>
+          {() => (
+            <div class="dsm-vc-orientation">
+              {format("video-creator-angle-speed")}
+              <If
+                predicate={() => {
+                  const sd = this.vc.getSpinningSpeedAndDirection();
+                  if (!sd) return false;
+                  return sd.speed !== 0;
+                }}
+              >
+                {() => (
+                  <span>
+                    {" "}
+                    <IconButton
+                      onTap={() => this.vc.toggleSpinningDirection()}
+                      iconClass={() => {
+                        const dir = this.vc.getSpinningSpeedAndDirection()?.dir;
+                        return dir === "xyRot"
+                          ? "dcg-icon-move-horizontal"
+                          : "dcg-icon-move-vertical";
+                      }}
+                      small={true}
+                    />
+                    <StaticMathQuillView
+                      latex={() =>
+                        this.vc.getSpinningSpeedAndDirection()?.dir === "zTip"
+                          ? "\\ z="
+                          : "\\ xy="
+                      }
+                    />
+                  </span>
+                )}
+              </If>
+              <ManagedNumberInput
+                focusID="speed-rot"
+                // TODO-localization
+                ariaLabel="speed rotation"
+                hasError={() => !this.vc.isSpeedRotValid()}
+                vc={this.vc}
+                data={this.vc.speedRot}
+                numberUnits={this.vc.cc.isDegreeMode() ? "°/s" : "rad/s"}
               />
             </div>
           )}

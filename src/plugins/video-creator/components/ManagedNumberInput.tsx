@@ -3,6 +3,7 @@ import { InlineMathInputViewGeneral } from "#components";
 import VideoCreator from "..";
 import { Calc } from "#globals";
 import { EvaluateSingleExpression } from "#utils/depUtils.ts";
+import "./ManagedNumberInput.less";
 
 interface ManagedNumberInputParams {
   focusID: string;
@@ -11,7 +12,7 @@ interface ManagedNumberInputParams {
   hasError: (val: number) => boolean;
   vc: VideoCreator;
   data: ManagedNumberInputModel;
-  numberUnits?: "rad" | "°" | undefined;
+  numberUnits?: "rad" | "°" | "rad/s" | "°/s" | undefined;
 }
 
 export interface ManagedNumberInputModelOpts {
@@ -70,6 +71,8 @@ export default class ManagedNumberInput extends Component<ManagedNumberInputPara
         containerClass={() => ({
           "dcg-suffix-degree": this.props.numberUnits?.() === "°",
           "dcg-suffix-radian": this.props.numberUnits?.() === "rad",
+          "dsm-suffix-degree-per-sec": this.props.numberUnits?.() === "°/s",
+          "dsm-suffix-radian-per-sec": this.props.numberUnits?.() === "rad/s",
           "dsm-input-placeholder": this.props.data().isPopulatedByDefault(),
         })}
         ariaLabel={() => this.props.ariaLabel()}

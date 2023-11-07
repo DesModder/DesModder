@@ -182,7 +182,14 @@ type Product = "graphing" | "geometry-calculator" | "graphing-3d";
 export interface Grapher3d {
   controls: {
     worldRotation3D: Matrix3;
+    axis3D: readonly [number, number, number];
+    speed3D: number;
+    lastRotateTime: number;
     copyWorldRotationToWorld: () => void;
+    onTapStart: () => void;
+    onTapMove: () => void;
+    onTapUp: () => void;
+    onMouseWheel: () => void;
   };
   viewportController: {
     animateToOrientation: (m: Matrix3) => void;

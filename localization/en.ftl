@@ -183,6 +183,7 @@ video-creator-size = Size:
 video-creator-angle = Angle:
 video-creator-angle-to = To:
 video-creator-angle-step = Step:
+video-creator-angle-speed = Speed:
 video-creator-step-count = Step count:
 video-creator-target-same-pixel-ratio = Target same pixel ratio
 video-creator-target-tooltip = Adjusts scaling of line width, point size, label size, etc.

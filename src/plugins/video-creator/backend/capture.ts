@@ -245,14 +245,20 @@ export async function capture(vc: VideoCreator) {
     }
     case "ticks": {
       let currTime = performance.now();
+      const noSpeed = { dir: "xyRot", speed: 0 } as const;
+      const sd = vc.getSpinningSpeedAndDirection() ?? noSpeed;
+      vc.setSpinningSpeedAndDirection(noSpeed);
       const step = () => {
-        currTime += vc.getTickTimeStepNumber();
-        stepOrientation();
+        const dt = vc.getTickTimeStepNumber();
+        vc.incrementOrientationBySpeed(dt, sd);
+        currTime += dt;
         tickSliders(currTime);
       };
       await captureActionOrSliderTicks(vc, step);
       // restore the typical handling of slider ticking
       vc.cc._tickSliders = tickSliders;
+      // restore previous speed
+      vc.setSpinningSpeedAndDirection(sd);
       break;
     }
     case "once":
