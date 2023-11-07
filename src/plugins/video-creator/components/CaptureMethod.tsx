@@ -133,21 +133,35 @@ export default class SelectCapture extends Component<{
             </div>
           ),
           ticks: () => (
-            // TODO: For "ticks", display something like
-            //      Moving sliders: 5
-            // or   Moving sliders: a, b, c, d, f
-            // To make it clear that ticks refers to sliders.
             <div class="dsm-vc-ticks-settings">
-              {format("video-creator-ticks-step")}
-
-              <ManagedNumberInput
-                focusID="capture-tick-time-step"
-                // TODO-localization
-                ariaLabel="time step (ms)"
-                hasError={() => !this.vc.isTickTimeStepValid()}
-                vc={this.vc}
-                data={this.vc.tickTimeStep}
-              />
+              <If predicate={() => this.vc.cc.getPlayingSliders().length > 0}>
+                {() => (
+                  <div>
+                    {format("video-creator-ticks-playing-sliders")}{" "}
+                    <span class="dsm-vc-playing-sliders">
+                      <StaticMathQuillView
+                        latex={() =>
+                          this.vc.cc
+                            .getPlayingSliders()
+                            .map((L) => L.latex.split("=")[0])
+                            .join(",\\ ")
+                        }
+                      />
+                    </span>
+                  </div>
+                )}
+              </If>
+              <div>
+                {format("video-creator-ticks-step")}
+                <ManagedNumberInput
+                  focusID="capture-tick-time-step"
+                  // TODO-localization
+                  ariaLabel="time step (ms)"
+                  hasError={() => !this.vc.isTickTimeStepValid()}
+                  vc={this.vc}
+                  data={this.vc.tickTimeStep}
+                />
+              </div>
             </div>
           ),
           once: () => null,

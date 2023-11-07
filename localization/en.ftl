@@ -176,6 +176,7 @@ video-creator-desc = Lets you export videos and GIFs of your graphs based on act
 video-creator-menu = Video Creator Menu
 video-creator-to = to
 video-creator-step = , step
+video-creator-ticks-playing-sliders = Playing sliders:
 video-creator-ticks-step = Time step (ms):
 video-creator-prev-action = Prev
 video-creator-next-action = Next

@@ -3,6 +3,11 @@
   margin-bottom: 5px;
 }
 
+.dsm-vc-playing-sliders {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
 .dsm-vc-action-navigate-container {
   display: flex;
   justify-content: space-between;
