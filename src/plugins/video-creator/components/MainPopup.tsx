@@ -8,6 +8,7 @@ import { Component, jsx } from "#DCGView";
 import { SegmentedControl, If, Input, Button, IfElse } from "#components";
 import { format } from "#i18n";
 import ManagedNumberInput from "./ManagedNumberInput";
+import { OrientationView } from "./OrientationView";
 
 const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng", "zip"];
 
@@ -43,7 +44,7 @@ export default class MainPopup extends Component<{
     return IfElse(() => this.vc.isExporting, {
       false: () => this.templateNormal(),
       true: () => (
-        <div class="dcg-popover-interior no-intellisense">
+        <div class="dcg-popover-interior no-intellisense dsm-vc-popover">
           <div class="dsm-vc-export-in-progress">
             {format("video-creator-exporting")}
             <LoadingPie
@@ -70,7 +71,17 @@ export default class MainPopup extends Component<{
 
   templateNormal() {
     return (
-      <div class="dcg-popover-interior no-intellisense">
+      <div class="dcg-popover-interior no-intellisense dsm-vc-popover">
+        <If predicate={() => this.vc.or.orientationMode !== "none"}>
+          {() => (
+            <div>
+              <div class="dcg-popover-title">
+                {format("video-creator-orientation")}
+              </div>
+              <OrientationView or={this.vc.or} />
+            </div>
+          )}
+        </If>
         <div class="dsm-vc-capture-menu">
           <div class="dcg-popover-title">{format("video-creator-capture")}</div>
           <CaptureMethod vc={this.vc} />

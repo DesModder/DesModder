@@ -9,14 +9,33 @@ import {
 } from "../../globals/matrix3";
 import { hookIntoFunction } from "#utils/listenerHelpers.ts";
 
+type OrientationMode = "none" | "from-to" | "current-delta" | "current-speed";
+
+export const noSpeed: SpeedAndDirection = { dir: "xyRot", speed: 0 };
+
 export class Orientation {
   cc = this.vc.cc;
   readonly cleanupCallbacks: (() => void)[] = [];
+  #orientationMode: OrientationMode = "none";
+  sdBeforeCapture: SpeedAndDirection = noSpeed;
 
   constructor(public vc: VideoCreator) {}
 
+  get orientationMode(): OrientationMode {
+    if (this.cc.is3dProduct()) {
+      if (this.#orientationMode === "none") return "current-speed";
+      else return this.#orientationMode;
+    } else return "none";
+  }
+
+  set orientationMode(mode: OrientationMode) {
+    this.#orientationMode = mode;
+    // TODO-updateView
+    this.vc.updateView();
+  }
+
   afterEnable() {
-    this.applySpinningOrientation();
+    this.updateLatexOrientationFromGraph();
     const controls = this.cc.grapher3d?.controls;
     if (controls) {
       const unhook = hookIntoFunction(
@@ -24,7 +43,7 @@ export class Orientation {
         "copyWorldRotationToWorld",
         "video-creator-rotation-listener",
         0,
-        () => this.applySpinningOrientation()
+        () => this.updateLatexOrientationFromGraph()
       );
       if (unhook) this.cleanupCallbacks.push(unhook);
       const keys = [
@@ -46,7 +65,7 @@ export class Orientation {
     }
     const dispatcherID = this.cc.dispatcher.register((evt) => {
       if (evt.type === "set-graph-settings" && "degreeMode" in evt) {
-        this.applySpinningOrientation();
+        this.updateLatexOrientationFromGraph();
       }
     });
     this.cleanupCallbacks.push(() =>
@@ -77,16 +96,32 @@ export class Orientation {
     defaultLatex: () => this.angleToString(this.getEulerOrientation().xyRot),
   });
 
+  readonly zTipFrom = this.vc.managedNumberInputModel("", {
+    defaultLatex: () => this.angleToString(this.getEulerOrientation().zTip),
+  });
+
+  readonly xyRotFrom = this.vc.managedNumberInputModel("", {
+    defaultLatex: () => this.angleToString(this.getEulerOrientation().xyRot),
+  });
+
   readonly zTipTo = this.vc.managedNumberInputModel("", {
-    defaultLatex: () => this.zTip.getLatexPopulatingDefault(),
+    defaultLatex: () => this.zTipFrom.getLatexPopulatingDefault(),
   });
 
   readonly xyRotTo = this.vc.managedNumberInputModel("", {
-    defaultLatex: () => this.xyRot.getLatexPopulatingDefault(),
+    defaultLatex: () =>
+      this.zTipFrom.getValue() === this.zTipTo.getValue()
+        ? this.angleToString(this.xyRotFrom.getValue() + 2 * Math.PI)
+        : this.xyRotFrom.getLatexPopulatingDefault(),
   });
 
-  readonly zTipStep = this.vc.managedNumberInputModel("0");
-  readonly xyRotStep = this.vc.managedNumberInputModel("0");
+  readonly zTipStep = this.vc.managedNumberInputModel("", {
+    defaultLatex: () => "0",
+  });
+
+  readonly xyRotStep = this.vc.managedNumberInputModel("", {
+    defaultLatex: () => "0",
+  });
 
   readonly speedRot = this.vc.managedNumberInputModel("", {
     afterLatexChanged: () => this.updateSpinningSpeedFromLatex(),
@@ -115,6 +150,14 @@ export class Orientation {
 
   isZTipStepValid() {
     return this.isAngleValid(this.zTipStep.getValue());
+  }
+
+  isXYRotFromValid() {
+    return this.isAngleValid(this.xyRotFrom.getValue());
+  }
+
+  isZTipFromValid() {
+    return this.isAngleValid(this.zTipFrom.getValue());
   }
 
   isXYRotToValid() {
@@ -153,6 +196,13 @@ export class Orientation {
     );
   }
 
+  orientationModeRequiresStepCount() {
+    return (
+      this.orientationMode === "from-to" ||
+      this.orientationMode === "current-delta"
+    );
+  }
+
   toggleSpinningDirection() {
     const sd = this.getSpinningSpeedAndDirection();
     if (!sd) return;
@@ -174,12 +224,15 @@ export class Orientation {
   }
 
   updateSpinningSpeedFromLatex() {
+    let speed = this.speedRot.getValue() * this.trigAngleMultiplier();
+    if (isNaN(speed)) speed = 0;
+    this.setSpeed(speed);
+  }
+
+  setSpeed(speed: number) {
     const sd = this.getSpinningSpeedAndDirection();
     if (!sd) return;
     const { dir } = sd;
-    const trigAngleMultiplier = this.trigAngleMultiplier();
-    let speed = this.speedRot.getValue() * trigAngleMultiplier;
-    if (isNaN(speed)) speed = 0;
     this.setSpinningSpeedAndDirection({ dir, speed });
   }
 
@@ -225,7 +278,7 @@ export class Orientation {
   }
 
   _applyingSpinningOrientation = false;
-  applySpinningOrientation() {
+  updateLatexOrientationFromGraph() {
     const grapher3d = this.cc.grapher3d;
     if (!grapher3d) return;
     if (this._applyingSpinningOrientation) return;
@@ -248,28 +301,27 @@ export class Orientation {
   _targetMatrixFromLatex: Matrix3 | undefined;
   updateOrientationFromLatex() {
     if (this._applyingSpinningOrientation) return;
+    const { zTip, xyRot } = this.getOrientationFromLatex();
+    if (!this.isAngleValid(zTip) || !this.isAngleValid(xyRot)) return;
     const grapher3d = this.cc.grapher3d;
     if (!grapher3d) return;
-    const trigAngleMultiplier = this.trigAngleMultiplier();
-    const zTip = this.zTip.getValue() * trigAngleMultiplier;
-    const xyRot = this.xyRot.getValue() * trigAngleMultiplier;
-    if (!this.isAngleValid(zTip) || !this.isAngleValid(xyRot)) return;
     const mat = orientationFromEuler(grapher3d, zTip, xyRot);
     this._targetMatrixFromLatex = mat;
     setOrientation(grapher3d, mat);
     this.applySpinningSpeedFromGraph();
   }
 
-  incrementOrientationBySpeed(dtMs: number, sd: SpeedAndDirection) {
-    const dt = dtMs / 1000;
-    const { xyRot, zTip } = this.getEulerOrientation();
-    if (sd.dir === "xyRot") {
-      const newAngle = xyRot + sd.speed * dt;
-      this.xyRot.setLatexWithCallbacks(this.angleToString(newAngle));
-    } else {
-      const newAngle = zTip + sd.speed * dt;
-      this.zTip.setLatexWithCallbacks(this.angleToString(newAngle));
-    }
+  setOrientationFromCapture(xyRot: number, zTip: number) {
+    this.xyRot.setLatexWithoutCallbacks(this.angleToString(xyRot));
+    this.zTip.setLatexWithoutCallbacks(this.angleToString(zTip));
+    this.updateOrientationFromLatex();
+  }
+
+  getOrientationFromLatex() {
+    const trigAngleMultiplier = this.trigAngleMultiplier();
+    const zTip = this.zTip.getValue() * trigAngleMultiplier;
+    const xyRot = this.xyRot.getValue() * trigAngleMultiplier;
+    return { zTip, xyRot };
   }
 
   getEulerOrientation() {

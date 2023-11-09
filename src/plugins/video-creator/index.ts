@@ -173,13 +173,16 @@ export default class VideoCreator extends PluginController {
 
   set captureMethod(method: CaptureMethod) {
     this.#captureMethod = method;
+    // TODO-updateView
     this.updateView();
   }
 
   get captureMethod() {
     return this.isCaptureMethodValid(this.#captureMethod)
       ? this.#captureMethod
-      : "once";
+      : this.isCaptureMethodValid("once")
+      ? "once"
+      : "ntimes";
   }
 
   isValidNumber(s: string) {
@@ -196,11 +199,18 @@ export default class VideoCreator extends PluginController {
   }
 
   isCaptureMethodValid(method: CaptureMethod) {
-    return method === "action"
-      ? this.hasAction()
-      : method === "ticks"
-      ? this.cc.getPlayingSliders().length > 0 || this.cc.is3dProduct()
-      : true;
+    switch (method) {
+      case "action":
+        return this.hasAction();
+      case "ticks":
+        return this.cc.getPlayingSliders().length > 0 || this.cc.is3dProduct();
+      case "slider":
+        return true;
+      case "once":
+        return !this.or.orientationModeRequiresStepCount();
+      case "ntimes":
+        return this.or.orientationModeRequiresStepCount();
+    }
   }
 
   isCaptureWidthValid() {
@@ -303,12 +313,15 @@ export default class VideoCreator extends PluginController {
   }
 
   areCaptureSettingsValid() {
+    // TODO: don't care about e.g. "from" when doing "step" capture, etc.
     if (!this.or.areCaptureSettingsValid()) return false;
     if (!this.isCaptureWidthValid() || !this.isCaptureHeightValid())
       return false;
     switch (this.captureMethod) {
       case "once":
         return true;
+      case "ntimes":
+        return this.isTickCountValid();
       case "slider":
         return (
           this.isSliderVariableValid() &&

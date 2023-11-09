@@ -2,11 +2,12 @@ import VideoCreator from "..";
 import { scaleBoundsAboutCenter } from "./utils";
 import DSM from "#DSM";
 import { ManagedNumberInputModel } from "../components/ManagedNumberInput";
+import { noSpeed } from "../orientation";
 
 let dispatchListenerID: string | null = null;
 let callbackIfCancel: (() => void) | null = null;
 
-export type CaptureMethod = "once" | "action" | "slider" | "ticks";
+export type CaptureMethod = "once" | "ntimes" | "action" | "slider" | "ticks";
 
 export function cancelCapture(vc: VideoCreator) {
   vc.captureCancelled = true;
@@ -84,7 +85,6 @@ export interface SliderSettings {
 }
 
 export async function captureSlider(vc: VideoCreator) {
-  const or = vc.or;
   const sliderSettings = vc.sliderSettings;
   const variable = vc.sliderVariable;
   const min = sliderSettings.min.getValue();
@@ -115,13 +115,7 @@ export async function captureSlider(vc: VideoCreator) {
     }
 
     if (i < numSteps) {
-      const numStepsRemaining = numSteps - i;
-      const s = 1 / numStepsRemaining;
-      const lerpXY = or.xyRotTo.getValue() * s + or.xyRot.getValue() * (1 - s);
-      or.xyRot.setLatexWithoutCallbacks(or.angleToString(lerpXY));
-      const lerpZ = or.zTipTo.getValue() * s + or.zTip.getValue() * (1 - s);
-      or.zTip.setLatexWithoutCallbacks(or.angleToString(lerpZ));
-      or.updateOrientationFromLatex();
+      updateOrientationAfterCapture(vc, numSteps - i);
     }
   }
 }
@@ -145,6 +139,7 @@ async function captureActionFrame(vc: VideoCreator, step: () => void) {
       if (tickCountRemaining - 1 > 0) {
         const slidersBefore = slidersLatexJoined(vc);
         step();
+        updateOrientationAfterCapture(vc, tickCountRemaining - 1);
         stepped = true;
         if (
           vc.captureMethod === "ticks" &&
@@ -187,6 +182,17 @@ async function captureActionOrSliderTicks(vc: VideoCreator, step: () => void) {
   });
 }
 
+async function captureNTimes(vc: VideoCreator) {
+  const tickCountRemaining = vc.getTickCountNumber();
+  if (vc.captureCancelled || tickCountRemaining <= 0) return;
+  await captureAndApplyFrame(vc);
+  vc.tickCount.setLatexWithCallbacks((tickCountRemaining - 1).toFixed(0));
+  if (tickCountRemaining - 1 > 0) {
+    updateOrientationAfterCapture(vc, tickCountRemaining - 1);
+    await captureNTimes(vc);
+  }
+}
+
 /** SegmentedControl does not plan for the list of names to change, so
  * force-reload the list of options by closing and re-opening the menu.
  * This is needed when action-capture stops sliders, so the slider-ticks
@@ -204,11 +210,50 @@ function forceReloadMenu(dsm: DSM) {
   }
 }
 
-// const grapher3d = vc.cc.grapher3d;
-// if (!grapher3d) throw new Error("Programming error: 3d but no grapher3d");
-// setOrientation(grapher3d, orientationFromEuler(grapher3d, 1, ++a / 10));
+function updateOrientationAfterCapture(
+  vc: VideoCreator,
+  numStepsRemaining: number
+) {
+  const or = vc.or;
+  switch (or.orientationMode) {
+    case "none":
+      return;
+    case "current-delta": {
+      let { xyRot, zTip } = or.getEulerOrientation();
+      xyRot += or.xyRotStep.getValue();
+      zTip += or.zTipStep.getValue();
+      or.setOrientationFromCapture(xyRot, zTip);
+      return;
+    }
+    case "from-to": {
+      if (numStepsRemaining <= 0) return;
+      const s = 1 / numStepsRemaining;
+      // Need to go from LaTeX since we need to tell the difference between
+      // 0 radians and tau radians when animating from 0 to 2*tau radians.
+      let { xyRot, zTip } = or.getOrientationFromLatex();
+      xyRot = or.xyRotTo.getValue() * s + xyRot * (1 - s);
+      zTip = or.zTipTo.getValue() * s + zTip * (1 - s);
+      or.setOrientationFromCapture(xyRot, zTip);
+      return;
+    }
+    case "current-speed": {
+      if (vc.captureMethod !== "ticks") return;
+      const dt = vc.getTickTimeStepNumber() / 1000;
+      const sd = or.sdBeforeCapture;
+      let { xyRot, zTip } = or.getEulerOrientation();
+      if (sd.dir === "xyRot") xyRot += sd.speed * dt;
+      else zTip += sd.speed * dt;
+      or.setOrientationFromCapture(xyRot, zTip);
+      return;
+    }
+    default:
+      or.orientationMode satisfies never;
+      throw new Error("Programming Error: Invalid orientation mode");
+  }
+}
 
 export async function capture(vc: VideoCreator) {
+  const or = vc.or;
   vc.isCapturing = true;
   vc.updateView();
   const tickSliders = vc.cc._tickSliders.bind(vc.cc);
@@ -223,20 +268,28 @@ export async function capture(vc: VideoCreator) {
       vc.cc.stopAllSliders();
       forceReloadMenu(vc.dsm);
     }
-  }
-  function stepOrientation() {
-    const or = vc.or;
-    const xyRot = or.xyRot.getValue() + or.xyRotStep.getValue();
-    or.xyRot.setLatexWithoutCallbacks(or.angleToString(xyRot));
-    const zTip = or.zTip.getValue() + or.zTipStep.getValue();
-    or.zTip.setLatexWithoutCallbacks(or.angleToString(zTip));
-    or.updateOrientationFromLatex();
+    if (vc.captureMethod !== "ticks") {
+      or.setSpeed(0);
+    }
+    or.sdBeforeCapture = or.getSpinningSpeedAndDirection() ?? noSpeed;
+    or.setSpinningSpeedAndDirection(noSpeed);
+    if (or.orientationMode === "from-to") {
+      or.xyRotFrom.setLatexWithoutCallbacks(
+        or.xyRotFrom.getLatexPopulatingDefault()
+      );
+      or.zTipFrom.setLatexWithoutCallbacks(
+        or.zTipFrom.getLatexPopulatingDefault()
+      );
+      or.setOrientationFromCapture(
+        or.xyRotFrom.getValue(),
+        or.zTipFrom.getValue()
+      );
+    }
   }
   switch (vc.captureMethod) {
     case "action": {
       const step = () => {
         if (vc.currentActionID === null) return;
-        stepOrientation();
         vc.cc.dispatch({
           type: "action-single-step",
           id: vc.currentActionID,
@@ -247,26 +300,22 @@ export async function capture(vc: VideoCreator) {
     }
     case "ticks": {
       let currTime = performance.now();
-      const noSpeed = { dir: "xyRot", speed: 0 } as const;
-      const or = vc.or;
-      const sd = or.getSpinningSpeedAndDirection() ?? noSpeed;
-      or.setSpinningSpeedAndDirection(noSpeed);
       const step = () => {
         const dt = vc.getTickTimeStepNumber();
-        or.incrementOrientationBySpeed(dt, sd);
         currTime += dt;
         tickSliders(currTime);
       };
       await captureActionOrSliderTicks(vc, step);
-      // restore the typical handling of slider ticking
-      or.cc._tickSliders = tickSliders;
-      // restore previous speed
-      or.setSpinningSpeedAndDirection(sd);
+      break;
+    }
+    case "ntimes": {
+      await captureNTimes(vc);
       break;
     }
     case "once":
       try {
         await captureAndApplyFrame(vc);
+        updateOrientationAfterCapture(vc, 0);
       } catch {
         // math bounds mismatch, irrelevant
       }
@@ -274,10 +323,15 @@ export async function capture(vc: VideoCreator) {
     case "slider":
       await captureSlider(vc);
       break;
-    default: {
-      const exhaustiveCheck: never = vc.captureMethod;
-      return exhaustiveCheck;
-    }
+    default:
+      vc.captureMethod satisfies never;
+      throw new Error("Programming Error: Invalid capture method");
+  }
+  if (vc.captureMethod !== "once") {
+    // restore the typical handling of slider ticking
+    or.cc._tickSliders = tickSliders;
+    // restore previous speed
+    or.setSpinningSpeedAndDirection(or.sdBeforeCapture);
   }
   vc.isCapturing = false;
   vc.actionCaptureState = "none";

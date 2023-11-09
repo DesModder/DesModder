@@ -14,17 +14,9 @@
   margin-bottom: 5px;
 }
 
-.dsm-vc-select-capture-method {
-  margin-top: 5px;
-  margin-bottom: 10px;
-}
-
-.dsm-vc-slider-settings {
-  margin-bottom: 10px;
-}
-
-.dsm-vc-end-condition-settings {
-  margin: 0 5px 10px 0;
+.dsm-vc-select-capture-method,
+.dsm-vc-select-orientation-mode {
+  margin-bottom: 5px;
 }
 
 .dsm-vc-reset-bounds-wrapper {
@@ -54,11 +46,11 @@
   cursor: pointer;
 }
 
-.dsm-vc-capture-menu .dcg-static-mathquill-view.dcg-mq-math-mode {
+.dsm-vc-popover .dcg-static-mathquill-view.dcg-mq-math-mode {
   font-size: 100%;
 }
 
-.dsm-vc-capture-menu .dcg-math-field.dcg-mq-math-mode {
+.dsm-vc-popover .dcg-math-field.dcg-mq-math-mode {
   font-size: 90%;
 }
 

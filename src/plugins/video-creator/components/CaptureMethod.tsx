@@ -16,7 +16,6 @@ import {
 } from "#components";
 import { format } from "#i18n";
 import ManagedNumberInput from "./ManagedNumberInput";
-import { OrientationView } from "./OrientationView";
 
 export default class SelectCapture extends Component<{
   vc: VideoCreator;
@@ -40,6 +39,7 @@ export default class SelectCapture extends Component<{
             selectedIndex={() => this.getSelectedCaptureMethodIndex()}
             setSelectedIndex={(i) => this.setSelectedCaptureMethodIndex(i)}
             allowChange={() => !this.vc.isCapturing}
+            // TODO-localization
             ariaGroupLabel={"Select capture method"}
           />
         </div>
@@ -164,6 +164,7 @@ export default class SelectCapture extends Component<{
               </div>
             </div>
           ),
+          ntimes: () => null,
           once: () => null,
         })}
         <div class="dsm-vc-capture-size">
@@ -220,7 +221,6 @@ export default class SelectCapture extends Component<{
             </div>
           )}
         </If>
-        <OrientationView or={this.vc.or} />
         <div class="dsm-vc-capture">
           {IfElse(
             () => !this.vc.isCapturing || this.vc.captureMethod === "once",
@@ -272,6 +272,21 @@ export default class SelectCapture extends Component<{
               </div>
             )}
           </If>
+          <If predicate={() => this.vc.captureMethod === "ntimes"}>
+            {() => (
+              <div class="dsm-vc-end-condition-settings">
+                {format("video-creator-frame-count")}
+                <ManagedNumberInput
+                  focusID="capture-frame-count"
+                  // TODO-localization
+                  ariaLabel="frame count"
+                  hasError={() => !this.vc.isTickCountValid()}
+                  vc={this.vc}
+                  data={this.vc.tickCount}
+                />
+              </div>
+            )}
+          </If>
         </div>
       </div>
     );
@@ -280,6 +295,7 @@ export default class SelectCapture extends Component<{
   validCaptureMethodNames() {
     const captureMethodNames: CaptureMethod[] = [
       "once",
+      "ntimes",
       "slider",
       "action",
       "ticks",
