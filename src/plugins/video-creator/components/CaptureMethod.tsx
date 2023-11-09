@@ -13,10 +13,10 @@ import {
   Tooltip,
   InlineMathInputView,
   For,
-  IconButton,
 } from "#components";
 import { format } from "#i18n";
 import ManagedNumberInput from "./ManagedNumberInput";
+import { OrientationView } from "./OrientationView";
 
 export default class SelectCapture extends Component<{
   vc: VideoCreator;
@@ -220,133 +220,7 @@ export default class SelectCapture extends Component<{
             </div>
           )}
         </If>
-        <If predicate={() => this.vc.isCurrentOrientationRelevant()}>
-          {() => (
-            <div class="dsm-vc-orientation">
-              {format("video-creator-angle")}
-              <StaticMathQuillView latex="\ xy=" />
-              <ManagedNumberInput
-                focusID="current-xy-rot"
-                // TODO-localization
-                ariaLabel="current rotation in xy plane"
-                hasError={() => !this.vc.isCurrentXYRotValid()}
-                vc={this.vc}
-                data={this.vc.xyRot}
-                numberUnits={this.vc.cc.isDegreeMode() ? "°" : "rad"}
-              />
-              <StaticMathQuillView latex="\ z=" />
-              <ManagedNumberInput
-                focusID="current-z-tip"
-                // TODO-localization
-                ariaLabel="current rotation tipping z axis towards camera"
-                hasError={() => !this.vc.isCurrentZTipValid()}
-                vc={this.vc}
-                data={this.vc.zTip}
-                numberUnits={this.vc.cc.isDegreeMode() ? "°" : "rad"}
-              />
-            </div>
-          )}
-        </If>
-        <If predicate={() => this.vc.isToOrientationRelevant()}>
-          {() => (
-            <div class="dsm-vc-orientation">
-              {format("video-creator-angle-to")}
-              <StaticMathQuillView latex="\ xy=" />
-              <ManagedNumberInput
-                focusID="to-xy-rot"
-                // TODO-localization
-                ariaLabel="to rotation in xy plane"
-                hasError={() => !this.vc.isXYRotToValid()}
-                vc={this.vc}
-                data={this.vc.xyRotTo}
-                numberUnits={this.vc.cc.isDegreeMode() ? "°" : "rad"}
-              />
-              <StaticMathQuillView latex="\ z=" />
-              <ManagedNumberInput
-                focusID="to-z-tip"
-                // TODO-localization
-                ariaLabel="to rotation tipping z axis towards camera"
-                hasError={() => !this.vc.isZTipToValid()}
-                vc={this.vc}
-                data={this.vc.zTipTo}
-                numberUnits={this.vc.cc.isDegreeMode() ? "°" : "rad"}
-              />
-            </div>
-          )}
-        </If>
-        <If predicate={() => this.vc.isStepOrientationRelevant()}>
-          {() => (
-            <div class="dsm-vc-orientation">
-              {format("video-creator-angle-step")}
-              <StaticMathQuillView latex="\ \Delta xy=" />
-              <ManagedNumberInput
-                focusID="step-xy-rot"
-                // TODO-localization
-                ariaLabel="step rotation in xy plane"
-                hasError={() => !this.vc.isXYRotStepValid()}
-                vc={this.vc}
-                data={this.vc.xyRotStep}
-                numberUnits={this.vc.cc.isDegreeMode() ? "°" : "rad"}
-              />
-              <StaticMathQuillView latex="\ \Delta z=" />
-              <ManagedNumberInput
-                focusID="step-z-tip"
-                // TODO-localization
-                ariaLabel="step rotation tipping z axis towards camera"
-                hasError={() => !this.vc.isZTipStepValid()}
-                vc={this.vc}
-                data={this.vc.zTipStep}
-                numberUnits={this.vc.cc.isDegreeMode() ? "°" : "rad"}
-              />
-            </div>
-          )}
-        </If>
-        <If predicate={() => this.vc.isSpeedOrientationRelevant()}>
-          {() => (
-            <div class="dsm-vc-orientation">
-              {format("video-creator-angle-speed")}
-              <If
-                predicate={() => {
-                  const sd = this.vc.getSpinningSpeedAndDirection();
-                  if (!sd) return false;
-                  return sd.speed !== 0;
-                }}
-              >
-                {() => (
-                  <span>
-                    {" "}
-                    <IconButton
-                      onTap={() => this.vc.toggleSpinningDirection()}
-                      iconClass={() => {
-                        const dir = this.vc.getSpinningSpeedAndDirection()?.dir;
-                        return dir === "xyRot"
-                          ? "dcg-icon-move-horizontal"
-                          : "dcg-icon-move-vertical";
-                      }}
-                      small={true}
-                    />
-                    <StaticMathQuillView
-                      latex={() =>
-                        this.vc.getSpinningSpeedAndDirection()?.dir === "zTip"
-                          ? "\\ z="
-                          : "\\ xy="
-                      }
-                    />
-                  </span>
-                )}
-              </If>
-              <ManagedNumberInput
-                focusID="speed-rot"
-                // TODO-localization
-                ariaLabel="speed rotation"
-                hasError={() => !this.vc.isSpeedRotValid()}
-                vc={this.vc}
-                data={this.vc.speedRot}
-                numberUnits={this.vc.cc.isDegreeMode() ? "°/s" : "rad/s"}
-              />
-            </div>
-          )}
-        </If>
+        <OrientationView or={this.vc.or} />
         <div class="dsm-vc-capture">
           {IfElse(
             () => !this.vc.isCapturing || this.vc.captureMethod === "once",

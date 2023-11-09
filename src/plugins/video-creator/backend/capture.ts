@@ -84,6 +84,7 @@ export interface SliderSettings {
 }
 
 export async function captureSlider(vc: VideoCreator) {
+  const or = vc.or;
   const sliderSettings = vc.sliderSettings;
   const variable = vc.sliderVariable;
   const min = sliderSettings.min.getValue();
@@ -116,11 +117,11 @@ export async function captureSlider(vc: VideoCreator) {
     if (i < numSteps) {
       const numStepsRemaining = numSteps - i;
       const s = 1 / numStepsRemaining;
-      const lerpXY = vc.xyRotTo.getValue() * s + vc.xyRot.getValue() * (1 - s);
-      vc.xyRot.setLatexWithoutCallbacks(vc.angleToString(lerpXY));
-      const lerpZ = vc.zTipTo.getValue() * s + vc.zTip.getValue() * (1 - s);
-      vc.zTip.setLatexWithoutCallbacks(vc.angleToString(lerpZ));
-      vc.updateOrientationFromLatex();
+      const lerpXY = or.xyRotTo.getValue() * s + or.xyRot.getValue() * (1 - s);
+      or.xyRot.setLatexWithoutCallbacks(or.angleToString(lerpXY));
+      const lerpZ = or.zTipTo.getValue() * s + or.zTip.getValue() * (1 - s);
+      or.zTip.setLatexWithoutCallbacks(or.angleToString(lerpZ));
+      or.updateOrientationFromLatex();
     }
   }
 }
@@ -224,11 +225,12 @@ export async function capture(vc: VideoCreator) {
     }
   }
   function stepOrientation() {
-    const xyRot = vc.xyRot.getValue() + vc.xyRotStep.getValue();
-    vc.xyRot.setLatexWithoutCallbacks(vc.angleToString(xyRot));
-    const zTip = vc.zTip.getValue() + vc.zTipStep.getValue();
-    vc.zTip.setLatexWithoutCallbacks(vc.angleToString(zTip));
-    vc.updateOrientationFromLatex();
+    const or = vc.or;
+    const xyRot = or.xyRot.getValue() + or.xyRotStep.getValue();
+    or.xyRot.setLatexWithoutCallbacks(or.angleToString(xyRot));
+    const zTip = or.zTip.getValue() + or.zTipStep.getValue();
+    or.zTip.setLatexWithoutCallbacks(or.angleToString(zTip));
+    or.updateOrientationFromLatex();
   }
   switch (vc.captureMethod) {
     case "action": {
@@ -246,19 +248,20 @@ export async function capture(vc: VideoCreator) {
     case "ticks": {
       let currTime = performance.now();
       const noSpeed = { dir: "xyRot", speed: 0 } as const;
-      const sd = vc.getSpinningSpeedAndDirection() ?? noSpeed;
-      vc.setSpinningSpeedAndDirection(noSpeed);
+      const or = vc.or;
+      const sd = or.getSpinningSpeedAndDirection() ?? noSpeed;
+      or.setSpinningSpeedAndDirection(noSpeed);
       const step = () => {
         const dt = vc.getTickTimeStepNumber();
-        vc.incrementOrientationBySpeed(dt, sd);
+        or.incrementOrientationBySpeed(dt, sd);
         currTime += dt;
         tickSliders(currTime);
       };
       await captureActionOrSliderTicks(vc, step);
       // restore the typical handling of slider ticking
-      vc.cc._tickSliders = tickSliders;
+      or.cc._tickSliders = tickSliders;
       // restore previous speed
-      vc.setSpinningSpeedAndDirection(sd);
+      or.setSpinningSpeedAndDirection(sd);
       break;
     }
     case "once":

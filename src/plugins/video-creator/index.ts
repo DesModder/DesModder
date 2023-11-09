@@ -14,15 +14,7 @@ import {
   ManagedNumberInputModel,
   ManagedNumberInputModelOpts,
 } from "./components/ManagedNumberInput";
-import { hookIntoFunction } from "#utils/listenerHelpers.ts";
-import {
-  Matrix3,
-  approx3su,
-  eulerFromOrientation,
-  getOrientation,
-  orientationFromEuler,
-  setOrientation,
-} from "../../globals/matrix3";
+import { Orientation } from "./orientation";
 
 type FocusedMQ = string;
 
@@ -31,7 +23,6 @@ const DEFAULT_FILENAME = "DesModder_Video_Creator";
 export default class VideoCreator extends PluginController {
   static id = "video-creator" as const;
   static enabledByDefault = true;
-  readonly cleanupCallbacks: (() => void)[] = [];
 
   ffmpegLoaded = false;
   frames: string[] = [];
@@ -77,45 +68,7 @@ export default class VideoCreator extends PluginController {
   readonly captureWidth = this.managedNumberInputModel("");
   samePixelRatio = false;
 
-  // ** orientation
-  /** Writes angle (in radians) as string (in preferred degrees or radians). */
-  angleToString(n: number) {
-    if (this.cc.isDegreeMode()) {
-      return (n / (Math.PI / 180)).toFixed(1);
-    } else {
-      return (n / (Math.PI * 2)).toFixed(3) + "\\tau";
-    }
-  }
-
-  readonly zTip = this.managedNumberInputModel("", {
-    afterLatexChanged: () => this.updateOrientationFromLatex(),
-    defaultLatex: () => this.angleToString(this.getEulerOrientation().zTip),
-  });
-
-  readonly xyRot = this.managedNumberInputModel("", {
-    afterLatexChanged: () => this.updateOrientationFromLatex(),
-    defaultLatex: () => this.angleToString(this.getEulerOrientation().xyRot),
-  });
-
-  readonly zTipTo = this.managedNumberInputModel("", {
-    defaultLatex: () => this.zTip.getLatexPopulatingDefault(),
-  });
-
-  readonly xyRotTo = this.managedNumberInputModel("", {
-    defaultLatex: () => this.xyRot.getLatexPopulatingDefault(),
-  });
-
-  readonly zTipStep = this.managedNumberInputModel("0");
-  readonly xyRotStep = this.managedNumberInputModel("0");
-
-  readonly speedRot = this.managedNumberInputModel("", {
-    afterLatexChanged: () => this.updateSpinningSpeedFromLatex(),
-    defaultLatex: () => {
-      const sd = this.getSpinningSpeedAndDirection();
-      if (!sd) return "";
-      return this.angleToString(sd.speed);
-    },
-  });
+  readonly or = new Orientation(this);
 
   // ** play preview
   previewIndex = 0;
@@ -147,7 +100,7 @@ export default class VideoCreator extends PluginController {
   afterEnable() {
     this.calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
     this._applyDefaultCaptureSize();
-    this.applySpinningOrientation();
+    this.or.afterEnable();
     this.dsm.pillboxMenus?.addPillboxButton({
       id: "dsm-vc-menu",
       tooltip: "video-creator-menu",
@@ -155,47 +108,12 @@ export default class VideoCreator extends PluginController {
       popup: () => MainPopupFunc(this),
     });
     document.addEventListener("keydown", this.onKeydown);
-    const controls = this.cc.grapher3d?.controls;
-    if (controls) {
-      const unhook = hookIntoFunction(
-        controls,
-        "copyWorldRotationToWorld",
-        "video-creator-rotation-listener",
-        0,
-        () => this.applySpinningOrientation()
-      );
-      if (unhook) this.cleanupCallbacks.push(unhook);
-      const keys = [
-        "onTapStart",
-        "onTapMove",
-        "onTapUp",
-        "onMouseWheel",
-      ] as const;
-      for (const k of keys) {
-        const unhook = hookIntoFunction(
-          controls,
-          k,
-          "video-creator-spinning-listener-" + k,
-          0,
-          () => this.applySpinningSpeedFromGraph()
-        );
-        if (unhook) this.cleanupCallbacks.push(unhook);
-      }
-    }
-    const dispatcherID = this.cc.dispatcher.register((evt) => {
-      if (evt.type === "set-graph-settings" && "degreeMode" in evt) {
-        this.applySpinningOrientation();
-      }
-    });
-    this.cleanupCallbacks.push(() =>
-      this.cc.dispatcher.unregister(dispatcherID)
-    );
   }
 
   afterDisable() {
     this.dsm.pillboxMenus?.removePillboxButton("dsm-vc-menu");
     document.removeEventListener("keydown", this.onKeydown);
-    for (const cleanup of this.cleanupCallbacks) cleanup();
+    this.or.afterDisable();
   }
 
   graphpaperBoundsChanged() {
@@ -380,206 +298,12 @@ export default class VideoCreator extends PluginController {
     return Number.isInteger(tc) && tc > 0;
   }
 
-  isAngleValid(v: number) {
-    return !isNaN(v) && Math.abs(v) < 2 ** 30;
-  }
-
-  isCurrentXYRotValid() {
-    return this.isAngleValid(this.xyRot.getValue());
-  }
-
-  isCurrentZTipValid() {
-    return this.isAngleValid(this.zTip.getValue());
-  }
-
-  isXYRotStepValid() {
-    return this.isAngleValid(this.xyRotStep.getValue());
-  }
-
-  isZTipStepValid() {
-    return this.isAngleValid(this.zTipStep.getValue());
-  }
-
-  isXYRotToValid() {
-    return this.isAngleValid(this.xyRotTo.getValue());
-  }
-
-  isZTipToValid() {
-    return this.isAngleValid(this.zTipTo.getValue());
-  }
-
-  isSpeedRotValid() {
-    return this.isAngleValid(this.speedRot.getValue());
-  }
-
-  isCurrentOrientationRelevant() {
-    return this.cc.is3dProduct();
-  }
-
-  isToOrientationRelevant() {
-    return (
-      this.isCurrentOrientationRelevant() && this.captureMethod === "slider"
-    );
-  }
-
-  isStepOrientationRelevant() {
-    return (
-      this.isCurrentOrientationRelevant() && this.captureMethod === "action"
-    );
-  }
-
-  isSpeedOrientationRelevant() {
-    return (
-      this.isCurrentOrientationRelevant() &&
-      this.captureMethod === "ticks" &&
-      this.getSpinningSpeedAndDirection() !== undefined
-    );
-  }
-
-  toggleSpinningDirection() {
-    const sd = this.getSpinningSpeedAndDirection();
-    if (!sd) return;
-    const { dir, speed } = sd;
-    this.setSpinningSpeedAndDirection({
-      dir: dir === "zTip" ? "xyRot" : "zTip",
-      speed,
-    });
-  }
-
-  applySpinningSpeedFromGraph() {
-    if (this._applyingSpinningOrientation) return;
-    const sd = this.getSpinningSpeedAndDirection();
-    if (!sd) return;
-    const trigAngleMultiplier = this.trigAngleMultiplier();
-    if (this.speedRot.getValue() * trigAngleMultiplier !== sd.speed) {
-      this.speedRot.setLatexWithoutCallbacks("");
-    }
-  }
-
-  updateSpinningSpeedFromLatex() {
-    const sd = this.getSpinningSpeedAndDirection();
-    if (!sd) return;
-    const { dir } = sd;
-    const trigAngleMultiplier = this.trigAngleMultiplier();
-    let speed = this.speedRot.getValue() * trigAngleMultiplier;
-    if (isNaN(speed)) speed = 0;
-    this.setSpinningSpeedAndDirection({ dir, speed });
-  }
-
-  private speedAndDirectionToAxis3DSpeed({ dir, speed }: SpeedAndDirection) {
-    const ss = speed >= 0 ? 1 : -1;
-    if (dir === "xyRot") {
-      return {
-        axis3D: [0, 0, ss] as const,
-        speed3D: Math.abs(speed),
-      };
-    } else {
-      const { xyRot } = this.getEulerOrientation();
-      return {
-        axis3D: [ss * Math.cos(xyRot), -ss * Math.sin(xyRot), 0] as const,
-        speed3D: Math.abs(speed),
-      };
-    }
-  }
-
-  setSpinningSpeedAndDirection(sd: SpeedAndDirection) {
-    const controls = this.cc.grapher3d?.controls;
-    if (!controls) return;
-    if (!this.isAngleValid(sd.speed)) return;
-    const { axis3D, speed3D } = this.speedAndDirectionToAxis3DSpeed(sd);
-    controls.axis3D = axis3D;
-    controls.speed3D = speed3D;
-  }
-
-  /** Returns undefined if the spin doesn't correspond to a simple zTip or xyRot. */
-  getSpinningSpeedAndDirection(): undefined | SpeedAndDirection {
-    const controls = this.cc.grapher3d?.controls;
-    if (!controls) return undefined;
-    const [x, y, z] = controls.axis3D;
-    if (Math.abs(z) > 0.999) {
-      return { dir: "xyRot", speed: controls.speed3D * Math.sign(z) };
-    } else if (Math.abs(z) < 0.001) {
-      const { xyRot } = this.getEulerOrientation();
-      const dot = Math.cos(xyRot) * x - Math.sin(xyRot) * y;
-      return { dir: "zTip", speed: controls.speed3D * Math.sign(dot) };
-    } else {
-      return undefined;
-    }
-  }
-
-  getEulerOrientation() {
-    const grapher3d = this.cc.grapher3d;
-    if (!grapher3d) return { zTip: 0, xyRot: 0 };
-    const mat = getOrientation(grapher3d);
-    return eulerFromOrientation(mat);
-  }
-
-  trigAngleMultiplier() {
-    return this.cc.isDegreeMode() ? Math.PI / 180 : 1;
-  }
-
-  _applyingSpinningOrientation = false;
-  applySpinningOrientation() {
-    const grapher3d = this.cc.grapher3d;
-    if (!grapher3d) return;
-    if (this._applyingSpinningOrientation) return;
-    const mat = getOrientation(grapher3d);
-    const tm = this._targetMatrixFromLatex;
-    if (tm && approx3su(mat, tm)) {
-      // Avoid a cycle where editing the latex changes the world changes the latex
-      return;
-    }
-    this._targetMatrixFromLatex = undefined;
-    // TODO: _applyingSpinningOrientation still needed? We have setLatexWithoutCallbacks now.
-    this._applyingSpinningOrientation = true;
-    this.zTip.setLatexWithoutCallbacks("");
-    this.xyRot.setLatexWithoutCallbacks("");
-    // TODO-updateView: should be tick?
-    this.updateView();
-    this._applyingSpinningOrientation = false;
-  }
-
-  _targetMatrixFromLatex: Matrix3 | undefined;
-  updateOrientationFromLatex() {
-    if (this._applyingSpinningOrientation) return;
-    const grapher3d = this.cc.grapher3d;
-    if (!grapher3d) return;
-    const trigAngleMultiplier = this.trigAngleMultiplier();
-    const zTip = this.zTip.getValue() * trigAngleMultiplier;
-    const xyRot = this.xyRot.getValue() * trigAngleMultiplier;
-    if (!this.isAngleValid(zTip) || !this.isAngleValid(xyRot)) return;
-    const mat = orientationFromEuler(grapher3d, zTip, xyRot);
-    this._targetMatrixFromLatex = mat;
-    setOrientation(grapher3d, mat);
-    this.applySpinningSpeedFromGraph();
-  }
-
-  incrementOrientationBySpeed(dtMs: number, sd: SpeedAndDirection) {
-    const dt = dtMs / 1000;
-    const { xyRot, zTip } = this.getEulerOrientation();
-    if (sd.dir === "xyRot") {
-      const newAngle = xyRot + sd.speed * dt;
-      this.xyRot.setLatexWithCallbacks(this.angleToString(newAngle));
-    } else {
-      const newAngle = zTip + sd.speed * dt;
-      this.zTip.setLatexWithCallbacks(this.angleToString(newAngle));
-    }
-  }
-
   async capture() {
     await capture(this);
   }
 
   areCaptureSettingsValid() {
-    if (this.isCurrentOrientationRelevant())
-      if (!this.isCurrentXYRotValid() || !this.isCurrentZTipValid())
-        return false;
-    if (this.isToOrientationRelevant())
-      if (!this.isXYRotToValid() || !this.isZTipToValid()) return false;
-    if (this.isStepOrientationRelevant())
-      if (!this.isXYRotStepValid() || !this.isZTipStepValid()) return false;
-    if (this.isSpeedOrientationRelevant())
-      if (!this.isSpeedRotValid()) return false;
+    if (!this.or.areCaptureSettingsValid()) return false;
     if (!this.isCaptureWidthValid() || !this.isCaptureHeightValid())
       return false;
     switch (this.captureMethod) {
@@ -730,9 +454,4 @@ export default class VideoCreator extends PluginController {
 
 function isValidLength(v: number) {
   return !isNaN(v) && v >= 2;
-}
-
-interface SpeedAndDirection {
-  dir: "xyRot" | "zTip";
-  speed: number;
 }
