@@ -1,5 +1,11 @@
 # DesModder Changelog
 
+## 0.12.4
+
+Bug fixes:
+
+- Fix replacement used for Text Mode and Pin Expressions.
+
 ## 0.12.3
 
 Bug fixes:
