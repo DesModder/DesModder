@@ -12,9 +12,12 @@
 $DCGView.createElement(
   "div",
   {
-    class: () => ({
-        "dcg-exppanel-container" ____
-      }),
+    class: () => {
+      var $;
+      return {
+        "dcg-exppanel-container": ____
+      }
+    },
     ____
   },
   __children__
