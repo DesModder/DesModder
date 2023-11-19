@@ -54,6 +54,13 @@
   font-size: 90%;
 }
 
-.dsm-input-placeholder .dcg-mq-root-block > * {
-  opacity: 0.6;
+.dsm-vc-popover .dcg-suffix-radian .dcg-mq-placeholder ~ .dcg-math-field,
+.dsm-vc-popover .dcg-suffix-degree .dcg-mq-placeholder ~ .dcg-math-field {
+  min-width: 72px;
+}
+
+/* prettier-ignore */
+.dsm-vc-popover .dsm-suffix-radian-per-sec .dcg-mq-placeholder ~ .dcg-math-field,
+.dsm-vc-popover .dsm-suffix-degree-per-sec .dcg-mq-placeholder ~ .dcg-math-field {
+  min-width: 90px;
 }

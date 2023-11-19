@@ -40,14 +40,20 @@ export class ManagedNumberInputModel {
     this.opts?.afterLatexChanged?.();
   }
 
-  getLatexPopulatingDefault() {
-    if (this.isPopulatedByDefault())
-      return this.opts?.defaultLatex?.() ?? this.#latex;
+  getDefaultLatex() {
+    return this.opts?.defaultLatex?.();
+  }
+
+  getLatex() {
     return this.#latex;
   }
 
-  isPopulatedByDefault() {
-    return /^(\s|\\ )*$/.test(this.#latex) && !!this.opts?.defaultLatex;
+  getLatexPopulatingDefault() {
+    if (/^(\s|\\ )*$/.test(this.#latex)) {
+      const def = this.getDefaultLatex();
+      if (def !== undefined) return def;
+    }
+    return this.#latex;
   }
 
   getValue() {
@@ -73,26 +79,17 @@ export default class ManagedNumberInput extends Component<ManagedNumberInputPara
           "dcg-suffix-radian": this.props.numberUnits?.() === "rad",
           "dsm-suffix-degree-per-sec": this.props.numberUnits?.() === "°/s",
           "dsm-suffix-radian-per-sec": this.props.numberUnits?.() === "rad/s",
-          "dsm-input-placeholder": this.props.data().isPopulatedByDefault(),
         })}
+        placeholder={() => this.props.data().getDefaultLatex()}
         ariaLabel={() => this.props.ariaLabel()}
         handleLatexChanged={(latex) => {
           this.props.data().setLatexWithCallbacks(latex);
           // TODO-updateView: this should be a tick
           this.vc.updateView();
         }}
-        latex={() => this.props.data().getLatexPopulatingDefault()}
+        latex={() => this.props.data().getLatex()}
         hasError={() => this.props.hasError(this.props.data().getValue())}
-        handleFocusChanged={(b) => {
-          this.vc.updateFocus(this.props.focusID(), b);
-          if (b) {
-            const d = this.props.data();
-            // Overwrite fixed latex with placeholder latex.
-            d.setLatexWithCallbacks(d.getLatexPopulatingDefault());
-            // TODO-updateView: this should be a tick
-            this.vc.updateView();
-          }
-        }}
+        handleFocusChanged={(b) => this.vc.updateFocus(this.props.focusID(), b)}
         isFocused={() => this.vc.isFocused(this.props.focusID())}
         controller={this.vc.cc}
         readonly={() => this.props.readonly?.() ?? false}
