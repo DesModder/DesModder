@@ -65,7 +65,7 @@ export class OrientationView extends Component<{
     return (
       <div class="dsm-vc-orientation">
         {format("video-creator-angle-current")}
-        <StaticMathQuillView latex="\ xy=" />
+        <StaticMathQuillView latex="\ xy:" />
         <ManagedNumberInput
           focusID="current-xy-rot"
           // TODO-localization
@@ -75,7 +75,7 @@ export class OrientationView extends Component<{
           data={this.or.xyRot}
           numberUnits={this.or.cc.isDegreeMode() ? "°" : "rad"}
         />
-        <StaticMathQuillView latex="\ z=" />
+        <StaticMathQuillView latex="\ z:" />
         <ManagedNumberInput
           focusID="current-z-tip"
           // TODO-localization
@@ -118,8 +118,8 @@ export class OrientationView extends Component<{
                 <StaticMathQuillView
                   latex={() =>
                     this.or.getSpinningSpeedAndDirection()?.dir === "zTip"
-                      ? "\\ z="
-                      : "\\ xy="
+                      ? "\\ z:"
+                      : "\\ xy:"
                   }
                 />
               </span>
@@ -145,7 +145,7 @@ export class OrientationView extends Component<{
         {this.templateCurrent()}
         <div class="dsm-vc-orientation">
           {format("video-creator-angle-step")}
-          <StaticMathQuillView latex="\ \Delta xy=" />
+          <StaticMathQuillView latex="\ \Delta xy:" />
           <ManagedNumberInput
             focusID="step-xy-rot"
             // TODO-localization
@@ -155,7 +155,7 @@ export class OrientationView extends Component<{
             data={this.or.xyRotStep}
             numberUnits={this.or.cc.isDegreeMode() ? "°" : "rad"}
           />
-          <StaticMathQuillView latex="\ \Delta z=" />
+          <StaticMathQuillView latex="\ \Delta z:" />
           <ManagedNumberInput
             focusID="step-z-tip"
             // TODO-localization
@@ -175,7 +175,7 @@ export class OrientationView extends Component<{
       <span>
         <div class="dsm-vc-orientation">
           {format("video-creator-angle-from")}
-          <StaticMathQuillView latex="\ xy=" />
+          <StaticMathQuillView latex="\ xy:" />
           <ManagedNumberInput
             focusID="from-xy-rot"
             // TODO-localization
@@ -185,7 +185,7 @@ export class OrientationView extends Component<{
             data={this.or.xyRotFrom}
             numberUnits={this.or.cc.isDegreeMode() ? "°" : "rad"}
           />
-          <StaticMathQuillView latex="\ z=" />
+          <StaticMathQuillView latex="\ z:" />
           <ManagedNumberInput
             focusID="from-z-tip"
             // TODO-localization
@@ -198,7 +198,7 @@ export class OrientationView extends Component<{
         </div>
         <div class="dsm-vc-orientation">
           {format("video-creator-angle-to")}
-          <StaticMathQuillView latex="\ xy=" />
+          <StaticMathQuillView latex="\ xy:" />
           <ManagedNumberInput
             focusID="to-xy-rot"
             // TODO-localization
@@ -208,7 +208,7 @@ export class OrientationView extends Component<{
             data={this.or.xyRotTo}
             numberUnits={this.or.cc.isDegreeMode() ? "°" : "rad"}
           />
-          <StaticMathQuillView latex="\ z=" />
+          <StaticMathQuillView latex="\ z:" />
           <ManagedNumberInput
             focusID="to-z-tip"
             // TODO-localization
