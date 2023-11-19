@@ -60,6 +60,7 @@ export async function cancelExport(vc: VideoCreator) {
 export async function initFFmpeg(vc: VideoCreator) {
   if (ffmpeg === null) {
     ffmpeg = createFFmpeg({ log: false });
+    // Idk why this doesn't just use ffmpeg.setProgress, but it works for now.
     ffmpeg.setLogger(({ type, message }) => {
       if (type === "fferr") {
         const match = message.match(/frame=\s*(?<frame>\d+)/);
