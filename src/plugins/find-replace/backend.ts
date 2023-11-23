@@ -24,15 +24,28 @@ export const rootKeys = [
   "fillOpacity",
   "residualVariable",
   "fps",
+  "resolution",
 ] as const;
 
 export const nestedKeyContainers = [
   "slider",
   "parametricDomain",
   "polarDomain",
+  "parametricDomain3Du",
+  "parametricDomain3Dv",
+  "parametricDomain3Dr",
+  "parametricDomain3Dphi",
+  "cdf",
+  "vizProps",
 ] as const;
 
-export const nestedKeys = ["max", "min", "step"] as const;
+export const nestedKeys = [
+  "max",
+  "min",
+  "step",
+  "breadth",
+  "axisOffset",
+] as const;
 
 function replace(calc: Calc, replaceLatex: (s: string) => string) {
   // replaceString is applied to stuff like labels
