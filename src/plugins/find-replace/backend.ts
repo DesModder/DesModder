@@ -206,7 +206,29 @@ export function refactor(calc: Calc, from: string, to: string) {
       return acc;
     });
   } else {
-    const regex = RegExp(escapeRegExp(from), "g");
-    replace(calc, (s: string) => s.replace(regex, to));
+    // Sticky flag "y", global flag "g"
+    const search = escapeRegExp(from);
+    const regex = RegExp(`(?<before>.*?)(?<search>${search})`, "gy");
+    const endsInCommand = /\\[a-zA-Z]+$/;
+    const startsWithLetter = /^[a-zA-Z]/;
+    replace(calc, (s: string) => {
+      regex.lastIndex = 0;
+      let out = "";
+      let r = regex.exec(s);
+      let last = 0;
+      if (!r) return s;
+      for (; r; last = regex.lastIndex, r = regex.exec(s)) {
+        const before = r.groups!.before;
+        const insert = to;
+        if (endsInCommand.test(out) && startsWithLetter.test(before))
+          out += " ";
+        out += before;
+        if (endsInCommand.test(out) && startsWithLetter.test(insert))
+          out += " ";
+        out += insert;
+      }
+      out += s.slice(last);
+      return out;
+    });
   }
 }
