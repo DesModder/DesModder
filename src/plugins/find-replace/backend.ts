@@ -169,12 +169,12 @@ function getReplacements(
   return [];
 }
 
-export function refactor(calc: Calc, from: string, to: string) {
+export function replacer(from: string, to: string) {
   const fromParsed = parseDesmosLatex(from.trim());
   if (satisfiesType(fromParsed, "Identifier")) {
     // trim `from` to prevent inputs such as "  a" messing up matches that depend on `from` itself.
     from = from.trim();
-    replace(calc, (s: string) => {
+    return (s: string) => {
       const node = parseDesmosLatex(s);
       if (satisfiesType(node, "Error")) {
         return s;
@@ -204,14 +204,14 @@ export function refactor(calc: Calc, from: string, to: string) {
       }
       acc += s.slice(endIndex);
       return acc;
-    });
+    };
   } else {
     // Sticky flag "y", global flag "g"
     const search = escapeRegExp(from);
     const regex = RegExp(`(?<before>.*?)(?<search>${search})`, "gy");
     const endsInCommand = /\\[a-zA-Z]+$/;
     const startsWithLetter = /^[a-zA-Z]/;
-    replace(calc, (s: string) => {
+    return (s: string) => {
       regex.lastIndex = 0;
       let out = "";
       let r = regex.exec(s);
@@ -227,8 +227,15 @@ export function refactor(calc: Calc, from: string, to: string) {
           out += " ";
         out += insert;
       }
-      out += s.slice(last);
+      const trailing = s.slice(last);
+      if (endsInCommand.test(out) && startsWithLetter.test(trailing))
+        out += " ";
+      out += trailing;
       return out;
-    });
+    };
   }
+}
+
+export function refactor(calc: Calc, from: string, to: string) {
+  replace(calc, replacer(from, to));
 }
