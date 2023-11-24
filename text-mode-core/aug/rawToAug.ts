@@ -241,7 +241,7 @@ function tryRawNonFolderToAug(
     case "table": {
       const longestColumnLength = Math.max(
         ...item.columns.map((col) =>
-          col.values.map((e) => e !== "").lastIndexOf(true)
+          (col.values ?? []).map((e) => e !== "").lastIndexOf(true)
         )
       );
       return {
@@ -252,7 +252,7 @@ function tryRawNonFolderToAug(
           .map((column) => ({
             type: "column",
             id: column.id,
-            values: column.values
+            values: (column.values ?? [])
               .slice(0, longestColumnLength + 1)
               .map((s) => parseLatex(cfg, s)),
             ...columnExpressionCommon(cfg, column),
