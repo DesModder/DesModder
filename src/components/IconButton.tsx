@@ -7,6 +7,7 @@ export default class IconButton extends Component<{
   btnClass?: MaybeClassDict;
   onTap: (e: Event) => void;
   disabled?: boolean;
+  small?: boolean;
 }> {
   template() {
     return (
@@ -15,8 +16,9 @@ export default class IconButton extends Component<{
         class={() =>
           mergeClass(
             {
-              "dsm-btn-icon-disabled": this.props.disabled?.() ?? false,
               "dsm-btn-icon": true,
+              "dsm-btn-icon-disabled": this.props.disabled?.() ?? false,
+              "dsm-btn-icon-small": this.props.small?.() ?? false,
             },
             this.props.btnClass?.()
           )

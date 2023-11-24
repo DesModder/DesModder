@@ -154,9 +154,9 @@ type MaybeHookedFunction<Fn extends (...args: any[]) => any> =
     });
 
 export function hookIntoFunction<
+  Key extends string,
   Obj extends { [K in Key]: (...args: any[]) => any },
-  Fn extends Obj[Key],
-  Key extends keyof Obj
+  Fn extends Obj[Key]
 >(
   obj: Obj,
   prop: Key,
@@ -164,7 +164,7 @@ export function hookIntoFunction<
   priority: number,
   fn: HookedFunctionCallback<Fn>
 ) {
-  const oldfn = obj[prop] as MaybeHookedFunction<Fn>;
+  const oldfn = obj[prop].bind(obj) as MaybeHookedFunction<Fn>;
 
   // monkeypatch the function if it isn't monkeypatched already
   if (!oldfn.__isMonkeypatchedIn) {

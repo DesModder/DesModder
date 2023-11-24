@@ -110,6 +110,7 @@ export abstract class MathQuillViewComponent extends ClassComponent<{
 export const MathQuillView = Fragile.MathquillView;
 
 export abstract class InlineMathInputViewComponent extends ClassComponent<{
+  containerClass?: string | Record<string, boolean>;
   latex: string;
   // capExpressionSize: number | false;
   // config: { autoOperatorNames: string };

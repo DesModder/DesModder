@@ -3,23 +3,20 @@
   margin-bottom: 5px;
 }
 
+.dsm-vc-playing-sliders {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
 .dsm-vc-action-navigate-container {
   display: flex;
   justify-content: space-between;
   margin-bottom: 5px;
 }
 
-.dsm-vc-select-capture-method {
-  margin-top: 5px;
-  margin-bottom: 10px;
-}
-
-.dsm-vc-slider-settings {
-  margin-bottom: 10px;
-}
-
-.dsm-vc-end-condition-settings {
-  margin: 0 5px 10px;
+.dsm-vc-select-capture-method,
+.dsm-vc-select-orientation-mode {
+  margin-bottom: 5px;
 }
 
 .dsm-vc-reset-bounds-wrapper {
@@ -41,12 +38,29 @@
   margin-left: 8px;
 }
 
-.dsm-vc-capture-size,
 .dsm-vc-pixel-ratio {
-  margin-bottom: 10px;
-  margin-left: 5px;
+  margin-bottom: 8px;
 }
 
 .dsm-vc-pixel-ratio-inner {
   cursor: pointer;
+}
+
+.dsm-vc-popover .dcg-static-mathquill-view.dcg-mq-math-mode {
+  font-size: 100%;
+}
+
+.dsm-vc-popover .dcg-math-field.dcg-mq-math-mode {
+  font-size: 90%;
+}
+
+.dsm-vc-popover .dcg-suffix-radian .dcg-mq-placeholder ~ .dcg-math-field,
+.dsm-vc-popover .dcg-suffix-degree .dcg-mq-placeholder ~ .dcg-math-field {
+  min-width: 72px;
+}
+
+/* prettier-ignore */
+.dsm-vc-popover .dsm-suffix-radian-per-sec .dcg-mq-placeholder ~ .dcg-math-field,
+.dsm-vc-popover .dsm-suffix-degree-per-sec .dcg-mq-placeholder ~ .dcg-math-field {
+  min-width: 90px;
 }

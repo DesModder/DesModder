@@ -1,5 +1,5 @@
 import "./SegmentedControl.less";
-import { DesmosSegmentedControl } from "./desmosComponents";
+import { DesmosSegmentedControl, Switch } from "./desmosComponents";
 import { Component, jsx } from "#DCGView";
 
 export default class SegmentedControl extends Component<{
@@ -11,11 +11,15 @@ export default class SegmentedControl extends Component<{
 }> {
   template() {
     return (
-      <DesmosSegmentedControl
-        staticConfig={this.getStaticConfig()}
-        ariaGroupLabel={this.props.ariaGroupLabel()}
-        disabled={() => !this.getChangeAllowed(-1)}
-      />
+      <Switch key={() => this.props.names().join(";")}>
+        {() => (
+          <DesmosSegmentedControl
+            staticConfig={this.getStaticConfig()}
+            ariaGroupLabel={this.props.ariaGroupLabel()}
+            disabled={() => !this.getChangeAllowed(-1)}
+          />
+        )}
+      </Switch>
     );
   }
 
