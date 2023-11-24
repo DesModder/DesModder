@@ -37,12 +37,15 @@ export default class LoadingPie extends Component<{
       e.removeChild(e.firstChild);
     }
     if (progress >= 0 && progress <= 1) {
-      const svg = document.createElement("svg");
-      svg.className = "dsm-vc-pie-overlay";
+      const NS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("xmlns", NS);
+      svg.setAttribute("class", "dsm-vc-pie-overlay");
       svg.setAttribute("viewBox", "-1 -1 2 2");
-      const path = document.createElement("path");
+      const path = document.createElementNS(NS, "path");
       svg.appendChild(path);
       path.setAttribute("d", this.getPiePath());
+      e.appendChild(svg);
     }
   }
 
