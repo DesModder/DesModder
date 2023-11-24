@@ -40,6 +40,12 @@ export function generateBracketPairColorizationCSS(
         color: ${colorMaker};
     }
     `,
+    // Reset color on children of a \textcolor{} in label or expression
+    `
+    .dcg-mq-textcolor .dcg-mq-bracket-container {
+      color: unset;
+    }
+    `,
     `
     .dcg-mq-bracket-l path, .dcg-mq-bracket-r path {
         stroke-width: ${thickenBrackets}%;
@@ -56,6 +62,12 @@ export function generateBracketPairColorizationCSS(
     `
     .dcg-mq-root-block > .dsm-mq-syntax-comma {
         color: unset
+    }
+    `,
+    // Reset color on children of a \textcolor{} in label or expression
+    `
+    .dcg-mq-textcolor .dsm-mq-syntax-comma {
+      color: unset;
     }
     `,
     `
