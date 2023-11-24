@@ -1401,6 +1401,11 @@ describe("Operator precedence", () => {
     binop("Exponent", id("x"), factorial(id("y")))
   );
   testExpr(
+    "exp > exp",
+    "x^y^z",
+    binop("Exponent", id("x"), binop("Exponent", id("y"), id("z")))
+  );
+  testExpr(
     "exp > prefix",
     "-x^y",
     negative(binop("Exponent", id("x"), id("y")))
