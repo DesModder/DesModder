@@ -104,6 +104,8 @@ function astToTextDoc(ctx: EmitContext, path: TextAST.NodePath) {
     case "ListComprehension":
     case "Substitution":
     case "PiecewiseExpression":
+    case "Restriction":
+    case "Or":
     case "PrefixExpression":
     case "Norm":
     case "SequenceExpression":
@@ -516,6 +518,26 @@ function exprToTextNoParen(
         ctx.softline,
         "}",
       ]);
+    case "Restriction":
+      if (e.condition === true) return "{}";
+      return group([
+        "{",
+        indent([
+          ctx.softline,
+          exprToText(ctx, path.withChild(e.condition, "condition")),
+        ]),
+        ctx.softline,
+        "}",
+      ]);
+    case "Or":
+      // "Or" can only appear inside a restriction, which provides the group().
+      // Hence we don't put a group here even though it's binary.
+      return [
+        exprToText(ctx, path.withChild(e.left, "left")),
+        ",",
+        ctx.line,
+        exprToText(ctx, path.withChild(e.right, "right")),
+      ];
     case "BinaryExpression": {
       const left = exprToText(ctx, path.withChild(e.left, "left"));
       const right = exprToText(ctx, path.withChild(e.right, "right"));

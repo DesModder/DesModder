@@ -37,12 +37,14 @@ export type AnyChild =
   | ListComprehension
   | Substitution
   | Piecewise
+  | Restriction
   | RepeatedOperator
   | BinaryOperator
   | Negative
   | Norm
   | Factorial
   | Comparator
+  | Or
   | DoubleInequality
   | AssignmentExpression;
 
@@ -212,12 +214,28 @@ export interface Substitution {
   assignments: AssignmentExpression[];
 }
 
+type PiecewiseBoolean = Comparator | DoubleInequality;
+type RestrictionBoolean = PiecewiseBoolean | Or;
+
+export function isPiecewiseBoolean(arg: AnyChild): arg is PiecewiseBoolean {
+  return arg.type === "Comparator" || arg.type === "DoubleInequality";
+}
+
+export function isRestrictionBoolean(arg: AnyChild): arg is RestrictionBoolean {
+  return isPiecewiseBoolean(arg) || arg.type === "Or";
+}
+
 export interface Piecewise {
   // A large piecewise is represented by another piecewise in the alternate
   type: "Piecewise";
-  condition: Comparator | DoubleInequality | true;
+  condition: PiecewiseBoolean | true;
   consequent: AnyChild;
   alternate: AnyChild;
+}
+
+export interface Restriction {
+  type: "Restriction";
+  condition: RestrictionBoolean | true;
 }
 
 export interface RepeatedOperator {
@@ -240,6 +258,12 @@ export interface BinaryOperator {
     | "Exponent";
   left: AnyChild;
   right: AnyChild;
+}
+
+export interface Or {
+  type: "Or";
+  left: RestrictionBoolean;
+  right: RestrictionBoolean;
 }
 
 export interface Negative {

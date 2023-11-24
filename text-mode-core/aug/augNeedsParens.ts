@@ -48,6 +48,8 @@ export default function augNeedsParens(
     case "Visualization":
     case "List":
     case "Piecewise":
+    case "Restriction":
+    case "Or": // Note "Or" can only show up as a direct child of restriction or Or.
     case "Range":
     case "Norm":
       return false;
@@ -150,6 +152,7 @@ function power(node: Aug.Latex.AnyChild): number {
     case "Range":
     case "ListComprehension":
     case "Piecewise":
+    case "Restriction":
       return POWERS.atom;
     case "Factorial":
       return POWERS.factorial;
@@ -175,6 +178,7 @@ function power(node: Aug.Latex.AnyChild): number {
     case "DoubleInequality":
     case "AssignmentExpression":
       return POWERS.compare;
+    case "Or":
     case "Seq":
       return POWERS.seq;
     case "Substitution":

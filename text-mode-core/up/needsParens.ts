@@ -71,10 +71,12 @@ export default function needsParens(path: NodePath): boolean {
         default:
           return true;
       }
+    case "Or": // "Or" is always a direct child of Or or Piecewise
     case "RangeExpression":
     case "ListExpression":
     case "ListComprehension":
     case "PiecewiseExpression":
+    case "Restriction":
       // They come with their own grouping ([] or {}), no need to add parens
       return false;
     case "Number":

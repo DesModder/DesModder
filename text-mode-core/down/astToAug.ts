@@ -1,7 +1,12 @@
 import { ProgramAnalysis } from "../ProgramAnalysis";
 import TextAST from "../TextAST";
 import { Config } from "../TextModeConfig";
-import { Identifier, constant } from "../aug/AugLatex";
+import {
+  Identifier,
+  constant,
+  isPiecewiseBoolean,
+  isRestrictionBoolean,
+} from "../aug/AugLatex";
 import Aug from "../aug/AugState";
 import { childLatexToAST } from "../up/augToAST";
 import { DiagnosticsState } from "./diagnostics";
@@ -616,6 +621,24 @@ export function childExprToAug(
       };
     case "PiecewiseExpression":
       return piecewiseToAug(expr.branches);
+    case "Restriction": {
+      if (expr.condition === true)
+        return { type: "Restriction", condition: true };
+      const condition = childExprToAug(expr.condition);
+      if (!isRestrictionBoolean(condition))
+        throw Error("Invalid restriction condition");
+      return {
+        type: "Restriction",
+        condition,
+      };
+    }
+    case "Or": {
+      const left = childExprToAug(expr.left);
+      const right = childExprToAug(expr.right);
+      if (!isRestrictionBoolean(left) || !isRestrictionBoolean(right))
+        throw Error("Invalid or condition");
+      return { type: "Or", left, right };
+    }
     case "PrefixExpression":
       return {
         type: "Negative",
@@ -802,10 +825,7 @@ function piecewiseInnerToAug(
   if (firstBranch.condition === null)
     return childExprToAug(firstBranch.consequent);
   const firstCond = childExprToAug(firstBranch.condition);
-  if (
-    firstCond.type !== "DoubleInequality" &&
-    firstCond.type !== "Comparator"
-  ) {
+  if (!isPiecewiseBoolean(firstCond)) {
     throw Error("Invalid condition");
   }
   return {
