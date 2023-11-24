@@ -1,5 +1,23 @@
 # DesModder Changelog
 
+## 0.12.5
+
+New Features:
+
+- (Video Creator) Control orientation when capturing in 3d.
+
+Bug fixes:
+
+- (More Greek Letters) Fix breakage of "rho" in 3d.
+- (Video Creator) Show progress pie when exporting.
+- (Text Mode) Fix restrictions producing errors.
+- (Text Mode) Fix associativity of exponent.
+- (Text Mode) Fix empty table conversion to Text Mode.
+- (Find Replace) Fix bug where a space was missing between a command and a letter.
+- (Find Replace) Apply replacements to 3D u/v/r/phi domains and some other scenarios.
+- (Multiline) Map Ctrl+M to run multiline only, and not toggle muting.
+- (Syntax Highlighting) Don't override textcolor specified in LaTeX.
+
 ## 0.12.4
 
 Bug fixes:
