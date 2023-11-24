@@ -6,5 +6,5 @@
     { "path": "../metadata" },
     { "path": "../parsing" }
   ],
-  "include": ["**/*"]
+  "include": ["**/*", "../src/tests/run_calc_for_tests.ts"]
 }

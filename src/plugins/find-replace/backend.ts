@@ -24,15 +24,28 @@ export const rootKeys = [
   "fillOpacity",
   "residualVariable",
   "fps",
+  "resolution",
 ] as const;
 
 export const nestedKeyContainers = [
   "slider",
   "parametricDomain",
   "polarDomain",
+  "parametricDomain3Du",
+  "parametricDomain3Dv",
+  "parametricDomain3Dr",
+  "parametricDomain3Dphi",
+  "cdf",
+  "vizProps",
 ] as const;
 
-export const nestedKeys = ["max", "min", "step"] as const;
+export const nestedKeys = [
+  "max",
+  "min",
+  "step",
+  "breadth",
+  "axisOffset",
+] as const;
 
 function replace(calc: Calc, replaceLatex: (s: string) => string) {
   // replaceString is applied to stuff like labels
@@ -169,12 +182,12 @@ function getReplacements(
   return [];
 }
 
-export function refactor(calc: Calc, from: string, to: string) {
+export function replacer(from: string, to: string) {
   const fromParsed = parseDesmosLatex(from.trim());
   if (satisfiesType(fromParsed, "Identifier")) {
     // trim `from` to prevent inputs such as "  a" messing up matches that depend on `from` itself.
     from = from.trim();
-    replace(calc, (s: string) => {
+    return (s: string) => {
       const node = parseDesmosLatex(s);
       if (satisfiesType(node, "Error")) {
         return s;
@@ -204,9 +217,38 @@ export function refactor(calc: Calc, from: string, to: string) {
       }
       acc += s.slice(endIndex);
       return acc;
-    });
+    };
   } else {
-    const regex = RegExp(escapeRegExp(from), "g");
-    replace(calc, (s: string) => s.replace(regex, to));
+    // Sticky flag "y", global flag "g"
+    const search = escapeRegExp(from);
+    const regex = RegExp(`(?<before>.*?)(?<search>${search})`, "gy");
+    const endsInCommand = /\\[a-zA-Z]+$/;
+    const startsWithLetter = /^[a-zA-Z]/;
+    return (s: string) => {
+      regex.lastIndex = 0;
+      let out = "";
+      let r = regex.exec(s);
+      let last = 0;
+      if (!r) return s;
+      for (; r; last = regex.lastIndex, r = regex.exec(s)) {
+        const before = r.groups!.before;
+        const insert = to;
+        if (endsInCommand.test(out) && startsWithLetter.test(before))
+          out += " ";
+        out += before;
+        if (endsInCommand.test(out) && startsWithLetter.test(insert))
+          out += " ";
+        out += insert;
+      }
+      const trailing = s.slice(last);
+      if (endsInCommand.test(out) && startsWithLetter.test(trailing))
+        out += " ";
+      out += trailing;
+      return out;
+    };
   }
+}
+
+export function refactor(calc: Calc, from: string, to: string) {
+  replace(calc, replacer(from, to));
 }
