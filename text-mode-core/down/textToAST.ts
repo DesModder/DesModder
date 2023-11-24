@@ -703,8 +703,7 @@ const consequentParselets: Record<
   "*": binaryParselet(Power.mul, "*"),
   cross: binaryParselet(Power.mul, "cross"),
   "/": binaryParselet(Power.mul, "/"),
-  // Subtract 1 from the binding power to make it right-associative
-  "^": binaryParselet(minus1(Power.pow), "^"),
+  "^": binaryParselet(Power.pow, "^", { rightAssociative: true }),
   "(": consequentParselet(Power.call, parseFunctionCall),
   "'": consequentParselet(Power.call, (ps, left): Node => {
     if (left.type !== "Identifier")
@@ -1176,11 +1175,20 @@ function consequentParselet(
   return { bindingPower, parse };
 }
 
-function binaryParselet(bp: BindingPower, op: TextAST.BinaryExpression["op"]) {
+function binaryParselet(
+  bp: BindingPower,
+  op: TextAST.BinaryExpression["op"],
+  { rightAssociative }: { rightAssociative?: boolean } = {}
+) {
   return consequentParselet(bp, (ps, left, token): Node => {
     const ex = op === "cross" ? `v ${op} u` : `2 ${op} x`;
     assertLeftIsExpression(ps, left, token, ex);
-    const right = parseExpr(ps, bp, `right side of ${op}`, ex);
+    const right = parseExpr(
+      ps,
+      rightAssociative ?? false ? minus1(bp) : bp,
+      `right side of ${op}`,
+      ex
+    );
     return {
       type: "BinaryExpression",
       op,

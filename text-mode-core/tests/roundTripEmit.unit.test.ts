@@ -86,6 +86,10 @@ describe("Text Emit round-trips (keeping optional spaces)", () => {
     `y = 100000 - 0.000001`,
     // TODO: NaN support
     `y = infty ^ 3 + (-infty) ^ 3`,
+    // These parentheses are not necessary:
+    `0 ^ (x ^ infty)`,
+    // These parenthesese *are* necessary:
+    `(x ^ 2) ^ y`,
   ].map(dedentString);
   for (const text of cases) {
     testRoundTripIdenticalViaAST(text, {});
