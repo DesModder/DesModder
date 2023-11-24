@@ -552,6 +552,17 @@ export function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         branches: piecewiseBranches,
       };
     }
+    case "Restriction":
+      return {
+        type: "Restriction",
+        condition: e.condition === true ? true : childLatexToAST(e.condition),
+      };
+    case "Or":
+      return {
+        type: "Or",
+        left: childLatexToAST(e.left),
+        right: childLatexToAST(e.right),
+      };
     case "RepeatedOperator":
       return {
         type: "RepeatedExpression",

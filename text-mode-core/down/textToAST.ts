@@ -7,6 +7,7 @@ import TextAST, {
   Pos,
   isStatement,
   Statement,
+  PiecewiseBranch,
 } from "../TextAST";
 import { Config } from "../TextModeConfig";
 import { ignoredID } from "../up/augToAST";
@@ -396,11 +397,7 @@ const initialParselets: TokenMap<InitialParselet> = {
       const next = ps.peek();
       if (next.value === "}") {
         const next = ps.consume();
-        return {
-          type: "PiecewiseExpression",
-          branches,
-          pos: pos(token, next),
-        };
+        return finalizePiecewise(branches, pos(token, next));
       }
       while (true) {
         const curr = parseExpr(
@@ -428,11 +425,7 @@ const initialParselets: TokenMap<InitialParselet> = {
                   pos: pos(curr),
                 }
           );
-          return {
-            type: "PiecewiseExpression",
-            branches,
-            pos: pos(token, next),
-          };
+          return finalizePiecewise(branches, pos(token, next));
         } else if (next.value === ":") {
           const consequent = parseExpr(
             ps,
@@ -449,11 +442,7 @@ const initialParselets: TokenMap<InitialParselet> = {
           });
           const next = ps.consume();
           if (next.value === "}")
-            return {
-              type: "PiecewiseExpression",
-              branches,
-              pos: pos(token, next),
-            };
+            return finalizePiecewise(branches, pos(token, next));
           else if (next.value !== ",")
             throw ps.pushFatalError(
               "Unexpected character in Piecewise",
@@ -556,6 +545,32 @@ const initialParselets: TokenMap<InitialParselet> = {
     },
   },
 };
+
+function finalizePiecewise(
+  branches: PiecewiseBranch[],
+  piecewisePos: Pos
+): TextAST.PiecewiseExpression | TextAST.Restriction {
+  if (branches.every((b) => b.consequent === null)) {
+    if (branches.length === 0)
+      return { type: "Restriction", condition: true, pos: piecewisePos };
+    const condition = branches
+      .map((b) => b.condition!)
+      .reduceRight(
+        (right, left): TextAST.Or => ({
+          type: "Or",
+          left,
+          right,
+          pos: pos(left, right),
+        })
+      );
+    return { type: "Restriction", condition, pos: piecewisePos };
+  }
+  return {
+    type: "PiecewiseExpression",
+    branches,
+    pos: piecewisePos,
+  };
+}
 
 const comparisonOps = ["<", ">", "<=", ">=", "="];
 

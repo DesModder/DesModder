@@ -155,6 +155,19 @@ function childNodeToStringNoParen(
       }
       return "\\left\\{" + piecewiseParts.join(",") + "\\right\\}";
     }
+    case "Restriction": {
+      if (e.condition === true) return "\\left\\{\\right\\}";
+      return (
+        "\\left\\{" + childNodeToString(cfg, e.condition, e) + "\\right\\}"
+      );
+    }
+    case "Or":
+      // This can only show up inside a restriction.
+      return (
+        childNodeToString(cfg, e.left, e) +
+        "," +
+        childNodeToString(cfg, e.right, e)
+      );
     case "RepeatedOperator": {
       const prefix = e.name === "Product" ? "\\prod" : "\\sum";
       return (

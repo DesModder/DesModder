@@ -272,6 +272,12 @@ export interface Piecewise extends Expression {
   // empty(): unknown
 }
 
+export interface Restriction extends Expression {
+  // "\\{x<1\\}" or "\\{x<1,y>2\\}" (this is a restriction with an Or child)
+  type: "Restriction";
+  args: [ChildExprNode];
+}
+
 interface RGBColor extends Expression {
   // No idea how to get RGBColor
   type: "RGBColor";
@@ -364,6 +370,11 @@ export interface And extends Expression {
   // "1<2<3"
   args: [Comparator, Comparator];
   type: "And";
+}
+export interface Or extends Expression {
+  // "\\{x<1,y>2\\}"
+  args: [ChildExprNode, ChildExprNode];
+  type: "Or";
 }
 interface RawExponent extends Exponent {
   // Not sure how to get RawExponent
@@ -645,6 +656,7 @@ export type ChildExprNode =
   | Norm
   | NamedCoordinateAccess
   | Piecewise
+  | Restriction
   | Product
   | Sum
   | SeededFunctionCall
@@ -657,6 +669,7 @@ export type ChildExprNode =
   | Exponent
   | Negative
   | And
+  | Or
   | Comparator
   // Seed + ExtendSeed only used in SeededFunctionCalls?
   | Seed

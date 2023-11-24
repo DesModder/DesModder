@@ -9,6 +9,7 @@ import {
   // eslint-disable-next-line rulesdir/no-reach-past-exports
 } from "../../parsing/parsenode";
 import { Config } from "../TextModeConfig";
+import { isPiecewiseBoolean, isRestrictionBoolean } from "./AugLatex";
 import Aug from "./AugState";
 import type * as Graph from "@desmodder/graph-state";
 
@@ -571,11 +572,7 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         conditionNode._constantValue === true
           ? true
           : childNodeToTree(conditionNode);
-      if (
-        condition !== true &&
-        condition.type !== "Comparator" &&
-        condition.type !== "DoubleInequality"
-      ) {
+      if (condition !== true && !isPiecewiseBoolean(condition)) {
         throw Error(
           "Expected condition of Piecewise to be a Comparator, DoubleInequality, or true"
         );
@@ -586,6 +583,27 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         consequent: childNodeToTree(node.args[1]),
         alternate: childNodeToTree(node.args[2]),
       };
+    }
+    case "Restriction": {
+      const conditionNode = node.args[0];
+      const condition =
+        conditionNode.type === "Constant" &&
+        conditionNode._constantValue === true
+          ? true
+          : childNodeToTree(conditionNode);
+      if (condition !== true && !isRestrictionBoolean(condition)) {
+        throw Error(
+          "Expected condition of Restriction to be a Comparator, DoubleInequality, Or, or true"
+        );
+      }
+      return { type: "Restriction", condition };
+    }
+    case "Or": {
+      const left = childNodeToTree(node.args[0]);
+      const right = childNodeToTree(node.args[1]);
+      if (!isRestrictionBoolean(left) || !isRestrictionBoolean(right))
+        throw new Error("Expected 'Or' to combine two syntactical booelans.");
+      return { type: "Or", left, right };
     }
     case "Product":
     case "Sum":

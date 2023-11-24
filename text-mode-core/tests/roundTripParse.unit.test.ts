@@ -257,10 +257,13 @@ describe("Operator Precedence round-trip", () => {
     "[1,2,3]",
     "[(b\\o{with}b=3),2,b\\o{with}b=3]",
     "[b\\o{with}b=3]",
-    /// parent = Piecewise
-    "\\{\\}",
-    "\\{x=5\\}",
-    "\\{x=5,y=4\\}",
+    /// parent = Restriction
+    "y=x\\cdot \\{\\}",
+    "y=x\\cdot \\{x=5\\}",
+    "y=x\\cdot \\{x=5,y=4\\}",
+    "y=x\\cdot \\{x=5,y=4,z>7\\}",
+    /// parent = Piecewise or Restriction
+    "\\{x=5:2,y=4\\}",
     "\\{x>1:3+x,5*y\\}",
     "\\{x>1:5\\}",
     "\\{x>1\\}",

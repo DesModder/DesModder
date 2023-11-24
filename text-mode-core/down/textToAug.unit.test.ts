@@ -311,22 +311,16 @@ describe("Basic exprs", () => {
   });
   describe("Piecewise", () => {
     testExpr("trivial piecewise", "{}", {
-      type: "Piecewise",
+      type: "Restriction",
       condition: true,
-      consequent: number(1),
-      alternate: number(NaN),
     });
     testExpr("implicit consequent", "{x>1}", {
-      type: "Piecewise",
+      type: "Restriction",
       condition: comparator(">", id("x"), number(1)),
-      consequent: number(1),
-      alternate: number(NaN),
     });
     testExpr("implicit consequent double inequality", "{1<x<5}", {
-      type: "Piecewise",
+      type: "Restriction",
       condition: doubleInequality(number(1), "<", id("x"), "<", number(5)),
-      consequent: number(1),
-      alternate: number(NaN),
     });
     testExpr("single condition", "{x>1:2}", {
       type: "Piecewise",
@@ -347,14 +341,11 @@ describe("Basic exprs", () => {
       alternate: number(5),
     });
     testExpr("implicit consequent twice", "{x<1,x>1}", {
-      type: "Piecewise",
-      condition: comparator("<", id("x"), number(1)),
-      consequent: number(1),
-      alternate: {
-        type: "Piecewise",
-        condition: comparator(">", id("x"), number(1)),
-        consequent: number(1),
-        alternate: number(NaN),
+      type: "Restriction",
+      condition: {
+        type: "Or",
+        left: comparator("<", id("x"), number(1)),
+        right: comparator(">", id("x"), number(1)),
       },
     });
     testExpr("two conditions and else", "{x>1:2,y>3:4,5}", {

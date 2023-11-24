@@ -121,6 +121,8 @@ export type Expression<C extends S = Concrete> =
   | Substitution<C>
   | AssignmentExpression<C>
   | PiecewiseExpression<C>
+  | Restriction<C>
+  | Or<C>
   | PrefixExpression<C>
   | Norm<C>
   | SequenceExpression<C>
@@ -210,6 +212,18 @@ export type PiecewiseBranch<C extends S = Concrete> = Positioned<C> & {
         consequent: null;
       }
   );
+
+export type Restriction<C extends S = Concrete> = Positioned<C> & {
+  type: "Restriction";
+  /** True corresponds to {} */
+  condition: Expression<C> | true;
+};
+
+export type Or<C extends S = Concrete> = Positioned<C> & {
+  type: "Or";
+  left: Expression<C>;
+  right: Expression<C>;
+};
 
 export type PrefixExpression<C extends S = Concrete> = Positioned<C> & {
   type: "PrefixExpression";

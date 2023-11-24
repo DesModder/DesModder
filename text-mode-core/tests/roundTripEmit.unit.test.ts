@@ -66,7 +66,8 @@ describe("Text Emit round-trips (keeping optional spaces)", () => {
     `sin(x) with x = 5`,
     `x + y with x = 5, y = -5`,
     `{}`,
-    // TODO: preserve (lack of) `:1` in round-trip
+    // Lack of `: 1` is only preserved here since it's counted as a restriction.
+    `{x > 5}`,
     `{x > 5: 1}`,
     `{x > 5: 2}`,
     `{x > 5: 2, 3}`,
