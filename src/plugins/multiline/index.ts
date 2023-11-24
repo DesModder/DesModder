@@ -185,6 +185,7 @@ export default class Multiline extends PluginController<Config> {
 
     if (e.key.toUpperCase() === "M" && e.ctrlKey) {
       this.dequeueAllMultilinifications();
+      e.preventDefault();
     }
 
     if (this.calc.focusedMathQuill) {
