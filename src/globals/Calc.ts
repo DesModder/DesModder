@@ -29,6 +29,7 @@ export type DispatchedEvent =
         | "commit-geo-objects"
         | "upward-delete-selected-expression"
         | "downward-delete-selected-expression"
+        | "update-expression-search-str"
         | "ui/container-resized";
     }
   | {

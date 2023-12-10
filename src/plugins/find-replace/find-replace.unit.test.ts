@@ -32,3 +32,10 @@ describe("Find-replace identifier", () => {
   ]);
   testRepl("x_{2}", "u", [["x_{2}<x_{23}+x_{2}<x+x_{2}", "u<x_{23}+u<x+u"]]);
 });
+
+describe("Find-replace empty string", () => {
+  testRepl("", "u", [
+    ["y<x<2", "y<x<2"],
+    ["x_{123}+x+a_{12x34}", "x_{123}+x+a_{12x34}"],
+  ]);
+});

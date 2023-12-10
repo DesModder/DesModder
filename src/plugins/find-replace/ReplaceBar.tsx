@@ -51,13 +51,16 @@ export default class ReplaceBar extends Component<{
           <i class="dcg-icon-search dcg-icon-caret-right" />
         </div>
         {/* Using a standard Button looks horrible on the gray background */}
-        <div
-          class="dsm-find-replace-replace-all"
+        <span
+          class={() => ({
+            "dsm-find-replace-replace-all": true,
+            "dsm-disabled": !this.fr.isReplaceValid(),
+          })}
           role="button"
           onTap={() => this.fr.refactorAll()}
         >
           {format("find-and-replace-replace-all")}
-        </div>
+        </span>
       </div>
     );
   }

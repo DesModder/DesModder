@@ -231,6 +231,13 @@ export function replacer(from: string, to: string) {
       let last = 0;
       if (!r) return s;
       for (; r; last = regex.lastIndex, r = regex.exec(s)) {
+        if (last === regex.lastIndex) {
+          // Empty match
+          if (last >= s.length) break;
+          out += s[last];
+          regex.lastIndex++;
+          continue;
+        }
         const before = r.groups!.before;
         const insert = to;
         if (endsInCommand.test(out) && startsWithLetter.test(before))
