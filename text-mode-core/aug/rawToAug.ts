@@ -633,24 +633,11 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         type: "Negative",
         arg: childNodeToTree(node.args[0]),
       };
-    case "And":
+    case "ComparatorChain":
       return {
-        type: "DoubleInequality",
-        // We know these are comparators because the args are comparators
-        left: childNodeToTree(node.args[0].args[0]),
-        leftOperator: node.args[0].operator,
-        middle: childNodeToTree(node.args[0].args[1]),
-        rightOperator: node.args[1].operator,
-        right: childNodeToTree(node.args[1].args[1]),
-      };
-    case "DoubleInequality":
-      return {
-        type: "DoubleInequality",
-        left: childNodeToTree(node.args[0]),
-        leftOperator: node.args[1] as "<" | "<=" | "=" | ">=" | ">",
-        middle: childNodeToTree(node.args[2]),
-        rightOperator: node.args[3] as "<" | "<=" | "=" | ">=" | ">",
-        right: childNodeToTree(node.args[4]),
+        type: "ComparatorChain",
+        args: node.args.map(childNodeToTree),
+        symbols: node.symbols,
       };
     case "Comparator['<']":
     case "Comparator['<=']":

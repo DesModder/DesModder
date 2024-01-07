@@ -42,23 +42,6 @@ export function comparator(
   };
 }
 
-export function doubleInequality(
-  left: Aug.Latex.AnyChild,
-  leftOperator: CompOp,
-  middle: Aug.Latex.AnyChild,
-  rightOperator: CompOp,
-  right: Aug.Latex.AnyChild
-) {
-  return {
-    type: "DoubleInequality",
-    left,
-    leftOperator,
-    middle,
-    rightOperator,
-    right,
-  };
-}
-
 export function list(...children: Aug.Latex.AnyChild[]): Aug.Latex.List {
   return {
     type: "List",

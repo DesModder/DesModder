@@ -113,7 +113,7 @@ function astToTextDoc(ctx: EmitContext, path: TextAST.NodePath) {
     case "MemberExpression":
     case "ListAccessExpression":
     case "BinaryExpression":
-    case "DoubleInequality":
+    case "ComparatorChain":
     case "PostfixExpression":
     case "CallExpression":
     case "PrimeExpression":
@@ -551,20 +551,18 @@ function exprToTextNoParen(
       }
       return group([left, ctx.optionalSpace, e.op, indent([ctx.line, right])]);
     }
-    case "DoubleInequality":
-      return group([
-        exprToText(ctx, path.withChild(e.left, "left")),
-        ctx.optionalSpace,
-        e.leftOp,
-        indent([
-          ctx.line,
-          exprToText(ctx, path.withChild(e.middle, "middle")),
-          ctx.optionalSpace,
-          e.rightOp,
-          ctx.line,
-          exprToText(ctx, path.withChild(e.right, "right")),
-        ]),
-      ]);
+    case "ComparatorChain": {
+      const g = [];
+      for (let i = 0; i < e.args.length; i++) {
+        g.push(
+          exprToText(ctx, path.withChild(e.args[i], "arg." + i.toString()))
+        );
+        if (i < e.symbols.length) {
+          g.push(ctx.optionalSpace, e.symbols[i], ctx.line);
+        }
+      }
+      return group(g);
+    }
     case "PrefixExpression":
       return ["-", exprToText(ctx, path.withChild(e.expr, "expr"))];
     case "Norm":

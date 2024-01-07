@@ -366,11 +366,6 @@ export interface Negative extends Expression {
   args: [ChildExprNode];
   type: "Negative";
 }
-export interface And extends Expression {
-  // "1<2<3"
-  args: [Comparator, Comparator];
-  type: "And";
-}
 export interface Or extends Expression {
   // "\\{x<1,y>2\\}"
   args: [ChildExprNode, ChildExprNode];
@@ -392,30 +387,24 @@ interface BaseComparator extends Expression {
   _difference: Subtract;
 }
 
+type ComparatorSymbol = "<" | ">" | "<=" | ">=" | "=";
+
 export interface Comparator extends BaseComparator {
   // "1<3"
   // "1<=3"
   // "1>3"
   // "1>=3"
   // "\\left\\{x=0\\right\\}",
-  type:
-    | "Comparator['<']"
-    | "Comparator['>']"
-    | "Comparator['<=']"
-    | "Comparator['>=']"
-    | "Comparator['=']";
-  operator: "<" | ">" | "<=" | ">=" | "=";
+  type: `Comparator['${ComparatorSymbol}']`;
+  operator: ComparatorSymbol;
   args: [ChildExprNode, ChildExprNode];
 }
 
-interface DoubleInequality extends Base {
+interface ComparatorChain extends Base {
   // Not sure how to get DoubleInequality
-  type: "DoubleInequality";
-  args: [ChildExprNode, string, ChildExprNode, string, ChildExprNode];
-  _operators: [Expression, Expression];
-  _expressions: [Expression, Expression];
-  _indicator: unknown;
-  isShadeBetween: () => true;
+  type: "ComparatorChain";
+  args: [ChildExprNode, ChildExprNode, ...ChildExprNode[]];
+  symbols: ComparatorSymbol[];
 }
 
 interface SolvedEquation extends Base {
@@ -668,13 +657,12 @@ export type ChildExprNode =
   | Divide
   | Exponent
   | Negative
-  | And
   | Or
   | Comparator
+  | ComparatorChain
   // Seed + ExtendSeed only used in SeededFunctionCalls?
   | Seed
-  | ExtendSeed
-  | DoubleInequality;
+  | ExtendSeed;
 
 // These can only occur after further transformation or something
 type IrrelevantExprNode =
@@ -682,7 +670,6 @@ type IrrelevantExprNode =
   | MovablePoint
   | RGBColor
   | RawExponent
-  | DoubleInequality
   | SolvedEquation
   | Slider
   | Image

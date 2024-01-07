@@ -114,7 +114,7 @@ export default function needsParens(path: NodePath): boolean {
     case "ListAccessExpression":
       return false;
     case "BinaryExpression":
-    case "DoubleInequality":
+    case "ComparatorChain":
       switch (parent.type) {
         case "DerivativeExpression":
         case "PrefixExpression":
@@ -123,7 +123,7 @@ export default function needsParens(path: NodePath): boolean {
         case "ListAccessExpression":
           return name === "expr";
         case "BinaryExpression": {
-          if (node.type === "DoubleInequality") return true;
+          if (node.type === "ComparatorChain") return true;
           const precedence = getPrecedence(node.op);
           const parentPrecedence = getPrecedence(parent.op);
           if (parentPrecedence > precedence) return true;
