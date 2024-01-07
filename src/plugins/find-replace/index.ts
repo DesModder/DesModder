@@ -19,8 +19,9 @@ export default class FindReplace extends PluginController {
         this.tryInitView();
       } else if (type === "close-expression-search") {
         this.view.destroyView();
+      } else if (type === "update-expression-search-str") {
+        this.view.updateReplaceView();
       }
-      // may want to listen to update-expression-search-str
     });
   }
 
@@ -50,7 +51,12 @@ export default class FindReplace extends PluginController {
     this.replaceLatex = latex;
   }
 
+  isReplaceValid() {
+    return this.cc.getExpressionSearchStr().length > 0;
+  }
+
   refactorAll() {
+    if (!this.isReplaceValid()) return;
     refactor(this.calc, this.cc.getExpressionSearchStr(), this.replaceLatex);
   }
 
