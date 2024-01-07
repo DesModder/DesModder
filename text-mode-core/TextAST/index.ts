@@ -130,7 +130,7 @@ export type Expression<C extends S = Concrete> =
   | MemberExpression<C>
   | ListAccessExpression<C>
   | BinaryExpression<C>
-  | DoubleInequality<C>
+  | ComparatorChain<C>
   | PostfixExpression<C>
   | CallExpression<C>
   | PrimeExpression<C>
@@ -270,13 +270,10 @@ export type BinaryExpression<C extends S = Concrete> = Positioned<C> & {
   right: Expression<C>;
 };
 
-export type DoubleInequality<C extends S = Concrete> = Positioned<C> & {
-  type: "DoubleInequality";
-  left: Expression<C>;
-  leftOp: CompareOp;
-  middle: Expression<C>;
-  rightOp: CompareOp;
-  right: Expression<C>;
+export type ComparatorChain<C extends S = Concrete> = Positioned<C> & {
+  type: "ComparatorChain";
+  args: Expression<C>[];
+  symbols: CompareOp[];
 };
 
 export type PostfixExpression<C extends S = Concrete> = Positioned<C> & {

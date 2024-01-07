@@ -6,7 +6,6 @@ import {
   bareSeq,
   binop,
   comparator,
-  doubleInequality,
   factorial,
   functionCall,
   id,
@@ -320,7 +319,27 @@ describe("Basic exprs", () => {
     });
     testExpr("implicit consequent double inequality", "{1<x<5}", {
       type: "Restriction",
-      condition: doubleInequality(number(1), "<", id("x"), "<", number(5)),
+      condition: {
+        type: "ComparatorChain",
+        args: [number(1), id("x"), number(5)],
+        symbols: ["<", "<"],
+      },
+    });
+    testExpr("triple equality", "{1=x=y=z}", {
+      type: "Restriction",
+      condition: {
+        type: "ComparatorChain",
+        args: [number(1), id("x"), id("y"), id("z")],
+        symbols: ["=", "=", "="],
+      },
+    });
+    testExpr("triple inequality", "{1<x<=y<z}", {
+      type: "Restriction",
+      condition: {
+        type: "ComparatorChain",
+        args: [number(1), id("x"), id("y"), id("z")],
+        symbols: ["<", "<=", "<"],
+      },
     });
     testExpr("single condition", "{x>1:2}", {
       type: "Piecewise",
@@ -1376,6 +1395,15 @@ describe("Diagnostics", () => {
         "Expected branch of piecewise to be an expression. Did you mean to write something like '{x>3:5}'?",
         pos(5, 12)
       ),
+    ]);
+    testDiagnostics("Invalid comparator chain", `{1>=x<3}`, [
+      error("Cannot chain >= with <", pos(5, 6)),
+    ]);
+    testDiagnostics("Invalid comparator chain", `{1<x=3}`, [
+      error("Cannot chain < with =", pos(4, 5)),
+    ]);
+    testDiagnostics("Invalid comparator chain", `{1<x<=y<z=3}`, [
+      error("Cannot chain < with =", pos(9, 10)),
     ]);
   });
 });

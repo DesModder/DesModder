@@ -689,14 +689,11 @@ export function childExprToAug(
         list: childExprToAug(expr.expr),
         index: childExprToAug(expr.index),
       };
-    case "DoubleInequality":
+    case "ComparatorChain":
       return {
-        type: "DoubleInequality",
-        left: childExprToAug(expr.left),
-        leftOperator: expr.leftOp,
-        middle: childExprToAug(expr.middle),
-        rightOperator: expr.rightOp,
-        right: childExprToAug(expr.right),
+        type: "ComparatorChain",
+        args: expr.args.map(childExprToAug),
+        symbols: expr.symbols,
       };
     case "BinaryExpression":
       if (expr.op === "~")

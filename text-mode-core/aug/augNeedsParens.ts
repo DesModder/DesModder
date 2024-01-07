@@ -24,7 +24,7 @@ export default function augNeedsParens(
     case "Derivative":
       return power(node) <= POWERS.add;
     case "Comparator":
-    case "DoubleInequality":
+    case "ComparatorChain":
       return (
         power(node) <= (path === "top-level-eq" ? POWERS.top : POWERS.compare)
       );
@@ -175,7 +175,7 @@ function power(node: Aug.Latex.AnyChild): number {
     case "UpdateRule":
       return POWERS.update;
     case "Comparator":
-    case "DoubleInequality":
+    case "ComparatorChain":
     case "AssignmentExpression":
       return POWERS.compare;
     case "Or":

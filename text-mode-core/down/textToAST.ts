@@ -572,7 +572,9 @@ function finalizePiecewise(
   };
 }
 
-const comparisonOps = ["<", ">", "<=", ">=", "="];
+function isComparisonOp(op: string): op is TextAST.CompareOp {
+  return ["<", ">", "<=", ">=", "="].includes(op);
+}
 
 function assertComparison(ps: ParseState, node: TextAST.Expression) {
   if (!isComparison(node))
@@ -581,8 +583,8 @@ function assertComparison(ps: ParseState, node: TextAST.Expression) {
 
 function isComparison(node: TextAST.Expression) {
   return (
-    node.type === "DoubleInequality" ||
-    (node.type === "BinaryExpression" && comparisonOps.includes(node.op))
+    node.type === "ComparatorChain" ||
+    (node.type === "BinaryExpression" && isComparisonOp(node.op))
   );
 }
 
@@ -1115,41 +1117,59 @@ function parseFunctionCall(ps: ParseState, left: Node): TextAST.CallExpression {
   };
 }
 
-function compareOpParselet(symbol: TextAST.CompareOp) {
-  return consequentParselet(Power.rel, (ps, left, token, opts): Node => {
-    const ex = `y ${symbol} x`;
-    assertLeftIsExpression(ps, left, token, ex);
-    const rightPrec = opts.topLevelEq ? minus1(Power.seq) : Power.rel;
-    const right1 = parseExpr(ps, rightPrec, "right side of comparison", ex);
-    if (!["<", "<=", ">=", ">"].includes(ps.peek().value)) {
-      return {
-        type: "BinaryExpression",
-        op: symbol,
-        left,
-        right: right1,
-        pos: pos(left, right1),
-      };
-    }
-    // parse for double inequality
-    const right = ps.consume();
-    const rightOp = right.value as TextAST.CompareOp;
-    if (relopDir(rightOp) !== relopDir(symbol)) {
+function extendComparison(
+  ps: ParseState,
+  left: TextAST.Expression,
+  op: TextAST.CompareOp,
+  opToken: Token,
+  right: TextAST.Expression
+): TextAST.ComparatorChain | TextAST.BinaryExpression {
+  if (left.type === "ComparatorChain") {
+    const leftSymbol = left.symbols.at(-1)!;
+    if (relopDir(leftSymbol) !== relopDir(op)) {
       throw ps.pushFatalError(
-        `Cannot chain ${rightOp} with ${symbol}`,
-        pos(right)
+        `Cannot chain ${leftSymbol} with ${op}`,
+        pos(opToken)
       );
     }
-    const ex2 = "y < x < -y";
-    const right2 = parseExpr(ps, Power.rel, "right side of comparison", ex2);
+    // Note: this might be quadratic time since the chain keeps building.
     return {
-      type: "DoubleInequality",
-      left,
-      leftOp: symbol,
-      middle: right1,
-      rightOp,
-      right: right2,
-      pos: pos(left, right2),
+      type: "ComparatorChain",
+      args: [...left.args, right],
+      symbols: [...left.symbols, op],
+      pos: pos(left, right),
     };
+  } else if (left.type === "BinaryExpression" && isComparisonOp(left.op)) {
+    if (relopDir(left.op) !== relopDir(op)) {
+      throw ps.pushFatalError(
+        `Cannot chain ${left.op} with ${op}`,
+        pos(opToken)
+      );
+    }
+    return {
+      type: "ComparatorChain",
+      args: [left.left, left.right, right],
+      symbols: [left.op, op],
+      pos: pos(left, right),
+    };
+  } else {
+    return {
+      type: "BinaryExpression",
+      left,
+      right,
+      op,
+      pos: pos(left, right),
+    };
+  }
+}
+
+function compareOpParselet(op: TextAST.CompareOp) {
+  return consequentParselet(Power.rel, (ps, left, token, opts): Node => {
+    const ex = `y ${op} x`;
+    assertLeftIsExpression(ps, left, token, ex);
+    const rightPrec = opts.topLevelEq ? minus1(Power.seq) : Power.rel;
+    const right = parseExpr(ps, rightPrec, "right side of comparison", ex);
+    return extendComparison(ps, left, op, token, right);
   });
 }
 

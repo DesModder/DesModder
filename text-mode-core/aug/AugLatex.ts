@@ -44,8 +44,8 @@ export type AnyChild =
   | Norm
   | Factorial
   | Comparator
+  | ComparatorChain
   | Or
-  | DoubleInequality
   | AssignmentExpression;
 
 export interface Equation {
@@ -214,11 +214,11 @@ export interface Substitution {
   assignments: AssignmentExpression[];
 }
 
-type PiecewiseBoolean = Comparator | DoubleInequality;
+type PiecewiseBoolean = Comparator | ComparatorChain;
 type RestrictionBoolean = PiecewiseBoolean | Or;
 
 export function isPiecewiseBoolean(arg: AnyChild): arg is PiecewiseBoolean {
-  return arg.type === "Comparator" || arg.type === "DoubleInequality";
+  return arg.type === "Comparator" || arg.type === "ComparatorChain";
 }
 
 export function isRestrictionBoolean(arg: AnyChild): arg is RestrictionBoolean {
@@ -283,13 +283,11 @@ export interface Factorial {
 
 type ComparatorSymbol = "<" | "<=" | "=" | ">=" | ">";
 
-export interface DoubleInequality {
-  type: "DoubleInequality";
-  left: AnyChild;
-  leftOperator: ComparatorSymbol;
-  middle: AnyChild;
-  rightOperator: ComparatorSymbol;
-  right: AnyChild;
+export interface ComparatorChain {
+  type: "ComparatorChain";
+  // Expect exactly one more arg than symbol.
+  symbols: ComparatorSymbol[];
+  args: AnyChild[];
 }
 
 export interface Comparator {

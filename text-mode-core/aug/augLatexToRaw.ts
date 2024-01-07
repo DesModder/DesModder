@@ -219,14 +219,16 @@ function childNodeToStringNoParen(
           path === "top" && e.operator === "=" ? "top-level-eq" : undefined
         )
       );
-    case "DoubleInequality":
-      return (
-        childNodeToString(cfg, e.left, e) +
-        comparatorMap[e.leftOperator] +
-        childNodeToString(cfg, e.middle, e) +
-        comparatorMap[e.rightOperator] +
-        childNodeToString(cfg, e.right, e)
-      );
+    case "ComparatorChain": {
+      let s = "";
+      for (let i = 0; i < e.args.length; i++) {
+        s += childNodeToString(cfg, e.args[i], e);
+        if (i < e.symbols.length) {
+          s += comparatorMap[e.symbols[i]];
+        }
+      }
+      return s;
+    }
     case "AssignmentExpression":
       return (
         identifierToString(cfg, e.variable) +

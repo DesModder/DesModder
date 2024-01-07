@@ -143,6 +143,7 @@ export class IntellisenseState {
       for (const key of rootKeys) {
         const ltxStr = get(expression, key);
         if (typeof ltxStr !== "string") continue;
+        if (ltxStr.trim() === "") continue;
 
         const ltx = undefinedIfErr(() => parseRootLatex(this.cfg, ltxStr));
 

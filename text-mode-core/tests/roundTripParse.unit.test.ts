@@ -138,6 +138,11 @@ describe("Operator Precedence round-trip", () => {
     "1+x<2*y",
     "A=a\\to a+1",
     "A=a\\to a+1,b\\to b-a",
+    /// parent = ComparatorChain
+    "0<x<y<z<1",
+    "0\\le x<y\\le z<1",
+    "0\\ge x>y\\ge z>1",
+    "x=y=z=1",
     /// parent = DoubleInequality
     "x<y<x+1",
     "(b\\o{with}b=3)\\le y\\le x+3",

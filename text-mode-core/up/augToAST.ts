@@ -624,14 +624,11 @@ export function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         left: childLatexToAST(e.left),
         right: childLatexToAST(e.right),
       };
-    case "DoubleInequality":
+    case "ComparatorChain":
       return {
-        type: "DoubleInequality",
-        left: childLatexToAST(e.left),
-        leftOp: e.leftOperator,
-        middle: childLatexToAST(e.middle),
-        rightOp: e.rightOperator,
-        right: childLatexToAST(e.right),
+        type: "ComparatorChain",
+        args: e.args.map(childLatexToAST),
+        symbols: e.symbols,
       };
     case "AssignmentExpression":
       return assignmentExprToAST(e);
