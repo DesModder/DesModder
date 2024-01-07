@@ -11,7 +11,7 @@
 $DCGView.createElement(
   "div",
   {
-    class: $DCGView.const("dcg-expressions-branding"),
+    class: $DCGView.const("dcg-expressions-branding")
     __args__
   },
   __children__
