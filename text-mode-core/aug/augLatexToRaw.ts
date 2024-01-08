@@ -107,12 +107,27 @@ function childNodeToStringNoParen(
         "\\to " +
         childNodeToString(cfg, e.expression, e)
       );
-    case "ListComprehension":
-      return wrapBracket(
-        childNodeToString(cfg, e.expr, e) +
-          "\\operatorname{for}" +
-          bareSeq(cfg, e.assignments, e)
+    case "ListComprehension": {
+      const assignments = e.assignments.map((f) =>
+        childNodeToString(cfg, f, e)
       );
+      const parameters = e.parameters.map(
+        ({ identifier, open, bounds: [min, max] }) =>
+          childNodeToString(cfg, min, e) +
+          (open[0] ? "<" : "\\le ") +
+          childNodeToString(cfg, identifier, e) +
+          (open[1] ? "<" : "\\le ") +
+          childNodeToString(cfg, max, e)
+      );
+      if (assignments.length + parameters.length === 0) {
+        throw new Error("Programming error: empty 'for' RHS.");
+      }
+      const unwrapped =
+        childNodeToString(cfg, e.expr, e) +
+        "\\operatorname{for}" +
+        [...parameters, ...assignments].join(",");
+      return e.bracketWrapped ? wrapBracket(unwrapped) : unwrapped;
+    }
     case "Substitution":
       return (
         childNodeToString(cfg, e.body, e) +

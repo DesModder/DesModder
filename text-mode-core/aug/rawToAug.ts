@@ -558,6 +558,14 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         type: "ListComprehension",
         expr: childNodeToTree(node.args[1]),
         assignments: node.args.slice(2).map(assignmentExprToTree),
+        parameters: node.parameters.map(
+          ({ identifier, open, bounds: [min, max] }) => ({
+            identifier: parseIdentifier(identifier._symbol),
+            open,
+            bounds: [childNodeToTree(min), childNodeToTree(max)],
+          })
+        ),
+        bracketWrapped: node.shouldCoerceToList,
       };
     case "Substitution":
       return {

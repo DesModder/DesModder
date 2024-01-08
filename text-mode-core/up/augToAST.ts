@@ -512,6 +512,14 @@ export function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         type: "ListComprehension",
         expr: childLatexToAST(e.expr),
         assignments: e.assignments.map(assignmentExprToAST),
+        parameters: e.parameters.map(
+          ({ identifier, open, bounds: [min, max] }) => ({
+            identifier: identifierToAST(identifier),
+            open,
+            bounds: [childLatexToAST(min), childLatexToAST(max)],
+          })
+        ),
+        bracketWrapped: e.bracketWrapped,
       };
     case "Substitution":
       return {
