@@ -619,6 +619,7 @@ export function childExprToAug(
             bounds: [childExprToAug(min), childExprToAug(max)],
           })
         ),
+        bracketWrapped: expr.bracketWrapped,
       };
     case "Substitution":
       return {

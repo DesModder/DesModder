@@ -149,6 +149,7 @@ describe("Basic exprs", () => {
       expr: binop("Add", id("i"), number(1)),
       assignments: [assignmentExpr(id("i"), id("L"))],
       parameters: [],
+      bracketWrapped: true,
     });
     testExpr("double nesting", "[i + j for i = L, j = [1 ... 5]]", {
       type: "ListComprehension",
@@ -158,6 +159,7 @@ describe("Basic exprs", () => {
         assignmentExpr(id("j"), range([number(1)], [number(5)])),
       ],
       parameters: [],
+      bracketWrapped: true,
     });
     testExpr(
       "interval parameters",
@@ -181,6 +183,7 @@ describe("Basic exprs", () => {
             open: [false, true],
           },
         ],
+        bracketWrapped: true,
       }
     );
   });

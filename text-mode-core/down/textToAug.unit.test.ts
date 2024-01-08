@@ -164,7 +164,7 @@ function testDiagnostics(desc: string, s: string, expected: Diagnostic[]) {
   });
 }
 
-function testExpr(desc: string, s: string, expected: any) {
+function testExpr(desc: string, s: string, expected: Aug.Latex.AnyChild) {
   testStmt(desc, s, {
     ...exprDefaults,
     latex: expected,
@@ -265,6 +265,7 @@ describe("Basic exprs", () => {
       expr: binop("Add", id("i"), number(1)),
       assignments: [assignmentExpr(id("i"), id("L"))],
       parameters: [],
+      bracketWrapped: true,
     });
     testExpr("double nesting", "[i+j for i=L,j=[1...5]]", {
       type: "ListComprehension",
@@ -278,6 +279,7 @@ describe("Basic exprs", () => {
         }),
       ],
       parameters: [],
+      bracketWrapped: true,
     });
     testExpr(
       "interval parameters",
@@ -301,6 +303,7 @@ describe("Basic exprs", () => {
             open: [false, true],
           },
         ],
+        bracketWrapped: true,
       }
     );
   });
@@ -331,7 +334,7 @@ describe("Basic exprs", () => {
       )
     );
     testDiagnostics("substitution precedence with comma", "[b with b=3, 5]", [
-      error("List comprehension must set variable = identifier", pos(13, 14)),
+      error("Substitution must set variable = identifier", pos(13, 14)),
     ]);
   });
   describe("Piecewise", () => {
@@ -541,6 +544,7 @@ describe("Basic exprs", () => {
         expr: binop("Add", id("i"), number(1)),
         assignments: [assignmentExpr(id("i"), id("M"))],
         parameters: [],
+        bracketWrapped: true,
       },
     });
   });

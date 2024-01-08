@@ -122,11 +122,11 @@ function childNodeToStringNoParen(
       if (assignments.length + parameters.length === 0) {
         throw new Error("Programming error: empty 'for' RHS.");
       }
-      return wrapBracket(
+      const unwrapped =
         childNodeToString(cfg, e.expr, e) +
-          "\\operatorname{for}" +
-          [...parameters, ...assignments].join(",")
-      );
+        "\\operatorname{for}" +
+        [...parameters, ...assignments].join(",");
+      return e.bracketWrapped ? wrapBracket(unwrapped) : unwrapped;
     }
     case "Substitution":
       return (

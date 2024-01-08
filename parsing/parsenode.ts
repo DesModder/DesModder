@@ -300,7 +300,9 @@ interface ListComprehension extends Expression {
     open: [boolean, boolean];
     bounds: [ChildExprNode, ChildExprNode];
   }[];
-  // TODO `shouldCoerceToList` (support bare list comps like `(a,a) for 0<a<1`
+  // Essentially, "is this wrapped in []?"
+  // So [(a,a) for 0<a<1][1] is fine but ((a,a) for 0<a<1)[1] errors
+  shouldCoerceToList: boolean;
 }
 
 interface Substitution extends Expression {

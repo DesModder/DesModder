@@ -6,8 +6,10 @@ export default function augNeedsParens(
   path: string | undefined
 ): boolean {
   if (node.type === "Seq" && node.parenWrapped) return true;
-  if (path === "before-comma" && node.type === "Substitution") return true;
-  // TODO
+  const nodeIsLikeSub = node.type === "Substitution";
+  // TODO: this might be needed for correctness. Extra thing for nodeIsLikeSub.
+  // || (node.type === "ListComprehension" && !node.bracketWrapped);
+  if (path === "before-comma" && nodeIsLikeSub) return true;
 
   if (parent === null) return false;
 
@@ -37,7 +39,7 @@ export default function augNeedsParens(
     case "Factorial":
       return power(node) < POWERS.power;
     case "AssignmentExpression":
-      return node.type === "Substitution";
+      return nodeIsLikeSub;
     case "ListComprehension":
     case "Substitution":
     case "UpdateRule":
@@ -151,10 +153,11 @@ function power(node: Aug.Latex.AnyChild): number {
     case "Identifier":
     case "List":
     case "Range":
-    case "ListComprehension":
     case "Piecewise":
     case "Restriction":
       return POWERS.atom;
+    case "ListComprehension":
+      return node.bracketWrapped ? POWERS.atom : POWERS.with;
     case "Factorial":
       return POWERS.factorial;
     case "FunctionCall":

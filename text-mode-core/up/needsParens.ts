@@ -33,6 +33,10 @@ export default function needsParens(path: NodePath): boolean {
   )
     return false;
 
+  const nodeIsLikeSub = node.type === "Substitution";
+  // TODO: this might be needed for correctness. Extra thing for nodeIsLikeSub.
+  // ||(node.type === "ListComprehension" && !node.bracketWrapped);
+
   switch (parent.type) {
     // TODO
     case "RepeatedExpression":
@@ -44,11 +48,11 @@ export default function needsParens(path: NodePath): boolean {
         (name === "callee" &&
           node.type !== "Identifier" &&
           node.type !== "MemberExpression") ||
-        node.type === "Substitution"
+        nodeIsLikeSub
       );
     case "ListExpression":
     case "RangeExpression":
-      return node.type === "Substitution";
+      return nodeIsLikeSub;
     case "ListComprehension":
     case "Substitution":
       return false;
@@ -64,6 +68,9 @@ export default function needsParens(path: NodePath): boolean {
     case "RepeatedExpression":
       // TODO: better logic for RepeatedExpression
       return true;
+    case "ListComprehension":
+      if (node.bracketWrapped) return false;
+    // fallthrough to Substitution.
     case "Substitution":
       switch (parent.type) {
         case "UpdateRule":
@@ -74,7 +81,6 @@ export default function needsParens(path: NodePath): boolean {
     case "Or": // "Or" is always a direct child of Or or Piecewise
     case "RangeExpression":
     case "ListExpression":
-    case "ListComprehension":
     case "PiecewiseExpression":
     case "Restriction":
       // They come with their own grouping ([] or {}), no need to add parens

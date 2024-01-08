@@ -212,6 +212,7 @@ export interface ListComprehension {
     open: [boolean, boolean];
     bounds: [AnyChild, AnyChild];
   }[];
+  bracketWrapped: boolean;
 }
 
 export interface Substitution {

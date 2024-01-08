@@ -519,6 +519,7 @@ export function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
             bounds: [childLatexToAST(min), childLatexToAST(max)],
           })
         ),
+        bracketWrapped: e.bracketWrapped,
       };
     case "Substitution":
       return {

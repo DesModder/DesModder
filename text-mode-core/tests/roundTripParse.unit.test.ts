@@ -235,6 +235,7 @@ describe("Operator Precedence round-trip", () => {
     "(-x)!",
     "(x+2)!",
     /// parent = ListComprehension
+    "a+b\\o{for}a=[1...5]",
     "[a+b\\o{for}a=[1...5]]",
     "[a+b\\o{for}a=[2...6],b=[-3...4]]",
     "[(a,a)\\o{for}1<a\\le 3]",

@@ -565,6 +565,7 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
             bounds: [childNodeToTree(min), childNodeToTree(max)],
           })
         ),
+        bracketWrapped: node.shouldCoerceToList,
       };
     case "Substitution":
       return {

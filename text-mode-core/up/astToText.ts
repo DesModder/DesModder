@@ -483,7 +483,7 @@ function exprToTextNoParen(
             exprToText(ctx, path.withChild(max, `param.${i}.max`)),
           ])
       );
-      return bracketize(ctx, [
+      const unwrapped = [
         maybeRequiredSpace(
           ctx,
           exprToText(ctx, path.withChild(e.expr, "expr")),
@@ -492,7 +492,8 @@ function exprToTextNoParen(
         ),
         " ",
         join(ctx.comma, [...intervalParameters, ...assignments]),
-      ]);
+      ];
+      return e.bracketWrapped ? bracketize(ctx, unwrapped) : unwrapped;
     }
     case "Substitution":
       return group([

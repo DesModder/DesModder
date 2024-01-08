@@ -51,6 +51,7 @@ const _power = [
   "rel",
   "sim",
   "updateRule",
+  "for",
   "substitution",
   "derivative",
   "add",
@@ -697,7 +698,7 @@ function repeatedOperatorParselet(
 }
 
 const consequentParselets: Record<
-  Punct | "cross" | "with",
+  Punct | "cross" | "with" | "for",
   ConsequentParselet | undefined
 > = {
   "+": binaryParselet(Power.add, "+"),
@@ -882,7 +883,7 @@ const consequentParselets: Record<
           item.left.type !== "Identifier"
         )
           throw ps.pushFatalError(
-            "List comprehension must set variable = identifier",
+            "Substitution must set variable = identifier",
             pos(item)
           );
         return {
@@ -898,6 +899,54 @@ const consequentParselets: Record<
       body: left,
       assignments,
       pos: pos(left, assignments[assignments.length - 1]),
+    };
+  }),
+  for: consequentParselet(Power.for, (ps, left, token): Node => {
+    assertLeftIsExpression(ps, left, token, "(a,a^2) for 1<a<2");
+    const assignments: TextAST.AssignmentExpression[] = [];
+    const parameters: TextAST.IntervalParameter[] = [];
+    let last: Node | null = null;
+    for (const item of parseBareSeq(ps, "[a+b for a=[0,5,10],b=[1...5]]")) {
+      if (
+        item.type === "BinaryExpression" &&
+        item.op === "=" &&
+        item.left.type === "Identifier"
+      ) {
+        last = {
+          type: "AssignmentExpression",
+          variable: item.left,
+          expr: item.right,
+          pos: item.pos,
+        };
+        assignments.push(last);
+      } else if (
+        item.type === "ComparatorChain" &&
+        item.symbols.length === 2 &&
+        item.symbols.every((s) => s === "<" || s === "<=") &&
+        item.args[1].type === "Identifier"
+      ) {
+        last = item.args[2];
+        parameters.push({
+          identifier: item.args[1],
+          open: [item.symbols[0] === "<", item.symbols[1] === "<"],
+          bounds: [item.args[0], item.args[2]],
+        });
+      } else {
+        throw ps.pushFatalError(
+          "List comprehension must set variable = identifier",
+          pos(item)
+        );
+      }
+    }
+    if (last === null)
+      throw ps.pushFatalError("Missing an assignment after 'for'", pos(token));
+    return {
+      type: "ListComprehension",
+      expr: left,
+      assignments,
+      parameters,
+      bracketWrapped: false,
+      pos: pos(left, last),
     };
   }),
   "...": undefined,
@@ -930,56 +979,30 @@ function parseList(ps: ParseState, token: Token): ListOrRange {
       pos: pos(token, t),
     };
   } else if (next.value === "]") {
+    const listcomps = startValues.filter((e) => e.type === "ListComprehension");
+    if (listcomps.length > 0) {
+      const inner = startValues[0];
+      if (listcomps.length > 1)
+        throw ps.pushFatalError(
+          "List comprehension can only have one 'for'",
+          pos(startValues[1])
+        );
+      if (inner.type !== "ListComprehension")
+        throw ps.pushFatalError(
+          "Expected exactly one expression before 'for'",
+          pos(next)
+        );
+      if (!inner.bracketWrapped) {
+        return {
+          ...inner,
+          bracketWrapped: true,
+        };
+      }
+    }
     return {
       type: "ListExpression",
       values: startValues,
       pos: pos(token, next),
-    };
-  } else if (next.type === "keyword" && next.value === "for") {
-    if (startValues.length !== 1)
-      throw ps.pushFatalError(
-        "Expected exactly one expression before 'for'",
-        pos(next)
-      );
-    const assignments: TextAST.AssignmentExpression[] = [];
-    const parameters: TextAST.IntervalParameter[] = [];
-    for (const item of parseBareSeq(ps, "[a+b for a=[0,5,10],b=[1...5]]")) {
-      if (
-        item.type === "BinaryExpression" &&
-        item.op === "=" &&
-        item.left.type === "Identifier"
-      )
-        assignments.push({
-          type: "AssignmentExpression",
-          variable: item.left,
-          expr: item.right,
-          pos: item.pos,
-        });
-      else if (
-        item.type === "ComparatorChain" &&
-        item.symbols.length === 2 &&
-        item.symbols.every((s) => s === "<" || s === "<=") &&
-        item.args[1].type === "Identifier"
-      ) {
-        parameters.push({
-          identifier: item.args[1],
-          open: [item.symbols[0] === "<", item.symbols[1] === "<"],
-          bounds: [item.args[0], item.args[2]],
-        });
-      } else {
-        throw ps.pushFatalError(
-          "List comprehension must set variable = identifier",
-          pos(item)
-        );
-      }
-    }
-    const t = ps.consume("]");
-    return {
-      type: "ListComprehension",
-      expr: startValues[0],
-      assignments,
-      parameters,
-      pos: pos(token, t),
     };
   } else {
     throw ps.pushFatalError("Expected ']'", pos(next));

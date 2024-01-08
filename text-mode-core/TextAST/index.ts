@@ -176,6 +176,7 @@ export type ListComprehension<C extends S = Concrete> = Positioned<C> & {
   expr: Expression<C>;
   assignments: AssignmentExpression<C>[];
   parameters: IntervalParameter<C>[];
+  bracketWrapped: boolean;
 };
 
 export interface IntervalParameter<C extends S = Concrete> {
