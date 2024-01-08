@@ -13,12 +13,17 @@ export type Parse = (
     disallowFrac?: boolean;
     trailingComma?: boolean;
     seedPrefix?: string;
+    allowIntervalComprehensions?: boolean;
   }
 ) => Node;
 
 export function parseDesmosLatex(s: string) {
   const parseDesmosLatexRaw = Private.Parser.parse as Parse;
-  return parseDesmosLatexRaw(s, { allowDt: true, allowIndex: true });
+  return parseDesmosLatexRaw(s, {
+    allowDt: true,
+    allowIndex: true,
+    allowIntervalComprehensions: true,
+  });
 }
 
 export function EvaluateSingleExpression(calc: Calc, s: string): number {

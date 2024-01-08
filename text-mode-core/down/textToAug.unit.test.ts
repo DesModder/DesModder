@@ -264,6 +264,7 @@ describe("Basic exprs", () => {
       type: "ListComprehension",
       expr: binop("Add", id("i"), number(1)),
       assignments: [assignmentExpr(id("i"), id("L"))],
+      parameters: [],
     });
     testExpr("double nesting", "[i+j for i=L,j=[1...5]]", {
       type: "ListComprehension",
@@ -276,7 +277,32 @@ describe("Basic exprs", () => {
           end: [number(5)],
         }),
       ],
+      parameters: [],
     });
+    testExpr(
+      "interval parameters",
+      "[U for 1 < a <= 3, 2 <= b < 4, i = L, j = K]",
+      {
+        type: "ListComprehension",
+        expr: id("U"),
+        assignments: [
+          assignmentExpr(id("i"), id("L")),
+          assignmentExpr(id("j"), id("K")),
+        ],
+        parameters: [
+          {
+            identifier: id("a"),
+            bounds: [number(1), number(3)],
+            open: [true, false],
+          },
+          {
+            identifier: id("b"),
+            bounds: [number(2), number(4)],
+            open: [false, true],
+          },
+        ],
+      }
+    );
   });
   describe("Substitution", () => {
     testExpr(
@@ -514,6 +540,7 @@ describe("Basic exprs", () => {
         type: "ListComprehension",
         expr: binop("Add", id("i"), number(1)),
         assignments: [assignmentExpr(id("i"), id("M"))],
+        parameters: [],
       },
     });
   });

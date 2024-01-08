@@ -462,7 +462,27 @@ function exprToTextNoParen(
         ctx.optionalSpace,
         exprToText(ctx, path.withChild(e.expr, "expr")),
       ]);
-    case "ListComprehension":
+    case "ListComprehension": {
+      const assignments = e.assignments.map((assignment, i) =>
+        assignmentExpressionToText(
+          ctx,
+          path.withChild(assignment, `assignments.${i}`)
+        )
+      );
+      const intervalParameters = e.parameters.map(
+        ({ identifier, open, bounds: [min, max] }, i) =>
+          group([
+            exprToText(ctx, path.withChild(min, `param.${i}.min`)),
+            ctx.optionalSpace,
+            open[0] ? "<" : "<=",
+            ctx.optionalSpace,
+            exprToText(ctx, path.withChild(identifier, `param.${i}.ident`)),
+            ctx.optionalSpace,
+            open[1] ? "<" : "<=",
+            ctx.optionalSpace,
+            exprToText(ctx, path.withChild(max, `param.${i}.max`)),
+          ])
+      );
       return bracketize(ctx, [
         maybeRequiredSpace(
           ctx,
@@ -471,16 +491,9 @@ function exprToTextNoParen(
           "for"
         ),
         " ",
-        join(
-          ctx.comma,
-          e.assignments.map((assignment, i) =>
-            assignmentExpressionToText(
-              ctx,
-              path.withChild(assignment, `assignments.${i}`)
-            )
-          )
-        ),
+        join(ctx.comma, [...intervalParameters, ...assignments]),
       ]);
+    }
     case "Substitution":
       return group([
         maybeRequiredSpace(

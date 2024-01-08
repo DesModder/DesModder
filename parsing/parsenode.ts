@@ -294,6 +294,13 @@ interface ListComprehension extends Expression {
   type: "ListComprehension";
   // The identifier is something like `_comprehensionIndex_5`
   args: [Identifier, ChildExprNode, ...AssignmentExpression[]];
+  // Parameters are relevant for interval comprehensions like `[(a,a) for 0<a<1]`.
+  parameters: {
+    identifier: Identifier;
+    open: [boolean, boolean];
+    bounds: [ChildExprNode, ChildExprNode];
+  }[];
+  // TODO `shouldCoerceToList` (support bare list comps like `(a,a) for 0<a<1`
 }
 
 interface Substitution extends Expression {

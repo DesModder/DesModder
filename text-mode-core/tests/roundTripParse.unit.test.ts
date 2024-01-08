@@ -237,6 +237,10 @@ describe("Operator Precedence round-trip", () => {
     /// parent = ListComprehension
     "[a+b\\o{for}a=[1...5]]",
     "[a+b\\o{for}a=[2...6],b=[-3...4]]",
+    "[(a,a)\\o{for}1<a\\le 3]",
+    "[(a,a+i)\\o{for}1\\le a<3,i=[1...3]]",
+    "[(a,a+b,b)\\o{for}1\\le a<3,3\\le b\\le c]",
+    "[P\\o{for}1\\le a<3,3\\le b\\le c,i=[1],j=[1],k=[2]]",
     "[a\\o{with}a=b+3\\o{for}b=[-3...4]]",
     /// parent = Substitution
     "a+(1,1)\\o{with}a=(1,2)",

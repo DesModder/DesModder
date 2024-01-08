@@ -206,6 +206,12 @@ export interface ListComprehension {
   // we don't include the comprehension index
   expr: AnyChild;
   assignments: AssignmentExpression[];
+  // Parameters are relevant for interval comprehensions like `[(a,a) for 0<a<1]`.
+  parameters: {
+    identifier: Identifier;
+    open: [boolean, boolean];
+    bounds: [AnyChild, AnyChild];
+  }[];
 }
 
 export interface Substitution {

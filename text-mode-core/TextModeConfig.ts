@@ -31,7 +31,11 @@ export function buildConfig(config: PublicConfig): Config {
         throw new Error(
           "Test Error: trying to parse LaTeX from Desmos, but the config does not define `parseDesmosLatex`."
         );
-      return config.parseDesmosLatex(s, { allowDt: true, allowIndex: true });
+      return config.parseDesmosLatex(s, {
+        allowDt: true,
+        allowIndex: true,
+        allowIntervalComprehensions: true,
+      });
     },
   };
 }

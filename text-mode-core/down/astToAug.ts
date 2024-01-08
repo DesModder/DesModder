@@ -612,6 +612,13 @@ export function childExprToAug(
         type: "ListComprehension",
         expr: childExprToAug(expr.expr),
         assignments: expr.assignments.map(assignment),
+        parameters: expr.parameters.map(
+          ({ identifier, open, bounds: [min, max] }) => ({
+            identifier: identifierToAug(identifier),
+            open,
+            bounds: [childExprToAug(min), childExprToAug(max)],
+          })
+        ),
       };
     case "Substitution":
       return {
