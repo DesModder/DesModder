@@ -1,5 +1,22 @@
 # DesModder Changelog
 
+## 0.12.6
+
+New Features:
+
+- (Text Mode) Support more chaining (`1<x<y<z` and `x=y=z`)
+- (Text Mode) Support interval comprehensions (`(a,a) for 1<a<3`)
+- (Text Mode) Support list comprehensions without brackets.
+
+Bug Fixes:
+
+- (Find-Replace) Prevent empty string in "from" field.
+- (Show Tips) Fix replacement error.
+
+Translations:
+
+- (Spanish) Updates for Video Creator.
+
 ## 0.12.5
 
 New Features:
