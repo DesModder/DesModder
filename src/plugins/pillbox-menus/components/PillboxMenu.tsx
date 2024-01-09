@@ -88,8 +88,11 @@ export default class PillboxMenu extends Component<{
 
   didMountContainer() {
     if (this.pm.cc.isGraphSettingsOpen()) {
-      this.pm.cc.dispatch({
-        type: "close-graph-settings",
+      // don't dispatch during tick
+      setTimeout(() => {
+        this.pm.cc.dispatch({
+          type: "close-graph-settings",
+        });
       });
     }
     this.generalEventNames.forEach((name) =>
