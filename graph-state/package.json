@@ -1,0 +1,19 @@
+{
+  "name": "@desmodder/graph-state",
+  "version": "0.2.3",
+  "description": "Typescript definitions for all possible Desmos graph states.",
+  "main": "state.ts",
+  "exports": {
+    ".": "./state.ts"
+  },
+  "scripts": {
+    "build-schema": "ts-to-json --path state.ts --type GraphState > state_schema.json",
+    "test-schema": "cd tests && node test_schema.js"
+  },
+  "author": "Jared Hughes",
+  "license": "MIT",
+  "devDependencies": {
+    "ajv": "^8.9.0",
+    "ts-to-json": "^1.4.1"
+  }
+}

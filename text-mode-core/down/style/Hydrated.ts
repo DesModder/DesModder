@@ -1,5 +1,5 @@
 import { AnyChild as Expr } from "../../aug/AugLatex";
-import type { LabelOrientation } from "@desmodder/graph-state";
+import type { LabelOrientation } from "#graph-state";
 import { Product } from "../../aug/AugState";
 
 export type AnyHydrated =

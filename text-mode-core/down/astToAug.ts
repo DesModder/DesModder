@@ -16,7 +16,7 @@ import * as Default from "./style/defaults";
 import { StyleValue, hydrate } from "./style/hydrate";
 import * as Schema from "./style/schema";
 import type { Diagnostic } from "@codemirror/lint";
-import type { GrapherState } from "@desmodder/graph-state";
+import type { GrapherState } from "#graph-state";
 
 export class DownState extends DiagnosticsState {
   constructor(public readonly cfg: Config, diagnostics: Diagnostic[]) {

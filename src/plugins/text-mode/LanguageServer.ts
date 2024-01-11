@@ -15,7 +15,7 @@ import {
   Facet,
 } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { GraphState } from "@desmodder/graph-state";
+import { GraphState } from "../../../graph-state";
 
 /**
  * onCalcEvent: when we receive a new event dispatched via Calc (such as a
@@ -127,9 +127,7 @@ function setCalcState(tm: TextMode, state: GraphState) {
   const ae = document.activeElement as HTMLElement | undefined;
   const oldBlur = ae?.blur;
   if (ae) ae.blur = () => {};
-  // Just marking state as any for now. Eventually we'll want to pull
-  // @desmodder/graph-state into this repository (like @desmodder/text-mode-core),
-  // to avoid needing to deal with npm back-and-forth.
+  // TODO-graph-state: .product
   (state.graph as any).product = tm.cc.graphSettings.config.product;
   tm.calc.setState(state, { allowUndo: true, fromTextMode: true } as any);
   if (ae) ae.blur = oldBlur!;

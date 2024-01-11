@@ -6,7 +6,7 @@ import { Config } from "../TextModeConfig";
 import { isConstant } from "./AugLatex";
 import Aug from "./AugState";
 import { latexTreeToString } from "./augLatexToRaw";
-import type * as Graph from "@desmodder/graph-state";
+import type * as Graph from "#graph-state";
 
 export default function augToRaw(
   cfg: Config,

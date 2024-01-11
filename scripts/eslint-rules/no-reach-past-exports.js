@@ -2,6 +2,7 @@
 const path = require("path");
 const fs = require("fs");
 const tmExports = require("../../text-mode-core/package.json");
+const gsExports = require("../../graph-state/package.json");
 
 module.exports = {
   name: "no-reach-past-exports",
@@ -46,9 +47,12 @@ function bad(filename, source) {
   return packageDir(filename) !== packageDir(p);
 }
 
-const allowed = Object.keys(tmExports.exports).map((a) =>
-  path.resolve("text-mode-core", a)
-);
+const allowed = [
+  ...Object.keys(tmExports.exports).map((a) =>
+    path.resolve("text-mode-core", a)
+  ),
+  ...Object.keys(gsExports.exports).map((a) => path.resolve("graph-state", a)),
+];
 
 function packageDir(file) {
   let dir = isDirectory(file) ? file : path.dirname(file);

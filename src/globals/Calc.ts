@@ -1,5 +1,5 @@
 import { ItemModel } from "./models";
-import { GraphState } from "@desmodder/graph-state";
+import { GraphState } from "../../graph-state";
 import { MathQuillField } from "#components";
 import { Matrix3 } from "./matrix3";
 

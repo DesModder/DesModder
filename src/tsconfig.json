@@ -2,6 +2,7 @@
   "extends": "../tsconfig-base.json",
   "compilerOptions": {},
   "references": [
+    { "path": "../graph-state" },
     { "path": "../text-mode-core" },
     { "path": "../localization" },
     { "path": "../parsing" },

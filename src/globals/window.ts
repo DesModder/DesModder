@@ -14,7 +14,7 @@ import {
 } from "../components/desmosComponents";
 import { GenericSettings, PluginID } from "../plugins";
 import { ItemModel } from "./models";
-import { GraphState } from "@desmodder/graph-state";
+import { GraphState } from "../../graph-state";
 
 export interface DWindow extends Window {
   DesModder: any;

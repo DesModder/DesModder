@@ -13,7 +13,7 @@ import TextAST, { Settings, Statement } from "../../../text-mode-core/TextAST";
 import { addRawID, tmPlugin } from "./LanguageServer";
 import { ChangeSpec, StateEffect } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { GraphState, NonFolderState } from "@desmodder/graph-state";
+import { GraphState, NonFolderState } from "../../../graph-state";
 import { DispatchedEvent } from "#globals";
 import Metadata from "metadata/interface";
 

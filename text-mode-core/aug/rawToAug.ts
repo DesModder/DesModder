@@ -11,7 +11,7 @@ import {
 import { Config } from "../TextModeConfig";
 import { isPiecewiseBoolean, isRestrictionBoolean } from "./AugLatex";
 import Aug from "./AugState";
-import type * as Graph from "@desmodder/graph-state";
+import type * as Graph from "#graph-state";
 
 export default function rawToAug(
   cfg: Config,
