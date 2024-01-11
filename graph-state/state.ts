@@ -8,6 +8,7 @@
  *  - https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/desmos/index.d.ts
  */
 export interface GraphState {
+  // TODO-graph-state: Version 11.
   version: 9;
   randomSeed?: string;
   graph: GrapherState;
@@ -26,12 +27,15 @@ export interface Ticker {
 
 export type ArrowMode = "NONE" | "POSITIVE" | "BOTH";
 
+export type Product = "graphing" | "geometry-calculator" | "graphing-3d";
+
 export interface GrapherState {
+  product?: Product;
   viewport: {
-    xmin: number;
-    ymin: number;
-    xmax: number;
-    ymax: number;
+    xmin?: number;
+    ymin?: number;
+    xmax?: number;
+    ymax?: number;
   };
   // {x,y}AxisMinorSubdivisions appears to be either 5 or 0 (disabled)
   // but Desmos accepts other subdivisions
@@ -57,6 +61,7 @@ export interface GrapherState {
   restrictGridToFirstQuadrant?: boolean;
   polarMode?: boolean;
   userLockedViewport?: boolean;
+  threeDMode?: boolean;
 }
 
 type Latex = string;

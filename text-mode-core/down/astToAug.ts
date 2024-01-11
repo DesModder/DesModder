@@ -329,9 +329,7 @@ function settingsToAug(
   const res = {
     ...hydrated,
     userLockedViewport: hydrated.lockViewport,
-    // TODO-graph-state: allow xmin, ymin, etc to be undefined in the state.
-    // TODO-graph-state: allow product to be defined in the state
-  } as any;
+  };
   delete res.lockViewport;
   if (res.product !== "graphing-3d") {
     res.viewport = { ...res.viewport };
