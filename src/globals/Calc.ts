@@ -1,5 +1,5 @@
 import { ItemModel } from "./models";
-import { GraphState } from "@desmodder/graph-state";
+import { GraphState, Product } from "../../graph-state";
 import { MathQuillField } from "#components";
 import { Matrix3 } from "./matrix3";
 
@@ -178,8 +178,6 @@ export interface Toast {
   hideAfter?: number;
 }
 
-type Product = "graphing" | "geometry-calculator" | "graphing-3d";
-
 export interface Grapher3d {
   controls: {
     worldRotation3D: Matrix3;
@@ -223,7 +221,6 @@ interface CalcPrivate {
     isGraphSettingsOpen: () => boolean;
     graphSettings: {
       config: {
-        // only includes products desmodder is enabled for
         product: Product;
         settingsMenu: boolean;
       };

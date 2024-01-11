@@ -1,5 +1,5 @@
 import { AnyChild as Expr } from "../../aug/AugLatex";
-import type { LabelOrientation } from "@desmodder/graph-state";
+import type { LabelOrientation } from "#graph-state";
 import { Product } from "../../aug/AugState";
 
 export type AnyHydrated =
@@ -25,7 +25,7 @@ export type AnyHydratedValue =
   | null;
 
 export interface Settings {
-  product: Product;
+  product?: Product;
   viewport: {
     xmin?: number;
     ymin?: number;
@@ -53,7 +53,7 @@ export interface Settings {
   polarNumbers: boolean;
   restrictGridToFirstQuadrant: boolean;
   polarMode: boolean;
-  lockViewport: boolean;
+  lockViewport?: boolean;
   axis3D?: number[];
   speed3D?: number;
   worldRotation3D?: number[];

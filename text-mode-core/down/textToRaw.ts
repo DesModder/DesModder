@@ -5,7 +5,7 @@ import augToRaw from "../aug/augToRaw";
 import astToAug, { childExprToAug } from "./astToAug";
 import { error } from "./diagnostics";
 import { IncrementalState, parse } from "./textToAST";
-import type { GraphState } from "@desmodder/graph-state";
+import type { GraphState } from "#graph-state";
 
 export default function textToRaw(
   cfg: Config,

@@ -3,6 +3,7 @@
   "include": ["./esbuild.mjs", "./.eslintrc.js"],
   "references": [
     { "path": "./scripts" },
+    { "path": "./graph-state" },
     { "path": "./metadata" },
     { "path": "./text-mode-core" },
     { "path": "./localization" },

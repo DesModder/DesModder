@@ -12,6 +12,7 @@
     "./TextAST/Synthetic": "./TextAST/Synthetic.ts"
   },
   "imports": {
+    "#graph-state": "graph-state",
     "#prettier/doc": "prettier/doc",
     "#jest/globals": "@jest/globals",
     "#moo": "moo",

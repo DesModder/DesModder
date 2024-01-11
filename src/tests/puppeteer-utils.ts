@@ -1,12 +1,13 @@
 import { DWindow } from "../globals/window";
 import { PluginID } from "../plugins";
-import { GraphState } from "@desmodder/graph-state";
+import { GraphState } from "../../graph-state";
 import Intellisense from "#plugins/intellisense/index.tsx";
 import { Browser, Page } from "puppeteer";
+import { Calc as CalcType } from "../globals/Calc";
 
 /** Calc is only available inside evaluate() callbacks and friends, since those
  * stringify the function and evaluate it inside the browser */
-declare let Calc: DWindow["Calc"];
+declare let Calc: CalcType;
 declare let Desmos: DWindow["Desmos"];
 declare let DSM: DWindow["DSM"];
 

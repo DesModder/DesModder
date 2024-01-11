@@ -16,7 +16,7 @@ import * as Default from "./style/defaults";
 import { StyleValue, hydrate } from "./style/hydrate";
 import * as Schema from "./style/schema";
 import type { Diagnostic } from "@codemirror/lint";
-import type { GrapherState } from "@desmodder/graph-state";
+import type { GrapherState } from "#graph-state";
 
 export class DownState extends DiagnosticsState {
   constructor(public readonly cfg: Config, diagnostics: Diagnostic[]) {
@@ -329,9 +329,7 @@ function settingsToAug(
   const res = {
     ...hydrated,
     userLockedViewport: hydrated.lockViewport,
-    // TODO-graph-state: allow xmin, ymin, etc to be undefined in the state.
-    // TODO-graph-state: allow product to be defined in the state
-  } as any;
+  };
   delete res.lockViewport;
   if (res.product !== "graphing-3d") {
     res.viewport = { ...res.viewport };

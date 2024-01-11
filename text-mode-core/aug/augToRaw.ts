@@ -6,7 +6,7 @@ import { Config } from "../TextModeConfig";
 import { isConstant } from "./AugLatex";
 import Aug from "./AugState";
 import { latexTreeToString } from "./augLatexToRaw";
-import type * as Graph from "@desmodder/graph-state";
+import type * as Graph from "#graph-state";
 
 export default function augToRaw(
   cfg: Config,
@@ -51,13 +51,13 @@ export default function augToRaw(
   const randomSeed = aug.settings.randomSeed;
   delete aug.settings.randomSeed;
   const res: Graph.GraphState = {
+    // TODO-graph-state: version 11? Not sure if it changes any behavior (due to migrations).
     version: 9,
     randomSeed,
     graph: {
       ...aug.settings,
       threeDMode: aug.settings.product === "graphing-3d",
-      // TODO-graph-state: bring @desmodder/graph-state in this repo, and specify threeDMode etc on it.
-    } as any,
+    },
     expressions: {
       list,
       ticker:

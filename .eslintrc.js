@@ -36,6 +36,7 @@ module.exports = {
     "*.html",
     "*.woff",
     "*.svg",
+    "*.zip",
     ".eslintrc.js",
   ],
   parser: "@typescript-eslint/parser",
