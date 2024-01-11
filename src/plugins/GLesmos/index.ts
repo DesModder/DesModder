@@ -33,7 +33,9 @@ export default class GLesmos extends PluginController {
       (model = this.cc.getItemModel(id)) &&
       model.type === "expression" &&
       model.formula &&
-      model.formula.expression_type === "IMPLICIT"
+      (model.formula.expression_type === "IMPLICIT" ||
+        model.formula.expression_type === "IMPLICIT_EQUATION" ||
+        model.formula.expression_type === "IMPLICIT_INEQUALITY")
     );
   }
 

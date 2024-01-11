@@ -32,11 +32,17 @@ interface ItemModelBase {
   formula?: {
     expression_type:
       | "X_OR_Y"
+      // Soon, X_OR_Y will be removed in favor of the following two:
+      | "X_OR_Y_EQUATION"
+      | "X_OR_Y_INEQUALITY"
       | "SINGLE_POINT"
       | "POINT_LIST"
       | "PARAMETRIC"
       | "POLAR"
       | "IMPLICIT"
+      // Soon, IMPLICIT will be removed in favor of the following two:
+      | "IMPLICIT_EQUATION"
+      | "IMPLICIT_INEQUALITY"
       | "POLYGON"
       | "HISTOGRAM"
       | "DOTPLOT"
@@ -44,7 +50,9 @@ interface ItemModelBase {
       | "TTEST"
       | "STATS"
       | "CUBE"
-      | "SPHERE";
+      | "SPHERE"
+      // There are many possible expression types due to 3d. No point writing them all out.
+      | string;
     is_graphable: boolean;
     is_inequality: boolean;
     action_value?: Record<string, string>;
