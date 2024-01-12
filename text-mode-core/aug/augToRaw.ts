@@ -178,6 +178,18 @@ function augNonFolderToRaw(
         polarDomain: item.polarDomain && latexMapDomain(cfg, item.polarDomain),
         parametricDomain:
           item.parametricDomain && latexMapDomain(cfg, item.parametricDomain),
+        parametricDomain3Du:
+          item.parametricDomain3Du &&
+          latexMapDomain(cfg, item.parametricDomain3Du),
+        parametricDomain3Dv:
+          item.parametricDomain3Dv &&
+          latexMapDomain(cfg, item.parametricDomain3Dv),
+        parametricDomain3Dr:
+          item.parametricDomain3Dr &&
+          latexMapDomain(cfg, item.parametricDomain3Dr),
+        parametricDomain3Dphi:
+          item.parametricDomain3Dphi &&
+          latexMapDomain(cfg, item.parametricDomain3Dphi),
         domain:
           item.parametricDomain && latexMapDomain(cfg, item.parametricDomain),
         cdf: item.cdf && {

@@ -116,6 +116,11 @@ const clickable: Schema = {
   clickDescription: "string",
 };
 
+const boundsSchema = schemaL({
+  min: "expr",
+  max: "expr",
+});
+
 export const expression: Schema = {
   ...nonFolderBase,
   ...columnExpressionCommon,
@@ -168,13 +173,14 @@ export const expression: Schema = {
     step: "expr",
   }),
   domain: schemaL({
-    min: "expr",
-    max: "expr",
+    theta: boundsSchema,
+    t: boundsSchema,
+    u: boundsSchema,
+    v: boundsSchema,
+    rho: boundsSchema,
+    phi: boundsSchema,
   }),
-  cdf: schemaL({
-    min: "expr",
-    max: "expr",
-  }),
+  cdf: boundsSchema,
   // TODO vizProps
   // vizProps
 };

@@ -132,8 +132,11 @@ export interface ExpressionAug extends BaseNonFolderAug {
   displayEvaluationAsFraction: boolean;
   slider: SliderData;
   polarDomain?: DomainAug;
-  // In Raw GraphState, `domain` is the same as `parametricDomain` (migration)
   parametricDomain?: DomainAug;
+  parametricDomain3Du?: DomainAug;
+  parametricDomain3Dv?: DomainAug;
+  parametricDomain3Dr?: DomainAug;
+  parametricDomain3Dphi?: DomainAug;
   cdf?: {
     min?: Latex.AnyChild;
     max?: Latex.AnyChild;

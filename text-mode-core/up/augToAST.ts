@@ -193,8 +193,6 @@ export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
 function expressionStyle(
   item: Aug.ExpressionAug
 ): Parameters<typeof styleMapping>[0] {
-  const domain = item.parametricDomain ?? item.polarDomain;
-
   return {
     ...columnExpressionCommonStyle(item),
     fill: childLatexToASTmaybe(item.fillOpacity),
@@ -222,12 +220,14 @@ function expressionStyle(
       step: childLatexToASTmaybe(item.slider.step),
     }),
     // We will infer whether parametric or polar domain is needed
-    domain:
-      domain &&
-      styleMapping({
-        min: childLatexToASTmaybe(domain.min),
-        max: childLatexToASTmaybe(domain.max),
-      }),
+    domain: styleMapping({
+      theta: domain(item.polarDomain),
+      t: domain(item.parametricDomain),
+      u: domain(item.parametricDomain3Du),
+      v: domain(item.parametricDomain3Dv),
+      r: domain(item.parametricDomain3Dr),
+      phi: domain(item.parametricDomain3Dphi),
+    }),
     cdf:
       item.cdf &&
       styleMapping({
@@ -255,6 +255,16 @@ function expressionStyle(
     onClick: childLatexToASTmaybe(item.clickableInfo?.latex),
     clickDescription: stringToASTmaybe(item.clickableInfo?.description),
   };
+}
+
+function domain(d: Aug.DomainAug | undefined) {
+  return (
+    d &&
+    styleMapping({
+      min: childLatexToASTmaybe(d.min),
+      max: childLatexToASTmaybe(d.max),
+    })
+  );
 }
 
 function columnExpressionCommonStyle(

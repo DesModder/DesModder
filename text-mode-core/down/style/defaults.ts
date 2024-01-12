@@ -71,7 +71,12 @@ const clickable: Hydrated.Clickable = {
   clickDescription: "",
 };
 
-const expression = {
+const defaultBounds = {
+  min: undefined,
+  max: undefined,
+};
+
+export const expression: Hydrated.Expression = {
   ...nonFolderBase,
   ...columnExpressionCommon,
   ...clickable,
@@ -98,29 +103,18 @@ const expression = {
     max: undefined,
     step: undefined,
   },
-  cdf: {
-    min: undefined,
-    max: undefined,
+  cdf: defaultBounds,
+  domain: {
+    theta: defaultBounds,
+    t: defaultBounds,
+    u: defaultBounds,
+    v: defaultBounds,
+    r: defaultBounds,
+    phi: defaultBounds,
   },
   // TODO vizProps
   // vizProps
 } as const;
-
-export const polarExpression: Hydrated.Expression = {
-  ...expression,
-  domain: {
-    min: undefined,
-    max: undefined,
-  },
-};
-
-export const nonpolarExpression: Hydrated.Expression = {
-  ...expression,
-  domain: {
-    min: undefined,
-    max: undefined,
-  },
-};
 
 export const regression: Hydrated.Regression = {
   ...nonFolderBase,
