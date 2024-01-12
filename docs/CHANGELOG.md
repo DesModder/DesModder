@@ -1,5 +1,12 @@
 # DesModder Changelog
 
+## 0.12.7
+
+Bug Fixes:
+
+- (Core) Fix bug where menus could overlap.
+- (Text Mode) Persist u,v,r,phi bounds in 3d.
+
 ## 0.12.6
 
 New Features:
