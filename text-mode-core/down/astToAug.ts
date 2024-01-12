@@ -213,17 +213,12 @@ function expressionToAug(
     return regressionToAug(ds, styleMapping, stmt, stmt.expr);
   }
   const expr = childExprToAug(stmt.expr);
-  // is the expr polar for the purposes of domain?
-  const isPolar =
-    expr.type === "Comparator" &&
-    expr.left.type === "Identifier" &&
-    expr.left.symbol === "r";
 
   // TODO: split hydration based on lines, function definition, etc.
   const style = hydrate(
     ds,
     styleMapping,
-    isPolar ? Default.polarExpression : Default.nonpolarExpression,
+    Default.expression,
     Schema.expression,
     "expression"
   );
@@ -257,27 +252,16 @@ function expressionToAug(
           step: style.slider.step,
         }
       : {},
-    polarDomain:
-      style.domain && isPolar
-        ? {
-            min: style.domain.min,
-            max: style.domain.max,
-          }
-        : undefined,
-    parametricDomain:
-      style.domain && !isPolar
-        ? {
-            min: style.domain.min,
-            max: style.domain.max,
-          }
-        : undefined,
+    polarDomain: style.domain?.theta,
+    parametricDomain: style.domain?.t,
+    parametricDomain3Du: style.domain?.u,
+    parametricDomain3Dv: style.domain?.v,
+    parametricDomain3Dr: style.domain?.r,
+    parametricDomain3Dphi: style.domain?.phi,
     cdf:
       style.cdf &&
-      !exprEvalSameDeep(style.cdf, { min: -Infinity, max: Infinity })
-        ? {
-            min: style.cdf.min,
-            max: style.cdf.max,
-          }
+      !exprEvalSameDeep(style.cdf as any, { min: -Infinity, max: Infinity })
+        ? { min: style.cdf.min, max: style.cdf.max }
         : undefined,
     // TODO: vizProps
     vizProps: {},

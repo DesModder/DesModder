@@ -198,7 +198,11 @@ function tryRawNonFolderToAug(
         errorHidden: dsmMetadata.expressions[item.id]?.errorHidden ?? false,
         displayEvaluationAsFraction: item.displayEvaluationAsFraction ?? false,
         polarDomain: parseMapDomain(cfg, item.polarDomain, "0", "12\\pi"),
-        parametricDomain: parseMapDomain(cfg, item.parametricDomain, "0", "1"),
+        parametricDomain: parseMapDomain(cfg, item.parametricDomain),
+        parametricDomain3Du: parseMapDomain(cfg, item.parametricDomain3Du),
+        parametricDomain3Dv: parseMapDomain(cfg, item.parametricDomain3Dv),
+        parametricDomain3Dr: parseMapDomain(cfg, item.parametricDomain3Dr),
+        parametricDomain3Dphi: parseMapDomain(cfg, item.parametricDomain3Dphi),
         cdf: item.cdf?.show
           ? {
               min: item.cdf.min ? parseLatex(cfg, item.cdf.min) : undefined,
@@ -299,8 +303,8 @@ function vizPropsAug(
 function parseMapDomain(
   cfg: Config,
   domain: Graph.Domain | undefined,
-  fallbackMin: string,
-  fallbackMax: string
+  fallbackMin: string = "0",
+  fallbackMax: string = "1"
 ): Aug.DomainAug | undefined {
   if (!domain) return undefined;
   return {

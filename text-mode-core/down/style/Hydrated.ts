@@ -101,6 +101,11 @@ export interface Clickable {
   clickDescription: string;
 }
 
+interface HydratedBounds {
+  min?: Expr;
+  max?: Expr;
+}
+
 // TODO: split hydrated expr based on regression, function definition, etc.
 export interface Expression
   extends NonFolderBase,
@@ -118,6 +123,7 @@ export interface Expression
   errorHidden: boolean;
   glesmos: boolean;
   fill?: Expr;
+  logMode: boolean;
   displayEvaluationAsFraction: boolean;
   slider?: {
     playing: boolean;
@@ -133,13 +139,14 @@ export interface Expression
     step?: Expr;
   };
   domain?: {
-    min?: Expr;
-    max?: Expr;
+    theta?: HydratedBounds;
+    t?: HydratedBounds;
+    u?: HydratedBounds;
+    v?: HydratedBounds;
+    r?: HydratedBounds;
+    phi?: HydratedBounds;
   };
-  cdf?: {
-    min?: Expr;
-    max?: Expr;
-  };
+  cdf?: HydratedBounds;
   // TODO vizProps
   // vizProps:
 }

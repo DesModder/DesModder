@@ -151,6 +151,10 @@ interface ExpressionStateWithoutColumn extends BaseNonFolderState {
   };
   polarDomain?: Domain;
   parametricDomain?: Domain;
+  parametricDomain3Du?: Domain;
+  parametricDomain3Dv?: Domain;
+  parametricDomain3Dr?: Domain;
+  parametricDomain3Dphi?: Domain;
   // seems like `domain` may be the same as `parametricDomain`
   domain?: Domain;
   cdf?: {
