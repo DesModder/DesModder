@@ -26,7 +26,8 @@ interface DrawCtx {
 export function drawGLesmosSketchToCtx(
   cc: CalcController,
   drawCtx: DrawCtx,
-  { id, branches }: GLesmosSketch
+  { id, branches }: GLesmosSketch,
+  glslHeader: string
 ) {
   branches = branches.filter((b) => b.graphMode === "GLesmos");
 
@@ -36,7 +37,7 @@ export function drawGLesmosSketchToCtx(
     chunks: glBranches.flatMap((b) => b.chunks),
     deps: glBranches.reduce<string[]>(
       (a, b) => a.concat(b.deps.filter((d) => !a.includes(d))),
-      []
+      [glslHeader]
     ),
     hasOutlines: glBranches.reduce((a, b) => a && b.hasOutlines, true),
   };

@@ -28,8 +28,8 @@ export type GLesmosProgram = WebGLProgram & {
   vertexAttribPos: number;
   corner: WebGLUniformLocation | null;
   size: WebGLUniformLocation | null;
-  NaN: WebGLUniformLocation | null;
-  Infinity: WebGLUniformLocation | null;
+  // Prefix to avoid collision with Desmos's `Infinity` uniform.
+  dsm_Infinity: WebGLUniformLocation | null;
 };
 
 type UniformType = "1f" | "2fv" | "3fv" | "4fv" | "1i"; // TODO: this isn't very typesafe!
@@ -121,8 +121,10 @@ function getShaderProgram(
   );
   shaderProgram.corner = gl.getUniformLocation(shaderProgram, "graphCorner");
   shaderProgram.size = gl.getUniformLocation(shaderProgram, "graphSize");
-  shaderProgram.NaN = gl.getUniformLocation(shaderProgram, "NaN");
-  shaderProgram.Infinity = gl.getUniformLocation(shaderProgram, "Infinity");
+  shaderProgram.dsm_Infinity = gl.getUniformLocation(
+    shaderProgram,
+    "dsm_Infinity"
+  );
 
   shaderCache.set(key, shaderProgram);
   if (shaderCache.size > 100) {
@@ -150,11 +152,7 @@ out vec4 outColor;
 
 uniform vec2  graphCorner;
 uniform vec2  graphSize;
-uniform float NaN;
-uniform float Infinity;
-
-#define M_PI 3.1415926535897932384626433832795
-#define M_E 2.71828182845904523536028747135266
+uniform float dsm_Infinity;
 
 vec2 toMathCoord(in vec2 fragCoord){
   return fragCoord * graphSize + graphCorner;
@@ -287,8 +285,6 @@ export function glesmosGetSDFShader(
         vec2(0,1), vec2(1,1)
       );
 
-      // const vec4 JFA_undefined = vec4(-Infinity);
-
     //============== END JFA Helper Data ==============//
 
 
@@ -349,7 +345,7 @@ export function glesmosGetSDFShader(
 
     vec2 quadTreeSolve( in vec2 seed, in float scale ){
 
-      float closest = Infinity;
+      float closest = dsm_Infinity;
       int closest_n = 0;
 
       for( int n = 0; n < 4; n++ ){
@@ -367,13 +363,13 @@ export function glesmosGetSDFShader(
 
     vec4 Step(in vec2 fragCoord){
 
-      vec4 JFA_undefined = vec4(-Infinity);
+      vec4 JFA_undefined = vec4(-dsm_Infinity);
 
       float stepwidth = floor(exp2(c_maxSteps - c_stepNum - 1.0));
 
       vec2 warp = iResolution / max(iResolution.x, iResolution.y);
       
-      float bestDistance = Infinity;
+      float bestDistance = dsm_Infinity;
       vec4  bestLine     = JFA_undefined;
       
       for (int n = 0; n < 9; n++) {
@@ -396,7 +392,7 @@ export function glesmosGetSDFShader(
 
     void main(){
 
-      vec4 JFA_undefined = vec4(-Infinity);
+      vec4 JFA_undefined = vec4(-dsm_Infinity);
 
       vec2 fragCoord = texCoord;
       
@@ -461,7 +457,7 @@ export function glesmosGetFinalPassShader(
 
       // lines
       if( iDoOutlines != 1 ) return;
-      vec4 JFA_undefined = vec4(-Infinity);
+      vec4 JFA_undefined = vec4(-dsm_Infinity);
       vec2 warp = iResolution / max(iResolution.x, iResolution.y);
 
       vec4 seed = getPixel( texCoord, iChannel0 );

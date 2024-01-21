@@ -125,6 +125,15 @@ __options__
 *Find*
 
 ```js
+`    ${$dcg_shared_module_exports[__glslHeader__]}
+    ${$f}
+    ${$c ? `varying vec2 vUV;
+` :
+```
+
+*Find*
+
+```js
 drawSketchToCtx({
   sketch: $sketch, drawContext: $drawCtx, poiLabelsLayer: $n,
   clickableObjectsLayer: $o, geometryContext: $a, showMovablePoints: $l
@@ -141,7 +150,9 @@ if (!$ee.branches || !$ee.branches.length) return;
 
 ```js
 __guard__
-DesModder.drawGLesmosSketchToCtx?.(window.Calc.controller, $drawCtx, $sketch);
+DesModder.drawGLesmosSketchToCtx?.(window.Calc.controller, $drawCtx, $sketch,
+  $dcg_shared_module_exports[__glslHeader__]
+);
 ```
 
 ## Pass GLesmos flag to worker
@@ -173,6 +184,11 @@ __body__
 
 *worker_only*
 
+*Find*
+```js
+.shader = $emitGLSL($t, 0)
+```
+
 *Find* 
 ```js
 ._graph = $_graphFunc;
@@ -196,7 +212,7 @@ let $branch = $c({
 
 *Replace* `compute2d` with
 ```js
-if (this.userData.glesmos && self.dsm_compileGLesmos) {
+if (this.userData.glesmos) {
   const lines =
     this.userData.lines !== false &&
     (!this.isInequality() || this.userData.glesmosLinesConfirmed);
@@ -209,7 +225,10 @@ if (this.userData.glesmos && self.dsm_compileGLesmos) {
   }
   const newCompiled = self.dsm_compileGLesmos(
     $ir, $graphInfo.color, $graphInfo.fillOpacity ?? 0, $graphInfo.lineOpacity, this.userData.lines !== false ? $graphInfo.lineWidth : 0.0,
-    derivativeX, derivativeY
+    derivativeX, derivativeY,
+    chunk => $emitGLSL(
+      chunk, 0 // 0 uniforms
+    )
   );
   return [{
     graphMode: "GLesmos",
