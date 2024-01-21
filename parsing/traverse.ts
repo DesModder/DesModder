@@ -17,11 +17,6 @@ export class Path<n extends Node = Node> {
         return [this.node._lhs, this.node._rhs];
       case "Error":
         return [];
-      case "DoubleInequality":
-        if ("args" in this.node) {
-          return [this.node.args[0], this.node.args[2], this.node.args[4]];
-        }
-      // fallthrough
       default: {
         if ("args" in this.node) {
           return this.node.args as ChildExprNode[];

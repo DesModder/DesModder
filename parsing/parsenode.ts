@@ -410,7 +410,6 @@ export interface Comparator extends BaseComparator {
 }
 
 interface ComparatorChain extends Base {
-  // Not sure how to get DoubleInequality
   type: "ComparatorChain";
   args: [ChildExprNode, ChildExprNode, ...ChildExprNode[]];
   symbols: ComparatorSymbol[];

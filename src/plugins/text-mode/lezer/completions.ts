@@ -131,8 +131,7 @@ function styleDefaults(tm: TextMode, node: SyntaxNode): AnyHydrated {
   }
   switch (node.name) {
     case "ExprStatement":
-      // TODO: check polar and other stuff
-      return Defaults.nonpolarExpression;
+      return Defaults.expression;
     case "Table":
       return Defaults.table;
     case "Image":

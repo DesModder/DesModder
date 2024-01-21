@@ -1,7 +1,7 @@
-import { DWindow } from "#globals";
+import { Calc as CalcType } from "#globals";
 import { Driver, clean, testWithPage } from "#tests";
 
-declare let Calc: DWindow["Calc"];
+declare let Calc: CalcType;
 
 async function assertKeypad(driver: Driver, expected: boolean) {
   const keypad = await driver.evaluate(() => Calc.settings.keypad);
