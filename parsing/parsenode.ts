@@ -1,4 +1,4 @@
-import { IRChunk, ValueType } from "./IR";
+import { IRChunk } from "./IR";
 
 interface Base {
   init: () => void;
@@ -564,7 +564,6 @@ export interface OptimizedRegression extends Base {
 export interface IRExpression extends Base {
   type: "IRExpression";
   _chunk: IRChunk;
-  valueType: ValueType;
   isList: boolean;
   // length is for isList only
   length: number;
