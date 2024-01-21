@@ -9,12 +9,6 @@ function clampParam(input: number, min: number, max: number, def: number) {
   return Math.min(Math.max(input, min), max);
 }
 
-function accDeps(a: Record<string, boolean>, b: Record<string, boolean>) {
-  for (const key in b) {
-    if (b[key]) a[key] = true;
-  }
-}
-
 export interface EmittedGLSL {
   source: string;
   shaderFunctions: Record<string, boolean>;
@@ -35,10 +29,8 @@ export function compileGLesmos(
     lineOpacity = clampParam(lineOpacity, 0, 1, 0.9);
     lineWidth = clampParam(lineWidth, 0, Infinity, 2.5);
 
-    const deps: Record<string, boolean> = {};
-
     let { source, shaderFunctions } = emitGLSL(concreteTree._chunk);
-    accDeps(deps, shaderFunctions);
+    let deps = shaderFunctions;
 
     // default values for if there should be no dx, dy
     let dxsource = "return 0.0;";
@@ -46,14 +38,14 @@ export function compileGLesmos(
     let hasOutlines = false;
     if (lineWidth > 0 && lineOpacity > 0 && derivativeX && derivativeY) {
       ({ source: dxsource, shaderFunctions } = emitGLSL(derivativeX._chunk));
-      accDeps(deps, shaderFunctions);
+      deps = { ...deps, ...shaderFunctions };
       ({ source: dysource, shaderFunctions } = emitGLSL(derivativeY._chunk));
-      accDeps(deps, shaderFunctions);
+      deps = { ...deps, ...shaderFunctions };
       hasOutlines = true;
     }
     return {
       hasOutlines,
-      deps: Object.keys(deps).filter((k) => deps[k]),
+      deps,
       chunks: [
         {
           main: source,

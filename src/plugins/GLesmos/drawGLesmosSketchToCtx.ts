@@ -35,9 +35,9 @@ export function drawGLesmosSketchToCtx(
   if (glBranches.length === 0) return;
   const compiledGL: GLesmosShaderPackage = {
     chunks: glBranches.flatMap((b) => b.chunks),
-    deps: glBranches.reduce<string[]>(
-      (a, b) => a.concat(b.deps.filter((d) => !a.includes(d))),
-      [glslHeader]
+    deps: glBranches.reduce<Record<string, boolean>>(
+      (a, b) => ({ ...a, ...b.deps }),
+      { [glslHeader]: true }
     ),
     hasOutlines: glBranches.reduce((a, b) => a && b.hasOutlines, true),
   };
@@ -57,7 +57,7 @@ function drawOneGLesmosSketchToCtx(
   // to avoid needing this.
   canvas = canvas ?? initGLesmosCanvas(cc);
 
-  const deps = compiledGL.deps.join("\n");
+  const deps = Object.keys(compiledGL.deps).join("\n");
 
   try {
     if (!canvas?.element) glesmosError("WebGL Context Lost!");
