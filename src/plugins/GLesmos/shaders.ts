@@ -28,6 +28,9 @@ export type GLesmosProgram = WebGLProgram & {
   size: WebGLUniformLocation | null;
   // Prefix to avoid collision with Desmos's `Infinity` uniform.
   dsm_Infinity: WebGLUniformLocation | null;
+  // The original Infinity and NaN that Desmos creates
+  Infinity: WebGLUniformLocation | null;
+  NaN: WebGLUniformLocation | null;
 };
 
 type UniformType = "1f" | "2fv" | "3fv" | "4fv" | "1i"; // TODO: this isn't very typesafe!
@@ -123,6 +126,8 @@ function getShaderProgram(
     shaderProgram,
     "dsm_Infinity"
   );
+  shaderProgram.Infinity = gl.getUniformLocation(shaderProgram, "Infinity");
+  shaderProgram.NaN = gl.getUniformLocation(shaderProgram, "NaN");
 
   shaderCache.set(key, shaderProgram);
   if (shaderCache.size > 100) {

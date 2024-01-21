@@ -154,6 +154,8 @@ export function initGLesmosCanvas(cc: CalcController) {
     gl.uniform2fv(program.size, sizeOfGraph);
     gl.uniform2fv(program.corner, cornerOfGraph);
     gl.uniform1f(program.dsm_Infinity, Infinity);
+    gl.uniform1f(program.Infinity, Infinity);
+    gl.uniform1f(program.NaN, NaN);
   };
 
   //= ================ WEBGL FUNCTIONS ================
