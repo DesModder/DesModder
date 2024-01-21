@@ -12,7 +12,7 @@ export default TextAST;
  */
 
 const synthetic = "synthetic";
-export type Synthetic = typeof synthetic;
+export type Synthetic = typeof synthetic | Concrete;
 const concrete = "concrete";
 export type Concrete = typeof concrete;
 type S = Synthetic | Concrete;
