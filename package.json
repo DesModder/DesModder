@@ -35,7 +35,7 @@
     "lint": "npm run lint:formatting && npm run lint:types && npm run lint:eslint",
     "prettier": "prettier",
     "lint:formatting": "prettier --check .",
-    "lint:types": "tsc --noEmit",
+    "lint:types": "tsc --build",
     "eslint": "eslint",
     "lint:eslint": "eslint \"**\"",
     "test": "npm run test:unit && npm run test:integration",
