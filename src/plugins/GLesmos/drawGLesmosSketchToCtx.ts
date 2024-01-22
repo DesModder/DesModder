@@ -72,9 +72,15 @@ function drawOneGLesmosSketchToCtx(
         ctx.drawImage(canvas?.element, 0, 0);
       }
     else {
-      canvas?.buildGLesmosFast(deps, compiledGL.chunks);
-      canvas?.renderFast();
-      ctx.drawImage(canvas?.element, 0, 0);
+      // No grouping. DCG_SC_uniforms will normally cause a list of
+      // implicits to be the same program though (with different uniforms).
+      // Grouping them might save some performance on repeated blitting,
+      // but the main gain from the old grouping approach was avoiding compiles.
+      for (const chunk of compiledGL.chunks) {
+        canvas?.buildGLesmosFast(deps, chunk);
+        canvas?.renderFast();
+        ctx.drawImage(canvas?.element, 0, 0);
+      }
     }
   } catch (e) {
     const model = cc.getItemModel(id);

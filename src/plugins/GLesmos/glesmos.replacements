@@ -225,10 +225,7 @@ if (this.userData.glesmos) {
   }
   const newCompiled = self.dsm_compileGLesmos(
     $ir, $graphInfo.color, $graphInfo.fillOpacity ?? 0, $graphInfo.lineOpacity, this.userData.lines !== false ? $graphInfo.lineWidth : 0.0,
-    derivativeX, derivativeY,
-    chunk => $emitGLSL(
-      chunk, 0 // 0 uniforms
-    )
+    derivativeX, derivativeY, $emitGLSL
   );
   return [{
     graphMode: "GLesmos",

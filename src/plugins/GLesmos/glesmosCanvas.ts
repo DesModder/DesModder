@@ -156,6 +156,10 @@ export function initGLesmosCanvas(cc: CalcController) {
     gl.uniform1f(program.dsm_Infinity, Infinity);
     gl.uniform1f(program.Infinity, Infinity);
     gl.uniform1f(program.NaN, NaN);
+
+    for (let i = 0; i < program.DCG_SC_uniforms.length; i++) {
+      gl.uniform1f(program.DCG_SC_uniforms[i], program.DCG_SC_uniformValues[i]);
+    }
   };
 
   //= ================ WEBGL FUNCTIONS ================
@@ -166,13 +170,13 @@ export function initGLesmosCanvas(cc: CalcController) {
     glesmosSDF = glesmosGetSDFShader(gl, chunk, deps); // we don't need to build this if we aren't drawing outlines
   };
 
-  const buildGLesmosFast = (deps: string, chunks: GLesmosShaderChunk[]) => {
-    glesmosFastFill = glesmosGetFastFillShader(gl, chunks, deps);
+  const buildGLesmosFast = (deps: string, chunk: GLesmosShaderChunk) => {
+    glesmosFastFill = glesmosGetFastFillShader(gl, chunk, deps);
   };
 
   const runCacheShader = () => {
     if (!glesmosCache) glesmosError("Cache shader failed.");
-    gl.useProgram(glesmosCache);
+    gl.useProgram(glesmosCache.glProgram);
     setupGLesmosEnvironment(glesmosCache);
 
     gl.activeTexture(gl.TEXTURE1); // following texture operations concern texture 1
@@ -183,7 +187,7 @@ export function initGLesmosCanvas(cc: CalcController) {
 
   const runSDFShader = () => {
     if (!glesmosSDF) glesmosError("SDF shader failed.");
-    gl.useProgram(glesmosSDF);
+    gl.useProgram(glesmosSDF.glProgram);
     ACTIVE_FB = 0;
 
     setupGLesmosEnvironment(glesmosSDF);
@@ -220,7 +224,7 @@ export function initGLesmosCanvas(cc: CalcController) {
 
   const runFinalPassShader = () => {
     if (!glesmosFinalPass) glesmosError("Outline pass shader failed.");
-    gl.useProgram(glesmosFinalPass);
+    gl.useProgram(glesmosFinalPass.glProgram);
     setupGLesmosEnvironment(glesmosFinalPass);
 
     setUniform(gl, glesmosFinalPass, "iResolution", "2fv", [c.width, c.height]);
@@ -238,7 +242,7 @@ export function initGLesmosCanvas(cc: CalcController) {
 
   const runFastShader = () => {
     if (!glesmosFastFill) glesmosError("Fast-fill shader failed.");
-    gl.useProgram(glesmosFastFill);
+    gl.useProgram(glesmosFastFill.glProgram);
     setupGLesmosEnvironment(glesmosFastFill);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);

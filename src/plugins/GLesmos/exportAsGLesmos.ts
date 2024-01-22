@@ -11,7 +11,12 @@ function clampParam(input: number, min: number, max: number, def: number) {
 export interface EmittedGLSL {
   source: string;
   shaderFunctions: Record<string, boolean>;
+  shaderUniforms: number[];
 }
+
+// Min 1024 must be supported (https://www.khronos.org/opengl/wiki/Uniform_(GLSL))
+// We also have stuff like `size` and `Infinity` as uniforms, so be conservative.
+const MAX_RESTRICTION_UNIFORMS = 900;
 
 export function compileGLesmos(
   concreteTree: IRExpression,
@@ -21,13 +26,16 @@ export function compileGLesmos(
   lineWidth: number,
   derivativeX: undefined | IRExpression,
   derivativeY: undefined | IRExpression,
-  emitGLSL: (chunk: IRChunk) => EmittedGLSL
+  emitGLSL: (chunk: IRChunk, maxUniforms: number) => EmittedGLSL
 ): GLesmosShaderPackage {
   fillOpacity = clampParam(fillOpacity, 0, 1, 0.4);
   lineOpacity = clampParam(lineOpacity, 0, 1, 0.9);
   lineWidth = clampParam(lineWidth, 0, Infinity, 2.5);
 
-  let { source, shaderFunctions } = emitGLSL(concreteTree._chunk);
+  let { source, shaderFunctions, shaderUniforms } = emitGLSL(
+    concreteTree._chunk,
+    MAX_RESTRICTION_UNIFORMS
+  );
   let deps = shaderFunctions;
 
   // default values for if there should be no dx, dy
@@ -35,9 +43,11 @@ export function compileGLesmos(
   let dysource = "return 0.0;";
   let hasOutlines = false;
   if (lineWidth > 0 && lineOpacity > 0 && derivativeX && derivativeY) {
-    ({ source: dxsource, shaderFunctions } = emitGLSL(derivativeX._chunk));
+    // The counting starts over from _DCG_SC_0, so
+    // nonzero uniform count would cause collisions with the above source.
+    ({ source: dxsource, shaderFunctions } = emitGLSL(derivativeX._chunk, 0));
     deps = { ...deps, ...shaderFunctions };
-    ({ source: dysource, shaderFunctions } = emitGLSL(derivativeY._chunk));
+    ({ source: dysource, shaderFunctions } = emitGLSL(derivativeY._chunk, 0));
     deps = { ...deps, ...shaderFunctions };
     hasOutlines = true;
   }
@@ -47,6 +57,7 @@ export function compileGLesmos(
     chunks: [
       {
         main: source,
+        DCG_SC_uniforms: shaderUniforms,
         dx: dxsource,
         dy: dysource,
         fill: fillOpacity > 0,
