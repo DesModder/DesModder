@@ -1,5 +1,13 @@
 # DesModder Changelog
 
+## 0.12.8
+
+GLesmos now uses Desmos's GLSL compiler:
+
+- Fixes many graphs where GLesmos would previously give an error.
+- Improves performance in some GLesmos plots that depend on moving sliders.
+- Some GLesmos plots may be slower.
+
 ## 0.12.7
 
 Bug Fixes:
