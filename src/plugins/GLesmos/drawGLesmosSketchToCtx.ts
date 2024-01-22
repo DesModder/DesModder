@@ -26,7 +26,8 @@ interface DrawCtx {
 export function drawGLesmosSketchToCtx(
   cc: CalcController,
   drawCtx: DrawCtx,
-  { id, branches }: GLesmosSketch
+  { id, branches }: GLesmosSketch,
+  glslHeader: string
 ) {
   branches = branches.filter((b) => b.graphMode === "GLesmos");
 
@@ -34,9 +35,9 @@ export function drawGLesmosSketchToCtx(
   if (glBranches.length === 0) return;
   const compiledGL: GLesmosShaderPackage = {
     chunks: glBranches.flatMap((b) => b.chunks),
-    deps: glBranches.reduce<string[]>(
-      (a, b) => a.concat(b.deps.filter((d) => !a.includes(d))),
-      []
+    deps: glBranches.reduce<Record<string, boolean>>(
+      (a, b) => ({ ...a, ...b.deps }),
+      { [glslHeader]: true }
     ),
     hasOutlines: glBranches.reduce((a, b) => a && b.hasOutlines, true),
   };
@@ -56,7 +57,7 @@ function drawOneGLesmosSketchToCtx(
   // to avoid needing this.
   canvas = canvas ?? initGLesmosCanvas(cc);
 
-  const deps = compiledGL.deps.join("\n");
+  const deps = Object.keys(compiledGL.deps).join("\n");
 
   try {
     if (!canvas?.element) glesmosError("WebGL Context Lost!");
@@ -71,9 +72,15 @@ function drawOneGLesmosSketchToCtx(
         ctx.drawImage(canvas?.element, 0, 0);
       }
     else {
-      canvas?.buildGLesmosFast(deps, compiledGL.chunks);
-      canvas?.renderFast();
-      ctx.drawImage(canvas?.element, 0, 0);
+      // No grouping. DCG_SC_uniforms will normally cause a list of
+      // implicits to be the same program though (with different uniforms).
+      // Grouping them might save some performance on repeated blitting,
+      // but the main gain from the old grouping approach was avoiding compiles.
+      for (const chunk of compiledGL.chunks) {
+        canvas?.buildGLesmosFast(deps, chunk);
+        canvas?.renderFast();
+        ctx.drawImage(canvas?.element, 0, 0);
+      }
     }
   } catch (e) {
     const model = cc.getItemModel(id);

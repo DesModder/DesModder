@@ -124,31 +124,16 @@ function getSymbols(commands: Command[], str: Token[]): SymbolTable {
           );
         const around = table.getRequired(command.args[0]);
         const ts = findTemplateStartBefore(table, around.start);
-        try {
-          // pre-esbuild
-          const found = findPattern(
-            patternTokens(".template=function(){__return__}", ""),
-            table.str,
-            { start: ts, length: table.str.length - ts - 1 },
-            true
-          );
-          table.set(command.returns, {
-            start: found.startIndex,
-            length: found.length,
-          });
-        } catch {
-          // post-esbuild
-          const found = findPattern(
-            patternTokens("template() {__return__}", ""),
-            table.str,
-            { start: ts, length: table.str.length - ts - 1 },
-            true
-          );
-          table.set(command.returns, {
-            start: found.startIndex,
-            length: found.length,
-          });
-        }
+        const found = findPattern(
+          patternTokens("template() {__return__}", ""),
+          table.str,
+          { start: ts, length: table.str.length - ts - 1 },
+          true
+        );
+        table.set(command.returns, {
+          start: found.startIndex,
+          length: found.length,
+        });
         break;
       }
       case "replace":
