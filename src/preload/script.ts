@@ -39,7 +39,7 @@ function getCalcDesktopURL() {
 }
 
 async function load(pluginsForceDisabled: Set<string>) {
-  if (window.location.href.includes("geometry-legacy")) return;
+  if (window.location.pathname === "/geometry-legacy") return;
 
   Console.warn(
     BROWSER === "firefox"
