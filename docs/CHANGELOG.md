@@ -1,5 +1,9 @@
 # DesModder Changelog
 
+## 0.12.9
+
+Internal fix to avoid replacement error.
+
 ## 0.12.8
 
 GLesmos now uses Desmos's GLSL compiler:
