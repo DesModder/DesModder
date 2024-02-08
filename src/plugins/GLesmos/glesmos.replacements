@@ -135,8 +135,7 @@ __options__
 
 ```js
 drawSketchToCtx({
-  sketch: $sketch, drawContext: $drawCtx, poiLabelsLayer: $n,
-  clickableObjectsLayer: $o, geometryContext: $a, showMovablePoints: $l
+  sketch: $sketch, drawContext: $drawCtx, ____
 }) {__body__}
 ```
 
@@ -150,7 +149,7 @@ if (!$ee.branches || !$ee.branches.length) return;
 
 ```js
 __guard__
-DesModder.drawGLesmosSketchToCtx?.(window.Calc.controller, $drawCtx, $sketch,
+window.DesModder?.drawGLesmosSketchToCtx?.(window.Calc.controller, $drawCtx, $sketch,
   $dcg_shared_module_exports[__glslHeader__]
 );
 ```
