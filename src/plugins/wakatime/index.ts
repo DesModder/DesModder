@@ -4,7 +4,9 @@ import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
 import { listenToMessageDown, postMessageUp } from "#utils/messages.ts";
 
-const heartbeatInterval = 120 * 1000;
+// TODO-waka: temp
+const heartbeatInterval = 5 * 1000;
+// const heartbeatInterval = 120 * 1000;
 
 export default class Wakatime extends PluginController<Config> {
   static id = "wakatime" as const;
@@ -26,16 +28,16 @@ export default class Wakatime extends PluginController<Config> {
     // TODO: avoid double-listen on disable-re-enable
     listenToMessageDown((msg) => {
       if (msg.type === "heartbeat-error") {
-        if (msg.isAuthError) {
-          this.dsm.disablePlugin("wakatime");
+        if (msg.key === "invalid-api-key") {
+          const message =
+            "WakaTime error: Invalid or missing API key. Check https://wakatime.com/settings for your key.";
           this.cc._showToast({
-            message:
-              "WakaTime heartbeat error: check your secret key. Plugin has been deactivated.",
+            message,
             toastStyle: "error",
-            hideAfter: 0,
+            hideAfter: 12 * 1000,
           });
+          Console.error("Wakatime heartbeat error:", message);
         }
-        Console.error("Wakatime heartbeat error:", msg.message);
       }
       return false;
     });

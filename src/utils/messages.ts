@@ -41,8 +41,7 @@ type MessageContentToWindow =
 
 export interface HeartbeatError {
   type: "heartbeat-error";
-  isAuthError: boolean;
-  message: string;
+  key: "invalid-api-key";
 }
 
 function postMessage<T extends { type: string }>(message: T) {
