@@ -11,7 +11,6 @@ export interface HeartbeatOptions extends WindowHeartbeatOptions {
   secretKey: string | undefined;
 }
 
-// TODO-waka: run this regex on the client field. Instant feedback
 export function apiKeyValid(key?: string): key is string {
   if (!key) return false;
   const re =

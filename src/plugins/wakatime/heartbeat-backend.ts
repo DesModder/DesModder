@@ -1,5 +1,4 @@
 // This script gets used in content and background scripts
-// TODO-waka: if two content scripts are open (i.e. Firefox), is that bad?
 import { HeartbeatError } from "../../utils/messages";
 import { IDBPDatabase, openDB } from "idb";
 import { HeartbeatOptions, apiKeyValid } from "./heartbeat-common";
