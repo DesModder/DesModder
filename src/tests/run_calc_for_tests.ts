@@ -31,6 +31,10 @@ HTMLCanvasElement.prototype.getContext = () => ({
   scale: () => {}
 } as any)
 HTMLCanvasElement.prototype.toDataURL = () => ""
+HTMLMediaElement.prototype.play = async () => {
+  await new Promise<void>((resolve) => resolve())
+}
+console.debug = () => {}
 
 // eslint-disable-next-line rulesdir/no-reach-past-exports
 import "../../node_modules/.cache/desmos/calculator_desktop.js";
