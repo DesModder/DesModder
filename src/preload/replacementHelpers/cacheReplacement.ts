@@ -3,8 +3,11 @@ import { addPanic, panickedPlugins } from "../../panic/panic";
 import workerAppend from "./append.inline";
 import { ReplacementResult, applyReplacements } from "./applyReplacement";
 import { Block } from "./parse";
-import { get, set } from "idb-keyval";
+import { IDBPDatabase, openDB } from "idb";
 import jsTokens from "js-tokens";
+
+const CACHE_STORE = "replacement_store";
+const CACHE_KEY = "replacement_cached";
 
 /**
  * Replacements are slow, so we cache the result. We optimize for the common
@@ -16,7 +19,12 @@ export async function fullReplacementCached(
   enabledReplacements: Block[]
 ): Promise<string> {
   (window as any).dsm_workerAppend = workerAppend;
-  const cached = await getCache();
+  const db = await openDB("cached-replacement-store", 1, {
+    upgrade(db) {
+      db.createObjectStore(CACHE_STORE);
+    },
+  });
+  const cached = await getCache(db);
   const hashRepls = cyrb53(JSON.stringify(enabledReplacements));
   const hashFile = cyrb53(calcDesktop);
   const hashAppend = cyrb53(workerAppend);
@@ -33,7 +41,7 @@ export async function fullReplacementCached(
   const result = fullReplacement(calcDesktop, enabledReplacements);
   // cache if there's no panics
   if (panickedPlugins.size === 0)
-    void setCache({ hashRepls, hashFile, hashAppend, result });
+    void setCache(db, { hashRepls, hashFile, hashAppend, result });
   return result;
 }
 
@@ -44,19 +52,18 @@ interface Cached {
   result: string;
 }
 
-const CACHE_KEY = "replacement_cached";
-
-async function getCache(): Promise<Cached | undefined> {
+async function getCache(db: IDBPDatabase): Promise<Cached | undefined> {
   try {
-    return await get(CACHE_KEY);
+    return await db.get(CACHE_STORE, CACHE_KEY);
   } catch {
     return undefined;
   }
 }
 
-async function setCache(obj: Cached) {
+async function setCache(db: IDBPDatabase, obj: Cached) {
   try {
-    await set(CACHE_KEY, obj);
+    // It's value and then key. Weird.
+    await db.put(CACHE_STORE, obj, CACHE_KEY);
   } catch {
     Console.warn(
       "Failed to cache replacement. This is expected in a Private Window " +
