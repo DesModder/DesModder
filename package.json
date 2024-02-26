@@ -90,7 +90,7 @@
     "@types/desmos": "^1.6.0",
     "client-zip": "^2.4.4",
     "eslint-plugin-rulesdir": "^0.2.2",
-    "idb-keyval": "^6.2.1",
+    "idb": "^8.0.0",
     "js-tokens": "^8.0.1",
     "moo": "^0.5.2",
     "prettier": "^2.8.8"
