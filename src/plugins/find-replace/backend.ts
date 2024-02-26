@@ -115,9 +115,17 @@ function getReplacements(
     case "Identifier":
       if (path.node._symbol === fromParsed._symbol) {
         // A normal identifier
+        let { input, start, end } = path.node.getInputSpan();
+        const span = input.slice(start, end);
+        if (span.includes("^")) {
+          // SupSub like x_{2}^3 may include the superscript.
+          // Trim to just the x_{2} part
+          end = start + span.indexOf("^");
+        }
         return [
           {
-            ...path.node.getInputSpan(),
+            start,
+            end,
             // If True → it's actually a differential like dx
             // path.parent?.node.type === "Integral" && path.index === 0
             replacement:
