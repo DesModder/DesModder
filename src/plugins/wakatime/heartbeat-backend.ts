@@ -89,12 +89,14 @@ class HeartbeatBackend {
     try {
       const request: RequestInit = {
         body: JSON.stringify(payload),
-        credentials: "omit",
+        headers: {
+          Authorization: `Basic ${btoa(apiKey)}`,
+          "content-type": "application/json",
+        },
         method: "POST",
       };
       const response = await fetch(
-        // TODO-waka: Go back to using auth header instead of api_key param.
-        `https://api.wakatime.com/api/v1/users/current/heartbeats?api_key=${apiKey}`,
+        `https://wakatime.com/api/v1/users/current/heartbeats`,
         request
       );
       const json = await response.json();
