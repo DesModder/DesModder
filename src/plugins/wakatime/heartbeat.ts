@@ -3,6 +3,9 @@
 import { HeartbeatError } from "../../utils/messages";
 import { IDBPDatabase, openDB } from "idb";
 
+// Also given in globals/env.ts, but that doesn't apply to this file.
+declare const VERSION: string;
+
 export interface WindowHeartbeatOptions {
   graphName: string;
   graphURL: string;
