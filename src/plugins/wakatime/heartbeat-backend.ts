@@ -2,22 +2,10 @@
 // TODO-waka: if two content scripts are open (i.e. Firefox), is that bad?
 import { HeartbeatError } from "../../utils/messages";
 import { IDBPDatabase, openDB } from "idb";
+import { HeartbeatOptions, apiKeyValid } from "./heartbeat-common";
 
 // Also given in globals/env.ts, but that doesn't apply to this file.
 declare const VERSION: string;
-
-export interface WindowHeartbeatOptions {
-  graphName: string;
-  graphURL: string;
-  lineCount: number;
-  isWrite: boolean;
-}
-
-export interface HeartbeatOptions extends WindowHeartbeatOptions {
-  splitProjects: boolean;
-  projectName: string;
-  secretKey: string | undefined;
-}
 
 // TODO-waka: remove idb-keyval. The documentation for
 // https://www.npmjs.com/package/idb has a few lines to replace it.
@@ -189,14 +177,6 @@ const INVALID_KEY_RESPONSE: HeartbeatError = {
   type: "heartbeat-error",
   key: "invalid-api-key",
 };
-
-// TODO-waka: run this regex on the client field. Instant feedback
-function apiKeyValid(key?: string): key is string {
-  if (!key) return false;
-  const re =
-    /^(waka_)?[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
-  return re.test(key);
-}
 
 const backend = new HeartbeatBackend();
 
