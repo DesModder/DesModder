@@ -25,19 +25,22 @@ export default class Wakatime extends PluginController<Config> {
         this.maybeSendHeartbeat(e.type === "clear-unsaved-changes");
       }
     });
-    // TODO: avoid double-listen on disable-re-enable
+    // TODO-waka: avoid double-listen on disable-re-enable
     listenToMessageDown((msg) => {
       if (msg.type === "heartbeat-error") {
+        let message: string;
         if (msg.key === "invalid-api-key") {
-          const message =
+          message =
             "WakaTime error: Invalid or missing API key. Check https://wakatime.com/settings for your key.";
           this.cc._showToast({
             message,
             toastStyle: "error",
             hideAfter: 12 * 1000,
           });
-          Console.error("Wakatime heartbeat error:", message);
+        } else {
+          message = msg.message;
         }
+        Console.error("Wakatime heartbeat error:", message);
       }
       return false;
     });

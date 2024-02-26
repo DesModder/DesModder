@@ -7,13 +7,8 @@ import { HeartbeatOptions, apiKeyValid } from "./heartbeat-common";
 // Also given in globals/env.ts, but that doesn't apply to this file.
 declare const VERSION: string;
 
-// TODO-waka: remove idb-keyval. The documentation for
-// https://www.npmjs.com/package/idb has a few lines to replace it.
-
-// TODO-waka: temp fast.
-// const CACHE_CHECK_PERIOD_MINUTES = 120;
-const CACHE_CHECK_PERIOD_SECONDS = 30;
-const DUPLICATE_HEARTBEAT_THROTTLE_SECONDS = 1;
+const CACHE_CHECK_PERIOD_SECONDS = 300;
+const DUPLICATE_HEARTBEAT_THROTTLE_SECONDS = 110;
 
 /* Some logic based on https://github.com/wakatime/browser-wakatime */
 class HeartbeatBackend {
@@ -88,7 +83,8 @@ class HeartbeatBackend {
 
   private async sendPostRequestToApi(
     payload: Record<string, unknown>,
-    apiKey: string
+    apiKey: string,
+    sendResponse: (message: HeartbeatError) => void
   ): Promise<void> {
     try {
       const request: RequestInit = {
@@ -97,14 +93,27 @@ class HeartbeatBackend {
         method: "POST",
       };
       const response = await fetch(
+        // TODO-waka: Go back to using auth header instead of api_key param.
         `https://api.wakatime.com/api/v1/users/current/heartbeats?api_key=${apiKey}`,
         request
       );
-      await response.json();
-    } catch (err: unknown) {
+      const json = await response.json();
+      if (response.status !== 201)
+        sendResponse({
+          type: "heartbeat-error",
+          key: "unknown",
+          message: JSON.stringify(json),
+        });
+    } catch (e: unknown) {
       if (this.db) {
         await this.db.add("cacheHeartbeats", payload);
       }
+      sendResponse({
+        type: "heartbeat-error",
+        key: "unknown",
+        message:
+          typeof e === "object" && e !== null ? (e as any).message ?? e : e,
+      });
     }
   }
 
@@ -127,7 +136,14 @@ class HeartbeatBackend {
       const chunk = requests.slice(i, i + chunkSize);
       const requestsPromises: Promise<void>[] = [];
       chunk.forEach((request: Record<string, unknown>) =>
-        requestsPromises.push(this.sendPostRequestToApi(request, apiKey))
+        requestsPromises.push(
+          this.sendPostRequestToApi(
+            request,
+            apiKey,
+            // Don't send response to page if there's a problem.
+            () => {}
+          )
+        )
       );
       try {
         await Promise.all(requestsPromises);
@@ -156,13 +172,18 @@ class HeartbeatBackend {
       now - this.lastHeartbeat <
       DUPLICATE_HEARTBEAT_THROTTLE_SECONDS * 1000
     ) {
+      sendResponse({
+        type: "heartbeat-error",
+        key: "unknown",
+        message: "Heartbeat too recently. Ignored.",
+      });
       return;
     }
     this.lastHeartbeat = now;
 
     // Actually send heartbeat
     const payload = await this.preparePayload(heartbeat);
-    await this.sendPostRequestToApi(payload, apiKey);
+    await this.sendPostRequestToApi(payload, apiKey, sendResponse);
 
     // Check if we want to do cache
     now = new Date().getTime();

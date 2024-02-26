@@ -39,9 +39,17 @@ type MessageContentToWindow =
     }
   | HeartbeatError;
 
-export interface HeartbeatError {
+export type HeartbeatError = HeartbeatErrorInvalidKey | HeartbeatErrorUnknown;
+
+interface HeartbeatErrorInvalidKey {
   type: "heartbeat-error";
   key: "invalid-api-key";
+}
+
+interface HeartbeatErrorUnknown {
+  type: "heartbeat-error";
+  key: "unknown";
+  message: string;
 }
 
 function postMessage<T extends { type: string }>(message: T) {
