@@ -214,5 +214,6 @@ function exprTemplate(
     },
     []
   );
+  n.init();
   return n.template();
 }
