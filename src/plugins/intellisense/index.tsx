@@ -358,88 +358,11 @@ export default class Intellisense extends PluginController<{
         ];
       }
 
-      // done because the monkeypatch has a different this value
-      // eslint-disable-next-line @typescript-eslint/no-this-alias
-      const self = this;
-
       if (this.calc.focusedMathQuill) {
         // monkeypatch in a function to wrap overrideKeystroke
         const remove = hookIntoOverrideKeystroke(
           this.calc.focusedMathQuill.mq,
-          function (key: string, _: KeyboardEvent) {
-            if (
-              // don't bother overriding keystroke if intellisense is offline
-              !self.canHaveIntellisense ||
-              self.intellisenseOpts.length === 0
-            )
-              // return nothing to ensure the actual overrideKeystroke runs
-              return;
-
-            // navigating downward in the intellisense menu
-            if (key === "Down") {
-              self.goToNextIntellisenseCol();
-              self.view?.update();
-              return false;
-
-              // navigating upward in the intellisense menu
-            } else if (key === "Up") {
-              self.goToPrevIntellisenseCol();
-
-              self.view?.update();
-              return false;
-
-              // selecting and autocompleting an intellisense selection
-              // or jump to def if in row 1
-            } else if (
-              key === "Enter" &&
-              self.intellisenseOpts[self.intellisenseIndex] !== undefined
-            ) {
-              if (self.intellisenseRow === 0) {
-                self.doAutocomplete(
-                  self.intellisenseOpts[self.intellisenseIndex].idents[0]
-                );
-                self.view?.update();
-              } else {
-                const str =
-                  self.intellisenseOpts[self.intellisenseIndex].idents[0]
-                    .variableName;
-
-                // need a delay so that Enter key doesn't immediately close
-                // the jump2def window
-                setIntellisenseTimeout(() => {
-                  self.jumpToDefinition(str);
-                });
-              }
-              return false;
-
-              // navigate by row up
-            } else if (key === "Tab") {
-              self.intellisenseRow++;
-              if (self.intellisenseRow > 1) {
-                self.intellisenseRow = 0;
-                self.goToNextIntellisenseCol();
-              }
-              self.view?.update();
-              return false;
-
-              // navigate by row down
-            } else if (key === "Shift-Tab") {
-              self.intellisenseRow--;
-              if (self.intellisenseRow < 0) {
-                self.intellisenseRow = 1;
-                self.goToPrevIntellisenseCol();
-              }
-              self.view?.update();
-              return false;
-            }
-            // close intellisense menu
-            // or jump2def menu
-            else if (key === "Esc") {
-              self.canHaveIntellisense = false;
-              self.view?.update();
-              return false;
-            }
-          },
+          this.onMQKeystroke.bind(this),
           0,
           "intellisense"
         );
@@ -448,6 +371,80 @@ export default class Intellisense extends PluginController<{
       }
     });
   };
+
+  onMQKeystroke(key: string, _: KeyboardEvent) {
+    if (
+      // don't bother overriding keystroke if intellisense is offline
+      !this.canHaveIntellisense ||
+      this.intellisenseOpts.length === 0
+    )
+      // return nothing to ensure the actual overrideKeystroke runs
+      return;
+
+    // navigating downward in the intellisense menu
+    if (key === "Down") {
+      this.goToNextIntellisenseCol();
+      this.view?.update();
+      return false;
+
+      // navigating upward in the intellisense menu
+    } else if (key === "Up") {
+      this.goToPrevIntellisenseCol();
+
+      this.view?.update();
+      return false;
+
+      // selecting and autocompleting an intellisense selection
+      // or jump to def if in row 1
+    } else if (
+      key === "Enter" &&
+      this.intellisenseOpts[this.intellisenseIndex] !== undefined
+    ) {
+      if (this.intellisenseRow === 0) {
+        this.doAutocomplete(
+          this.intellisenseOpts[this.intellisenseIndex].idents[0]
+        );
+        this.view?.update();
+      } else {
+        const str =
+          this.intellisenseOpts[this.intellisenseIndex].idents[0].variableName;
+
+        // need a delay so that Enter key doesn't immediately close
+        // the jump2def window
+        setIntellisenseTimeout(() => {
+          this.jumpToDefinition(str);
+        });
+      }
+      return false;
+
+      // navigate by row up
+    } else if (key === "Tab") {
+      this.intellisenseRow++;
+      if (this.intellisenseRow > 1) {
+        this.intellisenseRow = 0;
+        this.goToNextIntellisenseCol();
+      }
+      this.view?.update();
+      return false;
+
+      // navigate by row down
+    } else if (key === "Shift-Tab") {
+      this.intellisenseRow--;
+      if (this.intellisenseRow < 0) {
+        this.intellisenseRow = 1;
+        this.goToPrevIntellisenseCol();
+      }
+      this.view?.update();
+      return false;
+    }
+    // close intellisense menu
+    // or jump2def menu
+    else if (key === "Esc") {
+      this.canHaveIntellisense = false;
+      this.view?.update();
+      return false;
+    }
+  }
 
   // allows mathquill inputs that only allow arithmetic to selectively disable intellisense
   isActiveElementValidForIntellisense() {
