@@ -13,7 +13,6 @@ import { DCGView, MountedComponent, unmountFromNode } from "#DCGView";
 import { MathQuillField, MathQuillView } from "#components";
 import { ItemModel, TextModel } from "#globals";
 import { PluginController } from "#plugins/PluginController.ts";
-import { hookIntoOverrideKeystroke } from "#utils/listenerHelpers.ts";
 import { isDescendant } from "#utils/utils.ts";
 
 export type BoundIdentifier =
@@ -331,8 +330,6 @@ export default class Intellisense extends PluginController<{
     }
   };
 
-  modifiedOverrideKeystrokeUnsubbers: (() => void)[] = [];
-
   goToNextIntellisenseCol() {
     this.intellisenseIndex = Math.min(
       this.intellisenseIndex + 1,
@@ -357,42 +354,29 @@ export default class Intellisense extends PluginController<{
           ...Object.keys(this.calc.focusedMathQuill.mq.__options.autoCommands),
         ];
       }
-
-      if (this.calc.focusedMathQuill) {
-        // monkeypatch in a function to wrap overrideKeystroke
-        const remove = hookIntoOverrideKeystroke(
-          this.calc.focusedMathQuill.mq,
-          this.onMQKeystroke.bind(this),
-          0,
-          "intellisense"
-        );
-
-        if (remove) this.modifiedOverrideKeystrokeUnsubbers.push(remove);
-      }
     });
   };
 
-  onMQKeystroke(key: string, _: KeyboardEvent) {
+  onMQKeystroke(key: string, _: KeyboardEvent): undefined | "cancel" {
     if (
       // don't bother overriding keystroke if intellisense is offline
       !this.canHaveIntellisense ||
       this.intellisenseOpts.length === 0
     )
-      // return nothing to ensure the actual overrideKeystroke runs
       return;
 
     // navigating downward in the intellisense menu
     if (key === "Down") {
       this.goToNextIntellisenseCol();
       this.view?.update();
-      return false;
+      return "cancel";
 
       // navigating upward in the intellisense menu
     } else if (key === "Up") {
       this.goToPrevIntellisenseCol();
 
       this.view?.update();
-      return false;
+      return "cancel";
 
       // selecting and autocompleting an intellisense selection
       // or jump to def if in row 1
@@ -415,7 +399,7 @@ export default class Intellisense extends PluginController<{
           this.jumpToDefinition(str);
         });
       }
-      return false;
+      return "cancel";
 
       // navigate by row up
     } else if (key === "Tab") {
@@ -425,7 +409,7 @@ export default class Intellisense extends PluginController<{
         this.goToNextIntellisenseCol();
       }
       this.view?.update();
-      return false;
+      return "cancel";
 
       // navigate by row down
     } else if (key === "Shift-Tab") {
@@ -435,14 +419,14 @@ export default class Intellisense extends PluginController<{
         this.goToPrevIntellisenseCol();
       }
       this.view?.update();
-      return false;
+      return "cancel";
     }
     // close intellisense menu
     // or jump2def menu
     else if (key === "Esc") {
       this.canHaveIntellisense = false;
       this.view?.update();
-      return false;
+      return "cancel";
     }
   }
 
@@ -681,6 +665,11 @@ export default class Intellisense extends PluginController<{
     // close intellisense when clicking outside the intellisense window
     document.addEventListener("mouseup", this.mouseUpHandler);
 
+    this.dsm.overrideKeystroke?.setMQKeystrokeListener(
+      "intellisense",
+      this.onMQKeystroke.bind(this)
+    );
+
     // create initial intellisense window
     this.intellisenseMountPoint = document.createElement("div");
     document.body.appendChild(this.intellisenseMountPoint);
@@ -779,11 +768,6 @@ export default class Intellisense extends PluginController<{
     document.removeEventListener("keydown", this.keyDownHandler);
     document.removeEventListener("keyup", this.keyUpHandler);
     document.removeEventListener("mouseup", this.mouseUpHandler);
-
-    // unmodify any remaining keystroke functions
-    for (const unsub of this.modifiedOverrideKeystrokeUnsubbers) {
-      unsub();
-    }
 
     if (this.intellisenseMountPoint) {
       unmountFromNode(this.intellisenseMountPoint);

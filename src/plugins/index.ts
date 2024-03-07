@@ -28,6 +28,7 @@ import VideoCreator from "./video-creator";
 import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
 import BetterNavigation from "./better-navigation";
+import OverrideKeystroke from "./override-keystroke";
 
 interface ConfigItemGeneric {
   // indentation level for hierarchical relationships in settings
@@ -131,6 +132,7 @@ export const keyToPlugin = {
   textMode: TextMode,
   performanceInfo: PerformanceInfo,
   metadata: ManageMetadata,
+  overrideKeystroke: OverrideKeystroke,
   multiline: Multiline,
   intellisense: Intellisense,
   compactView: CompactView,
@@ -186,6 +188,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get textMode () { return this.ep["text-mode"]; }
   get performanceInfo () { return this.ep["performance-info"]; }
   get metadata () { return this.ep["manage-metadata"]; }
+  get overrideKeystroke () { return this.ep["override-keystroke"]; }
   get intellisense () { return this.ep["intellisense"]; }
   get compactView () { return this.ep["compact-view"]; }
   get multiline () { return this.ep["multiline"]; }

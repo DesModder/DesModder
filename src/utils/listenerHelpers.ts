@@ -1,4 +1,3 @@
-import { MathQuillField } from "#components";
 import type { Calc, DispatchedEvent } from "#globals";
 
 interface DispatchOverridingHandler {
@@ -103,33 +102,6 @@ export function propGetSet<Obj extends object, Key extends keyof Obj>(
   key: Key
 ) {
   return [() => obj[key], (v: Obj[Key]) => (obj[key] = v)] as const;
-}
-
-// override all keyboard inputs entering a MathQuill field
-// and optionally prevent them from doing their default behavior
-export function hookIntoOverrideKeystroke(
-  // field for which to override kb inputs
-  mq: MathQuillField,
-  // callback function
-  // return false to override all other events
-  fn: (key: string, evt: KeyboardEvent) => boolean | undefined,
-  // higher priority --> runs first
-  priority: number,
-  // unique key to prevent adding duplicate hooks
-  key: string
-) {
-  return hookIntoFunction(
-    mq.__options,
-    "overrideKeystroke",
-    key,
-    priority,
-    (stop, k, e) => {
-      const cont = fn(k, e);
-      if (cont === false) {
-        stop();
-      }
-    }
-  );
 }
 
 type HookedFunctionCallback<Fn extends (...args: any[]) => any> = (

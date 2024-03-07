@@ -10,7 +10,6 @@ import {
 } from "#plugins/intellisense/latex-parsing.tsx";
 import {
   deregisterCustomDispatchOverridingHandler,
-  hookIntoOverrideKeystroke,
   registerCustomDispatchOverridingHandler,
 } from "#utils/listenerHelpers.ts";
 
@@ -97,8 +96,6 @@ export default class Multiline extends PluginController<Config> {
       f.dataset.isVerticalified = "true";
     }
   }
-
-  customHandlerRemovers: (() => void)[] = [];
 
   dequeueAllMultilinifications() {
     for (const f of this.pendingMultilinifications) {
@@ -187,19 +184,9 @@ export default class Multiline extends PluginController<Config> {
       this.dequeueAllMultilinifications();
       e.preventDefault();
     }
-
-    if (this.calc.focusedMathQuill) {
-      const remove = hookIntoOverrideKeystroke(
-        this.calc.focusedMathQuill.mq,
-        this.onMQKeystroke.bind(this),
-        1,
-        "multiline"
-      );
-      if (remove) this.customHandlerRemovers.push(remove);
-    }
   };
 
-  onMQKeystroke(key: string, _: KeyboardEvent) {
+  onMQKeystroke(key: string, _: KeyboardEvent): undefined | "cancel" {
     const mq = this.calc.focusedMathQuill?.mq;
 
     if (key === "Shift-Enter" && this.settings.spacesToNewlines) {
@@ -213,7 +200,7 @@ export default class Multiline extends PluginController<Config> {
         });
       }
 
-      return false;
+      return "cancel";
     }
 
     if (mq && key.endsWith("Backspace") && this.settings.spacesToNewlines) {
@@ -221,7 +208,7 @@ export default class Multiline extends PluginController<Config> {
         mq.keystroke("Backspace");
         mq.keystroke("Backspace");
         mq.keystroke("Backspace");
-        return false;
+        return "cancel";
       }
     }
 
@@ -230,7 +217,7 @@ export default class Multiline extends PluginController<Config> {
         mq.keystroke("Del");
         mq.keystroke("Del");
         mq.keystroke("Del");
-        return false;
+        return "cancel";
       }
     }
 
@@ -251,13 +238,13 @@ export default class Multiline extends PluginController<Config> {
         mq.keystroke(arrowDir);
         mq.keystroke(arrowDir);
         mq.keystroke(arrowDir);
-        return false;
+        return "cancel";
       }
     }
 
     if (key === "Shift-Up" || key === "Shift-Down") {
       this.doMultilineVerticalNav(key);
-      return false;
+      return "cancel";
     }
   }
 
@@ -295,6 +282,11 @@ export default class Multiline extends PluginController<Config> {
   afterEnable() {
     document.addEventListener("keydown", this.keydownHandler);
     document.addEventListener("mousedown", this.mousedownHandler);
+
+    this.dsm.overrideKeystroke?.setMQKeystrokeListener(
+      "multiline",
+      this.onMQKeystroke.bind(this)
+    );
 
     this.afterConfigChange();
     this.dequeueAllMultilinifications();
@@ -377,10 +369,6 @@ export default class Multiline extends PluginController<Config> {
         this.calc,
         this.customDispatcherID
       );
-
-    for (const remover of this.customHandlerRemovers) {
-      remover();
-    }
   }
 
   // navigates up/down through a multiline expression

@@ -8,6 +8,7 @@ import { plugins, PluginID, ConfigItem } from "#plugins/index.ts";
 export default class PillboxMenus extends PluginController<undefined> {
   static id = "pillbox-menus" as const;
   static enabledByDefault = true;
+  static isCore = true;
   expandedPlugin: PluginID | null = null;
   private expandedCategory: string | null = null;
 

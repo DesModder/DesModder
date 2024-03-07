@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import { PluginController } from "../PluginController";
-import { hookIntoOverrideKeystroke } from "src/utils/listenerHelpers";
 import { MathQuillField, MathQuillView } from "src/components";
 import { getController } from "../intellisense/latex-parsing";
 
@@ -76,41 +75,22 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
     },
   ] as const;
 
-  removeHandlers() {
-    for (const removeHandler of this.customRemoveHandlers) removeHandler();
-  }
-
   afterConfigChange(): void {
     document.body.classList.toggle(
       "dsm-better-nav-scrollable-expressions",
       this.settings.scrollableExpressions
     );
-    this.removeHandlers();
   }
 
   dispatcherID: string | undefined;
 
-  customRemoveHandlers: (() => void)[] = [];
-
-  keydownHandler = () => {
-    if (this.calc.focusedMathQuill && this.settings.ctrlArrow) {
-      const remove = hookIntoOverrideKeystroke(
-        this.calc.focusedMathQuill.mq,
-        this.onMQKeystroke.bind(this),
-        0,
-        "better-nav-ctrl"
-      );
-
-      if (remove) this.customRemoveHandlers.push(remove);
-    }
-  };
-
-  onMQKeystroke(key: string, _: KeyboardEvent) {
+  onMQKeystroke(key: string, _: KeyboardEvent): undefined | "cancel" {
+    if (!this.settings.ctrlArrow) return;
     const mq = MathQuillView.getFocusedMathquill();
 
-    if (!mq) return true;
+    if (!mq) return;
     const navOption = NavigationTable[key];
-    if (!navOption) return true;
+    if (!navOption) return;
 
     // type an empty string to force desmos to update
     setTimeout(() => {
@@ -173,16 +153,14 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
       mq.keystroke(arrowOp);
     }
 
-    return false;
+    return "cancel";
   }
 
   afterEnable() {
     this.afterConfigChange();
-    document.addEventListener("keydown", this.keydownHandler);
-  }
-
-  afterDisable() {
-    document.removeEventListener("keydown", this.keydownHandler);
-    this.removeHandlers();
+    this.dsm.overrideKeystroke?.setMQKeystrokeListener(
+      "better-navigation",
+      this.onMQKeystroke.bind(this)
+    );
   }
 }
