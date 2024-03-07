@@ -95,6 +95,7 @@ export default class DSM extends TransparentPlugins {
 
   disablePlugin(id: PluginID) {
     const plugin = plugins.get(id);
+    if (plugin?.isCore) throw new Error(`Core plugin ${id} cannot be disabled`);
     if (plugin && this.isPluginToggleable(id)) {
       if (this.isPluginEnabled(id)) {
         const plugin = this.enabledPlugins[id];
