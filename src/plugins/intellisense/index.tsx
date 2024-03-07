@@ -485,6 +485,7 @@ export default class Intellisense extends PluginController<{
       this.isActiveElementValidForIntellisense()
     ) {
       this.canHaveIntellisense = true;
+      this.view?.update();
     }
 
     // Jump to definition
@@ -535,6 +536,7 @@ export default class Intellisense extends PluginController<{
       return;
 
     this.canHaveIntellisense = false;
+    this.view?.update();
   };
 
   jumpToDefinitionById(id: string) {
