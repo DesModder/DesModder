@@ -86,22 +86,18 @@ function isIdentifierSegment(cursor?: MQCursor): cursor is MQCursor {
 // identifiers are composed of the following structure:
 // (operatorname* | varname) subscript?
 
-function tryGetMathquillIdent(
-  mq: MathQuillField
-): TryFindMQIdentResult | undefined {
-  const ctrlr = getController(mq);
-
+function rawTryGetMathquillIdent(
+  node: MQCursor | undefined,
+  cursor: MQCursor | undefined = node
+) {
   const latexSegments: (string | undefined)[] = [];
 
-  let node = ctrlr.cursor[-1];
-
-  const isInSubscript =
-    ctrlr.cursor?.parent?._el?.classList.contains("dcg-mq-sub");
+  const isInSubscript = cursor?.parent?._el?.classList.contains("dcg-mq-sub");
 
   let goToEnd = 0;
 
   if (isInSubscript) {
-    node = ctrlr.cursor;
+    node = cursor;
     while (node?.[1]) {
       goToEnd++;
       node = node?.[1];
@@ -148,35 +144,50 @@ function tryGetMathquillIdent(
     if (isInSubscript) goToEnd++;
   }
 
-  const identString = latexSegments.filter((e) => e).join("");
+  const identString = latexSegments
+    .filter((e) => e)
+    .join("")
+    .replace(" _{ }", "")
+    .trim();
 
-  const normalizedIdentStr = latexStringToIdentifierString(
-    identString.replace(" _{ }", "")
-  );
-
-  if (normalizedIdentStr) {
-    if (!hasSubscript) {
-      goToEnd = 0;
-      backspaces = 1;
-    } else {
-      backspaces = Math.max(backspaces, 2);
-    }
-
-    return {
-      ident: normalizedIdentStr,
-      type: "",
-      goToEndOfIdent: () => {
-        for (let i = 0; i < goToEnd; i++) {
-          mq.keystroke("Right");
-        }
-      },
-      deleteIdent: () => {
-        for (let i = 0; i < backspaces; i++) {
-          mq.keystroke("Backspace");
-        }
-      },
-    };
+  if (!hasSubscript) {
+    goToEnd = 0;
+    backspaces = 1;
+  } else {
+    backspaces = Math.max(backspaces, 2);
   }
+
+  return {
+    ident: identString,
+    type: "",
+    goToEnd,
+    backspaces,
+  };
+}
+
+function tryGetMathquillIdent(
+  mq: MathQuillField
+): TryFindMQIdentResult | undefined {
+  const ctrlr = getController(mq);
+
+  const v = rawTryGetMathquillIdent(ctrlr.cursor[-1], ctrlr.cursor);
+  if (!v) return;
+  const ident = latexStringToIdentifierString(v.ident);
+  if (!ident) return;
+  return {
+    ident,
+    type: v.type,
+    goToEndOfIdent: () => {
+      for (let i = 0; i < v.goToEnd; i++) {
+        mq.keystroke("Right");
+      }
+    },
+    deleteIdent: () => {
+      for (let i = 0; i < v.backspaces; i++) {
+        mq.keystroke("Backspace");
+      }
+    },
+  };
 }
 
 export function getMathquillIdentifierAtCursorPosition(
@@ -204,24 +215,10 @@ export function getPartialFunctionCall(
       const oldCursor = cursor;
       cursor = cursor.parent?.parent?.[-1];
 
-      // TODO: maybe add support for cursed operatornames in the future?
-      // or more likely builtins
-      const ltx = cursor?.latex?.();
-      const ltx2 = cursor?.[-1]?.latex?.();
+      const ltx = rawTryGetMathquillIdent(cursor)?.ident;
       if (ltx && isIdentStr(ltx) && cursor?.[1]?.ctrlSeq === "\\left(") {
         return {
           ident: latexStringToIdentifierString(ltx) as string,
-          paramIndex,
-        };
-      } else if (
-        ltx2 &&
-        ltx &&
-        isIdentStr(ltx2 + ltx) &&
-        cursor?.[1]?.ctrlSeq === "\\left("
-      ) {
-        const str = latexStringToIdentifierString(ltx2 + ltx);
-        return {
-          ident: str as string,
           paramIndex,
         };
       }
