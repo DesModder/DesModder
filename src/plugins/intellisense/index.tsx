@@ -718,11 +718,10 @@ export default class Intellisense extends PluginController<{
           // no change but breaks cursor position
           if (ident.ident.length === 1) return;
 
+          const identWithoutSubscripts = ident.ident.replace(/_/g, "");
           if (
-            this.latestMQ.__options.autoOperatorNames[
-              ident.ident.replace(/_/g, "")
-            ] ||
-            this.latestMQ.__options.autoCommands[ident.ident.replace(/_/g, "")]
+            this.latestMQ.__options.autoOperatorNames[identWithoutSubscripts] ||
+            this.latestMQ.__options.autoCommands[identWithoutSubscripts]
           ) {
             return;
           }

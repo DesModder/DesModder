@@ -260,7 +260,10 @@ export function getCorrectableIdentifier(mq: MathQuillField): {
 
     const ltx = cursor?.latex?.();
     if (ltx === undefined) break;
-    identifierSegments.push(ltx.replace(/[^a-zA-Z0-9]/g, ""));
+    const filteredLatex = ltx.replace(/[^a-zA-Z0-9]/g, "");
+    // MathQuill considers "." to be a digit, so filter out that case.
+    if (filteredLatex.length === 0) break;
+    identifierSegments.push(filteredLatex);
 
     if (subscript) {
       goBack += ltx === "_{ }" ? 1 : ltx.length - 3;
