@@ -10,7 +10,6 @@ import {
 } from "#plugins/intellisense/latex-parsing.tsx";
 import {
   deregisterCustomDispatchOverridingHandler,
-  hookIntoOverrideKeystroke,
   registerCustomDispatchOverridingHandler,
 } from "#utils/listenerHelpers.ts";
 
@@ -97,8 +96,6 @@ export default class Multiline extends PluginController<Config> {
       f.dataset.isVerticalified = "true";
     }
   }
-
-  customHandlerRemovers: (() => void)[] = [];
 
   dequeueAllMultilinifications() {
     for (const f of this.pendingMultilinifications) {
@@ -187,82 +184,69 @@ export default class Multiline extends PluginController<Config> {
       this.dequeueAllMultilinifications();
       e.preventDefault();
     }
-
-    if (this.calc.focusedMathQuill) {
-      const remove = hookIntoOverrideKeystroke(
-        this.calc.focusedMathQuill.mq,
-        (key, _) => {
-          const mq = this.calc.focusedMathQuill?.mq;
-
-          if (key === "Shift-Enter" && this.settings.spacesToNewlines) {
-            if (mq) {
-              mq.typedText("   ");
-              this.enqueueVerticalifyOperation(
-                mq.__controller.container.querySelector(".dcg-mq-root-block")!
-              );
-              setTimeout(() => {
-                this.dequeueAllMultilinifications();
-              });
-            }
-
-            return false;
-          }
-
-          if (
-            mq &&
-            key.endsWith("Backspace") &&
-            this.settings.spacesToNewlines
-          ) {
-            if (isNextToTripleSpaceLineBreak(mq, L)) {
-              mq.keystroke("Backspace");
-              mq.keystroke("Backspace");
-              mq.keystroke("Backspace");
-              return false;
-            }
-          }
-
-          if (mq && key.endsWith("Del") && this.settings.spacesToNewlines) {
-            if (isNextToTripleSpaceLineBreak(mq, R)) {
-              mq.keystroke("Del");
-              mq.keystroke("Del");
-              mq.keystroke("Del");
-              return false;
-            }
-          }
-
-          // handle arrow nav with spaces2newlines
-          if (
-            mq &&
-            (key.endsWith("Left") || key.endsWith("Right")) &&
-            this.settings.spacesToNewlines
-          ) {
-            const right = key.endsWith("Right");
-            const shift = key.includes("Shift");
-
-            const arrowDir =
-              (shift ? "Shift-" : "") + (right ? "Right" : "Left");
-            const dir = right ? R : L;
-
-            // check for three consecutive spaces
-            if (isNextToTripleSpaceLineBreak(mq, dir)) {
-              mq.keystroke(arrowDir);
-              mq.keystroke(arrowDir);
-              mq.keystroke(arrowDir);
-              return false;
-            }
-          }
-
-          if (key === "Shift-Up" || key === "Shift-Down") {
-            this.doMultilineVerticalNav(key);
-            return false;
-          }
-        },
-        1,
-        "multiline"
-      );
-      if (remove) this.customHandlerRemovers.push(remove);
-    }
   };
+
+  onMQKeystroke(key: string, _: KeyboardEvent): undefined | "cancel" {
+    const mq = this.calc.focusedMathQuill?.mq;
+
+    if (key === "Shift-Enter" && this.settings.spacesToNewlines) {
+      if (mq) {
+        mq.typedText("   ");
+        this.enqueueVerticalifyOperation(
+          mq.__controller.container.querySelector(".dcg-mq-root-block")!
+        );
+        setTimeout(() => {
+          this.dequeueAllMultilinifications();
+        });
+      }
+
+      return "cancel";
+    }
+
+    if (mq && key.endsWith("Backspace") && this.settings.spacesToNewlines) {
+      if (isNextToTripleSpaceLineBreak(mq, L)) {
+        mq.keystroke("Backspace");
+        mq.keystroke("Backspace");
+        mq.keystroke("Backspace");
+        return "cancel";
+      }
+    }
+
+    if (mq && key.endsWith("Del") && this.settings.spacesToNewlines) {
+      if (isNextToTripleSpaceLineBreak(mq, R)) {
+        mq.keystroke("Del");
+        mq.keystroke("Del");
+        mq.keystroke("Del");
+        return "cancel";
+      }
+    }
+
+    // handle arrow nav with spaces2newlines
+    if (
+      mq &&
+      (key.endsWith("Left") || key.endsWith("Right")) &&
+      this.settings.spacesToNewlines
+    ) {
+      const right = key.endsWith("Right");
+      const shift = key.includes("Shift");
+
+      const arrowDir = (shift ? "Shift-" : "") + (right ? "Right" : "Left");
+      const dir = right ? R : L;
+
+      // check for three consecutive spaces
+      if (isNextToTripleSpaceLineBreak(mq, dir)) {
+        mq.keystroke(arrowDir);
+        mq.keystroke(arrowDir);
+        mq.keystroke(arrowDir);
+        return "cancel";
+      }
+    }
+
+    if (key === "Shift-Up" || key === "Shift-Down") {
+      this.doMultilineVerticalNav(key);
+      return "cancel";
+    }
+  }
 
   findCursorX() {
     const cursor = document.querySelector(".dcg-mq-cursor");
@@ -298,6 +282,11 @@ export default class Multiline extends PluginController<Config> {
   afterEnable() {
     document.addEventListener("keydown", this.keydownHandler);
     document.addEventListener("mousedown", this.mousedownHandler);
+
+    this.dsm.overrideKeystroke?.setMQKeystrokeListener(
+      "multiline",
+      this.onMQKeystroke.bind(this)
+    );
 
     this.afterConfigChange();
     this.dequeueAllMultilinifications();
@@ -380,10 +369,6 @@ export default class Multiline extends PluginController<Config> {
         this.calc,
         this.customDispatcherID
       );
-
-    for (const remover of this.customHandlerRemovers) {
-      remover();
-    }
   }
 
   // navigates up/down through a multiline expression

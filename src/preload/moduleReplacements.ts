@@ -35,6 +35,9 @@ const pluginNames = [
   "code-golf",
   "syntax-highlighting",
   "better-navigation",
+  "multiline",
+  "intellisense",
+  "override-keystroke",
 ];
 
 replacements.forEach((r) => {

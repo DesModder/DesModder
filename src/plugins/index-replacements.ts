@@ -6,6 +6,7 @@ import extraExpressionButtons from "#plugins/expr-action-buttons/expr-action-but
 import findReplace from "#plugins/find-replace/find-replace.replacements";
 import hideErrors from "#plugins/hide-errors/hide-errors.replacements";
 import metadata from "#plugins/manage-metadata/manage-metadata.replacements";
+import overrideKeystroke from "#plugins/override-keystroke/override-keystroke.replacements";
 import pillbox from "#plugins/pillbox-menus/pillbox-menus.replacements";
 import pinExpressions from "#plugins/pin-expressions/pin-expressions.replacements";
 import rightClickTray from "#plugins/right-click-tray/right-click-tray.replacements";
@@ -18,6 +19,7 @@ import insertPanels from "../preload/moduleOverrides/insert-panels.replacements"
 export default [
   insertPanels,
   metadata,
+  overrideKeystroke,
   pillbox,
   betterEvaluationView,
   findReplace,

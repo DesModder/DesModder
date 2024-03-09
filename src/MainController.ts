@@ -67,7 +67,13 @@ export default class DSM extends TransparentPlugins {
     this.applyStoredEnabled(recordToMap(dsmPreload.pluginsEnabled));
     delete window.DesModderPreload;
 
+    // Enable core plugins
     for (const { id } of pluginList) {
+      if (plugins.get(id)?.isCore) this._enablePlugin(id);
+    }
+    // Then all the other plugins
+    for (const { id } of pluginList) {
+      if (plugins.get(id)?.isCore) continue;
       if (this.isPluginEnabled(id)) this._enablePlugin(id);
     }
     this.pillboxMenus?.updateMenuView();
@@ -89,6 +95,7 @@ export default class DSM extends TransparentPlugins {
 
   disablePlugin(id: PluginID) {
     const plugin = plugins.get(id);
+    if (plugin?.isCore) throw new Error(`Core plugin ${id} cannot be disabled`);
     if (plugin && this.isPluginToggleable(id)) {
       if (this.isPluginEnabled(id)) {
         const plugin = this.enabledPlugins[id];

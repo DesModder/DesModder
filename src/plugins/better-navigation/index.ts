@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import { PluginController } from "../PluginController";
-import { hookIntoOverrideKeystroke } from "src/utils/listenerHelpers";
 import { MathQuillField, MathQuillView } from "src/components";
 import { getController } from "../intellisense/latex-parsing";
 
@@ -76,111 +75,92 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
     },
   ] as const;
 
-  removeHandlers() {
-    for (const removeHandler of this.customRemoveHandlers) removeHandler();
-  }
-
   afterConfigChange(): void {
     document.body.classList.toggle(
       "dsm-better-nav-scrollable-expressions",
       this.settings.scrollableExpressions
     );
-    this.removeHandlers();
   }
 
   dispatcherID: string | undefined;
 
-  customRemoveHandlers: (() => void)[] = [];
+  onMQKeystroke(key: string, _: KeyboardEvent): undefined | "cancel" {
+    if (!this.settings.ctrlArrow) return;
+    const mq = MathQuillView.getFocusedMathquill();
 
-  keydownHandler = () => {
-    if (this.calc.focusedMathQuill && this.settings.ctrlArrow) {
-      const remove = hookIntoOverrideKeystroke(
-        this.calc.focusedMathQuill.mq,
-        (key, _) => {
-          const mq = MathQuillView.getFocusedMathquill();
+    if (!mq) return;
+    const navOption = NavigationTable[key];
+    if (!navOption) return;
 
-          if (!mq) return true;
-          const navOption = NavigationTable[key];
-          if (!navOption) return true;
+    // type an empty string to force desmos to update
+    setTimeout(() => {
+      this.calc.focusedMathQuill?.typedText("");
+    }, 0);
 
-          // type an empty string to force desmos to update
-          setTimeout(() => {
-            this.calc.focusedMathQuill?.typedText("");
-          }, 0);
+    // backspace is implicitly "left"
+    const dir = navOption.dir;
+    const mode = navOption.mode;
 
-          // backspace is implicitly "left"
-          const dir = navOption.dir;
-          const mode = navOption.mode;
+    // remove the "Ctrl-" to get the normal arrow op to emulate
+    const arrowOp = key.slice(5);
 
-          // remove the "Ctrl-" to get the normal arrow op to emulate
-          const arrowOp = key.slice(5);
+    const ctrlr = getController(mq);
 
-          const ctrlr = getController(mq);
+    const next = ctrlr.cursor?.[navOption.dir];
 
-          const next = ctrlr.cursor?.[navOption.dir];
+    // if the next element is one of the following:
+    // bracket, fraction, sum, product, integral, sqrt, nthroot
+    // then skip over the entire thing when ctrl+arrowing (don't edit internals)
+    // Shift-arrow already does this behavior perfectly so we first do that.
+    // Then we do a normal arrow press to delete the selection.
+    if (isCtrlArrowSkippableSymbolMQElem(next?._el)) {
+      mq.keystroke(dir === R ? "Shift-Right" : "Shift-Left");
 
-          // if the next element is one of the following:
-          // bracket, fraction, sum, product, integral, sqrt, nthroot
-          // then skip over the entire thing when ctrl+arrowing (don't edit internals)
-          // Shift-arrow already does this behavior perfectly so we first do that.
-          // Then we do a normal arrow press to delete the selection.
-          if (isCtrlArrowSkippableSymbolMQElem(next?._el)) {
-            mq.keystroke(dir === R ? "Shift-Right" : "Shift-Left");
+      // remove selection if not extending a selection
+      if (mode !== "extend-sel") mq.keystroke(arrowOp);
 
-            // remove selection if not extending a selection
-            if (mode !== "extend-sel") mq.keystroke(arrowOp);
+      // skip over entire variable names, numbers, and operatornames
+    } else if (
+      isAtStartOrEndOfASubscriptOrSuperscript(mq, dir) ||
+      (next && isWordMQElem(next._el))
+    ) {
+      // leave start/end of sub/sup
+      if (isAtStartOrEndOfASubscriptOrSuperscript(mq, dir))
+        mq.keystroke(arrowOp);
 
-            // skip over entire variable names, numbers, and operatornames
-          } else if (
-            isAtStartOrEndOfASubscriptOrSuperscript(mq, dir) ||
-            (next && isWordMQElem(next._el))
-          ) {
-            // leave start/end of sub/sup
-            if (isAtStartOrEndOfASubscriptOrSuperscript(mq, dir))
-              mq.keystroke(arrowOp);
+      let i = 0;
+      while (isWordMQElem(ctrlr.cursor?.[dir]?._el) && i < 1000) {
+        // skip over super/subscript
+        if (isSupSubscriptMQElem(ctrlr.cursor?.[dir]?._el)) {
+          mq.keystroke(dir === R ? "Shift-Right" : "Shift-Left");
 
-            let i = 0;
-            while (isWordMQElem(ctrlr.cursor?.[dir]?._el) && i < 1000) {
-              // skip over super/subscript
-              if (isSupSubscriptMQElem(ctrlr.cursor?.[dir]?._el)) {
-                mq.keystroke(dir === R ? "Shift-Right" : "Shift-Left");
+          // remove selection if not extending selection
+          if (mode !== "extend-sel") mq.keystroke(arrowOp);
+        } else {
+          mq.keystroke(arrowOp);
+        }
 
-                // remove selection if not extending selection
-                if (mode !== "extend-sel") mq.keystroke(arrowOp);
-              } else {
-                mq.keystroke(arrowOp);
-              }
+        // if at the start/end of a subscript/superscript block,
+        // then escape it
+        if (isAtStartOrEndOfASubscriptOrSuperscript(mq, dir)) {
+          mq.keystroke(arrowOp);
+        }
+        i++;
+      }
 
-              // if at the start/end of a subscript/superscript block,
-              // then escape it
-              if (isAtStartOrEndOfASubscriptOrSuperscript(mq, dir)) {
-                mq.keystroke(arrowOp);
-              }
-              i++;
-            }
-
-            // treat it as a normal arrow key press in all other respects
-          } else {
-            mq.keystroke(arrowOp);
-          }
-
-          return false;
-        },
-        0,
-        "better-nav-ctrl"
-      );
-
-      if (remove) this.customRemoveHandlers.push(remove);
+      // treat it as a normal arrow key press in all other respects
+    } else {
+      mq.keystroke(arrowOp);
     }
-  };
+
+    return "cancel";
+  }
 
   afterEnable() {
     this.afterConfigChange();
-    document.addEventListener("keydown", this.keydownHandler);
-  }
-
-  afterDisable() {
-    document.removeEventListener("keydown", this.keydownHandler);
-    this.removeHandlers();
+    this.dsm.overrideKeystroke?.setMQKeystrokeListener(
+      "better-navigation",
+      this.onMQKeystroke.bind(this)
+    );
   }
 }

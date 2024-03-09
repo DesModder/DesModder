@@ -8,6 +8,7 @@ import { getMetadata, setMetadata } from "./sync";
 export default class ManageMetadata extends PluginController {
   static id = "manage-metadata" as const;
   static enabledByDefault = true;
+  static isCore = true;
 
   graphMetadata: GraphMetadata = getBlankMetadata();
 
