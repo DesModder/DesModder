@@ -3,11 +3,19 @@ import { addPanic, panickedPlugins } from "../../panic/panic";
 import workerAppend from "./append.inline";
 import { ReplacementResult, applyReplacements } from "./applyReplacement";
 import { Block } from "./parse";
-import { IDBPDatabase, openDB } from "idb";
+import { IDBPDatabase, openDB, deleteDB } from "idb";
 import jsTokens from "js-tokens";
 
 const CACHE_STORE = "replacement_store";
 const CACHE_KEY = "replacement_cached";
+
+// We used to use idb-keyval, which forced a particular db name and schema.
+// Deleting it saves about 7MB of disk.
+async function deleteOldDB() {
+  try {
+    await deleteDB("keyval-store");
+  } catch {}
+}
 
 /**
  * Replacements are slow, so we cache the result. We optimize for the common
@@ -18,6 +26,7 @@ export async function fullReplacementCached(
   calcDesktop: string,
   enabledReplacements: Block[]
 ): Promise<string> {
+  void deleteOldDB();
   (window as any).dsm_workerAppend = workerAppend;
   const db = await openDB("cached-replacement-store", 1, {
     upgrade(db) {
