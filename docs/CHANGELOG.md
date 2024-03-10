@@ -1,5 +1,16 @@
 # DesModder Changelog
 
+## 0.13.0
+
+Bug Fixes
+
+- (Text Mode) Fix error when opening Text Mode.
+- (Intellisense) Fix typing a "." after a subscript in some cases.
+- (Intellisense) Handle keys like "enter" even when Multiline or better Navigation are enabled.
+- (Intellisense) Show operatornames like "sin()" correctly instead of "n()."
+- (Right Click Tray) Close existing tray before opening a new one.
+- (Find-Replace) Avoid overwriting exponents in some cases.
+
 ## 0.12.9
 
 Internal fix to avoid replacement error.
