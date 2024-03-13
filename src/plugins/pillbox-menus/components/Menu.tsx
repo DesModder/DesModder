@@ -46,6 +46,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "folder-tools",
     "custom-mathquill-config",
     "code-golf",
+    "my-expressions-library",
     "better-navigation",
   ],
   visual: [
@@ -180,7 +181,12 @@ export default class Menu extends Component<{
     return (
       <div>
         {plugin.config.map((item: ConfigItem) => (
-          <If predicate={() => item.shouldShow?.(pluginSettings) ?? true}>
+          <If
+            predicate={() =>
+              (!item.notInSettingsMenu && item.shouldShow?.(pluginSettings)) ??
+              true
+            }
+          >
             {() =>
               indentation(
                 item.indentationLevel ?? 0,
@@ -193,6 +199,8 @@ export default class Menu extends Component<{
                     numberOption(this.pm, item, plugin, pluginSettings),
                   "color-list": () =>
                     colorListOption(this.pm, item, plugin, pluginSettings),
+                  stringArray: () =>
+                    stringArrayOption(this.pm, item, plugin, pluginSettings),
                 })
               )
             }
@@ -203,6 +211,51 @@ export default class Menu extends Component<{
   }
 }
 
+function stringArrayOption(
+  pm: PillboxMenus,
+  item: ConfigItem,
+  plugin: SpecificPlugin,
+  settings: GenericSettings
+) {
+  const setValue = (newValue: string[]) =>
+    pm.expandedPlugin &&
+    pm.dsm.setPluginSetting(pm.expandedPlugin, item.key, newValue);
+
+  function get() {
+    return settings[item.key] as string[];
+  }
+
+  let currentValue = get().join("\n");
+
+  const inputHandler = (evt: InputEvent) => {
+    currentValue = (evt.target as HTMLTextAreaElement).value;
+    setValue(currentValue.split("\n"));
+  };
+
+  return (
+    // not worrying about keys bc strings are cheap
+    <div class="dsm-settings-item dsm-settings-string-array">
+      <textarea
+        onInput={inputHandler}
+        onChange={inputHandler}
+        onUpdate={(e: HTMLTextAreaElement) => {
+          currentValue = get().join("\n");
+          if (currentValue === e.value) return;
+          e.value = currentValue;
+        }}
+        class="dsm-settings-string-array-input-box"
+      >
+        {get().join("\n")}
+      </textarea>
+      <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
+        <label for={`dsm-settings-item__input-${item.key}`}>
+          {configItemName(plugin, item)}
+        </label>
+      </Tooltip>
+      <ResetButton pm={pm} key={item.key} />
+    </div>
+  );
+}
 function indentation(level: number, inner: any) {
   return (
     <Switch key={() => level}>

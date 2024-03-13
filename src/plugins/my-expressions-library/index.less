@@ -1,0 +1,83 @@
+.dsm-my-expr-lib-menu {
+  max-height: 60vh;
+  overflow: auto;
+
+  .dsm-my-expr-lib-btn-container {
+    display: flex;
+  }
+
+  .dsm-my-expr-lib-rescale-plus {
+    transform: scale(1.4) translateY(-1px);
+  }
+
+  .dsm-my-expr-lib-item-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  ol,
+  ul {
+    list-style: none;
+    padding-inline-start: 0;
+  }
+
+  .dsm-my-expr-lib-folder,
+  .dsm-my-expr-lib-graph {
+    border-top: 1px solid #cccccc;
+  }
+
+  .dsm-my-expr-lib-multi-item-inner {
+    border-left: 1px solid #cccccc;
+    padding-inline-start: 5px;
+    margin-inline-start: 5px;
+  }
+
+  i {
+    color: #aaaaaa;
+    margin-right: 5px;
+  }
+
+  .dsm-my-expr-lib-btn {
+    display: none;
+  }
+
+  .align-right {
+    margin-left: auto;
+  }
+
+  .dsm-my-expr-lib-item-header:hover .dsm-my-expr-lib-btn {
+    padding-left: 5px;
+    border-radius: 3px;
+    background: none;
+    border: none;
+    display: block;
+    opacity: 0.6;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  .dsm-my-expr-lib-item-header,
+  .dsm-my-expr-lib-math {
+    cursor: pointer !important;
+    margin: 3px;
+    display: flex;
+  }
+
+  .dsm-my-expr-lib-math:hover {
+    background-color: #eeeeee;
+  }
+
+  .dsm-my-expr-lib-main-header {
+    position: sticky;
+    border-bottom: 1px solid #aaaaaa;
+    top: 0;
+    background-color: white;
+    * {
+      margin: 3px;
+    }
+    z-index: 3;
+  }
+}

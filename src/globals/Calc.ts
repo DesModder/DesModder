@@ -26,6 +26,7 @@ export type DispatchedEvent =
         | "redo"
         | "tick-ticker"
         | "keypad/functions"
+        | "new-folder"
         | "commit-geo-objects"
         | "upward-delete-selected-expression"
         | "downward-delete-selected-expression"
@@ -260,6 +261,7 @@ interface CalcPrivate {
       __itemModelArray: {
         id: string;
         colorLatex: string;
+        title: string;
         folderId: string;
         type: "folder" | "expression";
       }[];
