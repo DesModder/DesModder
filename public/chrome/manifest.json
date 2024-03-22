@@ -25,7 +25,13 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["script.css", "script.js", "preload/script.js"],
+      "resources": [
+        "script.css",
+        "script.js",
+        "preload/script.js",
+        "lib/ffmpeg-core.js",
+        "lib/ffmpeg-core.wasm"
+      ],
       "matches": ["*://*.desmos.com/*"]
     }
   ],

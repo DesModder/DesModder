@@ -27,6 +27,9 @@ type MessageWindowToContent =
   | {
       type: "send-heartbeat";
       options: WindowHeartbeatOptions;
+    }
+  | {
+      type: "get-ffmpeg-url";
     };
 
 type MessageContentToWindow =
@@ -37,7 +40,12 @@ type MessageContentToWindow =
       pluginSettings: Record<PluginID, GenericSettings | undefined>;
       scriptURL: string;
     }
-  | HeartbeatError;
+  | HeartbeatError
+  | {
+      type: "return-ffmpeg-url";
+      coreURL: string;
+      wasmURL: string;
+    };
 
 export interface HeartbeatError {
   type: "heartbeat-error";

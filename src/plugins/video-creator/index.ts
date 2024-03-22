@@ -15,6 +15,7 @@ import {
   ManagedNumberInputModelOpts,
 } from "./components/ManagedNumberInput";
 import { Orientation } from "./orientation";
+import { listenToMessageDown, postMessageUp } from "src/utils/messages";
 
 type FocusedMQ = string;
 
@@ -23,6 +24,11 @@ const DEFAULT_FILENAME = "DesModder_Video_Creator";
 export default class VideoCreator extends PluginController {
   static id = "video-creator" as const;
   static enabledByDefault = true;
+
+  enabled = true;
+
+  coreURL?: string;
+  wasmURL?: string;
 
   ffmpegLoaded = false;
   frames: string[] = [];
@@ -98,6 +104,16 @@ export default class VideoCreator extends PluginController {
   }
 
   afterEnable() {
+    listenToMessageDown((msg) => {
+      if (!this.enabled) return true;
+      if (msg.type !== "return-ffmpeg-url") return false;
+      const { coreURL, wasmURL } = msg;
+      this.coreURL = coreURL;
+      this.wasmURL = wasmURL;
+      return false;
+    });
+    postMessageUp({ type: "get-ffmpeg-url" });
+
     this.calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
     this._applyDefaultCaptureSize();
     this.or.afterEnable();
@@ -111,6 +127,7 @@ export default class VideoCreator extends PluginController {
   }
 
   afterDisable() {
+    this.enabled = false;
     this.dsm.pillboxMenus?.removePillboxButton("dsm-vc-menu");
     document.removeEventListener("keydown", this.onKeydown);
     this.or.afterDisable();

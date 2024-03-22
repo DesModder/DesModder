@@ -17,17 +17,17 @@ if (argv.help) {
   console.log(
     unindent2spaces`Usage:
     node esbuild.mjs [options]
-  
+
   Options:
     --help         Show help
     --browser=...  Browser target: "firefox", or "chrome"  [default: "chrome"]
     --watch        Watch mode: rebuild on file system changes [default: false]
     --outdir=...   Output directory                          [default: "dist"]
-    
+
   Examples:
     # Dev server for Chrome
     node esbuild.mjs --watch --browser=chrome
-    
+
     # Final build for Firefox
     node esbuild.mjs --browser=firefox`
   );
@@ -77,6 +77,20 @@ const opts = {
       assets: {
         from: [`./public/common/*`],
         to: outdir,
+      },
+    }),
+    copy({
+      resolveFrom: "cwd",
+      assets: {
+        from: [`./node_modules/@ffmpeg/core/dist/ffmpeg-core.js`],
+        to: `${outdir}/lib/ffmpeg-core.js`,
+      },
+    }),
+    copy({
+      resolveFrom: "cwd",
+      assets: {
+        from: [`./node_modules/@ffmpeg/core/dist/ffmpeg-core.wasm`],
+        to: `${outdir}/lib/ffmpeg-core.wasm`,
       },
     }),
   ],

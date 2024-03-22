@@ -145,6 +145,13 @@ listenToMessageUp((message) => {
     case "send-heartbeat":
       _sendHeartbeat(message.options);
       break;
+    case "get-ffmpeg-url":
+      postMessageDown({
+        type: "return-ffmpeg-url",
+        coreURL: chrome.runtime.getURL("lib/ffmpeg-core.js"),
+        wasmURL: chrome.runtime.getURL("lib/ffmpeg-core.wasm"),
+      });
+      break;
     default:
       message satisfies never;
   }
