@@ -28,6 +28,7 @@ export default class VideoCreator extends PluginController {
   enabled = true;
 
   coreURL?: string;
+  workerURL?: string;
   wasmURL?: string;
 
   ffmpegLoaded = false;
@@ -107,8 +108,9 @@ export default class VideoCreator extends PluginController {
     listenToMessageDown((msg) => {
       if (!this.enabled) return true;
       if (msg.type !== "return-ffmpeg-url") return false;
-      const { coreURL, wasmURL } = msg;
+      const { coreURL, workerURL, wasmURL } = msg;
       this.coreURL = coreURL;
+      this.workerURL = workerURL;
       this.wasmURL = wasmURL;
       return false;
     });

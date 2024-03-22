@@ -30,6 +30,7 @@
         "script.js",
         "preload/script.js",
         "lib/ffmpeg-core.js",
+        "lib/ffmpeg-core.worker.js",
         "lib/ffmpeg-core.wasm"
       ],
       "matches": ["*://*.desmos.com/*"]

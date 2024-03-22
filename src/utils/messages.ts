@@ -44,6 +44,7 @@ type MessageContentToWindow =
   | {
       type: "return-ffmpeg-url";
       coreURL: string;
+      workerURL: string;
       wasmURL: string;
     };
 

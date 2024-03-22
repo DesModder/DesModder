@@ -62,9 +62,8 @@ export async function initFFmpeg(vc: VideoCreator) {
     ffmpeg = createFFmpeg({
       log: false,
       corePath: vc.coreURL,
+      workerPath: vc.workerURL,
       wasmPath: vc.wasmURL,
-      // never run as we are using ffmpeg single-threaded
-      workerPath: URL.createObjectURL(new Blob([])),
     });
     // Idk why this doesn't just use ffmpeg.setProgress, but it works for now.
     ffmpeg.setLogger(({ type, message }) => {

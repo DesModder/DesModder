@@ -149,6 +149,7 @@ listenToMessageUp((message) => {
       postMessageDown({
         type: "return-ffmpeg-url",
         coreURL: chrome.runtime.getURL("lib/ffmpeg-core.js"),
+        workerURL: chrome.runtime.getURL("lib/ffmpeg-core.worker.js"),
         wasmURL: chrome.runtime.getURL("lib/ffmpeg-core.wasm"),
       });
       break;

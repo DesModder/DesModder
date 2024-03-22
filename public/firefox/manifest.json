@@ -26,6 +26,7 @@
     "script.js",
     "preloadScript.js",
     "lib/ffmpeg-core.js",
+    "lib/ffmpeg-core.worker.js",
     "lib/ffmpeg-core.wasm"
   ],
   "permissions": [

@@ -89,6 +89,13 @@ const opts = {
     copy({
       resolveFrom: "cwd",
       assets: {
+        from: [`./node_modules/@ffmpeg/core/dist/ffmpeg-core.worker.js`],
+        to: `${outdir}/lib/ffmpeg-core.worker.js`,
+      },
+    }),
+    copy({
+      resolveFrom: "cwd",
+      assets: {
         from: [`./node_modules/@ffmpeg/core/dist/ffmpeg-core.wasm`],
         to: `${outdir}/lib/ffmpeg-core.wasm`,
       },
