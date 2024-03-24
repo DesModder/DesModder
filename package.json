@@ -49,9 +49,10 @@
   },
   "devDependencies": {
     "@lezer/generator": "^1.7.0",
-    "@types/chrome": "0.0.239",
+    "@types/chrome": "0.0.263",
+    "@types/desmos": "^1.6.3",
     "@types/jest": "^29.5.12",
-    "@types/moo": "^0.5.5",
+    "@types/moo": "^0.5.9",
     "@types/prettier": "^2.7.3",
     "esbuild": "^0.18.11",
     "esbuild-plugin-copy": "^2.1.1",
@@ -70,7 +71,7 @@
     "puppeteer": "^22.6.0",
     "ts-jest": "^29.1.2",
     "tsutils": "^3.21.0",
-    "typescript": "^5.1.6"
+    "typescript": "^5.4.3"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.15.0",
@@ -85,7 +86,6 @@
     "@fluent/bundle": "^0.18.0",
     "@lezer/common": "^1.2.1",
     "@lezer/lr": "^1.4.0",
-    "@types/desmos": "^1.6.0",
     "client-zip": "^2.4.4",
     "eslint-plugin-rulesdir": "^0.2.2",
     "idb": "^8.0.0",
