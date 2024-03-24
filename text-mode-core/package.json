@@ -13,12 +13,12 @@
   },
   "imports": {
     "#graph-state": "graph-state",
-    "#prettier/doc": "prettier/doc",
     "#jest/globals": "@jest/globals",
     "#moo": "moo",
     "#parsing/*": "src/parsing/*",
     "#metadata/*": "metadata/*",
-    "#utils/*": "src/utils/*"
+    "#utils/*": "src/utils/*",
+    "#string-width": "string-width"
   },
   "repository": {
     "type": "git",

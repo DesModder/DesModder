@@ -1,17 +1,12 @@
-"use strict";
+import { isConcat, getDocParts, isType } from "./doc-utils";
+import type { Concat, Doc } from "./doc";
 
-const { isConcat, getDocParts } = require("./doc-utils.js");
-
-function flattenDoc(doc) {
-  if (!doc) {
-    return "";
-  }
-
+function flattenDoc(doc: Doc): Doc {
   if (isConcat(doc)) {
     const res = [];
     for (const part of getDocParts(doc)) {
       if (isConcat(part)) {
-        res.push(...flattenDoc(part).parts);
+        res.push(...(flattenDoc(part) as Concat).parts);
       } else {
         const flattened = flattenDoc(part);
         if (flattened !== "") {
@@ -22,6 +17,8 @@ function flattenDoc(doc) {
 
     return { type: "concat", parts: res };
   }
+
+  if (typeof doc === "string") return doc;
 
   if (doc.type === "if-break") {
     return {
@@ -35,7 +32,7 @@ function flattenDoc(doc) {
     return {
       ...doc,
       contents: flattenDoc(doc.contents),
-      expandedStates: doc.expandedStates && doc.expandedStates.map(flattenDoc),
+      expandedStates: doc.expandedStates?.map(flattenDoc),
     };
   }
 
@@ -43,21 +40,23 @@ function flattenDoc(doc) {
     return { type: "fill", parts: doc.parts.map(flattenDoc) };
   }
 
-  if (doc.contents) {
+  if ("contents" in doc && doc.contents) {
     return { ...doc, contents: flattenDoc(doc.contents) };
   }
 
   return doc;
 }
 
-function printDocToDebug(doc) {
-  /** @type Record<symbol, string> */
-  const printedSymbols = Object.create(null);
-  /** @type Set<string> */
-  const usedKeysForSymbols = new Set();
+export function printDocToDebug(doc: Doc) {
+  const printedSymbols: Record<symbol, string> = Object.create(null);
+  const usedKeysForSymbols = new Set<string>();
   return printDoc(flattenDoc(doc));
 
-  function printDoc(doc, index, parentParts) {
+  function printDoc(
+    doc: Doc,
+    index: number = 0,
+    parentParts?: Doc[] | undefined
+  ): string {
     if (typeof doc === "string") {
       return JSON.stringify(doc);
     }
@@ -70,8 +69,7 @@ function printDocToDebug(doc) {
     if (doc.type === "line") {
       const withBreakParent =
         Array.isArray(parentParts) &&
-        parentParts[index + 1] &&
-        parentParts[index + 1].type === "break-parent";
+        isType(parentParts[index + 1], "break-parent");
       if (doc.literal) {
         return withBreakParent
           ? "literalline"
@@ -87,12 +85,12 @@ function printDocToDebug(doc) {
     }
 
     if (doc.type === "break-parent") {
+      let prev;
       const afterHardline =
         Array.isArray(parentParts) &&
-        parentParts[index - 1] &&
-        parentParts[index - 1].type === "line" &&
-        parentParts[index - 1].hard;
-      return afterHardline ? undefined : "breakParent";
+        isType((prev = parentParts[index - 1]), "line") &&
+        prev.hard;
+      return afterHardline ? "undefined" : "breakParent";
     }
 
     if (doc.type === "trim") {
@@ -106,9 +104,11 @@ function printDocToDebug(doc) {
     if (doc.type === "align") {
       return doc.n === Number.NEGATIVE_INFINITY
         ? "dedentToRoot(" + printDoc(doc.contents) + ")"
-        : doc.n < 0
+        : typeof doc.n === "number" && doc.n < 0
         ? "dedent(" + printDoc(doc.contents) + ")"
-        : doc.n.type === "root"
+        : typeof doc.n !== "string" &&
+          typeof doc.n !== "number" &&
+          doc.n.type === "root"
         ? "markAsRoot(" + printDoc(doc.contents) + ")"
         : "align(" +
           JSON.stringify(doc.n) +
@@ -189,7 +189,7 @@ function printDocToDebug(doc) {
     throw new Error("Unknown doc type " + doc.type);
   }
 
-  function printGroupId(id) {
+  function printGroupId(id: string | symbol): string {
     if (typeof id !== "symbol") {
       return JSON.stringify(String(id));
     }
@@ -209,5 +209,3 @@ function printDocToDebug(doc) {
     }
   }
 }
-
-module.exports = { printDocToDebug };

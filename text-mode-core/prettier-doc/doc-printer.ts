@@ -1,36 +1,84 @@
-"use strict";
+// import _stringWidth from "#string-width";
+import { fill, cursor, indent } from "./doc-builders";
+import { isConcat, getDocParts } from "./doc-utils";
+import type { Align, Doc } from "./doc";
 
-const { convertEndOfLineToChars } = require("../common/end-of-line.js");
-const getLast = require("../utils/get-last.js");
-const getStringWidth = require("../utils/get-string-width.js");
-const { fill, cursor, indent } = require("./doc-builders.js");
-const { isConcat, getDocParts } = require("./doc-utils.js");
+// TODO-prettier: unit tests had error in importing string-width. Fix.
+// const notAsciiRegex = /[^\x20-\x7F]/;
+function stringWidth(text: string) {
+  if (!text) {
+    return 0;
+  }
+  return text.length;
 
-/** @typedef {typeof MODE_BREAK | typeof MODE_FLAT} Mode */
-/** @typedef {{ ind: any, doc: any, mode: Mode }} Command */
+  // // shortcut to avoid needless string `RegExp`s, replacements, and allocations within `string-width`
+  // if (!notAsciiRegex.test(text)) {
+  //   return text.length;
+  // }
 
-/** @type {Record<symbol, Mode>} */
-let groupModeMap;
+  // return _stringWidth(text);
+}
 
-// prettier-ignore
-const MODE_BREAK = /** @type {const} */ (1);
-// prettier-ignore
-const MODE_FLAT = /** @type {const} */ (2);
+interface Options {
+  /**
+   * Specify the line length that the printer will wrap on.
+   * @default 80
+   */
+  printWidth: number;
+  /**
+   * Specify the number of spaces per indentation-level.
+   * @default 2
+   */
+  tabWidth: number;
+  /**
+   * Indent lines with tabs instead of spaces
+   * @default false
+   */
+  useTabs: boolean;
+  parentParser?: string | undefined;
+  __embeddedInHtml?: boolean | undefined;
+}
 
-function rootIndent() {
+type Mode = typeof MODE_BREAK | typeof MODE_FLAT;
+type IndentPart =
+  | { type: "indent" | "dedent" }
+  | { type: "stringAlign"; n: string }
+  | { type: "numberAlign"; n: number };
+interface Indent {
+  value: string;
+  length: number;
+  queue: IndentPart[];
+  root?: Indent;
+}
+interface Command {
+  ind: Indent;
+  doc: any;
+  mode: Mode;
+}
+
+let groupModeMap: Record<symbol, Mode>;
+
+const MODE_BREAK = 1 as const;
+const MODE_FLAT = 2 as const;
+
+function rootIndent(): Indent {
   return { value: "", length: 0, queue: [] };
 }
 
-function makeIndent(ind, options) {
+function makeIndent(ind: Indent, options: Options) {
   return generateInd(ind, { type: "indent" }, options);
 }
 
-function makeAlign(indent, widthOrDoc, options) {
+function makeAlign(
+  indent: Indent,
+  widthOrDoc: Align["n"],
+  options: Options
+): Indent {
   if (widthOrDoc === Number.NEGATIVE_INFINITY) {
-    return indent.root || rootIndent();
+    return indent.root ?? rootIndent();
   }
 
-  if (widthOrDoc < 0) {
+  if (typeof widthOrDoc === "number" && widthOrDoc < 0) {
     return generateInd(indent, { type: "dedent" }, options);
   }
 
@@ -38,17 +86,20 @@ function makeAlign(indent, widthOrDoc, options) {
     return indent;
   }
 
-  if (widthOrDoc.type === "root") {
-    return { ...indent, root: indent };
+  if (typeof widthOrDoc === "number") {
+    return generateInd(indent, { type: "numberAlign", n: widthOrDoc }, options);
   }
 
-  const alignType =
-    typeof widthOrDoc === "string" ? "stringAlign" : "numberAlign";
+  if (typeof widthOrDoc === "string") {
+    return generateInd(indent, { type: "stringAlign", n: widthOrDoc }, options);
+  }
 
-  return generateInd(indent, { type: alignType, n: widthOrDoc }, options);
+  widthOrDoc satisfies { type: "root" };
+
+  return { ...indent, root: indent };
 }
 
-function generateInd(ind, newPart, options) {
+function generateInd(ind: Indent, newPart: IndentPart, options: Options) {
   const queue =
     newPart.type === "dedent"
       ? ind.queue.slice(0, -1)
@@ -88,12 +139,12 @@ function generateInd(ind, newPart, options) {
 
   return { ...ind, value, length, queue };
 
-  function addTabs(count) {
+  function addTabs(count: number) {
     value += "\t".repeat(count);
     length += options.tabWidth * count;
   }
 
-  function addSpaces(count) {
+  function addSpaces(count: number) {
     value += " ".repeat(count);
     length += count;
   }
@@ -126,7 +177,7 @@ function generateInd(ind, newPart, options) {
   }
 }
 
-function trim(out) {
+function trim(out: (string | symbol)[]) {
   if (out.length === 0) {
     return 0;
   }
@@ -134,35 +185,36 @@ function trim(out) {
   let trimCount = 0;
 
   // Trim whitespace at the end of line
+  let last;
   while (
     out.length > 0 &&
-    typeof getLast(out) === "string" &&
-    /^[\t ]*$/.test(getLast(out))
+    typeof (last = out.at(-1)) === "string" &&
+    /^[\t ]*$/.test(last)
   ) {
-    trimCount += out.pop().length;
+    trimCount += last.length;
+    out.pop();
   }
 
-  if (out.length > 0 && typeof getLast(out) === "string") {
-    const trimmed = getLast(out).replace(/[\t ]*$/, "");
-    trimCount += getLast(out).length - trimmed.length;
+  last = out.at(-1);
+  if (out.length > 0 && typeof last === "string") {
+    const trimmed = last.replace(/[\t ]*$/, "");
+    trimCount += last.length - trimmed.length;
     out[out.length - 1] = trimmed;
   }
 
   return trimCount;
 }
 
-/**
- * @param {Command} next
- * @param {Command[]} restCommands
- * @param {number} width
- * @param {boolean} hasLineSuffix
- * @param {boolean} [mustBeFlat]
- * @returns {boolean}
- */
-function fits(next, restCommands, width, hasLineSuffix, mustBeFlat) {
+function fits(
+  next: Command,
+  restCommands: Command[],
+  width: number,
+  hasLineSuffix: boolean,
+  mustBeFlat?: boolean
+): boolean {
   let restIdx = restCommands.length;
   /** @type {Array<Omit<Command, 'ind'>>} */
-  const cmds = [next];
+  const cmds: Array<Omit<Command, "ind">> = [next];
   // `out` is only used for width counting because `trim` requires to look
   // backwards for space characters.
   const out = [];
@@ -175,11 +227,11 @@ function fits(next, restCommands, width, hasLineSuffix, mustBeFlat) {
       continue;
     }
 
-    const { mode, doc } = cmds.pop();
+    const { mode, doc } = cmds.pop()!;
 
     if (typeof doc === "string") {
       out.push(doc);
-      width -= getStringWidth(doc);
+      width -= stringWidth(doc);
     } else if (isConcat(doc) || doc.type === "fill") {
       const parts = getDocParts(doc);
       for (let i = parts.length - 1; i >= 0; i--) {
@@ -206,7 +258,7 @@ function fits(next, restCommands, width, hasLineSuffix, mustBeFlat) {
           // The most expanded state takes up the least space on the current line.
           const contents =
             doc.expandedStates && groupMode === MODE_BREAK
-              ? getLast(doc.expandedStates)
+              ? doc.expandedStates.at(-1)
               : doc.contents;
           cmds.push({ mode: groupMode, doc: contents });
           break;
@@ -249,29 +301,33 @@ function fits(next, restCommands, width, hasLineSuffix, mustBeFlat) {
   return false;
 }
 
-function printDocToString(doc, options) {
+interface PrintedDoc {
+  formatted: string;
+  cursorNodeStart?: number | undefined;
+  cursorNodeText?: string | undefined;
+}
+
+export function printDocToString(doc: Doc, options: Options): PrintedDoc {
   groupModeMap = {};
 
   const width = options.printWidth;
-  const newLine = convertEndOfLineToChars(options.endOfLine);
+  const newLine = "\n";
   let pos = 0;
   // cmds is basically a stack. We've turned a recursive call into a
   // while loop which is much faster. The while loop below adds new
   // cmds to the array instead of recursively calling `print`.
-  /** @type Command[] */
-  const cmds = [{ ind: rootIndent(), mode: MODE_BREAK, doc }];
-  const out = [];
+  const cmds: Command[] = [{ ind: rootIndent(), mode: MODE_BREAK, doc }];
+  const out: (string | symbol)[] = [];
   let shouldRemeasure = false;
-  /** @type Command[] */
-  const lineSuffix = [];
+  const lineSuffix: Command[] = [];
 
   while (cmds.length > 0) {
-    const { ind, mode, doc } = cmds.pop();
+    const { ind, mode, doc } = cmds.pop()!;
 
     if (typeof doc === "string") {
       const formatted = newLine !== "\n" ? doc.replace(/\n/g, newLine) : doc;
       out.push(formatted);
-      pos += getStringWidth(formatted);
+      pos += stringWidth(formatted);
     } else if (isConcat(doc)) {
       const parts = getDocParts(doc);
       for (let i = parts.length - 1; i >= 0; i--) {
@@ -331,7 +387,7 @@ function printDocToString(doc, options) {
                 // group has these, we need to manually go through
                 // these states and find the first one that fits.
                 if (doc.expandedStates) {
-                  const mostExpanded = getLast(doc.expandedStates);
+                  const mostExpanded = doc.expandedStates.at(-1);
 
                   if (doc.break) {
                     cmds.push({ ind, mode: MODE_BREAK, doc: mostExpanded });
@@ -365,7 +421,7 @@ function printDocToString(doc, options) {
           }
 
           if (doc.id) {
-            groupModeMap[doc.id] = getLast(cmds).mode;
+            groupModeMap[doc.id] = cmds.at(-1)!.mode;
           }
           break;
         // Fills each line with as much code as possible before moving to a new
@@ -577,5 +633,3 @@ function printDocToString(doc, options) {
 
   return { formatted: out.join("") };
 }
-
-module.exports = { printDocToString };
