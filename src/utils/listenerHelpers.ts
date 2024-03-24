@@ -83,8 +83,9 @@ export function attach<F extends (...args: any) => any>(
 ): () => void {
   const oldTarget = getTarget();
 
-  // @ts-expect-error go away
+  // @ts-expect-error contravariance
   setTarget((...args) => {
+    // @ts-expect-error contravariance
     const ret = handler(...args);
 
     // intentional
@@ -152,7 +153,7 @@ export function hookIntoFunction<
           stop = true;
           ret = r;
         }, ...args);
-        if (stop) return ret as ReturnType<Fn>;
+        if (stop) return ret!;
       }
 
       return oldfn(...args);

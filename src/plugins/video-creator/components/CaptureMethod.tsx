@@ -125,7 +125,7 @@ export default class SelectCapture extends Component<{
                 <div class="dsm-vc-current-action">
                   {() => (
                     <StaticMathQuillView
-                      latex={() => this.vc.getCurrentAction()?.latex as string}
+                      latex={() => this.vc.getCurrentAction().latex!}
                     />
                   )}
                 </div>

@@ -74,12 +74,12 @@ function isVarName(cursor: MQCursor) {
 }
 
 function isIdentifierSegment(cursor?: MQCursor): cursor is MQCursor {
+  if (cursor === undefined) return false;
   return (
-    (cursor ?? false) &&
-    (isSubscript(cursor as MQCursor) ||
-      isOperatorName(cursor as MQCursor) ||
-      isStartingOperatorName(cursor as MQCursor) ||
-      isVarName(cursor as MQCursor))
+    isSubscript(cursor) ||
+    isOperatorName(cursor) ||
+    isStartingOperatorName(cursor) ||
+    isVarName(cursor)
   );
 }
 
@@ -218,7 +218,7 @@ export function getPartialFunctionCall(
       const ltx = rawTryGetMathquillIdent(cursor)?.ident;
       if (ltx && isIdentStr(ltx) && cursor?.[1]?.ctrlSeq === "\\left(") {
         return {
-          ident: latexStringToIdentifierString(ltx) as string,
+          ident: latexStringToIdentifierString(ltx)!,
           paramIndex,
         };
       }

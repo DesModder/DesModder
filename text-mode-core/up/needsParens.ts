@@ -214,5 +214,5 @@ const PRECEDENCE = new Map(
 );
 
 function getPrecedence(operator: BinaryExpression["op"]) {
-  return PRECEDENCE.get(operator) as number;
+  return PRECEDENCE.get(operator)!;
 }
