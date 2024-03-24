@@ -12,9 +12,9 @@ The groups of packages are:
 - Both the ffmpeg packages (test every export file type)
 - All the Jest packages (including Puppeteer) (test with `npm run test`)
 - All the esbuild packages (restart the dev server before testing)
-- Typescript and the `@types/*` (test with `npm run lint:types`)
 - All the eslint packages (test with `npm run lint:eslint`)
   - Some changes can be fixed with `npm run fix:eslint`
+- Typescript and the `@types/*` (test with `npm run lint:types`)
 - Prettier (test with re-run `npm run lint:formatting`)
   - Fix with `npm run fix:prettier`
 - Other packages

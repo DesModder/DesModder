@@ -38,7 +38,7 @@ export function initGLesmosCanvas(cc: CalcController) {
     // Thanks to <https://stackoverflow.com/a/12290551/7481517>
     premultipliedAlpha: false,
     antialias: true,
-  }) as WebGL2RenderingContext;
+  });
   if (!gl) {
     cc._showToast({
       // eslint-disable-next-line rulesdir/no-format-in-ts

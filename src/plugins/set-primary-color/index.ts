@@ -34,6 +34,7 @@ const configList = [
   },
 ] as const;
 
+// eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style
 const faviconLink = document.querySelector(
   "link[rel~='icon'][type]"
 ) as HTMLLinkElement;

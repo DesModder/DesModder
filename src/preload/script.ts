@@ -29,13 +29,11 @@ function runDesModder() {
 }
 
 function getCalcDesktopURL() {
-  return (
-    (document.querySelector("script[src*='calculator_desktop']") ??
-      document.querySelector("script[src*='calculator_geometry']") ??
-      document.querySelector(
-        "script[src*='calculator_3d']"
-      )) as HTMLScriptElement
-  )?.src;
+  const script: HTMLScriptElement | null =
+    document.querySelector("script[src*='calculator_desktop']") ??
+    document.querySelector("script[src*='calculator_geometry']") ??
+    document.querySelector("script[src*='calculator_3d']");
+  return script?.src;
 }
 
 async function load(pluginsForceDisabled: Set<string>) {

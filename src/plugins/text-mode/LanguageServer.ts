@@ -125,7 +125,7 @@ function setCalcState(tm: TextMode, state: GraphState) {
   // Alternative method this.view.focus() after setState does not prevent
   //   the current autocomplete tooltip from disappearing
   const ae = document.activeElement as HTMLElement | undefined;
-  const oldBlur = ae?.blur;
+  const oldBlur = ae?.blur.bind(ae);
   if (ae) ae.blur = () => {};
   state.graph.product = tm.cc.graphSettings.config.product;
   tm.calc.setState(state, { allowUndo: true, fromTextMode: true } as any);

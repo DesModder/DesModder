@@ -238,9 +238,7 @@ export class PartialFunctionCallView extends Component<{
                   <FormattedDocstring
                     docstring={() =>
                       parseDocstring(
-                        tokenizeDocstring(
-                          this.props.partialFunctionCallDoc() as string
-                        )
+                        tokenizeDocstring(this.props.partialFunctionCallDoc()!)
                       )
                     }
                     selectedParam={() =>

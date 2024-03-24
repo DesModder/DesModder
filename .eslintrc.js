@@ -8,7 +8,8 @@ module.exports = {
     es2021: true,
   },
   plugins: ["rulesdir"],
-  extends: ["standard-with-typescript", "prettier"],
+  // "love" is a new name for "standard-with-typescript"
+  extends: ["love", "prettier"],
   overrides: [],
   parserOptions: {
     ecmaVersion: "latest",
@@ -61,5 +62,6 @@ module.exports = {
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": "off",
     "no-console": "error",
+    "@typescript-eslint/no-unsafe-argument": "off",
   },
 };

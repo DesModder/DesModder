@@ -1149,7 +1149,7 @@ describe("Automatic IDs", () => {
       }
     `;
     const text = s.replace(/\|/g, "");
-    const positions = [...s.matchAll(/\|/g)].map((m, i) => m.index! - i);
+    const positions = [...s.matchAll(/\|/g)].map((m, i) => m.index - i);
     const rawIDs = positions
       .filter((_, i) => i % 2 === 0)
       .map((x, i) => ({ from: x, to: positions[2 * i + 1], id: `raw-${i}` }));
