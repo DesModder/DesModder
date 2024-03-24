@@ -1,9 +1,9 @@
-import { builders, printer } from "#prettier/doc";
-import type * as DocNS from "#prettier/doc";
+import * as builders from "../prettier-doc/doc-builders";
+import * as printer from "../prettier-doc/doc-printer";
+import { Doc } from "../prettier-doc/doc";
 import TextAST, { NodePath } from "../TextAST/Synthetic";
 import needsParens from "./needsParens";
 
-type Doc = DocNS.builders.Doc;
 const { group, indent, join, ifBreak } = builders;
 
 export interface TextEmitOptions {

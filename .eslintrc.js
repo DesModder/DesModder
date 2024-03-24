@@ -22,7 +22,7 @@ module.exports = {
     "dist",
     "dist-ts",
     "hooks",
-    "LICENSE",
+    "LICENSE*",
     // Opt-out instead of opt-in to avoid forgetting to include some js file.
     "*.md",
     "*.json",
