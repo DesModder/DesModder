@@ -52,6 +52,7 @@
     "@types/chrome": "0.0.239",
     "@types/jest": "^29.5.12",
     "@types/moo": "^0.5.5",
+    "@types/prettier": "^2.7.3",
     "esbuild": "^0.18.11",
     "esbuild-plugin-copy": "^2.1.1",
     "esbuild-plugin-less": "^1.2.1",
