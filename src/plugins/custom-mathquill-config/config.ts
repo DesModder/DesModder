@@ -65,6 +65,11 @@ export const configList = [
     type: "boolean",
     default: false,
   },
+  {
+    key: "strongMismatchedBrackets",
+    type: "boolean",
+    default: false,
+  },
 ] satisfies ConfigItem[];
 
 export interface Config {

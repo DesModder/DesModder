@@ -325,6 +325,8 @@ custom-mathquill-config-opt-extendedGreek-name = More Greek Letters
 custom-mathquill-config-opt-extendedGreek-desc = Enables replacements for all supported greek letters
 custom-mathquill-config-opt-lessFSpacing-name = Less Spacing Around "f"
 custom-mathquill-config-opt-lessFSpacing-desc = Reduces extra spacing around the letter "f"
+custom-mathquill-config-opt-strongMismatchedBrackets-name = strong mismatch brackets
+custom-mathquill-config-opt-strongMismatchedBrackets-desc = prevent '(' from matching with ']' and vice versa
 
 ## Code Golf
 code-golf-name = Code Golf

@@ -1,0 +1,20 @@
+# custom mathquill config Replacements
+
+*plugin* `better-evaluation-view`
+
+## Override mismatching brackets object
+
+*Description* `Override the damned object responsible for matching '[' with ')' and '(' with ']'`
+
+*Find* => `mismatchedBrackets`
+```js
+{"(":"]","[":")"}
+```
+
+*Replace* `mismatchedBrackets` with
+```js
+{
+    "(": DesModder.exposedPlugins['custom-mathquill-config']?.settings?.strongMismatchedBrackets ? ")" : "]",
+    "[": DesModder.exposedPlugins['custom-mathquill-config']?.settings?.strongMismatchedBrackets ? "]" : ")"
+}
+```
