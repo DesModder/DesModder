@@ -463,16 +463,12 @@ function normalizeDoc(doc: Doc) {
   });
 }
 
-function replaceEndOfLine(doc: Doc) {
+function replaceEndOfLine(doc: Doc, replacement = literalline) {
   return mapDoc(doc, (currentDoc) =>
-    typeof currentDoc === "string" && currentDoc.includes("\n")
-      ? replaceTextEndOfLine(currentDoc)
+    typeof currentDoc === "string"
+      ? join(replacement, currentDoc.split("\n"))
       : currentDoc
   );
-}
-
-function replaceTextEndOfLine(text: string, replacement = literalline) {
-  return join(replacement, text.split("\n"));
 }
 
 function canBreakFn(doc: Doc) {
@@ -496,7 +492,6 @@ export default {
   normalizeParts,
   normalizeDoc,
   cleanDoc,
-  replaceTextEndOfLine,
   replaceEndOfLine,
   canBreak,
 };
