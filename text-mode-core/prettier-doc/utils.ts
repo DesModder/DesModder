@@ -275,29 +275,29 @@ function removeLines(doc: Doc) {
   return mapDoc(doc, removeLinesFn);
 }
 
-const isHardline = (doc: Doc, nextDoc: Doc) =>
-  isType(doc, DT.Line) && doc.hard && isType(nextDoc, DT.BreakParent);
+function stripTrailingHardlineFromParts(parts: Doc[]) {
+  parts = [...parts];
 
-function stripDocTrailingHardlineFromDoc(doc: Doc): Doc {
-  if (!doc) {
-    return doc;
+  while (
+    parts.length >= 2 &&
+    isType(parts.at(-2)!, DT.Line) &&
+    isType(parts.at(-1)!, DT.BreakParent)
+  ) {
+    parts.length -= 2;
   }
 
-  if (isArray(doc) || isType(doc, DT.Fill)) {
-    const parts = getDocParts(doc);
-
-    while (parts.length > 1 && isHardline(parts.at(-2)!, parts.at(-1)!)) {
-      parts.length -= 2;
-    }
-
-    if (parts.length > 0) {
-      const lastPart = stripDocTrailingHardlineFromDoc(parts.at(-1)!);
-      parts[parts.length - 1] = lastPart;
-    }
-    return Array.isArray(doc) ? parts : { ...doc, parts };
+  if (parts.length > 0) {
+    const lastPart = stripTrailingHardlineFromDoc(parts.at(-1)!);
+    parts[parts.length - 1] = lastPart;
   }
 
-  if (typeof doc === "string") return doc;
+  return parts;
+}
+
+function stripTrailingHardlineFromDoc(doc: Doc): Doc {
+  if (isArray(doc)) return stripTrailingHardlineFromParts(doc);
+
+  if (typeof doc === "string") return doc.replace(/[\n\r]*$/, "");
 
   switch (doc.type) {
     case DT.Align:
@@ -306,26 +306,39 @@ function stripDocTrailingHardlineFromDoc(doc: Doc): Doc {
     case DT.Group:
     case DT.LineSuffix:
     case DT.Label: {
-      const contents = stripDocTrailingHardlineFromDoc(doc.contents);
+      const contents = stripTrailingHardlineFromDoc(doc.contents);
       return { ...doc, contents };
     }
-    case DT.IfBreak: {
-      const breakContents = stripDocTrailingHardlineFromDoc(doc.breakContents);
-      const flatContents = stripDocTrailingHardlineFromDoc(doc.flatContents);
-      return { ...doc, breakContents, flatContents };
-    }
+
+    case DT.IfBreak:
+      return {
+        ...doc,
+        breakContents: stripTrailingHardlineFromDoc(doc.breakContents),
+        flatContents: stripTrailingHardlineFromDoc(doc.flatContents),
+      };
+
+    case DT.Fill:
+      return { ...doc, parts: stripTrailingHardlineFromParts(doc.parts) };
+
+    case DT.Cursor:
+    case DT.Trim:
+    case DT.LineSuffixBoundary:
+    case DT.Line:
+    case DT.BreakParent:
+      // No op
+      break;
+
+    default:
+      doc satisfies never;
+      throw invalidDoc();
   }
 
   return doc;
 }
 
 function stripTrailingHardline(doc: Doc) {
-  if (typeof doc === "string") {
-    return doc.replace(/(?:\r?\n)*$/, "");
-  }
-
   // HACK remove ending hardline, original PR: #1984
-  return stripDocTrailingHardlineFromDoc(cleanDoc(doc));
+  return stripTrailingHardlineFromDoc(cleanDoc(doc));
 }
 
 function cleanDocFn(doc: Doc): Doc {

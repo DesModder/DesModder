@@ -226,7 +226,7 @@ function fits(
   mustBeFlat?: boolean
 ): boolean {
   let restIdx = restCommands.length;
-  /** @type {Array<Omit<Command, 'ind'>>} */
+
   const cmds: Array<Omit<Command, "ind">> = [next];
   // `out` is only used for width counting because `trim` requires to look
   // backwards for space characters.
