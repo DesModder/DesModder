@@ -1,7 +1,7 @@
 import { DT } from "./doc-types";
 import _stringWidth from "#string-width";
 import { fill, indent, hardline } from "./builders";
-import { isArray, getDocParts, propagateBreaks } from "./utils";
+import { isArray, propagateBreaks } from "./utils";
 import type { Align, Doc } from "./doc";
 
 const notAsciiRegex = /[^\x20-\x7F]/;
@@ -250,7 +250,7 @@ function fits(
       out.push(doc);
       width -= stringWidth(doc);
     } else if (isArray(doc) || doc.type === DT.Fill) {
-      const parts = getDocParts(doc);
+      const parts = isArray(doc) ? doc : doc.parts;
       for (let i = parts.length - 1; i >= 0; i--) {
         cmds.push({ mode, doc: parts[i] });
       }

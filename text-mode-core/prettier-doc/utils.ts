@@ -1,6 +1,6 @@
 import { DT } from "./doc-types";
 import { literalline, join } from "./builders";
-import { Doc, DocCommand, Fill, Group } from "./doc";
+import { Doc, DocCommand, Group } from "./doc";
 
 export function invalidDoc() {
   return new Error("Invalid doc");
@@ -15,14 +15,6 @@ export function isType<T extends DocCommand["type"]>(
   type: T
 ): doc is DocCommand & { type: T } {
   return !!doc && (doc as any).type === type;
-}
-
-export function getDocParts(doc: Doc[] | Fill): Doc[] {
-  if (isArray(doc)) {
-    return doc;
-  }
-
-  return doc.parts;
 }
 
 // Using a unique object to compare by reference.
@@ -61,7 +53,7 @@ function traverseDoc(
     // so that they are processed in the original order
     // when the stack is popped.
     if (isArray(doc) || isType(doc, DT.Fill)) {
-      const parts = getDocParts(doc);
+      const parts = isArray(doc) ? doc : doc.parts;
       for (let ic = parts.length, i = ic - 1; i >= 0; --i) {
         docsStack.push(parts[i]);
       }
@@ -491,7 +483,6 @@ function canBreak(doc: Doc) {
 
 export default {
   isConcat: isArray,
-  getDocParts,
   willBreak,
   traverseDoc,
   findInDoc,
