@@ -1,22 +1,20 @@
-// import _stringWidth from "#string-width";
+import _stringWidth from "#string-width";
 import { fill, cursor, indent } from "./doc-builders";
 import { isConcat, getDocParts } from "./doc-utils";
 import type { Align, Doc } from "./doc";
 
-// TODO-prettier: unit tests had error in importing string-width. Fix.
-// const notAsciiRegex = /[^\x20-\x7F]/;
+const notAsciiRegex = /[^\x20-\x7F]/;
 function stringWidth(text: string) {
   if (!text) {
     return 0;
   }
-  return text.length;
 
-  // // shortcut to avoid needless string `RegExp`s, replacements, and allocations within `string-width`
-  // if (!notAsciiRegex.test(text)) {
-  //   return text.length;
-  // }
+  // shortcut to avoid needless string `RegExp`s, replacements, and allocations within `string-width`
+  if (!notAsciiRegex.test(text)) {
+    return text.length;
+  }
 
-  // return _stringWidth(text);
+  return _stringWidth(text);
 }
 
 interface Options {
