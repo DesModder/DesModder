@@ -177,29 +177,41 @@ function generateInd(ind: Indent, newPart: IndentPart, options: Options) {
   }
 }
 
-function trim(out: (string | symbol)[]) {
-  if (out.length === 0) {
-    return 0;
-  }
-
+// Trim `Tab(U+0009)` and `Space(U+0020)` at the end of line
+function trim(out: (string | typeof CURSOR_PLACEHOLDER)[]) {
   let trimCount = 0;
+  let cursorCount = 0;
+  let outIndex = out.length;
 
-  // Trim whitespace at the end of line
-  let last;
-  while (
-    out.length > 0 &&
-    typeof (last = out.at(-1)) === "string" &&
-    /^[\t ]*$/.test(last)
-  ) {
-    trimCount += last.length;
-    out.pop();
+  // eslint-disable-next-line no-labels
+  outer: while (outIndex--) {
+    const last = out[outIndex];
+
+    if (last === CURSOR_PLACEHOLDER) {
+      cursorCount++;
+      continue;
+    }
+
+    // Not using a regexp here because regexps for trimming off trailing
+    // characters are known to have performance issues.
+    for (let charIndex = last.length - 1; charIndex >= 0; charIndex--) {
+      const char = last[charIndex];
+      if (char === " " || char === "\t") {
+        trimCount++;
+      } else {
+        out[outIndex] = last.slice(0, charIndex + 1);
+        // eslint-disable-next-line no-labels
+        break outer;
+      }
+    }
   }
 
-  last = out.at(-1);
-  if (out.length > 0 && typeof last === "string") {
-    const trimmed = last.replace(/[\t ]*$/, "");
-    trimCount += last.length - trimmed.length;
-    out[out.length - 1] = trimmed;
+  if (trimCount > 0 || cursorCount > 0) {
+    out.length = outIndex + 1;
+
+    while (cursorCount-- > 0) {
+      out.push(CURSOR_PLACEHOLDER);
+    }
   }
 
   return trimCount;
@@ -318,7 +330,7 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
   // while loop which is much faster. The while loop below adds new
   // cmds to the array instead of recursively calling `print`.
   const cmds: Command[] = [{ ind: rootIndent(), mode: MODE_BREAK, doc }];
-  const out: (string | symbol)[] = [];
+  const out: (string | typeof CURSOR_PLACEHOLDER)[] = [];
   let shouldRemeasure = false;
   const lineSuffix: Command[] = [];
   let printedCursorCount = 0;
