@@ -85,7 +85,7 @@ export function fill(parts: Doc[]): Doc {
 
 export function ifBreak(
   breakContents: Doc,
-  flatContents: Doc,
+  flatContents: Doc = "",
   opts: { groupId?: symbol | undefined } = {}
 ): Doc {
   if (process.env.NODE_ENV !== "production") {

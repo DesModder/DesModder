@@ -70,12 +70,7 @@ function traverseDoc(
 
     switch (doc.type) {
       case DT.IfBreak:
-        if (doc.flatContents) {
-          docsStack.push(doc.flatContents);
-        }
-        if (doc.breakContents) {
-          docsStack.push(doc.breakContents);
-        }
+        docsStack.push(doc.flatContents, doc.breakContents);
         break;
       case DT.Group:
         if (shouldTraverseConditionalGroups && doc.expandedStates) {
@@ -143,9 +138,11 @@ function mapDoc<T = Doc>(doc: Doc, cb: (doc: Doc) => T): T {
         return cb({ ...doc, parts });
       }
       case DT.IfBreak: {
-        const breakContents = doc.breakContents && rec(doc.breakContents);
-        const flatContents = doc.flatContents && rec(doc.flatContents);
-        return cb({ ...doc, breakContents, flatContents });
+        return cb({
+          ...doc,
+          breakContents: rec(doc.breakContents),
+          flatContents: rec(doc.flatContents),
+        });
       }
       case DT.Group: {
         if (doc.expandedStates) {
@@ -265,7 +262,7 @@ function removeLinesFn(doc: Doc) {
   }
 
   if (doc.type === DT.IfBreak) {
-    return doc.flatContents || "";
+    return doc.flatContents;
   }
 
   return doc;
