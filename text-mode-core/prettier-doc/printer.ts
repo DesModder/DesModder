@@ -1,6 +1,6 @@
 import { DT } from "./doc-types";
 import _stringWidth from "#string-width";
-import { fill, cursor, indent, hardline } from "./builders";
+import { fill, indent, hardline } from "./builders";
 import { isArray, getDocParts } from "./utils";
 import type { Align, Doc } from "./doc";
 
@@ -57,8 +57,9 @@ interface Command {
 
 type GroupModeMap = Record<symbol, Mode>;
 
-const MODE_BREAK = 1 as const;
-const MODE_FLAT = 2 as const;
+const MODE_BREAK = Symbol("MODE_BREAK");
+const MODE_FLAT = Symbol("MODE_FLAT");
+const CURSOR_PLACEHOLDER = Symbol("cursor");
 
 function rootIndent(): Indent {
   return { value: "", length: 0, queue: [] };
@@ -335,7 +336,7 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
     } else {
       switch (doc.type) {
         case DT.Cursor:
-          out.push(cursor.placeholder);
+          out.push(CURSOR_PLACEHOLDER);
 
           break;
         case DT.Indent:
@@ -371,7 +372,7 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
             case MODE_BREAK: {
               shouldRemeasure = false;
 
-              const next = { ind, mode: MODE_FLAT, doc: doc.contents };
+              const next: Command = { ind, mode: MODE_FLAT, doc: doc.contents };
               const rem = width - pos;
               const hasLineSuffix = lineSuffix.length > 0;
 
@@ -403,7 +404,11 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
                         break;
                       } else {
                         const state = doc.expandedStates[i];
-                        const cmd = { ind, mode: MODE_FLAT, doc: state };
+                        const cmd: Command = {
+                          ind,
+                          mode: MODE_FLAT,
+                          doc: state,
+                        };
 
                         if (fits(cmd, cmds, rem, hasLineSuffix, groupModeMap)) {
                           cmds.push(cmd);
@@ -455,8 +460,16 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
           }
 
           const [content, whitespace] = parts;
-          const contentFlatCmd = { ind, mode: MODE_FLAT, doc: content };
-          const contentBreakCmd = { ind, mode: MODE_BREAK, doc: content };
+          const contentFlatCmd: Command = {
+            ind,
+            mode: MODE_FLAT,
+            doc: content,
+          };
+          const contentBreakCmd: Command = {
+            ind,
+            mode: MODE_BREAK,
+            doc: content,
+          };
           const contentFits = fits(
             contentFlatCmd,
             [],
@@ -475,8 +488,16 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
             break;
           }
 
-          const whitespaceFlatCmd = { ind, mode: MODE_FLAT, doc: whitespace };
-          const whitespaceBreakCmd = { ind, mode: MODE_BREAK, doc: whitespace };
+          const whitespaceFlatCmd: Command = {
+            ind,
+            mode: MODE_FLAT,
+            doc: whitespace,
+          };
+          const whitespaceBreakCmd: Command = {
+            ind,
+            mode: MODE_BREAK,
+            doc: whitespace,
+          };
 
           if (parts.length === 2) {
             if (contentFits) {
@@ -493,11 +514,11 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
           // elements to a new array would make this algorithm quadratic,
           // which is unusable for large arrays (e.g. large texts in JSX).
           parts.splice(0, 2);
-          const remainingCmd = { ind, mode, doc: fill(parts) };
+          const remainingCmd: Command = { ind, mode, doc: fill(parts) };
 
           const secondContent = parts[0];
 
-          const firstAndSecondContentFlatCmd = {
+          const firstAndSecondContentFlatCmd: Command = {
             ind,
             mode: MODE_FLAT,
             doc: [content, whitespace, secondContent],
@@ -616,10 +637,10 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
     }
   }
 
-  const cursorPlaceholderIndex = out.indexOf(cursor.placeholder);
+  const cursorPlaceholderIndex = out.indexOf(CURSOR_PLACEHOLDER);
   if (cursorPlaceholderIndex !== -1) {
     const otherCursorPlaceholderIndex = out.indexOf(
-      cursor.placeholder,
+      CURSOR_PLACEHOLDER,
       cursorPlaceholderIndex + 1
     );
     const beforeCursor = out.slice(0, cursorPlaceholderIndex).join("");

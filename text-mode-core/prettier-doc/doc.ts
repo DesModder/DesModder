@@ -28,7 +28,6 @@ export interface BreakParent {
 
 export interface Cursor {
   type: DT.Cursor;
-  placeholder: symbol;
 }
 
 export interface Fill {

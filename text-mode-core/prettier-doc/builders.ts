@@ -142,7 +142,6 @@ export const literalline: Doc = [literallineWithoutBreakParent, breakParent];
 
 export const cursor: Cursor = {
   type: DT.Cursor,
-  placeholder: Symbol(DT.Cursor),
 };
 
 export function join(sep: Doc, arr: Doc[]): Doc {

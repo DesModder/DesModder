@@ -85,6 +85,11 @@ function traverseDoc(
 }
 
 function mapDoc<T = Doc>(doc: Doc, cb: (doc: Doc) => T): T {
+  // Avoid creating `Map`
+  if (typeof doc === "string") {
+    return cb(doc);
+  }
+
   // Within a doc tree, the same subtrees can be found multiple times.
   // E.g., often this happens in conditional groups.
   // As an optimization (those subtrees can be huge) and to maintain the
