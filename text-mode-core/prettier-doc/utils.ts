@@ -159,15 +159,16 @@ function mapDoc<T = Doc>(doc: Doc, cb: (doc: Doc) => T): T {
 
 function findInDoc<T = Doc>(doc: Doc, fn: (doc: Doc) => T, defaultValue: T): T {
   let result = defaultValue;
-  let hasStopped = false;
+  let shouldSkipFurtherProcessing = false;
   function findInDocOnEnterFn(doc: Doc) {
+    if (shouldSkipFurtherProcessing) {
+      return false;
+    }
+
     const maybeResult = fn(doc);
     if (maybeResult !== undefined) {
-      hasStopped = true;
+      shouldSkipFurtherProcessing = true;
       result = maybeResult;
-    }
-    if (hasStopped) {
-      return false;
     }
   }
   traverseDoc(doc, findInDocOnEnterFn);
