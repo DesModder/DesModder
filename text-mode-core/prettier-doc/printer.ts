@@ -1,7 +1,7 @@
 import { DT } from "./doc-types";
 import _stringWidth from "#string-width";
 import { fill, indent, hardline } from "./builders";
-import { isArray, getDocParts } from "./utils";
+import { isArray, getDocParts, propagateBreaks } from "./utils";
 import type { Align, Doc } from "./doc";
 
 const notAsciiRegex = /[^\x20-\x7F]/;
@@ -334,6 +334,8 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
   let shouldRemeasure = false;
   const lineSuffix: Command[] = [];
   let printedCursorCount = 0;
+
+  propagateBreaks(doc);
 
   while (cmds.length > 0) {
     const { ind, mode, doc } = cmds.pop()!;

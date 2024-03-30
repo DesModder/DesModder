@@ -220,7 +220,7 @@ function breakParentGroup(groupStack: Group[]) {
   return null;
 }
 
-function propagateBreaks(doc: Doc) {
+export function propagateBreaks(doc: Doc) {
   const alreadyVisitedSet = new Set();
   const groupStack: Group[] = [];
   function propagateBreaksOnEnterFn(doc: Doc) {
