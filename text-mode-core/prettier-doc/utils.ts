@@ -2,6 +2,10 @@ import { DT } from "./doc-types";
 import { literalline, join } from "./builders";
 import { Doc, DocCommand, Fill, Group } from "./doc";
 
+export function invalidDoc() {
+  return new Error("Invalid doc");
+}
+
 export function isArray(doc: Doc): doc is Doc[] {
   return Array.isArray(doc);
 }
@@ -115,29 +119,41 @@ function mapDoc<T = Doc>(doc: Doc, cb: (doc: Doc) => T): T {
 
     if (typeof doc === "string") return cb(doc);
 
-    if (doc.type === DT.Fill) {
-      const parts = doc.parts.map(rec);
-      return cb({ ...doc, parts });
+    switch (doc.type) {
+      case DT.Fill: {
+        const parts = doc.parts.map(rec);
+        return cb({ ...doc, parts });
+      }
+      case DT.IfBreak: {
+        const breakContents = doc.breakContents && rec(doc.breakContents);
+        const flatContents = doc.flatContents && rec(doc.flatContents);
+        return cb({ ...doc, breakContents, flatContents });
+      }
+      case DT.Group: {
+        if (doc.expandedStates) {
+          const expandedStates = doc.expandedStates.map(rec);
+          const contents = expandedStates[0];
+          return cb({ ...doc, contents, expandedStates });
+        } else {
+          return cb({ ...doc, contents: rec(doc.contents) });
+        }
+      }
+      case DT.Align:
+      case DT.Indent:
+      case DT.IndentIfBreak:
+      case DT.Label:
+      case DT.LineSuffix:
+        return cb({ ...doc, contents: rec(doc.contents) });
+      case DT.Cursor:
+      case DT.Trim:
+      case DT.LineSuffixBoundary:
+      case DT.Line:
+      case DT.BreakParent:
+        return cb(doc);
+      default:
+        doc satisfies never;
+        throw invalidDoc();
     }
-
-    if (doc.type === DT.IfBreak) {
-      const breakContents = doc.breakContents && rec(doc.breakContents);
-      const flatContents = doc.flatContents && rec(doc.flatContents);
-      return cb({ ...doc, breakContents, flatContents });
-    }
-
-    if (doc.type === DT.Group && doc.expandedStates) {
-      const expandedStates = doc.expandedStates.map(rec);
-      const contents = expandedStates[0];
-      return cb({ ...doc, contents, expandedStates });
-    }
-
-    if ("contents" in doc && doc.contents) {
-      const contents = rec(doc.contents);
-      return cb({ ...doc, contents });
-    }
-
-    return cb(doc);
   }
 }
 
@@ -293,8 +309,34 @@ function stripTrailingHardline(doc: Doc) {
   return stripDocTrailingHardlineFromDoc(cleanDoc(doc));
 }
 
-function cleanDocFn(doc: Doc) {
-  if (typeof doc === "string" || Array.isArray(doc)) return doc;
+function cleanDocFn(doc: Doc): Doc {
+  if (typeof doc === "string") return doc;
+
+  if (isArray(doc)) {
+    const parts: Doc[] = [];
+    for (const part of doc) {
+      if (!part) {
+        continue;
+      }
+      const [currentPart, ...restParts] = isArray(part) ? part : [part];
+      const last = parts.at(-1);
+      if (typeof currentPart === "string" && typeof last === "string") {
+        parts[parts.length - 1] = last + currentPart;
+      } else {
+        parts.push(currentPart);
+      }
+      parts.push(...restParts);
+    }
+
+    if (parts.length === 0) {
+      return "";
+    }
+
+    if (parts.length === 1) {
+      return parts[0];
+    }
+    return parts;
+  }
 
   switch (doc.type) {
     case DT.Fill:
@@ -320,7 +362,7 @@ function cleanDocFn(doc: Doc) {
     case DT.Indent:
     case DT.IndentIfBreak:
     case DT.LineSuffix:
-      if (!("contents" in doc) || !doc.contents) {
+      if (!doc.contents) {
         return "";
       }
       break;
@@ -329,35 +371,19 @@ function cleanDocFn(doc: Doc) {
         return "";
       }
       break;
+    case DT.Cursor:
+    case DT.Trim:
+    case DT.LineSuffixBoundary:
+    case DT.Line:
+    case DT.Label:
+    case DT.BreakParent:
+      // No op
+      break;
+    default:
+      throw invalidDoc();
   }
 
-  if (!isArray(doc)) {
-    return doc;
-  }
-
-  const parts: Doc[] = [];
-  for (const part of doc) {
-    if (!part) {
-      continue;
-    }
-    const [currentPart, ...restParts] = isArray(part) ? part : [part];
-    const last = parts.at(-1);
-    if (typeof currentPart === "string" && typeof last === "string") {
-      parts[parts.length - 1] = last + currentPart;
-    } else {
-      parts.push(currentPart);
-    }
-    parts.push(...restParts);
-  }
-
-  if (parts.length === 0) {
-    return "";
-  }
-
-  if (parts.length === 1) {
-    return parts[0];
-  }
-  return parts;
+  return doc;
 }
 // A safer version of `normalizeDoc`
 // - `normalizeDoc` concat strings and flat array in `fill`, while `cleanDoc` don't
