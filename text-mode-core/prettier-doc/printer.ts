@@ -321,6 +321,7 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
   const out: (string | symbol)[] = [];
   let shouldRemeasure = false;
   const lineSuffix: Command[] = [];
+  let printedCursorCount = 0;
 
   while (cmds.length > 0) {
     const { ind, mode, doc } = cmds.pop()!;
@@ -336,7 +337,11 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
     } else {
       switch (doc.type) {
         case DT.Cursor:
+          if (printedCursorCount >= 2) {
+            throw new Error("There are too many 'cursor' in doc.");
+          }
           out.push(CURSOR_PLACEHOLDER);
+          printedCursorCount++;
 
           break;
         case DT.Indent:
