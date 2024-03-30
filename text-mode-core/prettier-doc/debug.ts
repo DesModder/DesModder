@@ -1,4 +1,4 @@
-import { isConcat, getDocParts, isType } from "./doc-utils";
+import { isConcat, getDocParts, isType } from "./utils";
 import type { Concat, Doc } from "./doc";
 
 function flattenDoc(doc: Doc): Doc {

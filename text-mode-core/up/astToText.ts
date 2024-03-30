@@ -1,5 +1,5 @@
-import * as builders from "../prettier-doc/doc-builders";
-import * as printer from "../prettier-doc/doc-printer";
+import * as builders from "../prettier-doc/builders";
+import * as printer from "../prettier-doc/printer";
 import { Doc } from "../prettier-doc/doc";
 import TextAST, { NodePath } from "../TextAST/Synthetic";
 import needsParens from "./needsParens";

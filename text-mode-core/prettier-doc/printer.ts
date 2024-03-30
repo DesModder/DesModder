@@ -1,6 +1,6 @@
 import _stringWidth from "#string-width";
-import { fill, cursor, indent } from "./doc-builders";
-import { isConcat, getDocParts } from "./doc-utils";
+import { fill, cursor, indent } from "./builders";
+import { isConcat, getDocParts } from "./utils";
 import type { Align, Doc } from "./doc";
 
 const notAsciiRegex = /[^\x20-\x7F]/;

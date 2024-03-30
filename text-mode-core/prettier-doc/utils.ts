@@ -1,4 +1,4 @@
-import { literalline, join } from "./doc-builders";
+import { literalline, join } from "./builders";
 import { Concat, Doc, DocCommand, Fill, Group } from "./doc";
 
 export function isConcat(doc: Doc): doc is Doc[] | Concat {
