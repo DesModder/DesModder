@@ -701,7 +701,6 @@ function startsOrEndsWithWord(dir: 0 | -1) {
 
     switch (doc.type) {
       case DT.Fill:
-      case DT.Concat:
         return fn(doc.parts.at(dir));
       case DT.IfBreak:
         return fn(doc.flatContents) || fn(doc.breakContents);

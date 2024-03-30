@@ -3,8 +3,7 @@
 // However, there are some pitfalls if you _export_ const enums.
 // See https://www.typescriptlang.org/docs/handbook/enums.html#const-enum-pitfalls
 export const enum DT {
-  String = "string",
-  Concat = "concat",
+  // String and Array do not follow the pattern of the rest.
   Cursor = "cursor",
   Indent = "indent",
   Align = "align",

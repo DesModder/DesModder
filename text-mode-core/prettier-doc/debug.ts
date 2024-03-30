@@ -1,13 +1,13 @@
 import { DT } from "./doc-types";
-import { isConcat, getDocParts, isType } from "./utils";
-import type { Concat, Doc } from "./doc";
+import { isArray, isType } from "./utils";
+import type { Doc } from "./doc";
 
 function flattenDoc(doc: Doc): Doc {
-  if (isConcat(doc)) {
+  if (isArray(doc)) {
     const res = [];
-    for (const part of getDocParts(doc)) {
-      if (isConcat(part)) {
-        res.push(...(flattenDoc(part) as Concat).parts);
+    for (const part of doc) {
+      if (isArray(part)) {
+        res.push(...(flattenDoc(part) as Doc[]));
       } else {
         const flattened = flattenDoc(part);
         if (flattened !== "") {
@@ -16,7 +16,7 @@ function flattenDoc(doc: Doc): Doc {
       }
     }
 
-    return { type: DT.Concat, parts: res };
+    return res;
   }
 
   if (typeof doc === "string") return doc;
@@ -62,8 +62,8 @@ export function printDocToDebug(doc: Doc) {
       return JSON.stringify(doc);
     }
 
-    if (isConcat(doc)) {
-      const printed = getDocParts(doc).map(printDoc).filter(Boolean);
+    if (isArray(doc)) {
+      const printed = doc.map(printDoc).filter(Boolean);
       return printed.length === 1 ? printed[0] : `[${printed.join(", ")}]`;
     }
 

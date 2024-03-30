@@ -1,5 +1,5 @@
 import { DT } from "./doc-types";
-import type { Align, Concat, Cursor, Doc } from "./doc";
+import type { Align, Cursor, Doc } from "./doc";
 
 export function assertDoc(val: unknown): asserts val is Doc {
   if (typeof val === "string") {
@@ -25,23 +25,6 @@ export interface GroupOptions {
   shouldBreak?: boolean | undefined;
   id?: symbol | undefined;
   expandedStates?: Doc[];
-}
-
-/** @deprecated use `Doc[]` instead */
-export function concat(parts: Doc[]): Concat {
-  if (process.env.NODE_ENV !== "production") {
-    for (const part of parts) {
-      assertDoc(part);
-    }
-  }
-
-  // We cannot do this until we change `printJSXElement` to not
-  // access the internals of a document directly.
-  // if(parts.length === 1) {
-  //   // If it's a single document, no need to concat it.
-  //   return parts[0];
-  // }
-  return { type: DT.Concat, parts };
 }
 
 export function indent(contents: Doc): Doc {
@@ -154,18 +137,15 @@ export const literallineWithoutBreakParent: Doc = {
 
 export const line: Doc = { type: DT.Line };
 export const softline: Doc = { type: DT.Line, soft: true };
-export const hardline: Doc = concat([hardlineWithoutBreakParent, breakParent]);
-export const literalline: Doc = concat([
-  literallineWithoutBreakParent,
-  breakParent,
-]);
+export const hardline: Doc = [hardlineWithoutBreakParent, breakParent];
+export const literalline: Doc = [literallineWithoutBreakParent, breakParent];
 
 export const cursor: Cursor = {
   type: DT.Cursor,
   placeholder: Symbol(DT.Cursor),
 };
 
-export function join(sep: Doc, arr: Doc[]): Concat {
+export function join(sep: Doc, arr: Doc[]): Doc {
   const res = [];
 
   for (let i = 0; i < arr.length; i++) {
@@ -176,7 +156,7 @@ export function join(sep: Doc, arr: Doc[]): Concat {
     res.push(arr[i]);
   }
 
-  return concat(res);
+  return res;
 }
 
 export function addAlignmentToDoc(doc: Doc, size: number, tabWidth: number) {

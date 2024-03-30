@@ -1,7 +1,7 @@
 import { DT } from "./doc-types";
 import _stringWidth from "#string-width";
-import { fill, cursor, indent } from "./builders";
-import { isConcat, getDocParts } from "./utils";
+import { fill, cursor, indent, hardline } from "./builders";
+import { isArray, getDocParts } from "./utils";
 import type { Align, Doc } from "./doc";
 
 const notAsciiRegex = /[^\x20-\x7F]/;
@@ -231,7 +231,7 @@ function fits(
     if (typeof doc === "string") {
       out.push(doc);
       width -= stringWidth(doc);
-    } else if (isConcat(doc) || doc.type === DT.Fill) {
+    } else if (isArray(doc) || doc.type === DT.Fill) {
       const parts = getDocParts(doc);
       for (let i = parts.length - 1; i >= 0; i--) {
         cmds.push({ mode, doc: parts[i] });
@@ -327,10 +327,9 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
       const formatted = newLine !== "\n" ? doc.replace(/\n/g, newLine) : doc;
       out.push(formatted);
       pos += stringWidth(formatted);
-    } else if (isConcat(doc)) {
-      const parts = getDocParts(doc);
-      for (let i = parts.length - 1; i >= 0; i--) {
-        cmds.push({ ind, mode, doc: parts[i] });
+    } else if (isArray(doc)) {
+      for (let i = doc.length - 1; i >= 0; i--) {
+        cmds.push({ ind, mode, doc: doc[i] });
       }
     } else {
       switch (doc.type) {
@@ -548,7 +547,7 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
           break;
         case DT.LineSuffixBoundary:
           if (lineSuffix.length > 0) {
-            cmds.push({ ind, mode, doc: { type: DT.Line, hard: true } });
+            cmds.push({ ind, mode, doc: hardline });
           }
           break;
         case DT.Line:

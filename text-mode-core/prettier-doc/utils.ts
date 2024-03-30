@@ -1,11 +1,9 @@
 import { DT } from "./doc-types";
 import { literalline, join } from "./builders";
-import { Concat, Doc, DocCommand, Fill, Group } from "./doc";
+import { Doc, DocCommand, Fill, Group } from "./doc";
 
-export function isConcat(doc: Doc): doc is Doc[] | Concat {
-  return (
-    Array.isArray(doc) || (typeof doc !== "string" && doc?.type === DT.Concat)
-  );
+export function isArray(doc: Doc): doc is Doc[] {
+  return Array.isArray(doc);
 }
 
 export function isType<T extends DocCommand["type"]>(
@@ -15,8 +13,8 @@ export function isType<T extends DocCommand["type"]>(
   return !!doc && (doc as any).type === type;
 }
 
-export function getDocParts(doc: Doc[] | Concat | Fill): Doc[] {
-  if (Array.isArray(doc)) {
+export function getDocParts(doc: Doc[] | Fill): Doc[] {
+  if (isArray(doc)) {
     return doc;
   }
 
@@ -55,7 +53,7 @@ function traverseDoc(
       // the parts need to be pushed onto the stack in reverse order,
       // so that they are processed in the original order
       // when the stack is popped.
-      if (isConcat(doc) || (typeof doc !== "string" && doc.type === DT.Fill)) {
+      if (isArray(doc) || isType(doc, DT.Fill)) {
         const parts = getDocParts(doc);
         for (let ic = parts.length, i = ic - 1; i >= 0; --i) {
           docsStack.push(parts[i]);
@@ -112,7 +110,7 @@ function mapDoc<T = Doc>(doc: Doc, cb: (doc: Doc) => T): T {
 
     if (typeof doc === "string") return cb(doc);
 
-    if (doc.type === DT.Concat || doc.type === DT.Fill) {
+    if (doc.type === DT.Fill) {
       const parts = doc.parts.map(rec);
       return cb({ ...doc, parts });
     }
@@ -245,7 +243,7 @@ function stripDocTrailingHardlineFromDoc(doc: Doc): Doc {
     return doc;
   }
 
-  if (isConcat(doc) || isType(doc, DT.Fill)) {
+  if (isArray(doc) || isType(doc, DT.Fill)) {
     const parts = getDocParts(doc);
 
     while (parts.length > 1 && isHardline(parts.at(-2)!, parts.at(-1)!)) {
@@ -324,18 +322,16 @@ function cleanDocFn(doc: Doc) {
       break;
   }
 
-  if (!isConcat(doc)) {
+  if (!isArray(doc)) {
     return doc;
   }
 
   const parts: Doc[] = [];
-  for (const part of getDocParts(doc)) {
+  for (const part of doc) {
     if (!part) {
       continue;
     }
-    const [currentPart, ...restParts] = isConcat(part)
-      ? getDocParts(part)
-      : [part];
+    const [currentPart, ...restParts] = isArray(part) ? part : [part];
     const last = parts.at(-1);
     if (typeof currentPart === "string" && typeof last === "string") {
       parts[parts.length - 1] = last + currentPart;
@@ -352,11 +348,11 @@ function cleanDocFn(doc: Doc) {
   if (parts.length === 1) {
     return parts[0];
   }
-  return Array.isArray(doc) ? parts : { ...doc, parts };
+  return parts;
 }
 // A safer version of `normalizeDoc`
-// - `normalizeDoc` concat strings and flat DT.CONCAT in `fill`, while `cleanDoc` don't
-// - On `concat` object, `normalizeDoc` always return object with `parts`, `cleanDoc` may return strings
+// - `normalizeDoc` concat strings and flat array in `fill`, while `cleanDoc` don't
+// - On array, `normalizeDoc` always return object with `parts`, `cleanDoc` may return strings
 // - `cleanDoc` also remove nested `group`s and empty `fill`/`align`/`indent`/`line-suffix`/`if-break` if possible
 function cleanDoc(doc: Doc): Doc {
   return mapDoc(doc, (currentDoc) => cleanDocFn(currentDoc));
@@ -373,8 +369,8 @@ function normalizeParts(parts: Doc[]): Doc {
       continue;
     }
 
-    if (isConcat(part)) {
-      restParts.unshift(...getDocParts(part));
+    if (isArray(part)) {
+      restParts.unshift(...part);
       continue;
     }
 
@@ -421,10 +417,8 @@ function replaceEndOfLine(doc: Doc) {
   );
 }
 
-// This function need return array
-// TODO: remove `.parts` when we remove `docBuilders.concat()`
 function replaceTextEndOfLine(text: string, replacement = literalline) {
-  return join(replacement, text.split("\n")).parts;
+  return join(replacement, text.split("\n"));
 }
 
 function canBreakFn(doc: Doc) {
@@ -436,7 +430,7 @@ function canBreak(doc: Doc) {
 }
 
 export default {
-  isConcat,
+  isConcat: isArray,
   getDocParts,
   willBreak,
   traverseDoc,

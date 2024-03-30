@@ -3,7 +3,6 @@ import { DT } from "./doc-types";
 export type DocCommand =
   | Align
   | BreakParent
-  | Concat
   | Cursor
   | Fill
   | Group
@@ -25,12 +24,6 @@ export interface Align {
 
 export interface BreakParent {
   type: DT.BreakParent;
-}
-
-// TODO-prettier: update removes Concat
-export interface Concat {
-  type: DT.Concat;
-  parts: Doc[];
 }
 
 export interface Cursor {
