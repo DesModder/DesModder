@@ -51,11 +51,11 @@ interface Indent {
 }
 interface Command {
   ind: Indent;
-  doc: any;
+  doc: Doc;
   mode: Mode;
 }
 
-let groupModeMap: Record<symbol, Mode>;
+type GroupModeMap = Record<symbol, Mode>;
 
 const MODE_BREAK = 1 as const;
 const MODE_FLAT = 2 as const;
@@ -209,6 +209,7 @@ function fits(
   restCommands: Command[],
   width: number,
   hasLineSuffix: boolean,
+  groupModeMap: GroupModeMap,
   mustBeFlat?: boolean
 ): boolean {
   let restIdx = restCommands.length;
@@ -257,7 +258,7 @@ function fits(
           // The most expanded state takes up the least space on the current line.
           const contents =
             doc.expandedStates && groupMode === MODE_BREAK
-              ? doc.expandedStates.at(-1)
+              ? doc.expandedStates.at(-1)!
               : doc.contents;
           cmds.push({ mode: groupMode, doc: contents });
           break;
@@ -307,7 +308,7 @@ interface PrintedDoc {
 }
 
 export function printDocToString(doc: Doc, options: Options): PrintedDoc {
-  groupModeMap = {};
+  const groupModeMap: GroupModeMap = {};
 
   const width = options.printWidth;
   const newLine = "\n";
@@ -374,7 +375,10 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
               const rem = width - pos;
               const hasLineSuffix = lineSuffix.length > 0;
 
-              if (!doc.break && fits(next, cmds, rem, hasLineSuffix)) {
+              if (
+                !doc.break &&
+                fits(next, cmds, rem, hasLineSuffix, groupModeMap)
+              ) {
                 cmds.push(next);
               } else {
                 // Expanded states are a rare case where a document
@@ -385,7 +389,7 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
                 // group has these, we need to manually go through
                 // these states and find the first one that fits.
                 if (doc.expandedStates) {
-                  const mostExpanded = doc.expandedStates.at(-1);
+                  const mostExpanded = doc.expandedStates.at(-1)!;
 
                   if (doc.break) {
                     cmds.push({ ind, mode: MODE_BREAK, doc: mostExpanded });
@@ -401,7 +405,7 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
                         const state = doc.expandedStates[i];
                         const cmd = { ind, mode: MODE_FLAT, doc: state };
 
-                        if (fits(cmd, cmds, rem, hasLineSuffix)) {
+                        if (fits(cmd, cmds, rem, hasLineSuffix, groupModeMap)) {
                           cmds.push(cmd);
 
                           break;
@@ -458,6 +462,7 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
             [],
             rem,
             lineSuffix.length > 0,
+            groupModeMap,
             true
           );
 
@@ -502,6 +507,7 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
             [],
             rem,
             lineSuffix.length > 0,
+            groupModeMap,
             true
           );
 

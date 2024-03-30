@@ -1,4 +1,4 @@
-This directory (prettier-doc) is based on the implementation of prettier/doc in https://github.com/prettier/prettier as of commit 7abc9bcb07e5a53f7dfc2899aa8de991b6d182ae (after version 2.8.8), subject to the following license.
+This directory (prettier-doc) is based on the implementation of prettier/doc in https://github.com/prettier/prettier as of commit aa3158d43eb6008e55e833e82acdd1bf41c4eeb7 (after version 2.8.8), subject to the following license.
 
 Copyright © James Long and contributors
 
