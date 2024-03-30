@@ -174,6 +174,10 @@ export function addAlignmentToDoc(doc: Doc, size: number, tabWidth: number) {
   return aligned;
 }
 
+/**
+ * Mark a doc with an arbitrary truthy value. This doesn't affect how the doc is printed, but can be useful for heuristics based on doc introspection.
+ * @param label If falsy, the `contents` doc is returned as is.
+ */
 export function label(label: string, contents: Doc): Doc {
-  return { type: DT.Label, label, contents };
+  return label ? { type: DT.Label, label, contents } : contents;
 }
