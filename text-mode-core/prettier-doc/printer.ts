@@ -1,3 +1,4 @@
+import { DT } from "./doc-types";
 import _stringWidth from "#string-width";
 import { fill, cursor, indent } from "./builders";
 import { isConcat, getDocParts } from "./utils";
@@ -110,7 +111,7 @@ function generateInd(ind: Indent, newPart: IndentPart, options: Options) {
 
   for (const part of queue) {
     switch (part.type) {
-      case "indent":
+      case DT.Indent:
         flush();
         if (options.useTabs) {
           addTabs(1);
@@ -230,25 +231,25 @@ function fits(
     if (typeof doc === "string") {
       out.push(doc);
       width -= stringWidth(doc);
-    } else if (isConcat(doc) || doc.type === "fill") {
+    } else if (isConcat(doc) || doc.type === DT.Fill) {
       const parts = getDocParts(doc);
       for (let i = parts.length - 1; i >= 0; i--) {
         cmds.push({ mode, doc: parts[i] });
       }
     } else {
       switch (doc.type) {
-        case "indent":
-        case "align":
-        case "indent-if-break":
-        case "label":
+        case DT.Indent:
+        case DT.Align:
+        case DT.IndentIfBreak:
+        case DT.Label:
           cmds.push({ mode, doc: doc.contents });
           break;
 
-        case "trim":
+        case DT.Trim:
           width += trim(out);
           break;
 
-        case "group": {
+        case DT.Group: {
           if (mustBeFlat && doc.break) {
             return false;
           }
@@ -262,7 +263,7 @@ function fits(
           break;
         }
 
-        case "if-break": {
+        case DT.IfBreak: {
           const groupMode = doc.groupId
             ? groupModeMap[doc.groupId] || MODE_FLAT
             : mode;
@@ -274,7 +275,7 @@ function fits(
           break;
         }
 
-        case "line":
+        case DT.Line:
           if (mode === MODE_BREAK || doc.hard) {
             return true;
           }
@@ -284,11 +285,11 @@ function fits(
           }
           break;
 
-        case "line-suffix":
+        case DT.LineSuffix:
           hasLineSuffix = true;
           break;
 
-        case "line-suffix-boundary":
+        case DT.LineSuffixBoundary:
           if (hasLineSuffix) {
             return false;
           }
@@ -333,15 +334,15 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
       }
     } else {
       switch (doc.type) {
-        case "cursor":
+        case DT.Cursor:
           out.push(cursor.placeholder);
 
           break;
-        case "indent":
+        case DT.Indent:
           cmds.push({ ind: makeIndent(ind, options), mode, doc: doc.contents });
 
           break;
-        case "align":
+        case DT.Align:
           cmds.push({
             ind: makeAlign(ind, doc.n, options),
             mode,
@@ -349,11 +350,11 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
           });
 
           break;
-        case "trim":
+        case DT.Trim:
           pos -= trim(out);
 
           break;
-        case "group":
+        case DT.Group:
           switch (mode) {
             case MODE_FLAT:
               if (!shouldRemeasure) {
@@ -442,7 +443,7 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
         //   "break".
         // * Neither content item fits on the line without breaking
         //   -> output the first content item and the whitespace with "break".
-        case "fill": {
+        case DT.Fill: {
           const rem = width - pos;
 
           const { parts } = doc;
@@ -514,12 +515,12 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
           }
           break;
         }
-        case "if-break":
-        case "indent-if-break": {
+        case DT.IfBreak:
+        case DT.IndentIfBreak: {
           const groupMode = doc.groupId ? groupModeMap[doc.groupId] : mode;
           if (groupMode === MODE_BREAK) {
             const breakContents =
-              doc.type === "if-break"
+              doc.type === DT.IfBreak
                 ? doc.breakContents
                 : doc.negate
                 ? doc.contents
@@ -530,7 +531,7 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
           }
           if (groupMode === MODE_FLAT) {
             const flatContents =
-              doc.type === "if-break"
+              doc.type === DT.IfBreak
                 ? doc.flatContents
                 : doc.negate
                 ? indent(doc.contents)
@@ -542,15 +543,15 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
 
           break;
         }
-        case "line-suffix":
+        case DT.LineSuffix:
           lineSuffix.push({ ind, mode, doc: doc.contents });
           break;
-        case "line-suffix-boundary":
+        case DT.LineSuffixBoundary:
           if (lineSuffix.length > 0) {
-            cmds.push({ ind, mode, doc: { type: "line", hard: true } });
+            cmds.push({ ind, mode, doc: { type: DT.Line, hard: true } });
           }
           break;
-        case "line":
+        case DT.Line:
           switch (mode) {
             case MODE_FLAT:
               if (!doc.hard) {
@@ -595,7 +596,7 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
               break;
           }
           break;
-        case "label":
+        case DT.Label:
           cmds.push({ ind, mode, doc: doc.contents });
           break;
         default:

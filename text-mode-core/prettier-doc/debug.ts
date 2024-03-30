@@ -1,3 +1,4 @@
+import { DT } from "./doc-types";
 import { isConcat, getDocParts, isType } from "./utils";
 import type { Concat, Doc } from "./doc";
 
@@ -15,12 +16,12 @@ function flattenDoc(doc: Doc): Doc {
       }
     }
 
-    return { type: "concat", parts: res };
+    return { type: DT.Concat, parts: res };
   }
 
   if (typeof doc === "string") return doc;
 
-  if (doc.type === "if-break") {
+  if (doc.type === DT.IfBreak) {
     return {
       ...doc,
       breakContents: flattenDoc(doc.breakContents),
@@ -28,7 +29,7 @@ function flattenDoc(doc: Doc): Doc {
     };
   }
 
-  if (doc.type === "group") {
+  if (doc.type === DT.Group) {
     return {
       ...doc,
       contents: flattenDoc(doc.contents),
@@ -36,8 +37,8 @@ function flattenDoc(doc: Doc): Doc {
     };
   }
 
-  if (doc.type === "fill") {
-    return { type: "fill", parts: doc.parts.map(flattenDoc) };
+  if (doc.type === DT.Fill) {
+    return { type: DT.Fill, parts: doc.parts.map(flattenDoc) };
   }
 
   if ("contents" in doc && doc.contents) {
@@ -66,10 +67,10 @@ export function printDocToDebug(doc: Doc) {
       return printed.length === 1 ? printed[0] : `[${printed.join(", ")}]`;
     }
 
-    if (doc.type === "line") {
+    if (doc.type === DT.Line) {
       const withBreakParent =
         Array.isArray(parentParts) &&
-        isType(parentParts[index + 1], "break-parent");
+        isType(parentParts[index + 1], DT.BreakParent);
       if (doc.literal) {
         return withBreakParent
           ? "literalline"
@@ -81,27 +82,27 @@ export function printDocToDebug(doc: Doc) {
       if (doc.soft) {
         return "softline";
       }
-      return "line";
+      return DT.Line;
     }
 
-    if (doc.type === "break-parent") {
+    if (doc.type === DT.BreakParent) {
       let prev;
       const afterHardline =
         Array.isArray(parentParts) &&
-        isType((prev = parentParts[index - 1]), "line") &&
+        isType((prev = parentParts[index - 1]), DT.Line) &&
         prev.hard;
       return afterHardline ? "undefined" : "breakParent";
     }
 
-    if (doc.type === "trim") {
-      return "trim";
+    if (doc.type === DT.Trim) {
+      return DT.Trim;
     }
 
-    if (doc.type === "indent") {
+    if (doc.type === DT.Indent) {
       return "indent(" + printDoc(doc.contents) + ")";
     }
 
-    if (doc.type === "align") {
+    if (doc.type === DT.Align) {
       return doc.n === Number.NEGATIVE_INFINITY
         ? "dedentToRoot(" + printDoc(doc.contents) + ")"
         : typeof doc.n === "number" && doc.n < 0
@@ -117,7 +118,7 @@ export function printDocToDebug(doc: Doc) {
           ")";
     }
 
-    if (doc.type === "if-break") {
+    if (doc.type === DT.IfBreak) {
       return (
         "ifBreak(" +
         printDoc(doc.breakContents) +
@@ -130,7 +131,7 @@ export function printDocToDebug(doc: Doc) {
       );
     }
 
-    if (doc.type === "indent-if-break") {
+    if (doc.type === DT.IndentIfBreak) {
       const optionsParts = [];
 
       if (doc.negate) {
@@ -147,7 +148,7 @@ export function printDocToDebug(doc: Doc) {
       return `indentIfBreak(${printDoc(doc.contents)}${options})`;
     }
 
-    if (doc.type === "group") {
+    if (doc.type === DT.Group) {
       const optionsParts = [];
 
       if (doc.break && doc.break !== "propagated") {
@@ -170,19 +171,19 @@ export function printDocToDebug(doc: Doc) {
       return `group(${printDoc(doc.contents)}${options})`;
     }
 
-    if (doc.type === "fill") {
+    if (doc.type === DT.Fill) {
       return `fill([${doc.parts.map((part) => printDoc(part)).join(", ")}])`;
     }
 
-    if (doc.type === "line-suffix") {
+    if (doc.type === DT.LineSuffix) {
       return "lineSuffix(" + printDoc(doc.contents) + ")";
     }
 
-    if (doc.type === "line-suffix-boundary") {
+    if (doc.type === DT.LineSuffixBoundary) {
       return "lineSuffixBoundary";
     }
 
-    if (doc.type === "label") {
+    if (doc.type === DT.Label) {
       return `label(${JSON.stringify(doc.label)}, ${printDoc(doc.contents)})`;
     }
 

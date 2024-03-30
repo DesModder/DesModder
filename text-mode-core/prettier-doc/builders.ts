@@ -1,3 +1,4 @@
+import { DT } from "./doc-types";
 import type { Align, Concat, Cursor, Doc } from "./doc";
 
 export function assertDoc(val: unknown): asserts val is Doc {
@@ -40,7 +41,7 @@ export function concat(parts: Doc[]): Concat {
   //   // If it's a single document, no need to concat it.
   //   return parts[0];
   // }
-  return { type: "concat", parts };
+  return { type: DT.Concat, parts };
 }
 
 export function indent(contents: Doc): Doc {
@@ -48,7 +49,7 @@ export function indent(contents: Doc): Doc {
     assertDoc(contents);
   }
 
-  return { type: "indent", contents };
+  return { type: DT.Indent, contents };
 }
 
 export function align(widthOrString: Align["n"], contents: Doc): Doc {
@@ -56,7 +57,7 @@ export function align(widthOrString: Align["n"], contents: Doc): Doc {
     assertDoc(contents);
   }
 
-  return { type: "align", contents, n: widthOrString };
+  return { type: DT.Align, contents, n: widthOrString };
 }
 
 export function group(contents: Doc, opts: GroupOptions = {}): Doc {
@@ -65,7 +66,7 @@ export function group(contents: Doc, opts: GroupOptions = {}): Doc {
   }
 
   return {
-    type: "group",
+    type: DT.Group,
     id: opts.id,
     contents,
     break: Boolean(opts.shouldBreak),
@@ -96,7 +97,7 @@ export function fill(parts: Doc[]): Doc {
     }
   }
 
-  return { type: "fill", parts };
+  return { type: DT.Fill, parts };
 }
 
 export function ifBreak(
@@ -114,7 +115,7 @@ export function ifBreak(
   }
 
   return {
-    type: "if-break",
+    type: DT.IfBreak,
     breakContents,
     flatContents,
     groupId: opts.groupId,
@@ -126,7 +127,7 @@ export function indentIfBreak(
   opts: { groupId: symbol; negate?: boolean }
 ): Doc {
   return {
-    type: "indent-if-break",
+    type: DT.IndentIfBreak,
     contents,
     groupId: opts.groupId,
     negate: opts.negate,
@@ -137,29 +138,32 @@ export function lineSuffix(contents: Doc) {
   if (process.env.NODE_ENV !== "production") {
     assertDoc(contents);
   }
-  return { type: "line-suffix", contents };
+  return { type: DT.LineSuffix, contents };
 }
 
-export const lineSuffixBoundary: Doc = { type: "line-suffix-boundary" };
-export const breakParent: Doc = { type: "break-parent" };
-export const trim: Doc = { type: "trim" };
+export const lineSuffixBoundary: Doc = { type: DT.LineSuffixBoundary };
+export const breakParent: Doc = { type: DT.BreakParent };
+export const trim: Doc = { type: DT.Trim };
 
-export const hardlineWithoutBreakParent: Doc = { type: "line", hard: true };
+export const hardlineWithoutBreakParent: Doc = { type: DT.Line, hard: true };
 export const literallineWithoutBreakParent: Doc = {
-  type: "line",
+  type: DT.Line,
   hard: true,
   literal: true,
 };
 
-export const line: Doc = { type: "line" };
-export const softline: Doc = { type: "line", soft: true };
+export const line: Doc = { type: DT.Line };
+export const softline: Doc = { type: DT.Line, soft: true };
 export const hardline: Doc = concat([hardlineWithoutBreakParent, breakParent]);
 export const literalline: Doc = concat([
   literallineWithoutBreakParent,
   breakParent,
 ]);
 
-export const cursor: Cursor = { type: "cursor", placeholder: Symbol("cursor") };
+export const cursor: Cursor = {
+  type: DT.Cursor,
+  placeholder: Symbol(DT.Cursor),
+};
 
 export function join(sep: Doc, arr: Doc[]): Concat {
   const res = [];
@@ -192,5 +196,5 @@ export function addAlignmentToDoc(doc: Doc, size: number, tabWidth: number) {
 }
 
 export function label(label: string, contents: Doc): Doc {
-  return { type: "label", label, contents };
+  return { type: DT.Label, label, contents };
 }

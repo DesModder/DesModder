@@ -1,3 +1,5 @@
+import { DT } from "./doc-types";
+
 export type DocCommand =
   | Align
   | BreakParent
@@ -16,33 +18,33 @@ export type DocCommand =
 export type Doc = string | Doc[] | DocCommand;
 
 export interface Align {
-  type: "align";
+  type: DT.Align;
   contents: Doc;
   n: number | string | { type: "root" };
 }
 
 export interface BreakParent {
-  type: "break-parent";
+  type: DT.BreakParent;
 }
 
 // TODO-prettier: update removes Concat
 export interface Concat {
-  type: "concat";
+  type: DT.Concat;
   parts: Doc[];
 }
 
 export interface Cursor {
-  type: "cursor";
+  type: DT.Cursor;
   placeholder: symbol;
 }
 
 export interface Fill {
-  type: "fill";
+  type: DT.Fill;
   parts: Doc[];
 }
 
 export interface Group {
-  type: "group";
+  type: DT.Group;
   id?: symbol;
   contents: Doc;
   break: boolean | "propagated";
@@ -54,44 +56,44 @@ export interface HardlineWithoutBreakParent extends Line {
 }
 
 export interface IfBreak {
-  type: "if-break";
+  type: DT.IfBreak;
   breakContents: Doc;
   flatContents: Doc;
   groupId?: symbol;
 }
 
 export interface Indent {
-  type: "indent";
+  type: DT.Indent;
   contents: Doc;
 }
 
 export interface IndentIfBreak {
-  type: "indent-if-break";
+  type: DT.IndentIfBreak;
   contents: Doc;
   groupId: symbol;
   negate?: boolean;
 }
 
 export interface Label {
-  type: "label";
+  type: DT.Label;
   label: unknown;
   contents: Doc;
 }
 
 export interface Line {
-  type: "line";
+  type: DT.Line;
   soft?: boolean | undefined;
   hard?: boolean | undefined;
   literal?: boolean | undefined;
 }
 
 export interface LineSuffix {
-  type: "line-suffix";
+  type: DT.LineSuffix;
   contents: Doc;
 }
 
 export interface LineSuffixBoundary {
-  type: "line-suffix-boundary";
+  type: DT.LineSuffixBoundary;
 }
 
 export interface LiterallineWithoutBreakParent extends Line {
@@ -104,5 +106,5 @@ export interface Softline extends Line {
 }
 
 export interface Trim {
-  type: "trim";
+  type: DT.Trim;
 }
