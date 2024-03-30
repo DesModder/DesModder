@@ -48,42 +48,60 @@ function traverseDoc(
       docsStack.push(doc, traverseDocOnExitStackMarker);
     }
 
-    if (
-      // Should Recurse
-      !onEnter ||
-      onEnter(doc) !== false
-    ) {
-      // When there are multiple parts to process,
-      // the parts need to be pushed onto the stack in reverse order,
-      // so that they are processed in the original order
-      // when the stack is popped.
-      if (isArray(doc) || isType(doc, DT.Fill)) {
-        const parts = getDocParts(doc);
-        for (let ic = parts.length, i = ic - 1; i >= 0; --i) {
-          docsStack.push(parts[i]);
-        }
-      } else if (typeof doc !== "string" && doc.type === DT.IfBreak) {
+    if (onEnter?.(doc) === false) {
+      continue;
+    }
+
+    if (typeof doc === "string") {
+      continue;
+    }
+
+    // When there are multiple parts to process,
+    // the parts need to be pushed onto the stack in reverse order,
+    // so that they are processed in the original order
+    // when the stack is popped.
+    if (isArray(doc) || isType(doc, DT.Fill)) {
+      const parts = getDocParts(doc);
+      for (let ic = parts.length, i = ic - 1; i >= 0; --i) {
+        docsStack.push(parts[i]);
+      }
+      continue;
+    }
+
+    switch (doc.type) {
+      case DT.IfBreak:
         if (doc.flatContents) {
           docsStack.push(doc.flatContents);
         }
         if (doc.breakContents) {
           docsStack.push(doc.breakContents);
         }
-      } else if (
-        typeof doc !== "string" &&
-        doc.type === DT.Group &&
-        doc.expandedStates
-      ) {
-        if (shouldTraverseConditionalGroups) {
+        break;
+      case DT.Group:
+        if (shouldTraverseConditionalGroups && doc.expandedStates) {
           for (let ic = doc.expandedStates.length, i = ic - 1; i >= 0; --i) {
             docsStack.push(doc.expandedStates[i]);
           }
         } else {
           docsStack.push(doc.contents);
         }
-      } else if (typeof doc !== "string" && "contents" in doc && doc.contents) {
+        break;
+      case DT.Align:
+      case DT.Indent:
+      case DT.IndentIfBreak:
+      case DT.Label:
+      case DT.LineSuffix:
         docsStack.push(doc.contents);
-      }
+        break;
+      case DT.Cursor:
+      case DT.Trim:
+      case DT.LineSuffixBoundary:
+      case DT.Line:
+      case DT.BreakParent:
+        break;
+      default:
+        doc satisfies never;
+        throw invalidDoc();
     }
   }
 }
