@@ -341,7 +341,10 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
     if (typeof doc === "string") {
       const formatted = newLine !== "\n" ? doc.replace(/\n/g, newLine) : doc;
       out.push(formatted);
-      pos += stringWidth(formatted);
+      // Plugins may print single string, should skip measure the width
+      if (cmds.length > 0) {
+        pos += stringWidth(formatted);
+      }
     } else if (isArray(doc)) {
       for (let i = doc.length - 1; i >= 0; i--) {
         cmds.push({ ind, mode, doc: doc[i] });
