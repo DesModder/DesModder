@@ -280,6 +280,10 @@ function stripDocTrailingHardlineFromDoc(doc: Doc): Doc {
 }
 
 function stripTrailingHardline(doc: Doc) {
+  if (typeof doc === "string") {
+    return doc.replace(/(?:\r?\n)*$/, "");
+  }
+
   // HACK remove ending hardline, original PR: #1984
   return stripDocTrailingHardlineFromDoc(cleanDoc(doc));
 }
