@@ -1,9 +1,10 @@
-import { builders, printer } from "#prettier/doc";
-import type * as DocNS from "#prettier/doc";
+import * as builders from "../prettier-doc/builders";
+import * as printer from "../prettier-doc/printer";
+import { Doc } from "../prettier-doc/doc";
 import TextAST, { NodePath } from "../TextAST/Synthetic";
 import needsParens from "./needsParens";
+import { DT } from "../prettier-doc/doc-types";
 
-type Doc = DocNS.builders.Doc;
 const { group, indent, join, ifBreak } = builders;
 
 export interface TextEmitOptions {
@@ -699,33 +700,29 @@ function startsOrEndsWithWord(dir: 0 | -1) {
     if (Array.isArray(doc)) return fn(doc.at(dir));
 
     switch (doc.type) {
-      case "fill":
-      case "concat":
+      case DT.Fill:
         return fn(doc.parts.at(dir));
-      case "if-break":
+      case DT.IfBreak:
         return fn(doc.flatContents) || fn(doc.breakContents);
-      case "group":
+      case DT.Group:
         if (doc.expandedStates) {
           return doc.expandedStates.some((d) => fn(d));
         } else {
           return fn(doc.contents);
         }
 
-      case "align":
-      case "indent":
-      case "label":
-      case "line-suffix":
-        // The type for Label does not currently include "contents".
-        // This was fixed a few days ago, waiting for release.
-        // https://github.com/prettier/prettier/commit/347c60730e12d6e9e52aaa360526d8792fb818e8
-        return fn((doc as any).contents);
+      case DT.Align:
+      case DT.Indent:
+      case DT.Label:
+      case DT.LineSuffix:
+        return fn(doc.contents);
 
-      case "indent-if-break":
-      case "cursor":
-      case "trim":
-      case "line-suffix-boundary":
-      case "line":
-      case "break-parent":
+      case DT.IndentIfBreak:
+      case DT.Cursor:
+      case DT.Trim:
+      case DT.LineSuffixBoundary:
+      case DT.Line:
+      case DT.BreakParent:
         // no children
         return false;
 
