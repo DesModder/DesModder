@@ -1,5 +1,5 @@
 import VideoCreator from "..";
-import { cancelCapture, CaptureMethod } from "../backend/capture";
+import { CaptureMethod } from "../backend/capture";
 import "./CaptureMethod.css";
 import { Component, jsx } from "#DCGView";
 import {
@@ -245,7 +245,7 @@ export default class SelectCapture extends Component<{
                 <Button
                   color="light-gray"
                   class="dsm-vc-cancel-capture-button"
-                  onTap={() => cancelCapture(this.vc)}
+                  onTap={() => this.vc.cancelCapture()}
                 >
                   {format("video-creator-cancel-capture")}
                 </Button>
