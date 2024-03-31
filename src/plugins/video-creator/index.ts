@@ -1,6 +1,11 @@
 import { PluginController } from "../PluginController";
 import { updateView } from "./View";
-import { CaptureMethod, SliderSettings, capture } from "./backend/capture";
+import {
+  CANCELLED,
+  CaptureMethod,
+  SliderSettings,
+  capture,
+} from "./backend/capture";
 import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
 import { escapeRegex } from "./backend/utils";
 import { MainPopupFunc } from "./components/MainPopup";
@@ -28,6 +33,10 @@ export default class VideoCreator extends PluginController {
   frames: string[] = [];
   isCapturing = false;
   captureCancelled = false;
+  callbackIfCancel?: () => void;
+  dispatchListenerID?: string;
+  updateSeen = false;
+  callbackIfUpdate?: () => void;
   readonly fps = this.managedNumberInputModel("30", {
     afterLatexChanged: () => {
       // advancing here resets the timeout
@@ -462,6 +471,71 @@ export default class VideoCreator extends PluginController {
 
   isFocused(location: FocusedMQ) {
     return this.focusedMQ === location;
+  }
+
+  cancelCapture() {
+    if (this.callbackIfCancel) {
+      this.callbackIfCancel();
+    } else {
+      this.captureCancelled = true;
+    }
+  }
+
+  async awaitCancel(): Promise<typeof CANCELLED> {
+    return await new Promise((resolve) => {
+      if (this.captureCancelled) {
+        resolve(CANCELLED);
+        return;
+      }
+      this.callbackIfCancel = () => {
+        this.callbackIfCancel = undefined;
+        resolve(CANCELLED);
+      };
+    });
+  }
+
+  registerUpdateListener() {
+    this.dispatchListenerID = this.cc.dispatcher.register((e) => {
+      if (
+        // near-equivalent to vc.calc.observeEvent("change", ...)
+        // but event "change" is not triggered for slider playing movement
+        e.type === "on-evaluator-changes"
+      ) {
+        this.gotUpdate();
+      }
+    });
+  }
+
+  unregisterUpdateListener() {
+    if (this.dispatchListenerID !== undefined) {
+      this.cc.dispatcher.unregister(this.dispatchListenerID);
+      this.dispatchListenerID = undefined;
+    }
+  }
+
+  private gotUpdate() {
+    if (!this.isCapturing) {
+      this.unregisterUpdateListener();
+      return;
+    }
+    if (this.callbackIfUpdate) {
+      this.callbackIfUpdate();
+    } else {
+      this.updateSeen = true;
+    }
+  }
+
+  async awaitUpdate() {
+    await new Promise<void>((resolve) => {
+      if (this.updateSeen) {
+        resolve();
+        return;
+      }
+      this.callbackIfUpdate = () => {
+        this.callbackIfUpdate = undefined;
+        resolve();
+      };
+    });
   }
 }
 

@@ -4,35 +4,23 @@ import DSM from "#DSM";
 import { ManagedNumberInputModel } from "../components/ManagedNumberInput";
 import { noSpeed } from "../orientation";
 
-let dispatchListenerID: string | null = null;
-let callbackIfCancel: (() => void) | null = null;
-
 export type CaptureMethod = "once" | "ntimes" | "action" | "slider" | "ticks";
 
-export function cancelCapture(vc: VideoCreator) {
-  vc.captureCancelled = true;
-  callbackIfCancel?.();
-}
+export const CANCELLED = Symbol("cancelled");
 
 async function captureAndApplyFrame(vc: VideoCreator) {
   const frame = await captureFrame(vc);
+  if (frame === CANCELLED) return CANCELLED;
   vc.pushFrame(frame);
 }
 
-export async function captureFrame(vc: VideoCreator) {
+async function captureFrame(
+  vc: VideoCreator
+): Promise<string | typeof CANCELLED> {
   const width = vc.getCaptureWidthNumber();
   const height = vc.getCaptureHeightNumber();
   const targetPixelRatio = vc.getTargetPixelRatio();
   // resolves the screenshot as a data URI
-  const tryCancel = () => {
-    if (vc.captureCancelled) {
-      vc.captureCancelled = false;
-      throw new Error("cancelled");
-    }
-  };
-  tryCancel();
-  // poll for mid-screenshot cancellation (only affects UI)
-  const interval = window.setInterval(tryCancel, 50);
   const size = {
     width: width / targetPixelRatio,
     targetPixelRatio,
@@ -40,9 +28,7 @@ export async function captureFrame(vc: VideoCreator) {
     preserveAxisNumbers: true,
   };
   const screenshot = vc.cc.is3dProduct() ? screenshot3d : screenshot2d;
-  const data = await screenshot(vc, size);
-  clearInterval(interval);
-  return data;
+  return await Promise.race([screenshot(vc, size), vc.awaitCancel()]);
 }
 
 interface ScreenshotOpts {
@@ -107,12 +93,8 @@ export async function captureSlider(vc: VideoCreator) {
       latex: `${variable}=${value}`,
     });
 
-    try {
-      await captureAndApplyFrame(vc);
-    } catch {
-      // should be paused due to cancellation
-      break;
-    }
+    const ret = await captureAndApplyFrame(vc);
+    if (ret === CANCELLED) break;
 
     if (i < numSteps) {
       updateOrientationAfterCapture(vc, numSteps - i);
@@ -127,65 +109,44 @@ function slidersLatexJoined(vc: VideoCreator) {
     .join(";");
 }
 
-async function captureActionFrame(vc: VideoCreator, step: () => void) {
-  let stepped = false;
-  try {
-    const tickCountRemaining = vc.getTickCountNumber();
-    if (tickCountRemaining > 0) {
-      vc.actionCaptureState = "waiting-for-screenshot";
-      await captureAndApplyFrame(vc);
-      vc.tickCount.setLatexWithCallbacks((tickCountRemaining - 1).toFixed(0));
-      vc.actionCaptureState = "waiting-for-update";
-      if (tickCountRemaining - 1 > 0) {
-        const slidersBefore = slidersLatexJoined(vc);
-        step();
-        updateOrientationAfterCapture(vc, tickCountRemaining - 1);
-        stepped = true;
-        if (
-          vc.captureMethod === "ticks" &&
-          slidersLatexJoined(vc) === slidersBefore
-        ) {
-          // Due to rounding, this slider tick does not actually change the state,
-          // so don't expect an event update. Just move to the next frame now.
-          setTimeout(() => {
-            void captureActionFrame(vc, step);
-          }, 0);
-        }
-      }
-    }
-  } catch {
-  } finally {
-    if (!stepped) {
-      // should be paused due to cancellation or tickCountRemaining ≤ 0
-      // this is effectively a break
-      callbackIfCancel?.();
+async function captureActionOrSliderTicks(vc: VideoCreator, step: () => void) {
+  vc.registerUpdateListener();
+
+  let tickCountRemaining;
+  while ((tickCountRemaining = vc.getTickCountNumber()) > 0) {
+    const ret = await captureAndApplyFrame(vc);
+    if (ret === CANCELLED) break;
+    const nextTickCount = tickCountRemaining - 1;
+    vc.tickCount.setLatexWithCallbacks(nextTickCount.toFixed(0));
+    if (nextTickCount <= 0) break;
+
+    vc.updateSeen = false;
+    const slidersBefore = slidersLatexJoined(vc);
+    step();
+    updateOrientationAfterCapture(vc, nextTickCount);
+
+    if (
+      vc.captureMethod === "ticks" &&
+      slidersLatexJoined(vc) === slidersBefore
+    ) {
+      // Due to rounding, this slider tick does not actually change the state,
+      // so don't expect an event update. Just move to the next frame now.
+      continue;
+    } else {
+      // Wait for an on-evaluator-changes update
+      const ret = await Promise.race([vc.awaitCancel(), vc.awaitUpdate()]);
+      if (ret === CANCELLED) break;
     }
   }
-}
 
-async function captureActionOrSliderTicks(vc: VideoCreator, step: () => void) {
-  await new Promise<void>((resolve) => {
-    callbackIfCancel = resolve;
-    dispatchListenerID = vc.cc.dispatcher.register((e) => {
-      if (
-        // near-equivalent to vc.calc.observeEvent("change", ...)
-        // but event "change" is not triggered for slider playing movement
-        e.type === "on-evaluator-changes" &&
-        // check waiting-for-update in case there is more than one update before the screenshot finishes
-        vc.actionCaptureState === "waiting-for-update"
-      ) {
-        void captureActionFrame(vc, step);
-      }
-    });
-
-    void captureActionFrame(vc, step);
-  });
+  vc.unregisterUpdateListener();
 }
 
 async function captureNTimes(vc: VideoCreator) {
   const tickCountRemaining = vc.getTickCountNumber();
   if (vc.captureCancelled || tickCountRemaining <= 0) return;
-  await captureAndApplyFrame(vc);
+  const ret = await captureAndApplyFrame(vc);
+  if (ret === CANCELLED) return;
   vc.tickCount.setLatexWithCallbacks((tickCountRemaining - 1).toFixed(0));
   if (tickCountRemaining - 1 > 0) {
     updateOrientationAfterCapture(vc, tickCountRemaining - 1);
@@ -254,6 +215,7 @@ function updateOrientationAfterCapture(
 
 export async function capture(vc: VideoCreator) {
   const or = vc.or;
+  vc.captureCancelled = false;
   vc.isCapturing = true;
   vc.updateView();
   const tickSliders = vc.cc._tickSliders.bind(vc.cc);
@@ -312,14 +274,12 @@ export async function capture(vc: VideoCreator) {
       await captureNTimes(vc);
       break;
     }
-    case "once":
-      try {
-        await captureAndApplyFrame(vc);
-        updateOrientationAfterCapture(vc, 0);
-      } catch {
-        // math bounds mismatch, irrelevant
-      }
+    case "once": {
+      const ret = await captureAndApplyFrame(vc);
+      if (ret === CANCELLED) break;
+      updateOrientationAfterCapture(vc, 0);
       break;
+    }
     case "slider":
       await captureSlider(vc);
       break;
@@ -333,13 +293,10 @@ export async function capture(vc: VideoCreator) {
     // restore previous speed
     or.setSpinningSpeedAndDirection(or.sdBeforeCapture);
   }
+  vc.captureCancelled = false;
   vc.isCapturing = false;
   vc.actionCaptureState = "none";
   vc.updateView();
-  if (dispatchListenerID !== null) {
-    vc.cc.dispatcher.unregister(dispatchListenerID);
-    dispatchListenerID = null;
-  }
   // no need to retain a pending cancellation, if any; capture is already finished
   vc.captureCancelled = false;
 }
