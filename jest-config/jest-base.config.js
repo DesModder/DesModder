@@ -7,7 +7,7 @@ module.exports = {
   coverageReporters: ["html", "lcov", "text"],
   coverageDirectory: "<rootDir>/coverage",
   transform: {
-    "^.+\\.ts|^.*string-width/index.js": [
+    "^.+\\.[tj]s": [
       "ts-jest",
       {
         tsconfig: {
@@ -22,5 +22,9 @@ module.exports = {
   },
   testPathIgnorePatterns: ["<rootDir>/node_modules/", "dist", "dist-ts"],
   moduleDirectories: ["node_modules", "src"],
-  transformIgnorePatterns: ["node_modules/(?!string-width/.*)"],
+  transformIgnorePatterns: [
+    "setup-unit",
+    // The following packages are ESM, and unit tests need them to be transformed.
+    "node_modules/(?!ansi-regex|string-length|strip-ansi|get-east-asian-width|emoji-regex|string-width)",
+  ],
 };
