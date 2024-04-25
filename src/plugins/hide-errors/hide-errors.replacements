@@ -8,17 +8,16 @@
 
 *Find* => `from`
 ```js
-  $getMissingVariablesForItem($l).length && $e.areSlidersEnabled())
-  return $e.createSlidersForItem(
+  $cc.areSlidersEnabled())
+  return $cc.createSlidersForItem($model.id
 ```
 
 *Replace* `from` with
 ```js
-  $getMissingVariablesForItem($l).length &&
-  $e.areSlidersEnabled() &&
-  !DSM.hideErrors?.isErrorHidden($l.id)
+  $cc.areSlidersEnabled() &&
+  !DSM.hideErrors?.isErrorHidden($model.id)
 )
-  return $e.createSlidersForItem(
+  return $cc.createSlidersForItem($model.id
 ```
 
 ## Wrap error triangle with div for onTap and opacity control
@@ -81,16 +80,14 @@ DSM.insertElement(() => DSM.hideErrors?.hideButton(() => this.model))
 *Find* => `from`
 ```js
 shouldShowSliderPrompt() {
-    return this.controller.areSlidersEnabled() ? $s(this.model).length > 0 : !1
-}
+  let
 ```
 
 *Replace* `from` with
 ```js
 shouldShowSliderPrompt() {
     if (DSM.hideErrors?.isErrorHidden(this.model?.id)) return false;
-    return this.controller.areSlidersEnabled() ? $s(this.model).length > 0 : !1
-}
+    let
 ```
 
 ## Allow shift-enter to create a new expression and hide errors on the old expression
