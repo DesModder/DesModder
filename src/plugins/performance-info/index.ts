@@ -45,7 +45,7 @@ export default class PerformanceInfo extends PluginController {
 
   refreshState() {
     this.cc._showToast({ message: "Refreshing graph..." });
-    this.calc.setState(this.calc.getState());
+    this.calc.setState(this.calc.getState(), { allowUndo: true });
   }
 }
 
