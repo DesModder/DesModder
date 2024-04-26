@@ -216,6 +216,7 @@ interface CalcPrivate {
       model: ItemModel,
       shouldFocus: boolean
     ) => void;
+    _hasUnsavedChanges: boolean;
     createItemModel: (modelTemplate: any) => ItemModel;
     getPillboxBackgroundColor: () => string;
     isGraphSettingsOpen: () => boolean;

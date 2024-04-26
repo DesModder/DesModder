@@ -45,7 +45,10 @@ export default class PerformanceInfo extends PluginController {
 
   refreshState() {
     this.cc._showToast({ message: "Refreshing graph..." });
-    this.calc.setState(this.calc.getState());
+    // should this be using killWorker instead?
+    const oldUnsavedChanges = this.cc._hasUnsavedChanges;
+    this.calc.setState(this.calc.getState(), { allowUndo: true });
+    this.cc._hasUnsavedChanges = oldUnsavedChanges;
   }
 }
 
