@@ -31,8 +31,6 @@ export function EvaluateSingleExpression(calc: Calc, s: string): number {
   return evaluateLatex(s, calc.controller.isDegreeMode());
 }
 
-export const getQueryParams = Fragile.getQueryParams;
-
 export const autoCommandNames: string =
   Private.MathquillConfig?.getAutoCommands?.();
 export const autoOperatorNames: string =
