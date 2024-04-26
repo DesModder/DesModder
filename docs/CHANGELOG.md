@@ -1,5 +1,15 @@
 # DesModder Changelog
 
+## 0.13.1
+
+Bug Fixes
+
+- (Video Creator) Fix text wrapping in some buttons in Japanese language.
+- (Video Creator) The "cancel" button now always works, even when capturing a slow frame.
+- (Performance View) Keep undo/redo history after using Refresh Graph
+- On a panic ("DesModder loading errors manager"), the home link at the top is now clickable.
+- Fix replacement error
+
 ## 0.13.0
 
 Bug Fixes
