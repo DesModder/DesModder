@@ -1,6 +1,5 @@
 import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
-import { getQueryParams } from "#utils/depUtils.ts";
 
 const managedKeys = configList.map((e) => e.key);
 
@@ -12,7 +11,6 @@ export default class BuiltinSettings extends PluginController<Config> {
 
   afterEnable() {
     this.initialSettings = { ...this.settings };
-    const queryParams = getQueryParams();
     for (const key of managedKeys) {
       this.initialSettings[key] =
         (
@@ -21,15 +19,6 @@ export default class BuiltinSettings extends PluginController<Config> {
             authorFeatures: boolean;
           }
         )[key] ?? false;
-    }
-    const queryConfig: Partial<Config> = {};
-    for (const key of managedKeys) {
-      if (queryParams[key]) {
-        queryConfig[key] = true;
-      }
-      if (queryParams["no" + key]) {
-        queryConfig[key] = false;
-      }
     }
     this.updateSettings(this.settings);
   }

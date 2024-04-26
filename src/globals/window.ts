@@ -94,7 +94,6 @@ export const Fragile = new Proxy(
     isRedo: (e: KeyboardEvent) => boolean;
     isHelp: (e: KeyboardEvent) => boolean;
   };
-  getQueryParams: () => Record<string, string | true>;
   List: {
     removeItemById: (listModel: any, id: string) => void;
     moveItemsTo: (listModel: any, from: number, to: number, n: number) => void;
