@@ -148,10 +148,6 @@ video-creator-method-slider = curseurs
 # Unchanged
 video-creator-method-action = action
 
-## Shift+Enter Newline
-shift-enter-newline-name = Maj+Entrée Nouvelle Ligne
-shift-enter-newline-desc = Utilisez Maj+Entrée pour taper des retours à la ligne dans les notes et les titres des images/dossiers.
-
 ## Wakatime
 # Unchanged
 wakatime-name = WakaTime

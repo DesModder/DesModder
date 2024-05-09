@@ -143,10 +143,6 @@ video-creator-method-slider = 变量动画
 video-creator-method-action = 动作动画
 video-creator-method-ticks = 定时器动画
 
-## Shift+Enter Newline
-shift-enter-newline-name = Shift+Enter 换行
-shift-enter-newline-desc = 按 Shift+Enter 在备注或图片/文件夹的标题中起新行。
-
 ## Wakatime
 wakatime-name = WakaTime
 wakatime-desc = 在 WakaTime.com 中记录你的 Desmos 使用活动

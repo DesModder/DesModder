@@ -196,10 +196,6 @@ video-creator-method-slider = スライダー
 video-creator-method-action = アクション
 video-creator-method-ticks = ticks
 
-## Shift+Enter Newline
-shift-enter-newline-name = Shift+Enter Newline
-shift-enter-newline-desc = Shift+Enterキーを使って、ノートや画像/フォルダタイトルに改行を入力します。
-
 ## Wakatime
 wakatime-name = WakaTime
 wakatime-desc = WakaTime.comでdesmosのアクティビティを追跡します。
