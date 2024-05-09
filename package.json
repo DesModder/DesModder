@@ -91,6 +91,6 @@
     "idb": "^8.0.0",
     "js-tokens": "^9.0.0",
     "moo": "^0.5.2",
-    "string-width": "^7.1.0"
+    "string-width": "^5.1.2"
   }
 }
