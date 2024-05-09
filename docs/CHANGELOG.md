@@ -1,5 +1,13 @@
 # DesModder Changelog
 
+## 0.13.2
+
+Bug Fixes
+
+- Fix crash on Firefox <=124.
+- (Video Creator) Fix accidental scrolljacking when 3d scene spins.
+- (Shift-Enter-Newline) Remove plugin since it is a vanilla feature now.
+
 ## 0.13.1
 
 Bug Fixes
