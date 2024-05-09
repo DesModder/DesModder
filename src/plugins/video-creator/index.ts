@@ -106,6 +106,10 @@ export default class VideoCreator extends PluginController {
     }
   }
 
+  isMenuOpen() {
+    return this.dsm.pillboxMenus?.pillboxMenuOpen === "dsm-vc-menu";
+  }
+
   afterEnable() {
     this.calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
     this._applyDefaultCaptureSize();

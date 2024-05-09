@@ -214,6 +214,7 @@ export class Orientation {
   }
 
   applySpinningSpeedFromGraph() {
+    if (!this.vc.isMenuOpen()) return;
     if (this._applyingSpinningOrientation) return;
     const sd = this.getSpinningSpeedAndDirection();
     if (!sd) return;
@@ -279,6 +280,7 @@ export class Orientation {
 
   _applyingSpinningOrientation = false;
   updateLatexOrientationFromGraph() {
+    if (!this.vc.isMenuOpen()) return;
     const grapher3d = this.cc.grapher3d;
     if (!grapher3d) return;
     if (this._applyingSpinningOrientation) return;
