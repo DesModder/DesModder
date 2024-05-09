@@ -1,7 +1,7 @@
 {
   "name": "desmodder",
   "description": "Supercharge your Desmos graph creation and sharing experience with many convenient features",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "author": {
     "name": "Jared Hughes"
   },
@@ -91,6 +91,6 @@
     "idb": "^8.0.0",
     "js-tokens": "^9.0.0",
     "moo": "^0.5.2",
-    "string-width": "^7.1.0"
+    "string-width": "^5.1.2"
   }
 }

@@ -17,5 +17,3 @@ Following are the graphs. Nested bullets are alt text (Firefox only):
   - Record videos of your graph in motion, then save as MP4, GIF, APNG, or WEBM.
 - Better Evaluation View: https://www.desmos.com/calculator/u25isysqgk
   - View special evaluation results better: NaN, infinity, lists, and color lists.
-- Shift-Enter and Duplicate: https://www.desmos.com/calculator/de8zj6cwsq
-  - Press Shift-Enter to type newlines in notes and folders. Also, Ctrl+Q to duplicate the current expression.
