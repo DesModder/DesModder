@@ -42,7 +42,6 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "performance-info",
     "right-click-tray",
     "duplicate-expression-hotkey",
-    "shift-enter-newline",
     "folder-tools",
     "custom-mathquill-config",
     "code-golf",

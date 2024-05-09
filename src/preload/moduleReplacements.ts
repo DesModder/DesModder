@@ -24,7 +24,6 @@ const pluginNames = [
   "right-click-tray",
   "duplicate-expression-hotkey",
   "GLesmos",
-  "shift-enter-newline",
   "hide-errors",
   "folder-tools",
   "text-mode",

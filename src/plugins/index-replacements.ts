@@ -10,7 +10,6 @@ import overrideKeystroke from "#plugins/override-keystroke/override-keystroke.re
 import pillbox from "#plugins/pillbox-menus/pillbox-menus.replacements";
 import pinExpressions from "#plugins/pin-expressions/pin-expressions.replacements";
 import rightClickTray from "#plugins/right-click-tray/right-click-tray.replacements";
-import shiftEnterNewline from "#plugins/shift-enter-newline/shift-enter-newline.replacements";
 import showTips from "#plugins/show-tips/show-tips.replacements";
 import syntaxHighlighting from "#plugins/syntax-highlighting/syntax-highlighting.replacements";
 import textMode from "#plugins/text-mode/text-mode.replacements";
@@ -26,7 +25,6 @@ export default [
   glesmos,
   hideErrors,
   pinExpressions,
-  shiftEnterNewline,
   textMode,
   debugMode,
   extraExpressionButtons,

@@ -20,7 +20,6 @@ import PillboxMenus from "./pillbox-menus";
 import PinExpressions from "./pin-expressions";
 import RightClickTray from "./right-click-tray";
 import SetPrimaryColor from "./set-primary-color";
-import ShiftEnterNewline from "./shift-enter-newline";
 import ShowTips from "./show-tips";
 import SyntaxHighlighting from "./syntax-highlighting";
 import TextMode from "./text-mode";
@@ -126,7 +125,6 @@ export const keyToPlugin = {
   rightClickTray: RightClickTray,
   duplicateHotkey: DuplicateHotkey,
   glesmos: GLesmos,
-  shiftEnterNewline: ShiftEnterNewline,
   hideErrors: HideErrors,
   folderTools: FolderTools,
   textMode: TextMode,
@@ -182,7 +180,6 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get rightClickTray () { return this.ep["right-click-tray"]; }
   get duplicateHotkey () { return this.ep["duplicate-expression-hotkey"]; }
   get glesmos () { return this.ep["GLesmos"]; }
-  get shiftEnterNewline () { return this.ep["shift-enter-newline"]; }
   get hideErrors () { return this.ep["hide-errors"]; }
   get folderTools () { return this.ep["folder-tools"]; }
   get textMode () { return this.ep["text-mode"]; }

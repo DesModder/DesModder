@@ -221,10 +221,6 @@ video-creator-method-slider = deslizador
 video-creator-method-action = acción
 video-creator-method-ticks = contador
 
-## Shift+Enter Newline
-shift-enter-newline-name = Shift+Entrar para Nueva Línea
-shift-enter-newline-desc = Permite teclear Shift+Entrar para añadir líneas nuevas en las notas y en los títulos de imágenes/carpetas.
-
 ## Wakatime
 # Unchanged
 wakatime-name = WakaTime
