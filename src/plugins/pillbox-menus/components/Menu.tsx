@@ -22,6 +22,7 @@ import {
 } from "#plugins/index.ts";
 import PillboxMenus from "..";
 import "./Menu.less";
+import "globals/env.ts";
 
 export function MenuFunc(pm: PillboxMenus) {
   return <Menu pm={pm} />;
