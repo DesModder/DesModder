@@ -22,6 +22,7 @@ import {
 } from "#plugins/index.ts";
 import PillboxMenus from "..";
 import "./Menu.less";
+declare const VERSION: string;
 
 export function MenuFunc(pm: PillboxMenus) {
   return <Menu pm={pm} />;
@@ -74,7 +75,10 @@ export default class Menu extends Component<{
   template() {
     return (
       <div class="dcg-popover-interior">
-        <div class="dcg-popover-title">{format("menu-desmodder-plugins")}</div>
+        <div class="dcg-popover-title">
+          {format("menu-desmodder-plugins")}
+          <div class="dsm-version-number">v{VERSION}</div>
+        </div>
         {categories.map((category) => (
           <div
             class="dcg-options-menu-section dsm-category-section"
