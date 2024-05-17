@@ -7,15 +7,15 @@ import { format } from "#i18n";
 
 export function ActionButtons(eab: ExprActionButtons, m: ItemModel) {
   return (
-    <For each={() => eab.order()} key={(b) => b.key}>
-      <div class="dsm-action-buttons">
+    <div class="dsm-action-buttons">
+      <For each={() => eab.order()} key={(b) => b.key}>
         {(b: ActionButton) => (
           <If predicate={() => b.predicate(m)}>
             {() => ActionButtonView(b, m)}
           </If>
         )}
-      </div>
-    </For>
+      </For>
+    </div>
   );
 }
 
