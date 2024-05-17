@@ -66,14 +66,14 @@ export class JumpToDefinitionMenu extends Component<{
                   class="dcg-icon-remove"
                 ></button>
               </div>
-              <For
-                each={() =>
-                  this.props.info()?.idents?.map((e, i) => [e, i] as const) ??
-                  []
-                }
-                key={(e) => e[0].sourceExprIndex}
-              >
-                <ul>
+              <ul>
+                <For
+                  each={() =>
+                    this.props.info()?.idents?.map((e, i) => [e, i] as const) ??
+                    []
+                  }
+                  key={(e) => e[0].sourceExprIndex}
+                >
                   {([e, i]: [
                     JumpToDefinitionMenuInfo["idents"][number],
                     number
@@ -94,8 +94,8 @@ export class JumpToDefinitionMenu extends Component<{
                       </li>
                     );
                   }}
-                </ul>
-              </For>
+                </For>
+              </ul>
             </div>
           );
 
@@ -170,11 +170,11 @@ export class FormattedDocstring extends Component<{
 }> {
   template() {
     return (
-      <For
-        each={() => this.props.docstring().map((e, i) => [e, i] as const)}
-        key={() => counter++}
-      >
-        <div style={{ display: "inline" }} class="dsm-intellisense-docstring">
+      <div style={{ display: "inline" }} class="dsm-intellisense-docstring">
+        <For
+          each={() => this.props.docstring().map((e, i) => [e, i] as const)}
+          key={() => counter++}
+        >
           {([r, _]: [DocStringRenderable, number]) =>
             Match(() => r, {
               param: (r) => {
@@ -215,8 +215,8 @@ export class FormattedDocstring extends Component<{
               ),
             })
           }
-        </div>
-      </For>
+        </For>
+      </div>
     );
   }
 }
@@ -261,15 +261,15 @@ export class PartialFunctionCallView extends Component<{
                   config={{}}
                 ></DStaticMathquillView>
                 <StaticMathQuillView latex="("></StaticMathQuillView>
-                <For
-                  each={() =>
-                    this.props
-                      .partialFunctionCallIdent()
-                      ?.params.map((e, i) => [e, i] as const) ?? []
-                  }
-                  key={(e) => e[0]}
-                >
-                  <div class="pfc-params">
+                <div class="pfc-params">
+                  <For
+                    each={() =>
+                      this.props
+                        .partialFunctionCallIdent()
+                        ?.params.map((e, i) => [e, i] as const) ?? []
+                    }
+                    key={(e) => e[0]}
+                  >
                     {(p: [string, number]) => {
                       return (
                         <div
@@ -298,8 +298,8 @@ export class PartialFunctionCallView extends Component<{
                         </div>
                       );
                     }}
-                  </div>
-                </For>
+                  </For>
+                </div>
                 <StaticMathQuillView latex=")"></StaticMathQuillView>
               </div>
             </div>

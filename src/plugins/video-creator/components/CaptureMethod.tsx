@@ -112,24 +112,24 @@ export default class SelectCapture extends Component<{
                   </div>
                 )}
               </If>
-              <For
-                each={
-                  // using an <If> here doesn't work because it doesn't update the StaticMathQuillView
-                  () =>
-                    this.vc.getCurrentAction()?.latex !== undefined
-                      ? [this.vc.getCurrentAction()]
-                      : []
-                }
-                key={(action) => action.id}
-              >
-                <div class="dsm-vc-current-action">
+              <div class="dsm-vc-current-action">
+                <For
+                  each={
+                    // using an <If> here doesn't work because it doesn't update the StaticMathQuillView
+                    () =>
+                      this.vc.getCurrentAction()?.latex !== undefined
+                        ? [this.vc.getCurrentAction()]
+                        : []
+                  }
+                  key={(action) => action.id}
+                >
                   {() => (
                     <StaticMathQuillView
                       latex={() => this.vc.getCurrentAction().latex!}
                     />
                   )}
-                </div>
-              </For>
+                </For>
+              </div>
             </div>
           ),
           ticks: () => (

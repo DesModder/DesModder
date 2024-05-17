@@ -105,13 +105,13 @@ export default class Menu extends Component<{
             </div>
             <If predicate={() => this.pm.isCategoryExpanded(category)}>
               {() => (
-                <For each={() => categoryPlugins[category]} key={(id) => id}>
-                  <div class="dsm-category-container">
+                <div class="dsm-category-container">
+                  <For each={() => categoryPlugins[category]} key={(id) => id}>
                     {(pluginID: PluginID) =>
                       this.plugin(plugins.get(pluginID)!)
                     }
-                  </div>
-                </For>
+                  </For>
+                </div>
               )}
             </If>
           </div>
@@ -247,13 +247,13 @@ function colorListOption(
         {IfElse(() => value().length > 0, {
           true: () => (
             <div class="flex">
-              <For
-                each={() =>
-                  (settings[item.key] as string[]).map((e, i) => [e, i])
-                }
-                key={([e, i]) => `${e}:${i}`}
-              >
-                <ol class="dsm-settings-color-list">
+              <ol class="dsm-settings-color-list">
+                <For
+                  each={() =>
+                    (settings[item.key] as string[]).map((e, i) => [e, i])
+                  }
+                  key={([e, i]) => `${e}:${i}`}
+                >
                   {([v, i]: [string, number]) => (
                     <div class="dsm-settings-color-list-item-container">
                       <input
@@ -288,8 +288,8 @@ function colorListOption(
                       </div>
                     </div>
                   )}
-                </ol>
-              </For>
+                </For>
+              </ol>
               <ResetButton pm={pm} key={item.key} />
             </div>
           ),
