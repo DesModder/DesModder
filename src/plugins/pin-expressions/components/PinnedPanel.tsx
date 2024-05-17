@@ -9,15 +9,15 @@ export interface ListView {
 
 export function PinnedPanel(pe: PinExpressions, listView: ListView) {
   return (
-    <For
-      each={() =>
-        pe.dsm.textMode?.inTextMode ? [] : pe.cc?.getAllItemModels?.() ?? []
-      }
-      key={(model) => (model as any).guid}
+    <div
+      class="dsm-pinned-expressions dcg-exppanel"
+      style={() => ({ background: pe.cc.getBackgroundColor() })}
     >
-      <div
-        class="dsm-pinned-expressions dcg-exppanel"
-        style={() => ({ background: pe.cc.getBackgroundColor() })}
+      <For
+        each={() =>
+          pe.dsm.textMode?.inTextMode ? [] : pe.cc?.getAllItemModels?.() ?? []
+        }
+        key={(model) => (model as any).guid}
       >
         {(model: any) => (
           <If predicate={() => pe?.isExpressionPinned(model.id)}>
@@ -28,7 +28,7 @@ export function PinnedPanel(pe: PinExpressions, listView: ListView) {
             {() => listView.makeDragCopyViewForModel(model)}
           </If>
         )}
-      </div>
-    </For>
+      </For>
+    </div>
   );
 }

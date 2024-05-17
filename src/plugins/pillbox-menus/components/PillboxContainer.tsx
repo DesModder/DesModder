@@ -31,13 +31,13 @@ export default class PillboxContainer extends Component<{
   templateTrue() {
     return (
       <div class="dsm-pillbox-and-popover">
-        <For each={() => this.pm.pillboxButtonsOrder} key={(id) => id}>
-          <div
-            class={{
-              "dsm-pillbox-buttons": true,
-              "dsm-horizontal-pillbox": this.horizontal,
-            }}
-          >
+        <div
+          class={{
+            "dsm-pillbox-buttons": true,
+            "dsm-horizontal-pillbox": this.horizontal,
+          }}
+        >
+          <For each={() => this.pm.pillboxButtonsOrder} key={(id) => id}>
             {(id: string) => (
               <Tooltip
                 tooltip={() => format(this.pm.pillboxButtons[id].tooltip)}
@@ -64,8 +64,8 @@ export default class PillboxContainer extends Component<{
                 </div>
               </Tooltip>
             )}
-          </div>
-        </For>
+          </For>
+        </div>
         {this.pm.dsm.insertElement(() => this.pm.pillboxMenuView(false))}
       </div>
     );
