@@ -363,91 +363,90 @@ export class View extends Component<{
             }
             cfg={() => this.props.plugin().intellisenseState.cfg}
           />
-          <IndexFor
-            each={() =>
-              this.props
-                .plugin()
-                .intellisenseOpts.map((ident, index) => ({ ...ident, index }))
-            }
-            key={(e) => e.idents[0].variableName}
-            innerComponent={intellisenseOptionsTable}
-          >
-            {(
-              ident: { idents: BoundIdentifier[] } & { index: number },
-              idx: () => number
-            ) => {
-              const reformattedIdent = ident.idents[0].variableName;
+          <table class="intellisense-options-table">
+            <IndexFor
+              each={() =>
+                this.props
+                  .plugin()
+                  .intellisenseOpts.map((ident, index) => ({ ...ident, index }))
+              }
+              key={(e) => e.idents[0].variableName}
+            >
+              {(
+                ident: { idents: BoundIdentifier[] } & { index: number },
+                idx: () => number
+              ) => {
+                const reformattedIdent = ident.idents[0].variableName;
 
-              const selected = () =>
-                idx() === this.props.plugin().intellisenseIndex;
+                const selected = () =>
+                  idx() === this.props.plugin().intellisenseIndex;
 
-              const opt = (
-                <tr
-                  class={() =>
-                    selected()
-                      ? (setIntellisenseTimeout(() => {
-                          opt._domNode?.scrollIntoView({
-                            block: "center",
-                          });
-                        }, 0),
-                        "selected-intellisense-row intellisense-option")
-                      : "intellisense-option"
-                  }
-                >
-                  <td style={{ color: "#AAAAAA" }}>
-                    <IdentifierSymbol symbol={() => ident}></IdentifierSymbol>
-                  </td>
-                  <td
+                const opt = (
+                  <tr
                     class={() =>
-                      selected() && this.props.plugin().intellisenseRow === 0
-                        ? "selected-intellisense-option"
-                        : "intellisense-clickable"
+                      selected()
+                        ? (setIntellisenseTimeout(() => {
+                            opt._domNode?.scrollIntoView({
+                              block: "center",
+                            });
+                          }, 0),
+                          "selected-intellisense-row intellisense-option")
+                        : "intellisense-option"
                     }
-                    onClick={() => {
-                      this.props.plugin().leaveIntellisenseMenu();
-                      this.props.plugin().doAutocomplete(ident.idents[0]);
-                    }}
                   >
-                    <StaticMathQuillView
-                      latex={
-                        identifierStringToLatexString(
-                          this.props.plugin().intellisenseState.cfg,
-                          reformattedIdent
-                        ) +
-                        (ident.idents.length === 1 &&
-                        ident.idents[0].type === "function"
-                          ? "\\left(\\right)"
-                          : "")
+                    <td style={{ color: "#AAAAAA" }}>
+                      <IdentifierSymbol symbol={() => ident}></IdentifierSymbol>
+                    </td>
+                    <td
+                      class={() =>
+                        selected() && this.props.plugin().intellisenseRow === 0
+                          ? "selected-intellisense-option"
+                          : "intellisense-clickable"
                       }
-                    ></StaticMathQuillView>
-                  </td>
-                  <td
-                    class={() =>
-                      selected() && this.props.plugin().intellisenseRow === 1
-                        ? "selected-intellisense-option"
-                        : "intellisense-clickable"
-                    }
-                  >
-                    <i
-                      onClick={(e: MouseEvent) => {
-                        this.props.plugin().jumpToDefinition(reformattedIdent);
-                        e.stopPropagation();
+                      onClick={() => {
+                        this.props.plugin().leaveIntellisenseMenu();
+                        this.props.plugin().doAutocomplete(ident.idents[0]);
                       }}
-                      class="dsm-icon-compass2 jump-to-def-btn"
-                    ></i>
-                  </td>
-                </tr>
-              );
+                    >
+                      <StaticMathQuillView
+                        latex={
+                          identifierStringToLatexString(
+                            this.props.plugin().intellisenseState.cfg,
+                            reformattedIdent
+                          ) +
+                          (ident.idents.length === 1 &&
+                          ident.idents[0].type === "function"
+                            ? "\\left(\\right)"
+                            : "")
+                        }
+                      ></StaticMathQuillView>
+                    </td>
+                    <td
+                      class={() =>
+                        selected() && this.props.plugin().intellisenseRow === 1
+                          ? "selected-intellisense-option"
+                          : "intellisense-clickable"
+                      }
+                    >
+                      <i
+                        onClick={(e: MouseEvent) => {
+                          this.props
+                            .plugin()
+                            .jumpToDefinition(reformattedIdent);
+                          e.stopPropagation();
+                        }}
+                        class="dsm-icon-compass2 jump-to-def-btn"
+                      ></i>
+                    </td>
+                  </tr>
+                );
 
-              return opt;
-            }}
-          </IndexFor>
+                return opt;
+              }}
+            </IndexFor>
+          </table>
         </div>
       </div>
     );
   }
-}
-
-function intellisenseOptionsTable(children: unknown) {
-  return <table class="intellisense-options-table">{children}</table>;
 }
