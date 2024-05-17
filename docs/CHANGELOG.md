@@ -1,5 +1,9 @@
 # DesModder Changelog
 
+## 0.13.3
+
+Fix compatability error preventing everything from loading.
+
 ## 0.13.2
 
 Bug Fixes
