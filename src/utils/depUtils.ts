@@ -28,7 +28,7 @@ export function parseDesmosLatex(s: string) {
 
 export function EvaluateSingleExpression(calc: Calc, s: string): number {
   // may also return NaN (which is a number)
-  return evaluateLatex(s, calc.controller.isDegreeMode());
+  return evaluateLatex(s, calc.controller.getDegreeMode());
 }
 
 export const autoCommandNames: string =

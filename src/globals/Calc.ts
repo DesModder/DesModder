@@ -242,7 +242,7 @@ interface CalcPrivate {
     stopAllSliders: () => void;
     isKeypadOpen: () => boolean;
     getKeypadHeight: () => number;
-    isDegreeMode: () => boolean;
+    getDegreeMode: () => boolean;
     getExpressionSearchOpen: () => boolean;
     generateId: () => string;
     // returns a subscript that occurs nowhere else in the graph

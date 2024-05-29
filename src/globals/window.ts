@@ -86,7 +86,7 @@ export const Fragile = new Proxy(
       };
     };
   };
-  evaluateLatex: (s: string, isDegreeMode: boolean) => number;
+  evaluateLatex: (s: string, getDegreeMode: boolean) => number;
   Keys: {
     lookup: (e: KeyboardEvent) => string;
     lookupChar: (e: KeyboardEvent) => string;
