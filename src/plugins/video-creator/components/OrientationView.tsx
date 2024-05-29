@@ -73,7 +73,7 @@ export class OrientationView extends Component<{
           hasError={() => !this.or.isCurrentXYRotValid()}
           vc={this.or.vc}
           data={this.or.xyRot}
-          numberUnits={this.or.cc.isDegreeMode() ? "°" : "rad"}
+          numberUnits={this.or.cc.getDegreeMode() ? "°" : "rad"}
         />
         <StaticMathQuillView latex="\ z:" />
         <ManagedNumberInput
@@ -83,7 +83,7 @@ export class OrientationView extends Component<{
           hasError={() => !this.or.isCurrentZTipValid()}
           vc={this.or.vc}
           data={this.or.zTip}
-          numberUnits={this.or.cc.isDegreeMode() ? "°" : "rad"}
+          numberUnits={this.or.cc.getDegreeMode() ? "°" : "rad"}
         />
       </div>
     );
@@ -132,7 +132,7 @@ export class OrientationView extends Component<{
             hasError={() => !this.or.isSpeedRotValid()}
             vc={this.or.vc}
             data={this.or.speedRot}
-            numberUnits={this.or.cc.isDegreeMode() ? "°/s" : "rad/s"}
+            numberUnits={this.or.cc.getDegreeMode() ? "°/s" : "rad/s"}
           />
         </div>
       </span>
@@ -153,7 +153,7 @@ export class OrientationView extends Component<{
             hasError={() => !this.or.isXYRotStepValid()}
             vc={this.or.vc}
             data={this.or.xyRotStep}
-            numberUnits={this.or.cc.isDegreeMode() ? "°" : "rad"}
+            numberUnits={this.or.cc.getDegreeMode() ? "°" : "rad"}
           />
           <StaticMathQuillView latex="\ \Delta z:" />
           <ManagedNumberInput
@@ -163,7 +163,7 @@ export class OrientationView extends Component<{
             hasError={() => !this.or.isZTipStepValid()}
             vc={this.or.vc}
             data={this.or.zTipStep}
-            numberUnits={this.or.cc.isDegreeMode() ? "°" : "rad"}
+            numberUnits={this.or.cc.getDegreeMode() ? "°" : "rad"}
           />
         </div>
       </span>
@@ -183,7 +183,7 @@ export class OrientationView extends Component<{
             hasError={() => !this.or.isXYRotFromValid()}
             vc={this.or.vc}
             data={this.or.xyRotFrom}
-            numberUnits={this.or.cc.isDegreeMode() ? "°" : "rad"}
+            numberUnits={this.or.cc.getDegreeMode() ? "°" : "rad"}
           />
           <StaticMathQuillView latex="\ z:" />
           <ManagedNumberInput
@@ -193,7 +193,7 @@ export class OrientationView extends Component<{
             hasError={() => !this.or.isZTipFromValid()}
             vc={this.or.vc}
             data={this.or.zTipFrom}
-            numberUnits={this.or.cc.isDegreeMode() ? "°" : "rad"}
+            numberUnits={this.or.cc.getDegreeMode() ? "°" : "rad"}
           />
         </div>
         <div class="dsm-vc-orientation">
@@ -206,7 +206,7 @@ export class OrientationView extends Component<{
             hasError={() => !this.or.isXYRotToValid()}
             vc={this.or.vc}
             data={this.or.xyRotTo}
-            numberUnits={this.or.cc.isDegreeMode() ? "°" : "rad"}
+            numberUnits={this.or.cc.getDegreeMode() ? "°" : "rad"}
           />
           <StaticMathQuillView latex="\ z:" />
           <ManagedNumberInput
@@ -216,7 +216,7 @@ export class OrientationView extends Component<{
             hasError={() => !this.or.isZTipToValid()}
             vc={this.or.vc}
             data={this.or.zTipTo}
-            numberUnits={this.or.cc.isDegreeMode() ? "°" : "rad"}
+            numberUnits={this.or.cc.getDegreeMode() ? "°" : "rad"}
           />
         </div>
       </span>

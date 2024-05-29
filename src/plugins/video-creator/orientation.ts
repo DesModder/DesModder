@@ -79,7 +79,7 @@ export class Orientation {
 
   /** Writes angle (in radians) as string (in preferred degrees or radians). */
   angleToString(n: number) {
-    if (this.cc.isDegreeMode()) {
+    if (this.cc.getDegreeMode()) {
       return (n / (Math.PI / 180)).toFixed(1);
     } else {
       return (n / (Math.PI * 2)).toFixed(3) + "\\tau";
@@ -334,7 +334,7 @@ export class Orientation {
   }
 
   trigAngleMultiplier() {
-    return this.cc.isDegreeMode() ? Math.PI / 180 : 1;
+    return this.cc.getDegreeMode() ? Math.PI / 180 : 1;
   }
 
   areCaptureSettingsValid() {
