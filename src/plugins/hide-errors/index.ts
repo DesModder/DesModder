@@ -68,7 +68,9 @@ export default class HideErrors extends PluginController {
     return () => HideButton(this, getModel);
   }
 
-  errorTriangle(id: string): Replacer {
+  /** This is called on all error triangles, but a string ID is only passed for exprs. */
+  errorTriangle(id: string | undefined): Replacer {
+    if (id === undefined) return undefined;
     return (inner: any) => ErrorTriangle(this, id, inner);
   }
 }

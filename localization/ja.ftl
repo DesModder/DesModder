@@ -1,6 +1,6 @@
 # File Conventions:
 # Everything related to a plugin starts with the ID of the plugin
-# Harcdoded in the Typescript:
+# Hardcoded in the Typescript:
 # [pluginID]-name = 名前
 # [pluginID]-desc = 説明
 # [pluginID]-opt-[optionKey]-name = オプション名

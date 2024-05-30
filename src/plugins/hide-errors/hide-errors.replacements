@@ -20,11 +20,9 @@
   return $cc.createSlidersForItem($model.id
 ```
 
-## Wrap error triangle with div for onTap and opacity control
+## Pass in ID to error triangle
 
 *Description* `Wrap error triangle to control its style`
-
-Wrap the error message tooltipped-error with a div, using `onTap` to trigger hiding/showing the error (but only when shift is held).
 
 *Find* => `from`
 ```js
@@ -43,12 +41,35 @@ $this.bindFn($this.getIconMode)
 
 *Replace* `from` with
 ```js
-error: () => DSM.replaceElement(
-  () => $DCGView.createElement($TooltippedError, {
-      error: $e.bindFn($e.getErrorMsg),
-      __opts__,
-    }),
-  () => DSM.hideErrors?.errorTriangle($this.model.id)
+error: () => $DCGView.createElement($TooltippedError, {
+    error: $e.bindFn($e.getErrorMsg),
+    exprId: () => $this.model.id,
+    __opts__
+  })
+```
+
+## Wrap error triangle with div for onTap and opacity control
+
+*Description* `Wrap error triangle to control its style`
+
+Wrap the error message tooltipped-error with a div, using `onTap` to trigger hiding/showing the error (but only when shift is held).
+
+*Find* => `from`
+```js
+$DCGView.createElement($Tooltip,
+  {
+    tooltip: this.props.error,
+    __opts__
+  },
+  __errorTriangle__
+)
+```
+
+*Replace* `errorTriangle` with
+```js
+DSM.replaceElement(
+  () => __errorTriangle__,
+  () => DSM.hideErrors?.errorTriangle(this.props.exprId())
 )
 ```
 
