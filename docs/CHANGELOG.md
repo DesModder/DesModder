@@ -1,5 +1,12 @@
 # DesModder Changelog
 
+## 0.13.4
+
+Bug Fixes
+
+- Fix Video Creator not loading
+- Fix shift-click on error triangle not working to hide errors.
+
 ## 0.13.3
 
 Fix compatibility error preventing everything from loading.
