@@ -1,12 +1,21 @@
 #!/bin/bash
 set -euo pipefail
 
-if [[ $# -lt 1 ]]; then
-  echo "Usage: release.sh [version]"
+prefix="prepare/"
+branch="$(git rev-parse --abbrev-ref HEAD)"
+version="${branch#"$prefix"}" # remove prefix
+
+if [ "$branch" != "$prefix$version" ]; then
+  echo "Must be on a branch named ${prefix}[version] like ${prefix}0.13.4"
   exit 1
 fi
 
-version="$1"
+if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+  echo "Version must look like '0.13.4' but got '$version'"
+  exit 1
+fi
+
+echo "Releasing version '$version'"
 
 echo "Updating package version"
 npm --no-git-tag-version version "$version"
