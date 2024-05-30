@@ -2,7 +2,7 @@
 
 ## 0.13.3
 
-Fix compatability error preventing everything from loading.
+Fix compatibility error preventing everything from loading.
 
 ## 0.13.2
 
