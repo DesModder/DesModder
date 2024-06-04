@@ -1,6 +1,5 @@
 import VideoCreator from "..";
 import { scaleBoundsAboutCenter } from "./utils";
-import DSM from "#DSM";
 import { ManagedNumberInputModel } from "../components/ManagedNumberInput";
 import { noSpeed } from "../orientation";
 
@@ -154,23 +153,6 @@ async function captureNTimes(vc: VideoCreator) {
   }
 }
 
-/** SegmentedControl does not plan for the list of names to change, so
- * force-reload the list of options by closing and re-opening the menu.
- * This is needed when action-capture stops sliders, so the slider-ticks
- * capture method option gets disabled. */
-function forceReloadMenu(dsm: DSM) {
-  // XXX: it would be better if SegmentedControl actually re-loaded options
-  // A proper implementation is needed if we ever allow pinning the vc menu.
-  const pm = dsm.pillboxMenus;
-  if (!pm) return;
-  if (pm.pillboxMenuOpen === "dsm-vc-menu") {
-    pm.pillboxMenuOpen = null;
-    pm.cc.dispatch({ type: "tick" });
-    pm.pillboxMenuOpen = "dsm-vc-menu";
-    pm.cc.dispatch({ type: "tick" });
-  }
-}
-
 function updateOrientationAfterCapture(
   vc: VideoCreator,
   numStepsRemaining: number
@@ -228,7 +210,7 @@ export async function capture(vc: VideoCreator) {
       vc.cc._tickSliders = () => {};
     } else if (vc.cc.getPlayingSliders().length > 0) {
       vc.cc.stopAllSliders();
-      forceReloadMenu(vc.dsm);
+      vc.updateView();
     }
     if (vc.captureMethod !== "ticks") {
       or.setSpeed(0);
