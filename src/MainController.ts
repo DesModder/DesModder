@@ -106,7 +106,7 @@ export default class DSM extends TransparentPlugins {
         this.setPluginEnabled(id, false);
         this.pillboxMenus?.updateMenuView();
         plugin?.afterDisable();
-        this.cc.updateViews();
+        this.cc.dispatch({ type: "tick" });
       }
     }
   }
@@ -121,7 +121,7 @@ export default class DSM extends TransparentPlugins {
       this.setPluginEnabled(id, true);
       res.afterEnable();
       this.pillboxMenus?.updateMenuView();
-      this.cc.updateViews();
+      this.cc.dispatch({ type: "tick" });
     }
   }
 
@@ -229,9 +229,8 @@ export default class DSM extends TransparentPlugins {
     if (plugin) {
       plugin.settings = pluginSettings;
       plugin.afterConfigChange();
-      this.cc.updateViews();
     }
-    this.pillboxMenus?.updateMenuView();
+    this.cc.dispatch({ type: "tick" });
   }
 
   /** Tests only */
@@ -246,7 +245,7 @@ export default class DSM extends TransparentPlugins {
     if (allowUndo) {
       this.cc.commitUndoRedoSynchronously({ type: "dsm-blank" });
     }
-    this.cc.updateViews();
+    this.cc.dispatch({ type: "tick" });
   }
 
   insertElement = insertElement;

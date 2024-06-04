@@ -44,5 +44,5 @@ function applyCaptureFrame(vc: VideoCreator) {
 
 export function updateView(vc: VideoCreator) {
   applyCaptureFrame(vc);
-  vc.calc.controller.updateViews();
+  vc.cc.dispatch({ type: "tick" });
 }

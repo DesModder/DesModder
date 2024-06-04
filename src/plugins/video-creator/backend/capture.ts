@@ -165,9 +165,9 @@ function forceReloadMenu(dsm: DSM) {
   if (!pm) return;
   if (pm.pillboxMenuOpen === "dsm-vc-menu") {
     pm.pillboxMenuOpen = null;
-    pm.cc.updateViews();
+    pm.cc.dispatch({ type: "tick" });
     pm.pillboxMenuOpen = "dsm-vc-menu";
-    pm.cc.updateViews();
+    pm.cc.dispatch({ type: "tick" });
   }
 }
 
