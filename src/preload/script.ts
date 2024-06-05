@@ -39,6 +39,20 @@ function getCalcDesktopURL() {
 async function load(pluginsForceDisabled: Set<string>) {
   if (window.location.pathname === "/geometry-legacy") return;
 
+  if ((window as any).Desmodder) {
+    throw new Error(
+      "DesModder is already loaded in the tab, probably due to an update in Firefox. " +
+        "Stopping the loading process for DesModder."
+    );
+  }
+
+  if ((window.Desmos as any)?.Calculator || (window as any).Calc) {
+    throw new Error(
+      "DesModder failed to load properly; it was unable to block the initial load of Desmos. " +
+        "Stopping the loading process for DesModder."
+    );
+  }
+
   Console.warn(
     BROWSER === "firefox"
       ? `%cThe warning above (Loading failed for the <script> with source...) is intentional and does not indicate a bug.`
