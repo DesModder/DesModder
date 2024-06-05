@@ -4,7 +4,14 @@
 
 Bug Fixes
 
-- Fix Video Creator not loading
+- Prevent duplicate loading (such as might occur after an update in Firefox).
+- Fix error from non-expression error triangles with hide-errors enabled.
+
+## 0.13.4
+
+Bug Fixes
+
+- Fix Video Creator not loading.
 - Fix shift-click on error triangle not working to hide errors.
 
 ## 0.13.3
