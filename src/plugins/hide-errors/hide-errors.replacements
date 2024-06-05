@@ -69,7 +69,7 @@ $DCGView.createElement($Tooltip,
 ```js
 DSM.replaceElement(
   () => __errorTriangle__,
-  () => DSM.hideErrors?.errorTriangle(this.props.exprId())
+  () => DSM.hideErrors?.errorTriangle(this.props.exprId?.() ?? "")
 )
 ```
 
