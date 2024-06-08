@@ -1,5 +1,13 @@
 # DesModder Changelog
 
+## 0.13.5
+
+Bug Fixes
+
+- Fix CSS issues causing the expressions list to split in half.
+- Fix CSS issues affecting Set Primary Color and other plugins.
+- Fix bug where scrolling/zooming would jump to the selected expression when Video Creator was enabled.
+
 ## 0.13.4
 
 Bug Fixes
