@@ -37,6 +37,8 @@ const colorMapping = {
   "#347ff5": "--dsm-primary-light-1-rgb", // 1.11
   "52,127,245": "--dsm-primary-light-1-rgb",
   // primary btn border (on dark bg); for simplicity make same as light-1
+  "#4380e0": "--dsm-primary-light-1-rgb",
+  "67,128,224": "--dsm-primary-light-1-rgb",
   "#4480e0": "--dsm-primary-light-1-rgb", // nonlinear, avg 1.2
   "68,128,224": "--dsm-primary-light-1-rgb",
   // Green from Desmos. Will probably be patched
@@ -97,9 +99,8 @@ css = css
 css = css.replace(/(?:[^\n]*,\n)*[^\n]*{\s*}/g, "");
 // Remove duplicated newlines
 css = css.replace(/\n{2,}/g, "\n");
-// Remove leading ".dcg-calculator-api-container "
-css = css.replaceAll(".dcg-calculator-api-container ", "");
+// Remove leading ".dcg-calculator-api-container-vXX "
+css = css.replaceAll(/.dcg-calculator-api-container\S+ /g, "");
 
-console.log(
-  ".dsm-set-primary-color.dcg-calculator-api-container { " + css + "}"
-);
+console.log("// MACHINE-GENERATED FILE: Do not edit, except by clean-css.mjs.");
+console.log(".dsm-set-primary-color.dcg-sliding-interior { " + css + "}");

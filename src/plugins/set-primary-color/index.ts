@@ -49,9 +49,8 @@ export default class SetPrimaryColor extends PluginController<Config> {
   apiContainer!: HTMLElement;
 
   afterEnable() {
-    this.apiContainer = document.querySelector(
-      ".dcg-calculator-api-container"
-    )!;
+    // .dcg-sliding-interior contains everything (header and body)
+    this.apiContainer = document.querySelector(".dcg-sliding-interior")!;
     this.applyConfig();
     this.apiContainer.classList.add("dsm-set-primary-color");
     this.senseDarkReader();

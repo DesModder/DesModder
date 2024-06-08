@@ -1,24 +1,21 @@
 .commaizer {
-  .dcg-calculator-api-container .dcg-mq-root-block .dcg-mq-group-start,
-  .dcg-calculator-api-container
+  .dcg-container .dcg-mq-root-block .dcg-mq-group-start,
+  .dcg-container
     .dcg-mq-math-mode
     .dcg-mq-root-block
     .dcg-mq-group-start::before {
     content: var(--delimiter-override);
   }
 
-  .dcg-calculator-api-container .dcg-mq-root-block .dcg-mq-group-start,
-  .dcg-calculator-api-container
-    .dcg-mq-math-mode
-    .dcg-mq-root-block
-    .dcg-mq-group-start {
+  .dcg-container .dcg-mq-root-block .dcg-mq-group-start,
+  .dcg-container .dcg-mq-math-mode .dcg-mq-root-block .dcg-mq-group-start {
     margin-left: 0;
     margin-right: 0;
   }
 }
 
 .less-f-spacing {
-  .dcg-calculator-api-container .dcg-mq-math-mode var.dcg-mq-f {
+  .dcg-container .dcg-mq-math-mode var.dcg-mq-f {
     margin-left: unset;
     margin-right: 0.05em;
   }
