@@ -3,7 +3,7 @@ import { Inserter, PluginController } from "../PluginController";
 import Tip from "./Tip";
 
 function apiContainer() {
-  return document.querySelector(".dcg-calculator-api-container");
+  return document.querySelector(".dcg-container");
 }
 
 export default class ShowTips extends PluginController {
