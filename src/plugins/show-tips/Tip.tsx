@@ -40,6 +40,6 @@ export default class Tip extends Component<{ st: ShowTips }> {
   nextTip() {
     this.currentTipIndex += 1;
     this.currentTipIndex %= this.tips.length;
-    this.props.st().cc.dispatch({ type: "tick" });
+    this.props.st().cc.updateViews();
   }
 }

@@ -48,7 +48,7 @@ export default class TextMode extends PluginController {
       // Revert back to the old markTickRequiredNextFrame given by prototype
       delete (this.cc as any).markTickRequiredNextFrame;
     }
-    this.cc.dispatch({ type: "tick" });
+    this.cc.updateViews();
   }
 
   /**

@@ -61,7 +61,7 @@ export default class PillboxMenus extends PluginController<undefined> {
   }
 
   updateMenuView() {
-    this.cc.dispatch({ type: "tick" });
+    this.cc.updateViews();
   }
 
   addPillboxButton(info: PillboxButton) {

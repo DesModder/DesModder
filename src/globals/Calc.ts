@@ -247,6 +247,7 @@ interface CalcPrivate {
     generateId: () => string;
     // returns a subscript that occurs nowhere else in the graph
     generateTableXSubscript: () => number;
+    updateViews: () => void;
     updateTheComputedWorld: () => void;
     commitUndoRedoSynchronously: (e: { type: string }) => void;
     evaluator: {
