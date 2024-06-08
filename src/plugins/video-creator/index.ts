@@ -130,6 +130,7 @@ export default class VideoCreator extends PluginController {
   }
 
   graphpaperBoundsChanged() {
+    if (!this.isMenuOpen()) return;
     this.updateView();
   }
 
