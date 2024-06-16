@@ -2,11 +2,9 @@
 
 *plugin* `better-evaluation-view`
 
-## Override evaluation view
+## Show undefineds: JSX consumer
 
-*Description* `Override the evaluation view`
-
-Bindings
+*Description* `Show NaN, -∞, and +∞`
 
 *Find* => `undefined`
 ```js
@@ -38,12 +36,14 @@ undefined: () => $Dcgview.Components.IfElse(
   )
 ```
 
-Show list elements
+## Show list elements: JSX consumer
+
+*Description* `Show list elements`
 
 *Find* => `list`
 ```js
 ()=>this.getEvaluationType(), {
-list: () => $.createElement(__oldList__)
+list: () => $Dcgview.createElement(__oldList__)
 ```
 
 *Replace* `list` with
@@ -55,10 +55,13 @@ list: () => DSM.replaceElement(
 )
 ```
 
-Show color values
+## Show color values: JSX consumer
+
+*Description* `Show color values`
+
 *Find* => `color`
 ```js
-rgbcolor: () => $.createElement(__swatch__)
+rgbcolor: () => $Dcgview.createElement(__swatch__)
 ```
 
 *Replace* `color` with
