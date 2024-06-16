@@ -13,17 +13,17 @@ adding an extra section to the menu view.
 ```js
 createElement(
   'div',
-  { class: $DCGView.const('dcg-options-menu-content') },
+  { class: $DCGView.const('dcg-options-menu-content') ____ },
   $DCGView.createElement(
     'div',
     {
       class: $DCGView.const(
         'dcg-iconed-mathquill-row dcg-fill-opacity-row'
       )
-    },
-    __rest0__
-  ),
-  __rest1__
+    }
+    ____
+  )
+  ____
 )
 ```
 
