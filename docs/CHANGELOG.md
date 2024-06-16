@@ -1,6 +1,14 @@
 # DesModder Changelog
 
-## 0.13.5
+## 0.13.7
+
+Bug Fixes
+
+- Fix error preventing GLesmos from being enabled
+- Fix error breaking Better Evaluation View
+- Fix CSS issue affecting transparent colors with Set Primary Color
+
+## 0.13.6
 
 Bug Fixes
 
@@ -8,7 +16,7 @@ Bug Fixes
 - Fix CSS issues affecting Set Primary Color and other plugins.
 - Fix bug where scrolling/zooming would jump to the selected expression when Video Creator was enabled.
 
-## 0.13.4
+## 0.13.5
 
 Bug Fixes
 
