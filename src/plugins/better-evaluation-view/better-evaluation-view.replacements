@@ -8,16 +8,9 @@
 
 Bindings
 
-*Find*
-```js
-fraction: () => $Dcgview.createElement($StaticMathquillViewDefault, {latex
-```
-
-Show exposed undefined values
-
 *Find* => `undefined`
 ```js
-undefined: () =>  $.createElement(
+undefined: () =>  $Dcgview.createElement(
     'span',
     null,
     $.const("undefined")
@@ -30,9 +23,9 @@ undefined: () => $Dcgview.Components.IfElse(
     () => DSM.betterEvaluationView,
     {
       true: () => $Dcgview.createElement(
-        $StaticMathquillViewDefault,
+        Desmos.Private.Fragile.StaticMathquillView,
         {
-          latex: () => this.getNumberLabel().value,
+          latex: () => this.getNumberLabelString?.() || "undefined",
           config: $Dcgview.const({})
         }
       ),
