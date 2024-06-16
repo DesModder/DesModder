@@ -49,7 +49,7 @@ Just add one more child.
 *Replace* `__rest__` with
 ```js
 __rest__,
-DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.id, $ToggleView, true))
+DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, true))
 ```
 
 ## Add a lines menu option for switching an expression to glesmos rendering mode
@@ -85,7 +85,7 @@ Just add one more child.
 *Replace* `__rest__` with
 ```js
 __rest__,
-DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.id, $ToggleView, false))
+DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, false))
 ```
 
 ## Add a lines menu option for confirming GLesmos lines
@@ -114,7 +114,7 @@ Prefix with a child
 
 *Replace* `options` with
 ```js
-DSM.insertElement(() => DSM.glesmos?.confirmLines(this.id, $ToggleView)),
+DSM.insertElement(() => DSM.glesmos?.confirmLines(this.model.id, $ToggleView)),
 __options__
 ```
 
