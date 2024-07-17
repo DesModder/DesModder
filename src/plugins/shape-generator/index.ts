@@ -1,4 +1,6 @@
 import { PluginController } from "#plugins/PluginController.js";
+import { ComputeEngine } from "@cortex-js/compute-engine";
+import { computeEngineLatexToDesmosLatex } from "compute-engine-to-desmos-latex";
 
 export default class ShapeGenerator extends PluginController {
   static id = "shape-generator" as const;
@@ -6,6 +8,8 @@ export default class ShapeGenerator extends PluginController {
 
   private _addExpressionBtnClickHandler: (() => void) | null = null;
   isEditingShape = false;
+
+  ce = new ComputeEngine();
 
   afterEnable() {
     const addExpressionBtn = getAddExpressionButton();
@@ -179,10 +183,14 @@ function addExpressionBtnClickHandler(this: ShapeGenerator) {
               firstDropdownItem!.dispatchEvent(new CustomEvent("dcg-tap"));
               this.calc.setExpression({
                 id: this.calc.selectedExpressionId,
-                latex: ellipseLatex(x, y, rx, ry, angle),
+                latex: computeEngineLatexToDesmosLatex(
+                  this.ce.parse(ellipseLatex(x, y, rx, ry, angle)).evaluate()
+                    .latex
+                ),
               });
 
               this.cleanupExpressions();
+              this.isEditingShape = false;
             });
           });
 
