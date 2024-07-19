@@ -26,6 +26,9 @@ export default class ManageMetadata extends PluginController {
   }
 
   checkForMetadataChange() {
+    if (!this.dsm.initDone) {
+      return;
+    }
     const newMetadata = getMetadata(this.calc);
     if (!this.dsm.glesmos) {
       if (

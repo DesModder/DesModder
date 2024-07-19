@@ -13,6 +13,7 @@ import { postMessageUp, mapToRecord, recordToMap } from "#utils/messages.ts";
 
 export default class DSM extends TransparentPlugins {
   cc = this.calc.controller;
+  initDone = false;
   /**
    * pluginsEnabled keeps track of what plugins the user wants enabled,
    * regardless of forceDisabled settings.
@@ -77,6 +78,8 @@ export default class DSM extends TransparentPlugins {
       if (this.isPluginEnabled(id)) this._enablePlugin(id);
     }
     this.pillboxMenus?.updateMenuView();
+    this.initDone = true;
+    this.metadata?.checkForMetadataChange();
     // The graph loaded before DesModder loaded, so DesModder was not available to
     // return true when asked isGlesmosMode. Refresh those expressions now
     this.glesmos?.checkGLesmos();
