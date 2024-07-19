@@ -167,6 +167,21 @@ export default class SelectCapture extends Component<{
           ntimes: () => null,
           once: () => null,
         })}
+        <If predicate={() => !this.vc.cc.is3dProduct()}>
+          {() => (
+            <div class="dsm-vc-fast-screenshots">
+              <Checkbox
+                checked={() => this.vc.fastScreenshots}
+                onChange={(checked) => this.vc.setFastScreenshots(checked)}
+                ariaLabel="Fast screenshots"
+              >
+                <span class="dsm-vc-checkbox-inner">
+                  {format("video-creator-fast-screenshot")}
+                </span>
+              </Checkbox>
+            </div>
+          )}
+        </If>
         <div class="dsm-vc-capture-size">
           {format("video-creator-size")}
           <ManagedNumberInput
@@ -213,9 +228,9 @@ export default class SelectCapture extends Component<{
                   tooltip={() => format("video-creator-target-tooltip")}
                   gravity="n"
                 >
-                  <div class="dsm-vc-pixel-ratio-inner">
+                  <span class="dsm-vc-checkbox-inner">
                     {format("video-creator-target-same-pixel-ratio")}
-                  </div>
+                  </span>
                 </Tooltip>
               </Checkbox>
             </div>

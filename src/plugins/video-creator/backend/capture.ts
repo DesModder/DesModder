@@ -44,6 +44,11 @@ async function screenshot3d(vc: VideoCreator, size: ScreenshotOpts) {
 }
 
 async function screenshot2d(vc: VideoCreator, size: ScreenshotOpts) {
+  if (vc.fastScreenshots) {
+    return await new Promise<string>((resolve) => {
+      vc.cc.evaluator.notifyWhenSynced(() => resolve(vc.calc.screenshot(size)));
+    });
+  }
   // make the captured region entirely visible
   const { width, height } = size;
   const pixelBounds = vc.calc.graphpaperBounds.pixelCoordinates;

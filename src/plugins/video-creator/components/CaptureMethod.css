@@ -38,11 +38,15 @@
   margin-left: 8px;
 }
 
+.dsm-vc-fast-screenshots {
+  margin-bottom: 8px;
+}
+
 .dsm-vc-pixel-ratio {
   margin-bottom: 8px;
 }
 
-.dsm-vc-pixel-ratio-inner {
+.dsm-vc-checkbox-inner {
   cursor: pointer;
 }
 
