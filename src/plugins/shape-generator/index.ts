@@ -1,10 +1,20 @@
 import { PluginController } from "#plugins/PluginController.js";
 import { ComputeEngine } from "@cortex-js/compute-engine";
 import { computeEngineLatexToDesmosLatex } from "compute-engine-to-desmos-latex";
+import { ConfigItem } from "..";
 
-export default class ShapeGenerator extends PluginController {
+export default class ShapeGenerator extends PluginController<{
+  simplifyEquations: boolean;
+}> {
   static id = "shape-generator" as const;
   static enabledByDefault = false;
+  static config: readonly ConfigItem[] = [
+    {
+      type: "boolean",
+      key: "simplifyEquations",
+      default: true,
+    },
+  ];
 
   private _addExpressionBtnClickHandler: (() => void) | null = null;
   isEditingShape = false;
@@ -180,13 +190,23 @@ function addExpressionBtnClickHandler(this: ShapeGenerator) {
               // TODO: HelperExpression missing unobserve types
               angleHelper.unobserve("numericValue");
 
+              // Create new empty expression to add the ellipse to
               firstDropdownItem!.dispatchEvent(new CustomEvent("dcg-tap"));
+
+              // Generate ellipse LaTeX
+              let latex = ellipseLatex(x, y, rx, ry, angle);
+
+              // Simplify the equation if needed
+              if (this.settings.simplifyEquations) {
+                latex = computeEngineLatexToDesmosLatex(
+                  this.ce.parse(latex).evaluate().latex
+                );
+              }
+
+              // Set the expression
               this.calc.setExpression({
                 id: this.calc.selectedExpressionId,
-                latex: computeEngineLatexToDesmosLatex(
-                  this.ce.parse(ellipseLatex(x, y, rx, ry, angle)).evaluate()
-                    .latex
-                ),
+                latex,
               });
 
               this.cleanupExpressions();
