@@ -55,6 +55,25 @@ list: () => DSM.replaceElement(
 )
 ```
 
+### Alternative
+
+*Description* `Show list elements (2)`
+
+*Find* => `list`
+```js
+()=>this.getEvaluationRHS())({
+list: $rhs => $Dcgview.createElement(__oldList__)
+```
+
+*Replace* `list` with
+```js
+()=>this.getEvaluationRHS())({
+list: $rhs => DSM.replaceElement(
+  () => $Dcgview.createElement(__oldList__),
+  () => DSM.betterEvaluationView?.listEvaluation(() => this.props.val())
+)
+```
+
 ## Show color values: JSX consumer
 
 *Description* `Show color values`
@@ -67,6 +86,23 @@ rgbcolor: () => $Dcgview.createElement(__swatch__)
 *Replace* `color` with
 ```js
 rgbcolor: () => DSM.replaceElement(
+  () => $Dcgview.createElement(__swatch__),
+  () => DSM.betterEvaluationView?.colorEvaluation(() => this.props.val())
+)
+```
+
+### Alternative
+
+*Description* `Show color values (2)`
+
+*Find* => `color`
+```js
+rgbcolor: $rhs => $Dcgview.createElement(__swatch__)
+```
+
+*Replace* `color` with
+```js
+rgbcolor: $rhs => DSM.replaceElement(
   () => $Dcgview.createElement(__swatch__),
   () => DSM.betterEvaluationView?.colorEvaluation(() => this.props.val())
 )
