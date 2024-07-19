@@ -38,7 +38,7 @@ export default class DSM extends TransparentPlugins {
   applyStoredEnabled(storedEnabled: Map<PluginID, boolean | undefined>) {
     for (const { id } of pluginList) {
       const stored = storedEnabled.get(id);
-      if (stored !== undefined && id !== "GLesmos") {
+      if (stored !== undefined) {
         this.pluginsEnabled.set(id, stored);
       }
     }
