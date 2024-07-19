@@ -352,3 +352,5 @@ better-navigation-opt-scrollableExpressions-desc = Adds horizontal scrollbars to
 ## Shape Generator
 shape-generator-name = Shape Generator
 shape-generator-desc = Tool for quickly generating equations for different shapes.
+shape-generator-opt-simplifyEquations-name = Simplify equations
+shape-generator-opt-simplifyEquations-desc = Uses the CortexJS Compute Engine to simplify generated equations before inserting them into the graph.
