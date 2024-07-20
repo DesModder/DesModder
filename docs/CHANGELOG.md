@@ -1,5 +1,16 @@
 # DesModder Changelog
 
+## 0.13.8
+
+Enhancements:
+
+- (GLesmos) Don't disable on page reloads.
+- (Video Creator) Add "fast screenshots" option in 2d calculators. The old approach (slow screenshots) will be removed eventually if there are no problems with "fast screenshots."
+
+Bug fixes:
+
+- (Hide errors) Fix bug where clicking doesn't work on error triangles.
+
 ## 0.13.7
 
 Bug Fixes
