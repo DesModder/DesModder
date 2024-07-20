@@ -18,7 +18,7 @@ export function ellipseLatex(
   return `\\frac{\\left(\\left(x-${x}\\right)\\cos\\left(${angle}\\right)+\\left(y-${y}\\right)\\sin\\left(${angle}\\right)\\right)^{2}}{${rx}^{2}}+\\frac{\\left(\\left(x-${x}\\right)\\sin\\left(${angle}\\right)-\\left(y-${y}\\right)\\cos\\left(${angle}\\right)\\right)^{2}}{${ry}^{2}}<1`;
 }
 
-export const ellipseGeneratorExpressions: Desmos.ExpressionState[] = [
+export const ellipseGeneratorExpressions = [
   {
     id: "shape-generator-ellipse",
     type: "expression",
@@ -59,7 +59,8 @@ export const ellipseGeneratorExpressions: Desmos.ExpressionState[] = [
   {
     id: "shape-generator-ellipse-radius-x-point",
     type: "expression",
-    latex: `\\left(x_{ellipseGenerator}-r_{xEllipseGenerator}\\cos A_{ellipseGenerator},y_{ellipseGenerator}-r_{xEllipseGenerator}\\sin A_{ellipseGenerator}\\right)`,
+    latex:
+      "\\left(x_{ellipseGenerator}-r_{xEllipseGenerator}\\cos A_{ellipseGenerator},y_{ellipseGenerator}-r_{xEllipseGenerator}\\sin A_{ellipseGenerator}\\right)",
     color: "",
   },
   {
@@ -80,7 +81,8 @@ export const ellipseGeneratorExpressions: Desmos.ExpressionState[] = [
   {
     id: "shape-generator-ellipse-radius-y-point",
     type: "expression",
-    latex: `\\left(f_{ellipseGeneratorRadiusYX}\\left(r_{yEllipseGenerator}\\right),y_{ellipseGenerator}+r_{yEllipseGenerator}\\sin\\left(A_{ellipseGenerator}+\\frac{\\pi}{2}\\right)\\right)`,
+    latex:
+      "\\left(f_{ellipseGeneratorRadiusYX}\\left(r_{yEllipseGenerator}\\right),y_{ellipseGenerator}+r_{yEllipseGenerator}\\sin\\left(A_{ellipseGenerator}+\\frac{\\pi}{2}\\right)\\right)",
     color: "",
   },
   {
@@ -114,4 +116,4 @@ export const ellipseGeneratorExpressions: Desmos.ExpressionState[] = [
     dragMode: "X",
     color: "",
   },
-];
+] satisfies Desmos.ExpressionState[];
