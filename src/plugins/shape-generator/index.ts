@@ -34,7 +34,7 @@ export default class ShapeGenerator extends PluginController<{
   ];
 
   private _addExpressionBtnClickHandler: (() => void) | null = null;
-  isEditingShape = false;
+  private _isEditingShape = false;
 
   ce = new ComputeEngine();
 
@@ -77,11 +77,35 @@ export default class ShapeGenerator extends PluginController<{
 
     // Remove generated expressions
     this.cleanupExpressions();
+
+    // Re-enable the save button if it was disabled.
+    // We only remove dcg-disabled if shape-generator-disabled is present.
+    // This is to prevent re-enabling the save button if it was disabled,
+    // by Desmos or another plugin, for another reason.
+    const saveBtn = getSaveBtn();
+    if (saveBtn?.classList.contains("shape-generator-disabled")) {
+      saveBtn.classList.remove("dcg-disabled", "shape-generator-disabled");
+    }
   }
 
   cleanupExpressions() {
     this.calc.removeExpressions(ellipseGeneratorExpressions);
     this.calc.removeExpressions(rectangleGeneratorExpressions);
+  }
+
+  get isEditingShape() {
+    return this._isEditingShape;
+  }
+
+  set isEditingShape(value) {
+    this._isEditingShape = value;
+
+    // Disable the save button if the user is editing a shape
+    const saveBtn = getSaveBtn();
+    if (saveBtn) {
+      saveBtn.classList.toggle("dcg-disabled", value);
+      saveBtn.classList.toggle("shape-generator-disabled", value);
+    }
   }
 }
 
@@ -137,7 +161,7 @@ function addExpressionBtnClickHandler(this: ShapeGenerator) {
             return;
           }
 
-          // TODO: HelperExpression missing unobserve types
+          // TODO: HelperExpression is missing unobserve types
           angleHelper.unobserve("numericValue");
 
           // Create new empty expression to add the ellipse to
@@ -199,6 +223,7 @@ function addExpressionBtnClickHandler(this: ShapeGenerator) {
             return;
           }
 
+          // TODO: HelperExpression is missing unobserve types
           angleHelper.unobserve("numericValue");
 
           // Create new empty expression to add the rectangle to
@@ -318,4 +343,8 @@ function getAddExpressionDropdown() {
   }
 
   return dropdown as HTMLDivElement;
+}
+
+function getSaveBtn() {
+  return document.querySelector(".save-btn-container .dcg-action-save");
 }
