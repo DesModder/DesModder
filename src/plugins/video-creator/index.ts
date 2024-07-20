@@ -76,6 +76,7 @@ export default class VideoCreator extends PluginController {
   readonly captureHeight = this.managedNumberInputModel("");
   readonly captureWidth = this.managedNumberInputModel("");
   samePixelRatio = false;
+  fastScreenshots = true;
 
   readonly or = new Orientation(this);
 
@@ -260,6 +261,11 @@ export default class VideoCreator extends PluginController {
 
   getCaptureHeightNumber() {
     return this.captureHeight.getValue();
+  }
+
+  setFastScreenshots(fastScreenshot: boolean) {
+    this.fastScreenshots = fastScreenshot;
+    this.updateView();
   }
 
   setSamePixelRatio(samePixelRatio: boolean) {

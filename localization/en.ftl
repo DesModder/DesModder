@@ -193,6 +193,7 @@ video-creator-angle-speed = Speed:
 video-creator-step-count = Step count:
 video-creator-frame-count = Frame count:
 video-creator-target-same-pixel-ratio = Target same pixel ratio
+video-creator-fast-screenshot = Fast screenshots
 video-creator-target-tooltip = Adjusts scaling of line width, point size, label size, etc.
 video-creator-ffmpeg-loading = FFmpeg loading...
 video-creator-ffmpeg-fail = If this doesn't work in the next few seconds, try reloading the page or reporting this bug to DesModder devs.
