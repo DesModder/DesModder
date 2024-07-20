@@ -13,6 +13,7 @@ import { rotatedPointLatex } from "./latex";
 
 export default class ShapeGenerator extends PluginController<{
   simplifyEquations: boolean;
+  numericalPrecision: number;
 }> {
   static id = "shape-generator" as const;
   static enabledByDefault = false;
@@ -21,6 +22,14 @@ export default class ShapeGenerator extends PluginController<{
       type: "boolean",
       key: "simplifyEquations",
       default: true,
+    },
+    {
+      type: "number",
+      key: "numericalPrecision",
+      default: 3,
+      min: 0,
+      max: 20,
+      step: 1,
     },
   ];
 
@@ -204,8 +213,10 @@ function addExpressionBtnClickHandler(this: ShapeGenerator) {
                   .parse(rotatedPointLatex(px, py, x, y, angle))
                   .evaluate().json as ["Tuple", number, number];
 
-                return `\\left(${tuple[1].toFixed(3)},${tuple[2].toFixed(
-                  3
+                return `\\left(${tuple[1].toFixed(
+                  this.settings.numericalPrecision
+                )},${tuple[2].toFixed(
+                  this.settings.numericalPrecision
                 )}\\right)`;
               }
             );
