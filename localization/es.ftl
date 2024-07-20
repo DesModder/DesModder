@@ -366,3 +366,5 @@ shape-generator-name = Generador de Formas
 shape-generator-desc = Facilita la creación de equaciones para distinas formas.
 shape-generator-opt-simplifyEquations-name = Simplificar equaciones
 shape-generator-opt-simplifyEquations-desc = Usa el Compute Engine de CortexJS para simplificar las equaciones generadas antes de insertarlas.
+shape-generator-opt-numericalPrecision-name = Precisión numérica
+shape-generator-opt-numericalPrecision-desc = Cuántos dígitos decimales se deben incluir en las equaciones generadas.
