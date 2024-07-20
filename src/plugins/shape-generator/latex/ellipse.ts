@@ -32,12 +32,6 @@ export const ellipseGeneratorExpressions = [
     color: "",
   },
   {
-    id: "shape-generator-ellipse-position-point",
-    type: "expression",
-    latex: "\\left(x_{ellipseGenerator},y_{ellipseGenerator}\\right)",
-    color: "",
-  },
-  {
     id: "shape-generator-ellipse-position-x",
     type: "expression",
     latex: "x_{ellipseGenerator}=0",
@@ -57,17 +51,30 @@ export const ellipseGeneratorExpressions = [
     color: "",
   },
   {
-    id: "shape-generator-ellipse-radius-x-point",
-    type: "expression",
-    latex:
-      "\\left(x_{ellipseGenerator}-r_{xEllipseGenerator}\\cos A_{ellipseGenerator},y_{ellipseGenerator}-r_{xEllipseGenerator}\\sin A_{ellipseGenerator}\\right)",
-    color: "",
-  },
-  {
     id: "shape-generator-ellipse-radius-y",
     type: "expression",
     latex: "r_{yEllipseGenerator}=1",
     sliderBounds: { min: 0, max: "", step: "" },
+    color: "",
+  },
+  {
+    id: "shape-generator-ellipse-angle",
+    type: "expression",
+    latex: "A_{ellipseGenerator}=0",
+    sliderBounds: { min: 0, max: "\\tau", step: "" },
+    color: "",
+  },
+  {
+    id: "shape-generator-ellipse-position-point",
+    type: "expression",
+    latex: "\\left(x_{ellipseGenerator},y_{ellipseGenerator}\\right)",
+    color: "",
+  },
+  {
+    id: "shape-generator-ellipse-radius-x-point",
+    type: "expression",
+    latex:
+      "\\left(x_{ellipseGenerator}-r_{xEllipseGenerator}\\cos A_{ellipseGenerator},y_{ellipseGenerator}-r_{xEllipseGenerator}\\sin A_{ellipseGenerator}\\right)",
     color: "",
   },
   {
@@ -83,13 +90,6 @@ export const ellipseGeneratorExpressions = [
     type: "expression",
     latex:
       "\\left(f_{ellipseGeneratorRadiusYX}\\left(r_{yEllipseGenerator}\\right),y_{ellipseGenerator}+r_{yEllipseGenerator}\\sin\\left(A_{ellipseGenerator}+\\frac{\\pi}{2}\\right)\\right)",
-    color: "",
-  },
-  {
-    id: "shape-generator-ellipse-angle",
-    type: "expression",
-    latex: "A_{ellipseGenerator}=0",
-    sliderBounds: { min: 0, max: "\\tau", step: "" },
     color: "",
   },
   {
@@ -117,3 +117,5 @@ export const ellipseGeneratorExpressions = [
     color: "",
   },
 ] satisfies Desmos.ExpressionState[];
+
+// Ensure that the expressions that will be hidden are at the bottom of the list

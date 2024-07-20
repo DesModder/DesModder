@@ -55,11 +55,6 @@ export const rectangleGeneratorExpressions = [
     ),
   },
   {
-    id: "shape-generator-rectangle-position-point",
-    type: "expression",
-    latex: "\\left(x_{rectangleGenerator},y_{rectangleGenerator}\\right)",
-  },
-  {
     id: "shape-generator-rectangle-position-x",
     type: "expression",
     latex: "x_{rectangleGenerator}=0",
@@ -68,6 +63,29 @@ export const rectangleGeneratorExpressions = [
     id: "shape-generator-rectangle-position-y",
     type: "expression",
     latex: "y_{rectangleGenerator}=0",
+  },
+  {
+    id: "shape-generator-rectangle-width",
+    type: "expression",
+    latex: "w_{rectangleGenerator}=1",
+    sliderBounds: { min: 0, max: "", step: "" },
+  },
+  {
+    id: "shape-generator-rectangle-height",
+    type: "expression",
+    latex: "h_{rectangleGenerator}=1",
+    sliderBounds: { min: 0, max: "", step: "" },
+  },
+  {
+    id: "shape-generator-rectangle-angle",
+    type: "expression",
+    latex: "A_{rectangleGenerator}=0",
+    sliderBounds: { min: 0, max: "\\tau", step: "" },
+  },
+  {
+    id: "shape-generator-rectangle-position-point",
+    type: "expression",
+    latex: "\\left(x_{rectangleGenerator},y_{rectangleGenerator}\\right)",
   },
   {
     id: "shape-generator-rectangle-width-point",
@@ -96,18 +114,6 @@ export const rectangleGeneratorExpressions = [
     hidden: true,
   },
   {
-    id: "shape-generator-rectangle-width",
-    type: "expression",
-    latex: "w_{rectangleGenerator}=1",
-    sliderBounds: { min: 0, max: "", step: "" },
-  },
-  {
-    id: "shape-generator-rectangle-height",
-    type: "expression",
-    latex: "h_{rectangleGenerator}=1",
-    sliderBounds: { min: 0, max: "", step: "" },
-  },
-  {
     id: "shape-generator-rectangle-angle-point",
     type: "expression",
     latex:
@@ -127,11 +133,5 @@ export const rectangleGeneratorExpressions = [
     latex:
       "f_{rectangleGeneratorAngleY}\\left(a_{rectangleGenerator}\\right)=y_{rectangleGenerator}+h_{rectangleGenerator}\\cos a_{rectangleGenerator}+w_{rectangleGenerator}\\sin a_{rectangleGenerator}",
     hidden: true,
-  },
-  {
-    id: "shape-generator-rectangle-angle",
-    type: "expression",
-    latex: "A_{rectangleGenerator}=0",
-    sliderBounds: { min: 0, max: "\\tau", step: "" },
   },
 ] satisfies Desmos.ExpressionState[];

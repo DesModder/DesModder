@@ -50,6 +50,11 @@ export default class ShapeGenerator extends PluginController<{
     // Construct stylesheet
     const style = document.createElement("style");
     style.textContent = `
+      [data-shape-generator-is-editing-shape="true"] .save-btn-container .dcg-action-save {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
       .dcg-expressionitem[expr-id^="shape-generator-"][expr-id$="-point"],
       .dcg-expressionitem[expr-id^="shape-generator-"][expr-id*="-helper"]{
         display: none !important;
@@ -75,17 +80,10 @@ export default class ShapeGenerator extends PluginController<{
     // Remove stylesheet
     document.getElementById("shape-generator-styles")!.remove();
 
+    delete document.body.dataset.shapeGeneratorIsEditingShape;
+
     // Remove generated expressions
     this.cleanupExpressions();
-
-    // Re-enable the save button if it was disabled.
-    // We only remove dcg-disabled if shape-generator-disabled is present.
-    // This is to prevent re-enabling the save button if it was disabled,
-    // by Desmos or another plugin, for another reason.
-    const saveBtn = getSaveBtn();
-    if (saveBtn?.classList.contains("shape-generator-disabled")) {
-      saveBtn.classList.remove("dcg-disabled", "shape-generator-disabled");
-    }
   }
 
   cleanupExpressions() {
@@ -100,12 +98,7 @@ export default class ShapeGenerator extends PluginController<{
   set isEditingShape(value) {
     this._isEditingShape = value;
 
-    // Disable the save button if the user is editing a shape
-    const saveBtn = getSaveBtn();
-    if (saveBtn) {
-      saveBtn.classList.toggle("dcg-disabled", value);
-      saveBtn.classList.toggle("shape-generator-disabled", value);
-    }
+    document.body.dataset.shapeGeneratorIsEditingShape = value.toString();
   }
 }
 
@@ -343,8 +336,4 @@ function getAddExpressionDropdown() {
   }
 
   return dropdown as HTMLDivElement;
-}
-
-function getSaveBtn() {
-  return document.querySelector(".save-btn-container .dcg-action-save");
 }
