@@ -108,9 +108,9 @@ rgbcolor: $rhs => DSM.replaceElement(
 )
 ```
 
-## Return more info from numericLabels
+## Distinguish undefineds in numericLabels
 
-*Description* `Distinguish 0 vs -0 and NaN vs -∞ vs +∞`
+*Description* `Distinguish NaN vs -∞ vs +∞`
 
 *worker_only*
 
@@ -126,11 +126,15 @@ if ($options = $options || {}, isNaN($val) || !isFinite($val)) return { type: "u
 if ($options = $options || {}, isNaN($val) || !isFinite($val)) return { type: "undefined", value: isNaN($val) ? "\\mathrm{NaN}" : $val === Infinity ? "\\infty" : $val === -Infinity ? "-\\infty" : "undefined"}
 ```
 
-Distinguish between 0 and -0
+## Distinguish between 0 and -0 in numericLabels
+
+*Description* `Distinguish 0 vs -0`
+
+*worker_only*
 
 *Find* => `zero`
 ```js
-if ($ === 0 || $.zeroCutoff && Math.abs($) < $.zeroCutoff)
+if ($val === 0 || $options.zeroCutoff && Math.abs($) < $.zeroCutoff)
   return {
     type: 'decimal',
     value: '0'
