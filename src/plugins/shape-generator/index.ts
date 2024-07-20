@@ -50,11 +50,18 @@ export default class ShapeGenerator extends PluginController<{
     // Construct stylesheet
     const style = document.createElement("style");
     style.textContent = `
+      /* Disable the save button while editing a shape */
       [data-shape-generator-is-editing-shape="true"] .save-btn-container .dcg-action-save {
         opacity: 0.5;
         pointer-events: none;
       }
 
+      /* Disable pointer events on disabled Add expression dropdown items */
+      .dcg-add-expression-dropdown div.dcg-popover-interior .dcg-new-item.dcg-disabled {
+        pointer-events: none;
+      }
+
+      /* Hide shape points (controls) and helper functions expressions */
       .dcg-expressionitem[expr-id^="shape-generator-"][expr-id$="-point"],
       .dcg-expressionitem[expr-id^="shape-generator-"][expr-id*="-helper"]{
         display: none !important;
@@ -110,7 +117,13 @@ function addExpressionBtnClickHandler(this: ShapeGenerator) {
     return;
   }
 
-  const dropdown = getAddExpressionDropdown();
+  const dropdown = document.querySelector<HTMLDivElement>(
+    ".dcg-add-expression-dropdown div.dcg-popover-interior"
+  );
+
+  if (!dropdown) {
+    throw new Error("Could not find the add expression dropdown");
+  }
 
   const newDropdownItems: {
     ariaLabel: string;
@@ -317,23 +330,13 @@ function addExpressionBtnClickHandler(this: ShapeGenerator) {
 }
 
 function getAddExpressionButton() {
-  const btn = document.querySelector("button.dcg-add-expression-btn");
+  const btn = document.querySelector<HTMLButtonElement>(
+    "button.dcg-add-expression-btn"
+  );
 
   if (!btn) {
     throw new Error("Could not find the add expression button");
   }
 
-  return btn as HTMLButtonElement;
-}
-
-function getAddExpressionDropdown() {
-  const dropdown = document.querySelector(
-    ".dcg-add-expression-dropdown div.dcg-popover-interior"
-  );
-
-  if (!dropdown) {
-    throw new Error("Could not find the add expression dropdown");
-  }
-
-  return dropdown as HTMLDivElement;
+  return btn;
 }
