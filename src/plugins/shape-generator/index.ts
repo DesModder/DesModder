@@ -3,6 +3,13 @@ import { ComputeEngine } from "@cortex-js/compute-engine";
 import { computeEngineLatexToDesmosLatex } from "compute-engine-to-desmos-latex";
 import { ConfigItem } from "..";
 import { ellipseGeneratorExpressions, ellipseLatex } from "./latex/ellipse";
+import {
+  rectangleGeneratorExpressions,
+  rectangleLatex,
+  rectangleLatexGivenPointsLatex,
+  rectanglePoints,
+} from "./latex/rectangle";
+import { rotatedPointLatex } from "./latex";
 
 export default class ShapeGenerator extends PluginController<{
   simplifyEquations: boolean;
@@ -33,28 +40,17 @@ export default class ShapeGenerator extends PluginController<{
 
     // Construct stylesheet
     const style = document.createElement("style");
-    const expressionIdsToHide = [
-      "shape-generator-ellipse-position-point",
-      "shape-generator-ellipse-radius-x-point",
-      "shape-generator-ellipse-radius-y-point",
-      "shape-generator-ellipse-radius-y-point-helper",
-      "shape-generator-ellipse-angle-point-helper-x",
-      "shape-generator-ellipse-angle-point-helper-y",
-      "shape-generator-ellipse-angle-point",
-    ];
-    let styleCss = "";
-    for (const exprId of expressionIdsToHide) {
-      styleCss += `.dcg-expressionitem[expr-id=${JSON.stringify(exprId)}],`;
-    }
-    styleCss = styleCss.slice(0, -1); // Remove trailing comma
-    styleCss += `{ display: none !important; }`;
-    styleCss += `
-      #shape-generator-ellipse-ok-btn {
+    style.textContent = `
+      .dcg-expressionitem[expr-id^="shape-generator-"][expr-id$="-point"],
+      .dcg-expressionitem[expr-id^="shape-generator-"][expr-id*="-helper"]{
+        display: none !important;
+      }
+
+      .shape-generator-ok-btn {
         margin-top: 36px;
         margin-left: 1px;
       }
     `;
-    style.textContent = styleCss;
     style.id = "shape-generator-styles";
     document.head.appendChild(style);
   }
@@ -75,47 +71,8 @@ export default class ShapeGenerator extends PluginController<{
   }
 
   cleanupExpressions() {
-    this.calc.removeExpressions([
-      {
-        id: "shape-generator-ellipse",
-      },
-      {
-        id: "shape-generator-ellipse-position-point",
-      },
-      {
-        id: "shape-generator-ellipse-position-x",
-      },
-      {
-        id: "shape-generator-ellipse-position-y",
-      },
-      {
-        id: "shape-generator-ellipse-radius-x",
-      },
-      {
-        id: "shape-generator-ellipse-radius-x-point",
-      },
-      {
-        id: "shape-generator-ellipse-radius-y",
-      },
-      {
-        id: "shape-generator-ellipse-radius-y-point-helper",
-      },
-      {
-        id: "shape-generator-ellipse-radius-y-point",
-      },
-      {
-        id: "shape-generator-ellipse-angle",
-      },
-      {
-        id: "shape-generator-ellipse-angle-point-helper-x",
-      },
-      {
-        id: "shape-generator-ellipse-angle-point-helper-y",
-      },
-      {
-        id: "shape-generator-ellipse-angle-point",
-      },
-    ]);
+    this.calc.removeExpressions(ellipseGeneratorExpressions);
+    this.calc.removeExpressions(rectangleGeneratorExpressions);
   }
 }
 
@@ -132,95 +89,141 @@ function addExpressionBtnClickHandler(this: ShapeGenerator) {
   const newDropdownItems: {
     ariaLabel: string;
     label: string;
-    disabled?: boolean;
+    okBtnExprId: string;
     handler: () => void;
+    okBtnHandler: () => void;
   }[] = [
     {
       ariaLabel: "Add ellipse",
       label: "ellipse",
-      disabled: this.isEditingShape,
+      okBtnExprId: "shape-generator-ellipse",
       handler: () => {
-        this.isEditingShape = true;
+        this.calc.setExpressions(ellipseGeneratorExpressions);
+      },
+      okBtnHandler: () => {
+        const xHelper = this.calc.HelperExpression({
+          latex: "x_{ellipseGenerator}",
+        });
+        const yHelper = this.calc.HelperExpression({
+          latex: "y_{ellipseGenerator}",
+        });
+        const rxHelper = this.calc.HelperExpression({
+          latex: "r_{xEllipseGenerator}",
+        });
+        const ryHelper = this.calc.HelperExpression({
+          latex: "r_{yEllipseGenerator}",
+        });
+        const angleHelper = this.calc.HelperExpression({
+          latex: "A_{ellipseGenerator}",
+        });
 
-        this.calc.observeEvent("change.shapeGenerator", () => {
-          const ellipseExpressionTab = document.querySelector(
-            '.dcg-expressionitem[expr-id="shape-generator-ellipse"] .dcg-tab-interior'
-          );
+        angleHelper.observe("numericValue", () => {
+          const x = xHelper.numericValue;
+          const y = yHelper.numericValue;
+          const rx = rxHelper.numericValue;
+          const ry = ryHelper.numericValue;
+          const angle = angleHelper.numericValue;
 
-          if (!ellipseExpressionTab) {
+          if (isNaN(x) || isNaN(y) || isNaN(rx) || isNaN(ry) || isNaN(angle)) {
             return;
           }
 
-          const okButton = document.createElement("button");
-          okButton.id = "shape-generator-ellipse-ok-btn";
-          okButton.textContent = "OK";
-          okButton.addEventListener("click", () => {
-            const xHelper = this.calc.HelperExpression({
-              latex: "x_{ellipseGenerator}",
-            });
-            const yHelper = this.calc.HelperExpression({
-              latex: "y_{ellipseGenerator}",
-            });
-            const rxHelper = this.calc.HelperExpression({
-              latex: "r_{xEllipseGenerator}",
-            });
-            const ryHelper = this.calc.HelperExpression({
-              latex: "r_{yEllipseGenerator}",
-            });
-            const angleHelper = this.calc.HelperExpression({
-              latex: "A_{ellipseGenerator}",
-            });
+          // TODO: HelperExpression missing unobserve types
+          angleHelper.unobserve("numericValue");
 
-            angleHelper.observe("numericValue", () => {
-              const x = xHelper.numericValue;
-              const y = yHelper.numericValue;
-              const rx = rxHelper.numericValue;
-              const ry = ryHelper.numericValue;
-              const angle = angleHelper.numericValue;
+          // Create new empty expression to add the ellipse to
+          firstDropdownItem!.dispatchEvent(new CustomEvent("dcg-tap"));
 
-              if (
-                isNaN(x) ||
-                isNaN(y) ||
-                isNaN(rx) ||
-                isNaN(ry) ||
-                isNaN(angle)
-              ) {
-                return;
-              }
+          // Generate ellipse LaTeX
+          let latex = ellipseLatex(x, y, rx, ry, angle);
 
-              // TODO: HelperExpression missing unobserve types
-              angleHelper.unobserve("numericValue");
+          // Simplify the equation if needed
+          if (this.settings.simplifyEquations) {
+            latex = computeEngineLatexToDesmosLatex(
+              this.ce.parse(latex).evaluate().latex
+            );
+          }
 
-              // Create new empty expression to add the ellipse to
-              firstDropdownItem!.dispatchEvent(new CustomEvent("dcg-tap"));
-
-              // Generate ellipse LaTeX
-              let latex = ellipseLatex(x, y, rx, ry, angle);
-
-              // Simplify the equation if needed
-              if (this.settings.simplifyEquations) {
-                latex = computeEngineLatexToDesmosLatex(
-                  this.ce.parse(latex).evaluate().latex
-                );
-              }
-
-              // Set the expression
-              this.calc.setExpression({
-                id: this.calc.selectedExpressionId,
-                latex,
-              });
-
-              this.cleanupExpressions();
-              this.isEditingShape = false;
-            });
+          // Set the expression
+          this.calc.setExpression({
+            id: this.calc.selectedExpressionId,
+            latex,
           });
 
-          ellipseExpressionTab.appendChild(okButton);
-
-          this.calc.unobserveEvent("change.shapeGenerator");
+          this.cleanupExpressions();
+          this.isEditingShape = false;
+        });
+      },
+    },
+    {
+      ariaLabel: "Add rectangle",
+      label: "rectangle",
+      okBtnExprId: "shape-generator-rectangle",
+      handler: () => {
+        this.calc.setExpressions(rectangleGeneratorExpressions);
+      },
+      okBtnHandler: () => {
+        const xHelper = this.calc.HelperExpression({
+          latex: "x_{rectangleGenerator}",
+        });
+        const yHelper = this.calc.HelperExpression({
+          latex: "y_{rectangleGenerator}",
+        });
+        const wHelper = this.calc.HelperExpression({
+          latex: "w_{rectangleGenerator}",
+        });
+        const hHelper = this.calc.HelperExpression({
+          latex: "h_{rectangleGenerator}",
+        });
+        const angleHelper = this.calc.HelperExpression({
+          latex: "A_{rectangleGenerator}",
         });
 
-        this.calc.setExpressions(ellipseGeneratorExpressions);
+        angleHelper.observe("numericValue", () => {
+          const x = xHelper.numericValue;
+          const y = yHelper.numericValue;
+          const w = wHelper.numericValue;
+          const h = hHelper.numericValue;
+          const angle = angleHelper.numericValue;
+
+          if (isNaN(x) || isNaN(y) || isNaN(w) || isNaN(h) || isNaN(angle)) {
+            return;
+          }
+
+          angleHelper.unobserve("numericValue");
+
+          // Create new empty expression to add the rectangle to
+          firstDropdownItem!.dispatchEvent(new CustomEvent("dcg-tap"));
+
+          // Generate rectangle LaTeX
+          let latex: string;
+          if (this.settings.simplifyEquations) {
+            const points = rectanglePoints(w, h, x, y, angle).map(
+              ([px, py]) => {
+                const tuple = this.ce
+                  .parse(rotatedPointLatex(px, py, x, y, angle))
+                  .evaluate().json as ["Tuple", number, number];
+
+                return `\\left(${tuple[1].toFixed(3)},${tuple[2].toFixed(
+                  3
+                )}\\right)`;
+              }
+            );
+
+            latex = rectangleLatexGivenPointsLatex(points.join(","));
+          } else {
+            latex = rectangleLatex(w, h, x, y, angle);
+          }
+
+          // Set the expression
+          this.calc.setExpression({
+            id: this.calc.selectedExpressionId,
+            latex,
+          });
+
+          this.cleanupExpressions();
+          this.isEditingShape = false;
+        });
       },
     },
   ];
@@ -243,13 +246,39 @@ function addExpressionBtnClickHandler(this: ShapeGenerator) {
 
     dropdown.appendChild(newDropdownItemElm);
 
-    if (newDropdownItem.disabled) {
+    if (this.isEditingShape) {
       newDropdownItemElm.ariaDisabled = "true";
       newDropdownItemElm.classList.add("dcg-disabled");
     } else {
       newDropdownItemElm.addEventListener("click", () => {
         // Close the dropdown
         addExpressionBtn.dispatchEvent(new CustomEvent("dcg-tap"));
+
+        this.isEditingShape = true;
+
+        // Listen for expression to add the OK button to
+        const eventId = `change.shapeGenerator.${newDropdownItem.label}`;
+        this.calc.observeEvent(eventId, () => {
+          const expressionTab = document.querySelector(
+            `.dcg-expressionitem[expr-id=${JSON.stringify(
+              newDropdownItem.okBtnExprId
+            )}] .dcg-tab-interior`
+          );
+
+          if (!expressionTab) {
+            return;
+          }
+
+          const okButton = document.createElement("button");
+          okButton.id = `shape-generator-${newDropdownItem.label}-ok-btn`;
+          okButton.classList.add("shape-generator-ok-btn");
+          okButton.textContent = "OK";
+          okButton.addEventListener("click", newDropdownItem.okBtnHandler);
+
+          expressionTab.appendChild(okButton);
+
+          this.calc.unobserveEvent(eventId);
+        });
 
         // Run the handler for this dropdown item
         newDropdownItem.handler();
