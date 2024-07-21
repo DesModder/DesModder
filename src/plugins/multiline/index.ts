@@ -8,11 +8,6 @@ import {
   getController,
   mqKeystroke,
 } from "#plugins/intellisense/latex-parsing.tsx";
-import {
-  DispatchID as DispatchHandlerID,
-  deregisterCustomDispatchOverridingHandler,
-  registerCustomDispatchOverridingHandler,
-} from "#utils/listenerHelpers.ts";
 
 export const R = 1;
 export const L = -1;
@@ -278,8 +273,6 @@ export default class Multiline extends PluginController<Config> {
 
   dispatcherID: string | undefined;
 
-  customDispatcherID: DispatchHandlerID | undefined;
-
   afterEnable() {
     document.addEventListener("keydown", this.keydownHandler);
     document.addEventListener("mousedown", this.mousedownHandler);
@@ -340,18 +333,20 @@ export default class Multiline extends PluginController<Config> {
       }
     });
 
-    this.customDispatcherID = registerCustomDispatchOverridingHandler(
-      this.calc,
-      (evt) => {
-        if (evt.type === "on-special-key-pressed") {
-          if (evt.key === "Up" || evt.key === "Down") {
-            if (!this.doMultilineVerticalNav(evt.key))
-              return "abort-later-handlers";
-          }
-        }
-      },
-      0
+    this.dsm.registerDispatchHandler(
+      Multiline.id,
+      10,
+      this.multilineDispatchHandler.bind(this)
     );
+  }
+
+  private multilineDispatchHandler(evt: DispatchedEvent) {
+    if (evt.type === "on-special-key-pressed") {
+      if (evt.key === "Up" || evt.key === "Down") {
+        if (!this.doMultilineVerticalNav(evt.key))
+          return "abort-later-handlers";
+      }
+    }
   }
 
   afterDisable() {
@@ -365,12 +360,6 @@ export default class Multiline extends PluginController<Config> {
 
     if (this.multilineIntervalID !== undefined)
       clearInterval(this.multilineIntervalID);
-
-    if (this.customDispatcherID)
-      deregisterCustomDispatchOverridingHandler(
-        this.calc,
-        this.customDispatcherID
-      );
   }
 
   // navigates up/down through a multiline expression

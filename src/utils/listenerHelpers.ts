@@ -17,7 +17,7 @@ const calcDispatchOverrideHandlers = new WeakMap<
 let dispatchOverridingHandlerId = 0;
 
 /**
- * Schedule a function to run after every desmos event
+ * Schedule a function to run after every desmos event.
  * Priorities determine which run first. Larger number runs first.
  * The handler can return `"abort-later-handlers"` to force the dispatcher to stop early
  * (e.g. to stop desmos from doing a default action upon pressing a key)
@@ -64,7 +64,6 @@ function getDispatchOverrideHandlers(calc: Calc) {
   return newHandlers;
 }
 
-//!
 // Change calc.handleDispatchedAction to first run a set of custom handlers
 export function setupDispatchOverride(calc: Calc) {
   const old = calc.controller.handleDispatchedAction;

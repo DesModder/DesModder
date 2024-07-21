@@ -1,5 +1,5 @@
 import { insertElement, replaceElement } from "./preload/replaceElement";
-import window, { type Calc } from "#globals";
+import window, { DispatchedEvent, type Calc } from "#globals";
 import {
   plugins,
   pluginList,
@@ -10,6 +10,11 @@ import {
   PluginInstance,
 } from "./plugins";
 import { postMessageUp, mapToRecord, recordToMap } from "#utils/messages.ts";
+import {
+  DispatchID,
+  deregisterCustomDispatchOverridingHandler,
+  registerCustomDispatchOverridingHandler,
+} from "./utils/listenerHelpers";
 
 export default class DSM extends TransparentPlugins {
   cc = this.calc.controller;
@@ -25,6 +30,8 @@ export default class DSM extends TransparentPlugins {
       (plugin) => [plugin.id, getDefaultConfig(plugin.id)] as const
     )
   ) as IDToPluginSettings;
+
+  private readonly pluginDispatchHandlers = new Map<PluginID, DispatchID>();
 
   constructor(public calc: Calc) {
     super();
@@ -109,6 +116,10 @@ export default class DSM extends TransparentPlugins {
         this.setPluginEnabled(id, false);
         this.pillboxMenus?.updateMenuView();
         plugin?.afterDisable();
+        const dispatchID = this.pluginDispatchHandlers.get(id);
+        if (dispatchID !== undefined) {
+          deregisterCustomDispatchOverridingHandler(this.calc, dispatchID);
+        }
         this.cc.updateViews();
       }
     }
@@ -250,6 +261,42 @@ export default class DSM extends TransparentPlugins {
       this.cc.commitUndoRedoSynchronously({ type: "dsm-blank" });
     }
     this.cc.updateViews();
+  }
+
+  /**
+   * Register an additional handler to be called inside
+   * `handleDispatchedAction`, the big switch statement of `calc.controller`.
+   * The DSM controller will remove this handler when the plugin is disabled.
+   *
+   * @param priority
+   *  Larger number corresponds to higher priority (runs first).
+   *  TODO: The original Desmos switch has priority 0.
+   *  TODO: Use positive priority if you want to run before Desmos's handlers.
+   *  TODO: Use negative priority if you want to run after Desmos's handlers.
+   *  TODO: Ties are broken by plugin ID.
+   *
+   * @param handleDispatchedAction
+   *  Return `"abort-later-handlers"` if you don't want lower-priority
+   *  handlers to run for this evet.
+   */
+  registerDispatchHandler(
+    pluginID: PluginID,
+    priority: number,
+    handleDispatchedAction: (
+      action: DispatchedEvent
+    ) => "abort-later-handlers" | undefined
+  ) {
+    if (this.pluginDispatchHandlers.has(pluginID)) {
+      throw new Error(
+        "Cannot register a new dispatch override for the same plugin. Use only one override per plugin."
+      );
+    }
+    const id = registerCustomDispatchOverridingHandler(
+      this.calc,
+      handleDispatchedAction,
+      priority
+    );
+    this.pluginDispatchHandlers.set(pluginID, id);
   }
 
   insertElement = insertElement;
