@@ -1,0 +1,4 @@
+# Allow dependencies to be installed with Bun
+# without generating a Bun-specific lockfile
+[install.lockfile]
+save = false
