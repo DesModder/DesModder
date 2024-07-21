@@ -345,7 +345,8 @@ export default class Multiline extends PluginController<Config> {
       (evt) => {
         if (evt.type === "on-special-key-pressed") {
           if (evt.key === "Up" || evt.key === "Down") {
-            if (!this.doMultilineVerticalNav(evt.key)) return false;
+            if (!this.doMultilineVerticalNav(evt.key))
+              return "abort-later-handlers";
           }
         }
       },

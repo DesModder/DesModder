@@ -3,8 +3,8 @@ import type { Calc, DispatchedEvent } from "#globals";
 export type DispatchID = number & { _nominallyDispatchID: unknown };
 
 interface DispatchOverridingHandler {
-  /** Returning `false` means don't run any later handlers. */
-  handler: (evt: DispatchedEvent) => boolean | undefined;
+  /** Returning `"abort-later-handlers"` means don't run any later handlers. */
+  handler: (evt: DispatchedEvent) => "abort-later-handlers" | undefined;
   priority: number;
   id: DispatchID;
 }
@@ -16,13 +16,16 @@ const calcDispatchOverrideHandlers = new WeakMap<
 
 let dispatchOverridingHandlerId = 0;
 
-// schedule a function to run after every desmos event
-// priorities determine which run first
-// the handler can return false to force the dispatcher to stop early
-// (e.g. to stop desmos from doing a default action upon pressing a key)
+/**
+ * Schedule a function to run after every desmos event
+ * Priorities determine which run first. Larger number runs first.
+ * The handler can return `"abort-later-handlers"` to force the dispatcher to stop early
+ * (e.g. to stop desmos from doing a default action upon pressing a key)
+ */
+
 export function registerCustomDispatchOverridingHandler(
   calc: Calc,
-  handler: (evt: DispatchedEvent) => boolean | undefined,
+  handler: (evt: DispatchedEvent) => "abort-later-handlers" | undefined,
   priority: number
 ): DispatchID {
   const handlers = getDispatchOverrideHandlers(calc);
@@ -69,7 +72,7 @@ export function setupDispatchOverride(calc: Calc) {
   calc.controller.handleDispatchedAction = function (evt) {
     for (const { handler } of handlers) {
       const keepGoing = handler(evt);
-      if (keepGoing === false) return;
+      if (keepGoing === "abort-later-handlers") return;
     }
 
     old.call(this, evt);
