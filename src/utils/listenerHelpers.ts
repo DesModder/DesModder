@@ -1,9 +1,12 @@
 import type { Calc, DispatchedEvent } from "#globals";
 
+export type DispatchID = number & { _nominallyDispatchID: unknown };
+
 interface DispatchOverridingHandler {
+  /** Returning `false` means don't run any later handlers. */
   handler: (evt: DispatchedEvent) => boolean | undefined;
   priority: number;
-  id: number;
+  id: DispatchID;
 }
 
 const calcDispatchOverrideHandlers = new WeakMap<
@@ -21,9 +24,9 @@ export function registerCustomDispatchOverridingHandler(
   calc: Calc,
   handler: (evt: DispatchedEvent) => boolean | undefined,
   priority: number
-): number {
+): DispatchID {
   const handlers = getDispatchOverrideHandlers(calc);
-  const id = dispatchOverridingHandlerId++;
+  const id = dispatchOverridingHandlerId++ as DispatchID;
   // add the handler
   handlers.push({ handler, priority, id });
 
@@ -38,7 +41,7 @@ export function registerCustomDispatchOverridingHandler(
 // uses the id that the former function returns
 export function deregisterCustomDispatchOverridingHandler(
   calc: Calc,
-  id: number
+  id: DispatchID
 ): void {
   const handlers = getDispatchOverrideHandlers(calc);
   // remove all handlers with matching IDs
@@ -58,6 +61,7 @@ function getDispatchOverrideHandlers(calc: Calc) {
   return newHandlers;
 }
 
+//!
 // Change calc.handleDispatchedAction to first run a set of custom handlers
 export function setupDispatchOverride(calc: Calc) {
   const old = calc.controller.handleDispatchedAction;
