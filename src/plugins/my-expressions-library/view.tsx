@@ -1,9 +1,10 @@
-import MyExpressionsLibrary, {
+import MyExpressionsLibrary from ".";
+import {
   ExpressionLibraryExpression,
   ExpressionLibraryFolder,
   ExpressionLibraryGraph,
   ExpressionLibraryMathExpression,
-} from ".";
+} from "./library-statements";
 import "./index.less";
 import { Component, jsx, mountToNode } from "#DCGView";
 import { For, If, IfElse, StaticMathQuillView, Switch } from "#components";

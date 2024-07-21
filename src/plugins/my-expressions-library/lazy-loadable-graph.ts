@@ -1,5 +1,8 @@
-import MyExpressionsLibrary, { ExpressionLibraryGraph } from ".";
-import { getGraphState } from "./get-graph-state";
+import MyExpressionsLibrary from ".";
+import { ExpressionLibraryGraph } from "./library-statements";
+import { buildConfigFromGlobals } from "../../../text-mode-core";
+import { getMetadata } from "../manage-metadata/sync";
+import { getGraphState, processGraph } from "./get-graph-state";
 
 export enum GraphValidity {
   Valid = "valid",
@@ -47,7 +50,14 @@ export class LazyLoadableGraph {
 
     if (state) {
       try {
-        const graph = await this.plugin.getGraph(state);
+        // TODO-ml: metadata wrong
+        const graph = await processGraph(
+          state,
+          () => this.plugin.uniqueID++,
+          getMetadata(this.plugin.calc),
+          buildConfigFromGlobals(Desmos, this.plugin.calc)
+        );
+
         this.loading = false;
         this.data = graph;
         this.name = graph.title ?? "Untitled Graph";

@@ -108,7 +108,9 @@ export default class Menu extends Component<{
               {() => (
                 <div class="dsm-category-container">
                   <For each={() => categoryPlugins[category]} key={(id) => id}>
-                    {(pluginID: PluginID) => this.plugin(plugins.get(pluginID))}
+                    {(pluginID: PluginID) =>
+                      this.plugin(plugins.get(pluginID)!)
+                    }
                   </For>
                 </div>
               )}
