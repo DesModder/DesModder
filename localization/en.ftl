@@ -259,6 +259,22 @@ intellisense-opt-subscriptify-name = Auto-Subscriptify
 intellisense-opt-subscriptify-desc = Automatically converts text of variables/functions with subscripts when they are typed without subscripts.
 intellisense-jump2def-menu-instructions = has multiple definitions. Pick one from below to jump to.
 
+## My Expressions Library
+my-expressions-library-name = My Expressions Library
+my-expressions-library-desc = Create and use a reusable library of expressions in multiple graphs.
+my-expressions-library-pillbox-menu = My Expressions Library
+my-expressions-library-did-not-load = My Expressions Library: The graphs with the following links did not load: { $links }
+my-expressions-library-load = Load
+my-expressions-library-search = Search
+my-expressions-library-add-graph = Add Graph
+my-expressions-library-graph-link-here = Graph Link Here
+my-expressions-library-add-graph-success = My Expressions Library: Added graph with link { $link }
+my-expressions-library-remove-graph-success = My Expressions Library: Removed graph '{ $name }' with link { $link }
+my-expressions-library-loading = Loading...
+my-expressions-library-invalid-graph-details = The graph at the link { $link } failed to load.
+my-expressions-library-invalid-graph = Invalid Graph
+my-expressions-library-this-folder-is-empty = This folder is empty.
+
 ## Compact View
 compact-view-name = Compact View
 compact-view-desc = Offers a variety of options for condensing the UI so you can see more on the screen at once.

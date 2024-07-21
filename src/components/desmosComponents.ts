@@ -134,6 +134,7 @@ export const InlineMathInputViewGeneral = Fragile.InlineMathInputView;
 
 export const { If, For, IfElse, Input, Switch, SwitchUnion } =
   DCGView.Components;
+// TODO-cleanup: This is an existing overload of Switch.
 export function Match<Disc extends { type: string }>(
   discriminant: () => Disc,
   branches: {
