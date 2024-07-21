@@ -9,6 +9,7 @@ import {
   mqKeystroke,
 } from "#plugins/intellisense/latex-parsing.tsx";
 import {
+  DispatchID as DispatchHandlerID,
   deregisterCustomDispatchOverridingHandler,
   registerCustomDispatchOverridingHandler,
 } from "#utils/listenerHelpers.ts";
@@ -277,7 +278,7 @@ export default class Multiline extends PluginController<Config> {
 
   dispatcherID: string | undefined;
 
-  customDispatcherID: number | undefined;
+  customDispatcherID: DispatchHandlerID | undefined;
 
   afterEnable() {
     document.addEventListener("keydown", this.keydownHandler);
@@ -344,7 +345,8 @@ export default class Multiline extends PluginController<Config> {
       (evt) => {
         if (evt.type === "on-special-key-pressed") {
           if (evt.key === "Up" || evt.key === "Down") {
-            if (!this.doMultilineVerticalNav(evt.key)) return false;
+            if (!this.doMultilineVerticalNav(evt.key))
+              return "abort-later-handlers";
           }
         }
       },

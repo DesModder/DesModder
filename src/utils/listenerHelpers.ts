@@ -1,9 +1,12 @@
 import type { Calc, DispatchedEvent } from "#globals";
 
+export type DispatchID = number & { _nominallyDispatchID: unknown };
+
 interface DispatchOverridingHandler {
-  handler: (evt: DispatchedEvent) => boolean | undefined;
+  /** Returning `"abort-later-handlers"` means don't run any later handlers. */
+  handler: (evt: DispatchedEvent) => "abort-later-handlers" | undefined;
   priority: number;
-  id: number;
+  id: DispatchID;
 }
 
 const calcDispatchOverrideHandlers = new WeakMap<
@@ -13,17 +16,20 @@ const calcDispatchOverrideHandlers = new WeakMap<
 
 let dispatchOverridingHandlerId = 0;
 
-// schedule a function to run after every desmos event
-// priorities determine which run first
-// the handler can return false to force the dispatcher to stop early
-// (e.g. to stop desmos from doing a default action upon pressing a key)
+/**
+ * Schedule a function to run after every desmos event
+ * Priorities determine which run first. Larger number runs first.
+ * The handler can return `"abort-later-handlers"` to force the dispatcher to stop early
+ * (e.g. to stop desmos from doing a default action upon pressing a key)
+ */
+
 export function registerCustomDispatchOverridingHandler(
   calc: Calc,
-  handler: (evt: DispatchedEvent) => boolean | undefined,
+  handler: (evt: DispatchedEvent) => "abort-later-handlers" | undefined,
   priority: number
-): number {
+): DispatchID {
   const handlers = getDispatchOverrideHandlers(calc);
-  const id = dispatchOverridingHandlerId++;
+  const id = dispatchOverridingHandlerId++ as DispatchID;
   // add the handler
   handlers.push({ handler, priority, id });
 
@@ -38,7 +44,7 @@ export function registerCustomDispatchOverridingHandler(
 // uses the id that the former function returns
 export function deregisterCustomDispatchOverridingHandler(
   calc: Calc,
-  id: number
+  id: DispatchID
 ): void {
   const handlers = getDispatchOverrideHandlers(calc);
   // remove all handlers with matching IDs
@@ -58,6 +64,7 @@ function getDispatchOverrideHandlers(calc: Calc) {
   return newHandlers;
 }
 
+//!
 // Change calc.handleDispatchedAction to first run a set of custom handlers
 export function setupDispatchOverride(calc: Calc) {
   const old = calc.controller.handleDispatchedAction;
@@ -65,7 +72,7 @@ export function setupDispatchOverride(calc: Calc) {
   calc.controller.handleDispatchedAction = function (evt) {
     for (const { handler } of handlers) {
       const keepGoing = handler(evt);
-      if (keepGoing === false) return;
+      if (keepGoing === "abort-later-handlers") return;
     }
 
     old.call(this, evt);
