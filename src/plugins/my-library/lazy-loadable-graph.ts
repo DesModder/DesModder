@@ -1,4 +1,4 @@
-import MyExpressionsLibrary from ".";
+import { MyLibrary } from ".";
 import { ExpressionLibraryGraph } from "./library-statements";
 import { buildConfigFromGlobals } from "../../../text-mode-core";
 import { getMetadata } from "../manage-metadata/sync";
@@ -17,17 +17,13 @@ export class LazyLoadableGraph {
   name?: string;
   link: string;
   id: number;
-  plugin: MyExpressionsLibrary;
+  ml: MyLibrary;
 
   static CurrentID = 0;
 
-  constructor(opts: {
-    link: string;
-    name?: string;
-    plugin: MyExpressionsLibrary;
-  }) {
+  constructor(opts: { link: string; name?: string; ml: MyLibrary }) {
     this.link = opts.link;
-    this.plugin = opts.plugin;
+    this.ml = opts.ml;
     this.id = LazyLoadableGraph.CurrentID++;
     if (opts.name) {
       this.name = opts.name;
@@ -46,22 +42,22 @@ export class LazyLoadableGraph {
 
     this.loading = true;
 
-    const state = await getGraphState(this.link, this.plugin);
+    const state = await getGraphState(this.link, this.ml);
 
     if (state) {
       try {
         // TODO-ml: metadata wrong
         const graph = await processGraph(
           state,
-          () => this.plugin.uniqueID++,
-          getMetadata(this.plugin.calc),
-          buildConfigFromGlobals(Desmos, this.plugin.calc)
+          () => this.ml.uniqueID++,
+          getMetadata(this.ml.calc),
+          buildConfigFromGlobals(Desmos, this.ml.calc)
         );
 
         this.loading = false;
         this.data = graph;
         this.name = graph.title ?? "Untitled Graph";
-        this.plugin.setNameFromLink(this.link, this.name);
+        this.ml.setNameFromLink(this.link, this.name);
         this.valid = GraphValidity.Valid;
         return graph;
       } catch {

@@ -17,10 +17,10 @@ import {
 export const EXPANSIONS_LOCALSTORAGE_KEY = "dsm-my-expr-lib-expansions";
 export const LINK_TO_NAME_LOCALSTORAGE_KEY = "dsm-my-expr-lib-link2name";
 
-export default class MyExpressionsLibrary extends PluginController<{
+export class MyLibrary extends PluginController<{
   libraryGraphLinks: string[]; // probably a temporary fix
 }> {
-  static id = "my-expressions-library" as const;
+  static id = "my-library" as const;
   static enabledByDefault = false;
   static config = [
     {
@@ -344,7 +344,7 @@ export default class MyExpressionsLibrary extends PluginController<{
     const llg = new LazyLoadableGraph({
       link,
       name: this.getNameFromLink(link),
-      plugin: this,
+      ml: this,
     });
     this.graphs.set(link, llg);
 
@@ -380,7 +380,7 @@ export default class MyExpressionsLibrary extends PluginController<{
     // add pillbox menu
     this.dsm.pillboxMenus?.addPillboxButton({
       id: "dsm-library-menu",
-      tooltip: "my-expressions-library-pillbox-menu",
+      tooltip: "my-library-pillbox-menu",
       iconClass: "dsm-icon-bookmark",
       popup: () => {
         return LibrarySearchViewFunc(this);

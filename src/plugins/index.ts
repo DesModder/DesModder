@@ -17,7 +17,7 @@ import HideErrors from "./hide-errors";
 import Intellisense from "./intellisense";
 import ManageMetadata from "../core-plugins/manage-metadata";
 import Multiline from "./multiline";
-import MyExpressionsLibrary from "./my-expressions-library";
+import { MyLibrary } from "./my-library";
 import PerformanceInfo from "./performance-info";
 import PillboxMenus from "../core-plugins/pillbox-menus";
 import PinExpressions from "./pin-expressions";
@@ -154,7 +154,7 @@ export const keyToPlugin = {
   overrideKeystroke: OverrideKeystroke,
   multiline: Multiline,
   intellisense: Intellisense,
-  myExpressionsLibrary: MyExpressionsLibrary,
+  myLibrary: MyLibrary,
   compactView: CompactView,
   exprActionButtons: ExprActionButtons,
   codeGolf: CodeGolf,
@@ -209,7 +209,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get metadata () { return this.ep["manage-metadata"]; }
   get overrideKeystroke () { return this.ep["override-keystroke"]; }
   get intellisense () { return this.ep["intellisense"]; }
-  get myExpressionsLibrary () { return this.ep["my-expressions-library"]; }
+  get myLibrary () { return this.ep["my-library"]; }
   get compactView () { return this.ep["compact-view"]; }
   get multiline () { return this.ep["multiline"]; }
   get exprActionButtons () { return this.ep["expr-action-buttons"]; }

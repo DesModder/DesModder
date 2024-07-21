@@ -1,5 +1,5 @@
 import { GraphState, ItemState } from "../../../graph-state";
-import MyExpressionsLibrary from ".";
+import { MyLibrary } from ".";
 import {
   ExpressionLibraryExpression,
   ExpressionLibraryFolder,
@@ -22,7 +22,7 @@ interface FetchedGraph {
 
 export async function getGraphState(
   link: string,
-  plugin: MyExpressionsLibrary
+  ml: MyLibrary
 ): Promise<FetchedGraph | undefined> {
   try {
     const result = await (
@@ -31,7 +31,7 @@ export async function getGraphState(
       })
     ).json();
     if (result?.title) {
-      plugin.setNameFromLink(link, result.title ?? "Untitled Graph");
+      ml.setNameFromLink(link, result.title ?? "Untitled Graph");
     }
     return { ...result, link };
   } catch {

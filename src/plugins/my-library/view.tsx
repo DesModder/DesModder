@@ -1,4 +1,4 @@
-import MyExpressionsLibrary from ".";
+import { MyLibrary } from ".";
 import {
   ExpressionLibraryExpression,
   ExpressionLibraryFolder,
@@ -45,7 +45,7 @@ function folderView(
           onClick={() => {
             // expand/contract folder
             container.props
-              .plugin()
+              .ml()
               .toggleFolderExpanded(container.props.graph().link, expr.id);
           }}
         >
@@ -53,7 +53,7 @@ function folderView(
             class="dcg-icon-caret-down"
             style={() => ({
               transform: container.props
-                .plugin()
+                .ml()
                 .isFolderExpanded(container.props.graph().link, expr.id)
                 ? ""
                 : "rotate(-90deg)",
@@ -65,7 +65,7 @@ function folderView(
           <button
             class="dsm-my-expr-lib-btn align-right dsm-my-expr-lib-rescale-plus"
             onClick={(e: MouseEvent) => {
-              void container.props.plugin().loadFolder(expr);
+              void container.props.ml().loadFolder(expr);
               e.stopPropagation();
             }}
           >
@@ -75,7 +75,7 @@ function folderView(
         <If
           predicate={() =>
             container.props
-              .plugin()
+              .ml()
               .isFolderExpanded(container.props.graph().link, expr.id)
           }
         >
@@ -91,9 +91,7 @@ function folderView(
                   // (and not just, say, loading (even though that makes no sense))
                   if (expressions().length === 0) {
                     return (
-                      <div>
-                        {format("my-expressions-library-this-folder-is-empty")}
-                      </div>
+                      <div>{format("my-library-this-folder-is-empty")}</div>
                     );
                   }
 
@@ -104,7 +102,7 @@ function folderView(
                         <For each={() => expressions()} key={(e) => e.uniqueID}>
                           {(e: ExpressionLibraryExpression) => (
                             <LibrarySearchElement
-                              plugin={container.props.plugin}
+                              ml={container.props.ml}
                               expr={() => e}
                               graph={container.props.graph}
                               observer={container.props.observer}
@@ -125,7 +123,7 @@ function folderView(
 }
 
 class LibrarySearchElement extends Component<{
-  plugin: () => MyExpressionsLibrary;
+  ml: () => MyLibrary;
   expr: () => ExpressionLibraryMathExpression | ExpressionLibraryFolder;
   graph: () => ExpressionLibraryGraph;
   observer: () => IntersectionObserver;
@@ -146,7 +144,7 @@ class LibrarySearchElement extends Component<{
               <li
                 class="dsm-my-expr-lib-math"
                 onClick={(_: MouseEvent) => {
-                  void this.props.plugin().loadMathExpression(expr);
+                  void this.props.ml().loadMathExpression(expr);
                 }}
                 style={{
                   "min-height": "20px",
@@ -168,7 +166,7 @@ class LibrarySearchElement extends Component<{
 }
 
 class LibrarySearchGraph extends Component<{
-  plugin: () => MyExpressionsLibrary;
+  ml: () => MyLibrary;
   graph: () => LazyLoadableGraph;
   observer: () => IntersectionObserver;
 }> {
@@ -181,20 +179,20 @@ class LibrarySearchGraph extends Component<{
             class="dsm-my-expr-lib-item-header"
             onClick={() => {
               // toggle graph expanded/closed
-              if (!this.props.plugin().isGraphExpanded(graph().link)) {
+              if (!this.props.ml().isGraphExpanded(graph().link)) {
                 void graph()
                   .load()
                   .then(() => {
-                    this.props.plugin().updateViews();
+                    this.props.ml().updateViews();
                   });
               }
-              this.props.plugin().toggleGraphExpanded(graph().link);
+              this.props.ml().toggleGraphExpanded(graph().link);
             }}
           >
             <i
               class="dcg-icon-caret-down"
               style={() => ({
-                transform: this.props.plugin().isGraphExpanded(graph().link)
+                transform: this.props.ml().isGraphExpanded(graph().link)
                   ? ""
                   : "rotate(-90deg)",
                 display: "inline-block",
@@ -210,7 +208,7 @@ class LibrarySearchGraph extends Component<{
               {() =>
                 graph().valid !== GraphValidity.Invalid
                   ? graph().name
-                  : format("my-expressions-library-invalid-graph")
+                  : format("my-library-invalid-graph")
               }
             </div>
 
@@ -222,7 +220,7 @@ class LibrarySearchGraph extends Component<{
                     onClick={async (e: MouseEvent) => {
                       const graphData = await graph().load();
                       if (!graphData) return;
-                      void this.props.plugin().loadEntireGraph(graphData);
+                      void this.props.ml().loadEntireGraph(graphData);
                       e.stopPropagation();
                     }}
                   >
@@ -234,24 +232,21 @@ class LibrarySearchGraph extends Component<{
               <button
                 class="dsm-my-expr-lib-btn"
                 onClick={() => {
-                  this.props.plugin().dsm.setPluginSetting(
-                    "my-expressions-library",
+                  this.props.ml().dsm.setPluginSetting(
+                    "my-library",
                     "libraryGraphLinks",
                     this.props
-                      .plugin()
+                      .ml()
                       .settings.libraryGraphLinks.filter(
                         (l) => l !== graph().link
                       )
                   );
 
-                  this.props.plugin().cc._showToast({
-                    message: format(
-                      "my-expressions-library-remove-graph-success",
-                      {
-                        link: graph().link,
-                        name: graph().name ?? "Untitled Graph",
-                      }
-                    ),
+                  this.props.ml().cc._showToast({
+                    message: format("my-library-remove-graph-success", {
+                      link: graph().link,
+                      name: graph().name ?? "Untitled Graph",
+                    }),
                   });
                 }}
               >
@@ -259,9 +254,7 @@ class LibrarySearchGraph extends Component<{
               </button>
             </div>
           </div>
-          <If
-            predicate={() => this.props.plugin().isGraphExpanded(graph().link)}
-          >
+          <If predicate={() => this.props.ml().isGraphExpanded(graph().link)}>
             {() => (
               <Switch key={() => graph().loading || !graph().data}>
                 {() => {
@@ -270,21 +263,16 @@ class LibrarySearchGraph extends Component<{
                   if (graph().valid === GraphValidity.Invalid) {
                     return (
                       <div>
-                        {format(
-                          "my-expressions-library-invalid-graph-details",
-                          {
-                            link: graph().link,
-                          }
-                        )}
+                        {format("my-library-invalid-graph-details", {
+                          link: graph().link,
+                        })}
                       </div>
                     );
                   }
 
                   // show a loading message while expanded while the graph is loading
                   if (graph().loading || !graph().data)
-                    return (
-                      <div>{format("my-expressions-library-loading")}</div>
-                    );
+                    return <div>{format("my-library-loading")}</div>;
 
                   // show the actual contents of the graph if it is loaded
                   return (
@@ -309,7 +297,7 @@ class LibrarySearchGraph extends Component<{
                               | ExpressionLibraryFolder
                           ) => (
                             <LibrarySearchElement
-                              plugin={this.props.plugin}
+                              ml={this.props.ml}
                               expr={() => e}
                               graph={() => this.props.graph().data!}
                               observer={this.props.observer}
@@ -330,7 +318,7 @@ class LibrarySearchGraph extends Component<{
 }
 
 class LibrarySearchView extends Component<{
-  plugin: () => MyExpressionsLibrary;
+  ml: () => MyLibrary;
 }> {
   template() {
     const observer = new IntersectionObserver(
@@ -351,17 +339,17 @@ class LibrarySearchView extends Component<{
       <div class="dcg-popover-interior dsm-my-expr-lib-popup">
         <div class="dsm-my-expr-lib-menu">
           <div class="dsm-my-expr-lib-main-header" role="heading">
-            {format("my-expressions-library-pillbox-menu")}
+            {format("my-library-pillbox-menu")}
             <br></br>
             <input
               onClick={(evt: MouseEvent) => {
                 if (evt.target instanceof HTMLElement) evt.target.focus();
               }}
               onInput={(e: InputEvent & { target: HTMLInputElement }) => {
-                this.props.plugin().refineSearch(e.target.value);
+                this.props.ml().refineSearch(e.target.value);
               }}
-              value={() => this.props.plugin().searchStr}
-              placeholder={format("my-expressions-library-search")}
+              value={() => this.props.ml().searchStr}
+              placeholder={format("my-library-search")}
             ></input>
             <br></br>
             <input
@@ -372,43 +360,43 @@ class LibrarySearchView extends Component<{
                 e.value = graphlink;
               }}
               value={() => graphlink}
-              placeholder={format("my-expressions-library-graph-link-here")}
+              placeholder={format("my-library-graph-link-here")}
             ></input>
             <button
               onClick={() => {
-                this.props.plugin().dsm.setPluginSetting(
-                  "my-expressions-library",
+                this.props.ml().dsm.setPluginSetting(
+                  "my-library",
                   "libraryGraphLinks",
                   // this Array.from(new Set) stuff is to deduplicate
                   Array.from(
                     new Set([
-                      ...this.props.plugin().settings.libraryGraphLinks,
+                      ...this.props.ml().settings.libraryGraphLinks,
                       graphlink,
                     ])
                   )
                 );
-                this.props.plugin().cc._showToast({
-                  message: format("my-expressions-library-add-graph-success", {
+                this.props.ml().cc._showToast({
+                  message: format("my-library-add-graph-success", {
                     link: graphlink,
                   }),
                 });
                 graphlink = "";
-                this.props.plugin().updateViews();
+                this.props.ml().updateViews();
               }}
             >
-              {format("my-expressions-library-add-graph")}
+              {format("my-library-add-graph")}
             </button>
           </div>
-          <Switch key={() => this.props.plugin().searchStr}>
+          <Switch key={() => this.props.ml().searchStr}>
             {() => {
               // if search string is empty, display everything normally
               // with collapsible sections for graphs/folders etc
-              if (this.props.plugin().searchStr === "") {
+              if (this.props.ml().searchStr === "") {
                 return (
                   <ul>
                     <For
                       each={() => {
-                        return [...this.props.plugin().graphs.values()];
+                        return [...this.props.ml().graphs.values()];
                       }}
                       key={(g) => g.id}
                     >
@@ -416,7 +404,7 @@ class LibrarySearchView extends Component<{
                         return (
                           <LibrarySearchGraph
                             graph={() => g}
-                            plugin={this.props.plugin}
+                            ml={this.props.ml}
                             observer={() => observer}
                           ></LibrarySearchGraph>
                         );
@@ -433,7 +421,7 @@ class LibrarySearchView extends Component<{
                   <For
                     each={() => {
                       return this.props
-                        .plugin()
+                        .ml()
                         .getLibraryExpressions()
                         .filter((e) => e.type === "expression");
                     }}
@@ -444,7 +432,7 @@ class LibrarySearchView extends Component<{
                         <LibrarySearchElement
                           graph={() => e.graph}
                           expr={() => e}
-                          plugin={this.props.plugin}
+                          ml={this.props.ml}
                           observer={() => observer}
                         ></LibrarySearchElement>
                       );
@@ -460,8 +448,6 @@ class LibrarySearchView extends Component<{
   }
 }
 
-export function LibrarySearchViewFunc(
-  plugin: MyExpressionsLibrary
-): LibrarySearchView {
-  return <LibrarySearchView plugin={() => plugin} />;
+export function LibrarySearchViewFunc(ml: MyLibrary): LibrarySearchView {
+  return <LibrarySearchView ml={() => ml} />;
 }

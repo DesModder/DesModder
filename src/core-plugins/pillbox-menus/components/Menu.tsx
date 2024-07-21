@@ -46,7 +46,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "folder-tools",
     "custom-mathquill-config",
     "code-golf",
-    "my-expressions-library",
+    "my-library",
     "better-navigation",
   ],
   visual: [
