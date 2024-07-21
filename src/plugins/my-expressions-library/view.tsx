@@ -328,7 +328,7 @@ class LibrarySearchGraph extends Component<{
   }
 }
 
-export class LibrarySearchView extends Component<{
+class LibrarySearchView extends Component<{
   plugin: () => MyExpressionsLibrary;
 }> {
   template() {
@@ -457,4 +457,10 @@ export class LibrarySearchView extends Component<{
       </div>
     );
   }
+}
+
+export function LibrarySearchViewFunc(
+  plugin: MyExpressionsLibrary
+): LibrarySearchView {
+  return <LibrarySearchView plugin={() => plugin} />;
 }

@@ -2,9 +2,8 @@ import Aug from "text-mode-core/aug/AugState";
 import { parseRootLatex, rawNonFolderToAug } from "text-mode-core/aug/rawToAug";
 import { textModeExprToLatex } from "text-mode-core/down/textToRaw";
 import { getGraphState } from "./get-graph-state";
-import { LibrarySearchView } from "./view";
+import { LibrarySearchViewFunc } from "./view";
 import { ExpressionState, ItemState } from "../../../graph-state";
-import { jsx } from "#DCGView";
 import { MathQuillField } from "#components";
 import { PluginController } from "../PluginController";
 import { mapAugAST } from "../intellisense/latex-parsing";
@@ -665,13 +664,7 @@ export default class MyExpressionsLibrary extends PluginController<{
       tooltip: "my-expressions-library-pillbox-menu",
       iconClass: "dsm-icon-bookmark",
       popup: () => {
-        return (
-          <LibrarySearchView
-            plugin={() => {
-              return this;
-            }}
-          ></LibrarySearchView>
-        );
+        return LibrarySearchViewFunc(this);
       },
     });
   }
