@@ -1,7 +1,6 @@
 import { MyLibrary } from ".";
 import { ExpressionLibraryGraph } from "./library-statements";
 import { buildConfigFromGlobals } from "../../../text-mode-core";
-import { getMetadata } from "../manage-metadata/sync";
 import { getGraphState, processGraph } from "./get-graph-state";
 
 export enum GraphValidity {
@@ -46,11 +45,9 @@ export class LazyLoadableGraph {
 
     if (state) {
       try {
-        // TODO-ml: metadata wrong
         const graph = await processGraph(
           state,
           () => this.ml.uniqueID++,
-          getMetadata(this.ml.calc),
           buildConfigFromGlobals(Desmos, this.ml.calc)
         );
 

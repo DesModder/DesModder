@@ -6,9 +6,8 @@ import {
   ExpressionLibraryGraph,
 } from "./library-statements";
 import Aug from "text-mode-core/aug/AugState";
-import { parseRootLatex, rawNonFolderToAug } from "text-mode-core/aug/rawToAug";
+import rawToAug, { parseRootLatex } from "text-mode-core/aug/rawToAug";
 import { mapAugAST } from "../intellisense/latex-parsing";
-import Metadata from "metadata/interface";
 import { Config as TextModeConfig, astToText } from "text-mode-core";
 import { rootLatexToAST } from "text-mode-core/up/augToAST";
 import { forAllLatexSources } from "./for-all-latex-sources";
@@ -43,7 +42,6 @@ export async function getGraphState(
 export async function processGraph(
   g: FetchedGraph,
   getUniqueId: () => number,
-  metadata: Metadata,
   config: TextModeConfig
 ) {
   const newGraph: Partial<ExpressionLibraryGraph> = {};
@@ -55,13 +53,18 @@ export async function processGraph(
 
   const folders = new Map<string, ExpressionLibraryFolder>();
 
-  for (const expr of g.state.expressions.list) {
+  const aug = rawToAug(config, g.state);
+
+  for (const expr of aug.expressions.list) {
     if (expr.type !== "folder") {
-      augs.set(expr.id, rawNonFolderToAug(config, expr, metadata));
+      augs.set(expr.id, expr);
     } else {
+      for (const child of expr.children) {
+        augs.set(child.id, child);
+      }
       folders.set(expr.id, {
         text: expr.title ?? "Untitled Folder",
-        expressions: new Set(),
+        expressions: new Set(expr.children.map((a) => a.id)),
         type: "folder",
         uniqueID: getUniqueId(),
         // TODO-ml: are we sure that all entries of the `Partial<>` are filled in?
@@ -69,11 +72,6 @@ export async function processGraph(
         id: expr.id,
       });
     }
-  }
-
-  for (const expr of g.state.expressions.list) {
-    if (expr.type === "folder") continue;
-    folders.get(expr.folderId ?? "")?.expressions?.add(expr.id);
   }
 
   for (const [id, aug] of augs) {

@@ -17,6 +17,7 @@ export interface ExpressionLibraryMathExpression {
 /** Represents a pre-processed folder */
 export interface ExpressionLibraryFolder {
   type: "folder";
+  /** Set of IDs */
   expressions: Set<string>;
   text: string;
   uniqueID: number;
