@@ -14,6 +14,7 @@ import ExprActionButtons, {
 import FindReplace from "./find-replace";
 import FolderTools from "./folder-tools";
 import HideErrors from "./hide-errors";
+import HandleDispatches from "../core-plugins/handle-dispatches";
 import Intellisense from "./intellisense";
 import ManageMetadata from "../core-plugins/manage-metadata";
 import Multiline from "./multiline";
@@ -137,6 +138,7 @@ export const keyToPlugin = {
   intellisense: Intellisense,
   compactView: CompactView,
   exprActionButtons: ExprActionButtons,
+  handleDispatches: HandleDispatches,
   codeGolf: CodeGolf,
   syntaxHighlighting: SyntaxHighlighting,
   betterNavigation: BetterNavigation,
@@ -192,6 +194,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get compactView () { return this.ep["compact-view"]; }
   get multiline () { return this.ep["multiline"]; }
   get exprActionButtons () { return this.ep["expr-action-buttons"]; }
+  get handleDispatches() { return this.ep["handle-dispatches"]; }
   get codeGolf () { return this.ep["code-golf"]; }
   get syntaxHighlighting () { return this.ep["syntax-highlighting"]}
   get betterNavigation () { return this.ep["better-navigation"]} 
