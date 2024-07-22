@@ -43,7 +43,7 @@ export default class HandleDispatches extends PluginController {
    *
    * @param handleDispatchedAction
    *  Return `"abort-later-handlers"` if you don't want lower-priority
-   *  handlers to run for this evet.
+   *  handlers to run for this event. Otherwise, return `undefined`.
    */
   registerDispatchHandler(
     pluginID: PluginID,

@@ -2,8 +2,11 @@ import { ItemModel } from "./models";
 import { GraphState, Product } from "../../graph-state";
 import { MathQuillField } from "#components";
 import { Matrix3 } from "./matrix3";
+import type { DispatchedEvent } from "./extra-actions";
 
-export type DispatchedEvent =
+export type { DispatchedEvent };
+
+export type VanillaDispatchedEvent =
   | {
       type:
         | "close-graph-settings"

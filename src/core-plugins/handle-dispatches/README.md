@@ -89,3 +89,16 @@ This is the main action loop of the controller.
 To create custom actions that work as confidently as vanilla actions, we replace `handleDispatchedAction` with our own version that can handle our custom actions.
 
 TODO document this once we get the API worked out.
+
+Extend the `AllActions` interface with module augmentation and interface merging.
+
+```ts
+declare module "src/globals/extra-actions" {
+  interface AllActions {
+    "folder-tools": {
+      type: "folder-dump" | "folder-merge" | "note-enclose";
+      id: string;
+    };
+  }
+}
+```
