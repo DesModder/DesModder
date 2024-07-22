@@ -1,5 +1,5 @@
-import { PluginID } from "..";
-import { Inserter, PluginController } from "../PluginController";
+import { PluginID } from "../../plugins";
+import { Inserter, PluginController } from "../../plugins/PluginController";
 import { ActionButtons } from "./components/ActionButtons";
 import { ItemModel } from "#globals";
 

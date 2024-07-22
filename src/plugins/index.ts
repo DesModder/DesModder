@@ -8,15 +8,17 @@ import CompactView from "./compact-view";
 import CustomMathQuillConfig from "./custom-mathquill-config";
 import DebugMode from "./debug-mode";
 import DuplicateHotkey from "./duplicate-hotkey";
-import ExprActionButtons, { ActionButton } from "./expr-action-buttons";
+import ExprActionButtons, {
+  ActionButton,
+} from "../core-plugins/expr-action-buttons";
 import FindReplace from "./find-replace";
 import FolderTools from "./folder-tools";
 import HideErrors from "./hide-errors";
 import Intellisense from "./intellisense";
-import ManageMetadata from "./manage-metadata";
+import ManageMetadata from "../core-plugins/manage-metadata";
 import Multiline from "./multiline";
 import PerformanceInfo from "./performance-info";
-import PillboxMenus from "./pillbox-menus";
+import PillboxMenus from "../core-plugins/pillbox-menus";
 import PinExpressions from "./pin-expressions";
 import RightClickTray from "./right-click-tray";
 import SetPrimaryColor from "./set-primary-color";
@@ -27,7 +29,7 @@ import VideoCreator from "./video-creator";
 import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
 import BetterNavigation from "./better-navigation";
-import OverrideKeystroke from "./override-keystroke";
+import OverrideKeystroke from "../core-plugins/override-keystroke";
 
 interface ConfigItemGeneric {
   // indentation level for hierarchical relationships in settings

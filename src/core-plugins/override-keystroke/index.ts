@@ -1,5 +1,5 @@
-import { PluginID } from "..";
-import { PluginController } from "../PluginController";
+import { PluginID } from "../../plugins";
+import { PluginController } from "../../plugins/PluginController";
 
 type MQKeystrokeCallback = (
   key: string,
