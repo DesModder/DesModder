@@ -1,4 +1,4 @@
-import { Inserter, PluginController } from "../PluginController";
+import { Inserter, PluginController } from "../../plugins/PluginController";
 import { MenuFunc } from "./components/Menu";
 import PillboxContainer from "./components/PillboxContainer";
 import PillboxMenu from "./components/PillboxMenu";

@@ -1,4 +1,4 @@
-import { PluginController } from "../PluginController";
+import { PluginController } from "../../plugins/PluginController";
 import GraphMetadata, {
   Expression as MetadataExpression,
 } from "#metadata/interface.ts";

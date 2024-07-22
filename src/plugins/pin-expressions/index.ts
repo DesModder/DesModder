@@ -1,5 +1,5 @@
 import { Inserter, PluginController } from "../PluginController";
-import { ActionButton } from "../expr-action-buttons";
+import { ActionButton } from "../../core-plugins/expr-action-buttons";
 import { ListView, PinnedPanel } from "./components/PinnedPanel";
 import "./pinExpressions.less";
 

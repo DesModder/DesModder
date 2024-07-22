@@ -1,5 +1,5 @@
 import { PluginController } from "../PluginController";
-import { ActionButton } from "../expr-action-buttons";
+import { ActionButton } from "../../core-plugins/expr-action-buttons";
 import { ItemModel } from "#globals";
 import { List } from "#utils/depUtils.ts";
 

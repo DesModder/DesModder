@@ -8,7 +8,7 @@ import type { Calc, ItemModel } from "#globals";
 import { rootKeys } from "#plugins/find-replace/backend.ts";
 import Metadata from "metadata/interface";
 import { get } from "#utils/utils.ts";
-import { getMetadata } from "../manage-metadata/sync";
+import { getMetadata } from "../../core-plugins/manage-metadata/sync";
 
 function getOrMakeKey<K, V>(map: Map<K, V>, k: K, v: () => V) {
   if (map.has(k)) {
