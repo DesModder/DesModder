@@ -49,14 +49,18 @@ export default class HideErrors extends PluginController {
   }
 
   hideError(id: string) {
-    this.dsm.metadata?.updateExprMetadata(id, {
-      errorHidden: true,
+    this.cc.dispatch({
+      type: "dsm-manage-metadata-update-for-expr",
+      id,
+      obj: { errorHidden: true },
     });
   }
 
   toggleErrorHidden(id: string) {
-    this.dsm.metadata?.updateExprMetadata(id, {
-      errorHidden: !this.isErrorHidden(id),
+    this.cc.dispatch({
+      type: "dsm-manage-metadata-update-for-expr",
+      id,
+      obj: { errorHidden: !this.isErrorHidden(id) },
     });
   }
 

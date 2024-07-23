@@ -245,14 +245,6 @@ export default class DSM extends TransparentPlugins {
     }
   }
 
-  commitStateChange(allowUndo: boolean) {
-    this.cc.updateTheComputedWorld();
-    if (allowUndo) {
-      this.cc.commitUndoRedoSynchronously({ type: "dsm-blank" });
-    }
-    this.cc.updateViews();
-  }
-
   insertElement = insertElement;
   replaceElement = replaceElement;
 }

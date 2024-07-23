@@ -113,6 +113,7 @@ export interface Plugin<
 }
 
 export const keyToPlugin = {
+  handleDispatches: HandleDispatches,
   pillboxMenus: PillboxMenus,
   builtinSettings: BuiltinSettings,
   betterEvaluationView: BetterEvaluationView,
@@ -138,7 +139,6 @@ export const keyToPlugin = {
   intellisense: Intellisense,
   compactView: CompactView,
   exprActionButtons: ExprActionButtons,
-  handleDispatches: HandleDispatches,
   codeGolf: CodeGolf,
   syntaxHighlighting: SyntaxHighlighting,
   betterNavigation: BetterNavigation,

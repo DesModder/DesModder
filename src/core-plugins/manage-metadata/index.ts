@@ -4,6 +4,17 @@ import GraphMetadata, {
 } from "#metadata/interface.ts";
 import { getBlankMetadata, changeExprInMetadata } from "#metadata/manage.ts";
 import { getMetadata, setMetadata } from "./sync";
+import { AllActions, DispatchedEvent } from "../../globals/extra-actions";
+
+declare module "src/globals/extra-actions" {
+  interface AllActions {
+    "manage-metadata": {
+      type: "dsm-manage-metadata-update-for-expr";
+      id: string;
+      obj: Partial<MetadataExpression>;
+    };
+  }
+}
 
 export default class ManageMetadata extends PluginController {
   static id = "manage-metadata" as const;
@@ -17,6 +28,11 @@ export default class ManageMetadata extends PluginController {
       this.checkForMetadataChange();
     });
     this.checkForMetadataChange();
+    this.dsm.handleDispatches!.registerDispatchHandler(
+      ManageMetadata.id,
+      20,
+      this.manageMetadataDispatchHandler.bind(this)
+    );
   }
 
   beforeDisable() {
@@ -48,24 +64,30 @@ export default class ManageMetadata extends PluginController {
     this.dsm.pinExpressions?.applyPinnedStyle();
   }
 
-  _updateExprMetadata(id: string, obj: Partial<MetadataExpression>) {
+  private _updateExprMetadata(id: string, obj: Partial<MetadataExpression>) {
     changeExprInMetadata(this.graphMetadata, id, obj);
     setMetadata(this.calc, this.graphMetadata);
   }
 
+  /** Called from inside a couple dispatched functions. */
   duplicateMetadata(toID: string, fromID: string) {
     const model = this.getDsmItemModel(fromID);
     if (model) this._updateExprMetadata(toID, model);
   }
 
-  updateExprMetadata(id: string, obj: Partial<MetadataExpression>) {
-    this._updateExprMetadata(id, obj);
-    this.finishUpdateMetadata();
-  }
-
-  finishUpdateMetadata() {
-    this.dsm.pinExpressions?.applyPinnedStyle();
-    this.dsm.commitStateChange(false);
+  manageMetadataDispatchHandler(action: DispatchedEvent) {
+    switch (action.type) {
+      case "dsm-manage-metadata-update-for-expr":
+        this._updateExprMetadata(action.id, action.obj);
+        this.dsm.pinExpressions?.applyPinnedStyle();
+        break;
+      default:
+        action satisfies Exclude<
+          DispatchedEvent,
+          AllActions["manage-metadata"]
+        >;
+    }
+    return undefined;
   }
 
   getDsmItemModel(id: string) {

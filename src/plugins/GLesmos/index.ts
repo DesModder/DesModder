@@ -45,8 +45,10 @@ export default class GLesmos extends PluginController {
   }
 
   toggleGlesmos(id: string) {
-    this.dsm.metadata?.updateExprMetadata(id, {
-      glesmos: !this.isGlesmosMode(id),
+    this.cc.dispatch({
+      type: "dsm-manage-metadata-update-for-expr",
+      id,
+      obj: { glesmos: !this.isGlesmosMode(id) },
     });
     this.forceWorkerUpdate(id);
   }
@@ -72,8 +74,10 @@ export default class GLesmos extends PluginController {
   }
 
   toggleGLesmosLinesConfirmed(id: string) {
-    this.dsm.metadata?.updateExprMetadata(id, {
-      glesmosLinesConfirmed: !this.isGLesmosLinesConfirmed(id),
+    this.cc.dispatch({
+      type: "dsm-manage-metadata-update-for-expr",
+      id,
+      obj: { glesmosLinesConfirmed: !this.isGLesmosLinesConfirmed(id) },
     });
     this.forceWorkerUpdate(id);
   }
