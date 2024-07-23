@@ -28,10 +28,6 @@ export default class ManageMetadata extends PluginController {
       this.checkForMetadataChange();
     });
     this.checkForMetadataChange();
-    this.dsm.handleDispatches!.registerDispatchHandler(
-      ManageMetadata.id,
-      this.manageMetadataDispatchHandler.bind(this)
-    );
   }
 
   beforeDisable() {
@@ -74,7 +70,7 @@ export default class ManageMetadata extends PluginController {
     if (model) this._updateExprMetadata(toID, model);
   }
 
-  manageMetadataDispatchHandler(action: DispatchedEvent) {
+  handleDispatchedAction(action: DispatchedEvent) {
     switch (action.type) {
       case "dsm-manage-metadata-update-for-expr":
         this._updateExprMetadata(action.id, action.obj);

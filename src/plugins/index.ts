@@ -14,7 +14,6 @@ import ExprActionButtons, {
 import FindReplace from "./find-replace";
 import FolderTools from "./folder-tools";
 import HideErrors from "./hide-errors";
-import HandleDispatches from "../core-plugins/handle-dispatches";
 import Intellisense from "./intellisense";
 import ManageMetadata from "../core-plugins/manage-metadata";
 import Multiline from "./multiline";
@@ -31,6 +30,7 @@ import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
 import BetterNavigation from "./better-navigation";
 import OverrideKeystroke from "../core-plugins/override-keystroke";
+import { DispatchedEvent } from "src/globals/extra-actions";
 
 interface ConfigItemGeneric {
   // indentation level for hierarchical relationships in settings
@@ -80,7 +80,7 @@ export type GenericSettings = Record<string, any>;
  * (.settings gets set before afterEnable)
  * afterEnable
  *
- * (.settings gets updated befre afterConfigChange)
+ * (.settings gets updated before afterConfigChange)
  * afterConfigChange
  *
  * beforeDisable
@@ -96,6 +96,11 @@ export interface PluginInstance<
   settings: Settings;
   /** Consumed by expr-action-buttons. This should really be a facet a la Codemirror. */
   actionButtons?: ActionButton[];
+
+  /** Returning `"abort-later-handlers"` means don't run any later handlers. */
+  handleDispatchedAction?: (
+    evt: DispatchedEvent
+  ) => "abort-later-handlers" | undefined;
 }
 
 export interface Plugin<
@@ -113,7 +118,6 @@ export interface Plugin<
 }
 
 export const keyToPlugin = {
-  handleDispatches: HandleDispatches,
   pillboxMenus: PillboxMenus,
   builtinSettings: BuiltinSettings,
   betterEvaluationView: BetterEvaluationView,
@@ -194,7 +198,6 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get compactView () { return this.ep["compact-view"]; }
   get multiline () { return this.ep["multiline"]; }
   get exprActionButtons () { return this.ep["expr-action-buttons"]; }
-  get handleDispatches() { return this.ep["handle-dispatches"]; }
   get codeGolf () { return this.ep["code-golf"]; }
   get syntaxHighlighting () { return this.ep["syntax-highlighting"]}
   get betterNavigation () { return this.ep["better-navigation"]} 

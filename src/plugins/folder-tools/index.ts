@@ -58,14 +58,7 @@ export default class FolderTools extends PluginController {
     },
   ];
 
-  afterEnable() {
-    this.dsm.handleDispatches!.registerDispatchHandler(
-      FolderTools.id,
-      this.folderToolsDispatchHandler.bind(this)
-    );
-  }
-
-  folderToolsDispatchHandler(action: DispatchedEvent) {
+  handleDispatchedAction(action: DispatchedEvent) {
     switch (action.type) {
       case "dsm-folder-tools-folder-dump":
         this.folderDump(action.index);

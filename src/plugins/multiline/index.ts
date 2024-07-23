@@ -332,14 +332,9 @@ export default class Multiline extends PluginController<Config> {
         this.afterConfigChange();
       }
     });
-
-    this.dsm.handleDispatches!.registerDispatchHandler(
-      Multiline.id,
-      this.multilineDispatchHandler.bind(this)
-    );
   }
 
-  private multilineDispatchHandler(evt: DispatchedEvent) {
+  handleDispatchedAction(evt: DispatchedEvent) {
     if (evt.type === "on-special-key-pressed") {
       if (evt.key === "Up" || evt.key === "Down") {
         if (!this.doMultilineVerticalNav(evt.key))

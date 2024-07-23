@@ -1,4 +1,4 @@
-## Dispatch Handlers
+# Dispatch Handling
 
 There are three primary ways to cause changes in state of a calculator's controller (`Calc.controller`):
 
@@ -62,43 +62,76 @@ All of Desmos's vanilla (built-in) action dispatches are implemented by this app
 
 However, this approach has the advantage of tending to get undo/redo correct by default. Also, as compared to dispatching vanilla actions, you get more freedom, like being able to delete several expressions at once.
 
-Conceptually, the `Calc.controller` has the following code ran when the calculator is first loaded:
+Conceptually, the `Calc.controller` has the following code ran when the calculator is first loaded (letting `cc = Calc.controller` for brevity):
 
 ```js
-this.dispatcher.register((action) => {
-  const focusedBeforeDispatch = this.getFocusLocation();
-  this.handleDispatchedAction(action);
-  this.updateTheComputedWorld();
+cc.dispatcher.register((action) => {
+  const focusedBeforeDispatch = cc.getFocusLocation();
+  cc.handleDispatchedAction(action);
+  cc.updateTheComputedWorld();
   if (action.type !== "undo" && action.type !== "redo") {
-    this.commitUndoRedoSynchronously(action);
+    cc.commitUndoRedoSynchronously(action);
   }
   if (focusedBeforeDispatch !== focusedAfterDispatch) {
     // ...
   }
-  this.updateViews();
+  cc.updateViews();
 });
 ```
 
 This is the main action loop of the controller.
 
-- This uses the same `Calc.controller.dispatcher.register` API you might use to listen to changes.
-- `handleDispatchedAction` is a huge switch statement over all the possible actions.
-- There is some logic before and after `handleDispatchedAction`. It's sandwiched.
-- It handles pushing to the undo/redo stack.
+- This uses the same `cc.dispatcher.register` API you might use to listen to changes.
+- `cc.handleDispatchedAction` is a huge switch statement over all the possible actions.
+- There is some logic before and after `cc.handleDispatchedAction`, importantly handling undo/redo state.
 
-To create custom actions that work as confidently as vanilla actions, we replace `handleDispatchedAction` with our own version that can handle our custom actions.
+To create custom actions that work as confidently as vanilla actions, we replace `cc.handleDispatchedAction` with our own version that can handle our custom actions. This is all hooked up to work automatically. As a plugin developer, there are just two steps to getting custom actions.
 
-TODO document this once we get the API worked out.
-
-Extend the `AllActions` interface with module augmentation and interface merging.
+Step 1: Add imports, and declare the new actions by extending the `AllActions` interface using TypeScript magic (module augmentation and interface merging).
 
 ```ts
+import { AllActions, DispatchedEvent } from "../../globals/extra-actions";
+
+// Tutorial: These next two lines are just "magic"
 declare module "src/globals/extra-actions" {
   interface AllActions {
+    // Tutorial: This next line should be the ID of the plugin
     "folder-tools": {
-      type: "folder-dump" | "folder-merge" | "note-enclose";
+      // Tutorial: The type of the new actions you're declaring.
+      // We currently prefix liberally since this shares the
+      // namespace with vanilla Desmos and with all the other plugins.
+      type:
+        | "dsm-folder-tools-folder-dump"
+        | "dsm-folder-tools-folder-merge"
+        | "dsm-folder-tools-note-enclose";
+      index: number;
       id: string;
     };
   }
+}
+```
+
+Step 2: Handle the new actions by declaring the `handleDispatchedAction` on the plugin controller.
+
+```ts
+handleDispatchedAction(action: DispatchedEvent) {
+  switch (action.type) {
+    case "dsm-folder-tools-folder-dump":
+      this.folderDump(action.index);
+      break;
+    case "dsm-folder-tools-folder-merge":
+      this.folderMerge(action.index);
+      break;
+    case "dsm-folder-tools-note-enclose":
+      this.noteEnclose(action.index);
+      break;
+    default:
+      // Tutorial: If a plugin declares a new action but doesn't handle it, then
+      // the action simply does nothing. This `satisfies` statement ensures
+      // that this plugin at least handles all the actions it declares.
+      // Remember to change `"folder-tools"` to the actual plugin ID.
+      action satisfies Exclude<DispatchedEvent, AllActions["folder-tools"]>;
+  }
+  return undefined;
 }
 ```
