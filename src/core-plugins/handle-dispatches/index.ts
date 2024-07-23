@@ -1,20 +1,35 @@
 import { DispatchedEvent } from "../../globals";
 import { PluginID } from "../../plugins";
 import { PluginController } from "../../plugins/PluginController";
-import {
-  DispatchID,
-  deregisterCustomDispatchOverridingHandler,
-  registerCustomDispatchOverridingHandler,
-} from "./manageDispatches";
+
+interface HandlerRecord {
+  /** Larger priorities run first, and vanilla has priority 0. */
+  priority: number;
+  id: PluginID | "vanilla";
+  /** Returning `"abort-later-handlers"` means don't run any later handlers. */
+  handler: (evt: DispatchedEvent) => "abort-later-handlers" | undefined;
+}
 
 export default class HandleDispatches extends PluginController {
   static id = "handle-dispatches" as const;
   static enabledByDefault = true;
   static isCore = true;
 
-  private readonly pluginDispatchHandlers = new Map<PluginID, DispatchID>();
+  private handlers: HandlerRecord[] = [];
 
-  afterEnable() {}
+  afterEnable() {
+    this.handlers = [
+      {
+        priority: 0,
+        id: "vanilla",
+        // Assertion necessary because `void` is not assignable to `undefined`.
+        handler: this.cc.handleDispatchedAction.bind(this.cc) as (
+          evt: DispatchedEvent
+        ) => undefined,
+      },
+    ];
+    this.cc.handleDispatchedAction = this.handleDispatchedAction.bind(this);
+  }
 
   beforeDisable() {
     throw new Error(
@@ -22,10 +37,20 @@ export default class HandleDispatches extends PluginController {
     );
   }
 
+  handleDispatchedAction(evt: DispatchedEvent) {
+    for (const { handler } of this.handlers) {
+      const keepGoing = handler(evt);
+      if (keepGoing === "abort-later-handlers") return;
+    }
+  }
+
   deregisterForPlugin(pluginID: PluginID) {
-    const dispatchID = this.pluginDispatchHandlers.get(pluginID);
-    if (dispatchID !== undefined) {
-      deregisterCustomDispatchOverridingHandler(this.calc, dispatchID);
+    // Remove all handlers with matching IDs
+    // This is in general O(ND), but only one handler should be deleted typically.
+    for (let i = this.handlers.length - 1; i >= 0; i--) {
+      if (this.handlers[i].id === pluginID) {
+        this.handlers.splice(i, 1);
+      }
     }
   }
 
@@ -36,10 +61,10 @@ export default class HandleDispatches extends PluginController {
    *
    * @param priority
    *  Larger number corresponds to higher priority (runs first).
-   *  TODO: The original Desmos switch has priority 0.
-   *  TODO: Use positive priority if you want to run before Desmos's handlers.
-   *  TODO: Use negative priority if you want to run after Desmos's handlers.
-   *  TODO: Ties are broken by plugin ID.
+   *  The original Desmos switch has priority 0.
+   *  Use positive priority if you want to run before Desmos's handlers.
+   *  Use negative priority if you want to run after Desmos's handlers.
+   *  Ties are broken by plugin ID.
    *
    * @param handleDispatchedAction
    *  Return `"abort-later-handlers"` if you don't want lower-priority
@@ -52,16 +77,23 @@ export default class HandleDispatches extends PluginController {
       action: DispatchedEvent
     ) => "abort-later-handlers" | undefined
   ) {
-    if (this.pluginDispatchHandlers.has(pluginID)) {
+    if (
+      this.handlers.find(
+        ({ id, priority: p }) => id === pluginID && p === priority
+      )
+    ) {
       throw new Error(
-        "Cannot register a new dispatch override for the same plugin. Use only one override per plugin."
+        `Cannot register two dispatch handlers for plugin '${pluginID}' with the same priority ${priority}.`
       );
     }
-    const id = registerCustomDispatchOverridingHandler(
-      this.calc,
-      handleDispatchedAction,
-      priority
-    );
-    this.pluginDispatchHandlers.set(pluginID, id);
+    this.handlers.push({
+      id: pluginID,
+      priority,
+      handler: handleDispatchedAction,
+    });
+    this.handlers.sort((a, b) => {
+      if (a.priority !== b.priority) return b.priority - a.priority;
+      return b.id > a.id ? 1 : -1;
+    });
   }
 }
