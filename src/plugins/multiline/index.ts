@@ -335,7 +335,6 @@ export default class Multiline extends PluginController<Config> {
 
     this.dsm.handleDispatches!.registerDispatchHandler(
       Multiline.id,
-      10,
       this.multilineDispatchHandler.bind(this)
     );
   }

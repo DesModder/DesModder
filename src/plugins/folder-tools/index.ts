@@ -61,7 +61,6 @@ export default class FolderTools extends PluginController {
   afterEnable() {
     this.dsm.handleDispatches!.registerDispatchHandler(
       FolderTools.id,
-      20,
       this.folderToolsDispatchHandler.bind(this)
     );
   }

@@ -3,8 +3,6 @@ import { PluginID } from "../../plugins";
 import { PluginController } from "../../plugins/PluginController";
 
 interface HandlerRecord {
-  /** Larger priorities run first, and vanilla has priority 0. */
-  priority: number;
   id: PluginID | "vanilla";
   /** Returning `"abort-later-handlers"` means don't run any later handlers. */
   handler: (evt: DispatchedEvent) => "abort-later-handlers" | undefined;
@@ -15,19 +13,12 @@ export default class HandleDispatches extends PluginController {
   static enabledByDefault = true;
   static isCore = true;
 
-  private handlers: HandlerRecord[] = [];
+  private readonly handlers: HandlerRecord[] = [];
+
+  private vanillaHandler: (evt: DispatchedEvent) => void = () => {};
 
   afterEnable() {
-    this.handlers = [
-      {
-        priority: 0,
-        id: "vanilla",
-        // Assertion necessary because `void` is not assignable to `undefined`.
-        handler: this.cc.handleDispatchedAction.bind(this.cc) as (
-          evt: DispatchedEvent
-        ) => undefined,
-      },
-    ];
+    this.vanillaHandler = this.cc.handleDispatchedAction.bind(this.cc);
     this.cc.handleDispatchedAction = this.handleDispatchedAction.bind(this);
   }
 
@@ -42,6 +33,7 @@ export default class HandleDispatches extends PluginController {
       const keepGoing = handler(evt);
       if (keepGoing === "abort-later-handlers") return;
     }
+    this.vanillaHandler(evt);
   }
 
   deregisterForPlugin(pluginID: PluginID) {
@@ -59,12 +51,8 @@ export default class HandleDispatches extends PluginController {
    * `handleDispatchedAction`, the big switch statement of `calc.controller`.
    * The DSM controller will remove this handler when the plugin is disabled.
    *
-   * @param priority
-   *  Larger number corresponds to higher priority (runs first).
-   *  The original Desmos switch has priority 0.
-   *  Use positive priority if you want to run before Desmos's handlers.
-   *  Use negative priority if you want to run after Desmos's handlers.
-   *  Ties are broken by plugin ID.
+   * The handlers run in lexicographic order of plugin IDs, and
+   * the vanilla handlers are ran at the end.
    *
    * @param handleDispatchedAction
    *  Return `"abort-later-handlers"` if you don't want lower-priority
@@ -72,27 +60,20 @@ export default class HandleDispatches extends PluginController {
    */
   registerDispatchHandler(
     pluginID: PluginID,
-    priority: number,
     handleDispatchedAction: (
       action: DispatchedEvent
     ) => "abort-later-handlers" | undefined
   ) {
-    if (
-      this.handlers.find(
-        ({ id, priority: p }) => id === pluginID && p === priority
-      )
-    ) {
+    if (this.handlers.find(({ id }) => id === pluginID)) {
       throw new Error(
-        `Cannot register two dispatch handlers for plugin '${pluginID}' with the same priority ${priority}.`
+        `Cannot register two dispatch handlers for plugin '${pluginID}'.`
       );
     }
     this.handlers.push({
       id: pluginID,
-      priority,
       handler: handleDispatchedAction,
     });
     this.handlers.sort((a, b) => {
-      if (a.priority !== b.priority) return b.priority - a.priority;
       return b.id > a.id ? 1 : -1;
     });
   }

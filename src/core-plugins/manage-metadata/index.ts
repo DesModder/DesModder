@@ -30,7 +30,6 @@ export default class ManageMetadata extends PluginController {
     this.checkForMetadataChange();
     this.dsm.handleDispatches!.registerDispatchHandler(
       ManageMetadata.id,
-      20,
       this.manageMetadataDispatchHandler.bind(this)
     );
   }
