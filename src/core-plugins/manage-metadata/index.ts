@@ -64,7 +64,7 @@ export default class ManageMetadata extends PluginController {
     setMetadata(this.calc, this.graphMetadata);
   }
 
-  /** Called from inside a couple dispatched functions. */
+  /** Called from inside a couple vanilla dispatched actions. */
   duplicateMetadata(toID: string, fromID: string) {
     const model = this.getDsmItemModel(fromID);
     if (model) this._updateExprMetadata(toID, model);
