@@ -2,6 +2,19 @@ import { PluginController } from "../PluginController";
 import { ActionButton } from "../../core-plugins/expr-action-buttons";
 import { ItemModel } from "#globals";
 import { List } from "#utils/depUtils.ts";
+import { AllActions, DispatchedEvent } from "../../globals/extra-actions";
+
+declare module "src/globals/extra-actions" {
+  interface AllActions {
+    "folder-tools": {
+      type:
+        | "dsm-folder-tools-folder-dump"
+        | "dsm-folder-tools-folder-merge"
+        | "dsm-folder-tools-note-enclose";
+      index: number;
+    };
+  }
+}
 
 export default class FolderTools extends PluginController {
   static id = "folder-tools" as const;
@@ -12,14 +25,22 @@ export default class FolderTools extends PluginController {
       tooltip: "folder-tools-enclose",
       buttonClass: "dsm-note-enclose-button",
       iconClass: "dsm-icon-folder-plus",
-      onTap: (model) => this.noteEnclose(model.index),
+      onTap: (model) =>
+        this.cc.dispatch({
+          type: "dsm-folder-tools-note-enclose",
+          index: model.index,
+        }),
       predicate: (model) => model.type === "text",
     },
     {
       tooltip: "folder-tools-dump",
       buttonClass: "dsm-folder-dump-button",
       iconClass: "dsm-icon-folder-minus",
-      onTap: (model) => this.folderDump(model.index),
+      onTap: (model) =>
+        this.cc.dispatch({
+          type: "dsm-folder-tools-folder-dump",
+          index: model.index,
+        }),
       predicate: (model) =>
         model.type === "folder" &&
         this.cc.getItemModelByIndex(model.index + 1)?.folderId === model.id,
@@ -28,12 +49,33 @@ export default class FolderTools extends PluginController {
       tooltip: "folder-tools-merge",
       buttonClass: "dsm-folder-merge-button",
       iconClass: "dsm-icon-folder-plus",
-      onTap: (model) => this.folderMerge(model.index),
+      onTap: (model) =>
+        this.cc.dispatch({
+          type: "dsm-folder-tools-folder-merge",
+          index: model.index,
+        }),
       predicate: (model) => model.type === "folder",
     },
   ];
 
-  folderDump(folderIndex: number) {
+  handleDispatchedAction(action: DispatchedEvent) {
+    switch (action.type) {
+      case "dsm-folder-tools-folder-dump":
+        this.folderDump(action.index);
+        break;
+      case "dsm-folder-tools-folder-merge":
+        this.folderMerge(action.index);
+        break;
+      case "dsm-folder-tools-note-enclose":
+        this.noteEnclose(action.index);
+        break;
+      default:
+        action satisfies Exclude<DispatchedEvent, AllActions["folder-tools"]>;
+    }
+    return undefined;
+  }
+
+  private folderDump(folderIndex: number) {
     const folderModel = this.cc.getItemModelByIndex(folderIndex);
     if (!folderModel || folderModel.type !== "folder") return;
     const folderId = folderModel?.id;
@@ -55,11 +97,9 @@ export default class FolderTools extends PluginController {
       text: folderModel.title,
     });
     this.cc._toplevelReplaceItemAt(folderIndex, T, true);
-
-    this.dsm.commitStateChange(true);
   }
 
-  folderMerge(folderIndex: number) {
+  private folderMerge(folderIndex: number) {
     const folderModel = this.cc.getItemModelByIndex(folderIndex);
     const folderId = folderModel?.id;
 
@@ -114,11 +154,9 @@ export default class FolderTools extends PluginController {
     }
     if (toDeleteFolderID)
       List.removeItemById(this.cc.listModel, toDeleteFolderID);
-
-    this.dsm.commitStateChange(true);
   }
 
-  noteEnclose(noteIndex: number) {
+  private noteEnclose(noteIndex: number) {
     // Replace this note with a folder, then folderMerge
     const noteModel = this.cc.getItemModelByIndex(noteIndex);
     if (!noteModel || noteModel.type !== "text") return;
@@ -130,7 +168,5 @@ export default class FolderTools extends PluginController {
     });
     this.cc._toplevelReplaceItemAt(noteIndex, T, true);
     this.folderMerge(noteIndex);
-
-    this.dsm.commitStateChange(true);
   }
 }

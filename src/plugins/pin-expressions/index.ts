@@ -28,8 +28,10 @@ export default class PinExpressions extends PluginController {
 
   pinExpression(id: string) {
     if (this.cc.getItemModel(id)?.type !== "folder")
-      this.dsm.metadata?.updateExprMetadata(id, {
-        pinned: true,
+      this.cc.dispatch({
+        type: "dsm-manage-metadata-update-for-expr",
+        id,
+        obj: { pinned: true },
       });
   }
 
@@ -42,8 +44,10 @@ export default class PinExpressions extends PluginController {
   }
 
   unpinExpression(id: string) {
-    this.dsm.metadata?.updateExprMetadata(id, {
-      pinned: false,
+    this.cc.dispatch({
+      type: "dsm-manage-metadata-update-for-expr",
+      id,
+      obj: { pinned: false },
     });
   }
 

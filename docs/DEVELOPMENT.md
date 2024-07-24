@@ -1,3 +1,12 @@
+# Development: Intro
+
+This page covers how to get started making changes in DesModder, with specific examples.
+
+If you're looking for in-depth development documentation, see:
+
+- [Plugin architecture](./PLUGINS.md)
+- [Dispatch handling](./dev/dispatch-handlers.md)
+
 ## Setup Environment
 
 1. Remove the existing extension to avoid conflict. If you plan to be editing DesModder, I suggest opening a [separate Chrome profile](https://support.google.com/chrome/answer/2364824) so that you still have the stable extension in your main profile when you need it.

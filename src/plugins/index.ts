@@ -30,6 +30,7 @@ import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
 import BetterNavigation from "./better-navigation";
 import OverrideKeystroke from "../core-plugins/override-keystroke";
+import { DispatchedEvent } from "src/globals/extra-actions";
 
 interface ConfigItemGeneric {
   // indentation level for hierarchical relationships in settings
@@ -79,7 +80,7 @@ export type GenericSettings = Record<string, any>;
  * (.settings gets set before afterEnable)
  * afterEnable
  *
- * (.settings gets updated befre afterConfigChange)
+ * (.settings gets updated before afterConfigChange)
  * afterConfigChange
  *
  * beforeDisable
@@ -95,6 +96,11 @@ export interface PluginInstance<
   settings: Settings;
   /** Consumed by expr-action-buttons. This should really be a facet a la Codemirror. */
   actionButtons?: ActionButton[];
+
+  /** Returning `"abort-later-handlers"` means don't run any later handlers. */
+  handleDispatchedAction?: (
+    evt: DispatchedEvent
+  ) => "abort-later-handlers" | undefined;
 }
 
 export interface Plugin<

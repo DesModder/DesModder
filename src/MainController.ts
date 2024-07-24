@@ -1,5 +1,5 @@
 import { insertElement, replaceElement } from "./preload/replaceElement";
-import window, { type Calc } from "#globals";
+import window, { DispatchedEvent, type Calc } from "#globals";
 import {
   plugins,
   pluginList,
@@ -26,14 +26,35 @@ export default class DSM extends TransparentPlugins {
     )
   ) as IDToPluginSettings;
 
+  private readonly vanillaHandleAction: (evt: DispatchedEvent) => void;
+
   constructor(public calc: Calc) {
     super();
+    if ((calc as any)._dsmConnected)
+      throw new Error(
+        "Cannot bind DesModder controller (DSM) twice to one calc instance."
+      );
+    (calc as any)._dsmConnected = true;
     // default values
     this.forceDisabled = window.DesModderPreload!.pluginsForceDisabled;
     if (calc.controller.is3dProduct()) this.forceDisabled.add("GLesmos");
     this.pluginsEnabled = new Map(
       pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
     );
+    // Setup handler override
+    this.vanillaHandleAction = this.cc.handleDispatchedAction.bind(this.cc);
+    this.cc.handleDispatchedAction = this.handleDispatchedAction.bind(this);
+  }
+
+  handleDispatchedAction(evt: DispatchedEvent) {
+    const enabledPluginIDs = Object.keys(this.enabledPlugins) as PluginID[];
+    enabledPluginIDs.sort();
+    for (const id of enabledPluginIDs) {
+      const plugin = this.enabledPlugins[id];
+      const keepGoing = plugin?.handleDispatchedAction?.(evt);
+      if (keepGoing === "abort-later-handlers") return;
+    }
+    this.vanillaHandleAction(evt);
   }
 
   applyStoredEnabled(storedEnabled: Map<PluginID, boolean | undefined>) {
@@ -242,14 +263,6 @@ export default class DSM extends TransparentPlugins {
     for (const [key, value] of Object.entries(settings)) {
       this.updatePluginSettings(key as PluginID, value, false);
     }
-  }
-
-  commitStateChange(allowUndo: boolean) {
-    this.cc.updateTheComputedWorld();
-    if (allowUndo) {
-      this.cc.commitUndoRedoSynchronously({ type: "dsm-blank" });
-    }
-    this.cc.updateViews();
   }
 
   insertElement = insertElement;

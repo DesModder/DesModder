@@ -14,13 +14,15 @@ export function isBlankMetadata(metadata: Metadata) {
   );
 }
 
+/**
+ * Mutate `metadata.expressions[id]` by inserting `obj`.
+ * Default values are deleted.
+ */
 export function changeExprInMetadata(
   metadata: Metadata,
   id: string,
   obj: Partial<Expression>
 ) {
-  /* Mutates metadata by spreading obj into metadata.expressions[id],
-  with default values deleted */
   const changed = metadata.expressions[id] ?? {};
   for (const _key in obj) {
     const key = _key as keyof Expression;
