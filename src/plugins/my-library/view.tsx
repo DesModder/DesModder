@@ -322,8 +322,6 @@ class LibrarySearchView extends Component<{
       { threshold: 0.5 }
     );
 
-    let graphlink = "";
-
     return (
       <div class="dcg-popover-interior dsm-my-expr-lib-popup">
         <div class="dsm-my-expr-lib-menu">
@@ -344,22 +342,17 @@ class LibrarySearchView extends Component<{
             <br></br>
             <input
               onInput={(e: InputEvent & { target: HTMLInputElement }) => {
-                graphlink = e.target.value;
+                this.props.ml().graphLink = e.target.value;
               }}
-              onUpdate={(e: HTMLInputElement) => {
-                e.value = graphlink;
-              }}
-              value={() => graphlink}
+              value={() => this.props.ml().graphLink}
               placeholder={format("my-library-graph-link-here")}
             ></input>
             <button
               onTap={() => {
                 this.props.ml().cc.dispatch({
                   type: "dsm-my-library-add-graph",
-                  link: graphlink,
+                  link: this.props.ml().graphLink,
                 });
-                // TODO-ml: get the graphlink directly from the input element
-                graphlink = "";
               }}
             >
               {format("my-library-add-graph")}

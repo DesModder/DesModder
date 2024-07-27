@@ -68,6 +68,7 @@ export class MyLibrary extends PluginController<{
   identTracker: IntellisenseState = new IntellisenseState(this.calc);
 
   searchStr: string = "";
+  graphLink: string = "";
 
   menuExpansionData: {
     graphs: Record<
