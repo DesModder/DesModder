@@ -201,6 +201,7 @@ video-creator-angle-speed = Velocidad:
 video-creator-step-count = Número de pasos:
 video-creator-frame-count = Número de cuadros:
 video-creator-target-same-pixel-ratio = Mantener la misma proporción de píxeles.
+video-creator-fast-screenshot = Captura rápida
 video-creator-target-tooltip = Ajustar la magnitud del ancho de las líneas, el tamaño de puntos, el tamaño de rótulos, etc.
 video-creator-ffmpeg-loading = cargando FFmpeg...
 video-creator-ffmpeg-fail = Si no funciona en unos segundos, prueba recargar la página o informa los devs de DesModder sobre el error.
