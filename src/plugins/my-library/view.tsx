@@ -131,6 +131,11 @@ class LibrarySearchElement extends Component<{
   graph: () => ExpressionLibraryGraph;
   observer: () => IntersectionObserver;
 }> {
+  ml!: MyLibrary;
+  init() {
+    this.ml = this.props.ml();
+  }
+
   template() {
     return (
       <Switch key={() => this.props.expr().type}>
@@ -147,7 +152,7 @@ class LibrarySearchElement extends Component<{
               <li
                 class="dsm-my-expr-lib-math"
                 onTap={() => {
-                  this.props.ml().cc.dispatch({
+                  this.ml.cc.dispatch({
                     type: "dsm-my-library-insert-math",
                     expr,
                   });
@@ -176,6 +181,11 @@ class LibrarySearchGraph extends Component<{
   graph: () => LazyLoadableGraph;
   observer: () => IntersectionObserver;
 }> {
+  ml!: MyLibrary;
+  init() {
+    this.ml = this.props.ml();
+  }
+
   template() {
     const graph = () => this.props.graph();
     return (
@@ -184,7 +194,7 @@ class LibrarySearchGraph extends Component<{
           <div
             class="dsm-my-expr-lib-item-header"
             onTap={() => {
-              this.props.ml().cc.dispatch({
+              this.ml.cc.dispatch({
                 type: "dsm-my-library-toggle-graph-expanded",
                 link: graph().link,
               });
@@ -193,7 +203,7 @@ class LibrarySearchGraph extends Component<{
             <i
               class="dcg-icon-caret-down"
               style={() => ({
-                transform: this.props.ml().isGraphExpanded(graph().link)
+                transform: this.ml.isGraphExpanded(graph().link)
                   ? ""
                   : "rotate(-90deg)",
                 display: "inline-block",
@@ -219,7 +229,7 @@ class LibrarySearchGraph extends Component<{
                   <button
                     class="dsm-my-expr-lib-btn dsm-my-expr-lib-rescale-plus"
                     onTap={() => {
-                      this.props.ml().cc.dispatch({
+                      this.ml.cc.dispatch({
                         type: "dsm-my-expr-lib-insert-entire-graph",
                         link: graph().link,
                       });
@@ -233,7 +243,7 @@ class LibrarySearchGraph extends Component<{
               <button
                 class="dsm-my-expr-lib-btn"
                 onTap={() => {
-                  this.props.ml().cc.dispatch({
+                  this.ml.cc.dispatch({
                     type: "dsm-my-library-remove-graph",
                     link: graph().link,
                   });
@@ -243,7 +253,7 @@ class LibrarySearchGraph extends Component<{
               </button>
             </div>
           </div>
-          <If predicate={() => this.props.ml().isGraphExpanded(graph().link)}>
+          <If predicate={() => this.ml.isGraphExpanded(graph().link)}>
             {() => (
               <Switch key={() => graph().loading || !graph().data}>
                 {() => {
@@ -309,6 +319,11 @@ class LibrarySearchGraph extends Component<{
 class LibrarySearchView extends Component<{
   ml: () => MyLibrary;
 }> {
+  ml!: MyLibrary;
+  init() {
+    this.ml = this.props.ml();
+  }
+
   template() {
     const observer = new IntersectionObserver(
       (evt) => {
@@ -334,40 +349,40 @@ class LibrarySearchView extends Component<{
                 if (evt.target instanceof HTMLElement) evt.target.focus();
               }}
               onInput={(e: InputEvent & { target: HTMLInputElement }) => {
-                this.props.ml().refineSearch(e.target.value);
+                this.ml.refineSearch(e.target.value);
               }}
-              value={() => this.props.ml().searchStr}
+              value={() => this.ml.searchStr}
               placeholder={format("my-library-search")}
             />
             <br></br>
             <input
               onInput={(e: InputEvent & { target: HTMLInputElement }) => {
-                this.props.ml().graphLink = e.target.value;
+                this.ml.graphLink = e.target.value;
               }}
-              value={() => this.props.ml().graphLink}
+              value={() => this.ml.graphLink}
               placeholder={format("my-library-graph-link-here")}
             ></input>
             <button
               onTap={() => {
-                this.props.ml().cc.dispatch({
+                this.ml.cc.dispatch({
                   type: "dsm-my-library-add-graph",
-                  link: this.props.ml().graphLink,
+                  link: this.ml.graphLink,
                 });
               }}
             >
               {format("my-library-add-graph")}
             </button>
           </div>
-          <Switch key={() => this.props.ml().searchStr}>
+          <Switch key={() => this.ml.searchStr}>
             {() => {
               // if search string is empty, display everything normally
               // with collapsible sections for graphs/folders etc
-              if (this.props.ml().searchStr === "") {
+              if (this.ml.searchStr === "") {
                 return (
                   <ul>
                     <For
                       each={() => {
-                        return [...this.props.ml().graphs.values()];
+                        return [...this.ml.graphs.values()];
                       }}
                       key={(g) => g.id}
                     >
