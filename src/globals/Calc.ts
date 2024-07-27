@@ -303,6 +303,7 @@ interface CalcPrivate {
     };
     is3dProduct: () => boolean;
     grapher3d?: Grapher3d;
+    runAfterDispatch: (cb: () => void) => void;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;

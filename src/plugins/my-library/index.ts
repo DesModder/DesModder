@@ -7,10 +7,40 @@ import { GraphValidity, LazyLoadableGraph } from "./lazy-loadable-graph";
 import {
   ExpressionLibraryExpression,
   ExpressionLibraryFolder,
-  ExpressionLibraryGraph,
   ExpressionLibraryMathExpression,
 } from "./library-statements";
 import { Inserter } from "./insertion";
+import { AllActions, DispatchedEvent } from "../../globals/extra-actions";
+import { format } from "#i18n";
+
+declare module "src/globals/extra-actions" {
+  interface AllActions {
+    "my-library":
+      | {
+          type: "dsm-my-library-toggle-folder-expanded";
+          link: string;
+          id: string;
+        }
+      | {
+          type: "dsm-my-library-insert-folder";
+          // TODO-ml: This should just be link and id
+          expr: ExpressionLibraryFolder;
+        }
+      | {
+          type: "dsm-my-library-insert-math";
+          // TODO-ml: This should just be link and id
+          expr: ExpressionLibraryMathExpression;
+        }
+      | {
+          type:
+            | "dsm-my-library-toggle-graph-expanded"
+            | "dsm-my-library-remove-graph"
+            | "dsm-my-library-add-graph"
+            | "dsm-my-expr-lib-insert-entire-graph";
+          link: string;
+        };
+  }
+}
 
 // keys for local storage
 export const EXPANSIONS_LOCALSTORAGE_KEY = "dsm-my-expr-lib-expansions";
@@ -30,6 +60,7 @@ export class MyLibrary extends PluginController<{
     },
   ] as const;
 
+  /** Map from graph link to graph */
   graphs = new Map<string, LazyLoadableGraph>();
 
   keypadRow: HTMLElement | undefined;
@@ -56,6 +87,92 @@ export class MyLibrary extends PluginController<{
   linkToName: Record<string, string> = {};
 
   inserter: Inserter = new Inserter(this.calc);
+
+  handleDispatchedAction(action: DispatchedEvent) {
+    switch (action.type) {
+      case "dsm-my-expr-lib-insert-entire-graph":
+        // TODO-ml: make this non-async
+        this.cc.runAfterDispatch(() => {
+          void this.loadEntireGraph(action.link);
+        });
+        break;
+      case "dsm-my-library-insert-folder":
+        // TODO-ml: make this non-async
+        this.cc.runAfterDispatch(() => {
+          void this.loadFolder(action.expr);
+        });
+        break;
+      case "dsm-my-library-insert-math":
+        // TODO-ml: make this non-async
+        this.cc.runAfterDispatch(() => {
+          void this.loadMathExpression(action.expr);
+        });
+        break;
+      case "dsm-my-library-toggle-graph-expanded": {
+        // TODO-ml: make this non-async
+        this.cc.runAfterDispatch(() => {
+          void this.toggleGraphExpanded(action.link);
+        });
+        break;
+      }
+      case "dsm-my-library-toggle-folder-expanded":
+        this.toggleFolderExpanded(action.link, action.id);
+        break;
+      case "dsm-my-library-remove-graph": {
+        const graph = this.graphs.get(action.link);
+        if (!graph) return;
+        this.dsm.setPluginSetting(
+          "my-library",
+          "libraryGraphLinks",
+          this.settings.libraryGraphLinks.filter((l) => l !== action.link)
+        );
+
+        // TODO-ml: Add an undo button (quite important after deleting a graph).
+        this.cc._showToast({
+          // This use of `format` is okay because `_showToast` is ephemeral.
+          // eslint-disable-next-line rulesdir/no-format-in-ts
+          message: format("my-library-remove-graph-success", {
+            link: action.link,
+            name: graph.name ?? "Untitled Graph",
+          }),
+          hideAfter: 0,
+        });
+        break;
+      }
+      case "dsm-my-library-add-graph": {
+        // TODO-ml: Add an undo button (may as well since we're toasting anyways).
+        if (this.settings.libraryGraphLinks.includes(action.link)) {
+          this.cc._showToast({
+            // This use of `format` is okay because `_showToast` is ephemeral.
+            // eslint-disable-next-line rulesdir/no-format-in-ts
+            message: format("my-library-add-graph-duplicate", {
+              link: action.link,
+              name: this.graphs?.get(action.link)?.name ?? "Untitled Graph",
+            }),
+            hideAfter: 0,
+          });
+          return;
+        }
+        this.dsm.setPluginSetting(
+          "my-library",
+          "libraryGraphLinks",
+          this.settings.libraryGraphLinks.concat(action.link)
+        );
+        this.cc._showToast({
+          // This use of `format` is okay because `_showToast` is ephemeral.
+          // eslint-disable-next-line rulesdir/no-format-in-ts
+          message: format("my-library-add-graph-success", {
+            link: action.link,
+          }),
+          hideAfter: 0,
+        });
+        break;
+      }
+      default:
+        action satisfies Exclude<DispatchedEvent, AllActions["my-library"]>;
+    }
+    return undefined;
+  }
 
   // convert graph link to cached name
   getNameFromLink(link: string) {
@@ -84,7 +201,13 @@ export class MyLibrary extends PluginController<{
   }
 
   // toggle whether a graph is expanded in the MyExprLib menu
-  toggleGraphExpanded(link: string) {
+  async toggleGraphExpanded(link: string) {
+    // TODO-ml: loading indicator?
+    const lazyGraph = this.graphs.get(link);
+    if (!lazyGraph) return;
+    if (!this.isGraphExpanded(link)) {
+      await lazyGraph.load();
+    }
     if (!this.menuExpansionData.graphs[link]) {
       this.menuExpansionData.graphs[link] = { expanded: true, folders: {} };
     } else {
@@ -127,7 +250,9 @@ export class MyLibrary extends PluginController<{
     return (this.calc.controller.getSelectedItem()?.index ?? 0) + 1;
   }
 
-  async loadEntireGraph(graph: ExpressionLibraryGraph) {
+  async loadEntireGraph(link: string) {
+    const graph = await this.graphs.get(link)?.load();
+    if (!graph) return;
     const startIndex = this.getInsertionStartIndex();
     await this.inserter.loadEntireGraph(graph, startIndex);
   }

@@ -269,6 +269,7 @@ my-library-search = Search
 my-library-add-graph = Add Graph
 my-library-graph-link-here = Graph Link Here
 my-library-add-graph-success = My Library: Added graph with link { $link }
+my-library-add-graph-duplicate = My Library: Cannot add '{ $name }' with link { $link } since it is already added
 my-library-remove-graph-success = My Library: Removed graph '{ $name }' with link { $link }
 my-library-loading = Loading...
 my-library-invalid-graph-details = The graph at the link { $link } failed to load.

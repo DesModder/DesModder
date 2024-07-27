@@ -42,11 +42,12 @@ function folderView(
       <div class="dsm-my-expr-lib-multi-item-inner">
         <div
           class="dsm-my-expr-lib-item-header"
-          onClick={() => {
-            // expand/contract folder
-            container.props
-              .ml()
-              .toggleFolderExpanded(container.props.graph().link, expr.id);
+          onTap={() => {
+            container.props.ml().cc.dispatch({
+              type: "dsm-my-library-toggle-folder-expanded",
+              link: container.props.graph().link,
+              id: expr.id,
+            });
           }}
         >
           <i
@@ -64,9 +65,11 @@ function folderView(
           <div class="dsm-my-expr-lib-item-title">{expr.text}</div>
           <button
             class="dsm-my-expr-lib-btn align-right dsm-my-expr-lib-rescale-plus"
-            onClick={(e: MouseEvent) => {
-              void container.props.ml().loadFolder(expr);
-              e.stopPropagation();
+            onTap={() => {
+              container.props.ml().cc.dispatch({
+                type: "dsm-my-library-insert-folder",
+                expr,
+              });
             }}
           >
             <i class="dcg-icon-plus"></i>
@@ -143,8 +146,11 @@ class LibrarySearchElement extends Component<{
             const container = (
               <li
                 class="dsm-my-expr-lib-math"
-                onClick={(_: MouseEvent) => {
-                  void this.props.ml().loadMathExpression(expr);
+                onTap={() => {
+                  this.props.ml().cc.dispatch({
+                    type: "dsm-my-library-insert-math",
+                    expr,
+                  });
                 }}
                 style={{
                   "min-height": "20px",
@@ -177,16 +183,11 @@ class LibrarySearchGraph extends Component<{
         <div class="dsm-my-expr-lib-multi-item-inner">
           <div
             class="dsm-my-expr-lib-item-header"
-            onClick={() => {
-              // toggle graph expanded/closed
-              if (!this.props.ml().isGraphExpanded(graph().link)) {
-                void graph()
-                  .load()
-                  .then(() => {
-                    this.props.ml().updateViews();
-                  });
-              }
-              this.props.ml().toggleGraphExpanded(graph().link);
+            onTap={() => {
+              this.props.ml().cc.dispatch({
+                type: "dsm-my-library-toggle-graph-expanded",
+                link: graph().link,
+              });
             }}
           >
             <i
@@ -217,11 +218,11 @@ class LibrarySearchGraph extends Component<{
                 {() => (
                   <button
                     class="dsm-my-expr-lib-btn dsm-my-expr-lib-rescale-plus"
-                    onClick={async (e: MouseEvent) => {
-                      const graphData = await graph().load();
-                      if (!graphData) return;
-                      void this.props.ml().loadEntireGraph(graphData);
-                      e.stopPropagation();
+                    onTap={() => {
+                      this.props.ml().cc.dispatch({
+                        type: "dsm-my-expr-lib-insert-entire-graph",
+                        link: graph().link,
+                      });
                     }}
                   >
                     <i class="dcg-icon-plus"></i>
@@ -231,22 +232,10 @@ class LibrarySearchGraph extends Component<{
 
               <button
                 class="dsm-my-expr-lib-btn"
-                onClick={() => {
-                  this.props.ml().dsm.setPluginSetting(
-                    "my-library",
-                    "libraryGraphLinks",
-                    this.props
-                      .ml()
-                      .settings.libraryGraphLinks.filter(
-                        (l) => l !== graph().link
-                      )
-                  );
-
-                  this.props.ml().cc._showToast({
-                    message: format("my-library-remove-graph-success", {
-                      link: graph().link,
-                      name: graph().name ?? "Untitled Graph",
-                    }),
+                onTap={() => {
+                  this.props.ml().cc.dispatch({
+                    type: "dsm-my-library-remove-graph",
+                    link: graph().link,
                   });
                 }}
               >
@@ -343,6 +332,7 @@ class LibrarySearchView extends Component<{
             <br></br>
             <input
               onClick={(evt: MouseEvent) => {
+                // TODO-ml: why does there need to be special handling to focus the input?
                 if (evt.target instanceof HTMLElement) evt.target.focus();
               }}
               onInput={(e: InputEvent & { target: HTMLInputElement }) => {
@@ -350,7 +340,7 @@ class LibrarySearchView extends Component<{
               }}
               value={() => this.props.ml().searchStr}
               placeholder={format("my-library-search")}
-            ></input>
+            />
             <br></br>
             <input
               onInput={(e: InputEvent & { target: HTMLInputElement }) => {
@@ -363,25 +353,13 @@ class LibrarySearchView extends Component<{
               placeholder={format("my-library-graph-link-here")}
             ></input>
             <button
-              onClick={() => {
-                this.props.ml().dsm.setPluginSetting(
-                  "my-library",
-                  "libraryGraphLinks",
-                  // this Array.from(new Set) stuff is to deduplicate
-                  Array.from(
-                    new Set([
-                      ...this.props.ml().settings.libraryGraphLinks,
-                      graphlink,
-                    ])
-                  )
-                );
-                this.props.ml().cc._showToast({
-                  message: format("my-library-add-graph-success", {
-                    link: graphlink,
-                  }),
+              onTap={() => {
+                this.props.ml().cc.dispatch({
+                  type: "dsm-my-library-add-graph",
+                  link: graphlink,
                 });
+                // TODO-ml: get the graphlink directly from the input element
                 graphlink = "";
-                this.props.ml().updateViews();
               }}
             >
               {format("my-library-add-graph")}
