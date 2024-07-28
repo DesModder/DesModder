@@ -75,7 +75,7 @@ export default class Menu extends Component<{
   template() {
     return (
       <div class="dcg-popover-interior">
-        <div class="dcg-popover-title">
+        <div class="dcg-popover-title dsm-title-version-grid">
           {format("menu-desmodder-plugins")}
           <div class="dsm-version-number">v{VERSION}</div>
         </div>
