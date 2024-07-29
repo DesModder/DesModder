@@ -3,39 +3,37 @@ import {
   ExpressionLibraryGraph,
   ExpressionLibraryMathExpression,
 } from "./library-statements";
-import { type Calc } from "#globals";
-import { ExpressionState } from "../../../graph-state";
+import { CalcController } from "#globals";
 
 export class Inserter {
-  constructor(private readonly calc: Calc) {}
+  constructor(private readonly cc: CalcController) {}
 
-  /** Create an empty folder at `startIndex` */
-  createEmptyFolder(title: string, startIndex: number) {
-    this.calc.controller.dispatch({ type: "new-folder" });
-
-    const folder =
-      this.calc.controller.listModel.__itemModelArray[startIndex - 1];
-    if (folder.type === "folder") {
-      folder.title = title;
-    }
-
-    this.calc.controller.updateTheComputedWorld();
+  /** Create an empty folder at/after the selection, and return its index. */
+  createEmptyFolder(title: string) {
+    const id = this.cc.generateId();
+    const model = this.cc.createItemModel({
+      type: "folder",
+      title,
+      id,
+    });
+    this.cc._toplevelNewItemAtSelection(model, { shouldFocus: false });
+    return this.cc.getItemModel(id)!.index;
   }
 
   /** load all the contents of a folder into the current graph */
-  async loadFolder(expr: ExpressionLibraryFolder, startIndex: number) {
-    this.createEmptyFolder(expr.text, startIndex);
+  loadFolder(expr: ExpressionLibraryFolder) {
+    const startIndex = this.createEmptyFolder(expr.text);
 
     for (const id of expr.expressions) {
       const e = expr.graph.expressions.get(id);
       if (e && e.type === "expression") {
-        await this.loadMathExpression(e, startIndex);
+        this.loadMathExpression(e, startIndex);
       }
     }
   }
 
-  /** Add a single math expression into the graph */
-  async loadMathExpression(
+  /** Add a single math expression into the graph after `startIndex` */
+  loadMathExpression(
     expr: ExpressionLibraryMathExpression,
     startIndex: number,
     dontLoadDependencies = false
@@ -60,50 +58,39 @@ export class Inserter {
     loadExpressionInner(expr);
 
     let loadedArray = Array.from(loaded).map((e) => {
+      // TODO-ml: needs to be link to avoid rare collisions
+      // Or don't overwrite existing (feels weird for insert to be a no-op)
       const id = `dsm-mapped-${e.graph.hash}-${e.raw.id}`;
       return {
         ...e,
-        raw: {
-          ...e.raw,
-          id,
-        },
-        aug: {
-          ...e.aug,
-          id,
-        },
+        raw: { ...e.raw, id },
+        aug: { ...e.aug, id },
         id,
       };
     });
 
     // deduplicate redundant expressions
     loadedArray = loadedArray.filter(
-      (loadExpr) => !this.calc.controller.getItemModel(loadExpr.raw.id)
+      (loadExpr) => !this.cc.getItemModel(loadExpr.raw.id)
     );
 
+    startIndex++;
     // figure out what folder to put expressions into
-    const startItem =
-      this.calc.controller.listModel.__itemModelArray[startIndex - 1];
+    const startItem = this.cc.listModel.__itemModelArray[startIndex - 1];
     const startFolder: string | undefined =
       startItem?.type === "folder" ? startItem?.id : startItem?.folderId;
 
     const idsBefore = new Set(
-      this.calc.controller.listModel.__itemModelArray.map((e) => e.id)
+      this.cc.listModel.__itemModelArray.map((e) => e.id)
     );
 
-    this.calc.setExpressions(
-      // @ts-expect-error todo: fix type safety later
-      loadedArray.map((e) => {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const copy: Partial<ExpressionState> = {
-          ...e.raw,
-        } as ExpressionState;
-        return copy;
-      })
-    );
+    for (const e of loadedArray) {
+      // TODO-ml: augToRaw
+      const model = this.cc.createItemModel(e.raw);
+      this.cc._addItemToEndFromAPI(model);
+    }
 
-    const idsAfter = this.calc.controller.listModel.__itemModelArray.map(
-      (e) => e.id
-    );
+    const idsAfter = this.cc.listModel.__itemModelArray.map((e) => e.id);
 
     const idsNew: string[] = [];
 
@@ -116,11 +103,10 @@ export class Inserter {
     // reorder expressions
     let i = 0;
     for (const id of idsNew) {
-      const idIndex = this.calc.controller.listModel.__itemModelArray.findIndex(
+      const idIndex = this.cc.listModel.__itemModelArray.findIndex(
         (e) => e.id === id
       );
-      const itemToMove =
-        this.calc.controller.listModel.__itemModelArray[idIndex];
+      const itemToMove = this.cc.listModel.__itemModelArray[idIndex];
 
       const expr = loadedArray[i];
 
@@ -130,28 +116,24 @@ export class Inserter {
         itemToMove.colorLatex = expr.raw.colorLatex;
       }
 
-      this.calc.controller.listModel.__itemModelArray.splice(idIndex, 1);
+      this.cc.listModel.__itemModelArray.splice(idIndex, 1);
 
       if (startIndex > idIndex) startIndex--;
 
-      this.calc.controller.listModel.__itemModelArray.splice(
-        startIndex,
-        0,
-        itemToMove
-      );
+      this.cc.listModel.__itemModelArray.splice(startIndex, 0, itemToMove);
       i++;
     }
 
-    this.calc.controller.updateTheComputedWorld();
+    this.cc.updateTheComputedWorld();
   }
 
   /** Load an entire graph into this graph */
-  async loadEntireGraph(graph: ExpressionLibraryGraph, startIndex: number) {
-    this.createEmptyFolder(`Graph: ${graph.title}`, startIndex);
+  loadEntireGraph(graph: ExpressionLibraryGraph) {
+    const startIndex = this.createEmptyFolder(`Graph: ${graph.title}`);
 
     for (const [_, expr] of Array.from(graph.expressions.entries()).reverse()) {
-      if (expr.type === "expression") {
-        await this.loadMathExpression(expr, startIndex, true);
+      if (expr.type !== "folder") {
+        this.loadMathExpression(expr, startIndex, true);
       }
     }
   }

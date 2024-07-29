@@ -87,7 +87,7 @@ export class MyLibrary extends PluginController<{
 
   linkToName: Record<string, string> = {};
 
-  inserter: Inserter = new Inserter(this.calc);
+  inserter: Inserter = new Inserter(this.cc);
 
   handleDispatchedAction(action: DispatchedEvent) {
     switch (action.type) {
@@ -254,13 +254,11 @@ export class MyLibrary extends PluginController<{
   async loadEntireGraph(link: string) {
     const graph = await this.graphs.get(link)?.load();
     if (!graph) return;
-    const startIndex = this.getInsertionStartIndex();
-    await this.inserter.loadEntireGraph(graph, startIndex);
+    this.inserter.loadEntireGraph(graph);
   }
 
   async loadFolder(expr: ExpressionLibraryFolder) {
-    const startIndex = this.getInsertionStartIndex();
-    await this.inserter.loadFolder(expr, startIndex);
+    this.inserter.loadFolder(expr);
   }
 
   async loadMathExpression(
@@ -268,11 +266,7 @@ export class MyLibrary extends PluginController<{
     dontLoadDependencies = false
   ) {
     const startIndex = this.getInsertionStartIndex();
-    await this.inserter.loadMathExpression(
-      expr,
-      startIndex,
-      dontLoadDependencies
-    );
+    this.inserter.loadMathExpression(expr, startIndex, dontLoadDependencies);
   }
 
   uniqueID = 0;
