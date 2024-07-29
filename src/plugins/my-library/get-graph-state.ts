@@ -8,7 +8,11 @@ import {
 import Aug from "text-mode-core/aug/AugState";
 import rawToAug, { parseRootLatex } from "text-mode-core/aug/rawToAug";
 import { mapAugAST } from "../intellisense/latex-parsing";
-import { Config as TextModeConfig, astToText } from "text-mode-core";
+import {
+  Config as TextModeConfig,
+  astToText,
+  buildConfigFromGlobals,
+} from "text-mode-core";
 import { rootLatexToAST } from "text-mode-core/up/augToAST";
 import { forAllLatexSources } from "./for-all-latex-sources";
 
@@ -19,7 +23,18 @@ interface FetchedGraph {
   link: string;
 }
 
-export async function getGraphState(
+export async function fetchAndProcessGraph(link: string, ml: MyLibrary) {
+  const state = await fetchGraphState(link, ml);
+  if (!state) return undefined;
+
+  return await processGraph(
+    state,
+    () => ml.uniqueID++,
+    buildConfigFromGlobals(window.Desmos, ml.calc)
+  );
+}
+
+async function fetchGraphState(
   link: string,
   ml: MyLibrary
 ): Promise<FetchedGraph | undefined> {
@@ -38,8 +53,20 @@ export async function getGraphState(
   }
 }
 
+async function processGraph(
+  g: FetchedGraph,
+  getUniqueId: () => number,
+  config: TextModeConfig
+) {
+  try {
+    return await _processGraph(g, getUniqueId, config);
+  } catch {
+    return undefined;
+  }
+}
+
 // convert the data returned from a raw graph fetch request into an ExpressionLibraryGraph
-export async function processGraph(
+async function _processGraph(
   g: FetchedGraph,
   getUniqueId: () => number,
   config: TextModeConfig

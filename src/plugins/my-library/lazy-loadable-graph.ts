@@ -1,22 +1,32 @@
 import { MyLibrary } from ".";
 import { ExpressionLibraryGraph } from "./library-statements";
-import { buildConfigFromGlobals } from "../../../text-mode-core";
-import { getGraphState, processGraph } from "./get-graph-state";
+import { fetchAndProcessGraph } from "./get-graph-state";
 
-export enum GraphValidity {
-  Valid = "valid",
-  Invalid = "invalid",
-  Unknown = "unknown",
-}
+export type LazyGraphState =
+  | {
+      /** Not yet fetched */
+      type: "unknown";
+    }
+  | {
+      /** Currently fetching */
+      type: "fetching";
+    }
+  | {
+      /** Fetched and failed, or invalid JSON. */
+      type: "invalid";
+    }
+  | {
+      type: "valid";
+      graph: ExpressionLibraryGraph;
+    };
 
 export class LazyLoadableGraph {
-  loading: boolean = false;
-  valid: GraphValidity = GraphValidity.Unknown;
-  data?: ExpressionLibraryGraph;
+  readonly id: number;
+  readonly ml: MyLibrary;
+  readonly link: string;
+
+  state: LazyGraphState = { type: "unknown" };
   name?: string;
-  link: string;
-  id: number;
-  ml: MyLibrary;
 
   static CurrentID = 0;
 
@@ -29,39 +39,51 @@ export class LazyLoadableGraph {
     }
   }
 
-  setGraphInvalid() {
-    this.loading = false;
-    this.valid = GraphValidity.Invalid;
-    this.data = undefined;
+  /** Callbacks for concurrent requests on this same graph. */
+  private resolves: ((g: ExpressionLibraryGraph | undefined) => void)[] = [];
+
+  syncLoadOrUndefined() {
+    const { state } = this;
+    if (state.type === "valid") {
+      return state.graph;
+    }
+    return undefined;
   }
 
   // attempt to fetch a graph from some server
-  async load() {
-    if (this.data) return this.data;
-
-    this.loading = true;
-
-    const state = await getGraphState(this.link, this.ml);
-
-    if (state) {
-      try {
-        const graph = await processGraph(
-          state,
-          () => this.ml.uniqueID++,
-          buildConfigFromGlobals(Desmos, this.ml.calc)
-        );
-
-        this.loading = false;
-        this.data = graph;
-        this.name = graph.title ?? "Untitled Graph";
-        this.ml.setNameFromLink(this.link, this.name);
-        this.valid = GraphValidity.Valid;
-        return graph;
-      } catch {
-        this.setGraphInvalid();
+  async load(): Promise<ExpressionLibraryGraph | undefined> {
+    const { state } = this;
+    switch (state.type) {
+      case "unknown": {
+        const graph = await this.fetch();
+        return await new Promise((resolve) => {
+          resolve(graph);
+          for (const r of this.resolves) {
+            r(graph);
+          }
+          this.resolves = [];
+        });
       }
-    } else {
-      this.setGraphInvalid();
+      case "fetching":
+        return await new Promise((resolve) => {
+          this.resolves.push(resolve);
+        });
+      case "invalid":
+        return undefined;
+      case "valid":
+        return state.graph;
     }
+  }
+
+  private async fetch() {
+    const graph = await fetchAndProcessGraph(this.link, this.ml);
+    if (!graph) {
+      this.state = { type: "invalid" };
+      return undefined;
+    }
+    this.state = { type: "valid", graph };
+    this.name = graph.title ?? "Untitled Graph";
+    this.ml.setNameFromLink(this.link, this.name);
+    return graph;
   }
 }

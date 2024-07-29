@@ -10,7 +10,7 @@ import { Component, jsx, mountToNode } from "#DCGView";
 import { For, If, IfElse, StaticMathQuillView, Switch } from "#components";
 import { format } from "#i18n";
 import { ExpressionState } from "../../../graph-state";
-import { GraphValidity, LazyLoadableGraph } from "./lazy-loadable-graph";
+import { LazyGraphState, LazyLoadableGraph } from "./lazy-loadable-graph";
 
 export function expressionLibraryMathExpressionView(
   expr: ExpressionLibraryMathExpression,
@@ -210,21 +210,21 @@ class LibrarySearchGraph extends Component<{
               })}
             />
 
-            {IfElse(() => graph().valid !== GraphValidity.Invalid, {
+            {IfElse(() => graph().state.type !== "invalid", {
               true: () => <i class="dcg-icon-cartesian"></i>,
               false: () => <i class="dcg-icon-error"></i>,
             })}
 
             <div class="dsm-my-expr-lib-item-title">
               {() =>
-                graph().valid !== GraphValidity.Invalid
+                graph().state.type !== "invalid"
                   ? graph().name
                   : format("my-library-invalid-graph")
               }
             </div>
 
             <div class="align-right dsm-my-expr-lib-btn-container">
-              <If predicate={() => graph().valid !== GraphValidity.Invalid}>
+              <If predicate={() => graph().syncLoadOrUndefined() !== undefined}>
                 {() => (
                   <button
                     class="dsm-my-expr-lib-btn dsm-my-expr-lib-rescale-plus"
@@ -254,12 +254,13 @@ class LibrarySearchGraph extends Component<{
             </div>
           </div>
           <If predicate={() => this.ml.isGraphExpanded(graph().link)}>
+            {/* TODO-ml: SwitchUnion */}
             {() => (
-              <Switch key={() => graph().loading || !graph().data}>
-                {() => {
+              <Switch key={() => graph().state}>
+                {(state: LazyGraphState) => {
                   // when the graph is invalid, show a message saying that the
                   // graph at the given link failed to load when it's expanded
-                  if (graph().valid === GraphValidity.Invalid) {
+                  if (state.type === "invalid") {
                     return (
                       <div>
                         {format("my-library-invalid-graph-details", {
@@ -270,7 +271,7 @@ class LibrarySearchGraph extends Component<{
                   }
 
                   // show a loading message while expanded while the graph is loading
-                  if (graph().loading || !graph().data)
+                  if (state.type === "fetching" || state.type === "unknown")
                     return <div>{format("my-library-loading")}</div>;
 
                   // show the actual contents of the graph if it is loaded
@@ -279,9 +280,7 @@ class LibrarySearchGraph extends Component<{
                       <ol>
                         <For
                           each={() => {
-                            return [
-                              ...graph().data!.expressions.values(),
-                            ].filter(
+                            return [...state.graph.expressions.values()].filter(
                               (e) =>
                                 e.type === "folder" ||
                                 (e.type === "expression" &&
@@ -298,7 +297,7 @@ class LibrarySearchGraph extends Component<{
                             <LibrarySearchElement
                               ml={this.props.ml}
                               expr={() => e}
-                              graph={() => this.props.graph().data!}
+                              graph={() => state.graph}
                               observer={this.props.observer}
                             ></LibrarySearchElement>
                           )}

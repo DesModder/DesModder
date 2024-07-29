@@ -3,7 +3,7 @@ import { LibrarySearchViewFunc } from "./view";
 import { PluginController } from "../PluginController";
 import { IntellisenseState } from "../intellisense/state";
 import { buildConfigFromGlobals } from "text-mode-core";
-import { GraphValidity, LazyLoadableGraph } from "./lazy-loadable-graph";
+import { LazyLoadableGraph } from "./lazy-loadable-graph";
 import {
   ExpressionLibraryExpression,
   ExpressionLibraryFolder,
@@ -275,17 +275,16 @@ export class MyLibrary extends PluginController<{
   // this function also prompts all graphs to be force-loaded
   getLibraryExpressions() {
     // force load all graphs to enable searching
-    for (const graph of this.graphs.values()) {
-      if (!!graph.data || graph.valid === GraphValidity.Invalid) continue;
-      void graph.load().then(() => {
-        this.updateViews();
-      });
-    }
+    void Promise.all(
+      [...this.graphs.values()].map(async (g) => await g.load())
+    ).then(() => {
+      // TODO-ml: Dispatch.
+      this.updateViews();
+    });
 
     const exprs: ExpressionLibraryExpression[] = [];
     for (const graphData of this.graphs.values()) {
-      const graph = graphData.data;
-
+      const graph = graphData.syncLoadOrUndefined();
       if (!graph) continue;
 
       for (const [_, expr] of graph.expressions) {
