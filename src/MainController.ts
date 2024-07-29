@@ -234,7 +234,7 @@ export default class DSM extends TransparentPlugins {
   setPluginSetting(
     pluginID: PluginID,
     key: string,
-    value: boolean | string | number | string[],
+    value: boolean | string | number | readonly string[],
     temporary: boolean = false
   ) {
     this.updatePluginSettings(pluginID, { [key]: value }, temporary);

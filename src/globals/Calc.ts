@@ -29,6 +29,7 @@ export type VanillaDispatchedEvent =
         | "redo"
         | "tick-ticker"
         | "keypad/functions"
+        | "new-folder"
         | "commit-geo-objects"
         | "upward-delete-selected-expression"
         | "downward-delete-selected-expression"
@@ -221,6 +222,10 @@ interface CalcPrivate {
     ) => void;
     _hasUnsavedChanges: boolean;
     createItemModel: (modelTemplate: any) => ItemModel;
+    _toplevelNewItemAtSelection: (
+      model: ItemModel,
+      opts: { shouldFocus: boolean }
+    ) => void;
     getPillboxBackgroundColor: () => string;
     isGraphSettingsOpen: () => boolean;
     graphSettings: {
@@ -264,6 +269,7 @@ interface CalcPrivate {
       __itemModelArray: {
         id: string;
         colorLatex: string;
+        title: string;
         folderId: string;
         type: "folder" | "expression";
       }[];
@@ -301,6 +307,7 @@ interface CalcPrivate {
     };
     is3dProduct: () => boolean;
     grapher3d?: Grapher3d;
+    runAfterDispatch: (cb: () => void) => void;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;

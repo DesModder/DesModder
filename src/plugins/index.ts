@@ -17,6 +17,7 @@ import HideErrors from "./hide-errors";
 import Intellisense from "./intellisense";
 import ManageMetadata from "../core-plugins/manage-metadata";
 import Multiline from "./multiline";
+import { MyLibrary } from "./my-library";
 import PerformanceInfo from "./performance-info";
 import PillboxMenus from "../core-plugins/pillbox-menus";
 import PinExpressions from "./pin-expressions";
@@ -40,6 +41,12 @@ interface ConfigItemGeneric {
   key: string;
   // TODO proper type here
   shouldShow?: (current: any) => boolean;
+  /**
+   * If true, this config item won't be shown in the settings menu
+   * this is useful if, for example, the setting in question should be modified
+   * in a different menu
+   */
+  notInSettingsMenu?: boolean;
   // display name and descriptions are managed in a translations file
 }
 
@@ -66,9 +73,15 @@ export interface ConfigItemColorList extends ConfigItemGeneric {
   default: string[];
 }
 
+export interface ConfigItemStringArray extends ConfigItemGeneric {
+  type: "stringArray";
+  default: readonly string[];
+}
+
 export type ConfigItem =
   | ConfigItemBoolean
   | ConfigItemString
+  | ConfigItemStringArray
   | ConfigItemNumber
   | ConfigItemColorList;
 
@@ -141,6 +154,7 @@ export const keyToPlugin = {
   overrideKeystroke: OverrideKeystroke,
   multiline: Multiline,
   intellisense: Intellisense,
+  myLibrary: MyLibrary,
   compactView: CompactView,
   exprActionButtons: ExprActionButtons,
   codeGolf: CodeGolf,
@@ -195,6 +209,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get metadata () { return this.ep["manage-metadata"]; }
   get overrideKeystroke () { return this.ep["override-keystroke"]; }
   get intellisense () { return this.ep["intellisense"]; }
+  get myLibrary () { return this.ep["my-library"]; }
   get compactView () { return this.ep["compact-view"]; }
   get multiline () { return this.ep["multiline"]; }
   get exprActionButtons () { return this.ep["expr-action-buttons"]; }
