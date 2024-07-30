@@ -8,11 +8,9 @@ export default class DebugMode extends PluginController {
     // The displayed indexes are stored in some state somewhere, so
     // update the state first before updating views
     this.cc.updateTheComputedWorld();
-    this.dsm.textMode?.updateDebugMode();
   }
 
   afterDisable() {
     this.cc.updateTheComputedWorld();
-    this.dsm.textMode?.updateDebugMode();
   }
 }
