@@ -37,10 +37,6 @@ text-mode-desc = Attendez-vous au bugs. Documentation temporaire:
 text-mode-toggle = Option Text Mode
 # Missing: error messages
 
-## Debug Mode
-debug-mode-name = Mode débogage
-debug-mode-desc = Montrer les indentifiant d'expression pluto que les indices
-
 ## Find and Replace
 find-and-replace-name = Trouver et remplacer
 find-and-replace-desc = Ajoute un bouton "remplacer tout" dans le menu Ctrl+F pour refactoriser plus facilement les noms de variables/fonctions.

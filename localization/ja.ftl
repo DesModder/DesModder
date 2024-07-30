@@ -89,10 +89,6 @@ text-mode-desc = バグの可能性があります。一時的なドキュメン
 text-mode-toggle = テキストモードの切り替え
 # Missing: error messages
 
-## Debug Mode
-debug-mode-name = デバッグモード
-debug-mode-desc = インデックスの代わりに式IDを表示する
-
 ## Find and Replace
 find-and-replace-name = 検索と置換
 find-and-replace-desc = Ctrl+Fメニューに "replace all" ボタンが追加され、変数名や関数名の一括置換ができるようになりました。

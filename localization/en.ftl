@@ -93,10 +93,6 @@ text-mode-toggle-newlines = Newlines
 text-mode-toggle-newlines-tooltip = Include newlines and indentation when formatting
 text-mode-format = Format
 
-## Debug Mode
-debug-mode-name = Debug Mode
-debug-mode-desc = Show expression IDs instead of indices
-
 ## Find and Replace
 find-and-replace-name = Find and Replace
 find-and-replace-desc = Adds a "replace all" button in the Ctrl+F Menu to let you easily refactor variable/function names.

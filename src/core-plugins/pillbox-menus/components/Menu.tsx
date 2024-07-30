@@ -50,7 +50,6 @@ const categoryPlugins: Record<string, PluginID[]> = {
   ],
   visual: [
     "set-primary-color",
-    "debug-mode",
     "better-evaluation-view",
     "show-tips",
     "hide-errors",

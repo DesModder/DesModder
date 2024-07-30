@@ -95,10 +95,6 @@ text-mode-toggle-newlines = Nueva línea
 text-mode-toggle-newlines-tooltip = Incluir nueva línea y sangrado al aplicar formato
 text-mode-format = Dar Formato
 
-## Debug Mode
-debug-mode-name = Modo de Depuración
-debug-mode-desc = Muestra los IDs de las expresiones en lugar de los índices.
-
 ## Find and Replace
 find-and-replace-name = Buscar y Reemplazar
 find-and-replace-desc = Agrega un botón de "reemplazar todo" en el menú de búsqueda con Ctrl+F y te permite cambiar fácilmente los nombres de variables o funciones.

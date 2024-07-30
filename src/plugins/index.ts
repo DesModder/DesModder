@@ -6,7 +6,6 @@ import BuiltinSettings from "./builtin-settings";
 import CodeGolf from "./code-golf";
 import CompactView from "./compact-view";
 import CustomMathQuillConfig from "./custom-mathquill-config";
-import DebugMode from "./debug-mode";
 import DuplicateHotkey from "./duplicate-hotkey";
 import ExprActionButtons, {
   ActionButton,
@@ -127,7 +126,6 @@ export const keyToPlugin = {
   videoCreator: VideoCreator,
   wakatime: Wakatime,
   findReplace: FindReplace,
-  debugMode: DebugMode,
   showTips: ShowTips,
   customMathQuillConfig: CustomMathQuillConfig,
   rightClickTray: RightClickTray,
@@ -182,7 +180,6 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get videoCreator () { return this.ep["video-creator"]; }
   get wakatime () { return this.ep["wakatime"]; }
   get findReplace () { return this.ep["find-and-replace"]; }
-  get debugMode () { return this.ep["debug-mode"]; }
   get showTips () { return this.ep["show-tips"]; }
   get customMathQuillConfig () { return this.ep["custom-mathquill-config"]; }
   get rightClickTray () { return this.ep["right-click-tray"]; }
