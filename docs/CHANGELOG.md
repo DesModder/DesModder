@@ -1,5 +1,20 @@
 # DesModder Changelog
 
+## 0.13.9
+
+Breaking Changes:
+
+- (Debug Mode) Remove Debug Mode plugin (use ?showIDs instead for now).
+
+Enhancements:
+
+- (Video Creator) Support labels in "fast captures" mode
+
+Bug fixes
+
+- Scroll version number along with rest of settings
+- Fix CSS on toggle switches
+
 ## 0.13.8
 
 Enhancements:
