@@ -301,6 +301,13 @@ interface CalcPrivate {
     };
     is3dProduct: () => boolean;
     grapher3d?: Grapher3d;
+    getGrapher: () => {
+      // Same API as the `Calc.asyncScreenshot` method, but this doesn't
+      // create and wait for a shared calculator, so this is
+      // actually a synchronous screenshot but with the extra
+      // permitted options from the `asyncScreenshot` API.
+      asyncScreenshot: Desmos.Calculator["asyncScreenshot"];
+    };
   };
   _calc: {
     globalHotkeys: TopLevelComponents;
