@@ -1,6 +1,5 @@
 import { Folder, Program, Table } from "../../../../../text-mode-core/TextAST";
 import { analysisStateField } from "../../LanguageServer";
-import { debugModeStateField } from "../editor";
 import { statementsIntersecting } from "../statementIntersection";
 import { EditorState, Extension, RangeSet } from "@codemirror/state";
 import {
@@ -23,12 +22,11 @@ const stmtNumberGutter = gutter({
     const { from, to } = view.viewport;
     const ranges = [];
     let last = -1;
-    const debugMode = view.state.field(debugModeStateField);
     for (const stmt of statementsIntersecting(program, from, to)) {
       const pos = view.lineBlockAt(stmt.pos.from).from;
       if (pos > last) {
         last = pos;
-        const label = debugMode ? stmt.id : stmt.index.toString();
+        const label = stmt.index.toString();
         ranges.push(new NumberMarker(label).range(pos));
       }
     }
@@ -47,13 +45,6 @@ const stmtNumberGutter = gutter({
 
 function maxNumber(state: EditorState) {
   const analysis = state.field(analysisStateField);
-  if (state.field(debugModeStateField)) {
-    const numDigits = Object.keys(analysis.mapIDstmt).reduce(
-      (a, b) => Math.max(a, b.length),
-      1
-    );
-    return "9".repeat(numDigits);
-  }
   function _maxNumber(stmt: Folder | Table | Program): number {
     const children = stmt.type === "Table" ? stmt.columns : stmt.children;
     const last = children[children.length - 1];

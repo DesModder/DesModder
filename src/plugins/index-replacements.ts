@@ -1,7 +1,6 @@
 import glesmos from "#plugins/GLesmos/glesmos.replacements";
 import betterEvaluationView from "#plugins/better-evaluation-view/better-evaluation-view.replacements";
 import codeGolf from "#plugins/code-golf/code-golf.replacements";
-import debugMode from "#plugins/debug-mode/debug-mode.replacements";
 import extraExpressionButtons from "#plugins/../core-plugins/expr-action-buttons/expr-action-buttons.replacements";
 import findReplace from "#plugins/find-replace/find-replace.replacements";
 import hideErrors from "#plugins/hide-errors/hide-errors.replacements";
@@ -26,7 +25,6 @@ export default [
   hideErrors,
   pinExpressions,
   textMode,
-  debugMode,
   extraExpressionButtons,
   showTips,
   rightClickTray,

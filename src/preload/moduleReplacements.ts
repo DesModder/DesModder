@@ -19,7 +19,6 @@ const pluginNames = [
   "video-creator",
   "wakatime",
   "find-and-replace",
-  "debug-mode",
   "show-tips",
   "right-click-tray",
   "duplicate-expression-hotkey",

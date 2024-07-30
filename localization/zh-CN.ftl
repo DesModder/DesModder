@@ -36,10 +36,6 @@ text-mode-desc = 可能会出现故障。临时的使用文档请参见：
 text-mode-toggle = 启用文本模式
 # Missing: error messages
 
-## Debug Mode
-debug-mode-name = 调试模式
-debug-mode-desc = 显示每个表达式的内部ID，而非行号
-
 ## Find and Replace
 find-and-replace-name = 查找与替换
 find-and-replace-desc = 在搜索栏(Ctrl+F)中添加“全部替换”按钮，方便批量重命名函数和变量。
