@@ -75,17 +75,9 @@ builtin-settings-opt-expressions-desc = {""}
 builtin-settings-opt-zoomButtons-name = Afficher le navigateur de zoom
 # Unchanged
 builtin-settings-opt-zoomButtons-desc = {""}
-builtin-settings-opt-expressionsTopbar-name = Afficher le bar en haut du bar d'expression
-# Unchanged
-builtin-settings-opt-expressionsTopbar-desc = {""}
-builtin-settings-opt-border-name = Cadre
-builtin-settings-opt-border-desc = Cadre subtile autour de la calculatrice
 builtin-settings-opt-keypad-name = Afficher le Clavier
 # Unchanged
 builtin-settings-opt-keypad-desc = {""}
-builtin-settings-opt-qwertyKeyboard-name = Clavier QWERTY
-# Unchanged
-builtin-settings-opt-qwertyKeyboard-desc = {""}
 
 ## Duplicate Expression Hotkey
 duplicate-expression-hotkey-name = Touche de raccourci d'expression en double

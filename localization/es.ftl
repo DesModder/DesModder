@@ -134,17 +134,9 @@ builtin-settings-opt-expressions-desc = {""}
 builtin-settings-opt-zoomButtons-name = Muestra los Botones de Zoom
 # Unchanged
 builtin-settings-opt-zoomButtons-desc = {""}
-builtin-settings-opt-expressionsTopbar-name = Muestra la Barra Superior de Expresiones
-# Unchanged
-builtin-settings-opt-expressionsTopbar-desc = {""}
-builtin-settings-opt-border-name = Borde
-builtin-settings-opt-border-desc = Muestra un borde alrededor del calculador.
 builtin-settings-opt-keypad-name = Mostrar el teclado numérico
 # Unchanged
 builtin-settings-opt-keypad-desc = {""}
-builtin-settings-opt-qwertyKeyboard-name = Teclado QWERTY
-# Unchanged
-builtin-settings-opt-qwertyKeyboard-desc = {""}
 
 ## Duplicate Expression Hotkey
 duplicate-expression-hotkey-name = Tecla Rápida para Duplicar Expresión

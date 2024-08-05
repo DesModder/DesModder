@@ -125,14 +125,8 @@ builtin-settings-opt-expressions-name = 表現の表示
 builtin-settings-opt-expressions-desc = {""}
 builtin-settings-opt-zoomButtons-name = ズームボタンの表示
 builtin-settings-opt-zoomButtons-desc = {""}
-builtin-settings-opt-expressionsTopbar-name = Expressionsのトップバーの表示
-builtin-settings-opt-expressionsTopbar-desc = {""}
-builtin-settings-opt-border-name = ボーダー
-builtin-settings-opt-border-desc = 電卓の周りのボーダー
 builtin-settings-opt-keypad-name = keypadの表示
 builtin-settings-opt-keypad-desc = {""}
-builtin-settings-opt-qwertyKeyboard-name = QWERTY Keyboard
-builtin-settings-opt-qwertyKeyboard-desc = {""}
 
 ## Duplicate Expression Hotkey
 duplicate-expression-hotkey-name = 式の複製ホットキー

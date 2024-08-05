@@ -1,4 +1,4 @@
-export const configList = [
+export const settingsConfigList = [
   {
     key: "advancedStyling",
     type: "boolean",
@@ -36,23 +36,8 @@ export const configList = [
     default: true,
   },
   {
-    key: "expressionsTopbar",
-    type: "boolean",
-    default: true,
-  },
-  {
-    key: "border",
-    type: "boolean",
-    default: false,
-  },
-  {
     key: "keypad",
     name: "Show keypad",
-    type: "boolean",
-    default: true,
-  },
-  {
-    key: "qwertyKeyboard",
     type: "boolean",
     default: true,
   },
@@ -60,7 +45,18 @@ export const configList = [
   // instead of the type 'string'
 ] as const;
 
-export interface Config {
+export const specialConfigList = [
+  {
+    key: "showIDs",
+    name: "Show IDs",
+    type: "boolean",
+    default: false,
+  },
+] as const;
+
+export const configList = [...settingsConfigList, ...specialConfigList];
+
+export interface SettingsConfig {
   advancedStyling: boolean;
   graphpaper: boolean;
   authorFeatures: boolean;
@@ -68,8 +64,9 @@ export interface Config {
   trace: boolean;
   expressions: boolean;
   zoomButtons: boolean;
-  expressionsTopbar: boolean;
-  border: boolean;
   keypad: boolean;
-  qwertyKeyboard: boolean;
+}
+
+export interface Config extends SettingsConfig {
+  showIDs: boolean;
 }
