@@ -131,6 +131,8 @@ builtin-settings-opt-zoomButtons-name = Show Zoom Buttons
 builtin-settings-opt-zoomButtons-desc = {""}
 builtin-settings-opt-keypad-name = Show keypad
 builtin-settings-opt-keypad-desc = {""}
+builtin-settings-opt-showIDs-name = Show IDs
+builtin-settings-opt-showIDs-desc = {""}
 
 ## Duplicate Expression Hotkey
 duplicate-expression-hotkey-name = Duplicate Expression Hotkey

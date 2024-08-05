@@ -1,4 +1,4 @@
-export const configList = [
+export const settingsConfigList = [
   {
     key: "advancedStyling",
     type: "boolean",
@@ -45,7 +45,18 @@ export const configList = [
   // instead of the type 'string'
 ] as const;
 
-export interface Config {
+export const specialConfigList = [
+  {
+    key: "showIDs",
+    name: "Show IDs",
+    type: "boolean",
+    default: false,
+  },
+] as const;
+
+export const configList = [...settingsConfigList, ...specialConfigList];
+
+export interface SettingsConfig {
   advancedStyling: boolean;
   graphpaper: boolean;
   authorFeatures: boolean;
@@ -54,4 +65,8 @@ export interface Config {
   expressions: boolean;
   zoomButtons: boolean;
   keypad: boolean;
+}
+
+export interface Config extends SettingsConfig {
+  showIDs: boolean;
 }
