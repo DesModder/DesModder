@@ -36,23 +36,8 @@ export const configList = [
     default: true,
   },
   {
-    key: "expressionsTopbar",
-    type: "boolean",
-    default: true,
-  },
-  {
-    key: "border",
-    type: "boolean",
-    default: false,
-  },
-  {
     key: "keypad",
     name: "Show keypad",
-    type: "boolean",
-    default: true,
-  },
-  {
-    key: "qwertyKeyboard",
     type: "boolean",
     default: true,
   },
@@ -68,8 +53,5 @@ export interface Config {
   trace: boolean;
   expressions: boolean;
   zoomButtons: boolean;
-  expressionsTopbar: boolean;
-  border: boolean;
   keypad: boolean;
-  qwertyKeyboard: boolean;
 }

@@ -72,14 +72,8 @@ builtin-settings-opt-expressions-name = 显示表达式列表
 builtin-settings-opt-expressions-desc = {""}
 builtin-settings-opt-zoomButtons-name = 显示缩放按钮
 builtin-settings-opt-zoomButtons-desc = {""}
-builtin-settings-opt-expressionsTopbar-name = 显示表达式列表顶栏
-builtin-settings-opt-expressionsTopbar-desc = {""}
-builtin-settings-opt-border-name = 计算器边框
-builtin-settings-opt-border-desc = 显示图形计算器外周的细边框
 builtin-settings-opt-keypad-name = 显示虚拟键盘
 builtin-settings-opt-keypad-desc = {""}
-builtin-settings-opt-qwertyKeyboard-name = QWERTY 键盘
-builtin-settings-opt-qwertyKeyboard-desc = {""}
 
 ## Duplicate Expression Hotkey
 duplicate-expression-hotkey-name = 单行复制快捷键

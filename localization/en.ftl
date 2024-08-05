@@ -129,14 +129,8 @@ builtin-settings-opt-expressions-name = Show Expressions
 builtin-settings-opt-expressions-desc = {""}
 builtin-settings-opt-zoomButtons-name = Show Zoom Buttons
 builtin-settings-opt-zoomButtons-desc = {""}
-builtin-settings-opt-expressionsTopbar-name = Show Expressions Top Bar
-builtin-settings-opt-expressionsTopbar-desc = {""}
-builtin-settings-opt-border-name = Border
-builtin-settings-opt-border-desc = Subtle border around the calculator
 builtin-settings-opt-keypad-name = Show keypad
 builtin-settings-opt-keypad-desc = {""}
-builtin-settings-opt-qwertyKeyboard-name = QWERTY Keyboard
-builtin-settings-opt-qwertyKeyboard-desc = {""}
 
 ## Duplicate Expression Hotkey
 duplicate-expression-hotkey-name = Duplicate Expression Hotkey
