@@ -7,6 +7,7 @@ export default class Button extends Component<{
   class?: MaybeClassDict;
   onTap: (e: Event) => void;
   disabled?: boolean;
+  children?: any;
 }> {
   template() {
     return (
@@ -24,7 +25,7 @@ export default class Button extends Component<{
         }
         onTap={(e: Event) => !this.props.disabled?.() && this.props.onTap(e)}
       >
-        {this.children}
+        {this.props.children}
       </span>
     );
   }
