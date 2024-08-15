@@ -96,14 +96,14 @@ export default class SelectCapture extends Component<{
                 {() => (
                   <div class="dsm-vc-action-navigate-container">
                     <Button
-                      color="primary"
+                      color="blue"
                       onTap={() => this.vc.addToActionIndex(-1)}
                       disabled={() => this.vc.isCapturing}
                     >
                       {format("video-creator-prev-action")}
                     </Button>
                     <Button
-                      color="primary"
+                      color="blue"
                       onTap={() => this.vc.addToActionIndex(+1)}
                       disabled={() => this.vc.isCapturing}
                     >
@@ -242,7 +242,7 @@ export default class SelectCapture extends Component<{
             {
               true: () => (
                 <Button
-                  color="primary"
+                  color="blue"
                   class="dsm-vc-capture-frame-button"
                   disabled={() =>
                     this.vc.isCapturing ||

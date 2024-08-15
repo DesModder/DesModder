@@ -152,7 +152,7 @@ export default class MainPopup extends Component<{
               />
               <div class="dsm-vc-export">
                 <Button
-                  color="primary"
+                  color="blue"
                   class="dsm-vc-export-frames-button"
                   onTap={() => {
                     void this.vc.exportFrames();

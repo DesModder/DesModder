@@ -3,7 +3,7 @@ import { Component, jsx } from "#DCGView";
 import { mergeClass, MaybeClassDict } from "#utils/utils.ts";
 
 export default class Button extends Component<{
-  color: "primary" | "red" | "light-gray";
+  color: "blue" | "red" | "light-gray";
   class?: MaybeClassDict;
   onTap: (e: Event) => void;
   disabled?: boolean;
