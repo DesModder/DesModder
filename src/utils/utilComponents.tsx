@@ -4,6 +4,7 @@ import { For } from "#components";
 export class IndexFor<T> extends Component<{
   each: () => T[];
   key: (t: T) => string | number;
+  children?: any;
 }> {
   template() {
     const indexCache = new Map<string | number, number>();
@@ -25,7 +26,7 @@ export class IndexFor<T> extends Component<{
         key={([e]) => this.props.key(e)}
       >
         {([e, index]: [T, () => number]) => {
-          return (this.children as any)[0](e, index);
+          return this.props?.children(e, index);
         }}
       </For>
     );

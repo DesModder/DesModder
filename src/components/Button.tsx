@@ -3,10 +3,11 @@ import { Component, jsx } from "#DCGView";
 import { mergeClass, MaybeClassDict } from "#utils/utils.ts";
 
 export default class Button extends Component<{
-  color: "primary" | "red" | "light-gray";
+  color: "blue" | "red" | "light-gray";
   class?: MaybeClassDict;
   onTap: (e: Event) => void;
   disabled?: boolean;
+  children?: any;
 }> {
   template() {
     return (
@@ -24,7 +25,7 @@ export default class Button extends Component<{
         }
         onTap={(e: Event) => !this.props.disabled?.() && this.props.onTap(e)}
       >
-        {this.children}
+        {this.props.children}
       </span>
     );
   }

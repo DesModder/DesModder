@@ -70,7 +70,7 @@ async function makeNewPage() {
 }
 
 const ENTER_ELM = ".dcg-action-toggle-edit.dcg-icon-btn";
-const EXIT_ELM = ".dcg-action-toggle-edit.dcg-btn-primary";
+const EXIT_ELM = ".dcg-action-toggle-edit.dcg-btn-blue";
 
 export class Driver {
   enabledPluginsStart!: string[];

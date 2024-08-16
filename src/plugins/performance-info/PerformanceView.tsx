@@ -64,7 +64,7 @@ export class PerformanceView extends Component<{
         <div class="dsm-pi-refresh-state-button-container">
           <Tooltip tooltip={format("performance-info-refresh-graph-tooltip")}>
             <Button
-              color="primary"
+              color="blue"
               class="dsm-pi-refresh-state-button"
               onTap={() => {
                 this.props.pi().refreshState();
