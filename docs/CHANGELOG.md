@@ -1,5 +1,22 @@
 # DesModder Changelog
 
+## 0.13.10
+
+Breaking Changes:
+
+- (Builtin Settings) Remove three settings: Border, QWERTY Keyboard, and Show Expressions Top Bar.
+
+New Features:
+
+- (Builtin Settings) Add "Show IDs" toggle.
+
+Bug fixes:
+
+- Fix missing text on all buttons.
+- Fix styling of blue buttons.
+- Fix Intellisense showing an empty list.
+- Fix vertical offset on labels containing both math and text.
+
 ## 0.13.9
 
 Breaking Changes:
