@@ -137,6 +137,9 @@ builtin-settings-opt-zoomButtons-desc = {""}
 builtin-settings-opt-keypad-name = Mostrar el teclado numérico
 # Unchanged
 builtin-settings-opt-keypad-desc = {""}
+builtin-settings-opt-showIDs-name = Mostrar IDs
+# Unchanged
+builtin-settings-opt-showIDs-desc = {""}
 
 ## Duplicate Expression Hotkey
 duplicate-expression-hotkey-name = Tecla Rápida para Duplicar Expresión
