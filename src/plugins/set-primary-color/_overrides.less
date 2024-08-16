@@ -1,8 +1,5 @@
 // MACHINE-GENERATED FILE: Do not edit, except by clean-css.mjs.
 .dsm-set-primary-color.dcg-sliding-interior {
-  .dcg-geo-token-view {
-    border: 2px solid rgb(var(--dsm-primary-color-rgb));
-  }
   .dcg-geo-token-view:not(.dcg-static-token).dcg-focus-visible {
     box-shadow: 0 0 0 3px rgba(var(--dsm-primary-color-rgb), 0.502) !important;
   }
@@ -26,17 +23,17 @@
   .dcg-btn-blue.dcg-focus-visible {
     background: rgb(var(--dsm-primary-dark-3-rgb));
   }
-  .dcg-btn-secondary {
+  .dcg-btn-blue-outline {
     border: 1px solid rgb(var(--dsm-primary-color-rgb));
     color: rgb(var(--dsm-primary-color-rgb));
   }
-  .dcg-btn-secondary.dcg-hovered,
-  .dcg-btn-secondary.dcg-focus-visible {
+  .dcg-btn-blue-outline.dcg-hovered,
+  .dcg-btn-blue-outline.dcg-focus-visible {
     border-color: rgb(var(--dsm-primary-dark-3-rgb));
     box-shadow: 0 0 0 1px rgb(var(--dsm-primary-dark-3-rgb));
     color: rgb(var(--dsm-primary-dark-4-rgb));
   }
-  .dcg-btn-secondary.dcg-depressed {
+  .dcg-btn-blue-outline.dcg-depressed {
     color: rgb(var(--dsm-primary-dark-5-rgb));
     background: rgba(var(--dsm-primary-color-rgb), 0.102);
   }
@@ -73,10 +70,6 @@
   textarea.dcg-shared-input-blue-outline:focus {
     border: 1px solid rgb(var(--dsm-primary-color-rgb));
     box-shadow: 0 0 0 1px rgb(var(--dsm-primary-color-rgb));
-  }
-  .dcg-popover .dcg-language-picker .dcg-language-header {
-    color: rgb(var(--dsm-primary-color-rgb));
-    border-bottom: 2px solid rgb(var(--dsm-primary-color-rgb));
   }
   .dcg-popover .dcg-popover-title {
     border-bottom: 2px solid rgb(var(--dsm-primary-color-rgb));
@@ -123,12 +116,24 @@
     .dcg-math-field.dcg-focus,
   .dcg-expressions-options-menu
     .dcg-iconed-mathquill-row
+    .dcg-math-field.dcg-focus-visible,
+  .dcg-expressions-options-menu
+    .dcg-iconed-mathquill-row
     .dcg-math-field.dcg-invalid,
   .dcg-table-column-menu .dcg-iconed-mathquill-row .dcg-math-field.dcg-focus,
+  .dcg-table-column-menu
+    .dcg-iconed-mathquill-row
+    .dcg-math-field.dcg-focus-visible,
   .dcg-table-column-menu .dcg-iconed-mathquill-row .dcg-math-field.dcg-invalid,
   .dcg-image-options-menu .dcg-iconed-mathquill-row .dcg-math-field.dcg-focus,
+  .dcg-image-options-menu
+    .dcg-iconed-mathquill-row
+    .dcg-math-field.dcg-focus-visible,
   .dcg-image-options-menu .dcg-iconed-mathquill-row .dcg-math-field.dcg-invalid,
   .dcg-generic-options-menu .dcg-iconed-mathquill-row .dcg-math-field.dcg-focus,
+  .dcg-generic-options-menu
+    .dcg-iconed-mathquill-row
+    .dcg-math-field.dcg-focus-visible,
   .dcg-generic-options-menu
     .dcg-iconed-mathquill-row
     .dcg-math-field.dcg-invalid {
@@ -173,10 +178,12 @@
     border: 2px solid rgb(var(--dsm-primary-color-rgb));
   }
   .dcg-inline-math-input-view .dcg-math-field.dcg-focus,
+  .dcg-inline-math-input-view .dcg-math-field.dcg-focus-visible,
   .dcg-inline-math-input-view .dcg-math-field.dcg-invalid {
     border-bottom: 2px solid rgb(var(--dsm-primary-color-rgb));
   }
   .dcg-inline-math-input-view .dcg-mathquill-braille.dcg-focus,
+  .dcg-inline-math-input-view .dcg-mathquill-braille.dcg-focus-visible,
   .dcg-inline-math-input-view .dcg-mathquill-braille.dcg-invalid {
     border-bottom: 2px solid rgb(var(--dsm-primary-color-rgb));
   }
@@ -232,11 +239,24 @@
     .dcg-math-field.dcg-focus,
   .dcg-settings-view-3d-container
     .dcg-inline-math-input-view
+    .dcg-math-field.dcg-focus-visible,
+  .dcg-settings-view-3d-container
+    .dcg-inline-math-input-view
     .dcg-math-field.dcg-invalid {
     border-bottom: 2px solid rgb(var(--dsm-primary-color-rgb));
   }
   .dcg-clickable-section .dcg-clickable-menu-row .dcg-math-field.dcg-focus,
-  .dcg-clickable-section .dcg-clickable-menu-row .dcg-math-field.dcg-invalid {
+  .dcg-clickable-section
+    .dcg-clickable-menu-row
+    .dcg-math-field.dcg-focus-visible,
+  .dcg-clickable-section .dcg-clickable-menu-row .dcg-math-field.dcg-invalid,
+  .dcg-clickable-section .dcg-clickable-menu-row .dcg-braille-input.dcg-focus,
+  .dcg-clickable-section
+    .dcg-clickable-menu-row
+    .dcg-braille-input.dcg-focus-visible,
+  .dcg-clickable-section
+    .dcg-clickable-menu-row
+    .dcg-braille-input.dcg-invalid {
     border-bottom: 2px solid rgb(var(--dsm-primary-color-rgb));
   }
   .dcg-label-orientation-view .dcg-orientation-option.dcg-selected {
@@ -264,6 +284,10 @@
     .dcg-clickable-image-controls
     .dcg-clickable-menu-row
     .dcg-math-field.dcg-focus,
+  .dcg-image-options-menu
+    .dcg-clickable-image-controls
+    .dcg-clickable-menu-row
+    .dcg-math-field.dcg-focus-visible,
   .dcg-image-options-menu
     .dcg-clickable-image-controls
     .dcg-clickable-menu-row
@@ -306,7 +330,23 @@
   .dcg-ticker
     .dcg-ticker-settings-internal
     .dcg-action-definition
-    .dcg-math-field.dcg-invalid {
+    .dcg-math-field.dcg-focus-visible,
+  .dcg-ticker
+    .dcg-ticker-settings-internal
+    .dcg-action-definition
+    .dcg-math-field.dcg-invalid,
+  .dcg-ticker
+    .dcg-ticker-settings-internal
+    .dcg-action-definition
+    .dcg-braille-input.dcg-focus,
+  .dcg-ticker
+    .dcg-ticker-settings-internal
+    .dcg-action-definition
+    .dcg-braille-input.dcg-focus-visible,
+  .dcg-ticker
+    .dcg-ticker-settings-internal
+    .dcg-action-definition
+    .dcg-braille-input.dcg-invalid {
     border-bottom: 2px solid rgb(var(--dsm-primary-color-rgb));
   }
   .dcg-ticker
@@ -316,7 +356,23 @@
   .dcg-ticker
     .dcg-ticker-settings-internal
     .dcg-action-frequency
-    .dcg-math-field.dcg-invalid {
+    .dcg-math-field.dcg-focus-visible,
+  .dcg-ticker
+    .dcg-ticker-settings-internal
+    .dcg-action-frequency
+    .dcg-math-field.dcg-invalid,
+  .dcg-ticker
+    .dcg-ticker-settings-internal
+    .dcg-action-frequency
+    .dcg-braille-input.dcg-focus,
+  .dcg-ticker
+    .dcg-ticker-settings-internal
+    .dcg-action-frequency
+    .dcg-braille-input.dcg-focus-visible,
+  .dcg-ticker
+    .dcg-ticker-settings-internal
+    .dcg-action-frequency
+    .dcg-braille-input.dcg-invalid {
     border-bottom: 2px solid rgb(var(--dsm-primary-color-rgb));
   }
   .dcg-custom-toolbar-settings-modal
@@ -356,6 +412,15 @@
   .dcg-quest__step-status-container .dcg-satisfied {
     border-color: rgb(var(--dsm-primary-color-rgb));
   }
+  .dcg-dropdown-popover .dcg-popover-title,
+  .dcg-dropdown-popover__title {
+    border-bottom: 2px solid rgb(var(--dsm-primary-color-rgb));
+    color: rgb(var(--dsm-primary-color-rgb));
+  }
+  .dcg-help-menu-title {
+    border-bottom: 2px solid rgb(var(--dsm-primary-color-rgb));
+    color: rgb(var(--dsm-primary-color-rgb));
+  }
   .dcg-suggestions
     .dcg-feedback-action-container
     .dcg-template-processing
@@ -371,6 +436,14 @@
   }
   .dcg-shared-options-dropdown .dropdown-explanations .explanation a {
     color: rgb(var(--dsm-primary-color-rgb));
+  }
+  .dcg-shared-options-dropdown
+    .dropdown-choice:not(.dcg-disabled).dcg-focus-visible {
+    box-shadow: 0 0 0 2px rgba(var(--dsm-primary-color-rgb), 0.502) inset;
+  }
+  .dcg-language-picker .dcg-language-header {
+    color: rgb(var(--dsm-primary-color-rgb));
+    border-bottom: 2px solid rgb(var(--dsm-primary-color-rgb));
   }
   .dcg-share-container .dcg-share-actions .dcg-print-link i,
   .dcg-share-container .dcg-share-actions .dcg-export-image-link i,
@@ -515,11 +588,8 @@
     border: 2px solid rgb(var(--dsm-primary-color-rgb));
     background: rgba(var(--dsm-primary-color-rgb), 0.102);
   }
-  .dcg-dropdown-container .dcg-dropdown-input.dcg-focus-visible {
+  .dcg-select-dropdown-container .dcg-dropdown-input.dcg-focus-visible {
     border-color: rgb(var(--dsm-primary-color-rgb));
-  }
-  .dcg-dropdown-container .dcg-dropdown-option.dcg-focus-visible {
-    box-shadow: 0 0 0 2px rgba(var(--dsm-primary-color-rgb), 0.502) inset;
   }
   .dcg-loading-container .dcg-cancel-while-loading {
     color: rgba(var(--dsm-primary-color-rgb), 0.502);

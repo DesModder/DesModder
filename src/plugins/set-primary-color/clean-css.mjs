@@ -5,7 +5,9 @@
  * overrides.less, replacing primary-based colors with var(--variable) and
  * keeping only those rules
  *
- * Usage:
+ * First copy `calculator_desktop-[hash].css` into `src/plugins/set-primary-color/raw.css`
+ *
+ * Usage once `raw.css` is obtained:
  *   cd src/plugins/set-primary-color/
  *   node clean-css.mjs > _overrides.less && npx prettier --write _overrides.less
  */
