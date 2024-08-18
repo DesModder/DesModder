@@ -33,7 +33,8 @@ export type VanillaDispatchedEvent =
         | "upward-delete-selected-expression"
         | "downward-delete-selected-expression"
         | "update-expression-search-str"
-        | "ui/container-resized";
+        | "ui/container-resized"
+        | "new-expression";
     }
   | {
       type: "keypad/set-minimized";
@@ -50,6 +51,11 @@ export type VanillaDispatchedEvent =
         | "delete-item-and-animate-out"
         | "move-focus-to-item";
       id: string;
+    }
+  | {
+      type: "finish-deleting-item-after-animation";
+      id: string;
+      setFocusAfterDelete: boolean;
     }
   | {
       /** This is somewhat a super type of all the `DispatchedEvent`s. It's here

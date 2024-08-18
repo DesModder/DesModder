@@ -10,14 +10,22 @@ import {
   rectanglePoints,
 } from "./latex/rectangle";
 import { rotatedPointLatex } from "./latex";
+import { DispatchedEvent } from "#globals";
+import { roundToDecimalPlaces } from "#utils/utils.js";
 
 export default class ShapeGenerator extends PluginController<{
+  showSliders: boolean;
   simplifyEquations: boolean;
   numericalPrecision: number;
 }> {
   static id = "shape-generator" as const;
   static enabledByDefault = false;
   static config: readonly ConfigItem[] = [
+    {
+      type: "boolean",
+      key: "showSliders",
+      default: false,
+    },
     {
       type: "boolean",
       key: "simplifyEquations",
@@ -38,9 +46,12 @@ export default class ShapeGenerator extends PluginController<{
   private readonly _addExpressionBtnClickHandler: typeof this.addExpressionBtnClickHandler =
     this.addExpressionBtnClickHandler.bind(this);
 
+  private _onDispatchHandler = "";
+
   ce = new ComputeEngine();
 
   afterEnable() {
+    // TODO: use dispatcher type toggle-add-expression
     const addExpressionBtn = getAddExpressionButton();
     addExpressionBtn.addEventListener(
       "click",
@@ -67,6 +78,11 @@ export default class ShapeGenerator extends PluginController<{
         display: none !important;
       }
 
+      /* Hide sliders if the setting is disabled */
+      [data-shape-generator-show-sliders="false"] .dcg-expressionitem[expr-id^="shape-generator-"]:has(.dcg-slider) {
+        display: none !important;
+      }
+
       .shape-generator-ok-btn {
         margin-top: 36px;
         margin-left: 1px;
@@ -74,6 +90,12 @@ export default class ShapeGenerator extends PluginController<{
     `;
     style.id = "shape-generator-styles";
     document.head.appendChild(style);
+
+    this._onDispatchHandler = this.calc.controller.dispatcher.register(
+      this.onDispatch.bind(this)
+    );
+
+    this.afterConfigChange();
   }
 
   afterDisable() {
@@ -87,10 +109,20 @@ export default class ShapeGenerator extends PluginController<{
     // Remove stylesheet
     document.getElementById("shape-generator-styles")!.remove();
 
+    // Remove global dataset attributes
     delete document.body.dataset.shapeGeneratorIsEditingShape;
+    delete document.body.dataset.shapeGeneratorShowSliders;
+
+    // Remove event listeners
+    this.calc.controller.dispatcher.unregister(this._onDispatchHandler);
 
     // Remove generated expressions
     this.cleanupExpressions();
+  }
+
+  afterConfigChange() {
+    document.body.dataset.shapeGeneratorShowSliders =
+      this.settings.showSliders.toString();
   }
 
   cleanupExpressions() {
@@ -176,7 +208,9 @@ export default class ShapeGenerator extends PluginController<{
             angleHelper.unobserve("numericValue");
 
             // Create new empty expression to add the ellipse to
-            firstDropdownItem!.dispatchEvent(new CustomEvent("dcg-tap"));
+            this.calc.controller.dispatch({
+              type: "new-expression",
+            });
 
             // Generate ellipse LaTeX
             let latex = ellipseLatex(x, y, rx, ry, angle);
@@ -238,7 +272,9 @@ export default class ShapeGenerator extends PluginController<{
             angleHelper.unobserve("numericValue");
 
             // Create new empty expression to add the rectangle to
-            firstDropdownItem!.dispatchEvent(new CustomEvent("dcg-tap"));
+            this.calc.controller.dispatch({
+              type: "new-expression",
+            });
 
             // Generate rectangle LaTeX
             let latex: string;
@@ -249,9 +285,11 @@ export default class ShapeGenerator extends PluginController<{
                     .parse(rotatedPointLatex(px, py, x, y, angle))
                     .evaluate().json as ["Tuple", number, number];
 
-                  return `\\left(${tuple[1].toFixed(
+                  return `\\left(${roundToDecimalPlaces(
+                    tuple[1],
                     this.settings.numericalPrecision
-                  )},${tuple[2].toFixed(
+                  )},${roundToDecimalPlaces(
+                    tuple[2],
                     this.settings.numericalPrecision
                   )}\\right)`;
                 }
@@ -332,6 +370,39 @@ export default class ShapeGenerator extends PluginController<{
         });
       }
     }
+  }
+
+  onDispatch(e: DispatchedEvent) {
+    if (e.type !== "finish-deleting-item-after-animation") {
+      return;
+    }
+
+    if (!e.id.startsWith("shape-generator-")) {
+      return;
+    }
+
+    if (!this.isEditingShape) {
+      throw new Error(
+        "Shape generator expression deleted while not editing shape. This should not happen."
+      );
+    }
+
+    const expressions = this.calc.getExpressions();
+
+    for (const expression of expressions) {
+      if (
+        expression.id &&
+        expression.id !== e.id &&
+        expression.id.startsWith("shape-generator-")
+      ) {
+        this.calc.controller._finishDeletingItemAfterAnimation(
+          expression.id,
+          e.setFocusAfterDelete
+        );
+      }
+    }
+
+    this.isEditingShape = false;
   }
 }
 
