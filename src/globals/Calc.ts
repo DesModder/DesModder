@@ -34,7 +34,8 @@ export type VanillaDispatchedEvent =
         | "downward-delete-selected-expression"
         | "update-expression-search-str"
         | "ui/container-resized"
-        | "new-expression";
+        | "new-expression"
+        | "toggle-add-expression";
     }
   | {
       type: "keypad/set-minimized";

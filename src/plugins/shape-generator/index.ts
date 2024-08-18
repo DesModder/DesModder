@@ -43,21 +43,11 @@ export default class ShapeGenerator extends PluginController<{
 
   private _isEditingShape = false;
 
-  private readonly _addExpressionBtnClickHandler: typeof this.addExpressionBtnClickHandler =
-    this.addExpressionBtnClickHandler.bind(this);
-
   private _onDispatchHandler = "";
 
   ce = new ComputeEngine();
 
   afterEnable() {
-    // TODO: use dispatcher type toggle-add-expression
-    const addExpressionBtn = getAddExpressionButton();
-    addExpressionBtn.addEventListener(
-      "click",
-      this._addExpressionBtnClickHandler
-    );
-
     // Construct stylesheet
     const style = document.createElement("style");
     style.textContent = `
@@ -99,13 +89,6 @@ export default class ShapeGenerator extends PluginController<{
   }
 
   afterDisable() {
-    // Prevent the Add ellipse button from being added to the Add expression dropdown
-    const addExpressionBtn = getAddExpressionButton();
-    addExpressionBtn.removeEventListener(
-      "click",
-      this._addExpressionBtnClickHandler
-    );
-
     // Remove stylesheet
     document.getElementById("shape-generator-styles")!.remove();
 
@@ -140,7 +123,7 @@ export default class ShapeGenerator extends PluginController<{
     document.body.dataset.shapeGeneratorIsEditingShape = value.toString();
   }
 
-  addExpressionBtnClickHandler() {
+  addExpressionMenuHandler() {
     const addExpressionBtn = getAddExpressionButton();
 
     // Only add to popup if it's being opened
@@ -373,6 +356,11 @@ export default class ShapeGenerator extends PluginController<{
   }
 
   onDispatch(e: DispatchedEvent) {
+    if (e.type === "toggle-add-expression") {
+      this.addExpressionMenuHandler();
+      return;
+    }
+
     if (e.type !== "finish-deleting-item-after-animation") {
       return;
     }
