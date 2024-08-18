@@ -354,7 +354,3 @@ shape-generator-name = Shape Generator
 shape-generator-desc = Tool for quickly generating equations for different shapes.
 shape-generator-opt-showSliders-name = Show sliders
 shape-generator-opt-showSliders-desc = Shows the slider expressions for the variables used for shape sizes, positions and directions.
-shape-generator-opt-simplifyEquations-name = Simplify equations
-shape-generator-opt-simplifyEquations-desc = Uses the CortexJS Compute Engine to simplify generated equations before inserting them into the graph.
-shape-generator-opt-numericalPrecision-name = Numerical precision
-shape-generator-opt-numericalPrecision-desc = How many decimal places to include in generated equations.

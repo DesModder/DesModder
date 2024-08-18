@@ -84,8 +84,3 @@ export function isDescendant(elem: HTMLElement | null, target: HTMLElement) {
   }
   return false;
 }
-
-export function roundToDecimalPlaces(n: number, d: number) {
-  const p = Math.pow(10, d);
-  return Math.round((n + Number.EPSILON) * p) / p;
-}

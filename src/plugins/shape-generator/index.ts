@@ -1,22 +1,14 @@
 import { PluginController } from "#plugins/PluginController.js";
-import { ComputeEngine } from "@cortex-js/compute-engine";
-import { computeEngineLatexToDesmosLatex } from "compute-engine-to-desmos-latex";
 import { ConfigItem } from "..";
 import { ellipseGeneratorExpressions, ellipseLatex } from "./latex/ellipse";
 import {
   rectangleGeneratorExpressions,
   rectangleLatex,
-  rectangleLatexGivenPointsLatex,
-  rectanglePoints,
 } from "./latex/rectangle";
-import { rotatedPointLatex } from "./latex";
 import { DispatchedEvent } from "#globals";
-import { roundToDecimalPlaces } from "#utils/utils.js";
 
 export default class ShapeGenerator extends PluginController<{
   showSliders: boolean;
-  simplifyEquations: boolean;
-  numericalPrecision: number;
 }> {
   static id = "shape-generator" as const;
   static enabledByDefault = false;
@@ -25,19 +17,6 @@ export default class ShapeGenerator extends PluginController<{
       type: "boolean",
       key: "showSliders",
       default: false,
-    },
-    {
-      type: "boolean",
-      key: "simplifyEquations",
-      default: true,
-    },
-    {
-      type: "number",
-      key: "numericalPrecision",
-      default: 3,
-      min: 0,
-      max: 20,
-      step: 1,
     },
   ];
 
@@ -96,14 +75,7 @@ export default class ShapeGenerator extends PluginController<{
           });
 
           // Generate ellipse LaTeX
-          let latex = ellipseLatex(x, y, rx, ry, angle);
-
-          // Simplify the equation if needed
-          if (this.settings.simplifyEquations) {
-            latex = computeEngineLatexToDesmosLatex(
-              this.ce.parse(latex).evaluate().latex
-            );
-          }
+          const latex = ellipseLatex(x, y, rx, ry, angle);
 
           // Set the expression
           this.calc.setExpression({
@@ -160,28 +132,7 @@ export default class ShapeGenerator extends PluginController<{
           });
 
           // Generate rectangle LaTeX
-          let latex: string;
-          if (this.settings.simplifyEquations) {
-            const points = rectanglePoints(w, h, x, y, angle).map(
-              ([px, py]) => {
-                const tuple = this.ce
-                  .parse(rotatedPointLatex(px, py, x, y, angle))
-                  .evaluate().json as ["Tuple", number, number];
-
-                return `\\left(${roundToDecimalPlaces(
-                  tuple[1],
-                  this.settings.numericalPrecision
-                )},${roundToDecimalPlaces(
-                  tuple[2],
-                  this.settings.numericalPrecision
-                )}\\right)`;
-              }
-            );
-
-            latex = rectangleLatexGivenPointsLatex(points.join(","));
-          } else {
-            latex = rectangleLatex(w, h, x, y, angle);
-          }
+          const latex = rectangleLatex(w, h, x, y, angle);
 
           // Set the expression
           this.calc.setExpression({
@@ -197,8 +148,6 @@ export default class ShapeGenerator extends PluginController<{
   ];
 
   private expressionsMutationObserver: MutationObserver | null = null;
-
-  ce = new ComputeEngine();
 
   afterEnable() {
     // Construct stylesheet
