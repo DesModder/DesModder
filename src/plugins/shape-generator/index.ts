@@ -7,6 +7,14 @@ import {
 } from "./latex/rectangle";
 import { DispatchedEvent } from "#globals";
 
+interface NewDropdownItem {
+  ariaLabel: string;
+  label: string;
+  okBtnExprId: string;
+  handler: () => void;
+  okBtnHandler: (expr: Desmos.ExpressionState) => void;
+}
+
 export default class ShapeGenerator extends PluginController<{
   showSliders: boolean;
 }> {
@@ -24,13 +32,7 @@ export default class ShapeGenerator extends PluginController<{
 
   private _onDispatchHandler = "";
 
-  private readonly newDropdownItems: {
-    ariaLabel: string;
-    label: string;
-    okBtnExprId: string;
-    handler: () => void;
-    okBtnHandler: () => void;
-  }[] = [
+  private readonly newDropdownItems: NewDropdownItem[] = [
     {
       ariaLabel: "Add ellipse",
       label: "ellipse",
@@ -38,7 +40,7 @@ export default class ShapeGenerator extends PluginController<{
       handler: () => {
         this.calc.setExpressions(ellipseGeneratorExpressions);
       },
-      okBtnHandler: () => {
+      okBtnHandler: (expr) => {
         const xHelper = this.calc.HelperExpression({
           latex: "x_{ellipseGenerator}",
         });
@@ -79,7 +81,9 @@ export default class ShapeGenerator extends PluginController<{
 
           // Set the expression
           this.calc.setExpression({
+            ...expr,
             id: this.calc.selectedExpressionId,
+            type: "expression",
             latex,
           });
 
@@ -95,7 +99,7 @@ export default class ShapeGenerator extends PluginController<{
       handler: () => {
         this.calc.setExpressions(rectangleGeneratorExpressions);
       },
-      okBtnHandler: () => {
+      okBtnHandler: (expr) => {
         const xHelper = this.calc.HelperExpression({
           latex: "x_{rectangleGenerator}",
         });
@@ -136,7 +140,9 @@ export default class ShapeGenerator extends PluginController<{
 
           // Set the expression
           this.calc.setExpression({
+            ...expr,
             id: this.calc.selectedExpressionId,
+            type: "expression",
             latex,
           });
 
@@ -230,7 +236,19 @@ export default class ShapeGenerator extends PluginController<{
           okButton.id = `shape-generator-${newDropdownItem.label}-ok-btn`;
           okButton.classList.add("shape-generator-ok-btn");
           okButton.textContent = "OK";
-          okButton.addEventListener("click", newDropdownItem.okBtnHandler);
+          okButton.addEventListener("click", () => {
+            const expr = this.calc
+              .getExpressions()
+              .find((expr) => expr.id === newDropdownItem.okBtnExprId);
+
+            if (!expr) {
+              throw new Error(
+                "Could not find the expression for the OK button"
+              );
+            }
+
+            newDropdownItem.okBtnHandler(expr);
+          });
 
           expressionTab.appendChild(okButton);
         }
