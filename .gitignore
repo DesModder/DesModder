@@ -3,3 +3,6 @@ dist
 dist-ts
 *.zip
 coverage
+
+# macOS Finder metadata files
+.DS_Store
