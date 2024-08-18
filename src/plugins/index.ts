@@ -28,7 +28,7 @@ import VideoCreator from "./video-creator";
 import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
 import BetterNavigation from "./better-navigation";
-import OverrideKeystroke from "./override-keystroke";
+import OverrideKeystroke from "../core-plugins/override-keystroke";
 import ShapeGenerator from "./shape-generator";
 
 interface ConfigItemGeneric {
