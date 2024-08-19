@@ -31,8 +31,6 @@ export default class ShapeGenerator extends PluginController<{
 
   private _isEditingShape = false;
 
-  private _onDispatchHandler = "";
-
   private readonly newDropdownItems: NewDropdownItem[] = [
     {
       ariaLabel: "Add ellipse",
@@ -158,10 +156,6 @@ export default class ShapeGenerator extends PluginController<{
   private expressionsMutationObserver: MutationObserver | null = null;
 
   afterEnable() {
-    this._onDispatchHandler = this.calc.controller.dispatcher.register(
-      this.onDispatch.bind(this)
-    );
-
     // Listen for expression to add the OK button to
     this.expressionsMutationObserver = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
@@ -242,7 +236,6 @@ export default class ShapeGenerator extends PluginController<{
     delete document.body.dataset.shapeGeneratorShowSliders;
 
     // Remove event listeners
-    this.calc.controller.dispatcher.unregister(this._onDispatchHandler);
     this.expressionsMutationObserver?.disconnect();
     this.expressionsMutationObserver = null;
 
@@ -321,9 +314,12 @@ export default class ShapeGenerator extends PluginController<{
     }
   }
 
-  onDispatch(e: DispatchedEvent) {
+  handleDispatchedAction(e: DispatchedEvent) {
     if (e.type === "toggle-add-expression") {
-      this.addExpressionMenuHandler();
+      // Wait for addExpressionBtn.ariaExpanded to be updated
+      queueMicrotask(() => {
+        this.addExpressionMenuHandler();
+      });
       return;
     }
 
