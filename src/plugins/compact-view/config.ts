@@ -12,6 +12,11 @@ export const configList = [
   },
   {
     type: "boolean",
+    key: "hideFolderToggles",
+    default: true,
+  },
+  {
+    type: "boolean",
     key: "noSeparatingLines",
     default: false,
   },
@@ -70,4 +75,5 @@ export interface Config {
   highlightAlternatingLines: boolean;
   compactFactor: number;
   hideEvaluations: boolean;
+  hideFolderToggles: boolean;
 }
