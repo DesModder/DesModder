@@ -57,6 +57,7 @@ export default class ShapeGenerator extends PluginController<{
           latex: "A_{ellipseGenerator}",
         });
 
+        // Wait for all helpers to have a numeric value
         angleHelper.observe("numericValue", () => {
           const x = xHelper.numericValue;
           const y = yHelper.numericValue;
