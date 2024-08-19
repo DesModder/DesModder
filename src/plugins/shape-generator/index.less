@@ -1,7 +1,5 @@
 /* Disable the save button while editing a shape */
-[data-shape-generator-is-editing-shape="true"]
-  .save-btn-container
-  .dcg-action-save {
+.dsm-shape-generator-is-editing-shape .save-btn-container .dcg-action-save {
   opacity: 0.5;
   pointer-events: none;
 }
@@ -20,7 +18,7 @@
 }
 
 /* Hide sliders if the setting is disabled */
-[data-shape-generator-show-sliders="false"]
+.dsm-shape-generator-hide-sliders
   .dcg-expressionitem[expr-id^="shape-generator-"]:has(.dcg-slider) {
   display: none !important;
 }

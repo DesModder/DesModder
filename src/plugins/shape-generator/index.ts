@@ -231,9 +231,11 @@ export default class ShapeGenerator extends PluginController<{
   }
 
   afterDisable() {
-    // Remove global dataset attributes
-    delete document.body.dataset.shapeGeneratorIsEditingShape;
-    delete document.body.dataset.shapeGeneratorShowSliders;
+    // Remove global classes
+    document.body.classList.remove(
+      "dsm-shape-generator-is-editing-shape",
+      "dsm-shape-generator-hide-sliders"
+    );
 
     // Remove event listeners
     this.expressionsMutationObserver?.disconnect();
@@ -244,8 +246,10 @@ export default class ShapeGenerator extends PluginController<{
   }
 
   afterConfigChange() {
-    document.body.dataset.shapeGeneratorShowSliders =
-      this.settings.showSliders.toString();
+    document.body.classList.toggle(
+      "dsm-shape-generator-hide-sliders",
+      !this.settings.showSliders
+    );
   }
 
   cleanupExpressions() {
@@ -260,7 +264,10 @@ export default class ShapeGenerator extends PluginController<{
   set isEditingShape(value) {
     this._isEditingShape = value;
 
-    document.body.dataset.shapeGeneratorIsEditingShape = value.toString();
+    document.body.classList.toggle(
+      "dsm-shape-generator-is-editing-shape",
+      value
+    );
   }
 
   addExpressionMenuHandler() {
