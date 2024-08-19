@@ -82,6 +82,7 @@ export const rectangleGeneratorExpressions = [
     latex: "A_{rectangleGenerator}=0",
     sliderBounds: { min: 0, max: "\\tau", step: "" },
   },
+
   {
     id: "shape-generator-rectangle-position-point",
     type: "expression",

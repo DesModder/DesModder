@@ -64,6 +64,8 @@ export const ellipseGeneratorExpressions = [
     sliderBounds: { min: 0, max: "\\tau", step: "" },
     color: "",
   },
+
+  // Ensure that the expressions that will be hidden are at the bottom of the list
   {
     id: "shape-generator-ellipse-position-point",
     type: "expression",
@@ -117,5 +119,3 @@ export const ellipseGeneratorExpressions = [
     color: "",
   },
 ] satisfies Desmos.ExpressionState[];
-
-// Ensure that the expressions that will be hidden are at the bottom of the list
