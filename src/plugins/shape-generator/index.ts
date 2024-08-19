@@ -6,6 +6,7 @@ import {
   rectangleLatex,
 } from "./latex/rectangle";
 import { DispatchedEvent } from "#globals";
+import "./index.less";
 
 interface NewDropdownItem {
   ariaLabel: string;
@@ -157,39 +158,6 @@ export default class ShapeGenerator extends PluginController<{
   private expressionsMutationObserver: MutationObserver | null = null;
 
   afterEnable() {
-    // Construct stylesheet
-    const style = document.createElement("style");
-    style.textContent = `
-      /* Disable the save button while editing a shape */
-      [data-shape-generator-is-editing-shape="true"] .save-btn-container .dcg-action-save {
-        opacity: 0.5;
-        pointer-events: none;
-      }
-
-      /* Disable pointer events on disabled Add expression dropdown items */
-      .dcg-add-expression-dropdown div.dcg-popover-interior .dcg-new-item.dcg-disabled {
-        pointer-events: none;
-      }
-
-      /* Hide shape points (controls) and helper functions expressions */
-      .dcg-expressionitem[expr-id^="shape-generator-"][expr-id$="-point"],
-      .dcg-expressionitem[expr-id^="shape-generator-"][expr-id*="-helper"] {
-        display: none !important;
-      }
-
-      /* Hide sliders if the setting is disabled */
-      [data-shape-generator-show-sliders="false"] .dcg-expressionitem[expr-id^="shape-generator-"]:has(.dcg-slider) {
-        display: none !important;
-      }
-
-      .shape-generator-ok-btn {
-        margin-top: 36px;
-        margin-left: 1px;
-      }
-    `;
-    style.id = "shape-generator-styles";
-    document.head.appendChild(style);
-
     this._onDispatchHandler = this.calc.controller.dispatcher.register(
       this.onDispatch.bind(this)
     );
@@ -269,9 +237,6 @@ export default class ShapeGenerator extends PluginController<{
   }
 
   afterDisable() {
-    // Remove stylesheet
-    document.getElementById("shape-generator-styles")!.remove();
-
     // Remove global dataset attributes
     delete document.body.dataset.shapeGeneratorIsEditingShape;
     delete document.body.dataset.shapeGeneratorShowSliders;
