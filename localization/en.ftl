@@ -19,7 +19,7 @@ category-integrations-name = Integrations
 
 ## GLesmos
 GLesmos-name = GLesmos
-GLesmos-desc = Render implicits on the GPU. Disabled on tab reload. Can cause the UI to slow down or freeze in rare cases ; reload the page if you have issues.
+GLesmos-desc = Render implicits on the GPU. Disabled on tab reload. Can cause the UI to slow down or freeze in rare cases; reload the page if you have issues.
 GLesmos-label-toggle-glesmos = Render with GLesmos
 GLesmos-confirm-lines = Confirm lines
 GLesmos-confirm-lines-body = GLesmos line rendering can be slow. Be careful, especially for a list of layers.
@@ -282,7 +282,7 @@ multiline-opt-multilinifyDelayAfterEdit-name = Edit Delay (ms)
 multiline-opt-multilinifyDelayAfterEdit-desc = Multiline expressions should be updated after no edits are made for this number of milliseconds.
 multiline-opt-spacesToNewlines-name = Spaces to Newlines
 multiline-opt-spacesToNewlines-desc = Convert groups of 3 spaces into newlines. These can be automatically created with Shift+Enter.
-multiline-opt-determineLineBreaksAutomatically-name = Auto Insert Linebreaks
+multiline-opt-determineLineBreaksAutomatically-name = Auto Insert Linebreaks 
 multiline-opt-determineLineBreaksAutomatically-desc = Automatically figure out where to put line breaks. Use Ctrl+M to trigger this.
 multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-name = Skip expressions with triple spaces
 multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-desc = Don't automatically insert extra line breaks in expressions that have any manually-added line breaks (triple spaces).
