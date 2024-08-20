@@ -5,7 +5,7 @@ import {
   rectangleGeneratorExpressions,
   rectangleLatex,
 } from "./latex/rectangle";
-import { DispatchedEvent } from "#globals";
+import type { Calc, DispatchedEvent } from "#globals";
 import "./index.less";
 
 interface NewDropdownItem {
@@ -69,7 +69,9 @@ export default class ShapeGenerator extends PluginController<{
           }
 
           // TODO: HelperExpression is missing unobserve types
-          angleHelper.unobserve("numericValue");
+          (angleHelper as unknown as Pick<Calc, "unobserve">).unobserve(
+            "numericValue"
+          );
 
           // Create new empty expression to add the ellipse to
           this.calc.controller.dispatch({
@@ -128,7 +130,9 @@ export default class ShapeGenerator extends PluginController<{
           }
 
           // TODO: HelperExpression is missing unobserve types
-          angleHelper.unobserve("numericValue");
+          (angleHelper as unknown as Pick<Calc, "unobserve">).unobserve(
+            "numericValue"
+          );
 
           // Create new empty expression to add the rectangle to
           this.calc.controller.dispatch({
