@@ -224,8 +224,9 @@ export default class Intellisense extends PluginController<{
         // sort the intellisense options so that closer ones appear first
         const listModel = this.cc.listModel;
         const orderMap = new Map<string, number>();
-        for (let i = 0; i < listModel.drawLayers[0].drawOrder.length; i++) {
-          orderMap.set(listModel.drawLayers[0].drawOrder[i], i);
+        const flatOrder = listModel.drawLayers.flatMap((e) => e.drawOrder);
+        for (let i = 0; i < flatOrder.length; i++) {
+          orderMap.set(flatOrder[i], i);
         }
         const myindex = this.cc.getSelectedItem()?.index;
         if (myindex !== undefined) {
