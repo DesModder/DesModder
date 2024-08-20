@@ -324,7 +324,7 @@ export default class ShapeGenerator extends PluginController<{
   handleDispatchedAction(e: DispatchedEvent) {
     if (e.type === "toggle-add-expression") {
       // Wait for addExpressionBtn.ariaExpanded to be updated
-      queueMicrotask(() => {
+      this.calc.controller.runAfterDispatch(() => {
         this.addExpressionMenuHandler();
       });
       return;
