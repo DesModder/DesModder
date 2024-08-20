@@ -30,6 +30,7 @@ import WolframToDesmos from "./wolfram2desmos";
 import BetterNavigation from "./better-navigation";
 import OverrideKeystroke from "../core-plugins/override-keystroke";
 import ShapeGenerator from "./shape-generator";
+import type { DispatchedEvent } from "#globals";
 
 interface ConfigItemGeneric {
   // indentation level for hierarchical relationships in settings

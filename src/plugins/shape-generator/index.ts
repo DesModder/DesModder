@@ -325,7 +325,7 @@ export default class ShapeGenerator extends PluginController<{
     }
   }
 
-  handleDispatchedAction(e: DispatchedEvent) {
+  handleDispatchedAction(e: DispatchedEvent): undefined {
     if (e.type === "toggle-add-expression") {
       // Wait for addExpressionBtn.ariaExpanded to be updated
       this.calc.controller.runAfterDispatch(() => {
