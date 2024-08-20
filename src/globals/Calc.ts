@@ -226,6 +226,10 @@ interface CalcPrivate {
       model: ItemModel,
       shouldFocus: boolean
     ) => void;
+    _finishDeletingItemAfterAnimation: (
+      id: string,
+      setFocusAfterDelete: boolean
+    ) => void;
     _hasUnsavedChanges: boolean;
     createItemModel: (modelTemplate: any) => ItemModel;
     getPillboxBackgroundColor: () => string;
@@ -237,6 +241,7 @@ interface CalcPrivate {
       };
     };
     dispatch: (e: DispatchedEvent) => void;
+    runAfterDispatch: (callback: () => void) => void;
     getExpressionSearchStr: () => string;
     dispatcher: {
       register: (func: (e: DispatchedEvent) => void) => string;
