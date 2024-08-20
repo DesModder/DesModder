@@ -1,5 +1,4 @@
 import { ConfigItem } from "#plugins/index.ts";
-import window from "#globals";
 
 export const configList = [
   {
@@ -15,9 +14,11 @@ export const configList = [
     type: "boolean",
     key: "hideFolderToggles",
     default: true,
-    shouldShow: (_): boolean =>
-      (window as any).Calc.settings.advancedStyling ||
-      (window as any).Calc.settings.authorFeatures,
+    shouldShow: (_, dsm): boolean =>
+      // The official API doesn't have `advancedStyling` and `authorFeatures`,
+      // and it would be a hassle to copy over the typing for the extra two fields.
+      (dsm.calc.settings as any).advancedStyling ||
+      (dsm.calc.settings as any).authorFeatures,
   },
   {
     type: "boolean",
