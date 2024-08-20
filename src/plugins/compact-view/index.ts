@@ -29,6 +29,7 @@ export default class CompactView extends PluginController<Config> {
       "compact-view-hide-evaluations-enabled",
       this.settings.hideEvaluations
     );
+    toggleBodyClass("hide-folder-toggles", this.settings.hideFolderToggles);
 
     document.body.style.setProperty(
       "--math-font-size",

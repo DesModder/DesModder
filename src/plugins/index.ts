@@ -38,7 +38,7 @@ interface ConfigItemGeneric {
   indentationLevel?: number;
   key: string;
   // TODO proper type here
-  shouldShow?: (current: any) => boolean;
+  shouldShow?: (current: any, dsm: DSM) => boolean;
   // display name and descriptions are managed in a translations file
 }
 
