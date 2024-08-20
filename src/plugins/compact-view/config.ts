@@ -1,4 +1,7 @@
 import { ConfigItem } from "#plugins/index.ts";
+import window from "#globals";
+
+const builtinSettings = window.DSM.builtinSettings;
 
 export const configList = [
   {
@@ -14,6 +17,9 @@ export const configList = [
     type: "boolean",
     key: "hideFolderToggles",
     default: true,
+    shouldShow: (_): boolean | undefined =>
+      (builtinSettings?.settings.advancedStyling ?? false) ||
+      (builtinSettings?.settings.authorFeatures ?? false),
   },
   {
     type: "boolean",
