@@ -222,23 +222,17 @@ export default class Intellisense extends PluginController<{
         );
 
         // sort the intellisense options so that closer ones appear first
-        const listModel = this.cc.listModel;
-        const orderMap = new Map<string, number>();
-        const flatOrder = listModel.drawLayers.flatMap((e) => e.drawOrder);
-        for (let i = 0; i < flatOrder.length; i++) {
-          orderMap.set(flatOrder[i], i);
-        }
         const myindex = this.cc.getSelectedItem()?.index;
         if (myindex !== undefined) {
           this.intellisenseOpts.sort((a, b) => {
             const aMin = Math.min(
               ...a.idents.map((e) =>
-                Math.abs((orderMap.get(e.exprId) ?? 0) - myindex)
+                Math.abs((this.getExpressionIndex(e.exprId) ?? 0) - myindex)
               )
             );
             const bMin = Math.min(
               ...b.idents.map((e) =>
-                Math.abs((orderMap.get(e.exprId) ?? 0) - myindex)
+                Math.abs((this.getExpressionIndex(e.exprId) ?? 0) - myindex)
               )
             );
             return aMin - bMin;
