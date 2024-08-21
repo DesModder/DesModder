@@ -87,12 +87,14 @@ export const rectangleGeneratorExpressions = [
     id: "shape-generator-rectangle-position-point",
     type: "expression",
     latex: "\\left(x_{rectangleGenerator},y_{rectangleGenerator}\\right)",
+    secret: true,
   },
   {
     id: "shape-generator-rectangle-width-point",
     type: "expression",
     latex:
       "\\left(f_{rectangleGeneratorWidthX}\\left(w_{rectangleGenerator}\\right),y_{rectangleGenerator}+w_{rectangleGenerator}\\sin A_{rectangleGenerator}\\right)",
+    secret: true,
   },
   {
     id: "shape-generator-rectangle-width-x-helper",
@@ -100,12 +102,14 @@ export const rectangleGeneratorExpressions = [
     latex:
       "f_{rectangleGeneratorWidthX}\\left(W_{rectangleGenerator}\\right)=x_{rectangleGenerator}+W_{rectangleGenerator}\\cos A_{rectangleGenerator}",
     hidden: true,
+    secret: true,
   },
   {
     id: "shape-generator-rectangle-height-point",
     type: "expression",
     latex:
       "\\left(f_{rectangleGeneratorHeightX}\\left(h_{rectangleGenerator}\\right),y_{rectangleGenerator}+h_{rectangleGenerator}\\cos A_{rectangleGenerator}\\right)",
+    secret: true,
   },
   {
     id: "shape-generator-rectangle-height-x-helper",
@@ -113,6 +117,7 @@ export const rectangleGeneratorExpressions = [
     latex:
       "f_{rectangleGeneratorHeightX}\\left(H_{rectangleGenerator}\\right)=x_{rectangleGenerator}-H_{rectangleGenerator}\\sin A_{rectangleGenerator}",
     hidden: true,
+    secret: true,
   },
   {
     id: "shape-generator-rectangle-angle-point",
@@ -120,6 +125,7 @@ export const rectangleGeneratorExpressions = [
     latex:
       "\\left(f_{rectangleGeneratorAngleX}\\left(A_{rectangleGenerator}\\right),f_{rectangleGeneratorAngleY}\\left(A_{rectangleGenerator}\\right)\\right)",
     dragMode: "X",
+    secret: true,
   },
   {
     id: "shape-generator-rectangle-angle-point-x-helper",
@@ -127,6 +133,7 @@ export const rectangleGeneratorExpressions = [
     latex:
       "f_{rectangleGeneratorAngleX}\\left(a_{rectangleGenerator}\\right)=x_{rectangleGenerator}+w_{rectangleGenerator}\\cos a_{rectangleGenerator}-h_{rectangleGenerator}\\sin a_{rectangleGenerator}",
     hidden: true,
+    secret: true,
   },
   {
     id: "shape-generator-rectangle-angle-point-y-helper",
@@ -134,5 +141,6 @@ export const rectangleGeneratorExpressions = [
     latex:
       "f_{rectangleGeneratorAngleY}\\left(a_{rectangleGenerator}\\right)=y_{rectangleGenerator}+h_{rectangleGenerator}\\cos a_{rectangleGenerator}+w_{rectangleGenerator}\\sin a_{rectangleGenerator}",
     hidden: true,
+    secret: true,
   },
 ] satisfies Desmos.ExpressionState[];

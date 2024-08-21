@@ -71,6 +71,7 @@ export const ellipseGeneratorExpressions = [
     type: "expression",
     latex: "\\left(x_{ellipseGenerator},y_{ellipseGenerator}\\right)",
     color: "",
+    secret: true,
   },
   {
     id: "shape-generator-ellipse-radius-x-point",
@@ -78,6 +79,7 @@ export const ellipseGeneratorExpressions = [
     latex:
       "\\left(x_{ellipseGenerator}-r_{xEllipseGenerator}\\cos A_{ellipseGenerator},y_{ellipseGenerator}-r_{xEllipseGenerator}\\sin A_{ellipseGenerator}\\right)",
     color: "",
+    secret: true,
   },
   {
     id: "shape-generator-ellipse-radius-y-point-helper",
@@ -86,6 +88,7 @@ export const ellipseGeneratorExpressions = [
       "f_{ellipseGeneratorRadiusYX}\\left(R_{yEllipseGenerator}\\right)=x_{ellipseGenerator}+R_{yEllipseGenerator}\\cos\\left(A_{ellipseGenerator}+\\frac{\\pi}{2}\\right)",
     hidden: true,
     color: "",
+    secret: true,
   },
   {
     id: "shape-generator-ellipse-radius-y-point",
@@ -93,6 +96,7 @@ export const ellipseGeneratorExpressions = [
     latex:
       "\\left(f_{ellipseGeneratorRadiusYX}\\left(r_{yEllipseGenerator}\\right),y_{ellipseGenerator}+r_{yEllipseGenerator}\\sin\\left(A_{ellipseGenerator}+\\frac{\\pi}{2}\\right)\\right)",
     color: "",
+    secret: true,
   },
   {
     id: "shape-generator-ellipse-angle-point-helper-x",
@@ -101,6 +105,7 @@ export const ellipseGeneratorExpressions = [
       "f_{ellipseGeneratorAngleX}\\left(a_{ellipseGenerator}\\right)=x_{ellipseGenerator}+r_{xEllipseGenerator}\\cos a_{ellipseGenerator}",
     hidden: true,
     color: "",
+    secret: true,
   },
   {
     id: "shape-generator-ellipse-angle-point-helper-y",
@@ -109,6 +114,7 @@ export const ellipseGeneratorExpressions = [
       "f_{ellipseGeneratorAngleY}\\left(a_{ellipseGenerator}\\right)=y_{ellipseGenerator}+r_{xEllipseGenerator}\\sin a_{ellipseGenerator}",
     hidden: true,
     color: "",
+    secret: true,
   },
   {
     id: "shape-generator-ellipse-angle-point",
@@ -117,5 +123,6 @@ export const ellipseGeneratorExpressions = [
       "\\left(f_{ellipseGeneratorAngleX}\\left(A_{ellipseGenerator}\\right),f_{ellipseGeneratorAngleY}\\left(A_{ellipseGenerator}\\right)\\right)",
     dragMode: "X",
     color: "",
+    secret: true,
   },
 ] satisfies Desmos.ExpressionState[];
