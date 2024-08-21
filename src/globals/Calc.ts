@@ -269,7 +269,7 @@ interface CalcPrivate {
       }[];
       __itemIdToModel: Record<string, ItemModel>;
 
-      drawOrder: string[];
+      drawLayers: { layer: number; drawOrder: string[]; drawSet: string[] }[];
     };
     _addItemToEndFromAPI: (item: ItemModel) => void;
     _showToast: (toast: Toast) => void;
