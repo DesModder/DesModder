@@ -226,8 +226,8 @@ export default class ShapeGenerator extends PluginController<{
       }
     });
     const expressionlist = document.querySelector(
-      ".dcg-expressionitem[expr-id]"
-    )?.parentElement;
+      ".dcg-template-expressioneach"
+    );
     if (!expressionlist) {
       throw new Error("Could not find the expression list");
     }
