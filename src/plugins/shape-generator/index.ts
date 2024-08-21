@@ -240,12 +240,6 @@ export default class ShapeGenerator extends PluginController<{
   }
 
   afterDisable() {
-    // Remove global classes
-    document.body.classList.remove(
-      "dsm-shape-generator-is-editing-shape",
-      "dsm-shape-generator-hide-sliders"
-    );
-
     // Remove event listeners
     this.expressionsMutationObserver?.disconnect();
     this.expressionsMutationObserver = null;
@@ -420,11 +414,6 @@ export default class ShapeGenerator extends PluginController<{
 
   private set isEditingShape(value) {
     this._isEditingShape = value;
-
-    document.body.classList.toggle(
-      "dsm-shape-generator-is-editing-shape",
-      !!value
-    );
   }
 
   addExpressionMenuHandler() {
