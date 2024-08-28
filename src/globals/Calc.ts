@@ -24,6 +24,7 @@ export type VanillaDispatchedEvent =
         | "set-none-selected"
         | "toggle-graph-settings"
         | "clear-unsaved-changes"
+        | "clear-graph"
         | "undo"
         | "tick"
         | "redo"

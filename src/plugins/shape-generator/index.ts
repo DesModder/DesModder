@@ -468,44 +468,55 @@ export default class ShapeGenerator extends PluginController<{
   }
 
   handleDispatchedAction(e: DispatchedEvent): undefined {
-    if (e.type === "toggle-add-expression") {
-      // Wait for addExpressionBtn.ariaExpanded to be updated
-      this.calc.controller.runAfterDispatch(() => {
-        this.addExpressionMenuHandler();
-      });
-      return;
-    }
+    switch (e.type) {
+      case "toggle-add-expression": {
+        // Wait for addExpressionBtn.ariaExpanded to be updated
+        this.calc.controller.runAfterDispatch(() => {
+          this.addExpressionMenuHandler();
+        });
+        break;
+      }
 
-    if (e.type !== "finish-deleting-item-after-animation") {
-      return;
-    }
+      case "finish-deleting-item-after-animation": {
+        if (!e.id.startsWith("shape-generator-")) {
+          break;
+        }
 
-    if (!e.id.startsWith("shape-generator-")) {
-      return;
-    }
+        if (!this.isEditingShape) {
+          throw new Error(
+            "Shape generator expression deleted while not editing shape. This should not happen."
+          );
+        }
 
-    if (!this.isEditingShape) {
-      throw new Error(
-        "Shape generator expression deleted while not editing shape. This should not happen."
-      );
-    }
+        const expressions = this.calc.getExpressions();
 
-    const expressions = this.calc.getExpressions();
+        for (const expression of expressions) {
+          if (
+            expression.id &&
+            expression.id !== e.id &&
+            expression.id.startsWith("shape-generator-")
+          ) {
+            this.calc.controller._finishDeletingItemAfterAnimation(
+              expression.id,
+              e.setFocusAfterDelete
+            );
+          }
+        }
 
-    for (const expression of expressions) {
-      if (
-        expression.id &&
-        expression.id !== e.id &&
-        expression.id.startsWith("shape-generator-")
-      ) {
-        this.calc.controller._finishDeletingItemAfterAnimation(
-          expression.id,
-          e.setFocusAfterDelete
-        );
+        this.isEditingShape = false;
+
+        break;
+      }
+
+      case "clear-unsaved-changes":
+      case "clear-graph": {
+        this.cc.runAfterDispatch(() => {
+          this.cleanupExpressions();
+          this.isEditingShape = false;
+        });
+        break;
       }
     }
-
-    this.isEditingShape = false;
   }
 
   getAddExpressionButton() {
