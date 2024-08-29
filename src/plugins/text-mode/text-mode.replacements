@@ -80,8 +80,9 @@ DSM.insertElement(
 
 ```js
 $ExpressionView = class extends $ {
-  didMount() {
-      this.onItemViewMounted(),
+  didMountRootNode($e) {
+      this.rootNode = $e,
+      this.onItemViewMounted($e),
       this.lastBrailleMode = this.controller.getBrailleMode()
   }
 ```
