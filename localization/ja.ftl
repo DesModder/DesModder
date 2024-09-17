@@ -28,7 +28,7 @@ GLesmos-no-support = 残念ながら、あなたのブラウザは WebGL2 をサ
 
 ## Tips
 show-tips-name = ヒントの表示
-show-tips-desc = 数式リストの一番下にヒントを表示する
+show-tips-desc = 数式リストの一番下にヒントを表示します。
 show-tips-tip-export-videos = 動画をエクスポートする場合は、GIF よりも MP4 または APNG のほうがよいでしょう。
 show-tips-tip-disable-graphpaper = 計算機の設定でグラフ用紙を無効にすると、一連の数式を書くのに便利です。
 show-tips-tip-paste-asciimath = Desmos には直接 ASCII Math を貼り付けることができます。
@@ -67,7 +67,7 @@ show-tips-tip-listcomps = リスト内包は、点のグリッドや多角形の
 show-tips-tip-list-filters = リストフィルターは、正の要素や偶数の要素などのフィルターに使用できます。
 show-tips-tip-bernard = Bernard
 show-tips-tip-new-desmos = Desmos の新着情報
-show-tips-tip-simultaneous-actions =アクションの割り当ては順次ではなく、同時に行われる。
+show-tips-tip-simultaneous-actions =アクションの割り当ては順次ではなく、同時に行われます。
 show-tips-tip-share-permalink = サインインしなくても、パーマリンク経由でグラフを共有できます。
 show-tips-tip-point-coordinate = 点の変数に .x または .y を追加して、ポイントの x 座標または y 座標を抽出できます。
 show-tips-tip-audiotrace = オーディオトレースを使ってグラフを聴くことができます。
@@ -152,7 +152,7 @@ set-primary-color-opt-doFavicon-desc = ファビコンにも基調色設定を�
 
 ## Hide Errors
 hide-errors-name = エラーの非表示
-hide-errors-desc = エラーの三角形をクリックすると非表示になります。
+hide-errors-desc = エラーの三角形をクリックすることで非表示にします。
 hide-errors-hide = 非表示
 
 ## Folder Tools
@@ -228,7 +228,7 @@ performance-info-other = その他
 
 ## Better Evaluation View
 better-evaluation-view-name = 高機能な評価ビュー
-better-evaluation-view-desc = リストの要素、色、未定義の値を表示する
+better-evaluation-view-desc = リストの要素、色、undefined の値を表示します。
 better-evaluation-view-opt-lists-name = リストの要素を表示
 better-evaluation-view-opt-lists-desc = リストの長さの代わりに要素を表示する
 better-evaluation-view-opt-colors-name = 色を表示
@@ -327,7 +327,7 @@ code-golf-note-latex-byte-count = LaTeX 表現のバイト数 { $chars }
 
 ## Syntax highlightAlternatingLines
 syntax-highlighting-name = シンタックスハイライト
-syntax-highlighting-desc = 数式のさまざまな部分に色をつけて判読性を向上する
+syntax-highlighting-desc = 数式のさまざまな部分に色をつけて判読性を高めます。
 syntax-highlighting-opt-bracketPairColorization-name = 括弧の色付け
 syntax-highlighting-opt-bracketPairColorization-desc = 括弧に交互に色を適用し (例: ()[]{"{"}{"}"}||)、 一致する括弧のペアを見つけやすくします。
 syntax-highlighting-opt-bracketPairColorizationColors-name = 括弧の色
