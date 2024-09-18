@@ -12,9 +12,11 @@
       max(var(--bracket-font-size-factor), var(--minimum-font-size))
     );
   }
-  .dcg-main,
+  .dcg-main {
+    font-size: calc(1.1 * (16 / 18) * var(--math-font-size));
+  }
   .dcg-evaluation-container {
-    font-size: var(--math-font-size);
+    font-size: calc((16 / 18) * var(--math-font-size));
   }
 
   &.compact-view-no-separating-lines {
