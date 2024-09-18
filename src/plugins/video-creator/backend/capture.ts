@@ -19,13 +19,13 @@ async function captureFrame(
   const width = vc.getCaptureWidthNumber();
   const height = vc.getCaptureHeightNumber();
   const targetPixelRatio = vc.getTargetPixelRatio();
-  // resolves the screenshot as a data URI
   const size = {
     width: width / targetPixelRatio,
     targetPixelRatio,
     height: height / targetPixelRatio,
     preserveAxisNumbers: true,
   };
+  // resolves the screenshot as a data URI
   const screenshot = vc.cc.is3dProduct() ? screenshot3d : screenshot2d;
   return await Promise.race([screenshot(vc, size), vc.awaitCancel()]);
 }
@@ -57,6 +57,7 @@ async function screenshot2d(vc: VideoCreator, size: ScreenshotOpts) {
     ...size,
     showLabels: true,
     mathBounds: clampedMathBounds,
+    mode: "contain" as "contain",
   };
   if (vc.fastScreenshots) {
     return await new Promise<string>((resolve) => {
