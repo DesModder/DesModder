@@ -148,6 +148,9 @@ export default class VideoCreator extends PluginController {
   deleteAll() {
     this.frames = [];
     this.previewIndex = 0;
+    if (this.isPlayingPreview) {
+      this.togglePlayingPreview();
+    }
     this.updateView();
   }
 
