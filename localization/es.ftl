@@ -363,6 +363,6 @@ better-navigation-opt-scrollableExpressions-desc = Añade una barra de desplazam
 
 ## Shape Generator
 shape-generator-name = Generador de Formas
-shape-generator-desc = Facilita la creación de equaciones para distinas formas.
+shape-generator-desc = Facilita la creación de ecuaciones para distintas formas.
 shape-generator-opt-showSliders-name = Mostrar controles deslizantes
 shape-generator-opt-showSliders-desc = Muestra los controles deslizantes para las variables del tamaño, posición y dirección de las formas.
