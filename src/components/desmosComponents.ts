@@ -171,14 +171,14 @@ export abstract class ExpressionViewComponent extends ClassComponent<
   }
 > {}
 
-const ExpressionView = window.DesModderFragile.ExpressionView;
+const ExpressionView = window.DesModderFragile?.ExpressionView;
 
 export abstract class IconViewComponent extends ClassComponent<{
   model: ItemModel;
   controller: CalcController;
 }> {}
 
-export const ImageIconView = window.DesModderFragile.ImageIconView;
+export const ImageIconView = window.DesModderFragile?.ImageIconView;
 
 interface ModelAndController {
   model: ExpressionModel;
