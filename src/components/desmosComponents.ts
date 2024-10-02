@@ -171,6 +171,7 @@ export abstract class ExpressionViewComponent extends ClassComponent<
   }
 > {}
 
+// `?` to avoid a crash if the replacement fails
 const ExpressionView = window.DesModderFragile?.ExpressionView;
 
 export abstract class IconViewComponent extends ClassComponent<{
@@ -178,6 +179,7 @@ export abstract class IconViewComponent extends ClassComponent<{
   controller: CalcController;
 }> {}
 
+// `?` to avoid a crash if the replacement fails
 export const ImageIconView = window.DesModderFragile?.ImageIconView;
 
 interface ModelAndController {
