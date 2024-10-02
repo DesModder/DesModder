@@ -100,14 +100,14 @@ DSM.insertElement(() => DSM.hideErrors?.hideButton(() => this.model))
 
 *Find* => `from`
 ```js
-shouldShowSliderPrompt() {
+shouldShowSliderPrompt($expression) {
   let
 ```
 
 *Replace* `from` with
 ```js
-shouldShowSliderPrompt() {
-    if (DSM.hideErrors?.isErrorHidden(this.model?.id)) return false;
+shouldShowSliderPrompt($expression) {
+    if (DSM.hideErrors?.isErrorHidden($expression?.id)) return false;
     let
 ```
 
