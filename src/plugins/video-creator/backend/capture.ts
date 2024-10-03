@@ -57,7 +57,7 @@ async function screenshot2d(vc: VideoCreator, size: ScreenshotOpts) {
     ...size,
     showLabels: true,
     mathBounds: clampedMathBounds,
-    mode: "contain" as "contain",
+    mode: "contain" as const,
   };
   if (vc.fastScreenshots) {
     return await new Promise<string>((resolve) => {
