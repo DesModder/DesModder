@@ -212,9 +212,7 @@ export default class SelectCapture extends Component<{
             )}
           </If>
         </div>
-        <If
-          predicate={() => Math.abs(this.vc._getTargetPixelRatio() - 1) > 0.001}
-        >
+        <If predicate={() => this.vc.isPixelRatioValid()}>
           {() => (
             <div class="dsm-vc-pixel-ratio">
               <Checkbox
