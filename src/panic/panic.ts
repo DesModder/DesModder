@@ -1,4 +1,4 @@
-import { Console } from "../globals/window";
+import window, { Console } from "../globals/window";
 import { format } from "#i18n";
 import { PluginID } from "../plugins";
 import { Block } from "../preload/replacementHelpers/parse";
@@ -64,6 +64,9 @@ function addLabelledCheckboxItem(list: Element, plugin: string) {
 
 export const panickedPlugins = new Set<string>();
 function addPanickedPlugin(plugin: string) {
+  if (window.DesModderPreload?.pluginsForceDisabled.has(plugin as any)) {
+    return;
+  }
   Console.warn("Panicking for plugin", plugin);
   const panicPopover = ensurePanicPopover();
   document
