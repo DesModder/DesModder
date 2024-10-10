@@ -18,7 +18,7 @@ copyExpressionToIndex(____) { __body__ }
 let $to = this.createItemModel(
 ```
 
-*Find*
+*Find* inside `body`:
 ```js
 case "expression": $from =
 ```
