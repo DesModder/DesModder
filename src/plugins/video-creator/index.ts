@@ -148,6 +148,9 @@ export default class VideoCreator extends PluginController {
   deleteAll() {
     this.frames = [];
     this.previewIndex = 0;
+    if (this.isPlayingPreview) {
+      this.togglePlayingPreview();
+    }
     this.updateView();
   }
 
@@ -273,10 +276,17 @@ export default class VideoCreator extends PluginController {
     this.updateView();
   }
 
+  isPixelRatioValid() {
+    const UNIT_THRESHOLD = 0.001;
+    return this._getTargetPixelRatio() - 1 > UNIT_THRESHOLD;
+  }
+
   _getTargetPixelRatio() {
-    return (
+    // clamp to 1 because Desmos no longer support ratios less than 1
+    return Math.max(
+      1,
       this.captureWidth.getValue() /
-      this.calc.graphpaperBounds.pixelCoordinates.width
+        this.calc.graphpaperBounds.pixelCoordinates.width
     );
   }
 
