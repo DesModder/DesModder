@@ -1,5 +1,24 @@
 # DesModder Changelog
 
+## 0.13.11
+
+New features:
+
+- (Compact View) Add "Hide Folder Toggles" when author features or advanced styling are enabled.
+
+Bug fixes:
+
+- Fixes a whole bunch of loading errors.
+- (Intellisense) Sort suggestions by list order again.
+- (Video Creator) Fix sizing when screenshot width is smaller than viewport width.
+- (Video Creator) Stop playing when all frames are deleted.
+- (Compact View) Default math size to the vanilla math size, instead of 10% bigger.
+
+Translations:
+
+- Major updates for Japanese: corrections and completeness
+- Minor updates for Spanish
+
 ## 0.13.10
 
 Breaking Changes:
