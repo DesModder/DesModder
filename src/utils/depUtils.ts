@@ -41,7 +41,7 @@ export function truncatedLatexLabel(label: any, labelOptions: any) {
 }
 
 export function getCurrentGraphTitle(calc: Calc): string | undefined {
-  return calc._calc.globalHotkeys?.headerController?.graphsController?.getCurrentGraphTitle?.();
+  return calc._calc.globalHotkeys?.mygraphsController?.graphsController?.getCurrentGraphTitle?.();
 }
 
 export const List = Fragile.List;
