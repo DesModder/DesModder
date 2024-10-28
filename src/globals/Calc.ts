@@ -104,7 +104,7 @@ export type VanillaDispatchedEvent =
         prop: "folderId" | string;
       };
     }
-  | { type: "new-images"; files: FileList }
+  | { type: "new-images"; files: FileList; id?: string }
   | { type: "set-folder-collapsed"; id: string; isCollapsed: boolean }
   | { type: "set-item-colorLatex"; id: string; colorLatex: string }
   | { type: "set-note-text"; id: string; text: string };

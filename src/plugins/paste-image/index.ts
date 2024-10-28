@@ -22,16 +22,15 @@ export default class PasteImage extends PluginController {
         // avoid images being inserted at the top of the expressions list
         // when there is no selected expression
         if (document.activeElement !== document.body) return;
-        const lastExpression: Desmos.ExpressionState = this.calc
-          .getExpressions()
-          .splice(-1)[0];
-        this.cc.dispatch({
-          type: "set-focus-location",
-          location: {
-            type: "expression",
-            id: lastExpression.id,
-          },
-        });
+        const lastExpression = this.calc.getExpressions().splice(-1)[0];
+        lastExpression &&
+          this.cc.dispatch({
+            type: "set-focus-location",
+            location: {
+              type: "expression",
+              id: lastExpression.id,
+            },
+          });
       }
       this.cc.dispatch({
         type: "new-images",
