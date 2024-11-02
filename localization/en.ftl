@@ -287,7 +287,7 @@ multiline-opt-spacesToNewlines-desc = Convert groups of 3 spaces into newlines. 
 multiline-opt-determineLineBreaksAutomatically-name = Auto Insert Linebreaks 
 multiline-opt-determineLineBreaksAutomatically-desc = Automatically figure out where to put line breaks. Use Ctrl+M to trigger this.
 multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-name = Skip expressions with triple spaces
-multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-desc = Don't automatically insert extra line breaks in expressions that have any manually-added line breaks (triple spaces). 
+multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-desc = Don't automatically insert extra line breaks in expressions that have any manually-added line breaks (triple spaces).
 
 ## Custom MathQuill Config
 custom-mathquill-config-name = Custom MathQuill Config
@@ -345,8 +345,14 @@ syntax-highlighting-opt-underlineHighlightedRanges-desc = Puts a dark underline 
 
 ## Better Navigation
 better-navigation-name = Better Navigation
-better-navigation-desc = Tools for making Desmos expressions easier to navigate. 
+better-navigation-desc = Tools for making Desmos expressions easier to navigate.
 better-navigation-opt-ctrlArrow-name = Ctrl+Arrow Support
 better-navigation-opt-ctrlArrow-desc = Use Ctrl+ArrowKeys or Ctrl+Shift+ArrowKeys to skip over large blocks of text quickly. Use Ctrl+Backspace to delete large blocks of text.
 better-navigation-opt-scrollableExpressions-name = Scrollable Expressions
 better-navigation-opt-scrollableExpressions-desc = Adds horizontal scrollbars to expressions. This is primarily intended to make scrolling easier on mobile.
+
+## Shape Generator
+shape-generator-name = Shape Generator
+shape-generator-desc = Tool for quickly generating equations for different shapes.
+shape-generator-opt-showSliders-name = Show sliders
+shape-generator-opt-showSliders-desc = Shows the slider expressions for the variables used for shape sizes, positions and directions.

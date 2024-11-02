@@ -24,6 +24,7 @@ export type VanillaDispatchedEvent =
         | "set-none-selected"
         | "toggle-graph-settings"
         | "clear-unsaved-changes"
+        | "clear-graph"
         | "undo"
         | "tick"
         | "redo"
@@ -33,7 +34,9 @@ export type VanillaDispatchedEvent =
         | "upward-delete-selected-expression"
         | "downward-delete-selected-expression"
         | "update-expression-search-str"
-        | "ui/container-resized";
+        | "ui/container-resized"
+        | "new-expression"
+        | "toggle-add-expression";
     }
   | {
       type: "keypad/set-minimized";
@@ -50,6 +53,11 @@ export type VanillaDispatchedEvent =
         | "delete-item-and-animate-out"
         | "move-focus-to-item";
       id: string;
+    }
+  | {
+      type: "finish-deleting-item-after-animation";
+      id: string;
+      setFocusAfterDelete: boolean;
     }
   | {
       /** This is somewhat a super type of all the `DispatchedEvent`s. It's here
@@ -219,6 +227,10 @@ interface CalcPrivate {
       model: ItemModel,
       shouldFocus: boolean
     ) => void;
+    _finishDeletingItemAfterAnimation: (
+      id: string,
+      setFocusAfterDelete: boolean
+    ) => void;
     _hasUnsavedChanges: boolean;
     createItemModel: (modelTemplate: any) => ItemModel;
     getPillboxBackgroundColor: () => string;
@@ -230,6 +242,7 @@ interface CalcPrivate {
       };
     };
     dispatch: (e: DispatchedEvent) => void;
+    runAfterDispatch: (callback: () => void) => void;
     getExpressionSearchStr: () => string;
     dispatcher: {
       register: (func: (e: DispatchedEvent) => void) => string;
