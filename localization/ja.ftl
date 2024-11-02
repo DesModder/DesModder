@@ -350,3 +350,7 @@ better-navigation-opt-ctrlArrow-name = Ctrl+Arrow のサポート
 better-navigation-opt-ctrlArrow-desc = Ctrl+矢印キー または Ctrl+Shift+矢印キー を使用して、大きなテキストブロックをすばやくスキップします。Ctrl+Backspace を使用すると、大きなテキストブロックを削除できます。
 better-navigation-opt-scrollableExpressions-name = 数式のスクロールを有効化
 better-navigation-opt-scrollableExpressions-desc = 数式に水平スクロールバーを追加します。これは主にモバイルでのスクロールを簡単にするためのものです。
+
+## Paste Image
+paste-image-name = 画像の貼り付け
+paste-image-desc = 画像ファイルを貼り付けて一度にインポートできます。

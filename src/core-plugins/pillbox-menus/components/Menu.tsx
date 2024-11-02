@@ -38,6 +38,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
   ],
   utility: [
     "wolfram2desmos",
+    "paste-image",
     "pin-expressions",
     "find-and-replace",
     "performance-info",

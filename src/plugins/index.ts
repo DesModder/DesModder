@@ -16,6 +16,7 @@ import HideErrors from "./hide-errors";
 import Intellisense from "./intellisense";
 import ManageMetadata from "../core-plugins/manage-metadata";
 import Multiline from "./multiline";
+import PasteImage from "./paste-image";
 import PerformanceInfo from "./performance-info";
 import PillboxMenus from "../core-plugins/pillbox-menus";
 import PinExpressions from "./pin-expressions";
@@ -144,6 +145,7 @@ export const keyToPlugin = {
   codeGolf: CodeGolf,
   syntaxHighlighting: SyntaxHighlighting,
   betterNavigation: BetterNavigation,
+  pasteImage: PasteImage,
 } satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);
@@ -198,6 +200,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get codeGolf () { return this.ep["code-golf"]; }
   get syntaxHighlighting () { return this.ep["syntax-highlighting"]}
   get betterNavigation () { return this.ep["better-navigation"]} 
+  get pasteImage () { return this.ep["paste-image"]; }
 }
 
 export type IDToPluginSettings = {
