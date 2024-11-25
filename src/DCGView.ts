@@ -73,7 +73,7 @@ export interface DCGViewModule {
     Switch: typeof SwitchComponent;
     SwitchUnion: <Key extends string>(
       discriminant: () => Key,
-      branches: { [k in Key]: () => ComponentChild }
+      branches: Record<Key, () => ComponentChild>
     ) => ComponentTemplate;
     IfElse: (p: () => boolean, v: IfElseSecondParam) => ComponentTemplate;
   };

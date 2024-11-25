@@ -70,7 +70,7 @@ export interface Config {
   parseDesmosLatex: Parse;
 }
 
-type Colors = { [key in string]: string };
+type Colors = Record<string, string>;
 
 const defaultOperatorNames =
   "exp ln log total length mean median quantile quartile nCr nPr stats stdev stddev stdDev stdevp stddevp stdDevP mad var varp variance cov covp corr spearman lcm mcm gcd mcd gcf mod ceil floor round abs min max sign signum sgn sin cos tan csc sec cot sinh cosh tanh csch sech coth arcsin arccos arctan arccsc arcsec arccot arcsinh arccosh arctanh arccsch arcsech arccoth arsinh arcosh artanh arcsch arsech arcoth polygon distance midpoint sort shuffle join unique erf TTest ttest TScore tscore iTTest ittest IndependentTTest TScore Tscore tscore normaldist tdist poissondist binomialdist uniformdist pdf cdf random inverseCdf inversecdf histogram dotplot boxplot pdf cdf rgb hsv for width height with det inv transpose rref trace";

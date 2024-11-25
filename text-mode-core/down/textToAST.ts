@@ -333,9 +333,7 @@ function getInitialParselet(token: Token) {
   else return tagGroup?.[token.value];
 }
 
-type TokenMap<T> = {
-  [key in TokenType]?: T | Record<string, T>;
-};
+type TokenMap<T> = Partial<Record<TokenType, T | Record<string, T>>>;
 
 type InitialParselet = (ps: ParseState, token: Token) => Node;
 
