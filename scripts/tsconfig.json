@@ -1,6 +1,10 @@
 {
-  "extends": "../tsconfig-base.json",
+  "extends": "../tsconfig-base",
   "compilerOptions": {},
   "references": [{ "path": "../localization" }],
-  "include": ["**/*"]
+  "include": [
+    "**/*",
+    "../text-mode-core/package.json",
+    "../graph-state/package.json"
+  ]
 }
