@@ -15,8 +15,8 @@ const Console = console;
 
 export function format(
   key: string,
-  args?: Record<string, FluentVariable> | null | undefined,
-  missingReplacement?: string | undefined
+  args?: Record<string, FluentVariable> | null,
+  missingReplacement?: string
 ): string {
   const lang = currentLanguage();
   const bundle = locales.get(lang);
