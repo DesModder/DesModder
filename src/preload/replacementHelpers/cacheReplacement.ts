@@ -109,7 +109,7 @@ function fullReplacement(calcDesktop: string, enabledReplacements: Block[]) {
       value: calcDesktop,
     };
   } else {
-    const sharedModuleToken = sharedModuleTokens[0];
+    const [sharedModuleToken] = sharedModuleTokens;
     workerResult = applyReplacements(
       enabledReplacements.filter((x) => x.workerOnly),
       // JSON.parse doesn't work because this is a single-quoted string.

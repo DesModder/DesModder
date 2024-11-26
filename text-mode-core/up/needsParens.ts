@@ -12,10 +12,7 @@ import {
  * Based on https://github.com/prettier/prettier/blob/main/src/language-js/needs-parens.js
  */
 export default function needsParens(path: NodePath): boolean {
-  const parent = path.parent;
-
-  const node = path.node;
-  const name = path.name;
+  const { parent, node, name } = path;
 
   if (node.type === "SequenceExpression" && node.parenWrapped) return true;
 
@@ -195,7 +192,7 @@ function isNonExpression(node: Node): node is NonExprNode {
 }
 
 function isArithmetic(expr: BinaryExpression) {
-  const op = expr.op;
+  const { op } = expr;
   return op === "^" || op === "*" || op === "/" || op === "+" || op === "-";
 }
 

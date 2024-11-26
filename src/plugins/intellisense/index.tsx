@@ -174,8 +174,7 @@ export default class Intellisense extends PluginController<{
       // determine where to put intellisense window
       const bbox = getMQCursorPosition(focusedMQ);
       if (bbox && bbox?.left !== 0 && bbox?.top !== 0) {
-        this.x = bbox.left;
-        this.y = bbox.top;
+        ({ left: this.x, top: this.y } = bbox);
       } else {
         this.canHaveIntellisense = false;
         this.view?.update();

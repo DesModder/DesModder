@@ -7,9 +7,9 @@ function testRoundTripIdenticalViaAST(text: string, emitOpts: TextEmitOptions) {
   test(text, () => {
     const analysis = parse(buildConfig({}), text);
     expect(analysis.diagnostics).toEqual([]);
-    const children = analysis.program.children;
+    const { children } = analysis.program;
     expect(children.length).toEqual(1);
-    const item = children[0];
+    const [item] = children;
     const emitted = astToText(item, emitOpts);
     expect(emitted).toBe(text);
   });
@@ -206,7 +206,7 @@ function dedentString(str: string) {
       .filter((line) => /\S/.test(line))
       .map((line) => line.match(/^\s*/)![0].length)
   );
-  let s = lines[0];
+  let [s] = lines;
   for (const line of trailingLines) {
     s += "\n" + (/\S/.test(line) ? line.slice(dedentAmount) : "");
   }

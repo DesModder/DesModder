@@ -65,7 +65,7 @@ export async function initFFmpeg(vc: VideoCreator) {
       if (type === "fferr") {
         const match = message.match(/frame=\s*(?<frame>\d+)/);
         if (match !== null) {
-          const frame = (match.groups as { frame: string }).frame;
+          const { frame } = match.groups as { frame: string };
           let denom = vc.frames.length - 1;
           if (denom === 0) denom = 1;
           const ratio = parseInt(frame) / denom;
@@ -141,7 +141,7 @@ export async function exportFrames(vc: VideoCreator) {
   vc.setExportProgress(-1);
   vc.updateView();
 
-  const fileType = vc.fileType;
+  const { fileType } = vc;
   const ext = fileType === "apng" ? "png" : fileType;
   const blob =
     fileType === "zip"

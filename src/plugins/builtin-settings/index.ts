@@ -66,7 +66,7 @@ export default class BuiltinSettings extends PluginController<Config> {
           key satisfies never;
       }
     }
-    const href = window.location.href;
+    const { href } = window.location;
     const url = new URL(href);
     url.search = params.toString();
     const newURL = url.toString().replace(/=trueDSMDELETE/g, "");

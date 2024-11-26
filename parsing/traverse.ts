@@ -21,7 +21,7 @@ export class Path<n extends Node = Node> {
         if ("args" in this.node) {
           return this.node.args as ChildExprNode[];
         }
-        const type = (this.node as any).type;
+        const { type } = this.node as any;
         throw Error(`Unexpected node type: ${type}. How did you obtain it?`);
       }
     }

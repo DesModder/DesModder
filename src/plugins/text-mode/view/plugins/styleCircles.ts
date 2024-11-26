@@ -13,7 +13,7 @@ export function styleCircles(): Extension {
 const styleCircleGutter = gutter({
   renderEmptyElements: false,
   markers(view) {
-    const program = view.state.field(analysisStateField).program;
+    const { program } = view.state.field(analysisStateField);
     const { from, to } = view.viewport;
     const ranges = [];
     let last = -1;

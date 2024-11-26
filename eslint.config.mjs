@@ -70,6 +70,15 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
       "no-console": "error",
       "@typescript-eslint/no-unsafe-argument": "off",
+
+      "@typescript-eslint/prefer-destructuring": [
+        "error",
+        { array: true, object: true },
+        {
+          enforceForRenamedProperties: false,
+          enforceForDeclarationWithTypeAnnotation: false,
+        },
+      ],
     },
   },
   {

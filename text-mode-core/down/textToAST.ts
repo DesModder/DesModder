@@ -923,7 +923,7 @@ const consequentParselets: Record<
         item.symbols.every((s) => s === "<" || s === "<=") &&
         item.args[1].type === "Identifier"
       ) {
-        last = item.args[2];
+        [, , last] = item.args;
         parameters.push({
           identifier: item.args[1],
           open: [item.symbols[0] === "<", item.symbols[1] === "<"],
@@ -979,7 +979,7 @@ function parseList(ps: ParseState, token: Token): ListOrRange {
   } else if (next.value === "]") {
     const listcomps = startValues.filter((e) => e.type === "ListComprehension");
     if (listcomps.length > 0) {
-      const inner = startValues[0];
+      const [inner] = startValues;
       if (listcomps.length > 1)
         throw ps.pushFatalError(
           "List comprehension can only have one 'for'",
@@ -1101,7 +1101,7 @@ function exprToStatement(ps: ParseState, expr: Expression): TextAST.Statement {
     expr.right.type === "BinaryExpression" &&
     expr.right.op === "~"
   ) {
-    const left = expr.left;
+    const { left } = expr;
     if (left.type !== "Identifier") {
       throw ps.pushFatalError(
         `Residual variable must be identifier, but got ${left.type}`,

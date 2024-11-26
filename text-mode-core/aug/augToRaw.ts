@@ -48,7 +48,7 @@ export default function augToRaw(
       } as const
     );
   }
-  const randomSeed = aug.settings.randomSeed;
+  const { randomSeed } = aug.settings;
   delete aug.settings.randomSeed;
   const res: Graph.GraphState = {
     // TODO-graph-state: version 11? Not sure if it changes any behavior (due to migrations).

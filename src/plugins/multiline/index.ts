@@ -394,10 +394,7 @@ export default class Multiline extends PluginController<Config> {
 
     // prevent the cursor from updating html elements
     // by monkey patching the domfrag prototype
-    const insAtDirEnd = domfragProto.insAtDirEnd;
-    const insDirOf = domfragProto.insDirOf;
-    const removeClass = domfragProto.removeClass;
-    const addClass = domfragProto.addClass;
+    const { insAtDirEnd, insDirOf, removeClass, addClass } = domfragProto;
     domfragProto.insAtDirEnd = function () {
       return this;
     };

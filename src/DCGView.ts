@@ -1,6 +1,6 @@
 import { Fragile } from "#globals";
 
-export const DCGView = Fragile.DCGView;
+export const { DCGView } = Fragile;
 
 type OrConst<T> = {
   [K in keyof T]: T[K] extends (...args: any[]) => any
@@ -109,9 +109,7 @@ export interface ComponentTemplate {
 }
 export type ComponentChild = ComponentTemplate | null | string | (() => string);
 
-export const Component = DCGView.Class;
-export const mountToNode = DCGView.mountToNode;
-export const unmountFromNode = DCGView.unmountFromNode;
+export const { Class: Component, mountToNode, unmountFromNode } = DCGView;
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

@@ -100,8 +100,8 @@ export default class SetPrimaryColor extends PluginController<Config> {
 
     if (!this.originalImage) return;
     const canvas = document.createElement("canvas");
-    canvas.width = this.originalImage.naturalWidth;
-    canvas.height = this.originalImage.naturalHeight;
+    ({ naturalWidth: canvas.width, naturalHeight: canvas.height } =
+      this.originalImage);
     const ctx = canvas.getContext("2d");
     if (ctx === null) return;
     const defaultHslValues = {

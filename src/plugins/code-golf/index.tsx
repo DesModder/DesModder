@@ -14,7 +14,7 @@ function calcWidthInPixels(domNode?: HTMLElement) {
   range.setStartBefore(rootblock.firstChild);
   range.setEndAfter(rootblock.lastChild);
 
-  const width = range.getBoundingClientRect().width;
+  const { width } = range.getBoundingClientRect();
 
   return width;
 }

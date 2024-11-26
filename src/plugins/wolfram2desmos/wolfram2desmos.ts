@@ -263,7 +263,7 @@ export function wolfram2desmos(input: string, config: Config) {
   replace(/(?<![A-Za-zΑ-ω])lcm(?![A-Za-zΑ-ω])/g, "Ｌ");
   if (find(/d(\^\d*)*\/dx(\^\d*)*/) !== -1) {
     i = find(/d(\^\d*)*\/dx(\^\d*)*/);
-    selection = input.match(/(?<=\^)(\d*)/)?.[0] ?? "";
+    [selection] = /(?<=\^)(\d*)/.exec(input) ?? [""];
     replace(/d(\^\d*)*\/dx(\^\d*)*/, "");
     insert(i, "Ｍ");
     insert(i + 1, "^(" + selection + ")");
@@ -616,9 +616,10 @@ export function wolfram2desmos(input: string, config: Config) {
         if (bracket === 0) {
           overwrite(startingIndex - 1, "}");
           overwrite(i, "{");
-          const match = selection.match(
-            /(?<=\^\{\\frac\{1\}\{)[A-z\d\s.\t+\-*]*(?=\}\})/
-          )?.[0];
+          const [match] =
+            selection.match(
+              /(?<=\^\{\\frac\{1\}\{)[A-z\d\s.\t+\-*]*(?=\}\})/
+            ) ?? [];
           if (match) insert(i, "√[" + match + "]");
           break;
         }
@@ -633,9 +634,10 @@ export function wolfram2desmos(input: string, config: Config) {
         bracketEvalFinal();
         if ((isOperator0(i) && bracket === 1) || bracket === 0) {
           insert(i + 1, "{");
-          const match = selection?.match(
-            /(?<=\^\{\\frac\{1\}\{)[A-z\d\s.\t+\-*]*(?=\}\})/
-          )?.[0];
+          const [match] =
+            selection?.match(
+              /(?<=\^\{\\frac\{1\}\{)[A-z\d\s.\t+\-*]*(?=\}\})/
+            ) ?? [];
           if (match) insert(i, "√[" + match + "]");
           break;
         }

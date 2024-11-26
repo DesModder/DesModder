@@ -394,7 +394,7 @@ function patternMatch(
         throw new ReplacementError(
           `Identifier pattern ${expectedToken.value} already bound to a non-identifier`
         );
-      expectedToken = currValue[0];
+      [expectedToken] = currValue;
     }
     const foundToken = str[strIndex];
     if (foundToken === undefined) return null;
