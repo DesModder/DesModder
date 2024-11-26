@@ -63,7 +63,7 @@ export async function initFFmpeg(vc: VideoCreator) {
     // Idk why this doesn't just use ffmpeg.setProgress, but it works for now.
     ffmpeg.setLogger(({ type, message }) => {
       if (type === "fferr") {
-        const match = message.match(/frame=\s*(?<frame>\d+)/);
+        const match = /frame=\s*(?<frame>\d+)/.exec(message);
         if (match !== null) {
           const { frame } = match.groups as { frame: string };
           let denom = vc.frames.length - 1;

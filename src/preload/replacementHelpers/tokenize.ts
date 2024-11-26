@@ -31,14 +31,14 @@ export function tokenizeReplacement(
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (line.startsWith("#")) {
-      const depth = line.match(/^#+/)![0].length;
+      const depth = /^#+/.exec(line)![0].length;
       tokens.push({
         tag: "heading",
         depth,
         text: line.slice(depth).trim(),
       });
     } else if (line.startsWith("*")) {
-      const match = line.match(/^\*([^*]+)\*(.*)$/);
+      const match = /^\*([^*]+)\*(.*)$/.exec(line);
       if (match === null)
         errorOnLine(`Line starting with '*' missing second '*'`, i, line);
       const parts = match[2].split("=>");

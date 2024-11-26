@@ -331,7 +331,7 @@ export function wolfram2desmos(input: string, config: Config) {
     if (selection.search(functionSymbols) === 0 && selection[1] === "(") {
       i += 1;
     } else if (selection.search(/([0-9]*[.])?[0-9]+/) === 0) {
-      i += selection.match(/([0-9]*[.])?[0-9]+/)?.[0]?.length ?? 0;
+      i += /([0-9]*[.])?[0-9]+/.exec(selection)?.[0]?.length ?? 0;
       if (input[i + 1] === "(") {
         insert(i + 1, ")");
         continue;
@@ -617,9 +617,8 @@ export function wolfram2desmos(input: string, config: Config) {
           overwrite(startingIndex - 1, "}");
           overwrite(i, "{");
           const [match] =
-            selection.match(
-              /(?<=\^\{\\frac\{1\}\{)[A-z\d\s.\t+\-*]*(?=\}\})/
-            ) ?? [];
+            /(?<=\^\{\\frac\{1\}\{)[A-z\d\s.\t+\-*]*(?=\}\})/.exec(selection) ??
+            [];
           if (match) insert(i, "√[" + match + "]");
           break;
         }
@@ -635,9 +634,8 @@ export function wolfram2desmos(input: string, config: Config) {
         if ((isOperator0(i) && bracket === 1) || bracket === 0) {
           insert(i + 1, "{");
           const [match] =
-            selection?.match(
-              /(?<=\^\{\\frac\{1\}\{)[A-z\d\s.\t+\-*]*(?=\}\})/
-            ) ?? [];
+            /(?<=\^\{\\frac\{1\}\{)[A-z\d\s.\t+\-*]*(?=\}\})/.exec(selection) ??
+            [];
           if (match) insert(i, "√[" + match + "]");
           break;
         }

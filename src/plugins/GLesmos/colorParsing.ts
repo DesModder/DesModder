@@ -175,8 +175,8 @@ function parseCSSFunc(color: string): ColorType | null {
   const NUMMAP_HSL: boolean[] = [false, true, true];
 
   const [, funcName = "", argSet = ""] =
-    color.trim().match(matchSignature) ?? [];
-  const args0 = argSet.match(matchArgs);
+    matchSignature.exec(color.trim()) ?? [];
+  const args0 = matchArgs.exec(argSet);
   if (args0 === null) return null;
   const args = args0.slice(1);
   const alphaStr: string | undefined = args.pop();
@@ -217,25 +217,25 @@ function parseCSSFunc(color: string): ColorType | null {
 export function parseCSSHex(color: string) {
   const rxHex: RegExp = /^#((?:[0-9a-z]){3,8})$/i;
 
-  const hexMatch: RegExpMatchArray | null = color.match(rxHex);
+  const hexMatch: RegExpExecArray | null = rxHex.exec(color);
   if (hexMatch === null) return null;
   const hex: string = hexMatch[1];
 
   let output: string[] | number[];
   switch (hex.length) {
     case 3:
-      output = hex.match(/(.)(.)(.)/)?.splice(1) ?? [];
+      output = /(.)(.)(.)/.exec(hex)?.splice(1) ?? [];
       output = output.map((elem) => elem + elem);
       break;
     case 6:
-      output = hex.match(/(..)(..)(..)/)?.splice(1) ?? [];
+      output = /(..)(..)(..)/.exec(hex)?.splice(1) ?? [];
       break;
     case 4:
-      output = hex.match(/(.)(.)(.)(.)/)?.splice(1) ?? [];
+      output = /(.)(.)(.)(.)/.exec(hex)?.splice(1) ?? [];
       output = output.map((elem) => elem + elem);
       break;
     case 8:
-      output = hex.match(/(..)(..)(..)(..)/)?.splice(1) ?? [];
+      output = /(..)(..)(..)(..)/.exec(hex)?.splice(1) ?? [];
       break;
     default:
       return null;

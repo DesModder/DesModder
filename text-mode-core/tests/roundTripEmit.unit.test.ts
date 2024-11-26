@@ -204,7 +204,7 @@ function dedentString(str: string) {
   const dedentAmount = Math.min(
     ...trailingLines
       .filter((line) => /\S/.test(line))
-      .map((line) => line.match(/^\s*/)![0].length)
+      .map((line) => /^\s*/.exec(line)![0].length)
   );
   let [s] = lines;
   for (const line of trailingLines) {

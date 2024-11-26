@@ -409,5 +409,5 @@ function insertWithIndentation(
 
 export function getIndentation(view: EditorView, from: number) {
   const line = view.state.doc.lineAt(from);
-  return line.text.match(/^[ \t]*/)![0];
+  return /^[ \t]*/.exec(line.text)![0];
 }
