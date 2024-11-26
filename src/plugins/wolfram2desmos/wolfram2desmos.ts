@@ -325,7 +325,7 @@ export function wolfram2desmos(input: string, config: Config) {
     temp = temp.search(functionSymbols) !== -1;
     bracket = -1;
     selection = input.slice(i + 1, input.length);
-    if (selection[0] === "+" || selection[0] === "-" || selection[0] === "±") {
+    if (/^[-+±]/.test(selection)) {
       i += 1;
     }
     if (selection.search(functionSymbols) === 0 && selection[1] === "(") {

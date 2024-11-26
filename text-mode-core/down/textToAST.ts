@@ -1209,7 +1209,7 @@ function compareOpParselet(op: TextAST.CompareOp) {
 }
 
 function relopDir(symbol: TextAST.CompareOp) {
-  return symbol === "=" ? 0 : symbol[0] === "<" ? 1 : -1;
+  return symbol === "=" ? 0 : symbol.startsWith("<") ? 1 : -1;
 }
 
 interface CPOpts {
