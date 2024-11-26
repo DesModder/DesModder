@@ -528,12 +528,11 @@ const initialParselets: TokenMap<InitialParselet> = {
         pos: pos(token, name),
       });
     },
-    settings: (ps, token): Node => {
-      return ps.finishStatement({
+    settings: (ps, token): Node =>
+      ps.finishStatement({
         type: "Settings",
         pos: pos(token),
-      });
-    },
+      }),
     ticker: (ps, token): Node => {
       const handler = parseExpr(ps, Power.meta, "ticker handler", "a -> a+1");
       return ps.finishStatement({

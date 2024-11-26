@@ -15,19 +15,12 @@ export class IndexFor<T> extends Component<{
           indexCache.clear();
           return this.props.each().map((e, i) => {
             indexCache.set(this.props.key(e), i);
-            return [
-              e,
-              () => {
-                return indexCache.get(this.props.key(e));
-              },
-            ] as const;
+            return [e, () => indexCache.get(this.props.key(e))] as const;
           });
         }}
         key={([e]) => this.props.key(e)}
       >
-        {([e, index]: [T, () => number]) => {
-          return this.props?.children(e, index);
-        }}
+        {([e, index]: [T, () => number]) => this.props?.children(e, index)}
       </For>
     );
   }

@@ -97,26 +97,26 @@ export class ExpressionItemCostPanel extends Component<{
         <div class="dsm-code-golf-char-count-container">
           <div class="dsm-code-golf-char-count">
             <div>
-              {() => {
-                return format("code-golf-width-in-pixels", {
+              {() =>
+                format("code-golf-width-in-pixels", {
                   pixels: Math.round(
                     getGolfStats(
                       this.props.cc(),
                       this.props.model().latex ?? ""
                     ).width
                   ).toString(),
-                });
-              }}
+                })
+              }
             </div>
             <div>
-              {() => {
-                return format("code-golf-symbol-count", {
+              {() =>
+                format("code-golf-symbol-count", {
                   elements: getGolfStats(
                     this.props.cc(),
                     this.props.model().latex ?? ""
                   ).symbols,
-                });
-              }}
+                })
+              }
             </div>
           </div>
         </div>

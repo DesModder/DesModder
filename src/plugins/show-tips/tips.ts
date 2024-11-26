@@ -75,10 +75,8 @@ export function getTipData() {
     huggy: "",
   })
     .sort((a, b) => hashString(a[0]) - hashString(b[0]))
-    .map(([ftlKey, learnMore]) => {
-      return {
-        tip: `show-tips-tip-${ftlKey}`,
-        learnMore,
-      };
-    });
+    .map(([ftlKey, learnMore]) => ({
+      tip: `show-tips-tip-${ftlKey}`,
+      learnMore,
+    }));
 }

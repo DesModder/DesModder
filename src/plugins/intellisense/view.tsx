@@ -77,23 +77,21 @@ export class JumpToDefinitionMenu extends Component<{
                   {([e, i]: [
                     JumpToDefinitionMenuInfo["idents"][number],
                     number
-                  ]) => {
-                    return (
-                      <li
-                        onClick={() => {
-                          this.props.jumpToDefinitionById(e.sourceExprId);
-                        }}
-                        class={() =>
-                          i === this.props.jumpToDefIndex() ? "selected" : ""
-                        }
-                      >
-                        <DStaticMathquillView
-                          latex={() => e.sourceExprLatex}
-                          config={{}}
-                        ></DStaticMathquillView>
-                      </li>
-                    );
-                  }}
+                  ]) => (
+                    <li
+                      onClick={() => {
+                        this.props.jumpToDefinitionById(e.sourceExprId);
+                      }}
+                      class={() =>
+                        i === this.props.jumpToDefIndex() ? "selected" : ""
+                      }
+                    >
+                      <DStaticMathquillView
+                        latex={() => e.sourceExprLatex}
+                        config={{}}
+                      ></DStaticMathquillView>
+                    </li>
+                  )}
                 </For>
               </ul>
             </div>
@@ -252,12 +250,12 @@ export class PartialFunctionCallView extends Component<{
               </If>
               <div class="pfc-latex">
                 <DStaticMathquillView
-                  latex={() => {
-                    return identifierStringToLatexString(
+                  latex={() =>
+                    identifierStringToLatexString(
                       this.props.cfg(),
                       this.props.partialFunctionCall()?.ident ?? ""
-                    );
-                  }}
+                    )
+                  }
                   config={{}}
                 ></DStaticMathquillView>
                 <StaticMathQuillView latex="("></StaticMathQuillView>
@@ -270,34 +268,31 @@ export class PartialFunctionCallView extends Component<{
                     }
                     key={(e) => e[0]}
                   >
-                    {(p: [string, number]) => {
-                      return (
-                        <div
-                          class={() =>
-                            this.props.partialFunctionCall()?.paramIndex ===
-                            p[1]
-                              ? "pfc-param-selected"
-                              : "pfc-param"
+                    {(p: [string, number]) => (
+                      <div
+                        class={() =>
+                          this.props.partialFunctionCall()?.paramIndex === p[1]
+                            ? "pfc-param-selected"
+                            : "pfc-param"
+                        }
+                      >
+                        <DStaticMathquillView
+                          config={{}}
+                          latex={() =>
+                            identifierStringToLatexString(
+                              this.props.cfg(),
+                              p[0]
+                            ) +
+                            (p[1] ===
+                            (this.props.partialFunctionCallIdent()?.params
+                              ?.length ?? 0) -
+                              1
+                              ? ""
+                              : ",")
                           }
-                        >
-                          <DStaticMathquillView
-                            config={{}}
-                            latex={() =>
-                              identifierStringToLatexString(
-                                this.props.cfg(),
-                                p[0]
-                              ) +
-                              (p[1] ===
-                              (this.props.partialFunctionCallIdent()?.params
-                                ?.length ?? 0) -
-                                1
-                                ? ""
-                                : ",")
-                            }
-                          ></DStaticMathquillView>
-                        </div>
-                      );
-                    }}
+                        ></DStaticMathquillView>
+                      </div>
+                    )}
                   </For>
                 </div>
                 <StaticMathQuillView latex=")"></StaticMathQuillView>
