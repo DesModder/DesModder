@@ -14,7 +14,6 @@ export function attach<F extends (...args: any) => any>(
     const ret = handler(...args);
 
     // intentional
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-boolean-literal-compare
     if (ret?.[0] === false) return ret[1];
     return oldTarget(...args);
   });
