@@ -24,7 +24,7 @@ module.exports = {
           node.callee.name === "expect" &&
           node.arguments.length > 0
         ) {
-          const parserServices = context.parserServices;
+          const { parserServices } = context.sourceCode;
           const checker = parserServices.program.getTypeChecker();
           const originalArgNode = parserServices.esTreeNodeToTSNodeMap.get(
             node.arguments[0]

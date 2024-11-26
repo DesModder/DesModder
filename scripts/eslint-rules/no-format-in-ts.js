@@ -20,7 +20,7 @@ module.exports = {
           node.callee.type === "Identifier" &&
           node.callee.name === "format"
         ) {
-          const filename = context.getFilename();
+          const filename = context.filename ?? context.getFilename();
           if (!filename.endsWith(".jsx") && !filename.endsWith(".tsx")) {
             context.report({
               messageId: "noFormatInTS",
