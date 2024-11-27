@@ -1,4 +1,7 @@
 import { PluginController } from "../PluginController";
+import { format } from "#i18n";
+import type { DispatchedEvent } from "#globals";
+import type { AtLeastOne } from "#utils/utils.ts";
 
 export default class PasteImage extends PluginController {
   static id = "paste-image" as const;
@@ -16,26 +19,87 @@ export default class PasteImage extends PluginController {
 
   _pasteHandler(e: ClipboardEvent) {
     const clipboardFiles = e.clipboardData?.files;
-    if (clipboardFiles?.length) {
-      e.preventDefault();
-      if (!this.calc.selectedExpressionId) {
-        // avoid images being inserted at the top of the expressions list
-        // when there is no selected expression
+    if (!this.cc.areImagesEnabled()) {
+      this.cc._showToast({
+        // eslint-disable-next-line rulesdir/no-format-in-ts
+        message: format("paste-image-error-images-not-enabled"),
+      });
+    } else if (this.cc.isUploadingImages()) {
+      this.waitForImageUploads({
+        runFinally: () =>
+          this.cc._showToast({
+            // eslint-disable-next-line rulesdir/no-format-in-ts
+            message: format("paste-image-error-another-upload-in-progress"),
+          }),
+      });
+    } else if (clipboardFiles?.length) {
+      const { 0: nonImageFiles, 1: imageFiles } = Object.groupBy(
+        clipboardFiles,
+        ({ type: mimeType }) => +/image\/*/.test(mimeType)
+      );
+      // Among the possible errors, only those related to an invalid MIME type is not handled by the image-upload-error event
+      nonImageFiles &&
+        setTimeout(() =>
+          this.cc._showToast({
+            message: this.cc.s("graphing-calculator-error-image-invalid-file", {
+              file: nonImageFiles[0].name,
+            }),
+          })
+        );
+      if (!imageFiles) return;
+      if (!this.calc.isAnyExpressionSelected) {
         if (document.activeElement !== document.body) return;
-        const lastExpression = this.calc.getExpressions().splice(-1)[0];
-        lastExpression &&
-          this.cc.dispatch({
-            type: "set-focus-location",
-            location: {
-              type: "expression",
-              id: lastExpression.id,
-            },
-          });
+        // Avoid images being inserted at the top of the expressions list when there is no selected expression
+        const lastExprId = this.calc.getExpressions().at(-1)?.id;
+        lastExprId && this.setFocusLocation(lastExprId);
       }
+      e.preventDefault();
+      this.waitForImageUploads({
+        // Callback ID_1 has already been invoked so __nextItemId is incremented
+        runAfterSuccess: () => this.setFocusLocation(this.cc.__nextItemId - 1),
+        runFinally: () => this.cc.scrollSelectedItemIntoView(),
+      });
       this.cc.dispatch({
         type: "new-images",
-        files: clipboardFiles,
+        files: PasteImage.fileListOf(...imageFiles),
       });
     }
+  }
+
+  setFocusLocation(exprId: string | number) {
+    this.cc.dispatch({
+      type: "set-focus-location",
+      location: { type: "expression", id: exprId.toString() },
+    });
+  }
+
+  waitForImageUploads({
+    runAfterSuccess,
+    runFinally,
+  }: AtLeastOne<{
+    runAfterSuccess: () => void;
+    runFinally: () => void;
+  }>) {
+    const handleImageUpload = (e: DispatchedEvent) => {
+      switch (e.type) {
+        case "image-upload-success":
+          runAfterSuccess?.();
+        // eslint-disable-next-line no-fallthrough
+        case "image-upload-error":
+          if (!this.cc.isUploadingImages())
+            setTimeout(() => {
+              runFinally?.();
+              this.cc.dispatcher.unregister(callbackId);
+            });
+          break;
+      }
+    };
+    const callbackId = this.cc.dispatcher.register(handleImageUpload);
+  }
+
+  static fileListOf(...files: File[]): FileList {
+    const dT = new DataTransfer();
+    files.forEach((file) => dT.items.add(file));
+    return dT.files;
   }
 }
