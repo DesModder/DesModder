@@ -74,7 +74,7 @@ function getGolfStats(
   cachedGolfStatsPool.set(latex, stats);
 
   if (cachedGolfStatsPool.size > 10000) {
-    cachedGolfStatsPool.delete(cachedGolfStatsPool.keys().next().value);
+    cachedGolfStatsPool.delete(cachedGolfStatsPool.keys().next().value!);
   }
 
   document.body.removeChild(fakeContainer);
