@@ -87,7 +87,7 @@ listenToMessageDown((message) => {
     message.pluginsForceDisabled.forEach((disabledPlugin) =>
       addForceDisabled(disabledPlugin)
     );
-    scriptURL = message.scriptURL;
+    ({ scriptURL } = message);
     window.DesModderPreload = {
       pluginsForceDisabled: arrayToSet(message.pluginsForceDisabled),
       pluginsEnabled: message.pluginsEnabled,

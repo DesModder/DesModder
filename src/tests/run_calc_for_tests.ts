@@ -36,5 +36,4 @@ HTMLMediaElement.prototype.play = async () => {
 }
 console.debug = () => {}
 
-// eslint-disable-next-line rulesdir/no-reach-past-exports
 import "../../node_modules/.cache/desmos/calculator_desktop.js";

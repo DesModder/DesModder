@@ -1,5 +1,4 @@
 import { replacer } from "./backend";
-// eslint-disable-next-line rulesdir/no-reach-past-exports
 import "../../tests/run_calc_for_tests";
 
 function testRepl(from: string, to: string, cases: [string, string][]) {

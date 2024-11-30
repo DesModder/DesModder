@@ -74,13 +74,9 @@ function mapToColorSpace(
     case 0: // none to none - does nothing
       return (args: number[]) => convFunc(...args);
     case 1: // alpha to none - alpha value gets ignored
-      return (args: number[]) => {
-        return convFunc(...args);
-      };
+      return (args: number[]) => convFunc(...args);
     case 2: // none to alpha - 1 is added as alpha value
-      return (args: number[]) => {
-        return convFunc(...args).concat(1);
-      };
+      return (args: number[]) => convFunc(...args).concat(1);
     case 3: // alpha to alpha - alpha value gets added to output
       return (args: number[]) => {
         const al = args.pop()!;
@@ -96,15 +92,12 @@ function getRGBfromHSL(hue: number, sat: number, light: number) {
   const lsRatio: number = Math.min(light, 1 - light) * sat;
 
   return [0, 8, 4]
-    .map((offset) => {
-      return mod(offset + hue / 30, 12);
-    })
-    .map((kval) => {
-      return (
+    .map((offset) => mod(offset + hue / 30, 12))
+    .map(
+      (kval) =>
         light -
         lsRatio * Math.max(Math.min(Math.min(kval - 3, 9 - kval), 1), -1)
-      );
-    });
+    );
 }
 
 function getRGBfromHSV(hue: number, sat: number, value: number) {
@@ -112,14 +105,11 @@ function getRGBfromHSV(hue: number, sat: number, value: number) {
   const vsRatio: number = value * sat;
 
   return [5, 3, 1]
-    .map((offset) => {
-      return mod(offset + hue / 60, 6);
-    })
-    .map((kval) => {
-      return (
+    .map((offset) => mod(offset + hue / 60, 6))
+    .map(
+      (kval) =>
         value - vsRatio * Math.max(Math.min(Math.min(kval, 4 - kval), 1), 0)
-      );
-    });
+    );
 }
 
 export function getHSVfromRGB(red: number, green: number, blue: number) {
@@ -175,8 +165,8 @@ function parseCSSFunc(color: string): ColorType | null {
   const NUMMAP_HSL: boolean[] = [false, true, true];
 
   const [, funcName = "", argSet = ""] =
-    color.trim().match(matchSignature) ?? [];
-  const args0 = argSet.match(matchArgs);
+    matchSignature.exec(color.trim()) ?? [];
+  const args0 = matchArgs.exec(argSet);
   if (args0 === null) return null;
   const args = args0.slice(1);
   const alphaStr: string | undefined = args.pop();
@@ -190,17 +180,15 @@ function parseCSSFunc(color: string): ColorType | null {
     case funcName === "rgb":
     case funcName === "rgba":
       if (!isEqual(pType, NUMMAP_RGB)) return null;
-      components = args.map((num) => {
-        return parseFloat(num) / 255;
-      });
+      components = args.map((num) => parseFloat(num) / 255);
 
       break;
     case funcName === "hsl":
     case funcName === "hsla":
       if (!isEqual(pType, NUMMAP_HSL)) return null;
-      components = args.map((num, i) => {
-        return parseFloat(num) * (pType[i] ? 0.01 : 1);
-      });
+      components = args.map(
+        (num, i) => parseFloat(num) * (pType[i] ? 0.01 : 1)
+      );
       break;
     default:
       return null;
@@ -217,33 +205,31 @@ function parseCSSFunc(color: string): ColorType | null {
 export function parseCSSHex(color: string) {
   const rxHex: RegExp = /^#((?:[0-9a-z]){3,8})$/i;
 
-  const hexMatch: RegExpMatchArray | null = color.match(rxHex);
+  const hexMatch: RegExpExecArray | null = rxHex.exec(color);
   if (hexMatch === null) return null;
   const hex: string = hexMatch[1];
 
   let output: string[] | number[];
   switch (hex.length) {
     case 3:
-      output = hex.match(/(.)(.)(.)/)?.splice(1) ?? [];
+      output = /(.)(.)(.)/.exec(hex)?.splice(1) ?? [];
       output = output.map((elem) => elem + elem);
       break;
     case 6:
-      output = hex.match(/(..)(..)(..)/)?.splice(1) ?? [];
+      output = /(..)(..)(..)/.exec(hex)?.splice(1) ?? [];
       break;
     case 4:
-      output = hex.match(/(.)(.)(.)(.)/)?.splice(1) ?? [];
+      output = /(.)(.)(.)(.)/.exec(hex)?.splice(1) ?? [];
       output = output.map((elem) => elem + elem);
       break;
     case 8:
-      output = hex.match(/(..)(..)(..)(..)/)?.splice(1) ?? [];
+      output = /(..)(..)(..)(..)/.exec(hex)?.splice(1) ?? [];
       break;
     default:
       return null;
   }
 
-  output = output.map((item) => {
-    return Number(`0x${item}`) / 255;
-  });
+  output = output.map((item) => Number(`0x${item}`) / 255);
 
   return output;
 }

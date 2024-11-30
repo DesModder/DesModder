@@ -4,7 +4,7 @@ import { foldEffect } from "@codemirror/language";
 import { EditorState } from "@codemirror/state";
 
 function collapsedRanges(state: EditorState) {
-  const program = state.field(analysisStateField).program;
+  const { program } = state.field(analysisStateField);
   const { from, to } = program.pos;
   const arr = [];
   for (const stmt of statementsIntersecting(program, from, to)) {

@@ -28,7 +28,7 @@ fs.readdirSync("./calc_states").forEach((filename) => {
       return;
     }
     const valid = validate(data);
-    const graphID = filename.replace(/\?.*/, "").split(".")[0];
+    const [graphID] = filename.replace(/\?.*/, "").split(".");
     if (printGraphs) console.log(graphID);
     total += 1;
     if (valid) {

@@ -174,8 +174,7 @@ export default class Intellisense extends PluginController<{
       // determine where to put intellisense window
       const bbox = getMQCursorPosition(focusedMQ);
       if (bbox && bbox?.left !== 0 && bbox?.top !== 0) {
-        this.x = bbox.left;
-        this.y = bbox.top;
+        ({ left: this.x, top: this.y } = bbox);
       } else {
         this.canHaveIntellisense = false;
         this.view?.update();
@@ -214,11 +213,9 @@ export default class Intellisense extends PluginController<{
         }
 
         this.intellisenseOpts = Array.from(intellisenseOptsMap.entries()).map(
-          ([_, idents]) => {
-            return {
-              idents,
-            };
-          }
+          ([_, idents]) => ({
+            idents,
+          })
         );
 
         // sort the intellisense options so that closer ones appear first
@@ -556,9 +553,7 @@ export default class Intellisense extends PluginController<{
   jumpToDefinition(name: string) {
     const identDsts = this.intellisenseState
       .boundIdentifiersArray()
-      .filter((id) => {
-        return id.variableName === name;
-      });
+      .filter((id) => id.variableName === name);
 
     if (identDsts.length === 1) {
       this.jumpToDefinitionById(identDsts[0].exprId);
@@ -571,14 +566,12 @@ export default class Intellisense extends PluginController<{
 
       this.jumpToDefState = {
         varName: identDsts[0].variableName,
-        idents: identDsts.map((dst) => {
-          return {
-            ident: dst,
-            sourceExprId: dst.exprId,
-            sourceExprIndex: this.getExpressionIndex(dst.exprId) ?? 0,
-            sourceExprLatex: this.getExpressionLatex(dst.exprId) ?? "",
-          };
-        }),
+        idents: identDsts.map((dst) => ({
+          ident: dst,
+          sourceExprId: dst.exprId,
+          sourceExprIndex: this.getExpressionIndex(dst.exprId) ?? 0,
+          sourceExprLatex: this.getExpressionLatex(dst.exprId) ?? "",
+        })),
       };
     }
 

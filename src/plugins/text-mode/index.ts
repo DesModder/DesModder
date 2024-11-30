@@ -140,7 +140,7 @@ export default class TextMode extends PluginController {
 }
 
 function selectFromText(view: EditorView) {
-  const calc = view.state.facet(tmPlugin).calc;
+  const { calc } = view.state.facet(tmPlugin);
   const currSelected = calc.selectedExpressionId as string | undefined;
   const newSelected = getSelectedItem(view);
   if (newSelected !== currSelected) {

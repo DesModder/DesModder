@@ -6,25 +6,26 @@ export function generateBracketPairColorizationCSS(
   if (!colors[0]) return [];
 
   const colorMaker = `rgb(${colors[0]
-    .map((_, i) => {
-      return `calc(${colors
-        .map((col, colindex) => {
-          const channel = col[i];
-          // Uses the periodic nature of cosine to only color every Nth bracket a given color
+    .map(
+      (_, i) =>
+        `calc(${colors
+          .map((col, colindex) => {
+            const channel = col[i];
+            // Uses the periodic nature of cosine to only color every Nth bracket a given color
 
-          // All colors are multiplied by this "cosine factor" and then added together
-          // to only "pick" the correct color.
+            // All colors are multiplied by this "cosine factor" and then added together
+            // to only "pick" the correct color.
 
-          // The "max(0, 10000 * cos(whatever) - 9999)" thing is done to *only* pick
-          // values where cosine is 1 (i.e. where bracketdepth - index = 0)
+            // The "max(0, 10000 * cos(whatever) - 9999)" thing is done to *only* pick
+            // values where cosine is 1 (i.e. where bracketdepth - index = 0)
 
-          // I'm not using better options like abs() or mod() due to browser compatibility
-          return `${channel} * max(0, 10000 * cos(
+            // I'm not using better options like abs() or mod() due to browser compatibility
+            return `${channel} * max(0, 10000 * cos(
             2 * 3.14159265358979323 * (var(--bracket-depth2) - ${colindex}) / ${colors.length}
             ) - 9999)`;
-        })
-        .join(" + ")})`;
-    })
+          })
+          .join(" + ")})`
+    )
     .join(", ")})`;
 
   return [
@@ -50,7 +51,7 @@ export function generateBracketPairColorizationCSS(
     .dcg-mq-bracket-l path, .dcg-mq-bracket-r path {
         stroke-width: ${thickenBrackets}%;
         stroke: ${colorMaker};
-    } 
+    }
     `,
     `
     .dsm-mq-syntax-comma {

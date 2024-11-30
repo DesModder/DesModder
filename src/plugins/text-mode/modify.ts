@@ -180,7 +180,7 @@ function metadataChange(
   const ast = itemAugToAST(itemAug);
   if (!ast) return [];
   const fullItem = astToText(ast);
-  const newStyle = /@\{[^]*/m.exec(fullItem)?.[0];
+  const [newStyle] = /@\{[^]*/m.exec(fullItem) ?? [];
   const insert = (!oldNode.style && newStyle ? " " : "") + (newStyle ?? "");
   return insertWithIndentation(view, pos, insert);
 }
@@ -257,7 +257,7 @@ function deletedItemsChange(
       stmt.type !== "Ticker" &&
       stmt.type !== "Table"
     ) {
-      let from = stmt.pos.from;
+      let { from } = stmt.pos;
       while (/^[ \t\n]$/.test(view.state.sliceDoc(from - 1, from))) {
         --from;
       }
@@ -381,7 +381,7 @@ function itemChange(
       const params = "#{" + text.split("#{")[1];
       // only modify the parameters
       if (!oldNode.parameters) {
-        const to = oldNode.pos.to;
+        const { to } = oldNode.pos;
         return [insertWithIndentation(view, { from: to, to }, " " + params)];
       } else {
         return [insertWithIndentation(view, oldNode.parameters.pos, params)];
@@ -409,5 +409,5 @@ function insertWithIndentation(
 
 export function getIndentation(view: EditorView, from: number) {
   const line = view.state.doc.lineAt(from);
-  return line.text.match(/^[ \t]*/)![0];
+  return /^[ \t]*/.exec(line.text)![0];
 }

@@ -1,7 +1,6 @@
 {
-  "extends": "../tsconfig-base.json",
+  "extends": "../tsconfig-base",
   "compilerOptions": {},
   "references": [],
-  "include": ["**/*"],
-  "exclude": ["tests"]
+  "include": ["**/*"]
 }

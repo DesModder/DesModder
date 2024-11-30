@@ -25,7 +25,7 @@ export default function rawToAug(
       list: rawListToAug(cfg, raw.expressions.list, dsmMetadata),
     },
   };
-  const ticker = raw.expressions.ticker;
+  const { ticker } = raw.expressions;
   if (ticker?.handlerLatex) {
     res.expressions.ticker = {
       handlerLatex: parseLatex(cfg, ticker.handlerLatex),
@@ -578,7 +578,7 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         assignments: node.args.slice(1).map(assignmentExprToTree),
       };
     case "Piecewise": {
-      const conditionNode = node.args[0];
+      const [conditionNode] = node.args;
       const condition =
         conditionNode.type === "Constant" &&
         conditionNode._constantValue === true
@@ -597,7 +597,7 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
       };
     }
     case "Restriction": {
-      const conditionNode = node.args[0];
+      const [conditionNode] = node.args;
       const condition =
         conditionNode.type === "Constant" &&
         conditionNode._constantValue === true

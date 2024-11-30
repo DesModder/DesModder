@@ -5,7 +5,9 @@ describe("Find-replace", () => {
     // Init an expression
     await driver.focusIndex(0);
     await driver.setLatexAndSync("a+b+a");
-    const latex = ((await driver.getState()).expressions.list[0] as any).latex;
+    const [{ latex }] = (await driver.getState()).expressions.list as {
+      latex: string;
+    }[];
     expect(latex).toBe("a+b+a");
 
     // Press Ctrl+F to open the menu
@@ -23,7 +25,9 @@ describe("Find-replace", () => {
 
     // Do the replacement
     await driver.click(".dsm-find-replace-replace-all");
-    const latex2 = ((await driver.getState()).expressions.list[0] as any).latex;
+    const [{ latex: latex2 }] = (await driver.getState()).expressions.list as {
+      latex: string;
+    }[];
     expect(latex2).toBe("c+b+c");
 
     // Close the find-replace menu

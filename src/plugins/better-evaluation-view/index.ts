@@ -15,7 +15,7 @@ export default class BetterEvaluationView extends PluginController<Config> {
   }
 
   colorEvaluation(val: () => string | string[]): Replacer {
-    const settings = this.settings;
+    const { settings } = this;
     if (!settings.colors) return undefined;
     const isArray = Array.isArray(val());
     if (isArray && !(settings.lists && settings.colorLists)) return undefined;

@@ -542,7 +542,7 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
           parts.splice(0, 2);
           const remainingCmd: Command = { ind, mode, doc: fill(parts) };
 
-          const secondContent = parts[0];
+          const [secondContent] = parts;
 
           const firstAndSecondContentFlatCmd: Command = {
             ind,

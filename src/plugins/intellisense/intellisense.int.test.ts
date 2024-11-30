@@ -22,7 +22,7 @@ describe("Intellisense", () => {
         latexSuffix: string,
         suffixLeft: number
       ) => {
-        let typedIdentifierSample = `${varname}`;
+        let typedIdentifierSample = varname;
 
         // generate expected latex
         let expectedLatex = varname;

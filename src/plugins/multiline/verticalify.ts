@@ -244,7 +244,7 @@ export function verticalify(
   // add line breaks
   if (options.determineLineBreaksAutomatically) {
     for (const child of children) {
-      const width = child.getBoundingClientRect().width;
+      const { width } = child.getBoundingClientRect();
 
       // accumulate width so we know when to break
       accumulatedWidth += width;
@@ -301,7 +301,7 @@ export function verticalify(
     if (context.containerType === "root" && child.innerHTML.startsWith("="))
       beforeEquals = false;
 
-    const width = child.getBoundingClientRect().width;
+    const { width } = child.getBoundingClientRect();
 
     // verticalify child
     if (

@@ -1,7 +1,7 @@
 import Node from "#parsing/parsenode.ts";
 import { type Calc, Fragile, Private } from "#globals";
 
-const evaluateLatex = Fragile.evaluateLatex;
+const { evaluateLatex } = Fragile;
 
 export const keys = Fragile.Keys;
 
@@ -44,4 +44,4 @@ export function getCurrentGraphTitle(calc: Calc): string | undefined {
   return calc._calc.globalHotkeys?.mygraphsController?.graphsController?.getCurrentGraphTitle?.();
 }
 
-export const List = Fragile.List;
+export const { List } = Fragile;

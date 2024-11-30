@@ -281,7 +281,7 @@ export class Orientation {
   _applyingSpinningOrientation = false;
   updateLatexOrientationFromGraph() {
     if (!this.vc.isMenuOpen()) return;
-    const grapher3d = this.cc.grapher3d;
+    const { grapher3d } = this.cc;
     if (!grapher3d) return;
     if (this._applyingSpinningOrientation) return;
     const mat = getOrientation(grapher3d);
@@ -305,7 +305,7 @@ export class Orientation {
     if (this._applyingSpinningOrientation) return;
     const { zTip, xyRot } = this.getOrientationFromLatex();
     if (!this.isAngleValid(zTip) || !this.isAngleValid(xyRot)) return;
-    const grapher3d = this.cc.grapher3d;
+    const { grapher3d } = this.cc;
     if (!grapher3d) return;
     const mat = orientationFromEuler(grapher3d, zTip, xyRot);
     this._targetMatrixFromLatex = mat;
@@ -327,7 +327,7 @@ export class Orientation {
   }
 
   getEulerOrientation() {
-    const grapher3d = this.cc.grapher3d;
+    const { grapher3d } = this.cc;
     if (!grapher3d) return { zTip: 0, xyRot: 0 };
     const mat = getOrientation(grapher3d);
     return eulerFromOrientation(mat);

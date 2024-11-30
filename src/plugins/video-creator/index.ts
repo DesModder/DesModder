@@ -385,7 +385,7 @@ export default class VideoCreator extends PluginController {
   getCurrentAction() {
     const model = this.cc.getItemModel(this.currentActionID);
     if (model === undefined) {
-      const action = this.getActions()[0];
+      const [action] = this.getActions();
       if (action !== undefined) {
         this.currentActionID = action.id;
       }

@@ -97,9 +97,8 @@ export class IntellisenseState {
     this.boundIdentifiersInExpressions = new Map();
     this.identifierReferences = new Map();
     this.identifiersReferencedInExpression = new Map();
-    const models = this.cc.getAllItemModels();
-    for (let i = 0; i < models.length; i++) {
-      this.handleStateChange(models[i]);
+    for (const model of this.cc.getAllItemModels()) {
+      this.handleStateChange(model);
     }
   }
 
