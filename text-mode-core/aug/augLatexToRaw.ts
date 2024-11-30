@@ -35,7 +35,7 @@ function childNodeToString(
   cfg: Config,
   e: Aug.Latex.AnyChild,
   parent: Aug.Latex.AnyRootOrChild | null,
-  path?: string | undefined
+  path?: string
 ): string {
   const inner = childNodeToStringNoParen(cfg, e, path);
   if (rawNeedsParens(e, parent, path)) return wrapParen(inner);

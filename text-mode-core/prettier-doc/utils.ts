@@ -139,7 +139,7 @@ function mapDoc<T = Doc>(doc: Doc, cb: (doc: Doc) => T): T {
       case DT.Group: {
         if (doc.expandedStates) {
           const expandedStates = doc.expandedStates.map(rec);
-          const contents = expandedStates[0];
+          const [contents] = expandedStates;
           return cb({ ...doc, contents, expandedStates });
         } else {
           return cb({ ...doc, contents: rec(doc.contents) });

@@ -22,7 +22,7 @@
     "jsx": "react",
     "jsxFactory": "jsx",
 
-    "allowJs": false,
+    "allowJs": true,
 
     "skipLibCheck": true
   },

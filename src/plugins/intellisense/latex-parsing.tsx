@@ -50,7 +50,7 @@ export interface TryFindMQIdentResult {
 // is an MQ node a subscript?
 function isSubscript(cursor: MQCursor) {
   const ltx = cursor.latex?.();
-  return ltx?.[0] === "_" && ltx[1] === "{" && ltx[ltx.length - 1] === "}";
+  return !!ltx?.startsWith("_{") && ltx.endsWith("}");
 }
 
 // is an MQ node an operator name?

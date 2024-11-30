@@ -181,7 +181,7 @@ export interface TimingData {
 }
 
 export interface TopLevelComponents {
-  headerController: {
+  mygraphsController: {
     graphsController: {
       getCurrentGraphTitle: () => string | undefined;
     };

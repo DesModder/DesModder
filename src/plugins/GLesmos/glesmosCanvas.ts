@@ -110,9 +110,10 @@ export function initGLesmosCanvas(cc: CalcController) {
   //= ====================== RESIZING STUFF =======================
 
   const updateTransforms = (transforms: ViewportTransforms) => {
-    const w = transforms.pixelCoordinates.right;
-    const h = transforms.pixelCoordinates.bottom;
-    const p2m = transforms.pixelsToMath;
+    const {
+      pixelCoordinates: { right: w, bottom: h },
+      pixelsToMath: p2m,
+    } = transforms;
     c.width = w;
     c.height = h;
 

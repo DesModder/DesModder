@@ -18,7 +18,7 @@ const stmtNumberGutter = gutter({
   class: "cm-lineNumbers",
   renderEmptyElements: false,
   markers(view: EditorView) {
-    const program = view.state.field(analysisStateField).program;
+    const { program } = view.state.field(analysisStateField);
     const { from, to } = view.viewport;
     const ranges = [];
     let last = -1;

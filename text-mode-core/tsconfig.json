@@ -1,10 +1,14 @@
 {
-  "extends": "../tsconfig-base.json",
+  "extends": "../tsconfig-base",
   "compilerOptions": {},
   "references": [
     { "path": "../localization" },
     { "path": "../metadata" },
     { "path": "../parsing" }
   ],
-  "include": ["**/*", "../src/tests/run_calc_for_tests.ts"]
+  "include": [
+    "**/*",
+    "../src/tests/run_calc_for_tests.ts",
+    "../loaders/utils.mjs"
+  ]
 }

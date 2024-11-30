@@ -9,7 +9,7 @@ export default class StyleCircle extends Component<{
 }> {
   template() {
     const model = this.props.model();
-    const type = model.type;
+    const { type } = model;
     switch (type) {
       case "expression":
         return (

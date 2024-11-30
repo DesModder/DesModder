@@ -16,7 +16,7 @@ export abstract class CheckboxComponent extends ClassComponent<{
   onChange: (checked: boolean) => void;
 }> {}
 
-export const Checkbox = Fragile.Checkbox;
+export const { Checkbox } = Fragile;
 
 export abstract class SegmentedControlComponent extends ClassComponent<{
   ariaGroupLabel: string;
@@ -162,7 +162,7 @@ export abstract class TooltipComponent extends ClassComponent<{
   gravity?: "n" | "e" | "s" | "w";
 }> {}
 
-export const Tooltip = Fragile.Tooltip;
+export const { Tooltip } = Fragile;
 
 export abstract class ExpressionViewComponent extends ClassComponent<
   ModelAndController & {

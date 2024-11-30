@@ -150,7 +150,7 @@ function getShaderProgram(
 
   shaderCache.set(key, shaderProgram);
   if (shaderCache.size > 100) {
-    const key = Array.from(shaderCache.keys())[0];
+    const [key] = Array.from(shaderCache.keys());
     shaderCache.delete(key);
   }
 

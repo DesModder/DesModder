@@ -652,7 +652,7 @@ function bracketize(ctx: EmitContext, doc: Doc): Doc {
 }
 
 function listToText(ctx: EmitContext, path: NodePath<TextAST.ListExpression>) {
-  const values = path.node.values;
+  const { values } = path.node;
   const printOneLineOnly =
     values.length > 50 || values.every(isNumericOrNumericPoint);
   const inner = values.map((v, i) =>

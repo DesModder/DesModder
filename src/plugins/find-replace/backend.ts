@@ -55,7 +55,7 @@ function replace(calc: Calc, replaceLatex: (s: string) => string) {
     return s.replace(/(?<=\$\{)((?:[^{}]|\{[^}]*\})+)(?=\})/g, replaceLatex);
   }
   const state = calc.getState();
-  const ticker = state.expressions.ticker;
+  const { ticker } = state.expressions;
   if (ticker?.handlerLatex !== undefined) {
     ticker.handlerLatex = replaceLatex(ticker.handlerLatex);
   }
@@ -246,7 +246,7 @@ export function replacer(from: string, to: string) {
           regex.lastIndex++;
           continue;
         }
-        const before = r.groups!.before;
+        const { before } = r.groups!;
         const insert = to;
         if (endsInCommand.test(out) && startsWithLetter.test(before))
           out += " ";

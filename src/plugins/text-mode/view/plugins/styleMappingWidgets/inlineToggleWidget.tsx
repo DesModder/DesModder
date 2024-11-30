@@ -38,14 +38,9 @@ class InlineToggleWidget extends WidgetType {
               />
             </span>
           ) as HTMLSpanElement;
-          res.addEventListener("click", () => {
-            return toggleString(
-              view,
-              view.posAtDOM(res),
-              this.value,
-              styleName
-            );
-          });
+          res.addEventListener("click", () =>
+            toggleString(view, view.posAtDOM(res), this.value, styleName)
+          );
           return res;
         })}
       </span>

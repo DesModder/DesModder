@@ -14,7 +14,6 @@ export function attach<F extends (...args: any) => any>(
     const ret = handler(...args);
 
     // intentional
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-boolean-literal-compare
     if (ret?.[0] === false) return ret[1];
     return oldTarget(...args);
   });
@@ -53,7 +52,7 @@ type MaybeHookedFunction<Fn extends (...args: any[]) => any> =
 
 export function hookIntoFunction<
   Key extends string,
-  Obj extends { [K in Key]: (...args: any[]) => any },
+  Obj extends Record<Key, (...args: any[]) => any>,
   Fn extends Obj[Key]
 >(
   obj: Obj,

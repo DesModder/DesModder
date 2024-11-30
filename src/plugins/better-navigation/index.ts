@@ -98,8 +98,7 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
     }, 0);
 
     // backspace is implicitly "left"
-    const dir = navOption.dir;
-    const mode = navOption.mode;
+    const { dir, mode } = navOption;
 
     // remove the "Ctrl-" to get the normal arrow op to emulate
     const arrowOp = key.slice(5);

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { readFile } = require("fs").promises;
 const os = require("os");
 const path = require("path");

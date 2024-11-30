@@ -121,7 +121,7 @@ type FromEntries<T> = T extends [infer Key, any][]
   ? {
       [K in Key extends string ? Key : string]: Extract<T[number], [K, any]>[1];
     }
-  : { [key in string]: any };
+  : Record<string, any>;
 
 export type FromEntriesWithReadOnly<T> = FromEntries<DeepWriteable<T>>;
 

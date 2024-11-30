@@ -8,7 +8,7 @@ import { FooterView } from "#components";
 import { ExpressionModel } from "#globals";
 
 function getFooters(state: EditorState) {
-  const program = state.field(analysisStateField).program;
+  const { program } = state.field(analysisStateField);
   const decorations = [];
   const { from, to } = program.pos;
   const tm = state.facet(tmPlugin);

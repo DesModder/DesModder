@@ -413,7 +413,7 @@ function tableColumnToAug(
     "column"
   );
   if (style === null) return null;
-  const expr = column.expr;
+  const { expr } = column;
   const base = {
     type: "column" as const,
     id: column.id,
@@ -807,7 +807,7 @@ function piecewiseToAug(
 function piecewiseInnerToAug(
   branches: TextAST.PiecewiseBranch[]
 ): Aug.Latex.AnyChild {
-  const firstBranch = branches[0];
+  const [firstBranch] = branches;
   if (firstBranch === undefined) return constant(NaN);
   if (firstBranch.condition === null)
     return childExprToAug(firstBranch.consequent);

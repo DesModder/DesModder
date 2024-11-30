@@ -31,7 +31,7 @@ type StatementBase<C extends S = Concrete> = Positioned<C> &
         id: string;
         index: number;
       }
-    : // eslint-disable-next-line @typescript-eslint/ban-types
+    : // eslint-disable-next-line @typescript-eslint/no-empty-object-type
       {});
 
 export type Statement<C extends S = Concrete> =
@@ -312,14 +312,14 @@ export type Positioned<C extends S = Concrete> = C extends Concrete
   ? {
       pos: Pos;
     }
-  : // eslint-disable-next-line @typescript-eslint/ban-types
+  : // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     {};
 
 export type HasChildren<C extends S = Concrete> = C extends Concrete
   ? {
       afterOpen: number;
     }
-  : // eslint-disable-next-line @typescript-eslint/ban-types
+  : // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     {};
 
 export interface Pos {

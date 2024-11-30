@@ -333,9 +333,7 @@ function getInitialParselet(token: Token) {
   else return tagGroup?.[token.value];
 }
 
-type TokenMap<T> = {
-  [key in TokenType]?: T | Record<string, T>;
-};
+type TokenMap<T> = Partial<Record<TokenType, T | Record<string, T>>>;
 
 type InitialParselet = (ps: ParseState, token: Token) => Node;
 
@@ -530,12 +528,11 @@ const initialParselets: TokenMap<InitialParselet> = {
         pos: pos(token, name),
       });
     },
-    settings: (ps, token): Node => {
-      return ps.finishStatement({
+    settings: (ps, token): Node =>
+      ps.finishStatement({
         type: "Settings",
         pos: pos(token),
-      });
-    },
+      }),
     ticker: (ps, token): Node => {
       const handler = parseExpr(ps, Power.meta, "ticker handler", "a -> a+1");
       return ps.finishStatement({
@@ -925,7 +922,7 @@ const consequentParselets: Record<
         item.symbols.every((s) => s === "<" || s === "<=") &&
         item.args[1].type === "Identifier"
       ) {
-        last = item.args[2];
+        [, , last] = item.args;
         parameters.push({
           identifier: item.args[1],
           open: [item.symbols[0] === "<", item.symbols[1] === "<"],
@@ -981,7 +978,7 @@ function parseList(ps: ParseState, token: Token): ListOrRange {
   } else if (next.value === "]") {
     const listcomps = startValues.filter((e) => e.type === "ListComprehension");
     if (listcomps.length > 0) {
-      const inner = startValues[0];
+      const [inner] = startValues;
       if (listcomps.length > 1)
         throw ps.pushFatalError(
           "List comprehension can only have one 'for'",
@@ -1103,7 +1100,7 @@ function exprToStatement(ps: ParseState, expr: Expression): TextAST.Statement {
     expr.right.type === "BinaryExpression" &&
     expr.right.op === "~"
   ) {
-    const left = expr.left;
+    const { left } = expr;
     if (left.type !== "Identifier") {
       throw ps.pushFatalError(
         `Residual variable must be identifier, but got ${left.type}`,
@@ -1211,7 +1208,7 @@ function compareOpParselet(op: TextAST.CompareOp) {
 }
 
 function relopDir(symbol: TextAST.CompareOp) {
-  return symbol === "=" ? 0 : symbol[0] === "<" ? 1 : -1;
+  return symbol === "=" ? 0 : symbol.startsWith("<") ? 1 : -1;
 }
 
 interface CPOpts {

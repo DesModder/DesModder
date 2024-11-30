@@ -53,11 +53,7 @@ export function printDocToDebug(doc: Doc) {
   const usedKeysForSymbols = new Set<string>();
   return printDoc(flattenDoc(doc));
 
-  function printDoc(
-    doc: Doc,
-    index: number = 0,
-    parentParts?: Doc[] | undefined
-  ): string {
+  function printDoc(doc: Doc, index: number = 0, parentParts?: Doc[]): string {
     if (typeof doc === "string") {
       return JSON.stringify(doc);
     }

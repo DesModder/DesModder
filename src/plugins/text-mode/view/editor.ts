@@ -112,7 +112,7 @@ export function startState(tm: TextMode, text: string) {
       tmPlugin.of(tm),
     ],
   });
-  state = state.update(collapseStylesAtStart(state)).state;
+  ({ state } = state.update(collapseStylesAtStart(state)));
   return state;
 }
 

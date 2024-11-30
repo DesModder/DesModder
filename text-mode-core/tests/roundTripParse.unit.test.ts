@@ -67,9 +67,9 @@ function testRoundTripIdenticalViaText(raw: string, emitOpts: TextEmitOptions) {
     const text = astToText(ast, emitOpts);
     const analysis = parse(text);
     expect(analysis.diagnostics).toEqual([]);
-    const children = analysis.program.children;
+    const { children } = analysis.program;
     expect(children.length).toEqual(1);
-    const item = children[0];
+    const [item] = children;
     expect(item.type).toEqual("ExprStatement");
     if (item.type !== "ExprStatement") throw new Error("Jest lied.");
     const aug2 = childExprToAug(item.expr);
@@ -334,7 +334,7 @@ function roundTrips(cases: string[]) {
 }
 
 describe("Same-parse round trips", () => {
-  const raw = String.raw;
+  const { raw } = String;
 
   const cases: string[] = [
     raw`A_{main}\left(d\right)=A_{T}\left(d\right),\ A_{horizScroll}\left(0\right),\ A_{vertScroll}\left(0\right),\left\{Q_{pauseEval}=0:\ \left\{Q_{landscape}=1:\ A_{E}\left(0\right)\right\}\right\},\ A_{drag}\left(0\right),\ A_{scrollbarWidth}\left(0\right)`,

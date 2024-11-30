@@ -34,7 +34,7 @@ export default class SegmentedControl extends Component<{
   }
 
   getChangeAllowed(i: number) {
-    const allowChange = this.props.allowChange;
+    const { allowChange } = this.props;
     return (
       allowChange === undefined ||
       allowChange() === true ||

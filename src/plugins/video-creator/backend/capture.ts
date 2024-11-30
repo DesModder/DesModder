@@ -78,7 +78,7 @@ export interface SliderSettings {
 }
 
 export async function captureSlider(vc: VideoCreator) {
-  const sliderSettings = vc.sliderSettings;
+  const { sliderSettings } = vc;
   const variable = vc.sliderVariable;
   const min = sliderSettings.min.getValue();
   const max = sliderSettings.max.getValue();
@@ -165,7 +165,7 @@ function updateOrientationAfterCapture(
   vc: VideoCreator,
   numStepsRemaining: number
 ) {
-  const or = vc.or;
+  const { or } = vc;
   switch (or.orientationMode) {
     case "none":
       return;
@@ -204,7 +204,7 @@ function updateOrientationAfterCapture(
 }
 
 export async function capture(vc: VideoCreator) {
-  const or = vc.or;
+  const { or } = vc;
   vc.captureCancelled = false;
   vc.isCapturing = true;
   vc.updateView();
