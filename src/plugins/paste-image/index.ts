@@ -38,7 +38,7 @@ export default class PasteImage extends PluginController {
         ({ type: mimeType }) => +/image\/*/.test(mimeType)
       );
       // Among the possible errors, only those related to an invalid MIME type is not handled by the image-upload-error event
-      nonImageFiles &&
+      if (nonImageFiles)
         setTimeout(() =>
           this.cc._showToast({
             message: this.cc.s("graphing-calculator-error-image-invalid-file", {
@@ -51,7 +51,7 @@ export default class PasteImage extends PluginController {
         if (document.activeElement !== document.body) return;
         // Avoid images being inserted at the top of the expressions list when there is no selected expression
         const lastExprId = this.calc.getExpressions().at(-1)?.id;
-        lastExprId && this.setFocusLocation(lastExprId);
+        if (lastExprId) this.setFocusLocation(lastExprId);
       }
       e.preventDefault();
       this.waitForImageUploads({
