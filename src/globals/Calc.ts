@@ -104,7 +104,7 @@ export type VanillaDispatchedEvent =
         prop: "folderId" | string;
       };
     }
-  | { type: "new-images"; files: FileList; id?: string }
+  | { type: "new-images"; files: File[] | FileList; id?: string }
   | {
       type: "image-upload-success";
       token: keyof CalcController["__pendingImageUploads"];

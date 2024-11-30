@@ -61,7 +61,7 @@ export default class PasteImage extends PluginController {
       });
       this.cc.dispatch({
         type: "new-images",
-        files: PasteImage.fileListOf(...imageFiles),
+        files: imageFiles,
       });
     }
   }
@@ -95,11 +95,5 @@ export default class PasteImage extends PluginController {
       }
     };
     const callbackId = this.cc.dispatcher.register(handleImageUpload);
-  }
-
-  static fileListOf(...files: File[]): FileList {
-    const dT = new DataTransfer();
-    files.forEach((file) => dT.items.add(file));
-    return dT.files;
   }
 }
