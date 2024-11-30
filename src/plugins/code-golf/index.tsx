@@ -1,9 +1,16 @@
 import { Component, jsx, mountToNode } from "#DCGView";
+import { AllActions } from "src/globals/extra-actions";
 import { Inserter, PluginController } from "../PluginController";
 import "./index.less";
 import { format } from "localization/i18n-core";
-import { IfElse, InlineMathInputView } from "src/components";
-import { CalcController, ExpressionModel, FolderModel } from "src/globals";
+import { If, IfElse, InlineMathInputView } from "src/components";
+import {
+  CalcController,
+  DispatchedEvent,
+  ExpressionModel,
+  FolderModel,
+  ItemModel,
+} from "src/globals";
 
 function calcWidthInPixels(domNode?: HTMLElement) {
   const rootblock = domNode?.querySelector(".dcg-mq-root-block");
@@ -39,15 +46,50 @@ function calcSymbolCount(el?: HTMLElement) {
   return rootblock ? symbolCount(rootblock) : 0;
 }
 
-const cachedGolfStatsPool = new Map<string, ReturnType<typeof getGolfStats>>();
-
-function getGolfStats(
-  cc: CalcController,
-  latex: string
-): {
+interface GoodGolfStats {
   width: number;
   symbols: number;
-} {
+}
+
+/**
+ * `TOO_LONG`: I'd love to measure this, but it's longer than `MAX_GOLF_LENGTH_CHARS`.
+ *   This also blocks any future measurements of children, if this is a folder.
+ * `HIDDEN`: It's offscreen, or collapsed inside a folder. No need to measure it.
+ */
+export type GolfStats = "TOO_LONG" | "HIDDEN" | GoodGolfStats;
+
+function _displayStats(stats: GolfStats | undefined): GoodGolfStats {
+  if (!stats || stats === "TOO_LONG" || stats === "HIDDEN") {
+    return { width: 0, symbols: 0 };
+  } else {
+    return stats;
+  }
+}
+
+function areStatsUseful(stats: GolfStats | undefined): boolean {
+  const { width, symbols } = _displayStats(stats);
+  return width > 0 && symbols > 0;
+}
+
+function displayStats(stats: GolfStats | undefined) {
+  const { width, symbols } = _displayStats(stats);
+  return {
+    width: format("code-golf-width-in-pixels", {
+      pixels: Math.round(width).toString(),
+    }),
+    symbols: format("code-golf-symbol-count", {
+      elements: symbols.toString(),
+    }),
+  };
+}
+
+const MAX_GOLF_LENGTH_CHARS = 2000;
+
+const cachedGolfStatsPool = new Map<string, GoodGolfStats>();
+
+function getGolfStats(cc: CalcController, latex: string): GolfStats {
+  if (latex.length === 0) return { width: 0, symbols: 0 };
+
   const cached = cachedGolfStatsPool.get(latex);
   if (cached) return cached;
 
@@ -82,141 +124,38 @@ function getGolfStats(
   return stats;
 }
 
-export class ExpressionItemCostPanel extends Component<{
+class GolfStatsPanel extends Component<{
   cc: () => CalcController;
-  model: () => ExpressionModel;
-  el: () => HTMLDivElement;
+  model: () => ItemModel;
 }> {
-  rootblock: Element | null | undefined = null;
-
   template() {
-    const chars = () => this.props.model().latex?.length ?? 0;
-
-    return IfElse(() => chars() > 0, {
-      true: () => (
-        <div class="dsm-code-golf-char-count-container">
-          <div class="dsm-code-golf-char-count">
-            <div>
-              {() =>
-                format("code-golf-width-in-pixels", {
-                  pixels: Math.round(
-                    getGolfStats(
-                      this.props.cc(),
-                      this.props.model().latex ?? ""
-                    ).width
-                  ).toString(),
-                })
-              }
-            </div>
-            <div>
-              {() =>
-                format("code-golf-symbol-count", {
-                  elements: getGolfStats(
-                    this.props.cc(),
-                    this.props.model().latex ?? ""
-                  ).symbols,
-                })
-              }
-            </div>
-          </div>
-        </div>
-      ),
-      false: () => <div></div>,
-    });
-  }
-}
-export class FolderCostPanel extends Component<{
-  model: () => FolderModel;
-  cc: () => CalcController;
-}> {
-  totalWidth = 0;
-  totalSymbols = 0;
-
-  enabled = true;
-  checkedStats = false;
-
-  get cc() {
-    return this.props.cc();
-  }
-
-  recalculate() {
-    const exprs = this.props
-      .cc()
-      .getAllItemModels()
-      .filter(
-        (m) => m.type === "expression" && m.folderId === this.props.model().id
-      ) as ExpressionModel[];
-
-    this.totalWidth = 0;
-    this.totalSymbols = 0;
-
-    if (!this.checkedStats) {
-      const chars = exprs.reduce(
-        (prev, curr) => prev + (curr.latex?.length ?? 0),
-        0
-      );
-
-      if (chars > 2000) {
-        this.enabled = false;
-        this.checkedStats = true;
-        this.update();
-        return;
-      }
-    }
-
-    for (const e of exprs) {
-      const { width, symbols } = getGolfStats(this.cc, e.latex ?? "");
-      this.totalWidth += width;
-      this.totalSymbols += symbols;
-    }
-
-    this.update();
-  }
-
-  dispatcher!: string;
-
-  willUnmount() {
-    this.cc.dispatcher.unregister(this.dispatcher);
-  }
-
-  template() {
-    setTimeout(() => {
-      this.recalculate();
-    }, 0);
-
-    this.dispatcher = this.cc.dispatcher.register(() => {
-      this.recalculate();
-    });
-
     return (
-      <div
-        class="dsm-code-golf-char-count-container"
-        onClick={() => {
-          this.enabled = true;
-          this.recalculate();
-        }}
-      >
-        {IfElse(() => this.enabled, {
+      <div class="dsm-code-golf-char-count-container">
+        {IfElse(() => !this.isDisabled(), {
           true: () => (
-            <div class="dsm-code-golf-char-count">
-              <div>
-                {() =>
-                  format("code-golf-width-in-pixels", {
-                    pixels: Math.round(this.totalWidth),
-                  })
-                }
-              </div>
-              <div>
-                {() =>
-                  format("code-golf-symbol-count", {
-                    elements: this.totalSymbols,
-                  })
-                }
-              </div>
-            </div>
+            <If
+              predicate={() => areStatsUseful(this.props.model().dsmGolfStats)}
+            >
+              {() => (
+                <div class="dsm-code-golf-char-count-container">
+                  <div class="dsm-code-golf-char-count">
+                    <div>{() => this.displayedStats().width}</div>
+                    <div>{() => this.displayedStats().symbols}</div>
+                  </div>
+                </div>
+              )}
+            </If>
           ),
           false: () => (
-            <div class="dsm-code-golf-char-count dsm-clickable">
+            <div
+              class="dsm-code-golf-char-count dsm-clickable"
+              onClick={() => {
+                this.props.cc().dispatch({
+                  type: "dsm-code-golf-enable-despite-length",
+                  id: this.props.model().id,
+                });
+              }}
+            >
               {format("code-golf-click-to-enable-folder")}
             </div>
           ),
@@ -224,36 +163,254 @@ export class FolderCostPanel extends Component<{
       </div>
     );
   }
+
+  private isDisabled() {
+    const model = this.props.model();
+    return model.dsmGolfStats === "TOO_LONG";
+  }
+
+  private displayedStats() {
+    return displayStats(this.props.model().dsmGolfStats);
+  }
+}
+
+declare module "src/globals/extra-actions" {
+  interface AllActions {
+    "code-golf": {
+      type: "dsm-code-golf-enable-despite-length";
+      id: string;
+    };
+  }
 }
 
 export default class CodeGolf extends PluginController {
   static id = "code-golf" as const;
   static enabledByDefault = false;
 
-  expressionItemCostPanel(
-    model: ExpressionModel,
-    el: HTMLDivElement
-  ): Inserter {
-    return () => (
-      <ExpressionItemCostPanel
-        cc={() => this.cc}
-        model={() => model}
-        el={() => el}
-      />
-    );
+  expressionItemCostPanel(model: ExpressionModel): Inserter {
+    return () => <GolfStatsPanel cc={() => this.cc} model={() => model} />;
   }
 
-  folderCostPanel(model: FolderModel) {
-    return () => (
-      <FolderCostPanel cc={() => this.cc} model={() => model}></FolderCostPanel>
-    );
+  folderCostPanel(model: FolderModel): Inserter {
+    return () => <GolfStatsPanel cc={() => this.cc} model={() => model} />;
   }
 
   afterConfigChange(): void {}
 
-  dispatcher!: string;
-
   afterEnable() {}
 
   afterDisable() {}
+
+  handleDispatchedAction(action: DispatchedEvent) {
+    switch (action.type) {
+      case "dsm-code-golf-enable-despite-length": {
+        const item = this.cc.getItemModel(action.id);
+        if (item) {
+          item.dsmEnableGolfDespiteLength = true;
+        }
+        break;
+      }
+      default:
+        // Tutorial: If a plugin declares a new action but doesn't handle it, then
+        // the action simply does nothing. This `satisfies` statement ensures
+        // that this plugin at least handles all the actions it declares.
+        // Remember to change `"folder-tools"` to the actual plugin ID.
+        action satisfies Exclude<DispatchedEvent, AllActions["code-golf"]>;
+    }
+
+    // This should really be in updateTheComputedWorld.
+    // But that's okay, as long as it's before `updateViews` and after the
+    // above changes. Desmos should be done with their `latex` mutation
+    // by the end of their `handleDispatchedAction`, and ours runs after.
+    calculateMeasures(this.cc);
+  }
+}
+
+/**
+ * Mutate the item models, filling in `dsmGolfMeasure`.
+ * This is the same approach that Desmos takes to filling in the increasing
+ * sequence of index numbers from start to end. The main difference is that
+ * the calculation now relies on DOM measures, which could be brutal for
+ * performance. We really should do all the measures in a single pass,
+ * but that is not yet implemented.
+ */
+function calculateMeasures(cc: CalcController) {
+  const itemModels = cc.getAllItemModels();
+
+  // Mark long folders as too long.
+  for (let i = 0; i < itemModels.length; i++) {
+    const item = itemModels[i];
+
+    // Clear out dsmGolfStats. In particular, clearing out TOO_LONG
+    // allows re-calculate those exprs/folders if the latex gets short enough.
+    item.dsmGolfStats = undefined;
+    switch (item.type) {
+      case "expression":
+      case "folder":
+      case undefined:
+        if (isItemTooLong(itemModels, item, i)) {
+          item.dsmGolfStats = "TOO_LONG";
+        }
+        break;
+      case "image":
+      case "table":
+      case "text":
+        continue;
+      default:
+        item satisfies never;
+        continue;
+    }
+  }
+
+  // Go in reverse direction so the children's stats are computed before each folder.
+  for (let i = itemModels.length - 1; i >= 0; i--) {
+    const item = itemModels[i];
+    switch (item.type) {
+      case "expression":
+      case "folder":
+        item.dsmGolfStats = itemMeasure(cc, itemModels, item, i);
+        break;
+      case "image":
+      case "table":
+      case "text":
+      case undefined:
+        // No stats for these.
+        break;
+      default:
+        item satisfies never;
+    }
+  }
+}
+
+function isItemTooLong(
+  itemModels: ItemModel[],
+  item: ExpressionModel | FolderModel,
+  i: number
+) {
+  return item.type === "folder"
+    ? isFolderTooLong(itemModels, item, i)
+    : isExprTooLong(item);
+}
+
+function isExprTooLong(item: ExpressionModel) {
+  if (item.dsmEnableGolfDespiteLength) {
+    return false;
+  }
+  if (item.folderId) {
+    const folder = item.controller.getItemModel(item.folderId);
+    if (folder?.dsmEnableGolfDespiteLength) {
+      return false;
+    }
+  }
+  return (item.latex?.length ?? 0) > MAX_GOLF_LENGTH_CHARS;
+}
+
+/**
+ * Assume folderMeasure[i] is a folder with ID `folderID`.
+ * Should we just give up now for performance?
+ */
+function isFolderTooLong(
+  itemModels: ItemModel[],
+  folderItem: FolderModel,
+  i: number
+): boolean {
+  if (folderItem.dsmEnableGolfDespiteLength) {
+    return false;
+  }
+  const folderId = folderItem.id;
+  let totalLength = 0;
+  for (let j = i + 1; j < itemModels.length; j++) {
+    const item = itemModels[j];
+    if (item.folderId !== folderId) break;
+    if (item.type !== "expression") continue;
+    totalLength += item.latex?.length ?? 0;
+    if (totalLength > MAX_GOLF_LENGTH_CHARS) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function isHidden(item: ItemModel) {
+  // Is offscreen, hidden, or filtered out by Ctrl+F.
+  return item.renderShell || item.isHiddenFromUI || item.filteredBySearch;
+}
+
+function needToComputeMeasure(cc: CalcController, item: ItemModel): boolean {
+  if (item.dsmGolfStats === "TOO_LONG") {
+    return false;
+  } else if (!isHidden(item)) {
+    return true;
+  } else if (item.type !== "folder") {
+    const parentFolder = item.folderId && cc.getItemModel(item.folderId);
+    return !!parentFolder && needToComputeMeasure(cc, parentFolder);
+  } else {
+    return false;
+  }
+}
+
+function itemMeasure(
+  cc: CalcController,
+  itemModels: ItemModel[],
+  item: ExpressionModel | FolderModel,
+  i: number
+): GolfStats {
+  if (item.dsmGolfStats === "TOO_LONG") {
+    return "TOO_LONG";
+  }
+  if (!needToComputeMeasure(cc, item)) {
+    return "HIDDEN";
+  }
+  switch (item.type) {
+    case "expression":
+    case undefined:
+      return getGolfStats(cc, item.latex ?? "");
+    case "folder":
+      return folderMeasure(itemModels, item.id, i);
+    default:
+      item satisfies never;
+      return "HIDDEN";
+  }
+}
+
+/**
+ * Assume folderMeasure[i] is a folder with ID `folderID`,
+ * and the measures for everything after it have been filled in.
+ * Give the GolfStats for the folder.
+ */
+function folderMeasure(
+  itemModels: ItemModel[],
+  folderId: string,
+  i: number
+): GolfStats {
+  let totalWidth = 0;
+  let totalSymbols = 0;
+  for (let j = i + 1; j < itemModels.length; j++) {
+    const item = itemModels[j];
+    if (item.folderId !== folderId) break;
+    if (item.type !== "expression") continue;
+    if (
+      item.dsmGolfStats === undefined ||
+      item.dsmGolfStats === "TOO_LONG" ||
+      item.dsmGolfStats === "HIDDEN"
+    ) {
+      // To satisfy this, we need a parent folder to be TOO_LONG whenever
+      // a child expression is TOO_LONG. This is met because we use the same
+      // threshold in length for both.
+      // Also, we need children to not be HIDDEN if the parent folder is not
+      // HIDDEN. This is handled in `needToComputeMeasure`.
+
+      throw new Error(
+        `Expected dsmGolfStats to be computed for expr ${item.id}, but got ${item.dsmGolfStats}`
+      );
+    }
+    const { width, symbols } = item.dsmGolfStats;
+    totalWidth += width;
+    totalSymbols += symbols;
+  }
+
+  return {
+    width: totalWidth,
+    symbols: totalSymbols,
+  };
 }

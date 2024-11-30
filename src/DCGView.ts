@@ -15,7 +15,6 @@ type ToFunc<T> = {
 export abstract class ClassComponent<
   PropsType extends GenericProps = Record<string, unknown>
 > {
-  update!: () => void;
   props!: ToFunc<PropsType>;
   children!: unknown;
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
