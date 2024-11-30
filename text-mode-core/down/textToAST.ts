@@ -552,7 +552,7 @@ function finalizePiecewise(
     if (branches.length === 0)
       return { type: "Restriction", condition: true, pos: piecewisePos };
     const condition = branches
-      .map((b) => b.condition!)
+      .map((b) => b.condition)
       .reduceRight(
         (right, left): TextAST.Or => ({
           type: "Or",
