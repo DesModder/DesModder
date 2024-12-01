@@ -27,6 +27,7 @@ export default class DSM extends TransparentPlugins {
   ) as IDToPluginSettings;
 
   private readonly vanillaHandleAction: (evt: DispatchedEvent) => void;
+  private readonly vanillaUpdateTheComputedWorld: () => void;
 
   constructor(public calc: Calc) {
     super();
@@ -44,17 +45,35 @@ export default class DSM extends TransparentPlugins {
     // Setup handler override
     this.vanillaHandleAction = this.cc.handleDispatchedAction.bind(this.cc);
     this.cc.handleDispatchedAction = this.handleDispatchedAction.bind(this);
+    this.vanillaUpdateTheComputedWorld = this.cc.updateTheComputedWorld.bind(
+      this.cc
+    );
+    this.cc.updateTheComputedWorld = this.updateTheComputedWorld.bind(this);
+  }
+
+  enabledPluginsSorted() {
+    const enabledPluginIDs = Object.keys(this.enabledPlugins) as PluginID[];
+    enabledPluginIDs.sort();
+    const plugins: [PluginID, PluginInstance][] = [];
+    for (const id of enabledPluginIDs) {
+      plugins.push([id, this.enabledPlugins[id]!]);
+    }
+    return plugins;
   }
 
   handleDispatchedAction(evt: DispatchedEvent) {
-    const enabledPluginIDs = Object.keys(this.enabledPlugins) as PluginID[];
-    enabledPluginIDs.sort();
-    for (const id of enabledPluginIDs) {
-      const plugin = this.enabledPlugins[id];
+    for (const [_id, plugin] of this.enabledPluginsSorted()) {
       const keepGoing = plugin?.handleDispatchedAction?.(evt);
       if (keepGoing === "abort-later-handlers") return;
     }
     this.vanillaHandleAction(evt);
+  }
+
+  updateTheComputedWorld() {
+    this.vanillaUpdateTheComputedWorld();
+    for (const [_id, plugin] of this.enabledPluginsSorted()) {
+      plugin?.afterUpdateTheComputedWorld?.();
+    }
   }
 
   applyStoredEnabled(storedEnabled: Map<PluginID, boolean | undefined>) {
