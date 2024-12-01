@@ -12,6 +12,7 @@ $DCGView.createElement("div", {
     class: ()=>({
         "dcg-do-not-blur": !0,
         "dcg-expressionitem": !0,
+        "dcg-highlighted-expressionitem": this.controller.isExpressionHighlighted(this.id),
         "dcg-mathitem": !0,
         __rest0__
         }),
@@ -39,6 +40,7 @@ $DCGView2.createElement("div", {
     class: () => ({
         "dcg-do-not-blur": !0,
         "dcg-expressionitem": !0,
+        "dcg-highlighted-expressionitem": this.controller.isExpressionHighlighted(this.id),
         "dcg-readonly": this.controller.isItemReadonly(this.id),
         "dcg-expressionfolder": !0,
         __classesAfter__

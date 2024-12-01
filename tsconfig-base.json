@@ -4,8 +4,7 @@
     "outDir": "./dist-ts/",
 
     "composite": true,
-    "declaration": true,
-    "sourceMap": false,
+    "emitDeclarationOnly": true,
 
     "strictNullChecks": true,
     "strict": true,
@@ -18,6 +17,7 @@
     "baseUrl": ".",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
+    "allowImportingTsExtensions": true,
 
     "jsx": "react",
     "jsxFactory": "jsx",

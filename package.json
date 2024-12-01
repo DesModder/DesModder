@@ -77,8 +77,8 @@
     "puppeteer": "^22.6.0",
     "ts-jest": "^29.1.2",
     "tsutils": "^3.21.0",
-    "typescript": "^5.4.3",
-    "typescript-eslint": "^8.15.0"
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.16.0"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.15.0",

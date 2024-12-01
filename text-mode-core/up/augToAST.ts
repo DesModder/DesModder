@@ -178,9 +178,7 @@ export function itemAugToAST(item: Aug.ItemAug): TextAST.Statement | null {
       return {
         type: "Folder",
         title: item.title,
-        children: item.children
-          .map(itemAugToAST)
-          .filter((e) => e !== null) as TextAST.Statement[],
+        children: item.children.map(itemAugToAST).filter((e) => e !== null),
         style: styleMapping({
           ...base,
           collapsed: booleanToAST(item.collapsed, false),
