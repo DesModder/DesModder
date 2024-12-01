@@ -19,6 +19,7 @@ export default class PasteImage extends PluginController {
 
   _pasteHandler(e: ClipboardEvent) {
     const clipboardFiles = e.clipboardData?.files;
+    if (!clipboardFiles?.length) return;
     if (!this.cc.areImagesEnabled()) {
       this.cc._showToast({
         // eslint-disable-next-line rulesdir/no-format-in-ts
@@ -32,7 +33,7 @@ export default class PasteImage extends PluginController {
             message: format("paste-image-error-another-upload-in-progress"),
           }),
       });
-    } else if (clipboardFiles?.length) {
+    } else {
       const { 0: nonImageFiles, 1: imageFiles } = Object.groupBy(
         clipboardFiles,
         ({ type: mimeType }) => +/image\/*/.test(mimeType)
