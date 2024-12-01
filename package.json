@@ -18,9 +18,6 @@
     "#metadata/*": "./metadata/*",
     "#components": "./src/components/index.ts"
   },
-  "eslintIgnore": [
-    "dist/*.js"
-  ],
   "scripts": {
     "init": "git config core.hooksPath hooks && npm install",
     "build": "node ./esbuild.mjs --browser=chrome",
