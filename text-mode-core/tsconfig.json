@@ -2,13 +2,12 @@
   "extends": "../tsconfig-base",
   "compilerOptions": {},
   "references": [
+    // https://github.com/microsoft/TypeScript/issues/33685
+    // { "path": "../src" },
     { "path": "../localization" },
     { "path": "../metadata" },
-    { "path": "../parsing" }
+    { "path": "../parsing" },
+    { "path": "../graph-state" }
   ],
-  "include": [
-    "**/*",
-    "../src/tests/run_calc_for_tests.ts",
-    "../loaders/utils.mjs"
-  ]
+  "include": ["**/*", "../src", "../loaders/utils.mjs"]
 }
