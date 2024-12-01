@@ -1,5 +1,4 @@
 import { mountToNode } from "#DCGView";
-import "./index.less";
 import { InlineMathInputView } from "src/components";
 import {
   CalcController,

@@ -1,17 +1,9 @@
 import { Component, jsx } from "#DCGView";
-import { AllActions } from "src/globals/extra-actions";
-import { Inserter, PluginController } from "../PluginController";
-import "./index.less";
+import "./GolfStatsPanel.less";
 import { format } from "localization/i18n-core";
-import { If, IfElse } from "src/components";
-import {
-  CalcController,
-  DispatchedEvent,
-  ExpressionModel,
-  FolderModel,
-  ItemModel,
-} from "src/globals";
-import { populateGolfStats, GolfStats, GoodGolfStats } from "./golf-model";
+import { CalcController, ItemModel } from "src/globals";
+import { GolfStats, GoodGolfStats } from "./golf-model";
+import { If, IfElse } from "../../components";
 
 function _displayStats(stats: GolfStats | undefined): GoodGolfStats {
   if (!stats || stats === "TOO_LONG" || stats === "HIDDEN") {
@@ -38,7 +30,7 @@ function displayStats(stats: GolfStats | undefined) {
   };
 }
 
-class GolfStatsPanel extends Component<{
+export class GolfStatsPanel extends Component<{
   cc: () => CalcController;
   model: () => ItemModel;
 }> {
@@ -88,54 +80,6 @@ class GolfStatsPanel extends Component<{
   }
 }
 
-declare module "src/globals/extra-actions" {
-  interface AllActions {
-    "code-golf": {
-      type: "dsm-code-golf-enable-despite-length";
-      id: string;
-    };
-  }
-}
-
-export default class CodeGolf extends PluginController {
-  static id = "code-golf" as const;
-  static enabledByDefault = false;
-
-  expressionItemCostPanel(model: ExpressionModel): Inserter {
-    return () => <GolfStatsPanel cc={() => this.cc} model={() => model} />;
-  }
-
-  folderCostPanel(model: FolderModel): Inserter {
-    return () => <GolfStatsPanel cc={() => this.cc} model={() => model} />;
-  }
-
-  afterConfigChange(): void {}
-
-  afterEnable() {}
-
-  afterDisable() {}
-
-  handleDispatchedAction(action: DispatchedEvent) {
-    switch (action.type) {
-      case "dsm-code-golf-enable-despite-length": {
-        const item = this.cc.getItemModel(action.id);
-        if (item) {
-          item.dsmEnableGolfDespiteLength = true;
-        }
-        break;
-      }
-      default:
-        // Tutorial: If a plugin declares a new action but doesn't handle it, then
-        // the action simply does nothing. This `satisfies` statement ensures
-        // that this plugin at least handles all the actions it declares.
-        // Remember to change `"folder-tools"` to the actual plugin ID.
-        action satisfies Exclude<DispatchedEvent, AllActions["code-golf"]>;
-    }
-
-    // This should really be in updateTheComputedWorld.
-    // But that's okay, as long as it's before `updateViews` and after the
-    // above changes. Desmos should be done with their `latex` mutation
-    // by the end of their `handleDispatchedAction`, and ours runs after.
-    populateGolfStats(this.cc);
-  }
+export function GolfStatsPanelFn(cc: CalcController, model: ItemModel) {
+  return <GolfStatsPanel cc={() => cc} model={() => model} />;
 }
