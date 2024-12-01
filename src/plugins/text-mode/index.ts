@@ -40,12 +40,21 @@ export default class TextMode extends PluginController {
     this.cc.updateViews();
   }
 
+  abortController = new AbortController();
+
   /**
    * mountEditor: called from module overrides when the DCGView node mounts
    */
   mountEditor(container: HTMLElement) {
     const [hasError, text] = this.getText();
     this.view = initView(this, text);
+    this.view.scrollDOM.addEventListener(
+      "scroll",
+      () => this.cc.dispatch({ type: "close-item-settings-menu" }),
+      {
+        signal: this.abortController.signal,
+      }
+    );
     if (hasError) this.conversionError(() => this.toggleTextMode());
     container.appendChild(this.view.dom);
     this.preventPropagation(container);
@@ -112,6 +121,7 @@ export default class TextMode extends PluginController {
       this.cc.dispatcher.unregister(this.dispatchListenerID);
     }
     if (this.view) {
+      this.abortController.abort();
       this.view.destroy();
       this.view = null;
     }
