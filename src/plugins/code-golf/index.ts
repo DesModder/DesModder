@@ -41,10 +41,6 @@ export default class CodeGolf extends PluginController {
         break;
       }
       default:
-        // Tutorial: If a plugin declares a new action but doesn't handle it, then
-        // the action simply does nothing. This `satisfies` statement ensures
-        // that this plugin at least handles all the actions it declares.
-        // Remember to change `"folder-tools"` to the actual plugin ID.
         action satisfies Exclude<DispatchedEvent, AllActions["code-golf"]>;
     }
 
