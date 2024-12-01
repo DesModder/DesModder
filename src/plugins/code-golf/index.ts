@@ -42,13 +42,12 @@ export default class CodeGolf extends PluginController {
       }
       default:
         action satisfies Exclude<DispatchedEvent, AllActions["code-golf"]>;
+        break;
     }
-
-    // This should really be in updateTheComputedWorld.
-    // But that's okay, as long as it's before `updateViews` and after the
-    // above changes. Desmos should be done with their `latex` mutation
-    // by the end of their `handleDispatchedAction`, and ours runs after.
-    populateGolfStats(this.cc);
     return undefined;
+  }
+
+  afterUpdateTheComputedWorld() {
+    populateGolfStats(this.cc);
   }
 }
