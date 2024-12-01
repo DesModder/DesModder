@@ -132,6 +132,8 @@ handleDispatchedAction(action: DispatchedEvent) {
       // Remember to change `"folder-tools"` to the actual plugin ID.
       action satisfies Exclude<DispatchedEvent, AllActions["folder-tools"]>;
   }
+  // Returning undefined is required unfortunately. Typescript makes a distinction
+  // between `void` and `undefined`, and `void` can't be used in type unions.
   return undefined;
 }
 ```

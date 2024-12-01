@@ -4,6 +4,7 @@
  */
 import { ClassComponent } from "#DCGView";
 import { CalcController } from ".";
+import { GolfStats } from "../plugins/code-golf/golf-model";
 
 interface BasicSetExpression {
   id: string;
@@ -24,8 +25,17 @@ interface BasicSetExpression {
 }
 
 interface ItemModelBase {
-  index: number;
   id: string;
+  controller: CalcController;
+  index: number;
+  renderShell: boolean;
+  isHiddenFromUI: boolean;
+  filteredBySearch?: boolean;
+  dsmGolfStats?: GolfStats;
+  dsmEnableGolfDespiteLength?: boolean;
+}
+
+interface NonfolderItemModelBase extends ItemModelBase {
   folderId?: string;
   secret?: boolean;
   error?: any;
@@ -57,7 +67,6 @@ interface ItemModelBase {
     is_inequality: boolean;
     action_value?: Record<string, string>;
   };
-  controller: CalcController;
   dcgView?: ClassComponent;
 }
 
@@ -68,7 +77,9 @@ interface BaseClickable {
   latex?: string;
 }
 
-export interface ExpressionModel extends BasicSetExpression, ItemModelBase {
+export interface ExpressionModel
+  extends BasicSetExpression,
+    NonfolderItemModelBase {
   type?: "expression";
   fill?: boolean;
   secret?: boolean;
@@ -113,18 +124,18 @@ interface TableColumn extends BasicSetExpression {
   values?: string[];
 }
 
-export interface TableModel extends ItemModelBase {
+export interface TableModel extends NonfolderItemModelBase {
   type: "table";
   columns: TableColumn[];
   columnModels: { draggable: boolean }[];
 }
 
-export interface TextModel extends ItemModelBase {
+export interface TextModel extends NonfolderItemModelBase {
   type: "text";
   text?: string;
 }
 
-export interface ImageModel extends ItemModelBase {
+export interface ImageModel extends NonfolderItemModelBase {
   type: "image";
   image_url: string;
   angle?: string;
@@ -139,15 +150,12 @@ export interface ImageModel extends ItemModelBase {
   };
 }
 
-export interface FolderModel {
+export interface FolderModel extends ItemModelBase {
   type: "folder";
   folderId?: undefined;
-  id: string;
   title?: string;
   secret?: boolean;
   error?: any;
-  index: number;
-  controller: CalcController;
 }
 
 export type ItemModel =
