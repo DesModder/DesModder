@@ -42,6 +42,16 @@ export function changeExprInMetadata(
   }
 }
 
+/**
+ * Mutate `target` by inserting the metadata from `source`.
+ */
+export function mergeMetadata(target: Metadata, source: Metadata) {
+  for (const [id, obj] of Object.entries(source.expressions)) {
+    if (!obj) continue;
+    changeExprInMetadata(target, id, obj);
+  }
+}
+
 function getDefaultValue(key: keyof Expression) {
   switch (key) {
     case "pinned":

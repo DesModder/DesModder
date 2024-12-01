@@ -3,7 +3,11 @@ import GraphMetadata, {
   Expression as MetadataExpression,
 } from "#metadata/interface.ts";
 import { getBlankMetadata, changeExprInMetadata } from "#metadata/manage.ts";
-import { getMetadataFromListModel, setMetadataInListModel } from "./sync";
+import {
+  consolidateMetadataNotes,
+  getMetadataFromListModel,
+  setMetadataInListModel,
+} from "./sync";
 import { AllActions, DispatchedEvent } from "../../globals/extra-actions";
 
 declare module "src/globals/extra-actions" {
@@ -90,6 +94,10 @@ export default class ManageMetadata extends PluginController {
         >;
     }
     return undefined;
+  }
+
+  beforeUpdateTheComputedWorld() {
+    consolidateMetadataNotes(this.calc);
   }
 
   afterUpdateTheComputedWorld() {

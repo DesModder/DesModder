@@ -69,6 +69,9 @@ export default class DSM extends TransparentPlugins {
   }
 
   updateTheComputedWorld() {
+    for (const [_id, plugin] of this.enabledPluginsSorted()) {
+      plugin?.beforeUpdateTheComputedWorld?.();
+    }
     this.vanillaUpdateTheComputedWorld();
     for (const [_id, plugin] of this.enabledPluginsSorted()) {
       plugin?.afterUpdateTheComputedWorld?.();
