@@ -4,7 +4,7 @@ export const configList = [
   {
     type: "boolean",
     default: true,
-    key: "determineLineBreaksAutomatically",
+    key: "autoInsertLinebreaks",
   },
   {
     indentationLevel: 1,
@@ -15,7 +15,7 @@ export const configList = [
     step: 1,
     key: "widthBeforeMultiline",
     shouldShow(current) {
-      return current.determineLineBreaksAutomatically;
+      return current.autoInsertLinebreaks;
     },
   },
   {
@@ -24,21 +24,47 @@ export const configList = [
     default: true,
     key: "disableAutomaticLineBreaksForHandAlignedExpressions",
     shouldShow(current) {
-      return current.determineLineBreaksAutomatically;
+      return current.autoInsertLinebreaks;
     },
+  },
+  {
+    type: "boolean",
+    default: true,
+    key: "spacesToNewlines",
   },
   {
     indentationLevel: 1,
     type: "boolean",
-    default: true,
-    key: "automaticallyMultilinify",
-
+    default: false,
+    key: "autoAlignGrids",
     shouldShow(current) {
-      return current.determineLineBreaksAutomatically;
+      return current.spacesToNewlines;
     },
   },
   {
     indentationLevel: 2,
+    type: "number",
+    default: 3000,
+    min: 0,
+    max: Infinity,
+    step: 1,
+    key: "maxAutoAlignExpressionSize",
+    shouldShow(current) {
+      return current.spacesToNewlines && current.autoAlignGrids;
+    },
+  },
+  {
+    indentationLevel: 0,
+    type: "boolean",
+    default: true,
+    key: "updateLayoutWhileTyping",
+
+    shouldShow(current) {
+      return current.autoInsertLinebreaks || current.autoAlignGrids;
+    },
+  },
+  {
+    indentationLevel: 1,
     type: "number",
     default: 1000,
     min: 0,
@@ -47,23 +73,20 @@ export const configList = [
     key: "multilinifyDelayAfterEdit",
     shouldShow(current) {
       return (
-        current.automaticallyMultilinify &&
-        current.determineLineBreaksAutomatically
+        current.updateLayoutWhileTyping &&
+        (current.autoInsertLinebreaks || current.autoAlignGrids)
       );
     },
-  },
-  {
-    type: "boolean",
-    default: true,
-    key: "spacesToNewlines",
   },
 ] satisfies ConfigItem[];
 
 export interface Config {
   widthBeforeMultiline: number;
-  automaticallyMultilinify: boolean;
-  determineLineBreaksAutomatically: boolean;
+  updateLayoutWhileTyping: boolean;
+  autoInsertLinebreaks: boolean;
   multilinifyDelayAfterEdit: number;
   spacesToNewlines: boolean;
   disableAutomaticLineBreaksForHandAlignedExpressions: boolean;
+  autoAlignGrids: boolean;
+  maxAutoAlignExpressionSize: number;
 }

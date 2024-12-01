@@ -1,4 +1,5 @@
 import { Console } from "#globals";
+import { alignGrid, isGrid } from "./autoalign";
 
 export interface VerticalifyContext {
   containerType:
@@ -101,7 +102,11 @@ interface VerticalifyOptions {
   spacesToNewlines: boolean;
 
   // whether to automatically find places to line break
-  determineLineBreaksAutomatically: boolean;
+  autoInsertLinebreaks: boolean;
+
+  autoAlignGrids: boolean;
+
+  maxAutoAlignExpressionSize: number;
 }
 
 export function unverticalify(elem: Element, force?: boolean) {
@@ -242,7 +247,7 @@ export function verticalify(
   }
 
   // add line breaks
-  if (options.determineLineBreaksAutomatically) {
+  if (options.autoInsertLinebreaks) {
     for (const child of children) {
       const { width } = child.getBoundingClientRect();
 
@@ -305,7 +310,7 @@ export function verticalify(
 
     // verticalify child
     if (
-      (options.determineLineBreaksAutomatically && width > options.skipWidth) ||
+      (options.autoInsertLinebreaks && width > options.skipWidth) ||
       options.spacesToNewlines
     ) {
       verticalify(
@@ -353,6 +358,27 @@ export function verticalify(
         subtree: true,
         childList: true,
       });
+    }
+  });
+
+  context.domManipHandlers.push(() => {
+    if (options.autoAlignGrids && elem instanceof HTMLElement) {
+      if (elem.children.length < options.maxAutoAlignExpressionSize) {
+        const matrixInfo = isGrid(elem);
+
+        if (matrixInfo) {
+          alignGrid(elem);
+        }
+      } else {
+        if (elem.dataset.isCenterAligned) {
+          for (const child of elem.children) {
+            if (!(child instanceof HTMLElement)) continue;
+            child.style.marginRight = "";
+            child.style.marginLeft = "";
+          }
+          delete elem.dataset.isCenterAligned;
+        }
+      }
     }
   });
 }
