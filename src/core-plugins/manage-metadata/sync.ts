@@ -1,8 +1,9 @@
 import Metadata from "#metadata/interface.ts";
 import migrateToLatest from "#metadata/migrate.ts";
 import { getBlankMetadata, isBlankMetadata } from "#metadata/manage.ts";
-import { type Calc, Console, FolderModel, TextModel } from "#globals";
+import { type Calc, Console } from "#globals";
 import { List } from "#utils/depUtils.ts";
+import { FolderState, TextState } from "graph-state/state";
 
 /*
 This file manages the metadata expressions. These are stored on the graph state as expressions and consist of:
@@ -42,12 +43,7 @@ export function getMetadata(calc: Calc) {
   return getBlankMetadata();
 }
 
-function addItemToEnd(
-  calc: Calc,
-  state:
-    | Omit<FolderModel, "index" | "controller">
-    | Omit<TextModel, "index" | "controller">
-) {
+function addItemToEnd(calc: Calc, state: FolderState | TextState) {
   calc.controller._addItemToEndFromAPI(calc.controller.createItemModel(state));
 }
 

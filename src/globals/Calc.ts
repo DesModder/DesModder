@@ -1,5 +1,5 @@
 import { ItemModel } from "./models";
-import { GraphState, Product } from "../../graph-state";
+import { GraphState, ItemState, Product } from "../../graph-state";
 import { MathQuillField } from "#components";
 import { Matrix3 } from "./matrix3";
 import type { DispatchedEvent } from "./extra-actions";
@@ -235,7 +235,7 @@ interface CalcPrivate {
       shouldFocus: boolean
     ) => void;
     _hasUnsavedChanges: boolean;
-    createItemModel: (modelTemplate: any) => ItemModel;
+    createItemModel: (modelTemplate: ItemState) => ItemModel;
     getPillboxBackgroundColor: () => string;
     isGraphSettingsOpen: () => boolean;
     graphSettings: {

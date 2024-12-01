@@ -53,5 +53,6 @@ export default class CodeGolf extends PluginController {
     // above changes. Desmos should be done with their `latex` mutation
     // by the end of their `handleDispatchedAction`, and ours runs after.
     populateGolfStats(this.cc);
+    return undefined;
   }
 }

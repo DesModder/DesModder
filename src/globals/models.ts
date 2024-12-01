@@ -4,7 +4,7 @@
  */
 import { ClassComponent } from "#DCGView";
 import { CalcController } from ".";
-import { GolfStats } from "../plugins/code-golf";
+import { GolfStats } from "../plugins/code-golf/golf-model";
 
 interface BasicSetExpression {
   id: string;
