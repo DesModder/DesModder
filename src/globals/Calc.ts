@@ -104,6 +104,21 @@ export type VanillaDispatchedEvent =
         prop: "folderId" | string;
       };
     }
+  | { type: "new-images"; files: File[] | FileList; id?: string }
+  | {
+      type: "image-upload-success";
+      token: keyof CalcController["__pendingImageUploads"];
+      url: string;
+      width: `${number}`;
+      height: `${number}`;
+      name: string;
+      id?: string;
+    }
+  | {
+      type: "image-upload-error";
+      token: keyof CalcController["__pendingImageUploads"];
+      error: true;
+    }
   | { type: "set-folder-collapsed"; id: string; isCollapsed: boolean }
   | { type: "set-item-colorLatex"; id: string; colorLatex: string }
   | { type: "set-note-text"; id: string; text: string };
@@ -308,6 +323,12 @@ interface CalcPrivate {
       // permitted options from the `asyncScreenshot` API.
       asyncScreenshot: Desmos.Calculator["asyncScreenshot"];
     };
+    __nextItemId: number;
+    __pendingImageUploads: Record<`${number}`, true>;
+    isUploadingImages: () => boolean;
+    areImagesEnabled: () => boolean;
+    scrollSelectedItemIntoView: () => void;
+    s: (identifier: string, placeables?: Record<string, any> | null) => string;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;

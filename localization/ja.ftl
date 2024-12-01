@@ -85,7 +85,7 @@ show-tips-tip-huggy = Huggy!
 
 ## Text Mode
 text-mode-name = テキストモード (ベータ版)
-text-mode-desc = バグがある可能性があります。一時的なドキュメントはこちら: 
+text-mode-desc = バグがある可能性があります。一時的なドキュメントはこちら:
 text-mode-toggle = テキストモードの切り替え
 text-mode-toggle-spaces = スペース
 text-mode-toggle-spaces-tooltip = 整形時、デリミタの後にスペースを挿入します。
@@ -345,8 +345,14 @@ syntax-highlighting-opt-underlineHighlightedRanges-desc = ハイライトされ�
 
 ## Better Navigation
 better-navigation-name = 効率的な移動機能
-better-navigation-desc = Desmos の数式での移動をより簡単にするためのツール 
+better-navigation-desc = Desmos の数式での移動をより簡単にするためのツール
 better-navigation-opt-ctrlArrow-name = Ctrl+Arrow のサポート
 better-navigation-opt-ctrlArrow-desc = Ctrl+矢印キー または Ctrl+Shift+矢印キー を使用して、大きなテキストブロックをすばやくスキップします。Ctrl+Backspace を使用すると、大きなテキストブロックを削除できます。
 better-navigation-opt-scrollableExpressions-name = 数式のスクロールを有効化
 better-navigation-opt-scrollableExpressions-desc = 数式に水平スクロールバーを追加します。これは主にモバイルでのスクロールを簡単にするためのものです。
+
+## Paste Image
+paste-image-name = 画像の貼り付け
+paste-image-desc = 画像ファイルを貼り付けて一度にインポートできます。
+paste-image-error-images-not-enabled = このグラフでは画像の挿入が有効になっていません。
+paste-image-error-another-upload-in-progress = 進行中の他のアップロードが終了してから再試行してください。
