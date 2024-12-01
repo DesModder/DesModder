@@ -40,7 +40,6 @@ export default class GLesmos extends PluginController {
   }
 
   isGlesmosMode(id: string) {
-    this.dsm.metadata?.checkForMetadataChange();
     return this.dsm.metadata?.getDsmItemModel(id)?.glesmos ?? false;
   }
 
@@ -67,7 +66,6 @@ export default class GLesmos extends PluginController {
   }
 
   isGLesmosLinesConfirmed(id: string) {
-    this.dsm.metadata?.checkForMetadataChange();
     return (
       this.dsm.metadata?.getDsmItemModel(id)?.glesmosLinesConfirmed ?? false
     );

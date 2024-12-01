@@ -32,12 +32,16 @@ function getMetadataExpr(calc: Calc) {
   return calc.controller.getItemModel(ID_METADATA);
 }
 
-export function getMetadata(calc: Calc) {
+export function getMetadataFromListModel(calc: Calc) {
   const expr = getMetadataExpr(calc);
   if (expr === undefined) return getBlankMetadata();
   if (expr.type === "text" && expr.text !== undefined) {
-    const parsed = JSON.parse(expr.text);
-    return migrateToLatest(parsed);
+    try {
+      const parsed = JSON.parse(expr.text);
+      return migrateToLatest(parsed);
+    } catch {
+      // Fallthrough to below Invalid case.
+    }
   }
   Console.warn("Invalid dsm-metadata. Ignoring");
   return getBlankMetadata();
@@ -47,7 +51,7 @@ function addItemToEnd(calc: Calc, state: FolderState | TextState) {
   calc.controller._addItemToEndFromAPI(calc.controller.createItemModel(state));
 }
 
-export function setMetadata(calc: Calc, metadata: Metadata) {
+export function setMetadataInListModel(calc: Calc, metadata: Metadata) {
   cleanMetadata(calc, metadata);
   List.removeItemById(calc.controller.listModel, ID_METADATA);
   List.removeItemById(calc.controller.listModel, ID_METADATA_FOLDER);

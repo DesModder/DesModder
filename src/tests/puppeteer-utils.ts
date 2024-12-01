@@ -205,7 +205,6 @@ export class Driver {
       (enabled) => DSM.togglePluginsTo(enabled),
       this.enabledPluginsStart
     );
-    await this.evaluate(() => DSM.metadata?.checkForMetadataChange());
     const exitELM = await this.page.$(EXIT_ELM);
     if (exitELM) await exitELM.click();
     // Wait for settings to get sent back to the extension storage
