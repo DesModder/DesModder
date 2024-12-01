@@ -1,10 +1,6 @@
 import Metadata from "#metadata/interface.ts";
 import { migrateToLatestMaybe } from "#metadata/migrate.ts";
-import {
-  getBlankMetadata,
-  isBlankMetadata,
-  mergeMetadata,
-} from "#metadata/manage.ts";
+import { getBlankMetadata, isBlankMetadata } from "#metadata/manage.ts";
 import {
   type Calc,
   CalcController,
@@ -122,6 +118,7 @@ export function consolidateMetadataNotes(calc: Calc) {
   for (const item of cc.getAllItemModels()) {
     if (item.id === ID_METADATA) continue;
     if (item.type !== "text") continue;
+    if (item.readonly) continue;
     if (!isItemSecret(cc, item)) continue;
     const metadata = getMetadataFromTextItemMaybe(item);
     if (metadata === undefined) continue;
@@ -137,14 +134,7 @@ export function consolidateMetadataNotes(calc: Calc) {
   if (toRemove.size === 0) {
     return;
   }
-  const { deletedItems } = cc.removeListOfItems([...toRemove.keys()]);
-  const graphMetadata = _getMetadataFromListModel(cc);
-  for (const item of deletedItems) {
-    const metadata = toRemove.get(item.id);
-    if (!metadata) continue;
-    mergeMetadata(graphMetadata, metadata);
-  }
-  setMetadataInListModel(calc, graphMetadata);
+  cc.removeListOfItems([...toRemove.keys()]);
 }
 
 function isItemSecret(cc: CalcController, item: ItemModel): boolean {

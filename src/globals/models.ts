@@ -31,6 +31,7 @@ interface ItemModelBase {
   renderShell: boolean;
   isHiddenFromUI: boolean;
   filteredBySearch?: boolean;
+  readonly?: boolean;
   dsmGolfStats?: GolfStats;
   dsmEnableGolfDespiteLength?: boolean;
 }
