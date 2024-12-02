@@ -13,21 +13,18 @@ import { FolderState, ItemState, TextState } from "graph-state/state";
 /*
 This file manages the metadata expressions. These are stored on the graph state as expressions and consist of:
 
-{
-  type: "folder",
-  id: "dsm-metadata-folder",
-  secret: true,
-  title: "DesModder Metadata"
-}
 
 {
   type: "text",
   id: "dsm-metadata",
-  folderId: "dsm-metadata-folder",
+  secret: true,
   text: "{\n  \"key\": value\n}"
 }
 
 The text content of dsm-metadata is in JSON format
+
+There used to be a folder with ID "dsm-metadata-folder". We no longer use it
+and instead remove the folder from existing graphs.
 */
 
 const ID_METADATA = "dsm-metadata";
@@ -89,15 +86,9 @@ export function setMetadataInListModel(calc: Calc, metadata: Metadata) {
   List.removeItemById(calc.controller.listModel, ID_METADATA_FOLDER);
   if (!isBlankMetadata(metadata)) {
     addItemToEnd(calc, {
-      type: "folder",
-      id: ID_METADATA_FOLDER,
-      secret: true,
-      title: "DesModder Metadata",
-    });
-    addItemToEnd(calc, {
       type: "text",
       id: ID_METADATA,
-      folderId: ID_METADATA_FOLDER,
+      secret: true,
       text: JSON.stringify(metadata),
     });
   }
@@ -109,20 +100,12 @@ export function setMetadataInListJSON(list: ItemState[], metadata: Metadata) {
   removeIDFromListJSON(list, ID_METADATA);
   removeIDFromListJSON(list, ID_METADATA_FOLDER);
   if (!isBlankMetadata(metadata)) {
-    list.push(
-      {
-        type: "folder",
-        id: ID_METADATA_FOLDER,
-        secret: true,
-        title: "DesModder Metadata",
-      },
-      {
-        type: "text",
-        id: ID_METADATA,
-        folderId: ID_METADATA_FOLDER,
-        text: JSON.stringify(metadata),
-      }
-    );
+    list.push({
+      type: "text",
+      id: ID_METADATA,
+      secret: true,
+      text: JSON.stringify(metadata),
+    });
   }
 }
 
