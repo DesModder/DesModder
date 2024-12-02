@@ -288,6 +288,12 @@ interface CalcPrivate {
     };
     _addItemToEndFromAPI: (item: ItemModel) => void;
     _showToast: (toast: Toast) => void;
+    removeListOfItems: (ids: string[]) => {
+      // Might only return a subset of the models corresponding to `ids`
+      // if some of the `ids` correspond to readonly expressions.
+      deletedItems: ItemModel[];
+      readonlyItemsNotDeleted: number;
+    };
     getViewState: () => {
       viewport: {
         xmin: number;
