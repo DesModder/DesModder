@@ -41,6 +41,7 @@ interface NonfolderItemModelBase extends ItemModelBase {
   secret?: boolean;
   error?: any;
   formula?: {
+    exported_variables?: string[];
     expression_type:
       | "X_OR_Y"
       // Soon, X_OR_Y will be removed in favor of the following two:

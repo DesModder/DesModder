@@ -11,7 +11,7 @@ import { pendingIntellisenseTimeouts, setIntellisenseTimeout } from "./utils";
 import { JumpToDefinitionMenuInfo, View } from "./view";
 import { DCGView, MountedComponent, unmountFromNode } from "#DCGView";
 import { MathQuillField, MathQuillView } from "#components";
-import { ItemModel, TextModel } from "#globals";
+import { DispatchedEvent, ItemModel, TextModel } from "#globals";
 import { PluginController } from "#plugins/PluginController.ts";
 import { isDescendant } from "#utils/utils.ts";
 
@@ -25,7 +25,8 @@ export type BoundIdentifier =
         | "listcomp-param"
         | "substitution"
         | "derivative"
-        | "repeated-operator";
+        | "repeated-operator"
+        | "other";
       id: number;
     }
   | BoundIdentifierFunction;
@@ -729,6 +730,10 @@ export default class Intellisense extends PluginController<{
         }
       }
     });
+  }
+
+  handleDispatchedAction(e: DispatchedEvent) {
+    this.intellisenseState.handleDispatchedAction(e);
   }
 
   updateCSSForAllDocstringExpressions() {
