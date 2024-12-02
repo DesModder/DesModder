@@ -9,6 +9,7 @@ export type { DispatchedEvent };
 export type VanillaDispatchedEvent =
   | {
       type:
+        | "close-item-settings-menu"
         | "close-graph-settings"
         | "open-expression-search"
         | "close-expression-search"
