@@ -48,6 +48,6 @@ export default class CodeGolf extends PluginController {
   }
 
   afterUpdateTheComputedWorld() {
-    populateGolfStats(this.cc);
+    populateGolfStats(this);
   }
 }
