@@ -26,6 +26,9 @@ for file in public/{chrome,firefox}/manifest.json; do
   npx prettier --write "$file"
 done
 
+echo "Updating RELEASE.md link"
+perl -pi -e 's/compare\/v\d+\.\d+\.\d+/compare\/v'"${version}"'/g' docs/RELEASE.md
+
 git add -A
 git commit -m "Prepare v$version"
 

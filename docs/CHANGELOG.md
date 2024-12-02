@@ -1,5 +1,22 @@
 # DesModder Changelog
 
+## 0.14.0
+
+New features:
+
+- New plugin: Paste image. Copy-paste images into the calculator. Enabled by default.
+
+Bug fixes:
+
+- (Video Creator) Fix default filename detection.
+- (Better Evaluation View) Show display for complex numbers. Note -0 and +0 are treated the same for complex numbers.
+- (Code Golf) Fix replacement error.
+- (Code Golf) Avoid warning when opening a graph with many folders.
+- (Text Mode) Close expression tray when scrolling.
+- Store DesModder metadata inside a note, instead of a note inside a folder.
+- Merge DesModder metadata when pasting a link to a graph into another graph.
+- Delete invalid DesModder metadata notes/folders (which can come from pasting-by-link when DesModder is disabled).
+
 ## 0.13.11
 
 New features:
