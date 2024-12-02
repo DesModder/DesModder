@@ -6,6 +6,7 @@ import {
   FolderModel,
   ItemModel,
 } from "src/globals";
+import CodeGolf from ".";
 
 const MAX_GOLF_LENGTH_CHARS = 2000;
 
@@ -63,8 +64,8 @@ export type GolfStats = "TOO_LONG" | "HIDDEN" | GoodGolfStats;
  * performance. We really should do all the measures in a single pass,
  * but that is not yet implemented.
  */
-export function populateGolfStats(cc: CalcController) {
-  const itemModels = cc.getAllItemModels();
+export function populateGolfStats(cg: CodeGolf) {
+  const itemModels = cg.cc.getAllItemModels();
 
   // Mark long folders as too long.
   for (let i = 0; i < itemModels.length; i++) {
@@ -97,7 +98,7 @@ export function populateGolfStats(cc: CalcController) {
     switch (item.type) {
       case "expression":
       case "folder":
-        item.dsmGolfStats = golfStatsForItem(cc, itemModels, item, i);
+        item.dsmGolfStats = golfStatsForItem(cg, itemModels, item, i);
         break;
       case "image":
       case "table":
@@ -160,26 +161,29 @@ function isFolderTooLong(
   return false;
 }
 
-function isHidden(item: ItemModel) {
+function isHidden(cg: CodeGolf, item: ItemModel) {
   // Is offscreen, hidden, or filtered out by Ctrl+F.
-  return item.renderShell || item.isHiddenFromUI || item.filteredBySearch;
+  if (cg.dsm.pinExpressions?.isExpressionPinned(item.id)) {
+    return false;
+  }
+  return item.renderShell || item.isHiddenFromUI || !!item.filteredBySearch;
 }
 
-function needToComputeStats(cc: CalcController, item: ItemModel): boolean {
+function needToComputeStats(cg: CodeGolf, item: ItemModel): boolean {
   if (item.dsmGolfStats === "TOO_LONG") {
     return false;
-  } else if (!isHidden(item)) {
+  } else if (!isHidden(cg, item)) {
     return true;
   } else if (item.type !== "folder") {
-    const parentFolder = item.folderId && cc.getItemModel(item.folderId);
-    return !!parentFolder && needToComputeStats(cc, parentFolder);
+    const parentFolder = item.folderId && cg.cc.getItemModel(item.folderId);
+    return !!parentFolder && needToComputeStats(cg, parentFolder);
   } else {
     return false;
   }
 }
 
 function golfStatsForItem(
-  cc: CalcController,
+  cg: CodeGolf,
   itemModels: ItemModel[],
   item: ExpressionModel | FolderModel,
   i: number
@@ -187,13 +191,13 @@ function golfStatsForItem(
   if (item.dsmGolfStats === "TOO_LONG") {
     return "TOO_LONG";
   }
-  if (!needToComputeStats(cc, item)) {
+  if (!needToComputeStats(cg, item)) {
     return "HIDDEN";
   }
   switch (item.type) {
     case "expression":
     case undefined:
-      return golfStatsForExpr(cc, item.latex ?? "");
+      return golfStatsForExpr(cg.cc, item.latex ?? "");
     case "folder":
       return golfStatsForFolder(itemModels, item.id, i);
     default:
