@@ -40,7 +40,7 @@ export default class TextMode extends PluginController {
     this.cc.updateViews();
   }
 
-  abortController = new AbortController();
+  abortScrollListenerController = new AbortController();
 
   /**
    * mountEditor: called from module overrides when the DCGView node mounts
@@ -51,9 +51,7 @@ export default class TextMode extends PluginController {
     this.view.scrollDOM.addEventListener(
       "scroll",
       () => this.cc.dispatch({ type: "close-item-settings-menu" }),
-      {
-        signal: this.abortController.signal,
-      }
+      { signal: this.abortScrollListenerController.signal }
     );
     if (hasError) this.conversionError(() => this.toggleTextMode());
     container.appendChild(this.view.dom);
@@ -67,6 +65,20 @@ export default class TextMode extends PluginController {
         if (this.view) onCalcEvent(this.view, event);
       });
     });
+  }
+
+  /**
+   * unmountEditor: called from module overrides when the DCGView node unmounts
+   */
+  unmountEditor() {
+    if (this.dispatchListenerID !== null) {
+      this.cc.dispatcher.unregister(this.dispatchListenerID);
+    }
+    if (this.view) {
+      this.abortScrollListenerController.abort();
+      this.view.destroy();
+      this.view = null;
+    }
   }
 
   editorPanel(): Inserter {
@@ -111,20 +123,6 @@ export default class TextMode extends PluginController {
       // `undoCallback: undefined` still adds the "Press Ctrl+Z" message
       ...(undoCallback ? { undoCallback } : {}),
     });
-  }
-
-  /**
-   * unmountEditor: called from module overrides when the DCGView node unmounts
-   */
-  unmountEditor() {
-    if (this.dispatchListenerID !== null) {
-      this.cc.dispatcher.unregister(this.dispatchListenerID);
-    }
-    if (this.view) {
-      this.abortController.abort();
-      this.view.destroy();
-      this.view = null;
-    }
   }
 
   /**
