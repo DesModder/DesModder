@@ -52,6 +52,18 @@ export function mergeMetadata(target: Metadata, source: Metadata) {
   }
 }
 
+/** Create a new metadata by replacing all IDs `from` with `oldIdToNewId[from]`. */
+export function metadataWithIdsMapped(
+  oldMetadata: Metadata,
+  oldIdToNewId: Map<string, string>
+) {
+  const out = getBlankMetadata();
+  for (const [id, value] of Object.entries(oldMetadata.expressions)) {
+    out.expressions[oldIdToNewId.get(id) ?? id] = value;
+  }
+  return out;
+}
+
 function getDefaultValue(key: keyof Expression) {
   switch (key) {
     case "pinned":

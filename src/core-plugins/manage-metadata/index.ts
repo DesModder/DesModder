@@ -7,8 +7,10 @@ import {
   consolidateMetadataNotes,
   getMetadataFromListModel,
   setMetadataInListModel,
+  transferMetadata,
 } from "./sync";
 import { AllActions, DispatchedEvent } from "../../globals/extra-actions";
+import { ItemState } from "graph-state/state";
 
 declare module "src/globals/extra-actions" {
   interface AllActions {
@@ -113,5 +115,13 @@ export default class ManageMetadata extends PluginController {
       ...v,
       id,
     }));
+  }
+
+  transferMetadata(
+    currentList: ItemState[],
+    newList: ItemState[],
+    oldIdToNewId: Map<string, string>
+  ) {
+    transferMetadata(currentList, newList, oldIdToNewId);
   }
 }

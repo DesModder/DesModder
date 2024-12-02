@@ -1,15 +1,14 @@
 import Metadata from "#metadata/interface.ts";
 import { migrateToLatestMaybe } from "#metadata/migrate.ts";
-import { getBlankMetadata, isBlankMetadata } from "#metadata/manage.ts";
 import {
-  type Calc,
-  CalcController,
-  Console,
-  ItemModel,
-  TextModel,
-} from "#globals";
+  getBlankMetadata,
+  isBlankMetadata,
+  mergeMetadata,
+  metadataWithIdsMapped,
+} from "#metadata/manage.ts";
+import { type Calc, CalcController, Console, ItemModel } from "#globals";
 import { List } from "#utils/depUtils.ts";
-import { FolderState, TextState } from "graph-state/state";
+import { FolderState, ItemState, TextState } from "graph-state/state";
 
 /*
 This file manages the metadata expressions. These are stored on the graph state as expressions and consist of:
@@ -42,7 +41,7 @@ function _getMetadataFromListModel(cc: CalcController) {
   const expr = getMetadataExpr(cc);
   if (expr === undefined) return getBlankMetadata();
   if (expr.type === "text") {
-    const metadata = getMetadataFromTextItemMaybe(expr);
+    const metadata = getMetadataFromTextMaybe(expr.text);
     if (metadata) {
       return metadata;
     }
@@ -56,11 +55,23 @@ export function getMetadataFromListModel(calc: Calc) {
   return _getMetadataFromListModel(calc.controller);
 }
 
-function getMetadataFromTextItemMaybe(expr: TextModel): Metadata | undefined {
-  if (!expr.text) return undefined;
-  if (!expr.text.startsWith("{")) return undefined;
+export function getMetadataFromListJSONMaybe(
+  list: ItemState[],
+  mappedId: string
+): Metadata | undefined {
+  for (const item of list) {
+    if (item.id === mappedId && item.type === "text")
+      return getMetadataFromTextMaybe(item.text);
+  }
+}
+
+function getMetadataFromTextMaybe(
+  text: string | undefined
+): Metadata | undefined {
+  if (!text) return undefined;
+  if (!text.startsWith("{")) return undefined;
   try {
-    const parsed = JSON.parse(expr.text);
+    const parsed = JSON.parse(text);
     return migrateToLatestMaybe(parsed);
   } catch {
     return undefined;
@@ -71,6 +82,7 @@ function addItemToEnd(calc: Calc, state: FolderState | TextState) {
   calc.controller._addItemToEndFromAPI(calc.controller.createItemModel(state));
 }
 
+/** Mutate `listModel` by setting metadata exprs. */
 export function setMetadataInListModel(calc: Calc, metadata: Metadata) {
   cleanMetadata(calc, metadata);
   List.removeItemById(calc.controller.listModel, ID_METADATA);
@@ -91,10 +103,57 @@ export function setMetadataInListModel(calc: Calc, metadata: Metadata) {
   }
 }
 
+/** Mutate `list` by setting metadata exprs. */
+export function setMetadataInListJSON(list: ItemState[], metadata: Metadata) {
+  cleanMetadataGivenList(list, metadata);
+  removeIDFromListJSON(list, ID_METADATA);
+  removeIDFromListJSON(list, ID_METADATA_FOLDER);
+  if (!isBlankMetadata(metadata)) {
+    list.push(
+      {
+        type: "folder",
+        id: ID_METADATA_FOLDER,
+        secret: true,
+        title: "DesModder Metadata",
+      },
+      {
+        type: "text",
+        id: ID_METADATA,
+        folderId: ID_METADATA_FOLDER,
+        text: JSON.stringify(metadata),
+      }
+    );
+  }
+}
+
+function removeIDFromListJSON(list: ItemState[], id: string) {
+  for (let i = list.length - 1; i >= 0; i--) {
+    const item = list[i];
+    if (item.id === id) {
+      list.splice(i, 1);
+      return;
+    }
+  }
+}
+
 /* Mutate metadata by removing expressions that no longer exist */
 function cleanMetadata(calc: Calc, metadata: Metadata) {
   for (const id in metadata.expressions) {
     if (calc.controller.getItemModel(id) === undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete metadata.expressions[id];
+    }
+  }
+}
+
+/* Mutate metadata by removing expressions that no longer exist */
+function cleanMetadataGivenList(list: ItemState[], metadata: Metadata) {
+  const presentIds = new Set();
+  for (const item of list) {
+    presentIds.add(item.id);
+  }
+  for (const id in metadata.expressions) {
+    if (!presentIds.has(id)) {
       // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete metadata.expressions[id];
     }
@@ -120,7 +179,7 @@ export function consolidateMetadataNotes(calc: Calc) {
     if (item.type !== "text") continue;
     if (item.readonly) continue;
     if (!isItemSecret(cc, item)) continue;
-    const metadata = getMetadataFromTextItemMaybe(item);
+    const metadata = getMetadataFromTextMaybe(item.text);
     if (metadata === undefined) continue;
     const toDelete = idToDelete(cc, item);
     toRemove.set(toDelete, metadata);
@@ -156,4 +215,43 @@ function idToDelete(cc: CalcController, item: ItemModel): string {
     }
   }
   return item.id;
+}
+
+/**
+ * Used by a replacement. The `newList` has already been spliced into
+ * `currentList`, with IDs migrated to newly-generated IDs (without collision)
+ * as described by the map `oldIdToNewId`. If metadata is present on `newList`,
+ * then mutate the metadata on the `currentList` (or insert if missing),
+ * and delete the metadata on the `newList`.
+ */
+export function transferMetadata(
+  currentList: ItemState[],
+  newList: ItemState[],
+  oldIdToNewId: Map<string, string>
+) {
+  const newMetadataID = oldIdToNewId.get(ID_METADATA);
+  if (!newMetadataID) return;
+  const newMetadataWithOldIDs = getMetadataFromListJSONMaybe(
+    newList,
+    newMetadataID
+  );
+  if (!newMetadataWithOldIDs) return;
+
+  const newMetadata = metadataWithIdsMapped(
+    newMetadataWithOldIDs,
+    oldIdToNewId
+  );
+  const currentMetadata = getMetadataFromListJSONMaybe(
+    currentList,
+    ID_METADATA
+  );
+  const metadata = currentMetadata
+    ? (mergeMetadata(currentMetadata, newMetadata), currentMetadata)
+    : newMetadata;
+  removeIDFromListJSON(newList, newMetadataID);
+  const newMetadataFolderID = oldIdToNewId.get(ID_METADATA_FOLDER);
+  if (newMetadataFolderID) {
+    removeIDFromListJSON(newList, newMetadataFolderID);
+  }
+  setMetadataInListJSON(currentList, metadata);
 }

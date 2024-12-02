@@ -28,3 +28,64 @@ case "expression": $from =
 __body__;
 DSM.metadata?.duplicateMetadata($to.id, $from.id)
 ```
+
+## Convert IDs when loading graph from a link
+
+*Description* `Transfer expression IDs for metadata when a link is pasted into a blank expression`
+
+*Find* => `body`
+
+```js
+for (let $I = 0; $I < $newList.length; $I++) {
+    let $newId = $r.generateId(),
+        $expr = $newList[$I];
+    if ($expr.type === "folder")
+        if ($m) {
+            $n();
+            return
+        } else {
+            $y[$expr.id] = $newId,
+            $expr.id = $newId;
+            continue
+        }
+    $expr.folderId ? $expr.folderId = $y[$expr.folderId] : $h ? $expr.folderId = $p.id : $u && ($expr.folderId = $p.folderId),
+    $expr.id = $newId
+}
+let $v = $exports[____]($w),
+    $E = 0;
+for (; $E < $currentList.length; ) {
+    ____
+}
+let $k = $h ? $E + 1 : $E,
+    $T = $h ? 0 : 1;
+$currentList.splice($k, $T, ...$newList),
+```
+
+*Find* inside `body` => `firstFor`
+
+```js
+for (let $ = 0; $ < $.length; $++) {
+    let $ = $.generateId(),
+        $ = $[$];
+```
+
+*Replace* `firstFor` with
+
+```js
+const dsmOldIdToNewId = new window.Map();
+__firstFor__
+    dsmOldIdToNewId.set($expr.id, $newId);
+```
+
+*Find* inside `body` => `splice`
+
+```js
+$.splice($, $, ...$)
+```
+
+*Replace* `splice` with
+
+```js
+__splice__,
+DSM?.metadata?.transferMetadata($currentList, $newList, dsmOldIdToNewId)
+```
