@@ -129,6 +129,7 @@ export default class Intellisense extends PluginController<{
 
   // recalculate the intellisense
   updateIntellisense() {
+    if (!this.intellisenseState) return;
     const focusedMQ = MathQuillView.getFocusedMathquill();
     this.saveCursorState();
     this.intellisenseOpts = [];
@@ -629,6 +630,8 @@ export default class Intellisense extends PluginController<{
   dispatcher: string | undefined;
 
   afterEnable() {
+    this.intellisenseState.afterEnable();
+
     // remove lines between docstrings and their expressions
     this.updateCSSForAllDocstringExpressions();
 
@@ -747,6 +750,8 @@ export default class Intellisense extends PluginController<{
   }
 
   afterDisable() {
+    this.intellisenseState.afterDisable();
+
     document.body.classList.toggle("intellisense-enabled", false);
 
     // clear event listeners

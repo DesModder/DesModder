@@ -6,9 +6,7 @@ import {
 import { mapAugAST } from "./latex-parsing";
 import type { Calc, ItemModel } from "#globals";
 import { rootKeys } from "#plugins/find-replace/backend.ts";
-import Metadata from "metadata/interface";
 import { get } from "#utils/utils.ts";
-import { getMetadataFromListModel } from "../../core-plugins/manage-metadata/sync";
 
 function getOrMakeKey<K, V>(map: Map<K, V>, k: K, v: () => V) {
   if (map.has(k)) {
@@ -36,8 +34,6 @@ export class IntellisenseState {
   // maps an expression ID to every identifier it references
   identifiersReferencedInExpression = new Map<string, Set<string>>();
 
-  metadata: Metadata;
-
   counter = 0;
   cc = this.calc.controller;
 
@@ -61,24 +57,59 @@ export class IntellisenseState {
 
   readonly cfg = buildConfigFromGlobals(Desmos, this.calc);
 
-  constructor(public calc: Calc) {
-    this.metadata = getMetadataFromListModel(calc);
-    this.cc.dispatcher.register((e) => {
-      if (e.type === "on-evaluator-changes") {
-        for (const id of Object.keys(e.changes)) {
-          const model = this.cc.getItemModel(id);
-          if (model) {
-            this.handleStateChange(model);
-          }
-        }
-      } else if (e.type === "delete-item-and-animate-out") {
-        this.handleStateRemoval(e.id);
-      } else if (e.type === "set-state") {
-        this.setAllState();
-      }
-    });
+  vanillaWorkerPoolSendMessage: undefined | ((payload: unknown) => void);
+
+  constructor(public calc: Calc) {}
+
+  afterEnable() {
+    const wpc = this.cc.evaluator.workerPoolConnection;
+    this.vanillaWorkerPoolSendMessage = wpc.sendMessage.bind(wpc);
+    wpc.sendMessage = this.workerPoolSendMessage.bind(this);
 
     this.setAllState();
+  }
+
+  afterDisable() {
+    this.cc.evaluator.workerPoolConnection.sendMessage =
+      this.vanillaWorkerPoolSendMessage!;
+  }
+
+  /**
+   * This is a hook into a Desmos function. The payload is typically
+   *  {
+   *    isCompleteState?: boolean,
+   *    statements?: Record<string, ItemModel>,
+   *    removes?: Record<string, boolean>
+   *  },
+   * but the method feels generic enough that it makes sense to
+   * validate the argument here.
+   *
+   * We piggy-back off the mechanism for sending changed/removed statements
+   * to the work. Desmos must have that airtight to make evaluation correct,
+   * so we can trust that it is more reliable than any event listening.
+   */
+  workerPoolSendMessage(payload: unknown) {
+    this.vanillaWorkerPoolSendMessage!(payload);
+    if (typeof payload !== "object" || payload === null) return;
+    if ("isCompleteState" in payload && payload.isCompleteState) {
+      this.setAllState();
+      return;
+    }
+    if ("statements" in payload) {
+      const { statements } = payload;
+      if (typeof statements !== "object" || statements === null) return;
+      for (const id in statements) {
+        const model = this.cc.getItemModel(id);
+        if (model) this.handleStateChange(model);
+      }
+    }
+    if ("removes" in payload) {
+      const { removes } = payload;
+      if (typeof removes !== "object" || removes === null) return;
+      for (const id in removes) {
+        this.handleStateRemoval(id);
+      }
+    }
   }
 
   *boundIdentifiers() {

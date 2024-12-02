@@ -272,6 +272,7 @@ interface CalcPrivate {
     evaluator: {
       workerPoolConnection: {
         killWorker: () => void;
+        sendMessage: (payload: unknown) => void;
       };
       notifyWhenSynced: (cb: () => void) => void;
     };
