@@ -49,8 +49,21 @@ export interface TryFindMQIdentResult {
 
 // is an MQ node a subscript?
 function isSubscript(cursor: MQCursor) {
+  return getSubscriptInside(cursor) !== undefined;
+}
+
+function getSubscriptInside(cursor: MQCursor) {
   const ltx = cursor.latex?.();
-  return !!ltx?.startsWith("_{") && ltx.endsWith("}");
+  if (!ltx) {
+    return undefined;
+  }
+  if (ltx === "_{ }") {
+    return "";
+  }
+  if (ltx.startsWith("_{") && ltx.endsWith("}")) {
+    return ltx.slice(2, -1);
+  }
+  return undefined;
 }
 
 // is an MQ node an operator name?
@@ -243,15 +256,15 @@ export function getCorrectableIdentifier(mq: MathQuillField): {
   }
 
   const identifierSegments: string[] = [];
-
-  let goBack = 0;
+  const segmentGoBackLengths: number[] = [];
 
   while (cursor) {
-    const subscript = isSubscript(cursor);
+    const subscriptInside = getSubscriptInside(cursor);
+    const isSubscript = subscriptInside !== undefined;
     const isValid =
       isOperatorName(cursor) ||
       isVarName(cursor) ||
-      subscript ||
+      isSubscript ||
       isDigit(cursor);
     if (!isValid) break;
 
@@ -262,26 +275,29 @@ export function getCorrectableIdentifier(mq: MathQuillField): {
     if (filteredLatex.length === 0) break;
     identifierSegments.push(filteredLatex);
 
-    if (subscript) {
-      goBack += ltx === "_{ }" ? 1 : ltx.length - 3;
-    } else {
-      goBack++;
-    }
+    const goBack = isSubscript ? subscriptInside.length : 1;
+    segmentGoBackLengths.push(goBack);
 
     cursor = cursor[-1];
   }
-
-  if (isInSubscript) goBack++;
 
   identifierSegments.reverse();
 
   // remove all leading numbers from the identifier
   while (identifierSegments[0]?.match(/^[0-9]+$/g)) {
     identifierSegments.splice(0, 1);
+    segmentGoBackLengths.splice(0, 1);
+  }
+
+  let goBack = 0;
+  for (const len of segmentGoBackLengths) {
+    goBack += len;
   }
 
   const back = () => {
-    for (let i = 0; i < goBack; i++) mq.keystroke("Backspace");
+    for (let i = 0; i < goBack; i++) {
+      mq.keystroke("Backspace");
+    }
   };
 
   if (identifierSegments.length === 1) {
