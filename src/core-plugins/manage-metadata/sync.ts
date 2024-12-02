@@ -152,9 +152,10 @@ function cleanMetadataGivenList(list: ItemState[], metadata: Metadata) {
  *  - Text statement
  *  - Text starts with "{"
  *  - Parses as valid metadata.
- * They are removed and all merged into a single metadata expression.
+ * They are all removed. They were pasted without proper ID migration,
+ * so the IDs are wrong: there is no point merging them in to the existing metadata.
  */
-export function consolidateMetadataNotes(calc: Calc) {
+export function deleteJunkMetadataNotes(calc: Calc) {
   const cc = calc.controller;
   const toRemove = new Map<string, Metadata>();
   for (const item of cc.getAllItemModels()) {

@@ -4,7 +4,7 @@ import GraphMetadata, {
 } from "#metadata/interface.ts";
 import { getBlankMetadata, changeExprInMetadata } from "#metadata/manage.ts";
 import {
-  consolidateMetadataNotes,
+  deleteJunkMetadataNotes,
   getMetadataFromListModel,
   setMetadataInListModel,
   transferMetadata,
@@ -99,7 +99,7 @@ export default class ManageMetadata extends PluginController {
   }
 
   beforeUpdateTheComputedWorld() {
-    consolidateMetadataNotes(this.calc);
+    deleteJunkMetadataNotes(this.calc);
   }
 
   afterUpdateTheComputedWorld() {
