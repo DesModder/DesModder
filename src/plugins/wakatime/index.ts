@@ -14,6 +14,7 @@ export default class Wakatime extends PluginController<Config> {
   lastUpdate = performance.now() - heartbeatInterval;
   handler!: string;
 
+  enabled = true;
   afterEnable() {
     this.handler = this.cc.dispatcher.register((e) => {
       if (
@@ -23,19 +24,25 @@ export default class Wakatime extends PluginController<Config> {
         this.maybeSendHeartbeat(e.type === "clear-unsaved-changes");
       }
     });
-    // TODO: avoid double-listen on disable-re-enable
     listenToMessageDown((msg) => {
+      // Avoid double-listen on disable-re-enable
+      if (!this.enabled) {
+        return true;
+      }
       if (msg.type === "heartbeat-error") {
-        if (msg.isAuthError) {
-          this.dsm.disablePlugin("wakatime");
+        let message: string;
+        if (msg.key === "invalid-api-key") {
+          message =
+            "WakaTime error: Invalid or missing API key. Check https://wakatime.com/settings for your key.";
           this.cc._showToast({
-            message:
-              "WakaTime heartbeat error: check your secret key. Plugin has been deactivated.",
+            message,
             toastStyle: "error",
-            hideAfter: 0,
+            hideAfter: 12 * 1000,
           });
+        } else {
+          message = msg.message;
         }
-        Console.error("Wakatime heartbeat error:", msg.message);
+        Console.error("Wakatime heartbeat error:", message);
       }
       return false;
     });
@@ -43,6 +50,7 @@ export default class Wakatime extends PluginController<Config> {
 
   afterDisable() {
     this.cc.dispatcher.unregister(this.handler);
+    this.enabled = false;
   }
 
   maybeSendHeartbeat(isWrite: boolean) {
