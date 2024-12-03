@@ -11,6 +11,7 @@ import {
 } from "./sync";
 import { AllActions, DispatchedEvent } from "../../globals/extra-actions";
 import { ItemState } from "graph-state/state";
+import { format } from "#i18n";
 
 declare module "src/globals/extra-actions" {
   interface AllActions {
@@ -61,8 +62,8 @@ export default class ManageMetadata extends PluginController {
       ) {
         // list of glesmos expressions changed
         this.cc._showToast({
-          message:
-            "Enable the GLesmos plugin to improve the performance of some implicits in this graph",
+          // eslint-disable-next-line rulesdir/no-format-in-ts
+          message: format("GLesmos-not-enabled"),
         });
       }
     }
