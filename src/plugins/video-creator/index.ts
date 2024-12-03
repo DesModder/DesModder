@@ -78,6 +78,9 @@ export default class VideoCreator extends PluginController {
   samePixelRatio = false;
   fastScreenshots = true;
 
+  readonly mosaicRatioX = this.managedNumberInputModel("1");
+  readonly mosaicRatioY = this.managedNumberInputModel("1");
+
   readonly or = new Orientation(this);
 
   // ** play preview
@@ -216,6 +219,30 @@ export default class VideoCreator extends PluginController {
     return EvaluateSingleExpression(this.calc, s);
   }
 
+  useMosaicRatio() {
+    return !this.cc.is3dProduct();
+  }
+
+  getMosaicRatioX() {
+    const x = this.mosaicRatioX.getValue();
+    if (isPositiveInteger(x) && x <= 10) return x;
+    return undefined;
+  }
+
+  isMosaicRatioXValid() {
+    return this.getMosaicRatioX() !== undefined;
+  }
+
+  getMosaicRatioY() {
+    const y = this.mosaicRatioY.getValue();
+    if (isPositiveInteger(y) && y <= 10) return y;
+    return undefined;
+  }
+
+  isMosaicRatioYValid() {
+    return this.getMosaicRatioY() !== undefined;
+  }
+
   isCaptureMethodValid(method: CaptureMethod) {
     switch (method) {
       case "action":
@@ -335,7 +362,7 @@ export default class VideoCreator extends PluginController {
 
   isTickCountValid() {
     const tc = this.getTickCountNumber();
-    return Number.isInteger(tc) && tc > 0;
+    return isPositiveInteger(tc);
   }
 
   async capture() {
@@ -346,6 +373,11 @@ export default class VideoCreator extends PluginController {
     // TODO: don't care about e.g. "from" when doing "step" capture, etc.
     if (!this.or.areCaptureSettingsValid()) return false;
     if (!this.isCaptureWidthValid() || !this.isCaptureHeightValid())
+      return false;
+    if (
+      this.useMosaicRatio() &&
+      !(this.isMosaicRatioXValid() && this.isMosaicRatioYValid())
+    )
       return false;
     switch (this.captureMethod) {
       case "once":
@@ -562,4 +594,8 @@ export default class VideoCreator extends PluginController {
 
 function isValidLength(v: number) {
   return !isNaN(v) && v >= 2;
+}
+
+function isPositiveInteger(x: number) {
+  return Number.isInteger(x) && x > 0;
 }
