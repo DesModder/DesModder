@@ -80,7 +80,7 @@ export default class ManagedNumberInput extends Component<ManagedNumberInputPara
           "dsm-suffix-degree-per-sec": this.props.numberUnits?.() === "°/s",
           "dsm-suffix-radian-per-sec": this.props.numberUnits?.() === "rad/s",
         })}
-        placeholder={() => this.props.data().getDefaultLatex()}
+        placeholder={() => this.props.data().getDefaultLatex() ?? ""}
         ariaLabel={() => this.props.ariaLabel()}
         handleLatexChanged={(latex) => {
           this.props.data().setLatexWithCallbacks(latex);

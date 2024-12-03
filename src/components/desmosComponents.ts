@@ -117,7 +117,7 @@ export abstract class InlineMathInputViewComponent extends ClassComponent<{
   isFocused: boolean;
   ariaLabel: string;
   // ariaPostLabel: string;
-  placeholder?: string;
+  placeholder: string;
   handleLatexChanged: (s: string) => void;
   handlePressedKey?: (key: string, e: KeyboardEvent) => void;
   hasError?: boolean;
