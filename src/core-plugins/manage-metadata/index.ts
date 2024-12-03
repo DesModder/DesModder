@@ -53,7 +53,8 @@ export default class ManageMetadata extends PluginController {
 
   private syncFromMetadataNote() {
     const newMetadata = getMetadataFromListModel(this.calc);
-    if (!this.dsm.glesmos) {
+    // We could be in the middle of init, so we can't just do `!this.dsm.glesmos`.
+    if (!this.dsm.isPluginEnabled("GLesmos")) {
       if (
         Object.entries(newMetadata.expressions).some(
           ([id, e]) =>
