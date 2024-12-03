@@ -11,6 +11,7 @@ import {
 } from "./sync";
 import { AllActions, DispatchedEvent } from "../../globals/extra-actions";
 import { ItemState } from "graph-state/state";
+import { format } from "#i18n";
 
 declare module "src/globals/extra-actions" {
   interface AllActions {
@@ -43,6 +44,7 @@ export default class ManageMetadata extends PluginController {
   static isCore = true;
 
   graphMetadata: GraphMetadata = getBlankMetadata();
+  recentlyOpenedGLesmos = false;
 
   beforeDisable() {
     throw new Error(
@@ -52,7 +54,8 @@ export default class ManageMetadata extends PluginController {
 
   private syncFromMetadataNote() {
     const newMetadata = getMetadataFromListModel(this.calc);
-    if (!this.dsm.glesmos) {
+    // We could be in the middle of init, so we can't just do `!this.dsm.glesmos`.
+    if (!this.dsm.isPluginEnabled("GLesmos")) {
       if (
         Object.entries(newMetadata.expressions).some(
           ([id, e]) =>
@@ -60,10 +63,15 @@ export default class ManageMetadata extends PluginController {
         )
       ) {
         // list of glesmos expressions changed
-        this.cc._showToast({
-          message:
-            "Enable the GLesmos plugin to improve the performance of some implicits in this graph",
-        });
+        this.showGlesmosNotEnabledToast();
+        // Navigating graphs in the shell creates the toast 'Opened "Graph Name"'
+        // which is dispatched as a separate event after the event that
+        // triggers this code path. So we replace that toast with the
+        //  "GLesmos-not-enabled" toast.
+        this.recentlyOpenedGLesmos = true;
+        setTimeout(() => {
+          this.recentlyOpenedGLesmos = false;
+        }, 0);
       }
     }
     this.graphMetadata = newMetadata;
@@ -77,6 +85,13 @@ export default class ManageMetadata extends PluginController {
     setMetadataInListModel(this.calc, this.graphMetadata);
   }
 
+  private showGlesmosNotEnabledToast() {
+    this.cc._showToast({
+      // eslint-disable-next-line rulesdir/no-format-in-ts
+      message: format("GLesmos-not-enabled"),
+    });
+  }
+
   /** Called from inside a couple dispatched functions. */
   duplicateMetadata(toID: string, fromID: string) {
     const model = this.getDsmItemModel(fromID);
@@ -88,6 +103,12 @@ export default class ManageMetadata extends PluginController {
       case "dsm-manage-metadata-update-for-expr":
         this._updateExprMetadata(action.id, action.obj);
         this.dsm.pinExpressions?.applyPinnedStyle();
+        break;
+      case "toast/show":
+        if (this.recentlyOpenedGLesmos) {
+          this.showGlesmosNotEnabledToast();
+          return "abort-later-handlers";
+        }
         break;
       default:
         action satisfies Exclude<

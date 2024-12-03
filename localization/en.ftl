@@ -24,6 +24,7 @@ GLesmos-label-toggle-glesmos = Render with GLesmos
 GLesmos-confirm-lines = Confirm lines
 GLesmos-confirm-lines-body = GLesmos line rendering can be slow. Be careful, especially for a list of layers.
 GLesmos-no-support = Unfortunately, your browser does not support GLesmos because it does not support WebGL2.
+GLesmos-not-enabled = Enable the GLesmos plugin to improve the performance of some implicits in this graph.
 # Missing: error messages
 
 ## Tips

@@ -120,6 +120,10 @@ export type VanillaDispatchedEvent =
       token: keyof CalcController["__pendingImageUploads"];
       error: true;
     }
+  | {
+      type: "toast/show";
+      toast: Toast;
+    }
   | { type: "set-folder-collapsed"; id: string; isCollapsed: boolean }
   | { type: "set-item-colorLatex"; id: string; colorLatex: string }
   | { type: "set-note-text"; id: string; text: string };
@@ -337,6 +341,7 @@ interface CalcPrivate {
     areImagesEnabled: () => boolean;
     scrollSelectedItemIntoView: () => void;
     s: (identifier: string, placeables?: Record<string, any> | null) => string;
+    runAfterDispatch: (cb: () => void) => void;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;
