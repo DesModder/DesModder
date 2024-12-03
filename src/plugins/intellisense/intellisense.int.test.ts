@@ -1,4 +1,4 @@
-import { testWithPage } from "../../tests/puppeteer-utils";
+import { testWithPage } from "#tests";
 
 const delay = async (ms: number) =>
   // eslint-disable-next-line rulesdir/no-timeouts-in-intellisense
@@ -152,6 +152,11 @@ describe("Intellisense", () => {
       await driver.keyboard.type("alphaabc");
       await wiggle();
       await driver.assertSelectedItemLatex("\\alpha_{abc}");
+      await driver.keyboard.press("Escape");
+      await driver.keyboard.press("Enter");
+      await driver.keyboard.type("2foo");
+      await wiggle();
+      await driver.assertSelectedItemLatex("2f_{oo}");
       await driver.keyboard.press("Escape");
       await driver.keyboard.press("Enter");
 
