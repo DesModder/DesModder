@@ -4,11 +4,9 @@ import {
   parseRootLatex,
 } from "../../../text-mode-core";
 import { mapAugAST } from "./latex-parsing";
-import type { Calc, ItemModel } from "#globals";
+import type { Calc, DispatchedEvent, ItemModel } from "#globals";
 import { rootKeys } from "#plugins/find-replace/backend.ts";
-import Metadata from "metadata/interface";
 import { get } from "#utils/utils.ts";
-import { getMetadataFromListModel } from "../../core-plugins/manage-metadata/sync";
 
 function getOrMakeKey<K, V>(map: Map<K, V>, k: K, v: () => V) {
   if (map.has(k)) {
@@ -36,8 +34,6 @@ export class IntellisenseState {
   // maps an expression ID to every identifier it references
   identifiersReferencedInExpression = new Map<string, Set<string>>();
 
-  metadata: Metadata;
-
   counter = 0;
   cc = this.calc.controller;
 
@@ -61,24 +57,79 @@ export class IntellisenseState {
 
   readonly cfg = buildConfigFromGlobals(Desmos, this.calc);
 
-  constructor(public calc: Calc) {
-    this.metadata = getMetadataFromListModel(calc);
-    this.cc.dispatcher.register((e) => {
-      if (e.type === "on-evaluator-changes") {
+  vanillaWorkerPoolSendMessage: undefined | ((payload: unknown) => void);
+
+  constructor(public calc: Calc) {}
+
+  afterEnable() {
+    const wpc = this.cc.evaluator.workerPoolConnection;
+    this.vanillaWorkerPoolSendMessage = wpc.sendMessage.bind(wpc);
+    wpc.sendMessage = this.workerPoolSendMessage.bind(this);
+
+    this.setAllState();
+  }
+
+  afterDisable() {
+    this.cc.evaluator.workerPoolConnection.sendMessage =
+      this.vanillaWorkerPoolSendMessage!;
+  }
+
+  /**
+   * This is a hook into a Desmos function. The payload is typically
+   *  {
+   *    isCompleteState?: boolean,
+   *    statements?: Record<string, ItemModel>,
+   *    removes?: Record<string, boolean>
+   *  },
+   * but the method feels generic enough that it makes sense to
+   * validate the argument here.
+   *
+   * We piggy-back off the mechanism for sending changed/removed statements
+   * to the work. Desmos must have that airtight to make evaluation correct,
+   * so we can trust that it is more reliable than any event listening.
+   */
+  workerPoolSendMessage(payload: unknown) {
+    this.vanillaWorkerPoolSendMessage!(payload);
+    if (typeof payload !== "object" || payload === null) return;
+    if ("isCompleteState" in payload && payload.isCompleteState) {
+      this.setAllState();
+      return;
+    }
+    // This helps immediately update the intellisense when an assignment
+    // is added, but the `formula.expected_variables` is not set correctly here,
+    // so e.g. tables and regressions don't get their exports added until
+    // the next on-evaluator-changes.
+    if ("statements" in payload) {
+      const { statements } = payload;
+      if (typeof statements !== "object" || statements === null) return;
+      for (const id in statements) {
+        const model = this.cc.getItemModel(id);
+        if (model) this.handleStateChange(model);
+      }
+    }
+    // This is where we robustly handle removed statements.
+    if ("removes" in payload) {
+      const { removes } = payload;
+      if (typeof removes !== "object" || removes === null) return;
+      for (const id in removes) {
+        this.handleStateRemoval(id);
+      }
+    }
+  }
+
+  handleDispatchedAction(e: DispatchedEvent) {
+    switch (e.type) {
+      // We handle on-evaluator-changes here because `formula.exported_variables`
+      // is now up-to-date, so exports can be found from tables and regressions.
+      case "on-evaluator-changes":
         for (const id of Object.keys(e.changes)) {
           const model = this.cc.getItemModel(id);
           if (model) {
             this.handleStateChange(model);
           }
         }
-      } else if (e.type === "delete-item-and-animate-out") {
-        this.handleStateRemoval(e.id);
-      } else if (e.type === "set-state") {
-        this.setAllState();
-      }
-    });
-
-    this.setAllState();
+        break;
+    }
   }
 
   *boundIdentifiers() {
@@ -138,6 +189,8 @@ export class IntellisenseState {
 
     const newIdentifiersReferenced = new Set<string>();
 
+    let foundTopLevelBinding = false;
+
     if (expression.type === "expression") {
       for (const key of rootKeys) {
         const ltxStr = get(expression, key);
@@ -156,7 +209,7 @@ export class IntellisenseState {
             exprId: expression.id,
             id: this.counter++,
           });
-
+          foundTopLevelBinding = true;
           // add fn def and params to bound ident list
         } else if (ltx.type === "FunctionDefinition") {
           newBoundIdentifiers.push({
@@ -174,6 +227,7 @@ export class IntellisenseState {
               id: this.counter++,
             }))
           );
+          foundTopLevelBinding = true;
         }
 
         mapAugAST(ltx, (node) => {
@@ -217,6 +271,25 @@ export class IntellisenseState {
             });
           }
         });
+      }
+    }
+
+    // Add in `exported_variables` for table columns and regression parameters.
+    // We don't use `exported_variables` at all if we have already found
+    // an export directly from the LaTeX since `exported_variables` wouldn't
+    // give anything new and is probably out-of-date.
+    if (!foundTopLevelBinding && "formula" in expression) {
+      const exportedVariables = expression.formula?.exported_variables;
+      if (exportedVariables && exportedVariables.length > 0) {
+        for (const ident of exportedVariables) {
+          if (ident.startsWith("idref_") || ident.startsWith("ans")) continue;
+          newBoundIdentifiers.push({
+            exprId: expression.id,
+            variableName: ident,
+            type: "other",
+            id: this.counter++,
+          });
+        }
       }
     }
 

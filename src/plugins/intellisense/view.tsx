@@ -136,6 +136,7 @@ function latexForType(type: BoundIdentifier["type"]) {
     derivative: "\\frac{d}{dx}",
     "repeated-operator": "\\Sigma",
     substitution: "\\operatorname{with}",
+    other: "",
   }[type];
 }
 

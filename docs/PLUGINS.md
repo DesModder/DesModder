@@ -43,6 +43,8 @@ The name should be human-readable and can change, if needed, for clarity.
 
 The `afterEnable` method is called whenever the plugin starts up: either on page load or after the user enables the plugin after it was disabled.
 
+If you do something in the class constructor instead of `afterEnable`, be careful: At the time of construction, the plugin is not yet added to the plugin map, so external functions will think the plugin is disabled.
+
 The `afterDisable` method is only called when the plugin was enabled but the user taps the toggle to switch it to disabled.
 
 The setting `enabledByDefault` only affects users when they first use DesModder.

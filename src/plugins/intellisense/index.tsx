@@ -11,7 +11,7 @@ import { pendingIntellisenseTimeouts, setIntellisenseTimeout } from "./utils";
 import { JumpToDefinitionMenuInfo, View } from "./view";
 import { DCGView, MountedComponent, unmountFromNode } from "#DCGView";
 import { MathQuillField, MathQuillView } from "#components";
-import { ItemModel, TextModel } from "#globals";
+import { DispatchedEvent, ItemModel, TextModel } from "#globals";
 import { PluginController } from "#plugins/PluginController.ts";
 import { isDescendant } from "#utils/utils.ts";
 
@@ -25,7 +25,8 @@ export type BoundIdentifier =
         | "listcomp-param"
         | "substitution"
         | "derivative"
-        | "repeated-operator";
+        | "repeated-operator"
+        | "other";
       id: number;
     }
   | BoundIdentifierFunction;
@@ -129,6 +130,7 @@ export default class Intellisense extends PluginController<{
 
   // recalculate the intellisense
   updateIntellisense() {
+    if (!this.intellisenseState) return;
     const focusedMQ = MathQuillView.getFocusedMathquill();
     this.saveCursorState();
     this.intellisenseOpts = [];
@@ -629,6 +631,8 @@ export default class Intellisense extends PluginController<{
   dispatcher: string | undefined;
 
   afterEnable() {
+    this.intellisenseState.afterEnable();
+
     // remove lines between docstrings and their expressions
     this.updateCSSForAllDocstringExpressions();
 
@@ -728,6 +732,11 @@ export default class Intellisense extends PluginController<{
     });
   }
 
+  handleDispatchedAction(e: DispatchedEvent) {
+    this.intellisenseState.handleDispatchedAction(e);
+    return undefined;
+  }
+
   updateCSSForAllDocstringExpressions() {
     for (const m of this.cc.getAllItemModels()) {
       if (m.type !== "text") continue;
@@ -747,6 +756,8 @@ export default class Intellisense extends PluginController<{
   }
 
   afterDisable() {
+    this.intellisenseState.afterDisable();
+
     document.body.classList.toggle("intellisense-enabled", false);
 
     // clear event listeners
