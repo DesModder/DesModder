@@ -58,6 +58,7 @@ export default class SelectCapture extends Component<{
                       this.vc.updateFocus("capture-slider-var", b)
                     }
                     controller={this.vc.cc}
+                    placeholder=""
                   />
                 </span>
                 <StaticMathQuillView latex="=" />

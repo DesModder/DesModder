@@ -227,6 +227,7 @@ function golfStatsForExpr(cc: CalcController, latex: string): GolfStats {
     handleFocusChanged: () => () => false,
     ariaLabel: () => "",
     controller: () => cc,
+    placeholder: () => "",
   });
 
   const stats = {
