@@ -180,6 +180,7 @@ video-creator-orientation-mode-current-speed = current
 video-creator-orientation-mode-current-delta = step
 video-creator-orientation-mode-from-to = from/to
 video-creator-size = Size:
+video-creator-mosaic = Mosaic:
 video-creator-angle-current = Angle:
 video-creator-angle-from = From:
 video-creator-angle-to = To:

@@ -2,6 +2,7 @@ import VideoCreator from "..";
 import { scaleBoundsAboutCenter } from "./utils";
 import { ManagedNumberInputModel } from "../components/ManagedNumberInput";
 import { noSpeed } from "../orientation";
+import { CalcController, Viewport } from "../../../globals";
 
 export type CaptureMethod = "once" | "ntimes" | "action" | "slider" | "ticks";
 
@@ -13,21 +14,109 @@ async function captureAndApplyFrame(vc: VideoCreator) {
   vc.pushFrame(frame);
 }
 
-async function captureFrame(
-  vc: VideoCreator
-): Promise<string | typeof CANCELLED> {
+interface MosaicDims {
+  x: number;
+  y: number;
+}
+
+function mosaicDimensions(vc: VideoCreator): MosaicDims | undefined {
+  if (!vc.useMosaicRatio()) return undefined;
+  const x = vc.getMosaicRatioX();
+  const y = vc.getMosaicRatioY();
+  if (!x || !y) return undefined;
+  if (x === 1 && y === 1) return undefined;
+  return { x, y };
+}
+
+type ImageCapturePromise = Promise<string | typeof CANCELLED>;
+
+function* segmentInterval(lo: number, hi: number, count: number) {
+  let segmentLo = lo;
+  for (let i = 1; i <= count; i++) {
+    const segmentHi = lo * ((count - i) / count) + hi * (i / count);
+    yield [segmentLo, segmentHi] as const;
+    segmentLo = segmentHi;
+  }
+}
+
+async function imageOnload(img: HTMLImageElement) {
+  await new Promise<void>((resolve) => {
+    img.addEventListener("load", () => resolve());
+  });
+}
+
+function setViewport(cc: CalcController, vp: Viewport) {
+  const Viewport = cc.getDefaultViewport().constructor;
+  const grapher = cc.getGrapher();
+  grapher.viewportController.setViewport(Viewport.fromObject(vp));
+  cc.dispatch({
+    type: "commit-user-requested-viewport",
+    viewport: vp,
+  });
+}
+
+async function captureMosaic(
+  vc: VideoCreator,
+  /** The width and height of each tile of the mosaic */
+  { width, height }: { width: number; height: number },
+  captureOpts: ScreenshotOpts,
+  dims: MosaicDims
+): ImageCapturePromise {
+  const canvas = document.createElement("canvas");
+  canvas.width = width * dims.x;
+  canvas.height = height * dims.y;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error("Failed to get context");
+  }
+  const vp = { ...vc.cc.getViewState().viewport };
+  let imgy = 0;
+  for (const [ymax, ymin] of segmentInterval(vp.ymax, vp.ymin, dims.y)) {
+    let imgx = 0;
+    for (const [xmin, xmax] of segmentInterval(vp.xmin, vp.xmax, dims.x)) {
+      setViewport(vc.cc, { xmin, xmax, ymin, ymax });
+
+      const pngURI = await screenshotOrCancel(vc, captureOpts);
+      if (pngURI === CANCELLED) return CANCELLED;
+
+      const img = new Image();
+      img.src = pngURI;
+      await imageOnload(img);
+
+      ctx.drawImage(img, imgx, imgy, width, height);
+      imgx += width;
+    }
+    imgy += height;
+  }
+  setViewport(vc.cc, vp);
+  return canvas.toDataURL("image/png");
+}
+
+async function screenshotOrCancel(
+  vc: VideoCreator,
+  captureOpts: ScreenshotOpts
+): ImageCapturePromise {
+  const screenshot = vc.cc.is3dProduct() ? screenshot3d : screenshot2d;
+  return await Promise.race([screenshot(vc, captureOpts), vc.awaitCancel()]);
+}
+
+// resolves the screenshot as a data URI
+async function captureFrame(vc: VideoCreator): ImageCapturePromise {
   const width = vc.getCaptureWidthNumber();
   const height = vc.getCaptureHeightNumber();
   const targetPixelRatio = vc.getTargetPixelRatio();
-  const size = {
+  const captureOpts = {
     width: width / targetPixelRatio,
     targetPixelRatio,
     height: height / targetPixelRatio,
     preserveAxisNumbers: true,
   };
-  // resolves the screenshot as a data URI
-  const screenshot = vc.cc.is3dProduct() ? screenshot3d : screenshot2d;
-  return await Promise.race([screenshot(vc, size), vc.awaitCancel()]);
+  const mosaic = mosaicDimensions(vc);
+  if (mosaic) {
+    return await captureMosaic(vc, { width, height }, captureOpts, mosaic);
+  } else {
+    return await screenshotOrCancel(vc, captureOpts);
+  }
 }
 
 interface ScreenshotOpts {
