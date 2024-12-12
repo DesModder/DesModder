@@ -13,8 +13,8 @@ import { fullReplacementCached } from "./replacementHelpers/cacheReplacement";
 
 /* This script is loaded at document_start, before the page's scripts */
 
-/** The calculator is not loaded as soon as toplevel/calculator_desktop is
- * loaded; toplevel/calculator_desktop sneakily contains a thenable, so it
+/** The calculator is not loaded as soon as shared_calculator_desktop is
+ * loaded; shared_calculator_desktop sneakily contains a thenable, so it
  * returns before actually initializing the calculator. This leads to a race
  * condition, so poll for Calc being ready. */
 function tryRunDesModder() {
@@ -30,6 +30,7 @@ function runDesModder() {
 
 function getCalcDesktopURL() {
   const script: HTMLScriptElement | null =
+    document.querySelector("script[src*='shared_calculator_desktop']") ??
     document.querySelector("script[src*='calculator_desktop']") ??
     document.querySelector("script[src*='calculator_geometry']") ??
     document.querySelector("script[src*='calculator_3d']");

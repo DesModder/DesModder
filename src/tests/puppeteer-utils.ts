@@ -258,7 +258,7 @@ export class Driver {
       ".dcg-keys-container[aria-hidden]"
     );
     // There's no visible mathquill, except those that are children of keypad
-    // (which don't get removed rom the DOM tree)
+    // (which don't get removed from the DOM tree)
     const allMathquillAreInKeypad = await this.page.$$eval(
       ".dcg-mq-root-block:not(.dcg-mq-empty)",
       (elems) => elems.every((e) => e.closest(".dcg-keypad"))

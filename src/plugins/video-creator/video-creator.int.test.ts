@@ -1,4 +1,4 @@
-import { clean, testWithPage } from "#tests";
+import { testWithPage } from "#tests";
 
 const CAPTURE = ".dsm-menu-container .dsm-vc-capture-menu";
 const PREVIEW = ".dsm-menu-container .dsm-vc-preview-menu";
@@ -35,7 +35,5 @@ describe("Video Creator", () => {
 
     // Click graphpaper to close menu
     await driver.click(".dcg-graph-outer");
-
-    return clean;
   });
 });

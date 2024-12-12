@@ -145,5 +145,25 @@
     "condition": {
       "urlFilter": "*://*.desmos.com:*/*/calculator_3d-*.js|"
     }
+  },
+  {
+    "id": 11,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "*://*.desmos.com/*/shared_calculator_desktop-*.js|"
+    }
+  },
+  {
+    "id": 12,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "*://*.desmos.com:*/*/shared_calculator_desktop-*.js|"
+    }
   }
 ]

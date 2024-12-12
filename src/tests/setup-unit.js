@@ -8,7 +8,7 @@ module.exports = async function () {
   const SERVER = "https://desmos.com";
   const CACHE_FOLDER = "node_modules/.cache/desmos";
   const CALC_DESKTOP = `${CACHE_FOLDER}/calculator_desktop.js`;
-  const PREFIX = '<script src="/assets/build/calculator_desktop';
+  const PREFIX = '<script src="/assets/build/shared_calculator_desktop';
 
   const calculatorLink = `${SERVER}/calculator`;
 
