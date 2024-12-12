@@ -732,9 +732,8 @@ export default class Intellisense extends PluginController<{
     });
   }
 
-  handleDispatchedAction(e: DispatchedEvent) {
-    this.intellisenseState.handleDispatchedAction(e);
-    return undefined;
+  afterHandleDispatchedAction(e: DispatchedEvent) {
+    this.intellisenseState.afterHandleDispatchedAction(e);
   }
 
   updateCSSForAllDocstringExpressions() {

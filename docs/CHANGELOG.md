@@ -1,5 +1,15 @@
 # DesModder Changelog
 
+## 0.14.1
+
+Bug fixes
+
+- Fix loading process in all calculators.
+- (Intellisense) Fix bug where the number before an identifier could be deleted with auto-subscriptify enabled.
+- (Intellisense) Include identifiers exported by tables or regressions
+- (GLesmos) Tweak behavior of showing warning that GLesmos is required.
+- (Video Creator) Avoid error message when a size field is empty.
+
 ## 0.14.0
 
 New features:
