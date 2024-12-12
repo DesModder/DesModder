@@ -33,6 +33,7 @@ if (BROWSER === "firefox") {
         "https://*.desmos.com/assets/build/calculator_desktop-*.js",
         "https://*.desmos.com/assets/build/calculator_geometry-*.js",
         "https://*.desmos.com/assets/build/calculator_3d-*.js",
+        "https://*.desmos.com/assets/build/shared_calculator_desktop-*.js",
       ],
     },
     ["blocking"]

@@ -5,7 +5,7 @@
  * overrides.less, replacing primary-based colors with var(--variable) and
  * keeping only those rules
  *
- * First copy `calculator_desktop-[hash].css` into `src/plugins/set-primary-color/raw.css`
+ * First copy `shared_calculator_desktop-[hash].css` into `src/plugins/set-primary-color/raw.css`
  *
  * Usage once `raw.css` is obtained:
  *   cd src/plugins/set-primary-color/
