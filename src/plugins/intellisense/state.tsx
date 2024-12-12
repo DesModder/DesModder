@@ -117,10 +117,13 @@ export class IntellisenseState {
     }
   }
 
-  handleDispatchedAction(e: DispatchedEvent) {
+  afterHandleDispatchedAction(e: DispatchedEvent) {
     switch (e.type) {
       // We handle on-evaluator-changes here because `formula.exported_variables`
       // is now up-to-date, so exports can be found from tables and regressions.
+      // Needs to be `afterHandleDispatchedAction` and not before
+      // (`handleDispatchedAction`) because this needs to be after Desmos
+      // updates the formula, which happens in its own dispatch handler.
       case "on-evaluator-changes":
         for (const id of Object.keys(e.changes)) {
           const model = this.cc.getItemModel(id);

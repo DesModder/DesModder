@@ -66,6 +66,9 @@ export default class DSM extends TransparentPlugins {
       if (keepGoing === "abort-later-handlers") return;
     }
     this.vanillaHandleAction(evt);
+    for (const [_id, plugin] of this.enabledPluginsSorted()) {
+      plugin?.afterHandleDispatchedAction?.(evt);
+    }
   }
 
   updateTheComputedWorld() {

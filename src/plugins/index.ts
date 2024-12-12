@@ -101,6 +101,7 @@ export interface PluginInstance<
   handleDispatchedAction?: (
     evt: DispatchedEvent
   ) => "abort-later-handlers" | undefined;
+  afterHandleDispatchedAction?: (evt: DispatchedEvent) => void;
   beforeUpdateTheComputedWorld?: () => void;
   afterUpdateTheComputedWorld?: () => void;
 }
