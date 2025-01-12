@@ -41,6 +41,12 @@ export const settingsConfigList = [
     type: "boolean",
     default: true,
   },
+  {
+    key: "showPerformanceMeter",
+    name: "Show performance meter",
+    type: "boolean",
+    default: false,
+  },
   // `as const` ensures that the key values can be used as types
   // instead of the type 'string'
 ] as const;
@@ -65,6 +71,7 @@ export interface SettingsConfig {
   expressions: boolean;
   zoomButtons: boolean;
   keypad: boolean;
+  showPerformanceMeter: boolean;
 }
 
 export interface Config extends SettingsConfig {
