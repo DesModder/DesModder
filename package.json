@@ -71,7 +71,7 @@
     "minimist-lite": "^2.2.1",
     "node-fetch": "^3.3.2",
     "prettier": "^2.8.8",
-    "puppeteer": "^22.6.0",
+    "puppeteer": "^24.0.0",
     "ts-jest": "^29.1.2",
     "tsutils": "^3.21.0",
     "typescript": "^5.7.2",
