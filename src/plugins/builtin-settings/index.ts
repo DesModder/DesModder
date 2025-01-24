@@ -28,6 +28,7 @@ export default class BuiltinSettings extends PluginController<Config> {
           this.calc.settings as typeof this.calc.settings & {
             advancedStyling: boolean;
             authorFeatures: boolean;
+            showPerformanceMeter: boolean;
           }
         )[key] ?? false;
     }
