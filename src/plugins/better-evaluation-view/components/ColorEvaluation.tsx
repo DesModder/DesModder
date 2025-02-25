@@ -3,31 +3,33 @@ import { StaticMathQuillView } from "#components";
 
 function _ColorEvaluation(val: () => string | string[]) {
   return (
-    <StaticMathQuillView
-      latex={() => {
-        const value = val();
-        const length = 6;
-        if (Array.isArray(value)) {
-          const color = value.map(rgb);
-          return (
-            "\\operatorname{rgb}\\left(\\left[" +
-            color
-              .slice(0, length)
-              .map((clist) => `\\left(${clist.join(",")}\\right)`)
-              .join(",") +
-            (color.length > length
-              ? `\\textcolor{gray}{...\\mathit{${
-                  color.length - length
-                }\\ more}}`
-              : "") +
-            "\\right]\\right)"
-          );
-        } else {
-          const color = rgb(value);
-          return "\\operatorname{rgb}\\left(" + color.join(",") + "\\right)";
-        }
-      }}
-    />
+    <div class="dcg-evaluation-view__wrapped-value">
+      <StaticMathQuillView
+        latex={() => {
+          const value = val();
+          const length = 6;
+          if (Array.isArray(value)) {
+            const color = value.map(rgb);
+            return (
+              "\\operatorname{rgb}\\left(\\left[" +
+              color
+                .slice(0, length)
+                .map((clist) => `\\left(${clist.join(",")}\\right)`)
+                .join(",") +
+              (color.length > length
+                ? `\\textcolor{gray}{...\\mathit{${
+                    color.length - length
+                  }\\ more}}`
+                : "") +
+              "\\right]\\right)"
+            );
+          } else {
+            const color = rgb(value);
+            return "\\operatorname{rgb}\\left(" + color.join(",") + "\\right)";
+          }
+        }}
+      />
+    </div>
   );
 }
 
