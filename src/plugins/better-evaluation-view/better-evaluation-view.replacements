@@ -8,11 +8,13 @@
 
 *Find* => `undefined`
 ```js
-undefined: () =>  $Dcgview.createElement(
-    'span',
-    null,
-    $.const("undefined")
-  )
+undefined: ()=> $Dcgview.createElement(
+  $ViewClass,
+  {
+    ...this.props,
+    content: () => this.controller.s("shared-calculator-label-undefined")
+  }
+)
 ```
 
 *Replace* `undefined` with
@@ -28,9 +30,11 @@ undefined: () => $Dcgview.Components.IfElse(
         }
       ),
       false: () => $Dcgview.createElement(
-        "span",
-        null,
-        $Dcgview.const("undefined")
+        $ViewClass,
+        {
+          ...this.props,
+          content: () => this.controller.s("shared-calculator-label-undefined")
+        }
       )
     }
   )
