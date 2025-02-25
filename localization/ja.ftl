@@ -24,6 +24,7 @@ GLesmos-label-toggle-glesmos = GLesmos を使ったレンダリング
 GLesmos-confirm-lines = 線のレンダリングの確認
 GLesmos-confirm-lines-body = GLesmos の線のレンダリングは遅いことがあります。特にレイヤーのリストには注意してください。
 GLesmos-no-support = 残念ながら、あなたのブラウザは WebGL2 をサポートしていないため、GLesmos はサポートされません。
+GLesmos-not-enabled = このグラフの陰関数のパフォーマンスを向上させるために、GLesmos プラグインを有効にしてください。
 # Missing: error messages
 
 ## Tips
