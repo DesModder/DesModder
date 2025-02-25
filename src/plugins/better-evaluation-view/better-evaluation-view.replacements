@@ -65,16 +65,33 @@ list: () => DSM.replaceElement(
 
 *Find* => `list`
 ```js
-()=>this.getEvaluationRHS())({
+()=>this.cachedEvaluationRHS)({
 list: $rhs => $Dcgview.createElement(__oldList__)
 ```
 
 *Replace* `list` with
 ```js
-()=>this.getEvaluationRHS())({
+()=>this.cachedEvaluationRHS)({
 list: $rhs => DSM.replaceElement(
   () => $Dcgview.createElement(__oldList__),
-  () => DSM.betterEvaluationView?.listEvaluation(() => this.props.val())
+  () => DSM.betterEvaluationView?.listEvaluation(() => {
+    const itemModel = this.controller.getItemModel(this.props.id());
+    // get untruncated value
+    return itemModel.formula.typed_constant_value.value;
+  })
+)
+```
+
+*Find* => `emptyList`
+```js
+emptyList: () => $emptyListDcgview.createElement(__oldEmptyList__)
+```
+
+*Replace* `emptyList` with
+```js
+emptyList: () => DSM.replaceElement(
+  () => $emptyListDcgview.createElement(__oldEmptyList__),
+  () => DSM.betterEvaluationView?.listEvaluation(() => [])
 )
 ```
 
