@@ -125,7 +125,7 @@ rgbcolor: $rhs => $Dcgview.createElement(__swatch__)
 ```js
 rgbcolor: $rhs => DSM.replaceElement(
   () => $Dcgview.createElement(__swatch__),
-  () => DSM.betterEvaluationView?.colorEvaluation(() => this.props.val())
+  () => DSM.betterEvaluationView?.colorEvaluation(() => this.getEvaluationRHS().val)
 )
 ```
 
