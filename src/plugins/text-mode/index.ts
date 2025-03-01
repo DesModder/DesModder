@@ -25,6 +25,21 @@ export default class TextMode extends PluginController {
   static descriptionLearnMore = "https://www.desmodder.com/text-mode";
 
   inTextMode: boolean = false;
+  /**
+   * Life cycle:
+   * 1. `inTextMode = false` and `isEditorMounted = false`
+   * 2. User clicks toggle button, dispatches `dsm-text-mode-toggle`,
+   *    which sets `inTextMode = true`.
+   * 3. DCGView mounts the panel div, triggering `didMount` and starting a timeout.
+   * 4. Timeout runs, mounting editor (setting `isEditorMounted = true`)
+   *    which runs a setState. Timeout was needed to avoid
+   *    dispatch-in-dispatch from the setState.
+   * 5. User clicks toggle button, dispatches `dsm-text-mode-toggle`,
+   *    which sets `inTextMode = false`.
+   * 6. DCGView unmounts the panel div, triggering `willUnmount`,
+   *    which sets `isEditorMounted = false`.
+   */
+  isEditorMounted: boolean = false;
   view: EditorView | null = null;
   dispatchListenerID: string | null = null;
 
@@ -108,12 +123,16 @@ export default class TextMode extends PluginController {
         if (this.view) onCalcEvent(this.view, event);
       });
     });
+    this.isEditorMounted = true;
   }
 
   /**
    * unmountEditor: called from module overrides when the DCGView node unmounts
    */
   unmountEditor() {
+    if (!this.isEditorMounted) return;
+    this.isEditorMounted = false;
+    this.dispatchListenerID = null;
     if (this.dispatchListenerID !== null) {
       this.cc.dispatcher.unregister(this.dispatchListenerID);
     }
@@ -129,7 +148,10 @@ export default class TextMode extends PluginController {
     return () =>
       DCGView.createElement("div", {
         class: DCGView.const("dsm-text-editor-container"),
-        didMount: (div) => setTimeout(() => this.mountEditor(div), 0),
+        didMount: (div) =>
+          // setTimeout to avoid a dispatch-in-dispatch arising from
+          // mountEditor doing a `setState` to ensure sync correctness.
+          setTimeout(() => this.inTextMode && this.mountEditor(div), 0),
         willUnmount: () => this.unmountEditor(),
       });
   }

@@ -11,7 +11,7 @@ testWithPage("Text Mode Panel", async (driver) => {
   // Panel gets toggled
   await driver.assertSelectorNot(EDITOR);
   await driver.click(TOGGLE);
-  await driver.assertSelector(EDITOR);
+  await driver.assertSelectorEventually(EDITOR);
   await driver.click(TOGGLE);
   await driver.assertSelectorNot(EDITOR);
 
