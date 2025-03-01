@@ -58,6 +58,7 @@ export interface GraphSettings {
   xAxisMinorSubdivisions?: number;
   yAxisMinorSubdivisions?: number;
   degreeMode?: boolean;
+  complex?: boolean;
   showGrid?: boolean;
   showXAxis?: boolean;
   showYAxis?: boolean;

@@ -15,6 +15,7 @@ export const settings: Hydrated.Settings = {
   xAxisStep: 0,
   yAxisStep: 0,
   degreeMode: false,
+  complex: false,
   showGrid: true,
   showXAxis: true,
   showYAxis: true,
