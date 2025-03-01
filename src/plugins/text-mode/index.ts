@@ -6,6 +6,18 @@ import { TextModeToggle } from "./components/TextModeToggle";
 import { initView, startState } from "./view/editor";
 import { EditorView, ViewUpdate } from "@codemirror/view";
 import { keys } from "#utils/depUtils.ts";
+import { AllActions, DispatchedEvent } from "src/globals/extra-actions";
+
+declare module "src/globals/extra-actions" {
+  interface AllActions {
+    "text-mode": {
+      type: "dsm-text-mode-toggle";
+      /** If true, toggle on. If false, toggle off.
+       * If undefined, toggle to opposite of current state. */
+      inTextMode?: boolean;
+    };
+  }
+}
 
 export default class TextMode extends PluginController {
   static id = "text-mode" as const;
@@ -17,7 +29,9 @@ export default class TextMode extends PluginController {
   dispatchListenerID: string | null = null;
 
   afterDisable() {
-    if (this.inTextMode) this.toggleTextMode();
+    if (this.inTextMode) {
+      this.toggleTextModeOff();
+    }
   }
 
   afterUpdateTheComputedWorld() {
@@ -28,24 +42,42 @@ export default class TextMode extends PluginController {
     }
   }
 
-  toggleTextMode() {
-    this.inTextMode = !this.inTextMode;
+  handleDispatchedAction(action: DispatchedEvent) {
+    switch (action.type) {
+      case "dsm-text-mode-toggle": {
+        const newInTextMode = action.inTextMode ?? !this.inTextMode;
+        if (newInTextMode === this.inTextMode) break;
+        if (newInTextMode) {
+          this.toggleTextModeOn();
+        } else {
+          this.toggleTextModeOff();
+        }
+        break;
+      }
+      default:
+        action satisfies Exclude<DispatchedEvent, AllActions["text-mode"]>;
+    }
+    return undefined;
+  }
+
+  toggleTextModeOn() {
+    this.inTextMode = true;
     // Ticks update rendering, and they process sliders. Since the existing
     // expression UI doesn't render in text mode, we replace markTickRequiredNextFrame
     // with a version that calls markTickRequiredNextFrame only when sliders are playing
-    if (this.inTextMode) {
-      this.cc.expressionSearchOpen = false;
-      this.cc.markTickRequiredNextFrame = function () {
-        if (this.getPlayingSliders().length > 0) {
-          // eslint-disable-next-line no-proto
-          (this as any).__proto__.markTickRequiredNextFrame.apply(this);
-        }
-      };
-    } else {
-      // Revert back to the old markTickRequiredNextFrame given by prototype
-      delete (this.cc as any).markTickRequiredNextFrame;
-    }
-    this.cc.updateViews();
+    this.cc.expressionSearchOpen = false;
+    this.cc.markTickRequiredNextFrame = function () {
+      if (this.getPlayingSliders().length > 0) {
+        // eslint-disable-next-line no-proto
+        (this as any).__proto__.markTickRequiredNextFrame.apply(this);
+      }
+    };
+  }
+
+  toggleTextModeOff() {
+    this.inTextMode = false;
+    // Revert back to the old markTickRequiredNextFrame given by prototype
+    delete (this.cc as any).markTickRequiredNextFrame;
   }
 
   abortScrollListenerController = new AbortController();
@@ -61,7 +93,10 @@ export default class TextMode extends PluginController {
       () => this.cc.dispatch({ type: "close-item-settings-menu" }),
       { signal: this.abortScrollListenerController.signal }
     );
-    if (hasError) this.conversionError(() => this.toggleTextMode());
+    if (hasError)
+      this.conversionError(() =>
+        this.cc.dispatch({ type: "dsm-text-mode-toggle", inTextMode: false })
+      );
     container.appendChild(this.view.dom);
     this.preventPropagation(container);
     this.dispatchListenerID = this.cc.dispatcher.register((event) => {
@@ -94,7 +129,7 @@ export default class TextMode extends PluginController {
     return () =>
       DCGView.createElement("div", {
         class: DCGView.const("dsm-text-editor-container"),
-        didMount: (div) => this.mountEditor(div),
+        didMount: (div) => setTimeout(() => this.mountEditor(div), 0),
         willUnmount: () => this.unmountEditor(),
       });
   }
