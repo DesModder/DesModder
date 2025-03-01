@@ -2,7 +2,7 @@ import VideoCreator from "..";
 import { scaleBoundsAboutCenter } from "./utils";
 import { ManagedNumberInputModel } from "../components/ManagedNumberInput";
 import { noSpeed } from "../orientation";
-import { CalcController, Viewport } from "../../../globals";
+import { CalcController, Scale, Viewport } from "../../../globals";
 
 export type CaptureMethod = "once" | "ntimes" | "action" | "slider" | "ticks";
 
@@ -30,13 +30,62 @@ function mosaicDimensions(vc: VideoCreator): MosaicDims | undefined {
 
 type ImageCapturePromise = Promise<string | typeof CANCELLED>;
 
-function* segmentInterval(lo: number, hi: number, count: number) {
-  let segmentLo = lo;
-  for (let i = 1; i <= count; i++) {
-    const segmentHi = lo * ((count - i) / count) + hi * (i / count);
-    yield [segmentLo, segmentHi] as const;
-    segmentLo = segmentHi;
+/**
+ * Segment [lo, hi] into count intervals.
+ * Guarantees the first interval matches lo, and the last interval matches hi,
+ * and [lo, hi] of the intervals in between
+ */
+function segmentInterval(
+  lo: number,
+  hi: number,
+  count: number,
+  scale: Scale
+): readonly (readonly [number, number])[] {
+  let range;
+  switch (scale) {
+    case "logarithmic":
+      range = logspace(lo, hi, count);
+      break;
+    case "linear":
+    default:
+      range = linspace(lo, hi, count);
+      break;
   }
+  const out: [number, number][] = [];
+  let left = range.next().value!;
+  for (const right of range) {
+    out.push([left, right]);
+    left = right;
+  }
+  return out;
+}
+
+/**
+ * Assumes count is an integer at least 1.
+ * Yields count+1 numbers, logarithmically spaced,
+ * where the middle count-1 are fresh,
+ * the first is lo, and the last is hi.
+ */
+function* logspace(lo: number, hi: number, count: number) {
+  yield lo;
+  for (let i = 1; i < count; i++) {
+    yield lo ** ((count - i) / count) * hi ** (i / count);
+  }
+  yield hi;
+}
+
+/**
+ * Assumes count is an integer at least 1.
+ * Yields count+1 numbers, linearly spaced,
+ * where the middle count-1 are fresh,
+ * the first is lo, and the last is hi.
+ */
+function* linspace(lo: number, hi: number, count: number) {
+  yield lo;
+  for (let i = 1; i < count; i++) {
+    yield lo * ((count - i) / count) + hi * (i / count);
+  }
+  yield hi;
 }
 
 async function imageOnload(img: HTMLImageElement) {
@@ -69,11 +118,15 @@ async function captureMosaic(
   if (!ctx) {
     throw new Error("Failed to get context");
   }
-  const vp = { ...vc.cc.getViewState().viewport };
+  const viewState = vc.cc.getViewState();
+  const vp = { ...viewState.viewport };
+  const { xAxisScale, yAxisScale } = viewState;
   let imgy = 0;
-  for (const [ymax, ymin] of segmentInterval(vp.ymax, vp.ymin, dims.y)) {
+  const yIntervals = segmentInterval(vp.ymax, vp.ymin, dims.y, yAxisScale);
+  const xIntervals = segmentInterval(vp.xmin, vp.xmax, dims.x, xAxisScale);
+  for (const [ymax, ymin] of yIntervals) {
     let imgx = 0;
-    for (const [xmin, xmax] of segmentInterval(vp.xmin, vp.xmax, dims.x)) {
+    for (const [xmin, xmax] of xIntervals) {
       setViewport(vc.cc, { xmin, xmax, ymin, ymax });
 
       const pngURI = await screenshotOrCancel(vc, captureOpts);

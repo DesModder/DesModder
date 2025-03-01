@@ -233,6 +233,8 @@ export interface Grapher3d {
   };
 }
 
+export type Scale = "linear" | "logarithmic";
+
 interface CalcPrivate {
   focusedMathQuill:
     | {
@@ -314,6 +316,8 @@ interface CalcPrivate {
     };
     getViewState: () => {
       viewport: Viewport;
+      xAxisScale: Scale;
+      yAxisScale: Scale;
     };
     /** Mark UI tick required to convert render shells to full item lines */
     markTickRequiredNextFrame: () => void;
