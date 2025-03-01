@@ -77,8 +77,12 @@ export default class BuiltinSettings extends PluginController<Config> {
   }
 
   private updateSettings(config: Config) {
-    let { graphpaper, zoomButtons } = config;
+    let { graphpaper, zoomButtons, expressions } = config;
+    // zoomButtons is only allowed to be true if graphpaper is true.
     zoomButtons &&= graphpaper;
+    // expressions must be true if graphpaper is false, to avoid softlock
+    // https://github.com/DesModder/DesModder/issues/982
+    expressions ||= !graphpaper;
     // Deal with zoomButtons needing to be off before graphpaper is disabled
     // But graphpaper needs to be on before zoomButtons is enabled.
     if (graphpaper) this.calc.updateSettings({ graphpaper });
@@ -89,7 +93,12 @@ export default class BuiltinSettings extends PluginController<Config> {
     for (const key of settingsKeys) {
       settings[key] = config[key];
     }
-    this.calc.updateSettings({ ...settings, zoomButtons, graphpaper });
+    this.calc.updateSettings({
+      ...settings,
+      zoomButtons,
+      graphpaper,
+      expressions,
+    });
   }
 
   updateConfig(config: Config) {
