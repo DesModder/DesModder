@@ -220,7 +220,7 @@ export default class VideoCreator extends PluginController {
   }
 
   useMosaicRatio() {
-    return !this.cc.is3dProduct();
+    return !this.cc.is3dProduct() && !this.isDefaultCaptureSizeDifferent();
   }
 
   getMosaicRatioX() {
