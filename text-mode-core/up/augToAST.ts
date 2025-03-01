@@ -35,6 +35,7 @@ export function graphSettingsToAST(
       xAxisMinorSubdivisions: numberToASTmaybe(settings.xAxisMinorSubdivisions),
       yAxisMinorSubdivisions: numberToASTmaybe(settings.yAxisMinorSubdivisions),
       degreeMode: booleanToAST(settings.degreeMode, false),
+      complex: booleanToAST(settings.complex, false),
       showGrid: booleanToAST(settings.showGrid, true),
       showXAxis: booleanToAST(settings.showXAxis, true),
       showYAxis: booleanToAST(settings.showYAxis, true),
