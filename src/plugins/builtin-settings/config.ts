@@ -16,6 +16,12 @@ export const settingsConfigList = [
     shouldShow: (config: Config) => !!config.graphpaper,
   },
   {
+    key: "expressions",
+    type: "boolean",
+    default: true,
+    shouldShow: (config: Config) => !!config.graphpaper,
+  },
+  {
     key: "authorFeatures",
     type: "boolean",
     default: false,
@@ -27,11 +33,6 @@ export const settingsConfigList = [
   },
   {
     key: "trace",
-    type: "boolean",
-    default: true,
-  },
-  {
-    key: "expressions",
     type: "boolean",
     default: true,
   },
@@ -68,7 +69,9 @@ export interface SettingsConfig {
   authorFeatures: boolean;
   pointsOfInterest: boolean;
   trace: boolean;
+  /** We will ignore expressions (treat it as true) if graphpaper is false. */
   expressions: boolean;
+  /** We will ignore zoomButtons (treat it as false) if graphpaper is false. */
   zoomButtons: boolean;
   keypad: boolean;
   showPerformanceMeter: boolean;
