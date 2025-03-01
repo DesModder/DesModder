@@ -20,6 +20,14 @@ export default class TextMode extends PluginController {
     if (this.inTextMode) this.toggleTextMode();
   }
 
+  afterUpdateTheComputedWorld() {
+    if (this.inTextMode) {
+      for (const m of this.cc.getAllItemModels()) {
+        m.isHiddenFromUI = true;
+      }
+    }
+  }
+
   toggleTextMode() {
     this.inTextMode = !this.inTextMode;
     // Ticks update rendering, and they process sliders. Since the existing
