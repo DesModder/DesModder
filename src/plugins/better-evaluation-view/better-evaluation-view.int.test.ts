@@ -2,7 +2,7 @@ import { Driver, clean, testWithPage } from "#tests";
 
 async function expectEval(driver: Driver, latexExpected: string) {
   const latexFound = await driver.$eval(
-    ".dcg-evaluation-html .dcg-mq-root-block",
+    ".dcg-evaluation-container .dcg-mq-root-block",
     (el) => (el as any).mqBlockNode.latex()
   );
   expect(latexFound).toBe(latexExpected);
@@ -10,7 +10,7 @@ async function expectEval(driver: Driver, latexExpected: string) {
 
 async function expectEvalPlain(driver: Driver, textExpected: string) {
   const textFound = await driver.$eval(
-    ".dcg-evaluation-html",
+    ".dcg-evaluation-container",
     (el) => (el as HTMLElement).innerText
   );
   expect(textFound).toBe(textExpected);
@@ -20,16 +20,16 @@ const COLOR_SWATCH = ".dcg-color-swatch";
 
 testWithPage("List", async (driver) => {
   await driver.focusIndex(0);
-  await driver.setLatexAndSync("[1,2,3]");
+  await driver.setLatexAndSync("[1,2,3]+0");
   await expectEval(driver, "\\left[1,2,3\\right]");
 
   // It updates when you edit the latex
-  await driver.setLatexAndSync("[1,2,3,4]");
+  await driver.setLatexAndSync("[1,2,3,4]+0");
   await expectEval(driver, "\\left[1,2,3,4\\right]");
 
-  // It gets reset on disabling lists
+  // It gets reset on disabling lists, and shows the native list view instead.
   await driver.setPluginSetting("better-evaluation-view", "lists", false);
-  await expectEvalPlain(driver, "4 element list");
+  await expectEvalPlain(driver, "equals\n=\n1\n1\n2\n2\n3\n3\n4\n4");
 
   // Clean up
   await driver.clean();
