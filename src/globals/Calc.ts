@@ -18,7 +18,6 @@ export type VanillaDispatchedEvent =
         | "toggle-lock-viewport"
         | "grapher/drag-end"
         | "set-axis-limit-latex"
-        | "commit-user-requested-viewport"
         | "zoom"
         | "set-graph-settings"
         | "resize-exp-list"
@@ -35,6 +34,10 @@ export type VanillaDispatchedEvent =
         | "downward-delete-selected-expression"
         | "update-expression-search-str"
         | "ui/container-resized";
+    }
+  | {
+      type: "commit-user-requested-viewport";
+      viewport: Viewport;
     }
   | {
       type: "keypad/set-minimized";
@@ -201,6 +204,15 @@ export interface Toast {
   hideAfter?: number;
 }
 
+export interface Viewport {
+  xmin: number;
+  xmax: number;
+  ymin: number;
+  ymax: number;
+}
+
+type ViewportClass = Viewport & { __isViewportClass: unknown };
+
 export interface Grapher3d {
   controls: {
     worldRotation3D: Matrix3;
@@ -220,6 +232,8 @@ export interface Grapher3d {
     duration: number;
   };
 }
+
+export type Scale = "linear" | "logarithmic";
 
 interface CalcPrivate {
   focusedMathQuill:
@@ -248,6 +262,8 @@ interface CalcPrivate {
         product: Product;
         settingsMenu: boolean;
       };
+      squareAxes: boolean;
+      setProperty: (k: "squareAxes", v: boolean) => void;
     };
     dispatch: (e: DispatchedEvent) => void;
     getExpressionSearchStr: () => string;
@@ -301,12 +317,9 @@ interface CalcPrivate {
       readonlyItemsNotDeleted: number;
     };
     getViewState: () => {
-      viewport: {
-        xmin: number;
-        ymin: number;
-        xmax: number;
-        ymax: number;
-      };
+      viewport: Viewport;
+      xAxisScale: Scale;
+      yAxisScale: Scale;
     };
     /** Mark UI tick required to convert render shells to full item lines */
     markTickRequiredNextFrame: () => void;
@@ -334,6 +347,10 @@ interface CalcPrivate {
       // actually a synchronous screenshot but with the extra
       // permitted options from the `asyncScreenshot` API.
       asyncScreenshot: Desmos.Calculator["asyncScreenshot"];
+      // 2d only?
+      viewportController: {
+        setViewport: (vp: ViewportClass) => void;
+      };
     };
     __nextItemId: number;
     __pendingImageUploads: Record<`${number}`, true>;
@@ -342,6 +359,9 @@ interface CalcPrivate {
     scrollSelectedItemIntoView: () => void;
     s: (identifier: string, placeables?: Record<string, any> | null) => string;
     runAfterDispatch: (cb: () => void) => void;
+    getDefaultViewport: () => {
+      constructor: { fromObject: (vp: Viewport) => ViewportClass };
+    };
   };
   _calc: {
     globalHotkeys: TopLevelComponents;
