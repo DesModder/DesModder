@@ -262,6 +262,8 @@ interface CalcPrivate {
         product: Product;
         settingsMenu: boolean;
       };
+      squareAxes: boolean;
+      setProperty: (k: "squareAxes", v: boolean) => void;
     };
     dispatch: (e: DispatchedEvent) => void;
     getExpressionSearchStr: () => string;

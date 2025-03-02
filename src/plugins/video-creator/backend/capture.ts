@@ -120,6 +120,11 @@ async function captureMosaic(
   }
   const viewState = vc.cc.getViewState();
   const vp = { ...viewState.viewport };
+  const { squareAxes } = vc.cc.graphSettings;
+  function cleanup() {
+    setViewport(vc.cc, vp);
+    vc.cc.graphSettings.setProperty("squareAxes", squareAxes);
+  }
   const { xAxisScale, yAxisScale } = viewState;
   let imgy = 0;
   const yIntervals = segmentInterval(vp.ymax, vp.ymin, dims.y, yAxisScale);
@@ -127,10 +132,21 @@ async function captureMosaic(
   for (const [ymax, ymin] of yIntervals) {
     let imgx = 0;
     for (const [xmin, xmax] of xIntervals) {
+      // Need to set squareAxes false to avoid cropping when mosaicX
+      // and mosaicY are inequal.
+      vc.cc.graphSettings.setProperty("squareAxes", false);
       setViewport(vc.cc, { xmin, xmax, ymin, ymax });
 
-      const pngURI = await screenshotOrCancel(vc, captureOpts);
-      if (pngURI === CANCELLED) return CANCELLED;
+      const opts = {
+        ...captureOpts,
+        showLabels: true,
+      };
+
+      const pngURI = await raceWithCancel(vc, _screenshot2d(vc, opts));
+      if (pngURI === CANCELLED) {
+        cleanup();
+        return CANCELLED;
+      }
 
       const img = new Image();
       img.src = pngURI;
@@ -141,16 +157,8 @@ async function captureMosaic(
     }
     imgy += height;
   }
-  setViewport(vc.cc, vp);
+  cleanup();
   return canvas.toDataURL("image/png");
-}
-
-async function screenshotOrCancel(
-  vc: VideoCreator,
-  captureOpts: ScreenshotOpts
-): ImageCapturePromise {
-  const screenshot = vc.cc.is3dProduct() ? screenshot3d : screenshot2d;
-  return await Promise.race([screenshot(vc, captureOpts), vc.awaitCancel()]);
 }
 
 // resolves the screenshot as a data URI
@@ -165,11 +173,20 @@ async function captureFrame(vc: VideoCreator): ImageCapturePromise {
     preserveAxisNumbers: true,
   };
   const mosaic = mosaicDimensions(vc);
-  if (mosaic) {
+  if (vc.cc.is3dProduct()) {
+    return await raceWithCancel(vc, screenshot3d(vc, captureOpts));
+  } else if (mosaic) {
     return await captureMosaic(vc, { width, height }, captureOpts, mosaic);
   } else {
-    return await screenshotOrCancel(vc, captureOpts);
+    return await raceWithCancel(vc, screenshot2d(vc, captureOpts));
   }
+}
+
+async function raceWithCancel(
+  vc: VideoCreator,
+  p: Promise<string>
+): ImageCapturePromise {
+  return await Promise.race([p, vc.awaitCancel()]);
 }
 
 interface ScreenshotOpts {
@@ -185,7 +202,7 @@ async function screenshot3d(vc: VideoCreator, size: ScreenshotOpts) {
   });
 }
 
-async function screenshot2d(vc: VideoCreator, size: ScreenshotOpts) {
+function getClampedMathBounds(vc: VideoCreator, size: ScreenshotOpts) {
   // make the captured region entirely visible
   const { width, height } = size;
   const pixelBounds = vc.calc.graphpaperBounds.pixelCoordinates;
@@ -195,12 +212,10 @@ async function screenshot2d(vc: VideoCreator, size: ScreenshotOpts) {
     mathBounds,
     Math.min(ratio, 1 / ratio)
   );
-  const opts = {
-    ...size,
-    showLabels: true,
-    mathBounds: clampedMathBounds,
-    mode: "contain" as const,
-  };
+  return clampedMathBounds;
+}
+
+async function _screenshot2d(vc: VideoCreator, opts: any) {
   if (vc.fastScreenshots) {
     return await new Promise<string>((resolve) => {
       vc.cc.evaluator.notifyWhenSynced(() =>
@@ -211,6 +226,17 @@ async function screenshot2d(vc: VideoCreator, size: ScreenshotOpts) {
   return await new Promise<string>((resolve) => {
     vc.calc.asyncScreenshot(opts, resolve);
   });
+}
+
+async function screenshot2d(vc: VideoCreator, size: ScreenshotOpts) {
+  const clampedMathBounds = getClampedMathBounds(vc, size);
+  const opts = {
+    ...size,
+    showLabels: true,
+    mathBounds: clampedMathBounds,
+    mode: "contain" as const,
+  };
+  return await _screenshot2d(vc, opts);
 }
 
 export interface SliderSettings {
