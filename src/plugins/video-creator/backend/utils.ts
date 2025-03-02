@@ -10,13 +10,19 @@ export function escapeRegex(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export function scaleBoundsAboutCenter(b: Bounds, r: number) {
-  const cx = (b.left + b.right) / 2;
-  const cy = (b.top + b.bottom) / 2;
+/**
+ * Scales x coordinates by a factor of xr about center, and
+ * scales y coordinates by a factor of yr about center.
+ */
+export function scaleBoundsAboutCenter(b: Bounds, xr: number, yr: number) {
+  const dx = (b.right - b.left) * ((xr - 1) / 2);
+  const dy = (b.top - b.bottom) * ((yr - 1) / 2);
+  // After this, `right - left` becomes `(b.right - b.left) - 2 * dx`
+  // which equals `(b.right - b.left) * (xr - 1 + 1)`.
   return {
-    left: cx + (b.left - cx) * r,
-    right: cx + (b.right - cx) * r,
-    top: cy + (b.top - cy) * r,
-    bottom: cy + (b.bottom - cy) * r,
+    left: b.left - dx,
+    right: b.right + dx,
+    top: b.top + dy,
+    bottom: b.bottom - dy,
   };
 }

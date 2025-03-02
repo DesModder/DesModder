@@ -118,6 +118,7 @@ async function captureMosaic(
   if (!ctx) {
     throw new Error("Failed to get context");
   }
+  const { left, right, top, bottom } = getClampedMathBounds(vc, captureOpts);
   const viewState = vc.cc.getViewState();
   const vp = { ...viewState.viewport };
   const { squareAxes } = vc.cc.graphSettings;
@@ -127,8 +128,8 @@ async function captureMosaic(
   }
   const { xAxisScale, yAxisScale } = viewState;
   let imgy = 0;
-  const yIntervals = segmentInterval(vp.ymax, vp.ymin, dims.y, yAxisScale);
-  const xIntervals = segmentInterval(vp.xmin, vp.xmax, dims.x, xAxisScale);
+  const yIntervals = segmentInterval(top, bottom, dims.y, yAxisScale);
+  const xIntervals = segmentInterval(left, right, dims.x, xAxisScale);
   for (const [ymax, ymin] of yIntervals) {
     let imgx = 0;
     for (const [xmin, xmax] of xIntervals) {
@@ -210,7 +211,8 @@ function getClampedMathBounds(vc: VideoCreator, size: ScreenshotOpts) {
   const mathBounds = vc.calc.graphpaperBounds.mathCoordinates;
   const clampedMathBounds = scaleBoundsAboutCenter(
     mathBounds,
-    Math.min(ratio, 1 / ratio)
+    Math.min(1 / ratio, 1),
+    Math.min(ratio, 1)
   );
   return clampedMathBounds;
 }
