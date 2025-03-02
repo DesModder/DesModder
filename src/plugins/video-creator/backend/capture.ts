@@ -1,8 +1,8 @@
 import VideoCreator from "..";
-import { scaleBoundsAboutCenter } from "./utils";
+import { scaleBoundsAboutCenter, segmentInterval } from "./utils";
 import { ManagedNumberInputModel } from "../components/ManagedNumberInput";
 import { noSpeed } from "../orientation";
-import { CalcController, Scale, Viewport } from "../../../globals";
+import { CalcController, Viewport } from "../../../globals";
 
 export type CaptureMethod = "once" | "ntimes" | "action" | "slider" | "ticks";
 
@@ -29,64 +29,6 @@ function mosaicDimensions(vc: VideoCreator): MosaicDims | undefined {
 }
 
 type ImageCapturePromise = Promise<string | typeof CANCELLED>;
-
-/**
- * Segment [lo, hi] into count intervals.
- * Guarantees the first interval matches lo, and the last interval matches hi,
- * and [lo, hi] of the intervals in between
- */
-function segmentInterval(
-  lo: number,
-  hi: number,
-  count: number,
-  scale: Scale
-): readonly (readonly [number, number])[] {
-  let range;
-  switch (scale) {
-    case "logarithmic":
-      range = logspace(lo, hi, count);
-      break;
-    case "linear":
-    default:
-      range = linspace(lo, hi, count);
-      break;
-  }
-  const out: [number, number][] = [];
-  let left = range.next().value!;
-  for (const right of range) {
-    out.push([left, right]);
-    left = right;
-  }
-  return out;
-}
-
-/**
- * Assumes count is an integer at least 1.
- * Yields count+1 numbers, logarithmically spaced,
- * where the middle count-1 are fresh,
- * the first is lo, and the last is hi.
- */
-function* logspace(lo: number, hi: number, count: number) {
-  yield lo;
-  for (let i = 1; i < count; i++) {
-    yield lo ** ((count - i) / count) * hi ** (i / count);
-  }
-  yield hi;
-}
-
-/**
- * Assumes count is an integer at least 1.
- * Yields count+1 numbers, linearly spaced,
- * where the middle count-1 are fresh,
- * the first is lo, and the last is hi.
- */
-function* linspace(lo: number, hi: number, count: number) {
-  yield lo;
-  for (let i = 1; i < count; i++) {
-    yield lo * ((count - i) / count) + hi * (i / count);
-  }
-  yield hi;
-}
 
 async function imageOnload(img: HTMLImageElement) {
   await new Promise<void>((resolve) => {
@@ -212,7 +154,8 @@ function getClampedMathBounds(vc: VideoCreator, size: ScreenshotOpts) {
   const clampedMathBounds = scaleBoundsAboutCenter(
     mathBounds,
     Math.min(1 / ratio, 1),
-    Math.min(ratio, 1)
+    Math.min(ratio, 1),
+    vc.cc.getViewState()
   );
   return clampedMathBounds;
 }
