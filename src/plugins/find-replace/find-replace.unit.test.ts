@@ -31,6 +31,10 @@ describe("Find-replace identifier", () => {
   ]);
   testRepl("x_{2}", "u", [["x_{2}<x_{23}+x_{2}<x+x_{2}", "u<x_{23}+u<x+u"]]);
   testRepl("x_{2}", "(a+b)", [["x_{2}^{3}", "(a+b)^{3}"]]);
+  testRepl("a", "1+2", [
+    ["\\frac{d}{dt}f", "\\frac{d}{dt}f"],
+    ["\\frac{d}{da}f", "\\frac{d}{d1+2}f"],
+  ]);
 });
 
 describe("Find-replace empty string", () => {
