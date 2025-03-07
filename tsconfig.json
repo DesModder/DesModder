@@ -8,6 +8,7 @@
   ],
   "references": [
     { "path": "./scripts" },
+    { "path": "./eslint-rules" },
     { "path": "./graph-state/tsconfig-build.json" },
     { "path": "./metadata" },
     { "path": "./text-mode-core" },
