@@ -327,28 +327,28 @@ function columnExpressionCommon(
       item.pointSize === "0"
         ? { size: parseLatex(cfg, "0") }
         : item.points === true ||
-          item.pointOpacity !== undefined ||
-          item.pointSize !== undefined ||
-          item.dragMode !== undefined
-        ? {
-            opacity: parseMaybeLatex(cfg, item.pointOpacity),
-            size: parseMaybeLatex(cfg, item.pointSize),
-            style: item.pointStyle,
-            dragMode: item.dragMode,
-          }
-        : undefined,
+            item.pointOpacity !== undefined ||
+            item.pointSize !== undefined ||
+            item.dragMode !== undefined
+          ? {
+              opacity: parseMaybeLatex(cfg, item.pointOpacity),
+              size: parseMaybeLatex(cfg, item.pointSize),
+              style: item.pointStyle,
+              dragMode: item.dragMode,
+            }
+          : undefined,
     lines:
       item.lines === false || item.lineOpacity === "0" || item.lineWidth === "0"
         ? { width: parseLatex(cfg, "0") }
         : item.lines === true ||
-          item.lineOpacity !== undefined ||
-          item.lineWidth !== undefined
-        ? {
-            opacity: parseMaybeLatex(cfg, item.lineOpacity),
-            width: parseMaybeLatex(cfg, item.lineWidth),
-            style: item.lineStyle,
-          }
-        : undefined,
+            item.lineOpacity !== undefined ||
+            item.lineWidth !== undefined
+          ? {
+              opacity: parseMaybeLatex(cfg, item.lineOpacity),
+              width: parseMaybeLatex(cfg, item.lineWidth),
+              style: item.lineStyle,
+            }
+          : undefined,
   };
 }
 
