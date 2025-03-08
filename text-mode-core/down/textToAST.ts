@@ -89,7 +89,11 @@ class ParseState extends DiagnosticsState {
   private readonly rawIDs: (RawIDRange | undefined)[];
   private readonly rawIDsAll: Set<string>;
 
-  constructor(public cfg: Config, input: string, incr: IncrementalState) {
+  constructor(
+    public cfg: Config,
+    input: string,
+    incr: IncrementalState
+  ) {
     super();
     this.lexer = moo.compile(rules);
     this.lexer.reset(input);

@@ -19,7 +19,10 @@ import type { Diagnostic } from "@codemirror/lint";
 import type { GrapherState } from "#graph-state";
 
 export class DownState extends DiagnosticsState {
-  constructor(public readonly cfg: Config, diagnostics: Diagnostic[]) {
+  constructor(
+    public readonly cfg: Config,
+    diagnostics: Diagnostic[]
+  ) {
     super(diagnostics);
   }
 

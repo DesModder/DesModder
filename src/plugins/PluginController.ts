@@ -12,7 +12,10 @@ export class PluginController<
   calc = this.dsm.calc;
   cc = this.calc.controller;
 
-  constructor(readonly dsm: DSM, public settings: Settings) {}
+  constructor(
+    readonly dsm: DSM,
+    public settings: Settings
+  ) {}
 
   afterEnable() {}
   afterConfigChange() {}
