@@ -101,7 +101,7 @@ return $DCGView.createElement(
 ```
 ````
 
-Note that the return value is not specified (there is no `` => `name`  ``). The point of this code block is to find what the `__rest__` pattern matches.
+Note that the return value is not specified (there is no ``=> `name` ``). The point of this code block is to find what the `__rest__` pattern matches.
 
 ### Command `*Find_surrounding_template*`
 
