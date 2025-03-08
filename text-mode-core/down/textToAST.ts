@@ -1243,7 +1243,7 @@ function binaryParselet(
     assertLeftIsExpression(ps, left, token, ex);
     const right = parseExpr(
       ps,
-      rightAssociative ?? false ? minus1(bp) : bp,
+      (rightAssociative ?? false) ? minus1(bp) : bp,
       `right side of ${op}`,
       ex
     );
