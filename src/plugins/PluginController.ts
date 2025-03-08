@@ -2,7 +2,7 @@ import { ConfigItem, GenericSettings } from ".";
 import DSM from "#DSM";
 
 export class PluginController<
-  Settings extends GenericSettings | undefined = undefined
+  Settings extends GenericSettings | undefined = undefined,
 > {
   static descriptionLearnMore?: string = undefined;
   static forceEnabled?: boolean = undefined;

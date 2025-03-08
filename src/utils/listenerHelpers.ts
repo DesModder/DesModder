@@ -53,7 +53,7 @@ type MaybeHookedFunction<Fn extends (...args: any[]) => any> =
 export function hookIntoFunction<
   Key extends string,
   Obj extends Record<Key, (...args: any[]) => any>,
-  Fn extends Obj[Key]
+  Fn extends Obj[Key],
 >(
   obj: Obj,
   prop: Key,
