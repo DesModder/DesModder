@@ -116,8 +116,8 @@ function binopLeftPower(name: BinopName): number {
   return name === "Divide"
     ? POWERS.top - 1
     : name === "Exponent"
-    ? POWERS.power + 1
-    : binopPower(name) - 1;
+      ? POWERS.power + 1
+      : binopPower(name) - 1;
 }
 
 // This node can hold anything with power greater than (return value) on its right

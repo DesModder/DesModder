@@ -36,8 +36,8 @@ class EmitContext {
         ? []
         : builders.softline
       : noNewlines
-      ? " "
-      : builders.line;
+        ? " "
+        : builders.line;
     this.hardline = noNewlines ? [] : builders.hardline;
     this.softline = noNewlines ? [] : builders.softline;
     this.optionalSpace = noOptionalSpaces ? [] : " ";
@@ -637,10 +637,10 @@ function numToText(num: number): Doc {
   return isFinite(num)
     ? num.toString().replace("e+", "e")
     : num > 0
-    ? "infty"
-    : num < 0
-    ? "-infty"
-    : "NaN";
+      ? "infty"
+      : num < 0
+        ? "-infty"
+        : "NaN";
 }
 
 function parenthesize(ctx: EmitContext, doc: Doc): Doc {

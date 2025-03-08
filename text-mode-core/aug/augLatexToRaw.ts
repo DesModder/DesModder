@@ -336,8 +336,8 @@ export function identifierToString(
     main.length === 1
       ? main
       : cfg.commandNames.has(main)
-      ? "\\" + main
-      : `\\operatorname{${main}}`;
+        ? "\\" + main
+        : `\\operatorname{${main}}`;
   const end = subscript ? `_{${subscript}}` : "";
   return start + end;
 }

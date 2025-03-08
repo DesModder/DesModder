@@ -76,7 +76,7 @@ export class JumpToDefinitionMenu extends Component<{
                 >
                   {([e, i]: [
                     JumpToDefinitionMenuInfo["idents"][number],
-                    number
+                    number,
                   ]) => (
                     <li
                       onClick={() => {

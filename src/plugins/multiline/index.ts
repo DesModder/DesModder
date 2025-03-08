@@ -455,8 +455,8 @@ export default class Multiline extends PluginController<Config> {
       if (linesPassed === 1) {
         cursorPositions.push(
           isNextRight
-            ? next?.getBoundingClientRect().right ?? 0
-            : next?.getBoundingClientRect().left ?? 0
+            ? (next?.getBoundingClientRect().right ?? 0)
+            : (next?.getBoundingClientRect().left ?? 0)
         );
       }
 

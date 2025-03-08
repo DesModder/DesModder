@@ -144,8 +144,8 @@ export function verticalify(
           bracketType === "curly"
             ? "piecewise"
             : bracketType === "square"
-            ? "list"
-            : context.containerType,
+              ? "list"
+              : context.containerType,
       },
       options
     );

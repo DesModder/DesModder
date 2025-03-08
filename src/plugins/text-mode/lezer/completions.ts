@@ -95,10 +95,10 @@ export function completions(tm: TextMode, context: CompletionContext) {
       parent.name === "BlockInner" && parent.parent!.name === "Folder"
         ? FOLDER_COMPLETIONS
         : parent.name === "Program"
-        ? PROGRAM_COMPLETIONS
-        : parent.name === "StyleMapping" || parent.name === "MappingEntry"
-        ? styleCompletions(tm, parent)
-        : [],
+          ? PROGRAM_COMPLETIONS
+          : parent.name === "StyleMapping" || parent.name === "MappingEntry"
+            ? styleCompletions(tm, parent)
+            : [],
   };
 }
 
@@ -167,22 +167,26 @@ function styleCompletionsFromDefaults(defaults: AnyHydrated): Completion[] {
         value === null
           ? macroExpandWithSelection(key + ": ", "", ",")
           : typeof value === "object"
-          ? "type" in value
-            ? macroExpandWithSelection(
-                key + ": ",
-                astToText(childLatexToAST(value)),
-                ","
-              )
-            : macroExpandWithSelection(key + ": @{ ", "", " },")
-          : typeof value === "string"
-          ? macroExpandWithSelection(
-              key + ': "',
-              // string stringify will always start and end with `"`
-              JSON.stringify(value).slice(1, -1),
-              '",'
-            )
-          : // I don't know if this last case is reachable
-            macroExpandWithSelection(key + ": ", JSON.stringify(value), ","),
+            ? "type" in value
+              ? macroExpandWithSelection(
+                  key + ": ",
+                  astToText(childLatexToAST(value)),
+                  ","
+                )
+              : macroExpandWithSelection(key + ": @{ ", "", " },")
+            : typeof value === "string"
+              ? macroExpandWithSelection(
+                  key + ': "',
+                  // string stringify will always start and end with `"`
+                  JSON.stringify(value).slice(1, -1),
+                  '",'
+                )
+              : // I don't know if this last case is reachable
+                macroExpandWithSelection(
+                  key + ": ",
+                  JSON.stringify(value),
+                  ","
+                ),
     });
   }
   return completions;

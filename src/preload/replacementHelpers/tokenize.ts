@@ -137,10 +137,10 @@ function* _patternTokensRaw(str: string): Generator<PatternToken> {
     yield token.type !== "IdentifierName"
       ? token
       : /^__\w*__$/.test(token.value)
-      ? { type: "PatternBalanced", value: token.value }
-      : token.value.startsWith("$")
-      ? { type: "PatternIdentifier", value: token.value }
-      : token;
+        ? { type: "PatternBalanced", value: token.value }
+        : token.value.startsWith("$")
+          ? { type: "PatternIdentifier", value: token.value }
+          : token;
   }
 }
 

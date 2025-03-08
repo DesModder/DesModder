@@ -2,7 +2,7 @@ import { ConfigItem, GenericSettings } from ".";
 import DSM from "#DSM";
 
 export class PluginController<
-  Settings extends GenericSettings | undefined = undefined
+  Settings extends GenericSettings | undefined = undefined,
 > {
   static descriptionLearnMore?: string = undefined;
   static forceEnabled?: boolean = undefined;
@@ -12,7 +12,10 @@ export class PluginController<
   calc = this.dsm.calc;
   cc = this.calc.controller;
 
-  constructor(readonly dsm: DSM, public settings: Settings) {}
+  constructor(
+    readonly dsm: DSM,
+    public settings: Settings
+  ) {}
 
   afterEnable() {}
   afterConfigChange() {}

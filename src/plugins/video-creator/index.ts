@@ -202,8 +202,8 @@ export default class VideoCreator extends PluginController {
     return this.isCaptureMethodValid(this.#captureMethod)
       ? this.#captureMethod
       : this.isCaptureMethodValid("once")
-      ? "once"
-      : "ntimes";
+        ? "once"
+        : "ntimes";
   }
 
   isValidNumber(s: string) {

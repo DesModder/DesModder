@@ -87,7 +87,7 @@ export type GenericSettings = Record<string, any>;
  * afterDisable
  */
 export interface PluginInstance<
-  Settings extends GenericSettings | undefined = GenericSettings | undefined
+  Settings extends GenericSettings | undefined = GenericSettings | undefined,
 > {
   afterEnable(): void;
   afterConfigChange(): void;
@@ -107,7 +107,7 @@ export interface PluginInstance<
 }
 
 export interface Plugin<
-  Settings extends GenericSettings | undefined = GenericSettings | undefined
+  Settings extends GenericSettings | undefined = GenericSettings | undefined,
 > {
   /** The ID is fixed permanently, even for future releases. It is kebab
    * case. If you rename the plugin, keep the ID the same for settings sync */

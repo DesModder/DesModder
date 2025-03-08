@@ -4,7 +4,10 @@ import { EditorView, WidgetType } from "@codemirror/view";
 import { jsx } from "#utils/utils.ts";
 
 class InlineToggleWidget extends WidgetType {
-  constructor(readonly value: string, readonly path: string) {
+  constructor(
+    readonly value: string,
+    readonly path: string
+  ) {
     super();
   }
 

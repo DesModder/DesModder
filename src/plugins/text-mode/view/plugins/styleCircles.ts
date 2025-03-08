@@ -41,7 +41,10 @@ class StyleCircleMarker extends GutterMarker {
   unsub: (() => void) | undefined;
   div: HTMLElement | undefined;
 
-  constructor(readonly id: string, readonly model: ItemModel) {
+  constructor(
+    readonly id: string,
+    readonly model: ItemModel
+  ) {
     super();
   }
 
