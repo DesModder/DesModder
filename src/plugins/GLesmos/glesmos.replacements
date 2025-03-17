@@ -205,8 +205,12 @@ let $branch = $c({
   graphInfo: $graphInfo,
   compiled: $compiled,
   derivative: $derivative
-}),
-  $box = $($(this), $ir)
+})
+```
+
+*Find* inside `graph`
+```js
+$ = $concrete.toImplicitBool()
 ```
 
 *Replace* `compute2d` with
@@ -218,12 +222,12 @@ if (this.userData.glesmos) {
   let derivativeX, derivativeY;
   if (lines) {
     try {
-      derivativeX = $ir.takeDerivative('x');
-      derivativeY = $ir.takeDerivative('y');
+      derivativeX = $concrete.takeDerivative('x');
+      derivativeY = $concrete.takeDerivative('y');
     } catch {}
   }
   const newCompiled = self.dsm_compileGLesmos(
-    $ir, $graphInfo.color, $graphInfo.fillOpacity ?? 0, $graphInfo.lineOpacity, this.userData.lines !== false ? $graphInfo.lineWidth : 0.0,
+    $concrete, $graphInfo.color, $graphInfo.fillOpacity ?? 0, $graphInfo.lineOpacity, this.userData.lines !== false ? $graphInfo.lineWidth : 0.0,
     derivativeX, derivativeY, $emitGLSL
   );
   return [{

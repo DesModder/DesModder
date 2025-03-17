@@ -104,6 +104,7 @@ function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 }
 
+/** Replacing from (identifier) with to. */
 function getReplacements(
   path: Path,
   fromParsed: Identifier,
@@ -153,23 +154,25 @@ function getReplacements(
       span = path.node.getInputSpan();
       line = path.node.getInputString();
       const eqIndex = line.indexOf("=");
+      // Need this code (imperfect) to handle funky input like
+      // replacing "a_{0}" in "  a_{0}    =    72 "
+      const repl = line
+        .slice(0, eqIndex)
+        .replace(
+          RegExp(
+            String.raw`(?<=([,(]|^)(\s|\\ )*)` +
+              escapeRegExp(from) +
+              String.raw`(?=(\s|\\ )*((\\left)?\(|(\\right)?\)|,|$))`,
+            "g"
+          ),
+          to
+        );
+      if (repl === line) break;
       return [
         {
-          // Need this code (imperfect) to handle funky input like
-          // replacing "a_{0}" in "  a_{0}    =    72 "
           start: span.start,
           end: span.start + eqIndex,
-          replacement: line
-            .slice(0, eqIndex)
-            .replace(
-              RegExp(
-                String.raw`(?<=([,(]|^)(\s|\\ )*)` +
-                  escapeRegExp(from) +
-                  String.raw`(?=(\s|\\ )*((\\left)?\(|(\\right)?\)|,|$))`,
-                "g"
-              ),
-              to
-            ),
+          replacement: repl,
         },
       ];
     }
@@ -178,6 +181,7 @@ function getReplacements(
       line = path.node.getInputString();
       const diffBottomStr = `{d${from}}`;
       const diffBottomStart = line.indexOf(diffBottomStr);
+      if (diffBottomStart === -1) break;
       return [
         {
           start: span.start + diffBottomStart,

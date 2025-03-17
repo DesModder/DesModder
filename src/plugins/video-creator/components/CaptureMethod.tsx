@@ -235,6 +235,30 @@ export default class SelectCapture extends Component<{
             </div>
           )}
         </If>
+        <If predicate={() => this.vc.useMosaicRatio()}>
+          {() => (
+            <div>
+              {format("video-creator-mosaic")}
+              <ManagedNumberInput
+                focusID="mosaic-ratio-x"
+                // TODO-localization
+                ariaLabel="mosaic ratio X"
+                hasError={() => !this.vc.isMosaicRatioXValid()}
+                vc={this.vc}
+                data={this.vc.mosaicRatioX}
+              />
+              ×
+              <ManagedNumberInput
+                focusID="mosaic-ratio-y"
+                // TODO-localization
+                ariaLabel="mosaic ratio Y"
+                hasError={() => !this.vc.isMosaicRatioYValid()}
+                vc={this.vc}
+                data={this.vc.mosaicRatioY}
+              />
+            </div>
+          )}
+        </If>
         <div class="dsm-vc-capture">
           {IfElse(
             () => !this.vc.isCapturing || this.vc.captureMethod === "once",

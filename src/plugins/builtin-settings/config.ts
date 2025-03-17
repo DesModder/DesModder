@@ -16,6 +16,12 @@ export const settingsConfigList = [
     shouldShow: (config: Config) => !!config.graphpaper,
   },
   {
+    key: "expressions",
+    type: "boolean",
+    default: true,
+    shouldShow: (config: Config) => !!config.graphpaper,
+  },
+  {
     key: "authorFeatures",
     type: "boolean",
     default: false,
@@ -31,15 +37,16 @@ export const settingsConfigList = [
     default: true,
   },
   {
-    key: "expressions",
-    type: "boolean",
-    default: true,
-  },
-  {
     key: "keypad",
     name: "Show keypad",
     type: "boolean",
     default: true,
+  },
+  {
+    key: "showPerformanceMeter",
+    name: "Show performance meter",
+    type: "boolean",
+    default: false,
   },
   // `as const` ensures that the key values can be used as types
   // instead of the type 'string'
@@ -62,9 +69,12 @@ export interface SettingsConfig {
   authorFeatures: boolean;
   pointsOfInterest: boolean;
   trace: boolean;
+  /** We will ignore expressions (treat it as true) if graphpaper is false. */
   expressions: boolean;
+  /** We will ignore zoomButtons (treat it as false) if graphpaper is false. */
   zoomButtons: boolean;
   keypad: boolean;
+  showPerformanceMeter: boolean;
 }
 
 export interface Config extends SettingsConfig {

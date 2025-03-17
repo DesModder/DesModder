@@ -9,9 +9,16 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   return true;
 });
 
+// Open /calculator when the browser action is clicked.
 if (BROWSER === "chrome") {
-  // FIREFOX TODO: find Firefox equivalent. chrome.browserAction?
   chrome.action.onClicked?.addListener(() => {
+    void chrome.tabs.create({
+      url: "https://www.desmos.com/calculator",
+    });
+  });
+} else {
+  // MV2, see https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/browserAction
+  chrome.browserAction.onClicked?.addListener(() => {
     void chrome.tabs.create({
       url: "https://www.desmos.com/calculator",
     });

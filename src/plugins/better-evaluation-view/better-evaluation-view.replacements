@@ -8,11 +8,13 @@
 
 *Find* => `undefined`
 ```js
-undefined: () =>  $Dcgview.createElement(
-    'span',
-    null,
-    $.const("undefined")
-  )
+undefined: ()=> $Dcgview.createElement(
+  $ViewClass,
+  {
+    ...this.props,
+    content: () => this.controller.s("shared-calculator-label-undefined")
+  }
+)
 ```
 
 *Replace* `undefined` with
@@ -28,9 +30,11 @@ undefined: () => $Dcgview.Components.IfElse(
         }
       ),
       false: () => $Dcgview.createElement(
-        "span",
-        null,
-        $Dcgview.const("undefined")
+        $ViewClass,
+        {
+          ...this.props,
+          content: () => this.controller.s("shared-calculator-label-undefined")
+        }
       )
     }
   )
@@ -61,16 +65,33 @@ list: () => DSM.replaceElement(
 
 *Find* => `list`
 ```js
-()=>this.getEvaluationRHS())({
+()=>this.cachedEvaluationRHS)({
 list: $rhs => $Dcgview.createElement(__oldList__)
 ```
 
 *Replace* `list` with
 ```js
-()=>this.getEvaluationRHS())({
+()=>this.cachedEvaluationRHS)({
 list: $rhs => DSM.replaceElement(
   () => $Dcgview.createElement(__oldList__),
-  () => DSM.betterEvaluationView?.listEvaluation(() => this.props.val())
+  () => DSM.betterEvaluationView?.listEvaluation(() => {
+    const itemModel = this.controller.getItemModel(this.props.id());
+    // get untruncated value
+    return itemModel.formula.typed_constant_value.value;
+  })
+)
+```
+
+*Find* => `emptyList`
+```js
+emptyList: () => $emptyListDcgview.createElement(__oldEmptyList__)
+```
+
+*Replace* `emptyList` with
+```js
+emptyList: () => DSM.replaceElement(
+  () => $emptyListDcgview.createElement(__oldEmptyList__),
+  () => DSM.betterEvaluationView?.listEvaluation(() => [])
 )
 ```
 
@@ -104,7 +125,7 @@ rgbcolor: $rhs => $Dcgview.createElement(__swatch__)
 ```js
 rgbcolor: $rhs => DSM.replaceElement(
   () => $Dcgview.createElement(__swatch__),
-  () => DSM.betterEvaluationView?.colorEvaluation(() => this.props.val())
+  () => DSM.betterEvaluationView?.colorEvaluation(() => this.getEvaluationRHS().val)
 )
 ```
 

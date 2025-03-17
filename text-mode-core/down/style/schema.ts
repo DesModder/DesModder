@@ -50,6 +50,7 @@ export const settings: Schema = {
   xAxisStep: "number",
   yAxisStep: "number",
   degreeMode: "boolean",
+  complex: "boolean",
   showGrid: "boolean",
   showXAxis: "boolean",
   showYAxis: "boolean",

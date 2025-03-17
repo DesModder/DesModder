@@ -2,10 +2,17 @@
   "name": "DesModder for Desmos",
   "description": "Supercharge your Desmos graph creation and sharing experience with many convenient features",
   "manifest_version": 2,
-  "version": "0.14.1",
+  "version": "0.14.2",
   "icons": {
     "48": "icon48.png",
     "128": "icon128.png"
+  },
+  "browser_action": {
+    "default_icon": {
+      "48": "icon48.png",
+      "128": "icon128.png"
+    },
+    "default_title": "DesModder"
   },
   "background": {
     "scripts": ["background.js"]

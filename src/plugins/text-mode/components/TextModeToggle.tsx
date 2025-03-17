@@ -14,7 +14,7 @@ export function TextModeToggle(tm: TextMode) {
         handleEvent="true"
         role="button"
         tabindex="0"
-        onTap={() => tm.toggleTextMode()}
+        onTap={() => tm.cc.dispatch({ type: "dsm-text-mode-toggle" })}
       >
         <i class="dcg-icon-title" />
       </span>

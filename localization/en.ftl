@@ -132,6 +132,8 @@ builtin-settings-opt-zoomButtons-name = Show Zoom Buttons
 builtin-settings-opt-zoomButtons-desc = {""}
 builtin-settings-opt-keypad-name = Show keypad
 builtin-settings-opt-keypad-desc = {""}
+builtin-settings-opt-showPerformanceMeter-name = Show performance meter 
+builtin-settings-opt-showPerformanceMeter-desc = {""}
 builtin-settings-opt-showIDs-name = Show IDs
 builtin-settings-opt-showIDs-desc = {""}
 
@@ -178,6 +180,7 @@ video-creator-orientation-mode-current-speed = current
 video-creator-orientation-mode-current-delta = step
 video-creator-orientation-mode-from-to = from/to
 video-creator-size = Size:
+video-creator-mosaic = Mosaic:
 video-creator-angle-current = Angle:
 video-creator-angle-from = From:
 video-creator-angle-to = To:

@@ -45,6 +45,7 @@ export interface Settings {
   xAxisStep: number;
   yAxisStep: number;
   degreeMode: boolean;
+  complex: boolean;
   showGrid: boolean;
   showXAxis: boolean;
   showYAxis: boolean;

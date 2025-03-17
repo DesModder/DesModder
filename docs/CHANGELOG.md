@@ -1,5 +1,25 @@
 # DesModder Changelog
 
+## 0.14.2
+
+New features:
+
+- (Video Creator) Mosaic capture: Pick mosaic dimensions bigger than 1x1 to stitch together a large image from smaller captures.
+  - Axis numbers may clutter the capture (disable in the wrench settings menu).
+- (Calculator Settings) Add "Show Performance Meter" (once enabled, click the meter in the bottom-right to toggle modes).
+- (Firefox) Click the DesModder icon to jump straight to the calculator. If it's not pinned to the toolbar, you can find it from the puzzle-piece "Extensions" button.
+
+Bug fixes
+
+- (Better Evaluation View) Fix broken replacements
+- (GLesmos) Fix broken replacements
+- (Compact View) Show folder toggles (visible from author features) when checked even if "Hide Folder Toggles" is checked.
+- (Text Mode) Fix bug where style settings would sometimes be offset to the top of the page.
+- (Text Mode) Persist the complex mode toggle.
+- (Text Mode) Track 3d rotation slightly better.
+- (Builtin Settings) Prevent soft-lock from disabling both graphpaper and expressions.
+- (Find-Replace) Fix bug where Leibniz derivatives would be corrupted on find-replace.
+
 ## 0.14.1
 
 Bug fixes
