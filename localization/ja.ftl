@@ -132,6 +132,8 @@ builtin-settings-opt-zoomButtons-name = ズームボタンの表示
 builtin-settings-opt-zoomButtons-desc = {""}
 builtin-settings-opt-keypad-name = キーパッドの表示
 builtin-settings-opt-keypad-desc = {""}
+builtin-settings-opt-showPerformanceMeter-name = パフォーマンスメーターを表示
+builtin-settings-opt-showPerformanceMeter-desc = {""}
 builtin-settings-opt-showIDs-name = ID を表示
 builtin-settings-opt-showIDs-desc = 行番号の代わりに数式 ID を表示します。
 
@@ -178,6 +180,7 @@ video-creator-orientation-mode-current-speed = current
 video-creator-orientation-mode-current-delta = step
 video-creator-orientation-mode-from-to = from/to
 video-creator-size = サイズ:
+video-creator-mosaic = モザイク:
 video-creator-angle-current = Angle:
 video-creator-angle-from = From:
 video-creator-angle-to = To:
