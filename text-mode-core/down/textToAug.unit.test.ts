@@ -1164,8 +1164,8 @@ describe("Automatic IDs", () => {
           e.type === "folder"
             ? e.children.map((f) => f.id)
             : e.type === "table"
-            ? e.columns.map((f) => f.id)
-            : []
+              ? e.columns.map((f) => f.id)
+              : []
         );
         return arr;
       })

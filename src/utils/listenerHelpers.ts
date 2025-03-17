@@ -53,7 +53,7 @@ type MaybeHookedFunction<Fn extends (...args: any[]) => any> =
 export function hookIntoFunction<
   Key extends string,
   Obj extends Record<Key, (...args: any[]) => any>,
-  Fn extends Obj[Key]
+  Fn extends Obj[Key],
 >(
   obj: Obj,
   prop: Key,
@@ -73,10 +73,13 @@ export function hookIntoFunction<
       for (const h of handlersArray) {
         let stop = false;
         let ret: ReturnType<Fn> | undefined;
-        h.fn((r: ReturnType<Fn>) => {
-          stop = true;
-          ret = r;
-        }, ...args);
+        h.fn(
+          (r: ReturnType<Fn>) => {
+            stop = true;
+            ret = r;
+          },
+          ...args
+        );
         if (stop) return ret!;
       }
 

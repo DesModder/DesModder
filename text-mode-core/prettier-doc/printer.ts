@@ -575,8 +575,8 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
               doc.type === DT.IfBreak
                 ? doc.breakContents
                 : doc.negate
-                ? doc.contents
-                : indent(doc.contents);
+                  ? doc.contents
+                  : indent(doc.contents);
             if (breakContents) {
               cmds.push({ ind, mode, doc: breakContents });
             }
@@ -586,8 +586,8 @@ export function printDocToString(doc: Doc, options: Options): PrintedDoc {
               doc.type === DT.IfBreak
                 ? doc.flatContents
                 : doc.negate
-                ? indent(doc.contents)
-                : doc.contents;
+                  ? indent(doc.contents)
+                  : doc.contents;
             if (flatContents) {
               cmds.push({ ind, mode, doc: flatContents });
             }

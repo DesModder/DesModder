@@ -95,8 +95,8 @@ function stylePath(view: EditorView, node: SyntaxNode): string {
   return node.name === "StyleMapping"
     ? stylePath(view, node.parent!)
     : node.name === "MappingEntry"
-    ? stylePath(view, node.parent!) +
-      "." +
-      view.state.doc.sliceString(node.firstChild!.from, node.firstChild!.to)
-    : "";
+      ? stylePath(view, node.parent!) +
+        "." +
+        view.state.doc.sliceString(node.firstChild!.from, node.firstChild!.to)
+      : "";
 }

@@ -164,7 +164,7 @@ function tryRawNonFolderToAug(
                 cfg,
                 item.fillOpacity === "0"
                   ? "2^{-99}"
-                  : item.fillOpacity ?? (item.fill ? "0.4" : undefined)
+                  : (item.fillOpacity ?? (item.fill ? "0.4" : undefined))
               ),
         regression: item.residualVariable
           ? {
@@ -230,7 +230,7 @@ function tryRawNonFolderToAug(
         center: parseLatex(cfg, item.center ?? "(0,0)"),
         angle: parseLatex(cfg, item.angle ?? "0"),
         // opacity = 0 corresponds to hidden: true
-        opacity: parseLatex(cfg, item.hidden ? "0" : item.opacity ?? "1"),
+        opacity: parseLatex(cfg, item.hidden ? "0" : (item.opacity ?? "1")),
         foreground: item.foreground ?? false,
         draggable: item.draggable ?? false,
         clickableInfo: item.clickableInfo?.latex
@@ -327,28 +327,28 @@ function columnExpressionCommon(
       item.pointSize === "0"
         ? { size: parseLatex(cfg, "0") }
         : item.points === true ||
-          item.pointOpacity !== undefined ||
-          item.pointSize !== undefined ||
-          item.dragMode !== undefined
-        ? {
-            opacity: parseMaybeLatex(cfg, item.pointOpacity),
-            size: parseMaybeLatex(cfg, item.pointSize),
-            style: item.pointStyle,
-            dragMode: item.dragMode,
-          }
-        : undefined,
+            item.pointOpacity !== undefined ||
+            item.pointSize !== undefined ||
+            item.dragMode !== undefined
+          ? {
+              opacity: parseMaybeLatex(cfg, item.pointOpacity),
+              size: parseMaybeLatex(cfg, item.pointSize),
+              style: item.pointStyle,
+              dragMode: item.dragMode,
+            }
+          : undefined,
     lines:
       item.lines === false || item.lineOpacity === "0" || item.lineWidth === "0"
         ? { width: parseLatex(cfg, "0") }
         : item.lines === true ||
-          item.lineOpacity !== undefined ||
-          item.lineWidth !== undefined
-        ? {
-            opacity: parseMaybeLatex(cfg, item.lineOpacity),
-            width: parseMaybeLatex(cfg, item.lineWidth),
-            style: item.lineStyle,
-          }
-        : undefined,
+            item.lineOpacity !== undefined ||
+            item.lineWidth !== undefined
+          ? {
+              opacity: parseMaybeLatex(cfg, item.lineOpacity),
+              width: parseMaybeLatex(cfg, item.lineWidth),
+              style: item.lineStyle,
+            }
+          : undefined,
   };
 }
 
