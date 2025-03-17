@@ -24,6 +24,7 @@ GLesmos-label-toggle-glesmos = GLesmos を使ったレンダリング
 GLesmos-confirm-lines = 線のレンダリングの確認
 GLesmos-confirm-lines-body = GLesmos の線のレンダリングは遅いことがあります。特にレイヤーのリストには注意してください。
 GLesmos-no-support = 残念ながら、あなたのブラウザは WebGL2 をサポートしていないため、GLesmos はサポートされません。
+GLesmos-not-enabled = このグラフの陰関数のパフォーマンスを向上させるために、GLesmos プラグインを有効にしてください。
 # Missing: error messages
 
 ## Tips
@@ -42,14 +43,14 @@ show-tips-tip-note-folder =  " を押下すると、フォルダーを素早く�
 show-tips-tip-arctan = 点の角度を求めるには、arctan(y / x) の代わりに arctan(y, x) を使ってください。
 show-tips-tip-indefinite-integral = 積分範囲は無限区間にすることができます。
 show-tips-tip-random = ランダム関数は分布からサンプリングすることができます。
-show-tips-tip-two-argument-round = 2引数の round 関数は丸めたラベルに最適です。
-show-tips-tip-two-argument-sort = sort(A, B) を使って、あるリストを別のリストのキーでソートできます。
+show-tips-tip-two-argument-round = 2 引数の round 関数はラベルでの丸めに最適です。
+show-tips-tip-two-argument-sort = sort(A, B) を使って、別のリストをキーとしてあるリストをソートできます。
 show-tips-tip-custom-colors = rgb 関数と hsv 関数を使ってカスタムカラーを作成することができます。
 show-tips-tip-ctrl-f = Ctrl+F で数式を検索できます。
 show-tips-tip-derivatives = ラグランジュ記法またはライプニッツ記法を用いて導関数をとることができます。
 show-tips-tip-unbounded-list-slices = リストのスライスは終了位置を必要としません。
 show-tips-tip-dataviz-plots = データを視覚化するには、ヒストグラムや箱ひげ図などが使用できます。
-show-tips-tip-statistics = Desmosには多くの統計機能が組み込まれています。
+show-tips-tip-statistics = Desmos には多くの統計機能が組み込まれています。
 show-tips-tip-table-draggable-points = ドラッグ可能な点のリストには表を使用してください。
 show-tips-tip-polygon = 簡単な多角形には polygon 関数を使用してください。
 show-tips-tip-point-arithmetic = 点（ベクトル）演算は期待通りに機能します。例: (1, 2) + (3, 4) = (4, 6)
@@ -69,14 +70,14 @@ show-tips-tip-bernard = Bernard
 show-tips-tip-new-desmos = Desmos の新着情報
 show-tips-tip-simultaneous-actions =アクションの割り当ては順次ではなく、同時に行われます。
 show-tips-tip-share-permalink = サインインしなくても、パーマリンク経由でグラフを共有できます。
-show-tips-tip-point-coordinate = 点の変数に .x または .y を追加して、ポイントの x 座標または y 座標を抽出できます。
+show-tips-tip-point-coordinate = 点の変数に .x や .y を追加して、x 座標や y 座標を抽出できます。
 show-tips-tip-audiotrace = オーディオトレースを使ってグラフを聴くことができます。
 show-tips-tip-audiotrace-note-frequency = オーディオトレースの周波数は表示域内の高さまたは低さに依存します。
-show-tips-tip-audiotrace-range = オーディオトレースの範囲は E4 (329.63 Hz) から E5 (659.25 Hz) までです。
-show-tips-tip-other-calculators = Desmosには他にも計算機があります。
+show-tips-tip-audiotrace-range = オーディオトレースの範囲は E4（329.63 Hz）から E5（659.25 Hz）までです。
+show-tips-tip-other-calculators = Desmos には他にも計算機があります。
 show-tips-tip-lock-viewport = 表示域を移動させたくない場合は、グラフの設定で固定してください。
 show-tips-tip-glesmos = GLesmos プラグインを有効にすると、陰関数を高速化できます。
-show-tips-tip-disable-show-tips = 私にはうんざり？ヒントを非表示にするには Desmodder の設定でヒント表示のプラグインを無効にしてください。
+show-tips-tip-disable-show-tips = 私にはうんざり？ヒントを非表示にするには DesModder の設定でヒント表示のプラグインを無効にしてください。
 show-tips-tip-compact-view-multiline = 数式のスクロールにうんざりしていませんか？小型ビューや改行つき数式を有効にすると、すぐに数式の全体を見ることができます。
 show-tips-tip-intellisense = 長い変数名が多すぎますか？インテリセンスを有効にして、簡単に扱えるようにしましょう。
 show-tips-tip-youre-doing-great = あなたはよく頑張っています :)
@@ -84,7 +85,7 @@ show-tips-tip-youre-superb = あなたは素晴らしい <3
 show-tips-tip-huggy = Huggy!
 
 ## Text Mode
-text-mode-name = テキストモード (ベータ版)
+text-mode-name = テキストモード（ベータ版）
 text-mode-desc = バグがある可能性があります。一時的なドキュメントはこちら:
 text-mode-toggle = テキストモードの切り替え
 text-mode-toggle-spaces = スペース
@@ -104,7 +105,7 @@ wolfram2desmos-desc = ASCII Math（Wolfram Alpha クエリの結果など）を 
 wolfram2desmos-opt-reciprocalExponents2Surds-name = 根号表記
 wolfram2desmos-opt-reciprocalExponents2Surds-desc = 自然数の逆数のべきを、それと等価な根号表記で書き換えます。
 wolfram2desmos-opt-derivativeLoopLimit-name = 微分の展開
-wolfram2desmos-opt-derivativeLoopLimit-desc = ライプニッツ記法の n 階微分を反復微分に展開します（10回まで）。
+wolfram2desmos-opt-derivativeLoopLimit-desc = ライプニッツ記法の n 階微分を反復微分に展開します（10 回まで）。
 
 ## Pin Expressions
 pin-expressions-name = 数式の固定
@@ -131,6 +132,8 @@ builtin-settings-opt-zoomButtons-name = ズームボタンの表示
 builtin-settings-opt-zoomButtons-desc = {""}
 builtin-settings-opt-keypad-name = キーパッドの表示
 builtin-settings-opt-keypad-desc = {""}
+builtin-settings-opt-showPerformanceMeter-name = パフォーマンスメーターを表示
+builtin-settings-opt-showPerformanceMeter-desc = {""}
 builtin-settings-opt-showIDs-name = ID を表示
 builtin-settings-opt-showIDs-desc = 行番号の代わりに数式 ID を表示します。
 
@@ -164,12 +167,12 @@ folder-tools-enclose = フォルダーに包む
 
 ## Video Creator
 video-creator-name = 動画作成
-video-creator-desc = アクションやスライダーに基づいてグラフの動画やGIFをエクスポートできます。
+video-creator-desc = アクションやスライダーに基づいてグラフの動画や GIF をエクスポートできます。
 video-creator-menu = 動画作成メニュー
 video-creator-to = to
 video-creator-step = , 主目盛
 video-creator-ticks-playing-sliders = Playing sliders:
-video-creator-ticks-step = タイムステップ (ms):
+video-creator-ticks-step = タイムステップ（ms）:
 video-creator-prev-action = 前へ
 video-creator-next-action = 次へ
 video-creator-orientation = Orientation
@@ -177,6 +180,7 @@ video-creator-orientation-mode-current-speed = current
 video-creator-orientation-mode-current-delta = step
 video-creator-orientation-mode-from-to = from/to
 video-creator-size = サイズ:
+video-creator-mosaic = モザイク:
 video-creator-angle-current = Angle:
 video-creator-angle-from = From:
 video-creator-angle-to = To:
@@ -199,7 +203,7 @@ video-creator-filename-placeholder = ファイル名の設定
 video-creator-export = エクスポート
 video-creator-export-as = { $fileType } としてエクスポート
 video-creator-fps = FPS:
-video-creator-method-once = 1度だけ
+video-creator-method-once = 1 度だけ
 video-creator-method-ntimes = count
 video-creator-method-slider = スライダー
 video-creator-method-action = アクション
@@ -227,7 +231,7 @@ performance-info-rendering = レンダリング
 performance-info-other = その他
 
 ## Better Evaluation View
-better-evaluation-view-name = 高機能な評価ビュー
+better-evaluation-view-name = 評価ビューの改善
 better-evaluation-view-desc = リストの要素、色、undefined の値を表示します。
 better-evaluation-view-opt-lists-name = リストの要素を表示
 better-evaluation-view-opt-lists-desc = リストの長さの代わりに要素を表示する
@@ -267,53 +271,53 @@ compact-view-opt-compactFactor-desc = 数式リストのスペースを削除
 compact-view-opt-hideFolderToggles-name = フォルダーメニューを隠す
 compact-view-opt-hideFolderToggles-desc = フォルダーの表示 / 非表示を切り替えたり最前面に表示したりするために追加されたフォルダーメニューを隠します。
 compact-view-opt-noSeparatingLines-name = 区切り線を削除
-compact-view-opt-noSeparatingLines-desc = 式と式の間の区切り線を削除し、1行おきのハイライトで代替します。
+compact-view-opt-noSeparatingLines-desc = 式と式の間の区切り線を削除し、1 行おきのハイライトで代替します。
 compact-view-opt-highlightAlternatingLines-name = 数式を交互にハイライト
-compact-view-opt-highlightAlternatingLines-desc = 数式を1行おきにハイライトし、互いに区別しやすくします。
+compact-view-opt-highlightAlternatingLines-desc = 数式を 1 行おきにハイライトし、互いに区別しやすくします。
 compact-view-opt-hideEvaluations-name = 評価ビューを折りたたむ
-compact-view-opt-hideEvaluations-desc = 数式の評価ビューを横に表示します。フォーカスしたり、カーソルを合わせると表示されます。
+compact-view-opt-hideEvaluations-desc = 数式の評価ビューを横に表示します。フォーカスしたり、カーソルを合わせたりすると表示されます。
 
 ## Multiline
 multiline-name = 改行つき数式
 multiline-desc = 数式を複数行に分割します。
-multiline-opt-widthBeforeMultiline-name = しきい値 (%)
-multiline-opt-widthBeforeMultiline-desc = 折り返しが発生する最小幅（表示域のサイズに対するパーセンテージ）。モバイルでは、この値は3倍になります。
+multiline-opt-widthBeforeMultiline-name = しきい値（%）
+multiline-opt-widthBeforeMultiline-desc = 折り返しが発生する最小幅（表示域のサイズに対するパーセンテージ）。モバイルでは、この値は 3 倍になります。
 multiline-opt-automaticallyMultilinify-name = 入力中に改行を挿入する
 multiline-opt-automaticallyMultilinify-desc = 入力中に数式を自動的に複数行に分割するようにすると、Ctrl+M を使う必要がありません。
-multiline-opt-multilinifyDelayAfterEdit-name = 更新間隔 (ms)
+multiline-opt-multilinifyDelayAfterEdit-name = 更新間隔（ms）
 multiline-opt-multilinifyDelayAfterEdit-desc = 改行つき数式の自動折り返しは、ここで指定した時間編集が行われなければ更新されます。
 multiline-opt-spacesToNewlines-name = スペースを改行に変換
-multiline-opt-spacesToNewlines-desc = 3つの半角スペースを改行に変換する。Shift+Enter を押下することでも可能です。
+multiline-opt-spacesToNewlines-desc = 3 つの半角スペースを改行に変換します。Shift+Enter を押下して改行することもできます。
 multiline-opt-determineLineBreaksAutomatically-name = 自動で数式を折り返す
 multiline-opt-determineLineBreaksAutomatically-desc = 改行位置を自動的に判断します。Ctrl+M を押下すると手動で改行できます。
-multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-name = 3つの半角スペースを含む数式をスキップ
-multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-desc = 手動で追加した改行（3つの半角スペース）がある数式には自動的に改行を追加しません。
+multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-name = 3 つの半角スペースを含む数式をスキップ
+multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-desc = 手動で追加した改行（3 つの半角スペース）がある数式には自動的に改行を追加しません。
 
 ## Custom MathQuill Config
 custom-mathquill-config-name = MathQuill のカスタム設定
 custom-mathquill-config-desc = 数式の入力方法を変更します。
-custom-mathquill-config-opt-superscriptOperators-name = 指数での演算子
+custom-mathquill-config-opt-superscriptOperators-name = 指数での演算子入力
 custom-mathquill-config-opt-superscriptOperators-desc = 指数に + のような演算子を入力できるようにします。
 custom-mathquill-config-opt-noAutoSubscript-name = 自動添え字を無効化
-custom-mathquill-config-opt-noAutoSubscript-desc = 変数名の後に入力された数字が自動で添え字に入る機能を無効化します。
+custom-mathquill-config-opt-noAutoSubscript-desc = 変数名の後に入力された数字が自動で添え字に入る機能を無効にします。
 custom-mathquill-config-opt-noNEquals-name = 総和の n= を無効化
-custom-mathquill-config-opt-noNEquals-desc = 総和の下限に n= が自動的に入力される機能を無効化します。
-custom-mathquill-config-opt-subSupWithoutOp-name = オペランドなしの添え字 / 上付き文字
-custom-mathquill-config-opt-subSupWithoutOp-desc = 下付き文字と上付き文字を、前に何も付いていなくても指定できるようにします。
-custom-mathquill-config-opt-allowMixedBrackets-name = 不一致の括弧を許可
+custom-mathquill-config-opt-noNEquals-desc = 総和の下限に n= が自動的に入力される機能を無効にします。
+custom-mathquill-config-opt-subSupWithoutOp-name = オペランドなしの上付き / 下付き文字
+custom-mathquill-config-opt-subSupWithoutOp-desc = 上付き文字と下付き文字を、前に何も付いていなくても指定できるようにします。
+custom-mathquill-config-opt-allowMixedBrackets-name = 括弧の不一致を許可
 custom-mathquill-config-opt-allowMixedBrackets-desc = すべての括弧が互いに一致するようにします（絶対値を含む）。
 custom-mathquill-config-opt-subscriptReplacements-name = 添え字の置換を許可
 custom-mathquill-config-opt-subscriptReplacements-desc = 記号や関数名を添え字で入力できるようにします。
 custom-mathquill-config-opt-noPercentOf-name = % of を無効化
-custom-mathquill-config-opt-noPercentOf-desc = % と入力すると代わりに % of が入力される機能を無効化します。
-custom-mathquill-config-opt-commaDelimiter-name = カンマ区切り
+custom-mathquill-config-opt-noPercentOf-desc = % と入力すると代わりに % of が入力される機能を無効にします。
+custom-mathquill-config-opt-commaDelimiter-name = 数値のカンマ区切り
 custom-mathquill-config-opt-commaDelimiter-desc = 数値の区切り文字としてカンマを挿入します。
 custom-mathquill-config-opt-delimiterOverride-name = カスタム区切り文字
 custom-mathquill-config-opt-delimiterOverride-desc = 数値の区切り文字として使用する文字列を設定します。
 custom-mathquill-config-opt-leftIntoSubscript-name = 左右移動を下付き文字に
-custom-mathquill-config-opt-leftIntoSubscript-desc = カーソルを左右に動かすと、上付き文字ではなく下付き文字になります。
-custom-mathquill-config-opt-extendedGreek-name = より多くのギリシャ文字
-custom-mathquill-config-opt-extendedGreek-desc = サポートされているすべてのギリシャ文字の置き換えを有効にします。
+custom-mathquill-config-opt-leftIntoSubscript-desc = カーソルを左右に動かしたとき、上付き文字ではなく下付き文字にカーソルを移動させます。
+custom-mathquill-config-opt-extendedGreek-name = ギリシャ文字の拡張
+custom-mathquill-config-opt-extendedGreek-desc = サポートされているすべてのギリシャ文字の挿入を有効にします。
 custom-mathquill-config-opt-lessFSpacing-name = f の周りのスペースを削減
 custom-mathquill-config-opt-lessFSpacing-desc = 文字 f の周りの余分なスペースを削減します。
 
@@ -329,7 +333,7 @@ code-golf-note-latex-byte-count = LaTeX 表現のバイト数 { $chars }
 syntax-highlighting-name = シンタックスハイライト
 syntax-highlighting-desc = 数式のさまざまな部分に色をつけて判読性を高めます。
 syntax-highlighting-opt-bracketPairColorization-name = 括弧の色付け
-syntax-highlighting-opt-bracketPairColorization-desc = 括弧に交互に色を適用し (例: ()[]{"{"}{"}"}||)、 一致する括弧のペアを見つけやすくします。
+syntax-highlighting-opt-bracketPairColorization-desc = 括弧に交互に色を適用し（例: ()[]{"{"}{"}"}||）、一致する括弧のペアを見つけやすくします。
 syntax-highlighting-opt-bracketPairColorizationColors-name = 括弧の色
 syntax-highlighting-opt-bracketPairColorizationColors-desc = 括弧の色付けに使用する色の数と順序を設定します。
 syntax-highlighting-opt-bpcColorInText-name = 括弧内のテキストを色付けする
@@ -344,7 +348,7 @@ syntax-highlighting-opt-underlineHighlightedRanges-name = ハイライト範囲�
 syntax-highlighting-opt-underlineHighlightedRanges-desc = ハイライトされた範囲の下に濃い下線を引いて見やすくします。
 
 ## Better Navigation
-better-navigation-name = 効率的な移動機能
+better-navigation-name = ナビゲーションの改善
 better-navigation-desc = Desmos の数式での移動をより簡単にするためのツール
 better-navigation-opt-ctrlArrow-name = Ctrl+Arrow のサポート
 better-navigation-opt-ctrlArrow-desc = Ctrl+矢印キー または Ctrl+Shift+矢印キー を使用して、大きなテキストブロックをすばやくスキップします。Ctrl+Backspace を使用すると、大きなテキストブロックを削除できます。
