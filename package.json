@@ -40,6 +40,9 @@
     "test:integration": "jest --config ./jest-config/jest-integration.config.js --run-in-band",
     "test:integration-local": "jest --config ./jest-config/jest-integration-local.config.js --run-in-band"
   },
+  "prettier": {
+    "trailingComma": "es5"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/DesModder/DesModder"
