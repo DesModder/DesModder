@@ -43,8 +43,8 @@ show-tips-tip-note-folder =  " を押下すると、フォルダーを素早く�
 show-tips-tip-arctan = 点の角度を求めるには、arctan(y / x) の代わりに arctan(y, x) を使ってください。
 show-tips-tip-indefinite-integral = 積分範囲は無限区間にすることができます。
 show-tips-tip-random = ランダム関数は分布からサンプリングすることができます。
-show-tips-tip-two-argument-round = 2 引数の round 関数は丸めたラベルに最適です。
-show-tips-tip-two-argument-sort = sort(A, B) を使って、あるリストを別のリストのキーでソートできます。
+show-tips-tip-two-argument-round = 2 引数の round 関数はラベルでの丸めに最適です。
+show-tips-tip-two-argument-sort = sort(A, B) を使って、別のリストをキーとしてあるリストをソートできます。
 show-tips-tip-custom-colors = rgb 関数と hsv 関数を使ってカスタムカラーを作成することができます。
 show-tips-tip-ctrl-f = Ctrl+F で数式を検索できます。
 show-tips-tip-derivatives = ラグランジュ記法またはライプニッツ記法を用いて導関数をとることができます。
@@ -70,7 +70,7 @@ show-tips-tip-bernard = Bernard
 show-tips-tip-new-desmos = Desmos の新着情報
 show-tips-tip-simultaneous-actions =アクションの割り当ては順次ではなく、同時に行われます。
 show-tips-tip-share-permalink = サインインしなくても、パーマリンク経由でグラフを共有できます。
-show-tips-tip-point-coordinate = 点の変数に .x または .y を追加して、ポイントの x 座標または y 座標を抽出できます。
+show-tips-tip-point-coordinate = 点の変数に .x や .y を追加して、x 座標や y 座標を抽出できます。
 show-tips-tip-audiotrace = オーディオトレースを使ってグラフを聴くことができます。
 show-tips-tip-audiotrace-note-frequency = オーディオトレースの周波数は表示域内の高さまたは低さに依存します。
 show-tips-tip-audiotrace-range = オーディオトレースの範囲は E4 (329.63 Hz) から E5 (659.25 Hz) までです。
@@ -228,7 +228,7 @@ performance-info-rendering = レンダリング
 performance-info-other = その他
 
 ## Better Evaluation View
-better-evaluation-view-name = 高機能な評価ビュー
+better-evaluation-view-name = 評価ビューの改善
 better-evaluation-view-desc = リストの要素、色、undefined の値を表示します。
 better-evaluation-view-opt-lists-name = リストの要素を表示
 better-evaluation-view-opt-lists-desc = リストの長さの代わりに要素を表示する
@@ -272,7 +272,7 @@ compact-view-opt-noSeparatingLines-desc = 式と式の間の区切り線を削�
 compact-view-opt-highlightAlternatingLines-name = 数式を交互にハイライト
 compact-view-opt-highlightAlternatingLines-desc = 数式を 1 行おきにハイライトし、互いに区別しやすくします。
 compact-view-opt-hideEvaluations-name = 評価ビューを折りたたむ
-compact-view-opt-hideEvaluations-desc = 数式の評価ビューを横に表示します。フォーカスしたり、カーソルを合わせると表示されます。
+compact-view-opt-hideEvaluations-desc = 数式の評価ビューを横に表示します。フォーカスしたり、カーソルを合わせたりすると表示されます。
 
 ## Multiline
 multiline-name = 改行つき数式
@@ -284,7 +284,7 @@ multiline-opt-automaticallyMultilinify-desc = 入力中に数式を自動的に�
 multiline-opt-multilinifyDelayAfterEdit-name = 更新間隔 (ms)
 multiline-opt-multilinifyDelayAfterEdit-desc = 改行つき数式の自動折り返しは、ここで指定した時間編集が行われなければ更新されます。
 multiline-opt-spacesToNewlines-name = スペースを改行に変換
-multiline-opt-spacesToNewlines-desc = 3 つの半角スペースを改行に変換する。Shift+Enter を押下することでも可能です。
+multiline-opt-spacesToNewlines-desc = 3 つの半角スペースを改行に変換します。Shift+Enter を押下して改行することもできます。
 multiline-opt-determineLineBreaksAutomatically-name = 自動で数式を折り返す
 multiline-opt-determineLineBreaksAutomatically-desc = 改行位置を自動的に判断します。Ctrl+M を押下すると手動で改行できます。
 multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-name = 3 つの半角スペースを含む数式をスキップ
@@ -293,28 +293,28 @@ multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-desc = 手動�
 ## Custom MathQuill Config
 custom-mathquill-config-name = MathQuill のカスタム設定
 custom-mathquill-config-desc = 数式の入力方法を変更します。
-custom-mathquill-config-opt-superscriptOperators-name = 指数での演算子
+custom-mathquill-config-opt-superscriptOperators-name = 指数での演算子入力
 custom-mathquill-config-opt-superscriptOperators-desc = 指数に + のような演算子を入力できるようにします。
 custom-mathquill-config-opt-noAutoSubscript-name = 自動添え字を無効化
-custom-mathquill-config-opt-noAutoSubscript-desc = 変数名の後に入力された数字が自動で添え字に入る機能を無効化します。
+custom-mathquill-config-opt-noAutoSubscript-desc = 変数名の後に入力された数字が自動で添え字に入る機能を無効にします。
 custom-mathquill-config-opt-noNEquals-name = 総和の n= を無効化
-custom-mathquill-config-opt-noNEquals-desc = 総和の下限に n= が自動的に入力される機能を無効化します。
-custom-mathquill-config-opt-subSupWithoutOp-name = オペランドなしの添え字 / 上付き文字
-custom-mathquill-config-opt-subSupWithoutOp-desc = 下付き文字と上付き文字を、前に何も付いていなくても指定できるようにします。
-custom-mathquill-config-opt-allowMixedBrackets-name = 不一致の括弧を許可
+custom-mathquill-config-opt-noNEquals-desc = 総和の下限に n= が自動的に入力される機能を無効にします。
+custom-mathquill-config-opt-subSupWithoutOp-name = オペランドなしの上付き / 下付き文字
+custom-mathquill-config-opt-subSupWithoutOp-desc = 上付き文字と下付き文字を、前に何も付いていなくても指定できるようにします。
+custom-mathquill-config-opt-allowMixedBrackets-name = 括弧の不一致を許可
 custom-mathquill-config-opt-allowMixedBrackets-desc = すべての括弧が互いに一致するようにします（絶対値を含む）。
 custom-mathquill-config-opt-subscriptReplacements-name = 添え字の置換を許可
 custom-mathquill-config-opt-subscriptReplacements-desc = 記号や関数名を添え字で入力できるようにします。
 custom-mathquill-config-opt-noPercentOf-name = % of を無効化
-custom-mathquill-config-opt-noPercentOf-desc = % と入力すると代わりに % of が入力される機能を無効化します。
-custom-mathquill-config-opt-commaDelimiter-name = カンマ区切り
+custom-mathquill-config-opt-noPercentOf-desc = % と入力すると代わりに % of が入力される機能を無効にします。
+custom-mathquill-config-opt-commaDelimiter-name = 数値のカンマ区切り
 custom-mathquill-config-opt-commaDelimiter-desc = 数値の区切り文字としてカンマを挿入します。
 custom-mathquill-config-opt-delimiterOverride-name = カスタム区切り文字
 custom-mathquill-config-opt-delimiterOverride-desc = 数値の区切り文字として使用する文字列を設定します。
 custom-mathquill-config-opt-leftIntoSubscript-name = 左右移動を下付き文字に
-custom-mathquill-config-opt-leftIntoSubscript-desc = カーソルを左右に動かすと、上付き文字ではなく下付き文字になります。
-custom-mathquill-config-opt-extendedGreek-name = より多くのギリシャ文字
-custom-mathquill-config-opt-extendedGreek-desc = サポートされているすべてのギリシャ文字の置き換えを有効にします。
+custom-mathquill-config-opt-leftIntoSubscript-desc = カーソルを左右に動かしたとき、上付き文字ではなく下付き文字にカーソルを移動させます。
+custom-mathquill-config-opt-extendedGreek-name = ギリシャ文字の拡張
+custom-mathquill-config-opt-extendedGreek-desc = サポートされているすべてのギリシャ文字の挿入を有効にします。
 custom-mathquill-config-opt-lessFSpacing-name = f の周りのスペースを削減
 custom-mathquill-config-opt-lessFSpacing-desc = 文字 f の周りの余分なスペースを削減します。
 
@@ -345,7 +345,7 @@ syntax-highlighting-opt-underlineHighlightedRanges-name = ハイライト範囲�
 syntax-highlighting-opt-underlineHighlightedRanges-desc = ハイライトされた範囲の下に濃い下線を引いて見やすくします。
 
 ## Better Navigation
-better-navigation-name = 効率的な移動機能
+better-navigation-name = ナビゲーションの改善
 better-navigation-desc = Desmos の数式での移動をより簡単にするためのツール
 better-navigation-opt-ctrlArrow-name = Ctrl+Arrow のサポート
 better-navigation-opt-ctrlArrow-desc = Ctrl+矢印キー または Ctrl+Shift+矢印キー を使用して、大きなテキストブロックをすばやくスキップします。Ctrl+Backspace を使用すると、大きなテキストブロックを削除できます。
