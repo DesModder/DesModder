@@ -14,7 +14,8 @@
     }
   },
   "scripts": {
-    "build": "tsc --build && node esbuild.mjs"
+    "build": "tsc --build && node esbuild.mjs",
+    "postinstall": "npm run build"
   },
   "repository": {
     "type": "git",
