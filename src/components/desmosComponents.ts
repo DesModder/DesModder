@@ -192,8 +192,12 @@ interface ModelAndController {
 export class ExpressionIconView extends Component<ModelAndController> {
   template() {
     const template = exprTemplate(this);
-    return template.children[1].children[1].children[0];
+    return listWrap(template.children[1].children[1].children)[0];
   }
+}
+
+function listWrap(x: unknown) {
+  return Array.isArray(x) ? x : [x];
 }
 
 // <If predicate={this.shouldShowFooter}>
@@ -201,7 +205,7 @@ export class ExpressionIconView extends Component<ModelAndController> {
 export class FooterView extends Component<ModelAndController> {
   template() {
     const template = exprTemplate(this);
-    return template.children[0].children[2];
+    return listWrap(template.children)[0].children[2];
   }
 }
 
