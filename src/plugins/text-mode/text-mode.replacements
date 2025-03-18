@@ -26,21 +26,14 @@ isShowKeypadButtonVisible () {
 
 *Find* => `center`
 ```js
-.createElement(
+$DGCShared['n'](
   'div',
-  { class: $DCGView.const('dcg-center-buttons') },
+  { class: 'dcg-center-buttons' },
   ____
 )
 ```
 
-*Find_surrounding_template* `center` => `template`
-
-*Find* inside `template`
-
-```js
-.createElement($Tooltip, {
-  tooltip: () => this.controller.s("graphing-calculator-label-edit-list-tooltip")
-```
+*Description* Removed template here as it does not seem to be needed anymore?
 
 *Replace* `center` with
 ```js
@@ -99,11 +92,11 @@ $ExpressionView = (window.DesModderFragile ??= {}).ExpressionView
 *Find*
 
 ```js
-$ImageIconView = class extends $.Class {
+$ImageIconView = class extends $.View {
   init() { ____ }
   template() {
-      return $.createElement("div", {
-          class: $.const("dcg-expression-icon-container dcg-image-icon-container")
+      return $['n']("div", {
+          class: "dcg-expression-icon-container dcg-image-icon-container"
       }
 ```
 

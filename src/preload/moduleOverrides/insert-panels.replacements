@@ -9,7 +9,7 @@
 
 *Find* => `element`
 ```js
-$DCGView.createElement(
+$DCGShared['n'](
   "div",
   {
     class: () => {
@@ -17,8 +17,7 @@ $DCGView.createElement(
       return {
         "dcg-exppanel-container": ____
       }
-    },
-    ____
+    }, ____
   },
   __children__
 )

@@ -8,7 +8,7 @@
 
 *Find* => `undefined`
 ```js
-undefined: ()=> $Dcgview.createElement(
+undefined: ()=> $DcgShared['n'](
   $ViewClass,
   {
     ...this.props,
@@ -19,17 +19,17 @@ undefined: ()=> $Dcgview.createElement(
 
 *Replace* `undefined` with
 ```js
-undefined: () => $Dcgview.Components.IfElse(
+undefined: () => $DcgShared.Components.IfElse(
     () => DSM.betterEvaluationView,
     {
-      true: () => $Dcgview.createElement(
+      true: () => $DcgShared['n'](
         Desmos.Private.Fragile.StaticMathquillView,
         {
           latex: () => this.getNumberLabelString?.() || "undefined",
-          config: $Dcgview.const({})
+          config: {}
         }
       ),
-      false: () => $Dcgview.createElement(
+      false: () => $DcgShared['n'](
         $ViewClass,
         {
           ...this.props,
@@ -66,14 +66,14 @@ list: () => DSM.replaceElement(
 *Find* => `list`
 ```js
 ()=>this.cachedEvaluationRHS)({
-list: $rhs => $Dcgview.createElement(__oldList__)
+list: $rhs => $DcgShared['n'](__oldList__)
 ```
 
 *Replace* `list` with
 ```js
 ()=>this.cachedEvaluationRHS)({
 list: $rhs => DSM.replaceElement(
-  () => $Dcgview.createElement(__oldList__),
+  () => $DcgShared['n'](__oldList__),
   () => DSM.betterEvaluationView?.listEvaluation(() => {
     const itemModel = this.controller.getItemModel(this.props.id());
     // get untruncated value
@@ -84,13 +84,13 @@ list: $rhs => DSM.replaceElement(
 
 *Find* => `emptyList`
 ```js
-emptyList: () => $emptyListDcgview.createElement(__oldEmptyList__)
+emptyList: () => $emptyListDcgShared['n'](__oldEmptyList__)
 ```
 
 *Replace* `emptyList` with
 ```js
 emptyList: () => DSM.replaceElement(
-  () => $emptyListDcgview.createElement(__oldEmptyList__),
+  () => $emptyListDcgShared['n'](__oldEmptyList__),
   () => DSM.betterEvaluationView?.listEvaluation(() => [])
 )
 ```
@@ -118,13 +118,13 @@ rgbcolor: () => DSM.replaceElement(
 
 *Find* => `color`
 ```js
-rgbcolor: $rhs => $Dcgview.createElement(__swatch__)
+rgbcolor: $rhs => $DcgShared['n'](__swatch__)
 ```
 
 *Replace* `color` with
 ```js
 rgbcolor: $rhs => DSM.replaceElement(
-  () => $Dcgview.createElement(__swatch__),
+  () => $DcgShared['n'](__swatch__),
   () => DSM.betterEvaluationView?.colorEvaluation(() => this.getEvaluationRHS().val)
 )
 ```

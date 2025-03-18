@@ -11,15 +11,13 @@ adding an extra section to the menu view.
 
 *Find* => `element`
 ```js
-createElement(
+['n'](
   'div',
-  { class: $DCGView.const('dcg-options-menu-content') ____ },
-  $DCGView.createElement(
+  { class: 'dcg-options-menu-content' ____ },
+  $DCGShared['n'](
     'div',
     {
-      class: $DCGView.const(
-        'dcg-iconed-mathquill-row dcg-fill-opacity-row'
-      )
+      class: 'dcg-iconed-mathquill-row dcg-fill-opacity-row'
     }
     ____
   )
@@ -29,9 +27,9 @@ createElement(
 
 *Find* inside `element`
 ```js
-createElement(
+['n'](
   'div',
-  { class: $.const('dcg-options-menu-content') },
+  { class: 'dcg-options-menu-content' },
   __rest__
 )
 ```
@@ -40,7 +38,7 @@ createElement(
 
 *Find* inside `template`
 ```js
-createElement($ToggleView, {
+['n']($ToggleView, {
   ariaLabel: () => this.controller.s("graphing-calculator-narration-fill-visible")
 ```
 
@@ -60,23 +58,23 @@ Warning: this is duplicated above ("Add a fill menu option...").
 
 *Find* => `key`
 ```js
-{ class: $DCGView.const('dcg-iconed-mathquill-row dcg-line-opacity-row') }
+{ class: 'dcg-iconed-mathquill-row dcg-line-opacity-row' }
 ```
 
 *Find_surrounding_template* `key` => `template`
 
 *Find* inside `template`
 ```js
-createElement(
+['n'](
   'div',
-  { class: $.const('dcg-options-menu-content') },
+  { class: 'dcg-options-menu-content' },
   __rest__
 )
 ```
 
 *Find* inside `template`
 ```js
-createElement($ToggleView, {
+['n']($ToggleView, {
   ariaLabel: () => this.controller.s("graphing-calculator-narration-lines-visible")
 ```
 
@@ -94,19 +92,19 @@ DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, f
 
 *Find* => `options`
 ```js
-$DCGView.createElement("div",
-  { class: $DCGView.const("dcg-options-flex-container") },
-  $DCGView.createElement("div",
-    { class: $DCGView.const("dcg-options-left-side") },
-    $DCGView.createElement("div", {
-      class: $DCGView.const("dcg-iconed-mathquill-row dcg-line-opacity-row")
+$DCGShared['n']("div",
+  { class: "dcg-options-flex-container" },
+  $DCGShared['n']("div",
+    { class: "dcg-options-left-side" },
+    $DCGShared['n']("div", {
+      class: "dcg-iconed-mathquill-row dcg-line-opacity-row"
 ```
 
 *Find_surrounding_template* `options` => `template`
 
 *Find* inside `template`
 ```js
-createElement($ToggleView, {
+['n']($ToggleView, {
   ariaLabel: () => this.controller.s("graphing-calculator-narration-lines-visible")
 ```
 

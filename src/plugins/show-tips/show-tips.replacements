@@ -8,10 +8,10 @@
 
 *Find*
 ```js
-$DCGView.createElement(
+$DCGShared['n'](
   "div",
   {
-    class: $DCGView.const("dcg-expressions-branding")
+    class: "dcg-expressions-branding"
     __args__
   },
   __children__

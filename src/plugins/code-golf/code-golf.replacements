@@ -8,7 +8,7 @@
 
 *Find* => `math expression item`
 ```js
-$DCGView.createElement("div", {
+$DCGShared['n']("div", {
     class: ()=>({
         "dcg-do-not-blur": !0,
         "dcg-expressionitem": !0,
@@ -17,8 +17,8 @@ $DCGView.createElement("div", {
         __rest0__
         }),
         __rest1__
-}, $DCGView.createElement("div", {
-                class: $DCGView.const("dcg-fade-container"),
+}, $DCGShared['n']("div", {
+                class: "dcg-fade-container",
                 onTapStart: this.bindFn(this.onMouseSelect),
                 onTap: this.bindFn(this.onMouseSelect)
             }, __rest3__), __rest4__)
@@ -36,7 +36,7 @@ DSM.insertElement(() => ( DSM.codeGolf?.expressionItemCostPanel(this.model, this
 
 *Find* => `folder expression item`
 ```js
-$DCGView2.createElement("div", {
+$DCGShared['n']("div", {
     class: () => ({
         "dcg-do-not-blur": !0,
         "dcg-expressionitem": !0,
@@ -46,8 +46,8 @@ $DCGView2.createElement("div", {
         __classesAfter__
     }),
     __rest1folder__
-}, $DCGView2.createElement("div", {
-    class: $DCGView2.const("dcg-fade-container")
+}, $DCGShared['n']("div", {
+    class: "dcg-fade-container"
 }, __rest2folder__), __rest3folder__)
 ```
 
