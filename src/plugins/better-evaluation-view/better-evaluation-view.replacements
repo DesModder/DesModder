@@ -19,25 +19,25 @@ undefined: ()=> $createElement(
 
 *Replace* `undefined` with
 ```js
-undefined: () => $DcgShared.Components.IfElse(
-    () => DSM.betterEvaluationView,
+undefined: () => DSM.replaceElement(
+  () => $createElement(
+    $ViewClass,
     {
-      true: () => $createElement(
-        Desmos.Private.Fragile.StaticMathquillView,
-        {
-          latex: () => this.getNumberLabelString?.() || "undefined",
-          config: {}
-        }
-      ),
-      false: () => $createElement(
-        $ViewClass,
-        {
-          ...this.props,
-          content: () => this.controller.s("shared-calculator-label-undefined")
-        }
-      )
+      ...this.props,
+      content: () => this.controller.s("shared-calculator-label-undefined")
     }
-  )
+  ),
+  () => 
+    DSM.betterEvaluationView
+      ? $createElement(
+          Desmos.Private.Fragile.StaticMathquillView,
+          {
+            latex: () => this.getNumberLabelString?.() || "undefined",
+            config: {}
+          }
+        )
+      : undefined
+)
 ```
 
 ## Show list elements: JSX consumer
