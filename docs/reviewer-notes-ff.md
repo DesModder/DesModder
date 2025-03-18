@@ -1,5 +1,5 @@
 The extension can be built with any relatively recent version of node and npm.
-I built this with node v18.20.2 and npm 10.5.0 on Ubuntu 22.04.
+I built this with node v22.13.0 and npm 10.9.2 on Ubuntu 22.04.
 
 Build process:
 

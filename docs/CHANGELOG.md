@@ -1,5 +1,15 @@
 # DesModder Changelog
 
+## 0.14.3
+
+Bug fixes
+
+- Fix broken replacements affecting Intellisense, GLesmos, and other plugins.
+
+Translations:
+
+- Updates to Japanese translations.
+
 ## 0.14.2
 
 New features:
