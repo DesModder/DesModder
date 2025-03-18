@@ -45,6 +45,32 @@ DSM.insertElement(
 )
 ```
 
+### Alternative
+
+*Description* `Add toggle button to enable Text Mode`
+
+*Find* => `center`
+```js
+.createElement(
+  'div',
+  { class: $DCGView.const('dcg-center-buttons') },
+  ____
+)
+```
+
+*Replace* `center` with
+```js
+__center__,
+DSM.insertElement(() => DSM.textMode?.textModeToggle()),
+// This is for pillbox-menus, not text-mode
+DSM.insertElement(
+  () => (
+    !this.controller.getGraphSettings().config.graphpaper
+      && DSM.pillboxMenus?.pillboxButtonsView(true)
+  )
+)
+```
+
 ## Add Text Mode class for styling
 
 *Description* `Style expressions list differently in Text Mode`
@@ -95,6 +121,25 @@ $ImageIconView = class extends $.View {
       return $createElement("div", {
           class: "dcg-expression-icon-container dcg-image-icon-container"
           ____
+      }
+```
+
+*Replace* `ImageIconView` with
+```js
+$ImageIconView = (window.DesModderFragile ??= {}).ImageIconView
+```
+
+### Alternative
+
+*Description* `Show style circles for Text Mode images`
+
+*Find*
+```js
+$ImageIconView = class extends $.View {
+  init() { ____ }
+  template() {
+      return $.createElement("div", {
+          class: $.const("dcg-expression-icon-container dcg-image-icon-container")
       }
 ```
 

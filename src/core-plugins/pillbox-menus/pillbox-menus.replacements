@@ -30,6 +30,34 @@ case "dsm-pillbox-menus":
   return DSM.insertElement(() => DSM.pillboxMenus?.pillboxButtonsView(false));
 ```
 
+### Alternative
+
+*Description* `Add pillbox buttons (like the DesModder button) in the graphing calculator`
+
+*Find* => `pushkey`
+```js
+this.shouldShowGeometrySettings() && $right.push("settings-geo"),
+```
+
+*Replace* `pushkey` with
+```js
+__pushkey__
+DSM.pillboxMenus && $right.push("dsm-pillbox-menus"),
+```
+
+*Find* => `case`
+```js
+case "settings2d":
+  return $.createElement($, ____);
+```
+
+*Replace* `case` with
+```js
+__case__
+case "dsm-pillbox-menus":
+  return DSM.insertElement(() => DSM.pillboxMenus?.pillboxButtonsView(false));
+```
+
 ## Bottom zero for our pillbox menus
 
 *Description* `Fix scrolling of pillbox menus (like the video creator menu)`
@@ -58,6 +86,26 @@ $createElement($If, {
     this.controller.isGraphSettingsOpen(),
   ____
 } ____)
+```
+
+*Replace* `from` with
+```js
+__from__,
+DSM.insertElement(() => DSM.pillboxMenus?.pillboxMenuView(true))
+```
+
+### Alternative
+
+*Description* `Allow showing pillbox menus (like the video creator menu) in the geometry calculator`
+
+*Find* => `from`
+```js
+$DCGView.createElement($If, {
+  predicate: () =>
+    this.controller.isGeoUIActive() &&
+    this.controller.getGraphSettings().config.settingsMenu &&
+    this.controller.isGraphSettingsOpen()
+}, ____)
 ```
 
 *Replace* `from` with
@@ -97,6 +145,42 @@ $createElement("div", {
 __children__,
 $createElement("div", {
     class: "dcg-arrow"
+}),
+```
+
+*Replace* `classes` with
+```js
+__classes__,
+"dcg-settings-container": this.controller.isNarrowGeometryHeader(),
+"dcg-left": this.controller.isNarrowGeometryHeader()
+```
+
+### Alternative
+
+*Description* `Move settings menu left in the geometry calculator (so it doesn't cover DesModder buttons)`
+It should be on the left to avoid covering up all the DesModder config stuff.
+
+*Find*
+```js
+return $DCGView.createElement("div", {
+    class: ()=>({
+        "dcg-geometry-settings-container": !0,
+        "dcg-popover": !0,
+        __classes__
+    }),
+    style: this.bindFn(this.getContainerStyle),
+    didMount: this.bindFn(this.didMountContainer),
+    didUnmount: this.bindFn(this.didUnmountContainer)
+}, $DCGView.createElement("div", { ____ },
+  __children__
+))
+```
+
+*Replace* `children` with
+```js
+__children__,
+$DCGView.createElement("div", {
+    class: $DCGView.const("dcg-arrow")
 }),
 ```
 
