@@ -55,8 +55,9 @@ $createElement($If, {
   predicate: () =>
     this.controller.isGeoUIActive() &&
     this.controller.getGraphSettings().config.settingsMenu &&
-    this.controller.isGraphSettingsOpen()
-}, ____)
+    this.controller.isGraphSettingsOpen(),
+  ____
+} ____)
 ```
 
 *Replace* `from` with
@@ -73,25 +74,29 @@ It should be on the left to avoid covering up all the DesModder config stuff.
 
 *Find*
 ```js
-return $DCGView.createElement("div", {
-    class: ()=>({
-        "dcg-geometry-settings-container": !0,
-        "dcg-popover": !0,
-        __classes__
-    }),
-    style: this.bindFn(this.getContainerStyle),
-    didMount: this.bindFn(this.didMountContainer),
-    didUnmount: this.bindFn(this.didUnmountContainer)
-}, $DCGView.createElement("div", { ____ },
-  __children__
-))
+$createElement("div", {
+  class: () => ({
+      "dcg-geometry-settings-container": !0,
+      "dcg-popover": !0,
+      __classes__
+  }),
+  style: this.bindFn(this.getContainerStyle),
+  didMount: this.bindFn(this.didMountContainer),
+  didUnmount: this.bindFn(this.didUnmountContainer),
+  children: $createElement2("div", {
+    class: "dcg-popover-interior",
+    role: "region",
+    "aria-label": () => this.controller.s("graphing-calculator-label-tooltip-geometry-settings"),
+    children: [__children__]
+  })
+})
 ```
 
 *Replace* `children` with
 ```js
 __children__,
-$DCGView.createElement("div", {
-    class: $DCGView.const("dcg-arrow")
+$createElement("div", {
+    class: "dcg-arrow"
 }),
 ```
 

@@ -11,15 +11,16 @@
 $createElement(
   "div",
   {
-    class: "dcg-expressions-branding"
-    __args__
-  },
-  __children__
+    class: "dcg-expressions-branding",
+    children: __children__
+  }
 )
 ```
 
 *Replace* `children` with
 ```js
-__children__,
-DSM.insertElement(() => DSM.showTips?.tipView())
+[
+  __children__,
+  DSM.insertElement(() => DSM.showTips?.tipView())
+]
 ```

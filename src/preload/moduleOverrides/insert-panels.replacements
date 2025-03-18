@@ -17,9 +17,10 @@ $createElement(
       return {
         "dcg-exppanel-container": ____
       }
-    }, ____
-  },
-  __children__
+    },
+    style: () => (____),
+    children: [__children__]
+  }
 )
 ```
 

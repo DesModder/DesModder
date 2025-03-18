@@ -65,13 +65,13 @@ list: $rhs => DSM.replaceElement(
 
 *Find* => `emptyList`
 ```js
-emptyList: () => $createElement(__oldEmptyList__)
+emptyList: () => $createElement2(__oldEmptyList__)
 ```
 
 *Replace* `emptyList` with
 ```js
 emptyList: () => DSM.replaceElement(
-  () => $createElement(__oldEmptyList__),
+  () => $createElement2(__oldEmptyList__),
   () => DSM.betterEvaluationView?.listEvaluation(() => [])
 )
 ```

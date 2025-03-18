@@ -26,14 +26,11 @@ isShowKeypadButtonVisible () {
 
 *Find* => `center`
 ```js
-$DGCShared$createElement(
+$createElement(
   'div',
-  { class: 'dcg-center-buttons' },
-  ____
+  { class: 'dcg-center-buttons' ____ }
 )
 ```
-
-*Description* Removed template here as it does not seem to be needed anymore?
 
 *Replace* `center` with
 ```js
@@ -97,6 +94,7 @@ $ImageIconView = class extends $.View {
   template() {
       return $createElement("div", {
           class: "dcg-expression-icon-container dcg-image-icon-container"
+          ____
       }
 ```
 

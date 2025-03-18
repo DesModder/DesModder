@@ -9,45 +9,38 @@ adding an extra section to the menu view.
 
 *Description* `Add toggle in "fill" menu to enable GLesmos`
 
-*Find* => `element`
+*Find* => `key`
 ```js
-$createElement(
-  'div',
-  { class: 'dcg-options-menu-content' ____ },
-  $createElement(
-    'div',
-    {
-      class: 'dcg-iconed-mathquill-row dcg-fill-opacity-row'
-    }
-    ____
-  )
-  ____
-)
+{ class: 'dcg-iconed-mathquill-row dcg-fill-opacity-row' ____ }
 ```
 
-*Find* inside `element`
-```js
-$createElement(
-  'div',
-  { class: 'dcg-options-menu-content' },
-  __rest__
-)
-```
-
-*Find_surrounding_template* `element` => `template`
+*Find_surrounding_template* `key` => `template`
 
 *Find* inside `template`
 ```js
-$createElement($ToggleView, {
+$createElement(
+  'div',
+  {
+    class: 'dcg-options-menu-content',
+    children: __children__
+  }
+)
+```
+
+*Find* inside `template`
+```js
+$createElement2($ToggleView, {
   ariaLabel: () => this.controller.s("graphing-calculator-narration-fill-visible")
 ```
 
 Just add one more child.
 
-*Replace* `__rest__` with
+*Replace* `children` with
 ```js
-__rest__,
-DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, true))
+[
+  __children__,
+  DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, true))
+]
 ```
 
 ## Add a lines menu option for switching an expression to glesmos rendering mode
@@ -58,7 +51,7 @@ Warning: this is duplicated above ("Add a fill menu option...").
 
 *Find* => `key`
 ```js
-{ class: 'dcg-iconed-mathquill-row dcg-line-opacity-row' }
+{ class: 'dcg-iconed-mathquill-row dcg-line-opacity-row' ____ }
 ```
 
 *Find_surrounding_template* `key` => `template`
@@ -67,44 +60,51 @@ Warning: this is duplicated above ("Add a fill menu option...").
 ```js
 $createElement(
   'div',
-  { class: 'dcg-options-menu-content' },
-  __rest__
+  {
+    class: 'dcg-options-menu-content',
+    children: __children__
+  }
 )
 ```
 
 *Find* inside `template`
 ```js
-$createElement($ToggleView, {
+$createElement2($ToggleView, {
   ariaLabel: () => this.controller.s("graphing-calculator-narration-lines-visible")
 ```
 
 Just add one more child.
 
-*Replace* `__rest__` with
+*Replace* `children` with
 ```js
-__rest__,
-DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, false))
+[
+  __children__,
+  DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, false))
+]
 ```
 
 ## Add a lines menu option for confirming GLesmos lines
 
 *Description* `Add toggle to confirm GLesmos lines`
 
-*Find* => `options`
+
+*Find* => `key`
 ```js
-$createElement("div",
-  { class: "dcg-options-flex-container" },
-  $createElement("div",
-    { class: "dcg-options-left-side" },
-    $createElement("div", {
-      class: "dcg-iconed-mathquill-row dcg-line-opacity-row"
+{ class: 'dcg-iconed-mathquill-row dcg-line-opacity-row' ____ }
 ```
 
-*Find_surrounding_template* `options` => `template`
+*Find_surrounding_template* `key` => `template`
+
+*Find* inside `template` => `options`
+```js
+$createElement("div",
+  { class: "dcg-options-flex-container" ____}
+)
+```
 
 *Find* inside `template`
 ```js
-$createElement($ToggleView, {
+$createElement2($ToggleView, {
   ariaLabel: () => this.controller.s("graphing-calculator-narration-lines-visible")
 ```
 
@@ -112,8 +112,10 @@ Prefix with a child
 
 *Replace* `options` with
 ```js
-DSM.insertElement(() => DSM.glesmos?.confirmLines(this.model.id, $ToggleView)),
-__options__
+[
+  DSM.insertElement(() => DSM.glesmos?.confirmLines(this.model.id, $ToggleView)),
+  __options__
+]
 ```
 
 ## Replace main renderer with glesmos rendering when necessary

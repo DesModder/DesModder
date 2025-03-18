@@ -140,14 +140,15 @@ export function Match<Disc extends { type: string }>(
     [K in Disc["type"]]: (r: Disc & { type: K }) => ComponentChild;
   }
 ): ComponentTemplate {
-  return DCGView.createElement(
-    Switch,
-    { key: () => discriminant().type },
-    () => {
-      const d = discriminant();
-      return branches[d.type as Disc["type"]](d) as any;
-    }
-  );
+  return DCGView.createElement(Switch, {
+    key: () => discriminant().type,
+    children: [
+      () => {
+        const d = discriminant();
+        return branches[d.type as Disc["type"]](d) as any;
+      },
+    ],
+  });
 }
 
 export abstract class DStaticMathquillViewComponent extends ClassComponent<{

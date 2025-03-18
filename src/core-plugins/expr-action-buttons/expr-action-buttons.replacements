@@ -2,31 +2,18 @@
 
 *plugin* `pin-expressions` `folder-tools`
 
-TODO: work this into an API so it doesn't need a ton of injected code.
-
 ## Insert extra buttons
 
 Insert before the delete button but after the other buttons.
 
 *Description* `Show buttons like "pin" and "merge folder."`
 
-*Find*
+*Find* => `delete_button`
 ```js
-$createElement(
-  'span',
-  {
-    class: () => ({
-        'dcg-expression-edit-actions' ____
-      }
-    ),
-    ____
-  },
-  $createElement(____),
-  $createElement(____),
-  $createElement(____),
-  $createElement(____),
-  __delete_button__
-)
+$createElement($Tooltip, {
+  tooltip: () => this.controller.s("graphing-calculator-label-expression-delete-tooltip")
+  ____
+})
 ```
 
 *Replace* `delete_button` with
