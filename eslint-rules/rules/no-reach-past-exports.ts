@@ -2,8 +2,8 @@
 import path from "path";
 import fs from "fs";
 import { createRule } from "../create-rule";
-import tmExports from "../../../text-mode-core/package.json" with { type: "json" };
-import gsExports from "../../../graph-state/package.json" with { type: "json" };
+import tmExports from "../../text-mode-core/package.json" with { type: "json" };
+import gsExports from "../../graph-state/package.json" with { type: "json" };
 
 export default createRule({
   name: "no-reach-past-exports",
