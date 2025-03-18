@@ -8,6 +8,44 @@
 
 *Find* => `undefined`
 ```js
+undefined: ()=> $createElement(
+  $ViewClass,
+  {
+    ...this.props,
+    content: () => this.controller.s("shared-calculator-label-undefined")
+  }
+)
+```
+
+*Replace* `undefined` with
+```js
+undefined: () => DSM.replaceElement(
+  () => $createElement(
+    $ViewClass,
+    {
+      ...this.props,
+      content: () => this.controller.s("shared-calculator-label-undefined")
+    }
+  ),
+  () => 
+    DSM.betterEvaluationView
+      ? $createElement(
+          Desmos.Private.Fragile.StaticMathquillView,
+          {
+            latex: () => this.getNumberLabelString?.() || "undefined",
+            config: {}
+          }
+        )
+      : undefined
+)
+```
+
+### Alternative
+
+*Description* `Show NaN, -∞, and +∞`
+
+*Find* => `undefined`
+```js
 undefined: ()=> $Dcgview.createElement(
   $ViewClass,
   {
@@ -46,22 +84,39 @@ undefined: () => $Dcgview.Components.IfElse(
 
 *Find* => `list`
 ```js
-()=>this.getEvaluationType(), {
-list: () => $Dcgview.createElement(__oldList__)
+()=>this.cachedEvaluationRHS)({
+list: $rhs => $createElement(__oldList__)
 ```
 
 *Replace* `list` with
 ```js
-()=>this.getEvaluationType(), {
-list: () => DSM.replaceElement(
-  () => $Dcgview.createElement(__oldList__),
-  () => DSM.betterEvaluationView?.listEvaluation(() => this.props.val())
+()=>this.cachedEvaluationRHS)({
+list: $rhs => DSM.replaceElement(
+  () => $createElement(__oldList__),
+  () => DSM.betterEvaluationView?.listEvaluation(() => {
+    const itemModel = this.controller.getItemModel(this.props.id());
+    // get untruncated value
+    return itemModel.formula.typed_constant_value.value;
+  })
+)
+```
+
+*Find* => `emptyList`
+```js
+emptyList: () => $createElement2(__oldEmptyList__)
+```
+
+*Replace* `emptyList` with
+```js
+emptyList: () => DSM.replaceElement(
+  () => $createElement2(__oldEmptyList__),
+  () => DSM.betterEvaluationView?.listEvaluation(() => [])
 )
 ```
 
 ### Alternative
 
-*Description* `Show list elements (2)`
+*Description* `Show list elements`
 
 *Find* => `list`
 ```js
@@ -101,20 +156,20 @@ emptyList: () => DSM.replaceElement(
 
 *Find* => `color`
 ```js
-rgbcolor: () => $Dcgview.createElement(__swatch__)
+rgbcolor: $rhs => $createElement(__swatch__)
 ```
 
 *Replace* `color` with
 ```js
-rgbcolor: () => DSM.replaceElement(
-  () => $Dcgview.createElement(__swatch__),
-  () => DSM.betterEvaluationView?.colorEvaluation(() => this.props.val())
+rgbcolor: $rhs => DSM.replaceElement(
+  () => $createElement(__swatch__),
+  () => DSM.betterEvaluationView?.colorEvaluation(() => this.getEvaluationRHS().val)
 )
 ```
 
 ### Alternative
 
-*Description* `Show color values (2)`
+*Description* `Show color values`
 
 *Find* => `color`
 ```js
