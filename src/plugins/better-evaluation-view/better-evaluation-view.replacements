@@ -46,25 +46,6 @@ undefined: () => $DcgShared.Components.IfElse(
 
 *Find* => `list`
 ```js
-()=>this.getEvaluationType(), {
-list: () => $Dcgview.createElement(__oldList__)
-```
-
-*Replace* `list` with
-```js
-()=>this.getEvaluationType(), {
-list: () => DSM.replaceElement(
-  () => $Dcgview.createElement(__oldList__),
-  () => DSM.betterEvaluationView?.listEvaluation(() => this.props.val())
-)
-```
-
-### Alternative
-
-*Description* `Show list elements (2)`
-
-*Find* => `list`
-```js
 ()=>this.cachedEvaluationRHS)({
 list: $rhs => $createElement(__oldList__)
 ```
@@ -98,23 +79,6 @@ emptyList: () => DSM.replaceElement(
 ## Show color values: JSX consumer
 
 *Description* `Show color values`
-
-*Find* => `color`
-```js
-rgbcolor: () => $Dcgview.createElement(__swatch__)
-```
-
-*Replace* `color` with
-```js
-rgbcolor: () => DSM.replaceElement(
-  () => $Dcgview.createElement(__swatch__),
-  () => DSM.betterEvaluationView?.colorEvaluation(() => this.props.val())
-)
-```
-
-### Alternative
-
-*Description* `Show color values (2)`
 
 *Find* => `color`
 ```js
