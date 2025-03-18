@@ -15,7 +15,7 @@ export function PinnedPanel(pe: PinExpressions, listView: ListView) {
     >
       <For
         each={() =>
-          pe.dsm.textMode?.inTextMode ? [] : pe.cc?.getAllItemModels?.() ?? []
+          pe.dsm.textMode?.inTextMode ? [] : (pe.cc?.getAllItemModels?.() ?? [])
         }
         key={(model) => (model as any).guid}
       >

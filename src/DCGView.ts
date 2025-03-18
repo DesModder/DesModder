@@ -13,7 +13,7 @@ type ToFunc<T> = {
 };
 
 export abstract class ClassComponent<
-  PropsType extends GenericProps = Record<string, unknown>
+  PropsType extends GenericProps = Record<string, unknown>,
 > {
   props!: ToFunc<PropsType>;
   children!: unknown;

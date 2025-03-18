@@ -9,6 +9,7 @@
 *Find* => `parentMQ`
 ```js
 didMountMathquill($) {
+  var $, $;
   this.cachedConfig = this.getCacheableMQConfig();
   __MQbody__
 ```

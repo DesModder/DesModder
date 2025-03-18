@@ -102,16 +102,16 @@ export function printDocToDebug(doc: Doc) {
       return doc.n === Number.NEGATIVE_INFINITY
         ? "dedentToRoot(" + printDoc(doc.contents) + ")"
         : typeof doc.n === "number" && doc.n < 0
-        ? "dedent(" + printDoc(doc.contents) + ")"
-        : typeof doc.n !== "string" &&
-          typeof doc.n !== "number" &&
-          doc.n.type === "root"
-        ? "markAsRoot(" + printDoc(doc.contents) + ")"
-        : "align(" +
-          JSON.stringify(doc.n) +
-          ", " +
-          printDoc(doc.contents) +
-          ")";
+          ? "dedent(" + printDoc(doc.contents) + ")"
+          : typeof doc.n !== "string" &&
+              typeof doc.n !== "number" &&
+              doc.n.type === "root"
+            ? "markAsRoot(" + printDoc(doc.contents) + ")"
+            : "align(" +
+              JSON.stringify(doc.n) +
+              ", " +
+              printDoc(doc.contents) +
+              ")";
     }
 
     if (doc.type === DT.IfBreak) {

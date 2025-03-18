@@ -89,7 +89,11 @@ class ParseState extends DiagnosticsState {
   private readonly rawIDs: (RawIDRange | undefined)[];
   private readonly rawIDsAll: Set<string>;
 
-  constructor(public cfg: Config, input: string, incr: IncrementalState) {
+  constructor(
+    public cfg: Config,
+    input: string,
+    incr: IncrementalState
+  ) {
     super();
     this.lexer = moo.compile(rules);
     this.lexer.reset(input);
@@ -1239,7 +1243,7 @@ function binaryParselet(
     assertLeftIsExpression(ps, left, token, ex);
     const right = parseExpr(
       ps,
-      rightAssociative ?? false ? minus1(bp) : bp,
+      (rightAssociative ?? false) ? minus1(bp) : bp,
       `right side of ${op}`,
       ex
     );

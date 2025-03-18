@@ -19,7 +19,10 @@ import type { Diagnostic } from "@codemirror/lint";
 import type { GrapherState } from "#graph-state";
 
 export class DownState extends DiagnosticsState {
-  constructor(public readonly cfg: Config, diagnostics: Diagnostic[]) {
+  constructor(
+    public readonly cfg: Config,
+    diagnostics: Diagnostic[]
+  ) {
     super(diagnostics);
   }
 
@@ -345,33 +348,33 @@ function columnExpressionCommonStyle(
       style.points === true
         ? {}
         : style.points === false
-        ? { size: constant(0) }
-        : style.points
-        ? exprEvalSame(style.points.opacity, 0) ||
-          exprEvalSame(style.points.size, 0)
           ? { size: constant(0) }
-          : {
-              opacity: style.points.opacity,
-              size: style.points.size,
-              style: style.points.style,
-              dragMode: style.points.drag,
-            }
-        : undefined,
+          : style.points
+            ? exprEvalSame(style.points.opacity, 0) ||
+              exprEvalSame(style.points.size, 0)
+              ? { size: constant(0) }
+              : {
+                  opacity: style.points.opacity,
+                  size: style.points.size,
+                  style: style.points.style,
+                  dragMode: style.points.drag,
+                }
+            : undefined,
     lines:
       style.lines === true
         ? {}
         : style.lines === false
-        ? { width: constant(0) }
-        : style.lines
-        ? exprEvalSame(style.lines.opacity, 0) ||
-          exprEvalSame(style.lines.width, 0)
           ? { width: constant(0) }
-          : {
-              opacity: style.lines.opacity,
-              width: style.lines.width,
-              style: style.lines.style,
-            }
-        : undefined,
+          : style.lines
+            ? exprEvalSame(style.lines.opacity, 0) ||
+              exprEvalSame(style.lines.width, 0)
+              ? { width: constant(0) }
+              : {
+                  opacity: style.lines.opacity,
+                  width: style.lines.width,
+                  style: style.lines.style,
+                }
+            : undefined,
   };
   return res;
 }

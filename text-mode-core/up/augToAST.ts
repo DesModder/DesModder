@@ -312,16 +312,16 @@ function columnToAST(col: Aug.TableColumnAug): TextAST.TableColumn {
             values: col.values.map((e) => childLatexToAST(e)),
           }
         : col.latex.type === "Identifier"
-        ? {
-            type: "BinaryExpression",
-            op: "=",
-            left: childLatexToAST(col.latex),
-            right: {
-              type: "ListExpression",
-              values: col.values.map(childLatexToAST),
-            },
-          }
-        : childLatexToAST(col.latex),
+          ? {
+              type: "BinaryExpression",
+              op: "=",
+              left: childLatexToAST(col.latex),
+              right: {
+                type: "ListExpression",
+                values: col.values.map(childLatexToAST),
+              },
+            }
+          : childLatexToAST(col.latex),
     style: styleMapping({
       id: idToString(col.id),
       ...columnExpressionCommonStyle(col),

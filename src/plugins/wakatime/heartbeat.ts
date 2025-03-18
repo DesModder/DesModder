@@ -71,7 +71,7 @@ export async function sendHeartbeat(
       type: "heartbeat-error",
       isAuthError: false,
       message:
-        typeof e === "object" && e !== null ? (e as any).message ?? e : e,
+        typeof e === "object" && e !== null ? ((e as any).message ?? e) : e,
     });
   }
 }
