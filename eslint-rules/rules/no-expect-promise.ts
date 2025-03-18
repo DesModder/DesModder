@@ -1,4 +1,4 @@
-import tsutils from "tsutils";
+import * as tsutils from "ts-api-utils";
 import { AST_NODE_TYPES } from "@typescript-eslint/utils";
 import type { Node, TypeChecker } from "typescript";
 import { createRule } from "../create-rule";
