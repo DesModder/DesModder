@@ -21,7 +21,7 @@ import astToAug from "./astToAug";
 import { error, warning } from "./diagnostics";
 import { IncrementalState, parse } from "./textToAST";
 import type { Diagnostic } from "@codemirror/lint";
-// eslint-disable-next-line rulesdir/no-external-imports
+// eslint-disable-next-line @desmodder/eslint-rules/no-external-imports
 import { test, expect as _expect, describe } from "@jest/globals";
 
 const cfg = buildConfig({});

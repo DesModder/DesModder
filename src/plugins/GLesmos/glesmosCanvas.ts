@@ -41,7 +41,7 @@ export function initGLesmosCanvas(cc: CalcController) {
   });
   if (!gl) {
     cc._showToast({
-      // eslint-disable-next-line rulesdir/no-format-in-ts
+      // eslint-disable-next-line @desmodder/eslint-rules/no-format-in-ts
       message: format("GLesmos-no-support"),
     });
     window.DSM?.setPluginEnabled?.("GLesmos", false);

@@ -1,7 +1,7 @@
 import { testWithPage } from "#tests";
 
 const delay = async (ms: number) =>
-  // eslint-disable-next-line rulesdir/no-timeouts-in-intellisense
+  // eslint-disable-next-line @desmodder/eslint-rules/no-timeouts-in-intellisense
   await new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 describe("Intellisense", () => {

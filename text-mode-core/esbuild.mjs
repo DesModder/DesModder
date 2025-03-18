@@ -1,6 +1,6 @@
-/* eslint-disable rulesdir/no-external-imports */
+/* eslint-disable @desmodder/eslint-rules/no-external-imports */
 
-/* eslint-disable rulesdir/no-reach-past-exports */
+/* eslint-disable @desmodder/eslint-rules/no-reach-past-exports */
 import { loadFile } from "../loaders/utils.mjs";
 import esbuild from "esbuild";
 import { promises as fs } from "fs";
