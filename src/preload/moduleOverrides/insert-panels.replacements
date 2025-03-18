@@ -9,7 +9,7 @@
 
 *Find* => `element`
 ```js
-$DCGShared['n'](
+$createElement(
   "div",
   {
     class: () => {

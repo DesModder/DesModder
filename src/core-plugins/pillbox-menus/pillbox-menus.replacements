@@ -20,7 +20,7 @@ DSM.pillboxMenus && $right.push("dsm-pillbox-menus"),
 *Find* => `case`
 ```js
 case "settings2d":
-  return $['n']($, ____);
+  return $createElement($, ____);
 ```
 
 *Replace* `case` with
@@ -51,7 +51,7 @@ this.controller.isGraphSettingsOpen() || DSM.pillboxMenus?.isSomePillboxMenuOpen
 
 *Find* => `from`
 ```js
-$DCGShared['n']($If, {
+$createElement($If, {
   predicate: () =>
     this.controller.isGeoUIActive() &&
     this.controller.getGraphSettings().config.settingsMenu &&

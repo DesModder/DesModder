@@ -12,7 +12,7 @@ Insert before the delete button but after the other buttons.
 
 *Find*
 ```js
-$['n'](
+$createElement(
   'span',
   {
     class: () => ({
@@ -21,10 +21,10 @@ $['n'](
     ),
     ____
   },
-  $DCGShared['n'](____),
-  $DCGShared['n'](____),
-  $DCGShared['n'](____),
-  $DCGShared['n'](____),
+  $createElement(____),
+  $createElement(____),
+  $createElement(____),
+  $createElement(____),
   __delete_button__
 )
 ```

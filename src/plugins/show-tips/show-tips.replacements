@@ -8,7 +8,7 @@
 
 *Find*
 ```js
-$DCGShared['n'](
+$createElement(
   "div",
   {
     class: "dcg-expressions-branding"

@@ -26,7 +26,7 @@ isShowKeypadButtonVisible () {
 
 *Find* => `center`
 ```js
-$DGCShared['n'](
+$DGCShared$createElement(
   'div',
   { class: 'dcg-center-buttons' },
   ____
@@ -95,7 +95,7 @@ $ExpressionView = (window.DesModderFragile ??= {}).ExpressionView
 $ImageIconView = class extends $.View {
   init() { ____ }
   template() {
-      return $['n']("div", {
+      return $createElement("div", {
           class: "dcg-expression-icon-container dcg-image-icon-container"
       }
 ```

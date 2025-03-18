@@ -8,7 +8,7 @@
 
 *Find* => `undefined`
 ```js
-undefined: ()=> $DcgShared['n'](
+undefined: ()=> $createElement(
   $ViewClass,
   {
     ...this.props,
@@ -22,14 +22,14 @@ undefined: ()=> $DcgShared['n'](
 undefined: () => $DcgShared.Components.IfElse(
     () => DSM.betterEvaluationView,
     {
-      true: () => $DcgShared['n'](
+      true: () => $createElement(
         Desmos.Private.Fragile.StaticMathquillView,
         {
           latex: () => this.getNumberLabelString?.() || "undefined",
           config: {}
         }
       ),
-      false: () => $DcgShared['n'](
+      false: () => $createElement(
         $ViewClass,
         {
           ...this.props,
@@ -66,14 +66,14 @@ list: () => DSM.replaceElement(
 *Find* => `list`
 ```js
 ()=>this.cachedEvaluationRHS)({
-list: $rhs => $DcgShared['n'](__oldList__)
+list: $rhs => $createElement(__oldList__)
 ```
 
 *Replace* `list` with
 ```js
 ()=>this.cachedEvaluationRHS)({
 list: $rhs => DSM.replaceElement(
-  () => $DcgShared['n'](__oldList__),
+  () => $createElement(__oldList__),
   () => DSM.betterEvaluationView?.listEvaluation(() => {
     const itemModel = this.controller.getItemModel(this.props.id());
     // get untruncated value
@@ -84,13 +84,13 @@ list: $rhs => DSM.replaceElement(
 
 *Find* => `emptyList`
 ```js
-emptyList: () => $emptyListDcgShared['n'](__oldEmptyList__)
+emptyList: () => $createElement(__oldEmptyList__)
 ```
 
 *Replace* `emptyList` with
 ```js
 emptyList: () => DSM.replaceElement(
-  () => $emptyListDcgShared['n'](__oldEmptyList__),
+  () => $createElement(__oldEmptyList__),
   () => DSM.betterEvaluationView?.listEvaluation(() => [])
 )
 ```
@@ -118,13 +118,13 @@ rgbcolor: () => DSM.replaceElement(
 
 *Find* => `color`
 ```js
-rgbcolor: $rhs => $DcgShared['n'](__swatch__)
+rgbcolor: $rhs => $createElement(__swatch__)
 ```
 
 *Replace* `color` with
 ```js
 rgbcolor: $rhs => DSM.replaceElement(
-  () => $DcgShared['n'](__swatch__),
+  () => $createElement(__swatch__),
   () => DSM.betterEvaluationView?.colorEvaluation(() => this.getEvaluationRHS().val)
 )
 ```
