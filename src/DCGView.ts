@@ -1,8 +1,9 @@
 import { Fragile } from "#globals";
+import { createElementWrapped } from "./preload/replaceElement";
 
 export const { DCGView } = Fragile;
 
-type OrConst<T> = {
+export type OrConst<T> = {
   [K in keyof T]: T[K] extends (...args: any[]) => any
     ? T[K]
     : T[K] | (() => T[K]);
@@ -183,5 +184,5 @@ export function jsx<Props extends GenericProps>(
     }
   }
   fnProps.children = children.length === 1 ? children[0] : children;
-  return DCGView.createElement(el, fnProps);
+  return createElementWrapped(el, fnProps);
 }

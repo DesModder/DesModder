@@ -7,6 +7,7 @@ import {
   DCGView,
 } from "#DCGView";
 import window, { CalcController, Fragile } from "#globals";
+import { createElementWrapped } from "../preload/replaceElement";
 
 export abstract class CheckboxComponent extends ClassComponent<{
   checked: boolean;
@@ -140,7 +141,7 @@ export function Match<Disc extends { type: string }>(
     [K in Disc["type"]]: (r: Disc & { type: K }) => ComponentChild;
   }
 ): ComponentTemplate {
-  return DCGView.createElement(Switch, {
+  return createElementWrapped(Switch, {
     key: () => discriminant().type,
     children: [
       () => {
@@ -188,13 +189,15 @@ interface ModelAndController {
   controller: CalcController;
 }
 
+function children(template: any) {
+  return listWrap(template.children ?? template.props.children);
+}
+
 // <ExpressionIconView ... >
 export class ExpressionIconView extends Component<ModelAndController> {
   template() {
     const template = exprTemplate(this);
-    return listWrap(
-      template.props.children[1].props.children[1].props.children
-    )[0];
+    return children(children(children(template)[1])[1])[0];
   }
 }
 
@@ -207,7 +210,7 @@ function listWrap(x: unknown) {
 export class FooterView extends Component<ModelAndController> {
   template() {
     const template = exprTemplate(this);
-    return listWrap(template.props.children)[0].props.children[2];
+    return children(children(template)[0])[2];
   }
 }
 
