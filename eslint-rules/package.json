@@ -1,0 +1,37 @@
+{
+  "name": "@desmodder/eslint-rules",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local ESLint rules for DesModder development",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist-ts/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc --build && node esbuild.mjs",
+    "postinstall": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DesModder/DesModder"
+  },
+  "homepage": "https://github.com/DesModder/DesModder/tree/main/eslint-rules",
+  "author": "Jared Hughes",
+  "license": "MIT",
+  "dependencies": {
+    "@typescript-eslint/utils": "^8.26.0",
+    "ts-api-utils": "^2.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10"
+  },
+  "peerDependencies": {
+    "eslint": "^9.0.0"
+  }
+}

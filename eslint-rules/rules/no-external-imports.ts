@@ -1,10 +1,11 @@
-module.exports = {
+import { createRule } from "../create-rule";
+
+export default createRule({
   name: "no-external-imports",
   meta: {
     type: "problem",
     docs: {
       description: "Disallow importing in violation of package.json 'imports'",
-      category: "Best Practices",
     },
     messages: {
       noExternalImports:
@@ -13,13 +14,14 @@ module.exports = {
     },
     schema: [],
   },
+  defaultOptions: [],
   create: function (context) {
     if (!context.filename.includes("text-mode-core")) return {};
     return {
       ImportDeclaration: function (node) {
-        if (node.source.type === "Literal" && node.importKind !== "type") {
+        if (node.importKind !== "type") {
           const source = node.source.value;
-          if (source[0] !== "." && source[0] !== "#") {
+          if (!source.startsWith(".") && !source.startsWith("#")) {
             context.report({
               messageId: "noExternalImports",
               node: node.source,
@@ -30,4 +32,4 @@ module.exports = {
       },
     };
   },
-};
+});

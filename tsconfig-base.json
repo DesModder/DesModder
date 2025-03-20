@@ -12,7 +12,7 @@
     "noUnusedParameters": true,
 
     "target": "es2020",
-    "module": "es6",
+    "module": "ESNext",
     "lib": ["ES2024.Object"],
     "baseUrl": ".",
     "moduleResolution": "bundler",

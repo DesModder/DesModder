@@ -1,16 +1,16 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-const path = require("path");
-const fs = require("fs");
-const tmExports = require("../../text-mode-core/package.json");
-const gsExports = require("../../graph-state/package.json");
+/* eslint-disable @desmodder/eslint-rules/no-reach-past-exports */
+import path from "path";
+import fs from "fs";
+import { createRule } from "../create-rule";
+import tmExports from "../../text-mode-core/package.json" with { type: "json" };
+import gsExports from "../../graph-state/package.json" with { type: "json" };
 
-module.exports = {
+export default createRule({
   name: "no-reach-past-exports",
   meta: {
     type: "problem",
     docs: {
       description: "Disallow importing in violation of package.json 'exports'",
-      category: "Best Practices",
     },
     messages: {
       noReachPastExports:
@@ -18,30 +18,29 @@ module.exports = {
     },
     schema: [],
   },
+  defaultOptions: [],
   create: function (context) {
     return {
       ImportDeclaration: function (node) {
-        if (node.source.type === "Literal") {
-          const source = node.source.value;
-          const filename = context.getFilename();
-          if (bad(filename, source)) {
-            context.report({
-              messageId: "noReachPastExports",
-              node: node.source,
-              data: {},
-            });
-          }
+        const source = node.source.value;
+        const { filename } = context;
+        if (bad(filename, source)) {
+          context.report({
+            messageId: "noReachPastExports",
+            node: node.source,
+            data: {},
+          });
         }
       },
     };
   },
-};
+});
 
 // Kinda like @nx/enforce-module-boundaries but way simpler
 // Janky, good temporary though.
-function bad(filename, source) {
+function bad(filename: string, source: string) {
   // TODO: handle absolutes.
-  if (source[0] !== ".") return false;
+  if (!source.startsWith(".")) return false;
   const p = path.resolve(path.dirname(filename), source);
   if (allowed.some((a) => p.endsWith(a))) return false;
   return packageDir(filename) !== packageDir(p);
@@ -54,7 +53,7 @@ const allowed = [
   ...Object.keys(gsExports.exports).map((a) => path.resolve("graph-state", a)),
 ];
 
-function packageDir(file) {
+function packageDir(file: string) {
   let dir = isDirectory(file) ? file : path.dirname(file);
   while (dir.length > 1) {
     if (fs.existsSync(path.join(dir, "package.json"))) return dir;
@@ -63,7 +62,7 @@ function packageDir(file) {
   return dir;
 }
 
-function isDirectory(file) {
+function isDirectory(file: string) {
   try {
     return fs.statSync(file).isDirectory();
   } catch {

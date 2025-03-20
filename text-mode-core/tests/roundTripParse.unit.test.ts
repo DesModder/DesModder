@@ -8,7 +8,7 @@ import { childExprToAug } from "../down/astToAug";
 import { parse as _parse } from "../down/textToAST";
 import { TextEmitOptions, astToText } from "../up/astToText";
 import { rootLatexToAST } from "../up/augToAST";
-// eslint-disable-next-line rulesdir/no-reach-past-exports
+// eslint-disable-next-line @desmodder/eslint-rules/no-reach-past-exports
 import "../../src/tests/run_calc_for_tests";
 
 const Calc = window.Desmos.GraphingCalculator(

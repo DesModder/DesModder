@@ -1,11 +1,9 @@
-import rulesDirPlugin from "eslint-plugin-rulesdir";
 import love from "eslint-config-love";
 import eslintConfigPrettier from "eslint-config-prettier";
 import globals from "globals";
 import tsParser from "@typescript-eslint/parser";
 import tseslint from "typescript-eslint";
-
-rulesDirPlugin.RULES_DIR = "scripts/eslint-rules";
+import dsmeslint from "@desmodder/eslint-rules";
 
 export default tseslint.config(
   {
@@ -17,6 +15,7 @@ export default tseslint.config(
       "hooks",
       "LICENSE*",
       "**/dist",
+      "**/dist-ts",
       // Opt-out instead of opt-in to avoid forgetting to include some js file.
       "**/*.md",
       "**/*.json",
@@ -111,16 +110,5 @@ export default tseslint.config(
       "@typescript-eslint/require-await": "off",
     },
   },
-  {
-    plugins: {
-      rulesdir: rulesDirPlugin,
-    },
-    rules: {
-      "rulesdir/no-format-in-ts": "error",
-      "rulesdir/no-expect-promise": "error",
-      "rulesdir/no-reach-past-exports": "error",
-      "rulesdir/no-external-imports": "error",
-      "rulesdir/no-timeouts-in-intellisense": "error",
-    },
-  }
+  dsmeslint.config
 );

@@ -22,14 +22,14 @@ export default class PasteImage extends PluginController {
     if (!clipboardFiles?.length) return;
     if (!this.cc.areImagesEnabled()) {
       this.cc._showToast({
-        // eslint-disable-next-line rulesdir/no-format-in-ts
+        // eslint-disable-next-line @desmodder/eslint-rules/no-format-in-ts
         message: format("paste-image-error-images-not-enabled"),
       });
     } else if (this.cc.isUploadingImages()) {
       this.waitForImageUploads({
         runFinally: () =>
           this.cc._showToast({
-            // eslint-disable-next-line rulesdir/no-format-in-ts
+            // eslint-disable-next-line @desmodder/eslint-rules/no-format-in-ts
             message: format("paste-image-error-another-upload-in-progress"),
           }),
       });

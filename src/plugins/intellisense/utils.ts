@@ -6,7 +6,7 @@ export const setIntellisenseTimeout = function (
 ): any {
   const thisInvocationID = intellisenseTimeoutID++;
   pendingIntellisenseTimeouts.add(thisInvocationID);
-  // eslint-disable-next-line rulesdir/no-timeouts-in-intellisense
+  // eslint-disable-next-line @desmodder/eslint-rules/no-timeouts-in-intellisense
   setTimeout(() => {
     handler();
     pendingIntellisenseTimeouts.delete(thisInvocationID);

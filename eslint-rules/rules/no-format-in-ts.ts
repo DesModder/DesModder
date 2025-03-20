@@ -1,10 +1,12 @@
-module.exports = {
+import { AST_NODE_TYPES } from "@typescript-eslint/utils";
+import { createRule } from "../create-rule";
+
+export default createRule({
   name: "no-format-in-ts",
   meta: {
     type: "problem",
     docs: {
       description: "Disallow using format() in TS files. ",
-      category: "Best Practices",
     },
     messages: {
       noFormatInTS:
@@ -13,14 +15,15 @@ module.exports = {
     },
     schema: [],
   },
+  defaultOptions: [],
   create: function (context) {
     return {
       CallExpression: function (node) {
         if (
-          node.callee.type === "Identifier" &&
+          node.callee.type === AST_NODE_TYPES.Identifier &&
           node.callee.name === "format"
         ) {
-          const filename = context.filename ?? context.getFilename();
+          const { filename } = context;
           if (!filename.endsWith(".jsx") && !filename.endsWith(".tsx")) {
             context.report({
               messageId: "noFormatInTS",
@@ -32,4 +35,4 @@ module.exports = {
       },
     };
   },
-};
+});
