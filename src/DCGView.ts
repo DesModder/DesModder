@@ -1,8 +1,9 @@
 import { Fragile } from "#globals";
+import { createElementWrapped } from "./preload/replaceElement";
 
 export const { DCGView } = Fragile;
 
-type OrConst<T> = {
+export type OrConst<T> = {
   [K in keyof T]: T[K] extends (...args: any[]) => any
     ? T[K]
     : T[K] | (() => T[K]);
@@ -80,8 +81,7 @@ export interface DCGViewModule {
   const: <T>(v: T) => () => T;
   createElement: <Props extends GenericProps>(
     comp: ComponentConstructor<Props>,
-    props: WithCommonProps<ToFunc<Props>>,
-    ...children: ComponentChild[]
+    props: WithCommonProps<ToFunc<Props>>
   ) => ComponentTemplate;
   // couldn't figure out type for `comp`, so I just put | any
   mountToNode: <Props extends GenericProps>(
@@ -101,6 +101,7 @@ interface CommonProps {
   class?: () => string;
   didMount?: (elem: HTMLElement) => void;
   willUnmount?: () => void;
+  children?: ComponentChild[];
 }
 type WithCommonProps<T> = Omit<T, keyof CommonProps> & CommonProps;
 export interface ComponentTemplate {
@@ -182,5 +183,6 @@ export function jsx<Props extends GenericProps>(
       fnProps[k] = props[k] as (...args: any[]) => any;
     }
   }
-  return DCGView.createElement(el, fnProps, ...children);
+  fnProps.children = children.length === 1 ? children[0] : children;
+  return createElementWrapped(el, fnProps);
 }

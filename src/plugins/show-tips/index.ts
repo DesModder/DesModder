@@ -1,4 +1,4 @@
-import { DCGView } from "../../DCGView";
+import { createElementWrapped } from "../../preload/replaceElement";
 import { Inserter, PluginController } from "../PluginController";
 import Tip from "./Tip";
 
@@ -19,6 +19,6 @@ export default class ShowTips extends PluginController {
   }
 
   tipView(): Inserter {
-    return () => DCGView.createElement(Tip, { st: () => this });
+    return () => createElementWrapped(Tip, { st: () => this });
   }
 }

@@ -12,7 +12,7 @@ If you're looking for in-depth development documentation, see:
 1. Remove the existing extension to avoid conflict. If you plan to be editing DesModder, I suggest opening a [separate Chrome profile](https://support.google.com/chrome/answer/2364824) so that you still have the stable extension in your main profile when you need it.
 2. Make sure you have `git` and `npm` installed.
 
-   - Ensure `node --version` is at least `v18.0.0`. If it isn't, `nvm use 18` should typically fix this.
+   - Ensure `node --version` is at least `v22.0.0`. If it isn't, `nvm use 22` should typically fix this.
    - Check that `npm --version` is at least `7.0.0` to avoid issues with overwriting the lockfile.
 
 3. Run `git clone https://github.com/DesModder/DesModder` to download the latest commit

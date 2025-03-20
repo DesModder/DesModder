@@ -7,6 +7,7 @@ import {
   DCGView,
 } from "#DCGView";
 import window, { CalcController, Fragile } from "#globals";
+import { createElementWrapped } from "../preload/replaceElement";
 
 export abstract class CheckboxComponent extends ClassComponent<{
   checked: boolean;
@@ -140,14 +141,15 @@ export function Match<Disc extends { type: string }>(
     [K in Disc["type"]]: (r: Disc & { type: K }) => ComponentChild;
   }
 ): ComponentTemplate {
-  return DCGView.createElement(
-    Switch,
-    { key: () => discriminant().type },
-    () => {
-      const d = discriminant();
-      return branches[d.type as Disc["type"]](d) as any;
-    }
-  );
+  return createElementWrapped(Switch, {
+    key: () => discriminant().type,
+    children: [
+      () => {
+        const d = discriminant();
+        return branches[d.type as Disc["type"]](d) as any;
+      },
+    ],
+  });
 }
 
 export abstract class DStaticMathquillViewComponent extends ClassComponent<{
@@ -187,12 +189,20 @@ interface ModelAndController {
   controller: CalcController;
 }
 
+function children(template: any) {
+  return listWrap(template.children ?? template.props.children);
+}
+
 // <ExpressionIconView ... >
 export class ExpressionIconView extends Component<ModelAndController> {
   template() {
     const template = exprTemplate(this);
-    return template.children[1].children[1].children[0];
+    return children(children(children(template)[1])[1])[0];
   }
+}
+
+function listWrap(x: unknown) {
+  return Array.isArray(x) ? x : [x];
 }
 
 // <If predicate={this.shouldShowFooter}>
@@ -200,7 +210,7 @@ export class ExpressionIconView extends Component<ModelAndController> {
 export class FooterView extends Component<ModelAndController> {
   template() {
     const template = exprTemplate(this);
-    return template.children[0].children[2];
+    return children(children(template)[0])[2];
   }
 }
 

@@ -8,6 +8,29 @@
 
 *Find*
 ```js
+$createElement(
+  "div",
+  {
+    class: "dcg-expressions-branding",
+    children: __children__
+  }
+)
+```
+
+*Replace* `children` with
+```js
+[
+  __children__,
+  DSM.insertElement(() => DSM.showTips?.tipView())
+]
+```
+
+### Alternative
+
+*Description* `Replace "powered by desmos" with tips`
+
+*Find*
+```js
 $DCGView.createElement(
   "div",
   {

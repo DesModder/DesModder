@@ -6,6 +6,40 @@
 
 *Description* `Show how many characters used by an expression in the exppanel`
 
+*Find* => `math_item`
+```js
+$createElement("div", {
+    class: ()=>({
+        "dcg-do-not-blur": !0,
+        "dcg-expressionitem": !0,
+        "dcg-highlighted-expressionitem": this.controller.isExpressionHighlighted(this.id),
+        "dcg-mathitem": !0,
+        ____
+    })
+    ____
+})
+```
+
+*Find* inside `math_item`
+```js
+$createElement2("div", {
+    class: "dcg-fade-container",
+    onTapStart: this.bindFn(this.onMouseSelect),
+    onTap: this.bindFn(this.onMouseSelect),
+    children: [__children__]
+})
+```
+
+*Replace* `__children__` with
+```js
+__children__,
+DSM.insertElement(() => ( DSM.codeGolf?.expressionItemCostPanel(this.model, this._rootNode)  ))
+```
+
+### Alternative
+
+*Description* `Show how many characters used by an expression in the exppanel`
+
 *Find* => `math expression item`
 ```js
 $DCGView.createElement("div", {
@@ -31,6 +65,40 @@ DSM.insertElement(() => ( DSM.codeGolf?.expressionItemCostPanel(this.model, this
 ```
 
 ## Add total counts to folders in exppanel
+
+*Description* `Show golfing stats for an entire folder`
+
+*Find* => `folder_item`
+```js
+$createElement("div", {
+    class: () => ({
+        "dcg-do-not-blur": !0,
+        "dcg-expressionitem": !0,
+        "dcg-highlighted-expressionitem": this.controller.isExpressionHighlighted(this.id),
+        "dcg-readonly": this.controller.isItemReadonly(this.id),
+        "dcg-expressionfolder": !0,
+        ____
+    })
+    ____
+})
+```
+
+
+*Find* inside `folder_item`
+```js
+$createElement2("div", {
+    class: "dcg-fade-container",
+    children: [__children__]
+})
+```
+
+*Replace* `children` with
+```js
+__children__,
+DSM.insertElement(() => (DSM.codeGolf?.folderCostPanel(this.model)))
+```
+
+### Alternative
 
 *Description* `Show golfing stats for an entire folder`
 

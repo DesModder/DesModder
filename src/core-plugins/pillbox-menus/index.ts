@@ -4,6 +4,7 @@ import PillboxContainer from "./components/PillboxContainer";
 import PillboxMenu from "./components/PillboxMenu";
 import { DCGView } from "#DCGView";
 import { plugins, PluginID, ConfigItem } from "#plugins/index.ts";
+import { createElementWrapped } from "../../preload/replaceElement";
 
 export default class PillboxMenus extends PluginController<undefined> {
   static id = "pillbox-menus" as const;
@@ -45,7 +46,7 @@ export default class PillboxMenus extends PluginController<undefined> {
 
   pillboxButtonsView(horizontal: boolean): Inserter {
     return () =>
-      DCGView.createElement(PillboxContainer, {
+      createElementWrapped(PillboxContainer, {
         pm: () => this,
         horizontal: DCGView.const(horizontal),
       });
@@ -54,7 +55,7 @@ export default class PillboxMenus extends PluginController<undefined> {
   pillboxMenuView(horizontal: boolean): Inserter {
     if (this.pillboxMenuOpen === null) return undefined;
     return () =>
-      DCGView.createElement(PillboxMenu, {
+      createElementWrapped(PillboxMenu, {
         pm: () => this,
         horizontal: DCGView.const(horizontal),
       });
