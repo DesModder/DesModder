@@ -303,10 +303,21 @@ __body__
 .shader = $emitGLSL($t, 0)
 ```
 
-*Find* 
+*Find*
+
 ```js
-._graph = $_graphFunc;
-function $_graphFunc(____) {
+function $_graphFuncSubroutine(
+  $graphMode,
+  {
+    viewState: $,
+    node: $node,
+    concrete: $,
+    graphInfo: $,
+    policy: $,
+    styleBroadcastStrategy: $
+  }
+){
+  let $ = $.valueType === $;
   __graph__
 }
 ```
@@ -330,10 +341,10 @@ $ = $concrete.toImplicitBool()
 
 *Replace* `compute2d` with
 ```js
-if (this.userData.glesmos) {
+if ($node.userData.glesmos) {
   const lines =
-    this.userData.lines !== false &&
-    (!this.isInequality() || this.userData.glesmosLinesConfirmed);
+    $node.userData.lines !== false &&
+    (!this.isInequality() || $node.userData.glesmosLinesConfirmed);
   let derivativeX, derivativeY;
   if (lines) {
     try {
@@ -342,7 +353,7 @@ if (this.userData.glesmos) {
     } catch {}
   }
   const newCompiled = self.dsm_compileGLesmos(
-    $concrete, $graphInfo.color, $graphInfo.fillOpacity ?? 0, $graphInfo.lineOpacity, this.userData.lines !== false ? $graphInfo.lineWidth : 0.0,
+    $concrete, $graphInfo.color, $graphInfo.fillOpacity ?? 0, $graphInfo.lineOpacity, $node.userData.lines !== false ? $graphInfo.lineWidth : 0.0,
     derivativeX, derivativeY, $emitGLSL
   );
   return [{
