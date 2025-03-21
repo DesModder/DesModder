@@ -1,0 +1,5 @@
+{
+  "tasks": {
+    "build": "npm install && node ./esbuild.mjs --browser=chrome --outdir=dist-chrome && node ./esbuild.mjs --browser=firefox --outdir=dist-ff"
+  }
+}

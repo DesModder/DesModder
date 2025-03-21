@@ -1,21 +1,15 @@
 {
   "name": "DesModder for Desmos",
   "description": "Supercharge your Desmos graph creation and sharing experience with many convenient features",
-  "manifest_version": 2,
+  "manifest_version": 3,
   "version": "0.14.3",
   "icons": {
     "48": "icon48.png",
     "128": "icon128.png"
   },
-  "browser_action": {
-    "default_icon": {
-      "48": "icon48.png",
-      "128": "icon128.png"
-    },
-    "default_title": "DesModder"
-  },
+  "action": {},
   "background": {
-    "scripts": ["background.js"]
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
@@ -29,13 +23,18 @@
       "all_frames": true
     }
   ],
-  "web_accessible_resources": ["script.js", "preloadScript.js"],
+  "web_accessible_resources": [
+    {
+      "resources": ["script.js", "preloadScript.js"],
+      "matches": ["*://*.desmos.com/*"]
+    }
+  ],
   "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
     "https://*.desmos.com/*",
-    "https://wakatime.com/api/v1/users/current/heartbeats",
-    "storage",
-    "webRequest",
-    "webRequestBlocking"
+    "https://wakatime.com/"
   ],
   "browser_specific_settings": {
     "gecko": {
