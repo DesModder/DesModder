@@ -8,7 +8,7 @@
 
 *Find*
 ```js
-$DCGView.addCustomAttribute("onLongHold", $callback => ({
+$addCustomAttribute("onLongHold", $callback => ({
   bindings: {
     onMount($el) {
       __body__
