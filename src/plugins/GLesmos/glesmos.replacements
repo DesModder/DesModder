@@ -4,7 +4,7 @@
 
 ## Add a fill menu option for switching an expression to glesmos rendering mode
 
-Warning: this is duplicated below ("Add a lines menu option...") rather than
+Warning: this is partially duplicated below ("Add a lines menu option...") rather than
 adding an extra section to the menu view.
 
 *Description* `Add toggle in "fill" menu to enable GLesmos`
@@ -45,9 +45,9 @@ Just add one more child.
 
 ## Add a lines menu option for switching an expression to glesmos rendering mode
 
-Warning: this is duplicated above ("Add a fill menu option...").
+Warning: this is partially duplicated above ("Add a fill menu option...").
 
-*Description* `Add toggle in "lines" menu to enable GLesmos`
+*Description* `Add toggle in "lines" menu to enable GLesmos and confirm lines`
 
 *Find* => `key`
 ```js
@@ -62,7 +62,7 @@ $createElement(
   'div',
   {
     class: 'dcg-options-menu-content',
-    children: [__children__]
+    children: __children__
   }
 )
 ```
@@ -73,47 +73,14 @@ $createElement2($ToggleView, {
   ariaLabel: () => this.controller.s("graphing-calculator-narration-lines-visible")
 ```
 
-Just add one more child.
+Add one child before and one after.
 
 *Replace* `children` with
 ```js
-__children__,
-DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, false))
-```
-
-
-## Add a lines menu option for confirming GLesmos lines
-
-*Description* `Add toggle to confirm GLesmos lines`
-
-
-*Find* => `key`
-```js
-{ class: 'dcg-iconed-mathquill-row dcg-line-opacity-row' ____ }
-```
-
-*Find_surrounding_template* `key` => `template`
-
-*Find* inside `template` => `options`
-```js
-$createElement("div",
-  { class: "dcg-options-flex-container" ____}
-)
-```
-
-*Find* inside `template`
-```js
-$createElement2($ToggleView, {
-  ariaLabel: () => this.controller.s("graphing-calculator-narration-lines-visible")
-```
-
-Prefix with a child
-
-*Replace* `options` with
-```js
 [
   DSM.insertElement(() => DSM.glesmos?.confirmLines(this.model.id, $ToggleView)),
-  __options__
+  __children__,
+  DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, false))
 ]
 ```
 
