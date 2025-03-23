@@ -85,12 +85,21 @@ undefined: () => $Dcgview.Components.IfElse(
 *Find* => `list`
 ```js
 ()=>this.cachedEvaluationRHS)({
+"list-count": $listCountRhs => $createElement3(__oldListCount__),
 list: $rhs => $createElement(__oldList__)
 ```
 
 *Replace* `list` with
 ```js
 ()=>this.cachedEvaluationRHS)({
+"list-count": $listCountRhs => DSM.replaceElement(
+  () => $createElement3(__oldListCount__),
+  () => DSM.betterEvaluationView?.listEvaluation(() => {
+    const itemModel = this.controller.getItemModel(this.props.id());
+    // get untruncated value
+    return itemModel.formula.typed_constant_value.value;
+  })
+),
 list: $rhs => DSM.replaceElement(
   () => $createElement(__oldList__),
   () => DSM.betterEvaluationView?.listEvaluation(() => {
@@ -121,12 +130,21 @@ emptyList: () => DSM.replaceElement(
 *Find* => `list`
 ```js
 ()=>this.cachedEvaluationRHS)({
+"list-count": $listCountRhs => $Dcgview.createElement(__oldListCount__),
 list: $rhs => $Dcgview.createElement(__oldList__)
 ```
 
 *Replace* `list` with
 ```js
 ()=>this.cachedEvaluationRHS)({
+"list-count": $listCountRhs => DSM.replaceElement(
+  () => $Dcgview.createElement(__oldListCount__),
+  () => DSM.betterEvaluationView?.listEvaluation(() => {
+    const itemModel = this.controller.getItemModel(this.props.id());
+    // get untruncated value
+    return itemModel.formula.typed_constant_value.value;
+  })
+),
 list: $rhs => DSM.replaceElement(
   () => $Dcgview.createElement(__oldList__),
   () => DSM.betterEvaluationView?.listEvaluation(() => {
