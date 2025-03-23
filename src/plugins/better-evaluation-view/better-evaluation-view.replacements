@@ -85,12 +85,21 @@ undefined: () => $Dcgview.Components.IfElse(
 *Find* => `list`
 ```js
 ()=>this.cachedEvaluationRHS)({
+"list-count": $listCountRhs => $createElement3(__oldListCount__),
 list: $rhs => $createElement(__oldList__)
 ```
 
 *Replace* `list` with
 ```js
 ()=>this.cachedEvaluationRHS)({
+"list-count": $listCountRhs => DSM.replaceElement(
+  () => $createElement3(__oldListCount__),
+  () => DSM.betterEvaluationView?.listEvaluation(() => {
+    const itemModel = this.controller.getItemModel(this.props.id());
+    // get untruncated value
+    return itemModel.formula.typed_constant_value.value;
+  })
+),
 list: $rhs => DSM.replaceElement(
   () => $createElement(__oldList__),
   () => DSM.betterEvaluationView?.listEvaluation(() => {
@@ -121,15 +130,15 @@ emptyList: () => DSM.replaceElement(
 *Find* => `list`
 ```js
 ()=>this.cachedEvaluationRHS)({
-"list-count": $listCountRhs => $createElement(__oldListCount__),
-list: $rhs => $createElement2(__oldList__)
+"list-count": $listCountRhs => $Dcgview.createElement(__oldListCount__),
+list: $rhs => $Dcgview.createElement(__oldList__)
 ```
 
 *Replace* `list` with
 ```js
 ()=>this.cachedEvaluationRHS)({
 "list-count": $listCountRhs => DSM.replaceElement(
-  () => $createElement(__oldListCount__),
+  () => $Dcgview.createElement(__oldListCount__),
   () => DSM.betterEvaluationView?.listEvaluation(() => {
     const itemModel = this.controller.getItemModel(this.props.id());
     // get untruncated value
@@ -137,7 +146,7 @@ list: $rhs => $createElement2(__oldList__)
   })
 ),
 list: $rhs => DSM.replaceElement(
-  () => $createElement2(__oldList__),
+  () => $Dcgview.createElement(__oldList__),
   () => DSM.betterEvaluationView?.listEvaluation(() => {
     const itemModel = this.controller.getItemModel(this.props.id());
     // get untruncated value
@@ -148,13 +157,13 @@ list: $rhs => DSM.replaceElement(
 
 *Find* => `emptyList`
 ```js
-emptyList: () => $createElement3(__oldEmptyList__)
+emptyList: () => $emptyListDcgview.createElement(__oldEmptyList__)
 ```
 
 *Replace* `emptyList` with
 ```js
 emptyList: () => DSM.replaceElement(
-  () => createElement3(__oldEmptyList__),
+  () => $emptyListDcgview.createElement(__oldEmptyList__),
   () => DSM.betterEvaluationView?.listEvaluation(() => [])
 )
 ```
