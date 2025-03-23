@@ -112,7 +112,7 @@ $createElement(
   'div',
   {
     class: 'dcg-options-menu-content',
-    children: __children__
+    children: [__children__]
   }
 )
 ```
@@ -127,10 +127,8 @@ Just add one more child.
 
 *Replace* `children` with
 ```js
-[
-  __children__,
-  DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, false))
-]
+__children__,
+DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, false))
 ```
 
 ### Alternative
