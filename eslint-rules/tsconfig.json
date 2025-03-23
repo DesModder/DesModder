@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig-base",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist-ts/"
+  },
+  "include": [
+    "**/*",
+    "../text-mode-core/package.json",
+    "../graph-state/package.json"
+  ],
+  "exclude": ["./dist", "./dist-ts"]
+}

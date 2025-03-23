@@ -1,12 +1,12 @@
-// eslint-disable-next-line rulesdir/no-reach-past-exports
+// eslint-disable-next-line @desmodder/eslint-rules/no-reach-past-exports
 import Metadata from "../../metadata/interface";
-// eslint-disable-next-line rulesdir/no-reach-past-exports
+// eslint-disable-next-line @desmodder/eslint-rules/no-reach-past-exports
 import migrateToLatest from "../../metadata/migrate";
 import {
   ChildExprNode,
   evalMaybeRational,
   AnyNode,
-  // eslint-disable-next-line rulesdir/no-reach-past-exports
+  // eslint-disable-next-line @desmodder/eslint-rules/no-reach-past-exports
 } from "../../parsing/parsenode";
 import { Config } from "../TextModeConfig";
 import { isPiecewiseBoolean, isRestrictionBoolean } from "./AugLatex";

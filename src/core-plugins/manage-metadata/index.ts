@@ -87,7 +87,7 @@ export default class ManageMetadata extends PluginController {
 
   private showGlesmosNotEnabledToast() {
     this.cc._showToast({
-      // eslint-disable-next-line rulesdir/no-format-in-ts
+      // eslint-disable-next-line @desmodder/eslint-rules/no-format-in-ts
       message: format("GLesmos-not-enabled"),
     });
   }

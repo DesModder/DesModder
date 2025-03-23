@@ -2,9 +2,5 @@
   "extends": "../tsconfig-base",
   "compilerOptions": {},
   "references": [{ "path": "../localization" }],
-  "include": [
-    "**/*",
-    "../text-mode-core/package.json",
-    "../graph-state/package.json"
-  ]
+  "include": ["**/*"]
 }
