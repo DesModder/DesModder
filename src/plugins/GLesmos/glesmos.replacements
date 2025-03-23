@@ -195,7 +195,7 @@ $ = $concrete.toImplicitBool()
 if ($node.userData.glesmos) {
   const lines =
     $node.userData.lines !== false &&
-    (!this.isInequality() || $node.userData.glesmosLinesConfirmed);
+    (!$node.isInequality() || $node.userData.glesmosLinesConfirmed);
   let derivativeX, derivativeY;
   if (lines) {
     try {
