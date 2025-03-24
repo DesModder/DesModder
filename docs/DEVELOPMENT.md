@@ -18,7 +18,7 @@ If you're looking for in-depth development documentation, see:
 3. Run `git clone https://github.com/DesModder/DesModder` to download the latest commit
 4. Navigate to the directory, then run `npm run init` to setup hooks and install dependencies
 5. Run `npm run build` to build.
-6. Load the unpacked extension in the `dist/` folder through the directions at https://developer.chrome.com/docs/extensions/mv2/getstarted/#manifest (see "load unpacked")
+6. Load the unpacked extension in the `dist/` folder through the directions at https://developer.chrome.com/docs/extensions/mv3/getstarted/#manifest (see "load unpacked")
 
 ## Making Changes
 
