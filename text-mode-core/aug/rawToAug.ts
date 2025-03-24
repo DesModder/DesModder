@@ -656,6 +656,11 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
     case "Comparator['=']":
     case "Comparator['>=']":
     case "Comparator['>']":
+    case "Greater":
+    case "Less":
+    case "GreaterEqual":
+    case "LessEqual":
+    case "Equal":
       return {
         type: "Comparator",
         operator: node.operator,

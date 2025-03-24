@@ -1,5 +1,12 @@
 # DesModder Changelog
 
+## 0.14.4
+
+Bug fixes
+
+- Fix broken replacements that removed the opacity and line width options in some situations.
+- Fix broken replacements affecting GLesmos, Better Evaluation View, and other plugins.
+
 ## 0.14.3
 
 Bug fixes
