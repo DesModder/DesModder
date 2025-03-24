@@ -397,6 +397,12 @@ interface BaseComparator extends Expression {
 }
 
 type ComparatorSymbol = "<" | ">" | "<=" | ">=" | "=";
+type ComparatorType =
+  | "Greater"
+  | "Less"
+  | "GreaterEqual"
+  | "LessEqual"
+  | "Equal";
 
 export interface Comparator extends BaseComparator {
   // "1<3"
@@ -404,7 +410,7 @@ export interface Comparator extends BaseComparator {
   // "1>3"
   // "1>=3"
   // "\\left\\{x=0\\right\\}",
-  type: `Comparator['${ComparatorSymbol}']`;
+  type: `Comparator['${ComparatorSymbol}']` | ComparatorType;
   operator: ComparatorSymbol;
   args: [ChildExprNode, ChildExprNode];
 }
