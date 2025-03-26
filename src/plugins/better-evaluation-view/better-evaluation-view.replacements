@@ -129,16 +129,16 @@ emptyList: () => DSM.replaceElement(
 
 *Find* => `list`
 ```js
-()=>this.cachedEvaluationRHS)({
-"list-count": $listCountRhs => $Dcgview.createElement(__oldListCount__),
-list: $rhs => $Dcgview.createElement(__oldList__)
+() => this.cachedEvaluationRHS, "type", {
+"list-count": $listCountRhs => $listCountCreateElement(__oldListCount__),
+list: $rhs => $createElement(__oldList__)
 ```
 
 *Replace* `list` with
 ```js
-()=>this.cachedEvaluationRHS)({
+() => this.cachedEvaluationRHS, "type", {
 "list-count": $listCountRhs => DSM.replaceElement(
-  () => $Dcgview.createElement(__oldListCount__),
+  () => $listCountCreateElement(__oldListCount__),
   () => DSM.betterEvaluationView?.listEvaluation(() => {
     const itemModel = this.controller.getItemModel(this.props.id());
     // get untruncated value
@@ -146,7 +146,7 @@ list: $rhs => $Dcgview.createElement(__oldList__)
   })
 ),
 list: $rhs => DSM.replaceElement(
-  () => $Dcgview.createElement(__oldList__),
+  () => $createElement(__oldList__),
   () => DSM.betterEvaluationView?.listEvaluation(() => {
     const itemModel = this.controller.getItemModel(this.props.id());
     // get untruncated value
