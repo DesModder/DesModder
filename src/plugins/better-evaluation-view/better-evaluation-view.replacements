@@ -157,13 +157,13 @@ list: $rhs => DSM.replaceElement(
 
 *Find* => `emptyList`
 ```js
-emptyList: () => $emptyListDcgview.createElement(__oldEmptyList__)
+emptyList: () => $emptyListCreateElement(__oldEmptyList__)
 ```
 
 *Replace* `emptyList` with
 ```js
 emptyList: () => DSM.replaceElement(
-  () => $emptyListDcgview.createElement(__oldEmptyList__),
+  () => $emptyListCreateElement(__oldEmptyList__),
   () => DSM.betterEvaluationView?.listEvaluation(() => [])
 )
 ```
