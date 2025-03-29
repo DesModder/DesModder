@@ -129,7 +129,7 @@ DSM.replaceElement(
 ```js
 $createElement(
   'span',
-  { class: 'btns', children: [__children__] }
+  { class: $.const('btns'), children: [__children__] }
 )
 ```
 
