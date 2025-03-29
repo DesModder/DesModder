@@ -132,8 +132,8 @@ $createElement("div", {
   didMount: this.bindFn(this.didMountContainer),
   didUnmount: this.bindFn(this.didUnmountContainer),
   children: $createElement2("div", {
-    class: "dcg-popover-interior",
-    role: "region",
+    class: $createElement3.const("dcg-popover-interior"),
+    role: $createElement3.const("region"),
     "aria-label": () => this.controller.s("graphing-calculator-label-tooltip-geometry-settings"),
     children: [__children__]
   })
@@ -144,7 +144,7 @@ $createElement("div", {
 ```js
 __children__,
 $createElement("div", {
-    class: "dcg-arrow"
+    class: $createElement3.const("dcg-arrow")
 }),
 ```
 
