@@ -147,10 +147,9 @@ DSM.insertElement(() => DSM.hideErrors?.hideButton(() => this.model))
 
 *Find* => `element`
 ```js
-createElement(
+.createElement(
   'span',
-  { class: $DCGView.const('btns') },
-  __children__
+  { class: $.const('btns'), children: [__children__] }
 )
 ```
 

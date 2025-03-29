@@ -50,17 +50,18 @@ $DCGView.createElement("div", {
         "dcg-mathitem": !0,
         __rest0__
         }),
-        __rest1__
-}, $DCGView.createElement("div", {
-                class: $DCGView.const("dcg-fade-container"),
+        "expr-id": () => this.model.id,
+        didMount: this.bindFn(this.didMountRootNode),
+        children: [$DCGView.createElement("div", {
+                class: $.const("dcg-fade-container"),
                 onTapStart: this.bindFn(this.onMouseSelect),
-                onTap: this.bindFn(this.onMouseSelect)
-            }, __rest3__), __rest4__)
+                onTap: this.bindFn(this.onMouseSelect),
+                children: [__rest1__]
 ```
 
-*Replace* `__rest3__` with
+*Replace* `__rest1__` with
 ```js
-__rest3__,
+__rest1__,
 DSM.insertElement(() => ( DSM.codeGolf?.expressionItemCostPanel(this.model, this._rootNode)  ))
 ```
 
@@ -113,10 +114,13 @@ $DCGView2.createElement("div", {
         "dcg-expressionfolder": !0,
         __classesAfter__
     }),
-    __rest1folder__
-}, $DCGView2.createElement("div", {
-    class: $DCGView2.const("dcg-fade-container")
-}, __rest2folder__), __rest3folder__)
+    "expr-id": () => this.model.id,
+    onTapStart: this.bindFn(this.onMouseSelect),
+    onTap: this.bindFn(this.onMouseSelect),
+    didMount: this.bindFn(this.didMountRoot),
+    children: [$DCGView2.createElement("div", {
+        class: $.const("dcg-fade-container"),
+        children: [__rest2folder__]
 ```
 
 *Replace* `__rest2folder__` with
