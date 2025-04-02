@@ -354,6 +354,8 @@ better-navigation-opt-ctrlArrow-name = Ctrl+Arrow Support
 better-navigation-opt-ctrlArrow-desc = Use Ctrl+ArrowKeys or Ctrl+Shift+ArrowKeys to skip over large blocks of text quickly. Use Ctrl+Backspace to delete large blocks of text.
 better-navigation-opt-scrollableExpressions-name = Scrollable Expressions
 better-navigation-opt-scrollableExpressions-desc = Adds horizontal scrollbars to expressions. This is primarily intended to make scrolling easier on mobile.
+better-navigation-opt-showScrollbar-name = Show Scrollbar
+better-navigation-opt-showScrollbar-desc = Shows or hides scrollbar. It is convenient to turn this off for touch devices.
 
 ## Paste Image
 paste-image-name = Paste Image
