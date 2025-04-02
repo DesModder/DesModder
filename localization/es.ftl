@@ -362,3 +362,5 @@ better-navigation-opt-ctrlArrow-name = Atajo Ctrl+Flecha.
 better-navigation-opt-ctrlArrow-desc = Te permite utilizar Ctrl+Flecha y Ctrl+Shift+Flecha para avanzar bloques de texto más rápidamente. De manera similar puedes usar Ctrl+Retroceso para borrar bloques.
 better-navigation-opt-scrollableExpressions-name = Expresiones Desplazables
 better-navigation-opt-scrollableExpressions-desc = Añade una barra de desplazamiento horizontal. Mayormente destinado para facilitar la navegación en móvil.
+better-navigation-opt-showScrollbar-name = Mostrar Barra de Desplazamiento
+better-navigation-opt-showScrollbar-desc = Mostrar o esconder barra de desplazamiento. Coveniente para dispositivos de pantalla táctil.
