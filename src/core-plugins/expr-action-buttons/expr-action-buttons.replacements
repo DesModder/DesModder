@@ -22,37 +22,6 @@ DSM.insertElement(() => DSM.exprActionButtons.actionButtonsView(this.model())),
 __delete_button__
 ```
 
-### Alternative
-
-Insert before the delete button but after the other buttons.
-
-*Description* `Show buttons like "pin" and "merge folder."`
-
-*Find*
-```js
-.createElement(
-  'span',
-  {
-    class: () => ({
-        'dcg-expression-edit-actions' ____
-      }
-    ),
-    ____
-  },
-  $DCGView.createElement(____),
-  $DCGView.createElement(____),
-  $DCGView.createElement(____),
-  $DCGView.createElement(____),
-  __delete_button__
-)
-```
-
-*Replace* `delete_button` with
-```js
-DSM.insertElement(() => DSM.exprActionButtons.actionButtonsView(this.model())),
-__delete_button__
-```
-
 ## Allow pin/unpin and dump/merge without exiting ELM
 
 *Description* `Stay in "Edit List" mode after unpinning an expression or dumping a folder`

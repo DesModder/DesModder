@@ -30,31 +30,3 @@ __children__,
 DSM.insertElement(() => DSM.pinExpressions?.pinnedPanel(this)),
 DSM.insertElement(() => DSM.textMode?.editorPanel(this)),
 ```
-
-### Alternative
-
-*Description* `Insert panels to show Text Mode and pinned expressions`
-
-*Find* => `element`
-```js
-$DCGView.createElement(
-  "div",
-  {
-    class: () => {
-      var $;
-      return {
-        "dcg-exppanel-container": ____
-      }
-    },
-    ____
-  },
-  __children__
-)
-```
-
-*Replace* `children` with
-```js
-__children__,
-DSM.insertElement(() => DSM.pinExpressions?.pinnedPanel(this)),
-DSM.insertElement(() => DSM.textMode?.editorPanel(this)),
-```
