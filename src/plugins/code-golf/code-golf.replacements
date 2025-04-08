@@ -36,35 +36,6 @@ __children__,
 DSM.insertElement(() => ( DSM.codeGolf?.expressionItemCostPanel(this.model, this._rootNode)  ))
 ```
 
-### Alternative
-
-*Description* `Show how many characters used by an expression in the exppanel`
-
-*Find* => `math expression item`
-```js
-$DCGView.createElement("div", {
-    class: ()=>({
-        "dcg-do-not-blur": !0,
-        "dcg-expressionitem": !0,
-        "dcg-highlighted-expressionitem": this.controller.isExpressionHighlighted(this.id),
-        "dcg-mathitem": !0,
-        __rest0__
-        }),
-        "expr-id": () => this.model.id,
-        didMount: this.bindFn(this.didMountRootNode),
-        children: [$DCGView.createElement("div", {
-                class: $.const("dcg-fade-container"),
-                onTapStart: this.bindFn(this.onMouseSelect),
-                onTap: this.bindFn(this.onMouseSelect),
-                children: [__rest1__]
-```
-
-*Replace* `__rest1__` with
-```js
-__rest1__,
-DSM.insertElement(() => ( DSM.codeGolf?.expressionItemCostPanel(this.model, this._rootNode)  ))
-```
-
 ## Add total counts to folders in exppanel
 
 *Description* `Show golfing stats for an entire folder`
@@ -96,35 +67,5 @@ $createElement2("div", {
 *Replace* `children` with
 ```js
 __children__,
-DSM.insertElement(() => (DSM.codeGolf?.folderCostPanel(this.model)))
-```
-
-### Alternative
-
-*Description* `Show golfing stats for an entire folder`
-
-*Find* => `folder expression item`
-```js
-$DCGView2.createElement("div", {
-    class: () => ({
-        "dcg-do-not-blur": !0,
-        "dcg-expressionitem": !0,
-        "dcg-highlighted-expressionitem": this.controller.isExpressionHighlighted(this.id),
-        "dcg-readonly": this.controller.isItemReadonly(this.id),
-        "dcg-expressionfolder": !0,
-        __classesAfter__
-    }),
-    "expr-id": () => this.model.id,
-    onTapStart: this.bindFn(this.onMouseSelect),
-    onTap: this.bindFn(this.onMouseSelect),
-    didMount: this.bindFn(this.didMountRoot),
-    children: [$DCGView2.createElement("div", {
-        class: $.const("dcg-fade-container"),
-        children: [__rest2folder__]
-```
-
-*Replace* `__rest2folder__` with
-```js
-__rest2folder__,
 DSM.insertElement(() => (DSM.codeGolf?.folderCostPanel(this.model)))
 ```
