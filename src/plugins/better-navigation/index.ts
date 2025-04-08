@@ -89,7 +89,7 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
       this.settings.scrollableExpressions
     );
     document.body.classList.toggle(
-      "dsm-better-nave-hide-scroll-bar",
+      "dsm-better-nav-hide-scroll-bar",
       !this.settings.showScrollbar
     );
   }
