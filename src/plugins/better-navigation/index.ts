@@ -2,6 +2,7 @@
 import { PluginController } from "../PluginController";
 import { MathQuillField, MathQuillView } from "src/components";
 import { getController } from "../intellisense/latex-parsing";
+import { ConfigItem } from "#plugins/index.ts";
 
 import "./index.less";
 
@@ -45,6 +46,7 @@ function isAtStartOrEndOfASubscriptOrSuperscript(mq: MathQuillField, dir: Dir) {
 interface BetterNavSettings {
   ctrlArrow: boolean;
   scrollableExpressions: boolean;
+  showScrollbar: boolean;
 }
 
 const NavigationTable: Record<
@@ -73,12 +75,22 @@ export default class BetterNavigation extends PluginController<BetterNavSettings
       default: false,
       key: "scrollableExpressions",
     },
-  ] as const;
+    {
+      type: "boolean",
+      default: true,
+      key: "showScrollbar",
+      shouldShow: (config) => config.scrollableExpressions,
+    },
+  ] satisfies readonly ConfigItem[];
 
   afterConfigChange(): void {
     document.body.classList.toggle(
       "dsm-better-nav-scrollable-expressions",
       this.settings.scrollableExpressions
+    );
+    document.body.classList.toggle(
+      "dsm-better-nav-hide-scroll-bar",
+      !this.settings.showScrollbar
     );
   }
 

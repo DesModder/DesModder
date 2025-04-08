@@ -25,6 +25,7 @@ GLesmos-label-toggle-glesmos = Usar GLesmos
 GLesmos-confirm-lines = Confirmar líneas
 GLesmos-confirm-lines-body = Generar líneas con GLesmos puede ser lento. Sé especialmente cuidadoso cuando utilices listas.
 GLesmos-no-support = Desafortunadamente tu navegador no soporta GLesmos porque no provee soporte para WebGL2.
+GLesmos-not-enabled = Habilita GLesmos para mejorar el rendimiento de algunas expresiones implícitas.
 # Missing: error messages
 
 ## Tips
@@ -137,6 +138,9 @@ builtin-settings-opt-zoomButtons-desc = {""}
 builtin-settings-opt-keypad-name = Mostrar el teclado numérico
 # Unchanged
 builtin-settings-opt-keypad-desc = {""}
+builtin-settings-opt-showPerformanceMeter-name = Mostrar Monitor de Rendimiento 
+# Unchanged
+builtin-settings-opt-showPerformanceMeter-desc = {""}
 builtin-settings-opt-showIDs-name = Mostrar IDs
 # Unchanged
 builtin-settings-opt-showIDs-desc = {""}
@@ -184,6 +188,7 @@ video-creator-orientation-mode-current-speed = actual
 video-creator-orientation-mode-current-delta = recorrer
 video-creator-orientation-mode-from-to = rango
 video-creator-size = Tamaño:
+video-creator-mosaic = Mosaico:
 video-creator-angle-current = Ángulo:
 video-creator-angle-from = Desde:
 video-creator-angle-to = Hasta:
@@ -362,3 +367,11 @@ better-navigation-opt-ctrlArrow-name = Atajo Ctrl+Flecha.
 better-navigation-opt-ctrlArrow-desc = Te permite utilizar Ctrl+Flecha y Ctrl+Shift+Flecha para avanzar bloques de texto más rápidamente. De manera similar puedes usar Ctrl+Retroceso para borrar bloques.
 better-navigation-opt-scrollableExpressions-name = Expresiones Desplazables
 better-navigation-opt-scrollableExpressions-desc = Añade una barra de desplazamiento horizontal. Mayormente destinado para facilitar la navegación en móvil.
+better-navigation-opt-showScrollbar-name = Mostrar Barra de Desplazamiento
+better-navigation-opt-showScrollbar-desc = Mostrar o esconder barra de desplazamiento. Coveniente para dispositivos de pantalla táctil.
+
+## Paste Image
+paste-image-name = Pegar Imagen
+paste-image-desc = Te permite pegar imagenes directamente en las expressiones para importar.
+paste-image-error-images-not-enabled = Inserción de imagen no está disponible para este gráfico.
+paste-image-error-another-upload-in-progress = Vuelve a intentar cuando la imagen previa termine de procesarse.
