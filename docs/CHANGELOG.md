@@ -1,5 +1,15 @@
 # DesModder Changelog
 
+## 0.14.5
+
+Bug fixes
+
+- Fix broken replacements affecting Code Golf, GLesmos, Text Mode, and other plugins.
+
+Translations:
+
+- Updates to Spanish translations.
+
 ## 0.14.4
 
 Bug fixes
