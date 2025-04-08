@@ -2,7 +2,11 @@
 
 ## 0.14.5
 
-Bug fixes
+New features:
+
+- (Better Navigation) Add "Show Scrollbar" toggle when "Scrollable Expressions" is enabled.
+
+Bug fixes:
 
 - Fix broken replacements affecting Code Golf, GLesmos, Text Mode, and other plugins.
 
