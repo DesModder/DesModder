@@ -28,7 +28,7 @@ isShowKeypadButtonVisible () {
 ```js
 $createElement(
   'div',
-  { class: 'dcg-center-buttons' ____ }
+  { class: $.const('dcg-center-buttons') ____ }
 )
 ```
 
@@ -53,8 +53,7 @@ DSM.insertElement(
 ```js
 .createElement(
   'div',
-  { class: $DCGView.const('dcg-center-buttons') },
-  ____
+  { class: $.const('dcg-center-buttons') ____ }
 )
 ```
 
@@ -119,7 +118,7 @@ $ImageIconView = class extends $.View {
   init() { ____ }
   template() {
       return $createElement("div", {
-          class: "dcg-expression-icon-container dcg-image-icon-container"
+          class: $.const("dcg-expression-icon-container dcg-image-icon-container")
           ____
       }
 ```

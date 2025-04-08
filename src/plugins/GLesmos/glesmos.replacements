@@ -11,7 +11,7 @@ adding an extra section to the menu view.
 
 *Find* => `key`
 ```js
-{ class: 'dcg-iconed-mathquill-row dcg-fill-opacity-row' ____ }
+{ class: $.const('dcg-iconed-mathquill-row dcg-fill-opacity-row') ____ }
 ```
 
 *Find_surrounding_template* `key` => `template`
@@ -21,7 +21,7 @@ adding an extra section to the menu view.
 $createElement(
   'div',
   {
-    class: 'dcg-options-menu-content',
+    class: $.const('dcg-options-menu-content'),
     children: __children__
   }
 )
@@ -51,7 +51,7 @@ Warning: this is partially duplicated above ("Add a fill menu option...").
 
 *Find* => `key`
 ```js
-{ class: 'dcg-iconed-mathquill-row dcg-line-opacity-row' ____ }
+{ class: $.const('dcg-iconed-mathquill-row dcg-line-opacity-row') ____ }
 ```
 
 *Find_surrounding_template* `key` => `template`
@@ -61,7 +61,7 @@ Warning: this is partially duplicated above ("Add a fill menu option...").
 $createElement(
   'div',
   {
-    class: 'dcg-options-menu-content',
+    class: $.const('dcg-options-menu-content'),
     children: __children__
   }
 )
