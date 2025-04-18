@@ -27,7 +27,7 @@ undefined: () => DSM.replaceElement(
       content: () => this.controller.s("shared-calculator-label-undefined")
     }
   ),
-  () => 
+  () =>
     DSM.betterEvaluationView
       ? $createElement(
           Desmos.Private.Fragile.StaticMathquillView,
@@ -59,7 +59,7 @@ list: $rhs => $createElement(__oldList__)
   () => DSM.betterEvaluationView?.listEvaluation(() => {
     const itemModel = this.controller.getItemModel(this.props.id());
     // get untruncated value
-    return itemModel.formula.typed_constant_value.value;
+    return itemModel.formula.typed_constant_value;
   })
 ),
 list: $rhs => DSM.replaceElement(
@@ -67,7 +67,7 @@ list: $rhs => DSM.replaceElement(
   () => DSM.betterEvaluationView?.listEvaluation(() => {
     const itemModel = this.controller.getItemModel(this.props.id());
     // get untruncated value
-    return itemModel.formula.typed_constant_value.value;
+    return itemModel.formula.typed_constant_value;
   })
 )
 ```
@@ -81,7 +81,10 @@ emptyList: () => $emptyListCreateElement(__oldEmptyList__)
 ```js
 emptyList: () => DSM.replaceElement(
   () => $emptyListCreateElement(__oldEmptyList__),
-  () => DSM.betterEvaluationView?.listEvaluation(() => [])
+  () => DSM.betterEvaluationView?.listEvaluation(() => {
+    const itemModel = this.controller.getItemModel(this.props.id());
+    return itemModel.formula.typed_constant_value;
+  })
 )
 ```
 
