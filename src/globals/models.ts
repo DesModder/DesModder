@@ -36,40 +36,45 @@ interface ItemModelBase {
   dsmEnableGolfDespiteLength?: boolean;
 }
 
+interface FormulaBase {
+  exported_variables?: string[];
+  is_graphable: boolean;
+  action_value?: Record<string, string>;
+}
+
 interface NonfolderItemModelBase extends ItemModelBase {
   folderId?: string;
   secret?: boolean;
   error?: any;
-  formula?: {
-    exported_variables?: string[];
-    expression_type:
-      | "X_OR_Y"
-      // Soon, X_OR_Y will be removed in favor of the following two:
-      | "X_OR_Y_EQUATION"
-      | "X_OR_Y_INEQUALITY"
-      | "SINGLE_POINT"
-      | "POINT_LIST"
-      | "PARAMETRIC"
-      | "POLAR"
-      | "IMPLICIT"
-      // Soon, IMPLICIT will be removed in favor of the following two:
-      | "IMPLICIT_EQUATION"
-      | "IMPLICIT_INEQUALITY"
-      | "POLYGON"
-      | "HISTOGRAM"
-      | "DOTPLOT"
-      | "BOXPLOT"
-      | "TTEST"
-      | "STATS"
-      | "CUBE"
-      | "SPHERE"
-      // There are many possible expression types due to 3d. No point writing them all out.
-      | string;
-    is_graphable: boolean;
-    is_inequality: boolean;
-    action_value?: Record<string, string>;
-  };
+  formula?: FormulaBase;
   dcgView?: ClassComponent;
+}
+
+export interface ExpressionFormula extends FormulaBase {
+  is_inequality?: boolean;
+  expression_type:
+    | "X_OR_Y"
+    // Soon, X_OR_Y will be removed in favor of the following two:
+    | "X_OR_Y_EQUATION"
+    | "X_OR_Y_INEQUALITY"
+    | "SINGLE_POINT"
+    | "POINT_LIST"
+    | "PARAMETRIC"
+    | "POLAR"
+    | "IMPLICIT"
+    // Soon, IMPLICIT will be removed in favor of the following two:
+    | "IMPLICIT_EQUATION"
+    | "IMPLICIT_INEQUALITY"
+    | "POLYGON"
+    | "HISTOGRAM"
+    | "DOTPLOT"
+    | "BOXPLOT"
+    | "TTEST"
+    | "STATS"
+    | "CUBE"
+    | "SPHERE"
+    // There are many possible expression types due to 3d. No point writing them all out.
+    | (string & {});
 }
 
 interface BaseClickable {
@@ -120,6 +125,7 @@ export interface ExpressionModel
     | "auto_right";
   clickableInfo?: BaseClickable;
   shouldGraph?: boolean;
+  formula?: ExpressionFormula;
 }
 
 interface TableColumn extends BasicSetExpression {
