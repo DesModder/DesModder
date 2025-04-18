@@ -36,6 +36,28 @@ interface ItemModelBase {
   dsmEnableGolfDespiteLength?: boolean;
 }
 
+export enum ValueType {
+  Any = 0,
+  Number = 1,
+  Bool = 2,
+  Complex = 38,
+  ListOfComplex = 39,
+  Point = 3,
+  Point3D = 100,
+  Distribution = 4,
+  Action = 5,
+  ListOfAny = 6,
+  ListOfNumber = 7,
+  ListOfBool = 8,
+  ListOfPoint = 9,
+  ListOfPoint3D = 101,
+  ListOfDistribution = 10,
+  EmptyList = 11,
+  RGBColor = 14,
+  ListOfColor = 15,
+  // omitted
+}
+
 interface FormulaBase {
   exported_variables?: string[];
   is_graphable: boolean;
@@ -49,6 +71,28 @@ interface NonfolderItemModelBase extends ItemModelBase {
   formula?: FormulaBase;
   dcgView?: ClassComponent;
 }
+
+interface ValueTypeMap {
+  [ValueType.EmptyList]: [];
+  [ValueType.Number]: number;
+  [ValueType.ListOfNumber]: number[];
+  [ValueType.Point]: [number, number];
+  [ValueType.ListOfPoint]: [number, number][];
+  [ValueType.Point3D]: [number, number, number];
+  [ValueType.ListOfPoint3D]: [number, number, number][];
+  [ValueType.Complex]: [number, number];
+  [ValueType.ListOfComplex]: [number, number][];
+  [ValueType.RGBColor]: [number, number, number];
+  [ValueType.ListOfColor]: [number, number, number][];
+  [key: number]: unknown;
+}
+
+export type TypedConstantValue<T extends ValueType = ValueType> = T extends T
+  ? {
+      valueType: T;
+      value: ValueTypeMap[T];
+    }
+  : never;
 
 export interface ExpressionFormula extends FormulaBase {
   is_inequality?: boolean;
@@ -75,6 +119,7 @@ export interface ExpressionFormula extends FormulaBase {
     | "SPHERE"
     // There are many possible expression types due to 3d. No point writing them all out.
     | (string & {});
+  typed_constant_value?: TypedConstantValue | undefined;
 }
 
 interface BaseClickable {
