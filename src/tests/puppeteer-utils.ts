@@ -195,6 +195,35 @@ export class Driver {
     await this.click(EXIT_ELM);
   }
 
+  async expectEval(latexExpected: string) {
+    const latexFound = await this.evaluate(() => {
+      const { rootViewNode } = Calc.controller.getSelectedItem()!;
+      interface MqRoot extends Element {
+        mqBlockNode: {
+          latex: () => string;
+        };
+      }
+      // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- false positive
+      const evaluationMqRoot = rootViewNode.querySelector(
+        ".dcg-evaluation-container .dcg-mq-root-block"
+      ) as MqRoot;
+      return evaluationMqRoot.mqBlockNode.latex();
+    });
+    expect(latexFound).toBe(latexExpected);
+  }
+
+  async expectEvalPlain(textExpected: string) {
+    const textFound = await this.evaluate(() => {
+      const { rootViewNode } = Calc.controller.getSelectedItem()!;
+      // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- false positive
+      const evaluationMqRoot = rootViewNode.querySelector(
+        ".dcg-evaluation-container"
+      ) as HTMLElement;
+      return evaluationMqRoot.innerText;
+    });
+    expect(textFound).toBe(textExpected);
+  }
+
   async clean() {
     await this.setBlank();
     await this.evaluate(

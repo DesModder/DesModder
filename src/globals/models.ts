@@ -34,6 +34,7 @@ interface ItemModelBase {
   readonly?: boolean;
   dsmGolfStats?: GolfStats;
   dsmEnableGolfDespiteLength?: boolean;
+  rootViewNode: HTMLElement;
 }
 
 export enum ValueType {

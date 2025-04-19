@@ -1,35 +1,19 @@
-import { Driver, clean, testWithPage } from "#tests";
-
-async function expectEval(driver: Driver, latexExpected: string) {
-  const latexFound = await driver.$eval(
-    ".dcg-evaluation-container .dcg-mq-root-block",
-    (el) => (el as any).mqBlockNode.latex()
-  );
-  expect(latexFound).toBe(latexExpected);
-}
-
-async function expectEvalPlain(driver: Driver, textExpected: string) {
-  const textFound = await driver.$eval(
-    ".dcg-evaluation-container",
-    (el) => (el as HTMLElement).innerText
-  );
-  expect(textFound).toBe(textExpected);
-}
+import { clean, testWithPage } from "#tests";
 
 const COLOR_SWATCH = ".dcg-color-swatch";
 
 testWithPage("List", async (driver) => {
   await driver.focusIndex(0);
   await driver.setLatexAndSync("[1,2,3]+0");
-  await expectEval(driver, "\\left[1,2,3\\right]");
+  await driver.expectEval("\\left[1,2,3\\right]");
 
   // It updates when you edit the latex
   await driver.setLatexAndSync("[1,2,3,4]+0");
-  await expectEval(driver, "\\left[1,2,3,4\\right]");
+  await driver.expectEval("\\left[1,2,3,4\\right]");
 
   // It gets reset on disabling lists, and shows the native list view instead.
   await driver.setPluginSetting("better-evaluation-view", "lists", false);
-  await expectEvalPlain(driver, "equals\n=\n1\n1\n2\n2\n3\n3\n4\n4");
+  await driver.expectEvalPlain("equals\n=\n1\n1\n2\n2\n3\n3\n4\n4");
 
   // Clean up
   await driver.clean();
@@ -40,12 +24,12 @@ testWithPage("Color", async (driver) => {
   await driver.focusIndex(0);
   await driver.setLatexAndSync("C=\\operatorname{rgb}\\left(1,2,3\\right)");
   const exp = "\\operatorname{rgb}\\left(1,2,3\\right)";
-  await expectEval(driver, exp);
+  await driver.expectEval(exp);
 
   // It doesn't get reset on disabling color lists
   await driver.setPluginSetting("better-evaluation-view", "colorLists", false);
   await driver.assertSelector(COLOR_SWATCH);
-  await expectEval(driver, exp);
+  await driver.expectEval(exp);
 
   // It gets reset on disabling colors
   await driver.setPluginSetting("better-evaluation-view", "colors", false);
@@ -61,7 +45,7 @@ testWithPage("Color List", async (driver) => {
   await driver.setLatexAndSync("C=\\operatorname{rgb}\\left(1,2,[3,4]\\right)");
   const exp =
     "\\operatorname{rgb}\\left(\\left[\\left(1,2,3\\right),\\left(1,2,4\\right)\\right]\\right)";
-  await expectEval(driver, exp);
+  await driver.expectEval(exp);
   await driver.assertSelector(COLOR_SWATCH);
 
   // It gets reset on disabling color lists
