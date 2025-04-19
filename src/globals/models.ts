@@ -34,42 +34,93 @@ interface ItemModelBase {
   readonly?: boolean;
   dsmGolfStats?: GolfStats;
   dsmEnableGolfDespiteLength?: boolean;
+  rootViewNode: HTMLElement;
+}
+
+export enum ValueType {
+  Any = 0,
+  Number = 1,
+  Bool = 2,
+  Complex = 38,
+  ListOfComplex = 39,
+  Point = 3,
+  Point3D = 100,
+  Distribution = 4,
+  Action = 5,
+  ListOfAny = 6,
+  ListOfNumber = 7,
+  ListOfBool = 8,
+  ListOfPoint = 9,
+  ListOfPoint3D = 101,
+  ListOfDistribution = 10,
+  EmptyList = 11,
+  RGBColor = 14,
+  ListOfColor = 15,
+  // omitted
+}
+
+interface FormulaBase {
+  exported_variables?: string[];
+  is_graphable: boolean;
+  action_value?: Record<string, string>;
 }
 
 interface NonfolderItemModelBase extends ItemModelBase {
   folderId?: string;
   secret?: boolean;
   error?: any;
-  formula?: {
-    exported_variables?: string[];
-    expression_type:
-      | "X_OR_Y"
-      // Soon, X_OR_Y will be removed in favor of the following two:
-      | "X_OR_Y_EQUATION"
-      | "X_OR_Y_INEQUALITY"
-      | "SINGLE_POINT"
-      | "POINT_LIST"
-      | "PARAMETRIC"
-      | "POLAR"
-      | "IMPLICIT"
-      // Soon, IMPLICIT will be removed in favor of the following two:
-      | "IMPLICIT_EQUATION"
-      | "IMPLICIT_INEQUALITY"
-      | "POLYGON"
-      | "HISTOGRAM"
-      | "DOTPLOT"
-      | "BOXPLOT"
-      | "TTEST"
-      | "STATS"
-      | "CUBE"
-      | "SPHERE"
-      // There are many possible expression types due to 3d. No point writing them all out.
-      | string;
-    is_graphable: boolean;
-    is_inequality: boolean;
-    action_value?: Record<string, string>;
-  };
+  formula?: FormulaBase;
   dcgView?: ClassComponent;
+}
+
+interface ValueTypeMap {
+  [ValueType.EmptyList]: [];
+  [ValueType.Number]: number;
+  [ValueType.ListOfNumber]: number[];
+  [ValueType.Point]: [number, number];
+  [ValueType.ListOfPoint]: [number, number][];
+  [ValueType.Point3D]: [number, number, number];
+  [ValueType.ListOfPoint3D]: [number, number, number][];
+  [ValueType.Complex]: [number, number];
+  [ValueType.ListOfComplex]: [number, number][];
+  [ValueType.RGBColor]: [number, number, number];
+  [ValueType.ListOfColor]: [number, number, number][];
+  [key: number]: unknown;
+}
+
+export type TypedConstantValue<T extends ValueType = ValueType> = T extends T
+  ? {
+      valueType: T;
+      value: ValueTypeMap[T];
+    }
+  : never;
+
+export interface ExpressionFormula extends FormulaBase {
+  is_inequality?: boolean;
+  expression_type:
+    | "X_OR_Y"
+    // Soon, X_OR_Y will be removed in favor of the following two:
+    | "X_OR_Y_EQUATION"
+    | "X_OR_Y_INEQUALITY"
+    | "SINGLE_POINT"
+    | "POINT_LIST"
+    | "PARAMETRIC"
+    | "POLAR"
+    | "IMPLICIT"
+    // Soon, IMPLICIT will be removed in favor of the following two:
+    | "IMPLICIT_EQUATION"
+    | "IMPLICIT_INEQUALITY"
+    | "POLYGON"
+    | "HISTOGRAM"
+    | "DOTPLOT"
+    | "BOXPLOT"
+    | "TTEST"
+    | "STATS"
+    | "CUBE"
+    | "SPHERE"
+    // There are many possible expression types due to 3d. No point writing them all out.
+    | (string & {});
+  typed_constant_value?: TypedConstantValue | undefined;
 }
 
 interface BaseClickable {
@@ -120,6 +171,7 @@ export interface ExpressionModel
     | "auto_right";
   clickableInfo?: BaseClickable;
   shouldGraph?: boolean;
+  formula?: ExpressionFormula;
 }
 
 interface TableColumn extends BasicSetExpression {

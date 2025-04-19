@@ -33,7 +33,9 @@ export type VanillaDispatchedEvent =
         | "upward-delete-selected-expression"
         | "downward-delete-selected-expression"
         | "update-expression-search-str"
-        | "ui/container-resized";
+        | "ui/container-resized"
+        | "toggle-complex-mode"
+        | "new-expression";
     }
   | {
       type: "commit-user-requested-viewport";
