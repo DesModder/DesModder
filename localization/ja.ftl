@@ -239,6 +239,8 @@ better-evaluation-view-opt-colors-name = 色を表示
 better-evaluation-view-opt-colors-desc = 色を RGB 値で表示する
 better-evaluation-view-opt-colorLists-name = 色のリストを表示
 better-evaluation-view-opt-colorLists-desc = 色のリストを RGB 値のリストとして表示する
+better-navigation-opt-showScrollbar-name = スクロールバーを表示
+better-navigation-opt-showScrollbar-desc = スクロールバーを表示または隠します。タッチデバイスではオフにすると使いやすくなります。
 
 ## Pillbox Menus
 pillbox-menus-name = Pillbox Menus (Core)
