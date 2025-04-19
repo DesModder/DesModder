@@ -4,7 +4,7 @@ import { downloadZip } from "client-zip";
 import { Console } from "#globals";
 
 type FFmpeg = ReturnType<typeof createFFmpeg>;
-type FFmpegFileType = "gif" | "mp4" | "webm" | "apng";
+type FFmpegFileType = "gif" | "mp4" | "webm" | "apng" | "webp";
 export type OutFileType = FFmpegFileType | "zip";
 
 let ffmpeg: null | FFmpeg = null;
@@ -26,6 +26,7 @@ async function exportAll(
     // https://superuser.com/a/1239082
     gif: ["-lavfi", "palettegen=stats_mode=diff[pal],[0:v][pal]paletteuse"],
     apng: ["-plays", "0", "-f", "apng"],
+    webp: ["-vcodec", "libwebp", "-lossless", "1", "-loop", "0"],
   }[fileType];
 
   await ffmpeg.run(
@@ -101,7 +102,7 @@ async function* files(frames: string[]) {
 async function exportFFmpeg(
   vc: VideoCreator,
   fileType: FFmpegFileType,
-  ext: "png" | "gif" | "mp4" | "webm"
+  ext: "png" | "gif" | "mp4" | "webm" | "webp"
 ) {
   const ffmpeg = await initFFmpeg(vc);
 
@@ -125,9 +126,13 @@ async function exportFFmpeg(
     ffmpeg.FS("unlink", filename);
   }
   ffmpeg.FS("unlink", outFilename);
-  const metaExt = { png: "image", gif: "image", mp4: "video", webm: "video" }[
-    ext
-  ];
+  const metaExt = {
+    png: "image",
+    gif: "image",
+    webp: "image",
+    mp4: "video",
+    webm: "video",
+  }[ext];
 
   return new Blob([data.buffer as ArrayBuffer], { type: `${metaExt}/${ext}` });
 }

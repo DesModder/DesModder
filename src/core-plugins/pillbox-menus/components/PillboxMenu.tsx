@@ -38,6 +38,7 @@ export default class PillboxMenu extends Component<{
             didUnmount={() => this.didUnmountContainer()}
             style={() => ({
               position: "absolute",
+              "min-width": "min-content",
               ...this.getPopoverPosition(),
             })}
           >
