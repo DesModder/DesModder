@@ -10,7 +10,14 @@ import { format } from "#i18n";
 import ManagedNumberInput from "./ManagedNumberInput";
 import { OrientationView } from "./OrientationView";
 
-const fileTypeNames: OutFileType[] = ["gif", "mp4", "webm", "apng", "zip"];
+const fileTypeNames: OutFileType[] = [
+  "gif",
+  "mp4",
+  "webm",
+  "apng",
+  "webp",
+  "zip",
+];
 
 export function MainPopupFunc(vc: VideoCreator) {
   return <MainPopup vc={vc} />;
