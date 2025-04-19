@@ -1,29 +1,50 @@
-import { truncatedLatexLabel } from "../../../utils/depUtils";
 import { jsx } from "#DCGView";
 import { StaticMathQuillView } from "#components";
+import { Private, TypedConstantValue, ValueType } from "#globals";
 
-export function ListEvaluation(val: () => string[]) {
+export function ListEvaluation(
+  val: () => TypedConstantValue<
+    | ValueType.EmptyList
+    | ValueType.ListOfNumber
+    | ValueType.ListOfComplex
+    | ValueType.ListOfPoint
+    | ValueType.ListOfPoint3D
+  >
+) {
   return (
     <div class="dcg-evaluation-view__wrapped-value">
       <StaticMathQuillView
         latex={() => {
-          const values = val();
+          const typedConstantValue = val();
           const labelOptions = {
             smallCutoff: 0.00001,
             bigCutoff: 1000000,
             digits: 5,
             displayAsFraction: false,
           };
-          const length = 20;
-          const labels = values
-            .slice(0, length)
-            .map((label) => truncatedLatexLabel(label, labelOptions));
+          const formatLabel = (() => {
+            switch (typedConstantValue.valueType) {
+              case ValueType.ListOfComplex:
+                return Private.Mathtools.Label.complexNumberLabel;
+              case ValueType.ListOfPoint:
+                return Private.Mathtools.Label.pointLabel;
+              case ValueType.ListOfPoint3D:
+                return Private.Mathtools.Label.point3dLabel;
+              default:
+                return Private.Mathtools.Label.truncatedLatexLabel;
+            }
+          })();
+          const listLength = typedConstantValue.value.length;
+          const truncationLength = 20;
+          const labels = typedConstantValue.value
+            .slice(0, truncationLength)
+            .map((label) => formatLabel(label, labelOptions));
           return (
             "\\left[" +
             labels.join(",") +
-            (values.length > length
+            (listLength > truncationLength
               ? `\\textcolor{gray}{...\\mathit{${
-                  values.length - length
+                  listLength - truncationLength
                 }\\ more}}`
               : "") +
             "\\right]"
