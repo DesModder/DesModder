@@ -3,7 +3,7 @@ import { PluginID } from "../plugins";
 import { GraphState } from "../../graph-state";
 import Intellisense from "#plugins/intellisense/index.tsx";
 import { Browser, Page } from "puppeteer";
-import { Calc as CalcType } from "../globals/Calc";
+import { Calc as CalcType, DispatchedEvent } from "../globals/Calc";
 
 /** Calc is only available inside evaluate() callbacks and friends, since those
  * stringify the function and evaluate it inside the browser */
@@ -193,6 +193,13 @@ export class Driver {
 
   async exitEditListMode() {
     await this.click(EXIT_ELM);
+  }
+
+  async dispatch(e: DispatchedEvent) {
+    await this.evaluate((_e) => {
+      Calc.controller.dispatch(_e);
+    }, e);
+    await this.waitForSync();
   }
 
   async expectEval(latexExpected: string) {
