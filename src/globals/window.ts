@@ -45,16 +45,41 @@ interface Desmos extends DesmosPublic {
   };
 }
 
+export interface LabelOptionsBase {
+  zeroCutoff?: number;
+  smallCutoff?: number;
+  bigCutoff?: number;
+  digits?: number;
+  displayAsFraction?: boolean;
+  addEllipses?: boolean;
+  spaceConstrained?: boolean;
+  scientificNotationDigits?: number;
+}
+
+type ComponentEmitType = "decimalString" | "latex" | (string & {});
+
 interface Mathtools {
   Label: {
     truncatedLatexLabel: (
-      label: string,
-      labelOptions: {
-        smallCutoff: 0.00001;
-        bigCutoff: 1000000;
-        digits: 5;
-        displayAsFraction: false;
-      }
+      label: number,
+      labelOptions?: LabelOptionsBase
+    ) => string;
+    pointLabel: (
+      label: [number, number],
+      labelOptions?: LabelOptionsBase,
+      emitComponentsAs?: ComponentEmitType
+    ) => string;
+    point3dLabel: (
+      label: [number, number, number],
+      labelOptions?: LabelOptionsBase,
+      emitComponentsAs?: ComponentEmitType
+    ) => string;
+    complexNumberLabel: (
+      label: [number, number],
+      labelOptions?: LabelOptionsBase & {
+        alwaysEmitImaginary?: boolean;
+      },
+      emitComponentsAs?: ComponentEmitType
     ) => string;
   };
   migrateToLatest: (s: GraphState) => GraphState;
