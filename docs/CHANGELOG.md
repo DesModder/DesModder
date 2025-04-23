@@ -1,5 +1,22 @@
 # DesModder Changelog
 
+## 0.14.6
+
+New features:
+
+- (Video Creator) Support exporting as WebP, an image format that happens to support video, similar to APNG and GIF.
+
+Bug fixes:
+
+- Fix coloring of the pillbox buttons.
+- (Better Evaluation View) Show points in lists as points rather than complex.
+- (GLesmos) Fix replacement error
+- (Syntax Highlighting) Do not highlight inside base case suggestions.
+
+Translations:
+
+- Updates to Japanese translations.
+
 ## 0.14.5
 
 New features:
