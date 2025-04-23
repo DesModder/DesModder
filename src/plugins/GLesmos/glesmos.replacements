@@ -124,23 +124,25 @@ window.DesModder?.drawGLesmosSketchToCtx?.(window.Calc.controller, $drawCtx, $sk
 
 *Description* `Pass GLesmos flag to the web worker`
 
-*Find*
+*Find* => `addStatement`
 ```js
 addStatement($stmt) {
-  __body__
+  this.applyToChangeSets(__callback__)
 }
 ```
 
-*Replace* `body` with
+*Replace* `addStatement` with
 ```js
-if ($stmt.type === "statement" && DSM.glesmos?.isGlesmosMode($stmt.id)) {
-  $stmt = {
-    ...$stmt,
-    glesmos: true,
-    glesmosLinesConfirmed: DSM.glesmos?.isGLesmosLinesConfirmed($stmt.id)
+addStatement($stmt) {
+  if ($stmt.type === "statement" && DSM.glesmos?.isGlesmosMode($stmt.id)) {
+    $stmt = {
+      ...$stmt,
+      glesmos: true,
+      glesmosLinesConfirmed: DSM.glesmos?.isGLesmosLinesConfirmed($stmt.id)
+    }
   }
+  this.applyToChangeSets(__callback__)
 }
-__body__
 ```
 
 ## Replace quadtree implicit tracing with glesmos compilation
