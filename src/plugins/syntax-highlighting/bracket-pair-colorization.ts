@@ -41,9 +41,10 @@ export function generateBracketPairColorizationCSS(
         color: ${colorMaker};
     }
     `,
-    // Reset color on children of a \textcolor{} in label or expression
+    // Reset color on children of a \textcolor{} or base case in label or expression
     `
-    .dcg-mq-textcolor .dcg-mq-bracket-container {
+    .dcg-mq-textcolor .dcg-mq-bracket-container,
+    .dcg-base-case-btn .dcg-mq-bracket-container {
       color: unset;
     }
     `,
@@ -65,9 +66,10 @@ export function generateBracketPairColorizationCSS(
         color: unset
     }
     `,
-    // Reset color on children of a \textcolor{} in label or expression
+    // Reset color on children of a \textcolor{} or base case in label or expression
     `
-    .dcg-mq-textcolor .dsm-mq-syntax-comma {
+    .dcg-mq-textcolor .dsm-mq-syntax-comma,
+    .dcg-base-case-btn .dsm-mq-syntax-comma {
       color: unset;
     }
     `,
