@@ -25,7 +25,8 @@ If you're looking for in-depth development documentation, see:
 First follow the instructions above in "Setup Environment".
 
 1. You will want the Prettier and Typescript packages installed for your editor.
-   - VS Code comes bundled with Typescript support. Its Prettier extension is called "Prettier - Code Formatter," and I suggest the settings
+   - VS Code comes bundled with Typescript support.
+   - VS Code should automatically suggest installing the Prettier extension. If not, its Prettier extension is called [`Prettier - Code Formatter`](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode), and I suggest the settings
      ```json
      "editor.formatOnSave": true,
      "editor.defaultFormatter": "esbenp.prettier-vscode"
