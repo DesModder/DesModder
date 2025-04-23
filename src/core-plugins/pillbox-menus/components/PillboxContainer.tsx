@@ -52,13 +52,6 @@ export default class PillboxContainer extends Component<{
                   role="button"
                   onTap={() => this.onTapMenuButton(id)}
                   // TODO: manageFocus?
-                  style={() =>
-                    this.horizontal
-                      ? {}
-                      : {
-                          background: this.pm.cc.getPillboxBackgroundColor(),
-                        }
-                  }
                 >
                   <i class={() => this.pm.pillboxButtons[id].iconClass ?? ""} />
                 </div>
