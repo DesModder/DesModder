@@ -29,12 +29,25 @@ function runDesModder() {
 }
 
 function getCalcDesktopURL() {
-  const script: HTMLScriptElement | null =
-    document.querySelector("script[src*='shared_calculator_desktop']") ??
-    document.querySelector("script[src*='calculator_desktop']") ??
-    document.querySelector("script[src*='calculator_geometry']") ??
-    document.querySelector("script[src*='calculator_3d']");
-  return script?.src;
+  // Poll until the calculator script tag is present
+  return new Promise<string>((resolve, reject) => {
+    let tries = 0;
+    function check() {
+      const script: HTMLScriptElement | null =
+        document.querySelector("script[src*='shared_calculator_desktop']") ??
+        document.querySelector("script[src*='calculator_desktop']") ??
+        document.querySelector("script[src*='calculator_geometry']") ??
+        document.querySelector("script[src*='calculator_3d']");
+      if (script?.src) {
+        resolve(script.src);
+      } else if (++tries > 500) {
+        reject(new Error("Could not find calculator script tag"));
+      } else {
+        setTimeout(check, 10);
+      }
+    }
+    check();
+  });
 }
 
 async function load(pluginsForceDisabled: Set<string>) {
@@ -66,7 +79,8 @@ async function load(pluginsForceDisabled: Set<string>) {
     "color: #388c46; font-weight: bold; font-size: 2em;"
   );
 
-  const srcURL = await pollForValue(getCalcDesktopURL);
+  // const srcURL = await pollForValue(getCalcDesktopURL);
+  const srcURL = await getCalcDesktopURL();
   /* we blocked calculator_desktop.js earlier to ensure that the preload/override script runs first.
   Now we load it, but with '?' appended to prevent the web request rules from blocking it */
   const calcDesktop = await (await fetch(srcURL + "?")).text();
