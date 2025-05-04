@@ -5,7 +5,7 @@ import {
   listenToMessageDown,
   arrayToSet,
 } from "#utils/messages.ts";
-import { pollForValue } from "#utils/utils.ts";
+import { pollForValue } from "#utils/utils.ts"; // This can be removed with the new change.
 import { addForceDisabled } from "../panic/panic";
 import moduleReplacements from "./moduleReplacements";
 import { insertElement, replaceElement } from "./replaceElement";
