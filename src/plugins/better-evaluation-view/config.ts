@@ -9,7 +9,7 @@ export const configList: ConfigItem[] = [
   {
     key: "lists",
     type: "boolean",
-    default: true,
+    default: false,
   },
   {
     key: "colors",
