@@ -40,7 +40,7 @@ DSM.insertElement(() => DSM.textMode?.textModeToggle()),
 DSM.insertElement(
   () => (
     !this.controller.getGraphSettings().config.graphpaper
-      && DSM.pillboxMenus?.pillboxButtonsView(true)
+      && DSM.pillboxMenus?.pillboxContainerView(true)
   )
 )
 ```

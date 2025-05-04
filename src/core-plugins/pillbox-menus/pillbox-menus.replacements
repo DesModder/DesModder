@@ -14,20 +14,24 @@ this.shouldShowGeometrySettings() && $right.push("settings-geo"),
 *Replace* `pushkey` with
 ```js
 __pushkey__
-DSM.pillboxMenus && $right.push("dsm-pillbox-menus"),
+DSM.pillboxMenus?.pushToPillboxList($right),
 ```
 
 *Find* => `case`
 ```js
-case "settings2d":
-  return $createElement($, ____);
+switch ($buttonId) {
+  case "settings2d":
+    return $createElement($, ____);
 ```
 
 *Replace* `case` with
 ```js
 __case__
-case "dsm-pillbox-menus":
-  return DSM.insertElement(() => DSM.pillboxMenus?.pillboxButtonsView(false));
+  default:
+    if ($buttonId.startsWith("dsm-"))
+      return DSM.insertElement(() => DSM.pillboxMenus?.pillboxButtonView($buttonId.slice(4), false));
+    console.warn("Unhandled pillbox button type");
+    return $createElement("span", {});
 ```
 
 ## Bottom zero for our pillbox menus
@@ -43,27 +47,6 @@ this.controller.isGraphSettingsOpen() ? `bottom: ${$e}px;` : "bottom: auto"
 ```js
 this.controller.isGraphSettingsOpen() || DSM.pillboxMenus?.isSomePillboxMenuOpen()
   ? `bottom: ${$e}px;` : "bottom: auto;"
-```
-
-## Add popover view for geometry
-
-*Description* `Allow showing pillbox menus (like the video creator menu) in the geometry calculator`
-
-*Find* => `from`
-```js
-$createElement($If, {
-  predicate: () =>
-    this.controller.isGeoUIActive() &&
-    this.controller.getGraphSettings().config.settingsMenu &&
-    this.controller.isGraphSettingsOpen(),
-  ____
-} ____)
-```
-
-*Replace* `from` with
-```js
-__from__,
-DSM.insertElement(() => DSM.pillboxMenus?.pillboxMenuView(true))
 ```
 
 ## Tweak placement of existing settings menu in geometry
