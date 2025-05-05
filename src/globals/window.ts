@@ -14,7 +14,7 @@ import {
   MathQuillConfig,
 } from "../components/desmosComponents";
 import { GenericSettings, PluginID } from "../plugins";
-import { ItemModel } from "./models";
+import { ItemModel, ValueType, ValueTypeMap } from "./models";
 import { GraphState } from "../../graph-state";
 
 export interface DWindow extends Window {
@@ -61,21 +61,21 @@ type ComponentEmitType = "decimalString" | "latex" | (string & {});
 interface Mathtools {
   Label: {
     truncatedLatexLabel: (
-      label: number,
+      label: ValueTypeMap[ValueType.Number],
       labelOptions?: LabelOptionsBase
     ) => string;
     pointLabel: (
-      label: [number, number],
+      label: ValueTypeMap[ValueType.Point],
       labelOptions?: LabelOptionsBase,
       emitComponentsAs?: ComponentEmitType
     ) => string;
     point3dLabel: (
-      label: [number, number, number],
+      label: ValueTypeMap[ValueType.Point3D],
       labelOptions?: LabelOptionsBase,
       emitComponentsAs?: ComponentEmitType
     ) => string;
     complexNumberLabel: (
-      label: [number, number],
+      label: ValueTypeMap[ValueType.Complex],
       labelOptions?: LabelOptionsBase & {
         alwaysEmitImaginary?: boolean;
       },
