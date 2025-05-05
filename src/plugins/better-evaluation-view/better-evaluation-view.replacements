@@ -118,21 +118,12 @@ Add a value field to "undefined" labels
 if (isNaN($val) || !isFinite($val)) return { type: "undefined" }
 ```
 
-Format complex numbers nicely
-
-*Find*
-```js
-complexNumberLabel: () => $complexNumberLabel,
-```
-
 *Replace* `undefined` with
 ```js
 if (isNaN($val) || !isFinite($val))
   return {
     type: "decimal",
-    value: Array.isArray($val) && $val.length == 2
-      ? $complexNumberLabel($val, {digits: 5})
-      : isNaN($val)
+    value: isNaN($val)
       ? "\\mathrm{NaN}"
       : $val === Infinity
       ? "\\infty"
