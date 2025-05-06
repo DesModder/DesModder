@@ -13,7 +13,7 @@
 
     "target": "es2020",
     "module": "ESNext",
-    "lib": ["ES2024.Object"],
+    "lib": ["ES2024.Object", "ES2023.Array"],
     "baseUrl": ".",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,

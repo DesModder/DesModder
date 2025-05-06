@@ -1,7 +1,8 @@
 import { PluginController } from "../PluginController";
 import { format } from "#i18n";
-import type { DispatchedEvent } from "#globals";
+import type { DispatchedEvent, ItemModel } from "#globals";
 import type { AtLeastOne } from "#utils/utils.ts";
+import { ID_METADATA_FOLDER } from "#metadata/manage.ts";
 
 export default class PasteImage extends PluginController {
   static id = "paste-image" as const;
@@ -48,11 +49,25 @@ export default class PasteImage extends PluginController {
           })
         );
       if (!imageFiles) return;
-      if (!this.calc.isAnyExpressionSelected) {
-        if (document.activeElement !== document.body) return;
-        // Avoid images being inserted at the top of the expressions list when there is no selected expression
-        const lastExprId = this.calc.getExpressions().at(-1)?.id;
-        if (lastExprId) this.setFocusLocation(lastExprId);
+      const geoFolderId = this.cc.getGeometryFolder()?.id;
+      const folderIdDenyList = [ID_METADATA_FOLDER].concat(geoFolderId ?? []);
+      const isInOrIsSpecialFolder = (model: ItemModel) =>
+        folderIdDenyList.includes(model.id) ||
+        (model.folderId && folderIdDenyList.includes(model.folderId));
+      const selectedItem = this.cc.getSelectedItem();
+      // Do nothing when the focused element is not an expression textarea
+      if (!selectedItem && document.activeElement !== document.body) return;
+      if (!selectedItem || isInOrIsSpecialFolder(selectedItem)) {
+        // Avoid images accidentally going into special folders,
+        // and being inserted at the top of the expression list when there is no selected expression
+        const lastExprInRegularFolder = this.cc
+          .getAllItemModels()
+          .findLast((model) => !isInOrIsSpecialFolder(model));
+        if (lastExprInRegularFolder) {
+          this.setFocusLocation(lastExprInRegularFolder.id);
+        } else {
+          this.cc.dispatch({ type: "new-expression-at-end" });
+        }
       }
       e.preventDefault();
       this.waitForImageUploads({
