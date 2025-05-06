@@ -1,20 +1,20 @@
 /* eslint-disable no-console */
-import { ReplacementResult, applyReplacements } from "./applyReplacement";
-import { Block } from "./parse";
+import { fullReplacement } from "../../apply-replacements/applyReplacement";
+import { Block } from "../../apply-replacements/parse";
 import { IDBPDatabase, openDB, deleteDB } from "idb";
-import jsTokens from "js-tokens";
 
 const CACHE_STORE = "replacement_store";
 const CACHE_KEY = "replacement_cached";
 
 interface ReplacementOpts {
-  addPanic: (b: Block) => void /**
+  addPanic: (b: Block) => void;
+  /**
   /*
   * The replacement functions doesn't actually append the `workerAppend` string,
   * it just uses it for a cache key. The function does add a `${window.dsm_workerAppend}`
   * in the worker string, so the expectation is that `window.dsm_workerAppend` is
   * set on the window before the new worker string is evaluated.
-  */;
+  */
   workerAppend: string;
 }
 
@@ -58,7 +58,6 @@ export async function fullReplacementCached(
   // cache miss :(
   let somePanic = false;
   const result = fullReplacement(calcDesktop, enabledReplacements, {
-    ...replOpts,
     addPanic: (b) => {
       somePanic = true;
       replOpts.addPanic(b);
@@ -95,85 +94,6 @@ async function setCache(db: IDBPDatabase, obj: Cached) {
         "but could indicate a problem in a regular window"
     );
   }
-}
-
-function fullReplacement(
-  calcDesktop: string,
-  enabledReplacements: Block[],
-  replOpts: ReplacementOpts
-) {
-  const tokens = Array.from(jsTokens(calcDesktop));
-  const sharedModuleTokens = tokens.filter(
-    (x) =>
-      x.type === "StringLiteral" &&
-      x.value.length > 200000 &&
-      // JS is sure to have &&. Protects against translations getting longer
-      // than the length cutoff, which is intentionally low in case of huge
-      // improvements in minification.
-      x.value.includes("&&")
-  );
-  let workerResult: ReplacementResult;
-  if (sharedModuleTokens.length !== 1) {
-    console.warn(
-      "More than one large JS string found, which is the shared module?"
-    );
-    // no-op
-    workerResult = {
-      successful: new Set(),
-      failed: new Map(
-        enabledReplacements.map(
-          (b) =>
-            [b, `Not reached: ${b.heading}. Maybe no worker builder?`] as const
-        )
-      ),
-      value: calcDesktop,
-    };
-  } else {
-    const [sharedModuleToken] = sharedModuleTokens;
-    workerResult = applyReplacements(
-      enabledReplacements.filter((x) => x.workerOnly),
-      // JSON.parse doesn't work because this is a single-quoted string.
-      // js-tokens tokenized this as a string anyway, so it should be
-      // safely eval'able to a string.
-      // eslint-disable-next-line no-eval
-      (0, eval)(sharedModuleToken.value) as string
-    );
-    sharedModuleToken.value = JSON.stringify(workerResult.value);
-  }
-  const wbTokenHead = tokens.find(
-    (x) =>
-      x.type === "NoSubstitutionTemplate" &&
-      x.value.includes("const __dcg_worker_module__ =")
-  );
-  const wbTokenTail = tokens.find(
-    (x) =>
-      x.type === "TemplateTail" &&
-      x.value.includes(
-        "__dcg_worker_module__(__dcg_worker_shared_module_exports__);"
-      )
-  );
-  if (wbTokenTail === undefined || wbTokenHead === undefined) {
-    console.warn("Failed to find valid worker builder.");
-  } else {
-    wbTokenHead.value =
-      // eslint-disable-next-line no-template-curly-in-string
-      "`function loadDesModderWorker(){${window.dsm_workerAppend}}" +
-      wbTokenHead.value.slice(1);
-    wbTokenTail.value =
-      wbTokenTail.value.slice(0, -1) + "\n loadDesModderWorker();`";
-  }
-  const srcWithWorkerAppend = tokens.map((x) => x.value).join("");
-  const mainResult = applyReplacements(
-    enabledReplacements.filter((x) => !x.workerOnly),
-    srcWithWorkerAppend
-  );
-  const failed = [...workerResult.failed].concat([...mainResult.failed]);
-
-  for (const [b, e] of failed) {
-    console.warn(e);
-    replOpts.addPanic(b);
-  }
-  return mainResult.value;
 }
 
 // https://github.com/bryc/code/blob/fed42df9db547493452e32375c93d7854383e480/jshash/experimental/cyrb53.js

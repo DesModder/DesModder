@@ -6,16 +6,8 @@
     { "path": "../text-mode-core" },
     { "path": "../localization" },
     { "path": "../parsing" },
-    { "path": "../metadata" }
+    { "path": "../metadata" },
+    { "path": "../apply-replacements" }
   ],
-  "include": [
-    "**/*",
-    "../replacementHelpers",
-    "../apply-replacements/append.inline.ts",
-    "../apply-replacements/applyReplacement.ts",
-    "../apply-replacements/cacheReplacement.ts",
-    "../apply-replacements/errors.ts",
-    "../apply-replacements/parse.ts",
-    "../apply-replacements/tokenize.ts"
-  ]
+  "include": ["**/*"]
 }

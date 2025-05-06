@@ -9,7 +9,7 @@ import { pollForValue } from "#utils/utils.ts";
 import { addForceDisabled, addPanic } from "../panic/panic";
 import moduleReplacements, { workerAppend } from "./moduleReplacements";
 import { insertElement, replaceElement } from "./replaceElement";
-import { fullReplacementCached } from "../../apply-replacements/cacheReplacement";
+import { fullReplacementCached } from "./cacheReplacement";
 
 /* This script is loaded at document_start, before the page's scripts */
 

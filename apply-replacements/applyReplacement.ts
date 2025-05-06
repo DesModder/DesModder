@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { ReplacementError } from "./errors";
 import { Command, Block } from "./parse";
 import { PatternToken, patternTokens } from "./tokenize";
@@ -9,12 +10,88 @@ export interface ReplacementResult {
   value: string;
 }
 
+export function fullReplacement(
+  calcDesktop: string,
+  enabledReplacements: Block[],
+  replOpts: { addPanic: (b: Block) => void }
+) {
+  const tokens = Array.from(jsTokens(calcDesktop));
+  const sharedModuleTokens = tokens.filter(
+    (x) =>
+      x.type === "StringLiteral" &&
+      x.value.length > 200000 &&
+      // JS is sure to have &&. Protects against translations getting longer
+      // than the length cutoff, which is intentionally low in case of huge
+      // improvements in minification.
+      x.value.includes("&&")
+  );
+  let workerResult: ReplacementResult;
+  if (sharedModuleTokens.length !== 1) {
+    console.warn(
+      "More than one large JS string found, which is the shared module?"
+    );
+    // no-op
+    workerResult = {
+      successful: new Set(),
+      failed: new Map(
+        enabledReplacements.map(
+          (b) =>
+            [b, `Not reached: ${b.heading}. Maybe no worker builder?`] as const
+        )
+      ),
+      value: calcDesktop,
+    };
+  } else {
+    const [sharedModuleToken] = sharedModuleTokens;
+    workerResult = applyReplacements(
+      enabledReplacements.filter((x) => x.workerOnly),
+      // JSON.parse doesn't work because this is a single-quoted string.
+      // js-tokens tokenized this as a string anyway, so it should be
+      // safely eval'able to a string.
+      // eslint-disable-next-line no-eval
+      (0, eval)(sharedModuleToken.value) as string
+    );
+    sharedModuleToken.value = JSON.stringify(workerResult.value);
+  }
+  const wbTokenHead = tokens.find(
+    (x) =>
+      x.type === "NoSubstitutionTemplate" &&
+      x.value.includes("const __dcg_worker_module__ =")
+  );
+  const wbTokenTail = tokens.find(
+    (x) =>
+      x.type === "TemplateTail" &&
+      x.value.includes(
+        "__dcg_worker_module__(__dcg_worker_shared_module_exports__);"
+      )
+  );
+  if (wbTokenTail === undefined || wbTokenHead === undefined) {
+    console.warn("Failed to find valid worker builder.");
+  } else {
+    wbTokenHead.value =
+      // eslint-disable-next-line no-template-curly-in-string
+      "`function loadDesModderWorker(){${window.dsm_workerAppend}}" +
+      wbTokenHead.value.slice(1);
+    wbTokenTail.value =
+      wbTokenTail.value.slice(0, -1) + "\n loadDesModderWorker();`";
+  }
+  const srcWithWorkerAppend = tokens.map((x) => x.value).join("");
+  const mainResult = applyReplacements(
+    enabledReplacements.filter((x) => !x.workerOnly),
+    srcWithWorkerAppend
+  );
+  const failed = [...workerResult.failed].concat([...mainResult.failed]);
+
+  for (const [b, e] of failed) {
+    console.warn(e);
+    replOpts.addPanic(b);
+  }
+  return mainResult.value;
+}
+
 /** Apply a list of replacements to a source file. The main return is the .value,
  * We keep track of .failed and .successful */
-export function applyReplacements(
-  repls: Block[],
-  file: string
-): ReplacementResult {
+function applyReplacements(repls: Block[], file: string): ReplacementResult {
   const replaced = applyStringReplacements(repls, Array.from(jsTokens(file)));
   return { ...replaced, value: replaced.value.map((t) => t.value).join("") };
 }
