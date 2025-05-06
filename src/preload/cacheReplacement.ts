@@ -1,7 +1,7 @@
-/* eslint-disable no-console */
 import { fullReplacement } from "../../apply-replacements/applyReplacement";
 import { Block } from "../../apply-replacements/parse";
 import { IDBPDatabase, openDB, deleteDB } from "idb";
+import { Console } from "../globals";
 
 const CACHE_STORE = "replacement_store";
 const CACHE_KEY = "replacement_cached";
@@ -56,17 +56,26 @@ export async function fullReplacementCached(
     return cached.result;
   }
   // cache miss :(
-  let somePanic = false;
-  const result = fullReplacement(calcDesktop, enabledReplacements, {
-    addPanic: (b) => {
-      somePanic = true;
-      replOpts.addPanic(b);
-    },
-  });
+  let good = true;
+  const result = fullReplacement(calcDesktop, enabledReplacements);
+  for (const e of result.otherErrors) {
+    good = false;
+    Console.warn(e);
+  }
+  for (const [b, e] of result.blockFailures) {
+    good = false;
+    Console.warn(e);
+    replOpts.addPanic(b);
+  }
   // cache if there's no panics
-  if (!somePanic)
-    void setCache(db, { hashRepls, hashFile, hashAppend, result });
-  return result;
+  if (good)
+    void setCache(db, {
+      hashRepls,
+      hashFile,
+      hashAppend,
+      result: result.newCode,
+    });
+  return result.newCode;
 }
 
 interface Cached {
@@ -89,7 +98,7 @@ async function setCache(db: IDBPDatabase, obj: Cached) {
     // It's value and then key. Weird.
     await db.put(CACHE_STORE, obj, CACHE_KEY);
   } catch {
-    console.warn(
+    Console.warn(
       "Failed to cache replacement. This is expected in a Private Window " +
         "but could indicate a problem in a regular window"
     );

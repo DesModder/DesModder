@@ -1,20 +1,25 @@
-/* eslint-disable no-console */
 import { ReplacementError } from "./errors";
 import { Command, Block } from "./parse";
 import { PatternToken, patternTokens } from "./tokenize";
 import jsTokens, { Token } from "js-tokens";
 
-export interface ReplacementResult {
+interface ReplacementResult {
   successful: Set<Block>;
+  /** Map from `Block` to `string` error message. */
   failed: Map<Block, string>;
   value: string;
 }
 
+export interface FullReplacementResult {
+  newCode: string;
+  blockFailures: [block: Block, errorMsg: string][];
+  otherErrors: string[];
+}
+
 export function fullReplacement(
   calcDesktop: string,
-  enabledReplacements: Block[],
-  replOpts: { addPanic: (b: Block) => void }
-) {
+  enabledReplacements: Block[]
+): FullReplacementResult {
   const tokens = Array.from(jsTokens(calcDesktop));
   const sharedModuleTokens = tokens.filter(
     (x) =>
@@ -26,8 +31,9 @@ export function fullReplacement(
       x.value.includes("&&")
   );
   let workerResult: ReplacementResult;
+  const otherErrors = [];
   if (sharedModuleTokens.length !== 1) {
-    console.warn(
+    otherErrors.push(
       "More than one large JS string found, which is the shared module?"
     );
     // no-op
@@ -66,7 +72,7 @@ export function fullReplacement(
       )
   );
   if (wbTokenTail === undefined || wbTokenHead === undefined) {
-    console.warn("Failed to find valid worker builder.");
+    otherErrors.push("Failed to find valid worker builder.");
   } else {
     wbTokenHead.value =
       // eslint-disable-next-line no-template-curly-in-string
@@ -80,13 +86,13 @@ export function fullReplacement(
     enabledReplacements.filter((x) => !x.workerOnly),
     srcWithWorkerAppend
   );
-  const failed = [...workerResult.failed].concat([...mainResult.failed]);
+  const blockFailures = [...workerResult.failed].concat([...mainResult.failed]);
 
-  for (const [b, e] of failed) {
-    console.warn(e);
-    replOpts.addPanic(b);
-  }
-  return mainResult.value;
+  return {
+    newCode: mainResult.value,
+    blockFailures,
+    otherErrors: [],
+  };
 }
 
 /** Apply a list of replacements to a source file. The main return is the .value,
