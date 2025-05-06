@@ -9,5 +9,16 @@
     { "path": "../parsing" },
     { "path": "../graph-state" }
   ],
-  "include": ["**/*", "../src", "../loaders/utils.mjs"]
+  "include": [
+    "**/*",
+    "../src",
+    "../loaders/utils.mjs",
+    "../replacementHelpers",
+    "../apply-replacements/append.inline.ts",
+    "../apply-replacements/applyReplacement.ts",
+    "../apply-replacements/cacheReplacement.ts",
+    "../apply-replacements/errors.ts",
+    "../apply-replacements/parse.ts",
+    "../apply-replacements/tokenize.ts"
+  ]
 }

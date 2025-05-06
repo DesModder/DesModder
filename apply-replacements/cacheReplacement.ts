@@ -1,5 +1,4 @@
-import { Console } from "../../globals/window";
-import { addPanic, panickedPlugins } from "../../panic/panic";
+/* eslint-disable no-console */
 import workerAppend from "./append.inline";
 import { ReplacementResult, applyReplacements } from "./applyReplacement";
 import { Block } from "./parse";
@@ -8,6 +7,10 @@ import jsTokens from "js-tokens";
 
 const CACHE_STORE = "replacement_store";
 const CACHE_KEY = "replacement_cached";
+
+interface ReplacementOpts {
+  addPanic: (b: Block) => void;
+}
 
 // We used to use idb-keyval, which forced a particular db name and schema.
 // Deleting it saves about 7MB of disk.
@@ -24,7 +27,8 @@ async function deleteOldDB() {
  */
 export async function fullReplacementCached(
   calcDesktop: string,
-  enabledReplacements: Block[]
+  enabledReplacements: Block[],
+  replOpts: ReplacementOpts
 ): Promise<string> {
   void deleteOldDB();
   (window as any).dsm_workerAppend = workerAppend;
@@ -47,9 +51,15 @@ export async function fullReplacementCached(
     return cached.result;
   }
   // cache miss :(
-  const result = fullReplacement(calcDesktop, enabledReplacements);
+  let somePanic = false;
+  const result = fullReplacement(calcDesktop, enabledReplacements, {
+    addPanic: (b) => {
+      somePanic = true;
+      replOpts.addPanic(b);
+    },
+  });
   // cache if there's no panics
-  if (panickedPlugins.size === 0)
+  if (!somePanic)
     void setCache(db, { hashRepls, hashFile, hashAppend, result });
   return result;
 }
@@ -74,14 +84,18 @@ async function setCache(db: IDBPDatabase, obj: Cached) {
     // It's value and then key. Weird.
     await db.put(CACHE_STORE, obj, CACHE_KEY);
   } catch {
-    Console.warn(
+    console.warn(
       "Failed to cache replacement. This is expected in a Private Window " +
         "but could indicate a problem in a regular window"
     );
   }
 }
 
-function fullReplacement(calcDesktop: string, enabledReplacements: Block[]) {
+function fullReplacement(
+  calcDesktop: string,
+  enabledReplacements: Block[],
+  replOpts: ReplacementOpts
+) {
   const tokens = Array.from(jsTokens(calcDesktop));
   const sharedModuleTokens = tokens.filter(
     (x) =>
@@ -94,7 +108,7 @@ function fullReplacement(calcDesktop: string, enabledReplacements: Block[]) {
   );
   let workerResult: ReplacementResult;
   if (sharedModuleTokens.length !== 1) {
-    Console.warn(
+    console.warn(
       "More than one large JS string found, which is the shared module?"
     );
     // no-op
@@ -133,7 +147,7 @@ function fullReplacement(calcDesktop: string, enabledReplacements: Block[]) {
       )
   );
   if (wbTokenTail === undefined || wbTokenHead === undefined) {
-    Console.warn("Failed to find valid worker builder.");
+    console.warn("Failed to find valid worker builder.");
   } else {
     wbTokenHead.value =
       // eslint-disable-next-line no-template-curly-in-string
@@ -150,8 +164,8 @@ function fullReplacement(calcDesktop: string, enabledReplacements: Block[]) {
   const failed = [...workerResult.failed].concat([...mainResult.failed]);
 
   for (const [b, e] of failed) {
-    Console.warn(e);
-    addPanic(b);
+    console.warn(e);
+    replOpts.addPanic(b);
   }
   return mainResult.value;
 }

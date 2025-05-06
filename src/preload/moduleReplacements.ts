@@ -1,6 +1,6 @@
 import replacementStrings from "#plugins/index-replacements.ts";
 import { Console } from "../globals/window";
-import parseFile, { Block } from "./replacementHelpers/parse";
+import parseFile, { Block } from "../../apply-replacements/parse";
 
 const replacements: Block[] = [];
 
