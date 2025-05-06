@@ -7,7 +7,7 @@ import {
 } from "#utils/messages.ts";
 import { pollForValue } from "#utils/utils.ts";
 import { addForceDisabled, addPanic } from "../panic/panic";
-import moduleReplacements from "./moduleReplacements";
+import moduleReplacements, { workerAppend } from "./moduleReplacements";
 import { insertElement, replaceElement } from "./replaceElement";
 import { fullReplacementCached } from "../../apply-replacements/cacheReplacement";
 
@@ -78,10 +78,11 @@ async function load(pluginsForceDisabled: Set<string>) {
   const newCode = await fullReplacementCached(
     calcDesktop,
     enabledReplacements,
-    { addPanic }
+    { addPanic, workerAppend }
   );
   // tryRunDesModder polls until the following eval'd code is done.
   tryRunDesModder();
+  (window as any).dsm_workerAppend = workerAppend;
   // eslint-disable-next-line no-eval
   (0, eval)(newCode);
   delete (window as any).dsm_workerAppend;

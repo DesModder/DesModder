@@ -1,4 +1,4 @@
-import { Console } from "../src/globals/window";
+/* eslint-disable no-console */
 import { ReplacementError } from "./errors";
 import jsTokens, { Token } from "js-tokens";
 
@@ -119,7 +119,7 @@ function* _patternTokens(str: string, msg: string): Generator<PatternToken> {
       const probablyFine = dotAccessName || propertyName;
       // This may be a global/local variable, and it might be brittle
       if (!probablyFine && !allowedIDs.has(token.value)) {
-        Console.warn(
+        console.warn(
           `Identifier '${token.value}' in '${msg}' may depend on specific minified naming. ` +
             "Prepend a '$' to indicate you want to match any identifier, or " +
             "lengthen it to longer than 3 letters, or " +

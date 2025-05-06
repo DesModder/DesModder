@@ -14,6 +14,7 @@
     { "path": "./text-mode-core" },
     { "path": "./localization" },
     { "path": "./parsing" },
-    { "path": "./src" }
+    { "path": "./src" },
+    { "path": "./apply-replacements" }
   ]
 }

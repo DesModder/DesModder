@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-import workerAppend from "./append.inline";
 import { ReplacementResult, applyReplacements } from "./applyReplacement";
 import { Block } from "./parse";
 import { IDBPDatabase, openDB, deleteDB } from "idb";
@@ -9,7 +8,14 @@ const CACHE_STORE = "replacement_store";
 const CACHE_KEY = "replacement_cached";
 
 interface ReplacementOpts {
-  addPanic: (b: Block) => void;
+  addPanic: (b: Block) => void /**
+  /*
+  * The replacement functions doesn't actually append the `workerAppend` string,
+  * it just uses it for a cache key. The function does add a `${window.dsm_workerAppend}`
+  * in the worker string, so the expectation is that `window.dsm_workerAppend` is
+  * set on the window before the new worker string is evaluated.
+  */;
+  workerAppend: string;
 }
 
 // We used to use idb-keyval, which forced a particular db name and schema.
@@ -31,7 +37,6 @@ export async function fullReplacementCached(
   replOpts: ReplacementOpts
 ): Promise<string> {
   void deleteOldDB();
-  (window as any).dsm_workerAppend = workerAppend;
   const db = await openDB("cached-replacement-store", 1, {
     upgrade(db) {
       db.createObjectStore(CACHE_STORE);
@@ -40,7 +45,7 @@ export async function fullReplacementCached(
   const cached = await getCache(db);
   const hashRepls = cyrb53(JSON.stringify(enabledReplacements));
   const hashFile = cyrb53(calcDesktop);
-  const hashAppend = cyrb53(workerAppend);
+  const hashAppend = cyrb53(replOpts.workerAppend);
   if (
     cached !== undefined &&
     cached.hashRepls === hashRepls &&
@@ -53,6 +58,7 @@ export async function fullReplacementCached(
   // cache miss :(
   let somePanic = false;
   const result = fullReplacement(calcDesktop, enabledReplacements, {
+    ...replOpts,
     addPanic: (b) => {
       somePanic = true;
       replOpts.addPanic(b);
