@@ -2,6 +2,8 @@ import Metadata from "#metadata/interface.ts";
 import { migrateToLatestMaybe } from "#metadata/migrate.ts";
 import {
   getBlankMetadata,
+  ID_METADATA,
+  ID_METADATA_FOLDER,
   isBlankMetadata,
   mergeMetadata,
   metadataWithIdsMapped,
@@ -26,9 +28,6 @@ The text content of dsm-metadata is in JSON format
 There used to be a folder with ID "dsm-metadata-folder". We no longer use it
 and instead remove the folder from existing graphs.
 */
-
-const ID_METADATA = "dsm-metadata";
-const ID_METADATA_FOLDER = "dsm-metadata-folder";
 
 function getMetadataExpr(cc: CalcController) {
   return cc.getItemModel(ID_METADATA);
