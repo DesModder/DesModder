@@ -1,0 +1,562 @@
+body.dark {
+  ::selection {
+    background-color: fade(#fff, 30%);
+  }
+
+  input,
+  textarea {
+    &::placeholder {
+      color: #eee !important;
+    }
+  }
+
+  .dcg-desmos-svg-logo g {
+    fill: #fff;
+  }
+
+  .dcg-expression-top-bar {
+    border-right-color: #888 !important;
+    border-bottom-color: #888 !important;
+  }
+
+  .user-info {
+    border-bottom-color: #888 !important;
+  }
+
+  .dcg-exppanel-container {
+    --dcg-item-background-color: #333;
+    background: #333;
+  }
+
+  *:not(.dcg-btn-short-blue)
+    > *
+    > i:not(
+      .dcg-shared-product-icon,
+      .dcg-icon-error,
+      .dcg-icon-point,
+      .dcg-geo-basic-tools .dcg-icon-caret-down,
+      .dcg-icon-zoom-fit,
+      .dcg-icon-points,
+      .dcg-icon-arrow-two-way,
+      .dcg-expressionitem.dcg-selected .dcg-icon-create-table
+    ),
+  .dcg-powered-by,
+  .dcg-mygraphs-legal * {
+    opacity: 1 !important;
+    text-shadow: none !important;
+    color: #fff !important;
+  }
+
+  .dcg-expressionitem:not(.dcg-selected) .dcg-tab,
+  .dcg-account-reminder,
+  .search-container input,
+  .dcg-evaluation-view__wrapped-value,
+  .dcg-loading-background-div {
+    background: #2a2a2a !important;
+  }
+
+  .dcg-expressionitem.dcg-selected .dcg-tab {
+    background: #1e88e5 !important;
+
+    * {
+      color: #2a2a2a !important;
+    }
+
+    .dcg-circular-icon:not(:has(.dcg-icon-parametric-solid)) {
+      border-color: #2a2a2a !important;
+
+      i {
+        color: #2a2a2a !important;
+      }
+    }
+  }
+
+  .dcg-new-expression-fade,
+  .dcg-mq-editable-field::after,
+  .dcg-popover,
+  .dcg-options-menu,
+  .dcg-dropdown-popover__interior,
+  .dcg-arrow,
+  .dcg-table-container,
+  .dcg-mq-editing-overflow-left::before {
+    --dcg-custom-background-color: #333;
+  }
+
+  .dcg-popover .dcg-new-item,
+  .dcg-evaluation-view__equals-sign,
+  .dcg-circular-icon-container {
+    opacity: 1 !important;
+  }
+
+  .dcg-popover-interior,
+  .dcg-dropdown-popover__interior,
+  .dcg-notice--authenticate,
+  .dcg-btn-white-outline,
+  .dcg-action-save.dcg-disabled,
+  .dcg-add-blank,
+  .dcg-calc-option,
+  .dcg-end-test-button {
+    border-color: #fff !important;
+  }
+
+  .dcg-btn-white-outline.dcg-hovered,
+  .dcg-end-test-button.dcg-hovered {
+    box-shadow: 0 0 0 1px #fff !important;
+  }
+
+  .dcg-arrow::after {
+    border-bottom-color: #fff !important;
+  }
+
+  .dcg-expressionitem.dcg-selected {
+    border-color: #1e88e5 !important;
+    --dcg-item-border-color: #1e88e5 !important;
+  }
+
+  .dcg-expressionitem:not(.dcg-selected) {
+    border-top-color: #888 !important;
+  }
+
+  .dcg-popover-title,
+  .dcg-dropdown-popover__title,
+  .dcg-help-menu-title {
+    color: #1e88e5 !important;
+    background-color: transparent !important;
+    border-bottom-color: #1e88e5 !important;
+  }
+
+  .dcg-checkbox {
+    border-color: #fff !important;
+  }
+
+  .dcg-toggle-track {
+    background: #eee !important;
+  }
+
+  .dcg-toggle-switch {
+    background: #fff !important;
+  }
+
+  .dcg-toggled .dcg-toggle-switch {
+    background: #aaa !important;
+  }
+
+  .dcg-keypad-btn.dcg-btn-light-on-gray,
+  .dcg-ctrl-toggle-cover {
+    background: #2a2a2a !important;
+    border-color: #888 !important;
+  }
+
+  .dcg-keypad-btn.dcg-btn-dark-on-gray {
+    background: #222 !important;
+    border-color: #888 !important;
+  }
+
+  .dcg-btn-short-blue,
+  .dcg-btn-blue,
+  .dcg-copy-button {
+    background: #1e88e5 !important;
+    border-color: transparent !important;
+    color: #333 !important;
+
+    * {
+      color: #333 !important;
+    }
+  }
+
+  .dcg-btn-red {
+    background: #ef5350 !important;
+    border-color: none !important;
+  }
+
+  .dcg-unstyled-button.dcg-disabled {
+    color: #eee !important;
+    border-color: #eee !important;
+  }
+
+  .dcg-overgraph-icon-container {
+    background: #333;
+    border-radius: 5px;
+  }
+
+  .dcg-header,
+  .dcg-main-header-container,
+  .navbar-inner {
+    background: #222 !important;
+    border-bottom-color: #888 !important;
+
+    *:not(
+        .dcg-btn-blue,
+        .dcg-dropdown-popover__title,
+        .dcg-copy-button > span,
+        .dcg-copy-button,
+        .dcg-help-menu-title
+      ) {
+      color: #fff !important;
+    }
+  }
+
+  .dcg-variable-permalink,
+  .dcg-shared-input-blue-outline,
+  .dcg-input-blue-outline {
+    background: #2a2a2a;
+    border-color: #fff !important;
+
+    &.dcg-focus-visible {
+      box-shadow: inset 0 0 0 1px #1e88e5 !important;
+      border-color: #1e88e5 !important;
+    }
+  }
+
+  *:not(.dcg-header-right-content) > * > * > .dcg-icon-print,
+  .dcg-icon-export,
+  .dcg-icon-embed {
+    box-shadow: 0 0 0 1px #1e88e5 !important;
+  }
+
+  .dcg-hovered > .dcg-icon-print,
+  .dcg-hovered > .dcg-icon-export,
+  .dcg-hovered > .dcg-icon-embed {
+    background: fade(#1e88e5, 26%) !important;
+  }
+
+  .dcg-notice--authenticate,
+  .dcg-authentication-modal,
+  .dcg-authentication-modal__detail,
+  .dcg-btn-gray-outline.dcg-hovered,
+  .dcg-resources-container,
+  .dcg-account-link,
+  .new-blank-graph,
+  .dcg-title,
+  .dcg-mygraphs-section-title,
+  .dcg-lost-work-link,
+  .dcg-action-save.dcg-disabled,
+  .dcg-mygraphs-legal,
+  .account-name,
+  .account-email,
+  .dcg-account-container *,
+  .search-container input,
+  .dcg-icon-remove::before,
+  .dcg-tooltip-message,
+  .dcg-attempt-recovery.dcg-hovered,
+  .no-matches,
+  .dcg-basic-calculator-footer,
+  .dcg-basic-calculator-footer *,
+  .dcg-checkbox-label,
+  .dcg-input-blue-outline,
+  .dcg-shared-modal-contents-wrapper
+    *:not(
+      .dcg-btn-blue,
+      .dcg-gray-link,
+      .dcg-blue-link,
+      .dcg-shared-tab-gray-underline
+    ),
+  .dcg-start-practice-screen,
+  .dcg-calc-option,
+  .dcg-keypad-control-toggle,
+  code,
+  h3,
+  .dcg-show-more-row-interior {
+    color: #fff !important;
+  }
+
+  .dcg-shared-modal-contents-wrapper,
+  .dcg-shared-modal-title::before,
+  .dcg-authentication-modal__detail,
+  .dcg-user-bar,
+  .dcg-scrollable,
+  .dcg-expressionitem.dcg-shell,
+  .dcg-loading-div-container,
+  .dcg-mini-play-pause,
+  .graph-preview,
+  .dcg-start-practice-screen,
+  .dcg-basic-calc-practice,
+  .dcg-cell.dcg-non-editable.dcg-selected,
+  pre {
+    background: #333 !important;
+  }
+
+  .dcg-authentication-modal__divider::before,
+  .dcg-authentication-modal__divider::after {
+    border-bottom-color: #fff !important;
+  }
+
+  .dcg-btn-gray-outline {
+    background: #2a2a2a !important;
+    border-color: #888 !important;
+
+    &.dcg-hovered {
+      box-shadow: 0 0 0 1px #fff !important;
+    }
+  }
+
+  .dcg-user-bar {
+    border-bottom-color: #888 !important;
+  }
+
+  .dcg-mygraphs-section-title,
+  .graph-link-container.dcg-hovered,
+  .graph-link-container.dcg-selected .graph-link,
+  .dcg-tooltip-message,
+  .dcg-sliding-interior,
+  .dcg-keypad-control-toggle {
+    background: #222 !important;
+  }
+
+  .dcg-mygraphs-section-title-container {
+    background: #888 !important;
+  }
+
+  .dcg-circular-icon {
+    border-color: #fff !important;
+    opacity: 1 !important;
+  }
+
+  .dcg-track > .dcg-graphic {
+    background: #222 !important;
+  }
+
+  .dcg-thumb > .dcg-graphic {
+    background: fade(#1e88e5, 59%) !important;
+  }
+
+  .dcg-thumb > .dcg-center {
+    background: #1e88e5 !important;
+  }
+
+  .dcg-evaluation-view__wrapped-value,
+  .dcg-circular-icon.dcg-hidden,
+  .dcg-keypad-control-toggle {
+    border-color: #888 !important;
+    box-shadow: none !important;
+  }
+
+  .dcg-tooltip-arrow {
+    border-bottom-color: #222 !important;
+  }
+
+  .dcg-hovered > .dcg-add-blank {
+    background: fade(#fff, 26%) !important;
+  }
+
+  .dcg-icon-error {
+    color: #fff176 !important;
+  }
+
+  .dcg-action-redo.dcg-disabled,
+  .dcg-action-undo.dcg-disabled {
+    opacity: 1 !important;
+
+    i {
+      color: #8e8e8e !important;
+    }
+  }
+
+  .dcg-loading-div {
+    filter: #fff-filter !important;
+  }
+
+  .dcg-inline-math-input-view .dcg-math-field,
+  .dcg-ticker-settings-internal .dcg-math-field {
+    border-bottom-color: #ddd !important;
+
+    &.dcg-focus {
+      border-bottom-color: #1e88e5 !important;
+    }
+  }
+
+  .dcg-mq-ghost {
+    opacity: 1 !important;
+    color: #ddd;
+  }
+
+  .dcg-mq-root-block::after,
+  .dcg-action-cancel {
+    opacity: 1 !important;
+  }
+
+  .dcg-mini-play-pause,
+  .graph-preview {
+    border-color: #333 !important;
+  }
+
+  .dcg-gray-link,
+  .dcg-centered-top-link {
+    color: #1e88e5 !important;
+  }
+
+  .dcg-shared-tab-gray-underline.dcg-selected {
+    border-bottom-color: #1e88e5 !important;
+  }
+
+  .dcg-calc-option.dcg-is-selected {
+    border-color: #1e88e5 !important;
+    box-shadow: 0 0 0 1px #1e88e5 !important;
+    background: fade(#1e88e5, 13%) !important;
+  }
+
+  /* To make this !important more important than Desmos' !important */
+  @layer {
+    .dcg-mq-selection,
+    .dcg-mq-selection .dcg-mq-bracket-container *,
+    .dcg-mq-selection .dcg-mq-bracket-container,
+    .dcg-mq-selection .dcg-mq-supsub {
+      background: #1e88e5 !important;
+      color: #333 !important;
+    }
+  }
+
+  .dcg-cell.dcg-first-column,
+  .dcg-cell.dcg-interior-column {
+    border-right-color: #fff !important;
+  }
+
+  .dcg-cell.dcg-table-header {
+    border-bottom-color: #fff !important;
+  }
+
+  .dcg-cell.dcg-interior-row,
+  .dcg-show-more-row {
+    border-bottom-color: #959595 !important;
+  }
+
+  .dcg-cell.dcg-selected {
+    box-shadow: inset 0 0 0 2px #1e88e5 !important;
+
+    &:not(.dcg-computed-cell)::after,
+    .dcg-inner-border {
+      border-color: #1e88e5 !important;
+    }
+  }
+
+  .dcg-action-changeimage.dcg-hovered {
+    color: #eee !important;
+  }
+
+  .active-arrow .dcg-graphic {
+    border-right-color: #333 !important;
+  }
+
+  .dcg-row:nth-of-type(2) .dcg-cell,
+  table th,
+  table td,
+  .footer {
+    border-top-color: #fff !important;
+  }
+
+  .dcg-row .dcg-cell {
+    border-left-color: #fff !important;
+  }
+
+  .dcg-row:not(:nth-of-type(2)) .dcg-cell {
+    border-top-color: #959595 !important;
+  }
+
+  .dcg-cell .dcg-empty-line {
+    border-top-color: transparent !important;
+  }
+
+  #pageHeader.brand {
+    text-shadow: none !important;
+  }
+
+  .dcg-btn-light-gray {
+    background: #2a2a2a !important;
+    box-shadow: none !important;
+    border-color: #fff !important;
+  }
+
+  .spa-header {
+    background: #9ccc65 !important;
+    color: #333;
+
+    @layer {
+      .spa-header .dcg-icon-desmos {
+        color: #333 !important;
+      }
+    }
+
+    .state-name,
+    .test-name {
+      border-left-color: #333 !important;
+    }
+  }
+
+  --dcg-custom-text-color: #fff;
+  --dcg-custom-background-color-shaded: #333;
+
+  /* DesModder */
+  .dsm-plugin-title-bar,
+  .dsm-version-number,
+  .dsm-plugin-info-body,
+  .cm-panel {
+    color: #fff;
+  }
+
+  .cm-gutters,
+  .cm-foldPlaceholder {
+    background: #222 !important;
+  }
+
+  .ͼb {
+    color: #ba68c8 !important;
+  }
+
+  .ͼe {
+    color: #ef5350 !important;
+  }
+
+  .ͼd {
+    color: #9ccc65 !important;
+  }
+
+  .cm-activeLineGutter,
+  #intellisense-container {
+    background: #2a2a2a !important;
+  }
+
+  .cm-focused .cm-matchingBracket {
+    background: fade(#1e88e5, 25%) !important;
+  }
+
+  .cm-activeLine {
+    background: fade(#888, 50%) !important;
+  }
+
+  .cm-foldPlaceholder,
+  #intellisense-container {
+    border-color: #888 !important;
+  }
+
+  .cm-gutters {
+    color: #eee !important;
+    border-right-color: #888;
+  }
+
+  .cm-panels {
+    background: #333 !important;
+  }
+
+  .cm-panels-bottom {
+    border-top-color: #888 !important;
+  }
+
+  .cm-lintRange-error {
+    @svg: escape(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="6" height="3"><path d="M0 2.5 2 1h1l2 1.5h1" stroke="#EF5350" fill="none" stroke-width=".7"/></svg>'
+    );
+    background-image: url(data:image/svg+xml,@{svg});
+  }
+
+  .cm-cursor {
+    border-left-color: #fff !important;
+  }
+
+  .cm-selectionBackground {
+    background: #8e8e8e !important;
+  }
+
+  .compact-view-enabled .dcg-mq-cursor {
+    border-color: #fff !important;
+  }
+}
