@@ -27,4 +27,7 @@ module.exports = {
     // The following packages are ESM, and unit tests need them to be transformed.
     "node_modules/(?!ansi-regex|string-length|strip-ansi|get-east-asian-width|emoji-regex|string-width)",
   ],
+  moduleNameMapper: {
+    "^#metadata/(.*)$": "<rootDir>/metadata/$1",
+  },
 };
