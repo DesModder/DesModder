@@ -34,3 +34,9 @@ Integration tests are ran in the "node" environment, since they control a browse
 If you want to see what happens during the tests, edit `headless: "new"` to `headless: false` in setup.js.
 
 If you get an error "TargetCloseError: Protocol error (Runtime.callFunctionOn): Target closed," you probably forgot an `await` somewhere.
+
+To test on different URLs, set the `DSM_TESTING_URL` environment variable, e.g.
+
+```
+DSM_TESTING_URL='https://desmos.com/calculator' npm run test:integration
+```

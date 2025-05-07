@@ -64,7 +64,8 @@ async function getPage() {
 
 async function makeNewPage() {
   const page = await browser.newPage();
-  await page.goto("https://desmos.com/calculator");
+  const url = process.env.DSM_TESTING_URL ?? "https://desmos.com/calculator";
+  await page.goto(url);
   await page.waitForSelector(".dsm-pillbox-and-popover");
   return page;
 }
