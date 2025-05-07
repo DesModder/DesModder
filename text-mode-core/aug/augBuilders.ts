@@ -1,4 +1,4 @@
-import Aug from "./AugState";
+import { Aug } from ".";
 
 export function number(x: number): Aug.Latex.Constant {
   return {

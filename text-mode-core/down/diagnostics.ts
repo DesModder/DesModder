@@ -1,4 +1,5 @@
-import TextAST, { Pos } from "../TextAST";
+import { Pos } from "../TextAST";
+import { TextAST } from "..";
 import type { Diagnostic } from "@codemirror/lint";
 
 function diagnostic(

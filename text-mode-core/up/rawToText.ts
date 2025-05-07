@@ -1,5 +1,5 @@
 import { Config } from "../TextModeConfig";
-import Aug from "../aug/AugState";
+import { Aug } from "../aug";
 import rawToAug from "../aug/rawToAug";
 import { augToText } from "./augToText";
 import type { GraphState } from "#graph-state";

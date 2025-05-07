@@ -1,7 +1,5 @@
-import TextAST, { Synthetic } from ".";
-import * as TextASTSynthetic from "./Synthetic";
-
-export default TextASTSynthetic;
+import { Synthetic } from ".";
+import { TextAST } from "..";
 
 export type Program = TextAST.Program<Synthetic>;
 export type Statement = TextAST.Statement<Synthetic>;
