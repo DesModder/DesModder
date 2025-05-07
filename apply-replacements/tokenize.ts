@@ -1,4 +1,3 @@
-import { Console } from "../../globals/window";
 import { ReplacementError } from "./errors";
 import jsTokens, { Token } from "js-tokens";
 
@@ -119,7 +118,9 @@ function* _patternTokens(str: string, msg: string): Generator<PatternToken> {
       const probablyFine = dotAccessName || propertyName;
       // This may be a global/local variable, and it might be brittle
       if (!probablyFine && !allowedIDs.has(token.value)) {
-        Console.warn(
+        // This can't fail due to Desmos's fault, only DesModder's fault,
+        // so it's safe to throw an error here.
+        throw new Error(
           `Identifier '${token.value}' in '${msg}' may depend on specific minified naming. ` +
             "Prepend a '$' to indicate you want to match any identifier, or " +
             "lengthen it to longer than 3 letters, or " +

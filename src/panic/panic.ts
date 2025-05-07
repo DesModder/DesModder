@@ -1,7 +1,7 @@
 import window, { Console } from "../globals/window";
 import { format } from "#i18n";
 import { PluginID } from "../plugins";
-import { Block } from "../preload/replacementHelpers/parse";
+import { Block } from "../../apply-replacements/parse";
 import { postMessageUp } from "../utils/messages";
 import panicHTML from "./panic.html";
 
@@ -62,7 +62,7 @@ function addLabelledCheckboxItem(list: Element, plugin: string) {
   return li;
 }
 
-export const panickedPlugins = new Set<string>();
+const panickedPlugins = new Set<string>();
 function addPanickedPlugin(plugin: string) {
   if (window.DesModderPreload?.pluginsForceDisabled.has(plugin as any)) {
     return;

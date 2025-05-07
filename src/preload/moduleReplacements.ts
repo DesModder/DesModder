@@ -1,6 +1,7 @@
 import replacementStrings from "#plugins/index-replacements.ts";
 import { Console } from "../globals/window";
-import parseFile, { Block } from "./replacementHelpers/parse";
+import parseFile, { Block } from "../../apply-replacements/parse";
+import workerAppend from "../plugins/append.inline";
 
 const replacements: Block[] = [];
 
@@ -52,3 +53,5 @@ replacements.forEach((r) => {
 });
 
 export default replacements;
+
+export { workerAppend };
