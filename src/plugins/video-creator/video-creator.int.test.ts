@@ -8,7 +8,7 @@ const EXPANDED = ".dsm-vc-preview-expanded";
 describe("Video Creator", () => {
   testWithPage("Menuing", async (driver) => {
     // Open menu. It should be FFmpeg loading
-    await driver.click(".dsm-pillbox-buttons :nth-child(2)");
+    await driver.click("[data-buttonid='dsm-vc-menu']");
     await driver.assertSelector(".dsm-menu-container .dsm-delayed-reveal");
 
     // Eventually, FFmpeg loads. Capture menu but no preview/export
