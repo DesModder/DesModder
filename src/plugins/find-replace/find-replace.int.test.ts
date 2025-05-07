@@ -10,10 +10,12 @@ describe("Find-replace", () => {
     }[];
     expect(latex).toBe("a+b+a");
 
-    // Press Ctrl+F to open the menu
-    await driver.keyboard.down("Control");
-    await driver.keyboard.press("f");
-    await driver.keyboard.up("Control");
+    // Equivalent to pressing Ctrl+F to open the menu
+    await driver.dispatch({
+      type: "open-expression-search",
+      rename: false,
+      latex: "",
+    } as any);
 
     // Specify replacement
     await driver.click(".dcg-expression-search-bar .dcg-math-field");
