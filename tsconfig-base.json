@@ -16,6 +16,7 @@
     "lib": ["ES2024.Object"],
     "baseUrl": ".",
     "moduleResolution": "bundler",
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "allowImportingTsExtensions": true,
 
