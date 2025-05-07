@@ -1,5 +1,8 @@
 import Metadata, { Expression } from "./interface";
 
+export const ID_METADATA = "dsm-metadata";
+export const ID_METADATA_FOLDER = "dsm-metadata-folder";
+
 export function getBlankMetadata(): Metadata {
   return {
     version: 2,

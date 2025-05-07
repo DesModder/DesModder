@@ -1,4 +1,4 @@
-import { ItemModel } from "./models";
+import { FolderModel, ItemModel } from "./models";
 import { GraphState, ItemState, Product } from "../../graph-state";
 import { MathQuillField } from "#components";
 import { Matrix3 } from "./matrix3";
@@ -35,7 +35,8 @@ export type VanillaDispatchedEvent =
         | "update-expression-search-str"
         | "ui/container-resized"
         | "toggle-complex-mode"
-        | "new-expression";
+        | "new-expression"
+        | "new-expression-at-end";
     }
   | {
       type: "commit-user-requested-viewport";
@@ -364,6 +365,7 @@ interface CalcPrivate {
     getDefaultViewport: () => {
       constructor: { fromObject: (vp: Viewport) => ViewportClass };
     };
+    getGeometryFolder: () => FolderModel | undefined;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;
