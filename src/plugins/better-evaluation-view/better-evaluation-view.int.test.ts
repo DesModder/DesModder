@@ -1,10 +1,16 @@
-import { clean, testWithPage } from "#tests";
+import { clean, Driver, testWithPage } from "#tests";
 
 const COLOR_SWATCH = ".dcg-color-swatch";
+
+async function enableBevLists(driver: Driver) {
+  // This used to be the defaults, so all the tests currently start with this.
+  await driver.setPluginSetting("better-evaluation-view", "lists", true);
+}
 
 testWithPage("EmptyList and ListOfNumber", async (driver) => {
   const listOfNumberIndex = 0;
   const emptyListIndex = 1;
+  await enableBevLists(driver);
   await driver.focusIndex(listOfNumberIndex);
   await driver.setLatexAndSync("[1,2,3]+0");
   await driver.expectEval("\\left[1,2,3\\right]");
@@ -33,6 +39,7 @@ testWithPage("EmptyList and ListOfNumber", async (driver) => {
 });
 
 testWithPage("ListOfComplex", async (driver) => {
+  await enableBevLists(driver);
   await driver.dispatch({
     type: "toggle-complex-mode",
   });
@@ -50,6 +57,7 @@ testWithPage("ListOfComplex", async (driver) => {
 });
 
 testWithPage("ListOfPoint and ListOfPoint3D", async (driver) => {
+  await enableBevLists(driver);
   const listOfPointIndex = 0;
   const listOfPoint3DIndex = 1;
   await driver.focusIndex(listOfPointIndex);
@@ -81,6 +89,7 @@ testWithPage("ListOfPoint and ListOfPoint3D", async (driver) => {
 });
 
 testWithPage("Color", async (driver) => {
+  await enableBevLists(driver);
   await driver.focusIndex(0);
   await driver.setLatexAndSync("C=\\operatorname{rgb}\\left(1,2,3\\right)");
   const exp = "\\operatorname{rgb}\\left(1,2,3\\right)";
@@ -101,6 +110,7 @@ testWithPage("Color", async (driver) => {
 });
 
 testWithPage("Color List", async (driver) => {
+  await enableBevLists(driver);
   await driver.focusIndex(0);
   await driver.setLatexAndSync("C=\\operatorname{rgb}\\left(1,2,[3,4]\\right)");
   const exp =
