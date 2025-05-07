@@ -91,7 +91,7 @@ export function fullReplacement(
   return {
     newCode: mainResult.value,
     blockFailures,
-    otherErrors: [],
+    otherErrors,
   };
 }
 

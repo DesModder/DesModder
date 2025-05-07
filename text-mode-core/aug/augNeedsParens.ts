@@ -1,4 +1,4 @@
-import Aug from "./AugState";
+import { Aug } from ".";
 
 export default function augNeedsParens(
   node: Aug.Latex.AnyChild,

@@ -9,7 +9,7 @@ import {
 } from "../../parsing/parsenode";
 import { Config } from "../TextModeConfig";
 import { isPiecewiseBoolean, isRestrictionBoolean } from "./AugLatex";
-import Aug from "./AugState";
+import { Aug } from ".";
 import type * as Graph from "#graph-state";
 
 export default function rawToAug(

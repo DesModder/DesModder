@@ -7,7 +7,7 @@ import {
 } from "#utils/messages.ts";
 import { pollForValue } from "#utils/utils.ts";
 import { addForceDisabled, addPanic } from "../panic/panic";
-import moduleReplacements, { workerAppend } from "./moduleReplacements";
+import { replacements, workerAppend } from "./moduleReplacements";
 import { insertElement, replaceElement } from "./replaceElement";
 import { fullReplacementCached } from "./cacheReplacement";
 
@@ -71,7 +71,7 @@ async function load(pluginsForceDisabled: Set<string>) {
   Now we load it, but with '?' appended to prevent the web request rules from blocking it */
   const calcDesktop = await (await fetch(srcURL + "?")).text();
   // Filter out force-disabled replacements
-  const enabledReplacements = moduleReplacements.filter(
+  const enabledReplacements = replacements.filter(
     (r) => !r.plugins.every((p) => pluginsForceDisabled.has(p))
   );
   // Apply replacements

@@ -7,7 +7,7 @@ import {
 } from "#metadata/manage";
 import { Config } from "../TextModeConfig";
 import { isConstant } from "./AugLatex";
-import Aug from "./AugState";
+import { Aug } from ".";
 import { latexTreeToString } from "./augLatexToRaw";
 import type * as Graph from "#graph-state";
 

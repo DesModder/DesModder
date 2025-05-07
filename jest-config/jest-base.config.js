@@ -19,6 +19,7 @@ module.exports = {
       },
     ],
     "\\.grammar": "<rootDir>/jest-config/lezer-transformer.mjs",
+    "\\.replacements": "<rootDir>/jest-config/replacements-transformer.mjs",
   },
   testPathIgnorePatterns: ["<rootDir>/node_modules/", "dist", "dist-ts"],
   moduleDirectories: ["node_modules", "src"],

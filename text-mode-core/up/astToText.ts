@@ -1,7 +1,8 @@
 import * as builders from "../prettier-doc/builders";
 import * as printer from "../prettier-doc/printer";
 import { Doc } from "../prettier-doc/doc";
-import TextAST, { NodePath } from "../TextAST/Synthetic";
+import { NodePath } from "../TextAST/Synthetic";
+import { TextASTSynthetic as TextAST } from "..";
 import needsParens from "./needsParens";
 import { DT } from "../prettier-doc/doc-types";
 

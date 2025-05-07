@@ -1,6 +1,6 @@
-import TextAST from "../TextAST";
+import { TextAST } from "..";
 import { buildConfig } from "../TextModeConfig";
-import Aug from "../aug/AugState";
+import { Aug } from "../aug";
 import {
   assignmentExpr,
   bareSeq,

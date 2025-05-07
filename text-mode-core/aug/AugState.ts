@@ -21,11 +21,8 @@
  * should produce no visual/functional difference.
  */
 import * as Latex from "./AugLatex";
-import * as Aug from "./AugState";
 
 export * as Latex from "./AugLatex";
-
-export default Aug;
 
 export type Product = "graphing" | "geometry-calculator" | "graphing-3d";
 

@@ -1,5 +1,5 @@
 import { ProgramAnalysis } from "../ProgramAnalysis";
-import TextAST from "../TextAST";
+import { TextAST } from "..";
 import { Config } from "../TextModeConfig";
 import {
   Identifier,
@@ -7,7 +7,7 @@ import {
   isPiecewiseBoolean,
   isRestrictionBoolean,
 } from "../aug/AugLatex";
-import Aug from "../aug/AugState";
+import { Aug } from "../aug";
 import { childLatexToAST } from "../up/augToAST";
 import { DiagnosticsState } from "./diagnostics";
 import { evalExpr } from "./staticEval";
