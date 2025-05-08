@@ -67,7 +67,7 @@ abstract class SwitchComponent extends ClassComponent<{
 
 export interface DCGViewModule {
   Components: {
-    For: typeof ForComponent;
+    For: typeof ForComponent | { Keyed: typeof ForComponent };
     If: typeof IfComponent;
     Input: typeof InputComponent;
     Switch: typeof SwitchComponent;
