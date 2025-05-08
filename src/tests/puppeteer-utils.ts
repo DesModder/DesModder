@@ -203,21 +203,38 @@ export class Driver {
     await this.waitForSync();
   }
 
-  async expectEval(latexExpected: string) {
-    const latexFound = await this.evaluate(() => {
+  async expectEval(latexExpected: string | string[]) {
+    const latexFoundList = await this.evaluate(() => {
       const { rootViewNode } = Calc.controller.getSelectedItem()!;
       interface MqRoot extends Element {
         mqBlockNode: {
           latex: () => string;
         };
       }
-      // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- false positive
-      const evaluationMqRoot = rootViewNode.querySelector(
+      const evaluationMqRoots = rootViewNode.querySelectorAll(
         ".dcg-evaluation-container .dcg-mq-root-block"
-      ) as MqRoot;
-      return evaluationMqRoot.mqBlockNode.latex();
+      );
+      // Do a list in case of vanilla list output.
+      const latexes = [...evaluationMqRoots].map((x) =>
+        (x as MqRoot).mqBlockNode.latex().trim()
+      );
+      if (latexes[0] === "=") {
+        latexes.shift();
+      }
+      if (latexes.length === 0) {
+        throw new Error(
+          "Evaluation is not latex. Use `expectEvalPlain` instead to expect plaintext like 'undefined'."
+        );
+      }
+      return latexes;
     });
-    expect(latexFound).toBe(latexExpected);
+    let latexFound;
+    if (latexFoundList.length === 1 && !Array.isArray(latexExpected)) {
+      [latexFound] = latexFoundList;
+    } else {
+      latexFound = latexFoundList;
+    }
+    expect(latexFound).toStrictEqual(latexExpected);
   }
 
   async expectEvalPlain(textExpected: string) {
