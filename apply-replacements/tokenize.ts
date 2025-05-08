@@ -8,6 +8,10 @@ export type PatternToken =
       value: string;
     }
   | {
+      type: "PatternIdentifierDot";
+      value: string;
+    }
+  | {
       type: "PatternIdentifier";
       value: string;
     };
@@ -135,13 +139,22 @@ function* _patternTokens(str: string, msg: string): Generator<PatternToken> {
 
 function* _patternTokensRaw(str: string): Generator<PatternToken> {
   for (const token of jsTokens(str.trim())) {
-    yield token.type !== "IdentifierName"
-      ? token
-      : /^__\w*__$/.test(token.value)
-        ? { type: "PatternBalanced", value: token.value }
-        : token.value.startsWith("$")
-          ? { type: "PatternIdentifier", value: token.value }
-          : token;
+    yield parseToken(token);
+  }
+}
+
+function parseToken(token: Token): PatternToken {
+  switch (true) {
+    case token.type !== "IdentifierName":
+      return token;
+    case /^__\w*__$/.test(token.value):
+      return { type: "PatternBalanced", value: token.value };
+    case token.value.startsWith("$$"):
+      return { type: "PatternIdentifierDot", value: token.value };
+    case token.value.startsWith("$"):
+      return { type: "PatternIdentifier", value: token.value };
+    default:
+      return token;
   }
 }
 

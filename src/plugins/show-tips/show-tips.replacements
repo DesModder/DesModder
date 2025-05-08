@@ -11,7 +11,7 @@
 $createElement(
   "div",
   {
-    class: $.const("dcg-expressions-branding"),
+    class: $$const("dcg-expressions-branding"),
     children: __children__
   }
 )
