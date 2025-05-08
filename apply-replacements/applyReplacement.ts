@@ -183,7 +183,10 @@ function getSymbols(commands: Command[], str: Token[]): SymbolTable {
         const inside = command.args[0]
           ? table.getRequired(command.args[0])
           : { start: 0, length: table.str.length };
-        const found = findPattern(command.patternArg, table.str, inside, false);
+        const found = findPattern(command.patternArg, table.str, inside, {
+          allowDuplicates: false,
+          table,
+        });
         table.merge(found.newBindings);
         if (command.returns)
           table.set(command.returns, {
@@ -211,7 +214,7 @@ function getSymbols(commands: Command[], str: Token[]): SymbolTable {
           patternTokens("template() {__return__}", ""),
           table.str,
           { start: ts, length: table.str.length - ts - 1 },
-          true
+          { allowDuplicates: true, table: new SymbolTable(str) }
         );
         table.set(command.returns, {
           start: found.startIndex,
@@ -378,7 +381,7 @@ function findPattern(
   pattern: PatternToken[],
   str: Token[],
   inside: Range,
-  allowDuplicates: boolean
+  { allowDuplicates, table }: { allowDuplicates: boolean; table: SymbolTable }
 ): MatchResult {
   const fullPattern = pattern;
   // filter whitespace out of pattern
@@ -402,8 +405,8 @@ function findPattern(
       continue;
     }
     const match =
-      patternMatch(pattern, str, i, inside, false) !== null
-        ? patternMatch(pattern, str, i, inside, true)
+      patternMatch(pattern, str, i, inside, table, false) !== null
+        ? patternMatch(pattern, str, i, inside, table, true)
         : null;
     if (match !== null) {
       if (allowDuplicates) return match;
@@ -480,6 +483,7 @@ function patternMatch(
   str: Token[],
   startIndex: number,
   inside: Range,
+  outerTable: SymbolTable,
   doTable: true
 ): MatchResult | null;
 function patternMatch(
@@ -487,6 +491,7 @@ function patternMatch(
   str: Token[],
   startIndex: number,
   inside: Range,
+  outerTable: SymbolTable,
   doTable: false
 ): true | null;
 function patternMatch(
@@ -494,6 +499,16 @@ function patternMatch(
   str: Token[],
   startIndex: number,
   inside: Range,
+  outerTable: SymbolTable,
+  /**
+   * doTable is a performance optimization added in
+   * https://github.com/DesModder/DesModder/pull/482/commits/9e3cd674a1911f15cd5fe4cacabe978accc0d43a.
+   * It saves about 500ms on a 3000ms fullReplacementCached run, by not
+   * touching the SymbolTable at all unless the pattern matches when treating
+   * the PatternIdentifiers as globs. We run once with doTable=false
+   * then only run doTable=true if that passes. I'm somewhat surprised it's that
+   * significant of a gain though.
+   */
   doTable: boolean
 ): MatchResult | true | null {
   let table: SymbolTable | null = null;
@@ -502,14 +517,25 @@ function patternMatch(
   const patternQueue = new PatternQueue(pattern);
   let expectedToken = patternQueue.next();
   while (expectedToken !== undefined) {
-    // If a pattern identifier appears twice, then use the old value
-    // e.g. `$DCGView.createElement('div', {class: $DCGView.const`
     if (
-      doTable &&
       (expectedToken.type === "PatternIdentifier" ||
         expectedToken.type === "PatternIdentifierDot") &&
+      outerTable.has(expectedToken.value)
+    ) {
+      // A previous *Find* block matched this pattern identifier, so use that instead.
+      const currValue = outerTable.getSlice(expectedToken.value);
+      patternQueue.queueTokens(currValue);
+      expectedToken = patternQueue.next();
+      continue;
+    }
+    if (
+      doTable &&
+      (expectedToken.type === "PatternIdentifierDot" ||
+        expectedToken.type === "PatternIdentifier") &&
       table!.has(expectedToken.value)
     ) {
+      // A pattern identifier appears twice, then use the old value
+      // e.g. `{ class: $$const("dcg-popover-interior"), role: $$const("region") }`
       const currValue = table!.getSlice(expectedToken.value);
       patternQueue.queueTokens(currValue);
       expectedToken = patternQueue.next();
