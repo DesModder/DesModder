@@ -143,7 +143,7 @@ function* _patternTokensRaw(str: string): Generator<PatternToken> {
   }
 }
 
-function parseToken(token: jsTokens.Token): PatternToken {
+function parseToken(token: Token): PatternToken {
   switch (true) {
     case token.type !== "IdentifierName":
       return token;

@@ -442,6 +442,39 @@ function findPattern(
 
 const DOT: Token = { type: "Punctuator", value: "." };
 
+class PatternQueue {
+  /** We yield from index 0 onwards in the pattern, indexed by patternIndex. */
+  private readonly pattern: PatternToken[];
+  /** patternIndex points to the next entry yielded. */
+  private patternIndex: number = 0;
+  /** We pop from the end of the stack and should never add to it when nonempty. */
+  private bonusStack: Token[] = [];
+
+  constructor(pattern: PatternToken[]) {
+    this.pattern = pattern;
+  }
+
+  next(): PatternToken | undefined {
+    if (this.bonusStack.length) return this.bonusStack.pop();
+    const ret = this.pattern[this.patternIndex];
+    this.patternIndex++;
+    return ret;
+  }
+
+  queueTokens(tokens: Token[]) {
+    if (this.bonusStack.length) {
+      // This will never be reached because the bonus stack doesn't have any
+      // patterns on it, so it cannot do any backreference table lookups.
+      throw new Error("Cannot queue more tokens when some are already queued.");
+    }
+    this.bonusStack = [...tokens].reverse();
+  }
+
+  isAtStart() {
+    return this.patternIndex === 0;
+  }
+}
+
 function patternMatch(
   pattern: PatternToken[],
   str: Token[],
@@ -465,29 +498,28 @@ function patternMatch(
 ): MatchResult | true | null {
   let table: SymbolTable | null = null;
   if (doTable) table = new SymbolTable(str);
-  let patternIndex = 0;
   let strIndex = startIndex;
-  while (patternIndex < pattern.length) {
-    let expectedToken = pattern[patternIndex];
+  const patternQueue = new PatternQueue(pattern);
+  let expectedToken = patternQueue.next();
+  while (expectedToken !== undefined) {
     // If a pattern identifier appears twice, then use the old value
     // e.g. `$DCGView.createElement('div', {class: $DCGView.const`
     if (
       doTable &&
-      expectedToken.type === "PatternIdentifier" &&
+      (expectedToken.type === "PatternIdentifier" ||
+        expectedToken.type === "PatternIdentifierDot") &&
       table!.has(expectedToken.value)
     ) {
       const currValue = table!.getSlice(expectedToken.value);
-      if (currValue.length !== 1 || currValue[0].type !== "IdentifierName")
-        throw new ReplacementError(
-          `Identifier pattern ${expectedToken.value} already bound to a non-identifier`
-        );
-      [expectedToken] = currValue;
+      patternQueue.queueTokens(currValue);
+      expectedToken = patternQueue.next();
+      continue;
     }
     const foundToken = str[strIndex];
     if (foundToken === undefined) return null;
     // whitespace is already filtered out of pattern
     // ignore whitespace in str, except at the start of a match
-    if (isIgnoredWhitespace(foundToken) && patternIndex > 0) {
+    if (isIgnoredWhitespace(foundToken) && !patternQueue.isAtStart()) {
       strIndex++;
       continue;
     }
@@ -536,7 +568,7 @@ function patternMatch(
     } else if (!tokensEqual(expectedToken, foundToken)) {
       return null;
     }
-    patternIndex++;
+    expectedToken = patternQueue.next();
     strIndex++;
     if (strIndex > inside.start + inside.length) return null;
   }
