@@ -311,7 +311,8 @@ function blockReplacements(
     // skipFirst = this is just an append
     const skipFirst =
       (command.patternArg[0].type === "PatternBalanced" ||
-        command.patternArg[0].type === "PatternIdentifier") &&
+        command.patternArg[0].type === "PatternIdentifier" ||
+        command.patternArg[0].type === "PatternIdentifierDot") &&
       symbolName(command.patternArg[0].value) === symbolName(command.args[0]);
     const from = table.getRequired(prefix + command.args[0]);
     const res: Replacement = {
@@ -320,7 +321,8 @@ function blockReplacements(
       to: command.patternArg.slice(skipFirst ? 1 : 0).flatMap((token) => {
         if (
           token.type === "PatternBalanced" ||
-          token.type === "PatternIdentifier"
+          token.type === "PatternIdentifier" ||
+          token.type === "PatternIdentifierDot"
         ) {
           return table.getSlice(prefix + token.value);
         } else return token;
@@ -438,6 +440,8 @@ function findPattern(
   return found;
 }
 
+const DOT: Token = { type: "Punctuator", value: "." };
+
 function patternMatch(
   pattern: PatternToken[],
   str: Token[],
@@ -512,6 +516,23 @@ function patternMatch(
       if (foundToken.type !== "IdentifierName") return null;
       if (doTable)
         table!.set(expectedToken.value, { start: strIndex, length: 1 });
+    } else if (expectedToken.type === "PatternIdentifierDot") {
+      if (foundToken.type !== "IdentifierName") return null;
+      const startStrIndex = strIndex;
+      // Enter loop with strIndex pointing to an identifier.
+      while (
+        str[strIndex + 1] &&
+        tokensEqual(str[strIndex + 1], DOT) &&
+        str[strIndex + 2]
+      ) {
+        strIndex += 2;
+        if (foundToken.type !== "IdentifierName") return null;
+      }
+      if (doTable)
+        table!.set(expectedToken.value, {
+          start: startStrIndex,
+          length: strIndex - startStrIndex + 1,
+        });
     } else if (!tokensEqual(expectedToken, foundToken)) {
       return null;
     }
