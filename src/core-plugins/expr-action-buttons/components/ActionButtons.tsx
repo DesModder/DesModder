@@ -9,9 +9,9 @@ export function ActionButtons(eab: ExprActionButtons, m: ItemModel) {
   return (
     <div class="dsm-action-buttons">
       <For each={() => eab.order()} key={(b) => b.key}>
-        {(b: ActionButton) => (
-          <If predicate={() => b.predicate(m)}>
-            {() => ActionButtonView(b, m)}
+        {(getButton: () => ActionButton) => (
+          <If predicate={() => getButton().predicate(m)}>
+            {() => ActionButtonView(getButton(), m)}
           </If>
         )}
       </For>
