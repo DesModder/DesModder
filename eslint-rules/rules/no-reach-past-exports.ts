@@ -4,6 +4,7 @@ import fs from "fs";
 import { createRule } from "../create-rule";
 import tmExports from "../../text-mode-core/package.json" with { type: "json" };
 import gsExports from "../../graph-state/package.json" with { type: "json" };
+import pdExports from "../../prettier-doc/package.json" with { type: "json" };
 
 export default createRule({
   name: "no-reach-past-exports",
@@ -51,6 +52,7 @@ const allowed = [
     path.resolve("text-mode-core", a)
   ),
   ...Object.keys(gsExports.exports).map((a) => path.resolve("graph-state", a)),
+  ...Object.keys(pdExports.exports).map((a) => path.resolve("prettier-doc", a)),
 ];
 
 function packageDir(file: string) {

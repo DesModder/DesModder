@@ -1,0 +1,12 @@
+{
+  "name": "prettier-doc",
+  "version": "3.3.0-dev",
+  "description": "prettier/doc based on https://github.com/prettier/prettier commit 384e2b49594ea1584a125bb7fc8d2afe6414a400",
+  "exports": {
+    "./builders": "./builders.ts",
+    "./printer": "./printer.ts",
+    "./doc": "./doc.ts",
+    "./doc-types": "./doc-types.ts"
+  },
+  "license": "MIT"
+}
