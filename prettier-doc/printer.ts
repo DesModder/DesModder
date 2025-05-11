@@ -1,5 +1,5 @@
 import { DT } from "./doc-types";
-import _stringWidth from "#string-width";
+import _stringWidth from "string-width";
 import { fill, indent, hardline } from "./builders";
 import { isArray, propagateBreaks } from "./utils";
 import type { Align, Doc } from "./doc";

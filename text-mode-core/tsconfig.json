@@ -10,5 +10,5 @@
     { "path": "../graph-state" },
     { "path": "../apply-replacements" }
   ],
-  "include": ["**/*", "../src", "../loaders/utils.mjs"]
+  "include": ["**/*", "../src", "../loaders/utils.mjs", "../prettier-doc"]
 }

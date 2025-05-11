@@ -1,9 +1,6 @@
-/* eslint-disable @desmodder/eslint-rules/no-reach-past-exports */
 import path from "path";
 import fs from "fs";
 import { createRule } from "../create-rule";
-import tmExports from "../../text-mode-core/package.json" with { type: "json" };
-import gsExports from "../../graph-state/package.json" with { type: "json" };
 
 export default createRule({
   name: "no-reach-past-exports",
@@ -39,27 +36,112 @@ export default createRule({
 // Kinda like @nx/enforce-module-boundaries but way simpler
 // Janky, good temporary though.
 function bad(filename: string, source: string) {
-  // TODO: handle absolutes.
-  if (!source.startsWith(".")) return false;
-  const p = path.resolve(path.dirname(filename), source);
-  if (allowed.some((a) => p.endsWith(a))) return false;
-  return packageDir(filename) !== packageDir(p);
+  // In the file `filename`, import `source`.
+  // The import ends up being resolved to the absolute path `p`.
+  const p = resolve(filename, source);
+  if (!p) {
+    // Probable something in the node_modules.
+    return false;
+  }
+  // In the package `packageIn`, we're importing from the package `packageImported`.
+  const packageIn = packageFilename(filename);
+  const packageImported = packageFilename(p);
+  // Importing within a package is always okay for this rule.
+  if (packageIn === packageImported) return false;
+  // For a diferent package, check its exports list.
+  const exports = packageExports(packageImported);
+  return !exports.has(p);
 }
 
-const allowed = [
-  ...Object.keys(tmExports.exports).map((a) =>
-    path.resolve("text-mode-core", a)
-  ),
-  ...Object.keys(gsExports.exports).map((a) => path.resolve("graph-state", a)),
-];
-
-function packageDir(file: string) {
-  let dir = isDirectory(file) ? file : path.dirname(file);
-  while (dir.length > 1) {
-    if (fs.existsSync(path.join(dir, "package.json"))) return dir;
-    dir = path.dirname(dir);
+/**
+ * Resolve an `import xxx from "source"` in the file `filename`
+ * Return undefined if the resolution is probably in node_modules.
+ */
+function resolve(filename: string, source: string): string | undefined {
+  if (source.startsWith(".")) {
+    return path.resolve(path.dirname(filename), source);
+  } else if (source.startsWith("#")) {
+    const [hashRef, ...parts] = source.split(path.sep);
+    const packageName = packageFilename(filename);
+    const imports = packageImports(packageName);
+    const packageDir = path.dirname(packageName);
+    if (imports[hashRef]) {
+      const value = imports[hashRef];
+      if (!value.startsWith(".")) {
+        // "#moo": "moo"
+        return undefined;
+      }
+      return path.resolve(packageDir, imports[hashRef]);
+    } else if (imports[hashRef + "/*"]) {
+      const value = imports[hashRef + "/*"];
+      if (!value.endsWith("/*")) {
+        throw new Error(
+          `Value for key '${hashRef + "/*"}' in 'imports' of ${packageName} missing trailing '/*'`
+        );
+      }
+      return path.resolve(
+        packageDir,
+        value.slice(0, -"/*".length),
+        parts.join(path.sep)
+      );
+    } else {
+      throw new Error(
+        `Missing 'imports' key for '${hashRef}' in ${packageName}`
+      );
+    }
+  } else {
+    return undefined;
   }
-  return dir;
+}
+
+const packageImportsCache = new Map<string, Record<string, string>>();
+function packageImports(packageFilename: string): Record<string, string> {
+  if (packageImportsCache.has(packageFilename)) {
+    return packageImportsCache.get(packageFilename)!;
+  }
+  const contents = fs.readFileSync(packageFilename, { encoding: "utf-8" });
+  const json = JSON.parse(contents);
+  return json.imports ?? {};
+}
+
+const packageExportsCache = new Map<string, Set<string>>();
+function packageExports(packageFilename: string): Set<string> {
+  if (packageExportsCache.has(packageFilename)) {
+    return packageExportsCache.get(packageFilename)!;
+  }
+  const contents = fs.readFileSync(packageFilename, { encoding: "utf-8" });
+  const json = JSON.parse(contents);
+  const exports = new Set<string>();
+  const packageDir = path.dirname(packageFilename);
+  for (const exportRelPath of Object.keys(json.exports ?? {})) {
+    exports.add(path.resolve(packageDir, exportRelPath));
+  }
+  packageExportsCache.set(packageFilename, exports);
+  return exports;
+}
+
+const packageFilenameCache = new Map<string, string>();
+function packageFilename(file: string): string {
+  if (packageFilenameCache.has(file)) {
+    return packageFilenameCache.get(file)!;
+  }
+  let dir = isDirectory(file) ? file : path.dirname(file);
+  const dirs = [file, dir];
+  while (dir.length > 1) {
+    if (packageFilenameCache.has(dir)) {
+      return packageFilenameCache.get(dir)!;
+    }
+    const maybePackage = path.join(dir, "package.json");
+    if (fs.existsSync(maybePackage)) {
+      for (const d of dirs) {
+        packageFilenameCache.set(d, maybePackage);
+      }
+      return maybePackage;
+    }
+    dir = path.dirname(dir);
+    dirs.push(dir);
+  }
+  throw new Error(`Failed to find package above '${file}'.`);
 }
 
 function isDirectory(file: string) {
