@@ -51,28 +51,47 @@ function bad(filename: string, source: string) {
   return !exports.has(p);
 }
 
-function packageExports(packageFilename: string) {
+const packageExportsCache = new Map<string, Set<string>>();
+function packageExports(packageFilename: string): Set<string> {
+  if (packageExportsCache.has(packageFilename)) {
+    return packageExportsCache.get(packageFilename)!;
+  }
   const contents = fs.readFileSync(packageFilename, { encoding: "utf-8" });
   const json = JSON.parse(contents);
   if (!json.exports) {
     return new Set();
   }
-  const exports = new Set();
+  const exports = new Set<string>();
   const packageDir = path.dirname(packageFilename);
   for (const exportRelPath of Object.keys(json.exports ?? {})) {
     exports.add(path.resolve(packageDir, exportRelPath));
   }
+  packageExportsCache.set(packageFilename, exports);
   return exports;
 }
 
-function packageFilename(file: string) {
-  let dir = isDirectory(file) ? file : path.dirname(file);
-  while (dir.length > 1) {
-    const maybePackage = path.join(dir, "package.json");
-    if (fs.existsSync(maybePackage)) return maybePackage;
-    dir = path.dirname(dir);
+const packageFilenameCache = new Map<string, string>();
+function packageFilename(file: string): string {
+  if (packageFilenameCache.has(file)) {
+    return packageFilenameCache.get(file)!;
   }
-  throw new Error("Failed to find.");
+  let dir = isDirectory(file) ? file : path.dirname(file);
+  const dirs = [file, dir];
+  while (dir.length > 1) {
+    if (packageFilenameCache.has(dir)) {
+      return packageFilenameCache.get(dir)!;
+    }
+    const maybePackage = path.join(dir, "package.json");
+    if (fs.existsSync(maybePackage)) {
+      for (const d of dirs) {
+        packageFilenameCache.set(d, maybePackage);
+      }
+      return maybePackage;
+    }
+    dir = path.dirname(dir);
+    dirs.push(dir);
+  }
+  throw new Error(`Failed to find package above '${file}'.`);
 }
 
 function isDirectory(file: string) {
