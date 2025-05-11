@@ -1,10 +1,6 @@
-/* eslint-disable @desmodder/eslint-rules/no-reach-past-exports */
 import path from "path";
 import fs from "fs";
 import { createRule } from "../create-rule";
-import tmExports from "../../text-mode-core/package.json" with { type: "json" };
-import gsExports from "../../graph-state/package.json" with { type: "json" };
-import pdExports from "../../prettier-doc/package.json" with { type: "json" };
 
 export default createRule({
   name: "no-reach-past-exports",
@@ -40,28 +36,43 @@ export default createRule({
 // Kinda like @nx/enforce-module-boundaries but way simpler
 // Janky, good temporary though.
 function bad(filename: string, source: string) {
+  // In the file `filename`, import `source`.
   // TODO: handle absolutes.
   if (!source.startsWith(".")) return false;
+  // The import ends up being resolved to the absolute path `p`.
   const p = path.resolve(path.dirname(filename), source);
-  if (allowed.some((a) => p.endsWith(a))) return false;
-  return packageDir(filename) !== packageDir(p);
+  // In the package `packageIn`, we're importing from the package `packageImported`.
+  const packageIn = packageFilename(filename);
+  const packageImported = packageFilename(p);
+  // Importing within a package is always okay for this rule.
+  if (packageIn === packageImported) return false;
+  // For a diferent package, check its exports list.
+  const exports = packageExports(packageImported);
+  return !exports.has(p);
 }
 
-const allowed = [
-  ...Object.keys(tmExports.exports).map((a) =>
-    path.resolve("text-mode-core", a)
-  ),
-  ...Object.keys(gsExports.exports).map((a) => path.resolve("graph-state", a)),
-  ...Object.keys(pdExports.exports).map((a) => path.resolve("prettier-doc", a)),
-];
+function packageExports(packageFilename: string) {
+  const contents = fs.readFileSync(packageFilename, { encoding: "utf-8" });
+  const json = JSON.parse(contents);
+  if (!json.exports) {
+    return new Set();
+  }
+  const exports = new Set();
+  const packageDir = path.dirname(packageFilename);
+  for (const exportRelPath of Object.keys(json.exports ?? {})) {
+    exports.add(path.resolve(packageDir, exportRelPath));
+  }
+  return exports;
+}
 
-function packageDir(file: string) {
+function packageFilename(file: string) {
   let dir = isDirectory(file) ? file : path.dirname(file);
   while (dir.length > 1) {
-    if (fs.existsSync(path.join(dir, "package.json"))) return dir;
+    const maybePackage = path.join(dir, "package.json");
+    if (fs.existsSync(maybePackage)) return maybePackage;
     dir = path.dirname(dir);
   }
-  return dir;
+  throw new Error("Failed to find.");
 }
 
 function isDirectory(file: string) {
