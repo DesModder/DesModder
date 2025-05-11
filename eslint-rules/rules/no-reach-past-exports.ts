@@ -37,10 +37,12 @@ export default createRule({
 // Janky, good temporary though.
 function bad(filename: string, source: string) {
   // In the file `filename`, import `source`.
-  // TODO: handle absolutes.
-  if (!source.startsWith(".")) return false;
   // The import ends up being resolved to the absolute path `p`.
-  const p = path.resolve(path.dirname(filename), source);
+  const p = resolve(filename, source);
+  if (!p) {
+    // Probable something in the node_modules.
+    return false;
+  }
   // In the package `packageIn`, we're importing from the package `packageImported`.
   const packageIn = packageFilename(filename);
   const packageImported = packageFilename(p);
@@ -51,6 +53,57 @@ function bad(filename: string, source: string) {
   return !exports.has(p);
 }
 
+/**
+ * Resolve an `import xxx from "source"` in the file `filename`
+ * Return undefined if the resolution is probably in node_modules.
+ */
+function resolve(filename: string, source: string): string | undefined {
+  if (source.startsWith(".")) {
+    return path.resolve(path.dirname(filename), source);
+  } else if (source.startsWith("#")) {
+    const [hashRef, ...parts] = source.split(path.sep);
+    const packageName = packageFilename(filename);
+    const imports = packageImports(packageName);
+    const packageDir = path.dirname(packageName);
+    if (imports[hashRef]) {
+      const value = imports[hashRef];
+      if (!value.startsWith(".")) {
+        // "#moo": "moo"
+        return undefined;
+      }
+      return path.resolve(packageDir, imports[hashRef]);
+    } else if (imports[hashRef + "/*"]) {
+      const value = imports[hashRef + "/*"];
+      if (!value.endsWith("/*")) {
+        throw new Error(
+          `Value for key '${hashRef + "/*"}' in 'imports' of ${packageName} missing trailing '/*'`
+        );
+      }
+      return path.resolve(
+        packageDir,
+        value.slice(0, -"/*".length),
+        parts.join(path.sep)
+      );
+    } else {
+      throw new Error(
+        `Missing 'imports' key for '${hashRef}' in ${packageName}`
+      );
+    }
+  } else {
+    return undefined;
+  }
+}
+
+const packageImportsCache = new Map<string, Record<string, string>>();
+function packageImports(packageFilename: string): Record<string, string> {
+  if (packageImportsCache.has(packageFilename)) {
+    return packageImportsCache.get(packageFilename)!;
+  }
+  const contents = fs.readFileSync(packageFilename, { encoding: "utf-8" });
+  const json = JSON.parse(contents);
+  return json.imports ?? {};
+}
+
 const packageExportsCache = new Map<string, Set<string>>();
 function packageExports(packageFilename: string): Set<string> {
   if (packageExportsCache.has(packageFilename)) {
@@ -58,9 +111,6 @@ function packageExports(packageFilename: string): Set<string> {
   }
   const contents = fs.readFileSync(packageFilename, { encoding: "utf-8" });
   const json = JSON.parse(contents);
-  if (!json.exports) {
-    return new Set();
-  }
   const exports = new Set<string>();
   const packageDir = path.dirname(packageFilename);
   for (const exportRelPath of Object.keys(json.exports ?? {})) {
