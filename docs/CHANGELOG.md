@@ -2,7 +2,7 @@
 
 ## 0.14.7
 
-New features
+New features:
 
 - (Better Evaluation View) Allow toggling 'Advanced Floating Point' (previously always on, now default off).
 
