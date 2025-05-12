@@ -20,12 +20,11 @@ $addCustomAttribute("onLongHold", $callback => ({
 *Replace* `body` with
 ```js
 __body__
-// allow-ids: of
 $el.addEventListener("mousedown", event => {
   if (event.button !== 2) return;
   const rightClickTray = DSM.rightClickTray
   if (!rightClickTray) return;
-  DSM.cc.dispatch({
+  DSM.cc?.dispatch({
     type: 'close-item-settings-menu'
   });
   event.handle = () => event.stopPropagation();
