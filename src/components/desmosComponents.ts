@@ -154,7 +154,7 @@ export function Match<Disc extends { type: string }>(
 
 export abstract class DStaticMathquillViewComponent extends ClassComponent<{
   latex: string;
-  config: any;
+  config: MathQuillConfig;
 }> {}
 
 export const DStaticMathquillView = Fragile.StaticMathquillView;
