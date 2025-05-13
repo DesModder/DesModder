@@ -1,5 +1,11 @@
 # DesModder Changelog
 
+## 0.14.8
+
+Bug fixes:
+
+- (Better Evaluation View) Stop crashing the page when a '0' is rendered when plugin is off.
+
 ## 0.14.7
 
 New features:

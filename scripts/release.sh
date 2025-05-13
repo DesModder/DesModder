@@ -22,7 +22,9 @@ npm --no-git-tag-version version "$version"
 
 echo "Updating extension version"
 for file in public/{chrome,firefox}/manifest.json; do
-  jq --arg version "$version" '.version |= $version' "$file" | sponge "$file"
+  tmp=$(mktemp);
+  jq --arg version "$version" '.version |= $version' "$file" > "$tmp"
+  mv "$tmp" "$file"
   npx prettier --write "$file"
 done
 
