@@ -7,6 +7,7 @@ import {
   ValueType,
   ValueTypeMap,
 } from "#globals";
+import { autoCommands, autoOperatorNames } from "#utils/depUtils.ts";
 
 const labelOptions = {
   smallCutoff: 0.00001,
@@ -15,15 +16,43 @@ const labelOptions = {
   displayAsFraction: false,
 } satisfies LabelOptionsBase;
 
-const { complexNumberLabel, pointLabel, point3dLabel, truncatedLatexLabel } =
-  Private.Mathtools.Label;
+type ComplexNumberLabel = typeof Private.Mathtools.Label.complexNumberLabel;
+type PointLabel = typeof Private.Mathtools.Label.pointLabel;
+type Point3dLabel = typeof Private.Mathtools.Label.point3dLabel;
+type TruncatedLatexLabel = typeof Private.Mathtools.Label.truncatedLatexLabel;
+
+const complexNumberLabel = (label: Parameters<ComplexNumberLabel>[0]) =>
+  Private.Mathtools.Label.complexNumberLabel(label, labelOptions);
+const pointLabel = (label: Parameters<PointLabel>[0]) =>
+  Private.Mathtools.Label.pointLabel(label, labelOptions);
+const point3dLabel = (label: Parameters<Point3dLabel>[0]) =>
+  Private.Mathtools.Label.point3dLabel(label, labelOptions);
+const truncatedLatexLabel = (label: Parameters<TruncatedLatexLabel>[0]) =>
+  Private.Mathtools.Label.truncatedLatexLabel(label, labelOptions);
 
 type ListValueType =
-  | ValueType.EmptyList
-  | ValueType.ListOfNumber
   | ValueType.ListOfComplex
+  | ValueType.ListOfAny
+  | ValueType.ListOfNumber
+  | ValueType.ListOfBool
   | ValueType.ListOfPoint
-  | ValueType.ListOfPoint3D;
+  | ValueType.ListOfPoint3D
+  | ValueType.EmptyList
+  | ValueType.ListOfPolygon
+  | ValueType.ListOfSegment
+  | ValueType.ListOfCircle
+  | ValueType.ListOfArc
+  | ValueType.ListOfLine
+  | ValueType.ListOfRay
+  | ValueType.ListOfVector
+  | ValueType.ListOfAngleMarker
+  | ValueType.ListOfDirectedAngleMarker
+  | ValueType.ListOfTransformation
+  | ValueType.ListOfSegment3D
+  | ValueType.ListOfTriangle3D
+  | ValueType.ListOfSphere3D
+  | ValueType.ListOfVector3D
+  | ValueType.ListOfTone;
 
 type TypedConstantIteratorValue<T extends ListValueType> = T extends T
   ? {
@@ -34,7 +63,7 @@ type TypedConstantIteratorValue<T extends ListValueType> = T extends T
 
 function formatLabels<T extends ListValueType>(
   typedConstantValue: TypedConstantValue<T>
-) {
+): IteratorObject<string> {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const { valueType, iterator } = {
     valueType: typedConstantValue.valueType,
@@ -42,13 +71,74 @@ function formatLabels<T extends ListValueType>(
   } as TypedConstantIteratorValue<T>;
   switch (valueType) {
     case ValueType.ListOfComplex:
-      return iterator.map((label) => complexNumberLabel(label, labelOptions));
+      return iterator.map(complexNumberLabel);
+    case ValueType.ListOfAny:
+      return iterator.map(String);
+    case ValueType.ListOfNumber:
+      return iterator.map(truncatedLatexLabel);
+    case ValueType.ListOfBool:
+      return iterator.map((bool) => `\\mathrm{${bool}}`);
     case ValueType.ListOfPoint:
-      return iterator.map((label) => pointLabel(label, labelOptions));
+      return iterator.map(pointLabel);
     case ValueType.ListOfPoint3D:
-      return iterator.map((label) => point3dLabel(label, labelOptions));
+      return iterator.map(point3dLabel);
+    case ValueType.EmptyList:
+      return iterator;
+    case ValueType.ListOfPolygon:
+      return iterator.map(
+        (points) => `polygon\\left(${points.map(pointLabel).join(",")}\\right)`
+      );
+    case ValueType.ListOfSegment:
+      return iterator.map(
+        (points) => `segment\\left(${points.map(pointLabel).join(",")}\\right)`
+      );
+    case ValueType.ListOfCircle:
+      return iterator.map(
+        ([center, radius]) =>
+          `circle\\left(${pointLabel(center)},${truncatedLatexLabel(radius)}\\right)`
+      );
+    case ValueType.ListOfArc:
+      return iterator.map(
+        (points) => `arc\\left(${points.map(pointLabel).join(",")}\\right)`
+      );
+    case ValueType.ListOfLine:
+      return iterator.map(
+        (points) => `line\\left(${points.map(pointLabel).join(",")}\\right)`
+      );
+    case ValueType.ListOfRay:
+      return iterator.map(
+        (points) => `ray\\left(${points.map(pointLabel).join(",")}\\right)`
+      );
+    case ValueType.ListOfVector:
+      return iterator.map(
+        (points) => `vector\\left(${points.map(pointLabel).join(",")}\\right)`
+      );
+    case ValueType.ListOfSegment3D:
+      return iterator.map(
+        (points) =>
+          `segment\\left(${points.map(point3dLabel).join(",")}\\right)`
+      );
+    case ValueType.ListOfTriangle3D:
+      return iterator.map(
+        (points) =>
+          `triangle\\left(${points.map(point3dLabel).join(",")}\\right)`
+      );
+    case ValueType.ListOfSphere3D:
+      return iterator.map(
+        ([center, radius]) =>
+          `sphere\\left(${point3dLabel(center)},${truncatedLatexLabel(radius)}\\right)`
+      );
+    case ValueType.ListOfVector3D:
+      return iterator.map(
+        (points) => `vector\\left(${points.map(point3dLabel).join(",")}\\right)`
+      );
+    case ValueType.ListOfTone:
+      return iterator.map(
+        (values) =>
+          `tone\\left(${values.map(truncatedLatexLabel).join(",")}\\right)`
+      );
     default:
-      return iterator.map((label) => truncatedLatexLabel(label, labelOptions));
+      return (iterator satisfies never).map(String);
   }
 }
 
@@ -80,6 +170,10 @@ export function ListEvaluation(val: () => TypedConstantValue<ListValueType>) {
               ? `\\textcolor{gray}{...\\mathit{${listLength - truncationLength}\\ more}}`
               : ""
           }\\right]`;
+        }}
+        config={{
+          autoCommands,
+          autoOperatorNames: `${autoOperatorNames} polygon segment circle arc line ray vector sphere tone triangle`,
         }}
       />
     </div>

@@ -18,7 +18,7 @@ export function EvaluateSingleExpression(calc: Calc, s: string): number {
   return evaluateLatex(s, calc.controller.getDegreeMode());
 }
 
-export const autoCommandNames = Private?.MathquillConfig?.getAutoCommands?.();
+export const autoCommands = Private?.MathquillConfig?.getAutoCommands?.();
 export const autoOperatorNames = Private?.MathquillConfig?.getAutoOperators?.();
 
 export function getCurrentGraphTitle(calc: Calc): string | undefined {
