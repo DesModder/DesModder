@@ -1,7 +1,3 @@
-import * as TextAST from ".";
-
-export default TextAST;
-
 /* Generic */
 
 /**

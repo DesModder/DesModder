@@ -1,7 +1,7 @@
 import { clean, testWithPage } from "#tests";
 
 const POPUP = ".dcg-popover-interior.dsm-performance-info-menu";
-const BUTTON = ".dsm-pillbox-buttons :nth-child(3)";
+const BUTTON = "[data-buttonid='dsm-pi-menu']";
 const PIN_BUTTON = ".dsm-pi-pin-menu-button";
 
 describe("Performance info", () => {

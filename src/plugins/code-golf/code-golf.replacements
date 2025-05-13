@@ -23,7 +23,7 @@ $createElement("div", {
 *Find* inside `math_item`
 ```js
 $createElement2("div", {
-    class: $.const("dcg-fade-container"),
+    class: $$const("dcg-fade-container"),
     onTapStart: this.bindFn(this.onMouseSelect),
     onTap: this.bindFn(this.onMouseSelect),
     children: [__children__]
@@ -59,7 +59,7 @@ $createElement("div", {
 *Find* inside `folder_item`
 ```js
 $createElement2("div", {
-    class: $.const("dcg-fade-container"),
+    class: $$const("dcg-fade-container"),
     children: [__children__]
 })
 ```

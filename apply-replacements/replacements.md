@@ -67,6 +67,8 @@ Some special pattern tokens match something other than their exact value:
 
 - `$id` matches any identifier name, and lets the variable `id` represent that identifier name.
 - `$` matches any identifier name but ignores the value
+- `$$id` matches any identifier name or a member access consisting of two identifiers joined by a `.`, such as `p.const`.
+  - `$$` does the same but ignores the value.
 - `__range__` matches a balanced sequence of tokens, and lets `range` represent that range of tokens
   - Greedy, matches up to the next close brace
   - Must be followed by a close brace in the pattern

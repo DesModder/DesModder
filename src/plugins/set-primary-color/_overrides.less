@@ -22,6 +22,9 @@
     .dcg-mathquill-braille.dcg-mathquill-braille.dcg-invalid {
     border-bottom: 2px solid rgb(var(--dsm-primary-color-rgb));
   }
+  .dcg-copy-evaluation-view .dcg-icon-check {
+    color: rgb(var(--dsm-primary-color-rgb));
+  }
   .dcg-dropdown-popover .dcg-popover-title,
   .dcg-dropdown-popover__title {
     border-bottom: 2px solid rgb(var(--dsm-primary-color-rgb));
@@ -30,6 +33,10 @@
   .dcg-container .dcg-label-container input:focus:not([disabled]) {
     border-color: rgb(var(--dsm-primary-color-rgb));
     box-shadow: 0 1px rgb(var(--dsm-primary-color-rgb));
+  }
+  .dcg-add-inference-wizard__table th:has(.dcg-focus):after,
+  .dcg-add-inference-wizard__table td:has(.dcg-focus):after {
+    border: 2px solid rgb(var(--dsm-primary-color-rgb));
   }
   .dcg-slider-interior .dcg-thumb:focus:after {
     border: 2px solid rgba(var(--dsm-primary-color-rgb), 0.35);
@@ -196,10 +203,6 @@
   .dcg-options-menu button.dcg-focus-visible {
     box-shadow: 0 0 0 2px rgba(var(--dsm-primary-color-rgb), 0.502);
   }
-  .dcg-options-menu textarea:focus {
-    border: 1px solid rgb(var(--dsm-primary-color-rgb));
-    box-shadow: 0 0 0 1px rgb(var(--dsm-primary-color-rgb));
-  }
   .dcg-geo-basic-tools
     .dcg-geo-basic-tools-row
     .dcg-tool-button-container
@@ -273,12 +276,6 @@
     .dcg-icon-check {
     color: rgb(var(--dsm-primary-color-rgb));
   }
-  .dcg-select-dropdown-container .dcg-dropdown-input.dcg-focus-visible {
-    border-color: rgb(var(--dsm-primary-color-rgb));
-  }
-  .dcg-shared-options-dropdown .dcg-dropdown-explanations .dcg-explanation a {
-    color: rgb(var(--dsm-primary-color-rgb));
-  }
   .dcg-smart-textarea-container .dcg-displayTextarea a {
     color: rgb(var(--dsm-primary-color-rgb));
   }
@@ -306,6 +303,18 @@
     input:focus:not([disabled]) {
     border-color: rgb(var(--dsm-primary-color-rgb));
     box-shadow: 0 1px rgb(var(--dsm-primary-color-rgb));
+  }
+  .dcg-add-inference-wizard__chi-square
+    .dcg-table--wrapper
+    .dcg-table
+    .dcg-table--cell:has(.dcg-focus):after {
+    border: 2px solid rgb(var(--dsm-primary-color-rgb));
+  }
+  .dcg-select-dropdown-container .dcg-dropdown-input.dcg-focus-visible {
+    border-color: rgb(var(--dsm-primary-color-rgb));
+  }
+  .dcg-shared-options-dropdown .dcg-dropdown-explanations .dcg-explanation a {
+    color: rgb(var(--dsm-primary-color-rgb));
   }
   .dcg-expressionitem.dcg-expressiontable
     .dcg-cell.dcg-selected:not(.dcg-non-editable):after {
@@ -423,11 +432,37 @@
   .dcg-shared-account-settings-dialog .dcg-shared-confirmation-message {
     color: rgb(var(--dsm-primary-color-rgb));
   }
-  .dcg-my-graphs-modal__heading.dcg-selected {
-    text-decoration-color: rgb(var(--dsm-primary-color-rgb));
+  .dcg-mygraphs-drag-drop-floating-view__count {
+    background: rgb(var(--dsm-primary-color-rgb));
   }
-  .dcg-move-graph-menu__add-graph.dcg-dropdown-choice {
+  .dcg-my-graphs-modal__heading.dcg-my-graphs-modal__back-button__drop-target {
+    box-shadow: 0 0 0 2px rgb(var(--dsm-primary-color-rgb));
+  }
+  .dcg-my-graphs-modal__heading--selectable.dcg-selected {
+    box-shadow: 0 3px rgb(var(--dsm-primary-color-rgb));
+  }
+  .dcg-notebook-view .dcg-notebook-dragdrop-copy {
+    background: rgb(var(--dsm-primary-color-rgb));
+  }
+  .dcg-notebook-view
+    .dcg-notebook-dragdrop-pending[data-dcg-drop-direction="full-width"]:after {
+    background: rgb(var(--dsm-primary-color-rgb));
+  }
+  .dcg-notebook-view
+    .dcg-notebook-dragdrop-pending[data-dcg-drop-direction="left"],
+  .dcg-notebook-view
+    .dcg-notebook-dragdrop-pending[data-dcg-drop-direction="right"] {
+    background: rgb(var(--dsm-primary-color-rgb));
+  }
+  .dcg-notebook-view
+    .dcg-notebook-drag-container.dcg-is-dragging__drop-noop:after {
+    background: rgb(var(--dsm-primary-color-rgb));
+  }
+  .dcg-move-mygraph-menu__add-graph.dcg-dropdown-choice {
     color: rgb(var(--dsm-primary-color-rgb));
+  }
+  .dcg-folder--pending-drop {
+    box-shadow: 0 0 0 2px rgb(var(--dsm-primary-color-rgb));
   }
   .dcg-authentication-modal__tag--selected {
     border: 2px solid rgb(var(--dsm-primary-color-rgb));
@@ -538,51 +573,76 @@
     color: rgb(var(--dsm-primary-color-rgb));
     border-bottom: 2px solid rgb(var(--dsm-primary-color-rgb));
   }
-  .dcg-share-container .dcg-share-actions .dcg-print-link i,
-  .dcg-share-container .dcg-share-actions .dcg-export-image-link i,
-  .dcg-share-container .dcg-share-actions .dcg-embed-link i {
+  .dcg-share-container--legacy .dcg-share-actions .dcg-print-link i,
+  .dcg-share-container--legacy .dcg-share-actions .dcg-export-image-link i,
+  .dcg-share-container--legacy .dcg-share-actions .dcg-embed-link i {
     box-shadow: 0 0 0 1px rgb(var(--dsm-primary-color-rgb));
     color: rgb(var(--dsm-primary-color-rgb));
   }
-  .dcg-share-container .dcg-share-actions .dcg-print-link.dcg-hovered i,
-  .dcg-share-container .dcg-share-actions .dcg-export-image-link.dcg-hovered i,
-  .dcg-share-container .dcg-share-actions .dcg-embed-link.dcg-hovered i {
+  .dcg-share-container--legacy .dcg-share-actions .dcg-print-link.dcg-hovered i,
+  .dcg-share-container--legacy
+    .dcg-share-actions
+    .dcg-export-image-link.dcg-hovered
+    i,
+  .dcg-share-container--legacy
+    .dcg-share-actions
+    .dcg-embed-link.dcg-hovered
+    i {
     background: rgba(var(--dsm-primary-color-rgb), 0.149);
   }
-  .dcg-share-container .dcg-share-actions .dcg-print-link.dcg-depressed i,
-  .dcg-share-container .dcg-share-actions .dcg-print-link.dcg-selected i,
-  .dcg-share-container
+  .dcg-share-container--legacy
+    .dcg-share-actions
+    .dcg-print-link.dcg-depressed
+    i,
+  .dcg-share-container--legacy
+    .dcg-share-actions
+    .dcg-print-link.dcg-selected
+    i,
+  .dcg-share-container--legacy
     .dcg-share-actions
     .dcg-export-image-link.dcg-depressed
     i,
-  .dcg-share-container .dcg-share-actions .dcg-export-image-link.dcg-selected i,
-  .dcg-share-container .dcg-share-actions .dcg-embed-link.dcg-depressed i,
-  .dcg-share-container .dcg-share-actions .dcg-embed-link.dcg-selected i {
+  .dcg-share-container--legacy
+    .dcg-share-actions
+    .dcg-export-image-link.dcg-selected
+    i,
+  .dcg-share-container--legacy
+    .dcg-share-actions
+    .dcg-embed-link.dcg-depressed
+    i,
+  .dcg-share-container--legacy
+    .dcg-share-actions
+    .dcg-embed-link.dcg-selected
+    i {
     background: rgba(var(--dsm-primary-color-rgb), 0.302);
   }
-  .dcg-share-container .dcg-embed-div textarea:focus {
+  .dcg-share-container--legacy .dcg-embed-div textarea:focus {
     border: 1px solid rgb(var(--dsm-primary-color-rgb));
     box-shadow: 0 0 0 1px rgb(var(--dsm-primary-color-rgb));
   }
-  .dcg-share-container .dcg-art-contest-container .dcg-enter-btn {
+  .dcg-share-container--legacy .dcg-art-contest-container .dcg-enter-btn {
     background: rgb(var(--dsm-primary-color-rgb));
   }
-  .dcg-share-container .dcg-art-contest-container .dcg-enter-btn.dcg-hovered {
+  .dcg-share-container--legacy
+    .dcg-art-contest-container
+    .dcg-enter-btn.dcg-hovered {
     background: rgb(var(--dsm-primary-dark-4-rgb));
   }
-  .dcg-share-container .dcg-art-contest-container .dcg-enter-btn.dcg-depressed {
+  .dcg-share-container--legacy
+    .dcg-art-contest-container
+    .dcg-enter-btn.dcg-depressed {
     background: rgb(var(--dsm-primary-dark-5-rgb));
   }
-  .dcg-share-container .dcg-failed .dcg-action-retry,
-  .dcg-share-container .dcg-failed .dcg-action-close {
+  .dcg-share-container--legacy .dcg-failed .dcg-action-retry,
+  .dcg-share-container--legacy .dcg-failed .dcg-action-close {
     color: rgb(var(--dsm-primary-color-rgb));
   }
-  .dcg-share-container .dcg-failed .dcg-action-retry.dcg-hovered,
-  .dcg-share-container .dcg-failed .dcg-action-close.dcg-hovered {
+  .dcg-share-container--legacy .dcg-failed .dcg-action-retry.dcg-hovered,
+  .dcg-share-container--legacy .dcg-failed .dcg-action-close.dcg-hovered {
     color: rgb(var(--dsm-primary-dark-4-rgb));
   }
-  .dcg-share-container .dcg-failed .dcg-action-retry.dcg-depressed,
-  .dcg-share-container .dcg-failed .dcg-action-close.dcg-depressed {
+  .dcg-share-container--legacy .dcg-failed .dcg-action-retry.dcg-depressed,
+  .dcg-share-container--legacy .dcg-failed .dcg-action-close.dcg-depressed {
     color: rgb(var(--dsm-primary-dark-5-rgb));
   }
   .dcg-share-menu__link {
@@ -593,5 +653,9 @@
   }
   .dcg-share-menu__link.dcg-depressed {
     color: rgb(var(--dsm-primary-dark-5-rgb));
+  }
+  .dcg-share-menu-embed__textarea:focus {
+    border: 1px solid rgb(var(--dsm-primary-color-rgb));
+    box-shadow: 0 0 0 1px rgb(var(--dsm-primary-color-rgb));
   }
 }

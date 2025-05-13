@@ -56,7 +56,7 @@ Wrap the error message tooltipped-error with a div, using `onTap` to trigger hid
 
 *Find* => `from`
 ```js
-additionalClass: this.const("dcg-tooltipped-error-container"),
+additionalClass: $$const("dcg-tooltipped-error-container"),
 children: __errorTriangle__
 ```
 
@@ -76,7 +76,7 @@ DSM.replaceElement(
 ```js
 $createElement(
   'span',
-  { class: $.const('btns'), children: [__children__] }
+  { class: $$const('btns'), children: [__children__] }
 )
 ```
 

@@ -16,19 +16,24 @@ const labelOptions = {
   displayAsFraction: false,
 } satisfies LabelOptionsBase;
 
-type ComplexNumberLabel = typeof Private.Mathtools.Label.complexNumberLabel;
-type PointLabel = typeof Private.Mathtools.Label.pointLabel;
-type Point3dLabel = typeof Private.Mathtools.Label.point3dLabel;
-type TruncatedLatexLabel = typeof Private.Mathtools.Label.truncatedLatexLabel;
+const { Label } = Private.Mathtools;
+
+type ComplexNumberLabel = typeof Label.complexNumberLabel;
+type PointLabel = typeof Label.pointLabel;
+type Point3dLabel = typeof Label.point3dLabel;
+type TruncatedLatexLabel = typeof Label.truncatedLatexLabel;
+
+const uprightUndefined = (label: string) =>
+  label === "undefined" ? "\\mathrm{undefined}" : label;
 
 const complexNumberLabel = (label: Parameters<ComplexNumberLabel>[0]) =>
-  Private.Mathtools.Label.complexNumberLabel(label, labelOptions);
+  uprightUndefined(Label.complexNumberLabel(label, labelOptions));
 const pointLabel = (label: Parameters<PointLabel>[0]) =>
-  Private.Mathtools.Label.pointLabel(label, labelOptions);
+  uprightUndefined(Label.pointLabel(label, labelOptions));
 const point3dLabel = (label: Parameters<Point3dLabel>[0]) =>
-  Private.Mathtools.Label.point3dLabel(label, labelOptions);
+  uprightUndefined(Label.point3dLabel(label, labelOptions));
 const truncatedLatexLabel = (label: Parameters<TruncatedLatexLabel>[0]) =>
-  Private.Mathtools.Label.truncatedLatexLabel(label, labelOptions);
+  uprightUndefined(Label.truncatedLatexLabel(label, labelOptions));
 
 type ListValueType =
   | ValueType.ListOfComplex

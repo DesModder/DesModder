@@ -262,8 +262,8 @@ describe("Operator Precedence round-trip", () => {
     "\\o{boxplot}([1,2,3,5,4]+L)",
     "\\o{dotplot}(L*M)",
     "\\o{histogram}([1,2,3],4)",
-    "\\o{IndependentTTest}((b\\o{with}b=[1,2,3]),[4,5,6])",
-    "\\o{TTest}([i+j\\o{for}i=[1...5],j=L])",
+    "\\o{ttest}((b\\o{with}b=[1,2,3]),[4,5,6])",
+    "\\o{ttest}([i+j\\o{for}i=[1...5],j=L])",
     /// parent = List
     "[1,2,3]",
     "[(b\\o{with}b=3),2,b\\o{with}b=3]",

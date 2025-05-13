@@ -1,3 +1,8 @@
+.compact-view-enabled.compact-view-enabled.compact-view-enabled.compact-view-enabled.compact-view-enabled.compact-view-enabled.compact-view-no-separating-lines.compact-view-highlight-alternating-lines
+  .dcg-expressionfolder:nth-child(2n of .dcg-expressionfolder) {
+  background-color: #d6d5f1;
+}
+
 .lerp2(@a, @b) {
   @r: calc((@a) + ((@b) - (@a)) * var(--dsm-compact-mode-multiplier));
 }
@@ -12,7 +17,8 @@
       max(var(--bracket-font-size-factor), var(--minimum-font-size))
     );
   }
-  .dcg-main {
+  .dcg-main,
+  .dcg-ticker .dcg-ticker-settings-internal {
     font-size: calc(1.1 * (16 / 18) * var(--math-font-size));
   }
   .dcg-evaluation-container {

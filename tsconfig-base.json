@@ -13,9 +13,10 @@
 
     "target": "es2020",
     "module": "ESNext",
-    "lib": ["ES2024.Object", "ESNext.Iterator"],
+    "lib": ["ES2024.Object", "ES2023.Array", "ESNext.Iterator"],
     "baseUrl": ".",
     "moduleResolution": "bundler",
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "allowImportingTsExtensions": true,
 

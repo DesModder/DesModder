@@ -133,8 +133,11 @@ export abstract class InlineMathInputViewComponent extends ClassComponent<{
 /** General InlineMathInputView, without any defaults filled in */
 export const InlineMathInputViewGeneral = Fragile.InlineMathInputView;
 
-export const { If, For, IfElse, Input, Switch, SwitchUnion } =
-  DCGView.Components;
+export const { If, IfElse, Input, Switch, SwitchUnion } = DCGView.Components;
+export const For =
+  "Keyed" in DCGView.Components.For
+    ? DCGView.Components.For.Keyed
+    : DCGView.Components.For;
 export function Match<Disc extends { type: string }>(
   discriminant: () => Disc,
   branches: {

@@ -1,5 +1,24 @@
 # DesModder Changelog
 
+## 0.14.8
+
+Bug fixes:
+
+- (Better Evaluation View) Stop crashing the page when a '0' is rendered when plugin is off.
+
+## 0.14.7
+
+New features:
+
+- (Better Evaluation View) Allow toggling 'Advanced Floating Point' (previously always on, now default off).
+
+Bug fixes and tweaks:
+
+- (Compact View) Apply math font size to the ticker.
+- (Paste Image) Don't paste images into secret folders like the metadata folder.
+- (Better Evaluation View) Don't use 'Advanced Floating Point' when plugin is off.
+- (Better Evaluation View) Disable 'Show List Elements' for new installs by default.
+
 ## 0.14.6
 
 New features:

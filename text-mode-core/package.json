@@ -17,8 +17,7 @@
     "#moo": "moo",
     "#parsing/*": "src/parsing/*",
     "#metadata/*": "metadata/*",
-    "#utils/*": "src/utils/*",
-    "#string-width": "string-width"
+    "#utils/*": "src/utils/*"
   },
   "repository": {
     "type": "git",

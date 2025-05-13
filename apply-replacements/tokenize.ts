@@ -1,4 +1,3 @@
-import { Console } from "../../globals/window";
 import { ReplacementError } from "./errors";
 import jsTokens, { Token } from "js-tokens";
 
@@ -6,6 +5,10 @@ export type PatternToken =
   | Token
   | {
       type: "PatternBalanced";
+      value: string;
+    }
+  | {
+      type: "PatternIdentifierDot";
       value: string;
     }
   | {
@@ -119,7 +122,9 @@ function* _patternTokens(str: string, msg: string): Generator<PatternToken> {
       const probablyFine = dotAccessName || propertyName;
       // This may be a global/local variable, and it might be brittle
       if (!probablyFine && !allowedIDs.has(token.value)) {
-        Console.warn(
+        // This can't fail due to Desmos's fault, only DesModder's fault,
+        // so it's safe to throw an error here.
+        throw new Error(
           `Identifier '${token.value}' in '${msg}' may depend on specific minified naming. ` +
             "Prepend a '$' to indicate you want to match any identifier, or " +
             "lengthen it to longer than 3 letters, or " +
@@ -134,13 +139,22 @@ function* _patternTokens(str: string, msg: string): Generator<PatternToken> {
 
 function* _patternTokensRaw(str: string): Generator<PatternToken> {
   for (const token of jsTokens(str.trim())) {
-    yield token.type !== "IdentifierName"
-      ? token
-      : /^__\w*__$/.test(token.value)
-        ? { type: "PatternBalanced", value: token.value }
-        : token.value.startsWith("$")
-          ? { type: "PatternIdentifier", value: token.value }
-          : token;
+    yield parseToken(token);
+  }
+}
+
+function parseToken(token: Token): PatternToken {
+  switch (true) {
+    case token.type !== "IdentifierName":
+      return token;
+    case /^__\w*__$/.test(token.value):
+      return { type: "PatternBalanced", value: token.value };
+    case token.value.startsWith("$$"):
+      return { type: "PatternIdentifierDot", value: token.value };
+    case token.value.startsWith("$"):
+      return { type: "PatternIdentifier", value: token.value };
+    default:
+      return token;
   }
 }
 
