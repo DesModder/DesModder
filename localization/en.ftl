@@ -132,7 +132,7 @@ builtin-settings-opt-zoomButtons-name = Show Zoom Buttons
 builtin-settings-opt-zoomButtons-desc = {""}
 builtin-settings-opt-keypad-name = Show keypad
 builtin-settings-opt-keypad-desc = {""}
-builtin-settings-opt-showPerformanceMeter-name = Show performance meter 
+builtin-settings-opt-showPerformanceMeter-name = Show performance meter
 builtin-settings-opt-showPerformanceMeter-desc = {""}
 builtin-settings-opt-showIDs-name = Show IDs
 builtin-settings-opt-showIDs-desc = {""}
@@ -364,3 +364,7 @@ paste-image-name = Paste Image
 paste-image-desc = Lets you paste image files to import them at once.
 paste-image-error-images-not-enabled = Image insertion is not enabled for this graph.
 paste-image-error-another-upload-in-progress = Retry after another upload in progress is completed.
+
+## Dark Theme
+dark-theme-name = Dark Theme
+dark-theme-desc = Modifies the UI to use darker colors.
