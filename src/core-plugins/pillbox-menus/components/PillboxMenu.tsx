@@ -7,6 +7,7 @@ import { keys } from "#utils/depUtils.ts";
 export default class PillboxMenu extends Component<{
   pm: PillboxMenus;
   horizontal: boolean;
+  buttonId: string;
 }> {
   pm!: PillboxMenus;
   horizontal!: boolean;
@@ -20,7 +21,7 @@ export default class PillboxMenu extends Component<{
     return (
       <If
         predicate={() =>
-          this.pm.pillboxMenuOpen !== null &&
+          this.pm.pillboxMenuOpen === this.props.buttonId() &&
           this.pm.showHorizontalPillboxMenu() === this.horizontal
         }
       >

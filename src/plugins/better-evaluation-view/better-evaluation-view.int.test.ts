@@ -1,10 +1,16 @@
-import { clean, testWithPage } from "#tests";
+import { clean, Driver, testWithPage } from "#tests";
 
 const COLOR_SWATCH = ".dcg-color-swatch";
+
+async function enableBevLists(driver: Driver) {
+  // This used to be the defaults, so all the tests currently start with this.
+  await driver.setPluginSetting("better-evaluation-view", "lists", true);
+}
 
 testWithPage("EmptyList and ListOfNumber", async (driver) => {
   const listOfNumberIndex = 0;
   const emptyListIndex = 1;
+  await enableBevLists(driver);
   await driver.focusIndex(listOfNumberIndex);
   await driver.setLatexAndSync("[1,2,3]+0");
   await driver.expectEval("\\left[1,2,3\\right]");
@@ -33,6 +39,7 @@ testWithPage("EmptyList and ListOfNumber", async (driver) => {
 });
 
 testWithPage("ListOfComplex", async (driver) => {
+  await enableBevLists(driver);
   await driver.dispatch({
     type: "toggle-complex-mode",
   });
@@ -50,6 +57,7 @@ testWithPage("ListOfComplex", async (driver) => {
 });
 
 testWithPage("ListOfPoint and ListOfPoint3D", async (driver) => {
+  await enableBevLists(driver);
   const listOfPointIndex = 0;
   const listOfPoint3DIndex = 1;
   await driver.focusIndex(listOfPointIndex);
@@ -81,6 +89,7 @@ testWithPage("ListOfPoint and ListOfPoint3D", async (driver) => {
 });
 
 testWithPage("Color", async (driver) => {
+  await enableBevLists(driver);
   await driver.focusIndex(0);
   await driver.setLatexAndSync("C=\\operatorname{rgb}\\left(1,2,3\\right)");
   const exp = "\\operatorname{rgb}\\left(1,2,3\\right)";
@@ -101,6 +110,7 @@ testWithPage("Color", async (driver) => {
 });
 
 testWithPage("Color List", async (driver) => {
+  await enableBevLists(driver);
   await driver.focusIndex(0);
   await driver.setLatexAndSync("C=\\operatorname{rgb}\\left(1,2,[3,4]\\right)");
   const exp =
@@ -121,3 +131,52 @@ testWithPage("Color List", async (driver) => {
   await driver.clean();
   return clean;
 });
+
+testWithPage(
+  "Floats",
+  async (driver) => {
+    await enableBevLists(driver);
+    await driver.focusIndex(0);
+
+    // List is untouched with floats=false (default)
+    await driver.setLatexAndSync("L=[0/0,1/0,-1/0,4]+0");
+    await driver.expectEval(
+      "\\left[\\mathrm{undefined},\\mathrm{undefined},\\mathrm{undefined},4\\right]"
+    );
+
+    // Scalar is untouched with floats=false.
+    await driver.setLatexAndSync("L=0/0");
+    await driver.expectEvalPlain("undefined");
+    await driver.setLatexAndSync("L=1/0");
+    await driver.expectEvalPlain("undefined");
+    await driver.setLatexAndSync("L=-1/0");
+    await driver.expectEvalPlain("undefined");
+
+    // Set floats=true
+    await driver.setPluginSetting("better-evaluation-view", "floats", true);
+
+    // List uses advanced floats with floats=true.
+    await driver.setLatexAndSync("L=[0/0,1/0,-1/0,4]+0");
+    await driver.expectEval(
+      "\\left[\\mathrm{NaN},\\infty ,-\\infty ,4\\right]"
+    );
+
+    // Scalar uses advanced floats with floats=true.
+    await driver.setLatexAndSync("L=0/0");
+    await driver.expectEval("\\mathrm{NaN}");
+    await driver.setLatexAndSync("L=1/0");
+    await driver.expectEval("\\infty");
+    await driver.setLatexAndSync("L=-1/0");
+    await driver.expectEval("-\\infty");
+
+    // Lists use advanced floats with floats=true even if lists=false.
+    await driver.setPluginSetting("better-evaluation-view", "lists", false);
+    await driver.setLatexAndSync("L=[0/0,1/0,-1/0,4]+0");
+    await driver.expectEval(["\\mathrm{NaN}", "\\infty", "-\\infty", "4"]);
+
+    // Clean up
+    await driver.clean();
+    return clean;
+  },
+  150000
+);

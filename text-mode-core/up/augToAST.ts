@@ -1,5 +1,5 @@
-import TextAST from "../TextAST/Synthetic";
-import Aug from "../aug/AugState";
+import { TextASTSynthetic as TextAST } from "..";
+import { Aug } from "../aug";
 
 export function augToTextAST(aug: Aug.State): TextAST.Program {
   const stmts: TextAST.Statement[] = [graphSettingsToAST(aug.settings)];

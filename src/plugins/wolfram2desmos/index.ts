@@ -64,8 +64,10 @@ export default class WolframToDesmos extends PluginController<Config> {
 
   _pasteHandler(e: ClipboardEvent) {
     const elem = e.target as HTMLElement;
-    const pasteData = e.clipboardData?.getData("Text");
-
+    if (!e.clipboardData) return;
+    const pasteData = e.clipboardData.getData("text/plain");
+    const dcgCopyExprData = e.clipboardData.getData("dcg-copy-expression");
+    if (dcgCopyExprData) return;
     if (
       !(elem?.classList.contains("dcg-label-input") ?? true) &&
       pasteData !== undefined &&

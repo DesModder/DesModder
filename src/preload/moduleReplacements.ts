@@ -1,8 +1,8 @@
 import replacementStrings from "#plugins/index-replacements.ts";
-import { Console } from "../globals/window";
-import parseFile, { Block } from "./replacementHelpers/parse";
+import parseFile, { Block } from "../../apply-replacements/parse";
+import workerAppend from "../plugins/append.inline";
 
-const replacements: Block[] = [];
+export const replacements: Block[] = [];
 
 for (const replacement of replacementStrings) {
   replacements.push(...parseFile(replacement.file, replacement.filename));
@@ -41,14 +41,12 @@ const pluginNames = [
 replacements.forEach((r) => {
   r.plugins.forEach((plugin) => {
     if (!pluginNames.includes(plugin))
-      Console.warn(
-        "Plugin",
-        plugin,
-        "specified in replacement",
-        r.filename,
-        "not found: at risk of instability on panic."
+      // This can only break due to DesModder, not Desmos, so a throw is acceptable.
+      throw new Error(
+        `Plugin ${plugin} specified in replacement ${r.filename} not found: ` +
+          `at risk of instability on panic.`
       );
   });
 });
 
-export default replacements;
+export { workerAppend };

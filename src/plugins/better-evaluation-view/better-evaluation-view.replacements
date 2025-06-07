@@ -28,7 +28,7 @@ undefined: () => DSM.replaceElement(
     }
   ),
   () =>
-    DSM.betterEvaluationView
+    DSM.betterEvaluationView?.settings.floats
       ? $createElement(
           Desmos.Private.Fragile.StaticMathquillView,
           {
@@ -109,6 +109,8 @@ rgbcolor: $rhs => DSM.replaceElement(
 
 *Description* `Distinguish NaN vs -∞ vs +∞ vs complex`
 
+Needs 'worker_only' because this goes into the `shared_module_source`
+
 *worker_only*
 
 Add a value field to "undefined" labels
@@ -127,19 +129,28 @@ complexNumberLabel: () => $complexNumberLabel,
 
 *Replace* `undefined` with
 ```js
-if (isNaN($val) || !isFinite($val))
+if (isNaN($val) || !isFinite($val)) {
+  if (Array.isArray($val) && $val.length == 2) {
+    return {
+      type: "decimal",
+      value: $complexNumberLabel($val, {digits: 5})
+    };
+  }
+  if (!DSM.betterEvaluationView?.settings.floats) {
+    return { type: "undefined" };
+  }
   return {
     type: "decimal",
-    value: Array.isArray($val) && $val.length == 2
-      ? $complexNumberLabel($val, {digits: 5})
-      : isNaN($val)
+    value: 
+      isNaN($val)
       ? "\\mathrm{NaN}"
       : $val === Infinity
       ? "\\infty"
       : $val === -Infinity
       ? "-\\infty"
-      : "undefined",
+      : "undefined"
   };
+}
 ```
 
 ## Distinguish between 0 and -0 in numericLabels
@@ -160,7 +171,7 @@ if ($val === 0 || Math.abs($val) < $zeroCutoff)
 *Replace* `zero` with
 ```js
 if ($val === 0) {
-  if (!DSM.betterEvaluationView || Object.is($val, 0)) {
+  if (!DSM.betterEvaluationView?.settings.floats || Object.is($val, 0)) {
     return {
       type: "decimal",
       value: "0"
@@ -172,7 +183,7 @@ if ($val === 0) {
     }
   }
 } else if ($zeroCutoff && Math.abs($val) < $zeroCutoff) {
-  if (!DSM.betterEvaluationView || Math.sign($val) === 1) {
+  if (!DSM.betterEvaluationView?.settings.floats || Math.sign($val) === 1) {
     return {
       type: "decimal",
       value: "0"
@@ -190,8 +201,7 @@ if ($val === 0) {
 
 *Description* `Distinguish NaN, +∞, -∞ in lists.`
 
-I'm really confused. The match doesn't work without *worker_only*, but the code
-runs on the main page, not the worker.
+Needs 'worker_only' because this goes into the `shared_module_source`
 
 *worker_only*
 
@@ -214,7 +224,7 @@ function $truncatedLatexLabel($e, $t) {
     let $r = $numericLabel($e, $t);
     switch ($r.type) {
     case "undefined":
-        return DSM.betterEvaluationView ? $r.value : 'undefined';
+        return DSM.betterEvaluationView?.settings.floats ? $r.value : 'undefined';
     case "decimal":
         return $r.value;
     case "scientific":

@@ -1,7 +1,6 @@
-// eslint-disable-next-line @desmodder/eslint-rules/no-reach-past-exports
-import Metadata from "../../metadata/interface";
-// eslint-disable-next-line @desmodder/eslint-rules/no-reach-past-exports
-import migrateToLatest from "../../metadata/migrate";
+import Metadata from "#metadata/interface";
+import migrateToLatest from "#metadata/migrate";
+import { ID_METADATA, ID_METADATA_FOLDER } from "#metadata/manage";
 import {
   ChildExprNode,
   evalMaybeRational,
@@ -10,7 +9,7 @@ import {
 } from "../../parsing/parsenode";
 import { Config } from "../TextModeConfig";
 import { isPiecewiseBoolean, isRestrictionBoolean } from "./AugLatex";
-import Aug from "./AugState";
+import { Aug } from ".";
 import type * as Graph from "#graph-state";
 
 export default function rawToAug(
@@ -45,7 +44,7 @@ export function rawToAugSettings(raw: Graph.GraphState): Aug.GraphSettings {
 
 export function rawToDsmMetadata(raw: Graph.GraphState) {
   const dsmMetadataExpr = raw.expressions.list.find(
-    (e) => e.id === "dsm-metadata"
+    (e) => e.id === ID_METADATA
   );
   return migrateToLatest(
     dsmMetadataExpr?.type === "text"
@@ -62,7 +61,7 @@ function rawListToAug(
   const res: Aug.ItemAug[] = [];
   let currentFolder: null | Aug.FolderAug = null;
   for (const item of list) {
-    if (item.id === "dsm-metadata-folder" || item.id === "dsm-metadata") {
+    if (item.id === ID_METADATA_FOLDER || item.id === ID_METADATA) {
       continue;
     }
     if (item.type === "folder") {

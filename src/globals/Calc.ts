@@ -35,7 +35,8 @@ export type VanillaDispatchedEvent =
         | "update-expression-search-str"
         | "ui/container-resized"
         | "toggle-complex-mode"
-        | "new-expression";
+        | "new-expression"
+        | "new-expression-at-end";
     }
   | {
       type: "commit-user-requested-viewport";
@@ -248,7 +249,6 @@ interface CalcPrivate {
   controller: {
     rootElt: HTMLElement;
     isNarrow: () => boolean;
-    // _removeExpressionSynchronously(model: ItemModel): void;
     handleDispatchedAction: (evt: DispatchedEvent) => void;
     _toplevelReplaceItemAt: (
       index: number,
@@ -257,7 +257,6 @@ interface CalcPrivate {
     ) => void;
     _hasUnsavedChanges: boolean;
     createItemModel: (modelTemplate: ItemState) => ItemModel;
-    getPillboxBackgroundColor: () => string;
     isGraphSettingsOpen: () => boolean;
     graphSettings: {
       config: {
@@ -282,12 +281,10 @@ interface CalcPrivate {
     getAllItemModels: () => ItemModel[];
     stopAllSliders: () => void;
     isKeypadOpen: () => boolean;
-    getKeypadHeight: () => number;
     getDegreeMode: () => boolean;
     getExpressionSearchOpen: () => boolean;
     generateId: () => string;
     // returns a subscript that occurs nowhere else in the graph
-    generateTableXSubscript: () => number;
     updateViews: () => void;
     updateTheComputedWorld: () => void;
     commitUndoRedoSynchronously: (e: { type: string }) => void;
@@ -327,10 +324,7 @@ interface CalcPrivate {
     markTickRequiredNextFrame: () => void;
     getPlayingSliders: () => { latex: string }[];
     _tickSliders: (nowTimestamp: number) => void;
-    computeMajorLayout: () => { grapher: { width: number } };
-    isGeometry: () => boolean;
     geometryGettingStartedMessageState: string;
-    isGeoUIActive: () => boolean;
     isNarrowGeometryHeader: () => boolean;
     expressionSearchOpen: boolean;
     /** Returns a function to call to unsubscribe */

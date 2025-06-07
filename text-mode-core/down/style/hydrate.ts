@@ -1,5 +1,5 @@
-import TextAST from "../../TextAST";
-import Aug from "../../aug/AugState";
+import { TextAST } from "../..";
+import { Aug } from "../../aug";
 import { DownState, childExprToAug } from "../astToAug";
 import { ComptimeValue, evalExpr } from "../staticEval";
 import { Schema } from "./schema";

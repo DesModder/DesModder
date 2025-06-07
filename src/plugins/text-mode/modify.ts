@@ -9,7 +9,8 @@ import {
   graphSettingsToText,
   itemToText,
 } from "../../../text-mode-core";
-import TextAST, { Settings, Statement } from "../../../text-mode-core/TextAST";
+import { Settings, Statement } from "../../../text-mode-core/TextAST";
+import { TextAST } from "text-mode-core";
 import { addRawID, tmPlugin } from "./LanguageServer";
 import { ChangeSpec, StateEffect } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";

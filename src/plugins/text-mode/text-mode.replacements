@@ -28,7 +28,7 @@ isShowKeypadButtonVisible () {
 ```js
 $createElement(
   'div',
-  { class: $.const('dcg-center-buttons') ____ }
+  { class: $$const('dcg-center-buttons') ____ }
 )
 ```
 
@@ -40,7 +40,7 @@ DSM.insertElement(() => DSM.textMode?.textModeToggle()),
 DSM.insertElement(
   () => (
     !this.controller.getGraphSettings().config.graphpaper
-      && DSM.pillboxMenus?.pillboxButtonsView(true)
+      && DSM.pillboxMenus?.pillboxContainerView(true)
   )
 )
 ```
@@ -93,7 +93,7 @@ $ImageIconView = class extends $.View {
   init() { ____ }
   template() {
       return $createElement("div", {
-          class: $.const("dcg-expression-icon-container dcg-image-icon-container")
+          class: $$const("dcg-expression-icon-container dcg-image-icon-container")
           ____
       }
 ```

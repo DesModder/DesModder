@@ -1,5 +1,5 @@
 import { Config } from "../TextModeConfig";
-import Aug from "./AugState";
+import { Aug } from ".";
 import rawNeedsParens from "./augNeedsParens";
 
 export function latexTreeToString(cfg: Config, e: Aug.Latex.AnyRootOrChild) {

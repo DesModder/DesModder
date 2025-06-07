@@ -1,10 +1,13 @@
-// eslint-disable-next-line @desmodder/eslint-rules/no-reach-past-exports
-import type Metadata from "../../metadata/interface";
-// eslint-disable-next-line @desmodder/eslint-rules/no-reach-past-exports
-import { changeExprInMetadata, isBlankMetadata } from "../../metadata/manage";
+import type Metadata from "#metadata/interface";
+import {
+  changeExprInMetadata,
+  ID_METADATA,
+  ID_METADATA_FOLDER,
+  isBlankMetadata,
+} from "#metadata/manage";
 import { Config } from "../TextModeConfig";
 import { isConstant } from "./AugLatex";
-import Aug from "./AugState";
+import { Aug } from ".";
 import { latexTreeToString } from "./augLatexToRaw";
 import type * as Graph from "#graph-state";
 
@@ -36,14 +39,14 @@ export default function augToRaw(
     list.push(
       {
         type: "folder",
-        id: "dsm-metadata-folder",
+        id: ID_METADATA_FOLDER,
         secret: true,
         title: "DesModder Metadata",
       } as const,
       {
         type: "text",
-        id: "dsm-metadata",
-        folderId: "dsm-metadata-folder",
+        id: ID_METADATA,
+        folderId: ID_METADATA_FOLDER,
         text: JSON.stringify(dsmMetadata),
       } as const
     );

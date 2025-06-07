@@ -2,9 +2,14 @@ import { ConfigItem } from "#plugins/index.ts";
 
 export const configList: ConfigItem[] = [
   {
+    key: "floats",
+    type: "boolean",
+    default: false,
+  },
+  {
     key: "lists",
     type: "boolean",
-    default: true,
+    default: false,
   },
   {
     key: "colors",
@@ -20,6 +25,7 @@ export const configList: ConfigItem[] = [
 ];
 
 export interface Config {
+  floats: boolean;
   lists: boolean;
   colors: boolean;
   colorLists: boolean;

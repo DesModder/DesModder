@@ -38,7 +38,11 @@ export function ListEvaluation(
           const truncationLength = 20;
           const labels = typedConstantValue.value
             .slice(0, truncationLength)
-            .map((label) => formatLabel(label, labelOptions));
+            .map((label) => {
+              const latex = formatLabel(label, labelOptions);
+              if (latex === "undefined") return "\\mathrm{undefined}";
+              return latex;
+            });
           return (
             "\\left[" +
             labels.join(",") +

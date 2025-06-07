@@ -1,4 +1,5 @@
-import TextAST, { Concrete, Synthetic } from "../TextAST";
+import { Concrete, Synthetic } from "../TextAST";
+import { TextAST } from "..";
 import { error } from "./diagnostics";
 import type { Diagnostic } from "@codemirror/lint";
 

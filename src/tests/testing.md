@@ -18,7 +18,7 @@ Options have to be after an alone `--` to get passed to jest instead of npm.
   - Open [`coverage/index.html`](../../coverage/index.html) in a browser to view more detailed coverage
   - On Mac, `open coverage/index.html`. On Linux-based, `xdg-open coverage/index.html`. Or navigate directly to `file:///home/username/DesModder/coverage/index.html` in a web browser.
 
-## Integration tests
+## Writing Integration Tests
 
 Create an integration test with `[name].int.test.ts`.
 
@@ -31,6 +31,18 @@ Return `clean` if you've cleaned up the page (closed all the menus etc). This se
 
 Integration tests are ran in the "node" environment, since they control a browser from a node process but are not inside the browser.
 
-If you want to see what happens during the tests, edit `headless: "new"` to `headless: false` in setup.js.
-
 If you get an error "TargetCloseError: Protocol error (Runtime.callFunctionOn): Target closed," you probably forgot an `await` somewhere.
+
+## Running Integration Tests
+
+If you want to see what happens during the tests, set the `DSM_TESTING_HEADLESS` environment variable to `false`, e.g.
+
+```
+DSM_TESTING_HEADLESS=false npm run test:integration
+```
+
+To test on different URLs, set the `DSM_TESTING_URL` environment variable, e.g.
+
+```
+DSM_TESTING_URL='https://desmos.com/calculator' npm run test:integration
+```

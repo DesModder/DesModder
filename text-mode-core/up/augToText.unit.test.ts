@@ -1,4 +1,4 @@
-import Aug from "../aug/AugState";
+import { Aug } from "../aug";
 import {
   assignmentExpr,
   bareSeq,
