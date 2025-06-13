@@ -146,7 +146,7 @@ export interface ValueTypeMap {
   [ValueType.Any]: unknown;
   [ValueType.Number]: number;
   [ValueType.Bool]: boolean;
-  [ValueType.Complex]: [re: number, im: number];
+  [ValueType.Complex]: [real: number, imag: number];
   [ValueType.ListOfComplex]: Array<ValueTypeMap[ValueType.Complex]>;
   [ValueType.Point]: [x: number, y: number];
   [ValueType.Point3D]: [x: number, y: number, z: number];
@@ -249,54 +249,125 @@ export interface ValueTypeMap {
   [ValueType.ListOfVector3D]: Array<ValueTypeMap[ValueType.Vector3D]>;
   [ValueType.Tone]: [frequency: number, gain: number];
   [ValueType.ListOfTone]: Array<ValueTypeMap[ValueType.Tone]>;
-  // [ValueType.ConfidenceInterval]: unknown;
-  // [ValueType.ListOfConfidenceInterval]: Array<
-  //   ValueTypeMap[ValueType.ConfidenceInterval]
-  // >;
-  // [ValueType.OneSampleTInference]: unknown;
-  // [ValueType.ListOfOneSampleTInference]: Array<
-  //   ValueTypeMap[ValueType.OneSampleTInference]
-  // >;
-  // [ValueType.TwoSampleTInference]: unknown;
-  // [ValueType.ListOfTwoSampleTInference]: Array<
-  //   ValueTypeMap[ValueType.TwoSampleTInference]
-  // >;
-  // [ValueType.RegressionTInference]: unknown;
-  // [ValueType.ListOfRegressionTInference]: Array<
-  //   ValueTypeMap[ValueType.RegressionTInference]
-  // >;
-  // [ValueType.OneSampleZInference]: unknown;
-  // [ValueType.ListOfOneSampleZInference]: Array<
-  //   ValueTypeMap[ValueType.OneSampleZInference]
-  // >;
-  // [ValueType.TwoSampleZInference]: unknown;
-  // [ValueType.ListOfTwoSampleZInference]: Array<
-  //   ValueTypeMap[ValueType.TwoSampleZInference]
-  // >;
-  // [ValueType.OneProportionZInference]: unknown;
-  // [ValueType.ListOfOneProportionZInference]: Array<
-  //   ValueTypeMap[ValueType.OneProportionZInference]
-  // >;
-  // [ValueType.TwoProportionZInference]: unknown;
-  // [ValueType.ListOfTwoProportionZInference]: Array<
-  //   ValueTypeMap[ValueType.TwoProportionZInference]
-  // >;
-  // [ValueType.ChiSquareGoodnessOfFit]: unknown;
-  // [ValueType.ListOfChiSquareGoodnessOfFit]: Array<
-  //   ValueTypeMap[ValueType.ChiSquareGoodnessOfFit]
-  // >;
-  // [ValueType.ChiSquareIndependence]: unknown;
-  // [ValueType.ListOfChiSquareIndependence]: Array<
-  //   ValueTypeMap[ValueType.ChiSquareIndependence]
-  // >;
-  // [ValueType.ZSignificanceTest]: unknown;
-  // [ValueType.ListOfZSignificanceTest]: Array<
-  //   ValueTypeMap[ValueType.ZSignificanceTest]
-  // >;
-  // [ValueType.TSignificanceTest]: unknown;
-  // [ValueType.ListOfTSignificanceTest]: Array<
-  //   ValueTypeMap[ValueType.TSignificanceTest]
-  // >;
+  [ValueType.ConfidenceInterval]: [
+    min: number,
+    max: number,
+    standardError: number,
+    dof: number,
+  ];
+  [ValueType.ListOfConfidenceInterval]: Array<
+    ValueTypeMap[ValueType.ConfidenceInterval]
+  >;
+  [ValueType.OneSampleTInference]: [
+    count: number,
+    mean: number,
+    stdev: number,
+    dof: number,
+  ];
+  [ValueType.ListOfOneSampleTInference]: Array<
+    ValueTypeMap[ValueType.OneSampleTInference]
+  >;
+  [ValueType.TwoSampleTInference]: [
+    count1: number,
+    mean1: number,
+    stdev1: number,
+    count2: number,
+    mean2: number,
+    stdev2: number,
+    dof: number,
+  ];
+  [ValueType.ListOfTwoSampleTInference]: Array<
+    ValueTypeMap[ValueType.TwoSampleTInference]
+  >;
+  [ValueType.RegressionTInference]: [
+    pointEstimate: number,
+    standardError: number,
+    dof: number,
+  ];
+  [ValueType.ListOfRegressionTInference]: Array<
+    ValueTypeMap[ValueType.RegressionTInference]
+  >;
+  [ValueType.OneSampleZInference]: [
+    count: number,
+    mean: number,
+    stdevp: number,
+  ];
+  [ValueType.ListOfOneSampleZInference]: Array<
+    ValueTypeMap[ValueType.OneSampleZInference]
+  >;
+  [ValueType.TwoSampleZInference]: [
+    count1: number,
+    mean1: number,
+    stdevp1: number,
+    count2: number,
+    mean2: number,
+    stdevp2: number,
+  ];
+  [ValueType.ListOfTwoSampleZInference]: Array<
+    ValueTypeMap[ValueType.TwoSampleZInference]
+  >;
+  [ValueType.OneProportionZInference]: [successes: number, count: number];
+  [ValueType.ListOfOneProportionZInference]: Array<
+    ValueTypeMap[ValueType.OneProportionZInference]
+  >;
+  [ValueType.TwoProportionZInference]: [
+    successes1: number,
+    count1: number,
+    successes2: number,
+    count2: number,
+  ];
+  [ValueType.ListOfTwoProportionZInference]: Array<
+    ValueTypeMap[ValueType.TwoProportionZInference]
+  >;
+  [ValueType.ChiSquareGoodnessOfFit]: [
+    p: number,
+    score: number,
+    dof: number,
+    observed: number[],
+    expected: number[],
+    contributions: number[],
+    total: number,
+  ];
+  [ValueType.ListOfChiSquareGoodnessOfFit]: Array<
+    ValueTypeMap[ValueType.ChiSquareGoodnessOfFit]
+  >;
+  [ValueType.ChiSquareIndependence]: [
+    p: number,
+    score: number,
+    dof: number,
+    observed: number[],
+    expected: number[],
+    contributions: number[],
+    rows: number,
+    columns: number,
+    rowTotals: number[],
+    columnTotals: number[],
+    total: number,
+  ];
+  [ValueType.ListOfChiSquareIndependence]: Array<
+    ValueTypeMap[ValueType.ChiSquareIndependence]
+  >;
+  [ValueType.ZSignificanceTest]: [
+    p: number,
+    score: number,
+    hypothesis: number,
+    pleft: number,
+    pright: number,
+  ];
+  [ValueType.ListOfZSignificanceTest]: Array<
+    ValueTypeMap[ValueType.ZSignificanceTest]
+  >;
+  [ValueType.TSignificanceTest]: [
+    p: number,
+    score: number,
+    hypothesis: number,
+    pleft: number,
+    pright: number,
+    dof: number,
+  ];
+  [ValueType.ListOfTSignificanceTest]: Array<
+    ValueTypeMap[ValueType.TSignificanceTest]
+  >;
   // [ValueType.MapIntervalPoint]: unknown;
   // [ValueType.MapIntervalComplex]: unknown;
   // [ValueType.MapIntervalPoint3D]: unknown;
