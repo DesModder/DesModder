@@ -106,12 +106,14 @@ export enum ValueType {
   ListOfOneProportionZInference = 71,
   TwoProportionZInference = 72,
   ListOfTwoProportionZInference = 73,
-  HypothesisTest = 74,
-  ListOfHypothesisTest = 75,
   ChiSquareGoodnessOfFit = 78,
   ListOfChiSquareGoodnessOfFit = 79,
   ChiSquareIndependence = 80,
   ListOfChiSquareIndependence = 81,
+  ZSignificanceTest = 82,
+  ListOfZSignificanceTest = 83,
+  TSignificanceTest = 84,
+  ListOfTSignificanceTest = 85,
   MapIntervalPoint = 200,
   MapIntervalComplex = 208,
   MapIntervalPoint3D = 201,
@@ -279,10 +281,6 @@ export interface ValueTypeMap {
   // [ValueType.ListOfTwoProportionZInference]: Array<
   //   ValueTypeMap[ValueType.TwoProportionZInference]
   // >;
-  // [ValueType.HypothesisTest]: unknown;
-  // [ValueType.ListOfHypothesisTest]: Array<
-  //   ValueTypeMap[ValueType.HypothesisTest]
-  // >;
   // [ValueType.ChiSquareGoodnessOfFit]: unknown;
   // [ValueType.ListOfChiSquareGoodnessOfFit]: Array<
   //   ValueTypeMap[ValueType.ChiSquareGoodnessOfFit]
@@ -290,6 +288,14 @@ export interface ValueTypeMap {
   // [ValueType.ChiSquareIndependence]: unknown;
   // [ValueType.ListOfChiSquareIndependence]: Array<
   //   ValueTypeMap[ValueType.ChiSquareIndependence]
+  // >;
+  // [ValueType.ZSignificanceTest]: unknown;
+  // [ValueType.ListOfZSignificanceTest]: Array<
+  //   ValueTypeMap[ValueType.ZSignificanceTest]
+  // >;
+  // [ValueType.TSignificanceTest]: unknown;
+  // [ValueType.ListOfTSignificanceTest]: Array<
+  //   ValueTypeMap[ValueType.TSignificanceTest]
   // >;
   // [ValueType.MapIntervalPoint]: unknown;
   // [ValueType.MapIntervalComplex]: unknown;
