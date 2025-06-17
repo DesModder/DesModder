@@ -154,10 +154,7 @@ export interface ValueTypeMap {
   // [ValueType.Distribution]: unknown;
   [ValueType.Action]: {
     type: "Action";
-    updateRules: Record<
-      string,
-      TypedConstantValue<Exclude<ValueType, ValueType.Action>>
-    >;
+    updateRules: Record<string, TypedConstantValue<ActionRHSValueType>>;
   };
   [ValueType.ListOfAny]: ValueTypeMap[ValueType.Any][];
   [ValueType.ListOfNumber]: ValueTypeMap[ValueType.Number][];
@@ -363,6 +360,83 @@ export type TypedConstantValue<
       value: ValueTypeMap[T];
     }
   : never;
+
+export type ActionRHSValueType =
+  | ValueType.EmptyList
+  | OrListType<
+      | ValueType.Number
+      | ValueType.Complex
+      | ValueType.Point
+      | ValueType.Point3D
+      | ValueType.RGBColor
+      | ValueType.Polygon
+      | ValueType.Segment
+      | ValueType.Line
+      | ValueType.Ray
+      | ValueType.Vector
+      | ValueType.Circle
+      | ValueType.Arc
+      | ValueType.AngleMarker
+      | ValueType.Tone
+      | ValueType.DirectedAngleMarker
+    >;
+
+type OrListType<T extends ListElementValueType> =
+  | T
+  | ReverseMap<ListElementTypeMap>[T];
+
+type ReverseMap<T extends Record<keyof T, PropertyKey>> = {
+  [K in keyof T as T[K]]: K;
+};
+
+export interface ListElementTypeMap {
+  [ValueType.ListOfAny]: ValueType.Any;
+  [ValueType.EmptyList]: ValueType.Number;
+  [ValueType.ListOfNumber]: ValueType.Number;
+  [ValueType.ListOfBool]: ValueType.Bool;
+  [ValueType.ListOfComplex]: ValueType.Complex;
+  [ValueType.ListOfRestriction]: ValueType.Restriction;
+  [ValueType.ListOfPoint]: ValueType.Point;
+  [ValueType.ListOfPoint3D]: ValueType.Point3D;
+  [ValueType.ListOfDistribution]: ValueType.Distribution;
+  [ValueType.ListOfColor]: ValueType.RGBColor;
+  [ValueType.ListOfPolygon]: ValueType.Polygon;
+  [ValueType.ListOfSegment]: ValueType.Segment;
+  [ValueType.ListOfCircle]: ValueType.Circle;
+  [ValueType.ListOfArc]: ValueType.Arc;
+  [ValueType.ListOfLine]: ValueType.Line;
+  [ValueType.ListOfRay]: ValueType.Ray;
+  [ValueType.ListOfVector]: ValueType.Vector;
+  [ValueType.ListOfAngleMarker]: ValueType.AngleMarker;
+  [ValueType.ListOfDirectedAngleMarker]: ValueType.DirectedAngleMarker;
+  [ValueType.ListOfTransformation]: ValueType.Transformation;
+  [ValueType.ListOfSegment3D]: ValueType.Segment3D;
+  [ValueType.ListOfVector3D]: ValueType.Vector3D;
+  [ValueType.ListOfTriangle3D]: ValueType.Triangle3D;
+  [ValueType.ListOfSphere3D]: ValueType.Sphere3D;
+  [ValueType.ListOfTone]: ValueType.Tone;
+  [ValueType.ListOfConfidenceInterval]: ValueType.ConfidenceInterval;
+  [ValueType.ListOfOneSampleTInference]: ValueType.OneSampleTInference;
+  [ValueType.ListOfTwoSampleTInference]: ValueType.TwoSampleTInference;
+  [ValueType.ListOfRegressionTInference]: ValueType.RegressionTInference;
+  [ValueType.ListOfOneSampleZInference]: ValueType.OneSampleZInference;
+  [ValueType.ListOfTwoSampleZInference]: ValueType.TwoSampleZInference;
+  [ValueType.ListOfOneProportionZInference]: ValueType.OneProportionZInference;
+  [ValueType.ListOfTwoProportionZInference]: ValueType.TwoProportionZInference;
+  [ValueType.ListOfZSignificanceTest]: ValueType.ZSignificanceTest;
+  [ValueType.ListOfTSignificanceTest]: ValueType.TSignificanceTest;
+  [ValueType.ListOfChiSquareGoodnessOfFit]: ValueType.ChiSquareGoodnessOfFit;
+  [ValueType.ListOfChiSquareIndependence]: ValueType.ChiSquareIndependence;
+  [ValueType.ListOfMapIntervalPoint]: ValueType.MapIntervalPoint;
+  [ValueType.ListOfMapIntervalComplex]: ValueType.MapIntervalComplex;
+  [ValueType.ListOfMapIntervalPoint3D]: ValueType.MapIntervalPoint3D;
+  [ValueType.ListOfMapInterval2DPoint]: ValueType.MapInterval2DPoint;
+  [ValueType.ListOfMapInterval2DComplex]: ValueType.MapInterval2DComplex;
+  [ValueType.ListOfMapInterval2DPoint3D]: ValueType.MapInterval2DPoint3D;
+}
+
+export type ListValueType = keyof ListElementTypeMap;
+export type ListElementValueType = ListElementTypeMap[ListValueType];
 
 export interface ExpressionFormula extends FormulaBase {
   is_inequality?: boolean;
