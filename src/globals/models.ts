@@ -142,6 +142,7 @@ interface NonfolderItemModelBase extends ItemModelBase {
   dcgView?: ClassComponent;
 }
 
+// commented-out lines indicate that the value doesn't appear in typed_constant_value
 export interface ValueTypeMap {
   [ValueType.Any]: unknown;
   [ValueType.Number]: number;
@@ -165,7 +166,6 @@ export interface ValueTypeMap {
   [ValueType.ListOfPoint3D]: ValueTypeMap[ValueType.Point3D][];
   // [ValueType.ListOfDistribution]: ValueTypeMap[ValueType.Distribution][];
   [ValueType.EmptyList]: [];
-  // couldn't be deduced; may not appear in typed_constant_value.
   // [ValueType.ErrorType]: unknown;
   // [ValueType.SeedType]: unknown;
   [ValueType.RGBColor]: [r: number, g: number, b: number];
@@ -352,10 +352,12 @@ export interface ValueTypeMap {
   // [ValueType.ListOfMapInterval2DPoint]: ValueTypeMap[ValueType.MapInterval2DPoint][];
   // [ValueType.ListOfMapInterval2DComplex]: ValueTypeMap[ValueType.MapInterval2DComplex][];
   // [ValueType.ListOfMapInterval2DPoint3D]: ValueTypeMap[ValueType.MapInterval2DPoint3D][];
-  [key: number]: unknown;
 }
 
-export type TypedConstantValue<T extends ValueType = ValueType> = T extends T
+export type ConstantValueType = keyof ValueTypeMap;
+export type TypedConstantValue<
+  T extends ConstantValueType = ConstantValueType,
+> = T extends T
   ? {
       valueType: T;
       value: ValueTypeMap[T];
