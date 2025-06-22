@@ -8,6 +8,7 @@ import {
   ValueTypeMap,
 } from "#globals";
 import { autoCommands, autoOperatorNames } from "#utils/depUtils.ts";
+import { zipWith } from "#utils/utils.ts";
 
 const labelOptions = {
   smallCutoff: 0.00001,
@@ -113,7 +114,8 @@ function formatLabels<T extends NormalListValueType>(
       );
     case ValueType.ListOfVector:
       return iterator.map(
-        (points) => `vector\\left(${points.map(pointLabel).join(",")}\\right)`
+        ([vector, start]) =>
+          `vector\\left(${pointLabel(start)},${pointLabel(zipWith((a, b) => a + b, start, vector))}\\right)`
       );
     case ValueType.ListOfSegment3D:
       return iterator.map(
@@ -132,7 +134,8 @@ function formatLabels<T extends NormalListValueType>(
       );
     case ValueType.ListOfVector3D:
       return iterator.map(
-        (points) => `vector\\left(${points.map(point3dLabel).join(",")}\\right)`
+        ([vector, start]) =>
+          `vector\\left(${point3dLabel(start)},${point3dLabel(zipWith((a, b) => a + b, start, vector))}\\right)`
       );
     case ValueType.ListOfTone:
       return iterator.map(

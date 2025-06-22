@@ -193,8 +193,8 @@ export interface ValueTypeMap {
   ];
   [ValueType.ListOfRay]: ValueTypeMap[ValueType.Ray][];
   [ValueType.Vector]: [
+    vector: ValueTypeMap[ValueType.Point],
     start: ValueTypeMap[ValueType.Point],
-    end: ValueTypeMap[ValueType.Point],
   ];
   [ValueType.ListOfVector]: ValueTypeMap[ValueType.Vector][];
   // [ValueType.Restriction]: unknown;
@@ -236,8 +236,8 @@ export interface ValueTypeMap {
   ];
   [ValueType.ListOfSphere3D]: ValueTypeMap[ValueType.Sphere3D][];
   [ValueType.Vector3D]: [
+    vector: ValueTypeMap[ValueType.Point3D],
     start: ValueTypeMap[ValueType.Point3D],
-    end: ValueTypeMap[ValueType.Point3D],
   ];
   [ValueType.ListOfVector3D]: ValueTypeMap[ValueType.Vector3D][];
   [ValueType.Tone]: [frequency: number, gain: number];
