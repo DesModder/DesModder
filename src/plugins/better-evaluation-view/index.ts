@@ -20,6 +20,22 @@ export default class BetterEvaluationView extends PluginController<Config> {
     const value = val();
     if (!value) return undefined;
     switch (value.valueType) {
+      case ValueType.ListOfAngleMarker:
+      case ValueType.ListOfDirectedAngleMarker:
+      case ValueType.ListOfTransformation:
+      case ValueType.ListOfConfidenceInterval:
+      case ValueType.ListOfOneSampleTInference:
+      case ValueType.ListOfTwoSampleTInference:
+      case ValueType.ListOfRegressionTInference:
+      case ValueType.ListOfOneSampleZInference:
+      case ValueType.ListOfTwoSampleZInference:
+      case ValueType.ListOfOneProportionZInference:
+      case ValueType.ListOfTwoProportionZInference:
+      case ValueType.ListOfZSignificanceTest:
+      case ValueType.ListOfTSignificanceTest:
+      case ValueType.ListOfChiSquareGoodnessOfFit:
+      case ValueType.ListOfChiSquareIndependence:
+        return undefined;
       case ValueType.RGBColor:
         return settings.colors
           ? (swatch) => ColorEvaluation(value, swatch)
