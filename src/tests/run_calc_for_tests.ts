@@ -35,5 +35,10 @@ HTMLMediaElement.prototype.play = async () => {
   await new Promise<void>((resolve) => resolve())
 }
 console.debug = () => {}
+window.ResizeObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}));
 
 import "../../node_modules/.cache/desmos/calculator_desktop.js";
