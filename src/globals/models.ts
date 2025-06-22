@@ -438,6 +438,8 @@ export interface ListElementTypeMap {
 export type ListValueType = keyof ListElementTypeMap;
 export type ListElementValueType = ListElementTypeMap[ListValueType];
 
+export type ConstantListValueType = Extract<ListValueType, ConstantValueType>;
+
 export interface ExpressionFormula extends FormulaBase {
   is_inequality?: boolean;
   expression_type:

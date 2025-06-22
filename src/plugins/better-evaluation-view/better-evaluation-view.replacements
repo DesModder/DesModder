@@ -56,19 +56,13 @@ list: $rhs => $createElement(__oldList__)
 () => this.cachedEvaluationRHS, "type", {
 "list-count": $listCountRhs => DSM.replaceElement(
   () => $listCountCreateElement(__oldListCount__),
-  () => DSM.betterEvaluationView?.listEvaluation(() => {
-    const itemModel = this.controller.getItemModel(this.props.id());
-    // get untruncated value
-    return itemModel.formula.typed_constant_value;
-  })
+  () => DSM.betterEvaluationView?.evaluation(DSM.betterEvaluationView?.getTypedConstantValue.bind(this)),
+  DSM.betterEvaluationView?.getTypedConstantValue.bind(this)
 ),
 list: $rhs => DSM.replaceElement(
   () => $createElement(__oldList__),
-  () => DSM.betterEvaluationView?.listEvaluation(() => {
-    const itemModel = this.controller.getItemModel(this.props.id());
-    // get untruncated value
-    return itemModel.formula.typed_constant_value;
-  })
+  () => DSM.betterEvaluationView?.evaluation(DSM.betterEvaluationView?.getTypedConstantValue.bind(this)),
+  DSM.betterEvaluationView?.getTypedConstantValue.bind(this)
 )
 ```
 
@@ -81,10 +75,8 @@ emptyList: () => $emptyListCreateElement(__oldEmptyList__)
 ```js
 emptyList: () => DSM.replaceElement(
   () => $emptyListCreateElement(__oldEmptyList__),
-  () => DSM.betterEvaluationView?.listEvaluation(() => {
-    const itemModel = this.controller.getItemModel(this.props.id());
-    return itemModel.formula.typed_constant_value;
-  })
+  () => DSM.betterEvaluationView?.evaluation(DSM.betterEvaluationView?.getTypedConstantValue.bind(this)),
+  DSM.betterEvaluationView?.getTypedConstantValue.bind(this)
 )
 ```
 
@@ -101,7 +93,8 @@ rgbcolor: $rhs => $createElement(__swatch__)
 ```js
 rgbcolor: $rhs => DSM.replaceElement(
   () => $createElement(__swatch__),
-  () => DSM.betterEvaluationView?.colorEvaluation(() => this.getEvaluationRHS().val)
+  () => DSM.betterEvaluationView?.evaluation(DSM.betterEvaluationView?.getTypedConstantValue.bind(this)),
+  DSM.betterEvaluationView?.getTypedConstantValue.bind(this)
 )
 ```
 

@@ -217,6 +217,15 @@ export class FooterView extends Component<ModelAndController> {
   }
 }
 
+export abstract class EvaluationContainerComponent extends ClassComponent<{
+  controller: CalcController;
+  id: () => string;
+}> {
+  abstract controller: CalcController;
+  // abstract cachedEvaluationRHS: EvaluationRHS;
+  // abstract getEvaluationRHS(): EvaluationRHS;
+}
+
 function exprTemplate(
   self: InstanceType<typeof Component<ModelAndController>>
 ) {

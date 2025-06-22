@@ -35,7 +35,7 @@ const point3dLabel = (label: Parameters<Point3dLabel>[0]) =>
 const truncatedLatexLabel = (label: Parameters<TruncatedLatexLabel>[0]) =>
   uprightUndefined(Label.truncatedLatexLabel(label, labelOptions));
 
-type ListValueType =
+type NormalListValueType =
   | ValueType.ListOfComplex
   | ValueType.ListOfAny
   | ValueType.ListOfNumber
@@ -50,23 +50,20 @@ type ListValueType =
   | ValueType.ListOfLine
   | ValueType.ListOfRay
   | ValueType.ListOfVector
-  | ValueType.ListOfAngleMarker
-  | ValueType.ListOfDirectedAngleMarker
-  | ValueType.ListOfTransformation
   | ValueType.ListOfSegment3D
   | ValueType.ListOfTriangle3D
   | ValueType.ListOfSphere3D
   | ValueType.ListOfVector3D
   | ValueType.ListOfTone;
 
-type TypedConstantIteratorValue<T extends ListValueType> = T extends T
+type TypedConstantIteratorValue<T extends NormalListValueType> = T extends T
   ? {
       valueType: T;
       iterator: ArrayIterator<ValueTypeMap[T][number]>;
     }
   : never;
 
-function formatLabels<T extends ListValueType>(
+function formatLabels<T extends NormalListValueType>(
   typedConstantValue: TypedConstantValue<T>
 ): IteratorObject<string> {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -143,7 +140,7 @@ function formatLabels<T extends ListValueType>(
           `tone\\left(${values.map(truncatedLatexLabel).join(",")}\\right)`
       );
     default:
-      return (iterator satisfies never).map(String);
+      return (iterator satisfies never as ArrayIterator<unknown>).map(String);
   }
 }
 
@@ -159,12 +156,13 @@ function* reusableTake<T>(iterable: Iterator<T>, limit: number) {
   }
 }
 
-export function ListEvaluation(val: () => TypedConstantValue<ListValueType>) {
+export function ListEvaluation(
+  typedConstantValue: TypedConstantValue<NormalListValueType>
+) {
   return (
     <div class="dcg-evaluation-view__wrapped-value">
       <StaticMathQuillView
         latex={() => {
-          const typedConstantValue = val();
           const listLength = typedConstantValue.value.length;
           const truncationLength = 20;
           const labels = formatLabels(typedConstantValue);
