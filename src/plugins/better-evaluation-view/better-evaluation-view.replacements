@@ -2,44 +2,6 @@
 
 *plugin* `better-evaluation-view`
 
-## Show undefineds: JSX consumer
-
-*Description* `Show NaN, -∞, and +∞`
-
-*Find* => `undefined`
-```js
-undefined: ()=> $createElement(
-  $ViewClass,
-  {
-    ...this.props,
-    content: () => this.controller.s("shared-calculator-label-undefined")
-  }
-)
-```
-
-*Replace* `undefined` with
-```js
-undefined: () => DSM.replaceElement(
-  () => $createElement(
-    $ViewClass,
-    {
-      ...this.props,
-      content: () => this.controller.s("shared-calculator-label-undefined")
-    }
-  ),
-  () =>
-    DSM.betterEvaluationView?.settings.floats
-      ? $createElement(
-          Desmos.Private.Fragile.StaticMathquillView,
-          {
-            latex: () => this.getNumberLabelString?.() || "undefined",
-            config: {}
-          }
-        )
-      : undefined
-)
-```
-
 ## Show list elements: JSX consumer
 
 *Description* `Show list elements`
