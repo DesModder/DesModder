@@ -1,0 +1,29 @@
+# Replacements for Quake Pro
+
+*plugin* `quake-pro`
+
+## Add a character count to each expression in the exppanel
+
+*Description* `Show how many characters used by an expression in the exppanel`
+
+*Find* => `thingy`
+```js
+case "set-perspective-distortion":
+{
+    this.getGraphSettings().config.setProperty("perspectiveDistortion", $e.value),
+    ($I = this.grapher3d) == null || $I.redrawAllLayers();
+    break
+}
+```
+
+
+*Replace* `thingy` with
+```js
+case "set-perspective-distortion":
+{
+    console.log("howdy mister!")
+    this.getGraphSettings().config.setProperty("perspectiveDistortion", $e.value),
+    ($I = this.grapher3d) == null || $I.redrawAllLayers();
+    break
+}
+```
