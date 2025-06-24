@@ -30,6 +30,7 @@ import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
 import BetterNavigation from "./better-navigation";
 import OverrideKeystroke from "../core-plugins/override-keystroke";
+import quakePro from "./quake-pro";
 import { DispatchedEvent } from "src/globals/extra-actions";
 
 interface ConfigItemGeneric {
@@ -149,6 +150,7 @@ export const keyToPlugin = {
   syntaxHighlighting: SyntaxHighlighting,
   betterNavigation: BetterNavigation,
   pasteImage: PasteImage,
+  quakePro: quakePro,
 } satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);
@@ -204,6 +206,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get syntaxHighlighting () { return this.ep["syntax-highlighting"]}
   get betterNavigation () { return this.ep["better-navigation"]} 
   get pasteImage () { return this.ep["paste-image"]; }
+  get quakePro () { return this.ep["quake-pro"]; }
 }
 
 export type IDToPluginSettings = {
