@@ -19,12 +19,12 @@ list: $rhs => $createElement(__oldList__)
 "list-count": $listCountRhs => DSM.replaceElement(
   () => $listCountCreateElement(__oldListCount__),
   () => DSM.betterEvaluationView?.evaluation(DSM.betterEvaluationView?.getTypedConstantValue.bind(this)),
-  DSM.betterEvaluationView?.getTypedConstantValue.bind(this)
+  () => DSM.betterEvaluationView?.evaluationUpdateKey(this)
 ),
 list: $rhs => DSM.replaceElement(
   () => $createElement(__oldList__),
   () => DSM.betterEvaluationView?.evaluation(DSM.betterEvaluationView?.getTypedConstantValue.bind(this)),
-  DSM.betterEvaluationView?.getTypedConstantValue.bind(this)
+  () => DSM.betterEvaluationView?.evaluationUpdateKey(this)
 )
 ```
 
@@ -38,7 +38,7 @@ emptyList: () => $emptyListCreateElement(__oldEmptyList__)
 emptyList: () => DSM.replaceElement(
   () => $emptyListCreateElement(__oldEmptyList__),
   () => DSM.betterEvaluationView?.evaluation(DSM.betterEvaluationView?.getTypedConstantValue.bind(this)),
-  DSM.betterEvaluationView?.getTypedConstantValue.bind(this)
+  () => DSM.betterEvaluationView?.evaluationUpdateKey(this)
 )
 ```
 
@@ -56,7 +56,7 @@ rgbcolor: $rhs => $createElement(__swatch__)
 rgbcolor: $rhs => DSM.replaceElement(
   () => $createElement(__swatch__),
   () => DSM.betterEvaluationView?.evaluation(DSM.betterEvaluationView?.getTypedConstantValue.bind(this)),
-  DSM.betterEvaluationView?.getTypedConstantValue.bind(this)
+  () => DSM.betterEvaluationView?.evaluationUpdateKey(this)
 )
 ```
 
