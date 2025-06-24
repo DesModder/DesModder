@@ -21,9 +21,21 @@ case "set-perspective-distortion":
 ```js
 case "set-perspective-distortion":
 {
-    console.log("howdy mister!")
-    this.getGraphSettings().config.setProperty("perspectiveDistortion", $e.value),
+    this.getGraphSettings().config.setProperty("perspectiveDistortion", $e.value *3 ),
     ($I = this.grapher3d) == null || $I.redrawAllLayers();
+
+    console.log($I);
     break
 }
+```
+
+*Find* => `potential`
+```js
+this.camera.fov = $Oae($t * $Nz($o * $i)) / $o
+```
+
+*Replace* `potential` with
+```js
+console.log("BEING TRIGGERED")
+this.camera.fov = 3*$Oae($t * $Nz($o * $i)) / $o
 ```
