@@ -367,5 +367,6 @@ paste-image-error-another-upload-in-progress = Retry after another upload in pro
 
 ## Quake Pro
 quake-pro-name = Quake Pro
-quake-pro-desc = Allows you to increase the FOV beyond the regular limit.
-quake-opt-multiplier-name = Multiplier
+quake-pro-desc = Allows you to increase the Field of View beyond the 3D calculator's regular limit.
+quake-pro-opt-magnification-name = Zoom Multiplier
+quake-pro-opt-magnification-desc = Increase the viewport's zoom limit by using this as the multiplier.

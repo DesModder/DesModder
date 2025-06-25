@@ -150,7 +150,7 @@ export const keyToPlugin = {
   syntaxHighlighting: SyntaxHighlighting,
   betterNavigation: BetterNavigation,
   pasteImage: PasteImage,
-  quakePro: quakePro,
+  quakePro,
 } satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);

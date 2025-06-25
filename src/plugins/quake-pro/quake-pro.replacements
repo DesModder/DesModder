@@ -2,55 +2,44 @@
 
 *plugin* `quake-pro`
 
-## Adjust the FOV slider
 
-*Description* `Divide getPerspectiveValue() to normalize the FOV slider.`
-
-
-*Find* => `from`
-```js
-return this.controller.getPerspectiveDistortion() - 1
-```
-
-
-*Replace* `from` with
-```js
-let multiplier = DSM.pluginSettings["quake-pro"].multiplier;
-return this.controller.getPerspectiveDistortion() / multiplier - 1
-```
-
-
-
-## Increase the camera FOV
+## Increase the FOV of the camera
 
 *Description* `Multiply getPerspectiveDistortion() to increase the viewport FOV.`
 
 *Find* => `from`
 ```js
-let $e = this.graphSettings.config.perspectiveDistortion;
-return isNaN($e) ? 1 : $e < 1e-4 ? 0 : $__dcg_shared_module_exports__['bc']($e, 0, $yk)
+{
+  let $e = this.graphSettings.config.perspectiveDistortion;
+  return __return__
+}
 ```
 
 *Replace* `from` with
 ```js
-let multiplier = DSM.pluginSettings["quake-pro"].multiplier;
-
-let $e = this.graphSettings.config.perspectiveDistortion;
-return isNaN($e) ? 1 : $e < 1e-4 ? 0 : $__dcg_shared_module_exports__['bc']($e, 0, $yk) * multiplier
+{
+  let $e = this.graphSettings.config.perspectiveDistortion;
+  // Multiply result to magnify.
+  return __return__ * DSM.pluginSettings["quake-pro"].magnification;
+  
+}
 ```
 
 
-*Find* => `potential`
+## Adjust the FOV of the slider
+
+*Description* `Divide getPerspectiveValue() to normalize the FOV slider in the settings menu.`
+
+*Find* => `from`
 ```js
-this.cameraDistance = $OP / $perspectiveDistortion,
-this.camera.position.set(-this.cameraDistance, 0, 0),
-this.camera.fov = $mathAtan($perspectiveDistortion * $mathTan($convertToRadian * $aspectRatio)) / $convertToRadian
+{
+  return this.controller.getPerspectiveDistortion() - 1
+}
 ```
 
-*Replace* `potential` with
+*Replace* `from` with
 ```js
-
-__potential__
-
+{
+  return this.controller.getPerspectiveDistortion() / DSM.pluginSettings["quake-pro"].magnification - 1
+}
 ```
-

@@ -6,6 +6,7 @@ export default class quakePro extends PluginController<Config> {
   static enabledByDefault = true;
   static config = configList;
 
+  magnification = 1;
   oldName = "";
 
   afterEnable() {

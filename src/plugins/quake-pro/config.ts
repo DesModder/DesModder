@@ -1,9 +1,9 @@
 export const configList = [
   {
-    key: "multiplier",
+    key: "magnification",
     type: "number",
-    default: 1.0,
-    min: 0.1,
+    default: 1,
+    min: 1,
     max: 10,
     step: 0.1,
   },
@@ -12,5 +12,5 @@ export const configList = [
 ] as const;
 
 export interface Config {
-  multiplier: number;
+  magnification: number;
 }
