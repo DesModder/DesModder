@@ -29,8 +29,8 @@ import VideoCreator from "./video-creator";
 import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
 import BetterNavigation from "./better-navigation";
+import QuakePro from "./quake-pro";
 import OverrideKeystroke from "../core-plugins/override-keystroke";
-import quakePro from "./quake-pro";
 import { DispatchedEvent } from "src/globals/extra-actions";
 
 interface ConfigItemGeneric {
@@ -150,7 +150,7 @@ export const keyToPlugin = {
   syntaxHighlighting: SyntaxHighlighting,
   betterNavigation: BetterNavigation,
   pasteImage: PasteImage,
-  quakePro,
+  quakePro: QuakePro,
 } satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);
