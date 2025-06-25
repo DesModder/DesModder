@@ -2,40 +2,55 @@
 
 *plugin* `quake-pro`
 
-## Add a character count to each expression in the exppanel
+## Adjust the FOV slider
 
-*Description* `Show how many characters used by an expression in the exppanel`
+*Description* `Divide getPerspectiveValue() to normalize the FOV slider.`
 
-*Find* => `thingy`
+
+*Find* => `from`
 ```js
-case "set-perspective-distortion":
-{
-    this.getGraphSettings().config.setProperty("perspectiveDistortion", $e.value),
-    ($I = this.grapher3d) == null || $I.redrawAllLayers();
-    break
-}
+return this.controller.getPerspectiveDistortion() - 1
 ```
 
 
-*Replace* `thingy` with
+*Replace* `from` with
 ```js
-case "set-perspective-distortion":
-{
-    this.getGraphSettings().config.setProperty("perspectiveDistortion", $e.value *3 ),
-    ($I = this.grapher3d) == null || $I.redrawAllLayers();
-
-    console.log($I);
-    break
-}
+let multiplier = DSM.pluginSettings["quake-pro"].multiplier;
+return this.controller.getPerspectiveDistortion() / multiplier - 1
 ```
+
+
+
+## Increase the camera FOV
+
+*Description* `Multiply getPerspectiveDistortion() to increase the viewport FOV.`
+
+*Find* => `from`
+```js
+let $e = this.graphSettings.config.perspectiveDistortion;
+return isNaN($e) ? 1 : $e < 1e-4 ? 0 : $__dcg_shared_module_exports__['bc']($e, 0, $yk)
+```
+
+*Replace* `from` with
+```js
+let multiplier = DSM.pluginSettings["quake-pro"].multiplier;
+
+let $e = this.graphSettings.config.perspectiveDistortion;
+return isNaN($e) ? 1 : $e < 1e-4 ? 0 : $__dcg_shared_module_exports__['bc']($e, 0, $yk) * multiplier
+```
+
 
 *Find* => `potential`
 ```js
-this.camera.fov = $Oae($t * $Nz($o * $i)) / $o
+this.cameraDistance = $OP / $perspectiveDistortion,
+this.camera.position.set(-this.cameraDistance, 0, 0),
+this.camera.fov = $mathAtan($perspectiveDistortion * $mathTan($convertToRadian * $aspectRatio)) / $convertToRadian
 ```
 
 *Replace* `potential` with
 ```js
-console.log("BEING TRIGGERED")
-this.camera.fov = 3*$Oae($t * $Nz($o * $i)) / $o
+
+__potential__
+
 ```
+

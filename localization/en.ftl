@@ -368,3 +368,4 @@ paste-image-error-another-upload-in-progress = Retry after another upload in pro
 ## Quake Pro
 quake-pro-name = Quake Pro
 quake-pro-desc = Allows you to increase the FOV beyond the regular limit.
+quake-opt-multiplier-name = Multiplier
