@@ -7,23 +7,25 @@ export default class quakePro extends PluginController<Config> {
   static config = configList;
 
   magnification = 1;
-  oldName = "";
 
   afterEnable() {
-    const headerElement = getHeaderElement();
-    if (headerElement === null) return;
-    const text = headerElement.innerText;
-    if (text !== undefined) this.oldName = text;
-    headerElement.innerText = "DesModder ♥";
+    this.magnification = this.settings.magnification;
+    this.redrawAllLayers();
+  }
+
+  afterConfigChange() {
+    this.magnification = this.settings.magnification;
+    this.redrawAllLayers();
   }
 
   afterDisable() {
-    const headerElement = getHeaderElement();
-    if (headerElement === null) return;
-    headerElement.innerText = this.oldName;
+    this.magnification = 1;
+    this.redrawAllLayers();
   }
-}
 
-function getHeaderElement(): HTMLElement | null {
-  return document.querySelector(".header-account-name");
+  redrawAllLayers() {
+    const { grapher3d } = this.cc;
+    if (!grapher3d) return;
+    grapher3d.redrawAllLayers();
+  }
 }

@@ -19,9 +19,7 @@
 ```js
 {
   let $e = this.graphSettings.config.perspectiveDistortion;
-  // Multiply result to magnify.
-  return __return__ * DSM.pluginSettings["quake-pro"].magnification;
-  
+  return __return__ * (DSM.quakePro?.magnification ?? 1);
 }
 ```
 
@@ -40,6 +38,6 @@
 *Replace* `from` with
 ```js
 {
-  return this.controller.getPerspectiveDistortion() / DSM.pluginSettings["quake-pro"].magnification - 1
+  return this.controller.getPerspectiveDistortion() / (DSM.quakePro?.magnification ?? 1) - 1
 }
 ```
