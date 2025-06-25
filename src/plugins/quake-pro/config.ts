@@ -2,7 +2,7 @@ export const configList = [
   {
     key: "magnification",
     type: "number",
-    default: 1,
+    default: 3,
     min: 1,
     max: 30,
     step: 0.1,
