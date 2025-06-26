@@ -60,16 +60,11 @@ It should be on the left to avoid covering up all the DesModder config stuff.
 $createElement("div", {
   class: () => ({
       "dcg-geometry-settings-container": !0,
-      "dcg-popover": !0,
       __classes__
   }),
-  style: this.bindFn(this.getContainerStyle),
-  didMount: this.bindFn(this.didMountContainer),
-  didUnmount: this.bindFn(this.didUnmountContainer),
+  ____$
   children: $createElement2("div", {
-    class: $$const("dcg-popover-interior"),
-    role: $$const("region"),
-    "aria-label": () => this.controller.s("graphing-calculator-label-tooltip-geometry-settings"),
+    ____$
     children: [__children__]
   })
 })
@@ -79,7 +74,7 @@ $createElement("div", {
 ```js
 __children__,
 $createElement("div", {
-    class: $$const("dcg-arrow")
+    class: () => "dcg-arrow"
 }),
 ```
 
