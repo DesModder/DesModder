@@ -427,18 +427,20 @@ function findPattern(
   if (found === null) {
     const s = inside.start;
     const len = inside.length;
-    throw new Error(
+    const msg =
       `Pattern not found: ${fullPattern.map((v) => v.value).join("")} ` +
-        `in {start: ${s}, length: ${len}}\n` +
-        str
-          .slice(s, s + 20)
-          .concat({ value: " … " } as any)
-          .concat(str.slice(s + len - 20, s + len))
-          .filter((v) => v.type !== "MultiLineComment")
-          .map((v) => (v.value.length < 100 ? v.value : "[long token]"))
-          .join("")
-          .replace(/\n{2,}/g, "\n")
-    );
+      `in {start: ${s}, length: ${len}}\n` +
+      str
+        .slice(s, s + 20)
+        .concat({ value: " … " } as any)
+        .concat(str.slice(s + len - 20, s + len))
+        .filter((v) => v.type !== "MultiLineComment")
+        .map((v) => (v.value.length < 100 ? v.value : "[long token]"))
+        .join("")
+        .replace(/\n{2,}/g, "\n");
+    (window as any).DSM_panics ??= [];
+    (window as any).DSM_panics.push(msg);
+    throw new Error(msg);
   }
   return found;
 }
