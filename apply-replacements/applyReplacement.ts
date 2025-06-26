@@ -292,6 +292,23 @@ function applyStringReplacements(
   };
 }
 
+function isVariablePattern(token: PatternToken) {
+  return (
+    token.type === "PatternBalanced" ||
+    token.type === "PatternBalancedNonGreedy" ||
+    token.type === "PatternIdentifier" ||
+    token.type === "PatternIdentifierDot"
+  );
+}
+
+/** Is the token a pattern that can be arbitrarily long? */
+function isLongPattern(token: PatternToken) {
+  return (
+    token.type === "PatternBalanced" ||
+    token.type === "PatternBalancedNonGreedy"
+  );
+}
+
 function blockReplacements(
   r: Block,
   getPrefix: (r: Block) => string,
@@ -313,20 +330,14 @@ function blockReplacements(
       );
     // skipFirst = this is just an append
     const skipFirst =
-      (command.patternArg[0].type === "PatternBalanced" ||
-        command.patternArg[0].type === "PatternIdentifier" ||
-        command.patternArg[0].type === "PatternIdentifierDot") &&
+      isVariablePattern(command.patternArg[0]) &&
       symbolName(command.patternArg[0].value) === symbolName(command.args[0]);
     const from = table.getRequired(prefix + command.args[0]);
     const res: Replacement = {
       heading: r.heading,
       from: skipFirst ? { start: from.start + from.length, length: 0 } : from,
       to: command.patternArg.slice(skipFirst ? 1 : 0).flatMap((token) => {
-        if (
-          token.type === "PatternBalanced" ||
-          token.type === "PatternIdentifier" ||
-          token.type === "PatternIdentifierDot"
-        ) {
+        if (isVariablePattern(token)) {
           return table.getSlice(prefix + token.value);
         } else return token;
       }),
@@ -393,7 +404,7 @@ function findPattern(
   if (fixedToken === undefined)
     throw new Error("Pattern Error: No fixed token found");
   const fixedTokenIdx = pattern.indexOf(fixedToken);
-  if (pattern.slice(0, fixedTokenIdx).some((x) => x.type === "PatternBalanced"))
+  if (pattern.slice(0, fixedTokenIdx).some(isLongPattern))
     throw new Error("First fixed token is after a variable-width span.");
 
   // search time!
@@ -412,9 +423,16 @@ function findPattern(
       if (allowDuplicates) return match;
       if (found !== null)
         throw new ReplacementError(
-          `Duplicate pattern match at ${match.startIndex} with length ${match.length}: \n` +
+          `Duplicate pattern match.\n` +
+            `Pattern: ${fullPattern.map((v) => v.value).join("")} \n` +
+            `\nNew match at ${match.startIndex} with length ${match.length}: \n` +
             str
               .slice(match.startIndex, match.startIndex + match.length)
+              .map((v) => v.value)
+              .join("") +
+            `\n\nOld match at ${found.startIndex} with length ${found.length}: \n` +
+            str
+              .slice(found.startIndex, found.startIndex + found.length)
               .map((v) => v.value)
               .join("")
         );
@@ -466,6 +484,12 @@ class PatternQueue {
     return ret;
   }
 
+  peek(): PatternToken | undefined {
+    if (this.bonusStack.length) return this.bonusStack.at(-1);
+    const ret = this.pattern[this.patternIndex];
+    return ret;
+  }
+
   queueTokens(tokens: Token[]) {
     if (this.bonusStack.length) {
       // This will never be reached because the bonus stack doesn't have any
@@ -479,6 +503,9 @@ class PatternQueue {
     return this.patternIndex === 0;
   }
 }
+
+const closeBraces = new Set([")", "]", "}"]);
+const openBraces = new Set(["(", "[", "{"]);
 
 function patternMatch(
   pattern: PatternToken[],
@@ -552,8 +579,6 @@ function patternMatch(
       continue;
     }
     if (expectedToken.type === "PatternBalanced") {
-      const closeBraces = new Set([")", "]", "}"]);
-      const openBraces = new Set(["(", "[", "{"]);
       // Scan right, keeping track of nested depth
       let depth = 1;
       let currIndex = strIndex - 1;
@@ -570,6 +595,43 @@ function patternMatch(
           length: currIndex - strIndex,
         });
       // while loop stops when currIndex points to the matching close brace
+      // but patternIndex points to the <balanced> before it, so subtract 1
+      strIndex = currIndex - 1;
+    } else if (expectedToken.type === "PatternBalancedNonGreedy") {
+      // Scan right, keeping track of nested depth
+      let depth = 1;
+      let currIndex = strIndex - 1;
+      const nextPattern = patternQueue.peek();
+      if (!nextPattern) {
+        throw new Error(
+          `Non-greedy pattern ${expectedToken.value} cannot be the final pattern token.`
+        );
+      }
+      if (isVariablePattern(nextPattern)) {
+        throw new Error(
+          `Variable pattern token '${nextPattern.value}' cannot follow non-greedy pattern token ${expectedToken.value}.`
+        );
+      }
+      while (depth > 0) {
+        currIndex++;
+        const curr = str[currIndex].value;
+        if (closeBraces.has(curr)) depth--;
+        else if (openBraces.has(curr)) depth++;
+
+        if (depth === 1 && tokensEqual(nextPattern, str[currIndex])) {
+          // Non-backtracking match.
+          break;
+        }
+      }
+      // done scanning: currIndex points to a close brace in `str`,
+      // (or to something matching the next pattern token)
+      if (doTable)
+        table!.set(expectedToken.value, {
+          start: strIndex,
+          length: currIndex - strIndex,
+        });
+      // while loop stops when currIndex points to the matching close brace
+      // (or to something matching the next pattern token),
       // but patternIndex points to the <balanced> before it, so subtract 1
       strIndex = currIndex - 1;
     } else if (expectedToken.type === "PatternIdentifier") {
