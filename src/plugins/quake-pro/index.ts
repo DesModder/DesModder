@@ -3,7 +3,7 @@ import { Config, configList } from "./config";
 
 export default class quakePro extends PluginController<Config> {
   static id = "quake-pro" as const;
-  static enabledByDefault = true;
+  static enabledByDefault = false;
   static config = configList;
 
   magnification = 1;
