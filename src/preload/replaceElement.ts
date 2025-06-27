@@ -31,10 +31,14 @@ export function insertElement(creator: () => undefined | (() => any)) {
   } as any);
 }
 
-export function replaceElement<T>(old: () => T, replacer: () => Replacer<T>) {
+export function replaceElement<T>(
+  old: () => T,
+  replacer: () => Replacer<T>,
+  key: () => unknown = () => !!replacer()
+) {
   const { DCGView } = (Desmos as any).Private.Fragile;
-  return DCGView.Components.IfElse(() => !!replacer(), {
-    true: () => replacer()!(old()),
-    false: () => old(),
-  });
+  return createElementWrapped(DCGView.Components.Switch, {
+    key,
+    children: () => (replacer() ?? ((_) => _))(old()),
+  } as any);
 }
