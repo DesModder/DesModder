@@ -19,7 +19,7 @@
 ```js
 {
   let $e = this.graphSettings.config.perspectiveDistortion;
-  return __return__ * (DSM.quakePro?.magnification ?? 1);
+  return (__return__) * (DSM.quakePro?.magnification ?? 1);
 }
 ```
 
