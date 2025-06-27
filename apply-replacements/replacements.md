@@ -73,6 +73,8 @@ Some special pattern tokens match something other than their exact value:
   - Greedy, matches up to the next close brace
   - Must be followed by a close brace in the pattern
 - `____` matches a balanced sequence of code but ignores the value
+- `____$` matches a balanced sequence of tokens but is non-greedy.
+  - Note for simplicity of implementation, there is no back-tracking. Make sure the token after this is sufficiently unique.
 
 The patterns bind names (`id` and `range`) in these bulleted examples. They get placed into the scope of the block in which the pattern appears; they do not get returned as return values. What this means is these carry over to later patterns in the same block.
 

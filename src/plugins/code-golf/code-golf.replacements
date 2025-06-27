@@ -10,10 +10,10 @@
 ```js
 $createElement("div", {
     class: ()=>({
-        "dcg-do-not-blur": !0,
-        "dcg-expressionitem": !0,
-        "dcg-highlighted-expressionitem": this.controller.isExpressionHighlighted(this.id),
-        "dcg-mathitem": !0,
+        ____$
+        "dcg-highlighted-expressionitem"
+        ____$
+        "dcg-mathitem"
         ____
     })
     ____
@@ -24,8 +24,7 @@ $createElement("div", {
 ```js
 $createElement2("div", {
     class: $$const("dcg-fade-container"),
-    onTapStart: this.bindFn(this.onMouseSelect),
-    onTap: this.bindFn(this.onMouseSelect),
+    ____$
     children: [__children__]
 })
 ```
@@ -44,11 +43,10 @@ DSM.insertElement(() => ( DSM.codeGolf?.expressionItemCostPanel(this.model, this
 ```js
 $createElement("div", {
     class: () => ({
-        "dcg-do-not-blur": !0,
-        "dcg-expressionitem": !0,
-        "dcg-highlighted-expressionitem": this.controller.isExpressionHighlighted(this.id),
-        "dcg-readonly": this.controller.isItemReadonly(this.id),
-        "dcg-expressionfolder": !0,
+        ____$
+        "dcg-highlighted-expressionitem"
+        ____$
+        "dcg-expressionfolder"
         ____
     })
     ____
