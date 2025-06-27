@@ -8,6 +8,10 @@ export type PatternToken =
       value: string;
     }
   | {
+      type: "PatternBalancedNonGreedy";
+      value: string;
+    }
+  | {
       type: "PatternIdentifierDot";
       value: string;
     }
@@ -149,6 +153,8 @@ function parseToken(token: Token): PatternToken {
       return token;
     case /^__\w*__$/.test(token.value):
       return { type: "PatternBalanced", value: token.value };
+    case /^__\w*__\$$/.test(token.value):
+      return { type: "PatternBalancedNonGreedy", value: token.value };
     case token.value.startsWith("$$"):
       return { type: "PatternIdentifierDot", value: token.value };
     case token.value.startsWith("$"):

@@ -1,5 +1,16 @@
 # DesModder Changelog
 
+## 0.14.9
+
+Bug fixes:
+
+- (Wolfram to Desmos) No longer prevent copying a whole folder.
+- (GLesmos) Fix replacement error.
+
+Translations:
+
+- Updates to Chinese translations (zh-CN).
+
 ## 0.14.8
 
 Bug fixes:

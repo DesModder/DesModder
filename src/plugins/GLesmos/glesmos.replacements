@@ -151,63 +151,39 @@ addStatement($stmt) {
 
 *worker_only*
 
-*Find*
+*Find* => `branchesReplacement`
 ```js
-.shader = $emitGLSL($t, 0)
-```
-
-*Find*
-
-```js
-function $_graphFuncSubroutine(
-  $graphMode,
-  {
-    viewState: $,
-    node: $node,
-    concrete: $,
-    graphInfo: $,
-    policy: $,
-    styleBroadcastStrategy: $
-  }
-){
-  let $ = $.valueType === $;
-  __graph__
+branchesReplacement: function (____) {
+  ____
 }
 ```
 
-The code loops over the different IR objects `$ir`.
+*Replace* `branchesReplacement` with
 
-*Find* inside `graph` => `compute2d`
 ```js
-let $branch = $c({
-  viewState: $viewState,
-  graphInfo: $graphInfo,
-  compiled: $compiled,
-  derivative: $derivative
-})
-```
-
-*Find* inside `graph`
-```js
-$ = $concrete.toImplicitBool()
-```
-
-*Replace* `compute2d` with
-```js
-if ($node.userData.glesmos) {
+branchesReplacement: function (
+  graphProps,
+  concrete,
+  graphInfo,
+  emitGLSL
+) {
+  const { userData } = graphProps;
+  if (!userData.glesmos)
+    return undefined;
+  const isEquality = graphInfo.operator === '=';
   const lines =
-    $node.userData.lines !== false &&
-    (!$node.isInequality() || $node.userData.glesmosLinesConfirmed);
+    userData.lines !== false &&
+    (isEquality || userData.glesmosLinesConfirmed);
   let derivativeX, derivativeY;
   if (lines) {
     try {
-      derivativeX = $concrete.takeDerivative('x');
-      derivativeY = $concrete.takeDerivative('y');
+      derivativeX = concrete.takeDerivative('x');
+      derivativeY = concrete.takeDerivative('y');
     } catch {}
   }
   const newCompiled = self.dsm_compileGLesmos(
-    $concrete, $graphInfo.color, $graphInfo.fillOpacity ?? 0, $graphInfo.lineOpacity, $node.userData.lines !== false ? $graphInfo.lineWidth : 0.0,
-    derivativeX, derivativeY, $emitGLSL
+    concrete, graphInfo.color, graphInfo.fillOpacity ?? 0, graphInfo.lineOpacity, userData.lines !== false ? graphInfo.lineWidth : 0.0,
+    derivativeX, derivativeY, emitGLSL
   );
   return [{
     graphMode: "GLesmos",
@@ -216,5 +192,4 @@ if ($node.userData.glesmos) {
     poi: {}
   }]
 }
-__compute2d__
 ```

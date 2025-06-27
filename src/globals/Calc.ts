@@ -1,4 +1,4 @@
-import { FolderModel, ItemModel } from "./models";
+import { ItemModel } from "./models";
 import { GraphState, ItemState, Product } from "../../graph-state";
 import { MathQuillField } from "#components";
 import { Matrix3 } from "./matrix3";
@@ -249,7 +249,6 @@ interface CalcPrivate {
   controller: {
     rootElt: HTMLElement;
     isNarrow: () => boolean;
-    // _removeExpressionSynchronously(model: ItemModel): void;
     handleDispatchedAction: (evt: DispatchedEvent) => void;
     _toplevelReplaceItemAt: (
       index: number,
@@ -258,7 +257,6 @@ interface CalcPrivate {
     ) => void;
     _hasUnsavedChanges: boolean;
     createItemModel: (modelTemplate: ItemState) => ItemModel;
-    getPillboxBackgroundColor: () => string;
     isGraphSettingsOpen: () => boolean;
     graphSettings: {
       config: {
@@ -283,12 +281,10 @@ interface CalcPrivate {
     getAllItemModels: () => ItemModel[];
     stopAllSliders: () => void;
     isKeypadOpen: () => boolean;
-    getKeypadHeight: () => number;
     getDegreeMode: () => boolean;
     getExpressionSearchOpen: () => boolean;
     generateId: () => string;
     // returns a subscript that occurs nowhere else in the graph
-    generateTableXSubscript: () => number;
     updateViews: () => void;
     updateTheComputedWorld: () => void;
     commitUndoRedoSynchronously: (e: { type: string }) => void;
@@ -328,10 +324,7 @@ interface CalcPrivate {
     markTickRequiredNextFrame: () => void;
     getPlayingSliders: () => { latex: string }[];
     _tickSliders: (nowTimestamp: number) => void;
-    computeMajorLayout: () => { grapher: { width: number } };
-    isGeometry: () => boolean;
     geometryGettingStartedMessageState: string;
-    isGeoUIActive: () => boolean;
     isNarrowGeometryHeader: () => boolean;
     expressionSearchOpen: boolean;
     /** Returns a function to call to unsubscribe */
@@ -365,7 +358,6 @@ interface CalcPrivate {
     getDefaultViewport: () => {
       constructor: { fromObject: (vp: Viewport) => ViewportClass };
     };
-    getGeometryFolder: () => FolderModel | undefined;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;
