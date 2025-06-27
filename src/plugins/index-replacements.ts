@@ -13,6 +13,7 @@ import showTips from "#plugins/show-tips/show-tips.replacements";
 import syntaxHighlighting from "#plugins/syntax-highlighting/syntax-highlighting.replacements";
 import textMode from "#plugins/text-mode/text-mode.replacements";
 import insertPanels from "../preload/moduleOverrides/insert-panels.replacements";
+import quakePro from "#plugins/quake-pro/quake-pro.replacements";
 
 export default [
   insertPanels,
@@ -30,4 +31,5 @@ export default [
   rightClickTray,
   codeGolf,
   syntaxHighlighting,
+  quakePro,
 ];
