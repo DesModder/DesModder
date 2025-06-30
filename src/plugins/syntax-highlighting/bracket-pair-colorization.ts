@@ -11,18 +11,12 @@ export function generateBracketPairColorizationCSS(
         `calc(${colors
           .map((col, colindex) => {
             const channel = col[i];
-            // Uses the periodic nature of cosine to only color every Nth bracket a given color
+            // Uses the periodic nature of mod to only color every Nth bracket a given color
 
-            // All colors are multiplied by this "cosine factor" and then added together
+            // All colors are multiplied by this "mod factor" and then added together
             // to only "pick" the correct color.
 
-            // The "max(0, 10000 * cos(whatever) - 9999)" thing is done to *only* pick
-            // values where cosine is 1 (i.e. where bracketdepth - index = 0)
-
-            // I'm not using better options like abs() or mod() due to browser compatibility
-            return `${channel} * max(0, 10000 * cos(
-            2 * 3.14159265358979323 * (var(--bracket-depth2) - ${colindex}) / ${colors.length}
-            ) - 9999)`;
+            return `${channel} * pow(0, mod(var(--bracket-depth2) - ${colindex}, ${colors.length}))`;
           })
           .join(" + ")})`
     )
