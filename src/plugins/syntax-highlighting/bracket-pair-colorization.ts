@@ -3,22 +3,22 @@ export function generateBracketPairColorizationCSS(
   colorInText: boolean,
   thickenBrackets: number
 ) {
-  if (!colors[0]) return [];
-
-  const colorMaker = `rgb(${colors[0]
+  const colorMaker = `rgb(${[0, 1, 2]
     .map(
-      (_, i) =>
-        `calc(${colors
-          .map((col, colindex) => {
-            const channel = col[i];
-            // Uses the periodic nature of mod to only color every Nth bracket a given color
+      (i) =>
+        `calc(${
+          colors
+            .map((col, colindex) => {
+              const channel = col[i];
+              // Uses the periodic nature of mod to only color every Nth bracket a given color
 
-            // All colors are multiplied by this "mod factor" and then added together
-            // to only "pick" the correct color.
+              // All colors are multiplied by this "mod factor" and then added together
+              // to only "pick" the correct color.
 
-            return `${channel} * pow(0, mod(var(--bracket-depth2) - ${colindex}, ${colors.length}))`;
-          })
-          .join(" + ")})`
+              return `${channel} * pow(0, mod(var(--bracket-depth2) - ${colindex}, ${colors.length}))`;
+            })
+            .join(" + ") ?? 0
+        })`
     )
     .join(", ")})`;
 
