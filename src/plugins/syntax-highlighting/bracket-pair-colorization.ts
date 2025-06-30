@@ -37,15 +37,14 @@ export function generateBracketPairColorizationCSS(settings: Config) {
     )
     .join(", ")})`;
 
-  return [
-    /*
-      Colorization exceptions:
+  /*
+    Colorization exceptions:
 
-      - Children of a \textcolor{} or base case in label or expression
-      - Standalone commas like in `(0,0),(1,2)`
-        Otherwise they would get the color of the first color in the list.
-    */
-    `
+    - Children of a \textcolor{} or base case in label or expression
+    - Standalone commas like in `(0,0),(1,2)`
+      Otherwise they would get the color of the first color in the list.
+  */
+  return `
     .dcg-mq-root-block {
       --bracket-depth1: 0;
       --bracket-depth2: 0;
@@ -71,6 +70,5 @@ export function generateBracketPairColorizationCSS(settings: Config) {
         }
       }
     }
-    `,
-  ];
+    `;
 }
