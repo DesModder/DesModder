@@ -29,54 +29,38 @@ export function generateBracketPairColorizationCSS(
     .join(", ")})`;
 
   return [
+    /*
+      Colorization exceptions:
+
+      - Children of a \textcolor{} or base case in label or expression
+      - Standalone commas like in `(0,0),(1,2)`
+        Otherwise they would get the color of the first color in the list.
+    */
     `
     .dcg-mq-root-block {
-        --bracket-depth1: 0;
-        --bracket-depth2: 0;
-    }
-    `,
-    `
-    .dcg-mq-bracket-container {
+      --bracket-depth1: 0;
+      --bracket-depth2: 0;
+
+      .dcg-mq-bracket-container {
         --bracket-depth2: var(--bracket-depth1);
-        color: ${colorMaker};
-    }
-    `,
-    // Reset color on children of a \textcolor{} or base case in label or expression
-    `
-    .dcg-mq-textcolor .dcg-mq-bracket-container,
-    .dcg-base-case-btn .dcg-mq-bracket-container {
-      color: unset;
-    }
-    `,
-    `
-    .dcg-mq-bracket-l path, .dcg-mq-bracket-r path {
-        stroke-width: ${thickenBrackets}%;
-        stroke: ${colorMaker};
-    }
-    `,
-    `
-    .dsm-mq-syntax-comma {
-        color: ${colorMaker};
-    }
-    `,
-    // Reset color on standalone commas, like in `(0,0),(1,2)`. Otherwise they
-    // would get the color of the first color in the list.
-    `
-    .dcg-mq-root-block > .dsm-mq-syntax-comma {
-        color: unset
-    }
-    `,
-    // Reset color on children of a \textcolor{} or base case in label or expression
-    `
-    .dcg-mq-textcolor .dsm-mq-syntax-comma,
-    .dcg-base-case-btn .dsm-mq-syntax-comma {
-      color: unset;
-    }
-    `,
-    `
-    .dcg-mq-bracket-middle {
-        --bracket-depth1: calc(var(--bracket-depth2) + 1);
-        ${colorInText ? "" : "color: black;"}
+
+        &:not(.dcg-mq-textcolor *, .dcg-base-case-btn *) {
+          .dcg-mq-paren,
+          .dsm-mq-syntax-comma,
+          *${colorInText ? "" : ":not(.dcg-mq-bracket-middle, .dcg-mq-bracket-middle *)"} {
+            color: ${colorMaker};
+          }
+        }
+
+        .dcg-mq-paren path {
+          stroke-width: ${thickenBrackets}%;
+          stroke: currentColor;
+        }
+
+        .dcg-mq-bracket-middle {
+          --bracket-depth1: calc(var(--bracket-depth2) + 1);
+        }
+      }
     }
     `,
   ];
