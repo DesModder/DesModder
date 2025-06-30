@@ -3,14 +3,6 @@ import { generateBracketPairColorizationCSS } from "./bracket-pair-colorization"
 import { Config, configList } from "./config";
 import "./index.less";
 
-// assumes valid input;
-export function hex2rgb(hex: string): [number, number, number] {
-  return [
-    parseInt(hex.slice(1, 3), 16),
-    parseInt(hex.slice(3, 5), 16),
-    parseInt(hex.slice(5, 7), 16),
-  ];
-}
 
 export default class SyntaxHighlighting extends PluginController<Config> {
   static id = "syntax-highlighting" as const;
@@ -26,11 +18,7 @@ export default class SyntaxHighlighting extends PluginController<Config> {
     this.resetHighlightedRanges();
 
     const bpcCss = this.settings.bracketPairColorization
-      ? generateBracketPairColorizationCSS(
-          this.settings.bracketPairColorizationColors.map((c) => hex2rgb(c)),
-          this.settings.bpcColorInText,
-          this.settings.thickenBrackets
-        )
+      ? generateBracketPairColorizationCSS(this.settings)
       : [];
 
     while ((this.styles.sheet?.cssRules?.length ?? 0) > 0) {

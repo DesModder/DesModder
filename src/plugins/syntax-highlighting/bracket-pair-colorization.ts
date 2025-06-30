@@ -1,8 +1,23 @@
-export function generateBracketPairColorizationCSS(
-  colors: [number, number, number][],
-  colorInText: boolean,
-  thickenBrackets: number
-) {
+import { Config } from "./config";
+
+// assumes valid input;
+function hex2rgb(hex: string) {
+  return [
+    parseInt(hex.slice(1, 3), 16),
+    parseInt(hex.slice(3, 5), 16),
+    parseInt(hex.slice(5, 7), 16),
+  ] as const;
+}
+
+export function generateBracketPairColorizationCSS(settings: Config) {
+  const {
+    bracketPairColorizationColors: bpcColors,
+    bpcColorInText: colorInText,
+    thickenBrackets,
+  } = settings;
+
+  const colors = bpcColors.map(hex2rgb);
+
   const colorMaker = `rgb(${[0, 1, 2]
     .map(
       (i) =>
