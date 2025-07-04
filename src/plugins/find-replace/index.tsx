@@ -1,47 +1,12 @@
-import { PluginController } from "../PluginController";
-import View from "./View";
+import { PluginController, Replacer } from "../PluginController";
 import { refactor } from "./backend";
-import { Console } from "#globals";
+import { ComponentTemplate, jsx } from "#DCGView";
+import ReplaceBar from "./ReplaceBar";
 
 export default class FindReplace extends PluginController {
   static id = "find-and-replace" as const;
   static enabledByDefault = true;
-  dispatchListenerID: string | undefined;
   replaceLatex = "";
-  view = new View();
-
-  afterEnable() {
-    if (this.cc.getExpressionSearchOpen()) {
-      this.tryInitView();
-    }
-    this.dispatchListenerID = this.cc.dispatcher.register(({ type }) => {
-      if (type === "open-expression-search") {
-        this.tryInitView();
-      } else if (type === "close-expression-search") {
-        this.view.destroyView();
-      } else if (type === "update-expression-search-str") {
-        this.view.updateReplaceView();
-      }
-    });
-  }
-
-  afterDisable() {
-    if (this.dispatchListenerID !== undefined)
-      this.cc.dispatcher.unregister(this.dispatchListenerID);
-    this.view.destroyView();
-  }
-
-  tryInitView() {
-    try {
-      this.view.initView(this);
-    } catch {
-      Console.warn("Failed to initialize find-replace view");
-    }
-  }
-
-  init(view: View) {
-    this.view = view;
-  }
 
   getReplaceLatex() {
     return this.replaceLatex;
@@ -66,4 +31,11 @@ export default class FindReplace extends PluginController {
       location: { type: "search-expressions" },
     });
   }
+
+  replaceSearchView: Replacer = (searchBar: ComponentTemplate) => (
+    <div class="dsm-find-replace-search-bar-container">
+      {searchBar}
+      <ReplaceBar fr={this} />
+    </div>
+  );
 }
