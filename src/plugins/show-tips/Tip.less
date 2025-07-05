@@ -18,15 +18,13 @@
   }
 
   .dsm-usage-tip {
-    background: white;
+    background: var(--dcg-custom-background-color, #fff);
     position: relative;
-    transition:
-      bottom 0.4s,
-      height 0.4s;
+    transition: bottom 0.4s, height 0.4s;
     bottom: 0px;
 
     // Color and font-size matching unresolved detail warning
-    color: #666;
+    color: var(--dcg-custom-text-color-shaded, #666);
     font-size: 12.8;
 
     opacity: 0.3;
