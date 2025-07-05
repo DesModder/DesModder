@@ -201,6 +201,15 @@
   border-left: 1px solid rgba(0, 0, 0, 0.2);
 }
 
+// for compatability with custom background colors.
+// afaict it's not used anywhere on desmos's side anymore?
+// even if I missed something, all vanilla modals/popovers are white
+// so it shouldn't break anything
+.dcg-popover-title {
+  // override #fff
+  background-color: transparent !important;
+}
+
 .dsm-version-number {
   margin-left: auto;
   margin-top: auto;
