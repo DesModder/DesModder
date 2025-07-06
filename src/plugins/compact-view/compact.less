@@ -141,7 +141,11 @@
         border-top-color: #777777;
       }
     }
-    .dcg-expressionitem.dcg-inFolder .dcg-fade-container:after {
+    .dcg-expressionitem:is(
+        .dcg-expressionfolder:not(.dcg-collapsed).dcg-has-items,
+        .dcg-inFolder
+      )
+      .dcg-fade-container:after {
       border-left-color: rgb(from var(--dcg-item-text-color) r g b / 0.67);
     }
 
