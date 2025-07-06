@@ -1,6 +1,11 @@
+// https://stackoverflow.com/a/28592238
+.layered-background(@a, @b: var(--dcg-item-background-color)) {
+  background: linear-gradient(@a), linear-gradient(@b);
+}
+
 .compact-view-enabled.compact-view-enabled.compact-view-enabled.compact-view-enabled.compact-view-enabled.compact-view-enabled.compact-view-no-separating-lines.compact-view-highlight-alternating-lines
   .dcg-expressionfolder:nth-child(2n of .dcg-expressionfolder) {
-  background-color: #d6d5f1;
+  .layered-background(rgb(50 49 185 / 0.2));
 }
 
 .lerp2(@a, @b) {
@@ -31,10 +36,10 @@
     }
     &.compact-view-highlight-alternating-lines
       .dcg-expressionitem:not(.dcg-expressionfolder):nth-child(2n) {
-      background-color: #f5f5f5;
+      .layered-background(rgb(190 190 190 / 0.15));
     }
     .dcg-expressionfolder {
-      background-color: #e9e8f8;
+      .layered-background(rgb(145 144 220 / 0.2));
     }
   }
 
@@ -103,7 +108,7 @@
   &.compact-view-remove-spacing-enabled {
     // make cursor/caret more obvious since it'll be smaller
     .dcg-mq-cursor {
-      border: 1.5px solid black;
+      border: 1.5px solid var(--dcg-custom-text-color, black);
       margin: 0 -1.5px;
     }
 
@@ -137,7 +142,7 @@
       }
     }
     .dcg-expressionitem.dcg-inFolder .dcg-fade-container:after {
-      border-left-color: #000000aa;
+      border-left-color: rgb(from var(--dcg-item-text-color) r g b / 0.67);
     }
 
     // fix authorfeatures toggle problem
@@ -181,7 +186,7 @@
     }
     .dcg-track .dcg-graphic {
       height: 2px;
-      background-color: #999999;
+      background-color: rgba(128, 128, 128, 0.8);
     }
     .dcg-thumb .dcg-graphic {
       width: 0;
