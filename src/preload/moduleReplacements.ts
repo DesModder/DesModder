@@ -36,6 +36,7 @@ const pluginNames = [
   "multiline",
   "intellisense",
   "override-keystroke",
+  "quake-pro",
 ];
 
 replacements.forEach((r) => {

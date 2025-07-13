@@ -234,6 +234,7 @@ export interface Grapher3d {
   transition: {
     duration: number;
   };
+  redrawAllLayers: () => void;
 }
 
 export type Scale = "linear" | "logarithmic";

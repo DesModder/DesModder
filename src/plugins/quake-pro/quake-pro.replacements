@@ -1,0 +1,43 @@
+# Replacements for Quake Pro
+
+*plugin* `quake-pro`
+
+
+## Increase the FOV of the camera
+
+*Description* `Multiply getPerspectiveDistortion() to increase the viewport FOV.`
+
+*Find* => `from`
+```js
+{
+  let $e = this.graphSettings.config.perspectiveDistortion;
+  return __return__
+}
+```
+
+*Replace* `from` with
+```js
+{
+  let $e = this.graphSettings.config.perspectiveDistortion;
+  return (__return__) * (DSM.quakePro?.magnification ?? 1);
+}
+```
+
+
+## Adjust the FOV of the slider
+
+*Description* `Divide getPerspectiveValue() to normalize the FOV slider in the settings menu.`
+
+*Find* => `from`
+```js
+{
+  return this.controller.getPerspectiveDistortion() - 1
+}
+```
+
+*Replace* `from` with
+```js
+{
+  return this.controller.getPerspectiveDistortion() / (DSM.quakePro?.magnification ?? 1) - 1
+}
+```
