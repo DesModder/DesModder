@@ -145,9 +145,9 @@ if (isNaN($val) || !isFinite($val)) {
       isNaN($val)
       ? "\\mathrm{NaN}"
       : $val === Infinity
-      ? "\\infty"
+      ? "\\infty{}"
       : $val === -Infinity
-      ? "-\\infty"
+      ? "-\\infty{}"
       : "undefined"
   };
 }
