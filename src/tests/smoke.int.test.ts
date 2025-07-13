@@ -5,6 +5,10 @@ describe("Initial load", () => {
   //  I'm just trying two simple tests to make sure the browser remains.
   testWithPage("Shows DesModder Button", async (driver) => {
     await driver.assertSelector(".dsm-pillbox-and-popover");
+    const panics = await driver.evaluate(
+      () => (window as any).DSM_panics ?? []
+    );
+    expect(panics).toEqual([]);
     await driver.assertSelectorNot("#dsm-panic-popover");
     return clean;
   });
