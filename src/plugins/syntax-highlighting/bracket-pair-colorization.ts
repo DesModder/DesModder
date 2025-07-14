@@ -1,83 +1,74 @@
-export function generateBracketPairColorizationCSS(
-  colors: [number, number, number][],
-  colorInText: boolean,
-  thickenBrackets: number
-) {
-  if (!colors[0]) return [];
+import { Config } from "./config";
 
-  const colorMaker = `rgb(${colors[0]
+// assumes valid input;
+function hex2rgb(hex: string) {
+  return [
+    parseInt(hex.slice(1, 3), 16),
+    parseInt(hex.slice(3, 5), 16),
+    parseInt(hex.slice(5, 7), 16),
+  ] as const;
+}
+
+export function generateBracketPairColorizationCSS(settings: Config) {
+  const {
+    bracketPairColorizationColors: bpcColors,
+    bpcColorInText: colorInText,
+    thickenBrackets,
+  } = settings;
+
+  const colors = bpcColors.map(hex2rgb);
+
+  const colorMaker = `rgb(${[0, 1, 2]
     .map(
-      (_, i) =>
-        `calc(${colors
-          .map((col, colindex) => {
-            const channel = col[i];
-            // Uses the periodic nature of cosine to only color every Nth bracket a given color
+      (i) =>
+        `calc(${
+          colors
+            .map((col, colindex) => {
+              const channel = col[i];
+              // Uses the periodic nature of mod to only color every Nth bracket a given color
 
-            // All colors are multiplied by this "cosine factor" and then added together
-            // to only "pick" the correct color.
+              // All colors are multiplied by this "mod factor" and then added together
+              // to only "pick" the correct color.
 
-            // The "max(0, 10000 * cos(whatever) - 9999)" thing is done to *only* pick
-            // values where cosine is 1 (i.e. where bracketdepth - index = 0)
-
-            // I'm not using better options like abs() or mod() due to browser compatibility
-            return `${channel} * max(0, 10000 * cos(
-            2 * 3.14159265358979323 * (var(--bracket-depth2) - ${colindex}) / ${colors.length}
-            ) - 9999)`;
-          })
-          .join(" + ")})`
+              return `${channel} * pow(0, mod(var(--bracket-depth2) - ${colindex}, ${colors.length}))`;
+            })
+            .join(" + ") ?? 0
+        })`
     )
     .join(", ")})`;
 
-  return [
-    `
+  /*
+    Colorization exceptions:
+
+    - Children of a \textcolor{} or base case in label or expression
+    - Standalone commas like in `(0,0),(1,2)`
+      Otherwise they would get the color of the first color in the list.
+  */
+  return `
     .dcg-mq-root-block {
-        --bracket-depth1: 0;
-        --bracket-depth2: 0;
-    }
-    `,
-    `
-    .dcg-mq-bracket-container {
+      --bracket-depth1: 0;
+      --bracket-depth2: 0;
+
+      .dcg-mq-bracket-container {
         --bracket-depth2: var(--bracket-depth1);
-        color: ${colorMaker};
+
+        &:not(.dcg-mq-textcolor *, .dcg-base-case-btn *) {
+          .dcg-mq-paren,
+          .dsm-mq-syntax-comma,
+          *${colorInText ? "" : ":not(.dcg-mq-bracket-middle, .dcg-mq-bracket-middle *)"} {
+            color: ${colorMaker};
+          }
+        }
+
+        .dcg-mq-paren path {
+          stroke-width: ${thickenBrackets}%;
+          stroke: currentColor;
+        }
+
+        .dcg-mq-bracket-middle {
+          --bracket-depth1: calc(var(--bracket-depth2) + 1);
+        }
+      }
     }
-    `,
-    // Reset color on children of a \textcolor{} or base case in label or expression
-    `
-    .dcg-mq-textcolor .dcg-mq-bracket-container,
-    .dcg-base-case-btn .dcg-mq-bracket-container {
-      color: unset;
-    }
-    `,
-    `
-    .dcg-mq-bracket-l path, .dcg-mq-bracket-r path {
-        stroke-width: ${thickenBrackets}%;
-        stroke: ${colorMaker};
-    }
-    `,
-    `
-    .dsm-mq-syntax-comma {
-        color: ${colorMaker};
-    }
-    `,
-    // Reset color on standalone commas, like in `(0,0),(1,2)`. Otherwise they
-    // would get the color of the first color in the list.
-    `
-    .dcg-mq-root-block > .dsm-mq-syntax-comma {
-        color: unset
-    }
-    `,
-    // Reset color on children of a \textcolor{} or base case in label or expression
-    `
-    .dcg-mq-textcolor .dsm-mq-syntax-comma,
-    .dcg-base-case-btn .dsm-mq-syntax-comma {
-      color: unset;
-    }
-    `,
-    `
-    .dcg-mq-bracket-middle {
-        --bracket-depth1: calc(var(--bracket-depth2) + 1);
-        ${colorInText ? "" : "color: black;"}
-    }
-    `,
-  ];
+    `;
 }

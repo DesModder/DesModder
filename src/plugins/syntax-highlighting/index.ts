@@ -3,21 +3,13 @@ import { generateBracketPairColorizationCSS } from "./bracket-pair-colorization"
 import { Config, configList } from "./config";
 import "./index.less";
 
-// assumes valid input;
-export function hex2rgb(hex: string): [number, number, number] {
-  return [
-    parseInt(hex.slice(1, 3), 16),
-    parseInt(hex.slice(3, 5), 16),
-    parseInt(hex.slice(5, 7), 16),
-  ];
-}
+const bpcStyleSheet = new CSSStyleSheet();
+document.adoptedStyleSheets.push(bpcStyleSheet);
 
 export default class SyntaxHighlighting extends PluginController<Config> {
   static id = "syntax-highlighting" as const;
   static enabledByDefault = false;
   static config = configList;
-
-  styles = document.createElement("style");
 
   caretBracketContainer: HTMLElement | null = null;
   mouseBracketContainer: HTMLElement | null = null;
@@ -25,21 +17,9 @@ export default class SyntaxHighlighting extends PluginController<Config> {
   afterConfigChange(): void {
     this.resetHighlightedRanges();
 
-    const bpcCss = this.settings.bracketPairColorization
-      ? generateBracketPairColorizationCSS(
-          this.settings.bracketPairColorizationColors.map((c) => hex2rgb(c)),
-          this.settings.bpcColorInText,
-          this.settings.thickenBrackets
-        )
-      : [];
-
-    while ((this.styles.sheet?.cssRules?.length ?? 0) > 0) {
-      this.styles.sheet?.deleteRule(0);
-    }
-
-    for (const rule of bpcCss) {
-      this.styles.sheet?.insertRule(rule);
-    }
+    const bpcCss = generateBracketPairColorizationCSS(this.settings);
+    void bpcStyleSheet.replace(bpcCss);
+    bpcStyleSheet.disabled = !this.settings.bracketPairColorization;
 
     document.body.classList.toggle(
       "dsm-syntax-highlighting-underline-highlighted-ranges",
@@ -97,7 +77,6 @@ export default class SyntaxHighlighting extends PluginController<Config> {
   highlightedRangeInterval!: ReturnType<typeof setInterval>;
 
   afterEnable(): void {
-    document.head.appendChild(this.styles);
     this.afterConfigChange();
 
     this.highlightedRangeInterval = setInterval(() => {
@@ -120,7 +99,7 @@ export default class SyntaxHighlighting extends PluginController<Config> {
 
   afterDisable(): void {
     clearInterval(this.highlightedRangeInterval);
-    document.head.removeChild(this.styles);
+    bpcStyleSheet.disabled = true;
     document.removeEventListener("mouseover", this.onMouseOver);
     document.removeEventListener("keydown", this.onKeyDown);
     document.removeEventListener("wheel", this.onWheel);
