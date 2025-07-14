@@ -1,19 +1,12 @@
-[data-contains-caret="true"] {
-  background-color: #eeeeee;
-}
-
+[data-contains-caret="true"],
 [data-is-directly-hovered="true"] {
-  background-color: #eeeeee;
+  background-color: rgb(199 199 199 / 0.3);
 }
 
 .dsm-syntax-highlighting-underline-highlighted-ranges {
-  [data-contains-caret="true"] {
-    border-bottom: 1px solid #999999;
-    margin-bottom: -1px;
-  }
-
+  [data-contains-caret="true"],
   [data-is-directly-hovered="true"] {
-    border-bottom: 1px solid #999999;
+    border-bottom: 1px solid color-mix(in srgb, #fff 60%, currentColor);
     margin-bottom: -1px;
   }
 }
