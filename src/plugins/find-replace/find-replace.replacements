@@ -17,3 +17,27 @@ this.controller.isExpressionListFocused()
 ```js
 !DSM.textMode?.inTextMode
 ```
+
+## Insert the expression replace bar after the search bar
+
+*Description* `Insert the expression replace bar after the search bar`
+
+*Find* => `searchBar`
+```js
+$createElement("div", {
+  class: () => ({
+    ____$
+    "dcg-expression-search-bar"
+    ____
+  })
+  ____
+})
+```
+
+*Replace* `searchBar` with
+```js
+DSM.replaceElement(
+  () => __searchBar__,
+  () => DSM.findReplace?.replaceSearchView
+)
+```

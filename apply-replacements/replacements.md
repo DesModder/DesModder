@@ -74,7 +74,7 @@ Some special pattern tokens match something other than their exact value:
   - Must be followed by a close brace in the pattern
 - `____` matches a balanced sequence of code but ignores the value
 - `____$` matches a balanced sequence of tokens but is non-greedy.
-  - Note for simplicity of implementation, there is no back-tracking. Make sure the token after this is sufficiently unique.
+  - Note for simplicity of implementation, there is no back-tracking. Make sure the token after this is sufficiently unique, in the sense that there is not another one before it at the same nesting level inside the same pair of parentheses or curly braces.
 
 The patterns bind names (`id` and `range`) in these bulleted examples. They get placed into the scope of the block in which the pattern appears; they do not get returned as return values. What this means is these carry over to later patterns in the same block.
 
@@ -97,15 +97,36 @@ Finds a chunk of code, but allows for the variable names changing on the next mi
 *Find* inside `template`
 
 ```js
-return $DCGView.createElement(
+return $createElement(
   'div',
-  { class: $DCGView.const('dcg-options-menu-content') },
+  { class: $$const('dcg-options-menu-content') },
   __rest__
 )
 ```
 ````
 
 Note that the return value is not specified (there is no ``=> `name` ``). The point of this code block is to find what the `__rest__` pattern matches.
+
+#### Preferred way to match an element (by class name)
+
+Often we need to match the template for an HTML element, and these can often be specified by containing a class. When the class is computed, the property often looks like `class: () => ({ "dcg-geometry-settings-container": this.isGeo() })`. The preferred way to match such a class is the following:
+
+<!-- prettier-ignore -->
+````md
+*Find* inside `template`
+
+```js
+$createElement("div", {
+  class: () => ({
+      ____$
+      "dcg-geometry-settings-container"
+      ____
+  }),
+}, __child__)
+```
+````
+
+This is resilient against the class name moving around in the object (e.g. more classes inserted before or after it), as well as the function name `this.isGeo()` changing.
 
 ### Command `*Find_surrounding_template*`
 
