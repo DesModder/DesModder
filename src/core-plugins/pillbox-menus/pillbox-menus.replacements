@@ -61,7 +61,7 @@ $createElement("div", {
   class: () => ({
       ____$
       "dcg-geometry-settings-container"
-      ____
+      __classes__
   }),
   ____$
   children: $createElement2("div", {
