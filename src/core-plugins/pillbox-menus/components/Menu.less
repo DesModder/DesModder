@@ -80,7 +80,7 @@
 
 .dsm-plugin-info-body {
   padding: 5px 0;
-  color: #444;
+  color: var(--dcg-custom-text-color-shaded, #444);
 
   a {
     color: rgb(var(--dsm-primary-color-rgb));
@@ -199,6 +199,12 @@
   margin-left: 10px;
   padding-left: 10px;
   border-left: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+// For compatability with custom background colors
+.dcg-popover-title {
+  // override #fff
+  background-color: transparent !important;
 }
 
 .dsm-version-number {
