@@ -26,10 +26,11 @@ this.controller.isExpressionListFocused()
 ```js
 $createElement("div", {
   class: () => ({
-    "dcg-expression-search-bar": !0,
-    __classes__
-  }),
-  __props__
+    ____$
+    "dcg-expression-search-bar"
+    ____
+  })
+  ____
 })
 ```
 

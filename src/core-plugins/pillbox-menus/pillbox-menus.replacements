@@ -59,8 +59,9 @@ It should be on the left to avoid covering up all the DesModder config stuff.
 ```js
 $createElement("div", {
   class: () => ({
-      "dcg-geometry-settings-container": !0,
-      __classes__
+      ____$
+      "dcg-geometry-settings-container"
+      ____
   }),
   ____$
   children: $createElement2("div", {
