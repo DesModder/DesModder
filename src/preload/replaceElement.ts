@@ -39,6 +39,6 @@ export function replaceElement<T>(
   const { DCGView } = (Desmos as any).Private.Fragile;
   return createElementWrapped(DCGView.Components.Switch, {
     key,
-    children: () => (replacer() ?? ((_) => _))(old()),
+    children: () => (replacer() ?? ((x) => x))(old()),
   } as any);
 }
