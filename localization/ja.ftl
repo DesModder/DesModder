@@ -232,7 +232,9 @@ performance-info-other = その他
 
 ## Better Evaluation View
 better-evaluation-view-name = 評価ビューの改善
-better-evaluation-view-desc = リストの要素、色、undefined の値を表示します。
+better-evaluation-view-desc = リストの要素、色、未定義の値を表示します。
+better-evaluation-view-opt-floats-name = 特殊な浮動小数点値
+better-evaluation-view-opt-floats-desc = 未定義の代わりに NaN/∞/-∞ を、 負のゼロに対して -0 を表示する
 better-evaluation-view-opt-lists-name = リストの要素を表示
 better-evaluation-view-opt-lists-desc = リストの長さの代わりに要素を表示する
 better-evaluation-view-opt-colors-name = 色を表示
@@ -362,3 +364,9 @@ paste-image-name = 画像の貼り付け
 paste-image-desc = 画像ファイルを貼り付けて一度にインポートできます。
 paste-image-error-images-not-enabled = このグラフでは画像の挿入が有効になっていません。
 paste-image-error-another-upload-in-progress = 進行中の他のアップロードが終了してから再試行してください。
+
+## Quake Pro
+quake-pro-name = Quake Pro
+quake-pro-desc = 3D グラフ計算機の通常の制限を超えて視野角を広げられるようにします。
+quake-pro-opt-magnification-name = ズーム係数
+quake-pro-opt-magnification-desc = この値を掛け合わせて表示領域のズーム上限を上げる
