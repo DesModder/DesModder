@@ -1,6 +1,7 @@
 .dsm-vc-current-action {
   overflow-x: auto;
   margin-bottom: 5px;
+  max-width: 320px;
 }
 
 .dsm-vc-playing-sliders {
