@@ -1,4 +1,6 @@
-import type { Parse } from "#utils/depUtils";
+import type { Parser } from "src/globals";
+
+type Parse = Parser["parse"];
 
 export interface PublicConfig {
   /** operatorNames affects subscripting */
