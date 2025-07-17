@@ -78,7 +78,7 @@ show-tips-tip-other-calculators = Desmos には他にも計算機があります
 show-tips-tip-lock-viewport = 表示域を移動させたくない場合は、グラフの設定で固定してください。
 show-tips-tip-glesmos = GLesmos プラグインを有効にすると、陰関数を高速化できます。
 show-tips-tip-disable-show-tips = 私にはうんざり？ヒントを非表示にするには DesModder の設定でヒント表示のプラグインを無効にしてください。
-show-tips-tip-compact-view-multiline = 数式のスクロールにうんざりしていませんか？小型ビューや改行つき数式を有効にすると、すぐに数式の全体を見ることができます。
+show-tips-tip-compact-view-multiline = 数式のスクロールにうんざりしていませんか？小型ビューや複数行モードを有効にすると、すぐに数式の全体を見ることができます。
 show-tips-tip-intellisense = 長い変数名が多すぎますか？インテリセンスを有効にして、簡単に扱えるようにしましょう。
 show-tips-tip-youre-doing-great = あなたはよく頑張っています :)
 show-tips-tip-youre-superb = あなたは素晴らしい <3
@@ -232,7 +232,9 @@ performance-info-other = その他
 
 ## Better Evaluation View
 better-evaluation-view-name = 評価ビューの改善
-better-evaluation-view-desc = リストの要素、色、undefined の値を表示します。
+better-evaluation-view-desc = リストの要素、色、未定義の値を表示します。
+better-evaluation-view-opt-floats-name = 特殊な浮動小数点値
+better-evaluation-view-opt-floats-desc = 未定義の代わりに NaN/∞/-∞ を、 負のゼロに対して -0 を表示する
 better-evaluation-view-opt-lists-name = リストの要素を表示
 better-evaluation-view-opt-lists-desc = リストの長さの代わりに要素を表示する
 better-evaluation-view-opt-colors-name = 色を表示
@@ -280,14 +282,14 @@ compact-view-opt-hideEvaluations-name = 評価ビューを折りたたむ
 compact-view-opt-hideEvaluations-desc = 数式の評価ビューを横に表示します。フォーカスしたり、カーソルを合わせたりすると表示されます。
 
 ## Multiline
-multiline-name = 改行つき数式
+multiline-name = 複数行モード
 multiline-desc = 数式を複数行に分割します。
 multiline-opt-widthBeforeMultiline-name = しきい値（%）
 multiline-opt-widthBeforeMultiline-desc = 折り返しが発生する最小幅（表示域のサイズに対するパーセンテージ）。モバイルでは、この値は 3 倍になります。
 multiline-opt-automaticallyMultilinify-name = 入力中に改行を挿入する
 multiline-opt-automaticallyMultilinify-desc = 入力中に数式を自動的に複数行に分割するようにすると、Ctrl+M を使う必要がありません。
 multiline-opt-multilinifyDelayAfterEdit-name = 更新間隔（ms）
-multiline-opt-multilinifyDelayAfterEdit-desc = 改行つき数式の自動折り返しは、ここで指定した時間編集が行われなければ更新されます。
+multiline-opt-multilinifyDelayAfterEdit-desc = 複数行モードの自動折り返しは、ここで指定した時間編集が行われなければ更新されます。
 multiline-opt-spacesToNewlines-name = スペースを改行に変換
 multiline-opt-spacesToNewlines-desc = 3 つの半角スペースを改行に変換します。Shift+Enter を押下して改行することもできます。
 multiline-opt-determineLineBreaksAutomatically-name = 自動で数式を折り返す
@@ -362,3 +364,9 @@ paste-image-name = 画像の貼り付け
 paste-image-desc = 画像ファイルを貼り付けて一度にインポートできます。
 paste-image-error-images-not-enabled = このグラフでは画像の挿入が有効になっていません。
 paste-image-error-another-upload-in-progress = 進行中の他のアップロードが終了してから再試行してください。
+
+## Quake Pro
+quake-pro-name = Quake Pro
+quake-pro-desc = 3D グラフ計算機の通常の制限を超えて視野角を広げられるようにします。
+quake-pro-opt-magnification-name = ズーム係数
+quake-pro-opt-magnification-desc = この値を掛け合わせて表示領域のズーム上限を上げる
