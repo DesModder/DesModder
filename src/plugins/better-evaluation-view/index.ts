@@ -6,9 +6,31 @@ import { ColorEvaluation } from "./components/ColorEvaluation";
 import { ListEvaluation } from "./components/ListEvaluation";
 import { Config, configList } from "./config";
 
-type EvaluableConstantValue = TypedConstantValue<
-  ConstantListValueType | ValueType.RGBColor
->;
+type EvaluableConstantValueType = ConstantListValueType | ValueType.RGBColor;
+type EvaluableConstantValue = TypedConstantValue<EvaluableConstantValueType>;
+
+export type NormalListValueType =
+  | ValueType.ListOfComplex
+  | ValueType.ListOfAny
+  | ValueType.ListOfNumber
+  | ValueType.ListOfBool
+  | ValueType.ListOfPoint
+  | ValueType.ListOfPoint3D
+  | ValueType.EmptyList
+  | ValueType.ListOfPolygon
+  | ValueType.ListOfSegment
+  | ValueType.ListOfCircle
+  | ValueType.ListOfArc
+  | ValueType.ListOfLine
+  | ValueType.ListOfRay
+  | ValueType.ListOfVector
+  | ValueType.ListOfSegment3D
+  | ValueType.ListOfTriangle3D
+  | ValueType.ListOfSphere3D
+  | ValueType.ListOfVector3D
+  | ValueType.ListOfTone;
+
+export type ColorValueType = ValueType.RGBColor | ValueType.ListOfColor;
 
 export default class BetterEvaluationView extends PluginController<Config> {
   static id = "better-evaluation-view" as const;
@@ -20,22 +42,26 @@ export default class BetterEvaluationView extends PluginController<Config> {
     const value = val();
     if (!value) return undefined;
     switch (value.valueType) {
-      case ValueType.ListOfAngleMarker:
-      case ValueType.ListOfDirectedAngleMarker:
-      case ValueType.ListOfTransformation:
-      case ValueType.ListOfConfidenceInterval:
-      case ValueType.ListOfOneSampleTInference:
-      case ValueType.ListOfTwoSampleTInference:
-      case ValueType.ListOfRegressionTInference:
-      case ValueType.ListOfOneSampleZInference:
-      case ValueType.ListOfTwoSampleZInference:
-      case ValueType.ListOfOneProportionZInference:
-      case ValueType.ListOfTwoProportionZInference:
-      case ValueType.ListOfZSignificanceTest:
-      case ValueType.ListOfTSignificanceTest:
-      case ValueType.ListOfChiSquareGoodnessOfFit:
-      case ValueType.ListOfChiSquareIndependence:
-        return undefined;
+      case ValueType.ListOfComplex:
+      case ValueType.ListOfAny:
+      case ValueType.ListOfNumber:
+      case ValueType.ListOfBool:
+      case ValueType.ListOfPoint:
+      case ValueType.ListOfPoint3D:
+      case ValueType.EmptyList:
+      case ValueType.ListOfPolygon:
+      case ValueType.ListOfSegment:
+      case ValueType.ListOfCircle:
+      case ValueType.ListOfArc:
+      case ValueType.ListOfLine:
+      case ValueType.ListOfRay:
+      case ValueType.ListOfVector:
+      case ValueType.ListOfSegment3D:
+      case ValueType.ListOfTriangle3D:
+      case ValueType.ListOfSphere3D:
+      case ValueType.ListOfVector3D:
+      case ValueType.ListOfTone:
+        return settings.lists ? () => ListEvaluation(value) : undefined;
       case ValueType.RGBColor:
         return settings.colors
           ? (swatch) => ColorEvaluation(value, swatch)
@@ -45,7 +71,11 @@ export default class BetterEvaluationView extends PluginController<Config> {
           ? (swatch) => ColorEvaluation(value, swatch)
           : undefined;
       default:
-        return settings.lists ? () => ListEvaluation(value) : undefined;
+        value.valueType satisfies Exclude<
+          EvaluableConstantValueType,
+          NormalListValueType | ColorValueType
+        >;
+        return undefined;
     }
   }
 

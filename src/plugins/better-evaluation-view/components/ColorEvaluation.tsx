@@ -1,10 +1,9 @@
 import { jsx } from "#DCGView";
 import { StaticMathQuillView } from "#components";
 import { TypedConstantValue, ValueType } from "#globals";
+import { ColorValueType } from "..";
 
-type TypedConstantColorValue = TypedConstantValue<
-  ValueType.RGBColor | ValueType.ListOfColor
->;
+type TypedConstantColorValue = TypedConstantValue<ColorValueType>;
 
 function _ColorEvaluation(val: TypedConstantColorValue) {
   return (

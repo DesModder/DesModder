@@ -9,6 +9,7 @@ import {
 } from "#globals";
 import { autoCommands, autoOperatorNames } from "#utils/depUtils.ts";
 import { zipWith } from "#utils/utils.ts";
+import { NormalListValueType } from "..";
 
 const labelOptions = {
   smallCutoff: 0.00001,
@@ -35,27 +36,6 @@ const point3dLabel = (label: Parameters<Point3dLabel>[0]) =>
   uprightUndefined(Label.point3dLabel(label, labelOptions));
 const truncatedLatexLabel = (label: Parameters<TruncatedLatexLabel>[0]) =>
   uprightUndefined(Label.truncatedLatexLabel(label, labelOptions));
-
-type NormalListValueType =
-  | ValueType.ListOfComplex
-  | ValueType.ListOfAny
-  | ValueType.ListOfNumber
-  | ValueType.ListOfBool
-  | ValueType.ListOfPoint
-  | ValueType.ListOfPoint3D
-  | ValueType.EmptyList
-  | ValueType.ListOfPolygon
-  | ValueType.ListOfSegment
-  | ValueType.ListOfCircle
-  | ValueType.ListOfArc
-  | ValueType.ListOfLine
-  | ValueType.ListOfRay
-  | ValueType.ListOfVector
-  | ValueType.ListOfSegment3D
-  | ValueType.ListOfTriangle3D
-  | ValueType.ListOfSphere3D
-  | ValueType.ListOfVector3D
-  | ValueType.ListOfTone;
 
 type TypedConstantIteratorValue<T extends NormalListValueType> = T extends T
   ? {
