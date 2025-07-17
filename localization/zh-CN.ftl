@@ -19,7 +19,7 @@ category-integrations-name = 集成
 
 ## GLesmos
 GLesmos-name = GLesmos
-GLesmos-desc = 使用 GPU 渲染隐式图形。刷新标签页后会自动禁用。在极少数情况下可能导致界面卡顿或无响应；如遇问题请刷新页面。
+GLesmos-desc = 使用 GPU 渲染隐式图形。在极少数情况下可能导致界面卡顿或无响应；如遇问题请刷新页面。
 GLesmos-label-toggle-glesmos = 使用 GLesmos 渲染
 GLesmos-confirm-lines = 确认渲染
 GLesmos-confirm-lines-body = GLesmos 渲染线条可能会很慢。请谨慎操作，尤其是使用列表绘制一系列图层时。

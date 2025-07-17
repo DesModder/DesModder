@@ -20,7 +20,7 @@ category-integrations-name = Integraciones
 ## GLesmos
 # Unchanged
 GLesmos-name = GLesmos
-GLesmos-desc = Genera funciones implícitas en la GPU. Se deshabilita cuando la página es refrescada. Puede ralentizar la interfaz gráfica o en raras ocasiones puede congelar la página. Recarga la página si te causa problemas.
+GLesmos-desc = Genera funciones implícitas en la GPU. Puede ralentizar la interfaz gráfica o en raras ocasiones puede congelar la página. Recarga la página si te causa problemas.
 GLesmos-label-toggle-glesmos = Usar GLesmos
 GLesmos-confirm-lines = Confirmar líneas
 GLesmos-confirm-lines-body = Generar líneas con GLesmos puede ser lento. Sé especialmente cuidadoso cuando utilices listas.

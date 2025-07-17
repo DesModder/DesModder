@@ -19,7 +19,7 @@ category-integrations-name = インテグレーション
 
 ## GLesmos
 GLesmos-name = GLesmos
-GLesmos-desc = GPU でのレンダリング。タブの再読み込みで無効になります。まれに UI が遅くなったり、フリーズしたりすることがあります。問題がある場合はページを再読み込みしてください。
+GLesmos-desc = GPU でのレンダリング。まれに UI が遅くなったり、フリーズしたりすることがあります。問題がある場合はページを再読み込みしてください。
 GLesmos-label-toggle-glesmos = GLesmos を使ったレンダリング
 GLesmos-confirm-lines = 線のレンダリングの確認
 GLesmos-confirm-lines-body = GLesmos の線のレンダリングは遅いことがあります。特にレイヤーのリストには注意してください。
