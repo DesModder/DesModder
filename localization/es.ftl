@@ -123,7 +123,7 @@ builtin-settings-opt-advancedStyling-desc = Permite editar rótulos, así como m
 builtin-settings-opt-graphpaper-name = Área del Gráfico
 # Unchanged
 builtin-settings-opt-graphpaper-desc = {""}
-builtin-settings-opt-authorFeatures-name = Funciones para autores 
+builtin-settings-opt-authorFeatures-name = Funciones para autores
 builtin-settings-opt-authorFeatures-desc = Permite esconder carpetas, expresiones de solo lectura, y más.
 builtin-settings-opt-pointsOfInterest-name = Muestra puntos de interés.
 builtin-settings-opt-pointsOfInterest-desc = Cortes de eje x/y, discontinuidades, intersecciones, etc.
@@ -138,7 +138,7 @@ builtin-settings-opt-zoomButtons-desc = {""}
 builtin-settings-opt-keypad-name = Mostrar el teclado numérico
 # Unchanged
 builtin-settings-opt-keypad-desc = {""}
-builtin-settings-opt-showPerformanceMeter-name = Mostrar Monitor de Rendimiento 
+builtin-settings-opt-showPerformanceMeter-name = Mostrar Monitor de Rendimiento
 # Unchanged
 builtin-settings-opt-showPerformanceMeter-desc = {""}
 builtin-settings-opt-showIDs-name = Mostrar IDs
@@ -234,7 +234,7 @@ performance-info-name = Monitor de Rendimiento
 performance-info-desc = Visualiza información sobre el rendimiento del gráfico.
 performance-info-refresh-graph = Refrescar el Gráfico
 performance-info-refresh-graph-tooltip = Refresca el gráfico para monitorear el tiempo de carga.
-performance-info-sticky-tooltip = Mantener el menú abierto 
+performance-info-sticky-tooltip = Mantener el menú abierto
 performance-info-time-in-worker = Tiempo en Web Worker
 performance-info-compiling = Compilando
 performance-info-rendering = Visualizando
@@ -299,7 +299,7 @@ multiline-opt-multilinifyDelayAfterEdit-name = Retraso de ajuste (ms)
 multiline-opt-multilinifyDelayAfterEdit-desc = Retrasa el ajuste de líneas en la expresión que estás editando por el número de milisegundos especificado.
 multiline-opt-spacesToNewlines-name = Espacios a Líneas Nuevas
 multiline-opt-spacesToNewlines-desc = Convierte grupos de 3 espacios a líneas nuevas. Puedes usar Shift+Entrar para el mismo efecto.
-multiline-opt-determineLineBreaksAutomatically-name = Ajuste de línea automático 
+multiline-opt-determineLineBreaksAutomatically-name = Ajuste de línea automático
 multiline-opt-determineLineBreaksAutomatically-desc = Determina automáticamente en dónde utilizar ajuste de línea. Alternatívamente puedes utilizar Ctrl+M para insertar líneas nuevas.
 multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-name = Ignorar expresiones con tres espacios
 multiline-opt-disableAutomaticLineBreaksForHandAlignedExpressions-desc = Previene el ajuste de línea en expresiones donde líneas nuevas han sido insertadas manualmente.
@@ -356,7 +356,7 @@ syntax-highlighting-opt-thickenBrackets-desc = Adherir ancho adicional a los par
 syntax-highlighting-opt-highlightBracketBlocks-name = Resaltar Bloques
 syntax-highlighting-opt-highlightBracketBlocks-desc = Resalta el grupo de paréntesis más pequeño que contiene el cursor de texto.
 syntax-highlighting-opt-highlightBracketBlocksHover-name = Resaltar con el Ratón
-syntax-highlighting-opt-highlightBracketBlocksHover-desc = Resalta el grupo de paréntesis más pequeño que contiene el cursor del ratón. 
+syntax-highlighting-opt-highlightBracketBlocksHover-desc = Resalta el grupo de paréntesis más pequeño que contiene el cursor del ratón.
 syntax-highlighting-opt-underlineHighlightedRanges-name = Subrayar Grupos Resaltados
 syntax-highlighting-opt-underlineHighlightedRanges-desc = Agrega subrayado debajo de los grupos resaltados para mejorar visibilidad.
 
