@@ -20,7 +20,7 @@ category-integrations-name = Intégrations
 ## GLesmos
 # Unchanged
 GLesmos-name = GLesmos
-GLesmos-desc = Rendre les implicites sur le GPU. Désactive sur rechargement de l'onglet. Dans des rares cas, peut causait l'onglet de s'arreter; rechargez la page si vous rencontrez des problèmes.
+GLesmos-desc = Rendre les implicites sur le GPU. Dans des rares cas, peut causait l'onglet de s'arreter; rechargez la page si vous rencontrez des problèmes.
 GLesmos-label-toggle-glesmos = Rendre avec GLesmos
 GLesmos-confirm-lines = Confirmer les lignes
 GLesmos-confirm-lines-body = Le rendu des lignes GLesmos peut être lent. Soyez prudent, surtout pour une liste de calques.

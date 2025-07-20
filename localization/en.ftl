@@ -19,7 +19,7 @@ category-integrations-name = Integrations
 
 ## GLesmos
 GLesmos-name = GLesmos
-GLesmos-desc = Render implicits on the GPU. Disabled on tab reload. Can cause the UI to slow down or freeze in rare cases; reload the page if you have issues.
+GLesmos-desc = Render implicits on the GPU. Can cause the UI to slow down or freeze in rare cases; reload the page if you have issues.
 GLesmos-label-toggle-glesmos = Render with GLesmos
 GLesmos-confirm-lines = Confirm lines
 GLesmos-confirm-lines-body = GLesmos line rendering can be slow. Be careful, especially for a list of layers.
@@ -132,7 +132,7 @@ builtin-settings-opt-zoomButtons-name = Show Zoom Buttons
 builtin-settings-opt-zoomButtons-desc = {""}
 builtin-settings-opt-keypad-name = Show keypad
 builtin-settings-opt-keypad-desc = {""}
-builtin-settings-opt-showPerformanceMeter-name = Show performance meter 
+builtin-settings-opt-showPerformanceMeter-name = Show performance meter
 builtin-settings-opt-showPerformanceMeter-desc = {""}
 builtin-settings-opt-showIDs-name = Show IDs
 builtin-settings-opt-showIDs-desc = {""}
