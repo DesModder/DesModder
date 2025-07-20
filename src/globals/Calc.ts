@@ -346,7 +346,7 @@ interface CalcPrivate {
       asyncScreenshot: Desmos.Calculator["asyncScreenshot"];
       // 2d only?
       viewportController: {
-        setViewport: (vp: ViewportClass) => void;
+        setEvaluatedViewport: (vp: ViewportClass) => void;
       };
     };
     __nextItemId: number;
@@ -356,7 +356,7 @@ interface CalcPrivate {
     scrollSelectedItemIntoView: () => void;
     s: (identifier: string, placeables?: Record<string, any> | null) => string;
     runAfterDispatch: (cb: () => void) => void;
-    getDefaultViewport: () => {
+    getEvaluatedDefaultViewport: () => {
       constructor: { fromObject: (vp: Viewport) => ViewportClass };
     };
   };
