@@ -1,4 +1,5 @@
 import { DCGViewModule } from "../DCGView";
+import Node from "#parsing/parsenode.ts";
 import DSM from "#DSM";
 import {
   CheckboxComponent,
@@ -13,7 +14,7 @@ import {
   MathQuillConfig,
 } from "../components/desmosComponents";
 import { GenericSettings, PluginID } from "../plugins";
-import { ItemModel } from "./models";
+import { ItemModel, ValueType, ValueTypeMap } from "./models";
 import { GraphState } from "../../graph-state";
 
 export interface DWindow extends Window {
@@ -28,47 +29,97 @@ export interface DWindow extends Window {
     ExpressionView: ExpressionViewComponent;
     ImageIconView: typeof IconViewComponent;
   };
-  Desmos: {
-    Private: {
-      Fragile: typeof Fragile;
-      Mathtools: Mathtools;
-    };
-    MathQuill: {
-      config: (config: MathQuillConfig) => DWindow["Desmos"]["MathQuill"];
-    };
+  Desmos: Desmos;
+}
+
+type DesmosPublic = typeof Desmos;
+interface Desmos extends DesmosPublic {
+  Private: {
+    Fragile: Fragile;
+    Mathtools: Mathtools;
+    Parser: Parser;
+    MathquillConfig: MathquillConfig;
+  };
+  MathQuill: {
+    config: (config: MathQuillConfig) => Desmos["MathQuill"];
   };
 }
+
+export interface LabelOptionsBase {
+  zeroCutoff?: number;
+  smallCutoff?: number;
+  bigCutoff?: number;
+  digits?: number;
+  displayAsFraction?: boolean;
+  addEllipses?: boolean;
+  spaceConstrained?: boolean;
+  scientificNotationDigits?: number;
+}
+
+type ComponentEmitType = "decimalString" | "latex" | (string & {});
 
 interface Mathtools {
   Label: {
     truncatedLatexLabel: (
-      label: string,
-      labelOptions: {
-        smallCutoff: 0.00001;
-        bigCutoff: 1000000;
-        digits: 5;
-        displayAsFraction: false;
-      }
+      label: ValueTypeMap[ValueType.Number],
+      labelOptions?: LabelOptionsBase
+    ) => string;
+    pointLabel: (
+      label: ValueTypeMap[ValueType.Point],
+      labelOptions?: LabelOptionsBase,
+      emitComponentsAs?: ComponentEmitType
+    ) => string;
+    point3dLabel: (
+      label: ValueTypeMap[ValueType.Point3D],
+      labelOptions?: LabelOptionsBase,
+      emitComponentsAs?: ComponentEmitType
+    ) => string;
+    complexNumberLabel: (
+      label: ValueTypeMap[ValueType.Complex],
+      labelOptions?: LabelOptionsBase & {
+        alwaysEmitImaginary?: boolean;
+      },
+      emitComponentsAs?: ComponentEmitType
     ) => string;
   };
   migrateToLatest: (s: GraphState) => GraphState;
+}
+
+export interface Parser {
+  parse: (
+    s: string,
+    config?: {
+      allowDt?: boolean;
+      allowIndex?: boolean;
+      disallowFrac?: boolean;
+      trailingComma?: boolean;
+      seedPrefix?: string;
+      allowIntervalComprehensions?: boolean;
+      disableParentheses?: boolean;
+      disabledFeatures?: string[];
+    }
+  ) => Node;
+}
+
+interface MathquillConfig {
+  getAutoCommands: (options?: {
+    disallowAns?: boolean;
+    disallowFrac?: boolean;
+    additionalCommands?: string[];
+  }) => string;
+  getAutoOperators: (options?: {
+    additionalOperators?: string[];
+    includeGeometryFunctions?: boolean;
+    include3DFunctions?: boolean;
+    newStats?: boolean;
+  }) => string;
 }
 
 declare let window: DWindow;
 
 export default window;
 
-export const Fragile = new Proxy(
-  {},
-  {
-    get(_target, prop) {
-      if ((window as any).Desmos === undefined) return undefined;
-      const fragile = (window as any).Desmos?.Private?.Fragile;
-      if (fragile === undefined) return undefined;
-      return fragile[prop];
-    },
-  }
-) as {
+interface Fragile {
   DCGView: DCGViewModule;
   PromptSliderView: any;
   Checkbox: typeof CheckboxComponent;
@@ -99,21 +150,30 @@ export const Fragile = new Proxy(
     moveItemsTo: (listModel: any, from: number, to: number, n: number) => void;
   };
   currentLanguage: () => string;
-};
+}
+
+export const Fragile = new Proxy(
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  {} as Fragile,
+  {
+    get(_target, prop: keyof Fragile) {
+      return window.Desmos?.Private?.Fragile?.[prop];
+    },
+  }
+);
 
 type Section = "colors-only" | "lines" | "points" | "fill" | "label" | "drag";
 
+type Private = Desmos["Private"];
 export const Private = new Proxy(
-  {},
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  {} as Private,
   {
-    get(_target, prop) {
-      if ((window as any).Desmos === undefined) return undefined;
-      const priv = (window as any).Desmos.Private;
-      if (priv === undefined) return undefined;
-      return priv[prop];
+    get(_target, prop: keyof Private) {
+      return window.Desmos?.Private?.[prop];
     },
   }
-) as any;
+);
 
 /* Object.fromEntries based on https://dev.to/svehla/typescript-object-fromentries-389c */
 type DeepWriteable<T> = { -readonly [P in keyof T]: DeepWriteable<T[P]> };

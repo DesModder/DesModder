@@ -87,3 +87,22 @@ export function isDescendant(elem: HTMLElement | null, target: HTMLElement) {
 // https://stackoverflow.com/questions/48230773/how-to-create-a-partial-like-that-requires-a-single-property-to-be-set
 export type AtLeastOne<T, U = { [K in keyof T]: Pick<T, K> }> = Partial<T> &
   U[keyof U];
+
+type MapTo<T, U> = {
+  [K in keyof T]: U;
+};
+
+type UnwrapInner<T extends ReadonlyArray<ReadonlyArray<unknown>>> = {
+  [K in keyof T]: T[K][number];
+};
+
+export const zipWith = <
+  const T extends ReadonlyArray<ReadonlyArray<unknown>>,
+  F extends (...elems: UnwrapInner<T>) => unknown,
+>(
+  mapFn: F,
+  ...tupleArray: T
+) =>
+  Array.from({ length: Math.min(...tupleArray.map((a) => a.length)) }, (_, i) =>
+    mapFn(...(tupleArray.map((a) => a[i]) as UnwrapInner<T>))
+  ) as MapTo<T[number], ReturnType<F>>;
