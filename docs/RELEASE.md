@@ -1,7 +1,7 @@
 Documentation for the release process of DesModder:
 
 - [ ] Make a branch `prepare/0.10.2` (swapping out for the correct version)
-- [ ] Update [the changelog](https://github.com/DesModder/DesModder/blob/main/docs/CHANGELOG.md). Helpful: https://github.com/DesModder/DesModder/compare/v0.15.0...main
+- [ ] Update [the changelog](https://github.com/DesModder/DesModder/blob/main/docs/CHANGELOG.md). Helpful: https://github.com/DesModder/DesModder/compare/v0.15.1...main
 - [ ] Update README.md, and update the corresponding webstore description.
 - [ ] Update any outdated webstore images, and add new ones for new features.
 - [ ] Run `./scripts/release.sh`
