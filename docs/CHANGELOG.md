@@ -1,5 +1,28 @@
 # DesModder Changelog
 
+## 0.14.10
+
+New features:
+
+- New plugin: Quake pro. Increase field-of-view extra wide in 3D.
+- (Video Creator) Reflect "reverse contrast" mode in captures.
+
+Bug fixes and enhancements:
+
+- (Better Evaluation View) Fix display of various types, such as lists of polygons.
+- (Better Evaluation View) Fix display of `\infty i`.
+- (Video Creator) Fix mosaic capture.
+- (Video Creator) Fix horizontal overflow of long actions in the capture menu.
+- (Syntax Highlighting) Fix styling of "add base case" suggestion in some cases.
+- (Pin Expressions) Fix ordering of pinned expressions and tickers after search bar closed.
+- (Code Golf) Keep code golf display under dropdowns like "cumulative probability."
+- (Hide Errors) Only hide errors with shift-enter if the selected expression currently has an error.
+
+Translations:
+
+- Updates to Japanese and Spanish translations.
+- Reflect the reality that GLesmos is no longer disabled on page reloads.
+
 ## 0.14.9
 
 Bug fixes:
