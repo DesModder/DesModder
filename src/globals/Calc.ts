@@ -263,6 +263,7 @@ interface CalcPrivate {
       config: {
         product: Product;
         settingsMenu: boolean;
+        invertedColors: boolean;
       };
       squareAxes: boolean;
       setProperty: (k: "squareAxes", v: boolean) => void;

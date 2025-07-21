@@ -502,7 +502,38 @@ export default class VideoCreator extends PluginController {
     this.updateView();
   }
 
-  pushFrame(frame: string) {
+  async invertImage(frame: string): Promise<string> {
+    return await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const { width, height } = img;
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          throw new Error("Failed to get context for inverting image.");
+        }
+        ctx.drawImage(img, 0, 0);
+        ctx.globalCompositeOperation = "difference";
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, width, height);
+        resolve(canvas.toDataURL("image/png"));
+        return null;
+      };
+      img.src = frame;
+    });
+  }
+
+  async pushFrame(frame: string) {
+    if (
+      !this.cc.is3dProduct() &&
+      this.cc.graphSettings?.config?.invertedColors
+    ) {
+      // Invert colors in 2d.
+      // 3d already inverts the canvas screenshots, so no need to invert.
+      frame = await this.invertImage(frame);
+    }
     if (
       !this.isPlayingPreview &&
       this.previewIndex === this.frames.length - 1
