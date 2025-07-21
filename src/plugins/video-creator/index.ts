@@ -507,7 +507,6 @@ export default class VideoCreator extends PluginController {
       const img = new Image();
       img.onload = () => {
         const { width, height } = img;
-        document.body.appendChild(img);
         const canvas = document.createElement("canvas");
         canvas.width = width;
         canvas.height = height;
@@ -519,7 +518,6 @@ export default class VideoCreator extends PluginController {
         ctx.globalCompositeOperation = "difference";
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, width, height);
-        document.body.appendChild(canvas);
         resolve(canvas.toDataURL("image/png"));
         return null;
       };
