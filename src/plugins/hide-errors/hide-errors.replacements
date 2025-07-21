@@ -120,7 +120,7 @@ if ($e === "Enter")
 ```js
 __from__
 else if ("Shift-Enter" === $e) {
-  if (this.model.error)
+  if (this.model.error && !DSM.multiline?.settings?.spacesToNewlines)
     DSM.hideErrors?.hideError(this.model.id);
   return this.controller.dispatch({
     type: "on-special-key-pressed",

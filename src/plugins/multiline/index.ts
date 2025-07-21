@@ -185,6 +185,8 @@ export default class Multiline extends PluginController<Config> {
   onMQKeystroke(key: string, _: KeyboardEvent): undefined | "cancel" {
     const mq = this.calc.focusedMathQuill?.mq;
 
+    // hide-errors.replacements has a special case to ensure the hide-errors
+    // Shift-Enter handler is suppressed if DSM.multiline.settings.spacesToNewlines.
     if (key === "Shift-Enter" && this.settings.spacesToNewlines) {
       if (mq) {
         mq.typedText("   ");
