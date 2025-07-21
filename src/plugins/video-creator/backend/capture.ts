@@ -11,7 +11,7 @@ export const CANCELLED = Symbol("cancelled");
 async function captureAndApplyFrame(vc: VideoCreator) {
   const frame = await captureFrame(vc);
   if (frame === CANCELLED) return CANCELLED;
-  vc.pushFrame(frame);
+  await vc.pushFrame(frame);
 }
 
 interface MosaicDims {

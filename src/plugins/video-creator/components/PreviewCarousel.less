@@ -140,3 +140,12 @@
   top: 0;
   right: 0;
 }
+
+.dcg-container.dcg-inverted-colors {
+  // In 2d, the images truly are inverted, so invert it back.
+  // In 3d, the images are not inverted, but Desmos doesn't
+  // add an extra invert filter, so this is the original invert.
+  .dsm-vc-preview-carousel img {
+    filter: invert(100%);
+  }
+}
