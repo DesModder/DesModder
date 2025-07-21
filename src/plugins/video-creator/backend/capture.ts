@@ -37,9 +37,9 @@ async function imageOnload(img: HTMLImageElement) {
 }
 
 function setViewport(cc: CalcController, vp: Viewport) {
-  const Viewport = cc.getDefaultViewport().constructor;
+  const Viewport = cc.getEvaluatedDefaultViewport().constructor;
   const grapher = cc.getGrapher();
-  grapher.viewportController.setViewport(Viewport.fromObject(vp));
+  grapher.viewportController.setEvaluatedViewport(Viewport.fromObject(vp));
   cc.dispatch({
     type: "commit-user-requested-viewport",
     viewport: vp,
