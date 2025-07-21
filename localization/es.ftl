@@ -243,6 +243,8 @@ performance-info-other = Otro
 ## Better Evaluation View
 better-evaluation-view-name = Mejor Vista de Evaluación
 better-evaluation-view-desc = Permite dar un vistazo a los elementos en listas, colores, y los números indefinidos.
+better-evaluation-view-opt-floats-name = Punto flotante avanzado
+better-evaluation-view-opt-floats-desc = Mostrar NaN/∞/-∞ en lugar de 'undefined' y '-0' cuando 0 es negativo.
 better-evaluation-view-opt-lists-name = Mostrar los elementos de la lista.
 better-evaluation-view-opt-lists-desc = Mostrar los elementos de la lista en vez de su tamaño.
 better-evaluation-view-opt-colors-name = Mostrar colores
@@ -375,3 +377,10 @@ paste-image-name = Pegar Imagen
 paste-image-desc = Te permite pegar imagenes directamente en las expressiones para importar.
 paste-image-error-images-not-enabled = Inserción de imagen no está disponible para este gráfico.
 paste-image-error-another-upload-in-progress = Vuelve a intentar cuando la imagen previa termine de procesarse.
+
+## Quake Pro
+# Unchanged
+quake-pro-name = Quake Pro
+quake-pro-desc = Permite incrementar el campo de visión más allá del límite regular.
+quake-pro-opt-magnification-name = Multiplicador de Zoom
+quake-pro-opt-magnification-desc = Factor por el cual se incrementa el límite de zoom.
