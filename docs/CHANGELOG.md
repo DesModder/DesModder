@@ -1,6 +1,12 @@
 # DesModder Changelog
 
+## 0.15.1
+
+Identical to 0.15.0 but it is compiled properly
+
 ## 0.15.0
+
+(Miscompiled for Chrome, Do not install 0.15.0 for Chrome; install 0.15.1 instead.)
 
 New features:
 
