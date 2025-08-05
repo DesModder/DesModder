@@ -406,7 +406,8 @@ export default class VideoCreator extends PluginController {
     return this.cc
       .getAllItemModels()
       .filter(
-        (e) => e.type === "expression" && e.formula?.action_value !== undefined
+        (e) =>
+          e.type === "expression" && e.formula?.evaluated_latex !== undefined
       ) as ExpressionModel[];
   }
 

@@ -162,7 +162,7 @@ interface EvaluatorChange {
    */
   move_strategy?: { type: "updateCoordinate" | "updateSlider" }[];
   /** (Expressions, images, (ticker)?) New action to be applied on the next click. Ignore */
-  action_value?: unknown;
+  evaluated_latex?: unknown;
   /** (Regression expressions) Regression metadata */
   regression?: unknown;
   /** (Tables) column changes from dragging points */
