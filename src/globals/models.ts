@@ -131,7 +131,6 @@ export enum ValueType {
 interface FormulaBase {
   exported_variables?: string[];
   is_graphable: boolean;
-  evaluated_latex?: Record<string, string>;
 }
 
 interface NonfolderItemModelBase extends ItemModelBase {
