@@ -408,8 +408,7 @@ export default class VideoCreator extends PluginController {
       .filter(
         (e) =>
           e.type === "expression" &&
-          e?.formula?.typed_constant_value !== undefined &&
-          e.formula.typed_constant_value.valueType === ValueType.Action
+          e?.formula?.typed_constant_value?.valueType === ValueType.Action
       ) as ExpressionModel[];
   }
 
