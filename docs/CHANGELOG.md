@@ -1,8 +1,14 @@
 # DesModder Changelog
 
+## 0.15.2
+
+Bug fixes:
+
+- (Video Creator) Now properly detects actions again, such as `a -> a+1`.
+
 ## 0.15.1
 
-Identical to 0.15.0 but it is compiled properly
+Identical to 0.15.0 but it is compiled properly.
 
 ## 0.15.0
 
