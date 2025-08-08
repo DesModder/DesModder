@@ -9,7 +9,7 @@ import {
 import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
 import { escapeRegex } from "./backend/utils";
 import { MainPopupFunc } from "./components/MainPopup";
-import { ExpressionModel } from "#globals";
+import { ExpressionModel, ValueType } from "#globals";
 import {
   keys,
   EvaluateSingleExpression,
@@ -406,7 +406,9 @@ export default class VideoCreator extends PluginController {
     return this.cc
       .getAllItemModels()
       .filter(
-        (e) => e.type === "expression" && e.formula?.action_value !== undefined
+        (e) =>
+          e.type === "expression" &&
+          e?.formula?.typed_constant_value?.valueType === ValueType.Action
       ) as ExpressionModel[];
   }
 
