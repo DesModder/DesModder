@@ -150,6 +150,7 @@ interface Fragile {
     moveItemsTo: (listModel: any, from: number, to: number, n: number) => void;
   };
   currentLanguage: () => string;
+  glslHeader: string;
 }
 
 export const Fragile = new Proxy(
