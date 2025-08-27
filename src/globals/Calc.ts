@@ -220,7 +220,7 @@ export interface Grapher3d {
     axis3D: readonly [number, number, number];
     speed3D: number;
     lastRotateTime: number;
-    copyWorldRotationToWorld: () => void;
+    setWorldRotation: (rotation: Matrix3) => void;
     onTapStart: () => void;
     onTapMove: () => void;
     onTapUp: () => void;
