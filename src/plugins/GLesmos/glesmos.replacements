@@ -159,6 +159,10 @@ branchesReplacement: function (
   const { userData } = graphProps;
   if (!userData.glesmos)
     return undefined;
+  // 8 == GRAPHMODE.IMPLICIT
+  if (graphInfo.graphMode !== 8) {
+    return undefined;
+  }
   const isEquality = graphInfo.operator === '=';
   const lines =
     userData.lines !== false &&
