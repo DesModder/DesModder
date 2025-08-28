@@ -1,7 +1,7 @@
 import ViewportTransforms from "./ViewportTransforms";
 import { initGLesmosCanvas, GLesmosCanvas } from "./glesmosCanvas";
 import { glesmosError, GLesmosShaderPackage } from "./shaders";
-import { CalcController } from "#globals";
+import { CalcController, Fragile } from "#globals";
 
 let canvas: GLesmosCanvas | null = null;
 
@@ -26,13 +26,13 @@ interface DrawCtx {
 export function drawGLesmosSketchToCtx(
   cc: CalcController,
   drawCtx: DrawCtx,
-  { id, branches }: GLesmosSketch,
-  glslHeader: string
+  { id, branches }: GLesmosSketch
 ) {
   branches = branches.filter((b) => b.graphMode === "GLesmos");
 
   const glBranches = branches.map((b) => b.compiledGL);
   if (glBranches.length === 0) return;
+  const { glslHeader } = Fragile;
   const compiledGL: GLesmosShaderPackage = {
     chunks: glBranches.flatMap((b) => b.chunks),
     deps: glBranches.reduce<Record<string, boolean>>(

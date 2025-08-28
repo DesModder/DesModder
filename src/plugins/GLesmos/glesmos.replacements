@@ -91,15 +91,6 @@ Add one child before and one after.
 *Find*
 
 ```js
-`    ${$dcg_shared_module_exports[__glslHeader__]}
-    ${$f}
-    ${$c ? `varying vec2 vUV;
-` :
-```
-
-*Find*
-
-```js
 drawSketchToCtx({
   sketch: $sketch, drawContext: $drawCtx, ____
 }) {__body__}
@@ -115,9 +106,7 @@ if (!$ee.branches || !$ee.branches.length) return;
 
 ```js
 __guard__
-window.DesModder?.drawGLesmosSketchToCtx?.(window.Calc.controller, $drawCtx, $sketch,
-  $dcg_shared_module_exports[__glslHeader__]
-);
+window.DesModder?.drawGLesmosSketchToCtx?.(window.Calc.controller, $drawCtx, $sketch);
 ```
 
 ## Pass GLesmos flag to worker
@@ -170,6 +159,10 @@ branchesReplacement: function (
   const { userData } = graphProps;
   if (!userData.glesmos)
     return undefined;
+  // 8 == GRAPHMODE.IMPLICIT
+  if (graphInfo.graphMode !== 8) {
+    return undefined;
+  }
   const isEquality = graphInfo.operator === '=';
   const lines =
     userData.lines !== false &&

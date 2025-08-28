@@ -40,7 +40,7 @@ export class Orientation {
     if (controls) {
       const unhook = hookIntoFunction(
         controls,
-        "copyWorldRotationToWorld",
+        "setWorldRotation",
         "video-creator-rotation-listener",
         0,
         () => this.updateLatexOrientationFromGraph()
