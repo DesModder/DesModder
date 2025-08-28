@@ -1,5 +1,11 @@
 # DesModder Changelog
 
+## 0.15.3
+
+Bug fixes
+
+- (GLesmos) Fix bug where a glesmos-enabled expression would render incorrectly as an implicit after editing.
+
 ## 0.15.2
 
 Bug fixes:
