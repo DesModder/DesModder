@@ -113,6 +113,17 @@ pin-expressions-desc = Pin expressions from Edit List mode
 pin-expressions-pin = Pin
 pin-expressions-unpin = Unpin
 
+## Graph Library
+graph-library-name = Graph Library
+graph-library-desc = Save and import other graphs by URL. Saved graphs can be imported into any graph as folders.
+graph-library-save-current = Save Current Graph
+graph-library-saved = Already Saved
+graph-library-save-hint = Save this graph to Desmos first before adding to library
+graph-library-saved-graphs = Saved Graphs
+graph-library-empty = No graphs saved yet
+graph-library-import = Import from library
+graph-library-delete = Remove from library
+
 ## Builtin Settings
 builtin-settings-name = Calculator Settings
 builtin-settings-desc = Lets you toggle features built-in to Desmos. Most options apply only to your own browser and are ignored when you share graphs with others.

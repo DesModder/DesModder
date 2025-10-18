@@ -98,6 +98,7 @@ listenToMessageDown((message) => {
       pluginsForceDisabled: arrayToSet(message.pluginsForceDisabled),
       pluginsEnabled: message.pluginsEnabled,
       pluginSettings: message.pluginSettings,
+      graphLibrary: message.graphLibrary,
     };
     // Helps with the case of replacements ran before initialization
     window.DSM = {

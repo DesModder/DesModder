@@ -30,6 +30,7 @@ import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
 import BetterNavigation from "./better-navigation";
 import QuakePro from "./quake-pro";
+import GraphLibrary from "./graph-library";
 import OverrideKeystroke from "../core-plugins/override-keystroke";
 import { DispatchedEvent } from "src/globals/extra-actions";
 
@@ -151,6 +152,7 @@ export const keyToPlugin = {
   betterNavigation: BetterNavigation,
   pasteImage: PasteImage,
   quakePro: QuakePro,
+  graphLibrary: GraphLibrary,
 } satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);
@@ -204,9 +206,10 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get exprActionButtons () { return this.ep["expr-action-buttons"]; }
   get codeGolf () { return this.ep["code-golf"]; }
   get syntaxHighlighting () { return this.ep["syntax-highlighting"]}
-  get betterNavigation () { return this.ep["better-navigation"]} 
+  get betterNavigation () { return this.ep["better-navigation"]}
   get pasteImage () { return this.ep["paste-image"]; }
   get quakePro () { return this.ep["quake-pro"]; }
+  get graphLibrary () { return this.ep["graph-library"]; }
 }
 
 export type IDToPluginSettings = {
