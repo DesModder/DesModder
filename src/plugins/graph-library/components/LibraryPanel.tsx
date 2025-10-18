@@ -163,9 +163,15 @@ class LibraryPanel extends Component<{ gl: GraphLibrary }> {
 
 	shouldFormatAsPrivate(title: string): boolean {
 		return title.startsWith("@private ");
-	}
+  }
 
-	formatTitle(title: string): string {
+  formatTitle(title: string): string {
+    // If its too long truncate it
+    const maxLength = 30;
+    if (title.length > maxLength) {
+      title = title.substring(0, maxLength - 3) + "...";
+    }
+
 		if (title.startsWith("@private ")) {
 			const restOfTitle = title.substring(9); // Remove "@private "
 			return restOfTitle;
