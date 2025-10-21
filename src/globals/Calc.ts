@@ -308,7 +308,7 @@ interface CalcPrivate {
       drawLayers: { layer: number; drawOrder: string[]; drawSet: string[] }[];
     };
     _addItemToEndFromAPI: (item: ItemModel) => void;
-    _showToast: (toast: Toast) => void;
+    showToast: (toast: Toast) => void;
     removeListOfItems: (ids: string[]) => {
       // Might only return a subset of the models corresponding to `ids`
       // if some of the `ids` correspond to readonly expressions.

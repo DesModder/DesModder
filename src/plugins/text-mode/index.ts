@@ -183,7 +183,7 @@ export default class TextMode extends PluginController {
   }
 
   toastError(msg: string, undoCallback?: () => void) {
-    this.cc._showToast({
+    this.cc.showToast({
       message: msg,
       // `undoCallback: undefined` still adds the "Press Ctrl+Z" message
       ...(undoCallback ? { undoCallback } : {}),
