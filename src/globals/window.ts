@@ -4,8 +4,9 @@ import DSM from "#DSM";
 import {
   CheckboxComponent,
   DStaticMathquillViewComponent,
-  ExpressionViewComponent,
-  IconViewComponent,
+  ImageIconViewComponent,
+  ExpressionIconViewComponent,
+  ExpressionFooterViewComponent,
   InlineMathInputViewComponent,
   MathQuillField,
   MathQuillViewComponent,
@@ -25,10 +26,7 @@ export interface DWindow extends Window {
     pluginsEnabled: Record<PluginID, boolean | undefined>;
     pluginSettings: Record<PluginID, GenericSettings | undefined>;
   };
-  DesModderFragile: {
-    ExpressionView: ExpressionViewComponent;
-    ImageIconView: typeof IconViewComponent;
-  };
+  // DesModderFragile: {};
   Desmos: Desmos;
 }
 
@@ -137,6 +135,9 @@ interface Fragile {
       };
     };
   };
+  ImageIconView: typeof ImageIconViewComponent;
+  ExpressionIconView: typeof ExpressionIconViewComponent;
+  ExpressionFooterView: typeof ExpressionFooterViewComponent;
   evaluateLatex: (s: string, getDegreeMode: boolean) => number;
   Keys: {
     lookup: (e: KeyboardEvent) => string;
