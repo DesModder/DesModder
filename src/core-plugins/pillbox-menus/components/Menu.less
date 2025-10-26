@@ -201,10 +201,16 @@
   border-left: 1px solid rgba(0, 0, 0, 0.2);
 }
 
-// For compatability with custom background colors
 .dcg-popover-title {
-  // override #fff
-  background-color: transparent !important;
+  margin-bottom: 10px;
+  font-size: 1.15rem;
+  border-bottom: 2px solid var(--dcg-accent-color, #2f72dc);
+  color: var(--dcg-accent-color, #2f72dc);
+  font-weight: normal;
+  line-height: normal;
+  &:not(:first-of-type) {
+    padding-top: 20px;
+  }
 }
 
 .dsm-version-number {
