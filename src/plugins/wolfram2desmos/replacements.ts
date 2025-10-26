@@ -51,6 +51,10 @@ export const functionReplacements: Replacement[] = [
   [/(?<![A-Za-zΑ-ω])sec/g, "Ⓦ"],
   [/(?<![A-Za-zΑ-ω])cot/g, "Ⓧ"],
   [/(?<![A-Za-zΑ-ω])log|ln/g, "Ⓩ"],
+  [/int(egral|)(?!\S)/g, "Ａ"],
+  [/int(egral|)(?=_)/g, "Ｂ"],
+  [/sum(?=_)/g, "Ｃ"],
+  [/prod(uct|)(?=_)/g, "Ｄ"],
 ];
 
 export const functionFinalReplacements: Replacement[] = [
@@ -80,13 +84,13 @@ export const functionFinalReplacements: Replacement[] = [
   [/Ⓧ/g, "cot"],
   [/Ⓩ(?!_)/g, "ln"],
   [/Ⓩ/g, "log"],
+  [/Ａ/g, "\\int_{0}^{t}"],
+  [/Ｂ/g, "\\int"],
+  [/Ｃ/g, "\\sum"],
+  [/Ｄ/g, "\\prod"],
 ];
 
 export const latinReplacements: Replacement[] = [
-  [/int(egral|)(?!\S)/g, "Ａ"],
-  [/int(egral|)(?=_)/g, "Ｂ"],
-  [/sum(?=_)/g, "Ｃ"],
-  [/prod(uct|)(?=_)/g, "Ｄ"],
   [/(?<![A-Za-zΑ-ω])binomial(?![A-Za-zΑ-ω])/g, "Ｇ"],
   [/(?<![A-Za-zΑ-ω])floor(?![A-Za-zΑ-ω])/g, "Ｈ"],
   [/(?<![A-Za-zΑ-ω])ceiling(?![A-Za-zΑ-ω])/g, "Ｉ"],
@@ -96,10 +100,6 @@ export const latinReplacements: Replacement[] = [
 ];
 
 export const finalLatinReplacements: Replacement[] = [
-  [/Ａ/g, "\\int_{0}^{t}"],
-  [/Ｂ/g, "\\int"],
-  [/Ｃ/g, "\\sum"],
-  [/Ｄ/g, "\\prod"],
   [/Ｅ/g, "\\operatorname{mod}"],
   [/Ｇ/g, "\\operatorname{nCr}"],
   [/Ｈ/g, "\\operatorname{floor}"],

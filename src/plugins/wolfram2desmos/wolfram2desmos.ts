@@ -170,12 +170,12 @@ export function wolfram2desmos(input: string, config: Config): string {
   }
 
   // function replacements
-  // ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ
+  // ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏＡＢＣＤ
   functionReplacements.forEach((x) => {
     replace(x[0], x[1]);
   });
 
-  // ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ
+  // ＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ
   while (find(/(?<![A-Za-zΑ-ω])mod(?![A-Za-zΑ-ω])/) !== -1) {
     i = find(/(?<![A-Za-zΑ-ω])mod(?![A-Za-zΑ-ω])/) + 3;
     bracket = -1;
