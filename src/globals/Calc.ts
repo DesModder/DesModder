@@ -6,6 +6,10 @@ import type { DispatchedEvent } from "./extra-actions";
 
 export type { DispatchedEvent };
 
+export type FocusLocation =
+  | { type: "expression"; id: string }
+  | { type: string };
+
 export type VanillaDispatchedEvent =
   | {
       type:
@@ -75,7 +79,7 @@ export type VanillaDispatchedEvent =
     }
   | {
       type: "set-focus-location";
-      location: { type: "expression"; id: string } | { type: string };
+      location: FocusLocation;
     }
   | {
       type: "on-evaluator-changes";

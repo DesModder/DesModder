@@ -9,6 +9,7 @@ export default class ReplaceBar extends Component<{
   fr: FindReplace;
 }> {
   fr!: FindReplace;
+  isFocused: boolean = false;
 
   init() {
     this.fr = this.props.fr();
@@ -23,7 +24,7 @@ export default class ReplaceBar extends Component<{
               latex={() => this.fr.getReplaceLatex()}
               capExpressionSize={false}
               config={{ autoOperatorNames }}
-              isFocused={false}
+              isFocused={() => this.isFocused}
               getAriaLabel="expression replace"
               getAriaPostLabel=""
               onUserChangedLatex={(e: string) => this.fr.setReplaceLatex(e)}
@@ -42,7 +43,18 @@ export default class ReplaceBar extends Component<{
                   }
                 }
               }}
-              onFocusedChanged={() => {}}
+              onFocusedChanged={(focused) => {
+                this.isFocused = focused;
+                if (focused)
+                  this.fr.cc.dispatch({
+                    type: "set-focus-location",
+                    // This is an invalid focus location, so this is really setting
+                    // the Calc.controller.focusLocation to undefined.
+                    location: {
+                      type: "invalid-focus-location",
+                    },
+                  });
+              }}
               hasError={false}
               selectOnFocus
               noFadeout
