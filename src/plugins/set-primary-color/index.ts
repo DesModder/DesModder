@@ -79,6 +79,7 @@ export default class SetPrimaryColor extends PluginController<Config> {
       const s = this.scaleColor(hex, scale);
       this.apiContainer.style.setProperty(key + "-rgb", s);
     }
+    (this.calc as any).updateSettings({ accentColor: hex });
   }
 
   applyHexToFavicon(hex: string) {
