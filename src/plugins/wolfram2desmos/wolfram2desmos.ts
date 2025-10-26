@@ -8,6 +8,7 @@ import {
   greekFinalSubs,
   latinSubs,
   finalSymbolSubs,
+  finalLatinSubs,
 } from "./substitutions.ts";
 
 // IMPORTANT
@@ -603,7 +604,7 @@ export function wolfram2desmos(input: string, config: Config): string {
   });
 
   // ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ
-  finalSymbolSubs.forEach((x) => {
+  finalLatinSubs.forEach((x) => {
     replace(x[0], x[1]);
   });
   while (find(/Ｍ/) !== -1) {
