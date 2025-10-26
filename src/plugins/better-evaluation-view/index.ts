@@ -32,10 +32,22 @@ export type NormalListValueType =
 
 export type ColorValueType = ValueType.RGBColor | ValueType.ListOfColor;
 
+function apiContainer() {
+  return document.querySelector(".dcg-container");
+}
+
 export default class BetterEvaluationView extends PluginController<Config> {
   static id = "better-evaluation-view" as const;
   static enabledByDefault = true;
   static config = configList;
+
+  afterEnable() {
+    apiContainer()?.classList.add("dsm-better-evaluation-view");
+  }
+
+  afterDisable() {
+    apiContainer()?.classList.remove("dsm-better-evaluation-view");
+  }
 
   evaluation(val: () => EvaluableConstantValue | undefined): Replacer {
     const { settings } = this;
