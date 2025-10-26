@@ -80,6 +80,21 @@ export default class SetPrimaryColor extends PluginController<Config> {
       this.apiContainer.style.setProperty(key + "-rgb", s);
     }
     (this.calc as any).updateSettings({ accentColor: hex });
+
+    const calcApiContainer = document.querySelector(".dcg-container") as
+      | HTMLElement
+      | undefined;
+    if (calcApiContainer) {
+      for (const prop of calcApiContainer.style) {
+        if (prop.startsWith("--dcg-accent-color")) {
+          // Copy over --dcg-accent-color, --dcg-accent-color-shaded-10, etc.
+          this.apiContainer.style.setProperty(
+            prop,
+            calcApiContainer.style.getPropertyValue(prop)
+          );
+        }
+      }
+    }
   }
 
   applyHexToFavicon(hex: string) {
