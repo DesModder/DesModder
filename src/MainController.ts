@@ -27,14 +27,22 @@ export default class DSM extends TransparentPlugins {
 
   private readonly vanillaHandleAction: (evt: DispatchedEvent) => void;
   private readonly vanillaUpdateTheComputedWorld: () => void;
+  private readonly afterDestroy?: () => void;
 
-  constructor(public calc: Calc) {
+  constructor(
+    public calc: Calc,
+    opts: {
+      /** Called after destroying the DSM (but before destroying the Calc). */
+      afterDestroy?: () => void;
+    } = {}
+  ) {
     super();
-    if ((calc as any)._dsmConnected)
+    this.afterDestroy = opts.afterDestroy;
+    if (calc._dsmConnected)
       throw new Error(
         "Cannot bind DesModder controller (DSM) twice to one calc instance."
       );
-    (calc as any)._dsmConnected = true;
+    calc._dsmConnected = true;
     // default values
     this.forceDisabled = window.DesModderPreload!.pluginsForceDisabled;
     if (calc.controller.is3dProduct()) this.forceDisabled.add("GLesmos");
@@ -111,7 +119,6 @@ export default class DSM extends TransparentPlugins {
     const dsmPreload = window.DesModderPreload!;
     this.applyStoredSettings(recordToMap(dsmPreload.pluginSettings));
     this.applyStoredEnabled(recordToMap(dsmPreload.pluginsEnabled));
-    delete window.DesModderPreload;
 
     // Enable core plugins
     for (const { id } of pluginList) {
@@ -126,6 +133,17 @@ export default class DSM extends TransparentPlugins {
     // The graph loaded before DesModder loaded, so DesModder was not available to
     // return true when asked isGlesmosMode. Refresh those expressions now
     this.glesmos?.checkGLesmos();
+
+    const oldDestroy = this.cc.destroy.bind(this.cc);
+    this.cc.destroy = () => {
+      oldDestroy();
+      this.destroy();
+    };
+  }
+
+  destroy() {
+    this.calc._dsmConnected = false;
+    this.afterDestroy?.();
   }
 
   setPluginEnabled(id: PluginID, isEnabled: boolean) {

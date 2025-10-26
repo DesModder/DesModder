@@ -358,6 +358,7 @@ interface CalcPrivate {
     getEvaluatedDefaultViewport: () => {
       constructor: { fromObject: (vp: Viewport) => ViewportClass };
     };
+    destroy: () => void;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;
@@ -378,5 +379,10 @@ interface CalcPrivate {
   ) => void;
 }
 
-export type Calc = CalcPrivate & Desmos.Calculator;
+interface CalcDummy {
+  /** Set to true if a DSM instance is connected. */
+  _dsmConnected?: boolean;
+}
+
+export type Calc = CalcDummy & CalcPrivate & Desmos.Calculator;
 export type CalcController = Calc["controller"];
