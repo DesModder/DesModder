@@ -1,14 +1,14 @@
 import { Config } from "./config";
 import {
-  symbolReplacements,
-  functionReplacements,
-  greekReplacements,
-  functionFinalReplacements,
-  bracketFinalReplacements,
-  greekFinalReplacements,
-  latinReplacements,
-  finalSymbolReplacements,
-} from "./replacements.ts";
+  symbolSubs,
+  functionSubs,
+  greekSubs,
+  functionFinalSubs,
+  bracketFinalSubs,
+  greekFinalSubs,
+  latinSubs,
+  finalSymbolSubs,
+} from "./substitutions.ts";
 
 // IMPORTANT
 // isIllegalASCIIMath() is REQUIRED BEFORE executing wolfram2desmos()
@@ -149,7 +149,7 @@ export function wolfram2desmos(input: string, config: Config): string {
   const functionSymbols = /^[a-wΑ-ωⒶ-ⓏＡ-Ｚ⒜-⒵√%][(_^]/gi;
   input = " " + input + " "; // this gives some breathing space
 
-  symbolReplacements.forEach((x) => {
+  symbolSubs.forEach((x) => {
     replace(x[0], x[1]);
   });
 
@@ -171,7 +171,7 @@ export function wolfram2desmos(input: string, config: Config): string {
 
   // function replacements
   // ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏＡＢＣＤ
-  functionReplacements.forEach((x) => {
+  functionSubs.forEach((x) => {
     replace(x[0], x[1]);
   });
 
@@ -207,7 +207,7 @@ export function wolfram2desmos(input: string, config: Config): string {
       }
     }
   }
-  latinReplacements.forEach((x) => {
+  latinSubs.forEach((x) => {
     replace(x[0], x[1]);
   });
   if (find(/d(\^\d*)*\/dx(\^\d*)*/) !== -1) {
@@ -229,7 +229,7 @@ export function wolfram2desmos(input: string, config: Config): string {
   replace(/\(Taylor series\)/g, "");
 
   // greek replacements
-  greekReplacements.forEach((x) => {
+  greekSubs.forEach((x) => {
     replace(x[0], x[1]);
   });
 
@@ -587,23 +587,23 @@ export function wolfram2desmos(input: string, config: Config): string {
 
   // FINAL REPLACEMENTS
   // implement proper brackets when all the operator brackets are gone
-  bracketFinalReplacements.forEach((x) => {
+  bracketFinalSubs.forEach((x) => {
     replace(x[0], x[1]);
   });
 
   // symbol replacements
-  finalSymbolReplacements.forEach((x) => {
+  finalSymbolSubs.forEach((x) => {
     replace(x[0], x[1]);
   });
 
   // function replacements
   // ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ
-  functionFinalReplacements.forEach((x) => {
+  functionFinalSubs.forEach((x) => {
     replace(x[0], x[1]);
   });
 
   // ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ
-  finalSymbolReplacements.forEach((x) => {
+  finalSymbolSubs.forEach((x) => {
     replace(x[0], x[1]);
   });
   while (find(/Ｍ/) !== -1) {
@@ -636,7 +636,7 @@ export function wolfram2desmos(input: string, config: Config): string {
   // unused: ⒜⒝⒞⒟⒠⒡⒢⒣⒤⒥⒦⒧⒨⒩⒪⒫⒬⒭⒮⒯⒰⒱⒲⒳⒴⒵
 
   // greek replacements
-  greekFinalReplacements.forEach((x) => {
+  greekFinalSubs.forEach((x) => {
     replace(x[0], x[1]);
   });
 

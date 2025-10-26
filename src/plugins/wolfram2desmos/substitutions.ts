@@ -1,6 +1,6 @@
-type Replacement = [RegExp, string];
+type Substitution = [RegExp, string];
 
-export const symbolReplacements: Replacement[] = [
+export const symbolSubs: Substitution[] = [
   [/ϕ/g, "φ"],
   [/\*\*/g, "^"],
   [/(?<![A-Za-zΑ-ω])sqrt/g, "√"],
@@ -17,7 +17,7 @@ export const symbolReplacements: Replacement[] = [
   [/->/g, "→"],
 ];
 
-export const finalSymbolReplacements: Replacement[] = [
+export const finalSymbolSubs: Substitution[] = [
   [/√\\left\[([^\]]*)\\right\]/g, "\\sqrt[$1]"],
   [/√/g, "\\sqrt"],
   [/∛/g, "\\sqrt[3]"],
@@ -25,7 +25,7 @@ export const finalSymbolReplacements: Replacement[] = [
   [/(?<=\d) (?=\d)/g, " \\cdot "],
 ];
 
-export const functionReplacements: Replacement[] = [
+export const functionSubs: Substitution[] = [
   [/(?<![A-Za-zΑ-ω])arcsinh/g, "Ⓐ"], // https://qaz.wtf/u/convert.cgi?
   [/(?<![A-Za-zΑ-ω])arccosh/g, "Ⓑ"],
   [/(?<![A-Za-zΑ-ω])arctanh/g, "Ⓒ"],
@@ -57,7 +57,7 @@ export const functionReplacements: Replacement[] = [
   [/prod(uct|)(?=_)/g, "Ｄ"],
 ];
 
-export const functionFinalReplacements: Replacement[] = [
+export const functionFinalSubs: Substitution[] = [
   [/Ⓐ/g, "arcsinh"],
   [/Ⓑ/g, "arccosh"],
   [/Ⓒ/g, "arctanh"],
@@ -90,7 +90,7 @@ export const functionFinalReplacements: Replacement[] = [
   [/Ｄ/g, "\\prod"],
 ];
 
-export const latinReplacements: Replacement[] = [
+export const latinSubs: Substitution[] = [
   [/(?<![A-Za-zΑ-ω])binomial(?![A-Za-zΑ-ω])/g, "Ｇ"],
   [/(?<![A-Za-zΑ-ω])floor(?![A-Za-zΑ-ω])/g, "Ｈ"],
   [/(?<![A-Za-zΑ-ω])ceiling(?![A-Za-zΑ-ω])/g, "Ｉ"],
@@ -99,7 +99,7 @@ export const latinReplacements: Replacement[] = [
   [/(?<![A-Za-zΑ-ω])lcm(?![A-Za-zΑ-ω])/g, "Ｌ"],
 ];
 
-export const finalLatinReplacements: Replacement[] = [
+export const finalLatinSubs: Substitution[] = [
   [/Ｅ/g, "\\operatorname{mod}"],
   [/Ｇ/g, "\\operatorname{nCr}"],
   [/Ｈ/g, "\\operatorname{floor}"],
@@ -110,7 +110,7 @@ export const finalLatinReplacements: Replacement[] = [
   [/Ｍ(?!\^\{)/g, "\\frac{d}{dx}"],
 ];
 
-export const greekReplacements: Replacement[] = [
+export const greekSubs: Substitution[] = [
   [/(?<![A-Za-zΑ-ω])alpha/g, "α"],
   [/(?<![A-Za-zΑ-ω])beta/g, "β"],
   [/(?<![A-Za-zΑ-ω])Gamma/g, "Γ"],
@@ -148,7 +148,7 @@ export const greekReplacements: Replacement[] = [
   [/(?<![A-Za-zΑ-ω])constant/g, "C"],
 ];
 
-export const greekFinalReplacements: Replacement[] = [
+export const greekFinalSubs: Substitution[] = [
   [/α/g, "\\alpha"],
   [/β/g, "\\beta"],
   [/Γ/g, "\\Gamma"],
@@ -186,7 +186,7 @@ export const greekFinalReplacements: Replacement[] = [
   [/polygamma/g, "\\psi_{poly}"],
 ];
 
-export const bracketFinalReplacements: Replacement[] = [
+export const bracketFinalSubs: Substitution[] = [
   [/\(/g, "\\left("],
   [/\)/g, "\\right)"],
   [/«/g, "\\left|"],
