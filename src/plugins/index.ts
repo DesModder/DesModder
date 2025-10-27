@@ -85,7 +85,6 @@ export type GenericSettings = Record<string, any>;
  * (.settings gets updated before afterConfigChange)
  * afterConfigChange
  *
- * beforeDisable
  * afterDisable
  */
 export interface PluginInstance<
@@ -93,7 +92,6 @@ export interface PluginInstance<
 > {
   afterEnable(): void;
   afterConfigChange(): void;
-  beforeDisable(): void;
   afterDisable(): void;
   settings: Settings;
   /** Consumed by expr-action-buttons. This should really be a facet a la Codemirror. */

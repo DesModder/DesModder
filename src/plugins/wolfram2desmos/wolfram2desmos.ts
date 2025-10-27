@@ -1,4 +1,15 @@
 import { Config } from "./config";
+import {
+  symbolSubs,
+  functionSubs,
+  greekSubs,
+  functionFinalSubs,
+  bracketFinalSubs,
+  greekFinalSubs,
+  latinSubs,
+  finalSymbolSubs,
+  finalLatinSubs,
+} from "./substitutions.ts";
 
 // IMPORTANT
 // isIllegalASCIIMath() is REQUIRED BEFORE executing wolfram2desmos()
@@ -10,67 +21,47 @@ export function isIllegalASCIIMath(input: string) {
   function count(expr: RegExp) {
     if (input.match(expr) != null) {
       return input.match(expr)?.length ?? 0;
-    } else {
-      return 0;
     }
+    return 0;
   }
 
-  // checks for illegal characters
-  if (input.search(/\\/) !== -1) {
-    return false;
-  }
-  if (input.search(/\n/) !== -1) {
-    return false;
-  }
-  if (input.search(/(?<=_|\^|\\\w+|\S]|}){/) !== -1) {
-    return false;
-  }
-  if (input.search(/\/\//) !== -1) {
-    return false;
-  }
-
-  // determines if the brackets are correct
-  if (count(/\(/g) > count(/\)/g)) {
-    return false;
-  }
-  if (count(/\(/g) < count(/\)/g)) {
-    return false;
-  }
-  if (count(/\{/g) > count(/\}/g)) {
-    return false;
-  }
-  if (count(/\{/g) < count(/\}/g)) {
-    return false;
-  }
-  if (count(/\[/g) !== count(/\]/g)) {
-    return false;
-  }
-  if (count(/\|/g) % 2 === 1) {
+  if (
+    // checks for illegal characters
+    input.search(/\\/) !== -1 ||
+    input.search(/\n/) !== -1 ||
+    input.search(/(?<=_|\^|\\\w+|\S]|}){/) !== -1 ||
+    input.search(/\/\//) !== -1 ||
+    // determines if the brackets are correct
+    count(/\(/g) !== count(/\)/g) ||
+    count(/\{/g) !== count(/\}/g) ||
+    count(/\[/g) !== count(/\]/g) ||
+    count(/\|/g) % 2 === 1
+  ) {
     return false;
   }
   return true;
 }
 
-export function wolfram2desmos(input: string, config: Config) {
+export function wolfram2desmos(input: string, config: Config): string {
   // FUNCTIONS
   // returns the first match's index
-  function find(expr: RegExp) {
+  function find(expr: RegExp): number {
     return input.search(expr);
   }
 
   // returns the last match's index (requires global expr)
-  function findFinal(expr: RegExp) {
+  function findFinal(expr: RegExp): number {
     const recent = [...input.matchAll(expr)];
     return recent[recent.length - 1]?.index ?? -1;
   }
 
   // replaces all matches with replacement
-  function replace(expr: RegExp, replacement: string) {
+  function replace(expr: RegExp, replacement: string): void {
     input = input.replace(expr, replacement);
   }
 
   // inserts replacement at given index
-  function insert(index: number, replacement: string) {
+  function insert(index: number, replacement: string): void {
     if (index >= 0) {
       input =
         input.slice(0, index) + replacement + input.slice(index, input.length);
@@ -78,7 +69,7 @@ export function wolfram2desmos(input: string, config: Config) {
   }
 
   // overwrites current index with replacement
-  function overwrite(index: number, replacement: string) {
+  function overwrite(index: number, replacement: string): void {
     input =
       input.slice(0, index) +
       replacement +
@@ -86,7 +77,7 @@ export function wolfram2desmos(input: string, config: Config) {
   }
 
   // iterates the bracket parser
-  function bracketEval() {
+  function bracketEval(): void {
     if (input[i] === ")") {
       bracket += 1;
     } else if (input[i] === "(") {
@@ -95,7 +86,7 @@ export function wolfram2desmos(input: string, config: Config) {
   }
 
   // iterates the bracket parser with {} in mind
-  function bracketEvalFinal() {
+  function bracketEvalFinal(): void {
     if (input[i] === ")" || input[i] === "}" || input[i] === "〕") {
       bracket += 1;
     } else if (input[i] === "(" || input[i] === "{" || input[i] === "〔") {
@@ -104,7 +95,7 @@ export function wolfram2desmos(input: string, config: Config) {
   }
 
   // checks if its an operator
-  function isOperator0(x: number) {
+  function isOperator0(x: number): boolean {
     return [
       "+",
       "-",
@@ -124,7 +115,7 @@ export function wolfram2desmos(input: string, config: Config) {
     ].includes(input[x]);
   }
 
-  function isOperator1(x: number) {
+  function isOperator1(x: number): boolean {
     return [
       "+",
       "-",
@@ -145,7 +136,7 @@ export function wolfram2desmos(input: string, config: Config) {
     ].includes(input[x]);
   }
 
-  function isOperator2(x: number) {
+  function isOperator2(x: number): boolean {
     return ["^", "_"].includes(input[x]);
   }
 
@@ -159,21 +150,9 @@ export function wolfram2desmos(input: string, config: Config) {
   const functionSymbols = /^[a-wΑ-ωⒶ-ⓏＡ-Ｚ⒜-⒵√%][(_^]/gi;
   input = " " + input + " "; // this gives some breathing space
 
-  // symbol replacements
-  replace(/ϕ/g, "φ");
-  replace(/\*\*/g, "^");
-  replace(/(?<![A-Za-zΑ-ω])sqrt/g, "√");
-  replace(/(?<![A-Za-zΑ-ω])cbrt/g, "∛");
-  replace(/(?<![A-Za-zΑ-ω])infinity|infty/g, "∞");
-  replace(/(?<![A-Za-zΑ-ω])mod(ulus|ulo)/g, "mod");
-  replace(/(?<![A-Za-zΑ-ω])mod(?!\s*\()/g, "%");
-  replace(/(?<![A-Za-zΑ-ω])pm/g, "±");
-  replace(/×|∙/g, "*");
-  replace(/==/g, "=");
-  replace(/>=/g, "≥");
-  replace(/<=/g, "≤");
-  replace(/!=/g, "≠");
-  replace(/->/g, "→");
+  symbolSubs.forEach((x) => {
+    replace(x[0], x[1]);
+  });
 
   // replace piecewise {} brackets with special character
   while (find(/(?<!_|\^|\\\w+|\S]|}){/) !== -1) {
@@ -192,38 +171,12 @@ export function wolfram2desmos(input: string, config: Config) {
   }
 
   // function replacements
-  // ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ
-  replace(/(?<![A-Za-zΑ-ω])arcsinh/g, "Ⓐ"); // 	https://qaz.wtf/u/convert.cgi?
-  replace(/(?<![A-Za-zΑ-ω])arccosh/g, "Ⓑ");
-  replace(/(?<![A-Za-zΑ-ω])arctanh/g, "Ⓒ");
-  replace(/(?<![A-Za-zΑ-ω])arccsch/g, "Ⓓ");
-  replace(/(?<![A-Za-zΑ-ω])arcsech/g, "Ⓔ");
-  replace(/(?<![A-Za-zΑ-ω])arccoth/g, "Ⓕ");
-  replace(/(?<![A-Za-zΑ-ω])sinh/g, "Ⓖ");
-  replace(/(?<![A-Za-zΑ-ω])cosh/g, "Ⓗ");
-  replace(/(?<![A-Za-zΑ-ω])tanh/g, "Ⓘ");
-  replace(/(?<![A-Za-zΑ-ω])csch/g, "Ⓙ");
-  replace(/(?<![A-Za-zΑ-ω])sech/g, "Ⓚ");
-  replace(/(?<![A-Za-zΑ-ω])coth/g, "Ⓛ");
-  replace(/(?<![A-Za-zΑ-ω])arcsin/g, "Ⓜ");
-  replace(/(?<![A-Za-zΑ-ω])arccos/g, "Ⓝ");
-  replace(/(?<![A-Za-zΑ-ω])arctan/g, "Ⓞ");
-  replace(/(?<![A-Za-zΑ-ω])arccsc/g, "Ⓟ");
-  replace(/(?<![A-Za-zΑ-ω])arcsec/g, "Ⓠ");
-  replace(/(?<![A-Za-zΑ-ω])arccot/g, "Ⓡ");
-  replace(/(?<![A-Za-zΑ-ω])sin/g, "Ⓢ");
-  replace(/(?<![A-Za-zΑ-ω])cos/g, "Ⓣ");
-  replace(/(?<![A-Za-zΑ-ω])tan/g, "Ⓤ");
-  replace(/(?<![A-Za-zΑ-ω])csc/g, "Ⓥ");
-  replace(/(?<![A-Za-zΑ-ω])sec/g, "Ⓦ");
-  replace(/(?<![A-Za-zΑ-ω])cot/g, "Ⓧ");
-  replace(/(?<![A-Za-zΑ-ω])log|ln/g, "Ⓩ");
+  // ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏＡＢＣＤ
+  functionSubs.forEach((x) => {
+    replace(x[0], x[1]);
+  });
 
-  // ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ
-  replace(/int(egral|)(?!\S)/g, "Ａ");
-  replace(/int(egral|)(?=_)/g, "Ｂ");
-  replace(/sum(?=_)/g, "Ｃ");
-  replace(/prod(uct|)(?=_)/g, "Ｄ");
+  // ＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ
   while (find(/(?<![A-Za-zΑ-ω])mod(?![A-Za-zΑ-ω])/) !== -1) {
     i = find(/(?<![A-Za-zΑ-ω])mod(?![A-Za-zΑ-ω])/) + 3;
     bracket = -1;
@@ -255,12 +208,9 @@ export function wolfram2desmos(input: string, config: Config) {
       }
     }
   }
-  replace(/(?<![A-Za-zΑ-ω])binomial(?![A-Za-zΑ-ω])/g, "Ｇ");
-  replace(/(?<![A-Za-zΑ-ω])floor(?![A-Za-zΑ-ω])/g, "Ｈ");
-  replace(/(?<![A-Za-zΑ-ω])ceiling(?![A-Za-zΑ-ω])/g, "Ｉ");
-  replace(/(?<![A-Za-zΑ-ω])round(?![A-Za-zΑ-ω])/g, "Ｊ");
-  replace(/(?<![A-Za-zΑ-ω])(gcd|gcf)(?![A-Za-zΑ-ω])/g, "Ｋ");
-  replace(/(?<![A-Za-zΑ-ω])lcm(?![A-Za-zΑ-ω])/g, "Ｌ");
+  latinSubs.forEach((x) => {
+    replace(x[0], x[1]);
+  });
   if (find(/d(\^\d*)*\/dx(\^\d*)*/) !== -1) {
     i = find(/d(\^\d*)*\/dx(\^\d*)*/);
     [selection] = /(?<=\^)(\d*)/.exec(input) ?? [""];
@@ -279,42 +229,10 @@ export function wolfram2desmos(input: string, config: Config) {
   replace(/\sfor(?!.*\sfor).*/g, "");
   replace(/\(Taylor series\)/g, "");
 
-  // latin replacements
-  replace(/(?<![A-Za-zΑ-ω])alpha/g, "α");
-  replace(/(?<![A-Za-zΑ-ω])beta/g, "β");
-  replace(/(?<![A-Za-zΑ-ω])Gamma/g, "Γ");
-  replace(/(?<![A-Za-zΑ-ω])gamma/g, "γ");
-  replace(/(?<![A-Za-zΑ-ω])Delta/g, "Δ");
-  replace(/(?<![A-Za-zΑ-ω])delta/g, "δ");
-  replace(/(?<![A-Za-zΑ-ω])epsilon/g, "ε");
-  replace(/(?<![A-Za-zΑ-ω])zeta/g, "ζ");
-  replace(/(?<![A-Za-zΑ-ω])eta/g, "η");
-  replace(/(?<![A-Za-zΑ-ω])Theta/g, "Θ");
-  replace(/(?<![A-Za-zΑ-ω])theta/g, "θ");
-  replace(/(?<![A-Za-zΑ-ω])iota/g, "ι");
-  replace(/(?<![A-Za-zΑ-ω])kappa/g, "κ");
-  replace(/(?<![A-Za-zΑ-ω])Lambda/g, "Λ");
-  replace(/(?<![A-Za-zΑ-ω])lambda/g, "λ");
-  replace(/(?<![A-Za-zΑ-ω])mu/g, "μ");
-  replace(/(?<![A-Za-zΑ-ω])nu/g, "ν");
-  replace(/(?<![A-Za-zΑ-ω])Xi/g, "Ξ");
-  replace(/(?<![A-Za-zΑ-ω])xi/g, "ξ");
-  replace(/(?<![A-Za-zΑ-ω])Pi/g, "Π");
-  replace(/(?<![A-Za-zΑ-ω])pi/g, "π");
-  replace(/(?<![A-Za-zΑ-ω])rho/g, "ρ");
-  replace(/(?<![A-Za-zΑ-ω])Sigma/g, "Σ");
-  replace(/(?<![A-Za-zΑ-ω])sigma/g, "σ");
-  replace(/(?<![A-Za-zΑ-ω])tau/g, "τ");
-  replace(/(?<![A-Za-zΑ-ω])Upsilon/g, "Τ");
-  replace(/(?<![A-Za-zΑ-ω])upsilon/g, "υ");
-  replace(/(?<![A-Za-zΑ-ω])Phi/g, "Φ");
-  replace(/(?<![A-Za-zΑ-ω])phi/g, "φ");
-  replace(/(?<![A-Za-zΑ-ω])chi/g, "χ");
-  replace(/(?<![A-Za-zΑ-ω])Psi/g, "Ψ");
-  replace(/(?<![A-Za-zΑ-ω])psi/g, "ψ");
-  replace(/(?<![A-Za-zΑ-ω])Omega/g, "Ω");
-  replace(/(?<![A-Za-zΑ-ω])omega/g, "ω");
-  replace(/(?<![A-Za-zΑ-ω])constant/g, "C");
+  // greek replacements
+  greekSubs.forEach((x) => {
+    replace(x[0], x[1]);
+  });
 
   // MISSING BRACKETS
   // this will ensure brackets AFTER each operator
@@ -670,64 +588,25 @@ export function wolfram2desmos(input: string, config: Config) {
 
   // FINAL REPLACEMENTS
   // implement proper brackets when all the operator brackets are gone
-  replace(/\(/g, "\\left(");
-  replace(/\)/g, "\\right)");
-  replace(/«/g, "\\left|");
-  replace(/»/g, "\\right|");
-  replace(/〔/g, "\\left\\{");
-  replace(/〕/g, "\\right\\}");
-  replace(/\[/g, "\\left[");
-  replace(/\]/g, "\\right]");
+  bracketFinalSubs.forEach((x) => {
+    replace(x[0], x[1]);
+  });
 
   // symbol replacements
-  replace(/√\\left\[([^\]]*)\\right\]/g, "\\sqrt[$1]");
-  replace(/√/g, "\\sqrt");
-  replace(/∛/g, "\\sqrt[3]");
-  replace(/\*/g, "\\cdot ");
-  replace(/(?<=\d) (?=\d)/g, " \\cdot ");
+  finalSymbolSubs.forEach((x) => {
+    replace(x[0], x[1]);
+  });
 
   // function replacements
   // ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ
-  replace(/Ⓐ/g, "arcsinh");
-  replace(/Ⓑ/g, "arccosh");
-  replace(/Ⓒ/g, "arctanh");
-  replace(/Ⓓ/g, "arccsch");
-  replace(/Ⓔ/g, "arcsech");
-  replace(/Ⓕ/g, "arccoth");
-  replace(/Ⓖ/g, "sinh");
-  replace(/Ⓗ/g, "cosh");
-  replace(/Ⓘ/g, "tanh");
-  replace(/Ⓙ/g, "csch");
-  replace(/Ⓚ/g, "sech");
-  replace(/Ⓛ/g, "coth");
-  replace(/Ⓜ/g, "arcsin");
-  replace(/Ⓝ/g, "arccos");
-  replace(/Ⓞ/g, "arctan");
-  replace(/Ⓟ/g, "arccsc");
-  replace(/Ⓠ/g, "arcsec");
-  replace(/Ⓡ/g, "arccot");
-  replace(/Ⓢ/g, "sin");
-  replace(/Ⓣ/g, "cos");
-  replace(/Ⓤ/g, "tan");
-  replace(/Ⓥ/g, "csc");
-  replace(/Ⓦ/g, "sec");
-  replace(/Ⓧ/g, "cot");
-  replace(/Ⓩ(?!_)/g, "ln");
-  replace(/Ⓩ/g, "log");
+  functionFinalSubs.forEach((x) => {
+    replace(x[0], x[1]);
+  });
 
   // ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ
-  replace(/Ａ/g, "\\int_{0}^{t}");
-  replace(/Ｂ/g, "\\int");
-  replace(/Ｃ/g, "\\sum");
-  replace(/Ｄ/g, "\\prod");
-  replace(/Ｅ/g, "\\operatorname{mod}");
-  replace(/Ｇ/g, "\\operatorname{nCr}");
-  replace(/Ｈ/g, "\\operatorname{floor}");
-  replace(/Ｉ/g, "\\operatorname{ceil}");
-  replace(/Ｊ/g, "\\operatorname{round}");
-  replace(/Ｋ/g, "\\operatorname{gcf}");
-  replace(/Ｌ/g, "\\operatorname{lcm}");
-  replace(/Ｍ(?!\^\{)/g, "\\frac{d}{dx}");
+  finalLatinSubs.forEach((x) => {
+    replace(x[0], x[1]);
+  });
   while (find(/Ｍ/) !== -1) {
     startingIndex = find(/Ｍ/);
     i = startingIndex + 2;
@@ -757,42 +636,10 @@ export function wolfram2desmos(input: string, config: Config) {
 
   // unused: ⒜⒝⒞⒟⒠⒡⒢⒣⒤⒥⒦⒧⒨⒩⒪⒫⒬⒭⒮⒯⒰⒱⒲⒳⒴⒵
 
-  // latin replacements
-  replace(/α/g, "\\alpha");
-  replace(/β/g, "\\beta");
-  replace(/Γ/g, "\\Gamma");
-  replace(/γ/g, "\\gamma");
-  replace(/Δ/g, "\\Delta");
-  replace(/δ/g, "\\delta");
-  replace(/ε/g, "\\epsilon");
-  replace(/ζ/g, "\\zeta");
-  replace(/η/g, "\\eta");
-  replace(/Θ/g, "\\Theta");
-  replace(/θ/g, "\\theta");
-  replace(/ι/g, "\\iota");
-  replace(/κ/g, "\\kappa");
-  replace(/Λ/g, "\\Lambda");
-  replace(/λ/g, "\\lambda");
-  replace(/μ/g, "\\mu");
-  replace(/ν/g, "\\nu");
-  replace(/Ξ/g, "\\Xi");
-  replace(/ξ/g, "\\xi");
-  replace(/Π/g, "\\Pi");
-  replace(/π/g, "\\pi");
-  replace(/ρ/g, "\\rho");
-  replace(/Σ/g, "\\Sigma");
-  replace(/σ/g, "\\sigma");
-  replace(/τ/g, "\\tau");
-  replace(/Τ/g, "\\Upsilon");
-  replace(/υ/g, "\\upsilon");
-  replace(/Φ/g, "\\Phi");
-  replace(/φ/g, "\\phi");
-  replace(/χ/g, "\\chi");
-  replace(/Ψ/g, "\\Psi");
-  replace(/ψ/g, "\\psi");
-  replace(/Ω/g, "\\Omega");
-  replace(/ω/g, "\\omega");
-  replace(/polygamma/g, "\\psi_{poly}");
+  // greek replacements
+  greekFinalSubs.forEach((x) => {
+    replace(x[0], x[1]);
+  });
 
   replace(/(^(\s*))|(\s*$)/g, "");
   return input;

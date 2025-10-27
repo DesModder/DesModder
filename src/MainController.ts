@@ -1,4 +1,3 @@
-import { insertElement, replaceElement } from "./preload/replaceElement";
 import window, { DispatchedEvent, type Calc } from "#globals";
 import {
   plugins,
@@ -27,27 +26,44 @@ export default class DSM extends TransparentPlugins {
 
   private readonly vanillaHandleAction: (evt: DispatchedEvent) => void;
   private readonly vanillaUpdateTheComputedWorld: () => void;
+  private readonly afterDestroy?: () => void;
+  private readonly destroyHandlers: (() => void)[] = [];
 
-  constructor(public calc: Calc) {
+  constructor(
+    public calc: Calc,
+    opts: {
+      /** Called after destroying the DSM (but before destroying the Calc). */
+      afterDestroy?: () => void;
+    } = {}
+  ) {
     super();
-    if ((calc as any)._dsmConnected)
+    this.afterDestroy = opts.afterDestroy;
+    if (calc._dsmConnected)
       throw new Error(
         "Cannot bind DesModder controller (DSM) twice to one calc instance."
       );
-    (calc as any)._dsmConnected = true;
+    calc._dsmConnected = true;
+    this.destroyHandlers.push(() => {
+      calc._dsmConnected = false;
+    });
     // default values
     this.forceDisabled = window.DesModderPreload!.pluginsForceDisabled;
-    if (calc.controller.is3dProduct()) this.forceDisabled.add("GLesmos");
     this.pluginsEnabled = new Map(
       pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
     );
     // Setup handler override
     this.vanillaHandleAction = this.cc.handleDispatchedAction.bind(this.cc);
     this.cc.handleDispatchedAction = this.handleDispatchedAction.bind(this);
+    this.destroyHandlers.push(() => {
+      this.cc.handleDispatchedAction = this.vanillaHandleAction;
+    });
     this.vanillaUpdateTheComputedWorld = this.cc.updateTheComputedWorld.bind(
       this.cc
     );
     this.cc.updateTheComputedWorld = this.updateTheComputedWorld.bind(this);
+    this.destroyHandlers.push(() => {
+      this.cc.updateTheComputedWorld = this.vanillaUpdateTheComputedWorld;
+    });
   }
 
   enabledPluginsSorted() {
@@ -111,7 +127,6 @@ export default class DSM extends TransparentPlugins {
     const dsmPreload = window.DesModderPreload!;
     this.applyStoredSettings(recordToMap(dsmPreload.pluginSettings));
     this.applyStoredEnabled(recordToMap(dsmPreload.pluginsEnabled));
-    delete window.DesModderPreload;
 
     // Enable core plugins
     for (const { id } of pluginList) {
@@ -126,17 +141,47 @@ export default class DSM extends TransparentPlugins {
     // The graph loaded before DesModder loaded, so DesModder was not available to
     // return true when asked isGlesmosMode. Refresh those expressions now
     this.glesmos?.checkGLesmos();
+
+    const oldDestroy = this.cc.destroy.bind(this.cc);
+    this.cc.destroy = () => {
+      this._destroy();
+      oldDestroy();
+    };
+    this.destroyHandlers.push(() => {
+      this.cc.destroy = oldDestroy;
+    });
+  }
+
+  destroy() {
+    this._destroy();
+    this.cc.updateViews();
+  }
+
+  private _destroy() {
+    for (const [_id, plugin] of this.enabledPluginsSorted().toReversed()) {
+      plugin.afterDisable();
+    }
+    for (const destroyHandler of this.destroyHandlers.toReversed()) {
+      destroyHandler();
+    }
+    this.afterDestroy?.();
   }
 
   setPluginEnabled(id: PluginID, isEnabled: boolean) {
     if (isEnabled && this.isPluginForceDisabled(id)) return;
     const same = isEnabled === this.pluginsEnabled.get(id);
     this.pluginsEnabled.set(id, isEnabled);
-    if (!same)
+    if (!same) {
+      if (window.DesModderPreload) {
+        window.DesModderPreload.pluginsEnabled = mapToRecord(
+          this.pluginsEnabled
+        );
+      }
       postMessageUp({
         type: "set-plugins-enabled",
         value: mapToRecord(this.pluginsEnabled),
       });
+    }
   }
 
   disablePlugin(id: PluginID) {
@@ -145,7 +190,6 @@ export default class DSM extends TransparentPlugins {
     if (plugin && this.isPluginToggleable(id)) {
       if (this.isPluginEnabled(id)) {
         const plugin = this.enabledPlugins[id];
-        plugin?.beforeDisable();
         this.pluginsEnabled.delete(id);
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete this.enabledPlugins[id];
@@ -204,7 +248,9 @@ export default class DSM extends TransparentPlugins {
   }
 
   isPluginForceDisabled(id: PluginID) {
-    return this.forceDisabled.has(id);
+    return (
+      this.forceDisabled.has(id) || (this.cc.is3dProduct() && id === "GLesmos")
+    );
   }
 
   isPluginForceEnabled(id: PluginID) {
@@ -222,6 +268,9 @@ export default class DSM extends TransparentPlugins {
   }
 
   postSetPluginSettingsMessage() {
+    if (window.DesModderPreload) {
+      window.DesModderPreload.pluginSettings = this.pluginSettings;
+    }
     postMessageUp({
       type: "set-plugin-settings",
       value: this.pluginSettings,
@@ -286,9 +335,6 @@ export default class DSM extends TransparentPlugins {
       this.updatePluginSettings(key as PluginID, value, false);
     }
   }
-
-  insertElement = insertElement;
-  replaceElement = replaceElement;
 }
 
 function getDefaultConfig(id: PluginID) {

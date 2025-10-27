@@ -6,7 +6,7 @@ import {
   ComponentTemplate,
   DCGView,
 } from "#DCGView";
-import window, { CalcController, Fragile } from "#globals";
+import { CalcController, Fragile } from "#globals";
 import { createElementWrapped } from "../preload/replaceElement";
 
 export abstract class CheckboxComponent extends ClassComponent<{
@@ -173,46 +173,29 @@ export abstract class ExpressionViewComponent extends ClassComponent<
   }
 > {}
 
-// `?` to avoid a crash if the replacement fails
-const ExpressionView = window.DesModderFragile?.ExpressionView;
-
-export abstract class IconViewComponent extends ClassComponent<{
+export abstract class ImageIconViewComponent extends ClassComponent<{
   model: ItemModel;
   controller: CalcController;
 }> {}
-
-// `?` to avoid a crash if the replacement fails
-export const ImageIconView = window.DesModderFragile?.ImageIconView;
 
 interface ModelAndController {
   model: ExpressionModel;
   controller: CalcController;
 }
 
-function children(template: any) {
-  return listWrap(template.children ?? template.props.children);
-}
-
 // <ExpressionIconView ... >
-export class ExpressionIconView extends Component<ModelAndController> {
-  template() {
-    const template = exprTemplate(this);
-    return children(children(children(template)[1])[1])[0];
-  }
-}
+export abstract class ExpressionIconViewComponent extends Component<ModelAndController> {}
 
-function listWrap(x: unknown) {
-  return Array.isArray(x) ? x : [x];
+interface ExpressionFooterViewProps extends ModelAndController {
+  isFirstRender: boolean;
 }
 
 // <If predicate={this.shouldShowFooter}>
 //   {() => <div class={this.getFooterClass()}> ...
-export class FooterView extends Component<ModelAndController> {
-  template() {
-    const template = exprTemplate(this);
-    return children(children(template)[0])[2];
-  }
-}
+export abstract class ExpressionFooterViewComponent extends Component<ExpressionFooterViewProps> {}
+
+export const { ImageIconView, ExpressionIconView, ExpressionFooterView } =
+  Fragile;
 
 export abstract class EvaluationContainerComponent extends ClassComponent<{
   controller: CalcController;
@@ -221,20 +204,4 @@ export abstract class EvaluationContainerComponent extends ClassComponent<{
   abstract controller: CalcController;
   // abstract cachedEvaluationRHS: EvaluationRHS;
   // abstract getEvaluationRHS(): EvaluationRHS;
-}
-
-function exprTemplate(
-  self: InstanceType<typeof Component<ModelAndController>>
-) {
-  const n = new (ExpressionView as any)(
-    {
-      model: () => self.props.model(),
-      controller: () => self.props.controller(),
-      onDragPending: () => {},
-      isDragCopy: () => false,
-    },
-    []
-  );
-  n.init();
-  return n.template();
 }

@@ -16,12 +16,12 @@ list: $rhs => $createElement(__oldList__)
 *Replace* `list` with
 ```js
 () => this.cachedEvaluationRHS, "type", {
-"list-count": $listCountRhs => DSM.replaceElement(
+"list-count": $listCountRhs => DesModder.replaceElement(
   () => $listCountCreateElement(__oldListCount__),
   () => DSM.betterEvaluationView?.evaluation(DSM.betterEvaluationView?.getTypedConstantValue.bind(this)),
   () => DSM.betterEvaluationView?.evaluationUpdateKey(this)
 ),
-list: $rhs => DSM.replaceElement(
+list: $rhs => DesModder.replaceElement(
   () => $createElement(__oldList__),
   () => DSM.betterEvaluationView?.evaluation(DSM.betterEvaluationView?.getTypedConstantValue.bind(this)),
   () => DSM.betterEvaluationView?.evaluationUpdateKey(this)
@@ -35,7 +35,7 @@ emptyList: () => $emptyListCreateElement(__oldEmptyList__)
 
 *Replace* `emptyList` with
 ```js
-emptyList: () => DSM.replaceElement(
+emptyList: () => DesModder.replaceElement(
   () => $emptyListCreateElement(__oldEmptyList__),
   () => DSM.betterEvaluationView?.evaluation(DSM.betterEvaluationView?.getTypedConstantValue.bind(this)),
   () => DSM.betterEvaluationView?.evaluationUpdateKey(this)
@@ -53,7 +53,7 @@ rgbcolor: $rhs => $createElement(__swatch__)
 
 *Replace* `color` with
 ```js
-rgbcolor: $rhs => DSM.replaceElement(
+rgbcolor: $rhs => DesModder.replaceElement(
   () => $createElement(__swatch__),
   () => DSM.betterEvaluationView?.evaluation(DSM.betterEvaluationView?.getTypedConstantValue.bind(this)),
   () => DSM.betterEvaluationView?.evaluationUpdateKey(this)

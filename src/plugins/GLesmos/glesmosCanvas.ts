@@ -40,7 +40,7 @@ export function initGLesmosCanvas(cc: CalcController) {
     antialias: true,
   });
   if (!gl) {
-    cc._showToast({
+    cc.showToast({
       // eslint-disable-next-line @desmodder/eslint-rules/no-format-in-ts
       message: format("GLesmos-no-support"),
     });

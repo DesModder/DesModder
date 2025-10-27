@@ -6,6 +6,10 @@ import type { DispatchedEvent } from "./extra-actions";
 
 export type { DispatchedEvent };
 
+export type FocusLocation =
+  | { type: "expression"; id: string }
+  | { type: string };
+
 export type VanillaDispatchedEvent =
   | {
       type:
@@ -75,7 +79,7 @@ export type VanillaDispatchedEvent =
     }
   | {
       type: "set-focus-location";
-      location: { type: "expression"; id: string } | { type: string };
+      location: FocusLocation;
     }
   | {
       type: "on-evaluator-changes";
@@ -269,6 +273,8 @@ interface CalcPrivate {
     dispatch: (e: DispatchedEvent) => void;
     getExpressionSearchStr: () => string;
     dispatcher: {
+      /** Make sure to save the result to a variable, and unregister
+       * it in afterDisable. */
       register: (func: (e: DispatchedEvent) => void) => string;
       unregister: (id: string) => void;
     };
@@ -308,7 +314,7 @@ interface CalcPrivate {
       drawLayers: { layer: number; drawOrder: string[]; drawSet: string[] }[];
     };
     _addItemToEndFromAPI: (item: ItemModel) => void;
-    _showToast: (toast: Toast) => void;
+    showToast: (toast: Toast) => void;
     removeListOfItems: (ids: string[]) => {
       // Might only return a subset of the models corresponding to `ids`
       // if some of the `ids` correspond to readonly expressions.
@@ -358,6 +364,7 @@ interface CalcPrivate {
     getEvaluatedDefaultViewport: () => {
       constructor: { fromObject: (vp: Viewport) => ViewportClass };
     };
+    destroy: () => void;
   };
   _calc: {
     globalHotkeys: TopLevelComponents;
@@ -378,5 +385,10 @@ interface CalcPrivate {
   ) => void;
 }
 
-export type Calc = CalcPrivate & Desmos.Calculator;
+interface CalcDummy {
+  /** Set to true if a DSM instance is connected. */
+  _dsmConnected?: boolean;
+}
+
+export type Calc = CalcDummy & CalcPrivate & Desmos.Calculator;
 export type CalcController = Calc["controller"];

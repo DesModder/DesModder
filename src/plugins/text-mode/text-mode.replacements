@@ -35,9 +35,9 @@ $createElement(
 *Replace* `center` with
 ```js
 __center__,
-DSM.insertElement(() => DSM.textMode?.textModeToggle()),
+DesModder.insertElement(() => DSM.textMode?.textModeToggle()),
 // This is for pillbox-menus, not text-mode
-DSM.insertElement(
+DesModder.insertElement(
   () => (
     !this.controller.getGraphSettings().config.graphpaper
       && DSM.pillboxMenus?.pillboxContainerView(true)
@@ -60,45 +60,4 @@ DSM.insertElement(
 ```js
 "dcg-exppanel-container": !0,
 "dsm-in-text-mode": DSM.textMode?.inTextMode
-```
-
-## Extract ExpressionView class
-
-*Description* `Show style circles and expression footers for Text Mode statements`
-
-*Find*
-
-```js
-$ExpressionView = class extends $ {
-  didMountRootNode($e) {
-      this.rootNode = $e,
-      this.onItemViewMounted($e),
-      this.lastBrailleMode = this.controller.getBrailleMode()
-  }
-```
-
-*Replace* `ExpressionView` with
-```js
-$ExpressionView = (window.DesModderFragile ??= {}).ExpressionView
-```
-
-## Extract ImageIconView class
-
-*Description* `Show style circles for Text Mode images`
-
-*Find*
-
-```js
-$ImageIconView = class extends $.View {
-  init() { ____ }
-  template() {
-      return $createElement("div", {
-          class: $$const("dcg-expression-icon-container dcg-image-icon-container")
-          ____
-      }
-```
-
-*Replace* `ImageIconView` with
-```js
-$ImageIconView = (window.DesModderFragile ??= {}).ImageIconView
 ```

@@ -39,7 +39,7 @@ Just add one more child.
 ```js
 [
   __children__,
-  DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, true))
+  DesModder.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, true))
 ]
 ```
 
@@ -78,9 +78,9 @@ Add one child before and one after.
 *Replace* `children` with
 ```js
 [
-  DSM.insertElement(() => DSM.glesmos?.confirmLines(this.model.id, $ToggleView)),
+  DesModder.insertElement(() => DSM.glesmos?.confirmLines(this.model.id, $ToggleView)),
   __children__,
-  DSM.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, false))
+  DesModder.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, false))
 ]
 ```
 

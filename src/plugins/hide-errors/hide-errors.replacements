@@ -62,7 +62,7 @@ children: __errorTriangle__
 
 *Replace* `errorTriangle` with
 ```js
-DSM.replaceElement(
+DesModder.replaceElement(
   () => __errorTriangle__,
   () => DSM.hideErrors?.errorTriangle(this.props.exprId?.() ?? "")
 )
@@ -85,7 +85,7 @@ Add one more child for the hide button
 *Replace* `children` with
 ```js
 __children__,
-DSM.insertElement(() => DSM.hideErrors?.hideButton(() => this.model))
+DesModder.insertElement(() => DSM.hideErrors?.hideButton(() => this.model))
 ```
 
 ## Disable slider creation prompt if error is hidden

@@ -14,12 +14,18 @@ function insertPanicElement() {
       const inputs: HTMLInputElement[] = Array.from(
         document.querySelectorAll("#dsm-panic-popover ul input")
       );
+      const newPluginsForceDisabled = inputs
+        .filter((el) => el.checked)
+        .map((el) => el.dataset.plugin)
+        .filter((n): n is PluginID => n !== undefined);
+      if (window.DesModderPreload) {
+        window.DesModderPreload.pluginsForceDisabled = new Set(
+          newPluginsForceDisabled
+        );
+      }
       postMessageUp({
         type: "set-plugins-force-disabled",
-        value: inputs
-          .filter((el) => el.checked)
-          .map((el) => el.dataset.plugin)
-          .filter((n): n is PluginID => n !== undefined),
+        value: newPluginsForceDisabled,
       });
       location.reload();
     });

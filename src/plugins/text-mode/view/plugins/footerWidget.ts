@@ -4,7 +4,7 @@ import "./footerWidget.less";
 import { EditorState, RangeSet } from "@codemirror/state";
 import { EditorView, Decoration, WidgetType } from "@codemirror/view";
 import { DCGView } from "#DCGView";
-import { FooterView } from "#components";
+import { ExpressionFooterView } from "#components";
 import { ExpressionModel } from "#globals";
 
 function getFooters(state: EditorState) {
@@ -71,9 +71,10 @@ class FooterWidget extends WidgetType {
   toDOM() {
     this.div = document.createElement("div");
     this.div.classList.add("dsm-tm-footer-wrapper");
-    const view = DCGView.mountToNode(FooterView, this.div, {
+    const view = DCGView.mountToNode(ExpressionFooterView, this.div, {
       model: DCGView.const(this.model),
       controller: DCGView.const(this.model.controller),
+      isFirstRender: () => false,
     });
     this.unsub = this.model.controller.subscribeToChanges(() => view.update());
     return this.div;

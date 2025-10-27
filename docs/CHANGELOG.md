@@ -1,5 +1,17 @@
 # DesModder Changelog
 
+## 0.15.4
+
+Bug fixes
+
+- Fix crash when switching between tools without navigating between pages (e.g. 2d to 3d).
+- Fix display of toasts (such as WakaTime warning "Plugin has been deactivated").
+- Fix styling of popover titles.
+- (Text Mode) Fix components like the style circle.
+- (Find-Replace) Fix focus bug when typing into the "replace" field of the find-replace bar (Ctrl+F).
+- (Better Evaluation View) Fix extraneous scrollbar on 3d color map preview sphere.
+- (Set Primary Color) Fix a bunch of elements that were missing color overrides.
+
 ## 0.15.3
 
 Bug fixes

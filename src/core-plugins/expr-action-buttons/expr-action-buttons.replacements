@@ -18,7 +18,7 @@ $createElement($Tooltip, {
 
 *Replace* `delete_button` with
 ```js
-DSM.insertElement(() => DSM.exprActionButtons?.actionButtonsView(this.model())),
+DesModder.insertElement(() => DSM.exprActionButtons?.actionButtonsView(this.model())),
 __delete_button__
 ```
 

@@ -27,6 +27,6 @@ $createElement(
 *Replace* `children` with
 ```js
 __children__,
-DSM.insertElement(() => DSM.pinExpressions?.pinnedPanel(this)),
-DSM.insertElement(() => DSM.textMode?.editorPanel(this)),
+DesModder.insertElement(() => DSM.pinExpressions?.pinnedPanel(this)),
+DesModder.insertElement(() => DSM.textMode?.editorPanel(this)),
 ```
