@@ -11,6 +11,35 @@ testWithPage("No crash when switching from calc to 3d", async (driver) => {
   await driver.assertSelector(".dsm-menu-container");
 });
 
+testWithPage(
+  "Plugin settings preserved when switching calc to 3d",
+  async (driver) => {
+    // Tweak setting
+    await driver.assertSelector(".dcg-action-zoomin");
+    await driver.setPluginSetting("builtin-settings", "zoomButtons", false);
+    await driver.assertSelectorNot(".dcg-action-zoomin");
+
+    // Tweak plugin enabled
+    await driver.assertSelector('[data-buttonid="dsm-vc-menu"]');
+    await driver.disablePlugin("video-creator");
+    await driver.assertSelectorNot('[data-buttonid="dsm-vc-menu"]');
+
+    // Switch to 3d. Same settings should be kept
+    await driver.click(".dcg-action-current-tool");
+    await driver.click('[href="/3d"]');
+    const url = await driver.evaluate(() => window.location.href);
+    expect(url).toEqual("https://www.desmos.com/3d");
+    await driver.assertSelectorNot(".dcg-action-zoomin");
+    await driver.assertSelectorNot('[data-buttonid="dsm-vc-menu"]');
+
+    // Revert settings, just to make sure they can be
+    await driver.setPluginSetting("builtin-settings", "zoomButtons", true);
+    await driver.assertSelector(".dcg-action-zoomin");
+    await driver.enablePlugin("video-creator");
+    await driver.assertSelector('[data-buttonid="dsm-vc-menu"]');
+  }
+);
+
 async function normalizedHtml(page: Page) {
   let html = await page.$eval("html", (elem) => elem.outerHTML);
   // Sometimes the script gets removed, sometimes it's not.
