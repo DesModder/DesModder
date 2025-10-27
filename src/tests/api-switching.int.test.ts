@@ -1,13 +1,78 @@
+import { Browser, Page } from "puppeteer";
 import { testWithPage } from "./puppeteer-utils";
 
-describe("Switching from calc to 3d", () => {
-  testWithPage("No crash when switching from calc to 3d", async (driver) => {
-    // Always starts on /calculator.
-    await driver.click(".dcg-action-current-tool");
-    await driver.click('[href="/3d"]');
-    const url = await driver.evaluate(() => window.location.href);
-    expect(url).toEqual("https://www.desmos.com/3d");
-    await driver.click(".dsm-action-menu");
-    await driver.assertSelector(".dsm-menu-container");
+testWithPage("No crash when switching from calc to 3d", async (driver) => {
+  // Always starts on /calculator.
+  await driver.click(".dcg-action-current-tool");
+  await driver.click('[href="/3d"]');
+  const url = await driver.evaluate(() => window.location.href);
+  expect(url).toEqual("https://www.desmos.com/3d");
+  await driver.click(".dsm-action-menu");
+  await driver.assertSelector(".dsm-menu-container");
+});
+
+async function normalizedHtml(page: Page) {
+  let html = await page.$eval("html", (elem) => elem.outerHTML);
+  // Sometimes the script gets removed, sometimes it's not.
+  html = html.replace(
+    /<script src="chrome-extension:\/\/[^/]+\/script.js"><\/script>/,
+    ""
+  );
+  // This div has tabindex depending on activeElement, ref `getShiftTabElementTabIndex`.
+  html = html.replace(
+    /<div tabindex="(0|-1)"><\/div>(<canvas class="dcg-graph-inner")/,
+    "$2"
+  );
+  return html;
+}
+
+test("DSM destroy reverts page HTML", async () => {
+  const browser = (globalThis as any).__BROWSER_GLOBAL__ as Browser;
+  const page = await browser.newPage();
+  const url =
+    "https://desmos.com/calculator?dsmTestingDelayLoad&dsmTestingSuppressAutoRestart";
+  await page.goto(url);
+  await page.waitForSelector(".dcg-grapher");
+
+  const dcgSubstring = "dcg-container";
+  const vcSel = '.dsm-action-menu[data-buttonid="dsm-vc-menu"]';
+  const vcSubstring = 'data-buttonid="dsm-vc-menu"';
+
+  const beforeHtml = await normalizedHtml(page);
+  expect(beforeHtml.includes(dcgSubstring)).toBe(true);
+  expect(beforeHtml.includes(vcSubstring)).toBe(false);
+
+  await page.waitForFunction(() => (window as any).tryInitDsm);
+  await page.evaluate(() => (window as any).tryInitDsm());
+
+  await page.waitForSelector(vcSel);
+
+  const dsmHtml = await normalizedHtml(page);
+  expect(dsmHtml.includes(dcgSubstring)).toBe(true);
+  expect(dsmHtml.includes(vcSubstring)).toBe(true);
+
+  await page.evaluate(() => {
+    (window as any).dsmTestingSuppressAutoRestart = true;
+    (window as any).DSM.destroy();
   });
+  await page.waitForFunction(() => !document.querySelector(".dsm-usage-tip"));
+
+  const afterHtml = await normalizedHtml(page);
+  expect(afterHtml.includes(dcgSubstring)).toBe(true);
+  expect(afterHtml.includes(vcSubstring)).toBe(false);
+
+  // The big test: HTML is the same before and after.
+  expect(afterHtml).toEqual(beforeHtml);
+
+  // If that fails, the following code helps debug:
+  // ```js
+  // const fs = require("fs");
+  // fs.writeFileSync("before.html", beforeHtml);
+  // fs.writeFileSync("after.html", afterHtml);
+  // ```js
+  // And shell commands:
+  // `npx prettier --write before.html after.html`
+  // `git diff --no-index before.html after.html > diff.html`
+
+  await page.close();
 });

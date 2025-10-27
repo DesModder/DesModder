@@ -146,8 +146,8 @@ export default class DSM extends TransparentPlugins {
 
     const oldDestroy = this.cc.destroy.bind(this.cc);
     this.cc.destroy = () => {
+      this._destroy();
       oldDestroy();
-      this.destroy();
     };
     this.destroyHandlers.push(() => {
       this.cc.destroy = oldDestroy;
@@ -155,6 +155,11 @@ export default class DSM extends TransparentPlugins {
   }
 
   destroy() {
+    this._destroy();
+    this.cc.updateViews();
+  }
+
+  private _destroy() {
     for (const [_id, plugin] of this.enabledPluginsSorted().toReversed()) {
       plugin.afterDisable();
     }

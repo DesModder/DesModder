@@ -4,6 +4,8 @@ import DSM from "#DSM";
 import "./fonts/style.css";
 import window, { Calc } from "#globals";
 
+const query = new URLSearchParams(window.location.search);
+
 function initDsm() {
   const calc = (window as any).Calc as Calc;
   const dsm = new DSM(calc, {
@@ -14,9 +16,10 @@ function initDsm() {
       // `setTimeout` to wait until after the event loop, with the idea that
       // the `destroy()` callee is likely to run `initializeApi()` in the
       // same event loop.
-      setTimeout(() => {
-        tryInitDsm();
-      });
+      if (!query.has("dsmTestingSuppressAutoRestart"))
+        setTimeout(() => {
+          tryInitDsm();
+        });
     },
   });
 
@@ -37,4 +40,8 @@ export function tryInitDsm() {
   else setTimeout(tryInitDsm, 10);
 }
 
-tryInitDsm();
+if (query.has("dsmTestingDelayLoad")) {
+  (window as any).tryInitDsm = tryInitDsm;
+} else {
+  tryInitDsm();
+}
