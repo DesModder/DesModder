@@ -71,8 +71,8 @@ test("DSM destroy reverts page HTML", async () => {
   expect(beforeHtml.includes(dcgSubstring)).toBe(true);
   expect(beforeHtml.includes(vcSubstring)).toBe(false);
 
-  await page.waitForFunction(() => (window as any).tryInitDsm);
-  await page.evaluate(() => (window as any).tryInitDsm());
+  await page.waitForFunction(() => !!(window as any).DesModder.init);
+  await page.evaluate(() => (window as any).DesModder.init());
 
   await page.waitForSelector(vcSel);
 

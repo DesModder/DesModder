@@ -35,8 +35,8 @@ export function tryInitDsm() {
   else setTimeout(tryInitDsm, 10);
 }
 
-if (query.has("dsmTestingDelayLoad")) {
-  (window as any).tryInitDsm = tryInitDsm;
-} else {
+window.DesModder.init = tryInitDsm;
+
+if (!query.has("dsmTestingDelayLoad")) {
   tryInitDsm();
 }
