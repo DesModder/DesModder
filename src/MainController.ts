@@ -1,4 +1,3 @@
-import { insertElement, replaceElement } from "./preload/replaceElement";
 import window, { DispatchedEvent, type Calc } from "#globals";
 import {
   plugins,
@@ -173,11 +172,17 @@ export default class DSM extends TransparentPlugins {
     if (isEnabled && this.isPluginForceDisabled(id)) return;
     const same = isEnabled === this.pluginsEnabled.get(id);
     this.pluginsEnabled.set(id, isEnabled);
-    if (!same)
+    if (!same) {
+      if (window.DesModderPreload) {
+        window.DesModderPreload.pluginsEnabled = mapToRecord(
+          this.pluginsEnabled
+        );
+      }
       postMessageUp({
         type: "set-plugins-enabled",
         value: mapToRecord(this.pluginsEnabled),
       });
+    }
   }
 
   disablePlugin(id: PluginID) {
@@ -262,6 +267,9 @@ export default class DSM extends TransparentPlugins {
   }
 
   postSetPluginSettingsMessage() {
+    if (window.DesModderPreload) {
+      window.DesModderPreload.pluginSettings = this.pluginSettings;
+    }
     postMessageUp({
       type: "set-plugin-settings",
       value: this.pluginSettings,
@@ -326,9 +334,6 @@ export default class DSM extends TransparentPlugins {
       this.updatePluginSettings(key as PluginID, value, false);
     }
   }
-
-  insertElement = insertElement;
-  replaceElement = replaceElement;
 }
 
 function getDefaultConfig(id: PluginID) {

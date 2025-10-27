@@ -29,7 +29,7 @@ switch ($buttonId) {
 __case__
   default:
     if ($buttonId.startsWith("dsm-"))
-      return DSM.insertElement(() => DSM.pillboxMenus?.pillboxButtonView($buttonId.slice(4), false));
+      return DesModder.insertElement(() => DSM.pillboxMenus?.pillboxButtonView($buttonId.slice(4), false));
     console.warn("Unhandled pillbox button type");
     return $createElement("span", {});
 ```

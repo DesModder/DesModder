@@ -36,7 +36,7 @@ $createElement("div", {
 
 *Replace* `searchBar` with
 ```js
-DSM.replaceElement(
+DesModder.replaceElement(
   () => __searchBar__,
   () => DSM.findReplace?.replaceSearchView
 )

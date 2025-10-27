@@ -32,7 +32,7 @@ $createElement2("div", {
 *Replace* `__children__` with
 ```js
 __children__,
-DSM.insertElement(() => ( DSM.codeGolf?.expressionItemCostPanel(this.model, this._rootNode)  ))
+DesModder.insertElement(() => ( DSM.codeGolf?.expressionItemCostPanel(this.model, this._rootNode)  ))
 ```
 
 ## Add total counts to folders in exppanel
@@ -65,5 +65,5 @@ $createElement2("div", {
 *Replace* `children` with
 ```js
 __children__,
-DSM.insertElement(() => (DSM.codeGolf?.folderCostPanel(this.model)))
+DesModder.insertElement(() => (DSM.codeGolf?.folderCostPanel(this.model)))
 ```

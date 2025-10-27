@@ -1,5 +1,3 @@
-import { format } from "#i18n";
-import { drawGLesmosSketchToCtx } from "./plugins/GLesmos/drawGLesmosSketchToCtx";
 import DSM from "#DSM";
 import "./fonts/style.css";
 import window, { Calc } from "#globals";
@@ -11,7 +9,8 @@ function initDsm() {
   const dsm = new DSM(calc, {
     afterDestroy: () => {
       delete (window as any).DSM;
-      delete (window as any).DesModder;
+      delete (window as any).DesModder.controller;
+      delete (window as any).DesModder.exposedPlugins;
 
       // `setTimeout` to wait until after the event loop, with the idea that
       // the `destroy()` callee is likely to run `initializeApi()` in the
@@ -23,13 +22,9 @@ function initDsm() {
     },
   });
 
-  window.DesModder = {
-    controller: dsm,
-    format,
-    drawGLesmosSketchToCtx,
-    // Not used by DesModder, but some external scripts may still reference this
-    exposedPlugins: dsm.enabledPlugins,
-  };
+  window.DesModder.controller = dsm;
+  // Not used by DesModder, but some external scripts may still reference this
+  window.DesModder.exposedPlugins = dsm.enabledPlugins;
   window.DSM = dsm;
 
   dsm.init();
@@ -40,8 +35,8 @@ export function tryInitDsm() {
   else setTimeout(tryInitDsm, 10);
 }
 
-if (query.has("dsmTestingDelayLoad")) {
-  (window as any).tryInitDsm = tryInitDsm;
-} else {
+window.DesModder.init = tryInitDsm;
+
+if (!query.has("dsmTestingDelayLoad")) {
   tryInitDsm();
 }

@@ -10,6 +10,8 @@ import { addForceDisabled, addPanic } from "../panic/panic";
 import { replacements, workerAppend } from "./moduleReplacements";
 import { insertElement, replaceElement } from "./replaceElement";
 import { fullReplacementCached } from "./cacheReplacement";
+import { format } from "../../localization/i18n-core";
+import { drawGLesmosSketchToCtx } from "../plugins/GLesmos/drawGLesmosSketchToCtx";
 
 /* This script is loaded at document_start, before the page's scripts */
 
@@ -99,10 +101,11 @@ listenToMessageDown((message) => {
       pluginsEnabled: message.pluginsEnabled,
       pluginSettings: message.pluginSettings,
     };
-    // Helps with the case of replacements ran before initialization
-    window.DSM = {
+    window.DesModder = {
       insertElement,
       replaceElement,
+      format,
+      drawGLesmosSketchToCtx,
     } as any;
     void load(arrayToSet(message.pluginsForceDisabled));
     // cancel listener
