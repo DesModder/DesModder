@@ -46,12 +46,6 @@ export default class ManageMetadata extends PluginController {
   graphMetadata: GraphMetadata = getBlankMetadata();
   recentlyOpenedGLesmos = false;
 
-  beforeDisable() {
-    throw new Error(
-      "Programming Error: core plugin Manage Metadata should not be disableable"
-    );
-  }
-
   private syncFromMetadataNote() {
     const newMetadata = getMetadataFromListModel(this.calc);
     // We could be in the middle of init, so we can't just do `!this.dsm.glesmos`.

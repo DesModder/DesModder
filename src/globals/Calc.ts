@@ -273,6 +273,8 @@ interface CalcPrivate {
     dispatch: (e: DispatchedEvent) => void;
     getExpressionSearchStr: () => string;
     dispatcher: {
+      /** Make sure to save the result to a variable, and unregister
+       * it in afterDisable. */
       register: (func: (e: DispatchedEvent) => void) => string;
       unregister: (id: string) => void;
     };

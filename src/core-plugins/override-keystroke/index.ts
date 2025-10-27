@@ -34,10 +34,4 @@ export default class OverrideKeystroke extends PluginController {
   setMQKeystrokeListener(pluginID: PluginID, cb: MQKeystrokeCallback) {
     this.mqKeystrokeListeners.set(pluginID, cb);
   }
-
-  beforeDisable() {
-    throw new Error(
-      "Programming Error: core plugin Override Keystroke should not be disableable"
-    );
-  }
 }
