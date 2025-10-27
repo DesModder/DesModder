@@ -42,4 +42,4 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run build
-      - run: npm run test:integration
+      - run: DSM_TESTING_URL='https://delta.desmos.com/calculator' npm run test:integration
