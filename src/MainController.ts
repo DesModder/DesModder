@@ -178,7 +178,6 @@ export default class DSM extends TransparentPlugins {
     if (plugin && this.isPluginToggleable(id)) {
       if (this.isPluginEnabled(id)) {
         const plugin = this.enabledPlugins[id];
-        plugin?.beforeDisable();
         this.pluginsEnabled.delete(id);
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete this.enabledPlugins[id];

@@ -38,12 +38,6 @@ export default class PillboxMenus extends PluginController<undefined> {
   pillboxMenuOpen: string | null = null;
   pillboxMenuPinned: boolean = false;
 
-  beforeDisable() {
-    throw new Error(
-      "Programming Error: core plugin Pillbox Menus should not be disableable"
-    );
-  }
-
   pushToPillboxList(list: { push: (buttonId: string) => void }) {
     for (const buttonId of this.pillboxButtonsOrder) {
       list.push("dsm-" + buttonId);

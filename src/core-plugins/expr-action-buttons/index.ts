@@ -8,12 +8,6 @@ export default class ExprActionButtons extends PluginController<undefined> {
   static enabledByDefault = true;
   static isCore = true;
 
-  beforeDisable() {
-    throw new Error(
-      "Programming Error: core plugin Expression Action Buttons should not be disableable"
-    );
-  }
-
   actionButtonsView(m: ItemModel): Inserter {
     return () => ActionButtons(this, m);
   }

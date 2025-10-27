@@ -19,7 +19,6 @@ export class PluginController<
 
   afterEnable() {}
   afterConfigChange() {}
-  beforeDisable() {}
   afterDisable() {}
 }
 
