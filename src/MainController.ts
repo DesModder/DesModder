@@ -1,4 +1,3 @@
-import { insertElement, replaceElement } from "./preload/replaceElement";
 import window, { DispatchedEvent, type Calc } from "#globals";
 import {
   plugins,
@@ -335,9 +334,6 @@ export default class DSM extends TransparentPlugins {
       this.updatePluginSettings(key as PluginID, value, false);
     }
   }
-
-  insertElement = insertElement;
-  replaceElement = replaceElement;
 }
 
 function getDefaultConfig(id: PluginID) {

@@ -21,6 +21,6 @@ $createElement(
 ```js
 [
   __children__,
-  DSM.insertElement(() => DSM.showTips?.tipView())
+  DesModder.insertElement(() => DSM.showTips?.tipView())
 ]
 ```
