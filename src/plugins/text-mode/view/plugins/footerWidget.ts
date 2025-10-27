@@ -74,6 +74,7 @@ class FooterWidget extends WidgetType {
     const view = DCGView.mountToNode(ExpressionFooterView, this.div, {
       model: DCGView.const(this.model),
       controller: DCGView.const(this.model.controller),
+      isFirstRender: () => false,
     });
     this.unsub = this.model.controller.subscribeToChanges(() => view.update());
     return this.div;

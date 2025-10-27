@@ -186,9 +186,13 @@ interface ModelAndController {
 // <ExpressionIconView ... >
 export abstract class ExpressionIconViewComponent extends Component<ModelAndController> {}
 
+interface ExpressionFooterViewProps extends ModelAndController {
+  isFirstRender: boolean;
+}
+
 // <If predicate={this.shouldShowFooter}>
 //   {() => <div class={this.getFooterClass()}> ...
-export abstract class ExpressionFooterViewComponent extends Component<ModelAndController> {}
+export abstract class ExpressionFooterViewComponent extends Component<ExpressionFooterViewProps> {}
 
 export const { ImageIconView, ExpressionIconView, ExpressionFooterView } =
   Fragile;
