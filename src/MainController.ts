@@ -48,7 +48,6 @@ export default class DSM extends TransparentPlugins {
     });
     // default values
     this.forceDisabled = window.DesModderPreload!.pluginsForceDisabled;
-    if (calc.controller.is3dProduct()) this.forceDisabled.add("GLesmos");
     this.pluginsEnabled = new Map(
       pluginList.map((plugin) => [plugin.id, plugin.enabledByDefault] as const)
     );
@@ -249,7 +248,9 @@ export default class DSM extends TransparentPlugins {
   }
 
   isPluginForceDisabled(id: PluginID) {
-    return this.forceDisabled.has(id);
+    return (
+      this.forceDisabled.has(id) || (this.cc.is3dProduct() && id === "GLesmos")
+    );
   }
 
   isPluginForceEnabled(id: PluginID) {
