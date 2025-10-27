@@ -28,6 +28,7 @@ export default class DSM extends TransparentPlugins {
   private readonly vanillaHandleAction: (evt: DispatchedEvent) => void;
   private readonly vanillaUpdateTheComputedWorld: () => void;
   private readonly afterDestroy?: () => void;
+  private readonly destroyHandlers: (() => void)[] = [];
 
   constructor(
     public calc: Calc,
@@ -43,6 +44,9 @@ export default class DSM extends TransparentPlugins {
         "Cannot bind DesModder controller (DSM) twice to one calc instance."
       );
     calc._dsmConnected = true;
+    this.destroyHandlers.push(() => {
+      calc._dsmConnected = false;
+    });
     // default values
     this.forceDisabled = window.DesModderPreload!.pluginsForceDisabled;
     if (calc.controller.is3dProduct()) this.forceDisabled.add("GLesmos");
@@ -52,10 +56,16 @@ export default class DSM extends TransparentPlugins {
     // Setup handler override
     this.vanillaHandleAction = this.cc.handleDispatchedAction.bind(this.cc);
     this.cc.handleDispatchedAction = this.handleDispatchedAction.bind(this);
+    this.destroyHandlers.push(() => {
+      this.cc.handleDispatchedAction = this.vanillaHandleAction;
+    });
     this.vanillaUpdateTheComputedWorld = this.cc.updateTheComputedWorld.bind(
       this.cc
     );
     this.cc.updateTheComputedWorld = this.updateTheComputedWorld.bind(this);
+    this.destroyHandlers.push(() => {
+      this.cc.updateTheComputedWorld = this.vanillaUpdateTheComputedWorld;
+    });
   }
 
   enabledPluginsSorted() {
@@ -139,10 +149,15 @@ export default class DSM extends TransparentPlugins {
       oldDestroy();
       this.destroy();
     };
+    this.destroyHandlers.push(() => {
+      this.cc.destroy = oldDestroy;
+    });
   }
 
   destroy() {
-    this.calc._dsmConnected = false;
+    for (const destroyHandler of this.destroyHandlers.toReversed()) {
+      destroyHandler();
+    }
     this.afterDestroy?.();
   }
 
