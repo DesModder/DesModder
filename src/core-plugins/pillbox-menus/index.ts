@@ -12,14 +12,19 @@ export default class PillboxMenus extends PluginController<undefined> {
   static isCore = true;
   expandedPlugin: PluginID | null = null;
   private expandedCategory: string | null = null;
+  private dispatcherID?: string;
 
   afterEnable() {
-    this.cc.dispatcher.register((e) => {
+    this.dispatcherID = this.cc.dispatcher.register((e) => {
       if (e.type === "toggle-graph-settings") {
         this.pillboxMenuPinned = false;
         this.closeMenu();
       }
     });
+  }
+
+  afterDisable() {
+    if (this.dispatcherID) this.cc.dispatcher.unregister(this.dispatcherID);
   }
 
   // array of IDs

@@ -19,6 +19,10 @@ export class PluginController<
 
   afterEnable() {}
   afterConfigChange() {}
+  /**
+   * afterDisable should clean up everything: un-monkeypatch functions,
+   * un-register dispatcher calls, clear intervals/timeouts, etc.
+   */
   afterDisable() {}
 }
 
