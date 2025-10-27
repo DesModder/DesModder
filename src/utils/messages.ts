@@ -7,6 +7,7 @@ Post message conventions:
 */
 import { WindowHeartbeatOptions } from "#plugins/wakatime/heartbeat.ts";
 import { GenericSettings, PluginID } from "#plugins/index.ts";
+import { GraphLibraryEntry } from "#plugins/graph-library/index.ts";
 
 type MessageWindowToContent =
   | {
@@ -27,6 +28,10 @@ type MessageWindowToContent =
   | {
       type: "send-heartbeat";
       options: WindowHeartbeatOptions;
+    }
+  | {
+      type: "set-graph-library";
+      value: GraphLibraryEntry[];
     };
 
 type MessageContentToWindow =
@@ -36,6 +41,7 @@ type MessageContentToWindow =
       pluginsForceDisabled: PluginID[];
       pluginSettings: Record<PluginID, GenericSettings | undefined>;
       scriptURL: string;
+      graphLibrary: GraphLibraryEntry[];
     }
   | HeartbeatError;
 
