@@ -24,6 +24,8 @@ Create an integration test with `[name].int.test.ts`.
 
 Do not import anything from files other than [`puppeteer-utils.ts`](./puppeteer-utils.ts), since the code runs in a node process, not inside the browser page. The exception is code inside functions like `driver.evaluate(() => Calc.setBlank())`. The callback gets stringified and ran inside the page.
 
+Tests should work regardless of the origin, e.g. it should work on https://delta.desmos.com/calculator as well as https://www.desmos.com/calculator. See "Running Integration Tests" for how to check that.
+
 Return `clean` if you've cleaned up the page (closed all the menus etc). This serves two purposes:
 
 1. Makes sure that the UI can be cleaned up
@@ -44,5 +46,20 @@ DSM_TESTING_HEADLESS=false npm run test:integration
 To test on different URLs, set the `DSM_TESTING_URL` environment variable, e.g.
 
 ```
-DSM_TESTING_URL='https://desmos.com/calculator' npm run test:integration
+DSM_TESTING_URL='https://delta.desmos.com/calculator' npm run test:integration
 ```
+
+To test a single test file, put the name of the file, e.g.
+
+```
+npm run test:integration api-switching
+```
+
+To test only a single test by name, pass part of all of the name after `-- -t`, e.g.
+
+```
+npm run test:integration -- -t "No
+crash"
+```
+
+The `--` is a separator to treat the `-t` flag as part of the called function (so it gets passed to Jest), rather than as part of the `npm` flag.
