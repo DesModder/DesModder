@@ -5,8 +5,7 @@ testWithPage("No crash when switching from calc to 3d", async (driver) => {
   // Always starts on /calculator.
   await driver.click(".dcg-action-current-tool");
   await driver.click('[href="/3d"]');
-  const url = await driver.evaluate(() => window.location.href);
-  expect(url).toEqual("https://www.desmos.com/3d");
+  await driver.assertPath("/3d");
   await driver.click(".dsm-action-menu");
   await driver.assertSelector(".dsm-menu-container");
 });
@@ -27,8 +26,7 @@ testWithPage(
     // Switch to 3d. Same settings should be kept
     await driver.click(".dcg-action-current-tool");
     await driver.click('[href="/3d"]');
-    const url = await driver.evaluate(() => window.location.href);
-    expect(url).toEqual("https://www.desmos.com/3d");
+    await driver.assertPath("/3d");
     await driver.assertSelectorNot(".dcg-action-zoomin");
     await driver.assertSelectorNot('[data-buttonid="dsm-vc-menu"]');
 

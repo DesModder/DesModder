@@ -274,6 +274,15 @@ export class Driver {
     }
   }
 
+  async assertPath(expected: string) {
+    const pathAndQuery = await this.evaluate(() => {
+      const { href } = window.location;
+      const { origin } = new URL(href);
+      return href.slice(origin.length);
+    });
+    expect(pathAndQuery).toEqual(expected);
+  }
+
   async assertSelectorNot(...selectors: string[]) {
     for (const sel of selectors) {
       const el = await this.page.$(sel);
