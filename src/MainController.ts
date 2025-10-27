@@ -155,6 +155,9 @@ export default class DSM extends TransparentPlugins {
   }
 
   destroy() {
+    for (const [_id, plugin] of this.enabledPluginsSorted().toReversed()) {
+      plugin.afterDisable();
+    }
     for (const destroyHandler of this.destroyHandlers.toReversed()) {
       destroyHandler();
     }
