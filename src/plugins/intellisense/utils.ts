@@ -1,14 +1,11 @@
-let intellisenseTimeoutID = 0;
-export const pendingIntellisenseTimeouts = new Set();
+export const pendingIntellisenseTimeouts = new Set<number>();
 export const setIntellisenseTimeout = function (
-  handler: () => any,
+  handler: () => void,
   timeout?: number
-): any {
-  const thisInvocationID = intellisenseTimeoutID++;
-  pendingIntellisenseTimeouts.add(thisInvocationID);
-  // eslint-disable-next-line @desmodder/eslint-rules/no-timeouts-in-intellisense
-  setTimeout(() => {
+) {
+  const thisInvocationID = window.setTimeout(() => {
     handler();
     pendingIntellisenseTimeouts.delete(thisInvocationID);
   }, timeout);
+  pendingIntellisenseTimeouts.add(thisInvocationID);
 };
