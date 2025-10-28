@@ -114,7 +114,7 @@ export default class Intellisense extends PluginController<{
 
   async waitForCurrentIntellisenseTimeoutsToFinish() {
     await new Promise<void>((resolve) => {
-      const currentTimeouts = Array.from(pendingIntellisenseTimeouts.entries());
+      const currentTimeouts = [...pendingIntellisenseTimeouts];
       const interval = setInterval(() => {
         // only continue if all timeouts have been finished
         for (const timeout of currentTimeouts) {
