@@ -772,5 +772,8 @@ export default class Intellisense extends PluginController<{
     }
 
     if (this.dispatcher) this.cc.dispatcher.unregister(this.dispatcher);
+
+    pendingIntellisenseTimeouts.forEach(clearTimeout);
+    pendingIntellisenseTimeouts.clear();
   }
 }
