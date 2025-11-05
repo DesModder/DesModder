@@ -23,6 +23,26 @@
 }
 ```
 
+### Alternative
+
+*Description* `Multiply getPerspectiveDistortion() to increase the viewport FOV.`
+
+*Find* => `from`
+```js
+{
+  let $e = this.graphSettings.perspectiveDistortion;
+  return __return__
+}
+```
+
+*Replace* `from` with
+```js
+{
+  let $e = this.graphSettings.perspectiveDistortion;
+  return (__return__) * (DSM.quakePro?.magnification ?? 1);
+}
+```
+
 
 ## Adjust the FOV of the slider
 
