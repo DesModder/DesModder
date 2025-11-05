@@ -196,3 +196,47 @@ The description should complete the sentence "This plugin will \_\_\_\_." and th
 ```md
 *Description* `Change the style of pillbox buttons (buttons over the graph paper)`
 ```
+
+## Alternatives/Fallbacks
+
+When the replacements need to work on two different versions of Desmos, it may be helpful to specify two different replacements. This may be done by creating a sub-heading `### Alternatives` under an existing replacement. For example, if DesModder replaces `a.x ** 2.2` with `a.z ** 2.2`, that might look like
+
+````md
+## Access Z instead
+
+_Description_ `Access z instead of x`
+
+_Find_ => `from`
+
+```js
+$a.x ** 2.2;
+```
+
+_Replace_ `from` with
+
+```js
+$a.z ** 2.2;
+```
+````
+
+If Desmos changes the source from `a.x ** 2.2` to `a.x * 5`, it can make sense to create an alternative fallback, which looks like
+
+````md
+### Alternative
+
+_Description_ `Access z instead of x`
+
+_Find_ => `from`
+
+```js
+$a.x * 5;
+```
+
+_Replace_ `from` with
+
+```js
+$a.z * 5;
+```
+````
+
+The replacements system will try the first replacement first; if it fails, it will try the alternative instead. If both fail, it uses the first replacement for the error message.
