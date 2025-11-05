@@ -1,5 +1,12 @@
 # DesModder Changelog
 
+## 0.15.5
+
+Bug fixes
+
+- Fix an error in Intellisense when switching between tools without navigating between pages (e.g. 2d to 3d).
+- Avoid a replacement error with Quake Pro.
+
 ## 0.15.4
 
 Bug fixes
