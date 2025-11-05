@@ -6,12 +6,14 @@ import {
 } from "../plugins/wakatime/heartbeat";
 import injectScript from "#utils/injectScript.ts";
 import { listenToMessageUp, postMessageDown } from "#utils/messages.ts";
+import { GraphLibraryEntry } from "#plugins/graph-library/index.ts";
 
 enum StorageKeys {
   pluginsEnabled = "_plugins-enabled",
   forceDisabled = "_force-disabled",
   forceDisabledVersion = "_force-disabled-version",
   pluginSettings = "_plugin-settings",
+  graphLibrary = "_graph-library",
 }
 
 interface InitialData {
@@ -19,6 +21,7 @@ interface InitialData {
   [StorageKeys.forceDisabledVersion]: string;
   [StorageKeys.pluginsEnabled]: Record<PluginID, boolean | undefined>;
   [StorageKeys.pluginSettings]: Record<PluginID, GenericSettings | undefined>;
+  [StorageKeys.graphLibrary]: GraphLibraryEntry[];
 }
 
 const initialDataDefaults: InitialData = {
@@ -31,6 +34,7 @@ const initialDataDefaults: InitialData = {
     PluginID,
     GenericSettings | undefined
   >, // default: no settings known
+  [StorageKeys.graphLibrary]: [], // default: empty library
 };
 
 type UntrustedInitialData = Partial<InitialData> | undefined;
@@ -44,6 +48,7 @@ function getInitialData() {
       pluginsForceDisabled: pluginsForceDisabled(items),
       pluginSettings: pluginSettings(items),
       scriptURL: chrome.runtime.getURL("script.js"),
+      graphLibrary: getItem(items, StorageKeys.graphLibrary),
     });
   });
 }
@@ -140,6 +145,11 @@ listenToMessageUp((message) => {
     case "set-plugin-settings":
       void chrome.storage.sync.set({
         [StorageKeys.pluginSettings]: message.value,
+      });
+      break;
+    case "set-graph-library":
+      void chrome.storage.sync.set({
+        [StorageKeys.graphLibrary]: message.value,
       });
       break;
     case "send-heartbeat":
