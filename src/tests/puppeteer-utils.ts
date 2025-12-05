@@ -206,17 +206,13 @@ export class Driver {
   async expectEval(latexExpected: string | string[]) {
     const latexFoundList = await this.evaluate(() => {
       const { rootViewNode } = Calc.controller.getSelectedItem()!;
-      interface MqRoot extends Element {
-        mqBlockNode: {
-          latex: () => string;
-        };
-      }
       const evaluationMqRoots = rootViewNode.querySelectorAll(
-        ".dcg-evaluation-container .dcg-mq-root-block"
+        ".dcg-evaluation-container .dcg-mq-math-mode"
       );
       // Do a list in case of vanilla list output.
-      const latexes = [...evaluationMqRoots].map((x) =>
-        (x as MqRoot).mqBlockNode.latex().trim()
+      const latexes = [...evaluationMqRoots].map(
+        (x) =>
+          Desmos.MathQuill.getApiInstanceForElement(x)?.latex().trim() ?? ""
       );
       if (latexes[0] === "=") {
         latexes.shift();
