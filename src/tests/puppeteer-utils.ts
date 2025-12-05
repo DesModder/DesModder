@@ -204,6 +204,14 @@ export class Driver {
   }
 
   async expectEval(latexExpected: string | string[]) {
+    const latexFound = await this.getEvalLatex(Array.isArray(latexExpected));
+    expect(latexFound).toStrictEqual(latexExpected);
+  }
+
+  async getEvalLatex(array: true): Promise<string[]>;
+  async getEvalLatex(array: false): Promise<string>;
+  async getEvalLatex(array: boolean): Promise<string | string[]>;
+  async getEvalLatex(array: boolean): Promise<string | string[]> {
     const latexFoundList = await this.evaluate(() => {
       const { rootViewNode } = Calc.controller.getSelectedItem()!;
       const evaluationMqRoots = rootViewNode.querySelectorAll(
@@ -225,12 +233,12 @@ export class Driver {
       return latexes;
     });
     let latexFound;
-    if (latexFoundList.length === 1 && !Array.isArray(latexExpected)) {
+    if (latexFoundList.length === 1 && !array) {
       [latexFound] = latexFoundList;
     } else {
       latexFound = latexFoundList;
     }
-    expect(latexFound).toStrictEqual(latexExpected);
+    return latexFound;
   }
 
   async expectEvalPlain(textExpected: string) {

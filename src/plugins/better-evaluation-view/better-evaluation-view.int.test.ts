@@ -157,9 +157,10 @@ testWithPage(
 
     // List uses advanced floats with floats=true.
     await driver.setLatexAndSync("L=[0/0,1/0,-1/0,4]+0");
-    await driver.expectEval(
-      "\\left[\\mathrm{NaN},\\infty ,-\\infty ,4\\right]"
-    );
+    let latex = await driver.getEvalLatex(false);
+    // Normalize, since sometimes there's spaces after the \infty.
+    latex = latex.replace(/ /g, "");
+    await driver.expectEval("\\left[\\mathrm{NaN},\\infty,-\\infty,4\\right]");
 
     // Scalar uses advanced floats with floats=true.
     await driver.setLatexAndSync("L=0/0");
