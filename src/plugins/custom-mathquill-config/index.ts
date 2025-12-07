@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
 import { Config, configList } from "./config";
 import "./custom-mathquill-config.less";
-import { MathQuillConfig, MathQuillField } from "#components";
+import { MathQuillConfig } from "#components";
 import { DWindow } from "#globals";
 import { PluginController } from "#plugins/PluginController.ts";
 
@@ -65,7 +64,6 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
         : defaultConfig.typingPercentWritesPercentOf,
     };
     (window as any as DWindow).Desmos.MathQuill.config(settingsObj);
-    this.updateAllMathquill();
   }
 
   afterEnable() {
@@ -77,7 +75,6 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
       return currentConfig;
     };
     this.updateConfig(this.settings);
-    this.updateAllMathquill();
   }
 
   afterDisable() {
@@ -85,30 +82,9 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
     this.cc.rootElt.classList.remove("commaizer");
     (window as any as DWindow).Desmos.MathQuill.config(defaultConfig);
     this.cc.getMathquillConfig = this.oldConfig;
-    this.updateAllMathquill();
   }
 
   afterConfigChange() {
     this.updateConfig(this.settings);
-  }
-
-  updateAllMathquill() {
-    for (const mqField of document.querySelectorAll(".dcg-math-field")) {
-      if (mqField.classList.contains("dcg-static-mathquill-view")) continue;
-
-      const currentMQ = (
-        mqField as Element & { _mqMathFieldInstance: MathQuillField }
-      )._mqMathFieldInstance;
-      const injectionList = this.autoCommandInjections.substring(1).split(" ");
-      if (this.doAutoCommandInjections) {
-        for (const injection of injectionList) {
-          currentMQ.__options.autoCommands[injection] = 1;
-        }
-      } else {
-        for (const injection of injectionList) {
-          delete currentMQ.__options.autoCommands[injection];
-        }
-      }
-    }
   }
 }
