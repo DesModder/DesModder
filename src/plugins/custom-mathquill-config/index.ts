@@ -82,6 +82,8 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
     this.cc.rootElt.classList.remove("commaizer");
     (window as any as DWindow).Desmos.MathQuill.config(defaultConfig);
     this.cc.getMathquillConfig = this.oldConfig;
+
+    this.cc.rootElt.style.removeProperty("--delimiter-override");
   }
 
   afterConfigChange() {
