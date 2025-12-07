@@ -204,19 +204,23 @@ export class Driver {
   }
 
   async expectEval(latexExpected: string | string[]) {
+    const latexFound = await this.getEvalLatex(Array.isArray(latexExpected));
+    expect(latexFound).toStrictEqual(latexExpected);
+  }
+
+  async getEvalLatex(array: true): Promise<string[]>;
+  async getEvalLatex(array: false): Promise<string>;
+  async getEvalLatex(array: boolean): Promise<string | string[]>;
+  async getEvalLatex(array: boolean): Promise<string | string[]> {
     const latexFoundList = await this.evaluate(() => {
       const { rootViewNode } = Calc.controller.getSelectedItem()!;
-      interface MqRoot extends Element {
-        mqBlockNode: {
-          latex: () => string;
-        };
-      }
       const evaluationMqRoots = rootViewNode.querySelectorAll(
-        ".dcg-evaluation-container .dcg-mq-root-block"
+        ".dcg-evaluation-container .dcg-mq-math-mode"
       );
       // Do a list in case of vanilla list output.
-      const latexes = [...evaluationMqRoots].map((x) =>
-        (x as MqRoot).mqBlockNode.latex().trim()
+      const latexes = [...evaluationMqRoots].map(
+        (x) =>
+          Desmos.MathQuill.getApiInstanceForElement(x)?.latex().trim() ?? ""
       );
       if (latexes[0] === "=") {
         latexes.shift();
@@ -229,12 +233,12 @@ export class Driver {
       return latexes;
     });
     let latexFound;
-    if (latexFoundList.length === 1 && !Array.isArray(latexExpected)) {
+    if (latexFoundList.length === 1 && !array) {
       [latexFound] = latexFoundList;
     } else {
       latexFound = latexFoundList;
     }
-    expect(latexFound).toStrictEqual(latexExpected);
+    return latexFound;
   }
 
   async expectEvalPlain(textExpected: string) {

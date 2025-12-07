@@ -40,7 +40,12 @@ interface Desmos extends DesmosPublic {
   };
   MathQuill: {
     config: (config: MathQuillConfig) => Desmos["MathQuill"];
+    getApiInstanceForElement: (el: Element) => null | MathQuillApi;
   };
+}
+
+interface MathQuillApi {
+  latex: () => string;
 }
 
 export interface LabelOptionsBase {
