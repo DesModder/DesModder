@@ -6,20 +6,24 @@ export default class quakePro extends PluginController<Config> {
   static enabledByDefault = false;
   static config = configList;
 
-  magnification = 1;
+  dollyMagnification = 1;
+  scalarZoomed = 1;
 
   afterEnable() {
-    this.magnification = this.settings.magnification;
+    this.dollyMagnification = this.settings.dollyMagnification;
+    this.scalarZoomed = this.settings.scalarZoomed;
     this.redrawAllLayers();
   }
 
   afterConfigChange() {
-    this.magnification = this.settings.magnification;
+    this.dollyMagnification = this.settings.dollyMagnification;
+    this.scalarZoomed = this.settings.scalarZoomed;
     this.redrawAllLayers();
   }
 
   afterDisable() {
-    this.magnification = 1;
+    this.dollyMagnification = 1;
+    this.scalarZoomed = 1;
     this.redrawAllLayers();
   }
 

@@ -2,7 +2,6 @@
 
 *plugin* `quake-pro`
 
-
 ## Increase the FOV of the camera
 
 *Description* `Multiply getPerspectiveDistortion() to increase the viewport FOV.`
@@ -19,7 +18,7 @@
 ```js
 {
   let $e = this.graphSettings.config.perspectiveDistortion;
-  return (__return__) * (DSM.quakePro?.magnification ?? 1);
+  return (__return__) * (DSM.quakePro?.dollyMagnification ?? 1);
 }
 ```
 
@@ -39,7 +38,7 @@
 ```js
 {
   let $e = this.graphSettings.perspectiveDistortion;
-  return (__return__) * (DSM.quakePro?.magnification ?? 1);
+  return (__return__) * (DSM.quakePro?.dollyMagnification ?? 1);
 }
 ```
 
@@ -58,6 +57,72 @@
 *Replace* `from` with
 ```js
 {
-  return this.controller.getPerspectiveDistortion() / (DSM.quakePro?.magnification ?? 1) - 1
+  return this.controller.getPerspectiveDistortion() / (DSM.quakePro?.dollyMagnification ?? 1) - 1
 }
 ```
+
+
+## Communicate to the 3D worker
+
+*Description* `Sends the necessary Quake Pro data to the 3D worker.`
+
+*Find* => `from`
+```js
+this.redrawMessagesInWorker++,
+this.sendMessage({
+  type: "redraw-3d",
+  workerData: this.getWorkerData(),
+  __payload__
+})
+```
+
+*Replace* `from` with
+```js
+this.redrawMessagesInWorker++;
+
+const workerData = this.getWorkerData();
+const quakePro = DSM.quakePro?.settings;
+const {settings} = workerData;
+
+/** This stores a value from 0-1 depending how zoomed the user currently is (based on dragging the slider). */
+const zoomPercentage = settings.perspectiveDistortion / (quakePro?.dollyMagnification ?? 1) / 6.25;
+
+const scalarMultiplier = quakePro ? (
+  (quakePro.scalarZoomed - 1) * zoomPercentage + 1
+) : 1;
+
+// Adds the Quake Pro settings
+settings.quakePro = {
+  ...(quakePro ?? {}),
+  zoomPercentage,
+  scalarMultiplier
+};
+
+this.sendMessage({
+  type: "redraw-3d",
+  workerData,
+  __payload__
+})
+```
+
+
+
+## Multiply everything by scalar
+
+*Description* `Multiply viewport to act like you are zooming in.`
+
+*worker_only*
+
+*Find* => `from`
+```js
+let $o = $cue / 360,
+  $i = $t6 / $Y0($r, 1);
+```
+
+*Replace* `from` with
+```js
+const quakePro = this.settings.quakePro;
+let $o = $cue / 360,
+  $i = $t6 / ($Y0($r, 1) * (quakePro.scalarMultiplier ?? 1));
+```
+
