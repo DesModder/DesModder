@@ -156,7 +156,14 @@ interface Fragile {
     moveItemsTo: (listModel: any, from: number, to: number, n: number) => void;
   };
   currentLanguage: () => string;
+  joinShaderFunctions: (shaderFunctionsList: ShaderFunctions[]) => string;
   glslHeader: string;
+}
+
+export interface ShaderFunctions {
+  scalarFxns: unknown;
+  variadicFxns: unknown;
+  intervalFxns: unknown;
 }
 
 export const Fragile = new Proxy(

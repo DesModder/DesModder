@@ -2,6 +2,7 @@ import { colorVec4 } from "./outputHelpers";
 import type { GLesmosShaderPackage } from "./shaders";
 import type { IRExpression } from "#parsing/parsenode.ts";
 import type { IRChunk } from "../../../parsing/IR";
+import { ShaderFunctions } from "../../globals";
 
 function clampParam(input: number, min: number, max: number, def: number) {
   if (isNaN(input)) return def;
@@ -10,7 +11,9 @@ function clampParam(input: number, min: number, max: number, def: number) {
 
 export interface EmittedGLSL {
   source: string;
-  shaderFunctions: Record<string, boolean>;
+
+  // TODO-cleanup: Record<string, boolean> can be removed once Desmos always provides joinShaderFunctions.
+  shaderFunctions: Record<string, boolean> | ShaderFunctions;
   shaderUniforms: number[];
 }
 
@@ -36,7 +39,7 @@ export function compileGLesmos(
     concreteTree._chunk,
     MAX_RESTRICTION_UNIFORMS
   );
-  let deps = shaderFunctions;
+  const shaderFunctionsList = [shaderFunctions];
 
   // default values for if there should be no dx, dy
   let dxsource = "return 0.0;";
@@ -46,25 +49,23 @@ export function compileGLesmos(
     // The counting starts over from _DCG_SC_0, so
     // nonzero uniform count would cause collisions with the above source.
     ({ source: dxsource, shaderFunctions } = emitGLSL(derivativeX._chunk, 0));
-    deps = { ...deps, ...shaderFunctions };
+    shaderFunctionsList.push(shaderFunctions);
     ({ source: dysource, shaderFunctions } = emitGLSL(derivativeY._chunk, 0));
-    deps = { ...deps, ...shaderFunctions };
+    shaderFunctionsList.push(shaderFunctions);
     hasOutlines = true;
   }
   return {
     hasOutlines,
-    deps,
-    chunks: [
-      {
-        main: source,
-        DCG_SC_uniforms: shaderUniforms,
-        dx: dxsource,
-        dy: dysource,
-        fill: fillOpacity > 0,
-        color: colorVec4(color, fillOpacity),
-        line_color: colorVec4(color, lineOpacity),
-        line_width: lineWidth,
-      },
-    ],
+    shaderFunctionsList,
+    chunk: {
+      main: source,
+      DCG_SC_uniforms: shaderUniforms,
+      dx: dxsource,
+      dy: dysource,
+      fill: fillOpacity > 0,
+      color: colorVec4(color, fillOpacity),
+      line_color: colorVec4(color, lineOpacity),
+      line_width: lineWidth,
+    },
   };
 }

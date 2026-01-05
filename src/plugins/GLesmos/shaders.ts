@@ -1,4 +1,4 @@
-import { Console } from "../../globals/window";
+import { Console, Fragile, ShaderFunctions } from "../../globals/window";
 
 export function glesmosError(msg: string): never {
   Console.error(`[GLesmos Error] ${msg}`);
@@ -15,8 +15,8 @@ export interface WebGLProgram extends globalThis.WebGLProgram {
 }
 
 export interface GLesmosShaderPackage {
-  deps: Record<string, boolean>;
-  chunks: GLesmosShaderChunk[];
+  shaderFunctionsList: (ShaderFunctions | Record<string, boolean>)[];
+  chunk: GLesmosShaderChunk;
   hasOutlines: boolean;
 }
 
@@ -301,6 +301,7 @@ export function glesmosGetSDFShader(
 
     //============== BEGIN Shared Stuff ==============//
 
+    ${Fragile.glslHeader}
     ${GLESMOS_SHARED}
 
     //============== END Shared Stuff ==============//
@@ -486,6 +487,7 @@ export function glesmosGetFinalPassShader(
     uniform int       iDoOutlines;
     uniform int       iDoFill;
 
+    ${Fragile.glslHeader}
     ${GLESMOS_SHARED}
 
     void main(){
@@ -541,6 +543,7 @@ export function glesmosGetFastFillShader(
     }`;
 
   const source = `${environment(chunk)}
+    ${Fragile.glslHeader}
     ${GLESMOS_SHARED}
 
     ${deps}

@@ -1,7 +1,8 @@
 import ViewportTransforms from "./ViewportTransforms";
 import { initGLesmosCanvas, GLesmosCanvas } from "./glesmosCanvas";
 import { glesmosError, GLesmosShaderPackage } from "./shaders";
-import { CalcController, Fragile } from "#globals";
+import { CalcController, Fragile, ShaderFunctions } from "#globals";
+import { EmittedGLSL } from "./exportAsGLesmos";
 
 let canvas: GLesmosCanvas | null = null;
 
@@ -32,23 +33,14 @@ export function drawGLesmosSketchToCtx(
 
   const glBranches = branches.map((b) => b.compiledGL);
   if (glBranches.length === 0) return;
-  const { glslHeader } = Fragile;
-  const compiledGL: GLesmosShaderPackage = {
-    chunks: glBranches.flatMap((b) => b.chunks),
-    deps: glBranches.reduce<Record<string, boolean>>(
-      (a, b) => ({ ...a, ...b.deps }),
-      { [glslHeader]: true }
-    ),
-    hasOutlines: glBranches.reduce((a, b) => a && b.hasOutlines, true),
-  };
 
-  drawOneGLesmosSketchToCtx?.(cc, drawCtx, compiledGL, id);
+  drawOneGLesmosSketchToCtx?.(cc, drawCtx, glBranches, id);
 }
 
 function drawOneGLesmosSketchToCtx(
   cc: CalcController,
   { ctx, projection }: DrawCtx,
-  compiledGL: GLesmosShaderPackage,
+  compiledGL: GLesmosShaderPackage[],
   id: string
 ) {
   // We persist canvas to fix #492 (some context gets messed up), so we
@@ -57,27 +49,21 @@ function drawOneGLesmosSketchToCtx(
   // to avoid needing this.
   canvas = canvas ?? initGLesmosCanvas(cc);
 
-  const deps = Object.keys(compiledGL.deps).join("\n");
-
   try {
     if (!canvas?.element) glesmosError("WebGL Context Lost!");
 
     canvas.updateTransforms(projection); // only do this once
 
-    if (compiledGL.hasOutlines)
-      // no grouping, perf will suffer
-      for (const chunk of compiledGL.chunks) {
-        canvas?.buildGLesmosFancy(deps, chunk);
+    for (const glPackage of compiledGL) {
+      const { hasOutlines, shaderFunctionsList, chunk } = glPackage;
+
+      const joinedShaderFunctions = joinShaderFunctions(shaderFunctionsList);
+      if (hasOutlines) {
+        canvas?.buildGLesmosFancy(joinedShaderFunctions, chunk);
         canvas?.renderFancy();
         ctx.drawImage(canvas?.element, 0, 0);
-      }
-    else {
-      // No grouping. DCG_SC_uniforms will normally cause a list of
-      // implicits to be the same program though (with different uniforms).
-      // Grouping them might save some performance on repeated blitting,
-      // but the main gain from the old grouping approach was avoiding compiles.
-      for (const chunk of compiledGL.chunks) {
-        canvas?.buildGLesmosFast(deps, chunk);
+      } else {
+        canvas?.buildGLesmosFast(joinedShaderFunctions, chunk);
         canvas?.renderFast();
         ctx.drawImage(canvas?.element, 0, 0);
       }
@@ -85,5 +71,19 @@ function drawOneGLesmosSketchToCtx(
   } catch (e) {
     const model = cc.getItemModel(id);
     if (model) model.error = e instanceof Error ? e.message : e;
+  }
+}
+
+function joinShaderFunctions(
+  shaderFunctionsList: EmittedGLSL["shaderFunctions"][]
+) {
+  const dsmJoinShaderFunctions = Fragile.joinShaderFunctions;
+  if (dsmJoinShaderFunctions) {
+    return dsmJoinShaderFunctions(shaderFunctionsList as ShaderFunctions[]);
+  } else {
+    // TODO-cleanup: this branch can be removed once Desmos always provides joinShaderFunctions.
+    const list = shaderFunctionsList as Record<string, boolean>[];
+    const deps = Object.assign({}, ...list);
+    return Object.keys(deps).join("\n");
   }
 }
