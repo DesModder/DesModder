@@ -368,5 +368,7 @@ paste-image-error-another-upload-in-progress = Retry after another upload in pro
 ## Quake Pro
 quake-pro-name = Quake Pro
 quake-pro-desc = Allows you to increase the Field of View beyond the 3D calculator's regular limit.
-quake-pro-opt-magnification-name = Zoom Multiplier
-quake-pro-opt-magnification-desc = Increase the viewport's zoom limit by using this as the multiplier.
+quake-pro-opt-dollyMagnification-name = Dolly Multiplier
+quake-pro-opt-dollyMagnification-desc = Heightens the zoom behavior by multiplying (dollying) the camera's viewport slider.
+quake-pro-opt-scalarZoomed-name = Scalar Cancellation
+quake-pro-opt-scalarZoomed-desc = Combats perspective distortion by multiplying (enlarging) the screen viewport (requires max zoom to be fully seen).

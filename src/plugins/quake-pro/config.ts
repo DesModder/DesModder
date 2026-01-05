@@ -1,8 +1,16 @@
 export const configList = [
   {
-    key: "magnification",
+    key: "dollyMagnification",
     type: "number",
     default: 3,
+    min: 1,
+    max: 30,
+    step: 0.1,
+  },
+  {
+    key: "scalarZoomed",
+    type: "number",
+    default: 1,
     min: 1,
     max: 30,
     step: 0.1,
@@ -10,5 +18,6 @@ export const configList = [
 ] as const;
 
 export interface Config {
-  magnification: number;
+  dollyMagnification: number;
+  scalarZoomed: number;
 }
