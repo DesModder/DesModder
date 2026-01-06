@@ -99,7 +99,14 @@ export default class DSM extends TransparentPlugins {
 
   applyStoredEnabled(storedEnabled: Map<PluginID, boolean | undefined>) {
     for (const { id } of pluginList) {
-      const stored = storedEnabled.get(id);
+      let stored = storedEnabled.get(id);
+      if (
+        id === "code-golf" &&
+        stored &&
+        this.pluginSettings[id]?.disableOnReload
+      ) {
+        stored = false;
+      }
       if (stored !== undefined) {
         this.pluginsEnabled.set(id, stored);
       }

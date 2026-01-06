@@ -332,6 +332,8 @@ code-golf-click-to-enable-folder = Click to enable code golf stats.
 code-golf-note-latex-byte-count = { $chars } LaTeX Bytes
 code-golf-opt-showWidth-name = Show 'Width'
 code-golf-opt-showWidth-desc = {""}
+code-golf-opt-disableOnReload-name = Disable on reload.
+code-golf-opt-disableOnReload-desc = {""}
 
 ## Syntax highlightAlternatingLines
 syntax-highlighting-name = Syntax Highlighting
