@@ -4,6 +4,7 @@ import { format } from "localization/i18n-core";
 import { CalcController, ItemModel } from "src/globals";
 import { GolfStats, GoodGolfStats } from "./golf-model";
 import { If, IfElse } from "../../components";
+import window from "#globals";
 
 function _displayStats(stats: GolfStats | undefined): GoodGolfStats {
   if (!stats || stats === "TOO_LONG" || stats === "HIDDEN") {
@@ -50,7 +51,13 @@ export class GolfStatsPanel extends Component<{
               {() => (
                 <div class="dsm-code-golf-char-count-container">
                   <div class="dsm-code-golf-char-count">
-                    <div>{() => this.displayedStats().width}</div>
+                    <If
+                      predicate={() =>
+                        !!window.DSM.codeGolf?.settings.showWidth
+                      }
+                    >
+                      {() => <div>{() => this.displayedStats().width}</div>}
+                    </If>
                     <div>{() => this.displayedStats().symbols}</div>
                   </div>
                 </div>
