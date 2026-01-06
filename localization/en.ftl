@@ -325,7 +325,7 @@ custom-mathquill-config-opt-lessFSpacing-desc = Reduces extra spacing around the
 
 ## Code Golf
 code-golf-name = Code Golf
-code-golf-desc = Tools for helping Desmos Code Golfers.
+code-golf-desc = Tools for helping Desmos Code Golfers. Press Alt+Q to enable/disable.
 code-golf-width-in-pixels = Width: { $pixels } px
 code-golf-symbol-count = Symbol Count: { $elements }
 code-golf-click-to-enable-folder = Click to enable code golf stats.

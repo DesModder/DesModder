@@ -157,7 +157,18 @@ export default class DSM extends TransparentPlugins {
     this.destroyHandlers.push(() => {
       this.cc.destroy = oldDestroy;
     });
+
+    document.addEventListener("keydown", this.onKeyDown);
+    this.destroyHandlers.push(() => {
+      document.removeEventListener("keydown", this.onKeyDown);
+    });
   }
+
+  onKeyDown = (e: KeyboardEvent) => {
+    if (e.altKey && !e.shiftKey && !e.ctrlKey && !e.metaKey && e.key === "q") {
+      this.togglePlugin("code-golf");
+    }
+  };
 
   destroy() {
     this._destroy();
