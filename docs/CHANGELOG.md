@@ -1,5 +1,14 @@
 # DesModder Changelog
 
+## 0.15.6
+
+New features:
+
+- (Quake Pro) Add scalar cancellation to scale canvas while holding dolly zoom fixed.
+- (Code Golf) Add option to show/hide pixel width.
+- (Code Golf) Add option to disable when the page is reloaded.
+- (Code Golf) Add hotkey Alt+Q to toggle the code golf plugin.
+
 ## 0.15.5
 
 Bug fixes
