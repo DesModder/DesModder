@@ -99,7 +99,14 @@ export default class DSM extends TransparentPlugins {
 
   applyStoredEnabled(storedEnabled: Map<PluginID, boolean | undefined>) {
     for (const { id } of pluginList) {
-      const stored = storedEnabled.get(id);
+      let stored = storedEnabled.get(id);
+      if (
+        id === "code-golf" &&
+        stored &&
+        this.pluginSettings[id]?.disableOnReload
+      ) {
+        stored = false;
+      }
       if (stored !== undefined) {
         this.pluginsEnabled.set(id, stored);
       }
@@ -150,7 +157,18 @@ export default class DSM extends TransparentPlugins {
     this.destroyHandlers.push(() => {
       this.cc.destroy = oldDestroy;
     });
+
+    document.addEventListener("keydown", this.onKeyDown);
+    this.destroyHandlers.push(() => {
+      document.removeEventListener("keydown", this.onKeyDown);
+    });
   }
+
+  onKeyDown = (e: KeyboardEvent) => {
+    if (e.altKey && !e.shiftKey && !e.ctrlKey && !e.metaKey && e.key === "q") {
+      this.togglePlugin("code-golf");
+    }
+  };
 
   destroy() {
     this._destroy();

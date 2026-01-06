@@ -3,6 +3,7 @@ import { Inserter, PluginController } from "../PluginController";
 import { DispatchedEvent, ExpressionModel, FolderModel } from "src/globals";
 import { populateGolfStats } from "./golf-model";
 import { GolfStatsPanelFn } from "./GolfStatsPanel";
+import { Config, configList } from "./config";
 
 declare module "src/globals/extra-actions" {
   interface AllActions {
@@ -13,9 +14,10 @@ declare module "src/globals/extra-actions" {
   }
 }
 
-export default class CodeGolf extends PluginController {
+export default class CodeGolf extends PluginController<Config> {
   static id = "code-golf" as const;
   static enabledByDefault = false;
+  static config = configList;
 
   expressionItemCostPanel(model: ExpressionModel): Inserter {
     return () => GolfStatsPanelFn(this.cc, model);

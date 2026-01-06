@@ -325,11 +325,15 @@ custom-mathquill-config-opt-lessFSpacing-desc = Reduces extra spacing around the
 
 ## Code Golf
 code-golf-name = Code Golf
-code-golf-desc = Tools for helping Desmos Code Golfers.
+code-golf-desc = Tools for helping Desmos Code Golfers. Press Alt+Q to enable/disable.
 code-golf-width-in-pixels = Width: { $pixels } px
 code-golf-symbol-count = Symbol Count: { $elements }
 code-golf-click-to-enable-folder = Click to enable code golf stats.
 code-golf-note-latex-byte-count = { $chars } LaTeX Bytes
+code-golf-opt-showWidth-name = Show 'Width'
+code-golf-opt-showWidth-desc = {""}
+code-golf-opt-disableOnReload-name = Disable on reload.
+code-golf-opt-disableOnReload-desc = {""}
 
 ## Syntax highlightAlternatingLines
 syntax-highlighting-name = Syntax Highlighting
