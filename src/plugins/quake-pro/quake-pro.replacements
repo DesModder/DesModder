@@ -121,8 +121,7 @@ let $o = $cue / 360,
 
 *Replace* `from` with
 ```js
-const quakePro = this.settings.quakePro;
+const quakePro = this.settings?.quakePro;
 let $o = $cue / 360,
-  $i = $t6 / ($Y0($r, 1) * (quakePro.scalarMultiplier ?? 1));
+  $i = $t6 / ($Y0($r, 1) * (quakePro?.scalarMultiplier ?? 1));
 ```
-
