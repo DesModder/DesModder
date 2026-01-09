@@ -1,5 +1,12 @@
 # DesModder Changelog
 
+## 0.15.7
+
+Bug fixes and enhancements:
+
+- Fix breakage to saving 3D graphs and taking 3D screenshots.
+- (Video Creator) Stop including capture frames in the undo/redo stack.
+
 ## 0.15.6
 
 New features:
