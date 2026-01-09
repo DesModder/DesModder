@@ -15,11 +15,12 @@ declare let DSM: DWindow["DSM"];
  * calculator tab. We introduce this state to avoid a bunch of reloads.
  * But it's slightly risky, if a page isn't quite cleaned up. */
 
-beforeEach(async () => {
-  // Ensure at least one page is clean, so the reload time is not counted
-  // as part of the test time (being unclean is the fault of an earlier test)
-  await getPage("https://desmos.com/calculator");
-}, 10000);
+const defaultUrl =
+  process.env.DSM_TESTING_URL ?? "https://desmos.com/calculator";
+
+function urlForPath(path: string) {
+  return defaultUrl.replace(/\/calculator$/, path);
+}
 
 /** Use if the page is expected to be clean */
 export const clean = Symbol("clean");
@@ -42,10 +43,7 @@ export function testWithPageAndOpts(
   test(
     name,
     async () => {
-      let url = process.env.DSM_TESTING_URL ?? "https://desmos.com/calculator";
-      if (path) {
-        url = url.replace(/\/calculator$/, path);
-      }
+      const url = urlForPath(path ?? "/calculator");
       const page = await getPage(url);
       const driver = new Driver(page);
       await driver.init();
