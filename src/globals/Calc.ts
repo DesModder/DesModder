@@ -242,6 +242,7 @@ export interface Grapher3d {
 export type Scale = "linear" | "logarithmic";
 
 interface CalcPrivate {
+  withHistoryReplacement: (fn: () => void) => any;
   focusedMathQuill:
     | {
         mq: MathQuillField;
