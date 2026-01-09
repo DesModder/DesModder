@@ -623,6 +623,21 @@ export default class VideoCreator extends PluginController {
       };
     });
   }
+
+  skipNextReplacement = false;
+  /**
+   * Identical to Calc.withHistoryReplacement, except respects
+   * `skipNextReplacement`, used to ensure that the initial state before a
+   * capture sequence stays in its stack.
+   */
+  maybeWithHistoryReplacement(fn: () => void) {
+    if (this.skipNextReplacement) {
+      this.skipNextReplacement = false;
+      fn();
+    } else {
+      this.calc.withHistoryReplacement(fn);
+    }
+  }
 }
 
 function isValidLength(v: number) {

@@ -2,7 +2,7 @@ import VideoCreator from "..";
 import { scaleBoundsAboutCenter, segmentInterval } from "./utils";
 import { ManagedNumberInputModel } from "../components/ManagedNumberInput";
 import { noSpeed } from "../orientation";
-import { CalcController, Viewport } from "../../../globals";
+import { Viewport } from "../../../globals";
 
 export type CaptureMethod = "once" | "ntimes" | "action" | "slider" | "ticks";
 
@@ -36,13 +36,17 @@ async function imageOnload(img: HTMLImageElement) {
   });
 }
 
-function setViewport(cc: CalcController, vp: Viewport) {
+function setViewport(vc: VideoCreator, vp: Viewport) {
+  const { cc } = vc;
   const Viewport = cc.getEvaluatedDefaultViewport().constructor;
   const grapher = cc.getGrapher();
   grapher.viewportController.setEvaluatedViewport(Viewport.fromObject(vp));
-  cc.dispatch({
-    type: "commit-user-requested-viewport",
-    viewport: vp,
+
+  vc.maybeWithHistoryReplacement(() => {
+    cc.dispatch({
+      type: "commit-user-requested-viewport",
+      viewport: vp,
+    });
   });
 }
 
@@ -65,7 +69,7 @@ async function captureMosaic(
   const vp = { ...viewState.viewport };
   const { squareAxes } = vc.cc.graphSettings;
   function cleanup() {
-    setViewport(vc.cc, vp);
+    setViewport(vc, vp);
     vc.cc.graphSettings.setProperty("squareAxes", squareAxes);
   }
   const { xAxisScale, yAxisScale } = viewState;
@@ -78,7 +82,7 @@ async function captureMosaic(
       // Need to set squareAxes false to avoid cropping when mosaicX
       // and mosaicY are inequal.
       vc.cc.graphSettings.setProperty("squareAxes", false);
-      setViewport(vc.cc, { xmin, xmax, ymin, ymax });
+      setViewport(vc, { xmin, xmax, ymin, ymax });
 
       const opts = {
         ...captureOpts,
@@ -208,9 +212,12 @@ export async function captureSlider(vc: VideoCreator) {
   // rarely hurts to have an extra frame
   for (let i = 0; i <= numSteps; i++) {
     const value = min + correctDirectionStep * i;
-    vc.calc.setExpression({
-      id: slider.id,
-      latex: `${variable}=${value}`,
+    vc.maybeWithHistoryReplacement(() => {
+      vc.calc.setExpression({
+        id: slider.id,
+        // Extra space at the end to ensure it's a distinct state for undo/redo.
+        latex: `${variable}=${value} `,
+      });
     });
 
     const ret = await captureAndApplyFrame(vc);
@@ -320,11 +327,14 @@ export async function capture(vc: VideoCreator) {
   const { or } = vc;
   vc.captureCancelled = false;
   vc.isCapturing = true;
+  vc.skipNextReplacement = true;
   vc.updateView();
   const tickSliders = vc.cc._tickSliders.bind(vc.cc);
   if (vc.captureMethod !== "once") {
     if (vc.cc.getTickerPlaying?.()) {
-      vc.cc.dispatch({ type: "toggle-ticker" });
+      vc.maybeWithHistoryReplacement(() => {
+        vc.cc.dispatch({ type: "toggle-ticker" });
+      });
     }
     if (vc.captureMethod === "ticks") {
       // prevent the current slider ticking since we will manually tick the sliders.
@@ -355,9 +365,11 @@ export async function capture(vc: VideoCreator) {
     case "action": {
       const step = () => {
         if (vc.currentActionID === null) return;
-        vc.cc.dispatch({
-          type: "action-single-step",
-          id: vc.currentActionID,
+        vc.maybeWithHistoryReplacement(() => {
+          vc.cc.dispatch({
+            type: "action-single-step",
+            id: vc.currentActionID!,
+          });
         });
       };
       await captureActionOrSliderTicks(vc, step);
