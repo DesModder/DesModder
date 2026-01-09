@@ -18,7 +18,7 @@ declare let DSM: DWindow["DSM"];
 beforeEach(async () => {
   // Ensure at least one page is clean, so the reload time is not counted
   // as part of the test time (being unclean is the fault of an earlier test)
-  await getPage();
+  await getPage("https://desmos.com/calculator");
 }, 10000);
 
 /** Use if the page is expected to be clean */
@@ -31,10 +31,22 @@ export function testWithPage(
   cb: (driver: Driver) => Promise<void> | Promise<Cleanliness>,
   timeout?: number
 ) {
+  testWithPageAndOpts(name, { timeout }, cb);
+}
+
+export function testWithPageAndOpts(
+  name: string,
+  { path, timeout }: { path?: string; timeout?: number },
+  cb: (driver: Driver) => Promise<void> | Promise<Cleanliness>
+) {
   test(
     name,
     async () => {
-      const page = await getPage();
+      let url = process.env.DSM_TESTING_URL ?? "https://desmos.com/calculator";
+      if (path) {
+        url = url.replace(/\/calculator$/, path);
+      }
+      const page = await getPage(url);
       const driver = new Driver(page);
       await driver.init();
       const cleanliness = await cb(driver);
@@ -51,20 +63,21 @@ export function testWithPage(
 
 const browser = (globalThis as any).__BROWSER_GLOBAL__ as Browser;
 
-async function getPage() {
+async function getPage(url: string) {
   const pages = await browser.pages();
   // Assume that all Desmos pages are clean
   const isClean = await Promise.all(
-    pages.map(async (x) => (await x.title()).includes("Desmos"))
+    pages.map(
+      async (x) => x.url() === url && (await x.title()).includes("Desmos")
+    )
   );
   const cleanPages = pages.filter((_, i) => isClean[i]);
   const page = cleanPages.pop();
-  return page ?? (await makeNewPage());
+  return page ?? (await makeNewPage(url));
 }
 
-async function makeNewPage() {
+async function makeNewPage(url: string) {
   const page = await browser.newPage();
-  const url = process.env.DSM_TESTING_URL ?? "https://desmos.com/calculator";
   await page.goto(url);
   await page.waitForSelector(".dsm-pillbox-and-popover");
   return page;
@@ -186,6 +199,15 @@ export class Driver {
           Calc.controller.evaluator.notifyWhenSynced(() => resolve());
         })
     );
+  }
+
+  async debugTest() {
+    await this.evaluate(async () => {
+      (console as any).log("Test paused! To continue, run `continueTest()`.");
+      await new Promise<void>((resolve) => {
+        (window as any).continueTest = resolve;
+      });
+    });
   }
 
   async enterEditListMode() {
