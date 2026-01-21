@@ -17,6 +17,7 @@ import {
 import { GenericSettings, PluginID } from "../plugins";
 import { ItemModel, ValueType, ValueTypeMap } from "./models";
 import { GraphState } from "../../graph-state";
+import { GraphLibraryEntry } from "#plugins/graph-library/index.ts";
 
 export interface DWindow extends Window {
   DesModder: any;
@@ -25,6 +26,7 @@ export interface DWindow extends Window {
     pluginsForceDisabled: Set<PluginID>;
     pluginsEnabled: Record<PluginID, boolean | undefined>;
     pluginSettings: Record<PluginID, GenericSettings | undefined>;
+    graphLibrary: GraphLibraryEntry[];
   };
   // DesModderFragile: {};
   Desmos: Desmos;
