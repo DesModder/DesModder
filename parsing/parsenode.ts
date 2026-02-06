@@ -441,6 +441,12 @@ export interface Equation extends UpperEquation {
   type: "Equation";
 }
 
+export interface CallAssignment extends Base {
+  type: "CallAssignment";
+  _lhs: ChildExprNode;
+  _rhs: ChildExprNode;
+}
+
 interface UpperAssignment extends Base {
   _expression: ChildExprNode;
   _symbol: string;
@@ -625,6 +631,7 @@ export interface Ticker extends Base {
 export type RootOnlyExprNode =
   | Equation
   | Assignment
+  | CallAssignment
   | FunctionDefinition
   | Stats
   | BoxPlot
