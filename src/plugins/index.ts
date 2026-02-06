@@ -32,6 +32,7 @@ import BetterNavigation from "./better-navigation";
 import QuakePro from "./quake-pro";
 import OverrideKeystroke from "../core-plugins/override-keystroke";
 import { DispatchedEvent } from "src/globals/extra-actions";
+import ScrollBeyond from "./scroll-beyond";
 
 interface ConfigItemGeneric {
   // indentation level for hierarchical relationships in settings
@@ -132,6 +133,7 @@ export const keyToPlugin = {
   showTips: ShowTips,
   customMathQuillConfig: CustomMathQuillConfig,
   rightClickTray: RightClickTray,
+  scrollBeyond: ScrollBeyond,
   duplicateHotkey: DuplicateHotkey,
   glesmos: GLesmos,
   hideErrors: HideErrors,
@@ -188,6 +190,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get showTips () { return this.ep["show-tips"]; }
   get customMathQuillConfig () { return this.ep["custom-mathquill-config"]; }
   get rightClickTray () { return this.ep["right-click-tray"]; }
+  get scrollBeyond () { return this.ep["scroll-beyond"]; }
   get duplicateHotkey () { return this.ep["duplicate-expression-hotkey"]; }
   get glesmos () { return this.ep["GLesmos"]; }
   get hideErrors () { return this.ep["hide-errors"]; }

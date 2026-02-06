@@ -145,6 +145,10 @@ duplicate-expression-hotkey-desc = Type Ctrl+Q or Ctrl+Shift+Q to duplicate the 
 right-click-tray-name = Right Click Tray
 right-click-tray-desc = Allows settings tray to be opened with a right click instead of holding left click on the settings bubble
 
+## Scroll Beyond Last Line
+scroll-beyond-name = Scroll Beyond Last Line
+scroll-beyond-desc = When enabled, the expression list will scroll beyond the last line.
+
 ## Set Primary Color
 set-primary-color-name = Set Primary Color
 set-primary-color-desc = Choose the primary color for the user interface
