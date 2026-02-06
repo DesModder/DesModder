@@ -1,5 +1,12 @@
 # DesModder Changelog
 
+## 0.15.8
+
+Bug fixes:
+
+- (Text Mode) Fix conversion of recursive functions.
+- (Find replace) Fix find-replace in recursive functions.
+
 ## 0.15.7
 
 Bug fixes and enhancements:
