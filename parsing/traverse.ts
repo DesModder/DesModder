@@ -14,6 +14,7 @@ export class Path<n extends Node = Node> {
         return [this.node._expression];
       case "Regression":
       case "Equation":
+      case "CallAssignment":
         return [this.node._lhs, this.node._rhs];
       case "Error":
         return [];

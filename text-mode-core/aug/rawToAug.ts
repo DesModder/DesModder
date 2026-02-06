@@ -666,6 +666,13 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         left: childNodeToTree(node.args[0]),
         right: childNodeToTree(node.args[1]),
       };
+    case "CallAssignment":
+      return {
+        type: "Comparator",
+        operator: "=",
+        left: childNodeToTree(node._lhs),
+        right: childNodeToTree(node._rhs),
+      };
     case "Error":
       throw new Error("Parsing threw an error");
     case "Equation":
