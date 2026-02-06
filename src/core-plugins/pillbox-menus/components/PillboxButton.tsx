@@ -34,8 +34,8 @@ export class PillboxButton extends Component<{
           <div
             class={() =>
               this.horizontal
-                ? "dcg-icon-btn"
-                : "dcg-btn-flat-gray dcg-settings-pillbox dcg-action-settings dcg-pillbox-btn-interior dsm-action-menu"
+                ? "dcg-icon-btn dcg-pillbox-element"
+                : "dcg-btn-flat-gray dcg-settings-pillbox dcg-action-settings dcg-pillbox-btn-interior dsm-action-menu dcg-pillbox-element"
             }
             data-buttonId={id}
             role="button"
