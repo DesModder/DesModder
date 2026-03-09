@@ -221,6 +221,10 @@ interface DropdownPopoverProps {
     | "bottom-left"
     | "bottom-right"
     | "top-left";
+  controlled?: () => {
+    isOpen: boolean;
+    setDropdownOpen: (isOpen: boolean) => void;
+  };
 }
 
 export abstract class DropdownPopoverComponent extends Component<DropdownPopoverProps> {}

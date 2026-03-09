@@ -49,8 +49,4 @@ export class PillboxContainer extends Component<{
       </div>
     );
   }
-
-  onTapMenuButton(id: string) {
-    this.pm.toggleMenu(id);
-  }
 }
