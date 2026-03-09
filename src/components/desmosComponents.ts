@@ -194,8 +194,12 @@ interface ExpressionFooterViewProps extends ModelAndController {
 //   {() => <div class={this.getFooterClass()}> ...
 export abstract class ExpressionFooterViewComponent extends Component<ExpressionFooterViewProps> {}
 
-export const { ImageIconView, ExpressionIconView, ExpressionFooterView } =
-  Fragile;
+export const {
+  ImageIconView,
+  ExpressionIconView,
+  ExpressionFooterView,
+  DropdownPopoverWithAnchorShim,
+} = Fragile;
 
 export abstract class EvaluationContainerComponent extends ClassComponent<{
   controller: CalcController;
@@ -205,3 +209,18 @@ export abstract class EvaluationContainerComponent extends ClassComponent<{
   // abstract cachedEvaluationRHS: EvaluationRHS;
   // abstract getEvaluationRHS(): EvaluationRHS;
 }
+
+interface DropdownPopoverProps {
+  anchor: () => ComponentChild;
+  popoverBody: () => ComponentChild;
+  tooltip?: () => string;
+  tooltipGravity?: () => "n" | "s" | "e" | "w";
+  orientation: () =>
+    | "left"
+    | "right"
+    | "bottom-left"
+    | "bottom-right"
+    | "top-left";
+}
+
+export abstract class DropdownPopoverComponent extends Component<DropdownPopoverProps> {}

@@ -13,6 +13,7 @@ import {
   SegmentedControlComponent,
   TooltipComponent,
   MathQuillConfig,
+  DropdownPopoverComponent,
 } from "../components/desmosComponents";
 import { GenericSettings, PluginID } from "../plugins";
 import { ItemModel, ValueType, ValueTypeMap } from "./models";
@@ -143,6 +144,7 @@ interface Fragile {
   ImageIconView: typeof ImageIconViewComponent;
   ExpressionIconView: typeof ExpressionIconViewComponent;
   ExpressionFooterView: typeof ExpressionFooterViewComponent;
+  DropdownPopoverWithAnchorShim: typeof DropdownPopoverComponent;
   evaluateLatex: (s: string, getDegreeMode: boolean) => number;
   Keys: {
     lookup: (e: KeyboardEvent) => string;
