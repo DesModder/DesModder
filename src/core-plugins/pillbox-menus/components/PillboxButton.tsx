@@ -2,6 +2,7 @@ import PillboxMenus from "..";
 import { Component, jsx } from "#DCGView";
 import { DropdownPopoverWithAnchorShim, Switch } from "#components";
 import { format } from "#i18n";
+import "./PillboxButton.less";
 
 export class PillboxButton extends Component<{
   pm: PillboxMenus;
@@ -43,13 +44,19 @@ export class PillboxButton extends Component<{
               <i class={() => this.pm.pillboxButtons[id].iconClass ?? ""} />
             </div>
           )}
-          orientation={() => "left"}
+          orientation={() => (this.horizontal ? "bottom-left" : "left")}
           popoverBody={() => (
-            <Switch key={this.props.buttonId}>
-              {() =>
-                this.pm.pillboxButtons[this.props.buttonId()].popup(this.pm)
-              }
-            </Switch>
+            <div
+              class={() => ({
+                "dsm-settings-container": true,
+              })}
+            >
+              <Switch key={this.props.buttonId}>
+                {() =>
+                  this.pm.pillboxButtons[this.props.buttonId()].popup(this.pm)
+                }
+              </Switch>
+            </div>
           )}
           controlled={() => ({
             setDropdownOpen: (isOpen) => {
