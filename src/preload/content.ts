@@ -119,37 +119,41 @@ function injectStyle() {
   (document.head || document.documentElement).appendChild(s);
 }
 
-listenToMessageUp((message) => {
-  switch (message.type) {
-    case "get-initial-data": {
-      injectStyle();
-      getInitialData();
-      break;
+function init() {
+  listenToMessageUp((message) => {
+    switch (message.type) {
+      case "get-initial-data": {
+        injectStyle();
+        getInitialData();
+        break;
+      }
+      case "set-plugins-enabled":
+        void chrome.storage.sync.set({
+          [StorageKeys.pluginsEnabled]: message.value,
+        });
+        break;
+      case "set-plugins-force-disabled":
+        void chrome.storage.sync.set({
+          [StorageKeys.forceDisabled]: Array.from(message.value),
+          [StorageKeys.forceDisabledVersion]: VERSION,
+        });
+        break;
+      case "set-plugin-settings":
+        void chrome.storage.sync.set({
+          [StorageKeys.pluginSettings]: message.value,
+        });
+        break;
+      case "send-heartbeat":
+        _sendHeartbeat(message.options);
+        break;
+      default:
+        message satisfies never;
     }
-    case "set-plugins-enabled":
-      void chrome.storage.sync.set({
-        [StorageKeys.pluginsEnabled]: message.value,
-      });
-      break;
-    case "set-plugins-force-disabled":
-      void chrome.storage.sync.set({
-        [StorageKeys.forceDisabled]: Array.from(message.value),
-        [StorageKeys.forceDisabledVersion]: VERSION,
-      });
-      break;
-    case "set-plugin-settings":
-      void chrome.storage.sync.set({
-        [StorageKeys.pluginSettings]: message.value,
-      });
-      break;
-    case "send-heartbeat":
-      _sendHeartbeat(message.options);
-      break;
-    default:
-      message satisfies never;
-  }
-  return false;
-});
+    return false;
+  });
 
-// run preload code, which handles replacements then calls the main code
-injectScript(chrome.runtime.getURL("preload/script.js"));
+  // run preload code, which handles replacements then calls the main code
+  injectScript(chrome.runtime.getURL("preload/script.js"));
+}
+
+init();
