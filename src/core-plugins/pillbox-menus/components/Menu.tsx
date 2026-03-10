@@ -92,7 +92,8 @@ export default class Menu extends Component<{
                   "dsm-category-header": true,
                   "dsm-expanded": this.pm.isCategoryExpanded(category),
                 })}
-                onClick={() => this.pm.toggleCategoryExpanded(category)}
+                tabindex={0}
+                onTap={() => this.pm.toggleCategoryExpanded(category)}
               >
                 <div
                   class={() => ({
@@ -128,7 +129,8 @@ export default class Menu extends Component<{
         <div class="dcg-options-menu-section-title dsm-plugin-title-bar">
           <div
             class="dsm-plugin-header"
-            onClick={() => this.pm.togglePluginExpanded(plugin.id)}
+            tabindex={0}
+            onTap={() => this.pm.togglePluginExpanded(plugin.id)}
           >
             <div
               class={() => ({
@@ -377,7 +379,7 @@ function booleanOption(
         ariaLabel={() => item.key}
       />
       <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
-        <div class="dsm-settings-label" onClick={toggle}>
+        <div class="dsm-settings-label" tabindex={0} onTap={toggle}>
           {configItemName(plugin, item)}
         </div>
       </Tooltip>
