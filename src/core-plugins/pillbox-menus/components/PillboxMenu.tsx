@@ -126,7 +126,7 @@ export default class PillboxMenu extends Component<{
       : {
           top: `${2 + 43 * index}px`,
           right: "38px",
-          bottom: 0,
+          bottom: "0",
         };
   }
 
