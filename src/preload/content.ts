@@ -120,6 +120,11 @@ function injectStyle() {
 }
 
 function init() {
+  if (document.location.hostname === "maintain.desmos.com") {
+    // maintain.desmos.com is an old version, no point supporting.
+    return;
+  }
+
   listenToMessageUp((message) => {
     switch (message.type) {
       case "get-initial-data": {
