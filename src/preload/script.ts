@@ -100,6 +100,7 @@ listenToMessageDown((message) => {
       pluginsForceDisabled: arrayToSet(message.pluginsForceDisabled),
       pluginsEnabled: message.pluginsEnabled,
       pluginSettings: message.pluginSettings,
+      graphLibrary: message.graphLibrary,
     };
     window.DesModder = {
       insertElement,
