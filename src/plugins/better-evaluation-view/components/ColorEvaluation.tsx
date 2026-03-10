@@ -2,6 +2,7 @@ import { jsx } from "#DCGView";
 import { StaticMathQuillView } from "#components";
 import { TypedConstantValue, ValueType } from "#globals";
 import { ColorValueType } from "..";
+import { truncatedLatexLabel } from "../label";
 
 type TypedConstantColorValue = TypedConstantValue<ColorValueType>;
 
@@ -17,7 +18,10 @@ function _ColorEvaluation(val: TypedConstantColorValue) {
               "\\operatorname{rgb}\\left(\\left[" +
               value
                 .slice(0, length)
-                .map((clist) => `\\left(${clist.join(",")}\\right)`)
+                .map(
+                  (clist) =>
+                    `\\left(${clist.map(truncatedLatexLabel).join(",")}\\right)`
+                )
                 .join(",") +
               (value.length > length
                 ? `\\textcolor{gray}{...\\mathit{${
@@ -27,7 +31,9 @@ function _ColorEvaluation(val: TypedConstantColorValue) {
               "\\right]\\right)"
             );
           } else {
-            return "\\operatorname{rgb}\\left(" + value.join(",") + "\\right)";
+            return `\\operatorname{rgb}\\left(${value
+              .map(truncatedLatexLabel)
+              .join(",")}\\right)`;
           }
         }}
       />

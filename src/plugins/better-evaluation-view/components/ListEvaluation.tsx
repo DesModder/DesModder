@@ -1,41 +1,15 @@
 import { jsx } from "#DCGView";
 import { StaticMathQuillView } from "#components";
-import {
-  LabelOptionsBase,
-  Private,
-  TypedConstantValue,
-  ValueType,
-  ValueTypeMap,
-} from "#globals";
+import { TypedConstantValue, ValueType, ValueTypeMap } from "#globals";
 import { autoCommands, autoOperatorNames } from "#utils/depUtils.ts";
 import { zipWith } from "#utils/utils.ts";
 import { NormalListValueType } from "..";
-
-const labelOptions = {
-  smallCutoff: 0.00001,
-  bigCutoff: 1000000,
-  digits: 5,
-  displayAsFraction: false,
-} satisfies LabelOptionsBase;
-
-const { Label } = Private.Mathtools;
-
-type ComplexNumberLabel = typeof Label.complexNumberLabel;
-type PointLabel = typeof Label.pointLabel;
-type Point3dLabel = typeof Label.point3dLabel;
-type TruncatedLatexLabel = typeof Label.truncatedLatexLabel;
-
-const uprightUndefined = (label: string) =>
-  label === "undefined" ? "\\mathrm{undefined}" : label;
-
-const complexNumberLabel = (label: Parameters<ComplexNumberLabel>[0]) =>
-  uprightUndefined(Label.complexNumberLabel(label, labelOptions));
-const pointLabel = (label: Parameters<PointLabel>[0]) =>
-  uprightUndefined(Label.pointLabel(label, labelOptions));
-const point3dLabel = (label: Parameters<Point3dLabel>[0]) =>
-  uprightUndefined(Label.point3dLabel(label, labelOptions));
-const truncatedLatexLabel = (label: Parameters<TruncatedLatexLabel>[0]) =>
-  uprightUndefined(Label.truncatedLatexLabel(label, labelOptions));
+import {
+  complexNumberLabel,
+  pointLabel,
+  point3dLabel,
+  truncatedLatexLabel,
+} from "../label";
 
 type TypedConstantIteratorValue<T extends NormalListValueType> = T extends T
   ? {
