@@ -42,12 +42,19 @@ function getCalcDesktopURL() {
 async function load(pluginsForceDisabled: Set<string>) {
   if (window.location.pathname === "/geometry-legacy") return;
 
-  if ((window as any).Desmodder) {
+  if ((window as any).DesModder) {
     throw new Error(
-      "DesModder is already loaded in the tab, probably due to an update in Firefox. " +
-        "Stopping the loading process for DesModder."
+      "DesModder is already loaded in the tab, probably due to an update in Firefox, " +
+        "or due to reinstalling DesModder. Stopping the loading process for DesModder."
     );
   }
+
+  window.DesModder = {
+    insertElement,
+    replaceElement,
+    format,
+    drawGLesmosSketchToCtx,
+  } as any;
 
   if ((window.Desmos as any)?.Calculator || (window as any).Calc) {
     throw new Error(
@@ -101,12 +108,6 @@ listenToMessageDown((message) => {
       pluginsEnabled: message.pluginsEnabled,
       pluginSettings: message.pluginSettings,
     };
-    window.DesModder = {
-      insertElement,
-      replaceElement,
-      format,
-      drawGLesmosSketchToCtx,
-    } as any;
     void load(arrayToSet(message.pluginsForceDisabled));
     // cancel listener
     return true;
