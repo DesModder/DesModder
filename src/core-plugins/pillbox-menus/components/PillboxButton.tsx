@@ -39,6 +39,7 @@ export class PillboxButton extends Component<{
               }
               data-buttonId={id}
               role="button"
+              tabIndex={0}
               // TODO: manageFocus?
             >
               <i class={() => this.pm.pillboxButtons[id].iconClass ?? ""} />

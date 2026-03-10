@@ -70,6 +70,7 @@ export default class ReplaceBar extends Component<{
               "dsm-disabled": !this.fr.isReplaceValid(),
             })}
             role="button"
+            tabIndex={0}
             onTap={() => this.fr.refactorAll()}
           >
             {format("find-and-replace-replace-all")}

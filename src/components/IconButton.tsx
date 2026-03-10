@@ -13,6 +13,7 @@ export default class IconButton extends Component<{
     return (
       <span
         role="button"
+        tabIndex={0}
         class={() =>
           mergeClass(
             {

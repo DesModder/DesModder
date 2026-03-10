@@ -14,6 +14,9 @@ export default class Toggle extends Component<{
           "dcg-toggled": this.props.toggled(),
           "dsm-disabled-toggle": this.props.disabled(),
         })}
+        role={() => "checkbox"}
+        tabIndex={0}
+        aria-checked={this.props.toggled}
         onTap={() => this.props.onChange()}
       >
         <div class="dcg-toggle-track">

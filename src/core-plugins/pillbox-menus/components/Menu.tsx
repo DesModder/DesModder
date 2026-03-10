@@ -159,6 +159,7 @@ export default class Menu extends Component<{
                       <a
                         href={() => plugin.descriptionLearnMore}
                         target="_blank"
+                        tabIndex={0}
                         onTap={(e: MouseEvent) => e.stopPropagation()}
                       >
                         {" "}
@@ -273,7 +274,7 @@ function colorListOption(
                             )
                           );
                         }}
-                      ></input>
+                      />
                       <div class="add-remove-buttons">
                         <IconButton
                           onTap={() => {
@@ -284,7 +285,7 @@ function colorListOption(
                             ]);
                           }}
                           iconClass={"dcg-icon-plus"}
-                        ></IconButton>
+                        />
                         <IconButton
                           onTap={() => {
                             setValue(
@@ -292,7 +293,7 @@ function colorListOption(
                             );
                           }}
                           iconClass={"dcg-icon-remove"}
-                        ></IconButton>
+                        />
                       </div>
                     </div>
                   )}
@@ -308,7 +309,7 @@ function colorListOption(
                 onTap={() => {
                   setValue(["#FF0000"]);
                 }}
-              ></IconButton>
+              />
             </div>
           ),
         })}
@@ -348,7 +349,7 @@ function numberOption(
           !e.classList.contains("dcg-hovered") &&
           (e.value = settings[item.key].toString())
         }
-      ></input>
+      />
       <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
         <label for={`dsm-settings-item__input-${item.key}`}>
           {configItemName(plugin, item)}
@@ -374,7 +375,7 @@ function booleanOption(
         onChange={toggle}
         checked={() => (settings[item.key] as boolean) ?? false}
         ariaLabel={() => item.key}
-      ></Checkbox>
+      />
       <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
         <div class="dsm-settings-label" onClick={toggle}>
           {configItemName(plugin, item)}
@@ -448,6 +449,7 @@ class ResetButton extends Component<{
           <div
             class="dsm-reset-btn"
             role="button"
+            tabIndex={0}
             onTap={() => this.pm.resetSetting(this.key)}
           >
             <i class="dcg-icon-reset" />
