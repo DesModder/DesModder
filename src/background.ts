@@ -33,7 +33,8 @@ if (BROWSER === "firefox") {
   // Block the initial load of calculator.js in order to run a modified version later
   chrome.webRequest.onBeforeRequest.addListener(
     ({ url }) => ({
-      cancel: url.endsWith(".js"),
+      cancel:
+        url.endsWith(".js") && !url.startsWith("https://maintain.desmos.com"),
     }),
     {
       urls: [

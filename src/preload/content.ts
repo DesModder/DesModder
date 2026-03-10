@@ -119,37 +119,46 @@ function injectStyle() {
   (document.head || document.documentElement).appendChild(s);
 }
 
-listenToMessageUp((message) => {
-  switch (message.type) {
-    case "get-initial-data": {
-      injectStyle();
-      getInitialData();
-      break;
-    }
-    case "set-plugins-enabled":
-      void chrome.storage.sync.set({
-        [StorageKeys.pluginsEnabled]: message.value,
-      });
-      break;
-    case "set-plugins-force-disabled":
-      void chrome.storage.sync.set({
-        [StorageKeys.forceDisabled]: Array.from(message.value),
-        [StorageKeys.forceDisabledVersion]: VERSION,
-      });
-      break;
-    case "set-plugin-settings":
-      void chrome.storage.sync.set({
-        [StorageKeys.pluginSettings]: message.value,
-      });
-      break;
-    case "send-heartbeat":
-      _sendHeartbeat(message.options);
-      break;
-    default:
-      message satisfies never;
+function init() {
+  if (document.location.hostname === "maintain.desmos.com") {
+    // maintain.desmos.com is an old version, no point supporting.
+    return;
   }
-  return false;
-});
 
-// run preload code, which handles replacements then calls the main code
-injectScript(chrome.runtime.getURL("preload/script.js"));
+  listenToMessageUp((message) => {
+    switch (message.type) {
+      case "get-initial-data": {
+        injectStyle();
+        getInitialData();
+        break;
+      }
+      case "set-plugins-enabled":
+        void chrome.storage.sync.set({
+          [StorageKeys.pluginsEnabled]: message.value,
+        });
+        break;
+      case "set-plugins-force-disabled":
+        void chrome.storage.sync.set({
+          [StorageKeys.forceDisabled]: Array.from(message.value),
+          [StorageKeys.forceDisabledVersion]: VERSION,
+        });
+        break;
+      case "set-plugin-settings":
+        void chrome.storage.sync.set({
+          [StorageKeys.pluginSettings]: message.value,
+        });
+        break;
+      case "send-heartbeat":
+        _sendHeartbeat(message.options);
+        break;
+      default:
+        message satisfies never;
+    }
+    return false;
+  });
+
+  // run preload code, which handles replacements then calls the main code
+  injectScript(chrome.runtime.getURL("preload/script.js"));
+}
+
+init();

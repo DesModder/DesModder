@@ -1,5 +1,15 @@
 [
   {
+    "id": 13,
+    "priority": 10,
+    "action": {
+      "type": "allow"
+    },
+    "condition": {
+      "urlFilter": "*://maintain.desmos.com"
+    }
+  },
+  {
     "id": 1,
     "priority": 1,
     "action": {
