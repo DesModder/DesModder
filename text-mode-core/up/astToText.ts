@@ -607,7 +607,7 @@ function piecewiseBranchToText(
   const branch = path.node;
   return group([
     branch.condition === null
-      ? [ctx.softline]
+      ? []
       : [
           exprToText(ctx, path.withChild(branch.condition, "condition")),
           ":",
