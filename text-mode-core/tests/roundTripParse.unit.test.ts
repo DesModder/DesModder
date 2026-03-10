@@ -34,35 +34,33 @@ function leftRight(s: string) {
     .replace(/[\])]|\\}/g, (x) => "\\right" + x)
     .replace(/\\\\left/g, "")
     .replace(/\\\\right/g, "")
+    .replace(/(\\left|\\right){2}/, "$1")
     .replace(/\*/g, "\\cdot ")
     .replace(/\\o/g, "\\operatorname");
 }
 
 function testRoundTripIdenticalViaAug(raw: string) {
   test(raw, () => {
-    const raw1 = leftRight(raw);
-    const aug = parseRootLatex(raw1);
+    const aug = parseRootLatex(raw);
     const raw2 = latexTreeToString(aug);
-    expect(raw2).toEqual(raw1);
+    expect(raw2).toEqual(raw);
   });
 }
 
 function testRoundTripIdenticalViaAST(raw: string) {
   test(raw, () => {
-    const raw1 = leftRight(raw);
-    const aug = parseRootLatex(raw1);
+    const aug = parseRootLatex(raw);
     const ast = rootLatexToAST(aug);
     // don't have id, index, pos, but that doesn't single expr
     const aug2 = childExprToAug(ast as any as Expression<Concrete>);
     const raw2 = latexTreeToString(aug2);
-    expect(raw2).toEqual(raw1);
+    expect(raw2).toEqual(raw);
   });
 }
 
 function testRoundTripIdenticalViaText(raw: string, emitOpts: TextEmitOptions) {
   test(raw, () => {
-    const raw1 = leftRight(raw);
-    const aug = parseRootLatex(raw1);
+    const aug = parseRootLatex(raw);
     const ast = rootLatexToAST(aug);
     const text = astToText(ast, emitOpts);
     const analysis = parse(text);
@@ -74,7 +72,7 @@ function testRoundTripIdenticalViaText(raw: string, emitOpts: TextEmitOptions) {
     if (item.type !== "ExprStatement") throw new Error("Jest lied.");
     const aug2 = childExprToAug(item.expr);
     const raw2 = latexTreeToString(aug2);
-    expect(raw2).toEqual(raw1);
+    expect(raw2).toEqual(raw);
   });
 }
 
@@ -287,7 +285,7 @@ describe("Operator Precedence round-trip", () => {
     "[1+2,(b\\o{with}b=3)...(b\\o{with}b=4),b\\o{with}b=5]",
     /// parent = ???? default
   ];
-  roundTrips(cases);
+  roundTrips(cases.map(leftRight));
 });
 
 describe("Identifiers round-trip", () => {
@@ -304,7 +302,7 @@ describe("Identifiers round-trip", () => {
     "\\o{index}",
     "\\token{123}",
   ];
-  roundTrips(cases);
+  roundTrips(cases.map(leftRight));
 });
 
 function roundTrips(cases: string[]) {
@@ -349,4 +347,13 @@ describe("Same-parse round trips", () => {
     raw`\o{factorial}(x)`,
   ];
   cases.forEach(testRoundTripParsesSame);
+});
+
+describe("Ice castle", () => {
+  const raw = String.raw`0\le y\le \left[40,40,37,14,50,15,15,18,18\right]\cdot \left\{-2.4\le \frac{x-\left[-83,83,0,0,0,-41,41,-116,116\right]}{\left[6,6,55,32,15,5,5,5,5\right]}\le 0:3\cdot \operatorname{tan}\left(\frac{x-\left[-83,83,0,0,0,-41,41,-116,116\right]}{\left[6,6,55,32,15,5,5,5,5\right]}+1\right),\frac{x-\left[-83,83,0,0,0,-41,41,-116,116\right]}{\left[6,6,55,32,15,5,5,5,5\right]}\le -2.4:3\cdot \operatorname{sec}\left(-2.4+1\right)^{2}\cdot \left(\frac{x-\left[-83,83,0,0,0,-41,41,-116,116\right]}{\left[6,6,55,32,15,5,5,5,5\right]}--2.4\right)+3\cdot \operatorname{tan}\left(-2.4+1\right),\frac{x-\left[-83,83,0,0,0,-41,41,-116,116\right]}{\left[6,6,55,32,15,5,5,5,5\right]}\ge 2.4:-3\cdot \operatorname{sec}\left(-2.4+1\right)^{2}\cdot \left(\frac{x-\left[-83,83,0,0,0,-41,41,-116,116\right]}{\left[6,6,55,32,15,5,5,5,5\right]}-2.4\right)+3\cdot \operatorname{tan}\left(-2.4+1\right)\cdot \left\{\frac{x-\left[-83,83,0,0,0,-41,41,-116,116\right]}{\left[6,6,55,32,15,5,5,5,5\right]}\ge 2.4\right\},3\cdot \operatorname{tan}\left(-\frac{x-\left[-83,83,0,0,0,-41,41,-116,116\right]}{\left[6,6,55,32,15,5,5,5,5\right]}+1\right)\right\}+\left[171,171,313,281,553,493,493,216,216\right]`;
+
+  testRoundTripIdenticalViaText(raw, {
+    noNewlines: false,
+    noOptionalSpaces: false,
+  });
 });
