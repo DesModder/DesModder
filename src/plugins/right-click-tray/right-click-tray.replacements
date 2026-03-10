@@ -6,37 +6,46 @@
 
 *Description* `Allow right-click to open long-hold menus`
 
-*Find*
+Patching JQuery's `.on()` function to behave specially for `.on('dcg-longhold', ...)`.
+We don't hook up `.off()` because that would be complicated, and it's not necessary.
+Desmos doesn't do `.off('dcg-longhold')`.
+
+*Find* => `on_def`
 ```js
-$addCustomAttribute("onLongHold", $callback => ({
-  bindings: {
-    onMount($el) {
-      __body__
-    }
-  }
-}));
+on: function($selector, $callback, $a, $b) {
+  return $on(this, $selector, $callback, $a, $b)
+}
 ```
 
-*Replace* `body` with
+*Replace* `on_def` with
+
 ```js
-__body__
-$el.addEventListener("mousedown", event => {
-  if (event.button !== 2) return;
-  const rightClickTray = DSM.rightClickTray
-  if (!rightClickTray) return;
-  DSM.cc?.dispatch({
-    type: 'close-item-settings-menu'
-  });
-  event.handle = () => event.stopPropagation();
-  rightClickTray.stopNextContextMenu = true;
-  $callback(event);
-})
-$el.addEventListener("contextmenu", event => {
-  const rightClickTray = DSM.rightClickTray
-  if (!rightClickTray) return;
-  if (rightClickTray.stopNextContextMenu) {
-    event.preventDefault();
-    rightClickTray.stopNextContextMenu = false;
+on: function($selector, $callback, $a, $b) {
+  if ($selector === 'dcg-longhold') {
+    // this = jquery object
+    this.each(function() {
+      // this = HTML element.
+      this.addEventListener("mousedown", event => {
+        if (event.button !== 2) return;
+        const rightClickTray = DSM.rightClickTray
+        if (!rightClickTray) return;
+        DSM.cc?.dispatch({
+          type: 'close-item-settings-menu'
+        });
+        event.handle = () => event.stopPropagation();
+        rightClickTray.stopNextContextMenu = true;
+        $callback(event);
+      })
+      this.addEventListener("contextmenu", event => {
+        const rightClickTray = DSM.rightClickTray
+        if (!rightClickTray) return;
+        if (rightClickTray.stopNextContextMenu) {
+          event.preventDefault();
+          rightClickTray.stopNextContextMenu = false;
+        }
+      })
+    })
   }
-})
+  return $on(this, $selector, $callback, $a, $b);
+}
 ```
