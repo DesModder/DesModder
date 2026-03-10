@@ -16,6 +16,13 @@ export default class ScrollBeyond extends PluginController {
     if (this.dispatchHandler) {
       this.cc.dispatcher.unregister(this.dispatchHandler);
     }
+
+    const newExpression = document.querySelector<HTMLElement>(
+      ".dcg-new-expression"
+    );
+    if (!newExpression) return;
+
+    newExpression.style.marginBottom = "";
   }
 
   private updateStyles() {
