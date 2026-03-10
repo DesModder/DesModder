@@ -35,6 +35,39 @@ __children__,
 DesModder.insertElement(() => ( DSM.codeGolf?.expressionItemCostPanel(this.model, this._rootNode)  ))
 ```
 
+### Alternative
+
+*Description* `Show how many characters used by an expression in the exppanel`
+
+*Find* => `math_item`
+```js
+$createElement("div", {
+    class: ()=>({
+        ____$
+        "dcg-highlighted-expressionitem"
+        ____$
+        "dcg-mathitem"
+        ____
+    })
+    ____
+})
+```
+
+*Find* inside `math_item`
+```js
+$createElement2("div", {
+    class: "dcg-fade-container",
+    ____$
+    children: [__children__]
+})
+```
+
+*Replace* `__children__` with
+```js
+__children__,
+DesModder.insertElement(() => ( DSM.codeGolf?.expressionItemCostPanel(this.model, this._rootNode)  ))
+```
+
 ## Add total counts to folders in exppanel
 
 *Description* `Show golfing stats for an entire folder`
@@ -58,6 +91,39 @@ $createElement("div", {
 ```js
 $createElement2("div", {
     class: $$const("dcg-fade-container"),
+    children: [__children__]
+})
+```
+
+*Replace* `children` with
+```js
+__children__,
+DesModder.insertElement(() => (DSM.codeGolf?.folderCostPanel(this.model)))
+```
+
+### Alternative
+
+*Description* `Show golfing stats for an entire folder`
+
+*Find* => `folder_item`
+```js
+$createElement("div", {
+    class: () => ({
+        ____$
+        "dcg-highlighted-expressionitem"
+        ____$
+        "dcg-expressionfolder"
+        ____
+    })
+    ____
+})
+```
+
+
+*Find* inside `folder_item`
+```js
+$createElement2("div", {
+    class: "dcg-fade-container",
     children: [__children__]
 })
 ```
