@@ -45,6 +45,31 @@ DesModder.insertElement(
 )
 ```
 
+### Alternative
+
+*Description* `Add toggle button to enable Text Mode`
+
+*Find* => `center`
+```js
+$createElement(
+  'div',
+  { class: 'dcg-center-buttons' ____ }
+)
+```
+
+*Replace* `center` with
+```js
+__center__,
+DesModder.insertElement(() => DSM.textMode?.textModeToggle()),
+// This is for pillbox-menus, not text-mode
+DesModder.insertElement(
+  () => (
+    !this.controller.getGraphSettings().config.graphpaper
+      && DSM.pillboxMenus?.pillboxContainerView(true)
+  )
+)
+```
+
 ## Add Text Mode class for styling
 
 *Description* `Style expressions list differently in Text Mode`

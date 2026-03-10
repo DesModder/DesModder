@@ -68,6 +68,26 @@ DesModder.replaceElement(
 )
 ```
 
+### Alternative
+
+*Description* `Wrap error triangle to control its style (2)`
+
+Wrap the error message tooltipped-error with a div, using `onTap` to trigger hiding/showing the error (but only when shift is held).
+
+*Find* => `from`
+```js
+additionalClass: "dcg-tooltipped-error-container",
+children: __errorTriangle__
+```
+
+*Replace* `errorTriangle` with
+```js
+DesModder.replaceElement(
+  () => __errorTriangle__,
+  () => DSM.hideErrors?.errorTriangle(this.props.exprId?.() ?? "")
+)
+```
+
 ## Add a "hide" button to the slider prompts
 
 *Description* `Add a "hide" button to the slider prompts`
@@ -77,6 +97,26 @@ DesModder.replaceElement(
 $createElement(
   'span',
   { class: $$const('btns'), children: [__children__] }
+)
+```
+
+Add one more child for the hide button
+
+*Replace* `children` with
+```js
+__children__,
+DesModder.insertElement(() => DSM.hideErrors?.hideButton(() => this.model))
+```
+
+### Alternative
+
+*Description* `Add a "hide" button to the slider prompts`
+
+*Find* => `element`
+```js
+$createElement(
+  'span',
+  { class: 'btns', children: [__children__] }
 )
 ```
 

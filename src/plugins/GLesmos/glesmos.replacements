@@ -43,6 +43,48 @@ Just add one more child.
 ]
 ```
 
+### Alternative
+
+
+Warning: this is partially duplicated below ("Add a lines menu option...") rather than
+adding an extra section to the menu view.
+
+*Description* `Add toggle in "fill" menu to enable GLesmos`
+
+*Find* => `key`
+```js
+{ class: 'dcg-iconed-mathquill-row dcg-fill-opacity-row' ____ }
+```
+
+*Find_surrounding_template* `key` => `template`
+
+*Find* inside `template`
+```js
+$createElement(
+  'div',
+  {
+    class: 'dcg-options-menu-content',
+    children: __children__
+  }
+)
+```
+
+*Find* inside `template`
+```js
+$createElement2($ToggleView, {
+  ariaLabel: () => this.controller.s("graphing-calculator-narration-fill-visible")
+```
+
+Just add one more child.
+
+*Replace* `children` with
+```js
+[
+  __children__,
+  DesModder.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, true))
+]
+```
+
 ## Add a lines menu option for switching an expression to glesmos rendering mode
 
 Warning: this is partially duplicated above ("Add a fill menu option...").
@@ -62,6 +104,48 @@ $createElement(
   'div',
   {
     class: $$const('dcg-options-menu-content'),
+    children: __children__
+  }
+)
+```
+
+*Find* inside `template`
+```js
+$createElement2($ToggleView, {
+  ariaLabel: () => this.controller.s("graphing-calculator-narration-lines-visible")
+```
+
+Add one child before and one after.
+
+*Replace* `children` with
+```js
+[
+  DesModder.insertElement(() => DSM.glesmos?.confirmLines(this.model.id, $ToggleView)),
+  __children__,
+  DesModder.insertElement(() => DSM.glesmos?.glesmosToggle(this.model.id, $ToggleView, false))
+]
+```
+
+### Alternative
+
+
+Warning: this is partially duplicated above ("Add a fill menu option...").
+
+*Description* `Add toggle in "lines" menu to enable GLesmos and confirm lines`
+
+*Find* => `key`
+```js
+{ class: 'dcg-iconed-mathquill-row dcg-line-opacity-row' ____ }
+```
+
+*Find_surrounding_template* `key` => `template`
+
+*Find* inside `template`
+```js
+$createElement(
+  'div',
+  {
+    class: 'dcg-options-menu-content',
     children: __children__
   }
 )
