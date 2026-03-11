@@ -65,9 +65,13 @@ export default class WolframToDesmos extends PluginController<Config> {
   _pasteHandler(e: ClipboardEvent) {
     const elem = e.target as HTMLElement;
     if (!e.clipboardData) return;
+
+    // Pasting a folder or expression that was yellow-copied.
+    const textHtml = e.clipboardData.getData("text/html");
+    if (textHtml.includes(`data-dcg-clipboard-format="dcg-copy-expression"`))
+      return;
+
     const pasteData = e.clipboardData.getData("text/plain");
-    const dcgCopyExprData = e.clipboardData.getData("dcg-copy-expression");
-    if (dcgCopyExprData) return;
     if (
       !(elem?.classList.contains("dcg-label-input") ?? true) &&
       pasteData !== undefined &&
