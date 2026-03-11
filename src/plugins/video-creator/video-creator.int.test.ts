@@ -1,8 +1,8 @@
 import { testWithPageAndOpts } from "#tests";
 
-const CAPTURE = ".dsm-menu-container .dsm-vc-capture-menu";
-const PREVIEW = ".dsm-menu-container .dsm-vc-preview-menu";
-const EXPORT = ".dsm-menu-container .dsm-vc-export-menu";
+const CAPTURE = ".dsm-pillbox-popover .dsm-vc-capture-menu";
+const PREVIEW = ".dsm-pillbox-popover .dsm-vc-preview-menu";
+const EXPORT = ".dsm-pillbox-popover .dsm-vc-export-menu";
 const EXPANDED = ".dsm-vc-preview-expanded";
 
 describe("Video Creator", () => {
@@ -21,7 +21,7 @@ describe("Video Creator", () => {
     async (driver) => {
       // Open menu. It should be FFmpeg loading
       await driver.click("[data-buttonid='dsm-vc-menu']");
-      await driver.assertSelector(".dsm-menu-container .dsm-delayed-reveal");
+      await driver.assertSelector(".dsm-pillbox-popover .dsm-delayed-reveal");
 
       // Eventually, FFmpeg loads. Capture menu but no preview/export
       await driver.assertSelectorEventually(CAPTURE);
@@ -56,7 +56,7 @@ describe("Video Creator", () => {
     async (driver) => {
       // Open menu. It should be FFmpeg loading
       await driver.click("[data-buttonid='dsm-vc-menu']");
-      await driver.assertSelector(".dsm-menu-container .dsm-delayed-reveal");
+      await driver.assertSelector(".dsm-pillbox-popover .dsm-delayed-reveal");
 
       // Eventually, FFmpeg loads. Capture menu but no preview/export
       await driver.assertSelectorEventually(CAPTURE);
