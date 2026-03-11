@@ -67,7 +67,8 @@ export class GolfStatsPanel extends Component<{
           false: () => (
             <div
               class="dsm-code-golf-char-count dsm-clickable"
-              onClick={() => {
+              tabindex={0}
+              onTap={() => {
                 this.props.cc().dispatch({
                   type: "dsm-code-golf-enable-despite-length",
                   id: this.props.model().id,

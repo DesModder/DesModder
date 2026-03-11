@@ -60,7 +60,8 @@ export class JumpToDefinitionMenu extends Component<{
                   {format("intellisense-jump2def-menu-instructions")}
                 </span>
                 <button
-                  onClick={() => {
+                  tabindex={0}
+                  onTap={() => {
                     this.props.closeJumpToDefinitionMenu();
                   }}
                   class="dcg-icon-remove"
@@ -81,7 +82,8 @@ export class JumpToDefinitionMenu extends Component<{
                     ]
                   ) => (
                     <li
-                      onClick={() => {
+                      tabindex={0}
+                      onTap={() => {
                         this.props.jumpToDefinitionById(
                           getPair()[0].sourceExprId
                         );
@@ -352,7 +354,8 @@ export class View extends Component<{
                 ? `translateY(calc(-100% - 50px))`
                 : "",
           })}
-          onClick={(e: MouseEvent) => {
+          tabindex={0}
+          onTap={(e: MouseEvent) => {
             e.stopPropagation();
           }}
         >
@@ -406,7 +409,8 @@ export class View extends Component<{
                           ? "selected-intellisense-option"
                           : "intellisense-clickable"
                       }
-                      onClick={() => {
+                      tabindex={0}
+                      onTap={() => {
                         this.props.plugin().leaveIntellisenseMenu();
                         this.props.plugin().doAutocomplete(ident.idents[0]);
                       }}
@@ -432,7 +436,8 @@ export class View extends Component<{
                       }
                     >
                       <i
-                        onClick={(e: MouseEvent) => {
+                        tabindex={0}
+                        onTap={(e: MouseEvent) => {
                           this.props
                             .plugin()
                             .jumpToDefinition(reformattedIdent);

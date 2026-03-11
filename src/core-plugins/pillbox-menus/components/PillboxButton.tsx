@@ -1,8 +1,8 @@
 import PillboxMenus from "..";
 import { Component, jsx } from "#DCGView";
-import { Tooltip } from "#components";
+import { DropdownPopoverWithAnchorShim, Switch } from "#components";
 import { format } from "#i18n";
-import PillboxMenu from "./PillboxMenu";
+import "./PillboxButton.less";
 
 export class PillboxButton extends Component<{
   pm: PillboxMenus;
@@ -27,36 +27,48 @@ export class PillboxButton extends Component<{
           "dsm-pillbox-and-popover": true,
         }}
       >
-        <Tooltip
+        <DropdownPopoverWithAnchorShim
           tooltip={() => format(this.pm.pillboxButtons[id].tooltip)}
-          gravity={() => (this.horizontal ? "s" : "w")}
-        >
-          <div
-            class={() =>
-              this.horizontal
-                ? "dcg-icon-btn dcg-pillbox-element"
-                : "dcg-btn-flat-gray dcg-settings-pillbox dcg-action-settings dcg-pillbox-btn-interior dsm-action-menu dcg-pillbox-element"
-            }
-            data-buttonId={id}
-            role="button"
-            onTap={() => this.onTapMenuButton(id)}
-            // TODO: manageFocus?
-          >
-            <i class={() => this.pm.pillboxButtons[id].iconClass ?? ""} />
-          </div>
-        </Tooltip>
-        {
-          <PillboxMenu
-            pm={this.pm}
-            horizontal={this.horizontal}
-            buttonId={this.props.buttonId()}
-          />
-        }
+          tooltipGravity={() => (this.horizontal ? "s" : "w")}
+          anchor={() => (
+            <div
+              class={() =>
+                this.horizontal
+                  ? "dcg-icon-btn dcg-pillbox-element"
+                  : "dcg-btn-flat-gray dcg-settings-pillbox dcg-action-settings dcg-pillbox-btn-interior dsm-action-menu dcg-pillbox-element"
+              }
+              data-buttonId={id}
+              role="button"
+              tabIndex={0}
+              // TODO: manageFocus?
+            >
+              <i class={() => this.pm.pillboxButtons[id].iconClass ?? ""} />
+            </div>
+          )}
+          orientation={() => (this.horizontal ? "bottom-left" : "left")}
+          popoverBody={() => (
+            <div
+              class={() => ({
+                "dsm-pillbox-popover": true,
+              })}
+            >
+              <Switch key={this.props.buttonId}>
+                {() =>
+                  this.pm.pillboxButtons[this.props.buttonId()].popup(this.pm)
+                }
+              </Switch>
+            </div>
+          )}
+          controlled={() => ({
+            setDropdownOpen: (isOpen) => {
+              this.pm.toggleMenu(this.props.buttonId(), isOpen);
+            },
+            isOpen:
+              this.pm.pillboxMenuOpen === this.props.buttonId() &&
+              this.pm.showHorizontalPillboxMenu() === this.horizontal,
+          })}
+        />
       </div>
     );
-  }
-
-  onTapMenuButton(id: string) {
-    this.pm.toggleMenu(id);
   }
 }

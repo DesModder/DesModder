@@ -353,7 +353,7 @@ export class Driver {
     expect(allMathquillAreInKeypad).toBeTruthy();
     // Menus aren't open
     await this.assertSelectorNot(
-      ".dsm-menu-container",
+      ".dsm-pillbox-popover",
       ".dsm-vc-capture-menu",
       ".dcg-shared-modal-container",
       ".dcg-popover-interior",

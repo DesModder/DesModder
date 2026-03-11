@@ -16,13 +16,14 @@ export default class Tip extends Component<{ st: ShowTips }> {
 
   template() {
     return (
-      <div class="dsm-usage-tip" onTap={() => this.nextTip()}>
+      <div class="dsm-usage-tip" tabIndex={0} onTap={() => this.nextTip()}>
         <div>{() => format(this.getCurrentTip().tip)}</div>
         <If predicate={() => this.getCurrentTip().learnMore !== ""}>
           {() => (
             <a
               href={() => this.getCurrentTip().learnMore}
               target="_blank"
+              tabIndex={0}
               onTap={(e: MouseEvent) => e.stopPropagation()}
             >
               {() => format("menu-learn-more")}

@@ -34,6 +34,39 @@ __case__
     return $createElement("span", {});
 ```
 
+### Alternative
+
+*Description* `Add pillbox buttons (like the DesModder button) in the graphing calculator`
+
+*Find* => `pushkey`
+```js
+this.shouldShowSettingsWrench() && $right.push("settings"),
+```
+
+*Replace* `pushkey` with
+```js
+__pushkey__
+DSM.pillboxMenus?.pushToPillboxList($right),
+```
+
+*Find* => `case`
+```js
+switch ($buttonId) {
+  case "settings":
+    return $createElement($, ____);
+```
+
+*Replace* `case` with
+```js
+__case__
+  default:
+    if ($buttonId.startsWith("dsm-"))
+      return DesModder.insertElement(() => DSM.pillboxMenus?.pillboxButtonView($buttonId.slice(4), false));
+    console.warn("Unhandled pillbox button type");
+    return $createElement("span", {});
+```
+
+
 ## Bottom zero for our pillbox menus
 
 *Description* `Fix scrolling of pillbox menus (like the video creator menu)`
@@ -85,3 +118,7 @@ __classes__,
 "dcg-settings-container": this.controller.isNarrowGeometryHeader(),
 "dcg-left": this.controller.isNarrowGeometryHeader()
 ```
+
+### Alternative
+
+*Description* `This is now a no-op`

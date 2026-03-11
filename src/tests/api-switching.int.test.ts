@@ -7,7 +7,7 @@ testWithPage("No crash when switching from calc to 3d", async (driver) => {
   await driver.click('[href="/3d"]');
   await driver.assertPath("/3d");
   await driver.click(".dsm-action-menu");
-  await driver.assertSelector(".dsm-menu-container");
+  await driver.assertSelector(".dsm-pillbox-popover");
 });
 
 testWithPage(

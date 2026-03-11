@@ -123,6 +123,7 @@ export default class MainPopup extends Component<{
                     {() => (
                       <div
                         class="dsm-vc-exit-expanded"
+                        tabIndex={0}
                         onTap={() => this.vc.togglePreviewExpanded()}
                       >
                         <i class="dcg-icon-remove" />

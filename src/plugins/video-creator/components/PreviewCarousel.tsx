@@ -21,6 +21,7 @@ export default class PreviewCarousel extends Component<{
             "dsm-vc-preview-wrapped-frame":
               this.getFrameIndex(-1) > this.getFrameIndex(0),
           })}
+          tabIndex={0}
           onTap={() => this.vc.addToPreviewIndex(-1)}
         >
           <img src={() => this.getFrame(-1)} draggable={false} />
@@ -34,6 +35,7 @@ export default class PreviewCarousel extends Component<{
             "dsm-vc-preview-wrapped-frame":
               this.getFrameIndex(1) < this.getFrameIndex(0),
           })}
+          tabIndex={0}
           onTap={() => this.vc.addToPreviewIndex(1)}
         >
           <img src={() => this.getFrame(1)} draggable={false} />
@@ -43,6 +45,7 @@ export default class PreviewCarousel extends Component<{
         </div>
         <div
           class="dsm-vc-preview-current-frame"
+          tabIndex={0}
           onTap={() =>
             this.vc.isPlayPreviewExpanded
               ? this.vc.togglePlayingPreview()
@@ -54,6 +57,7 @@ export default class PreviewCarousel extends Component<{
             {() => (
               <div
                 class="dsm-vc-preview-expand"
+                tabIndex={0}
                 onTap={(e: Event) => {
                   if (
                     e.target &&
@@ -72,6 +76,7 @@ export default class PreviewCarousel extends Component<{
           </If>
           <div
             class="dsm-vc-remove-frame"
+            tabIndex={0}
             onTap={(e: Event) => {
               this.vc.removeSelectedFrame();
               e.stopPropagation();
@@ -86,6 +91,7 @@ export default class PreviewCarousel extends Component<{
             {() => (
               <div
                 class="dsm-vc-preview-play-pause"
+                tabIndex={0}
                 onTap={(e: Event) => {
                   this.vc.togglePlayingPreview();
                   e.stopPropagation();

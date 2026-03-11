@@ -92,7 +92,8 @@ export default class Menu extends Component<{
                   "dsm-category-header": true,
                   "dsm-expanded": this.pm.isCategoryExpanded(category),
                 })}
-                onClick={() => this.pm.toggleCategoryExpanded(category)}
+                tabindex={0}
+                onTap={() => this.pm.toggleCategoryExpanded(category)}
               >
                 <div
                   class={() => ({
@@ -128,7 +129,8 @@ export default class Menu extends Component<{
         <div class="dcg-options-menu-section-title dsm-plugin-title-bar">
           <div
             class="dsm-plugin-header"
-            onClick={() => this.pm.togglePluginExpanded(plugin.id)}
+            tabindex={0}
+            onTap={() => this.pm.togglePluginExpanded(plugin.id)}
           >
             <div
               class={() => ({
@@ -159,6 +161,7 @@ export default class Menu extends Component<{
                       <a
                         href={() => plugin.descriptionLearnMore}
                         target="_blank"
+                        tabIndex={0}
                         onTap={(e: MouseEvent) => e.stopPropagation()}
                       >
                         {" "}
@@ -273,7 +276,7 @@ function colorListOption(
                             )
                           );
                         }}
-                      ></input>
+                      />
                       <div class="add-remove-buttons">
                         <IconButton
                           onTap={() => {
@@ -284,7 +287,7 @@ function colorListOption(
                             ]);
                           }}
                           iconClass={"dcg-icon-plus"}
-                        ></IconButton>
+                        />
                         <IconButton
                           onTap={() => {
                             setValue(
@@ -292,7 +295,7 @@ function colorListOption(
                             );
                           }}
                           iconClass={"dcg-icon-remove"}
-                        ></IconButton>
+                        />
                       </div>
                     </div>
                   )}
@@ -308,7 +311,7 @@ function colorListOption(
                 onTap={() => {
                   setValue(["#FF0000"]);
                 }}
-              ></IconButton>
+              />
             </div>
           ),
         })}
@@ -348,7 +351,7 @@ function numberOption(
           !e.classList.contains("dcg-hovered") &&
           (e.value = settings[item.key].toString())
         }
-      ></input>
+      />
       <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
         <label for={`dsm-settings-item__input-${item.key}`}>
           {configItemName(plugin, item)}
@@ -374,9 +377,9 @@ function booleanOption(
         onChange={toggle}
         checked={() => (settings[item.key] as boolean) ?? false}
         ariaLabel={() => item.key}
-      ></Checkbox>
+      />
       <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
-        <div class="dsm-settings-label" onClick={toggle}>
+        <div class="dsm-settings-label" tabindex={0} onTap={toggle}>
           {configItemName(plugin, item)}
         </div>
       </Tooltip>
@@ -448,6 +451,7 @@ class ResetButton extends Component<{
           <div
             class="dsm-reset-btn"
             role="button"
+            tabIndex={0}
             onTap={() => this.pm.resetSetting(this.key)}
           >
             <i class="dcg-icon-reset" />
