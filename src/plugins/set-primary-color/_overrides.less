@@ -3,10 +3,8 @@
   .dcg-text--dark-blue {
     color: rgb(var(--dsm-primary-dark-5-rgb));
   }
-  .dcg-literal-token-view {
-    background: rgba(var(--dsm-primary-color-rgb), 0.302);
-  }
-  .dcg-geo-token-view:not(.dcg-static-token).dcg-focus-visible {
+  .dcg-geo-token-view:not(.dcg-static-token).dcg-focus-visible,
+  .dcg-literal-token-error:not(.dcg-static-token).dcg-focus-visible {
     box-shadow: 0 0 0 3px rgba(var(--dsm-primary-color-rgb), 0.502) !important;
   }
   .dcg-evaluation-container
@@ -30,7 +28,7 @@
   .dcg-add-inference-wizard__table td:has(.dcg-focus):after {
     border: 2px solid rgb(var(--dsm-primary-color-rgb));
   }
-  .dcg-slider-interior .dcg-thumb:focus:after {
+  .dcg-slider-interior .dcg-thumb.dcg-focus-visible:after {
     border: 2px solid rgba(var(--dsm-primary-color-rgb), 0.35);
   }
   .dcg-color-picker-container
@@ -116,13 +114,6 @@
   .dcg-smart-textarea-container .dcg-displayTextarea a .dcg-depressed {
     color: rgb(var(--dsm-primary-dark-4-rgb));
   }
-  .dcg-image-options-menu
-    .dcg-clickable-image-controls
-    .dcg-clickable-menu-row
-    input:focus:not([disabled]) {
-    border-color: rgb(var(--dsm-primary-color-rgb));
-    box-shadow: 0 1px rgb(var(--dsm-primary-color-rgb));
-  }
   .dcg-add-inference-wizard__chi-square
     .dcg-table--wrapper
     .dcg-table
@@ -131,14 +122,6 @@
   }
   .dcg-select-dropdown-container .dcg-dropdown-input.dcg-focus-visible {
     border-color: rgb(var(--dsm-primary-color-rgb));
-  }
-  .dcg-shared-options-dropdown .dcg-dropdown-explanations .dcg-explanation a {
-    color: rgb(var(--dsm-primary-color-rgb));
-  }
-  .dcg-expressionitem.dcg-expressiontable
-    .dcg-cell.dcg-selected:not(.dcg-non-editable)
-    .dcg-inner-border {
-    border: 2px solid rgb(var(--dsm-primary-color-rgb));
   }
   .dcg-expressionitem.dcg-expressiontable .dcg-non-editable.dcg-selected {
     box-shadow: inset 0 0 0 2px rgba(var(--dsm-primary-color-rgb), 0.702);
@@ -181,11 +164,31 @@
   .dcg-shared-account-settings-dialog .dcg-shared-confirmation-message {
     color: rgb(var(--dsm-primary-color-rgb));
   }
-  .dcg-my-graphs-modal__heading--selectable.dcg-selected {
-    box-shadow: 0 3px rgb(var(--dsm-primary-color-rgb));
+  .dcg-my-graphs-modal__product-icon.dcg-icon-add-notebook {
+    color: rgb(var(--dsm-primary-color-rgb));
+  }
+  .dcg-shared-product-icon-container.dcg-depressed
+    .dcg-shared-product-icon:not(.dcg-disabled).dcg-icon-notebook,
+  .dcg-shared-product-icon-container.dcg-depressed
+    .dcg-shared-product-icon:not(.dcg-disabled).dcg-icon-notebook-inside,
+  .dcg-shared-product-icon.dcg-depressed:not(.dcg-disabled).dcg-icon-notebook,
+  .dcg-shared-product-icon.dcg-depressed:not(
+      .dcg-disabled
+    ).dcg-icon-notebook-inside {
+    background: linear-gradient(
+      330deg,
+      rgb(var(--dsm-primary-dark-5-rgb)) 6%,
+      rgb(var(--dsm-primary-dark-4-rgb)) 75%
+    );
   }
   .dcg-move-mygraph-menu__add-graph {
     color: rgb(var(--dsm-primary-color-rgb));
+  }
+  .dcg-privacy-tag__icon {
+    color: rgb(var(--dsm-primary-color-rgb));
+  }
+  .dcg-my-graphs-modal__heading--selectable.dcg-selected {
+    box-shadow: 0 3px rgb(var(--dsm-primary-color-rgb));
   }
   .dcg-product-filter__button--active {
     background: rgba(var(--dsm-primary-color-rgb), 0.149);
@@ -233,14 +236,6 @@
   .dcg-selectable-input-container .dcg-permalink:focus {
     border-color: rgb(var(--dsm-primary-color-rgb));
     box-shadow: inset 0 0 0 1px rgb(var(--dsm-primary-color-rgb));
-  }
-  #export-image-dialog .dcg-download-not-enabled-notice {
-    border: 2px solid rgb(var(--dsm-primary-color-rgb));
-    background: rgba(var(--dsm-primary-color-rgb), 0.102);
-  }
-  .dcg-language-picker .dcg-language-header {
-    color: rgb(var(--dsm-primary-color-rgb));
-    border-bottom: 2px solid rgb(var(--dsm-primary-color-rgb));
   }
   .dcg-share-menu-embed__textarea:focus {
     border: 1px solid rgb(var(--dsm-primary-color-rgb));
@@ -296,11 +291,5 @@
     .dcg-template-sent
     .dcg-icon-check {
     color: rgb(var(--dsm-primary-color-rgb));
-  }
-  .dcg-resources-content .dcg-resource-link.dcg-resources-view-all-quests span {
-    color: rgb(var(--dsm-primary-color-rgb));
-  }
-  .dcg-workspace-switcher__workspace-badge--team {
-    background-color: rgb(var(--dsm-primary-color-rgb));
   }
 }
