@@ -1,5 +1,18 @@
 # DesModder Changelog
 
+## 0.15.9
+
+New features:
+
+- New plugin: Scroll Beyond Last Line (in the "Visual" section).
+
+Bug fixes and enhancements:
+
+- (Text Mode) Fix formatting of long piecewises.
+- (Better Evaluation View) Display NaNs correctly in colors based on the "Advanced Floating Point" setting
+- DesModder now no longer tries to load on maintain.desmos.com.
+- Various DesModder clickable elements can now be tabbed to.
+
 ## 0.15.8
 
 Bug fixes:
