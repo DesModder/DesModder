@@ -7,7 +7,7 @@
         "!vtsls",
         "eslint",
       ],
-      "formatter": "language_server",
+      "formatter": "prettier",
     },
     "Markdown": {
       "format_on_save": "off",
