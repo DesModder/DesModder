@@ -79,9 +79,9 @@ export function wolfram2desmos(input: string, config: Config): string {
 
   // iterates the bracket parser with {} in mind
   function bracketEvalFinal(): void {
-    if (input[i] === ")" || input[i] === "}" || input[i] === "〕") {
+    if (/[)}〕]/.test(input[i])) {
       bracket++;
-    } else if (input[i] === "(" || input[i] === "{" || input[i] === "〔") {
+    } else if (/[({〔]/.test(input[i])) {
       bracket--;
     }
   }
@@ -134,7 +134,7 @@ export function wolfram2desmos(input: string, config: Config): string {
   let bracket: number;
   let startingIndex: number;
   let selection!: string;
-  let temp;
+  let temp: string | boolean;
   const functionSymbols = /^[a-wΑ-ωⒶ-ⓏＡ-Ｚ⒜-⒵√%][(_^]/gi;
   input = ` ${input} `; // this gives some breathing space
 
@@ -259,6 +259,7 @@ export function wolfram2desmos(input: string, config: Config): string {
       i++;
       bracketEval();
 
+      // This can probably be simplified
       if (
         bracket === 0 ||
         (bracket === -1 &&
