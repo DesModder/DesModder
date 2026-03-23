@@ -14,7 +14,7 @@ function typeInTextArea(
   const before = text.substring(0, start);
   const after = text.substring(end, text.length);
   el.value = before + newText + after;
-  el.selectionStart = el.selectionEnd = start + (newText?.length ?? 0);
+  el.selectionStart = el.selectionEnd = start + (newText.length ?? 0);
   el.focus();
 }
 
