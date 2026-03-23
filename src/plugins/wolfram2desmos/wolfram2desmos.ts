@@ -1,14 +1,14 @@
 import { Config } from "./config";
 import {
-  symbolSubs,
+  finalBracketSubs,
+  finalFunctionSubs,
+  finalGreekSubs,
+  finalLatinSubs,
+  finalSymbolSubs,
   functionSubs,
   greekSubs,
-  finalFunctionSubs,
-  finalBracketSubs,
-  finalGreekSubs,
   latinSubs,
-  finalSymbolSubs,
-  finalLatinSubs,
+  symbolSubs,
 } from "./substitutions.ts";
 
 // IMPORTANT
@@ -44,7 +44,7 @@ export function wolfram2desmos(input: string, config: Config): string {
   // returns the last match's index (requires global expr)
   function findFinal(expr: RegExp): number {
     const recent = [...input.matchAll(expr)];
-    return recent[recent.length - 1]?.index ?? -1;
+    return recent.at(-1)?.index ?? -1;
   }
 
   // replaces all matches with replacement
@@ -262,8 +262,7 @@ export function wolfram2desmos(input: string, config: Config): string {
       if (
         bracket === 0 ||
         (bracket === -1 &&
-          // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-          (isOperator1(i) || input[i].match(/[ ,:]/) || i === input.length)) ||
+          (isOperator1(i) || /[ ,:]/.test(input[i]) || i === input.length)) ||
         (temp &&
           (((isOperator1(i) || isOperator2(i)) && bracket === -1) ||
             (input[i] === "(" && bracket === -2)))
