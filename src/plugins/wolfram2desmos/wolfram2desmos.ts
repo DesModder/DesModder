@@ -17,8 +17,8 @@ import {
 // Ensure that JS DOESN'T override the clipboard
 // Besides that, this should work flawlessly! Enjoy!
 
-export function isIllegalASCIIMath(input: string) {
-  const count = (expr: RegExp) => input.match(expr)?.length ?? 0;
+export function isLegalASCIIMath(input: string) {
+  const count = (expr: RegExp) => expr.exec(input)?.length ?? 0;
 
   return !(
     // checks for illegal characters
@@ -44,7 +44,7 @@ export function wolfram2desmos(input: string, config: Config): string {
   // returns the last match's index (requires global expr)
   function findFinal(expr: RegExp): number {
     const recent = [...input.matchAll(expr)];
-    return recent.at(-1)?.index ?? -1;
+    return recent[recent.length - 1]?.index ?? -1;
   }
 
   // replaces all matches with replacement
@@ -208,7 +208,7 @@ export function wolfram2desmos(input: string, config: Config): string {
 
   if (find(/d(\^\d*)*\/dx(\^\d*)*/) !== -1) {
     i = find(/d(\^\d*)*\/dx(\^\d*)*/);
-    [selection] = input.match(/(?<=\^)(\d*)/) ?? [""];
+    [selection] = /(?<=\^)(\d*)/.exec(input) ?? [""];
     replace(/d(\^\d*)*\/dx(\^\d*)*/, "");
     insert(i, "Ｍ");
     insert(i + 1, "^(" + selection + ")");
@@ -248,7 +248,7 @@ export function wolfram2desmos(input: string, config: Config): string {
     if (selection.search(functionSymbols) === 0 && selection[1] === "(") {
       i++;
     } else if (selection.search(/([0-9]*[.])?[0-9]+/) === 0) {
-      i += selection.match(/([0-9]*[.])?[0-9]+/)?.[0]?.length ?? 0;
+      i += /([0-9]*[.])?[0-9]+/.exec(selection)?.[0]?.length ?? 0;
       if (input[i + 1] === "(") {
         insert(i + 1, ")");
         continue;
@@ -538,9 +538,8 @@ export function wolfram2desmos(input: string, config: Config): string {
           overwrite(startingIndex - 1, "}");
           overwrite(i, "{");
           const [match] =
-            selection.match(
-              /(?<=\^\{\\frac\{1\}\{)[A-z\d\s.\t+\-*]*(?=\}\})/
-            ) ?? [];
+            /(?<=\^\{\\frac\{1\}\{)[A-z\d\s.\t+\-*]*(?=\}\})/.exec(selection) ??
+            [];
           if (match) insert(i, "√[" + match + "]");
           break;
         }
@@ -555,9 +554,8 @@ export function wolfram2desmos(input: string, config: Config): string {
         if ((isOperator0(i) && bracket === 1) || bracket === 0) {
           insert(i + 1, "{");
           const [match] =
-            selection.match(
-              /(?<=\^\{\\frac\{1\}\{)[A-z\d\s.\t+\-*]*(?=\}\})/
-            ) ?? [];
+            /(?<=\^\{\\frac\{1\}\{)[A-z\d\s.\t+\-*]*(?=\}\})/.exec(selection) ??
+            [];
           if (match) insert(i, "√[" + match + "]");
           break;
         }
