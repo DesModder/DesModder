@@ -109,9 +109,7 @@ interface HydratedBounds {
 
 // TODO: split hydrated expr based on regression, function definition, etc.
 export interface Expression
-  extends NonFolderBase,
-    ColumnExpressionCommon,
-    Clickable {
+  extends NonFolderBase, ColumnExpressionCommon, Clickable {
   label?: {
     text: string;
     size: Expr;
