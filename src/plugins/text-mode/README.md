@@ -39,7 +39,6 @@ The compilation goes in two directions:
 One direction is going from top to bottom:
 
 1. lexer + parser from Text Mode `string` to `TextAST`
-
    - all syntax errors are checked here, so there should be no syntax errors later in the raw latex.
 
 2. convert `TextAST` to `Aug`

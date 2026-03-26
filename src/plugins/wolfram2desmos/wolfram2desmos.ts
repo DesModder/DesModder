@@ -18,21 +18,19 @@ import {
 // Besides that, this should work flawlessly! Enjoy!
 
 export function isLegalASCIIMath(input: string) {
-  const count = (expr: RegExp) => expr.exec(input)?.length ?? 0;
+  const count = (expr: RegExp) => input.match(expr)?.length ?? 0;
 
-  return !(
+  return (
     // checks for illegal characters
-    (
-      input.search(/\\/) !== -1 ||
-      input.search(/\n/) !== -1 ||
-      input.search(/(?<=_|\^|\\\w+|\S]|}){/) !== -1 ||
-      input.search(/\/\//) !== -1 ||
-      // determines if the brackets are correct
-      count(/\(/g) !== count(/\)/g) ||
-      count(/\{/g) !== count(/\}/g) ||
-      count(/\[/g) !== count(/\]/g) ||
-      count(/\|/g) % 2 === 1
-    )
+    input.search(/\\/) === -1 &&
+    input.search(/\n/) === -1 &&
+    input.search(/(?<=_|\^|\\\w+|\S]|}){/) === -1 &&
+    input.search(/\/\//) === -1 &&
+    // determines if the brackets are correct
+    count(/\(/g) === count(/\)/g) &&
+    count(/\{/g) === count(/\}/g) &&
+    count(/\[/g) === count(/\]/g) &&
+    count(/\|/g) % 2 === 0
   );
 }
 
