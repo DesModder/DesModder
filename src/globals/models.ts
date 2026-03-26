@@ -475,7 +475,8 @@ interface BaseClickable {
 }
 
 export interface ExpressionModel
-  extends BasicSetExpression, NonfolderItemModelBase {
+  extends BasicSetExpression,
+    NonfolderItemModelBase {
   type?: "expression";
   fill?: boolean;
   secret?: boolean;
