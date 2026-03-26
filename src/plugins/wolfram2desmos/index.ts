@@ -1,6 +1,6 @@
 import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
-import { wolfram2desmos, isIllegalASCIIMath } from "./wolfram2desmos";
+import { wolfram2desmos, isLegalASCIIMath } from "./wolfram2desmos";
 
 // https://stackoverflow.com/a/34278578
 function typeInTextArea(
@@ -78,7 +78,7 @@ export default class WolframToDesmos extends PluginController<Config> {
       pasteData !== "" &&
       this.cc.getItemModel(this.calc.selectedExpressionId)?.type ===
         "expression" &&
-      isIllegalASCIIMath(pasteData)
+      isLegalASCIIMath(pasteData)
     ) {
       e.stopPropagation();
       e.preventDefault();

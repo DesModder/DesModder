@@ -1,8 +1,8 @@
-import { isIllegalASCIIMath, wolfram2desmos } from "./wolfram2desmos";
+import { isLegalASCIIMath, wolfram2desmos } from "./wolfram2desmos";
 
 describe("Wolfram To Desmos (Default Config)", () => {
   const w2d = (s: string) =>
-    isIllegalASCIIMath(s)
+    isLegalASCIIMath(s)
       ? wolfram2desmos(s, {
           reciprocalExponents2Surds: true,
           derivativeLoopLimit: false,
@@ -104,7 +104,7 @@ describe("Wolfram To Desmos (Default Config)", () => {
 
 describe("Wolfram To Desmos (reciprocalExponents2Surds false)", () => {
   const w2d = (s: string) =>
-    isIllegalASCIIMath(s)
+    isLegalASCIIMath(s)
       ? wolfram2desmos(s, {
           reciprocalExponents2Surds: false,
           derivativeLoopLimit: false,
@@ -125,7 +125,7 @@ describe("Wolfram To Desmos (reciprocalExponents2Surds false)", () => {
 
 describe("Wolfram To Desmos (derivativeLoopLimit true)", () => {
   const w2d = (s: string) =>
-    isIllegalASCIIMath(s)
+    isLegalASCIIMath(s)
       ? wolfram2desmos(s, {
           reciprocalExponents2Surds: true,
           derivativeLoopLimit: true,
