@@ -1,0 +1,6 @@
+* text=auto eol=lf
+
+# NOTE: git versions prior to 2.10 might misbehave so the following were
+# added for safety.
+*.png binary
+*.woff binary
