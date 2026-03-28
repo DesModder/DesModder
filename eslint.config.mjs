@@ -85,7 +85,6 @@ export default tseslint.config(
         "error",
         { allowThrowingAny: false, allowThrowingUnknown: true },
       ],
-      "@typescript-eslint/prefer-regexp-exec": "error",
       "@typescript-eslint/class-methods-use-this": "off",
       "@typescript-eslint/max-params": "off",
       "@typescript-eslint/init-declarations": "off",
