@@ -136,10 +136,6 @@ export function wolfram2desmos(input: string, config: Config): string {
 
   const isOperator2 = (x: number) => ["^", "_"].includes(input[x]);
 
-  // PREPARATIONS
-  // predefine some variables.
-  //let selection: string;
-
   const functionSymbols = /^[a-wΑ-ωⒶ-ⓏＡ-Ｚ⒜-⒵√%][(_^]/gi;
   input = ` ${input} `; // this gives some breathing space
 
@@ -150,9 +146,8 @@ export function wolfram2desmos(input: string, config: Config): string {
   while (find(piecewiseBracketRegex) !== -1) {
     let bracket = -1;
     let startingIndex = find(piecewiseBracketRegex);
-    let i = startingIndex + 1;
 
-    for (i; i <= input.length; i++) {
+    for (let i = startingIndex + 1; i <= input.length; i++) {
       bracket += finalBracketEval(i);
       if (bracket === 0) {
         overwrite(startingIndex, "〔");
@@ -298,7 +293,8 @@ export function wolfram2desmos(input: string, config: Config): string {
   while (find(/\/|%/) !== -1) {
     let startingIndex = find(/\/|%/);
     let i = startingIndex - 1;
-    let temp: string | boolean = false;
+    let temp: string;
+    let found = false;
 
     if (input[startingIndex] === "/") {
       replace(/\//, "╱");
@@ -320,7 +316,7 @@ export function wolfram2desmos(input: string, config: Config): string {
             temp === "^(" ||
             temp === "_	("
           ) {
-            temp = true;
+            found = true;
             break;
           }
         }
@@ -330,7 +326,7 @@ export function wolfram2desmos(input: string, config: Config): string {
     }
 
     // preceded WITHOUT a ")" scenario
-    if (input[i] !== ")" || temp) {
+    if (input[i] !== ")" || found) {
       insert(startingIndex, ")");
       i = startingIndex - 1;
       let bracket = 1;
@@ -464,9 +460,10 @@ export function wolfram2desmos(input: string, config: Config): string {
 
   // implement subscripts and superscripts
   while (find(/[_^√∛]\(/) !== -1) {
-    let i = find(/[_^√∛]\(/) + 1;
-    overwrite(i, "{");
     let bracket = -1;
+    let i = find(/[_^√∛]\(/) + 1;
+
+    overwrite(i, "{");
     i++;
 
     for (i; i <= input.length; i++) {
@@ -510,8 +507,9 @@ export function wolfram2desmos(input: string, config: Config): string {
   replace(/(?<=Ｆ)\s*/g, "");
   while (find(/Ｆ\(/) !== -1) {
     let i = find(/Ｆ\(/) + 1;
-    replace(/Ｆ\(/, "«");
     let bracket = -1;
+
+    replace(/Ｆ\(/, "«");
 
     for (i; i <= input.length; i++) {
       bracket += finalBracketEval(i);
