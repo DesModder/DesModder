@@ -256,34 +256,31 @@ export function wolfram2desmos(input: string, config: Config): string {
         insert(i, ")");
         break;
       }
+
       if (insideFunction) {
-        if ((isOperator1(i) || isOperator2(i)) && bracket === -1) {
-          insert(i, ")");
-          break;
-        }
-        if (input[i] === "(" && bracket === -2) {
+        const shouldInsertBracket =
+          ((isOperator1(i) || isOperator2(i)) && bracket === -1) ||
+          (input[i] === "(" && bracket === -2);
+
+        if (shouldInsertBracket) {
           insert(i, ")");
           break;
         }
       }
+
       if (bracket === -1) {
-        if (isOperator1(i)) {
+        const shouldInsertBracket =
+          isOperator1(i) || /[ ,:]/.test(input[i]) || i === input.length;
+
+        if (shouldInsertBracket) {
           insert(i, ")");
           break;
         }
+
         if (isOperator2(i)) {
           i++;
           bracket--;
           continue;
-        }
-        if (input[i] === " " || input[i] === "," || input[i] === ":") {
-          // eg: "a/(a 2" → "a/(a) (2)"
-          insert(i, ")");
-          break;
-        }
-        if (i === input.length) {
-          insert(i, ")");
-          break;
         }
       }
     }
