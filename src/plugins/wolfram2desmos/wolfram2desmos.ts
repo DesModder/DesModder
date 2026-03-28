@@ -22,10 +22,10 @@ export function isLegalASCIIMath(input: string) {
 
   return (
     // checks for illegal characters
-    !/\\/.test(input) &&
-    !/\n/.test(input) &&
+    !input.includes("\\") &&
+    !input.includes("\n") &&
     !/(?<=_|\^|\\\w+|\S]|}){/.test(input) &&
-    !/\/\//.test(input) &&
+    !input.includes("//") &&
     // determines if the brackets are correct
     count(/\(/g) === count(/\)/g) &&
     count(/\{/g) === count(/\}/g) &&
@@ -145,7 +145,7 @@ export function wolfram2desmos(input: string, config: Config): string {
   // replace piecewise {} brackets with special character
   while (find(piecewiseBracketRegex) !== -1) {
     let bracket = -1;
-    let startingIndex = find(piecewiseBracketRegex);
+    const startingIndex = find(piecewiseBracketRegex);
 
     for (let i = startingIndex + 1; i <= input.length; i++) {
       bracket += finalBracketEval(i);
@@ -203,7 +203,7 @@ export function wolfram2desmos(input: string, config: Config): string {
 
   if (find(/d(\^\d*)*\/dx(\^\d*)*/) !== -1) {
     const i = find(/d(\^\d*)*\/dx(\^\d*)*/);
-    let [selection] = /(?<=\^)(\d*)/.exec(input) ?? [""];
+    const [selection] = /(?<=\^)(\d*)/.exec(input) ?? [""];
     replace(/d(\^\d*)*\/dx(\^\d*)*/, "");
     insert(i, "Ｍ");
     insert(i + 1, "^(" + selection + ")");
@@ -231,7 +231,7 @@ export function wolfram2desmos(input: string, config: Config): string {
     insert(i, "(");
     const insideFunction = functionSymbols.test(input.slice(i - 2, i));
     let bracket = -1;
-    let selection = input.slice(i + 1, input.length);
+    const selection = input.slice(i + 1, input.length);
 
     if (/^[-+±]/.test(selection)) {
       i++;
@@ -288,7 +288,7 @@ export function wolfram2desmos(input: string, config: Config): string {
 
   // this will ensure brackets BEFORE each DIVISION | MODULO
   while (find(/\/|%/) !== -1) {
-    let startingIndex = find(/\/|%/);
+    const startingIndex = find(/\/|%/);
     let i = startingIndex - 1;
     let temp: string;
     let found = false;
@@ -348,7 +348,7 @@ export function wolfram2desmos(input: string, config: Config): string {
   // implement function exponents
   while (find(/(?<=[Ⓐ-Ⓩ]\^)\(/) !== -1) {
     let bracket = -1;
-    let startingIndex = find(/(?<=[Ⓐ-Ⓩ]\^)\(/);
+    const startingIndex = find(/(?<=[Ⓐ-Ⓩ]\^)\(/);
     let i = startingIndex;
 
     overwrite(i, "‹");
@@ -363,7 +363,7 @@ export function wolfram2desmos(input: string, config: Config): string {
       }
     }
 
-    let selection = input.slice(startingIndex, i + 1);
+    const selection = input.slice(startingIndex, i + 1);
 
     if (
       selection !== "‹2›" &&
@@ -392,7 +392,7 @@ export function wolfram2desmos(input: string, config: Config): string {
   // implement fractions
   while (find(/\//) !== -1) {
     let bracket = -1;
-    let startingIndex = find(/\//);
+    const startingIndex = find(/\//);
     let i = startingIndex + 1;
 
     overwrite(i, "{");
@@ -425,7 +425,7 @@ export function wolfram2desmos(input: string, config: Config): string {
   // implement modulo (BASED ON FRACTION IMPLEMENTATION)
   while (find(/%/) !== -1) {
     let bracket = -1;
-    let startingIndex = find(/%/);
+    const startingIndex = find(/%/);
     let i = startingIndex + 1;
 
     overwrite(i, ",");
@@ -475,7 +475,7 @@ export function wolfram2desmos(input: string, config: Config): string {
   // remove excess brackets
   while (find(/\\frac{\(/) !== -1) {
     let bracket = -1;
-    let startingIndex = find(/\\frac\{\(/) + 6;
+    const startingIndex = find(/\\frac\{\(/) + 6;
     let i = startingIndex + 1; // "("
     let temp = false;
 
@@ -524,7 +524,7 @@ export function wolfram2desmos(input: string, config: Config): string {
     findFinal(reciprocalExponentsRegex) !== -1
   ) {
     let bracket = 0;
-    let startingIndex = findFinal(reciprocalExponentsRegex);
+    const startingIndex = findFinal(reciprocalExponentsRegex);
     let i = startingIndex + 1;
     let selection!: string;
 
@@ -578,7 +578,7 @@ export function wolfram2desmos(input: string, config: Config): string {
   replace(/(?<=Ⓩ)\s*/g, "");
   while (find(/(?<=Ⓩ)\(/) !== -1) {
     let bracket = -1;
-    let startingIndex = find(/(?<=Ⓩ)\(/);
+    const startingIndex = find(/(?<=Ⓩ)\(/);
     let i = startingIndex + 1;
     let selection: string;
 
@@ -619,7 +619,7 @@ export function wolfram2desmos(input: string, config: Config): string {
 
   while (find(/Ｍ/) !== -1) {
     let bracket = -1;
-    let startingIndex = find(/Ｍ/);
+    const startingIndex = find(/Ｍ/);
     let i = startingIndex + 3;
     let selection!: string;
 
