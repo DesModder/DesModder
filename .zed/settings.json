@@ -2,59 +2,59 @@
   "languages": {
     "JavaScript": {
       "code_actions_on_format": {
-        "source.fixAll.eslint": true,
+        "source.fixAll.eslint": false
       },
       "language_servers": [
         "!deno",
         "typescript-language-server",
         "!vtsls",
-        "eslint",
+        "eslint"
       ],
-      "formatter": "prettier",
+      "formatter": "prettier"
     },
     "JSON": {
-      "language_servers": ["eslint", "json-language-server"],
+      "language_servers": ["eslint", "json-language-server"]
     },
     "JSONC": {
-      "language_servers": ["eslint", "json-language-server"],
+      "language_servers": ["eslint", "json-language-server"]
     },
     "Markdown": {
       "format_on_save": "on",
-      "formatter": "prettier",
+      "formatter": "prettier"
     },
     "TSX": {
       "code_actions_on_format": {
-        "source.fixAll.eslint": true,
+        "source.fixAll.eslint": false
       },
       "language_servers": [
         "!deno",
         "typescript-language-server",
         "!vtsls",
-        "eslint",
+        "eslint"
       ],
-      "formatter": "prettier",
+      "formatter": "prettier"
     },
     "TypeScript": {
       "code_actions_on_format": {
-        "source.fixAll.eslint": true,
+        "source.fixAll.eslint": false
       },
       "language_servers": [
         "!deno",
         "typescript-language-server",
         "!vtsls",
-        "eslint",
+        "eslint"
       ],
-      "formatter": "prettier",
-    },
+      "formatter": "prettier"
+    }
   },
   "lsp": {
     "eslint": {
       "enable_lsp_tasks": true,
       "settings": {
         "workingDirectory": {
-          "mode": "auto",
-        },
-      },
-    },
-  },
+          "mode": "auto"
+        }
+      }
+    }
+  }
 }
