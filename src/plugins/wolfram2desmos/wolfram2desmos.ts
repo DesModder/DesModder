@@ -182,7 +182,7 @@ export function wolfram2desmos(input: string, config: Config): string {
     }
   }
 
-  replace(/(?<![A-Za-zΑ-ω])abs(olute|)/g, "Ｆ");
+  replace(/(?<![A-Za-zΑ-ω])abs(olute)?/g, "Ｆ");
   while (find(/\|/) !== -1) {
     let i = find(/\|/);
     overwrite(i, "Ｆ(");
@@ -228,10 +228,11 @@ export function wolfram2desmos(input: string, config: Config): string {
   // this will ensure brackets AFTER each operator
   while (findFinal(missingBracketsRegex) !== -1) {
     let i = findFinal(missingBracketsRegex) + 1;
-    insert(i, "(");
     const insideFunction = functionSymbols.test(input.slice(i - 2, i));
     let bracket = -1;
     const selection = input.slice(i + 1, input.length);
+
+    insert(i, "(");
 
     if (/^[-+±]/.test(selection)) {
       i++;
@@ -335,8 +336,6 @@ export function wolfram2desmos(input: string, config: Config): string {
           break;
         }
       }
-
-      i++;
     }
   }
 
@@ -592,13 +591,12 @@ export function wolfram2desmos(input: string, config: Config): string {
         insert(startingIndex, "_{" + selection + "}");
         break;
       }
+
       if (bracket === 0) {
         overwrite(startingIndex, "✅");
         break;
       }
     }
-
-    i--;
   }
 
   replace(/✅/g, "(");
