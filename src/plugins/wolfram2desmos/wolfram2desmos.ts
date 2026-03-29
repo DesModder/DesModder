@@ -185,8 +185,9 @@ export function wolfram2desmos(input: string, config: Config): string {
   replace(/(?<![A-Za-zΑ-ω])abs(olute)?/g, "Ｆ");
   while (find(/\|/) !== -1) {
     let i = find(/\|/);
-    overwrite(i, "Ｆ(");
     let bracket = -1;
+
+    overwrite(i, "Ｆ(");
     i += 2;
 
     for (i; i <= input.length; i++) {
@@ -325,9 +326,10 @@ export function wolfram2desmos(input: string, config: Config): string {
 
     // preceded WITHOUT a ")" scenario
     if (input[i] !== ")" || found) {
+      let bracket = 1;
+
       insert(startingIndex, ")");
       i = startingIndex - 1;
-      let bracket = 1;
 
       for (i; i >= 0; i--) {
         bracket += bracketEval(i);
@@ -579,15 +581,15 @@ export function wolfram2desmos(input: string, config: Config): string {
     let bracket = -1;
     const startingIndex = find(/(?<=Ⓩ)\(/);
     let i = startingIndex + 1;
-    let selection: string;
 
     for (i; i <= input.length; i++) {
       bracket += finalBracketEval(i);
       if (input[i] === "," && bracket === -1) {
         overwrite(i, "");
-        selection = input.slice(startingIndex + 1, i);
         input =
           input.slice(0, startingIndex + 1) + input.slice(i, input.length);
+
+        const selection = input.slice(startingIndex + 1, i);
         insert(startingIndex, "_{" + selection + "}");
         break;
       }
