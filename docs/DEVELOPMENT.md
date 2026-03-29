@@ -74,7 +74,7 @@ In this section, we will create a plugin which will simply change the displayed 
    }
 
    function getHeaderElement(): HTMLElement | null {
-     return document.querySelector(".header-account-name");
+     return document.querySelector(".dcg-header-bar__account-name");
    }
    ```
 
