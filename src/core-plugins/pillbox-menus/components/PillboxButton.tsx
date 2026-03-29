@@ -49,7 +49,7 @@ export class PillboxButton extends Component<{
           popoverBody={() => (
             <div
               class={() => ({
-                "dsm-pillbox-popover": true,
+                "dsm-pillbox-popover dcg-settings-container": true,
               })}
             >
               <Switch key={this.props.buttonId}>

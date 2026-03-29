@@ -153,6 +153,10 @@ duplicate-expression-hotkey-desc = Presiona Ctrl+Q ó Ctrl+Shift+Q para replicar
 right-click-tray-name = Color con Clic Derecho
 right-click-tray-desc = Permite abrir el menú para configurar expresiones con el clic derecho.
 
+## Scroll Beyond Last Line
+scroll-beyond-name = Desplazar Despues de Última Línea
+scroll-beyond-desc = Cuando se habilita permite desplazar las expressiones más allá de la última expressión.
+
 ## Set Primary Color
 set-primary-color-name = Cambiar Color de Aplicación
 set-primary-color-desc = Elige el color principal para la interfaz de usuario.
@@ -343,6 +347,12 @@ code-golf-symbol-count = Cantidad de Símbolos: { $elements }
 code-golf-click-to-enable-folder = Has clic para habilitar estadísticas de tu golf.
 # Unchanged
 code-golf-note-latex-byte-count = { $chars } LaTeX Bytes
+code-golf-opt-showWidth-name = Mostrar 'Ancho'
+# Unchanged
+code-golf-opt-showWidth-desc = {""}
+code-golf-opt-disableOnReload-name = Deshabilitar despues de recarga
+# Unchanged
+code-golf-opt-disableOnReload-desc = {""}
 
 ## Syntax highlightAlternatingLines
 syntax-highlighting-name = Resaltado de Sintaxis
@@ -381,6 +391,8 @@ paste-image-error-another-upload-in-progress = Vuelve a intentar cuando la image
 ## Quake Pro
 # Unchanged
 quake-pro-name = Quake Pro
-quake-pro-desc = Permite incrementar el campo de visión más allá del límite regular.
-quake-pro-opt-magnification-name = Multiplicador de Zoom
-quake-pro-opt-magnification-desc = Factor por el cual se incrementa el límite de zoom.
+quake-pro-desc = Permite incrementar el campo de visión o perspectiva más allá del límite regular.
+quake-pro-opt-dollyMagnification-name = Multiplicador
+quake-pro-opt-dollyMagnification-desc = Incrementa el valor regular de perspectiva por este factor (normalmente 1).
+quake-pro-opt-scalarZoomed-name = Ajuste de zoom
+quake-pro-opt-scalarZoomed-desc = Ajusta el nivel de zoom sin cambiar la distancia para reducir la distorción de perspectiva.
