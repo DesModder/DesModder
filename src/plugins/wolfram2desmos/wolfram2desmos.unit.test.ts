@@ -1,15 +1,14 @@
-import { isIllegalASCIIMath, wolfram2desmos } from "./wolfram2desmos";
+import { isLegalASCIIMath, wolfram2desmos } from "./wolfram2desmos";
 
 describe("Wolfram To Desmos (Default Config)", () => {
-  function w2d(s: string): string {
-    if (!isIllegalASCIIMath(s)) {
-      return "illegal";
-    }
-    return wolfram2desmos(s, {
-      reciprocalExponents2Surds: true,
-      derivativeLoopLimit: false,
-    });
-  }
+  const w2d = (s: string) =>
+    isLegalASCIIMath(s)
+      ? wolfram2desmos(s, {
+          reciprocalExponents2Surds: true,
+          derivativeLoopLimit: false,
+        })
+      : "illegal";
+
   const cases: [from: string, to: string][] = [
     ["abc", "abc"],
     ["\\left\\{x>y\\right\\}", "illegal"],
@@ -94,6 +93,7 @@ describe("Wolfram To Desmos (Default Config)", () => {
     ["a//b", "illegal"],
     ["a\\b", "illegal"],
   ];
+
   for (const [from, expected] of cases) {
     const actual = w2d(from);
     test(`from ${JSON.stringify(from)}`, () => {
@@ -103,19 +103,18 @@ describe("Wolfram To Desmos (Default Config)", () => {
 });
 
 describe("Wolfram To Desmos (reciprocalExponents2Surds false)", () => {
-  function w2d(s: string): string {
-    if (!isIllegalASCIIMath(s)) {
-      return "illegal";
-    }
-    return wolfram2desmos(s, {
-      reciprocalExponents2Surds: false,
-      derivativeLoopLimit: false,
-    });
-  }
+  const w2d = (s: string) =>
+    isLegalASCIIMath(s)
+      ? wolfram2desmos(s, {
+          reciprocalExponents2Surds: false,
+          derivativeLoopLimit: false,
+        })
+      : "illegal";
   const cases: [from: string, to: string][] = [
     ["x^(1/2)", "x^{\\frac{1}{2}}"],
     ["x^(1/3)", "x^{\\frac{1}{3}}"],
   ];
+
   for (const [from, expected] of cases) {
     const actual = w2d(from);
     test(`from ${JSON.stringify(from)}`, () => {
@@ -125,20 +124,19 @@ describe("Wolfram To Desmos (reciprocalExponents2Surds false)", () => {
 });
 
 describe("Wolfram To Desmos (derivativeLoopLimit true)", () => {
-  function w2d(s: string): string {
-    if (!isIllegalASCIIMath(s)) {
-      return "illegal";
-    }
-    return wolfram2desmos(s, {
-      reciprocalExponents2Surds: true,
-      derivativeLoopLimit: true,
-    });
-  }
+  const w2d = (s: string) =>
+    isLegalASCIIMath(s)
+      ? wolfram2desmos(s, {
+          reciprocalExponents2Surds: true,
+          derivativeLoopLimit: true,
+        })
+      : "illegal";
   const cases: [from: string, to: string][] = [
     ["d^2/dx^2(xy)", "\\frac{d}{dx}\\frac{d}{dx}\\left(xy\\right)"],
     // !! Surprising Output
     ["d/dx(x^2)", "\\frac{d}{dx}\\frac{d}{dx}\\left(x^{2}\\right)"],
   ];
+
   for (const [from, expected] of cases) {
     const actual = w2d(from);
     test(`from ${JSON.stringify(from)}`, () => {

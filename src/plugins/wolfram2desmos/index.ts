@@ -1,6 +1,6 @@
 import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
-import { wolfram2desmos, isIllegalASCIIMath } from "./wolfram2desmos";
+import { wolfram2desmos, isLegalASCIIMath } from "./wolfram2desmos";
 
 // https://stackoverflow.com/a/34278578
 function typeInTextArea(
@@ -14,7 +14,7 @@ function typeInTextArea(
   const before = text.substring(0, start);
   const after = text.substring(end, text.length);
   el.value = before + newText + after;
-  el.selectionStart = el.selectionEnd = start + (newText?.length ?? 0);
+  el.selectionStart = el.selectionEnd = start + (newText.length ?? 0);
   el.focus();
 }
 
@@ -78,7 +78,7 @@ export default class WolframToDesmos extends PluginController<Config> {
       pasteData !== "" &&
       this.cc.getItemModel(this.calc.selectedExpressionId)?.type ===
         "expression" &&
-      isIllegalASCIIMath(pasteData)
+      isLegalASCIIMath(pasteData)
     ) {
       e.stopPropagation();
       e.preventDefault();

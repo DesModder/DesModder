@@ -6,7 +6,7 @@ export const symbolSubs: Substitution[] = [
   [/(?<![A-Za-zΑ-ω])sqrt/g, "√"],
   [/(?<![A-Za-zΑ-ω])cbrt/g, "∛"],
   [/(?<![A-Za-zΑ-ω])infinity|infty/g, "∞"],
-  [/(?<![A-Za-zΑ-ω])mod(ulus|ulo)/g, "mod"],
+  [/(?<![A-Za-zΑ-ω])modul(us|o)/g, "mod"],
   [/(?<![A-Za-zΑ-ω])mod(?!\s*\()/g, "%"],
   [/(?<![A-Za-zΑ-ω])pm/g, "±"],
   [/×|∙/g, "*"],
@@ -57,7 +57,7 @@ export const functionSubs: Substitution[] = [
   [/prod(uct|)(?=_)/g, "Ｄ"],
 ];
 
-export const functionFinalSubs: Substitution[] = [
+export const finalFunctionSubs: Substitution[] = [
   [/Ⓐ/g, "arcsinh"],
   [/Ⓑ/g, "arccosh"],
   [/Ⓒ/g, "arctanh"],
@@ -148,7 +148,7 @@ export const greekSubs: Substitution[] = [
   [/(?<![A-Za-zΑ-ω])constant/g, "C"],
 ];
 
-export const greekFinalSubs: Substitution[] = [
+export const finalGreekSubs: Substitution[] = [
   [/α/g, "\\alpha"],
   [/β/g, "\\beta"],
   [/Γ/g, "\\Gamma"],
@@ -186,7 +186,7 @@ export const greekFinalSubs: Substitution[] = [
   [/polygamma/g, "\\psi_{poly}"],
 ];
 
-export const bracketFinalSubs: Substitution[] = [
+export const finalBracketSubs: Substitution[] = [
   [/\(/g, "\\left("],
   [/\)/g, "\\right)"],
   [/«/g, "\\left|"],
