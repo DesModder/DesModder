@@ -45,14 +45,11 @@ export default class ReplaceBar extends Component<{
               }}
               onFocusedChanged={(focused) => {
                 this.isFocused = focused;
-                if (focused)
+                const location = this.fr.cc.getFocusLocation();
+                if (focused && location)
                   this.fr.cc.dispatch({
-                    type: "set-focus-location",
-                    // This is an invalid focus location, so this is really setting
-                    // the Calc.controller.focusLocation to undefined.
-                    location: {
-                      type: "invalid-focus-location",
-                    },
+                    type: "blur-focus-location",
+                    location,
                   });
               }}
               hasError={false}

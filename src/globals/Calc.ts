@@ -9,7 +9,16 @@ export type { DispatchedEvent };
 export type FocusLocation =
   | { type: "expression"; id: string }
   | { type: "dsm-inline-math"; id: string }
-  | { type: string };
+  | { type: "search-expressions" }
+  | {
+      /**
+       * Special type to prevent exhaustive switches on `location.type`
+       * while still permitting logic like
+       * `location.type === 'expression' && location.id === id`
+       * which would not be allowed by `{type: "string"}`.
+       */
+      type: `dummy-dont-match-${string}`;
+    };
 
 export type VanillaDispatchedEvent =
   | {
@@ -79,7 +88,7 @@ export type VanillaDispatchedEvent =
       dsmFromTextModeSelection?: boolean;
     }
   | {
-      type: "set-focus-location";
+      type: "set-focus-location" | "blur-focus-location";
       location: FocusLocation;
     }
   | {
