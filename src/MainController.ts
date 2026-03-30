@@ -358,8 +358,10 @@ export default class DSM extends TransparentPlugins {
     switch (location.plugin) {
       case "video-creator":
         return this.videoCreator?.isMenuOpen();
+      case "find-and-replace":
+        return this.cc.getExpressionSearchOpen();
       default:
-        location.plugin satisfies never;
+        location satisfies never;
         return false;
     }
   }
