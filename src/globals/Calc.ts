@@ -8,7 +8,7 @@ export type { DispatchedEvent };
 
 export type FocusLocation =
   | { type: "expression"; id: string }
-  | { type: "dsm-inline-math"; id: string }
+  | { type: "dsm-focus"; plugin: "video-creator"; id: string }
   | { type: "search-expressions" }
   | {
       /**

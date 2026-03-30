@@ -551,7 +551,8 @@ export default class VideoCreator extends PluginController {
 
   updateFocus(location: FocusedMQ, isFocused: boolean) {
     const dsmLocation: FocusLocation = {
-      type: "dsm-inline-math",
+      type: "dsm-focus",
+      plugin: "video-creator",
       id: location,
     };
     if (isFocused) {
@@ -569,7 +570,11 @@ export default class VideoCreator extends PluginController {
 
   isFocused(location: FocusedMQ) {
     const focused = this.cc.getFocusLocation();
-    return focused?.type === "dsm-inline-math" && focused.id === location;
+    return (
+      focused?.type === "dsm-focus" &&
+      focused.plugin === "video-creator" &&
+      focused.id === location
+    );
   }
 
   cancelCapture() {

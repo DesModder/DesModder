@@ -9,7 +9,8 @@ function percentage(x: number) {
 function isHeightOrWidthFocused(vc: VideoCreator) {
   const location = vc.cc.getFocusLocation();
   return (
-    location?.type === "dsm-inline-math" &&
+    location?.type === "dsm-focus" &&
+    location.plugin === "video-creator" &&
     (location.id === "capture-width" || location.id === "capture-height")
   );
 }
