@@ -9,7 +9,7 @@ import {
 import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
 import { escapeRegex } from "./backend/utils";
 import { MainPopupFunc } from "./components/MainPopup";
-import { ExpressionModel, ValueType } from "#globals";
+import { ExpressionModel, FocusLocation, ValueType } from "#globals";
 import {
   keys,
   EvaluateSingleExpression,
@@ -47,8 +47,6 @@ export default class VideoCreator extends PluginController {
 
   fileType: OutFileType = "mp4";
   outfileName: string | null = null;
-
-  focusedMQ: FocusedMQ = "none";
 
   // ** export status
   isExporting = false;
@@ -114,6 +112,7 @@ export default class VideoCreator extends PluginController {
     return this.dsm.pillboxMenus?.pillboxMenuOpen === "dsm-vc-menu";
   }
 
+  dispatcherID: string | undefined;
   afterEnable() {
     this.calc.observe("graphpaperBounds", () => this.graphpaperBoundsChanged());
     this._applyDefaultCaptureSize();
@@ -125,12 +124,16 @@ export default class VideoCreator extends PluginController {
       popup: () => MainPopupFunc(this),
     });
     document.addEventListener("keydown", this.onKeydown);
+    this.dispatcherID = this.cc.dispatcher.register(() => {
+      updateView(this);
+    });
   }
 
   afterDisable() {
     this.dsm.pillboxMenus?.removePillboxButton("dsm-vc-menu");
     document.removeEventListener("keydown", this.onKeydown);
     this.or.afterDisable();
+    if (this.dispatcherID) this.cc.dispatcher.unregister(this.dispatcherID);
   }
 
   graphpaperBoundsChanged() {
@@ -139,7 +142,7 @@ export default class VideoCreator extends PluginController {
   }
 
   updateView() {
-    updateView(this);
+    this.cc.dispatch({ type: "tick" });
   }
 
   async tryInitFFmpeg() {
@@ -547,25 +550,31 @@ export default class VideoCreator extends PluginController {
   }
 
   updateFocus(location: FocusedMQ, isFocused: boolean) {
+    const dsmLocation: FocusLocation = {
+      type: "dsm-focus",
+      plugin: "video-creator",
+      id: location,
+    };
     if (isFocused) {
-      this.focusedMQ = location;
-      // `id` is currently unused, but it might be useful later
-      //  for getting rid of vc's own focus managment (using `this.focusedMQ`)?
       this.cc.dispatch({
         type: "set-focus-location",
-        location: {
-          type: "dsm-inline-math",
-          id: location,
-        },
+        location: dsmLocation,
       });
-    } else if (location === this.focusedMQ) {
-      this.focusedMQ = "none";
+    } else {
+      this.cc.dispatch({
+        type: "blur-focus-location",
+        location: dsmLocation,
+      });
     }
-    this.updateView();
   }
 
   isFocused(location: FocusedMQ) {
-    return this.focusedMQ === location;
+    const focused = this.cc.getFocusLocation();
+    return (
+      focused?.type === "dsm-focus" &&
+      focused.plugin === "video-creator" &&
+      focused.id === location
+    );
   }
 
   cancelCapture() {

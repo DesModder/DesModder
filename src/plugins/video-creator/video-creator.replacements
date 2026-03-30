@@ -21,7 +21,7 @@ isCurrentFocusLocationValid() {
   let $focusLocation = this.focusLocation;
   if (!$focusLocation)
     return !0;
-  if ($focusLocation.type === "dsm-inline-math") {
-    return DSM?.videoCreator?.isMenuOpen();
+  if ($focusLocation.type === "dsm-focus") {
+    return DSM?.focusLocationValid($focusLocation);
   }
 ```

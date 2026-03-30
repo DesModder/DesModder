@@ -4,12 +4,12 @@ import { Component, jsx } from "#DCGView";
 import { MathQuillView } from "#components";
 import { format } from "#i18n";
 import { autoOperatorNames } from "#utils/depUtils.ts";
+import { FocusLocation } from "../../globals";
 
 export default class ReplaceBar extends Component<{
   fr: FindReplace;
 }> {
   fr!: FindReplace;
-  isFocused: boolean = false;
 
   init() {
     this.fr = this.props.fr();
@@ -24,7 +24,7 @@ export default class ReplaceBar extends Component<{
               latex={() => this.fr.getReplaceLatex()}
               capExpressionSize={false}
               config={{ autoOperatorNames }}
-              isFocused={() => this.isFocused}
+              isFocused={() => this.isFocused()}
               getAriaLabel="expression replace"
               getAriaPostLabel=""
               onUserChangedLatex={(e: string) => this.fr.setReplaceLatex(e)}
@@ -44,16 +44,22 @@ export default class ReplaceBar extends Component<{
                 }
               }}
               onFocusedChanged={(focused) => {
-                this.isFocused = focused;
-                if (focused)
+                const location: FocusLocation = {
+                  type: "dsm-focus",
+                  plugin: "find-and-replace",
+                  id: "replace-bar",
+                };
+                if (focused) {
                   this.fr.cc.dispatch({
                     type: "set-focus-location",
-                    // This is an invalid focus location, so this is really setting
-                    // the Calc.controller.focusLocation to undefined.
-                    location: {
-                      type: "invalid-focus-location",
-                    },
+                    location,
                   });
+                } else {
+                  this.fr.cc.dispatch({
+                    type: "blur-focus-location",
+                    location,
+                  });
+                }
               }}
               hasError={false}
               selectOnFocus
@@ -77,6 +83,15 @@ export default class ReplaceBar extends Component<{
           </span>
         </div>
       </div>
+    );
+  }
+
+  isFocused() {
+    const location = this.fr.cc.getFocusLocation();
+    return (
+      location?.type === "dsm-focus" &&
+      location.plugin === "find-and-replace" &&
+      location.id === "replace-bar"
     );
   }
 

@@ -6,9 +6,18 @@ function percentage(x: number) {
   return `${100 * x}%`;
 }
 
+function isHeightOrWidthFocused(vc: VideoCreator) {
+  const location = vc.cc.getFocusLocation();
+  return (
+    location?.type === "dsm-focus" &&
+    location.plugin === "video-creator" &&
+    (location.id === "capture-width" || location.id === "capture-height")
+  );
+}
+
 function applyCaptureFrame(vc: VideoCreator) {
   let frame = document.getElementById(captureFrameID);
-  if (vc.focusedMQ === "capture-height" || vc.focusedMQ === "capture-width") {
+  if (isHeightOrWidthFocused(vc)) {
     if (frame === null) {
       frame = document.createElement("div");
       frame.id = captureFrameID;
@@ -44,5 +53,4 @@ function applyCaptureFrame(vc: VideoCreator) {
 
 export function updateView(vc: VideoCreator) {
   applyCaptureFrame(vc);
-  vc.cc.dispatch({ type: "tick" });
 }

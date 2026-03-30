@@ -1,4 +1,4 @@
-import window, { DispatchedEvent, type Calc } from "#globals";
+import window, { DispatchedEvent, FocusLocation, type Calc } from "#globals";
 import {
   plugins,
   pluginList,
@@ -351,6 +351,18 @@ export default class DSM extends TransparentPlugins {
   setAllPluginSettings(settings: IDToPluginSettings) {
     for (const [key, value] of Object.entries(settings)) {
       this.updatePluginSettings(key as PluginID, value, false);
+    }
+  }
+
+  focusLocationValid(location: FocusLocation & { type: "dsm-focus" }) {
+    switch (location.plugin) {
+      case "video-creator":
+        return this.videoCreator?.isMenuOpen();
+      case "find-and-replace":
+        return this.cc.getExpressionSearchOpen();
+      default:
+        location satisfies never;
+        return false;
     }
   }
 }
