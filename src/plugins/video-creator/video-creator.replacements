@@ -1,0 +1,27 @@
+# Replacements for Video Creator
+
+*plugin* `video-creator`
+
+## keypad fix 
+
+*Description* `bring up keypad when tapping on math inputs on mobile`
+
+*Find*  => `focusLocationValid`
+```js
+isCurrentFocusLocationValid() {
+  let $focusLocation = this.focusLocation;
+  if (!$focusLocation)
+    return !0;
+
+```
+
+*Replace* `focusLocationValid` with 
+```js
+isCurrentFocusLocationValid() {
+  let $focusLocation = this.focusLocation;
+  if (!$focusLocation)
+    return !0;
+  if ($focusLocation.type === "dsm-inline-math") {
+    return DSM?.videoCreator?.isMenuOpen();
+  }
+```

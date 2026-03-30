@@ -8,6 +8,7 @@ export type { DispatchedEvent };
 
 export type FocusLocation =
   | { type: "expression"; id: string }
+  | { type: "dsm-inline-math"; id: string }
   | { type: string };
 
 export type VanillaDispatchedEvent =
@@ -282,6 +283,7 @@ interface CalcPrivate {
     getTickerPlaying?: () => boolean;
     // The item models returned are actually much more detailed
     getSelectedItem: () => ItemModel | undefined;
+    getFocusLocation: () => FocusLocation | undefined;
     getItemModel: (id: any) => ItemModel | undefined;
     getAllSelectedItems: () => ItemModel[];
     getItemModelByIndex: (index: number) => ItemModel | undefined;

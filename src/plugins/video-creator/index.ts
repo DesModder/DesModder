@@ -549,6 +549,15 @@ export default class VideoCreator extends PluginController {
   updateFocus(location: FocusedMQ, isFocused: boolean) {
     if (isFocused) {
       this.focusedMQ = location;
+      // `id` is currently unused, but it might be useful later
+      //  for getting rid of vc's own focus managment (using `this.focusedMQ`)?
+      this.cc.dispatch({
+        type: "set-focus-location",
+        location: {
+          type: "dsm-inline-math",
+          id: location,
+        },
+      });
     } else if (location === this.focusedMQ) {
       this.focusedMQ = "none";
     }
