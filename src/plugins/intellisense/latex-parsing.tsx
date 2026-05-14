@@ -218,29 +218,29 @@ export function getPartialFunctionCall(
   mq: MathQuillField
 ): PartialFunctionCall | undefined {
   let cursor: MQCursor | undefined = getController(mq).cursor;
-  let paramIndex = 0;
   while (cursor) {
-    const ltx = cursor?.latex?.();
-    if (ltx === ",") paramIndex++;
-    if (cursor[-1]) {
-      cursor = cursor[-1];
-    } else {
-      // At the start of the group, check if it looks like a function call.
-      const parentheses = cursor.parent?.parent;
-      const tempCursor = parentheses?.[-1];
+    // Check if it looks like a function call.
+    const parentheses = cursor.parent?.parent;
+    const nodeBeforeParentheses = parentheses?.[-1];
 
-      const ltx = rawTryGetMathquillIdent(tempCursor)?.ident;
-      if (ltx && isIdentStr(ltx) && parentheses?.ctrlSeq === "\\left(") {
-        return {
-          ident: latexStringToIdentifierString(ltx)!,
-          paramIndex,
-        };
+    const ltx = rawTryGetMathquillIdent(nodeBeforeParentheses)?.ident;
+    if (ltx && isIdentStr(ltx) && parentheses?.ctrlSeq === "\\left(") {
+      // Count number of commas to left of cursor.
+      let paramIndex = 0;
+      let scanNode = cursor?.[-1];
+      while (scanNode) {
+        const ltx = scanNode.latex?.();
+        if (ltx === ",") paramIndex++;
+        scanNode = scanNode[-1];
       }
-
-      // Else go to the parent.
-      paramIndex = 0;
-      cursor = cursor.parent?.parent;
+      return {
+        ident: latexStringToIdentifierString(ltx)!,
+        paramIndex,
+      };
     }
+
+    // Else go to the parent.
+    cursor = cursor.parent?.parent;
   }
 }
 
