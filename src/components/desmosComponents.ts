@@ -77,6 +77,12 @@ export interface MathQuillConfig {
   typingPercentWritesPercentOf?: boolean;
 }
 
+export interface MqSelection {
+  latex: string;
+  startIndex: number;
+  endIndex: number;
+}
+
 export interface MathQuillField {
   keystroke: (key: string, e?: KeyboardEvent) => void;
   latex: (input?: string) => string;
@@ -84,6 +90,7 @@ export interface MathQuillField {
   config: (input: MathQuillConfig) => MathQuillField;
   focus: () => void;
   blur: () => void;
+  selection: (() => MqSelection) & ((selection: MqSelection) => MathQuillField);
   __controller: {
     options: MathQuillFieldOptions;
     cursor: MQCursor;

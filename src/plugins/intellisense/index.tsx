@@ -10,7 +10,7 @@ import { IntellisenseState } from "./state";
 import { pendingIntellisenseTimeouts, setIntellisenseTimeout } from "./utils";
 import { JumpToDefinitionMenuInfo, View } from "./view";
 import { DCGView, MountedComponent, unmountFromNode } from "#DCGView";
-import { MathQuillField, MathQuillView } from "#components";
+import { MathQuillField, MathQuillView, MqSelection } from "#components";
 import { DispatchedEvent, ItemModel, TextModel } from "#globals";
 import { PluginController } from "#plugins/PluginController.ts";
 import { isDescendant } from "#utils/utils.ts";
@@ -76,7 +76,7 @@ export default class Intellisense extends PluginController<{
   latestMQ: MathQuillField | undefined;
 
   intellisenseReturnMQ: MathQuillField | undefined;
-  prevCursorPos: { x: number; y: number } | undefined;
+  prevSelection: MqSelection | undefined;
   goRightBeforeReturningToMQ: boolean = false;
 
   idcounter = 0;
@@ -263,29 +263,14 @@ export default class Intellisense extends PluginController<{
       this.latestMQ = this.intellisenseReturnMQ;
     }
 
-    if (this.prevCursorPos && this.latestMQ) {
+    if (this.prevSelection && this.latestMQ) {
       const mqRootBlock = getController(this.latestMQ).container.querySelector(
         ".dcg-mq-root-block"
       );
 
       if (!mqRootBlock) return;
 
-      const mqRootBlockRect = mqRootBlock.getBoundingClientRect();
-
-      // simulate a click to get cursor in the right spot
-      const eventHandlerSettings = {
-        bubbles: true,
-        clientX:
-          this.prevCursorPos.x - mqRootBlock.scrollLeft + mqRootBlockRect.x,
-        clientY:
-          this.prevCursorPos.y - mqRootBlock.scrollTop + mqRootBlockRect.y,
-      };
-      getController(this.latestMQ).container.dispatchEvent(
-        new MouseEvent("mousedown", eventHandlerSettings)
-      );
-      getController(this.latestMQ).container.dispatchEvent(
-        new MouseEvent("mouseup", eventHandlerSettings)
-      );
+      this.latestMQ.selection(this.prevSelection);
     }
   }
 
@@ -294,26 +279,14 @@ export default class Intellisense extends PluginController<{
   saveCursorState() {
     const focusedmq = MathQuillView.getFocusedMathquill();
     if (focusedmq) this.latestMQ = focusedmq;
-    if (
-      this.latestMQ &&
-      document.body.contains(
-        getController(this.latestMQ).cursor.cursorElement ?? null
-      )
-    ) {
+    if (this.latestMQ) {
       // get cursor pos relative to the top left of the mathquill's root element
       const mqRootBlock = getController(this.latestMQ).container.querySelector(
         ".dcg-mq-root-block"
       );
 
       if (!mqRootBlock) return;
-      const mqRootBlockRect = mqRootBlock.getBoundingClientRect();
-      const rect = getController(
-        this.latestMQ
-      ).cursor.cursorElement?.getBoundingClientRect();
-      this.prevCursorPos = {
-        x: rect?.x ?? 0 + mqRootBlock.scrollLeft - mqRootBlockRect.x,
-        y: rect?.y ?? 0 + mqRootBlock.scrollTop - mqRootBlockRect.y,
-      };
+      this.prevSelection = this.latestMQ.selection();
     }
   }
 
