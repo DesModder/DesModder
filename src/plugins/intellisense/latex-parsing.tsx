@@ -225,18 +225,21 @@ export function getPartialFunctionCall(
     if (cursor[-1]) {
       cursor = cursor[-1];
     } else {
-      const oldCursor = cursor;
-      cursor = cursor.parent?.parent?.[-1];
+      // At the start of the group, check if it looks like a function call.
+      const parentheses = cursor.parent?.parent;
+      const tempCursor = parentheses?.[-1];
 
-      const ltx = rawTryGetMathquillIdent(cursor)?.ident;
-      if (ltx && isIdentStr(ltx) && cursor?.[1]?.ctrlSeq === "\\left(") {
+      const ltx = rawTryGetMathquillIdent(tempCursor)?.ident;
+      if (ltx && isIdentStr(ltx) && parentheses?.ctrlSeq === "\\left(") {
         return {
           ident: latexStringToIdentifierString(ltx)!,
           paramIndex,
         };
       }
+
+      // Else go to the parent.
       paramIndex = 0;
-      cursor = oldCursor.parent;
+      cursor = cursor.parent?.parent;
     }
   }
 }
