@@ -43,9 +43,10 @@ export interface BoundIdentifierFunction {
 }
 
 export function getMQCursorPosition(focusedMQ: MathQuillField) {
-  return getController(
-    focusedMQ
-  ).cursor?.cursorElement?.getBoundingClientRect();
+  return focusedMQ
+    .el()
+    .querySelector(".dcg-mq-cursor")
+    ?.getBoundingClientRect();
 }
 
 export default class Intellisense extends PluginController<{

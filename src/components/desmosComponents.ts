@@ -91,6 +91,8 @@ export interface MathQuillField {
   focus: () => void;
   blur: () => void;
   selection: (() => MqSelection) & ((selection: MqSelection) => MathQuillField);
+  /** Returns the `dcg-math-field` */
+  el: () => HTMLElement;
   __controller: {
     options: MathQuillFieldOptions;
     cursor: MQCursor;
