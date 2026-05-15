@@ -30,5 +30,6 @@ module.exports = {
   ],
   moduleNameMapper: {
     "^#metadata/(.*)$": "<rootDir>/metadata/$1",
+    ".ftl$": "<rootDir>/localization/mock-ftl.ts",
   },
 };

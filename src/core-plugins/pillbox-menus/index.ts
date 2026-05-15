@@ -67,7 +67,7 @@ export default class PillboxMenus extends PluginController<undefined> {
   }
 
   updateMenuView() {
-    this.cc.dispatch({ type: "tick" });
+    this.util.tick();
   }
 
   addPillboxButton(info: PillboxButtonSpec) {
@@ -104,7 +104,7 @@ export default class PillboxMenus extends PluginController<undefined> {
       this.cc.geometryGettingStartedMessageState !== "hidden"
     ) {
       this.cc.geometryGettingStartedMessageState = "hidden";
-      this.cc.dispatch({ type: "tick" });
+      this.util.tick();
     }
     this.pillboxMenuPinned = false;
     this.updateMenuView();

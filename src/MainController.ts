@@ -11,7 +11,7 @@ import {
 import { postMessageUp, mapToRecord, recordToMap } from "#utils/messages.ts";
 
 export default class DSM extends TransparentPlugins {
-  cc = this.calc.controller;
+  readonly cc = this.calc.controller;
   /**
    * pluginsEnabled keeps track of what plugins the user wants enabled,
    * regardless of forceDisabled settings.
@@ -30,7 +30,7 @@ export default class DSM extends TransparentPlugins {
   private readonly destroyHandlers: (() => void)[] = [];
 
   constructor(
-    public calc: Calc,
+    public readonly calc: Calc,
     opts: {
       /** Called after destroying the DSM (but before destroying the Calc). */
       afterDestroy?: () => void;

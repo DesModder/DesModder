@@ -1,7 +1,7 @@
 import ViewportTransforms from "./ViewportTransforms";
 import { initGLesmosCanvas, GLesmosCanvas } from "./glesmosCanvas";
 import { glesmosError, GLesmosShaderPackage } from "./shaders";
-import { CalcController, Fragile, ShaderFunctions } from "#globals";
+import { Calc, Fragile, ShaderFunctions } from "#globals";
 import { EmittedGLSL } from "./exportAsGLesmos";
 
 let canvas: GLesmosCanvas | null = null;
@@ -25,7 +25,7 @@ interface DrawCtx {
  * not just when the plugin is enabled, but also the time when the plugin
  * has just been disabled but the new sketch has not been received */
 export function drawGLesmosSketchToCtx(
-  cc: CalcController,
+  calc: Calc,
   drawCtx: DrawCtx,
   { id, branches }: GLesmosSketch
 ) {
@@ -34,11 +34,11 @@ export function drawGLesmosSketchToCtx(
   const glBranches = branches.map((b) => b.compiledGL);
   if (glBranches.length === 0) return;
 
-  drawOneGLesmosSketchToCtx?.(cc, drawCtx, glBranches, id);
+  drawOneGLesmosSketchToCtx?.(calc, drawCtx, glBranches, id);
 }
 
 function drawOneGLesmosSketchToCtx(
-  cc: CalcController,
+  calc: Calc,
   { ctx, projection }: DrawCtx,
   compiledGL: GLesmosShaderPackage[],
   id: string
@@ -47,7 +47,7 @@ function drawOneGLesmosSketchToCtx(
   // re-use the old canvas on a re-enable. This is a hacky fix.
   // There should be a way to clean up the GLesmos code
   // to avoid needing this.
-  canvas = canvas ?? initGLesmosCanvas(cc);
+  canvas = canvas ?? initGLesmosCanvas(calc);
 
   try {
     if (!canvas?.element) glesmosError("WebGL Context Lost!");
@@ -69,7 +69,7 @@ function drawOneGLesmosSketchToCtx(
       }
     }
   } catch (e) {
-    const model = cc.getItemModel(id);
+    const model = calc.controller.getItemModel(id);
     if (model) model.error = e instanceof Error ? e.message : e;
   }
 }

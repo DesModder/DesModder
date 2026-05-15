@@ -11,7 +11,6 @@ import {
 } from "./sync";
 import { AllActions, DispatchedEvent } from "../../globals/extra-actions";
 import { ItemState } from "graph-state/state";
-import { format } from "#i18n";
 
 declare module "src/globals/extra-actions" {
   interface AllActions {
@@ -80,10 +79,7 @@ export default class ManageMetadata extends PluginController {
   }
 
   private showGlesmosNotEnabledToast() {
-    this.cc.showToast({
-      // eslint-disable-next-line @desmodder/eslint-rules/no-format-in-ts
-      message: format("GLesmos-not-enabled"),
-    });
+    this.util.showToast({ message: { key: "GLesmos-not-enabled" } });
   }
 
   /** Called from inside a couple dispatched functions. */

@@ -9,8 +9,8 @@ import {
   glesmosGetFastFillShader,
   setUniform,
 } from "./shaders";
-import window, { CalcController } from "#globals";
-import { format } from "#i18n";
+import window, { Calc } from "#globals";
+import { showToast } from "#utils/depUtils.ts";
 
 export type GLesmosCanvas = ReturnType<typeof initGLesmosCanvas>;
 
@@ -29,7 +29,7 @@ const FULLSCREEN_QUAD = new Float32Array([
   -1, 1, 1, 1, 1, -1, -1, 1, 1, -1, -1, -1,
 ]);
 
-export function initGLesmosCanvas(cc: CalcController) {
+export function initGLesmosCanvas(calc: Calc) {
   //= ================ INIT ELEMENTS =======================
 
   const c: HTMLCanvasElement = document.createElement("canvas");
@@ -40,10 +40,7 @@ export function initGLesmosCanvas(cc: CalcController) {
     antialias: true,
   });
   if (!gl) {
-    cc.showToast({
-      // eslint-disable-next-line @desmodder/eslint-rules/no-format-in-ts
-      message: format("GLesmos-no-support"),
-    });
+    showToast(calc, { message: { key: "GLesmos-no-support" } });
     window.DSM?.setPluginEnabled?.("GLesmos", false);
     return undefined;
   }

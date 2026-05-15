@@ -190,7 +190,7 @@ if (!$ee.branches || !$ee.branches.length) return;
 
 ```js
 __guard__
-window.DesModder?.drawGLesmosSketchToCtx?.(window.Calc.controller, $drawCtx, $sketch);
+window.DesModder?.drawGLesmosSketchToCtx?.(window.Calc, $drawCtx, $sketch);
 ```
 
 ## Pass GLesmos flag to worker

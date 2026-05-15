@@ -1,5 +1,4 @@
 import { PluginController } from "../PluginController";
-import { format } from "#i18n";
 import type { DispatchedEvent } from "#globals";
 import type { AtLeastOne } from "#utils/utils.ts";
 
@@ -21,16 +20,14 @@ export default class PasteImage extends PluginController {
     const clipboardFiles = e.clipboardData?.files;
     if (!clipboardFiles?.length) return;
     if (!this.cc.areImagesEnabled()) {
-      this.cc.showToast({
-        // eslint-disable-next-line @desmodder/eslint-rules/no-format-in-ts
-        message: format("paste-image-error-images-not-enabled"),
+      this.util.showToast({
+        message: { key: "paste-image-error-images-not-enabled" },
       });
     } else if (this.cc.isUploadingImages()) {
       this.waitForImageUploads({
         runFinally: () =>
-          this.cc.showToast({
-            // eslint-disable-next-line @desmodder/eslint-rules/no-format-in-ts
-            message: format("paste-image-error-another-upload-in-progress"),
+          this.util.showToast({
+            message: { key: "paste-image-error-another-upload-in-progress" },
           }),
       });
     } else {
@@ -41,7 +38,7 @@ export default class PasteImage extends PluginController {
       // Among the possible errors, only those related to an invalid MIME type is not handled by the image-upload-error event
       if (nonImageFiles)
         setTimeout(() =>
-          this.cc.showToast({
+          this.util.showToast({
             message: this.cc.s("graphing-calculator-error-image-invalid-file", {
               file: nonImageFiles[0].name,
             }),

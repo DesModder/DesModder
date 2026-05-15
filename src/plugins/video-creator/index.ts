@@ -10,11 +10,7 @@ import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
 import { escapeRegex } from "./backend/utils";
 import { MainPopupFunc } from "./components/MainPopup";
 import { ExpressionModel, FocusLocation, ValueType } from "#globals";
-import {
-  keys,
-  EvaluateSingleExpression,
-  getCurrentGraphTitle,
-} from "#utils/depUtils.ts";
+import { keys } from "#utils/depUtils.ts";
 import {
   ManagedNumberInputModel,
   ManagedNumberInputModelOpts,
@@ -142,7 +138,7 @@ export default class VideoCreator extends PluginController {
   }
 
   updateView() {
-    this.cc.dispatch({ type: "tick" });
+    this.util.tick();
   }
 
   async tryInitFFmpeg() {
@@ -191,7 +187,7 @@ export default class VideoCreator extends PluginController {
 
   getOutfileName() {
     return (
-      this.outfileName ?? getCurrentGraphTitle(this.calc) ?? DEFAULT_FILENAME
+      this.outfileName ?? this.util.getCurrentGraphTitle() ?? DEFAULT_FILENAME
     );
   }
 
@@ -219,7 +215,7 @@ export default class VideoCreator extends PluginController {
   }
 
   eval(s: string) {
-    return EvaluateSingleExpression(this.calc, s);
+    return this.util.EvaluateSingleExpression(s);
   }
 
   useMosaicRatio() {

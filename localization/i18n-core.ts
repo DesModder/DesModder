@@ -1,3 +1,4 @@
+/* eslint-disable @desmodder/eslint-rules/no-format-in-ts */
 import enFTL from "./en.ftl";
 import esFTL from "./es.ftl";
 import frFTL from "./fr.ftl";
@@ -12,6 +13,18 @@ export function currentLanguage() {
 export const locales = new Map<string, FluentBundle>();
 
 const Console = console;
+
+export interface Formattable {
+  key: string;
+  args?: Record<string, FluentVariable> | null;
+  missingReplacement?: string;
+}
+
+export const fromFormattable = ({
+  key,
+  args,
+  missingReplacement,
+}: Formattable) => format(key, args, missingReplacement);
 
 export function format(
   key: string,

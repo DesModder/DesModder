@@ -1,5 +1,4 @@
 import { Console } from "../../globals/window";
-import { getCurrentGraphTitle } from "../../utils/depUtils";
 import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
 import { listenToMessageDown, postMessageUp } from "#utils/messages.ts";
@@ -28,7 +27,7 @@ export default class Wakatime extends PluginController<Config> {
       if (msg.type === "heartbeat-error") {
         if (msg.isAuthError) {
           this.dsm.disablePlugin("wakatime");
-          this.cc.showToast({
+          this.util.showToast({
             message:
               "WakaTime heartbeat error: check your secret key. Plugin has been deactivated.",
             toastStyle: "error",
@@ -48,7 +47,7 @@ export default class Wakatime extends PluginController<Config> {
   maybeSendHeartbeat(isWrite: boolean) {
     if (!(performance.now() - this.lastUpdate > heartbeatInterval || isWrite))
       return;
-    const graphName = getCurrentGraphTitle(this.calc) ?? "Untitled Graph";
+    const graphName = this.util.getCurrentGraphTitle() ?? "Untitled Graph";
     const graphURL = window.location.href;
     const lineCount = this.calc.getExpressions().length;
 
