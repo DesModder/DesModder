@@ -42,7 +42,10 @@ export function showToast(calc: Calc, toast: Toast | ToastFormattable): void {
   calc.controller.showToast(
     isPlainToast(toast)
       ? toast
-      : { ...toast, message: fromFormattable(toast.message) }
+      : // Toasts are ephemeral enough that they don't really need
+        // to update on language change:
+        // eslint-disable-next-line @desmodder/eslint-rules/no-format-in-ts
+        { ...toast, message: fromFormattable(toast.message) }
   );
   tick(calc);
 }
