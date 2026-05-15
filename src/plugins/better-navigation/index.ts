@@ -1,9 +1,10 @@
 import { PluginController } from "../PluginController";
 import { MathQuillField, MathQuillView } from "src/components";
-import { getCursorHead, MqNodeViaDom } from "../intellisense/latex-parsing";
 import { ConfigItem } from "#plugins/index.ts";
 
 import "./index.less";
+import { MqNodeViaDom } from "../../mathquill/mq-node";
+import { getCursorHead } from "../../mathquill/mq-cursor";
 
 const R = +1;
 const L = -1;
