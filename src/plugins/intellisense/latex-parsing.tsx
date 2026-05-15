@@ -1,6 +1,6 @@
 import { ExpressionAug } from "../../../text-mode-core";
 import { latexStringToIdentifierString } from "./view";
-import { MathQuillField } from "#components";
+import { MathQuillField, selectionDirection } from "#components";
 
 export function mapAugAST(
   node: ExpressionAug["latex"],
@@ -28,7 +28,11 @@ export function mapAugAST(
   map(node);
 }
 
-class MqNodeViaDom {
+function isSelection(el: Element) {
+  return el.classList.contains("dcg-mq-selection");
+}
+
+export class MqNodeViaDom {
   mq: MathQuillField;
   domNode: Element;
 
@@ -41,8 +45,12 @@ class MqNodeViaDom {
     if (this.domNode.classList.contains("dcg-mq-root-block")) {
       return undefined;
     }
-    const parent = this.domNode.parentElement;
+    let parent = this.domNode.parentElement;
     if (!parent) return undefined;
+    if (isSelection(parent)) {
+      parent = parent.parentElement;
+      if (!parent) return undefined;
+    }
     return new MqNodeViaDom(this.mq, parent);
   }
 
@@ -51,7 +59,13 @@ class MqNodeViaDom {
     while (sibling?.classList.contains("dcg-mq-cursor")) {
       sibling = sibling.nextElementSibling;
     }
-    if (sibling) return new MqNodeViaDom(this.mq, sibling);
+    const parent = this.domNode.parentElement;
+    if (!sibling && parent && isSelection(parent)) {
+      sibling = parent.nextElementSibling;
+    }
+    if (sibling) {
+      return new MqNodeViaDom(this.mq, sibling);
+    }
     return undefined;
   }
 
@@ -60,7 +74,13 @@ class MqNodeViaDom {
     while (sibling?.classList.contains("dcg-mq-cursor")) {
       sibling = sibling.previousElementSibling;
     }
-    if (sibling) return new MqNodeViaDom(this.mq, sibling);
+    const parent = this.domNode.parentElement;
+    if (!sibling && parent && isSelection(parent)) {
+      sibling = parent.previousElementSibling;
+    }
+    if (sibling) {
+      return new MqNodeViaDom(this.mq, sibling);
+    }
     return undefined;
   }
 
@@ -71,38 +91,72 @@ class MqNodeViaDom {
   }
 }
 
+type DomCursor =
+  | { type: "cursor"; el: Element }
+  | { type: "selection"; el: Element; headSide: 1 | -1 };
+
 class MqCursorViaDom {
   mq: MathQuillField;
-  domCursor: Element;
+  /**
+   * The domCursor represents the head of the selection.
+   * Since we only have access to DOM nodes, this is a bit awkward.
+   */
+  domCursor: DomCursor;
 
-  constructor(mq: MathQuillField, domCursor: Element) {
+  constructor(mq: MathQuillField, domCursor: DomCursor) {
     this.mq = mq;
     this.domCursor = domCursor;
   }
 
   nodeBefore(): MqNodeViaDom | undefined {
-    const sibling = this.domCursor.previousElementSibling;
+    const sibling =
+      this.domCursor.type === "selection" && this.domCursor.headSide === 1
+        ? this.domCursor.el.lastElementChild
+        : this.domCursor.el.previousElementSibling;
     if (sibling) return new MqNodeViaDom(this.mq, sibling);
     else return undefined;
   }
 
   nodeAfter(): MqNodeViaDom | undefined {
-    const sibling = this.domCursor.nextElementSibling;
+    const sibling =
+      this.domCursor.type === "selection" && this.domCursor.headSide === -1
+        ? this.domCursor.el.firstElementChild
+        : this.domCursor.el.nextElementSibling;
     if (sibling) return new MqNodeViaDom(this.mq, sibling);
     else return undefined;
   }
 
+  nodeInDirection(dir: 1 | -1): MqNodeViaDom | undefined {
+    return dir === 1 ? this.nodeAfter() : this.nodeBefore();
+  }
+
   parentGroup() {
-    const parent = this.domCursor.parentElement;
+    const parent = this.domCursor.el.parentElement;
     if (!parent) throw new Error("Invalid cursor.");
     return new MqNodeViaDom(this.mq, parent);
   }
 }
 
-export function getCursor(mq: MathQuillField) {
+/**
+ * Get the head of the selection.
+ * When the selection is a point (i.e. just the cursor), it represents that point.
+ * Otherwise, this is the head of the selection, which is what moves when you shift-arrow.
+ */
+export function getCursorHead(mq: MathQuillField): MqCursorViaDom | undefined {
   const cursorDom = mq.el().querySelector(".dcg-mq-cursor");
-  if (!cursorDom) return undefined;
-  return new MqCursorViaDom(mq, cursorDom);
+  if (cursorDom) {
+    return new MqCursorViaDom(mq, { type: "cursor", el: cursorDom });
+  }
+  const selectionDom = mq.el().querySelector(".dcg-mq-selection");
+  if (selectionDom) {
+    const direction = selectionDirection(mq);
+    return new MqCursorViaDom(mq, {
+      type: "selection",
+      el: selectionDom,
+      headSide: direction,
+    });
+  }
+  return undefined;
 }
 
 export function getController(mq: MathQuillField) {
@@ -125,7 +179,7 @@ export interface TryFindMQIdentResult {
 }
 
 /** is an MQ node a subscript? */
-// TODO-jared-mq-compat: this can just check classList.contains("dcg-mq-sub")
+// TODO-mq-compat: this can just check classList.contains("dcg-mq-sub")
 function isSubscript(node: MqNodeViaDom) {
   return getSubscriptInside(node) !== undefined;
 }
@@ -271,7 +325,7 @@ function finalGetMathquillIdent(
 function tryGetMathquillIdent(
   mq: MathQuillField
 ): TryFindMQIdentResult | undefined {
-  const cursor = getCursor(mq);
+  const cursor = getCursorHead(mq);
   const v = rawTryGetMathquillIdent(cursor?.nodeBefore(), cursor);
   if (!v) return;
   const ident = latexStringToIdentifierString(v.ident);
@@ -306,7 +360,7 @@ export interface PartialFunctionCall {
 export function getPartialFunctionCall(
   mq: MathQuillField
 ): PartialFunctionCall | undefined {
-  const cursor: MqCursorViaDom | undefined = getCursor(mq);
+  const cursor: MqCursorViaDom | undefined = getCursorHead(mq);
   /**
    * If we haven't gone to any parents yet,
    * `nodeBeforeCursor` is the actual node left of the cursor, such as
@@ -349,7 +403,7 @@ export function getCorrectableIdentifier(mq: MathQuillField): {
   ident: string;
   back: () => void;
 } {
-  const cursor = getCursor(mq);
+  const cursor = getCursorHead(mq);
   let node = cursor?.nodeBefore();
 
   const parentGroup = cursor?.parentGroup();

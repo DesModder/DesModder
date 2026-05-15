@@ -81,6 +81,8 @@ export interface MqSelection {
   latex: string;
   startIndex: number;
   endIndex: number;
+  headIndex?: number;
+  anchorIndex?: number;
 }
 
 export interface MathQuillField {
@@ -111,6 +113,7 @@ export interface MathQuillField {
   };
 }
 
+// TODO-mq-compat-when-single: reduce these
 // TODO-mq-compat: isAutoOperatorName and isAutoCommand are hacks
 // that could be done better maybe.
 export function isAutoOperatorName(mq: MathQuillField, ident: string) {
@@ -126,6 +129,28 @@ export function isAutoCommand(mq: MathQuillField, ident: string) {
     return !!mq.__controller.options.autoCommands[ident];
   } else {
     return mq.controller!.getConfig().autoCommands.has(ident);
+  }
+}
+
+/** Assuming there is a nonempty selection, return the direction. */
+export function selectionDirection(mq: MathQuillField): 1 | -1 {
+  if (mq.__controller) {
+    const nodeAfterHead = mq.__controller.cursor[1]?._el;
+    if (nodeAfterHead?.parentElement?.classList.contains("dcg-mq-selection")) {
+      // The node after the head is inside the selection, so
+      // the head is on the left of the selection.
+      return -1;
+    } else {
+      // Else the head is on the right of the selection.
+      return 1;
+    }
+  } else {
+    const selection = mq.selection();
+    if (selection.headIndex === selection.startIndex) {
+      return -1;
+    } else {
+      return 1;
+    }
   }
 }
 
