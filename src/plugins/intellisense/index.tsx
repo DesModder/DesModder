@@ -1,7 +1,6 @@
 import {
   PartialFunctionCall,
   TryFindMQIdentResult,
-  getController,
   getCorrectableIdentifier,
   getMathquillIdentifierAtCursorPosition,
   getPartialFunctionCall,
@@ -10,7 +9,13 @@ import { IntellisenseState } from "./state";
 import { pendingIntellisenseTimeouts, setIntellisenseTimeout } from "./utils";
 import { JumpToDefinitionMenuInfo, View } from "./view";
 import { DCGView, MountedComponent, unmountFromNode } from "#DCGView";
-import { MathQuillField, MathQuillView, MqSelection } from "#components";
+import {
+  isAutoCommand,
+  isAutoOperatorName,
+  MathQuillField,
+  MathQuillView,
+  MqSelection,
+} from "#components";
 import { DispatchedEvent, ItemModel, TextModel } from "#globals";
 import { PluginController } from "#plugins/PluginController.ts";
 import { isDescendant } from "#utils/utils.ts";
@@ -263,9 +268,9 @@ export default class Intellisense extends PluginController<{
     }
 
     if (this.prevSelection && this.latestMQ) {
-      const mqRootBlock = getController(this.latestMQ).container.querySelector(
-        ".dcg-mq-root-block"
-      );
+      const mqRootBlock = this.latestMQ
+        .el()
+        .querySelector(".dcg-mq-root-block");
 
       if (!mqRootBlock) return;
 
@@ -280,9 +285,9 @@ export default class Intellisense extends PluginController<{
     if (focusedmq) this.latestMQ = focusedmq;
     if (this.latestMQ) {
       // get cursor pos relative to the top left of the mathquill's root element
-      const mqRootBlock = getController(this.latestMQ).container.querySelector(
-        ".dcg-mq-root-block"
-      );
+      const mqRootBlock = this.latestMQ
+        .el()
+        .querySelector(".dcg-mq-root-block");
 
       if (!mqRootBlock) return;
       this.prevSelection = this.latestMQ.selection();
@@ -663,9 +668,10 @@ export default class Intellisense extends PluginController<{
           if (ident.ident.length === 1) return;
 
           const identWithoutSubscripts = ident.ident.replace(/_/g, "");
+
           if (
-            this.latestMQ.__options.autoOperatorNames[identWithoutSubscripts] ||
-            this.latestMQ.__options.autoCommands[identWithoutSubscripts]
+            isAutoOperatorName(this.latestMQ, identWithoutSubscripts) ||
+            isAutoCommand(this.latestMQ, identWithoutSubscripts)
           ) {
             return;
           }

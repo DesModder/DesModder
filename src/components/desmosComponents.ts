@@ -99,7 +99,34 @@ export interface MathQuillField {
     cursor: MQCursor;
     container: HTMLElement;
   };
-  __options: MathQuillFieldOptions;
+  controller?: {
+    getConfig: () => {
+      autoOperatorNames: {
+        has: (s: string) => boolean;
+      };
+      autoCommands: {
+        has: (s: string) => boolean;
+      };
+    };
+  };
+}
+
+// TODO-mq-compat: isAutoOperatorName and isAutoCommand are hacks
+// that could be done better maybe.
+export function isAutoOperatorName(mq: MathQuillField, ident: string) {
+  if (mq.__controller) {
+    return !!mq.__controller.options.autoOperatorNames[ident];
+  } else {
+    return mq.controller!.getConfig().autoOperatorNames.has(ident);
+  }
+}
+
+export function isAutoCommand(mq: MathQuillField, ident: string) {
+  if (mq.__controller) {
+    return !!mq.__controller.options.autoCommands[ident];
+  } else {
+    return mq.controller!.getConfig().autoCommands.has(ident);
+  }
 }
 
 export abstract class MathQuillViewComponent extends ClassComponent<{

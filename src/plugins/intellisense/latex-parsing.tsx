@@ -349,10 +349,11 @@ export function getCorrectableIdentifier(mq: MathQuillField): {
   ident: string;
   back: () => void;
 } {
-  let node = getCursor(mq)?.nodeBefore();
+  const cursor = getCursor(mq);
+  let node = cursor?.nodeBefore();
 
-  const isInSubscript =
-    mq.__controller.cursor?.parent?._el?.classList.contains("dcg-mq-sub");
+  const parentGroup = cursor?.parentGroup();
+  const isInSubscript = parentGroup && isSubscript(parentGroup);
 
   // don't bother if you're in a subscript
   if (isInSubscript) {
