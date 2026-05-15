@@ -30,6 +30,8 @@ const settingsEvents = [
   "set-graph-settings",
   "zoom",
   "resize-exp-list", // resize-exp-list can update viewport size
+  "set-lock-rotation",
+  "toggle-disable-lighting",
 ] as const;
 
 type ToChange = "table-columns" | "latex-only" | "image-pos" | "regression";

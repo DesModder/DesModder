@@ -79,6 +79,8 @@ export interface GraphSettings {
   axis3D?: number[];
   speed3D?: number;
   worldRotation3D?: number[];
+  userLockedRotation?: boolean;
+  disableLighting?: boolean;
 }
 
 export type ArrowMode = "NONE" | "POSITIVE" | "BOTH";

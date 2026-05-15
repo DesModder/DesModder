@@ -34,6 +34,8 @@ export const settings: Hydrated.Settings = {
     0.7681777567114166, -0.555570233019602, 0.3181896451432085,
     -0.3826834323650897, 0, 0.9238795325112867,
   ],
+  lockRotation: false,
+  disableLighting: false,
 };
 
 export const ticker: Hydrated.Ticker = {

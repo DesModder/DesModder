@@ -17,12 +17,13 @@ import {
   updateRule,
   wrappedSeq,
 } from "../aug/augBuilders";
-import astToAug from "./astToAug";
+import astToAug, { processSettings } from "./astToAug";
 import { error, warning } from "./diagnostics";
 import { IncrementalState, parse } from "./textToAST";
 import type { Diagnostic } from "@codemirror/lint";
 // eslint-disable-next-line @desmodder/eslint-rules/no-external-imports
 import { test, expect as _expect, describe } from "@jest/globals";
+import { settings as defaultSettings } from "./style/defaults";
 
 const cfg = buildConfig({});
 
@@ -109,7 +110,7 @@ const folderDefaults = {
   secret: false,
 } as const;
 
-const defaultSettings: Aug.GraphSettings = {
+const emptySettings: Aug.GraphSettings = {
   viewport: {},
 };
 
@@ -1181,7 +1182,7 @@ describe("Automatic IDs", () => {
 });
 
 describe("Settings", () => {
-  testSettings("No settings expr", `1`, defaultSettings);
+  testSettings("No settings expr", `1`, emptySettings);
   testSettings(
     "All settings",
     `settings @{
@@ -1211,7 +1212,7 @@ describe("Settings", () => {
       squareAxes: false,
       restrictGridToFirstQuadrant: true,
       polarMode: false,
-      lockViewport: true
+      lockViewport: true,
     }`,
     {
       randomSeed: "abc",
@@ -1241,6 +1242,36 @@ describe("Settings", () => {
       restrictGridToFirstQuadrant: true,
       polarMode: false,
       userLockedViewport: true,
+    }
+  );
+  testSettings(
+    "All 3D settings",
+    `settings @{
+      product: "graphing-3d",
+      lockRotation: true,
+      disableLighting: true,
+      speed3D: 5,
+      axis3D: [
+        1.1,
+        2.2,
+        3.3,
+      ],
+      worldRotation3D: [
+        -0.1, -0.2, -0.3,
+        0.1, 0.2, 0.3,
+        1, -2, 3,
+      ],
+    }`,
+    {
+      ...processSettings({
+        ...defaultSettings,
+        product: "graphing-3d",
+      }),
+      userLockedRotation: true,
+      disableLighting: true,
+      speed3D: 5,
+      axis3D: [1.1, 2.2, 3.3],
+      worldRotation3D: [-0.1, -0.2, -0.3, 0.1, 0.2, 0.3, 1, -2, 3],
     }
   );
 });

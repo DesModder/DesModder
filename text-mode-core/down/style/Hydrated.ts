@@ -58,6 +58,8 @@ export interface Settings {
   axis3D?: number[];
   speed3D?: number;
   worldRotation3D?: number[];
+  lockRotation?: boolean;
+  disableLighting?: boolean;
 }
 
 export interface Ticker {

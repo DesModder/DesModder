@@ -51,7 +51,9 @@ export type VanillaDispatchedEvent =
         | "ui/container-resized"
         | "toggle-complex-mode"
         | "new-expression"
-        | "new-expression-at-end";
+        | "new-expression-at-end"
+        | "set-lock-rotation"
+        | "toggle-disable-lighting";
     }
   | {
       type: "commit-user-requested-viewport";

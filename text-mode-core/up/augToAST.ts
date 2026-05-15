@@ -58,6 +58,8 @@ export function graphSettingsToAST(
       axis3D: numberArrayToASTmaybe(settings.axis3D),
       speed3D: numberToASTmaybe(settings.speed3D),
       worldRotation3D: numberArrayToASTmaybe(settings.worldRotation3D),
+      lockRotation: booleanToAST(settings.userLockedRotation, false),
+      disableLighting: booleanToAST(settings.disableLighting, false),
     }),
   };
 }

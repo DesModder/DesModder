@@ -66,6 +66,8 @@ export const settings: Schema = {
   },
   speed3D: "number",
   worldRotation3D: { type: "number[]", length: 9 },
+  lockRotation: "boolean",
+  disableLighting: "boolean",
 };
 
 export const ticker: Schema = {

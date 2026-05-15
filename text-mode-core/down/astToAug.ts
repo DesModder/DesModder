@@ -313,11 +313,22 @@ function settingsToAug(
     "settings"
   );
   if (hydrated === null) return null;
+  return {
+    type: "settings",
+    settings: processSettings(hydrated),
+  };
+}
+
+export function processSettings(
+  hydrated: Hydrated.Settings
+): Hydrated.Settings {
   const res = {
     ...hydrated,
     userLockedViewport: hydrated.lockViewport,
+    userLockedRotation: hydrated.lockRotation,
   };
   delete res.lockViewport;
+  delete res.lockRotation;
   if (res.product !== "graphing-3d") {
     res.viewport = { ...res.viewport };
     delete res.viewport?.zmin;
@@ -325,11 +336,13 @@ function settingsToAug(
     delete res.axis3D;
     delete res.speed3D;
     delete res.worldRotation3D;
+    delete res.userLockedRotation;
+    delete res.disableLighting;
   }
   if (res.product === "graphing") {
     delete res.product;
   }
-  return { type: "settings", settings: res };
+  return res;
 }
 
 function columnExpressionCommonStyle(
