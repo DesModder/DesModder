@@ -95,8 +95,6 @@ export default class Intellisense extends PluginController<{
   jumpToDefState: JumpToDefinitionMenuInfo | undefined;
   jumpToDefIndex: number = 0;
 
-  specialIdentifierNames: string[] = [];
-
   getSelectedExpressionID(): string | undefined {
     return this.cc.getSelectedItem()?.id;
   }
@@ -308,22 +306,6 @@ export default class Intellisense extends PluginController<{
   goToPrevIntellisenseCol() {
     this.intellisenseIndex = Math.max(this.intellisenseIndex - 1, 0);
   }
-
-  focusInHandler = () => {
-    setIntellisenseTimeout(() => {
-      if (
-        this.calc.focusedMathQuill &&
-        this.specialIdentifierNames.length === 0
-      ) {
-        this.specialIdentifierNames = [
-          ...Object.keys(
-            this.calc.focusedMathQuill.mq.__options.autoOperatorNames
-          ),
-          ...Object.keys(this.calc.focusedMathQuill.mq.__options.autoCommands),
-        ];
-      }
-    });
-  };
 
   onMQKeystroke(key: string, _: KeyboardEvent): undefined | "cancel" {
     if (
@@ -618,10 +600,6 @@ export default class Intellisense extends PluginController<{
     // disable intellisense when switching expressions
     document.addEventListener("focusout", this.focusOutHandler);
 
-    // override the mathquill keystroke handler so that it opens the
-    // intellisense menu when I want it to
-    document.addEventListener("focusin", this.focusInHandler);
-
     // general intellisense keyboard handler
     document.addEventListener("keydown", this.keyDownHandler);
 
@@ -735,7 +713,6 @@ export default class Intellisense extends PluginController<{
 
     // clear event listeners
     document.removeEventListener("focusout", this.focusOutHandler);
-    document.removeEventListener("focusin", this.focusInHandler);
     document.removeEventListener("keydown", this.keyDownHandler);
     document.removeEventListener("keyup", this.keyUpHandler);
     document.removeEventListener("mouseup", this.mouseUpHandler);
