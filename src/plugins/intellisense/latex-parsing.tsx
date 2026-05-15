@@ -1,6 +1,6 @@
 import { ExpressionAug } from "../../../text-mode-core";
 import { latexStringToIdentifierString } from "./view";
-import { MQCursor, MathQuillField } from "#components";
+import { MathQuillField } from "#components";
 
 export function mapAugAST(
   node: ExpressionAug["latex"],
@@ -28,6 +28,83 @@ export function mapAugAST(
   map(node);
 }
 
+class MqNodeViaDom {
+  mq: MathQuillField;
+  domNode: Element;
+
+  constructor(mq: MathQuillField, domNode: Element) {
+    this.mq = mq;
+    this.domNode = domNode;
+  }
+
+  parent() {
+    if (this.domNode.classList.contains("dcg-mq-root-block")) {
+      return undefined;
+    }
+    const parent = this.domNode.parentElement;
+    if (!parent) return undefined;
+    return new MqNodeViaDom(this.mq, parent);
+  }
+
+  nextSibling(): MqNodeViaDom | undefined {
+    let sibling = this.domNode.nextElementSibling;
+    while (sibling?.classList.contains("dcg-mq-cursor")) {
+      sibling = sibling.nextElementSibling;
+    }
+    if (sibling) return new MqNodeViaDom(this.mq, sibling);
+    return undefined;
+  }
+
+  prevSibling(): MqNodeViaDom | undefined {
+    let sibling = this.domNode.previousElementSibling;
+    while (sibling?.classList.contains("dcg-mq-cursor")) {
+      sibling = sibling.previousElementSibling;
+    }
+    if (sibling) return new MqNodeViaDom(this.mq, sibling);
+    return undefined;
+  }
+
+  latex() {
+    const span = this.mq.domNodeToSpan(this.domNode);
+    if (!span) return "";
+    return span.latex.slice(span.startIndex, span.endIndex);
+  }
+}
+
+class MqCursorViaDom {
+  mq: MathQuillField;
+  domCursor: Element;
+
+  constructor(mq: MathQuillField, domCursor: Element) {
+    this.mq = mq;
+    this.domCursor = domCursor;
+  }
+
+  nodeBefore(): MqNodeViaDom | undefined {
+    const sibling = this.domCursor.previousElementSibling;
+    if (sibling) return new MqNodeViaDom(this.mq, sibling);
+    else return undefined;
+  }
+
+  nodeAfter(): MqNodeViaDom | undefined {
+    const sibling = this.domCursor.nextElementSibling;
+    if (sibling) return new MqNodeViaDom(this.mq, sibling);
+    else return undefined;
+  }
+
+  parentGroup() {
+    const parent = this.domCursor.parentElement;
+    if (!parent) throw new Error("Invalid cursor.");
+    return new MqNodeViaDom(this.mq, parent);
+  }
+}
+
+export function getCursor(mq: MathQuillField) {
+  const cursorDom = mq.el().querySelector(".dcg-mq-cursor");
+  if (!cursorDom) return undefined;
+  return new MqCursorViaDom(mq, cursorDom);
+}
+
 export function getController(mq: MathQuillField) {
   return mq.__controller;
 }
@@ -47,13 +124,18 @@ export interface TryFindMQIdentResult {
   type: string;
 }
 
-// is an MQ node a subscript?
-function isSubscript(cursor: MQCursor) {
-  return getSubscriptInside(cursor) !== undefined;
+/** is an MQ node a subscript? */
+// TODO-jared-mq-compat: this can just check classList.contains("dcg-mq-sub")
+function isSubscript(node: MqNodeViaDom) {
+  return getSubscriptInside(node) !== undefined;
 }
 
-function getSubscriptInside(cursor: MQCursor) {
-  const ltx = cursor.latex?.();
+/**
+ * If `node` is a subscript, return the contents of the subscript.
+ * Otherwise return undefined.
+ */
+function getSubscriptInside(node: MqNodeViaDom): string | undefined {
+  const ltx = node.latex();
   if (!ltx) {
     return undefined;
   }
@@ -66,61 +148,69 @@ function getSubscriptInside(cursor: MQCursor) {
   return undefined;
 }
 
-// is an MQ node an operator name?
-function isOperatorName(cursor: MQCursor) {
-  return cursor._el?.classList.contains("dcg-mq-operator-name") ?? false;
+/** is an MQ node an operator name? */
+function isOperatorName(node: MqNodeViaDom) {
+  return node.domNode.classList.contains("dcg-mq-operator-name");
 }
 
-// is am MQ node a digit?
-function isDigit(cursor: MQCursor) {
-  return cursor._el?.classList.contains("dcg-mq-digit") ?? false;
+/** is an MQ node a digit? */
+function isDigit(node: MqNodeViaDom) {
+  return node.domNode.classList.contains("dcg-mq-digit");
 }
 
-// is an MQ node the start of an operator name?
-function isStartingOperatorName(cursor: MQCursor) {
-  return isOperatorName(cursor) && cursor.latex?.()?.[0] === "\\";
+/** is an MQ node the start of an operator name */
+function isStartingOperatorName(node: MqNodeViaDom) {
+  return isOperatorName(node) && node.latex().startsWith("\\");
 }
 
-// is an MQ node a variable name
-function isVarName(cursor: MQCursor) {
-  return cursor._el?.tagName.toUpperCase() === "VAR" && !isOperatorName(cursor);
+/** is an MQ node a variable name */
+function isVarName(node: MqNodeViaDom) {
+  return node.domNode.tagName.toUpperCase() === "VAR" && !isOperatorName(node);
 }
 
-function isIdentifierSegment(cursor?: MQCursor): cursor is MQCursor {
-  if (cursor === undefined) return false;
-  return (
-    isSubscript(cursor) ||
-    isOperatorName(cursor) ||
-    isStartingOperatorName(cursor) ||
-    isVarName(cursor)
-  );
+function isIdentifierSegment(node: MqNodeViaDom) {
+  return isSubscript(node) || isOperatorName(node) || isVarName(node);
 }
 
 // identifiers are composed of the following structure:
 // (operatorname* | varname) subscript?
 
 function rawTryGetMathquillIdent(
-  node: MQCursor | undefined,
-  cursor: MQCursor | undefined = node
+  node: MqNodeViaDom | undefined,
+  cursor: MqCursorViaDom | undefined
 ) {
-  const latexSegments: (string | undefined)[] = [];
-
-  const isInSubscript = cursor?.parent?._el?.classList.contains("dcg-mq-sub");
+  const isInSubscript = !!cursor && isSubscript(cursor.parentGroup());
 
   let goToEnd = 0;
 
   if (isInSubscript) {
-    node = cursor;
-    while (node?.[1]) {
+    let newNode = cursor?.nodeAfter();
+    while (newNode) {
       goToEnd++;
-      node = node?.[1];
+      newNode = newNode?.nextSibling();
     }
-    node = node?.parent?.parent;
+    // node will be the dcg-mq-supsub
+    node = cursor?.parentGroup().parent();
   }
 
+  return finalGetMathquillIdent(node, goToEnd, isInSubscript);
+}
+
+function getMathquillIdentLatex(node: MqNodeViaDom | undefined) {
+  return finalGetMathquillIdent(node, 0, false)?.ident;
+}
+
+function finalGetMathquillIdent(
+  node: MqNodeViaDom | undefined,
+  goToEnd: number,
+  isInSubscript: boolean
+) {
+  const latexSegments: (string | undefined)[] = [];
+
+  // Move before a subscript
   while (node && !isStartingOperatorName(node) && !isVarName(node)) {
     if (!isIdentifierSegment(node)) return;
-    node = node[-1];
+    node = node.prevSibling();
     goToEnd--;
   }
   if (!node) return;
@@ -130,7 +220,7 @@ function rawTryGetMathquillIdent(
   // get starting variable name
   if (isVarName(node)) {
     latexSegments.push(node.latex?.());
-    node = node[1];
+    node = node.nextSibling();
     goToEnd++;
     backspaces++;
 
@@ -138,7 +228,7 @@ function rawTryGetMathquillIdent(
   } else if (isStartingOperatorName(node)) {
     while (node && isOperatorName(node)) {
       latexSegments.push(node.latex?.());
-      node = node[1];
+      node = node.nextSibling();
       goToEnd++;
       backspaces++;
     }
@@ -181,9 +271,8 @@ function rawTryGetMathquillIdent(
 function tryGetMathquillIdent(
   mq: MathQuillField
 ): TryFindMQIdentResult | undefined {
-  const ctrlr = getController(mq);
-
-  const v = rawTryGetMathquillIdent(ctrlr.cursor[-1], ctrlr.cursor);
+  const cursor = getCursor(mq);
+  const v = rawTryGetMathquillIdent(cursor?.nodeBefore(), cursor);
   if (!v) return;
   const ident = latexStringToIdentifierString(v.ident);
   if (!ident) return;
@@ -217,21 +306,30 @@ export interface PartialFunctionCall {
 export function getPartialFunctionCall(
   mq: MathQuillField
 ): PartialFunctionCall | undefined {
-  let cursor: MQCursor | undefined = getController(mq).cursor;
-  while (cursor) {
+  const cursor: MqCursorViaDom | undefined = getCursor(mq);
+  /**
+   * If we haven't gone to any parents yet,
+   * `nodeBeforeCursor` is the actual node left of the cursor, such as
+   * "x" in `f(x<!>)`, where `<!>` is the cursor.
+   * But if it's something like `f([x<!>])`, after the first iteration,
+   * `nodeBeforeCursor` will be `[x]`, so it's really the node containing the cursor.
+   */
+  let nodeBeforeCursor = cursor?.nodeBefore();
+  let parentGroup = cursor?.parentGroup();
+  while (parentGroup) {
     // Check if it looks like a function call.
-    const parentheses = cursor.parent?.parent;
-    const nodeBeforeParentheses = parentheses?.[-1];
+    const parentheses = parentGroup.parent();
+    const nodeBeforeParentheses = parentheses?.prevSibling();
 
-    const ltx = rawTryGetMathquillIdent(nodeBeforeParentheses)?.ident;
-    if (ltx && isIdentStr(ltx) && parentheses?.ctrlSeq === "\\left(") {
+    const ltx = getMathquillIdentLatex(nodeBeforeParentheses);
+    if (ltx && isIdentStr(ltx) && parentheses?.latex().startsWith("\\left(")) {
       // Count number of commas to left of cursor.
       let paramIndex = 0;
-      let scanNode = cursor?.[-1];
+      let scanNode = nodeBeforeCursor;
       while (scanNode) {
         const ltx = scanNode.latex?.();
         if (ltx === ",") paramIndex++;
-        scanNode = scanNode[-1];
+        scanNode = scanNode.prevSibling();
       }
       return {
         ident: latexStringToIdentifierString(ltx)!,
@@ -240,7 +338,10 @@ export function getPartialFunctionCall(
     }
 
     // Else go to the parent.
-    cursor = cursor.parent?.parent;
+    // cursor = cursor.parent?.parent;
+    const parentNode = parentGroup.parent();
+    parentGroup = parentNode?.parent();
+    nodeBeforeCursor = parentNode;
   }
 }
 
@@ -248,7 +349,7 @@ export function getCorrectableIdentifier(mq: MathQuillField): {
   ident: string;
   back: () => void;
 } {
-  let cursor: MQCursor | undefined = mq.__controller.cursor[-1];
+  let node = getCursor(mq)?.nodeBefore();
 
   const isInSubscript =
     mq.__controller.cursor?.parent?._el?.classList.contains("dcg-mq-sub");
@@ -261,17 +362,14 @@ export function getCorrectableIdentifier(mq: MathQuillField): {
   const identifierSegments: string[] = [];
   const segmentGoBackLengths: number[] = [];
 
-  while (cursor) {
-    const subscriptInside = getSubscriptInside(cursor);
+  while (node) {
+    const subscriptInside = getSubscriptInside(node);
     const isSubscript = subscriptInside !== undefined;
     const isValid =
-      isOperatorName(cursor) ||
-      isVarName(cursor) ||
-      isSubscript ||
-      isDigit(cursor);
+      isOperatorName(node) || isVarName(node) || isSubscript || isDigit(node);
     if (!isValid) break;
 
-    const ltx = cursor?.latex?.();
+    const ltx = node.latex();
     if (ltx === undefined) break;
     const filteredLatex = ltx.replace(/[^a-zA-Z0-9]/g, "");
     // MathQuill considers "." to be a digit, so filter out that case.
@@ -281,7 +379,7 @@ export function getCorrectableIdentifier(mq: MathQuillField): {
     const goBack = isSubscript ? subscriptInside.length : 1;
     segmentGoBackLengths.push(goBack);
 
-    cursor = cursor[-1];
+    node = node.prevSibling();
   }
 
   identifierSegments.reverse();
