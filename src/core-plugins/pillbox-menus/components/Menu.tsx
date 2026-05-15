@@ -9,6 +9,7 @@ import {
   IfElse,
   IconButton,
   Switch,
+  SegmentedControl,
 } from "#components";
 import { format } from "#i18n";
 import {
@@ -19,6 +20,7 @@ import {
   PluginID,
   plugins,
   ConfigItemNumber,
+  ConfigItemEnum,
 } from "#plugins/index.ts";
 import PillboxMenus from "..";
 import "./Menu.less";
@@ -201,6 +203,13 @@ export default class Menu extends Component<{
                     booleanOption(this.pm, item, plugin, pluginSettings),
                   string: () =>
                     stringOption(this.pm, item, plugin, pluginSettings),
+                  enum: () =>
+                    enumOption(
+                      this.pm,
+                      item as ConfigItemEnum,
+                      plugin,
+                      pluginSettings
+                    ),
                   number: () =>
                     numberOption(this.pm, item, plugin, pluginSettings),
                   "color-list": () =>
@@ -428,6 +437,35 @@ function stringOption(
         </label>
       </Tooltip>
       <ResetButton pm={pm} key={item.key} />
+    </div>
+  );
+}
+
+function enumOption(
+  pm: PillboxMenus,
+  item: ConfigItemEnum,
+  plugin: SpecificPlugin,
+  settings: GenericSettings
+) {
+  return (
+    <div class="dsm-settings-item dsm-settings-enum">
+      <SegmentedControl
+        names={item.options}
+        selectedIndex={() => {
+          const i = item.options.findIndex((e) => e === settings[item.key]);
+          if (i === -1) return 0;
+          return i;
+        }}
+        setSelectedIndex={(i) =>
+          pm.dsm.setPluginSetting(plugin.id, item.key, item.options[i])
+        }
+        ariaGroupLabel={() => format(item.key)}
+      />
+      <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
+        <div class="dsm-settings-label" tabindex={0}>
+          {configItemName(plugin, item)}
+        </div>
+      </Tooltip>
     </div>
   );
 }

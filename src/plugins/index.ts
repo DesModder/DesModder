@@ -68,9 +68,16 @@ export interface ConfigItemColorList extends ConfigItemGeneric {
   default: string[];
 }
 
+export interface ConfigItemEnum extends ConfigItemGeneric {
+  type: "enum";
+  options: string[];
+  default: string;
+}
+
 export type ConfigItem =
   | ConfigItemBoolean
   | ConfigItemString
+  | ConfigItemEnum
   | ConfigItemNumber
   | ConfigItemColorList;
 

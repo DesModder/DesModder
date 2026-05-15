@@ -10,7 +10,7 @@ import { format } from "#i18n";
 import ManagedNumberInput from "./ManagedNumberInput";
 import { OrientationView } from "./OrientationView";
 
-const fileTypeNames: OutFileType[] = [
+export const fileTypeNames: OutFileType[] = [
   "gif",
   "mp4",
   "webm",

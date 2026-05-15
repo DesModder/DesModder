@@ -22,6 +22,12 @@ export const configList: ConfigItem[] = [
     default: true,
     shouldShow: (current: Config) => current.lists && current.colors,
   },
+  {
+    key: "listsTEMP",
+    type: "enum",
+    options: ["none", "old", "new"],
+    default: "new",
+  },
 ];
 
 export interface Config {
@@ -29,4 +35,5 @@ export interface Config {
   lists: boolean;
   colors: boolean;
   colorLists: boolean;
+  listsTEMP: "none" | "old" | "new";
 }
