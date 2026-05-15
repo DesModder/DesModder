@@ -8,6 +8,8 @@ import {
   getController,
   mqKeystroke,
 } from "#plugins/intellisense/latex-parsing.tsx";
+import { getCursorHead } from "../../mathquill/mq-cursor";
+import { MqNodeViaDom } from "../../mathquill/mq-node";
 
 export const R = 1;
 export const L = -1;
@@ -19,11 +21,20 @@ function focusmq(mq: MathQuillField | undefined) {
 }
 
 function isNextToTripleSpaceLineBreak(mq: MathQuillField, dir: Dir) {
+  const cursor = getCursorHead(mq);
+  if (!cursor) return false;
+  const node1 = cursor.nodeInDirection(dir);
+  const node2 = node1?.siblingInDirection(dir);
+  const node3 = node2?.siblingInDirection(dir);
   return (
-    getController(mq).cursor[dir]?._el?.dataset.isManualLineBreak &&
-    getController(mq).cursor[dir]?.[dir]?._el?.dataset.isManualLineBreak &&
-    getController(mq).cursor[dir]?.[dir]?.[dir]?._el?.dataset.isManualLineBreak
+    isManualLineBreak(node1) &&
+    isManualLineBreak(node2) &&
+    isManualLineBreak(node3)
   );
+}
+
+function isManualLineBreak(node: MqNodeViaDom | undefined) {
+  return (node?.domNode as HTMLElement | undefined)?.dataset.isManualLineBreak;
 }
 
 export default class Multiline extends PluginController<Config> {
@@ -191,7 +202,7 @@ export default class Multiline extends PluginController<Config> {
       if (mq) {
         mq.typedText("   ");
         this.enqueueVerticalifyOperation(
-          mq.__controller.container.querySelector(".dcg-mq-root-block")!
+          mq.el().querySelector(".dcg-mq-root-block")!
         );
         setTimeout(() => {
           this.dequeueAllMultilinifications();
@@ -247,23 +258,18 @@ export default class Multiline extends PluginController<Config> {
   }
 
   findCursorX() {
-    const cursor = document.querySelector(".dcg-mq-cursor");
+    const container = this.calc.focusedMathQuill?.mq.el();
+    if (!container) {
+      this.lastRememberedCursorX = undefined;
+      return;
+    }
+    const cursor = container.querySelector(".dcg-mq-cursor");
     if (cursor) {
       this.lastRememberedCursorX = cursor.getBoundingClientRect().left;
-    } else {
-      let xpos =
-        this.calc.focusedMathQuill?.mq.__controller.cursor?.[
-          -1
-        ]?._el?.getBoundingClientRect()?.right;
-      if (xpos !== undefined) {
-        this.lastRememberedCursorX = xpos;
-      } else {
-        xpos =
-          this.calc.focusedMathQuill?.mq.__controller.cursor?.[1]?._el?.getBoundingClientRect()
-            ?.left;
-        this.lastRememberedCursorX = xpos;
-      }
+      return;
     }
+    const selection = container.querySelector(".dcg-mq-selection");
+    this.lastRememberedCursorX = selection?.getBoundingClientRect()?.left;
   }
 
   mousedownHandler = () => {
@@ -392,42 +398,48 @@ export default class Multiline extends PluginController<Config> {
     const cursorPositions: number[] = [];
 
     const ctrlr = getController(focusedmq);
-    const domfragProto = Object.getPrototypeOf(ctrlr.cursor.domFrag());
+    let cleanup;
+    if (ctrlr) {
+      const domfragProto = Object.getPrototypeOf(ctrlr.cursor.domFrag());
 
-    // prevent the cursor from updating html elements
-    // by monkey patching the domfrag prototype
-    const { insAtDirEnd, insDirOf, removeClass, addClass } = domfragProto;
-    domfragProto.insAtDirEnd = function () {
-      return this;
-    };
-    domfragProto.insDirOf = function () {
-      return this;
-    };
-    domfragProto.removeClass = function () {
-      return this;
-    };
-    domfragProto.addClass = function () {
-      return this;
-    };
+      // prevent the cursor from updating html elements
+      // by monkey patching the domfrag prototype
+      const { insAtDirEnd, insDirOf, removeClass, addClass } = domfragProto;
+      domfragProto.insAtDirEnd = function () {
+        return this;
+      };
+      domfragProto.insDirOf = function () {
+        return this;
+      };
+      domfragProto.removeClass = function () {
+        return this;
+      };
+      domfragProto.addClass = function () {
+        return this;
+      };
 
-    // return the domfrag prototype to normal
-    const cleanup = () => {
-      domfragProto.insAtDirEnd = insAtDirEnd;
-      domfragProto.removeClass = removeClass;
-      domfragProto.addClass = addClass;
-      domfragProto.insDirOf = insDirOf;
-      if (select) {
-        mqKeystroke(focusedmq, oppositeArrowdir);
-        mqKeystroke(focusedmq, arrowdir);
-      }
-    };
+      // return the domfrag prototype to normal
+      cleanup = () => {
+        domfragProto.insAtDirEnd = insAtDirEnd;
+        domfragProto.removeClass = removeClass;
+        domfragProto.addClass = addClass;
+        domfragProto.insDirOf = insDirOf;
+        if (select) {
+          mqKeystroke(focusedmq, oppositeArrowdir);
+          mqKeystroke(focusedmq, arrowdir);
+        }
+      };
+    } else {
+      // new MQ: no monkey patching?
+      cleanup = () => {};
+    }
 
     // ended with break statements
     while (true) {
       // get cursor and adjacent element so we can figure out
       // if it's a line break
-      const ctrlr = getController(focusedmq);
-      let next = ctrlr.cursor?.[up ? L : R]?._el;
+      const cursor = getCursorHead(focusedmq);
+      let next = cursor?.nodeInDirection(up ? L : R)?.domNode;
 
       // are we getting the right side or the left side
       // of the element? (e.g. the bounding client rect "left" or "right" property)
@@ -439,7 +451,7 @@ export default class Multiline extends PluginController<Config> {
       // if we can't directly get the next element (e.g. end of a parenthesis block),
       // shift the cursor so that we can get access to it from the "other side"
       if (!next) {
-        next = ctrlr.cursor?.[up ? R : L]?._el;
+        next = cursor?.nodeInDirection(up ? R : L)?.domNode;
         isNextRight = !isNextRight;
       }
 

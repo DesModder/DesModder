@@ -71,6 +71,10 @@ export class MqNodeViaDom {
     return undefined;
   }
 
+  siblingInDirection(dir: 1 | -1): MqNodeViaDom | undefined {
+    return dir === -1 ? this.prevSibling() : this.nextSibling();
+  }
+
   latex() {
     const span = this.mq.domNodeToSpan(this.domNode);
     if (!span) return "";
