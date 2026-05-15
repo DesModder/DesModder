@@ -34,7 +34,8 @@ export default createRule({
         if (!program || !checker) return;
         if (
           node.callee.type === AST_NODE_TYPES.Identifier &&
-          node.callee.name === "format"
+          (node.callee.name === "format" ||
+            node.callee.name === "fromFormattable")
         ) {
           const { filename } = context;
           const calleeTsNode =
