@@ -4,7 +4,9 @@ document.body.dataset.loadData = JSON.stringify({ seed: "c29cb3444b1c435c8e4422a
 document.body.innerHTML = `
   <div class="dcg-sliding-interior">
     <div id="dcg-header-container"></div>
-    <div id="graph-container"></div>
+    <div id="dcg-main-content">
+      <div id="graph-container"></div>
+    </div>
   </div>
 
   <div id="mygraphs-container"></div>
