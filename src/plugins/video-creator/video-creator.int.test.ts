@@ -110,10 +110,15 @@ testWithPageAndOpts(
   }
 );
 
-testWithPageAndOpts(
+testWithPage(
   "getCurrentGraphTitle should work for titled graphs",
-  { path: "/calculator/jhuyewt32p" },
   async (driver) => {
+    await driver.click(".dcg-open-my-graphs-button");
+    await driver.click(".dcg-my-graphs-modal-examples-header");
+    await driver.click("::-p-text(Lines: Slope Intercept Form)");
+    await driver.page.waitForSelector(
+      "::-p-text(Opened 'Lines: Slope Intercept Form')"
+    );
     const title = await driver.evaluate(() =>
       (window as any).DSM.videoCreator.util.getCurrentGraphTitle()
     );
