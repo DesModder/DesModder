@@ -27,8 +27,12 @@ export interface DWindow extends Window {
     pluginsEnabled: Record<PluginID, boolean | undefined>;
     pluginSettings: Record<PluginID, GenericSettings | undefined>;
   };
-  // DesModderFragile: {};
   Desmos: Desmos;
+  shellController: {
+    graphsController: {
+      getCurrentGraphTitle: () => string;
+    };
+  };
 }
 
 type DesmosPublic = typeof Desmos;
