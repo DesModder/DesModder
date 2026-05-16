@@ -206,14 +206,6 @@ export interface TimingData {
   updateIntersections: number;
 }
 
-export interface TopLevelComponents {
-  mygraphsController: {
-    graphsController: {
-      getCurrentGraphTitle: () => string | undefined;
-    };
-  };
-}
-
 export interface Toast {
   message: string;
   undoCallback?: () => void;
@@ -380,9 +372,6 @@ interface CalcPrivate {
       constructor: { fromObject: (vp: Viewport) => ViewportClass };
     };
     destroy: () => void;
-  };
-  _calc: {
-    globalHotkeys: TopLevelComponents;
   };
   /// / public
 

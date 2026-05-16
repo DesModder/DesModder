@@ -1,4 +1,4 @@
-import { testWithPageAndOpts } from "#tests";
+import { testWithPageAndOpts, clean, testWithPage } from "#tests";
 
 const CAPTURE = ".dsm-pillbox-popover .dsm-vc-capture-menu";
 const PREVIEW = ".dsm-pillbox-popover .dsm-vc-preview-menu";
@@ -85,3 +85,43 @@ describe("Video Creator", () => {
     }
   );
 });
+
+testWithPage(
+  "getCurrentGraphTitle should give undefined for untitled graphs",
+  async (driver) => {
+    const title = await driver.evaluate(() =>
+      (window as any).DSM.videoCreator.util.getCurrentGraphTitle()
+    );
+    expect(title).toEqual(undefined);
+
+    return clean;
+  }
+);
+
+testWithPageAndOpts(
+  "getCurrentGraphTitle should give undefined for untitled geometry",
+  // Separate test here because geometry just says "Untitled" instead of "Untitled Graph"
+  { path: "/geometry" },
+  async (driver) => {
+    const title = await driver.evaluate(() =>
+      (window as any).DSM.videoCreator.util.getCurrentGraphTitle()
+    );
+    expect(title).toEqual(undefined);
+  }
+);
+
+testWithPage(
+  "getCurrentGraphTitle should work for titled graphs",
+  async (driver) => {
+    await driver.click(".dcg-open-my-graphs-button");
+    await driver.click(".dcg-my-graphs-modal-examples-header");
+    await driver.click("::-p-text(Lines: Slope Intercept Form)");
+    await driver.page.waitForSelector(
+      "::-p-text(Opened 'Lines: Slope Intercept Form')"
+    );
+    const title = await driver.evaluate(() =>
+      (window as any).DSM.videoCreator.util.getCurrentGraphTitle()
+    );
+    expect(title).toEqual("Lines: Slope Intercept Form");
+  }
+);
