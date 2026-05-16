@@ -1,4 +1,4 @@
-import { type Calc, DWindow, Fragile, Private, Toast } from "#globals";
+import { type Calc, Fragile, Private, Toast } from "#globals";
 import { Formattable, fromFormattable } from "#i18n";
 
 const { evaluateLatex } = Fragile;
@@ -23,9 +23,7 @@ export const autoCommands = Private?.MathquillConfig?.getAutoCommands?.();
 export const autoOperatorNames = Private?.MathquillConfig?.getAutoOperators?.();
 
 export function getCurrentGraphTitle(calc: Calc): string | undefined {
-  const title = (
-    window as any as DWindow
-  ).shellController.graphsController.getCurrentGraphTitle();
+  const title = window.shellController.graphsController.getCurrentGraphTitle();
   if (
     title === calc.controller.s("account-shell-text-untitled-graph") ||
     title === calc.controller.s("account-shell-text-untitled")
