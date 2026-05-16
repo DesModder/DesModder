@@ -112,7 +112,7 @@ testWithPageAndOpts(
 
 testWithPageAndOpts(
   "getCurrentGraphTitle should work for titled graphs",
-  { path: "/calculator/clqqw0vgvu" },
+  { path: "/calculator/jhuyewt32p" },
   async (driver) => {
     const title = await driver.evaluate(() =>
       (window as any).DSM.videoCreator.util.getCurrentGraphTitle()
