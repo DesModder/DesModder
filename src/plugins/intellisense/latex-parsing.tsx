@@ -50,9 +50,8 @@ export interface TryFindMQIdentResult {
 }
 
 /** is an MQ node a subscript? */
-// TODO-mq-compat: this can just check classList.contains("dcg-mq-sub")
 function isSubscript(node: MqNodeViaDom) {
-  return getSubscriptInside(node) !== undefined;
+  return node.domNode.classList.contains("dcg-mq-sub");
 }
 
 /**

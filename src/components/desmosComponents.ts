@@ -114,8 +114,6 @@ export interface MathQuillField {
 }
 
 // TODO-mq-compat-when-single: reduce these
-// TODO-mq-compat: isAutoOperatorName and isAutoCommand are hacks
-// that could be done better maybe.
 export function isAutoOperatorName(mq: MathQuillField, ident: string) {
   if (mq.__controller) {
     return !!mq.__controller.options.autoOperatorNames[ident];
