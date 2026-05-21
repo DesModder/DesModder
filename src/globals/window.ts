@@ -12,7 +12,6 @@ import {
   MathQuillViewComponent,
   SegmentedControlComponent,
   TooltipComponent,
-  MathQuillConfig,
   DropdownPopoverComponent,
 } from "../components/desmosComponents";
 import { GenericSettings, PluginID } from "../plugins";
@@ -46,7 +45,6 @@ interface Desmos extends DesmosPublic {
     MathquillConfig: MathquillConfig;
   };
   MathQuill: {
-    config: (config: MathQuillConfig) => Desmos["MathQuill"];
     getApiInstanceForElement: (el: Element) => null | MathQuillApi;
   };
 }

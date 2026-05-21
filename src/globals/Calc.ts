@@ -1,6 +1,6 @@
 import { ItemModel } from "./models";
 import { GraphState, ItemState, Product } from "../../graph-state";
-import { MathQuillField } from "#components";
+import { MathQuillConfig, MathQuillField } from "#components";
 import { Matrix3 } from "./matrix3";
 import type { DispatchedEvent } from "./extra-actions";
 
@@ -344,10 +344,9 @@ interface CalcPrivate {
     subscribeToChanges: (cb: () => void) => () => void;
     getBackgroundColor: () => string;
     isInEditListMode: () => boolean;
-    getMathquillConfig: (e: { additionalOperators?: string[] }) => {
-      autoOperatorNames: string;
-      autoCommands: string;
-    };
+    getMathquillConfig: (e: {
+      additionalOperators?: string[];
+    }) => MathQuillConfig;
     is3dProduct: () => boolean;
     grapher3d?: Grapher3d;
     getGrapher: () => {
