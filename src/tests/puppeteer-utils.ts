@@ -1,4 +1,3 @@
-import { DWindow } from "../globals/window";
 import { PluginID } from "../plugins";
 import { GraphState } from "../../graph-state";
 import Intellisense from "#plugins/intellisense/index.tsx";
@@ -8,8 +7,8 @@ import { Calc as CalcType, DispatchedEvent } from "../globals/Calc";
 /** Calc is only available inside evaluate() callbacks and friends, since those
  * stringify the function and evaluate it inside the browser */
 declare let Calc: CalcType;
-declare let Desmos: DWindow["Desmos"];
-declare let DSM: DWindow["DSM"];
+declare let Desmos: Window["Desmos"];
+declare let DSM: Window["DSM"];
 
 /** A clean page is one that is equivalent (for all purposes) to a just-opened
  * calculator tab. We introduce this state to avoid a bunch of reloads.

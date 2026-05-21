@@ -19,20 +19,22 @@ import { GenericSettings, PluginID } from "../plugins";
 import { ItemModel, ValueType, ValueTypeMap } from "./models";
 import { GraphState } from "../../graph-state";
 
-export interface DWindow extends Window {
-  DesModder: any;
-  DSM: DSM;
-  DesModderPreload?: {
-    pluginsForceDisabled: Set<PluginID>;
-    pluginsEnabled: Record<PluginID, boolean | undefined>;
-    pluginSettings: Record<PluginID, GenericSettings | undefined>;
-  };
-  Desmos: Desmos;
-  shellController: {
-    graphsController: {
-      getCurrentGraphTitle: () => string;
+declare global {
+  interface Window {
+    DesModder: any;
+    DSM: DSM;
+    DesModderPreload?: {
+      pluginsForceDisabled: Set<PluginID>;
+      pluginsEnabled: Record<PluginID, boolean | undefined>;
+      pluginSettings: Record<PluginID, GenericSettings | undefined>;
     };
-  };
+    Desmos: Desmos;
+    shellController: {
+      graphsController: {
+        getCurrentGraphTitle: () => string;
+      };
+    };
+  }
 }
 
 type DesmosPublic = typeof Desmos;
@@ -122,8 +124,6 @@ interface MathquillConfig {
     newStats?: boolean;
   }) => string;
 }
-
-declare let window: DWindow;
 
 export default window;
 

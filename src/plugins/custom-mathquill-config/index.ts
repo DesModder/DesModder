@@ -1,7 +1,6 @@
 import { Config, configList } from "./config";
 import "./custom-mathquill-config.less";
 import { MathQuillConfig } from "#components";
-import { DWindow } from "#globals";
 import { PluginController } from "#plugins/PluginController.ts";
 
 const defaultConfig: MathQuillConfig = {
@@ -63,7 +62,7 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
         ? false
         : defaultConfig.typingPercentWritesPercentOf,
     };
-    (window as any as DWindow).Desmos.MathQuill.config(settingsObj);
+    window.Desmos.MathQuill.config(settingsObj);
   }
 
   afterEnable() {
@@ -80,7 +79,7 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
   afterDisable() {
     this.doAutoCommandInjections = false;
     this.cc.rootElt.classList.remove("commaizer");
-    (window as any as DWindow).Desmos.MathQuill.config(defaultConfig);
+    window.Desmos.MathQuill.config(defaultConfig);
     this.cc.getMathquillConfig = this.oldConfig;
 
     this.cc.rootElt.style.removeProperty("--delimiter-override");
