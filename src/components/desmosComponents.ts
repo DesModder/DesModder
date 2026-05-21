@@ -77,6 +77,14 @@ export interface MathQuillConfig {
   typingPercentWritesPercentOf?: boolean;
 }
 
+export interface MqSelection {
+  latex: string;
+  startIndex: number;
+  endIndex: number;
+  headIndex?: number;
+  anchorIndex?: number;
+}
+
 export interface MathQuillField {
   keystroke: (key: string, e?: KeyboardEvent) => void;
   latex: (input?: string) => string;
@@ -84,12 +92,64 @@ export interface MathQuillField {
   config: (input: MathQuillConfig) => MathQuillField;
   focus: () => void;
   blur: () => void;
+  selection: (() => MqSelection) & ((selection: MqSelection) => MathQuillField);
+  /** Returns the `dcg-math-field` */
+  el: () => HTMLElement;
+  domNodeToSpan: (el: Element) => MqSelection | undefined;
   __controller: {
     options: MathQuillFieldOptions;
     cursor: MQCursor;
     container: HTMLElement;
   };
-  __options: MathQuillFieldOptions;
+  controller?: {
+    getConfig: () => {
+      autoOperatorNames: {
+        has: (s: string) => boolean;
+      };
+      autoCommands: {
+        has: (s: string) => boolean;
+      };
+    };
+  };
+}
+
+// TODO-mq-compat-when-single: reduce these
+export function isAutoOperatorName(mq: MathQuillField, ident: string) {
+  if (mq.__controller) {
+    return !!mq.__controller.options.autoOperatorNames[ident];
+  } else {
+    return mq.controller!.getConfig().autoOperatorNames.has(ident);
+  }
+}
+
+export function isAutoCommand(mq: MathQuillField, ident: string) {
+  if (mq.__controller) {
+    return !!mq.__controller.options.autoCommands[ident];
+  } else {
+    return mq.controller!.getConfig().autoCommands.has(ident);
+  }
+}
+
+/** Assuming there is a nonempty selection, return the direction. */
+export function selectionDirection(mq: MathQuillField): 1 | -1 {
+  if (mq.__controller) {
+    const nodeAfterHead = mq.__controller.cursor[1]?._el;
+    if (nodeAfterHead?.parentElement?.classList.contains("dcg-mq-selection")) {
+      // The node after the head is inside the selection, so
+      // the head is on the left of the selection.
+      return -1;
+    } else {
+      // Else the head is on the right of the selection.
+      return 1;
+    }
+  } else {
+    const selection = mq.selection();
+    if (selection.headIndex === selection.startIndex) {
+      return -1;
+    } else {
+      return 1;
+    }
+  }
 }
 
 export abstract class MathQuillViewComponent extends ClassComponent<{

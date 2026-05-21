@@ -35,42 +35,42 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
       "--delimiter-override",
       `"${CSS.escape(config.delimiterOverride)}"`
     );
-
-    const settingsObj = {
-      charsThatBreakOutOfSupSub: config.superscriptOperators
-        ? "=<>"
-        : defaultConfig.charsThatBreakOutOfSupSub,
-      disableAutoSubstitutionInSubscripts: config.subscriptReplacements
-        ? false
-        : defaultConfig.disableAutoSubstitutionInSubscripts,
-      autoSubscriptNumerals: config.noAutoSubscript
-        ? false
-        : defaultConfig.autoSubscriptNumerals,
-      sumStartsWithNEquals: config.noNEquals
-        ? false
-        : defaultConfig.sumStartsWithNEquals,
-      leftRightIntoCmdGoes: config.leftIntoSubscript
-        ? "down"
-        : defaultConfig.leftRightIntoCmdGoes,
-      supSubsRequireOperand: config.subSupWithoutOp
-        ? false
-        : defaultConfig.supSubsRequireOperand,
-      restrictMismatchedBrackets: config.allowMixedBrackets
-        ? false
-        : defaultConfig.restrictMismatchedBrackets,
-      typingPercentWritesPercentOf: config.noPercentOf
-        ? false
-        : defaultConfig.typingPercentWritesPercentOf,
-    };
-    window.Desmos.MathQuill.config(settingsObj);
   }
 
   afterEnable() {
     this.cc.getMathquillConfig = (e) => {
-      const currentConfig = this.oldConfig.call(this.cc, e);
+      const currentConfig: MathQuillConfig = this.oldConfig.call(this.cc, e);
       if (this.doAutoCommandInjections) {
         currentConfig.autoCommands += this.autoCommandInjections;
       }
+      const config = this.settings;
+      const freshConfig: MathQuillConfig = {
+        charsThatBreakOutOfSupSub: config.superscriptOperators
+          ? "=<>"
+          : defaultConfig.charsThatBreakOutOfSupSub,
+        disableAutoSubstitutionInSubscripts: config.subscriptReplacements
+          ? false
+          : defaultConfig.disableAutoSubstitutionInSubscripts,
+        autoSubscriptNumerals: config.noAutoSubscript
+          ? false
+          : defaultConfig.autoSubscriptNumerals,
+        sumStartsWithNEquals: config.noNEquals
+          ? false
+          : defaultConfig.sumStartsWithNEquals,
+        leftRightIntoCmdGoes: config.leftIntoSubscript
+          ? "down"
+          : defaultConfig.leftRightIntoCmdGoes,
+        supSubsRequireOperand: config.subSupWithoutOp
+          ? false
+          : defaultConfig.supSubsRequireOperand,
+        restrictMismatchedBrackets: config.allowMixedBrackets
+          ? false
+          : defaultConfig.restrictMismatchedBrackets,
+        typingPercentWritesPercentOf: config.noPercentOf
+          ? false
+          : defaultConfig.typingPercentWritesPercentOf,
+      };
+      Object.assign(currentConfig, freshConfig);
       return currentConfig;
     };
     this.updateConfig(this.settings);
@@ -79,7 +79,6 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
   afterDisable() {
     this.doAutoCommandInjections = false;
     this.cc.rootElt.classList.remove("commaizer");
-    window.Desmos.MathQuill.config(defaultConfig);
     this.cc.getMathquillConfig = this.oldConfig;
 
     this.cc.rootElt.style.removeProperty("--delimiter-override");

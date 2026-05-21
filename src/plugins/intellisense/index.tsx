@@ -1,7 +1,6 @@
 import {
   PartialFunctionCall,
   TryFindMQIdentResult,
-  getController,
   getCorrectableIdentifier,
   getMathquillIdentifierAtCursorPosition,
   getPartialFunctionCall,
@@ -10,7 +9,13 @@ import { IntellisenseState } from "./state";
 import { pendingIntellisenseTimeouts, setIntellisenseTimeout } from "./utils";
 import { JumpToDefinitionMenuInfo, View } from "./view";
 import { DCGView, MountedComponent, unmountFromNode } from "#DCGView";
-import { MathQuillField, MathQuillView } from "#components";
+import {
+  isAutoCommand,
+  isAutoOperatorName,
+  MathQuillField,
+  MathQuillView,
+  MqSelection,
+} from "#components";
 import { DispatchedEvent, ItemModel, TextModel } from "#globals";
 import { PluginController } from "#plugins/PluginController.ts";
 import { isDescendant } from "#utils/utils.ts";
@@ -43,9 +48,10 @@ export interface BoundIdentifierFunction {
 }
 
 export function getMQCursorPosition(focusedMQ: MathQuillField) {
-  return getController(
-    focusedMQ
-  ).cursor?.cursorElement?.getBoundingClientRect();
+  return focusedMQ
+    .el()
+    .querySelector(".dcg-mq-cursor")
+    ?.getBoundingClientRect();
 }
 
 export default class Intellisense extends PluginController<{
@@ -76,7 +82,7 @@ export default class Intellisense extends PluginController<{
   latestMQ: MathQuillField | undefined;
 
   intellisenseReturnMQ: MathQuillField | undefined;
-  prevCursorPos: { x: number; y: number } | undefined;
+  prevSelection: MqSelection | undefined;
   goRightBeforeReturningToMQ: boolean = false;
 
   idcounter = 0;
@@ -93,8 +99,6 @@ export default class Intellisense extends PluginController<{
 
   jumpToDefState: JumpToDefinitionMenuInfo | undefined;
   jumpToDefIndex: number = 0;
-
-  specialIdentifierNames: string[] = [];
 
   getSelectedExpressionID(): string | undefined {
     return this.cc.getSelectedItem()?.id;
@@ -263,29 +267,14 @@ export default class Intellisense extends PluginController<{
       this.latestMQ = this.intellisenseReturnMQ;
     }
 
-    if (this.prevCursorPos && this.latestMQ) {
-      const mqRootBlock = getController(this.latestMQ).container.querySelector(
-        ".dcg-mq-root-block"
-      );
+    if (this.prevSelection && this.latestMQ) {
+      const mqRootBlock = this.latestMQ
+        .el()
+        .querySelector(".dcg-mq-root-block");
 
       if (!mqRootBlock) return;
 
-      const mqRootBlockRect = mqRootBlock.getBoundingClientRect();
-
-      // simulate a click to get cursor in the right spot
-      const eventHandlerSettings = {
-        bubbles: true,
-        clientX:
-          this.prevCursorPos.x - mqRootBlock.scrollLeft + mqRootBlockRect.x,
-        clientY:
-          this.prevCursorPos.y - mqRootBlock.scrollTop + mqRootBlockRect.y,
-      };
-      getController(this.latestMQ).container.dispatchEvent(
-        new MouseEvent("mousedown", eventHandlerSettings)
-      );
-      getController(this.latestMQ).container.dispatchEvent(
-        new MouseEvent("mouseup", eventHandlerSettings)
-      );
+      this.latestMQ.selection(this.prevSelection);
     }
   }
 
@@ -294,26 +283,14 @@ export default class Intellisense extends PluginController<{
   saveCursorState() {
     const focusedmq = MathQuillView.getFocusedMathquill();
     if (focusedmq) this.latestMQ = focusedmq;
-    if (
-      this.latestMQ &&
-      document.body.contains(
-        getController(this.latestMQ).cursor.cursorElement ?? null
-      )
-    ) {
+    if (this.latestMQ) {
       // get cursor pos relative to the top left of the mathquill's root element
-      const mqRootBlock = getController(this.latestMQ).container.querySelector(
-        ".dcg-mq-root-block"
-      );
+      const mqRootBlock = this.latestMQ
+        .el()
+        .querySelector(".dcg-mq-root-block");
 
       if (!mqRootBlock) return;
-      const mqRootBlockRect = mqRootBlock.getBoundingClientRect();
-      const rect = getController(
-        this.latestMQ
-      ).cursor.cursorElement?.getBoundingClientRect();
-      this.prevCursorPos = {
-        x: rect?.x ?? 0 + mqRootBlock.scrollLeft - mqRootBlockRect.x,
-        y: rect?.y ?? 0 + mqRootBlock.scrollTop - mqRootBlockRect.y,
-      };
+      this.prevSelection = this.latestMQ.selection();
     }
   }
 
@@ -334,22 +311,6 @@ export default class Intellisense extends PluginController<{
   goToPrevIntellisenseCol() {
     this.intellisenseIndex = Math.max(this.intellisenseIndex - 1, 0);
   }
-
-  focusInHandler = () => {
-    setIntellisenseTimeout(() => {
-      if (
-        this.calc.focusedMathQuill &&
-        this.specialIdentifierNames.length === 0
-      ) {
-        this.specialIdentifierNames = [
-          ...Object.keys(
-            this.calc.focusedMathQuill.mq.__options.autoOperatorNames
-          ),
-          ...Object.keys(this.calc.focusedMathQuill.mq.__options.autoCommands),
-        ];
-      }
-    });
-  };
 
   onMQKeystroke(key: string, _: KeyboardEvent): undefined | "cancel" {
     if (
@@ -644,10 +605,6 @@ export default class Intellisense extends PluginController<{
     // disable intellisense when switching expressions
     document.addEventListener("focusout", this.focusOutHandler);
 
-    // override the mathquill keystroke handler so that it opens the
-    // intellisense menu when I want it to
-    document.addEventListener("focusin", this.focusInHandler);
-
     // general intellisense keyboard handler
     document.addEventListener("keydown", this.keyDownHandler);
 
@@ -711,9 +668,10 @@ export default class Intellisense extends PluginController<{
           if (ident.ident.length === 1) return;
 
           const identWithoutSubscripts = ident.ident.replace(/_/g, "");
+
           if (
-            this.latestMQ.__options.autoOperatorNames[identWithoutSubscripts] ||
-            this.latestMQ.__options.autoCommands[identWithoutSubscripts]
+            isAutoOperatorName(this.latestMQ, identWithoutSubscripts) ||
+            isAutoCommand(this.latestMQ, identWithoutSubscripts)
           ) {
             return;
           }
@@ -761,7 +719,6 @@ export default class Intellisense extends PluginController<{
 
     // clear event listeners
     document.removeEventListener("focusout", this.focusOutHandler);
-    document.removeEventListener("focusin", this.focusInHandler);
     document.removeEventListener("keydown", this.keyDownHandler);
     document.removeEventListener("keyup", this.keyUpHandler);
     document.removeEventListener("mouseup", this.mouseUpHandler);
