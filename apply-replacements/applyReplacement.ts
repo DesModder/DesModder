@@ -456,8 +456,6 @@ function findPattern(
         .map((v) => (v.value.length < 100 ? v.value : "[long token]"))
         .join("")
         .replace(/\n{2,}/g, "\n");
-    (window as any).DSM_panics ??= [];
-    (window as any).DSM_panics.push(msg);
     throw new Error(msg);
   }
   return found;

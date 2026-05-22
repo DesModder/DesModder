@@ -66,6 +66,8 @@ export async function fullReplacementCached(
     good = false;
     Console.warn(e);
     replOpts.addPanic(b);
+    (window as any).DSM_panics ??= [];
+    (window as any).DSM_panics.push(e);
   }
   // cache if there's no panics
   if (good)
