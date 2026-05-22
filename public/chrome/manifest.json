@@ -16,7 +16,8 @@
       "matches": [
         "*://*.desmos.com/calculator*",
         "*://*.desmos.com/geometry*",
-        "*://*.desmos.com/3d*"
+        "*://*.desmos.com/3d*",
+        "*://*.desmos.com/notebook*"
       ],
       "run_at": "document_start",
       "js": ["preload/content.js"],

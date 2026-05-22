@@ -20,7 +20,9 @@ import { drawGLesmosSketchToCtx } from "../plugins/GLesmos/drawGLesmosSketchToCt
  * returns before actually initializing the calculator. This leads to a race
  * condition, so poll for Calc being ready. */
 function tryRunDesModder() {
-  if ((window as any).Calc !== undefined) runDesModder();
+  if ((window as any).Notebook !== undefined) {
+    // Loaded into notebook. Abort.
+  } else if ((window as any).Calc !== undefined) runDesModder();
   else setTimeout(tryRunDesModder, 10);
 }
 
@@ -40,8 +42,6 @@ function getCalcDesktopURL() {
 }
 
 async function load(pluginsForceDisabled: Set<string>) {
-  if (window.location.pathname === "/geometry-legacy") return;
-
   if ((window as any).DesModder) {
     throw new Error(
       "DesModder is already loaded in the tab, probably due to an update in Firefox, " +
@@ -79,6 +79,7 @@ async function load(pluginsForceDisabled: Set<string>) {
   /* we blocked calculator_desktop.js earlier to ensure that the preload/override script runs first.
   Now we load it, but with '?' appended to prevent the web request rules from blocking it */
   const calcDesktop = await (await fetch(srcURL + "?")).text();
+
   // Filter out force-disabled replacements
   const enabledReplacements = replacements.filter(
     (r) => !r.plugins.every((p) => pluginsForceDisabled.has(p))
