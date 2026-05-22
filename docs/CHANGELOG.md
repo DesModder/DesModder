@@ -1,5 +1,16 @@
 # DesModder Changelog
 
+## 0.15.11
+
+Bug fixes:
+
+- Fix loading of https://www.desmos.com/notebook with DesModder enabled.
+- (Text Mode) Support "lock rotation" and "disable lighting" 3d settings.
+- (Code Golf) Fix Alt-Q so it toggles code golf even when an expression is focused.
+- (GLesmos) Fix rendering of lines with GLesmos mode enabled.
+- (Video Creator + WakaTime) Fix getting the saved graph's title.
+- (Better Evaluation View) Fix cut-off list view when toggling "list elements" off.
+
 ## 0.15.10
 
 Bug fixes:
