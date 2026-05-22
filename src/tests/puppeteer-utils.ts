@@ -17,7 +17,7 @@ declare let DSM: Window["DSM"];
 const defaultUrl =
   process.env.DSM_TESTING_URL ?? "https://desmos.com/calculator";
 
-function urlForPath(path: string) {
+export function urlForPath(path: string) {
   return defaultUrl.replace(/\/calculator$/, path);
 }
 
@@ -58,7 +58,7 @@ export function testWithPageAndOpts(
   );
 }
 
-const browser = (globalThis as any).__BROWSER_GLOBAL__ as Browser;
+export const browser = (globalThis as any).__BROWSER_GLOBAL__ as Browser;
 
 async function getPage(url: string) {
   const pages = await browser.pages();
@@ -76,7 +76,12 @@ async function getPage(url: string) {
 async function makeNewPage(url: string) {
   const page = await browser.newPage();
   await page.goto(url);
-  await page.waitForSelector(".dsm-pillbox-and-popover");
+  if (url.includes("/notebook")) {
+    await page.waitForSelector(".dcg-notebook-main");
+  } else {
+    await page.waitForSelector(".dsm-pillbox-and-popover");
+  }
+
   return page;
 }
 
