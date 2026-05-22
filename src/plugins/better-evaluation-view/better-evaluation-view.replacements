@@ -171,3 +171,20 @@ function $truncatedLatexLabel($e, $t) {
     case "scientific":
         return $r.mantissa + "\\times10^{" + $r.exponent + "}";
 ```
+
+## Break cache for list width
+
+*Description* `Force re-measure of list when better-evaluation-view settings change`
+
+*Find* => `cacheEntry`
+
+```js
+evaluationRHS: this.cachedEvaluationRHS,
+```
+
+*Replace* `cacheEntry` with
+
+```js
+evaluationRHS: this.cachedEvaluationRHS,
+dsmBevSettings: DSM.betterEvaluationView?.settings && {...DSM.betterEvaluationView.settings},
+```

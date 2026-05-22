@@ -7,6 +7,10 @@ async function enableBevLists(driver: Driver) {
   await driver.setPluginSetting("better-evaluation-view", "lists", true);
 }
 
+async function disableBevLists(driver: Driver) {
+  await driver.setPluginSetting("better-evaluation-view", "lists", false);
+}
+
 testWithPage("EmptyList and ListOfNumber", async (driver) => {
   const listOfNumberIndex = 0;
   const emptyListIndex = 1;
@@ -181,3 +185,24 @@ testWithPage(
   },
   150000
 );
+
+testWithPage("List remeasure", async (driver) => {
+  await driver.focusIndex(0);
+  // Set list evaluation to [1,2], so Desmos thinks it doesn't need a "more" link
+  await driver.setLatexAndSync("[1...2]");
+  // Enable BEV lists, suppressing Desmos's lists.
+  await enableBevLists(driver);
+  // Set list evaluation to something long
+  await driver.setLatexAndSync("[1...15]");
+  // Return to vanilla Desmos lists
+  await disableBevLists(driver);
+
+  // There should be a "more" link
+  await driver.assertSelectorEventually(
+    ".dcg-evaluation-list .dcg-show-more-link"
+  );
+
+  // Clean up
+  await driver.clean();
+  return clean;
+});
