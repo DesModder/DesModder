@@ -71,6 +71,7 @@ if (BROWSER === "firefox") {
         "https://*.desmos.com/calculator*",
         "https://*.desmos.com/geometry*",
         "https://*.desmos.com/3d*",
+        "https://*.desmos.com/notebook*",
       ],
     },
     ["blocking", "responseHeaders"]

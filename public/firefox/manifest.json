@@ -22,7 +22,8 @@
       "matches": [
         "https://*.desmos.com/calculator*",
         "https://*.desmos.com/geometry*",
-        "https://*.desmos.com/3d*"
+        "https://*.desmos.com/3d*",
+        "https://*.desmos.com/notebook*"
       ],
       "run_at": "document_start",
       "js": ["preload/content.js"],

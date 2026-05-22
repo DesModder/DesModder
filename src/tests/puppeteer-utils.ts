@@ -17,7 +17,7 @@ declare let DSM: Window["DSM"];
 const defaultUrl =
   process.env.DSM_TESTING_URL ?? "https://desmos.com/calculator";
 
-function urlForPath(path: string) {
+export function urlForPath(path: string) {
   return defaultUrl.replace(/\/calculator$/, path);
 }
 
@@ -49,34 +49,28 @@ export function testWithPageAndOpts(
       const cleanliness = await cb(driver);
       if (cleanliness === clean) {
         await driver.assertClean();
-      } else {
-        // If the page is not clean, close it.
-        await page.close();
       }
+      await page.close();
     },
     timeout ?? 15000
   );
 }
 
-const browser = (globalThis as any).__BROWSER_GLOBAL__ as Browser;
+export const browser = (globalThis as any).__BROWSER_GLOBAL__ as Browser;
 
 async function getPage(url: string) {
-  const pages = await browser.pages();
-  // Assume that all Desmos pages are clean
-  const isClean = await Promise.all(
-    pages.map(
-      async (x) => x.url() === url && (await x.title()).includes("Desmos")
-    )
-  );
-  const cleanPages = pages.filter((_, i) => isClean[i]);
-  const page = cleanPages.pop();
-  return page ?? (await makeNewPage(url));
+  return await makeNewPage(url);
 }
 
 async function makeNewPage(url: string) {
   const page = await browser.newPage();
   await page.goto(url);
-  await page.waitForSelector(".dsm-pillbox-and-popover");
+  if (url.includes("/notebook")) {
+    await page.waitForSelector(".dcg-notebook-main");
+  } else {
+    await page.waitForSelector(".dsm-pillbox-and-popover");
+  }
+
   return page;
 }
 
