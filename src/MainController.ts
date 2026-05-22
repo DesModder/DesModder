@@ -158,15 +158,24 @@ export default class DSM extends TransparentPlugins {
       this.cc.destroy = oldDestroy;
     });
 
-    document.addEventListener("keydown", this.onKeyDown);
-    this.destroyHandlers.push(() => {
-      document.removeEventListener("keydown", this.onKeyDown);
-    });
+    // The dcg-container is needed for some reason (overlap with disable braille
+    // hotkey) for Alt+Q in the expression list. The document listener is
+    // needed for Alt+Q when blurred (e.g. just clicked graph paper).
+    for (const el of [document.querySelector(".dcg-container"), document]) {
+      if (!el) continue;
+
+      el.addEventListener("keydown", this.onKeyDown);
+      this.destroyHandlers.push(() => {
+        el.removeEventListener("keydown", this.onKeyDown);
+      });
+    }
   }
 
-  onKeyDown = (e: KeyboardEvent) => {
+  onKeyDown = (ee: Event) => {
+    const e = ee as KeyboardEvent;
     if (e.altKey && !e.shiftKey && !e.ctrlKey && !e.metaKey && e.key === "q") {
       this.togglePlugin("code-golf");
+      ee.stopPropagation();
     }
   };
 
