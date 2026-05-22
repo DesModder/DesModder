@@ -49,10 +49,8 @@ export function testWithPageAndOpts(
       const cleanliness = await cb(driver);
       if (cleanliness === clean) {
         await driver.assertClean();
-      } else {
-        // If the page is not clean, close it.
-        await page.close();
       }
+      await page.close();
     },
     timeout ?? 15000
   );
@@ -61,16 +59,7 @@ export function testWithPageAndOpts(
 export const browser = (globalThis as any).__BROWSER_GLOBAL__ as Browser;
 
 async function getPage(url: string) {
-  const pages = await browser.pages();
-  // Assume that all Desmos pages are clean
-  const isClean = await Promise.all(
-    pages.map(
-      async (x) => x.url() === url && (await x.title()).includes("Desmos")
-    )
-  );
-  const cleanPages = pages.filter((_, i) => isClean[i]);
-  const page = cleanPages.pop();
-  return page ?? (await makeNewPage(url));
+  return await makeNewPage(url);
 }
 
 async function makeNewPage(url: string) {
