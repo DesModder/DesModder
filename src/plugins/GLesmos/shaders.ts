@@ -167,7 +167,7 @@ function populateProgram(
   };
 }
 
-export const VERTEX_SHADER = `#version 300 es
+const VERTEX_SHADER = `#version 300 es
 in highp vec2 vertexPosition;
 out vec2 texCoord;
 
@@ -191,6 +191,8 @@ uniform vec2  graphCorner;
 uniform vec2  graphSize;
 uniform float dsm_Infinity;
 ${scUniforms}
+${Fragile.glslHeader}
+${GLESMOS_SHARED}
 
 vec2 toMathCoord(in vec2 fragCoord){
   return fragCoord * graphSize + graphCorner;
@@ -203,7 +205,7 @@ vec4 mixColor(vec4 from, vec4 top) {
 `;
 }
 
-export const GLESMOS_SHARED = `
+const GLESMOS_SHARED = `
   vec4 getPixel( in vec2 coord, in sampler2D channel ){
     return texture( channel, coord );
   }
@@ -296,16 +298,6 @@ export function glesmosGetSDFShader(
     }
 
     //============== END GLesmos Imports ==============//
-
-
-
-    //============== BEGIN Shared Stuff ==============//
-
-    ${Fragile.glslHeader}
-    ${GLESMOS_SHARED}
-
-    //============== END Shared Stuff ==============//
-
 
 
     //============== BEGIN JFA Helper Data ==============//
@@ -487,9 +479,6 @@ export function glesmosGetFinalPassShader(
     uniform int       iDoOutlines;
     uniform int       iDoFill;
 
-    ${Fragile.glslHeader}
-    ${GLESMOS_SHARED}
-
     void main(){
 
       // fill
@@ -543,8 +532,6 @@ export function glesmosGetFastFillShader(
     }`;
 
   const source = `${environment(chunk)}
-    ${Fragile.glslHeader}
-    ${GLESMOS_SHARED}
 
     ${deps}
 
