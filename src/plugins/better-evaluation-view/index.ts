@@ -106,7 +106,12 @@ export default class BetterEvaluationView extends PluginController<Config> {
     const evaluation = this.evaluation(
       this.getTypedConstantValue.bind(container)
     );
-    return !!evaluation && this.getTypedConstantValue.call(container);
+    return (
+      !!evaluation && [
+        this.settings.lists,
+        this.getTypedConstantValue.call(container),
+      ]
+    );
   }
 
   getTypedConstantValue(this: EvaluationContainerComponent) {
