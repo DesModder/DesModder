@@ -67,12 +67,20 @@ export interface ConfigItemColorList extends ConfigItemGeneric {
   type: "color-list";
   default: string[];
 }
+export interface ConfigSegmentedOptions extends ConfigItemGeneric {
+  type: "segmented-options";
+  // TODO: possibly figure out a way to make the list const so that the
+  // default is type safe?
+  options: string[];
+  default: string;
+}
 
 export type ConfigItem =
   | ConfigItemBoolean
   | ConfigItemString
   | ConfigItemNumber
-  | ConfigItemColorList;
+  | ConfigItemColorList
+  | ConfigSegmentedOptions;
 
 export type GenericSettings = Record<string, any>;
 
