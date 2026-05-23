@@ -259,20 +259,22 @@ function segmentedOption(
   };
 
   return (
-    <div class="flex">
-      <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
-        <label for={`dsm-settings-item__segmented-${item.key}`}>
-          {configItemName(plugin, item)}
-        </label>
-      </Tooltip>
-      <div class="dsm-settings-item dsm-settings-segmented">
+    <div class="dsm-settings-item-segmented">
+      <div class="dsm-settings-item">
+        <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
+          <label for={`dsm-settings-item__segmented-${item.key}`}>
+            {configItemName(plugin, item)}
+          </label>
+        </Tooltip>
+        <ResetButton pm={pm} key={item.key} />
+      </div>
+      <div class="dsm-settings-segmented">
         <SegmentedControl
           names={() => segmentedItem.options}
           selectedIndex={selectedIndex}
           setSelectedIndex={setSelectedIndex}
           ariaGroupLabel={configItemName(plugin, item)}
         />
-        <ResetButton pm={pm} key={item.key} />
       </div>
     </div>
   );
