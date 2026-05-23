@@ -139,3 +139,9 @@ export function ListEvaluation(
     </div>
   );
 }
+
+export function ListLengthEvaluation(length: number) {
+  return (
+    <div class="dcg-evaluation-view__plaintext">{length} elements list</div>
+  );
+}

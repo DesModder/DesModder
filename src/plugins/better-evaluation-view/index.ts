@@ -3,7 +3,10 @@ import { ConstantListValueType, TypedConstantValue, ValueType } from "#globals";
 import { PluginController, Replacer } from "../PluginController";
 import "./better-evaluation-view.less";
 import { ColorEvaluation } from "./components/ColorEvaluation";
-import { ListEvaluation } from "./components/ListEvaluation";
+import {
+  ListEvaluation,
+  ListLengthEvaluation,
+} from "./components/ListEvaluation";
 import { Config, configList } from "./config";
 
 type EvaluableConstantValueType = ConstantListValueType | ValueType.RGBColor;
@@ -53,6 +56,10 @@ export default class BetterEvaluationView extends PluginController<Config> {
     const { settings } = this;
     const value = val();
     if (!value) return undefined;
+    // should EmptyEvaluation override ColorEvaluations?
+    // I assume yes; if the user set it to "none" it means they want a minimal display
+    if (settings.lists == "length")
+      return () => ListLengthEvaluation(value.value.length);
     switch (value.valueType) {
       case ValueType.ListOfComplex:
       case ValueType.ListOfAny:
@@ -73,13 +80,17 @@ export default class BetterEvaluationView extends PluginController<Config> {
       case ValueType.ListOfSphere3D:
       case ValueType.ListOfVector3D:
       case ValueType.ListOfTone:
-        return settings.lists ? () => ListEvaluation(value) : undefined;
+        return settings.lists === "old"
+          ? () => ListEvaluation(value)
+          : undefined;
       case ValueType.RGBColor:
         return settings.colors
           ? (swatch) => ColorEvaluation(value, swatch)
           : undefined;
       case ValueType.ListOfColor:
-        return settings.colors && settings.lists && settings.colorLists
+        return settings.colors &&
+          settings.lists === "old" &&
+          settings.colorLists
           ? (swatch) => ColorEvaluation(value, swatch)
           : undefined;
       default:

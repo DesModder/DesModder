@@ -1,5 +1,7 @@
 import { ConfigItem } from "#plugins/index.ts";
 
+export type ListOptions = "old" | "new" | "length";
+
 export const configList: ConfigItem[] = [
   {
     key: "floats",
@@ -8,8 +10,9 @@ export const configList: ConfigItem[] = [
   },
   {
     key: "lists",
-    type: "boolean",
-    default: false,
+    type: "segmented-options",
+    options: ["old", "new", "length"],
+    default: "new",
   },
   {
     key: "colors",
@@ -20,13 +23,14 @@ export const configList: ConfigItem[] = [
     key: "colorLists",
     type: "boolean",
     default: true,
-    shouldShow: (current: Config) => current.lists && current.colors,
+    shouldShow: (current: Config) =>
+      current.lists != "length" && current.colors,
   },
 ];
 
 export interface Config {
   floats: boolean;
-  lists: boolean;
+  lists: ListOptions;
   colors: boolean;
   colorLists: boolean;
 }
