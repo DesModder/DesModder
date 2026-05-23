@@ -24,7 +24,7 @@ export const configList: ConfigItem[] = [
     type: "boolean",
     default: true,
     shouldShow: (current: Config) =>
-      current.lists != "length" && current.colors,
+      current.lists !== "length" && current.colors,
   },
 ];
 

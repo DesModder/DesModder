@@ -58,7 +58,7 @@ export default class BetterEvaluationView extends PluginController<Config> {
     if (!value) return undefined;
     // should EmptyEvaluation override ColorEvaluations?
     // I assume yes; if the user set it to "none" it means they want a minimal display
-    if (settings.lists == "length")
+    if (settings.lists === "length")
       return () => ListLengthEvaluation(value.value.length);
     switch (value.valueType) {
       case ValueType.ListOfComplex:
