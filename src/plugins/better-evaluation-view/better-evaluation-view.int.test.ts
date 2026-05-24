@@ -4,11 +4,11 @@ const COLOR_SWATCH = ".dcg-color-swatch";
 
 async function enableBevLists(driver: Driver) {
   // This used to be the defaults, so all the tests currently start with this.
-  await driver.setPluginSetting("better-evaluation-view", "lists", true);
+  await driver.setPluginSetting("better-evaluation-view", "lists", "old");
 }
 
 async function disableBevLists(driver: Driver) {
-  await driver.setPluginSetting("better-evaluation-view", "lists", false);
+  await driver.setPluginSetting("better-evaluation-view", "lists", "new");
 }
 
 testWithPage("EmptyList and ListOfNumber", async (driver) => {
