@@ -31,7 +31,7 @@ testWithPage("EmptyList and ListOfNumber", async (driver) => {
   await driver.expectEval("\\left[\\right]");
 
   // It gets reset on disabling lists, and shows the native list view instead.
-  await driver.setPluginSetting("better-evaluation-view", "lists", false);
+  await driver.setPluginSetting("better-evaluation-view", "lists", "new");
   await driver.focusIndex(listOfNumberIndex);
   await driver.expectEvalPlain("equals\n=\n1\n1\n2\n2\n3\n3\n4\n4");
   await driver.focusIndex(emptyListIndex);
@@ -51,7 +51,7 @@ testWithPage("ListOfComplex", async (driver) => {
   await driver.setLatexAndSync("[1,2,3,4]+i");
   await driver.expectEval("\\left[1+i,2+i,3+i,4+i\\right]");
 
-  await driver.setPluginSetting("better-evaluation-view", "lists", false);
+  await driver.setPluginSetting("better-evaluation-view", "lists", "new");
   await driver.expectEvalPlain(
     'equals\n=\n1 plus "i"\n1+i\n2 plus "i"\n2+i\n3 plus "i"\n3+i\n4 plus "i"\n4+i'
   );
@@ -78,7 +78,7 @@ testWithPage("ListOfPoint and ListOfPoint3D", async (driver) => {
     "\\left[\\left(1,2,3\\right),\\left(2,2,3\\right),\\left(3,2,3\\right)\\right]"
   );
 
-  await driver.setPluginSetting("better-evaluation-view", "lists", false);
+  await driver.setPluginSetting("better-evaluation-view", "lists", "new");
   await driver.focusIndex(listOfPointIndex);
   await driver.expectEvalPlain(
     "equals\n=\nleft parenthesis, 1 , 2 , right parenthesis\n1,2\nleft parenthesis, 2 , 2 , right parenthesis\n2,2\nleft parenthesis, 3 , 2 , right parenthesis\n3,2"
@@ -175,7 +175,7 @@ testWithPage(
     await driver.expectEval("-\\infty");
 
     // Lists use advanced floats with floats=true even if lists=false.
-    await driver.setPluginSetting("better-evaluation-view", "lists", false);
+    await driver.setPluginSetting("better-evaluation-view", "lists", "new");
     await driver.setLatexAndSync("L=[0/0,1/0,-1/0,4]+0");
     await driver.expectEval(["\\mathrm{NaN}", "\\infty", "-\\infty", "4"]);
 
