@@ -56,8 +56,15 @@ export default class BetterEvaluationView extends PluginController<Config> {
     const { settings } = this;
     const value = val();
     if (!value) return undefined;
-    // should EmptyEvaluation override ColorEvaluations?
-    // I assume yes; if the user set it to "none" it means they want a minimal display
+
+    if (value.valueType === ValueType.RGBColor) {
+      // A non-list color
+      return settings.colors
+        ? (swatch) => ColorEvaluation(value, swatch)
+        : undefined;
+    }
+
+    // All the rest of the handled cases are lists, so check for "length" now.
     if (settings.lists === "length")
       return () => ListLengthEvaluation(value.value.length);
     switch (value.valueType) {
@@ -82,10 +89,6 @@ export default class BetterEvaluationView extends PluginController<Config> {
       case ValueType.ListOfTone:
         return settings.lists === "old"
           ? () => ListEvaluation(value)
-          : undefined;
-      case ValueType.RGBColor:
-        return settings.colors
-          ? (swatch) => ColorEvaluation(value, swatch)
           : undefined;
       case ValueType.ListOfColor:
         return settings.colors &&

@@ -11,6 +11,10 @@ async function disableBevLists(driver: Driver) {
   await driver.setPluginSetting("better-evaluation-view", "lists", "new");
 }
 
+async function setBevListsLength(driver: Driver) {
+  await driver.setPluginSetting("better-evaluation-view", "lists", "length");
+}
+
 testWithPage("EmptyList and ListOfNumber", async (driver) => {
   const listOfNumberIndex = 0;
   const emptyListIndex = 1;
@@ -96,6 +100,28 @@ testWithPage("Color", async (driver) => {
   await enableBevLists(driver);
   await driver.focusIndex(0);
   await driver.setLatexAndSync("C=\\operatorname{rgb}\\left(1,2,3\\right)");
+  const exp = "\\operatorname{rgb}\\left(1,2,3\\right)";
+  await driver.expectEval(exp);
+
+  // It doesn't get reset on disabling color lists
+  await driver.setPluginSetting("better-evaluation-view", "colorLists", false);
+  await driver.assertSelector(COLOR_SWATCH);
+  await driver.expectEval(exp);
+
+  // It gets reset on disabling colors
+  await driver.setPluginSetting("better-evaluation-view", "colors", false);
+  await driver.assertSelector(COLOR_SWATCH);
+
+  // Clean up
+  await driver.clean();
+  return clean;
+});
+
+testWithPage("Color with lists=length", async (driver) => {
+  await setBevListsLength(driver);
+  await driver.focusIndex(0);
+  await driver.setLatexAndSync("C=\\operatorname{rgb}\\left(1,2,3\\right)");
+  // Make sure we don't say "3 element list" here.
   const exp = "\\operatorname{rgb}\\left(1,2,3\\right)";
   await driver.expectEval(exp);
 
