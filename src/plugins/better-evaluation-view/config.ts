@@ -27,8 +27,7 @@ export const configList: ConfigItem[] = [
     key: "colorLists",
     type: "boolean",
     default: true,
-    shouldShow: (current: Config) =>
-      current.lists !== "length" && current.colors,
+    shouldShow: (current: Config) => current.lists === "old" && current.colors,
   },
 ];
 
