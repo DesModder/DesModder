@@ -246,13 +246,15 @@ function segmentedOption(
   const segmentedItem = item as ConfigSegmentedOptions;
   const value = () => (settings[item.key] as string) ?? "";
   const selectedIndex = () => {
-    const index = segmentedItem.options.indexOf(value());
+    const index = segmentedItem.options.findIndex(
+      (opt) => opt.name === value()
+    );
     return index >= 0 ? index : 0;
   };
 
   const setSelectedIndex = (index: number) => {
     if (!pm.expandedPlugin) return;
-    const option = segmentedItem.options[index];
+    const option = segmentedItem.options[index].name;
     if (option !== undefined) {
       pm.dsm.setPluginSetting(pm.expandedPlugin, item.key, option);
     }
@@ -270,7 +272,7 @@ function segmentedOption(
       </div>
       <div class="dsm-settings-segmented">
         <SegmentedControl
-          names={() => segmentedItem.options}
+          names={() => segmentedItem.options.map((opt) => format(opt.i18nKey))}
           selectedIndex={selectedIndex}
           setSelectedIndex={setSelectedIndex}
           ariaGroupLabel={configItemName(plugin, item)}

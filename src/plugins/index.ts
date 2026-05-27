@@ -67,11 +67,18 @@ export interface ConfigItemColorList extends ConfigItemGeneric {
   type: "color-list";
   default: string[];
 }
+
+interface SegmentedOption {
+  name: string;
+  /** Localization key, see en.ftl. */
+  i18nKey: string;
+}
+
 export interface ConfigSegmentedOptions extends ConfigItemGeneric {
   type: "segmented-options";
   // TODO: possibly figure out a way to make the list const so that the
   // default is type safe?
-  options: string[];
+  options: SegmentedOption[];
   default: string;
 }
 

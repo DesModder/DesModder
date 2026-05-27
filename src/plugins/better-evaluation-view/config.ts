@@ -11,7 +11,11 @@ export const configList: ConfigItem[] = [
   {
     key: "lists",
     type: "segmented-options",
-    options: ["old", "new", "length"],
+    options: [
+      { name: "old", i18nKey: "better-evaluation-view-opt-lists-old" },
+      { name: "new", i18nKey: "better-evaluation-view-opt-lists-new" },
+      { name: "length", i18nKey: "better-evaluation-view-opt-lists-length" },
+    ],
     default: "new",
   },
   {
