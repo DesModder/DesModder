@@ -116,6 +116,13 @@ export default class DSM extends TransparentPlugins {
   applyStoredSettings(
     storedSettings: Map<PluginID, GenericSettings | undefined>
   ) {
+    // Migrate "lists" property. Migration from 2026-05-26.
+    const bev = storedSettings.get("better-evaluation-view");
+    if (bev?.lists !== undefined) {
+      bev.lists = bev.lists ? "old" : "new";
+    }
+
+    // Apply the rest of the settings
     for (const { id } of pluginList) {
       const stored = storedSettings.get(id);
       if (stored !== undefined) {
