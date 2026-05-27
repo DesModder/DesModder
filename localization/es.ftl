@@ -247,6 +247,7 @@ performance-info-other = Otro
 ## Better Evaluation View
 better-evaluation-view-name = Mejor Vista de Evaluación
 better-evaluation-view-desc = Permite dar un vistazo a los elementos en listas, colores, y los números indefinidos.
+better-evaluation-view-evaluation-list = lista de { $count } elementos
 better-evaluation-view-opt-floats-name = Punto flotante avanzado
 better-evaluation-view-opt-floats-desc = Mostrar NaN/∞/-∞ en lugar de 'undefined' y '-0' cuando 0 es negativo.
 better-evaluation-view-opt-lists-name = Mostrar los elementos de la lista.

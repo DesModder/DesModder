@@ -237,6 +237,7 @@ performance-info-other = Other
 ## Better Evaluation View
 better-evaluation-view-name = Better Evaluation View
 better-evaluation-view-desc = Displays list elements, colors, and undefined values
+better-evaluation-view-evaluation-list = { $count } element list
 better-evaluation-view-opt-floats-name = Advanced floating point
 better-evaluation-view-opt-floats-desc = Show NaN/∞/-∞ instead of undefined, and '-0' for negative 0.
 better-evaluation-view-opt-lists-name = Show list elements

@@ -4,6 +4,7 @@ import { TypedConstantValue, ValueType, ValueTypeMap } from "#globals";
 import { autoCommands, autoOperatorNames } from "#utils/depUtils.ts";
 import { zipWith } from "#utils/utils.ts";
 import { NormalListValueType } from "..";
+import { format } from "../../../../localization/i18n-core";
 import {
   complexNumberLabel,
   pointLabel,
@@ -140,8 +141,10 @@ export function ListEvaluation(
   );
 }
 
-export function ListLengthEvaluation(length: number) {
+export function ListLengthEvaluation(count: number) {
   return (
-    <div class="dcg-evaluation-view__plaintext">{length} elements list</div>
+    <div class="dcg-evaluation-view__plaintext">
+      {format("better-evaluation-view-evaluation-list", { count })}
+    </div>
   );
 }

@@ -162,6 +162,7 @@ performance-info-other = Autre
 ## Better Evaluation View
 better-evaluation-view-name = Meilleure Vue d'évaluation
 better-evaluation-view-desc = Affiche les éléments de la liste, les couleurs et les valeurs non définies
+better-evaluation-view-evaluation-list = { $count } éléments liste
 better-evaluation-view-opt-lists-name = Afficher les éléments du liste
 better-evaluation-view-opt-lists-desc = Afficher les éléments du liste plutôt que la longeur du liste
 better-evaluation-view-opt-colors-name = Afficher les couleurs
