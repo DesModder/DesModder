@@ -1,7 +1,7 @@
 import ViewportTransforms from "./ViewportTransforms";
 import { initGLesmosCanvas, GLesmosCanvas } from "./glesmosCanvas";
 import { glesmosError, GLesmosShaderPackage } from "./shaders";
-import { Calc, Fragile, ShaderFunctions } from "#globals";
+import { Calc, Fragile } from "#globals";
 import { EmittedGLSL } from "./exportAsGLesmos";
 
 let canvas: GLesmosCanvas | null = null;
@@ -77,13 +77,5 @@ function drawOneGLesmosSketchToCtx(
 function joinShaderFunctions(
   shaderFunctionsList: EmittedGLSL["shaderFunctions"][]
 ) {
-  const dsmJoinShaderFunctions = Fragile.joinShaderFunctions;
-  if (dsmJoinShaderFunctions) {
-    return dsmJoinShaderFunctions(shaderFunctionsList as ShaderFunctions[]);
-  } else {
-    // TODO-cleanup: this branch can be removed once Desmos always provides joinShaderFunctions.
-    const list = shaderFunctionsList as Record<string, boolean>[];
-    const deps = Object.assign({}, ...list);
-    return Object.keys(deps).join("\n");
-  }
+  return Fragile.joinShaderFunctions(shaderFunctionsList);
 }

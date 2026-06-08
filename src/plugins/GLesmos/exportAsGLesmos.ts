@@ -11,9 +11,7 @@ function clampParam(input: number, min: number, max: number, def: number) {
 
 export interface EmittedGLSL {
   source: string;
-
-  // TODO-cleanup: Record<string, boolean> can be removed once Desmos always provides joinShaderFunctions.
-  shaderFunctions: Record<string, boolean> | ShaderFunctions;
+  shaderFunctions: ShaderFunctions;
   shaderUniforms: number[];
 }
 

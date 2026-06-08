@@ -15,7 +15,7 @@ export interface WebGLProgram extends globalThis.WebGLProgram {
 }
 
 export interface GLesmosShaderPackage {
-  shaderFunctionsList: (ShaderFunctions | Record<string, boolean>)[];
+  shaderFunctionsList: ShaderFunctions[];
   chunk: GLesmosShaderChunk;
   hasOutlines: boolean;
 }
