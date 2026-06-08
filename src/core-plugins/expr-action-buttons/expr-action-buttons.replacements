@@ -43,3 +43,9 @@ this.exitEditListMode()
 ```js
 (event.target.closest(".dsm-stay-edit-list-mode") || this.exitEditListMode())
 ```
+
+### Alternative
+
+*Description* `Stay in "Edit List" mode after unpinning an expression or dumping a folder`
+
+(Do nothing -- it now works by default)
