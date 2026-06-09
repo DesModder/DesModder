@@ -233,6 +233,7 @@ performance-info-other = 其他用时
 ## Better Evaluation View
 better-evaluation-view-name = 详细结果显示
 better-evaluation-view-desc = 显示列表元素、颜色和 undefined 的具体值
+better-evaluation-view-evaluation-list = { $count }个元素列表
 better-evaluation-view-opt-floats-name = 高级浮点显示
 better-evaluation-view-opt-floats-desc = 用 NaN/∞/-∞ 替代 undefined，负零显示为"-0"
 better-evaluation-view-opt-lists-name = 显示列表元素
