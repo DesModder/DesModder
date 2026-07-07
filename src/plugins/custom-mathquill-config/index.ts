@@ -10,7 +10,7 @@ const defaultConfig: MathQuillConfig = {
   sumStartsWithNEquals: true,
   leftRightIntoCmdGoes: "up",
   supSubsRequireOperand: true,
-  restrictMismatchedBrackets: true,
+  restrictMismatchedBrackets: "none",
   typingPercentWritesPercentOf: true,
 };
 

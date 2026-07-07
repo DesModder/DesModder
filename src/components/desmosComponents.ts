@@ -73,7 +73,7 @@ export interface MathQuillConfig {
   sumStartsWithNEquals?: boolean;
   leftRightIntoCmdGoes?: string;
   supSubsRequireOperand?: boolean;
-  restrictMismatchedBrackets?: boolean;
+  restrictMismatchedBrackets?: boolean | "none";
   typingPercentWritesPercentOf?: boolean;
 }
 
