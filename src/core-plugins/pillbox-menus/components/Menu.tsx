@@ -9,6 +9,7 @@ import {
   IfElse,
   IconButton,
   Switch,
+  SegmentedControl,
 } from "#components";
 import { format } from "#i18n";
 import {
@@ -19,6 +20,7 @@ import {
   PluginID,
   plugins,
   ConfigItemNumber,
+  ConfigSegmentedOptions,
 } from "#plugins/index.ts";
 import PillboxMenus from "..";
 import "./Menu.less";
@@ -205,6 +207,8 @@ export default class Menu extends Component<{
                     numberOption(this.pm, item, plugin, pluginSettings),
                   "color-list": () =>
                     colorListOption(this.pm, item, plugin, pluginSettings),
+                  "segmented-options": () =>
+                    segmentedOption(this.pm, item, plugin, pluginSettings),
                 })
               )
             }
@@ -230,6 +234,51 @@ function indentation(level: number, inner: any) {
         }
       }}
     </Switch>
+  );
+}
+
+function segmentedOption(
+  pm: PillboxMenus,
+  item: ConfigItem,
+  plugin: SpecificPlugin,
+  settings: GenericSettings
+) {
+  const segmentedItem = item as ConfigSegmentedOptions;
+  const value = () => (settings[item.key] as string) ?? "";
+  const selectedIndex = () => {
+    const index = segmentedItem.options.findIndex(
+      (opt) => opt.name === value()
+    );
+    return index >= 0 ? index : 0;
+  };
+
+  const setSelectedIndex = (index: number) => {
+    if (!pm.expandedPlugin) return;
+    const option = segmentedItem.options[index].name;
+    if (option !== undefined) {
+      pm.dsm.setPluginSetting(pm.expandedPlugin, item.key, option);
+    }
+  };
+
+  return (
+    <div class="dsm-settings-item-segmented">
+      <div class="dsm-settings-item">
+        <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
+          <label for={`dsm-settings-item__segmented-${item.key}`}>
+            {configItemName(plugin, item)}
+          </label>
+        </Tooltip>
+        <ResetButton pm={pm} key={item.key} />
+      </div>
+      <div class="dsm-settings-segmented">
+        <SegmentedControl
+          names={() => segmentedItem.options.map((opt) => format(opt.i18nKey))}
+          selectedIndex={selectedIndex}
+          setSelectedIndex={setSelectedIndex}
+          ariaGroupLabel={configItemName(plugin, item)}
+        />
+      </div>
+    </div>
   );
 }
 

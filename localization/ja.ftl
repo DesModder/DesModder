@@ -233,6 +233,7 @@ performance-info-other = その他
 ## Better Evaluation View
 better-evaluation-view-name = 評価ビューの改善
 better-evaluation-view-desc = リストの要素、色、未定義の値を表示します。
+better-evaluation-view-evaluation-list = 数列の項数：{ $count }
 better-evaluation-view-opt-floats-name = 特殊な浮動小数点値
 better-evaluation-view-opt-floats-desc = 未定義の代わりに NaN/∞/-∞ を、 負のゼロに対して -0 を表示する
 better-evaluation-view-opt-lists-name = リストの要素を表示
