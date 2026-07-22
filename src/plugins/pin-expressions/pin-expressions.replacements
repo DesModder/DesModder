@@ -38,7 +38,7 @@ Since pinned expressions have `isDragDrop=true`, they have `model.dcgView = unde
 
 *Find*
 ```js
-_deleteItemAndAnimateOut ($e, $t) {__body__}
+_deleteItemAndAnimateOut ($e, $t ____) {__body__}
 ```
 
 *Find* inside `body`
