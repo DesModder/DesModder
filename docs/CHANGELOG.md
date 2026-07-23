@@ -1,5 +1,17 @@
 # DesModder Changelog
 
+## 0.15.12
+
+New features:
+
+- (Better Evaluation View) Add "Count" option to "Show List Elements". It shows the length of the list, rather than any elements in it.
+
+Bug fixes:
+
+- (Better Evaluation View) Show scrollbar on long outputs.
+- (Custom MathQuill Config) Stop matching "(" and "]", and "[" and ")".
+- (Intellisense) Fix completion suggestions when the cursor is in a subscript.
+
 ## 0.15.11
 
 Bug fixes:
