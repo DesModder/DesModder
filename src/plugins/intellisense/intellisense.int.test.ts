@@ -60,7 +60,7 @@ describe("Intellisense", () => {
               str += `_${subscriptname.slice(0, i - 2)}`;
             }
 
-            // type out prefix znd suffix
+            // type out prefix and suffix
             await driver.keyboard.type(typedPrefix);
             await driver.keyboard.type(typedSuffix);
 
@@ -90,7 +90,7 @@ describe("Intellisense", () => {
               `Testing Identifier '${typedIdentifierSample}', autocompleting from '${str}', going left ${Math.max(
                 j - 1,
                 0
-              )} characters, ${j === 0 ? "out of subscript" : "in subscript"}.`
+              )} characters, ${j === 0 ? "out of subscript" : "in subscript"}, (j=${j}, i=${i}).`
             );
 
             await delay(50);

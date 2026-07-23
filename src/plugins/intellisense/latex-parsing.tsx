@@ -49,13 +49,28 @@ export interface TryFindMQIdentResult {
   type: string;
 }
 
-/** is an MQ node a subscript? */
-function isSubscript(node: MqNodeViaDom) {
+/** is an MQ node a subscript group? */
+function isSubscriptGroup(node: MqNodeViaDom) {
   return node.domNode.classList.contains("dcg-mq-sub");
 }
 
+/** If `node` is a sup-sub, return its sub if any. */
+function subscriptOfSupsub(node: MqNodeViaDom) {
+  if (!node.domNode.classList.contains("dcg-mq-supsub")) return undefined;
+  for (const child of node.children()) {
+    if (isSubscriptGroup(child)) return child;
+  }
+  return undefined;
+}
+
+/** Return true if `node` is a sup-sub that has a sub. */
+function isSupSubContainingSub(node: MqNodeViaDom) {
+  return subscriptOfSupsub(node) !== undefined;
+}
+
 /**
- * If `node` is a subscript, return the contents of the subscript.
+ * If `node` is a SupSub containing only a subscript,
+ * return the contents of the subscript.
  * Otherwise return undefined.
  */
 function getSubscriptInside(node: MqNodeViaDom): string | undefined {
@@ -93,7 +108,7 @@ function isVarName(node: MqNodeViaDom) {
 }
 
 function isIdentifierSegment(node: MqNodeViaDom) {
-  return isSubscript(node) || isOperatorName(node) || isVarName(node);
+  return isSupSubContainingSub(node) || isOperatorName(node) || isVarName(node);
 }
 
 // identifiers are composed of the following structure:
@@ -103,7 +118,7 @@ function rawTryGetMathquillIdent(
   node: MqNodeViaDom | undefined,
   cursor: MqCursorViaDom | undefined
 ) {
-  const isInSubscript = !!cursor && isSubscript(cursor.parentGroup());
+  const isInSubscript = !!cursor && isSubscriptGroup(cursor.parentGroup());
 
   let goToEnd = 0;
 
@@ -124,6 +139,10 @@ function getMathquillIdentLatex(node: MqNodeViaDom | undefined) {
   return finalGetMathquillIdent(node, 0, false)?.ident;
 }
 
+/**
+ * Node can be the dcg-mq-supsub, not a letter inside the subscript.
+ * Or, the node can be a single letter outside a subscript.
+ */
 function finalGetMathquillIdent(
   node: MqNodeViaDom | undefined,
   goToEnd: number,
@@ -161,10 +180,12 @@ function finalGetMathquillIdent(
   let hasSubscript = false;
 
   // get optional subscript
-  if (node && isSubscript(node)) {
-    latexSegments.push(node.latex?.());
+  const subscript = node && subscriptOfSupsub(node);
+  if (subscript) {
+    const subLatex = subscript.latex();
+    latexSegments.push(`_{${subLatex}}`);
 
-    backspaces += (node.latex?.()?.length ?? 4) - 4;
+    backspaces += subLatex.length;
 
     hasSubscript = true;
 
@@ -174,7 +195,7 @@ function finalGetMathquillIdent(
   const identString = latexSegments
     .filter((e) => e)
     .join("")
-    .replace(" _{ }", "")
+    .replace("_{}", "")
     .trim();
 
   if (!hasSubscript) {
@@ -269,6 +290,10 @@ export function getPartialFunctionCall(
   }
 }
 
+/**
+ * E.g. cursor is after a sequence of letters like `ftest`, and `f_{test}`
+ * is defined. Then return `f_test`.
+ */
 export function getCorrectableIdentifier(mq: MathQuillField): {
   ident: string;
   back: () => void;
@@ -277,7 +302,7 @@ export function getCorrectableIdentifier(mq: MathQuillField): {
   let node = cursor?.nodeBefore();
 
   const parentGroup = cursor?.parentGroup();
-  const isInSubscript = parentGroup && isSubscript(parentGroup);
+  const isInSubscript = parentGroup && isSubscriptGroup(parentGroup);
 
   // don't bother if you're in a subscript
   if (isInSubscript) {
