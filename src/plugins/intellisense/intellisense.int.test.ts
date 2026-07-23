@@ -50,8 +50,11 @@ describe("Intellisense", () => {
           segmentsLength = 2 + subscriptname.length;
         }
 
+        // Wait for evaluator
+        await delay(500);
+
         // try autocompleting from the first i "parts" of the identifier sample
-        for (let i = 1; i < segmentsLength; i++) {
+        for (let i = 0; i < segmentsLength; i++) {
           // go left j segments to validate it works at any position
           for (let j = 0; j < i; j++) {
             // generate partial identifier string

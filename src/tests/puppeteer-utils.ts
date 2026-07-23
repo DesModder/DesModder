@@ -198,6 +198,7 @@ export class Driver {
       await new Promise<void>((resolve) => {
         (window as any).continueTest = resolve;
       });
+      delete (window as any).continueTest;
     });
   }
 

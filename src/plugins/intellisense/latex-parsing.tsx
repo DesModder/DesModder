@@ -185,7 +185,7 @@ function finalGetMathquillIdent(
     const subLatex = subscript.latex();
     latexSegments.push(`_{${subLatex}}`);
 
-    backspaces += subLatex.length;
+    backspaces += subLatex.length - 1;
 
     hasSubscript = true;
 
