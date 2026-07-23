@@ -80,12 +80,33 @@ export class MqNodeViaDom {
     if (!span) return "";
     return span.latex.slice(span.startIndex, span.endIndex);
   }
-}
 
+  *children() {
+    for (const child of realChildren(this.domNode)) {
+      yield new MqNodeViaDom(this.mq, child);
+    }
+  }
+}
 /**
  * Selections are also in the HTML tree, but we want to avoid them
  * for MQ tree traversal methods like .nextSibling().
  */
 function isSelection(el: Element) {
   return el.classList.contains("dcg-mq-selection");
+}
+
+/** A fake node is one that doesn't correspond to an MQ node. */
+function isFakeNode(el: Element) {
+  return isSelection(el) && !el.classList.contains("dcg-mq-cursor");
+}
+
+/** A real node is one that corresponds to an MQ node. */
+function* realChildren(node: Element): Generator<Element> {
+  for (const child of node.children) {
+    if (!isFakeNode(child)) {
+      yield child;
+      return;
+    }
+    yield* realChildren(child);
+  }
 }

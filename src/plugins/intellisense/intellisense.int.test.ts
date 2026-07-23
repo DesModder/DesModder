@@ -50,8 +50,11 @@ describe("Intellisense", () => {
           segmentsLength = 2 + subscriptname.length;
         }
 
+        // Wait for evaluator
+        await delay(500);
+
         // try autocompleting from the first i "parts" of the identifier sample
-        for (let i = 1; i < segmentsLength; i++) {
+        for (let i = 0; i < segmentsLength; i++) {
           // go left j segments to validate it works at any position
           for (let j = 0; j < i; j++) {
             // generate partial identifier string
@@ -60,7 +63,7 @@ describe("Intellisense", () => {
               str += `_${subscriptname.slice(0, i - 2)}`;
             }
 
-            // type out prefix znd suffix
+            // type out prefix and suffix
             await driver.keyboard.type(typedPrefix);
             await driver.keyboard.type(typedSuffix);
 
@@ -90,7 +93,7 @@ describe("Intellisense", () => {
               `Testing Identifier '${typedIdentifierSample}', autocompleting from '${str}', going left ${Math.max(
                 j - 1,
                 0
-              )} characters, ${j === 0 ? "out of subscript" : "in subscript"}.`
+              )} characters, ${j === 0 ? "out of subscript" : "in subscript"}, (j=${j}, i=${i}).`
             );
 
             await delay(50);
