@@ -12,6 +12,8 @@
   @r: calc((@a) + ((@b) - (@a)) * var(--dsm-compact-mode-multiplier));
 }
 
+@tab-width-subtract: 14.5px;
+
 // force an increase in specificity
 .compact-view-enabled.compact-view-enabled.compact-view-enabled.compact-view-enabled.compact-view-enabled {
   .dcg-smart-textarea-container {
@@ -115,10 +117,9 @@
     .dcg-container .dcg-mq-editable-field:not(.dcg-no-fadeout):after {
       background: none;
     }
-    .dcg-main,
-    .dcg-evaluation-container {
+    .dcg-main .dcg-math-field {
       padding-top: .lerp2(15px, 0px) [];
-      padding-left: .lerp2(53px, 35px) [];
+      padding-left: .lerp2(53px, 35px - @tab-width-subtract) [];
       padding-bottom: .lerp2(9px, 0px) [];
       padding-right: .lerp2(35px, 25px) [];
       margin-left: 4px;
@@ -154,11 +155,14 @@
       margin-bottom: .lerp2(-5px, 0px) [];
     }
 
+    .dcg-tab {
+      width: .lerp2(38px, 38px - @tab-width-subtract) [];
+    }
+
     // icons to the left of the expressions bar
     .dcg-expression-icon-container {
-      right: .lerp2(0%, -10%) [];
-      left: unset;
-      top: 50%;
+      left: 50%;
+      top: .lerp2(28px, 50%) [];
       transform: scale(.lerp2(1, 0.5) []);
       .dcg-tooltip-hit-area-container {
         transform: scale(.lerp2(1, 1.3) []);
