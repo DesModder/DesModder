@@ -1,5 +1,14 @@
 # DesModder Changelog
 
+## 0.15.13
+
+Bug fixes:
+
+- (Compact View) Fix spacing issues.
+- (Better Evaluation View) Horizontal scrollbars no longer show on each element in "Default" mode.
+- (Better Evaluation View) "Show List Elements" no longer defaults to "Variant" upon reloading the page.
+- (Better Evaluation View) The "more" in "Variant" mode no longer has "or" upright.
+
 ## 0.15.12
 
 New features:
