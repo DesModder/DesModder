@@ -8,7 +8,7 @@ type TypedConstantColorValue = TypedConstantValue<ColorValueType>;
 
 function _ColorEvaluation(val: TypedConstantColorValue) {
   return (
-    <div class="dcg-evaluation-view__wrapped-value">
+    <div class="dcg-evaluation-view__wrapped-value dsm-bev-wide-wrapped-value">
       <StaticMathQuillView
         latex={() => {
           const { valueType, value } = val;

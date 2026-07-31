@@ -118,7 +118,7 @@ export function ListEvaluation(
   typedConstantValue: TypedConstantValue<NormalListValueType>
 ) {
   return (
-    <div class="dcg-evaluation-view__wrapped-value">
+    <div class="dcg-evaluation-view__wrapped-value dsm-bev-wide-wrapped-value">
       <StaticMathQuillView
         latex={() => {
           const listLength = typedConstantValue.value.length;
