@@ -118,7 +118,7 @@ export function ListEvaluation(
   typedConstantValue: TypedConstantValue<NormalListValueType>
 ) {
   return (
-    <div class="dcg-evaluation-view__wrapped-value">
+    <div class="dcg-evaluation-view__wrapped-value dsm-bev-wide-wrapped-value">
       <StaticMathQuillView
         latex={() => {
           const listLength = typedConstantValue.value.length;
@@ -128,7 +128,7 @@ export function ListEvaluation(
 
           return `\\left[${labelsToShow.join(",")}${
             listLength > truncationLength
-              ? `\\textcolor{gray}{...\\mathit{${listLength - truncationLength}\\ more}}`
+              ? `\\textcolor{gray}{...\\mathit{${listLength - truncationLength}\\ mo\\mathit{re}}}`
               : ""
           }\\right]`;
         }}
