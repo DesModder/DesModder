@@ -2,7 +2,7 @@
 
 *plugin* `video-creator`
 
-## keypad fix 
+## keypad fix
 
 *Description* `bring up keypad when tapping on math inputs on mobile`
 
@@ -15,7 +15,7 @@ isCurrentFocusLocationValid() {
 
 ```
 
-*Replace* `focusLocationValid` with 
+*Replace* `focusLocationValid` with
 ```js
 isCurrentFocusLocationValid() {
   let $focusLocation = this.focusLocation;
@@ -25,3 +25,7 @@ isCurrentFocusLocationValid() {
     return DSM?.focusLocationValid($focusLocation);
   }
 ```
+
+### Alternative
+
+*Description* `do nothing`
