@@ -2,6 +2,7 @@ import { PluginController, Replacer } from "../PluginController";
 import { refactor, refactorInItem } from "./backend";
 import { DispatchedEvent } from "src/globals";
 import { ComponentTemplate, jsx } from "#DCGView";
+import { If } from "#components";
 import ReplaceBar from "./ReplaceBar";
 
 export default class FindReplace extends PluginController {
@@ -68,7 +69,9 @@ export default class FindReplace extends PluginController {
   replaceSearchView: Replacer = (searchBar: ComponentTemplate) => (
     <div class="dsm-find-replace-search-bar-container">
       {searchBar}
-      <ReplaceBar fr={this} />
+      <If predicate={() => !this.isNativeRenameActive()}>
+        {() => <ReplaceBar fr={this} />}
+      </If>
     </div>
   );
 
