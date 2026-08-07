@@ -105,3 +105,24 @@ const quakePro = this.settings?.quakePro;
 let $o = $cue / 360,
   $i = $t6 / ($Y0($r, 1) * (quakePro?.scalarMultiplier ?? 1));
 ```
+
+### Alternative
+
+*Description* `Multiply viewport to act like you are zooming in.`
+
+*worker_only*
+
+*Find* => `from`
+```js
+getFovBeforePerspectiveDistortion(__args__) {
+  return __ret__
+}
+```
+
+*Replace* `from` with
+```js
+getFovBeforePerspectiveDistortion(__args__) {
+  const quakePro = this.settings?.quakePro;
+  return (__ret__) / (quakePro?.scalarMultiplier ?? 1);
+}
+```
