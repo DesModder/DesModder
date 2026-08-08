@@ -12,7 +12,6 @@ export default class FindReplace extends PluginController {
   vanillaShouldShowReplaceIcon: undefined | (() => boolean);
 
   afterEnable(): void {
-    this.calc.setState(this.calc.getState(), { allowUndo: true });
     this.vanillaShouldShowReplaceIcon = this.cc.shouldShowReplaceIcon.bind(
       this.cc
     );
@@ -76,12 +75,10 @@ export default class FindReplace extends PluginController {
   );
 
   handleDispatchedAction(evt: DispatchedEvent) {
-    switch (evt.type) {
-      case "rename-identifier-in-item":
-        if (this.isNativeRenameActive()) return;
-        this.cc.runAfterDispatch(() => this.refactorInItem(evt.id));
-        return "abort-later-handlers";
+    if (evt.type === "rename-identifier-in-item") {
+      if (this.isNativeRenameActive()) return;
+      this.cc.runAfterDispatch(() => this.refactorInItem(evt.id));
+      return "abort-later-handlers";
     }
-    return undefined;
   }
 }
