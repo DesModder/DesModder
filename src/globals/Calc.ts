@@ -149,6 +149,7 @@ export type VanillaDispatchedEvent =
     }
   | { type: "set-folder-collapsed"; id: string; isCollapsed: boolean }
   | { type: "set-item-colorLatex"; id: string; colorLatex: string }
+  | { type: "rename-identifier-in-item"; id: string }
   | { type: "set-note-text"; id: string; text: string };
 
 /**
@@ -278,6 +279,7 @@ interface CalcPrivate {
     };
     dispatch: (e: DispatchedEvent) => void;
     getExpressionSearchStr: () => string;
+    getExpressionReplaceStr: () => string;
     dispatcher: {
       /** Make sure to save the result to a variable, and unregister
        * it in afterDisable. */
@@ -365,6 +367,7 @@ interface CalcPrivate {
     isUploadingImages: () => boolean;
     areImagesEnabled: () => boolean;
     scrollSelectedItemIntoView: () => void;
+    shouldShowReplaceIcon: () => boolean;
     s: (identifier: string, placeables?: Record<string, any> | null) => string;
     runAfterDispatch: (cb: () => void) => void;
     getEvaluatedDefaultViewport: () => {

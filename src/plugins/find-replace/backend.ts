@@ -3,6 +3,7 @@ import { satisfiesType } from "#parsing/nodeTypes.ts";
 import { Identifier } from "#parsing/parsenode.ts";
 import traverse, { Path } from "#parsing/traverse.ts";
 import { parseDesmosLatex } from "#utils/depUtils.ts";
+import { ItemState } from "graph-state/state.ts";
 
 export const simpleKeys = [
   "latex",
@@ -47,7 +48,11 @@ export const nestedKeys = [
   "axisOffset",
 ] as const;
 
-function replace(calc: Calc, replaceLatex: (s: string) => string) {
+function replace(
+  calc: Calc,
+  replaceLatex: (s: string) => string,
+  filter?: (item: ItemState) => boolean
+) {
   // replaceString is applied to stuff like labels
   // middle group in regex accounts for 1 layer of braces, sufficient for `Print ${a+2}`
   function replaceString(s: string) {
@@ -55,14 +60,18 @@ function replace(calc: Calc, replaceLatex: (s: string) => string) {
     return s.replace(/(?<=\$\{)((?:[^{}]|\{[^}]*\})+)(?=\})/g, replaceLatex);
   }
   const state = calc.getState();
-  const { ticker } = state.expressions;
-  if (ticker?.handlerLatex !== undefined) {
-    ticker.handlerLatex = replaceLatex(ticker.handlerLatex);
-  }
-  if (ticker?.minStepLatex !== undefined) {
-    ticker.minStepLatex = replaceLatex(ticker.minStepLatex);
+  if (!filter) {
+    const { ticker } = state.expressions;
+    if (ticker?.handlerLatex !== undefined) {
+      ticker.handlerLatex = replaceLatex(ticker.handlerLatex);
+    }
+    if (ticker?.minStepLatex !== undefined) {
+      ticker.minStepLatex = replaceLatex(ticker.minStepLatex);
+    }
   }
   state.expressions.list.forEach((expr: any) => {
+    if (filter?.(expr) === false) return;
+
     rootKeys.forEach((k) => {
       if (k in expr) {
         expr[k] = replaceLatex(expr[k]);
@@ -270,4 +279,21 @@ export function replacer(from: string, to: string) {
 
 export function refactor(calc: Calc, from: string, to: string) {
   replace(calc, replacer(from, to));
+}
+
+export function refactorInItem(
+  calc: Calc,
+  from: string,
+  to: string,
+  itemId: string
+) {
+  const item = calc.controller.getItemModel(itemId);
+  if (!item) return;
+  let filter: (item: ItemState) => boolean;
+  if (item.type === "folder") {
+    filter = (state) => state.type !== "folder" && state.folderId === item?.id;
+  } else {
+    filter = (state) => state.id === item.id;
+  }
+  replace(calc, replacer(from, to), filter);
 }

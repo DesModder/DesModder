@@ -1,12 +1,29 @@
 import { PluginController, Replacer } from "../PluginController";
-import { refactor } from "./backend";
+import { refactor, refactorInItem } from "./backend";
+import { DispatchedEvent } from "src/globals";
 import { ComponentTemplate, jsx } from "#DCGView";
+import { If } from "#components";
 import ReplaceBar from "./ReplaceBar";
 
 export default class FindReplace extends PluginController {
   static id = "find-and-replace" as const;
   static enabledByDefault = true;
   replaceLatex = "";
+  vanillaShouldShowReplaceIcon: undefined | (() => boolean);
+
+  afterEnable(): void {
+    this.vanillaShouldShowReplaceIcon = this.cc.shouldShowReplaceIcon.bind(
+      this.cc
+    );
+    this.cc.shouldShowReplaceIcon = () => {
+      if (this.vanillaShouldShowReplaceIcon!()) return true;
+      return this.isReplaceValid();
+    };
+  }
+
+  afterDisable(): void {
+    this.cc.shouldShowReplaceIcon = this.vanillaShouldShowReplaceIcon!;
+  }
 
   getReplaceLatex() {
     return this.replaceLatex;
@@ -17,12 +34,28 @@ export default class FindReplace extends PluginController {
   }
 
   isReplaceValid() {
-    return this.cc.getExpressionSearchStr().length > 0;
+    const search = this.cc.getExpressionSearchStr();
+    return search.length > 0 && !this.isNativeRenameActive();
+  }
+
+  isNativeRenameActive() {
+    const renameReplace = this.cc.getExpressionReplaceStr();
+    return renameReplace.length > 0;
   }
 
   refactorAll() {
     if (!this.isReplaceValid()) return;
     refactor(this.calc, this.cc.getExpressionSearchStr(), this.replaceLatex);
+  }
+
+  refactorInItem(id: string) {
+    if (!this.isReplaceValid()) return;
+    refactorInItem(
+      this.calc,
+      this.cc.getExpressionSearchStr(),
+      this.replaceLatex,
+      id
+    );
   }
 
   focusSearch() {
@@ -35,7 +68,17 @@ export default class FindReplace extends PluginController {
   replaceSearchView: Replacer = (searchBar: ComponentTemplate) => (
     <div class="dsm-find-replace-search-bar-container">
       {searchBar}
-      <ReplaceBar fr={this} />
+      <If predicate={() => !this.isNativeRenameActive()}>
+        {() => <ReplaceBar fr={this} />}
+      </If>
     </div>
   );
+
+  handleDispatchedAction(evt: DispatchedEvent) {
+    if (evt.type === "rename-identifier-in-item") {
+      if (this.isNativeRenameActive()) return;
+      this.cc.runAfterDispatch(() => this.refactorInItem(evt.id));
+      return "abort-later-handlers";
+    }
+  }
 }
