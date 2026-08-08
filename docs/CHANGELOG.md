@@ -1,5 +1,11 @@
 # DesModder Changelog
 
+## 0.15.14
+
+New features:
+
+- (Find replace) Support find-replace within a folder, and within a single expression.
+
 ## 0.15.13
 
 Bug fixes:
