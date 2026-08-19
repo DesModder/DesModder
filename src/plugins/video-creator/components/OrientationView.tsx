@@ -6,10 +6,12 @@ import {
   IconButton,
   SwitchUnion,
   SegmentedControl,
+  MathQuillView,
 } from "#components";
 import { format } from "#i18n";
 import ManagedNumberInput from "./ManagedNumberInput";
 import { Orientation } from "../orientation";
+import { leftRightArrows } from "./left-right-arrows.ts";
 
 const orientationModes = ["current-speed", "current-delta", "from-to"] as const;
 
@@ -17,6 +19,7 @@ export class OrientationView extends Component<{
   or: Orientation;
 }> {
   or!: Orientation;
+  private container?: HTMLElement;
 
   init() {
     this.or = this.props.or();
@@ -24,7 +27,7 @@ export class OrientationView extends Component<{
 
   template() {
     return (
-      <div>
+      <div onMount={(div: HTMLElement) => (this.container = div)}>
         <div class="dsm-vc-select-orientation-mode">
           <SegmentedControl
             names={() =>
@@ -74,6 +77,7 @@ export class OrientationView extends Component<{
           vc={this.or.vc}
           data={this.or.xyRot}
           numberUnits={this.or.cc.getDegreeMode() ? "°" : "rad"}
+          handlePressedKey={this.handlePressedKey}
         />
         <StaticMathQuillView latex="\ z:" />
         <ManagedNumberInput
@@ -84,6 +88,7 @@ export class OrientationView extends Component<{
           vc={this.or.vc}
           data={this.or.zTip}
           numberUnits={this.or.cc.getDegreeMode() ? "°" : "rad"}
+          handlePressedKey={this.handlePressedKey}
         />
       </div>
     );
@@ -133,6 +138,7 @@ export class OrientationView extends Component<{
             vc={this.or.vc}
             data={this.or.speedRot}
             numberUnits={this.or.cc.getDegreeMode() ? "°/s" : "rad/s"}
+            handlePressedKey={this.handlePressedKey}
           />
         </div>
       </span>
@@ -154,6 +160,7 @@ export class OrientationView extends Component<{
             vc={this.or.vc}
             data={this.or.xyRotStep}
             numberUnits={this.or.cc.getDegreeMode() ? "°" : "rad"}
+            handlePressedKey={this.handlePressedKey}
           />
           <StaticMathQuillView latex="\ \Delta z:" />
           <ManagedNumberInput
@@ -164,6 +171,7 @@ export class OrientationView extends Component<{
             vc={this.or.vc}
             data={this.or.zTipStep}
             numberUnits={this.or.cc.getDegreeMode() ? "°" : "rad"}
+            handlePressedKey={this.handlePressedKey}
           />
         </div>
       </span>
@@ -184,6 +192,7 @@ export class OrientationView extends Component<{
             vc={this.or.vc}
             data={this.or.xyRotFrom}
             numberUnits={this.or.cc.getDegreeMode() ? "°" : "rad"}
+            handlePressedKey={this.handlePressedKey}
           />
           <StaticMathQuillView latex="\ z:" />
           <ManagedNumberInput
@@ -194,6 +203,7 @@ export class OrientationView extends Component<{
             vc={this.or.vc}
             data={this.or.zTipFrom}
             numberUnits={this.or.cc.getDegreeMode() ? "°" : "rad"}
+            handlePressedKey={this.handlePressedKey}
           />
         </div>
         <div class="dsm-vc-orientation">
@@ -207,6 +217,7 @@ export class OrientationView extends Component<{
             vc={this.or.vc}
             data={this.or.xyRotTo}
             numberUnits={this.or.cc.getDegreeMode() ? "°" : "rad"}
+            handlePressedKey={this.handlePressedKey}
           />
           <StaticMathQuillView latex="\ z:" />
           <ManagedNumberInput
@@ -217,9 +228,18 @@ export class OrientationView extends Component<{
             vc={this.or.vc}
             data={this.or.zTipTo}
             numberUnits={this.or.cc.getDegreeMode() ? "°" : "rad"}
+            handlePressedKey={this.handlePressedKey}
           />
         </div>
       </span>
     );
   }
+
+  handlePressedKey = (key: string, evt: KeyboardEvent) => {
+    if (!this.container) return;
+    const handled = leftRightArrows(this.container, key, evt);
+    if (handled) return;
+    const mq = MathQuillView.getFocusedMathquill();
+    mq?.keystroke(key, evt);
+  };
 }
