@@ -326,6 +326,10 @@ custom-mathquill-config-opt-extendedGreek-desc = サポートされているす�
 custom-mathquill-config-opt-lessFSpacing-name = f の周りのスペースを削減
 custom-mathquill-config-opt-lessFSpacing-desc = 文字 f の周りの余分なスペースを削減します。
 
+## Backslash Commands
+backslash-commands-name = バックスラッシュコマンド
+backslash-commands-desc = バックスラッシュに続けて TeX コマンドまたは LaTeX 全体を入力できるようにします。
+
 ## Code Golf
 code-golf-name = 数式ゴルフ
 code-golf-desc = Desmos の数式ゴルファーのための補助ツール

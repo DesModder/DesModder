@@ -331,6 +331,10 @@ custom-mathquill-config-opt-extendedGreek-desc = Enables replacements for all su
 custom-mathquill-config-opt-lessFSpacing-name = Less Spacing Around "f"
 custom-mathquill-config-opt-lessFSpacing-desc = Reduces extra spacing around the letter "f"
 
+## Backslash Commands
+backslash-commands-name = Backslash Commands
+backslash-commands-desc = Lets you enter TeX commands or complete LaTeX by typing a backslash.
+
 ## Code Golf
 code-golf-name = Code Golf
 code-golf-desc = Tools for helping Desmos Code Golfers. Press Alt+Q to enable/disable.
