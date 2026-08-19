@@ -31,7 +31,10 @@ export default class SelectCapture extends Component<{
 
   template() {
     return (
-      <div onMount={(div: HTMLElement) => (this.container = div)}>
+      <div
+        class="dsm-vc-capture-container"
+        onMount={(div: HTMLElement) => (this.container = div)}
+      >
         <div class="dsm-vc-select-capture-method">
           <SegmentedControl
             names={() =>
