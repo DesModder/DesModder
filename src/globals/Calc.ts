@@ -247,6 +247,15 @@ export interface Grapher3d {
 
 export type Scale = "linear" | "logarithmic";
 
+export type DsmFocusLocation = Extract<FocusLocation, { type: "dsm-focus" }>;
+
+export interface DesModderHooks {
+  isCurrentFocusLocationValid: (location: DsmFocusLocation) => boolean;
+  getFocusedItem: (location: DsmFocusLocation) => ItemModel | undefined;
+  isExpressionListFocused: (location: DsmFocusLocation) => boolean;
+  needsFakeKeypad: (location: DsmFocusLocation) => boolean;
+}
+
 interface CalcPrivate {
   withHistoryReplacement: (fn: () => void) => any;
   focusedMathQuill:
@@ -374,6 +383,7 @@ interface CalcPrivate {
       constructor: { fromObject: (vp: Viewport) => ViewportClass };
     };
     destroy: () => void;
+    dsmHooks: DesModderHooks;
   };
   /// / public
 

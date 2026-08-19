@@ -1,4 +1,4 @@
-import window, { DispatchedEvent, FocusLocation, type Calc } from "#globals";
+import window, { DispatchedEvent, type Calc } from "#globals";
 import {
   plugins,
   pluginList,
@@ -9,6 +9,7 @@ import {
   PluginInstance,
 } from "./plugins";
 import { postMessageUp, mapToRecord, recordToMap } from "#utils/messages.ts";
+import { makeControllerHooks } from "./controller-hooks.ts";
 
 export default class DSM extends TransparentPlugins {
   readonly cc = this.calc.controller;
@@ -64,6 +65,8 @@ export default class DSM extends TransparentPlugins {
     this.destroyHandlers.push(() => {
       this.cc.updateTheComputedWorld = this.vanillaUpdateTheComputedWorld;
     });
+
+    this.cc.dsmHooks = makeControllerHooks(this);
   }
 
   enabledPluginsSorted() {
@@ -361,18 +364,6 @@ export default class DSM extends TransparentPlugins {
   setAllPluginSettings(settings: IDToPluginSettings) {
     for (const [key, value] of Object.entries(settings)) {
       this.updatePluginSettings(key as PluginID, value, false);
-    }
-  }
-
-  focusLocationValid(location: FocusLocation & { type: "dsm-focus" }) {
-    switch (location.plugin) {
-      case "video-creator":
-        return this.videoCreator?.isMenuOpen();
-      case "find-and-replace":
-        return this.cc.getExpressionSearchOpen();
-      default:
-        location satisfies never;
-        return false;
     }
   }
 }
