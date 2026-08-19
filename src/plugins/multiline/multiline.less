@@ -1,7 +1,9 @@
 .multiline-expression-enabled {
   // make parenthesized things properly align
   .dcg-mq-bracket-container {
-    vertical-align: middle;
+    [data-is-multiline="true"] {
+      vertical-align: middle;
+    }
   }
 
   // hide the cursor if it's not in a selected expression
