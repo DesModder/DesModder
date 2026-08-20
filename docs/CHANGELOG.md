@@ -1,5 +1,16 @@
 # DesModder Changelog
 
+## 0.15.15
+
+New features:
+
+- (Video Creator) Arrow left and right between input fields.
+
+Bug fixes:
+
+- (Video Creator, Find-Replace) The virtual keypad should work on the input fields again.
+- (Multiline Expressions) No longer affects layout when expressions are not multiline.
+
 ## 0.15.14
 
 New features:
