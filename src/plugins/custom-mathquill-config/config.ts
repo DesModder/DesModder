@@ -26,6 +26,11 @@ export const configList = [
     default: false,
   },
   {
+    key: "backslashCommands",
+    type: "boolean",
+    default: false,
+  },
+  {
     key: "subscriptReplacements",
     type: "boolean",
     default: false,
@@ -68,6 +73,7 @@ export const configList = [
 ] satisfies ConfigItem[];
 
 export interface Config {
+  backslashCommands: boolean;
   superscriptOperators: boolean;
   commaDelimiter: boolean;
   delimiterOverride: string;
