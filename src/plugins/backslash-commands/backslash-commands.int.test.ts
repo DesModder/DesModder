@@ -46,7 +46,7 @@ testWithPage("Backslash Commands", async (driver) => {
     )
   ).toBe("4");
 
-  await pressKeys(driver, ["Space", "x"]);
+  await pressKeys(driver, ["Enter", "x"]);
   await driver.assertSelectorNot(".dsm-latex-command-input");
   await driver.assertSelectedItemLatex("\\sqrt{x}");
 
@@ -63,6 +63,15 @@ testWithPage("Backslash Commands", async (driver) => {
   await driver.assertSelector(".dsm-latex-command-input");
   await pressKeys(driver, ["Backspace"]);
   await driver.assertSelectorNot(".dsm-latex-command-input");
+  await driver.assertSelectedItemLatex("\\sqrt{x}");
+
+  await pressKeys(driver, ["Backslash", "f", "o", "o", "Space", "b", "a", "r"]);
+  expect(
+    await driver.$eval(".dsm-latex-command-input", (el) =>
+      el.textContent?.replace(/\u200b/g, "")
+    )
+  ).toBe("\\foo bar");
+  await pressKeys(driver, ["Escape"]);
   await driver.assertSelectedItemLatex("\\sqrt{x}");
 
   await pressKeys(driver, [
@@ -95,7 +104,7 @@ testWithPage("Backslash Commands", async (driver) => {
     "_",
     "2",
     "}",
-    "Space",
+    "Enter",
   ]);
   await driver.assertSelectedItemLatex("\\sqrt{x}+\\alpha+\\frac{a+1}{b_{2}}");
 
