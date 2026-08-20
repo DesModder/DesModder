@@ -2,6 +2,7 @@ import VideoCreator from "..";
 import { CaptureMethod } from "../backend/capture";
 import "./CaptureMethod.css";
 import { Component, jsx } from "#DCGView";
+import { MathQuillView } from "../../../components/desmosComponents.ts";
 import {
   SegmentedControl,
   If,
@@ -16,11 +17,13 @@ import {
 } from "#components";
 import { format } from "#i18n";
 import ManagedNumberInput from "./ManagedNumberInput";
+import { leftRightArrows } from "./left-right-arrows.ts";
 
 export default class SelectCapture extends Component<{
   vc: VideoCreator;
 }> {
   vc!: VideoCreator;
+  private container?: HTMLElement;
 
   init() {
     this.vc = this.props.vc();
@@ -28,7 +31,10 @@ export default class SelectCapture extends Component<{
 
   template() {
     return (
-      <div>
+      <div
+        class="dsm-vc-capture-container"
+        onMount={(div: HTMLElement) => (this.container = div)}
+      >
         <div class="dsm-vc-select-capture-method">
           <SegmentedControl
             names={() =>
@@ -59,6 +65,7 @@ export default class SelectCapture extends Component<{
                     }
                     controller={this.vc.cc}
                     placeholder=""
+                    handlePressedKey={this.handlePressedKey}
                   />
                 </span>
                 <StaticMathQuillView latex="=" />
@@ -69,6 +76,7 @@ export default class SelectCapture extends Component<{
                   hasError={() => !this.vc.isSliderSettingValid("min")}
                   vc={this.vc}
                   data={this.vc.sliderSettings.min}
+                  handlePressedKey={this.handlePressedKey}
                 />
                 {format("video-creator-to")}
                 <ManagedNumberInput
@@ -78,6 +86,7 @@ export default class SelectCapture extends Component<{
                   hasError={() => !this.vc.isSliderSettingValid("max")}
                   vc={this.vc}
                   data={this.vc.sliderSettings.max}
+                  handlePressedKey={this.handlePressedKey}
                 />
                 {format("video-creator-step")}
                 <ManagedNumberInput
@@ -87,6 +96,7 @@ export default class SelectCapture extends Component<{
                   hasError={() => !this.vc.isSliderSettingValid("step")}
                   vc={this.vc}
                   data={this.vc.sliderSettings.step}
+                  handlePressedKey={this.handlePressedKey}
                 />
               </div>
             </div>
@@ -161,6 +171,7 @@ export default class SelectCapture extends Component<{
                   hasError={() => !this.vc.isTickTimeStepValid()}
                   vc={this.vc}
                   data={this.vc.tickTimeStep}
+                  handlePressedKey={this.handlePressedKey}
                 />
               </div>
             </div>
@@ -192,6 +203,7 @@ export default class SelectCapture extends Component<{
             hasError={() => !this.vc.isCaptureWidthValid()}
             vc={this.vc}
             data={this.vc.captureWidth}
+            handlePressedKey={this.handlePressedKey}
           />
           ×
           <ManagedNumberInput
@@ -201,6 +213,7 @@ export default class SelectCapture extends Component<{
             hasError={() => !this.vc.isCaptureHeightValid()}
             vc={this.vc}
             data={this.vc.captureHeight}
+            handlePressedKey={this.handlePressedKey}
           />
           <If predicate={() => this.vc.isDefaultCaptureSizeDifferent()}>
             {() => (
@@ -246,6 +259,7 @@ export default class SelectCapture extends Component<{
                 hasError={() => !this.vc.isMosaicRatioXValid()}
                 vc={this.vc}
                 data={this.vc.mosaicRatioX}
+                handlePressedKey={this.handlePressedKey}
               />
               ×
               <ManagedNumberInput
@@ -255,6 +269,7 @@ export default class SelectCapture extends Component<{
                 hasError={() => !this.vc.isMosaicRatioYValid()}
                 vc={this.vc}
                 data={this.vc.mosaicRatioY}
+                handlePressedKey={this.handlePressedKey}
               />
             </div>
           )}
@@ -306,6 +321,7 @@ export default class SelectCapture extends Component<{
                   hasError={() => !this.vc.isTickCountValid()}
                   vc={this.vc}
                   data={this.vc.tickCount}
+                  handlePressedKey={this.handlePressedKey}
                 />
               </div>
             )}
@@ -321,6 +337,7 @@ export default class SelectCapture extends Component<{
                   hasError={() => !this.vc.isTickCountValid()}
                   vc={this.vc}
                   data={this.vc.tickCount}
+                  handlePressedKey={this.handlePressedKey}
                 />
               </div>
             )}
@@ -351,4 +368,12 @@ export default class SelectCapture extends Component<{
       this.vc.captureMethod = name;
     }
   }
+
+  handlePressedKey = (key: string, evt: KeyboardEvent) => {
+    if (!this.container) return;
+    const handled = leftRightArrows(this.container, key, evt);
+    if (handled) return;
+    const mq = MathQuillView.getFocusedMathquill();
+    mq?.keystroke(key, evt);
+  };
 }

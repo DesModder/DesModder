@@ -13,6 +13,7 @@ interface ManagedNumberInputParams {
   vc: VideoCreator;
   data: ManagedNumberInputModel;
   numberUnits?: "rad" | "°" | "rad/s" | "°/s" | undefined;
+  handlePressedKey?: (key: string, evt: KeyboardEvent) => void;
 }
 
 export interface ManagedNumberInputModelOpts {
@@ -93,6 +94,7 @@ export default class ManagedNumberInput extends Component<ManagedNumberInputPara
         isFocused={() => this.vc.isFocused(this.props.focusID())}
         controller={this.vc.cc}
         readonly={() => this.props.readonly?.() ?? false}
+        handlePressedKey={this.props.handlePressedKey}
       />
     );
   }

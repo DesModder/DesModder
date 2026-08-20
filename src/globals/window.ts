@@ -132,6 +132,11 @@ interface Fragile {
   SegmentedControl: typeof SegmentedControlComponent;
   MathquillView: typeof MathQuillViewComponent & {
     getFocusedMathquill: () => MathQuillField | undefined;
+    applyArrowKeyAndReturnIfWasAtBounds: (
+      mq: MathQuillField,
+      key: string,
+      evt: KeyboardEvent
+    ) => boolean;
   };
   InlineMathInputView: typeof InlineMathInputViewComponent;
   StaticMathquillView: typeof DStaticMathquillViewComponent;

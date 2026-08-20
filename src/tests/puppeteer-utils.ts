@@ -356,4 +356,8 @@ export class Driver {
       ".dcg-action-clearall"
     );
   }
+
+  async getActiveElement() {
+    return await this.page.evaluateHandle(() => document.activeElement!);
+  }
 }
