@@ -7,11 +7,8 @@ interface PendingCommand {
   command: string;
   cursorIndex: number;
   preview: HTMLElement | undefined;
+  sourceElement: HTMLElement | undefined;
 }
-
-type MathQuillControllerWithLatex = MathQuillField["__controller"] & {
-  exportLatex?: () => string;
-};
 
 type MathQuillFieldWithLatexWriter = MathQuillField & {
   write?: (latex: string) => unknown;
@@ -43,26 +40,26 @@ function getLatexInputCharacter(event: KeyboardEvent) {
  * instance.
  */
 export default class BackslashCommands extends PluginController {
-  static id = "backslash-commands" as const;
-  static enabledByDefault = false;
-
   private pending: PendingCommand | undefined;
+  private isEnabled = false;
 
   private clearPending() {
-    const preview = this.pending?.preview;
-    const cursor = preview?.querySelector(".dcg-mq-cursor");
-    if (preview && cursor) preview.replaceWith(cursor);
-    else preview?.remove();
+    this.pending?.sourceElement?.classList.remove(
+      "dsm-latex-command-input-active"
+    );
+    this.pending?.preview?.remove();
     this.pending = undefined;
   }
 
   /**
    * Desmos uses MathQuill's basic build, which omits LatexCommandInput.
-   * Temporarily wrap the live cursor in an equivalent visual node, then put
-   * the cursor back before MathQuill handles a completed command.
+   * Place an equivalent visual node next to the live cursor instead. The
+   * preview owns a fake caret; the MathQuill cursor remains in its original
+   * DOM position so repeated input cannot disturb MathQuill's internals.
    */
   private createPreview(mq: MathQuillField) {
-    const cursor = mq.el().querySelector(".dcg-mq-cursor");
+    const sourceElement = mq.el();
+    const cursor = sourceElement.querySelector(".dcg-mq-cursor");
     if (!(cursor instanceof HTMLElement) || !cursor.parentElement) return;
 
     const preview = document.createElement("span");
@@ -70,14 +67,13 @@ export default class BackslashCommands extends PluginController {
     preview.setAttribute("aria-hidden", "true");
     cursor.parentElement.insertBefore(preview, cursor);
     preview.addEventListener("mousedown", this.previewMouseDownHandler);
-    preview.append(cursor);
-    return preview;
+    sourceElement.classList.add("dsm-latex-command-input-active");
+    return { preview, sourceElement };
   }
 
   private updatePreview(pending: PendingCommand) {
     const { preview } = pending;
-    const cursor = preview?.querySelector(".dcg-mq-cursor");
-    if (!preview || !cursor) return;
+    if (!preview) return;
 
     const clampedIndex = Math.max(
       0,
@@ -95,20 +91,28 @@ export default class BackslashCommands extends PluginController {
       preview.append(char);
     };
 
+    const addCaret = () => {
+      const caret = document.createElement("span");
+      caret.className = "dsm-latex-command-input-caret";
+      preview.append(caret);
+    };
+
     addCharacter("\\", 0);
-    if (clampedIndex === 0) preview.append(cursor);
+    if (clampedIndex === 0) addCaret();
     for (let i = 0; i < pending.command.length; i++) {
       addCharacter(pending.command[i], i + 1);
-      if (clampedIndex === i + 1) preview.append(cursor);
+      if (clampedIndex === i + 1) addCaret();
     }
   }
 
   private beginPendingCommand(mq: MathQuillField) {
+    const previewInfo = this.createPreview(mq);
     const pending: PendingCommand = {
       mq,
       command: "",
       cursorIndex: 0,
-      preview: this.createPreview(mq),
+      preview: previewInfo?.preview,
+      sourceElement: previewInfo?.sourceElement,
     };
     this.pending = pending;
     this.updatePreview(pending);
@@ -208,15 +212,14 @@ export default class BackslashCommands extends PluginController {
 
   private insertPendingCommand(pending: PendingCommand) {
     const mq = pending.mq as MathQuillFieldWithLatexWriter;
-    const controller = pending.mq.__controller as MathQuillControllerWithLatex;
     const latex = `\\${pending.command}`;
-    const latexBefore = controller.exportLatex?.() ?? pending.mq.latex();
+    const latexBefore = pending.mq.latex();
 
     // `write()` parses a complete LaTeX fragment, including arguments such
     // as `\\frac{a}{b}`.
     if (typeof mq.write === "function") {
       mq.write(latex);
-      const latexAfter = controller.exportLatex?.() ?? pending.mq.latex();
+      const latexAfter = pending.mq.latex();
       if (latexAfter !== latexBefore) {
         this.syncFocusedLatex(latexAfter);
         return;
@@ -227,7 +230,7 @@ export default class BackslashCommands extends PluginController {
     // not for a complete fragment with arguments.
     if (/^[A-Za-z]+$/.test(pending.command) && typeof mq.cmd === "function") {
       mq.cmd(latex);
-      this.syncFocusedLatex(controller.exportLatex?.() ?? pending.mq.latex());
+      this.syncFocusedLatex(pending.mq.latex());
     }
   }
 
@@ -331,6 +334,8 @@ export default class BackslashCommands extends PluginController {
   }
 
   afterEnable() {
+    if (this.isEnabled) return;
+    this.isEnabled = true;
     document.addEventListener("keydown", this.keydownHandler, true);
     document.addEventListener("mousedown", this.mouseDownHandler, true);
     document.addEventListener("focusout", this.focusOutHandler, true);
@@ -338,6 +343,8 @@ export default class BackslashCommands extends PluginController {
   }
 
   afterDisable() {
+    if (!this.isEnabled) return;
+    this.isEnabled = false;
     document.removeEventListener("keydown", this.keydownHandler, true);
     document.removeEventListener("mousedown", this.mouseDownHandler, true);
     document.removeEventListener("focusout", this.focusOutHandler, true);

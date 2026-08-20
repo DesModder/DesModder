@@ -6,7 +6,12 @@ async function pressKeys(driver: Driver, keys: KeyInput[]) {
 }
 
 testWithPage("Backslash Commands", async (driver) => {
-  await driver.enablePlugin("backslash-commands");
+  await driver.enablePlugin("custom-mathquill-config");
+  await driver.setPluginSetting(
+    "custom-mathquill-config",
+    "backslashCommands",
+    true
+  );
   await driver.focusIndex(0);
 
   await pressKeys(driver, ["Backslash", "s", "q", "r", "t"]);
@@ -42,6 +47,15 @@ testWithPage("Backslash Commands", async (driver) => {
   ).toBe("4");
 
   await pressKeys(driver, ["Space", "x"]);
+  await driver.assertSelectorNot(".dsm-latex-command-input");
+  await driver.assertSelectedItemLatex("\\sqrt{x}");
+
+  await pressKeys(driver, [
+    "Backslash",
+    ...Array<KeyInput>(32).fill("a"),
+    ...Array<KeyInput>(32).fill("Backspace"),
+    "Backspace",
+  ]);
   await driver.assertSelectorNot(".dsm-latex-command-input");
   await driver.assertSelectedItemLatex("\\sqrt{x}");
 
