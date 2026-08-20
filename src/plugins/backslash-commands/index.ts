@@ -31,7 +31,7 @@ function getLatexInputCharacter(event: KeyboardEvent) {
   // Use the character, not the physical key code. International keyboard
   // layouts can use the same physical key for different shifted characters.
   if (event.key === "\\" || event.key === "¥") return "\\";
-  return /^[\x21-\x7e]$/.test(event.key) ? event.key : undefined;
+  return /^[\x20-\x7e]$/.test(event.key) ? event.key : undefined;
 }
 
 /**
@@ -321,7 +321,7 @@ export default class BackslashCommands extends PluginController {
     this.commitPendingCommand(pending);
 
     // These keys commit the entry without inserting an additional delimiter.
-    if (key === " " || key === "Spacebar" || key === "Tab" || key === "Enter") {
+    if (key === "Tab" || key === "Enter") {
       event.preventDefault();
       return "cancel";
     }
