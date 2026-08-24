@@ -12,7 +12,6 @@ interface PendingCommand {
 
 type MathQuillFieldWithLatexWriter = MathQuillField & {
   write?: (latex: string) => unknown;
-  cmd?: (latex: string) => unknown;
 };
 
 /** On JIS keyboards the same character can be reported as `¥`. */
@@ -215,22 +214,13 @@ export default class BackslashCommands extends PluginController {
     const latex = `\\${pending.command}`;
     const latexBefore = pending.mq.latex();
 
-    // `write()` parses a complete LaTeX fragment, including arguments such
-    // as `\\frac{a}{b}`.
+    // `write()` accepts complete LaTeX fragments, such as `\\frac{a}{b}`.
     if (typeof mq.write === "function") {
       mq.write(latex);
       const latexAfter = pending.mq.latex();
       if (latexAfter !== latexBefore) {
         this.syncFocusedLatex(latexAfter);
-        return;
       }
-    }
-
-    // In the older MathQuill API, `cmd()` is reliable for a bare command but
-    // not for a complete fragment with arguments.
-    if (/^[A-Za-z]+$/.test(pending.command) && typeof mq.cmd === "function") {
-      mq.cmd(latex);
-      this.syncFocusedLatex(pending.mq.latex());
     }
   }
 

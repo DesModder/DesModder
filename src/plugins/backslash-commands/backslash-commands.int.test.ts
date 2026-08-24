@@ -46,7 +46,7 @@ testWithPage("Backslash Commands", async (driver) => {
     )
   ).toBe("4");
 
-  await pressKeys(driver, ["Enter", "x"]);
+  await pressKeys(driver, ["{", "x", "}", "Enter"]);
   await driver.assertSelectorNot(".dsm-latex-command-input");
   await driver.assertSelectedItemLatex("\\sqrt{x}");
 
