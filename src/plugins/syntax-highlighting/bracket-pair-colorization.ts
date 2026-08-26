@@ -54,7 +54,7 @@ export function generateBracketPairColorizationCSS(settings: Config) {
 
         &:not(.dcg-mq-textcolor *, .dcg-base-case-btn *) {
           .dcg-mq-paren,
-          .dsm-mq-syntax-comma,
+          .dcg-mq-comma,
           *${colorInText ? "" : ":not(.dcg-mq-bracket-middle, .dcg-mq-bracket-middle *)"} {
             color: ${colorMaker};
           }

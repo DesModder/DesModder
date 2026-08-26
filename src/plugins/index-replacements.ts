@@ -10,7 +10,6 @@ import pillbox from "#plugins/../core-plugins/pillbox-menus/pillbox-menus.replac
 import pinExpressions from "#plugins/pin-expressions/pin-expressions.replacements";
 import rightClickTray from "#plugins/right-click-tray/right-click-tray.replacements";
 import showTips from "#plugins/show-tips/show-tips.replacements";
-import syntaxHighlighting from "#plugins/syntax-highlighting/syntax-highlighting.replacements";
 import textMode from "#plugins/text-mode/text-mode.replacements";
 import insertPanels from "../preload/moduleOverrides/insert-panels.replacements";
 import quakePro from "#plugins/quake-pro/quake-pro.replacements";
@@ -30,6 +29,5 @@ export default [
   showTips,
   rightClickTray,
   codeGolf,
-  syntaxHighlighting,
   quakePro,
 ];
