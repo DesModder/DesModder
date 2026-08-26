@@ -98,6 +98,7 @@ export class Driver {
   $$ = this.page.$$.bind(this.page);
   $eval = this.page.$eval.bind(this.page);
   $$eval = this.page.$$eval.bind(this.page);
+  waitForSelector = this.page.waitForSelector.bind(this.page);
 
   /** Helpers */
   async getState() {

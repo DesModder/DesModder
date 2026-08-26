@@ -114,6 +114,7 @@ describe("Find-replace", () => {
       );
       await driver.keyboard.press("c");
 
+      await driver.waitForSelector('[expr-id="2"] .dcg-icon-replace');
       await driver.click('[expr-id="2"] .dcg-icon-replace');
 
       expect(await getLatexStrings(driver)).toStrictEqual([
@@ -124,6 +125,7 @@ describe("Find-replace", () => {
         "a+3",
       ]);
 
+      await driver.waitForSelector('[expr-id="1"] .dcg-icon-replace');
       await driver.click('[expr-id="1"] .dcg-icon-replace');
 
       expect(await getLatexStrings(driver)).toStrictEqual([
