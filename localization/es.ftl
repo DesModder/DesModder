@@ -246,19 +246,19 @@ performance-info-other = Otro
 
 ## Better Evaluation View
 better-evaluation-view-name = Mejor Vista de Evaluación
-better-evaluation-view-desc = Permite dar un vistazo a los elementos en listas, colores, y los números indefinidos.
+better-evaluation-view-desc = Permite dar un vistazo a los elementos de lista, colores, y números indefinidos.
 better-evaluation-view-evaluation-list = lista de { $count } elementos
 better-evaluation-view-opt-floats-name = Punto flotante avanzado
 better-evaluation-view-opt-floats-desc = Mostrar NaN/∞/-∞ en lugar de 'undefined' y '-0' cuando 0 es negativo.
-better-evaluation-view-opt-lists-name = Mostrar los elementos de la lista.
-better-evaluation-view-opt-lists-desc = Mostrar los elementos de la lista en vez de su tamaño.
+better-evaluation-view-opt-lists-name = Mostrar elementos de lista.
+better-evaluation-view-opt-lists-desc = Mostrar elementos de lista en vez de su tamaño.
 better-evaluation-view-opt-lists-old = Dinámico
 better-evaluation-view-opt-lists-new = Estándar
 better-evaluation-view-opt-lists-length = Tamaño
 better-evaluation-view-opt-colors-name = Mostrar colores
 better-evaluation-view-opt-colors-desc = Mostrar colores como valores RGB
-better-evaluation-view-opt-colorLists-name = Mostrar listas de colores
-better-evaluation-view-opt-colorLists-desc = Mostrar listas de colores como listas de valores RGB
+better-evaluation-view-opt-colorLists-name = Mostrar listas de color
+better-evaluation-view-opt-colorLists-desc = Mostrar listas de color como listas de valores RGB
 
 ## Pillbox Menus
 pillbox-menus-name = Menú de Botones (Funciones Principales)
