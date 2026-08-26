@@ -63,6 +63,10 @@ export function generateBracketPairColorizationCSS(settings: Config) {
         .dcg-mq-paren path {
           stroke-width: ${thickenBrackets}%;
           stroke: currentColor;
+
+          &[vector-effect="non-scaling-stroke"] {
+            stroke-width: calc(0.05em + ${thickenBrackets}%);
+          }
         }
 
         .dcg-mq-bracket-middle {
