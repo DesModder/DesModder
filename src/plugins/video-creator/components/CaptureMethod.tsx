@@ -60,7 +60,7 @@ export default class SelectCapture extends Component<{
                     hasError={() => !this.vc.isSliderVariableValid()}
                     latex={() => this.vc.sliderVariable}
                     isFocused={() => this.vc.isFocused("capture-slider-var")}
-                    handleFocusChanged={(b) =>
+                    onFocusedChanged={(b) =>
                       this.vc.updateFocus("capture-slider-var", b)
                     }
                     controller={this.vc.cc}

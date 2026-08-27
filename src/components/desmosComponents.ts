@@ -184,7 +184,7 @@ export abstract class InlineMathInputViewComponent extends ClassComponent<{
   hasError?: boolean;
   selectOnFocus?: boolean;
   needsSystemKeypad?: boolean;
-  handleFocusChanged?: (isFocused: boolean) => void;
+  onFocusedChanged?: (isFocused: boolean) => void;
   noFadeout?: boolean;
   readonly: boolean;
   controller: CalcController;

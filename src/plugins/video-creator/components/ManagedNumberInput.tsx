@@ -90,7 +90,7 @@ export default class ManagedNumberInput extends Component<ManagedNumberInputPara
         }}
         latex={() => this.props.data().getLatex()}
         hasError={() => this.props.hasError(this.props.data().getValue())}
-        handleFocusChanged={(b) => this.vc.updateFocus(this.props.focusID(), b)}
+        onFocusedChanged={(b) => this.vc.updateFocus(this.props.focusID(), b)}
         isFocused={() => this.vc.isFocused(this.props.focusID())}
         controller={this.vc.cc}
         readonly={() => this.props.readonly?.() ?? false}
