@@ -224,7 +224,7 @@ function golfStatsForExpr(cc: CalcController, latex: string): GolfStats {
     selectOnFocus: () => false,
     handleLatexChanged: () => {},
     hasError: () => false,
-    handleFocusChanged: () => () => false,
+    onFocusedChanged: () => () => false,
     ariaLabel: () => "",
     controller: () => cc,
     placeholder: () => "",
