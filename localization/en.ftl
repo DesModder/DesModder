@@ -330,8 +330,10 @@ custom-mathquill-config-opt-extendedGreek-name = More Greek Letters
 custom-mathquill-config-opt-extendedGreek-desc = Enables replacements for all supported greek letters
 custom-mathquill-config-opt-lessFSpacing-name = Less Spacing Around "f"
 custom-mathquill-config-opt-lessFSpacing-desc = Reduces extra spacing around the letter "f"
-custom-mathquill-config-opt-backslashCommands-name = Backslash Commands
-custom-mathquill-config-opt-backslashCommands-desc = Lets you enter LaTeX after typing a backslash.
+
+## Backslash Commands
+backslash-commands-name = Backslash Commands
+backslash-commands-desc = Lets you enter LaTeX after typing a backslash.
 
 ## Code Golf
 code-golf-name = Code Golf

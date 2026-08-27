@@ -39,6 +39,9 @@ function getLatexInputCharacter(event: KeyboardEvent) {
  * instance.
  */
 export default class BackslashCommands extends PluginController {
+  static id = "backslash-commands" as const;
+  static enabledByDefault = false;
+
   private pending: PendingCommand | undefined;
   private isEnabled = false;
 

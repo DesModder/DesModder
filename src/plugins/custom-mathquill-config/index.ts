@@ -2,7 +2,6 @@ import { Config, configList } from "./config";
 import "./custom-mathquill-config.less";
 import { MathQuillConfig } from "#components";
 import { PluginController } from "#plugins/PluginController.ts";
-import BackslashCommands from "../backslash-commands";
 
 const defaultConfig: MathQuillConfig = {
   charsThatBreakOutOfSupSub: "+-=<>*",
@@ -24,7 +23,6 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
   doAutoCommandInjections = false;
   autoCommandInjections =
     " gamma Gamma delta Delta epsilon zeta eta Theta iota kappa lambda Lambda mu Xi xi Pi sigma Sigma upsilon Upsilon Phi chi psi Psi omega Omega";
-  backslashCommands = new BackslashCommands(this.dsm, undefined);
 
   updateConfig(config: Config) {
     this.cc.rootElt.classList.toggle("commaizer", config.commaDelimiter);
@@ -32,9 +30,6 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
     this.cc.rootElt.classList.toggle("less-f-spacing", config.lessFSpacing);
 
     this.doAutoCommandInjections = config.extendedGreek;
-
-    if (config.backslashCommands) this.backslashCommands.afterEnable();
-    else this.backslashCommands.afterDisable();
 
     this.cc.rootElt.style.setProperty(
       "--delimiter-override",
@@ -82,7 +77,6 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
   }
 
   afterDisable() {
-    this.backslashCommands.afterDisable();
     this.doAutoCommandInjections = false;
     this.cc.rootElt.classList.remove("commaizer");
     this.cc.getMathquillConfig = this.oldConfig;
