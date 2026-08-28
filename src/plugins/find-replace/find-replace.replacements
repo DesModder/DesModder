@@ -41,3 +41,29 @@ DesModder.replaceElement(
   () => DSM.findReplace?.replaceSearchView
 )
 ```
+
+
+## Add replace button on each element
+
+*Description* `Insert a replace button before the delete button`
+
+*Find* => `topLevelIcon`
+
+```js
+$createElement("div", {
+  class: () => ({
+    ____$
+    "dcg-top-level-icon"
+    ____
+  })
+  ____
+})
+```
+
+*Replace* `topLevelIcon` with
+```js
+DesModder.replaceElement(
+  () => __topLevelIcon__,
+  () => DSM.findReplace?.replaceTopLevelIcon(this.model.id, () => this.iconType())
+)
+```

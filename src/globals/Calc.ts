@@ -9,7 +9,13 @@ export type { DispatchedEvent };
 export type FocusLocation =
   | { type: "expression"; id: string }
   | { type: "dsm-focus"; plugin: "video-creator"; id: string }
-  | { type: "dsm-focus"; plugin: "find-and-replace"; id: "replace-bar" }
+  | {
+      type: "dsm-focus";
+      plugin: "find-and-replace";
+      kind: "replace-button";
+      id: string;
+    }
+  | { type: "dsm-focus"; plugin: "find-and-replace"; kind: "replace-bar" }
   | { type: "search-expressions" }
   | {
       /**
