@@ -47,7 +47,7 @@ export default class ReplaceBar extends Component<{
                 const location: FocusLocation = {
                   type: "dsm-focus",
                   plugin: "find-and-replace",
-                  id: "replace-bar",
+                  kind: "replace-bar",
                 };
                 if (focused) {
                   this.fr.cc.dispatch({
@@ -91,7 +91,7 @@ export default class ReplaceBar extends Component<{
     return (
       location?.type === "dsm-focus" &&
       location.plugin === "find-and-replace" &&
-      location.id === "replace-bar"
+      location.kind === "replace-bar"
     );
   }
 

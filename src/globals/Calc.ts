@@ -3,13 +3,20 @@ import { GraphState, ItemState, Product } from "../../graph-state";
 import { MathQuillConfig, MathQuillField } from "#components";
 import { Matrix3 } from "./matrix3";
 import type { DispatchedEvent } from "./extra-actions";
+import { VcFocusedMq } from "../plugins/video-creator/index.ts";
 
 export type { DispatchedEvent };
 
 export type FocusLocation =
   | { type: "expression"; id: string }
-  | { type: "dsm-focus"; plugin: "video-creator"; id: string }
-  | { type: "dsm-focus"; plugin: "find-and-replace"; id: "replace-bar" }
+  | { type: "dsm-focus"; plugin: "video-creator"; kind: VcFocusedMq }
+  | {
+      type: "dsm-focus";
+      plugin: "find-and-replace";
+      kind: "replace-button";
+      id: string;
+    }
+  | { type: "dsm-focus"; plugin: "find-and-replace"; kind: "replace-bar" }
   | { type: "search-expressions" }
   | {
       /**

@@ -17,7 +17,28 @@ import {
 } from "./components/ManagedNumberInput";
 import { Orientation } from "./orientation";
 
-type FocusedMQ = string;
+export type VcFocusedMq =
+  | "export-fps"
+  | "capture-width"
+  | "capture-height"
+  | "capture-slider-var"
+  | "capture-slider-min"
+  | "capture-slider-max"
+  | "capture-slider-step"
+  | "capture-tick-time-step"
+  | "mosaic-ratio-x"
+  | "mosaic-ratio-y"
+  | "capture-tick-count"
+  | "capture-frame-count"
+  | "to-z-tip"
+  | "from-z-tip"
+  | "step-z-tip"
+  | "to-xy-rot"
+  | "from-xy-rot"
+  | "step-xy-rot"
+  | "speed-rot"
+  | "current-xy-rot"
+  | "current-z-tip";
 
 const DEFAULT_FILENAME = "DesModder_Video_Creator";
 
@@ -545,11 +566,11 @@ export default class VideoCreator extends PluginController {
     this.updateView();
   }
 
-  updateFocus(location: FocusedMQ, isFocused: boolean) {
+  updateFocus(location: VcFocusedMq, isFocused: boolean) {
     const dsmLocation: FocusLocation = {
       type: "dsm-focus",
       plugin: "video-creator",
-      id: location,
+      kind: location,
     };
     if (isFocused) {
       this.cc.dispatch({
@@ -564,12 +585,12 @@ export default class VideoCreator extends PluginController {
     }
   }
 
-  isFocused(location: FocusedMQ) {
+  isFocused(location: VcFocusedMq) {
     const focused = this.cc.getFocusLocation();
     return (
       focused?.type === "dsm-focus" &&
       focused.plugin === "video-creator" &&
-      focused.id === location
+      focused.kind === location
     );
   }
 

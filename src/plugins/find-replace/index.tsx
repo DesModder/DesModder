@@ -1,29 +1,25 @@
 import { PluginController, Replacer } from "../PluginController";
 import { refactor, refactorInItem } from "./backend";
 import { DispatchedEvent } from "src/globals";
-import { ComponentTemplate, jsx } from "#DCGView";
+import { ComponentTemplate, DCGView, jsx } from "#DCGView";
 import { If } from "#components";
 import ReplaceBar from "./ReplaceBar";
+import { manageFocusHelper } from "../../utils/manage-focus-helper.ts";
+import "./find-replace.less";
+
+declare module "src/globals/extra-actions" {
+  interface AllActions {
+    "find-replace": {
+      type: "dsm-fr-rename-identifier-in-item";
+      id: string;
+    };
+  }
+}
 
 export default class FindReplace extends PluginController {
   static id = "find-and-replace" as const;
   static enabledByDefault = true;
   replaceLatex = "";
-  vanillaShouldShowReplaceIcon: undefined | (() => boolean);
-
-  afterEnable(): void {
-    this.vanillaShouldShowReplaceIcon = this.cc.shouldShowReplaceIcon.bind(
-      this.cc
-    );
-    this.cc.shouldShowReplaceIcon = () => {
-      if (this.vanillaShouldShowReplaceIcon!()) return true;
-      return this.isReplaceValid();
-    };
-  }
-
-  afterDisable(): void {
-    this.cc.shouldShowReplaceIcon = this.vanillaShouldShowReplaceIcon!;
-  }
 
   getReplaceLatex() {
     return this.replaceLatex;
@@ -74,9 +70,44 @@ export default class FindReplace extends PluginController {
     </div>
   );
 
+  replaceTopLevelIcon(id: string, iconType: () => string): Replacer {
+    return (topLevelIcon: ComponentTemplate) => (
+      <span>
+        <If predicate={() => iconType() === "delete" && this.isReplaceValid()}>
+          {() => (
+            <div
+              class="dcg-top-level-icon dcg-tappable dsm-extra-rename-btn"
+              tabIndex={DCGView.const(0)}
+              onTap={() =>
+                this.cc.dispatch({
+                  type: "dsm-fr-rename-identifier-in-item",
+                  id,
+                })
+              }
+              role="button"
+              manageFocus={DCGView.const(
+                manageFocusHelper({
+                  controller: this.cc,
+                  location: {
+                    type: "dsm-focus",
+                    plugin: "find-and-replace",
+                    kind: "replace-button",
+                    id,
+                  },
+                })
+              )}
+            >
+              <i class="dcg-icon-replace" aria-hidden="true" />
+            </div>
+          )}
+        </If>
+        {topLevelIcon}
+      </span>
+    );
+  }
+
   handleDispatchedAction(evt: DispatchedEvent) {
-    if (evt.type === "rename-identifier-in-item") {
-      if (this.isNativeRenameActive()) return;
+    if (evt.type === "dsm-fr-rename-identifier-in-item") {
       this.cc.runAfterDispatch(() => this.refactorInItem(evt.id));
       return "abort-later-handlers";
     }
