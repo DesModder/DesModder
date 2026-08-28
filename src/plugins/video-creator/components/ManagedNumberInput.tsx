@@ -1,12 +1,12 @@
 import { Component, jsx } from "#DCGView";
 import { InlineMathInputViewGeneral } from "#components";
-import VideoCreator from "..";
+import VideoCreator, { VcFocusedMq } from "..";
 import { Calc } from "#globals";
 import { EvaluateSingleExpression } from "#utils/depUtils.ts";
 import "./ManagedNumberInput.less";
 
 interface ManagedNumberInputParams {
-  focusID: string;
+  focusID: VcFocusedMq;
   ariaLabel: string;
   readonly?: boolean;
   hasError: (val: number) => boolean;

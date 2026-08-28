@@ -11,7 +11,7 @@ function isHeightOrWidthFocused(vc: VideoCreator) {
   return (
     location?.type === "dsm-focus" &&
     location.plugin === "video-creator" &&
-    (location.id === "capture-width" || location.id === "capture-height")
+    (location.kind === "capture-width" || location.kind === "capture-height")
   );
 }
 
