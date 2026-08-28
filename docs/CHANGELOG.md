@@ -1,5 +1,18 @@
 # DesModder Changelog
 
+## 0.15.16
+
+Bug fixes and enhancements:
+
+- (Syntax Highlighting) Square brackets now have normal thickness again.
+- (Syntax Highlighting) Commas match the colors of their containers again.
+- (Video Creator) Fix focus problems with the mathquill fields.
+- (Find and Replace) Keep delete buttons around when replace buttons are shown.
+
+Translations:
+
+- Updates to Spanish translations.
+
 ## 0.15.15
 
 New features:
