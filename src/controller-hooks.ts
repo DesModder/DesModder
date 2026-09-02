@@ -9,6 +9,9 @@ export function makeControllerHooks(dsm: DSM): DesModderHooks {
           return !!dsm.videoCreator?.isMenuOpen();
         case "find-and-replace":
           return dsm.cc.getExpressionSearchOpen();
+        case "code-golf":
+          // only focus location is the `dummy-mq` one.
+          return false;
         default:
           location satisfies never;
           return false;

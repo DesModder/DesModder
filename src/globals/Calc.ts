@@ -17,6 +17,12 @@ export type FocusLocation =
       id: string;
     }
   | { type: "dsm-focus"; plugin: "find-and-replace"; kind: "replace-bar" }
+  | {
+      type: "dsm-focus";
+      plugin: "code-golf";
+      /** Should be unreachable; just using to guarantee compatability with `manageFocusHelper`. */
+      kind: "dummy-mq";
+    }
   | { type: "search-expressions" }
   | {
       /**

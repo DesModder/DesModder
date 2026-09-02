@@ -17,6 +17,7 @@ import {
 import { GenericSettings, PluginID } from "../plugins";
 import { ItemModel, ValueType, ValueTypeMap } from "./models";
 import { GraphState } from "../../graph-state";
+import { CalcController, FocusLocation } from "./Calc.ts";
 
 declare global {
   interface Window {
@@ -167,6 +168,21 @@ interface Fragile {
   currentLanguage: () => string;
   joinShaderFunctions: (shaderFunctionsList: ShaderFunctions[]) => string;
   glslHeader: string;
+  manageFocusHelper: (opts: ManageFocusOpts) => ManageFocus;
+  mathquillFocusHelper: (opts: ManageFocusOpts) => ManageFocusMathQuill;
+}
+
+interface ManageFocusOpts {
+  controller: CalcController;
+  location: FocusLocation;
+}
+
+export interface ManageFocus {
+  __nominallyManageFocus: unknown;
+}
+
+export interface ManageFocusMathQuill {
+  __nominallyManageFocusMathQuill: unknown;
 }
 
 export interface ShaderFunctions {
@@ -221,3 +237,11 @@ declare global {
  * Use `/* eslint-disable no-console` and lowercase `console.log` on node scripts
  */
 export const Console = ((globalThis ?? window) as any).console;
+
+export function manageFocusHelper(opts: ManageFocusOpts) {
+  return Fragile.manageFocusHelper(opts);
+}
+
+export function mathquillFocusHelper(opts: ManageFocusOpts) {
+  return Fragile.mathquillFocusHelper(opts);
+}

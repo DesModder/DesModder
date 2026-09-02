@@ -1,7 +1,7 @@
 import VideoCreator from "..";
 import { CaptureMethod } from "../backend/capture";
 import "./CaptureMethod.css";
-import { Component, jsx } from "#DCGView";
+import { Component, DCGView, jsx } from "#DCGView";
 import { MathQuillView } from "../../../components/desmosComponents.ts";
 import {
   SegmentedControl,
@@ -59,10 +59,9 @@ export default class SelectCapture extends Component<{
                     handleLatexChanged={(v) => this.vc.setSliderVariable(v)}
                     hasError={() => !this.vc.isSliderVariableValid()}
                     latex={() => this.vc.sliderVariable}
-                    isFocused={() => this.vc.isFocused("capture-slider-var")}
-                    onFocusedChanged={(b) =>
-                      this.vc.updateFocus("capture-slider-var", b)
-                    }
+                    manageFocus={DCGView.const(
+                      this.vc.getMathquillFocus("capture-slider-var")
+                    )}
                     controller={this.vc.cc}
                     placeholder=""
                     handlePressedKey={this.handlePressedKey}

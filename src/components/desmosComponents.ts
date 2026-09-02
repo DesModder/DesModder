@@ -6,7 +6,7 @@ import {
   ComponentTemplate,
   DCGView,
 } from "#DCGView";
-import { CalcController, Fragile } from "#globals";
+import { CalcController, Fragile, ManageFocusMathQuill } from "#globals";
 import { createElementWrapped } from "../preload/replaceElement";
 
 export abstract class CheckboxComponent extends ClassComponent<{
@@ -156,7 +156,6 @@ export abstract class MathQuillViewComponent extends ClassComponent<{
   latex: string;
   capExpressionSize: number | false;
   config: { autoOperatorNames: string };
-  isFocused: boolean;
   getAriaLabel: string;
   getAriaPostLabel: string;
   onUserChangedLatex: (s: string) => void;
@@ -164,8 +163,8 @@ export abstract class MathQuillViewComponent extends ClassComponent<{
   hasError?: boolean;
   selectOnFocus?: boolean;
   needsSystemKeypad?: boolean;
-  onFocusedChanged?: (isFocused: boolean) => void;
   noFadeout?: boolean;
+  manageFocus: ManageFocusMathQuill;
 }> {}
 
 export const MathQuillView = Fragile.MathquillView;
@@ -175,7 +174,6 @@ export abstract class InlineMathInputViewComponent extends ClassComponent<{
   latex: string;
   // capExpressionSize: number | false;
   // config: { autoOperatorNames: string };
-  isFocused: boolean;
   ariaLabel: string;
   // ariaPostLabel: string;
   placeholder: string;
@@ -184,10 +182,10 @@ export abstract class InlineMathInputViewComponent extends ClassComponent<{
   hasError?: boolean;
   selectOnFocus?: boolean;
   needsSystemKeypad?: boolean;
-  onFocusedChanged?: (isFocused: boolean) => void;
   noFadeout?: boolean;
   readonly: boolean;
   controller: CalcController;
+  manageFocus: ManageFocusMathQuill;
 }> {}
 
 /** General InlineMathInputView, without any defaults filled in */

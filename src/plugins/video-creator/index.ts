@@ -9,7 +9,7 @@ import {
 import { OutFileType, exportFrames, initFFmpeg } from "./backend/export";
 import { escapeRegex } from "./backend/utils";
 import { MainPopupFunc } from "./components/MainPopup";
-import { ExpressionModel, FocusLocation, ValueType } from "#globals";
+import { ExpressionModel, mathquillFocusHelper, ValueType } from "#globals";
 import { keys } from "#utils/depUtils.ts";
 import {
   ManagedNumberInputModel,
@@ -569,32 +569,15 @@ export default class VideoCreator extends PluginController {
     this.updateView();
   }
 
-  updateFocus(location: VcFocusedMq, isFocused: boolean) {
-    const dsmLocation: FocusLocation = {
-      type: "dsm-focus",
-      plugin: "video-creator",
-      kind: location,
-    };
-    if (isFocused) {
-      this.cc.dispatch({
-        type: "set-focus-location",
-        location: dsmLocation,
-      });
-    } else {
-      this.cc.dispatch({
-        type: "blur-focus-location",
-        location: dsmLocation,
-      });
-    }
-  }
-
-  isFocused(location: VcFocusedMq) {
-    const focused = this.cc.getFocusLocation();
-    return (
-      focused?.type === "dsm-focus" &&
-      focused.plugin === "video-creator" &&
-      focused.kind === location
-    );
+  getMathquillFocus(location: VcFocusedMq) {
+    return mathquillFocusHelper({
+      location: {
+        type: "dsm-focus",
+        plugin: "video-creator",
+        kind: location,
+      },
+      controller: this.cc,
+    });
   }
 
   cancelCapture() {
