@@ -203,6 +203,14 @@ export class Orientation {
     );
   }
 
+  isSpinning() {
+    if (this.orientationMode !== "current-speed") return false;
+    if (this.sdBeforeCapture.speed !== 0 && this.vc.isCapturing) return true;
+    const sd = this.getSpinningSpeedAndDirection();
+    if (!sd) return false;
+    return sd.speed !== 0;
+  }
+
   toggleSpinningDirection() {
     const sd = this.getSpinningSpeedAndDirection();
     if (!sd) return;

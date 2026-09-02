@@ -271,7 +271,10 @@ export default class VideoCreator extends PluginController {
       case "action":
         return this.hasAction();
       case "ticks":
-        return this.cc.getPlayingSliders().length > 0 || this.cc.is3dProduct();
+        return (
+          this.cc.getPlayingSliders().length > 0 ||
+          (this.cc.is3dProduct() && this.or.isSpinning())
+        );
       case "slider":
         return true;
       case "once":
@@ -350,7 +353,7 @@ export default class VideoCreator extends PluginController {
 
   isTickTimeStepValid() {
     const ts = this.getTickTimeStepNumber();
-    return !isNaN(ts) && ts > 0;
+    return isFinite(ts) && ts > 0;
   }
 
   getMatchingSlider() {
