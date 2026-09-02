@@ -1,10 +1,9 @@
 import { PluginController, Replacer } from "../PluginController";
 import { refactor, refactorInItem } from "./backend";
-import { DispatchedEvent } from "src/globals";
+import { DispatchedEvent, manageFocusHelper } from "src/globals";
 import { ComponentTemplate, DCGView, jsx } from "#DCGView";
 import { If } from "#components";
 import ReplaceBar from "./ReplaceBar";
-import { manageFocusHelper } from "../../utils/manage-focus-helper.ts";
 import "./find-replace.less";
 
 declare module "src/globals/extra-actions" {
