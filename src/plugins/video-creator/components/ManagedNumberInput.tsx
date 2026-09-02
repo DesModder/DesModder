@@ -93,8 +93,8 @@ export default class ManagedNumberInput extends Component<ManagedNumberInputPara
         readonly={() => this.props.readonly?.() ?? false}
         handlePressedKey={(key, e) => {
           if (!this.props.handlePressedKey) return;
-          this.props.handlePressedKey(key, e);
           const mq = MathQuillView.getFocusedMathquill();
+          this.props.handlePressedKey(key, e);
           if (mq) this.handleLatexChanged(mq.latex());
         }}
       />
