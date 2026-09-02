@@ -350,7 +350,7 @@ export default class VideoCreator extends PluginController {
 
   isTickTimeStepValid() {
     const ts = this.getTickTimeStepNumber();
-    return !isNaN(ts) && ts > 0;
+    return isFinite(ts) && ts > 0;
   }
 
   getMatchingSlider() {
