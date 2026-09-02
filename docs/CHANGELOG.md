@@ -1,5 +1,14 @@
 # DesModder Changelog
 
+## 0.15.17
+
+Bug fixes:
+
+- (Calculator Settings) Fix "Show IDs" option.
+- (Video Creator) Only show "ticks" option when relevant (a slider is running, or in 3d and the cube is spinning).
+- (Video Creator) Avoid duplicated arrow keys in math fields.
+- (Find and Replace) Stop showing the virtual keypad on the replace buttons.
+
 ## 0.15.16
 
 Bug fixes and enhancements:
