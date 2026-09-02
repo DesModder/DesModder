@@ -28,19 +28,20 @@ export function leftRightArrows(
 
   const mq = MathQuillView.getFocusedMathquill();
   if (!mq) return false;
+
+  evt.stopPropagation();
+  evt.preventDefault();
+
   const atBounds = MathQuillView.applyArrowKeyAndReturnIfWasAtBounds(
     mq,
     key,
     evt
   );
-  if (!atBounds) return false;
+  if (!atBounds) return true;
 
   const newIndex = focusedIndex + dir;
 
-  if (newIndex < 0 || newIndex >= fields.length) return false;
-
-  evt.stopPropagation();
-  evt.preventDefault();
+  if (newIndex < 0 || newIndex >= fields.length) return true;
 
   fields[newIndex].focus();
   return true;
