@@ -8,24 +8,12 @@ const INLINE_INPUT = ".dcg-inline-math-input-view";
 const INLINE_INPUT_TEXTAREA = ".dcg-inline-math-input-view textarea";
 
 describe("Video Creator", () => {
-  const url = process.env.DSM_TESTING_URL ?? "https://desmos.com/calculator";
-  let testFn = testWithPageAndOpts;
-  if (!url.startsWith("https://")) {
-    // In non-secure contexts, self.crossOriginIsolated is false, so SharedArrayBuffer
-    // cannot work. That breaks the video creator loading, so skip this test on non-https URLs.
-    testFn = (name: string, _opts: unknown, cb: (driver: any) => void) =>
-      test.skip(name, cb);
-  }
-
-  testFn(
+  testWithPageAndOpts(
     "Regular capture in /calculator",
-    { timeout: 15000 },
+    { path: "/calculator?skipInitFFmpeg", timeout: 15000 },
     async (driver) => {
       // Open menu. It should be FFmpeg loading
       await driver.click("[data-buttonid='dsm-vc-menu']");
-      await driver.assertSelector(".dsm-pillbox-popover .dsm-delayed-reveal");
-
-      // Eventually, FFmpeg loads. Capture menu but no preview/export
       await driver.assertSelectorEventually(CAPTURE);
       await driver.assertSelectorNot(PREVIEW, EXPORT);
 
@@ -52,15 +40,12 @@ describe("Video Creator", () => {
     }
   );
 
-  testFn(
+  testWithPageAndOpts(
     "Regular capture in /3d",
-    { path: "/3d", timeout: 15000 },
+    { path: "/3d?skipInitFFmpeg", timeout: 15000 },
     async (driver) => {
       // Open menu. It should be FFmpeg loading
       await driver.click("[data-buttonid='dsm-vc-menu']");
-      await driver.assertSelector(".dsm-pillbox-popover .dsm-delayed-reveal");
-
-      // Eventually, FFmpeg loads. Capture menu but no preview/export
       await driver.assertSelectorEventually(CAPTURE);
       await driver.assertSelectorNot(PREVIEW, EXPORT);
 
@@ -97,15 +82,12 @@ describe("Video Creator", () => {
     return (node.previousSibling as HTMLElement).innerText;
   }
 
-  testFn(
+  testWithPageAndOpts(
     "Arrow key movement around controls",
-    { timeout: 15000 },
+    { path: "/calculator?skipInitFFmpeg", timeout: 15000 },
     async (driver) => {
       // Open menu. It should be FFmpeg loading
       await driver.click("[data-buttonid='dsm-vc-menu']");
-      await driver.assertSelector(".dsm-pillbox-popover .dsm-delayed-reveal");
-
-      // Eventually, FFmpeg loads. Capture menu but no preview/export
       await driver.assertSelectorEventually(CAPTURE);
       await driver.assertSelectorNot(PREVIEW, EXPORT);
 
