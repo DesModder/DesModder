@@ -4,7 +4,7 @@ import { Component, jsx } from "#DCGView";
 import { MathQuillView } from "#components";
 import { format } from "#i18n";
 import { autoOperatorNames } from "#utils/depUtils.ts";
-import { FocusLocation } from "../../globals";
+import { mathquillFocusHelper } from "../../globals";
 
 export default class ReplaceBar extends Component<{
   fr: FindReplace;
@@ -24,7 +24,6 @@ export default class ReplaceBar extends Component<{
               latex={() => this.fr.getReplaceLatex()}
               capExpressionSize={false}
               config={{ autoOperatorNames }}
-              isFocused={() => this.isFocused()}
               getAriaLabel="expression replace"
               getAriaPostLabel=""
               onUserChangedLatex={(e: string) => this.fr.setReplaceLatex(e)}
@@ -43,24 +42,14 @@ export default class ReplaceBar extends Component<{
                   }
                 }
               }}
-              onFocusedChanged={(focused) => {
-                const location: FocusLocation = {
+              manageFocus={mathquillFocusHelper({
+                controller: this.fr.cc,
+                location: {
                   type: "dsm-focus",
                   plugin: "find-and-replace",
                   kind: "replace-bar",
-                };
-                if (focused) {
-                  this.fr.cc.dispatch({
-                    type: "set-focus-location",
-                    location,
-                  });
-                } else {
-                  this.fr.cc.dispatch({
-                    type: "blur-focus-location",
-                    location,
-                  });
-                }
-              }}
+                },
+              })}
               hasError={false}
               selectOnFocus
               noFadeout
@@ -83,15 +72,6 @@ export default class ReplaceBar extends Component<{
           </span>
         </div>
       </div>
-    );
-  }
-
-  isFocused() {
-    const location = this.fr.cc.getFocusLocation();
-    return (
-      location?.type === "dsm-focus" &&
-      location.plugin === "find-and-replace" &&
-      location.kind === "replace-bar"
     );
   }
 

@@ -177,11 +177,11 @@ interface ManageFocusOpts {
   location: FocusLocation;
 }
 
-interface ManageFocus {
+export interface ManageFocus {
   __nominallyManageFocus: unknown;
 }
 
-interface ManageFocusMathQuill {
+export interface ManageFocusMathQuill {
   __nominallyManageFocusMathQuill: unknown;
 }
 

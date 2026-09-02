@@ -1,10 +1,11 @@
-import { mountToNode } from "#DCGView";
+import { DCGView, mountToNode } from "#DCGView";
 import { InlineMathInputView } from "src/components";
 import {
   CalcController,
   ExpressionModel,
   FolderModel,
   ItemModel,
+  mathquillFocusHelper,
 } from "src/globals";
 import CodeGolf from ".";
 
@@ -220,11 +221,18 @@ function golfStatsForExpr(cc: CalcController, latex: string): GolfStats {
 
   mountToNode(InlineMathInputView, fakeContainer, {
     latex: () => latex ?? "",
-    isFocused: () => false,
+    // Still need to specify focus because this is an InlineMathInputView
+    // I tried switching to StaticMathquillView but the sizes were different.
+    // Maybe fixing up some padding would fix that, but not dealing with that for now.
+    manageFocus: DCGView.const(
+      mathquillFocusHelper({
+        controller: cc,
+        location: { type: "dsm-focus", plugin: "code-golf", kind: "dummy-mq" },
+      })
+    ),
     selectOnFocus: () => false,
     handleLatexChanged: () => {},
     hasError: () => false,
-    onFocusedChanged: () => () => false,
     ariaLabel: () => "",
     controller: () => cc,
     placeholder: () => "",
