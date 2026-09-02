@@ -163,7 +163,10 @@ export default class VideoCreator extends PluginController {
   }
 
   async tryInitFFmpeg() {
-    await initFFmpeg(this);
+    const skipInit = new URLSearchParams(window.location.search).has(
+      "skipInitFFmpeg"
+    );
+    if (!skipInit) await initFFmpeg(this);
     this.ffmpegLoaded = true;
     this.updateView();
   }
