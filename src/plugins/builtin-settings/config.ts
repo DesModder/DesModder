@@ -1,4 +1,4 @@
-export const settingsConfigList = [
+export const configList = [
   {
     key: "advancedStyling",
     type: "boolean",
@@ -48,20 +48,15 @@ export const settingsConfigList = [
     type: "boolean",
     default: false,
   },
-  // `as const` ensures that the key values can be used as types
-  // instead of the type 'string'
-] as const;
-
-export const specialConfigList = [
   {
     key: "showIDs",
     name: "Show IDs",
     type: "boolean",
     default: false,
   },
+  // `as const` ensures that the key values can be used as types
+  // instead of the type 'string'
 ] as const;
-
-export const configList = [...settingsConfigList, ...specialConfigList];
 
 export interface SettingsConfig {
   advancedStyling: boolean;
