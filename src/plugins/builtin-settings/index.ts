@@ -1,18 +1,7 @@
 import { PluginController } from "../PluginController";
-import {
-  Config,
-  configList,
-  settingsConfigList,
-  specialConfigList,
-} from "./config";
+import { Config, configList } from "./config";
 
-const settingsKeys = settingsConfigList.map((e) => e.key);
-const specialKeys = specialConfigList.map((e) => e.key);
-
-function hasQueryFlag(s: string) {
-  const params = new URLSearchParams(window.location.href);
-  return params.has(s) && params.get(s) !== "false";
-}
+const settingsKeys = configList.map((e) => e.key);
 
 export default class BuiltinSettings extends PluginController<Config> {
   static id = "builtin-settings" as const;
@@ -29,17 +18,9 @@ export default class BuiltinSettings extends PluginController<Config> {
             advancedStyling: boolean;
             authorFeatures: boolean;
             showPerformanceMeter: boolean;
+            showIDs: boolean;
           }
         )[key] ?? false;
-    }
-    for (const key of specialKeys) {
-      switch (key) {
-        case "showIDs":
-          this.initialSettings[key] = hasQueryFlag("showIDs");
-          break;
-        default:
-          key satisfies never;
-      }
     }
     this.updateConfig(this.settings);
   }
@@ -50,30 +31,6 @@ export default class BuiltinSettings extends PluginController<Config> {
 
   afterConfigChange() {
     this.updateConfig(this.settings);
-  }
-
-  private updateURL(config: Config) {
-    const params = new URLSearchParams(window.location.search);
-    for (const key of specialKeys) {
-      switch (key) {
-        case "showIDs":
-          if (config[key]) {
-            params.set(key, "trueDSMDELETE");
-          } else {
-            params.delete(key);
-          }
-          break;
-        default:
-          key satisfies never;
-      }
-    }
-    const { href } = window.location;
-    const url = new URL(href);
-    url.search = params.toString();
-    const newURL = url.toString().replace(/=trueDSMDELETE/g, "");
-    if (newURL !== href) {
-      history.replaceState({}, "", newURL);
-    }
   }
 
   private updateSettings(config: Config) {
@@ -102,7 +59,6 @@ export default class BuiltinSettings extends PluginController<Config> {
   }
 
   updateConfig(config: Config) {
-    this.updateURL(config);
     this.updateSettings(config);
   }
 }
