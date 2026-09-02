@@ -1,5 +1,5 @@
 import { Component, DCGView, jsx } from "#DCGView";
-import { InlineMathInputViewGeneral } from "#components";
+import { InlineMathInputViewGeneral, MathQuillView } from "#components";
 import VideoCreator, { VcFocusedMq } from "..";
 import { Calc } from "#globals";
 import { EvaluateSingleExpression } from "#utils/depUtils.ts";
@@ -83,11 +83,7 @@ export default class ManagedNumberInput extends Component<ManagedNumberInputPara
         })}
         placeholder={() => this.props.data().getDefaultLatex() ?? ""}
         ariaLabel={() => this.props.ariaLabel()}
-        handleLatexChanged={(latex) => {
-          this.props.data().setLatexWithCallbacks(latex);
-          // TODO-updateView: this should be a tick
-          this.vc.updateView();
-        }}
+        handleLatexChanged={(latex) => this.handleLatexChanged(latex)}
         latex={() => this.props.data().getLatex()}
         hasError={() => this.props.hasError(this.props.data().getValue())}
         manageFocus={DCGView.const(
@@ -95,8 +91,19 @@ export default class ManagedNumberInput extends Component<ManagedNumberInputPara
         )}
         controller={this.vc.cc}
         readonly={() => this.props.readonly?.() ?? false}
-        handlePressedKey={this.props.handlePressedKey}
+        handlePressedKey={(key, e) => {
+          if (!this.props.handlePressedKey) return;
+          const mq = MathQuillView.getFocusedMathquill();
+          this.props.handlePressedKey(key, e);
+          if (mq) this.handleLatexChanged(mq.latex());
+        }}
       />
     );
+  }
+
+  private handleLatexChanged(latex: string) {
+    this.props.data().setLatexWithCallbacks(latex);
+    // TODO-updateView: this should be a tick
+    this.vc.updateView();
   }
 }
