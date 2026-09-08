@@ -61,7 +61,7 @@ function resolve(filename: string, source: string): string | undefined {
   if (source.startsWith(".")) {
     return path.resolve(path.dirname(filename), source);
   } else if (source.startsWith("#")) {
-    const [hashRef, ...parts] = source.split(path.sep);
+    const [hashRef, ...parts] = source.split("/");
     const packageName = packageFilename(filename);
     const imports = packageImports(packageName);
     const packageDir = path.dirname(packageName);
