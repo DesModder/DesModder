@@ -263,6 +263,62 @@ export function spectralFlux(magnitudes: Float32Array, previous: Float32Array) {
   return total === 0 ? 0 : clamp(rise / total, 0, 1);
 }
 
+export interface SpectralComponent {
+  readonly hz: number;
+  /** Magnitude relative to the strongest component, 0-1. */
+  readonly amplitude: number;
+}
+
+/**
+ * The strongest local maxima in the spectrum, loudest first.
+ *
+ * Local maxima rather than the largest bins, because the largest bins in a
+ * single peak are that peak and its two shoulders — taking them by magnitude
+ * alone returns one note three times and calls it a chord.
+ *
+ * Amplitudes come back relative to the loudest component, which is what the
+ * additive reconstruction wants: a shape, not an absolute level.
+ */
+export function strongestComponents(
+  magnitudes: Float32Array,
+  sampleRate: number,
+  fftSize: number,
+  count: number,
+  minHz = MIN_PITCH_HZ,
+  maxHz = 12000
+): SpectralComponent[] {
+  const lowest = Math.max(1, hzToBin(minHz, sampleRate, fftSize));
+  const highest = Math.min(
+    magnitudes.length - 2,
+    hzToBin(maxHz, sampleRate, fftSize)
+  );
+  const peaks: Array<{ index: number; magnitude: number }> = [];
+  for (let i = lowest; i <= highest; i++) {
+    const value = magnitudes[i];
+    if (value > 0 && value >= magnitudes[i - 1] && value > magnitudes[i + 1])
+      peaks.push({ index: i, magnitude: value });
+  }
+  peaks.sort((a, b) => b.magnitude - a.magnitude);
+
+  const loudest = peaks[0]?.magnitude ?? 0;
+  if (loudest === 0) return [];
+  return peaks.slice(0, Math.max(0, count)).map(({ index, magnitude }) => {
+    // Refined the same way the dominant peak is, so a component and the
+    // dominant frequency agree when they are the same note.
+    const left = magnitudes[index - 1];
+    const right = magnitudes[index + 1];
+    const denominator = left - 2 * magnitude + right;
+    const shift =
+      denominator === 0
+        ? 0
+        : clamp((0.5 * (left - right)) / denominator, -0.5, 0.5);
+    return {
+      hz: binToHz(index + shift, sampleRate, fftSize),
+      amplitude: clamp(magnitude / loudest, 0, 1),
+    };
+  });
+}
+
 /**
  * A value that rises quickly and falls slowly.
  *
