@@ -81,7 +81,7 @@ export class AudioFieldRenderer {
       alpha: true,
       antialias: false,
       depth: false,
-      premultipliedAlpha: true,
+      premultipliedAlpha: false,
       // The field is composited over graph paper every frame, so there is
       // nothing worth preserving between them.
       preserveDrawingBuffer: false,
@@ -323,10 +323,11 @@ export class AudioFieldRenderer {
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    // Additive over the graph paper, so overlapping particles brighten instead
-    // of hiding each other, and nothing the field draws can darken the graph.
+    // Ordinary alpha blending, not additive. Additive can only brighten what
+    // is underneath, and Desmos graph paper is white by default, so an additive
+    // field over it is invisible however many particles are in it.
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     gl.useProgram(program);
     this.uploadFeatures(program, features);
@@ -339,7 +340,7 @@ export class AudioFieldRenderer {
       gl.getUniformLocation(program, "uPointSize"),
       // Bigger points when there are fewer of them, so a quality drop reads as
       // slightly coarser rather than as a field that suddenly emptied.
-      this.quality.particles >= 8000 ? 2 : 3
+      this.quality.particles >= 8000 ? 4 : 5.5
     );
     gl.uniform1f(gl.getUniformLocation(program, "uLifetime"), LIFETIME_SECONDS);
 

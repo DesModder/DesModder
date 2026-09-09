@@ -159,13 +159,26 @@ in float vSpeed;
 in float vFade;
 out vec4 outColor;
 
-// Brightness chooses a hue between a cool blue and a warm amber. Kept to one
+// Brightness chooses a colour along one axis, from cool to warm. Kept to one
 // axis on purpose: a palette that moves in two directions at once stops
 // reading as a measurement of anything.
+//
+// Three stops rather than two, and the middle one is the reason. Interpolating
+// straight from blue to red passes through a desaturated grey at the halfway
+// point, which is where most music actually sits — the field came out the
+// colour of pencil. Routing through green keeps the whole range saturated.
+//
+// All three are Desmos's own expression colours, which are chosen to be legible
+// on white graph paper. That matters more than it sounds: a pale particle over
+// a white background is invisible however many of them there are.
 vec3 palette(float t) {
-  vec3 cool = vec3(0.16, 0.42, 0.78);
-  vec3 warm = vec3(0.95, 0.62, 0.20);
-  return mix(cool, warm, clamp(t, 0.0, 1.0));
+  vec3 cool = vec3(0.176, 0.439, 0.702);
+  vec3 middle = vec3(0.220, 0.549, 0.275);
+  vec3 warm = vec3(0.780, 0.267, 0.251);
+  float x = clamp(t, 0.0, 1.0);
+  return x < 0.5
+    ? mix(cool, middle, x * 2.0)
+    : mix(middle, warm, (x - 0.5) * 2.0);
 }
 
 void main() {
@@ -174,11 +187,21 @@ void main() {
   vec2 offset = gl_PointCoord - vec2(0.5);
   float radius = length(offset) * 2.0;
   if (radius > 1.0) discard;
-  float edge = smoothstep(1.0, 0.35, radius);
+  // Solid to half the radius, then a soft rim. Fading from the very centre
+  // makes a dot that is almost entirely falloff: measured across a frame, the
+  // mean covered pixel came out at 23/255 and the field read as pencil smudge.
+  float edge = smoothstep(1.0, 0.5, radius);
 
   vec3 color = palette(uCentroid * 0.65 + vSpeed * 0.35);
-  float intensity = (0.25 + 0.75 * vSpeed) * (0.4 + 0.6 * uRms) + uOnset * 0.4;
-  outColor = vec4(color * intensity, edge * vFade * clamp(intensity, 0.0, 1.0));
+  // Loudness and speed drive opacity rather than brightness. Over a light
+  // background, "louder" has to mean more opaque; making it brighter instead
+  // fades the field out exactly when the music gets going.
+  //
+  // The floor is high on purpose. A particle sitting still at a turning point
+  // of the field is still a particle, and a term that multiplied opacity by
+  // speed alone left half of a Pulse field invisible for half of every cycle.
+  float presence = (0.7 + 0.3 * vSpeed) * (0.72 + 0.28 * uRms) + uOnset * 0.3;
+  outColor = vec4(color, edge * vFade * clamp(presence, 0.0, 0.95));
 }
 `;
 
