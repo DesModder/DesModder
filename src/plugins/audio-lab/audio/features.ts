@@ -1,0 +1,437 @@
+/**
+ * Turns one analyser frame into the small set of numbers everything else in
+ * Audio Lab consumes.
+ *
+ * Every output is bounded, finite, and frame-rate independent: the smoothers
+ * take a real elapsed time rather than a frame count, so a 144 Hz monitor and a
+ * 60 Hz monitor settle at the same speed. Nothing here writes to Desmos or
+ * touches WebGL — the engine produces a frame, and the two consumers read it on
+ * their own clocks.
+ */
+
+/** Speed of sound in dry air at 20 °C, the value physics classes start from. */
+export const DEFAULT_SPEED_OF_SOUND = 343;
+
+/**
+ * Bands are named for what a listener hears, not for a standard. The edges are
+ * the usual ones for music visualisation: bass ends where kick and bass guitar
+ * stop dominating, treble starts around cymbals and consonants.
+ */
+export const BANDS = {
+  bass: [20, 250],
+  mid: [250, 2000],
+  treble: [2000, 12000],
+} as const;
+
+/** DC and room rumble are loud and never the note being played. */
+const MIN_PITCH_HZ = 40;
+/** Above this a dominant peak is a cymbal, not a pitch worth reporting. */
+const MAX_PITCH_HZ = 5000;
+
+/** Onsets closer together than this are one drum hit, not two. */
+const ONSET_REFRACTORY_S = 0.12;
+
+/** 240 BPM and 30 BPM. Outside this, the estimate is not a musical tempo. */
+const MIN_BEAT_PERIOD_S = 0.25;
+const MAX_BEAT_PERIOD_S = 2;
+
+export interface AudioFeatureFrame {
+  /** Seconds of analysis clock since the engine started. */
+  readonly time: number;
+  /** Smoothed loudness, 0-1. */
+  readonly rms: number;
+  /** Largest absolute sample this frame, 0-1. Near 1 means clipping. */
+  readonly peak: number;
+  /** Dominant frequency in hertz, or NaN when no stable peak was found. */
+  readonly dominantHz: number;
+  /** How much to trust `dominantHz`, 0-1. */
+  readonly confidence: number;
+  /** `speedOfSound / dominantHz`, or NaN when there is no frequency. */
+  readonly wavelength: number;
+  /** Band energies, each adaptively normalised to 0-1. */
+  readonly bass: number;
+  readonly mid: number;
+  readonly treble: number;
+  /** Energy-weighted mean frequency, log-normalised to 0-1. Brightness. */
+  readonly centroid: number;
+  /** Positive spectral change since the previous frame, 0-1. */
+  readonly flux: number;
+  /** Decaying impulse fired on an accepted onset, 0-1. */
+  readonly onset: number;
+  /** Position within the estimated beat, 0-1. */
+  readonly beatPhase: number;
+  /** Estimated tempo, or NaN before enough onsets have been seen. */
+  readonly bpm: number;
+  /** Whether the signal is too quiet to describe. */
+  readonly silent: boolean;
+}
+
+export const SILENT_FRAME: AudioFeatureFrame = {
+  time: 0,
+  rms: 0,
+  peak: 0,
+  dominantHz: NaN,
+  confidence: 0,
+  wavelength: NaN,
+  bass: 0,
+  mid: 0,
+  treble: 0,
+  centroid: 0,
+  flux: 0,
+  onset: 0,
+  beatPhase: 0,
+  bpm: NaN,
+  silent: true,
+};
+
+export function clamp(value: number, low: number, high: number) {
+  if (!Number.isFinite(value)) return low;
+  return value < low ? low : value > high ? high : value;
+}
+
+/** The largest absolute sample in the buffer. */
+export function peakAmplitude(samples: Float32Array) {
+  let peak = 0;
+  for (const sample of samples) {
+    const magnitude = Math.abs(sample);
+    if (magnitude > peak) peak = magnitude;
+  }
+  return Number.isFinite(peak) ? peak : 0;
+}
+
+/**
+ * Converts a decibel spectrum into linear magnitudes.
+ *
+ * `getFloatFrequencyData` reports dBFS, which is convenient to draw and wrong
+ * to add: energy in a band is a sum of magnitudes, and summing decibels
+ * averages exponents instead. Bins at or below the analyser's floor become
+ * exactly zero, so silence contributes nothing rather than a small constant.
+ */
+export function decibelsToMagnitudes(
+  decibels: Float32Array,
+  out: Float32Array,
+  floorDb = -100
+) {
+  for (let i = 0; i < decibels.length; i++) {
+    const db = decibels[i];
+    out[i] = Number.isFinite(db) && db > floorDb ? 10 ** (db / 20) : 0;
+  }
+  return out;
+}
+
+/** The frequency at the centre of bin `index`. */
+export function binToHz(index: number, sampleRate: number, fftSize: number) {
+  return (index * sampleRate) / fftSize;
+}
+
+/** The bin whose centre is nearest `hz`. */
+export function hzToBin(hz: number, sampleRate: number, fftSize: number) {
+  return Math.round((hz * fftSize) / sampleRate);
+}
+
+export interface SpectralPeak {
+  /** Refined peak frequency, or NaN when the range held nothing. */
+  readonly hz: number;
+  readonly magnitude: number;
+  /** How far the peak stands above its own shoulders, 0-1. */
+  readonly prominence: number;
+}
+
+/**
+ * Locates the strongest spectral peak between two frequencies, refining it past
+ * the bin grid.
+ *
+ * A 2048-point FFT at 48 kHz has bins 23 Hz apart, which is most of a semitone
+ * down at A2 — reporting a bin centre would quantise every pitch to that grid.
+ * Fitting a parabola through the peak bin and its two neighbours recovers the
+ * true maximum, which is the standard correction and costs three arithmetic
+ * operations.
+ *
+ * Prominence separates a pitch from a hiss: a pure tone towers over its
+ * neighbouring bins, while broadband noise barely rises above them at all.
+ */
+export function interpolatedPeak(
+  magnitudes: Float32Array,
+  sampleRate: number,
+  fftSize: number,
+  minHz = MIN_PITCH_HZ,
+  maxHz = MAX_PITCH_HZ
+): SpectralPeak {
+  const lowest = Math.max(1, hzToBin(minHz, sampleRate, fftSize));
+  const highest = Math.min(
+    magnitudes.length - 2,
+    hzToBin(maxHz, sampleRate, fftSize)
+  );
+  let index = -1;
+  let best = 0;
+  for (let i = lowest; i <= highest; i++) {
+    if (magnitudes[i] > best) {
+      best = magnitudes[i];
+      index = i;
+    }
+  }
+  if (index < 0) return { hz: NaN, magnitude: 0, prominence: 0 };
+
+  const left = magnitudes[index - 1];
+  const right = magnitudes[index + 1];
+  const denominator = left - 2 * best + right;
+  // A flat or upward-curving triple is not a peak to refine; keep the bin.
+  const shift =
+    denominator === 0
+      ? 0
+      : clamp((0.5 * (left - right)) / denominator, -0.5, 0.5);
+
+  const shoulder = Math.max(left, right);
+  const prominence = best === 0 ? 0 : (best - shoulder) / best;
+
+  return {
+    hz: binToHz(index + shift, sampleRate, fftSize),
+    magnitude: best,
+    prominence: clamp(prominence, 0, 1),
+  };
+}
+
+/**
+ * Mean magnitude per bin between two frequencies.
+ *
+ * Per bin, not summed: the treble band covers forty times as many bins as the
+ * bass band, so a sum would report treble as the larger of the two for a signal
+ * that is nothing but a bass note over a flat noise floor. Density asks how
+ * loud the band is, not how wide it is.
+ */
+export function bandDensity(
+  magnitudes: Float32Array,
+  sampleRate: number,
+  fftSize: number,
+  lowHz: number,
+  highHz: number
+) {
+  const first = Math.max(1, hzToBin(lowHz, sampleRate, fftSize));
+  const last = Math.min(
+    magnitudes.length - 1,
+    hzToBin(highHz, sampleRate, fftSize)
+  );
+  if (last < first) return 0;
+  let total = 0;
+  for (let i = first; i <= last; i++) total += magnitudes[i];
+  return total / (last - first + 1);
+}
+
+/**
+ * Energy-weighted mean frequency, normalised against a log scale.
+ *
+ * Pitch is logarithmic, so a linear normalisation would crowd every musical
+ * centroid into the bottom tenth of the range and leave the palette that reads
+ * it nearly constant.
+ */
+export function spectralCentroid(
+  magnitudes: Float32Array,
+  sampleRate: number,
+  fftSize: number
+) {
+  let weighted = 0;
+  let total = 0;
+  for (let i = 1; i < magnitudes.length; i++) {
+    weighted += binToHz(i, sampleRate, fftSize) * magnitudes[i];
+    total += magnitudes[i];
+  }
+  if (total === 0) return 0;
+  const hz = weighted / total;
+  const lowest = Math.log2(MIN_PITCH_HZ);
+  const highest = Math.log2(sampleRate / 2);
+  return clamp(
+    (Math.log2(Math.max(hz, MIN_PITCH_HZ)) - lowest) / (highest - lowest),
+    0,
+    1
+  );
+}
+
+/**
+ * Positive frame-to-frame spectral change, normalised by the current spectrum.
+ *
+ * Only increases count: a note starting is an onset, a note ending is not, and
+ * counting both would fire twice per event.
+ */
+export function spectralFlux(magnitudes: Float32Array, previous: Float32Array) {
+  let rise = 0;
+  let total = 0;
+  for (let i = 1; i < magnitudes.length; i++) {
+    const delta = magnitudes[i] - previous[i];
+    if (delta > 0) rise += delta;
+    total += magnitudes[i];
+  }
+  return total === 0 ? 0 : clamp(rise / total, 0, 1);
+}
+
+/**
+ * A value that rises quickly and falls slowly.
+ *
+ * A meter tracking the signal exactly would flicker every frame; one smoothed
+ * symmetrically would round the leading edge off every drum hit. Separate
+ * attack and release keep transients sharp and the decay readable.
+ *
+ * Both constants are time constants in seconds, applied against real elapsed
+ * time, so the settle time does not change with the frame rate.
+ */
+export class AsymmetricSmoother {
+  private value = 0;
+
+  constructor(
+    private readonly attackSeconds: number,
+    private readonly releaseSeconds: number
+  ) {}
+
+  update(target: number, dt: number) {
+    if (!Number.isFinite(target)) return this.value;
+    const tau = target > this.value ? this.attackSeconds : this.releaseSeconds;
+    // dt/(dt+tau) is the exponential step written so that dt = 0 holds the
+    // value and a very long dt jumps straight to the target, with no branch.
+    const alpha = tau <= 0 ? 1 : clamp(dt / (dt + tau), 0, 1);
+    this.value += (target - this.value) * alpha;
+    return this.value;
+  }
+
+  get current() {
+    return this.value;
+  }
+
+  reset() {
+    this.value = 0;
+  }
+}
+
+/**
+ * Scales an unbounded energy into 0-1 against a reference that follows the loud
+ * parts of the recent past.
+ *
+ * A fixed scale cannot serve both a quiet acoustic track and a loud master, and
+ * a peak-hold reference never recovers from one loud transient. This rises
+ * instantly to a new maximum and decays back slowly, so a quiet passage
+ * eventually reads as a full range again without one clap flattening the next
+ * thirty seconds.
+ */
+export class AdaptiveNormalizer {
+  private reference = 0;
+
+  constructor(
+    private readonly decaySeconds = 8,
+    private readonly floor = 1e-4
+  ) {}
+
+  /**
+   * `floor` raises the smallest reference this frame may divide by.
+   *
+   * Without it, anything steady eventually reads as 1: the reference decays to
+   * meet a constant input whatever its size, so the analyser's own noise floor
+   * in an unused band would report as full energy. Callers pass a floor tied to
+   * the whole spectrum, which is what makes "loud for this band" mean something
+   * relative to the rest of the sound.
+   */
+  update(value: number, dt: number, floor = this.floor) {
+    if (!Number.isFinite(value) || value < 0) return 0;
+    if (value > this.reference) this.reference = value;
+    else {
+      const alpha = clamp(dt / (dt + this.decaySeconds), 0, 1);
+      this.reference += (value - this.reference) * alpha;
+    }
+    return clamp(value / Math.max(this.reference, floor, this.floor), 0, 1);
+  }
+
+  reset() {
+    this.reference = 0;
+  }
+}
+
+/**
+ * Decides when a rise in spectral flux is an event.
+ *
+ * Two guards keep one drum hit from becoming three: the flux must fall back
+ * below a release level before another onset can arm, and a refractory window
+ * ignores everything for a moment after one fires.
+ */
+export class OnsetDetector {
+  private armed = true;
+  private lastOnsetTime = -Infinity;
+  private readonly average = new AsymmetricSmoother(0.35, 0.35);
+
+  constructor(
+    private readonly riseFactor = 1.6,
+    private readonly releaseFactor = 1.1
+  ) {}
+
+  /** Returns whether this frame is an accepted onset. */
+  update(flux: number, time: number, dt: number) {
+    const baseline = this.average.update(flux, dt);
+    const trigger = Math.max(baseline * this.riseFactor, 0.02);
+    const release = Math.max(baseline * this.releaseFactor, 0.01);
+
+    if (!this.armed && flux < release) this.armed = true;
+    if (!this.armed || flux < trigger) return false;
+    if (time - this.lastOnsetTime < ONSET_REFRACTORY_S) return false;
+
+    this.armed = false;
+    this.lastOnsetTime = time;
+    return true;
+  }
+
+  reset() {
+    this.armed = true;
+    this.lastOnsetTime = -Infinity;
+    this.average.reset();
+  }
+}
+
+/**
+ * Estimates a beat period from the spacing of accepted onsets, and reports
+ * where the current moment sits inside it.
+ *
+ * The median of recent intervals is used rather than the mean because one
+ * missed or doubled onset moves a mean permanently and a median not at all.
+ * Phase advances on the clock between onsets, so the pulse stays smooth through
+ * a bar with no drum hit in it.
+ */
+export class BeatTracker {
+  private readonly intervals: number[] = [];
+  private lastOnsetTime = NaN;
+  private periodSeconds = NaN;
+
+  onOnset(time: number) {
+    if (Number.isFinite(this.lastOnsetTime)) {
+      const interval = time - this.lastOnsetTime;
+      if (interval >= MIN_BEAT_PERIOD_S && interval <= MAX_BEAT_PERIOD_S) {
+        this.intervals.push(interval);
+        if (this.intervals.length > 8) this.intervals.shift();
+        this.periodSeconds = median(this.intervals);
+      }
+    }
+    this.lastOnsetTime = time;
+  }
+
+  phaseAt(time: number) {
+    if (
+      !Number.isFinite(this.periodSeconds) ||
+      !Number.isFinite(this.lastOnsetTime)
+    )
+      return 0;
+    const elapsed = (time - this.lastOnsetTime) / this.periodSeconds;
+    return elapsed - Math.floor(elapsed);
+  }
+
+  get bpm() {
+    return Number.isFinite(this.periodSeconds) ? 60 / this.periodSeconds : NaN;
+  }
+
+  reset() {
+    this.intervals.length = 0;
+    this.lastOnsetTime = NaN;
+    this.periodSeconds = NaN;
+  }
+}
+
+function median(values: readonly number[]) {
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = sorted.length >> 1;
+  return sorted.length % 2 === 0
+    ? (sorted[middle - 1] + sorted[middle]) / 2
+    : sorted[middle];
+}
