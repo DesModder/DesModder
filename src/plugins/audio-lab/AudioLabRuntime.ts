@@ -15,6 +15,8 @@ import {
   WAVEFORM_POINTS,
   type WaveFunctionMode,
 } from "./desmos/manifest";
+import { AudioFieldOverlay } from "./fieldplay/AudioFieldOverlay";
+import { PRESETS, presetById, type PresetId } from "./fieldplay/presets";
 
 const QUALITY = {
   performance: { fftSize: 1024, interval: 1000 / 24 },
@@ -65,6 +67,8 @@ export default class AudioLabRuntime {
   private spotifyPlaying = false;
   private readonly engine = new AudioAnalysisEngine();
   private readonly graph: DesmosAudioAdapter;
+  private readonly field: AudioFieldOverlay;
+  private fieldPreset: PresetId = "pulse";
   private waveMode: WaveFunctionMode = "representative";
   private speedOfSound = DEFAULT_SPEED_OF_SOUND;
   /** Reused across frames so the steady loop allocates nothing. */
@@ -88,6 +92,16 @@ export default class AudioLabRuntime {
     private readonly root: HTMLElement
   ) {
     this.graph = new DesmosAudioAdapter(plugin.calc);
+    // The field reads the latest frame on its own animation clock. It never
+    // drives the analysis and the analysis never waits for it, which is what
+    // lets either be switched off without changing what the other sees.
+    this.field = new AudioFieldOverlay(plugin.calc, {
+      onError: (message) => {
+        this.showFieldState();
+        this.status(message, true);
+      },
+      getFeatures: () => this.engine.latest,
+    });
     this.hydrateMediaElements();
     this.audio = this.find<HTMLAudioElement>("audio");
     this.wave = this.find<HTMLCanvasElement>("wave");
@@ -132,6 +146,7 @@ export default class AudioLabRuntime {
     // The expressions stay. Closing a panel is not a request to delete graph
     // content, and "Remove from graph" is right there when it is.
     this.graph.stop();
+    this.field.stop();
     if (this.frame !== undefined) cancelAnimationFrame(this.frame);
     window.removeEventListener("message", this.messageListener, false);
     if (this.playbackPoll !== undefined) clearInterval(this.playbackPoll);
@@ -262,8 +277,54 @@ export default class AudioLabRuntime {
       this.engine.setSpeedOfSound(value);
       this.graph.setSpeedOfSound(value);
     });
+    this.find<HTMLButtonElement>("field-toggle").addEventListener("click", () =>
+      this.toggleField()
+    );
+    const preset = this.find<HTMLSelectElement>("field-preset");
+    // Built from the registry rather than written out in the panel, so adding
+    // a preset cannot leave the picker one option short of the presets.
+    preset.replaceChildren(
+      ...PRESETS.map((item) => {
+        const option = document.createElement("option");
+        option.value = item.id;
+        option.textContent = item.name;
+        return option;
+      })
+    );
+    preset.value = this.fieldPreset;
+    preset.addEventListener("change", () => {
+      this.fieldPreset = preset.value as PresetId;
+      // Switching a running field swaps to that preset's already-compiled
+      // programs; switching a stopped one just remembers the choice.
+      if (this.field.isRunning) this.field.start(this.fieldPreset);
+      this.showFieldState();
+    });
+
     this.showWaveModeHint();
     this.showGraphState();
+    this.showFieldState();
+  }
+
+  private toggleField() {
+    if (this.field.isRunning) {
+      this.field.stop();
+      this.status("The audio field is off.");
+    } else {
+      this.field.start(this.fieldPreset);
+      if (this.field.isRunning)
+        this.status("The audio field is drawing behind the graph.");
+    }
+    this.showFieldState();
+  }
+
+  private showFieldState() {
+    this.find<HTMLButtonElement>("field-toggle").textContent = this.field
+      .isRunning
+      ? "Hide audio field"
+      : "Show audio field";
+    this.find<HTMLElement>("field-hint").textContent = presetById(
+      this.fieldPreset
+    ).description;
   }
 
   /**

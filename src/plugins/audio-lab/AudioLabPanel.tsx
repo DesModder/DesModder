@@ -158,6 +158,17 @@ export class AudioLabPanel extends Component<{ audioLab: () => AudioLab }> {
             </div>
           </section>
           <section>
+            <label>Audio field</label>
+            <select data-audio-lab="field-preset" class="dsm-audio-lab-wide" />
+            <p data-audio-lab="field-hint" class="dsm-audio-lab-hint" />
+            <button
+              data-audio-lab="field-toggle"
+              class="dcg-btn-light-gray dsm-audio-lab-wide"
+            >
+              Show audio field
+            </button>
+          </section>
+          <section>
             <label>W_audio(x) is</label>
             <select data-audio-lab="wave-mode" class="dsm-audio-lab-wide">
               <option value="representative" selected>
