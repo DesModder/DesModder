@@ -18,13 +18,20 @@ const directory = join("src", "plugins", "audio-lab");
 const runtime = readFileSync(join(directory, "AudioLabRuntime.ts"), "utf8");
 const panel = readFileSync(join(directory, "AudioLabPanel.tsx"), "utf8");
 
-const lookedUp = new Set(
-  [...runtime.matchAll(/find<[^>]*>\(\s*"([^"]+)"/g)].map(([, name]) => name)
-);
+// Both ways the view reaches an element: `find` for a plain lookup, and the
+// `on` helper, which does a `find` and then attaches a listener.
+const lookedUp = new Set([
+  ...[...runtime.matchAll(/find<[^>]*>\(\s*"([^"]+)"/g)].map(
+    ([, name]) => name
+  ),
+  ...[...runtime.matchAll(/\bon(?:<[^>]*>)?\(\s*"([^"]+)"/g)].map(
+    ([, name]) => name
+  ),
+]);
 const declared = new Set([
   ...[...panel.matchAll(/data-audio-lab="([^"]+)"/g)].map(([, name]) => name),
-  // Canvases and the audio element are placeholders in the markup and are
-  // swapped for real elements at mount, but they answer to the same lookup.
+  // The canvases are placeholders in the markup and are swapped for real
+  // elements at mount, but they answer to the same lookup.
   ...[...panel.matchAll(/data-audio-lab-placeholder="([^"]+)"/g)].map(
     ([, name]) => name
   ),

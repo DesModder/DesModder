@@ -1,164 +1,75 @@
+/**
+ * Binds the panel's DOM to the session, and nothing else.
+ *
+ * This object lives exactly as long as the panel is open. It owns no audio, no
+ * WebGL, and no expression — every control here asks the session to do
+ * something, and every readout here is drawn from what the session reports.
+ * Closing the panel destroys this and leaves all of that running.
+ *
+ * The consequence worth stating: there is no state in this file. On attach it
+ * reads the session and renders whatever it finds, which is what makes
+ * reopening the panel mid-song show the truth rather than a set of defaults.
+ */
 import type AudioLab from ".";
-import { listenToMessageDown, postMessageUp } from "#utils/messages.ts";
-import { downsample, spotifyUri } from "./dsp";
-import { AudioAnalysisEngine } from "./audio/AudioAnalysisEngine";
+import type AudioLabSession from "./AudioLabSession";
 import {
-  DEFAULT_SPEED_OF_SOUND,
-  spectrumPoints,
-  strongestComponents,
-  type SpectralComponent,
-} from "./audio/features";
-import { DesmosAudioAdapter } from "./desmos/DesmosAudioAdapter";
-import {
-  MAX_COMPONENTS,
-  SPECTRUM_POINTS,
-  WAVEFORM_POINTS,
-  type WaveFunctionMode,
-} from "./desmos/manifest";
-import { AudioFieldOverlay } from "./fieldplay/AudioFieldOverlay";
+  QUALITY,
+  type Quality,
+  type SessionView,
+  type SpotifyPlayback,
+} from "./AudioLabSession";
+import { downsample } from "./dsp";
+import type { AudioFeatureFrame } from "./audio/features";
+import { MAX_COMPONENTS, type WaveFunctionMode } from "./desmos/manifest";
 import { PRESETS, presetById, type PresetId } from "./fieldplay/presets";
 
-const QUALITY = {
-  performance: { fftSize: 1024, interval: 1000 / 24 },
-  balanced: { fftSize: 2048, interval: 1000 / 40 },
-  quality: { fftSize: 4096, interval: 1000 / 60 },
-} as const;
+/**
+ * Says what `W_audio(x)` currently means.
+ *
+ * The three modes are genuinely different objects and the panel has to say so.
+ * A representative sinusoid at the dominant frequency is not the recent
+ * waveform, and neither of them is the sound.
+ */
+const WAVE_MODE_HINTS: Record<WaveFunctionMode, string> = {
+  representative:
+    "A single sine at the dominant frequency. Useful for wavelength and pitch, and not the shape of the sound.",
+  recent:
+    "Interpolated through the most recent samples. This is the real waveform, redrawn a few times a second.",
+  additive: `A sum of the strongest ${MAX_COMPONENTS} components. An approximation for Fourier work, not a copy of the track.`,
+};
 
-type Quality = keyof typeof QUALITY;
-type SpotifyAction =
-  | "sign-in"
-  | "status"
-  | "sign-out"
-  | "play"
-  | "pause"
-  | "resume"
-  | "next"
-  | "previous"
-  | "playback-state"
-  | "open";
-
-interface SpotifyProfile {
-  name: string;
-}
-
-interface SpotifyPlayback {
-  active: boolean;
-  isPlaying?: boolean;
-  progressMs?: number;
-  durationMs?: number;
-  track?: string;
-  artist?: string;
-  device?: string;
-}
-
-export default class AudioLabRuntime {
-  private context?: AudioContext;
-  private analyser?: AnalyserNode;
-  private source?: AudioNode;
-  private localSource?: MediaElementAudioSourceNode;
-  private sourceMode?: "local" | "capture";
-  private capture?: MediaStream;
-  private objectUrl?: string;
-  private frame?: number;
-  private lastFrame = 0;
-  private timeData = new Float32Array();
-  private frequencyData = new Float32Array();
-  private quality: Quality = "balanced";
-  private spotifyPlaying = false;
-  private readonly engine = new AudioAnalysisEngine();
-  private readonly graph: DesmosAudioAdapter;
-  private readonly field: AudioFieldOverlay;
-  private fieldPreset: PresetId = "pulse";
-  private waveMode: WaveFunctionMode = "representative";
-  private speedOfSound = DEFAULT_SPEED_OF_SOUND;
-  /** Reused across frames so the steady loop allocates nothing. */
-  private components: SpectralComponent[] = [];
-  private readonly playbackPoll: ReturnType<typeof setInterval>;
-  private readonly messageListener: (event: MessageEvent) => void;
-  private readonly audio: HTMLAudioElement;
+export default class AudioLabRuntime implements SessionView {
+  private readonly session: AudioLabSession;
   private readonly wave: HTMLCanvasElement;
   private readonly spectrum: HTMLCanvasElement;
-  private readonly spotifyResponses = new Map<
-    string,
-    {
-      resolve: (value?: unknown) => void;
-      reject: (error: Error) => void;
-      timeout: ReturnType<typeof setTimeout>;
-    }
-  >();
 
   constructor(
     private readonly plugin: AudioLab,
     private readonly root: HTMLElement
   ) {
-    this.graph = new DesmosAudioAdapter(plugin.calc);
-    // The field reads the latest frame on its own animation clock. It never
-    // drives the analysis and the analysis never waits for it, which is what
-    // lets either be switched off without changing what the other sees.
-    this.field = new AudioFieldOverlay(plugin.calc, {
-      onError: (message) => {
-        this.showFieldState();
-        this.status(message, true);
-      },
-      getFeatures: () => this.engine.latest,
-    });
-    this.hydrateMediaElements();
-    this.audio = this.find<HTMLAudioElement>("audio");
+    this.session = plugin.session;
+    this.hydrateCanvases();
     this.wave = this.find<HTMLCanvasElement>("wave");
     this.spectrum = this.find<HTMLCanvasElement>("spectrum");
     this.bind();
-    this.messageListener = listenToMessageDown((message) => {
-      if (message.type !== "audio-lab-spotify-response") return false;
-      const pending = this.spotifyResponses.get(message.requestId);
-      if (pending === undefined) return false;
-      this.spotifyResponses.delete(message.requestId);
-      clearTimeout(pending.timeout);
-      if (message.ok) pending.resolve(message.value);
-      else
-        pending.reject(new Error(message.error ?? "Spotify request failed."));
-      return false;
-    });
-    this.frame = requestAnimationFrame(this.draw);
-    void this.refreshSpotifyStatus();
-    this.playbackPoll = setInterval(() => {
-      void this.refreshPlayback();
-    }, 2500);
-  }
-
-  private hydrateMediaElements() {
-    const replace = (name: string, element: HTMLElement) => {
-      element.dataset.audioLab = name;
-      this.root
-        .querySelector(`[data-audio-lab-placeholder="${name}"]`)
-        ?.replaceWith(element);
-    };
-    const audio = document.createElement("audio");
-    audio.preload = "metadata";
-    replace("audio", audio);
-    for (const name of ["wave", "spectrum"]) {
-      const canvas = document.createElement("canvas");
-      canvas.className = "dsm-audio-lab-canvas";
-      replace(name, canvas);
-    }
+    this.session.attach(this);
   }
 
   destroy() {
-    // The expressions stay. Closing a panel is not a request to delete graph
-    // content, and "Remove from graph" is right there when it is.
-    this.graph.stop();
-    this.field.stop();
-    if (this.frame !== undefined) cancelAnimationFrame(this.frame);
-    window.removeEventListener("message", this.messageListener, false);
-    if (this.playbackPoll !== undefined) clearInterval(this.playbackPoll);
-    for (const pending of this.spotifyResponses.values()) {
-      clearTimeout(pending.timeout);
-      pending.reject(new Error("Audio Lab closed."));
+    // Detach, not stop. The capture, the field, and the graph updates were
+    // turned on deliberately and are switched off the same way.
+    this.session.detach();
+  }
+
+  private hydrateCanvases() {
+    for (const name of ["wave", "spectrum"]) {
+      const canvas = document.createElement("canvas");
+      canvas.className = "dsm-audio-lab-canvas";
+      canvas.dataset.audioLab = name;
+      this.root
+        .querySelector(`[data-audio-lab-placeholder="${name}"]`)
+        ?.replaceWith(canvas);
     }
-    this.spotifyResponses.clear();
-    this.capture?.getTracks().forEach((track) => track.stop());
-    this.source?.disconnect();
-    void this.context?.close();
-    if (this.objectUrl !== undefined) URL.revokeObjectURL(this.objectUrl);
   }
 
   private find<T extends Element>(name: string) {
@@ -167,122 +78,93 @@ export default class AudioLabRuntime {
     return element;
   }
 
+  private on<T extends HTMLElement>(
+    name: string,
+    event: string,
+    handler: (element: T) => void
+  ) {
+    const element = this.find<T>(name);
+    element.addEventListener(event, () => handler(element));
+    return element;
+  }
+
   private bind() {
     const url = this.find<HTMLInputElement>("spotify-url");
-    url.value = this.plugin.spotifyUrl;
-    this.find<HTMLButtonElement>("sign-in").addEventListener("click", () => {
-      void this.signIn();
+    url.value = this.plugin.settings.spotifyUrl;
+
+    this.on("sign-in", "click", () => {
+      void this.session.signIn();
     });
-    this.find<HTMLButtonElement>("sign-out").addEventListener("click", () => {
-      void this.signOut();
+    this.on("sign-out", "click", () => {
+      void this.session.signOut();
     });
-    this.find<HTMLButtonElement>("open-spotify").addEventListener(
-      "click",
-      () => {
-        void this.spotifyRequest("open").catch((error: unknown) =>
-          this.status(
-            error instanceof Error ? error.message : "Could not open Spotify.",
-            true
-          )
-        );
-      }
-    );
-    this.find<HTMLButtonElement>("spotify-load").addEventListener(
-      "click",
-      () => {
-        const uri = spotifyUri(url.value);
-        if (uri === undefined) {
-          this.status("Paste a valid Spotify link.", true);
-          return;
-        }
-        this.plugin.setSpotifyUrl(url.value.trim());
-        void this.spotifyRequest("play", uri).then(
-          () => {
-            this.status("Spotify playback started.");
-            void this.refreshPlayback();
-          },
-          (error: unknown) =>
-            this.status(
-              error instanceof Error
-                ? error.message
-                : "Spotify playback failed.",
-              true
-            )
-        );
-      }
-    );
-    this.find<HTMLButtonElement>("spotify-toggle").addEventListener(
-      "click",
-      () => {
-        this.runPlaybackCommand(this.spotifyPlaying ? "pause" : "resume").catch(
-          () => undefined
-        );
-      }
-    );
-    // A click handler returns nothing, so the promise is voided here rather
-    // than handed back to the listener — the same shape as the `analyze`
-    // handler below.
-    this.find<HTMLButtonElement>("previous").addEventListener("click", () => {
-      void this.runPlaybackCommand("previous").catch(() => undefined);
+    this.on("open-spotify", "click", () => {
+      void this.session.openSpotify();
     });
-    this.find<HTMLButtonElement>("next").addEventListener("click", () => {
-      void this.runPlaybackCommand("next").catch(() => undefined);
+    this.on("spotify-load", "click", () => {
+      void this.session.playLink(url.value);
     });
-    this.find<HTMLButtonElement>("analyze").addEventListener("click", () => {
-      if (this.capture === undefined) void this.analyzeTab();
-      else this.stopTabAnalysis();
+    this.on("spotify-toggle", "click", () => {
+      void this.session.runPlaybackCommand(
+        this.session.isSpotifyPlaying ? "pause" : "resume"
+      );
     });
-    const file = this.find<HTMLInputElement>("file");
-    file.addEventListener("change", () => this.loadFile(file.files?.[0]));
-    this.audio.addEventListener("play", () => this.ensureAudioElementGraph());
-    this.find<HTMLButtonElement>("play").addEventListener("click", () => {
-      if (this.audio.paused) void this.audio.play();
-      else this.audio.pause();
+    this.on("previous", "click", () => {
+      void this.session.runPlaybackCommand("previous");
     });
-    this.find<HTMLInputElement>("volume").addEventListener("input", (event) => {
-      this.audio.volume = Number((event.target as HTMLInputElement).value);
+    this.on("next", "click", () => {
+      void this.session.runPlaybackCommand("next");
     });
-    this.find<HTMLSelectElement>("quality").addEventListener(
+
+    this.on("analyze", "click", () => {
+      if (this.session.isCapturing) this.session.stopTabAnalysis();
+      else void this.session.analyzeTab();
+    });
+    this.on<HTMLInputElement>("file", "change", (file) => {
+      this.session.loadFile(file.files?.[0]);
+    });
+    this.on("play", "click", () => this.session.togglePlay());
+    const volume = this.on<HTMLInputElement>("volume", "input", (element) => {
+      this.session.setVolume(Number(element.value));
+    });
+    volume.value = String(this.session.volume);
+
+    const quality = this.on<HTMLSelectElement>(
+      "quality",
       "change",
-      (event) => {
-        this.quality = (event.target as HTMLSelectElement).value as Quality;
-        this.configureAnalyser();
+      (element) => {
+        this.session.setQuality(element.value as Quality);
       }
     );
-    this.find<HTMLButtonElement>("graph-toggle").addEventListener("click", () =>
-      this.toggleGraph()
-    );
-    this.find<HTMLButtonElement>("graph-remove").addEventListener("click", () =>
-      this.removeGraph()
-    );
-    this.find<HTMLSelectElement>("wave-mode").addEventListener(
-      "change",
-      (event) => {
-        this.waveMode = (event.target as HTMLSelectElement)
-          .value as WaveFunctionMode;
-        this.graph.setFunctionMode(this.waveMode);
-        this.showWaveModeHint();
-      }
-    );
-    const speed = this.find<HTMLInputElement>("speed");
-    speed.value = String(this.speedOfSound);
-    speed.addEventListener("change", () => {
-      const value = Number(speed.value);
-      if (!Number.isFinite(value) || value <= 0) {
-        speed.value = String(this.speedOfSound);
-        this.status("The speed of sound has to be a positive number.", true);
-        return;
-      }
-      this.speedOfSound = value;
-      this.engine.setSpeedOfSound(value);
-      this.graph.setSpeedOfSound(value);
-    });
-    this.find<HTMLButtonElement>("field-toggle").addEventListener("click", () =>
-      this.toggleField()
-    );
-    const preset = this.find<HTMLSelectElement>("field-preset");
+    quality.value = this.session.quality;
     // Built from the registry rather than written out in the panel, so adding
-    // a preset cannot leave the picker one option short of the presets.
+    // a quality level cannot leave the picker one option short.
+    if (!(this.session.quality in QUALITY)) quality.selectedIndex = 0;
+
+    this.on("graph-toggle", "click", () => this.session.toggleGraph());
+    this.on("graph-remove", "click", () => this.session.removeGraph());
+
+    const mode = this.on<HTMLSelectElement>(
+      "wave-mode",
+      "change",
+      (element) => {
+        this.session.setWaveMode(element.value as WaveFunctionMode);
+      }
+    );
+    mode.value = this.session.waveMode;
+
+    const speed = this.on<HTMLInputElement>("speed", "change", (element) => {
+      // A rejected value is put back rather than left showing something the
+      // session did not accept.
+      if (!this.session.setSpeedOfSound(Number(element.value)))
+        element.value = String(this.session.speedOfSound);
+    });
+    speed.value = String(this.session.speedOfSound);
+
+    this.on("field-toggle", "click", () => this.session.toggleField());
+    const preset = this.find<HTMLSelectElement>("field-preset");
+    // Built from the registry, so adding a preset cannot leave the picker one
+    // option short of the presets.
     preset.replaceChildren(
       ...PRESETS.map((item) => {
         const option = document.createElement("option");
@@ -291,119 +173,46 @@ export default class AudioLabRuntime {
         return option;
       })
     );
-    preset.value = this.fieldPreset;
+    preset.value = this.session.fieldPreset;
     preset.addEventListener("change", () => {
-      this.fieldPreset = preset.value as PresetId;
-      // Switching a running field swaps to that preset's already-compiled
-      // programs; switching a stopped one just remembers the choice.
-      if (this.field.isRunning) this.field.start(this.fieldPreset);
-      this.showFieldState();
+      this.session.setFieldPreset(preset.value as PresetId);
     });
-
-    this.showWaveModeHint();
-    this.showGraphState();
-    this.showFieldState();
   }
 
-  private toggleField() {
-    if (this.field.isRunning) {
-      this.field.stop();
-      this.status("The audio field is off.");
-    } else {
-      this.field.start(this.fieldPreset);
-      if (this.field.isRunning)
-        this.status("The audio field is drawing behind the graph.");
-    }
-    this.showFieldState();
-  }
+  // ------------------------------------------------------------ SessionView
 
-  private showFieldState() {
-    this.find<HTMLButtonElement>("field-toggle").textContent = this.field
-      .isRunning
+  onStateChange() {
+    this.find<HTMLButtonElement>("analyze").textContent = this.session
+      .isCapturing
+      ? "Stop tab analysis"
+      : "Analyze tab audio";
+    this.find<HTMLButtonElement>("graph-toggle").textContent = this.session
+      .isGraphLive
+      ? "Stop updating the graph"
+      : "Start live graph";
+    this.find<HTMLButtonElement>("graph-remove").disabled =
+      !this.session.graphExists;
+    this.find<HTMLButtonElement>("field-toggle").textContent = this.session
+      .isFieldRunning
       ? "Hide audio field"
       : "Show audio field";
     this.find<HTMLElement>("field-hint").textContent = presetById(
-      this.fieldPreset
+      this.session.fieldPreset
     ).description;
+    this.find<HTMLElement>("wave-mode-hint").textContent =
+      WAVE_MODE_HINTS[this.session.waveMode];
+    this.find<HTMLButtonElement>("play").disabled = !this.session.hasFile;
+    this.find<HTMLElement>("filename").textContent =
+      this.session.currentFileName;
   }
 
-  /**
-   * Says what `W_audio(x)` currently means.
-   *
-   * The three modes are genuinely different objects and the panel has to say
-   * so. A representative sinusoid at the dominant frequency is not the recent
-   * waveform, and neither of them is the sound.
-   */
-  private showWaveModeHint() {
-    const hints: Record<WaveFunctionMode, string> = {
-      representative:
-        "A single sine at the dominant frequency. Useful for wavelength and pitch, and not the shape of the sound.",
-      recent:
-        "Interpolated through the most recent samples. This is the real waveform, redrawn a few times a second.",
-      additive: `A sum of the strongest ${MAX_COMPONENTS} components. An approximation for Fourier work, not a copy of the track.`,
-    };
-    this.find<HTMLElement>("wave-mode-hint").textContent = hints[this.waveMode];
+  onStatus(message: string, error: boolean) {
+    const status = this.find<HTMLElement>("status");
+    status.textContent = message;
+    status.classList.toggle("dsm-audio-lab-error", error);
   }
 
-  private async spotifyRequest(action: SpotifyAction, uri?: string) {
-    const requestId = crypto.randomUUID();
-    return await new Promise<unknown>((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        if (!this.spotifyResponses.delete(requestId)) return;
-        reject(
-          new Error("Spotify did not respond. Reload the extension and retry.")
-        );
-      }, 120_000);
-      this.spotifyResponses.set(requestId, { resolve, reject, timeout });
-      postMessageUp({
-        type: "audio-lab-spotify",
-        requestId,
-        action,
-        ...(uri === undefined ? {} : { uri }),
-      });
-    });
-  }
-
-  private async refreshSpotifyStatus() {
-    try {
-      const profile = await this.spotifyRequest("status");
-      this.setSignedIn((profile as SpotifyProfile | undefined)?.name);
-      await this.refreshPlayback();
-    } catch {
-      this.setSignedIn();
-    }
-  }
-
-  private async signIn() {
-    this.status("Opening Spotify sign-in…");
-    try {
-      const profile = await this.spotifyRequest("sign-in");
-      this.setSignedIn((profile as SpotifyProfile | undefined)?.name);
-      this.status("Spotify connected successfully.");
-      await this.refreshPlayback();
-    } catch (error) {
-      this.setSignedIn();
-      this.status(
-        error instanceof Error ? error.message : "Spotify sign-in failed.",
-        true
-      );
-    }
-  }
-
-  private async signOut() {
-    try {
-      await this.spotifyRequest("sign-out");
-      this.setSignedIn();
-      this.status("Signed out of Spotify.");
-    } catch (error) {
-      this.status(
-        error instanceof Error ? error.message : "Spotify sign-out failed.",
-        true
-      );
-    }
-  }
-
-  private setSignedIn(name?: string) {
+  onAccount(name?: string) {
     const signedIn = name !== undefined;
     this.find<HTMLElement>("account").textContent = signedIn
       ? `Signed in as ${name}`
@@ -411,214 +220,33 @@ export default class AudioLabRuntime {
     this.find<HTMLButtonElement>("sign-in").hidden = signedIn;
     this.find<HTMLButtonElement>("sign-out").hidden = !signedIn;
     this.find<HTMLButtonElement>("spotify-load").disabled = !signedIn;
-    if (!signedIn) this.showPlayback({ active: false });
   }
 
-  private async runPlaybackCommand(
-    action: "pause" | "resume" | "next" | "previous"
-  ) {
-    try {
-      await this.spotifyRequest(action);
-      await new Promise((resolve) => setTimeout(resolve, 250));
-      await this.refreshPlayback();
-    } catch (error) {
-      this.status(
-        error instanceof Error ? error.message : "Playback command failed.",
-        true
-      );
-    }
-  }
-
-  private async refreshPlayback() {
-    if (!this.find<HTMLButtonElement>("sign-in").hidden) return;
-    try {
-      const playback = (await this.spotifyRequest(
-        "playback-state"
-      )) as SpotifyPlayback;
-      this.showPlayback(playback);
-    } catch {
-      // A transient status poll should not replace a useful user-facing message.
-    }
-  }
-
-  private showPlayback(playback: SpotifyPlayback) {
-    this.spotifyPlaying = playback.isPlaying ?? false;
+  onPlayback(playback: SpotifyPlayback) {
     this.find<HTMLElement>("track").textContent = playback.active
       ? (playback.track ?? "Unknown track")
       : "No active Spotify player";
     this.find<HTMLElement>("artist").textContent = playback.active
       ? [playback.artist, playback.device].filter(Boolean).join(" · ")
       : "Open Spotify and play anything once.";
-    this.find<HTMLElement>("playback-time").textContent = `${this.formatTime(
+    this.find<HTMLElement>("playback-time").textContent = `${formatTime(
       (playback.progressMs ?? 0) / 1000
-    )} / ${this.formatTime((playback.durationMs ?? 0) / 1000)}`;
-    const toggle = this.find<HTMLButtonElement>("spotify-toggle");
-    toggle.textContent = this.spotifyPlaying ? "Pause" : "Play";
+    )} / ${formatTime((playback.durationMs ?? 0) / 1000)}`;
+    this.find<HTMLButtonElement>("spotify-toggle").textContent = this.session
+      .isSpotifyPlaying
+      ? "Pause"
+      : "Play";
     for (const name of ["spotify-toggle", "previous", "next"])
       this.find<HTMLButtonElement>(name).disabled = !playback.active;
   }
 
-  private formatTime(seconds: number) {
-    if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
-    const whole = Math.floor(seconds);
-    return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
-  }
-
-  private async analyzeTab() {
-    try {
-      this.capture?.getTracks().forEach((track) => track.stop());
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: true,
-      });
-      stream.getVideoTracks().forEach((track) => track.stop());
-      if (stream.getAudioTracks().length === 0) {
-        stream.getTracks().forEach((track) => track.stop());
-        throw new Error(
-          "No tab audio was shared. Enable Share tab audio and retry."
-        );
-      }
-      this.capture = new MediaStream(stream.getAudioTracks());
-      this.setupContext();
-      this.source?.disconnect();
-      this.analyser!.disconnect();
-      this.source = this.context!.createMediaStreamSource(this.capture);
-      this.sourceMode = "capture";
-      this.source.connect(this.analyser!);
-      this.capture
-        .getAudioTracks()[0]
-        ?.addEventListener("ended", () => this.stopTabAnalysis());
-      // The adaptive references and beat intervals describe the source that
-      // just stopped; carrying them into a new one mis-scales its first
-      // several seconds.
-      this.engine.reset();
-      this.find<HTMLButtonElement>("analyze").textContent = "Stop tab analysis";
-      this.status("Live waveform and spectrum analysis is active.");
-    } catch (error) {
-      this.status(
-        error instanceof Error ? error.message : "Tab analysis was cancelled.",
-        true
-      );
-    }
-  }
-
-  private stopTabAnalysis() {
-    const { capture } = this;
-    this.capture = undefined;
-    capture?.getTracks().forEach((track) => track.stop());
-    if (this.sourceMode === "capture") {
-      this.source?.disconnect();
-      this.source = undefined;
-      this.sourceMode = undefined;
-    }
-    this.find<HTMLButtonElement>("analyze").textContent = "Analyze tab audio";
-    this.status("Tab analysis stopped.");
-  }
-
-  private loadFile(file?: File) {
-    if (!file?.type.startsWith("audio/")) {
-      this.status("Choose a supported audio file.", true);
-      return;
-    }
-    if (this.objectUrl !== undefined) URL.revokeObjectURL(this.objectUrl);
-    this.stopTabAnalysis();
-    this.objectUrl = URL.createObjectURL(file);
-    this.audio.src = this.objectUrl;
-    this.find<HTMLButtonElement>("play").disabled = false;
-    this.engine.reset();
-    this.find<HTMLElement>("filename").textContent = file.name;
-    this.status("Audio ready.");
-  }
-
-  private setupContext() {
-    this.context ??= new AudioContext();
-    if (this.context.state === "suspended") void this.context.resume();
-    if (this.analyser === undefined) {
-      this.analyser = this.context.createAnalyser();
-      this.configureAnalyser();
-    }
-  }
-
-  private ensureAudioElementGraph() {
-    this.setupContext();
-    if (this.sourceMode === "local") return;
-    this.source?.disconnect();
-    this.analyser!.disconnect();
-    this.localSource ??= this.context!.createMediaElementSource(this.audio);
-    this.source = this.localSource;
-    this.sourceMode = "local";
-    this.source.connect(this.analyser!);
-    this.analyser!.connect(this.context!.destination);
-  }
-
-  private configureAnalyser() {
-    if (this.analyser === undefined) return;
-    this.analyser.fftSize = QUALITY[this.quality].fftSize;
-    this.analyser.smoothingTimeConstant = 0.72;
-    this.timeData = new Float32Array(this.analyser.fftSize);
-    this.frequencyData = new Float32Array(this.analyser.frequencyBinCount);
-  }
-
-  /**
-   * One animation frame: measure once, then let each output take what it needs
-   * on its own schedule.
-   *
-   * The panel's own canvases and the analysis run at the quality preset's rate.
-   * The graph adapter is called every one of those frames and decides for
-   * itself how many to act on — twelve a second for scalars, eight for lists —
-   * which is what keeps the expression list from becoming a video renderer.
-   */
-  private readonly draw = (timestamp: number) => {
-    this.frame = requestAnimationFrame(this.draw);
-    if (
-      this.analyser === undefined ||
-      timestamp - this.lastFrame < QUALITY[this.quality].interval
-    )
-      return;
-    const elapsed =
-      this.lastFrame === 0 ? 0 : (timestamp - this.lastFrame) / 1000;
-    this.lastFrame = timestamp;
-
-    this.analyser.getFloatTimeDomainData(this.timeData);
-    this.analyser.getFloatFrequencyData(this.frequencyData);
-    const rate = this.context?.sampleRate ?? 0;
-    const frame = this.engine.update(
-      this.timeData,
-      this.frequencyData,
-      rate,
-      this.analyser.fftSize,
-      elapsed
-    );
-
+  onFrame(frame: AudioFeatureFrame) {
     this.drawWaveform();
     this.drawSpectrum();
     this.showMetrics(frame);
+  }
 
-    if (!this.graph.isInstalled) return;
-    // Only the additive mode reads the components, and finding them means a
-    // pass over every bin. There is no reason to pay for it in the other two.
-    this.components =
-      this.waveMode === "additive"
-        ? strongestComponents(
-            this.engine.spectrum as Float32Array,
-            rate,
-            this.analyser.fftSize,
-            MAX_COMPONENTS
-          )
-        : [];
-    this.graph.update(
-      frame,
-      downsample(this.timeData, WAVEFORM_POINTS),
-      spectrumPoints(
-        this.engine.spectrum as Float32Array,
-        rate,
-        this.analyser.fftSize,
-        SPECTRUM_POINTS
-      ),
-      this.components,
-      timestamp
-    );
-  };
+  // ---------------------------------------------------------------- drawing
 
   /**
    * The readouts beside the canvases.
@@ -627,7 +255,7 @@ export default class AudioLabRuntime {
    * than as a number: a polyphonic frame does not have "a" frequency, and
    * printing the loudest bin anyway is how a readout becomes a lie.
    */
-  private showMetrics(frame: ReturnType<AudioAnalysisEngine["update"]>) {
+  private showMetrics(frame: AudioFeatureFrame) {
     const confident =
       Number.isFinite(frame.dominantHz) && frame.confidence > 0.2;
     this.find<HTMLElement>("peak").textContent = confident
@@ -660,13 +288,15 @@ export default class AudioLabRuntime {
   }
 
   private drawWaveform() {
+    const samples = this.session.waveform;
+    if (samples.length === 0) return;
     const { context, width, height } = this.prepareCanvas(this.wave);
     context.strokeStyle = "#2d70b3";
     context.lineWidth = Math.max(1, devicePixelRatio);
     context.beginPath();
-    for (let i = 0; i < this.timeData.length; i++) {
-      const x = (i / (this.timeData.length - 1)) * width;
-      const y = (0.5 - this.timeData[i] * 0.45) * height;
+    for (let i = 0; i < samples.length; i++) {
+      const x = (i / (samples.length - 1)) * width;
+      const y = (0.5 - samples[i] * 0.45) * height;
       if (i === 0) context.moveTo(x, y);
       else context.lineTo(x, y);
     }
@@ -674,8 +304,10 @@ export default class AudioLabRuntime {
   }
 
   private drawSpectrum() {
+    const bins = this.session.spectrum;
+    if (bins.length === 0) return;
     const { context, width, height } = this.prepareCanvas(this.spectrum);
-    const values = downsample(this.frequencyData, 128);
+    const values = downsample(bins as Float32Array, 128);
     context.fillStyle = "#2d70b3";
     values.forEach((value, index) => {
       const normalized = Math.max(0, Math.min(1, (value + 100) / 100));
@@ -688,57 +320,10 @@ export default class AudioLabRuntime {
       );
     });
   }
+}
 
-  /**
-   * Creates the managed folder, or stops writing to it.
-   *
-   * Stopping leaves the expressions in place. They are the user's graph content
-   * now — they may have written their own work against `A_audio` — so taking
-   * them away is a separate, explicit button.
-   */
-  private toggleGraph() {
-    if (this.graph.isInstalled) {
-      this.graph.stop();
-      this.showGraphState();
-      this.status(
-        "The Audio Lab variables are still in your graph; they have stopped updating."
-      );
-      return;
-    }
-    try {
-      this.graph.install({
-        mode: this.waveMode,
-        speedOfSound: this.speedOfSound,
-      });
-      this.showGraphState();
-      this.status("The Audio Lab folder is live in the expression list.");
-    } catch (error) {
-      this.status(
-        error instanceof Error
-          ? error.message
-          : "The Audio Lab folder could not be created.",
-        true
-      );
-    }
-  }
-
-  private removeGraph() {
-    this.graph.remove();
-    this.showGraphState();
-    this.status("Removed the Audio Lab folder. Nothing else was touched.");
-  }
-
-  private showGraphState() {
-    const live = this.graph.isInstalled;
-    this.find<HTMLButtonElement>("graph-toggle").textContent = live
-      ? "Stop updating the graph"
-      : "Start live graph";
-    this.find<HTMLButtonElement>("graph-remove").disabled = !this.graph.exists;
-  }
-
-  private status(message: string, error = false) {
-    const status = this.find<HTMLElement>("status");
-    status.textContent = message;
-    status.classList.toggle("dsm-audio-lab-error", error);
-  }
+function formatTime(seconds: number) {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const whole = Math.floor(seconds);
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
 }

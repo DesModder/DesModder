@@ -95,7 +95,6 @@ export class AudioLabPanel extends Component<{ audioLab: () => AudioLab }> {
               <input data-audio-lab="file" type="file" accept="audio/*" />
             </label>
             <span data-audio-lab="filename" class="dsm-audio-lab-hint" />
-            <div data-audio-lab-placeholder="audio" />
             <div class="dsm-audio-lab-inline">
               <button data-audio-lab="play" class="dcg-btn-light-gray" disabled>
                 Play / pause
