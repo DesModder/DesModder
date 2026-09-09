@@ -39,9 +39,40 @@ merged. Audio Lab development deliberately did not edit any file under
 - Draws Audio Field: eight thousand GPU particles behind the graph paper in one
   of four presets (Pulse, Vortex, Flow, Spectrum Storm), driven by uniforms
   only and degrading down a quality ladder to hold a 30 FPS floor.
+- Keeps the capture, the field, and the live variables running when the panel
+  is closed, and remembers the wave mode, field preset, quality, and speed of
+  sound across a page reload.
 - Cleans up animation frames, polling, pending requests, object URLs, audio
   nodes, streams, WebGL resources, observers, and message listeners when the
-  panel closes.
+  plugin is disabled.
+
+## Lifetimes
+
+This is the part most likely to be got wrong by a later change.
+
+| Object            | Lives for                        | Owns                                                              |
+| ----------------- | -------------------------------- | ----------------------------------------------------------------- |
+| `AudioLabSession` | as long as the plugin is enabled | audio graph, engine, Desmos adapter, field overlay, analysis loop |
+| `AudioLabRuntime` | as long as the panel is open     | the panel's DOM bindings and canvases, and nothing else           |
+
+Closing the panel calls `session.detach()`, which stops the panel canvases, the
+readouts, and the Spotify polling — none of which is worth doing when nobody
+can see them — and stops nothing else. A field drawing behind the graph and a
+folder of live variables were turned on deliberately and are turned off the
+same way.
+
+`session.destroy()` is the one path that stops everything, and only
+`afterDisable` calls it.
+
+The view holds no state. On attach it reads the session and renders whatever it
+finds, which is what makes reopening the panel mid-song show the truth instead
+of a set of defaults. **Do not add teardown to the view's `destroy`.** There is
+a test in `AudioLabSession.unit.test.ts` that toggles the graph on, detaches,
+and asserts it is still live, because this is exactly the kind of behaviour
+that rots quietly with every other test still green.
+
+The analysis loop runs when the field, the graph, or an open panel wants it,
+and stops when none of the three does.
 
 ## Rates
 
@@ -135,9 +166,13 @@ both Claude's optimization changes and the small Audio Lab integration hooks.
 ## Layout inside the plugin
 
 ```text
-audio/       AudioAnalysisEngine and the feature primitives it is built from
-desmos/      the expression manifest, latex builders, and the throttled adapter
-fieldplay/   presets, shaders, the WebGL renderer, and the canvas overlay
+index.ts             the plugin controller; owns the session
+AudioLabSession.ts   everything that keeps running when the panel is closed
+AudioLabRuntime.ts   the panel view: DOM bindings and canvases, no state
+AudioLabPanel.tsx    the markup, and the .less beside it
+audio/               AudioAnalysisEngine and the primitives it is built from
+desmos/              the expression manifest, latex builders, throttled adapter
+fieldplay/           presets, shaders, the WebGL renderer, the canvas overlay
 ```
 
 Nothing in `audio/` writes to Desmos and nothing in it touches WebGL. The engine
@@ -183,8 +218,13 @@ Manual Chrome test:
    keypad, and clicking an expression all still work with it running.
 10. Press **Stop updating the graph** and confirm the expressions stay. Press
     **Remove from graph** and confirm they go and nothing else does.
-11. Close and reopen the panel, then repeat analysis to check cleanup and source
-    switching.
+11. With the field running and the graph live, **close the panel**. Both must
+    keep going. Reopen it and confirm the buttons read "Hide audio field" and
+    "Stop updating the graph" rather than having reset.
+12. Reload the page and reopen the panel. The wave mode, field preset, quality,
+    and speed of sound should be as you left them.
+13. Disable Audio Lab in the DesModder plugin list. The field canvas must
+    disappear and the capture must stop.
 
 ### Things worth checking that the tests cannot
 
