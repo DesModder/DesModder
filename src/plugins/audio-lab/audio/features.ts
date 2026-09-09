@@ -263,6 +263,53 @@ export function spectralFlux(magnitudes: Float32Array, previous: Float32Array) {
   return total === 0 ? 0 : clamp(rise / total, 0, 1);
 }
 
+/**
+ * The spectrum reduced to a bounded number of points for display.
+ *
+ * Each output point keeps the loudest bin it covers rather than their average,
+ * so a narrow peak survives the reduction. Averaging would smear a pure tone
+ * into a low bump and make the trace disagree with the frequency readout beside
+ * it.
+ */
+export function spectrumPoints(
+  magnitudes: Float32Array,
+  sampleRate: number,
+  fftSize: number,
+  count: number,
+  maxHz = 12000
+): SpectralComponent[] {
+  const highest = Math.min(
+    magnitudes.length - 1,
+    hzToBin(maxHz, sampleRate, fftSize)
+  );
+  if (highest < 1 || count <= 0) return [];
+
+  let loudest = 0;
+  for (let i = 1; i <= highest; i++)
+    if (magnitudes[i] > loudest) loudest = magnitudes[i];
+  if (loudest === 0) return [];
+
+  const points: SpectralComponent[] = [];
+  const bucket = highest / count;
+  for (let index = 0; index < count; index++) {
+    const start = Math.max(1, Math.floor(index * bucket));
+    const end = Math.max(start + 1, Math.floor((index + 1) * bucket));
+    let peak = 0;
+    let peakIndex = start;
+    for (let i = start; i < end && i <= highest; i++) {
+      if (magnitudes[i] > peak) {
+        peak = magnitudes[i];
+        peakIndex = i;
+      }
+    }
+    points.push({
+      hz: binToHz(peakIndex, sampleRate, fftSize),
+      amplitude: clamp(peak / loudest, 0, 1),
+    });
+  }
+  return points;
+}
+
 export interface SpectralComponent {
   readonly hz: number;
   /** Magnitude relative to the strongest component, 0-1. */

@@ -122,29 +122,66 @@ export class AudioLabPanel extends Component<{ audioLab: () => AudioLab }> {
             </div>
             <div data-audio-lab-placeholder="spectrum" />
           </section>
-          <section class="dsm-audio-lab-metrics">
-            <span>
-              Peak: <strong data-audio-lab="peak">—</strong>
-            </span>
-            <span>
-              RMS: <strong data-audio-lab="rms">—</strong>
-            </span>
-            <select data-audio-lab="quality">
-              <option value="performance">Performance</option>
-              <option value="balanced" selected>
-                Balanced
+          <section>
+            <div class="dsm-audio-lab-readouts">
+              <span>
+                Dominant<strong data-audio-lab="peak">—</strong>
+              </span>
+              <span>
+                Wavelength<strong data-audio-lab="wavelength">—</strong>
+              </span>
+              <span>
+                Confidence<strong data-audio-lab="confidence">—</strong>
+              </span>
+              <span>
+                RMS<strong data-audio-lab="rms">—</strong>
+              </span>
+              <span>
+                Bass / mid / treble<strong data-audio-lab="bands">—</strong>
+              </span>
+            </div>
+            <div class="dsm-audio-lab-inline">
+              <label class="dsm-audio-lab-field">
+                Speed of sound (m/s)
+                <input data-audio-lab="speed" type="number" min="1" step="1" />
+              </label>
+              <label class="dsm-audio-lab-field">
+                Analysis quality
+                <select data-audio-lab="quality">
+                  <option value="performance">Performance</option>
+                  <option value="balanced" selected>
+                    Balanced
+                  </option>
+                  <option value="quality">Quality</option>
+                </select>
+              </label>
+            </div>
+          </section>
+          <section>
+            <label>W_audio(x) is</label>
+            <select data-audio-lab="wave-mode" class="dsm-audio-lab-wide">
+              <option value="representative" selected>
+                Representative wave
               </option>
-              <option value="quality">Quality</option>
+              <option value="recent">Recent waveform</option>
+              <option value="additive">Additive spectrum</option>
             </select>
+            <p data-audio-lab="wave-mode-hint" class="dsm-audio-lab-hint" />
           </section>
         </div>
         <div class="dsm-audio-lab-footer">
           <button
-            data-audio-lab="export"
+            data-audio-lab="graph-toggle"
             class="dcg-btn-blue dsm-audio-lab-wide"
+          >
+            Start live graph
+          </button>
+          <button
+            data-audio-lab="graph-remove"
+            class="dcg-btn-light-gray dsm-audio-lab-wide"
             disabled
           >
-            Send snapshot to Desmos
+            Remove from graph
           </button>
           <p
             data-audio-lab="status"

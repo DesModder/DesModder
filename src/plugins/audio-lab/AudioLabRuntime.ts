@@ -1,6 +1,20 @@
 import type AudioLab from ".";
 import { listenToMessageDown, postMessageUp } from "#utils/messages.ts";
-import { downsample, peakFrequency, pointsLatex, rms, spotifyUri } from "./dsp";
+import { downsample, spotifyUri } from "./dsp";
+import { AudioAnalysisEngine } from "./audio/AudioAnalysisEngine";
+import {
+  DEFAULT_SPEED_OF_SOUND,
+  spectrumPoints,
+  strongestComponents,
+  type SpectralComponent,
+} from "./audio/features";
+import { DesmosAudioAdapter } from "./desmos/DesmosAudioAdapter";
+import {
+  MAX_COMPONENTS,
+  SPECTRUM_POINTS,
+  WAVEFORM_POINTS,
+  type WaveFunctionMode,
+} from "./desmos/manifest";
 
 const QUALITY = {
   performance: { fftSize: 1024, interval: 1000 / 24 },
@@ -49,6 +63,12 @@ export default class AudioLabRuntime {
   private frequencyData = new Float32Array();
   private quality: Quality = "balanced";
   private spotifyPlaying = false;
+  private readonly engine = new AudioAnalysisEngine();
+  private readonly graph: DesmosAudioAdapter;
+  private waveMode: WaveFunctionMode = "representative";
+  private speedOfSound = DEFAULT_SPEED_OF_SOUND;
+  /** Reused across frames so the steady loop allocates nothing. */
+  private components: SpectralComponent[] = [];
   private readonly playbackPoll: ReturnType<typeof setInterval>;
   private readonly messageListener: (event: MessageEvent) => void;
   private readonly audio: HTMLAudioElement;
@@ -67,6 +87,7 @@ export default class AudioLabRuntime {
     private readonly plugin: AudioLab,
     private readonly root: HTMLElement
   ) {
+    this.graph = new DesmosAudioAdapter(plugin.calc);
     this.hydrateMediaElements();
     this.audio = this.find<HTMLAudioElement>("audio");
     this.wave = this.find<HTMLCanvasElement>("wave");
@@ -108,6 +129,9 @@ export default class AudioLabRuntime {
   }
 
   destroy() {
+    // The expressions stay. Closing a panel is not a request to delete graph
+    // content, and "Remove from graph" is right there when it is.
+    this.graph.stop();
     if (this.frame !== undefined) cancelAnimationFrame(this.frame);
     window.removeEventListener("message", this.messageListener, false);
     if (this.playbackPoll !== undefined) clearInterval(this.playbackPoll);
@@ -210,9 +234,54 @@ export default class AudioLabRuntime {
         this.configureAnalyser();
       }
     );
-    this.find<HTMLButtonElement>("export").addEventListener("click", () =>
-      this.exportSnapshot()
+    this.find<HTMLButtonElement>("graph-toggle").addEventListener("click", () =>
+      this.toggleGraph()
     );
+    this.find<HTMLButtonElement>("graph-remove").addEventListener("click", () =>
+      this.removeGraph()
+    );
+    this.find<HTMLSelectElement>("wave-mode").addEventListener(
+      "change",
+      (event) => {
+        this.waveMode = (event.target as HTMLSelectElement)
+          .value as WaveFunctionMode;
+        this.graph.setFunctionMode(this.waveMode);
+        this.showWaveModeHint();
+      }
+    );
+    const speed = this.find<HTMLInputElement>("speed");
+    speed.value = String(this.speedOfSound);
+    speed.addEventListener("change", () => {
+      const value = Number(speed.value);
+      if (!Number.isFinite(value) || value <= 0) {
+        speed.value = String(this.speedOfSound);
+        this.status("The speed of sound has to be a positive number.", true);
+        return;
+      }
+      this.speedOfSound = value;
+      this.engine.setSpeedOfSound(value);
+      this.graph.setSpeedOfSound(value);
+    });
+    this.showWaveModeHint();
+    this.showGraphState();
+  }
+
+  /**
+   * Says what `W_audio(x)` currently means.
+   *
+   * The three modes are genuinely different objects and the panel has to say
+   * so. A representative sinusoid at the dominant frequency is not the recent
+   * waveform, and neither of them is the sound.
+   */
+  private showWaveModeHint() {
+    const hints: Record<WaveFunctionMode, string> = {
+      representative:
+        "A single sine at the dominant frequency. Useful for wavelength and pitch, and not the shape of the sound.",
+      recent:
+        "Interpolated through the most recent samples. This is the real waveform, redrawn a few times a second.",
+      additive: `A sum of the strongest ${MAX_COMPONENTS} components. An approximation for Fourier work, not a copy of the track.`,
+    };
+    this.find<HTMLElement>("wave-mode-hint").textContent = hints[this.waveMode];
   }
 
   private async spotifyRequest(action: SpotifyAction, uri?: string) {
@@ -358,7 +427,10 @@ export default class AudioLabRuntime {
       this.capture
         .getAudioTracks()[0]
         ?.addEventListener("ended", () => this.stopTabAnalysis());
-      this.find<HTMLButtonElement>("export").disabled = false;
+      // The adaptive references and beat intervals describe the source that
+      // just stopped; carrying them into a new one mis-scales its first
+      // several seconds.
+      this.engine.reset();
       this.find<HTMLButtonElement>("analyze").textContent = "Stop tab analysis";
       this.status("Live waveform and spectrum analysis is active.");
     } catch (error) {
@@ -392,7 +464,7 @@ export default class AudioLabRuntime {
     this.objectUrl = URL.createObjectURL(file);
     this.audio.src = this.objectUrl;
     this.find<HTMLButtonElement>("play").disabled = false;
-    this.find<HTMLButtonElement>("export").disabled = false;
+    this.engine.reset();
     this.find<HTMLElement>("filename").textContent = file.name;
     this.status("Audio ready.");
   }
@@ -426,6 +498,15 @@ export default class AudioLabRuntime {
     this.frequencyData = new Float32Array(this.analyser.frequencyBinCount);
   }
 
+  /**
+   * One animation frame: measure once, then let each output take what it needs
+   * on its own schedule.
+   *
+   * The panel's own canvases and the analysis run at the quality preset's rate.
+   * The graph adapter is called every one of those frames and decides for
+   * itself how many to act on — twelve a second for scalars, eight for lists —
+   * which is what keeps the expression list from becoming a video renderer.
+   */
   private readonly draw = (timestamp: number) => {
     this.frame = requestAnimationFrame(this.draw);
     if (
@@ -433,17 +514,75 @@ export default class AudioLabRuntime {
       timestamp - this.lastFrame < QUALITY[this.quality].interval
     )
       return;
+    const elapsed =
+      this.lastFrame === 0 ? 0 : (timestamp - this.lastFrame) / 1000;
     this.lastFrame = timestamp;
+
     this.analyser.getFloatTimeDomainData(this.timeData);
     this.analyser.getFloatFrequencyData(this.frequencyData);
+    const rate = this.context?.sampleRate ?? 0;
+    const frame = this.engine.update(
+      this.timeData,
+      this.frequencyData,
+      rate,
+      this.analyser.fftSize,
+      elapsed
+    );
+
     this.drawWaveform();
     this.drawSpectrum();
-    const rate = this.context?.sampleRate ?? 0;
-    this.find<HTMLElement>("peak").textContent = `${Math.round(
-      peakFrequency(this.frequencyData, rate, this.analyser.fftSize)
-    )} Hz`;
-    this.find<HTMLElement>("rms").textContent = rms(this.timeData).toFixed(3);
+    this.showMetrics(frame);
+
+    if (!this.graph.isInstalled) return;
+    // Only the additive mode reads the components, and finding them means a
+    // pass over every bin. There is no reason to pay for it in the other two.
+    this.components =
+      this.waveMode === "additive"
+        ? strongestComponents(
+            this.engine.spectrum as Float32Array,
+            rate,
+            this.analyser.fftSize,
+            MAX_COMPONENTS
+          )
+        : [];
+    this.graph.update(
+      frame,
+      downsample(this.timeData, WAVEFORM_POINTS),
+      spectrumPoints(
+        this.engine.spectrum as Float32Array,
+        rate,
+        this.analyser.fftSize,
+        SPECTRUM_POINTS
+      ),
+      this.components,
+      timestamp
+    );
   };
+
+  /**
+   * The readouts beside the canvases.
+   *
+   * A frequency the analyser is not confident about shows as an em dash rather
+   * than as a number: a polyphonic frame does not have "a" frequency, and
+   * printing the loudest bin anyway is how a readout becomes a lie.
+   */
+  private showMetrics(frame: ReturnType<AudioAnalysisEngine["update"]>) {
+    const confident =
+      Number.isFinite(frame.dominantHz) && frame.confidence > 0.2;
+    this.find<HTMLElement>("peak").textContent = confident
+      ? `${Math.round(frame.dominantHz)} Hz`
+      : "—";
+    this.find<HTMLElement>("wavelength").textContent = confident
+      ? `${frame.wavelength.toFixed(2)} m`
+      : "—";
+    this.find<HTMLElement>("confidence").textContent = confident
+      ? `${Math.round(frame.confidence * 100)}%`
+      : "—";
+    this.find<HTMLElement>("rms").textContent = frame.rms.toFixed(3);
+    this.find<HTMLElement>("bands").textContent = `${Math.round(
+      frame.bass * 100
+    )} / ${Math.round(frame.mid * 100)} / ${Math.round(frame.treble * 100)}`;
+  }
 
   private prepareCanvas(canvas: HTMLCanvasElement) {
     const ratio = Math.min(devicePixelRatio, 2);
@@ -489,29 +628,51 @@ export default class AudioLabRuntime {
     });
   }
 
-  private exportSnapshot() {
-    if (this.analyser === undefined) return;
-    const waveform = downsample(this.timeData, 256);
-    const spectrum = downsample(this.frequencyData, 192).map((value) =>
-      Math.max(0, Math.min(1, (value + 100) / 100))
-    );
-    this.plugin.calc.setExpressions([
-      {
-        id: "audio_lab_waveform",
-        latex: pointsLatex(waveform, -10, 10, 2.5, 2.5),
-        lines: true,
-        points: false,
-        color: "#2d70b3",
-      },
-      {
-        id: "audio_lab_spectrum",
-        latex: pointsLatex(spectrum, -10, 10, 4, -5),
-        lines: true,
-        points: false,
-        color: "#388c46",
-      },
-    ]);
-    this.status("Current waveform and spectrum sent to the expression list.");
+  /**
+   * Creates the managed folder, or stops writing to it.
+   *
+   * Stopping leaves the expressions in place. They are the user's graph content
+   * now — they may have written their own work against `A_audio` — so taking
+   * them away is a separate, explicit button.
+   */
+  private toggleGraph() {
+    if (this.graph.isInstalled) {
+      this.graph.stop();
+      this.showGraphState();
+      this.status(
+        "The Audio Lab variables are still in your graph; they have stopped updating."
+      );
+      return;
+    }
+    try {
+      this.graph.install({
+        mode: this.waveMode,
+        speedOfSound: this.speedOfSound,
+      });
+      this.showGraphState();
+      this.status("The Audio Lab folder is live in the expression list.");
+    } catch (error) {
+      this.status(
+        error instanceof Error
+          ? error.message
+          : "The Audio Lab folder could not be created.",
+        true
+      );
+    }
+  }
+
+  private removeGraph() {
+    this.graph.remove();
+    this.showGraphState();
+    this.status("Removed the Audio Lab folder. Nothing else was touched.");
+  }
+
+  private showGraphState() {
+    const live = this.graph.isInstalled;
+    this.find<HTMLButtonElement>("graph-toggle").textContent = live
+      ? "Stop updating the graph"
+      : "Start live graph";
+    this.find<HTMLButtonElement>("graph-remove").disabled = !this.graph.exists;
   }
 
   private status(message: string, error = false) {

@@ -83,6 +83,30 @@ export class DesmosAudioAdapter {
   }
 
   /**
+   * Whether the folder is in the graph at all, live or not.
+   *
+   * Reads the graph rather than a flag, because the user can delete the folder
+   * by hand and a button that offers to remove what is not there is wrong.
+   * Only ever called from a button press, never from the animation loop.
+   */
+  get exists() {
+    return this.calc
+      .getState()
+      .expressions.list.some((item) => item.id === IDS.folder);
+  }
+
+  /**
+   * Stops writing, and leaves everything where it is.
+   *
+   * Distinct from `remove`: by the time a user presses stop they may have
+   * written their own expressions against `A_audio`, and deleting the variables
+   * those depend on is not what "stop" means anywhere else.
+   */
+  stop() {
+    this.installed = false;
+  }
+
+  /**
    * Creates the managed folder and every expression in it, in one undoable step.
    *
    * Refuses rather than overwrites when one of the IDs is already in the graph

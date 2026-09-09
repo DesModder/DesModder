@@ -5,22 +5,6 @@ export function rms(samples: Float32Array) {
   return Math.sqrt(sum / samples.length);
 }
 
-export function peakFrequency(
-  bins: Float32Array,
-  sampleRate: number,
-  fftSize: number
-) {
-  let peak = -Infinity;
-  let index = 0;
-  for (let i = 1; i < bins.length; i++) {
-    if (bins[i] > peak) {
-      peak = bins[i];
-      index = i;
-    }
-  }
-  return (index * sampleRate) / fftSize;
-}
-
 export function downsample(samples: Float32Array, requested: number) {
   if (samples.length === 0 || requested <= 0) return [];
   const count = Math.min(samples.length, Math.floor(requested));
@@ -36,13 +20,6 @@ export function downsample(samples: Float32Array, requested: number) {
     }
     return Math.abs(maximum) >= Math.abs(minimum) ? maximum : minimum;
   });
-}
-
-export function spotifyEmbedUrl(input: string) {
-  const uri = spotifyUri(input);
-  if (uri === undefined) return undefined;
-  const [, type, id] = uri.split(":");
-  return `https://open.spotify.com/embed/${type}/${id}?utm_source=generator`;
 }
 
 export function spotifyUri(input: string) {
@@ -68,23 +45,4 @@ export function spotifyUri(input: string) {
   } catch {
     return undefined;
   }
-}
-
-export function pointsLatex(
-  values: readonly number[],
-  xMinimum: number,
-  xMaximum: number,
-  scale: number,
-  offset: number
-) {
-  if (values.length === 0) return "[]";
-  const divisor = Math.max(1, values.length - 1);
-  return `[${values
-    .map((value, index) => {
-      const x = xMinimum + ((xMaximum - xMinimum) * index) / divisor;
-      return `(${Number(x.toFixed(6))},${Number(
-        (value * scale + offset).toFixed(6)
-      )})`;
-    })
-    .join(",")}]`;
 }

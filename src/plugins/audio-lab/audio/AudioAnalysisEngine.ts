@@ -102,6 +102,18 @@ export class AudioAnalysisEngine {
     return this.frame;
   }
 
+  /**
+   * The linear spectrum behind the latest frame.
+   *
+   * Handed out rather than recomputed by each consumer, because converting a
+   * thousand bins out of decibels twice a frame is the kind of waste that only
+   * shows up as a lower frame rate. It is the engine's live buffer, so callers
+   * read it and do not keep it.
+   */
+  get spectrum(): Readonly<Float32Array> {
+    return this.magnitudes;
+  }
+
   /** Metres per second used to turn a frequency into a wavelength. */
   setSpeedOfSound(metresPerSecond: number) {
     if (Number.isFinite(metresPerSecond) && metresPerSecond > 0)
