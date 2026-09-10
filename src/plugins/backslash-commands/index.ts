@@ -14,24 +14,18 @@ type MathQuillFieldWithLatexWriter = MathQuillField & {
   write?: (latex: string) => unknown;
 };
 
-/** On JIS keyboards the same character can be reported as `¥`. */
-function isBackslashKey(event: KeyboardEvent) {
-  return event.key === "\\" || event.key === "¥";
-}
-
-function isModifierKey(key: string) {
-  return ["Shift", "Control", "Alt", "Meta", "AltGraph", "CapsLock"].includes(
-    key
-  );
-}
-
-/** Any printable ASCII character can be part of the LaTeX being composed. */
-function getLatexInputCharacter(event: KeyboardEvent) {
-  // Use the character, not the physical key code. International keyboard
-  // layouts can use the same physical key for different shifted characters.
-  if (event.key === "\\" || event.key === "¥") return "\\";
-  return /^[\x20-\x7e]$/.test(event.key) ? event.key : undefined;
-}
+const nonCommittingKeyNames = new Set([
+  "Shift",
+  "Control",
+  "Alt",
+  "Meta",
+  "AltGraph",
+  "CapsLock",
+  "Dead",
+  "Process",
+  "Unidentified",
+  "Backspace",
+]);
 
 /**
  * Adds a LaTeX entry box without patching MathQuill's private `CharCmds`
@@ -127,8 +121,6 @@ export default class BackslashCommands extends PluginController {
 
   private readonly beforeInputHandler = (event: InputEvent) => {
     if (!this.pending) {
-      // Fallback for environments where keydown does not expose the key. Only
-      // accept an actual backslash here: `¥` may be committed by an IME.
       if (
         event.isComposing ||
         event.inputType !== "insertText" ||
@@ -143,14 +135,40 @@ export default class BackslashCommands extends PluginController {
       return;
     }
 
-    // `overrideKeystroke` runs before MathQuill's hidden textarea receives
-    // the browser's text input. Suppress that second path while a command is
-    // being collected.
-    if (
-      event.inputType === "insertText" ||
-      event.inputType === "deleteContentBackward"
-    ) {
+    if (event.isComposing) {
+      this.clearPending();
+      return;
+    }
+
+    if (event.inputType === "insertText") {
+      const { data } = event;
+      if (!data || !/^[\x20-\x7e]+$/.test(data)) {
+        this.commitPendingCommand(this.pending);
+        return;
+      }
+
       event.preventDefault();
+      this.pending.command =
+        this.pending.command.slice(0, this.pending.cursorIndex) +
+        data +
+        this.pending.command.slice(this.pending.cursorIndex);
+      this.pending.cursorIndex += data.length;
+      this.updatePreview(this.pending);
+      return;
+    }
+
+    if (event.inputType === "deleteContentBackward") {
+      event.preventDefault();
+      if (!this.pending.command) {
+        this.clearPending();
+        return;
+      }
+      if (this.pending.cursorIndex === 0) return;
+      this.pending.command =
+        this.pending.command.slice(0, this.pending.cursorIndex - 1) +
+        this.pending.command.slice(this.pending.cursorIndex);
+      this.pending.cursorIndex--;
+      this.updatePreview(this.pending);
     }
   };
 
@@ -234,37 +252,22 @@ export default class BackslashCommands extends PluginController {
   }
 
   onMQKeystroke(key: string, event: KeyboardEvent): undefined | "cancel" {
-    if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey) {
+    if (event.isComposing) {
       this.clearPending();
       return;
     }
 
     const pending = this.getPendingForFocusedMathquill();
     if (!pending) {
-      if (!isBackslashKey(event)) return;
-      const mq = this.calc.focusedMathQuill?.mq;
-      if (!mq) return;
-      event.preventDefault();
-      this.beginPendingCommand(mq);
+      return;
+    }
+
+    // These keys are either modifiers or handled later by `beforeinput`.
+    if (event.key.length === 1 || nonCommittingKeyNames.has(event.key)) {
       return "cancel";
     }
 
-    // Holding Shift for a capital command name must not commit the command.
-    if (isModifierKey(event.key)) return "cancel";
-
-    const latexInputCharacter = getLatexInputCharacter(event);
-    if (latexInputCharacter) {
-      event.preventDefault();
-      pending.command =
-        pending.command.slice(0, pending.cursorIndex) +
-        latexInputCharacter +
-        pending.command.slice(pending.cursorIndex);
-      pending.cursorIndex++;
-      this.updatePreview(pending);
-      return "cancel";
-    }
-
-    if (key.endsWith("Left") || event.key === "ArrowLeft") {
+    if (key === "ArrowLeft") {
       if (pending.cursorIndex === 0) {
         event.preventDefault();
         return "cancel";
@@ -275,7 +278,7 @@ export default class BackslashCommands extends PluginController {
       return "cancel";
     }
 
-    if (key.endsWith("Right") || event.key === "ArrowRight") {
+    if (key === "ArrowRight") {
       if (pending.cursorIndex === pending.command.length) {
         event.preventDefault();
         return "cancel";
@@ -286,20 +289,6 @@ export default class BackslashCommands extends PluginController {
       return "cancel";
     }
 
-    if (key.endsWith("Backspace")) {
-      event.preventDefault();
-      if (!pending.command) {
-        this.clearPending();
-        return "cancel";
-      }
-      if (pending.cursorIndex === 0) return "cancel";
-      pending.command =
-        pending.command.slice(0, pending.cursorIndex - 1) +
-        pending.command.slice(pending.cursorIndex);
-      pending.cursorIndex--;
-      this.updatePreview(pending);
-      return "cancel";
-    }
     if (key === "Esc" || key === "Escape") {
       event.preventDefault();
       this.clearPending();
@@ -318,12 +307,6 @@ export default class BackslashCommands extends PluginController {
       event.preventDefault();
       return "cancel";
     }
-    if (isBackslashKey(event)) {
-      event.preventDefault();
-      this.beginPendingCommand(pending.mq);
-      return "cancel";
-    }
-    // Normal delimiters proceed into MathQuill.
   }
 
   afterEnable() {
