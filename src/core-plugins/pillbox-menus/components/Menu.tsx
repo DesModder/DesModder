@@ -46,6 +46,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "performance-info",
     "vector-tools",
     "audio-lab",
+    "physics-lab",
     "right-click-tray",
     "duplicate-expression-hotkey",
     "folder-tools",
