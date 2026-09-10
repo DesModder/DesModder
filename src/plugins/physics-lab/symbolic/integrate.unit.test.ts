@@ -1,0 +1,176 @@
+/**
+ * Every antiderivative here is checked twice: once against the LaTeX a person
+ * would write, and once — the check that matters — by differentiating the
+ * result numerically and comparing it back against the integrand.
+ *
+ * The second check is the one that catches a wrong answer. An antiderivative
+ * off by a constant factor still looks entirely reasonable written down, and
+ * the only thing that notices is differentiating it.
+ */
+import { integrate, IntegrationError, linearIn } from "./integrate";
+import { agreesOnSamples, evaluate, numericDerivative } from "./evaluate";
+import { toLatex } from "./latex";
+import { Aug, AugBuilders, buildConfig } from "../../../../text-mode-core";
+
+const { binop, functionCall, id, negative, number } = AugBuilders;
+
+type Node = Aug.Latex.AnyChild;
+
+const cfg = buildConfig({
+  // Deliberately without `abs`: Desmos has no \abs command, so listing it here
+  // would let the emitter produce something a real calculator cannot read.
+  // `toLatex` turns the resulting `\operatorname{abs}(…)` into bars anyway.
+  commandNames: "sin cos tan sec csc cot ln log exp sqrt sinh cosh tanh",
+});
+
+const emit = (node: Node) => toLatex(cfg, node);
+
+const x = id("x");
+const mul = (a: Node, b: Node) => binop("Multiply", a, b);
+const div = (a: Node, b: Node) => binop("Divide", a, b);
+const add = (a: Node, b: Node) => binop("Add", a, b);
+const sub = (a: Node, b: Node) => binop("Subtract", a, b);
+const pow = (a: Node, b: Node) => binop("Exponent", a, b);
+const fn = (name: string, arg: Node) => functionCall(id(name), [arg]);
+
+const SAMPLES = [0.3, 0.7, 1.1, 1.9, 2.6, 3.3].map((value) => ({ x: value }));
+
+/**
+ * Differentiating the antiderivative has to give the integrand back. This is
+ * the definition, and it is the only assertion here that could not be satisfied
+ * by a plausible-looking wrong answer.
+ */
+function isAntiderivativeOf(result: Node, integrand: Node) {
+  return agreesOnSamples(
+    (bindings) => numericDerivative(result, "x", bindings),
+    (bindings) => evaluate(integrand, bindings),
+    SAMPLES
+  );
+}
+
+function check(integrand: Node, expected: string) {
+  const result = integrate(integrand, "x");
+  expect(emit(result)).toBe(expected);
+  expect(isAntiderivativeOf(result, integrand)).toBe(true);
+}
+
+describe("antiderivatives of what an AP course integrates", () => {
+  test("the power rule, including the constant it hides", () => {
+    check(x, "\\frac{x^{2}}{2}");
+    check(pow(x, number(3)), "\\frac{x^{4}}{4}");
+    check(number(5), "5x");
+    // 2·(x²/2) must fold to x², or the answer is right and unreadable.
+    check(mul(number(2), x), "x^{2}");
+  });
+
+  test("the power rule's exception is a logarithm, not a division by zero", () => {
+    check(pow(x, number(-1)), "\\ln\\left|x\\right|");
+    check(div(number(1), x), "\\ln\\left|x\\right|");
+  });
+
+  test("a sum integrates term by term", () => {
+    check(add(mul(number(3), pow(x, number(2))), number(4)), "x^{3}+4x");
+    check(sub(x, number(1)), "\\frac{x^{2}}{2}-x");
+  });
+
+  test("exponentials, which is what every growth problem becomes", () => {
+    check(fn("exp", x), "\\exp\\left(x\\right)");
+    check(pow(id("e"), x), "e^{x}");
+    // The 1/k factor from a linear argument is the thing most often dropped.
+    check(pow(id("e"), mul(number(3), x)), "\\frac{e^{3x}}{3}");
+    check(pow(id("e"), negative(x)), "-e^{-x}");
+  });
+
+  test("trigonometry, with the sign that is easy to lose", () => {
+    check(fn("sin", x), "-\\cos\\left(x\\right)");
+    check(fn("cos", x), "\\sin\\left(x\\right)");
+    check(fn("sin", mul(number(2), x)), "\\frac{-\\cos\\left(2x\\right)}{2}");
+  });
+
+  test("a polynomial times an exponential, by parts", () => {
+    // The integral behind every `y = x - 1 + Ce^{-x}` in an answer key.
+    check(mul(x, pow(id("e"), x)), "xe^{x}-e^{x}");
+    // Reordered so the sum does not open with a negative term, which is also
+    // how a textbook prints this one.
+    check(mul(x, fn("sin", x)), "\\sin\\left(x\\right)-x\\cos\\left(x\\right)");
+  });
+
+  test("a linear argument brings its reciprocal factor with it", () => {
+    check(
+      pow(add(mul(number(2), x), number(1)), number(3)),
+      "\\frac{\\left(2x+1\\right)^{4}}{8}"
+    );
+    check(div(number(1), add(x, number(1))), "\\ln\\left|x+1\\right|");
+  });
+
+  test("a constant that is not the variable is carried through", () => {
+    // `k` is a parameter here, not the variable of integration, so it has to be
+    // bound before the derivative check has anything to evaluate against.
+    const withParameters = SAMPLES.map((sample) => ({
+      ...sample,
+      k: 2.5,
+      y: 1.5,
+    }));
+    const integrand = mul(id("k"), x);
+    const result = integrate(integrand, "x");
+    expect(emit(result)).toBe("k\\frac{x^{2}}{2}");
+    expect(
+      agreesOnSamples(
+        (bindings) => numericDerivative(result, "x", bindings),
+        (bindings) => evaluate(integrand, bindings),
+        withParameters
+      )
+    ).toBe(true);
+    // Everything free of x is one constant, however many names it is spelled
+    // with.
+    expect(emit(integrate(mul(id("k"), id("y")), "x"))).toBe("kyx");
+  });
+
+  test("what it cannot do exactly, it refuses by name", () => {
+    // No elementary antiderivative exists at all.
+    expect(() => integrate(fn("sin", pow(x, number(2))), "x")).toThrow(
+      IntegrationError
+    );
+    // Parts only terminates against a polynomial. A product of two
+    // transcendentals recurses forever, so it is refused instead.
+    expect(() => integrate(mul(fn("exp", x), fn("sin", x)), "x")).toThrow(
+      IntegrationError
+    );
+    // Would need a substitution or partial fractions.
+    expect(() => integrate(div(x, add(x, number(1))), "x")).toThrow(
+      IntegrationError
+    );
+    // A symbolic exponent could be -1, where the power rule does not hold.
+    expect(() => integrate(pow(x, id("n")), "x")).toThrow(IntegrationError);
+    // x in both base and exponent.
+    expect(() => integrate(pow(x, x), "x")).toThrow(IntegrationError);
+  });
+});
+
+describe("recognising a linear argument", () => {
+  const linear = (node: Node) => {
+    const found = linearIn(node, "x");
+    return found === undefined
+      ? undefined
+      : { a: emit(found.a), b: emit(found.b) };
+  };
+
+  test("the shapes people actually write", () => {
+    expect(linear(x)).toEqual({ a: "1", b: "0" });
+    expect(linear(mul(number(3), x))).toEqual({ a: "3", b: "0" });
+    expect(linear(add(mul(number(2), x), number(1)))).toEqual({
+      a: "2",
+      b: "1",
+    });
+    expect(linear(sub(number(1), x))).toEqual({ a: "-1", b: "1" });
+    expect(linear(div(x, number(2)))).toEqual({ a: "\\frac{1}{2}", b: "0" });
+    // Free of x entirely, so the slope is zero.
+    expect(linear(id("k"))).toEqual({ a: "0", b: "k" });
+  });
+
+  test("and refuses what is not linear", () => {
+    expect(linear(pow(x, number(2)))).toBeUndefined();
+    expect(linear(mul(x, x))).toBeUndefined();
+    expect(linear(fn("sin", x))).toBeUndefined();
+  });
+});

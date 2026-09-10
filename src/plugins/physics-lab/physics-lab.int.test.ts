@@ -21,6 +21,8 @@ const PANEL = ".dsm-physics-lab-menu";
 const DRAW = ".dsm-physics-lab-draw";
 const CANVAS = "#dsm-physics-lab-slope-canvas";
 const EXACT_OUTPUT = '[data-physics-lab="exact-output"]';
+const SOLUTION = '[data-physics-lab="solution"]';
+const ADD_SOLUTION = ".dsm-physics-lab-add-solution";
 
 async function openPanel(driver: Driver) {
   await driver.enablePlugin("physics-lab");
@@ -79,27 +81,30 @@ testWithPage(
       list.filter((item) => item.type === "expression" && item.latex)
     ).toEqual([]);
 
-    // Evidence, and a reference rather than a plausibility check. The general
-    // solution of dy/dx = x - y is y = x - 1 + Ce^{-x}; drawing three of them
-    // over the marks is what shows the field is the right field, because a
-    // solution curve has to run tangent to every mark it crosses. A slope field
+    // Evidence, and a reference rather than a plausibility check: a solution
+    // curve has to run tangent to every mark it crosses, and a slope field
     // pointing the wrong way looks perfectly reasonable on its own.
-    for (const [id, c] of [
-      ["sol1", "0"],
-      ["sol2", "3"],
-      ["sol3", "-3"],
-    ] as const) {
-      await driver.evaluate(
-        (expressionId: string, constant: string) =>
-          Calc.setExpression({
-            id: expressionId,
-            latex: `y=x-1+${constant}e^{-x}`,
-            color: "#c74440",
-          }),
-        id,
-        c
-      );
-    }
+    //
+    // The curve is not written by this test. The panel solved the equation
+    // itself, and the button puts *its* answer into the graph — so the picture
+    // checks the solver and the renderer against each other, and neither of
+    // them against something hand-written here.
+    const solved = await driver.$eval(SOLUTION, (el) => el.textContent ?? "");
+    expect(solved).toBe("y=x-1+Ce^{-x}");
+    await driver.click(ADD_SOLUTION);
+    await driver.waitForSync();
+
+    const afterInsert = (await driver.getState()).expressions.list;
+    const curve = afterInsert.find(
+      (item) => item.type === "expression" && item.latex === "y=x-1+Ce^{-x}"
+    );
+    expect(curve).toBeDefined();
+
+    // C arrives undefined, so Desmos offers a slider for it — which is what
+    // turns one curve into the family. Pinning it draws a representative member.
+    await driver.evaluate(() =>
+      Calc.setExpression({ id: "c-slider", latex: "C=3" })
+    );
     await driver.waitForSync();
     // With the popover closed, so the field it is drawing is what is on screen.
     await driver.click(BUTTON);

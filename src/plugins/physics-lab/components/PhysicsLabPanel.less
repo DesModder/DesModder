@@ -178,3 +178,29 @@
     opacity: 0.7;
   }
 }
+
+.dsm-physics-lab-menu {
+  .dsm-physics-lab-solution {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    margin-top: 4px;
+    border-radius: 4px;
+    background: rgba(45, 112, 179, 0.08);
+  }
+
+  // The solution is shown as the LaTeX it is, because that is also the string
+  // the button puts into the expression list — seeing the two agree is worth
+  // more than a prettier rendering of one of them.
+  .dsm-physics-lab-solution-latex {
+    font-family: monospace;
+    font-size: 1.05em;
+    word-break: break-all;
+  }
+
+  .dsm-physics-lab-method {
+    font-size: 0.85em;
+    opacity: 0.75;
+  }
+}

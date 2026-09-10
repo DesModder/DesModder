@@ -26,6 +26,7 @@ import {
   scanDefinitions,
 } from "../../field-rendering/environment";
 import { evaluateExact, toLatex, toNumber } from "./symbolic/exact";
+import { solveFirstOrder, type ODEResult } from "./symbolic/ode";
 import {
   defaultPhysicsLabConfig,
   normalizePhysicsLabConfig,
@@ -71,6 +72,7 @@ export default class PhysicsLabSession {
   private environmentTimer?: ReturnType<typeof setTimeout>;
   private dispatcherID?: string;
   private thinned = false;
+  private solutionCache?: { latex: string; result: ODEResult };
 
   private readonly overlay = new ArrowOverlay(this.plugin.calc, {
     // Its own canvas id: Vector Tools may be drawing its own arrows at the same
@@ -328,6 +330,56 @@ export default class PhysicsLabSession {
   private get textModeConfig() {
     this.parseConfig ??= buildConfigFromGlobals(Desmos, this.plugin.calc);
     return this.parseConfig;
+  }
+
+  /**
+   * The symbolic solution of the equation the slope field is drawing.
+   *
+   * Cached against the exact LaTeX it was solved from, because the panel reads
+   * this on every render pass and solving involves parsing, integrating and
+   * then verifying the answer numerically over eighteen sample points. Doing
+   * that per keystroke would be felt.
+   *
+   * `undefined` means there is nothing typed yet; a result that is `ok: false`
+   * means it was attempted and could not be done, which is worth showing.
+   */
+  get solution(): ODEResult | undefined {
+    const latex = this.config.slope.fLatex;
+    if (latex.trim() === "") return undefined;
+    if (this.solutionCache?.latex === latex) return this.solutionCache.result;
+    let result: ODEResult;
+    try {
+      const tree = parseLatex(this.textModeConfig, latex);
+      result = solveFirstOrder(this.textModeConfig, tree);
+    } catch {
+      // Half-typed LaTeX does not parse, and that is the normal state of an
+      // input somebody is still using rather than an error to report.
+      result = { ok: false, error: "" };
+    }
+    this.solutionCache = { latex, result };
+    return result;
+  }
+
+  /**
+   * Puts the solution into the graph, over the field it solves.
+   *
+   * The constant of integration goes in as the undefined variable `C`, so
+   * Desmos offers a slider for it — which turns one curve into the whole family
+   * the general solution describes, laid over the marks it has to stay tangent
+   * to.
+   */
+  insertSolution() {
+    const result = this.solution;
+    if (result?.ok !== true) return;
+    this.plugin.calc.setExpression({
+      latex: result.solution.latex,
+      // Desmos's red, because Desmos's first colour is the same blue the slope
+      // field defaults to, and a solution curve indistinguishable from the
+      // marks it is meant to be tangent to defeats the point of drawing both.
+      // A default, not a rule: it is an ordinary expression and recolouring it
+      // is one click.
+      color: "#c74440",
+    });
   }
 
   /**

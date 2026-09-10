@@ -142,6 +142,7 @@ function slopeTab(physicsLab: PhysicsLab, config: ConfigGetter) {
           They never touch, because two marks that met would draw a curve that
           solves nothing.
         </div>
+        {solutionReadout(physicsLab)}
       </section>
 
       <section class="dsm-physics-lab-section">
@@ -219,6 +220,73 @@ function slopeTab(physicsLab: PhysicsLab, config: ConfigGetter) {
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * The solved equation, shown under the equation itself.
+ *
+ * Deliberately not on a tab of its own. The solution and the slope field are
+ * two views of one object — the marks are the tangents of the curves the
+ * solution describes — and putting them on separate tabs would hide the single
+ * most useful thing here, which is watching a solution curve run tangent to
+ * every mark it crosses while the slider for C drags it through the family.
+ *
+ * Nothing is shown when there is no solution to show. Most equations somebody
+ * types are half-typed, and an error under a field being edited reads as the
+ * tool complaining rather than as the tool waiting.
+ */
+function solutionReadout(physicsLab: PhysicsLab) {
+  const result = () => physicsLab.session.solution;
+  const solved = () => {
+    const value = result();
+    return value?.ok === true ? value.solution : undefined;
+  };
+  const failure = () => {
+    const value = result();
+    return value?.ok === false && value.error !== "" ? value.error : "";
+  };
+  return (
+    <div>
+      <If predicate={() => solved() !== undefined}>
+        {() => (
+          <div class="dsm-physics-lab-solution">
+            <div
+              class="dsm-physics-lab-solution-latex"
+              data-physics-lab="solution"
+            >
+              {() => solved()?.latex ?? ""}
+            </div>
+            <div class="dsm-physics-lab-inline">
+              <Button
+                color="blue"
+                class="dsm-physics-lab-add-solution"
+                onTap={() => physicsLab.session.insertSolution()}
+              >
+                Add solution to graph
+              </Button>
+              <span class="dsm-physics-lab-method">
+                {() => solved()?.method ?? ""}
+              </span>
+            </div>
+            {/* An implicit answer is a complete solution and is not a curve
+                Desmos can plot as `y = …`; a reader has to know which they
+                have before they try. */}
+            <If predicate={() => solved()?.explicit === false}>
+              {() => (
+                <div class="dsm-physics-lab-hint">
+                  This is a relation between x and y rather than y in terms of
+                  x. Desmos will still draw it.
+                </div>
+              )}
+            </If>
+          </div>
+        )}
+      </If>
+      <If predicate={() => failure() !== ""}>
+        {() => <div class="dsm-physics-lab-hint">{() => failure()}</div>}
+      </If>
     </div>
   );
 }
