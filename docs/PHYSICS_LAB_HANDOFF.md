@@ -156,3 +156,156 @@ default:
    boundary is unpleasant; committing to one before there is anything slow is
    speculative. A reasonable middle is to keep the numerics pure and
    transferable so moving them later is mechanical.
+
+---
+
+## What gate 0 established, and what it found
+
+Built: `src/plugins/physics-lab/`, registered, disabled by default, with the
+session split from the panel on day one per the Audio Lab lesson above. Also
+`symbolic/exact.ts` — exact real constants — because it is the foundation of
+the symbolic work and depends on none of the open questions below.
+
+### Verified against a real Desmos
+
+Three facts, each checked in a browser rather than assumed. The first one
+changes the design.
+
+- **A differential equation has no answer box.** Desmos parses `\frac{dy}{dx}`
+  as `d·y ÷ d·x`, marks the row with an error triangle, and puts **"add
+  slider: d"** exactly where `1+1` gets its `= 2`. So the evaluation box that
+  shows `2` under `1+1` does not exist on the rows a solver would want to write
+  into. Whatever surface the solution appears on has to be built; it cannot be
+  borrowed.
+- **`\sqrt{2}^{3}` evaluates to `2.82842712475`** and there is no setting,
+  anywhere, that shows `2\sqrt2`. The exact form genuinely has to come from us.
+- **`(-8)^{1/3}` has no value in Desmos at all** — not an error row, no `=`
+  line. `exact.ts` deliberately answers `-2`, the real cube root, because that
+  is the convention an AP course teaches. It is the one case where an exact
+  answer appears beside a blank evaluation box rather than beside a decimal.
+
+### The exact-constant engine
+
+`symbolic/exact.ts` holds a value as a **sum of products**,
+`Σ q · π^a · e^b · Π p_i^{c_i}`, with rational exponents over `bigint`
+rationals. Two normalisations do the visible work: prime exponents fold into
+[0, 1), which is what turns `(\sqrt2)^3` into `2\sqrt2` and rationalises
+`1/\sqrt2` into `\frac{\sqrt2}{2}`; and the coefficient is factored into primes
+before any root, so `\sqrt{8}` finds `2^3`. π and e stay opaque atoms, which is
+what keeps `\frac{\pi^2}{2}` from collapsing to 4.9348.
+
+It refuses rather than approximates — a sum in a denominator, a fractional
+power of a sum, `2^\pi`, an unknown function — and the caller shows Desmos's
+decimal instead.
+
+One bug worth recording because assertions could not see it: `\pi` emitted
+beside `e` is `\pie`, an undefined command that renders as **nothing**. The
+unit tests were happy. `concat` in `exact.ts` inserts a space only where two
+fragments would glue into one command name, and the integration test now round-
+trips emitted LaTeX through Desmos's own evaluator for exactly this class of
+failure.
+
+Evidence: `docs/assets/physics-lab-exact-value.png`.
+
+### Vector Tools is a soft dependency
+
+Rafael's direction, and it differs from Audio Lab's rule: Physics Lab **may**
+build on Vector Tools and **must** work without it. Everything that reaches for
+it goes through `PhysicsLabSession.vectorTools`, which returns `undefined` when
+the plugin is disabled, and every caller handles that. Reaching for
+`dsm.vectorTools` anywhere else is what would turn a shared component into a
+hard dependency by accident.
+
+### Decisions taken, 2026-09-09
+
+- **Symbolic answers appear in the panel, with an "Add to graph" button.** The
+  answer box was the original request and it does not exist on the rows that
+  need it. Injecting our own row into the expression DOM, and patching Desmos's
+  evaluation view through a `.replacements` file, were both offered and
+  declined — the second because it joins the §5.4 class of breakage that panics
+  on load whenever Desmos ships a new build.
+- **The live renderer is extracted into a neutral shared module** that Vector
+  Tools and Physics Lab both depend on, rather than copied or cross-imported.
+  Slope fields therefore work with Vector Tools disabled. This touches working,
+  verified Vector Tools code, which was accepted as the price.
+
+### Next
+
+Gate 1 in the table above is the quantity engine. Ahead of it, and unblocked by
+the decisions above: extracting `ArrowRenderer` / `latexToGLSL` / `palettes`
+into the shared module, then slope fields as a dash geometry over it — a slope
+field is `(1, f(x,y))` normalised, with the arrowhead taken off, so it is the
+existing instanced-line machinery with a different vertex program.
+
+The symbolic solver's scope should follow the curriculum rather than the
+textbook: AP Calculus BC examines separable equations, slope fields and Euler's
+method, and AP Physics adds RC, cooling, decay and SHM. Separable plus
+first-order linear covers essentially all of it, and `exact.ts` is what lets the
+constant of integration and the coefficients come out in the form a student is
+expected to write.
+
+---
+
+## The renderer extraction, and slope fields
+
+Done, and verified against a real Desmos.
+
+**`src/field-rendering/`** now holds the whole drawing half that used to be
+Vector Tools': both renderers, both overlays, the LaTeX-to-GLSL compiler, the
+GLSL field prelude, the palettes, the environment scan, the identifier rules and
+the GL test double. Vector Tools and Physics Lab both depend on it and neither
+owns it. The move was mechanical — git recorded every file as a rename, no logic
+changed — and Vector Tools' own 18 integration tests are the guard. They pass,
+and it still draws, checked in a picture rather than only in assertions.
+
+Two additive changes to the shared renderer, both off unless asked for:
+
+- `ArrowOptions.centered` straddles the sample point instead of starting from
+  it. A vector has a tail; a slope mark is a tangent line and does not.
+- The overlay's canvas id is now a parameter. An id is unique to a document, and
+  two overlays sharing one would each remove the other's canvas on start — a bug
+  that could not exist while only one plugin drew.
+
+**A slope field is a vector field with the arrowheads taken off.** `dy/dx =
+f(x,y)` is the direction field of `(1, f)`, so there is no second renderer here:
+the marks are the arrows, at one length because only the direction carries
+information, head size zero, centred on the sample point. That is the whole
+implementation.
+
+### How it was verified, and one trap
+
+`readPixels` on the overlay canvas reported **zero** non-transparent pixels
+while the field was drawing perfectly well. The context has no
+`preserveDrawingBuffer`, so reading it outside a frame returns an empty buffer.
+It is a false negative, and taking it at face value would have sent someone
+hunting a rendering bug that did not exist.
+
+What did work was reference cases with known answers. `dy/dx = 0` gives marks
+that are exactly horizontal; `dy/dx = 1` gives exactly 45° up and to the right,
+which also pins the sign convention; and for `dy/dx = x - y` the analytic
+solutions `y = x - 1 + Ce^{-x}` plotted over the field run tangent to every mark
+they cross. That last one is the permanent evidence
+(`docs/assets/physics-lab-slope-field.png`) and the integration test generates
+it rather than anyone taking it by hand.
+
+### The panel
+
+Rewritten in Vector Tools' style rather than Audio Lab's: a real DCGView
+component whose controls take getters, `onUpdate` for anything that cannot be an
+attribute, inputs re-synced only while unfocused, chips instead of `<select>`, a
+`SegmentedControl` tab bar, and real MathQuill fields for both maths inputs. The
+gate-0 panel followed Audio Lab's static-template-plus-plain-DOM-runtime pattern
+and has been removed.
+
+The colour modes offered are a deliberate subset of what the renderer
+implements: `x-component` is the constant 1 at every mark in a slope field, so
+it would colour the whole field flat and offer a control that does nothing.
+Magnitude is `sqrt(1 + f²)`, which is steepness, and is named that.
+
+### Still open
+
+Flow (fieldplay particles) over a slope field is nearly free now that
+`FlowRenderer` and `FlowOverlay` are in the shared module, but it is not wired
+up. The symbolic solver for separable and first-order linear equations is not
+started; `symbolic/exact.ts` is what will let its constants come out in the form
+a student is expected to write.

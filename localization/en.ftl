@@ -392,3 +392,7 @@ vector-tools-desc = Build editable 2D vector fields, and animate them as flowing
 ## Audio Lab
 audio-lab-name = Audio Lab
 audio-lab-desc = Play or capture audio, inspect its live waveform and spectrum, and send snapshots to the graph.
+
+## Physics Lab
+physics-lab-name = Physics Lab
+physics-lab-desc = Tools for AP Physics 1 and 2 and AP Calculus AB and BC: exact constants, slope fields, and differential equations.

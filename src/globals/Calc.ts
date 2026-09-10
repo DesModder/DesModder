@@ -28,6 +28,11 @@ export type FocusLocation =
       plugin: "vector-tools";
       kind: "p" | "q" | "f" | "curve-x" | "curve-y";
     }
+  | {
+      type: "dsm-focus";
+      plugin: "physics-lab";
+      kind: "slope-f" | "exact";
+    }
   | { type: "search-expressions" }
   | {
       /**

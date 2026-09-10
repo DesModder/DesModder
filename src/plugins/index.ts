@@ -28,6 +28,7 @@ import TextMode from "./text-mode";
 import VideoCreator from "./video-creator";
 import VectorTools from "./vector-tools";
 import AudioLab from "./audio-lab";
+import PhysicsLab from "./physics-lab";
 import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
 import BetterNavigation from "./better-navigation";
@@ -147,6 +148,7 @@ export const keyToPlugin = {
   videoCreator: VideoCreator,
   vectorTools: VectorTools,
   audioLab: AudioLab,
+  physicsLab: PhysicsLab,
   wakatime: Wakatime,
   findReplace: FindReplace,
   showTips: ShowTips,
@@ -206,6 +208,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get videoCreator () { return this.ep["video-creator"]; }
   get vectorTools () { return this.ep["vector-tools"]; }
   get audioLab () { return this.ep["audio-lab"]; }
+  get physicsLab () { return this.ep["physics-lab"]; }
   get wakatime () { return this.ep["wakatime"]; }
   get findReplace () { return this.ep["find-and-replace"]; }
   get showTips () { return this.ep["show-tips"]; }

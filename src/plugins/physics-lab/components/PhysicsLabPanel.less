@@ -1,0 +1,180 @@
+// The pillbox popover is a fixed 290px wide, so the plugin tags its own popover
+// with a class that lets it size to the panel instead — the same arrangement
+// Vector Tools needed, for the same reason.
+.dsm-physics-lab-popover {
+  width: auto;
+  max-width: none;
+}
+
+.dsm-physics-lab-menu {
+  width: 340px;
+  max-width: 92vw;
+  display: flex;
+  flex-direction: column;
+
+  .dsm-physics-lab-tabs {
+    padding: 6px 10px 0;
+  }
+
+  // A fixed title and tab bar, a scrolling body, and a fixed footer, so the
+  // status line and the Draw button never scroll away from the controls that
+  // decide what they act on.
+  .dsm-physics-lab-body {
+    overflow-y: auto;
+    max-height: 60vh;
+    padding: 4px 10px 8px;
+  }
+
+  .dsm-physics-lab-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 1em;
+    }
+  }
+
+  .dsm-physics-lab-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .dsm-physics-lab-label {
+    font-weight: bold;
+  }
+
+  .dsm-physics-lab-hint,
+  .dsm-physics-lab-status {
+    font-size: 0.85em;
+    opacity: 0.75;
+    line-height: 1.35;
+  }
+
+  // Desmos's inline math input is an inline-block, so it shrink-to-fits, and
+  // the MathQuill field inside caps its own max-width against whatever the
+  // container reports. A container with nothing to report settles it at a few
+  // dozen pixels and clips the expression rather than wrapping it.
+  .dsm-physics-lab-math-input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+
+    .dcg-mq-editable-field {
+      width: 100%;
+      max-width: 100%;
+    }
+  }
+
+  .dsm-physics-lab-axis {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .dsm-physics-lab-number {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1 1 88px;
+    min-width: 88px;
+    font-size: 0.85em;
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+    }
+  }
+
+  .dsm-physics-lab-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9em;
+  }
+
+  .dsm-physics-lab-chip-row,
+  .dsm-physics-lab-palette-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .dsm-physics-lab-chip {
+    padding: 3px 9px;
+    border-radius: 11px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    font-size: 0.85em;
+    user-select: none;
+
+    &.dsm-physics-lab-chip-selected {
+      background: #2d70b3;
+      border-color: #2d70b3;
+      color: white;
+    }
+  }
+
+  .dsm-physics-lab-palette {
+    width: 30px;
+    height: 16px;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+
+    &.dsm-physics-lab-palette-selected {
+      outline: 2px solid #2d70b3;
+      outline-offset: 1px;
+    }
+  }
+
+  .dsm-physics-lab-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dsm-physics-lab-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .dsm-physics-lab-inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dsm-physics-lab-exact-result {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  // The exact form is shown as the LaTeX it is, because that is also the string
+  // Add to graph puts into the expression list — seeing the two agree is worth
+  // more than a prettier rendering of one of them.
+  .dsm-physics-lab-exact {
+    font-family: monospace;
+    font-size: 1.05em;
+    word-break: break-all;
+  }
+
+  .dsm-physics-lab-decimal {
+    font-size: 0.85em;
+    opacity: 0.7;
+  }
+}

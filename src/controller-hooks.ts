@@ -14,6 +14,8 @@ export function makeControllerHooks(dsm: DSM): DesModderHooks {
           return false;
         case "vector-tools":
           return dsm.vectorTools?.isFocused(location.kind) ?? false;
+        case "physics-lab":
+          return dsm.physicsLab?.isFocused(location.kind) ?? false;
         default:
           location satisfies never;
           return false;
@@ -38,6 +40,9 @@ export function makeControllerHooks(dsm: DSM): DesModderHooks {
           return false;
         case "vector-tools":
           // The panel's component slots are real math fields.
+          return true;
+        case "physics-lab":
+          // So are the slope-field and exact-value inputs.
           return true;
         default:
           location satisfies never;
