@@ -7,10 +7,18 @@
 }
 
 .dsm-physics-lab-menu {
-  width: 340px;
+  // Wide enough that the ordinary controls — three number fields on a row, a
+  // heading beside its button — fit without the panel itself scrolling. Only
+  // the maths is allowed to be wider than the panel, because only the maths has
+  // no upper bound on its length.
+  width: 420px;
   max-width: 92vw;
   display: flex;
   flex-direction: column;
+  // Nothing here may push the popover sideways. A horizontal scrollbar on the
+  // panel means the controls move out from under the pointer, which is a far
+  // worse cost than a long expression needing a swipe.
+  overflow-x: hidden;
 
   .dsm-physics-lab-tabs {
     padding: 6px 10px 0;
@@ -21,6 +29,7 @@
   // decide what they act on.
   .dsm-physics-lab-body {
     overflow-y: auto;
+    overflow-x: hidden;
     max-height: 60vh;
     padding: 4px 10px 8px;
   }
@@ -47,6 +56,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
+    flex-wrap: wrap;
   }
 
   .dsm-physics-lab-label {
@@ -155,6 +165,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    // A long method name wraps under its button rather than widening the panel.
+    flex-wrap: wrap;
   }
 
   .dsm-physics-lab-exact-result {
@@ -162,15 +174,6 @@
     flex-direction: column;
     gap: 6px;
     margin-top: 6px;
-  }
-
-  // The exact form is shown as the LaTeX it is, because that is also the string
-  // Add to graph puts into the expression list — seeing the two agree is worth
-  // more than a prettier rendering of one of them.
-  .dsm-physics-lab-exact {
-    font-family: monospace;
-    font-size: 1.05em;
-    word-break: break-all;
   }
 
   .dsm-physics-lab-decimal {
@@ -190,17 +193,25 @@
     background: rgba(45, 112, 179, 0.08);
   }
 
-  // The solution is shown as the LaTeX it is, because that is also the string
-  // the button puts into the expression list — seeing the two agree is worth
-  // more than a prettier rendering of one of them.
-  .dsm-physics-lab-solution-latex {
-    font-family: monospace;
-    font-size: 1.05em;
-    word-break: break-all;
-  }
-
   .dsm-physics-lab-method {
     font-size: 0.85em;
     opacity: 0.75;
+  }
+}
+
+.dsm-physics-lab-menu {
+  // The one thing allowed to be wider than the panel. An expression has no
+  // upper bound on its length, and wrapping rendered maths mid-equation is
+  // worse than scrolling it: MathQuill lays a formula out as one line, so a
+  // forced wrap breaks it across a fraction bar rather than at an operator.
+  .dsm-physics-lab-math {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 0;
+
+    .dcg-mq-root-block {
+      white-space: nowrap;
+    }
   }
 }

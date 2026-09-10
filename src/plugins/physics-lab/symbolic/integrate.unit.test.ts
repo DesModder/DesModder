@@ -126,6 +126,40 @@ describe("antiderivatives of what an AP course integrates", () => {
     expect(emit(integrate(mul(id("k"), id("y")), "x"))).toBe("kyx");
   });
 
+  test("partial fractions, which is what separating the logistic asks for", () => {
+    // 1/(x(1-x)) integrates to ln|x| - ln|1-x|, with the 1/D factor equal to 1.
+    check(
+      div(number(1), mul(x, sub(number(1), x))),
+      "\\ln\\left|x\\right|-\\ln\\left|1-x\\right|"
+    );
+    // Here D is -1, so the two logarithms come back the other way round.
+    check(
+      div(number(1), mul(x, sub(x, number(1)))),
+      "-\\left(\\ln\\left|x\\right|-\\ln\\left|x-1\\right|\\right)"
+    );
+  });
+
+  test("a repeated factor goes to the power rule, not to partial fractions", () => {
+    // 1/((x+1)(x+1)) has D = 0, so partial fractions declines it. Collapsing
+    // the repeat into (x+1)^2 hands it to the power rule, which is where it
+    // always belonged.
+    const repeated = integrate(
+      div(number(1), mul(add(x, number(1)), add(x, number(1)))),
+      "x"
+    );
+    expect(
+      agreesOnSamples(
+        (bindings) => numericDerivative(repeated, "x", bindings),
+        (bindings) =>
+          evaluate(
+            div(number(1), mul(add(x, number(1)), add(x, number(1)))),
+            bindings
+          ),
+        SAMPLES
+      )
+    ).toBe(true);
+  });
+
   test("what it cannot do exactly, it refuses by name", () => {
     // No elementary antiderivative exists at all.
     expect(() => integrate(fn("sin", pow(x, number(2))), "x")).toThrow(

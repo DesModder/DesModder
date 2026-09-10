@@ -25,6 +25,7 @@ import {
   If,
   InlineMathInputViewGeneral,
   SegmentedControl,
+  StaticMathQuillView,
   SwitchUnion,
 } from "#components";
 import { format } from "#i18n";
@@ -252,11 +253,18 @@ function solutionReadout(physicsLab: PhysicsLab) {
       <If predicate={() => solved() !== undefined}>
         {() => (
           <div class="dsm-physics-lab-solution">
+            {/* Rendered as maths rather than shown as its own source. Desmos
+                already draws LaTeX better than anything this plugin would
+                ship, and an answer printed as `\frac{x}{3}` asks the reader to
+                parse the notation before they can read the result. The string
+                is still carried in a data attribute, so the integration test
+                can assert on exactly what the button will insert. */}
             <div
-              class="dsm-physics-lab-solution-latex"
+              class="dsm-physics-lab-math"
               data-physics-lab="solution"
+              data-latex={() => solved()?.latex ?? ""}
             >
-              {() => solved()?.latex ?? ""}
+              <StaticMathQuillView latex={() => solved()?.latex ?? ""} />
             </div>
             <div class="dsm-physics-lab-inline">
               <Button
@@ -338,10 +346,11 @@ function exactTab(physicsLab: PhysicsLab, config: ConfigGetter) {
           {() => (
             <div class="dsm-physics-lab-exact-result">
               <div
-                class="dsm-physics-lab-exact"
+                class="dsm-physics-lab-math"
                 data-physics-lab="exact-output"
+                data-latex={() => reading()?.latex ?? ""}
               >
-                {() => reading()?.latex ?? ""}
+                <StaticMathQuillView latex={() => reading()?.latex ?? ""} />
               </div>
               <div class="dsm-physics-lab-inline">
                 <Button

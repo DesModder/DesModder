@@ -89,6 +89,64 @@ describe("dy/dx = k(A - y), which is cooling, charging and terminal velocity", (
   });
 });
 
+describe("the logistic equation, which BC examines and AB draws", () => {
+  const M = id("M");
+
+  test("comes out in closed form, not as a relation between logarithms", () => {
+    // dy/dx = ky(1 - y/M), written the way every textbook writes it.
+    const solution = solved(mul(mul(k, y), sub(number(1), div(y, M))));
+    expect(solution.explicit).toBe(true);
+    expect(solution.latex).toBe("y=\\frac{M}{1+Ce^{-\\left(kx\\right)}}");
+  });
+
+  test("names the carrying capacity, which is what the question asks for", () => {
+    const solution = solved(
+      mul(mul(number(0.5), y), sub(number(1), div(y, number(10))))
+    );
+    expect(solution.latex).toBe("y=\\frac{10}{1+Ce^{-0.5x}}");
+    expect(solution.method).toBe("Logistic, carrying capacity 10");
+  });
+
+  test("and does not care which way round it was typed", () => {
+    // ky(M - y) is the same equation with the capacity multiplied through.
+    expect(solved(mul(y, sub(number(1), y))).latex).toBe(
+      "y=\\frac{1}{1+Ce^{-x}}"
+    );
+    expect(solved(mul(y, sub(y, number(1)))).latex).toBe(
+      "y=\\frac{1}{1+Ce^{x}}"
+    );
+  });
+
+  test("read as multiplication when Desmos parsed it as a function call", () => {
+    // `y\left(1-y\right)` is how the equation is written, and Desmos's parser
+    // resolves juxtaposition before a bracket as application — so it arrives
+    // as y applied to (1-y). Without rewriting that, the logistic equation is
+    // refused in the only form anybody types it in.
+    const asCall = functionCall(id("y"), [sub(number(1), y)]);
+    expect(solved(asCall).latex).toBe("y=\\frac{1}{1+Ce^{-x}}");
+    // With a coefficient in front, which is how it actually turns up.
+    const withRate = mul(
+      number(0.6),
+      functionCall(id("y"), [sub(number(1), y)])
+    );
+    expect(solved(withRate).method).toMatch(/carrying capacity 1/);
+  });
+
+  test("a genuine function call is left alone", () => {
+    // `g` might be a function the graph defines, and rewriting it as
+    // multiplication would silently answer a different question.
+    const result = solve(functionCall(id("g"), [y]));
+    expect(result.ok).toBe(false);
+  });
+
+  test("a quadratic with a constant term is not logistic and is not claimed to be", () => {
+    // Both equilibria move off zero, so the closed form does not apply. It
+    // falls through to the separable path rather than being answered wrongly.
+    const result = solve(add(mul(y, sub(number(1), y)), number(3)));
+    if (result.ok) expect(result.solution.method).not.toMatch(/logistic/i);
+  });
+});
+
 describe("separable equations that stay implicit", () => {
   test("dy/dx = x/y is reported as a relation, and said to be one", () => {
     const solution = solved(div(x, y));

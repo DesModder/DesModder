@@ -31,6 +31,7 @@
  */
 import { Aug, AugBuilders, type Config } from "../../../../text-mode-core";
 import {
+  coefficientsIn,
   dependsOn,
   integrate,
   IntegrationError,
@@ -91,6 +92,7 @@ export function solveFirstOrder(
   dependent = "y"
 ): ODEResult {
   const emit = (node: Node) => toLatex(cfg, node);
+  f = resolveImplicitCalls(f, [independent, dependent]);
 
   // An equation whose right-hand side mentions neither variable is still
   // solvable — dy/dx = k is the constant-velocity case — so nothing is rejected
@@ -105,7 +107,52 @@ export function solveFirstOrder(
     return affine(emit, f, asAffine, independent, dependent);
   }
 
+  // Before the general separable path, because separating the logistic equation
+  // succeeds and answers with a relation between logarithms — a complete
+  // answer, and not the one anybody wants. The closed form is what the syllabus
+  // teaches and what a carrying capacity is read off.
+  const asLogistic = logistic(emit, f, independent, dependent);
+  if (asLogistic !== undefined) return asLogistic;
+
   return separable(emit, f, independent, dependent);
+}
+
+/**
+ * Reads `y(1-y)` as y times (1-y) rather than as y applied to (1-y).
+ *
+ * Desmos's parser resolves juxtaposition before a bracket as function
+ * application, so `y\left(1-y\right)` arrives as a `FunctionCall` whose callee
+ * is `y`. That is the correct reading of the notation in general and the wrong
+ * one here, and it is not a corner case: `y(1-y)` and `ky(1-y/M)` are how the
+ * logistic equation is written in every textbook, so without this the headline
+ * equation is refused in the only form anybody types.
+ *
+ * Restricted to the two variables of the equation. A call to `f` or `g` really
+ * might be a function the graph defines, and rewriting that as multiplication
+ * would silently change what the user asked. Nobody defines a function named
+ * `y` while using y as the dependent variable — and if they did, Desmos's own
+ * evaluation of the slope field would disagree with this too, which is a
+ * conflict the panel would show rather than hide.
+ */
+function resolveImplicitCalls(node: Node, variables: readonly string[]): Node {
+  switch (node.type) {
+    case "FunctionCall": {
+      const args = node.args.map((arg) => resolveImplicitCalls(arg, variables));
+      if (variables.includes(node.callee.symbol) && args.length === 1)
+        return multiply(id(node.callee.symbol), args[0]);
+      return { ...node, args };
+    }
+    case "Negative":
+      return negative(resolveImplicitCalls(node.arg, variables));
+    case "BinaryOperator":
+      return {
+        ...node,
+        left: resolveImplicitCalls(node.left, variables),
+        right: resolveImplicitCalls(node.right, variables),
+      };
+    default:
+      return node;
+  }
 }
 
 /**
@@ -240,6 +287,67 @@ function affine(
 }
 
 /**
+ * `dy/dx = ry(1 - y/K)` — the logistic equation, in closed form.
+ *
+ * Separating it works and produces `ln|y| - ln|1-y/K| = rx + C`, which is a
+ * complete answer and is not the one the syllabus teaches. The explicit form is
+ * `y = K/(1 + Ce^{-rx})`, and it is the one worth having because everything the
+ * question asks is visible in it: K is the carrying capacity the population
+ * settles at, r is how fast it gets there, and the inflection point is at K/2.
+ *
+ * Recognised as a quadratic in y with no constant term — `f = ry + ay²`, so
+ * `y = 0` is an equilibrium — which covers `ky(1-y/M)`, `ky(M-y)` and `y(1-y)`
+ * without caring which way round they were typed. The carrying capacity is
+ * `-r/a`, and `a` is zero exactly when the equation is not logistic at all but
+ * plain exponential growth, which the affine case has already taken.
+ *
+ * `undefined` means "not this shape", so the caller falls through to the
+ * general separable path rather than reporting a failure.
+ */
+function logistic(
+  emit: (node: Node) => string,
+  f: Node,
+  independent: string,
+  dependent: string
+): ODEResult | undefined {
+  const coefficients = coefficientsIn(f, dependent, 2);
+  if (coefficients === undefined || coefficients.length !== 3) return undefined;
+  const [constant, linear, quadratic] = coefficients.map((c) => simplify(c));
+  // A constant term moves both equilibria off zero and the closed form no
+  // longer applies.
+  if (!isZero(constant)) return undefined;
+  if (isZero(quadratic)) return undefined;
+  // A rate that varies with x is a different equation.
+  if (dependsOn(linear, independent) || dependsOn(quadratic, independent))
+    return undefined;
+
+  const capacity = simplify(divide(negative(linear), quadratic));
+  const solution = simplify(
+    divide(
+      capacity,
+      add(
+        number(1),
+        multiply(
+          id(CONSTANT),
+          power(id("e"), simplify(multiply(negative(linear), id(independent))))
+        )
+      )
+    )
+  );
+  return verified(
+    {
+      latex: `${dependent}=${emit(solution)}`,
+      method: `Logistic, carrying capacity ${emit(capacity)}`,
+      explicit: true,
+    },
+    solution,
+    f,
+    independent,
+    dependent
+  );
+}
+
+/**
  * `dy/dx = g(x)·h(y)` — separated, integrated, and left as a relation.
  *
  * The result is implicit on purpose. Solving `∫dy/h(y) = ∫g(x)dx + C` for y
@@ -294,27 +402,43 @@ function separate(
   const collected: { node: Node; inNumerator: boolean }[] = [];
   collect(f, true, collected);
 
-  let g: Node = number(1);
-  // Built already inverted, rather than as h and then 1/h. Separating
-  // `dy/dx = x/y` gives h = 1/y, and `1/(1/y)` is a quotient whose denominator
-  // is not linear in y — the integrator would refuse it, for a reason that has
-  // nothing to do with the integral actually being asked for. Flipping each
-  // factor as it is collected hands over a plain `y` instead.
-  let hInverse: Node = number(1);
+  // Each side is gathered as a numerator list and a denominator list and only
+  // assembled at the end, rather than divided into step by step. Building it
+  // incrementally nests the quotients — `1/y` then divided again by `(1-y/M)`
+  // — and the integrator sees a fraction whose denominator is itself a
+  // fraction, which no rule matches. Assembling once gives the single flat
+  // reciprocal that partial fractions is looking for.
+  const gNumerator: Node[] = [];
+  const gDenominator: Node[] = [];
+  const inverseNumerator: Node[] = [];
+  const inverseDenominator: Node[] = [];
+
   for (const { node, inNumerator } of collected) {
     const hasX = dependsOn(node, independent);
     const hasY = dependsOn(node, dependent);
     if (hasX && hasY) return undefined;
     if (hasY) {
-      hInverse = inNumerator
-        ? divide(hInverse, node)
-        : multiply(hInverse, node);
+      // Inverted as it is collected, since what gets integrated is 1/h.
+      (inNumerator ? inverseDenominator : inverseNumerator).push(node);
     } else {
       // Anything free of y belongs with x, including plain constants.
-      g = inNumerator ? multiply(g, node) : divide(g, node);
+      (inNumerator ? gNumerator : gDenominator).push(node);
     }
   }
-  return { g: simplify(g), hInverse: simplify(hInverse) };
+  return {
+    g: simplify(assemble(gNumerator, gDenominator)),
+    hInverse: simplify(assemble(inverseNumerator, inverseDenominator)),
+  };
+}
+
+/** A quotient from its two lists of factors, with no redundant `1`s. */
+function assemble(numerator: Node[], denominator: Node[]): Node {
+  const product = (factors: Node[]) =>
+    factors.length === 0
+      ? number(1)
+      : factors.reduce((left, right) => multiply(left, right));
+  if (denominator.length === 0) return product(numerator);
+  return divide(product(numerator), product(denominator));
 }
 
 function collect(

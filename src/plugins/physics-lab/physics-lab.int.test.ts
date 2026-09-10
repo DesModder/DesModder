@@ -89,7 +89,12 @@ testWithPage(
     // itself, and the button puts *its* answer into the graph — so the picture
     // checks the solver and the renderer against each other, and neither of
     // them against something hand-written here.
-    const solved = await driver.$eval(SOLUTION, (el) => el.textContent ?? "");
+    // The readout renders as maths now, so the string the button will insert is
+    // carried in a data attribute rather than being the element text.
+    const solved = await driver.$eval(
+      SOLUTION,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
     expect(solved).toBe("y=x-1+Ce^{-x}");
     await driver.click(ADD_SOLUTION);
     await driver.waitForSync();
@@ -147,7 +152,7 @@ testWithPage(
 
     const shown = await driver.$eval(
       EXACT_OUTPUT,
-      (el) => el.textContent ?? ""
+      (el) => el.getAttribute("data-latex") ?? ""
     );
     expect(shown).toBe("2\\sqrt{2}");
 
@@ -165,4 +170,65 @@ testWithPage(
     await driver.disablePlugin("physics-lab");
   },
   40000
+);
+
+testWithPage(
+  "the logistic equation solves in the form it is written, and its curve fits the field",
+  async (driver) => {
+    await openPanel(driver);
+
+    // Typed the way a textbook writes it. Desmos parses the juxtaposition
+    // before the bracket as a function call, so this is also the regression
+    // test for reading it back as multiplication.
+    await driver.evaluate(() => {
+      (
+        DSM.physicsLab as unknown as {
+          session: { updateConfig: (m: (c: PhysicsLabConfig) => void) => void };
+        }
+      ).session.updateConfig((config) => {
+        // Set explicitly: the panel tab is persisted in plugin settings, which
+        // outlive the page, so a previous test leaving the Exact value tab
+        // selected would open this one somewhere with no solution on it.
+        config.panel.tab = "slope";
+        config.slope.fLatex = "0.6y\\left(1-\\frac{y}{4}\\right)";
+        config.slope.domain = {
+          x: { min: -2, max: 8 },
+          y: { min: -1, max: 6 },
+        };
+        config.slope.columns = 25;
+        config.slope.rows = 19;
+      });
+    });
+    await driver.waitForSync();
+    // Solving parses, integrates and then verifies numerically, and the panel
+    // re-renders after all of it; waitForSync only covers the calculator.
+    await driver.assertSelectorEventually(SOLUTION);
+
+    const solved = await driver.$eval(
+      SOLUTION,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
+    expect(solved).toBe("y=\\frac{4}{1+Ce^{-0.6x}}");
+
+    await driver.click(DRAW);
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    await driver.click(ADD_SOLUTION);
+    await driver.evaluate(() =>
+      Calc.setExpression({ id: "c-slider", latex: "C=8" })
+    );
+    await driver.waitForSync();
+    await driver.click(BUTTON);
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    // The S-curve has to leave the origin, bend, and flatten at the carrying
+    // capacity along the marks — which is only visible in a picture.
+    await driver.page.screenshot({
+      path: "docs/assets/physics-lab-logistic.png",
+    });
+    await driver.click(BUTTON);
+
+    await driver.click(DRAW);
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  50000
 );
