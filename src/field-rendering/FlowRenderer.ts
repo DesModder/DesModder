@@ -15,14 +15,14 @@
  *  - It renders onto a transparent canvas layered over the Desmos graph
  *    instead of owning the whole screen.
  */
-import { PALETTE_GLSL, paletteUniforms, type PaletteID } from "../palettes";
+import { PALETTE_GLSL, paletteUniforms, type PaletteID } from "./palettes";
 import {
   fieldFunctions,
   uploadFieldParameters,
   FlowRendererError,
 } from "./field";
 import type { FlowBounds, FlowField } from "./field";
-import type { FlowColorMode } from "../model";
+import type { FlowColorMode } from "./types";
 
 // Re-exported so the parts that only ever wanted a field keep one import.
 export {

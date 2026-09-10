@@ -11,7 +11,7 @@
  * understand `b`, and a slider that moves does not make this scan stale.
  */
 import { canonicalIdentifier, IDENTIFIER_SOURCE } from "./identifiers";
-import type { FieldEnvironment, FunctionDefinition } from "./flow/latexToGLSL";
+import type { FieldEnvironment, FunctionDefinition } from "./latexToGLSL";
 
 // The grammar lives in identifiers.ts, so the scan and the compiler cannot
 // disagree about where one name ends and the next begins.

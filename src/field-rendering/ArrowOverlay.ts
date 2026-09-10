@@ -16,14 +16,24 @@ import type { FlowBounds, FlowField } from "./FlowRenderer";
 import { ArrowRenderer, type ArrowOptions } from "./ArrowRenderer";
 import type { Calc } from "#globals";
 
-const CANVAS_ID = "dsm-vector-tools-arrow-canvas";
+/**
+ * The default canvas id, which is the one Vector Tools has always used.
+ *
+ * It is a default rather than a constant because two plugins now draw through
+ * this overlay, and an id is unique to a document: two overlays mounted under
+ * one id would each remove the other's canvas on start, and the second to draw
+ * would silently erase the first. Anything mounting a second overlay passes its
+ * own id.
+ */
+const DEFAULT_CANVAS_ID = "dsm-vector-tools-arrow-canvas";
 const GRAPH_CANVAS_SELECTOR = "canvas.dcg-graph-inner";
-const BOUNDS_OBSERVER_KEY = "graphpaperBounds.dsm-vector-tools-arrows";
 
 export interface ArrowOverlayCallbacks {
   onError: (message: string) => void;
   /** The overlay is drawing again after having reported a failure. */
   onRecovered: () => void;
+  /** Overrides the canvas id, for a second overlay on the same page. */
+  canvasId?: string;
 }
 
 export class ArrowOverlay {
@@ -92,6 +102,19 @@ export class ArrowOverlay {
     private readonly calc: Calc,
     private readonly callbacks: ArrowOverlayCallbacks
   ) {}
+
+  private get canvasId() {
+    return this.callbacks.canvasId ?? DEFAULT_CANVAS_ID;
+  }
+
+  /**
+   * Keyed off the canvas id for the same reason: Desmos holds one observer per
+   * key, so two overlays sharing a key would leave one of them never told that
+   * the view moved.
+   */
+  private get boundsObserverKey() {
+    return `graphpaperBounds.${this.canvasId}`;
+  }
 
   /**
    * Whether the overlay is mounted — which is the canvas, not the renderer. A
@@ -170,7 +193,7 @@ export class ArrowOverlay {
   }
 
   private applyContrast() {
-    const canvas = document.getElementById(CANVAS_ID);
+    const canvas = document.getElementById(this.canvasId);
     if (canvas === null) return;
     canvas.style.filter = this.counteractInvert ? "invert(1)" : "";
   }
@@ -213,10 +236,10 @@ export class ArrowOverlay {
         "Could not find the Desmos graph paper to draw on."
       );
     }
-    document.getElementById(CANVAS_ID)?.remove();
+    document.getElementById(this.canvasId)?.remove();
 
     const canvas = document.createElement("canvas");
-    canvas.id = CANVAS_ID;
+    canvas.id = this.canvasId;
     canvas.setAttribute("aria-hidden", "true");
     canvas.style.position = "absolute";
     canvas.style.left = "0";
@@ -251,8 +274,9 @@ export class ArrowOverlay {
     );
     this.visibilityObserver.observe(canvas);
 
-    this.calc.observe(BOUNDS_OBSERVER_KEY, () => this.requestFrame());
-    this.unobserveBounds = () => this.calc.unobserve(BOUNDS_OBSERVER_KEY);
+    const key = this.boundsObserverKey;
+    this.calc.observe(key, () => this.requestFrame());
+    this.unobserveBounds = () => this.calc.unobserve(key);
   }
 
   private resizeToBox() {

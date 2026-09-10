@@ -88,7 +88,38 @@ the shared libraries they draw on.
           symbolic.ts (exact partial derivatives — currently no caller)
 ```
 
+### 2.1 The renderer is no longer this plugin's
+
+Everything above the adapter line — `ArrowRenderer`, `FlowRenderer`, both
+overlays, `latexToGLSL`, `field.ts`, `palettes`, `environment`, `identifiers`
+and the GL test double — now lives in **`src/field-rendering/`**, which Vector
+Tools and Physics Lab both depend on and neither owns.
+
+It moved because a slope field is a vector field with the arrowheads taken off,
+and the alternative to sharing was a second copy of a thousand lines of shader
+that would drift. The move was mechanical: no logic changed, git recorded every
+file as a rename, and this plugin's integration suite is the guard that it
+still draws what it drew before.
+
+Two things did change, both additive and both off by default here:
+
+- `ArrowOptions.centered` draws a mark straddling its sample point instead of
+  starting from it. A vector has a tail and a slope mark does not. Vector Tools
+  does not set it.
+- The overlay's canvas id is a parameter rather than a constant, because an id
+  is unique to a document and two overlays sharing one would each delete the
+  other's canvas on start. Vector Tools keeps the id it always had.
+
+The four mode unions (`VectorLengthMode`, `VectorColorMode`, `ColorRangeMode`,
+`FlowColorMode`) moved to `field-rendering/types.ts` for the same reason and are
+re-exported from `model.ts`, so nothing that read them from `model` had to
+change.
+
 ### File map
+
+Rows marked **↑** no longer live in this plugin. They moved to
+`src/field-rendering/` when Physics Lab needed the same renderer — see 2.1.
+Everything about how they work is unchanged; only the import path is.
 
 | File                              | Lines | What it owns                                                                |
 | --------------------------------- | ----: | --------------------------------------------------------------------------- |
@@ -97,16 +128,16 @@ the shared libraries they draw on.
 | `desmos/ExpressionAdapter.ts`     |   270 | the **only** calculator boundary; apply / remove / audit a generated set    |
 | `index.ts`                        | ~1070 | the plugin controller: settings, overlays, dispatcher, component sync       |
 | `components/VectorToolsPanel.tsx` | ~1180 | the DCGView panel (Field / Arrows / Color / Flow tabs)                      |
-| `palettes.ts`                     |  ~460 | colour ramps as stops, emitted as Desmos LaTeX, shader uniforms **and** CSS |
-| `environment.ts`                  |  ~125 | scans the expression list for what a component may reference                |
+| `↑ palettes.ts`                   |  ~460 | colour ramps as stops, emitted as Desmos LaTeX, shader uniforms **and** CSS |
+| `↑ environment.ts`                |  ~125 | scans the expression list for what a component may reference                |
 | `symbolic.ts`                     |   409 | exact symbolic partial differentiation over Desmos's own syntax tree        |
-| `flow/latexToGLSL.ts`             |  ~700 | compiles the usable subset of Desmos LaTeX to GLSL ES 3.00                  |
-| `flow/field.ts`                   |  ~110 | the shared `vtField(vec2 p)` prelude, helpers, and parameter uniforms       |
-| `flow/ArrowRenderer.ts`           |  ~590 | instanced arrows, geometry from `gl_VertexID`/`gl_InstanceID`               |
-| `flow/ArrowOverlay.ts`            |  ~245 | the arrows' canvas, bounds, visibility, context loss                        |
-| `flow/FlowRenderer.ts`            |  ~985 | ping-ponged particle textures, RK4 advection, trails                        |
-| `flow/FlowOverlay.ts`             |  ~255 | the flow's canvas, bounds, visibility, context loss                         |
-| `flow/glTestDouble.ts`            |    90 | a fake WebGL2 both renderers are unit-tested against                        |
+| `↑ latexToGLSL.ts`                |  ~700 | compiles the usable subset of Desmos LaTeX to GLSL ES 3.00                  |
+| `↑ field.ts`                      |  ~110 | the shared `vtField(vec2 p)` prelude, helpers, and parameter uniforms       |
+| `↑ ArrowRenderer.ts`              |  ~590 | instanced arrows, geometry from `gl_VertexID`/`gl_InstanceID`               |
+| `↑ ArrowOverlay.ts`               |  ~245 | the arrows' canvas, bounds, visibility, context loss                        |
+| `↑ FlowRenderer.ts`               |  ~985 | ping-ponged particle textures, RK4 advection, trails                        |
+| `↑ FlowOverlay.ts`                |  ~255 | the flow's canvas, bounds, visibility, context loss                         |
+| `↑ glTestDouble.ts`               |    90 | a fake WebGL2 both renderers are unit-tested against                        |
 
 ---
 

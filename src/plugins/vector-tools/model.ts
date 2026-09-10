@@ -1,4 +1,25 @@
-import { PALETTE_IDS, type PaletteID } from "./palettes";
+import { PALETTE_IDS, type PaletteID } from "../../field-rendering/palettes";
+/**
+ * The four modes the shaders implement now live beside the shaders. They are
+ * re-exported here because they are still part of this plugin's configuration
+ * vocabulary, and every existing reader of `model` expects to find them.
+ *
+ * `ColorRangeMode`'s `automatic` is a ramp that saturates, sized by the
+ * viewport, rather than one stretched between a measured smallest and largest:
+ * it cannot be taken over by a pole. See the briefing §6.1.
+ */
+import type {
+  VectorLengthMode,
+  VectorColorMode,
+  ColorRangeMode,
+  FlowColorMode,
+} from "../../field-rendering/types";
+export type {
+  VectorLengthMode,
+  VectorColorMode,
+  ColorRangeMode,
+  FlowColorMode,
+};
 export const VECTOR_FIELD_SCHEMA_VERSION = 3;
 
 export const VECTOR_COUNT_WARNING = 2_500;
@@ -11,34 +32,8 @@ export type SamplingMode = "step" | "count";
  * scalar function, so the same arrows, colors, and flow describe ∇f.
  */
 export type FieldSource = "components" | "gradient";
-export type VectorLengthMode =
-  | "actual"
-  | "normalized"
-  | "scaled"
-  | "clamped"
-  | "compressed"
-  | "direction-only";
-export type VectorColorMode =
-  | "fixed"
-  | "magnitude"
-  | "log-magnitude"
-  | "direction"
-  | "x-component"
-  | "y-component";
 export type ColorPalette = PaletteID;
-/**
- * What the colour ramp is spread across.
- *
- * `automatic` is a ramp that saturates, sized by the viewport — the same one
- * the flow visualiser uses, so an arrow and the particles over it are the same
- * colour. It cannot be taken over by a pole the way a ramp stretched between a
- * measured smallest and largest can. `manual` spreads it linearly between the
- * two values given instead, for when a fixed scale matters more.
- */
-export type ColorRangeMode = "automatic" | "manual";
-
 export type ZeroVectorMode = "hide" | "point";
-export type FlowColorMode = "fixed" | "speed" | "direction";
 
 /**
  * Who draws the arrows.

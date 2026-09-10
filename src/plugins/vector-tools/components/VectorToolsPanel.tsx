@@ -43,7 +43,7 @@ import {
   PALETTE_GROUPS,
   PALETTE_IDS,
   paletteCSSGradient,
-} from "../palettes";
+} from "../../../field-rendering/palettes";
 import type { ComponentSlot } from "../generator";
 import "./VectorToolsPanel.less";
 

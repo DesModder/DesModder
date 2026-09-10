@@ -6,9 +6,9 @@ import {
   type VectorLengthMode,
   ZERO_VECTOR_TOLERANCE,
 } from "./model";
-import { paletteLatex } from "./palettes";
-import { renameIdentifier } from "./identifiers";
-import { TIME_NAME } from "./flow/latexToGLSL";
+import { paletteLatex } from "../../field-rendering/palettes";
+import { renameIdentifier } from "../../field-rendering/identifiers";
+import { TIME_NAME } from "../../field-rendering/latexToGLSL";
 import type {
   GeneratedExpressionSpec,
   GeneratedFolderSpec,

@@ -52,18 +52,21 @@ import {
 } from "./generator";
 import { differentiate, identifiersIn, toLatex } from "./symbolic";
 import { buildConfigFromGlobals, parseLatex } from "../../../text-mode-core";
-import { FlowOverlay } from "./flow/FlowOverlay";
-import { ArrowOverlay } from "./flow/ArrowOverlay";
-import type { ArrowOptions } from "./flow/ArrowRenderer";
+import { FlowOverlay } from "../../field-rendering/FlowOverlay";
+import { ArrowOverlay } from "../../field-rendering/ArrowOverlay";
+import type { ArrowOptions } from "../../field-rendering/ArrowRenderer";
 import {
   compileFieldComponentToGLSL,
   EMPTY_ENVIRONMENT,
   TIME_NAME,
-} from "./flow/latexToGLSL";
-import { mentions } from "./identifiers";
-import type { FieldEnvironment } from "./flow/latexToGLSL";
-import { environmentsDiffer, scanDefinitions } from "./environment";
-import type { FlowField } from "./flow/FlowRenderer";
+} from "../../field-rendering/latexToGLSL";
+import { mentions } from "../../field-rendering/identifiers";
+import type { FieldEnvironment } from "../../field-rendering/latexToGLSL";
+import {
+  environmentsDiffer,
+  scanDefinitions,
+} from "../../field-rendering/environment";
+import type { FlowField } from "../../field-rendering/FlowRenderer";
 import type { ConfigItem } from "..";
 
 export { TEST_FOLDER_ID, TEST_LINE_ID, TEST_NAMESPACE } from "./ids";

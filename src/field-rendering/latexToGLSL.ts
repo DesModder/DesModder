@@ -9,7 +9,7 @@
  * field that is not the one in the expression list.
  */
 
-import { canonicalIdentifier, IDENTIFIER_SOURCE } from "../identifiers";
+import { canonicalIdentifier, IDENTIFIER_SOURCE } from "./identifiers";
 
 /** A single-expression definition read out of the expression list. */
 export interface FunctionDefinition {
@@ -83,7 +83,7 @@ const glslIdentifier = (name: string) => name.replace(/[^A-Za-z0-9]/g, "_");
 /** One grammar for what a name is, shared with the scanner and the generator. */
 const IDENTIFIER_AT_START = new RegExp(`^${IDENTIFIER_SOURCE}`);
 
-export { canonicalIdentifier } from "../identifiers";
+export { canonicalIdentifier } from "./identifiers";
 
 /**
  * The letter that means the animation clock, and the uniform behind it.

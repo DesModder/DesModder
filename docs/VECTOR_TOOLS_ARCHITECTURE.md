@@ -1,5 +1,14 @@
 # Vector Tools architecture
 
+## Where the renderer lives
+
+Everything that draws — ArrowRenderer, FlowRenderer, both overlays,
+latexToGLSL, field.ts, palettes, environment, identifiers — now lives in
+**src/field-rendering/**, shared with Physics Lab and owned by neither plugin.
+Paths below that read `flow/…` or a bare `palettes.ts` refer to files there;
+nothing about their behaviour changed in the move. See
+VECTOR_TOOLS_BRIEFING.md §2.1.
+
 ## Scope
 
 Vector Tools is a disabled-by-default DesModder plugin for editable vector and

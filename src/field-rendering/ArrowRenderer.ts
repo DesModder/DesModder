@@ -24,12 +24,12 @@ import {
   hexToUnitRGB,
 } from "./FlowRenderer";
 import type { FlowBounds, FlowField } from "./FlowRenderer";
-import { PALETTE_GLSL, paletteUniforms, type PaletteID } from "../palettes";
+import { PALETTE_GLSL, paletteUniforms, type PaletteID } from "./palettes";
 import type {
   ColorRangeMode,
   VectorColorMode,
   VectorLengthMode,
-} from "../model";
+} from "./types";
 
 export interface ArrowOptions {
   /** Sample counts across the domain, which is one arrow per grid point. */
@@ -43,6 +43,18 @@ export interface ArrowOptions {
   compression: number;
   /** Length of the arrowhead in graph units, before it is capped on a short arrow. */
   headSize: number;
+  /**
+   * Draw each mark centred on its sample point rather than starting from it.
+   *
+   * A vector has a tail: it points *from* somewhere, so an arrow starting at
+   * the grid point is the honest picture. A slope field mark does not — it is
+   * a tangent line through the point, and drawing it from the point puts the
+   * whole mark on one side of the thing it is tangent to, which reads as a
+   * field of little vectors instead of a field of slopes.
+   *
+   * Optional, and off unless asked, so a vector field is unaffected.
+   */
+  centered?: boolean;
   headAngle: number;
   /** Shaft thickness in CSS pixels, so it does not change with the zoom. */
   shaftWidth: number;
@@ -375,6 +387,7 @@ export class ArrowRenderer {
         (this.canvas.width /
           Math.max(1, this.canvas.clientWidth || this.canvas.width))
     );
+    gl.uniform1i(uniforms.u_centered, options.centered === true ? 1 : 0);
     gl.uniform1f(uniforms.u_opacity, options.opacity);
     gl.uniform1i(uniforms.u_colorMode, COLOR_MODE_INDEX[options.colorMode]);
     const [r, g, b] = hexToUnitRGB(options.fixedColor);
@@ -495,6 +508,7 @@ uniform float u_compression;
 uniform float u_headSize;
 uniform float u_headAngle;
 uniform float u_shaftWidth;
+uniform int u_centered;
 uniform float u_opacity;
 uniform int u_colorMode;
 uniform vec3 u_fixedColor;
@@ -624,7 +638,10 @@ void main() {
     local = vec2(mix(shaftEnd, len, corner.x), corner.y * headHalf);
   }
 
-  vec2 world = base + dir * local.x + perp * local.y;
+  // The field is still sampled at the grid point; only the mark drawn from it
+  // moves, back along its own direction by half its length.
+  vec2 origin = base - dir * (u_centered == 1 ? 0.5 * len : 0.0);
+  vec2 world = origin + dir * local.x + perp * local.y;
   vec2 normalized = (world - u_min) / (u_max - u_min);
   gl_Position = vec4(2.0 * normalized - 1.0, 0.0, 1.0);
 

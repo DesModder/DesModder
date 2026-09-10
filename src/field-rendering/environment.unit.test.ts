@@ -1,5 +1,5 @@
 import { environmentsDiffer, scanDefinitions } from "./environment";
-import { compileFieldComponentToGLSL } from "./flow/latexToGLSL";
+import { compileFieldComponentToGLSL } from "./latexToGLSL";
 
 const expr = (latex: string, id?: string) => ({
   type: "expression",
