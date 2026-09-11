@@ -281,3 +281,32 @@
 .dsm-action-menu[data-buttonid="dsm-physics-lab-menu"] i {
   font-size: 21px;
 }
+
+.dsm-physics-lab-menu {
+  // Each step is a rule name, a sentence, and the expression the rule produced.
+  // Numbered, because the order is the method — a reader following along needs
+  // to know which came first, not only what each one says.
+  .dsm-physics-lab-steps {
+    margin: 0;
+    padding-left: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dsm-physics-lab-step {
+    padding-left: 4px;
+    border-left: 2px solid rgba(45, 112, 179, 0.25);
+  }
+
+  .dsm-physics-lab-step-title {
+    font-weight: bold;
+    font-size: 0.9em;
+  }
+
+  // The step's hint sits directly under its title and is the sentence saying
+  // what to do, so it keeps a little more contrast than a general hint.
+  .dsm-physics-lab-step .dsm-physics-lab-hint {
+    opacity: 0.85;
+  }
+}

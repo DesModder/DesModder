@@ -789,3 +789,67 @@ guaranteed to be the same shape of problem rather than a hand-picked one.
 Also noted for later: animating the phase plane with Vector Tools' time
 architecture, which would want modes for `t` — periodic or constant — rather
 than the unbounded clock a vector field uses.
+
+---
+
+## The Derivative tab
+
+The engine had no view; it has one now. Type an expression, pick the variable
+from a chip row, and get the derivative with the rules that produced it.
+
+Four things about how it presents, each of which was wrong first:
+
+**The steps run outermost first.** The recursion finishes innermost-first, so
+recording in completion order gives the small derivatives before the reason for
+them — a log rather than a derivation. A worked solution opens with "apply the
+product rule" and _then_ does the two pieces it asked for. Each step reserves
+its slot before recursing and fills it afterwards, so the outer rule lands in
+front of the ones it depends on.
+
+**The prose contains no LaTeX.** The first version built its sentences with the
+emitter — "With u = x^{2} and v = \operatorname{sin}\left(3x\right)" — which
+renders as exactly that, as text, next to the maths it was describing. The
+sentences now say what to do without naming the pieces, because the pieces are
+already on screen underneath.
+
+**Each rule shows its general form.** `RULE_FORMULAS` holds `(uv)'=u'v+uv'`,
+`d/dx x^n = nx^{n-1}`, `d/dx f(g) = f'(g)·g'` and the rest, rendered as maths
+beside the step. That is a different statement from the prose and the more
+useful one: the prose says what happened here, the formula is what transfers to
+the next problem. Rules whose statement is already the sentence — "a constant
+differentiates to zero" — have no entry rather than a formula repeating it.
+
+**Each step shows its result tidied.** The rules literally produce `2x^{1}` and
+`3\cdot1`, and a reader following the method does not need to watch arithmetic
+that has not happened yet. The general formula beside it already says what the
+rule did, so the concrete line can be the readable form.
+
+Two simplifier additions came out of it, both visible in ordinary answers:
+a coefficient buried on the right comes to the front, so `x²·(3cos 3x)` reads
+`3x²cos 3x`; and it is built left-nested, because the Aug emitter brackets a
+product hanging off the right of another and `3·(x²cos 3x)` prints with the
+bracket still in it.
+
+### The worked example
+
+Built from the user's own expression by changing its constants and leaving the
+shape alone. That is what makes it _similar_: the tree is unchanged, so the
+dispatch takes the same branches and the example needs exactly the rules just
+explained. Choosing a second problem from a list would give something that looks
+alike and may want a rule the reader has not met. An exponent is never allowed
+to land on 0 or 1, since both collapse the power rule into a case that is no
+longer an example of it. Its answer is behind a disclosure — the point is to try
+it first.
+
+Evidence: `docs/assets/physics-lab-derivative.png`.
+
+### Still open
+
+The integrator is not instrumented and the tab does not show integrals yet —
+that is the last piece, and the harder one: integration has no single dispatch
+the way differentiation does, so "which rule and why here" is a genuinely
+different question there.
+
+And the phase plane could animate through Vector Tools' time architecture, which
+would want bounded modes for `t` — periodic, or held — rather than the unbounded
+clock a vector field uses.

@@ -31,7 +31,15 @@ import { solveFirstOrder, type ODEResult } from "./symbolic/ode";
 import { resolvePrimes, solveSecondOrder } from "./symbolic/secondOrder";
 import { recognizeDecimal } from "./symbolic/recognize";
 import { particularConstant, type InitialResult } from "./symbolic/initial";
-import { differentiate, type Derivation } from "./symbolic/differentiate";
+import {
+  differentiate,
+  DifferentiationError,
+  RULE_FORMULAS,
+  similarExample,
+  type Derivation,
+} from "./symbolic/differentiate";
+import { simplify as simplifyTree } from "./symbolic/integrate";
+
 import { toLatex as toLatexTree } from "./symbolic/latex";
 import {
   defaultPhysicsLabConfig,
@@ -59,6 +67,34 @@ const ENVIRONMENT_REFRESH_DELAY_MS = 80;
 type SlopeCompilation =
   | { ok: true; field: FlowField }
   | { ok: false; error: string };
+
+/** One step, already rendered, so the panel need not know about `Config`. */
+export interface ShownStep {
+  key: string;
+  title: string;
+  detail: string;
+  /** The rule in general, where it has a form worth memorising. */
+  formula: string;
+  /** What this step produced, tidied. */
+  latex: string;
+  depth: number;
+}
+
+/** What the Derivative tab shows. */
+export type DerivationView =
+  | {
+      ok: true;
+      resultLatex: string;
+      shown: ShownStep[];
+      example?: WorkedExample;
+    }
+  | { ok: false; error: string };
+
+/** A second problem of the same shape, worked. */
+export interface WorkedExample {
+  source: string;
+  result: string;
+}
 
 /** What the exact-value reader can say about one expression. */
 export interface ExactReading {
@@ -96,6 +132,7 @@ export default class PhysicsLabSession {
   private drawing: "none" | "slope" | "phase" = "none";
   private solutionCache?: { latex: string; result: ODEResult };
   private secondCache?: { latex: string; result: ODEResult };
+  private derivativeCache?: { key: string; result: DerivationView };
 
   private readonly overlay = new ArrowOverlay(this.plugin.calc, {
     // Its own canvas id: Vector Tools may be drawing its own arrows at the same
@@ -675,6 +712,96 @@ export default class PhysicsLabSession {
     } catch {
       return undefined;
     }
+  }
+
+  /**
+   * The derivation shown on the Derivative tab, with why it failed when it did.
+   *
+   * Cached against the expression for the same reason every other readout here
+   * is: the panel reads it on each render pass, and a derivation parses, walks
+   * the tree and emits LaTeX at every step. Doing that per keystroke would be
+   * felt on a long expression.
+   *
+   * The error is kept rather than swallowed, because "the derivative of erf is
+   * not known" is the useful thing to say and an empty panel is not.
+   */
+  get derivation(): DerivationView | undefined {
+    const { fLatex, variable } = this.config.derivative;
+    if (fLatex.trim() === "") return undefined;
+    const key = `${variable} ${fLatex}`;
+    if (this.derivativeCache?.key === key) return this.derivativeCache.result;
+
+    let result: DerivationView;
+    try {
+      const tree = parseLatex(this.textModeConfig, fLatex);
+      const derivation = differentiate(this.textModeConfig, tree, variable);
+      result = {
+        ok: true,
+        resultLatex: toLatexTree(this.textModeConfig, derivation.result),
+        // Emitted here rather than in the panel. This is where the parser
+        // configuration lives, and a view that has to build LaTeX is a view
+        // that has to know about `Config`.
+        shown: derivation.steps.map((step, index) => ({
+          key: String(index),
+          title: step.title,
+          detail: step.detail,
+          formula: RULE_FORMULAS[step.rule] ?? "",
+          // Tidied rather than raw. The rule literally produces `2x^{1}` and
+          // `3cdot1`, and a reader following the method does not need to see
+          // the arithmetic that has not happened yet — the general formula
+          // beside it already says what the rule did.
+          latex: toLatexTree(this.textModeConfig, simplifyTree(step.after)),
+          depth: step.depth,
+        })),
+        example: this.workedExample(tree, variable),
+      };
+    } catch (error) {
+      result = {
+        ok: false,
+        error:
+          error instanceof DifferentiationError
+            ? error.message
+            : // Half-typed LaTeX does not parse, and that is the normal state of
+              // an input somebody is still using rather than something to report.
+              "",
+      };
+    }
+    this.derivativeCache = { key, result };
+    return result;
+  }
+
+  /**
+   * The same problem with different numbers, worked.
+   *
+   * Built from the user's own expression rather than chosen from a list, so it
+   * is guaranteed to exercise the rules they were just shown. If the nudged
+   * version somehow fails to differentiate it is dropped rather than reported —
+   * a broken example beside a correct derivation is worse than no example.
+   */
+  private workedExample(
+    tree: Parameters<typeof similarExample>[0],
+    variable: string
+  ): WorkedExample | undefined {
+    try {
+      const example = similarExample(tree);
+      const derived = differentiate(this.textModeConfig, example, variable);
+      return {
+        source: toLatexTree(this.textModeConfig, example),
+        result: toLatexTree(this.textModeConfig, derived.result),
+      };
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** Puts the derivative into the graph beside whatever else is there. */
+  insertDerivative() {
+    const found = this.derivation;
+    if (found?.ok !== true) return;
+    this.plugin.calc.setExpression({
+      latex: found.resultLatex,
+      color: "#c74440",
+    });
   }
 
   /** The derivative as LaTeX, for putting straight into the graph. */

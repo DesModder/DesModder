@@ -52,6 +52,29 @@ const square = (node: Node) => power(node, number(2));
 /** Thrown for anything this cannot differentiate exactly. */
 export class DifferentiationError extends Error {}
 
+/**
+ * The rule in general, for the rules that have a form worth memorising.
+ *
+ * Separate from the prose because it is a different kind of statement. The
+ * prose says what to do with *this* expression; the formula is the thing that
+ * transfers to the next one, and it is the half a reader is trying to learn.
+ * Kept as LaTeX so the panel renders it as maths rather than printing `u'v`.
+ *
+ * Rules without an entry are the ones whose statement is already the sentence —
+ * "a constant differentiates to zero" gains nothing from being written twice.
+ */
+export const RULE_FORMULAS: Partial<Record<RuleName, string>> = {
+  "constant-multiple": String.raw`\left(cf\right)'=cf'`,
+  power: String.raw`\frac{d}{dx}x^{n}=nx^{n-1}`,
+  sum: String.raw`\left(f+g\right)'=f'+g'`,
+  difference: String.raw`\left(f-g\right)'=f'-g'`,
+  product: String.raw`\left(uv\right)'=u'v+uv'`,
+  quotient: String.raw`\left(\frac{u}{v}\right)'=\frac{u'v-uv'}{v^{2}}`,
+  chain: String.raw`\frac{d}{dx}f\left(g\right)=f'\left(g\right)\cdot g'`,
+  "exponential-base": String.raw`\frac{d}{dx}a^{x}=a^{x}\ln a`,
+  "logarithmic-differentiation": String.raw`\frac{d}{dx}u^{v}=u^{v}\left(v'\ln u+\frac{vu'}{u}\right)`,
+};
+
 export type RuleName =
   | "constant"
   | "identity"
@@ -315,14 +338,29 @@ function derive(
   depth: number,
   steps: Step[]
 ): Node {
-  const show = (value: Node) => toLatex(cfg, value);
+  // Where this expression's own steps begin. Every step its children produce is
+  // pushed after this point during the recursion below, so splicing here puts
+  // the outer rule in front of the ones it depends on.
+  //
+  // That ordering is the whole difference between a derivation and a log. A
+  // worked solution opens with "apply the product rule" and then does the two
+  // small derivatives it asked for; recording in the order the recursion
+  // finishes gives the small ones first and the reason for them last.
+  const mark = steps.length;
   const record = (
     name: RuleName,
     title: string,
     detail: string,
     after: Node
   ) => {
-    steps.push({ rule: name, title, detail, before: node, after, depth });
+    steps.splice(mark, 0, {
+      rule: name,
+      title,
+      detail,
+      before: node,
+      after,
+      depth,
+    });
     return after;
   };
 
@@ -331,7 +369,7 @@ function derive(
     return record(
       "constant",
       "Constant rule",
-      `${show(node)} does not contain ${variable}, so its derivative is 0.`,
+      `This contains no ${variable}, so it is a constant and its derivative is 0.`,
       number(0)
     );
   }
@@ -356,10 +394,10 @@ function derive(
     }
 
     case "BinaryOperator":
-      return binaryRule(cfg, node, variable, depth, steps, record, show);
+      return binaryRule(cfg, node, variable, depth, steps, record);
 
     case "FunctionCall":
-      return functionCallRule(cfg, node, variable, depth, steps, record, show);
+      return functionCallRule(cfg, node, variable, depth, steps, record);
 
     default:
       throw new DifferentiationError(
@@ -381,8 +419,7 @@ function binaryRule(
   variable: string,
   depth: number,
   steps: Step[],
-  record: Record_,
-  show: (n: Node) => string
+  record: Record_
 ): Node {
   const { left, right } = node;
   const leftHas = dependsOn(left, variable);
@@ -412,7 +449,7 @@ function binaryRule(
         return record(
           "constant-multiple",
           "Constant multiple rule",
-          `${show(constant)} is a constant factor, so it stays put and only ${show(varying)} is differentiated.`,
+          "A constant factor stays put; only the other factor is differentiated.",
           multiply(constant, inner)
         );
       }
@@ -421,7 +458,7 @@ function binaryRule(
       return record(
         "product",
         "Product rule",
-        `With u = ${show(left)} and v = ${show(right)}, (uv)' = u'v + uv'.`,
+        "Both factors contain the variable, so differentiate each in turn and keep the other.",
         add(multiply(dLeft, right), multiply(left, dRight))
       );
     }
@@ -434,7 +471,7 @@ function binaryRule(
         return record(
           "constant-multiple",
           "Constant multiple rule",
-          `${show(right)} is a constant denominator, so it divides the derivative of ${show(left)}.`,
+          "A constant denominator divides the derivative of the numerator.",
           divide(inner, right)
         );
       }
@@ -443,7 +480,7 @@ function binaryRule(
       return record(
         "quotient",
         "Quotient rule",
-        `With u = ${show(left)} and v = ${show(right)}, (u/v)' = (u'v - uv')/v².`,
+        "The variable is above and below the line, so the quotient rule applies.",
         divide(
           subtract(multiply(dLeft, right), multiply(left, dRight)),
           square(right)
@@ -452,16 +489,7 @@ function binaryRule(
     }
 
     case "Exponent":
-      return exponentRule(
-        cfg,
-        left,
-        right,
-        variable,
-        depth,
-        steps,
-        record,
-        show
-      );
+      return exponentRule(cfg, left, right, variable, depth, steps, record);
   }
 }
 
@@ -476,8 +504,7 @@ function exponentRule(
   variable: string,
   depth: number,
   steps: Step[],
-  record: Record_,
-  show: (n: Node) => string
+  record: Record_
 ): Node {
   const baseHas = dependsOn(base, variable);
   const exponentHas = dependsOn(exponent, variable);
@@ -491,7 +518,7 @@ function exponentRule(
       return record(
         "power",
         "Power rule",
-        `Bring the exponent down and reduce it by one: ${variable}^${show(exponent)} becomes ${show(exponent)}·${variable}^${show(lowered)}.`,
+        "Bring the exponent down as a factor and reduce it by one.",
         outer
       );
     }
@@ -499,7 +526,7 @@ function exponentRule(
     return record(
       "power",
       "Power rule with the chain rule",
-      `The base ${show(base)} is not just ${variable}, so after the power rule multiply by its derivative.`,
+      `The base is not just ${variable}, so after the power rule multiply by its derivative.`,
       multiply(outer, inner)
     );
   }
@@ -515,7 +542,7 @@ function exponentRule(
         isE ? "Derivative of e^x" : "Derivative of a^x",
         isE
           ? `e^${variable} is its own derivative.`
-          : `a^${variable} differentiates to a^${variable}·ln a, here with a = ${show(base)}.`,
+          : "A constant raised to the variable differentiates to itself times the natural log of the base.",
         outer
       );
     }
@@ -552,8 +579,7 @@ function functionCallRule(
   variable: string,
   depth: number,
   steps: Step[],
-  record: Record_,
-  show: (n: Node) => string
+  record: Record_
 ): Node {
   const name = node.callee.symbol;
   if (node.args.length !== 1) {
@@ -576,7 +602,7 @@ function functionCallRule(
   return record(
     "chain",
     "Chain rule",
-    `${known.says}. The inside is ${show(argument)} rather than ${variable}, so multiply by its derivative.`,
+    `${known.says}. The inside is not just ${variable}, so multiply by the derivative of the inside.`,
     multiply(outer, inner)
   );
 }
@@ -614,6 +640,45 @@ export function implicitDerivative(
     depth: 0,
   });
   return { result: simplify(raw), raw, steps };
+}
+
+/**
+ * The same problem with different numbers in it.
+ *
+ * Generated by changing the constants and leaving the shape alone, which is
+ * what makes it genuinely *similar*: the tree is unchanged, so the dispatch
+ * takes the same branches and the worked example uses exactly the rules that
+ * were just explained. Picking a second problem by hand — or from a list —
+ * gives something that looks alike and may need a rule the reader has not met.
+ *
+ * An exponent is never allowed to land on 0 or 1, because both collapse the
+ * power rule into a case that is no longer an example of it.
+ */
+export function similarExample(node: Node): Node {
+  return nudge(node, false);
+}
+
+function nudge(node: Node, isExponent: boolean): Node {
+  switch (node.type) {
+    case "Constant": {
+      let next = node.value + 1;
+      if (isExponent && (next === 0 || next === 1)) next += 1;
+      return number(next);
+    }
+    case "Negative":
+      return negative(nudge(node.arg, isExponent));
+    case "FunctionCall":
+      return { ...node, args: node.args.map((arg) => nudge(arg, false)) };
+    case "BinaryOperator":
+      return {
+        ...node,
+        left: nudge(node.left, false),
+        // Only the right-hand side of a power is an exponent.
+        right: nudge(node.right, node.name === "Exponent"),
+      };
+    default:
+      return node;
+  }
 }
 
 function describe(node: Node) {

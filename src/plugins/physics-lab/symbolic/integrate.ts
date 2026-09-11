@@ -958,6 +958,23 @@ function simplifyBinary(node: Aug.Latex.BinaryOperator): Node {
       if (lc === -1) return simplify(negative(right));
       if (rc === -1) return simplify(negative(left));
       if (lc !== undefined && rc !== undefined) return number(lc * rc);
+      // A coefficient buried on the right comes to the front: `x²·(3cos 3x)` is
+      // written `3x²cos 3x`. The chain rule produces exactly that shape — the
+      // inner derivative arrives as a factor after the outer one — and left
+      // alone the answer carries a bracket around a number.
+      if (
+        lc === undefined &&
+        right.type === "BinaryOperator" &&
+        (right.name === "Multiply" || right.name === "CrossMultiply") &&
+        constantValue(right.left) !== undefined
+      ) {
+        // Left-nested deliberately. The Aug emitter brackets a product that
+        // hangs off the right of another, so `3·(x²cos 3x)` prints with the
+        // bracket still in it; `(3·x²)·cos 3x` prints as `3x²cos 3x`.
+        return simplify(
+          binop("Multiply", binop("Multiply", right.left, left), right.right)
+        );
+      }
       // `3·(2x)` is `6x`. Multiplication associates, and the constant multiple
       // rule produces exactly this shape whenever a coefficient meets the power
       // rule — which is most of the derivatives anybody takes.

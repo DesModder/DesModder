@@ -23,11 +23,12 @@ export const SLOPE_MARK_LIMIT = 10_000;
 export const SLOPE_COUNT_MINIMUM = 2;
 export const SLOPE_COUNT_MAXIMUM = 401;
 
-export type PanelTab = "slope" | "second" | "exact";
+export type PanelTab = "slope" | "second" | "derivative" | "exact";
 
 export const PANEL_TABS = [
   { id: "slope", label: "Slope field" },
   { id: "second", label: "2nd order" },
+  { id: "derivative", label: "Derivative" },
   { id: "exact", label: "Exact value" },
 ] as const satisfies readonly { id: PanelTab; label: string }[];
 
@@ -75,6 +76,8 @@ export interface PhysicsLabConfig {
    * picture of a second-order equation to draw beside it.
    */
   secondOrder: { fLatex: string };
+  /** The expression the Derivative tab differentiates, and with respect to what. */
+  derivative: { fLatex: string; variable: string };
   /**
    * The phase plane for the second-order equation: y across, y′ up.
    *
@@ -121,6 +124,12 @@ export function defaultPhysicsLabConfig(): PhysicsLabConfig {
     // A damped oscillator: the case with all the behaviour in it.
     secondOrder: { fLatex: "-y'-4y" },
     initial: { xLatex: "", yLatex: "" },
+    // Product, power and chain in one line, so the first thing on screen shows
+    // what the steps are for.
+    derivative: {
+      fLatex: "x^{2}\\operatorname{sin}\\left(3x\\right)",
+      variable: "x",
+    },
     phase: {
       domain: { x: { min: -4, max: 4 }, y: { min: -4, max: 4 } },
       columns: 19,
@@ -223,6 +232,17 @@ export function normalizePhysicsLabConfig(raw: unknown): PhysicsLabConfig {
       },
       columns: clampCount(source.phase?.columns, defaults.phase.columns),
       rows: clampCount(source.phase?.rows, defaults.phase.rows),
+    },
+    derivative: {
+      fLatex:
+        typeof source.derivative?.fLatex === "string"
+          ? source.derivative.fLatex
+          : defaults.derivative.fLatex,
+      variable:
+        typeof source.derivative?.variable === "string" &&
+        /^[a-zA-Z]$/.test(source.derivative.variable)
+          ? source.derivative.variable
+          : defaults.derivative.variable,
     },
     secondOrder: {
       fLatex:

@@ -36,6 +36,7 @@ const POPOVER_CLASS = "dsm-physics-lab-popover";
 export type PhysicsLabFocusKind =
   | "slope-f"
   | "second-f"
+  | "derivative-f"
   | "exact"
   | "initial-x"
   | "initial-y";

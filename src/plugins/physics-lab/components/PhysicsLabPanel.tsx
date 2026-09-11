@@ -22,6 +22,7 @@ import { Component, jsx } from "#DCGView";
 import { mathquillFocusHelper } from "#globals";
 import {
   Button,
+  For,
   If,
   InlineMathInputViewGeneral,
   SegmentedControl,
@@ -42,7 +43,7 @@ import {
   paletteCSSGradient,
   type PaletteID,
 } from "../../../field-rendering/palettes";
-import type { ExactReading } from "../PhysicsLabSession";
+import type { ExactReading, ShownStep } from "../PhysicsLabSession";
 import { secondOrderHint } from "../symbolic/secondOrder";
 import "./PhysicsLabPanel.less";
 
@@ -59,6 +60,20 @@ interface Choice<T extends string> {
  * flat and offer a control that does nothing. Magnitude here is sqrt(1 + f²),
  * which is steepness, so it is named that rather than named after the shader.
  */
+/**
+ * The variables a derivative can be taken with respect to.
+ *
+ * A short list rather than a free text field: every other name in an expression
+ * is held constant, so the choice is between the handful of letters somebody
+ * actually writes a function in. `t` is here because half of physics is.
+ */
+const VARIABLES: readonly Choice<string>[] = [
+  { value: "x", label: "x" },
+  { value: "t", label: "t" },
+  { value: "y", label: "y" },
+  { value: "r", label: "r" },
+];
+
 const COLOR_MODES: readonly Choice<VectorColorMode>[] = [
   { value: "fixed", label: "One colour" },
   { value: "magnitude", label: "Steepness" },
@@ -100,6 +115,7 @@ export class PhysicsLabPanel extends Component<{
           {SwitchUnion(() => config().panel.tab, {
             slope: () => slopeTab(physicsLab, config),
             second: () => secondOrderTab(physicsLab, config),
+            derivative: () => derivativeTab(physicsLab, config),
             exact: () => exactTab(physicsLab, config),
           })}
         </div>
@@ -581,6 +597,175 @@ function matchPhaseViewport(physicsLab: PhysicsLab) {
       max: round(bounds.top),
     };
   });
+}
+
+/**
+ * The derivative, and how it was got.
+ *
+ * The steps are the tab, not an extra on it. An answer alone is what Desmos
+ * already refuses to give and what a student cannot check; the sequence of
+ * rules is the part that transfers to the next problem, so it is shown by
+ * default rather than folded away behind a disclosure.
+ */
+function derivativeTab(physicsLab: PhysicsLab, config: ConfigGetter) {
+  const session = () => physicsLab.session;
+  const found = () => session().derivation;
+  const worked = () => {
+    const value = found();
+    return value?.ok === true ? value : undefined;
+  };
+  const failure = () => {
+    const value = found();
+    return value?.ok === false && value.error !== "" ? value.error : "";
+  };
+  const variable = () => config().derivative.variable;
+
+  return (
+    <div>
+      <section class="dsm-physics-lab-section">
+        <div class="dsm-physics-lab-section-head">
+          <label class="dsm-physics-lab-label">
+            {() => `d/d${variable()} of`}
+          </label>
+          {chipGroup(
+            "With respect to",
+            variable,
+            VARIABLES,
+            (value) =>
+              session().updateConfig((c) => {
+                c.derivative.variable = value;
+              }),
+            "dsm-physics-lab-derivative-variable"
+          )}
+        </div>
+        <InlineMathInputViewGeneral
+          containerClass={() => ({ "dsm-physics-lab-math-input": true })}
+          placeholder="x^{2}\sin\left(3x\right)"
+          ariaLabel="the expression to differentiate"
+          latex={() => config().derivative.fLatex}
+          handleLatexChanged={(latex: string) =>
+            session().updateConfig((c) => {
+              c.derivative.fLatex = latex;
+            })
+          }
+          hasError={() => failure() !== ""}
+          manageFocus={mathquillFocusHelper({
+            controller: physicsLab.cc,
+            location: {
+              type: "dsm-focus",
+              plugin: "physics-lab",
+              kind: "derivative-f",
+            },
+          })}
+          controller={physicsLab.cc}
+          readonly={false}
+        />
+        <If predicate={() => failure() !== ""}>
+          {() => <div class="dsm-physics-lab-hint">{() => failure()}</div>}
+        </If>
+      </section>
+
+      <If predicate={() => worked() !== undefined}>
+        {() => (
+          <div>
+            <section class="dsm-physics-lab-section">
+              <div class="dsm-physics-lab-solution">
+                <div
+                  class="dsm-physics-lab-math"
+                  data-physics-lab="derivative"
+                  data-latex={() => worked()?.resultLatex ?? ""}
+                >
+                  <StaticMathQuillView
+                    latex={() => worked()?.resultLatex ?? ""}
+                  />
+                </div>
+                <div class="dsm-physics-lab-inline">
+                  <Button
+                    color="blue"
+                    class="dsm-physics-lab-add-derivative"
+                    onTap={() => session().insertDerivative()}
+                  >
+                    Add to graph
+                  </Button>
+                </div>
+              </div>
+            </section>
+
+            <section class="dsm-physics-lab-section">
+              <h3>Step by step</h3>
+              <ol class="dsm-physics-lab-steps">
+                <For
+                  each={() => worked()?.shown ?? []}
+                  key={(step: ShownStep) => step.key}
+                >
+                  {(getStep: () => ShownStep) => (
+                    <li
+                      class="dsm-physics-lab-step"
+                      style={() => ({
+                        // Indented by how deep in the expression the rule was
+                        // applied, so a sub-derivative reads as belonging to the
+                        // rule that asked for it.
+                        "margin-left": `${Math.min(getStep().depth, 4) * 10}px`,
+                      })}
+                    >
+                      <div class="dsm-physics-lab-step-title">
+                        {() => getStep().title}
+                      </div>
+                      <div class="dsm-physics-lab-hint">
+                        {() => getStep().detail}
+                      </div>
+                      <If predicate={() => getStep().formula !== ""}>
+                        {() => (
+                          <div class="dsm-physics-lab-math dsm-physics-lab-formula">
+                            <StaticMathQuillView
+                              latex={() => getStep().formula}
+                            />
+                          </div>
+                        )}
+                      </If>
+                      <div class="dsm-physics-lab-math">
+                        <StaticMathQuillView latex={() => getStep().latex} />
+                      </div>
+                    </li>
+                  )}
+                </For>
+              </ol>
+            </section>
+
+            {/* Built from the user's own expression by changing its numbers, so
+                it is guaranteed to need exactly the rules just shown. Its answer
+                is given and its steps are not — the point is to try it. */}
+            <If predicate={() => worked()?.example !== undefined}>
+              {() => (
+                <section class="dsm-physics-lab-section">
+                  <h3>Now try this one</h3>
+                  <div class="dsm-physics-lab-math">
+                    <StaticMathQuillView
+                      latex={() =>
+                        `\\frac{d}{d${variable()}}\\left(${worked()?.example?.source ?? ""}\\right)`
+                      }
+                    />
+                  </div>
+                  <details class="dsm-physics-lab-details">
+                    <summary>Answer</summary>
+                    <div
+                      class="dsm-physics-lab-math"
+                      data-physics-lab="example-answer"
+                      data-latex={() => worked()?.example?.result ?? ""}
+                    >
+                      <StaticMathQuillView
+                        latex={() => worked()?.example?.result ?? ""}
+                      />
+                    </div>
+                  </details>
+                </section>
+              )}
+            </If>
+          </div>
+        )}
+      </If>
+    </div>
+  );
 }
 
 function exactTab(physicsLab: PhysicsLab, config: ConfigGetter) {

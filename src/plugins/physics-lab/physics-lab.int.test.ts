@@ -28,6 +28,9 @@ const ADD_SECOND = ".dsm-physics-lab-add-second";
 const PARTICULAR = String.raw`[data-physics-lab="particular"]`;
 const ADD_PARTICULAR = ".dsm-physics-lab-add-particular";
 const DRAW_PHASE = ".dsm-physics-lab-draw-phase";
+const DERIVATIVE = String.raw`[data-physics-lab="derivative"]`;
+const EXAMPLE_ANSWER = String.raw`[data-physics-lab="example-answer"]`;
+const ADD_DERIVATIVE = ".dsm-physics-lab-add-derivative";
 
 async function openPanel(driver: Driver) {
   await driver.enablePlugin("physics-lab");
@@ -477,4 +480,75 @@ testWithPage(
     await driver.disablePlugin("physics-lab");
   },
   60000
+);
+
+testWithPage(
+  "the Derivative tab shows the rules in the order they are applied",
+  async (driver) => {
+    await openPanel(driver);
+    await driver.evaluate(() => {
+      (
+        DSM.physicsLab as unknown as {
+          session: { updateConfig: (m: (c: PhysicsLabConfig) => void) => void };
+        }
+      ).session.updateConfig((config) => {
+        config.panel.tab = "derivative";
+        config.derivative.variable = "x";
+        // Product, power and chain in one line.
+        config.derivative.fLatex = "x^{2}\\operatorname{sin}\\left(3x\\right)";
+      });
+    });
+    await driver.waitForSync();
+    await driver.assertSelectorEventually(DERIVATIVE);
+
+    const shown = await driver.$eval(
+      DERIVATIVE,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
+    expect(shown).toBe(
+      "2x\\operatorname{sin}\\left(3x\\right)+3x^{2}\\operatorname{cos}\\left(3x\\right)"
+    );
+
+    // Outermost rule first. Recording in the order the recursion finishes gives
+    // the small derivatives before the reason for them, which is a log rather
+    // than a derivation.
+    const titles = await driver.evaluate(() =>
+      [...document.querySelectorAll(".dsm-physics-lab-step-title")].map(
+        (el) => (el as HTMLElement).innerText
+      )
+    );
+    expect(titles.slice(0, 3)).toEqual([
+      "Product rule",
+      "Power rule",
+      "Chain rule",
+    ]);
+
+    // The general rule is rendered beside each step, not printed as its source.
+    const formulas = await driver.evaluate(
+      () => [...document.querySelectorAll(".dsm-physics-lab-formula")].length
+    );
+    expect(formulas).toBeGreaterThan(0);
+
+    // The worked example is the same shape with different numbers, so it needs
+    // exactly the rules just explained.
+    const example = await driver.$eval(
+      EXAMPLE_ANSWER,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
+    expect(example).toBe(
+      "3x^{2}\\operatorname{sin}\\left(4x\\right)+4x^{3}\\operatorname{cos}\\left(4x\\right)"
+    );
+
+    // And it goes into the graph as an ordinary expression.
+    await driver.click(ADD_DERIVATIVE);
+    await driver.waitForSync();
+    const { list } = (await driver.getState()).expressions;
+    expect(
+      list.some((item) => item.type === "expression" && item.latex === shown)
+    ).toBe(true);
+
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  50000
 );
