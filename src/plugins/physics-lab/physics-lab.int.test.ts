@@ -407,3 +407,74 @@ testWithPage(
   },
   50000
 );
+
+testWithPage(
+  "every derivative rule emits LaTeX Desmos parses and agrees with",
+  async (driver) => {
+    await openPanel(driver);
+
+    // One expression per rule, including the ones whose derivatives are spelled
+    // with functions that are not LaTeX commands — sech, csch, arcsec. Those
+    // are exactly where a name Desmos does not have would slip through: the
+    // unit tests evaluate with JavaScript's own maths and would never notice.
+    const cases = [
+      "x^{3}",
+      "3x^{2}",
+      "x\\operatorname{sin}\\left(x\\right)",
+      "\\frac{\\operatorname{sin}\\left(x\\right)}{x}",
+      "\\operatorname{sin}\\left(x^{2}\\right)",
+      "\\operatorname{tan}\\left(2x\\right)",
+      "\\operatorname{arcsin}\\left(0.5x\\right)",
+      "\\operatorname{arctan}\\left(x\\right)",
+      "\\operatorname{tanh}\\left(x\\right)",
+      "\\operatorname{sech}\\left(x\\right)",
+      "\\operatorname{arcsec}\\left(2x\\right)",
+      "e^{2x}",
+      "2^{x}",
+      "x^{x}",
+      "\\ln\\left(x^{2}+1\\right)",
+      "\\sqrt{3x+1}",
+    ];
+
+    const checked = await driver.evaluate(async (list: string[]) => {
+      const { session } = DSM.physicsLab as unknown as {
+        session: { derivativeLatex: (l: string) => string | undefined };
+      };
+      const out: { source: string; derivative?: string; value: number }[] = [];
+      for (const source of list) {
+        const derivative = session.derivativeLatex(source);
+        if (derivative === undefined) {
+          out.push({ source, value: NaN });
+          continue;
+        }
+        // Evaluated through a definition rather than by substituting a number
+        // into the string. Textual substitution turns `0.5x` into `0.51.3`,
+        // which fails for a reason that has nothing to do with the derivative.
+        Calc.setExpression({ id: "probe", latex: `P_{r}(x)=${derivative}` });
+        const helper = Calc.HelperExpression({ latex: "P_{r}(1.3)" });
+        await new Promise((resolve) => setTimeout(resolve, 120));
+        out.push({
+          source,
+          derivative,
+          value: (helper as unknown as { numericValue: number }).numericValue,
+        });
+      }
+      return out;
+    }, cases);
+
+    for (const entry of checked) {
+      expect(entry.derivative).toBeDefined();
+      // Finite means Desmos read every function name in it. The unit tests
+      // already checked the value is the right one.
+      expect(
+        Number.isFinite(entry.value)
+          ? entry.source
+          : `${entry.source} -> ${entry.derivative ?? "none"} did not evaluate`
+      ).toBe(entry.source);
+    }
+
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  60000
+);

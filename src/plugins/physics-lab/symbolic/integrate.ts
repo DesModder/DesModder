@@ -910,6 +910,27 @@ function simplifyBinary(node: Aug.Latex.BinaryOperator): Node {
       break;
   }
 
+  // Two fractions add, subtract and multiply exactly, without either of them
+  // becoming a decimal on the way. The power rule needs this: differentiating
+  // `x^{1/2}` lowers the exponent by one, and unfolded that reads `x^{1/2-1}`.
+  if (
+    node.name === "Add" ||
+    node.name === "Subtract" ||
+    node.name === "Multiply"
+  ) {
+    const a = rationalOf(left);
+    const b = rationalOf(right);
+    if (a !== undefined && b !== undefined) {
+      if (node.name === "Multiply")
+        return rationalNode({ n: a.n * b.n, d: a.d * b.d });
+      const sign = node.name === "Add" ? 1 : -1;
+      return rationalNode({
+        n: a.n * b.d + sign * b.n * a.d,
+        d: a.d * b.d,
+      });
+    }
+  }
+
   // Like terms are collected, which is what actually cancels the exponent the
   // integrating factor leaves behind. `3x + -3x` has no `Negative` node in it
   // once the sign has been folded into the coefficient, so matching whole trees
@@ -937,6 +958,18 @@ function simplifyBinary(node: Aug.Latex.BinaryOperator): Node {
       if (lc === -1) return simplify(negative(right));
       if (rc === -1) return simplify(negative(left));
       if (lc !== undefined && rc !== undefined) return number(lc * rc);
+      // `3·(2x)` is `6x`. Multiplication associates, and the constant multiple
+      // rule produces exactly this shape whenever a coefficient meets the power
+      // rule — which is most of the derivatives anybody takes.
+      if (
+        lc !== undefined &&
+        right.type === "BinaryOperator" &&
+        (right.name === "Multiply" || right.name === "CrossMultiply")
+      ) {
+        const inner = constantValue(right.left);
+        if (inner !== undefined)
+          return simplify(binop("Multiply", number(lc * inner), right.right));
+      }
       // c · (d/e) folds to (cd)/e, which is what turns 2·(x²/2) into x².
       if (
         lc !== undefined &&
@@ -1064,6 +1097,55 @@ function foldKnownValue(name: string, args: Node[]): Node | undefined {
     default:
       return undefined;
   }
+}
+
+/**
+ * A node as an exact rational, where it is one.
+ *
+ * `constantValue` only sees a plain number, which is why `\frac{1}{2} - 1` used
+ * to survive simplification untouched: a fraction of two integers is a Divide
+ * node, not a Constant, so neither side folded and the power rule produced
+ * `x^{1/2 - 1}`. Reading fractions as well means the arithmetic happens without
+ * ever passing through a decimal.
+ */
+function rationalOf(node: Node): { n: number; d: number } | undefined {
+  if (node.type === "Constant")
+    return Number.isInteger(node.value) ? { n: node.value, d: 1 } : undefined;
+  if (node.type === "Negative") {
+    const inner = rationalOf(node.arg);
+    return inner === undefined ? undefined : { n: -inner.n, d: inner.d };
+  }
+  if (node.type === "BinaryOperator" && node.name === "Divide") {
+    const top = rationalOf(node.left);
+    const bottom = rationalOf(node.right);
+    if (top === undefined || bottom === undefined || bottom.n === 0)
+      return undefined;
+    return { n: top.n * bottom.d, d: top.d * bottom.n };
+  }
+  return undefined;
+}
+
+/** A rational back as a node: an integer where it is one, a fraction otherwise. */
+function rationalNode(value: { n: number; d: number }): Node {
+  let { n, d } = value;
+  if (d < 0) {
+    n = -n;
+    d = -d;
+  }
+  const divisor = greatestCommonDivisor(Math.abs(n), d);
+  if (divisor > 1) {
+    n /= divisor;
+    d /= divisor;
+  }
+  if (d === 1) return number(n);
+  return n < 0
+    ? negative(binop("Divide", number(-n), number(d)))
+    : binop("Divide", number(n), number(d));
+}
+
+function greatestCommonDivisor(a: number, b: number): number {
+  while (b !== 0) [a, b] = [b, a % b];
+  return a;
 }
 
 function constantValue(node: Node): number | undefined {

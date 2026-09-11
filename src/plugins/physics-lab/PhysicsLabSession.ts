@@ -31,6 +31,8 @@ import { solveFirstOrder, type ODEResult } from "./symbolic/ode";
 import { resolvePrimes, solveSecondOrder } from "./symbolic/secondOrder";
 import { recognizeDecimal } from "./symbolic/recognize";
 import { particularConstant, type InitialResult } from "./symbolic/initial";
+import { differentiate, type Derivation } from "./symbolic/differentiate";
+import { toLatex as toLatexTree } from "./symbolic/latex";
 import {
   defaultPhysicsLabConfig,
   normalizePhysicsLabConfig,
@@ -656,6 +658,31 @@ export default class PhysicsLabSession {
       // expressions where it has nothing to add.
       trivial: /^-?\d+$/.test(exact),
     };
+  }
+
+  /**
+   * The derivative of an expression, with the steps taken to get it.
+   *
+   * Exposed on the session rather than kept inside the panel because the
+   * derivation is the thing being built — the tab that shows it is a view over
+   * this, the same way every other readout here is.
+   */
+  derivative(latex: string, variable = "x"): Derivation | undefined {
+    if (latex.trim() === "") return undefined;
+    try {
+      const tree = parseLatex(this.textModeConfig, latex);
+      return differentiate(this.textModeConfig, tree, variable);
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** The derivative as LaTeX, for putting straight into the graph. */
+  derivativeLatex(latex: string, variable = "x"): string | undefined {
+    const found = this.derivative(latex, variable);
+    return found === undefined
+      ? undefined
+      : toLatexTree(this.textModeConfig, found.result);
   }
 
   /**

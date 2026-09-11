@@ -717,3 +717,75 @@ Evidence: `docs/assets/physics-lab-phase-plane.png`. The check is the direction
 of rotation — a damped oscillator spirals clockwise, so arrows point down where
 y is positive and up where it is negative. A phase plane drawn with its two
 components swapped looks just as reasonable and turns the other way.
+
+---
+
+## Differentiation, with the rules recorded
+
+`symbolic/differentiate.ts`. Vector Tools already differentiates, and this is
+deliberately a different artifact rather than a copy: `symbolic.ts` answers
+"what is the derivative" for generating expressions, and this has to answer
+"what did you do, and where", which changes the shape of the code. Every rule
+reports itself, simplification is kept separate so the intermediate form is
+still visible, and the dispatch has to pick the rule a course would pick rather
+than merely a correct one.
+
+### Picking the rule, which is half the content
+
+More than one rule is technically correct almost everywhere, and choosing badly
+produces steps that are right and unreadable:
+
+- `3x²` takes the **constant multiple** rule. The product rule gives
+  `0·x² + 3·2x`, which is correct and which nobody writes.
+- `x²` takes the power rule **without** the chain rule, because the inner
+  derivative is 1 and a step that multiplies by 1 teaches nothing. `(3x+1)²`
+  takes both.
+- `2^x` is the exponential rule, not the power rule — the variable is upstairs.
+  `x^x` is neither and needs logarithmic differentiation.
+- `f/c` is a constant multiple, not a quotient; the quotient rule squares the
+  constant and then cancels it again.
+
+Each of those has a test asserting the _rule names_ in the derivation, not only
+the answer.
+
+### Coverage
+
+Constant, identity, constant multiple, power, sum, difference, product,
+quotient, chain, exponential (base e and general base), logarithm (natural and
+base 10), all six trig, all six inverse trig, all six hyperbolic, three inverse
+hyperbolic, root, absolute value, logarithmic differentiation, and implicit
+differentiation through the implicit function theorem.
+
+Every function name was checked against Desmos's own `autoOperatorNames` list
+before being used, so nothing in the table emits a name the calculator does not
+have.
+
+### How it is verified
+
+Three ways, and the second is the one that matters. Each derivative is checked
+against the form a course writes; against a **numerical derivative of the
+original**, which is what catches a dropped chain factor or a flipped sign; and
+— for the rules whose derivatives are spelled with `sech`, `csch` or `arcsec` —
+against **Desmos's own evaluator**, in the integration suite. That last one
+exists because the unit tests evaluate with JavaScript's maths and would never
+notice a function name Desmos lacks. It caught nothing, which is the point of
+running it.
+
+Two real defects turned up while writing it, both invisible to the LaTeX
+assertions: the numeric evaluator had no `sech`, `csch`, `coth` or inverse
+hyperbolics, so six correct derivatives were being "checked" against NaN and
+passing by never being tested; and `simplify` could not fold `½ - 1`, because a
+fraction of two integers is a Divide node rather than a Constant, so the power
+rule on `x^{1/2}` produced `x^{1/2-1}`. `simplify` now does exact rational
+arithmetic on fractions — without either operand passing through a decimal.
+
+### Still open
+
+The steps are recorded and nothing displays them yet: the tab, and the matching
+instrumentation of `integrate.ts`, are the next piece. The generated "similar
+example" should re-run the same rule chain with different constants, so it is
+guaranteed to be the same shape of problem rather than a hand-picked one.
+
+Also noted for later: animating the phase plane with Vector Tools' time
+architecture, which would want modes for `t` — periodic or constant — rather
+than the unbounded clock a vector field uses.

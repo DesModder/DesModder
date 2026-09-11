@@ -34,9 +34,21 @@ const FUNCTIONS: Record<string, (x: number) => number> = {
   arcsin: Math.asin,
   arccos: Math.acos,
   arctan: Math.atan,
+  arccot: (x) => Math.PI / 2 - Math.atan(x),
+  arcsec: (x) => Math.acos(1 / x),
+  arccsc: (x) => Math.asin(1 / x),
   sinh: Math.sinh,
   cosh: Math.cosh,
   tanh: Math.tanh,
+  // The reciprocal hyperbolics, which the derivative table emits and JavaScript
+  // does not provide. Without them a correct derivative of tanh evaluates to
+  // NaN and the numeric check passes by never having tested anything.
+  coth: (x) => 1 / Math.tanh(x),
+  sech: (x) => 1 / Math.cosh(x),
+  csch: (x) => 1 / Math.sinh(x),
+  arcsinh: Math.asinh,
+  arccosh: Math.acosh,
+  arctanh: Math.atanh,
   exp: Math.exp,
   ln: Math.log,
   log: Math.log10,
