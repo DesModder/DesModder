@@ -656,3 +656,64 @@ already exists does not.
 Initial conditions for second-order equations, which need two conditions and a
 symbolic derivative of the solution to set up the 2×2 system. Non-constant
 forcing terms. Systems, and with them phase planes.
+
+---
+
+## Two CSS bugs, and the phase plane
+
+### The panel was clipped to 290px
+
+`.dsm-pillbox-popover { width: 290px }` is a single-class selector, and the
+override was `.dsm-physics-lab-popover { width: auto }` — also a single class.
+Equal specificity, so the winner was whichever stylesheet loaded last, and it
+was not this one. The panel rendered at 290px with the third tab off the edge
+and a horizontal scrollbar underneath.
+
+Vector Tools had this right from the start:
+`.dcg-container .dsm-pillbox-popover.dsm-vector-tools-popover` is three
+selectors and always wins. Copied.
+
+### The pillbox icon looked smaller
+
+It measured the same: 16px font, a 16×16 box, identical to every other button.
+Desmos's own icon font simply draws `scientific` at a smaller scale inside its
+em box than the `dsm-icons` glyphs beside it. Only that one button's icon is
+scaled up, to 21px, so it reads as an equal.
+
+The first attempt at that selector matched nothing, and the reason is worth
+recording: `dsm-action-menu` is a class **on the pillbox button itself**, not on
+an ancestor, so `.dsm-action-menu [data-buttonid=…]` — with a space — asks for a
+descendant that does not exist. The measurement is what caught it; the icon
+still reported 16px after the rule was added.
+
+## The phase plane
+
+`y'' = f(y, y')` has no direction field over x and y at all. The slope at a
+point depends on the velocity there as well, so a point on the plane does not
+determine a direction and there is nothing to draw. Against **y and y′** there
+is: writing the equation as the pair `y' = v`, `v' = f(y, v)` makes it a
+first-order system, and a system in two variables is exactly what the arrow
+renderer already draws.
+
+So the graph's x is y and the graph's y is v, the horizontal component is the
+graph's own y — the first equation of the pair written out — and the user's f is
+renamed into those coordinates. Renamed rather than string-replaced:
+`renameIdentifier` from the shared module scans identifiers properly, so a `v`
+inside a subscript or a function name is left alone.
+
+Two deliberate differences from the slope field:
+
+- **Arrows, with heads.** A slope field mark has no head because dy/dx is a
+  slope and a slope has no direction. A phase-plane trajectory runs one way in
+  time, and leaving the head off would throw that away.
+- **One overlay, not two.** Starting the phase plane stops the slope field. The
+  two use different coordinate systems, and drawing both would put two meanings
+  on one pair of axes.
+
+A non-autonomous equation is refused: if f depends on x, the field would change
+with x and the plane has no axis left to show that on.
+
+Evidence: `docs/assets/physics-lab-phase-plane.png`. The check is the direction
+of rotation — a damped oscillator spirals clockwise, so arrows point down where
+y is positive and up where it is negative. A phase plane drawn with its two
+components swapped looks just as reasonable and turns the other way.

@@ -1,7 +1,13 @@
 // The pillbox popover is a fixed 290px wide, so the plugin tags its own popover
 // with a class that lets it size to the panel instead — the same arrangement
 // Vector Tools needed, for the same reason.
-.dsm-physics-lab-popover {
+//
+// The `.dcg-container` prefix and both classes are load-bearing, not tidiness.
+// The rule this overrides is `.dsm-pillbox-popover { width: 290px }`, a single
+// class — so a single class here only ties with it and the winner is whichever
+// stylesheet happens to come last. It came last, and the panel was clipped to
+// 290px with the third tab off the edge. Three selectors always win.
+.dcg-container .dsm-pillbox-popover.dsm-physics-lab-popover {
   width: auto;
   max-width: none;
 }
@@ -263,4 +269,15 @@
       padding-bottom: 0;
     }
   }
+}
+
+// Desmos's own icon font draws `scientific` smaller inside its em box than the
+// dsm-icons glyphs beside it in the pillbox. Every button measures 16px and the
+// same 16×16 box, so nothing in the layout is wrong — the flask is simply drawn
+// at a smaller scale than the compass and the DesModder mark, and it reads as a
+// lesser button. Only this one is scaled up, to match its neighbours.
+// No space before the attribute: `dsm-action-menu` is a class on the button
+// itself, not on an ancestor of it, so a descendant selector matches nothing.
+.dsm-action-menu[data-buttonid="dsm-physics-lab-menu"] i {
+  font-size: 21px;
 }

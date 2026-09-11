@@ -25,6 +25,7 @@ import {
   environmentsDiffer,
   scanDefinitions,
 } from "../../field-rendering/environment";
+import { mentions, renameIdentifier } from "../../field-rendering/identifiers";
 import { evaluateExact, toLatex, toNumber } from "./symbolic/exact";
 import { solveFirstOrder, type ODEResult } from "./symbolic/ode";
 import { resolvePrimes, solveSecondOrder } from "./symbolic/secondOrder";
@@ -85,6 +86,12 @@ export default class PhysicsLabSession {
   private environmentTimer?: ReturnType<typeof setTimeout>;
   private dispatcherID?: string;
   private thinned = false;
+  /**
+   * Which field is on the graph. One overlay, because the two use different
+   * coordinate systems — a slope field is (x, y) and a phase plane is (y, y′)
+   * — and drawing both at once would put two meanings on one pair of axes.
+   */
+  private drawing: "none" | "slope" | "phase" = "none";
   private solutionCache?: { latex: string; result: ODEResult };
   private secondCache?: { latex: string; result: ODEResult };
 
@@ -142,7 +149,9 @@ export default class PhysicsLabSession {
     mutate(next);
     this.config = normalizePhysicsLabConfig(next);
     this.plugin.setSetting("serializedConfig", JSON.stringify(this.config));
-    if (this.overlay.isRunning) this.startSlopeField();
+    // Redraw whichever field is up, so a settings change is visible at once.
+    if (this.drawing === "slope") this.startSlopeField();
+    else if (this.drawing === "phase") this.startPhasePlane();
     this.plugin.rerenderPanel();
   }
 
@@ -159,7 +168,11 @@ export default class PhysicsLabSession {
   // ---- the slope field ---------------------------------------------------
 
   get isDrawing() {
-    return this.overlay.isRunning;
+    return this.drawing === "slope" && this.overlay.isRunning;
+  }
+
+  get isDrawingPhase() {
+    return this.drawing === "phase" && this.overlay.isRunning;
   }
 
   /**
@@ -179,13 +192,142 @@ export default class PhysicsLabSession {
   }
 
   toggleSlopeField() {
-    if (this.overlay.isRunning) {
-      this.overlay.stop();
-      this.plugin.rerenderPanel();
+    if (this.drawing === "slope") {
+      this.stopDrawing();
       return;
     }
+    this.drawing = "slope";
     this.startSlopeField();
     this.plugin.rerenderPanel();
+  }
+
+  /**
+   * The phase plane, which is the picture a second-order equation does have.
+   *
+   * There is no direction field for `y'' = f(y, y')` in (x, y): the slope at a
+   * point depends on the velocity there as well, so a point on the plane does
+   * not determine a direction and there is nothing to draw. Against y and y'
+   * there is — writing the equation as the pair `y' = v`, `v' = f(y, v)` makes
+   * it a first-order system, and a system in two variables is exactly what the
+   * arrow renderer already draws.
+   *
+   * Arrows here, not the slope field's headless marks. A slope field mark has
+   * no arrowhead because dy/dx is a slope and a slope has no direction; a phase
+   * plane trajectory runs one way in time, and leaving the head off would throw
+   * that away.
+   */
+  togglePhasePlane() {
+    if (this.drawing === "phase") {
+      this.stopDrawing();
+      return;
+    }
+    this.drawing = "phase";
+    this.startPhasePlane();
+    this.plugin.rerenderPanel();
+  }
+
+  private stopDrawing() {
+    this.drawing = "none";
+    this.overlay.stop();
+    this.plugin.rerenderPanel();
+  }
+
+  private startPhasePlane() {
+    const compiled = this.compilePhase();
+    if (!compiled.ok) {
+      this.message = compiled.error;
+      this.drawing = "none";
+      this.overlay.stop();
+      return;
+    }
+    this.message = "";
+    this.overlay.start(compiled.field, this.phaseOptions);
+    this.syncParameterValues(compiled.field.params ?? []);
+  }
+
+  /**
+   * `y'' = f(y, v)` as the system `(y', v') = (v, f)`, in the graph's own
+   * coordinates.
+   *
+   * The graph's x is y and the graph's y is v, so the horizontal component is
+   * simply the graph's y — the first equation of the pair, written out. The
+   * user's f is renamed into those coordinates rather than string-replaced:
+   * `renameIdentifier` scans identifiers properly, so a `v` inside a subscript
+   * or a function name is left alone.
+   */
+  private compilePhase(): SlopeCompilation {
+    const source = resolvePrimes(this.config.secondOrder.fLatex);
+    if (source.trim() === "")
+      return { ok: false, error: "Enter the second-order equation first." };
+    // A non-autonomous equation has no phase plane: the field would move with x,
+    // and the plane has no axis left to put x on.
+    if (mentions(source, "x")) {
+      return {
+        ok: false,
+        error:
+          "This equation depends on x, so its phase plane would change with x and there is no axis left to show that on.",
+      };
+    }
+    const renamed = renameIdentifier(
+      renameIdentifier(source, "y", "x"),
+      "v",
+      "y"
+    );
+    // dy/dt = v, which in the graph's coordinates is the graph's own y.
+    const p = compileFieldComponentToGLSL("y", this.environment);
+    if (!p.ok) return { ok: false, error: p.error };
+    const q = compileFieldComponentToGLSL(renamed, this.environment);
+    if (!q.ok) return { ok: false, error: `f: ${q.error}` };
+    return {
+      ok: true,
+      field: {
+        kind: "components",
+        p: p.glsl,
+        q: q.glsl,
+        helpers: q.helpers,
+        params: q.params,
+        usesTime: q.usesTime,
+      },
+    };
+  }
+
+  private get phaseOptions(): ArrowOptions {
+    const { phase, slope } = this.config;
+    const spacing = Math.min(
+      Math.abs(phase.domain.x.max - phase.domain.x.min) /
+        Math.max(1, phase.columns - 1),
+      Math.abs(phase.domain.y.max - phase.domain.y.min) /
+        Math.max(1, phase.rows - 1)
+    );
+    return {
+      columns: phase.columns,
+      rows: phase.rows,
+      domain: {
+        xMin: phase.domain.x.min,
+        xMax: phase.domain.x.max,
+        yMin: phase.domain.y.min,
+        yMax: phase.domain.y.max,
+      },
+      // Every arrow the same length, because near an equilibrium the speed goes
+      // to zero and a field scaled by magnitude vanishes exactly where the
+      // interesting behaviour is.
+      lengthMode: "direction-only",
+      targetLength: 0.7 * spacing,
+      scale: 1,
+      maximumLength: 0.7 * spacing,
+      compression: 1,
+      headSize: 0.28 * spacing,
+      headAngle: Math.PI / 7,
+      centered: false,
+      shaftWidth: slope.lineWidth,
+      colorMode: slope.colorMode,
+      palette: slope.palette,
+      fixedColor: slope.fixedColor,
+      opacity: 1,
+      rangeMode: slope.rangeMode,
+      rangeMinimum: slope.rangeMinimum,
+      rangeMaximum: slope.rangeMaximum,
+    };
   }
 
   private startSlopeField() {

@@ -76,6 +76,19 @@ export interface PhysicsLabConfig {
    */
   secondOrder: { fLatex: string };
   /**
+   * The phase plane for the second-order equation: y across, y′ up.
+   *
+   * Its own domain because it is its own coordinate system. A second-order
+   * equation has no direction field in (x, y) at all — the slope at a point
+   * depends on the velocity there too, so there is nothing to draw. Against y
+   * and y′ there is, and it is the picture the whole subject is taught from.
+   */
+  phase: {
+    domain: { x: Interval; y: Interval };
+    columns: number;
+    rows: number;
+  };
+  /**
    * A point the solution must pass through, as latex. Empty means no
    * condition, which is the general solution.
    */
@@ -108,6 +121,11 @@ export function defaultPhysicsLabConfig(): PhysicsLabConfig {
     // A damped oscillator: the case with all the behaviour in it.
     secondOrder: { fLatex: "-y'-4y" },
     initial: { xLatex: "", yLatex: "" },
+    phase: {
+      domain: { x: { min: -4, max: 4 }, y: { min: -4, max: 4 } },
+      columns: 19,
+      rows: 19,
+    },
     exact: { latex: "" },
   };
 }
@@ -197,6 +215,14 @@ export function normalizePhysicsLabConfig(raw: unknown): PhysicsLabConfig {
         typeof source.initial?.yLatex === "string"
           ? source.initial.yLatex
           : defaults.initial.yLatex,
+    },
+    phase: {
+      domain: {
+        x: normalizeInterval(source.phase?.domain?.x, defaults.phase.domain.x),
+        y: normalizeInterval(source.phase?.domain?.y, defaults.phase.domain.y),
+      },
+      columns: clampCount(source.phase?.columns, defaults.phase.columns),
+      rows: clampCount(source.phase?.rows, defaults.phase.rows),
     },
     secondOrder: {
       fLatex:

@@ -475,8 +475,112 @@ function secondOrderTab(physicsLab: PhysicsLab, config: ConfigGetter) {
           {() => <div class="dsm-physics-lab-hint">{() => failure()}</div>}
         </If>
       </section>
+
+      <section class="dsm-physics-lab-section">
+        <div class="dsm-physics-lab-section-head">
+          <h3>Phase plane</h3>
+          <Button
+            color="light-gray"
+            class="dsm-physics-lab-match-phase"
+            onTap={() => matchPhaseViewport(physicsLab)}
+          >
+            Match viewport
+          </Button>
+        </div>
+        {/* Its own coordinates, and saying so is the whole point: the marks are
+            not over x and y, so reading them as a slope field would be reading
+            a different equation. */}
+        <div class="dsm-physics-lab-hint">
+          y across, y′ up. A second-order equation has no direction field over x
+          and y — the slope at a point depends on the velocity there too — but
+          against y and y′ it does, and that is the picture the behaviour is
+          read from.
+        </div>
+        {phaseAxis(physicsLab, config, "x", "y")}
+        {phaseAxis(physicsLab, config, "y", "y′")}
+      </section>
+
+      <div class="dsm-physics-lab-footer">
+        <div class="dsm-physics-lab-status">
+          {() => physicsLab.session.status}
+        </div>
+        <div class="dsm-physics-lab-actions">
+          <Button
+            color="blue"
+            class="dsm-physics-lab-draw-phase"
+            onTap={() => physicsLab.session.togglePhasePlane()}
+          >
+            {() =>
+              physicsLab.session.isDrawingPhase
+                ? "Stop drawing"
+                : "Draw phase plane"
+            }
+          </Button>
+        </div>
+      </div>
     </div>
   );
+}
+
+/** One axis of the phase plane, labelled by what it holds rather than by x/y. */
+function phaseAxis(
+  physicsLab: PhysicsLab,
+  config: ConfigGetter,
+  axis: "x" | "y",
+  label: string
+) {
+  const session = () => physicsLab.session;
+  const count = axis === "x" ? "columns" : "rows";
+  return (
+    <div class="dsm-physics-lab-axis">
+      {numberControl(
+        `dsm-physics-lab-phase-${axis}-minimum`,
+        `${label} min`,
+        () => config().phase.domain[axis].min,
+        (value) =>
+          session().updateConfig((c) => {
+            c.phase.domain[axis].min = value;
+          })
+      )}
+      {numberControl(
+        `dsm-physics-lab-phase-${axis}-maximum`,
+        `${label} max`,
+        () => config().phase.domain[axis].max,
+        (value) =>
+          session().updateConfig((c) => {
+            c.phase.domain[axis].max = value;
+          })
+      )}
+      {numberControl(
+        `dsm-physics-lab-phase-${axis}-count`,
+        "arrows",
+        () => config().phase[count],
+        (value) =>
+          session().updateConfig((c) => {
+            c.phase[count] = Math.round(
+              Math.min(
+                SLOPE_COUNT_MAXIMUM,
+                Math.max(SLOPE_COUNT_MINIMUM, value)
+              )
+            );
+          })
+      )}
+    </div>
+  );
+}
+
+function matchPhaseViewport(physicsLab: PhysicsLab) {
+  const bounds = physicsLab.calc.graphpaperBounds.mathCoordinates;
+  physicsLab.session.updateConfig((config) => {
+    config.phase.domain.x = {
+      min: round(bounds.left),
+      max: round(bounds.right),
+    };
+    config.phase.domain.y = {
+      min: round(bounds.bottom),
+      max: round(bounds.top),
+    };
+  });
 }
 
 function exactTab(physicsLab: PhysicsLab, config: ConfigGetter) {

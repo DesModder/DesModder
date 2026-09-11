@@ -27,6 +27,7 @@ const SECOND_SOLUTION = String.raw`[data-physics-lab="second-solution"]`;
 const ADD_SECOND = ".dsm-physics-lab-add-second";
 const PARTICULAR = String.raw`[data-physics-lab="particular"]`;
 const ADD_PARTICULAR = ".dsm-physics-lab-add-particular";
+const DRAW_PHASE = ".dsm-physics-lab-draw-phase";
 
 async function openPanel(driver: Driver) {
   await driver.enablePlugin("physics-lab");
@@ -353,6 +354,53 @@ testWithPage(
       (el) => el.getAttribute("data-latex") ?? ""
     );
     expect(recognised).toBe("\\pi^{2}");
+
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  50000
+);
+
+testWithPage(
+  "a second-order equation gets a phase plane, in its own coordinates",
+  async (driver) => {
+    await openPanel(driver);
+    await driver.evaluate(() => {
+      (
+        DSM.physicsLab as unknown as {
+          session: { updateConfig: (m: (c: PhysicsLabConfig) => void) => void };
+        }
+      ).session.updateConfig((config) => {
+        config.panel.tab = "second";
+        config.secondOrder.fLatex = "-0.3y'-4y";
+      });
+    });
+    await driver.waitForSync();
+
+    await driver.click(DRAW_PHASE);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await driver.assertSelectorEventually(CANVAS);
+
+    // The overlay writes nothing to the graph, the same as the slope field.
+    const { list } = (await driver.getState()).expressions;
+    expect(
+      list.filter((item) => item.type === "expression" && item.latex)
+    ).toEqual([]);
+
+    await driver.click(BUTTON);
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    // The picture is the check: a damped oscillator spirals clockwise, so the
+    // arrows point down where y is positive and up where it is negative. A
+    // phase plane drawn with its two components swapped looks just as plausible
+    // and turns the other way.
+    await driver.page.screenshot({
+      path: "docs/assets/physics-lab-phase-plane.png",
+    });
+    await driver.click(BUTTON);
+
+    await driver.click(DRAW_PHASE);
+    await driver.waitForSync();
+    await driver.assertSelectorNot(CANVAS);
 
     await driver.setBlank();
     await driver.disablePlugin("physics-lab");
