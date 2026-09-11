@@ -840,8 +840,11 @@ export function simplify(node: Node): Node {
       }
       return negative(arg);
     }
-    case "FunctionCall":
-      return { ...node, args: node.args.map(simplify) };
+    case "FunctionCall": {
+      const args = node.args.map(simplify);
+      const folded = foldKnownValue(node.callee.symbol, args);
+      return folded ?? { ...node, args };
+    }
     case "BinaryOperator":
       return simplifyBinary(node);
     default:
@@ -1017,6 +1020,50 @@ function simplifyBinary(node: Aug.Latex.BinaryOperator): Node {
   return node.name === "CrossMultiply"
     ? { ...node, left, right }
     : binop(node.name, left, right);
+}
+
+/**
+ * The exact value of a known function at a known argument, where there is one.
+ *
+ * Only the values that are exactly representable — no decimals sneak in, so
+ * `sin(1)` is left alone while `sin(0)` becomes 0. That is a narrow table on
+ * purpose, and it earns its place because of where these arise: an initial
+ * condition is almost always given at x = 0, and substituting it produces
+ * `\sin(0)`, `\cos(0)` and `e^{0}` in every solution that has a trig term or an
+ * exponential in it. Left unfolded, the constant a student is supposed to read
+ * off comes out as `C = \pi - \sin(0)`.
+ */
+function foldKnownValue(name: string, args: Node[]): Node | undefined {
+  if (args.length !== 1) return undefined;
+  const argument = constantValue(args[0]);
+  if (argument === undefined) return undefined;
+  switch (name) {
+    case "sin":
+    case "tan":
+    case "sinh":
+    case "tanh":
+      return argument === 0 ? number(0) : undefined;
+    case "cos":
+    case "cosh":
+      return argument === 0 ? number(1) : undefined;
+    case "exp":
+      return argument === 0 ? number(1) : undefined;
+    case "ln":
+      return argument === 1 ? number(0) : undefined;
+    case "log":
+      return argument === 1 ? number(0) : undefined;
+    case "abs":
+      return number(Math.abs(argument));
+    case "sign":
+      return number(Math.sign(argument));
+    case "sqrt": {
+      // Only a perfect square, so no irrational is turned into a decimal.
+      const root = Math.sqrt(argument);
+      return Number.isInteger(root) ? number(root) : undefined;
+    }
+    default:
+      return undefined;
+  }
 }
 
 function constantValue(node: Node): number | undefined {

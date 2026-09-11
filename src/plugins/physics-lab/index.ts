@@ -33,7 +33,12 @@ interface PhysicsLabSettings {
 const POPOVER_CLASS = "dsm-physics-lab-popover";
 
 /** The panel's two real math fields. */
-export type PhysicsLabFocusKind = "slope-f" | "second-f" | "exact";
+export type PhysicsLabFocusKind =
+  | "slope-f"
+  | "second-f"
+  | "exact"
+  | "initial-x"
+  | "initial-y";
 
 export default class PhysicsLab extends PluginController<PhysicsLabSettings> {
   static id = "physics-lab" as const;

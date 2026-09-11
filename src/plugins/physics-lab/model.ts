@@ -75,6 +75,11 @@ export interface PhysicsLabConfig {
    * picture of a second-order equation to draw beside it.
    */
   secondOrder: { fLatex: string };
+  /**
+   * A point the solution must pass through, as latex. Empty means no
+   * condition, which is the general solution.
+   */
+  initial: { xLatex: string; yLatex: string };
   /** The expression the Exact value tab last read. */
   exact: { latex: string };
 }
@@ -101,7 +106,8 @@ export function defaultPhysicsLabConfig(): PhysicsLabConfig {
       rangeMaximum: 1,
     },
     // A damped oscillator: the case with all the behaviour in it.
-    secondOrder: { fLatex: "-v-4y" },
+    secondOrder: { fLatex: "-y'-4y" },
+    initial: { xLatex: "", yLatex: "" },
     exact: { latex: "" },
   };
 }
@@ -181,6 +187,16 @@ export function normalizePhysicsLabConfig(raw: unknown): PhysicsLabConfig {
         slope.rangeMaximum,
         defaults.slope.rangeMaximum
       ),
+    },
+    initial: {
+      xLatex:
+        typeof source.initial?.xLatex === "string"
+          ? source.initial.xLatex
+          : defaults.initial.xLatex,
+      yLatex:
+        typeof source.initial?.yLatex === "string"
+          ? source.initial.yLatex
+          : defaults.initial.yLatex,
     },
     secondOrder: {
       fLatex:

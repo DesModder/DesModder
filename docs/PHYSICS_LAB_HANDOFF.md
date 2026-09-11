@@ -563,3 +563,96 @@ assumes one independent variable in its data structures, but every solver does,
 so that would be new work rather than an extension — the separable heat and wave
 equations are the tractable start, and `src/field-rendering` already knows how to
 put a surface-shaped thing on screen.
+
+---
+
+## The prime is real after all
+
+`d²y/dx² = -y′-4y`, typed with an apostrophe. The earlier note here said the
+substitution to `v` was forced; that was half right and the wrong half was the
+conclusion.
+
+What is true is that **Desmos's parser** rejects `y'` — checked directly, and it
+returns an error node. What is not true is that the input had to work around it.
+**MathQuill holds the prime perfectly well**: it renders `−y′−4y` and hands the
+latex back, and the panel is the extension's, not Desmos's, so what is displayed
+and what is parsed never had to be the same string. The prime is rewritten to
+`v` on the way to the parser and the user never sees it. A literal `v` still
+works, since it needs no rewriting.
+
+The lesson is narrower than the original note made it: the parser cannot be
+taught new notation, and that says nothing about what the editor can hold.
+
+## Initial conditions
+
+"Find the particular solution through (0, 2)" is the second half of almost every
+differential-equation question, and a family with a slider on it is the answer
+to the first half only. The slope tab now takes a point under the solution and
+reports the constant that passes through it.
+
+No new solver. The point is substituted into the solution and what is left is
+one equation in C, which is tractable because C enters every form produced here
+in exactly one of three ways:
+
+- **Linearly** — `y = F(x) + C`, `y = A + Ce^{ax}` — so `C = (y₀ - b)/a`.
+- **In a denominator**, which is the logistic equation alone. Its reciprocal
+  _is_ linear in C, so the same solve runs on `1/y₀`.
+- **As the gap in a relation**, for the implicit separable answers:
+  `L(y) = R(x) + C` gives C directly.
+
+`linearIn` does the work in all three, which is the third distinct job that one
+function now has — it also splits a slope field's equation and a second-order
+equation's coefficients.
+
+The button inserts `C = …` beside the curve rather than substituting the value
+in. Desmos stops offering a slider once C is defined, which is exactly right for
+a particular solution, and the two expressions stay readable as what they are:
+the family, and the member of it the condition picks.
+
+One simplifier addition came with it. An initial condition is nearly always
+given at x = 0, and substituting it produces `\sin(0)`, `\cos(0)` and `e^{0}` in
+every solution with a trig term or an exponential. Unfolded, the constant reads
+`C = \pi - \sin(0)`. `foldKnownValue` is a deliberately narrow table — only
+values that are exactly representable, so `\sin(1)` is left alone and no decimal
+ever appears.
+
+## Reading a decimal backwards
+
+Desmos answers `\pi^2` with `9.86960440109`, and that number is what a student
+ends up carrying. Pasting it into the Exact value tab now names it.
+
+**This one guesses, and the panel says so.** Every other piece of `symbolic/`
+refuses rather than approximates, because an exact answer derived from an
+expression is a claim that can be checked. This is the opposite direction and
+cannot be: infinitely many constants agree with any finite decimal, and
+`9.86960440109` is exactly 986960440109/100000000000 as surely as it is π². So
+the readout says "matches all 12 digits you gave" rather than claiming the
+number _is_ that constant.
+
+Two things keep it honest. The tolerance is half a unit in the last place the
+user actually typed, so a candidate has to agree with every digit rather than be
+nearby — `9.86960440509` is refused. And below six significant digits only a
+plain rational is offered, because `3.14` is π to the digits given and is also
+157/50, and at that length half the search space would match something.
+
+The search is: for each atom — 1, powers of π, powers of e, a square root, π
+times a small root — divide and fit the remainder as a rational with a bounded
+denominator by continued fractions. The bound is what makes the search mean
+anything; without it continued fractions reproduce any input exactly and every
+atom would "match". Atoms are tried simplest first, so a number that is merely
+rational comes back as a fraction rather than as some baroque multiple of π.
+
+## The panel, reorganised
+
+460px, and everything fits at a normal window size with no horizontal scroll at
+any level. Number fields pair up two to a row instead of stacking. The mark
+appearance controls — length, thickness, colour, palette — fold into an
+**Appearance** disclosure, the same arrangement Vector Tools uses for the flow's
+fine tuning: what decides the picture stays on screen, what refines one that
+already exists does not.
+
+## Still open
+
+Initial conditions for second-order equations, which need two conditions and a
+symbolic derivative of the solution to set up the 2×2 system. Non-constant
+forcing terms. Systems, and with them phase planes.

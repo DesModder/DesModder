@@ -11,7 +11,7 @@
   // heading beside its button — fit without the panel itself scrolling. Only
   // the maths is allowed to be wider than the panel, because only the maths has
   // no upper bound on its length.
-  width: 420px;
+  width: 460px;
   max-width: 92vw;
   display: flex;
   flex-direction: column;
@@ -30,7 +30,7 @@
   .dsm-physics-lab-body {
     overflow-y: auto;
     overflow-x: hidden;
-    max-height: 60vh;
+    max-height: 62vh;
     padding: 4px 10px 8px;
   }
 
@@ -212,6 +212,55 @@
 
     .dcg-mq-root-block {
       white-space: nowrap;
+    }
+  }
+}
+
+.dsm-physics-lab-menu {
+  // Two controls to a row wherever both are short. The panel is wide enough
+  // that stacking them was wasting half of it.
+  .dsm-physics-lab-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+
+    > * {
+      flex: 1 1 140px;
+      min-width: 0;
+    }
+  }
+
+  // Narrower than a general control: these hold one number each, and a field
+  // sized for an expression makes the pair look like a form rather than a point.
+  .dsm-physics-lab-point {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9em;
+    flex: 0 1 150px;
+
+    .dsm-physics-lab-math-input {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+  }
+
+  // Secondary controls fold away, the same arrangement Vector Tools uses for
+  // the flow visualiser's fine tuning: what decides the picture stays on
+  // screen, what refines one that already exists does not.
+  .dsm-physics-lab-details {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 6px 0;
+
+    summary {
+      cursor: pointer;
+      font-weight: bold;
+      list-style-position: inside;
+    }
+
+    .dsm-physics-lab-section {
+      border-bottom: none;
+      padding-bottom: 0;
     }
   }
 }

@@ -68,6 +68,14 @@ export interface ODESolution {
    * know which of the two they have before they try to graph it.
    */
   explicit: boolean;
+  /**
+   * The right-hand side of `y = …`, kept so a point can be put through it.
+   * A general solution is only half an exam answer; the particular one needs
+   * the tree, not the string.
+   */
+  tree?: Node;
+  /** `left = right + C`, for a solution left as a relation. */
+  relation?: { left: Node; right: Node };
 }
 
 export type ODEResult =
@@ -182,6 +190,7 @@ function direct(
       latex: `${dependent}=${emit(simplify(antiderivative))}+${CONSTANT}`,
       method: "Direct antiderivative",
       explicit: true,
+      tree: simplify(add(antiderivative, id(CONSTANT))),
     },
     solution,
     f,
@@ -232,6 +241,7 @@ function affine(
           ? "Separable, with y on one side"
           : "Exponential growth and decay",
         explicit: true,
+        tree: solution,
       },
       solution,
       f,
@@ -249,6 +259,7 @@ function affine(
         latex: `${dependent}=${emit(solution)}`,
         method: `Approaches the equilibrium ${emit(simplify(equilibrium))}`,
         explicit: true,
+        tree: solution,
       },
       solution,
       f,
@@ -278,6 +289,7 @@ function affine(
       latex: `${dependent}=${emit(solution)}`,
       method: "Linear, solved with an integrating factor",
       explicit: true,
+      tree: solution,
     },
     solution,
     f,
@@ -339,6 +351,7 @@ function logistic(
       latex: `${dependent}=${emit(solution)}`,
       method: `Logistic, carrying capacity ${emit(capacity)}`,
       explicit: true,
+      tree: solution,
     },
     solution,
     f,
@@ -383,6 +396,7 @@ function separable(
     latex: `${emit(simplify(left))}=${emit(simplify(add(right, id(CONSTANT))))}`,
     method: "Separable, left as a relation between x and y",
     explicit: false,
+    relation: { left: simplify(left), right: simplify(right) },
   };
   return verifiedImplicit(relation, solution, f, independent, dependent);
 }

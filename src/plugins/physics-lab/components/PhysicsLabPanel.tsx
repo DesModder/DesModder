@@ -148,6 +148,8 @@ function slopeTab(physicsLab: PhysicsLab, config: ConfigGetter) {
         {solutionReadout(physicsLab)}
       </section>
 
+      {initialCondition(physicsLab, config)}
+
       <section class="dsm-physics-lab-section">
         <div class="dsm-physics-lab-section-head">
           <h3>Sampling domain</h3>
@@ -171,45 +173,53 @@ function slopeTab(physicsLab: PhysicsLab, config: ConfigGetter) {
         )}
       </section>
 
-      <section class="dsm-physics-lab-section">
-        <h3>Marks</h3>
-        {numberControl(
-          "dsm-physics-lab-mark-length",
-          "Length (of the spacing)",
-          () => config().slope.markLength,
-          (value) =>
-            session().updateConfig((c) => {
-              c.slope.markLength = value;
-            })
-        )}
-        {numberControl(
-          "dsm-physics-lab-line-width",
-          "Thickness (px)",
-          () => config().slope.lineWidth,
-          (value) =>
-            session().updateConfig((c) => {
-              c.slope.lineWidth = value;
-            })
-        )}
-        {chipGroup(
-          "Colour by",
-          () => config().slope.colorMode,
-          COLOR_MODES,
-          (value) =>
-            session().updateConfig((c) => {
-              c.slope.colorMode = value;
-            }),
-          "dsm-physics-lab-color-mode"
-        )}
-        {/* A ramp is only meaningful where something runs along it; one flat
-            colour has nothing to spread along one. */}
-        <If predicate={() => config().slope.colorMode !== "fixed"}>
-          {() => paletteChooser(physicsLab, config)}
-        </If>
-        <If predicate={() => config().slope.colorMode === "fixed"}>
-          {() => colorSwatch(physicsLab, config)}
-        </If>
-      </section>
+      {/* Folded away, the way Vector Tools folds its flow's secondary
+          controls. These refine a picture that already exists; the equation and
+          the domain decide what it *is*, and putting all of them in one column
+          makes none of them look more important than another. */}
+      <details class="dsm-physics-lab-details">
+        <summary>Appearance</summary>
+        <div class="dsm-physics-lab-section">
+          <div class="dsm-physics-lab-row">
+            {numberControl(
+              "dsm-physics-lab-mark-length",
+              "Mark length",
+              () => config().slope.markLength,
+              (value) =>
+                session().updateConfig((c) => {
+                  c.slope.markLength = value;
+                })
+            )}
+            {numberControl(
+              "dsm-physics-lab-line-width",
+              "Thickness (px)",
+              () => config().slope.lineWidth,
+              (value) =>
+                session().updateConfig((c) => {
+                  c.slope.lineWidth = value;
+                })
+            )}
+          </div>
+          {chipGroup(
+            "Colour by",
+            () => config().slope.colorMode,
+            COLOR_MODES,
+            (value) =>
+              session().updateConfig((c) => {
+                c.slope.colorMode = value;
+              }),
+            "dsm-physics-lab-color-mode"
+          )}
+          {/* A ramp is only meaningful where something runs along it; one flat
+              colour has nothing to spread along one. */}
+          <If predicate={() => config().slope.colorMode !== "fixed"}>
+            {() => paletteChooser(physicsLab, config)}
+          </If>
+          <If predicate={() => config().slope.colorMode === "fixed"}>
+            {() => colorSwatch(physicsLab, config)}
+          </If>
+        </div>
+      </details>
 
       <div class="dsm-physics-lab-footer">
         <div class="dsm-physics-lab-status">{() => session().status}</div>
@@ -302,6 +312,88 @@ function solutionReadout(physicsLab: PhysicsLab) {
 }
 
 /**
+ * The point the solution has to pass through.
+ *
+ * Sits directly under the general solution, because it is the second half of
+ * the same question: "solve it" and "find the particular solution through
+ * (0, 2)" are one exam problem, not two. Empty fields mean no condition, which
+ * is the general solution with its slider — so this costs nothing to ignore.
+ */
+function initialCondition(physicsLab: PhysicsLab, config: ConfigGetter) {
+  const session = () => physicsLab.session;
+  const result = () => session().particular;
+  const found = () => {
+    const value = result();
+    return value?.ok === true ? value : undefined;
+  };
+  const failure = () => {
+    const value = result();
+    return value?.ok === false ? value.error : "";
+  };
+  const point = (
+    which: "xLatex" | "yLatex",
+    label: string,
+    kind: "initial-x" | "initial-y"
+  ) => (
+    <label class="dsm-physics-lab-point">
+      <span>{label}</span>
+      <InlineMathInputViewGeneral
+        containerClass={() => ({ "dsm-physics-lab-math-input": true })}
+        placeholder="0"
+        ariaLabel={label}
+        latex={() => config().initial[which]}
+        handleLatexChanged={(latex: string) =>
+          session().updateConfig((c) => {
+            c.initial[which] = latex;
+          })
+        }
+        hasError={() => false}
+        manageFocus={mathquillFocusHelper({
+          controller: physicsLab.cc,
+          location: { type: "dsm-focus", plugin: "physics-lab", kind },
+        })}
+        controller={physicsLab.cc}
+        readonly={false}
+      />
+    </label>
+  );
+  return (
+    <section class="dsm-physics-lab-section">
+      <h3>Through a point</h3>
+      <div class="dsm-physics-lab-row">
+        {point("xLatex", "x₀", "initial-x")}
+        {point("yLatex", "y₀", "initial-y")}
+      </div>
+      <If predicate={() => found() !== undefined}>
+        {() => (
+          <div class="dsm-physics-lab-solution">
+            <div
+              class="dsm-physics-lab-math"
+              data-physics-lab="particular"
+              data-latex={() => found()?.latex ?? ""}
+            >
+              <StaticMathQuillView latex={() => found()?.latex ?? ""} />
+            </div>
+            <div class="dsm-physics-lab-inline">
+              <Button
+                color="blue"
+                class="dsm-physics-lab-add-particular"
+                onTap={() => session().insertParticular()}
+              >
+                Add particular solution
+              </Button>
+            </div>
+          </div>
+        )}
+      </If>
+      <If predicate={() => failure() !== ""}>
+        {() => <div class="dsm-physics-lab-hint">{() => failure()}</div>}
+      </If>
+    </section>
+  );
+}
+
+/**
  * Second-order equations, on their own tab.
  *
  * Separate from the slope field rather than folded into it, because they are
@@ -326,7 +418,7 @@ function secondOrderTab(physicsLab: PhysicsLab, config: ConfigGetter) {
         <label class="dsm-physics-lab-label">d²y/dx² =</label>
         <InlineMathInputViewGeneral
           containerClass={() => ({ "dsm-physics-lab-math-input": true })}
-          placeholder="-v-4y"
+          placeholder="-y'-4y"
           ariaLabel="the second derivative in terms of y and v"
           latex={() => config().secondOrder.fLatex}
           handleLatexChanged={(latex: string) =>
@@ -405,8 +497,9 @@ function exactTab(physicsLab: PhysicsLab, config: ConfigGetter) {
       <section class="dsm-physics-lab-section">
         <label class="dsm-physics-lab-label">Exact value</label>
         <div class="dsm-physics-lab-hint">
-          Desmos answers every constant with a decimal. This is the form it is
-          written in — and nothing at all when there is no exact form to give.
+          Desmos answers every constant with a decimal. Type an expression to
+          see the form it is written in — or paste one of those decimals back to
+          find out what it was.
         </div>
         <InlineMathInputViewGeneral
           containerClass={() => ({ "dsm-physics-lab-math-input": true })}
@@ -448,8 +541,19 @@ function exactTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                 >
                   Add to graph
                 </Button>
+                {/* A derived value and a matched one are different claims, and
+                    the panel says which. Infinitely many constants agree with
+                    any finite decimal, so a match is a candidate that fits
+                    every digit given — not a fact about the number. */}
                 <span class="dsm-physics-lab-decimal">
-                  {() => `≈ ${(reading()?.value ?? 0).toPrecision(12)}`}
+                  {() => {
+                    const value = reading();
+                    if (value === undefined) return "";
+                    const digits = value.matched;
+                    return digits === undefined
+                      ? `≈ ${value.value.toPrecision(12)}`
+                      : `matches all ${digits} digits you gave`;
+                  }}
                 </span>
               </div>
             </div>

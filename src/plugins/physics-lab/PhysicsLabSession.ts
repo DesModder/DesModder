@@ -27,7 +27,9 @@ import {
 } from "../../field-rendering/environment";
 import { evaluateExact, toLatex, toNumber } from "./symbolic/exact";
 import { solveFirstOrder, type ODEResult } from "./symbolic/ode";
-import { solveSecondOrder } from "./symbolic/secondOrder";
+import { resolvePrimes, solveSecondOrder } from "./symbolic/secondOrder";
+import { recognizeDecimal } from "./symbolic/recognize";
+import { particularConstant, type InitialResult } from "./symbolic/initial";
 import {
   defaultPhysicsLabConfig,
   normalizePhysicsLabConfig,
@@ -63,6 +65,16 @@ export interface ExactReading {
   value: number;
   /** True when the exact form is just a number and adds nothing to read. */
   trivial: boolean;
+  /**
+   * Significant digits matched, when this came from reading a decimal
+   * backwards rather than from evaluating an expression.
+   *
+   * Undefined for a derived value. The distinction has to reach the panel: a
+   * value computed from an expression is a fact about it, and a value matched
+   * against twelve digits is a candidate that happens to agree with all of
+   * them. Saying the same thing about both would be a lie about one.
+   */
+  matched?: number;
 }
 
 export default class PhysicsLabSession {
@@ -376,13 +388,56 @@ export default class PhysicsLabSession {
     if (this.secondCache?.latex === latex) return this.secondCache.result;
     let result: ODEResult;
     try {
-      const tree = parseLatex(this.textModeConfig, latex);
+      // The prime is rewritten here rather than in the panel, so what is
+      // stored and shown stays the notation the user typed.
+      const tree = parseLatex(this.textModeConfig, resolvePrimes(latex));
       result = solveSecondOrder(this.textModeConfig, tree);
     } catch {
       result = { ok: false, error: "" };
     }
     this.secondCache = { latex, result };
     return result;
+  }
+
+  /**
+   * The constant that sends the general solution through the point given, or
+   * `undefined` when no point has been entered.
+   *
+   * A general solution with a slider on it is the answer to the first half of
+   * an exam question; this is the second half.
+   */
+  get particular(): InitialResult | undefined {
+    const { xLatex, yLatex } = this.config.initial;
+    if (xLatex.trim() === "" || yLatex.trim() === "") return undefined;
+    const result = this.solution;
+    if (result?.ok !== true) return undefined;
+    try {
+      const x0 = parseLatex(this.textModeConfig, xLatex);
+      const y0 = parseLatex(this.textModeConfig, yLatex);
+      return particularConstant(this.textModeConfig, result.solution, x0, y0);
+    } catch {
+      // Half-typed coordinates are the normal state of a field in use.
+      return undefined;
+    }
+  }
+
+  /**
+   * Puts both the curve and its constant into the graph.
+   *
+   * `C = …` rather than the value substituted into the solution, because that
+   * keeps the two expressions readable as what they are — the family, and the
+   * member of it the condition picks. Desmos stops offering a slider once C is
+   * defined, which is exactly right for a particular solution.
+   */
+  insertParticular() {
+    const constant = this.particular;
+    const general = this.solution;
+    if (constant?.ok !== true || general?.ok !== true) return;
+    this.plugin.calc.setExpression({
+      latex: general.solution.latex,
+      color: "#c74440",
+    });
+    this.plugin.calc.setExpression({ latex: constant.latex });
   }
 
   insertSecondOrderSolution() {
@@ -427,6 +482,21 @@ export default class PhysicsLabSession {
    */
   exactValue(latex: string): ExactReading | undefined {
     if (latex.trim() === "") return undefined;
+
+    // A bare decimal is read backwards instead of forwards. Taken literally it
+    // is already exact — 9.86960440109 is that fraction over 10^11 — and saying
+    // so is useless, because the number on screen is what somebody copied off
+    // Desmos and the question is what it came from.
+    const asDecimal = recognizeDecimal(latex);
+    if (asDecimal !== undefined) {
+      return {
+        latex: toLatex(asDecimal.value),
+        value: toNumber(asDecimal.value),
+        trivial: false,
+        matched: asDecimal.digits,
+      };
+    }
+
     let tree;
     try {
       tree = parseLatex(this.textModeConfig, latex);

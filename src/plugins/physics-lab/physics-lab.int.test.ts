@@ -25,6 +25,8 @@ const SOLUTION = '[data-physics-lab="solution"]';
 const ADD_SOLUTION = ".dsm-physics-lab-add-solution";
 const SECOND_SOLUTION = String.raw`[data-physics-lab="second-solution"]`;
 const ADD_SECOND = ".dsm-physics-lab-add-second";
+const PARTICULAR = String.raw`[data-physics-lab="particular"]`;
+const ADD_PARTICULAR = ".dsm-physics-lab-add-particular";
 
 async function openPanel(driver: Driver) {
   await driver.enablePlugin("physics-lab");
@@ -247,9 +249,10 @@ testWithPage(
         }
       ).session.updateConfig((config) => {
         config.panel.tab = "second";
-        // A damped oscillator. `v` is dy/dx: Desmos's parser rejects `y'`
-        // outright, so the substitution is the only readable input there is.
-        config.secondOrder.fLatex = "-v-4y";
+        // Typed with a prime, which Desmos’s parser cannot read. MathQuill
+        // holds it fine, and it is rewritten on the way to the parser — so
+        // this is the regression test for that rewrite as well.
+        config.secondOrder.fLatex = "-y'-4y";
       });
     });
     await driver.waitForSync();
@@ -290,6 +293,67 @@ testWithPage(
       path: "docs/assets/physics-lab-second-order.png",
     });
     await driver.click(BUTTON);
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  50000
+);
+
+testWithPage(
+  "a point picks the constant, and a pasted decimal is read back into a constant",
+  async (driver) => {
+    await openPanel(driver);
+
+    await driver.evaluate(() => {
+      (
+        DSM.physicsLab as unknown as {
+          session: { updateConfig: (m: (c: PhysicsLabConfig) => void) => void };
+        }
+      ).session.updateConfig((config) => {
+        config.panel.tab = "slope";
+        config.slope.fLatex = "x-y";
+        config.initial.xLatex = "0";
+        config.initial.yLatex = "2";
+      });
+    });
+    await driver.waitForSync();
+    await driver.assertSelectorEventually(PARTICULAR);
+
+    // y = x - 1 + Ce^{-x} at x = 0 is C - 1, so passing through (0, 2) needs 3.
+    const constant = await driver.$eval(
+      PARTICULAR,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
+    expect(constant).toBe("C=3");
+
+    await driver.click(ADD_PARTICULAR);
+    await driver.waitForSync();
+    const inserted = (await driver.getState()).expressions.list;
+    expect(
+      inserted.some(
+        (item) => item.type === "expression" && item.latex === "C=3"
+      )
+    ).toBe(true);
+
+    // The reverse direction: Desmos prints pi squared as this, and pasting it
+    // back has to name it rather than report the fraction it literally is.
+    await openTab(driver, "exact");
+    await driver.evaluate(() => {
+      (
+        DSM.physicsLab as unknown as {
+          session: { updateConfig: (m: (c: PhysicsLabConfig) => void) => void };
+        }
+      ).session.updateConfig((config) => {
+        config.exact.latex = "9.86960440109";
+      });
+    });
+    await driver.waitForSync();
+    const recognised = await driver.$eval(
+      EXACT_OUTPUT,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
+    expect(recognised).toBe("\\pi^{2}");
+
     await driver.setBlank();
     await driver.disablePlugin("physics-lab");
   },

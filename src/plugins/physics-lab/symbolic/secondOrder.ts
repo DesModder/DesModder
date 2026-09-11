@@ -1,13 +1,21 @@
 /**
  * Second-order linear equations with constant coefficients.
  *
- * `y'' = p·v + q·y + r`, where **v means dy/dx**. That substitution is not a
- * notation this plugin invented, and it is not a workaround either — it is the
- * reduction of order every textbook performs, and in physics v is the velocity
- * the equation is usually about. It is also the only option: `y'` does not
- * parse in Desmos at all. Asking its parser for `y'` returns an error node, so
- * an input built around primes could never be read back, and the briefing's
- * rule that Desmos cannot be taught new notation applies exactly here.
+ * `y'' = p·y' + q·y + r`, written with a prime, exactly as it is written
+ * everywhere else.
+ *
+ * That is worth stating because it nearly was not. Desmos's **parser** does
+ * reject `y'` — asking it returns an error node — and the first version of this
+ * concluded that the input had to be a substitution and made the user type `v`.
+ * The conclusion was wrong. MathQuill holds the prime perfectly well: it renders
+ * it and gives the latex back, and the panel belongs to the extension rather
+ * than to Desmos, so what is shown and what is parsed never had to be the same
+ * string. The prime is rewritten to {@link VELOCITY} on the way to the parser
+ * and the user never sees it.
+ *
+ * The rule from the briefing still holds and is narrower than it first looked:
+ * Desmos cannot be taught new notation, and that says nothing about what its
+ * editor can hold.
  *
  * What this covers is what the equation is famous for. `y'' = -4y` is simple
  * harmonic motion, `y'' = -2v - 5y` is a damped oscillator, and the same
@@ -65,8 +73,33 @@ const call = (name: string, arg: Node) => functionCall(id(name), [arg]);
 const FIRST = "C_1";
 const SECOND = "C_2";
 
-/** The symbol standing for dy/dx in the right-hand side the user types. */
+/**
+ * The symbol the solver reads as dy/dx.
+ *
+ * Not what the user types. MathQuill holds a prime perfectly well — it renders
+ * it and gives the latex back — and it is only Desmos's *parser* that refuses
+ * one. Since the panel decides when to call the parser, the prime is rewritten
+ * to this on the way in and the user never sees it. See {@link resolvePrimes}.
+ */
 export const VELOCITY = "v";
+
+/**
+ * Rewrites the first derivative's prime into a symbol the parser can read.
+ *
+ * The panel belongs to the extension rather than to Desmos, so what is shown
+ * and what is parsed do not have to be the same string. A prime is how the
+ * equation is written everywhere outside this one calculator, and there is no
+ * reason to make somebody type a substitution because the parser underneath
+ * cannot take one.
+ *
+ * A literal `v` still works, needing no rewrite — that was the input before
+ * this, and it is the physics convention. A second prime becomes `v` followed
+ * by a stray prime, which does not parse and is refused: the second derivative
+ * is the left-hand side and has no business on the right.
+ */
+export function resolvePrimes(latex: string, dependent = "y") {
+  return latex.split(`${dependent}'`).join(VELOCITY);
+}
 
 const SAMPLE_XS = [-1.3, -0.4, 0.5, 1.2, 2.1, 2.9];
 const SAMPLE_PAIRS = [
@@ -285,4 +318,5 @@ function verifiedSecondOrder(
 export const SECOND_ORDER_CONSTANTS = [FIRST, SECOND];
 
 /** Exposed for the panel's hint, so the two cannot drift apart. */
-export const secondOrderHint = `Write dy/dx as ${VELOCITY} — for example, ${VELOCITY}-2y for a damped oscillator.`;
+export const secondOrderHint =
+  "Write the first derivative with a prime — type an apostrophe after y. For example, -y′-4y is a damped oscillator.";
