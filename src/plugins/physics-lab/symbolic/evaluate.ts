@@ -119,6 +119,27 @@ export function numericDerivative(
 }
 
 /**
+ * The second derivative at a point, by the central three-point formula.
+ *
+ * The step is the fourth root of machine epsilon rather than the cube root the
+ * first derivative uses, because cancellation is worse here: the formula
+ * subtracts three values of comparable size and divides by h², so too small a
+ * step loses more precision than the extra truncation error costs.
+ */
+export function numericSecondDerivative(
+  node: Node,
+  variable: string,
+  bindings: Bindings
+): number {
+  const at = bindings[variable];
+  const h = 1.22e-4 * Math.max(1, Math.abs(at));
+  const forward = evaluate(node, { ...bindings, [variable]: at + h });
+  const middle = evaluate(node, bindings);
+  const backward = evaluate(node, { ...bindings, [variable]: at - h });
+  return (forward - 2 * middle + backward) / (h * h);
+}
+
+/**
  * Whether two functions agree at a spread of sample points.
  *
  * Points where either side is undefined are skipped rather than counted as

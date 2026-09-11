@@ -31,7 +31,7 @@ export type FocusLocation =
   | {
       type: "dsm-focus";
       plugin: "physics-lab";
-      kind: "slope-f" | "exact";
+      kind: "slope-f" | "second-f" | "exact";
     }
   | { type: "search-expressions" }
   | {

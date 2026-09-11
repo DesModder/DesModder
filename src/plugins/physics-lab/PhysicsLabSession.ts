@@ -27,6 +27,7 @@ import {
 } from "../../field-rendering/environment";
 import { evaluateExact, toLatex, toNumber } from "./symbolic/exact";
 import { solveFirstOrder, type ODEResult } from "./symbolic/ode";
+import { solveSecondOrder } from "./symbolic/secondOrder";
 import {
   defaultPhysicsLabConfig,
   normalizePhysicsLabConfig,
@@ -73,6 +74,7 @@ export default class PhysicsLabSession {
   private dispatcherID?: string;
   private thinned = false;
   private solutionCache?: { latex: string; result: ODEResult };
+  private secondCache?: { latex: string; result: ODEResult };
 
   private readonly overlay = new ArrowOverlay(this.plugin.calc, {
     // Its own canvas id: Vector Tools may be drawing its own arrows at the same
@@ -358,6 +360,38 @@ export default class PhysicsLabSession {
     }
     this.solutionCache = { latex, result };
     return result;
+  }
+
+  /**
+   * The solved second-order equation.
+   *
+   * Cached the same way and for the same reason as the first-order one: the
+   * panel reads it on every render, and solving parses, takes exact
+   * characteristic roots and then verifies the answer by differentiating it
+   * twice over eighteen sample points.
+   */
+  get secondOrderSolution(): ODEResult | undefined {
+    const latex = this.config.secondOrder.fLatex;
+    if (latex.trim() === "") return undefined;
+    if (this.secondCache?.latex === latex) return this.secondCache.result;
+    let result: ODEResult;
+    try {
+      const tree = parseLatex(this.textModeConfig, latex);
+      result = solveSecondOrder(this.textModeConfig, tree);
+    } catch {
+      result = { ok: false, error: "" };
+    }
+    this.secondCache = { latex, result };
+    return result;
+  }
+
+  insertSecondOrderSolution() {
+    const result = this.secondOrderSolution;
+    if (result?.ok !== true) return;
+    this.plugin.calc.setExpression({
+      latex: result.solution.latex,
+      color: "#c74440",
+    });
   }
 
   /**

@@ -478,3 +478,88 @@ particular solution through a given point, and C appears linearly in every form
 produced here, so solving for it is a linear substitution rather than a new
 method. After that, second-order constant-coefficient equations — which is SHM,
 and needs a different input shape than `dy/dx =`.
+
+---
+
+## Second-order equations
+
+`d²y/dx² = f(y, v)`, on its own tab, where **v means dy/dx**.
+
+### Why `v` and not `y'`
+
+Because `y'` does not parse. Asking Desmos's parser for `y'` returns an error
+node — checked directly, along with `y''` and `-3y'-2y`, all of which fail while
+`-3v-2y` parses cleanly. The briefing's rule that Desmos cannot be taught new
+notation applies exactly here, so an input built around primes could never be
+read back at all.
+
+That makes the substitution forced, and it is also the right one: `v = y'` is the
+reduction of order every textbook performs, and in physics v is the velocity the
+equation is usually about.
+
+### What it solves
+
+`y'' = p·v + q·y + r` with constant coefficients, through the characteristic
+equation `s² - ps - q = 0`. All three root cases, because all three turn up in
+the problems this is for:
+
+| Discriminant | Solution                      | What it is                       |
+| ------------ | ----------------------------- | -------------------------------- |
+| positive     | `C₁e^{s₁x} + C₂e^{s₂x}`       | overdamping                      |
+| zero         | `(C₁ + C₂x)e^{sx}`            | critical damping                 |
+| negative     | `e^{αx}(C₁cos βx + C₂sin βx)` | SHM when α is 0, damped when not |
+
+The `x` in the repeated-root case is the whole content of that case: with one
+root the two exponentials are the same function, so they span one dimension and
+cannot meet two initial conditions.
+
+A constant term shifts the family by the equilibrium it holds — `y''` and `v` are
+both zero there, so `q·y + r = 0`.
+
+Two constants, `C_1` and `C_2`, so Desmos offers two sliders.
+
+### The roots are exact, and that is the point
+
+The characteristic roots go straight into an exponent, where a decimal is not a
+rounding: `e^{√2x}` and `e^{1.4142135623730951x}` are different answers and only
+one of them is the one being asked for. So the discriminant is carried through
+`exact.ts`, and `y'' = 2y` comes back as `C₁e^{√2x} + C₂e^{-√2x}`.
+
+This is what `exact.ts` was built for, and using it here needed one addition:
+`toNode`, which produces a syntax tree rather than a string. An exact constant is
+not only something to display — these roots get built into a solution that is
+then differentiated twice numerically and checked against the equation, and a
+string cannot be checked. `toNode` groups radicals the same way `toLatex` does,
+which is not cosmetic: the discriminant of `y'' = -v - 4y` is -15, and leaving
+its factors apart puts `√3·√5` in an exponent where a reader expects `√15`.
+
+Coefficients must be exact numbers. A symbolic one — `y'' = -ω²y`, which is how
+a physicist writes it — is refused, because the sign of the discriminant decides
+which of three completely different solutions is correct and there is no way to
+know the sign of ω² without knowing ω. Substituting a number, or a slider's
+value, is the way through.
+
+### Verification
+
+The same rule as everywhere else: substituted back before it is reported. Both
+derivatives are taken numerically and both are fed back in, with `v` bound to the
+candidate's own first derivative at each point, so it tests the equation rather
+than one differentiation. The tolerance is looser than the first-order check and
+has to be — a second difference divides by h², so it carries roughly the square
+root of the precision a first derivative does, and tightening it rejects correct
+answers.
+
+Evidence: `docs/assets/physics-lab-second-order.png`.
+
+### Still open
+
+Initial conditions, which would turn every general solution here into the
+particular one an exam question asks for. Non-constant forcing terms — `y'' + y =
+cos(2x)` needs undetermined coefficients or variation of parameters. Systems, and
+with them phase planes, which the shared field renderer could already draw.
+
+And the direction Rafael has named for later: PDEs for 3D Desmos. Nothing here
+assumes one independent variable in its data structures, but every solver does,
+so that would be new work rather than an extension — the separable heat and wave
+equations are the tractable start, and `src/field-rendering` already knows how to
+put a surface-shaped thing on screen.

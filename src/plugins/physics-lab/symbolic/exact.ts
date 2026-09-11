@@ -36,9 +36,11 @@
  * matters more here: an exact answer is a claim, and a claim that is nearly
  * true is worse than no claim.
  */
-import { Aug } from "../../../../text-mode-core";
+import { Aug, AugBuilders } from "../../../../text-mode-core";
 import * as Q from "./rational";
 import type { Rational } from "./rational";
+
+const { number, binop, functionCall, id, negative } = AugBuilders;
 
 /**
  * The transcendental atoms, keyed by the symbol Desmos's parser produces.
@@ -428,6 +430,112 @@ function termLatex(t: ExactTerm, isFirst: boolean): string {
 export function toLatex(value: ExactValue): string {
   if (value.length === 0) return "0";
   return value.map((t, i) => termLatex(t, i === 0)).join("");
+}
+
+/**
+ * The same value as a syntax tree rather than as a string.
+ *
+ * Needed because an exact constant is not only something to display. A
+ * second-order equation's characteristic roots are exact — `y'' = 2y` has roots
+ * ±√2 — and they have to be built into a solution that then gets differentiated
+ * numerically and checked against the equation. A string cannot be checked.
+ */
+export function toNode(value: ExactValue): Node {
+  if (value.length === 0) return number(0);
+  return value
+    .map((t) => termNode(t))
+    .reduce((sum, term) => binop("Add", sum, term));
+}
+
+/**
+ * Builds the atoms on one side of the bar, grouping radicals exactly the way
+ * {@link atomsLatex} does.
+ *
+ * The grouping is not cosmetic here either. `√3·√5` and `√15` are the same
+ * number, and only one of them is an answer — a characteristic root of
+ * `y'' = -v - 4y` comes out of the discriminant as 3 and 5 separately, and
+ * leaving them apart puts two radicals in an exponent where a reader expects
+ * one.
+ */
+function atomsNode(entries: [string, Rational][]): Node | undefined {
+  const plain: Node[] = [];
+  const radicals = new Map<bigint, bigint>();
+  for (const [atom, exponent] of entries) {
+    const base: Node =
+      atom === PI ? id("pi") : atom === E ? id("e") : number(Number(atom));
+    if (Q.isInteger(exponent)) {
+      plain.push(
+        exponent.n === 1n
+          ? base
+          : binop("Exponent", base, number(Number(exponent.n)))
+      );
+      continue;
+    }
+    if (atom === PI || atom === E) {
+      plain.push(
+        binop(
+          "Exponent",
+          base,
+          binop(
+            "Divide",
+            number(Number(exponent.n)),
+            number(Number(exponent.d))
+          )
+        )
+      );
+      continue;
+    }
+    const index = exponent.d;
+    const contribution = Q.pow(Q.rational(BigInt(atom)), exponent.n);
+    radicals.set(index, (radicals.get(index) ?? 1n) * contribution.n);
+  }
+  for (const [index, radicand] of [...radicals].sort((a, b) =>
+    Number(a[0] - b[0])
+  )) {
+    const inner = number(Number(radicand));
+    plain.push(
+      index === 2n
+        ? functionCall(id("sqrt"), [inner])
+        : binop(
+            "Exponent",
+            inner,
+            binop("Divide", number(1), number(Number(index)))
+          )
+    );
+  }
+  if (plain.length === 0) return undefined;
+  return plain.reduce((left, right) => binop("Multiply", left, right));
+}
+
+function termNode(t: ExactTerm): Node {
+  const positive: [string, Rational][] = [];
+  const negativeExponents: [string, Rational][] = [];
+  for (const [atom, exponent] of t.factors)
+    (Q.isNegative(exponent) ? negativeExponents : positive).push([
+      atom,
+      Q.isNegative(exponent) ? Q.negate(exponent) : exponent,
+    ]);
+
+  const magnitude = Q.isNegative(t.coeff) ? Q.negate(t.coeff) : t.coeff;
+  const above = atomsNode(positive);
+  const below = atomsNode(negativeExponents);
+
+  let numerator: Node;
+  if (above === undefined) numerator = number(Number(magnitude.n));
+  else if (magnitude.n === 1n) numerator = above;
+  else numerator = binop("Multiply", number(Number(magnitude.n)), above);
+
+  let denominator: Node | undefined;
+  if (magnitude.d !== 1n && below !== undefined)
+    denominator = binop("Multiply", number(Number(magnitude.d)), below);
+  else if (magnitude.d !== 1n) denominator = number(Number(magnitude.d));
+  else denominator = below;
+
+  const body =
+    denominator === undefined
+      ? numerator
+      : binop("Divide", numerator, denominator);
+  return Q.isNegative(t.coeff) ? negative(body) : body;
 }
 
 // ---- reading a Desmos expression -----------------------------------------

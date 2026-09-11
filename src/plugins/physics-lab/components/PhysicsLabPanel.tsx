@@ -43,6 +43,7 @@ import {
   type PaletteID,
 } from "../../../field-rendering/palettes";
 import type { ExactReading } from "../PhysicsLabSession";
+import { secondOrderHint } from "../symbolic/secondOrder";
 import "./PhysicsLabPanel.less";
 
 interface Choice<T extends string> {
@@ -98,6 +99,7 @@ export class PhysicsLabPanel extends Component<{
         <div class="dsm-physics-lab-body">
           {SwitchUnion(() => config().panel.tab, {
             slope: () => slopeTab(physicsLab, config),
+            second: () => secondOrderTab(physicsLab, config),
             exact: () => exactTab(physicsLab, config),
           })}
         </div>
@@ -295,6 +297,92 @@ function solutionReadout(physicsLab: PhysicsLab) {
       <If predicate={() => failure() !== ""}>
         {() => <div class="dsm-physics-lab-hint">{() => failure()}</div>}
       </If>
+    </div>
+  );
+}
+
+/**
+ * Second-order equations, on their own tab.
+ *
+ * Separate from the slope field rather than folded into it, because they are
+ * different objects: a slope field is a first-order picture and there is no 2D
+ * drawing of a second-order equation to sit beside it. Conditionally hiding
+ * half the slope tab would have said the same thing less clearly.
+ */
+function secondOrderTab(physicsLab: PhysicsLab, config: ConfigGetter) {
+  const session = () => physicsLab.session;
+  const result = () => session().secondOrderSolution;
+  const solved = () => {
+    const value = result();
+    return value?.ok === true ? value.solution : undefined;
+  };
+  const failure = () => {
+    const value = result();
+    return value?.ok === false && value.error !== "" ? value.error : "";
+  };
+  return (
+    <div>
+      <section class="dsm-physics-lab-section">
+        <label class="dsm-physics-lab-label">d²y/dx² =</label>
+        <InlineMathInputViewGeneral
+          containerClass={() => ({ "dsm-physics-lab-math-input": true })}
+          placeholder="-v-4y"
+          ariaLabel="the second derivative in terms of y and v"
+          latex={() => config().secondOrder.fLatex}
+          handleLatexChanged={(latex: string) =>
+            session().updateConfig((c) => {
+              c.secondOrder.fLatex = latex;
+            })
+          }
+          hasError={() => false}
+          manageFocus={mathquillFocusHelper({
+            controller: physicsLab.cc,
+            location: {
+              type: "dsm-focus",
+              plugin: "physics-lab",
+              kind: "second-f",
+            },
+          })}
+          controller={physicsLab.cc}
+          readonly={false}
+        />
+        {/* `v` rather than `y'` is not a shorthand this invented. Desmos's
+            parser rejects `y'` outright, and v is the substitution every
+            textbook makes — and the velocity the physics is usually about. */}
+        <div class="dsm-physics-lab-hint">{secondOrderHint}</div>
+        <If predicate={() => solved() !== undefined}>
+          {() => (
+            <div class="dsm-physics-lab-solution">
+              <div
+                class="dsm-physics-lab-math"
+                data-physics-lab="second-solution"
+                data-latex={() => solved()?.latex ?? ""}
+              >
+                <StaticMathQuillView latex={() => solved()?.latex ?? ""} />
+              </div>
+              <div class="dsm-physics-lab-inline">
+                <Button
+                  color="blue"
+                  class="dsm-physics-lab-add-second"
+                  onTap={() => session().insertSecondOrderSolution()}
+                >
+                  Add solution to graph
+                </Button>
+                <span class="dsm-physics-lab-method">
+                  {() => solved()?.method ?? ""}
+                </span>
+              </div>
+              <div class="dsm-physics-lab-hint">
+                Two constants, so Desmos offers two sliders — one family in each
+                of them.
+              </div>
+            </div>
+          )}
+        </If>
+        <If predicate={() => failure() !== ""}>
+          {() => <div class="dsm-physics-lab-hint">{() => failure()}</div>}
+        </If>
+      </section>
     </div>
   );
 }

@@ -23,6 +23,8 @@ const CANVAS = "#dsm-physics-lab-slope-canvas";
 const EXACT_OUTPUT = '[data-physics-lab="exact-output"]';
 const SOLUTION = '[data-physics-lab="solution"]';
 const ADD_SOLUTION = ".dsm-physics-lab-add-solution";
+const SECOND_SOLUTION = String.raw`[data-physics-lab="second-solution"]`;
+const ADD_SECOND = ".dsm-physics-lab-add-second";
 
 async function openPanel(driver: Driver) {
   await driver.enablePlugin("physics-lab");
@@ -227,6 +229,67 @@ testWithPage(
     await driver.click(BUTTON);
 
     await driver.click(DRAW);
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  50000
+);
+
+testWithPage(
+  "a second-order equation solves, and its damped oscillation lands on the graph",
+  async (driver) => {
+    await openPanel(driver);
+
+    await driver.evaluate(() => {
+      (
+        DSM.physicsLab as unknown as {
+          session: { updateConfig: (m: (c: PhysicsLabConfig) => void) => void };
+        }
+      ).session.updateConfig((config) => {
+        config.panel.tab = "second";
+        // A damped oscillator. `v` is dy/dx: Desmos's parser rejects `y'`
+        // outright, so the substitution is the only readable input there is.
+        config.secondOrder.fLatex = "-v-4y";
+      });
+    });
+    await driver.waitForSync();
+    await driver.assertSelectorEventually(SECOND_SOLUTION);
+
+    const solved = await driver.$eval(
+      SECOND_SOLUTION,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
+    // Roots -1/2 ± (√15/2)i. The radical is the point: a decimal in an exponent
+    // is not a rounding. And the two primes of 15 have to come back as one
+    // radical rather than as √3·√5, which is what they factor into.
+    expect(solved).toContain("\\sqrt{15}");
+    expect(solved).toContain("C_{1}");
+    expect(solved).toContain("C_{2}");
+
+    await driver.click(ADD_SECOND);
+    await driver.evaluate(() => {
+      Calc.setExpression({ id: "c1", latex: "C_{1}=2" });
+      Calc.setExpression({ id: "c2", latex: "C_{2}=1" });
+    });
+    await driver.waitForSync();
+
+    // Desmos parsed and graphed it: a solution it could not read would sit in
+    // the list unplotted, which no assertion about the string would notice.
+    const drawn = await driver.evaluate(
+      (latex: string) =>
+        Calc.getState().expressions.list.some(
+          (item) => item.type === "expression" && item.latex === latex
+        ),
+      solved
+    );
+    expect(drawn).toBe(true);
+
+    await driver.click(BUTTON);
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    await driver.page.screenshot({
+      path: "docs/assets/physics-lab-second-order.png",
+    });
+    await driver.click(BUTTON);
     await driver.setBlank();
     await driver.disablePlugin("physics-lab");
   },

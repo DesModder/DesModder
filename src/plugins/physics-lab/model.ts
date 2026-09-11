@@ -23,10 +23,11 @@ export const SLOPE_MARK_LIMIT = 10_000;
 export const SLOPE_COUNT_MINIMUM = 2;
 export const SLOPE_COUNT_MAXIMUM = 401;
 
-export type PanelTab = "slope" | "exact";
+export type PanelTab = "slope" | "second" | "exact";
 
 export const PANEL_TABS = [
   { id: "slope", label: "Slope field" },
+  { id: "second", label: "2nd order" },
   { id: "exact", label: "Exact value" },
 ] as const satisfies readonly { id: PanelTab; label: string }[];
 
@@ -66,6 +67,14 @@ export interface PhysicsLabConfig {
   schemaVersion: number;
   panel: { tab: PanelTab };
   slope: SlopeFieldConfig;
+  /**
+   * The right-hand side of d2y/dx2, in terms of y and v.
+   *
+   * Separate from the slope field's equation because they are different
+   * equations: a slope field is a first-order object, and there is no 2D
+   * picture of a second-order equation to draw beside it.
+   */
+  secondOrder: { fLatex: string };
   /** The expression the Exact value tab last read. */
   exact: { latex: string };
 }
@@ -91,6 +100,8 @@ export function defaultPhysicsLabConfig(): PhysicsLabConfig {
       rangeMinimum: 0,
       rangeMaximum: 1,
     },
+    // A damped oscillator: the case with all the behaviour in it.
+    secondOrder: { fLatex: "-v-4y" },
     exact: { latex: "" },
   };
 }
@@ -170,6 +181,12 @@ export function normalizePhysicsLabConfig(raw: unknown): PhysicsLabConfig {
         slope.rangeMaximum,
         defaults.slope.rangeMaximum
       ),
+    },
+    secondOrder: {
+      fLatex:
+        typeof source.secondOrder?.fLatex === "string"
+          ? source.secondOrder.fLatex
+          : defaults.secondOrder.fLatex,
     },
     exact: {
       latex:
