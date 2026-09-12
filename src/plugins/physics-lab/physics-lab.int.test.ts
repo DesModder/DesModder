@@ -32,6 +32,8 @@ const DERIVATIVE = String.raw`[data-physics-lab="derivative"]`;
 const EXAMPLE_ANSWER = String.raw`[data-physics-lab="example-answer"]`;
 const ADD_DERIVATIVE = ".dsm-physics-lab-add-derivative";
 const SHOW_ANSWER = ".dsm-physics-lab-show-answer";
+const CHECK_ANSWER = ".dsm-physics-lab-check-answer";
+const FORM_CHIPS = "#dsm-physics-lab-form";
 const HINT_BUTTON = ".dsm-physics-lab-hint-button";
 const VERDICT = String.raw`[data-physics-lab="verdict"]`;
 const STEP_TITLE = ".dsm-physics-lab-step-title";
@@ -537,19 +539,38 @@ testWithPage(
       "2x\\operatorname{sin}\\left(3x\\right)+3x^{2}\\operatorname{cos}\\left(3x\\right)"
     );
 
-    // Outermost rule first, and only the decisions. Recording in the order the
-    // recursion finishes gives the small derivatives before the reason for
-    // them, which is a log rather than a derivation; showing every one of them
-    // gives seven cards where there are three ideas.
+    // A tree, in cause-and-effect order, labelled by position rather than by
+    // sequence. The outermost rule is announced, its two sub-problems are
+    // worked — headed by the names *it* gave them — and the inner one's result
+    // is assembled below its own children rather than beside its announcement.
     // The last card is not numbered, because collecting terms is not a
     // differentiation rule and a card that looked like one would teach that it
     // is.
     expect(await stepTitles(driver)).toEqual([
       "1. Product rule",
-      "2. Power rule",
-      "3. Chain rule",
+      "1a. Differentiate u",
+      "1b. Differentiate v",
+      "Put v' together",
       "Tidy up",
     ]);
+
+    // Each sub-problem shows which part of the original it is about, which is
+    // the first thing a reader loses in a nested derivative.
+    const focus = await driver.evaluate(() =>
+      [...document.querySelectorAll(".dsm-physics-lab-focus")].map(
+        (el) =>
+          el.querySelector("[data-latex]")?.getAttribute("data-latex") ?? ""
+      )
+    );
+    expect(focus).toHaveLength(2);
+
+    // The rule's own name sits under the sub-problem it is being used on.
+    const ruleNames = await driver.evaluate(() =>
+      [...document.querySelectorAll(".dsm-physics-lab-rule-name")].map(
+        (el) => (el as HTMLElement).innerText
+      )
+    );
+    expect(ruleNames).toEqual(["Power rule", "Chain rule"]);
 
     // The product rule names the two pieces it split the problem into, and
     // shows itself applied with those pieces still outstanding.
@@ -558,7 +579,7 @@ testWithPage(
         (el) => (el as HTMLElement).innerText
       )
     );
-    expect(named).toEqual(["u =", "v =", "u ="]);
+    expect(named).toEqual(["u =", "v =", "outer =", "u ="]);
     await driver.assertSelector(".dsm-physics-lab-intermediate");
 
     // The general rule is rendered beside each step, not printed as its source.
@@ -573,9 +594,26 @@ testWithPage(
       "#dsm-physics-lab-detail .dsm-physics-lab-chip:nth-child(2)"
     );
     await driver.waitForSync();
+    // Same tree, one level deeper: the chain rule's own sub-problem appears,
+    // and it is placed under the rule that asked for it rather than after it.
     const everything = await stepTitles(driver);
-    expect(everything).toHaveLength(5);
-    expect(everything[3]).toBe("4. Derivative of a linear term");
+    expect(everything).toEqual([
+      "1. Product rule",
+      "1a. Differentiate u",
+      "1b. Differentiate v",
+      "1b-i. Differentiate u",
+      "Put v' together",
+      "Tidy up",
+    ]);
+
+    // The hierarchy is drawn from the depth rather than implied by the
+    // labels, so a reader looking rather than reading still sees the nesting.
+    const indents = await driver.evaluate(() =>
+      [...document.querySelectorAll(".dsm-physics-lab-step")].map(
+        (el) => (el as HTMLElement).style.marginLeft
+      )
+    );
+    expect(indents.slice(0, 4)).toEqual(["0px", "12px", "12px", "24px"]);
 
     // And it goes into the graph as an ordinary expression.
     await driver.click(ADD_DERIVATIVE);
@@ -615,6 +653,11 @@ testWithPage(
         ).session.setAttempt(attempt);
       }, latex);
       await driver.waitForSync();
+      // A verdict that arrives on every keystroke tells somebody halfway
+      // through typing that they are wrong, so it waits to be asked for.
+      await driver.assertSelectorNot(VERDICT);
+      await driver.click(CHECK_ANSWER);
+      await driver.waitForSync();
       await driver.assertSelectorEventually(VERDICT);
       return await driver.$eval(
         VERDICT,
@@ -634,7 +677,9 @@ testWithPage(
       )
     ).toBe("wrong");
 
-    // A hint points at structure, and gives away no arithmetic.
+    // The first hint is a question, and answers nothing. Doing the
+    // recognition for the reader would end the exercise, and the recognition
+    // is the exercise.
     await driver.click(HINT_BUTTON);
     await driver.waitForSync();
     const hints = await driver.evaluate(() =>
@@ -642,7 +687,7 @@ testWithPage(
         (el) => (el as HTMLElement).innerText
       )
     );
-    expect(hints).toEqual(["The expression is a product of two functions."]);
+    expect(hints).toEqual(["What are the two factors of the product?"]);
 
     await driver.click(SHOW_ANSWER);
     await driver.waitForSync();
@@ -665,6 +710,79 @@ testWithPage(
       "x^{3}\\operatorname{cos}\\left(2x\\right)"
     );
     await driver.assertSelectorNot(EXAMPLE_ANSWER, VERDICT);
+
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  50000
+);
+
+testWithPage(
+  "a long answer is offered factored as well as expanded",
+  async (driver) => {
+    await openPanel(driver);
+    // The expression GPT's review was written about: logarithmic
+    // differentiation, whose answer nobody writes the way the rules leave it.
+    await openDerivativeTab(
+      driver,
+      "x^{2}\\left(\\operatorname{sin}\\left(3x\\right)\\right)^{e^{x}}"
+    );
+
+    const expanded = await driver.$eval(
+      DERIVATIVE,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
+    expect(expanded).toContain("\\operatorname{ln}");
+
+    // Two forms of one function, so the panel offers both rather than choosing.
+    await driver.assertSelector(FORM_CHIPS);
+    await driver.click(`${FORM_CHIPS} .dsm-physics-lab-chip:nth-child(2)`);
+    await driver.waitForSync();
+    const factored = await driver.$eval(
+      DERIVATIVE,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
+    expect(factored).toBe(
+      "\\operatorname{sin}\\left(3x\\right)^{e^{x}}\\left(2x+x^{2}e^{x}" +
+        "\\left(\\operatorname{ln}\\left(\\operatorname{sin}\\left(3x\\right)\\right)+" +
+        "3\\operatorname{cot}\\left(3x\\right)\\right)\\right)"
+    );
+    expect(factored.length).toBeLessThan(expanded.length);
+
+    // Desmos has to agree that the two are the same function — this is the
+    // check nothing offline can make, and the reason the factoriser is allowed
+    // to rewrite an answer at all.
+    await driver.evaluate(
+      (a: string, b: string) => {
+        Calc.setExpression({ id: "expanded", latex: `E_{x}(x)=${a}` });
+        Calc.setExpression({ id: "factored", latex: `F_{a}(x)=${b}` });
+        Calc.setExpression({
+          id: "gap",
+          latex: "g_{ap}=E_{x}(0.4)-F_{a}(0.4)",
+        });
+      },
+      expanded,
+      factored
+    );
+    await driver.waitForSync();
+    const gap = await driver.evaluate(async () => {
+      const helper = Calc.HelperExpression({ latex: "g_{ap}" });
+      return await new Promise<number>((resolve) => {
+        helper.observe("numericValue", () => {
+          resolve(helper.numericValue);
+        });
+      });
+    });
+    expect(Math.abs(gap)).toBeLessThan(1e-9);
+
+    // And the shorter form says what was done to it, so it is not a puzzle.
+    const notes = await driver.evaluate(() =>
+      [...document.querySelectorAll(".dsm-physics-lab-note")].map(
+        (el) => (el as HTMLElement).innerText
+      )
+    );
+    expect(notes.join(" ")).toContain("Factor out");
+    expect(notes.join(" ")).toContain("cot");
 
     await driver.setBlank();
     await driver.disablePlugin("physics-lab");

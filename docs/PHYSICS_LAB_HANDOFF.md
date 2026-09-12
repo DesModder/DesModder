@@ -984,18 +984,174 @@ answer; this is the one that needs no dragging.
 Evidence: `docs/assets/physics-lab-derivation.png`,
 `docs/assets/physics-lab-practice.png`.
 
-### Still open
+---
 
-The simplifier does not factor. `x²(sin 3x)^{eˣ}(eˣ ln(sin 3x) + 3eˣcos3x/sin3x)`
-is correct and a person would write the `eˣ` outside the bracket and the quotient
-as `3cot 3x`. Pulling a common factor out of a sum, and rewriting cos/sin as cot,
-are both simplifier work rather than differentiator work, and neither is done.
+## The derivation renders as a tree
+
+The tree was in the data and not on the screen. `stepsOf` flattened it into a
+numbered list, so `x²(sin 3x)^{eˣ}` read as six sequential operations when three
+of them were sub-computations the third one asked for. The hierarchy is now
+drawn.
+
+### Rows, not steps
+
+A derivation step becomes more than one thing on screen, so the session emits
+**rows**: a `rule` row, then its children's rows, then a `substitute` row
+carrying that rule's own result. Flat rather than nested because DCGView builds
+a template once — a genuinely recursive component would have to rebuild itself
+whenever the expression changed shape — and because depth plus indentation plus
+a left rule draws the hierarchy for nothing.
+
+Labels say the same thing for anyone reading rather than looking: `1`, `1a`,
+`1b`, `1b-i`.
+
+### Cause before effect
+
+The old step 3 showed `3eˣcos(3x)/sin(3x)` before step 4 explained where
+`3cos(3x)` came from. A rule now announces itself, shows itself applied with its
+sub-derivatives **still written as `d/dx(…)`**, and its result is assembled in a
+row below its children rather than beside its announcement. A rule row with
+children carries no result at all; it has not been earned yet.
+
+### Sub-problems are headed by what they are
+
+`1a. Differentiate u` beside `x²`, with `Power rule` named underneath. The
+heading is the sub-problem and the rule is the annotation, not the other way
+round — which part of the original is being worked on is the first thing a
+reader loses in a nested derivative, and a rule name does not say it. The
+subexpression is shown boxed beside the heading.
+
+The name comes from the parent: a rule records `childRoles` alongside its
+`substitutions`, so the child that came from `u = sin(3x)` is headed
+"Differentiate u" rather than "Differentiate".
+
+### Standard and Every step are depths of one tree
+
+`standard` draws depth ≤ 1 — the outermost rule and the sub-problems it creates,
+which is the shape of the expression. `full` draws all of it. Nothing is
+recomputed and no step is re-classified; the two views cannot say different
+things because there is only one tree.
+
+That replaced filtering by importance, which had the same effect by accident and
+did not survive contact with a fourth level of nesting.
+
+### Rules that can show where they come from
+
+In the full view, logarithmic differentiation derives itself: `y = u^v`, take
+logs, differentiate both sides, multiply through by `y`. `RULE_DERIVATIONS`
+holds it. Nobody guesses `u^v(v' ln u + vu'/u)` and everybody can follow taking
+logs of both sides, so the rule that looks arbitrary is the one that gets
+shown; a rule whose statement is its own justification has no entry.
+
+### Wording that survives being generalised
+
+Three changes, each because the old sentence teaches something false when it
+meets the next problem:
+
+- The power rule now says **the exponent 2 is constant** before it says anything
+  about bringing it down, and adds that this is not available when the exponent
+  contains the variable. The same expression can hold `x²` and `(sin 3x)^{eˣ}`.
+- Logarithmic differentiation says "both the base and the exponent depend on x,
+  so neither the ordinary power rule nor the ordinary exponential rule is
+  sufficient" — which is the actual reason, rather than a statement of where the
+  variable is.
+- The chain rule names an **outer function and an inner one**, and records both
+  as substitutions: `outer = sin(u)`, `u = 3x`. "Multiply by the derivative of
+  the inside" does not survive `sin(e^{x²+1})`, which has three insides and no
+  way to say which.
+
+`Derivative of a linear term` is now `Linear rule`, since the heading above it
+already says it is differentiating the inner function.
+
+## The function simplifier
+
+`symbolic/factor.ts`. `condense(node)` returns the expression a person writes
+and a list of what it did to get there.
+
+It is deliberately separate from `simplify` in `integrate.ts`, and the split is
+the point. That one is **structural** — folding constants, cancelling factors,
+removing multiplications by 1 — all of which have one right answer. This one is
+**presentational**: pulling a common factor out of a sum and rewriting a quotient
+of trig functions make an expression shorter without making it simpler in any
+formal sense, so the panel offers both forms rather than choosing.
+
+Two passes, run to a fixpoint:
+
+**Common factors.** Candidates come from the first term's factors, since a
+common factor is by definition one of them, and only factors above the bar are
+considered: `f` divides `a·f + b·f/g` and pulling it out is right, whereas
+treating a denominator as a candidate gives something equal only where that
+denominator is non-zero. One factor per pass, because the remainder is a fresh
+sum the next pass walks into — which is how the inner `eˣ` comes out after the
+outer power has.
+
+**Quotient identities.** `cos u / sin u → cot u` and `sin u / cos u → tan u`,
+matched across a flattened numerator and denominator so `3eˣcos3x/sin3x` finds
+them. The reciprocal identities are left alone: `1/sin u` is not obviously
+better as `csc u`, and a rewrite that is a matter of taste does not belong in a
+pass that runs unasked.
+
+It will not pull numbers out — `2x + 4x²` stays, because `2x(1 + 2x)` is longer
+to read and nobody writes it — and it will not match powers of a shared base,
+because pulling `x²` out of `x³ + x²` is the first step of factoring to find
+roots and doing that silently inside an answer helps nobody.
+
+On the expression this was written for:
+
+    2x(sin3x)^{eˣ} + x²(sin3x)^{eˣ}(eˣln(sin3x) + 3eˣcos3x/sin3x)
+    →  (sin3x)^{eˣ}(2x + x²eˣ(ln(sin3x) + 3cot3x))
+
+Every unit case asserts two separate things: the **shape**, which is a matter of
+taste and can be argued with, and the **value** at a spread of points, which
+cannot. A factoriser that drops a term or loses a sign produces something
+shorter and entirely plausible, and only evaluating it notices. The integration
+test goes further and asks Desmos itself to evaluate both forms and subtract
+them.
+
+The notes carry the factor as a **tree**, not a label. The first version guessed
+at a short string and printed `sin` for a factor of `sin(3x)^{eˣ}` — a note
+naming something that is not a factor of anything. Emitting LaTeX needs a parser
+`Config`, which that module has no business holding, so the caller does it.
+
+## The practice problem
+
+**Check answer** is now a button. A verdict that updated on every keystroke told
+somebody halfway through typing that they were wrong, which was both true and
+useless; editing an answer withdraws the verdict on the previous one.
+
+**Hints escalate.** A question about the outermost shape, then the names of the
+pieces, then a question about whichever piece is actually hard — read off the
+example's own derivation, so a hint cannot point at a structure the expression
+does not have. Handing over the substitutions at the first press would end the
+exercise, and the recognition _is_ the exercise.
+
+## Smaller things
+
+The tab bar draws its own lower boundary, because the body scrolls under it and
+a step heading arriving at the top edge otherwise reads as part of the tab row.
+`scroll-padding-top` and `scroll-margin-top` keep anything scrolled to clear of
+it.
+
+`sameTree`, `topLevelTerms`, `rebuildSum` and `quotientFactors` moved into
+`integrate.ts`, which is where the shared tree tools already lived. Three
+callers want term-splitting and all three want it to mean exactly the same
+thing.
+
+Evidence: `docs/assets/physics-lab-derivation.png` (the tree),
+`docs/assets/physics-lab-rule-derivation.png` (a rule deriving itself),
+`docs/assets/physics-lab-factored.png` (the simplifier).
+
+### Still open
 
 The integrator is still not instrumented and the tab shows no integrals — the
 last piece, and the harder one: integration has no single dispatch the way
 differentiation does, so "which rule and why here" is a genuinely different
 question there. Several of its steps are _choices_ rather than forced branches,
 and the explanation has to say why the choice was made.
+
+The simplifier is not exposed on its own. It runs on derivatives; a tab where an
+arbitrary expression could be handed to it is a small amount of wiring and has
+not been asked for.
 
 And the phase plane could animate through Vector Tools' time architecture, which
 would want bounded modes for `t` — periodic, or held — rather than the unbounded

@@ -61,7 +61,7 @@
  * doubly so when it is presented as a worked example.
  */
 import { Aug, AugBuilders, type Config } from "../../../../text-mode-core";
-import { dependsOn, simplify } from "./integrate";
+import { dependsOn, rebuildSum, simplify, topLevelTerms } from "./integrate";
 import { toLatex } from "./latex";
 
 const { number, binop, functionCall, id, negative } = AugBuilders;
@@ -156,6 +156,41 @@ export const RULE_FORMULAS: Partial<Record<RuleName, string>> = {
   implicit: String.raw`\frac{dy}{dx}=-\frac{F_{x}}{F_{y}}`,
 };
 
+/** One line of a rule's own derivation, and why that line follows. */
+export interface RuleStep {
+  latex: string;
+  note: string;
+}
+
+/**
+ * Where a rule comes from, for readers who want to see it rather than take it.
+ *
+ * Shown only in the full view. A rule whose statement is its own justification
+ * — the derivative of a constant is zero — has no entry, and neither does one
+ * whose derivation is longer than the problem it is being used on. What is here
+ * is the case where the formula looks arbitrary until you see it fall out:
+ * nobody guesses `u^v(v'ln u + vu'/u)`, and everybody can follow taking logs of
+ * both sides and differentiating.
+ */
+export const RULE_DERIVATIONS: Partial<Record<RuleName, readonly RuleStep[]>> =
+  {
+    "logarithmic-differentiation": [
+      { latex: String.raw`y=u^{v}`, note: "Give the expression a name." },
+      {
+        latex: String.raw`\ln y=v\ln u`,
+        note: "Take the natural log of both sides. The exponent comes down, and the power becomes a product.",
+      },
+      {
+        latex: String.raw`\frac{y'}{y}=v'\ln u+\frac{vu'}{u}`,
+        note: "Differentiate both sides. The left is the chain rule on ln y; the right is the product rule.",
+      },
+      {
+        latex: String.raw`y'=u^{v}\left(v'\ln u+\frac{vu'}{u}\right)`,
+        note: "Multiply through by y, which is u to the v.",
+      },
+    ],
+  };
+
 /**
  * How much of the derivation a step is.
  *
@@ -215,6 +250,15 @@ export interface DerivationNode {
   /** What the rule produces once the children are in, before simplification. */
   after: Node;
   substitutions: readonly Substitution[];
+  /**
+   * What this rule called each child, aligned with `children`.
+   *
+   * So a sub-derivation can be headed "Differentiate u" rather than
+   * "Differentiate", which is the difference between a reader knowing why they
+   * are differentiating `3x` at that moment and merely being shown that they
+   * are. Absent where the rule named nothing — a sum has terms, not pieces.
+   */
+  childRoles?: readonly string[];
   domain: readonly DomainCondition[];
   children: readonly DerivationNode[];
 }
@@ -562,7 +606,7 @@ function binaryRule(
         if (isVariable(varying, variable)) {
           return leaf({
             rule: "linear",
-            title: "Derivative of a linear term",
+            title: "Linear rule",
             recognition: `This is a constant times ${variable}.`,
             detail: "Its derivative is that constant.",
             before: node,
@@ -609,6 +653,7 @@ function binaryRule(
             { symbol: "u", value: left },
             { symbol: "v", value: right },
           ],
+          childRoles: ["u", "v"],
           domain: [],
           children: [dLeft.step, dRight.step],
         },
@@ -663,6 +708,7 @@ function binaryRule(
             { symbol: "u", value: left },
             { symbol: "v", value: right },
           ],
+          childRoles: ["u", "v"],
           domain: [],
           children: [dLeft.step, dRight.step],
         },
@@ -686,8 +732,7 @@ function sumRule(
   node: Aug.Latex.BinaryOperator,
   variable: string
 ): Working {
-  const terms: { term: Node; negated: boolean }[] = [];
-  collectTerms(node, false, terms);
+  const terms = topLevelTerms(node);
   const worked = terms.map((entry) => ({
     ...entry,
     working: derive(cfg, entry.term, variable),
@@ -718,55 +763,6 @@ function sumRule(
 }
 
 /**
- * The top-level terms of a sum, with their signs.
- *
- * The one place an answer can be broken over lines without changing what it
- * looks like it says. A break inside a product, or under a fraction bar, reads
- * as a different expression.
- */
-export function topLevelTerms(
-  node: Node
-): readonly { term: Node; negated: boolean }[] {
-  const out: { term: Node; negated: boolean }[] = [];
-  collectTerms(node, false, out);
-  return out;
-}
-
-function collectTerms(
-  node: Node,
-  negated: boolean,
-  out: { term: Node; negated: boolean }[]
-) {
-  if (node.type === "BinaryOperator") {
-    if (node.name === "Add") {
-      collectTerms(node.left, negated, out);
-      collectTerms(node.right, negated, out);
-      return;
-    }
-    if (node.name === "Subtract") {
-      collectTerms(node.left, negated, out);
-      collectTerms(node.right, !negated, out);
-      return;
-    }
-  }
-  out.push({ term: node, negated });
-}
-
-function rebuildSum(parts: readonly { value: Node; negated: boolean }[]): Node {
-  let result: Node | undefined;
-  for (const part of parts) {
-    if (result === undefined) {
-      result = part.negated ? negative(part.value) : part.value;
-    } else {
-      result = part.negated
-        ? subtract(result, part.value)
-        : add(result, part.value);
-    }
-  }
-  return result ?? number(0);
-}
-
-/**
  * The three genuinely different cases of `u^v`, and they are not variations on
  * one rule: which of them applies depends entirely on where the variable is.
  */
@@ -786,13 +782,22 @@ function exponentRule(
     // The chain rule's inner derivative is 1 when the base is the bare
     // variable, and a step that multiplies by 1 is noise.
     if (isVariable(base, variable)) {
+      const named =
+        exponent.type === "Constant"
+          ? `The exponent ${exponent.value} is`
+          : "The exponent is";
       return {
         derivative: outer,
         step: {
           rule: "power",
           title: "Power rule",
-          recognition: `The exponent is a constant and the base is ${variable} itself, so the ordinary power rule applies.`,
-          detail: "Bring the exponent down as a factor and reduce it by one.",
+          // Why the rule may be used here, before what it does. An expression
+          // can hold `x²` and a variable exponent at once — the first screen of
+          // this plugin does — and "bring the exponent down" read beside the
+          // second is a rule the reader will misapply for the rest of the term.
+          recognition: `${named} constant and the base is ${variable} itself, so the ordinary power rule applies.`,
+          detail:
+            "Bring the constant exponent down as a factor and reduce it by one. This is not available when the exponent contains the variable.",
           importance: "supporting",
           before: node,
           after: outer,
@@ -815,6 +820,7 @@ function exponentRule(
         intermediate: multiply(outer, pending(base, variable)),
         after: multiply(outer, inner.derivative),
         substitutions: [{ symbol: "u", value: base }],
+        childRoles: ["u"],
         domain: [],
         children: [inner.step],
       },
@@ -859,6 +865,7 @@ function exponentRule(
         intermediate: multiply(outer, pending(exponent, variable)),
         after: multiply(outer, inner.derivative),
         substitutions: [{ symbol: "u", value: exponent }],
+        childRoles: ["u"],
         domain: [],
         children: [inner.step],
       },
@@ -879,7 +886,7 @@ function exponentRule(
     step: {
       rule: "logarithmic-differentiation",
       title: "Logarithmic differentiation",
-      recognition: `${variable} is in both the base and the exponent, so neither the power rule nor the exponential rule applies.`,
+      recognition: `Both the base and the exponent depend on ${variable}, so neither the ordinary power rule nor the ordinary exponential rule is sufficient.`,
       detail:
         "Taking logs first turns the power into a product, which the product and chain rules can handle. Do not bring the exponent down: it is not a constant.",
       importance: "major",
@@ -890,6 +897,7 @@ function exponentRule(
         { symbol: "u", value: base },
         { symbol: "v", value: exponent },
       ],
+      childRoles: ["u", "v"],
       // The log of the base ends up in the answer whether or not the question
       // mentioned one, so the answer is only real where the base is positive.
       domain: [{ expression: base, requirement: "positive" }],
@@ -940,13 +948,22 @@ function functionCallRule(
     step: {
       rule: "chain",
       title: "Chain rule",
-      recognition: `The inside is a whole expression rather than ${variable} on its own, so this is one function composed with another.`,
-      detail: `${known.says}. Differentiate the outside, leave the inside alone, then multiply by the derivative of the inside.`,
+      // Named as an outer function and an inner one, rather than as "the
+      // inside". The naming is what scales: `sin(e^{x²+1})` is three
+      // compositions, and a reader who has only ever been told to "multiply by
+      // the derivative of the inside" has no way to say which inside.
+      recognition:
+        "This is a composition — one function applied to another, rather than to the variable on its own.",
+      detail: `${known.says}. Differentiate the outer function, leave the inner one where it is, then multiply by the derivative of the inner one.`,
       importance: "major",
       before: node,
       intermediate: multiply(outer, pending(argument, variable)),
       after: multiply(outer, inner.derivative),
-      substitutions: [{ symbol: "u", value: argument }],
+      substitutions: [
+        { symbol: "outer", value: functionCall(node.callee, [id("u")]) },
+        { symbol: "u", value: argument },
+      ],
+      childRoles: ["u"],
       domain: [],
       children: [inner.step],
     },
@@ -1013,23 +1030,65 @@ export function stepsOf(
   return out;
 }
 
+/** One hint: something to think about, and sometimes something to look at. */
+export interface Hint {
+  text: string;
+  /** Expressions the hint refers to. Emitted by the caller, which has the config. */
+  show: readonly Node[];
+}
+
 /**
- * What to look at, in the order a reader should look at it.
+ * The question a reader should ask themselves at each stage of the problem.
  *
- * Taken from the derivation rather than written by hand, so a hint cannot point
- * at a structure the expression does not have. Only the outer two levels, and
- * only the steps that were a decision: a hint reading "the derivative of x is
- * 1" has given away nothing and helped nobody.
+ * Not the answer to it. A hint that says "the expression is a product of two
+ * functions" has done the recognition, which is the part being practised.
  */
-export function hintsFor(root: DerivationNode): readonly string[] {
-  const hints: string[] = [];
-  const walk = (step: DerivationNode, depth: number) => {
-    if (depth > 1) return;
-    if (step.importance !== "atomic" && !hints.includes(step.recognition))
-      hints.push(step.recognition);
-    for (const child of step.children) walk(child, depth + 1);
-  };
-  walk(root, 0);
+const RULE_QUESTIONS: Partial<Record<RuleName, string>> = {
+  product: "What are the two factors of the product?",
+  quotient: "What is above the line, and what is below it?",
+  sum: "Can the terms be differentiated one at a time?",
+  chain: "What is the outer function here, and what is the inner one?",
+  power: "Is the exponent a constant?",
+  "power-chain":
+    "The exponent is constant — but is the base just the variable?",
+  "constant-multiple": "Which of the factors actually contains the variable?",
+  exponential: "Is the variable in the base, or in the exponent?",
+  "exponential-base": "Is the variable in the base, or in the exponent?",
+  "exponential-chain": "Is the variable in the base, or in the exponent?",
+  "exponential-base-chain": "Is the variable in the base, or in the exponent?",
+  "logarithmic-differentiation":
+    "The base and the exponent both contain the variable. Which method handles that?",
+};
+
+/**
+ * Three hints, each giving away a little more.
+ *
+ * Read off the derivation rather than written by hand, so a hint cannot point
+ * at a structure the expression does not have. They escalate deliberately: a
+ * question about the outermost shape, then the names of the pieces, then a
+ * question about whichever piece is actually hard. Handing over the
+ * substitutions at the first press would end the exercise, and the exercise is
+ * the recognition.
+ */
+export function hintsFor(root: DerivationNode): readonly Hint[] {
+  const hints: Hint[] = [];
+  const opening = RULE_QUESTIONS[root.rule];
+  if (opening !== undefined) hints.push({ text: opening, show: [] });
+
+  if (root.substitutions.length > 0) {
+    hints.push({
+      text: "Name the pieces before differentiating either of them.",
+      show: root.substitutions.map((substitution) => substitution.value),
+    });
+  }
+
+  // The hard child, which is the one whose rule is not the obvious one.
+  const hard = root.children.find(
+    (child) => child.importance === "major" && RULE_QUESTIONS[child.rule]
+  );
+  if (hard !== undefined) {
+    hints.push({ text: RULE_QUESTIONS[hard.rule]!, show: [hard.before] });
+  }
   return hints.slice(0, 3);
 }
 

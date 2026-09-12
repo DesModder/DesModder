@@ -17,6 +17,7 @@ import {
   DifferentiationError,
   hintsFor,
   implicitDerivative,
+  RULE_DERIVATIONS,
   stepsOf,
   type DerivationNode,
 } from "./differentiate";
@@ -334,6 +335,40 @@ describe("what a step carries besides its name", () => {
       "x^{2}",
       "\\operatorname{sin}\\left(x\\right)",
     ]);
+    // And the names reach the children, so a sub-derivation can be headed
+    // "Differentiate u" rather than merely "Differentiate".
+    expect(step.childRoles).toEqual(["u", "v"]);
+  });
+
+  test("the chain rule names an outer function and an inner one", () => {
+    // "Multiply by the derivative of the inside" does not scale: a reader
+    // meeting sin(e^{x²+1}) has three insides and no way to say which.
+    const step = root(fn("sin", mul(number(3), x)));
+    expect(step.substitutions.map((s) => s.symbol)).toEqual(["outer", "u"]);
+    expect(step.substitutions.map((s) => emit(s.value))).toEqual([
+      "\\operatorname{sin}\\left(u\\right)",
+      "3x",
+    ]);
+    expect(step.childRoles).toEqual(["u"]);
+  });
+
+  test("the power rule says why it may be used, and names the exponent", () => {
+    // The same expression can hold x² and a variable exponent at once, so
+    // "bring the exponent down" on its own is a rule the reader misapplies.
+    expect(root(pow(x, number(2))).recognition).toBe(
+      "The exponent 2 is constant and the base is x itself, so the ordinary power rule applies."
+    );
+    expect(root(pow(fn("sin", x), x)).recognition).toContain(
+      "neither the ordinary power rule nor the ordinary exponential rule is sufficient"
+    );
+  });
+
+  test("logarithmic differentiation can show where it comes from", () => {
+    // Nobody guesses u^v(v'ln u + vu'/u); everybody can follow taking logs.
+    const lines = RULE_DERIVATIONS["logarithmic-differentiation"];
+    expect(lines).toBeDefined();
+    expect(lines).toHaveLength(4);
+    for (const line of lines!) expect(line.note).not.toMatch(/[\\{}^_]/);
   });
 
   test("a structural rule shows itself applied before it shows the answer", () => {
@@ -401,16 +436,37 @@ describe("the explanation is written in words", () => {
 });
 
 describe("hints, for the problem the reader is asked to try", () => {
-  test("they point at structure, outermost first, and stop", () => {
-    const node = mul(
-      pow(x, number(2)),
-      pow(fn("sin", mul(number(3), x)), pow(id("e"), x))
-    );
+  const node = mul(
+    pow(x, number(2)),
+    pow(fn("sin", mul(number(3), x)), pow(id("e"), x))
+  );
+
+  test("they escalate: the shape, then the pieces, then the hard part", () => {
     const hints = hintsFor(derive(node).root);
-    expect(hints.length).toBeGreaterThan(0);
-    expect(hints.length).toBeLessThanOrEqual(3);
-    expect(hints[0]).toBe("The expression is a product of two functions.");
-    for (const hint of hints) expect(hint).not.toMatch(/[\\{}^_]/);
+    expect(hints).toHaveLength(3);
+
+    // First a question, answering nothing. The recognition is the exercise, so
+    // a hint that performs it has ended the exercise.
+    expect(hints[0].text).toBe("What are the two factors of the product?");
+    expect(hints[0].show).toEqual([]);
+
+    // Then the pieces, which is the answer to the first question.
+    expect(hints[1].show.map(emit)).toEqual([
+      "x^{2}",
+      "\\operatorname{sin}\\left(3x\\right)^{e^{x}}",
+    ]);
+
+    // Then a question about whichever piece is actually hard, and it points at
+    // that piece rather than at the whole expression.
+    expect(hints[2].text).toContain("base and the exponent");
+    expect(hints[2].show.map(emit)).toEqual([
+      "\\operatorname{sin}\\left(3x\\right)^{e^{x}}",
+    ]);
+  });
+
+  test("a hint is prose, never LaTeX", () => {
+    for (const hint of hintsFor(derive(node).root))
+      expect(hint.text).not.toMatch(/[\\{}^_]/);
   });
 
   test("nothing is given away for an expression with no structure", () => {

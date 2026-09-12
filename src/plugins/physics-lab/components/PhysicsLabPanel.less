@@ -44,7 +44,13 @@
 
   .dsm-physics-lab-tabs {
     flex: none;
-    padding: 6px 10px 0;
+    padding: 6px 10px 8px;
+    // The body scrolls under this, so the boundary has to be drawn rather than
+    // implied: a step heading arriving at the top edge otherwise reads as part
+    // of the tab row it is sliding beneath.
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+    position: relative;
+    z-index: 1;
   }
 
   // A fixed title and tab bar, a scrolling body, and a fixed footer, so the
@@ -58,6 +64,9 @@
     overflow-y: auto;
     overflow-x: hidden;
     padding: 4px 10px 8px;
+    // Anything scrolled to deliberately stops clear of the tab bar rather than
+    // hard against it.
+    scroll-padding-top: 10px;
   }
 
   .dsm-physics-lab-section {
@@ -348,6 +357,71 @@
   .dsm-physics-lab-step {
     padding: 2px 0 2px 7px;
     border-left: 2px solid rgba(45, 112, 179, 0.2);
+    scroll-margin-top: 10px;
+  }
+
+  // The heading is the sub-problem — "Differentiate u" — beside the piece of
+  // the expression it means. Which part of the original is being worked on is
+  // the first thing a reader loses in a nested derivative, and a rule name does
+  // not say it.
+  .dsm-physics-lab-step-head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    min-width: 0;
+  }
+
+  .dsm-physics-lab-focus {
+    padding: 0 4px;
+    border-radius: 3px;
+    background: rgba(45, 112, 179, 0.1);
+  }
+
+  // The rule's name, under the sub-problem it is being used on.
+  .dsm-physics-lab-rule-name {
+    font-size: 0.85em;
+    font-weight: bold;
+    color: #2d70b3;
+    letter-spacing: 0.01em;
+  }
+
+  // Assembling a result is not a rule, so the row that does it does not look
+  // like one.
+  .dsm-physics-lab-step-joining {
+    border-left-style: dashed;
+    border-left-color: rgba(0, 0, 0, 0.2);
+
+    .dsm-physics-lab-step-title {
+      font-weight: normal;
+      font-style: italic;
+    }
+  }
+
+  // Where a rule comes from, in the full view. Numbered, because it is a
+  // derivation of its own and the order is the argument.
+  .dsm-physics-lab-rule-derivation {
+    margin: 4px 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 0.95em;
+    border-left: 1px dotted rgba(0, 0, 0, 0.18);
+  }
+
+  .dsm-physics-lab-factor-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 4px;
+  }
+
+  .dsm-physics-lab-note {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
   // A structural decision — which rule, and why — is the thing to read first,

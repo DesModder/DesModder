@@ -582,8 +582,64 @@ function splitCoefficient(node: Node): [number, Node] {
 }
 
 /** Structural equality, which is all that is needed to spot a shared base. */
-function sameTree(a: Node, b: Node) {
+/** Whether two trees are the same expression, written the same way. */
+export function sameTree(a: Node, b: Node) {
   return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/**
+ * The top-level terms of a sum, with their signs.
+ *
+ * Shared because three things want it and all three want it to mean exactly
+ * the same thing: the differentiator differentiates a sum in one step, the
+ * factoriser looks for what every term has in common, and the panel breaks a
+ * long answer over lines. The last one is why it stops at the top level — a
+ * break inside a product, or under a fraction bar, reads as a different
+ * expression.
+ */
+export function topLevelTerms(
+  node: Node
+): readonly { term: Node; negated: boolean }[] {
+  const out: { term: Node; negated: boolean }[] = [];
+  collectTerms(node, false, out);
+  return out;
+}
+
+function collectTerms(
+  node: Node,
+  negated: boolean,
+  out: { term: Node; negated: boolean }[]
+) {
+  if (node.type === "BinaryOperator") {
+    if (node.name === "Add") {
+      collectTerms(node.left, negated, out);
+      collectTerms(node.right, negated, out);
+      return;
+    }
+    if (node.name === "Subtract") {
+      collectTerms(node.left, negated, out);
+      collectTerms(node.right, !negated, out);
+      return;
+    }
+  }
+  out.push({ term: node, negated });
+}
+
+/** A signed list of terms back into one expression. */
+export function rebuildSum(
+  parts: readonly { value: Node; negated: boolean }[]
+): Node {
+  let result: Node | undefined;
+  for (const part of parts) {
+    if (result === undefined) {
+      result = part.negated ? negative(part.value) : part.value;
+    } else {
+      result = part.negated
+        ? subtract(result, part.value)
+        : add(result, part.value);
+    }
+  }
+  return result ?? number(0);
 }
 
 /**
@@ -596,7 +652,7 @@ function sameTree(a: Node, b: Node) {
  * flattener that stopped at the fraction would leave the two exponentials in
  * plain sight and never cancel them.
  */
-function quotientFactors(
+export function quotientFactors(
   node: Node,
   inNumerator: boolean,
   out: { node: Node; inNumerator: boolean }[]

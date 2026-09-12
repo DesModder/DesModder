@@ -34,6 +34,7 @@ import {
   PANEL_TABS,
   SLOPE_COUNT_MAXIMUM,
   SLOPE_COUNT_MINIMUM,
+  type AnswerForm,
   type DetailLevel,
   type PhysicsLabConfig,
 } from "../model";
@@ -90,10 +91,11 @@ const DETAIL_LEVELS: readonly Choice<DetailLevel>[] = [
   { value: "full", label: "Every step" },
 ];
 
-/** A step with the number it is drawn under, which depends on what is hidden. */
-interface NumberedStep extends ShownStep {
-  position: number;
-}
+/** Two ways of writing the same function, neither more correct than the other. */
+const ANSWER_FORMS: readonly Choice<AnswerForm>[] = [
+  { value: "expanded", label: "Expanded" },
+  { value: "factored", label: "Factored" },
+];
 
 /**
  * What marking an attempt can say.
@@ -640,12 +642,17 @@ function matchPhaseViewport(physicsLab: PhysicsLab) {
  * rules is the part that transfers to the next problem, so it is shown by
  * default rather than folded away behind a disclosure.
  *
- * What each step shows follows the shape of the derivation rather than one
- * template. A structural rule — a product, a chain, logarithmic
- * differentiation — names the pieces it split the problem into and shows itself
- * applied with the smaller derivatives still outstanding, because that middle
- * line is the move being taught. A sub-problem shows its answer and nothing
- * else. A fact waits until the reader asks to see everything.
+ * Two things about the layout are load-bearing rather than decorative.
+ *
+ * It is a **tree**. Every row carries the depth it sits at and is indented and
+ * ruled by it, so "chain rule" reads as something logarithmic differentiation
+ * asked for rather than as the next item in a list. The labels — `1`, `1a`,
+ * `1b-i` — say the same thing for anyone reading rather than looking.
+ *
+ * And it is in **cause-and-effect order**. A rule announces itself and shows
+ * itself applied with its sub-derivatives still outstanding; its children are
+ * worked; only then is its own result assembled, in a row of its own below
+ * them. No line uses a value the reader has not yet been shown how to get.
  */
 function derivativeTab(physicsLab: PhysicsLab, config: ConfigGetter) {
   const session = () => physicsLab.session;
@@ -659,35 +666,32 @@ function derivativeTab(physicsLab: PhysicsLab, config: ConfigGetter) {
     return value?.ok === false && value.error !== "" ? value.error : "";
   };
   const variable = () => config().derivative.variable;
+  const full = () => config().derivative.detail === "full";
 
   /**
-   * The steps to draw, numbered as drawn.
+   * The rows to draw.
    *
    * Filtered here rather than in the session, so switching the detail level
    * redraws the same derivation instead of asking for another one. There is
    * only ever one derivation, and therefore nothing that can disagree.
    */
-  const steps = (): NumberedStep[] => {
-    const value = worked();
-    if (value === undefined) return [];
-    const everything = config().derivative.detail === "full";
-    return value.shown
-      .filter((step) => everything || !step.atomic)
-      .map((step, index) => ({ ...step, position: index + 1 }));
-  };
+  const rows = (): ShownStep[] =>
+    (worked()?.shown ?? []).filter((row) => full() || !row.deep);
 
+  /** Which form of the answer is on screen, and whether there is a choice. */
+  const hasChoice = () => (worked()?.factoredLatex ?? "") !== "";
+  const factoredShown = () =>
+    hasChoice() && config().derivative.form === "factored";
+  const answerLatex = () =>
+    factoredShown()
+      ? (worked()?.factoredLatex ?? "")
+      : (worked()?.resultLatex ?? "");
   const answerLines = () =>
-    (worked()?.resultLines ?? []).map((latex, index) => ({
-      key: String(index),
-      latex,
-    }));
-  const stacked = () => answerLines().length > 1;
+    (factoredShown() ? worked()?.factoredLines : worked()?.resultLines) ?? [];
 
   const example = () => worked()?.example;
   const hints = () =>
-    (example()?.hints ?? [])
-      .slice(0, config().derivative.hintsShown)
-      .map((text, index) => ({ key: String(index), text }));
+    (example()?.hints ?? []).slice(0, config().derivative.hintsShown);
   const moreHints = () =>
     config().derivative.hintsShown < (example()?.hints.length ?? 0);
   const verdict = () => session().attemptVerdict;
@@ -736,42 +740,27 @@ function derivativeTab(physicsLab: PhysicsLab, config: ConfigGetter) {
         {() => (
           <div>
             <section class="dsm-physics-lab-section">
+              {/* Two forms of one function. Neither is more correct, so the
+                  panel offers both rather than picking one. */}
+              <If predicate={hasChoice}>
+                {() => (
+                  <div class="dsm-physics-lab-section-head">
+                    {chipGroup(
+                      "Answer form",
+                      () => config().derivative.form,
+                      ANSWER_FORMS,
+                      (value) => session().setAnswerForm(value),
+                      "dsm-physics-lab-form"
+                    )}
+                  </div>
+                )}
+              </If>
               <div
                 class="dsm-physics-lab-solution"
                 data-physics-lab="derivative"
-                data-latex={() => worked()?.resultLatex ?? ""}
+                data-latex={answerLatex}
               >
-                {/* Long answers are stacked at their top-level signs. A
-                    derivative is the one thing on this tab with no bound on its
-                    length, and an answer that runs off the side is one the
-                    reader cannot check. */}
-                <If predicate={stacked}>
-                  {() => (
-                    <div class="dsm-physics-lab-answer-lines">
-                      <For
-                        each={answerLines}
-                        key={(line: { key: string }) => line.key}
-                      >
-                        {(getLine: () => { latex: string }) => (
-                          <div class="dsm-physics-lab-math">
-                            <StaticMathQuillView
-                              latex={() => getLine().latex}
-                            />
-                          </div>
-                        )}
-                      </For>
-                    </div>
-                  )}
-                </If>
-                <If predicate={() => !stacked()}>
-                  {() => (
-                    <div class="dsm-physics-lab-math">
-                      <StaticMathQuillView
-                        latex={() => worked()?.resultLatex ?? ""}
-                      />
-                    </div>
-                  )}
-                </If>
+                {mathBlock(answerLatex, answerLines)}
                 <div class="dsm-physics-lab-inline">
                   <Button
                     color="blue"
@@ -783,11 +772,41 @@ function derivativeTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                 </div>
               </div>
 
+              <If predicate={() => factoredShown()}>
+                {() => (
+                  <div class="dsm-physics-lab-factor-notes">
+                    <For
+                      each={() => worked()?.factorNotes ?? []}
+                      key={(note: { key: string }) => note.key}
+                    >
+                      {(getNote: () => { text: string; latex: string }) => (
+                        <div class="dsm-physics-lab-note">
+                          <span class="dsm-physics-lab-hint">
+                            {() => getNote().text}
+                          </span>
+                          <If predicate={() => getNote().latex !== ""}>
+                            {() => (
+                              <span class="dsm-physics-lab-math">
+                                <StaticMathQuillView
+                                  latex={() => getNote().latex}
+                                />
+                              </span>
+                            )}
+                          </If>
+                        </div>
+                      )}
+                    </For>
+                  </div>
+                )}
+              </If>
+
               {/* Where the method assumed something the question did not say. */}
               <If predicate={() => (worked()?.domain.length ?? 0) > 0}>
                 {() => (
                   <div class="dsm-physics-lab-domain">
-                    <span class="dsm-physics-lab-hint">Real-valued where</span>
+                    <span class="dsm-physics-lab-hint">
+                      This derivation takes logs, so it is real-valued where
+                    </span>
                     <For
                       each={() =>
                         (worked()?.domain ?? []).map((latex, index) => ({
@@ -820,102 +839,13 @@ function derivativeTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                 )}
               </div>
               <ol class="dsm-physics-lab-steps">
-                <For each={steps} key={(step: NumberedStep) => step.key}>
-                  {(getStep: () => NumberedStep) => (
-                    <li
-                      class={() => ({
-                        "dsm-physics-lab-step": true,
-                        // A structural decision is the thing to read. A
-                        // sub-problem is the thing to read next.
-                        "dsm-physics-lab-step-major": getStep().major,
-                      })}
-                      style={() => ({
-                        // Indented by how deep in the expression the rule was
-                        // applied, so a sub-derivation reads as belonging to the
-                        // rule that asked for it.
-                        "margin-left": `${Math.min(getStep().depth, 4) * 10}px`,
-                      })}
-                    >
-                      <div class="dsm-physics-lab-step-title">
-                        {() => `${getStep().position}. ${getStep().title}`}
-                      </div>
-                      <div class="dsm-physics-lab-hint">
-                        {() => getStep().recognition}
-                      </div>
-
-                      {/* The pieces the rule split the problem into. Naming
-                          them is what makes the formula beside it readable. */}
-                      <If predicate={() => getStep().substitutions.length > 0}>
-                        {() => (
-                          <div class="dsm-physics-lab-subs">
-                            <For
-                              each={() => getStep().substitutions}
-                              key={(sub: { symbol: string }) => sub.symbol}
-                            >
-                              {(
-                                getSub: () => { symbol: string; latex: string }
-                              ) => (
-                                <span class="dsm-physics-lab-sub">
-                                  <span class="dsm-physics-lab-sub-symbol">
-                                    {() => `${getSub().symbol} =`}
-                                  </span>
-                                  <span class="dsm-physics-lab-math">
-                                    <StaticMathQuillView
-                                      latex={() => getSub().latex}
-                                    />
-                                  </span>
-                                </span>
-                              )}
-                            </For>
-                          </div>
-                        )}
-                      </If>
-
-                      <If predicate={() => getStep().formula !== ""}>
-                        {() => (
-                          <div class="dsm-physics-lab-math dsm-physics-lab-formula">
-                            <StaticMathQuillView
-                              latex={() => getStep().formula}
-                            />
-                          </div>
-                        )}
-                      </If>
-                      <If predicate={() => getStep().detail !== ""}>
-                        {() => (
-                          <div class="dsm-physics-lab-hint">
-                            {() => getStep().detail}
-                          </div>
-                        )}
-                      </If>
-
-                      {/* The rule applied, with the smaller derivatives still
-                          to do. Jumping straight to the expanded answer hides
-                          the move being taught. */}
-                      <If predicate={() => getStep().intermediate !== ""}>
-                        {() => (
-                          <div class="dsm-physics-lab-math dsm-physics-lab-intermediate">
-                            <StaticMathQuillView
-                              latex={() => getStep().intermediate}
-                            />
-                          </div>
-                        )}
-                      </If>
-                      <If predicate={() => getStep().latex !== ""}>
-                        {() => (
-                          <div class="dsm-physics-lab-math">
-                            <StaticMathQuillView
-                              latex={() => getStep().latex}
-                            />
-                          </div>
-                        )}
-                      </If>
-                    </li>
-                  )}
+                <For each={rows} key={(row: ShownStep) => row.key}>
+                  {(getRow: () => ShownStep) => stepRow(getRow, full)}
                 </For>
               </ol>
 
-              {/* Collecting terms is not a differentiation rule, and a card
-                  that looked like one would teach that it is. */}
+              {/* Collecting terms is not a differentiation rule, and a row that
+                  looked like one would teach that it is. */}
               <If predicate={() => (worked()?.rawLatex ?? "") !== ""}>
                 {() => (
                   <div class="dsm-physics-lab-step dsm-physics-lab-tidy">
@@ -923,20 +853,20 @@ function derivativeTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                     <div class="dsm-physics-lab-hint">
                       No rule is applied here. The rules left it like this:
                     </div>
-                    <div class="dsm-physics-lab-math dsm-physics-lab-intermediate">
-                      <StaticMathQuillView
-                        latex={() => worked()?.rawLatex ?? ""}
-                      />
+                    <div class="dsm-physics-lab-intermediate">
+                      {mathBlock(
+                        () => worked()?.rawLatex ?? "",
+                        () => worked()?.rawLines ?? []
+                      )}
                     </div>
                     <div class="dsm-physics-lab-hint">
                       Collecting it gives the same function, written more
                       briefly:
                     </div>
-                    <div class="dsm-physics-lab-math">
-                      <StaticMathQuillView
-                        latex={() => worked()?.resultLatex ?? ""}
-                      />
-                    </div>
+                    {mathBlock(
+                      () => worked()?.resultLatex ?? "",
+                      () => worked()?.resultLines ?? []
+                    )}
                   </div>
                 )}
               </If>
@@ -1012,6 +942,13 @@ function derivativeTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                         </Button>
                       )}
                     </If>
+                    <Button
+                      color="blue"
+                      class="dsm-physics-lab-check-answer"
+                      onTap={() => session().checkAttempt()}
+                    >
+                      Check answer
+                    </Button>
                     <If predicate={() => !config().derivative.showAnswer}>
                       {() => (
                         <Button
@@ -1025,6 +962,10 @@ function derivativeTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                     </If>
                   </div>
 
+                  {/* Progressive: the shape, then the pieces, then the hard
+                      part. Handing over the substitutions at the first press
+                      would end the exercise, and the recognition is the
+                      exercise. */}
                   <If predicate={() => hints().length > 0}>
                     {() => (
                       <ol class="dsm-physics-lab-hints">
@@ -1032,9 +973,30 @@ function derivativeTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                           each={hints}
                           key={(hint: { key: string }) => hint.key}
                         >
-                          {(getHint: () => { text: string }) => (
-                            <li class="dsm-physics-lab-hint">
-                              {() => getHint().text}
+                          {(
+                            getHint: () => { text: string; show: string[] }
+                          ) => (
+                            <li>
+                              <span class="dsm-physics-lab-hint">
+                                {() => getHint().text}
+                              </span>
+                              <For
+                                each={() =>
+                                  getHint().show.map((latex, index) => ({
+                                    key: String(index),
+                                    latex,
+                                  }))
+                                }
+                                key={(entry: { key: string }) => entry.key}
+                              >
+                                {(getEntry: () => { latex: string }) => (
+                                  <div class="dsm-physics-lab-math">
+                                    <StaticMathQuillView
+                                      latex={() => getEntry().latex}
+                                    />
+                                  </div>
+                                )}
+                              </For>
                             </li>
                           )}
                         </For>
@@ -1061,6 +1023,181 @@ function derivativeTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                 </section>
               )}
             </If>
+          </div>
+        )}
+      </If>
+    </div>
+  );
+}
+
+/**
+ * One row of the derivation.
+ *
+ * The heading is the *sub-problem* — "Differentiate u", beside the
+ * subexpression it means — rather than the rule name, with the rule named
+ * underneath it. Which part of the original is being worked on is the thing a
+ * reader loses first in a nested derivative, and a rule name does not say it.
+ */
+function stepRow(getRow: () => ShownStep, full: () => boolean) {
+  const heading = () => {
+    const row = getRow();
+    const text = row.task === "" ? row.title : row.task;
+    return row.label === "" ? text : `${row.label}. ${text}`;
+  };
+  /** Named separately from the heading only when the heading is the task. */
+  const ruleName = () => {
+    const row = getRow();
+    return row.task === "" ? "" : row.title;
+  };
+
+  return (
+    <li
+      class={() => ({
+        "dsm-physics-lab-step": true,
+        // A structural decision is the thing to read. A sub-problem is the
+        // thing to read next.
+        "dsm-physics-lab-step-major": getRow().major,
+        // Assembling a result is not a rule, and does not look like one.
+        "dsm-physics-lab-step-joining": getRow().kind !== "rule",
+      })}
+      style={() => ({
+        // Indented by how deep in the expression the rule was applied, so a
+        // sub-derivation reads as belonging to the rule that asked for it.
+        "margin-left": `${Math.min(getRow().depth, 4) * 12}px`,
+      })}
+    >
+      <div class="dsm-physics-lab-step-head">
+        <span class="dsm-physics-lab-step-title">{heading}</span>
+        <If predicate={() => getRow().focus !== ""}>
+          {() => (
+            <span class="dsm-physics-lab-math dsm-physics-lab-focus">
+              <StaticMathQuillView latex={() => getRow().focus} />
+            </span>
+          )}
+        </If>
+      </div>
+      <If predicate={() => ruleName() !== ""}>
+        {() => <div class="dsm-physics-lab-rule-name">{ruleName}</div>}
+      </If>
+      <If predicate={() => getRow().recognition !== ""}>
+        {() => (
+          <div class="dsm-physics-lab-hint">{() => getRow().recognition}</div>
+        )}
+      </If>
+
+      {/* The pieces the rule split the problem into. Naming them is what makes
+          the formula beside it readable. */}
+      <If predicate={() => getRow().substitutions.length > 0}>
+        {() => (
+          <div class="dsm-physics-lab-subs">
+            <For
+              each={() => getRow().substitutions}
+              key={(entry: { symbol: string }) => entry.symbol}
+            >
+              {(getSub: () => { symbol: string; latex: string }) => (
+                <span class="dsm-physics-lab-sub">
+                  <span class="dsm-physics-lab-sub-symbol">
+                    {() => `${getSub().symbol} =`}
+                  </span>
+                  <span class="dsm-physics-lab-math">
+                    <StaticMathQuillView latex={() => getSub().latex} />
+                  </span>
+                </span>
+              )}
+            </For>
+          </div>
+        )}
+      </If>
+
+      <If predicate={() => getRow().formula !== ""}>
+        {() => (
+          <div class="dsm-physics-lab-math dsm-physics-lab-formula">
+            <StaticMathQuillView latex={() => getRow().formula} />
+          </div>
+        )}
+      </If>
+      <If predicate={() => getRow().detail !== ""}>
+        {() => <div class="dsm-physics-lab-hint">{() => getRow().detail}</div>}
+      </If>
+
+      {/* Where the rule comes from, for readers who would rather see it than
+          take it. Only in the full view: in the standard one the formula is
+          the thing being used, not the thing being proved. */}
+      <If predicate={() => full() && getRow().derivation.length > 0}>
+        {() => (
+          <ol class="dsm-physics-lab-rule-derivation">
+            <For
+              each={() => getRow().derivation}
+              key={(line: { key: string }) => line.key}
+            >
+              {(getLine: () => { latex: string; note: string }) => (
+                <li>
+                  <span class="dsm-physics-lab-hint">
+                    {() => getLine().note}
+                  </span>
+                  <div class="dsm-physics-lab-math">
+                    <StaticMathQuillView latex={() => getLine().latex} />
+                  </div>
+                </li>
+              )}
+            </For>
+          </ol>
+        )}
+      </If>
+
+      {/* The rule applied, with the smaller derivatives still to do. Jumping
+          straight to the expanded answer hides the move being taught. */}
+      <If predicate={() => getRow().intermediate !== ""}>
+        {() => (
+          <div class="dsm-physics-lab-math dsm-physics-lab-intermediate">
+            <StaticMathQuillView latex={() => getRow().intermediate} />
+          </div>
+        )}
+      </If>
+      <If predicate={() => getRow().latex !== ""}>
+        {() =>
+          mathBlock(
+            () => getRow().latex,
+            () => getRow().lines
+          )
+        }
+      </If>
+    </li>
+  );
+}
+
+/**
+ * An expression, over several lines when one would run off the side.
+ *
+ * Horizontal scrolling is worse for maths than for anything else on a panel: an
+ * expression laid out as one line loses its shape the moment half of it is off
+ * screen, and the shape is what is being read.
+ */
+function mathBlock(latex: () => string, lines: () => string[]) {
+  return (
+    <div>
+      <If predicate={() => lines().length > 1}>
+        {() => (
+          <div class="dsm-physics-lab-answer-lines">
+            <For
+              each={() =>
+                lines().map((line, index) => ({ key: String(index), line }))
+              }
+              key={(entry: { key: string }) => entry.key}
+            >
+              {(getEntry: () => { line: string }) => (
+                <div class="dsm-physics-lab-math">
+                  <StaticMathQuillView latex={() => getEntry().line} />
+                </div>
+              )}
+            </For>
+          </div>
+        )}
+      </If>
+      <If predicate={() => lines().length <= 1}>
+        {() => (
+          <div class="dsm-physics-lab-math">
+            <StaticMathQuillView latex={latex} />
           </div>
         )}
       </If>

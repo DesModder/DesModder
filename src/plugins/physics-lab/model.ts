@@ -55,6 +55,16 @@ export interface PanelConfig {
  */
 export type DetailLevel = "standard" | "full";
 
+/**
+ * Which way round to write the answer.
+ *
+ * Two forms of the same function, and neither is more correct: expanded is what
+ * the rules produce and factored is what a person writes down. Offered rather
+ * than chosen, because which one is wanted depends on what is about to be done
+ * with it — expanded to read off a term, factored to see where it vanishes.
+ */
+export type AnswerForm = "expanded" | "factored";
+
 export interface DerivativeConfig {
   fLatex: string;
   variable: string;
@@ -70,6 +80,14 @@ export interface DerivativeConfig {
   hintsShown: number;
   /** Whether the practice answer has been revealed. */
   showAnswer: boolean;
+  /**
+   * Whether the attempt has been submitted for marking.
+   *
+   * A verdict that updates on every keystroke tells somebody halfway through
+   * typing their answer that it is wrong, which is both true and useless.
+   */
+  checked: boolean;
+  form: AnswerForm;
 }
 
 export const PANEL_TABS = [
@@ -180,6 +198,8 @@ export function defaultPhysicsLabConfig(): PhysicsLabConfig {
       attemptLatex: "",
       hintsShown: 0,
       showAnswer: false,
+      checked: false,
+      form: "expanded",
     },
     phase: {
       domain: { x: { min: -4, max: 4 }, y: { min: -4, max: 4 } },
@@ -328,6 +348,8 @@ export function normalizePhysicsLabConfig(raw: unknown): PhysicsLabConfig {
         Math.round(clampNumber(source.derivative?.hintsShown, 0))
       ),
       showAnswer: source.derivative?.showAnswer === true,
+      checked: source.derivative?.checked === true,
+      form: source.derivative?.form === "factored" ? "factored" : "expanded",
     },
     secondOrder: {
       fLatex:

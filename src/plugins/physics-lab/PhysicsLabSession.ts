@@ -35,14 +35,15 @@ import {
   differentiate,
   DifferentiationError,
   hintsFor,
+  RULE_DERIVATIONS,
   RULE_FORMULAS,
   similarExample,
-  stepsOf,
-  topLevelTerms,
   type Derivation,
+  type DerivationNode,
 } from "./symbolic/differentiate";
+import { condense } from "./symbolic/factor";
+import { simplify as simplifyTree, topLevelTerms } from "./symbolic/integrate";
 import { agreesOnSamples, evaluate } from "./symbolic/evaluate";
-import { simplify as simplifyTree } from "./symbolic/integrate";
 
 import { toLatex as toLatexTree } from "./symbolic/latex";
 import {
@@ -50,6 +51,7 @@ import {
   normalizePhysicsLabConfig,
   thinSlopeGrid,
   validateSlopeField,
+  type AnswerForm,
   type DetailLevel,
   type PanelTab,
   type PhysicsLabConfig,
@@ -65,6 +67,30 @@ function resetPractice(config: PhysicsLabConfig) {
   config.derivative.attemptLatex = "";
   config.derivative.hintsShown = 0;
   config.derivative.showAnswer = false;
+  config.derivative.checked = false;
+}
+
+/** A row with nothing in it, for the kinds that carry only a result. */
+function blankRow(key: string, kind: RowKind, depth: number): ShownStep {
+  return {
+    key,
+    kind,
+    label: "",
+    title: "",
+    task: "",
+    focus: "",
+    recognition: "",
+    detail: "",
+    formula: "",
+    derivation: [],
+    substitutions: [],
+    intermediate: "",
+    latex: "",
+    lines: [],
+    depth,
+    major: false,
+    deep: false,
+  };
 }
 
 /** As much of Desmos's `HelperExpression` as reading one number needs. */
@@ -83,55 +109,76 @@ type SlopeCompilation =
   | { ok: true; field: FlowField }
   | { ok: false; error: string };
 
-/** One step of a derivation, rendered, so the panel needs no `Config`. */
+/**
+ * One row of the rendered derivation.
+ *
+ * Rows rather than steps, because a derivation step becomes more than one thing
+ * on screen. A rule that has sub-derivations is announced, then its children are
+ * worked, and only then is its own result assembled — and that last part is a
+ * row of its own, placed after the children rather than beside the
+ * announcement. Written any other way the explanation uses a result before it
+ * has explained where the result came from, which is the difference between a
+ * derivation and a summary of one.
+ */
+export type RowKind = "rule" | "substitute" | "assemble";
+
 export interface ShownStep {
   key: string;
+  kind: RowKind;
+  /** Position in the derivation tree: `1`, `1a`, `1b-i`. Empty on a non-rule row. */
+  label: string;
   title: string;
+  /** "Differentiate u" — what sub-problem this is, in the parent's words. */
+  task: string;
+  /** The subexpression being worked on, so the reader knows which part. */
+  focus: string;
   /** The structure that was recognised — why this rule and not another. */
   recognition: string;
   /** What applying it does here. Empty when the formula beside it says so. */
   detail: string;
   /** The rule in general, where it has a form worth memorising. */
   formula: string;
+  /** Where the rule comes from. Shown only in the full view. */
+  derivation: { key: string; latex: string; note: string }[];
   /** The names the rule gave the pieces, already rendered. */
   substitutions: { symbol: string; latex: string }[];
   /**
    * The rule applied with its sub-derivatives still written as `d/dx(…)`.
    *
-   * Only carried for the structural steps. On a sub-problem it would say
-   * nothing the answer beneath it does not already say, and every extra line
-   * of maths costs a reader more than it costs the renderer.
+   * The line a worked solution actually shows. Jumping from the product rule
+   * straight to a fully expanded answer hides the move being taught.
    */
   intermediate: string;
-  /** What this step produced, tidied. */
+  /** What this row produced. Empty on a rule row whose children follow. */
   latex: string;
+  /** `latex` split over lines when one line would be too wide. */
+  lines: string[];
   depth: number;
   /** A structural decision rather than a sub-problem, for the panel's emphasis. */
   major: boolean;
-  /** A fact rather than an idea, so it waits until the reader asks for everything. */
-  atomic: boolean;
+  /** Below the standard view's depth, so it waits to be asked for. */
+  deep: boolean;
 }
 
 /** What the Derivative tab shows. */
 export type DerivationView =
   | {
       ok: true;
+      /** The derivative as the rules leave it, tidied. */
       resultLatex: string;
-      /**
-       * The answer split at its top-level plus and minus signs, or empty when
-       * one line is short enough.
-       *
-       * A derivative is the one expression on this tab with no bound on its
-       * length, and an answer that runs off the side is an answer the reader
-       * cannot check. Where to break is decided by counting what actually gets
-       * drawn rather than the LaTeX — `\operatorname{sin}\left(` is
-       * twenty-four characters and four glyphs — which is a proxy, not a
-       * measurement. The resize handle is the exact answer; this is the one
-       * that needs no dragging.
-       */
       resultLines: string[];
+      /**
+       * The same derivative with common factors pulled out, when that found
+       * anything. Empty when it did not, which is how the panel knows to offer
+       * no choice rather than two identical forms.
+       */
+      factoredLatex: string;
+      factoredLines: string[];
+      /** What the factoriser did, so the shorter form is not a puzzle. */
+      factorNotes: { key: string; text: string; latex: string }[];
       /** The derivative before tidying, when tidying changed anything. */
       rawLatex: string;
+      rawLines: string[];
       /** What the derivation had to assume, as comparisons to render. */
       domain: string[];
       shown: ShownStep[];
@@ -143,8 +190,8 @@ export type DerivationView =
 export interface WorkedExample {
   source: string;
   result: string;
-  /** Read off the example's own derivation, outermost structure first. */
-  hints: readonly string[];
+  /** Progressive: a question about the shape, then the pieces, then the hard part. */
+  hints: { key: string; text: string; show: string[] }[];
 }
 
 /** How a reader's attempt at the practice problem compares with the answer. */
@@ -159,11 +206,22 @@ export type AttemptVerdict = "correct" | "wrong" | "unreadable";
  */
 const ATTEMPT_SAMPLES = [0.21, 0.37, 0.53, 0.69, 0.85];
 
-/** Beyond this many drawn glyphs an answer is stacked rather than run on. */
+/** Beyond this many drawn glyphs an expression is stacked rather than run on. */
 const ANSWER_LINE_GLYPHS = 30;
 
-/** How much shorter tidying has to make an answer before it is worth a card. */
+/** How much shorter tidying has to make an answer before it is worth a row. */
 const TIDY_GLYPHS = 3;
+
+/**
+ * How deep the standard view goes.
+ *
+ * One level: the outermost rule and the sub-problems it creates, which is the
+ * shape of the expression. Everything below that is how each sub-problem was
+ * finished, and the full view is where that lives. Both render the same tree,
+ * so the setting changes the depth drawn and nothing else — there is no second
+ * derivation that could disagree with the first.
+ */
+const STANDARD_DEPTH = 1;
 
 /**
  * Roughly how wide a piece of LaTeX draws, in glyphs.
@@ -178,6 +236,21 @@ function visibleLength(latex: string): number {
     .replace(/\\[a-zA-Z]+/g, "f")
     .replace(/[{}]/g, "").length;
 }
+
+/**
+ * The label a child gets, given its parent's.
+ *
+ * Numbers, then letters, then roman numerals, which is how a worked solution
+ * on paper numbers itself. Past that it goes back to digits: a derivation four
+ * levels deep has bigger problems than its labelling scheme.
+ */
+function childLabel(parent: string, depth: number, index: number): string {
+  if (depth === 0) return parent + String.fromCharCode(97 + (index % 26));
+  if (depth === 1) return `${parent}-${ROMAN[index] ?? String(index + 1)}`;
+  return `${parent}.${index + 1}`;
+}
+
+const ROMAN = ["i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x"];
 
 /** What the exact-value reader can say about one expression. */
 export interface ExactReading {
@@ -810,7 +883,7 @@ export default class PhysicsLabSession {
    * the tree and emits LaTeX at every step. Doing that per keystroke would be
    * felt on a long expression.
    *
-   * Every step of the tree is rendered, including the ones the standard view
+   * Every row of the tree is rendered, including the ones the standard view
    * hides. The detail level is therefore a filter the panel applies rather than
    * a second derivation — switching it cannot change an answer, because there
    * is only ever one.
@@ -832,20 +905,40 @@ export default class PhysicsLabSession {
       const emit = (node: Node) => toLatexTree(this.textModeConfig, node);
       const resultLatex = emit(derivation.result);
       const rawLatex = emit(derivation.raw);
+      const shorter = condense(derivation.result);
+      const factoredLatex = emit(shorter.node);
       const example = this.workedExample(tree, variable);
       exampleDerivative = example?.derivative;
       result = {
         ok: true,
         resultLatex,
-        resultLines: this.answerLines(derivation.result, resultLatex),
+        resultLines: this.stack(derivation.result, resultLatex),
+        // Offered rather than imposed. Neither form is more correct, and which
+        // one a reader wants depends on what they are about to do with it.
+        factoredLatex:
+          shorter.notes.length === 0 || factoredLatex === resultLatex
+            ? ""
+            : factoredLatex,
+        factoredLines: this.stack(shorter.node, factoredLatex),
+        factorNotes: shorter.notes.map((note, index) => ({
+          key: String(index),
+          text: note.text,
+          // A fixed identity where there is one, otherwise the actual factor.
+          latex:
+            note.latex !== ""
+              ? note.latex
+              : note.factor === undefined
+                ? ""
+                : emit(note.factor),
+        })),
         // Only when tidying did something a reader would notice. The rules
-        // produce `2x^{1}` where the answer is `2x`, and a card about that is
-        // a card about nothing — while the one after logarithmic
-        // differentiation collapses half a line and is worth seeing.
+        // produce `2x^{1}` where the answer is `2x`, and a row about that is a
+        // row about nothing.
         rawLatex:
           visibleLength(rawLatex) > visibleLength(resultLatex) + TIDY_GLYPHS
             ? rawLatex
             : "",
+        rawLines: this.stack(derivation.raw, rawLatex),
         domain: [
           ...new Set(
             derivation.domain.map(
@@ -853,45 +946,7 @@ export default class PhysicsLabSession {
             )
           ),
         ],
-        // Emitted here rather than in the panel. This is where the parser
-        // configuration lives, and a view that has to build LaTeX is a view
-        // that has to know about `Config`.
-        shown: stepsOf(derivation.root).map(({ step, depth }, index) => {
-          // Tidied rather than raw. The rule literally produces `2x^{1}` and
-          // `3cdot1`, and a reader following the method does not need to see
-          // the arithmetic that has not happened yet — the general formula
-          // beside it already says what the rule did.
-          const produced = emit(simplifyTree(step.after));
-          return {
-            key: String(index),
-            title: step.title,
-            recognition: step.recognition,
-            detail: step.detail,
-            formula: RULE_FORMULAS[step.rule] ?? "",
-            substitutions: step.substitutions.map((substitution) => ({
-              symbol: substitution.symbol,
-              latex: emit(substitution.value),
-            })),
-            intermediate:
-              step.intermediate === undefined || step.importance !== "major"
-                ? ""
-                : emit(step.intermediate),
-            // The outermost structural rule finishes with the whole answer,
-            // which is already on screen a few lines above it. Printing it twice
-            // makes the first card look like the end of the working.
-            latex:
-              depth === 0 &&
-              step.intermediate !== undefined &&
-              produced === resultLatex
-                ? ""
-                : produced,
-            depth,
-            major: step.importance === "major",
-            // The outermost step is never hidden. A derivation that filters down
-            // to nothing at all would be a blank panel reporting success.
-            atomic: step.importance === "atomic" && depth > 0,
-          };
-        }),
+        shown: this.rows(derivation.root),
         example: example?.view,
       };
     } catch (error) {
@@ -910,13 +965,109 @@ export default class PhysicsLabSession {
   }
 
   /**
-   * The answer over several lines, or none when it fits on one.
+   * The derivation tree flattened into rows, in the order it should be read.
+   *
+   * Flat rather than nested because the tree structure is carried by `depth`
+   * and by the labels, and a flat list is what the panel can render: DCGView
+   * builds a template once, so a genuinely recursive component would have to
+   * rebuild itself every time the expression changed shape. Indentation and a
+   * left rule draw the hierarchy from the depth, which costs nothing and
+   * survives the panel being resized.
+   *
+   * The order is the whole point. A rule is announced, its children are worked,
+   * and its own result is assembled afterwards in a row of its own — so no line
+   * of the explanation uses a value the reader has not yet been shown how to
+   * get.
+   */
+  private rows(root: DerivationNode): ShownStep[] {
+    const out: ShownStep[] = [];
+    const emit = (node: Node) => toLatexTree(this.textModeConfig, node);
+
+    const walk = (
+      step: DerivationNode,
+      depth: number,
+      label: string,
+      role: string | undefined
+    ) => {
+      const hasChildren = step.children.length > 0;
+      const produced = emit(simplifyTree(step.after));
+      out.push({
+        key: `${label}-rule`,
+        kind: "rule",
+        label,
+        title: step.title,
+        // Named by the parent where the parent named it, so a sub-derivation
+        // reads as the piece it is rather than as the next thing in a list.
+        task:
+          depth === 0
+            ? ""
+            : role === undefined
+              ? "Differentiate"
+              : `Differentiate ${role}`,
+        // Which subtree of the original this step is about. Without it a reader
+        // three levels down has to reconstruct what is being differentiated.
+        focus: depth === 0 ? "" : emit(step.before),
+        recognition: step.recognition,
+        detail: step.detail,
+        formula: RULE_FORMULAS[step.rule] ?? "",
+        derivation: (RULE_DERIVATIONS[step.rule] ?? []).map((line, index) => ({
+          key: String(index),
+          ...line,
+        })),
+        substitutions: step.substitutions.map((substitution) => ({
+          symbol: substitution.symbol,
+          latex: emit(substitution.value),
+        })),
+        intermediate:
+          step.intermediate === undefined || step.importance !== "major"
+            ? ""
+            : emit(step.intermediate),
+        // A rule with children does not state its result here: it has not been
+        // earned yet. It arrives in the substitute row below its children.
+        latex: hasChildren ? "" : produced,
+        lines: hasChildren ? [] : this.stack(step.after, produced),
+        depth,
+        major: step.importance === "major",
+        deep: depth > STANDARD_DEPTH,
+      });
+
+      step.children.forEach((child, index) => {
+        walk(
+          child,
+          depth + 1,
+          childLabel(label, depth, index),
+          step.childRoles?.[index]
+        );
+      });
+
+      // The root's assembly is the final row, where it is joined by the tidying
+      // — "substitute back, then collect" is one movement and reads as one.
+      if (hasChildren && depth > 0) {
+        out.push({
+          ...blankRow(`${label}-substitute`, "substitute", depth),
+          title:
+            role === undefined ? "Put it together" : `Put ${role}' together`,
+          detail:
+            "Substitute the derivatives just found back into the rule above.",
+          latex: produced,
+          lines: this.stack(step.after, produced),
+          deep: depth > STANDARD_DEPTH,
+        });
+      }
+    };
+
+    walk(root, 0, "1", undefined);
+    return out;
+  }
+
+  /**
+   * An expression over several lines, or none when it fits on one.
    *
    * Broken only at the top level, and only between terms: a break inside a
    * product or under a fraction bar would change what the expression looks
    * like it says.
    */
-  private answerLines(node: Node, latex: string): string[] {
+  private stack(node: Node, latex: string): string[] {
     const terms = topLevelTerms(node);
     if (terms.length < 2) return [];
     if (visibleLength(latex) <= ANSWER_LINE_GLYPHS) return [];
@@ -950,7 +1101,13 @@ export default class PhysicsLabSession {
         view: {
           source: toLatexTree(this.textModeConfig, example),
           result: toLatexTree(this.textModeConfig, derived.result),
-          hints: hintsFor(derived.root),
+          hints: hintsFor(derived.root).map((hint, index) => ({
+            key: String(index),
+            text: hint.text,
+            show: hint.show.map((node) =>
+              toLatexTree(this.textModeConfig, node)
+            ),
+          })),
         },
         derivative: derived.result,
       };
@@ -968,10 +1125,13 @@ export default class PhysicsLabSession {
    * string matching will agree that they are. Two expressions that take the
    * same value everywhere they are defined are the same function, and that is
    * the thing being marked.
+   *
+   * Withheld until the reader presses Check, because a verdict that updates on
+   * every keystroke tells somebody halfway through typing that they are wrong.
    */
   get attemptVerdict(): AttemptVerdict | undefined {
     const attempt = this.config.derivative.attemptLatex.trim();
-    if (attempt === "") return undefined;
+    if (attempt === "" || !this.config.derivative.checked) return undefined;
     // Reading the derivation is what fills the cache the answer lives in.
     if (this.derivation?.ok !== true) return undefined;
     const truth = this.derivativeCache?.exampleDerivative;
@@ -1028,9 +1188,23 @@ export default class PhysicsLabSession {
     });
   }
 
+  setAnswerForm(form: AnswerForm) {
+    this.updateConfig((config) => {
+      config.derivative.form = form;
+    });
+  }
+
+  /** Editing an answer withdraws the verdict on the previous one. */
   setAttempt(attemptLatex: string) {
     this.updateConfig((config) => {
       config.derivative.attemptLatex = attemptLatex;
+      config.derivative.checked = false;
+    });
+  }
+
+  checkAttempt() {
+    this.updateConfig((config) => {
+      config.derivative.checked = true;
     });
   }
 
@@ -1046,12 +1220,20 @@ export default class PhysicsLabSession {
     });
   }
 
-  /** Puts the derivative into the graph beside whatever else is there. */
+  /**
+   * Puts the derivative into the graph beside whatever else is there.
+   *
+   * Whichever form is on screen. Adding the expanded one while the factored one
+   * is displayed would put an expression into the list that does not match the
+   * one the user was looking at when they pressed the button.
+   */
   insertDerivative() {
     const found = this.derivation;
     if (found?.ok !== true) return;
+    const factored =
+      this.config.derivative.form === "factored" && found.factoredLatex !== "";
     this.plugin.calc.setExpression({
-      latex: found.resultLatex,
+      latex: factored ? found.factoredLatex : found.resultLatex,
       color: "#c74440",
     });
   }
