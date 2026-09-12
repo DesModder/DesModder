@@ -13,30 +13,50 @@
 }
 
 .dsm-physics-lab-menu {
-  // Wide enough that the ordinary controls — three number fields on a row, a
-  // heading beside its button — fit without the panel itself scrolling. Only
-  // the maths is allowed to be wider than the panel, because only the maths has
-  // no upper bound on its length.
+  box-sizing: border-box;
+  // The default is wide enough that the ordinary controls — three number fields
+  // on a row, a heading beside its button — fit without the panel itself
+  // scrolling. The width and height are then overwritten inline from the stored
+  // configuration, because the corner is draggable and what the user dragged it
+  // to is the size they wanted.
+  //
+  // A derivation is the reason this needed to be draggable at all: an answer
+  // and the seven lines under it have no bound on their width, and a reader who
+  // wants to see one of them whole should not have to choose which.
   width: 460px;
-  max-width: 92vw;
+  min-width: 380px;
+  max-width: min(820px, 92vw);
+  min-height: 280px;
+  max-height: min(940px, 86vh);
   display: flex;
   flex-direction: column;
-  // Nothing here may push the popover sideways. A horizontal scrollbar on the
-  // panel means the controls move out from under the pointer, which is a far
-  // worse cost than a long expression needing a swipe.
-  overflow-x: hidden;
+  // `resize` does nothing without a non-visible overflow. The body scrolls
+  // rather than the panel, so the tab bar and the footer stay put — and nothing
+  // may push the popover sideways: a horizontal scrollbar on the panel moves
+  // the controls out from under the pointer, which costs far more than a long
+  // expression needing a swipe.
+  overflow: hidden;
+  resize: both;
+
+  .dcg-popover-title {
+    flex: none;
+  }
 
   .dsm-physics-lab-tabs {
+    flex: none;
     padding: 6px 10px 0;
   }
 
   // A fixed title and tab bar, a scrolling body, and a fixed footer, so the
   // status line and the Draw button never scroll away from the controls that
-  // decide what they act on.
+  // decide what they act on. The body takes whatever height is left rather
+  // than a fraction of the viewport, so dragging the corner lengthens the part
+  // that has something to show.
   .dsm-physics-lab-body {
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    max-height: 62vh;
     padding: 4px 10px 8px;
   }
 
@@ -80,14 +100,40 @@
   // the MathQuill field inside caps its own max-width against whatever the
   // container reports. A container with nothing to report settles it at a few
   // dozen pixels and clips the expression rather than wrapping it.
+  //
+  // Every level down to the field gets a definite full width, and the field's
+  // own cap is overridden because Desmos writes it onto the element as a pixel
+  // value. Without the whole chain the box settles at a few dozen pixels and
+  // clips the expression rather than growing — unreadable exactly when the
+  // expression gets long enough to need reading. Vector Tools needed the same
+  // chain for the same reason.
   .dsm-physics-lab-math-input {
     display: block;
     width: 100%;
     min-width: 0;
 
-    .dcg-mq-editable-field {
+    .dcg-mathquill-wrapper,
+    .dcg-typeset-math,
+    .dcg-mq-container {
+      box-sizing: border-box;
+      display: block;
       width: 100%;
-      max-width: 100%;
+    }
+
+    .dcg-math-field,
+    .dcg-mq-editable-field {
+      box-sizing: border-box;
+      display: block;
+      width: 100%;
+      max-width: 100% !important;
+    }
+
+    // A fraction is taller than a line of text and the box grows to hold it.
+    // What still cannot fit sideways scrolls, because an expression truncated
+    // out of sight is one the user cannot tell is wrong.
+    .dcg-mq-root-block {
+      overflow-x: auto;
+      overflow-y: hidden;
     }
   }
 
@@ -160,6 +206,7 @@
   }
 
   .dsm-physics-lab-footer {
+    flex: none;
     border-top: 1px solid rgba(0, 0, 0, 0.12);
     padding: 8px 10px;
     display: flex;
@@ -286,22 +333,103 @@
   // Each step is a rule name, a sentence, and the expression the rule produced.
   // Numbered, because the order is the method — a reader following along needs
   // to know which came first, not only what each one says.
+  // The number is written into the title rather than drawn by the list, because
+  // which steps are shown depends on the detail level and a browser counts the
+  // items it was given — leaving gaps where the atomic facts were hidden.
   .dsm-physics-lab-steps {
     margin: 0;
-    padding-left: 22px;
+    padding-left: 0;
+    list-style: none;
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
 
   .dsm-physics-lab-step {
-    padding-left: 4px;
-    border-left: 2px solid rgba(45, 112, 179, 0.25);
+    padding: 2px 0 2px 7px;
+    border-left: 2px solid rgba(45, 112, 179, 0.2);
+  }
+
+  // A structural decision — which rule, and why — is the thing to read first,
+  // and a sub-problem is the thing to read next. One weight for both was the
+  // flat list in another form.
+  .dsm-physics-lab-step-major {
+    border-left-width: 3px;
+    border-left-color: #2d70b3;
+    background: rgba(45, 112, 179, 0.05);
+    border-radius: 0 4px 4px 0;
   }
 
   .dsm-physics-lab-step-title {
     font-weight: bold;
     font-size: 0.9em;
+  }
+
+  // The pieces a rule split the problem into, named. Laid out as a row so
+  // `u = x²` and `v = sin 3x` read as one statement rather than two lines.
+  .dsm-physics-lab-subs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin: 2px 0;
+  }
+
+  .dsm-physics-lab-sub {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .dsm-physics-lab-sub-symbol {
+    font-style: italic;
+    font-size: 0.95em;
+  }
+
+  // The rule applied with its sub-derivatives still outstanding. Set back,
+  // because it is the working rather than the result.
+  .dsm-physics-lab-intermediate {
+    opacity: 0.8;
+  }
+
+  // Simplifying is not a differentiation rule, so this card is not one of the
+  // numbered steps and does not look like one.
+  .dsm-physics-lab-tidy {
+    margin-top: 8px;
+    border-left-color: rgba(0, 0, 0, 0.2);
+  }
+
+  // Long answers, one top-level term to a line.
+  .dsm-physics-lab-answer-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .dsm-physics-lab-domain {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .dsm-physics-lab-verdict {
+    font-size: 0.9em;
+    margin-top: 4px;
+    color: #c74440;
+
+    &.dsm-physics-lab-verdict-correct {
+      color: #1f7a3f;
+    }
+  }
+
+  .dsm-physics-lab-hints {
+    margin: 6px 0 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
 
   // The step's hint sits directly under its title and is the sentence saying

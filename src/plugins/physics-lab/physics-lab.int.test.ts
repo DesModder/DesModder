@@ -31,6 +31,43 @@ const DRAW_PHASE = ".dsm-physics-lab-draw-phase";
 const DERIVATIVE = String.raw`[data-physics-lab="derivative"]`;
 const EXAMPLE_ANSWER = String.raw`[data-physics-lab="example-answer"]`;
 const ADD_DERIVATIVE = ".dsm-physics-lab-add-derivative";
+const SHOW_ANSWER = ".dsm-physics-lab-show-answer";
+const HINT_BUTTON = ".dsm-physics-lab-hint-button";
+const VERDICT = String.raw`[data-physics-lab="verdict"]`;
+const STEP_TITLE = ".dsm-physics-lab-step-title";
+
+/** The Derivative tab, on the expression whose tree contains three rules. */
+async function openDerivativeTab(driver: Driver, fLatex: string) {
+  // Through the same call the math field makes, so what the field does to the
+  // practice problem is what the test does to it.
+  await driver.evaluate((latex: string) => {
+    const { session } = DSM.physicsLab as unknown as {
+      session: {
+        updateConfig: (m: (c: PhysicsLabConfig) => void) => void;
+        setDerivativeVariable: (v: string) => void;
+        setDerivativeExpression: (l: string) => void;
+      };
+    };
+    session.updateConfig((config) => {
+      config.panel.tab = "derivative";
+      config.derivative.detail = "standard";
+    });
+    session.setDerivativeVariable("x");
+    session.setDerivativeExpression(latex);
+  }, fLatex);
+  await driver.waitForSync();
+  await driver.assertSelectorEventually(DERIVATIVE);
+}
+
+async function stepTitles(driver: Driver) {
+  return await driver.evaluate(
+    (selector: string) =>
+      [...document.querySelectorAll(selector)].map(
+        (el) => (el as HTMLElement).innerText
+      ),
+    STEP_TITLE
+  );
+}
 
 async function openPanel(driver: Driver) {
   await driver.enablePlugin("physics-lab");
@@ -483,23 +520,14 @@ testWithPage(
 );
 
 testWithPage(
-  "the Derivative tab shows the rules in the order they are applied",
+  "the Derivative tab explains the expression tree, not a list of rules",
   async (driver) => {
     await openPanel(driver);
-    await driver.evaluate(() => {
-      (
-        DSM.physicsLab as unknown as {
-          session: { updateConfig: (m: (c: PhysicsLabConfig) => void) => void };
-        }
-      ).session.updateConfig((config) => {
-        config.panel.tab = "derivative";
-        config.derivative.variable = "x";
-        // Product, power and chain in one line.
-        config.derivative.fLatex = "x^{2}\\operatorname{sin}\\left(3x\\right)";
-      });
-    });
-    await driver.waitForSync();
-    await driver.assertSelectorEventually(DERIVATIVE);
+    // Product, power and chain in one line.
+    await openDerivativeTab(
+      driver,
+      "x^{2}\\operatorname{sin}\\left(3x\\right)"
+    );
 
     const shown = await driver.$eval(
       DERIVATIVE,
@@ -509,19 +537,29 @@ testWithPage(
       "2x\\operatorname{sin}\\left(3x\\right)+3x^{2}\\operatorname{cos}\\left(3x\\right)"
     );
 
-    // Outermost rule first. Recording in the order the recursion finishes gives
-    // the small derivatives before the reason for them, which is a log rather
-    // than a derivation.
-    const titles = await driver.evaluate(() =>
-      [...document.querySelectorAll(".dsm-physics-lab-step-title")].map(
+    // Outermost rule first, and only the decisions. Recording in the order the
+    // recursion finishes gives the small derivatives before the reason for
+    // them, which is a log rather than a derivation; showing every one of them
+    // gives seven cards where there are three ideas.
+    // The last card is not numbered, because collecting terms is not a
+    // differentiation rule and a card that looked like one would teach that it
+    // is.
+    expect(await stepTitles(driver)).toEqual([
+      "1. Product rule",
+      "2. Power rule",
+      "3. Chain rule",
+      "Tidy up",
+    ]);
+
+    // The product rule names the two pieces it split the problem into, and
+    // shows itself applied with those pieces still outstanding.
+    const named = await driver.evaluate(() =>
+      [...document.querySelectorAll(".dsm-physics-lab-sub-symbol")].map(
         (el) => (el as HTMLElement).innerText
       )
     );
-    expect(titles.slice(0, 3)).toEqual([
-      "Product rule",
-      "Power rule",
-      "Chain rule",
-    ]);
+    expect(named).toEqual(["u =", "v =", "u ="]);
+    await driver.assertSelector(".dsm-physics-lab-intermediate");
 
     // The general rule is rendered beside each step, not printed as its source.
     const formulas = await driver.evaluate(
@@ -529,15 +567,15 @@ testWithPage(
     );
     expect(formulas).toBeGreaterThan(0);
 
-    // The worked example is the same shape with different numbers, so it needs
-    // exactly the rules just explained.
-    const example = await driver.$eval(
-      EXAMPLE_ANSWER,
-      (el) => el.getAttribute("data-latex") ?? ""
+    // Asking for everything shows the facts too — the same tree, filtered
+    // differently, so no answer can change with the setting.
+    await driver.click(
+      "#dsm-physics-lab-detail .dsm-physics-lab-chip:nth-child(2)"
     );
-    expect(example).toBe(
-      "3x^{2}\\operatorname{sin}\\left(4x\\right)+4x^{3}\\operatorname{cos}\\left(4x\\right)"
-    );
+    await driver.waitForSync();
+    const everything = await stepTitles(driver);
+    expect(everything).toHaveLength(5);
+    expect(everything[3]).toBe("4. Derivative of a linear term");
 
     // And it goes into the graph as an ordinary expression.
     await driver.click(ADD_DERIVATIVE);
@@ -546,6 +584,158 @@ testWithPage(
     expect(
       list.some((item) => item.type === "expression" && item.latex === shown)
     ).toBe(true);
+
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  50000
+);
+
+testWithPage(
+  "the practice problem stays a problem until its answer is asked for",
+  async (driver) => {
+    await openPanel(driver);
+    await openDerivativeTab(
+      driver,
+      "x^{2}\\operatorname{sin}\\left(3x\\right)"
+    );
+
+    // A solution sitting under the question is not a question.
+    await driver.assertSelectorNot(EXAMPLE_ANSWER);
+
+    // An attempt is marked by evaluating it, so the same derivative written
+    // another way is still the same derivative. This one is the right answer
+    // with its two terms the other way round.
+    async function setAttempt(latex: string) {
+      await driver.evaluate((attempt: string) => {
+        (
+          DSM.physicsLab as unknown as {
+            session: { setAttempt: (l: string) => void };
+          }
+        ).session.setAttempt(attempt);
+      }, latex);
+      await driver.waitForSync();
+      await driver.assertSelectorEventually(VERDICT);
+      return await driver.$eval(
+        VERDICT,
+        (el) => el.getAttribute("data-verdict") ?? ""
+      );
+    }
+
+    expect(
+      await setAttempt(
+        "4x^{3}\\operatorname{cos}\\left(4x\\right)+3x^{2}\\operatorname{sin}\\left(4x\\right)"
+      )
+    ).toBe("correct");
+    // A dropped chain factor, which is the mistake this problem is for.
+    expect(
+      await setAttempt(
+        "3x^{2}\\operatorname{sin}\\left(4x\\right)+x^{3}\\operatorname{cos}\\left(4x\\right)"
+      )
+    ).toBe("wrong");
+
+    // A hint points at structure, and gives away no arithmetic.
+    await driver.click(HINT_BUTTON);
+    await driver.waitForSync();
+    const hints = await driver.evaluate(() =>
+      [...document.querySelectorAll(".dsm-physics-lab-hints li")].map(
+        (el) => (el as HTMLElement).innerText
+      )
+    );
+    expect(hints).toEqual(["The expression is a product of two functions."]);
+
+    await driver.click(SHOW_ANSWER);
+    await driver.waitForSync();
+    await driver.assertSelectorEventually(EXAMPLE_ANSWER);
+    // The same shape with different numbers, so it needs exactly the rules
+    // just explained.
+    expect(
+      await driver.$eval(
+        EXAMPLE_ANSWER,
+        (el) => el.getAttribute("data-latex") ?? ""
+      )
+    ).toBe(
+      "3x^{2}\\operatorname{sin}\\left(4x\\right)+4x^{3}\\operatorname{cos}\\left(4x\\right)"
+    );
+
+    // Changing the question takes the answer back down with it: an answer left
+    // on screen from the last problem reads as the answer to this one.
+    await openDerivativeTab(
+      driver,
+      "x^{3}\\operatorname{cos}\\left(2x\\right)"
+    );
+    await driver.assertSelectorNot(EXAMPLE_ANSWER, VERDICT);
+
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  50000
+);
+
+testWithPage(
+  "the panel is resizable, and remembers what it was dragged to",
+  async (driver) => {
+    await openPanel(driver);
+
+    // The panel opens at its stored width and grows by the corner. Dragging a
+    // resize handle is not something Puppeteer can do faithfully, so the drag's
+    // effect — an inline width on the element — is written directly and the
+    // observer that watches for it is what is under test.
+    const startWidth = await driver.$eval(
+      PANEL,
+      (el) => (el as HTMLElement).style.width
+    );
+    expect(startWidth).toBe("460px");
+    expect(await driver.$eval(PANEL, (el) => getComputedStyle(el).resize)).toBe(
+      "both"
+    );
+
+    await driver.evaluate((selector: string) => {
+      const panel = document.querySelector<HTMLElement>(selector)!;
+      panel.style.width = "640px";
+      panel.style.height = "700px";
+    }, PANEL);
+    // The observer is debounced, because one drag fires it every frame and
+    // every write serialises the whole configuration.
+    await driver.evaluate(
+      async () =>
+        await new Promise((resolve) => {
+          setTimeout(resolve, 600);
+        })
+    );
+    await driver.waitForSync();
+
+    const { panel } = await liveConfig(driver);
+    expect(panel.width).toBe(640);
+    expect(panel.height).toBe(700);
+
+    // Closed and reopened, it comes back the size it was left.
+    await driver.click(BUTTON);
+    await driver.waitForSync();
+    await driver.click(BUTTON);
+    await driver.assertSelectorEventually(PANEL);
+    expect(
+      await driver.$eval(PANEL, (el) => (el as HTMLElement).style.width)
+    ).toBe("640px");
+
+    // And the equation fields fill whatever width the panel now has, rather
+    // than shrinking to fit their own contents and clipping the expression.
+    await openTab(driver, "derivative");
+    const fieldWidth = await driver.evaluate(() => {
+      const input = document.querySelector<HTMLElement>(
+        ".dsm-physics-lab-math-input .dcg-mq-editable-field"
+      )!;
+      const box = input.parentElement!;
+      return { field: input.clientWidth, container: box.clientWidth };
+    });
+    expect(fieldWidth.field).toBeGreaterThan(fieldWidth.container - 4);
+
+    // Nothing on the tab pushes the panel sideways at any size.
+    const overflow = await driver.$eval(PANEL, (el) => ({
+      scroll: el.scrollWidth,
+      client: el.clientWidth,
+    }));
+    expect(overflow.scroll).toBe(overflow.client);
 
     await driver.setBlank();
     await driver.disablePlugin("physics-lab");

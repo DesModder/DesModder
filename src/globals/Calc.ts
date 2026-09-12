@@ -35,6 +35,7 @@ export type FocusLocation =
         | "slope-f"
         | "second-f"
         | "derivative-f"
+        | "derivative-attempt"
         | "exact"
         | "initial-x"
         | "initial-y";

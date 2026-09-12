@@ -25,6 +25,53 @@ export const SLOPE_COUNT_MAXIMUM = 401;
 
 export type PanelTab = "slope" | "second" | "derivative" | "exact";
 
+/**
+ * How far the panel may be dragged.
+ *
+ * The same bounds Vector Tools uses, widened at the top because a derivation
+ * puts more on one line than a field's controls do. The minimum is the width
+ * below which the three number fields on a row start wrapping into a column.
+ */
+export const PANEL_MIN_WIDTH = 380;
+export const PANEL_MAX_WIDTH = 820;
+export const PANEL_MIN_HEIGHT = 280;
+export const PANEL_MAX_HEIGHT = 940;
+
+/** Persisted panel geometry, so a resized panel stays resized. */
+export interface PanelConfig {
+  width: number;
+  height: number;
+  /** Section the panel opens on. */
+  tab: PanelTab;
+}
+
+/**
+ * How much of a derivation to show.
+ *
+ * `standard` hides the atomic facts — the derivative of x, of a constant — and
+ * shows the decisions. `full` shows everything the engine did. Both render the
+ * same derivation tree; nothing is recomputed, and no second explanation
+ * exists that could disagree with the first.
+ */
+export type DetailLevel = "standard" | "full";
+
+export interface DerivativeConfig {
+  fLatex: string;
+  variable: string;
+  detail: DetailLevel;
+  /**
+   * The reader's own answer to the practice problem, checked numerically
+   * against the real one. Kept here with everything else the panel owns, and
+   * cleared whenever the question changes — an attempt at the previous problem
+   * marked against this one would be nonsense.
+   */
+  attemptLatex: string;
+  /** How many hints have been asked for. */
+  hintsShown: number;
+  /** Whether the practice answer has been revealed. */
+  showAnswer: boolean;
+}
+
 export const PANEL_TABS = [
   { id: "slope", label: "Slope field" },
   { id: "second", label: "2nd order" },
@@ -66,7 +113,7 @@ export interface SlopeFieldConfig {
 
 export interface PhysicsLabConfig {
   schemaVersion: number;
-  panel: { tab: PanelTab };
+  panel: PanelConfig;
   slope: SlopeFieldConfig;
   /**
    * The right-hand side of d2y/dx2, in terms of y and v.
@@ -76,8 +123,8 @@ export interface PhysicsLabConfig {
    * picture of a second-order equation to draw beside it.
    */
   secondOrder: { fLatex: string };
-  /** The expression the Derivative tab differentiates, and with respect to what. */
-  derivative: { fLatex: string; variable: string };
+  /** What the Derivative tab is working on, and how much of it to show. */
+  derivative: DerivativeConfig;
   /**
    * The phase plane for the second-order equation: y across, y′ up.
    *
@@ -103,7 +150,7 @@ export interface PhysicsLabConfig {
 export function defaultPhysicsLabConfig(): PhysicsLabConfig {
   return {
     schemaVersion: PHYSICS_LAB_SCHEMA_VERSION,
-    panel: { tab: "slope" },
+    panel: { width: 460, height: 600, tab: "slope" },
     slope: {
       // The example every AP Calculus text opens with, and one whose solutions
       // are visibly not what a first guess says they are.
@@ -129,6 +176,10 @@ export function defaultPhysicsLabConfig(): PhysicsLabConfig {
     derivative: {
       fLatex: "x^{2}\\operatorname{sin}\\left(3x\\right)",
       variable: "x",
+      detail: "standard",
+      attemptLatex: "",
+      hintsShown: 0,
+      showAnswer: false,
     },
     phase: {
       domain: { x: { min: -4, max: 4 }, y: { min: -4, max: 4 } },
@@ -141,6 +192,13 @@ export function defaultPhysicsLabConfig(): PhysicsLabConfig {
 
 const clampNumber = (value: unknown, fallback: number) =>
   typeof value === "number" && Number.isFinite(value) ? value : fallback;
+
+const clampRange = (
+  value: unknown,
+  fallback: number,
+  low: number,
+  high: number
+) => Math.min(high, Math.max(low, clampNumber(value, fallback)));
 
 const clampCount = (value: unknown, fallback: number) =>
   Math.round(
@@ -170,12 +228,29 @@ export function normalizePhysicsLabConfig(raw: unknown): PhysicsLabConfig {
   if (typeof raw !== "object" || raw === null) return defaults;
   const source = raw as Partial<PhysicsLabConfig>;
   const slope = (source.slope ?? {}) as Partial<SlopeFieldConfig>;
-  const tab = source.panel?.tab;
+  const panel = source.panel ?? defaults.panel;
+  const { tab } = panel;
   return {
     schemaVersion: PHYSICS_LAB_SCHEMA_VERSION,
     panel: {
+      width: Math.round(
+        clampRange(
+          panel.width,
+          defaults.panel.width,
+          PANEL_MIN_WIDTH,
+          PANEL_MAX_WIDTH
+        )
+      ),
+      height: Math.round(
+        clampRange(
+          panel.height,
+          defaults.panel.height,
+          PANEL_MIN_HEIGHT,
+          PANEL_MAX_HEIGHT
+        )
+      ),
       tab: PANEL_TABS.some((entry) => entry.id === tab)
-        ? tab!
+        ? tab
         : defaults.panel.tab,
     },
     slope: {
@@ -243,6 +318,16 @@ export function normalizePhysicsLabConfig(raw: unknown): PhysicsLabConfig {
         /^[a-zA-Z]$/.test(source.derivative.variable)
           ? source.derivative.variable
           : defaults.derivative.variable,
+      detail: source.derivative?.detail === "full" ? "full" : "standard",
+      attemptLatex:
+        typeof source.derivative?.attemptLatex === "string"
+          ? source.derivative.attemptLatex
+          : "",
+      hintsShown: Math.max(
+        0,
+        Math.round(clampNumber(source.derivative?.hintsShown, 0))
+      ),
+      showAnswer: source.derivative?.showAnswer === true,
     },
     secondOrder: {
       fLatex:

@@ -12,7 +12,7 @@
  * `src/field-rendering`, and both plugins draw through it.
  */
 import { buildConfigFromGlobals, parseLatex } from "../../../text-mode-core";
-import type { Config } from "../../../text-mode-core";
+import type { Aug, Config } from "../../../text-mode-core";
 import { ArrowOverlay } from "../../field-rendering/ArrowOverlay";
 import type { ArrowOptions } from "../../field-rendering/ArrowRenderer";
 import {
@@ -34,10 +34,14 @@ import { particularConstant, type InitialResult } from "./symbolic/initial";
 import {
   differentiate,
   DifferentiationError,
+  hintsFor,
   RULE_FORMULAS,
   similarExample,
+  stepsOf,
+  topLevelTerms,
   type Derivation,
 } from "./symbolic/differentiate";
+import { agreesOnSamples, evaluate } from "./symbolic/evaluate";
 import { simplify as simplifyTree } from "./symbolic/integrate";
 
 import { toLatex as toLatexTree } from "./symbolic/latex";
@@ -46,11 +50,22 @@ import {
   normalizePhysicsLabConfig,
   thinSlopeGrid,
   validateSlopeField,
+  type DetailLevel,
   type PanelTab,
   type PhysicsLabConfig,
   type SlopeValidation,
 } from "./model";
+
 import type PhysicsLab from ".";
+
+type Node = Aug.Latex.AnyChild;
+
+/** Forgets the practice problem, because the question it belonged to is gone. */
+function resetPractice(config: PhysicsLabConfig) {
+  config.derivative.attemptLatex = "";
+  config.derivative.hintsShown = 0;
+  config.derivative.showAnswer = false;
+}
 
 /** As much of Desmos's `HelperExpression` as reading one number needs. */
 interface ValueHelper {
@@ -68,16 +83,33 @@ type SlopeCompilation =
   | { ok: true; field: FlowField }
   | { ok: false; error: string };
 
-/** One step, already rendered, so the panel need not know about `Config`. */
+/** One step of a derivation, rendered, so the panel needs no `Config`. */
 export interface ShownStep {
   key: string;
   title: string;
+  /** The structure that was recognised — why this rule and not another. */
+  recognition: string;
+  /** What applying it does here. Empty when the formula beside it says so. */
   detail: string;
   /** The rule in general, where it has a form worth memorising. */
   formula: string;
+  /** The names the rule gave the pieces, already rendered. */
+  substitutions: { symbol: string; latex: string }[];
+  /**
+   * The rule applied with its sub-derivatives still written as `d/dx(…)`.
+   *
+   * Only carried for the structural steps. On a sub-problem it would say
+   * nothing the answer beneath it does not already say, and every extra line
+   * of maths costs a reader more than it costs the renderer.
+   */
+  intermediate: string;
   /** What this step produced, tidied. */
   latex: string;
   depth: number;
+  /** A structural decision rather than a sub-problem, for the panel's emphasis. */
+  major: boolean;
+  /** A fact rather than an idea, so it waits until the reader asks for everything. */
+  atomic: boolean;
 }
 
 /** What the Derivative tab shows. */
@@ -85,15 +117,66 @@ export type DerivationView =
   | {
       ok: true;
       resultLatex: string;
+      /**
+       * The answer split at its top-level plus and minus signs, or empty when
+       * one line is short enough.
+       *
+       * A derivative is the one expression on this tab with no bound on its
+       * length, and an answer that runs off the side is an answer the reader
+       * cannot check. Where to break is decided by counting what actually gets
+       * drawn rather than the LaTeX — `\operatorname{sin}\left(` is
+       * twenty-four characters and four glyphs — which is a proxy, not a
+       * measurement. The resize handle is the exact answer; this is the one
+       * that needs no dragging.
+       */
+      resultLines: string[];
+      /** The derivative before tidying, when tidying changed anything. */
+      rawLatex: string;
+      /** What the derivation had to assume, as comparisons to render. */
+      domain: string[];
       shown: ShownStep[];
       example?: WorkedExample;
     }
   | { ok: false; error: string };
 
-/** A second problem of the same shape, worked. */
+/** A second problem of the same shape, and the scaffolding to attempt it. */
 export interface WorkedExample {
   source: string;
   result: string;
+  /** Read off the example's own derivation, outermost structure first. */
+  hints: readonly string[];
+}
+
+/** How a reader's attempt at the practice problem compares with the answer. */
+export type AttemptVerdict = "correct" | "wrong" | "unreadable";
+
+/**
+ * Where an attempt is marked.
+ *
+ * Inside the first positive arch of `sin 3x`, so the variable powers the
+ * default expression is built around are real there. An answer that is only
+ * undefined on this stretch is reported as unreadable rather than wrong.
+ */
+const ATTEMPT_SAMPLES = [0.21, 0.37, 0.53, 0.69, 0.85];
+
+/** Beyond this many drawn glyphs an answer is stacked rather than run on. */
+const ANSWER_LINE_GLYPHS = 30;
+
+/** How much shorter tidying has to make an answer before it is worth a card. */
+const TIDY_GLYPHS = 3;
+
+/**
+ * Roughly how wide a piece of LaTeX draws, in glyphs.
+ *
+ * Every command collapses to one character because that is about what it
+ * renders as, and the grouping braces to none because they render as nothing.
+ */
+function visibleLength(latex: string): number {
+  return latex
+    .replace(/\\operatorname\{([a-zA-Z]+)\}/g, "$1")
+    .replace(/\\left|\\right/g, "")
+    .replace(/\\[a-zA-Z]+/g, "f")
+    .replace(/[{}]/g, "").length;
 }
 
 /** What the exact-value reader can say about one expression. */
@@ -132,7 +215,12 @@ export default class PhysicsLabSession {
   private drawing: "none" | "slope" | "phase" = "none";
   private solutionCache?: { latex: string; result: ODEResult };
   private secondCache?: { latex: string; result: ODEResult };
-  private derivativeCache?: { key: string; result: DerivationView };
+  private derivativeCache?: {
+    key: string;
+    result: DerivationView;
+    /** What an attempt at the practice problem is marked against. */
+    exampleDerivative?: Node;
+  };
 
   private readonly overlay = new ArrowOverlay(this.plugin.calc, {
     // Its own canvas id: Vector Tools may be drawing its own arrows at the same
@@ -722,6 +810,11 @@ export default class PhysicsLabSession {
    * the tree and emits LaTeX at every step. Doing that per keystroke would be
    * felt on a long expression.
    *
+   * Every step of the tree is rendered, including the ones the standard view
+   * hides. The detail level is therefore a filter the panel applies rather than
+   * a second derivation — switching it cannot change an answer, because there
+   * is only ever one.
+   *
    * The error is kept rather than swallowed, because "the derivative of erf is
    * not known" is the useful thing to say and an empty panel is not.
    */
@@ -732,28 +825,74 @@ export default class PhysicsLabSession {
     if (this.derivativeCache?.key === key) return this.derivativeCache.result;
 
     let result: DerivationView;
+    let exampleDerivative: Node | undefined;
     try {
       const tree = parseLatex(this.textModeConfig, fLatex);
       const derivation = differentiate(this.textModeConfig, tree, variable);
+      const emit = (node: Node) => toLatexTree(this.textModeConfig, node);
+      const resultLatex = emit(derivation.result);
+      const rawLatex = emit(derivation.raw);
+      const example = this.workedExample(tree, variable);
+      exampleDerivative = example?.derivative;
       result = {
         ok: true,
-        resultLatex: toLatexTree(this.textModeConfig, derivation.result),
+        resultLatex,
+        resultLines: this.answerLines(derivation.result, resultLatex),
+        // Only when tidying did something a reader would notice. The rules
+        // produce `2x^{1}` where the answer is `2x`, and a card about that is
+        // a card about nothing — while the one after logarithmic
+        // differentiation collapses half a line and is worth seeing.
+        rawLatex:
+          visibleLength(rawLatex) > visibleLength(resultLatex) + TIDY_GLYPHS
+            ? rawLatex
+            : "",
+        domain: [
+          ...new Set(
+            derivation.domain.map(
+              (condition) => `${emit(condition.expression)}>0`
+            )
+          ),
+        ],
         // Emitted here rather than in the panel. This is where the parser
         // configuration lives, and a view that has to build LaTeX is a view
         // that has to know about `Config`.
-        shown: derivation.steps.map((step, index) => ({
-          key: String(index),
-          title: step.title,
-          detail: step.detail,
-          formula: RULE_FORMULAS[step.rule] ?? "",
+        shown: stepsOf(derivation.root).map(({ step, depth }, index) => {
           // Tidied rather than raw. The rule literally produces `2x^{1}` and
           // `3cdot1`, and a reader following the method does not need to see
           // the arithmetic that has not happened yet — the general formula
           // beside it already says what the rule did.
-          latex: toLatexTree(this.textModeConfig, simplifyTree(step.after)),
-          depth: step.depth,
-        })),
-        example: this.workedExample(tree, variable),
+          const produced = emit(simplifyTree(step.after));
+          return {
+            key: String(index),
+            title: step.title,
+            recognition: step.recognition,
+            detail: step.detail,
+            formula: RULE_FORMULAS[step.rule] ?? "",
+            substitutions: step.substitutions.map((substitution) => ({
+              symbol: substitution.symbol,
+              latex: emit(substitution.value),
+            })),
+            intermediate:
+              step.intermediate === undefined || step.importance !== "major"
+                ? ""
+                : emit(step.intermediate),
+            // The outermost structural rule finishes with the whole answer,
+            // which is already on screen a few lines above it. Printing it twice
+            // makes the first card look like the end of the working.
+            latex:
+              depth === 0 &&
+              step.intermediate !== undefined &&
+              produced === resultLatex
+                ? ""
+                : produced,
+            depth,
+            major: step.importance === "major",
+            // The outermost step is never hidden. A derivation that filters down
+            // to nothing at all would be a blank panel reporting success.
+            atomic: step.importance === "atomic" && depth > 0,
+          };
+        }),
+        example: example?.view,
       };
     } catch (error) {
       result = {
@@ -766,8 +905,26 @@ export default class PhysicsLabSession {
               "",
       };
     }
-    this.derivativeCache = { key, result };
+    this.derivativeCache = { key, result, exampleDerivative };
     return result;
+  }
+
+  /**
+   * The answer over several lines, or none when it fits on one.
+   *
+   * Broken only at the top level, and only between terms: a break inside a
+   * product or under a fraction bar would change what the expression looks
+   * like it says.
+   */
+  private answerLines(node: Node, latex: string): string[] {
+    const terms = topLevelTerms(node);
+    if (terms.length < 2) return [];
+    if (visibleLength(latex) <= ANSWER_LINE_GLYPHS) return [];
+    return terms.map((entry, index) => {
+      const body = toLatexTree(this.textModeConfig, entry.term);
+      if (index === 0) return entry.negated ? `-${body}` : body;
+      return `${entry.negated ? "-" : "+"}${body}`;
+    });
   }
 
   /**
@@ -777,21 +934,116 @@ export default class PhysicsLabSession {
    * is guaranteed to exercise the rules they were just shown. If the nudged
    * version somehow fails to differentiate it is dropped rather than reported —
    * a broken example beside a correct derivation is worse than no example.
+   *
+   * Its derivative comes back alongside the view because it is what an attempt
+   * is marked against, and marking against a parsed string would be marking
+   * against the panel rather than against the engine.
    */
   private workedExample(
-    tree: Parameters<typeof similarExample>[0],
+    tree: Node,
     variable: string
-  ): WorkedExample | undefined {
+  ): { view: WorkedExample; derivative: Node } | undefined {
     try {
       const example = similarExample(tree);
       const derived = differentiate(this.textModeConfig, example, variable);
       return {
-        source: toLatexTree(this.textModeConfig, example),
-        result: toLatexTree(this.textModeConfig, derived.result),
+        view: {
+          source: toLatexTree(this.textModeConfig, example),
+          result: toLatexTree(this.textModeConfig, derived.result),
+          hints: hintsFor(derived.root),
+        },
+        derivative: derived.result,
       };
     } catch {
       return undefined;
     }
+  }
+
+  /**
+   * Whether the reader's attempt at the practice problem is the derivative.
+   *
+   * Compared numerically rather than symbolically, which is the only honest
+   * comparison available: `3x²sin(4x) + 4x³cos(4x)` and the same thing with its
+   * terms swapped and a factor pulled out are the same answer, and no amount of
+   * string matching will agree that they are. Two expressions that take the
+   * same value everywhere they are defined are the same function, and that is
+   * the thing being marked.
+   */
+  get attemptVerdict(): AttemptVerdict | undefined {
+    const attempt = this.config.derivative.attemptLatex.trim();
+    if (attempt === "") return undefined;
+    // Reading the derivation is what fills the cache the answer lives in.
+    if (this.derivation?.ok !== true) return undefined;
+    const truth = this.derivativeCache?.exampleDerivative;
+    if (truth === undefined) return undefined;
+
+    let tree: Node;
+    try {
+      tree = parseLatex(this.textModeConfig, attempt);
+    } catch {
+      return "unreadable";
+    }
+    const { variable } = this.config.derivative;
+    const samples = ATTEMPT_SAMPLES.map((value) => ({ [variable]: value }));
+    // An expression that is undefined everywhere it is checked has not been
+    // marked at all, and reporting that as wrong would be a lie about it.
+    if (samples.every((bindings) => !Number.isFinite(evaluate(tree, bindings))))
+      return "unreadable";
+    return agreesOnSamples(
+      (bindings) => evaluate(tree, bindings),
+      (bindings) => evaluate(truth, bindings),
+      samples,
+      1e-7
+    )
+      ? "correct"
+      : "wrong";
+  }
+
+  /**
+   * A new expression to differentiate.
+   *
+   * Everything about the practice problem is cleared with it. The example is
+   * regenerated from the new expression, so a revealed answer, a spent hint or
+   * a half-typed attempt all belong to a question that no longer exists — and
+   * an answer left on screen from the previous one reads as the answer to this
+   * one.
+   */
+  setDerivativeExpression(fLatex: string) {
+    this.updateConfig((config) => {
+      config.derivative.fLatex = fLatex;
+      resetPractice(config);
+    });
+  }
+
+  setDerivativeVariable(variable: string) {
+    this.updateConfig((config) => {
+      config.derivative.variable = variable;
+      resetPractice(config);
+    });
+  }
+
+  setDetailLevel(detail: DetailLevel) {
+    this.updateConfig((config) => {
+      config.derivative.detail = detail;
+    });
+  }
+
+  setAttempt(attemptLatex: string) {
+    this.updateConfig((config) => {
+      config.derivative.attemptLatex = attemptLatex;
+    });
+  }
+
+  revealHint() {
+    this.updateConfig((config) => {
+      config.derivative.hintsShown += 1;
+    });
+  }
+
+  revealExampleAnswer() {
+    this.updateConfig((config) => {
+      config.derivative.showAnswer = true;
+    });
   }
 
   /** Puts the derivative into the graph beside whatever else is there. */

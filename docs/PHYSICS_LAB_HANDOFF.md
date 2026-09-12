@@ -843,12 +843,159 @@ it first.
 
 Evidence: `docs/assets/physics-lab-derivative.png`.
 
+---
+
+## The derivation is a tree
+
+The Derivative tab shipped explaining itself as a flat list of every rule it
+touched. That list was accurate and it was not a derivation: it lost the one
+thing worth teaching, which is that a rule ran _inside_ another. The engine now
+returns a tree, and the panel renders the hierarchy.
+
+`derive` returns `{ derivative, step }` at every node, and there is no other way
+to get either. Nothing computes an answer and then reconstructs a story for it —
+a story reconstructed from an answer can disagree with the answer, and the
+disagreement would be invisible, because both halves look plausible.
+
+### Three levels, one tree
+
+Every step carries an `importance`:
+
+- **major** — a structural decision. Which rule applies to this shape, and why.
+- **supporting** — a sub-problem worth naming. "Differentiate x²."
+- **atomic** — a fact. The derivative of x is 1; a constant goes to 0.
+
+The standard view hides the atomic ones and `Every step` stops hiding them. Both
+render the _same_ tree, so switching cannot change an answer — there is only ever
+one derivation. The outermost step is never hidden, or a derivation that filtered
+down to nothing would be a blank panel reporting success.
+
+`x²(sin 3x)^{eˣ}` was seven cards. It is now three: product rule, power rule,
+logarithmic differentiation — with the chain rule and the exponential nested
+under the third, and the derivative of 3x folded into the chain step.
+
+Two dispatch changes did most of that shortening. `3x` is now one atomic fact,
+`d/dx(cx) = c`, rather than a coefficient rule wrapped round a derivative of 1;
+and a chain of additions is flattened before it is differentiated, so
+`x⁴+3x²-7x+2` is one step with four children instead of three nested sum cards
+all saying the same sentence.
+
+### What a step shows
+
+A structural rule names the pieces it split the problem into — `u = x²`,
+`v = (sin 3x)^{eˣ}` — and then shows **itself applied with the smaller
+derivatives still outstanding**:
+
+    d/dx(x²)·(sin 3x)^{eˣ} + x²·d/dx((sin 3x)^{eˣ})
+
+That middle line is the move being taught. Jumping from the product rule
+straight to a fully expanded answer hides the only thing `(uv)' = u'v + uv'`
+does, which is turn one problem into two smaller ones. It is built with Aug's
+`Derivative` node over a paren-wrapped `Seq`, because the emitter brackets what
+sits under a `d/dx` only when it binds looser than addition — without the `Seq`,
+`d/dx x²sin(3x)` comes out with nothing to mark where the product ends.
+
+A supporting step shows its answer and no middle line: there, the middle line
+would say nothing the answer does not.
+
+### The power rule and the general power rule are two rules
+
+The old prose for `x²` read "bring the exponent down as a factor and reduce it by
+one". Beside `(sin 3x)^{eˣ}` — which is on the same screen, in the same
+expression — that sentence is not a simplification but a falsehood, and a reader
+carries it to the next problem. The recognition line now says _the exponent is a
+constant_ before it says anything about bringing it down, and logarithmic
+differentiation says "do not bring the exponent down: it is not a constant".
+
+`power` and `power-chain` are separate rules with separate formulas for the same
+reason: `d/dx u^n = nu^{n-1}` written beside a base of `3x+1` is the exact
+omission that loses the factor of 3.
+
+### Domain conditions
+
+Logarithmic differentiation puts `ln(sin 3x)` into the answer to a question that
+never mentioned a logarithm, so the answer is only real where `sin 3x > 0`. That
+condition is recorded by the rule that introduced it and shown under the answer.
+
+Only conditions the _derivation_ introduces are recorded. `ln u` already wants a
+positive `u` and the reader can see that; a note that appears on every answer is
+one nobody reads on the answer where it matters.
+
+### Simplifying is not a rule
+
+The last card is `Tidy up`, it is not numbered, and it says so: the rules
+produced one form, collecting it gives the same function written more briefly.
+Both forms are shown, because by that point the answer has scrolled away.
+
+It appears only when tidying did something a reader would notice — the rules
+produce `2x¹` where the answer is `2x`, and a card about that is a card about
+nothing.
+
+### The practice problem is a problem
+
+The answer used to sit under the question behind a disclosure, which is not much
+of a question. It is now behind **Show solution**, with **Hint** beside it and a
+field to answer in.
+
+The hints are read off the example's own derivation — outermost structure first,
+atomic steps skipped, at most three — so a hint cannot point at a structure the
+expression does not have, and "the derivative of x is 1" never becomes one.
+
+An attempt is marked by **evaluating both sides**, not by comparing strings:
+`3x²sin(4x) + 4x³cos(4x)` with its terms the other way round is the same
+derivative, and no amount of string matching will agree that it is. Two
+expressions that take the same value everywhere they are defined are the same
+function, and that is the thing being marked. An expression undefined at every
+sample point is reported as unreadable rather than wrong — it has not been marked
+at all.
+
+Changing the question clears the attempt, the hints and the revealed answer.
+An answer left on screen from the previous problem reads as the answer to this
+one.
+
+## The panel resizes
+
+Same arrangement as Vector Tools, for the same reason and with the same
+debounce: `resize: both` with a non-visible overflow, the size read back off the
+element's inline style rather than its rendered box, and one write per drag
+rather than sixty. Reading the rendered box would remember a `max-height` clamp
+from a short window and shrink the panel permanently.
+
+A derivation is what made it necessary. An answer and the lines under it have no
+bound on their width, and a reader who wants to see one of them whole should not
+have to choose which.
+
+Two things followed:
+
+**The equation fields fill the panel.** Desmos's inline math input is an
+inline-block that shrink-to-fits, and the MathQuill field inside caps its own
+max-width against whatever the container reports — a container with nothing to
+report settles it at a few dozen pixels and _clips_ the expression, unreadable
+exactly when it grows long enough to need reading. Every level down to the field
+now gets a definite full width and the field's own pixel cap is overridden.
+
+**A long answer is broken over lines** at its top-level `+` and `-`, and nowhere
+else: a break inside a product or under a fraction bar reads as a different
+expression. Where to break is decided by counting what actually gets drawn rather
+than the LaTeX — `\operatorname{sin}\left(` is twenty-four characters and four
+glyphs — which is a proxy, not a measurement. The resize handle is the exact
+answer; this is the one that needs no dragging.
+
+Evidence: `docs/assets/physics-lab-derivation.png`,
+`docs/assets/physics-lab-practice.png`.
+
 ### Still open
 
-The integrator is not instrumented and the tab does not show integrals yet —
-that is the last piece, and the harder one: integration has no single dispatch
-the way differentiation does, so "which rule and why here" is a genuinely
-different question there.
+The simplifier does not factor. `x²(sin 3x)^{eˣ}(eˣ ln(sin 3x) + 3eˣcos3x/sin3x)`
+is correct and a person would write the `eˣ` outside the bracket and the quotient
+as `3cot 3x`. Pulling a common factor out of a sum, and rewriting cos/sin as cot,
+are both simplifier work rather than differentiator work, and neither is done.
+
+The integrator is still not instrumented and the tab shows no integrals — the
+last piece, and the harder one: integration has no single dispatch the way
+differentiation does, so "which rule and why here" is a genuinely different
+question there. Several of its steps are _choices_ rather than forced branches,
+and the explanation has to say why the choice was made.
 
 And the phase plane could animate through Vector Tools' time architecture, which
 would want bounded modes for `t` — periodic, or held — rather than the unbounded

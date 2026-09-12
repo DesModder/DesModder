@@ -32,11 +32,15 @@ interface PhysicsLabSettings {
 
 const POPOVER_CLASS = "dsm-physics-lab-popover";
 
+/** Long enough that one corner drag is one write rather than sixty. */
+const PANEL_SIZE_SETTLE_MS = 250;
+
 /** The panel's two real math fields. */
 export type PhysicsLabFocusKind =
   | "slope-f"
   | "second-f"
   | "derivative-f"
+  | "derivative-attempt"
   | "exact"
   | "initial-x"
   | "initial-y";
@@ -55,6 +59,8 @@ export default class PhysicsLab extends PluginController<PhysicsLabSettings> {
   ] satisfies readonly ConfigItem[];
 
   private panelElement?: HTMLElement;
+  private panelResizeObserver?: ResizeObserver;
+  private panelSizeTimer?: ReturnType<typeof setTimeout>;
   private currentSession?: PhysicsLabSession;
 
   /**
@@ -113,14 +119,57 @@ export default class PhysicsLab extends PluginController<PhysicsLabSettings> {
   }
 
   attachPanelElement(element: HTMLElement) {
+    this.detachPanelElement();
     this.panelElement = element;
     element.closest(".dsm-pillbox-popover")?.classList.add(POPOVER_CLASS);
+    const { width, height } = this.session.getConfig().panel;
+    element.style.width = `${width}px`;
+    element.style.height = `${height}px`;
+    // The panel is resized by dragging its corner, so the size has to be read
+    // back off the element — there is no control to hang it on.
+    this.panelResizeObserver = new ResizeObserver(() =>
+      this.persistPanelSize()
+    );
+    this.panelResizeObserver.observe(element);
   }
 
   detachPanelElement() {
+    if (this.panelSizeTimer !== undefined) clearTimeout(this.panelSizeTimer);
+    this.panelSizeTimer = undefined;
+    this.panelResizeObserver?.disconnect();
+    this.panelResizeObserver = undefined;
     this.panelElement
       ?.closest(`.${POPOVER_CLASS}`)
       ?.classList.remove(POPOVER_CLASS);
     this.panelElement = undefined;
+  }
+
+  /**
+   * Remembers a dragged size, once the dragging stops.
+   *
+   * Debounced because a drag fires the observer every frame, and each write
+   * serialises the whole configuration into a plugin setting.
+   */
+  private persistPanelSize() {
+    if (this.panelSizeTimer !== undefined) clearTimeout(this.panelSizeTimer);
+    this.panelSizeTimer = setTimeout(() => {
+      this.panelSizeTimer = undefined;
+      const element = this.panelElement;
+      if (element === undefined) return;
+      // The inline style, not the rendered box. A corner drag writes the inline
+      // width and height, whereas a short window merely clamps what is rendered
+      // through max-height — and remembering that clamp would shrink the panel
+      // permanently on the next machine it was opened on.
+      const width = Math.round(Number.parseFloat(element.style.width));
+      const height = Math.round(Number.parseFloat(element.style.height));
+      if (!Number.isFinite(width) || !Number.isFinite(height)) return;
+      if (width === 0 || height === 0) return;
+      const { panel } = this.session.getConfig();
+      if (width === panel.width && height === panel.height) return;
+      this.session.updateConfig((config) => {
+        config.panel.width = width;
+        config.panel.height = height;
+      });
+    }, PANEL_SIZE_SETTLE_MS);
   }
 }
