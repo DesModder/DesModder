@@ -11,7 +11,14 @@ import {
   isDevelopmentBuild,
   getAxisSampleCount,
   thinArrowGrid,
-  normalizeVectorFieldConfig,
+  activeField,
+  cloneDefaultLibrary,
+  MAX_FIELDS,
+  nextFieldID,
+  nextSymbolToken,
+  normalizeVectorFieldLibrary,
+  uniqueFieldName,
+  type VectorFieldLibrary,
   type ColorPalette,
   type ColorRangeMode,
   type DensityPreset,
@@ -182,7 +189,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     {
       type: "string",
       variant: "text",
-      default: JSON.stringify(cloneDefaultConfig()),
+      default: JSON.stringify(cloneDefaultLibrary()),
       key: "serializedFieldConfig",
       shouldShow: () => false,
     },
@@ -233,7 +240,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
    * to parse the persisted JSON. Cache it against the raw string so a render
    * pass costs one parse rather than dozens.
    */
-  private configCache?: { serialized: string; config: VectorFieldConfig };
+  private configCache?: { serialized: string; library: VectorFieldLibrary };
   private dispatcherID?: string;
   private panelElement?: HTMLElement;
   private panelResizeObserver?: ResizeObserver;
@@ -698,38 +705,155 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     );
   }
 
-  getConfig(): VectorFieldConfig {
+  /** Every saved field, and which one the panel is editing. */
+  getLibrary(): VectorFieldLibrary {
     const serialized = this.settings.serializedFieldConfig;
     if (this.configCache?.serialized === serialized) {
-      return this.configCache.config;
+      return this.configCache.library;
     }
-    let config: VectorFieldConfig;
+    let library: VectorFieldLibrary;
     try {
-      config = normalizeVectorFieldConfig(JSON.parse(serialized));
+      library = normalizeVectorFieldLibrary(JSON.parse(serialized));
     } catch {
-      config = cloneDefaultConfig();
+      library = cloneDefaultLibrary();
     }
-    this.configCache = { serialized, config };
-    return config;
+    this.configCache = { serialized, library };
+    return library;
   }
 
-  updateConfig(update: (config: VectorFieldConfig) => void) {
-    // Copy first: `getConfig` hands back a cached object shared with the panel.
+  /**
+   * The field being edited and drawn.
+   *
+   * Kept as `getConfig` so that every caller that only cares about the current
+   * field — which is nearly all of them — reads exactly as it did before there
+   * was more than one.
+   */
+  getConfig(): VectorFieldConfig {
+    return activeField(this.getLibrary());
+  }
+
+  updateLibrary(update: (library: VectorFieldLibrary) => void) {
+    // Copy first: `getLibrary` hands back a cached object shared with the panel.
     // `structuredClone` rather than a JSON round trip, because this runs on
     // every pointermove of every slider and the round trip was serialising the
     // whole configuration twice — once out, once back — to copy it.
-    const next = structuredClone(this.getConfig());
+    const next = structuredClone(this.getLibrary());
     update(next);
-    this.saveConfig(normalizeVectorFieldConfig(next));
+    this.saveLibrary(normalizeVectorFieldLibrary(next));
+  }
+
+  updateConfig(update: (config: VectorFieldConfig) => void) {
+    this.updateLibrary((library) => {
+      update(activeField(library));
+    });
   }
 
   resetConfig() {
-    const next = cloneDefaultConfig();
-    // Panel size and the open tab are chrome, not field settings. Resetting the
-    // field should not also resize the panel or throw the user to another tab.
-    next.panel = { ...this.getConfig().panel };
-    this.saveConfig(next);
+    const restored = cloneDefaultConfig();
+    this.updateLibrary((library) => {
+      const current = activeField(library);
+      // The field is replaced, its identity is not. Its id and symbol token
+      // address expressions already written into the user's graph, and its name
+      // is how they find it in the chooser — handing all three back to the
+      // defaults would orphan the expressions and rename the wrong row.
+      Object.assign(library.fields[library.fields.indexOf(current)], restored, {
+        id: current.id,
+        name: current.name,
+        symbolToken: current.symbolToken,
+      });
+    });
     this.lastActionMessage = "Restored the default rotational field settings.";
+  }
+
+  // ---- the library -------------------------------------------------------
+
+  setActiveField(id: string) {
+    if (this.getLibrary().fields.every((field) => field.id !== id)) return;
+    this.updateLibrary((library) => {
+      library.activeId = id;
+    });
+    // The overlay is drawing the field that was active a moment ago.
+    this.refreshArrows();
+    this.refreshFlow();
+  }
+
+  /**
+   * A new field, made active.
+   *
+   * Seeded from the defaults rather than from the current field: "new" that
+   * silently copies what is on screen is indistinguishable from "duplicate",
+   * and there is a separate button for that.
+   */
+  addField() {
+    const library = this.getLibrary();
+    if (library.fields.length >= MAX_FIELDS) {
+      this.lastActionMessage = `A library holds at most ${MAX_FIELDS} fields.`;
+      return;
+    }
+    this.createField(cloneDefaultConfig(), "Vector Field");
+  }
+
+  duplicateField() {
+    const library = this.getLibrary();
+    if (library.fields.length >= MAX_FIELDS) {
+      this.lastActionMessage = `A library holds at most ${MAX_FIELDS} fields.`;
+      return;
+    }
+    const current = this.getConfig();
+    this.createField(structuredClone(current), `${current.name} copy`);
+  }
+
+  private createField(seed: VectorFieldConfig, name: string) {
+    this.updateLibrary((library) => {
+      const token = nextSymbolToken(library);
+      if (token === undefined) return;
+      const field: VectorFieldConfig = {
+        ...seed,
+        id: nextFieldID(library),
+        name: uniqueFieldName(library, name),
+        symbolToken: token,
+      };
+      library.fields.push(field);
+      library.activeId = field.id;
+    });
+    this.refreshArrows();
+    this.refreshFlow();
+  }
+
+  /**
+   * Forgets a field, and takes its generated expressions with it.
+   *
+   * Removing the expressions is the whole reason this is not just a splice:
+   * a field the user cannot see any more is one they cannot press Remove on,
+   * so the arrows it wrote into the graph would be stranded there with nothing
+   * left that knows how to find them.
+   */
+  deleteField(id: string) {
+    const library = this.getLibrary();
+    if (library.fields.length <= 1) {
+      this.lastActionMessage = "A library keeps at least one field.";
+      return;
+    }
+    const doomed = library.fields.find((field) => field.id === id);
+    if (doomed === undefined) return;
+    this.removeGeneratedFor(doomed);
+    this.updateLibrary((next) => {
+      const index = next.fields.findIndex((field) => field.id === id);
+      if (index < 0) return;
+      next.fields.splice(index, 1);
+      if (next.activeId === id) {
+        next.activeId = next.fields[Math.min(index, next.fields.length - 1)].id;
+      }
+    });
+    this.lastActionMessage = `Deleted ${doomed.name}.`;
+    this.refreshArrows();
+    this.refreshFlow();
+  }
+
+  renameField(name: string) {
+    this.updateConfig((config) => {
+      config.name = name;
+    });
   }
 
   /** The definitions the user types into for the current source. */
@@ -907,8 +1031,8 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
   // ---- panel chrome ------------------------------------------------------
 
   setPanelTab(tab: PanelTab) {
-    this.updateConfig((config) => {
-      config.panel.tab = tab;
+    this.updateLibrary((library) => {
+      library.panel.tab = tab;
     });
   }
 
@@ -918,7 +1042,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     // Pillbox popovers are a fixed 290px wide. Tag ours so it can size to the
     // panel instead of clipping it.
     element.closest(".dsm-pillbox-popover")?.classList.add(POPOVER_CLASS);
-    const { width, height } = this.getConfig().panel;
+    const { width, height } = this.getLibrary().panel;
     element.style.width = `${width}px`;
     element.style.height = `${height}px`;
     // The panel is resized by dragging its corner, so the size has to be read
@@ -951,12 +1075,12 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       const width = Math.round(Number.parseFloat(element.style.width));
       const height = Math.round(Number.parseFloat(element.style.height));
       if (!Number.isFinite(width) || !Number.isFinite(height)) return;
-      const { panel } = this.getConfig();
+      const { panel } = this.getLibrary();
       if (width === panel.width && height === panel.height) return;
       if (width === 0 || height === 0) return;
-      this.updateConfig((config) => {
-        config.panel.width = width;
-        config.panel.height = height;
+      this.updateLibrary((library) => {
+        library.panel.width = width;
+        library.panel.height = height;
       });
     }, PANEL_SIZE_SAVE_DELAY_MS);
   }
@@ -1425,6 +1549,24 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     return [plan.folder.id, ...plan.expressions.map((e) => e.id)];
   }
 
+  /**
+   * Takes one field's generated expressions out of the graph.
+   *
+   * Written against a field rather than against the active one, because
+   * deleting a field has to clear up after a field that is about to stop
+   * existing — and the usual path reads whichever field is current.
+   */
+  private removeGeneratedFor(field: VectorFieldConfig) {
+    const plan = createVectorFieldPlan(field, this.generationOptions);
+    this.expressions.removeGeneratedSet(
+      plan.namespace,
+      allGeneratedIDs(field),
+      // Only if it is ours: a ticker the user set up for something else must
+      // survive a field being deleted.
+      this.ownsCurrentTicker()
+    );
+  }
+
   removeProductionField() {
     const plan = createVectorFieldPlan(
       this.getConfig(),
@@ -1568,8 +1710,8 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     return auditVectorFieldPlan(plan, items);
   }
 
-  private saveConfig(config: VectorFieldConfig) {
-    const serialized = JSON.stringify(config);
+  private saveLibrary(library: VectorFieldLibrary) {
+    const serialized = JSON.stringify(library);
     // A drag delivers a pointermove per frame, and most of them land on the
     // value the setting already has — a slider that has run out of travel, or a
     // number that rounds to what it already was. Writing anyway meant a
@@ -1584,7 +1726,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
   }
 
   private ensureStoredConfigIsCurrent() {
-    const normalized = this.getConfig();
+    const normalized = this.getLibrary();
     const serialized = JSON.stringify(normalized);
     if (serialized !== this.settings.serializedFieldConfig) {
       this.dsm.setPluginSetting(

@@ -20,7 +20,44 @@ export type {
   ColorRangeMode,
   FlowColorMode,
 };
-export const VECTOR_FIELD_SCHEMA_VERSION = 3;
+export const VECTOR_FIELD_SCHEMA_VERSION = 4;
+
+/**
+ * The letters a field's generated Desmos symbols are built from.
+ *
+ * Every generated definition is `v_{tf<token><suffix>}`, so two fields sharing
+ * a token would define `v_{tfdp}` twice and Desmos would call one of them a
+ * duplicate. The token is stored on the field rather than derived from its
+ * position, because a field keeps its symbols when the one above it is deleted.
+ *
+ * `d` comes first so the field a pre-library setting is migrated into keeps the
+ * exact symbols it already wrote into the user's saved graphs. `t` is missing
+ * because the generator reserves it for its own tests, and the vowels that make
+ * unfortunate three-letter subscripts are missing too.
+ */
+export const SYMBOL_TOKENS = [
+  "d",
+  "e",
+  "g",
+  "h",
+  "j",
+  "k",
+  "m",
+  "n",
+  "p",
+  "q",
+  "r",
+  "s",
+  "u",
+  "v",
+  "w",
+  "x",
+  "y",
+  "z",
+] as const;
+
+/** How many fields one library may hold. */
+export const MAX_FIELDS = SYMBOL_TOKENS.length;
 
 export const VECTOR_COUNT_WARNING = 2_500;
 export const VECTOR_COUNT_HARD_MAXIMUM = 10_000;
@@ -364,6 +401,14 @@ export interface VectorFieldConfig {
   schemaVersion: number;
   id: string;
   name: string;
+  /**
+   * The letter this field's generated Desmos symbols are built from.
+   *
+   * See {@link SYMBOL_TOKENS}. Part of the saved field rather than worked out
+   * on the fly, because the symbols are written into the user's graph and have
+   * to keep meaning the same thing after another field is deleted.
+   */
+  symbolToken: string;
   source: FieldSource;
   components: {
     xLatex: string;
@@ -394,6 +439,24 @@ export interface VectorFieldConfig {
   flow: FlowConfig;
   curve: CurveConfig;
   time: TimeConfig;
+}
+
+/**
+ * Every field the user has saved, and which of them the panel is editing.
+ *
+ * The panel's own geometry lives here rather than on a field: dragging the
+ * corner is not a property of the maths, and switching fields should not resize
+ * the window. Everything else is per-field, including the clock — two fields
+ * can be animating at different speeds and only one of them is being drawn.
+ *
+ * Only the active field is drawn. Generated Desmos expressions are another
+ * matter: those are namespaced per field and stay in the graph, so a field can
+ * be generated, set aside, and a second one generated beside it.
+ */
+export interface VectorFieldLibrary {
+  schemaVersion: number;
+  fields: VectorFieldConfig[];
+  activeId: string;
   panel: PanelConfig;
 }
 
@@ -455,10 +518,27 @@ const DEFAULT_AXIS_Y: SamplingAxisConfig = {
   count: 13,
 };
 
+/**
+ * Big enough that the Field tab fits without scrolling.
+ *
+ * Measured rather than guessed: at 620 the sampling cards were 25px past the
+ * fold, which is the worst height to pick — enough to hide a control, not
+ * enough to look deliberate. The old default was 420×560, from before the tab
+ * held a field chooser or two axis cards.
+ */
+export const DEFAULT_PANEL_CONFIG: PanelConfig = {
+  width: 460,
+  height: 650,
+  tab: "field",
+};
+
 export const DEFAULT_VECTOR_FIELD_CONFIG: VectorFieldConfig = {
   schemaVersion: VECTOR_FIELD_SCHEMA_VERSION,
   id: "default",
   name: "Vector Field",
+  // See SYMBOL_TOKENS: `d` is first so a migrated setting keeps the symbols
+  // it has already written into saved graphs.
+  symbolToken: "d",
   source: "components",
   components: { xLatex: "-y", yLatex: "x" },
   // ∇(x²+y²) = (2x, 2y): a radial field that is obviously the gradient of the
@@ -515,7 +595,6 @@ export const DEFAULT_VECTOR_FIELD_CONFIG: VectorFieldConfig = {
     showPoint: true,
   },
   time: { playing: true, speed: 1 },
-  panel: { width: 420, height: 560, tab: "field" },
 };
 
 export const DENSITY_PRESETS: readonly DensityPreset[] = [
@@ -631,8 +710,67 @@ export function cloneDefaultConfig(): VectorFieldConfig {
     flow: { ...DEFAULT_VECTOR_FIELD_CONFIG.flow },
     curve: { ...DEFAULT_VECTOR_FIELD_CONFIG.curve },
     time: { ...DEFAULT_VECTOR_FIELD_CONFIG.time },
-    panel: { ...DEFAULT_VECTOR_FIELD_CONFIG.panel },
   };
+}
+
+export function cloneDefaultLibrary(): VectorFieldLibrary {
+  const field = cloneDefaultConfig();
+  return {
+    schemaVersion: VECTOR_FIELD_SCHEMA_VERSION,
+    fields: [field],
+    activeId: field.id,
+    panel: { ...DEFAULT_PANEL_CONFIG },
+  };
+}
+
+/**
+ * The field the panel is editing.
+ *
+ * Never undefined: a library that somehow lost its active field falls back to
+ * the first one rather than leaving the panel with nothing to show, and
+ * `normalizeVectorFieldLibrary` guarantees there is always a first one.
+ */
+export function activeField(library: VectorFieldLibrary): VectorFieldConfig {
+  return (
+    library.fields.find((field) => field.id === library.activeId) ??
+    library.fields[0]
+  );
+}
+
+/** A token no field in the library is using, or undefined when all are taken. */
+export function nextSymbolToken(
+  library: VectorFieldLibrary
+): string | undefined {
+  const taken = new Set(library.fields.map((field) => field.symbolToken));
+  return SYMBOL_TOKENS.find((token) => !taken.has(token));
+}
+
+/** An id no field is using. Ids reach Desmos as part of an expression id. */
+export function nextFieldID(library: VectorFieldLibrary): string {
+  const taken = new Set(library.fields.map((field) => field.id));
+  for (let index = 1; ; index += 1) {
+    const candidate = `field${index}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+}
+
+/**
+ * A name nothing else is called.
+ *
+ * Duplicating a field twice should give two distinguishable things in the
+ * chooser; two rows both reading "Vector Field copy" is a chooser that cannot
+ * be used.
+ */
+export function uniqueFieldName(
+  library: VectorFieldLibrary,
+  base: string
+): string {
+  const taken = new Set(library.fields.map((field) => field.name));
+  if (!taken.has(base)) return base;
+  for (let index = 2; ; index += 1) {
+    const candidate = `${base} ${index}`;
+    if (!taken.has(candidate)) return candidate;
+  }
 }
 
 export function getAxisSampleCount(axis: SamplingAxisConfig): number {
@@ -760,6 +898,11 @@ export function normalizeVectorFieldConfig(value: unknown): VectorFieldConfig {
     schemaVersion: VECTOR_FIELD_SCHEMA_VERSION,
     id: validID(value.id) ? value.id : fallback.id,
     name: validString(value.name) ? value.name : fallback.name,
+    symbolToken: SYMBOL_TOKENS.includes(
+      value.symbolToken as (typeof SYMBOL_TOKENS)[number]
+    )
+      ? (value.symbolToken as string)
+      : fallback.symbolToken,
     // Schema 2 and earlier had no source; those configs are all component
     // fields, which is exactly what the fallback says.
     source: value.source === "gradient" ? "gradient" : fallback.source,
@@ -839,9 +982,69 @@ export function normalizeVectorFieldConfig(value: unknown): VectorFieldConfig {
     flow: normalizeFlow(value.flow, fallback.flow),
     curve: normalizeCurve(value.curve, fallback.curve),
     time: normalizeTime(value.time, fallback.time),
-    panel: normalizePanel(value.panel, fallback.panel),
   };
   return config;
+}
+
+/**
+ * Brings any stored value up to the current library schema.
+ *
+ * Accepts a bare field as well as a library, because that is what every setting
+ * saved before this existed contains — schema 3 stored one `VectorFieldConfig`
+ * at the top level. Such a value is wrapped into a one-field library, keeping
+ * its id and its symbol token, so the expressions it has already generated into
+ * the user's graphs stay recognisable and removable.
+ *
+ * Nothing here throws. A library that cannot be read is one the user cannot get
+ * back to, and losing a saved field is worse than restoring a default.
+ */
+export function normalizeVectorFieldLibrary(
+  value: unknown
+): VectorFieldLibrary {
+  const fallback = cloneDefaultLibrary();
+  if (!isRecord(value)) return fallback;
+
+  const stored = Array.isArray(value.fields) ? value.fields : undefined;
+  // A pre-library setting is one field, stored where the library now goes.
+  const fields = (stored ?? [value]).map((field) =>
+    normalizeVectorFieldConfig(field)
+  );
+  if (fields.length === 0) fields.push(cloneDefaultConfig());
+
+  // Ids and tokens both have to be unique, and a stored file that somehow
+  // repeats one would otherwise produce two fields writing over each other's
+  // expressions. Later duplicates are moved rather than dropped: the field is
+  // still the user's, and only its addressing is wrong.
+  const usedIDs = new Set<string>();
+  const usedTokens = new Set<string>();
+  for (const field of fields) {
+    if (usedIDs.has(field.id)) {
+      let index = 1;
+      while (usedIDs.has(`field${index}`)) index += 1;
+      field.id = `field${index}`;
+    }
+    usedIDs.add(field.id);
+    if (usedTokens.has(field.symbolToken)) {
+      const free = SYMBOL_TOKENS.find((token) => !usedTokens.has(token));
+      // Past the end of the alphabet two fields share a token, which collides
+      // only if both are generated into the same graph. Dropping the field
+      // would be the worse of the two outcomes.
+      field.symbolToken = free ?? field.symbolToken;
+    }
+    usedTokens.add(field.symbolToken);
+  }
+
+  const trimmed = fields.slice(0, MAX_FIELDS);
+  const activeId =
+    validID(value.activeId) && trimmed.some((f) => f.id === value.activeId)
+      ? value.activeId
+      : trimmed[0].id;
+  return {
+    schemaVersion: VECTOR_FIELD_SCHEMA_VERSION,
+    fields: trimmed,
+    activeId,
+    panel: normalizePanel(value.panel, fallback.panel),
+  };
 }
 
 function normalizeCurve(value: unknown, fallback: CurveConfig): CurveConfig {

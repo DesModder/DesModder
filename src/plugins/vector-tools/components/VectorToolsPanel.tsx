@@ -126,12 +126,15 @@ export class VectorToolsPanel extends Component<{
         willUnmount={() => vectorTools.detachPanelElement()}
       >
         <div class="dcg-popover-title">{format("vector-tools-name")}</div>
+        {fieldChooser(vectorTools, config)}
         <div class="dsm-vector-tools-tabs">
           <SegmentedControl
             ariaGroupLabel="Vector Tools section"
             names={() => PANEL_TABS.map((tab) => tab.label)}
             selectedIndex={() =>
-              PANEL_TABS.findIndex((tab) => tab.id === config().panel.tab)
+              PANEL_TABS.findIndex(
+                (tab) => tab.id === vectorTools.getLibrary().panel.tab
+              )
             }
             setSelectedIndex={(index: number) =>
               vectorTools.setPanelTab(PANEL_TABS[index].id)
@@ -140,7 +143,7 @@ export class VectorToolsPanel extends Component<{
         </div>
 
         <div class="dsm-vector-tools-body">
-          {SwitchUnion(() => config().panel.tab, {
+          {SwitchUnion(() => vectorTools.getLibrary().panel.tab, {
             field: () => fieldTab(vectorTools, config, validation),
             arrows: () => arrowsTab(vectorTools, config),
             color: () => colorTab(vectorTools, config),
@@ -168,15 +171,36 @@ function fieldTab(
   return (
     <div>
       <section class="dsm-vector-tools-section">
-        {textControl(
-          "dsm-vector-tools-name",
-          "Field name",
-          () => config().name,
-          (value) =>
-            vectorTools.updateConfig((field) => {
-              field.name = value;
-            })
-        )}
+        <div class="dsm-vector-tools-section-head">
+          {textControl(
+            "dsm-vector-tools-name",
+            "Name",
+            () => config().name,
+            (value) => vectorTools.renameField(value)
+          )}
+          <div class="dsm-vector-tools-inline">
+            <Button
+              color="light-gray"
+              class="dsm-vector-tools-duplicate-field"
+              onTap={() => vectorTools.duplicateField()}
+            >
+              Duplicate
+            </Button>
+            {/* Deleting the last field would leave the panel with nothing to
+                edit, so the button goes rather than failing when pressed. */}
+            <If predicate={() => vectorTools.getLibrary().fields.length > 1}>
+              {() => (
+                <Button
+                  color="light-gray"
+                  class="dsm-vector-tools-delete-field"
+                  onTap={() => vectorTools.deleteField(config().id)}
+                >
+                  Delete
+                </Button>
+              )}
+            </If>
+          </div>
+        </div>
         {chipGroup(
           "Field from",
           () => config().source,
@@ -248,8 +272,13 @@ function fieldTab(
             Match viewport
           </Button>
         </div>
-        {axisControls(vectorTools, "x", config)}
-        {axisControls(vectorTools, "y", config)}
+        {/* Side by side where the panel is wide enough, stacked where it is
+            not. Two identical cards down the page were taking most of the tab
+            to hold six numbers, and the tab did not fit at its default size. */}
+        <div class="dsm-vector-tools-axes">
+          {axisControls(vectorTools, "x", config)}
+          {axisControls(vectorTools, "y", config)}
+        </div>
         <div class="dsm-vector-tools-count">
           Estimated vectors:{" "}
           {() => validation().estimatedVectorCount.toLocaleString()}
@@ -985,6 +1014,60 @@ function timeControls(vectorTools: VectorTools) {
   );
 }
 
+/**
+ * The saved fields, above the tabs rather than inside one.
+ *
+ * Every tab edits the field this row points at — Colour and Flow as much as
+ * Field — so a chooser buried in one of them would look like a setting of that
+ * tab. It also has to stay small: it sits in the panel's chrome, where the space
+ * it takes is taken from every tab at once.
+ *
+ * Chips rather than a dropdown, for the same reason every other choice in this
+ * panel is chips: DCGView cannot drive a native `select`'s selection through
+ * props, and a dropdown inside a scrolling popover is awkward to hit.
+ */
+function fieldChooser(vectorTools: VectorTools, config: ConfigGetter) {
+  const fields = () => vectorTools.getLibrary().fields;
+  return (
+    <div
+      class="dsm-vector-tools-chooser"
+      role="group"
+      aria-label="Saved fields"
+    >
+      <div class="dsm-vector-tools-field-chips">
+        <For each={fields} key={(field: VectorFieldConfig) => field.id}>
+          {(getField: () => VectorFieldConfig) => (
+            <span
+              role="button"
+              tabIndex={0}
+              data-field={() => getField().id}
+              class={() => ({
+                "dsm-vector-tools-chip": true,
+                "dsm-vector-tools-chip-selected": getField().id === config().id,
+              })}
+              aria-pressed={() =>
+                getField().id === config().id ? "true" : "false"
+              }
+              onTap={() => vectorTools.setActiveField(getField().id)}
+            >
+              {() => getField().name}
+            </span>
+          )}
+        </For>
+      </div>
+      <span
+        role="button"
+        tabIndex={0}
+        class="dsm-vector-tools-chip dsm-vector-tools-add-field"
+        aria-label="New field"
+        onTap={() => vectorTools.addField()}
+      >
+        +
+      </span>
+    </div>
+  );
+}
+
 function axisControls(
   vectorTools: VectorTools,
   axisName: "x" | "y",
@@ -993,8 +1076,21 @@ function axisControls(
   const axis = () => config().domain[axisName];
   return (
     <div class="dsm-vector-tools-axis" data-axis={axisName}>
-      <div class="dsm-vector-tools-axis-heading">{axisName} axis</div>
-      <div class="dsm-vector-tools-number-grid">
+      {/* The heading and the mode share a line, and the numbers share the one
+          below. The mode stays per-axis — sampling x by step and y by count is
+          unusual and entirely reasonable — it just no longer costs a row. */}
+      <div class="dsm-vector-tools-axis-head">
+        <div class="dsm-vector-tools-axis-heading">{axisName} axis</div>
+        {chipGroup(
+          "",
+          () => axis().mode,
+          SAMPLING_MODES,
+          (value) => vectorTools.setAxis(axisName, "mode", value),
+          `dsm-vector-tools-${axisName}-sampling`,
+          `Sampling ${axisName} by`
+        )}
+      </div>
+      <div class="dsm-vector-tools-number-grid dsm-vector-tools-axis-numbers">
         {numberControl(
           `dsm-vector-tools-${axisName}-minimum`,
           "Minimum",
@@ -1008,13 +1104,6 @@ function axisControls(
           (value) => vectorTools.setAxis(axisName, "max", value)
         )}
       </div>
-      {chipGroup(
-        "Sampling by",
-        () => axis().mode,
-        SAMPLING_MODES,
-        (value) => vectorTools.setAxis(axisName, "mode", value),
-        `dsm-vector-tools-${axisName}-sampling`
-      )}
       {IfElse(() => axis().mode === "step", {
         true: () =>
           numberControl(
@@ -1177,10 +1266,19 @@ function chipGroup<T extends string>(
   value: () => T,
   choices: readonly Choice<T>[],
   onChange: (value: T) => void,
-  id?: string
+  id?: string,
+  // A group whose visible label would only repeat the heading beside it still
+  // needs one for a screen reader, and two groups sharing a label are two
+  // groups nothing can tell apart.
+  ariaLabel = label
 ) {
   return (
-    <div class="dsm-vector-tools-chips" id={id} role="group" aria-label={label}>
+    <div
+      class="dsm-vector-tools-chips"
+      id={id}
+      role="group"
+      aria-label={ariaLabel}
+    >
       <div class="dsm-vector-tools-label">{label}</div>
       <div class="dsm-vector-tools-chip-row">
         {choices.map((choice) => (

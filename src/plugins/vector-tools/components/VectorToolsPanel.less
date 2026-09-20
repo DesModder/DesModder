@@ -301,18 +301,98 @@
     }
   }
 
+  // Side by side wherever the panel is wide enough for it. Two identical
+  // cards stacked down the page were taking most of the Field tab to hold six
+  // numbers, and at the default panel size the tab did not fit.
+  .dsm-vector-tools-axes {
+    display: grid;
+    gap: 7px;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    margin-top: 7px;
+  }
+
   .dsm-vector-tools-axis {
     border: 1px solid #e1e1e1;
     border-radius: 4px;
-    margin-top: 7px;
     padding: 7px;
+    min-width: 0;
+  }
+
+  // The heading and the sampling mode share a line. The mode stays per-axis —
+  // sampling x by step and y by count is unusual and perfectly reasonable — it
+  // just no longer costs a row of its own.
+  .dsm-vector-tools-axis-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 8px;
   }
 
   .dsm-vector-tools-axis-heading {
     font-size: 12px;
     font-weight: bold;
-    margin-bottom: 2px;
     text-transform: uppercase;
+  }
+
+  // A chip group given no label still renders the element for one.
+  .dsm-vector-tools-label:empty {
+    display: none;
+  }
+
+  // Used once, for the paragraph under "Drawn by", and it had no rule at all —
+  // so it drew at full body size beside every other explanation, which uses
+  // the small grey hint. It is the same kind of sentence; it now looks like it.
+  .dsm-vector-tools-note {
+    color: #666;
+    font-size: 11px;
+    line-height: 1.4;
+    margin: 4px 0 6px;
+  }
+
+  // The saved fields, in the panel's chrome above the tabs. It does not scroll
+  // with the body, so it is kept to one row: the height it takes is taken from
+  // every tab at once.
+  .dsm-vector-tools-chooser {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0 0;
+    min-width: 0;
+  }
+
+  .dsm-vector-tools-field-chips {
+    display: flex;
+    gap: 4px;
+    flex: 1 1 auto;
+    min-width: 0;
+    // Many saved fields scroll sideways here rather than wrapping into a
+    // second row that would push every tab down.
+    overflow-x: auto;
+    scrollbar-width: thin;
+
+    .dsm-vector-tools-chip {
+      white-space: nowrap;
+    }
+  }
+
+  .dsm-vector-tools-add-field {
+    flex: none;
+    font-weight: bold;
+    line-height: 1;
+    padding: 4px 9px;
+  }
+
+  .dsm-vector-tools-inline {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+
+    .dsm-btn {
+      margin: 0;
+    }
   }
 
   .dsm-vector-tools-number-grid {

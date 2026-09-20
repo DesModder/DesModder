@@ -24,6 +24,14 @@ import {
   lengthInputsFor,
   LIVE_ARROW_MAXIMUM,
   normalizeVectorFieldConfig,
+  normalizeVectorFieldLibrary,
+  activeField,
+  cloneDefaultLibrary,
+  MAX_FIELDS,
+  nextFieldID,
+  nextSymbolToken,
+  uniqueFieldName,
+  VECTOR_FIELD_SCHEMA_VERSION,
   PANEL_MAX_WIDTH,
   PANEL_MIN_HEIGHT,
   thinArrowGrid,
@@ -303,7 +311,7 @@ describe("Vector Tools field configuration", () => {
     });
 
     expect(config).toMatchObject({
-      schemaVersion: 3,
+      schemaVersion: VECTOR_FIELD_SCHEMA_VERSION,
       id: "saved_field",
       name: "Saved field",
       components: { xLatex: "", yLatex: "x+y" },
@@ -378,8 +386,11 @@ describe("Vector Tools field configuration", () => {
   });
 
   test("clamps persisted panel geometry and falls back to a known tab", () => {
+    // Panel geometry belongs to the library rather than to a field: dragging
+    // the corner is not a property of the maths, and switching fields must not
+    // resize the window.
     expect(
-      normalizeVectorFieldConfig({
+      normalizeVectorFieldLibrary({
         panel: { width: 10_000, height: 4, tab: "nope" },
       }).panel
     ).toEqual({
@@ -388,7 +399,7 @@ describe("Vector Tools field configuration", () => {
       tab: "field",
     });
     expect(
-      normalizeVectorFieldConfig({ panel: { width: 460, tab: "flow" } }).panel
+      normalizeVectorFieldLibrary({ panel: { width: 460, tab: "flow" } }).panel
     ).toMatchObject({ width: 460, tab: "flow" });
   });
 
@@ -847,5 +858,121 @@ describe("Vector Tools flow colour matching", () => {
         expect.stringMatching(/^(speed|direction|fixed)$/),
       ]);
     }
+  });
+});
+
+/**
+ * The library is where a saved setting from before it existed has to land, and
+ * where two fields have to stay distinguishable. Both of those are silent
+ * failures if they go wrong: a migration that drops the user's field loses
+ * work, and two fields sharing a symbol token produce a duplicate-definition
+ * error in Desmos rather than an error here.
+ */
+describe("the field library", () => {
+  test("a setting saved before libraries existed becomes a one-field library", () => {
+    const legacy = {
+      schemaVersion: 3,
+      id: "default",
+      name: "My Field",
+      components: { xLatex: "y", yLatex: "-x" },
+      panel: { width: 500, height: 600, tab: "flow" },
+    };
+    const library = normalizeVectorFieldLibrary(legacy);
+    expect(library.fields).toHaveLength(1);
+    expect(library.activeId).toBe("default");
+    expect(library.fields[0].name).toBe("My Field");
+    expect(library.fields[0].components).toEqual({
+      xLatex: "y",
+      yLatex: "-x",
+    });
+    // The id and the token address expressions already written into the user's
+    // saved graphs, so the migration is not allowed to reassign either.
+    expect(library.fields[0].id).toBe("default");
+    expect(library.fields[0].symbolToken).toBe("d");
+    // The panel geometry comes out of the field and up to the library.
+    expect(library.panel).toMatchObject({ width: 500, tab: "flow" });
+  });
+
+  test("anything unreadable falls back rather than throwing", () => {
+    // A library the user cannot get back to is worse than a default one.
+    expect(normalizeVectorFieldLibrary(null).fields).toHaveLength(1);
+    expect(normalizeVectorFieldLibrary({ fields: [] }).fields).toHaveLength(1);
+    expect(
+      normalizeVectorFieldLibrary({ fields: [{}, {}] }).fields
+    ).toHaveLength(2);
+  });
+
+  test("repeated ids and symbol tokens are moved apart", () => {
+    const library = normalizeVectorFieldLibrary({
+      fields: [
+        { id: "default", symbolToken: "d" },
+        { id: "default", symbolToken: "d" },
+        { id: "other", symbolToken: "d" },
+      ],
+    });
+    expect(new Set(library.fields.map((f) => f.id)).size).toBe(3);
+    expect(new Set(library.fields.map((f) => f.symbolToken)).size).toBe(3);
+    // The first field keeps what it had; only the later clashes move.
+    expect(library.fields[0].id).toBe("default");
+    expect(library.fields[0].symbolToken).toBe("d");
+  });
+
+  test("an active id pointing at nothing falls back to the first field", () => {
+    const library = normalizeVectorFieldLibrary({
+      fields: [{ id: "one" }, { id: "two" }],
+      activeId: "gone",
+    });
+    expect(library.activeId).toBe("one");
+    expect(activeField(library).id).toBe("one");
+  });
+
+  test("it will not hold more fields than there are symbols for", () => {
+    const library = normalizeVectorFieldLibrary({
+      fields: Array.from({ length: MAX_FIELDS + 5 }, (_, index) => ({
+        id: `f${index}`,
+      })),
+    });
+    expect(library.fields).toHaveLength(MAX_FIELDS);
+    expect(nextSymbolToken(library)).toBeUndefined();
+  });
+
+  test("new fields get a free token, a free id and a name of their own", () => {
+    const library = cloneDefaultLibrary();
+    expect(nextSymbolToken(library)).toBe("e");
+    expect(nextFieldID(library)).toBe("field1");
+    expect(uniqueFieldName(library, "Vector Field")).toBe("Vector Field 2");
+    expect(uniqueFieldName(library, "Something else")).toBe("Something else");
+  });
+});
+
+describe("generated symbols are the field's own", () => {
+  test("two fields do not both define the same Desmos symbol", () => {
+    // Before the library existed the generator took the field's id and threw
+    // it away, so every field emitted `v_{tfdp}`. Invisible while only one
+    // field could exist; a duplicate-definition error the moment two could.
+    const library = cloneDefaultLibrary();
+    const [first] = library.fields;
+    const second = {
+      ...cloneDefaultConfig(),
+      id: "field1",
+      symbolToken: nextSymbolToken(library)!,
+    };
+
+    const latexOf = (config: typeof first) =>
+      createVectorFieldPlan(config)
+        .expressions.map((expression) => expression.latex ?? "")
+        .join(" ");
+
+    expect(latexOf(first)).toContain("v_{tfdp}");
+    expect(latexOf(second)).toContain("v_{tfep}");
+    expect(latexOf(second)).not.toContain("v_{tfdp}");
+  });
+
+  test("and their expression ids stay apart too", () => {
+    const first = cloneDefaultConfig();
+    const second = { ...cloneDefaultConfig(), id: "field1", symbolToken: "e" };
+    const ids = (config: typeof first) => new Set(allGeneratedIDs(config));
+    const shared = [...ids(first)].filter((id) => ids(second).has(id));
+    expect(shared).toEqual([]);
   });
 });

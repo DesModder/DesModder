@@ -313,3 +313,103 @@ configuration plus a deterministic plan, then use the same adapter ownership
 and audit rules. Any additional Desmos-internal integration should stay
 isolated at the adapter boundary and be re-verified as Desmos or DesModder
 changes.
+
+---
+
+## The field library
+
+One setting used to hold one `VectorFieldConfig`. It now holds a
+`VectorFieldLibrary` — every saved field, which one is active, and the panel's
+own geometry — and the panel gained a chooser above its tabs.
+
+Only the active field is drawn live. Generated Desmos expressions are a
+different matter: each field's are namespaced with its own id and stay in the
+graph, so a field can be generated, set aside, and a second one generated
+beside it.
+
+### The collision this had to fix first
+
+`createSymbols` took the field's id and threw it away:
+
+```ts
+const instance = instanceID === "test" ? "t" : "d";
+```
+
+Every field emitted `v_{tfdp}`, `v_{tfdq}` and the rest. Invisible while only
+one field could exist — and a duplicate-definition error in Desmos the moment
+two could. Each field now carries a `symbolToken` and its symbols are built
+from that.
+
+The token is **stored on the field**, not derived from its position, because a
+field has to keep meaning the same thing after the one above it is deleted. `d`
+is first in `SYMBOL_TOKENS` so the field a pre-library setting migrates into
+keeps the symbols it has already written into the user's saved graphs, and `t`
+is absent because the generator's test lab reserves it.
+
+### Migration
+
+`normalizeVectorFieldLibrary` accepts a bare field as well as a library, since
+that is what every setting saved before this contains, and wraps it into a
+one-field library keeping its id and token. Repeated ids or tokens in a stored
+file are moved apart rather than dropped — the field is still the user's, and
+only its addressing is wrong.
+
+An integration test does the real thing: writes a schema-3 setting, restarts the
+plugin, and checks the field comes back as the user's rather than as a default.
+
+### A leak the tests found
+
+Adding those tests broke an unrelated one. Plugin settings reach extension
+storage on a debounce, and `waitForSync` waits for the _evaluator_, not for
+that — so a page closed before the flush left the next one reading a stale
+setting, migrating it on enable, and holding a settings write in flight while
+that test asserted nothing was pending.
+
+Two guards came out of it. The tests now wait for the flush before closing, and
+a unit test asserts the library **normalizes back to exactly itself**. That one
+is not tidiness: the plugin compares the serialized library against what is
+stored every time it starts, so a library that does not round-trip means every
+enable writes a setting.
+
+## The panel, tidied
+
+**The chooser sits above the tabs.** Every tab edits the field it points at —
+Colour and Flow as much as Field — so a chooser inside one of them would read as
+a setting of that tab. It is one row, because it lives in the chrome where the
+space it takes is taken from every tab at once; many fields scroll sideways
+rather than wrapping into a second row.
+
+**The two sampling axes are side by side**, and each one's mode shares a line
+with its heading. Two identical bordered cards stacked down the page were taking
+most of the Field tab to hold six numbers. The mode stays per-axis — sampling x
+by step and y by count is unusual and perfectly reasonable — it just no longer
+costs a row.
+
+Both axis chip groups also used to carry the same `aria-label`, so nothing could
+tell them apart; they are now "Sampling x by" and "Sampling y by".
+
+**`.dsm-vector-tools-note` had no CSS rule at all.** Used once, for the
+paragraph under "Drawn by", it drew at full body size beside every other
+explanation, which uses the small grey hint. It is the same kind of sentence and
+now looks like it.
+
+**The default panel is 460×650**, measured rather than guessed: at 620 the
+sampling cards sat 25px past the fold, which is the worst height to pick —
+enough to hide a control, not enough to look deliberate. At 650 the Field tab's
+`scrollHeight` equals its `clientHeight`. The old default was 420×560, from
+before the tab held either a chooser or two axis cards.
+
+Evidence: `docs/assets/vector-tools-library.png`.
+
+### Next
+
+Four new field sources are agreed and not yet built: point sources (a table of
+charges or masses summed into an inverse-square field), the perpendicular
+gradient (−f*y, f_x) for stream functions and level-curve flow, polar components
+(F_r, F*θ), and a complex function drawn as a Pólya field. The last of those is
+much the most expensive — extracting real and imaginary parts symbolically is a
+complex-arithmetic evaluator, not a formula — so it goes last.
+
+Then colouring by divergence or curl, which `symbolic.ts` already has the exact
+partials for; and a gallery of presets that move and react, which is what the
+per-field clock and the environment scanner were built for.

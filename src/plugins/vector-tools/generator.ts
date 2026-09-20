@@ -102,7 +102,7 @@ export function namespaceForField(config: VectorFieldConfig): string {
 
 /** The symbol a generated field advances as its clock. */
 export function timeSymbolFor(config: VectorFieldConfig) {
-  return createSymbols(config.id).time;
+  return createSymbols(config).time;
 }
 
 /**
@@ -200,7 +200,7 @@ export function componentFunctionLatex(
   slot: ComponentSlot,
   animateTime = false
 ) {
-  const symbols = createSymbols(config.id);
+  const symbols = createSymbols(config);
   return `${slotSymbol(symbols, slot)}\\left(x,y\\right)=\\left(${componentBodyLatex(
     config,
     slot,
@@ -283,7 +283,7 @@ export function parseComponentFromLatex(
   animateTime = false
 ): string | undefined {
   if (latex === undefined) return undefined;
-  const symbols = createSymbols(config.id);
+  const symbols = createSymbols(config);
   const symbol = slotSymbol(symbols, slot);
   const normalized = latex.replace(/\s+/g, "");
   const prefixes = [
@@ -350,7 +350,7 @@ export function createVectorFieldPlan(
   { animateTime = false }: GenerationOptions = {}
 ): VectorFieldPlan {
   const namespace = namespaceForField(config);
-  const symbols = createSymbols(config.id);
+  const symbols = createSymbols(config);
   const xCount = getAxisSampleCount(config.domain.x);
   const yCount = getAxisSampleCount(config.domain.y);
   const xSpacing = getAxisSpacing(config.domain.x);
@@ -647,8 +647,19 @@ export function auditVectorFieldPlan(
   };
 }
 
-function createSymbols(instanceID: string) {
-  const instance = instanceID === "test" ? "t" : "d";
+/**
+ * The Desmos symbols one field's generated expressions define.
+ *
+ * Keyed by the field's own token, so two fields generated into the same graph
+ * do not both define `v_{tfdp}`. Before the library existed this took the
+ * field's id and threw it away — every field produced the same symbols, which
+ * was invisible while only one field could exist and a duplicate-definition
+ * error the moment two could.
+ *
+ * The test lab keeps `t`, which is why `SYMBOL_TOKENS` does not offer it.
+ */
+function createSymbols(config: Pick<VectorFieldConfig, "id" | "symbolToken">) {
+  const instance = config.id === "test" ? "t" : config.symbolToken;
   const symbol = (suffix: string) => `v_{tf${instance}${suffix}}`;
   return {
     xSamples: symbol("xs"),

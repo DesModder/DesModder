@@ -136,12 +136,20 @@ const selectedChip = (label: string) =>
  * `evaluate` stringifies its callback, so nothing from module scope is in
  * scope inside one. Read the stored config through its own round trip.
  */
-const storedConfig = async (driver: Driver) =>
+const storedLibrary = async (driver: Driver) =>
   await driver.evaluate(() =>
     JSON.parse(
       DSM.pluginSettings["vector-tools"]!.serializedFieldConfig as string
     )
   );
+
+/** The field the panel is editing, read back out of the stored library. */
+const storedConfig = async (driver: Driver) => {
+  const library = await storedLibrary(driver);
+  return library.fields.find(
+    (field: { id: string }) => field.id === library.activeId
+  );
+};
 
 /**
  * Opens a tab by name rather than by position.
@@ -167,7 +175,10 @@ testWithPage(
     await driver.click(BUTTON);
 
     // The panel opens on Field, and its sampling chips reflect stored state.
-    expect(await driver.evaluate(selectedChip, "Sampling by")).toBe("step");
+    expect(await driver.evaluate(selectedChip, "Sampling x by")).toBe("step");
+    // Each axis has its own group. They used to share one aria-label, so
+    // nothing could tell the two apart.
+    expect(await driver.evaluate(selectedChip, "Sampling y by")).toBe("step");
 
     // Number inputs must be unique per axis, or the labels point at the wrong
     // field and the y axis mirrors the x axis.
@@ -351,7 +362,7 @@ testWithPage(
       )?.textContent,
       components: JSON.parse(
         DSM.pluginSettings["vector-tools"]!.serializedFieldConfig as string
-      ).components,
+      ).fields[0].components,
     }));
     expect(afterRename.hint).toContain("no longer matches");
     expect(afterRename.components.yLatex).toBe("x");
@@ -497,7 +508,7 @@ testWithPage(
     const { domain, bounds } = await driver.evaluate(() => ({
       domain: JSON.parse(
         DSM.pluginSettings["vector-tools"]!.serializedFieldConfig as string
-      ).domain,
+      ).fields[0].domain,
       bounds: Calc.graphpaperBounds.mathCoordinates,
     }));
     const round = (value: number) => Math.round(value * 1000) / 1000;
@@ -667,14 +678,14 @@ testWithPage(
     // for being undefined rather than for being subscripted: a name the graph
     // does define is compiled, so the reason has to name the name.
     await driver.evaluate(() => {
-      const config = JSON.parse(
+      const library = JSON.parse(
         DSM.pluginSettings["vector-tools"]!.serializedFieldConfig as string
       );
-      config.components.xLatex = "a_{1}";
+      library.fields[0].components.xLatex = "a_{1}";
       DSM.setPluginSetting(
         "vector-tools",
         "serializedFieldConfig",
-        JSON.stringify(config)
+        JSON.stringify(library)
       );
     });
     await driver.waitForSync();
@@ -1404,6 +1415,160 @@ testWithPage(
     await driver.evaluate(() =>
       (DSM.enabledPlugins["vector-tools"] as any).resetConfig()
     );
+    await driver.disablePlugin("vector-tools");
+    await driver.setBlank();
+    await driver.waitForSync();
+  },
+  90000
+);
+
+const ADD_FIELD = ".dsm-vector-tools-add-field";
+const DELETE_FIELD = ".dsm-vector-tools-delete-field";
+const FIELD_CHIPS = ".dsm-vector-tools-field-chips [data-field]";
+
+testWithPage(
+  "two saved fields generate into one graph without colliding",
+  async (driver) => {
+    await driver.enablePlugin("vector-tools");
+    await driver.assertSelectorEventually(BUTTON);
+    await driver.click(BUTTON);
+    await driver.assertSelector(PANEL);
+    await openTab(driver, "field");
+
+    const chipNames = async () =>
+      await driver.evaluate(
+        (selector: string) =>
+          [...document.querySelectorAll<HTMLElement>(selector)].map(
+            (chip) => chip.innerText
+          ),
+        FIELD_CHIPS
+      );
+
+    expect(await chipNames()).toEqual(["Vector Field"]);
+    await driver.click(GENERATE);
+    await driver.waitForSync();
+
+    // A second field, which must not be handed the first one's symbols.
+    await driver.click(ADD_FIELD);
+    await driver.waitForSync();
+    expect(await chipNames()).toEqual(["Vector Field", "Vector Field 2"]);
+    const library = await storedLibrary(driver);
+    expect(
+      library.fields.map((f: { symbolToken: string }) => f.symbolToken)
+    ).toEqual(["d", "e"]);
+    expect(library.activeId).toBe("field1");
+
+    await driver.click(GENERATE);
+    await driver.waitForSync();
+
+    // The check this whole change exists for. Before the library, every field
+    // emitted `v_{tfdp}` — which was invisible while only one field could
+    // exist, and a duplicate-definition error the moment two could.
+    const definitions = await driver.evaluate(() => {
+      const counts: Record<string, number> = {};
+      for (const item of Calc.getState().expressions.list) {
+        const match = /^(v_\{tf[a-z]+\})\\left\(/.exec(
+          (item as { latex?: string }).latex ?? ""
+        );
+        if (match) counts[match[1]] = (counts[match[1]] ?? 0) + 1;
+      }
+      return counts;
+    });
+    expect(definitions["v_{tfdp}"]).toBe(1);
+    expect(definitions["v_{tfep}"]).toBe(1);
+    expect(Object.values(definitions).every((count) => count === 1)).toBe(true);
+
+    // Both folders are in the graph at once.
+    const folders = async () =>
+      (await driver.getState()).expressions.list
+        .filter((item) => item.type === "folder")
+        .map((item) => item.id);
+    expect(await folders()).toEqual(
+      expect.arrayContaining([FOLDER_ID, "vector_tools_vf_field1_folder"])
+    );
+
+    // Switching is by chip, and switching does not touch the graph.
+    await driver.click(`${FIELD_CHIPS}[data-field="default"]`);
+    await driver.waitForSync();
+    expect((await storedLibrary(driver)).activeId).toBe("default");
+    expect(await folders()).toEqual(
+      expect.arrayContaining([FOLDER_ID, "vector_tools_vf_field1_folder"])
+    );
+
+    // Deleting a field takes its expressions with it, and leaves the other
+    // field's alone — a field the user can no longer see is one they can no
+    // longer press Remove on.
+    await driver.click(`${FIELD_CHIPS}[data-field="field1"]`);
+    await driver.waitForSync();
+    await driver.click(DELETE_FIELD);
+    await driver.waitForSync();
+    expect(await chipNames()).toEqual(["Vector Field"]);
+    const remaining = await folders();
+    expect(remaining).toContain(FOLDER_ID);
+    expect(remaining).not.toContain("vector_tools_vf_field1_folder");
+
+    await driver.click(REMOVE);
+    await driver.waitForSync();
+    // Settings reach extension storage on a debounce, and `waitForSync` waits
+    // for the evaluator rather than for that. A page closed before the flush
+    // leaves the next one reading a stale setting — which it migrates and
+    // writes, with that write in flight when some later test asserts that
+    // nothing is pending.
+    await driver.waitForFunction(() => !DSM.delaySetPluginSettings);
+    await driver.disablePlugin("vector-tools");
+    await driver.setBlank();
+    await driver.waitForSync();
+  },
+  90000
+);
+
+testWithPage(
+  "a setting saved before libraries existed keeps its field",
+  async (driver) => {
+    // The migration that matters: somebody who used this yesterday has one
+    // field stored at the top level, and it has to come back as their field
+    // rather than as a default one.
+    await driver.enablePlugin("vector-tools");
+    await driver.evaluate(() => {
+      DSM.setPluginSetting(
+        "vector-tools",
+        "serializedFieldConfig",
+        JSON.stringify({
+          schemaVersion: 3,
+          id: "default",
+          name: "Saved before libraries",
+          source: "components",
+          components: { xLatex: "2y", yLatex: "-2x" },
+          panel: { width: 470, height: 600, tab: "field" },
+        })
+      );
+    });
+    await driver.waitForSync();
+
+    // Off and on again, because migration happens when the plugin starts. Doing
+    // it here rather than letting it happen on the next page also leaves the
+    // stored setting already migrated — a half-written setting left behind is a
+    // settings write still in flight while some later test asserts that nothing
+    // is pending, which is how this was found.
+    await driver.disablePlugin("vector-tools");
+    await driver.enablePlugin("vector-tools");
+    await driver.waitForSync();
+    await driver.assertSelectorEventually(BUTTON);
+    await driver.click(BUTTON);
+    await driver.assertSelector(PANEL);
+    await openTab(driver, "field");
+
+    const field = await storedConfig(driver);
+    expect(field.name).toBe("Saved before libraries");
+    // And the stored value is now a library, so nothing migrates it again.
+    expect((await storedLibrary(driver)).schemaVersion).toBe(4);
+    expect(field.components).toEqual({ xLatex: "2y", yLatex: "-2x" });
+    // Its id and token address expressions already in the user's saved graphs.
+    expect(field.id).toBe("default");
+    expect(field.symbolToken).toBe("d");
+    expect((await storedLibrary(driver)).panel.width).toBe(470);
+
+    await driver.waitForFunction(() => !DSM.delaySetPluginSettings);
     await driver.disablePlugin("vector-tools");
     await driver.setBlank();
     await driver.waitForSync();
