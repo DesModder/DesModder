@@ -5,7 +5,12 @@
  * check that matters is that every one of them compiles, and it belongs here
  * rather than in a browser.
  */
-import { FIELD_GALLERY, configFromGallery, galleryPreset } from "./gallery";
+import {
+  colorsFromGallery,
+  configFromGallery,
+  FIELD_GALLERY,
+  galleryPreset,
+} from "./gallery";
 import { compileFieldComponentToGLSL } from "../../field-rendering/latexToGLSL";
 import { cloneDefaultConfig } from "./model";
 import { PALETTE_IDS } from "../../field-rendering/palettes";
@@ -73,6 +78,32 @@ describe("loading one", () => {
     const config = configFromGallery(galleryPreset("dipole")!, base);
     expect(config.curve.enabled).toBe(true);
     expect(config.zeroVectorMode).toBe("point");
+  });
+
+  test("the light touch takes the colours and leaves the rest alone", () => {
+    // What somebody has set up is usually the part they spent time on, and a
+    // gallery that throws it away is one they stop clicking.
+    const base = cloneDefaultConfig();
+    base.domain.x = { ...base.domain.x, min: -3, max: 3, count: 9 };
+    base.arrowMode = "live";
+    base.flow = { ...base.flow, particleCount: 4_000, pointSize: 5 };
+
+    const config = colorsFromGallery(galleryPreset("black-hole")!, base);
+
+    // Taken: the formula, the name and the colours.
+    expect(config.components.xLatex).toBe(galleryPreset("black-hole")!.xLatex);
+    expect(config.name).toBe("Black hole");
+    expect(config.flow.palette).toBe("ember");
+    // The backdrop comes with the palette rather than separately: a ramp that
+    // starts near black is not separable from the dark it is drawn on.
+    expect(config.flow.backdropEnabled).toBe(true);
+
+    // Left alone: everything that was somebody's own setting.
+    expect(config.domain.x.min).toBe(-3);
+    expect(config.domain.x.count).toBe(9);
+    expect(config.arrowMode).toBe("live");
+    expect(config.flow.particleCount).toBe(4_000);
+    expect(config.flow.pointSize).toBe(5);
   });
 
   test("an unknown id is nothing rather than a guess", () => {

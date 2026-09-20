@@ -489,12 +489,17 @@ export interface VectorFieldLibrary {
   activeId: string;
   panel: PanelConfig;
   /**
-   * Whether loading a gallery field brings its look with it.
+   * Whether loading a gallery field also replaces the framing, the particle
+   * settings and the arrow mode.
+   *
+   * Off by default. Those are settings somebody has usually spent time on, and
+   * throwing them away because a new field was clicked is how a gallery
+   * becomes something you stop clicking. The colours still come with the field,
+   * because a palette built to run from near-black is not separable from the
+   * dark it is meant to be drawn on.
    *
    * On the library rather than on a field, because it is a preference about
-   * how the gallery behaves rather than a property of any particular field —
-   * and a setting that reset itself every time you switched fields would be a
-   * setting nobody could rely on.
+   * how the gallery behaves rather than a property of any particular field.
    */
   galleryWithLook: boolean;
 }
@@ -764,7 +769,7 @@ export function cloneDefaultLibrary(): VectorFieldLibrary {
     fields: [field],
     activeId: field.id,
     panel: { ...DEFAULT_PANEL_CONFIG },
-    galleryWithLook: true,
+    galleryWithLook: false,
   };
 }
 
@@ -1089,7 +1094,7 @@ export function normalizeVectorFieldLibrary(
     fields: trimmed,
     activeId,
     panel: normalizePanel(value.panel, fallback.panel),
-    galleryWithLook: value.galleryWithLook !== false,
+    galleryWithLook: value.galleryWithLook === true,
   };
 }
 

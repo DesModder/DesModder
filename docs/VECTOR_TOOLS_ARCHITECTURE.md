@@ -496,3 +496,62 @@ vortex lattice's counter-rotating cells and the black hole's central brightening
 are both visible — and **not** enough to judge the look. Brightness was tuned by
 reasoning about a dark palette on a dark backdrop rather than by eye, and every
 one of those numbers is a slider on the Flow tab.
+
+---
+
+## Four corrections after first use
+
+### The flow was repainted but never rebuilt
+
+Loading a gallery field changed its colours and left the simulation running the
+previous field. `afterConfigChange` called `setOptions` — colours, counts,
+speeds, everything a running simulation can be told — and never `startFlow`,
+which is the only thing that compiles the field to GLSL. `setSlot` had its own
+`refreshFlow` call and was the sole reason typing into P and Q had ever worked;
+every other path that edits the components was broken the same way, `resetConfig`
+included.
+
+The fix compares a **signature of what the shader is built from** — the source,
+the two components and the scalar — and rebuilds only when that changes. It has
+to compare rather than always rebuild: `startFlow` throws the particles away, so
+refreshing on every config change would reset the simulation each time a colour
+slider moved. An integration test reads that signature before and after loading
+a preset, and asserts that a colour change does _not_ move it. Removing the fix
+makes it fail.
+
+### Loading a preset no longer takes over
+
+A preset now brings its formula and its colours, and leaves the sampling domain,
+the arrow mode and the flow settings exactly as they were. Those are the
+settings somebody has usually spent time on, and replacing them because a new
+field was clicked is how a gallery becomes something you stop clicking. Taking
+the framing and particle settings too is still available, as a checkbox that is
+now off by default.
+
+The palette and the backdrop stay together in the light-touch load, because they
+are not separable: a ramp that starts near black is only legible on the dark it
+was built for.
+
+### The ramps were too dark
+
+Their low end is where most particles sit — a field's speed is small across most
+of its area — so a ramp starting at near-black put the majority of the picture
+below the visible floor. All three now start from a mid tone around RGB 40–60
+rather than from 5–10, and their middles are brighter. Still desaturated: the
+change is in value, not in chroma.
+
+### Save
+
+Everything here is saved as it changes, so Save is a checkpoint rather than a
+commit: it keeps a copy of the field as it stands and **leaves you on the one
+you are editing**. That is what separates it from Duplicate, which moves you
+onto the copy — one is for not losing where you have got to, the other for
+starting a variation.
+
+### A note on the tests
+
+Two of the three new tests passed alone and failed in the suite, because plugin
+settings live in the extension's storage and outlast the page: a test that
+assumes a default field is really asserting on whatever ran before it. They now
+reset the stored library first. This is the second time that has bitten, which
+is why `resetLibrary` is a named helper rather than two inline calls.

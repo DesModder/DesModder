@@ -4,7 +4,12 @@ import {
   CalculatorExpressionAdapter,
   type GeneratedItemSnapshot,
 } from "./desmos/ExpressionAdapter";
-import { configFromGallery, FIELD_GALLERY, galleryPreset } from "./gallery";
+import {
+  colorsFromGallery,
+  configFromGallery,
+  FIELD_GALLERY,
+  galleryPreset,
+} from "./gallery";
 import {
   configForPreset,
   DENSITY_PRESETS,
@@ -228,6 +233,8 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
   private arrowMessage = "";
   private flowMessage = "";
   private flowRefreshTimer?: ReturnType<typeof setTimeout>;
+  /** The field signature the running simulation was compiled from. */
+  private lastFlowSignature?: string;
   private flowCompilationCache?: {
     source: FieldSource;
     xLatex: string;
@@ -678,8 +685,23 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
   }
 
   afterConfigChange() {
-    if (this.flowOverlay.isRunning)
+    if (this.flowOverlay.isRunning) {
       this.flowOverlay.setOptions(this.flowOptions);
+      // Options are colours, counts and speeds — everything the running
+      // simulation can be told without rebuilding it. The *field* is compiled
+      // GLSL, and it only changes when `startFlow` runs again.
+      //
+      // Every path that edits the components through `updateConfig` therefore
+      // has to ask for that, and forgetting to was a real bug: loading a
+      // gallery preset repainted the flow in the new palette while it went on
+      // simulating the old field. `setSlot` had its own call and was the only
+      // reason typing into P and Q ever worked. Comparing the source here
+      // covers every path at once, and compares rather than always refreshing
+      // because `startFlow` throws the particles away — a colour tweak must
+      // not restart the simulation.
+      if (this.flowFieldSignature !== this.lastFlowSignature)
+        this.refreshFlow();
+    }
     // Written settings only reach `this.settings` by the time this runs, so
     // this is where the arrows can read what they have to follow. Every path
     // that changes the field arrives here, `resetConfig` included — which is
@@ -794,6 +816,41 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.createField(cloneDefaultConfig(), "Vector Field");
   }
 
+  /**
+   * Keeps a copy of the field as it is now, and stays on the one being edited.
+   *
+   * Everything here is saved as it is changed, so this is not that kind of
+   * save — it is a checkpoint. Load a gallery field, tune it, press Save, and
+   * carry on tuning knowing the version you liked is in the chooser.
+   *
+   * Which is what separates it from Duplicate: that one moves you onto the
+   * copy, so it is for starting a variation. This one leaves you where you
+   * are, so it is for not losing where you have got to.
+   */
+  saveField() {
+    const library = this.getLibrary();
+    if (library.fields.length >= MAX_FIELDS) {
+      this.lastActionMessage = `A library holds at most ${MAX_FIELDS} fields.`;
+      return;
+    }
+    const current = this.getConfig();
+    let saved = current.name;
+    this.updateLibrary((next) => {
+      const token = nextSymbolToken(next);
+      if (token === undefined) return;
+      saved = uniqueFieldName(next, current.name);
+      next.fields.push({
+        ...structuredClone(current),
+        id: nextFieldID(next),
+        name: saved,
+        symbolToken: token,
+      });
+      // `activeId` is deliberately untouched: a checkpoint you are thrown out
+      // of is a checkpoint that interrupts what you were doing.
+    });
+    this.lastActionMessage = `Saved as ${saved}.`;
+  }
+
   duplicateField() {
     const library = this.getLibrary();
     if (library.fields.length >= MAX_FIELDS) {
@@ -881,18 +938,13 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     const preset = galleryPreset(id);
     if (preset === undefined) return;
     this.updateConfig((config) => {
-      const loaded = configFromGallery(preset, config);
+      const loaded = withLook
+        ? configFromGallery(preset, config)
+        : colorsFromGallery(preset, config);
       // The identity stays with the field: its id and token address
       // expressions already in the graph, and the chooser points at it.
       const { id: keepID, symbolToken } = config;
-      const changes = withLook
-        ? loaded
-        : {
-            name: loaded.name,
-            source: loaded.source,
-            components: loaded.components,
-          };
-      Object.assign(config, changes, { id: keepID, symbolToken });
+      Object.assign(config, loaded, { id: keepID, symbolToken });
     });
     this.lastActionMessage = `Loaded ${preset.name}.`;
     // These are flow pictures, so the flow is what has to be running for one
@@ -1469,8 +1521,28 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       return;
     }
     this.flowMessage = "";
+    this.lastFlowSignature = this.flowFieldSignature;
     this.flowOverlay.start(compiled.field, this.flowOptions);
     this.util.tick();
+  }
+
+  /**
+   * What the compiled field is built from.
+   *
+   * Only the parts that reach the shader: a different palette or particle
+   * count produces the same GLSL, and restarting the simulation for one would
+   * throw away every particle on screen to change a colour.
+   */
+  private get flowFieldSignature() {
+    const config = this.getConfig();
+    // JSON rather than a delimiter, so no separator has to be chosen that
+    // LaTeX could not contain.
+    return JSON.stringify([
+      config.source,
+      config.components.xLatex,
+      config.components.yLatex,
+      config.scalar.fLatex,
+    ]);
   }
 
   private get flowOptions() {

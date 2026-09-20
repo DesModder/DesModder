@@ -181,6 +181,16 @@ function fieldTab(
             (value) => vectorTools.renameField(value)
           )}
           <div class="dsm-vector-tools-inline">
+            {/* Everything is saved as it changes, so this is a checkpoint
+                rather than a commit — and unlike Duplicate it leaves you on
+                the field you are working on. */}
+            <Button
+              color="blue"
+              class="dsm-vector-tools-save-field"
+              onTap={() => vectorTools.saveField()}
+            >
+              Save
+            </Button>
             <Button
               color="light-gray"
               class="dsm-vector-tools-duplicate-field"
@@ -1128,15 +1138,15 @@ function gallerySection(vectorTools: VectorTools) {
         </For>
       </div>
       {checkboxControl(
-        "Load each one's colours, particles and framing too",
+        "Also take its framing, particle settings and arrow mode",
         withLook,
         (checked) => vectorTools.setGalleryWithLook(checked)
       )}
       <div class="dsm-vector-tools-hint">
         {() =>
           withLook()
-            ? "Loading one replaces the field you are editing and starts the flow visualizer. Duplicate first to keep it."
-            : "Only the formula and the name are loaded. Everything else stays as you have it."
+            ? "Loading one replaces the field you are editing, including your sampling domain and flow settings. Save first to keep them."
+            : "The formula and the colours are loaded. Your sampling domain, arrows and flow settings stay as they are."
         }
       </div>
     </section>

@@ -57,6 +57,9 @@ export interface GalleryPreset {
 
 const r2 = String.raw`\left(x^{2}+y^{2}\right)`;
 
+/** The dark these are drawn on where a preset does not name its own. */
+const DEFAULT_BACKDROP = "#0d1020";
+
 export const FIELD_GALLERY: readonly GalleryPreset[] = [
   {
     id: "black-hole",
@@ -228,6 +231,38 @@ export function galleryPreset(id: string): GalleryPreset | undefined {
  * usual value — a preset is a set of changes from the ordinary field, not a
  * second place where every setting has to be maintained.
  */
+/**
+ * The colours a gallery entry brings, and nothing else.
+ *
+ * The light-touch load, and the default one. A preset's framing, its particle
+ * counts and whether it draws arrows are settings the user has probably
+ * already spent time on, and replacing them because they clicked a new field
+ * is how a gallery becomes something you stop clicking.
+ *
+ * The palette and the backdrop go together: a near-black ramp without the dark
+ * behind it is the navy scribble this was built to avoid, so "the colours"
+ * means both of them.
+ */
+export function colorsFromGallery(
+  preset: GalleryPreset,
+  base: VectorFieldConfig
+): VectorFieldConfig {
+  return {
+    ...base,
+    name: preset.name,
+    source: "components",
+    components: { xLatex: preset.xLatex, yLatex: preset.yLatex },
+    color: { ...base.color, palette: preset.palette },
+    time: { ...base.time, speed: preset.timeSpeed ?? base.time.speed },
+    flow: {
+      ...base.flow,
+      palette: preset.palette,
+      backdropEnabled: true,
+      backdropColor: preset.backdrop ?? DEFAULT_BACKDROP,
+    },
+  };
+}
+
 export function configFromGallery(
   preset: GalleryPreset,
   base: VectorFieldConfig = cloneDefaultConfig()
@@ -262,7 +297,7 @@ export function configFromGallery(
       // light, and on white graph paper the dark end of that is the most
       // visible part of the picture.
       backdropEnabled: true,
-      backdropColor: preset.backdrop ?? "#080b18",
+      backdropColor: preset.backdrop ?? DEFAULT_BACKDROP,
       ...preset.flow,
     },
   };

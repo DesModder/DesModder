@@ -1425,6 +1425,7 @@ testWithPage(
 const ADD_FIELD = ".dsm-vector-tools-add-field";
 const DELETE_FIELD = ".dsm-vector-tools-delete-field";
 const FIELD_CHIPS = ".dsm-vector-tools-field-chips [data-field]";
+const SAVE_FIELD = ".dsm-vector-tools-save-field";
 
 testWithPage(
   "two saved fields generate into one graph without colliding",
@@ -1567,6 +1568,119 @@ testWithPage(
     expect(field.id).toBe("default");
     expect(field.symbolToken).toBe("d");
     expect((await storedLibrary(driver)).panel.width).toBe(470);
+
+    await driver.waitForFunction(() => !DSM.delaySetPluginSettings);
+    await driver.disablePlugin("vector-tools");
+    await driver.setBlank();
+    await driver.waitForSync();
+  },
+  90000
+);
+
+/**
+ * Puts the stored library back to its defaults.
+ *
+ * Plugin settings live in the extension's storage, which outlasts the page —
+ * so a test that assumes a default field is really asserting on whatever the
+ * test before it left behind. An unparseable value is the documented way back
+ * to the defaults, which is exactly what is wanted here.
+ */
+async function resetLibrary(driver: Driver) {
+  await driver.evaluate(() => {
+    DSM.setPluginSetting("vector-tools", "serializedFieldConfig", "");
+  });
+  await driver.waitForSync();
+}
+
+testWithPage(
+  "loading a gallery field recompiles the flow, not just its colours",
+  async (driver) => {
+    // The bug this is here for: the flow visualizer was told the new palette
+    // and never the new field, so a preset repainted the picture while it went
+    // on simulating the one before it. Options and the compiled field are
+    // different things, and only `startFlow` rebuilds the second.
+    await driver.enablePlugin("vector-tools");
+    await resetLibrary(driver);
+    await driver.assertSelectorEventually(BUTTON);
+    await driver.click(BUTTON);
+    await driver.assertSelector(PANEL);
+    await openTab(driver, "flow");
+
+    await driver.click(VISUALIZE);
+    await driver.waitForFunction(() => DSM.vectorTools!.isFlowRunning);
+
+    // What the running simulation was compiled from. Private, and read here
+    // anyway: the alternative is asserting on pixels, and a test that cannot
+    // tell a repaint from a rebuild is the test that missed this.
+    const compiledFrom = async () =>
+      await driver.evaluate(
+        () =>
+          (DSM.vectorTools as unknown as { lastFlowSignature?: string })
+            .lastFlowSignature ?? ""
+      );
+
+    const before = await compiledFrom();
+    expect(before).toContain("-y");
+
+    await driver.evaluate(() => {
+      DSM.vectorTools!.applyGalleryPreset("cellular", false);
+    });
+    // The rebuild is debounced, because it throws the particles away.
+    await driver.waitForFunction(
+      () =>
+        (
+          DSM.vectorTools as unknown as { lastFlowSignature?: string }
+        ).lastFlowSignature?.includes("sin") === true
+    );
+
+    const after = await compiledFrom();
+    expect(after).not.toBe(before);
+    expect(after).toContain("cos");
+
+    // And a change that only affects colour must not rebuild, or every tweak
+    // of a slider would throw away the particles on screen.
+    await driver.evaluate(() => {
+      DSM.vectorTools!.setFlow("opacity", 0.7);
+    });
+    await driver.waitForSync();
+    expect(await compiledFrom()).toBe(after);
+
+    await driver.click(VISUALIZE);
+    await driver.waitForFunction(() => !DSM.delaySetPluginSettings);
+    await driver.disablePlugin("vector-tools");
+    await driver.setBlank();
+    await driver.waitForSync();
+  },
+  90000
+);
+
+testWithPage(
+  "Save keeps a copy of the field and leaves you on it",
+  async (driver) => {
+    await driver.enablePlugin("vector-tools");
+    await resetLibrary(driver);
+    await driver.assertSelectorEventually(BUTTON);
+    await driver.click(BUTTON);
+    await driver.assertSelector(PANEL);
+    await openTab(driver, "field");
+
+    await driver.click(SAVE_FIELD);
+    await driver.waitForSync();
+
+    const library = await storedLibrary(driver);
+    expect(library.fields).toHaveLength(2);
+    expect(library.fields.map((f: { name: string }) => f.name)).toEqual([
+      "Vector Field",
+      "Vector Field 2",
+    ]);
+    // The point of a checkpoint is that it does not interrupt what you were
+    // doing — Duplicate is the one that moves you onto the copy.
+    expect(library.activeId).toBe("default");
+    // And the copy gets symbols of its own, or generating both would define
+    // the same name twice.
+    expect(library.fields[1].symbolToken).not.toBe(
+      library.fields[0].symbolToken
+    );
 
     await driver.waitForFunction(() => !DSM.delaySetPluginSettings);
     await driver.disablePlugin("vector-tools");
