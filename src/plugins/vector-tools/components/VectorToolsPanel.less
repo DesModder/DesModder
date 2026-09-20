@@ -384,6 +384,20 @@
     padding: 4px 9px;
   }
 
+  // The gallery. Chips wrap here rather than scrolling, because this one is
+  // inside the scrolling body and browsing it is the point — a row you have to
+  // drag sideways is a row whose last entries nobody finds.
+  .dsm-vector-tools-gallery-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 4px 0 6px;
+  }
+
+  .dsm-vector-tools-gallery-chip {
+    cursor: pointer;
+  }
+
   .dsm-vector-tools-inline {
     display: flex;
     align-items: center;

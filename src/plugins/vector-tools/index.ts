@@ -4,6 +4,7 @@ import {
   CalculatorExpressionAdapter,
   type GeneratedItemSnapshot,
 } from "./desmos/ExpressionAdapter";
+import { configFromGallery, FIELD_GALLERY, galleryPreset } from "./gallery";
 import {
   configForPreset,
   DENSITY_PRESETS,
@@ -850,6 +851,55 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.refreshFlow();
   }
 
+  get gallery() {
+    return FIELD_GALLERY;
+  }
+
+  get galleryWithLook() {
+    return this.getLibrary().galleryWithLook;
+  }
+
+  setGalleryWithLook(withLook: boolean) {
+    this.updateLibrary((library) => {
+      library.galleryWithLook = withLook;
+    });
+  }
+
+  /**
+   * Loads a gallery field into the one being edited.
+   *
+   * `withLook` is the toggle: with it, the preset brings its palette, its
+   * particle settings and the frame it is meant to be seen in, which is most of
+   * what makes it the picture it is. Without it only the formula and the name
+   * change, so a preset can be used as a starting point inside a look that has
+   * already been set up.
+   *
+   * It replaces the active field rather than adding one, which is what "load"
+   * usually means — Duplicate is next to it for keeping what is there.
+   */
+  applyGalleryPreset(id: string, withLook: boolean) {
+    const preset = galleryPreset(id);
+    if (preset === undefined) return;
+    this.updateConfig((config) => {
+      const loaded = configFromGallery(preset, config);
+      // The identity stays with the field: its id and token address
+      // expressions already in the graph, and the chooser points at it.
+      const { id: keepID, symbolToken } = config;
+      const changes = withLook
+        ? loaded
+        : {
+            name: loaded.name,
+            source: loaded.source,
+            components: loaded.components,
+          };
+      Object.assign(config, changes, { id: keepID, symbolToken });
+    });
+    this.lastActionMessage = `Loaded ${preset.name}.`;
+    // These are flow pictures, so the flow is what has to be running for one
+    // to be anything at all.
+    if (withLook && !this.flowOverlay.isRunning) this.toggleFlow();
+  }
+
   renameField(name: string) {
     this.updateConfig((config) => {
       config.name = name;
@@ -1429,6 +1479,10 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     // lets turning it off restore what the flow was set to before.
     return {
       ...config.flow,
+      // The toggle is resolved here rather than stored as a zero, so switching
+      // it back on gives back the strength that was set.
+      glow: config.flow.glowEnabled ? config.flow.glow : 0,
+      backdrop: config.flow.backdropEnabled ? config.flow.backdropColor : "",
       ...effectiveFlowColor(config),
       fixedColor: config.color.fixedColor,
     };

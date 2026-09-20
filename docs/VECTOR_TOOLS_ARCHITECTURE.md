@@ -413,3 +413,86 @@ complex-arithmetic evaluator, not a formula — so it goes last.
 Then colouring by divergence or curl, which `symbolic.ts` already has the exact
 partials for; and a gallery of presets that move and react, which is what the
 per-field clock and the environment scanner were built for.
+
+---
+
+## The gallery, and the visual extras
+
+### A preset is a whole look
+
+`FIELD_GALLERY` in `gallery.ts` is eight fields chosen because they are worth
+looking at, and each carries its palette, its particle settings, the frame it
+is meant to be seen in and whether arrows are drawn at all. Setting only P and
+Q produces a black hole drawn as a grid of short blue arrows, which is nobody's
+idea of a black hole.
+
+It is deliberately separate from `VECTOR_FIELD_PRESETS` in `model.ts`, which is
+the development test lab's set. Those are plain on purpose — their job is to
+make a _rendering_ bug obvious, and a picture with a lot going on in it hides
+one. These have the opposite job.
+
+**The maths is real.** The galaxy's arms come out of differential rotation —
+inner orbits going round faster than outer ones, which is what winds a spiral
+out of a disc — and the black hole's particles accelerate inward because the
+field genuinely goes as a power of 1/r. This plugin's whole claim is that what
+you see is the field, so a preset that drew a shape to look like something
+would be the one thing in it that lies.
+
+Three of the eight read the clock, so they move on their own: the binary's two
+vortices orbit their common centre, the aurora's curtains drift and fold, and
+the pulsar's radial field changes sign with `sin t`.
+
+A unit test compiles every one of them to GLSL. They are long hand-written
+LaTeX strings where a missing brace is easy to write and impossible to spot,
+and a broken one would fail at the moment somebody clicked it, as a field that
+draws nothing.
+
+### The extras are toggles
+
+**Glow** gives each particle a soft falloff around a brighter core. Thousands of
+overlapping haloes accumulate into the diffuse light that makes a dense flow
+read as luminous rather than stippled. The sprite has to grow for the halo to
+have somewhere to go, so it costs fill rate rather than particles — `GLOW_SPREAD`
+is capped at 1.5 for that reason, which is about six times the area of a bare
+particle.
+
+Its on-off is stored separately from its strength, so switching it off and on
+gives back what was set rather than a default. A choice that forgets what you
+chose is worse than no choice.
+
+**The backdrop** is the one that makes the gallery work at all. The palettes
+built for the flow — Nebula, Aurora, Starfield — run from near-black to
+near-white, because a particle's dark end is where it _fades out_ and starting
+near black is what makes the bright end read as light. On white graph paper that
+is exactly backwards: the most visible part of the ramp is the part meant to
+disappear, and a field drawn in light comes out as navy scribble. Laying down a
+dark backdrop first fixes it.
+
+It is off by default and a genuine trade rather than an improvement: the graph
+paper, the axes and every other expression go behind it. `backdropOpacity` is
+how much of them survives. Gallery presets turn it on because without it they
+are not the pictures they claim to be.
+
+It composites in the existing blit rather than in a pass of its own — the canvas
+is _cleared_ to the premultiplied backdrop and the trail texture is drawn over
+it with `ONE, ONE_MINUS_SRC_ALPHA`, which is the same blend the trails already
+used and one fewer full-screen pass than drawing a quad would cost.
+
+### The palettes are desaturated on purpose
+
+The saturated version of these already exists — `neon` is what happens when a
+dark ramp is allowed to run to full-chroma magenta and lime — and at a hundred
+thousand overlapping particles a saturated ramp stops looking like light and
+starts looking like ink. Real astrophotography is dusty: the colour lives in the
+middle of the ramp and the bright end goes to a warm or cool white rather than
+to a hue.
+
+Evidence: `docs/assets/vector-tools-black-hole.png`,
+`docs/assets/vector-tools-vortex-lattice.png`.
+
+Both were captured through a software GL renderer, which is enough to show that
+the field compiles, the particles integrate and the structure is right — the
+vortex lattice's counter-rotating cells and the black hole's central brightening
+are both visible — and **not** enough to judge the look. Brightness was tuned by
+reasoning about a dark palette on a dark backdrop rather than by eye, and every
+one of those numbers is a slider on the Flow tab.

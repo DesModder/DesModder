@@ -45,6 +45,7 @@ import {
   paletteCSSGradient,
 } from "../../../field-rendering/palettes";
 import type { ComponentSlot } from "../generator";
+import type { GalleryPreset } from "../gallery";
 import "./VectorToolsPanel.less";
 
 interface Choice<T extends string> {
@@ -170,6 +171,7 @@ function fieldTab(
 ) {
   return (
     <div>
+      {gallerySection(vectorTools)}
       <section class="dsm-vector-tools-section">
         <div class="dsm-vector-tools-section-head">
           {textControl(
@@ -838,6 +840,24 @@ function flowTab(vectorTools: VectorTools, config: ConfigGetter) {
           { minimum: 0.5, maximum: 6, step: 0.1, decimals: 1 },
           (value) => vectorTools.setFlow("pointSize", value)
         )}
+        {/* A toggle and a degree. The visual extras are meant to be a choice,
+            and the strength survives being switched off. */}
+        {checkboxControl(
+          "Glow around each particle",
+          () => flow().glowEnabled,
+          (checked) => vectorTools.setFlow("glowEnabled", checked)
+        )}
+        <If predicate={() => flow().glowEnabled}>
+          {() =>
+            sliderControl(
+              "dsm-vector-tools-flow-glow",
+              "Glow strength",
+              () => flow().glow,
+              { minimum: 0.05, maximum: 1, step: 0.01, decimals: 2 },
+              (value) => vectorTools.setFlow("glow", value)
+            )
+          }
+        </If>
         {sliderControl(
           "dsm-vector-tools-flow-render-scale",
           "Render detail (lower is faster)",
@@ -1065,6 +1085,61 @@ function fieldChooser(vectorTools: VectorTools, config: ConfigGetter) {
         +
       </span>
     </div>
+  );
+}
+
+/**
+ * Fields worth looking at, and the one toggle that decides how much of one
+ * gets loaded.
+ *
+ * A gallery entry is a picture rather than a formula: its palette, its particle
+ * settings and the frame it is meant to be seen in are most of what makes it
+ * what it is, and loading only P and Q gives a black hole drawn as a grid of
+ * short blue arrows. That is still worth being able to ask for, though — a
+ * formula is a fine starting point inside a look somebody has already set up —
+ * so which of the two happens is a checkbox rather than a decision made here.
+ */
+function gallerySection(vectorTools: VectorTools) {
+  const withLook = () => vectorTools.galleryWithLook;
+  return (
+    <section class="dsm-vector-tools-section dsm-vector-tools-gallery">
+      <div class="dsm-vector-tools-section-head">
+        <h3>Gallery</h3>
+      </div>
+      <div class="dsm-vector-tools-gallery-row">
+        <For
+          each={() => [...vectorTools.gallery]}
+          key={(preset: GalleryPreset) => preset.id}
+        >
+          {(getPreset: () => GalleryPreset) => (
+            <span
+              role="button"
+              tabIndex={0}
+              data-preset={() => getPreset().id}
+              title={() => getPreset().blurb}
+              class="dsm-vector-tools-chip dsm-vector-tools-gallery-chip"
+              onTap={() =>
+                vectorTools.applyGalleryPreset(getPreset().id, withLook())
+              }
+            >
+              {() => getPreset().name}
+            </span>
+          )}
+        </For>
+      </div>
+      {checkboxControl(
+        "Load each one's colours, particles and framing too",
+        withLook,
+        (checked) => vectorTools.setGalleryWithLook(checked)
+      )}
+      <div class="dsm-vector-tools-hint">
+        {() =>
+          withLook()
+            ? "Loading one replaces the field you are editing and starts the flow visualizer. Duplicate first to keep it."
+            : "Only the formula and the name are loaded. Everything else stays as you have it."
+        }
+      </div>
+    </section>
   );
 }
 

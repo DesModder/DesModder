@@ -378,6 +378,15 @@ describe("Vector Tools field configuration", () => {
       palette: "spectral",
       look: "streamlines",
       normalizeSpeed: true,
+      // The visual extras, which a setting saved before them has none of.
+      // Both are off-or-default rather than silently applied: the glow is on
+      // because it only changes how a particle is drawn, and the backdrop is
+      // off because it hides the graph paper behind it.
+      glow: 0.45,
+      glowEnabled: true,
+      backdropEnabled: false,
+      backdropColor: "#080b18",
+      backdropOpacity: 0.92,
     });
     expect(
       normalizeVectorFieldConfig({ flow: { particleCount: 1 } }).flow

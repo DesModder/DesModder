@@ -46,6 +46,37 @@ export interface FlowOptions {
   /** Per-frame chance that a particle restarts somewhere random, 0..1. */
   dropRate: number;
   pointSize: number;
+  /**
+   * How much of a halo each particle draws around itself, 0..1.
+   *
+   * At 0 a particle is the flat disc it has always been. Above that it gains a
+   * soft falloff around a brighter core, which is the difference between a
+   * field drawn in dots and one drawn in light — thousands of overlapping
+   * haloes accumulate into the diffuse glow that makes a dense flow read as
+   * luminous rather than stippled.
+   *
+   * It costs fill rate rather than particles: the sprite has to grow for the
+   * halo to have anywhere to go, so the area drawn per particle grows with it.
+   * The spread is capped for that reason.
+   */
+  glow: number;
+  /**
+   * A colour laid under the particles, as `#rrggbb`, or "" for none.
+   *
+   * The palettes built for this run from near-black to near-white, because a
+   * particle's dark end is where it fades out and starting near black is what
+   * makes the bright end read as light. On Desmos's white graph paper that is
+   * exactly backwards: the dark end of the ramp is the most visible part of it,
+   * and a field drawn in light comes out as navy scribble.
+   *
+   * Laying down a dark backdrop first is what fixes it, and it is a genuine
+   * trade rather than an improvement — the graph paper, the axes and every
+   * other expression go behind it. `backdropOpacity` is how much of them
+   * survives.
+   */
+  backdrop: string;
+  /** How opaque the backdrop is, 0..1. */
+  backdropOpacity: number;
   opacity: number;
   colorMode: FlowColorMode;
   /** The ramp the `speed` color mode runs along, shared with the arrows. */
@@ -73,6 +104,9 @@ export const DEFAULT_FLOW_OPTIONS: FlowOptions = {
   trailPersistence: 0.95,
   dropRate: 0.01,
   pointSize: 2,
+  glow: 0.45,
+  backdrop: "",
+  backdropOpacity: 0.9,
   opacity: 0.42,
   colorMode: "speed",
   palette: "spectral",
@@ -542,6 +576,7 @@ export class FlowRenderer {
       )
     );
     gl.uniform1f(program.uniforms.u_opacity, this.options.opacity);
+    gl.uniform1f(program.uniforms.u_glow, this.options.glow);
     gl.uniform1i(
       program.uniforms.u_colorMode,
       colorModeIndex(this.options.colorMode)
@@ -572,14 +607,42 @@ export class FlowRenderer {
     gl.useProgram(program.program);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, this.trailWidth, this.trailHeight);
-    gl.disable(gl.BLEND);
     gl.bindVertexArray(this.quadArray);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.trailFront!);
     gl.uniform1i(program.uniforms.u_screen, 0);
-    gl.clearColor(0, 0, 0, 0);
+
+    // The backdrop is *cleared* to rather than drawn, so the trails composite
+    // over it in one pass. Trail colours are premultiplied, which is what makes
+    // `ONE, ONE_MINUS_SRC_ALPHA` the right blend for putting them on top of
+    // something rather than on top of nothing.
+    const backdrop = this.backdropRGBA;
+    if (backdrop === undefined) {
+      gl.disable(gl.BLEND);
+      gl.clearColor(0, 0, 0, 0);
+    } else {
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      const [r, g, b, a] = backdrop;
+      // Premultiplied, because the canvas is composited over the page the same
+      // way the trails are composited over the backdrop.
+      gl.clearColor(r * a, g * a, b * a, a);
+    }
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.disable(gl.BLEND);
+  }
+
+  /** The backdrop as premultiplication-ready components, or undefined for none. */
+  private get backdropRGBA():
+    | readonly [number, number, number, number]
+    | undefined {
+    const { backdrop, backdropOpacity } = this.options;
+    if (backdrop === "") return undefined;
+    const alpha = Math.min(1, Math.max(0, backdropOpacity));
+    if (alpha <= 0) return undefined;
+    const [r, g, b] = hexToUnitRGB(backdrop);
+    return [r, g, b, alpha];
   }
 
   private bindTrailTarget(texture: WebGLTexture) {
@@ -974,6 +1037,7 @@ uniform int u_resolution;
 uniform vec2 u_min;
 uniform vec2 u_max;
 uniform float u_pointSize;
+uniform float u_glow;
 uniform float u_opacity;
 uniform int u_colorMode;
 uniform vec3 u_fixedColor;
@@ -990,7 +1054,10 @@ void main() {
 
   vec2 normalized = (state.xy - u_min) / (u_max - u_min);
   gl_Position = vec4(2.0 * normalized - 1.0, 0.0, 1.0);
-  gl_PointSize = u_pointSize;
+  // The sprite grows so the halo has somewhere to go. The core keeps its own
+  // size by shrinking in sprite coordinates, so raising the glow softens a
+  // particle without also making it look bigger.
+  gl_PointSize = u_pointSize * (1.0 + ${glslFloat(GLOW_SPREAD)} * u_glow);
 
   vec2 v = vtField(state.xy);
   vec3 rgb = u_fixedColor;
@@ -1016,13 +1083,42 @@ void main() {
 `;
 }
 
+/**
+ * How much wider a fully glowing particle's sprite is than a bare one.
+ *
+ * Capped, because the cost of the glow is the area drawn per particle and area
+ * goes as the square of this. At 1.5 a glowing particle costs about six times
+ * the fill of a bare one, which a mid-range GPU absorbs at the particle counts
+ * this visualizer actually runs at.
+ */
+const GLOW_SPREAD = 1.5;
+
+/**
+ * A number as a GLSL float literal.
+ *
+ * `${2}` interpolates as `2`, which GLSL rejects where a float is wanted, and
+ * the failure is a shader that does not compile rather than one that looks
+ * wrong — so it has to be right for every value the constant could take, not
+ * just the one it has.
+ */
+function glslFloat(value: number) {
+  return Number.isInteger(value) ? `${value}.0` : String(value);
+}
+
 const DRAW_FRAGMENT_SHADER = `#version 300 es
 precision highp float;
 in vec4 v_color;
+uniform float u_glow;
 out vec4 outColor;
 void main() {
-  vec2 offset = gl_PointCoord - vec2(0.5);
-  float mask = 1.0 - smoothstep(0.35, 0.5, length(offset));
+  // Distance from the sprite's centre, 0 at the middle and 1 at its edge.
+  float d = length(gl_PointCoord - vec2(0.5)) * 2.0;
+  float spread = 1.0 + ${glslFloat(GLOW_SPREAD)} * u_glow;
+  // The core is the particle as it has always been drawn, kept the same size
+  // on screen while the sprite around it grows.
+  float core = 1.0 - smoothstep(0.7 / spread, 1.0 / spread, d);
+  float halo = exp(-2.5 * d * d);
+  float mask = clamp(core + u_glow * halo, 0.0, 1.0);
   outColor = v_color * mask;
 }
 `;

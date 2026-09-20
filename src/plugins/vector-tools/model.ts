@@ -159,6 +159,36 @@ export interface FlowConfig {
   dropRate: number;
   opacity: number;
   pointSize: number;
+  /**
+   * How much of a halo each particle draws, 0..1.
+   *
+   * At 0 a particle is a flat disc. Above it a soft falloff accumulates across
+   * overlapping particles into a diffuse glow, which is the difference between
+   * a field drawn in dots and one drawn in light. It costs fill rate rather
+   * than particles — the sprite grows for the halo to have somewhere to go.
+   */
+  glow: number;
+  /**
+   * Whether the halo is drawn at all.
+   *
+   * Separate from its strength so that turning it off and on again gives back
+   * the strength that was set, rather than a default. The visual extras are
+   * meant to be a choice, and a choice that forgets what you chose is a worse
+   * one than no choice at all.
+   */
+  glowEnabled: boolean;
+  /**
+   * Whether a dark backdrop is laid under the particles.
+   *
+   * The palettes built for the flow run from near-black to near-white, which
+   * is backwards on white graph paper — the most visible end of the ramp is
+   * the one meant to fade out. A backdrop fixes that, and it is a trade rather
+   * than an improvement: the grid, the axes and every other expression go
+   * behind it, which is why it is a choice and not the default.
+   */
+  backdropEnabled: boolean;
+  backdropColor: string;
+  backdropOpacity: number;
   colorMode: FlowColorMode;
   /** The ramp the `speed` color mode runs along. */
   palette: ColorPalette;
@@ -458,6 +488,15 @@ export interface VectorFieldLibrary {
   fields: VectorFieldConfig[];
   activeId: string;
   panel: PanelConfig;
+  /**
+   * Whether loading a gallery field brings its look with it.
+   *
+   * On the library rather than on a field, because it is a preference about
+   * how the gallery behaves rather than a property of any particular field —
+   * and a setting that reset itself every time you switched fields would be a
+   * setting nobody could rely on.
+   */
+  galleryWithLook: boolean;
 }
 
 export interface ValidationIssue {
@@ -576,6 +615,11 @@ export const DEFAULT_VECTOR_FIELD_CONFIG: VectorFieldConfig = {
     dropRate: 0.01,
     opacity: 0.42,
     pointSize: 2,
+    glow: 0.45,
+    glowEnabled: true,
+    backdropEnabled: false,
+    backdropColor: "#080b18",
+    backdropOpacity: 0.92,
     colorMode: "speed",
     palette: "spectral",
     look: "streamlines",
@@ -720,6 +764,7 @@ export function cloneDefaultLibrary(): VectorFieldLibrary {
     fields: [field],
     activeId: field.id,
     panel: { ...DEFAULT_PANEL_CONFIG },
+    galleryWithLook: true,
   };
 }
 
@@ -1044,6 +1089,7 @@ export function normalizeVectorFieldLibrary(
     fields: trimmed,
     activeId,
     panel: normalizePanel(value.panel, fallback.panel),
+    galleryWithLook: value.galleryWithLook !== false,
   };
 }
 
@@ -1139,6 +1185,20 @@ function normalizeFlow(value: unknown, fallback: FlowConfig): FlowConfig {
     dropRate: clampNumber(flow?.dropRate, fallback.dropRate, 0, 0.2),
     opacity: clampNumber(flow?.opacity, fallback.opacity, 0.05, 1),
     pointSize: clampNumber(flow?.pointSize, fallback.pointSize, 0.5, 6),
+    glow: clampNumber(flow?.glow, fallback.glow, 0, 1),
+    glowEnabled: flow?.glowEnabled !== false,
+    backdropEnabled: flow?.backdropEnabled === true,
+    backdropColor:
+      typeof flow?.backdropColor === "string" &&
+      /^#[0-9a-fA-F]{6}$/.test(flow.backdropColor)
+        ? flow.backdropColor
+        : fallback.backdropColor,
+    backdropOpacity: clampNumber(
+      flow?.backdropOpacity,
+      fallback.backdropOpacity,
+      0,
+      1
+    ),
     colorMode: isFlowColorMode(flow?.colorMode)
       ? flow.colorMode
       : fallback.colorMode,

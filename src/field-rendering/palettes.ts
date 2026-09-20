@@ -40,6 +40,9 @@ export type PaletteID =
   | "ocean"
   | "ember"
   | "neon"
+  | "nebula"
+  | "aurora"
+  | "starfield"
   | "direction-hue"
   | "twilight"
   | "phase";
@@ -267,6 +270,61 @@ export const PALETTES: Record<PaletteID, Palette> = {
       { at: 0.6, rgb: [240, 30, 140] },
       { at: 0.8, rgb: [60, 240, 220] },
       { at: 1, rgb: [230, 255, 120] },
+    ],
+  },
+  /**
+   * The three below are built for the flow visualizer rather than for arrows,
+   * and they are built differently because of it.
+   *
+   * An arrow palette wants its dark end to still be visible against white
+   * graph paper. A particle palette does not: particles are drawn with
+   * premultiplied alpha onto a trail buffer, so the dark end of the ramp is
+   * where a particle *fades out*, and starting near black is what makes the
+   * fast parts read as light rather than as paint.
+   *
+   * They are also deliberately **desaturated**. The saturated version of each
+   * of these exists already — `neon` is what happens when you let a dark ramp
+   * run to full-chroma magenta and lime — and at a hundred thousand overlapping
+   * particles a saturated ramp stops looking like light and starts looking like
+   * ink. Real astrophotography is dusty: the colour lives in the middle of the
+   * ramp and the bright end goes to a warm or cool white rather than to a hue.
+   */
+  nebula: {
+    name: "Nebula",
+    group: "expressive",
+    stops: [
+      { at: 0, rgb: [8, 10, 28] },
+      { at: 0.3, rgb: [46, 42, 82] },
+      { at: 0.55, rgb: [104, 78, 108] },
+      { at: 0.78, rgb: [172, 126, 116] },
+      { at: 0.92, rgb: [222, 194, 172] },
+      { at: 1, rgb: [244, 236, 228] },
+    ],
+  },
+  aurora: {
+    name: "Aurora",
+    group: "expressive",
+    stops: [
+      { at: 0, rgb: [5, 11, 20] },
+      { at: 0.32, rgb: [16, 56, 64] },
+      { at: 0.58, rgb: [44, 114, 102] },
+      { at: 0.8, rgb: [122, 174, 146] },
+      { at: 1, rgb: [216, 232, 218] },
+    ],
+  },
+  /**
+   * Nearly monochrome on purpose. A field drawn in one colour reads as
+   * structure rather than as a measurement, which is what you want when the
+   * picture is the point and the magnitude is not.
+   */
+  starfield: {
+    name: "Starfield",
+    group: "expressive",
+    stops: [
+      { at: 0, rgb: [6, 8, 20] },
+      { at: 0.4, rgb: [44, 62, 104] },
+      { at: 0.72, rgb: [132, 164, 208] },
+      { at: 1, rgb: [242, 246, 252] },
     ],
   },
   /**
