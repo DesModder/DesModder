@@ -6,8 +6,21 @@ import AudioLabSession from "./AudioLabSession";
 interface AudioLabSettings {
   spotifyUrl: string;
   waveMode: "representative" | "recent" | "additive";
-  fieldPreset: "pulse" | "vortex" | "flow" | "storm";
-  quality: "performance" | "balanced" | "quality";
+  /**
+   * The whole audio-field configuration, as JSON.
+   *
+   * One setting rather than a dozen, because the field is one thing: the
+   * components, the ripples, the pointer and the look are chosen together and a
+   * preset sets all four at once. Spreading them across separate settings would
+   * make loading a preset a dozen writes that are not atomic, and would mean
+   * every new control needing a settings migration.
+   *
+   * Empty means "never configured", which the session reads as the default
+   * preset rather than as an empty field.
+   */
+  fieldConfig: string;
+  /** How patient the measurement is. See `RESPONSE` in the session. */
+  response: string;
   /** Stored as a string so it round-trips through the string config type. */
   speedOfSound: string;
 }
@@ -39,15 +52,15 @@ export default class AudioLab extends PluginController<AudioLabSettings> {
     {
       type: "string",
       variant: "text",
-      default: "pulse",
-      key: "fieldPreset",
+      default: "",
+      key: "fieldConfig",
       shouldShow: () => false,
     },
     {
       type: "string",
       variant: "text",
       default: "balanced",
-      key: "quality",
+      key: "response",
       shouldShow: () => false,
     },
     {

@@ -32,16 +32,80 @@ import {
   WAVEFORM_POINTS,
   type WaveFunctionMode,
 } from "./desmos/manifest";
-import { AudioFieldOverlay } from "./fieldplay/AudioFieldOverlay";
-import type { PresetId } from "./fieldplay/presets";
+import { AudioFieldController } from "./field/AudioFieldController";
+import { compileAudioField } from "./field/compile";
+import {
+  AUDIO_FIELD_PRESETS,
+  configFromPreset,
+  matchesPreset,
+  normalizeAudioFieldConfig,
+  type AudioFieldConfig,
+} from "./field/model";
 
-export const QUALITY = {
-  performance: { fftSize: 1024, interval: 1000 / 24 },
-  balanced: { fftSize: 2048, interval: 1000 / 40 },
-  quality: { fftSize: 4096, interval: 1000 / 60 },
+/**
+ * How patient the measurement is, as one choice.
+ *
+ * Every number here trades the same thing, which is why they move together.
+ * A shorter window, less analyser smoothing and slacker engine smoothers all
+ * mean the field moves sooner after the sound does, and all mean the numbers
+ * jitter more on material that is not a clean tone.
+ *
+ * The delay this controls is larger than it looks. At the old fixed settings a
+ * bin was averaged with roughly the previous three frames *and* measured over
+ * an 85 ms window *and* then smoothed again by the engine, which put the field
+ * something like a sixth of a second behind the music — far enough to see on a
+ * drum track, and the single biggest reason it felt laggy.
+ *
+ * `intervalMs` is a floor, not a rate: the loop runs on animation frames and
+ * skips one that arrives too soon. Zero means measure on every frame, which is
+ * what `snappy` wants and what a 240 Hz display makes cheap enough to do.
+ */
+export const RESPONSE = {
+  snappy: {
+    label: "Snappy",
+    fftSize: 1024,
+    analyserSmoothing: 0,
+    smootherScale: 0.35,
+    intervalMs: 0,
+    hint: "Reacts almost at once. The frequency readout will wander on anything but a clean note.",
+  },
+  balanced: {
+    label: "Balanced",
+    fftSize: 2048,
+    analyserSmoothing: 0.35,
+    smootherScale: 1,
+    intervalMs: 1000 / 60,
+    hint: "Quick enough to feel connected to the music, steady enough to read.",
+  },
+  smooth: {
+    label: "Smooth",
+    fftSize: 4096,
+    analyserSmoothing: 0.72,
+    smootherScale: 2,
+    intervalMs: 1000 / 40,
+    hint: "Steadiest numbers and the finest frequency resolution, at about a sixth of a second behind.",
+  },
 } as const;
 
-export type Quality = keyof typeof QUALITY;
+export type Response = keyof typeof RESPONSE;
+
+/**
+ * The old setting's three values, mapped onto the new ones.
+ *
+ * A stored `quality` of "performance" meant a small window, which is what
+ * `snappy` is; "quality" meant a large one. Migrating rather than resetting so
+ * that someone who had chosen a setting keeps the closest thing to it.
+ */
+const RESPONSE_FROM_QUALITY: Record<string, Response> = {
+  performance: "snappy",
+  balanced: "balanced",
+  quality: "smooth",
+};
+
+export function normalizeResponse(stored: string): Response {
+  if (stored in RESPONSE) return stored as Response;
+  return RESPONSE_FROM_QUALITY[stored] ?? "balanced";
+}
 
 type SpotifyAction =
   | "sign-in"
@@ -85,6 +149,24 @@ export interface SessionView {
   onPlayback: (playback: SpotifyPlayback) => void;
 }
 
+/**
+ * Checks a configuration compiles, without a renderer to try it on.
+ *
+ * The field may be switched off while someone is editing the expression, and an
+ * editor that says nothing until you switch the field on is an editor that lets
+ * you get it wrong in silence.
+ */
+function compileOnly(config: AudioFieldConfig) {
+  const compiled = compileAudioField(config);
+  return compiled.ok
+    ? undefined
+    : `${compiled.which} could not be read. ${compiled.error}`;
+}
+
+/** Handed to the adapter on a frame with no lists due. Shared, never written. */
+const EMPTY_NUMBERS: readonly number[] = [];
+const EMPTY_COMPONENTS: readonly SpectralComponent[] = [];
+
 export default class AudioLabSession {
   private context?: AudioContext;
   private analyser?: AnalyserNode;
@@ -115,7 +197,7 @@ export default class AudioLabSession {
 
   private readonly engine = new AudioAnalysisEngine();
   private readonly graph: DesmosAudioAdapter;
-  private readonly field: AudioFieldOverlay;
+  private readonly field: AudioFieldController;
   /** Reused across frames so the steady loop allocates nothing. */
   private components: SpectralComponent[] = [];
   private readonly messageListener: (event: MessageEvent) => void;
@@ -135,12 +217,18 @@ export default class AudioLabSession {
     // The field reads the latest frame on its own animation clock. It never
     // drives the analysis and the analysis never waits for it, which is what
     // lets either be switched off without changing what the other sees.
-    this.field = new AudioFieldOverlay(plugin.calc, {
+    this.field = new AudioFieldController(plugin.calc, {
       onError: (message) => {
         this.status(message, true);
         this.changed();
       },
-      getFeatures: () => this.engine.latest,
+      onRecovered: () => {
+        this.status("The audio field is drawing again.");
+        this.changed();
+      },
+      getFrame: () => this.engine.latest,
+      reversesContrast: () =>
+        plugin.cc.graphSettings?.config?.invertedColors ?? false,
     });
     this.audio = document.createElement("audio");
     this.audio.preload = "metadata";
@@ -148,6 +236,10 @@ export default class AudioLabSession {
     this.audio.addEventListener("play", () => this.changed());
     this.audio.addEventListener("pause", () => this.changed());
     this.engine.setSpeedOfSound(this.speedOfSound);
+    // The stored response has to reach the engine here, not only when the
+    // control is touched. Without it, a page reloaded on "Snappy" measures at
+    // the default patience until someone clicks the chip that is already lit.
+    this.engine.setResponseScale(RESPONSE[this.response].smootherScale);
 
     this.messageListener = listenToMessageDown((message) => {
       if (message.type !== "audio-lab-spotify-response") return false;
@@ -170,12 +262,33 @@ export default class AudioLabSession {
     return this.plugin.settings.waveMode;
   }
 
-  get fieldPreset() {
-    return this.plugin.settings.fieldPreset;
+  /**
+   * The audio field's whole configuration.
+   *
+   * Parsed from the stored string on every read, and that is affordable because
+   * every caller is a control or a start, never the animation loop — the
+   * running field holds the configuration it was started with.
+   */
+  get fieldConfig(): AudioFieldConfig {
+    return (this.cachedFieldConfig ??= this.readFieldConfig());
   }
 
-  get quality() {
-    return this.plugin.settings.quality;
+  private cachedFieldConfig?: AudioFieldConfig;
+
+  private readFieldConfig(): AudioFieldConfig {
+    const stored = this.plugin.settings.fieldConfig;
+    if (stored === "") return configFromPreset("stream");
+    try {
+      return normalizeAudioFieldConfig(JSON.parse(stored));
+    } catch {
+      // A setting that will not parse is a setting written by something else,
+      // or by a hand. Starting from the default beats refusing to draw.
+      return configFromPreset("stream");
+    }
+  }
+
+  get response(): Response {
+    return normalizeResponse(this.plugin.settings.response);
   }
 
   get speedOfSound() {
@@ -384,9 +497,11 @@ export default class AudioLabSession {
       this.audio.volume = Math.min(Math.max(value, 0), 1);
   }
 
-  setQuality(quality: Quality) {
-    this.plugin.setSetting("quality", quality);
+  setResponse(response: Response) {
+    this.plugin.setSetting("response", response);
     this.configureAnalyser();
+    this.engine.setResponseScale(RESPONSE[response].smootherScale);
+    this.changed();
   }
 
   /** Creates the managed folder, or stops writing to it. */
@@ -447,8 +562,9 @@ export default class AudioLabSession {
       this.field.stop();
       this.status("The audio field is off.");
     } else {
-      this.field.start(this.fieldPreset);
-      if (this.field.isRunning)
+      const error = this.field.start(this.fieldConfig);
+      if (error !== undefined) this.status(error, true);
+      else if (this.field.isRunning)
         this.status(
           "The audio field is drawing behind the graph. It stays until you hide it."
         );
@@ -457,12 +573,44 @@ export default class AudioLabSession {
     this.changed();
   }
 
-  setFieldPreset(preset: PresetId) {
-    this.plugin.setSetting("fieldPreset", preset);
-    // Switching a running field swaps to that preset's already-compiled
-    // programs; switching a stopped one just remembers the choice.
-    if (this.field.isRunning) this.field.start(preset);
+  /**
+   * Replaces the configuration, and re-applies it if the field is running.
+   *
+   * Returns the message a bad expression produced, so the panel can show it
+   * beside the box it was typed into rather than in the status line at the
+   * bottom. The configuration is stored either way: an expression that does not
+   * compile yet is still what the user is in the middle of writing, and
+   * throwing it away on every keystroke would make the editor unusable.
+   */
+  setFieldConfig(config: AudioFieldConfig): string | undefined {
+    const normalized = normalizeAudioFieldConfig(config);
+    // Once the components stop matching the preset they came from, the field is
+    // the user's rather than the preset's, and the chooser says so.
+    if (!matchesPreset(normalized)) normalized.presetId = "custom";
+    this.cachedFieldConfig = normalized;
+    this.plugin.setSetting("fieldConfig", JSON.stringify(normalized));
+    const error = this.field.isRunning
+      ? this.field.start(normalized)
+      : compileOnly(normalized);
     this.changed();
+    return error;
+  }
+
+  /** Loads a preset wholesale: components, ripples, pointer and look. */
+  loadFieldPreset(id: string) {
+    const preset = AUDIO_FIELD_PRESETS.find((item) => item.id === id);
+    if (preset === undefined) return;
+    this.setFieldConfig(configFromPreset(id));
+    this.status(`Loaded the ${preset.name} field.`);
+  }
+
+  /** Drops a ripple in the middle of the view, for trying one out. */
+  dropRipple() {
+    if (!this.field.isRunning) {
+      this.status("Show the audio field first.", true);
+      return;
+    }
+    this.field.dropRippleAtCentre();
   }
 
   // ----------------------------------------------------------------- spotify
@@ -620,8 +768,14 @@ export default class AudioLabSession {
 
   private configureAnalyser() {
     if (this.analyser === undefined) return;
-    this.analyser.fftSize = QUALITY[this.quality].fftSize;
-    this.analyser.smoothingTimeConstant = 0.72;
+    const profile = RESPONSE[this.response];
+    this.analyser.fftSize = profile.fftSize;
+    // The analyser's own smoothing is an exponential average across frames, so
+    // it is delay in the most literal sense: at 0.72 a bin is roughly three
+    // frames behind the sound. The engine smooths again afterwards, against a
+    // real elapsed time, which is the smoothing worth keeping — it is the one
+    // that behaves the same on every monitor.
+    this.analyser.smoothingTimeConstant = profile.analyserSmoothing;
     this.timeData = new Float32Array(this.analyser.fftSize);
     this.frequencyData = new Float32Array(this.analyser.frequencyBinCount);
   }
@@ -670,7 +824,7 @@ export default class AudioLabSession {
     this.frame = undefined;
     if (!this.wanted) return;
     this.frame = requestAnimationFrame(this.tick);
-    if (timestamp - this.lastFrame < QUALITY[this.quality].interval) return;
+    if (timestamp - this.lastFrame < RESPONSE[this.response].intervalMs) return;
     const elapsed =
       this.lastFrame === 0 ? 0 : (timestamp - this.lastFrame) / 1000;
     this.lastFrame = timestamp;
@@ -690,10 +844,22 @@ export default class AudioLabSession {
     this.view?.onFrame(frame);
 
     if (!this.graph.isInstalled) return;
+    // Nothing is reduced unless the adapter is going to send it. Reducing the
+    // spectrum to display points and finding the strongest components are each
+    // a walk over every bin, and they were being paid for on every animation
+    // frame to feed a write that happens eight times a second — seven frames in
+    // eight of that work was computed, handed over, and dropped.
+    //
+    // The adapter itself is still called on every frame, and still decides for
+    // itself what to send. It has to be: it integrates the representative
+    // wave's phase from the frame clock, and a phase integrated only on the
+    // frames that happen to carry a write is a coarser animation for no gain.
+    const sendingLists = this.graph.dueForLists(timestamp);
+
     // Only the additive mode reads the components, and finding them means a
     // pass over every bin. There is no reason to pay for it in the other two.
     this.components =
-      this.waveMode === "additive"
+      sendingLists && this.waveMode === "additive"
         ? strongestComponents(
             this.engine.spectrum as Float32Array,
             rate,
@@ -703,13 +869,15 @@ export default class AudioLabSession {
         : [];
     this.graph.update(
       frame,
-      downsample(this.timeData, WAVEFORM_POINTS),
-      spectrumPoints(
-        this.engine.spectrum as Float32Array,
-        rate,
-        analyser.fftSize,
-        SPECTRUM_POINTS
-      ),
+      sendingLists ? downsample(this.timeData, WAVEFORM_POINTS) : EMPTY_NUMBERS,
+      sendingLists
+        ? spectrumPoints(
+            this.engine.spectrum as Float32Array,
+            rate,
+            analyser.fftSize,
+            SPECTRUM_POINTS
+          )
+        : EMPTY_COMPONENTS,
       this.components,
       timestamp
     );

@@ -21,11 +21,9 @@ import {
   SILENT_FRAME,
   bandDensity,
   clamp,
-  decibelsToMagnitudes,
   interpolatedPeak,
   peakAmplitude,
-  spectralCentroid,
-  spectralFlux,
+  summarizeSpectrum,
   type AudioFeatureFrame,
 } from "./features";
 import { rms } from "../dsp";
@@ -72,6 +70,7 @@ export class AudioAnalysisEngine {
   private previousMagnitudes = new Float32Array(0);
   private elapsed = 0;
   private onsetLevel = 0;
+  private onsetCount = 0;
   private lastGoodHz = NaN;
   private speedOfSound = DEFAULT_SPEED_OF_SOUND;
   private frame: AudioFeatureFrame = SILENT_FRAME;
@@ -114,6 +113,32 @@ export class AudioAnalysisEngine {
     return this.magnitudes;
   }
 
+  /**
+   * Scales every smoother away from the constants it was built with.
+   *
+   * One number for all of them on purpose. The constants are tuned against
+   * each other — loudness has to settle faster than pitch, pitch faster than
+   * brightness — and letting the panel move them independently would let that
+   * relationship be broken from the UI. What the response control chooses is
+   * how patient the whole measurement is, not which parts of it are.
+   *
+   * Below 1 the field reacts sooner and the readouts jitter more; above 1 the
+   * reverse. This is the larger half of the audio-to-visual delay, the other
+   * being the analyser's own smoothing, which the session sets alongside it.
+   */
+  setResponseScale(scale: number) {
+    for (const smoother of [
+      this.rmsSmoother,
+      this.pitchSmoother,
+      this.confidenceSmoother,
+      this.centroidSmoother,
+      this.bandSmoothers.bass,
+      this.bandSmoothers.mid,
+      this.bandSmoothers.treble,
+    ])
+      smoother.setResponseScale(scale);
+  }
+
   /** Metres per second used to turn a frequency into a wavelength. */
   setSpeedOfSound(metresPerSecond: number) {
     if (Number.isFinite(metresPerSecond) && metresPerSecond > 0)
@@ -130,6 +155,7 @@ export class AudioAnalysisEngine {
   reset() {
     this.elapsed = 0;
     this.onsetLevel = 0;
+    this.onsetCount = 0;
     this.lastGoodHz = NaN;
     this.frame = SILENT_FRAME;
     this.rmsSmoother.reset();
@@ -162,18 +188,27 @@ export class AudioAnalysisEngine {
     this.elapsed += dt;
     this.resize(decibels.length);
 
-    const magnitudes = decibelsToMagnitudes(decibels, this.magnitudes);
+    const { magnitudes } = this;
+    // Converted, compared against the previous frame, totalled and weighted in
+    // one walk rather than five. `previousMagnitudes` goes in holding the last
+    // frame and comes out holding this one, so the loop still owns exactly two
+    // buffers and allocates neither.
+    const summary = summarizeSpectrum(
+      decibels,
+      magnitudes,
+      this.previousMagnitudes,
+      sampleRate,
+      fftSize
+    );
     const level = this.rmsSmoother.update(rms(samples), dt);
     const peak = peakAmplitude(samples);
     const silent = level < SILENCE_RMS;
 
-    const flux = silent ? 0 : spectralFlux(magnitudes, this.previousMagnitudes);
-    // Copied after the flux is taken, so the next frame compares against this
-    // one. Reusing the buffer keeps the steady loop allocation-free.
-    this.previousMagnitudes.set(magnitudes);
+    const flux = silent ? 0 : summary.flux;
 
     if (this.onsets.update(flux, this.elapsed, dt)) {
       this.onsetLevel = 1;
+      this.onsetCount++;
       this.beats.onOnset(this.elapsed);
     } else {
       // Decays on elapsed time rather than per frame, so the pulse looks the
@@ -182,16 +217,15 @@ export class AudioAnalysisEngine {
       if (this.onsetLevel < 1e-4) this.onsetLevel = 0;
     }
 
-    // Average magnitude per bin across the whole spectrum. Each band is
-    // measured as a multiple of this, so "loud" means loud relative to the rest
-    // of the sound rather than relative to a fixed scale that cannot serve both
-    // a quiet acoustic take and a loud master.
-    let total = 0;
-    for (let i = 1; i < magnitudes.length; i++) total += magnitudes[i];
-    const averageDensity = total / Math.max(1, magnitudes.length - 1);
+    // Average magnitude per bin across the whole spectrum, from the same walk.
+    // Each band is measured as a multiple of this, so "loud" means loud
+    // relative to the rest of the sound rather than relative to a fixed scale
+    // that cannot serve both a quiet acoustic take and a loud master.
+    //
     // Silence zeroes the bands outright; there is no ratio worth taking when
     // there is nothing to take it against.
-    const scale = silent || averageDensity <= 0 ? 0 : averageDensity;
+    const scale =
+      silent || summary.averageDensity <= 0 ? 0 : summary.averageDensity;
 
     const { hz, prominence } = silent
       ? { hz: NaN, prominence: 0 }
@@ -221,12 +255,10 @@ export class AudioAnalysisEngine {
       bass: this.band("bass", magnitudes, sampleRate, fftSize, dt, scale),
       mid: this.band("mid", magnitudes, sampleRate, fftSize, dt, scale),
       treble: this.band("treble", magnitudes, sampleRate, fftSize, dt, scale),
-      centroid: this.centroidSmoother.update(
-        silent ? 0 : spectralCentroid(magnitudes, sampleRate, fftSize),
-        dt
-      ),
+      centroid: this.centroidSmoother.update(silent ? 0 : summary.centroid, dt),
       flux,
       onset: this.onsetLevel,
+      onsetCount: this.onsetCount,
       beatPhase: this.beats.phaseAt(this.elapsed),
       bpm: this.beats.bpm,
       silent,

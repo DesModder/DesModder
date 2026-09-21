@@ -58,6 +58,15 @@ export interface AudioFeatureFrame {
   readonly flux: number;
   /** Decaying impulse fired on an accepted onset, 0-1. */
   readonly onset: number;
+  /**
+   * How many onsets have been accepted since the engine last reset.
+   *
+   * A counter rather than a flag, because the consumers read frames on their
+   * own clocks and several of them are faster than the analysis. A flag would
+   * be seen set on three consecutive reads of the same frame and be acted on
+   * three times; a count that has not moved is unmistakably the same onset.
+   */
+  readonly onsetCount: number;
   /** Position within the estimated beat, 0-1. */
   readonly beatPhase: number;
   /** Estimated tempo, or NaN before enough onsets have been seen. */
@@ -79,6 +88,7 @@ export const SILENT_FRAME: AudioFeatureFrame = {
   centroid: 0,
   flux: 0,
   onset: 0,
+  onsetCount: 0,
   beatPhase: 0,
   bpm: NaN,
   silent: true,
@@ -264,6 +274,92 @@ export function spectralFlux(magnitudes: Float32Array, previous: Float32Array) {
 }
 
 /**
+ * Everything one pass over the spectrum can produce at once.
+ *
+ * The separate functions above each walk the whole array, and the engine used
+ * to call five of them per frame: decibels to magnitudes, flux against the
+ * previous frame, the copy that becomes the next frame's previous, the total
+ * for the band reference, and the centroid. Five passes over two thousand bins,
+ * sixty times a second, is four passes more than the arithmetic needs — and it
+ * is main-thread time, competing with the calculator that is trying to render.
+ *
+ * The individual functions are kept, because they are what the tests reason
+ * about and what a reader should look at to understand any one measurement.
+ * `spectrumUnitTest` asserts this agrees with all of them on the same input,
+ * which is the guard that stops the fused copy from drifting away from the
+ * readable one.
+ */
+export interface SpectrumSummary {
+  /** Positive frame-to-frame change, normalised. Matches `spectralFlux`. */
+  flux: number;
+  /** Mean magnitude per bin over the whole spectrum. */
+  averageDensity: number;
+  /** Log-normalised energy-weighted mean frequency. Matches `spectralCentroid`. */
+  centroid: number;
+}
+
+/**
+ * Converts, compares, copies, totals and weights in one walk.
+ *
+ * `previous` is both read and written: it holds the last frame on the way in
+ * and this frame on the way out, which is what lets the steady loop keep two
+ * buffers rather than allocating a third.
+ */
+export function summarizeSpectrum(
+  decibels: Float32Array,
+  magnitudes: Float32Array,
+  previous: Float32Array,
+  sampleRate: number,
+  fftSize: number,
+  floorDb = -100
+): SpectrumSummary {
+  let rise = 0;
+  let total = 0;
+  let weighted = 0;
+  const bins = decibels.length;
+  // Bin 0 is DC. Every measurement here starts at 1, so the conversion writes
+  // it and nothing reads it, exactly as the separate functions do.
+  const [firstDb] = decibels;
+  magnitudes[0] =
+    Number.isFinite(firstDb) && firstDb > floorDb ? 10 ** (firstDb / 20) : 0;
+  const [firstMagnitude] = magnitudes;
+  previous[0] = firstMagnitude;
+  const hzPerBin = sampleRate / fftSize;
+  for (let i = 1; i < bins; i++) {
+    const db = decibels[i];
+    magnitudes[i] = Number.isFinite(db) && db > floorDb ? 10 ** (db / 20) : 0;
+    // Read back rather than reused: the array is 32-bit and the expression
+    // above is 64-bit, so the two differ in the last few places. Everything
+    // downstream sees the stored value, and a total taken from the unstored one
+    // would be a total of numbers nothing else ever has.
+    const magnitude = magnitudes[i];
+    const delta = magnitude - previous[i];
+    if (delta > 0) rise += delta;
+    previous[i] = magnitude;
+    total += magnitude;
+    weighted += i * hzPerBin * magnitude;
+  }
+
+  let centroid = 0;
+  if (total > 0) {
+    const hz = weighted / total;
+    const lowest = Math.log2(MIN_PITCH_HZ);
+    const highest = Math.log2(sampleRate / 2);
+    centroid = clamp(
+      (Math.log2(Math.max(hz, MIN_PITCH_HZ)) - lowest) / (highest - lowest),
+      0,
+      1
+    );
+  }
+
+  return {
+    flux: total === 0 ? 0 : clamp(rise / total, 0, 1),
+    averageDensity: total / Math.max(1, bins - 1),
+    centroid,
+  };
+}
+
+/**
  * The spectrum reduced to a bounded number of points for display.
  *
  * Each output point keeps the loudest bin it covers rather than their average,
@@ -378,11 +474,30 @@ export function strongestComponents(
  */
 export class AsymmetricSmoother {
   private value = 0;
+  private attackSeconds: number;
+  private releaseSeconds: number;
 
   constructor(
-    private readonly attackSeconds: number,
-    private readonly releaseSeconds: number
-  ) {}
+    private readonly baseAttack: number,
+    private readonly baseRelease: number
+  ) {
+    this.attackSeconds = baseAttack;
+    this.releaseSeconds = baseRelease;
+  }
+
+  /**
+   * Scales both time constants away from the ones this was built with.
+   *
+   * Against the originals rather than the current values, so repeated calls
+   * cannot compound: dragging the response control from snappy to smooth and
+   * back has to land exactly where it started, and a smoother that multiplied
+   * its own current constant would get slower every time it was touched.
+   */
+  setResponseScale(scale: number) {
+    const safe = Number.isFinite(scale) && scale > 0 ? scale : 1;
+    this.attackSeconds = this.baseAttack * safe;
+    this.releaseSeconds = this.baseRelease * safe;
+  }
 
   update(target: number, dt: number) {
     if (!Number.isFinite(target)) return this.value;

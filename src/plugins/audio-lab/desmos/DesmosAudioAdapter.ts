@@ -28,13 +28,13 @@ import {
   componentLatex,
   listLatex,
   num,
-  pairsLatex,
   sampleFloorLatex,
   sampleIndexLatex,
   scalarLatex,
   traceXs,
   waveFunctionLatex,
   wavelengthLatex,
+  zippedLatex,
 } from "./latex";
 import type { AudioFeatureFrame, SpectralComponent } from "../audio/features";
 import type { Calc } from "#globals";
@@ -199,10 +199,31 @@ export class DesmosAudioAdapter {
   }
 
   /**
+   * Whether a list write is due.
+   *
+   * Public so the caller can ask *before* doing the work that feeds one.
+   * Reducing the spectrum to display points and finding the strongest
+   * components are each a whole pass over every bin, and they were being run on
+   * every animation frame to produce numbers this class then dropped on seven
+   * of every eight of them.
+   *
+   * The scalars have no equivalent, because there is no work behind them worth
+   * skipping: they come straight off the frame that has already been measured.
+   */
+  dueForLists(nowMs: number) {
+    return this.installed && nowMs - this.lastListWrite >= LIST_INTERVAL_MS;
+  }
+
+  /**
    * Publishes the latest frame, subject to both budgets.
    *
    * Called every animation frame; sends on far fewer of them. `nowMs` is passed
    * in rather than read here so a test can drive the clock.
+   *
+   * `waveform`, `spectrum` and `components` may be empty when
+   * {@link dueForLists} said no, since computing them would have been wasted.
+   * An empty waveform is therefore "nothing to say this frame" rather than
+   * "silence", and the list branch is not entered at all in that case.
    */
   update(
     frame: AudioFeatureFrame,
@@ -223,8 +244,22 @@ export class DesmosAudioAdapter {
         { id: IDS.phase, latex: scalarLatex(IDS.phase, this.phase) },
         { id: IDS.bass, latex: scalarLatex(IDS.bass, frame.bass) },
         { id: IDS.mid, latex: scalarLatex(IDS.mid, frame.mid) },
-        { id: IDS.treble, latex: scalarLatex(IDS.treble, frame.treble) }
+        { id: IDS.treble, latex: scalarLatex(IDS.treble, frame.treble) },
+        {
+          id: IDS.brightness,
+          latex: scalarLatex(IDS.brightness, frame.centroid),
+        },
+        { id: IDS.onset, latex: scalarLatex(IDS.onset, frame.onset) },
+        { id: IDS.beat, latex: scalarLatex(IDS.beat, frame.beatPhase) }
       );
+      // Tempo, like frequency, is written only when there is one. A zero there
+      // would read as a stopped metronome rather than as "not yet known", and
+      // anything dividing by it would blow up.
+      if (Number.isFinite(frame.bpm))
+        updates.push({
+          id: IDS.tempo,
+          latex: scalarLatex(IDS.tempo, frame.bpm),
+        });
       // Frequency is written only when there is one. Sending a zero during a
       // rest would make the wavelength infinite and blank the wave; leaving the
       // last good value there keeps the picture steady through a gap.
@@ -235,14 +270,16 @@ export class DesmosAudioAdapter {
         });
     }
 
-    if (nowMs - this.lastListWrite >= LIST_INTERVAL_MS) {
+    if (waveform.length > 0 && nowMs - this.lastListWrite >= LIST_INTERVAL_MS) {
       this.lastListWrite = nowMs;
       const ys = waveform.slice(0, WAVEFORM_POINTS);
       const xs = this.xs.slice(0, ys.length);
+      // The two traces are not rewritten: they name the lists and follow them.
+      // Only the lists themselves go out, so the samples cross once instead of
+      // twice. See `zippedLatex`.
       updates.push(
         { id: IDS.waveX, latex: `X_{wave}=${listLatex(xs)}` },
-        { id: IDS.waveY, latex: `Y_{wave}=${listLatex(ys)}` },
-        { id: IDS.waveform, latex: pairsLatex(xs, ys) }
+        { id: IDS.waveY, latex: `Y_{wave}=${listLatex(ys)}` }
       );
 
       const bins = spectrum.slice(0, SPECTRUM_POINTS);
@@ -250,8 +287,7 @@ export class DesmosAudioAdapter {
       const level = bins.map((bin) => bin.amplitude);
       updates.push(
         { id: IDS.spectrumF, latex: `F_{bin}=${listLatex(hz, 1)}` },
-        { id: IDS.spectrumS, latex: `S_{bin}=${listLatex(level)}` },
-        { id: IDS.spectrum, latex: pairsLatex(hz, level) }
+        { id: IDS.spectrumS, latex: `S_{bin}=${listLatex(level)}` }
       );
 
       if (this.mode === "additive") {
@@ -321,6 +357,14 @@ export class DesmosAudioAdapter {
       { id: IDS.mid, latex: scalarLatex(IDS.mid, 0), hidden: true },
       { id: IDS.treble, latex: scalarLatex(IDS.treble, 0), hidden: true },
       {
+        id: IDS.brightness,
+        latex: scalarLatex(IDS.brightness, 0),
+        hidden: true,
+      },
+      { id: IDS.onset, latex: scalarLatex(IDS.onset, 0), hidden: true },
+      { id: IDS.beat, latex: scalarLatex(IDS.beat, 0), hidden: true },
+      { id: IDS.tempo, latex: scalarLatex(IDS.tempo, 120), hidden: true },
+      {
         id: IDS.waveX,
         latex: `X_{wave}=${listLatex(this.xs)}`,
         hidden: true,
@@ -359,17 +403,14 @@ export class DesmosAudioAdapter {
       },
       {
         id: IDS.waveform,
-        latex: pairsLatex(
-          this.xs,
-          this.xs.map(() => 0)
-        ),
+        latex: zippedLatex("X_{wave}", "Y_{wave}"),
         color: DESMOS_BLUE,
         lines: true,
         points: false,
       },
       {
         id: IDS.spectrum,
-        latex: pairsLatex([], []),
+        latex: zippedLatex("F_{bin}", "S_{bin}"),
         color: DESMOS_GREEN,
         lines: true,
         points: false,

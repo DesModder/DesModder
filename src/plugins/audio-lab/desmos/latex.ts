@@ -30,22 +30,23 @@ export function listLatex(values: readonly number[], places = 4) {
 }
 
 /**
- * A list of points from paired coordinates.
+ * The plotted trace, as a point built from the two lists beside it.
  *
- * Written as a point list rather than `(X_{wave},Y_{wave})` for the plotted
- * expression, because a point list keeps rendering if one of the two component
- * lists is momentarily a different length mid-update.
+ * This replaced a literal list of 192 points, and the reason is arithmetic: the
+ * same samples were being written to the graph twice, once as `Y_{wave}` and
+ * again inside the point list, so every trace update carried about twice the
+ * LaTeX Desmos then had to re-parse — eight times a second, on the main thread,
+ * while the calculator was trying to render. Naming the lists sends the samples
+ * once, and makes the trace an expression that never has to be rewritten at
+ * all: it follows the lists.
+ *
+ * Desmos truncates an elementwise operation to the shorter of its lists, so a
+ * moment where the two disagree in length draws the part they agree on rather
+ * than failing. Avoiding that was the original reason for the literal list, and
+ * it turns out not to need one.
  */
-export function pairsLatex(
-  xs: readonly number[],
-  ys: readonly number[],
-  places = 4
-) {
-  const count = Math.min(xs.length, ys.length);
-  const points: string[] = [];
-  for (let i = 0; i < count; i++)
-    points.push(`\\left(${num(xs[i], places)},${num(ys[i], places)}\\right)`);
-  return `\\left[${points.join(",")}\\right]`;
+export function zippedLatex(xs: string, ys: string) {
+  return `\\left(${xs},${ys}\\right)`;
 }
 
 /** Evenly spaced x coordinates across the trace window. */
@@ -68,6 +69,10 @@ export const SCALARS = {
   [IDS.bass]: "B_{audio}",
   [IDS.mid]: "M_{audio}",
   [IDS.treble]: "T_{audio}",
+  [IDS.brightness]: "S_{audio}",
+  [IDS.onset]: "O_{audio}",
+  [IDS.beat]: "R_{audio}",
+  [IDS.tempo]: "N_{audio}",
 } as const;
 
 export function scalarLatex(id: keyof typeof SCALARS, value: number) {

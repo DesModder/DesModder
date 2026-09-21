@@ -31,17 +31,26 @@ merged. Audio Lab development deliberately did not edit any file under
   phase.
 - Maintains a managed Audio Lab folder of live Desmos variables —
   `t_audio`, `A_audio`, `f_audio`, `phi_audio`, `c_audio`, `lambda_audio`,
-  `B_audio`, `M_audio`, `T_audio` — plus the recent sample lists `X_wave` and
-  `Y_wave`, the spectrum lists `F_bin` and `S_bin`, and `W_audio(x)`.
+  `B_audio`, `M_audio`, `T_audio`, `S_audio`, `O_audio`, `R_audio`, `N_audio` —
+  plus the recent sample lists `X_wave` and `Y_wave`, the spectrum lists
+  `F_bin` and `S_bin`, and `W_audio(x)`.
 - Offers `W_audio(x)` as a representative sinusoid, an interpolation through
   the recent samples, or a sum of the strongest eight components, with the
   panel saying which of the three you are looking at.
-- Draws Audio Field: eight thousand GPU particles behind the graph paper in one
-  of four presets (Pulse, Vortex, Flow, Spectrum Storm), driven by uniforms
-  only and degrading down a quality ladder to hold a 30 FPS floor.
+- Draws Audio Field: GPU particles with trails behind the graph paper, advected
+  by a vector field the user can edit. The two components are Desmos LaTeX over
+  x and y that may read any of the audio variables, compiled to GLSL by the
+  shared `latexToGLSL`. Five presets are starting points rather than fixed
+  modes: Stream, Pulse, Vortex, Spectrum storm, and Still water.
+- Drops **ripples** into that field. A ripple is an expanding ring with an
+  origin, a birth time and a strength, emitted on an onset or on the beat, and
+  it is the one part of the field that cannot be an expression — see
+  "Why ripples are not an expression" below.
+- Lets the cursor push, pull or stir the field, and drop a ripple on a click,
+  through passive listeners that never intercept a Desmos gesture.
 - Keeps the capture, the field, and the live variables running when the panel
-  is closed, and remembers the wave mode, field preset, quality, and speed of
-  sound across a page reload.
+  is closed, and remembers the wave mode, the whole field configuration, the
+  response, and the speed of sound across a page reload.
 - Cleans up animation frames, polling, pending requests, object URLs, audio
   nodes, streams, WebGL resources, observers, and message listeners when the
   plugin is disabled.
@@ -80,10 +89,23 @@ Rate separation is the design, not an optimisation.
 
 | Consumer       | Rate                  | Why                                    |
 | -------------- | --------------------- | -------------------------------------- |
-| Analysis       | every animation frame | The field needs it                     |
+| Analysis       | up to every frame     | Set by the response control            |
 | Desmos scalars | ~12 Hz, coalesced     | A calculator is a mathematical display |
 | Desmos lists   | ~8 Hz, coalesced      | Same, and lists cost more to parse     |
 | Audio Field    | every animation frame | Uniform uploads only                   |
+
+The field reads the latest measurement on its **own** clock rather than being
+pushed one, through `FlowOverlay`'s `beforeFrame` hook. That is what lets the
+particles stay at sixty frames a second while the analysis runs at whatever
+rate the response setting asks for, without a second animation loop and without
+the parameters uploaded belonging to a different moment than the frame that
+used them.
+
+The work behind a Desmos write is not done on frames that will not carry one.
+`DesmosAudioAdapter.dueForLists` is public for exactly that: reducing the
+spectrum to display points and finding the strongest components are each a walk
+over every bin, and they used to be computed on every frame to feed a write
+that happens eight times a second.
 
 Nothing serialises the graph during playback. Creation is one `setState`;
 every update after it is `setExpressions` with an id and a latex string, and
@@ -172,19 +194,78 @@ AudioLabRuntime.ts   the panel view: DOM bindings and canvases, no state
 AudioLabPanel.tsx    the markup, and the .less beside it
 audio/               AudioAnalysisEngine and the primitives it is built from
 desmos/              the expression manifest, latex builders, throttled adapter
-fieldplay/           presets, shaders, the WebGL renderer, the canvas overlay
+field/               the audio field: configuration, presets, ripples, cursor
 ```
 
 Nothing in `audio/` writes to Desmos and nothing in it touches WebGL. The engine
-publishes a frame; the adapter and the overlay each sample it on their own
-clock, which is what lets either be switched off without changing what the
-other sees.
+publishes a frame; the adapter and the field each sample it on their own clock,
+which is what lets either be switched off without changing what the other sees.
 
-`fieldplay/glTestDouble.ts` is Audio Lab's own fake WebGL, deliberately not
-shared with the one in `src/plugins/vector-tools/flow/`. A test helper reaching
-across that boundary is still a dependency across it. If the two are ever
-merged, it should be into a neutral package with its own tests, not by one
-plugin importing the other's.
+## The field, and where it lives
+
+Audio Lab no longer has a renderer. It drives **`src/field-rendering/`**, the
+neutral package Vector Tools and Physics Lab also drive, and everything the
+field gets from that — particle trails, the glow, the palettes, reprojecting
+the trails across a pan, surviving a lost context — is code this plugin does
+not own a second copy of. The handoff used to warn that Audio Lab's
+`fieldplay/glTestDouble.ts` was a deliberate duplicate and that merging the two
+should be into a neutral package rather than by one plugin importing the
+other's. That is what happened, in the other direction: the package already
+existed, and Audio Lab moved onto it.
+
+`field/` is what is left, and all of it is Audio Lab's own:
+
+| File                      | What it is                                          |
+| ------------------------- | --------------------------------------------------- |
+| `model.ts`                | `AudioFieldConfig`, the presets, and the normalizer |
+| `variables.ts`            | the audio values a field expression may read        |
+| `compile.ts`              | configuration → `FlowField`, through `latexToGLSL`  |
+| `RippleEmitter.ts`        | onsets and beats → the shader's ripple slots        |
+| `PointerTracker.ts`       | the cursor, in graph coordinates, read-only         |
+| `AudioFieldController.ts` | one overlay, one configuration, one frame at a time |
+
+Two things were added to the neutral package for this, both opt-in and both
+absent from the shader when they are not asked for, so every field that
+predates them compiles to exactly the source it did before:
+
+- **`FieldDisturbances`** on a `FlowField` — a ripple slot count and a pointer
+  flag. Only the _count_ is part of the field's identity, because only that
+  changes the shader; the ripples themselves arrive each frame through
+  `setDisturbances`, like parameters do.
+- **`FlowOverlayIdentity`** — the canvas id and the bounds-observer key. These
+  were hardcoded to Vector Tools' values, and `mount` removes any element
+  already carrying the id, precisely so a reload cannot stack two of the same
+  overlay's canvases. Two plugins sharing one id turns that safeguard into each
+  one deleting the other. Vector Tools keeps its values as the default.
+
+### Why ripples are not an expression
+
+`P` and `Q` are functions of position and of the current sound, so they can say
+"push harder while the bass is loud". They cannot say "a drum hit happened
+_there_, _then_, and the front from it is now this far out" — that needs
+remembering, and an expression does not remember. So a ripple is state: an
+origin, a birth time and a signed strength, in a fixed-size uniform array that
+`RippleEmitter` writes in place.
+
+The slot count is a constant rather than a setting, because a uniform array
+length is part of the shader and a count that moved with a control would relink
+two programs whenever that control moved. Turning ripples off asks for zero
+slots, which is the one case that does rebuild — and it is a click, not a drag.
+
+Onsets are counted rather than detected from the impulse height. The field
+draws faster than the analysis measures, so the frame an onset fired on is read
+several times over, and a rising-edge test on `frame.onset` would emit a ring
+on each of them. `frame.onsetCount` is what makes "the same onset" unambiguous.
+
+### Why "Still water" has a current in it
+
+It does, and it has to. A field that is exactly zero draws nothing at all: the
+renderer respawns any particle whose step rounds to zero — otherwise a genuine
+fixed point would collect particles forever — and a particle fades in over its
+first several frames, so with no current every particle outside a ripple is
+respawned every frame and none lives long enough to become visible. A blank
+canvas reporting no error. The preset therefore has a very slow wander in it,
+slow enough that what you see is still the rings.
 
 ## Verification
 
@@ -207,32 +288,53 @@ Manual Chrome test:
 5. Sign in, open Spotify, start any track once, paste a Spotify link, and press
    **Play**.
 6. Press **Analyze tab audio**, choose the Spotify tab, enable **Share tab
-   audio**, and confirm both canvases animate and the readouts move.
+   audio**, and confirm both canvases animate and the readouts move. Try all
+   three **Response** settings against a drum track and check that Snappy
+   visibly reacts sooner than Smooth.
 7. Press **Start live graph**. An Audio Lab folder should appear and its
    variables should move with the music. Check that `lambda_audio` follows
    `f_audio`, and that the dominant frequency shows an em dash rather than a
    number during a drum break.
 8. Switch `W_audio(x)` through all three modes and confirm the curve changes
    meaning while the variables keep updating.
-9. Press **Show audio field** and try each preset. Confirm that pan, zoom, the
-   keypad, and clicking an expression all still work with it running.
-10. Press **Stop updating the graph** and confirm the expressions stay. Press
+9. Press **Show audio field** and try each preset in the Field tab. Confirm
+   that pan, zoom, the keypad, and clicking an expression all still work with
+   it running.
+10. On **Still water**, press **Drop one now** and watch a single ring expand
+    and fade. Then move the ripple numbers and confirm each does what it says.
+11. Edit `P(x, y)` to something of your own and press Enter. The field should
+    change without the trails blinking out, the preset chip should move to
+    **Yours**, and a name it cannot read should be reported under the boxes
+    rather than anywhere else.
+12. Move the cursor over the graph with the cursor mode on push, pull and stir.
+    Click the graph and confirm a ripple appears where you clicked, and that
+    dragging to pan does **not** leave one behind.
+13. Turn on Desmos's reverse contrast. The field must keep its own colours
+    rather than appearing as the negative of itself.
+14. Press **Stop updating the graph** and confirm the expressions stay. Press
     **Remove from graph** and confirm they go and nothing else does.
-11. With the field running and the graph live, **close the panel**. Both must
+15. With the field running and the graph live, **close the panel**. Both must
     keep going. Reopen it and confirm the buttons read "Hide audio field" and
     "Stop updating the graph" rather than having reset.
-12. Reload the page and reopen the panel. The wave mode, field preset, quality,
-    and speed of sound should be as you left them.
-13. Disable Audio Lab in the DesModder plugin list. The field canvas must
+16. Reload the page and reopen the panel. The wave mode, the whole field
+    configuration, the response, and the speed of sound should be as you left
+    them.
+17. Turn on **both** Audio Lab's field and Vector Tools' flow visualizer.
+    Neither canvas may disappear, and stopping one must not stop the other.
+18. Disable Audio Lab in the DesModder plugin list. The field canvas must
     disappear and the capture must stop.
 
 ### Things worth checking that the tests cannot
 
 The unit tests run against a fake WebGL that never compiles a shader, so shader
 correctness and everything about how the field _looks_ is only ever verified by
-running it. The same goes for the panel's layout inside the real pillbox, and
-for how the field reads against Desmos's dark/reverse-contrast mode, which has
-not been tuned.
+running it. The same goes for the panel's layout inside the real pillbox.
+
+Both were checked for this change against a real WebGL2 context and a real
+browser, outside Desmos — every preset's field function compiled, and the
+panel was driven by the real `AudioLabRuntime` against a stubbed session. What
+that cannot cover is the pillbox itself, tab capture, and how the field sits
+against a real graph, which is what the manual pass above is for.
 
 If the Audio Lab button is missing, check that the loaded extension points to
 the current `dist`, `audio-lab` is present in the plugin registry and utility
@@ -256,14 +358,32 @@ after the extension reload.
   measurement. `AnalyserNode` reports magnitudes only; there is no phase to
   read. This is why the mode is labelled an approximation for Fourier work
   rather than a reconstruction.
+- A field expression may read `x`, `y`, `t` and the audio variables, and
+  nothing else. It deliberately does not compile against the expression list
+  the way Vector Tools' does: this configuration persists across graphs, and a
+  field that silently depended on a `g(x)` the user had defined would stop
+  compiling the moment it was carried to a graph without one.
+- Greek-named variables cannot be used in a field expression. `latexToGLSL`
+  shares Desmos's identifier grammar — a letter and an optional subscript — so
+  `\lambda_{audio}` reads as the command `\lambda` followed by nothing. Both
+  it and `\phi_{audio}` are still defined in the graph; they are simply not
+  available in the two component boxes, and the panel says so.
+- Ripple _speed_ is in graph units per second and has nothing to do with
+  `c_audio`. A ring is a picture of an event, not a simulation of a wave in
+  air, and giving it the speed of sound would send it off screen in a frame at
+  any ordinary zoom.
 - **Not done:** the CPU fallback for machines without WebGL2. The field refuses
   with a clear message and the live graph keeps working, which satisfies the
   specification's requirement that one being unavailable does not take the
-  other down. A real fallback means a second implementation of all four fields
-  in TypeScript, and two copies of a field function drifting apart is a worse
+  other down. A real fallback means a second implementation of the field in
+  TypeScript, and two copies of a field function drifting apart is a worse
   failure than not having the fallback. Worth doing deliberately, with the
   field maths in one place, rather than as an afterthought here.
-- **Not tuned:** Desmos's dark / reverse-contrast mode. The field's colours are
-  chosen for white graph paper. Vector Tools solves the same problem with a
-  counter-invert on its canvas; Audio Lab needs an equivalent, and it should be
-  looked at on screen rather than reasoned about.
+- **Not measured:** the field's frame cost. The old renderer carried a quality
+  ladder that dropped particles when a frame ran long, and it measured the
+  wrong thing — `performance.now()` around a series of GL calls times how long
+  the CPU took to _submit_ work, not how long the GPU took to do it, so the
+  ladder was reading a number near zero whatever the field was doing. It was
+  not replaced with a better measurement; it was removed, and particle count
+  and render detail are controls in the panel instead. A real answer is
+  `EXT_disjoint_timer_query_webgl2`, which is worth doing deliberately.

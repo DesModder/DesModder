@@ -18,19 +18,30 @@
 import { PALETTE_GLSL, paletteUniforms, type PaletteID } from "./palettes";
 import {
   fieldFunctions,
+  uploadFieldDisturbances,
   uploadFieldParameters,
   FlowRendererError,
+  NO_DISTURBANCES,
 } from "./field";
-import type { FlowBounds, FlowField } from "./field";
+import type { DisturbanceState, FlowBounds, FlowField } from "./field";
 import type { FlowColorMode } from "./types";
 
 // Re-exported so the parts that only ever wanted a field keep one import.
 export {
   fieldFunctions,
+  uploadFieldDisturbances,
   uploadFieldParameters,
   FlowRendererError,
+  NO_DISTURBANCES,
+  RIPPLE_STRIDE,
 } from "./field";
-export type { FlowBounds, FlowField } from "./field";
+export type {
+  DisturbanceState,
+  FieldDisturbances,
+  FlowBounds,
+  FlowField,
+  Ripple,
+} from "./field";
 
 export interface FlowOptions {
   /**
@@ -226,6 +237,8 @@ export class FlowRenderer {
   /** The field currently linked, so its parameter names are to hand each frame. */
   private linkedField?: FlowField;
   private parameters: ReadonlyMap<string, number> = new Map();
+  /** This frame's ripples and pointer. Uploaded, never part of the identity. */
+  private disturbances: DisturbanceState = NO_DISTURBANCES;
   /** Seconds on the animation clock, uploaded as `u_time` when the field reads it. */
   private time = 0;
   private frameSeed = 1;
@@ -295,6 +308,18 @@ export class FlowRenderer {
 
   setTime(seconds: number) {
     this.time = seconds;
+  }
+
+  /**
+   * This frame's ripples and pointer.
+   *
+   * Kept off `setField` for exactly the reason parameters are: these change
+   * every frame, and routing them through the field would relink both programs
+   * sixty times a second. Only the *number* of ripple slots is part of the
+   * field, because only that changes the shader.
+   */
+  setDisturbances(state: DisturbanceState) {
+    this.disturbances = state;
   }
 
   /**
@@ -480,6 +505,12 @@ export class FlowRenderer {
       this.parameters,
       this.time
     );
+    uploadFieldDisturbances(
+      gl,
+      program.uniforms,
+      this.linkedField,
+      this.disturbances
+    );
     gl.disable(gl.BLEND);
     gl.bindVertexArray(this.quadArray);
 
@@ -550,6 +581,12 @@ export class FlowRenderer {
       this.linkedField,
       this.parameters,
       this.time
+    );
+    uploadFieldDisturbances(
+      gl,
+      program.uniforms,
+      this.linkedField,
+      this.disturbances
     );
     this.bindTrailTarget(this.trailFront!);
     gl.enable(gl.BLEND);

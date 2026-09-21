@@ -142,6 +142,28 @@ describe("LaTeX to GLSL field compiler", () => {
     expect(Number.isFinite(evaluate(glsl, 0, 0))).toBe(true);
   });
 
+  test("an environment can say where its names come from", () => {
+    // The default answer points at the expression list, which is where Vector
+    // Tools and Physics Lab get their values. Audio Lab's fields read a fixed
+    // list of measurements and never touch the graph, so sending someone there
+    // would have them define a variable that could not be found.
+    const fallback = compileFieldComponentToGLSL("q");
+    expect(fallback.ok).toBe(false);
+    if (!fallback.ok) expect(fallback.error).toContain("expression list");
+
+    const custom = compileFieldComponentToGLSL("q", {
+      functions: new Map(),
+      scalars: new Set(),
+      unknownNameHint: "Only the audio variables are available here.",
+    });
+    expect(custom.ok).toBe(false);
+    if (!custom.ok) {
+      expect(custom.error).toContain('"q" is not defined');
+      expect(custom.error).toContain("Only the audio variables");
+      expect(custom.error).not.toContain("expression list");
+    }
+  });
+
   test("explains what it cannot translate", () => {
     const cases: readonly [string, string][] = [
       ["a_{1}x", "is not defined"],

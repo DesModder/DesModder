@@ -235,3 +235,172 @@
 .dsm-audio-lab-footer button + button {
   margin-top: 5px;
 }
+
+// The head: meters and tabs, above the scrolling body.
+//
+// The meters sit here rather than in a tab because they answer "is anything
+// being heard", and that question comes up while adjusting every other control.
+// A waveform you have to switch tabs to see is a waveform you stop using.
+.dsm-audio-lab-head {
+  border-bottom: 1px solid #ddd;
+  flex: none;
+  padding-bottom: 6px;
+
+  // Tall enough to read an envelope from, short enough that it is not what the
+  // panel is mostly made of. The head is fixed, so every pixel here is taken
+  // from the controls, on every tab, forever.
+  .dsm-audio-lab-canvas {
+    height: clamp(44px, 8vh, 64px);
+    margin-bottom: 5px;
+  }
+
+  // In the head the readouts are one wrapping line of label-and-value pairs
+  // rather than the stacked grid they are elsewhere. Stacked, five of them cost
+  // two rows of label plus two of value; inline they cost two rows in total,
+  // and a fixed head is the one place in the panel where that trade is worth
+  // making.
+  .dsm-audio-lab-readouts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+    margin: 0 0 6px;
+
+    span {
+      align-items: baseline;
+      flex-direction: row;
+      gap: 4px;
+    }
+
+    strong {
+      font-size: 11px;
+    }
+  }
+}
+
+.dsm-audio-lab-tabs {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(3, 1fr);
+
+  button {
+    background: #f0f0f0;
+    color: #444;
+    font-size: 12px;
+  }
+}
+
+// One shared look for every chip row, so a preset, a palette and a ripple
+// source all read as the same kind of choice.
+.dsm-audio-lab-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 3px 0 5px;
+
+  button {
+    background: #f0f0f0;
+    color: #444;
+    font-size: 11px;
+    min-height: 24px;
+    padding: 3px 8px;
+  }
+}
+
+.dsm-audio-lab-chips button.dsm-audio-lab-chip-on,
+.dsm-audio-lab-tabs button.dsm-audio-lab-chip-on {
+  background: #2d70b3;
+  color: #fff;
+}
+
+// Two columns of numbers. Four of them in one row would give each about sixty
+// pixels, which is not enough to show "0.995" and a spinner.
+.dsm-audio-lab-numbers {
+  display: grid;
+  gap: 5px 8px;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  margin: 5px 0;
+}
+
+// The component editor. A monospace box, because what goes in it is LaTeX and
+// proportional digits in `0.55x-1.1t` are harder to check than they look.
+.dsm-audio-lab-component {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  margin: 4px 0;
+
+  span {
+    color: #666;
+    flex: none;
+    font-size: 11px;
+    font-weight: bold;
+    width: 62px;
+  }
+
+  input {
+    border: 1px solid #bcbcbc;
+    border-radius: 3px;
+    box-sizing: border-box;
+    flex: 1;
+    font-family: monospace;
+    font-size: 11px;
+    min-height: 28px;
+    min-width: 0;
+    padding: 4px 6px;
+  }
+}
+
+.dsm-audio-lab-details {
+  margin: 8px 0;
+
+  summary {
+    color: #666;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: bold;
+  }
+}
+
+// The variable list, in two columns: the name, then what it means. A single
+// column of "A_audio — Loudness — 0 to 1" is a paragraph rather than a table.
+.dsm-audio-lab-variables {
+  display: grid;
+  gap: 2px 8px;
+  margin: 5px 0;
+
+  div {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 76px 1fr;
+  }
+
+  code {
+    color: #2d70b3;
+    font-family: monospace;
+    font-size: 11px;
+  }
+
+  span {
+    color: #666;
+    font-size: 11px;
+  }
+}
+
+.dsm-audio-lab-check {
+  align-items: center;
+  display: flex;
+  font-weight: normal;
+  gap: 6px;
+
+  input {
+    flex: none;
+    margin: 0;
+  }
+}
+
+// The footer's two switches. `dsm-audio-lab-transport` is a three-up grid and
+// there are two of these, so the column count is overridden rather than a
+// second near-identical grid being introduced.
+.dsm-audio-lab-primary {
+  grid-template-columns: 1fr 1fr;
+}

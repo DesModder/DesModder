@@ -19,6 +19,10 @@ export const IDS = {
   bass: "audio_lab_bass",
   mid: "audio_lab_mid",
   treble: "audio_lab_treble",
+  brightness: "audio_lab_brightness",
+  onset: "audio_lab_onset",
+  beat: "audio_lab_beat",
+  tempo: "audio_lab_tempo",
   waveX: "audio_lab_wave_x",
   waveY: "audio_lab_wave_y",
   /** Kept from the snapshot-only version so an existing graph is reused. */

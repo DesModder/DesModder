@@ -18,16 +18,17 @@ const directory = join("src", "plugins", "audio-lab");
 const runtime = readFileSync(join(directory, "AudioLabRuntime.ts"), "utf8");
 const panel = readFileSync(join(directory, "AudioLabPanel.tsx"), "utf8");
 
-// Both ways the view reaches an element: `find` for a plain lookup, and the
-// `on` helper, which does a `find` and then attaches a listener.
-const lookedUp = new Set([
-  ...[...runtime.matchAll(/find<[^>]*>\(\s*"([^"]+)"/g)].map(
-    ([, name]) => name
-  ),
-  ...[...runtime.matchAll(/\bon(?:<[^>]*>)?\(\s*"([^"]+)"/g)].map(
-    ([, name]) => name
-  ),
-]);
+// Every way the view reaches an element. All five helpers end in a `find`,
+// which is what throws, so a name misspelled in any of them is one failure.
+const lookedUp = new Set(
+  [
+    ...runtime.matchAll(/\bfind(?:<[^>]*>)?\(\s*"([^"]+)"/g),
+    ...runtime.matchAll(/\bon(?:<[^>]*>)?\(\s*"([^"]+)"/g),
+    ...runtime.matchAll(/\btext\(\s*\n?\s*"([^"]+)"/g),
+    ...runtime.matchAll(/\bchips(?:<[^>]*>)?\(\s*\n?\s*"([^"]+)"/g),
+    ...runtime.matchAll(/\bnumbers\(\s*"([^"]+)"/g),
+  ].map(([, name]) => name)
+);
 const declared = new Set([
   ...[...panel.matchAll(/data-audio-lab="([^"]+)"/g)].map(([, name]) => name),
   // The canvases are placeholders in the markup and are swapped for real

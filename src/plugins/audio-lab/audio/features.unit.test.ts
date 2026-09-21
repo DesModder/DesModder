@@ -15,6 +15,7 @@ import {
   peakAmplitude,
   spectralCentroid,
   spectralFlux,
+  summarizeSpectrum,
 } from "./features";
 import { rms } from "../dsp";
 
@@ -41,6 +42,88 @@ function spectrumWithPeak(hz: number, peakDb = -6, floorDb = -95) {
     return floorDb + (peakDb - floorDb) * Math.exp(-(distance ** 2) / 0.9);
   });
 }
+
+/**
+ * The fused walk and the readable functions must agree.
+ *
+ * `summarizeSpectrum` exists only because the engine was making five passes
+ * over the spectrum per frame where the arithmetic needs one. The five separate
+ * functions are what a reader should look at to understand any one measurement,
+ * so they stay — and that leaves two implementations of the same numbers. This
+ * is the guard that keeps them from drifting apart, which is the failure mode
+ * that made the separate `glTestDouble` copies a problem elsewhere in this
+ * plugin.
+ */
+describe("the fused spectrum walk", () => {
+  const cases: ReadonlyArray<readonly [string, Float32Array, Float32Array]> = [
+    [
+      "a tone over a floor, against silence",
+      spectrumWithPeak(440),
+      new Float32Array(BINS).fill(-100),
+    ],
+    [
+      "a tone rising from a quieter one",
+      spectrumWithPeak(440, -6),
+      spectrumWithPeak(440, -40),
+    ],
+    [
+      "a tone falling away, where only the rise counts",
+      spectrumWithPeak(440, -40),
+      spectrumWithPeak(440, -6),
+    ],
+    [
+      "silence against silence",
+      new Float32Array(BINS).fill(-120),
+      new Float32Array(BINS).fill(-120),
+    ],
+    [
+      "a spectrum with holes in it",
+      Float32Array.from({ length: BINS }, (_, i) =>
+        i % 3 === 0 ? -Infinity : -20 - (i % 40)
+      ),
+      new Float32Array(BINS).fill(-100),
+    ],
+  ];
+
+  test.each(cases)("%s", (_name, decibels, before) => {
+    // The readable way: convert, then each measurement walks it again.
+    const separate = new Float32Array(BINS);
+    decibelsToMagnitudes(decibels, separate);
+    const previousSeparate = Float32Array.from(before).map((db) =>
+      Number.isFinite(db) && db > -100 ? 10 ** (db / 20) : 0
+    );
+    const flux = spectralFlux(separate, previousSeparate);
+    const centroid = spectralCentroid(separate, RATE, FFT);
+    let total = 0;
+    for (let i = 1; i < separate.length; i++) total += separate[i];
+    const averageDensity = total / Math.max(1, separate.length - 1);
+
+    // The fused way, which is what the engine actually runs.
+    const fusedMagnitudes = new Float32Array(BINS);
+    const fusedPrevious = Float32Array.from(previousSeparate);
+    const summary = summarizeSpectrum(
+      decibels,
+      fusedMagnitudes,
+      fusedPrevious,
+      RATE,
+      FFT
+    );
+
+    expect([...fusedMagnitudes]).toEqual([...separate]);
+    expect(summary.flux).toBeCloseTo(flux, 10);
+    expect(summary.centroid).toBeCloseTo(centroid, 10);
+    expect(summary.averageDensity).toBeCloseTo(averageDensity, 10);
+  });
+
+  test("the previous buffer comes out holding this frame", () => {
+    // Which is what lets the loop own two buffers rather than three.
+    const decibels = spectrumWithPeak(1000);
+    const magnitudes = new Float32Array(BINS);
+    const previous = new Float32Array(BINS).fill(0.5);
+    summarizeSpectrum(decibels, magnitudes, previous, RATE, FFT);
+    expect([...previous]).toEqual([...magnitudes]);
+  });
+});
 
 describe("spectral primitives", () => {
   test("dB converts to linear magnitude and floors to zero", () => {
@@ -147,6 +230,55 @@ describe("smoothers", () => {
     for (let i = 0; i < 120; i++) fine.update(1, 1 / 120);
     // One second of signal, four times the frames: the same place.
     expect(fine.current).toBeCloseTo(coarse.current, 2);
+  });
+
+  test("the response scale retimes a smoother against its original constants", () => {
+    const settle = (smoother: AsymmetricSmoother) => {
+      let steps = 0;
+      while (smoother.current < 0.9 && steps < 10_000) {
+        smoother.update(1, 1 / 60);
+        steps++;
+      }
+      return steps;
+    };
+
+    const base = settle(new AsymmetricSmoother(0.1, 0.1));
+    const snappy = new AsymmetricSmoother(0.1, 0.1);
+    snappy.setResponseScale(0.35);
+    const smooth = new AsymmetricSmoother(0.1, 0.1);
+    smooth.setResponseScale(2);
+    expect(settle(snappy)).toBeLessThan(base);
+    expect(settle(smooth)).toBeGreaterThan(base);
+  });
+
+  test("scaling the response twice does not compound", () => {
+    // Against the constants it was built with, not the current ones. Dragging
+    // the control from snappy to smooth and back has to land where it started,
+    // and a smoother that scaled its own current value would get slower with
+    // every touch.
+    const smoother = new AsymmetricSmoother(0.1, 0.2);
+    smoother.setResponseScale(4);
+    smoother.setResponseScale(4);
+    smoother.setResponseScale(1);
+    const plain = new AsymmetricSmoother(0.1, 0.2);
+    for (let i = 0; i < 20; i++) {
+      smoother.update(1, 1 / 60);
+      plain.update(1, 1 / 60);
+    }
+    expect(smoother.current).toBeCloseTo(plain.current, 12);
+  });
+
+  test("a nonsense response scale is ignored rather than freezing the meter", () => {
+    const smoother = new AsymmetricSmoother(0.1, 0.1);
+    smoother.setResponseScale(0);
+    smoother.setResponseScale(NaN);
+    smoother.setResponseScale(-2);
+    const plain = new AsymmetricSmoother(0.1, 0.1);
+    for (let i = 0; i < 20; i++) {
+      smoother.update(1, 1 / 60);
+      plain.update(1, 1 / 60);
+    }
+    expect(smoother.current).toBeCloseTo(plain.current, 12);
   });
 
   test("adaptive normaliser jumps up and decays down", () => {

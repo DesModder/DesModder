@@ -11,20 +11,55 @@ import {
   DEFAULT_FLOW_OPTIONS,
   FlowRenderer,
   FlowRendererError,
+  NO_DISTURBANCES,
+  type DisturbanceState,
   type FlowBounds,
   type FlowField,
   type FlowOptions,
 } from "./FlowRenderer";
 import type { Calc } from "#globals";
 
-const CANVAS_ID = "dsm-vector-tools-flow-canvas";
 const GRAPH_CANVAS_SELECTOR = "canvas.dcg-graph-inner";
-const BOUNDS_OBSERVER_KEY = "graphpaperBounds.dsm-vector-tools";
+
+/**
+ * What tells one overlay's canvas and observer apart from another's.
+ *
+ * Two plugins may each have a flow on the same graph at once, and the id is not
+ * decoration: `mount` removes any element already carrying it, precisely so a
+ * reload cannot leave two of the same overlay's canvases stacked up. Sharing
+ * one id between two different overlays turns that safeguard into each one
+ * deleting the other. The observer key is namespaced for the matching reason —
+ * `unobserve` takes a key, so a shared one lets either overlay's teardown
+ * detach the other's pan handler.
+ */
+export interface FlowOverlayIdentity {
+  canvasId: string;
+  boundsObserverKey: string;
+}
+
+/** What Vector Tools has always used, kept so its markup does not move. */
+export const VECTOR_TOOLS_FLOW_IDENTITY: FlowOverlayIdentity = {
+  canvasId: "dsm-vector-tools-flow-canvas",
+  boundsObserverKey: "graphpaperBounds.dsm-vector-tools",
+};
 
 export interface FlowOverlayCallbacks {
   onError: (message: string) => void;
   /** The overlay is drawing again after having reported a failure. */
   onRecovered: () => void;
+  /**
+   * Called immediately before each drawn frame, on the overlay's own clock.
+   *
+   * The hook exists so a caller whose field reads something that changes every
+   * frame — live audio, a physical simulation — can set it here rather than run
+   * a second animation loop beside this one. Two loops for one picture is both
+   * a wasted frame callback and a source of tearing, where the parameters
+   * uploaded belong to a different moment than the frame that used them.
+   *
+   * It is not called for a frame that is skipped because the graph is off
+   * screen, since nothing would read what it set.
+   */
+  beforeFrame?: () => void;
 }
 
 export class FlowOverlay {
@@ -47,6 +82,8 @@ export class FlowOverlay {
   private lastField?: FlowField;
   /** Kept so a remount after a lost context comes back with the same values. */
   private lastParameters: ReadonlyMap<string, number> = new Map();
+  /** Kept for the same reason as the parameters: a restored context needs it. */
+  private lastDisturbances: DisturbanceState = NO_DISTURBANCES;
   private lastTime = 0;
   /**
    * Whether to invert this canvas to cancel the graph's reverse contrast.
@@ -78,6 +115,9 @@ export class FlowOverlay {
       this.renderer = new FlowRenderer(canvas);
       this.renderer.setOptions(this.options);
       this.renderer.setField(this.lastField);
+      this.renderer.setParameters(this.lastParameters);
+      this.renderer.setDisturbances(this.lastDisturbances);
+      this.renderer.setTime(this.lastTime);
       this.resizeToBox();
       this.lastBounds = undefined;
       this.syncBounds(true);
@@ -95,7 +135,8 @@ export class FlowOverlay {
 
   constructor(
     private readonly calc: Calc,
-    private readonly callbacks: FlowOverlayCallbacks
+    private readonly callbacks: FlowOverlayCallbacks,
+    private readonly identity: FlowOverlayIdentity = VECTOR_TOOLS_FLOW_IDENTITY
   ) {}
 
   /**
@@ -124,6 +165,7 @@ export class FlowOverlay {
       this.renderer!.setOptions(this.options);
       this.renderer!.setField(field);
       this.renderer!.setParameters(this.lastParameters);
+      this.renderer!.setDisturbances(this.lastDisturbances);
       this.renderer!.setTime(this.lastTime);
       this.applyContrast();
       this.syncBounds(true);
@@ -159,6 +201,17 @@ export class FlowOverlay {
     this.renderer?.setParameters(values);
   }
 
+  /**
+   * This frame's ripples and pointer.
+   *
+   * Kept, like the parameters, so a renderer rebuilt after a lost context comes
+   * back with the disturbances it had rather than a frame of stillness.
+   */
+  setDisturbances(state: DisturbanceState) {
+    this.lastDisturbances = state;
+    this.renderer?.setDisturbances(state);
+  }
+
   /** Cancels, or stops cancelling, the graph's reverse contrast. */
   setCounteractInvert(counteract: boolean) {
     if (this.counteractInvert === counteract) return;
@@ -167,7 +220,7 @@ export class FlowOverlay {
   }
 
   private applyContrast() {
-    const canvas = document.getElementById(CANVAS_ID);
+    const canvas = document.getElementById(this.identity.canvasId);
     if (canvas === null) return;
     canvas.style.filter = this.counteractInvert ? "invert(1)" : "";
   }
@@ -211,10 +264,10 @@ export class FlowOverlay {
         "Could not find the Desmos graph paper to draw on."
       );
     }
-    document.getElementById(CANVAS_ID)?.remove();
+    document.getElementById(this.identity.canvasId)?.remove();
 
     const canvas = document.createElement("canvas");
-    canvas.id = CANVAS_ID;
+    canvas.id = this.identity.canvasId;
     canvas.setAttribute("aria-hidden", "true");
     canvas.style.position = "absolute";
     canvas.style.left = "0";
@@ -247,8 +300,11 @@ export class FlowOverlay {
     // Desmos reports pan/zoom through this observable; the trail texture is in
     // screen space, so it has to be dropped whenever the mapping changes. The
     // key is namespaced so unobserving cannot detach another plugin's handler.
-    this.calc.observe(BOUNDS_OBSERVER_KEY, () => this.syncBounds(false));
-    this.unobserveBounds = () => this.calc.unobserve(BOUNDS_OBSERVER_KEY);
+    this.calc.observe(this.identity.boundsObserverKey, () =>
+      this.syncBounds(false)
+    );
+    this.unobserveBounds = () =>
+      this.calc.unobserve(this.identity.boundsObserverKey);
   }
 
   private resizeToBox() {
@@ -291,7 +347,10 @@ export class FlowOverlay {
       this.animationFrame = undefined;
       if (this.renderer === undefined || this.renderer.isContextLost) return;
       try {
-        if (this.onScreen) this.renderer.frame();
+        if (this.onScreen) {
+          this.callbacks.beforeFrame?.();
+          this.renderer.frame();
+        }
       } catch (error) {
         // A context lost mid-frame is not a failure to report and tear down;
         // its own handler has already said so and is waiting for it back.

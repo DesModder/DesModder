@@ -10,6 +10,7 @@ import AudioLabSession, {
   type SpotifyPlayback,
 } from "./AudioLabSession";
 import { IDS } from "./desmos/manifest";
+import { cloneAudioFieldConfig } from "./field/model";
 import type AudioLab from ".";
 import type { ItemState } from "graph-state/state";
 
@@ -18,8 +19,8 @@ function fakePlugin() {
   const settings = {
     spotifyUrl: "",
     waveMode: "representative",
-    fieldPreset: "pulse",
-    quality: "balanced",
+    fieldConfig: "",
+    response: "balanced",
     speedOfSound: "343",
   };
   const calc = {
@@ -36,6 +37,7 @@ function fakePlugin() {
   };
   const plugin = {
     calc,
+    cc: { graphSettings: { config: { invertedColors: false } } },
     settings,
     setSetting: (key: string, value: string) => {
       (settings as Record<string, string>)[key] = value;
@@ -154,21 +156,67 @@ describe("the session outliving the panel", () => {
 });
 
 describe("remembered settings", () => {
-  test("the wave mode, preset, quality and speed go through plugin settings", () => {
+  test("the wave mode, field, response and speed go through plugin settings", () => {
     const { plugin, settings } = fakePlugin();
     const session = new AudioLabSession(plugin);
 
     session.setWaveMode("recent");
-    session.setFieldPreset("vortex");
-    session.setQuality("quality");
+    session.loadFieldPreset("vortex");
+    session.setResponse("smooth");
     expect(session.setSpeedOfSound(1500)).toBe(true);
 
     // Written through the plugin, which is what survives a page reload.
     expect(settings.waveMode).toBe("recent");
-    expect(settings.fieldPreset).toBe("vortex");
-    expect(settings.quality).toBe("quality");
+    expect(JSON.parse(settings.fieldConfig).presetId).toBe("vortex");
+    expect(settings.response).toBe("smooth");
     expect(settings.speedOfSound).toBe("1500");
     expect(session.speedOfSound).toBe(1500);
+    session.destroy();
+  });
+
+  test("a stored field configuration comes back as the user's", () => {
+    const { plugin, settings } = fakePlugin();
+    const first = new AudioLabSession(plugin);
+    first.loadFieldPreset("storm");
+    const edited = cloneAudioFieldConfig(first.fieldConfig);
+    edited.p = "2y";
+    first.setFieldConfig(edited);
+    first.destroy();
+
+    // A fresh session over the same settings, which is what a reload is.
+    const second = new AudioLabSession(plugin);
+    expect(second.fieldConfig.p).toBe("2y");
+    // Editing a component makes the field the user's rather than the preset's.
+    expect(second.fieldConfig.presetId).toBe("custom");
+    expect(settings.fieldConfig).not.toBe("");
+    second.destroy();
+  });
+
+  test("a field configuration that will not parse falls back to a default", () => {
+    const { plugin, settings } = fakePlugin();
+    settings.fieldConfig = "{not json";
+    const session = new AudioLabSession(plugin);
+    expect(session.fieldConfig.presetId).toBe("stream");
+    session.destroy();
+  });
+
+  test("an expression that cannot compile is kept and reported", () => {
+    const { plugin } = fakePlugin();
+    const session = new AudioLabSession(plugin);
+    const broken = cloneAudioFieldConfig(session.fieldConfig);
+    broken.p = "Z_{nonsense}";
+    const error = session.setFieldConfig(broken);
+    expect(error).toContain("P could not be read");
+    // Kept, because it is what the user is in the middle of writing.
+    expect(session.fieldConfig.p).toBe("Z_{nonsense}");
+    session.destroy();
+  });
+
+  test("the old quality setting migrates onto the response it meant", () => {
+    const { plugin, settings } = fakePlugin();
+    settings.response = "performance";
+    const session = new AudioLabSession(plugin);
+    expect(session.response).toBe("snappy");
     session.destroy();
   });
 

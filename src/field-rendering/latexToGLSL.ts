@@ -32,6 +32,16 @@ export interface FunctionDefinition {
 export interface FieldEnvironment {
   functions: ReadonlyMap<string, FunctionDefinition>;
   scalars: ReadonlySet<string>;
+  /**
+   * What to tell someone who used a name this environment does not have.
+   *
+   * The default answer names the expression list, because that is where Vector
+   * Tools' and Physics Lab's fields get their values from. Audio Lab's do not —
+   * its environment is a fixed list of measurements and it deliberately never
+   * reads the graph — so pointing someone at the expression list would send
+   * them to define a variable that could not possibly be found.
+   */
+  unknownNameHint?: string;
 }
 
 export const EMPTY_ENVIRONMENT: FieldEnvironment = {
@@ -620,7 +630,10 @@ class Parser {
       return glslParamName(name);
     }
     throw new CompileError(
-      `"${name}" is not defined. The flow visualizer knows x and y, and anything the expression list defines as a number or a function of numbers.`
+      `"${name}" is not defined. ${
+        this.context.env.unknownNameHint ??
+        "The flow visualizer knows x and y, and anything the expression list defines as a number or a function of numbers."
+      }`
     );
   }
 
