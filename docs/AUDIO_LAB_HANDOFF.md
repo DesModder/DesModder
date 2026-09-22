@@ -7,9 +7,22 @@ Audio Lab is an independent DesModder plugin on `feature/audio-lab` and draft PR
 `src/plugins/vector-tools`, import either plugin from the other, or combine their
 settings, controllers, panels, tests, generated expression IDs, or lifecycle.
 
+**What that rule means, and what it does not.** It forbids a _dependency_
+between the two plugins, not a shared package below them. Both now draw through
+`src/field-rendering/`, which neither owns and which has its own tests, and
+both offer the same gallery of fields from `src/field-rendering/gallery.ts`.
+Neither imports a line from the other. Anything that moves there has to be
+genuinely neutral — if it needs one plugin's configuration format to make
+sense, it is that plugin's and belongs in it, which is why the mapping from a
+gallery entry into a configuration lives in each plugin separately.
+
+The gallery move is the one time Audio Lab work has edited a file under
+`src/plugins/vector-tools`: `gallery.ts` there lost the field data and kept the
+mapping, re-exporting the rest so nothing that imported from it had to change.
+Its own tests were untouched and still pass.
+
 The branch started from main commit `930bd35`, after Vector Tools PR #1 was
-merged. Audio Lab development deliberately did not edit any file under
-`src/plugins/vector-tools`.
+merged.
 
 ## What version 1 does
 
@@ -40,8 +53,10 @@ merged. Audio Lab development deliberately did not edit any file under
 - Draws Audio Field: GPU particles with trails behind the graph paper, advected
   by a vector field the user can edit. The two components are Desmos LaTeX over
   x and y that may read any of the audio variables, compiled to GLSL by the
-  shared `latexToGLSL`. Five presets are starting points rather than fixed
-  modes: Stream, Pulse, Vortex, Spectrum storm, and Still water.
+  shared `latexToGLSL`. Thirteen presets are starting points rather than fixed
+  modes: five written to be moved by sound — Stream, Pulse, Vortex, Spectrum
+  storm, Still water — and the eight in the shared gallery, which Vector Tools
+  offers too.
 - Drops **ripples** into that field. A ripple is an expanding ring with an
   origin, a birth time and a strength, emitted on an onset or on the beat, and
   it is the one part of the field that cannot be an expression — see
@@ -182,6 +197,22 @@ Shared integration files touched by the feature are:
 - `src/utils/messages.ts`: declares the message protocol and returns listener
   handles so Audio Lab can unregister its page listener.
 
+The neutral rendering package, which Vector Tools and Physics Lab also drive:
+
+- `src/field-rendering/field.ts`: `FieldDisturbances`, the ripple and pointer
+  GLSL, and `uploadFieldDisturbances`. Opt-in; a field that asks for neither
+  compiles to exactly the source it did before they existed.
+- `src/field-rendering/FlowRenderer.ts`: `setDisturbances`, uploaded in both
+  passes beside the parameters.
+- `src/field-rendering/FlowOverlay.ts`: `FlowOverlayIdentity` (the canvas id and
+  the bounds-observer key, which were Vector Tools' hardcoded values) and the
+  `beforeFrame` hook.
+- `src/field-rendering/latexToGLSL.ts`: `unknownNameHint` on a
+  `FieldEnvironment`, so an unresolvable name is explained in terms of what the
+  _caller's_ fields can read rather than always the expression list.
+- `src/field-rendering/gallery.ts`: the eight gallery fields, moved out of
+  Vector Tools so both plugins can offer them.
+
 Conflicts in those shared files should be resolved semantically while retaining
 both Claude's optimization changes and the small Audio Lab integration hooks.
 
@@ -219,10 +250,59 @@ existed, and Audio Lab moved onto it.
 | ------------------------- | --------------------------------------------------- |
 | `model.ts`                | `AudioFieldConfig`, the presets, and the normalizer |
 | `variables.ts`            | the audio values a field expression may read        |
+| `gallery.ts`              | the shared gallery, as fields the music can move    |
 | `compile.ts`              | configuration → `FlowField`, through `latexToGLSL`  |
 | `RippleEmitter.ts`        | onsets and beats → the shader's ripple slots        |
 | `PointerTracker.ts`       | the cursor, in graph coordinates, read-only         |
 | `AudioFieldController.ts` | one overlay, one configuration, one frame at a time |
+
+### The gallery, and what is done to it
+
+`src/field-rendering/gallery.ts` holds eight fields chosen because they are
+worth looking at — a black hole's accretion inspiral, a dipole, Taylor–Green
+flow. They were Vector Tools' until Audio Lab wanted them too; a list of
+pictures is not specific to either plugin, and two copies would be two lists to
+keep in step. What each plugin still owns is the mapping into its own
+configuration format, because those genuinely differ.
+
+None of the eight mentions the sound, and their maths is deliberately real. Two
+things are therefore done to one on its way into Audio Lab, and **both are done
+by rewriting the LaTeX rather than by a setting**, so that both show up in the
+box where they can be read, retuned or deleted:
+
+- **A loudness gain**, `\left(0.55+1.45A_{audio}\right)`, multiplies both
+  components, so the orbits speed up when the track does. The same term for all
+  eight, because the point of putting it in the box is that it can be
+  recognised. It cannot reach zero — a field that could would stall every
+  particle in it, and see "Still water" below for what that draws.
+- **The clock speed is baked in.** A gallery preset carries a `timeSpeed`
+  because Vector Tools has a clock control. Audio Lab does not, and adding a
+  second clock would have broken the ripples, whose whole appearance is their
+  age measured against `u_time`. So `t` is rewritten to `\left(0.45t\right)` in
+  the expression instead — through `renameIdentifier`, which walks the string
+  as a lexer would, because `\tan` contains a `t` and so does a subscript
+  belonging to another name.
+
+Ripple and cursor sizes are scaled by the preset's own `extent`, which is the
+only scale information there is: a ring 1.6 units across is most of a Magnetic
+dipole and a detail in a Spiral galaxy.
+
+`identifyPreset` is the one answer to which preset a configuration still is,
+across both lists. It compares only the components — changing the palette does
+not stop a field being the Black hole, whereas changing a component does.
+
+### The equations are in Desmos's own format
+
+Every component this plugin ships is written the way Desmos writes one:
+`\left(` and `\right)` around a group, `x^{2}`, `\frac{a}{b}`, `\cdot` for an
+explicit product, and no space between a command and a following `\left`.
+
+This is a rule with a test behind it (`latex-format.unit.test.ts`) rather than a
+convention, because the compiler accepts the shorter spellings — so nothing
+would fail, it would just slowly stop looking like Desmos. These strings are put
+in front of people in an editable box and pasted into graphs; one that came back
+from Desmos looking different from the one that went in is a small lie about
+where it came from.
 
 Two things were added to the neutral package for this, both opt-in and both
 absent from the shader when they are not asked for, so every field that
@@ -297,15 +377,17 @@ Manual Chrome test:
    number during a drum break.
 8. Switch `W_audio(x)` through all three modes and confirm the curve changes
    meaning while the variables keep updating.
-9. Press **Show audio field** and try each preset in the Field tab. Confirm
-   that pan, zoom, the keypad, and clicking an expression all still work with
-   it running.
+9. Press **Show audio field** and try each preset in the Field tab, both rows.
+   Confirm that pan, zoom, the keypad, and clicking an expression all still
+   work with it running. A gallery field lays its own dark backdrop over the
+   graph paper — that is the trade its palette needs, not a bug.
 10. On **Still water**, press **Drop one now** and watch a single ring expand
     and fade. Then move the ripple numbers and confirm each does what it says.
 11. Edit `P(x, y)` to something of your own and press Enter. The field should
     change without the trails blinking out, the preset chip should move to
     **Yours**, and a name it cannot read should be reported under the boxes
-    rather than anywhere else.
+    rather than anywhere else. Deleting the loudness term from a gallery field
+    is the same thing and should also read as **Yours**.
 12. Move the cursor over the graph with the cursor mode on push, pull and stir.
     Click the graph and confirm a ripple appears where you clicked, and that
     dragging to pan does **not** leave one behind.

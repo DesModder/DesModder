@@ -49,6 +49,7 @@ import {
   type RippleOrigin,
   type RippleSource,
 } from "./field/model";
+import { galleryChoices, galleryPresetFromConfigId } from "./field/gallery";
 import { AUDIO_VARIABLES } from "./field/variables";
 import { PALETTE_GROUPS, PALETTES } from "../../field-rendering/palettes";
 import type { PaletteID } from "../../field-rendering/palettes";
@@ -413,6 +414,16 @@ export default class AudioLabRuntime implements SessionView {
   }
 
   private bindField() {
+    // Two rows, because they are two different offers. The first are fields
+    // written to be moved by sound; the second are the gallery's, whose maths
+    // is a black hole's or a dipole's and which the sound reaches through a
+    // loudness term written into the boxes. Only one chip across both rows is
+    // ever lit, because `presetId` has one value.
+    const loadPreset = (id: string) => {
+      if (id === "custom") return;
+      this.session.loadFieldPreset(id);
+      this.syncField();
+    };
     this.syncPreset = this.chips(
       "field-preset",
       [
@@ -422,11 +433,13 @@ export default class AudioLabRuntime implements SessionView {
         ["custom", "Yours"] as const,
       ],
       () => this.session.fieldConfig.presetId,
-      (id) => {
-        if (id === "custom") return;
-        this.session.loadFieldPreset(id);
-        this.syncField();
-      }
+      loadPreset
+    );
+    this.syncGallery = this.chips(
+      "field-gallery",
+      galleryChoices(),
+      () => this.session.fieldConfig.presetId,
+      loadPreset
     );
 
     for (const [name, key] of [
@@ -680,6 +693,7 @@ export default class AudioLabRuntime implements SessionView {
   // so that a control added without a matching sync is a compile error.
   private syncResponse?: () => void;
   private syncPreset?: () => void;
+  private syncGallery?: () => void;
   private syncRippleSource?: () => void;
   private syncRippleOrigin?: () => void;
   private syncRippleNumbers?: () => void;
@@ -697,6 +711,7 @@ export default class AudioLabRuntime implements SessionView {
     if (document.activeElement !== p) p.value = config.p;
     if (document.activeElement !== q) q.value = config.q;
     this.syncPreset?.();
+    this.syncGallery?.();
     this.syncRippleSource?.();
     this.syncRippleOrigin?.();
     this.syncRippleNumbers?.();
@@ -708,10 +723,12 @@ export default class AudioLabRuntime implements SessionView {
     const preset = AUDIO_FIELD_PRESETS.find(
       (item) => item.id === config.presetId
     );
+    const gallery = galleryPresetFromConfigId(config.presetId);
     this.text(
       "field-hint",
       preset?.description ??
-        "Your own field. Pick a preset above to start over from one."
+        gallery?.blurb ??
+        "Your own field. Pick a starting point above to begin again from one."
     );
   }
 

@@ -334,7 +334,7 @@ describe("the stored configuration", () => {
     expect(config.pointer.mode).toBe(base.pointer.mode);
     expect(config.look.palette).toBe(base.look.palette);
     // Clamped rather than rejected, since a number in range is what was meant.
-    expect(config.look.particleCount).toBe(60_000);
+    expect(config.look.particleCount).toBe(120_000);
     expect(config.look.opacity).toBe(0.02);
   });
 

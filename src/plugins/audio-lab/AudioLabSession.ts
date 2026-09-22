@@ -35,9 +35,13 @@ import {
 import { AudioFieldController } from "./field/AudioFieldController";
 import { compileAudioField } from "./field/compile";
 import {
+  configFromGalleryPreset,
+  galleryPresetFromConfigId,
+  identifyPreset,
+} from "./field/gallery";
+import {
   AUDIO_FIELD_PRESETS,
   configFromPreset,
-  matchesPreset,
   normalizeAudioFieldConfig,
   type AudioFieldConfig,
 } from "./field/model";
@@ -584,9 +588,10 @@ export default class AudioLabSession {
    */
   setFieldConfig(config: AudioFieldConfig): string | undefined {
     const normalized = normalizeAudioFieldConfig(config);
-    // Once the components stop matching the preset they came from, the field is
-    // the user's rather than the preset's, and the chooser says so.
-    if (!matchesPreset(normalized)) normalized.presetId = "custom";
+    // Once the components stop matching the preset they came from — from either
+    // list — the field is the user's rather than the preset's, and the chooser
+    // says so.
+    normalized.presetId = identifyPreset(normalized);
     this.cachedFieldConfig = normalized;
     this.plugin.setSetting("fieldConfig", JSON.stringify(normalized));
     const error = this.field.isRunning
@@ -596,8 +601,20 @@ export default class AudioLabSession {
     return error;
   }
 
-  /** Loads a preset wholesale: components, ripples, pointer and look. */
+  /**
+   * Loads a starting point wholesale: components, ripples, pointer and look.
+   *
+   * Takes an id from either list. A gallery field arrives with a loudness term
+   * written into both of its components and its clock rescaled in place — both
+   * visible in the boxes, both editable, and both explained in `field/gallery`.
+   */
   loadFieldPreset(id: string) {
+    const gallery = galleryPresetFromConfigId(id);
+    if (gallery !== undefined) {
+      this.setFieldConfig(configFromGalleryPreset(gallery));
+      this.status(`Loaded ${gallery.name}. ${gallery.blurb}`);
+      return;
+    }
     const preset = AUDIO_FIELD_PRESETS.find((item) => item.id === id);
     if (preset === undefined) return;
     this.setFieldConfig(configFromPreset(id));

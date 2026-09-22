@@ -198,7 +198,14 @@ export class AudioLabPanel extends Component<{ audioLab: () => AudioLab }> {
                 class="dsm-audio-lab-chips"
                 data-audio-lab="field-preset"
                 role="group"
-                aria-label="Field preset"
+                aria-label="Audio field preset"
+              />
+              <div class="dsm-audio-lab-subhead">From the gallery</div>
+              <div
+                class="dsm-audio-lab-chips"
+                data-audio-lab="field-gallery"
+                role="group"
+                aria-label="Gallery field"
               />
               <p data-audio-lab="field-hint" class="dsm-audio-lab-hint" />
             </section>

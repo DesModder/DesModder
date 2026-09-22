@@ -102,7 +102,7 @@ export interface AudioFieldPreset {
   readonly config: Omit<AudioFieldConfig, "schemaVersion" | "presetId">;
 }
 
-const BASE_LOOK: FieldLook = {
+export const DEFAULT_LOOK: FieldLook = {
   particleCount: 12_000,
   trailPersistence: 0.94,
   speed: 1,
@@ -142,8 +142,8 @@ export const AUDIO_FIELD_PRESETS: readonly AudioFieldPreset[] = [
     description:
       "A current flowing left to right. Bass drives it, mids bend it, and every hit drops a ring into it.",
     config: {
-      p: "1.4+2.6B_{audio}",
-      q: "0.8\\sin(0.55x-1.1t)\\cos(0.7y+0.4t)(0.35+3M_{audio})",
+      p: String.raw`1.4+2.6B_{audio}`,
+      q: String.raw`0.8\sin\left(0.55x-1.1t\right)\cos\left(0.7y+0.4t\right)\left(0.35+3M_{audio}\right)`,
       ripples: {
         source: "onset",
         origin: "scatter",
@@ -153,7 +153,7 @@ export const AUDIO_FIELD_PRESETS: readonly AudioFieldPreset[] = [
         strength: 2.6,
       },
       pointer: { ...BASE_POINTER },
-      look: { ...BASE_LOOK, trailPersistence: 0.95 },
+      look: { ...DEFAULT_LOOK, trailPersistence: 0.95 },
     },
   },
   {
@@ -164,8 +164,8 @@ export const AUDIO_FIELD_PRESETS: readonly AudioFieldPreset[] = [
     config: {
       // Normalised radially, with an epsilon under the root so the origin is a
       // finite point rather than a division by zero.
-      p: "\\frac{x}{\\sqrt{x^{2}+y^{2}+0.05}}(0.4+3.2B_{audio})-0.7y\\cdot M_{audio}",
-      q: "\\frac{y}{\\sqrt{x^{2}+y^{2}+0.05}}(0.4+3.2B_{audio})+0.7x\\cdot M_{audio}",
+      p: String.raw`\frac{x}{\sqrt{x^{2}+y^{2}+0.05}}\left(0.4+3.2B_{audio}\right)-0.7y\cdot M_{audio}`,
+      q: String.raw`\frac{y}{\sqrt{x^{2}+y^{2}+0.05}}\left(0.4+3.2B_{audio}\right)+0.7x\cdot M_{audio}`,
       ripples: {
         source: "onset",
         origin: "centre",
@@ -175,7 +175,7 @@ export const AUDIO_FIELD_PRESETS: readonly AudioFieldPreset[] = [
         strength: 3.4,
       },
       pointer: { ...BASE_POINTER, mode: "pull", strength: 2.5 },
-      look: { ...BASE_LOOK, trailPersistence: 0.92, palette: "ember" },
+      look: { ...DEFAULT_LOOK, trailPersistence: 0.92, palette: "ember" },
     },
   },
   {
@@ -184,8 +184,8 @@ export const AUDIO_FIELD_PRESETS: readonly AudioFieldPreset[] = [
     description:
       "Rotation with a drift inward. Loudness sets the speed, brightness the direction of the drift.",
     config: {
-      p: "-y(0.5+2A_{audio})-0.45x(1-S_{audio})",
-      q: "x(0.5+2A_{audio})-0.45y(1-S_{audio})",
+      p: String.raw`-y\left(0.5+2A_{audio}\right)-0.45x\left(1-S_{audio}\right)`,
+      q: String.raw`x\left(0.5+2A_{audio}\right)-0.45y\left(1-S_{audio}\right)`,
       ripples: {
         source: "beat",
         origin: "centre",
@@ -195,7 +195,7 @@ export const AUDIO_FIELD_PRESETS: readonly AudioFieldPreset[] = [
         strength: 2,
       },
       pointer: { ...BASE_POINTER, mode: "swirl", strength: 4 },
-      look: { ...BASE_LOOK, trailPersistence: 0.96, palette: "ocean" },
+      look: { ...DEFAULT_LOOK, trailPersistence: 0.96, palette: "ocean" },
     },
   },
   {
@@ -206,8 +206,8 @@ export const AUDIO_FIELD_PRESETS: readonly AudioFieldPreset[] = [
     config: {
       // Summed rather than multiplied, so a band going quiet takes its own
       // octave out and leaves the others turning.
-      p: "\\sin(0.6y+0.5t)(0.6+2B_{audio})+\\sin(1.7y-0.9t)(0.3+1.6M_{audio})+\\sin(4.3y+2.1t)(0.1+1.4T_{audio})",
-      q: "\\cos(0.6x-0.4t)(0.6+2B_{audio})+\\cos(1.7x+1.1t)(0.3+1.6M_{audio})+\\cos(4.3x-1.9t)(0.1+1.4T_{audio})",
+      p: String.raw`\sin\left(0.6y+0.5t\right)\left(0.6+2B_{audio}\right)+\sin\left(1.7y-0.9t\right)\left(0.3+1.6M_{audio}\right)+\sin\left(4.3y+2.1t\right)\left(0.1+1.4T_{audio}\right)`,
+      q: String.raw`\cos\left(0.6x-0.4t\right)\left(0.6+2B_{audio}\right)+\cos\left(1.7x+1.1t\right)\left(0.3+1.6M_{audio}\right)+\cos\left(4.3x-1.9t\right)\left(0.1+1.4T_{audio}\right)`,
       ripples: {
         source: "onset",
         origin: "spectrum",
@@ -217,7 +217,7 @@ export const AUDIO_FIELD_PRESETS: readonly AudioFieldPreset[] = [
         strength: 2.2,
       },
       pointer: { ...BASE_POINTER, strength: 4 },
-      look: { ...BASE_LOOK, trailPersistence: 0.9, palette: "turbo" },
+      look: { ...DEFAULT_LOOK, trailPersistence: 0.9, palette: "turbo" },
     },
   },
   {
@@ -238,8 +238,8 @@ export const AUDIO_FIELD_PRESETS: readonly AudioFieldPreset[] = [
       //
       // A very slow wander is enough to keep them alive, and slow enough that
       // what you see is still the rings.
-      p: "0.09\\sin(0.35y+0.15t)+0.04",
-      q: "0.09\\cos(0.35x-0.15t)+0.04",
+      p: String.raw`0.09\sin\left(0.35y+0.15t\right)+0.04`,
+      q: String.raw`0.09\cos\left(0.35x-0.15t\right)+0.04`,
       ripples: {
         source: "onset",
         origin: "scatter",
@@ -250,7 +250,7 @@ export const AUDIO_FIELD_PRESETS: readonly AudioFieldPreset[] = [
       },
       pointer: { ...BASE_POINTER, strength: 2 },
       look: {
-        ...BASE_LOOK,
+        ...DEFAULT_LOOK,
         trailPersistence: 0.9,
         // The current carries almost nothing away, so the respawn rate is what
         // keeps the field from settling into a fixed pattern of dots.
@@ -375,7 +375,7 @@ export function normalizeAudioFieldConfig(raw: unknown): AudioFieldConfig {
     },
     look: {
       particleCount: Math.round(
-        clamp(look.particleCount, 500, 60_000, base.look.particleCount)
+        clamp(look.particleCount, 500, 120_000, base.look.particleCount)
       ),
       trailPersistence: clamp(
         look.trailPersistence,
