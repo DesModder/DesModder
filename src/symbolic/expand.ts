@@ -63,7 +63,7 @@ import {
   divide,
   multiply,
   negative,
-  nodeCount,
+  exceedsNodeCount,
   number,
   rebuildSum,
   sameTree,
@@ -113,6 +113,11 @@ const RAISE: SimplificationNote = {
     "\\left(a+b\\right)^{3}=\\left(a+b\\right)\\left(a+b\\right)\\left(a+b\\right)",
 };
 
+const SIGN: SimplificationNote = {
+  text: "Took the minus sign inside, so each term carries its own.",
+  latex: "-\\left(a+b\\right)=-a-b",
+};
+
 const TOO_BIG: SimplificationNote = {
   text: "Stopped short: multiplying the rest out would make it longer than it is worth.",
   latex: "",
@@ -128,7 +133,7 @@ const TOO_BIG: SimplificationNote = {
  * the stack rather than returning something to measure.
  */
 function withinLimit(node: Node) {
-  return nodeCount(node) <= EXPANSION_LIMIT;
+  return !exceedsNodeCount(node, EXPANSION_LIMIT);
 }
 
 /**
@@ -142,8 +147,15 @@ export function expand(node: Node): ExpandResult {
   const notes: SimplificationNote[] = [];
   for (let pass = 0; pass < MAX_PASSES; pass += 1) {
     const before = current;
-    const opened = fold(tidySums(fold(openOnce(current, notes))));
-    if (nodeCount(opened) > EXPANSION_LIMIT) {
+    const rewritten = openOnce(current, notes);
+    // Nothing fired, so there is nothing to gather and nothing to say. The
+    // early exit is what makes an empty `notes` mean the expression came back
+    // untouched: `tidySums` reorders and collects, which is a visible change,
+    // and running it on an expression nothing was done to would hand back a
+    // rearranged tree while claiming to have done nothing.
+    if (sameTree(rewritten, before)) break;
+    const opened = fold(tidySums(fold(rewritten)));
+    if (exceedsNodeCount(opened, EXPANSION_LIMIT)) {
       notes.push(TOO_BIG);
       return { node: before, notes: dedupe(notes) };
     }
@@ -158,7 +170,7 @@ function openOnce(node: Node, notes: SimplificationNote[]): Node {
   const rebuilt = mapChildren(node, (child) => openOnce(child, notes));
   switch (rebuilt.type) {
     case "Negative":
-      return distributeSign(rebuilt.arg) ?? rebuilt;
+      return distributeSign(rebuilt.arg, notes) ?? rebuilt;
     case "BinaryOperator":
       switch (rebuilt.name) {
         case "Multiply":
@@ -200,9 +212,13 @@ function mapChildren(node: Node, on: (child: Node) => Node): Node {
 }
 
 /** `-(a+b)` becomes `-a-b`, so the sign stops hiding a sum from every rule. */
-function distributeSign(inner: Node): Node | undefined {
+function distributeSign(
+  inner: Node,
+  notes: SimplificationNote[]
+): Node | undefined {
   const terms = topLevelTerms(inner);
   if (terms.length < 2) return undefined;
+  notes.push(SIGN);
   return rebuildSum(
     terms.map(({ term, negated }) => ({ value: term, negated: !negated }))
   );
@@ -342,7 +358,10 @@ function tidySums(node: Node): Node {
 function degreeOf(node: Node): number {
   switch (node.type) {
     case "Identifier":
-      return node.symbol === "e" || node.symbol === "\\pi" ? 0 : 1;
+      // `pi`, not `\pi`: Aug carries the name, and the emitter is what puts the
+      // backslash back on. The first spelling of this checked for the LaTeX and
+      // so quietly sorted π as a variable of degree one.
+      return node.symbol === "e" || node.symbol === "pi" ? 0 : 1;
     case "Negative":
       return degreeOf(node.arg);
     case "BinaryOperator":

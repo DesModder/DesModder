@@ -28,21 +28,32 @@ export const call = (name: string, arg: Node) => functionCall(id(name), [arg]);
 /**
  * Every node in the tree, parents before children.
  *
- * Written over `Object.values` rather than over a list of node shapes on
+ * Written over the node's own keys rather than over a list of node shapes on
  * purpose. Aug has dozens of node types and this has to keep working for the
- * ones no rewrite here handles — a visitor that knew the shapes would silently
+ * ones no rewrite here handles: a walker that knew the shapes would silently
  * stop descending the moment Aug gained a node, and the caller asking "does
  * this depend on x" would get `false` for an expression that plainly does.
+ *
+ * `for...in` rather than `Object.values`, which allocated an array for every
+ * node in every tree. This is the innermost loop of everything in this
+ * directory and the array was most of its cost.
  */
 export function visit(node: Node, callback: (node: Node) => void) {
   callback(node);
-  for (const value of Object.values(
-    node as unknown as Record<string, unknown>
-  )) {
+  forEachChild(node, (child) => {
+    visit(child, callback);
+  });
+}
+
+/** The direct children of a node, whatever shape it is. */
+function forEachChild(node: Node, on: (child: Node) => void) {
+  for (const key in node) {
+    const value = (node as unknown as Record<string, unknown>)[key];
+    if (typeof value !== "object" || value === null) continue;
     if (Array.isArray(value)) {
-      for (const child of value) if (isNode(child)) visit(child, callback);
+      for (const child of value) if (isNode(child)) on(child);
     } else if (isNode(value)) {
-      visit(value, callback);
+      on(value);
     }
   }
 }
@@ -55,11 +66,19 @@ export function isNode(value: unknown): value is Node {
   );
 }
 
-/** Whether `variable` appears anywhere in the tree. */
+/**
+ * Whether `variable` appears anywhere in the tree.
+ *
+ * Its own walk rather than a `visit` with a flag, so that it can stop at the
+ * first occurrence. The integrator asks this of every operand of every node it
+ * looks at, which makes it the most-called function here by a wide margin, and
+ * an expression that depends on x usually says so near the top.
+ */
 export function dependsOn(node: Node, variable: string): boolean {
+  if (node.type === "Identifier") return node.symbol === variable;
   let found = false;
-  visit(node, (child) => {
-    if (child.type === "Identifier" && child.symbol === variable) found = true;
+  forEachChild(node, (child) => {
+    if (!found && dependsOn(child, variable)) found = true;
   });
   return found;
 }
@@ -74,9 +93,61 @@ export function identifiersIn(node: Node): string[] {
   return names;
 }
 
-/** Whether two trees are the same expression, written the same way. */
-export function sameTree(a: Node, b: Node) {
-  return JSON.stringify(a) === JSON.stringify(b);
+/**
+ * Whether two trees are the same expression, written the same way.
+ *
+ * A structural walk rather than comparing `JSON.stringify` of each, which is
+ * what this used to do. Three reasons, in order of how much they matter.
+ *
+ * It stops at the first difference. Stringifying cannot: it builds both strings
+ * in full before looking at either of them, and the overwhelmingly common call
+ * here is one that fails on the node it starts at. Every product asks whether
+ * each of its factors shares a base with each of the others.
+ *
+ * It allocates nothing, where stringifying allocated two strings per call.
+ *
+ * And it does not depend on the order the keys happen to sit in. Two nodes with
+ * the same fields written in a different order are the same expression, and
+ * `{ ...node, args }` is enough to produce one, so the old spelling could
+ * answer `false` for a tree compared against a rebuilt copy of itself.
+ */
+export function sameTree(a: Node, b: Node): boolean {
+  return deepEqual(a, b);
+}
+
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (
+    typeof a !== "object" ||
+    typeof b !== "object" ||
+    a === null ||
+    b === null
+  ) {
+    return false;
+  }
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length)
+      return false;
+    for (let i = 0; i < a.length; i += 1) {
+      if (!deepEqual(a[i], b[i])) return false;
+    }
+    return true;
+  }
+  const left = a as Record<string, unknown>;
+  const right = b as Record<string, unknown>;
+  let keys = 0;
+  for (const key in left) {
+    keys += 1;
+    if (!deepEqual(left[key], right[key])) return false;
+  }
+  // Only reached once every one of a's keys matched, so counting b's is all
+  // that is left: a key b has and a does not would otherwise pass.
+  let otherKeys = 0;
+  for (const key in right) {
+    void key;
+    otherKeys += 1;
+  }
+  return keys === otherKeys;
 }
 
 /**
@@ -257,7 +328,29 @@ export function greatestCommonDivisor(a: number, b: number): number {
 
 /** How many nodes a tree has, which is how a rewrite knows it has run away. */
 export function nodeCount(node: Node): number {
-  let count = 0;
-  visit(node, () => count++);
+  let count = 1;
+  forEachChild(node, (child) => {
+    count += nodeCount(child);
+  });
+  return count;
+}
+
+/**
+ * Whether a tree has more than `limit` nodes, without counting the rest.
+ *
+ * The expander asks this of every rewrite it makes, and a rewrite that has run
+ * away is exactly the case where counting to the end costs most: the answer is
+ * already known a few hundred nodes into a tree with a hundred thousand in it.
+ */
+export function exceedsNodeCount(node: Node, limit: number): boolean {
+  return countUpTo(node, limit) > limit;
+}
+
+function countUpTo(node: Node, limit: number): number {
+  let count = 1;
+  forEachChild(node, (child) => {
+    if (count > limit) return;
+    count += countUpTo(child, limit - count);
+  });
   return count;
 }

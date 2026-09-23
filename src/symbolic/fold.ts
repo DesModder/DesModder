@@ -228,8 +228,17 @@ function foldBinary(node: BinaryOperator): Node {
           binop("Divide", binop("Multiply", left, right.left), right.right)
         );
       }
+      // A number on the right comes to the front, so `y·2` reads as `2y`.
+      //
+      // Folded again rather than returned as it stands, because moving the
+      // number is what lets the rules above it see the shape they are looking
+      // for: `(x/k)·-8` swaps to `-8·(x/k)`, which is the coefficient-over-a-
+      // fraction rule, which gives `-8x/k`. Returned unfolded, that took a
+      // second call to `fold` to settle — which is a property nothing else
+      // here could rely on. The swap cannot recur, because after it the
+      // coefficient is on the left and this branch needs it on the right.
       if (rc !== undefined && lc === undefined)
-        return binop("Multiply", right, left);
+        return fold(binop("Multiply", right, left));
       break;
     }
     case "Divide": {
@@ -244,9 +253,20 @@ function foldBinary(node: BinaryOperator): Node {
         return fold(negative(binop("Divide", left, number(-rc))));
       if (lc !== undefined && lc < 0)
         return fold(negative(binop("Divide", number(-lc), right)));
-      // A quotient of two numbers folds only when it comes out whole. `1/2`
-      // stays the fraction it was written as, because a decimal is the one
-      // thing an exact answer must not quietly become.
+      // A quotient of two numbers is reduced, never divided out. `6/3` becomes
+      // `2` and `3/6` becomes `1/2`, and neither becomes a decimal — which is
+      // the one thing an exact answer must not quietly do.
+      //
+      // `rationalOf` handles the whole family in one rule: integers, fractions
+      // of integers, and fractions of those. The earlier spelling only caught
+      // the case that came out whole, so `3/6` survived a fold untouched and
+      // an answer carried the arithmetic that produced it.
+      {
+        const a = rationalOf(left);
+        const b = rationalOf(right);
+        if (a !== undefined && b !== undefined && b.n !== 0)
+          return rationalNode({ n: a.n * b.d, d: a.d * b.n });
+      }
       if (
         lc !== undefined &&
         rc !== undefined &&

@@ -194,7 +194,7 @@ describe("it really is condense run backwards", () => {
       ],
       [
         negative(sub(x, number(5))),
-        forTesting.distributeSign(sub(x, number(5))),
+        forTesting.distributeSign(sub(x, number(5)), notes),
       ],
     ];
     for (const [before, after] of cases) {
