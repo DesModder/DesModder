@@ -72,6 +72,25 @@ export function fold(node: Node): Node {
       }
       return negative(arg);
     }
+    case "Factorial": {
+      const arg = fold(node.arg);
+      const value = constantValue(arg);
+      // Only a whole number, and only one small enough to stay exact. A
+      // factorial is what a series index carries, so it arrives constantly as
+      // `(2*0+1)!` -- correct, and not something anybody would leave in an
+      // answer.
+      if (
+        value !== undefined &&
+        Number.isInteger(value) &&
+        value >= 0 &&
+        value <= 18
+      ) {
+        let total = 1;
+        for (let i = 2; i <= value; i += 1) total *= i;
+        return number(total);
+      }
+      return { ...node, arg };
+    }
     case "FunctionCall": {
       const args = node.args.map(fold);
       const folded = foldKnownValue(node.callee.symbol, args);
@@ -427,6 +446,11 @@ function foldBinary(node: BinaryOperator): Node {
     case "Exponent":
       if (rc === 1) return left;
       if (rc === 0) return number(1);
+      // One to any power is one, whatever the power is. A series built around
+      // a function of `ax^k` carries `a^{e(n)}`, and for the ordinary case
+      // where `a` is 1 that is a `1^{2n+1}` sitting in the middle of every
+      // term of the answer.
+      if (lc === 1) return number(1);
       // A negative power is written as a fraction. `y^{-1}` is a correct answer
       // to ∫dy/y² and `-1/y` is the one in the book, and the power rule
       // produces the former on every separable problem with a power of y in it.

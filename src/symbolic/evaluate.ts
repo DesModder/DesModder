@@ -83,6 +83,36 @@ export function evaluate(node: Node, bindings: Bindings): number {
       if (fn === undefined || node.args.length !== 1) return NaN;
       return fn(evaluate(node.args[0], bindings));
     }
+    case "Factorial": {
+      // Integers only. The gamma function would extend it and nothing here
+      // produces a factorial of anything else -- a series index is a whole
+      // number by construction -- so a non-integer is a sign that something
+      // upstream is wrong rather than something to interpolate through.
+      const value = evaluate(node.arg, bindings);
+      if (!Number.isInteger(value) || value < 0) return NaN;
+      let total = 1;
+      for (let i = 2; i <= value; i += 1) total *= i;
+      return total;
+    }
+    case "RepeatedOperator": {
+      // A finite sum or product. Needed because a series antiderivative *is*
+      // one of these, and a check that cannot evaluate the answer is not a
+      // check at all.
+      const start = evaluate(node.start, bindings);
+      const end = evaluate(node.end, bindings);
+      if (!Number.isInteger(start) || !Number.isInteger(end)) return NaN;
+      const isSum = node.name === "Sum";
+      let total = isSum ? 0 : 1;
+      for (let i = start; i <= end; i += 1) {
+        const value = evaluate(node.expression, {
+          ...bindings,
+          [node.index.symbol]: i,
+        });
+        if (isSum) total += value;
+        else total *= value;
+      }
+      return total;
+    }
     case "BinaryOperator": {
       const left = evaluate(node.left, bindings);
       const right = evaluate(node.right, bindings);

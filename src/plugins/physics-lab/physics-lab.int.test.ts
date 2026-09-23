@@ -494,12 +494,17 @@ testWithPage(
         // which fails for a reason that has nothing to do with the derivative.
         Calc.setExpression({ id: "probe", latex: `P_{r}(x)=${derivative}` });
         const helper = Calc.HelperExpression({ latex: "P_{r}(1.3)" });
-        await new Promise((resolve) => setTimeout(resolve, 120));
-        out.push({
-          source,
-          derivative,
-          value: (helper as unknown as { numericValue: number }).numericValue,
-        });
+        // Waited for rather than slept on. A helper expression gets its value
+        // from an asynchronous evaluation, and a fixed pause was long enough
+        // almost every time -- which made this fail on whichever expression
+        // happened to be first, for a reason that had nothing to do with it.
+        let value = NaN;
+        for (let tries = 0; tries < 50; tries += 1) {
+          value = (helper as unknown as { numericValue: number }).numericValue;
+          if (Number.isFinite(value)) break;
+          await new Promise((resolve) => setTimeout(resolve, 40));
+        }
+        out.push({ source, derivative, value });
       }
       return out;
     }, cases);
