@@ -1,8 +1,7 @@
 /**
  * Writing an expression the way a person writes it.
  *
- * `simplify` in `integrate.ts` is a different job, and keeping the two apart is
- * the point. That one is *structural*: it folds constants, cancels factors,
+ * `fold` is a different job, and keeping the two apart is the point. That one is *structural*: it folds constants, cancels factors,
  * removes multiplications by 1 — everything whose result is not a matter of
  * opinion. This one is *presentational*. It pulls a common factor out of a sum
  * and rewrites a quotient of trig functions as the single function that means
@@ -39,22 +38,19 @@
  * function with the same domain, but `cot` is a function Desmos defines by that
  * very quotient, so nothing is lost. Factoring never changes a domain at all.
  */
-import { Aug, AugBuilders } from "../../../../text-mode-core";
+import { fold } from "./fold";
 import {
+  call,
+  divide,
+  multiply,
+  negative,
+  number,
   quotientFactors,
   rebuildSum,
   sameTree,
-  simplify,
   topLevelTerms,
-} from "./integrate";
-
-const { number, binop, functionCall, id, negative } = AugBuilders;
-
-type Node = Aug.Latex.AnyChild;
-
-const multiply = (a: Node, b: Node) => binop("Multiply", a, b);
-const divide = (a: Node, b: Node) => binop("Divide", a, b);
-const call = (name: string, arg: Node) => functionCall(id(name), [arg]);
+  type Node,
+} from "./tree";
 
 /** What was done to an expression, so the panel can say so. */
 export interface SimplificationNote {
@@ -95,12 +91,12 @@ const MAX_PASSES = 4;
  * uses to offer no choice at all rather than two identical forms.
  */
 export function condense(node: Node): Condensed {
-  let current = simplify(node);
+  let current = fold(node);
   const notes: SimplificationNote[] = [];
   for (let pass = 0; pass < MAX_PASSES; pass += 1) {
     const before = current;
-    current = simplify(rewriteTrig(current, notes));
-    current = simplify(factorSums(current, notes));
+    current = fold(rewriteTrig(current, notes));
+    current = fold(factorSums(current, notes));
     if (sameTree(before, current)) break;
   }
   return { node: current, notes: dedupe(notes) };

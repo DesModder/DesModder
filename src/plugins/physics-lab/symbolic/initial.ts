@@ -23,9 +23,13 @@
  * ways the condition is refused, which is the same rule the solvers follow.
  */
 import { Aug, AugBuilders, type Config } from "../../../../text-mode-core";
-import { dependsOn, linearIn, simplify } from "./integrate";
-import { evaluate } from "./evaluate";
-import { toLatex } from "./latex";
+import { linearIn } from "./integrate";
+import {
+  dependsOn,
+  evaluate,
+  fold as simplify,
+  toLatex,
+} from "../../../symbolic";
 
 const { number, binop } = AugBuilders;
 

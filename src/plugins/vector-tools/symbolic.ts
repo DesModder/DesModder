@@ -16,35 +16,36 @@
  * *partial* derivative: differentiating `2xy` by `x` treats `y` as a constant
  * and gives `2y`.
  */
+import { Aug } from "../../../text-mode-core";
+/**
+ * The fold, the emitter and the tree vocabulary all live in `src/symbolic` now.
+ * They used to live here as well, in a smaller and slightly worse version —
+ * this module's `simplify` produced `2x + -(2x)` where the shared one produces
+ * `0` — which is what two copies of one idea come to. Re-exported so
+ * that everything reading them from here still can.
+ */
 import {
-  Aug,
-  AugBuilders,
-  latexTreeToString,
-  type Config,
-} from "../../../text-mode-core";
+  add,
+  binop,
+  call,
+  dependsOn,
+  divide,
+  fold as simplify,
+  identifiersIn,
+  multiply,
+  negative,
+  number,
+  power,
+  subtract,
+  toLatex,
+  type Node,
+} from "../../symbolic";
 
-const { number, binop, functionCall, id, negative } = AugBuilders;
-
-type Node = Aug.Latex.AnyChild;
+export { dependsOn, identifiersIn, simplify, toLatex };
+export type { Node };
 
 /** Thrown for anything this cannot differentiate exactly. */
 export class SymbolicError extends Error {}
-
-/**
- * Emits a tree as LaTeX, with implicit multiplication where Desmos reads it
- * identically. The Aug emitter always writes `\cdot`, so a derivative comes out
- * as `2\cdot y` — correct, and noise to read next to the `2y` a person would
- * write.
- *
- * The dot is only dropped before a letter or a LaTeX command, which is the case
- * where juxtaposition means multiplication and nothing else. It is kept before
- * digits (`2\cdot 3` must not become `23`) and before signs (`2\cdot -3` must
- * not become a subtraction). Only ever applied to trees this module built, never
- * to anything the user typed.
- */
-export function toLatex(cfg: Config, node: Node): string {
-  return latexTreeToString(cfg, node).replace(/\\cdot (?=[A-Za-z\\])/g, "");
-}
 
 /**
  * Derivatives of the named functions, as a factor to multiply the chain-rule
@@ -204,160 +205,6 @@ export function implicitDerivative(
   );
 }
 
-/** Whether `variable` appears anywhere in the tree. */
-export function dependsOn(node: Node, variable: string): boolean {
-  let found = false;
-  visit(node, (child) => {
-    if (child.type === "Identifier" && child.symbol === variable) found = true;
-  });
-  return found;
-}
-
-/** Every identifier in the tree, in first-seen order. */
-export function identifiersIn(node: Node): string[] {
-  const names: string[] = [];
-  visit(node, (child) => {
-    if (child.type === "Identifier" && !names.includes(child.symbol))
-      names.push(child.symbol);
-  });
-  return names;
-}
-
-function visit(node: Node, callback: (node: Node) => void) {
-  callback(node);
-  for (const value of Object.values(
-    node as unknown as Record<string, unknown>
-  )) {
-    if (Array.isArray(value)) {
-      for (const child of value) {
-        if (isNode(child)) visit(child, callback);
-      }
-    } else if (isNode(value)) {
-      visit(value, callback);
-    }
-  }
-}
-
-function isNode(value: unknown): value is Node {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    typeof (value as { type?: unknown }).type === "string"
-  );
-}
-
-/**
- * Folds the arithmetic identities that differentiation produces in bulk.
- *
- * Without this the derivative of `2xy` by `x` comes out as
- * `0*x*y + 2*(1*y + x*0)` rather than `2y`, which is technically correct and
- * completely useless to read.
- */
-export function simplify(node: Node): Node {
-  switch (node.type) {
-    case "Negative": {
-      const arg = simplify(node.arg);
-      if (arg.type === "Constant") return number(-arg.value);
-      if (arg.type === "Negative") return arg.arg;
-      return negative(arg);
-    }
-    case "FunctionCall":
-      return {
-        ...node,
-        args: node.args.map(simplify),
-      };
-    case "BinaryOperator":
-      return simplifyBinary(node);
-    default:
-      return node;
-  }
-}
-
-function simplifyBinary(node: Aug.Latex.BinaryOperator): Node {
-  const left = simplify(node.left);
-  const right = simplify(node.right);
-  const lc = constantValue(left);
-  const rc = constantValue(right);
-  switch (node.name) {
-    case "Add":
-      if (lc === 0) return right;
-      if (rc === 0) return left;
-      if (lc !== undefined && rc !== undefined) return number(lc + rc);
-      break;
-    case "Subtract":
-      if (rc === 0) return left;
-      if (lc === 0) return simplify(negative(right));
-      if (lc !== undefined && rc !== undefined) return number(lc - rc);
-      break;
-    case "Multiply":
-    case "CrossMultiply":
-      if (lc === 0 || rc === 0) return number(0);
-      if (lc === 1) return right;
-      if (rc === 1) return left;
-      if (lc !== undefined && rc !== undefined) return number(lc * rc);
-      // Keep numbers on the left, so `y*2` reads as `2y`.
-      if (rc !== undefined && lc === undefined)
-        return binop("Multiply", right, left);
-      break;
-    case "Divide": {
-      if (lc === 0) return number(0);
-      if (rc === 1) return left;
-      if (lc !== undefined && rc !== undefined && rc !== 0)
-        return number(lc / rc);
-      const reduced = cancelSharedCoefficient(left, right);
-      if (reduced !== undefined) return reduced;
-      break;
-    }
-    case "Exponent":
-      if (rc === 1) return left;
-      if (rc === 0) return number(1);
-      if (lc !== undefined && rc !== undefined) return number(lc ** rc);
-      break;
-  }
-  // `binop` does not accept CrossMultiply, which carries the same meaning here.
-  return node.name === "CrossMultiply"
-    ? { ...node, left, right }
-    : binop(node.name, left, right);
-}
-
-/**
- * Cancels a numeric factor the two sides of a fraction share, so the implicit
- * derivative of `x²+y²=25` reads as `-x/y` rather than `-2x/2y`.
- *
- * Only an exactly equal factor is cancelled. Full common-factor reduction is a
- * computer algebra problem, and a half-done version that cancels the wrong
- * thing would be worse than leaving the fraction as it is.
- */
-function cancelSharedCoefficient(left: Node, right: Node): Node | undefined {
-  const [leftFactor, leftRest] = splitCoefficient(left);
-  const [rightFactor, rightRest] = splitCoefficient(right);
-  if (leftRest === undefined || rightRest === undefined) return undefined;
-  if (leftFactor !== rightFactor || leftFactor === 1) return undefined;
-  return binop("Divide", leftRest, rightRest);
-}
-
-/** Splits a leading numeric factor off a product: `2x` becomes `[2, x]`. */
-function splitCoefficient(node: Node): [number, Node | undefined] {
-  if (node.type === "Constant") return [node.value, undefined];
-  if (
-    node.type === "BinaryOperator" &&
-    (node.name === "Multiply" || node.name === "CrossMultiply")
-  ) {
-    const factor = constantValue(node.left);
-    if (factor !== undefined) return [factor, node.right];
-  }
-  return [1, node];
-}
-
-function constantValue(node: Node): number | undefined {
-  if (node.type === "Constant") return node.value;
-  if (node.type === "Negative") {
-    const inner = constantValue(node.arg);
-    return inner === undefined ? undefined : -inner;
-  }
-  return undefined;
-}
-
 function describe(node: Node) {
   switch (node.type) {
     case "Integral":
@@ -379,30 +226,6 @@ function describe(node: Node) {
 }
 
 // ---- small builders ------------------------------------------------------
-
-function call(name: string, arg: Node) {
-  return functionCall(id(name), [arg]);
-}
-
-function add(left: Node, right: Node) {
-  return binop("Add", left, right);
-}
-
-function subtract(left: Node, right: Node) {
-  return binop("Subtract", left, right);
-}
-
-function multiply(left: Node, right: Node) {
-  return binop("Multiply", left, right);
-}
-
-function divide(left: Node, right: Node) {
-  return binop("Divide", left, right);
-}
-
-function power(base: Node, exponent: Node) {
-  return binop("Exponent", base, exponent);
-}
 
 function square(node: Node) {
   return power(node, number(2));

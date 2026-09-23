@@ -22,51 +22,27 @@
  * this level, and doing them by the `1/a` factor rather than by a general
  * u-substitution keeps the result in the form a student would write.
  */
-import { Aug, AugBuilders } from "../../../../text-mode-core";
-
-const { number, binop, functionCall, id, negative } = AugBuilders;
-
-type Node = Aug.Latex.AnyChild;
+import { Aug } from "../../../../text-mode-core";
+import { expand, fold } from "../../../symbolic";
+import {
+  add,
+  binop,
+  call,
+  dependsOn,
+  divide,
+  id,
+  multiply,
+  negative,
+  nodeCount,
+  number,
+  power,
+  sameTree,
+  subtract,
+  type Node,
+} from "../../../symbolic";
 
 /** Thrown for anything this cannot integrate exactly. */
 export class IntegrationError extends Error {}
-
-const add = (a: Node, b: Node) => binop("Add", a, b);
-const subtract = (a: Node, b: Node) => binop("Subtract", a, b);
-const multiply = (a: Node, b: Node) => binop("Multiply", a, b);
-const divide = (a: Node, b: Node) => binop("Divide", a, b);
-const power = (a: Node, b: Node) => binop("Exponent", a, b);
-const call = (name: string, arg: Node) => functionCall(id(name), [arg]);
-
-/** Whether `variable` appears anywhere in the tree. */
-export function dependsOn(node: Node, variable: string): boolean {
-  let found = false;
-  visit(node, (child) => {
-    if (child.type === "Identifier" && child.symbol === variable) found = true;
-  });
-  return found;
-}
-
-export function visit(node: Node, callback: (node: Node) => void) {
-  callback(node);
-  for (const value of Object.values(
-    node as unknown as Record<string, unknown>
-  )) {
-    if (Array.isArray(value)) {
-      for (const child of value) if (isNode(child)) visit(child, callback);
-    } else if (isNode(value)) {
-      visit(value, callback);
-    }
-  }
-}
-
-function isNode(value: unknown): value is Node {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    typeof (value as { type?: unknown }).type === "string"
-  );
-}
 
 /**
  * `node` as `a·variable + b` with a and b free of the variable, or `undefined`
@@ -85,7 +61,7 @@ export function linearIn(
   // zero. An unsimplified `3·1` is all three of those done badly.
   return found === undefined
     ? undefined
-    : { a: simplify(found.a), b: simplify(found.b) };
+    : { a: fold(found.a), b: fold(found.b) };
 }
 
 function linearParts(
@@ -177,7 +153,60 @@ export function integrate(node: Node, variable: string): Node {
   // so an integrand that has not been folded first gets refused for the shape
   // it happens to have been written in rather than for what it is: `(x+1)(x+1)`
   // is not a recognised denominator and `(x+1)^2` is the same thing and is.
-  return simplify(antiderivative(simplify(node), variable));
+  const folded = fold(node);
+  const direct = attempt(folded, variable);
+
+  // Multiplied out and tried again, because there is no product rule for
+  // integrals and there does not need to be one. `∫(x+1)(x+2)dx` has no rule
+  // that matches it; `∫x²+3x+2 dx` is three applications of the power rule.
+  // `∫(x²+1)/x dx` is a quotient with the variable on both sides of the bar,
+  // which is refused, and is `∫x dx + ∫dx/x` once the fraction is split.
+  // Expanding first is how the problem is done by hand.
+  const opened = fold(expand(folded).node);
+  if (sameTree(opened, folded)) {
+    if (direct.ok) return direct.value;
+    throw direct.error;
+  }
+  const expanded = attempt(opened, variable);
+
+  if (!expanded.ok) {
+    // The message kept is the one about the expression the user actually
+    // wrote, not about a form they have never seen and did not ask for.
+    if (direct.ok) return direct.value;
+    throw direct.error;
+  }
+  if (!direct.ok) return expanded.value;
+
+  // Both routes worked, which happens more often than it sounds: integration
+  // by parts succeeds on `(x+1)(x+2)` and answers
+  // `(x+1)(x²/2+2x) - (x³/6+x²)`, which is a correct antiderivative and is not
+  // what anybody writes. Two antiderivatives of one integrand differ by a
+  // constant, so there is nothing to choose between them on correctness and
+  // the shorter one is the answer.
+  //
+  // The tie goes to the unexpanded route, which is what keeps `∫(x+1)^7 dx`
+  // answering `(x+1)^8/8` rather than eight terms of the same function.
+  return nodeCount(expanded.value) < nodeCount(direct.value)
+    ? expanded.value
+    : direct.value;
+}
+
+/**
+ * An antiderivative, or the error saying why there is none.
+ *
+ * Both routes above are tried in full before either is chosen, which is why
+ * failure is returned here rather than thrown.
+ */
+function attempt(
+  node: Node,
+  variable: string
+): { ok: true; value: Node } | { ok: false; error: IntegrationError } {
+  try {
+    return { ok: true, value: fold(antiderivative(node, variable)) };
+  } catch (error) {
+    if (!(error instanceof IntegrationError)) throw error;
+    return { ok: false, error };
+  }
 }
 
 function antiderivative(node: Node, variable: string): Node {
@@ -308,7 +337,7 @@ function partialFractions(
   // and belongs to the simpler logarithm rule below.
   if (isZeroConstant(first.a) || isZeroConstant(second.a)) return undefined;
 
-  const cross = simplify(
+  const cross = fold(
     subtract(multiply(first.a, second.b), multiply(second.a, first.b))
   );
   if (isZeroConstant(cross)) return undefined;
@@ -364,7 +393,7 @@ function byParts(left: Node, right: Node, variable: string): Node {
   if (isZeroConstant(derivative)) return multiply(polynomial, restIntegral);
   return subtract(
     multiply(polynomial, restIntegral),
-    antiderivative(simplify(multiply(derivative, restIntegral)), variable)
+    antiderivative(fold(multiply(derivative, restIntegral)), variable)
   );
 }
 
@@ -558,241 +587,8 @@ function rebuild(coefficients: Node[], variable: string): Node {
   );
 }
 
-/**
- * Splits a leading numeric coefficient off a term: `2x` becomes `[2, x]`, and
- * anything without one becomes `[1, itself]`.
- *
- * A bare constant reports its own value against a remainder of 1, so two
- * constants collect the same way two multiples of x do.
- */
-function splitCoefficient(node: Node): [number, Node] {
-  if (node.type === "Constant") return [node.value, number(1)];
-  if (node.type === "Negative") {
-    const [factor, rest] = splitCoefficient(node.arg);
-    return [-factor, rest];
-  }
-  if (
-    node.type === "BinaryOperator" &&
-    (node.name === "Multiply" || node.name === "CrossMultiply")
-  ) {
-    const factor = constantValue(node.left);
-    if (factor !== undefined) return [factor, node.right];
-  }
-  return [1, node];
-}
-
-/** Structural equality, which is all that is needed to spot a shared base. */
-/** Whether two trees are the same expression, written the same way. */
-export function sameTree(a: Node, b: Node) {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
-
-/**
- * The top-level terms of a sum, with their signs.
- *
- * Shared because three things want it and all three want it to mean exactly
- * the same thing: the differentiator differentiates a sum in one step, the
- * factoriser looks for what every term has in common, and the panel breaks a
- * long answer over lines. The last one is why it stops at the top level — a
- * break inside a product, or under a fraction bar, reads as a different
- * expression.
- */
-export function topLevelTerms(
-  node: Node
-): readonly { term: Node; negated: boolean }[] {
-  const out: { term: Node; negated: boolean }[] = [];
-  collectTerms(node, false, out);
-  return out;
-}
-
-function collectTerms(
-  node: Node,
-  negated: boolean,
-  out: { term: Node; negated: boolean }[]
-) {
-  if (node.type === "BinaryOperator") {
-    if (node.name === "Add") {
-      collectTerms(node.left, negated, out);
-      collectTerms(node.right, negated, out);
-      return;
-    }
-    if (node.name === "Subtract") {
-      collectTerms(node.left, negated, out);
-      collectTerms(node.right, !negated, out);
-      return;
-    }
-  }
-  out.push({ term: node, negated });
-}
-
-/** A signed list of terms back into one expression. */
-export function rebuildSum(
-  parts: readonly { value: Node; negated: boolean }[]
-): Node {
-  let result: Node | undefined;
-  for (const part of parts) {
-    if (result === undefined) {
-      result = part.negated ? negative(part.value) : part.value;
-    } else {
-      result = part.negated
-        ? subtract(result, part.value)
-        : add(result, part.value);
-    }
-  }
-  return result ?? number(0);
-}
-
-/**
- * Every factor of a product or quotient, flattened, each marked with the side
- * of the bar it was on.
- *
- * Division has to be walked as well as multiplication. The integrating factor
- * meets its opposite through a fraction far more often than beside it —
- * `e^{3x}·(x·e^{-3x}/-3)` is what solving `dy/dx = x + 3y` produces, and a
- * flattener that stopped at the fraction would leave the two exponentials in
- * plain sight and never cancel them.
- */
-export function quotientFactors(
-  node: Node,
-  inNumerator: boolean,
-  out: { node: Node; inNumerator: boolean }[]
-) {
-  if (node.type === "BinaryOperator") {
-    if (node.name === "Multiply" || node.name === "CrossMultiply") {
-      quotientFactors(node.left, inNumerator, out);
-      quotientFactors(node.right, inNumerator, out);
-      return;
-    }
-    if (node.name === "Divide") {
-      quotientFactors(node.left, inNumerator, out);
-      quotientFactors(node.right, !inNumerator, out);
-      return;
-    }
-  }
-  if (node.type === "Negative") {
-    // A sign is a factor of -1, and leaving it wrapped round the term would
-    // hide every exponential inside it from the fold. `e^{3x}·-(e^{-3x}/3)/3`
-    // is what the integrating factor produces, and the two exponentials only
-    // meet once the minus stops being a lid on one of them.
-    out.push({ node: number(-1), inNumerator });
-    quotientFactors(node.arg, inNumerator, out);
-    return;
-  }
-  out.push({ node, inNumerator });
-}
-
-/**
- * Folds powers of a shared base within one product: `e^{-x}·x·e^{x}` is `x`.
- *
- * The integrating factor makes this unavoidable. Solving a linear equation
- * multiplies by `e^{-∫a}` and then by `e^{∫a}` again, and without folding the
- * two the answer to `dy/dx = x - y` reads `e^{-x}(xe^{x}-e^{x}+C)` rather than
- * `x-1+Ce^{-x}` — the same function, and not the one in any answer key.
- *
- * Factors are flattened first because the two powers are rarely adjacent: they
- * arrive on opposite sides of whatever the polynomial part turned out to be.
- */
-function foldSharedBases(node: Aug.Latex.BinaryOperator): Node | undefined {
-  const entries: { node: Node; inNumerator: boolean }[] = [];
-  quotientFactors(node, true, entries);
-  if (entries.length < 2) return undefined;
-
-  // Exponents accumulate per base, counting a factor below the bar as negative
-  // — which is what makes a fraction cancel against a factor above it.
-  const powers: { base: Node; exponent: Node }[] = [];
-  const others: { node: Node; inNumerator: boolean }[] = [];
-  let folded = false;
-  for (const entry of entries) {
-    const { node: factor, inNumerator } = entry;
-    // Every factor is a power: one without an exponent has an exponent of 1.
-    // Reading them that way is what lets `(x+1)(x+1)` become `(x+1)^2`, which
-    // the power rule can then integrate — the alternative is refusing a
-    // repeated factor that partial fractions has already, correctly, declined.
-    const isPower =
-      factor.type === "BinaryOperator" && factor.name === "Exponent";
-    const base = isPower ? factor.left : factor;
-    const exponent = isPower ? factor.right : number(1);
-    // A number is a coefficient rather than a base worth collecting; folding
-    // `2·2` into `2^2` is arithmetic the constant rules already do better.
-    if (base.type === "Constant") {
-      others.push(entry);
-      continue;
-    }
-    const contribution = inNumerator ? exponent : negative(exponent);
-    const match = powers.findIndex((existing) => sameTree(existing.base, base));
-    if (match >= 0) {
-      powers[match] = {
-        base: powers[match].base,
-        exponent: binop("Add", powers[match].exponent, contribution),
-      };
-      folded = true;
-    } else {
-      powers.push({ base, exponent: contribution });
-    }
-  }
-  if (!folded) return undefined;
-
-  // Rebuilt with plain nodes rather than by simplifying each pair. Every nested
-  // `simplify` on a product re-enters this function, which re-flattens the
-  // whole thing from scratch, so folding pair by pair costs progressively more
-  // work at each level. The caller simplifies the result once instead, and that
-  // pass finds no shared base left to fold, so it terminates.
-  let numerator: Node = number(1);
-  let denominator: Node = number(1);
-  for (const { base, exponent } of powers)
-    numerator = binop("Multiply", numerator, binop("Exponent", base, exponent));
-  for (const { node: factor, inNumerator } of others) {
-    if (inNumerator) numerator = binop("Multiply", numerator, factor);
-    else denominator = binop("Multiply", denominator, factor);
-  }
-  return binop("Divide", numerator, denominator);
-}
-
-/**
- * Removes factors that appear on both sides of a fraction.
- *
- * The logistic equation's carrying capacity is what needs this. Reading
- * `ky(1 - y/M)` gives a linear coefficient of `k` and a quadratic one of
- * `-k/M`, so the capacity `-linear/quadratic` arrives as `-k / -(k·(1/M))` —
- * which is M, and reads as nothing at all. Cancelling the `-1` and the `k`
- * leaves the answer the question was asking for.
- *
- * Worth stating plainly: cancelling `k` from both sides assumes `k` is not
- * zero. That is the ordinary convention for a symbolic simplifier, and here it
- * is additionally safe in the only way that matters — the result is checked
- * numerically against the original equation before anybody sees it, at
- * parameter values that are not zero.
- */
-function cancelCommonFactors(node: Aug.Latex.BinaryOperator): Node | undefined {
-  const entries: { node: Node; inNumerator: boolean }[] = [];
-  quotientFactors(node, true, entries);
-  const numerator = entries.filter((e) => e.inNumerator).map((e) => e.node);
-  const denominator = entries.filter((e) => !e.inNumerator).map((e) => e.node);
-  if (numerator.length === 0 || denominator.length === 0) return undefined;
-
-  let cancelled = false;
-  for (let i = numerator.length - 1; i >= 0; i--) {
-    const match = denominator.findIndex((d) => sameTree(d, numerator[i]));
-    if (match < 0) continue;
-    numerator.splice(i, 1);
-    denominator.splice(match, 1);
-    cancelled = true;
-  }
-  if (!cancelled) return undefined;
-
-  // Plain nodes, simplified once by the caller — the same reason foldSharedBases
-  // does not simplify pair by pair.
-  const product = (factors: Node[]) =>
-    factors.length === 0
-      ? (number(1) as Node)
-      : factors.reduce((a, b) => binop("Multiply", a, b));
-  return denominator.length === 0
-    ? product(numerator)
-    : binop("Divide", product(numerator), product(denominator));
-}
-
 function isZeroConstant(node: Node) {
-  const simplified = simplify(node);
+  const simplified = fold(node);
   return simplified.type === "Constant" && simplified.value === 0;
 }
 
@@ -868,366 +664,6 @@ function functionIntegral(
     );
   }
   return divide(rule(argument), linear.a);
-}
-
-/**
- * Folds the arithmetic that the rules above produce in bulk.
- *
- * Without it `∫2x dx` comes out as `2·(x²/2)` rather than `x²`, which is
- * correct and is not what anybody writes. This is the same fold Vector Tools'
- * differentiator uses, for the same reason.
- */
-export function simplify(node: Node): Node {
-  switch (node.type) {
-    case "Negative": {
-      const arg = simplify(node.arg);
-      if (arg.type === "Constant") return number(-arg.value);
-      if (arg.type === "Negative") return arg.arg;
-      // A sign in front of a product with a numeric coefficient belongs on the
-      // coefficient: `-(2x)` is written `-2x`, and the bracket the emitter puts
-      // round the product otherwise is pure noise.
-      if (
-        arg.type === "BinaryOperator" &&
-        (arg.name === "Multiply" || arg.name === "CrossMultiply")
-      ) {
-        const coefficient = constantValue(arg.left);
-        if (coefficient !== undefined)
-          return simplify(binop("Multiply", number(-coefficient), arg.right));
-      }
-      return negative(arg);
-    }
-    case "FunctionCall": {
-      const args = node.args.map(simplify);
-      const folded = foldKnownValue(node.callee.symbol, args);
-      return folded ?? { ...node, args };
-    }
-    case "BinaryOperator":
-      return simplifyBinary(node);
-    default:
-      return node;
-  }
-}
-
-function simplifyBinary(node: Aug.Latex.BinaryOperator): Node {
-  const left = simplify(node.left);
-  const right = simplify(node.right);
-  const lc = constantValue(left);
-  const rc = constantValue(right);
-
-  // Signs are hoisted out of products and folded through sums, so parts
-  // produces `-x·cos(x) + sin(x)` rather than the literally correct
-  // `x·-cos(x) - -sin(x)`. Each rewrite removes a Negative from below the
-  // operator, so re-simplifying terminates.
-  if (
-    (node.name === "Multiply" || node.name === "CrossMultiply") &&
-    (left.type === "Negative" || right.type === "Negative")
-  ) {
-    const bareLeft = left.type === "Negative" ? left.arg : left;
-    const bareRight = right.type === "Negative" ? right.arg : right;
-    const product = simplify(binop("Multiply", bareLeft, bareRight));
-    // Two negatives cancel; one survives as the sign of the whole product.
-    return left.type === "Negative" && right.type === "Negative"
-      ? product
-      : simplify(negative(product));
-  }
-  if (node.name === "Add" && right.type === "Negative")
-    return simplify(binop("Subtract", left, right.arg));
-  // A negative on the left of a sum is a subtraction the other way round, which
-  // is also how `-x+x` gets to `x-x` and from there to zero.
-  if (node.name === "Add" && left.type === "Negative")
-    return simplify(binop("Subtract", right, left.arg));
-  if (node.name === "Subtract" && right.type === "Negative")
-    return simplify(binop("Add", left, right.arg));
-
-  if (node.name === "Multiply" || node.name === "CrossMultiply") {
-    const shared = foldSharedBases(binop("Multiply", left, right));
-    if (shared !== undefined) return simplify(shared);
-  }
-
-  if (node.name === "Divide") {
-    const cancelled = cancelCommonFactors(binop("Divide", left, right));
-    if (cancelled !== undefined) return simplify(cancelled);
-  }
-
-  switch (node.name) {
-    case "Add":
-      if (lc === 0) return right;
-      if (rc === 0) return left;
-      if (lc !== undefined && rc !== undefined) return number(lc + rc);
-      break;
-    case "Subtract":
-      if (rc === 0) return left;
-      if (lc === 0) return simplify(negative(right));
-      if (lc !== undefined && rc !== undefined) return number(lc - rc);
-      // Anything minus itself is zero, and the integrating factor produces
-      // exactly that in an exponent: folding e^{-x}·e^{x} leaves e^{-x--x},
-      // which has to reach e^{0} before it can become 1.
-      if (sameTree(left, right)) return number(0);
-      break;
-  }
-
-  // Two fractions add, subtract and multiply exactly, without either of them
-  // becoming a decimal on the way. The power rule needs this: differentiating
-  // `x^{1/2}` lowers the exponent by one, and unfolded that reads `x^{1/2-1}`.
-  if (
-    node.name === "Add" ||
-    node.name === "Subtract" ||
-    node.name === "Multiply"
-  ) {
-    const a = rationalOf(left);
-    const b = rationalOf(right);
-    if (a !== undefined && b !== undefined) {
-      if (node.name === "Multiply")
-        return rationalNode({ n: a.n * b.n, d: a.d * b.d });
-      const sign = node.name === "Add" ? 1 : -1;
-      return rationalNode({
-        n: a.n * b.d + sign * b.n * a.d,
-        d: a.d * b.d,
-      });
-    }
-  }
-
-  // Like terms are collected, which is what actually cancels the exponent the
-  // integrating factor leaves behind. `3x + -3x` has no `Negative` node in it
-  // once the sign has been folded into the coefficient, so matching whole trees
-  // is not enough — the coefficients have to be added.
-  if (node.name === "Add" || node.name === "Subtract") {
-    const [leftFactor, leftRest] = splitCoefficient(left);
-    const [rightFactor, rightRest] = splitCoefficient(right);
-    if (sameTree(leftRest, rightRest)) {
-      const combined =
-        node.name === "Add"
-          ? leftFactor + rightFactor
-          : leftFactor - rightFactor;
-      return simplify(binop("Multiply", number(combined), leftRest));
-    }
-  }
-
-  switch (node.name) {
-    case "Multiply":
-    case "CrossMultiply": {
-      if (lc === 0 || rc === 0) return number(0);
-      if (lc === 1) return right;
-      if (rc === 1) return left;
-      // A coefficient of -1 is a sign, not a factor. `-1x` is how the power
-      // rule spells a negation, and it reads as a typo.
-      if (lc === -1) return simplify(negative(right));
-      if (rc === -1) return simplify(negative(left));
-      if (lc !== undefined && rc !== undefined) return number(lc * rc);
-      // A coefficient buried on the right comes to the front: `x²·(3cos 3x)` is
-      // written `3x²cos 3x`. The chain rule produces exactly that shape — the
-      // inner derivative arrives as a factor after the outer one — and left
-      // alone the answer carries a bracket around a number.
-      if (
-        lc === undefined &&
-        right.type === "BinaryOperator" &&
-        (right.name === "Multiply" || right.name === "CrossMultiply") &&
-        constantValue(right.left) !== undefined
-      ) {
-        // Left-nested deliberately. The Aug emitter brackets a product that
-        // hangs off the right of another, so `3·(x²cos 3x)` prints with the
-        // bracket still in it; `(3·x²)·cos 3x` prints as `3x²cos 3x`.
-        return simplify(
-          binop("Multiply", binop("Multiply", right.left, left), right.right)
-        );
-      }
-      // `3·(2x)` is `6x`. Multiplication associates, and the constant multiple
-      // rule produces exactly this shape whenever a coefficient meets the power
-      // rule — which is most of the derivatives anybody takes.
-      if (
-        lc !== undefined &&
-        right.type === "BinaryOperator" &&
-        (right.name === "Multiply" || right.name === "CrossMultiply")
-      ) {
-        const inner = constantValue(right.left);
-        if (inner !== undefined)
-          return simplify(binop("Multiply", number(lc * inner), right.right));
-      }
-      // c · (d/e) folds to (cd)/e, which is what turns 2·(x²/2) into x².
-      if (
-        lc !== undefined &&
-        right.type === "BinaryOperator" &&
-        right.name === "Divide"
-      ) {
-        return simplify(
-          binop("Divide", binop("Multiply", left, right.left), right.right)
-        );
-      }
-      if (rc !== undefined && lc === undefined)
-        return binop("Multiply", right, left);
-      break;
-    }
-    case "Divide": {
-      if (lc === 0) return number(0);
-      if (rc === 1) return left;
-      // Dividing by -1 is negating, and the reciprocal rule above hands this
-      // one over constantly.
-      if (rc === -1) return simplify(negative(left));
-      // A negative on either side of the bar belongs in front of the fraction.
-      // `x/-3` and `-1/9` are both correct and neither is how it is written.
-      if (rc !== undefined && rc < 0)
-        return simplify(negative(binop("Divide", left, number(-rc))));
-      if (lc !== undefined && lc < 0)
-        return simplify(negative(binop("Divide", number(-lc), right)));
-      // A quotient of two numbers folds only when it comes out whole. `1/2`
-      // stays the fraction it was written as, because a decimal is the one
-      // thing an exact answer must not quietly become.
-      if (
-        lc !== undefined &&
-        rc !== undefined &&
-        rc !== 0 &&
-        Number.isInteger(lc / rc)
-      )
-        return number(lc / rc);
-      // A numeric factor above the line cancels against one below it, which is
-      // what turns the power rule's own 3x^3/3 back into x^3. Without this every
-      // answer carries the arithmetic that produced it.
-      if (
-        rc !== undefined &&
-        rc !== 0 &&
-        left.type === "BinaryOperator" &&
-        (left.name === "Multiply" || left.name === "CrossMultiply")
-      ) {
-        const factor = constantValue(left.left);
-        // Only when it divides exactly. Folding 3x²/2 into 1.5x² trades a
-        // fraction anyone can read for a decimal, and this is the one pipeline
-        // in the plugin whose whole purpose is keeping values exact.
-        if (factor !== undefined && Number.isInteger(factor / rc))
-          return simplify(binop("Multiply", number(factor / rc), left.right));
-      }
-      // (a/b)/c folds to a/(bc), so a linear argument's 1/a factor does not
-      // leave a stack of fractions behind it.
-      if (
-        left.type === "BinaryOperator" &&
-        left.name === "Divide" &&
-        rc !== undefined
-      ) {
-        const inner = constantValue(left.right);
-        if (inner !== undefined)
-          return simplify(binop("Divide", left.left, number(inner * rc)));
-      }
-      break;
-    }
-    case "Exponent":
-      if (rc === 1) return left;
-      if (rc === 0) return number(1);
-      // A negative power is written as a fraction. `y^{-1}` is a correct answer
-      // to ∫dy/y² and `-1/y` is the one in the book, and the power rule
-      // produces the former on every separable problem with a power of y in it.
-      if (rc !== undefined && Number.isInteger(rc) && rc < 0)
-        return simplify(
-          binop("Divide", number(1), binop("Exponent", left, number(-rc)))
-        );
-      // Same rule for powers: 2^{1/2} is not 1.4142135623730951.
-      if (lc !== undefined && rc !== undefined && Number.isInteger(lc ** rc))
-        return number(lc ** rc);
-      break;
-  }
-  return node.name === "CrossMultiply"
-    ? { ...node, left, right }
-    : binop(node.name, left, right);
-}
-
-/**
- * The exact value of a known function at a known argument, where there is one.
- *
- * Only the values that are exactly representable — no decimals sneak in, so
- * `sin(1)` is left alone while `sin(0)` becomes 0. That is a narrow table on
- * purpose, and it earns its place because of where these arise: an initial
- * condition is almost always given at x = 0, and substituting it produces
- * `\sin(0)`, `\cos(0)` and `e^{0}` in every solution that has a trig term or an
- * exponential in it. Left unfolded, the constant a student is supposed to read
- * off comes out as `C = \pi - \sin(0)`.
- */
-function foldKnownValue(name: string, args: Node[]): Node | undefined {
-  if (args.length !== 1) return undefined;
-  const argument = constantValue(args[0]);
-  if (argument === undefined) return undefined;
-  switch (name) {
-    case "sin":
-    case "tan":
-    case "sinh":
-    case "tanh":
-      return argument === 0 ? number(0) : undefined;
-    case "cos":
-    case "cosh":
-      return argument === 0 ? number(1) : undefined;
-    case "exp":
-      return argument === 0 ? number(1) : undefined;
-    case "ln":
-      return argument === 1 ? number(0) : undefined;
-    case "log":
-      return argument === 1 ? number(0) : undefined;
-    case "abs":
-      return number(Math.abs(argument));
-    case "sign":
-      return number(Math.sign(argument));
-    case "sqrt": {
-      // Only a perfect square, so no irrational is turned into a decimal.
-      const root = Math.sqrt(argument);
-      return Number.isInteger(root) ? number(root) : undefined;
-    }
-    default:
-      return undefined;
-  }
-}
-
-/**
- * A node as an exact rational, where it is one.
- *
- * `constantValue` only sees a plain number, which is why `\frac{1}{2} - 1` used
- * to survive simplification untouched: a fraction of two integers is a Divide
- * node, not a Constant, so neither side folded and the power rule produced
- * `x^{1/2 - 1}`. Reading fractions as well means the arithmetic happens without
- * ever passing through a decimal.
- */
-function rationalOf(node: Node): { n: number; d: number } | undefined {
-  if (node.type === "Constant")
-    return Number.isInteger(node.value) ? { n: node.value, d: 1 } : undefined;
-  if (node.type === "Negative") {
-    const inner = rationalOf(node.arg);
-    return inner === undefined ? undefined : { n: -inner.n, d: inner.d };
-  }
-  if (node.type === "BinaryOperator" && node.name === "Divide") {
-    const top = rationalOf(node.left);
-    const bottom = rationalOf(node.right);
-    if (top === undefined || bottom === undefined || bottom.n === 0)
-      return undefined;
-    return { n: top.n * bottom.d, d: top.d * bottom.n };
-  }
-  return undefined;
-}
-
-/** A rational back as a node: an integer where it is one, a fraction otherwise. */
-function rationalNode(value: { n: number; d: number }): Node {
-  let { n, d } = value;
-  if (d < 0) {
-    n = -n;
-    d = -d;
-  }
-  const divisor = greatestCommonDivisor(Math.abs(n), d);
-  if (divisor > 1) {
-    n /= divisor;
-    d /= divisor;
-  }
-  if (d === 1) return number(n);
-  return n < 0
-    ? negative(binop("Divide", number(-n), number(d)))
-    : binop("Divide", number(n), number(d));
-}
-
-function greatestCommonDivisor(a: number, b: number): number {
-  while (b !== 0) [a, b] = [b, a % b];
-  return a;
-}
-
-function constantValue(node: Node): number | undefined {
-  if (node.type === "Constant") return node.value;
-  if (node.type === "Negative") {
-    const inner = constantValue(node.arg);
-    return inner === undefined ? undefined : -inner;
-  }
-  return undefined;
 }
 
 function describe(node: Node) {

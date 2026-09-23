@@ -37,7 +37,15 @@
  * correct and there is no way to know the sign of ω² without knowing ω.
  */
 import { Aug, AugBuilders, type Config } from "../../../../text-mode-core";
-import { linearIn, simplify } from "./integrate";
+import { linearIn } from "./integrate";
+import {
+  fold as simplify,
+  agreesOnSamples,
+  evaluate,
+  numericDerivative,
+  numericSecondDerivative,
+  toLatex,
+} from "../../../symbolic";
 import {
   add as exactAdd,
   asRational,
@@ -51,13 +59,6 @@ import {
 } from "./exact";
 import * as Q from "./rational";
 import type { Rational } from "./rational";
-import {
-  agreesOnSamples,
-  evaluate,
-  numericDerivative,
-  numericSecondDerivative,
-} from "./evaluate";
-import { toLatex } from "./latex";
 import type { ODEResult, ODESolution } from "./ode";
 
 const { binop, functionCall, id } = AugBuilders;

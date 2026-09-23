@@ -32,15 +32,19 @@
 import { Aug, AugBuilders, type Config } from "../../../../text-mode-core";
 import {
   coefficientsIn,
-  dependsOn,
   integrate,
   IntegrationError,
   linearIn,
-  simplify,
-  visit,
 } from "./integrate";
-import { agreesOnSamples, evaluate, numericDerivative } from "./evaluate";
-import { toLatex } from "./latex";
+import {
+  agreesOnSamples,
+  dependsOn,
+  evaluate,
+  fold as simplify,
+  numericDerivative,
+  visit,
+  toLatex,
+} from "../../../symbolic";
 
 const { number, binop, id, negative } = AugBuilders;
 

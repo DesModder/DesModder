@@ -3,12 +3,11 @@
  *
  * The Aug emitter is correct and literal, which is the right default for a
  * round trip and the wrong one for an answer somebody reads. Three differences
- * matter enough to fix, and all are applied only to trees this plugin built —
- * never to anything the user typed.
+ * matter enough to fix, and all are applied only to trees the symbolic layer
+ * built — never to anything the user typed.
  *
  * `\cdot` before a name is dropped, so a solution reads `2y` rather than
- * `2\cdot y`. That is the same tidy-up Vector Tools' `symbolic.ts` does, and it
- * is safe for the same reason: juxtaposition means multiplication and nothing
+ * `2\cdot y`. That is safe because juxtaposition means multiplication and nothing
  * else before a letter or a command. The dot stays before a digit, where
  * `2\cdot 3` must not become `23`.
  *
@@ -26,11 +25,7 @@
  * rest of the expression outside the bars, producing something that still
  * parses and quietly means something else.
  */
-import {
-  Aug,
-  latexTreeToString,
-  type Config,
-} from "../../../../text-mode-core";
+import { Aug, latexTreeToString, type Config } from "../../text-mode-core";
 
 type Node = Aug.Latex.AnyChild;
 

@@ -18,9 +18,7 @@
  * observer to fire — asynchronous, and far too slow to run over a grid of
  * sample points while somebody is typing.
  */
-import { Aug } from "../../../../text-mode-core";
-
-type Node = Aug.Latex.AnyChild;
+import type { Node } from "./tree";
 
 export type Bindings = Readonly<Record<string, number>>;
 

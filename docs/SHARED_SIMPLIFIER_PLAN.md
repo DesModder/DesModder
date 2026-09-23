@@ -181,3 +181,74 @@ These change what gets built and are not settled here.
 - Physics Lab's fold substituted for Vector Tools': 72/72 Vector Tools unit
   tests, 1983/1983 repo unit tests, unchanged.
 - Repo state at the time of writing: `12c63407`.
+
+---
+
+# What was actually built
+
+Everything above is the plan as written before starting. This section records
+what happened, including the two places the plan turned out to be wrong.
+
+`src/symbolic/` now exists and holds `tree.ts`, `fold.ts`, `condense.ts`,
+`expand.ts`, `evaluate.ts`, `latex.ts`, `notes.ts` and an `index.ts` that
+states the three-names argument where somebody will read it. Physics Lab and
+Vector Tools both import from it and neither has a simplifier of its own.
+
+Steps 1–4 went as planned and were a drop-in. Step 5 was left out: exact
+constants still live in Physics Lab, because nothing else has asked for them.
+
+**`latex.ts` moved too, which the plan did not anticipate.** It was the same
+story a second time: Vector Tools' `toLatex` and Physics Lab's shared a
+character-for-character identical `\cdot`-dropping regex, and Physics Lab's did
+two more things on top. One emitter now, and Vector Tools gained absolute-value
+bars for free.
+
+**`expand` is new, and is the reason the extraction happened when it did.** It
+is `condense`'s opposite: it multiplies products out, splits a fraction over a
+sum in its numerator, and writes a small whole-number power of a sum out in
+full. The point is integration — there is no product rule for integrals, so
+`∫(x+1)(x+2)dx` has no rule that matches it and `∫x²+3x+2 dx` is three
+applications of the power rule.
+
+Three things about it that the plan did not foresee:
+
+- **It needed the like-term collection that decision 1 was about**, because
+  the fold collects only _adjacent_ like terms — it is written one binary
+  operator at a time — and `(x+1)(x+2)` distributes to `x·x + 2x + x + 2` with
+  a term in between. Without gathering, expanding a pair of binomials produces
+  `x²+2x+x+2`, which is worse than what it started from. The gathering lives
+  in `expand.ts` rather than in `fold.ts`, so the fold's behaviour everywhere
+  else is untouched.
+- **It needed a term order**, for the same reason: `(x+2)(x²-3)` distributes
+  in the order the factors were written and comes out `x³-3x+2x²-6`. Terms are
+  now sorted by descending degree. It is a _stable_ sort on a single number, so
+  terms it cannot rank keep the order they were written in and nothing is
+  reordered on a rule the code cannot state — that is what keeps it a display
+  order rather than the first half of a canonical form.
+- **Every rewrite is size-capped individually, not once at the end.** A pass
+  that expands `(x+1)^8(x+2)^8` in one go builds a sum of thousands of terms
+  before anything asks how big it is, and the fold that runs next overflows the
+  stack rather than returning something to measure.
+
+**The integrator tries both routes and keeps the shorter answer.** The first
+version tried expansion only after a refusal, which missed `(x+1)(x+2)`
+entirely: integration by parts _succeeds_ on it and answers
+`(x+1)(x²/2+2x) - (x³/6+x²)`, which is a correct antiderivative and is not what
+anybody writes. Two antiderivatives of one integrand differ by a constant, so
+there is nothing to choose between them on correctness and the shorter one is
+the answer. A tie goes to the unexpanded route, which is what keeps
+`∫(x+1)^7 dx` answering `(x+1)^8/8` rather than eight terms of the same
+function.
+
+Decision 2 (a factored form in Vector Tools' panel) and decision 4 (Audio Lab)
+are still open, and `expand` is not offered in any panel yet — it exists for
+the integrator.
+
+## Evidence, second pass
+
+- 2003 unit tests, 73 integration tests, lint clean, Chrome build.
+- `expand`'s every case asserts both the shape and, at six sample points, that
+  it is still the same function — including each rewrite run once on its own,
+  because the loop could hide a bad rewrite behind a good one.
+- New integrals that used to be refused: `∫(x+1)(x+2)dx = x³/3 + 3x²/2 + 2x`
+  and `∫(x²+1)/x dx = x²/2 + ln|x|`.

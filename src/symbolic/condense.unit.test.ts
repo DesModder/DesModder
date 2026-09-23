@@ -11,10 +11,10 @@
  * sign produces something shorter and plausible, and only evaluating it notices
  * — which is exactly the failure the rest of this directory is built to catch.
  */
-import { condense } from "./factor";
+import { condense } from "./condense";
 import { agreesOnSamples, evaluate } from "./evaluate";
 import { toLatex } from "./latex";
-import { Aug, AugBuilders, buildConfig } from "../../../../text-mode-core";
+import { Aug, AugBuilders, buildConfig } from "../../text-mode-core";
 
 const { binop, functionCall, id, number } = AugBuilders;
 

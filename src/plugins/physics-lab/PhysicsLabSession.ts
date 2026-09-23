@@ -42,11 +42,15 @@ import {
   type Derivation,
   type DerivationNode,
 } from "./symbolic/differentiate";
-import { condense } from "./symbolic/factor";
-import { simplify as simplifyTree, topLevelTerms } from "./symbolic/integrate";
-import { agreesOnSamples, evaluate } from "./symbolic/evaluate";
+import {
+  agreesOnSamples,
+  condense,
+  evaluate,
+  fold as simplifyTree,
+  topLevelTerms,
+  toLatex as toLatexTree,
+} from "../../symbolic";
 
-import { toLatex as toLatexTree } from "./symbolic/latex";
 import {
   defaultPhysicsLabConfig,
   normalizePhysicsLabConfig,

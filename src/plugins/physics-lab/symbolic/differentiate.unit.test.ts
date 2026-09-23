@@ -21,8 +21,12 @@ import {
   stepsOf,
   type DerivationNode,
 } from "./differentiate";
-import { agreesOnSamples, evaluate, numericDerivative } from "./evaluate";
-import { toLatex } from "./latex";
+import {
+  agreesOnSamples,
+  evaluate,
+  numericDerivative,
+  toLatex,
+} from "../../../symbolic";
 import { Aug, AugBuilders, buildConfig } from "../../../../text-mode-core";
 
 const { binop, functionCall, id, number } = AugBuilders;

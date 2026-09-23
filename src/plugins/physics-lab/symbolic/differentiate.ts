@@ -61,8 +61,13 @@
  * doubly so when it is presented as a worked example.
  */
 import { Aug, AugBuilders, type Config } from "../../../../text-mode-core";
-import { dependsOn, rebuildSum, simplify, topLevelTerms } from "./integrate";
-import { toLatex } from "./latex";
+import {
+  dependsOn,
+  fold as simplify,
+  rebuildSum,
+  topLevelTerms,
+  toLatex,
+} from "../../../symbolic";
 
 const { number, binop, functionCall, id, negative } = AugBuilders;
 

@@ -8,8 +8,12 @@
  * the only thing that notices is differentiating it.
  */
 import { integrate, IntegrationError, linearIn } from "./integrate";
-import { agreesOnSamples, evaluate, numericDerivative } from "./evaluate";
-import { toLatex } from "./latex";
+import {
+  agreesOnSamples,
+  evaluate,
+  numericDerivative,
+  toLatex,
+} from "../../../symbolic";
 import { Aug, AugBuilders, buildConfig } from "../../../../text-mode-core";
 
 const { binop, functionCall, id, negative, number } = AugBuilders;
@@ -206,5 +210,52 @@ describe("recognising a linear argument", () => {
     expect(linear(pow(x, number(2)))).toBeUndefined();
     expect(linear(mul(x, x))).toBeUndefined();
     expect(linear(fn("sin", x))).toBeUndefined();
+  });
+});
+
+describe("integrals that only work once the integrand is multiplied out", () => {
+  test("a product of binomials, which has no rule of its own", () => {
+    // There is no product rule for integrals. `(x+1)(x+2)` written out is
+    // `x²+3x+2`, and that is three applications of the power rule.
+    check(
+      mul(add(x, number(1)), add(x, number(2))),
+      "\\frac{x^{3}}{3}+\\frac{3x^{2}}{2}+2x"
+    );
+  });
+
+  test("a quotient with the variable on both sides of the bar", () => {
+    // Refused as it stands, and `x + 1/x` once the fraction is split.
+    check(
+      div(add(pow(x, number(2)), number(1)), x),
+      "\\frac{x^{2}}{2}+\\ln\\left|x\\right|"
+    );
+  });
+
+  test("a sum times a function, term by term", () => {
+    const integrand = mul(add(x, number(1)), fn("cos", x));
+    const result = integrate(integrand, "x");
+    // Parts handles the `x·cos x` half; the expansion is what gets it there.
+    expect(isAntiderivativeOf(result, integrand)).toBe(true);
+  });
+
+  test("a power that already has a rule keeps the answer that rule gives", () => {
+    // `(x+1)^7` is `(x+1)^8/8`, not eight terms of the same function. The
+    // expansion is a fallback, so it never gets the chance to make an answer
+    // worse than the one the rules produce.
+    check(
+      pow(add(x, number(1)), number(7)),
+      "\\frac{\\left(x+1\\right)^{8}}{8}"
+    );
+  });
+
+  test("and expanding does not turn a refusal into a guess", () => {
+    // `sin(x²)` has no elementary antiderivative, expanded or not, and the
+    // message that comes back is the one about the expression as written.
+    expect(() => integrate(fn("sin", pow(x, number(2))), "x")).toThrow(
+      IntegrationError
+    );
+    expect(() =>
+      integrate(mul(fn("sin", pow(x, number(2))), add(x, number(1))), "x")
+    ).toThrow(IntegrationError);
   });
 });
