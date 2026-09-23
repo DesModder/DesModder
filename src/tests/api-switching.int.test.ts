@@ -50,6 +50,11 @@ async function normalizedHtml(page: Page) {
     /<div tabindex="(0|-1)"><\/div>(<canvas class="dcg-graph-inner")/,
     "$2"
   );
+  // The style here sometimes has `display: none`, sometimes not.
+  html = html.replace(
+    /<div class="dcg-loading-div-container" style="[^"]+">/g,
+    ""
+  );
   return html;
 }
 
