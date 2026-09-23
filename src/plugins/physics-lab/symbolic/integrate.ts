@@ -23,7 +23,22 @@
  * u-substitution keeps the result in the form a student would write.
  */
 import { Aug } from "../../../../text-mode-core";
-import { expand, fold } from "../../../symbolic";
+import {
+  constantValue,
+  differentiate,
+  expand,
+  fold,
+  rationalNode,
+  rationalOf,
+  replaceIdentifier,
+} from "../../../symbolic";
+import {
+  asSinesAndCosines,
+  findSubstitution,
+  oddTrigPower,
+} from "./substitute";
+import { rationalIntegral } from "./rationalIntegral";
+import { findTrigSubstitution } from "./trigSubstitution";
 import {
   add,
   binop,
@@ -128,18 +143,55 @@ const FUNCTION_INTEGRALS: Record<string, (u: Node) => Node> = {
   sin: (u) => negative(call("cos", u)),
   cos: (u) => call("sin", u),
   exp: (u) => call("exp", u),
-  // ∫sec²  and ∫csc² are the two that come up, and they arrive as powers
-  // rather than as calls, so they are handled in the exponent rule.
-  sec: (u) => call("ln", call("abs", add(call("sec", u), call("tan", u)))),
+  // The three that are themselves a logarithm of something trigonometric.
   tan: (u) => negative(call("ln", call("abs", call("cos", u)))),
+  cot: (u) => call("ln", call("abs", call("sin", u))),
+  sec: (u) => call("ln", call("abs", add(call("sec", u), call("tan", u)))),
+  csc: (u) =>
+    negative(call("ln", call("abs", add(call("csc", u), call("cot", u))))),
   sinh: (u) => call("cosh", u),
   cosh: (u) => call("sinh", u),
+  tanh: (u) => call("ln", call("cosh", u)),
+  coth: (u) => call("ln", call("abs", call("sinh", u))),
+  // Each of these is integration by parts with dv = du, done once and written
+  // down rather than rediscovered: the parts rule below only reduces a
+  // polynomial factor, and every one of these arrives with no factor at all.
+  ln: (u) => subtract(multiply(u, call("ln", u)), u),
+  log: (u) =>
+    subtract(multiply(u, call("log", u)), divide(u, call("ln", number(10)))),
+  arcsin: (u) =>
+    add(
+      multiply(u, call("arcsin", u)),
+      call("sqrt", subtract(number(1), square(u)))
+    ),
+  arccos: (u) =>
+    subtract(
+      multiply(u, call("arccos", u)),
+      call("sqrt", subtract(number(1), square(u)))
+    ),
+  arctan: (u) =>
+    subtract(
+      multiply(u, call("arctan", u)),
+      divide(call("ln", add(number(1), square(u))), number(2))
+    ),
+  arcsinh: (u) =>
+    subtract(
+      multiply(u, call("arcsinh", u)),
+      call("sqrt", add(square(u), number(1)))
+    ),
+  arctanh: (u) =>
+    add(
+      multiply(u, call("arctanh", u)),
+      divide(call("ln", call("abs", subtract(number(1), square(u)))), number(2))
+    ),
   sqrt: (u) =>
     divide(
       multiply(number(2), power(u, divide(number(3), number(2)))),
       number(3)
     ),
 };
+
+const square = (node: Node) => power(node, number(2));
 
 /**
  * The antiderivative of `node` with respect to `variable`, without a constant
@@ -163,7 +215,20 @@ export function integrate(node: Node, variable: string): Node {
   // which is refused, and is `∫x dx + ∫dx/x` once the fraction is split.
   // Expanding first is how the problem is done by hand.
   const opened = fold(expand(folded).node);
-  if (sameTree(opened, folded)) {
+  // Expanding is only *always* the right idea when what comes out is a
+  // polynomial, where integrating term by term is the whole technique. The
+  // rest of the time it is a fallback, tried when no rule matched the
+  // integrand as written.
+  //
+  // The case that settled this: `1/(x(1-x))` expands to `1/(x-x^2)`, which is
+  // a perfectly good integral and comes back through the discriminant as
+  // `ln|x/(x-1)|` -- one node shorter than the `ln|x| - ln|1-x|` that partial
+  // fractions gives, and not the form anybody writes it in. A rule that
+  // preferred it because of one node would be picking answers by accident.
+  const worthExpanding =
+    !sameTree(opened, folded) &&
+    (!direct.ok || polynomialDegree(opened, variable) !== undefined);
+  if (!worthExpanding) {
     if (direct.ok) return direct.value;
     throw direct.error;
   }
@@ -209,7 +274,111 @@ function attempt(
   }
 }
 
-function antiderivative(node: Node, variable: string): Node {
+/**
+ * How deep a chain of substitutions may go before it is called a loop.
+ *
+ * Each substitution hands back a smaller integral, so a genuine chain is two or
+ * three long. The cap is there because a substitution is a *search*, and a
+ * search that keeps finding something to try is how a refusal turns into a
+ * hang.
+ */
+const MAX_SUBSTITUTION_DEPTH = 4;
+
+function antiderivative(node: Node, variable: string, depth = 0): Node {
+  try {
+    return byRule(node, variable, depth);
+  } catch (error) {
+    if (!(error instanceof IntegrationError)) throw error;
+    // No rule matched the shape. Everything below rewrites the integrand into
+    // something a rule can match, and each one is an identity, so a rewrite
+    // that does not help costs a refusal and never a wrong answer.
+    const rewritten = byRewrite(node, variable, depth);
+    if (rewritten !== undefined) return rewritten;
+    // The message kept is the one about the integrand as written.
+    throw error;
+  }
+}
+
+/**
+ * The rewrites, tried in the order that gives the tidiest answer.
+ *
+ * Substitution first, because it is the one that most often turns an integral
+ * into a rule rather than into another integral. The trigonometric rewrite
+ * second, because the only thing it does is make a substitution possible.
+ */
+function byRewrite(
+  node: Node,
+  variable: string,
+  depth: number
+): Node | undefined {
+  if (depth >= MAX_SUBSTITUTION_DEPTH) return undefined;
+
+  const substituted = bySubstitution(node, variable, depth);
+  if (substituted !== undefined) return substituted;
+
+  // A root of a sum of squares is the one shape no substitution can clear,
+  // because what is in the way is not a composition. Tried after the search,
+  // since a root that *is* part of a composition is cheaper to undo that way.
+  const trig = findTrigSubstitution(node, variable);
+  if (trig !== undefined) {
+    try {
+      const inner = antiderivative(trig.integrand, trig.name, depth + 1);
+      return trig.back(inner);
+    } catch (error) {
+      // A substitution that did not help is not an error about the integral.
+      if (!(error instanceof IntegrationError)) throw error;
+    }
+  }
+
+  const reduced = oddTrigPower(node, variable);
+  if (reduced !== undefined) {
+    // Multiplied out first, so the substitution that follows sees a sum of
+    // terms rather than a power of one.
+    return antiderivative(fold(expand(reduced).node), variable, depth + 1);
+  }
+
+  // Last, because it makes an expression longer whenever it does not help.
+  const plain = asSinesAndCosines(node, variable);
+  if (plain !== undefined) {
+    try {
+      return antiderivative(fold(plain), variable, depth + 1);
+    } catch (error) {
+      if (!(error instanceof IntegrationError)) throw error;
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * One substitution, found and carried out, or `undefined` if none was found or
+ * the integral it produced could not be done either.
+ *
+ * Returning `undefined` rather than throwing on the inner failure is what keeps
+ * a substitution from turning a good error message into a confusing one: the
+ * caller still has the message about the integrand as it was written.
+ */
+function bySubstitution(
+  node: Node,
+  variable: string,
+  depth: number
+): Node | undefined {
+  if (depth >= MAX_SUBSTITUTION_DEPTH) return undefined;
+  const found = findSubstitution(node, variable);
+  if (found === undefined) return undefined;
+  try {
+    // The inner integral is done in the new name, then the name is put back.
+    // Undoing the substitution is the one step here that could be wrong, and
+    // it is also the one the caller's numeric check catches.
+    const inner = antiderivative(found.integrand, found.name, depth + 1);
+    return fold(replaceIdentifier(inner, found.name, found.u));
+  } catch (error) {
+    if (!(error instanceof IntegrationError)) throw error;
+    return undefined;
+  }
+}
+
+function byRule(node: Node, variable: string, depth: number): Node {
   // Anything free of the variable is a constant, and integrates to c·x.
   if (!dependsOn(node, variable)) return multiply(node, id(variable));
 
@@ -218,9 +387,9 @@ function antiderivative(node: Node, variable: string): Node {
       // The variable itself.
       return divide(power(id(variable), number(2)), number(2));
     case "Negative":
-      return negative(antiderivative(node.arg, variable));
+      return negative(antiderivative(node.arg, variable, depth));
     case "BinaryOperator":
-      return binaryIntegral(node, variable);
+      return binaryIntegral(node, variable, depth);
     case "FunctionCall":
       return functionIntegral(node, variable);
     default:
@@ -232,19 +401,20 @@ function antiderivative(node: Node, variable: string): Node {
 
 function binaryIntegral(
   node: Aug.Latex.BinaryOperator,
-  variable: string
+  variable: string,
+  depth: number
 ): Node {
   const { left, right } = node;
   switch (node.name) {
     case "Add":
       return add(
-        antiderivative(left, variable),
-        antiderivative(right, variable)
+        antiderivative(left, variable, depth),
+        antiderivative(right, variable, depth)
       );
     case "Subtract":
       return subtract(
-        antiderivative(left, variable),
-        antiderivative(right, variable)
+        antiderivative(left, variable, depth),
+        antiderivative(right, variable, depth)
       );
     case "Multiply":
     case "CrossMultiply": {
@@ -254,18 +424,35 @@ function binaryIntegral(
       const leftHas = dependsOn(left, variable);
       const rightHas = dependsOn(right, variable);
       if (leftHas && rightHas) {
-        return byParts(left, right, variable);
+        // The one product where parts never terminates and the answer is still
+        // elementary, because applying it twice returns the original integral
+        // with a coefficient and the equation can be solved for it.
+        const cyclic = exponentialTimesWave(left, right, variable);
+        if (cyclic !== undefined) return cyclic;
+        // Substitution before parts, where both apply. `x√(1-x²)` is one
+        // substitution away from a power rule and parts turns it into `x`
+        // times an arcsine -- correct, three times the length, and the sort of
+        // answer that makes a reader think they have misread the question.
+        const substituted = bySubstitution(node, variable, depth);
+        if (substituted !== undefined) return substituted;
+        return byParts(left, right, variable, depth);
       }
       return leftHas
-        ? multiply(right, antiderivative(left, variable))
-        : multiply(left, antiderivative(right, variable));
+        ? multiply(right, antiderivative(left, variable, depth))
+        : multiply(left, antiderivative(right, variable, depth));
     }
     case "Divide": {
       if (!dependsOn(right, variable)) {
         // A constant denominator is a constant factor.
-        return divide(antiderivative(left, variable), right);
+        return divide(antiderivative(left, variable, depth), right);
       }
       if (dependsOn(left, variable)) {
+        // One polynomial over another is its own family, decided by the
+        // denominator's discriminant rather than by its shape.
+        const rational = rationalIntegral(left, right, variable, (piece) =>
+          antiderivative(piece, variable, depth)
+        );
+        if (rational !== undefined) return rational;
         throw new IntegrationError(
           "A quotient with the variable above and below the line needs a substitution or partial fractions, which this does not do."
         );
@@ -281,7 +468,8 @@ function binaryIntegral(
       ) {
         return antiderivative(
           multiply(left, power(right.left, number(-right.right.value))),
-          variable
+          variable,
+          depth
         );
       }
       // c / (L₁·L₂), two factors each linear in the variable: partial
@@ -290,6 +478,25 @@ function binaryIntegral(
       // the equation on the BC syllabus is refused.
       const split = partialFractions(right, variable);
       if (split !== undefined) return multiply(left, split);
+
+      // A constant over a quadratic is an arctangent, a pair of logarithms or
+      // a power depending on the discriminant, and nothing else here can tell
+      // those apart.
+      //
+      // After the factor-based split rather than before it, deliberately. Both
+      // can do `1/(x(1-x))`; the one above writes it as `ln|x| - ln|1-x|`,
+      // which is the answer in the book, and this one writes the same function
+      // through `2ax+b±√D`, which is the answer in a table of integrals.
+      const rational = rationalIntegral(left, right, variable, (piece) =>
+        antiderivative(piece, variable, depth)
+      );
+      if (rational !== undefined) return rational;
+
+      // c / sqrt(a - x^2) and its two relatives, which are the inverse
+      // trigonometric and hyperbolic functions and nothing else. They arrive
+      // as a quotient with a root underneath, which no other rule here reads.
+      const root = rootDenominatorIntegral(left, right, variable);
+      if (root !== undefined) return root;
 
       // c / (ax + b) is the logarithm, which is the case every separable
       // growth-and-decay problem turns into.
@@ -302,7 +509,7 @@ function binaryIntegral(
       return divide(multiply(left, call("ln", call("abs", right))), linear.a);
     }
     case "Exponent":
-      return exponentIntegral(left, right, variable);
+      return exponentIntegral(left, right, variable, depth);
   }
 }
 
@@ -351,6 +558,115 @@ function partialFractions(
   );
 }
 
+/**
+ * `∫sec³u du` and `∫csc³u du`, the two that need the reduction formula.
+ *
+ * Neither is reachable by any of the other rules. Parts against `sec u` brings
+ * the same integral back with a coefficient, exactly as the exponential and the
+ * wave do, and the answer is what you get by solving for it:
+ *
+ *     ∫sec³ = (sec u tan u + ln|sec u + tan u|) / 2
+ *
+ * Written down rather than derived, for the same reason the cyclic pair is.
+ */
+function oddSecantCube(base: Node, variable: string): Node | undefined {
+  if (base.type !== "FunctionCall" || base.args.length !== 1) return undefined;
+  const name = base.callee.symbol;
+  if (name !== "sec" && name !== "csc") return undefined;
+  const [argument] = base.args;
+  const linear = linearIn(argument, variable);
+  if (linear === undefined || isZeroConstant(linear.a)) return undefined;
+
+  if (name === "sec") {
+    const inner = add(
+      multiply(call("sec", argument), call("tan", argument)),
+      call("ln", call("abs", add(call("sec", argument), call("tan", argument))))
+    );
+    return divide(inner, multiply(number(2), linear.a));
+  }
+  const inner = subtract(
+    negative(multiply(call("csc", argument), call("cot", argument))),
+    call("ln", call("abs", add(call("csc", argument), call("cot", argument))))
+  );
+  return divide(inner, multiply(number(2), linear.a));
+}
+
+/**
+ * `∫ e^{ax} sin(bx) dx` and its cousin with a cosine.
+ *
+ * The integral that made integration by parts famous and the one it cannot
+ * finish: parts takes it to another integral of the same shape, and parts again
+ * takes it back to where it started. What finishes it is algebra rather than
+ * calculus -- `I = ... - (b/a)^2 I`, solved for `I` -- and the result is short
+ * enough to write down, so it is written down here instead of being
+ * rediscovered every time.
+ *
+ * Both arguments must be linear, and in this the two coefficients are `a` and
+ * `b`. Nothing else about the product matters.
+ */
+function exponentialTimesWave(
+  left: Node,
+  right: Node,
+  variable: string
+): Node | undefined {
+  const pair = (first: Node, second: Node) => {
+    const exponential = asExponential(first, variable);
+    const wave = asWave(second, variable);
+    return exponential === undefined || wave === undefined
+      ? undefined
+      : { exponential, wave };
+  };
+  const found = pair(left, right) ?? pair(right, left);
+  if (found === undefined) return undefined;
+  const { exponential, wave } = found;
+
+  // a² + b², the denominator both forms share.
+  const scale = add(square(exponential.rate), square(wave.rate));
+  const sine = call("sin", wave.argument);
+  const cosine = call("cos", wave.argument);
+  const inner =
+    wave.name === "sin"
+      ? subtract(multiply(exponential.rate, sine), multiply(wave.rate, cosine))
+      : add(multiply(exponential.rate, cosine), multiply(wave.rate, sine));
+  return divide(multiply(exponential.node, inner), scale);
+}
+
+/** `e^{ax}` or `exp(ax)` with `a` free of the variable, as its rate. */
+function asExponential(
+  node: Node,
+  variable: string
+): { node: Node; rate: Node } | undefined {
+  const exponent =
+    node.type === "FunctionCall" &&
+    node.callee.symbol === "exp" &&
+    node.args.length === 1
+      ? node.args[0]
+      : node.type === "BinaryOperator" &&
+          node.name === "Exponent" &&
+          node.left.type === "Identifier" &&
+          node.left.symbol === "e"
+        ? node.right
+        : undefined;
+  if (exponent === undefined) return undefined;
+  const linear = linearIn(exponent, variable);
+  if (linear === undefined || isZeroConstant(linear.a)) return undefined;
+  // A shift is a constant factor and comes along inside `node` untouched.
+  return { node, rate: linear.a };
+}
+
+/** `sin(bx)` or `cos(bx)` with a linear argument, as its rate. */
+function asWave(
+  node: Node,
+  variable: string
+): { name: "sin" | "cos"; argument: Node; rate: Node } | undefined {
+  if (node.type !== "FunctionCall" || node.args.length !== 1) return undefined;
+  const name = node.callee.symbol;
+  if (name !== "sin" && name !== "cos") return undefined;
+  const linear = linearIn(node.args[0], variable);
+  if (linear === undefined || isZeroConstant(linear.a)) return undefined;
+  return { name, argument: node.args[0], rate: linear.a };
+}
+
 /** Beyond this a polynomial factor is not what anybody meant to type. */
 const MAX_PARTS_DEGREE = 8;
 
@@ -368,7 +684,12 @@ const MAX_PARTS_DEGREE = 8;
  * comes down to: the integrating factor turns it into ∫x·e^x, which is the
  * integral behind every "y = x - 1 + Ce^{-x}" in an AP answer key.
  */
-function byParts(left: Node, right: Node, variable: string): Node {
+function byParts(
+  left: Node,
+  right: Node,
+  variable: string,
+  depth: number
+): Node {
   const leftDegree = polynomialDegree(left, variable);
   const rightDegree = polynomialDegree(right, variable);
   // If both are polynomials the product is one too, and expanding it is not
@@ -380,21 +701,227 @@ function byParts(left: Node, right: Node, variable: string): Node {
   const rest = usePolynomialLeft ? right : left;
   const degree = usePolynomialLeft ? leftDegree : rightDegree;
 
+  if (depth >= MAX_SUBSTITUTION_DEPTH) {
+    throw new IntegrationError(
+      "Integration by parts did not terminate on this product."
+    );
+  }
+  // A logarithm or an inverse function against anything that can be integrated
+  // at all, whether or not the other factor is a polynomial. `√x ln x` is the
+  // ordinary example: neither factor is a polynomial and parts still finishes
+  // in one step, because differentiating the logarithm is what ends it.
+  const inverseLeft = isInverseOrLog(left);
+  const inverseRight = isInverseOrLog(right);
+  if (degree === undefined && (inverseLeft || inverseRight)) {
+    const chosen = inverseLeft ? left : right;
+    const other = inverseLeft ? right : left;
+    const inner = antiderivative(other, variable, depth + 1);
+    const chosenDerivative = fold(differentiate(chosen, variable));
+    return subtract(
+      multiply(chosen, inner),
+      antiderivative(
+        fold(multiply(chosenDerivative, inner)),
+        variable,
+        depth + 1
+      )
+    );
+  }
   if (degree === undefined || degree > MAX_PARTS_DEGREE) {
     throw new IntegrationError(
       "A product of two expressions that both contain the variable needs integration by parts, and neither factor is a polynomial this can reduce."
     );
   }
 
-  const restIntegral = antiderivative(rest, variable);
+  // Which factor becomes `u` is the whole of integration by parts, and putting
+  // the polynomial there is right for every case except one. A logarithm or an
+  // inverse trigonometric function has an antiderivative that still contains
+  // itself: the integral of `arctan x` is `x arctan x - ...`, so taking
+  // `dv = arctan x dx` produces a remaining integral with `x arctan x` in it,
+  // which is the integral that was being done. It recurses forever.
+  //
+  // The usual name for choosing the other way round is LIATE, and the reason
+  // behind the mnemonic is exactly this: those are the functions that get
+  // simpler when differentiated and worse when integrated.
+  if (isInverseOrLog(rest)) {
+    const inner = antiderivative(polynomial, variable, depth + 1);
+    const restDerivative = fold(differentiate(rest, variable));
+    return subtract(
+      multiply(rest, inner),
+      antiderivative(fold(multiply(restDerivative, inner)), variable, depth + 1)
+    );
+  }
+
+  const restIntegral = antiderivative(rest, variable, depth + 1);
   const derivative = polynomialDerivative(polynomial, variable);
   // The remaining integral has a polynomial one degree lower, so this bottoms
   // out at a constant, whose derivative is zero and whose term vanishes.
   if (isZeroConstant(derivative)) return multiply(polynomial, restIntegral);
   return subtract(
     multiply(polynomial, restIntegral),
-    antiderivative(fold(multiply(derivative, restIntegral)), variable)
+    antiderivative(
+      fold(multiply(derivative, restIntegral)),
+      variable,
+      depth + 1
+    )
   );
+}
+
+/**
+ * The L and I of LIATE: the functions whose antiderivative still contains them.
+ *
+ * Matched on the call rather than on anything deeper, because that is exactly
+ * the shape that matters. `x·arctan(x)` is the case; `x·arctan(x)²` is not one
+ * parts can finish at all, and the recursion guard refuses it rather than this
+ * list pretending to.
+ */
+const INVERSE_OR_LOG = new Set([
+  "ln",
+  "log",
+  "arcsin",
+  "arccos",
+  "arctan",
+  "arccot",
+  "arcsec",
+  "arccsc",
+  "arcsinh",
+  "arccosh",
+  "arctanh",
+]);
+
+function isInverseOrLog(node: Node) {
+  return node.type === "FunctionCall" && INVERSE_OR_LOG.has(node.callee.symbol);
+}
+
+/**
+ * `c / √(k ± (linear)²)`, which is where the inverse functions come from.
+ *
+ * Three integrals, told apart by two signs:
+ *
+ * - `1/√(k - u²)` is `arcsin(u/√k)`, the one every course does.
+ * - `1/√(k + u²)` is `arcsinh(u/√k)`, which Desmos has under that name.
+ * - `1/√(u² - k)` is `arccosh(u/√k)`, defined only where `u > √k`.
+ *
+ * Only a *linear* `u`, and only a numeric `k`. The linear part is the same
+ * restriction every other rule here carries and for the same reason: the `1/a`
+ * factor is what a substitution would have produced, and anything else needs a
+ * real substitution, which the search will have already tried and failed at
+ * before this is reached. The numeric part is because the sign of `k` decides
+ * which of the three this is, exactly as the discriminant does for a quadratic
+ * denominator.
+ */
+function rootDenominatorIntegral(
+  numerator: Node,
+  denominator: Node,
+  variable: string
+): Node | undefined {
+  if (
+    denominator.type !== "FunctionCall" ||
+    denominator.callee.symbol !== "sqrt" ||
+    denominator.args.length !== 1
+  ) {
+    return undefined;
+  }
+  // The numerator has to be a constant factor. Without this check
+  // `x^2/sqrt(1-x^2)` would come back as `x^2 arcsin(x)`, which is not an
+  // antiderivative of anything -- the one way a rule here can be wrong rather
+  // than merely absent.
+  if (dependsOn(numerator, variable)) return undefined;
+  const inside = coefficientsIn(denominator.args[0], variable, 2);
+  if (inside === undefined || inside.length !== 3) return undefined;
+  const constant = constantValue(fold(inside[0]));
+  const linearTerm = constantValue(fold(inside[1]));
+  const quadratic = constantValue(fold(inside[2]));
+  // A linear term would mean the square is not centred on the origin. It could
+  // be completed, and doing so is the substitution `u = x + b/2a` that the
+  // search reaches first, so there is nothing here for it to add.
+  if (
+    constant === undefined ||
+    linearTerm !== 0 ||
+    quadratic === undefined ||
+    quadratic === 0
+  ) {
+    return undefined;
+  }
+
+  const scale = call("sqrt", number(Math.abs(constant / quadratic)));
+  const argument = divide(id(variable), scale);
+  const magnitude = call("sqrt", number(Math.abs(quadratic)));
+  const named = (name: string) => divide(call(name, argument), magnitude);
+
+  if (constant > 0 && quadratic < 0)
+    return multiply(numerator, named("arcsin"));
+  if (constant > 0 && quadratic > 0)
+    return multiply(numerator, named("arcsinh"));
+  if (constant < 0 && quadratic > 0)
+    return multiply(numerator, named("arccosh"));
+  // Both negative: the whole thing under the root is negative everywhere, so
+  // there is no real function to integrate.
+  return undefined;
+}
+
+/**
+ * Powers of the six trigonometric functions, where there is a rule.
+ *
+ * `sec²` and `csc²` are derivatives of `tan` and `cot`, so they integrate
+ * straight back. The squares of `sin` and `cos` go through the half-angle
+ * identity, which is the only way to do them and the form every answer key
+ * uses. `tan²` and `cot²` go through `sec² = 1 + tan²`.
+ *
+ * Odd powers are not here: they reduce to a substitution instead, which
+ * `oddTrigPower` does, and handling them twice would mean two answers for one
+ * integral depending on which rule was reached first.
+ */
+function trigPowerIntegral(
+  base: Node,
+  exponent: Node,
+  variable: string,
+  depth: number
+): Node | undefined {
+  if (exponent.type !== "Constant") return undefined;
+  if (exponent.value === 3) return oddSecantCube(base, variable);
+  if (exponent.value !== 2) return undefined;
+  if (base.type !== "FunctionCall" || base.args.length !== 1) return undefined;
+  const name = base.callee.symbol;
+  const [argument] = base.args;
+  const linear = linearIn(argument, variable);
+  // The `1/a` factor every rule here needs, and the reason a non-linear
+  // argument is refused rather than guessed at: `sec²(x²)` has no elementary
+  // antiderivative at all.
+  if (linear === undefined || isZeroConstant(linear.a)) return undefined;
+  const over = (node: Node) => divide(node, linear.a);
+  const x = id(variable);
+
+  switch (name) {
+    case "sec":
+      return over(call("tan", argument));
+    case "csc":
+      return negative(over(call("cot", argument)));
+    case "sech":
+      return over(call("tanh", argument));
+    case "csch":
+      return negative(over(call("coth", argument)));
+    case "tan":
+      // tan² = sec² - 1.
+      return subtract(over(call("tan", argument)), x);
+    case "cot":
+      return subtract(negative(over(call("cot", argument))), x);
+    case "tanh":
+      return subtract(x, over(call("tanh", argument)));
+    case "coth":
+      return subtract(x, over(call("coth", argument)));
+    case "sin":
+    case "cos": {
+      // sin² = (1 - cos 2u)/2 and cos² = (1 + cos 2u)/2. The doubled argument
+      // brings its own factor of two, which is where the 4 comes from.
+      const doubled = call("sin", multiply(number(2), argument));
+      const half = divide(x, number(2));
+      const wave = divide(doubled, multiply(number(4), linear.a));
+      return name === "sin" ? subtract(half, wave) : add(half, wave);
+    }
+    default:
+      void depth;
+      return undefined;
+  }
 }
 
 /**
@@ -596,9 +1123,20 @@ function isZeroConstant(node: Node) {
  * Powers split into the three cases that appear, and the first two are where
  * nearly all of AP integration lives.
  */
-function exponentIntegral(base: Node, exponent: Node, variable: string): Node {
+function exponentIntegral(
+  base: Node,
+  exponent: Node,
+  variable: string,
+  depth: number
+): Node {
   const baseHas = dependsOn(base, variable);
   const exponentHas = dependsOn(exponent, variable);
+
+  // A power of a trigonometric function is not a power rule. `sec²x` has no
+  // base linear in x, so the rule below would refuse it, and it is one of the
+  // half-dozen integrals a calculus course expects to be instant.
+  const trigonometric = trigPowerIntegral(base, exponent, variable, depth);
+  if (trigonometric !== undefined) return trigonometric;
 
   if (baseHas && !exponentHas) {
     const linear = linearIn(base, variable);
@@ -611,15 +1149,23 @@ function exponentIntegral(base: Node, exponent: Node, variable: string): Node {
     // instead. A symbolic exponent could be either, so it is refused rather
     // than assumed: dividing by n+1 when n is -1 is a division by zero the
     // reader would never see.
-    if (exponent.type !== "Constant") {
+    //
+    // A *rational* exponent is not symbolic, and reading it as one used to
+    // refuse `x^{1/2}` -- which is `√x`, and which the integrator itself
+    // produces the moment anything is integrated against a square root.
+    const rational = rationalOf(exponent);
+    if (rational === undefined) {
       throw new IntegrationError(
         "A symbolic exponent could be -1, where the power rule does not apply, so this is not integrated."
       );
     }
-    if (exponent.value === -1) {
+    if (rational.n === -rational.d) {
       return divide(call("ln", call("abs", base)), linear.a);
     }
-    const raised = number(exponent.value + 1);
+    const raised = rationalNode({
+      n: rational.n + rational.d,
+      d: rational.d,
+    });
     return divide(divide(power(base, raised), raised), linear.a);
   }
 

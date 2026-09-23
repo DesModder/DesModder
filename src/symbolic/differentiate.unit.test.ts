@@ -2,11 +2,11 @@ import {
   differentiate,
   identifiersIn,
   implicitDerivative,
-  simplify,
   SymbolicError,
   toLatex,
-} from "./symbolic";
-import { Aug, AugBuilders, buildConfig } from "../../../text-mode-core";
+  fold as simplify,
+} from "./index";
+import { Aug, AugBuilders, buildConfig } from "../../text-mode-core";
 
 const { binop, functionCall, id, negative, number } = AugBuilders;
 
@@ -68,8 +68,9 @@ describe("Vector Tools symbolic differentiation", () => {
     expect(derive(sub(pow(x, number(3)), x), "x")).toBe("3x^{2}-1");
     // d/dx (x*y) = y
     expect(derive(mul(x, y), "x")).toBe("y");
-    // d/dx (x/y) = 1/y, after the quotient rule collapses.
-    expect(derive(div(x, y), "x")).toBe("\\frac{y}{y^{2}}");
+    // d/dx (x/y) = 1/y. The quotient rule produces `y/y^2`, and it is the
+    // shared-base fold reaching across the bar that finishes the job.
+    expect(derive(div(x, y), "x")).toBe("\\frac{1}{y}");
   });
 
   test("applies the chain rule through known functions", () => {

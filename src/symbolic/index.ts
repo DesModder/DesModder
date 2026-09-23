@@ -36,6 +36,11 @@
  * honest and enough.
  */
 export { fold } from "./fold";
+export {
+  differentiate,
+  implicitDerivative,
+  SymbolicError,
+} from "./differentiate";
 export { absToBars, dropRedundantParens, toLatex } from "./latex";
 export { condense, type Condensed } from "./condense";
 export { expand, EXPANSION_LIMIT, type ExpandResult } from "./expand";
@@ -54,6 +59,7 @@ export {
   constantValue,
   dependsOn,
   divide,
+  freshName,
   functionCall,
   greatestCommonDivisor,
   id,
@@ -61,6 +67,7 @@ export {
   isNode,
   multiply,
   negative,
+  exceedsNodeCount,
   nodeCount,
   number,
   power,
@@ -68,6 +75,8 @@ export {
   rationalNode,
   rationalOf,
   rebuildSum,
+  replaceIdentifier,
+  replaceSubtree,
   sameTree,
   splitCoefficient,
   subtract,

@@ -182,7 +182,10 @@ describe("what it will not pretend to solve", () => {
   });
 
   test("a product parts cannot reduce, because neither factor is a polynomial", () => {
-    expect(refused(mul(fn("exp", x), fn("sin", x)))).toMatch(/parts/i);
+    // `e^x sin x` used to be the example here and is now solved, by the one
+    // rule that finishes a cyclic pair. `e^x tan x` is not cyclic and has no
+    // elementary antiderivative at all.
+    expect(refused(mul(fn("exp", x), fn("tan", x)))).toMatch(/parts/i);
   });
 });
 

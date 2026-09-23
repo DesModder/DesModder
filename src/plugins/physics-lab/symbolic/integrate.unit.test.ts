@@ -88,7 +88,7 @@ describe("antiderivatives of what an AP course integrates", () => {
   test("trigonometry, with the sign that is easy to lose", () => {
     check(fn("sin", x), "-\\cos\\left(x\\right)");
     check(fn("cos", x), "\\sin\\left(x\\right)");
-    check(fn("sin", mul(number(2), x)), "\\frac{-\\cos\\left(2x\\right)}{2}");
+    check(fn("sin", mul(number(2), x)), "-\\frac{\\cos\\left(2x\\right)}{2}");
   });
 
   test("a polynomial times an exponential, by parts", () => {
@@ -117,7 +117,7 @@ describe("antiderivatives of what an AP course integrates", () => {
     }));
     const integrand = mul(id("k"), x);
     const result = integrate(integrand, "x");
-    expect(emit(result)).toBe("k\\frac{x^{2}}{2}");
+    expect(emit(result)).toBe("\\frac{kx^{2}}{2}");
     expect(
       agreesOnSamples(
         (bindings) => numericDerivative(result, "x", bindings),
@@ -169,13 +169,10 @@ describe("antiderivatives of what an AP course integrates", () => {
     expect(() => integrate(fn("sin", pow(x, number(2))), "x")).toThrow(
       IntegrationError
     );
-    // Parts only terminates against a polynomial. A product of two
-    // transcendentals recurses forever, so it is refused instead.
-    expect(() => integrate(mul(fn("exp", x), fn("sin", x)), "x")).toThrow(
-      IntegrationError
-    );
-    // Would need a substitution or partial fractions.
-    expect(() => integrate(div(x, add(x, number(1))), "x")).toThrow(
+    // Parts only terminates against a polynomial, and a product of two
+    // transcendentals recurses forever. The one pair that does not is
+    // `e^{ax}` against a sine or cosine, which has its own rule below.
+    expect(() => integrate(mul(fn("exp", x), fn("tan", x)), "x")).toThrow(
       IntegrationError
     );
     // A symbolic exponent could be -1, where the power rule does not hold.

@@ -354,3 +354,67 @@ function countUpTo(node: Node, limit: number): number {
   });
   return count;
 }
+
+/**
+ * Every occurrence of `target` in the tree, replaced by `value`.
+ *
+ * What makes a substitution a substitution. Matching is structural rather than
+ * by object identity, because the subexpression being replaced was found by
+ * walking a tree and the tree the caller wants rewritten is usually a *folded*
+ * version of the one it was found in.
+ *
+ * It does not descend into a node it has just replaced, so a `value` that
+ * contains the `target` cannot send it round forever.
+ */
+export function replaceSubtree(node: Node, target: Node, value: Node): Node {
+  if (sameTree(node, target)) return value;
+  return mapChildNodes(node, (child) => replaceSubtree(child, target, value));
+}
+
+/** Every use of an identifier replaced by an expression. */
+export function replaceIdentifier(node: Node, name: string, value: Node): Node {
+  if (node.type === "Identifier" && node.symbol === name) return value;
+  return mapChildNodes(node, (child) => replaceIdentifier(child, name, value));
+}
+
+/**
+ * A node rebuilt with each direct child mapped, for the shapes a rewrite here
+ * can meet.
+ *
+ * Deliberately narrower than `visit`, and the asymmetry is on purpose: walking
+ * an unknown node type is safe, because the worst case is a question answered
+ * about more of the tree than necessary. *Rebuilding* one is not — a node put
+ * back together from the fields this function happens to know about would lose
+ * the rest of them silently. So anything else is returned untouched, and a
+ * substitution simply does not reach inside it.
+ */
+function mapChildNodes(node: Node, on: (child: Node) => Node): Node {
+  switch (node.type) {
+    case "Negative":
+      return negative(on(node.arg));
+    case "FunctionCall":
+      return { ...node, args: node.args.map(on) };
+    case "Factorial":
+      return { ...node, arg: on(node.arg) };
+    case "BinaryOperator":
+      return node.name === "CrossMultiply"
+        ? { ...node, left: on(node.left), right: on(node.right) }
+        : binop(node.name, on(node.left), on(node.right));
+    case "Seq":
+      return { ...node, args: node.args.map(on) };
+    case "RepeatedOperator":
+      return { ...node, expression: on(node.expression) };
+    default:
+      return node;
+  }
+}
+
+/** A name nothing in `node` already uses, for a substitution's placeholder. */
+export function freshName(node: Node, preferred: readonly string[]): string {
+  const taken = new Set(identifiersIn(node));
+  for (const name of preferred) if (!taken.has(name)) return name;
+  for (let i = 1; ; i += 1) {
+    const name = `u_{${i}}`;
+    if (!taken.has(name)) return name;
+  }
+}

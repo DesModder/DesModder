@@ -33,6 +33,7 @@ import { Aug } from "../../text-mode-core";
 import {
   binop,
   constantValue,
+  greatestCommonDivisor,
   negative,
   number,
   quotientFactors,
@@ -117,11 +118,39 @@ function foldBinary(node: BinaryOperator): Node {
   if (node.name === "Multiply" || node.name === "CrossMultiply") {
     const shared = foldSharedBases(binop("Multiply", left, right));
     if (shared !== undefined) return fold(shared);
+    // A product containing a fraction is one fraction. Two reasons, and the
+    // second is the one that matters: `1/(1+x^2) times x^2/2` is
+    // how anybody would write the parts of it and `x^2/(2(1+x^2))` is
+    // how anybody would write it, *and* only the second is a rational function
+    // as far as any rule can tell. The integrator meets exactly this product
+    // in the middle of integrating `x arctan x`, and left as a product it goes
+    // back to integration by parts and round again.
+    //
+    // Each rewrite moves one `Divide` out from under the `Multiply`, so the
+    // number of them below it strictly falls and this terminates.
+    if (left.type === "BinaryOperator" && left.name === "Divide") {
+      return fold(
+        binop("Divide", binop("Multiply", left.left, right), left.right)
+      );
+    }
+    if (right.type === "BinaryOperator" && right.name === "Divide") {
+      return fold(
+        binop("Divide", binop("Multiply", left, right.left), right.right)
+      );
+    }
   }
 
   if (node.name === "Divide") {
     const cancelled = cancelCommonFactors(binop("Divide", left, right));
     if (cancelled !== undefined) return fold(cancelled);
+    // And the same shared-base fold a product gets. `foldSharedBases` already
+    // walks both sides of the bar -- that is what lets an integrating factor
+    // cancel through a fraction -- so it was only ever the wiring that stopped
+    // `x^3/(2x)` from becoming `x^2/2`. Until this was here, every
+    // substitution whose `u` divided out to a *power* of x rather than to x
+    // itself was refused, which is most of them.
+    const shared = foldSharedBases(binop("Divide", left, right));
+    if (shared !== undefined) return fold(shared);
   }
 
   switch (node.name) {
@@ -139,6 +168,21 @@ function foldBinary(node: BinaryOperator): Node {
       // which has to reach e^{0} before it can become 1.
       if (sameTree(left, right)) return number(0);
       break;
+  }
+
+  // A term whose coefficient is negative belongs on the other side of the
+  // sign. `a - -2cos x` is what integration by parts produces and `a + 2cos x`
+  // is what it means; the emitter writes the first as `a--2\cos x`, which
+  // reads as a typo and is the one shape in an answer that makes a reader
+  // distrust the rest of it.
+  if (node.name === "Add" || node.name === "Subtract") {
+    const [factor, rest] = splitCoefficient(right);
+    if (factor < 0 && rc === undefined) {
+      const positive = fold(binop("Multiply", number(-factor), rest));
+      return fold(
+        binop(node.name === "Add" ? "Subtract" : "Add", left, positive)
+      );
+    }
   }
 
   // Two fractions add, subtract and multiply exactly, without either of them
@@ -160,6 +204,57 @@ function foldBinary(node: BinaryOperator): Node {
         d: a.d * b.d,
       });
     }
+  }
+
+  // A constant meeting the constant at the end of a sum. `x + 1/2 - 1/2` is
+  // what completing the square produces and `x` is what it is; the rule below
+  // only collects terms that are next to each other, and these have a whole
+  // expression between them.
+  if (
+    (node.name === "Add" || node.name === "Subtract") &&
+    left.type === "BinaryOperator" &&
+    (left.name === "Add" || left.name === "Subtract")
+  ) {
+    // Read as rationals, not as plain numbers: completing the square produces
+    // `x + 1/2 - 1/2`, and `1/2` is a `Divide` node that `constantValue` does
+    // not see at all.
+    const outer = rationalOf(right);
+    const trailing = rationalOf(left.right);
+    if (outer !== undefined && trailing !== undefined) {
+      const innerSign = left.name === "Add" ? 1 : -1;
+      const outerSign = node.name === "Add" ? 1 : -1;
+      const total = {
+        n: innerSign * trailing.n * outer.d + outerSign * outer.n * trailing.d,
+        d: trailing.d * outer.d,
+      };
+      return fold(binop("Add", left.left, rationalNode(total)));
+    }
+  }
+
+  // A negative constant on either kind of sum belongs on the other side of the
+  // sign. `x - -1` is what completing the square leaves and `x + 1` is what it
+  // means; the emitter writes the first as `x--1`.
+  if (
+    rc !== undefined &&
+    rc < 0 &&
+    (node.name === "Add" || node.name === "Subtract")
+  )
+    return fold(
+      binop(node.name === "Add" ? "Subtract" : "Add", left, number(-rc))
+    );
+
+  // A bracket after a minus sign is a bracket that can go. `a - (b - c)` is
+  // `a - b + c`, and the form with the bracket in it is what integration by
+  // parts produces every time its remaining integral is itself a difference.
+  if (
+    node.name === "Subtract" &&
+    right.type === "BinaryOperator" &&
+    (right.name === "Add" || right.name === "Subtract")
+  ) {
+    const head = fold(binop("Subtract", left, right.left));
+    return fold(
+      binop(right.name === "Add" ? "Subtract" : "Add", head, right.right)
+    );
   }
 
   // Like terms are collected, which is what actually cancels the exponent the
@@ -289,18 +384,44 @@ function foldBinary(node: BinaryOperator): Node {
         // in the plugin whose whole purpose is keeping values exact.
         if (factor !== undefined && Number.isInteger(factor / rc))
           return fold(binop("Multiply", number(factor / rc), left.right));
+        // And when it does not divide exactly, the two still share a factor
+        // worth taking out: `2A/4` is `A/2`. The fraction stays a fraction, so
+        // nothing becomes a decimal -- only the numbers get smaller. Without
+        // this, every answer that arrived through a half-angle identity
+        // carried the arithmetic that produced it.
+        if (factor !== undefined && Number.isInteger(factor)) {
+          const common = greatestCommonDivisor(Math.abs(factor), Math.abs(rc));
+          if (common > 1) {
+            const reduced = factor / common;
+            const under = rc / common;
+            const top =
+              reduced === 1
+                ? left.right
+                : binop("Multiply", number(reduced), left.right);
+            return fold(binop("Divide", top, number(under)));
+          }
+        }
       }
-      // (a/b)/c folds to a/(bc), so a linear argument's 1/a factor does not
-      // leave a stack of fractions behind it.
-      if (
-        left.type === "BinaryOperator" &&
-        left.name === "Divide" &&
-        rc !== undefined
-      ) {
-        const inner = constantValue(left.right);
-        if (inner !== undefined)
-          return fold(binop("Divide", left.left, number(inner * rc)));
+      // (a/b)/c folds to a/(bc), whatever c is. It used to ask for both to be
+      // numbers, which left `(x^2/2)/(1+x^2)` as a stack -- and a stack is not
+      // a rational function as far as any rule can see, so the integral of
+      // `x arctan x` was refused for the shape its own working arrived in.
+      if (left.type === "BinaryOperator" && left.name === "Divide") {
+        return fold(
+          binop("Divide", left.left, binop("Multiply", left.right, right))
+        );
       }
+      // a/(b/c) is ac/b, for the same reason.
+      if (right.type === "BinaryOperator" && right.name === "Divide") {
+        return fold(
+          binop("Divide", binop("Multiply", left, right.right), right.left)
+        );
+      }
+      // A sign anywhere on a fraction belongs in front of it.
+      if (left.type === "Negative")
+        return fold(negative(binop("Divide", left.arg, right)));
+      if (right.type === "Negative")
+        return fold(negative(binop("Divide", left, right.arg)));
       break;
     }
     case "Exponent":
@@ -446,7 +567,14 @@ function cancelCommonFactors(node: BinaryOperator): Node | undefined {
  */
 function foldKnownValue(name: string, args: Node[]): Node | undefined {
   if (args.length !== 1) return undefined;
+  // The two exact values whose argument is a name rather than a number. They
+  // arrive constantly: every exponential integral divides by `ln` of its base,
+  // and for base e that factor is one. Left unfolded, `∫2xe^{x²}dx` comes back
+  // as `e^{x²}/\ln e`.
+  const symbol = args[0].type === "Identifier" ? args[0].symbol : undefined;
+  if (name === "ln" && symbol === "e") return number(1);
   const argument = constantValue(args[0]);
+  if (name === "log" && argument === 10) return number(1);
   if (argument === undefined) return undefined;
   switch (name) {
     case "sin":

@@ -98,7 +98,7 @@ describe("the rules every course starts with", () => {
     check(pow(x, number(-2)), "-\\frac{2}{x^{3}}");
     // The exponent drops by one exactly, without the fraction ever becoming
     // 0.5 on the way.
-    check(pow(x, div(number(1), number(2))), "\\frac{1}{2}x^{-\\frac{1}{2}}");
+    check(pow(x, div(number(1), number(2))), "\\frac{x^{-\\frac{1}{2}}}{2}");
   });
 
   test("constant multiples, and sums", () => {
