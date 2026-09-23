@@ -653,7 +653,9 @@ testWithPage(
           Math.abs(a.height - b.height) < 1,
         pointerEvents: getComputedStyle(overlay).pointerEvents,
         hasBuffer: overlay.width > 0 && overlay.height > 0,
-        // The overlay must sit above the graph paper, not replace it.
+        // Under the graph by default, which is what lets a plotted function
+        // come out on top of the field. Desmos's canvas is transparent
+        // wherever it has not drawn something, so this hides nothing.
         drawnAfterGraph:
           graph.compareDocumentPosition(overlay) &
           Node.DOCUMENT_POSITION_FOLLOWING,
@@ -662,7 +664,7 @@ testWithPage(
     expect(geometry.aligned).toBe(true);
     expect(geometry.pointerEvents).toBe("none");
     expect(geometry.hasBuffer).toBe(true);
-    expect(geometry.drawnAfterGraph).toBeGreaterThan(0);
+    expect(geometry.drawnAfterGraph).toBe(0);
 
     // Particle count is a free number, not a menu of fixed sizes.
     await driver.page.click("#dsm-vector-tools-particle-count", {
@@ -1139,10 +1141,17 @@ testWithPage(
     });
     await driver.waitForSync();
 
+    // Only the two keys this test is about. `flowColor` also carries the
+    // saturation and contrast the flow is drawn at, which the match brings
+    // across as well, and asserting the whole object here would make every
+    // colour setting added later look like a failure of this one.
     const flowColor = async () =>
-      await driver.evaluate(
-        () => (DSM.enabledPlugins["vector-tools"] as any).flowColor
-      );
+      await driver.evaluate(() => {
+        const { colorMode, palette } = (
+          DSM.enabledPlugins["vector-tools"] as any
+        ).flowColor;
+        return { colorMode, palette };
+      });
 
     // The arrows' half is open by default and the flow's is closed.
     expect(
@@ -1689,3 +1698,154 @@ testWithPage(
   },
   90000
 );
+
+testWithPage(
+  "both canvases move to the side of the graph the setting names",
+  async (driver) => {
+    // The whole point of the setting is what Desmos draws on top of. Its
+    // graph canvas is transparent wherever nothing has been drawn, so putting
+    // the overlays before it in the DOM puts the grid, the axes and every
+    // plotted function over the field instead of under it.
+    //
+    // And within a side the order still matters: the arrows have to stay over
+    // the particles, or a dense flow buries the thing the arrows are for. The
+    // two overlays mount independently, so that is asserted on both sides
+    // rather than assumed from the order they happened to start in.
+    await driver.enablePlugin("vector-tools");
+    await resetLibrary(driver);
+    await driver.assertSelectorEventually(BUTTON);
+    await driver.click(BUTTON);
+    await driver.assertSelector(PANEL);
+
+    await openTab(driver, "flow");
+    await driver.click(VISUALIZE);
+    await driver.assertSelectorEventually(FLOW_CANVAS);
+    await driver.assertSelectorEventually(ARROW_CANVAS);
+
+    /** Each canvas's index among its siblings, so one read orders all three. */
+    const order = async () =>
+      await driver.evaluate(() => {
+        const graph = document.querySelector("canvas.dcg-graph-inner")!;
+        const siblings = [...graph.parentElement!.children];
+        const at = (selector: string) =>
+          siblings.indexOf(document.querySelector(selector)!);
+        return {
+          flow: at("#dsm-vector-tools-flow-canvas"),
+          arrows: at("#dsm-vector-tools-arrow-canvas"),
+          graph: siblings.indexOf(graph),
+        };
+      });
+
+    const under = await order();
+    expect(under.flow).toBeLessThan(under.arrows);
+    expect(under.arrows).toBeLessThan(under.graph);
+
+    await openTab(driver, "color");
+    await driver.click("#dsm-vector-tools-overlay-layer [data-value='over']");
+    await driver.waitForSync();
+
+    const over = await order();
+    expect(over.graph).toBeLessThan(over.flow);
+    expect(over.flow).toBeLessThan(over.arrows);
+
+    // And back, because a setting that only works once is a setting that has
+    // to be found out about the hard way.
+    await driver.click("#dsm-vector-tools-overlay-layer [data-value='under']");
+    await driver.waitForSync();
+    expect(await order()).toEqual(under);
+
+    await openTab(driver, "flow");
+    await driver.click(VISUALIZE);
+    await driver.waitForFunction(() => !DSM.delaySetPluginSettings);
+    await driver.disablePlugin("vector-tools");
+    await driver.setBlank();
+    await driver.waitForSync();
+  },
+  90000
+);
+
+testWithPage(
+  "saturation and contrast reach the generated arrows too",
+  async (driver) => {
+    // The sliders would be a half-measure if they only moved the live
+    // picture: switching the arrows to Desmos expressions would then change
+    // the colours back, which reads as the expressions being wrong.
+    await driver.enablePlugin("vector-tools");
+    await resetLibrary(driver);
+    await driver.assertSelectorEventually(BUTTON);
+    await driver.click(BUTTON);
+    await driver.assertSelector(PANEL);
+
+    const colorList = async () =>
+      await driver.evaluate(() => {
+        const found = Calc.getState().expressions.list.find(
+          (expression) => expression.id === "vector_tools_vf_default_colors"
+        );
+        return found !== undefined && "latex" in found
+          ? (found.latex ?? "")
+          : "";
+      });
+
+    await driver.click(GENERATE);
+    await driver.waitForSync();
+    const plain = await colorList();
+    expect(plain).toContain("rgb");
+
+    await driver.evaluate(() => {
+      DSM.vectorTools?.setColor("saturation", 0);
+    });
+    await driver.click(GENERATE);
+    await driver.waitForSync();
+    const grey = await colorList();
+    expect(grey).not.toBe(plain);
+    // Saturation zero is grey, and grey is the same number in every channel,
+    // so the rgb call's three arguments come out identical. They are split by
+    // depth rather than by comma: each one is a sum of clamped segments, and
+    // every segment contains commas of its own.
+    const channels = rgbArguments(grey);
+    expect(channels).toHaveLength(3);
+    expect(channels[0]).toBe(channels[1]);
+    expect(channels[1]).toBe(channels[2]);
+    // And it really is the adjustment doing it, not an empty expression.
+    expect(rgbArguments(plain)[0]).not.toBe(rgbArguments(plain)[2]);
+
+    await driver.click(REMOVE);
+    await driver.waitForFunction(() => !DSM.delaySetPluginSettings);
+    await driver.disablePlugin("vector-tools");
+    await driver.setBlank();
+    await driver.waitForSync();
+  },
+  90000
+);
+
+/**
+ * The three arguments of the `rgb(...)` a colour list is built from.
+ *
+ * Split on depth rather than on commas: each argument is a sum of clamped
+ * segments, and `\min\left(1,\max\left(0,...` puts commas inside every one of
+ * them. Depth counts Desmos's `\left(` and `\right)`, which is what the emitted
+ * form actually uses.
+ */
+function rgbArguments(latex: string): string[] {
+  const opening = "\\operatorname{rgb}\\left(";
+  const from = latex.indexOf(opening);
+  if (from < 0) return [];
+  const body = latex.slice(from + opening.length);
+  const parts: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < body.length; i++) {
+    if (body.startsWith("\\left(", i)) depth++;
+    else if (body.startsWith("\\right)", i)) {
+      if (depth === 0) {
+        parts.push(body.slice(start, i));
+        break;
+      }
+      depth--;
+    } else if (body[i] === "," && depth === 0) {
+      parts.push(body.slice(start, i));
+      start = i + 1;
+    }
+  }
+  return parts;
+}

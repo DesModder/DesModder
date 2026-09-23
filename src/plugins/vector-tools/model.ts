@@ -1,4 +1,11 @@
-import { PALETTE_IDS, type PaletteID } from "../../field-rendering/palettes";
+import {
+  COLOR_CONTRAST_MAXIMUM,
+  COLOR_CONTRAST_MINIMUM,
+  COLOR_SATURATION_MAXIMUM,
+  COLOR_SATURATION_MINIMUM,
+  PALETTE_IDS,
+  type PaletteID,
+} from "../../field-rendering/palettes";
 /**
  * The four modes the shaders implement now live beside the shaders. They are
  * re-exported here because they are still part of this plugin's configuration
@@ -13,12 +20,14 @@ import type {
   VectorColorMode,
   ColorRangeMode,
   FlowColorMode,
+  OverlayLayer,
 } from "../../field-rendering/types";
 export type {
   VectorLengthMode,
   VectorColorMode,
   ColorRangeMode,
   FlowColorMode,
+  OverlayLayer,
 };
 export const VECTOR_FIELD_SCHEMA_VERSION = 4;
 
@@ -192,6 +201,17 @@ export interface FlowConfig {
   colorMode: FlowColorMode;
   /** The ramp the `speed` color mode runs along. */
   palette: ColorPalette;
+  /**
+   * How far the particles' colours are pushed once the ramp has been walked.
+   *
+   * Its own pair rather than shared with the arrows, because the two are drawn
+   * against different things. A particle is a faint additive smear that
+   * thousands of its neighbours pile onto, and an arrow is a solid shape with
+   * graph paper showing between it and the next one — the settings that make
+   * one readable wash the other out.
+   */
+  saturation: number;
+  contrast: number;
   /** Which of the two looks the trail and respawn settings were last set to. */
   look: FlowLook;
   /** Draw streamlines at a constant pace instead of the field's magnitude. */
@@ -340,13 +360,26 @@ export function flowColorModeFor(mode: VectorColorMode): FlowColorMode {
 export function effectiveFlowColor(config: VectorFieldConfig): {
   colorMode: FlowColorMode;
   palette: ColorPalette;
+  saturation: number;
+  contrast: number;
 } {
   if (!config.color.matchFlow) {
-    return { colorMode: config.flow.colorMode, palette: config.flow.palette };
+    return {
+      colorMode: config.flow.colorMode,
+      palette: config.flow.palette,
+      saturation: config.flow.saturation,
+      contrast: config.flow.contrast,
+    };
   }
+  // Saturation and contrast come across with the ramp, because the checkbox
+  // says "the same colors" and a flow that matched the palette while keeping
+  // its own strength would not be the same colours. The flow's own pair is
+  // left where it is, so unticking gives it back.
   return {
     colorMode: flowColorModeFor(config.color.mode),
     palette: config.color.palette,
+    saturation: config.color.saturation,
+    contrast: config.color.contrast,
   };
 }
 
@@ -403,6 +436,16 @@ export interface VectorColorConfig {
   maximum: number;
   fixedColor: string;
   /**
+   * How far the arrows' colours are pushed once the ramp has been walked.
+   *
+   * See `ColorAdjust` in `field-rendering/palettes`, which owns the arithmetic
+   * and applies it in all three places a ramp is emitted — the live arrows'
+   * shader, the generated Desmos expressions, and the swatch in the picker, so
+   * that the swatch shows what the field will actually look like.
+   */
+  saturation: number;
+  contrast: number;
+  /**
    * Whether the flow's colours follow the arrows'.
    *
    * A standing link rather than a copy, and that is the whole point: the flow's
@@ -458,6 +501,15 @@ export interface VectorFieldConfig {
   zeroVectorMode: ZeroVectorMode;
   /** Whether the extension draws the arrows itself. */
   arrowMode: ArrowMode;
+  /**
+   * Whether the overlays are drawn over Desmos's graph or under it.
+   *
+   * One setting for both canvases rather than one each: they are two halves of
+   * a single picture, and a field whose arrows floated above the axes while its
+   * particles sat below them would be neither of the two things this chooses
+   * between. See {@link OverlayLayer} for what each side costs.
+   */
+  overlayLayer: OverlayLayer;
   /**
    * Whether a grid too dense to read is sampled more coarsely before drawing.
    *
@@ -605,11 +657,17 @@ export const DEFAULT_VECTOR_FIELD_CONFIG: VectorFieldConfig = {
     minimum: 0,
     maximum: 1,
     fixedColor: "#6042a6",
+    saturation: 1,
+    contrast: 1,
     matchFlow: false,
     keepColorsInReverseContrast: false,
   },
   zeroVectorMode: "hide",
   arrowMode: "live",
+  // Under the graph, so a plotted function reads at full contrast on top of
+  // the field rather than being covered by it. The arrows lose a little
+  // against the grid lines for it, which is the trade `OverlayLayer` sets out.
+  overlayLayer: "under",
   arrowDensityLimit: true,
   // Deliberately restrained: the flow is drawn on top of the graph paper, so
   // the defaults have to leave the axes and expressions legible underneath.
@@ -627,6 +685,8 @@ export const DEFAULT_VECTOR_FIELD_CONFIG: VectorFieldConfig = {
     backdropOpacity: 0.92,
     colorMode: "speed",
     palette: "spectral",
+    saturation: 1,
+    contrast: 1,
     look: "streamlines",
     normalizeSpeed: true,
     renderScale: 1,
@@ -1014,6 +1074,18 @@ export function normalizeVectorFieldConfig(value: unknown): VectorFieldConfig {
         typeof color?.fixedColor === "string"
           ? color.fixedColor
           : fallback.color.fixedColor,
+      saturation: clampNumber(
+        color?.saturation,
+        fallback.color.saturation,
+        COLOR_SATURATION_MINIMUM,
+        COLOR_SATURATION_MAXIMUM
+      ),
+      contrast: clampNumber(
+        color?.contrast,
+        fallback.color.contrast,
+        COLOR_CONTRAST_MINIMUM,
+        COLOR_CONTRAST_MAXIMUM
+      ),
       matchFlow:
         typeof color?.matchFlow === "boolean"
           ? color.matchFlow
@@ -1029,6 +1101,12 @@ export function normalizeVectorFieldConfig(value: unknown): VectorFieldConfig {
         ? value.arrowMode
         : "live",
     arrowDensityLimit: value.arrowDensityLimit !== false,
+    // A field saved before this setting existed takes the default, which is
+    // under the graph — the same as a new one, so there is not a version of
+    // Vector Tools whose fields look different depending on when they were
+    // first saved. A stored "over" is somebody's answer and is kept.
+    overlayLayer:
+      value.overlayLayer === "over" ? "over" : fallback.overlayLayer,
     flow: normalizeFlow(value.flow, fallback.flow),
     curve: normalizeCurve(value.curve, fallback.curve),
     time: normalizeTime(value.time, fallback.time),
@@ -1163,6 +1241,13 @@ function normalizePanel(value: unknown, fallback: PanelConfig): PanelConfig {
   };
 }
 
+/**
+ * The keys come out in the same order as `DEFAULT_VECTOR_FIELD_CONFIG.flow`,
+ * and that is load-bearing rather than tidiness: the stored library is compared
+ * against its own JSON on every enable, and two objects with the same values in
+ * a different order are two different strings. Reordering this writes a setting
+ * on every page load.
+ */
 function normalizeFlow(value: unknown, fallback: FlowConfig): FlowConfig {
   const flow = asRecord(value);
   // Schema 2 stored a texture edge length rather than a count.
@@ -1208,6 +1293,18 @@ function normalizeFlow(value: unknown, fallback: FlowConfig): FlowConfig {
       ? flow.colorMode
       : fallback.colorMode,
     palette: isPalette(flow?.palette) ? flow.palette : fallback.palette,
+    saturation: clampNumber(
+      flow?.saturation,
+      fallback.saturation,
+      COLOR_SATURATION_MINIMUM,
+      COLOR_SATURATION_MAXIMUM
+    ),
+    contrast: clampNumber(
+      flow?.contrast,
+      fallback.contrast,
+      COLOR_CONTRAST_MINIMUM,
+      COLOR_CONTRAST_MAXIMUM
+    ),
     look:
       flow?.look === "streamlines" || flow?.look === "texture"
         ? flow.look

@@ -32,6 +32,7 @@ import {
   type ColorRangeMode,
   type FieldSource,
   type FlowColorMode,
+  type OverlayLayer,
   type SamplingMode,
   type VectorColorMode,
   type VectorFieldConfig,
@@ -39,10 +40,16 @@ import {
   type ZeroVectorMode,
 } from "../model";
 import {
+  COLOR_CONTRAST_MAXIMUM,
+  COLOR_CONTRAST_MINIMUM,
+  COLOR_SATURATION_MAXIMUM,
+  COLOR_SATURATION_MINIMUM,
+  NO_COLOR_ADJUST,
   PALETTES,
   PALETTE_GROUPS,
   PALETTE_IDS,
   paletteCSSGradient,
+  type ColorAdjust,
 } from "../../../field-rendering/palettes";
 import type { ComponentSlot } from "../generator";
 import type { GalleryPreset } from "../gallery";
@@ -107,6 +114,25 @@ const FLOW_COLOR_MODES: readonly Choice<FlowColorMode>[] = [
   { value: "direction", label: "Direction" },
   { value: "fixed", label: "Fixed color" },
 ];
+
+const OVERLAY_LAYERS: readonly Choice<OverlayLayer>[] = [
+  { value: "under", label: "Under the graph" },
+  { value: "over", label: "Over the graph" },
+];
+
+/** Shared by the arrows' pair and the flow's, which mean the same two things. */
+const SATURATION_RANGE: SliderRange = {
+  minimum: COLOR_SATURATION_MINIMUM,
+  maximum: COLOR_SATURATION_MAXIMUM,
+  step: 0.05,
+  decimals: 2,
+};
+const CONTRAST_RANGE: SliderRange = {
+  minimum: COLOR_CONTRAST_MINIMUM,
+  maximum: COLOR_CONTRAST_MAXIMUM,
+  step: 0.05,
+  decimals: 2,
+};
 
 type ConfigGetter = () => VectorFieldConfig;
 
@@ -474,8 +500,21 @@ function colorTab(vectorTools: VectorTools, config: ConfigGetter) {
     if (flowUsesFixed()) return "The flow's particles are set to this color.";
     return "The arrows are set to this color.";
   };
+  const flow = () => config().flow;
+  const arrowAdjust = (): ColorAdjust => ({
+    saturation: color().saturation,
+    contrast: color().contrast,
+  });
+  const flowAdjust = (): ColorAdjust =>
+    // While the link is on the flow is drawn with the arrows' settings, so the
+    // swatches under it have to be too or they would advertise a picture that
+    // is not the one being drawn.
+    vectorTools.matchFlowColor
+      ? arrowAdjust()
+      : { saturation: flow().saturation, contrast: flow().contrast };
   return (
     <div>
+      {onTheGraphSection(vectorTools, config)}
       {checkboxControl(
         "Use the same colors for the flow as for the arrows",
         () => vectorTools.matchFlowColor,
@@ -511,13 +550,29 @@ function colorTab(vectorTools: VectorTools, config: ConfigGetter) {
           COLOR_MODES,
           (value) => vectorTools.setColor("mode", value)
         )}
+        {sliderControl(
+          "dsm-vector-tools-arrow-saturation",
+          "Saturation",
+          () => color().saturation,
+          SATURATION_RANGE,
+          (value) => vectorTools.setColor("saturation", value)
+        )}
+        {sliderControl(
+          "dsm-vector-tools-arrow-contrast",
+          "Contrast",
+          () => color().contrast,
+          CONTRAST_RANGE,
+          (value) => vectorTools.setColor("contrast", value)
+        )}
         <If predicate={usesPalette}>
           {() => (
             <div>
               {paletteChooser(
                 "Palette",
                 () => color().palette,
-                (value) => vectorTools.setColor("palette", value)
+                (value) => vectorTools.setColor("palette", value),
+                undefined,
+                arrowAdjust
               )}
               {chipGroup(
                 "Color range",
@@ -568,6 +623,24 @@ function colorTab(vectorTools: VectorTools, config: ConfigGetter) {
                 FLOW_COLOR_MODES,
                 (value) => vectorTools.setFlow("colorMode", value)
               )}
+              {/* Their own pair rather than the arrows'. A particle is a faint
+                  smear that thousands of its neighbours pile onto; an arrow is
+                  a solid shape with graph paper showing around it. The numbers
+                  that make one readable wash the other out. */}
+              {sliderControl(
+                "dsm-vector-tools-flow-saturation",
+                "Saturation",
+                () => config().flow.saturation,
+                SATURATION_RANGE,
+                (value) => vectorTools.setFlow("saturation", value)
+              )}
+              {sliderControl(
+                "dsm-vector-tools-flow-contrast",
+                "Contrast",
+                () => config().flow.contrast,
+                CONTRAST_RANGE,
+                (value) => vectorTools.setFlow("contrast", value)
+              )}
               {/* Direction runs along a cyclic ramp of its own and fixed takes
                   the shared swatch, so only speed has a ramp to choose. */}
               <If predicate={() => config().flow.colorMode === "speed"}>
@@ -575,7 +648,9 @@ function colorTab(vectorTools: VectorTools, config: ConfigGetter) {
                   paletteChooser(
                     "Particle palette",
                     () => config().flow.palette,
-                    (value) => vectorTools.setFlow("palette", value)
+                    (value) => vectorTools.setFlow("palette", value),
+                    undefined,
+                    flowAdjust
                   )
                 }
               </If>
@@ -612,6 +687,86 @@ function colorTab(vectorTools: VectorTools, config: ConfigGetter) {
         )}
       </If>
     </div>
+  );
+}
+
+/**
+ * Where the field sits relative to Desmos's own drawing, and what is behind it.
+ *
+ * These belong together because they are one decision made twice. Desmos's
+ * graph canvas is transparent wherever it has not drawn something, so putting
+ * the overlays underneath it lets the grid, the axes, the labels and every
+ * plotted function come out on top of the field at full strength — which is the
+ * whole reason to want a dark backdrop in the first place, and useless without
+ * one if the field is drawn over the expressions it is meant to sit behind.
+ */
+function onTheGraphSection(vectorTools: VectorTools, config: ConfigGetter) {
+  const flow = () => config().flow;
+  return (
+    <section class="dsm-vector-tools-section dsm-vector-tools-layer">
+      {chipGroup(
+        "Draw the field",
+        () => vectorTools.overlayLayer,
+        OVERLAY_LAYERS,
+        (value) => vectorTools.setOverlayLayer(value),
+        "dsm-vector-tools-overlay-layer"
+      )}
+      <div class="dsm-vector-tools-hint">
+        {() =>
+          vectorTools.overlayLayer === "under"
+            ? "Your expressions, the axes and the grid are drawn on top of the field."
+            : "The field covers the axes, the grid and anything plotted under it."
+        }
+      </div>
+      {/* The backdrop is what the flow's palettes were built for: they run from
+          near-black so the fast parts read as light, which on white graph paper
+          makes the most visible end of the ramp the end meant to disappear. */}
+      {checkboxControl(
+        "Dark backdrop behind the field",
+        () => flow().backdropEnabled,
+        (checked) => vectorTools.setFlow("backdropEnabled", checked),
+        "dsm-vector-tools-backdrop"
+      )}
+      <If predicate={() => flow().backdropEnabled}>
+        {() => (
+          <div>
+            <div class="dsm-vector-tools-inline">
+              <label
+                class="dsm-vector-tools-label"
+                for="dsm-vector-tools-backdrop-color"
+              >
+                Backdrop color
+              </label>
+              <input
+                id="dsm-vector-tools-backdrop-color"
+                type="color"
+                onUpdate={(element: HTMLInputElement) => {
+                  if (document.activeElement !== element)
+                    element.value = flow().backdropColor;
+                }}
+                onInput={(event: Event) =>
+                  vectorTools.setFlow(
+                    "backdropColor",
+                    (event.target as HTMLInputElement).value
+                  )
+                }
+              />
+            </div>
+            {sliderControl(
+              "dsm-vector-tools-backdrop-opacity",
+              "Backdrop strength",
+              () => flow().backdropOpacity,
+              { minimum: 0, maximum: 1, step: 0.01, decimals: 2 },
+              (value) => vectorTools.setFlow("backdropOpacity", value)
+            )}
+            <div class="dsm-vector-tools-hint">
+              Drawn by the flow visualizer, so it only appears while that is
+              running.
+            </div>
+          </div>
+        )}
+      </If>
+    </section>
   );
 }
 
@@ -1403,7 +1558,12 @@ function paletteChooser(
   label: string,
   value: () => ColorPalette,
   onChange: (value: ColorPalette) => void,
-  id?: string
+  id?: string,
+  // The swatches are drawn at the saturation and contrast the field is drawn
+  // at, so that choosing a ramp is choosing what you can see rather than what
+  // it would look like at settings nobody is using. A function, because a
+  // swatch built once would stop tracking the sliders the moment they moved.
+  adjust: () => ColorAdjust = () => NO_COLOR_ADJUST
 ) {
   return (
     <div
@@ -1433,7 +1593,9 @@ function paletteChooser(
                 >
                   <span
                     class="dsm-vector-tools-palette-swatch"
-                    style={{ background: paletteCSSGradient(pid) }}
+                    style={() => ({
+                      background: paletteCSSGradient(pid, adjust()),
+                    })}
                   />
                   <span class="dsm-vector-tools-palette-name">
                     {PALETTES[pid].name}

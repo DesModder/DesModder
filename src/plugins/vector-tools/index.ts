@@ -37,6 +37,7 @@ import {
   type PanelTab,
   type SamplingAxisConfig,
   type SamplingMode,
+  type OverlayLayer,
   type VectorColorMode,
   type VectorFieldConfig,
   type VectorFieldPreset,
@@ -610,6 +611,9 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     }
     this.arrowMessage = "";
     this.arrowOverlay.start(compiled.field, this.arrowOptions);
+    // A start may have mounted a canvas, and a fresh canvas lands wherever the
+    // overlay's own default puts it until it is told which side it is on.
+    this.syncLayer();
   }
 
   /**
@@ -662,6 +666,8 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       colorMode: config.color.mode,
       palette: config.color.palette,
       fixedColor: config.color.fixedColor,
+      saturation: config.color.saturation,
+      contrast: config.color.contrast,
       opacity: 1,
       rangeMode: config.color.rangeMode,
       rangeMinimum: config.color.minimum,
@@ -710,6 +716,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.refreshArrows();
     this.syncClock();
     this.syncContrast();
+    this.syncLayer();
     this.util.tick();
   }
 
@@ -1351,6 +1358,31 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.flowOverlay.setCounteractInvert(counteract);
   }
 
+  get overlayLayer(): OverlayLayer {
+    return this.getConfig().overlayLayer;
+  }
+
+  setOverlayLayer(layer: OverlayLayer) {
+    this.updateConfig((config) => {
+      config.overlayLayer = layer;
+    });
+  }
+
+  /**
+   * Tells both canvases which side of Desmos's graph to sit on.
+   *
+   * The flow first and the arrows second, every time, and not only when the
+   * setting changed: the two overlays mount independently — starting the
+   * visualizer, switching the arrows to live, a context coming back — and the
+   * one that mounted last would otherwise decide which is drawn over the
+   * other. Asking in this order each time is what keeps the arrows on top.
+   */
+  private syncLayer() {
+    const { overlayLayer } = this;
+    this.flowOverlay.setLayer(overlayLayer);
+    this.arrowOverlay.setLayer(overlayLayer);
+  }
+
   // ---- symbolic differentiation ------------------------------------------
 
   /**
@@ -1523,6 +1555,9 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.flowMessage = "";
     this.lastFlowSignature = this.flowFieldSignature;
     this.flowOverlay.start(compiled.field, this.flowOptions);
+    // As in `refreshArrows`: a newly mounted canvas has to be told which side
+    // of the graph it belongs on, and the order matters. See `syncLayer`.
+    this.syncLayer();
     this.util.tick();
   }
 

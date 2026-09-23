@@ -42,3 +42,20 @@ export type VectorColorMode =
 export type ColorRangeMode = "automatic" | "manual";
 
 export type FlowColorMode = "fixed" | "speed" | "direction";
+
+/**
+ * Where an overlay's canvas sits relative to Desmos's own graph canvas.
+ *
+ * Not a cosmetic choice. `canvas.dcg-graph-inner` is transparent except where
+ * Desmos has drawn something — the white a graph appears to have comes from an
+ * ancestor, not from the canvas — so an overlay inserted *before* it is covered
+ * by the grid, the axes, the labels and every plotted curve, while one inserted
+ * after covers all of them.
+ *
+ * `"over"` is what these overlays did for their whole history, and it is the
+ * right answer for arrows you want to read against the graph paper. `"under"`
+ * is the answer when the field is a backdrop for the maths rather than the
+ * subject of the picture: your functions come out on top of it at full
+ * contrast, at the price of the graph paper being drawn over the field.
+ */
+export type OverlayLayer = "over" | "under";

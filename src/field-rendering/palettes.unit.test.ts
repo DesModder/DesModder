@@ -1,5 +1,9 @@
 import {
   MAX_PALETTE_STOPS,
+  NO_COLOR_ADJUST,
+  adjustRGB,
+  adjustedHSV,
+  isNeutralAdjust,
   PALETTE_IDS,
   PALETTES,
   paletteCSSGradient,
@@ -180,5 +184,170 @@ describe("Vector Tools palettes", () => {
         ends: [...stops[stops.length - 1].rgb],
       });
     }
+  });
+});
+
+describe("saturation and contrast", () => {
+  /** The piecewise-linear walk along a set of stops, on the CPU. */
+  function walk(
+    stops: readonly { at: number; rgb: readonly [number, number, number] }[],
+    t: number
+  ) {
+    const rgb = [...stops[0].rgb] as number[];
+    for (let i = 1; i < stops.length; i++) {
+      const span = Math.max(stops[i].at - stops[i - 1].at, 1e-6);
+      const along = Math.min(1, Math.max(0, (t - stops[i - 1].at) / span));
+      for (let c = 0; c < 3; c++) {
+        rgb[c] += (stops[i].rgb[c] - stops[i - 1].rgb[c]) * along;
+      }
+    }
+    return rgb;
+  }
+
+  test("neutral leaves every colour exactly where it was", () => {
+    // The default has to be the identity, or turning the feature on for the
+    // first time would move a picture somebody had already settled.
+    expect(isNeutralAdjust(NO_COLOR_ADJUST)).toBe(true);
+    for (const id of PALETTE_IDS) {
+      for (const stop of paletteStops(id)) {
+        expect(adjustRGB(stop.rgb)).toEqual([...stop.rgb]);
+      }
+      expect(paletteLatex(id, "t", number, NO_COLOR_ADJUST)).toBe(
+        paletteLatex(id, "t", number)
+      );
+    }
+  });
+
+  test("no saturation is grey, and grey is where the luminance is", () => {
+    // Not the average of the channels: a green of 200 is much brighter than a
+    // blue of 200, and averaging turns a ramp's hues into a flat band that
+    // does not match its brightness.
+    const grey = adjustRGB([200, 40, 10], { saturation: 0, contrast: 1 });
+    expect(grey[0]).toBe(grey[1]);
+    expect(grey[1]).toBe(grey[2]);
+    expect(grey[0]).toBe(Math.round(200 * 0.2126 + 40 * 0.7152 + 10 * 0.0722));
+  });
+
+  test("contrast pushes away from mid-grey and leaves mid-grey alone", () => {
+    expect(adjustRGB([128, 128, 128], { saturation: 1, contrast: 2 })).toEqual([
+      129, 129, 129,
+    ]);
+    const [dark] = adjustRGB([60, 60, 60], { saturation: 1, contrast: 1.5 });
+    expect(dark).toBeLessThan(60);
+    const [light] = adjustRGB([200, 200, 200], {
+      saturation: 1,
+      contrast: 1.5,
+    });
+    expect(light).toBeGreaterThan(200);
+  });
+
+  test("nothing can be pushed outside a colour", () => {
+    for (const saturation of [0, 1, 2]) {
+      for (const contrast of [0.5, 1, 2]) {
+        for (const id of PALETTE_IDS) {
+          for (const stop of paletteStops(id)) {
+            for (const channel of adjustRGB(stop.rgb, {
+              saturation,
+              contrast,
+            })) {
+              expect(channel).toBeGreaterThanOrEqual(0);
+              expect(channel).toBeLessThanOrEqual(255);
+            }
+          }
+        }
+      }
+    }
+  });
+
+  test("the generated expression is the ramp through the adjusted stops", () => {
+    // Every emitter pushes the stops and then interpolates, including the
+    // shader -- see `ColorAdjust`. So the LaTeX Desmos is handed has to be
+    // exactly the ramp through `adjustRGB` of each stop, at settings strong
+    // enough that several of them clamp. Evaluating it is the only way to know
+    // that, since the emitted form is a sum of clamped segments rather than a
+    // list of colours.
+    const adjust = { saturation: 1.35, contrast: 1.2 };
+    for (const id of ["spectral", "turbo", "coolwarm"] as const) {
+      const latex = paletteLatex(id, "t", number, adjust);
+      const pushed = paletteStops(id).map((stop) => ({
+        at: stop.at,
+        rgb: adjustRGB(stop.rgb, adjust),
+      }));
+      for (const t of [0, 0.17, 0.5, 0.83, 1]) {
+        const emitted = evaluateChannel(latex, t);
+        const expected = walk(pushed, t);
+        for (let c = 0; c < 3; c++) {
+          expect(emitted[c]).toBeCloseTo(expected[c], 6);
+        }
+      }
+    }
+  });
+
+  test("adjusting before and after interpolating agree until something clamps", () => {
+    // Why the order had to be settled rather than left to each emitter. The
+    // adjustment is affine and interpolation is linear, so the two orders are
+    // the same function -- right up to the clamp, which is not affine.
+    const gentle = { saturation: 0.85, contrast: 0.9 };
+    const strong = { saturation: 1.8, contrast: 1.6 };
+    const before = (adjust: typeof gentle, t: number) =>
+      walk(
+        paletteStops("turbo").map((stop) => ({
+          at: stop.at,
+          rgb: adjustRGB(stop.rgb, adjust),
+        })),
+        t
+      );
+    const after = (adjust: typeof gentle, t: number) =>
+      adjustRGB(
+        walk(paletteStops("turbo"), t) as [number, number, number],
+        adjust
+      );
+
+    for (const t of [0.1, 0.35, 0.5, 0.72, 0.95]) {
+      for (let c = 0; c < 3; c++) {
+        // One level, not zero: `adjustRGB` rounds each stop to a whole
+        // channel, and adjusting first rounds before interpolating.
+        const gap = Math.abs(before(gentle, t)[c] - after(gentle, t)[c]);
+        expect({ t, c, within: gap <= 1 }).toEqual({ t, c, within: true });
+      }
+    }
+    // And they really do diverge when it is pushed, which is what makes
+    // picking one of the two orders a decision rather than a formality.
+    const apart = [0.1, 0.35, 0.5, 0.72, 0.95].some((t) =>
+      [0, 1, 2].some(
+        (c) => Math.abs(before(strong, t)[c] - after(strong, t)[c]) > 8
+      )
+    );
+    expect(apart).toBe(true);
+  });
+
+  test("the swatch is drawn at the settings the field is drawn at", () => {
+    // A picker that showed the unadjusted ramp would be offering a choice
+    // between pictures none of which is the one about to appear.
+    const adjust = { saturation: 0, contrast: 1 };
+    const gradient = paletteCSSGradient("spectral", adjust);
+    for (const stop of paletteStops("spectral")) {
+      const [r, g, b] = adjustRGB(stop.rgb, adjust);
+      expect(r).toBe(g);
+      expect(gradient).toContain(`rgb(${r},${g},${b})`);
+    }
+  });
+
+  test("the hue wheel takes the approximation hsv can express", () => {
+    // It has no stops to push. Saturation scales hsv's own, and contrast moves
+    // its value; both clamp, so a strong setting cannot ask for a colour
+    // outside the wheel.
+    expect(adjustedHSV(0.82, 0.9, NO_COLOR_ADJUST)).toEqual({
+      saturation: 0.82,
+      value: 0.9,
+    });
+    expect(adjustedHSV(0.82, 0.9, { saturation: 0.5, contrast: 1 })).toEqual({
+      saturation: 0.41,
+      value: 0.9,
+    });
+    expect(adjustedHSV(0.82, 0.9, { saturation: 2, contrast: 2 })).toEqual({
+      saturation: 1,
+      value: 1,
+    });
   });
 });

@@ -380,6 +380,108 @@ export function paletteStops(id: PaletteID): readonly PaletteStop[] {
   return PALETTES[id].stops ?? PALETTES.spectral.stops!;
 }
 
+/**
+ * How far a ramp's colours are pushed, after the ramp has been walked.
+ *
+ * Saturation and contrast are kept out of the palettes themselves on purpose.
+ * A palette is a choice of hues; how strongly they are drawn is a choice about
+ * the picture, and the two are adjusted at different moments — you pick a ramp
+ * once and then spend a while deciding how hard it should hit against the
+ * graph paper behind it. Folding them together would mean twenty more palettes
+ * that are the same palettes again, louder.
+ *
+ * Both are multipliers around a neutral 1: saturation mixes toward the
+ * luminance of the colour, contrast pushes away from mid-grey.
+ *
+ * All four emitters push the *stops* and then interpolate, never the other way
+ * round. Two of them have no choice — a Desmos expression and a CSS gradient
+ * are stops, with nothing left to adjust afterwards — and the shader follows
+ * them rather than adjusting its result, because the two are not the same
+ * thing. The adjustment is affine and interpolation is linear, so they agree
+ * exactly while nothing clamps; a stop pushed past black or white clamps, and
+ * from there the two orders drift by several percent. Agreeing everywhere is
+ * worth more than either order is on its own: it is what makes the swatch in
+ * the picker, the generated arrows and the live ones one picture.
+ */
+export interface ColorAdjust {
+  /** 0 is grey, 1 is the ramp as written, above 1 is stronger. */
+  saturation: number;
+  /** 1 is the ramp as written; above 1 spreads it away from mid-grey. */
+  contrast: number;
+}
+
+/** The adjustment that changes nothing, for callers that do not offer one. */
+export const NO_COLOR_ADJUST: ColorAdjust = { saturation: 1, contrast: 1 };
+
+export const COLOR_SATURATION_MINIMUM = 0;
+export const COLOR_SATURATION_MAXIMUM = 2;
+export const COLOR_CONTRAST_MINIMUM = 0.5;
+export const COLOR_CONTRAST_MAXIMUM = 2;
+
+/** Rec. 709 luminance, which is what "how grey is this colour" means here. */
+const LUMA = [0.2126, 0.7152, 0.0722] as const;
+
+/**
+ * One colour pushed, in the 0..255 the stops are written in.
+ *
+ * The twin of `vtAdjust` in the shader below. The two are written out
+ * separately for the reason the whole file exists — three places draw these
+ * ramps and only one of them can run GLSL — so they are kept next to each
+ * other and a test pins the CPU one to worked values.
+ */
+export function adjustRGB(
+  rgb: readonly [number, number, number],
+  adjust: ColorAdjust = NO_COLOR_ADJUST
+): [number, number, number] {
+  const luma = rgb[0] * LUMA[0] + rgb[1] * LUMA[1] + rgb[2] * LUMA[2];
+  const push = (channel: number) => {
+    const saturated = luma + (channel - luma) * adjust.saturation;
+    const contrasted = (saturated - 127.5) * adjust.contrast + 127.5;
+    return Math.round(Math.min(255, Math.max(0, contrasted)));
+  };
+  return [push(rgb[0]), push(rgb[1]), push(rgb[2])];
+}
+
+/** Whether an adjustment would leave every colour exactly where it was. */
+export function isNeutralAdjust(adjust: ColorAdjust) {
+  return adjust.saturation === 1 && adjust.contrast === 1;
+}
+
+function adjustedStops(
+  stops: readonly PaletteStop[],
+  adjust: ColorAdjust
+): readonly PaletteStop[] {
+  if (isNeutralAdjust(adjust)) return stops;
+  return stops.map((stop) => ({
+    at: stop.at,
+    rgb: adjustRGB(stop.rgb, adjust),
+  }));
+}
+
+/**
+ * The nearest thing an `hsv` call has to a saturation and contrast adjustment.
+ *
+ * Two of the ramps are handed to Desmos as `hsv` rather than as stops: the
+ * direction wheel here, and the arrows' own `direction` mode in the generator.
+ * A wheel has no stops to push. Its saturation parameter is close enough to
+ * ours to scale directly, and pushing the value away from mid-grey is what
+ * contrast means everywhere else. It is an approximation, and the only one --
+ * every ramp with stops gets the exact adjustment.
+ *
+ * Shared so the two callers cannot drift, which is this file's whole premise.
+ */
+export function adjustedHSV(
+  saturation: number,
+  value: number,
+  adjust: ColorAdjust = NO_COLOR_ADJUST
+): { saturation: number; value: number } {
+  const clamp = (at: number) => Math.min(1, Math.max(0, at));
+  return {
+    saturation: clamp(saturation * adjust.saturation),
+    value: clamp((value - 0.5) * adjust.contrast + 0.5),
+  };
+}
+
 /** The hue wheel evaluated on the CPU, matching `vtHueRamp` in the shader. */
 function hueRamp(hue: number): [number, number, number] {
   const channel = (offset: number) => {
@@ -399,9 +501,14 @@ function hueRamp(hue: number): [number, number, number] {
  * disagrees with the field is worse than no swatch at all. The hue wheel has no
  * stops to walk, so it is sampled from the same formula the shader uses.
  */
-export function paletteCSSGradient(id: PaletteID): string {
-  const rgb = (color: readonly [number, number, number], at: number) =>
-    `rgb(${color[0]},${color[1]},${color[2]}) ${Math.round(at * 100)}%`;
+export function paletteCSSGradient(
+  id: PaletteID,
+  adjust: ColorAdjust = NO_COLOR_ADJUST
+): string {
+  const rgb = (color: readonly [number, number, number], at: number) => {
+    const [r, g, b] = adjustRGB(color, adjust);
+    return `rgb(${r},${g},${b}) ${Math.round(at * 100)}%`;
+  };
   const stops =
     PALETTES[id].stops === undefined
       ? Array.from({ length: 13 }, (_, i) => {
@@ -444,12 +551,18 @@ function channelTerms(
 export function paletteLatex(
   id: PaletteID,
   t: string,
-  number: (value: number) => string
+  number: (value: number) => string,
+  adjust: ColorAdjust = NO_COLOR_ADJUST
 ): string {
   if (id === "direction-hue") {
-    return `\\operatorname{hsv}\\left(360\\left(${t}\\right),0.82,0.9\\right)`;
+    // This ramp has no stops to push; `adjustedHSV` says what is done instead
+    // and why it is the one approximation in here.
+    const hsv = adjustedHSV(0.82, 0.9, adjust);
+    return `\\operatorname{hsv}\\left(360\\left(${t}\\right),${number(
+      hsv.saturation
+    )},${number(hsv.value)}\\right)`;
   }
-  const stops = paletteStops(id);
+  const stops = adjustedStops(paletteStops(id), adjust);
   const ramp = (from: number, to: number) =>
     `\\min\\left(1,\\max\\left(0,\\left(${t}-${number(from)}\\right)/${number(
       to - from
@@ -516,20 +629,48 @@ uniform float u_paletteAt[${MAX_PALETTE_STOPS}];
 uniform vec3 u_paletteRGB[${MAX_PALETTE_STOPS}];
 uniform int u_paletteCount;
 uniform int u_paletteIsHue;
+uniform float u_saturation;
+uniform float u_contrast;
+
+/**
+ * The twin of \`adjustRGB\` on the CPU, in the 0..1 a shader works in.
+ *
+ * Applied at the end of the colour path rather than inside \`vtPalette\`, so it
+ * reaches the fixed colour and the direction wheel too — "how strong are the
+ * field's colours" is a question about the picture, not about the ramp, and a
+ * knob that stopped working when you picked a flat colour would be a puzzle.
+ */
+vec3 vtAdjust(vec3 rgb) {
+  float luma = dot(rgb, vec3(${LUMA[0]}, ${LUMA[1]}, ${LUMA[2]}));
+  vec3 pushed = mix(vec3(luma), rgb, u_saturation);
+  pushed = (pushed - 0.5) * u_contrast + 0.5;
+  return clamp(pushed, 0.0, 1.0);
+}
 
 vec3 vtHueRamp(float hue) {
   vec3 k = mod(hue * 6.0 + vec3(0.0, 4.0, 2.0), 6.0);
   return clamp(min(k, 4.0 - k), 0.0, 1.0);
 }
 
+/**
+ * The ramp, walked and already adjusted.
+ *
+ * Each stop is pushed *before* the interpolation rather than the result after
+ * it, which is not the same thing and is the spelling that matters: the two
+ * agree wherever nothing clamps, and where a stop is driven past black or white
+ * they part company by several percent. The other two emitters have no choice —
+ * a Desmos expression and a CSS gradient are stops, and there is nothing to
+ * adjust afterwards — so doing it the same way here is what makes the swatch,
+ * the generated arrows and the live ones the same picture.
+ */
 vec3 vtPalette(float t) {
-  if (u_paletteIsHue == 1) return vtHueRamp(fract(t));
-  vec3 rgb = u_paletteRGB[0];
+  if (u_paletteIsHue == 1) return vtAdjust(vtHueRamp(fract(t)));
+  vec3 rgb = vtAdjust(u_paletteRGB[0]);
   for (int i = 1; i < ${MAX_PALETTE_STOPS}; i++) {
     if (i >= u_paletteCount) break;
     float from = u_paletteAt[i - 1];
     float to = u_paletteAt[i];
-    rgb += (u_paletteRGB[i] - u_paletteRGB[i - 1]) *
+    rgb += (vtAdjust(u_paletteRGB[i]) - vtAdjust(u_paletteRGB[i - 1])) *
            clamp((t - from) / max(to - from, 1e-6), 0.0, 1.0);
   }
   return rgb;

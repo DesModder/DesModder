@@ -14,6 +14,7 @@
 import { FlowRendererError } from "./FlowRenderer";
 import type { FlowBounds, FlowField } from "./FlowRenderer";
 import { ArrowRenderer, type ArrowOptions } from "./ArrowRenderer";
+import type { OverlayLayer } from "./types";
 import type { Calc } from "#globals";
 
 /**
@@ -63,6 +64,13 @@ export class ArrowOverlay {
    * context comes back looking the same.
    */
   private counteractInvert = false;
+  /**
+   * Which side of Desmos's graph canvas this one is drawn on.
+   *
+   * Kept rather than read back from the DOM because a remount after a lost
+   * context has to put the canvas back where it was.
+   */
+  private layer: OverlayLayer = "over";
   private lastOptions?: ArrowOptions;
   private contextLost = false;
   private readonly onContextLost = (event: Event) => {
@@ -185,6 +193,44 @@ export class ArrowOverlay {
     this.requestFrame();
   }
 
+  /**
+   * Moves the canvas above or below Desmos's graph.
+   *
+   * A DOM move rather than a remount, so the WebGL context and the arrows
+   * already on screen survive it.
+   */
+  setLayer(layer: OverlayLayer) {
+    this.layer = layer;
+    this.placeCanvas();
+  }
+
+  /**
+   * Puts the canvas on the side of the graph canvas that `layer` asks for.
+   *
+   * The arrows take the *top* of whichever stack they are in — last child when
+   * they are over the graph, immediately before the graph canvas when they are
+   * under it — which is what keeps them readable over the flow's particles on
+   * both sides. `FlowOverlay` takes the bottom of the same two stacks.
+   *
+   * Idempotent and re-run on every sync, because the two overlays mount
+   * independently: whichever mounted second would otherwise decide the order.
+   */
+  private placeCanvas() {
+    const { canvas } = this;
+    if (canvas === undefined) return;
+    const graphCanvas = document.querySelector(GRAPH_CANVAS_SELECTOR);
+    const parent = graphCanvas?.parentElement;
+    if (graphCanvas == null || parent == null) return;
+    const reference = this.layer === "under" ? graphCanvas : null;
+    // The parent check is not redundant: a canvas that has just been created
+    // has no parent and a null `nextSibling`, which is exactly what "already
+    // last child" looks like. Without it a fresh overlay in `over` mode is
+    // never inserted at all, and draws into a canvas nobody can see.
+    if (canvas.parentElement === parent && canvas.nextSibling === reference)
+      return;
+    parent.insertBefore(canvas, reference);
+  }
+
   /** Cancels, or stops cancelling, the graph's reverse contrast. */
   setCounteractInvert(counteract: boolean) {
     if (this.counteractInvert === counteract) return;
@@ -247,12 +293,10 @@ export class ArrowOverlay {
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     canvas.style.pointerEvents = "none";
-    // After the graph paper, and after the flow canvas if one is already there,
-    // so arrows read on top of the particles rather than under them.
-    parent.append(canvas);
+    this.canvas = canvas;
+    this.placeCanvas();
     canvas.addEventListener("webglcontextlost", this.onContextLost);
     canvas.addEventListener("webglcontextrestored", this.onContextRestored);
-    this.canvas = canvas;
     this.renderer = new ArrowRenderer(canvas);
     this.resizeToBox();
 

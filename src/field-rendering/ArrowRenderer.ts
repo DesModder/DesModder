@@ -61,6 +61,15 @@ export interface ArrowOptions {
   colorMode: VectorColorMode;
   palette: PaletteID;
   fixedColor: string;
+  /**
+   * How far the chosen colours are pushed, once chosen.
+   *
+   * See `ColorAdjust` in `./palettes`, which is where both the meaning and the
+   * arithmetic live — the flow visualizer takes the same pair, so that a field
+   * drawn both ways is drawn the same way twice.
+   */
+  saturation: number;
+  contrast: number;
   opacity: number;
   rangeMode: ColorRangeMode;
   rangeMinimum: number;
@@ -82,6 +91,8 @@ export const DEFAULT_ARROW_OPTIONS: ArrowOptions = {
   colorMode: "magnitude",
   palette: "spectral",
   fixedColor: "#6042a6",
+  saturation: 1,
+  contrast: 1,
   opacity: 1,
   rangeMode: "automatic",
   rangeMinimum: 0,
@@ -404,6 +415,8 @@ export class ArrowRenderer {
       uniforms.u_paletteIsHue,
       options.palette === "direction-hue" ? 1 : 0
     );
+    gl.uniform1f(uniforms.u_saturation, options.saturation);
+    gl.uniform1f(uniforms.u_contrast, options.contrast);
 
     gl.drawArraysInstanced(gl.TRIANGLES, 0, VERTICES_PER_ARROW, count);
     gl.bindVertexArray(null);
@@ -540,9 +553,11 @@ float vtLengthFactor(float magnitude) {
 }
 
 vec3 vtArrowColor(vec2 v, float magnitude) {
-  if (u_colorMode == 0) return u_fixedColor;
+  // vtPalette adjusts its own stops, so only the two colours that never
+  // went through a ramp are adjusted here.
+  if (u_colorMode == 0) return vtAdjust(u_fixedColor);
   if (u_colorMode == 3) {
-    return vtHueRamp(fract(atan(v.y, v.x) / 6.2831853 + 1.0));
+    return vtAdjust(vtHueRamp(fract(atan(v.y, v.x) / 6.2831853 + 1.0)));
   }
   if (u_colorMode == 4 || u_colorMode == 5) {
     // Signed, so the ramp is entered from its middle outwards.
@@ -569,6 +584,7 @@ vec3 vtArrowColor(vec2 v, float magnitude) {
   }
   return vtPalette(1.0 - exp(-magnitude / u_speedScale));
 }
+
 
 void main() {
   // Instances cover only the visible part of the grid, but the spacing is still

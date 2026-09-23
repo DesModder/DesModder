@@ -15,7 +15,12 @@
  *  - It renders onto a transparent canvas layered over the Desmos graph
  *    instead of owning the whole screen.
  */
-import { PALETTE_GLSL, paletteUniforms, type PaletteID } from "./palettes";
+import {
+  PALETTE_GLSL,
+  paletteUniforms,
+  type ColorAdjust,
+  type PaletteID,
+} from "./palettes";
 import {
   fieldFunctions,
   uploadFieldDisturbances,
@@ -94,6 +99,9 @@ export interface FlowOptions {
   palette: PaletteID;
   /** Hex color used by the `fixed` color mode. */
   fixedColor: string;
+  /** How far the colours are pushed once chosen; see {@link ColorAdjust}. */
+  saturation: number;
+  contrast: number;
   /** Draw streamlines at a constant speed instead of the field's own magnitude. */
   normalizeSpeed: boolean;
   /**
@@ -122,6 +130,8 @@ export const DEFAULT_FLOW_OPTIONS: FlowOptions = {
   colorMode: "speed",
   palette: "spectral",
   fixedColor: "#6042a6",
+  saturation: 1,
+  contrast: 1,
   normalizeSpeed: true,
   renderScale: 1,
 };
@@ -628,6 +638,8 @@ export class FlowRenderer {
       program.uniforms.u_paletteIsHue,
       this.options.palette === "direction-hue" ? 1 : 0
     );
+    gl.uniform1f(program.uniforms.u_saturation, this.options.saturation);
+    gl.uniform1f(program.uniforms.u_contrast, this.options.contrast);
     gl.uniform1f(
       program.uniforms.u_speedScale,
       Math.max(1e-6, (xMax - xMin) / 3)
@@ -1097,7 +1109,9 @@ void main() {
   gl_PointSize = u_pointSize * (1.0 + ${glslFloat(GLOW_SPREAD)} * u_glow);
 
   vec2 v = vtField(state.xy);
-  vec3 rgb = u_fixedColor;
+  // vtPalette adjusts its own stops; the other two branches are colours that
+  // never went through a ramp, so they are adjusted here.
+  vec3 rgb = vtAdjust(u_fixedColor);
   if (u_colorMode == 1) {
     // A ramp that saturates rather than one stretched between two measured
     // ends. Nothing has to be reduced to find the field's range — and, which
@@ -1108,7 +1122,7 @@ void main() {
     // poles run into its end.
     rgb = vtPalette(1.0 - exp(-length(v) / u_speedScale));
   } else if (u_colorMode == 2) {
-    rgb = vtHueRamp(fract(atan(v.y, v.x) / 6.2831853 + 1.0));
+    rgb = vtAdjust(vtHueRamp(fract(atan(v.y, v.x) / 6.2831853 + 1.0)));
   }
 
   // Ease particles in and out so respawns do not pop.

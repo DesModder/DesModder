@@ -20,6 +20,7 @@ import type {
   FlowField,
   FlowOptions,
 } from "../../../field-rendering/FlowRenderer";
+import { NO_COLOR_ADJUST } from "../../../field-rendering/palettes";
 
 /**
  * What a field component is allowed to mention.
@@ -92,6 +93,9 @@ function mergeHelpers(
 export function flowOptionsFor(config: AudioFieldConfig): FlowOptions {
   const { look } = config;
   return {
+    // Neutral: Audio Lab colours its field by the palette alone, and has no
+    // control for pushing the result.
+    ...NO_COLOR_ADJUST,
     particleCount: look.particleCount,
     speed: look.speed,
     trailPersistence: look.trailPersistence,

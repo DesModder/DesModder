@@ -38,6 +38,10 @@ import {
   validateVectorFieldConfig,
   VECTOR_FIELD_PRESETS,
 } from "./model";
+import {
+  COLOR_CONTRAST_MINIMUM,
+  COLOR_SATURATION_MAXIMUM,
+} from "../../field-rendering/palettes";
 import type { Calc } from "#globals";
 
 interface FakeItem {
@@ -363,6 +367,8 @@ describe("Vector Tools field configuration", () => {
         colorMode: "nonsense",
         normalizeSpeed: "yes",
         renderScale: 0,
+        saturation: 9,
+        contrast: -4,
       },
     });
     expect(clamped.flow).toEqual({
@@ -374,6 +380,10 @@ describe("Vector Tools field configuration", () => {
       pointSize: 6,
       renderScale: FLOW_RENDER_SCALE_MINIMUM,
       colorMode: "speed",
+      // Clamped like every other slider, so a hand-edited setting cannot ask
+      // for a colour the shader would drive to a flat block.
+      saturation: COLOR_SATURATION_MAXIMUM,
+      contrast: COLOR_CONTRAST_MINIMUM,
       // Neither was in the saved object, so both fall back to the default.
       palette: "spectral",
       look: "streamlines",
@@ -815,8 +825,12 @@ describe("Vector Tools flow colour matching", () => {
     config.color.mode = "magnitude";
     config.color.palette = "turbo";
     config.color.matchFlow = matchFlow;
+    config.color.saturation = 1.4;
+    config.color.contrast = 0.8;
     config.flow.colorMode = "direction";
     config.flow.palette = "ocean";
+    config.flow.saturation = 0.6;
+    config.flow.contrast = 1.6;
     return config;
   };
 
@@ -829,14 +843,21 @@ describe("Vector Tools flow colour matching", () => {
     expect(effectiveFlowColor(matched)).toEqual({
       colorMode: "speed",
       palette: "turbo",
+      // "The same colors" has to include how hard they are pushed, or a
+      // matched flow would follow the ramp and not the picture.
+      saturation: 1.4,
+      contrast: 0.8,
     });
     expect(matched.flow.colorMode).toBe("direction");
     expect(matched.flow.palette).toBe("ocean");
+    expect(matched.flow.saturation).toBe(0.6);
 
     matched.color.matchFlow = false;
     expect(effectiveFlowColor(matched)).toEqual({
       colorMode: "direction",
       palette: "ocean",
+      saturation: 0.6,
+      contrast: 1.6,
     });
   });
 
@@ -844,6 +865,8 @@ describe("Vector Tools flow colour matching", () => {
     expect(effectiveFlowColor(configWith(false))).toEqual({
       colorMode: "direction",
       palette: "ocean",
+      saturation: 0.6,
+      contrast: 1.6,
     });
   });
 

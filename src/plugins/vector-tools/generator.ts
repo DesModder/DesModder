@@ -6,7 +6,12 @@ import {
   type VectorLengthMode,
   ZERO_VECTOR_TOLERANCE,
 } from "./model";
-import { paletteLatex } from "../../field-rendering/palettes";
+import {
+  adjustRGB,
+  adjustedHSV,
+  paletteLatex,
+  type ColorAdjust,
+} from "../../field-rendering/palettes";
 import { renameIdentifier } from "../../field-rendering/identifiers";
 import { TIME_NAME } from "../../field-rendering/latexToGLSL";
 import type {
@@ -752,43 +757,67 @@ function colorListLatex(
     clamp01(
       `\\left(${component}+\\max\\left(\\max\\left(${component}\\right),-\\min\\left(${component}\\right),${numberLatex(ZERO_VECTOR_TOLERANCE)}\\right)\\right)/\\left(2\\max\\left(\\max\\left(${component}\\right),-\\min\\left(${component}\\right),${numberLatex(ZERO_VECTOR_TOLERANCE)}\\right)\\right)`
     );
+  // The generated arrows go through the same saturation and contrast the live
+  // ones do. Two ways of drawing one field that disagree about its colours
+  // would make switching between them look like changing the field.
+  const adjust = colorAdjustOf(config);
   let colorExpression: string;
   switch (mode) {
     case "fixed": {
-      const [red, green, blue] = hexToRGB(config.color.fixedColor);
+      const [red, green, blue] = adjustRGB(
+        hexToRGB(config.color.fixedColor),
+        adjust
+      );
       colorExpression = `\\operatorname{rgb}\\left(${red}+0\\cdot ${symbols.gridX},${green}+0\\cdot ${symbols.gridX},${blue}+0\\cdot ${symbols.gridX}\\right)`;
       break;
     }
-    case "direction":
-      colorExpression = `\\operatorname{hsv}\\left(180\\left(${symbols.direction}/\\pi+1\\right),0.82,0.9\\right)`;
+    case "direction": {
+      // The direction wheel is an `hsv` call rather than a ramp with stops, so
+      // it takes the approximate adjustment; `adjustedHSV` says why.
+      const hsv = adjustedHSV(0.82, 0.9, adjust);
+      colorExpression = `\\operatorname{hsv}\\left(180\\left(${
+        symbols.direction
+      }/\\pi+1\\right),${numberLatex(hsv.saturation)},${numberLatex(
+        hsv.value
+      )}\\right)`;
       break;
+    }
     case "x-component":
-      colorExpression = divergingColorLatex(componentT(symbols.u));
+      colorExpression = divergingColorLatex(componentT(symbols.u), adjust);
       break;
     case "y-component":
-      colorExpression = divergingColorLatex(componentT(symbols.v));
+      colorExpression = divergingColorLatex(componentT(symbols.v), adjust);
       break;
     case "magnitude":
     case "log-magnitude":
-      colorExpression = paletteColorLatex(config.color.palette, rangeT);
+      colorExpression = paletteColorLatex(config.color.palette, rangeT, adjust);
       break;
   }
   return `${symbols.colors}=${colorExpression}`;
 }
 
+/** The saturation and contrast this field's colours are drawn at. */
+function colorAdjustOf(config: VectorFieldConfig): ColorAdjust {
+  return {
+    saturation: config.color.saturation,
+    contrast: config.color.contrast,
+  };
+}
+
 function paletteColorLatex(
   palette: VectorFieldConfig["color"]["palette"],
-  t: string
+  t: string,
+  adjust: ColorAdjust
 ) {
-  return paletteLatex(palette, t, numberLatex);
+  return paletteLatex(palette, t, numberLatex, adjust);
 }
 
 /**
  * The ramp a signed component is drawn with: blue below zero, red above, and
  * light through the middle, so the neutral value recedes instead of shouting.
  */
-function divergingColorLatex(t: string) {
-  return paletteLatex("blue-red", t, numberLatex);
+function divergingColorLatex(t: string, adjust: ColorAdjust) {
+  return paletteLatex("blue-red", t, numberLatex, adjust);
 }
 
 function parametricSegmentLatex(

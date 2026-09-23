@@ -15,6 +15,7 @@ import { buildConfigFromGlobals, parseLatex } from "../../../text-mode-core";
 import type { Aug, Config } from "../../../text-mode-core";
 import { ArrowOverlay } from "../../field-rendering/ArrowOverlay";
 import type { ArrowOptions } from "../../field-rendering/ArrowRenderer";
+import { NO_COLOR_ADJUST } from "../../field-rendering/palettes";
 import {
   compileFieldComponentToGLSL,
   EMPTY_ENVIRONMENT,
@@ -500,6 +501,9 @@ export default class PhysicsLabSession {
         Math.max(1, phase.rows - 1)
     );
     return {
+      // Neutral: the saturation and contrast knobs are Vector Tools' own, and
+      // this picture has no control offering them.
+      ...NO_COLOR_ADJUST,
       columns: phase.columns,
       rows: phase.rows,
       domain: {
@@ -593,6 +597,9 @@ export default class PhysicsLabSession {
         Math.max(1, grid.rows - 1)
     );
     return {
+      // Neutral: the saturation and contrast knobs are Vector Tools' own, and
+      // this picture has no control offering them.
+      ...NO_COLOR_ADJUST,
       columns: grid.columns,
       rows: grid.rows,
       domain: {

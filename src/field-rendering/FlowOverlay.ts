@@ -17,6 +17,7 @@ import {
   type FlowField,
   type FlowOptions,
 } from "./FlowRenderer";
+import type { OverlayLayer } from "./types";
 import type { Calc } from "#globals";
 
 const GRAPH_CANVAS_SELECTOR = "canvas.dcg-graph-inner";
@@ -93,6 +94,14 @@ export class FlowOverlay {
    * context comes back looking the same.
    */
   private counteractInvert = false;
+  /**
+   * Where the canvas sits relative to Desmos's own graph canvas.
+   *
+   * Kept here rather than read from the DOM because a remount — after a lost
+   * context, or a stop and start — has to put the canvas back on the side it
+   * was on.
+   */
+  private layer: OverlayLayer = "over";
   private contextLost = false;
   private readonly onContextLost = (event: Event) => {
     // Without this the browser never restores the context at all.
@@ -212,6 +221,48 @@ export class FlowOverlay {
     this.renderer?.setDisturbances(state);
   }
 
+  /**
+   * Moves the canvas above or below Desmos's graph.
+   *
+   * A DOM move rather than a remount: the element stays in the document, so the
+   * WebGL context, the trails and the particles all survive it. Remounting to
+   * change a z-order would throw away the picture to change where it is drawn.
+   */
+  setLayer(layer: OverlayLayer) {
+    this.layer = layer;
+    this.placeCanvas();
+  }
+
+  /**
+   * Puts the canvas on the side of the graph canvas that `layer` asks for.
+   *
+   * The flow goes at the *bottom* of whichever stack it is in — first child
+   * when it is under the graph, immediately after the graph canvas when it is
+   * over it. That is what keeps the arrows drawn on top of the particles on
+   * both sides, since `ArrowOverlay` takes the top of the same two stacks.
+   *
+   * Idempotent, and called again on every layer sync rather than only on a
+   * change, because the two overlays mount independently and the one that
+   * mounted first would otherwise end up wherever it happened to land.
+   */
+  private placeCanvas() {
+    const { canvas } = this;
+    if (canvas === undefined) return;
+    const graphCanvas = document.querySelector(GRAPH_CANVAS_SELECTOR);
+    const parent = graphCanvas?.parentElement;
+    if (graphCanvas == null || parent == null) return;
+    const reference =
+      this.layer === "under" ? parent.firstChild : graphCanvas.nextSibling;
+    // The parent check is not redundant: a canvas that has just been created
+    // has no parent and a null `nextSibling`, which can match a null reference
+    // and leave it never inserted. See the same note in `ArrowOverlay`.
+    const placed =
+      canvas.parentElement === parent &&
+      (reference === canvas || canvas.nextSibling === reference);
+    if (placed) return;
+    parent.insertBefore(canvas, reference);
+  }
+
   /** Cancels, or stops cancelling, the graph's reverse contrast. */
   setCounteractInvert(counteract: boolean) {
     if (this.counteractInvert === counteract) return;
@@ -275,10 +326,10 @@ export class FlowOverlay {
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     canvas.style.pointerEvents = "none";
-    parent.insertBefore(canvas, graphCanvas.nextSibling);
+    this.canvas = canvas;
+    this.placeCanvas();
     canvas.addEventListener("webglcontextlost", this.onContextLost);
     canvas.addEventListener("webglcontextrestored", this.onContextRestored);
-    this.canvas = canvas;
 
     this.renderer = new FlowRenderer(canvas);
     this.resizeToBox();
