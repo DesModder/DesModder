@@ -66,8 +66,10 @@ import {
   exceedsNodeCount,
   number,
   rebuildSum,
+  rationalNode,
+  sameProduct,
   sameTree,
-  splitCoefficient,
+  splitRationalCoefficient,
   topLevelTerms,
   type Node,
 } from "./tree";
@@ -317,18 +319,31 @@ function raise(
  * come out of here looking different, and deciding that they are the same is
  * `agreesOnSamples`'s job, not this one's.
  */
-function tidySums(node: Node): Node {
+export function tidySums(node: Node): Node {
   const rebuilt = mapChildren(node, tidySums);
-  const terms = topLevelTerms(rebuilt);
+  const terms = opened(topLevelTerms(rebuilt));
   if (terms.length < 2) return rebuilt;
 
-  const groups: { coefficient: number; rest: Node; degree: number }[] = [];
+  const groups: {
+    coefficient: { n: number; d: number };
+    rest: Node;
+    degree: number;
+  }[] = [];
   for (const { term, negated } of terms) {
-    const [coefficient, rest] = splitCoefficient(term);
-    const signed = negated ? -coefficient : coefficient;
-    const match = groups.findIndex((group) => sameTree(group.rest, rest));
-    if (match >= 0) groups[match].coefficient += signed;
-    else groups.push({ coefficient: signed, rest, degree: degreeOf(rest) });
+    const { coefficient, rest } = splitRationalCoefficient(term);
+    const signed = negated
+      ? { n: -coefficient.n, d: coefficient.d }
+      : coefficient;
+    const match = groups.findIndex((group) => sameProduct(group.rest, rest));
+    if (match >= 0) {
+      const total = groups[match].coefficient;
+      groups[match].coefficient = {
+        n: total.n * signed.d + signed.n * total.d,
+        d: total.d * signed.d,
+      };
+    } else {
+      groups.push({ coefficient: signed, rest, degree: degreeOf(rest) });
+    }
   }
 
   // A stable sort by descending degree. `Array.prototype.sort` has been stable
@@ -336,14 +351,61 @@ function tidySums(node: Node): Node {
   // were written in rather than being shuffled by an implementation detail.
   groups.sort((a, b) => b.degree - a.degree);
 
-  const kept = groups.filter((group) => group.coefficient !== 0);
+  const kept = groups.filter((group) => group.coefficient.n !== 0);
   if (kept.length === 0) return number(0);
   return rebuildSum(
     kept.map(({ coefficient, rest }) => ({
-      value: multiply(number(Math.abs(coefficient)), rest),
-      negated: coefficient < 0,
+      value: multiply(
+        rationalNode({
+          n: Math.abs(coefficient.n),
+          d: Math.abs(coefficient.d),
+        }),
+        rest
+      ),
+      negated: coefficient.n < 0 !== coefficient.d < 0,
     }))
   );
+}
+
+/**
+ * Terms of a sum, with any bracket over a number opened out.
+ *
+ * `(A + B)/2 - B` has two terms and the two `B`s never meet, because the first
+ * one is inside a bracket. Opening it is what lets them collect, and it is done
+ * only here -- a lone `(x+1)/2` is left alone, because splitting it would turn
+ * `arcsin((x+1)/2)` into `arcsin(x/2 + 1/2)` for no gain at all.
+ */
+function opened(
+  terms: readonly { term: Node; negated: boolean }[]
+): { term: Node; negated: boolean }[] {
+  if (terms.length < 2) return [...terms];
+  const out: { term: Node; negated: boolean }[] = [];
+  for (const { term, negated } of terms) {
+    const divisor =
+      term.type === "BinaryOperator" && term.name === "Divide"
+        ? constantValue(term.right)
+        : undefined;
+    if (
+      term.type !== "BinaryOperator" ||
+      divisor === undefined ||
+      divisor === 0
+    ) {
+      out.push({ term, negated });
+      continue;
+    }
+    const inner = topLevelTerms(term.left);
+    if (inner.length < 2) {
+      out.push({ term, negated });
+      continue;
+    }
+    for (const piece of inner) {
+      out.push({
+        term: divide(piece.term, term.right),
+        negated: negated !== piece.negated,
+      });
+    }
+  }
+  return out;
 }
 
 /**

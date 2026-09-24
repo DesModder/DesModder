@@ -34,6 +34,7 @@ import {
   binop,
   constantValue,
   greatestCommonDivisor,
+  id,
   negative,
   number,
   quotientFactors,
@@ -101,6 +102,16 @@ export function fold(node: Node): Node {
     default:
       return node;
   }
+}
+
+/** Whether a term already has a fraction bar in it, ignoring signs. */
+function isFractionLike(node: Node): boolean {
+  if (node.type === "Negative") return isFractionLike(node.arg);
+  if (node.type !== "BinaryOperator") return false;
+  if (node.name === "Divide") return true;
+  return node.name === "Multiply" || node.name === "CrossMultiply"
+    ? isFractionLike(node.left) || isFractionLike(node.right)
+    : false;
 }
 
 function foldBinary(node: BinaryOperator): Node {
@@ -261,6 +272,39 @@ function foldBinary(node: BinaryOperator): Node {
     return fold(
       binop(node.name === "Add" ? "Subtract" : "Add", left, number(-rc))
     );
+
+  // A bracket after a plus sign is a bracket that can go, and unlike the one
+  // after a minus it does not even change a sign. `a + (b + c)` is `a + b + c`,
+  // which is what a sum of three terms should look like however it was built.
+  if (
+    node.name === "Add" &&
+    right.type === "BinaryOperator" &&
+    (right.name === "Add" || right.name === "Subtract")
+  ) {
+    const head = fold(binop("Add", left, right.left));
+    return fold(binop(right.name, head, right.right));
+  }
+
+  // A number in front of a sum that already contains a fraction. The same
+  // narrow case as the split below and for the same reason: `4(arcsin(x/2)/2 +
+  // x sqrt(4-x^2)/8)` is a bracket wrapped round two fractions, and
+  // multiplying it through is what turns it back into two terms. A sum with no
+  // fraction in it is left alone, because `2(x+1)` is shorter than `2x+2`.
+  if (
+    (node.name === "Multiply" || node.name === "CrossMultiply") &&
+    lc !== undefined &&
+    right.type === "BinaryOperator" &&
+    (right.name === "Add" || right.name === "Subtract") &&
+    (isFractionLike(right.left) || isFractionLike(right.right))
+  ) {
+    return fold(
+      binop(
+        right.name,
+        binop("Multiply", left, right.left),
+        binop("Multiply", left, right.right)
+      )
+    );
+  }
 
   // A bracket after a minus sign is a bracket that can go. `a - (b - c)` is
   // `a - b + c`, and the form with the bracket in it is what integration by
@@ -436,6 +480,32 @@ function foldBinary(node: BinaryOperator): Node {
           binop("Divide", binop("Multiply", left, right.right), right.left)
         );
       }
+      // A sum over a *number* splits, but only when one of its terms is
+      // already a fraction. This is `expand`'s rewrite narrowed twice over.
+      //
+      // A constant denominator cannot be zero for some x and cannot cancel
+      // against the numerator, so there is no domain to lose: that is the
+      // first narrowing, and it is what makes this a fold rather than a
+      // choice. The second is that splitting is only an improvement when it
+      // removes a *stack* -- `(sec x tan x + ln|sec x + tan x|)/2` reads
+      // better whole, and `(x/2 + sin 4x/8)/4` reads as a fraction whose
+      // numerator is two fractions, which is what a half-angle identity
+      // leaves behind every time.
+      if (
+        rc !== undefined &&
+        rc !== 0 &&
+        left.type === "BinaryOperator" &&
+        (left.name === "Add" || left.name === "Subtract") &&
+        (isFractionLike(left.left) || isFractionLike(left.right))
+      ) {
+        return fold(
+          binop(
+            left.name,
+            binop("Divide", left.left, right),
+            binop("Divide", left.right, right)
+          )
+        );
+      }
       // A sign anywhere on a fraction belongs in front of it.
       if (left.type === "Negative")
         return fold(negative(binop("Divide", left.arg, right)));
@@ -446,6 +516,44 @@ function foldBinary(node: BinaryOperator): Node {
     case "Exponent":
       if (rc === 1) return left;
       if (rc === 0) return number(1);
+      // A power of a square root is a half-integer power of what is under it.
+      // Safe in the direction it is written: `sqrt(u)` is only defined where
+      // `u` is not negative, so raising it and halving the exponent agree
+      // everywhere the left-hand side exists. The other direction is not --
+      // `sqrt(u^2)` is `|u|` -- and is not done.
+      if (
+        rc !== undefined &&
+        Number.isInteger(rc) &&
+        left.type === "FunctionCall" &&
+        left.callee.symbol === "sqrt" &&
+        left.args.length === 1
+      ) {
+        return fold(
+          binop("Exponent", left.args[0], rationalNode({ n: rc, d: 2 }))
+        );
+      }
+      // `e^{ln u}` is `u`, which is what the logarithmic substitution leaves
+      // behind every time it puts the logarithm back. Safe in this direction
+      // only: `ln(e^u)` is `u` for every real u, but that is a different rule
+      // and is not needed here.
+      if (
+        left.type === "Identifier" &&
+        left.symbol === "e" &&
+        right.type === "FunctionCall" &&
+        right.callee.symbol === "ln" &&
+        right.args.length === 1
+      ) {
+        return right.args[0];
+      }
+      // And a one-half power is a square root, which is how it is written.
+      // The two rules cannot chase each other: this one only fires on exactly
+      // one half, and the one above never produces it.
+      {
+        const exponent = rationalOf(right);
+        if (exponent !== undefined && exponent.n === 1 && exponent.d === 2) {
+          return { type: "FunctionCall", callee: id("sqrt"), args: [left] };
+        }
+      }
       // One to any power is one, whatever the power is. A series built around
       // a function of `ax^k` carries `a^{e(n)}`, and for the ordinary case
       // where `a` is 1 that is a `1^{2n+1}` sitting in the middle of every
@@ -620,9 +728,23 @@ function foldKnownValue(name: string, args: Node[]): Node | undefined {
     case "sign":
       return number(Math.sign(argument));
     case "sqrt": {
-      // Only a perfect square, so no irrational is turned into a decimal.
+      // A perfect square comes out whole, and anything else comes out with its
+      // square factor taken outside: `sqrt(12)` is `2 sqrt(3)`. Never a
+      // decimal -- what is left under the root stays under it, which is the
+      // only way `sqrt(3)` can be an answer rather than 1.7320508.
+      if (!Number.isInteger(argument) || argument < 0) return undefined;
       const root = Math.sqrt(argument);
-      return Number.isInteger(root) ? number(root) : undefined;
+      if (Number.isInteger(root)) return number(root);
+      for (let factor = Math.floor(root); factor >= 2; factor -= 1) {
+        const square = factor * factor;
+        if (argument % square !== 0) continue;
+        return binop("Multiply", number(factor), {
+          type: "FunctionCall",
+          callee: id("sqrt"),
+          args: [number(argument / square)],
+        });
+      }
+      return undefined;
     }
     default:
       return undefined;

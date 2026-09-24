@@ -43,7 +43,9 @@
  * thing arrived at more slowly. Bigger first is also the shape that fails
  * fastest when it is wrong.
  */
+import { linearIn } from "./integrate";
 import {
+  constantValue,
   dependsOn,
   differentiate,
   fold,
@@ -51,6 +53,8 @@ import {
   identifiersIn,
   multiply,
   nodeCount,
+  number,
+  replaceIdentifier,
   replaceSubtree,
   sameTree,
   SymbolicError,
@@ -133,7 +137,9 @@ function tryCandidate(
     left: node,
     right: derivative,
   });
-  const rewritten = fold(replaceSubtree(quotient, u, identifier(name)));
+  const rewritten = fold(
+    replacePowers(replaceSubtree(quotient, u, identifier(name)), u, name)
+  );
   // The test. Anything still mentioning x is not a function of u.
   if (dependsOn(rewritten, variable)) return undefined;
   return { u, name, integrand: rewritten, derivative };
@@ -141,6 +147,51 @@ function tryCandidate(
 
 function identifier(symbol: string) {
   return { type: "Identifier", symbol } as const;
+}
+
+/**
+ * Powers of the same base as `u`, rewritten as powers of `u`.
+ *
+ * Matching the subexpression exactly is not enough, and the two cases where it
+ * is not are both ordinary. `x/(x^4+1)` wants `u = x^2`, and `x^4` does not
+ * contain `x^2` anywhere -- it *is* `u^2`, and nothing but arithmetic on the
+ * exponents says so. `e^x/(e^{2x}+1)` is the same thing with a symbolic
+ * exponent: `2x` over `x` is 2.
+ *
+ * Only a whole positive multiple, because `u^{1/2}` is a root with a sign
+ * question attached and `u^{-1}` would be a substitution that makes the
+ * integrand worse.
+ */
+function replacePowers(node: Node, u: Node, name: string): Node {
+  if (u.type !== "BinaryOperator" || u.name !== "Exponent") return node;
+  const base = u.left;
+  const step = u.right;
+  const rewrite = (child: Node): Node => {
+    if (
+      child.type !== "BinaryOperator" ||
+      child.name !== "Exponent" ||
+      !sameTree(child.left, base)
+    ) {
+      return child;
+    }
+    const ratio = constantValue(
+      fold({
+        type: "BinaryOperator",
+        name: "Divide",
+        left: child.right,
+        right: step,
+      })
+    );
+    if (ratio === undefined || !Number.isInteger(ratio) || ratio < 1)
+      return child;
+    return {
+      type: "BinaryOperator",
+      name: "Exponent",
+      left: identifier(name),
+      right: { type: "Constant", value: ratio },
+    };
+  };
+  return mapTree(node, rewrite);
 }
 
 /**
@@ -171,9 +222,69 @@ function candidates(node: Node, variable: string): Node[] {
     if (found.some((existing) => sameTree(existing, child))) return;
     found.push(child);
   });
+  // A candidate does not have to be *in* the tree. `x/(x^4+1)` wants
+  // `u = x^2`, and `x^2` appears nowhere in it -- what appears is `x^4`, which
+  // is `u^2`. So every power in the tree also offers its own roots, which is
+  // the one family of useful substitutions that is not a subexpression.
+  for (const child of [...found]) {
+    for (const root of lowerPowers(child)) {
+      if (!found.some((existing) => sameTree(existing, root))) found.push(root);
+    }
+  }
   // Largest first, so that the cap keeps the candidates most likely to help.
   found.sort((a, b) => nodeCount(b) - nodeCount(a));
   return found.slice(0, MAX_CANDIDATES);
+}
+
+/**
+ * The same base raised to a whole fraction of the same power.
+ *
+ * `x^6` offers `x^2` and `x^3`, because a substitution of either turns it into
+ * a square or a cube. `e^{4x}` offers `e^{2x}` and `e^{x}` the same way, which
+ * is the case that matters for every integral of an exponential over another.
+ */
+function lowerPowers(node: Node): Node[] {
+  if (node.type !== "BinaryOperator" || node.name !== "Exponent") return [];
+  const exponent = fold(node.right);
+  const whole = constantValue(exponent);
+  const out: Node[] = [];
+  const raise = (to: Node): Node => ({
+    type: "BinaryOperator",
+    name: "Exponent",
+    left: node.left,
+    right: to,
+  });
+  if (whole !== undefined && Number.isInteger(whole) && whole >= 2) {
+    for (let d = 1; d < whole; d += 1) {
+      if (whole % d === 0) out.push(d === 1 ? node.left : raise(number(d)));
+    }
+    return out;
+  }
+  // A symbolic exponent with a numeric factor: `e^{4x}` is `(e^{x})^4`.
+  if (
+    exponent.type === "BinaryOperator" &&
+    (exponent.name === "Multiply" || exponent.name === "CrossMultiply")
+  ) {
+    const factor = constantValue(exponent.left);
+    if (factor !== undefined && Number.isInteger(factor) && factor >= 2) {
+      for (let d = 1; d < factor; d += 1) {
+        if (factor % d !== 0) continue;
+        out.push(
+          raise(
+            d === 1
+              ? exponent.right
+              : {
+                  type: "BinaryOperator",
+                  name: "Multiply",
+                  left: number(d),
+                  right: exponent.right,
+                }
+          )
+        );
+      }
+    }
+  }
+  return out;
 }
 
 /**
@@ -311,4 +422,77 @@ function mapTree(node: Node, on: (child: Node) => Node): Node {
             }
           : node;
   return on(rebuilt);
+}
+
+/**
+ * `x` written in terms of a logarithm that is in the way.
+ *
+ * `∫cos(ln x)dx` has a logarithm nothing can get past: substituting `u = ln x`
+ * leaves `x` behind in the `dx`, and there is no `u` whose derivative divides
+ * it out. What works is the same move trigonometric substitution makes -- go
+ * the other way. With `x = e^u` the integrand becomes `e^u cos u`, which is the
+ * cyclic pair, and the logarithm is gone rather than merely renamed.
+ *
+ * The argument has to be linear, so that the inverse is one exponential rather
+ * than a solve, and every logarithm in the integrand has to be of the *same*
+ * argument, because one new variable stands for one of them.
+ */
+export function findLogSubstitution(
+  node: Node,
+  variable: string
+): { integrand: Node; name: string; back: (node: Node) => Node } | undefined {
+  const logs: Node[] = [];
+  visit(node, (child) => {
+    if (child.type !== "FunctionCall" || child.args.length !== 1) return;
+    if (child.callee.symbol !== "ln") return;
+    if (!dependsOn(child.args[0], variable)) return;
+    if (logs.some((existing) => sameTree(existing, child))) return;
+    logs.push(child);
+  });
+  if (logs.length !== 1) return undefined;
+  const [logarithm] = logs;
+  const [inside] = (logarithm as { args: Node[] }).args;
+  const linear = linearIn(inside, variable);
+  if (linear === undefined) return undefined;
+  const slope = constantValue(fold(linear.a));
+  const intercept = constantValue(fold(linear.b));
+  if (slope === undefined || slope === 0 || intercept === undefined)
+    return undefined;
+
+  const name = freshName(node, ["u", "w", "s", "v"]);
+  const u = identifier(name);
+  const exponential: Node = {
+    type: "BinaryOperator",
+    name: "Exponent",
+    left: identifier("e"),
+    right: u,
+  };
+  // ln(ax+b) = u means x = (e^u - b)/a, and dx = e^u du / a.
+  const inverse = divideNodes(
+    {
+      type: "BinaryOperator",
+      name: "Subtract",
+      left: exponential,
+      right: numberNode(intercept),
+    },
+    numberNode(slope)
+  );
+  const jacobian = divideNodes(exponential, numberNode(slope));
+
+  const withoutLog = replaceSubtree(node, logarithm, u);
+  const rewritten = replaceIdentifier(withoutLog, variable, inverse);
+  if (dependsOn(rewritten, variable)) return undefined;
+  return {
+    integrand: fold(multiply(rewritten, jacobian)),
+    name,
+    back: (answer) => fold(replaceIdentifier(answer, name, logarithm)),
+  };
+}
+
+function numberNode(value: number): Node {
+  return { type: "Constant", value };
+}
+
+function divideNodes(left: Node, right: Node): Node {
+  return { type: "BinaryOperator", name: "Divide", left, right };
 }

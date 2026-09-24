@@ -24,6 +24,7 @@
  */
 import { Aug } from "../../../../text-mode-core";
 import {
+  collectLikeTerms,
   constantValue,
   differentiate,
   expand,
@@ -34,11 +35,15 @@ import {
 } from "../../../symbolic";
 import {
   asSinesAndCosines,
+  findLogSubstitution,
   findSubstitution,
-  oddTrigPower,
 } from "./substitute";
+import { findHalfAngleSubstitution } from "./weierstrass";
+import { trigRewrite } from "./trigProducts";
 import { rationalIntegral } from "./rationalIntegral";
+import { partialFractionIntegral } from "./partialFractions";
 import { findTrigSubstitution } from "./trigSubstitution";
+import { findRootSubstitution } from "./rootSubstitution";
 import {
   add,
   binop,
@@ -267,7 +272,24 @@ function attempt(
   variable: string
 ): { ok: true; value: Node } | { ok: false; error: IntegrationError } {
   try {
-    return { ok: true, value: fold(antiderivative(node, variable)) };
+    // Collected and ordered on the way out, which is the one place an answer
+    // is tidied for a reader rather than for a rule. `sin^4` comes back as
+    // `x/4 - sin(2x)/4 + x/8 + ...` because the half-angle identity is applied
+    // twice, and the two multiples of x are not next to each other -- which is
+    // exactly the case the fold cannot collect, since it works one operator at
+    // a time.
+    const tidied = fold(collectLikeTerms(fold(antiderivative(node, variable))));
+    // And once more with the brackets opened, keeping whichever is shorter.
+    // Integration by parts leaves products of sums -- `sqrt(x)(2 sqrt(x)
+    // arctan sqrt(x) - ln(x+1)) - ...` is nine terms that collapse to three --
+    // and the terms inside them can only collect against the ones outside once
+    // the brackets are gone. Kept only when it helps, because multiplying out
+    // `(x+1)^8/8` would be the same trade in reverse.
+    const opened = fold(collectLikeTerms(fold(expand(tidied).node)));
+    return {
+      ok: true,
+      value: nodeCount(opened) < nodeCount(tidied) ? opened : tidied,
+    };
   } catch (error) {
     if (!(error instanceof IntegrationError)) throw error;
     return { ok: false, error };
@@ -330,20 +352,116 @@ function byRewrite(
     }
   }
 
-  const reduced = oddTrigPower(node, variable);
-  if (reduced !== undefined) {
-    // Multiplied out first, so the substitution that follows sees a sum of
-    // terms rather than a power of one.
-    return antiderivative(fold(expand(reduced).node), variable, depth + 1);
+  // A root of something linear, cleared by making the root the new variable.
+  // After the trigonometric substitutions, which handle a root of a quadratic
+  // and would otherwise never be reached for one.
+  const rooted = findRootSubstitution(node, variable);
+  if (rooted !== undefined) {
+    try {
+      const inner = antiderivative(rooted.integrand, rooted.name, depth + 1);
+      return rooted.back(inner);
+    } catch (error) {
+      if (!(error instanceof IntegrationError)) throw error;
+    }
   }
 
-  // Last, because it makes an expression longer whenever it does not help.
+  // Every product and power of trigonometric functions, rewritten into
+  // something with a substitution in it. Multiplied out first, so what comes
+  // back is a sum of terms rather than a power of one.
+  const reduced = trigRewrite(node, variable);
+  if (reduced !== undefined) {
+    try {
+      return antiderivative(fold(expand(reduced).node), variable, depth + 1);
+    } catch (error) {
+      if (!(error instanceof IntegrationError)) throw error;
+    }
+  }
+
+  // A quotient is a product with a negative power, and the rules for a
+  // product -- parts, and which factor becomes u -- are what finish
+  // `ln(x)/x^2`. Last of the rewrites that change the shape rather than the
+  // spelling, because it turns a quotient nobody asked to see as a product
+  // into one, and parts on the wrong pair gives a correct answer three times
+  // the length.
+  if (
+    node.type === "BinaryOperator" &&
+    node.name === "Divide" &&
+    dependsOn(node.left, variable) &&
+    dependsOn(node.right, variable)
+  ) {
+    try {
+      // Handed to the product rules *unfolded*, deliberately. Folding it puts
+      // the fraction straight back together, and the whole point is to reach
+      // integration by parts with `dv = dx/x^2` rather than to look at the
+      // quotient again.
+      return binaryIntegral(
+        {
+          type: "BinaryOperator",
+          name: "Multiply",
+          left: node.left,
+          right: divide(number(1), node.right),
+        },
+        variable,
+        depth + 1
+      );
+    } catch (error) {
+      if (!(error instanceof IntegrationError)) throw error;
+    }
+  }
+
+  // A logarithm or an inverse function standing on its own, with an argument
+  // the table cannot take. `∫f dx = x f - ∫x f'` is integration by parts with
+  // `dv = dx`, and it is how every entry in that table was derived; doing it
+  // here rather than adding more entries is what covers `arctan(sqrt x)` and
+  // `(ln x)^2` without a rule for each.
+  if (isInverseOrLog(node)) {
+    try {
+      const x = id(variable);
+      const derivative = fold(differentiate(node, variable));
+      return subtract(
+        multiply(x, node),
+        antiderivative(fold(multiply(x, derivative)), variable, depth + 1)
+      );
+    } catch (error) {
+      if (!(error instanceof IntegrationError)) throw error;
+    }
+  }
+
+  // A logarithm nothing can get past, cleared by writing the variable as an
+  // exponential. The inverse direction, like the two substitutions above.
+  const logged = findLogSubstitution(node, variable);
+  if (logged !== undefined) {
+    try {
+      const inner = antiderivative(logged.integrand, logged.name, depth + 1);
+      return logged.back(inner);
+    } catch (error) {
+      if (!(error instanceof IntegrationError)) throw error;
+    }
+  }
+
+  // Rewriting everything as sines and cosines makes an expression longer
+  // whenever it does not help, so it waits until the shape-changing rewrites
+  // have all been tried.
   const plain = asSinesAndCosines(node, variable);
   if (plain !== undefined) {
     try {
       return antiderivative(fold(plain), variable, depth + 1);
     } catch (error) {
       if (!(error instanceof IntegrationError)) throw error;
+    }
+  }
+
+  // The half-angle substitution, absolutely last. It works on far more than it
+  // should be used for -- every integral of a sine is a rational function of
+  // one -- so it only ever sees an integrand that nothing else could touch.
+  const halved = findHalfAngleSubstitution(node, variable);
+  if (halved !== undefined) {
+    for (const candidate of halved.integrands) {
+      try {
+        return halved.back(antiderivative(candidate, halved.name, depth + 1));
+      } catch (error) {
+        if (!(error instanceof IntegrationError)) throw error;
+      }
     }
   }
 
@@ -449,6 +567,12 @@ function binaryIntegral(
       if (dependsOn(left, variable)) {
         // One polynomial over another is its own family, decided by the
         // denominator's discriminant rather than by its shape.
+        // The decomposition first, where it applies: `x/((x-1)(x+2))` split
+        // into two logarithms is the answer, and read through a discriminant
+        // it is a logarithm of a product minus a logarithm of a quotient --
+        // the same function, and not one anybody would recognise.
+        const split = partialFractionIntegral(left, right, variable);
+        if (split !== undefined) return split;
         const rational = rationalIntegral(left, right, variable, (piece) =>
           antiderivative(piece, variable, depth)
         );
@@ -491,6 +615,19 @@ function binaryIntegral(
         antiderivative(piece, variable, depth)
       );
       if (rational !== undefined) return rational;
+
+      // Three factors, a repeated one, or a denominator not written as a
+      // product at all: the general decomposition, which is what most of a
+      // partial-fractions exercise actually looks like.
+      const decomposed = partialFractionIntegral(left, right, variable);
+      if (decomposed !== undefined) return decomposed;
+
+      // c / (x^2 + s^2), where `s` is written as a square and so cannot be
+      // negative. That is the one symbolic case the discriminant rule cannot
+      // take: it needs the *sign* of `4ac - b^2`, and a square says what the
+      // sign is without saying what the number is.
+      const symbolic = squaredDenominatorIntegral(left, right, variable);
+      if (symbolic !== undefined) return symbolic;
 
       // c / sqrt(a - x^2) and its two relatives, which are the inverse
       // trigonometric and hyperbolic functions and nothing else. They arrive
@@ -788,8 +925,62 @@ const INVERSE_OR_LOG = new Set([
   "arctanh",
 ]);
 
-function isInverseOrLog(node: Node) {
-  return node.type === "FunctionCall" && INVERSE_OR_LOG.has(node.callee.symbol);
+function isInverseOrLog(node: Node): boolean {
+  if (node.type === "FunctionCall")
+    return INVERSE_OR_LOG.has(node.callee.symbol);
+  // A power of one counts too. `(ln x)^2` gets simpler when differentiated in
+  // exactly the same way `ln x` does -- twice as slowly, which is why the
+  // recursion budget is what stops it rather than the rule.
+  if (node.type === "BinaryOperator" && node.name === "Exponent") {
+    const exponent = constantValue(fold(node.right));
+    return (
+      exponent !== undefined &&
+      Number.isInteger(exponent) &&
+      exponent >= 1 &&
+      isInverseOrLog(node.left)
+    );
+  }
+  return false;
+}
+
+/**
+ * `c / (u² + s²)` with `s` free of the variable, which is an arctangent.
+ *
+ * The one case with a symbolic constant that can still be decided. Everything
+ * else in the rational family turns on the sign of a discriminant, and with a
+ * symbol there is no way to know it -- but `a²` is written as a square, and a
+ * square is not negative whatever `a` is. That is enough to choose the
+ * arctangent over the pair of logarithms.
+ *
+ * The answer divides by `a` rather than by `|a|`, which is the ordinary
+ * convention: an antiderivative is defined up to a constant and the two differ
+ * by a sign, and every table prints it this way.
+ */
+function squaredDenominatorIntegral(
+  numerator: Node,
+  denominator: Node,
+  variable: string
+): Node | undefined {
+  if (dependsOn(numerator, variable)) return undefined;
+  const parts = coefficientsIn(denominator, variable, 2);
+  if (parts === undefined || parts.length !== 3) return undefined;
+  const linearTerm = constantValue(fold(parts[1]));
+  const quadratic = constantValue(fold(parts[2]));
+  if (linearTerm !== 0 || quadratic !== 1) return undefined;
+  const constant = fold(parts[0]);
+  if (
+    constant.type !== "BinaryOperator" ||
+    constant.name !== "Exponent" ||
+    constantValue(constant.right) !== 2 ||
+    dependsOn(constant.left, variable)
+  ) {
+    return undefined;
+  }
+  const scale = constant.left;
+  return multiply(
+    numerator,
+    divide(call("arctan", divide(id(variable), scale)), scale)
+  );
 }
 
 /**
@@ -831,32 +1022,53 @@ function rootDenominatorIntegral(
   const constant = constantValue(fold(inside[0]));
   const linearTerm = constantValue(fold(inside[1]));
   const quadratic = constantValue(fold(inside[2]));
-  // A linear term would mean the square is not centred on the origin. It could
-  // be completed, and doing so is the substitution `u = x + b/2a` that the
-  // search reaches first, so there is nothing here for it to add.
   if (
     constant === undefined ||
-    linearTerm !== 0 ||
+    linearTerm === undefined ||
     quadratic === undefined ||
     quadratic === 0
   ) {
     return undefined;
   }
 
-  const scale = call("sqrt", number(Math.abs(constant / quadratic)));
-  const argument = divide(id(variable), scale);
-  const magnitude = call("sqrt", number(Math.abs(quadratic)));
-  const named = (name: string) => divide(call(name, argument), magnitude);
+  // Completed, so that a linear term is a shift rather than a refusal.
+  // `3 - 2x - x^2` is `4 - (x+1)^2`, which is the arcsine with its argument
+  // moved along, and it arrives written the first way every time.
+  const shift = linearTerm / (2 * quadratic);
+  const remainder = constant - (linearTerm * linearTerm) / (4 * quadratic);
+  const shifted = add(id(variable), exactly(shift));
+  if (remainder === 0) return undefined;
 
-  if (constant > 0 && quadratic < 0)
-    return multiply(numerator, named("arcsin"));
-  if (constant > 0 && quadratic > 0)
-    return multiply(numerator, named("arcsinh"));
-  if (constant < 0 && quadratic > 0)
-    return multiply(numerator, named("arccosh"));
+  // |u| / sqrt(|a|), where the ratio decides which of the three this is.
+  const scale = call("sqrt", exactly(Math.abs(remainder / quadratic)));
+  const argument = divide(shifted, scale);
+  const magnitude = call("sqrt", exactly(Math.abs(quadratic)));
+  const named = (name: string) =>
+    multiply(numerator, divide(call(name, argument), magnitude));
+
+  if (remainder > 0 && quadratic < 0) return named("arcsin");
+  if (remainder > 0 && quadratic > 0) return named("arcsinh");
+  if (remainder < 0 && quadratic > 0) return named("arccosh");
   // Both negative: the whole thing under the root is negative everywhere, so
   // there is no real function to integrate.
   return undefined;
+}
+
+/**
+ * A number as a node, exactly.
+ *
+ * Completing a square divides by `2a` and by `4a`, and JavaScript hands back
+ * `0.5` for the commonest case of all. Continued fractions recover the
+ * fraction, which is what keeps an answer exact.
+ */
+function exactly(value: number): Node {
+  if (Number.isInteger(value)) return number(value);
+  for (let denominator = 1; denominator <= 10000; denominator += 1) {
+    const scaled = value * denominator;
+    if (Math.abs(scaled - Math.round(scaled)) < 1e-9)
+      return divide(number(Math.round(scaled)), number(denominator));
+  }
+  return number(value);
 }
 
 /**
@@ -909,6 +1121,15 @@ function trigPowerIntegral(
       return subtract(x, over(call("tanh", argument)));
     case "coth":
       return subtract(x, over(call("coth", argument)));
+    case "sinh":
+    case "cosh": {
+      // cosh(2u) = 1 + 2sinh^2 = 2cosh^2 - 1, which is the half-angle identity
+      // with the sign that tells the two families apart.
+      const doubled = call("sinh", multiply(number(2), argument));
+      const half = divide(x, number(2));
+      const wave = divide(doubled, multiply(number(4), linear.a));
+      return name === "sinh" ? subtract(wave, half) : add(wave, half);
+    }
     case "sin":
     case "cos": {
       // sin² = (1 - cos 2u)/2 and cos² = (1 + cos 2u)/2. The doubled argument

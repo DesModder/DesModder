@@ -139,7 +139,7 @@ describe("antiderivatives of what an AP course integrates", () => {
     // Here D is -1, so the two logarithms come back the other way round.
     check(
       div(number(1), mul(x, sub(x, number(1)))),
-      "-\\left(\\ln\\left|x\\right|-\\ln\\left|x-1\\right|\\right)"
+      "\\ln\\left|x-1\\right|-\\ln\\left|x\\right|"
     );
   });
 

@@ -43,7 +43,12 @@ export {
 } from "./differentiate";
 export { absToBars, dropRedundantParens, toLatex } from "./latex";
 export { condense, type Condensed } from "./condense";
-export { expand, EXPANSION_LIMIT, type ExpandResult } from "./expand";
+export {
+  expand,
+  tidySums as collectLikeTerms,
+  EXPANSION_LIMIT,
+  type ExpandResult,
+} from "./expand";
 export { dedupe, type SimplificationNote } from "./notes";
 export {
   agreesOnSamples,
@@ -54,6 +59,7 @@ export {
 } from "./evaluate";
 export {
   add,
+  asRatio,
   binop,
   call,
   constantValue,
@@ -77,8 +83,10 @@ export {
   rebuildSum,
   replaceIdentifier,
   replaceSubtree,
+  sameProduct,
   sameTree,
   splitCoefficient,
+  splitRationalCoefficient,
   subtract,
   topLevelTerms,
   visit,

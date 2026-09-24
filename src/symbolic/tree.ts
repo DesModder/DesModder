@@ -418,3 +418,168 @@ export function freshName(node: Node, preferred: readonly string[]): string {
     if (!taken.has(name)) return name;
   }
 }
+
+/**
+ * A term split into an exact rational coefficient and what it multiplies.
+ *
+ * `splitCoefficient` only sees a whole number in front, which is enough to
+ * collect `2x` against `5x` and not enough for `x/4` against `x/8` — and the
+ * second is what a half-angle identity produces, twice, in every even power of
+ * a sine. Reading the division as part of the coefficient is what lets those
+ * collect into `3x/8`.
+ *
+ * Rational rather than a plain number throughout, because the whole point is
+ * that the collected coefficient goes into a printed answer: `0.375x` is the
+ * same value and is not the same answer.
+ */
+export function splitRationalCoefficient(node: Node): {
+  coefficient: { n: number; d: number };
+  rest: Node;
+} {
+  const whole = rationalOf(node);
+  if (whole !== undefined) return { coefficient: whole, rest: number(1) };
+  if (node.type === "Negative") {
+    const inner = splitRationalCoefficient(node.arg);
+    return {
+      coefficient: { n: -inner.coefficient.n, d: inner.coefficient.d },
+      rest: inner.rest,
+    };
+  }
+  if (node.type === "BinaryOperator") {
+    if (node.name === "Multiply" || node.name === "CrossMultiply") {
+      const left = rationalOf(node.left);
+      if (left !== undefined) {
+        const inner = splitRationalCoefficient(node.right);
+        return {
+          coefficient: {
+            n: left.n * inner.coefficient.n,
+            d: left.d * inner.coefficient.d,
+          },
+          rest: inner.rest,
+        };
+      }
+    }
+    if (node.name === "Divide") {
+      const right = rationalOf(node.right);
+      if (right !== undefined && right.n !== 0) {
+        const inner = splitRationalCoefficient(node.left);
+        return {
+          coefficient: {
+            n: inner.coefficient.n * right.d,
+            d: inner.coefficient.d * right.n,
+          },
+          rest: inner.rest,
+        };
+      }
+    }
+  }
+  return { coefficient: { n: 1, d: 1 }, rest: node };
+}
+
+/**
+ * An expression as a single numerator over a single denominator.
+ *
+ * Built from the four operations and integer powers; anything else is its own
+ * numerator over one. The point is not tidiness — `x + 1/x` over a common
+ * denominator reads worse, not better — but that a *rule* can only see a
+ * rational function when it is written as one. The tangent half-angle
+ * substitution turns `1/(1+cos x)` into a tower of fractions inside fractions,
+ * and every one of them is a rational function of the new variable that no rule
+ * can recognise until it is over one bar.
+ *
+ * Nothing is cancelled and nothing is multiplied out: the caller folds and
+ * expands the two halves if it wants them as polynomials.
+ */
+export function asRatio(node: Node): { numerator: Node; denominator: Node } {
+  const whole = (value: Node) => ({ numerator: value, denominator: number(1) });
+  switch (node.type) {
+    case "Negative": {
+      const inner = asRatio(node.arg);
+      return { ...inner, numerator: negative(inner.numerator) };
+    }
+    case "BinaryOperator": {
+      const left = asRatio(node.left);
+      const right = asRatio(node.right);
+      switch (node.name) {
+        case "Add":
+        case "Subtract": {
+          const scaledLeft = multiply(left.numerator, right.denominator);
+          const scaledRight = multiply(right.numerator, left.denominator);
+          return {
+            numerator:
+              node.name === "Add"
+                ? add(scaledLeft, scaledRight)
+                : subtract(scaledLeft, scaledRight),
+            denominator: multiply(left.denominator, right.denominator),
+          };
+        }
+        case "Multiply":
+        case "CrossMultiply":
+          return {
+            numerator: multiply(left.numerator, right.numerator),
+            denominator: multiply(left.denominator, right.denominator),
+          };
+        case "Divide":
+          return {
+            numerator: multiply(left.numerator, right.denominator),
+            denominator: multiply(left.denominator, right.numerator),
+          };
+        case "Exponent": {
+          const exponent = constantValue(node.right);
+          if (exponent === undefined || !Number.isInteger(exponent))
+            return whole(node);
+          const raise = (value: Node, to: number): Node =>
+            to === 1 ? value : binop("Exponent", value, number(to));
+          if (exponent >= 0) {
+            return {
+              numerator: raise(left.numerator, exponent),
+              denominator: raise(left.denominator, exponent),
+            };
+          }
+          return {
+            numerator: raise(left.denominator, -exponent),
+            denominator: raise(left.numerator, -exponent),
+          };
+        }
+        default:
+          return whole(node);
+      }
+    }
+    default:
+      return whole(node);
+  }
+}
+
+/**
+ * Whether two expressions are the same product, in any order.
+ *
+ * Not a canonical form and not a step toward one. It answers exactly one
+ * question — are these the same factors? — and multiplication being
+ * commutative is not a matter of opinion, so the answer is not either. What it
+ * is *not* able to do is see that `x(x+1)` and `x²+x` are the same, which is
+ * where a canonical form would have to start.
+ *
+ * It earns its place in collecting like terms. Integration by parts produces
+ * `2(x arctan√x)` in one place and `arctan(√x)x` in another, and left as two
+ * different terms an answer carries both.
+ */
+export function sameProduct(a: Node, b: Node): boolean {
+  if (sameTree(a, b)) return true;
+  const left: { node: Node; inNumerator: boolean }[] = [];
+  const right: { node: Node; inNumerator: boolean }[] = [];
+  quotientFactors(a, true, left);
+  quotientFactors(b, true, right);
+  if (left.length !== right.length) return false;
+  const taken = new Array<boolean>(right.length).fill(false);
+  for (const factor of left) {
+    const match = right.findIndex(
+      (other, index) =>
+        !taken[index] &&
+        other.inNumerator === factor.inNumerator &&
+        sameTree(other.node, factor.node)
+    );
+    if (match < 0) return false;
+    taken[match] = true;
+  }
+  return true;
+}

@@ -83,6 +83,11 @@ export function findTrigSubstitution(
   node: Node,
   variable: string
 ): TrigSubstitution | undefined {
+  // A half-integer power is a root with something else done to it, and it is
+  // written that way constantly: `(1+x^2)^{3/2}` is `sqrt(1+x^2)^3`. Rewritten
+  // first, so that everything below has only one shape to look for and the
+  // substitution has a subtree it can replace.
+  node = asRootPowers(node);
   const form = firstForm(node, variable);
   if (form === undefined) return undefined;
   const name = freshName(node, ["\\theta", "t", "w"]);
@@ -121,6 +126,31 @@ export function findTrigSubstitution(
     name,
     back: (answer) => fold(backSubstitute(answer, name, variable, form)),
   };
+}
+
+/** `A^{m/2}` for odd m, rewritten as `sqrt(A)^m`. */
+function asRootPowers(node: Node): Node {
+  return mapTree(node, (child) => {
+    if (child.type !== "BinaryOperator" || child.name !== "Exponent")
+      return child;
+    const exponent = fold(child.right);
+    if (
+      exponent.type !== "BinaryOperator" ||
+      exponent.name !== "Divide" ||
+      constantValue(exponent.right) !== 2
+    ) {
+      return child;
+    }
+    const top = constantValue(exponent.left);
+    if (top === undefined || !Number.isInteger(top) || Math.abs(top) % 2 !== 1)
+      return child;
+    return {
+      type: "BinaryOperator",
+      name: "Exponent",
+      left: call("sqrt", child.left),
+      right: { type: "Constant", value: top },
+    };
+  });
 }
 
 /** The first root in the tree that one of the three substitutions clears. */

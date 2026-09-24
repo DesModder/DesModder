@@ -94,7 +94,10 @@ describe("what it refuses to turn into a decimal", () => {
   test("a root that is not exact is left as a root", () => {
     check(fn("sqrt", number(4)), "2");
     check(fn("sqrt", number(2)), "\\sqrt{2}");
-    check(pow(number(2), div(number(1), number(2))), "2^{\\frac{1}{2}}");
+    // A one-half power *is* a square root, and is written as one: the two
+    // are the same node after folding, which is what keeps an answer from
+    // carrying both spellings depending on which rule produced it.
+    check(pow(number(2), div(number(1), number(2))), "\\sqrt{2}");
   });
 
   test("only the function values that are exact are folded", () => {

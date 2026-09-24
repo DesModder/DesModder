@@ -48,14 +48,27 @@ const fn = (name: string, arg: Node) => functionCall(id(name), [arg]);
  */
 const SAMPLES = [0.11, 0.27, 0.41, 0.58, 0.72].map((value) => ({ x: value }));
 
-function check(integrand: Node, expected: string) {
+/**
+ * `extra` binds any parameter the integrand carries besides the variable.
+ *
+ * Without it an integrand mentioning `a` evaluates to `NaN` at every point,
+ * every point is skipped as undefined, and the numeric check passes by never
+ * having checked anything -- which is the one way this suite could be quietly
+ * worthless.
+ */
+function check(
+  integrand: Node,
+  expected: string,
+  extra: Record<string, number> = {}
+) {
   const result = integrate(integrand, "x");
   expect(emit(result)).toBe(expected);
+  const samples = SAMPLES.map((sample) => ({ ...sample, ...extra }));
   expect(
     agreesOnSamples(
       (bindings) => numericDerivative(result, "x", bindings),
       (bindings) => evaluate(integrand, bindings),
-      SAMPLES
+      samples
     )
   ).toBe(true);
 }
@@ -111,7 +124,7 @@ describe("the table, which is most of a first course", () => {
   test("the inverse functions, each of which is parts done once in advance", () => {
     check(
       fn("arctan", x),
-      "x\\arctan\\left(x\\right)-\\frac{\\ln\\left(1+x^{2}\\right)}{2}"
+      "x\\arctan\\left(x\\right)-\\frac{\\ln\\left(x^{2}+1\\right)}{2}"
     );
     check(fn("arcsin", x), "x\\arcsin\\left(x\\right)+\\sqrt{1-x^{2}}");
     check(fn("ln", x), "x\\ln\\left(x\\right)-x");
@@ -201,7 +214,7 @@ describe("one polynomial over another, decided by the discriminant", () => {
     );
     check(
       div(pow(x, number(3)), add(x, number(2))),
-      "4x-x^{2}+\\frac{x^{3}}{3}-8\\ln\\left|x+2\\right|"
+      "\\frac{x^{3}}{3}-x^{2}+4x-8\\ln\\left|x+2\\right|"
     );
   });
 
@@ -283,7 +296,7 @@ describe("trigonometric substitution, and coming back from it", () => {
   test("the quarter circle", () => {
     check(
       fn("sqrt", sub(number(1), pow(x, number(2)))),
-      "\\frac{\\arcsin\\left(x\\right)}{2}+\\frac{x\\sqrt{1-x^{2}}}{2}"
+      "\\frac{x\\sqrt{1-x^{2}}}{2}+\\frac{\\arcsin\\left(x\\right)}{2}"
     );
   });
 
@@ -299,7 +312,7 @@ describe("trigonometric substitution, and coming back from it", () => {
   test("the tangent case, which lands on a secant cube", () => {
     check(
       fn("sqrt", add(number(1), pow(x, number(2)))),
-      "\\frac{\\sqrt{1+x^{2}}x+\\ln\\left|\\sqrt{1+x^{2}}+x\\right|}{2}"
+      "\\frac{\\sqrt{x^{2}+1}x+\\ln\\left|x+\\sqrt{x^{2}+1}\\right|}{2}"
     );
   });
 });
@@ -322,5 +335,179 @@ describe("what it still refuses, and says so", () => {
 
   test("a symbolic exponent, which could be the one the power rule misses", () => {
     expect(() => integrate(pow(x, id("n")), "x")).toThrow(IntegrationError);
+  });
+});
+
+describe("partial fractions, in general rather than in two special cases", () => {
+  test("three distinct linear factors", () => {
+    check(
+      div(
+        number(1),
+        mul(mul(add(x, number(1)), add(x, number(2))), add(x, number(3)))
+      ),
+      "\\frac{\\ln\\left|x+1\\right|}{2}+\\frac{\\ln\\left|x+3\\right|}{2}-\\ln\\left|x+2\\right|"
+    );
+  });
+
+  test("a repeated factor, which needs a term over each power", () => {
+    check(
+      div(number(1), mul(x, pow(add(x, number(1)), number(2)))),
+      "\\ln\\left|x\\right|-\\ln\\left|x+1\\right|+\\frac{1}{x+1}"
+    );
+  });
+
+  test("a denominator that is not written as a product at all", () => {
+    // `x^3 - x` has to be factored before it can be decomposed, which is the
+    // rational root theorem doing the work.
+    check(
+      div(number(1), sub(pow(x, number(3)), x)),
+      "\\frac{\\ln\\left|x+1\\right|}{2}-\\ln\\left|x\\right|+\\frac{\\ln\\left|x-1\\right|}{2}"
+    );
+  });
+
+  test("an irreducible quadratic factor becomes an arctangent", () => {
+    check(
+      div(number(1), mul(pow(x, number(2)), add(pow(x, number(2)), number(1)))),
+      "-\\arctan\\left(x\\right)-\\frac{1}{x}"
+    );
+  });
+
+  test("a symbolic square in the denominator is still an arctangent", () => {
+    // The one symbolic case a discriminant cannot decide and a square can:
+    // `a^2` is not negative whatever `a` is.
+    check(
+      div(number(1), add(pow(x, number(2)), pow(id("a"), number(2)))),
+      "\\frac{\\arctan\\left(\\frac{x}{a}\\right)}{a}",
+      { a: 2.1 }
+    );
+  });
+});
+
+describe("products and powers of trigonometric functions", () => {
+  test("an even power, through the half-angle identity twice", () => {
+    check(
+      pow(fn("sin", x), number(4)),
+      "\\frac{3x}{8}-\\frac{\\sin\\left(2x\\right)}{4}+\\frac{\\sin\\left(4x\\right)}{32}"
+    );
+  });
+
+  test("a mixed product, where an odd power decides the substitution", () => {
+    check(
+      mul(pow(fn("sin", x), number(2)), pow(fn("cos", x), number(3))),
+      "\\frac{\\sin\\left(x\\right)^{3}}{3}-\\frac{\\sin\\left(x\\right)^{5}}{5}"
+    );
+    // Both even, so there is no factor to peel off and the half-angle
+    // identities are the only way down.
+    check(
+      mul(pow(fn("sin", x), number(2)), pow(fn("cos", x), number(2))),
+      "\\frac{x}{8}-\\frac{\\sin\\left(4x\\right)}{32}"
+    );
+  });
+
+  test("a tangent and a secant, by reduction", () => {
+    check(
+      pow(fn("tan", x), number(4)),
+      "x+\\frac{\\tan\\left(x\\right)^{3}}{3}-\\tan\\left(x\\right)"
+    );
+    check(
+      pow(fn("sec", x), number(4)),
+      "\\tan\\left(x\\right)+\\frac{\\tan\\left(x\\right)^{3}}{3}"
+    );
+  });
+
+  test("two waves of different frequencies, by product to sum", () => {
+    check(
+      mul(fn("sin", mul(number(3), x)), fn("cos", mul(number(2), x))),
+      "-\\frac{\\cos\\left(5x\\right)}{10}-\\frac{\\cos\\left(x\\right)}{2}"
+    );
+  });
+
+  test("a factor that is not trigonometric comes along", () => {
+    // `sin x cos x` is `sin(2x)/2`, which turns this into the cyclic pair.
+    check(
+      mul(pow(e, x), mul(fn("sin", x), fn("cos", x))),
+      "\\frac{e^{x}\\left(\\sin\\left(2x\\right)-2\\cos\\left(2x\\right)\\right)}{10}"
+    );
+  });
+});
+
+describe("substitutions that run backwards", () => {
+  test("a root of something linear becomes the new variable", () => {
+    check(
+      div(x, fn("sqrt", add(x, number(1)))),
+      "\\frac{2\\left(x+1\\right)^{\\frac{3}{2}}}{3}-2\\sqrt{x+1}"
+    );
+    check(
+      div(fn("sqrt", x), add(number(1), x)),
+      "2\\sqrt{x}-2\\arctan\\left(\\sqrt{x}\\right)"
+    );
+    check(
+      div(number(1), add(fn("sqrt", x), x)),
+      "2\\ln\\left|\\sqrt{x}+1\\right|"
+    );
+  });
+
+  test("a logarithm in the way becomes an exponential", () => {
+    // `u = ln x` leaves the `x` in `dx` behind. `x = e^u` does not.
+    check(
+      fn("cos", fn("ln", x)),
+      "\\frac{x\\left(\\cos\\left(\\ln\\left(x\\right)\\right)+\\sin\\left(\\ln\\left(x\\right)\\right)\\right)}{2}"
+    );
+  });
+
+  test("a rational function of one angle, by the half-angle tangent", () => {
+    check(
+      div(number(1), add(number(1), fn("cos", x))),
+      "\\tan\\left(\\frac{x}{2}\\right)"
+    );
+    check(
+      div(number(1), add(number(2), fn("sin", x))),
+      "\\frac{2\\arctan\\left(\\frac{2\\tan\\left(\\frac{x}{2}\\right)+1}{\\sqrt{3}}\\right)}{\\sqrt{3}}"
+    );
+  });
+
+  test("a root of a quadratic, with the square completed first", () => {
+    check(
+      div(
+        number(1),
+        fn("sqrt", sub(sub(number(3), mul(number(2), x)), pow(x, number(2))))
+      ),
+      "\\arcsin\\left(\\frac{x+1}{2}\\right)"
+    );
+  });
+});
+
+describe("what had to be found rather than matched", () => {
+  test("a substitution that is not a subexpression", () => {
+    // `x/(x^4+1)` wants `u = x^2`, and `x^2` appears nowhere in it -- what
+    // appears is `x^4`, which is `u^2`.
+    check(
+      div(x, add(pow(x, number(4)), number(1))),
+      "\\frac{\\arctan\\left(x^{2}\\right)}{2}"
+    );
+    check(
+      div(pow(e, x), add(pow(e, mul(number(2), x)), number(1))),
+      "\\arctan\\left(e^{x}\\right)"
+    );
+  });
+
+  test("a logarithm or an inverse function raised to a power", () => {
+    check(
+      pow(fn("ln", x), number(2)),
+      "x\\ln\\left(x\\right)^{2}-2\\left(x\\ln\\left(x\\right)-x\\right)"
+    );
+    check(
+      mul(x, pow(fn("ln", x), number(2))),
+      "\\frac{\\ln\\left(x\\right)^{2}x^{2}}{2}-\\frac{\\ln\\left(x\\right)x^{2}}{2}+\\frac{x^{2}}{4}"
+    );
+  });
+
+  test("a quotient handed to the product rules", () => {
+    // Not a rational function, so `ln(x)/x^2` is `ln x` times `x^{-2}` and
+    // integration by parts finishes it.
+    check(
+      div(fn("ln", x), pow(x, number(2))),
+      "-\\frac{\\ln\\left(x\\right)}{x}-\\frac{1}{x}"
+    );
   });
 });

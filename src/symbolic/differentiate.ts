@@ -46,8 +46,13 @@ export class SymbolicError extends Error {}
 const FUNCTION_DERIVATIVES: Record<string, (arg: Node) => Node> = {
   sin: (u) => call("cos", u),
   cos: (u) => negative(call("sin", u)),
-  tan: (u) => divide(number(1), power(call("cos", u), number(2))),
-  cot: (u) => negative(divide(number(1), power(call("sin", u), number(2)))),
+  // `sec^2` rather than `1/cos^2`, which is the same function and is what
+  // every table prints. It also matters mechanically: the integrator finds a
+  // substitution by dividing the integrand by `du`, and `tan^2 sec^2` divided
+  // by `sec^2` cancels while the same thing divided by `1/cos^2` does not --
+  // nothing here knows that `sec` and `cos` are reciprocals.
+  tan: (u) => power(call("sec", u), number(2)),
+  cot: (u) => negative(power(call("csc", u), number(2))),
   sec: (u) => multiply(call("sec", u), call("tan", u)),
   csc: (u) => negative(multiply(call("csc", u), call("cot", u))),
   exp: (u) => call("exp", u),
