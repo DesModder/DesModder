@@ -25,7 +25,7 @@ export default class ColorField extends Component<{ ci: ColorInput }> {
           tabindex="-1"
           ontap=""
         >
-          <i class="dcg-icon-volume" aria-hidden="true"></i>
+          <i class="dsm-icon-color" aria-hidden="true"></i>
         </div>
         <div class="dsm-color-input-container">
           <InlineMathInputView
