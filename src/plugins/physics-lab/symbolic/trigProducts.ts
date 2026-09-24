@@ -49,6 +49,7 @@ import {
   subtract,
   type Node,
 } from "../../../symbolic";
+import { linearIn } from "./integrate";
 
 /**
  * An integrand read as `c · rest · sin(u)^p · cos(u)^q`.
@@ -110,6 +111,29 @@ export function trigRewrite(node: Node, variable: string): Node | undefined {
     );
   }
 
+  // A pure tangent or cotangent, where the reduction formula is the way down
+  // and both of its pieces are ordinary. Ahead of the odd-power peel on
+  // purpose: `tan^5` is also an odd power of sine, and peeling it gives
+  // `1/(4cos^4 x) - 1/cos^2 x - ln|cos x|` -- correct, and written in secants
+  // nobody asked for. Through the reduction it is `tan^4/4 - tan^2/2 - ...`,
+  // which is the answer in the book.
+  if (q === -p && p >= 2) {
+    return scaled(
+      subtract(
+        multiply(power(tan, number(p - 2)), power(sec, number(2))),
+        power(tan, number(p - 2))
+      )
+    );
+  }
+  if (p === -q && q >= 2) {
+    return scaled(
+      subtract(
+        multiply(power(cot, number(q - 2)), power(csc, number(2))),
+        power(cot, number(q - 2))
+      )
+    );
+  }
+
   // An odd positive power of either one: peel a factor off to be `du` and
   // write what is left through the Pythagorean identity.
   if (p > 0 && p % 2 === 1) {
@@ -131,25 +155,6 @@ export function trigRewrite(node: Node, variable: string): Node | undefined {
           power(sin, number(p))
         ),
         cos
-      )
-    );
-  }
-
-  // A pure tangent or cotangent, where the reduction formula is the only way
-  // down and both of its pieces are ordinary.
-  if (q === -p && p >= 2) {
-    return scaled(
-      subtract(
-        multiply(power(tan, number(p - 2)), power(sec, number(2))),
-        power(tan, number(p - 2))
-      )
-    );
-  }
-  if (p === -q && q >= 2) {
-    return scaled(
-      subtract(
-        multiply(power(cot, number(q - 2)), power(csc, number(2))),
-        power(cot, number(q - 2))
       )
     );
   }
@@ -207,6 +212,58 @@ export function trigRewrite(node: Node, variable: string): Node | undefined {
   }
 
   return undefined;
+}
+
+/**
+ * `∫sec^n u du` and `∫csc^n u du` for odd `n`, one step of the reduction
+ * formula at a time:
+ *
+ *     ∫sec^n = sec^{n-2} tan / (n-1) + (n-2)/(n-1) ∫sec^{n-2}
+ *     ∫csc^n = -csc^{n-2} cot / (n-1) + (n-2)/(n-1) ∫csc^{n-2}
+ *
+ * The one family the rewrites above cannot reach. An even power keeps a `sec²`
+ * back for `du`; an odd one has nothing to keep, because `sec` alone is not
+ * the derivative of anything in it. The recurrence is integration by parts
+ * with `dv = sec² u du`, solved for the integral it hands back, and it is
+ * written down rather than rediscovered.
+ *
+ * Returned as the part that is finished and the integral that is left, since
+ * a reduction formula is not a rewrite of the integrand: half of it is already
+ * an answer. The caller integrates what is left, which is the same problem two
+ * powers smaller, and `sec^3` and `sec` each have a rule of their own.
+ */
+export function trigReduction(
+  node: Node,
+  variable: string
+): { finished: Node; remaining: Node } | undefined {
+  const parsed = readSinCosPowers(node, variable);
+  if (parsed === undefined) return undefined;
+  const { coefficient, rest, argument, p, q } = parsed;
+  if (dependsOn(rest, variable)) return undefined;
+  const secant = p === 0 && q <= -3 && Math.abs(q) % 2 === 1;
+  const cosecant = q === 0 && p <= -3 && Math.abs(p) % 2 === 1;
+  if (!secant && !cosecant) return undefined;
+  const n = secant ? -q : -p;
+  if (n > MAX_POWER) return undefined;
+  const linear = linearIn(argument, variable);
+  if (linear === undefined) return undefined;
+  const slope = fold(linear.a);
+  if (constantValue(slope) === 0) return undefined;
+
+  const scale = fold(multiply(coefficient, rest));
+  const name = secant ? "sec" : "csc";
+  const lowered = power(call(name, argument), number(n - 2));
+  const partner = call(secant ? "tan" : "cot", argument);
+  const stepped = divide(
+    multiply(multiply(scale, lowered), partner),
+    multiply(number(n - 1), slope)
+  );
+  return {
+    finished: fold(secant ? stepped : { type: "Negative", arg: stepped }),
+    remaining: fold(
+      multiply(divide(multiply(scale, number(n - 2)), number(n - 1)), lowered)
+    ),
+  };
 }
 
 /**

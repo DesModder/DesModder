@@ -86,6 +86,15 @@ const VARIABLES: readonly Choice<string>[] = [
  * Both render the same tree — `full` stops hiding the atomic facts. Nothing is
  * recomputed, so the two views cannot say different things.
  */
+/**
+ * An antiderivative, or a number between two bounds. Chips rather than a
+ * checkbox because both are answers and neither is the absence of the other.
+ */
+const INTEGRAL_KINDS: readonly Choice<"indefinite" | "definite">[] = [
+  { value: "indefinite", label: "Antiderivative" },
+  { value: "definite", label: "Between bounds" },
+];
+
 const DETAIL_LEVELS: readonly Choice<DetailLevel>[] = [
   { value: "standard", label: "Standard" },
   { value: "full", label: "Every step" },
@@ -1227,6 +1236,15 @@ function integralTab(physicsLab: PhysicsLab, config: ConfigGetter) {
   };
   const series = () => failure()?.series;
   const variable = () => config().integral.variable;
+  const definiteResult = () => worked()?.definite;
+  const definiteWorked = () => {
+    const value = definiteResult();
+    return value?.ok === true ? value : undefined;
+  };
+  const definiteFailed = () => {
+    const value = definiteResult();
+    return value?.ok === false ? value : undefined;
+  };
 
   return (
     <div>
@@ -1256,7 +1274,14 @@ function integralTab(physicsLab: PhysicsLab, config: ConfigGetter) {
             handleLatexChanged={(latex: string) =>
               session().setIntegralExpression(latex)
             }
-            hasError={() => (failure()?.error ?? "") !== ""}
+            // Red only when nothing at all came back. A refusal with a series
+            // under it, or one that names the special function, is an answer
+            // about the integral, and a red line reads as "you typed it wrong".
+            hasError={() =>
+              (failure()?.error ?? "") !== "" &&
+              failure()?.series === undefined &&
+              failure()?.special === undefined
+            }
             manageFocus={mathquillFocusHelper({
               controller: physicsLab.cc,
               location: {
@@ -1272,7 +1297,77 @@ function integralTab(physicsLab: PhysicsLab, config: ConfigGetter) {
             <StaticMathQuillView latex={() => `d${variable()}`} />
           </span>
         </div>
+        {chipGroup(
+          "Find",
+          () => (config().integral.definite ? "definite" : "indefinite"),
+          INTEGRAL_KINDS,
+          (value) => session().setIntegralDefinite(value === "definite"),
+          "dsm-physics-lab-integral-kind"
+        )}
+        <If predicate={() => config().integral.definite}>
+          {() => (
+            <div class="dsm-physics-lab-bounds">
+              {boundInput(physicsLab, config, "lower")}
+              {boundInput(physicsLab, config, "upper")}
+            </div>
+          )}
+        </If>
       </section>
+
+      {/* The number, exactly, with its decimal beside it rather than in its
+          place. Built only on an antiderivative that was already checked, and
+          checked again against a numerical integration, which is what catches
+          an antiderivative that jumps inside the interval. */}
+      <If predicate={() => definiteResult() !== undefined}>
+        {() => (
+          <section class="dsm-physics-lab-section">
+            <div
+              class="dsm-physics-lab-solution"
+              data-physics-lab="integral-definite"
+              data-latex={() => definiteWorked()?.valueLatex ?? ""}
+            >
+              <If predicate={() => definiteWorked() !== undefined}>
+                {() => (
+                  <div>
+                    <div class="dsm-physics-lab-math">
+                      <StaticMathQuillView
+                        latex={() =>
+                          `${definiteWorked()?.statementLatex ?? ""}=${definiteWorked()?.valueLatex ?? ""}`
+                        }
+                      />
+                    </div>
+                    <div class="dsm-physics-lab-inline">
+                      <Button
+                        color="blue"
+                        class="dsm-physics-lab-add-definite"
+                        onTap={() => session().insertDefinite()}
+                      >
+                        Add to graph
+                      </Button>
+                      <span class="dsm-physics-lab-decimal">
+                        {() => definiteWorked()?.decimal ?? ""}
+                      </span>
+                    </div>
+                    <div class="dsm-physics-lab-hint">
+                      {() => definiteWorked()?.note ?? ""}
+                    </div>
+                  </div>
+                )}
+              </If>
+              <If predicate={() => definiteFailed() !== undefined}>
+                {() => (
+                  <div
+                    class="dsm-physics-lab-refusal"
+                    data-physics-lab="integral-definite-refusal"
+                  >
+                    {() => definiteFailed()?.error ?? ""}
+                  </div>
+                )}
+              </If>
+            </div>
+          </section>
+        )}
+      </If>
 
       <If predicate={() => worked() !== undefined}>
         {() => (
@@ -1286,6 +1381,15 @@ function integralTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                 () => worked()?.latex ?? "",
                 () => worked()?.lines ?? []
               )}
+              {/* Named by the branch that finished it, the way the ODE
+                  readout names its method -- never guessed from the answer,
+                  since one arctangent can come from four techniques. */}
+              <div
+                class="dsm-physics-lab-method"
+                data-physics-lab="integral-method"
+              >
+                {() => worked()?.method ?? ""}
+              </div>
               <div class="dsm-physics-lab-inline">
                 <Button
                   color="blue"
@@ -1346,11 +1450,56 @@ function integralTab(physicsLab: PhysicsLab, config: ConfigGetter) {
         {() => (
           <section class="dsm-physics-lab-section">
             <h3>As a power series</h3>
+            {/* Three different claims, and the sentence has to match the one
+                being made. "There is none" is only true when the refusal named
+                the special function; "none was found" is all a failed search
+                can say. A truncated series is exact term by term and still
+                only a beginning, and says so. */}
             <div class="dsm-physics-lab-hint">
-              There is no elementary antiderivative, which is a fact about the
-              function rather than a gap here. Integrating its series term by
-              term gives one exactly.
+              {() =>
+                (failure()?.special !== undefined
+                  ? "There is no elementary antiderivative, which is a fact about the function rather than a gap here. "
+                  : "No elementary antiderivative was found. ") +
+                (series()?.order !== undefined
+                  ? "These are the first terms of its Maclaurin series, every coefficient exact; no general term was found, so the sum stops where the arithmetic did."
+                  : "Integrating its series term by term gives one exactly.")
+              }
             </div>
+            <If predicate={() => (series()?.parts.length ?? 0) > 1}>
+              {() => (
+                <div
+                  class="dsm-physics-lab-series-parts"
+                  data-physics-lab="integral-series-parts"
+                >
+                  {/* Term by term, because a sum of a closed form and a series
+                      is two kinds of answer and the reader should know which
+                      part is which. */}
+                  <For
+                    each={() => series()?.parts ?? []}
+                    key={(part: { latex: string; kind: string }) =>
+                      `${part.kind} ${part.latex}`
+                    }
+                  >
+                    {(part: () => { latex: string; kind: string }) => (
+                      <div class="dsm-physics-lab-series-part">
+                        <span class="dsm-physics-lab-math">
+                          <StaticMathQuillView latex={() => part().latex} />
+                        </span>
+                        <span class="dsm-physics-lab-decimal">
+                          {() =>
+                            part().kind === "closed"
+                              ? "in closed form"
+                              : part().kind === "series"
+                                ? "as a series, with its general term"
+                                : "as the first terms of its series"
+                          }
+                        </span>
+                      </div>
+                    )}
+                  </For>
+                </div>
+              )}
+            </If>
             {/* The ellipsis is set beside the maths rather than inside it.
                 MathQuill has no `\dots`, and a field it cannot parse renders
                 as nothing at all — so the line that makes the series
@@ -1380,7 +1529,13 @@ function integralTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                   Add to graph
                 </Button>
                 <span class="dsm-physics-lab-decimal">
-                  {() => `converges for ${series()?.interval ?? ""}`}
+                  {() => {
+                    const found = series();
+                    if (found === undefined) return "";
+                    return found.order === undefined
+                      ? `converges for ${found.interval}`
+                      : `exact below x${superscript(found.order)}, for x near 0`;
+                  }}
                 </span>
               </div>
             </div>
@@ -1406,6 +1561,45 @@ function integralTab(physicsLab: PhysicsLab, config: ConfigGetter) {
           </section>
         )}
       </If>
+    </div>
+  );
+}
+
+/** One bound of a definite integral: a small math field with its label. */
+function boundInput(
+  physicsLab: PhysicsLab,
+  config: ConfigGetter,
+  which: "lower" | "upper"
+) {
+  const latex = () =>
+    which === "lower"
+      ? config().integral.lowerLatex
+      : config().integral.upperLatex;
+  return (
+    <div class="dsm-physics-lab-bound">
+      <span class="dsm-physics-lab-label">
+        {which === "lower" ? "from" : "to"}
+      </span>
+      <InlineMathInputViewGeneral
+        containerClass={() => ({ "dsm-physics-lab-math-input": true })}
+        placeholder={which === "lower" ? "0" : "\\infty"}
+        ariaLabel={which === "lower" ? "the lower bound" : "the upper bound"}
+        latex={latex}
+        handleLatexChanged={(value: string) =>
+          physicsLab.session.setIntegralBound(which, value)
+        }
+        hasError={() => false}
+        manageFocus={mathquillFocusHelper({
+          controller: physicsLab.cc,
+          location: {
+            type: "dsm-focus",
+            plugin: "physics-lab",
+            kind: which === "lower" ? "integral-lower" : "integral-upper",
+          },
+        })}
+        controller={physicsLab.cc}
+        readonly={false}
+      />
     </div>
   );
 }
@@ -1720,4 +1914,10 @@ function checkboxControl(
 
 export function PhysicsLabPanelFunc(physicsLab: PhysicsLab) {
   return <PhysicsLabPanel physicsLab={() => physicsLab} />;
+}
+
+/** A whole number as superscript digits, for a power written in running text. */
+function superscript(value: number): string {
+  const digits = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+  return String(value).replace(/\d/g, (d) => digits[Number(d)]);
 }

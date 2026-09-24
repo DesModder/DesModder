@@ -27,7 +27,13 @@ import {
   scanDefinitions,
 } from "../../field-rendering/environment";
 import { mentions, renameIdentifier } from "../../field-rendering/identifiers";
-import { evaluateExact, toLatex, toNumber } from "./symbolic/exact";
+import {
+  evaluateExact,
+  toLatex,
+  toNumber,
+  fromInteger as toExact,
+  toNode as exactToNode,
+} from "./symbolic/exact";
 import { solveFirstOrder, type ODEResult } from "./symbolic/ode";
 import { resolvePrimes, solveSecondOrder } from "./symbolic/secondOrder";
 import { recognizeDecimal } from "./symbolic/recognize";
@@ -42,8 +48,19 @@ import {
   type Derivation,
   type DerivationNode,
 } from "./symbolic/differentiate";
-import { integrate, IntegrationError } from "./symbolic/integrate";
-import { seriesAntiderivative, SeriesError } from "./symbolic/series";
+import {
+  describeMethod,
+  implicitProducts,
+  integrateWithMethod,
+  IntegrationError,
+  NonElementaryError,
+} from "./symbolic/integrate";
+import { seriesFallback, type PartKind } from "./symbolic/seriesSum";
+import {
+  definiteIntegral,
+  DefiniteError,
+  type Bound,
+} from "./symbolic/definite";
 import {
   add,
   agreesOnSamples,
@@ -276,8 +293,19 @@ const ROMAN = ["i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x"];
  * `x + x³/3 + x⁵/10` as something that climbs.
  */
 export interface SeriesView {
-  /** The general term, as an expression in the index. */
+  /** The general term, when there is one series with one; otherwise empty. */
   termLatex: string;
+  /**
+   * Each term of the integrand and how it was integrated: in closed form, as
+   * a series with a general term, or as a series known only to some order.
+   * Said per term because those are three different claims.
+   */
+  parts: { latex: string; kind: PartKind }[];
+  /**
+   * Set when part of the answer is a truncated series: the sum is exact below
+   * `x^order` and claims nothing beyond it.
+   */
+  order?: number;
   /** The whole sum, with a finite upper bound, for the expression list. */
   sumLatex: string;
   /** The first few terms, added up. */
@@ -300,6 +328,26 @@ export interface SeriesView {
  */
 export type IntegralCheck = "checked" | "unchecked";
 
+/**
+ * A definite integral, as the Integral tab shows it.
+ *
+ * Only ever built on top of a checked antiderivative, and only ever exact:
+ * the decimal is for reading beside the value, not in place of it.
+ */
+export type DefiniteView =
+  | {
+      ok: true;
+      /** `\int_{a}^{b}f\,dx`, for the left of the equals sign. */
+      statementLatex: string;
+      /** The exact value, or `\infty` for a divergent integral. */
+      valueLatex: string;
+      /** The same value as a decimal, for reading beside it. */
+      decimal: string;
+      /** Said when it was improper or diverges; empty otherwise. */
+      note: string;
+    }
+  | { ok: false; error: string };
+
 /** What the Integral tab has to show for one integrand. */
 export type IntegralView =
   | {
@@ -309,11 +357,24 @@ export type IntegralView =
       /** The same, broken across lines when it is too long for one. */
       lines: string[];
       check: IntegralCheck;
+      /**
+       * The techniques that finished it, as recorded by the branch that
+       * succeeded: "Integration by parts, then trigonometric substitution".
+       */
+      method: string;
+      /** The integral between the bounds, when bounds are given. */
+      definite?: DefiniteView;
     }
   | {
       ok: false;
       /** Why there is no elementary antiderivative, in words. */
       error: string;
+      /**
+       * The special function the antiderivative is written with, when it is
+       * known not to be elementary. Undefined when the integrator merely
+       * failed, which is a weaker thing to say and the panel says it that way.
+       */
+      special?: string;
       /**
        * The series antiderivative, when the integrand has one.
        *
@@ -1360,9 +1421,11 @@ export default class PhysicsLabSession {
    * the same thing.
    */
   get integral(): IntegralView | undefined {
-    const { fLatex, variable, terms } = this.config.integral;
+    const { fLatex, variable, terms, definite, lowerLatex, upperLatex } =
+      this.config.integral;
     if (fLatex.trim() === "") return undefined;
-    const key = `${variable} ${terms} ${fLatex}`;
+    const bounds = definite ? `${lowerLatex} ${upperLatex}` : "";
+    const key = `${variable} ${terms} ${fLatex} ${bounds}`;
     if (this.integralCache?.key === key) return this.integralCache.result;
     const result = this.computeIntegral(fLatex, variable, terms);
     this.integralCache = { key, result };
@@ -1376,7 +1439,13 @@ export default class PhysicsLabSession {
   ): IntegralView {
     let integrand: Node;
     try {
-      integrand = parseLatex(this.textModeConfig, fLatex);
+      // `x(x)` parses as a call of a function named x; see implicitProducts.
+      // Normalised here as well as inside the integrator, because the numeric
+      // check below evaluates the integrand too.
+      integrand = implicitProducts(
+        parseLatex(this.textModeConfig, fLatex),
+        variable
+      );
     } catch {
       // Half-typed LaTeX does not parse, and that is the normal state of an
       // input somebody is still using rather than something to report.
@@ -1384,8 +1453,10 @@ export default class PhysicsLabSession {
     }
 
     let refusal: string;
+    let special: string | undefined;
     try {
-      const value = integrate(integrand, variable);
+      const found = integrateWithMethod(integrand, variable);
+      const { value } = found;
       const check = this.checkAntiderivative(value, integrand, variable);
       if (check !== "wrong") {
         const constant = freshName(integrand, ["C", "K", "D"]);
@@ -1396,6 +1467,10 @@ export default class PhysicsLabSession {
           latex,
           lines: this.stack(withConstant, latex),
           check,
+          method: describeMethod(found.techniques),
+          definite: this.config.integral.definite
+            ? this.definiteView(integrand, value, variable, fLatex)
+            : undefined,
         };
       }
       // An answer that does not differentiate back to the integrand is worse
@@ -1408,9 +1483,15 @@ export default class PhysicsLabSession {
     } catch (error) {
       if (!(error instanceof IntegrationError)) throw error;
       refusal = error.message;
+      if (error instanceof NonElementaryError) ({ special } = error);
     }
 
-    return { ok: false, error: refusal, series: this.series(integrand, terms) };
+    return {
+      ok: false,
+      error: refusal,
+      special,
+      series: this.series(integrand, terms),
+    };
   }
 
   /**
@@ -1425,20 +1506,21 @@ export default class PhysicsLabSession {
    */
   private series(integrand: Node, terms: number): SeriesView | undefined {
     const { variable } = this.config.integral;
-    try {
-      const found = seriesAntiderivative(integrand, variable, terms);
-      const emit = (node: Node) => toLatexTree(this.textModeConfig, node);
-      return {
-        termLatex: emit(found.term),
-        sumLatex: emit(found.sum),
-        partialLatex: emit(found.partial),
-        interval: found.interval,
-        terms,
-      };
-    } catch (error) {
-      if (!(error instanceof SeriesError)) throw error;
-      return undefined;
-    }
+    const found = seriesFallback(integrand, variable, terms);
+    if (found === undefined) return undefined;
+    const emit = (node: Node) => toLatexTree(this.textModeConfig, node);
+    return {
+      termLatex: found.term === undefined ? "" : emit(found.term),
+      parts: found.parts.map((part) => ({
+        latex: emit(part.integrand),
+        kind: part.kind,
+      })),
+      order: found.order,
+      sumLatex: emit(found.sum),
+      partialLatex: emit(found.partial),
+      interval: found.interval,
+      terms,
+    };
   }
 
   /**
@@ -1475,6 +1557,107 @@ export default class PhysicsLabSession {
     )
       ? "checked"
       : "wrong";
+  }
+
+  /**
+   * `∫_a^b` of the integrand, from the antiderivative already found.
+   *
+   * The bounds are read as typed; `\infty` is read here rather than by the
+   * parser, which has no infinity to give back.
+   */
+  private definiteView(
+    integrand: Node,
+    antiderivative: Node,
+    variable: string,
+    fLatex: string
+  ): DefiniteView {
+    const { lowerLatex, upperLatex } = this.config.integral;
+    const lower = this.readBound(lowerLatex);
+    const upper = this.readBound(upperLatex);
+    if (lower === undefined || upper === undefined) {
+      return {
+        ok: false,
+        error: "Each bound has to be a number, an expression in numbers, or ∞.",
+      };
+    }
+    const statementLatex = `\\int_{${lowerLatex.trim()}}^{${upperLatex.trim()}}${fLatex}d${variable}`;
+    try {
+      const result = definiteIntegral(
+        integrand,
+        antiderivative,
+        variable,
+        lower,
+        upper
+      );
+      if (result.diverges === 0) {
+        return {
+          ok: false,
+          error:
+            "The integral diverges: on either side of a point inside the interval the antiderivative runs off to infinity, in different directions, so it has no value.",
+        };
+      }
+      if (result.diverges !== undefined) {
+        return {
+          ok: true,
+          statementLatex,
+          valueLatex: result.diverges > 0 ? "\\infty" : "-\\infty",
+          decimal: "",
+          note: "The integral diverges: the antiderivative has no finite limit at the bound.",
+        };
+      }
+      const exact = result.exact ?? toExact(0);
+      return {
+        ok: true,
+        statementLatex,
+        valueLatex: toLatexTree(this.textModeConfig, exactToNode(exact)),
+        decimal: `≈ ${formatDecimal(result.value)}`,
+        note: result.improper
+          ? "Improper: the antiderivative is taken as a limit at the bound, and the value is checked against a numerical integration."
+          : "Checked against a numerical integration of the integrand.",
+      };
+    } catch (error) {
+      if (!(error instanceof DefiniteError)) throw error;
+      return { ok: false, error: error.message };
+    }
+  }
+
+  /** A bound as typed: `\infty`, `-\infty`, or a constant expression. */
+  private readBound(latex: string): Bound | undefined {
+    const trimmed = latex.trim().replace(/\\left|\\right/g, "");
+    if (/^\+?\\infty$/.test(trimmed)) return { kind: "infinite", sign: 1 };
+    if (/^-\\infty$/.test(trimmed)) return { kind: "infinite", sign: -1 };
+    try {
+      const node = parseLatex(this.textModeConfig, latex);
+      const value = evaluate(node, {});
+      return Number.isFinite(value)
+        ? { kind: "finite", node, value }
+        : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  setIntegralDefinite(definite: boolean) {
+    this.updateConfig((config) => {
+      config.integral.definite = definite;
+    });
+  }
+
+  setIntegralBound(which: "lower" | "upper", latex: string) {
+    this.updateConfig((config) => {
+      if (which === "lower") config.integral.lowerLatex = latex;
+      else config.integral.upperLatex = latex;
+    });
+  }
+
+  /** Puts the exact value of the definite integral into the graph. */
+  insertDefinite() {
+    const found = this.integral;
+    if (found?.ok !== true || found.definite?.ok !== true) return;
+    this.plugin.calc.setExpression({
+      latex: found.definite.valueLatex,
+      color: "#388c46",
+    });
   }
 
   /** A new integrand. */
@@ -1556,4 +1739,9 @@ function readStoredConfig(serialized: string): unknown {
     // it falls back to defaults rather than throwing on the way in.
     return undefined;
   }
+}
+
+/** A decimal for reading beside an exact value: nine significant figures. */
+function formatDecimal(value: number): string {
+  return Number(value.toPrecision(9)).toString();
 }

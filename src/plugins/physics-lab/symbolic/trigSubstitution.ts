@@ -44,6 +44,7 @@ import {
   constantValue,
   dependsOn,
   divide,
+  expand,
   fold,
   freshName,
   id,
@@ -119,13 +120,42 @@ export function findTrigSubstitution(
   // be substituted too and the identity would never be used.
   const withoutRoot = replaceSubtree(node, root, substitution.root);
   const inAngle = replaceIdentifier(withoutRoot, variable, substitution.x);
-  const integrand = fold(multiply(inAngle, substitution.dx));
+  // A power of a product distributed over its factors. Substituting
+  // `x = 2tanθ` into `x²` gives `(2tanθ)²`, which the fold leaves as it is,
+  // and a squared product is not something the trigonometric rules can read as
+  // `sin^p cos^q` -- which is why `1/(x²√(x²+4))` was refused while
+  // `1/(x²√(x²+1))`, with nothing to square but the tangent, went through.
+  const integrand = fold(
+    powersOfProducts(fold(multiply(inAngle, substitution.dx)))
+  );
 
   return {
     integrand,
     name,
     back: (answer) => fold(backSubstitute(answer, name, variable, form)),
   };
+}
+
+/** `(ab)^n` as `a^n b^n` for an integer `n`, everywhere in the tree. */
+function powersOfProducts(node: Node): Node {
+  return mapTree(node, (child) => {
+    if (child.type !== "BinaryOperator" || child.name !== "Exponent")
+      return child;
+    const base = child.left;
+    const exponent = constantValue(child.right);
+    if (
+      exponent === undefined ||
+      !Number.isInteger(exponent) ||
+      base.type !== "BinaryOperator" ||
+      (base.name !== "Multiply" && base.name !== "CrossMultiply")
+    ) {
+      return child;
+    }
+    return multiply(
+      powersOfProducts(power(base.left, child.right)),
+      powersOfProducts(power(base.right, child.right))
+    );
+  });
 }
 
 /** `A^{m/2}` for odd m, rewritten as `sqrt(A)^m`. */
@@ -317,15 +347,44 @@ function openDoubleAngles(node: Node, name: string): Node {
     ) {
       return child;
     }
-    if (constantValue(inner.left) !== 2) return child;
+    const k = constantValue(inner.left);
+    if (k === undefined || !Number.isInteger(k) || k < 2 || k > 8) return child;
     const angle = inner.right;
     if (angle.type !== "Identifier" || angle.symbol !== name) return child;
-    const sin = call("sin", angle);
-    const cos = call("cos", angle);
-    return which === "sin"
-      ? multiply(number(2), multiply(sin, cos))
-      : subtract(number(1), multiply(number(2), power(sin, number(2))));
+    // Multiplied out as it goes in, so that the numbers in it meet the
+    // coefficient outside: left nested, `sin 4θ / 32` comes back as
+    // `2(x√(1-x²))(1-2x²)/16`, with a 2 the fold cannot reach.
+    return fold(expand(multipleAngle(which, k, angle)).node);
   });
+}
+
+/**
+ * `sin(kθ)` or `cos(kθ)` written in `sinθ` and `cosθ`, for a whole `k`.
+ *
+ * Not only the doubled angle. `∫sin²θcos²θ` is `θ/8 - sin(4θ)/32`, and a
+ * `sin(4θ)` left as it is survives the back-substitution as `sin(4 arcsin x)`
+ * -- correct, and not something anybody writes. Halving an even multiple and
+ * peeling one angle off an odd one reach `sinθ` and `cosθ` in a few steps,
+ * and those are exactly what the table replaces.
+ */
+function multipleAngle(which: "sin" | "cos", k: number, angle: Node): Node {
+  const sin = call("sin", angle);
+  const cos = call("cos", angle);
+  if (k === 1) return which === "sin" ? sin : cos;
+  if (k % 2 === 0) {
+    const half = k / 2;
+    const s = multipleAngle("sin", half, angle);
+    const c = multipleAngle("cos", half, angle);
+    return which === "sin"
+      ? multiply(number(2), multiply(s, c))
+      : subtract(number(1), multiply(number(2), power(s, number(2))));
+  }
+  // sin((k-1)θ + θ) and cos((k-1)θ + θ), by the addition formulas.
+  const s = multipleAngle("sin", k - 1, angle);
+  const c = multipleAngle("cos", k - 1, angle);
+  return which === "sin"
+    ? add(multiply(s, cos), multiply(c, sin))
+    : subtract(multiply(c, cos), multiply(s, sin));
 }
 
 /** Every `f(θ)` for a trigonometric `f`, replaced by its value in x. */

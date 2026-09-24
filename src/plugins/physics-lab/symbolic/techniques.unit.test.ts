@@ -13,7 +13,13 @@
  * derivative of the answer against the integrand at five points, which no
  * plausible wrong answer survives.
  */
-import { integrate, IntegrationError } from "./integrate";
+import {
+  describeMethod,
+  integrate,
+  integrateWithMethod,
+  IntegrationError,
+  NonElementaryError,
+} from "./integrate";
 import {
   agreesOnSamples,
   evaluate,
@@ -309,6 +315,18 @@ describe("trigonometric substitution, and coming back from it", () => {
     );
   });
 
+  test("a scale that is not one is squared through the product", () => {
+    // x = 2tan(t) makes x^2 into (2tan t)^2, which has to become 4tan^2 t
+    // before the trigonometric rules can read it.
+    check(
+      div(
+        number(1),
+        mul(pow(x, number(2)), fn("sqrt", add(pow(x, number(2)), number(4))))
+      ),
+      "-\\frac{\\sqrt{x^{2}+4}}{4x}"
+    );
+  });
+
   test("the tangent case, which lands on a secant cube", () => {
     check(
       fn("sqrt", add(number(1), pow(x, number(2)))),
@@ -335,6 +353,106 @@ describe("what it still refuses, and says so", () => {
 
   test("a symbolic exponent, which could be the one the power rule misses", () => {
     expect(() => integrate(pow(x, id("n")), "x")).toThrow(IntegrationError);
+  });
+});
+
+describe("refusing by name where the answer is not elementary", () => {
+  const special = (node: Node) => {
+    try {
+      integrate(node, "x");
+    } catch (error) {
+      return error instanceof NonElementaryError ? error.special : "generic";
+    }
+    return "integrated";
+  };
+
+  test("each named function, from the shape that produces it", () => {
+    expect(special(div(pow(e, x), x))).toBe("Ei");
+    expect(special(div(fn("sin", x), x))).toBe("Si");
+    expect(special(div(fn("cos", x), x))).toBe("Ci");
+    expect(special(div(number(1), fn("ln", x)))).toBe("li");
+    expect(special(pow(e, pow(x, number(2))))).toBe("erfi");
+    expect(special(fn("sin", pow(x, number(2))))).toBe("Fresnel");
+    expect(special(div(fn("ln", x), add(x, number(1))))).toBe("Li2");
+    expect(special(div(x, add(pow(e, x), number(1))))).toBe("Li2");
+    expect(special(pow(fn("arctan", x), number(2)))).toBe("Li2");
+    expect(special(pow(x, x))).toBe("power tower");
+  });
+
+  test("a sum with one non-elementary term is named", () => {
+    expect(special(add(pow(e, pow(x, number(2))), x))).toBe("erfi");
+  });
+});
+
+describe("deciding, not matching: Liouville and Chebyshev", () => {
+  const special = (node: Node) => {
+    try {
+      integrate(node, "x");
+    } catch (error) {
+      return error instanceof NonElementaryError ? error.special : "generic";
+    }
+    return "integrated";
+  };
+
+  test("two non-elementary terms that cancel are integrated", () => {
+    // e^x/x - e^x/x^2 is the derivative of e^x/x: y' + y = f has y = 1/x.
+    check(
+      sub(div(pow(e, x), x), div(pow(e, x), pow(x, number(2)))),
+      "\\frac{e^{x}}{x}"
+    );
+    check(
+      mul(
+        add(number(1), mul(number(2), pow(x, number(2)))),
+        pow(e, pow(x, number(2)))
+      ),
+      "xe^{x^{2}}"
+    );
+  });
+
+  test("no rational solution is a proof, and names the function", () => {
+    expect(special(div(pow(e, x), x))).toBe("Ei");
+    expect(special(pow(e, pow(x, number(2))))).toBe("erfi");
+    expect(
+      special(
+        mul(
+          pow(x, number(2)),
+          pow(e, { type: "Negative", arg: pow(x, number(2)) })
+        )
+      )
+    ).toBe("erf");
+  });
+
+  test("a binomial differential is decided by Chebyshev's theorem", () => {
+    // p = 1/2, (m+1)/n = 1/3, p + (m+1)/n = 5/6: none whole, so none exists.
+    expect(special(fn("sqrt", add(number(1), pow(x, number(3)))))).toBe(
+      "binomial"
+    );
+    expect(
+      special(div(number(1), fn("sqrt", sub(number(1), pow(x, number(3))))))
+    ).toBe("binomial");
+    // (m+1)/n = 1: elementary, and found by substitution. A degree-based
+    // "elliptic" label would have been wrong about this one.
+    check(
+      div(
+        mul(number(3), pow(x, number(2))),
+        fn("sqrt", add(number(1), pow(x, number(3))))
+      ),
+      "2\\sqrt{x^{3}+1}"
+    );
+  });
+
+  test("a rational function is never called non-elementary", () => {
+    // 1/(x^3+2) has an elementary antiderivative in terms of the cube root of
+    // 2; this cannot write it, and says so in those words.
+    expect(() =>
+      integrate(div(number(1), add(pow(x, number(3)), number(2))), "x")
+    ).toThrow(/Every rational function has an elementary antiderivative/);
+  });
+
+  test("an odd power against a Gaussian is elementary, and not named", () => {
+    expect(
+      special(mul(x, pow(e, { type: "Negative", arg: pow(x, number(2)) })))
+    ).toBe("integrated");
   });
 });
 
@@ -380,6 +498,212 @@ describe("partial fractions, in general rather than in two special cases", () =>
       "\\frac{\\arctan\\left(\\frac{x}{a}\\right)}{a}",
       { a: 2.1 }
     );
+  });
+});
+
+describe("factors whose roots are irrational", () => {
+  test("a quartic with no rational root, split over the square root of two", () => {
+    check(
+      div(number(1), add(pow(x, number(4)), number(1))),
+      "\\frac{\\sqrt{2}\\ln\\left|x^{2}+\\sqrt{2}x+1\\right|}{8}+\\frac{\\sqrt{2}\\arctan\\left(\\sqrt{2}x+1\\right)}{4}+\\frac{\\sqrt{2}\\arctan\\left(\\sqrt{2}x-1\\right)}{4}-\\frac{\\sqrt{2}\\ln\\left|x^{2}-\\sqrt{2}x+1\\right|}{8}"
+    );
+  });
+
+  test("a quadratic with real irrational roots is kept whole", () => {
+    // The Weierstrass substitution lands on 2/(1+2t-t^2), whose roots are
+    // 1 +/- sqrt 2, once the (1+t^2) it put on both sides is cancelled.
+    check(
+      div(number(1), add(fn("sin", x), fn("cos", x))),
+      "-\\frac{\\ln\\left|\\frac{\\tan\\left(\\frac{x}{2}\\right)-1-\\sqrt{2}}{\\tan\\left(\\frac{x}{2}\\right)-1+\\sqrt{2}}\\right|}{\\sqrt{2}}"
+    );
+  });
+
+  test("a root of an invertible function becomes the new variable", () => {
+    // u = sqrt(tan x) means x = arctan(u^2), and the integrand becomes
+    // 2u^2/(1+u^4) -- the quartic above.
+    check(
+      fn("sqrt", fn("tan", x)),
+      "\\frac{\\sqrt{2}\\arctan\\left(\\sqrt{2}\\sqrt{\\tan\\left(x\\right)}+1\\right)}{2}-\\frac{\\sqrt{2}\\ln\\left|\\tan\\left(x\\right)+\\sqrt{2}\\sqrt{\\tan\\left(x\\right)}+1\\right|}{4}+\\frac{\\sqrt{2}\\ln\\left|\\tan\\left(x\\right)-\\sqrt{2}\\sqrt{\\tan\\left(x\\right)}+1\\right|}{4}+\\frac{\\sqrt{2}\\arctan\\left(\\sqrt{2}\\sqrt{\\tan\\left(x\\right)}-1\\right)}{2}"
+    );
+  });
+
+  test("a surd half-width is written as a person writes it", () => {
+    check(
+      div(add(x, number(1)), add(add(pow(x, number(2)), x), number(1))),
+      "\\frac{\\ln\\left|x^{2}+x+1\\right|}{2}+\\frac{\\arctan\\left(\\frac{2x+1}{\\sqrt{3}}\\right)}{\\sqrt{3}}"
+    );
+  });
+
+  test("a repeated irreducible quadratic, by its reduction formula", () => {
+    check(
+      div(number(1), pow(add(pow(x, number(2)), number(1)), number(2))),
+      "\\frac{x}{2\\left(x^{2}+1\\right)}+\\frac{\\arctan\\left(x\\right)}{2}"
+    );
+  });
+});
+
+describe("factoring over Q before partial fractions", () => {
+  test("x^6 + 1 is a quadratic times a quartic, and the quartic splits over sqrt 3", () => {
+    check(
+      div(number(1), add(pow(x, number(6)), number(1))),
+      "\\frac{\\arctan\\left(x\\right)}{3}+\\frac{\\sqrt{3}\\ln\\left|x^{2}+\\sqrt{3}x+1\\right|}{12}+\\frac{\\arctan\\left(2x+\\sqrt{3}\\right)}{6}+\\frac{\\arctan\\left(2x-\\sqrt{3}\\right)}{6}-\\frac{\\sqrt{3}\\ln\\left|x^{2}-\\sqrt{3}x+1\\right|}{12}"
+    );
+  });
+
+  test("a power of a power is flattened on the way back from a substitution", () => {
+    check(
+      div(x, sub(pow(x, number(6)), number(1))),
+      "\\frac{\\ln\\left|x^{2}-1\\right|}{6}-\\frac{\\ln\\left|x^{4}+x^{2}+1\\right|}{12}-\\frac{\\arctan\\left(\\frac{2x^{2}+1}{\\sqrt{3}}\\right)}{2\\sqrt{3}}"
+    );
+  });
+});
+
+describe("a polynomial against e^{ax} and a wave, solved for its coefficients", () => {
+  test("printed factored, over one denominator", () => {
+    check(
+      mul(mul(pow(x, number(2)), pow(e, x)), fn("sin", x)),
+      "\\frac{e^{x}\\left(\\left(2x-x^{2}-1\\right)\\cos\\left(x\\right)+\\left(x^{2}-1\\right)\\sin\\left(x\\right)\\right)}{2}"
+    );
+  });
+});
+
+describe("reduction formulas", () => {
+  test("an odd power of a secant, two powers at a time", () => {
+    check(
+      pow(fn("sec", x), number(5)),
+      "\\frac{\\sec\\left(x\\right)^{3}\\tan\\left(x\\right)}{4}+\\frac{3\\left(\\sec\\left(x\\right)\\tan\\left(x\\right)+\\ln\\left|\\sec\\left(x\\right)+\\tan\\left(x\\right)\\right|\\right)}{8}"
+    );
+    check(
+      pow(fn("csc", x), number(5)),
+      "-\\frac{\\csc\\left(x\\right)^{3}\\cot\\left(x\\right)}{4}-\\frac{3\\left(\\csc\\left(x\\right)\\cot\\left(x\\right)+\\ln\\left|\\csc\\left(x\\right)+\\cot\\left(x\\right)\\right|\\right)}{8}"
+    );
+  });
+
+  test("a power of a sum of squares, symbolic and numeric", () => {
+    check(
+      div(
+        number(1),
+        pow(add(pow(x, number(2)), pow(id("a"), number(2))), number(2))
+      ),
+      "\\frac{x}{2a^{2}\\left(x^{2}+a^{2}\\right)}+\\frac{\\arctan\\left(\\frac{x}{a}\\right)}{2a^{3}}",
+      { a: 2.1 }
+    );
+    check(
+      div(
+        number(1),
+        pow(
+          add(add(pow(x, number(2)), mul(number(2), x)), number(5)),
+          number(2)
+        )
+      ),
+      "\\frac{x+1}{8\\left(x^{2}+2x+5\\right)}+\\frac{\\arctan\\left(\\frac{x+1}{2}\\right)}{16}"
+    );
+  });
+
+  test("an odd power of a tangent keeps to tangents", () => {
+    check(
+      pow(fn("tan", x), number(5)),
+      "\\frac{\\tan\\left(x\\right)^{4}}{4}-\\frac{\\tan\\left(x\\right)^{2}}{2}-\\ln\\left|\\cos\\left(x\\right)\\right|"
+    );
+  });
+});
+
+describe("tabular integration, for a polynomial against a closed family", () => {
+  test("a polynomial times the cyclic pair, three factors deep", () => {
+    // Solved for U and V in e^x(U cos x + V sin x) rather than by parts, and
+    // printed on that basis.
+    check(
+      mul(mul(x, fn("sin", x)), pow(e, x)),
+      "\\frac{e^{x}\\left(x\\sin\\left(x\\right)+\\left(1-x\\right)\\cos\\left(x\\right)\\right)}{2}"
+    );
+  });
+
+  test("a high power does not run out of recursion", () => {
+    // Every R_k is integrated from the same depth, so x^6 e^x terminates in
+    // seven steps rather than being refused as "did not terminate".
+    check(
+      mul(pow(x, number(6)), pow(e, x)),
+      "e^{x}\\left(x^{6}-6x^{5}+30x^{4}-120x^{3}+360x^{2}-720x+720\\right)"
+    );
+  });
+
+  test("the whole family, with coefficients on everything", () => {
+    const integrand = mul(
+      mul(pow(x, number(5)), pow(e, mul(number(3), x))),
+      fn("cos", mul(number(2), x))
+    );
+    const result = integrate(integrand, "x");
+    expect(
+      agreesOnSamples(
+        (bindings) => numericDerivative(result, "x", bindings),
+        (bindings) => evaluate(integrand, bindings),
+        SAMPLES
+      )
+    ).toBe(true);
+  });
+});
+
+describe("answers written the way anybody writes them", () => {
+  test("a quadruple angle is opened before the substitution is undone", () => {
+    // Integrating sin^2 cos^2 gives sin(4t)/32, which survived as
+    // sin(4 arcsin x) until multiple angles were opened as well as double ones.
+    check(
+      mul(pow(x, number(2)), fn("sqrt", sub(number(1), pow(x, number(2))))),
+      "\\frac{x^{3}\\sqrt{1-x^{2}}}{4}-\\frac{x\\sqrt{1-x^{2}}}{8}+\\frac{\\arcsin\\left(x\\right)}{8}"
+    );
+  });
+
+  test("a constant inside a logarithm is a constant of integration", () => {
+    // Parts hands partial fractions x^2/(2(x+1)); ln|2(x+1)| is ln|x+1| + ln 2.
+    check(
+      mul(x, fn("ln", add(x, number(1)))),
+      "\\frac{\\ln\\left(x+1\\right)x^{2}}{2}-\\frac{x^{2}}{4}+\\frac{x}{2}-\\frac{\\ln\\left|x+1\\right|}{2}"
+    );
+  });
+});
+
+describe("the method, as the branch that finished it recorded it", () => {
+  const method = (node: Node) =>
+    describeMethod(integrateWithMethod(node, "x").techniques);
+
+  test("one technique, named", () => {
+    expect(method(mul(x, fn("sin", x)))).toBe("Integration by parts");
+    expect(method(pow(fn("sec", x), number(5)))).toBe("Reduction formula");
+    expect(method(div(number(1), add(pow(x, number(4)), number(1))))).toBe(
+      "Partial fractions"
+    );
+  });
+
+  test("a chain, outermost first", () => {
+    expect(method(div(number(1), add(fn("sin", x), fn("cos", x))))).toBe(
+      "Tangent half-angle substitution, then partial fractions"
+    );
+    expect(method(pow(fn("arcsin", x), number(2)))).toBe(
+      "Integration by parts, then trigonometric substitution"
+    );
+  });
+
+  test("the table and the power rule only when they are all there was", () => {
+    expect(method(add(pow(x, number(2)), fn("sin", x)))).toBe(
+      "Power rule and standard integral"
+    );
+    // A product of polynomials is multiplied out, not integrated by parts.
+    expect(method(mul(x, add(x, number(1))))).toBe("Power rule");
+  });
+});
+
+describe("a call of the variable is a product", () => {
+  test("x(x+1) is x times x+1, not a function named x", () => {
+    const written = fn("x", add(x, number(1)));
+    const result = integrate(written, "x");
+    expect(emit(result)).toBe("\\frac{x^{3}}{3}+\\frac{x^{2}}{2}");
+    expect(
+      agreesOnSamples(
+        (bindings) => numericDerivative(result, "x", bindings),
+        (bindings) => evaluate(mul(x, add(x, number(1))), bindings),
+        SAMPLES
+      )
+    ).toBe(true);
   });
 });
 
@@ -499,6 +823,14 @@ describe("what had to be found rather than matched", () => {
     check(
       mul(x, pow(fn("ln", x), number(2))),
       "\\frac{\\ln\\left(x\\right)^{2}x^{2}}{2}-\\frac{\\ln\\left(x\\right)x^{2}}{2}+\\frac{x^{2}}{4}"
+    );
+  });
+
+  test("parts twice, with dv one factor of three", () => {
+    // x arcsin^2 - int 2x arcsin/sqrt(1-x^2): u = arcsin, dv = 2x/sqrt(1-x^2).
+    check(
+      pow(fn("arcsin", x), number(2)),
+      "x\\arcsin\\left(x\\right)^{2}-2x+2\\arcsin\\left(x\\right)\\sqrt{1-x^{2}}"
     );
   });
 

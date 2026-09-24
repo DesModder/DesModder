@@ -562,6 +562,46 @@
     flex: none;
   }
 
+  // The two bounds side by side, each a label and a field, the way Desmos sets
+  // a domain restriction: small, and in one line.
+  .dsm-physics-lab-bounds {
+    display: flex;
+    gap: 12px;
+    margin-top: 6px;
+  }
+
+  .dsm-physics-lab-bound {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+
+    .dsm-physics-lab-math-input {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  // One line per term of the integrand, the maths first and what kind of answer
+  // it got after it, so the column of labels lines up down the right.
+  .dsm-physics-lab-series-parts {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .dsm-physics-lab-series-part {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+
+    .dsm-physics-lab-math {
+      min-width: 0;
+    }
+  }
+
   // A refusal is a sentence about the integral, not an error about the panel,
   // so it is set as text rather than in the red every other failure uses.
   .dsm-physics-lab-refusal {

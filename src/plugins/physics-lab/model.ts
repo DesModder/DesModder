@@ -124,6 +124,15 @@ export interface IntegralConfig {
   variable: string;
   /** How many terms a series antiderivative carries. */
   terms: number;
+  /**
+   * Whether bounds are given. Off by default: an antiderivative is the answer
+   * to more questions than one number is, and the bounds are there when asked
+   * for rather than in the way when not.
+   */
+  definite: boolean;
+  /** The bounds as typed, which may be `\infty` or `-\infty`. */
+  lowerLatex: string;
+  upperLatex: string;
 }
 
 export const PANEL_TABS = [
@@ -244,7 +253,14 @@ export function defaultPhysicsLabConfig(): PhysicsLabConfig {
     // see it. The first thing on screen is a worked integral rather than an
     // empty field, and this one is short enough to check by differentiating in
     // your head.
-    integral: { fLatex: "x\\sin\\left(x\\right)", variable: "x", terms: 20 },
+    integral: {
+      fLatex: "x\\sin\\left(x\\right)",
+      variable: "x",
+      terms: 20,
+      definite: false,
+      lowerLatex: "0",
+      upperLatex: "\\pi",
+    },
     phase: {
       domain: { x: { min: -4, max: 4 }, y: { min: -4, max: 4 } },
       columns: 19,
@@ -413,6 +429,15 @@ export function normalizePhysicsLabConfig(raw: unknown): PhysicsLabConfig {
           SERIES_TERMS_MAX
         )
       ),
+      definite: source.integral?.definite === true,
+      lowerLatex:
+        typeof source.integral?.lowerLatex === "string"
+          ? source.integral.lowerLatex
+          : defaults.integral.lowerLatex,
+      upperLatex:
+        typeof source.integral?.upperLatex === "string"
+          ? source.integral.upperLatex
+          : defaults.integral.upperLatex,
     },
     secondOrder: {
       fLatex:

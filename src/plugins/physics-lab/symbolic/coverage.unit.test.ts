@@ -1,5 +1,5 @@
 /**
- * Forty-eight integrals from a calculus course, run end to end.
+ * Fifty-eight integrals from a calculus course, run end to end.
  *
  * The other suites check one technique each, with the integrand chosen to
  * exercise it. This one is the opposite: a list of integrals somebody might
@@ -119,19 +119,32 @@ const CASES: [string, Node, number[]?][] = [
   ["sinh^2 x", pow(fn("sinh", x), n(2))],
   ["x cosh x", mul(x, fn("cosh", x))],
   ["arctan(sqrt(x))", fn("arctan", fn("sqrt", x))],
+  // --- irrational factors, reductions, and parts on one factor of three
+  ["1/(x^4+1)", div(n(1), add(pow(x, n(4)), n(1)))],
+  ["1/(sin x + cos x)", div(n(1), add(fn("sin", x), fn("cos", x)))],
+  ["sqrt(tan x)", fn("sqrt", fn("tan", x))],
+  ["sec^5 x", pow(fn("sec", x), n(5))],
+  ["1/(x^2+1)^2", div(n(1), pow(add(pow(x, n(2)), n(1)), n(2)))],
+  ["tan^5 x", pow(fn("tan", x), n(5))],
+  [
+    "1/(x^2 sqrt(x^2+4))",
+    div(n(1), mul(pow(x, n(2)), fn("sqrt", add(pow(x, n(2)), n(4))))),
+  ],
+  // --- tabular integration over three factors
+  ["x sin x e^x", mul(mul(x, fn("sin", x)), pow(e, x))],
+  ["x^2 e^x sin x", mul(mul(pow(x, n(2)), pow(e, x)), fn("sin", x))],
+  ["x^6 e^x", mul(pow(x, n(6)), pow(e, x))],
   // --- symbolic parameters
   ["k x e^{kx}", mul(mul(id("k"), x), pow(e, mul(id("k"), x)))],
   ["1/(x^2+a^2)", div(n(1), add(pow(x, n(2)), pow(id("a"), n(2))))],
 ];
 
 /**
- * The integrals this still cannot do.
- *
- * `arcsin(x)^2` needs integration by parts twice with `dv = x dx/sqrt(1-x^2)`
- * in the middle, which means choosing a `dv` that is neither a polynomial nor
- * the whole of the rest -- a choice nothing here makes.
+ * The integrals this still cannot do. Empty since `arcsin(x)^2` went through:
+ * it needed parts with `dv = 2x dx/sqrt(1-x^2)`, one factor of three rather
+ * than one side of a product, and the flattened choice now makes it.
  */
-const KNOWN_REFUSALS = new Set(["arcsin(x)^2"]);
+const KNOWN_REFUSALS = new Set<string>([]);
 
 test("the integrals a course asks for", () => {
   const rows: string[] = [];

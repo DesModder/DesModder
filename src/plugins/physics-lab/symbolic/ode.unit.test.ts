@@ -177,7 +177,7 @@ describe("what it will not pretend to solve", () => {
 
   test("a right-hand side with no antiderivative", () => {
     expect(refused(fn("sin", pow(x, number(2))))).toMatch(
-      /cannot be integrated|not linear/i
+      /not (an )?elementary/i
     );
   });
 

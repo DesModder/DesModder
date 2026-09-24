@@ -50,6 +50,84 @@ const { number, binop, functionCall, id, negative } = AugBuilders;
 const PI = "pi";
 const E = "e";
 
+/**
+ * Opaque atoms: exact constants this representation cannot reduce further,
+ * kept as the expression they are.
+ *
+ * `ln 2` is the one that matters. A definite integral of `1/x` from 1 to 2 is
+ * exactly `ln 2`, and without an atom for it the only options were a decimal
+ * or a refusal. Logarithms of primes are the canonical ones -- `ln 8 - ln 2`
+ * is `2 ln 2` only because both are written in them -- and anything else that
+ * will not reduce (`arctan 2`, `e^{√2}`) gets an atom keyed by its own tree,
+ * which is exact and merely unsimplified.
+ *
+ * Keys start with `@`, which neither a prime nor π nor e can.
+ */
+interface OpaqueAtom {
+  node: Node;
+  value: number;
+  /** LaTeX, where the atom knows it; the rest render only through `toNode`. */
+  latex?: string;
+}
+const OPAQUE = new Map<string, OpaqueAtom>();
+const isOpaque = (atom: string) => atom.startsWith("@");
+
+/** An exact constant this cannot simplify, as a value of its own. */
+export function opaque(node: Node, value: number, latex?: string): ExactValue {
+  const key = `@${JSON.stringify(node)}`;
+  if (!OPAQUE.has(key)) OPAQUE.set(key, { node, value, latex });
+  return [term(Q.ONE, new Map([[key, Q.ONE]]))];
+}
+
+function lnPrime(p: bigint): ExactValue {
+  const key = `@ln:${p}`;
+  if (!OPAQUE.has(key)) {
+    OPAQUE.set(key, {
+      node: functionCall(id("ln"), [number(Number(p))]),
+      value: Math.log(Number(p)),
+      latex: `\\ln\\left(${p}\\right)`,
+    });
+  }
+  return [term(Q.ONE, new Map([[key, Q.ONE]]))];
+}
+
+/**
+ * `ln q` for a positive rational, as a sum of logarithms of primes: `ln 12` is
+ * `2 ln 2 + ln 3`. Undefined for zero, a negative, or a number too large to
+ * factor.
+ */
+export function logarithm(q: Rational): ExactValue | undefined {
+  if (!(q.n > 0n)) return undefined;
+  const top = factorize(q.n);
+  const bottom = factorize(q.d);
+  if (top === undefined || bottom === undefined) return undefined;
+  let total: ExactValue = ZERO;
+  for (const [p, e] of top)
+    total = add(total, multiply(fromInteger(e), lnPrime(BigInt(p))));
+  for (const [p, e] of bottom)
+    total = subtract(total, multiply(fromInteger(e), lnPrime(BigInt(p))));
+  return total;
+}
+
+/** `ln` of one atom: 1 for e, `ln p` for a prime, an opaque `ln π` for π. */
+export function logarithmOfAtom(atom: string): ExactValue | undefined {
+  if (atom === E) return fromInteger(1);
+  if (atom === PI)
+    return opaque(functionCall(id("ln"), [id("pi")]), Math.log(Math.PI));
+  if (isOpaque(atom)) return undefined;
+  return lnPrime(BigInt(atom));
+}
+
+/** The one term of a single-term value, for callers that take it apart. */
+export function atomsOf(
+  value: ExactValue
+): { coeff: Rational; factors: ReadonlyMap<string, Rational> } | undefined {
+  return value.length === 1 ? value[0] : undefined;
+}
+
+/** Whether an atom key is π. */
+export const isPiAtom = (atom: string) => atom === PI;
+
 /** One product term: a rational coefficient times atoms raised to exponents. */
 export interface ExactTerm {
   readonly coeff: Rational;
@@ -141,7 +219,7 @@ function normalize(
   const factors = new Map<string, Rational>();
   for (const [atom, exponent] of raw) {
     if (Q.isZero(exponent)) continue;
-    if (atom === PI || atom === E) {
+    if (atom === PI || atom === E || isOpaque(atom)) {
       factors.set(atom, exponent);
       continue;
     }
@@ -320,7 +398,14 @@ export function toNumber(value: ExactValue): number {
   for (const t of value) {
     let product = Q.toNumber(t.coeff);
     for (const [atom, e] of t.factors) {
-      const base = atom === PI ? Math.PI : atom === E ? Math.E : Number(atom);
+      const base =
+        atom === PI
+          ? Math.PI
+          : atom === E
+            ? Math.E
+            : isOpaque(atom)
+              ? (OPAQUE.get(atom)?.value ?? NaN)
+              : Number(atom);
       product *= Math.pow(base, Q.toNumber(e));
     }
     total += product;
@@ -331,6 +416,12 @@ export function toNumber(value: ExactValue): number {
 // ---- rendering -----------------------------------------------------------
 
 function atomLatex(atom: string) {
+  if (isOpaque(atom)) {
+    const latex = OPAQUE.get(atom)?.latex;
+    if (latex === undefined)
+      throw new Error("This constant renders only through toNode.");
+    return latex;
+  }
   return atom === PI ? "\\pi" : atom === E ? "e" : atom;
 }
 
@@ -353,6 +444,15 @@ function atomsLatex(entries: [string, Rational][]): string {
     }
     if (atom === PI || atom === E) {
       plain.push(`${atomLatex(atom)}^{${Q.toLatex(exponent)}}`);
+      continue;
+    }
+    if (isOpaque(atom)) {
+      const latex = OPAQUE.get(atom)?.latex;
+      if (latex === undefined)
+        throw new Error("This constant renders only through toNode.");
+      plain.push(
+        Q.isOne(exponent) ? latex : `${latex}^{${Q.toLatex(exponent)}}`
+      );
       continue;
     }
     // A prime with a fractional exponent joins the radical of that index:
@@ -461,8 +561,13 @@ function atomsNode(entries: [string, Rational][]): Node | undefined {
   const plain: Node[] = [];
   const radicals = new Map<bigint, bigint>();
   for (const [atom, exponent] of entries) {
-    const base: Node =
-      atom === PI ? id("pi") : atom === E ? id("e") : number(Number(atom));
+    const base: Node = isOpaque(atom)
+      ? (OPAQUE.get(atom)?.node ?? number(NaN))
+      : atom === PI
+        ? id("pi")
+        : atom === E
+          ? id("e")
+          : number(Number(atom));
     if (Q.isInteger(exponent)) {
       plain.push(
         exponent.n === 1n
@@ -471,7 +576,7 @@ function atomsNode(entries: [string, Rational][]): Node | undefined {
       );
       continue;
     }
-    if (atom === PI || atom === E) {
+    if (atom === PI || atom === E || isOpaque(atom)) {
       plain.push(
         binop(
           "Exponent",

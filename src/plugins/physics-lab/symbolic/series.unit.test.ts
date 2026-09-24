@@ -169,11 +169,23 @@ describe("what it refuses", () => {
     ).toThrow(SeriesError);
   });
 
-  test("a term whose exponent would be zero", () => {
-    // `1/x` times the geometric series would need `∫dx/x`, which is a
-    // logarithm and not a power, so there is no single general term.
+  test("a first term that is a multiple of 1/x becomes a logarithm", () => {
+    // `1/x` times the geometric series starts with `∫dx/x`. That term is
+    // taken out as ln|x| and the general term starts one index later, which is
+    // exactly how the exponential integral is written.
+    const result = seriesAntiderivative(
+      div(number(1), mul(x, sub(number(1), x))),
+      "x"
+    );
+    expect(result.logarithm).toBeDefined();
+    expect(result.from).toBe(1);
+  });
+
+  test("a zero exponent in the middle of the series is still refused", () => {
+    // e^x/x^3: the n = 2 term is x^{-1}, and no one general term covers the
+    // powers either side of a logarithm.
     expect(() =>
-      seriesAntiderivative(div(number(1), mul(x, sub(number(1), x))), "x")
+      seriesAntiderivative(div(pow(e, x), pow(x, number(3))), "x")
     ).toThrow(SeriesError);
   });
 });

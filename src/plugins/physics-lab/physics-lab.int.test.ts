@@ -42,6 +42,10 @@ const INTEGRAL_REFUSAL = String.raw`[data-physics-lab="integral-refusal"]`;
 const SERIES = String.raw`[data-physics-lab="integral-series"]`;
 const ADD_INTEGRAL = ".dsm-physics-lab-add-integral";
 const ADD_SERIES = ".dsm-physics-lab-add-series";
+const INTEGRAL_METHOD = String.raw`[data-physics-lab="integral-method"]`;
+const SERIES_PARTS = String.raw`[data-physics-lab="integral-series-parts"]`;
+const DEFINITE = String.raw`[data-physics-lab="integral-definite"]`;
+const DEFINITE_REFUSAL = String.raw`[data-physics-lab="integral-definite-refusal"]`;
 
 /** The Integral tab, on one integrand. */
 async function openIntegralTab(driver: Driver, fLatex: string) {
@@ -922,6 +926,10 @@ testWithPage(
     expect(answer).toBe(
       "\\operatorname{sin}\\left(x\\right)-x\\operatorname{cos}\\left(x\\right)+C"
     );
+    // Named by the branch that finished it, not guessed from the answer.
+    expect(
+      await driver.$eval(INTEGRAL_METHOD, (el) => (el as HTMLElement).innerText)
+    ).toBe("Integration by parts");
 
     // It goes into the graph as an ordinary expression, constant and all: `C`
     // is undefined, so Desmos offers a slider and dragging it walks the whole
@@ -991,14 +999,14 @@ testWithPage(
     // than a gap in this engine.
     await openIntegralTab(driver, "e^{x^{2}}");
     await driver.assertSelectorEventually(INTEGRAL_REFUSAL);
-    // Refused rather than approximated, and the refusal says what was in the
-    // way rather than that something went wrong.
+    // Refused rather than approximated, and the refusal names the function the
+    // antiderivative is written with rather than describing the matcher.
     expect(
       await driver.$eval(
         INTEGRAL_REFUSAL,
         (el) => (el as HTMLElement).innerText
       )
-    ).toContain("linear");
+    ).toContain("imaginary error function erfi");
     await driver.assertSelectorNot(INTEGRAL);
 
     const sum = await driver.$eval(
@@ -1042,6 +1050,175 @@ testWithPage(
       await driver.$eval(SERIES, (el) => el.getAttribute("data-latex") ?? "")
     ).toContain("\\sum_{n=0}^{4}");
 
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  50000
+);
+
+testWithPage(
+  "a definite integral is exact, and Desmos's own integral agrees with it",
+  async (driver) => {
+    await openPanel(driver);
+    const setDefinite = async (f: string, lower: string, upper: string) => {
+      await driver.evaluate(
+        (args: string[]) => {
+          const { session } = DSM.physicsLab as unknown as {
+            session: {
+              updateConfig: (m: (c: PhysicsLabConfig) => void) => void;
+            };
+          };
+          const [f, lower, upper] = args;
+          session.updateConfig((config) => {
+            config.panel.tab = "integral";
+            config.integral.fLatex = f;
+            config.integral.definite = true;
+            config.integral.lowerLatex = lower;
+            config.integral.upperLatex = upper;
+          });
+        },
+        [f, lower, upper]
+      );
+      await driver.waitForSync();
+    };
+    const value = async () =>
+      await driver.$eval(DEFINITE, (el) => el.getAttribute("data-latex") ?? "");
+
+    // An arctangent at 1: exactly a quarter of pi, and Desmos, integrating
+    // numerically in its own way, agrees with the exact form it parses.
+    await setDefinite("\\frac{1}{x^{2}+1}", "0", "1");
+    await driver.assertSelectorEventually(DEFINITE);
+    expect(await value()).toBe("\\frac{\\pi}{4}");
+    await driver.evaluate(
+      (latex: string) => {
+        Calc.setExpression({
+          id: "gap",
+          latex: `g_{ap}=${latex}-\\int_{0}^{1}\\frac{1}{t^{2}+1}dt`,
+        });
+      },
+      await value()
+    );
+    await driver.waitForSync();
+    expect(Math.abs(await desmosValue(driver, "g_{ap}"))).toBeLessThan(1e-9);
+
+    // Improper, to infinity, and at a singular endpoint.
+    await setDefinite("e^{-x}", "0", "\\infty");
+    await driver.assertSelectorEventually(DEFINITE);
+    expect(await value()).toBe("1");
+    await setDefinite("\\ln\\left(x\\right)", "0", "1");
+    await driver.assertSelectorEventually(DEFINITE);
+    expect(await value()).toBe("-1");
+
+    // And an antiderivative that jumps inside the interval is crossed rather
+    // than subtracted: tan(x/2) leaps at pi, the interval is cut there, and
+    // the answer is the true 2pi/sqrt 3 rather than F(2pi) - F(0) = 0. Checked
+    // against Desmos's own numerical integral, which knows nothing of tan.
+    await setDefinite("\\frac{1}{2+\\sin\\left(x\\right)}", "0", "2\\pi");
+    await driver.assertSelectorEventually(DEFINITE);
+    await driver.evaluate(
+      (latex: string) => {
+        Calc.setExpression({
+          id: "gap",
+          latex: `g_{ap}=${latex}-\\int_{0}^{2\\pi}\\frac{1}{2+\\sin\\left(t\\right)}dt`,
+        });
+      },
+      await value()
+    );
+    await driver.waitForSync();
+    expect(Math.abs(await desmosValue(driver, "g_{ap}"))).toBeLessThan(1e-9);
+
+    // A pole inside the interval: the integral diverges, and says so.
+    await setDefinite("\\frac{1}{x^{2}}", "-1", "1");
+    await driver.assertSelectorEventually(DEFINITE);
+    expect(await value()).toBe("\\infty");
+    // And one whose pieces run off in opposite directions has no value at
+    // all, not a finite one: 1/x across zero.
+    await setDefinite("\\frac{1}{x}", "-1", "1");
+    await driver.assertSelectorEventually(DEFINITE_REFUSAL);
+    expect(
+      await driver.$eval(
+        DEFINITE_REFUSAL,
+        (el) => (el as HTMLElement).innerText
+      )
+    ).toContain("diverges");
+
+    await driver.evaluate(() => {
+      const { session } = DSM.physicsLab as unknown as {
+        session: { updateConfig: (m: (c: PhysicsLabConfig) => void) => void };
+      };
+      session.updateConfig((config) => {
+        config.integral.definite = false;
+      });
+    });
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  50000
+);
+
+testWithPage(
+  "a refusal falls back to series term by term, and says which term got what",
+  async (driver) => {
+    await openPanel(driver);
+    await driver.evaluate(() => {
+      (
+        DSM.physicsLab as unknown as {
+          session: { setSeriesTerms: (n: number) => void };
+        }
+      ).session.setSeriesTerms(12);
+    });
+
+    // A call of the variable is a product: `x(x)` is x times x.
+    await openIntegralTab(driver, "x\\left(x\\right)");
+    await driver.assertSelectorEventually(INTEGRAL);
+    expect(
+      await driver.$eval(INTEGRAL, (el) => el.getAttribute("data-latex") ?? "")
+    ).toBe("\\frac{x^{3}}{3}+C");
+
+    // A sum with one term in closed form and one only as a series.
+    await openIntegralTab(driver, "e^{x^{2}}+x");
+    await driver.assertSelectorEventually(SERIES_PARTS);
+    const parts = await driver.$eval(
+      SERIES_PARTS,
+      (el) => (el as HTMLElement).innerText
+    );
+    expect(parts).toContain("in closed form");
+    expect(parts).toContain("as a series, with its general term");
+
+    // No general term anywhere: the first terms, exact, to a stated order --
+    // and checked against Desmos's own numeric integral near zero, where the
+    // neglected terms are far below the tolerance.
+    await openIntegralTab(driver, "e^{\\sin\\left(x\\right)}");
+    await driver.assertSelectorEventually(SERIES);
+    const sum = await driver.$eval(
+      SERIES,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
+    expect(
+      await driver.$eval(
+        `${SERIES} .dsm-physics-lab-decimal`,
+        (el) => (el as HTMLElement).innerText
+      )
+    ).toContain("exact below x¹³, for x near 0");
+    await driver.evaluate((latex: string) => {
+      Calc.setExpression({ id: "S", latex: `S_{u}\\left(x\\right)=${latex}` });
+      Calc.setExpression({
+        id: "gap",
+        latex:
+          "g_{ap}=S_{u}\\left(0.3\\right)-\\int_{0}^{0.3}e^{\\sin\\left(t\\right)}dt",
+      });
+    }, sum);
+    await driver.waitForSync();
+    expect(Math.abs(await desmosValue(driver, "g_{ap}"))).toBeLessThan(1e-9);
+
+    // Put back what this changed, since settings outlive the test.
+    await driver.evaluate(() => {
+      (
+        DSM.physicsLab as unknown as {
+          session: { setSeriesTerms: (n: number) => void };
+        }
+      ).session.setSeriesTerms(20);
+    });
     await driver.setBlank();
     await driver.disablePlugin("physics-lab");
   },

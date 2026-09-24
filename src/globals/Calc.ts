@@ -37,6 +37,8 @@ export type FocusLocation =
         | "derivative-f"
         | "derivative-attempt"
         | "integral-f"
+        | "integral-lower"
+        | "integral-upper"
         | "exact"
         | "initial-x"
         | "initial-y";

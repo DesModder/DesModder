@@ -116,6 +116,11 @@ function tryCandidate(
   u: Node,
   name: string
 ): Substitution | undefined {
+  // `u = x` is a renaming, not a substitution. It slipped in as one of the
+  // roots `x^6` offers, always "worked", and spent a level of the recursion
+  // budget each time -- enough to leave `x^5 e^{3x} cos 2x` refused and to
+  // report "u-substitution" as the method for `x^6 e^x`.
+  if (u.type === "Identifier" && u.symbol === variable) return undefined;
   let derivative: Node;
   try {
     derivative = fold(differentiate(u, variable));

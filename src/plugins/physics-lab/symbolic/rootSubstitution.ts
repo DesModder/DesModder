@@ -29,9 +29,12 @@
  */
 import {
   add,
+  call,
   constantValue,
   dependsOn,
+  differentiate,
   divide,
+  SymbolicError,
   fold,
   freshName,
   id,
@@ -81,12 +84,8 @@ export function findRootSubstitution(
   const [{ base }] = roots;
   if (!roots.every((root) => sameTree(root.base, base))) return undefined;
 
-  const linear = linearIn(base, variable);
-  if (linear === undefined) return undefined;
-  const slope = constantValue(fold(linear.a));
-  const intercept = constantValue(fold(linear.b));
-  if (slope === undefined || slope === 0 || intercept === undefined)
-    return undefined;
+  const invert = inverseOf(base, variable);
+  if (invert === undefined) return undefined;
 
   let index = 1;
   for (const root of roots) index = leastCommonMultiple(index, root.index);
@@ -94,13 +93,16 @@ export function findRootSubstitution(
 
   const name = freshName(node, ["u", "w", "s", "v"]);
   const u = id(name);
-  // base = u^index, so x = (u^index - b)/a and dx = (index/a) u^{index-1} du.
+  // base = u^index, so x = g^{-1}(u^index) and dx is its derivative in u.
   const raised = power(u, number(index));
-  const inverse = divide(subtract(raised, number(intercept)), number(slope));
-  const jacobian = divide(
-    multiply(number(index), power(u, number(index - 1))),
-    number(slope)
-  );
+  const inverse = invert(raised);
+  let jacobian: Node;
+  try {
+    jacobian = fold(differentiate(inverse, name));
+  } catch (error) {
+    if (error instanceof SymbolicError) return undefined;
+    throw error;
+  }
 
   // Every root is replaced before the variable is, or the `x` inside each root
   // would be substituted and the root would never go away.
@@ -112,6 +114,9 @@ export function findRootSubstitution(
       power(u, number((root.numerator * index) / root.index))
     );
   }
+  // What is under the root may also appear outside it -- `tan x` beside
+  // `sqrt(tan x)` -- and it is `u^index` there too.
+  rewritten = replaceSubtree(rewritten, base, raised);
   rewritten = replaceIdentifier(rewritten, variable, inverse);
   if (dependsOn(rewritten, variable)) return undefined;
 
@@ -127,6 +132,58 @@ export function findRootSubstitution(
         )
       ),
   };
+}
+
+/**
+ * `x` as a function of `w`, where `w` is what sits under the root.
+ *
+ * A linear expression was the original case. The others are the functions
+ * with an inverse that is defined on the whole range in question, so that the
+ * substitution is a change of variable rather than a change of branch:
+ * `√(tan x)` becomes `x = arctan(u²)`, which turns it into `2u²/(1+u⁴)` and
+ * partial fractions. `sin` and `cos` are left out deliberately; `arcsin` would
+ * make the answer right on one half-period and silently wrong on the next.
+ */
+function inverseOf(
+  base: Node,
+  variable: string
+): ((w: Node) => Node) | undefined {
+  const undoLinear = (inside: Node) => {
+    const linear = linearIn(inside, variable);
+    if (linear === undefined) return undefined;
+    const slope = constantValue(fold(linear.a));
+    const intercept = constantValue(fold(linear.b));
+    if (slope === undefined || slope === 0 || intercept === undefined)
+      return undefined;
+    return (value: Node) =>
+      divide(subtract(value, number(intercept)), number(slope));
+  };
+
+  const plain = undoLinear(base);
+  if (plain !== undefined) return plain;
+
+  const isE =
+    base.type === "BinaryOperator" &&
+    base.name === "Exponent" &&
+    base.left.type === "Identifier" &&
+    base.left.symbol === "e";
+  if (isE) {
+    const undo = undoLinear(base.right);
+    return undo === undefined ? undefined : (w) => undo(call("ln", w));
+  }
+  if (base.type !== "FunctionCall" || base.args.length !== 1) return undefined;
+  const undo = undoLinear(base.args[0]);
+  if (undo === undefined) return undefined;
+  switch (base.callee.symbol) {
+    case "tan":
+      return (w) => undo(call("arctan", w));
+    case "exp":
+      return (w) => undo(call("ln", w));
+    case "ln":
+      return (w) => undo(power(id("e"), w));
+    default:
+      return undefined;
+  }
 }
 
 /** Every `f^{m/n}` in the tree where `n > 1`, including `sqrt`. */

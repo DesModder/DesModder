@@ -58,6 +58,7 @@ import {
   subtract,
   type Node,
 } from "../../../symbolic";
+import { joinSums } from "./integrate";
 
 /** Thrown for an integrand no series here can be built from. */
 export class SeriesError extends Error {}
@@ -155,6 +156,8 @@ export interface SeriesAntiderivative {
   index: string;
   /** Where the index starts. */
   from: number;
+  /** A `c·ln|x|` taken out in front, when the first term was a `1/x`. */
+  logarithm?: Node;
   /** The sum, with a finite upper bound, ready for Desmos to plot. */
   sum: Node;
   /** The first few terms written out, for reading rather than plotting. */
@@ -206,9 +209,34 @@ export function seriesAntiderivative(
   // only one of them is an answer. This is the one place the expander is used
   // for how something reads rather than for what a rule can match.
   const degree = fold(expand(xPower).node);
-  if (vanishes(degree, index, entry.from, terms)) {
+  const zeros = vanishingIndices(degree, index, entry.from, terms);
+  let { from } = entry;
+  let logarithm: Node | undefined;
+  if (zeros.length === 1 && zeros[0] === entry.from) {
+    // The first term is a multiple of 1/x, and its integral is a logarithm.
+    // That is exactly how the exponential integral is written --
+    // Ei(x) = γ + ln|x| + Σ_{n≥1} xⁿ/(n·n!) -- so the logarithm is taken out
+    // in closed form and the general term starts one index later.
+    const at = number(entry.from);
+    logarithm = fold(
+      multiply(
+        replaceIdentifier(
+          fold(
+            multiply(
+              multiply(shape.constant, entry.coefficient(n)),
+              raisedScale
+            )
+          ),
+          index,
+          at
+        ),
+        call("ln", call("abs", id(variable)))
+      )
+    );
+    from = entry.from + 1;
+  } else if (zeros.length > 0) {
     throw new SeriesError(
-      "One term of this series would be a logarithm rather than a power, so it has no single general term."
+      "A term in the middle of this series is a multiple of 1/x, whose integral is a logarithm rather than a power, so no single general term covers every index."
     );
   }
 
@@ -219,21 +247,27 @@ export function seriesAntiderivative(
     )
   );
   const term = fold(multiply(coefficient, power(id(variable), degree)));
+  const sum: Node = {
+    type: "RepeatedOperator",
+    name: "Sum",
+    index: { type: "Identifier", symbol: index },
+    start: number(from),
+    end: number(from + terms - 1),
+    expression: term,
+  };
+  const partial = writtenOut(term, index, from);
 
   return {
     term,
     index,
-    from: entry.from,
-    sum: {
-      type: "RepeatedOperator",
-      name: "Sum",
-      index: { type: "Identifier", symbol: index },
-      start: number(entry.from),
-      end: number(entry.from + terms - 1),
-      expression: term,
-    },
-    partial: writtenOut(term, index, entry.from),
-    interval: entry.interval,
+    from,
+    logarithm,
+    sum: logarithm === undefined ? sum : add(logarithm, sum),
+    // Not folded: the fold orders a sum by its own rules, and a series read
+    // out of order is harder to recognise than one with a stray bracket.
+    partial: logarithm === undefined ? partial : joinSums([logarithm, partial]),
+    interval:
+      logarithm === undefined ? entry.interval : `${entry.interval} except 0`,
     source: shape.series,
   };
 }
@@ -249,25 +283,25 @@ function writtenOut(term: Node, index: string, from: number): Node {
 }
 
 /**
- * Whether the exponent this divides by is zero for any index in range.
+ * The indices in range at which the exponent this divides by is zero.
  *
  * `∫dx/x` is a logarithm, and a series term with a zero exponent is exactly
- * that case hiding inside a general term. Rather than emit a division by zero,
- * the whole thing is refused.
+ * that case hiding inside a general term.
  */
-function vanishes(
+function vanishingIndices(
   degree: Node,
   index: string,
   from: number,
   terms: number
-): boolean {
+): number[] {
+  const out: number[] = [];
   for (let i = from; i < from + terms; i += 1) {
     const value = constantValue(
       fold(replaceIdentifier(degree, index, number(i)))
     );
-    if (value === 0) return true;
+    if (value === 0) out.push(i);
   }
-  return false;
+  return out;
 }
 
 /** The integrand, read as `c · x^m · f(a x^k)`. */
