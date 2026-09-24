@@ -1143,12 +1143,6 @@ Evidence: `docs/assets/physics-lab-derivation.png` (the tree),
 
 ### Still open
 
-The integrator is still not instrumented and the tab shows no integrals — the
-last piece, and the harder one: integration has no single dispatch the way
-differentiation does, so "which rule and why here" is a genuinely different
-question there. Several of its steps are _choices_ rather than forced branches,
-and the explanation has to say why the choice was made.
-
 The simplifier is not exposed on its own. It runs on derivatives; a tab where an
 arbitrary expression could be handed to it is a small amount of wiring and has
 not been asked for.
@@ -1156,3 +1150,93 @@ not been asked for.
 And the phase plane could animate through Vector Tools' time architecture, which
 would want bounded modes for `t` — periodic, or held — rather than the unbounded
 clock a vector field uses.
+
+## The Integral tab
+
+The integrator had been finished, tested and unreachable: `integrate` answered
+47 of a 48-integral sweep and `seriesAntiderivative` handled the ones with no
+elementary answer, and nothing in the panel offered either. This is the wiring.
+
+### What it shows
+
+An integrand, a variable, and one answer with `+C`. No step-by-step, and that
+is a decision rather than an omission. A derivation is a sequence of rules and
+reads as one; an integral is found by _search_ — the answer to one of these was
+found by trying a dozen things and keeping the one that worked — and a list of
+what was tried is a transcript of the engine rather than an explanation.
+
+The constant is added in the session rather than by the integrator, because
+only a caller knows whether it wants `+C` or a pair of bounds, and its name is
+chosen against the integrand so an integral already mentioning `C` does not come
+back with two different things called the same thing. It is left undefined on
+purpose: Desmos offers a slider for it, and dragging that slider walks the whole
+family of antiderivatives.
+
+### Every answer is differentiated back before it is shown
+
+Numerically, by a central difference. Differentiating the answer with the same
+engine that produced it would agree with itself whatever it had done.
+
+There are three outcomes, not two, and the third is why this is worth having.
+An integrand carrying a name nothing gives a value to — `1/(x²+a²)` before `a`
+exists — evaluates to nothing at every sample, so there was nothing to check;
+the panel says _not checked_ rather than claiming a verification that never
+happened. An answer that actively disagrees is not shown at all.
+
+**The samples are all positive, and that is load-bearing.** `∫dx/(x√(x²-1))`
+comes back as `arccos(1/x)`, which every table gives, and which differentiates
+to the integrand for `x > 1` and to _minus_ it for `x < -1`. The sign a `√(x²)`
+loses is real, and it is a question about which branch the answer is on rather
+than about whether the answer is right — a check that sampled both signs would
+have called the standard answer wrong and hidden it. This was found by sweeping
+integrals rather than by reasoning about it, and it very nearly shipped.
+
+### The series is a fallback, not a second opinion
+
+Offered only on a refusal. `∫e^x dx` has a perfectly good series and nobody
+wants it, so a series shown beside a closed form would be noise. Where there is
+no closed form it is not a consolation either: the sum _is_ the function, and it
+goes into the graph as one expression.
+
+How far the sum runs is a control rather than a constant, because the two things
+somebody wants from it pull in opposite directions — further out, or faster to
+redraw under a moving slider.
+
+### Two things MathQuill would not draw
+
+`\int` on its own renders with its two limit slots empty, and an empty slot is
+drawn as a grey box: the one symbol that says what the tab does arrived looking
+like a control waiting to be filled in. It is a glyph now.
+
+And MathQuill has no `\dots`. A field it cannot parse renders as _nothing at
+all_, so the partial sum — the line that makes a series recognisable, since
+nobody reads a general term and sees the shape of a function — was the one line
+that disappeared. The ellipsis is set beside the maths rather than inside it.
+
+Both were caught by screenshotting the panel. Neither would have failed a test.
+
+### Verification
+
+Two integration tests, and each makes a check nothing offline can. Desmos
+differentiates the antiderivative itself and is asked whether the result is the
+integrand; and the series sum is compared against Desmos's own numeric integral
+of `e^{x²}`, which agrees to 1e-9. A sum that parsed and plotted something else
+would have passed every other assertion.
+
+Evidence: `docs/assets/physics-lab-integral.png`,
+`docs/assets/physics-lab-integral-series.png`.
+
+### Still open
+
+Nothing reports _which_ technique finished an integral, so the panel cannot say.
+That is the one thing worth saying about an integral that it currently cannot,
+and it needs a label threaded out of the integrator rather than guessed from the
+shape of the answer.
+
+Definite integrals are not offered anywhere — no bounds, no exact evaluation at
+them.
+
+The series reader takes `c·xᵐ·f(a xᵏ)` and nothing else, so `e^{x²} + x` gets no
+series even though both terms have one. Integrating a sum term by term, and
+saying which terms were done in closed form and which as series, is the obvious
+next move.

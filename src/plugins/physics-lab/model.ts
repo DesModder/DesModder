@@ -23,7 +23,22 @@ export const SLOPE_MARK_LIMIT = 10_000;
 export const SLOPE_COUNT_MINIMUM = 2;
 export const SLOPE_COUNT_MAXIMUM = 401;
 
-export type PanelTab = "slope" | "second" | "derivative" | "exact";
+export type PanelTab = "slope" | "second" | "derivative" | "integral" | "exact";
+
+/**
+ * How many terms the plotted series carries.
+ *
+ * A control rather than a constant because the two things somebody wants from
+ * a series antiderivative pull in opposite directions: a curve that is right
+ * out to the edge of the window wants more terms, and a sum Desmos redraws
+ * while a slider moves wants fewer. Two is the fewest that is still a series.
+ * The ceiling is not a limit of the arithmetic — it is where more terms stop
+ * helping: an alternating series far from zero builds enormous terms that
+ * cancel to something small, and past this the cancellation costs more digits
+ * than the extra terms add.
+ */
+export const SERIES_TERMS_MIN = 2;
+export const SERIES_TERMS_MAX = 40;
 
 /**
  * How far the panel may be dragged.
@@ -90,10 +105,32 @@ export interface DerivativeConfig {
   form: AnswerForm;
 }
 
+/**
+ * What the Integral tab is working on.
+ *
+ * No practice problem and no detail level, unlike the derivative beside it,
+ * and neither is an omission. Differentiation is a set of rules that can be
+ * listed and applied in order, so a derivation reads as a sequence of steps
+ * somebody could have taken. Integration is a search: the answer to
+ * `∫dx/(1+cos x)` was found by trying a dozen things and keeping the one that
+ * worked, and a list of what was tried is a transcript of the engine rather
+ * than an explanation. Naming the technique that finished it would be worth
+ * saying and is not available: nothing in the integrator reports which branch
+ * succeeded, and inventing a label from the shape of the answer would be
+ * guessing at its own working.
+ */
+export interface IntegralConfig {
+  fLatex: string;
+  variable: string;
+  /** How many terms a series antiderivative carries. */
+  terms: number;
+}
+
 export const PANEL_TABS = [
   { id: "slope", label: "Slope field" },
   { id: "second", label: "2nd order" },
   { id: "derivative", label: "Derivative" },
+  { id: "integral", label: "Integral" },
   { id: "exact", label: "Exact value" },
 ] as const satisfies readonly { id: PanelTab; label: string }[];
 
@@ -143,6 +180,8 @@ export interface PhysicsLabConfig {
   secondOrder: { fLatex: string };
   /** What the Derivative tab is working on, and how much of it to show. */
   derivative: DerivativeConfig;
+  /** What the Integral tab is working on. */
+  integral: IntegralConfig;
   /**
    * The phase plane for the second-order equation: y across, y′ up.
    *
@@ -201,6 +240,11 @@ export function defaultPhysicsLabConfig(): PhysicsLabConfig {
       checked: false,
       form: "expanded",
     },
+    // Integration by parts, and an answer everybody recognises the moment they
+    // see it. The first thing on screen is a worked integral rather than an
+    // empty field, and this one is short enough to check by differentiating in
+    // your head.
+    integral: { fLatex: "x\\sin\\left(x\\right)", variable: "x", terms: 20 },
     phase: {
       domain: { x: { min: -4, max: 4 }, y: { min: -4, max: 4 } },
       columns: 19,
@@ -350,6 +394,25 @@ export function normalizePhysicsLabConfig(raw: unknown): PhysicsLabConfig {
       showAnswer: source.derivative?.showAnswer === true,
       checked: source.derivative?.checked === true,
       form: source.derivative?.form === "factored" ? "factored" : "expanded",
+    },
+    integral: {
+      fLatex:
+        typeof source.integral?.fLatex === "string"
+          ? source.integral.fLatex
+          : defaults.integral.fLatex,
+      variable:
+        typeof source.integral?.variable === "string" &&
+        /^[a-zA-Z]$/.test(source.integral.variable)
+          ? source.integral.variable
+          : defaults.integral.variable,
+      terms: Math.round(
+        clampRange(
+          source.integral?.terms,
+          defaults.integral.terms,
+          SERIES_TERMS_MIN,
+          SERIES_TERMS_MAX
+        )
+      ),
     },
     secondOrder: {
       fLatex:

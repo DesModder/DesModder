@@ -35,12 +35,13 @@ const POPOVER_CLASS = "dsm-physics-lab-popover";
 /** Long enough that one corner drag is one write rather than sixty. */
 const PANEL_SIZE_SETTLE_MS = 250;
 
-/** The panel's two real math fields. */
+/** Every math field in the panel, so focus can be routed back to one. */
 export type PhysicsLabFocusKind =
   | "slope-f"
   | "second-f"
   | "derivative-f"
   | "derivative-attempt"
+  | "integral-f"
   | "exact"
   | "initial-x"
   | "initial-y";

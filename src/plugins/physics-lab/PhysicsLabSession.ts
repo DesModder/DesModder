@@ -42,18 +42,27 @@ import {
   type Derivation,
   type DerivationNode,
 } from "./symbolic/differentiate";
+import { integrate, IntegrationError } from "./symbolic/integrate";
+import { seriesAntiderivative, SeriesError } from "./symbolic/series";
 import {
+  add,
   agreesOnSamples,
   condense,
   evaluate,
   fold as simplifyTree,
+  freshName,
+  id,
+  numericDerivative,
   topLevelTerms,
   toLatex as toLatexTree,
+  type Bindings,
 } from "../../symbolic";
 
 import {
   defaultPhysicsLabConfig,
   normalizePhysicsLabConfig,
+  SERIES_TERMS_MAX,
+  SERIES_TERMS_MIN,
   thinSlopeGrid,
   validateSlopeField,
   type AnswerForm,
@@ -257,6 +266,83 @@ function childLabel(parent: string, depth: number, index: number): string {
 
 const ROMAN = ["i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x"];
 
+/**
+ * A series antiderivative, ready to read and ready to plot.
+ *
+ * Both spellings are kept because they answer different questions. The sum is
+ * the antiderivative — one expression, exact, and what goes into the graph.
+ * The first few terms written out are what makes it recognisable: nobody reads
+ * a general term and sees the shape of the function, and everybody recognises
+ * `x + x³/3 + x⁵/10` as something that climbs.
+ */
+export interface SeriesView {
+  /** The general term, as an expression in the index. */
+  termLatex: string;
+  /** The whole sum, with a finite upper bound, for the expression list. */
+  sumLatex: string;
+  /** The first few terms, added up. */
+  partialLatex: string;
+  /** Where the series converges, in words. */
+  interval: string;
+  /** How many terms the plottable sum carries. */
+  terms: number;
+}
+
+/**
+ * Whether the antiderivative was checked against the integrand.
+ *
+ * Every answer here is differentiated back numerically before it is shown, and
+ * an answer that fails is not shown at all. What this reports is the case in
+ * between: an integrand with a free parameter in it — `1/(x²+a²)` before `a`
+ * exists in the graph — evaluates to nothing at every sample, so there was
+ * nothing to check. That is not the same as having checked it, and the panel
+ * says so rather than claiming a verification that never happened.
+ */
+export type IntegralCheck = "checked" | "unchecked";
+
+/** What the Integral tab has to show for one integrand. */
+export type IntegralView =
+  | {
+      ok: true;
+      /** The antiderivative with its constant, as LaTeX Desmos parses. */
+      latex: string;
+      /** The same, broken across lines when it is too long for one. */
+      lines: string[];
+      check: IntegralCheck;
+    }
+  | {
+      ok: false;
+      /** Why there is no elementary antiderivative, in words. */
+      error: string;
+      /**
+       * The series antiderivative, when the integrand has one.
+       *
+       * Only ever offered on a refusal. A series is an exact answer and a
+       * worse one to read: `∫e^x dx` has a perfectly good series and nobody
+       * wants it, so it is what the panel falls back to rather than what it
+       * shows beside a closed form.
+       */
+      series?: SeriesView;
+    };
+
+/**
+ * Where an antiderivative is checked.
+ *
+ * All positive, and that is the load-bearing part. `∫dx/(x√(x²-1))` comes back
+ * as `arccos(1/x)`, which every table gives and which differentiates to the
+ * integrand for `x > 1` and to *minus* it for `x < -1` — the sign a `√(x²)`
+ * loses is real, and it is a question about which branch the answer is on
+ * rather than about whether the answer is right. A check that sampled both
+ * signs would call that answer wrong and hide it, which is the opposite of
+ * what this is for.
+ *
+ * Spread either side of 1 because the domains here divide there: the circle
+ * substitutions need |x| < 1 and the secant ones need |x| > 1. Points where
+ * either side is undefined are skipped, so a spread that crosses a
+ * singularity costs a sample rather than a verdict.
+ */
+const INTEGRAL_SAMPLES = [0.13, 0.37, 0.62, 0.91, 1.4, 2.3, 3.7];
+
 /** What the exact-value reader can say about one expression. */
 export interface ExactReading {
   /** The exact form, as LaTeX Desmos parses. */
@@ -293,6 +379,7 @@ export default class PhysicsLabSession {
   private drawing: "none" | "slope" | "phase" = "none";
   private solutionCache?: { latex: string; result: ODEResult };
   private secondCache?: { latex: string; result: ODEResult };
+  private integralCache?: { key: string; result: IntegralView };
   private derivativeCache?: {
     key: string;
     result: DerivationView;
@@ -1255,6 +1342,183 @@ export default class PhysicsLabSession {
     return found === undefined
       ? undefined
       : toLatexTree(this.textModeConfig, found.result);
+  }
+
+  /**
+   * The antiderivative shown on the Integral tab, or why there is none.
+   *
+   * Cached against the integrand the same way the derivation is, and for a
+   * stronger reason: integration is a search rather than a walk. Refusing
+   * `∫e^{x²}dx` means trying every technique and failing at each, which is the
+   * most expensive thing this engine does — and it is exactly what happens on
+   * every keystroke of an expression somebody is halfway through typing.
+   *
+   * The constant of integration is added here rather than inside the
+   * integrator, because only a caller knows whether it wants `+C` or a pair of
+   * bounds. Its name is chosen against the integrand, so an integral that
+   * already mentions `C` does not come back with two different things called
+   * the same thing.
+   */
+  get integral(): IntegralView | undefined {
+    const { fLatex, variable, terms } = this.config.integral;
+    if (fLatex.trim() === "") return undefined;
+    const key = `${variable} ${terms} ${fLatex}`;
+    if (this.integralCache?.key === key) return this.integralCache.result;
+    const result = this.computeIntegral(fLatex, variable, terms);
+    this.integralCache = { key, result };
+    return result;
+  }
+
+  private computeIntegral(
+    fLatex: string,
+    variable: string,
+    terms: number
+  ): IntegralView {
+    let integrand: Node;
+    try {
+      integrand = parseLatex(this.textModeConfig, fLatex);
+    } catch {
+      // Half-typed LaTeX does not parse, and that is the normal state of an
+      // input somebody is still using rather than something to report.
+      return { ok: false, error: "" };
+    }
+
+    let refusal: string;
+    try {
+      const value = integrate(integrand, variable);
+      const check = this.checkAntiderivative(value, integrand, variable);
+      if (check !== "wrong") {
+        const constant = freshName(integrand, ["C", "K", "D"]);
+        const withConstant = add(value, id(constant));
+        const latex = toLatexTree(this.textModeConfig, withConstant);
+        return {
+          ok: true,
+          latex,
+          lines: this.stack(withConstant, latex),
+          check,
+        };
+      }
+      // An answer that does not differentiate back to the integrand is worse
+      // than no answer: it is wrong, and it is wrong in a form that looks
+      // exactly like a right one. Nothing in the test suite produces this, and
+      // if something ever does, this is the difference between finding out and
+      // not.
+      refusal =
+        "The antiderivative found here does not differentiate back to what you typed, so it is not shown.";
+    } catch (error) {
+      if (!(error instanceof IntegrationError)) throw error;
+      refusal = error.message;
+    }
+
+    return { ok: false, error: refusal, series: this.series(integrand, terms) };
+  }
+
+  /**
+   * The series antiderivative, when the integrand has one this can build.
+   *
+   * Only reached on a refusal, and allowed to refuse in turn — most integrands
+   * are not `c·xᵐ·f(a xᵏ)` for one of the eight series here, and the ones that
+   * are are the ones nothing else can do at all.
+   *
+   * The variable is not passed through: a series is built about zero in the
+   * variable the integrand is written in, which is the one the tab is set to.
+   */
+  private series(integrand: Node, terms: number): SeriesView | undefined {
+    const { variable } = this.config.integral;
+    try {
+      const found = seriesAntiderivative(integrand, variable, terms);
+      const emit = (node: Node) => toLatexTree(this.textModeConfig, node);
+      return {
+        termLatex: emit(found.term),
+        sumLatex: emit(found.sum),
+        partialLatex: emit(found.partial),
+        interval: found.interval,
+        terms,
+      };
+    } catch (error) {
+      if (!(error instanceof SeriesError)) throw error;
+      return undefined;
+    }
+  }
+
+  /**
+   * Whether the antiderivative differentiates back to the integrand.
+   *
+   * Numerically, by a central difference, which is the only check available
+   * that does not assume the symbolic layer is right — differentiating the
+   * answer with the same engine that produced it and comparing trees would
+   * agree with itself whatever it had done.
+   *
+   * Three verdicts rather than two. An integrand mentioning a name the graph
+   * has not defined evaluates to nothing everywhere, and a comparison with
+   * nothing on one side is not a pass. Reporting that as checked would be the
+   * one dishonest thing this readout could do.
+   */
+  private checkAntiderivative(
+    value: Node,
+    integrand: Node,
+    variable: string
+  ): IntegralCheck | "wrong" {
+    const decided: Bindings[] = [];
+    for (const at of INTEGRAL_SAMPLES) {
+      const bindings = { [variable]: at };
+      if (!Number.isFinite(evaluate(integrand, bindings))) continue;
+      if (!Number.isFinite(numericDerivative(value, variable, bindings)))
+        continue;
+      decided.push(bindings);
+    }
+    if (decided.length < 3) return "unchecked";
+    return agreesOnSamples(
+      (bindings) => numericDerivative(value, variable, bindings),
+      (bindings) => evaluate(integrand, bindings),
+      decided
+    )
+      ? "checked"
+      : "wrong";
+  }
+
+  /** A new integrand. */
+  setIntegralExpression(fLatex: string) {
+    this.updateConfig((config) => {
+      config.integral.fLatex = fLatex;
+    });
+  }
+
+  setIntegralVariable(variable: string) {
+    this.updateConfig((config) => {
+      config.integral.variable = variable;
+    });
+  }
+
+  setSeriesTerms(terms: number) {
+    this.updateConfig((config) => {
+      config.integral.terms = Math.round(
+        Math.min(SERIES_TERMS_MAX, Math.max(SERIES_TERMS_MIN, terms))
+      );
+    });
+  }
+
+  /**
+   * Puts the antiderivative into the graph, constant and all.
+   *
+   * With the `+C` rather than without it, because Desmos offers a slider for
+   * an undefined name and dragging that slider through the family of curves is
+   * the whole picture an antiderivative describes.
+   */
+  insertIntegral() {
+    const found = this.integral;
+    if (found?.ok !== true) return;
+    this.plugin.calc.setExpression({ latex: found.latex, color: "#388c46" });
+  }
+
+  /** Puts the series antiderivative into the graph, as its finite sum. */
+  insertSeries() {
+    const found = this.integral;
+    if (found?.ok !== false || found.series === undefined) return;
+    this.plugin.calc.setExpression({
+      latex: found.series.sumLatex,
+      color: "#388c46",
+    });
   }
 
   /**

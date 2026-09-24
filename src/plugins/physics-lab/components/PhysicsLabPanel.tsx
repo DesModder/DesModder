@@ -151,6 +151,7 @@ export class PhysicsLabPanel extends Component<{
             slope: () => slopeTab(physicsLab, config),
             second: () => secondOrderTab(physicsLab, config),
             derivative: () => derivativeTab(physicsLab, config),
+            integral: () => integralTab(physicsLab, config),
             exact: () => exactTab(physicsLab, config),
           })}
         </div>
@@ -1199,6 +1200,210 @@ function mathBlock(latex: () => string, lines: () => string[]) {
           <div class="dsm-physics-lab-math">
             <StaticMathQuillView latex={latex} />
           </div>
+        )}
+      </If>
+    </div>
+  );
+}
+
+/**
+ * The Integral tab.
+ *
+ * Shorter than the derivative tab beside it, and deliberately so. A derivation
+ * is a sequence of rules and reads as one; an integral is found by search, and
+ * the honest thing to put on screen is the answer, whether it was checked, and
+ * — when there is no elementary answer — the series that is one.
+ */
+function integralTab(physicsLab: PhysicsLab, config: ConfigGetter) {
+  const session = () => physicsLab.session;
+  const found = () => session().integral;
+  const worked = () => {
+    const value = found();
+    return value?.ok === true ? value : undefined;
+  };
+  const failure = () => {
+    const value = found();
+    return value?.ok === false ? value : undefined;
+  };
+  const series = () => failure()?.series;
+  const variable = () => config().integral.variable;
+
+  return (
+    <div>
+      <section class="dsm-physics-lab-section">
+        <div class="dsm-physics-lab-section-head">
+          <label class="dsm-physics-lab-label">Integrate</label>
+          {chipGroup(
+            "With respect to",
+            variable,
+            VARIABLES,
+            (value) => session().setIntegralVariable(value),
+            "dsm-physics-lab-integral-variable"
+          )}
+        </div>
+        <div class="dsm-physics-lab-integrand">
+          {/* The sign is a glyph rather than rendered maths. MathQuill draws
+              `\int` on its own with its two limit slots empty, and an empty
+              slot is drawn as a grey box — so the one symbol that says what
+              this tab does would arrive looking like a control waiting to be
+              filled in. */}
+          <span class="dsm-physics-lab-integral-sign">∫</span>
+          <InlineMathInputViewGeneral
+            containerClass={() => ({ "dsm-physics-lab-math-input": true })}
+            placeholder="x\sin\left(x\right)"
+            ariaLabel="the expression to integrate"
+            latex={() => config().integral.fLatex}
+            handleLatexChanged={(latex: string) =>
+              session().setIntegralExpression(latex)
+            }
+            hasError={() => (failure()?.error ?? "") !== ""}
+            manageFocus={mathquillFocusHelper({
+              controller: physicsLab.cc,
+              location: {
+                type: "dsm-focus",
+                plugin: "physics-lab",
+                kind: "integral-f",
+              },
+            })}
+            controller={physicsLab.cc}
+            readonly={false}
+          />
+          <span class="dsm-physics-lab-differential">
+            <StaticMathQuillView latex={() => `d${variable()}`} />
+          </span>
+        </div>
+      </section>
+
+      <If predicate={() => worked() !== undefined}>
+        {() => (
+          <section class="dsm-physics-lab-section">
+            <div
+              class="dsm-physics-lab-solution"
+              data-physics-lab="integral"
+              data-latex={() => worked()?.latex ?? ""}
+            >
+              {mathBlock(
+                () => worked()?.latex ?? "",
+                () => worked()?.lines ?? []
+              )}
+              <div class="dsm-physics-lab-inline">
+                <Button
+                  color="blue"
+                  class="dsm-physics-lab-add-integral"
+                  onTap={() => session().insertIntegral()}
+                >
+                  Add to graph
+                </Button>
+                {/* Said only where it is true. An answer that was checked and
+                    one that could not be is a different claim, and the absence
+                    of this line is the second one. */}
+                <span class="dsm-physics-lab-decimal">
+                  {() =>
+                    worked()?.check === "checked"
+                      ? "differentiates back to the integrand"
+                      : "not checked — this uses a name nothing here gives a value to"
+                  }
+                </span>
+              </div>
+            </div>
+            <div class="dsm-physics-lab-hint">
+              C is undefined, so Desmos will offer a slider for it. Dragging it
+              moves the curve through the whole family of antiderivatives.
+            </div>
+          </section>
+        )}
+      </If>
+
+      {/* Nothing is said while an expression is half-typed: LaTeX that does not
+          parse arrives with an empty message, and an error under a field
+          somebody is still using reads as the tool complaining rather than as
+          the tool waiting. */}
+      <If predicate={() => (failure()?.error ?? "") !== ""}>
+        {() => (
+          <section class="dsm-physics-lab-section">
+            <div
+              class="dsm-physics-lab-refusal"
+              data-physics-lab="integral-refusal"
+            >
+              {() => failure()?.error ?? ""}
+            </div>
+            <If predicate={() => series() === undefined}>
+              {() => (
+                <div class="dsm-physics-lab-hint">
+                  Refused rather than approximated. An answer that is nearly
+                  right is not an antiderivative of anything.
+                </div>
+              )}
+            </If>
+          </section>
+        )}
+      </If>
+
+      {/* The one thing that can be said about an integral with no elementary
+          antiderivative, and it is an exact answer rather than a consolation:
+          the sum *is* the function. */}
+      <If predicate={() => series() !== undefined}>
+        {() => (
+          <section class="dsm-physics-lab-section">
+            <h3>As a power series</h3>
+            <div class="dsm-physics-lab-hint">
+              There is no elementary antiderivative, which is a fact about the
+              function rather than a gap here. Integrating its series term by
+              term gives one exactly.
+            </div>
+            {/* The ellipsis is set beside the maths rather than inside it.
+                MathQuill has no `\dots`, and a field it cannot parse renders
+                as nothing at all — so the line that makes the series
+                recognisable was the one line that disappeared. */}
+            <div class="dsm-physics-lab-partial">
+              <div class="dsm-physics-lab-math">
+                <StaticMathQuillView
+                  latex={() => series()?.partialLatex ?? ""}
+                />
+              </div>
+              <span class="dsm-physics-lab-ellipsis">+ ⋯</span>
+            </div>
+            <div
+              class="dsm-physics-lab-solution"
+              data-physics-lab="integral-series"
+              data-latex={() => series()?.sumLatex ?? ""}
+            >
+              <div class="dsm-physics-lab-math">
+                <StaticMathQuillView latex={() => series()?.sumLatex ?? ""} />
+              </div>
+              <div class="dsm-physics-lab-inline">
+                <Button
+                  color="blue"
+                  class="dsm-physics-lab-add-series"
+                  onTap={() => session().insertSeries()}
+                >
+                  Add to graph
+                </Button>
+                <span class="dsm-physics-lab-decimal">
+                  {() => `converges for ${series()?.interval ?? ""}`}
+                </span>
+              </div>
+            </div>
+            {/* The sum that goes into the graph stops somewhere, and where it
+                stops is the reader's trade rather than this panel's: more terms
+                reach further out, fewer redraw faster under a moving slider. */}
+            {/* In a row, because a number control's flex basis is read as a
+                height by the column its section is, and one on its own would
+                reserve eighty-eight pixels of nothing under itself. */}
+            <div class="dsm-physics-lab-row">
+              {numberControl(
+                "dsm-physics-lab-series-terms",
+                "Terms plotted",
+                () => config().integral.terms,
+                (value) => session().setSeriesTerms(value)
+              )}
+            </div>
+            <div class="dsm-physics-lab-hint">
+              The series is infinite and the plotted sum is not. Past the
+              interval it converges on, and far enough out inside it, the curve
+              is the sum rather than the function.
+            </div>
+          </section>
         )}
       </If>
     </div>

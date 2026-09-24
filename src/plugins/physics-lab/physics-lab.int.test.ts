@@ -37,6 +37,48 @@ const FORM_CHIPS = "#dsm-physics-lab-form";
 const HINT_BUTTON = ".dsm-physics-lab-hint-button";
 const VERDICT = String.raw`[data-physics-lab="verdict"]`;
 const STEP_TITLE = ".dsm-physics-lab-step-title";
+const INTEGRAL = String.raw`[data-physics-lab="integral"]`;
+const INTEGRAL_REFUSAL = String.raw`[data-physics-lab="integral-refusal"]`;
+const SERIES = String.raw`[data-physics-lab="integral-series"]`;
+const ADD_INTEGRAL = ".dsm-physics-lab-add-integral";
+const ADD_SERIES = ".dsm-physics-lab-add-series";
+
+/** The Integral tab, on one integrand. */
+async function openIntegralTab(driver: Driver, fLatex: string) {
+  await driver.evaluate((latex: string) => {
+    const { session } = DSM.physicsLab as unknown as {
+      session: {
+        updateConfig: (m: (c: PhysicsLabConfig) => void) => void;
+        setIntegralExpression: (l: string) => void;
+      };
+    };
+    session.updateConfig((config) => {
+      config.panel.tab = "integral";
+    });
+    session.setIntegralExpression(latex);
+  }, fLatex);
+  await driver.waitForSync();
+}
+
+/**
+ * What Desmos makes of an expression, waited for rather than slept on.
+ *
+ * A helper expression is evaluated asynchronously, so a fixed pause is long
+ * enough almost every time — which is the worst way for a check like this to
+ * fail.
+ */
+async function desmosValue(driver: Driver, latex: string): Promise<number> {
+  return await driver.evaluate(async (probe: string) => {
+    const helper = Calc.HelperExpression({ latex: probe });
+    let value = NaN;
+    for (let tries = 0; tries < 50; tries += 1) {
+      value = (helper as unknown as { numericValue: number }).numericValue;
+      if (Number.isFinite(value)) break;
+      await new Promise((resolve) => setTimeout(resolve, 40));
+    }
+    return value;
+  }, latex);
+}
 
 /** The Derivative tab, on the expression whose tree contains three rules. */
 async function openDerivativeTab(driver: Driver, fLatex: string) {
@@ -859,6 +901,146 @@ testWithPage(
       client: el.clientWidth,
     }));
     expect(overflow.scroll).toBe(overflow.client);
+
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  50000
+);
+
+testWithPage(
+  "the Integral tab answers, and Desmos differentiates the answer back",
+  async (driver) => {
+    await openPanel(driver);
+    await openIntegralTab(driver, "x\\sin\\left(x\\right)");
+    await driver.assertSelectorEventually(INTEGRAL);
+
+    const answer = await driver.$eval(
+      INTEGRAL,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
+    expect(answer).toBe(
+      "\\operatorname{sin}\\left(x\\right)-x\\operatorname{cos}\\left(x\\right)+C"
+    );
+
+    // It goes into the graph as an ordinary expression, constant and all: `C`
+    // is undefined, so Desmos offers a slider and dragging it walks the whole
+    // family of antiderivatives.
+    await driver.click(ADD_INTEGRAL);
+    await driver.waitForSync();
+    const { list } = (await driver.getState()).expressions;
+    expect(
+      list.some((item) => item.type === "expression" && item.latex === answer)
+    ).toBe(true);
+
+    // The check nothing offline can make. The unit tests differentiate the
+    // answer with this extension's own engine, which would agree with itself
+    // whatever it had done; here Desmos differentiates it and is asked whether
+    // the result is the integrand.
+    await driver.evaluate((latex: string) => {
+      Calc.setExpression({ id: "c", latex: "C=0" });
+      Calc.setExpression({ id: "F", latex: `F_{a}\\left(x\\right)=${latex}` });
+      Calc.setExpression({
+        id: "gap",
+        latex:
+          "g_{ap}=F_{a}'\\left(1.3\\right)-1.3\\operatorname{sin}\\left(1.3\\right)",
+      });
+    }, answer);
+    await driver.waitForSync();
+    const gap = await desmosValue(driver, "g_{ap}");
+    expect(Math.abs(gap)).toBeLessThan(1e-6);
+
+    // Every answer is differentiated back before it is shown, and the panel
+    // says so only where it is true. An integrand carrying a name nothing
+    // gives a value to cannot be checked at all, and claiming otherwise is the
+    // one dishonest thing this readout could do.
+    const note = async () =>
+      await driver.$eval(
+        `${INTEGRAL} .dsm-physics-lab-decimal`,
+        (el) => (el as HTMLElement).innerText
+      );
+    expect(await note()).toContain("differentiates back");
+
+    await openIntegralTab(driver, "\\frac{1}{x^{2}+a^{2}}");
+    await driver.assertSelectorEventually(INTEGRAL);
+    expect(await note()).toContain("not checked");
+
+    // And the check samples one side of zero on purpose. This is the standard
+    // answer, and it differentiates to the integrand for x > 1 and to minus it
+    // for x < -1 — a question about which branch it is on rather than about
+    // whether it is right. Sampling both signs would hide it as wrong.
+    await openIntegralTab(driver, "\\frac{1}{x\\sqrt{x^{2}-1}}");
+    await driver.assertSelectorEventually(INTEGRAL);
+    expect(
+      await driver.$eval(INTEGRAL, (el) => el.getAttribute("data-latex") ?? "")
+    ).toBe("\\operatorname{arccos}\\left(\\frac{1}{x}\\right)+C");
+    expect(await note()).toContain("differentiates back");
+
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  50000
+);
+
+testWithPage(
+  "an integral with no elementary answer is refused, and offered as a series",
+  async (driver) => {
+    await openPanel(driver);
+    // The integral the whole series path exists for: `e^{x²}` has no
+    // elementary antiderivative, which is a theorem about the function rather
+    // than a gap in this engine.
+    await openIntegralTab(driver, "e^{x^{2}}");
+    await driver.assertSelectorEventually(INTEGRAL_REFUSAL);
+    // Refused rather than approximated, and the refusal says what was in the
+    // way rather than that something went wrong.
+    expect(
+      await driver.$eval(
+        INTEGRAL_REFUSAL,
+        (el) => (el as HTMLElement).innerText
+      )
+    ).toContain("linear");
+    await driver.assertSelectorNot(INTEGRAL);
+
+    const sum = await driver.$eval(
+      SERIES,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
+    expect(sum).toBe("\\sum_{n=0}^{19}\\frac{x^{2n+1}}{n!\\left(2n+1\\right)}");
+
+    await driver.click(ADD_SERIES);
+    await driver.waitForSync();
+    const { list } = (await driver.getState()).expressions;
+    expect(
+      list.some((item) => item.type === "expression" && item.latex === sum)
+    ).toBe(true);
+
+    // And the claim, checked against the one thing on the page that can settle
+    // it: Desmos's own numeric integral of the integrand. A sum that parses and
+    // plots something else would pass every other assertion here.
+    await driver.evaluate((latex: string) => {
+      Calc.setExpression({ id: "S", latex: `S_{u}\\left(x\\right)=${latex}` });
+      Calc.setExpression({
+        id: "gap",
+        latex: "g_{ap}=S_{u}\\left(0.7\\right)-\\int_{0}^{0.7}e^{t^{2}}dt",
+      });
+    }, sum);
+    await driver.waitForSync();
+    const gap = await desmosValue(driver, "g_{ap}");
+    expect(Math.abs(gap)).toBeLessThan(1e-9);
+
+    // How far the sum runs is the reader's trade — further out, or faster to
+    // redraw — so it is a control rather than a constant.
+    await driver.evaluate(() => {
+      (
+        DSM.physicsLab as unknown as {
+          session: { setSeriesTerms: (n: number) => void };
+        }
+      ).session.setSeriesTerms(5);
+    });
+    await driver.waitForSync();
+    expect(
+      await driver.$eval(SERIES, (el) => el.getAttribute("data-latex") ?? "")
+    ).toContain("\\sum_{n=0}^{4}");
 
     await driver.setBlank();
     await driver.disablePlugin("physics-lab");

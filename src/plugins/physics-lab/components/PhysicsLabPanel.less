@@ -512,3 +512,66 @@
     opacity: 0.85;
   }
 }
+
+.dsm-physics-lab-menu {
+  // The integrand and its differential on one line, the way the integral is
+  // written. The `dx` is not decoration: an integral with no differential does
+  // not say which letter it is being taken in, and the tab has four to choose
+  // from.
+  .dsm-physics-lab-integrand {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    // The input takes the room and the differential takes what it needs, so a
+    // long integrand scrolls inside its own box rather than pushing the `dx`
+    // off the end of the panel.
+    .dsm-physics-lab-math-input {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+  }
+
+  .dsm-physics-lab-differential {
+    flex: none;
+  }
+
+  // Set the way the rest of the expression is, so the sign and the integrand
+  // read as one thing rather than as a picture beside a field.
+  .dsm-physics-lab-integral-sign {
+    flex: none;
+    font-family: Symbola, "Times New Roman", serif;
+    font-size: 1.8em;
+    line-height: 1;
+  }
+
+  // The maths and the ellipsis on one baseline. The first scrolls when it is
+  // too long, so the ellipsis has to sit outside it — inside, it would scroll
+  // away with the terms it is there to stand for.
+  .dsm-physics-lab-partial {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    .dsm-physics-lab-math {
+      min-width: 0;
+    }
+  }
+
+  .dsm-physics-lab-ellipsis {
+    flex: none;
+  }
+
+  // A refusal is a sentence about the integral, not an error about the panel,
+  // so it is set as text rather than in the red every other failure uses.
+  .dsm-physics-lab-refusal {
+    font-size: 0.9em;
+    line-height: 1.4;
+  }
+
+  // One small integer. A field sized for a domain bound makes it look like it
+  // wants a measurement.
+  #dsm-physics-lab-series-terms {
+    max-width: 96px;
+  }
+}
