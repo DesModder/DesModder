@@ -381,8 +381,7 @@ export type ActionRHSValueType =
     >;
 
 type OrListType<T extends ListElementValueType> =
-  | T
-  | ReverseMap<ListElementTypeMap>[T];
+  T | ReverseMap<ListElementTypeMap>[T];
 
 type ReverseMap<T extends Record<keyof T, PropertyKey>> = {
   [K in keyof T as T[K]]: K;
@@ -465,6 +464,7 @@ export interface ExpressionFormula extends FormulaBase {
     // There are many possible expression types due to 3d. No point writing them all out.
     | (string & {});
   typed_constant_value?: TypedConstantValue | undefined;
+  color_latex_valid?: boolean;
 }
 
 interface BaseClickable {
@@ -475,8 +475,7 @@ interface BaseClickable {
 }
 
 export interface ExpressionModel
-  extends BasicSetExpression,
-    NonfolderItemModelBase {
+  extends BasicSetExpression, NonfolderItemModelBase {
   type?: "expression";
   fill?: boolean;
   secret?: boolean;
@@ -516,6 +515,7 @@ export interface ExpressionModel
   clickableInfo?: BaseClickable;
   shouldGraph?: boolean;
   formula?: ExpressionFormula;
+  colorLatex?: string;
 }
 
 interface TableColumn extends BasicSetExpression {
@@ -557,8 +557,4 @@ export interface FolderModel extends ItemModelBase {
 }
 
 export type ItemModel =
-  | ExpressionModel
-  | TableModel
-  | TextModel
-  | ImageModel
-  | FolderModel;
+  ExpressionModel | TableModel | TextModel | ImageModel | FolderModel;
