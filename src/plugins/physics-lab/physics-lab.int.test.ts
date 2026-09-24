@@ -1224,3 +1224,195 @@ testWithPage(
   },
   50000
 );
+
+const LIMIT = String.raw`[data-physics-lab="limit"]`;
+const LIMIT_NONE = String.raw`[data-physics-lab="limit-none"]`;
+const LIMIT_REFUSAL = String.raw`[data-physics-lab="limit-refusal"]`;
+const LIMIT_FORM = String.raw`[data-physics-lab="limit-form"]`;
+const LIMIT_STEPS = String.raw`[data-physics-lab="limit-steps"]`;
+const LIMIT_METHOD = String.raw`[data-physics-lab="limit-method"]`;
+const SHOW_LIMIT = ".dsm-physics-lab-show-limit";
+const ADD_LIMIT = ".dsm-physics-lab-add-limit";
+
+/** The Limit tab, on one expression at one point. */
+async function setLimit(
+  driver: Driver,
+  fLatex: string,
+  pointLatex: string,
+  side: "both" | "left" | "right" = "both"
+) {
+  await driver.evaluate(
+    (args: string[]) => {
+      const { session } = DSM.physicsLab as unknown as {
+        session: { updateConfig: (m: (c: PhysicsLabConfig) => void) => void };
+      };
+      const [f, point, which] = args;
+      session.updateConfig((config) => {
+        config.panel.tab = "limit";
+        config.limit.variable = "x";
+        config.limit.fLatex = f;
+        config.limit.pointLatex = point;
+        config.limit.side = which as "both" | "left" | "right";
+      });
+    },
+    [fLatex, pointLatex, side]
+  );
+  await driver.waitForSync();
+}
+
+const text = async (driver: Driver, selector: string) =>
+  await driver.$eval(selector, (el) => (el as HTMLElement).innerText);
+const latexOf = async (driver: Driver, selector: string) =>
+  await driver.$eval(selector, (el) => el.getAttribute("data-latex") ?? "");
+
+testWithPage(
+  "the Limit tab answers, says how, and Desmos agrees with the answer",
+  async (driver) => {
+    await openPanel(driver);
+    await openTab(driver, "limit");
+    await setLimit(
+      driver,
+      String.raw`\left(1+\frac{1}{x}\right)^{x}`,
+      String.raw`\infty`
+    );
+
+    // The limit that defines e: a 1^∞ form, named as one, and answered by
+    // rewriting the power as an exponential of a logarithm.
+    await driver.assertSelectorEventually(LIMIT);
+    expect(await latexOf(driver, LIMIT)).toBe("e");
+    expect(await latexOf(driver, LIMIT_FORM)).toBe(String.raw`1^{\infty}`);
+    expect(await text(driver, LIMIT_METHOD)).toContain(
+      "exponential of a logarithm"
+    );
+    // The approach chips mean nothing at an infinity, so they are not there.
+    await driver.assertSelectorNot("#dsm-physics-lab-limit-side");
+    await driver.page.screenshot({ path: "docs/assets/physics-lab-limit.png" });
+
+    // 0/0, and L'Hôpital's rule applied for real: its line is on screen, and
+    // the value is exact. Desmos evaluates the function itself close to the
+    // point, which checks both the answer and that its LaTeX parses.
+    await setLimit(
+      driver,
+      String.raw`\frac{\sin\left(3x\right)}{\sin\left(5x\right)}`,
+      "0"
+    );
+    await driver.assertSelectorEventually(LIMIT_STEPS);
+    expect(await latexOf(driver, LIMIT)).toBe(String.raw`\frac{3}{5}`);
+    expect(await latexOf(driver, LIMIT_FORM)).toBe(String.raw`\frac{0}{0}`);
+    expect(await text(driver, LIMIT_METHOD)).toBe("L'Hôpital's rule");
+    await driver.assertSelector("#dsm-physics-lab-limit-side");
+    await driver.page.screenshot({
+      path: "docs/assets/physics-lab-limit-lhopital.png",
+    });
+    await driver.evaluate(
+      (latex: string) => {
+        Calc.setExpression({
+          id: "gap",
+          latex: String.raw`g_{ap}=\frac{\sin\left(3\cdot10^{-6}\right)}{\sin\left(5\cdot10^{-6}\right)}-${latex}`,
+        });
+      },
+      await latexOf(driver, LIMIT)
+    );
+    await driver.waitForSync();
+    expect(Math.abs(await desmosValue(driver, "g_{ap}"))).toBeLessThan(1e-9);
+
+    // "Add to graph" puts the number in the graph, as Desmos parses it.
+    await driver.click(ADD_LIMIT);
+    await driver.waitForSync();
+    expect(
+      (await driver.getState()).expressions.list.some(
+        (item) =>
+          item.type === "expression" && item.latex === String.raw`\frac{3}{5}`
+      )
+    ).toBe(true);
+    await driver.setBlank();
+
+    // What a limit looks like on the graph: the curve, and an open circle at
+    // the point it approaches -- open, because sin(x)/x has no value at 0.
+    await setLimit(driver, String.raw`\frac{\sin\left(x\right)}{x}`, "0");
+    await driver.assertSelectorEventually(LIMIT);
+    await driver.click(SHOW_LIMIT);
+    await driver.waitForSync();
+    const drawn = (await driver.getState()).expressions.list.flatMap((item) =>
+      item.type === "expression" ? [item.latex ?? ""] : []
+    );
+    expect(drawn).toContain(String.raw`\left(0,1\right)`);
+    await driver.evaluate(() =>
+      Calc.setMathBounds({ left: -8, right: 8, bottom: -1.5, top: 1.5 })
+    );
+    await driver.click(BUTTON);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await driver.page.screenshot({
+      path: "docs/assets/physics-lab-limit-graph.png",
+    });
+    await driver.click(BUTTON);
+    await driver.setBlank();
+
+    // An infinite limit from one side: no number to add, so no button to add
+    // it with.
+    await setLimit(
+      driver,
+      String.raw`\tan\left(x\right)`,
+      String.raw`\frac{\pi}{2}`,
+      "left"
+    );
+    await driver.assertSelectorEventually(LIMIT);
+    expect(await latexOf(driver, LIMIT)).toBe(String.raw`\infty`);
+    await driver.assertSelectorNot(ADD_LIMIT);
+
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  50000
+);
+
+testWithPage(
+  "a limit that does not exist says why, and one it cannot decide is refused",
+  async (driver) => {
+    await openPanel(driver);
+    await openTab(driver, "limit");
+
+    // A jump: both one-sided limits exist and differ, and both are shown,
+    // because they are the reason there is no limit.
+    await setLimit(driver, String.raw`\frac{\left|x\right|}{x}`, "0");
+    await driver.assertSelectorEventually(LIMIT_NONE);
+    const jump = await text(driver, LIMIT_NONE);
+    expect(jump).toContain("different values from the two sides");
+    await driver.assertSelectorNot(LIMIT);
+
+    // Drawn as a jump: the function, and an open circle where each side is
+    // headed.
+    await driver.click(SHOW_LIMIT);
+    await driver.waitForSync();
+    const drawn = (await driver.getState()).expressions.list.flatMap((item) =>
+      item.type === "expression" ? [item.latex ?? ""] : []
+    );
+    expect(drawn).toContain(String.raw`y=\frac{\left|x\right|}{x}`);
+    expect(drawn).toContain(String.raw`\left(0,-1\right)`);
+    expect(drawn).toContain(String.raw`\left(0,1\right)`);
+    await driver.page.screenshot({
+      path: "docs/assets/physics-lab-limit-jump.png",
+    });
+    await driver.setBlank();
+
+    // An oscillation, which has no limit provably rather than by failure.
+    await setLimit(driver, String.raw`\sin\left(\frac{1}{x}\right)`, "0");
+    await driver.assertSelectorEventually(LIMIT_NONE);
+    expect(await text(driver, LIMIT_NONE)).toContain("oscillates");
+
+    // And the squeeze theorem, which is why x sin(1/x) is different.
+    await setLimit(driver, String.raw`x\sin\left(\frac{1}{x}\right)`, "0");
+    await driver.assertSelectorEventually(LIMIT);
+    expect(await latexOf(driver, LIMIT)).toBe("0");
+    expect(await text(driver, LIMIT_METHOD)).toBe("Squeeze theorem");
+
+    // A name with no value: there is nothing to approach, and it says which.
+    await setLimit(driver, String.raw`\frac{\sin\left(ax\right)}{x}`, "0");
+    await driver.assertSelectorEventually(LIMIT_REFUSAL);
+    expect(await text(driver, LIMIT_REFUSAL)).toContain("uses a");
+
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  50000
+);

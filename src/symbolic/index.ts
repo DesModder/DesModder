@@ -75,6 +75,7 @@ export {
   negative,
   exceedsNodeCount,
   nodeCount,
+  normsToAbs,
   number,
   power,
   quotientFactors,

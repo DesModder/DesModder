@@ -39,6 +39,8 @@ export type FocusLocation =
         | "integral-f"
         | "integral-lower"
         | "integral-upper"
+        | "limit-f"
+        | "limit-point"
         | "exact"
         | "initial-x"
         | "initial-y";

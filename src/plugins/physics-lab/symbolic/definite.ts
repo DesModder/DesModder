@@ -42,6 +42,7 @@ import {
   identifiersIn,
   multiply,
   number as numberNode,
+  power,
   quotientFactors,
   replaceIdentifier,
   visit,
@@ -316,14 +317,38 @@ function naturalLog(v: X.ExactValue): X.ExactValue | undefined {
 
 // ---- limits ------------------------------------------------------------------
 
-type Limit =
+export type Limit =
   | { kind: "finite"; value: X.ExactValue }
   | { kind: "infinite"; sign: 1 | -1 };
 
 /** Where a limit is taken: at an infinity, or at a point from one side. */
-type Approach =
+export type Approach =
   | { kind: "infinite"; sign: 1 | -1 }
   | { kind: "point"; node: Node; value: number; side: 1 | -1 };
+
+/**
+ * What decided a limit, recorded by the rule that did it.
+ *
+ * Recorded rather than inferred for the reason the integrator records its
+ * technique: `sin(3x)/sin(5x)` and `(3x²+1)/(2x²-x)` both come out as a
+ * fraction, and nothing about the fraction says whether a series or a pair of
+ * leading terms produced it.
+ */
+export type LimitTechnique =
+  | "substitution"
+  | "leading-terms"
+  | "exp-log"
+  | "series"
+  | "growth"
+  | "squeeze"
+  | "dominant-term"
+  | "one-sided"
+  | "end-behaviour";
+
+/** Called with each technique as it decides part of a limit. */
+export type LimitRecorder = (technique: LimitTechnique) => void;
+
+const ignore: LimitRecorder = () => {};
 
 /** A point close to the approach, for reading signs off. */
 function near(approach: Approach, scale = 1): number {
@@ -345,12 +370,22 @@ function near(approach: Approach, scale = 1): number {
 export function limitOf(
   node: Node,
   variable: string,
-  approach: Approach
+  approach: Approach,
+  record: LimitRecorder = ignore
 ): Limit | undefined {
-  return (
-    limitByRules(node, variable, approach) ??
-    seriesLimit(node, variable, approach)
-  );
+  // Each attempt records into its own list, and only the one that answered
+  // passes its list up. The rules try a branch, fail and fall through to the
+  // series all the time, and a technique that decided nothing must not end up
+  // named as the one that did.
+  for (const attempt of [limitByRules, seriesLimit]) {
+    const used: LimitTechnique[] = [];
+    const found = attempt(node, variable, approach, (t) => used.push(t));
+    if (found !== undefined) {
+      used.forEach(record);
+      return found;
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -362,11 +397,17 @@ export function limitOf(
  * series decides it: `v > 0` is 0, `v = 0` is `c`, `v < 0` is an infinity with
  * the sign of `c`. A series that vanishes to every order computed decides
  * nothing, and the limit stays unknown rather than being called zero.
+ *
+ * A point that is not rational — `π`, `√2` — is substituted as the expression
+ * it is and folded, so `sin(x - π)/(x - π)` becomes `sin(h)/h` before the
+ * series is asked for. What does not fold away (`sin(π + h)` on its own) is
+ * a coefficient the series layer has no exact form for, and it refuses.
  */
 function seriesLimit(
   node: Node,
   variable: string,
-  approach: Approach
+  approach: Approach,
+  record: LimitRecorder
 ): Limit | undefined {
   // A name no Desmos expression can contain, so the substitution is clean.
   const h = "limitStep";
@@ -379,15 +420,15 @@ function seriesLimit(
     );
   } else {
     const at = X.asRational(exactConstant(approach.node) ?? []);
-    if (at === undefined) return undefined;
-    moved = replaceIdentifier(
-      node,
-      variable,
-      addNodes(
-        X.toNode(X.fromRational(at)),
-        multiply(numberNode(approach.side), id(h))
-      )
-    );
+    const step = multiply(numberNode(approach.side), id(h));
+    moved =
+      at === undefined
+        ? fold(replaceIdentifier(node, variable, addNodes(approach.node, step)))
+        : replaceIdentifier(
+            node,
+            variable,
+            addNodes(X.toNode(X.fromRational(at)), step)
+          );
   }
   let lead: ReturnType<typeof leadingTerm>;
   try {
@@ -397,6 +438,7 @@ function seriesLimit(
     throw error;
   }
   if (lead === undefined) return undefined;
+  record("series");
   if (lead.valuation > 0) return { kind: "finite", value: X.ZERO };
   if (lead.valuation === 0)
     return { kind: "finite", value: X.fromRational(lead.coefficient) };
@@ -406,7 +448,8 @@ function seriesLimit(
 function limitByRules(
   node: Node,
   variable: string,
-  approach: Approach
+  approach: Approach,
+  record: LimitRecorder
 ): Limit | undefined {
   if (!dependsOn(node, variable)) {
     const value = exactConstant(node);
@@ -421,15 +464,22 @@ function limitByRules(
       Number.isFinite(beside) &&
       Math.abs(at - beside) < 1e-4 * Math.max(1, Math.abs(at))
     ) {
-      const value = exactConstant(
-        replaceIdentifier(node, variable, approach.node)
-      );
-      if (value !== undefined) return { kind: "finite", value };
+      const substituted = replaceIdentifier(node, variable, approach.node);
+      // Floating point says 0^0 = 1, which is why x^x looks continuous at 0.
+      // It is a form, not a value, and substituting into it is not a method.
+      const value = zeroToTheZero(substituted)
+        ? undefined
+        : exactConstant(substituted);
+      if (value !== undefined) {
+        record("substitution");
+        return { kind: "finite", value };
+      }
     }
   }
   const sign = (n: Node): 1 | -1 =>
     evaluate(n, { [variable]: near(approach) }) < 0 ? -1 : 1;
   const zero = (l: Limit) => l.kind === "finite" && l.value.length === 0;
+  const recurse = (n: Node) => limitOf(n, variable, approach, record);
 
   switch (node.type) {
     case "Identifier":
@@ -437,16 +487,24 @@ function limitByRules(
         ? { kind: "infinite", sign: approach.sign }
         : { kind: "finite", value: exactConstant(approach.node) ?? X.ZERO };
     case "Negative": {
-      const inner = limitOf(node.arg, variable, approach);
+      const inner = recurse(node.arg);
       if (inner === undefined) return undefined;
       return inner.kind === "finite"
         ? { kind: "finite", value: X.negate(inner.value) }
         : { kind: "infinite", sign: inner.sign === 1 ? -1 : 1 };
     }
     case "BinaryOperator": {
-      if (node.name === "Exponent") return powerLimit(node, variable, approach);
-      const left = limitOf(node.left, variable, approach);
-      const right = limitOf(node.right, variable, approach);
+      if (node.name === "Exponent")
+        return powerLimit(node, variable, approach, record);
+      // Before the parts: a quotient of polynomials is decided by its leading
+      // terms whatever the parts do, and `2x² - x` on its own is an ∞ - ∞
+      // that would otherwise be resolved, and recorded, for nothing.
+      if (node.name === "Divide") {
+        const ratio = polynomialRatio(node, variable, approach, record);
+        if (ratio !== undefined) return ratio;
+      }
+      const left = recurse(node.left);
+      const right = recurse(node.right);
       switch (node.name) {
         case "Add":
         case "Subtract": {
@@ -466,29 +524,37 @@ function limitByRules(
           ].filter((s) => s !== 0);
           if (signs.every((s) => s === signs[0]))
             return { kind: "infinite", sign: signs[0] as 1 | -1 };
-          return dominated(node, variable, approach);
+          return dominantTerm(node, variable, approach, record);
         }
         case "Multiply":
         case "CrossMultiply": {
           if (left === undefined || right === undefined)
-            return dominated(node, variable, approach);
+            return (
+              squeezed(node, left, right, record) ??
+              dominated(node, variable, approach, record)
+            );
           if (left.kind === "finite" && right.kind === "finite")
             return {
               kind: "finite",
               value: X.multiply(left.value, right.value),
             };
           if (zero(left) || zero(right))
-            return dominated(node, variable, approach);
+            return dominated(node, variable, approach, record);
           return { kind: "infinite", sign: sign(node) };
         }
         case "Divide": {
-          const ratio = polynomialRatio(node, variable, approach);
-          if (ratio !== undefined) return ratio;
           if (left === undefined || right === undefined)
-            return dominated(node, variable, approach);
+            return (
+              squeezed(node, left, right, record) ??
+              dominated(node, variable, approach, record)
+            );
           if (left.kind === "finite" && right.kind === "finite") {
             if (right.value.length === 0) {
-              if (zero(left)) return dominated(node, variable, approach);
+              if (zero(left))
+                return dominated(node, variable, approach, record);
+              // A non-zero number over something vanishing: the side the
+              // denominator vanishes from decides the sign.
+              record("one-sided");
               return { kind: "infinite", sign: sign(node) };
             }
             const value = X.divide(left.value, right.value);
@@ -503,44 +569,63 @@ function limitByRules(
           if (left.kind === "finite" && right.kind === "infinite")
             return { kind: "finite", value: X.ZERO };
           if (left.kind === "infinite" && right.kind === "finite") {
-            if (right.value.length === 0)
-              return { kind: "infinite", sign: sign(node) };
+            if (right.value.length === 0) record("one-sided");
             return { kind: "infinite", sign: sign(node) };
           }
-          return dominated(node, variable, approach);
+          return dominated(node, variable, approach, record);
         }
       }
       return undefined;
     }
     case "FunctionCall":
-      return functionLimit(node, variable, approach);
+      return functionLimit(node, variable, approach, record);
     default:
       return undefined;
   }
 }
 
+/** Whether a constant expression contains `0^0` anywhere inside it. */
+function zeroToTheZero(node: Node): boolean {
+  let found = false;
+  visit(node, (child) => {
+    if (
+      !found &&
+      child.type === "BinaryOperator" &&
+      child.name === "Exponent" &&
+      evaluate(child.left, {}) === 0 &&
+      evaluate(child.right, {}) === 0
+    )
+      found = true;
+  });
+  return found;
+}
+
 function powerLimit(
   node: Node & { type: "BinaryOperator" },
   variable: string,
-  approach: Approach
+  approach: Approach,
+  record: LimitRecorder
 ): Limit | undefined {
   const { left, right } = node;
   if (left.type === "Identifier" && left.symbol === "e")
-    return functionLimit(call("exp", right), variable, approach);
+    return functionLimit(call("exp", right), variable, approach, record);
   if (dependsOn(right, variable)) {
     // A^B with the variable in both: exp(B ln A), which is where 1^∞, 0^0 and
     // ∞^0 stop being forms and become one limit of a product. Only while A is
     // positive near the point, where the logarithm is real.
     if (!(evaluate(left, { [variable]: near(approach) }) > 0)) return undefined;
-    return functionLimit(
+    const found = functionLimit(
       call("exp", multiply(right, call("ln", left))),
       variable,
-      approach
+      approach,
+      record
     );
+    if (found !== undefined) record("exp-log");
+    return found;
   }
   const r = X.asRational(exactConstant(right) ?? []);
   if (r === undefined) return undefined;
-  const base = limitOf(left, variable, approach);
+  const base = limitOf(left, variable, approach, record);
   if (base === undefined) return undefined;
   if (base.kind === "infinite") {
     if (Q.isNegative(r)) return { kind: "finite", value: X.ZERO };
@@ -551,6 +636,7 @@ function powerLimit(
   if (base.value.length === 0) {
     if (Q.isNegative(r)) {
       const s = evaluate(node, { [variable]: near(approach) }) < 0 ? -1 : 1;
+      record("one-sided");
       return { kind: "infinite", sign: s };
     }
     return { kind: "finite", value: X.ZERO };
@@ -562,35 +648,40 @@ function powerLimit(
 function functionLimit(
   node: Node & { type: "FunctionCall" },
   variable: string,
-  approach: Approach
+  approach: Approach,
+  record: LimitRecorder
 ): Limit | undefined {
   if (node.args.length !== 1) return undefined;
   const name = node.callee.symbol;
-  const inner = limitOf(node.args[0], variable, approach);
+  const inner = limitOf(node.args[0], variable, approach, record);
   if (inner === undefined) return undefined;
   if (inner.kind === "infinite") {
     const s = inner.sign;
-    switch (name) {
-      case "exp":
-        return s > 0
-          ? { kind: "infinite", sign: 1 }
-          : { kind: "finite", value: X.ZERO };
-      case "ln":
-      case "sqrt":
-        return s > 0 ? { kind: "infinite", sign: 1 } : undefined;
-      case "abs":
-      case "cosh":
-        return { kind: "infinite", sign: 1 };
-      case "sinh":
-        return { kind: "infinite", sign: s };
-      case "arctan":
-        return { kind: "finite", value: PI_OVER(s, 2) };
-      case "tanh":
-        return { kind: "finite", value: X.fromInteger(s) };
-      default:
-        // sin and cos at infinity oscillate and have no limit.
-        return undefined;
-    }
+    const found = ((): Limit | undefined => {
+      switch (name) {
+        case "exp":
+          return s > 0
+            ? { kind: "infinite", sign: 1 }
+            : { kind: "finite", value: X.ZERO };
+        case "ln":
+        case "sqrt":
+          return s > 0 ? { kind: "infinite", sign: 1 } : undefined;
+        case "abs":
+        case "cosh":
+          return { kind: "infinite", sign: 1 };
+        case "sinh":
+          return { kind: "infinite", sign: s };
+        case "arctan":
+          return { kind: "finite", value: PI_OVER(s, 2) };
+        case "tanh":
+          return { kind: "finite", value: X.fromInteger(s) };
+        default:
+          // sin and cos at infinity oscillate and have no limit.
+          return undefined;
+      }
+    })();
+    if (found !== undefined) record("end-behaviour");
+    return found;
   }
   // A pole of a trigonometric function: tan and sec where cos vanishes, cot
   // and csc where sin does. The side decides the sign.
@@ -601,6 +692,7 @@ function functionLimit(
     const pole = name === "tan" || name === "sec" ? cosZero : sinZero;
     if (pole) {
       const s = evaluate(node, { [variable]: near(approach) }) < 0 ? -1 : 1;
+      record("one-sided");
       return { kind: "infinite", sign: s };
     }
   }
@@ -608,7 +700,9 @@ function functionLimit(
     if (name === "ln") {
       // ln of something tending to zero from above.
       const inside = evaluate(node.args[0], { [variable]: near(approach) });
-      return inside > 0 ? { kind: "infinite", sign: -1 } : undefined;
+      if (!(inside > 0)) return undefined;
+      record("one-sided");
+      return { kind: "infinite", sign: -1 };
     }
   }
   const value = exactConstant(call(name, X.toNode(inner.value)));
@@ -621,7 +715,8 @@ function functionLimit(
 function polynomialRatio(
   node: Node & { type: "BinaryOperator" },
   variable: string,
-  approach: Approach
+  approach: Approach,
+  record: LimitRecorder
 ): Limit | undefined {
   if (approach.kind !== "infinite") return undefined;
   const top = numericPolynomial(node.left, variable);
@@ -629,6 +724,7 @@ function polynomialRatio(
   if (top === undefined || bottom === undefined) return undefined;
   const m = top.length - 1;
   const n = bottom.length - 1;
+  record("leading-terms");
   if (m < n) return { kind: "finite", value: X.ZERO };
   if (m === n)
     return {
@@ -656,6 +752,99 @@ function numericPolynomial(
 }
 
 /**
+ * Whether a factor stays between two fixed numbers near the approach, however
+ * its argument moves: sine and cosine of anything real, the arctangent, the
+ * hyperbolic tangent, the sign. `sin(1/x)` has no limit at 0 and is still
+ * between -1 and 1 there, which is all the squeeze theorem asks of it.
+ */
+function isBounded(node: Node): boolean {
+  if (node.type === "Negative") return isBounded(node.arg);
+  if (node.type === "FunctionCall" && node.args.length === 1)
+    return ["sin", "cos", "arctan", "tanh", "sign"].includes(
+      node.callee.symbol
+    );
+  return false;
+}
+
+/**
+ * A bounded factor times one that vanishes, or over one that runs off: the
+ * squeeze theorem. `x sin(1/x) → 0` at 0 because `-|x| ≤ x sin(1/x) ≤ |x|`,
+ * and `cos(x)/x → 0` at infinity the same way. Only reached when one side had
+ * no limit, which is exactly when the product rule for limits says nothing.
+ */
+function squeezed(
+  node: Node & { type: "BinaryOperator" },
+  left: Limit | undefined,
+  right: Limit | undefined,
+  record: LimitRecorder
+): Limit | undefined {
+  const vanishes = (l: Limit | undefined) =>
+    l?.kind === "finite" && l.value.length === 0;
+  const product = node.name !== "Divide";
+  const other = (side: Limit | undefined) =>
+    product ? vanishes(side) : side?.kind === "infinite";
+  if (left === undefined && isBounded(node.left) && other(right)) {
+    record("squeeze");
+    return { kind: "finite", value: X.ZERO };
+  }
+  if (
+    product &&
+    right === undefined &&
+    isBounded(node.right) &&
+    vanishes(left)
+  ) {
+    record("squeeze");
+    return { kind: "finite", value: X.ZERO };
+  }
+  return undefined;
+}
+
+/**
+ * Infinity minus infinity, when one term is bigger: `A - B = A(1 - B/A)`, and
+ * if `B/A` has a limit `c` other than 1 the sum goes where `A` goes, scaled by
+ * `1 - c`. `x - ln x → ∞` because `ln(x)/x → 0`.
+ *
+ * `c = 1` is left alone. `√(x²+x) - x` has `c = 1` and a finite limit that
+ * the leading terms know nothing about; the series decides that one.
+ */
+function dominantTerm(
+  node: Node & { type: "BinaryOperator" },
+  variable: string,
+  approach: Approach,
+  record: LimitRecorder
+): Limit | undefined {
+  const flip = node.name === "Subtract" ? -1 : 1;
+  const lead = limitOf(node.left, variable, approach, record);
+  if (lead?.kind !== "infinite") return undefined;
+  const ratio = limitOf(
+    divide(node.right, node.left),
+    variable,
+    approach,
+    record
+  );
+  if (ratio === undefined) return undefined;
+  // (A ± B) = A(1 ± B/A).
+  if (ratio.kind === "infinite") {
+    // B is the bigger one, so the sum goes where ±B goes.
+    const s = evaluate(node, { [variable]: near(approach) }) < 0 ? -1 : 1;
+    record("dominant-term");
+    return { kind: "infinite", sign: s };
+  }
+  const factor = X.add(
+    X.fromInteger(1),
+    flip === 1 ? ratio.value : X.negate(ratio.value)
+  );
+  if (factor.length === 0) return undefined;
+  const size = X.toNumber(factor);
+  if (!Number.isFinite(size) || size === 0) return undefined;
+  record("dominant-term");
+  return {
+    kind: "infinite",
+    sign: (lead.sign * Math.sign(size)) as 1 | -1,
+  };
+}
+
+/**
  * The two indeterminate products every improper integral in a course meets,
  * resolved by growth rates rather than guessed:
  *
@@ -669,7 +858,8 @@ function numericPolynomial(
 function dominated(
   node: Node,
   variable: string,
-  approach: Approach
+  approach: Approach,
+  record: LimitRecorder
 ): Limit | undefined {
   // Infinity minus infinity: a sum whose terms run off in opposite directions
   // is genuinely indeterminate, and `ln x - ln(x+1)` at infinity is exactly the
@@ -689,7 +879,7 @@ function dominated(
   let slowBelow = true;
   for (const { node: factor, inNumerator } of factors) {
     if (!dependsOn(factor, variable)) continue;
-    const kind = growth(factor, variable, approach);
+    const kind = growth(factor, variable, approach, record);
     if (kind === undefined) return undefined;
     if (kind === "exploding-exponential") {
       // Above the bar it wins against anything slower below it; below the
@@ -719,9 +909,12 @@ function dominated(
   // And e^{g} with g → +∞ beats any power or logarithm: `e^x/x^10 → +∞`.
   if (explodingAbove && slowBelow && !vanishing) {
     const s = evaluate(node, { [variable]: near(approach, 1e-4) }) < 0 ? -1 : 1;
+    record("growth");
     return { kind: "infinite", sign: s };
   }
-  return vanishing ? { kind: "finite", value: X.ZERO } : undefined;
+  if (!vanishing) return undefined;
+  record("growth");
+  return { kind: "finite", value: X.ZERO };
 }
 
 type Growth =
@@ -734,12 +927,21 @@ type Growth =
 function growth(
   factor: Node,
   variable: string,
-  approach: Approach
+  approach: Approach,
+  record: LimitRecorder
 ): Growth | undefined {
   const isLog = (n: Node): boolean =>
     (n.type === "FunctionCall" && n.callee.symbol === "ln") ||
     (n.type === "BinaryOperator" && n.name === "Exponent" && isLog(n.left));
   if (isLog(factor)) return "logarithmic";
+  // A root is a power: √x is x^{1/2}, and ln(x)/√x is the ln(x)/x rule.
+  if (factor.type === "FunctionCall" && factor.callee.symbol === "sqrt")
+    return growth(
+      power(factor.args[0], divide(numberNode(1), numberNode(2))),
+      variable,
+      approach,
+      record
+    );
   if (approach.kind === "point") {
     // (x - a)^k with k > 0 vanishes; the bare variable at zero is the case.
     const at = evaluate(factor, { [variable]: approach.value });
@@ -768,7 +970,7 @@ function growth(
         ? factor.args[0]
         : undefined;
   if (exponent !== undefined) {
-    const inner = limitOf(exponent, variable, approach);
+    const inner = limitOf(exponent, variable, approach, record);
     if (inner?.kind !== "infinite") return undefined;
     return inner.sign < 0 ? "vanishing" : "exploding-exponential";
   }

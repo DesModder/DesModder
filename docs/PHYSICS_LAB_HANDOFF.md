@@ -1240,3 +1240,94 @@ The series reader takes `c·xᵐ·f(a xᵏ)` and nothing else, so `e^{x²} + x` 
 series even though both terms have one. Integrating a sum term by term, and
 saying which terms were done in closed form and which as series, is the obvious
 next move.
+
+---
+
+## The Limit tab
+
+`limitOf` had existed since improper integrals needed it, and had never been
+asked a question a limit course asks. The tab is in `symbolic/limit.ts` over
+that engine, and sits between 2nd order and Derivative, which is the order a
+course teaches them in.
+
+### What it shows
+
+`lim` with its approach under it, the expression, and a chip row for the side
+when the point is finite. Then, in order: the indeterminate form when there is
+one, L'Hôpital's lines when the rule was used, the value with its decimal, and
+the method that decided it — recorded by the rule that fired, the way the
+integrator records its technique, and passed up only from the branch that
+succeeded, so an abandoned attempt never ends up named.
+
+Three outcomes, kept visibly apart. A value. "Does not exist", which is an
+answer: `|x|/x` at 0 shows both one-sided limits because they are the reason,
+and `sin(1/x)` at 0 is proved to oscillate (its argument is continuous and
+unbounded there, so every neighbourhood holds a whole period) rather than
+merely failed at. And a refusal, which says nothing about the limit.
+
+### L'Hôpital's rule is applied, not described
+
+For `0/0` and `∞/∞` the derivatives are really taken and the new quotient's
+limit really found, up to four times. The answer must agree with the engine's
+own when both exist; a disagreement is a refusal. One exception: a rational
+function at infinity is answered by its leading terms, because L'Hôpital
+would apply itself once per degree and nobody would choose that.
+
+### What the engine learned
+
+- **Squeeze.** A bounded factor (sin, cos, arctan, tanh, sign) times one that
+  vanishes, or over one that runs off: `x sin(1/x) → 0`, `cos(x)/x → 0`.
+- **∞ − ∞ by the dominant term.** `A − B = A(1 − B/A)`; `x − ln x → ∞`.
+  `B/A → 1` is left alone, since that is where the series is needed.
+- **A root is a power** for growth rates, so `ln(x)/√x → 0`.
+- **Irrational points** are substituted and folded before the series is asked
+  for, so `sin(x−π)/(x−π)` at π works. `sin(π+h)` on its own still does not.
+- **`0^0` is not continuous.** Floating point says `0^0 = 1`, which made `x^x`
+  at 0⁺ report "direct substitution". A substituted tree containing `0^0` is
+  no longer a value.
+- **`|x|` is a `Norm` node.** Desmos parses the bars as `Norm`, not as a call
+  to `abs`, so `\left|x\right|` evaluated to nothing anywhere while
+  `\operatorname{abs}(x)` worked. `normsToAbs` in `src/symbolic/tree.ts`
+  rewrites it; only the Limit tab applies it so far.
+
+### Checked numerically, with three verdicts
+
+As every antiderivative is differentiated back. The function is sampled from
+10⁻¹ to 10⁻⁸ of the point (or 10¹ to 10⁸ out); a finite limit is confirmed
+by the best agreement at any distance, or by the error at least halving each
+step, since floating point stops helping before the point itself. Values that
+settle somewhere else hide the answer. `1/ln x → 0` is still 0.05 at 10⁸, so
+it is shown as not confirmed rather than called checked or wrong.
+
+### On the graph
+
+"Add to graph" puts the value in, when it is a number. "Show on graph" draws
+the function and what its limit looks like: an open circle at a finite limit
+at a point (open, because the function need not have that value there), a
+dashed horizontal line for a limit at infinity, a dashed vertical one for an
+infinite limit, and an open circle per side for a jump.
+
+### Two display fixes
+
+MathQuill here has no `\lim`: it draws the letters in italic as a product
+with the approach hanging off the side. Every statement is built instead —
+upright `lim` stacked over its approach, then the maths. And six tabs did not
+fit where five had; Desmos pads both the segment and the label inside it, and
+dropping the inner padding (plus one point of type) fits all six at the
+default width without renaming any.
+
+Evidence: `docs/assets/physics-lab-limit.png`,
+`docs/assets/physics-lab-limit-lhopital.png`,
+`docs/assets/physics-lab-limit-jump.png`,
+`docs/assets/physics-lab-limit-graph.png`.
+
+### Still open
+
+- Symbolic parameters: `sin(ax)/x` is refused rather than answered `a`.
+- Two-sided limits where the function lives on one side only (`√x`, `x^x` at 0) are reported as the one-sided limit with a note. Whether a course calls
+  that the limit or says it does not exist is a convention question.
+- Piecewise functions — the most common way a course asks for one-sided
+  limits — are not parsed.
+- Oscillation is recognised only for a sine or cosine of an unbounded argument
+  at the top level, times a constant.
+- No worked-example or practice problem yet, unlike the Derivative tab.

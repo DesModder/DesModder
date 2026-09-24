@@ -23,7 +23,13 @@ export const SLOPE_MARK_LIMIT = 10_000;
 export const SLOPE_COUNT_MINIMUM = 2;
 export const SLOPE_COUNT_MAXIMUM = 401;
 
-export type PanelTab = "slope" | "second" | "derivative" | "integral" | "exact";
+export type PanelTab =
+  | "slope"
+  | "second"
+  | "limit"
+  | "derivative"
+  | "integral"
+  | "exact";
 
 /**
  * How many terms the plotted series carries.
@@ -135,9 +141,29 @@ export interface IntegralConfig {
   upperLatex: string;
 }
 
+/**
+ * Which way a limit at a point is taken.
+ *
+ * Both sides by default, because that is what `lim` means with nothing
+ * written under the arrow — and the case where the two sides disagree is the
+ * one a course most wants seen. One side is there for the piecewise and
+ * absolute-value questions that ask for it by name.
+ */
+export type LimitDirection = "both" | "left" | "right";
+
+/** What the Limit tab is working on. */
+export interface LimitConfig {
+  fLatex: string;
+  variable: string;
+  /** Where the variable goes, as typed: a number, an expression, or ±∞. */
+  pointLatex: string;
+  side: LimitDirection;
+}
+
 export const PANEL_TABS = [
   { id: "slope", label: "Slope field" },
   { id: "second", label: "2nd order" },
+  { id: "limit", label: "Limit" },
   { id: "derivative", label: "Derivative" },
   { id: "integral", label: "Integral" },
   { id: "exact", label: "Exact value" },
@@ -191,6 +217,8 @@ export interface PhysicsLabConfig {
   derivative: DerivativeConfig;
   /** What the Integral tab is working on. */
   integral: IntegralConfig;
+  /** What the Limit tab is working on. */
+  limit: LimitConfig;
   /**
    * The phase plane for the second-order equation: y across, y′ up.
    *
@@ -260,6 +288,14 @@ export function defaultPhysicsLabConfig(): PhysicsLabConfig {
       definite: false,
       lowerLatex: "0",
       upperLatex: "\\pi",
+    },
+    // The limit that defines e, and a 1^∞ form: the one every course uses to
+    // show that "the base goes to 1" does not mean "the answer is 1".
+    limit: {
+      fLatex: "\\left(1+\\frac{1}{x}\\right)^{x}",
+      variable: "x",
+      pointLatex: "\\infty",
+      side: "both",
     },
     phase: {
       domain: { x: { min: -4, max: 4 }, y: { min: -4, max: 4 } },
@@ -438,6 +474,25 @@ export function normalizePhysicsLabConfig(raw: unknown): PhysicsLabConfig {
         typeof source.integral?.upperLatex === "string"
           ? source.integral.upperLatex
           : defaults.integral.upperLatex,
+    },
+    limit: {
+      fLatex:
+        typeof source.limit?.fLatex === "string"
+          ? source.limit.fLatex
+          : defaults.limit.fLatex,
+      variable:
+        typeof source.limit?.variable === "string" &&
+        /^[a-zA-Z]$/.test(source.limit.variable)
+          ? source.limit.variable
+          : defaults.limit.variable,
+      pointLatex:
+        typeof source.limit?.pointLatex === "string"
+          ? source.limit.pointLatex
+          : defaults.limit.pointLatex,
+      side:
+        source.limit?.side === "left" || source.limit?.side === "right"
+          ? source.limit.side
+          : "both",
     },
     secondOrder: {
       fLatex:

@@ -59,8 +59,16 @@ import { seriesFallback, type PartKind } from "./symbolic/seriesSum";
 import {
   definiteIntegral,
   DefiniteError,
+  type Approach,
   type Bound,
+  type Limit,
 } from "./symbolic/definite";
+import {
+  checkLimit,
+  describeLimitMethod,
+  findLimit,
+  type IndeterminateForm,
+} from "./symbolic/limit";
 import {
   add,
   agreesOnSamples,
@@ -68,10 +76,13 @@ import {
   evaluate,
   fold as simplifyTree,
   freshName,
+  identifiersIn,
+  normsToAbs,
   id,
   numericDerivative,
   topLevelTerms,
   toLatex as toLatexTree,
+  visit as visitTree,
   type Bindings,
 } from "../../symbolic";
 
@@ -83,6 +94,7 @@ import {
   thinSlopeGrid,
   validateSlopeField,
   type AnswerForm,
+  type LimitDirection,
   type DetailLevel,
   type PanelTab,
   type PhysicsLabConfig,
@@ -386,6 +398,95 @@ export type IntegralView =
       series?: SeriesView;
     };
 
+/** One one-sided limit, for showing the two sides of a limit that has none. */
+export interface LimitSideView {
+  /** The whole line: `\lim_{x\to0^{-}}f=-1`. */
+  latex: string;
+  /** What goes under `lim`: `x\to0^{-}`. */
+  approachLatex: string;
+  /** Just the value, for drawing where that side is headed. */
+  valueLatex: string;
+}
+
+/**
+ * What the Limit tab has to show.
+ *
+ * Three outcomes, and the middle one is an answer. "Does not exist" is a
+ * result somebody asked for as much as a number is — `|x|/x` at 0 is on every
+ * worksheet because its answer is that there is none — and it arrives with
+ * its reason. A refusal is different: it says nothing about the limit, only
+ * about what this could decide.
+ */
+export type LimitView =
+  | {
+      status: "value";
+      /** `\lim_{x\to a}f`, whole, for reading back. */
+      statementLatex: string;
+      /** What goes under `lim`, and what comes after it. */
+      approachLatex: string;
+      bodyLatex: string;
+      /** The exact value, or `\pm\infty`. */
+      valueLatex: string;
+      /** The value as a decimal beside it; empty for an infinity. */
+      decimal: string;
+      finite: boolean;
+      /** How it was found, as recorded by what found it. */
+      method: string;
+      /** The indeterminate form, as maths; empty when there is none. */
+      formLatex: string;
+      /** L'Hôpital's rule, one line per application. */
+      steps: string[];
+      check: "checked" | "unchecked";
+      /** Said when the answer is narrower than what was asked. */
+      note: string;
+    }
+  | {
+      status: "none";
+      /** Why there is no limit, in words. */
+      reason: string;
+      formLatex: string;
+      /** The two one-sided limits, when they exist and disagree. */
+      sides: LimitSideView[];
+    }
+  | {
+      status: "refused";
+      error: string;
+      formLatex: string;
+      /** Whichever one-sided limits were found, when not both were. */
+      sides?: LimitSideView[];
+    };
+
+const sideView = (
+  approachLatex: string,
+  bodyLatex: string,
+  valueLatex: string
+): LimitSideView => ({
+  latex: `\\lim_{${approachLatex}}${bodyLatex}=${valueLatex}`,
+  approachLatex,
+  valueLatex,
+});
+
+/** How each side is written after the point in `\lim_{x\to a}`. */
+const SIDE_MARKS: Record<LimitDirection, string> = {
+  both: "",
+  left: "^{-}",
+  right: "^{+}",
+};
+
+/** Each indeterminate form as it is written in a textbook. */
+const FORM_LATEX: Record<IndeterminateForm, string> = {
+  "0/0": "\\frac{0}{0}",
+  "inf/inf": "\\frac{\\infty}{\\infty}",
+  "0*inf": "0\\cdot\\infty",
+  "inf-inf": "\\infty-\\infty",
+  "1^inf": "1^{\\infty}",
+  "0^0": "0^{0}",
+  "inf^0": "\\infty^{0}",
+};
+
+/** Names that are values without anybody defining them. */
+const KNOWN_CONSTANTS = ["e", "pi"];
+
 /**
  * Where an antiderivative is checked.
  *
@@ -441,6 +542,7 @@ export default class PhysicsLabSession {
   private solutionCache?: { latex: string; result: ODEResult };
   private secondCache?: { latex: string; result: ODEResult };
   private integralCache?: { key: string; result: IntegralView };
+  private limitCache?: { key: string; result: LimitView };
   private derivativeCache?: {
     key: string;
     result: DerivationView;
@@ -1702,6 +1804,271 @@ export default class PhysicsLabSession {
       latex: found.series.sumLatex,
       color: "#388c46",
     });
+  }
+
+  /**
+   * The limit shown on the Limit tab, or why there is none.
+   *
+   * Cached against everything that decides it, like the integral: a limit
+   * can take L'Hôpital's rule four times over, each a differentiation, and the
+   * panel asks for it on every render pass of every keystroke.
+   */
+  get limit(): LimitView | undefined {
+    const { fLatex, variable, pointLatex, side } = this.config.limit;
+    if (fLatex.trim() === "" || pointLatex.trim() === "") return undefined;
+    const key = `${variable} ${side} ${pointLatex} ${fLatex}`;
+    if (this.limitCache?.key === key) return this.limitCache.result;
+    const result = this.computeLimit(fLatex, variable, pointLatex, side);
+    this.limitCache = { key, result };
+    return result;
+  }
+
+  private computeLimit(
+    fLatex: string,
+    variable: string,
+    pointLatex: string,
+    side: LimitDirection
+  ): LimitView {
+    let node: Node;
+    try {
+      node = normsToAbs(
+        implicitProducts(parseLatex(this.textModeConfig, fLatex), variable)
+      );
+    } catch {
+      // Half-typed, and said nothing about for the reason the integral says
+      // nothing: an error under a field somebody is using is noise.
+      return { status: "refused", error: "", formLatex: "" };
+    }
+    const at = this.readBound(pointLatex);
+    if (at === undefined)
+      return {
+        status: "refused",
+        error: "The point has to be a number, an expression in numbers, or ∞.",
+        formLatex: "",
+      };
+
+    // A point can only be approached from the side the function lives on.
+    // √x at 0 has nothing to its left, and asking for both sides there would
+    // report "no limit" for a reason that is about the domain, not the limit.
+    let effectiveSide = side;
+    let note = "";
+    if (at.kind === "finite" && side === "both") {
+      const lives = (s: 1 | -1) =>
+        [1e-3, 1e-5, 1e-7].some((h) =>
+          Number.isFinite(evaluate(node, { [variable]: at.value + s * h }))
+        );
+      const left = lives(-1);
+      const right = lives(1);
+      if (left !== right) {
+        effectiveSide = right ? "right" : "left";
+        note = `Only defined to the ${effectiveSide} of the point, so this is the limit from the ${effectiveSide}.`;
+      }
+    }
+
+    const found = findLimit(node, variable, at, effectiveSide);
+    const emit = (n: Node) => toLatexTree(this.textModeConfig, n);
+    const point = pointLatex.trim();
+    const approach = (s: LimitDirection) =>
+      `${variable}\\to ${point}${at.kind === "infinite" ? "" : SIDE_MARKS[s]}`;
+    const sideLine = (s: LimitDirection, l: Limit) =>
+      sideView(approach(s), fLatex, limitLatex(l));
+    const limitLatex = (l: Limit) =>
+      l.kind === "infinite"
+        ? l.sign > 0
+          ? "\\infty"
+          : "-\\infty"
+        : emit(exactToNode(l.value));
+    const formLatex = found.form === undefined ? "" : FORM_LATEX[found.form];
+    const approachFor = (s: 1 | -1): Approach =>
+      at.kind === "infinite"
+        ? { kind: "infinite", sign: at.sign }
+        : { kind: "point", node: at.node, value: at.value, side: s };
+    const { answer } = found;
+
+    switch (answer.kind) {
+      case "value": {
+        const sides: (1 | -1)[] =
+          at.kind === "infinite" || effectiveSide === "right"
+            ? [1]
+            : effectiveSide === "left"
+              ? [-1]
+              : [1, -1];
+        const verdicts = sides.map((s) =>
+          checkLimit(node, variable, approachFor(s), answer.limit)
+        );
+        // The same rule as for an antiderivative: a limit the numbers
+        // actively contradict is not shown, because it is wrong in a form that
+        // looks exactly like a right one.
+        if (verdicts.includes("wrong"))
+          return {
+            status: "refused",
+            error:
+              "The limit found here does not agree with the function's values near the point, so it is not shown.",
+            formLatex,
+          };
+        return {
+          status: "value",
+          statementLatex: `\\lim_{${approach(effectiveSide)}}${fLatex}`,
+          approachLatex: approach(effectiveSide),
+          bodyLatex: fLatex,
+          valueLatex: limitLatex(answer.limit),
+          decimal:
+            answer.limit.kind === "finite"
+              ? `≈ ${formatDecimal(toNumber(answer.limit.value))}`
+              : "",
+          finite: answer.limit.kind === "finite",
+          method: describeLimitMethod(answer.method),
+          formLatex,
+          steps: answer.method.lhopital.map(
+            (step) =>
+              `\\frac{${emit(step.numerator)}}{${emit(step.denominator)}}`
+          ),
+          check: verdicts.every((v) => v === "checked")
+            ? "checked"
+            : "unchecked",
+          note,
+        };
+      }
+      case "sides-differ":
+        return {
+          status: "none",
+          reason:
+            "The limit does not exist: the function approaches different values from the two sides.",
+          formLatex,
+          sides: [
+            sideLine("left", answer.left),
+            sideLine("right", answer.right),
+          ],
+        };
+      case "oscillates":
+        return {
+          status: "none",
+          reason:
+            "The limit does not exist: the function oscillates. Its argument runs off to infinity, so however close you look it passes through a whole period and takes every value between its highest and lowest.",
+          formLatex,
+          sides: [],
+        };
+      case "unknown": {
+        // Functions are names too, and `sin` needs no value from anybody.
+        const called = new Set<string>();
+        visitTree(node, (child) => {
+          if (child.type === "FunctionCall") called.add(child.callee.symbol);
+        });
+        const named = identifiersIn(node).filter(
+          (name) =>
+            name !== variable &&
+            !KNOWN_CONSTANTS.includes(name) &&
+            !called.has(name)
+        );
+        return {
+          status: "refused",
+          error:
+            named.length > 0
+              ? `This uses ${named.join(", ")}, which nothing here gives a value to, so there is no number to approach.`
+              : "No limit was found. None of the methods here decides this one, and a guess from the numbers is not a limit.",
+          formLatex,
+          sides: [
+            ...(answer.left === undefined
+              ? []
+              : [sideLine("left", answer.left)]),
+            ...(answer.right === undefined
+              ? []
+              : [sideLine("right", answer.right)]),
+          ],
+        };
+      }
+    }
+  }
+
+  setLimitExpression(fLatex: string) {
+    this.updateConfig((config) => {
+      config.limit.fLatex = fLatex;
+    });
+  }
+
+  setLimitVariable(variable: string) {
+    this.updateConfig((config) => {
+      config.limit.variable = variable;
+    });
+  }
+
+  setLimitPoint(pointLatex: string) {
+    this.updateConfig((config) => {
+      config.limit.pointLatex = pointLatex;
+    });
+  }
+
+  setLimitSide(side: LimitDirection) {
+    this.updateConfig((config) => {
+      config.limit.side = side;
+    });
+  }
+
+  /** Puts the value of the limit into the graph, when it is a number. */
+  insertLimit() {
+    const found = this.limit;
+    if (found?.status !== "value" || !found.finite) return;
+    this.plugin.calc.setExpression({
+      latex: found.valueLatex,
+      color: "#388c46",
+    });
+  }
+
+  /**
+   * Draws the function and what its limit looks like on the graph: an open
+   * circle at a finite limit at a point — open because the function need not
+   * have that value there, which is the whole distinction a limit makes — a
+   * dashed horizontal asymptote for a limit at infinity, and a dashed
+   * vertical one for an infinite limit at a point.
+   *
+   * The graph is always in x, so a function written in t is drawn with its
+   * variable renamed; one that already mentions x as something else is not
+   * drawn, since renaming would change what it means.
+   */
+  showLimitOnGraph() {
+    const found = this.limit;
+    const { fLatex, variable, pointLatex } = this.config.limit;
+    if (found === undefined) return;
+    if (variable !== "x" && mentions(fLatex, "x")) return;
+    const graphed =
+      variable === "x" ? fLatex : renameIdentifier(fLatex, variable, "x");
+    const at = this.readBound(pointLatex);
+    if (at === undefined) return;
+    const { calc } = this.plugin;
+    calc.setExpression({ latex: `y=${graphed}`, color: "#2d70b3" });
+    const point = pointLatex.trim();
+    if (found.status === "value") {
+      if (at.kind === "infinite" && found.finite) {
+        calc.setExpression({
+          latex: `y=${found.valueLatex}`,
+          color: "#c74440",
+          lineStyle: "DASHED",
+        });
+      } else if (at.kind === "finite" && found.finite) {
+        calc.setExpression({
+          latex: `\\left(${point},${found.valueLatex}\\right)`,
+          color: "#c74440",
+          pointStyle: "OPEN",
+        });
+      } else if (at.kind === "finite") {
+        calc.setExpression({
+          latex: `x=${point}`,
+          color: "#c74440",
+          lineStyle: "DASHED",
+        });
+      }
+    } else if (found.status === "none" && at.kind === "finite") {
+      // Where each side is headed, as its own open circle, which is the
+      // picture of a jump.
+      for (const { valueLatex: value } of found.sides) {
+        if (value.includes("\\infty")) continue;
+        calc.setExpression({
+          latex: `\\left(${point},${value}\\right)`,
+          color: "#c74440",
+          pointStyle: "OPEN",
+        });
+      }
+    }
   }
 
   /**

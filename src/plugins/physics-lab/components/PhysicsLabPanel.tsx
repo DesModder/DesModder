@@ -36,6 +36,7 @@ import {
   SLOPE_COUNT_MINIMUM,
   type AnswerForm,
   type DetailLevel,
+  type LimitDirection,
   type PhysicsLabConfig,
 } from "../model";
 import type { VectorColorMode } from "../../../field-rendering/types";
@@ -48,6 +49,7 @@ import {
 import type {
   AttemptVerdict,
   ExactReading,
+  LimitSideView,
   ShownStep,
 } from "../PhysicsLabSession";
 import { secondOrderHint } from "../symbolic/secondOrder";
@@ -159,6 +161,7 @@ export class PhysicsLabPanel extends Component<{
           {SwitchUnion(() => config().panel.tab, {
             slope: () => slopeTab(physicsLab, config),
             second: () => secondOrderTab(physicsLab, config),
+            limit: () => limitTab(physicsLab, config),
             derivative: () => derivativeTab(physicsLab, config),
             integral: () => integralTab(physicsLab, config),
             exact: () => exactTab(physicsLab, config),
@@ -1557,6 +1560,376 @@ function integralTab(physicsLab: PhysicsLab, config: ConfigGetter) {
               The series is infinite and the plotted sum is not. Past the
               interval it converges on, and far enough out inside it, the curve
               is the sum rather than the function.
+            </div>
+          </section>
+        )}
+      </If>
+    </div>
+  );
+}
+
+/**
+ * Which side a limit at a point is taken from. The marks are the ones written
+ * after the point, so the chip says what the notation will say.
+ */
+const LIMIT_SIDES: readonly Choice<LimitDirection>[] = [
+  { value: "both", label: "Both sides" },
+  { value: "left", label: "From the left  a⁻" },
+  { value: "right", label: "From the right  a⁺" },
+];
+
+/**
+ * One line of a limit, set the way it is printed: `lim` upright with its
+ * approach underneath, then the maths.
+ *
+ * Built rather than rendered as one `\lim_{x\to a}`. MathQuill here has no
+ * `\lim` operator: it draws the three letters in italic, as a product l·i·m,
+ * with the approach hanging off the side as a subscript — which reads as a
+ * variable called lim rather than as the operator. `\operatorname{lim}` fixes
+ * the letters and not the placement.
+ */
+function limitStatement(
+  prefix: string,
+  approach: () => string,
+  rest: () => string
+) {
+  return (
+    <div class="dsm-physics-lab-limit-line">
+      {prefix === "" ? null : (
+        <span class="dsm-physics-lab-math">
+          <StaticMathQuillView latex={() => prefix} />
+        </span>
+      )}
+      <span class="dsm-physics-lab-limit-operator">
+        <span class="dsm-physics-lab-limit-word">lim</span>
+        <span class="dsm-physics-lab-limit-under">
+          <StaticMathQuillView latex={approach} />
+        </span>
+      </span>
+      <span class="dsm-physics-lab-math">
+        <StaticMathQuillView latex={rest} />
+      </span>
+    </div>
+  );
+}
+
+/** Whether a point as typed is one of the infinities, where sides mean nothing. */
+const isInfinity = (latex: string) =>
+  /^[+-]?\\infty$/.test(latex.trim().replace(/\\left|\\right/g, ""));
+
+/**
+ * The Limit tab.
+ *
+ * Laid out the way a limit is written — `lim` with the approach beneath it,
+ * then the expression — because the notation is what a student reads on a
+ * worksheet, and a form that separated the pieces would have to be translated
+ * back into it. The answer is a number, "does not exist" with its reason, or a
+ * refusal, and those three are kept visibly different.
+ */
+function limitTab(physicsLab: PhysicsLab, config: ConfigGetter) {
+  const session = () => physicsLab.session;
+  const found = () => session().limit;
+  const value = () => {
+    const view = found();
+    return view?.status === "value" ? view : undefined;
+  };
+  const none = () => {
+    const view = found();
+    return view?.status === "none" ? view : undefined;
+  };
+  const refused = () => {
+    const view = found();
+    return view?.status === "refused" ? view : undefined;
+  };
+  const variable = () => config().limit.variable;
+  const formLatex = () => found()?.formLatex ?? "";
+  const refusedSides = () => refused()?.sides ?? [];
+
+  return (
+    <div>
+      <section class="dsm-physics-lab-section">
+        <div class="dsm-physics-lab-section-head">
+          <label class="dsm-physics-lab-label">Limit</label>
+          {chipGroup(
+            "Variable",
+            variable,
+            VARIABLES,
+            (choice) => session().setLimitVariable(choice),
+            "dsm-physics-lab-limit-variable"
+          )}
+        </div>
+        <div class="dsm-physics-lab-limit">
+          {/* The operator and its approach stacked, as it is printed. Built
+              from a glyph and a field rather than rendered: a static `\lim`
+              cannot hold an editable point under it. */}
+          <div class="dsm-physics-lab-limit-operator">
+            <span class="dsm-physics-lab-limit-word">lim</span>
+            <div class="dsm-physics-lab-limit-approach">
+              <span class="dsm-physics-lab-limit-arrow">
+                <StaticMathQuillView latex={() => `${variable()}\\to`} />
+              </span>
+              <InlineMathInputViewGeneral
+                containerClass={() => ({
+                  "dsm-physics-lab-math-input": true,
+                  "dsm-physics-lab-limit-point": true,
+                })}
+                placeholder="0"
+                ariaLabel="the point the variable approaches"
+                latex={() => config().limit.pointLatex}
+                handleLatexChanged={(latex: string) =>
+                  session().setLimitPoint(latex)
+                }
+                hasError={() =>
+                  refused()?.error.startsWith("The point") === true
+                }
+                manageFocus={mathquillFocusHelper({
+                  controller: physicsLab.cc,
+                  location: {
+                    type: "dsm-focus",
+                    plugin: "physics-lab",
+                    kind: "limit-point",
+                  },
+                })}
+                controller={physicsLab.cc}
+                readonly={false}
+              />
+            </div>
+          </div>
+          <InlineMathInputViewGeneral
+            containerClass={() => ({ "dsm-physics-lab-math-input": true })}
+            placeholder="\frac{\sin\left(x\right)}{x}"
+            ariaLabel="the expression to take the limit of"
+            latex={() => config().limit.fLatex}
+            handleLatexChanged={(latex: string) =>
+              session().setLimitExpression(latex)
+            }
+            hasError={() => false}
+            manageFocus={mathquillFocusHelper({
+              controller: physicsLab.cc,
+              location: {
+                type: "dsm-focus",
+                plugin: "physics-lab",
+                kind: "limit-f",
+              },
+            })}
+            controller={physicsLab.cc}
+            readonly={false}
+          />
+        </div>
+        {/* At an infinity there is only one way to approach, so the choice
+            is not offered rather than offered and ignored. */}
+        <If predicate={() => !isInfinity(config().limit.pointLatex)}>
+          {() =>
+            chipGroup(
+              "Approach",
+              () => config().limit.side,
+              LIMIT_SIDES,
+              (side) => session().setLimitSide(side),
+              "dsm-physics-lab-limit-side"
+            )
+          }
+        </If>
+      </section>
+
+      {/* The form comes first because it is what is recognised first: a
+          student sees 0/0 before choosing what to do about it. */}
+      <If predicate={() => formLatex() !== ""}>
+        {() => (
+          <section class="dsm-physics-lab-section">
+            <div
+              class="dsm-physics-lab-inline dsm-physics-lab-limit-form"
+              data-physics-lab="limit-form"
+              data-latex={formLatex}
+            >
+              <span class="dsm-physics-lab-label">Indeterminate form</span>
+              <span class="dsm-physics-lab-math">
+                <StaticMathQuillView latex={formLatex} />
+              </span>
+            </div>
+            <div class="dsm-physics-lab-hint">
+              Substituting gives no value, only a form, so the limit has to be
+              found another way.
+            </div>
+          </section>
+        )}
+      </If>
+
+      <If predicate={() => value() !== undefined}>
+        {() => (
+          <section class="dsm-physics-lab-section">
+            {/* L'Hôpital's rule, as applied: each line is the new quotient,
+                the derivative of the top over the derivative of the bottom. */}
+            <If predicate={() => (value()?.steps.length ?? 0) > 0}>
+              {() => (
+                <div
+                  class="dsm-physics-lab-limit-steps"
+                  data-physics-lab="limit-steps"
+                >
+                  {limitStatement(
+                    "",
+                    () => value()?.approachLatex ?? "",
+                    () => value()?.bodyLatex ?? ""
+                  )}
+                  <For
+                    each={() =>
+                      (value()?.steps ?? []).map((line, index) => ({
+                        key: String(index),
+                        line,
+                      }))
+                    }
+                    key={(entry: { key: string }) => entry.key}
+                  >
+                    {(entry: () => { line: string }) =>
+                      limitStatement(
+                        "=",
+                        () => value()?.approachLatex ?? "",
+                        () => entry().line
+                      )
+                    }
+                  </For>
+                </div>
+              )}
+            </If>
+            <div
+              class="dsm-physics-lab-solution"
+              data-physics-lab="limit"
+              data-latex={() => value()?.valueLatex ?? ""}
+            >
+              {/* After L'Hôpital's lines the value is the last line of the
+                  chain; on its own it is the whole statement. */}
+              <If predicate={() => (value()?.steps.length ?? 0) > 0}>
+                {() => (
+                  <div class="dsm-physics-lab-math dsm-physics-lab-limit-result">
+                    <StaticMathQuillView
+                      latex={() => `=${value()?.valueLatex ?? ""}`}
+                    />
+                  </div>
+                )}
+              </If>
+              <If predicate={() => (value()?.steps.length ?? 0) === 0}>
+                {() =>
+                  limitStatement(
+                    "",
+                    () => value()?.approachLatex ?? "",
+                    () =>
+                      `${value()?.bodyLatex ?? ""}=${value()?.valueLatex ?? ""}`
+                  )
+                }
+              </If>
+              {/* Named by what decided it, never inferred from the answer. */}
+              <div
+                class="dsm-physics-lab-method"
+                data-physics-lab="limit-method"
+              >
+                {() => value()?.method ?? ""}
+              </div>
+              <div class="dsm-physics-lab-inline">
+                <If predicate={() => value()?.finite === true}>
+                  {() => (
+                    <Button
+                      color="blue"
+                      class="dsm-physics-lab-add-limit"
+                      onTap={() => session().insertLimit()}
+                    >
+                      Add to graph
+                    </Button>
+                  )}
+                </If>
+                <Button
+                  color="light-gray"
+                  class="dsm-physics-lab-show-limit"
+                  onTap={() => session().showLimitOnGraph()}
+                >
+                  Show on graph
+                </Button>
+                <span class="dsm-physics-lab-decimal">
+                  {() => value()?.decimal ?? ""}
+                </span>
+              </div>
+              <div class="dsm-physics-lab-hint">
+                {() =>
+                  value()?.check === "checked"
+                    ? "The function's values close in on this near the point."
+                    : "Not confirmed numerically: the function approaches too slowly for floating point to see it arrive."
+                }
+              </div>
+              <If predicate={() => (value()?.note ?? "") !== ""}>
+                {() => (
+                  <div class="dsm-physics-lab-hint">
+                    {() => value()?.note ?? ""}
+                  </div>
+                )}
+              </If>
+            </div>
+          </section>
+        )}
+      </If>
+
+      <If predicate={() => none() !== undefined}>
+        {() => (
+          <section class="dsm-physics-lab-section">
+            <div class="dsm-physics-lab-solution" data-physics-lab="limit-none">
+              <div class="dsm-physics-lab-refusal">
+                {() => none()?.reason ?? ""}
+              </div>
+              <For
+                each={() =>
+                  (none()?.sides ?? []).map((side) => ({
+                    key: side.latex,
+                    side,
+                  }))
+                }
+                key={(entry: { key: string }) => entry.key}
+              >
+                {(entry: () => { side: LimitSideView }) =>
+                  limitStatement(
+                    "",
+                    () => entry().side.approachLatex,
+                    () => `${config().limit.fLatex}=${entry().side.valueLatex}`
+                  )
+                }
+              </For>
+              <div class="dsm-physics-lab-inline">
+                <Button
+                  color="light-gray"
+                  class="dsm-physics-lab-show-limit"
+                  onTap={() => session().showLimitOnGraph()}
+                >
+                  Show on graph
+                </Button>
+              </div>
+            </div>
+          </section>
+        )}
+      </If>
+
+      {/* Nothing while half-typed, for the reason the Integral tab gives. */}
+      <If predicate={() => (refused()?.error ?? "") !== ""}>
+        {() => (
+          <section class="dsm-physics-lab-section">
+            <div
+              class="dsm-physics-lab-refusal"
+              data-physics-lab="limit-refusal"
+            >
+              {() => refused()?.error ?? ""}
+            </div>
+            <For
+              each={() =>
+                refusedSides().map((side) => ({ key: side.latex, side }))
+              }
+              key={(entry: { key: string }) => entry.key}
+            >
+              {(entry: () => { side: LimitSideView }) =>
+                limitStatement(
+                  "",
+                  () => entry().side.approachLatex,
+                  () => `${config().limit.fLatex}=${entry().side.valueLatex}`
+                )
+              }
+            </For>
+            <div class="dsm-physics-lab-hint">
+              Refused rather than guessed. A number the function seems to
+              approach is evidence, not a limit.
             </div>
           </section>
         )}

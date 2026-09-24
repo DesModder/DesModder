@@ -409,6 +409,19 @@ function mapChildNodes(node: Node, on: (child: Node) => Node): Node {
   }
 }
 
+/**
+ * `|g|` as `abs(g)`.
+ *
+ * Desmos parses the bars as a `Norm` node rather than as a call, so nothing
+ * that knows `abs` — evaluation, the limit rules, the sign of a side — sees an
+ * absolute value typed the way everybody types one. `\operatorname{abs}` was
+ * understood and `\left|x\right|` evaluated to nothing at every point.
+ */
+export function normsToAbs(node: Node): Node {
+  if (node.type === "Norm") return call("abs", normsToAbs(node.arg));
+  return mapChildNodes(node, normsToAbs);
+}
+
 /** A name nothing in `node` already uses, for a substitution's placeholder. */
 export function freshName(node: Node, preferred: readonly string[]): string {
   const taken = new Set(identifiersIn(node));

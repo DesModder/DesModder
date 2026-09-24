@@ -51,6 +51,31 @@
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
     position: relative;
     z-index: 1;
+
+    // Six sections since the Limit tab, and at Desmos's own size five fit:
+    // the last label ran off the end of the panel. A point smaller and less
+    // padding fits six at the default width; below it, each segment keeps
+    // its label whole and the row scrolls, rather than any label clipping.
+    .dcg-segmented-control-container {
+      overflow-x: auto;
+    }
+
+    // Desmos pads both the segment and the label inside it; one of the two
+    // is enough.
+    .dcg-segmented-control-btn {
+      font-size: 13px;
+      padding-left: 6px;
+      padding-right: 6px;
+      white-space: nowrap;
+    }
+
+    // Spelled out in full because Desmos's own rule for this padding is.
+    .dcg-segmented-control-container
+      .dcg-segmented-control-btn
+      .dcg-segmented-control-interior {
+      padding-left: 0;
+      padding-right: 0;
+    }
   }
 
   // A fixed title and tab bar, a scrolling body, and a fixed footer, so the
@@ -613,5 +638,90 @@
   // wants a measurement.
   #dsm-physics-lab-series-terms {
     max-width: 96px;
+  }
+}
+
+.dsm-physics-lab-menu {
+  // The limit as it is printed: `lim` over its approach, then the expression
+  // on the same baseline as `lim` itself.
+  .dsm-physics-lab-limit {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+
+    > .dsm-physics-lab-math-input {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+  }
+
+  .dsm-physics-lab-limit-operator {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  // Set in the face MathQuill uses for operator names, so `lim` reads as the
+  // same maths as the expression beside it rather than as a label.
+  .dsm-physics-lab-limit-word {
+    font-family: Symbola, "Times New Roman", serif;
+    font-size: 1.35em;
+    line-height: 1.5;
+  }
+
+  // Smaller than the expression, the way a subscript is.
+  .dsm-physics-lab-limit-approach {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 0.85em;
+  }
+
+  .dsm-physics-lab-limit-arrow {
+    flex: none;
+  }
+
+  // A point is short: a number, pi over something, or infinity.
+  .dsm-physics-lab-limit-point {
+    width: 64px;
+  }
+
+  .dsm-physics-lab-limit-form {
+    gap: 8px;
+  }
+
+  // L'Hôpital's lines hang under the statement, each starting with its equals
+  // sign, the way a worked limit is written down a page.
+  .dsm-physics-lab-limit-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+}
+
+.dsm-physics-lab-menu {
+  // A limit statement: the operator block, then the maths centred on it, the
+  // way a displayed limit sits on its line.
+  .dsm-physics-lab-limit-line {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+
+    > .dsm-physics-lab-math {
+      min-width: 0;
+    }
+  }
+
+  // The approach is set small under `lim`, like the limits of a sum.
+  .dsm-physics-lab-limit-under {
+    font-size: 0.75em;
+    line-height: 1;
+  }
+
+  .dsm-physics-lab-limit-result {
+    padding-left: 12px;
   }
 }
