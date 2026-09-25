@@ -547,6 +547,32 @@ function foldBinary(node: BinaryOperator): Node {
       ) {
         return right.args[0];
       }
+      // And e^{k ln u} is u^k, for a number k: e^{−ln x} is 1/x. Where ln u is
+      // defined u is positive, so the two agree everywhere the left does.
+      if (left.type === "Identifier" && left.symbol === "e") {
+        const scaled =
+          right.type === "Negative"
+            ? { k: -1, inner: right.arg }
+            : right.type === "BinaryOperator" &&
+                right.name === "Multiply" &&
+                rationalOf(right.left) !== undefined
+              ? { k: rationalOf(right.left)!, inner: right.right }
+              : undefined;
+        const k =
+          scaled === undefined
+            ? undefined
+            : typeof scaled.k === "number"
+              ? { n: scaled.k, d: 1 }
+              : scaled.k;
+        if (
+          scaled !== undefined &&
+          k !== undefined &&
+          scaled.inner.type === "FunctionCall" &&
+          scaled.inner.callee.symbol === "ln" &&
+          scaled.inner.args.length === 1
+        )
+          return fold(binop("Exponent", scaled.inner.args[0], rationalNode(k)));
+      }
       // A power of an exponential is one exponential: (e^u)^2 is e^{2u}, true
       // for every real u because e^u is positive. The same for any positive
       // number as the base. The substitution u = e^x puts every power of u

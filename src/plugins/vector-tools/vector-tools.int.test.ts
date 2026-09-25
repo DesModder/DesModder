@@ -1890,8 +1890,9 @@ testWithPage(
           divergence: text('[data-vector-tools="divergence"]'),
           curl: text('[data-vector-tools="curl"]'),
           verdict:
-            document.querySelector('[data-vector-tools="conservative"]')
-              ?.innerText ?? "",
+            document.querySelector<HTMLElement>(
+              '[data-vector-tools="conservative"]'
+            )?.innerText ?? "",
         };
       });
     const setField = async (p: string, q: string) => {

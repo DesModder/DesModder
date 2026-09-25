@@ -38,10 +38,14 @@ import {
 } from "./integrate";
 import {
   agreesOnSamples,
+  asRatio,
+  collectLikeTerms,
   dependsOn,
+  expand,
   evaluate,
   fold as simplify,
   numericDerivative,
+  topLevelTerms,
   visit,
   toLatex,
 } from "../../../symbolic";
@@ -126,7 +130,264 @@ export function solveFirstOrder(
   const asLogistic = logistic(emit, f, independent, dependent);
   if (asLogistic !== undefined) return asLogistic;
 
-  return separable(emit, f, independent, dependent);
+  const separated = separable(emit, f, independent, dependent);
+  if (separated.ok) return separated;
+
+  // Two substitutions that turn an equation into one of the kinds above:
+  // v = y^{1−n} for Bernoulli's, v = y/x for a homogeneous one.
+  return (
+    bernoulli(cfg, emit, f, independent, dependent) ??
+    homogeneous(emit, f, independent, dependent) ??
+    separated
+  );
+}
+
+/** Every `ln|u|` in a tree written `ln u`. */
+function withoutLogBars(node: Node): Node {
+  switch (node.type) {
+    case "FunctionCall": {
+      const args = node.args.map(withoutLogBars);
+      const [inner] = args;
+      if (
+        node.callee.symbol === "ln" &&
+        args.length === 1 &&
+        inner.type === "FunctionCall" &&
+        inner.callee.symbol === "abs"
+      )
+        return { ...node, args: inner.args };
+      return { ...node, args };
+    }
+    case "BinaryOperator":
+      return {
+        ...node,
+        left: withoutLogBars(node.left),
+        right: withoutLogBars(node.right),
+      };
+    case "Negative":
+      return { ...node, arg: withoutLogBars(node.arg) };
+    default:
+      return node;
+  }
+}
+
+/**
+ * `y' = P(x) y + Q(x) yⁿ`, Bernoulli's equation: with `v = y^{1−n}` it is
+ * `v' = (1−n)(P v + Q)`, which is linear, and `y = v^{1/(1−n)}`.
+ *
+ * Recognised term by term: each term of f separates into a function of x
+ * times a power of y, and there are exactly two powers, 1 and some n.
+ */
+function bernoulli(
+  cfg: Config,
+  emit: (node: Node) => string,
+  f: Node,
+  independent: string,
+  dependent: string
+): ODEResult | undefined {
+  const byPower = new Map<number, Node[]>();
+  for (const { term, negated } of topLevelTerms(f)) {
+    const split = separate(term, independent, dependent);
+    if (split === undefined) return undefined;
+    // h(y) = 1/hInverse has to be a power of y; its exponent is read off two
+    // points and confirmed at a third.
+    const h = (y: number) =>
+      1 / evaluate(split.hInverse, { [dependent]: y, ...PARAMETER_PROBE });
+    const k = Math.log(h(2) / h(1)) / Math.log(2);
+    if (!Number.isFinite(k)) return undefined;
+    const rounded = Math.round(k * 12) / 12;
+    if (Math.abs(h(3) - h(1) * 3 ** rounded) > 1e-9 * Math.abs(h(3)))
+      return undefined;
+    const coefficient = simplify(
+      multiply(
+        split.g,
+        divide(
+          number(1),
+          multiply(split.hInverse, power(id(dependent), number(rounded)))
+        )
+      )
+    );
+    const signed = negated ? negative(coefficient) : coefficient;
+    byPower.set(rounded, [...(byPower.get(rounded) ?? []), signed]);
+  }
+  if (byPower.size !== 2 || !byPower.has(1)) return undefined;
+  const n = [...byPower.keys()].find((k) => k !== 1)!;
+  if (n === 0) return undefined;
+  const sum = (terms: Node[]) => terms.reduce((a, b) => add(a, b));
+  const P = simplify(sum(byPower.get(1)!));
+  const Q = simplify(sum(byPower.get(n)!));
+  // The coefficients must really be free of y, or this is not the shape.
+  if (dependsOn(P, dependent) || dependsOn(Q, dependent)) return undefined;
+  const v = "v";
+  const scale = number(1 - n);
+  const linearInV = simplify(multiply(scale, add(multiply(P, id(v)), Q)));
+  const inV = solveFirstOrder(cfg, linearInV, independent, v);
+  if (!inV.ok || inV.solution.tree === undefined) return undefined;
+  const root = 1 / (1 - n);
+  const solution = simplify(power(inV.solution.tree, rationalExponent(root)));
+  // An even root has two signs, and y = −√v solves it as well; the check
+  // below only sees the one written.
+  const evenRoot =
+    rationalExponent(root).type !== "Constant" &&
+    Math.round(Math.abs(1 - n)) % 2 === 0;
+  return verified(
+    {
+      latex: `${dependent}=${emit(solution)}`,
+      method: `Bernoulli, with v = ${powerWords(dependent, 1 - n)}, which makes it linear${
+        evenRoot ? `; ${dependent} = −(this) is a solution too` : ""
+      }`,
+      explicit: true,
+      tree: solution,
+    },
+    solution,
+    f,
+    independent,
+    dependent
+  );
+}
+
+/** Values for any parameter in f while its shape is being read. */
+const PARAMETER_PROBE: Record<string, number> = {};
+
+function rationalExponent(value: number): Node {
+  for (let d = 1; d <= 12; d++) {
+    const n = Math.round(value * d);
+    if (Math.abs(n / d - value) < 1e-12)
+      return d === 1 ? number(n) : divide(number(n), number(d));
+  }
+  return number(value);
+}
+
+/** `y²`, `1/y`, `y^(1/3)`: a power as the method line says it. */
+function powerWords(name: string, exponent: number) {
+  const superscripts: Record<string, string> = {
+    "2": "²",
+    "3": "³",
+    "4": "⁴",
+    "5": "⁵",
+  };
+  if (exponent === 1) return name;
+  if (exponent === -1) return `1/${name}`;
+  if (Number.isInteger(exponent)) {
+    const up = superscripts[String(Math.abs(exponent))];
+    const raised =
+      up === undefined ? `${name}^${Math.abs(exponent)}` : name + up;
+    return exponent > 0 ? raised : `1/${raised}`;
+  }
+  const node = rationalExponent(exponent);
+  return node.type === "BinaryOperator" &&
+    node.left.type === "Constant" &&
+    node.right.type === "Constant"
+    ? `${name}^(${node.left.value}/${node.right.value})`
+    : `${name}^${exponent}`;
+}
+
+/**
+ * `y' = F(y/x)`, a homogeneous equation: with `y = vx` it is
+ * `x v' = F(v) − v`, which separates, and the relation in v is written back
+ * in y/x.
+ *
+ * Recognised by what homogeneous means: f takes the same value at (x, y) and
+ * at (tx, ty) for every t, checked at several points and scales.
+ */
+function homogeneous(
+  emit: (node: Node) => string,
+  f: Node,
+  independent: string,
+  dependent: string
+): ODEResult | undefined {
+  const at = (x: number, y: number) =>
+    evaluate(f, { [independent]: x, [dependent]: y });
+  let compared = 0;
+  for (const [x, y] of [
+    [0.7, 1.3],
+    [1.9, -0.4],
+    [-1.1, 2.3],
+  ])
+    for (const t of [2.5, -1.7, 0.3]) {
+      const a = at(x, y);
+      const b = at(t * x, t * y);
+      if (!Number.isFinite(a) || !Number.isFinite(b)) continue;
+      compared++;
+      if (Math.abs(a - b) > 1e-9 * Math.max(1, Math.abs(a))) return undefined;
+    }
+  if (compared < 4) return undefined;
+  const v = "v";
+  // F(v) = f(1, v).
+  const F = simplify(
+    replaceName(replaceName(f, dependent, id(v)), independent, number(1))
+  );
+  const denominator = simplify(subtract(F, id(v)));
+  if (isZero(denominator)) return undefined;
+  // Over one bar before integrating: 1/((v−1)/(v+1) − v) is
+  // −(v+1)/(v²+1), and only the second is a shape a rule knows.
+  const ratio = asRatio(denominator);
+  let left: Node;
+  try {
+    left = integrate(
+      simplify(
+        divide(
+          simplify(collectLikeTerms(simplify(expand(ratio.denominator).node))),
+          simplify(collectLikeTerms(simplify(expand(ratio.numerator).node)))
+        )
+      ),
+      v
+    );
+  } catch {
+    return undefined;
+  }
+  const quotient = divide(id(dependent), id(independent));
+  const leftInY = simplify(replaceName(left, v, quotient));
+  const right = simplify(
+    add(
+      {
+        type: "FunctionCall",
+        callee: id("ln"),
+        args: [
+          { type: "FunctionCall", callee: id("abs"), args: [id(independent)] },
+        ],
+      },
+      id(CONSTANT)
+    )
+  );
+  const relation = simplify(subtract(leftInY, right));
+  return verifiedImplicit(
+    relation,
+    {
+      latex: `${emit(leftInY)}=${emit(right)}`,
+      method: `Homogeneous, with v = ${dependent}/${independent}, which separates`,
+      explicit: false,
+      relation: {
+        left: leftInY,
+        right: simplify(subtract(right, id(CONSTANT))),
+      },
+    },
+    f,
+    independent,
+    dependent
+  );
+}
+
+/** Every `name` in a tree replaced by `value`. */
+function replaceName(node: Node, name: string, value: Node): Node {
+  switch (node.type) {
+    case "Identifier":
+      return node.symbol === name ? value : node;
+    case "FunctionCall":
+      return {
+        ...node,
+        args: node.args.map((a) => replaceName(a, name, value)),
+      };
+    case "BinaryOperator":
+      return {
+        ...node,
+        left: replaceName(node.left, name, value),
+        right: replaceName(node.right, name, value),
+      };
+    case "Negative":
+      return { ...node, arg: replaceName(node.arg, name, value) };
+    default:
+      return node;
+  }
 }
 
 /**
@@ -229,7 +490,11 @@ function affine(
 
   let antiderivativeOfA: Node;
   try {
-    antiderivativeOfA = integrate(a, independent);
+    // ln|u| read as ln u: an integrating factor is only needed up to a
+    // constant multiple, and on each interval where u keeps its sign |u| is
+    // ±u. Kept with the bars, e^{−ln|x|} is 1/|x|, and ∫ q/|x| is a harder
+    // integral than the problem.
+    antiderivativeOfA = withoutLogBars(integrate(a, independent));
   } catch (error) {
     return failed(error);
   }
@@ -333,6 +598,10 @@ function logistic(
   // longer applies.
   if (!isZero(constant)) return undefined;
   if (isZero(quadratic)) return undefined;
+  // With no linear term there is no carrying capacity: y' = ky² is not
+  // logistic, and reading it as one answered with the equilibrium y = 0
+  // alone, which satisfies the equation and is not its general solution.
+  if (isZero(linear)) return undefined;
   // A rate that varies with x is a different equation.
   if (dependsOn(linear, independent) || dependsOn(quadratic, independent))
     return undefined;
@@ -476,6 +745,22 @@ function collect(
       return;
     }
   }
+  // e^{x−y} is e^x · e^{−y}, which is the separation; as one factor it is a
+  // factor with both variables in it.
+  if (
+    node.type === "BinaryOperator" &&
+    node.name === "Exponent" &&
+    node.left.type === "Identifier" &&
+    node.left.symbol === "e" &&
+    node.right.type === "BinaryOperator" &&
+    (node.right.name === "Add" || node.right.name === "Subtract")
+  ) {
+    const second =
+      node.right.name === "Add" ? node.right.right : negative(node.right.right);
+    collect(power(node.left, node.right.left), inNumerator, out);
+    collect(power(node.left, second), inNumerator, out);
+    return;
+  }
   if (node.type === "Negative") {
     // The sign is a constant factor and must not be left attached to a y-only
     // factor, where it would land on the wrong side of the separation.
@@ -546,6 +831,15 @@ function verified(
   independent: string,
   dependent: string
 ): ODEResult {
+  // A general solution has its constant in it. One without is a single
+  // solution — an equilibrium — and passing it off as the general one is the
+  // mistake the check below cannot see, since an equilibrium does satisfy it.
+  if (!dependsOn(candidate, CONSTANT))
+    return {
+      ok: false,
+      error:
+        "Only a single solution was found, not the family of them, so it has not been reported.",
+    };
   const parameters = parameterBindings(
     [f, candidate],
     [independent, dependent, CONSTANT]

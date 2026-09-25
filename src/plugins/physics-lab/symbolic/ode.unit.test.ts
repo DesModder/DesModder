@@ -204,3 +204,42 @@ describe("the linear case that needs an integrating factor", () => {
     expect(solved(add(x, y)).latex).toBe("y=-x-1+Ce^{x}");
   });
 });
+
+describe("equations a substitution turns into one of the others", () => {
+  const two = number(2);
+
+  test("y' = y² is not logistic, and is answered by its family", () => {
+    // Read once as logistic with capacity 0, and answered y = 0: an
+    // equilibrium, which satisfies the equation and is not its solution.
+    const result = solve(pow(y, two));
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.solution.latex).toContain("C");
+  });
+
+  test("Bernoulli's equation, by v = y^{1−n}", () => {
+    const result = solve(add(y, mul(x, pow(y, two))));
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.solution.method).toContain("Bernoulli");
+      expect(result.solution.explicit).toBe(true);
+    }
+  });
+
+  test("a homogeneous equation, by v = y/x", () => {
+    const result = solve(div(sub(y, x), add(y, x)));
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.solution.method).toContain("Homogeneous");
+  });
+
+  test("an integrating factor from a logarithm is a power", () => {
+    // y' = 1 + y/x: the factor e^{−ln x} is 1/x, not 1/|x|.
+    const result = solve(add(number(1), div(y, x)));
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.solution.latex).not.toContain("e^");
+  });
+
+  test("an exponential of a difference separates", () => {
+    const result = solve(pow(id("e"), sub(x, y)));
+    expect(result.ok).toBe(true);
+  });
+});

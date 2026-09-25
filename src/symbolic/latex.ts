@@ -110,7 +110,42 @@ export function dropRedundantParens(latex: string): string {
 export function toLatex(cfg: Config, node: Node): string {
   return dropRedundantParens(
     absToBars(
-      latexTreeToString(cfg, node).replace(/\\cdot (?=[A-Za-z\\])/g, "")
+      latexTreeToString(cfg, bracketFractionPowers(node)).replace(
+        /\\cdot (?=[A-Za-z\\])/g,
+        ""
+      )
     )
   );
+}
+
+/**
+ * A fraction raised to a power, in brackets: `(y/x)²` rather than
+ * `\frac{y}{x}^{2}`. Desmos reads both the same way, but the second puts the
+ * exponent against the denominator for anyone reading it, and
+ * `-\frac{1}{x}^{2}` looks like −1/x² when it means −(1/x)².
+ */
+function bracketFractionPowers(node: Node): Node {
+  switch (node.type) {
+    case "BinaryOperator": {
+      const left = bracketFractionPowers(node.left);
+      const right = bracketFractionPowers(node.right);
+      if (
+        node.name === "Exponent" &&
+        left.type === "BinaryOperator" &&
+        left.name === "Divide"
+      )
+        return {
+          ...node,
+          left: { type: "Seq", parenWrapped: true, args: [left] },
+          right,
+        };
+      return { ...node, left, right };
+    }
+    case "Negative":
+      return { ...node, arg: bracketFractionPowers(node.arg) };
+    case "FunctionCall":
+      return { ...node, args: node.args.map(bracketFractionPowers) };
+    default:
+      return node;
+  }
 }

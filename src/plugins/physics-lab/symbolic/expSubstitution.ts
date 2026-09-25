@@ -15,6 +15,7 @@ import {
   add,
   asRatio,
   call,
+  collectLikeTerms,
   dependsOn,
   divide,
   expand,
@@ -178,8 +179,8 @@ export function findExpSubstitution(
   const factored = fold(divide(ratio.numerator, ratio.denominator));
   const opened = fold(
     divide(
-      fold(expand(ratio.numerator).node),
-      fold(expand(ratio.denominator).node)
+      fold(collectLikeTerms(fold(expand(ratio.numerator).node))),
+      fold(collectLikeTerms(fold(expand(ratio.denominator).node)))
     )
   );
   return {
