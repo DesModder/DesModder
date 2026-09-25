@@ -1231,6 +1231,22 @@ testWithPage(
       )
     ).toContain("diverges");
 
+    // No antiderivative at all: integrated numerically to thirty digits, and
+    // the digits read back as the constant they are. The Gaussian is √π, and
+    // Desmos's own integral agrees with the closed form it parses.
+    await setDefinite("e^{-x^{2}}", "-\\infty", "\\infty");
+    await driver.assertSelectorEventually(`${DEFINITE}:not([data-latex=""])`);
+    expect(await value()).toBe("\\sqrt{\\pi}");
+    // And one that is a special constant: ∫₀^∞ e^{-x} ln x = −γ, which goes
+    // into the graph with γ's definition before it.
+    await setDefinite("e^{-x}\\ln\\left(x\\right)", "0", "\\infty");
+    await driver.assertSelectorEventually(`${DEFINITE}:not([data-latex=""])`);
+    expect(await value()).toBe("-\\gamma");
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    await driver.page.screenshot({
+      path: "docs/assets/physics-lab-numeric-definite.png",
+    });
+
     await driver.evaluate(() => {
       const { session } = DSM.physicsLab as unknown as {
         session: { updateConfig: (m: (c: PhysicsLabConfig) => void) => void };

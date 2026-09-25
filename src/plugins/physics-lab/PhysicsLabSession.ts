@@ -62,9 +62,11 @@ import {
   NonElementaryError,
 } from "./symbolic/integrate";
 import { seriesFallback, type PartKind } from "./symbolic/seriesSum";
+import { quadratureSteps, type QuadratureResult } from "./symbolic/quadrature";
 import {
   definiteIntegral,
   DefiniteError,
+  interiorSingularity,
   type Approach,
   type Bound,
   type Limit,
@@ -366,8 +368,20 @@ export type DefiniteView =
       decimal: string;
       /** Said when it was improper or diverges; empty otherwise. */
       note: string;
+      /**
+       * Set when there was no antiderivative and the value came from a
+       * numerical integration, matched to a closed form or not.
+       */
+      numeric?: boolean;
+      /** Definitions the value needs in the graph: γ, ζ(3), G. */
+      definitions?: { name: string; latex: string }[];
     }
-  | { ok: false; error: string };
+  | {
+      ok: false;
+      error: string;
+      /** Still being integrated numerically; nothing to say yet. */
+      pending?: boolean;
+    };
 
 /** What the Integral tab has to show for one integrand. */
 export type IntegralView =
@@ -405,6 +419,11 @@ export type IntegralView =
        * shows beside a closed form.
        */
       series?: SeriesView;
+      /**
+       * The integral between the bounds, numerically, when there is no
+       * antiderivative to evaluate it with.
+       */
+      definite?: DefiniteView;
     };
 
 /** One one-sided limit, for showing the two sides of a limit that has none. */
@@ -616,6 +635,12 @@ export default class PhysicsLabSession {
   private solutionCache?: { latex: string; result: ODEResult };
   private secondCache?: { latex: string; result: ODEResult };
   private integralCache?: { key: string; result: IntegralView };
+  /** Numerical definite integrals already done, by integrand and bounds. */
+  private readonly numericDefinite = new Map<
+    string,
+    QuadratureResult | "none"
+  >();
+  private numericJob?: { key: string; timer?: ReturnType<typeof setTimeout> };
   private limitCache?: { key: string; result: LimitView };
   private exactCache?: { latex: string; result: ExactReading | undefined };
   private exactTimer?: ReturnType<typeof setTimeout>;
@@ -1712,7 +1737,148 @@ export default class PhysicsLabSession {
       error: refusal,
       special,
       series: this.series(integrand, terms),
+      definite: this.config.integral.definite
+        ? this.numericDefiniteView(integrand, variable, fLatex)
+        : undefined,
     };
+  }
+
+  /**
+   * `∫_a^b f` with no antiderivative: integrated numerically to thirty-odd
+   * digits, then read back into a closed form where the digits say which.
+   *
+   * The integration takes up to a couple of seconds, so it runs in slices
+   * once typing pauses, and the view says it is working until it is done.
+   */
+  private numericDefiniteView(
+    integrand: Node,
+    variable: string,
+    fLatex: string
+  ): DefiniteView {
+    const { lowerLatex, upperLatex } = this.config.integral;
+    const lower = this.readBound(lowerLatex);
+    const upper = this.readBound(upperLatex);
+    if (lower === undefined || upper === undefined)
+      return {
+        ok: false,
+        error: "Each bound has to be a number, an expression in numbers, or ∞.",
+      };
+    // Anything else named in it has no value, and neither does the integral.
+    const callees = new Set<string>();
+    visitTree(integrand, (child) => {
+      if (child.type === "FunctionCall") callees.add(child.callee.symbol);
+    });
+    const free = identifiersIn(integrand).filter(
+      (name) =>
+        name !== variable && name !== "e" && name !== "pi" && !callees.has(name)
+    );
+    if (free.length > 0)
+      return {
+        ok: false,
+        error: `A value needs numbers, and ${free[0]} has none here.`,
+      };
+    const key = `${variable}|${fLatex}|${lowerLatex}|${upperLatex}`;
+    const done = this.numericDefinite.get(key);
+    if (done === undefined) {
+      this.startNumericDefinite(key, integrand, variable, lower, upper);
+      return { ok: false, error: "", pending: true };
+    }
+    if (done === "none")
+      return {
+        ok: false,
+        error:
+          "No antiderivative was found to evaluate, and integrating numerically to thirty digits did not settle: the integral may diverge, have a point inside the interval where it is undefined, or oscillate out to infinity in a way this cannot follow.",
+      };
+    const statementLatex = `\\int_{${lowerLatex.trim()}}^{${upperLatex.trim()}}${fLatex}d${variable}`;
+    const shown = Math.min(done.digits, 34);
+    const text = done.value.toSignificantDigits(shown).toFixed();
+    const match = recognizeDecimal(text);
+    if (match !== undefined && match.spare >= 8) {
+      return {
+        ok: true,
+        numeric: true,
+        statementLatex,
+        valueLatex: toLatexTree(this.textModeConfig, match.node),
+        decimal: `≈ ${done.value.toFixed(DECIMAL_PLACES)}`,
+        note: `No antiderivative was found to evaluate, so this was integrated numerically, to ${done.digits} digits. Those digits match this closed form with ${match.spare} to spare: almost certainly exact, but found by matching digits (an integer-relation search), not proved.`,
+        definitions: match.definitions.map((c) => ({
+          name: c.name,
+          latex: c.definition,
+        })),
+      };
+    }
+    return {
+      ok: true,
+      numeric: true,
+      statementLatex,
+      valueLatex: done.value.toSignificantDigits(Math.min(shown, 20)).toFixed(),
+      decimal: "",
+      note: `No antiderivative was found to evaluate, so this was integrated numerically, to ${done.digits} digits, and no closed form among the constants known here matches them. Every digit shown is right.`,
+    };
+  }
+
+  /** Runs the numerical integration for `key`, a few milliseconds at a time. */
+  private startNumericDefinite(
+    key: string,
+    integrand: Node,
+    variable: string,
+    lower: Bound,
+    upper: Bound
+  ) {
+    if (this.numericJob?.key === key) return;
+    this.cancelNumericDefinite();
+    const job: { key: string; timer?: ReturnType<typeof setTimeout> } = {
+      key,
+    };
+    this.numericJob = job;
+    const finish = (result: QuadratureResult | "none") => {
+      if (this.numericDefinite.size > 24) this.numericDefinite.clear();
+      this.numericDefinite.set(key, result);
+      this.numericJob = undefined;
+      this.integralCache = undefined;
+      this.plugin.rerenderPanel();
+    };
+    job.timer = setTimeout(() => {
+      // A pole inside the interval makes the symmetric nodes cancel, and
+      // ∫₋₁¹ dx/x would come back 0; it has no value at all.
+      const a = lower.kind === "finite" ? lower.value : lower.sign * Infinity;
+      const b = upper.kind === "finite" ? upper.value : upper.sign * Infinity;
+      if (
+        interiorSingularity(
+          (x) => evaluate(integrand, { [variable]: x }),
+          Math.min(a, b),
+          Math.max(a, b)
+        )
+      ) {
+        finish("none");
+        return;
+      }
+      const steps = quadratureSteps(integrand, variable, lower, upper);
+      const run = () => {
+        if (this.numericJob !== job) return;
+        const until = Date.now() + 20;
+        try {
+          while (Date.now() < until) {
+            const next = steps.next();
+            if (next.done === true) {
+              finish(next.value ?? "none");
+              return;
+            }
+          }
+        } catch {
+          finish("none");
+          return;
+        }
+        job.timer = setTimeout(run, 0);
+      };
+      run();
+    }, 300);
+  }
+
+  private cancelNumericDefinite() {
+    if (this.numericJob?.timer !== undefined)
+      clearTimeout(this.numericJob.timer);
+    this.numericJob = undefined;
   }
 
   /**
@@ -1871,12 +2037,27 @@ export default class PhysicsLabSession {
     });
   }
 
-  /** Puts the exact value of the definite integral into the graph. */
+  /**
+   * Puts the value of the definite integral into the graph, after any
+   * definitions it needs that the graph does not already have.
+   */
   insertDefinite() {
-    const found = this.integral;
-    if (found?.ok !== true || found.definite?.ok !== true) return;
+    const definite = this.integral?.definite;
+    if (definite?.ok !== true) return;
+    const existing = this.plugin.calc
+      .getExpressions()
+      .flatMap((item) =>
+        item.type === "expression" && typeof item.latex === "string"
+          ? [item.latex]
+          : []
+      );
+    for (const definition of definite.definitions ?? []) {
+      const name = definition.latex.slice(0, definition.latex.indexOf("=") + 1);
+      if (!existing.some((latex) => latex.startsWith(name)))
+        this.plugin.calc.setExpression({ latex: definition.latex });
+    }
     this.plugin.calc.setExpression({
-      latex: found.definite.valueLatex,
+      latex: definite.valueLatex,
       color: "#388c46",
     });
   }
@@ -2378,6 +2559,7 @@ export default class PhysicsLabSession {
     if (this.exactTimer !== undefined) clearTimeout(this.exactTimer);
     this.exactTimer = undefined;
     this.environmentTimer = undefined;
+    this.cancelNumericDefinite();
     if (this.dispatcherID !== undefined)
       this.plugin.cc.dispatcher.unregister(this.dispatcherID);
     this.dispatcherID = undefined;

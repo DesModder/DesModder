@@ -565,7 +565,15 @@ function productNode(
     const side = Q.isNegative(q) ? below : above;
     const size = Q.isNegative(q) ? Q.negate(q) : q;
     if (prime === undefined) {
-      side.push(Q.equals(size, Q.ONE) ? node : power(node, rationalNode(size)));
+      // A half power of a constant is its square root, as a book writes
+      // √π; any other fractional power stays a power.
+      side.push(
+        Q.equals(size, Q.ONE)
+          ? node
+          : Q.equals(size, Q.rational(1n, 2n))
+            ? call("sqrt", node)
+            : power(node, rationalNode(size))
+      );
       return;
     }
     // p^{k + r}: p^k into the fraction, √p for r = ½, p^r otherwise.

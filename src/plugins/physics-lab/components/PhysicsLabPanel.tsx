@@ -1243,14 +1243,19 @@ function integralTab(physicsLab: PhysicsLab, config: ConfigGetter) {
   };
   const series = () => failure()?.series;
   const variable = () => config().integral.variable;
-  const definiteResult = () => worked()?.definite;
+  // From the antiderivative when there is one, and numerically when not.
+  const definiteResult = () => worked()?.definite ?? failure()?.definite;
   const definiteWorked = () => {
     const value = definiteResult();
     return value?.ok === true ? value : undefined;
   };
   const definiteFailed = () => {
     const value = definiteResult();
-    return value?.ok === false ? value : undefined;
+    return value?.ok === false && value.pending !== true ? value : undefined;
+  };
+  const definitePending = () => {
+    const value = definiteResult();
+    return value?.ok === false && value.pending === true;
   };
 
   return (
@@ -1287,7 +1292,8 @@ function integralTab(physicsLab: PhysicsLab, config: ConfigGetter) {
             hasError={() =>
               (failure()?.error ?? "") !== "" &&
               failure()?.series === undefined &&
-              failure()?.special === undefined
+              failure()?.special === undefined &&
+              failure()?.definite === undefined
             }
             manageFocus={mathquillFocusHelper({
               controller: physicsLab.cc,
@@ -1368,6 +1374,17 @@ function integralTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                     data-physics-lab="integral-definite-refusal"
                   >
                     {() => definiteFailed()?.error ?? ""}
+                  </div>
+                )}
+              </If>
+              <If predicate={definitePending}>
+                {() => (
+                  <div
+                    class="dsm-physics-lab-hint"
+                    data-physics-lab="integral-definite-pending"
+                  >
+                    No antiderivative to evaluate, so integrating numerically to
+                    thirty digits…
                   </div>
                 )}
               </If>

@@ -1469,7 +1469,7 @@ export function quadrature(
 }
 
 /** Points inside the interval where the integrand has no finite value. */
-function interiorSingularity(
+export function interiorSingularity(
   f: (x: number) => number,
   lower: number,
   upper: number
