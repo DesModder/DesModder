@@ -13,9 +13,14 @@
  * of it.
  */
 export {
+  add,
+  collectLikeTerms,
+  constantValue,
   dependsOn,
   differentiate,
+  evaluate,
   fold as simplify,
+  subtract,
   identifiersIn,
   implicitDerivative,
   SymbolicError,

@@ -8,6 +8,7 @@ import {
   IfElse,
   InlineMathInputViewGeneral,
   SegmentedControl,
+  StaticMathQuillView,
   SwitchUnion,
 } from "#components";
 import { format } from "#i18n";
@@ -293,6 +294,8 @@ function fieldTab(
         </div>
       </section>
 
+      {analysisSection(vectorTools)}
+
       {/* Only for a field that reads the clock. A field written without `t` is
           a still picture and has nothing to play. */}
       <If predicate={() => vectorTools.fieldUsesTime}>
@@ -323,6 +326,69 @@ function fieldTab(
         </div>
       </section>
     </div>
+  );
+}
+
+/**
+ * Divergence, curl, and whether there is a potential: the three questions a
+ * course asks of every field it draws, answered exactly where the algebra
+ * allows and said plainly where it only checked.
+ */
+function analysisSection(vectorTools: VectorTools) {
+  const analysis = () => vectorTools.fieldAnalysis;
+  const worked = () => {
+    const value = analysis();
+    return value.ok ? value : undefined;
+  };
+  const verdict = () => {
+    switch (worked()?.conservative) {
+      case "gradient":
+        return "Conservative: it is the gradient of f, so f is a potential and the work around any closed loop is 0.";
+      case "exactly":
+        return "Conservative: the curl is exactly 0, so on a region with no holes there is a potential f with ∇f = F.";
+      case "numerically":
+        return "Probably conservative: the curl vanishes at every one of the points checked across the sampling domain, though it did not simplify to 0.";
+      case "no":
+        return "Not conservative: the curl is not 0, so the work done depends on the path and there is no potential.";
+      default:
+        return "Whether it is conservative could not be checked here: the curl has no value at enough points.";
+    }
+  };
+  return (
+    <If predicate={() => worked() !== undefined}>
+      {() => (
+        <section class="dsm-vector-tools-section" data-vector-tools="analysis">
+          <h3>Divergence and curl</h3>
+          <div
+            class="dsm-vector-tools-analysis-row"
+            data-vector-tools="divergence"
+            data-latex={() => worked()?.divergenceLatex ?? ""}
+          >
+            {/* The name as text: Desmos's MathQuill has no \nabla. */}
+            <span class="dsm-vector-tools-analysis-name">∇·F =</span>
+            <StaticMathQuillView
+              latex={() => worked()?.divergenceLatex ?? ""}
+            />
+          </div>
+          <div
+            class="dsm-vector-tools-analysis-row"
+            data-vector-tools="curl"
+            data-latex={() => worked()?.curlLatex ?? ""}
+          >
+            <span class="dsm-vector-tools-analysis-name">∇×F =</span>
+            <StaticMathQuillView latex={() => worked()?.curlLatex ?? ""} />
+          </div>
+          <div class="dsm-vector-tools-hint" data-vector-tools="conservative">
+            {verdict}
+          </div>
+          <div class="dsm-vector-tools-hint">
+            Divergence is how much the field spreads out of a point (positive is
+            a source); curl is how much it spins there (positive is
+            counter-clockwise).
+          </div>
+        </section>
+      )}
+    </If>
   );
 }
 

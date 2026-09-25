@@ -1871,3 +1871,67 @@ function rgbArguments(latex: string): string[] {
   }
   return parts;
 }
+
+testWithPage(
+  "the field tab gives divergence and curl exactly, and says whether there is a potential",
+  async (driver) => {
+    await resetLibrary(driver);
+    await driver.enablePlugin("vector-tools");
+    await driver.assertSelectorEventually(BUTTON);
+    await driver.click(BUTTON);
+    await driver.assertSelector(PANEL);
+    await openTab(driver, "field");
+
+    const read = async () =>
+      await driver.evaluate(() => {
+        const text = (selector: string) =>
+          document.querySelector(selector)?.getAttribute("data-latex") ?? "";
+        return {
+          divergence: text('[data-vector-tools="divergence"]'),
+          curl: text('[data-vector-tools="curl"]'),
+          verdict:
+            document.querySelector('[data-vector-tools="conservative"]')
+              ?.innerText ?? "",
+        };
+      });
+    const setField = async (p: string, q: string) => {
+      await driver.evaluate(
+        (args: string[]) => {
+          const plugin = DSM.enabledPlugins["vector-tools"] as any;
+          plugin.setSource("components");
+          plugin.setSlot("p", args[0]);
+          plugin.setSlot("q", args[1]);
+        },
+        [p, q]
+      );
+      await driver.waitForSync();
+    };
+
+    // A rotation: no spreading, a constant spin, and no potential.
+    await setField("-y", "x");
+    let found = await read();
+    expect(found.divergence).toBe("0");
+    expect(found.curl).toBe("2");
+    expect(found.verdict).toContain("Not conservative");
+
+    // A gradient written out by hand: the curl cancels exactly.
+    await setField("2xy", "x^{2}");
+    found = await read();
+    expect(found.curl).toBe("0");
+    expect(found.verdict).toContain("exactly 0");
+    await driver.evaluate(() => {
+      document
+        .querySelector('[data-vector-tools="analysis"]')
+        ?.scrollIntoView({ block: "center" });
+    });
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    await driver.page.screenshot({
+      path: "docs/assets/vector-tools-divergence-curl.png",
+    });
+
+    await driver.disablePlugin("vector-tools");
+    await driver.setBlank();
+    await driver.waitForSync();
+  },
+  90000
+);

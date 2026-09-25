@@ -581,7 +581,14 @@ equations course. Desmos draws implicit curves natively, so the generated half
 is nearly free. A live GPU version would be a fragment pass colouring pixels
 where the field's sign changes, distance-normalised so the line has even width.
 
-### 5. Divergence and curl
+### 5. Divergence and curl — **the exact half is in the Field tab**
+
+The Field tab shows `∇·F` and `∇×F` (the scalar curl, ∂Q/∂x − ∂P/∂y) as
+formulas, differentiated by the shared differentiator from Desmos's own parse,
+and says whether the field is conservative: by construction for a gradient,
+exactly when the curl folds to 0, "probably" when it only vanishes at the 49
+points of a grid over the sampling domain, and plainly not otherwise. That is
+also the conservative-field check listed below. The GPU overlay is still to do.
 
 Two halves:
 

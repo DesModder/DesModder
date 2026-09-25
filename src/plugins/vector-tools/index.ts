@@ -64,7 +64,19 @@ import {
   type ExpressionAudit,
   type VectorFieldPlan,
 } from "./generator";
-import { differentiate, identifiersIn, toLatex } from "./symbolic";
+import {
+  add,
+  collectLikeTerms,
+  constantValue,
+  differentiate,
+  evaluate,
+  identifiersIn,
+  simplify,
+  subtract,
+  toLatex,
+  type Node,
+} from "./symbolic";
+
 import { buildConfigFromGlobals, parseLatex } from "../../../text-mode-core";
 import { FlowOverlay } from "../../field-rendering/FlowOverlay";
 import { ArrowOverlay } from "../../field-rendering/ArrowOverlay";
@@ -82,6 +94,22 @@ import {
 } from "../../field-rendering/environment";
 import type { FlowField } from "../../field-rendering/FlowRenderer";
 import type { ConfigItem } from "..";
+
+/** The divergence and curl of a field, and whether it has a potential. */
+export type FieldAnalysis =
+  | {
+      ok: true;
+      divergenceLatex: string;
+      /** The scalar curl, ∂Q/∂x − ∂P/∂y: the z-component of ∇ × F. */
+      curlLatex: string;
+      /**
+       * `gradient`: it is ∇f by construction. `exactly`: the curl simplifies
+       * to 0. `numerically`: it vanishes at every point checked. `no`: it
+       * does not. `unknown`: too few points had a value to say.
+       */
+      conservative: "gradient" | "exactly" | "numerically" | "no" | "unknown";
+    }
+  | { ok: false; error: string };
 
 export { TEST_FOLDER_ID, TEST_LINE_ID, TEST_NAMESPACE } from "./ids";
 
@@ -1381,6 +1409,103 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     const { overlayLayer } = this;
     this.flowOverlay.setLayer(overlayLayer);
     this.arrowOverlay.setLayer(overlayLayer);
+  }
+
+  // ---- divergence, curl, and whether there is a potential -----------------
+
+  private analysisCache?: { key: string; result: FieldAnalysis };
+
+  /**
+   * The divergence and the curl of the field, exactly, and whether it is
+   * conservative.
+   *
+   * Differentiated by the shared differentiator from Desmos's own parse, so
+   * `∂P/∂x + ∂Q/∂y` comes back as the formula rather than as a number at a
+   * point. Whether the curl is zero is decided symbolically when the fold
+   * reaches 0, and otherwise at a grid of points across the sampling domain,
+   * which is said as such: a curl that simplifies to `2y − 2y` is not the
+   * same claim as one that vanishes at 49 points checked.
+   */
+  get fieldAnalysis(): FieldAnalysis {
+    const config = this.getConfig();
+    const key = JSON.stringify([
+      config.source,
+      config.components,
+      config.scalar,
+      config.domain,
+    ]);
+    if (this.analysisCache?.key === key) return this.analysisCache.result;
+    const result = this.analyse(config);
+    this.analysisCache = { key, result };
+    return result;
+  }
+
+  private analyse(config: VectorFieldConfig): FieldAnalysis {
+    try {
+      const cfg = buildConfigFromGlobals(Desmos, this.calc);
+      const tidy = (node: Node) => simplify(collectLikeTerms(simplify(node)));
+      const [P, Q] =
+        config.source === "gradient"
+          ? (() => {
+              const f = parseLatex(cfg, config.scalar.fLatex);
+              return [differentiate(f, "x"), differentiate(f, "y")];
+            })()
+          : [
+              parseLatex(cfg, config.components.xLatex),
+              parseLatex(cfg, config.components.yLatex),
+            ];
+      const divergence = tidy(
+        add(differentiate(P, "x"), differentiate(Q, "y"))
+      );
+      const curl = tidy(subtract(differentiate(Q, "x"), differentiate(P, "y")));
+      let conservative:
+        | "gradient"
+        | "exactly"
+        | "numerically"
+        | "no"
+        | "unknown";
+      if (config.source === "gradient") conservative = "gradient";
+      else if (constantValue(curl) === 0) conservative = "exactly";
+      else {
+        // A grid over the sampling domain, off the axes where fields tend to
+        // have their poles.
+        const { x, y } = config.domain;
+        let checked = 0;
+        let nonzero = false;
+        for (let i = 0; i < 7; i++)
+          for (let j = 0; j < 7; j++) {
+            const at = {
+              x: x.min + ((i + 0.37) / 7) * (x.max - x.min),
+              y: y.min + ((j + 0.61) / 7) * (y.max - y.min),
+            };
+            const value = evaluate(curl, at);
+            if (!Number.isFinite(value)) continue;
+            const scale = Math.max(
+              1,
+              Math.abs(evaluate(P, at)),
+              Math.abs(evaluate(Q, at))
+            );
+            checked++;
+            if (Math.abs(value) > 1e-9 * scale) nonzero = true;
+          }
+        conservative =
+          checked < 10 ? "unknown" : nonzero ? "no" : "numerically";
+      }
+      return {
+        ok: true,
+        divergenceLatex: toLatex(cfg, divergence),
+        curlLatex: toLatex(cfg, curl),
+        conservative,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "This field could not be differentiated.",
+      };
+    }
   }
 
   // ---- symbolic differentiation ------------------------------------------
