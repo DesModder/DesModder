@@ -2231,7 +2231,7 @@ function exactTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                 <Button
                   color="blue"
                   class="dsm-physics-lab-insert"
-                  onTap={() => insertExact(physicsLab, reading()?.latex)}
+                  onTap={() => insertExact(physicsLab, reading())}
                 >
                   Add to graph
                 </Button>
@@ -2250,6 +2250,22 @@ function exactTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                   }}
                 </span>
               </div>
+              <If predicate={() => (reading()?.definitions.length ?? 0) > 0}>
+                {() => (
+                  <div
+                    class="dsm-physics-lab-hint"
+                    data-physics-lab="exact-definitions"
+                  >
+                    {() =>
+                      `Desmos has no name for ${(reading()?.definitions ?? [])
+                        .map((d) => d.name)
+                        .join(
+                          " or "
+                        )}, so Add to graph also adds a definition that computes it to every digit Desmos keeps.`
+                    }
+                  </div>
+                )}
+              </If>
             </div>
           )}
         </If>
@@ -2265,9 +2281,31 @@ function exactTab(physicsLab: PhysicsLab, config: ConfigGetter) {
  * better than anything this plugin would ship, and an expression in the list is
  * also the form that survives without the extension.
  */
-function insertExact(physicsLab: PhysicsLab, latex: string | undefined) {
-  if (latex === undefined) return;
-  physicsLab.calc.setExpression({ latex });
+/**
+ * Puts an exact form into the graph, with the definitions it needs first.
+ *
+ * `π²/6 + γ` means nothing to Desmos until γ does, so each special constant
+ * the form uses is defined beside it — once: a graph that already defines the
+ * name keeps its own definition.
+ */
+function insertExact(
+  physicsLab: PhysicsLab,
+  reading: ExactReading | undefined
+) {
+  if (reading === undefined) return;
+  const existing = physicsLab.calc
+    .getExpressions()
+    .flatMap((item) =>
+      item.type === "expression" && typeof item.latex === "string"
+        ? [item.latex]
+        : []
+    );
+  for (const definition of reading.definitions) {
+    const name = definition.latex.slice(0, definition.latex.indexOf("=") + 1);
+    if (!existing.some((latex) => latex.startsWith(name)))
+      physicsLab.calc.setExpression({ latex: definition.latex });
+  }
+  physicsLab.calc.setExpression({ latex: reading.latex });
 }
 
 function matchViewport(physicsLab: PhysicsLab) {

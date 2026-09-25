@@ -57,6 +57,7 @@ import {
   evaluatePrecise,
   fold,
   id,
+  identifiersIn,
   multiply,
   negative,
   number,
@@ -69,6 +70,12 @@ import { evaluateExact, opaque, toNumber, type ExactValue } from "./exact";
 import * as Q from "./rational";
 import { rationalNode } from "./field";
 import { integerRelation } from "./pslq";
+import {
+  constantsIn,
+  SPECIAL_CONSTANTS,
+  specialBindings,
+  type SpecialConstant,
+} from "./specialConstants";
 
 /**
  * The largest denominator the fraction-times-constant shape may use.
@@ -87,11 +94,26 @@ const MAX_DENOMINATOR = 10_000n;
 const DIGITS_FOR_IRRATIONAL = 6;
 
 /**
- * How many more digits a match must explain than it costs to write. Six
- * digits spare means a random decimal would pass by chance about once in a
- * million formulas of that size — and the searches here try far fewer.
+ * How many more digits a match must explain than it costs to write.
+ *
+ * Eight: with the special constants in the search there are a few thousand
+ * formulas of each size a match could come from, and eight digits to spare
+ * keeps the chance that random digits match any of them near one in ten
+ * thousand. The plain fraction-times-constant shape asks for four, since it
+ * searches a few dozen and its formulas are the ones people actually meet.
  */
-const MARGIN = 6;
+const MARGIN = 8;
+const PLAIN_MARGIN = 4;
+
+/**
+ * The most digits PSLQ works to. It only proposes relations; every candidate
+ * is then checked against every digit given, so running it on more digits
+ * than a small relation needs buys nothing but time.
+ */
+const PSLQ_DIGITS = 50;
+
+/** Fewest digits before the special constants are searched at all. */
+const DIGITS_FOR_SPECIAL = 15;
 
 export interface Recognition {
   value: ExactValue;
@@ -104,12 +126,19 @@ export interface Recognition {
   digits: number;
   /** How many digits the match explains beyond what the formula costs. */
   spare: number;
+  /**
+   * The special constants the formula uses — γ, ζ(3) — each with the Desmos
+   * definition that gives its name a value in the graph.
+   */
+  definitions: SpecialConstant[];
 }
 
 /** A formula that might be the decimal, and what it costs to write down. */
 interface Candidate {
   node: Node;
   cost: number;
+  /** A plain rational, which needs no margin: it names no constant. */
+  plain?: boolean;
 }
 
 const log10 = (n: bigint | number) => Math.log10(Math.abs(Number(n)) + 1);
@@ -160,12 +189,16 @@ export function recognizeDecimal(text: string): Recognition | undefined {
   const node = fold(found.node);
   const exact =
     evaluateExact(node) ??
-    opaque(node, evaluatePrecise(node, {}, precision).toNumber());
+    opaque(
+      node,
+      evaluatePrecise(node, specialBindings(precision), precision).toNumber()
+    );
   return {
     value: exact,
     node: found.node,
     digits,
     spare: Math.max(0, Math.floor(digits - found.cost)),
+    definitions: constantsIn(identifiersIn(found.node)),
   };
 }
 
@@ -182,22 +215,41 @@ function identify(
 ): Candidate | undefined {
   const sign = value.isNegative() ? -1 : 1;
   const size = value.abs();
+  // Checked at two precisions: a candidate whose value moves between them is
+  // one whose constants were not computed to the digits claimed, and is not
+  // trusted to any of them.
   const matches = (candidate: Candidate) => {
-    const got = evaluatePrecise(candidate.node, {}, precision);
-    return got.isFinite() && got.minus(size).abs().lte(tolerance);
+    const got = valueAt(candidate.node, precision);
+    const again = valueAt(candidate.node, precision + 20);
+    return (
+      got.isFinite() &&
+      got.minus(size).abs().lte(tolerance) &&
+      got.minus(again).abs().lte(tolerance.div(100))
+    );
   };
   const found: Candidate[] = [];
 
   for (const candidate of multiples(size, digits, precision))
-    if (matches(candidate)) found.push(candidate);
+    if (
+      (candidate.plain === true || candidate.cost <= digits - PLAIN_MARGIN) &&
+      matches(candidate)
+    )
+      found.push(candidate);
 
   const earned = (candidate: Candidate) =>
     candidate.cost <= digits - MARGIN && matches(candidate);
-  if (digits >= 12)
+  // Inside a tower the exponent is a multiple or a product -- π√2, e√2, γ --
+  // and running every sum again for each base was most of the search time.
+  if (towers && digits >= 12)
     for (const candidate of sums(size, digits, precision))
       if (earned(candidate)) found.push(candidate);
   if (digits >= 15) {
     const product = products(size, digits, precision);
+    if (product !== undefined && earned(product)) found.push(product);
+  }
+  // Eleven logarithms need more digits to relate than six do.
+  if (digits >= 30) {
+    const product = products(size, digits, precision, SPECIAL_PRODUCT_BASES);
     if (product !== undefined && earned(product)) found.push(product);
   }
   if (towers && digits >= 12 && found.length === 0)
@@ -212,10 +264,12 @@ function identify(
 // ---- 1. a fraction times one constant --------------------------------------
 
 /** The constants the first shape multiplies, simplest first, with their cost. */
-function atoms(): { node: Node; cost: number }[] {
+function atoms(): { node: Node; cost: number; special?: boolean }[] {
   const pi = id("pi");
   const e = id("e");
-  const list: { node: Node; cost: number }[] = [{ node: number(1), cost: 0 }];
+  const list: { node: Node; cost: number; special?: boolean }[] = [
+    { node: number(1), cost: 0 },
+  ];
   // Powers of pi, including reciprocals: areas and periods give pi, pi squared
   // turns up in energy and in series, and 1/pi in normalisations.
   list.push({ node: pi, cost: 1 });
@@ -236,6 +290,11 @@ function atoms(): { node: Node; cost: number }[] {
   // Pi times a small root, which is what a pendulum's period looks like.
   for (const n of [2, 3, 5, 6, 10])
     list.push({ node: multiply(pi, call("sqrt", number(n))), cost: 2 });
+  // The constants Desmos has no name for, and their reciprocals.
+  for (const { symbol } of SPECIAL_CONSTANTS) {
+    list.push({ node: id(symbol), cost: 1.5, special: true });
+    list.push({ node: divide(number(1), id(symbol)), cost: 2, special: true });
+  }
   return list;
 }
 
@@ -254,6 +313,7 @@ function* multiples(
   for (const atom of ATOMS) {
     const plain = atom.cost === 0;
     if (!plain && digits < DIGITS_FOR_IRRATIONAL) continue;
+    if (atom.special === true && digits < DIGITS_FOR_SPECIAL) continue;
     const base = valueOf(atom.node, precision);
     const ratio = bestRational(size.div(base), digits);
     if (ratio === undefined || Q.isZero(ratio)) continue;
@@ -265,7 +325,11 @@ function* multiples(
       : ratio.d === 1n
         ? top
         : divide(top, number(Number(ratio.d)));
-    yield { node: scaled, cost: log10(ratio.n) + log10(ratio.d) + atom.cost };
+    yield {
+      node: scaled,
+      cost: log10(ratio.n) + log10(ratio.d) + atom.cost,
+      plain,
+    };
   }
 }
 
@@ -318,13 +382,22 @@ function sumBases(digits: number): Node[][] {
     [one, call("ln", number(3))],
     [pi, power(pi, number(2))],
   ];
-  if (digits >= 20)
+  if (digits >= 20) {
     bases.push(
       [one, root(2), root(3)],
       [one, pi, power(pi, number(2))],
       [one, e, power(e, number(2))],
       [one, pi, e]
     );
+    for (const { symbol } of SPECIAL_CONSTANTS) bases.push([one, id(symbol)]);
+    // The pairs that turn up together: π²/6 beside γ, ζ(3) beside π³.
+    bases.push(
+      [one, id("gamma"), call("ln", number(2))],
+      [one, id("gamma"), power(pi, number(2))],
+      [one, id("zeta_3"), power(pi, number(3))],
+      [one, id("G_c"), pi]
+    );
+  }
   return bases;
 }
 
@@ -336,7 +409,7 @@ function* sums(
   for (const basis of sumBases(digits)) {
     const values = basis.map((node) => valueOf(node, precision));
     const relation = integerRelation([size, ...values], {
-      digits,
+      digits: Math.min(digits, PSLQ_DIGITS),
       maxCoefficient: 10 ** Math.min(6, digits - MARGIN),
     });
     if (relation === undefined || relation[0] === 0n) continue;
@@ -383,21 +456,25 @@ function sumNode(a0: bigint, rest: readonly bigint[], basis: Node[]): Node {
       return coefficient < 0n ? subtract(total, term) : add(total, term);
     }, undefined);
 
-  const constant = order.find((t) => isOne(t.node));
-  if (
-    divisor !== 1n &&
-    constant !== undefined &&
-    constant.coefficient % divisor === 0n
-  ) {
-    const whole = constant.coefficient / divisor;
-    const others = join(order.filter((t) => t !== constant));
-    const fraction =
-      others === undefined
-        ? number(0)
-        : divide(others, number(Number(divisor)));
-    return whole < 0n
-      ? subtract(fraction, number(Number(-whole)))
-      : add(number(Number(whole)), fraction);
+  // Terms the divisor goes into evenly stand in front, whole: 1 + π²/6 and
+  // γ + π²/6, not (6 + π²)/6. What is left shares one denominator.
+  const whole = order.filter(
+    (t) => divisor !== 1n && t.coefficient % divisor === 0n
+  );
+  if (whole.length > 0 && whole.length < order.length) {
+    const front = join(
+      whole.map((t) => ({ ...t, coefficient: t.coefficient / divisor }))
+    );
+    const others = join(order.filter((t) => !whole.includes(t)));
+    if (front !== undefined && others !== undefined) {
+      const fraction = divide(
+        others.type === "Negative" ? others.arg : others,
+        number(Number(divisor))
+      );
+      return others.type === "Negative"
+        ? subtract(front, fraction)
+        : add(front, fraction);
+    }
   }
   const numerator = join(order) ?? number(0);
   return divisor === 1n
@@ -408,7 +485,12 @@ function sumNode(a0: bigint, rest: readonly bigint[], basis: Node[]): Node {
 // ---- 3. a product of powers ------------------------------------------------
 
 /** The bases of the product shape, in the order a product is read. */
-const PRODUCT_BASES: { node: Node; prime?: bigint }[] = [
+interface ProductBase {
+  node: Node;
+  prime?: bigint;
+}
+
+const PRODUCT_BASES: ProductBase[] = [
   { node: id("pi") },
   { node: id("e") },
   { node: number(2), prime: 2n },
@@ -421,19 +503,26 @@ const PRODUCT_BASES: { node: Node; prime?: bigint }[] = [
  * A product of powers of π, e, 2, 3, 5 and 7, found as a sum of their
  * logarithms. `ln e = 1`, so `e` is the constant term of the relation.
  */
+/** The product bases with the special constants after them. */
+const SPECIAL_PRODUCT_BASES: ProductBase[] = [
+  ...PRODUCT_BASES,
+  ...SPECIAL_CONSTANTS.map(({ symbol }) => ({ node: id(symbol) })),
+];
+
 function products(
   size: Decimal,
   digits: number,
-  precision: number
+  precision: number,
+  bases: ProductBase[] = PRODUCT_BASES
 ): Candidate | undefined {
   const D = decimalContext(precision);
-  const logs = PRODUCT_BASES.map(({ node }) =>
+  const logs = bases.map(({ node }) =>
     node.type === "Identifier" && node.symbol === "e"
       ? new D(1)
       : D.ln(valueOf(node, precision))
   );
   const relation = integerRelation([D.ln(size), ...logs], {
-    digits: digits - 1,
+    digits: Math.min(digits - 1, PSLQ_DIGITS),
     maxCoefficient: 10 ** Math.min(4, (digits - MARGIN) / 2),
   });
   if (relation === undefined || relation[0] === 0n) return undefined;
@@ -443,9 +532,14 @@ function products(
   const used = exponents.filter((q) => !Q.isZero(q));
   // A rational, or one constant to a whole power, is the first shape's job.
   if (used.length === 0) return undefined;
-  if (used.length === 1 && Q.isInteger(used[0])) return undefined;
+  // One constant to the first power is the first shape's job; γ² is this one's.
+  if (
+    used.length === 1 &&
+    Q.isOne(Q.isNegative(used[0]) ? Q.negate(used[0]) : used[0])
+  )
+    return undefined;
   return {
-    node: productNode(exponents),
+    node: productNode(exponents, bases),
     cost: relation.reduce((total, a) => total + log10(a), 0) + used.length,
   };
 }
@@ -456,7 +550,10 @@ function products(
  * everything with a negative exponent below the line. `π² e / √2`, not
  * `e·2^{-1/2}·π²`.
  */
-function productNode(exponents: readonly Q.Rational[]): Node {
+function productNode(
+  exponents: readonly Q.Rational[],
+  bases: ProductBase[] = PRODUCT_BASES
+): Node {
   const above: Node[] = [];
   const below: Node[] = [];
   let coefficient = Q.ONE;
@@ -464,7 +561,7 @@ function productNode(exponents: readonly Q.Rational[]): Node {
   let rootBelow = 1n;
   exponents.forEach((q, i) => {
     if (Q.isZero(q)) return;
-    const { node, prime } = PRODUCT_BASES[i];
+    const { node, prime } = bases[i];
     const side = Q.isNegative(q) ? below : above;
     const size = Q.isNegative(q) ? Q.negate(q) : q;
     if (prime === undefined) {
@@ -555,10 +652,15 @@ function valueOf(node: Node, precision: number): Decimal {
   const key = `${precision} ${JSON.stringify(node)}`;
   let value = cache.get(key);
   if (value === undefined) {
-    value = evaluatePrecise(node, {}, precision);
+    value = valueAt(node, precision);
     cache.set(key, value);
   }
   return value;
+}
+
+/** A formula's value, with the special constants given theirs. */
+function valueAt(node: Node, precision: number): Decimal {
+  return evaluatePrecise(node, specialBindings(precision), precision);
 }
 
 /** Kept for the tests: a value's double, for comparing with the input. */

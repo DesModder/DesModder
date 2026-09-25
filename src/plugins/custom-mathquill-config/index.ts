@@ -2,6 +2,7 @@ import { Config, configList } from "./config";
 import "./custom-mathquill-config.less";
 import { MathQuillConfig } from "#components";
 import { PluginController } from "#plugins/PluginController.ts";
+import { EXTENDED_GREEK } from "#utils/greek.ts";
 
 const defaultConfig: MathQuillConfig = {
   charsThatBreakOutOfSupSub: "+-=<>*",
@@ -21,8 +22,7 @@ export default class CustomMathQuillConfig extends PluginController<Config> {
 
   oldConfig = this.cc.getMathquillConfig;
   doAutoCommandInjections = false;
-  autoCommandInjections =
-    " gamma Gamma delta Delta epsilon zeta eta Theta iota kappa lambda Lambda mu Xi xi Pi sigma Sigma upsilon Upsilon Phi chi psi Psi omega Omega";
+  autoCommandInjections = ` ${EXTENDED_GREEK.join(" ")}`;
 
   updateConfig(config: Config) {
     this.cc.rootElt.classList.toggle("commaizer", config.commaDelimiter);

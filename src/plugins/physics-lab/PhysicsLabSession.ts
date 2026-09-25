@@ -13,6 +13,7 @@
  */
 import { buildConfigFromGlobals, parseLatex } from "../../../text-mode-core";
 import type { Aug, Config } from "../../../text-mode-core";
+import { EXTENDED_GREEK } from "#utils/greek.ts";
 import { ArrowOverlay } from "../../field-rendering/ArrowOverlay";
 import type { ArrowOptions } from "../../field-rendering/ArrowRenderer";
 import { NO_COLOR_ADJUST } from "../../field-rendering/palettes";
@@ -41,7 +42,7 @@ import {
 } from "./symbolic/exact";
 import { solveFirstOrder, type ODEResult } from "./symbolic/ode";
 import { resolvePrimes, solveSecondOrder } from "./symbolic/secondOrder";
-import { recognizeDecimal } from "./symbolic/recognize";
+import { recognizeDecimal, significantDigits } from "./symbolic/recognize";
 import { particularConstant, type InitialResult } from "./symbolic/initial";
 import {
   differentiate,
@@ -584,7 +585,19 @@ export interface ExactReading {
    * to write down. The larger, the less likely the match is a coincidence.
    */
   spare?: number;
+  /**
+   * The definitions the exact form needs before Desmos can evaluate it: γ,
+   * ζ(3) and the rest have no name there until one is given.
+   */
+  definitions: { name: string; latex: string }[];
 }
+
+/**
+ * How many digits a decimal needs before reading it backwards waits for a
+ * pause in typing. Below this the search is quick enough to run on every
+ * keystroke; above it, a search per digit typed would be felt.
+ */
+const SLOW_DECIMAL_DIGITS = 16;
 
 export default class PhysicsLabSession {
   private parseConfig?: Config;
@@ -605,6 +618,7 @@ export default class PhysicsLabSession {
   private integralCache?: { key: string; result: IntegralView };
   private limitCache?: { key: string; result: LimitView };
   private exactCache?: { latex: string; result: ExactReading | undefined };
+  private exactTimer?: ReturnType<typeof setTimeout>;
   private derivativeCache?: {
     key: string;
     result: DerivationView;
@@ -1006,8 +1020,21 @@ export default class PhysicsLabSession {
 
   // ---- exact constants ----------------------------------------------------
 
+  /**
+   * Desmos's LaTeX config, with every Greek letter known by name.
+   *
+   * The writer spells a variable as a command only if it is one of
+   * MathQuill's auto-commands, and Desmos's leave out γ, ζ and most of the
+   * alphabet — so `γ + π²/6` came out as `\operatorname{gamma}+…`, which
+   * Desmos reads as an unknown operator. The same list the Custom MathQuill
+   * Config plugin injects is added here, whether or not that plugin is on.
+   */
   private get textModeConfig() {
-    this.parseConfig ??= buildConfigFromGlobals(Desmos, this.plugin.calc);
+    if (this.parseConfig === undefined) {
+      this.parseConfig = buildConfigFromGlobals(Desmos, this.plugin.calc);
+      for (const letter of EXTENDED_GREEK)
+        this.parseConfig.commandNames.add(letter);
+    }
     return this.parseConfig;
   }
 
@@ -1148,8 +1175,20 @@ export default class PhysicsLabSession {
   exactValue(latex: string): ExactReading | undefined {
     // Cached: reading a long decimal backwards searches towers of constants
     // at high precision, and the panel asks on every render pass.
-    if (this.exactCache?.latex !== latex)
-      this.exactCache = { latex, result: this.readExact(latex) };
+    if (this.exactCache?.latex === latex) return this.exactCache.result;
+    // A long decimal is searched once typing pauses, not on every digit: the
+    // search takes up to a second, and one per keystroke would stall the
+    // field. Nothing is claimed in the meantime.
+    if (significantDigits(latex.trim()) >= SLOW_DECIMAL_DIGITS) {
+      if (this.exactTimer !== undefined) clearTimeout(this.exactTimer);
+      this.exactTimer = setTimeout(() => {
+        this.exactTimer = undefined;
+        this.exactCache = { latex, result: this.readExact(latex) };
+        this.plugin.rerenderPanel();
+      }, 350);
+      return undefined;
+    }
+    this.exactCache = { latex, result: this.readExact(latex) };
     return this.exactCache.result;
   }
 
@@ -1171,6 +1210,10 @@ export default class PhysicsLabSession {
         trivial: false,
         matched: asDecimal.digits,
         spare: asDecimal.spare,
+        definitions: asDecimal.definitions.map((c) => ({
+          name: c.name,
+          latex: c.definition,
+        })),
       };
     }
 
@@ -1191,6 +1234,7 @@ export default class PhysicsLabSession {
       // Repeating it teaches nothing and makes the readout look broken on the
       // expressions where it has nothing to add.
       trivial: /^-?\d+$/.test(exact),
+      definitions: [],
     };
   }
 
@@ -2331,6 +2375,8 @@ export default class PhysicsLabSession {
   destroy() {
     if (this.environmentTimer !== undefined)
       clearTimeout(this.environmentTimer);
+    if (this.exactTimer !== undefined) clearTimeout(this.exactTimer);
+    this.exactTimer = undefined;
     this.environmentTimer = undefined;
     if (this.dispatcherID !== undefined)
       this.plugin.cc.dispatcher.unregister(this.dispatcherID);

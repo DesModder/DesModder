@@ -12,6 +12,7 @@
 import { clean, Driver, testWithPage } from "../../tests/puppeteer-utils";
 import type { Calc as CalcType } from "#globals";
 import { PANEL_TABS, type PanelTab, type PhysicsLabConfig } from "./model";
+import { SPECIAL_CONSTANTS } from "./symbolic/specialConstants";
 
 declare let Calc: CalcType;
 declare let DSM: Window["DSM"];
@@ -459,6 +460,14 @@ testWithPage(
         });
       }, decimal);
       await driver.waitForSync();
+      // A long decimal is read once typing pauses, so wait for the reading.
+      await driver.page.waitForFunction(
+        (selector: string) =>
+          (document.querySelector(selector)?.getAttribute("data-latex") ??
+            "") !== "",
+        { timeout: 10000 },
+        EXACT_OUTPUT
+      );
       return await driver.$eval(
         EXACT_OUTPUT,
         (el) => el.getAttribute("data-latex") ?? ""
@@ -477,6 +486,50 @@ testWithPage(
     ] as const) {
       const value = await desmosValue(driver, latex);
       expect(Math.abs(value - decimal) / decimal).toBeLessThan(1e-14);
+    }
+
+    // A constant Desmos has no name for: γ + π²/6. Add to graph defines γ
+    // first, and then Desmos can evaluate the answer itself.
+    const withGamma = await recognise("2.222149731749759297078927");
+    expect(withGamma).toBe(String.raw`\gamma+\frac{\pi^{2}}{6}`);
+    await driver.assertSelector(
+      String.raw`[data-physics-lab="exact-definitions"]`
+    );
+    await driver.page.screenshot({
+      path: "docs/assets/physics-lab-recognize-gamma.png",
+    });
+    await driver.click(".dsm-physics-lab-insert");
+    await driver.waitForSync();
+    const added = (await driver.getState()).expressions.list.flatMap((item) =>
+      item.type === "expression" ? [item.latex ?? ""] : []
+    );
+    expect(added.some((latex) => latex.startsWith(String.raw`\gamma=`))).toBe(
+      true
+    );
+    expect(added).toContain(withGamma);
+    expect(
+      Math.abs((await desmosValue(driver, withGamma)) - 2.2221497317497594)
+    ).toBeLessThan(1e-14);
+    await driver.setBlank();
+
+    // Every definition, evaluated by Desmos in its own doubles, against the
+    // published value: exact to the last digit a double keeps.
+    // The reference is each constant at sixty digits, rounded to the nearest
+    // double; one unit in the last place is the floor for any sum Desmos
+    // adds up in doubles, since its final addition rounds.
+    for (const constant of SPECIAL_CONSTANTS) {
+      const reference = constant.compute(60).toNumber();
+      await driver.evaluate((latex: string) => {
+        Calc.setExpression({ id: "definition", latex });
+      }, constant.definition);
+      await driver.waitForSync();
+      const name = constant.definition.slice(
+        0,
+        constant.definition.indexOf("=")
+      );
+      const value = await desmosValue(driver, name);
+      const ulp = 2 ** (Math.floor(Math.log2(Math.abs(reference))) - 52);
+      expect(Math.abs(value - reference)).toBeLessThanOrEqual(ulp);
     }
 
     await driver.setBlank();

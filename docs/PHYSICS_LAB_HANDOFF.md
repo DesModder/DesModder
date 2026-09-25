@@ -1503,9 +1503,34 @@ A match is shown as the tree it was found as, so it reads like a textbook:
 Evidence: `docs/assets/physics-lab-recognize.png` — 29 pasted digits read as
 `π^{e√2}`, which Desmos evaluates back to within 10⁻¹⁴.
 
-Not done: constants Desmos cannot write (Euler's γ, ζ(3), Catalan's G) are
-left out of the search, since a match could not go into the graph; and
-physical constants belong in a units-aware catalog, a separate feature.
+### Constants Desmos has no name for
+
+Euler's γ, ζ(3), ζ(5), ζ(7) and Catalan's G are now in the search, because
+Desmos does not need a name for a constant — only a definition.
+`specialConstants.ts` gives each two computations:
+
+- **to any precision**, for recognising: Brent–McMillan for γ, Borwein's
+  algorithm for ζ, a central-binomial series for G. Tests pin all five to
+  published digits and check 200 against 250.
+- **a Desmos definition** (`\gamma=…`, `\zeta_{3}=…`, `G_{c}=…`), exact to one
+  unit in a double's last place: Euler–Maclaurin at N = 100 for γ and ζ, the
+  same series for G, each summed from its smallest term up — in the other
+  order the rounding of ninety-nine additions reached the fourth unit. The
+  integration test sets each definition in Desmos and compares.
+
+"Add to graph" adds the definitions a match uses, once, before the answer.
+Greek names are written as commands by adding the Custom MathQuill Config
+plugin's extended-Greek list (now `src/utils/greek.ts`, shared by both) to
+Physics Lab's LaTeX config; without it `γ` came out `\operatorname{gamma}`.
+
+Tighter evidence, since a bigger search makes chance matches likelier: the
+margin rose from six digits to eight, the plain shape needs four spare for
+an irrational constant, special constants are searched only from fifteen
+digits, and every candidate is checked at two precisions. Random 16- to
+50-digit inputs are still refused. A decimal of sixteen digits or more is
+read once typing pauses, since its search can take up to a second.
+
+Physical constants still belong in a units-aware catalog, a separate feature.
 
 ### Still open, from the research
 

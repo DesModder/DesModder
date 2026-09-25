@@ -44,6 +44,7 @@ import {
   type Decimal,
 } from "../../../symbolic";
 import * as Q from "./rational";
+import { specialBindings } from "./specialConstants";
 import type { Rational } from "./rational";
 
 const { number, binop, functionCall, id, negative } = AugBuilders;
@@ -435,7 +436,11 @@ export function toDecimal(value: ExactValue, digits = WORKING_DIGITS): Decimal {
     let product = new D(t.coeff.n.toString()).div(t.coeff.d.toString());
     for (const [atom, e] of t.factors) {
       const base = isOpaque(atom)
-        ? evaluatePrecise(OPAQUE.get(atom)?.node ?? number(NaN), {}, digits)
+        ? evaluatePrecise(
+            OPAQUE.get(atom)?.node ?? number(NaN),
+            specialBindings(digits),
+            digits
+          )
         : atom === PI
           ? D.acos(-1)
           : atom === E

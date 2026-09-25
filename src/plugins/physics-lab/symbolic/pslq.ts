@@ -35,7 +35,7 @@ export interface RelationSearch {
  */
 export function integerRelation(
   xs: readonly Decimal[],
-  { digits, maxCoefficient, maxIterations = 400 }: RelationSearch
+  { digits, maxCoefficient, maxIterations = 250 }: RelationSearch
 ): bigint[] | undefined {
   const n = xs.length;
   if (n < 2) return undefined;

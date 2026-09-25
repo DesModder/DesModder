@@ -125,6 +125,54 @@ describe("with more digits, more shapes", () => {
   });
 });
 
+describe("constants Desmos has no name for", () => {
+  const cfg = buildConfig({
+    commandNames: "sin cos tan ln log exp sqrt gamma zeta",
+  });
+  const shown = (text: string) => {
+    const found = recognizeDecimal(text);
+    return found === undefined
+      ? undefined
+      : emit(cfg, found.node).replace(/\\operatorname\{pi\}/g, "\\pi");
+  };
+  const needs = (text: string) =>
+    recognizeDecimal(text)?.definitions.map((c) => c.symbol);
+
+  test("each on its own, from sixteen digits", () => {
+    expect(shown("0.5772156649015329")).toBe(String.raw`\gamma`);
+    expect(needs("0.5772156649015329")).toEqual(["gamma"]);
+    expect(shown("1.202056903159594")).toBe(String.raw`\zeta_{3}`);
+    expect(shown("0.9159655941772190151")).toBe(String.raw`G_{c}`);
+    expect(shown("1.0369277551433699263")).toBe(String.raw`\zeta_{5}`);
+  });
+
+  test("in the shapes the others take", () => {
+    expect(shown("0.60102845157979714270")).toBe(
+      String.raw`\frac{\zeta_{3}}{2}`
+    );
+    expect(shown("1.7324547146006334736")).toBe(String.raw`\frac{1}{\gamma}`);
+    expect(shown("2.222149731749759297078927")).toBe(
+      String.raw`\gamma+\frac{\pi^{2}}{6}`
+    );
+    expect(shown("2.2020569031595942854")).toBe(String.raw`1+\zeta_{3}`);
+    expect(shown("1.7810724179901979852365041")).toBe(String.raw`e^{\gamma}`);
+    expect(shown("0.33317792380771867431837613635524")).toBe(
+      String.raw`\gamma^{2}`
+    );
+  });
+
+  test("a bigger search does not make random digits match", () => {
+    for (const digits of [
+      "3.8471029384756102",
+      "1.2903847561029384756",
+      "0.5629384710293847561029384",
+      "4.83726194857302918475602918374",
+      "2.019283746510293847561029384756102938475",
+    ])
+      expect(shown(digits)).toBeUndefined();
+  });
+});
+
 describe("counting significant digits, which sets the tolerance", () => {
   test("the cases that decide how hard a match has to work", () => {
     expect(significantDigits("9.86960440109")).toBe(12);
