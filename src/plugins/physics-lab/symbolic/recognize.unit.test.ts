@@ -6,6 +6,8 @@
  */
 import { recognizeDecimal, significantDigits } from "./recognize";
 import { toLatex } from "./exact";
+import { buildConfig } from "../../../../text-mode-core";
+import { toLatex as emit } from "../../../symbolic";
 
 const recognised = (text: string) => {
   const found = recognizeDecimal(text);
@@ -66,6 +68,60 @@ describe("what it will not claim", () => {
     expect(recognised("0")).toBeUndefined();
     expect(recognised("")).toBeUndefined();
     expect(recognised("abc")).toBeUndefined();
+  });
+});
+
+describe("with more digits, more shapes", () => {
+  // Written as the formula was found; the tests' parser spells π by name.
+  const cfg = buildConfig({ commandNames: "sin cos tan ln log exp sqrt" });
+  const shown = (text: string) => {
+    const found = recognizeDecimal(text);
+    return found === undefined
+      ? undefined
+      : emit(cfg, found.node).replace(/\\operatorname\{pi\}/g, "\\pi");
+  };
+
+  test("a sum: the golden ratio, from what Desmos prints and from more", () => {
+    expect(shown("1.61803398875")).toBe(String.raw`\frac{1+\sqrt{5}}{2}`);
+    expect(shown("-1.6180339887498948482")).toBe(
+      String.raw`-\frac{1+\sqrt{5}}{2}`
+    );
+    expect(shown("2.6449340668482264365")).toBe(
+      String.raw`1+\frac{\pi^{2}}{6}`
+    );
+  });
+
+  test("a product of powers", () => {
+    expect(shown("18.970519737161744759052")).toBe(
+      String.raw`\frac{\pi^{2}e}{\sqrt{2}}`
+    );
+    expect(shown("1.3956124250860895286")).toBe(String.raw`e^{\frac{1}{3}}`);
+    expect(shown("1.2599210498948731648")).toBe(String.raw`2^{\frac{1}{3}}`);
+  });
+
+  test("a tower", () => {
+    expect(shown("81.500254752812172662559552037")).toBe(
+      String.raw`\pi^{e\sqrt{2}}`
+    );
+    expect(shown("2.6651441426902251886502972498731")).toBe(
+      String.raw`2^{\sqrt{2}}`
+    );
+    // e^π from the twelve digits Desmos prints.
+    expect(shown("23.1406926328")).toBe(String.raw`e^{\pi}`);
+  });
+
+  test("random digits stay random, however many there are", () => {
+    expect(shown("1.2903847561029384756")).toBeUndefined();
+    expect(shown("4.83726194857302918475602918374")).toBeUndefined();
+    expect(
+      shown("7.1234987612309876123498761230987612349876123098761")
+    ).toBeUndefined();
+  });
+
+  test("the strength of a match grows with the digits behind it", () => {
+    const short = recognizeDecimal("1.61803398875");
+    const long = recognizeDecimal("1.6180339887498948482045868343656");
+    expect(short?.spare).toBeLessThan(long?.spare ?? 0);
   });
 });
 

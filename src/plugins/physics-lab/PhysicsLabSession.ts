@@ -579,6 +579,11 @@ export interface ExactReading {
    * them. Saying the same thing about both would be a lie about one.
    */
   matched?: number;
+  /**
+   * For a match: how many digits it explains beyond what the formula takes
+   * to write down. The larger, the less likely the match is a coincidence.
+   */
+  spare?: number;
 }
 
 export default class PhysicsLabSession {
@@ -599,6 +604,7 @@ export default class PhysicsLabSession {
   private secondCache?: { latex: string; result: ODEResult };
   private integralCache?: { key: string; result: IntegralView };
   private limitCache?: { key: string; result: LimitView };
+  private exactCache?: { latex: string; result: ExactReading | undefined };
   private derivativeCache?: {
     key: string;
     result: DerivationView;
@@ -1140,6 +1146,14 @@ export default class PhysicsLabSession {
    * screen is Desmos's own decimal and no second opinion.
    */
   exactValue(latex: string): ExactReading | undefined {
+    // Cached: reading a long decimal backwards searches towers of constants
+    // at high precision, and the panel asks on every render pass.
+    if (this.exactCache?.latex !== latex)
+      this.exactCache = { latex, result: this.readExact(latex) };
+    return this.exactCache.result;
+  }
+
+  private readExact(latex: string): ExactReading | undefined {
     if (latex.trim() === "") return undefined;
 
     // A bare decimal is read backwards instead of forwards. Taken literally it
@@ -1149,11 +1163,14 @@ export default class PhysicsLabSession {
     const asDecimal = recognizeDecimal(latex);
     if (asDecimal !== undefined) {
       return {
-        latex: toLatex(asDecimal.value),
+        // Written as the formula was found, the way a textbook writes it:
+        // `(1+√5)/2` rather than the exact layer's `√5/2 + 1/2`.
+        latex: toLatexTree(this.textModeConfig, asDecimal.node),
         value: toNumber(asDecimal.value),
         decimal: exactDecimal(asDecimal.value),
         trivial: false,
         matched: asDecimal.digits,
+        spare: asDecimal.spare,
       };
     }
 

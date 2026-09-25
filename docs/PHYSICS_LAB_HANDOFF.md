@@ -1474,6 +1474,39 @@ This mostly settles the hide-or-show question above: a conflict can no
 longer be a floating-point accident for anything the precise evaluator reads,
 so it means the engine is wrong, and hiding is right.
 
+### Reading a decimal back into constants, with PSLQ
+
+The Exact value tab read a decimal backwards as "a fraction times one
+constant", in doubles. With precise arithmetic it can do much more, and
+`recognize.ts` now searches four shapes, cheapest passing candidate winning:
+
+1. a fraction times one constant (`7π/12`, `3√2/4`), by continued fractions;
+2. a sum (`(1+√5)/2`, `1 + π²/6`), by PSLQ on the decimal and a few constants;
+3. a product of powers (`π²e/√2`, `e^{1/3}`), by PSLQ on logarithms;
+4. a tower (`π^{e√2}`, `e^{π√2}`, `2^{√2}`, `e^π`), by recognising the
+   exponent `ln v / ln b` with the other shapes.
+
+`pslq.ts` is the Ferguson–Bailey integer-relation algorithm in `decimal.js`.
+Precision scales with the input (`2 × digits + 30`), so pasted digits are all
+used. Every constant is one Desmos can write, so a match can go into the graph.
+
+**Evidence is compression.** A candidate must round to every digit typed, and
+past the plain shape it must be at least six digits shorter to write than the
+digits it explains; the panel says how many to spare in words ("very unlikely
+to be chance" from fifteen). That is what lets the search grow without random
+digits matching: random 20-, 30- and 50-digit inputs are all refused. A match
+is still a candidate — the panel says "matches", never "is".
+
+A match is shown as the tree it was found as, so it reads like a textbook:
+`(1+√5)/2`, not the exact layer's `√5/2 + 1/2`.
+
+Evidence: `docs/assets/physics-lab-recognize.png` — 29 pasted digits read as
+`π^{e√2}`, which Desmos evaluates back to within 10⁻¹⁴.
+
+Not done: constants Desmos cannot write (Euler's γ, ζ(3), Catalan's G) are
+left out of the search, since a match could not go into the graph; and
+physical constants belong in a units-aware catalog, a separate feature.
+
 ### Still open, from the research
 
 - Parameters (`sin(ax)/x → a`) with case splits — research Q6.

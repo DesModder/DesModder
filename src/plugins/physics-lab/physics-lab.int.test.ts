@@ -443,6 +443,42 @@ testWithPage(
     );
     expect(recognised).toBe("\\pi^{2}");
 
+    // With more digits, more shapes: a sum and a tower, each written the way
+    // a textbook writes it, and each read back by Desmos as the number that
+    // was pasted.
+    const recognise = async (decimal: string) => {
+      await driver.evaluate((text: string) => {
+        (
+          DSM.physicsLab as unknown as {
+            session: {
+              updateConfig: (m: (c: PhysicsLabConfig) => void) => void;
+            };
+          }
+        ).session.updateConfig((config) => {
+          config.exact.latex = text;
+        });
+      }, decimal);
+      await driver.waitForSync();
+      return await driver.$eval(
+        EXACT_OUTPUT,
+        (el) => el.getAttribute("data-latex") ?? ""
+      );
+    };
+    const golden = await recognise("1.6180339887498948482");
+    expect(golden).toBe(String.raw`\frac{1+\sqrt{5}}{2}`);
+    const tower = await recognise("81.500254752812172662559552037");
+    expect(tower).toBe(String.raw`\pi^{e\sqrt{2}}`);
+    await driver.page.screenshot({
+      path: "docs/assets/physics-lab-recognize.png",
+    });
+    for (const [latex, decimal] of [
+      [golden, 1.618033988749895],
+      [tower, 81.50025475281217],
+    ] as const) {
+      const value = await desmosValue(driver, latex);
+      expect(Math.abs(value - decimal) / decimal).toBeLessThan(1e-14);
+    }
+
     await driver.setBlank();
     await driver.disablePlugin("physics-lab");
   },

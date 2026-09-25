@@ -2017,6 +2017,23 @@ function checkWords(
   return "The function's values near the point head the way this says, at every distance tested.";
 }
 
+/**
+ * How strong a match from reading a decimal backwards is, in plain words.
+ *
+ * The strength is the digits to spare: how many more digits the match
+ * explains than its formula takes to write. A one-digit formula matching
+ * twelve digits is eleven to spare and all but certain; a formula nearly as
+ * long as the digits it matches could be chance, and more digits would say.
+ */
+function matchWords(digits: number, spare: number): string {
+  const base = `matches all ${digits} digits you gave`;
+  if (spare >= 15)
+    return `${base}: a formula this short matching that many digits is very unlikely to be chance`;
+  if (spare >= 9)
+    return `${base}: very likely, and more digits would settle it`;
+  return `${base}: plausible; more digits would make it certain or rule it out`;
+}
+
 /** The one-sided limits that exist, each a line of maths. */
 function sideLines(sides: () => LimitSideView[], body: () => string) {
   return (
@@ -2229,7 +2246,7 @@ function exactTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                     const digits = value.matched;
                     return digits === undefined
                       ? value.decimal
-                      : `matches all ${digits} digits you gave`;
+                      : matchWords(digits, value.spare ?? 0);
                   }}
                 </span>
               </div>
