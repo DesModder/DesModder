@@ -1230,7 +1230,8 @@ const LIMIT_NONE = String.raw`[data-physics-lab="limit-none"]`;
 const LIMIT_REFUSAL = String.raw`[data-physics-lab="limit-refusal"]`;
 const LIMIT_FORM = String.raw`[data-physics-lab="limit-form"]`;
 const LIMIT_STEPS = String.raw`[data-physics-lab="limit-steps"]`;
-const LIMIT_METHOD = String.raw`[data-physics-lab="limit-method"]`;
+const LIMIT_ROUTE = "#dsm-physics-lab-limit-route";
+const LIMIT_PROOF = ".dsm-physics-lab-limit-proof";
 const SHOW_LIMIT = ".dsm-physics-lab-show-limit";
 const ADD_LIMIT = ".dsm-physics-lab-add-limit";
 
@@ -1264,6 +1265,12 @@ const text = async (driver: Driver, selector: string) =>
   await driver.$eval(selector, (el) => (el as HTMLElement).innerText);
 const latexOf = async (driver: Driver, selector: string) =>
   await driver.$eval(selector, (el) => el.getAttribute("data-latex") ?? "");
+/** The method whose steps are showing. */
+const shownRoute = async (driver: Driver) =>
+  await driver.$eval(
+    `${LIMIT_ROUTE} .dsm-physics-lab-chip-selected`,
+    (el) => el.getAttribute("data-value") ?? ""
+  );
 
 testWithPage(
   "the Limit tab answers, says how, and Desmos agrees with the answer",
@@ -1281,9 +1288,7 @@ testWithPage(
     await driver.assertSelectorEventually(LIMIT);
     expect(await latexOf(driver, LIMIT)).toBe("e");
     expect(await latexOf(driver, LIMIT_FORM)).toBe(String.raw`1^{\infty}`);
-    expect(await text(driver, LIMIT_METHOD)).toContain(
-      "exponential of a logarithm"
-    );
+    expect(await shownRoute(driver)).toBe("exponential");
     // The approach chips mean nothing at an infinity, so they are not there.
     await driver.assertSelectorNot("#dsm-physics-lab-limit-side");
     await driver.page.screenshot({ path: "docs/assets/physics-lab-limit.png" });
@@ -1325,11 +1330,34 @@ testWithPage(
     await driver.assertSelectorEventually(LIMIT_STEPS);
     expect(await latexOf(driver, LIMIT)).toBe(String.raw`\frac{3}{5}`);
     expect(await latexOf(driver, LIMIT_FORM)).toBe(String.raw`\frac{0}{0}`);
-    expect(await text(driver, LIMIT_METHOD)).toBe("L'Hôpital's rule");
+    // The standard trigonometric limit leads, as a course would do it, and
+    // L'Hôpital's rule is one tap away.
+    expect(await shownRoute(driver)).toBe("trigonometric");
+    await driver.click(`${LIMIT_ROUTE} [data-value="lhopital"]`);
+    await driver.waitForSync();
+    expect(await shownRoute(driver)).toBe("lhopital");
+    expect(await text(driver, LIMIT_STEPS)).toContain("L'Hôpital's rule");
+    // At the proof level every step carries its certificate; at the simple
+    // level none does.
+    await driver.assertSelectorNot(LIMIT_PROOF);
+    await driver.click(
+      '#dsm-physics-lab-limit-explain [data-value="research"]'
+    );
+    await driver.waitForSync();
+    await driver.click(`${LIMIT_ROUTE} [data-value="trigonometric"]`);
+    await driver.waitForSync();
+    await driver.assertSelectorEventually(LIMIT_PROOF);
     await driver.assertSelector("#dsm-physics-lab-limit-side");
+    await driver.evaluate(() =>
+      document
+        .querySelector('[data-physics-lab="limit-steps"]')
+        ?.scrollIntoView({ block: "start" })
+    );
     await driver.page.screenshot({
       path: "docs/assets/physics-lab-limit-lhopital.png",
     });
+    await driver.click('#dsm-physics-lab-limit-explain [data-value="simple"]');
+    await driver.waitForSync();
     await driver.evaluate(
       (latex: string) => {
         Calc.setExpression({
@@ -1430,7 +1458,35 @@ testWithPage(
     await setLimit(driver, String.raw`x\sin\left(\frac{1}{x}\right)`, "0");
     await driver.assertSelectorEventually(LIMIT);
     expect(await latexOf(driver, LIMIT)).toBe("0");
-    expect(await text(driver, LIMIT_METHOD)).toBe("Squeeze theorem");
+    expect(await shownRoute(driver)).toBe("squeeze");
+
+    // A piecewise function: each side uses its own formula, and they meet
+    // different values.
+    await setLimit(driver, String.raw`\left\{x<1:x^{2},2x+1\right\}`, "1");
+    await driver.assertSelectorEventually(LIMIT_NONE);
+    expect(await text(driver, LIMIT_NONE)).toContain(
+      "different values from the two sides"
+    );
+    await driver.page.screenshot({
+      path: "docs/assets/physics-lab-limit-piecewise.png",
+    });
+
+    // A function that lives on one side: no two-sided limit under the
+    // stricter convention, and the one-sided value under the other. The
+    // choice is offered only here, where it changes the answer.
+    await setLimit(driver, String.raw`\sqrt{x}`, "0");
+    await driver.assertSelectorEventually(LIMIT_NONE);
+    expect(await text(driver, LIMIT_NONE)).toContain("no two-sided limit");
+    await driver.click(
+      '#dsm-physics-lab-limit-convention [data-value="domain"]'
+    );
+    await driver.waitForSync();
+    await driver.assertSelectorEventually(LIMIT);
+    expect(await latexOf(driver, LIMIT)).toBe("0");
+    await driver.click(
+      '#dsm-physics-lab-limit-convention [data-value="bilateral"]'
+    );
+    await driver.waitForSync();
 
     // A name with no value: there is nothing to approach, and it says which.
     await setLimit(driver, String.raw`\frac{\sin\left(ax\right)}{x}`, "0");

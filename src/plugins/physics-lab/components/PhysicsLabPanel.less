@@ -725,3 +725,49 @@
     padding-left: 12px;
   }
 }
+
+.dsm-physics-lab-menu {
+  // A worked limit reads down the page: the sentence saying what to do, the
+  // maths it produces, and — at the deeper levels — why it is allowed and
+  // what proves it. Numbered, because the order is the argument.
+  ol.dsm-physics-lab-limit-steps {
+    margin: 8px 0 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .dsm-physics-lab-limit-step {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .dsm-physics-lab-limit-say {
+    line-height: 1.4;
+  }
+
+  .dsm-physics-lab-limit-math,
+  .dsm-physics-lab-limit-step .dsm-physics-lab-limit-line {
+    padding-left: 8px;
+  }
+
+  // Why the step is legal: quieter than the step, and marked as a reason.
+  .dsm-physics-lab-limit-why {
+    font-size: 0.9em;
+    font-style: italic;
+    opacity: 0.8;
+    line-height: 1.4;
+  }
+
+  // The certificate under the step: set apart, since most readers will not
+  // want it and the ones who do want to find it at a glance.
+  .dsm-physics-lab-limit-proof {
+    font-size: 0.85em;
+    line-height: 1.45;
+    padding: 6px 8px;
+    border-left: 3px solid #2d70b3;
+    background: rgba(45, 112, 179, 0.06);
+  }
+}

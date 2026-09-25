@@ -113,6 +113,14 @@ export function evaluate(node: Node, bindings: Bindings): number {
       }
       return total;
     }
+    case "Piecewise": {
+      // Desmos's own rule: the first true condition wins, and a condition
+      // that cannot be evaluated is not true. A missing "otherwise" arrives
+      // as an undefined constant, which is NaN here, as it is in Desmos.
+      const holds =
+        node.condition === true || conditionHolds(node.condition, bindings);
+      return evaluate(holds ? node.consequent : node.alternate, bindings);
+    }
     case "BinaryOperator": {
       const left = evaluate(node.left, bindings);
       const right = evaluate(node.right, bindings);
@@ -134,6 +142,38 @@ export function evaluate(node: Node, bindings: Bindings): number {
     default:
       return NaN;
   }
+}
+
+const COMPARE: Record<string, (a: number, b: number) => boolean> = {
+  "<": (a, b) => a < b,
+  "<=": (a, b) => a <= b,
+  "=": (a, b) => a === b,
+  ">=": (a, b) => a >= b,
+  ">": (a, b) => a > b,
+};
+
+/**
+ * Whether a piecewise condition holds: one comparison, or a chain like
+ * `0 < x < 1` where every link must hold. Anything unevaluable is false.
+ */
+export function conditionHolds(condition: Node, bindings: Bindings): boolean {
+  const links: [Node, string, Node][] =
+    condition.type === "Comparator"
+      ? [[condition.left, condition.operator, condition.right]]
+      : condition.type === "ComparatorChain"
+        ? condition.symbols.map((symbol, i) => [
+            condition.args[i],
+            symbol,
+            condition.args[i + 1],
+          ])
+        : [];
+  if (links.length === 0) return false;
+  return links.every(([left, operator, right]) =>
+    (COMPARE[operator] ?? (() => false))(
+      evaluate(left, bindings),
+      evaluate(right, bindings)
+    )
+  );
 }
 
 /**

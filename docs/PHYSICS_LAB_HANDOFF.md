@@ -1374,3 +1374,80 @@ opaque atom keyed by its tree and `\exp(π)` and `e^{π}` would never cancel.
 
 Evidence: `docs/assets/physics-lab-limit-e-pi.png`; the integration test
 checks the panel emits `e^{\pi}` and that Desmos reads it back as the number.
+
+---
+
+## Limits decided with proofs, explained in plain words
+
+Rafael's direction (2026-09-24): "above college board level to a more
+research grade type evaluator with ap level explanations so its simple
+enough for regular people to understand". The research that followed is
+`C:\Users\rafae\Downloads\Physics_Lab_Limit_Research.md` (GPT's answer to
+`docs/PHYSICS_LAB_LIMIT_RESEARCH_BRIEF.md`); this is its "now" list.
+
+### The engine proves; sampling only checks
+
+- **Eventual sign** (`eventualSign` in `definite.ts`) is the primitive
+  everything one-sided rests on: the sign of `g` on a whole one-sided
+  neighbourhood, from a non-zero limit or from the exact leading term `c·hᵛ`
+  of its series. It replaced reading `|x|`'s sign off four sample points.
+- **One side at a time** (`resolveSide`): `|g|`, `sign g`, `⌊g⌋`, `⌈g⌉`,
+  `round g` and piecewise functions (`\left\{x<1:…,…\right\}`, including
+  chains and conditions like `x² < 1`) become the single formula they are on
+  the side approached, each choice proved. `evaluate` learned piecewise
+  functions, with Desmos's first-true-wins rule.
+- **Domain** (`domainOnSide`): a square root of something eventually
+  negative, a logarithm of something eventually not positive, or a missing
+  "otherwise" makes the side empty — `no-approach`, its own outcome.
+- **Endpoint convention**, a labelled control shown only where it matters:
+  "Both sides required" (default; `√x` at 0 has no two-sided limit, and its
+  right-hand limit is shown as evidence) or "Within the domain" (it is 0).
+  The research found no College Board ruling either way.
+- **Oscillation, proved**: `A·sin(g) + r` with `g` continuous and unbounded,
+  `A → c ≠ 0` or `±∞`, `r → r₀`. The intermediate value theorem gives the
+  two witness sequences; no inverse of `g` is needed, so `sin(x²)` and
+  `sin(1/x² + x)` — refusal fixtures in the research — are proved here. Two
+  oscillating terms (`sin x + sin(√2x)`) are refused.
+- **L'Hôpital, guarded**: hypotheses checked each application (form, and the
+  new denominator's sign proved non-zero), stopped on a repeat or on growth
+  past four times the starting size, and kept only where it made the problem
+  easier — a quotient that still needs a series was not simplified by it.
+- `x + sin x → ∞`: an infinity plus a bounded term.
+- The numeric check's words changed to what a diagnostic can claim:
+  consistent / inconclusive / conflict. A conflict still hides the answer:
+  the research argued for showing a valid symbolic result anyway, but this
+  session found three wrong answers that only the numbers caught, and
+  hiding is the safer default. **A trade-off for Rafael**, not settled here.
+
+### The explanation is a set of routes
+
+`limitSteps.ts` builds the textbook routes, each a real computation whose
+last line must equal the proved answer or the route is dropped: substitution,
+factor and cancel (synthetic division over Q), the conjugate, `sin u/u → 1`,
+dividing by the highest power, the squeeze theorem, the sign of each part at
+a pole, `A^B = e^{B ln A}`, L'Hôpital, and the leading term of the exact
+series. The first that applies leads — the order a course reaches for them —
+and the rest are chips under "Method". A one-sided answer's routes open with
+the step that wrote out the absolute value or picked the branch.
+
+Each step carries three depths, chosen by the "Explain" chips: `say` (plain
+words, no LaTeX in the prose), `why` (the condition that makes it legal),
+`proof` (the certificate). One set of steps, so the depths cannot disagree.
+
+### Coverage
+
+`limit.coverage.unit.test.ts` is the research's fifty-limit set, minus the
+integral and sum rows (a Sums tab's) and `(−1)^n` (a sequence): 45 rows, and
+every answered row has a route and no numeric conflict. Refusal fixtures
+remaining: 27, 30, 50.
+
+Evidence: `docs/assets/physics-lab-limit-lhopital.png` (steps at the proof
+depth), `docs/assets/physics-lab-limit-piecewise.png`.
+
+### Still open, from the research
+
+- Parameters (`sin(ax)/x → a`) with case splits — research Q6.
+- Discrete limits (`n → ∞` over integers) and sums/integrals as a Sums tab.
+- Practice problems generated from a route's template, not by editing
+  constants — research Q8.
+- Conjugates at infinity and `√(x²) = |x|` in the highest-power route.

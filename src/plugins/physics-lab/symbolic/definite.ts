@@ -438,6 +438,47 @@ export function certainlyZero(value: X.ExactValue): boolean | undefined {
   return false;
 }
 
+/**
+ * The sign `node` keeps on a whole one-sided neighbourhood of the approach —
+ * `1`, `-1`, `0` for a constant zero — or undefined when that is not proved.
+ *
+ * Proved, not sampled. A non-zero limit fixes the sign near the point; a zero
+ * limit is decided by the leading term `c·h^v` of the exact series in the
+ * distance `h > 0`, whose coefficient's sign is the sign of the function for
+ * all small enough `h`. `x sin(1/x)` at 0 has neither, and changes sign
+ * infinitely often however close you look, so it has no eventual sign and
+ * gets none.
+ */
+export function eventualSign(
+  node: Node,
+  variable: string,
+  approach: Approach
+): 1 | -1 | 0 | undefined {
+  const signOf = (value: X.ExactValue): 1 | -1 | 0 | undefined => {
+    const zero = certainlyZero(value);
+    if (zero === undefined) return undefined;
+    if (zero) return 0;
+    return X.toNumber(value) < 0 ? -1 : 1;
+  };
+  if (!dependsOn(node, variable)) {
+    const value = exactConstant(node);
+    return value === undefined ? undefined : signOf(value);
+  }
+  const found = limitOf(node, variable, approach);
+  if (found?.kind === "infinite") return found.sign;
+  if (found !== undefined) {
+    const sign = signOf(found.value);
+    if (sign !== 0) return sign;
+  }
+  const lead = leadingTermExactly(
+    movedToZero(node, variable, approach),
+    LIMIT_STEP
+  );
+  if (lead === undefined) return undefined;
+  const sign = signOf(lead.coefficient);
+  return sign === 0 ? undefined : sign;
+}
+
 /** A limit whose value is certainly zero or certainly not. */
 const decided = (found: Limit) =>
   found.kind === "infinite" || certainlyZero(found.value) !== undefined;
@@ -626,7 +667,21 @@ function limitByRules(
       switch (node.name) {
         case "Add":
         case "Subtract": {
-          if (left === undefined || right === undefined) return undefined;
+          // Something running off to infinity plus something that stays
+          // bounded runs off too: x + sin x → ∞, whatever the sine does.
+          if (left === undefined || right === undefined) {
+            const [known, other] =
+              left === undefined ? [right, node.left] : [left, node.right];
+            if (known?.kind !== "infinite" || !isBounded(other))
+              return undefined;
+            record("squeeze");
+            // bounded - B goes where -B goes; A ± bounded goes where A goes.
+            const negated = left === undefined && node.name === "Subtract";
+            return {
+              kind: "infinite",
+              sign: negated ? (-known.sign as 1 | -1) : known.sign,
+            };
+          }
           const flip = node.name === "Subtract" ? -1 : 1;
           if (left.kind === "finite" && right.kind === "finite")
             return {
@@ -871,6 +926,13 @@ function functionLimit(
         case "abs":
         case "cosh":
           return { kind: "infinite", sign: 1 };
+        // Within 1 of their argument, so they go where it goes.
+        case "floor":
+        case "ceil":
+        case "round":
+          return { kind: "infinite", sign: s };
+        case "sign":
+          return { kind: "finite", value: X.fromInteger(s) };
         case "sinh":
           return { kind: "infinite", sign: s };
         case "arctan":
@@ -937,7 +999,7 @@ function polynomialRatio(
   return { kind: "infinite", sign: s };
 }
 
-function numericPolynomial(
+export function numericPolynomial(
   node: Node,
   variable: string
 ): Q.Rational[] | undefined {
@@ -959,7 +1021,7 @@ function numericPolynomial(
  * hyperbolic tangent, the sign. `sin(1/x)` has no limit at 0 and is still
  * between -1 and 1 there, which is all the squeeze theorem asks of it.
  */
-function isBounded(node: Node): boolean {
+export function isBounded(node: Node): boolean {
   if (node.type === "Negative") return isBounded(node.arg);
   if (node.type === "FunctionCall" && node.args.length === 1)
     return ["sin", "cos", "arctan", "tanh", "sign"].includes(

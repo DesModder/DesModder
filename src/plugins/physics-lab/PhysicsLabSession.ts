@@ -33,6 +33,9 @@ import {
   toNumber,
   fromInteger as toExact,
   toNode as exactToNode,
+  add as addExact,
+  negate as negateExact,
+  ZERO as EXACT_ZERO,
 } from "./symbolic/exact";
 import { solveFirstOrder, type ODEResult } from "./symbolic/ode";
 import { resolvePrimes, solveSecondOrder } from "./symbolic/secondOrder";
@@ -65,13 +68,15 @@ import {
 } from "./symbolic/definite";
 import {
   checkLimit,
-  describeLimitMethod,
   findLimit,
   type IndeterminateForm,
+  type LimitMethod,
 } from "./symbolic/limit";
+import { limitRoutes, type LimitStep } from "./symbolic/limitSteps";
 import {
   add,
   agreesOnSamples,
+  call as callNode,
   condense,
   evaluate,
   fold as simplifyTree,
@@ -94,6 +99,7 @@ import {
   thinSlopeGrid,
   validateSlopeField,
   type AnswerForm,
+  type ExplainLevel,
   type LimitDirection,
   type DetailLevel,
   type PanelTab,
@@ -409,6 +415,37 @@ export interface LimitSideView {
 }
 
 /**
+ * One line of maths in an explanation: a limit, drawn with its approach
+ * under `lim`, or plain maths.
+ */
+export interface LimitLineView {
+  kind: "limit" | "math";
+  approachLatex: string;
+  latex: string;
+  /** Whether the line starts with an equals sign, continuing the one above. */
+  equals: boolean;
+}
+
+/**
+ * One step of an explanation, at every depth at once. The panel shows `say`
+ * always, `why` from the detailed level, and `proof` at the research level —
+ * the same step, so the depths cannot disagree.
+ */
+export interface LimitStepView {
+  say: string;
+  lines: LimitLineView[];
+  why: string;
+  proof: string;
+}
+
+/** One way to the answer, as a textbook would take it. */
+export interface LimitRouteView {
+  id: string;
+  name: string;
+  steps: LimitStepView[];
+}
+
+/**
  * What the Limit tab has to show.
  *
  * Three outcomes, and the middle one is an answer. "Does not exist" is a
@@ -430,23 +467,33 @@ export type LimitView =
       /** The value as a decimal beside it; empty for an infinity. */
       decimal: string;
       finite: boolean;
-      /** How it was found, as recorded by what found it. */
-      method: string;
+      /**
+       * Said under an infinite answer: it is a description of how the
+       * function behaves, not a number the limit equals.
+       */
+      caption: string;
       /** The indeterminate form, as maths; empty when there is none. */
       formLatex: string;
-      /** L'Hôpital's rule, one line per application. */
-      steps: string[];
-      check: "checked" | "unchecked";
+      /** Every route to the answer, the one a course would use first. */
+      routes: LimitRouteView[];
+      /** The route being shown. */
+      route: string;
+      check: "consistent" | "inconclusive";
       /** Said when the answer is narrower than what was asked. */
       note: string;
+      /** Whether the endpoint convention changed anything here. */
+      endpoint: boolean;
     }
   | {
       status: "none";
       /** Why there is no limit, in words. */
       reason: string;
       formLatex: string;
-      /** The two one-sided limits, when they exist and disagree. */
+      /** The one-sided limits that exist, as evidence. */
       sides: LimitSideView[];
+      /** The argument, at every depth. */
+      steps: LimitStepView[];
+      endpoint: boolean;
     }
   | {
       status: "refused";
@@ -1811,16 +1858,26 @@ export default class PhysicsLabSession {
    *
    * Cached against everything that decides it, like the integral: a limit
    * can take L'Hôpital's rule four times over, each a differentiation, and the
-   * panel asks for it on every render pass of every keystroke.
+   * panel asks for it on every render pass of every keystroke. The
+   * explanation depth is not in the key — every depth is computed at once and
+   * the panel filters — but the chosen route is, since it picks what is shown.
    */
   get limit(): LimitView | undefined {
-    const { fLatex, variable, pointLatex, side } = this.config.limit;
+    const { fLatex, variable, pointLatex, side, convention, route } =
+      this.config.limit;
     if (fLatex.trim() === "" || pointLatex.trim() === "") return undefined;
-    const key = `${variable} ${side} ${pointLatex} ${fLatex}`;
-    if (this.limitCache?.key === key) return this.limitCache.result;
-    const result = this.computeLimit(fLatex, variable, pointLatex, side);
-    this.limitCache = { key, result };
-    return result;
+    const key = `${variable} ${side} ${convention} ${pointLatex} ${fLatex}`;
+    if (this.limitCache?.key !== key)
+      this.limitCache = {
+        key,
+        result: this.computeLimit(fLatex, variable, pointLatex, side),
+      };
+    const { result } = this.limitCache;
+    if (result.status !== "value") return result;
+    const chosen = result.routes.some((r) => r.id === route)
+      ? route
+      : (result.routes[0]?.id ?? "");
+    return { ...result, route: chosen };
   }
 
   private computeLimit(
@@ -1847,88 +1904,176 @@ export default class PhysicsLabSession {
         formLatex: "",
       };
 
-    // A point can only be approached from the side the function lives on.
-    // √x at 0 has nothing to its left, and asking for both sides there would
-    // report "no limit" for a reason that is about the domain, not the limit.
-    let effectiveSide = side;
-    let note = "";
-    if (at.kind === "finite" && side === "both") {
-      const lives = (s: 1 | -1) =>
-        [1e-3, 1e-5, 1e-7].some((h) =>
-          Number.isFinite(evaluate(node, { [variable]: at.value + s * h }))
-        );
-      const left = lives(-1);
-      const right = lives(1);
-      if (left !== right) {
-        effectiveSide = right ? "right" : "left";
-        note = `Only defined to the ${effectiveSide} of the point, so this is the limit from the ${effectiveSide}.`;
-      }
-    }
-
-    const found = findLimit(node, variable, at, effectiveSide);
+    const { convention } = this.config.limit;
+    const found = findLimit(node, variable, at, side, convention);
     const emit = (n: Node) => toLatexTree(this.textModeConfig, n);
     const point = pointLatex.trim();
-    const approach = (s: LimitDirection) =>
+    const approachLatex = (s: LimitDirection) =>
       `${variable}\\to ${point}${at.kind === "infinite" ? "" : SIDE_MARKS[s]}`;
-    const sideLine = (s: LimitDirection, l: Limit) =>
-      sideView(approach(s), fLatex, limitLatex(l));
+    const direction = (s: 1 | -1 | undefined): LimitDirection =>
+      s === undefined ? side : s > 0 ? "right" : "left";
     const limitLatex = (l: Limit) =>
       l.kind === "infinite"
         ? l.sign > 0
           ? "\\infty"
           : "-\\infty"
         : emit(exactToNode(l.value));
+    const sideLine = (s: LimitDirection, l: Limit) =>
+      sideView(approachLatex(s), fLatex, limitLatex(l));
     const formLatex = found.form === undefined ? "" : FORM_LATEX[found.form];
     const approachFor = (s: 1 | -1): Approach =>
       at.kind === "infinite"
         ? { kind: "infinite", sign: at.sign }
         : { kind: "point", node: at.node, value: at.value, side: s };
+    // The explanation's maths, from the engine's trees.
+    const stepView =
+      (under: string) =>
+      (step: LimitStep): LimitStepView => ({
+        say: step.say,
+        why: step.why ?? "",
+        proof: step.proof ?? "",
+        lines: step.math.map((line): LimitLineView => {
+          switch (line.kind) {
+            case "limit":
+              return {
+                kind: "limit",
+                approachLatex: under,
+                latex: emit(line.body),
+                equals: line.equals,
+              };
+            case "expr":
+              return {
+                kind: "math",
+                approachLatex: "",
+                latex: emit(line.node),
+                equals: line.equals,
+              };
+            case "value":
+              return {
+                kind: "math",
+                approachLatex: "",
+                latex: limitLatex(line.limit),
+                equals: line.equals,
+              };
+            default:
+              // The last kind: "between", an inequality on one line.
+              return {
+                kind: "math",
+                approachLatex: "",
+                latex: `${emit(line.low)}\\le ${emit(line.middle)}\\le ${emit(line.high)}`,
+                equals: false,
+              };
+          }
+        }),
+      });
+    // The working is computed on one side, and written the way the question
+    // was asked: `x → 0` when both sides agree, `x → 0⁺` when only one was
+    // taken.
+    const routesFor = (
+      s: 1 | -1,
+      limit: Limit,
+      method: LimitMethod,
+      shown: LimitDirection
+    ): LimitRouteView[] =>
+      limitRoutes({
+        original: node,
+        node: method.resolved,
+        variable,
+        approach: approachFor(s),
+        limit,
+        method,
+        form: found.form,
+      }).map((route) => ({
+        id: route.id,
+        name: route.name,
+        steps: route.steps.map(stepView(approachLatex(shown))),
+      }));
     const { answer } = found;
 
     switch (answer.kind) {
       case "value": {
         const sides: (1 | -1)[] =
-          at.kind === "infinite" || effectiveSide === "right"
+          at.kind === "infinite"
             ? [1]
-            : effectiveSide === "left"
-              ? [-1]
+            : answer.side !== undefined
+              ? [answer.side]
               : [1, -1];
         const verdicts = sides.map((s) =>
           checkLimit(node, variable, approachFor(s), answer.limit)
         );
-        // The same rule as for an antiderivative: a limit the numbers
-        // actively contradict is not shown, because it is wrong in a form that
-        // looks exactly like a right one.
-        if (verdicts.includes("wrong"))
+        // A limit the numbers actively contradict is not shown. The engine
+        // proves what it answers, and a conflict is the one sign left that a
+        // proof went wrong somewhere; wrong in a form that looks exactly like
+        // right is the worst thing this panel could do.
+        if (verdicts.includes("conflict"))
           return {
             status: "refused",
             error:
               "The limit found here does not agree with the function's values near the point, so it is not shown.",
             formLatex,
           };
+        const shownSide = direction(answer.side);
+        const infinite = answer.limit.kind === "infinite";
         return {
           status: "value",
-          statementLatex: `\\lim_{${approach(effectiveSide)}}${fLatex}`,
-          approachLatex: approach(effectiveSide),
+          statementLatex: `\\lim_{${approachLatex(shownSide)}}${fLatex}`,
+          approachLatex: approachLatex(shownSide),
           bodyLatex: fLatex,
           valueLatex: limitLatex(answer.limit),
           decimal:
             answer.limit.kind === "finite"
               ? `≈ ${formatDecimal(toNumber(answer.limit.value))}`
               : "",
-          finite: answer.limit.kind === "finite",
-          method: describeLimitMethod(answer.method),
+          finite: !infinite,
+          caption:
+            answer.limit.kind === "infinite"
+              ? `The values ${answer.limit.sign > 0 ? "grow" : "fall"} without bound, so there is no finite limit; ${answer.limit.sign > 0 ? "+∞" : "−∞"} says how it fails to have one.`
+              : "",
           formLatex,
-          steps: answer.method.lhopital.map(
-            (step) =>
-              `\\frac{${emit(step.numerator)}}{${emit(step.denominator)}}`
+          routes: routesFor(
+            answer.side ?? 1,
+            answer.limit,
+            answer.method,
+            shownSide
           ),
-          check: verdicts.every((v) => v === "checked")
-            ? "checked"
-            : "unchecked",
-          note,
+          route: "",
+          check: verdicts.every((v) => v === "consistent")
+            ? "consistent"
+            : "inconclusive",
+          note:
+            answer.withinDomain === true
+              ? `The function only lives to the ${shownSide} of the point, and the limit is taken within its domain.`
+              : "",
+          endpoint: answer.withinDomain === true,
         };
       }
+      case "one-side-only": {
+        const shown = direction(answer.side);
+        const other = answer.side > 0 ? "left" : "right";
+        const routes = routesFor(
+          answer.side,
+          answer.limit,
+          answer.method,
+          shown
+        );
+        return {
+          status: "none",
+          reason: `There is no two-sided limit: the function has no values to the ${other} of the point, because ${answer.missing}. From the ${shown} it does have a limit.`,
+          formLatex,
+          sides: [sideLine(shown, answer.limit)],
+          steps: routes[0]?.steps ?? [],
+          endpoint: true,
+        };
+      }
+      case "no-approach":
+        return {
+          status: "none",
+          reason: `There is no limit to take: the function has no values near this point on the side asked for, because ${answer.reason}.`,
+          formLatex,
+          sides: [],
+          steps: [],
+          endpoint: false,
+        };
       case "sides-differ":
         return {
           status: "none",
@@ -1939,15 +2084,62 @@ export default class PhysicsLabSession {
             sideLine("left", answer.left),
             sideLine("right", answer.right),
           ],
+          steps: [
+            {
+              say: "Coming from the left, the values settle on one thing; coming from the right, on another.",
+              lines: [],
+              why: "A two-sided limit exists exactly when both one-sided limits exist and are equal.",
+              proof:
+                "Each one-sided limit is proved on its own side, with the sign of every choice it depends on proved there too.",
+            },
+          ],
+          endpoint: false,
         };
-      case "oscillates":
+      case "oscillates": {
+        const { proof } = answer;
+        const wave = emit(callNode(proof.fn, proof.argument));
+        const values = (target: 1 | -1) => {
+          if (proof.amplitude.kind === "infinite")
+            return proof.amplitude.sign * target > 0 ? "\\infty" : "-\\infty";
+          const shifted = addExact(
+            proof.rest.kind === "finite" ? proof.rest.value : EXACT_ZERO,
+            target > 0
+              ? proof.amplitude.value
+              : negateExact(proof.amplitude.value)
+          );
+          return emit(exactToNode(shifted));
+        };
+        const unbounded = proof.amplitude.kind === "infinite";
         return {
           status: "none",
-          reason:
-            "The limit does not exist: the function oscillates. Its argument runs off to infinity, so however close you look it passes through a whole period and takes every value between its highest and lowest.",
+          reason: `The limit does not exist: the function oscillates${unbounded ? ", further and further each way" : ""}.`,
           formLatex,
           sides: [],
+          steps: [
+            {
+              say: `What is inside the ${proof.fn === "sin" ? "sine" : "cosine"} runs off to ${proof.argumentSign > 0 ? "+∞" : "−∞"}, so it keeps swinging between −1 and 1 however close you look. Where it is 1 the function is near one value, and where it is −1 near another.`,
+              lines: [
+                {
+                  kind: "math",
+                  approachLatex: "",
+                  latex: `${wave}=1\\Rightarrow ${fLatex}\\to ${values(1)}`,
+                  equals: false,
+                },
+                {
+                  kind: "math",
+                  approachLatex: "",
+                  latex: `${wave}=-1\\Rightarrow ${fLatex}\\to ${values(-1)}`,
+                  equals: false,
+                },
+              ],
+              why: "A limit would have to be close to both at once, and two different values cannot both be.",
+              proof:
+                "The argument is continuous near the point and tends to an infinity, so by the intermediate value theorem it passes through π/2 + 2πn and 3π/2 + 2πn for every large n, at points arbitrarily close to the point. Along those two sequences the function tends to different limits (or to opposite infinities), which no single limit allows.",
+            },
+          ],
+          endpoint: false,
         };
+      }
       case "unknown": {
         // Functions are names too, and `sin` needs no value from anybody.
         const called = new Set<string>();
@@ -1983,6 +2175,7 @@ export default class PhysicsLabSession {
   setLimitExpression(fLatex: string) {
     this.updateConfig((config) => {
       config.limit.fLatex = fLatex;
+      config.limit.route = "";
     });
   }
 
@@ -1995,12 +2188,31 @@ export default class PhysicsLabSession {
   setLimitPoint(pointLatex: string) {
     this.updateConfig((config) => {
       config.limit.pointLatex = pointLatex;
+      config.limit.route = "";
     });
   }
 
   setLimitSide(side: LimitDirection) {
     this.updateConfig((config) => {
       config.limit.side = side;
+    });
+  }
+
+  setLimitExplain(explain: ExplainLevel) {
+    this.updateConfig((config) => {
+      config.limit.explain = explain;
+    });
+  }
+
+  setLimitConvention(convention: "bilateral" | "domain") {
+    this.updateConfig((config) => {
+      config.limit.convention = convention;
+    });
+  }
+
+  setLimitRoute(route: string) {
+    this.updateConfig((config) => {
+      config.limit.route = route;
     });
   }
 

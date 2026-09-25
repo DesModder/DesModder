@@ -158,7 +158,22 @@ export interface LimitConfig {
   /** Where the variable goes, as typed: a number, an expression, or ±∞. */
   pointLatex: string;
   side: LimitDirection;
+  /**
+   * How deep the explanation goes. The same steps at every depth, so the
+   * three cannot disagree: `simple` says what to do, `detailed` adds the
+   * condition that makes each step legal, `research` adds the proof under it.
+   */
+  explain: ExplainLevel;
+  /**
+   * What a two-sided limit means where the function lives on one side only.
+   * Both are conventions a textbook uses; the first is the stricter.
+   */
+  convention: "bilateral" | "domain";
+  /** The method being shown, by route id; empty for the one a course uses first. */
+  route: string;
 }
+
+export type ExplainLevel = "simple" | "detailed" | "research";
 
 export const PANEL_TABS = [
   { id: "slope", label: "Slope field" },
@@ -296,6 +311,9 @@ export function defaultPhysicsLabConfig(): PhysicsLabConfig {
       variable: "x",
       pointLatex: "\\infty",
       side: "both",
+      explain: "simple",
+      convention: "bilateral",
+      route: "",
     },
     phase: {
       domain: { x: { min: -4, max: 4 }, y: { min: -4, max: 4 } },
@@ -493,6 +511,14 @@ export function normalizePhysicsLabConfig(raw: unknown): PhysicsLabConfig {
         source.limit?.side === "left" || source.limit?.side === "right"
           ? source.limit.side
           : "both",
+      explain:
+        source.limit?.explain === "detailed" ||
+        source.limit?.explain === "research"
+          ? source.limit.explain
+          : "simple",
+      convention:
+        source.limit?.convention === "domain" ? "domain" : "bilateral",
+      route: typeof source.limit?.route === "string" ? source.limit.route : "",
     },
     secondOrder: {
       fLatex:

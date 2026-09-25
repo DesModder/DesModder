@@ -1,45 +1,53 @@
 /**
- * Limits, as the Limit tab asks for them.
+ * Limits, decided with proofs.
  *
- * The engine is `limitOf` in `definite.ts`, which already had to exist for
- * improper integrals. What this adds is what a course asks of a limit that an
- * integral never did:
+ * The engine is `limitOf` in `definite.ts`, which improper integrals needed
+ * first. This is what a limit asks of it beyond that, and the standard is a
+ * mathematician's rather than a syllabus's: every outcome here is proved, and
+ * sampling is used only to check.
  *
- * - **Both sides.** An improper integral only ever approaches a bound from
- *   inside the interval. A limit at a point is two one-sided limits, and it
- *   exists only when they agree: `|x|/x` at 0 is -1 from the left and 1 from
- *   the right, and the answer is that there is no limit — with both sides
- *   shown, because they are the reason.
- * - **The form.** `0/0` and `1^∞` are what a student is taught to recognise
- *   before choosing a method, so the form is reported as a fact about the
- *   expression, read off the limits of its parts.
- * - **L'Hôpital's rule.** The series engine answers `sin(x)/x` without it, and
- *   a course answers it with it. For `0/0` and `∞/∞` the rule is applied for
- *   real — the derivatives are taken and the new quotient's limit is found —
- *   and the result must agree with the engine's own answer when there is one.
- *   A disagreement is a refusal, not a choice between them.
- * - **"Does not exist" as an answer.** `sin(1/x)` at 0 has no limit, and that
- *   can be proved rather than merely failed at: its argument runs off to
- *   infinity continuously, so it passes through every value in every
- *   neighbourhood and the sine takes both -1 and 1 there.
- *
- * Every answer is checked numerically before it is shown, the way every
- * antiderivative is differentiated back, and with the same three verdicts.
+ * - **Sides.** A limit at a point is two one-sided limits, each taken on its
+ *   own. On one side `|g|`, `sign g`, `⌊g⌋`, `⌈g⌉`, `round g` and a piecewise
+ *   function are each a single formula, because the sign of whatever decides
+ *   them is fixed there — and that sign is proved (`eventualSign`), never read
+ *   off a few sample points.
+ * - **Domain.** A side the function does not live on is not approached at
+ *   all: `√x` has no left side at 0. That is its own outcome, distinct from a
+ *   limit that fails to exist, and how the two sides then combine is a
+ *   convention the caller chooses.
+ * - **Non-existence.** Different one-sided limits prove there is no limit.
+ *   So does an oscillation, proved by construction: `A(x)·sin(g(x)) + r(x)`
+ *   with `g` continuous and unbounded passes through `g = π/2 + 2πn` and
+ *   `g = 3π/2 + 2πn` arbitrarily close to the point, where the values tend to
+ *   `r ± A` — two different numbers, or, when `A` is unbounded, nowhere.
+ * - **L'Hôpital's rule**, applied for real and guarded: its hypotheses are
+ *   checked at every application, and it stops as soon as it repeats itself
+ *   or the expression grows, because there is no measure that makes repeated
+ *   differentiation terminate in general. Its answer must agree with the
+ *   engine's own when both exist.
  */
 import {
   dependsOn,
   differentiate,
   divide,
   evaluate,
+  exceedsNodeCount,
+  fold,
   negative,
+  nodeCount,
   number as numberNode,
-  replaceSubtree,
+  quotientFactors,
+  subtract,
   SymbolicError,
+  topLevelTerms,
   visit,
   type Node,
 } from "../../../symbolic";
 import * as X from "./exact";
+import * as Q from "./rational";
 import {
+  certainlyZero,
+  eventualSign,
   limitOf,
   type Approach,
   type Bound,
@@ -49,6 +57,16 @@ import {
 
 /** Which way a limit at a point is taken. Ignored at an infinity. */
 export type LimitSide = "both" | "left" | "right";
+
+/**
+ * What a two-sided limit means when the function lives on one side only.
+ *
+ * `bilateral`, the default: a two-sided limit needs both sides, so `√x` at 0
+ * has a right-hand limit and no two-sided one. `domain`: the limit is taken
+ * through the points of the domain, so `√x → 0` there. Both are conventions a
+ * textbook uses, and neither is imposed.
+ */
+export type EndpointConvention = "bilateral" | "domain";
 
 /**
  * An indeterminate form, as it is written: the thing a student recognises
@@ -69,21 +87,83 @@ export interface LHopitalStep {
   denominator: Node;
 }
 
+/**
+ * One piece of the expression replaced by what it is on the side approached:
+ * `|x|` by `-x` from the left, a piecewise function by its branch. Kept so the
+ * explanation can say so, since it is the step the whole answer rests on.
+ */
+export interface Resolution {
+  kind: "abs" | "sign" | "floor" | "ceil" | "round" | "piecewise";
+  before: Node;
+  after: Node;
+}
+
 /** How the answer was reached, for saying so. */
 export interface LimitMethod {
   techniques: readonly LimitTechnique[];
   /** The applications of L'Hôpital's rule, in order; empty when not used. */
   lhopital: readonly LHopitalStep[];
-  /** Whether an absolute value was written out for the side approached. */
-  absolute: boolean;
+  /** What was written out for the side approached. */
+  resolutions: readonly Resolution[];
+  /** The expression after those were written out. */
+  resolved: Node;
 }
 
-export type LimitAnswer =
+/**
+ * The proof that there is no limit because of an oscillation: the term
+ * `amplitude · f(argument)` with `f` sine or cosine, plus whatever else
+ * tends to `rest`.
+ */
+export interface OscillationProof {
+  fn: "sin" | "cos";
+  argument: Node;
+  /** Where the argument goes: +∞ or -∞. */
+  argumentSign: 1 | -1;
+  /** The factor in front: a non-zero number, or an infinity. */
+  amplitude: Limit;
+  /** What the other terms tend to. */
+  rest: Limit;
+}
+
+/** What one side comes to. */
+export type SideOutcome =
   | { kind: "value"; limit: Limit; method: LimitMethod }
+  | { kind: "oscillates"; proof: OscillationProof }
+  /** The function has no points on this side near the point. */
+  | { kind: "no-approach"; reason: string }
+  | { kind: "unknown" };
+
+export type LimitAnswer =
+  | {
+      kind: "value";
+      limit: Limit;
+      method: LimitMethod;
+      /**
+       * The one side the answer comes from, when only one was taken: asked
+       * for, or the only one the function lives on under the domain
+       * convention.
+       */
+      side?: 1 | -1;
+      /** Set when the other side was not there and the convention allowed it. */
+      withinDomain?: boolean;
+    }
   /** The two one-sided limits exist and differ. */
   | { kind: "sides-differ"; left: Limit; right: Limit }
   /** An oscillation that provably has no limit. */
-  | { kind: "oscillates" }
+  | { kind: "oscillates"; proof: OscillationProof; side?: 1 | -1 }
+  /**
+   * Only one side exists, and the convention asks for both: the one-sided
+   * limit is given, and there is no two-sided one.
+   */
+  | {
+      kind: "one-side-only";
+      side: 1 | -1;
+      limit: Limit;
+      method: LimitMethod;
+      missing: string;
+    }
+  /** The function is not defined near the point on the side(s) asked for. */
+  | { kind: "no-approach"; reason: string }
   /** Nothing here could decide it. */
   | { kind: "unknown"; left?: Limit; right?: Limit };
 
@@ -106,11 +186,12 @@ export function findLimit(
   node: Node,
   variable: string,
   at: Bound,
-  side: LimitSide
+  side: LimitSide,
+  convention: EndpointConvention = "bilateral"
 ): LimitResult {
   if (at.kind === "infinite") {
     const approach: Approach = { kind: "infinite", sign: at.sign };
-    return oneSided(node, variable, approach);
+    return single(oneSided(node, variable, approach), undefined);
   }
   const from = (s: 1 | -1): Approach => ({
     kind: "point",
@@ -118,16 +199,52 @@ export function findLimit(
     value: at.value,
     side: s,
   });
-  if (side === "right") return oneSided(node, variable, from(1));
-  if (side === "left") return oneSided(node, variable, from(-1));
+  if (side !== "both") {
+    const s = side === "right" ? 1 : -1;
+    return single(oneSided(node, variable, from(s)), s);
+  }
 
   const right = oneSided(node, variable, from(1));
   const left = oneSided(node, variable, from(-1));
   const form = right.form ?? left.form;
-  const r = right.answer;
-  const l = left.answer;
-  if (r.kind === "oscillates" || l.kind === "oscillates")
-    return { answer: { kind: "oscillates" }, form };
+  const r = right.outcome;
+  const l = left.outcome;
+
+  if (r.kind === "no-approach" && l.kind === "no-approach")
+    return { answer: { kind: "no-approach", reason: r.reason }, form };
+  // Only one side is there: which convention is in force decides whether its
+  // limit is the limit.
+  if (r.kind === "no-approach" || l.kind === "no-approach") {
+    const [present, s, missing] =
+      r.kind === "no-approach"
+        ? [l, -1 as const, r.reason]
+        : [r, 1 as const, (l as { reason: string }).reason];
+    if (present.kind === "value") {
+      if (convention === "domain")
+        return {
+          answer: { ...present, kind: "value", side: s, withinDomain: true },
+          form,
+        };
+      return {
+        answer: {
+          kind: "one-side-only",
+          side: s,
+          limit: present.limit,
+          method: present.method,
+          missing,
+        },
+        form,
+      };
+    }
+    if (present.kind === "oscillates")
+      return {
+        answer: { kind: "oscillates", proof: present.proof, side: s },
+        form,
+      };
+    return { answer: { kind: "unknown" }, form };
+  }
+  if (r.kind === "oscillates") return { answer: r, form };
+  if (l.kind === "oscillates") return { answer: l, form };
   if (r.kind === "value" && l.kind === "value") {
     if (sameLimit(r.limit, l.limit)) return { answer: r, form };
     return {
@@ -145,28 +262,57 @@ export function findLimit(
   };
 }
 
-function sameLimit(a: Limit, b: Limit): boolean {
+function single(
+  { outcome, form }: { outcome: SideOutcome; form?: IndeterminateForm },
+  side: 1 | -1 | undefined
+): LimitResult {
+  switch (outcome.kind) {
+    case "value":
+      return { answer: { ...outcome, side }, form };
+    case "oscillates":
+      return { answer: { ...outcome, side }, form };
+    default:
+      return { answer: outcome, form };
+  }
+}
+
+export function sameLimit(a: Limit, b: Limit): boolean {
   if (a.kind === "infinite") return b.kind === "infinite" && a.sign === b.sign;
   if (b.kind === "infinite") return false;
-  return X.subtract(a.value, b.value).length === 0;
+  return certainlyZero(X.subtract(a.value, b.value)) === true;
 }
 
 function oneSided(
   original: Node,
   variable: string,
   approach: Approach
-): LimitResult {
-  const node = resolveAbsolute(original, variable, approach);
-  const absolute = node !== original;
+): { outcome: SideOutcome; form?: IndeterminateForm } {
+  const resolutions: Resolution[] = [];
+  const node = resolveSide(original, variable, approach, resolutions);
+
+  const domain = domainOnSide(node, variable, approach);
+  if (domain !== undefined)
+    return { outcome: { kind: "no-approach", reason: domain } };
+
   const form = formOf(node, variable, approach);
 
-  if (oscillates(node, variable, approach))
-    return { answer: { kind: "oscillates" }, form };
+  const oscillation = oscillationOf(node, variable, approach);
+  if (oscillation !== undefined)
+    return { outcome: { kind: "oscillates", proof: oscillation }, form };
 
   const techniques: LimitTechnique[] = [];
   const direct = limitOf(node, variable, approach, (t) => techniques.push(t));
   // Recorded innermost first; read outermost first.
   techniques.reverse();
+  const method = (
+    used: readonly LimitTechnique[],
+    lhopital: readonly LHopitalStep[]
+  ): LimitMethod => ({
+    techniques: used,
+    lhopital,
+    resolutions,
+    resolved: node,
+  });
 
   // A rational function at infinity is answered by its leading terms, which
   // is how a course answers it too. L'Hôpital would get there, by applying
@@ -177,91 +323,230 @@ function oneSided(
 
   // The rule a course would use, applied for real. It is tried whenever the
   // form allows it, and kept only if it reaches the same answer as the engine
-  // — or the only answer, when the engine has none.
+  // -- or the only answer, when the engine has none.
   if (
     !byLeadingTerms &&
     (form === "0/0" || form === "inf/inf") &&
     node.type === "BinaryOperator" &&
     node.name === "Divide"
   ) {
-    const viaRule = lHopital(node, variable, approach);
+    const found = lHopital(node, variable, approach);
+    // Kept only where it made the problem easier. A quotient that still needs
+    // a series to finish was not simplified by the rule -- √(x²+1)/x becomes
+    // x/√(x²+1), the same difficulty upside down -- and the direct route is
+    // the honest one to show.
+    const viaRule =
+      found !== undefined &&
+      direct !== undefined &&
+      found.techniques.includes("series")
+        ? undefined
+        : found;
     if (viaRule !== undefined) {
       if (direct !== undefined && !sameLimit(direct, viaRule.limit))
-        return { answer: { kind: "unknown" }, form };
+        return { outcome: { kind: "unknown" }, form };
       return {
-        answer: {
+        outcome: {
           kind: "value",
           limit: viaRule.limit,
-          method: { ...viaRule, absolute },
+          method: method(viaRule.techniques, viaRule.lhopital),
         },
         form,
       };
     }
   }
 
-  if (direct === undefined) return { answer: { kind: "unknown" }, form };
+  if (direct === undefined) return { outcome: { kind: "unknown" }, form };
   return {
-    answer: {
-      kind: "value",
-      limit: direct,
-      method: { techniques, lhopital: [], absolute },
-    },
+    outcome: { kind: "value", limit: direct, method: method(techniques, []) },
     form,
   };
 }
 
+// ---- one side at a time ------------------------------------------------------
+
 /**
- * `|g|` and `sign(g)` near a one-sided approach, where `g` keeps one sign:
- * `±g` and `±1`. That is what the absolute value *is* on one side of a
- * point, and it is the step that turns `|x|/x` into `x/x` from the right and
- * `-x/x` from the left.
- *
- * The sign is read at several distances rather than one, because a `g` that
- * changes sign arbitrarily close to the point (`x sin(1/x)`) has no one sign
- * to replace it with, and is left alone.
+ * The expression as it is on the side approached: every absolute value,
+ * sign, floor, ceiling, rounding and piecewise choice written as the single
+ * formula it is there. Anything whose deciding sign is not proved is left
+ * alone, and the limit engine will then not decide the whole either.
  */
-function resolveAbsolute(
+function resolveSide(
+  node: Node,
+  variable: string,
+  approach: Approach,
+  out: Resolution[]
+): Node {
+  const again = (n: Node) => resolveSide(n, variable, approach, out);
+  const signOf = (n: Node) => eventualSign(n, variable, approach);
+  switch (node.type) {
+    case "Negative":
+      return negative(again(node.arg));
+    case "BinaryOperator": {
+      const rebuilt: Node = {
+        ...node,
+        left: again(node.left),
+        right: again(node.right),
+      };
+      return rebuilt;
+    }
+    case "Piecewise": {
+      if (!dependsOn(node, variable)) return node;
+      const holds =
+        node.condition === true
+          ? true
+          : conditionOnSide(node.condition, variable, approach);
+      if (holds === undefined) return node;
+      const chosen = holds ? node.consequent : node.alternate;
+      out.push({ kind: "piecewise", before: node, after: chosen });
+      return again(chosen);
+    }
+    case "FunctionCall": {
+      const args = node.args.map(again);
+      const rebuilt: Node & { type: "FunctionCall" } = { ...node, args };
+      if (args.length !== 1 || !dependsOn(args[0], variable)) return rebuilt;
+      const [inner] = args;
+      const name = rebuilt.callee.symbol;
+      const record = (kind: Resolution["kind"], after: Node) => {
+        out.push({ kind, before: rebuilt, after });
+        return after;
+      };
+      if (name === "abs") {
+        const s = signOf(inner);
+        if (s === 1) return record("abs", inner);
+        if (s === -1) return record("abs", negative(inner));
+        if (s === 0) return record("abs", numberNode(0));
+        return rebuilt;
+      }
+      if (name === "sign") {
+        const s = signOf(inner);
+        return s === undefined ? rebuilt : record("sign", numberNode(s));
+      }
+      if (name === "floor" || name === "ceil" || name === "round") {
+        const step = integerStep(name, inner, variable, approach);
+        return step === undefined ? rebuilt : record(name, numberNode(step));
+      }
+      return rebuilt;
+    }
+    default:
+      return node;
+  }
+}
+
+/**
+ * The constant value of `⌊g⌋`, `⌈g⌉` or `round g` on the side approached,
+ * when `g` has a finite limit there. Away from a jump it is the function of
+ * the limit; at a jump, the side `g` arrives from — proved by the sign of
+ * `g − m` — picks between the two values.
+ */
+function integerStep(
+  name: "floor" | "ceil" | "round",
+  inner: Node,
+  variable: string,
+  approach: Approach
+): number | undefined {
+  const found = limitOf(inner, variable, approach);
+  if (found?.kind !== "finite") return undefined;
+  const value = X.toNumber(found.value);
+  // Where the jumps are: integers for floor and ceiling, half-integers for
+  // rounding.
+  const offset = name === "round" ? 0.5 : 0;
+  const jump = Math.round(value - offset) + offset;
+  const exactJump = X.fromRational(
+    Q.divide(Q.rational(BigInt(Math.round(2 * jump))), Q.rational(2n))
+  );
+  const atJump = certainlyZero(X.subtract(found.value, exactJump));
+  if (atJump === undefined) return undefined;
+  const fn = { floor: Math.floor, ceil: Math.ceil, round: Math.round }[name];
+  if (!atJump) {
+    // Comfortably between jumps: the function is constant near the point.
+    return Math.abs(value - jump) > 1e-9 ? fn(value) : undefined;
+  }
+  const s = eventualSign(
+    subtract(inner, X.toNode(exactJump)),
+    variable,
+    approach
+  );
+  if (s === undefined) return undefined;
+  if (s === 0) return fn(jump);
+  // Arriving from above the jump or from below it.
+  const below = jump - 0.5;
+  const above = jump + 0.5;
+  return fn(s > 0 ? above : below);
+}
+
+/**
+ * Whether a piecewise condition holds on the whole side approached, proved
+ * from the sign of `left − right` for each comparison in it. Undefined when a
+ * sign is not proved — `sin(1/x) > 0` changes its answer infinitely often at
+ * 0, and no branch is chosen for it.
+ */
+function conditionOnSide(
+  condition: Node,
+  variable: string,
+  approach: Approach
+): boolean | undefined {
+  const links: [Node, string, Node][] =
+    condition.type === "Comparator"
+      ? [[condition.left, condition.operator, condition.right]]
+      : condition.type === "ComparatorChain"
+        ? condition.symbols.map((symbol, i) => [
+            condition.args[i],
+            symbol,
+            condition.args[i + 1],
+          ])
+        : [];
+  if (links.length === 0) return undefined;
+  let all = true;
+  for (const [left, operator, right] of links) {
+    const s = eventualSign(subtract(left, right), variable, approach);
+    if (s === undefined) return undefined;
+    const holds = {
+      "<": s < 0,
+      "<=": s <= 0,
+      "=": s === 0,
+      ">=": s >= 0,
+      ">": s > 0,
+    }[operator];
+    if (holds === undefined) return undefined;
+    all = all && holds;
+  }
+  return all;
+}
+
+/**
+ * Why the function has no points on the side approached, or undefined when
+ * it has them or that is not decided.
+ *
+ * A square root of something eventually negative, a logarithm of something
+ * eventually not positive, and a piecewise function whose branch there is
+ * undefined all leave the side empty. That is proved by the same eventual
+ * signs as everything else here.
+ */
+function domainOnSide(
   node: Node,
   variable: string,
   approach: Approach
-): Node {
-  const found: (Node & { type: "FunctionCall" })[] = [];
+): string | undefined {
+  let reason: string | undefined;
   visit(node, (child) => {
+    if (reason !== undefined) return;
+    if (child.type === "Constant" && Number.isNaN(child.value)) {
+      reason = "the formula in force on this side is undefined";
+      return;
+    }
+    if (child.type !== "FunctionCall" || child.args.length !== 1) return;
+    const [inner] = child.args;
+    if (!dependsOn(inner, variable)) return;
+    const name = child.callee.symbol;
+    if (name === "sqrt" && eventualSign(inner, variable, approach) === -1)
+      reason = "a square root of a negative number is not real";
     if (
-      child.type === "FunctionCall" &&
-      child.args.length === 1 &&
-      (child.callee.symbol === "abs" || child.callee.symbol === "sign") &&
-      dependsOn(child.args[0], variable)
+      (name === "ln" || name === "log") &&
+      (eventualSign(inner, variable, approach) ?? 1) <= 0
     )
-      found.push(child);
+      reason = "a logarithm of a number that is not positive is not real";
   });
-  let out = node;
-  for (const target of found) {
-    const [inner] = target.args;
-    const signs = new Set(
-      [1, 10, 100, 1000].map((scale) =>
-        Math.sign(evaluate(inner, { [variable]: nearAt(approach, scale) }))
-      )
-    );
-    if (signs.size !== 1) continue;
-    const [s] = [...signs];
-    if (s !== 1 && s !== -1) continue;
-    const replacement =
-      target.callee.symbol === "sign"
-        ? numberNode(s)
-        : s > 0
-          ? inner
-          : negative(inner);
-    out = replaceSubtree(out, target, replacement);
-  }
-  return out;
-}
-
-/** A point near the approach; larger scales are further away. */
-function nearAt(approach: Approach, scale: number): number {
-  return approach.kind === "infinite"
-    ? approach.sign * 1e5 * scale
-    : approach.value + approach.side * 1e-8 * scale;
+  return reason;
 }
 
 /**
@@ -278,9 +563,10 @@ export function formOf(
   if (node.type !== "BinaryOperator") return undefined;
   const part = (n: Node) => limitOf(n, variable, approach);
   const isZero = (l: Limit | undefined) =>
-    l?.kind === "finite" && l.value.length === 0;
+    l?.kind === "finite" && certainlyZero(l.value) === true;
   const isOne = (l: Limit | undefined) =>
-    l?.kind === "finite" && X.subtract(l.value, X.fromInteger(1)).length === 0;
+    l?.kind === "finite" &&
+    certainlyZero(X.subtract(l.value, X.fromInteger(1))) === true;
   const isInfinite = (l: Limit | undefined) => l?.kind === "infinite";
   switch (node.name) {
     case "Divide": {
@@ -321,17 +607,27 @@ export function formOf(
 }
 
 /**
- * L'Hôpital's rule, applied until the quotient stops being `0/0` or `∞/∞`
- * and its limit can be found — or until it has been applied
- * {@link LHOPITAL_LIMIT} times, which is where it has stopped helping:
- * `e^x/x^{10}` needs ten, and the engine answers it directly by growth.
+ * L'Hôpital's rule, guarded.
+ *
+ * Its hypotheses are checked at every application: the quotient is still
+ * `0/0` or `∞/∞` on the side approached, and the new denominator keeps one
+ * non-zero sign there. And it stops the moment it stops helping: a quotient
+ * that repeats one already seen (`√(x²+1)/x` alternates with its reciprocal
+ * shape forever), one that has grown past four times the size it started at
+ * (`e^{1/x}` gains a power of `1/x` each time), or {@link LHOPITAL_LIMIT}
+ * applications. There is no measure that proves repeated differentiation
+ * terminates in general, so none is pretended.
  */
 function lHopital(
   node: Node & { type: "BinaryOperator" },
   variable: string,
   approach: Approach
-): (Omit<LimitMethod, "absolute"> & { limit: Limit }) | undefined {
+):
+  | { limit: Limit; techniques: LimitTechnique[]; lhopital: LHopitalStep[] }
+  | undefined {
   const steps: LHopitalStep[] = [];
+  const seen = new Set<string>([JSON.stringify(node)]);
+  const budget = 4 * nodeCount(node);
   let top: Node = node.left;
   let bottom: Node = node.right;
   for (let round = 0; round < LHOPITAL_LIMIT; round++) {
@@ -342,8 +638,14 @@ function lHopital(
       if (error instanceof SymbolicError) return undefined;
       throw error;
     }
-    steps.push({ numerator: top, denominator: bottom });
+    if (eventualSign(bottom, variable, approach) === undefined)
+      return undefined;
+    if (eventualSign(bottom, variable, approach) === 0) return undefined;
     const quotient = divide(top, bottom);
+    const print = JSON.stringify(fold(quotient));
+    if (seen.has(print) || exceedsNodeCount(quotient, budget)) return undefined;
+    seen.add(print);
+    steps.push({ numerator: top, denominator: bottom });
     const form = formOf(quotient, variable, approach);
     if (form === "0/0" || form === "inf/inf") continue;
     const techniques: LimitTechnique[] = [];
@@ -356,70 +658,145 @@ function lHopital(
   return undefined;
 }
 
+// ---- oscillation -------------------------------------------------------------
+
+/** Functions that may not sit inside an oscillating argument: they jump. */
+const JUMPS = ["floor", "ceil", "round", "sign"];
+
 /**
- * Whether the expression is a sine or cosine of something that runs off to
- * an infinity, which provably has no limit.
+ * A proof that the expression oscillates without a limit, or undefined.
  *
- * Provably, not probably: the argument is continuous near the approach and
- * unbounded there, so in every neighbourhood it passes through a whole
- * period, and the function takes both -1 and 1 however close you look. A
- * constant factor in front changes nothing, so it is looked through.
+ * The shape proved is `A(x)·f(g(x)) + r(x)`, `f` sine or cosine, where
+ *
+ * - `g` is continuous near the approach (no jumps inside it) and tends to
+ *   ±∞, so by the intermediate value theorem it passes through every large
+ *   value, arbitrarily close to the point;
+ * - `A` tends to a non-zero number `c` or to an infinity;
+ * - `r` tends to a number `r₀`.
+ *
+ * Along the points where `f(g) = 1` the values tend to `r₀ + c`, and along
+ * those where `f(g) = -1` to `r₀ − c`: two limits of one function along two
+ * approaches, which a limit cannot have. When `A` is unbounded the values
+ * along one of them run off to infinity and along the other to minus
+ * infinity. `A → 0` is not this case — the squeeze theorem gives 0 — and
+ * two oscillating terms are not attempted: `sin x + sin(√2 x)` needs a proof
+ * about irrational rotations, not this one.
  */
-function oscillates(node: Node, variable: string, approach: Approach): boolean {
-  let inner = node;
-  if (inner.type === "Negative") inner = inner.arg;
-  if (
-    inner.type === "BinaryOperator" &&
-    inner.name === "Multiply" &&
-    !dependsOn(inner.left, variable) &&
-    Number.isFinite(evaluate(inner.left, {})) &&
-    evaluate(inner.left, {}) !== 0
-  )
-    inner = inner.right;
-  if (
-    inner.type !== "FunctionCall" ||
-    inner.args.length !== 1 ||
-    !["sin", "cos"].includes(inner.callee.symbol)
-  )
-    return false;
-  const argument = limitOf(inner.args[0], variable, approach);
-  return argument?.kind === "infinite";
+function oscillationOf(
+  node: Node,
+  variable: string,
+  approach: Approach
+): OscillationProof | undefined {
+  let found: { term: Node; negated: boolean; factor: Node } | undefined;
+  const rest: Node[] = [];
+  for (const { term, negated } of topLevelTerms(node)) {
+    const factors: { node: Node; inNumerator: boolean }[] = [];
+    quotientFactors(term, true, factors);
+    const oscillating = factors.find(
+      ({ node: f, inNumerator }) =>
+        inNumerator &&
+        f.type === "FunctionCall" &&
+        f.args.length === 1 &&
+        (f.callee.symbol === "sin" || f.callee.symbol === "cos") &&
+        dependsOn(f.args[0], variable)
+    );
+    const argument =
+      oscillating?.node.type === "FunctionCall"
+        ? oscillating.node.args[0]
+        : undefined;
+    const unbounded =
+      argument !== undefined &&
+      limitOf(argument, variable, approach)?.kind === "infinite";
+    if (oscillating !== undefined && unbounded) {
+      if (found !== undefined) return undefined;
+      found = { term, negated, factor: oscillating.node };
+    } else rest.push(negated ? negative(term) : term);
+  }
+  if (found === undefined || found.factor.type !== "FunctionCall")
+    return undefined;
+  const [argument] = found.factor.args;
+  let jumps = false;
+  visit(argument, (child) => {
+    if (
+      (child.type === "FunctionCall" && JUMPS.includes(child.callee.symbol)) ||
+      child.type === "Piecewise"
+    )
+      jumps = true;
+  });
+  if (jumps) return undefined;
+  const argumentLimit = limitOf(argument, variable, approach);
+  if (argumentLimit?.kind !== "infinite") return undefined;
+
+  // The amplitude: the term with the oscillating factor divided out.
+  const amplitudeNode = fold(
+    divide(found.negated ? negative(found.term) : found.term, found.factor)
+  );
+  const amplitude = limitOf(amplitudeNode, variable, approach);
+  if (amplitude === undefined) return undefined;
+  if (amplitude.kind === "finite" && certainlyZero(amplitude.value) !== false)
+    return undefined;
+  // The other terms must settle on a number. One that runs off could beat the
+  // oscillation (x + sin x → ∞), so an infinite remainder proves nothing.
+  const restLimit: Limit =
+    rest.length === 0
+      ? { kind: "finite", value: X.ZERO }
+      : (limitOf(
+          rest.reduce((total, t) => ({
+            type: "BinaryOperator",
+            name: "Add",
+            left: total,
+            right: t,
+          })),
+          variable,
+          approach
+        ) ?? { kind: "infinite", sign: 1 });
+  if (restLimit.kind !== "finite") return undefined;
+  return {
+    fn: found.factor.callee.symbol as "sin" | "cos",
+    argument,
+    argumentSign: argumentLimit.sign,
+    amplitude,
+    rest: restLimit,
+  };
 }
 
 // ---- checking ----------------------------------------------------------------
 
 /**
- * Whether the function's values near the approach agree with the limit.
+ * How the function's values near the approach compare with the limit.
  *
- * Three verdicts, the way an antiderivative's check has three:
+ * A diagnostic, never a proof: no finite set of floating-point samples can
+ * confirm a limit, since a function can agree at every sample and differ in
+ * between. So the words are careful:
  *
- * - `checked`: the values close in on it.
- * - `unchecked`: they neither close in nor settle somewhere else within the
- *   distances floating point can reach. `1/ln x → 0` at infinity is true and
- *   is still 0.05 at 10⁸; saying it was checked would be a lie, and calling
- *   it wrong would be a worse one.
- * - `wrong`: the values settle, and not on the answer.
+ * - `consistent`: at the distances tested, the values close in on it.
+ * - `inconclusive`: they neither close in nor settle somewhere else within
+ *   the distances floating point can reach. `1/ln x → 0` is still 0.05 at
+ *   10⁸.
+ * - `conflict`: the values settle, and not on the answer.
  *
- * Distances run from far to near. Floating point stops helping before the
- * point itself — `(1 - cos x)/x²` at 10⁻⁸ is all rounding — so what counts is
- * the best agreement at any distance, not the agreement at the last.
+ * Distances run from far to near, and what counts is the best agreement at
+ * any of them, because rounding takes over before the point itself:
+ * `(1 − cos x)/x²` at 10⁻⁸ is nothing but rounding.
  */
 export function checkLimit(
   node: Node,
   variable: string,
   approach: Approach,
   limit: Limit
-): "checked" | "unchecked" | "wrong" {
+): "consistent" | "inconclusive" | "conflict" {
   const values: number[] = [];
   for (let k = 1; k <= 8; k++) {
     const at =
       approach.kind === "infinite"
         ? approach.sign * 10 ** k
         : approach.value + approach.side * 10 ** -k;
+    // A point floating point cannot tell from the approach tests nothing.
+    if (approach.kind === "point" && at === approach.value) continue;
     const v = evaluate(node, { [variable]: at });
     if (!Number.isNaN(v)) values.push(v);
   }
-  if (values.length < 3) return "unchecked";
+  if (values.length < 3) return "inconclusive";
 
   if (limit.kind === "infinite") {
     const tail = values.slice(-4);
@@ -428,20 +805,21 @@ export function checkLimit(
       (v, i) => i === 0 || Math.abs(v) >= Math.abs(tail[i - 1])
     );
     if (rightSign && growing && Math.abs(tail[tail.length - 1]) > 10)
-      return "checked";
-    return settled(values) ? "wrong" : "unchecked";
+      return "consistent";
+    return settled(values) ? "conflict" : "inconclusive";
   }
 
   const target = X.toNumber(limit.value);
   const scale = Math.max(1, Math.abs(target));
   const errors = values.map((v) => Math.abs(v - target));
-  if (Math.min(...errors) <= 1e-5 * scale) return "checked";
+  if (Math.min(...errors) <= 1e-5 * scale) return "consistent";
   // Closing in, if slowly: each step at least halves the distance.
   const last = errors.slice(-4);
-  if (last.every((e, i) => i === 0 || e <= last[i - 1] / 2)) return "checked";
+  if (last.every((e, i) => i === 0 || e <= last[i - 1] / 2))
+    return "consistent";
   if (settled(values) && errors[errors.length - 1] > 1e-3 * scale)
-    return "wrong";
-  return "unchecked";
+    return "conflict";
+  return "inconclusive";
 }
 
 /** Whether the last few values have stopped moving. */
@@ -491,8 +869,13 @@ export function describeLimitMethod(method: LimitMethod): string {
     listed.unshift(`L'Hôpital's rule${times}`);
     if (substantial.length === 0) listed.splice(1);
   }
-  if (method.absolute)
+  const kinds = new Set(method.resolutions.map((r) => r.kind));
+  if (kinds.has("piecewise"))
+    listed.unshift("The formula in force on this side");
+  if (kinds.has("abs") || kinds.has("sign"))
     listed.unshift("Absolute value written out for this side");
+  if (kinds.has("floor") || kinds.has("ceil") || kinds.has("round"))
+    listed.unshift("The whole-number part is constant on this side");
   return listed
     .map((name, i) =>
       i === 0 ? name : name.charAt(0).toLowerCase() + name.slice(1)

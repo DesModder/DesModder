@@ -25,6 +25,7 @@ const add = (a: Node, b: Node) => binop("Add", a, b);
 const sub = (a: Node, b: Node) => binop("Subtract", a, b);
 const pow = (a: Node, b: Node) => binop("Exponent", a, b);
 const fn = (name: string, a: Node) => functionCall(id(name), [a]);
+const negative = (arg: Node): Node => ({ type: "Negative", arg });
 
 const INF: Bound = { kind: "infinite", sign: 1 };
 const NEG_INF: Bound = { kind: "infinite", sign: -1 };
@@ -53,6 +54,10 @@ function limit(node: Node, where: Bound, side: LimitSide = "both") {
       return "DNE oscillates";
     case "unknown":
       return "unknown";
+    case "one-side-only":
+      return `only ${answer.side > 0 ? "right" : "left"} ${show(answer.limit)}`;
+    case "no-approach":
+      return "no approach";
   }
 }
 
@@ -199,17 +204,172 @@ describe("squeeze, sides, and limits that do not exist", () => {
   });
 });
 
+type Operator = "<" | "<=" | "=" | ">=" | ">";
+const compare = (left: Node, operator: Operator, right: Node) =>
+  ({ type: "Comparator", left, operator, right }) as unknown as Node;
+const piecewise = (condition: Node, consequent: Node, alternate: Node) =>
+  ({ type: "Piecewise", condition, consequent, alternate }) as unknown as Node;
+/** How Desmos parses a missing "otherwise". */
+const UNDEFINED = { type: "Constant", value: NaN } as unknown as Node;
+
+describe("piecewise functions and jumps, side by side", () => {
+  const ONE = at(n(1), 1);
+  const TWO = at(n(2), 2);
+
+  test("a jump between two formulas: 1 from the left, 3 from the right", () => {
+    const f = piecewise(
+      compare(x, "<", n(1)),
+      pow(x, n(2)),
+      add(mul(n(2), x), n(1))
+    );
+    expect(limit(f, ONE)).toBe("DNE 1 3");
+    expect(limit(f, ONE, "left")).toBe("1");
+    expect(limit(f, ONE, "right")).toBe("3");
+    expect(method(f, ONE, "left")).toContain("formula in force");
+  });
+
+  test("≤ instead of < changes the value at 1, not the limit", () => {
+    const f = piecewise(
+      compare(x, "<=", n(1)),
+      pow(x, n(2)),
+      add(mul(n(2), x), n(1))
+    );
+    expect(limit(f, ONE)).toBe("DNE 1 3");
+  });
+
+  test("two formulas that meet: the limit exists", () => {
+    const f = piecewise(
+      compare(x, "<", n(1)),
+      pow(x, n(2)),
+      sub(mul(n(2), x), n(1))
+    );
+    expect(limit(f, ONE)).toBe("1");
+    expect(limit(piecewise(compare(x, "<", n(0)), negative(x), x), ZERO)).toBe(
+      "0"
+    );
+  });
+
+  test("a condition that is not x < c is decided by its sign", () => {
+    expect(
+      limit(
+        piecewise(compare(pow(x, n(2)), "<", n(1)), n(2), add(x, n(1))),
+        ONE
+      )
+    ).toBe("2");
+    // True everywhere except the point itself, which a limit never looks at.
+    expect(
+      limit(
+        piecewise(compare(pow(sub(x, n(1)), n(2)), ">", n(0)), n(7), n(9)),
+        ONE
+      )
+    ).toBe("7");
+  });
+
+  test("floor, ceiling, rounding and sign at their jumps", () => {
+    expect(limit(fn("floor", x), TWO)).toBe("DNE 1 2");
+    expect(limit(fn("ceil", x), TWO)).toBe("DNE 2 3");
+    expect(limit(fn("round", x), at(div(n(1), n(2)), 0.5))).toBe("DNE 0 1");
+    expect(limit(fn("sign", x), ZERO)).toBe("DNE -1 1");
+    expect(limit(fn("floor", pow(x, n(2))), ONE)).toBe("DNE 0 1");
+  });
+
+  test("between jumps a floor is simply constant", () => {
+    expect(limit(fn("floor", x), at(div(n(5), n(2)), 2.5))).toBe("2");
+    // x² reaches 0 from above on both sides, so ⌊x²⌋ is 0 on both.
+    expect(limit(fn("floor", pow(x, n(2))), ZERO)).toBe("0");
+  });
+});
+
+describe("a side the function does not live on", () => {
+  test("√x at 0: only the right side exists", () => {
+    const f = fn("sqrt", x);
+    expect(limit(f, ZERO)).toBe("only right 0");
+    expect(limit(f, ZERO, "right")).toBe("0");
+    expect(limit(f, ZERO, "left")).toBe("no approach");
+  });
+
+  test("under the domain convention the one side is the limit", () => {
+    const { answer } = findLimit(fn("sqrt", x), "x", ZERO, "both", "domain");
+    expect(answer.kind === "value" && answer.withinDomain).toBe(true);
+  });
+
+  test("√(1 - x) at 1 lives on the left; ln x at 0 on the right", () => {
+    expect(limit(fn("sqrt", sub(n(1), x)), at(n(1), 1))).toBe("only left 0");
+    expect(limit(fn("ln", x), ZERO)).toBe("only right -inf");
+  });
+
+  test("a piecewise function with no 'otherwise' has no other side", () => {
+    expect(limit(piecewise(compare(x, ">", n(0)), x, UNDEFINED), ZERO)).toBe(
+      "only right 0"
+    );
+  });
+});
+
+describe("oscillation, proved", () => {
+  test("a vanishing term does not rescue sin(1/x): sin(1/x) + x", () => {
+    expect(limit(add(fn("sin", div(n(1), x)), x), ZERO)).toBe("DNE oscillates");
+  });
+
+  test("unbounded oscillation: x sin x at infinity", () => {
+    expect(limit(mul(x, fn("sin", x)), INF)).toBe("DNE oscillates");
+  });
+
+  test("a factor tending to a non-zero number: sin(x)(1 + 1/x)", () => {
+    expect(limit(mul(fn("sin", x), add(n(1), div(n(1), x))), INF)).toBe(
+      "DNE oscillates"
+    );
+  });
+
+  test("any continuous unbounded argument will do: sin(x²), sin(1/x² + x)", () => {
+    expect(limit(fn("sin", pow(x, n(2))), INF)).toBe("DNE oscillates");
+    expect(limit(fn("sin", add(div(n(1), pow(x, n(2))), x)), ZERO)).toBe(
+      "DNE oscillates"
+    );
+  });
+
+  test("what is not an oscillation is not called one", () => {
+    // x + sin x runs off to infinity; the sine only wobbles it.
+    expect(limit(add(x, fn("sin", x)), INF)).toBe("+inf");
+    // Two oscillations can interfere, and proving they do not is a
+    // different theorem.
+    expect(
+      limit(add(fn("sin", x), fn("sin", mul(fn("sqrt", n(2)), x))), INF)
+    ).toBe("unknown");
+  });
+
+  test("e^{1/x} at 0: 0 from the left, +∞ from the right", () => {
+    expect(limit(pow(e, div(n(1), x)), ZERO)).toBe("DNE 0 +inf");
+  });
+});
+
+describe("L'Hôpital's rule, guarded", () => {
+  test("applied twice where it helps: (eˣ - 1 - x)/x²", () => {
+    const f = div(sub(sub(pow(e, x), n(1)), x), pow(x, n(2)));
+    expect(limit(f, ZERO)).toBe("\\frac{1}{2}");
+    expect(method(f, ZERO)).toContain("applied twice");
+  });
+
+  test("not trusted where it loops: √(x² + 1)/x at ±∞", () => {
+    const f = div(fn("sqrt", add(pow(x, n(2)), n(1))), x);
+    expect(limit(f, INF)).toBe("1");
+    expect(limit(f, NEG_INF)).toBe("-1");
+    expect(method(f, INF)).not.toContain("L'Hôpital");
+  });
+});
+
 describe("the numeric check", () => {
   const right = { kind: "point", node: n(0), value: 0, side: 1 } as const;
   const one = { kind: "finite", value: X.fromInteger(1) } as const;
 
   test("confirms a right answer", () => {
-    expect(checkLimit(div(fn("sin", x), x), "x", right, one)).toBe("checked");
+    expect(checkLimit(div(fn("sin", x), x), "x", right, one)).toBe(
+      "consistent"
+    );
   });
 
   test("rejects a wrong one the values settle away from", () => {
     const two = { kind: "finite", value: X.fromInteger(2) } as const;
-    expect(checkLimit(div(fn("sin", x), x), "x", right, two)).toBe("wrong");
+    expect(checkLimit(div(fn("sin", x), x), "x", right, two)).toBe("conflict");
   });
 
   test("does not claim a slow limit it cannot see arrive", () => {
@@ -222,7 +382,7 @@ describe("the numeric check", () => {
         { kind: "infinite", sign: 1 },
         zero
       )
-    ).toBe("unchecked");
+    ).toBe("inconclusive");
   });
 });
 

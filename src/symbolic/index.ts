@@ -52,6 +52,7 @@ export {
 export { dedupe, type SimplificationNote } from "./notes";
 export {
   agreesOnSamples,
+  conditionHolds,
   evaluate,
   numericDerivative,
   numericSecondDerivative,

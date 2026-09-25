@@ -36,6 +36,7 @@ import {
   SLOPE_COUNT_MINIMUM,
   type AnswerForm,
   type DetailLevel,
+  type ExplainLevel,
   type LimitDirection,
   type PhysicsLabConfig,
 } from "../model";
@@ -49,7 +50,9 @@ import {
 import type {
   AttemptVerdict,
   ExactReading,
+  LimitLineView,
   LimitSideView,
+  LimitStepView,
   ShownStep,
 } from "../PhysicsLabSession";
 import { secondOrderHint } from "../symbolic/secondOrder";
@@ -1572,6 +1575,23 @@ function integralTab(physicsLab: PhysicsLab, config: ConfigGetter) {
  * Which side a limit at a point is taken from. The marks are the ones written
  * after the point, so the chip says what the notation will say.
  */
+/**
+ * How deep an explanation goes. The same steps at each depth, so moving
+ * between them cannot change the argument — only how much of it is spelled
+ * out.
+ */
+const EXPLAIN_LEVELS: readonly Choice<ExplainLevel>[] = [
+  { value: "simple", label: "Simple" },
+  { value: "detailed", label: "With reasons" },
+  { value: "research", label: "Proof" },
+];
+
+/** What a two-sided limit means at the edge of a function's domain. */
+const CONVENTIONS: readonly Choice<"bilateral" | "domain">[] = [
+  { value: "bilateral", label: "Both sides required" },
+  { value: "domain", label: "Within the domain" },
+];
+
 const LIMIT_SIDES: readonly Choice<LimitDirection>[] = [
   { value: "both", label: "Both sides" },
   { value: "left", label: "From the left  a⁻" },
@@ -1747,82 +1767,38 @@ function limitTab(physicsLab: PhysicsLab, config: ConfigGetter) {
               </span>
             </div>
             <div class="dsm-physics-lab-hint">
-              Substituting gives no value, only a form, so the limit has to be
-              found another way.
+              Putting the point in gives no value, only a form, so the limit has
+              to be found another way.
             </div>
           </section>
         )}
       </If>
 
+      {/* The answer, stated first and whole. How it was reached comes after,
+          at whatever depth the reader asks for. */}
       <If predicate={() => value() !== undefined}>
         {() => (
           <section class="dsm-physics-lab-section">
-            {/* L'Hôpital's rule, as applied: each line is the new quotient,
-                the derivative of the top over the derivative of the bottom. */}
-            <If predicate={() => (value()?.steps.length ?? 0) > 0}>
-              {() => (
-                <div
-                  class="dsm-physics-lab-limit-steps"
-                  data-physics-lab="limit-steps"
-                >
-                  {limitStatement(
-                    "",
-                    () => value()?.approachLatex ?? "",
-                    () => value()?.bodyLatex ?? ""
-                  )}
-                  <For
-                    each={() =>
-                      (value()?.steps ?? []).map((line, index) => ({
-                        key: String(index),
-                        line,
-                      }))
-                    }
-                    key={(entry: { key: string }) => entry.key}
-                  >
-                    {(entry: () => { line: string }) =>
-                      limitStatement(
-                        "=",
-                        () => value()?.approachLatex ?? "",
-                        () => entry().line
-                      )
-                    }
-                  </For>
-                </div>
-              )}
-            </If>
             <div
               class="dsm-physics-lab-solution"
               data-physics-lab="limit"
               data-latex={() => value()?.valueLatex ?? ""}
             >
-              {/* After L'Hôpital's lines the value is the last line of the
-                  chain; on its own it is the whole statement. */}
-              <If predicate={() => (value()?.steps.length ?? 0) > 0}>
+              {limitStatement(
+                "",
+                () => value()?.approachLatex ?? "",
+                () => `${value()?.bodyLatex ?? ""}=${value()?.valueLatex ?? ""}`
+              )}
+              <If predicate={() => (value()?.caption ?? "") !== ""}>
                 {() => (
-                  <div class="dsm-physics-lab-math dsm-physics-lab-limit-result">
-                    <StaticMathQuillView
-                      latex={() => `=${value()?.valueLatex ?? ""}`}
-                    />
+                  <div
+                    class="dsm-physics-lab-hint"
+                    data-physics-lab="limit-caption"
+                  >
+                    {() => value()?.caption ?? ""}
                   </div>
                 )}
               </If>
-              <If predicate={() => (value()?.steps.length ?? 0) === 0}>
-                {() =>
-                  limitStatement(
-                    "",
-                    () => value()?.approachLatex ?? "",
-                    () =>
-                      `${value()?.bodyLatex ?? ""}=${value()?.valueLatex ?? ""}`
-                  )
-                }
-              </If>
-              {/* Named by what decided it, never inferred from the answer. */}
-              <div
-                class="dsm-physics-lab-method"
-                data-physics-lab="limit-method"
-              >
-                {() => value()?.method ?? ""}
-              </div>
               <div class="dsm-physics-lab-inline">
                 <If predicate={() => value()?.finite === true}>
                   {() => (
@@ -1846,11 +1822,13 @@ function limitTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                   {() => value()?.decimal ?? ""}
                 </span>
               </div>
-              <div class="dsm-physics-lab-hint">
+              {/* A diagnostic, and worded as one: no set of samples proves a
+                  limit, and the proof is the working below. */}
+              <div class="dsm-physics-lab-hint" data-physics-lab="limit-check">
                 {() =>
-                  value()?.check === "checked"
-                    ? "The function's values close in on this near the point."
-                    : "Not confirmed numerically: the function approaches too slowly for floating point to see it arrive."
+                  value()?.check === "consistent"
+                    ? "The function's values near the point are consistent with this at every distance tested."
+                    : "The numbers near the point are inconclusive: it approaches too slowly for floating point to see it arrive. The answer rests on the working below."
                 }
               </div>
               <If predicate={() => (value()?.note ?? "") !== ""}>
@@ -1865,6 +1843,75 @@ function limitTab(physicsLab: PhysicsLab, config: ConfigGetter) {
         )}
       </If>
 
+      <If predicate={() => value() !== undefined}>
+        {() => (
+          <section class="dsm-physics-lab-section">
+            <div class="dsm-physics-lab-section-head">
+              <h3>How</h3>
+              {chipGroup(
+                "Explain",
+                () => config().limit.explain,
+                EXPLAIN_LEVELS,
+                (level) => session().setLimitExplain(level),
+                "dsm-physics-lab-limit-explain"
+              )}
+            </div>
+            {/* Every route that reaches the answer, the one a course would
+                reach for first selected. One tap shows the same limit done
+                another way, which is most of what makes a method stick. */}
+            <If predicate={() => (value()?.routes.length ?? 0) > 0}>
+              {() => (
+                <div
+                  class="dsm-physics-lab-chips"
+                  id="dsm-physics-lab-limit-route"
+                  role="group"
+                  aria-label="Method"
+                >
+                  <div class="dsm-physics-lab-label">Method</div>
+                  <div class="dsm-physics-lab-chip-row">
+                    <For
+                      each={() =>
+                        (value()?.routes ?? []).map((route) => ({
+                          key: route.id,
+                          name: route.name,
+                        }))
+                      }
+                      key={(route: { key: string }) => route.key}
+                    >
+                      {(route: () => { key: string; name: string }) => (
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          data-value={() => route().key}
+                          class={() => ({
+                            "dsm-physics-lab-chip": true,
+                            "dsm-physics-lab-chip-selected":
+                              value()?.route === route().key,
+                          })}
+                          onTap={() => session().setLimitRoute(route().key)}
+                        >
+                          {() => route().name}
+                        </span>
+                      )}
+                    </For>
+                  </div>
+                </div>
+              )}
+            </If>
+            {stepList(
+              () => {
+                const shown = value();
+                return (
+                  shown?.routes.find((r) => r.id === shown.route)?.steps ?? []
+                );
+              },
+              () => value()?.route ?? "",
+              () => config().limit.explain
+            )}
+          </section>
+        )}
+      </If>
+
       <If predicate={() => none() !== undefined}>
         {() => (
           <section class="dsm-physics-lab-section">
@@ -1872,23 +1919,10 @@ function limitTab(physicsLab: PhysicsLab, config: ConfigGetter) {
               <div class="dsm-physics-lab-refusal">
                 {() => none()?.reason ?? ""}
               </div>
-              <For
-                each={() =>
-                  (none()?.sides ?? []).map((side) => ({
-                    key: side.latex,
-                    side,
-                  }))
-                }
-                key={(entry: { key: string }) => entry.key}
-              >
-                {(entry: () => { side: LimitSideView }) =>
-                  limitStatement(
-                    "",
-                    () => entry().side.approachLatex,
-                    () => `${config().limit.fLatex}=${entry().side.valueLatex}`
-                  )
-                }
-              </For>
+              {sideLines(
+                () => none()?.sides ?? [],
+                () => config().limit.fLatex
+              )}
               <div class="dsm-physics-lab-inline">
                 <Button
                   color="light-gray"
@@ -1899,6 +1933,48 @@ function limitTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                 </Button>
               </div>
             </div>
+            <If predicate={() => (none()?.steps.length ?? 0) > 0}>
+              {() => (
+                <div>
+                  <div class="dsm-physics-lab-section-head">
+                    <h3>Why</h3>
+                    {chipGroup(
+                      "Explain",
+                      () => config().limit.explain,
+                      EXPLAIN_LEVELS,
+                      (level) => session().setLimitExplain(level),
+                      "dsm-physics-lab-limit-explain"
+                    )}
+                  </div>
+                  {stepList(
+                    () => none()?.steps ?? [],
+                    () => none()?.reason ?? "",
+                    () => config().limit.explain
+                  )}
+                </div>
+              )}
+            </If>
+          </section>
+        )}
+      </If>
+
+      {/* Offered only where it changes the answer: a function that lives on
+          one side of the point. Both conventions are in textbooks, and which
+          one a course uses is the reader's to say. */}
+      <If
+        predicate={() =>
+          value()?.endpoint === true || none()?.endpoint === true
+        }
+      >
+        {() => (
+          <section class="dsm-physics-lab-section">
+            {chipGroup(
+              "Two-sided limit at the edge of the domain",
+              () => config().limit.convention,
+              CONVENTIONS,
+              (convention) => session().setLimitConvention(convention),
+              "dsm-physics-lab-limit-convention"
+            )}
           </section>
         )}
       </If>
@@ -1913,20 +1989,7 @@ function limitTab(physicsLab: PhysicsLab, config: ConfigGetter) {
             >
               {() => refused()?.error ?? ""}
             </div>
-            <For
-              each={() =>
-                refusedSides().map((side) => ({ key: side.latex, side }))
-              }
-              key={(entry: { key: string }) => entry.key}
-            >
-              {(entry: () => { side: LimitSideView }) =>
-                limitStatement(
-                  "",
-                  () => entry().side.approachLatex,
-                  () => `${config().limit.fLatex}=${entry().side.valueLatex}`
-                )
-              }
-            </For>
+            {sideLines(refusedSides, () => config().limit.fLatex)}
             <div class="dsm-physics-lab-hint">
               Refused rather than guessed. A number the function seems to
               approach is evidence, not a limit.
@@ -1935,6 +1998,106 @@ function limitTab(physicsLab: PhysicsLab, config: ConfigGetter) {
         )}
       </If>
     </div>
+  );
+}
+
+/** The one-sided limits that exist, each a line of maths. */
+function sideLines(sides: () => LimitSideView[], body: () => string) {
+  return (
+    <For
+      each={() => sides().map((side) => ({ key: side.latex, side }))}
+      key={(entry: { key: string }) => entry.key}
+    >
+      {(entry: () => { side: LimitSideView }) =>
+        limitStatement(
+          "",
+          () => entry().side.approachLatex,
+          () => `${body()}=${entry().side.valueLatex}`
+        )
+      }
+    </For>
+  );
+}
+
+/**
+ * The steps of an explanation, numbered, at the depth asked for.
+ *
+ * One list for every depth: what changes is which parts of each step are
+ * shown, never which steps there are, so moving between the depths cannot
+ * change the argument.
+ */
+function stepList(
+  steps: () => LimitStepView[],
+  route: () => string,
+  level: () => ExplainLevel
+) {
+  return (
+    <ol class="dsm-physics-lab-limit-steps" data-physics-lab="limit-steps">
+      <For
+        each={() =>
+          steps().map((step, index) => ({
+            key: `${route()} ${index}`,
+            step,
+          }))
+        }
+        key={(entry: { key: string }) => entry.key}
+      >
+        {(entry: () => { step: LimitStepView }) => (
+          <li class="dsm-physics-lab-limit-step">
+            <div class="dsm-physics-lab-limit-say">
+              {() => entry().step.say}
+            </div>
+            <For
+              each={() =>
+                entry().step.lines.map((line, index) => ({
+                  key: `${index} ${line.kind} ${line.equals ? "=" : ""} ${line.latex}`,
+                  line,
+                }))
+              }
+              key={(item: { key: string }) => item.key}
+            >
+              {(item: () => { line: LimitLineView }) =>
+                item().line.kind === "limit" ? (
+                  limitStatement(
+                    item().line.equals ? "=" : "",
+                    () => item().line.approachLatex,
+                    () => item().line.latex
+                  )
+                ) : (
+                  <div class="dsm-physics-lab-math dsm-physics-lab-limit-math">
+                    <StaticMathQuillView
+                      latex={() =>
+                        `${item().line.equals ? "=" : ""}${item().line.latex}`
+                      }
+                    />
+                  </div>
+                )
+              }
+            </For>
+            <If
+              predicate={() => level() !== "simple" && entry().step.why !== ""}
+            >
+              {() => (
+                <div class="dsm-physics-lab-limit-why">
+                  {() => entry().step.why}
+                </div>
+              )}
+            </If>
+            <If
+              predicate={() =>
+                level() === "research" && entry().step.proof !== ""
+              }
+            >
+              {() => (
+                <div class="dsm-physics-lab-limit-proof">
+                  {() => entry().step.proof}
+                </div>
+              )}
+            </If>
+          </li>
+        )}
+      </For>
+    </ol>
   );
 }
 
