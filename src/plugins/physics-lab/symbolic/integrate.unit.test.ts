@@ -24,7 +24,8 @@ const cfg = buildConfig({
   // Deliberately without `abs`: Desmos has no \abs command, so listing it here
   // would let the emitter produce something a real calculator cannot read.
   // `toLatex` turns the resulting `\operatorname{abs}(…)` into bars anyway.
-  commandNames: "sin cos tan sec csc cot ln log exp sqrt sinh cosh tanh",
+  commandNames:
+    "sin cos tan sec csc cot ln log exp sqrt sinh cosh tanh arcsin arccos arctan",
 });
 
 const emit = (node: Node) => toLatex(cfg, node);
@@ -276,5 +277,65 @@ describe("a function of its inverse, simplified before integrating", () => {
     expect(emit(integrate(fn("cos", fn("arcsin", x)), "x"))).toBe(
       emit(integrate(fn("sqrt", sub(number(1), pow(x, number(2)))), "x"))
     );
+  });
+});
+
+describe("exponentials of one rate, and the hyperbolic functions as them", () => {
+  const e = id("e");
+  const exp = (a: Node) => pow(e, a);
+  const check2 = (integrand: Node, expected: string) => {
+    const result = integrate(integrand, "x");
+    expect(emit(result)).toBe(expected);
+    expect(isAntiderivativeOf(result, integrand)).toBe(true);
+  };
+
+  test("u = eˣ turns them into rational functions", () => {
+    check2(
+      div(number(1), add(exp(x), exp(negative(x)))),
+      String.raw`\arctan\left(e^{x}\right)`
+    );
+    check2(
+      div(number(1), fn("cosh", x)),
+      String.raw`2\arctan\left(e^{x}\right)`
+    );
+    check2(
+      mul(fn("cosh", mul(number(2), x)), fn("sinh", mul(number(3), x))),
+      String.raw`\frac{e^{5x}}{20}+\frac{e^{-x}}{4}+\frac{e^{x}}{4}+\frac{e^{-5x}}{20}`
+    );
+  });
+
+  test("the logarithm of an exponential is its exponent", () => {
+    check2(
+      div(number(1), add(number(1), exp(x))),
+      String.raw`x-\ln\left|1+e^{x}\right|`
+    );
+  });
+});
+
+describe("a root of a quadratic with a middle term", () => {
+  test("is moved so the middle term is gone, and put back as typed", () => {
+    const radicand = add(add(pow(x, number(2)), mul(number(4), x)), number(13));
+    const result = integrate(fn("sqrt", radicand), "x");
+    expect(emit(result)).toContain(String.raw`\sqrt{x^{2}+4x+13}`);
+    expect(isAntiderivativeOf(result, fn("sqrt", radicand))).toBe(true);
+  });
+});
+
+describe("corners", () => {
+  test("|u| and sign(u), continuous across the root", () => {
+    check(fn("abs", x), String.raw`\frac{\left|x\right|x}{2}`);
+    check(mul(x, fn("abs", x)), String.raw`\frac{\left|x\right|x^{2}}{3}`);
+    check(fn("sign", x), String.raw`\left|x\right|`);
+  });
+});
+
+describe("a doubled angle beside the single one", () => {
+  test("is opened, so the substitution can see it", () => {
+    const integrand = mul(
+      fn("sin", mul(number(2), x)),
+      pow(id("e"), fn("sin", x))
+    );
+    const result = integrate(integrand, "x");
+    expect(isAntiderivativeOf(result, integrand)).toBe(true);
   });
 });

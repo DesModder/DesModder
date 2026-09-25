@@ -32,6 +32,7 @@ import {
   rationalNode,
   rationalOf,
   replaceIdentifier,
+  freshName,
 } from "../../../symbolic";
 import {
   asSinesAndCosines,
@@ -39,6 +40,10 @@ import {
   findSubstitution,
 } from "./substitute";
 import { findHalfAngleSubstitution } from "./weierstrass";
+import {
+  findExpSubstitution,
+  hyperbolicAsExponentials,
+} from "./expSubstitution";
 import { trigReduction, trigRewrite } from "./trigProducts";
 import { rationalIntegral } from "./rationalIntegral";
 import { partialFractionIntegral } from "./partialFractions";
@@ -57,6 +62,7 @@ import {
   call,
   dependsOn,
   divide,
+  evaluate,
   id,
   multiply,
   negative,
@@ -65,6 +71,7 @@ import {
   power,
   quotientFactors,
   rebuildSum,
+  replaceSubtree,
   sameTree,
   splitRationalCoefficient,
   subtract,
@@ -109,6 +116,9 @@ export const TECHNIQUES = {
   trigSubstitution: "Trigonometric substitution",
   rootSubstitution: "Rationalising substitution",
   logSubstitution: "Substitution x = e^u",
+  expSubstitution: "Substitution u = e^{kx}",
+  hyperbolic: "Hyperbolic functions as exponentials",
+  absolute: "Splitting at the corner of |u|",
   halfAngle: "Tangent half-angle substitution",
   liouville: "Solving y′ + g′y = f for y·e^g (Liouville)",
   expTrig: "Undetermined coefficients for e^{ax}(U cos bx + V sin bx)",
@@ -772,6 +782,12 @@ function antiderivative(node: Node, variable: string, depth = 0): Node {
   // Whatever a failed route recorded is forgotten with it, so the method
   // reported is the route that finished rather than every route tried.
   const mark = trace.length;
+  // Bars first: parts on x·|x| succeeds too, by integrating |x| inside it,
+  // and comes back three times the length of x²|x|/3.
+  if (depth < MAX_SUBSTITUTION_DEPTH) {
+    const signed = bySign(node, variable, depth);
+    if (signed !== undefined) return signed;
+  }
   try {
     return byRule(node, variable, depth);
   } catch (error) {
@@ -804,6 +820,31 @@ function byRewrite(
 
   const substituted = bySubstitution(node, variable, depth);
   if (substituted !== undefined) return substituted;
+
+  // A root of a quadratic with a middle term, moved so the middle term is
+  // gone: √(x² + 4x + 13) is √(w² + 9) with w = x + 2. Completing the square
+  // is the step before a trigonometric substitution in every course, and the
+  // three table shapes below only know a bare square.
+  const shifted = squareCompletingShift(node, variable);
+  for (const integrand of shifted?.integrands ?? []) {
+    try {
+      return recorded(TECHNIQUES.completingSquare, () =>
+        // The radicands multiplied back out on the way home, so the answer
+        // says √(x² + 4x + 13), which is what was typed, not √((x+2)² + 9).
+        fold(
+          expandRadicands(
+            replaceIdentifier(
+              antiderivative(integrand, shifted!.name, depth + 1),
+              shifted!.name,
+              shifted!.w
+            )
+          )
+        )
+      );
+    } catch (error) {
+      if (!(error instanceof IntegrationError)) throw error;
+    }
+  }
 
   // A root of a sum of squares is the one shape no substitution can clear,
   // because what is in the way is not a composition. Tried after the search,
@@ -928,6 +969,53 @@ function byRewrite(
     }
   }
 
+  // A doubled angle beside the single one: sin 2x = 2 sin x cos x, which is
+  // what lets u = sin x see ∫sin 2x · e^{sin x} dx.
+  const opened = openedDoubleAngles(node, variable);
+  if (opened !== undefined) {
+    try {
+      return recorded(TECHNIQUES.trigIdentity, () =>
+        antiderivative(opened, variable, depth + 1)
+      );
+    } catch (error) {
+      if (!(error instanceof IntegrationError)) throw error;
+    }
+  }
+
+  // Every appearance of the variable inside exponentials of one rate: a
+  // rational function of u = e^{kx}. After the hyperbolic functions are
+  // written as the exponentials they are, the same move finishes them.
+  const exponential = findExpSubstitution(node, variable);
+  for (const candidate of exponential?.integrands ?? []) {
+    try {
+      return recorded(TECHNIQUES.expSubstitution, () =>
+        exponential!.back(
+          antiderivative(candidate, exponential!.name, depth + 1)
+        )
+      );
+    } catch (error) {
+      if (!(error instanceof IntegrationError)) throw error;
+    }
+  }
+  const hyperbolic = hyperbolicAsExponentials(node, variable);
+  // Multiplied out first: cosh 2x sinh 3x is four exponentials, each a rule,
+  // where as a product it is a substitution two levels deeper.
+  const hyperbolicForms =
+    hyperbolic === undefined
+      ? []
+      : [fold(expand(hyperbolic).node), hyperbolic].filter(
+          (form, i, all) => i === 0 || !sameTree(form, all[0])
+        );
+  for (const form of hyperbolicForms) {
+    try {
+      return recorded(TECHNIQUES.hyperbolic, () =>
+        antiderivative(form, variable, depth + 1)
+      );
+    } catch (error) {
+      if (!(error instanceof IntegrationError)) throw error;
+    }
+  }
+
   // Rewriting everything as sines and cosines makes an expression longer
   // whenever it does not help, so it waits until the shape-changing rewrites
   // have all been tried.
@@ -959,6 +1047,231 @@ function byRewrite(
   }
 
   return undefined;
+}
+
+/**
+ * `∫ f · |u|` and `∫ f · sign(u)` for one linear `u = ax + b` appearing as a
+ * factor. With `|u| = u·sign(u)`, the integrand is `sign(u)·g` for a `g`
+ * with no bars in it; `sign(u)·(G(x) − G(r))`, `r` the root of `u`,
+ * differentiates to it away from `r` and is continuous at `r`, which is what
+ * an antiderivative of a function with a corner has to be.
+ */
+function bySign(node: Node, variable: string, depth: number): Node | undefined {
+  const factors: { node: Node; inNumerator: boolean }[] = [];
+  quotientFactors(node, true, factors);
+  const marked = factors.filter(
+    (f) =>
+      f.node.type === "FunctionCall" &&
+      (f.node.callee.symbol === "abs" || f.node.callee.symbol === "sign") &&
+      f.node.args.length === 1 &&
+      dependsOn(f.node.args[0], variable)
+  );
+  if (marked.length !== 1 || !marked[0].inNumerator) return undefined;
+  const call0 = marked[0].node as Aug.Latex.FunctionCall;
+  const [u] = call0.args;
+  const linear = linearIn(u, variable);
+  if (linear === undefined) return undefined;
+  // Anything else with bars in it is not this shape.
+  let otherBars = false;
+  visit(node, (child) => {
+    if (
+      child !== call0 &&
+      child.type === "FunctionCall" &&
+      (child.callee.symbol === "abs" || child.callee.symbol === "sign") &&
+      dependsOn(child, variable)
+    )
+      otherBars = true;
+  });
+  if (otherBars) return undefined;
+  const smooth = replaceSubtree(
+    node,
+    call0,
+    call0.callee.symbol === "abs" ? u : number(1)
+  );
+  const root = fold(divide(negative(linear.b), linear.a));
+  if (!Number.isFinite(evaluate(root, {}))) return undefined;
+  try {
+    return recorded(TECHNIQUES.absolute, () => {
+      const G = antiderivative(fold(smooth), variable, depth + 1);
+      const atRoot = fold(replaceIdentifier(G, variable, root));
+      if (!Number.isFinite(evaluate(atRoot, {})))
+        throw new IntegrationError(
+          "The antiderivative has no value at the corner."
+        );
+      const piece = fold(subtract(G, atRoot));
+      const signed = fold(multiply(call("sign", u), piece));
+      // |u|·(piece/u) reads better, and u always divides a polynomial piece
+      // exactly, since the piece vanishes at the root: x|x|/2 rather than
+      // sign(x)x²/2.
+      const quotient = dividedByLinear(piece, linear, variable);
+      if (quotient === undefined) return signed;
+      return fold(multiply(call("abs", u), quotient));
+    });
+  } catch (error) {
+    if (!(error instanceof IntegrationError)) throw error;
+    return undefined;
+  }
+}
+
+/**
+ * `p(x)/(ax + b)` for a polynomial `p` with rational coefficients that
+ * vanishes at the root, by synthetic division; undefined otherwise.
+ */
+function dividedByLinear(
+  piece: Node,
+  linear: { a: Node; b: Node },
+  variable: string
+): Node | undefined {
+  const coefficients = coefficientsIn(fold(expand(piece).node), variable, 12);
+  const a = rationalOf(fold(linear.a));
+  const b = rationalOf(fold(linear.b));
+  if (coefficients === undefined || a === undefined || b === undefined)
+    return undefined;
+  const q = coefficients.map((c) => rationalOf(fold(c)));
+  if (q.some((c) => c === undefined)) return undefined;
+  const values = (q as { n: number; d: number }[]).map((c) => c.n / c.d);
+  const root = -(b.n / b.d) / (a.n / a.d);
+  // Horner from the top: p(x) = (x − r)·s(x) + p(r).
+  const degree = values.length - 1;
+  if (degree < 1) return undefined;
+  const s: number[] = new Array(degree).fill(0);
+  let carry = 0;
+  for (let k = degree; k >= 1; k--) {
+    carry = values[k] + carry * root;
+    s[k - 1] = carry;
+  }
+  const remainder = values[0] + carry * root;
+  if (Math.abs(remainder) > 1e-12 * Math.max(1, ...values.map(Math.abs)))
+    return undefined;
+  // s is the quotient by (x − r); dividing by a(x − r) scales by 1/a.
+  const scale = a.d / a.n;
+  const nodes = s.map((c) => exactly(c * scale));
+  // `exactly` falls back to the decimal when nothing small fits, and a
+  // decimal in an exact answer is the one thing this must not do.
+  if (nodes.some((n) => n.type === "Constant" && !Number.isInteger(n.value)))
+    return undefined;
+  return fold(rebuild(nodes, variable));
+}
+
+/**
+ * sin(2u) and cos(2u) opened as 2 sin u cos u and cos²u − sin²u, when the
+ * same integrand also has a function of u alone: only then is the doubled
+ * angle what stands between it and a substitution.
+ */
+function openedDoubleAngles(node: Node, variable: string): Node | undefined {
+  const singles: Node[] = [];
+  visit(node, (child) => {
+    if (
+      child.type === "FunctionCall" &&
+      child.args.length === 1 &&
+      ["sin", "cos", "tan"].includes(child.callee.symbol) &&
+      dependsOn(child.args[0], variable)
+    )
+      singles.push(child.args[0]);
+  });
+  let changed = false;
+  const walk = (n: Node): Node => {
+    switch (n.type) {
+      case "Negative":
+        return { ...n, arg: walk(n.arg) };
+      case "BinaryOperator":
+        return { ...n, left: walk(n.left), right: walk(n.right) };
+      case "FunctionCall": {
+        const name = n.callee.symbol;
+        if (n.args.length !== 1 || (name !== "sin" && name !== "cos"))
+          return { ...n, args: n.args.map(walk) };
+        const half = fold(divide(n.args[0], number(2)));
+        if (!singles.some((single) => sameTree(fold(single), half)))
+          return { ...n, args: n.args.map(walk) };
+        changed = true;
+        const sin = call("sin", half);
+        const cos = call("cos", half);
+        return name === "sin"
+          ? multiply(number(2), multiply(sin, cos))
+          : subtract(power(cos, number(2)), power(sin, number(2)));
+      }
+      default:
+        return n;
+    }
+  };
+  const rewritten = walk(node);
+  return changed ? fold(rewritten) : undefined;
+}
+
+/**
+ * `x = w − b/(2a)` for the first square root of `ax² + bx + c` with `b ≠ 0`,
+ * as the integrand in `w` and the `w` to put back.
+ */
+function squareCompletingShift(
+  node: Node,
+  variable: string
+): { integrands: Node[]; name: string; w: Node } | undefined {
+  let offset: { n: number; d: number } | undefined;
+  visit(node, (child) => {
+    if (offset !== undefined) return;
+    const radicand =
+      child.type === "FunctionCall" &&
+      child.callee.symbol === "sqrt" &&
+      child.args.length === 1
+        ? child.args[0]
+        : child.type === "BinaryOperator" &&
+            child.name === "Exponent" &&
+            rationalOf(child.right)?.d === 2
+          ? child.left
+          : undefined;
+    if (radicand === undefined || !dependsOn(radicand, variable)) return;
+    const c = coefficientsIn(fold(expand(radicand).node), variable, 2);
+    if (c?.length !== 3) return;
+    const [, b, a] = c.map((k) => rationalOf(fold(k)));
+    if (a === undefined || b === undefined || a.n === 0 || b.n === 0) return;
+    // b/(2a), kept exact.
+    const n = b.n * a.d;
+    const d = 2 * b.d * a.n;
+    const g = gcdOf(Math.abs(n), Math.abs(d));
+    offset = { n: (Math.sign(d) * n) / g, d: Math.abs(d) / g };
+  });
+  if (offset === undefined) return undefined;
+  const name = freshName(node, ["w", "u", "s", "v"]);
+  const k = rationalNode(offset);
+  const moved = fold(
+    expandRadicands(replaceIdentifier(node, variable, subtract(id(name), k)))
+  );
+  // Multiplied out as well: (w − 1)√(w² + 4) is a substitution plus a
+  // table integral once it is two terms, and a long detour while it is one.
+  const opened = fold(expand(moved).node);
+  return {
+    integrands: sameTree(opened, moved) ? [moved] : [opened, moved],
+    name,
+    w: add(id(variable), k),
+  };
+}
+
+/** Every square root's radicand multiplied out, so (w − 2)² + 4(w − 2) + 13
+ * reads w² + 9 to the shape matchers. */
+function expandRadicands(node: Node): Node {
+  switch (node.type) {
+    case "FunctionCall":
+      return {
+        ...node,
+        args: node.args.map((arg) =>
+          node.callee.symbol === "sqrt"
+            ? fold(expand(arg).node)
+            : expandRadicands(arg)
+        ),
+      };
+    case "BinaryOperator":
+      return node.name === "Exponent" && rationalOf(node.right)?.d === 2
+        ? { ...node, left: fold(expand(node.left).node) }
+        : {
+            ...node,
+            left: expandRadicands(node.left),
+            right: expandRadicands(node.right),
+          };
+    case "Negative":
+      return { ...node, arg: expandRadicands(node.arg) };
+    default:
+      return node;
+  }
 }
 
 /**

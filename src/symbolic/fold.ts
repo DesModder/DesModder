@@ -547,6 +547,21 @@ function foldBinary(node: BinaryOperator): Node {
       ) {
         return right.args[0];
       }
+      // A power of an exponential is one exponential: (e^u)^2 is e^{2u}, true
+      // for every real u because e^u is positive. The same for any positive
+      // number as the base. The substitution u = e^x puts every power of u
+      // back as (e^x)^n, and that is not how anyone writes e^{nx}.
+      if (
+        rc !== undefined &&
+        left.type === "BinaryOperator" &&
+        left.name === "Exponent" &&
+        ((left.left.type === "Identifier" && left.left.symbol === "e") ||
+          (constantValue(left.left) ?? 0) > 0)
+      ) {
+        return fold(
+          binop("Exponent", left.left, binop("Multiply", right, left.right))
+        );
+      }
       // And a one-half power is a square root, which is how it is written.
       // The two rules cannot chase each other: this one only fires on exactly
       // one half, and the one above never produces it.
@@ -571,6 +586,19 @@ function foldBinary(node: BinaryOperator): Node {
       // Same rule for powers: 2^{1/2} is not 1.4142135623730951.
       if (lc !== undefined && rc !== undefined && Number.isInteger(lc ** rc))
         return number(lc ** rc);
+      // A fraction to a whole power is a fraction: (1/2)² is 1/4.
+      {
+        const base = rationalOf(left);
+        if (
+          base !== undefined &&
+          base.d !== 1 &&
+          rc !== undefined &&
+          Number.isInteger(rc) &&
+          rc > 0 &&
+          rc <= 12
+        )
+          return rationalNode({ n: base.n ** rc, d: base.d ** rc });
+      }
       break;
   }
   return node.name === "CrossMultiply"
@@ -704,6 +732,16 @@ function cancelCommonFactors(node: BinaryOperator): Node | undefined {
 function foldInverse(name: string, args: Node[]): Node | undefined {
   if (args.length !== 1) return undefined;
   const [inner] = args;
+  // |e^u| is e^u, and so is any positive number to a power: they are never
+  // negative. ln|eˣ| is what ∫du/u leaves after u = eˣ.
+  if (
+    name === "abs" &&
+    inner.type === "BinaryOperator" &&
+    inner.name === "Exponent" &&
+    ((inner.left.type === "Identifier" && inner.left.symbol === "e") ||
+      (constantValue(inner.left) ?? 0) > 0)
+  )
+    return inner;
   if (name === "ln" && inner.type === "BinaryOperator") {
     if (
       inner.name === "Exponent" &&
@@ -711,6 +749,19 @@ function foldInverse(name: string, args: Node[]): Node | undefined {
       inner.left.symbol === "e"
     )
       return inner.right;
+    // ln(aᵘ) = u ln a for a positive number a with the variable in u.
+    if (
+      inner.name === "Exponent" &&
+      (constantValue(inner.left) ?? 0) > 0 &&
+      constantValue(inner.right) === undefined
+    )
+      return fold(
+        binop("Multiply", inner.right, {
+          type: "FunctionCall",
+          callee: id("ln"),
+          args: [inner.left],
+        })
+      );
     return undefined;
   }
   if (inner.type !== "FunctionCall" || inner.args.length !== 1)
