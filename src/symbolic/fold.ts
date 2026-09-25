@@ -94,7 +94,9 @@ export function fold(node: Node): Node {
     }
     case "FunctionCall": {
       const args = node.args.map(fold);
-      const folded = foldKnownValue(node.callee.symbol, args);
+      const folded =
+        foldKnownValue(node.callee.symbol, args) ??
+        foldInverse(node.callee.symbol, args);
       return folded ?? { ...node, args };
     }
     case "BinaryOperator":
@@ -684,6 +686,69 @@ function cancelCommonFactors(node: BinaryOperator): Node | undefined {
   return denominator.length === 0
     ? product(numerator)
     : binop("Divide", product(numerator), product(denominator));
+}
+
+/**
+ * A function applied to an inverse function, written without either.
+ *
+ * `sin(arcsin u)` is `u`, and `cos(arcsin u)` is `√(1−u²)`: the right-angled
+ * triangle with opposite side u and hypotenuse 1, read off. Each rule is an
+ * identity everywhere its left-hand side is defined, the same direction as
+ * `e^{ln u} = u` above, so nothing is claimed where the input had no value.
+ * The other order is not done: `arcsin(sin u)` is `u` only for |u| ≤ π/2.
+ * `ln(e^u)` is the exception, since `e^u` takes every positive value once.
+ *
+ * Without these `∫sin(arcsin x) dx` was refused as the sine of something
+ * that is not linear, when it is `∫x dx`.
+ */
+function foldInverse(name: string, args: Node[]): Node | undefined {
+  if (args.length !== 1) return undefined;
+  const [inner] = args;
+  if (name === "ln" && inner.type === "BinaryOperator") {
+    if (
+      inner.name === "Exponent" &&
+      inner.left.type === "Identifier" &&
+      inner.left.symbol === "e"
+    )
+      return inner.right;
+    return undefined;
+  }
+  if (inner.type !== "FunctionCall" || inner.args.length !== 1)
+    return undefined;
+  const [u] = inner.args;
+  const square = () => binop("Exponent", u, number(2));
+  const root = (radicand: Node): Node =>
+    fold({ type: "FunctionCall", callee: id("sqrt"), args: [radicand] });
+  const oneMinus = () => root(binop("Subtract", number(1), square()));
+  const onePlus = () => root(binop("Add", square(), number(1)));
+  const key = `${name} ${inner.callee.symbol}`;
+  switch (key) {
+    case "sin arcsin":
+    case "cos arccos":
+    case "tan arctan":
+    case "sinh arcsinh":
+    case "cosh arccosh":
+    case "tanh arctanh":
+    case "ln exp":
+      return u;
+    case "cos arcsin":
+    case "sin arccos":
+      return oneMinus();
+    case "tan arcsin":
+      return binop("Divide", u, oneMinus());
+    case "tan arccos":
+      return binop("Divide", oneMinus(), u);
+    case "sin arctan":
+      return binop("Divide", u, onePlus());
+    case "cos arctan":
+      return binop("Divide", number(1), onePlus());
+    case "cosh arcsinh":
+      return onePlus();
+    case "sinh arccosh":
+      return root(binop("Subtract", square(), number(1)));
+    default:
+      return undefined;
+  }
 }
 
 /**

@@ -256,3 +256,25 @@ describe("integrals that only work once the integrand is multiplied out", () => 
     ).toThrow(IntegrationError);
   });
 });
+
+describe("a function of its inverse, simplified before integrating", () => {
+  test("sin(arcsin x) is x, where it is defined", () => {
+    // Refused once as the sine of something that is not linear.
+    const integrand = fn("sin", fn("arcsin", x));
+    const result = integrate(integrand, "x");
+    expect(emit(result)).toBe(String.raw`\frac{x^{2}}{2}`);
+    expect(
+      agreesOnSamples(
+        (b) => numericDerivative(result, "x", b),
+        (b) => evaluate(integrand, b),
+        [0.1, 0.4, 0.8].map((v) => ({ x: v }))
+      )
+    ).toBe(true);
+  });
+
+  test("cos(arcsin x) is the root of 1 − x²", () => {
+    expect(emit(integrate(fn("cos", fn("arcsin", x)), "x"))).toBe(
+      emit(integrate(fn("sqrt", sub(number(1), pow(x, number(2)))), "x"))
+    );
+  });
+});

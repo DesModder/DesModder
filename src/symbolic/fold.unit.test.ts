@@ -195,3 +195,22 @@ describe("what it deliberately leaves alone", () => {
     );
   });
 });
+
+describe("a function of its own inverse", () => {
+  test("cancels, in the direction that is always true", () => {
+    check(fn("sin", fn("arcsin", x)), "x");
+    check(fn("tan", fn("arctan", x)), "x");
+    check(fn("ln", pow(id("e"), x)), "x");
+  });
+
+  test("and across, by the right-angled triangle", () => {
+    check(fn("cos", fn("arcsin", x)), String.raw`\sqrt{1-x^{2}}`);
+    check(fn("sin", fn("arctan", x)), String.raw`\frac{x}{\sqrt{x^{2}+1}}`);
+  });
+
+  test("but not the other way round", () => {
+    // arcsin(sin x) is x only for |x| ≤ π/2.
+    const node = fn("arcsin", fn("sin", x));
+    check(node, emit(node));
+  });
+});

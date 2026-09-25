@@ -541,3 +541,76 @@ describe("the numeric check, at a hundred digits", () => {
     expect(found.digits).toBeGreaterThanOrEqual(14);
   });
 });
+
+describe("growth races, on Hardy's scale", () => {
+  const ln = (a: Node) => fn("ln", a);
+  const ex = (a: Node) => pow(e, a);
+
+  test("a power against an exponential, however large the power", () => {
+    expect(limit(div(pow(x, n(100)), ex(x)), INF)).toBe("0");
+    expect(limit(div(pow(x, n(2)), pow(n(2), x)), INF)).toBe("0");
+    expect(limit(sub(ex(x), pow(x, n(5))), INF)).toBe("+inf");
+    expect(method(div(pow(x, n(100)), ex(x)), INF)).toMatch(/grow/i);
+  });
+
+  test("a logarithm against a power, and exponentials against each other", () => {
+    expect(limit(div(pow(ln(x), n(100)), pow(x, div(n(1), n(100)))), INF)).toBe(
+      "0"
+    );
+    expect(limit(div(pow(n(2), x), pow(n(3), x)), INF)).toBe("0");
+    expect(limit(div(pow(x, ln(x)), ex(x)), INF)).toBe("0");
+    expect(limit(div(ex(add(pow(x, n(2)), n(1))), ex(pow(x, n(2)))), INF)).toBe(
+      "e"
+    );
+  });
+
+  test("at a point, moved to infinity first", () => {
+    // x^{-100} e^{-1/x²} at 0 is t^{100} e^{-t²} at infinity.
+    expect(
+      limit(div(ex(negative(div(n(1), pow(x, n(2))))), pow(x, n(100))), ZERO)
+    ).toBe("0");
+    expect(limit(pow(fn("sin", x), x), ZERO, "right")).toBe("1");
+    expect(limit(pow(x, fn("sin", x)), ZERO, "right")).toBe("1");
+    expect(limit(div(sub(pow(x, x), n(1)), mul(x, ln(x))), ZERO, "right")).toBe(
+      "1"
+    );
+  });
+
+  test("terms that cancel are looked past, not guessed at", () => {
+    expect(limit(sub(ln(add(n(1), ex(x))), x), INF)).toBe("0");
+    expect(limit(sub(ln(add(ex(x), pow(x, n(3)))), x), INF)).toBe("0");
+    expect(limit(sub(ln(add(x, n(1))), ln(x)), INF)).toBe("0");
+  });
+
+  test("a bounded term beside one that runs off", () => {
+    expect(limit(div(add(x, fn("sin", x)), x), INF)).toBe("1");
+    expect(limit(mul(add(n(2), fn("sin", x)), x), INF)).toBe("+inf");
+  });
+});
+
+describe("answers this used to get wrong", () => {
+  test("a pole is not a large number", () => {
+    // tan(π/2) is 1.6·10¹⁶ in floating point, and was once read as a finite
+    // non-zero factor, answering 0.
+    expect(
+      limit(
+        mul(sub(div(pi, n(2)), x), fn("tan", x)),
+        at(div(pi, n(2)), Math.PI / 2)
+      )
+    ).toBe("1");
+    expect(
+      limit(mul(sub(n(1), x), fn("tan", div(mul(pi, x), n(2)))), at(n(1), 1))
+    ).toBe(String.raw`\frac{2}{\pi}`);
+  });
+
+  test("an exponential is only faster than every power if its exponent outgrows ln x", () => {
+    // e^{√ln x} runs off to infinity and is still smaller than x.
+    expect(limit(div(pow(e, fn("sqrt", fn("ln", x))), x), INF)).not.toBe(
+      "+inf"
+    );
+  });
+
+  test("tanh at infinity finishes", () => {
+    expect(limit(fn("tanh", x), INF)).toBe("1");
+  });
+});

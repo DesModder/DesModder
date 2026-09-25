@@ -28,9 +28,11 @@ export function decimalContext(digits = WORKING_DIGITS): typeof Decimal {
     context = Decimal.clone({
       precision: digits,
       rounding: Decimal.ROUND_HALF_EVEN,
-      // Wide enough that e^{10⁴} and 10⁻⁴⁰⁰ are numbers, not overflow.
-      toExpNeg: -9e15,
-      toExpPos: 9e15,
+      // toExpPos and toExpNeg stay at their defaults. They only choose when a
+      // string uses exponent notation, not the range, which is maxE, but
+      // decimal.js goes through strings inside `pow`. Set to 9e15, raising
+      // e^{10⁸} to a power wrote out a hundred-million-digit string, and a
+      // limit at infinity that sampled there ran out of memory.
     });
     contexts.set(digits, context);
   }
@@ -40,6 +42,32 @@ export function decimalContext(digits = WORKING_DIGITS): typeof Decimal {
 export type PreciseBindings = Readonly<Record<string, Decimal>>;
 
 type Unary = (D: typeof Decimal, x: Decimal) => Decimal;
+
+/*
+ * The hyperbolic functions through `exp`, not decimal.js's own: those sum a
+ * series in the argument itself and did not finish for x = 10⁶, which is
+ * where a limit at infinity samples. `exp` reduces its argument first.
+ */
+const sinh: Unary = (D, x) => {
+  // Near zero the difference of exponentials cancels, so the series instead.
+  if (x.abs().lt(0.5)) return D.sinh(x);
+  const e = D.exp(x);
+  return e.minus(new D(1).div(e)).div(2);
+};
+
+const cosh: Unary = (D, x) => {
+  const e = D.exp(x.abs());
+  return e.plus(new D(1).div(e)).div(2);
+};
+
+// Written with e^{−2|x|}, which only shrinks, so a huge x gives ±1 and not
+// ∞/∞.
+const tanh: Unary = (D, x) => {
+  if (x.abs().lt(0.5)) return D.tanh(x);
+  const e = D.exp(x.abs().times(-2));
+  const t = new D(1).minus(e).div(new D(1).plus(e));
+  return x.isNegative() ? t.neg() : t;
+};
 
 const FUNCTIONS: Record<string, Unary> = {
   sin: (D, x) => D.sin(x),
@@ -54,12 +82,12 @@ const FUNCTIONS: Record<string, Unary> = {
   arccot: (D, x) => D.acos(-1).div(2).minus(D.atan(x)),
   arcsec: (D, x) => D.acos(new D(1).div(x)),
   arccsc: (D, x) => D.asin(new D(1).div(x)),
-  sinh: (D, x) => D.sinh(x),
-  cosh: (D, x) => D.cosh(x),
-  tanh: (D, x) => D.tanh(x),
-  coth: (D, x) => new D(1).div(D.tanh(x)),
-  sech: (D, x) => new D(1).div(D.cosh(x)),
-  csch: (D, x) => new D(1).div(D.sinh(x)),
+  sinh,
+  cosh,
+  tanh,
+  coth: (D, x) => new D(1).div(tanh(D, x)),
+  sech: (D, x) => new D(1).div(cosh(D, x)),
+  csch: (D, x) => new D(1).div(sinh(D, x)),
   arcsinh: (D, x) => D.asinh(x),
   arccosh: (D, x) => D.acosh(x),
   arctanh: (D, x) => D.atanh(x),

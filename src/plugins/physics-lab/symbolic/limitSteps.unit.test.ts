@@ -102,3 +102,31 @@ test("(eˣ − 1 − x)/x²: L'Hôpital twice, and the leading term", () => {
   const found = routes(div(sub(sub(pow(e, x), n(1)), x), pow(x, n(2))), at(0));
   expect(found).toEqual(expect.arrayContaining(["lhopital", "series"]));
 });
+
+describe("growth rates, explained", () => {
+  test("x¹⁰⁰/eˣ is shown as a race eˣ wins", () => {
+    const node = binop(
+      "Divide",
+      binop("Exponent", id("x"), n(100)),
+      binop("Exponent", id("e"), id("x"))
+    );
+    const { answer } = findLimit(
+      node,
+      "x",
+      { kind: "infinite", sign: 1 },
+      "both"
+    );
+    if (answer.kind !== "value") throw new Error(answer.kind);
+    const routes = limitRoutes({
+      original: node,
+      node,
+      variable: "x",
+      approach: { kind: "infinite", sign: 1 },
+      limit: answer.limit,
+      method: answer.method,
+    });
+    const growth = routes.find((r) => r.id === "growth");
+    expect(growth?.name).toBe("Compare growth rates");
+    expect(growth?.steps[0].why).toMatch(/ln t/);
+  });
+});

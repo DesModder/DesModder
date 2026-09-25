@@ -64,3 +64,34 @@ test("what a double cannot evaluate, this cannot either: NaN in the same places"
   ).toBe(true);
   expect(evaluatePrecise(id("a"), {}).isNaN()).toBe(true);
 });
+
+describe("far from zero, where a limit at infinity samples", () => {
+  test("the hyperbolic functions finish, and saturate", () => {
+    const big = { x: new D(10).pow(40) };
+    const start = Date.now();
+    expect(evaluatePrecise(fn("tanh", x), big).toNumber()).toBe(1);
+    expect(evaluatePrecise(fn("tanh", sub(n(0), x)), big).toNumber()).toBe(-1);
+    expect(
+      evaluatePrecise(fn("cosh", x), { x: new D(1000) }).toPrecision(8)
+    ).toBe("9.8503556e+433");
+    expect(Date.now() - start).toBeLessThan(2000);
+  });
+
+  test("small arguments keep their digits", () => {
+    const tiny = { x: new D(10).pow(-30) };
+    expect(evaluatePrecise(fn("sinh", x), tiny).toPrecision(20)).toBe(
+      "1.0000000000000000000e-30"
+    );
+  });
+
+  test("a power of an enormous number does not write it out", () => {
+    // (eˣ + x)^{1/x} at x = 10¹⁰ once built a ten-billion-digit string.
+    const start = Date.now();
+    const value = evaluatePrecise(
+      pow(binop("Add", pow(id("e"), x), x), binop("Divide", n(1), x)),
+      { x: new D(10).pow(10) }
+    );
+    expect(value.toFixed(10)).toBe("2.7182818285");
+    expect(Date.now() - start).toBeLessThan(2000);
+  });
+});

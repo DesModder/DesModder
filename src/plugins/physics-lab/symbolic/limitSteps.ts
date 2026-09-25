@@ -55,6 +55,7 @@ import {
   type Limit,
 } from "./definite";
 import { sameLimit, type IndeterminateForm, type LimitMethod } from "./limit";
+import { leadingForm } from "./asymptotic";
 
 /** One line of maths in a step. */
 export type MathLine =
@@ -121,6 +122,7 @@ export function limitRoutes(context: RouteContext): LimitRoute[] {
     exponentialRoute,
     lHopitalRoute,
     seriesRoute,
+    growthRoute,
   ];
   const routes: LimitRoute[] = [];
   for (const build of builders) {
@@ -945,6 +947,48 @@ function seriesRoute({
               : "A negative power of h grows without bound, with the sign of its coefficient.",
         proof:
           "Every coefficient is computed exactly, and the leading one is proved non-zero, so the function equals c·hᵛ(1 + o(1)) as h → 0⁺.",
+      },
+      { say: "So the limit is:", math: [valueLine(reaches)] },
+    ],
+  };
+}
+
+/**
+ * Growth rates, compared on the scale a course ranks them by: every power of
+ * ln t is eventually smaller than every power of t, and every power of t is
+ * smaller than an exponential whose exponent outgrows ln t. Each part is
+ * replaced by its biggest piece, and the pieces are multiplied.
+ */
+function growthRoute({
+  node,
+  variable,
+  approach,
+  method,
+}: RouteContext): Built | undefined {
+  // Only where the answer was a growth race; offered for sin(x)/x as well it
+  // would be a true route nobody reaches for.
+  if (!method.techniques.includes("growth")) return undefined;
+  const found = leadingForm(node, variable, approach);
+  if (found === undefined) return undefined;
+  const { form, moved, limit: reaches } = found;
+  const substitution =
+    approach.kind === "infinite"
+      ? `${variable} = −t`
+      : `${variable} = point ${approach.side > 0 ? "+" : "−"} 1/t`;
+  const setUp = moved
+    ? `Put ${substitution}, so t grows without bound, and compare how fast each piece grows.`
+    : "Compare how fast each piece grows.";
+  return {
+    id: "growth",
+    name: "Compare growth rates",
+    reaches,
+    steps: [
+      {
+        say: `${setUp} Keep only the biggest piece of each part; what is left over is a factor tending to 1.`,
+        math: [exprLine(form, false)],
+        why: "For large t: any power of ln t < any power of t < e^(g) when g outgrows ln t. So ln(t)¹⁰⁰ loses to t^0.01, and t¹⁰⁰ loses to eᵗ.",
+        proof:
+          "Each piece is written c·tᵃ·(ln t)ᵇ·e^E, with E zero or outgrowing ln t, and the function divided by this form tends to 1. Two sizes compare by E first, then a, then b (Hardy's scale).",
       },
       { say: "So the limit is:", math: [valueLine(reaches)] },
     ],

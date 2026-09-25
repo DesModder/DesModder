@@ -59,6 +59,7 @@ import {
   PowerSeriesError,
   type CoefficientField,
 } from "./powerSeries";
+import { scaleLimit } from "./asymptotic";
 
 /** Thrown for a definite integral this will not evaluate, with the reason. */
 export class DefiniteError extends Error {}
@@ -406,7 +407,7 @@ export function limitOf(
   // passes its list up. The rules try a branch, fail and fall through to the
   // series all the time, and a technique that decided nothing must not end up
   // named as the one that did.
-  for (const attempt of [limitByRules, seriesLimit]) {
+  for (const attempt of [limitByRules, seriesLimit, scaleLimit]) {
     const used: LimitTechnique[] = [];
     const found = attempt(node, variable, approach, (t) => used.push(t));
     if (found !== undefined && decided(found)) {
@@ -714,7 +715,8 @@ function limitByRules(
           if (left === undefined || right === undefined)
             return (
               squeezed(node, left, right, record) ??
-              dominated(node, variable, approach, record)
+              dominated(node, variable, approach, record) ??
+              trapped(node, left, right, record)
             );
           if (left.kind === "finite" && right.kind === "finite")
             return {
@@ -1034,9 +1036,45 @@ export function numericPolynomial(
 export function isBounded(node: Node): boolean {
   if (node.type === "Negative") return isBounded(node.arg);
   if (node.type === "FunctionCall" && node.args.length === 1)
-    return ["sin", "cos", "arctan", "tanh", "sign"].includes(
-      node.callee.symbol
-    );
+    return [
+      "sin",
+      "cos",
+      "arctan",
+      "arccot",
+      "arcsin",
+      "arccos",
+      "tanh",
+      "sign",
+    ].includes(node.callee.symbol);
+  // Sums and products of bounded things, and constant multiples, are bounded:
+  // 3 sin x + cos 2x is, and so is sin x cos x.
+  if (node.type === "BinaryOperator") {
+    // With nothing bound, only a constant evaluates to a number.
+    const constant = (n: Node) => Number.isFinite(evaluate(n, {}));
+    const bounded = (n: Node) => constant(n) || isBounded(n);
+    switch (node.name) {
+      case "Add":
+      case "Subtract":
+      case "Multiply":
+      case "CrossMultiply":
+        return bounded(node.left) && bounded(node.right);
+      case "Divide":
+        return (
+          bounded(node.left) &&
+          constant(node.right) &&
+          evaluate(node.right, {}) !== 0
+        );
+      case "Exponent":
+        return (
+          isBounded(node.left) &&
+          constant(node.right) &&
+          Number.isInteger(evaluate(node.right, {})) &&
+          evaluate(node.right, {}) > 0
+        );
+      default:
+        return false;
+    }
+  }
   return false;
 }
 
@@ -1071,6 +1109,84 @@ function squeezed(
     return { kind: "finite", value: X.ZERO };
   }
   return undefined;
+}
+
+/**
+ * Bounds on an expression that holds for every value of the variable, by
+ * interval arithmetic on the bounded functions: `2 + sin x` is always in
+ * [1, 3]. Undefined for anything unbounded or unknown.
+ */
+export function range(node: Node): [number, number] | undefined {
+  const value = evaluate(node, {});
+  if (Number.isFinite(value)) return [value, value];
+  switch (node.type) {
+    case "Negative": {
+      const r = range(node.arg);
+      return r && [-r[1], -r[0]];
+    }
+    case "FunctionCall": {
+      if (node.args.length !== 1) return undefined;
+      switch (node.callee.symbol) {
+        case "sin":
+        case "cos":
+        case "tanh":
+        case "sign":
+          return [-1, 1];
+        case "arctan":
+          return [-Math.PI / 2, Math.PI / 2];
+        default:
+          return undefined;
+      }
+    }
+    case "BinaryOperator": {
+      const l = range(node.left);
+      const r = l && range(node.right);
+      if (l === undefined || r === undefined) return undefined;
+      switch (node.name) {
+        case "Add":
+          return [l[0] + r[0], l[1] + r[1]];
+        case "Subtract":
+          return [l[0] - r[1], l[1] - r[0]];
+        case "Multiply":
+        case "CrossMultiply": {
+          const p = [l[0] * r[0], l[0] * r[1], l[1] * r[0], l[1] * r[1]];
+          return [Math.min(...p), Math.max(...p)];
+        }
+        case "Divide": {
+          // Only by a constant; a bounded denominator can come near zero.
+          if (r[0] !== r[1] || r[0] === 0) return undefined;
+          const q = [l[0] / r[0], l[1] / r[0]];
+          return [Math.min(...q), Math.max(...q)];
+        }
+        default:
+          return undefined;
+      }
+    }
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * A factor with no limit but trapped between two numbers of one sign, times
+ * one that runs off: `(2 + sin x) · x ≥ x → ∞`. The comparison theorem, with
+ * the bound that makes it apply.
+ */
+function trapped(
+  node: Node & { type: "BinaryOperator" },
+  left: Limit | undefined,
+  right: Limit | undefined,
+  record: LimitRecorder
+): Limit | undefined {
+  const [known, other] =
+    left === undefined ? [right, node.left] : [left, node.right];
+  if (known?.kind !== "infinite") return undefined;
+  const bounds = range(other);
+  if (bounds === undefined) return undefined;
+  const [lo, hi] = bounds;
+  if (!(lo > 0 || hi < 0)) return undefined;
+  record("squeeze");
+  return { kind: "infinite", sign: (known.sign * (lo > 0 ? 1 : -1)) as 1 | -1 };
 }
 
 /**
@@ -1246,7 +1362,14 @@ function growth(
     const baseAt = evaluate(base, { [variable]: approach.value });
     if (baseAt === 0 && coefficientsIn(base, variable, 1) !== undefined)
       return Q.isNegative(exponent) ? "exploding-power" : "vanishing";
-    return Number.isFinite(at) && at !== 0 ? "polynomial" : undefined;
+    // Finite and non-zero by its limit, not by evaluating at the point:
+    // tan(π/2) is 1.6·10¹⁶ in floating point, and reading that as a
+    // number answered (π/2 − x) tan x → 0 when the limit is 1.
+    if (!Number.isFinite(at) || at === 0) return undefined;
+    const settles = limitOf(factor, variable, approach, record);
+    return settles?.kind === "finite" && certainlyZero(settles.value) === false
+      ? "polynomial"
+      : undefined;
   }
   // At infinity: e^{g} with g → -∞ vanishes faster than anything else here.
   const exponent =
@@ -1261,6 +1384,15 @@ function growth(
   if (exponent !== undefined) {
     const inner = limitOf(exponent, variable, approach, record);
     if (inner?.kind !== "infinite") return undefined;
+    // Faster than any power only if the exponent outgrows ln x: e^{√ln x}
+    // runs off to infinity and is still smaller than x, and calling it
+    // exploding once answered e^{√ln x}/x → ∞ when the limit is 0.
+    const outgrowsLog = limitOf(
+      divide(exponent, call("ln", id(variable))),
+      variable,
+      approach
+    );
+    if (outgrowsLog?.kind !== "infinite") return undefined;
     return inner.sign < 0 ? "vanishing" : "exploding-exponential";
   }
   if (coefficientsIn(factor, variable, 12) !== undefined) return "polynomial";
