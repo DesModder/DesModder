@@ -1539,3 +1539,48 @@ Physical constants still belong in a units-aware catalog, a separate feature.
 - Practice problems generated from a route's template, not by editing
   constants — research Q8.
 - Conjugates at infinity and `√(x²) = |x|` in the highest-power route.
+
+## The tightening pass (2026-09-25)
+
+An audit of every engine against probes of a few hundred inputs each, each
+answer checked independently (integrals differentiated back, limits against
+hundred-digit numerics, derivatives against central differences, ODE
+solutions substituted back). Three wrong answers, one hang, one crash, and a
+list of refusals turned up; all are fixed and tested.
+
+**Wrong answers fixed.** `(π/2 − x)·tan x` at π/2 answered 0 (a pole read as
+a large finite number by evaluating at it); `e^{√ln x}/x` at ∞ answered ∞
+(an exponential called faster than every power when its exponent does not
+outgrow ln x); `y' = y²` answered `y = 0` (an equilibrium, reported as the
+general solution — explicit answers without their constant are now refused).
+
+**A hang and a crash.** decimal.js's own `tanh`/`sinh`/`cosh` never finished
+at 10⁶, where limits at infinity sample; they now go through `exp`. And the
+precise context set `toExpPos` to 9e15, which only affects string formatting
+but made `pow` write out a ten-billion-digit string; it is back at the
+default.
+
+**Limits: Hardy's scale.** `asymptotic.ts` measures each piece as
+`c·tᵃ·(ln t)ᵇ·e^E` and compares exponentials, then powers, then logarithms,
+keeping a leading term only where the rest is provably smaller; cancelling
+terms are looked past (a logarithm opened, `f − c ~ c·ln(f/c)`, a series in
+1/t) rather than guessed. `x¹⁰⁰/eˣ`, `2ˣ/3ˣ`, `x^{sin x}`, `(x^x − 1)/(x ln x)`,
+`ln(eˣ + x³) − x` now decide, with a "Compare growth rates" route.
+
+**Integrals.** `u = e^{kx}` for rational functions of exponentials (and the
+hyperbolic functions written as them), completing the square before a
+trigonometric substitution, `|u|`/`sign(u)` of a linear u split at the
+corner, doubled angles opened beside single ones, and a function of its own
+inverse folded (`sin(arcsin x) = x`), which is what the screenshot that
+started this pass needed.
+
+**Definite integrals with no antiderivative** are integrated numerically to
+~40 digits (`quadrature.ts`, double-exponential rules in decimal arithmetic)
+and read back by the recogniser: `∫e^{−x²} = √π`, `∫₀¹ ln(1+x)/x = π²/12`,
+`∫₀¹ arctan(x)/x = G`, `∫₀^∞ e^{−x} ln x = −γ`. Said as found by matching
+digits, not proved. Runs in 20 ms slices after typing pauses.
+
+**ODEs.** Bernoulli (v = y^{1−n}), homogeneous (v = y/x), integrating factors
+from logarithms (`e^{k ln u} = u^k`), and `e^{x−y}` separating.
+
+Screenshot: `docs/assets/physics-lab-numeric-definite.png`.
