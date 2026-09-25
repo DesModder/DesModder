@@ -37,6 +37,12 @@
  * true is worse than no claim.
  */
 import { Aug, AugBuilders } from "../../../../text-mode-core";
+import {
+  decimalContext,
+  evaluatePrecise,
+  WORKING_DIGITS,
+  type Decimal,
+} from "../../../symbolic";
 import * as Q from "./rational";
 import type { Rational } from "./rational";
 
@@ -409,6 +415,41 @@ export function toNumber(value: ExactValue): number {
       product *= Math.pow(base, Q.toNumber(e));
     }
     total += product;
+  }
+  return total;
+}
+
+/**
+ * The value to `digits` significant digits: {@link toNumber} without the
+ * double's sixteen-digit ceiling.
+ *
+ * Every atom is recomputed at the precision asked for — π and e from their
+ * definitions, `√p` and `ln p` from the prime, an opaque atom from the tree
+ * it stands for — never from the double stored beside it, which would put
+ * sixteen digits' worth of error back in.
+ */
+export function toDecimal(value: ExactValue, digits = WORKING_DIGITS): Decimal {
+  const D = decimalContext(digits);
+  let total = new D(0);
+  for (const t of value) {
+    let product = new D(t.coeff.n.toString()).div(t.coeff.d.toString());
+    for (const [atom, e] of t.factors) {
+      const base = isOpaque(atom)
+        ? evaluatePrecise(OPAQUE.get(atom)?.node ?? number(NaN), {}, digits)
+        : atom === PI
+          ? D.acos(-1)
+          : atom === E
+            ? D.exp(1)
+            : new D(atom);
+      const exponent = new D(e.n.toString()).div(e.d.toString());
+      // An odd root of a negative atom is real; nothing else negative is.
+      const raised =
+        base.isNegative() && e.d % 2n === 1n
+          ? D.pow(base.neg(), exponent).times(e.n % 2n === 0n ? 1 : -1)
+          : D.pow(base, exponent);
+      product = product.times(raised);
+    }
+    total = total.plus(product);
   }
   return total;
 }

@@ -6,12 +6,14 @@
  */
 import {
   checkLimit,
+  numericEvidence,
   describeLimitMethod,
   findLimit,
   type LimitSide,
 } from "./limit";
 import type { Bound } from "./definite";
 import * as X from "./exact";
+import * as Q from "./rational";
 import { AugBuilders, buildConfig } from "../../../../text-mode-core";
 import { toLatex, type Node } from "../../../symbolic";
 
@@ -489,4 +491,53 @@ describe("exact constants inside the limit", () => {
       expect(exact(node, where)).toBe(expected);
     }
   );
+});
+
+describe("the numeric check, at a hundred digits", () => {
+  const right = { kind: "point", node: n(0), value: 0, side: 1 } as const;
+  const half = {
+    kind: "finite",
+    value: X.fromRational(Q.rational(1n, 2n)),
+  } as const;
+
+  test("sees (1 − cos x)/x² arrive, where doubles saw only rounding", () => {
+    const f = div(sub(n(1), fn("cos", x)), pow(x, n(2)));
+    const found = numericEvidence(f, "x", right, half);
+    expect(found.verdict).toBe("consistent");
+    expect(found.digits).toBeGreaterThanOrEqual(30);
+  });
+
+  test("still calls a wrong answer a conflict", () => {
+    const f = div(sub(n(1), fn("cos", x)), pow(x, n(2)));
+    const third = {
+      kind: "finite",
+      value: X.fromRational(Q.rational(1n, 3n)),
+    } as const;
+    expect(numericEvidence(f, "x", right, third).verdict).toBe("conflict");
+  });
+
+  test("and still does not claim a limit too slow to see", () => {
+    const zero = { kind: "finite", value: X.ZERO } as const;
+    expect(
+      numericEvidence(
+        div(n(1), fn("ln", x)),
+        "x",
+        { kind: "infinite", sign: 1 },
+        zero
+      ).verdict
+    ).toBe("inconclusive");
+  });
+
+  test("e^π to fourteen places and beyond", () => {
+    const f = pow(add(n(1), div(pi, x)), x);
+    const { answer } = findLimit(f, "x", INF, "both");
+    if (answer.kind !== "value") throw new Error("expected a value");
+    const found = numericEvidence(
+      f,
+      "x",
+      { kind: "infinite", sign: 1 },
+      answer.limit
+    );
+    expect(found.digits).toBeGreaterThanOrEqual(14);
+  });
 });

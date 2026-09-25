@@ -93,6 +93,7 @@
     "@lezer/common": "^1.2.1",
     "@lezer/lr": "^1.4.0",
     "client-zip": "^2.4.4",
+    "decimal.js": "^10.4.3",
     "idb": "^8.0.0",
     "js-tokens": "^9.0.0",
     "moo": "^0.5.2",

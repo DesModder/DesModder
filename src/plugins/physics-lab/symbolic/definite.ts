@@ -432,10 +432,20 @@ export function certainlyZero(value: X.ExactValue): boolean | undefined {
   // What is uncertain is a term that is itself worth nothing, or terms that
   // cancel to almost nothing against their own size.
   const sizes = value.map((t) => Math.abs(X.toNumber([t])));
-  if (sizes.some((s) => !Number.isFinite(s) || s === 0)) return undefined;
   const total = Math.abs(X.toNumber(value));
-  if (total <= 1e-12 * Math.max(...sizes)) return undefined;
-  return false;
+  if (
+    sizes.every((s) => Number.isFinite(s) && s > 0) &&
+    total > 1e-12 * Math.max(...sizes)
+  )
+    return false;
+  // Doubles cannot tell. Sixty digits usually can: two different numbers
+  // that agree to twelve places almost never agree to forty-five, and when
+  // they do, or a term is worth nothing at all, the question stays open.
+  const precise = value.map((t) => X.toDecimal([t]).abs());
+  if (precise.some((s) => !s.isFinite() || s.isZero())) return undefined;
+  const largest = precise.reduce((a, b) => (a.gt(b) ? a : b));
+  const sum = X.toDecimal(value).abs();
+  return sum.gt(largest.times("1e-45")) ? false : undefined;
 }
 
 /**

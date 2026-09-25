@@ -16,7 +16,7 @@
  * Every answered row is also held to two more things: at least one textbook
  * route reaches it, and the numbers near the point do not conflict with it.
  */
-import { checkLimit, findLimit, type LimitSide } from "./limit";
+import { findLimit, numericEvidence, type LimitSide } from "./limit";
 import { limitRoutes } from "./limitSteps";
 import type { Approach, Bound } from "./definite";
 import * as X from "./exact";
@@ -324,6 +324,11 @@ describe("every answer in it can be explained, and survives its numbers", () => 
       form,
     });
     expect(routes.length).toBeGreaterThan(0);
-    expect(checkLimit(node, "x", approach, answer.limit)).not.toBe("conflict");
+    // Sampled at a hundred digits: every finite answer here is met to twelve
+    // decimal places or more, and no answer is contradicted.
+    const evidence = numericEvidence(node, "x", approach, answer.limit);
+    expect(evidence.verdict).toBe("consistent");
+    if (answer.limit.kind === "finite")
+      expect(evidence.digits).toBeGreaterThanOrEqual(12);
   });
 });

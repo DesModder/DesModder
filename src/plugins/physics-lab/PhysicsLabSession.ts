@@ -33,6 +33,8 @@ import {
   toNumber,
   fromInteger as toExact,
   toNode as exactToNode,
+  toDecimal as toExactDecimal,
+  type ExactValue,
   add as addExact,
   negate as negateExact,
   ZERO as EXACT_ZERO,
@@ -67,8 +69,8 @@ import {
   type Limit,
 } from "./symbolic/definite";
 import {
-  checkLimit,
   findLimit,
+  numericEvidence,
   type IndeterminateForm,
   type LimitMethod,
 } from "./symbolic/limit";
@@ -479,6 +481,11 @@ export type LimitView =
       /** The route being shown. */
       route: string;
       check: "consistent" | "inconclusive";
+      /**
+       * Decimal places the sampled values agree with the answer to, at the
+       * closest distance tested; 0 for an infinity, which has no places.
+       */
+      digits: number;
       /** Said when the answer is narrower than what was asked. */
       note: string;
       /** Whether the endpoint convention changed anything here. */
@@ -558,6 +565,8 @@ export interface ExactReading {
   latex: string;
   /** The same value as a double, for showing beside it. */
   value: number;
+  /** The decimal to show: fourteen places, every one of them right. */
+  decimal: string;
   /** True when the exact form is just a number and adds nothing to read. */
   trivial: boolean;
   /**
@@ -1142,6 +1151,7 @@ export default class PhysicsLabSession {
       return {
         latex: toLatex(asDecimal.value),
         value: toNumber(asDecimal.value),
+        decimal: exactDecimal(asDecimal.value),
         trivial: false,
         matched: asDecimal.digits,
       };
@@ -1159,6 +1169,7 @@ export default class PhysicsLabSession {
     return {
       latex: exact,
       value: toNumber(value),
+      decimal: exactDecimal(value),
       // A constant whose exact form is `7` is one Desmos already showed as 7.
       // Repeating it teaches nothing and makes the readout look broken on the
       // expressions where it has nothing to add.
@@ -1759,7 +1770,7 @@ export default class PhysicsLabSession {
         ok: true,
         statementLatex,
         valueLatex: toLatexTree(this.textModeConfig, exactToNode(exact)),
-        decimal: `≈ ${formatDecimal(result.value)}`,
+        decimal: exactDecimal(exact),
         note: result.improper
           ? "Improper: the antiderivative is taken as a limit at the bound, and the value is checked against a numerical integration."
           : "Checked against a numerical integration of the integrand.",
@@ -1998,9 +2009,12 @@ export default class PhysicsLabSession {
             : answer.side !== undefined
               ? [answer.side]
               : [1, -1];
-        const verdicts = sides.map((s) =>
-          checkLimit(node, variable, approachFor(s), answer.limit)
+        const evidence = sides.map((s) =>
+          numericEvidence(node, variable, approachFor(s), answer.limit)
         );
+        const verdicts = evidence.map((e) => e.verdict);
+        // The weaker side is what can be claimed for both.
+        const digits = Math.min(...evidence.map((e) => e.digits));
         // A limit the numbers actively contradict is not shown. The engine
         // proves what it answers, and a conflict is the one sign left that a
         // proof went wrong somewhere; wrong in a form that looks exactly like
@@ -2022,7 +2036,7 @@ export default class PhysicsLabSession {
           valueLatex: limitLatex(answer.limit),
           decimal:
             answer.limit.kind === "finite"
-              ? `≈ ${formatDecimal(toNumber(answer.limit.value))}`
+              ? exactDecimal(answer.limit.value)
               : "",
           finite: !infinite,
           caption:
@@ -2040,6 +2054,7 @@ export default class PhysicsLabSession {
           check: verdicts.every((v) => v === "consistent")
             ? "consistent"
             : "inconclusive",
+          digits,
           note:
             answer.withinDomain === true
               ? `The function only lives to the ${shownSide} of the point, and the limit is taken within its domain.`
@@ -2320,7 +2335,31 @@ function readStoredConfig(serialized: string): unknown {
   }
 }
 
-/** A decimal for reading beside an exact value: nine significant figures. */
-function formatDecimal(value: number): string {
-  return Number(value.toPrecision(9)).toString();
+/**
+ * How many decimal places an exact value's decimal shows: twelve that are
+ * asked for and two to spare. Computed at sixty significant digits, so every
+ * place shown is right, not merely printed.
+ */
+const DECIMAL_PLACES = 14;
+
+/**
+ * The decimal beside an exact value.
+ *
+ * `= 0.6` when the decimal *is* the value — a fraction whose expansion stops
+ * within the places shown — and `≈` with fourteen places otherwise. A value
+ * too large or too small for fourteen places to say anything useful is
+ * written in scientific form with fifteen significant digits instead.
+ */
+function exactDecimal(value: ExactValue): string {
+  const precise = toExactDecimal(value);
+  if (!precise.isFinite()) return "";
+  const size = precise.abs();
+  if (!size.isZero() && (size.lt("1e-4") || size.gte("1e15")))
+    return `≈ ${precise.toSignificantDigits(15).toExponential(14)}`;
+  const shown = precise.toFixed(DECIMAL_PLACES);
+  const exact = precise.eq(shown);
+  const trimmed = shown.includes(".")
+    ? shown.replace(/0+$/, "").replace(/\.$/, "")
+    : shown;
+  return exact ? `= ${trimmed}` : `≈ ${shown}`;
 }

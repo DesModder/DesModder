@@ -94,3 +94,10 @@ export {
   visit,
   type Node,
 } from "./tree";
+export {
+  decimalContext,
+  evaluatePrecise,
+  WORKING_DIGITS,
+  type Decimal,
+  type PreciseBindings,
+} from "./precise";

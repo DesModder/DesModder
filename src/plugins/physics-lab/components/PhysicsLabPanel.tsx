@@ -56,6 +56,7 @@ import type {
   ShownStep,
 } from "../PhysicsLabSession";
 import { secondOrderHint } from "../symbolic/secondOrder";
+import { MAX_REPORTED_DIGITS } from "../symbolic/limit";
 import "./PhysicsLabPanel.less";
 
 interface Choice<T extends string> {
@@ -1825,11 +1826,7 @@ function limitTab(physicsLab: PhysicsLab, config: ConfigGetter) {
               {/* A diagnostic, and worded as one: no set of samples proves a
                   limit, and the proof is the working below. */}
               <div class="dsm-physics-lab-hint" data-physics-lab="limit-check">
-                {() =>
-                  value()?.check === "consistent"
-                    ? "The function's values near the point are consistent with this at every distance tested."
-                    : "The numbers near the point are inconclusive: it approaches too slowly for floating point to see it arrive. The answer rests on the working below."
-                }
+                {() => checkWords(value()?.check, value()?.digits ?? 0)}
               </div>
               <If predicate={() => (value()?.note ?? "") !== ""}>
                 {() => (
@@ -1999,6 +1996,25 @@ function limitTab(physicsLab: PhysicsLab, config: ConfigGetter) {
       </If>
     </div>
   );
+}
+
+/**
+ * What the numeric check found, in words that claim no more than it did.
+ * The digits are real: the function was evaluated at a hundred significant
+ * digits, as close as 10⁻⁴⁰ to the point, and they are how many decimal
+ * places of the answer its values reached.
+ */
+function checkWords(
+  check: "consistent" | "inconclusive" | undefined,
+  digits: number
+): string {
+  if (check !== "consistent")
+    return "The function's values near the point are inconclusive: it approaches too slowly to see it arrive even 10⁻⁴⁰ away. The answer rests on the working below.";
+  if (digits >= MAX_REPORTED_DIGITS)
+    return `The function's values near the point agree with this to more than ${MAX_REPORTED_DIGITS} decimal places.`;
+  if (digits >= 1)
+    return `The function's values near the point agree with this to ${digits} decimal place${digits === 1 ? "" : "s"}, and are still closing in.`;
+  return "The function's values near the point head the way this says, at every distance tested.";
 }
 
 /** The one-sided limits that exist, each a line of maths. */
@@ -2212,7 +2228,7 @@ function exactTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                     if (value === undefined) return "";
                     const digits = value.matched;
                     return digits === undefined
-                      ? `≈ ${value.value.toPrecision(12)}`
+                      ? value.decimal
                       : `matches all ${digits} digits you gave`;
                   }}
                 </span>

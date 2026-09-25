@@ -1444,6 +1444,36 @@ remaining: 27, 30, 50.
 Evidence: `docs/assets/physics-lab-limit-lhopital.png` (steps at the proof
 depth), `docs/assets/physics-lab-limit-piecewise.png`.
 
+### Fourteen decimal places, every one right
+
+Rafael asked for decimals "accurate to 12 decimal places with maybe a couple
+more to spare". Doubles carry about sixteen significant digits and lose some
+at every step, so they could not promise it; and the numeric check sampled
+only to 10⁻⁸, because nearer the point a double sees nothing but rounding
+(`1 − cos(10⁻⁹)` is exactly 0).
+
+`src/symbolic/precise.ts` evaluates any tree at a stated precision with
+`decimal.js` (now a real dependency, MIT, ~32 KB minified), node for node as
+`evaluate` does, NaN in the same places. `toDecimal` in `exact.ts` evaluates an
+exact value the same way, recomputing every atom — π, e, √p, ln p, an opaque
+atom's own tree — rather than trusting the double stored beside it. Tests pin
+π, e, √2, ln 2, sin 1 and e^π to fifty places.
+
+- **The decimal beside every exact answer** (Limit, definite integral, Exact
+  value) is fourteen places from sixty-digit arithmetic: `≈ 23.14069263277927`
+  for e^π, and `= 0.6` where the decimal is the value.
+- **The numeric check** samples at a hundred digits out to 10⁻⁴⁰ (or 10⁴⁰),
+  and reports how many decimal places the values reached: every finite answer
+  in the coverage set agrees to more than 30, and the harness now requires 12.
+  Slow limits (`1/ln x`) are still honestly inconclusive, and a wrong answer
+  is still a conflict.
+- **Zero certification** falls back to sixty digits when doubles cannot tell
+  whether a sum of constants is zero, rather than refusing.
+
+This mostly settles the hide-or-show question above: a conflict can no
+longer be a floating-point accident for anything the precise evaluator reads,
+so it means the engine is wrong, and hiding is right.
+
 ### Still open, from the research
 
 - Parameters (`sin(ax)/x → a`) with case splits — research Q6.

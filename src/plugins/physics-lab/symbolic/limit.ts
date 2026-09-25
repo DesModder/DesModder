@@ -27,8 +27,11 @@
  *   engine's own when both exist.
  */
 import {
+  decimalContext,
   dependsOn,
   differentiate,
+  evaluatePrecise,
+  type Decimal,
   divide,
   evaluate,
   exceedsNodeCount,
@@ -48,6 +51,7 @@ import * as Q from "./rational";
 import {
   certainlyZero,
   eventualSign,
+  exactConstant,
   limitOf,
   type Approach,
   type Bound,
@@ -762,22 +766,119 @@ function oscillationOf(
 
 // ---- checking ----------------------------------------------------------------
 
+/** Significant digits the check samples at: enough to stand 10⁻⁴⁰ from a point. */
+const CHECK_DIGITS = 100;
+
 /**
- * How the function's values near the approach compare with the limit.
+ * What the function's values near the approach say about the limit.
  *
- * A diagnostic, never a proof: no finite set of floating-point samples can
- * confirm a limit, since a function can agree at every sample and differ in
- * between. So the words are careful:
+ * A diagnostic, never a proof: no finite set of samples can confirm a limit,
+ * since a function can agree at every sample and differ in between. So the
+ * words are careful:
  *
- * - `consistent`: at the distances tested, the values close in on it.
- * - `inconclusive`: they neither close in nor settle somewhere else within
- *   the distances floating point can reach. `1/ln x → 0` is still 0.05 at
- *   10⁸.
+ * - `consistent`: the values close in on the answer. `digits` says how many
+ *   decimal places they reached, which is what the panel reports.
+ * - `inconclusive`: they neither close in nor settle elsewhere at the
+ *   distances tested. `1/ln x → 0` is still 0.01 at 10⁴⁰.
  * - `conflict`: the values settle, and not on the answer.
  *
- * Distances run from far to near, and what counts is the best agreement at
- * any of them, because rounding takes over before the point itself:
- * `(1 − cos x)/x²` at 10⁻⁸ is nothing but rounding.
+ * Sampled at a hundred significant digits, out to 10⁻⁴⁰ from the point (or
+ * 10⁴⁰ out towards an infinity). In doubles the samples near the point were
+ * mostly rounding — `(1 − cos x)/x²` at 10⁻⁸ is 0 — so the check stopped at
+ * 10⁻⁸ and a slow limit looked inconclusive for reasons that had nothing to
+ * do with the function. At this precision the arithmetic is exact to far
+ * past anything shown, and what the samples say is about the function.
+ */
+export function numericEvidence(
+  node: Node,
+  variable: string,
+  approach: Approach,
+  limit: Limit
+): { verdict: "consistent" | "inconclusive" | "conflict"; digits: number } {
+  const D = decimalContext(CHECK_DIGITS);
+  const centre =
+    approach.kind === "point"
+      ? X.toDecimal(exactConstant(approach.node) ?? [], CHECK_DIGITS)
+      : undefined;
+  const values: Decimal[] = [];
+  for (let k = 2; k <= 40; k += 2) {
+    const at =
+      approach.kind === "infinite"
+        ? new D(10).pow(k).times(approach.sign)
+        : centre?.isFinite() === true
+          ? centre.plus(new D(10).pow(-k).times(approach.side))
+          : new D(NaN);
+    if (at.isNaN()) continue;
+    const v = evaluatePrecise(node, { [variable]: at }, CHECK_DIGITS);
+    if (!v.isNaN()) values.push(v);
+  }
+  // Nothing the precise evaluator could read: fall back to doubles, which at
+  // least know every function the rest of the plugin does.
+  if (values.length < 3)
+    return { verdict: checkLimit(node, variable, approach, limit), digits: 0 };
+
+  if (limit.kind === "infinite") {
+    // Growing steadily with the right sign across the last several decades
+    // of distance. Not "past a million": ln x at 10⁻⁴⁰ is only -92, and is
+    // on its way to -∞ all the same.
+    const tail = values.slice(-6);
+    const rightSign = tail.every(
+      (v) => !v.isZero() && v.isNegative() === limit.sign < 0
+    );
+    const growing = tail.every(
+      (v, i) => i === 0 || v.abs().gt(tail[i - 1].abs())
+    );
+    if (rightSign && growing) return { verdict: "consistent", digits: 0 };
+    return {
+      verdict: settledPrecisely(values) ? "conflict" : "inconclusive",
+      digits: 0,
+    };
+  }
+
+  const target = X.toDecimal(limit.value, CHECK_DIGITS);
+  const scale = D.max(1, target.abs());
+  const errors = values.map((v) => v.minus(target).abs().div(scale));
+  const best = errors.reduce((a, b) => (a.lt(b) ? a : b));
+  const digits = best.isZero()
+    ? MAX_REPORTED_DIGITS
+    : Math.min(
+        MAX_REPORTED_DIGITS,
+        Math.max(0, Math.floor(-best.log(10).toNumber()))
+      );
+  if (digits >= 12) return { verdict: "consistent", digits };
+  // Closing in, if slowly: the error falls tenfold or more over the samples
+  // and never rises on the way.
+  const last = errors.slice(-6);
+  if (
+    last.every((e, i) => i === 0 || e.lte(last[i - 1])) &&
+    last[last.length - 1].times(10).lte(last[0])
+  )
+    return { verdict: "consistent", digits };
+  if (settledPrecisely(values) && errors[errors.length - 1].gt("1e-10"))
+    return { verdict: "conflict", digits };
+  return { verdict: "inconclusive", digits };
+}
+
+/** How many agreeing decimal places the panel will claim at most. */
+export const MAX_REPORTED_DIGITS = 30;
+
+/** Whether the last few precise values have stopped moving. */
+function settledPrecisely(values: readonly Decimal[]): boolean {
+  const tail = values.slice(-3);
+  if (tail.length < 3 || !tail.every((v) => v.isFinite())) return false;
+  const size = tail.reduce(
+    (m, v) => (v.abs().gt(m) ? v.abs() : m),
+    new (decimalContext(CHECK_DIGITS))(1)
+  );
+  return (
+    tail[2].minus(tail[1]).abs().lte(size.times("1e-30")) &&
+    tail[1].minus(tail[0]).abs().lte(size.times("1e-25"))
+  );
+}
+
+/**
+ * The same check in doubles, for what the precise evaluator cannot read.
+ * Distances stop at 10⁻⁸, where rounding takes over.
  */
 export function checkLimit(
   node: Node,

@@ -1303,6 +1303,15 @@ testWithPage(
     );
     await driver.assertSelectorEventually(LIMIT);
     expect(await latexOf(driver, LIMIT)).toBe(String.raw`e^{\pi}`);
+    // Fourteen decimal places, every one right: e^π = 23.14069263277926900…
+    // rounds to …27 in the fourteenth. And the values near the point, taken
+    // at a hundred digits, agree with it further than the panel will claim.
+    expect(await text(driver, `${LIMIT} .dsm-physics-lab-decimal`)).toBe(
+      "≈ 23.14069263277927"
+    );
+    expect(
+      await text(driver, String.raw`[data-physics-lab="limit-check"]`)
+    ).toContain("more than 30 decimal places");
     await driver.page.screenshot({
       path: "docs/assets/physics-lab-limit-e-pi.png",
     });
