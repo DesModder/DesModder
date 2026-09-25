@@ -45,6 +45,7 @@ import {
   power,
   quotientFactors,
   replaceIdentifier,
+  topLevelTerms,
   visit,
   type Node,
 } from "../../../symbolic";
@@ -52,7 +53,12 @@ import * as X from "./exact";
 import * as Q from "./rational";
 import { coefficientsIn, linearIn } from "./integrate";
 import { factorOverQ } from "./factor";
-import { leadingTerm, PowerSeriesError } from "./powerSeries";
+import {
+  leadingTerm,
+  leadingTermOver,
+  PowerSeriesError,
+  type CoefficientField,
+} from "./powerSeries";
 
 /** Thrown for a definite integral this will not evaluate, with the reason. */
 export class DefiniteError extends Error {}
@@ -214,6 +220,9 @@ function reduce(node: Node): X.ExactValue | undefined {
         case "Exponent": {
           if (node.left.type === "Identifier" && node.left.symbol === "e")
             return exponential(right);
+          // 1 to any power is 1, and 1^π is not a new number.
+          if (X.subtract(left, X.fromInteger(1)).length === 0)
+            return X.fromInteger(1);
           const r = X.asRational(right);
           return r === undefined ? undefined : X.power(left, r);
         }
@@ -253,6 +262,18 @@ function exponential(v: X.ExactValue): X.ExactValue | undefined {
   return total;
 }
 
+/**
+ * `name(arg)` as a tree, with the exponential spelled `e^{arg}`.
+ *
+ * One spelling, because an exponential nothing reduces becomes an opaque atom
+ * keyed by its tree: `\exp(π)` and `e^{π}` would be two different atoms for
+ * one number, and `e^{π+h} - e^{π}` would never cancel. And `e^{π}` is also
+ * how Desmos writes it.
+ */
+function applied(name: string, arg: Node): Node {
+  return name === "exp" ? power(id("e"), arg) : call(name, arg);
+}
+
 function special(name: string, v: X.ExactValue): X.ExactValue | undefined {
   switch (name) {
     case "sqrt":
@@ -263,6 +284,14 @@ function special(name: string, v: X.ExactValue): X.ExactValue | undefined {
       return exponential(v);
     case "ln":
       return naturalLog(v);
+    case "log": {
+      // log v = ln v / ln 10, so log 1 is exactly 0 and log 100 exactly 2.
+      const top = naturalLog(v);
+      const ten = naturalLog(X.fromInteger(10));
+      return top === undefined || ten === undefined
+        ? undefined
+        : X.divide(top, ten);
+    }
     case "sin":
     case "cos":
     case "tan":
@@ -380,13 +409,38 @@ export function limitOf(
   for (const attempt of [limitByRules, seriesLimit]) {
     const used: LimitTechnique[] = [];
     const found = attempt(node, variable, approach, (t) => used.push(t));
-    if (found !== undefined) {
+    if (found !== undefined && decided(found)) {
       used.forEach(record);
       return found;
     }
   }
   return undefined;
 }
+
+/**
+ * Whether an exact value is certainly zero or certainly not.
+ *
+ * Undefined in between: a value that is not written as zero and is
+ * numerically indistinguishable from it. `ln(1)` read through `log` once
+ * came back as an opaque atom worth exactly 0 that did not look like 0, and
+ * `log(1+x)/x` at 0 was divided by it and answered +∞. An answer that
+ * depends on a zero nobody proved is not an answer.
+ */
+export function certainlyZero(value: X.ExactValue): boolean | undefined {
+  if (value.length === 0) return true;
+  // Relative, not absolute: (1/π)^{24}/24 is 5·10⁻¹⁴ and perfectly certain.
+  // What is uncertain is a term that is itself worth nothing, or terms that
+  // cancel to almost nothing against their own size.
+  const sizes = value.map((t) => Math.abs(X.toNumber([t])));
+  if (sizes.some((s) => !Number.isFinite(s) || s === 0)) return undefined;
+  const total = Math.abs(X.toNumber(value));
+  if (total <= 1e-12 * Math.max(...sizes)) return undefined;
+  return false;
+}
+
+/** A limit whose value is certainly zero or certainly not. */
+const decided = (found: Limit) =>
+  found.kind === "infinite" || certainlyZero(found.value) !== undefined;
 
 /**
  * The limit read off a series, for the indeterminate forms the rules leave:
@@ -398,10 +452,11 @@ export function limitOf(
  * the sign of `c`. A series that vanishes to every order computed decides
  * nothing, and the limit stays unknown rather than being called zero.
  *
- * A point that is not rational — `π`, `√2` — is substituted as the expression
- * it is and folded, so `sin(x - π)/(x - π)` becomes `sin(h)/h` before the
- * series is asked for. What does not fold away (`sin(π + h)` on its own) is
- * a coefficient the series layer has no exact form for, and it refuses.
+ * Rational coefficients are tried first, because they are fast and cover
+ * most of what a course writes. When they cannot represent a coefficient —
+ * `(1 + π/x)^x` has `π` in every one, and `sin x` about `π/6` has `√3/2` —
+ * the same series is taken over the exact constants instead, so the limit is
+ * `e^π` and `√3/2` rather than a refusal.
  */
 function seriesLimit(
   node: Node,
@@ -409,40 +464,103 @@ function seriesLimit(
   approach: Approach,
   record: LimitRecorder
 ): Limit | undefined {
-  // A name no Desmos expression can contain, so the substitution is clean.
-  const h = "limitStep";
-  let moved: Node;
-  if (approach.kind === "infinite") {
-    moved = replaceIdentifier(
+  const moved = movedToZero(node, variable, approach);
+  const lead = leadingTermExactly(moved, LIMIT_STEP);
+  if (lead === undefined) return undefined;
+  record("series");
+  if (lead.valuation > 0) return { kind: "finite", value: X.ZERO };
+  if (lead.valuation === 0) return { kind: "finite", value: lead.coefficient };
+  return {
+    kind: "infinite",
+    sign: X.toNumber(lead.coefficient) < 0 ? -1 : 1,
+  };
+}
+
+/** A name no Desmos expression can contain, so a substitution is clean. */
+export const LIMIT_STEP = "limitStep";
+
+/**
+ * The expression with the approach moved to `h → 0⁺`: `x = a ± h` at a
+ * point, `x = ±1/h` at an infinity.
+ */
+export function movedToZero(
+  node: Node,
+  variable: string,
+  approach: Approach
+): Node {
+  const h = id(LIMIT_STEP);
+  if (approach.kind === "infinite")
+    return replaceIdentifier(
       node,
       variable,
-      divide(numberNode(approach.sign), id(h))
+      divide(numberNode(approach.sign), h)
     );
-  } else {
-    const at = X.asRational(exactConstant(approach.node) ?? []);
-    const step = multiply(numberNode(approach.side), id(h));
-    moved =
-      at === undefined
-        ? fold(replaceIdentifier(node, variable, addNodes(approach.node, step)))
-        : replaceIdentifier(
-            node,
-            variable,
-            addNodes(X.toNode(X.fromRational(at)), step)
-          );
-  }
-  let lead: ReturnType<typeof leadingTerm>;
+  const at = X.asRational(exactConstant(approach.node) ?? []);
+  const centre =
+    at === undefined ? approach.node : X.toNode(X.fromRational(at));
+  return replaceIdentifier(
+    node,
+    variable,
+    addNodes(centre, multiply(numberNode(approach.side), h))
+  );
+}
+
+/**
+ * The exact constants as a field of series coefficients.
+ *
+ * Zero has to be certain. The exact representation is canonical for the
+ * atoms it knows, but two opaque atoms that happen to be equal — two
+ * spellings of the same number nothing reduced — would subtract to something
+ * that is zero and does not look it, and a leading coefficient that is
+ * really zero makes a wrong limit rather than an unknown one. So a
+ * coefficient that is not structurally zero and is numerically
+ * indistinguishable from zero is neither: the expansion stops.
+ */
+export const EXACT_CONSTANTS: CoefficientField<X.ExactValue> = {
+  zero: X.ZERO,
+  one: X.fromInteger(1),
+  fromRational: X.fromRational,
+  add: X.add,
+  negate: X.negate,
+  multiply: X.multiply,
+  inverse: (a) => X.divide(X.fromInteger(1), a),
+  isZero: (a) => {
+    const zero = certainlyZero(a);
+    if (zero === undefined)
+      throw new PowerSeriesError(
+        "A coefficient could not be decided to be zero or not."
+      );
+    return zero;
+  },
+  power: X.power,
+  constant: (node) => exactConstant(node),
+  apply: (name, c) => exactConstant(applied(name, X.toNode(c))),
+};
+
+/**
+ * The leading term of a series about zero, over the rationals if they will
+ * do and the exact constants if not. Undefined when neither decides it.
+ */
+export function leadingTermExactly(
+  node: Node,
+  variable: string
+): { valuation: number; coefficient: X.ExactValue } | undefined {
   try {
-    lead = leadingTerm(moved, h);
+    const lead = leadingTerm(node, variable);
+    if (lead === undefined) return undefined;
+    return {
+      valuation: lead.valuation,
+      coefficient: X.fromRational(lead.coefficient),
+    };
+  } catch (error) {
+    if (!(error instanceof PowerSeriesError)) throw error;
+  }
+  try {
+    return leadingTermOver(EXACT_CONSTANTS, node, variable);
   } catch (error) {
     if (error instanceof PowerSeriesError) return undefined;
     throw error;
   }
-  if (lead === undefined) return undefined;
-  record("series");
-  if (lead.valuation > 0) return { kind: "finite", value: X.ZERO };
-  if (lead.valuation === 0)
-    return { kind: "finite", value: X.fromRational(lead.coefficient) };
-  return { kind: "infinite", sign: Q.isNegative(lead.coefficient) ? -1 : 1 };
 }
 
 function limitByRules(
@@ -584,6 +702,68 @@ function limitByRules(
   }
 }
 
+/**
+ * `ln A` written as a sum the limit rules can take apart, or undefined when
+ * nothing here applies:
+ *
+ * - `ln(e^u) = u` and `ln(a^u) = u ln a` for a positive constant `a`;
+ * - `ln(A + B) = ln B + ln(1 + A/B)` when `A/B → 0`: the dominant term comes
+ *   out, and what is left is a logarithm of something tending to 1.
+ *
+ * Every identity holds exactly wherever both sides are defined, and the
+ * caller only asks while `A` is positive near the approach.
+ */
+function expandedLogarithm(
+  node: Node,
+  variable: string,
+  approach: Approach,
+  depth = 0
+): Node | undefined {
+  if (depth > 3) return undefined;
+  if (node.type === "BinaryOperator" && node.name === "Exponent") {
+    if (node.left.type === "Identifier" && node.left.symbol === "e")
+      return node.right;
+    if (!dependsOn(node.left, variable) && evaluate(node.left, {}) > 0)
+      return multiply(node.right, call("ln", node.left));
+  }
+  if (
+    node.type === "BinaryOperator" &&
+    (node.name === "Add" || node.name === "Subtract")
+  ) {
+    const other = (
+      dominant: Node,
+      rest: Node,
+      sign: 1 | -1
+    ): Node | undefined => {
+      const ratio = limitOf(divide(rest, dominant), variable, approach);
+      if (ratio?.kind !== "finite" || certainlyZero(ratio.value) !== true)
+        return undefined;
+      if (!(evaluate(dominant, { [variable]: near(approach) }) > 0))
+        return undefined;
+      const inner =
+        expandedLogarithm(dominant, variable, approach, depth + 1) ??
+        call("ln", dominant);
+      const small = divide(rest, dominant);
+      return addNodes(
+        inner,
+        call(
+          "ln",
+          addNodes(
+            numberNode(1),
+            sign > 0 ? small : multiply(numberNode(-1), small)
+          )
+        )
+      );
+    };
+    // A + B: either term may dominate. L - R = L(1 - R/L): only the left, since
+    // the whole is positive and a dominant subtracted term would make it not.
+    return node.name === "Add"
+      ? (other(node.right, node.left, 1) ?? other(node.left, node.right, 1))
+      : other(node.left, node.right, -1);
+  }
+  return undefined;
+}
+
 /** Whether a constant expression contains `0^0` anywhere inside it. */
 function zeroToTheZero(node: Node): boolean {
   let found = false;
@@ -614,12 +794,34 @@ function powerLimit(
     // ∞^0 stop being forms and become one limit of a product. Only while A is
     // positive near the point, where the logarithm is real.
     if (!(evaluate(left, { [variable]: near(approach) }) > 0)) return undefined;
-    const found = functionLimit(
-      call("exp", multiply(right, call("ln", left))),
-      variable,
-      approach,
-      record
-    );
+    // B times each term of the logarithm, so that (1/x)(x ln 2 + …) reaches
+    // the rules as ln 2 + … rather than as 0·∞.
+    const exponent = (logarithm: Node) =>
+      functionLimit(
+        call(
+          "exp",
+          topLevelTerms(logarithm)
+            .map(({ term, negated }) => {
+              const product = fold(multiply(right, term));
+              return negated ? multiply(numberNode(-1), product) : product;
+            })
+            .reduce((total, term) => addNodes(total, term))
+        ),
+        variable,
+        approach,
+        record
+      );
+    let found = exponent(call("ln", left));
+    if (found === undefined) {
+      // The logarithm taken apart where it can be: (1 + 2^x)^{1/x} is
+      // exp((x ln 2 + ln(1 + 2^{-x}))/x), which is e^{ln 2} = 2 -- and
+      // exp(ln(1 + 2^x)/x) on its own is a growth race the rules cannot run.
+      const expanded = expandedLogarithm(left, variable, approach);
+      if (expanded !== undefined) {
+        found = exponent(expanded);
+        if (found !== undefined) record("dominant-term");
+      }
+    }
     if (found !== undefined) record("exp-log");
     return found;
   }
@@ -705,7 +907,7 @@ function functionLimit(
       return { kind: "infinite", sign: -1 };
     }
   }
-  const value = exactConstant(call(name, X.toNode(inner.value)));
+  const value = exactConstant(applied(name, X.toNode(inner.value)));
   return value === undefined ? undefined : { kind: "finite", value };
 }
 
@@ -933,7 +1135,22 @@ function growth(
   const isLog = (n: Node): boolean =>
     (n.type === "FunctionCall" && n.callee.symbol === "ln") ||
     (n.type === "BinaryOperator" && n.name === "Exponent" && isLog(n.left));
-  if (isLog(factor)) return "logarithmic";
+  if (isLog(factor)) {
+    // A logarithm is slow only of something that grows like a power. ln(2^x)
+    // is x ln 2, a power, and treating ln(1 + 2^x) as slow once answered
+    // (1 + 2^x)^{1/x} at infinity with 1 instead of 2.
+    let inside: Node = factor;
+    while (inside.type === "BinaryOperator" && inside.name === "Exponent")
+      inside = inside.left;
+    if (inside.type !== "FunctionCall") return undefined;
+    const kind = growth(inside.args[0], variable, approach, record);
+    return kind === "polynomial" ||
+      kind === "vanishing" ||
+      kind === "exploding-power" ||
+      kind === "logarithmic"
+      ? "logarithmic"
+      : undefined;
+  }
   // A root is a power: √x is x^{1/2}, and ln(x)/√x is the ln(x)/x rule.
   if (factor.type === "FunctionCall" && factor.callee.symbol === "sqrt")
     return growth(

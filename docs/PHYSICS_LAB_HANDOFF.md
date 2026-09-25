@@ -1331,3 +1331,46 @@ Evidence: `docs/assets/physics-lab-limit.png`,
 - Oscillation is recognised only for a sine or cosine of an unbounded argument
   at the top level, times a constant.
 - No worked-example or practice problem yet, unlike the Derivative tab.
+
+---
+
+## Constants inside a series
+
+`(1 + π/x)^x` was refused, and it was not one missing case: the series engine
+held rational coefficients only, so every limit whose expansion carries a
+constant failed the same way — `sin(πx)/x`, `(2^x − 1)/x`, `log(1+x)/x`, and
+every expansion about `π/6`.
+
+`powerSeries.ts` is now generic over a `CoefficientField`. The rationals stay
+the fast default and all the integrator uses; `EXACT_CONSTANTS` in
+`definite.ts` is the exact field (π, e, roots, logarithms of primes, special
+values), tried when the rationals cannot hold a coefficient. With exact
+coefficients the addition formulas become available — `e^{c+w} = e^c e^w`,
+`sin(c+w) = sin c cos w + cos c sin w`, `ln(c+w) = ln c + ln(1 + w/c)` — which
+is what expanding about a non-zero point needs. `a^u = e^{u ln a}` covers a
+constant base and an irrational exponent; `log` is `ln` over `ln 10`.
+
+Probing the neighbours of the reported case found three **wrong** answers,
+not just refusals, and they are the more important part of this:
+
+- `log(1+x)/x` at 0 answered +∞. `exactConstant(log 1)` had come back as an
+  opaque atom worth exactly 0 that did not look like 0, and the rules divided
+  by it. Zero is now certified (`certainlyZero`): a value that is not written
+  as zero and whose terms cancel to nothing against their own size is
+  undecided, and `limitOf` refuses a finite answer it cannot decide. The
+  threshold is relative — an absolute one tripped on `(1/π)^{24}/24`.
+- `(x^π − 1)/(x − 1)` at 1 answered +∞, through `1^π` becoming a new atom
+  (it is now 1), and the series engine read the exponent's double back with
+  `Q.fromNumber`, making π a decimal passed off as exact. Only a rational
+  written as one is a rational exponent now.
+- `(1 + 2^x)^{1/x}` at infinity answered 1. The growth rule called any
+  logarithm slow; `ln(1 + 2^x)` grows like `x ln 2`. A logarithm is slow only
+  of something growing like a power, and the `exp(B ln A)` route now takes
+  the dominant term out of the logarithm, `ln(A + B) = ln B + ln(1 + A/B)`,
+  which answers 2.
+
+Exponentials are spelled `e^{…}` everywhere, because an unreduced one is an
+opaque atom keyed by its tree and `\exp(π)` and `e^{π}` would never cancel.
+
+Evidence: `docs/assets/physics-lab-limit-e-pi.png`; the integration test
+checks the panel emits `e^{\pi}` and that Desmos reads it back as the number.

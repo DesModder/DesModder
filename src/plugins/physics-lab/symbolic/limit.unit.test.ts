@@ -12,8 +12,8 @@ import {
 } from "./limit";
 import type { Bound } from "./definite";
 import * as X from "./exact";
-import { AugBuilders } from "../../../../text-mode-core";
-import type { Node } from "../../../symbolic";
+import { AugBuilders, buildConfig } from "../../../../text-mode-core";
+import { toLatex, type Node } from "../../../symbolic";
 
 const { binop, functionCall, id, number: n } = AugBuilders;
 const x = id("x");
@@ -224,4 +224,109 @@ describe("the numeric check", () => {
       )
     ).toBe("unchecked");
   });
+});
+
+describe("exact constants inside the limit", () => {
+  // The parser config the tests use has no `\pi`; Desmos's does, and the
+  // integration test checks the real spelling.
+  const cfg = buildConfig({
+    commandNames:
+      "sin cos tan sec csc cot ln log exp sqrt sinh cosh tanh arcsin arccos arctan",
+  });
+  const exact = (node: Node, where: Bound) => {
+    const { answer } = findLimit(node, "x", where, "both");
+    if (answer.kind !== "value" || answer.limit.kind !== "finite")
+      return "no finite value";
+    return toLatex(cfg, X.toNode(answer.limit.value)).replace(
+      /\\operatorname\{pi\}/g,
+      String.raw`\pi`
+    );
+  };
+  const sqrt2 = fn("sqrt", n(2));
+  const onePlus = (a: Node) => add(n(1), a);
+
+  test.each([
+    ["(1 + π/x)^x", pow(onePlus(div(pi, x)), x), INF, String.raw`e^{\pi}`],
+    ["(1 + e/x)^x", pow(onePlus(div(e, x)), x), INF, "e^{e}"],
+    ["(1 - π/x)^x", pow(sub(n(1), div(pi, x)), x), INF, String.raw`e^{-\pi}`],
+    [
+      "(1 + √2/x)^{3x}",
+      pow(onePlus(div(sqrt2, x)), mul(n(3), x)),
+      INF,
+      String.raw`e^{3\sqrt{2}}`,
+    ],
+    [
+      "(1 + 1/(πx))^x",
+      pow(onePlus(div(n(1), mul(pi, x))), x),
+      INF,
+      String.raw`e^{\frac{1}{\pi}}`,
+    ],
+    [
+      "(1 + 1/x)^{πx}",
+      pow(onePlus(div(n(1), x)), mul(pi, x)),
+      INF,
+      String.raw`e^{\pi}`,
+    ],
+    [
+      "(1 + πx)^{1/x} at 0",
+      pow(onePlus(mul(pi, x)), div(n(1), x)),
+      ZERO,
+      String.raw`e^{\pi}`,
+    ],
+    ["sin(πx)/x at 0", div(fn("sin", mul(pi, x)), x), ZERO, String.raw`\pi`],
+    [
+      "(e^{√2x} - 1)/x at 0",
+      div(sub(pow(e, mul(sqrt2, x)), n(1)), x),
+      ZERO,
+      String.raw`\sqrt{2}`,
+    ],
+    [
+      "(2^x - 1)/x at 0",
+      div(sub(pow(n(2), x), n(1)), x),
+      ZERO,
+      String.raw`\ln\left(2\right)`,
+    ],
+    [
+      "log(1 + x)/x at 0",
+      div(fn("log", onePlus(x)), x),
+      ZERO,
+      String.raw`\frac{1}{\ln\left(10\right)}`,
+    ],
+    [
+      "√(x² + πx) - x",
+      sub(fn("sqrt", add(pow(x, n(2)), mul(pi, x))), x),
+      INF,
+      String.raw`\frac{\pi}{2}`,
+    ],
+    ["(1 + 2^x)^{1/x}", pow(onePlus(pow(n(2), x)), div(n(1), x)), INF, "2"],
+    [
+      "(sin x - 1/2)/(x - π/6) at π/6",
+      div(sub(fn("sin", x), div(n(1), n(2))), sub(x, div(pi, n(6)))),
+      at(div(pi, n(6)), Math.PI / 6),
+      String.raw`\frac{\sqrt{3}}{2}`,
+    ],
+    [
+      "(e^x - e^π)/(x - π) at π",
+      div(sub(pow(e, x), pow(e, pi)), sub(x, pi)),
+      at(pi, Math.PI),
+      String.raw`e^{\pi}`,
+    ],
+    [
+      "(x^π - 1)/(x - 1) at 1",
+      div(sub(pow(x, pi), n(1)), sub(x, n(1))),
+      at(n(1), 1),
+      String.raw`\pi`,
+    ],
+    [
+      "(ln x - 1)/(x - e) at e",
+      div(sub(fn("ln", x), n(1)), sub(x, e)),
+      at(e, Math.E),
+      String.raw`\frac{1}{e}`,
+    ],
+  ] as [string, Node, Bound, string][])(
+    "%s is %s",
+    (_, node, where, expected) => {
+      expect(exact(node, where)).toBe(expected);
+    }
+  );
 });

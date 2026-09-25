@@ -1288,6 +1288,32 @@ testWithPage(
     await driver.assertSelectorNot("#dsm-physics-lab-limit-side");
     await driver.page.screenshot({ path: "docs/assets/physics-lab-limit.png" });
 
+    // The same limit with π in it: every coefficient of its series carries π,
+    // which the rational series could not hold. The answer is e^π, written the
+    // way Desmos writes it, and Desmos reads that string back as the number.
+    await setLimit(
+      driver,
+      String.raw`\left(1+\frac{\pi}{x}\right)^{x}`,
+      String.raw`\infty`
+    );
+    await driver.assertSelectorEventually(LIMIT);
+    expect(await latexOf(driver, LIMIT)).toBe(String.raw`e^{\pi}`);
+    await driver.page.screenshot({
+      path: "docs/assets/physics-lab-limit-e-pi.png",
+    });
+    await driver.evaluate(
+      (latex: string) => {
+        Calc.setExpression({
+          id: "gap",
+          latex: `g_{ap}=${latex}-e^{3.14159265358979}`,
+        });
+      },
+      await latexOf(driver, LIMIT)
+    );
+    await driver.waitForSync();
+    expect(Math.abs(await desmosValue(driver, "g_{ap}"))).toBeLessThan(1e-9);
+    await driver.setBlank();
+
     // 0/0, and L'Hôpital's rule applied for real: its line is on screen, and
     // the value is exact. Desmos evaluates the function itself close to the
     // point, which checks both the answer and that its LaTeX parses.
