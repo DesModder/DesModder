@@ -245,12 +245,18 @@ translate rather than silently drawing a different field.
 
 Supported: `+ - * / ^`, `\frac`, `\sqrt` (including `\sqrt[n]`), `|…|`,
 parentheses/braces/brackets, implicit multiplication, `\cdot`/`\times`, and the
-functions `sin cos tan cot sec csc arcsin arccos arctan sinh cosh tanh exp ln
-log sqrt abs sign floor ceil round mod min max`. Variables `x`, `y` and `e`,
-**plus anything the expression list defines** — see 4.3.
+functions `sin cos tan cot sec csc arcsin arccos arctan arccot arcsec arccsc
+sinh cosh tanh coth sech csch arcsinh arccosh arctanh exp ln log sqrt abs sign
+floor ceil round mod min max`. Variables `x`, `y` and `e`, **plus anything the
+expression list defines** — see 4.3.
 
-**Explicitly refused**: lists, sums, integrals, piecewise, actions, and any
-name the expression list does not define.
+Piecewise functions and restrictions compile too: `\{c₁: v₁, c₂: v₂, v\}` is a
+chain of ternaries in Desmos's order, a condition may be a chain (`-1 ≤ x ≤ 1`),
+a branch with no value is 1, and no branch holding is undefined — a NaN the
+field reads as no arrow, which is what Desmos draws there.
+
+**Explicitly refused**: lists, sums, integrals, actions, and any name the
+expression list does not define.
 
 ### 4.3 `environment.ts` — reaching the rest of the graph
 

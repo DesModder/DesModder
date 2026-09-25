@@ -169,7 +169,6 @@ describe("LaTeX to GLSL field compiler", () => {
       ["a_{1}x", "is not defined"],
       ["\\int_{0}^{1}x", "not supported"],
       ["y=x", "not an equation"],
-      ["\\left\\{x>0\\right\\}", "not supported"],
       ["z", "is not defined"],
       ["\\sin\\left(x", "closing parenthesis"],
       ["\\operatorname{lcm}\\left(x,y\\right)", "not supported"],
@@ -308,5 +307,56 @@ describe("Vector Tools LaTeX referencing the expression list", () => {
     );
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.params).toEqual(["k"]);
+  });
+});
+
+describe("piecewise functions and restrictions", () => {
+  const compile = (latex: string) => {
+    const result = compileFieldComponentToGLSL(latex);
+    if (!result.ok) throw new Error(result.error);
+    return result.glsl;
+  };
+
+  test("the first branch that holds, and undefined past the last", () => {
+    const glsl = compile(String.raw`\left\{x>0:x,-x\right\}`);
+    expect(glsl).toContain("(p.x > 0.0)");
+    expect(glsl).toContain("?");
+    expect(compile(String.raw`\left\{x>0:1\right\}`)).toContain(
+      "vtUndefined()"
+    );
+  });
+
+  test("a restriction multiplies by one where it holds", () => {
+    const glsl = compile(String.raw`y\left\{x^{2}+y^{2}<4\right\}`);
+    expect(glsl).toContain("1.0");
+    expect(glsl).toContain("vtUndefined()");
+  });
+
+  test("chains, and the comparison commands Desmos writes", () => {
+    const glsl = compile(String.raw`\left\{-1\le x\le1:y,0\right\}`);
+    expect(glsl).toContain("<=");
+    expect(glsl).toContain("&&");
+  });
+});
+
+describe("the functions Desmos has", () => {
+  test("inverse and reciprocal hyperbolic and trigonometric functions", () => {
+    for (const name of [
+      "arcsinh",
+      "arccosh",
+      "arctanh",
+      "sech",
+      "csch",
+      "coth",
+      "arccot",
+      "arcsec",
+      "arccsc",
+    ]) {
+      const latex = String.raw`\operatorname{${name}}\left(x\right)`;
+      expect([name, compileFieldComponentToGLSL(latex).ok]).toEqual([
+        name,
+        true,
+      ]);
+    }
   });
 });

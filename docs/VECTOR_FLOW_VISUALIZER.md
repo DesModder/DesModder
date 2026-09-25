@@ -56,8 +56,10 @@ The GPU cannot call back into Desmos's evaluator, so `flow/latexToGLSL.ts`
 compiles the component LaTeX into a GLSL expression. It supports numbers, `x`,
 `y`, `e`, `\pi`, the arithmetic operators, implicit multiplication, `\frac`,
 `\sqrt` (including `\sqrt[n]`), powers, `|...|`, and the usual named functions
-(trig and inverse trig, hyperbolics, `\exp`, `\ln`, `\log`, `\operatorname{mod}`,
-`\operatorname{sign}`, `\min`, `\max`, floor/ceil/round).
+(trig and inverse trig, hyperbolics and their inverses and reciprocals, `\exp`,
+`\ln`, `\log`, `\operatorname{mod}`, `\operatorname{sign}`, `\min`, `\max`,
+floor/ceil/round), and piecewise functions and restrictions, where no branch
+holding means no arrow, as in Desmos.
 
 A gradient field is compiled differently: its scalar f goes to the GPU as a
 function, and the shader central-differences it, because the GPU cannot
@@ -70,7 +72,7 @@ Anything else is refused **by name** before the button is enabled, rather than
 producing a plausible-looking animation of the wrong field. The common cases:
 
 - A reference to another expression (`a_{1}`), which only Desmos can resolve.
-- Lists, piecewises, restrictions, integrals, derivatives, and sums.
+- Lists, integrals, derivatives, and sums.
 - Any variable other than `x` and `y`.
 
 Divisions and singularities are guarded rather than allowed to produce

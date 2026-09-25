@@ -812,6 +812,28 @@ testWithPage(
     ).toContain("Streaming");
     expect(await litPixels()).toBeGreaterThan(panned.buffer * 4);
 
+    // A piecewise field and the inverse hyperbolic functions compile to a
+    // shader the GPU accepts: `vtUndefined` and `asinh` are GLSL ES 3.00, and
+    // a unit test of the emitted text cannot say whether a driver links it.
+    await driver.evaluate(() => {
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      plugin.setSource("components");
+      plugin.setSlot(
+        "p",
+        String.raw`\left\{x^{2}+y^{2}<16:-y,\operatorname{arcsinh}\left(x\right)\right\}`
+      );
+      plugin.setSlot("q", String.raw`\left\{-3\le x\le3:x\right\}`);
+    });
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    const piecewise = await canvasSize();
+    expect(piecewise.error, "the piecewise field left a WebGL error").toBe(0);
+    expect(
+      await driver.evaluate(
+        () => (DSM.enabledPlugins["vector-tools"] as any).flowStatus
+      )
+    ).toContain("Streaming");
+    expect(await litPixels()).toBeGreaterThan(piecewise.buffer * 4);
+
     await driver.disablePlugin("vector-tools");
     await driver.assertSelectorNot(FLOW_CANVAS);
     await driver.setBlank();

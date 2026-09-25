@@ -127,6 +127,11 @@ float vtSec(float a) { return 1.0 / (abs(cos(a)) < 1e-12 ? 1e-12 : cos(a)); }
 float vtCsc(float a) { return 1.0 / (abs(sin(a)) < 1e-12 ? 1e-12 : sin(a)); }
 float vtLog10(float a) { return log(a) / log(10.0); }
 float vtMod(float a, float b) { return b == 0.0 ? 0.0 : mod(a, b); }
+// What a piecewise with no branch that holds is: undefined. The field reads
+// a non-finite component as no arrow at all, which is what Desmos draws.
+float vtUndefined() { return uintBitsToFloat(0x7fc00000u); }
+float vtCoth(float a) { float t = tanh(a); return 1.0 / (abs(t) < 1e-12 ? 1e-12 : t); }
+float vtCsch(float a) { float s = sinh(a); return 1.0 / (abs(s) < 1e-12 ? 1e-12 : s); }
 `;
 
 const PI = "3.1415926535897932";
@@ -152,9 +157,31 @@ const FUNCTIONS: Record<string, FunctionSpec> = {
     emit: (args) =>
       args.length === 1 ? `atan(${args[0]})` : `atan(${args[0]}, ${args[1]})`,
   },
+  // Desmos's arccot is π/2 − arctan, continuous through 0, not arctan(1/x).
+  arccot: {
+    arity: [1],
+    emit: ([a]) => `(${PI} / 2.0 - atan(${a}))`,
+  },
+  arcsec: {
+    arity: [1],
+    emit: ([a]) => `acos(clamp(vtDiv(1.0, ${a}), -1.0, 1.0))`,
+  },
+  arccsc: {
+    arity: [1],
+    emit: ([a]) => `asin(clamp(vtDiv(1.0, ${a}), -1.0, 1.0))`,
+  },
   sinh: { arity: [1], emit: ([a]) => `sinh(${a})` },
   cosh: { arity: [1], emit: ([a]) => `cosh(${a})` },
   tanh: { arity: [1], emit: ([a]) => `tanh(${a})` },
+  coth: { arity: [1], emit: ([a]) => `vtCoth(${a})` },
+  sech: { arity: [1], emit: ([a]) => `(1.0 / cosh(${a}))` },
+  csch: { arity: [1], emit: ([a]) => `vtCsch(${a})` },
+  arcsinh: { arity: [1], emit: ([a]) => `asinh(${a})` },
+  arccosh: { arity: [1], emit: ([a]) => `acosh(max(${a}, 1.0))` },
+  arctanh: {
+    arity: [1],
+    emit: ([a]) => `atanh(clamp(${a}, -0.999999, 0.999999))`,
+  },
   exp: { arity: [1], emit: ([a]) => `exp(${a})` },
   ln: { arity: [1], emit: ([a]) => `log(max(${a}, 1e-12))` },
   log: { arity: [1], emit: ([a]) => `vtLog10(max(${a}, 1e-12))` },
@@ -280,7 +307,18 @@ type Token =
     }
   | { kind: "bar" }
   | { kind: "comma" }
-  | { kind: "frac" | "sqrt" };
+  | { kind: "frac" | "sqrt" }
+  /** `\left\{` and `\right\}`: a piecewise or a restriction. */
+  | { kind: "pieceOpen" | "pieceClose" | "colon" }
+  | { kind: "cmp"; value: "<" | ">" | "<=" | ">=" | "=" };
+
+/** The comparison commands Desmos writes, as GLSL operators. */
+const COMPARISONS: Record<string, "<=" | ">="> = {
+  le: "<=",
+  leq: "<=",
+  ge: ">=",
+  geq: ">=",
+};
 
 const COMMAND_ALIASES: Record<string, string> = {
   cdot: "*",
@@ -329,11 +367,12 @@ function tokenize(latex: string): Token[] {
         else if (delimiter === ")")
           tokens.push({ kind: name === "left" ? "open" : "close" });
         else if (delimiter === "|") pushBar();
-        else if (delimiter === "\\") {
-          // \left\{ ... \right\} — restrictions and piecewises are not supported.
-          throw new CompileError(
-            "Piecewise and restriction braces are not supported."
-          );
+        else if (delimiter === "\\" && latex[i] === "{") {
+          i++;
+          tokens.push({ kind: name === "left" ? "pieceOpen" : "pieceClose" });
+        } else if (delimiter === "\\" && latex[i] === "}") {
+          i++;
+          tokens.push({ kind: name === "left" ? "pieceOpen" : "pieceClose" });
         } else
           throw new CompileError(
             `The "${delimiter}" bracket is not supported.`
@@ -370,6 +409,10 @@ function tokenize(latex: string): Token[] {
       }
       if (name in FUNCTIONS) {
         tokens.push({ kind: "function", value: name });
+        continue;
+      }
+      if (name in COMPARISONS) {
+        tokens.push({ kind: "cmp", value: COMPARISONS[name] });
         continue;
       }
       throw new CompileError(
@@ -420,9 +463,14 @@ function tokenize(latex: string): Token[] {
         tokens.push({ kind: "op", value: char });
         continue;
       case "=":
-        throw new CompileError(
-          "A field component must be an expression, not an equation."
-        );
+      case "<":
+      case ">":
+        // An `=` outside a condition is an equation, and the parser says so.
+        tokens.push({ kind: "cmp", value: char });
+        continue;
+      case ":":
+        tokens.push({ kind: "colon" });
+        continue;
       default:
         throw new CompileError(`"${char}" is not supported.`);
     }
@@ -446,6 +494,11 @@ class Parser {
   ) {}
 
   expectEnd() {
+    const next = this.peek();
+    if (next?.kind === "cmp" && next.value === "=")
+      throw new CompileError(
+        "A field component must be an expression, not an equation."
+      );
     if (this.index < this.tokens.length) {
       throw new CompileError("There is leftover input after the expression.");
     }
@@ -591,6 +644,10 @@ class Parser {
         this.index++;
         return this.parseFunctionCall(token.value);
       }
+      case "pieceOpen": {
+        this.index++;
+        return this.parsePiecewise();
+      }
       default:
         throw new CompileError(
           "The expression has a bracket or symbol in an unexpected place."
@@ -684,6 +741,66 @@ class Parser {
     return spec.emit(args);
   }
 
+  /**
+   * `{c₁: v₁, c₂: v₂, …, otherwise}`, as Desmos reads it: the first branch
+   * whose condition holds, the last bare value if none does, and undefined if
+   * there is no such value. A branch with no value is 1 where it holds, so a
+   * restriction `{x > 0}` multiplies by 1 there and is undefined elsewhere.
+   */
+  private parsePiecewise(): string {
+    const branches: { condition: string; value: string }[] = [];
+    let otherwise = "vtUndefined()";
+    if (this.peek()?.kind === "pieceClose") {
+      this.index++;
+      return "1.0";
+    }
+    for (;;) {
+      const first = this.parseExpression();
+      if (this.peek()?.kind === "cmp") {
+        const condition = this.parseConditionFrom(first);
+        let value = "1.0";
+        if (this.peek()?.kind === "colon") {
+          this.index++;
+          value = this.parseExpression();
+        }
+        branches.push({ condition, value });
+      } else {
+        // A bare value is the otherwise branch, and has to be the last one.
+        otherwise = first;
+        if (this.peek()?.kind !== "pieceClose")
+          throw new CompileError(
+            "Only the last branch of a piecewise can have no condition."
+          );
+      }
+      const next = this.peek();
+      if (next?.kind === "comma") {
+        this.index++;
+        continue;
+      }
+      this.expect("pieceClose", "a closing \\}");
+      break;
+    }
+    return branches.reduceRight(
+      (rest, { condition, value }) => `((${condition}) ? (${value}) : ${rest})`,
+      otherwise
+    );
+  }
+
+  /** `a < b ≤ c`, a chain, as each link joined by `&&`. */
+  private parseConditionFrom(first: string): string {
+    const links: string[] = [];
+    let left = first;
+    while (this.peek()?.kind === "cmp") {
+      const token = this.peek() as { kind: "cmp"; value: string };
+      this.index++;
+      const right = this.parseExpression();
+      const op = token.value === "=" ? "==" : token.value;
+      links.push(`(${left} ${op} ${right})`);
+      left = right;
+    }
+    return links.join(" && ");
+  }
+
   private parseBracedGroup(): string {
     if (this.peek()?.kind !== "openBrace") {
       throw new CompileError("Expected a braced group.");
@@ -703,7 +820,8 @@ class Parser {
       token.kind === "open" ||
       token.kind === "frac" ||
       token.kind === "sqrt" ||
-      token.kind === "function"
+      token.kind === "function" ||
+      token.kind === "pieceOpen"
     );
   }
 
