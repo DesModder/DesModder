@@ -13,6 +13,7 @@ import {
   decibelsToMagnitudes,
   interpolatedPeak,
   peakAmplitude,
+  peakOffset,
   spectralCentroid,
   spectralFlux,
   summarizeSpectrum,
@@ -457,5 +458,51 @@ describe("AudioAnalysisEngine", () => {
     engine.reset();
     expect(engine.latest.dominantHz).toBeNaN();
     expect(engine.latest.time).toBe(0);
+  });
+});
+
+describe("refining a peak past the bin grid", () => {
+  /**
+   * The three bins around a tone `fraction` of a bin past bin 100, windowed
+   * with the Blackman window the Web Audio analyser applies (α = 0.16), by a
+   * direct DFT of just those three bins.
+   */
+  function blackmanBins(fraction: number) {
+    const n = 2048;
+    const f = 100 + fraction;
+    const bin = (k: number) => {
+      let re = 0;
+      let im = 0;
+      for (let i = 0; i < n; i++) {
+        const w =
+          0.42 -
+          0.5 * Math.cos((2 * Math.PI * i) / n) +
+          0.08 * Math.cos((4 * Math.PI * i) / n);
+        const x = Math.sin((2 * Math.PI * f * i) / n + 0.3) * w;
+        re += x * Math.cos((2 * Math.PI * k * i) / n);
+        im -= x * Math.sin((2 * Math.PI * k * i) / n);
+      }
+      return Math.hypot(re, im);
+    };
+    const centre = Math.round(f);
+    return {
+      bins: [bin(centre - 1), bin(centre), bin(centre + 1)] as const,
+      offset: f - centre,
+    };
+  }
+
+  test("to within a hundredth of a bin, on the analyser's own window", () => {
+    // The linear-magnitude parabola this replaced was off by up to 0.044 of
+    // a bin here: sixteen cents at A2 with 23 Hz bins.
+    for (const fraction of [0.05, 0.1, 0.2, 0.3, 0.4, 0.45]) {
+      const { bins, offset } = blackmanBins(fraction);
+      expect(Math.abs(peakOffset(...bins) - offset)).toBeLessThan(0.01);
+    }
+  });
+
+  test("a triple that is not a peak is left on its bin", () => {
+    expect(peakOffset(1, 1, 1)).toBe(0);
+    expect(peakOffset(1, 0.5, 1)).toBe(0);
+    expect(peakOffset(0, 0, 0)).toBe(0);
   });
 });

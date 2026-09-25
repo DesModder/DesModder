@@ -184,12 +184,7 @@ export function interpolatedPeak(
 
   const left = magnitudes[index - 1];
   const right = magnitudes[index + 1];
-  const denominator = left - 2 * best + right;
-  // A flat or upward-curving triple is not a peak to refine; keep the bin.
-  const shift =
-    denominator === 0
-      ? 0
-      : clamp((0.5 * (left - right)) / denominator, -0.5, 0.5);
+  const shift = peakOffset(left, best, right);
 
   const shoulder = Math.max(left, right);
   const prominence = best === 0 ? 0 : (best - shoulder) / best;
@@ -199,6 +194,30 @@ export function interpolatedPeak(
     magnitude: best,
     prominence: clamp(prominence, 0, 1),
   };
+}
+
+/**
+ * Where between bins the true peak lies, from the peak bin and its two
+ * neighbours, in bins: −½ to ½.
+ *
+ * The parabola is fitted to the logarithms of the magnitudes, not to the
+ * magnitudes. A window's main lobe is close to a Gaussian, and the log of a
+ * Gaussian is exactly a parabola; the lobe itself is not. For the Blackman
+ * window the analyser applies, the linear fit is off by up to 0.044 of a bin
+ * — at 23 Hz a bin, 16 cents at A2 — and the log fit by 0.0066. (J. O. Smith
+ * and X. Serra, "PARSHL", 1987: quadratic interpolation of the dB spectrum.)
+ */
+export function peakOffset(left: number, centre: number, right: number) {
+  // A bin at exactly zero has no logarithm; the floor is far below anything
+  // the analyser reports.
+  const floor = 1e-30;
+  const l = Math.log(Math.max(left, floor));
+  const c = Math.log(Math.max(centre, floor));
+  const r = Math.log(Math.max(right, floor));
+  const denominator = l - 2 * c + r;
+  // A flat or upward-curving triple is not a peak to refine; keep the bin.
+  if (!(denominator < 0)) return 0;
+  return clamp((0.5 * (l - r)) / denominator, -0.5, 0.5);
 }
 
 /**
@@ -448,13 +467,11 @@ export function strongestComponents(
   return peaks.slice(0, Math.max(0, count)).map(({ index, magnitude }) => {
     // Refined the same way the dominant peak is, so a component and the
     // dominant frequency agree when they are the same note.
-    const left = magnitudes[index - 1];
-    const right = magnitudes[index + 1];
-    const denominator = left - 2 * magnitude + right;
-    const shift =
-      denominator === 0
-        ? 0
-        : clamp((0.5 * (left - right)) / denominator, -0.5, 0.5);
+    const shift = peakOffset(
+      magnitudes[index - 1],
+      magnitude,
+      magnitudes[index + 1]
+    );
     return {
       hz: binToHz(index + shift, sampleRate, fftSize),
       amplitude: clamp(magnitude / loudest, 0, 1),

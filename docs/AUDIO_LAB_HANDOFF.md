@@ -38,8 +38,9 @@ merged.
 - Captures audio only after the user clicks **Analyze tab audio** and explicitly
   selects a tab with **Share tab audio** enabled.
 - Optionally analyzes a local audio file.
-- Measures each frame into one feature set: loudness, peak, a parabolically
-  refined dominant frequency with a confidence, the wavelength that follows
+- Measures each frame into one feature set: loudness, peak, a dominant frequency
+  refined by a parabola through the log magnitudes (within 0.007 of a bin on the
+  analyser's Blackman window) with a confidence, the wavelength that follows
   from it, three band energies, brightness, spectral flux, onsets, and a beat
   phase.
 - Maintains a managed Audio Lab folder of live Desmos variables —
