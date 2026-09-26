@@ -29,10 +29,10 @@ export default class ColorInput extends PluginController {
       return "";
     }
 
-    let hexColor = parseInt(this.exprModel.color.slice(1), 16);
-    let r = (hexColor >> 16) & 255;
-    let g = (hexColor >> 8) & 255;
-    let b = hexColor & 255;
+    const hexColor = parseInt(this.exprModel.color.slice(1), 16);
+    const r = (hexColor >> 16) & 255;
+    const g = (hexColor >> 8) & 255;
+    const b = hexColor & 255;
     return `\\operatorname{rgb}\\left(${r},${g},${b}\\right)`;
   }
 
@@ -45,7 +45,7 @@ export default class ColorInput extends PluginController {
 
   afterEnable() {
     this.dispatcher = this.cc.dispatcher.register((e) => {
-      if (e.type == "toggle-item-settings-menu") {
+      if (e.type === "toggle-item-settings-menu") {
         this.exprModel = this.cc.getItemModel(e.menu.id) as
           | ExpressionModel
           | undefined;
