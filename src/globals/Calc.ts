@@ -345,7 +345,7 @@ interface CalcPrivate {
       ticker: {
         handlerLatex: string;
         minStepLatex: string;
-      }
+      };
 
       drawLayers: { layer: number; drawOrder: string[]; drawSet: string[] }[];
     };
