@@ -25,7 +25,7 @@ export default class ColorInput extends PluginController {
   }
 
   getPlaceholder(): string {
-    if (!this.exprModel || !this.exprModel.color) {
+    if (!this.exprModel?.color) {
       return "";
     }
 
