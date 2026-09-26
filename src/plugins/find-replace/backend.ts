@@ -59,7 +59,7 @@ function replace(
     // `from` should have "global" flag enabled in order to replace all
     return s.replace(/(?<=\$\{)((?:[^{}]|\{[^}]*\})+)(?=\})/g, replaceLatex);
   }
-  const listModel = calc.controller.listModel;
+  const {listModel} = calc.controller;
   if (!filter) {
     const { ticker } = listModel;
     if (ticker?.handlerLatex !== undefined) {
