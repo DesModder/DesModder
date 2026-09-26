@@ -465,6 +465,7 @@ export interface ExpressionFormula extends FormulaBase {
     // There are many possible expression types due to 3d. No point writing them all out.
     | (string & {});
   typed_constant_value?: TypedConstantValue | undefined;
+  color_latex_valid?: boolean;
 }
 
 interface BaseClickable {
@@ -516,6 +517,7 @@ export interface ExpressionModel
   clickableInfo?: BaseClickable;
   shouldGraph?: boolean;
   formula?: ExpressionFormula;
+  colorLatex?: string;
 }
 
 interface TableColumn extends BasicSetExpression {
