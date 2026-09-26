@@ -381,7 +381,8 @@ export type ActionRHSValueType =
     >;
 
 type OrListType<T extends ListElementValueType> =
-  T | ReverseMap<ListElementTypeMap>[T];
+  | T
+  | ReverseMap<ListElementTypeMap>[T];
 
 type ReverseMap<T extends Record<keyof T, PropertyKey>> = {
   [K in keyof T as T[K]]: K;
@@ -475,7 +476,8 @@ interface BaseClickable {
 }
 
 export interface ExpressionModel
-  extends BasicSetExpression, NonfolderItemModelBase {
+  extends BasicSetExpression,
+    NonfolderItemModelBase {
   type?: "expression";
   fill?: boolean;
   secret?: boolean;
@@ -557,4 +559,8 @@ export interface FolderModel extends ItemModelBase {
 }
 
 export type ItemModel =
-  ExpressionModel | TableModel | TextModel | ImageModel | FolderModel;
+  | ExpressionModel
+  | TableModel
+  | TextModel
+  | ImageModel
+  | FolderModel;

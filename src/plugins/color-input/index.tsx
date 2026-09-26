@@ -47,7 +47,8 @@ export default class ColorInput extends PluginController {
     this.dispatcher = this.cc.dispatcher.register((e) => {
       if (e.type == "toggle-item-settings-menu") {
         this.exprModel = this.cc.getItemModel(e.menu.id) as
-          ExpressionModel | undefined;
+          | ExpressionModel
+          | undefined;
       }
     });
   }
