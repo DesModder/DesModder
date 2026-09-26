@@ -5,7 +5,7 @@ import { ExpressionModel } from "#globals";
 
 export default class ColorInput extends PluginController {
   static id = "color-input" as const;
-  static enabledByDefault = true;
+  static enabledByDefault = false;
   exprModel: ExpressionModel | undefined;
   dispatcher: string = "";
 
