@@ -127,7 +127,7 @@ export interface Expression
   glesmos: boolean;
   fill?: Expr;
   logMode: boolean;
-  displayEvaluationAsFraction: boolean;
+  fractionDisplay: boolean;
   slider?: {
     playing: boolean;
     reversed: boolean;

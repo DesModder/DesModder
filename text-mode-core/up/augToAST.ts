@@ -210,7 +210,7 @@ function expressionStyle(
       }),
     errorHidden: booleanToAST(item.errorHidden, false),
     glesmos: booleanToAST(item.glesmos, false),
-    fractionDisplay: booleanToAST(item.displayEvaluationAsFraction, false),
+    fractionDisplay: booleanToAST(item.fractionDisplay, false),
     slider: styleMapping({
       playing: booleanToAST(item.slider.isPlaying, false),
       reversed: booleanToAST(item.slider.playDirection === -1, false),
