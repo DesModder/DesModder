@@ -237,7 +237,8 @@ function golfStatsForExpr(cc: CalcController, latex: string): GolfStats {
     controller: () => cc,
     placeholder: () => "",
   });
-
+  fakeContainer.querySelectorAll(".dcg-mq-matrix__pull-handle").forEach(el => el.remove());
+  
   const stats = {
     width: calcWidthInPixels(fakeContainer),
     symbols: calcSymbolCount(fakeContainer),
