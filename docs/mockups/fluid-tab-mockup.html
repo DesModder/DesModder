@@ -1,0 +1,3627 @@
+<title>Vector Tools Fluid Tab</title>
+<style>
+  /* Layout: a Desmos workspace. Expression list | graph paper | the Vector Tools
+     panel docked beside it. Below 1100px the panel drops under the graph; below
+     720px everything stacks. Desmos's own look is the design system here. */
+  :root {
+    --ground: #eceef1;
+    --surface: #ffffff;
+    --surface-2: #f5f6f8;
+    --rule: #d8dbe0;
+    --ink: #1f2226;
+    --ink-2: #636a74;
+    --accent: #2f6fd6;
+    --accent-ink: #ffffff;
+    --tab-on: #5a5a5a;
+    --chip: #eceef1;
+    --chip-rule: #cdd1d7;
+    --paper: #ffffff;
+    --grid-minor: #f1f2f4;
+    --grid-major: #dde0e5;
+    --axis: #3a3f46;
+    --red: #c74440;
+    --blue: #2d70b3;
+    --green: #388c46;
+    --purple: #6042a6;
+    --orange: #e8711a;
+    --black: #2b2b2b;
+    --particle: #1b1e22;
+    --smoke: 30 33 37;
+    --good-bg: #edf6ee;
+    --good-ink: #2d6a35;
+    --warn-bg: #fdf1e2;
+    --warn-ink: #8a5200;
+    --font-ui: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    --font-math: "Times New Roman", Times, "Liberation Serif", serif;
+    --font-num:
+      ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #141619;
+      --surface: #1e2125;
+      --surface-2: #25292e;
+      --rule: #353a41;
+      --ink: #e6e8eb;
+      --ink-2: #a2a9b3;
+      --accent: #5b93ef;
+      --accent-ink: #0d1420;
+      --tab-on: #8b9097;
+      --chip: #2a2f35;
+      --chip-rule: #3e444c;
+      --paper: #1a1c1f;
+      --grid-minor: #212428;
+      --grid-major: #2f3339;
+      --axis: #c7cbd1;
+      --red: #e0625d;
+      --blue: #5f9ddc;
+      --green: #5fb36b;
+      --purple: #9b80e0;
+      --orange: #ff9a45;
+      --black: #d0d0d0;
+      --particle: #f1f3f5;
+      --smoke: 236 238 241;
+      --good-bg: #1d3221;
+      --good-ink: #93d39e;
+      --warn-bg: #3a2b16;
+      --warn-ink: #f2c27b;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #141619;
+    --surface: #1e2125;
+    --surface-2: #25292e;
+    --rule: #353a41;
+    --ink: #e6e8eb;
+    --ink-2: #a2a9b3;
+    --accent: #5b93ef;
+    --accent-ink: #0d1420;
+    --tab-on: #8b9097;
+    --chip: #2a2f35;
+    --chip-rule: #3e444c;
+    --paper: #1a1c1f;
+    --grid-minor: #212428;
+    --grid-major: #2f3339;
+    --axis: #c7cbd1;
+    --red: #e0625d;
+    --blue: #5f9ddc;
+    --green: #5fb36b;
+    --purple: #9b80e0;
+    --orange: #ff9a45;
+    --black: #d0d0d0;
+    --particle: #f1f3f5;
+    --smoke: 236 238 241;
+    --good-bg: #1d3221;
+    --good-ink: #93d39e;
+    --warn-bg: #3a2b16;
+    --warn-ink: #f2c27b;
+    color-scheme: dark;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .page {
+    max-width: 1560px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    padding-block: 18px 40px;
+    display: grid;
+    gap: 16px;
+  }
+
+  /* ---- intro ---- */
+  .intro {
+    display: grid;
+    gap: 6px;
+    max-width: 78ch;
+  }
+  .eyebrow {
+    margin: 0;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .intro h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 600;
+    text-wrap: balance;
+  }
+  .intro p.lede {
+    margin: 0;
+    color: var(--ink-2);
+    font-size: 15px;
+  }
+
+  /* ---- workspace ---- */
+  .workspace {
+    display: grid;
+    grid-template-columns: 270px minmax(0, 1fr) 380px;
+    grid-template-areas: "list graph panel";
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    min-width: 0;
+  }
+  .exprlist {
+    grid-area: list;
+    border-right: 1px solid var(--rule);
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .exprlist-head {
+    height: 38px;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    padding-inline: 10px;
+    gap: 8px;
+    color: var(--ink-2);
+    font-size: 13px;
+    background: var(--surface-2);
+  }
+  .exprlist-head .plus {
+    font-size: 20px;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .rows {
+    display: flex;
+    flex-direction: column;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    border-bottom: 1px solid var(--rule);
+    min-height: 52px;
+  }
+  .row .gutter {
+    background: var(--surface-2);
+    border-right: 1px solid var(--rule);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 10px;
+    color: var(--ink-2);
+  }
+  .swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--c);
+    background: var(--c);
+    padding: 0;
+    cursor: pointer;
+  }
+  .swatch.off {
+    background: transparent;
+  }
+  .swatch.static {
+    cursor: default;
+  }
+  .swatch:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .row .body {
+    padding: 9px 10px;
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+    align-content: center;
+  }
+  .math {
+    font-family: var(--font-math);
+    font-size: 18px;
+    overflow-wrap: anywhere;
+  }
+  .math i {
+    font-style: italic;
+  }
+  .math .fn {
+    font-style: normal;
+  }
+  .math sup {
+    font-size: 0.72em;
+  }
+  .row .note {
+    font-size: 11px;
+    color: var(--ink-2);
+  }
+  .row.result .math {
+    color: var(--purple);
+  }
+  .row input[type="range"] {
+    width: 100%;
+    accent-color: var(--c);
+  }
+  .slider-ends {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .graph {
+    grid-area: graph;
+    position: relative;
+    min-width: 0;
+    background: var(--paper);
+  }
+  .graph canvas {
+    display: block;
+    width: 100%;
+    aspect-ratio: 18.8 / 8;
+    max-width: 100%;
+    touch-action: none;
+    cursor: crosshair;
+  }
+  .graph-caption {
+    margin: 0;
+    padding: 8px 12px 10px;
+    font-size: 12px;
+    color: var(--ink-2);
+    border-top: 1px solid var(--rule);
+    background: var(--surface);
+  }
+
+  /* ---- the Vector Tools panel ---- */
+  .vt {
+    grid-area: panel;
+    border-left: 1px solid var(--rule);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    max-height: 860px;
+  }
+  .vt-head {
+    padding: 12px 14px 10px;
+    display: grid;
+    gap: 9px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .vt-title {
+    margin: 0;
+    font-size: 21px;
+    font-weight: 400;
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 3px;
+  }
+  .vt-fields {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .vt-fields .grow {
+    flex: 1;
+  }
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    border: 1px solid var(--chip-rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .tabs button {
+    border: 0;
+    border-right: 1px solid var(--chip-rule);
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    padding: 8px 2px;
+    cursor: not-allowed;
+  }
+  .tabs button:last-child {
+    border-right: 0;
+  }
+  .tabs button.on {
+    background: var(--tab-on);
+    color: #ffffff;
+    cursor: default;
+  }
+  .vt-body {
+    overflow-y: auto;
+    padding: 4px 14px 12px;
+    display: grid;
+    gap: 0;
+    min-height: 0;
+  }
+  .sec {
+    padding-block: 11px;
+    border-bottom: 1px solid var(--rule);
+    display: grid;
+    gap: 8px;
+  }
+  .sec:last-child {
+    border-bottom: 0;
+  }
+  .sec h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .hint {
+    margin: 0;
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .chip {
+    font: inherit;
+    font-size: 13px;
+    border: 1px solid var(--chip-rule);
+    background: var(--chip);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 5px 12px;
+    cursor: pointer;
+  }
+  .chip.on {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  .chip.ghost {
+    cursor: default;
+  }
+  .field {
+    display: grid;
+    gap: 4px;
+  }
+  .field label,
+  .field .lab {
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .field .val {
+    font-weight: 400;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .field input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+  }
+  .textin {
+    font-family: var(--font-math);
+    font-size: 16px;
+    padding: 6px 8px;
+    border: 1px solid var(--chip-rule);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--ink);
+    width: 100%;
+    min-width: 0;
+  }
+  .inline {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    min-width: 0;
+  }
+  .check {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    font-size: 13px;
+  }
+  .err {
+    margin: 0;
+    font-size: 12px;
+    color: var(--red);
+  }
+  .btn {
+    font: inherit;
+    font-size: 13px;
+    padding: 6px 12px;
+    border: 1px solid var(--chip-rule);
+    border-radius: 4px;
+    background: var(--surface-2);
+    color: var(--ink);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  table.readout {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  table.readout td {
+    padding: 3px 0;
+    border-bottom: 1px dotted var(--rule);
+  }
+  table.readout td.num {
+    text-align: right;
+    font-family: var(--font-num);
+    font-variant-numeric: tabular-nums;
+  }
+  table.readout td.ref {
+    text-align: right;
+    color: var(--ink-2);
+    font-size: 12px;
+    padding-left: 8px;
+  }
+  details.sec summary {
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .kv {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 3px 10px;
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+  .kv b {
+    color: var(--ink);
+    font-weight: 400;
+    font-family: var(--font-num);
+  }
+  .vt-foot {
+    border-top: 1px solid var(--rule);
+    padding: 10px 14px 12px;
+    display: grid;
+    gap: 8px;
+  }
+  .status {
+    font-size: 13px;
+    padding: 7px 10px;
+    border-radius: 4px;
+    background: var(--good-bg);
+    color: var(--good-ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .status.warn {
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+  }
+  .btns {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  /* ---- notes under the workspace ---- */
+  .notes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .note-card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: 14px 16px;
+    min-width: 0;
+  }
+  .note-card h2 {
+    margin: 0 0 8px;
+    font-size: 15px;
+  }
+  .note-card ul {
+    margin: 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 6px;
+    color: var(--ink-2);
+    font-size: 13px;
+  }
+  .note-card li b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  @media (max-width: 1100px) {
+    .workspace {
+      grid-template-columns: 250px minmax(0, 1fr);
+      grid-template-areas:
+        "list graph"
+        "panel panel";
+    }
+    .vt {
+      border-left: 0;
+      border-top: 1px solid var(--rule);
+      max-height: none;
+    }
+    .notes {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  @media (max-width: 720px) {
+    .workspace {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas:
+        "graph"
+        "list"
+        "panel";
+    }
+    .exprlist {
+      border-right: 0;
+      border-top: 1px solid var(--rule);
+    }
+    .tabs button {
+      font-size: 11px;
+    }
+  }
+</style>
+
+<div class="page">
+  <header class="intro">
+    <p class="eyebrow">Mock-up · Vector Tools · not built yet</p>
+    <h1>A Fluid tab: Navier–Stokes flow that runs into your graph</h1>
+    <p class="lede">
+      The fluid below is a real simulation running in this page. Every
+      inequality in the expression list is solid, an equation is a thin wall,
+      and the sliders and the point move them while the fluid is running. Drag
+      the point, drag empty space to stir, or type your own inequality.
+    </p>
+  </header>
+
+  <div class="workspace">
+    <aside class="exprlist" aria-label="Expression list (mock-up)">
+      <div class="exprlist-head"><span class="plus">+</span> Expressions</div>
+      <div class="rows" id="rows"></div>
+    </aside>
+
+    <div class="graph">
+      <canvas
+        id="view"
+        aria-label="Graph paper with the fluid simulation"
+      ></canvas>
+      <p class="graph-caption" id="caption">
+        The dashed box is the simulation's tank: a fixed region of the graph, so
+        panning would not change the physics.
+      </p>
+    </div>
+
+    <section class="vt" aria-label="Vector Tools panel (mock-up)">
+      <div class="vt-head">
+        <h2 class="vt-title">Vector Tools</h2>
+        <div class="vt-fields">
+          <span class="chip on ghost">Vector Field</span>
+          <span class="grow"></span>
+          <span class="chip ghost">+</span>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Vector Tools tabs">
+          <button
+            role="tab"
+            aria-selected="false"
+            title="Not part of this mock-up"
+          >
+            Field
+          </button>
+          <button
+            role="tab"
+            aria-selected="false"
+            title="Not part of this mock-up"
+          >
+            Arrows
+          </button>
+          <button
+            role="tab"
+            aria-selected="false"
+            title="Not part of this mock-up"
+          >
+            Color
+          </button>
+          <button
+            role="tab"
+            aria-selected="false"
+            title="Not part of this mock-up"
+          >
+            Curve
+          </button>
+          <button
+            role="tab"
+            aria-selected="false"
+            title="Not part of this mock-up"
+          >
+            Flow
+          </button>
+          <button role="tab" aria-selected="true" class="on">Fluid</button>
+        </div>
+      </div>
+
+      <div class="vt-body">
+        <div class="sec">
+          <h3>Simulate</h3>
+          <div
+            class="chips"
+            id="modeChips"
+            role="radiogroup"
+            aria-label="Simulate"
+          >
+            <button class="chip" data-v="off">Off</button>
+            <button class="chip on" data-v="tunnel">Wind tunnel</button>
+            <button class="chip" data-v="liquid">Liquid</button>
+            <button class="chip" data-v="box">Stirred box</button>
+          </div>
+          <p class="hint" id="modeHint"></p>
+        </div>
+
+        <div class="sec" data-for="tunnel">
+          <h3>Scene</h3>
+          <div
+            class="chips"
+            id="sceneChips"
+            role="radiogroup"
+            aria-label="Scene"
+          >
+            <button class="chip on" data-v="cylinder">Cylinder</button>
+            <button class="chip" data-v="wing">Wing</button>
+            <button class="chip" data-v="venturi">Venturi</button>
+            <button class="chip" data-v="custom">Your inequality</button>
+          </div>
+          <div class="field" id="customBox" hidden>
+            <label for="customInput">Add an obstacle</label>
+            <div class="inline">
+              <input
+                class="textin"
+                id="customInput"
+                value="y &lt; 0.6 sin(2x) − 2.3"
+                spellcheck="false"
+                autocomplete="off"
+              />
+              <button class="btn" id="customAdd">Add</button>
+            </div>
+            <p class="err" id="customErr" hidden></p>
+            <p class="hint">
+              Use x, y, a, b, r, t and θ. Try y = 0.5x (a wall) or (x − 2 −
+              sin(t))^2 + y^2 &lt; 0.3 (a body that moves on its own).
+            </p>
+          </div>
+          <p class="hint">
+            Every inequality in the list is solid and every equation is a thin
+            wall. Click a row's circle to hide it, and the fluid flows through.
+          </p>
+        </div>
+
+        <div class="sec" data-for="box">
+          <h3>Force from your field</h3>
+          <div
+            class="chips"
+            id="boxChips"
+            role="radiogroup"
+            aria-label="Force preset"
+          >
+            <button class="chip on" data-v="spin">Spin</button>
+            <button class="chip" data-v="source">Source</button>
+            <button class="chip" data-v="shear">Shear</button>
+            <button class="chip" data-v="cells">Cells</button>
+          </div>
+          <div class="field">
+            <label for="pInput">P(x, y)</label>
+            <input
+              class="textin"
+              id="pInput"
+              spellcheck="false"
+              autocomplete="off"
+            />
+            <label for="qInput">Q(x, y)</label>
+            <input
+              class="textin"
+              id="qInput"
+              spellcheck="false"
+              autocomplete="off"
+            />
+            <p class="err" id="pqErr" hidden></p>
+          </div>
+          <p class="hint" id="boxHint"></p>
+          <div class="field">
+            <label for="ampRange"
+              >Strength <span class="val" id="ampVal"></span
+            ></label>
+            <input
+              type="range"
+              id="ampRange"
+              min="0"
+              max="3"
+              step="0.05"
+              value="1"
+            />
+          </div>
+        </div>
+
+        <div class="sec" data-for="tunnel box">
+          <h3>Fluid</h3>
+          <div class="field">
+            <label for="reRange"
+              >Reynolds number <span class="val" id="reVal"></span
+            ></label>
+            <input type="range" id="reRange" min="0" max="1" step="0.001" />
+            <p class="hint" id="reHint"></p>
+          </div>
+          <div class="field">
+            <span class="lab">Subgrid model</span>
+            <div
+              class="chips"
+              id="lesChips"
+              role="radiogroup"
+              aria-label="Subgrid model"
+            >
+              <button class="chip on" data-v="auto">Auto</button>
+              <button class="chip" data-v="none">Off</button>
+              <button class="chip" data-v="les">Smagorinsky</button>
+            </div>
+            <p class="hint" id="lesHint"></p>
+          </div>
+        </div>
+
+        <div class="sec" data-for="liquid">
+          <h3>Liquid</h3>
+          <div class="field">
+            <label for="nRange"
+              >Particles <span class="val" id="nVal"></span
+            ></label>
+            <input
+              type="range"
+              id="nRange"
+              min="200"
+              max="2400"
+              step="100"
+              value="1400"
+            />
+          </div>
+          <div class="field">
+            <label for="gRange"
+              >Gravity <span class="val" id="gVal"></span
+            ></label>
+            <input
+              type="range"
+              id="gRange"
+              min="0.2"
+              max="2"
+              step="0.05"
+              value="1"
+            />
+          </div>
+          <label class="check"
+            ><input type="checkbox" id="faucetCheck" checked /> Pour from the
+            point (a, b)</label
+          >
+        </div>
+
+        <div class="sec" data-for="tunnel box liquid">
+          <h3>Show</h3>
+          <div
+            class="chips"
+            id="showChips"
+            role="radiogroup"
+            aria-label="Colour by"
+          >
+            <button class="chip on" data-v="vorticity" data-for="tunnel box">
+              Vorticity (curl)
+            </button>
+            <button class="chip" data-v="speed">Speed</button>
+            <button class="chip" data-v="pressure" data-for="tunnel box">
+              Pressure
+            </button>
+            <button class="chip" data-v="dye" data-for="tunnel box">Dye</button>
+            <button class="chip" data-v="plain" data-for="liquid">Plain</button>
+          </div>
+          <label class="check" data-for="tunnel box"
+            ><input type="checkbox" id="particlesCheck" checked /> Tracer
+            particles (the Flow tab's renderer)</label
+          >
+          <label class="check" data-for="tunnel box"
+            ><input type="checkbox" id="arrowsCheck" /> Velocity arrows (the
+            Arrows tab's renderer)</label
+          >
+          <div class="field">
+            <label for="opRange"
+              >Opacity <span class="val" id="opVal"></span
+            ></label>
+            <input
+              type="range"
+              id="opRange"
+              min="0.1"
+              max="1"
+              step="0.05"
+              value="0.85"
+            />
+          </div>
+        </div>
+
+        <div class="sec" data-for="tunnel box liquid">
+          <h3>Measured</h3>
+          <table class="readout" id="readout"></table>
+          <label class="check"
+            ><input type="checkbox" id="sendCheck" /> Write these into the graph
+            as variables</label
+          >
+          <p class="hint" id="refNote"></p>
+        </div>
+
+        <details class="sec">
+          <summary>Fine tuning</summary>
+          <div class="kv" id="tuning"></div>
+          <p class="hint">
+            The real tab would run the same method on the GPU, where 1024 × 512
+            cells at sixty frames a second is ordinary. This page runs it on one
+            CPU core, so the lattice is coarse.
+          </p>
+        </details>
+      </div>
+
+      <div class="vt-foot">
+        <div class="status" id="status" role="status">Starting…</div>
+        <div class="btns">
+          <button class="btn primary" id="playBtn">Pause</button>
+          <button class="btn" id="resetBtn">Reset</button>
+          <button class="btn" id="stepBtn">Step</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="notes" aria-label="About this mock-up">
+    <div class="note-card">
+      <h2>What is real here</h2>
+      <ul>
+        <li>
+          <b>The solver.</b> Incompressible Navier–Stokes by the lattice
+          Boltzmann method (D2Q9, BGK collision, optional Smagorinsky model).
+          The real tab would use the same method on the GPU.
+        </li>
+        <li>
+          <b>Obstacles from expressions.</b> Each row is parsed and evaluated
+          per cell. A moving point or slider changes the boundary and its
+          velocity while the fluid runs.
+        </li>
+        <li>
+          <b>Measured numbers.</b> Drag and lift come from the momentum the
+          fluid hands the body. The shedding frequency (Strouhal number) comes
+          from the lift signal.
+        </li>
+      </ul>
+    </div>
+    <div class="note-card">
+      <h2>What it leaves out</h2>
+      <ul>
+        <li>
+          <b>Resolution.</b> 300 × 120 cells on one CPU thread. The GPU version
+          would have ten to fifty times the cells and finer boundaries, so its
+          numbers would sit closer to the reference values.
+        </li>
+        <li>
+          <b>Desmos itself.</b> The expression list and graph paper are drawn by
+          this page. In the plugin, Desmos draws the shaded regions, and its
+          MathQuill fields take the input.
+        </li>
+        <li>
+          <b>3D.</b> Not shown. The research package covers what Desmos 3D would
+          allow.
+        </li>
+      </ul>
+    </div>
+    <div class="note-card">
+      <h2>What you would be deciding</h2>
+      <ul>
+        <li>
+          <b>A sixth tab, or a mode of Flow.</b> Six tabs fit a 460 px panel
+          only just.
+        </li>
+        <li>
+          <b>Wind tunnel, liquid, or both.</b> They are different solvers with
+          different costs.
+        </li>
+        <li>
+          <b>Fixed tank or follow the view.</b> Following the view would change
+          the physics every time you pan.
+        </li>
+        <li>
+          <b>How loudly to claim accuracy.</b> For example, whether to show the
+          benchmark comparison by default.
+        </li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+  (() => {
+    "use strict";
+
+    // =====================================================================
+    // A tiny maths parser: the stand-in for Desmos's own parser + latexToGLSL
+    // =====================================================================
+    const FUNCS = {
+      sinh: Math.sinh,
+      cosh: Math.cosh,
+      tanh: Math.tanh,
+      arctan: Math.atan,
+      sin: Math.sin,
+      cos: Math.cos,
+      tan: Math.tan,
+      exp: Math.exp,
+      ln: Math.log,
+      log: Math.log10,
+      sqrt: Math.sqrt,
+      abs: Math.abs,
+    };
+    const NAMES = [...Object.keys(FUNCS), "theta", "pi"].sort(
+      (p, q) => q.length - p.length
+    );
+    const VARS = ["x", "y", "a", "b", "r", "t", "θ"];
+
+    function tokenize(src) {
+      const out = [];
+      const s = src;
+      let i = 0;
+      while (i < s.length) {
+        const ch = s[i];
+        if (/\s/.test(ch)) {
+          i++;
+          continue;
+        }
+        if (/[0-9.]/.test(ch)) {
+          let j = i;
+          while (j < s.length && /[0-9.]/.test(s[j])) j++;
+          const raw = s.slice(i, j);
+          const v = Number(raw);
+          if (!Number.isFinite(v)) throw new Error(`“${raw}” is not a number.`);
+          out.push({ t: "num", v, raw });
+          i = j;
+          continue;
+        }
+        if (/[a-zA-Zθπ]/.test(ch)) {
+          let j = i;
+          while (j < s.length && /[a-zA-Zθπ]/.test(s[j])) j++;
+          const run = s.slice(i, j);
+          let k = 0;
+          while (k < run.length) {
+            const name = NAMES.find((n) => run.startsWith(n, k));
+            if (name) {
+              if (name === "theta") out.push({ t: "var", v: "θ", raw: "θ" });
+              else if (name === "pi")
+                out.push({ t: "num", v: Math.PI, raw: "π" });
+              else out.push({ t: "fn", v: name, raw: name });
+              k += name.length;
+              continue;
+            }
+            const c = run[k];
+            if (c === "π") out.push({ t: "num", v: Math.PI, raw: "π" });
+            else if (c === "e") out.push({ t: "num", v: Math.E, raw: "e" });
+            else if (VARS.includes(c)) out.push({ t: "var", v: c, raw: c });
+            else
+              throw new Error(
+                `“${c}” is not defined here. Use x, y, a, b, r, t or θ.`
+              );
+            k++;
+          }
+          i = j;
+          continue;
+        }
+        const two = s.slice(i, i + 2);
+        if (two === "<=" || two === ">=") {
+          out.push({ t: "cmp", v: two[0], raw: two === "<=" ? "≤" : "≥" });
+          i += 2;
+          continue;
+        }
+        if ("≤≥<>=".includes(ch)) {
+          out.push({
+            t: "cmp",
+            v: ch === "≤" ? "<" : ch === "≥" ? ">" : ch,
+            raw: ch,
+          });
+          i++;
+          continue;
+        }
+        if ("+-−*·/^()|".includes(ch)) {
+          out.push({
+            t: "op",
+            v: ch === "−" ? "-" : ch === "·" ? "*" : ch,
+            raw: ch,
+          });
+          i++;
+          continue;
+        }
+        throw new Error(`“${ch}” is not something this can read.`);
+      }
+      return out;
+    }
+
+    function parse(src, wantRelation) {
+      const tk = tokenize(src);
+      let p = 0;
+      const peek = () => tk[p];
+      const next = () => tk[p++];
+      const isOp = (v) => peek() && peek().t === "op" && peek().v === v;
+      const expect = (v) => {
+        const q = next();
+        if (!q || q.v !== v) throw new Error(`A “${v}” is missing.`);
+      };
+      const startsAtom = () => {
+        const q = peek();
+        return (
+          q &&
+          (q.t === "num" ||
+            q.t === "var" ||
+            q.t === "fn" ||
+            (q.t === "op" && q.v === "("))
+        );
+      };
+      function sum() {
+        let n = prod();
+        while (isOp("+") || isOp("-")) {
+          const o = next().v;
+          n = { k: o, a: n, b: prod() };
+        }
+        return n;
+      }
+      function prod() {
+        let n = unary();
+        for (;;) {
+          if (isOp("*") || isOp("/")) {
+            const o = next().v;
+            n = { k: o, a: n, b: unary() };
+          } else if (startsAtom()) {
+            n = { k: "*", a: n, b: pow() };
+          } else return n;
+        }
+      }
+      function unary() {
+        if (isOp("-")) {
+          next();
+          return { k: "neg", a: unary() };
+        }
+        if (isOp("+")) {
+          next();
+          return unary();
+        }
+        return pow();
+      }
+      function pow() {
+        const base = atom();
+        if (isOp("^")) {
+          next();
+          return { k: "^", a: base, b: unary() };
+        }
+        return base;
+      }
+      function atom() {
+        const q = next();
+        if (!q) throw new Error("The expression ends too early.");
+        if (q.t === "num") return { k: "num", v: q.v };
+        if (q.t === "var") return { k: "var", v: q.v };
+        if (q.t === "fn") {
+          if (isOp("(")) {
+            next();
+            const a = sum();
+            expect(")");
+            return { k: "fn", f: q.v, a };
+          }
+          return { k: "fn", f: q.v, a: pow() };
+        }
+        if (q.t === "op" && q.v === "(") {
+          const a = sum();
+          expect(")");
+          return a;
+        }
+        if (q.t === "op" && q.v === "|") {
+          const a = sum();
+          expect("|");
+          return { k: "fn", f: "abs", a };
+        }
+        throw new Error(`“${q.raw}” is in an unexpected place.`);
+      }
+      const lhs = sum();
+      if (!wantRelation) {
+        if (peek())
+          throw new Error(`“${peek().raw}” is in an unexpected place.`);
+        return { expr: lhs, tokens: tk };
+      }
+      if (!peek() || peek().t !== "cmp") {
+        throw new Error(
+          "Type an inequality, like y < sin(x), or an equation for a wall, like y = 0.5x."
+        );
+      }
+      const cmp = next().v;
+      const rhs = sum();
+      if (peek()) throw new Error(`“${peek().raw}” is in an unexpected place.`);
+      return { lhs, cmp, rhs, tokens: tk };
+    }
+
+    function uses(n, name) {
+      if (!n) return false;
+      if (n.k === "var") return n.v === name;
+      return uses(n.a, name) || uses(n.b, name);
+    }
+
+    // Compiled to closures rather than to a string for new Function: a page
+    // with a strict content policy refuses eval, and this is fast enough.
+    function compile(n, P) {
+      switch (n.k) {
+        case "num": {
+          const v = n.v;
+          return () => v;
+        }
+        case "var":
+          if (n.v === "x") return (x) => x;
+          if (n.v === "y") return (x, y) => y;
+          {
+            const key = n.v;
+            return () => P[key];
+          }
+        case "neg": {
+          const a = compile(n.a, P);
+          return (x, y) => -a(x, y);
+        }
+        case "+": {
+          const a = compile(n.a, P),
+            b = compile(n.b, P);
+          return (x, y) => a(x, y) + b(x, y);
+        }
+        case "-": {
+          const a = compile(n.a, P),
+            b = compile(n.b, P);
+          return (x, y) => a(x, y) - b(x, y);
+        }
+        case "*": {
+          const a = compile(n.a, P),
+            b = compile(n.b, P);
+          return (x, y) => a(x, y) * b(x, y);
+        }
+        case "/": {
+          const a = compile(n.a, P),
+            b = compile(n.b, P);
+          return (x, y) => a(x, y) / b(x, y);
+        }
+        case "^": {
+          const a = compile(n.a, P);
+          if (n.b.k === "num" && n.b.v === 2)
+            return (x, y) => {
+              const v = a(x, y);
+              return v * v;
+            };
+          const b = compile(n.b, P);
+          return (x, y) => Math.pow(a(x, y), b(x, y));
+        }
+        case "fn": {
+          const f = FUNCS[n.f],
+            a = compile(n.a, P);
+          return (x, y) => f(a(x, y));
+        }
+      }
+      throw new Error("Unknown node");
+    }
+
+    // ---- display: the plain text drawn the way Desmos would typeset it ----
+    const esc = (s) =>
+      s.replace(
+        /[&<>"]/g,
+        (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
+      );
+    function tokenHTML(q, prev) {
+      switch (q.t) {
+        case "num":
+          return q.raw === "π" ? "π" : q.raw === "e" ? "<i>e</i>" : esc(q.raw);
+        case "var":
+          return `<i>${esc(q.raw)}</i>`;
+        case "fn": {
+          const gap =
+            prev && (prev.t === "num" || prev.t === "var" || prev.v === ")")
+              ? " "
+              : "";
+          return (
+            gap + (q.v === "sqrt" ? "√" : `<span class="fn">${q.v}</span>`)
+          );
+        }
+        case "cmp": {
+          const sym =
+            q.raw === "≤" || q.raw === "≥"
+              ? q.raw
+              : q.v === "<"
+                ? "&lt;"
+                : q.v === ">"
+                  ? "&gt;"
+                  : "=";
+          return ` ${sym} `;
+        }
+        case "op": {
+          if (q.v === "*") return "·";
+          if (q.v === "-") {
+            const unary =
+              !prev ||
+              prev.t === "cmp" ||
+              (prev.t === "op" && prev.v !== ")" && prev.v !== "|");
+            return unary ? "−" : " − ";
+          }
+          if (q.v === "+") return " + ";
+          return esc(q.v);
+        }
+      }
+      return "";
+    }
+    function renderTokens(tk, i0, i1) {
+      let html = "";
+      for (let i = i0; i < i1; i++) {
+        const q = tk[i];
+        if (q.t === "op" && q.v === "^") {
+          let j = i + 1;
+          let neg = "";
+          if (j < i1 && tk[j].t === "op" && tk[j].v === "-") {
+            neg = "−";
+            j++;
+          }
+          if (j < i1 && tk[j].t === "op" && tk[j].v === "(") {
+            let depth = 0,
+              k = j;
+            for (; k < i1; k++) {
+              if (tk[k].v === "(") depth++;
+              else if (tk[k].v === ")") {
+                depth--;
+                if (depth === 0) break;
+              }
+            }
+            html += `<sup>${neg}${renderTokens(tk, j + 1, k)}</sup>`;
+            i = k;
+            continue;
+          }
+          html += `<sup>${neg}${j < i1 ? tokenHTML(tk[j], null) : ""}</sup>`;
+          i = j;
+          continue;
+        }
+        html += tokenHTML(q, tk[i - 1]);
+      }
+      return html;
+    }
+    const pretty = (src) => {
+      try {
+        const tk = tokenize(src);
+        return renderTokens(tk, 0, tk.length);
+      } catch {
+        return esc(src);
+      }
+    };
+
+    // =====================================================================
+    // Geometry: one tank, fixed in graph coordinates
+    // =====================================================================
+    const NX = 300,
+      NY = 120,
+      N = NX * NY;
+    const X0 = -6,
+      Y0 = -3.6,
+      DX = 0.06; // tank is [-6, 12] × [-3.6, 3.6]
+    const VIEW = { x0: -6.4, x1: 12.4, y0: -4, y1: 4 };
+    const U_LAT = 0.1; // lattice inflow speed, i.e. Mach ≈ 0.17
+    const DT = (U_LAT * DX) / 1; // graph seconds per step, so the inflow is 1 unit/s
+
+    const W0 = 4 / 9,
+      W1 = 1 / 9,
+      W5 = 1 / 36;
+    let fCur = new Float32Array(9 * N);
+    let fNext = new Float32Array(9 * N);
+    const solid = new Uint8Array(N); // 0 fluid, 1 wall, 2 measured body
+    const nearSolid = new Uint8Array(N); // any of the eight neighbours solid
+    const prevSolid = new Uint8Array(N);
+    const uwx = new Float32Array(N),
+      uwy = new Float32Array(N);
+    const RHO = new Float32Array(N),
+      UX = new Float32Array(N),
+      UY = new Float32Array(N);
+    const bfx = new Float32Array(N),
+      bfy = new Float32Array(N);
+    let dye = new Float32Array(N),
+      dye2 = new Float32Array(N);
+    const maskRGBA = new Uint8ClampedArray(N * 4);
+
+    // =====================================================================
+    // State
+    // =====================================================================
+    const P = { a: -2.6, b: 0.12, r: 0.6, t: 0, θ: (8 * Math.PI) / 180 };
+    const S = {
+      mode: "tunnel",
+      scene: "cylinder",
+      show: "vorticity",
+      particles: true,
+      arrows: false,
+      opacity: 0.85,
+      Re: 100,
+      lesMode: "auto",
+      running: true,
+      send: false,
+      liquidMax: 1400,
+      gravity: 1,
+      faucet: true,
+      boxPreset: "spin",
+      amp: 1,
+      thetaDeg: 8,
+      unstable: false,
+    };
+    let rows = []; // what the expression list shows
+    let obstacles = []; // compiled rows
+    let customTexts = [
+      "y < 0.6 sin(2x) − 2.3",
+      "(x + 2 − 0.6 sin(t))^2 + (y − 0.6)^2 < r^2",
+    ];
+    let maskDirty = true;
+    let lastMaskTime = 0;
+    let simTime = 0;
+    let stepCount = 0;
+    let stepsPerSec = 0;
+    let lastFrameSteps = 0;
+    let Uin = U_LAT;
+    let tau0 = 0.56;
+    let forcing = false;
+    let dragging = null;
+    let stir = null;
+    let liftHist = [];
+    let cd = 0,
+      cl = 0,
+      stEst = NaN,
+      crossings = [],
+      liftArmed = false;
+    let inletTrim = 0,
+      upstream = 0;
+    let clMean = 0;
+    let lastSend = 0;
+    let readoutCache = [];
+
+    const SCENES = {
+      cylinder: {
+        hint: "Flow past a cylinder. Above Reynolds number 47 the wake sheds vortices from alternate sides: the von Kármán street.",
+        params: { a: -2.6, b: 0.12, r: 0.6 },
+        Re: 100,
+        show: "vorticity",
+        u: 0.1,
+        rows: [
+          { kind: "point", label: "drag to move the cylinder" },
+          { kind: "slider", name: "r", min: 0.25, max: 1.1, step: 0.05 },
+          {
+            kind: "obstacle",
+            text: "(x − a)^2 + (y − b)^2 ≤ r^2",
+            color: "red",
+            measure: true,
+          },
+        ],
+        dref: () => 2 * P.r,
+        drefName: "diameter",
+      },
+      wing: {
+        hint: "An elliptical wing at an angle of attack. Move θ and watch the lift change sign.",
+        params: { a: -2.4, b: 0 },
+        Re: 400,
+        show: "vorticity",
+        u: 0.1,
+        rows: [
+          { kind: "point", label: "drag to move the wing" },
+          { kind: "slider", name: "θ", min: -20, max: 20, step: 1, deg: true },
+          {
+            kind: "obstacle",
+            text: "((x − a)cos(θ) − (y − b)sin(θ))^2/1.44 + ((x − a)sin(θ) + (y − b)cos(θ))^2/0.04 ≤ 1",
+            color: "purple",
+            measure: true,
+          },
+        ],
+        dref: () => 2.4,
+        drefName: "chord",
+      },
+      venturi: {
+        hint: "A Venturi tube: two walls given as functions. The fluid speeds up through the throat and the pressure there drops, as continuity and Bernoulli say it should.",
+        params: {},
+        Re: 300,
+        show: "pressure",
+        u: 0.05,
+        rows: [
+          { kind: "obstacle", text: "y ≥ 2.4 − 1.3e^(−x^2/2)", color: "blue" },
+          { kind: "obstacle", text: "y ≤ −2.4 + 1.3e^(−x^2/2)", color: "blue" },
+        ],
+        dref: () => 4.8,
+        drefName: "channel width",
+      },
+      custom: {
+        hint: "Anything you type becomes solid. Inequalities are regions; equations are walls one cell thick.",
+        params: { a: -2, b: 0, r: 0.5 },
+        Re: 150,
+        show: "dye",
+        u: 0.08,
+        rows: [{ kind: "slider", name: "r", min: 0.25, max: 1.1, step: 0.05 }],
+        dref: () => 1,
+        drefName: "unit length",
+      },
+    };
+    const BOX = {
+      spin: {
+        p: "−y",
+        q: "x − 3",
+        hint: "∇·F = 0 and ∇×F = 2. All of the field is curl, so all of it turns the fluid.",
+      },
+      source: {
+        p: "x − 3",
+        q: "y",
+        hint: "∇·F = 2 and ∇×F = 0. A pure gradient cannot move an incompressible fluid: the pressure absorbs it. Look at the pressure, which is the field's potential.",
+      },
+      shear: {
+        p: "sin(2y)",
+        q: "0",
+        hint: "∇·F = 0 and ∇×F = −2cos(2y). Layers pushed in opposite directions roll up into vortices once the Reynolds number is high enough.",
+      },
+      cells: {
+        p: "sin(x)cos(y)",
+        q: "−cos(x)sin(y)",
+        hint: "∇·F = 0. A grid of counter-rotating cells, the forcing behind the Taylor–Green vortex.",
+      },
+    };
+
+    // =====================================================================
+    // Lattice Boltzmann
+    // =====================================================================
+    function setEq(f, c, rho, ux, uy) {
+      const usq = 1.5 * (ux * ux + uy * uy);
+      const u5 = ux + uy,
+        u6 = -ux + uy;
+      f[c] = W0 * rho * (1 - usq);
+      f[N + c] = W1 * rho * (1 + 3 * ux + 4.5 * ux * ux - usq);
+      f[2 * N + c] = W1 * rho * (1 + 3 * uy + 4.5 * uy * uy - usq);
+      f[3 * N + c] = W1 * rho * (1 - 3 * ux + 4.5 * ux * ux - usq);
+      f[4 * N + c] = W1 * rho * (1 - 3 * uy + 4.5 * uy * uy - usq);
+      f[5 * N + c] = W5 * rho * (1 + 3 * u5 + 4.5 * u5 * u5 - usq);
+      f[6 * N + c] = W5 * rho * (1 + 3 * u6 + 4.5 * u6 * u6 - usq);
+      f[7 * N + c] = W5 * rho * (1 - 3 * u5 + 4.5 * u5 * u5 - usq);
+      f[8 * N + c] = W5 * rho * (1 - 3 * u6 + 4.5 * u6 * u6 - usq);
+    }
+
+    function lbmStep() {
+      const fo = fCur,
+        fn = fNext;
+      const T0 = tau0;
+      const les = lesOn();
+      let FX = 0,
+        FY = 0;
+      for (let y = 1; y < NY - 1; y++) {
+        let c = y * NX + 1;
+        for (let x = 1; x < NX - 1; x++, c++) {
+          if (solid[c]) continue;
+          let s, fb, f1, f2, f3, f4, f5, f6, f7, f8;
+          const f0 = fo[c];
+          if (!nearSolid[c]) {
+            // Most cells touch no wall, and skipping eight checks is a third
+            // of the step.
+            f1 = fo[N + c - 1];
+            f2 = fo[2 * N + c - NX];
+            f3 = fo[3 * N + c + 1];
+            f4 = fo[4 * N + c + NX];
+            f5 = fo[5 * N + c - NX - 1];
+            f6 = fo[6 * N + c - NX + 1];
+            f7 = fo[7 * N + c + NX + 1];
+            f8 = fo[8 * N + c + NX - 1];
+          } else {
+            // Pull each population from the neighbour it streams from. A solid
+            // neighbour sends back what this cell sent it (bounce-back), plus
+            // the momentum of a moving wall; the change is the force on it.
+            s = c - 1;
+            if (solid[s]) {
+              fb = fo[3 * N + c];
+              f1 = fb + 6 * W1 * uwx[s];
+              if (solid[s] === 2) FX -= fb + f1;
+            } else f1 = fo[N + s];
+            s = c - NX;
+            if (solid[s]) {
+              fb = fo[4 * N + c];
+              f2 = fb + 6 * W1 * uwy[s];
+              if (solid[s] === 2) FY -= fb + f2;
+            } else f2 = fo[2 * N + s];
+            s = c + 1;
+            if (solid[s]) {
+              fb = fo[N + c];
+              f3 = fb - 6 * W1 * uwx[s];
+              if (solid[s] === 2) FX += fb + f3;
+            } else f3 = fo[3 * N + s];
+            s = c + NX;
+            if (solid[s]) {
+              fb = fo[2 * N + c];
+              f4 = fb - 6 * W1 * uwy[s];
+              if (solid[s] === 2) FY += fb + f4;
+            } else f4 = fo[4 * N + s];
+            s = c - NX - 1;
+            if (solid[s]) {
+              fb = fo[7 * N + c];
+              f5 = fb + 6 * W5 * (uwx[s] + uwy[s]);
+              if (solid[s] === 2) {
+                FX -= fb + f5;
+                FY -= fb + f5;
+              }
+            } else f5 = fo[5 * N + s];
+            s = c - NX + 1;
+            if (solid[s]) {
+              fb = fo[8 * N + c];
+              f6 = fb + 6 * W5 * (-uwx[s] + uwy[s]);
+              if (solid[s] === 2) {
+                FX += fb + f6;
+                FY -= fb + f6;
+              }
+            } else f6 = fo[6 * N + s];
+            s = c + NX + 1;
+            if (solid[s]) {
+              fb = fo[5 * N + c];
+              f7 = fb - 6 * W5 * (uwx[s] + uwy[s]);
+              if (solid[s] === 2) {
+                FX += fb + f7;
+                FY += fb + f7;
+              }
+            } else f7 = fo[7 * N + s];
+            s = c + NX - 1;
+            if (solid[s]) {
+              fb = fo[6 * N + c];
+              f8 = fb + 6 * W5 * (uwx[s] - uwy[s]);
+              if (solid[s] === 2) {
+                FX -= fb + f8;
+                FY += fb + f8;
+              }
+            } else f8 = fo[8 * N + s];
+          }
+
+          const rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
+          const ir = 1 / rho;
+          let ux = (f1 - f3 + f5 - f6 - f7 + f8) * ir;
+          let uy = (f2 - f4 + f5 + f6 - f7 - f8) * ir;
+
+          let usq = 1.5 * (ux * ux + uy * uy);
+          let u5 = ux + uy,
+            u6 = -ux + uy;
+          let e0 = W0 * rho * (1 - usq);
+          let e1 = W1 * rho * (1 + 3 * ux + 4.5 * ux * ux - usq);
+          let e2 = W1 * rho * (1 + 3 * uy + 4.5 * uy * uy - usq);
+          let e3 = W1 * rho * (1 - 3 * ux + 4.5 * ux * ux - usq);
+          let e4 = W1 * rho * (1 - 3 * uy + 4.5 * uy * uy - usq);
+          let e5 = W5 * rho * (1 + 3 * u5 + 4.5 * u5 * u5 - usq);
+          let e6 = W5 * rho * (1 + 3 * u6 + 4.5 * u6 * u6 - usq);
+          let e7 = W5 * rho * (1 - 3 * u5 + 4.5 * u5 * u5 - usq);
+          let e8 = W5 * rho * (1 - 3 * u6 + 4.5 * u6 * u6 - usq);
+
+          let tau = T0;
+          if (les) {
+            // Smagorinsky through the non-equilibrium stress, which the
+            // lattice gives locally: no velocity gradients are needed.
+            const n5 = f5 - e5,
+              n6 = f6 - e6,
+              n7 = f7 - e7,
+              n8 = f8 - e8;
+            const pxx = f1 - e1 + (f3 - e3) + n5 + n6 + n7 + n8;
+            const pyy = f2 - e2 + (f4 - e4) + n5 + n6 + n7 + n8;
+            const pxy = n5 - n6 + n7 - n8;
+            const q = Math.sqrt(pxx * pxx + pyy * pyy + 2 * pxy * pxy);
+            tau = 0.5 * (T0 + Math.sqrt(T0 * T0 + 0.18 * q * ir));
+          }
+
+          if (forcing) {
+            // Body force by shifting the equilibrium velocity (Shan–Chen).
+            const sx = ux + tau * bfx[c] * ir,
+              sy = uy + tau * bfy[c] * ir;
+            usq = 1.5 * (sx * sx + sy * sy);
+            u5 = sx + sy;
+            u6 = -sx + sy;
+            e0 = W0 * rho * (1 - usq);
+            e1 = W1 * rho * (1 + 3 * sx + 4.5 * sx * sx - usq);
+            e2 = W1 * rho * (1 + 3 * sy + 4.5 * sy * sy - usq);
+            e3 = W1 * rho * (1 - 3 * sx + 4.5 * sx * sx - usq);
+            e4 = W1 * rho * (1 - 3 * sy + 4.5 * sy * sy - usq);
+            e5 = W5 * rho * (1 + 3 * u5 + 4.5 * u5 * u5 - usq);
+            e6 = W5 * rho * (1 + 3 * u6 + 4.5 * u6 * u6 - usq);
+            e7 = W5 * rho * (1 - 3 * u5 + 4.5 * u5 * u5 - usq);
+            e8 = W5 * rho * (1 - 3 * u6 + 4.5 * u6 * u6 - usq);
+            ux += 0.5 * bfx[c] * ir;
+            uy += 0.5 * bfy[c] * ir;
+          }
+
+          const om = 1 / tau;
+          fn[c] = f0 + om * (e0 - f0);
+          fn[N + c] = f1 + om * (e1 - f1);
+          fn[2 * N + c] = f2 + om * (e2 - f2);
+          fn[3 * N + c] = f3 + om * (e3 - f3);
+          fn[4 * N + c] = f4 + om * (e4 - f4);
+          fn[5 * N + c] = f5 + om * (e5 - f5);
+          fn[6 * N + c] = f6 + om * (e6 - f6);
+          fn[7 * N + c] = f7 + om * (e7 - f7);
+          fn[8 * N + c] = f8 + om * (e8 - f8);
+          RHO[c] = rho;
+          UX[c] = ux;
+          UY[c] = uy;
+        }
+      }
+
+      if (S.mode === "tunnel") {
+        // Top and bottom are slip walls, the way a wind tunnel's are drawn in
+        // a textbook: each ghost row is the mirror image of the row inside it,
+        // so the flow reflects off them without growing a boundary layer.
+        // Holding them at the inflow velocity instead sheared the fluid the
+        // cylinder pushes aside, and drew a false band of vorticity.
+        const MIRROR = [0, 1, 4, 3, 2, 8, 7, 6, 5];
+        for (let x = 0; x < NX; x++) {
+          const bot = x,
+            top = (NY - 1) * NX + x;
+          for (let i = 0; i < 9; i++) {
+            fn[i * N + bot] = fn[MIRROR[i] * N + bot + NX];
+            fn[i * N + top] = fn[MIRROR[i] * N + top - NX];
+          }
+        }
+        // Inlet: uniform flow. Outlet: zero gradient.
+        // The inflow is eased in over 1500 steps. Started impulsively, it
+        // sends a pressure pulse that rings between the slip walls for as long
+        // as the page is open, and the lift picks the ringing up as shedding.
+        const ease = Math.min(1, stepCount / 1500),
+          uIn = Uin * ease * ease * (3 - 2 * ease);
+        // Then one brief sideways gust. Without a disturbance the symmetric
+        // wake is a real, if unstable, solution, and noise takes minutes to
+        // tip it into shedding.
+        const g =
+          stepCount > 1500 && stepCount < 2300
+            ? 0.15 * Uin * Math.sin((Math.PI * (stepCount - 1500)) / 800)
+            : 0;
+        for (let y = 0; y < NY; y++) setEq(fn, y * NX, 1, uIn + inletTrim, g);
+        for (let y = 1; y < NY - 1; y++) {
+          const c = y * NX + NX - 1;
+          for (let i = 0; i < 9; i++) fn[i * N + c] = fn[i * N + c - 1];
+        }
+        // An equilibrium inlet fixes the density as well as the velocity, and
+        // the fluid inside needs slightly more pressure than that to get round
+        // a body, so the stream actually arriving runs below the nominal one.
+        // A slow integrator on the inlet holds the measured upstream speed at
+        // the nominal value instead. Giving the inlet the inside density was
+        // tried first and turned it into a resonator.
+        let up = 0,
+          nUp = 0;
+        for (let y = 1; y < NY - 1; y++) {
+          const c = y * NX + 12;
+          if (!solid[c]) {
+            up += UX[c];
+            nUp++;
+          }
+        }
+        upstream = nUp ? up / nUp : 0;
+        if (stepCount > 1500)
+          inletTrim = Math.max(
+            0,
+            Math.min(0.5 * Uin, inletTrim + 0.004 * (Uin - upstream))
+          );
+      }
+      fCur = fn;
+      fNext = fo;
+      stepCount++;
+      simTime += DT;
+      return [FX, FY];
+    }
+
+    function resetFluid() {
+      const u0 = 0;
+      for (let c = 0; c < N; c++) {
+        // A whisper of noise breaks the left-right symmetry so the wake starts
+        // shedding in seconds rather than minutes.
+        const uy = S.mode === "tunnel" ? (Math.random() - 0.5) * 0.004 : 0;
+        setEq(fCur, c, 1, solid[c] ? 0 : u0, solid[c] ? 0 : uy);
+        setEq(fNext, c, 1, solid[c] ? 0 : u0, 0);
+        RHO[c] = 1;
+        UX[c] = solid[c] ? 0 : u0;
+        UY[c] = 0;
+      }
+      dye.fill(0);
+      simTime = 0;
+      stepCount = 0;
+      liftHist = [];
+      crossings = [];
+      stEst = NaN;
+      cd = 0;
+      cl = 0;
+      clMean = 0;
+      liftArmed = false;
+      inletTrim = 0;
+      S.unstable = false;
+      seedParticles();
+      clearTrails = true;
+    }
+
+    // =====================================================================
+    // Obstacles from expression rows
+    // =====================================================================
+    const OBS_F = []; // per obstacle, Float32Array of F at each cell
+    const OBS_PREV = [];
+
+    function compileObstacle(text) {
+      const ast = parse(text, true);
+      const L = compile(ast.lhs, P),
+        R = compile(ast.rhs, P);
+      let F;
+      if (ast.cmp === "<") F = (x, y) => L(x, y) - R(x, y);
+      else if (ast.cmp === ">") F = (x, y) => R(x, y) - L(x, y);
+      else {
+        // An equation is a wall: distance to the curve, by one Newton step's
+        // worth of gradient, minus a half thickness.
+        const G = (x, y) => L(x, y) - R(x, y);
+        const h = 1e-3,
+          half = 0.06;
+        F = (x, y) => {
+          const g = G(x, y);
+          const gx = (G(x + h, y) - G(x - h, y)) / (2 * h);
+          const gy = (G(x, y + h) - G(x, y - h)) / (2 * h);
+          return Math.abs(g) / Math.max(Math.hypot(gx, gy), 1e-6) - half;
+        };
+      }
+      const moving = ["a", "b", "r", "t", "θ"].some(
+        (v) => uses(ast.lhs, v) || uses(ast.rhs, v)
+      );
+      return {
+        F,
+        moving,
+        usesT: uses(ast.lhs, "t") || uses(ast.rhs, "t"),
+        tokens: ast.tokens,
+        isWall: ast.cmp === "=",
+      };
+    }
+
+    function rebuildMask() {
+      prevSolid.set(solid);
+      solid.fill(0);
+      const dtSince = simTime - lastMaskTime;
+      lastMaskTime = simTime;
+      if (S.mode === "box" || S.mode === "liquid") {
+        for (let x = 0; x < NX; x++) {
+          solid[x] = 1;
+          solid[(NY - 1) * NX + x] = 1;
+        }
+        for (let y = 0; y < NY; y++) {
+          solid[y * NX] = 1;
+          solid[y * NX + NX - 1] = 1;
+        }
+      }
+      uwx.fill(0);
+      uwy.fill(0);
+      maskRGBA.fill(0);
+      obstacles.forEach((o, k) => {
+        if (!OBS_F[k]) {
+          OBS_F[k] = new Float32Array(N);
+          OBS_PREV[k] = new Float32Array(N);
+        }
+        const Fk = OBS_F[k],
+          Fp = OBS_PREV[k];
+        Fp.set(Fk);
+        if (!o.enabled) {
+          Fk.fill(1);
+          return;
+        }
+        const role = o.measure ? 2 : 1;
+        const [cr, cg, cb] = o.rgb;
+        for (let y = 0; y < NY; y++) {
+          const gy = Y0 + (y + 0.5) * DX;
+          for (let x = 0; x < NX; x++) {
+            const c = y * NX + x;
+            let v = o.F(X0 + (x + 0.5) * DX, gy);
+            if (!Number.isFinite(v)) v = 1; // undefined is not solid, as in Desmos
+            Fk[c] = v;
+            if (v <= 0) {
+              if (!solid[c] || role === 2) solid[c] = role;
+              const m = c * 4;
+              maskRGBA[m] = cr;
+              maskRGBA[m + 1] = cg;
+              maskRGBA[m + 2] = cb;
+              maskRGBA[m + 3] = 70;
+            }
+          }
+        }
+        // The boundary's velocity is the level set's: v = −F_t ∇F / |∇F|².
+        // One rule covers a dragged point, a slider and the clock alike.
+        if (o.moving && dtSince > 1e-6 && o.everBuilt) {
+          for (let y = 1; y < NY - 1; y++) {
+            for (let x = 1; x < NX - 1; x++) {
+              const c = y * NX + x;
+              if (Fk[c] > 0) continue;
+              const ft = (Fk[c] - Fp[c]) / dtSince;
+              if (ft === 0) continue;
+              const gx = (Fk[c + 1] - Fk[c - 1]) / (2 * DX);
+              const gy = (Fk[c + NX] - Fk[c - NX]) / (2 * DX);
+              const g2 = gx * gx + gy * gy;
+              if (g2 < 1e-9) continue;
+              // Only the band of cells next to the surface, measured in
+              // distance (F/|∇F|) rather than in F's own units.
+              if (-Fk[c] / Math.sqrt(g2) > 3 * DX) continue;
+              const scale = (-ft / g2) * (DT / DX); // graph units/s → lattice
+              const cap = 0.12;
+              uwx[c] = Math.max(-cap, Math.min(cap, scale * gx));
+              uwy[c] = Math.max(-cap, Math.min(cap, scale * gy));
+            }
+          }
+        }
+        o.everBuilt = true;
+      });
+      nearSolid.fill(0);
+      for (let y = 1; y < NY - 1; y++) {
+        for (let x = 1; x < NX - 1; x++) {
+          const c = y * NX + x;
+          nearSolid[c] =
+            solid[c - 1] |
+            solid[c + 1] |
+            solid[c - NX] |
+            solid[c + NX] |
+            solid[c - NX - 1] |
+            solid[c - NX + 1] |
+            solid[c + NX - 1] |
+            solid[c + NX + 1]
+              ? 1
+              : 0;
+        }
+      }
+      // Cells a body has just left are given back to the fluid at rest.
+      if (S.mode !== "liquid") {
+        for (let c = 0; c < N; c++) {
+          if (prevSolid[c] && !solid[c]) {
+            setEq(fCur, c, 1, 0, 0);
+            RHO[c] = 1;
+            UX[c] = 0;
+            UY[c] = 0;
+          }
+        }
+      }
+      contourDirty = true;
+      maskDirty = false;
+    }
+
+    // =====================================================================
+    // Body force for the stirred box
+    // =====================================================================
+    let boxP = null,
+      boxQ = null;
+    function compileBoxForce() {
+      const err = document.getElementById("pqErr");
+      try {
+        const p = compile(
+          parse(document.getElementById("pInput").value, false).expr,
+          P
+        );
+        const q = compile(
+          parse(document.getElementById("qInput").value, false).expr,
+          P
+        );
+        boxP = p;
+        boxQ = q;
+        err.hidden = true;
+      } catch (e) {
+        err.textContent = e.message;
+        err.hidden = false;
+        return;
+      }
+      updateForce();
+    }
+    function updateForce() {
+      forcing = S.mode === "box" && boxP !== null;
+      if (!forcing) return;
+      const k = 4.4e-6 * S.amp;
+      for (let y = 0; y < NY; y++) {
+        const gy = Y0 + (y + 0.5) * DX;
+        for (let x = 0; x < NX; x++) {
+          const gx = X0 + (x + 0.5) * DX,
+            c = y * NX + x;
+          const fx = boxP(gx, gy),
+            fy = boxQ(gx, gy);
+          bfx[c] = Number.isFinite(fx) ? k * fx : 0;
+          bfy[c] = Number.isFinite(fy) ? k * fy : 0;
+        }
+      }
+    }
+
+    // =====================================================================
+    // Liquid: particles with double-density relaxation (Clavet et al. 2005)
+    // =====================================================================
+    const H = 0.2; // interaction radius in graph units
+    const LW = 18 / H,
+      LH = 7.2 / H;
+    const MAXP = 2400;
+    const lx = new Float32Array(MAXP),
+      ly = new Float32Array(MAXP);
+    const lvx = new Float32Array(MAXP),
+      lvy = new Float32Array(MAXP);
+    const lox = new Float32Array(MAXP),
+      loy = new Float32Array(MAXP);
+    let nLiquid = 0;
+    const GW = Math.ceil(LW),
+      GH = Math.ceil(LH);
+    const cellStart = new Int32Array(GW * GH + 1);
+    const cellItems = new Int32Array(MAXP);
+    const cellOf = new Int32Array(MAXP);
+
+    function liquidReset() {
+      nLiquid = 0;
+    }
+
+    function buildGrid() {
+      cellStart.fill(0);
+      for (let i = 0; i < nLiquid; i++) {
+        const gx = Math.min(GW - 1, Math.max(0, lx[i] | 0));
+        const gy = Math.min(GH - 1, Math.max(0, ly[i] | 0));
+        const k = gy * GW + gx;
+        cellOf[i] = k;
+        cellStart[k + 1]++;
+      }
+      for (let k = 0; k < GW * GH; k++) cellStart[k + 1] += cellStart[k];
+      const fill = cellStart.slice(0, GW * GH);
+      for (let i = 0; i < nLiquid; i++) cellItems[fill[cellOf[i]]++] = i;
+    }
+
+    function liquidStep() {
+      const sub = 3,
+        dt = 1;
+      // 9.8 u/s² is 9.8 / (H · 180²) in h-units per substep², at three substeps a frame.
+      const g = (9.8 / (H * 180 * 180)) * S.gravity;
+      const rho0 = 3.2,
+        k = 0.06,
+        kNear = 0.25,
+        sigma = 0.015,
+        beta = 0.04;
+      if (S.faucet && nLiquid < S.liquidMax) {
+        for (let s = 0; s < 3 && nLiquid < S.liquidMax; s++) {
+          const i = nLiquid++;
+          lx[i] = (P.a - X0) / H + (Math.random() - 0.5) * 0.6;
+          ly[i] = (P.b - Y0) / H + (Math.random() - 0.5) * 0.6;
+          lvx[i] = 0;
+          lvy[i] = -0.05;
+        }
+      }
+      for (let it = 0; it < sub; it++) {
+        for (let i = 0; i < nLiquid; i++) lvy[i] -= g * dt;
+        if (stir) {
+          const sx = (stir.gx - X0) / H,
+            sy = (stir.gy - Y0) / H;
+          for (let i = 0; i < nLiquid; i++) {
+            const dx = lx[i] - sx,
+              dy = ly[i] - sy,
+              d2 = dx * dx + dy * dy;
+            if (d2 < 16) {
+              // Pointer velocity in graph units/s, into h-units per substep.
+              const w = (1 - Math.sqrt(d2) / 4) * 0.25;
+              lvx[i] += (stir.vx / H / 180 - lvx[i]) * w;
+              lvy[i] += (stir.vy / H / 180 - lvy[i]) * w;
+            }
+          }
+        }
+        buildGrid();
+        // Viscosity impulses between approaching neighbours.
+        for (let i = 0; i < nLiquid; i++) {
+          const gx = lx[i] | 0,
+            gy = ly[i] | 0;
+          for (let oy = -1; oy <= 1; oy++) {
+            const cy = gy + oy;
+            if (cy < 0 || cy >= GH) continue;
+            for (let ox = -1; ox <= 1; ox++) {
+              const cx = gx + ox;
+              if (cx < 0 || cx >= GW) continue;
+              const kk = cy * GW + cx;
+              for (let m = cellStart[kk]; m < cellStart[kk + 1]; m++) {
+                const j = cellItems[m];
+                if (j <= i) continue;
+                const dx = lx[j] - lx[i],
+                  dy = ly[j] - ly[i],
+                  r2 = dx * dx + dy * dy;
+                if (r2 >= 1 || r2 < 1e-12) continue;
+                const r = Math.sqrt(r2),
+                  q = r,
+                  nx = dx / r,
+                  ny = dy / r;
+                const u = (lvx[i] - lvx[j]) * nx + (lvy[i] - lvy[j]) * ny;
+                if (u > 0) {
+                  const I = dt * (1 - q) * (sigma * u + beta * u * u);
+                  lvx[i] -= 0.5 * I * nx;
+                  lvy[i] -= 0.5 * I * ny;
+                  lvx[j] += 0.5 * I * nx;
+                  lvy[j] += 0.5 * I * ny;
+                }
+              }
+            }
+          }
+        }
+        for (let i = 0; i < nLiquid; i++) {
+          lox[i] = lx[i];
+          loy[i] = ly[i];
+          lx[i] += dt * lvx[i];
+          ly[i] += dt * lvy[i];
+        }
+        buildGrid();
+        for (let i = 0; i < nLiquid; i++) {
+          const gx = lx[i] | 0,
+            gy = ly[i] | 0;
+          let d = 0,
+            dn = 0;
+          for (let oy = -1; oy <= 1; oy++) {
+            const cy = gy + oy;
+            if (cy < 0 || cy >= GH) continue;
+            for (let ox = -1; ox <= 1; ox++) {
+              const cx = gx + ox;
+              if (cx < 0 || cx >= GW) continue;
+              const kk = cy * GW + cx;
+              for (let m = cellStart[kk]; m < cellStart[kk + 1]; m++) {
+                const j = cellItems[m];
+                if (j === i) continue;
+                const dx = lx[j] - lx[i],
+                  dy = ly[j] - ly[i],
+                  r2 = dx * dx + dy * dy;
+                if (r2 >= 1) continue;
+                const q = 1 - Math.sqrt(r2);
+                d += q * q;
+                dn += q * q * q;
+              }
+            }
+          }
+          // Below rest density the pressure pulls neighbours together, which
+          // is surface tension. At full strength it clumps the liquid into a
+          // gel that never levels, so the pull is kept to a quarter.
+          let pr = k * (d - rho0);
+          if (pr < 0) pr *= 0.25;
+          const prn = kNear * dn;
+          let ddx = 0,
+            ddy = 0;
+          for (let oy = -1; oy <= 1; oy++) {
+            const cy = gy + oy;
+            if (cy < 0 || cy >= GH) continue;
+            for (let ox = -1; ox <= 1; ox++) {
+              const cx = gx + ox;
+              if (cx < 0 || cx >= GW) continue;
+              const kk = cy * GW + cx;
+              for (let m = cellStart[kk]; m < cellStart[kk + 1]; m++) {
+                const j = cellItems[m];
+                if (j === i) continue;
+                let dx = lx[j] - lx[i],
+                  dy = ly[j] - ly[i];
+                const r2 = dx * dx + dy * dy;
+                if (r2 >= 1) continue;
+                if (r2 < 1e-12) {
+                  dx = (Math.random() - 0.5) * 1e-3;
+                  dy = (Math.random() - 0.5) * 1e-3;
+                }
+                const r = Math.max(Math.sqrt(r2), 1e-6),
+                  q = 1 - r;
+                const D = dt * dt * (pr * q + prn * q * q) * 0.5;
+                const ux = (dx / r) * D,
+                  uy = (dy / r) * D;
+                lx[j] += ux;
+                ly[j] += uy;
+                ddx -= ux;
+                ddy -= uy;
+              }
+            }
+          }
+          lx[i] += ddx;
+          ly[i] += ddy;
+        }
+        // Collisions: the tank, then every enabled obstacle, by projecting
+        // back onto F = 0 along its gradient.
+        for (let i = 0; i < nLiquid; i++) {
+          let gxp = X0 + lx[i] * H,
+            gyp = Y0 + ly[i] * H;
+          for (const o of obstacles) {
+            if (!o.enabled) continue;
+            let v = o.F(gxp, gyp);
+            for (let n = 0; n < 3 && v < 0.004; n++) {
+              const e = 1e-3;
+              const fx = (o.F(gxp + e, gyp) - o.F(gxp - e, gyp)) / (2 * e);
+              const fy = (o.F(gxp, gyp + e) - o.F(gxp, gyp - e)) / (2 * e);
+              const g2 = fx * fx + fy * fy;
+              if (!(g2 > 1e-10)) break;
+              const sft = (0.004 - v) / g2;
+              gxp += sft * fx;
+              gyp += sft * fy;
+              v = o.F(gxp, gyp);
+            }
+          }
+          lx[i] = (gxp - X0) / H;
+          ly[i] = (gyp - Y0) / H;
+          if (lx[i] < 0.3) lx[i] = 0.3;
+          if (lx[i] > LW - 0.3) lx[i] = LW - 0.3;
+          if (ly[i] < 0.3) ly[i] = 0.3;
+          if (ly[i] > LH - 0.3) ly[i] = LH - 0.3;
+          lvx[i] = (lx[i] - lox[i]) / dt;
+          lvy[i] = (ly[i] - loy[i]) / dt;
+          const sp = Math.hypot(lvx[i], lvy[i]);
+          if (sp > 0.9) {
+            lvx[i] *= 0.9 / sp;
+            lvy[i] *= 0.9 / sp;
+          }
+        }
+      }
+      simTime += 1 / 60;
+    }
+
+    // =====================================================================
+    // Tracers and dye
+    // =====================================================================
+    const NP = 2600;
+    const px = new Float32Array(NP),
+      py = new Float32Array(NP),
+      age = new Float32Array(NP),
+      life = new Float32Array(NP);
+    function respawn(i) {
+      for (let tries = 0; tries < 20; tries++) {
+        const x = 1 + Math.random() * (NX - 3),
+          y = 1 + Math.random() * (NY - 3);
+        if (!solid[(y | 0) * NX + (x | 0)]) {
+          px[i] = x;
+          py[i] = y;
+          break;
+        }
+      }
+      age[i] = 0;
+      life[i] = 120 + Math.random() * 240;
+    }
+    function seedParticles() {
+      for (let i = 0; i < NP; i++) {
+        respawn(i);
+        age[i] = Math.random() * life[i];
+      }
+    }
+    function sampleU(x, y) {
+      const x0 = Math.min(NX - 2, Math.max(0, x | 0)),
+        y0 = Math.min(NY - 2, Math.max(0, y | 0));
+      const fx = x - x0,
+        fy = y - y0,
+        c = y0 * NX + x0;
+      const ux =
+        (UX[c] * (1 - fx) + UX[c + 1] * fx) * (1 - fy) +
+        (UX[c + NX] * (1 - fx) + UX[c + NX + 1] * fx) * fy;
+      const uy =
+        (UY[c] * (1 - fx) + UY[c + 1] * fx) * (1 - fy) +
+        (UY[c + NX] * (1 - fx) + UY[c + NX + 1] * fx) * fy;
+      return [ux, uy];
+    }
+    function advectTracers(steps) {
+      for (let i = 0; i < NP; i++) {
+        const [u1, v1] = sampleU(px[i], py[i]);
+        const [u2, v2] = sampleU(
+          px[i] + 0.5 * steps * u1,
+          py[i] + 0.5 * steps * v1
+        );
+        px[i] += steps * u2;
+        py[i] += steps * v2;
+        age[i]++;
+        const xi = px[i] | 0,
+          yi = py[i] | 0;
+        if (
+          age[i] > life[i] ||
+          px[i] < 1 ||
+          px[i] > NX - 2 ||
+          py[i] < 1 ||
+          py[i] > NY - 2 ||
+          solid[yi * NX + xi]
+        )
+          respawn(i);
+      }
+    }
+    function advectDye(steps) {
+      for (let y = 1; y < NY - 1; y++) {
+        for (let x = 1; x < NX - 1; x++) {
+          const c = y * NX + x;
+          if (solid[c]) {
+            dye2[c] = 0;
+            continue;
+          }
+          let sx = x - steps * UX[c],
+            sy = y - steps * UY[c];
+          sx = Math.min(NX - 1.001, Math.max(0, sx));
+          sy = Math.min(NY - 1.001, Math.max(0, sy));
+          const x0 = sx | 0,
+            y0 = sy | 0,
+            fx = sx - x0,
+            fy = sy - y0,
+            k = y0 * NX + x0;
+          dye2[c] =
+            0.9985 *
+            ((dye[k] * (1 - fx) + dye[k + 1] * fx) * (1 - fy) +
+              (dye[k + NX] * (1 - fx) + dye[k + NX + 1] * fx) * fy);
+        }
+      }
+      if (S.mode === "tunnel") {
+        for (let y = 1; y < NY - 1; y++) {
+          const on = y % 12 < 3 ? 1 : 0;
+          for (let x = 0; x < 3; x++) dye2[y * NX + x] = on;
+        }
+      } else {
+        // In the box, dye is laid down once in stripes and then mixed.
+      }
+      const t = dye;
+      dye = dye2;
+      dye2 = t;
+    }
+    function stripeDye() {
+      for (let y = 0; y < NY; y++)
+        for (let x = 0; x < NX; x++) dye[y * NX + x] = (x + y) % 24 < 8 ? 1 : 0;
+    }
+
+    // =====================================================================
+    // Drawing
+    // =====================================================================
+    const view = document.getElementById("view");
+    const ctx = view.getContext("2d");
+    const simCanvas = document.createElement("canvas");
+    simCanvas.width = NX;
+    simCanvas.height = NY;
+    const sctx = simCanvas.getContext("2d");
+    const simImg = sctx.createImageData(NX, NY);
+    const maskCanvas = document.createElement("canvas");
+    maskCanvas.width = NX;
+    maskCanvas.height = NY;
+    const mctx = maskCanvas.getContext("2d");
+    const trail = document.createElement("canvas");
+    const tctx = trail.getContext("2d");
+    const paper = document.createElement("canvas");
+    const pctx = paper.getContext("2d");
+    let W = 0,
+      Hc = 0,
+      dpr = 1,
+      pxu = 1;
+    let clearTrails = true;
+    let contourDirty = true;
+    let contourPaths = [];
+    let colors = {};
+
+    function readColors() {
+      const cs = getComputedStyle(document.documentElement);
+      const g = (n) => cs.getPropertyValue(n).trim();
+      const rgb = (hex) => {
+        const h = hex.replace("#", "");
+        const v =
+          h.length === 3
+            ? h
+                .split("")
+                .map((c) => c + c)
+                .join("")
+            : h;
+        return [
+          parseInt(v.slice(0, 2), 16),
+          parseInt(v.slice(2, 4), 16),
+          parseInt(v.slice(4, 6), 16),
+        ];
+      };
+      colors = {
+        paper: g("--paper"),
+        minor: g("--grid-minor"),
+        major: g("--grid-major"),
+        axis: g("--axis"),
+        ink2: g("--ink-2"),
+        rule: g("--rule"),
+        particle: g("--particle"),
+        orange: g("--orange"),
+        red: g("--red"),
+        blue: g("--blue"),
+        green: g("--green"),
+        purple: g("--purple"),
+        black: g("--black"),
+        smoke: g("--smoke").split(/\s+/).map(Number),
+        neg: rgb(g("--blue")),
+        pos: rgb(g("--red")),
+        rgb,
+      };
+      obstacles.forEach((o) => (o.rgb = colors.rgb(colors[o.color])));
+      maskDirty = true;
+    }
+
+    const SPECTRAL = [
+      "#5e4fa2",
+      "#3288bd",
+      "#66c2a5",
+      "#abdda4",
+      "#e6f598",
+      "#fee08b",
+      "#fdae61",
+      "#f46d43",
+      "#d53e4f",
+      "#9e0142",
+    ];
+    const LUT = new Uint8ClampedArray(256 * 3);
+    (() => {
+      const st = SPECTRAL.map((h) => [
+        parseInt(h.slice(1, 3), 16),
+        parseInt(h.slice(3, 5), 16),
+        parseInt(h.slice(5, 7), 16),
+      ]);
+      for (let i = 0; i < 256; i++) {
+        const t = (i / 255) * (st.length - 1),
+          k = Math.min(st.length - 2, t | 0),
+          f = t - k;
+        for (let ch = 0; ch < 3; ch++)
+          LUT[i * 3 + ch] = st[k][ch] * (1 - f) + st[k + 1][ch] * f;
+      }
+    })();
+
+    const mapX = (gx) => ((gx - VIEW.x0) / (VIEW.x1 - VIEW.x0)) * W;
+    const mapY = (gy) => (1 - (gy - VIEW.y0) / (VIEW.y1 - VIEW.y0)) * Hc;
+    const unmapX = (sx) => VIEW.x0 + (sx / W) * (VIEW.x1 - VIEW.x0);
+    const unmapY = (sy) => VIEW.y0 + (1 - sy / Hc) * (VIEW.y1 - VIEW.y0);
+
+    function resize() {
+      const r = view.getBoundingClientRect();
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = Math.max(10, Math.round(r.width * dpr));
+      Hc = Math.max(10, Math.round(r.height * dpr));
+      view.width = W;
+      view.height = Hc;
+      trail.width = W;
+      trail.height = Hc;
+      paper.width = W;
+      paper.height = Hc;
+      pxu = W / (VIEW.x1 - VIEW.x0);
+      drawPaper();
+      contourDirty = true;
+      clearTrails = true;
+    }
+
+    function drawPaper() {
+      const c = pctx;
+      c.fillStyle = colors.paper;
+      c.fillRect(0, 0, W, Hc);
+      const minor = 0.2,
+        major = 1;
+      c.lineWidth = 1;
+      if (pxu * minor >= 5 * dpr) {
+        c.strokeStyle = colors.minor;
+        c.beginPath();
+        for (
+          let x = Math.ceil(VIEW.x0 / minor) * minor;
+          x <= VIEW.x1;
+          x += minor
+        ) {
+          const s = Math.round(mapX(x)) + 0.5;
+          c.moveTo(s, 0);
+          c.lineTo(s, Hc);
+        }
+        for (
+          let y = Math.ceil(VIEW.y0 / minor) * minor;
+          y <= VIEW.y1;
+          y += minor
+        ) {
+          const s = Math.round(mapY(y)) + 0.5;
+          c.moveTo(0, s);
+          c.lineTo(W, s);
+        }
+        c.stroke();
+      }
+      c.strokeStyle = colors.major;
+      c.beginPath();
+      for (let x = Math.ceil(VIEW.x0); x <= VIEW.x1; x += major) {
+        const s = Math.round(mapX(x)) + 0.5;
+        c.moveTo(s, 0);
+        c.lineTo(s, Hc);
+      }
+      for (let y = Math.ceil(VIEW.y0); y <= VIEW.y1; y += major) {
+        const s = Math.round(mapY(y)) + 0.5;
+        c.moveTo(0, s);
+        c.lineTo(W, s);
+      }
+      c.stroke();
+      c.strokeStyle = colors.axis;
+      c.lineWidth = 1.5 * dpr;
+      c.beginPath();
+      c.moveTo(0, mapY(0));
+      c.lineTo(W, mapY(0));
+      c.moveTo(mapX(0), 0);
+      c.lineTo(mapX(0), Hc);
+      c.stroke();
+      c.fillStyle = colors.axis;
+      c.font = `${12 * dpr}px Arial, sans-serif`;
+      c.textAlign = "center";
+      c.textBaseline = "top";
+      for (let x = -6; x <= 12; x += 2) {
+        if (x !== 0)
+          c.fillText(String(x).replace("-", "−"), mapX(x), mapY(0) + 4 * dpr);
+      }
+      c.textAlign = "right";
+      c.textBaseline = "middle";
+      for (let y = -3; y <= 3; y += 1) {
+        if (y !== 0)
+          c.fillText(String(y).replace("-", "−"), mapX(0) - 5 * dpr, mapY(y));
+      }
+      c.textAlign = "right";
+      c.textBaseline = "top";
+      c.fillText("0", mapX(0) - 5 * dpr, mapY(0) + 4 * dpr);
+    }
+
+    function buildContours() {
+      contourPaths = obstacles.map((o, k) => {
+        const path = new Path2D();
+        if (!o.enabled || !OBS_F[k]) return path;
+        const F = OBS_F[k];
+        const sx = (x) => mapX(X0 + (x + 0.5) * DX),
+          sy = (y) => mapY(Y0 + (y + 0.5) * DX);
+        for (let y = 0; y < NY - 1; y++) {
+          for (let x = 0; x < NX - 1; x++) {
+            const c = y * NX + x;
+            const a = F[c],
+              b = F[c + 1],
+              d = F[c + NX],
+              e = F[c + NX + 1];
+            const pts = [];
+            if (a <= 0 !== b <= 0) {
+              const t = a / (a - b);
+              pts.push([x + t, y]);
+            }
+            if (b <= 0 !== e <= 0) {
+              const t = b / (b - e);
+              pts.push([x + 1, y + t]);
+            }
+            if (d <= 0 !== e <= 0) {
+              const t = d / (d - e);
+              pts.push([x + t, y + 1]);
+            }
+            if (a <= 0 !== d <= 0) {
+              const t = a / (a - d);
+              pts.push([x, y + t]);
+            }
+            for (let m = 0; m + 1 < pts.length; m += 2) {
+              path.moveTo(sx(pts[m][0]), sy(pts[m][1]));
+              path.lineTo(sx(pts[m + 1][0]), sy(pts[m + 1][1]));
+            }
+          }
+        }
+        return path;
+      });
+      contourDirty = false;
+    }
+
+    function paintField() {
+      const d = simImg.data;
+      const op = S.opacity;
+      const show = S.show;
+      const uref = S.mode === "box" ? 0.06 : Uin;
+      const wScale = 0.06 * uref;
+      const pScale = 0.5 * uref * uref;
+      const [nr, ng, nb] = colors.neg,
+        [pr, pg, pb] = colors.pos;
+      const [sr, sg, sb] = colors.smoke;
+      let maxU = 0,
+        rhoSum = 0,
+        rhoCount = 0;
+      for (let y = 0; y < NY; y++) {
+        const row = (NY - 1 - y) * NX;
+        for (let x = 0; x < NX; x++) {
+          const c = y * NX + x,
+            m = (row + x) * 4;
+          if (solid[c]) {
+            d[m + 3] = 0;
+            continue;
+          }
+          const ux = UX[c],
+            uy = UY[c];
+          const sp = Math.sqrt(ux * ux + uy * uy);
+          if (sp > maxU) maxU = sp;
+          if (show === "speed") {
+            const k = Math.min(255, ((sp / (1.6 * uref)) * 255) | 0) * 3;
+            d[m] = LUT[k];
+            d[m + 1] = LUT[k + 1];
+            d[m + 2] = LUT[k + 2];
+            d[m + 3] = 255 * op;
+          } else if (show === "vorticity" || show === "pressure") {
+            let v;
+            if (show === "vorticity") {
+              if (x < 2 || y < 2 || x > NX - 3 || y > NY - 3) {
+                d[m + 3] = 0;
+                continue;
+              }
+              v = 0.5 * (UY[c + 1] - UY[c - 1] - (UX[c + NX] - UX[c - NX]));
+              v = v / wScale;
+            } else {
+              // Gauge pressure against the tank's mean, so a channel whose
+              // pressure all sits above the inlet's still shows where it drops.
+              v = (RHO[c] - rhoMean) / 3 / pScale;
+              v = v / 0.6;
+              rhoSum += RHO[c];
+              rhoCount++;
+            }
+            // The signed saturating ramp from Vector Tools: sign(d)(1 − e^−|d|).
+            const a = 1 - Math.exp(-Math.abs(v));
+            if (v < 0) {
+              d[m] = nr;
+              d[m + 1] = ng;
+              d[m + 2] = nb;
+            } else {
+              d[m] = pr;
+              d[m + 1] = pg;
+              d[m + 2] = pb;
+            }
+            d[m + 3] = 255 * op * a;
+          } else {
+            const v = Math.min(1, dye[c]);
+            d[m] = sr;
+            d[m + 1] = sg;
+            d[m + 2] = sb;
+            d[m + 3] = 255 * op * v * 0.8;
+          }
+        }
+      }
+      sctx.putImageData(simImg, 0, 0);
+      if (rhoCount) rhoMean = rhoSum / rhoCount;
+      return maxU;
+    }
+    let rhoMean = 1;
+
+    function tankRect() {
+      const x0 = mapX(X0),
+        x1 = mapX(X0 + NX * DX),
+        y0 = mapY(Y0 + NY * DX),
+        y1 = mapY(Y0);
+      return [x0, y0, x1 - x0, y1 - y0];
+    }
+
+    function render() {
+      ctx.drawImage(paper, 0, 0);
+      const [tx, ty, tw, th] = tankRect();
+      const lattice = S.mode === "tunnel" || S.mode === "box";
+      let maxU = 0;
+      if (lattice) {
+        maxU = paintField();
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(simCanvas, tx, ty, tw, th);
+      }
+      // Obstacles: shaded the way Desmos shades an inequality, outlined.
+      if (maskDirty) rebuildMask();
+      if (contourDirty) {
+        buildContours();
+        const img = mctx.createImageData(NX, NY);
+        for (let y = 0; y < NY; y++) {
+          const src = y * NX * 4,
+            dst = (NY - 1 - y) * NX * 4;
+          img.data.set(maskRGBA.subarray(src, src + NX * 4), dst);
+        }
+        mctx.putImageData(img, 0, 0);
+      }
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(maskCanvas, tx, ty, tw, th);
+      ctx.lineWidth = 2.5 * dpr;
+      ctx.lineCap = "round";
+      obstacles.forEach((o, k) => {
+        if (!o.enabled) return;
+        ctx.strokeStyle = colors[o.color];
+        ctx.stroke(contourPaths[k]);
+      });
+
+      if (lattice && S.particles) {
+        if (clearTrails) {
+          tctx.clearRect(0, 0, W, Hc);
+          clearTrails = false;
+        }
+        tctx.globalCompositeOperation = "destination-out";
+        tctx.fillStyle = "rgba(0,0,0,0.075)";
+        tctx.fillRect(0, 0, W, Hc);
+        tctx.globalCompositeOperation = "source-over";
+        tctx.fillStyle = colors.particle;
+        const s = 1.6 * dpr;
+        for (let i = 0; i < NP; i++) {
+          const gx = X0 + px[i] * DX,
+            gy = Y0 + py[i] * DX;
+          tctx.fillRect(mapX(gx) - s / 2, mapY(gy) - s / 2, s, s);
+        }
+        ctx.globalAlpha = 0.7;
+        ctx.drawImage(trail, 0, 0);
+        ctx.globalAlpha = 1;
+      }
+
+      if (lattice && S.arrows) {
+        ctx.strokeStyle = colors.orange;
+        ctx.fillStyle = colors.orange;
+        ctx.lineWidth = 1.6 * dpr;
+        const uref = S.mode === "box" ? 0.06 : Uin;
+        for (let y = 8; y < NY - 4; y += 14) {
+          for (let x = 8; x < NX - 4; x += 14) {
+            const c = y * NX + x;
+            if (solid[c]) continue;
+            const ux = UX[c],
+              uy = UY[c],
+              sp = Math.hypot(ux, uy);
+            if (sp < 1e-5) continue;
+            const L = Math.min(1, sp / (1.4 * uref)) * 20 * dpr;
+            const x0 = mapX(X0 + (x + 0.5) * DX),
+              y0 = mapY(Y0 + (y + 0.5) * DX);
+            const dx = (ux / sp) * L,
+              dy = -(uy / sp) * L;
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x0 + dx, y0 + dy);
+            ctx.stroke();
+            const hx = -dy * 0.28,
+              hy = dx * 0.28;
+            ctx.beginPath();
+            ctx.moveTo(x0 + dx * 1.25, y0 + dy * 1.25);
+            ctx.lineTo(x0 + dx * 0.85 + hx, y0 + dy * 0.85 + hy);
+            ctx.lineTo(x0 + dx * 0.85 - hx, y0 + dy * 0.85 - hy);
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+      }
+
+      if (S.mode === "liquid") {
+        const rr = 0.55 * H * pxu;
+        const [br, bg, bb] = colors.neg;
+        for (let i = 0; i < nLiquid; i++) {
+          const sp = Math.hypot(lvx[i], lvy[i]);
+          const gx = X0 + lx[i] * H,
+            gy = Y0 + ly[i] * H;
+          if (S.show === "speed") {
+            const k = Math.min(255, (sp / 0.35) * 255) | 0;
+            ctx.fillStyle = `rgba(${LUT[k * 3]},${LUT[k * 3 + 1]},${LUT[k * 3 + 2]},${S.opacity})`;
+          } else ctx.fillStyle = `rgba(${br},${bg},${bb},${S.opacity * 0.75})`;
+          ctx.beginPath();
+          ctx.arc(mapX(gx), mapY(gy), rr, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // The tank.
+      ctx.setLineDash([6 * dpr, 5 * dpr]);
+      ctx.strokeStyle = colors.ink2;
+      ctx.lineWidth = 1 * dpr;
+      ctx.strokeRect(tx, ty, tw, th);
+      ctx.setLineDash([]);
+
+      // Movable point, drawn the way Desmos draws one.
+      if (hasPoint()) {
+        const sx = mapX(P.a),
+          sy = mapY(P.b);
+        const col =
+          S.mode === "liquid"
+            ? colors.blue
+            : colors[
+                (obstacles.find((o) => o.measure) || { color: "red" }).color
+              ];
+        ctx.fillStyle = col;
+        ctx.globalAlpha = dragging === "point" || hover ? 0.3 : 0.18;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 14 * dpr, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 5 * dpr, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.font = `${13 * dpr}px Arial, sans-serif`;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "bottom";
+        const label = `(${fmt(P.a, 2)}, ${fmt(P.b, 2)})`;
+        const lx0 = sx + 14 * dpr,
+          ly0 = sy - 12 * dpr;
+        ctx.lineWidth = 4 * dpr;
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = colors.paper;
+        ctx.strokeText(label, lx0, ly0);
+        ctx.fillStyle = colors.axis;
+        ctx.fillText(label, lx0, ly0);
+      }
+      return maxU;
+    }
+
+    const fmt = (v, d) =>
+      Number.isFinite(v) ? v.toFixed(d).replace("-", "−") : "—";
+    const hasPoint = () =>
+      (S.mode === "tunnel" && (S.scene === "cylinder" || S.scene === "wing")) ||
+      S.mode === "liquid";
+
+    // =====================================================================
+    // The expression list
+    // =====================================================================
+    const rowsEl = document.getElementById("rows");
+    function sceneRows() {
+      if (S.mode === "liquid") {
+        return [
+          { kind: "point", label: "the liquid pours from here" },
+          {
+            kind: "obstacle",
+            text: "y ≤ 0.35 sin(1.3x) − 2.7",
+            color: "green",
+          },
+          {
+            kind: "obstacle",
+            text: "(x + 0.5)^2 + (y − 0.1)^2 ≤ 0.5",
+            color: "red",
+          },
+          {
+            kind: "obstacle",
+            text: "y = −0.35x − 0.5",
+            color: "purple",
+            restrictX: true,
+          },
+        ];
+      }
+      if (S.mode === "box") {
+        return [
+          {
+            kind: "def",
+            html: `<i>P</i>(<i>x</i>, <i>y</i>) = ${pretty(document.getElementById("pInput").value)}`,
+          },
+          {
+            kind: "def",
+            html: `<i>Q</i>(<i>x</i>, <i>y</i>) = ${pretty(document.getElementById("qInput").value)}`,
+          },
+        ];
+      }
+      if (S.mode === "off") return [];
+      const base = SCENES[S.scene].rows.slice();
+      if (S.scene === "custom")
+        customTexts.forEach((t, i) =>
+          base.push({
+            kind: "obstacle",
+            text: t,
+            color: ["green", "orange", "purple", "black"][i % 4],
+            custom: i,
+          })
+        );
+      return base;
+    }
+
+    function rebuildRows() {
+      rows = sceneRows();
+      obstacles = [];
+      for (const r of rows) {
+        if (r.kind !== "obstacle") continue;
+        try {
+          let o = compileObstacle(r.text);
+          if (r.restrictX) {
+            // The ramp is only a segment: the wall y = −0.35x − 0.5 for 0.4 ≤ x ≤ 6.
+            const F0 = o.F;
+            o = { ...o, F: (x, y) => (x < 0.4 || x > 6 ? 1 : F0(x, y)) };
+            r.note = "restricted to 0.4 ≤ x ≤ 6";
+          }
+          o.color = r.color;
+          o.measure = !!r.measure;
+          o.enabled = r.enabled !== false;
+          o.row = r;
+          o.rgb = colors.rgb(colors[r.color]);
+          obstacles.push(o);
+          r.obs = o;
+        } catch (e) {
+          r.error = e.message;
+        }
+      }
+      OBS_F.length = 0;
+      OBS_PREV.length = 0;
+      renderRows();
+      maskDirty = true;
+    }
+
+    let resultRowsEl = null;
+    function renderRows() {
+      rowsEl.innerHTML = "";
+      let idx = 1;
+      for (const r of rows) {
+        const row = document.createElement("div");
+        row.className = "row";
+        const gutter = document.createElement("div");
+        gutter.className = "gutter";
+        gutter.innerHTML = `<span>${idx++}</span>`;
+        const body = document.createElement("div");
+        body.className = "body";
+        if (r.kind === "obstacle") {
+          const sw = document.createElement("button");
+          sw.className = "swatch" + (r.obs && !r.obs.enabled ? " off" : "");
+          sw.style.setProperty("--c", `var(--${r.color})`);
+          sw.setAttribute("aria-label", "Show or hide this obstacle");
+          sw.setAttribute("aria-pressed", String(!(r.obs && !r.obs.enabled)));
+          sw.addEventListener("click", () => {
+            if (!r.obs) return;
+            r.obs.enabled = !r.obs.enabled;
+            r.enabled = r.obs.enabled;
+            sw.classList.toggle("off", !r.obs.enabled);
+            sw.setAttribute("aria-pressed", String(r.obs.enabled));
+            maskDirty = true;
+          });
+          gutter.appendChild(sw);
+          body.innerHTML =
+            `<div class="math">${pretty(r.text)}</div>` +
+            (r.error
+              ? `<div class="note" style="color:var(--red)">${esc(r.error)}</div>`
+              : "") +
+            (r.note ? `<div class="note">${esc(r.note)}</div>` : "") +
+            (r.measure
+              ? `<div class="note">solid · forces measured on this one</div>`
+              : r.obs && r.obs.isWall
+                ? `<div class="note">a wall, one cell thick</div>`
+                : `<div class="note">solid</div>`);
+          if (r.custom !== undefined) {
+            const rm = document.createElement("button");
+            rm.className = "btn";
+            rm.textContent = "Remove";
+            rm.style.justifySelf = "start";
+            rm.style.padding = "2px 8px";
+            rm.style.fontSize = "12px";
+            rm.addEventListener("click", () => {
+              customTexts.splice(r.custom, 1);
+              rebuildRows();
+            });
+            body.appendChild(rm);
+          }
+        } else if (r.kind === "point") {
+          const sw = document.createElement("span");
+          sw.className = "swatch static";
+          sw.style.setProperty(
+            "--c",
+            S.mode === "liquid"
+              ? "var(--blue)"
+              : `var(--${(rows.find((q) => q.measure) || { color: "red" }).color})`
+          );
+          gutter.appendChild(sw);
+          body.innerHTML = `<div class="math">(<i>a</i>, <i>b</i>) = <span data-live="point">(${fmt(P.a, 2)}, ${fmt(P.b, 2)})</span></div><div class="note">${esc(r.label)}</div>`;
+        } else if (r.kind === "slider") {
+          const val = r.deg ? S.thetaDeg : P[r.name];
+          const shown = r.deg ? `${val}°` : fmt(val, 2);
+          body.innerHTML = `<div class="math"><i>${r.name}</i> = <span data-live="${r.name}">${shown}</span></div>`;
+          const range = document.createElement("input");
+          range.type = "range";
+          range.min = r.min;
+          range.max = r.max;
+          range.step = r.step;
+          range.value = val;
+          range.id = `slider-${r.name}`;
+          range.style.setProperty("--c", "var(--black)");
+          range.setAttribute("aria-label", `Slider ${r.name}`);
+          range.addEventListener("input", () => {
+            const v = Number(range.value);
+            if (r.deg) {
+              S.thetaDeg = v;
+              P.θ = (v * Math.PI) / 180;
+            } else P[r.name] = v;
+            body.querySelector(`[data-live="${r.name}"]`).textContent = r.deg
+              ? `${v}°`
+              : fmt(v, 2);
+            maskDirty = true;
+            updateReHint();
+          });
+          body.appendChild(range);
+          const ends = document.createElement("div");
+          ends.className = "slider-ends";
+          ends.innerHTML = `<span>${String(r.min).replace("-", "−")}</span><span>${String(r.max).replace("-", "−")}</span>`;
+          body.appendChild(ends);
+        } else if (r.kind === "def") {
+          const sw = document.createElement("span");
+          sw.className = "swatch static off";
+          sw.style.setProperty("--c", "var(--black)");
+          gutter.appendChild(sw);
+          body.innerHTML = `<div class="math">${r.html}</div><div class="note">from the Field tab · drives the fluid as a force</div>`;
+        }
+        row.append(gutter, body);
+        rowsEl.appendChild(row);
+      }
+      resultRowsEl = document.createElement("div");
+      rowsEl.appendChild(resultRowsEl);
+      const empty = document.createElement("div");
+      empty.className = "row";
+      empty.innerHTML = `<div class="gutter"><span></span></div><div class="body"></div>`;
+      rowsEl.appendChild(empty);
+      renderResultRows(true);
+    }
+
+    function renderResultRows(force) {
+      if (!resultRowsEl) return;
+      if (!S.send || S.mode === "off") {
+        if (resultRowsEl.childElementCount || force)
+          resultRowsEl.innerHTML = "";
+        return;
+      }
+      const items = readoutCache.filter((r) => r.var);
+      const html = items
+        .map(
+          (r) =>
+            `<div class="row result"><div class="gutter"><span class="swatch static" style="--c: var(--purple)"></span></div><div class="body"><div class="math">${r.var} = ${r.value}</div><div class="note">written by Vector Tools, about 8 times a second</div></div></div>`
+        )
+        .join("");
+      resultRowsEl.innerHTML = html;
+    }
+
+    // =====================================================================
+    // Measurements
+    // =====================================================================
+    function measure(FX, FY, steps) {
+      if (
+        S.mode === "tunnel" &&
+        (S.scene === "cylinder" || S.scene === "wing")
+      ) {
+        const D = SCENES[S.scene].dref() / DX;
+        const q = 0.5 * Uin * Uin * D;
+        const cdNow = FX / steps / q,
+          clNow = FY / steps / q;
+        const k = 0.08;
+        cd = Number.isFinite(cd) && cd !== 0 ? cd + k * (cdNow - cd) : cdNow;
+        // Low-passed with a time constant of about 150 steps: a fifth of a
+        // shedding period, and long enough to strip the tank's acoustic ringing.
+        const a = 1 - Math.exp(-steps / 150);
+        cl = Number.isFinite(cl) ? cl + a * (clNow - cl) : clNow;
+        clMean += 0.002 * (cl - clMean);
+        liftHist.push([stepCount, cl - clMean]);
+        // A crossing counts only after the lift has been clearly below its
+        // mean, so noise on a still-symmetric wake cannot pass for shedding.
+        if (cl - clMean < -0.05) liftArmed = true;
+        if (liftHist.length > 2) {
+          const [sa, va] = liftHist[liftHist.length - 2],
+            [sb, vb] = liftHist[liftHist.length - 1];
+          if (liftArmed && va < 0 && vb >= 0 && stepCount > 3000) {
+            liftArmed = false;
+            const sc = sa + ((sb - sa) * -va) / (vb - va);
+            crossings.push(sc);
+            if (crossings.length > 6) crossings.shift();
+            if (crossings.length >= 3) {
+              const periods = [];
+              for (let i = 1; i < crossings.length; i++)
+                periods.push(crossings[i] - crossings[i - 1]);
+              periods.sort((a, b) => a - b);
+              const T = periods[periods.length >> 1];
+              if (T > 50) stEst = D / (T * Uin);
+            }
+          }
+        }
+        if (liftHist.length > 4000) liftHist.splice(0, 2000);
+      }
+    }
+
+    function readouts(maxU) {
+      const out = [];
+      const re = currentRe();
+      if (S.mode === "tunnel") {
+        out.push({ label: "Reynolds number", value: fmt(re, 0), ref: "" });
+        out.push({
+          label: "Mach (lattice)",
+          value: fmt((maxU || Uin) / Math.sqrt(1 / 3), 2),
+          ref: "keep below 0.3",
+        });
+        if (S.scene === "cylinder" || S.scene === "wing") {
+          out.push({
+            label: "Drag coefficient",
+            value: fmt(cd, 2),
+            var: "C<sub>D</sub>",
+            ref: S.scene === "cylinder" ? "1.33 at Re 100" : "",
+          });
+          out.push({
+            label: "Lift coefficient",
+            value: fmt(cl, 2),
+            var: "C<sub>L</sub>",
+            ref: "",
+          });
+          if (S.scene === "cylinder")
+            out.push({
+              label: "Strouhal number",
+              value: Number.isFinite(stEst) ? fmt(stEst, 3) : "measuring…",
+              var: Number.isFinite(stEst) ? "S<sub>t</sub>" : undefined,
+              ref: "0.164 at Re 100",
+            });
+          else
+            out.push({ label: "Lift / drag", value: fmt(cl / cd, 2), ref: "" });
+        }
+        if (S.scene === "venturi") {
+          const col = (gx) => {
+            const x = Math.round((gx - X0) / DX);
+            let s = 0,
+              n = 0,
+              p = 0;
+            for (let y = 1; y < NY - 1; y++) {
+              const c = y * NX + x;
+              if (!solid[c]) {
+                s += UX[c];
+                p += (RHO[c] - 1) / 3;
+                n++;
+              }
+            }
+            return [n ? s / n : 0, n, n ? p / n : 0];
+          };
+          const [u1, n1, p1] = col(-4.5),
+            [u2, n2, p2] = col(0);
+          // Speeds in graph units/s, with the inflow at Uin / U_LAT of one.
+          const g = (v) => v / U_LAT;
+          out.push({
+            label: "Speed upstream",
+            value: fmt(g(u1), 3),
+            var: "v<sub>1</sub>",
+            ref: "",
+          });
+          out.push({
+            label: "Speed at the throat",
+            value: fmt(g(u2), 3),
+            var: "v<sub>2</sub>",
+            ref: `continuity: ${fmt(g(u1) * (n1 / n2), 3)}`,
+          });
+          // ½ρ(v₂² − v₁²) with ρ = 1: what Bernoulli says the drop should be
+          // with no viscosity. The measured drop is larger by the friction.
+          const dpMeas = (p1 - p2) / (U_LAT * U_LAT),
+            dpBern = 0.5 * (g(u2) ** 2 - g(u1) ** 2);
+          out.push({
+            label: "Pressure drop",
+            value: fmt(dpMeas, 3),
+            var: "p<sub>d</sub>",
+            ref: `Bernoulli: ${fmt(dpBern, 3)}`,
+          });
+        }
+      } else if (S.mode === "box") {
+        let ke = 0,
+          n = 0;
+        for (let c = 0; c < N; c++)
+          if (!solid[c]) {
+            ke += UX[c] * UX[c] + UY[c] * UY[c];
+            n++;
+          }
+        const uGraph = (v) => v / U_LAT; // graph units per second
+        out.push({ label: "Reynolds number", value: fmt(re, 0), ref: "" });
+        out.push({
+          label: "Fastest flow",
+          value: fmt(uGraph(maxU), 3) + " u/s",
+          var: "v<sub>max</sub>",
+          ref: "",
+        });
+        out.push({
+          label: "Mean kinetic energy",
+          value: fmt((0.5 * ke) / n / (U_LAT * U_LAT), 4),
+          var: "E",
+          ref: "",
+        });
+      } else if (S.mode === "liquid") {
+        let sp = 0;
+        for (let i = 0; i < nLiquid; i++) sp += Math.hypot(lvx[i], lvy[i]);
+        out.push({
+          label: "Particles",
+          value: String(nLiquid),
+          var: "n",
+          ref: "",
+        });
+        out.push({
+          label: "Mean speed",
+          value: fmt(nLiquid ? (sp / nLiquid) * H * 60 * 3 : 0, 2) + " u/s",
+          var: "v",
+          ref: "",
+        });
+      }
+      readoutCache = out;
+      const notes = {
+        cylinder:
+          "Reference values for a cylinder in open air at Re = 100: C_D ≈ 1.33 (Park, Kwon and Choi 1998) and St ≈ 0.164 (Williamson 1996). Here the cylinder blocks a sixth of the tank, which raises both; the real tab would state its error against a benchmark with the same walls (Schäfer and Turek 1996).",
+        wing: "Lift and drag per unit span, as coefficients of ½ρU² times the chord.",
+        venturi:
+          "Bernoulli assumes no viscosity. The measured drop is larger, and the difference is the friction a real pipe also has.",
+        custom:
+          "Forces are measured only on a body marked for it. Your obstacles are walls.",
+      };
+      const rn = $("refNote");
+      const note =
+        S.mode === "tunnel"
+          ? notes[S.scene]
+          : S.mode === "box"
+            ? "The mean kinetic energy is in units of ½ρ(1 u/s)². The box is closed, so nothing enters or leaves."
+            : "Particles interact within 0.2 units, which is the liquid's resolution.";
+      if (rn.textContent !== note) rn.textContent = note;
+      const tb = document.getElementById("readout");
+      tb.innerHTML = out
+        .map(
+          (r) =>
+            `<tr><td>${r.label}</td><td class="num">${r.value}</td><td class="ref">${r.ref || ""}</td></tr>`
+        )
+        .join("");
+    }
+
+    function currentRe() {
+      if (S.mode === "box") return S.Re;
+      return S.Re;
+    }
+
+    function updateTau() {
+      let Dcells, U;
+      if (S.mode === "box") {
+        Dcells = NY;
+        U = 0.06;
+      } else {
+        Dcells = SCENES[S.scene].dref() / DX;
+        U = Uin;
+      }
+      const nu = (U * Dcells) / S.Re;
+      tau0 = Math.max(0.5005, 3 * nu + 0.5);
+      return nu;
+    }
+
+    function updateReHint() {
+      const nu = updateTau();
+      const nuGraph = (nu * (DX * DX)) / DT;
+      const re = document.getElementById("reHint");
+      if (S.mode === "box")
+        re.textContent = `Re = U·L/ν for the box height L = 7.2. That makes ν = ${fmt(nuGraph * 0.6, 4)} units²/s.`;
+      else {
+        const sc = SCENES[S.scene];
+        re.textContent = `Re = U·D/ν with inflow U = ${fmt(Uin / U_LAT, 1)} unit/s and ${sc.drefName} D = ${fmt(sc.dref(), 2)}, so ν = ${fmt(nuGraph, 4)} units²/s.`;
+      }
+      document.getElementById("reVal").textContent = `= ${Math.round(S.Re)}`;
+      const lh = document.getElementById("lesHint");
+      const on = lesOn();
+      lh.textContent =
+        (S.lesMode === "auto"
+          ? `Auto turns the model on when the lattice viscosity gets small (τ below 0.55). It is ${on ? "on" : "off"} now. `
+          : "") +
+        "Off resolves every eddy the lattice can hold and is exact as far as the lattice goes, but high Reynolds numbers blow up. Smagorinsky models the smallest eddies instead, and halves the step rate here.";
+    }
+
+    // The subgrid model costs half the step rate on this CPU path and changes
+    // nothing at Re 100, so the default is to run it only where BGK alone
+    // would go unstable. A trade-off, so it stays a labelled choice.
+    const lesOn = () =>
+      S.lesMode === "les" || (S.lesMode === "auto" && tau0 < 0.55);
+
+    // =====================================================================
+    // Controls
+    // =====================================================================
+    const $ = (id) => document.getElementById(id);
+    function chips(id, get, set) {
+      const el = $(id);
+      el.addEventListener("click", (e) => {
+        const b = e.target.closest("button[data-v]");
+        if (!b) return;
+        set(b.dataset.v);
+        syncChips();
+      });
+      el._get = get;
+    }
+    function syncChips() {
+      for (const id of [
+        "modeChips",
+        "sceneChips",
+        "lesChips",
+        "showChips",
+        "boxChips",
+      ]) {
+        const el = $(id);
+        const v = el._get();
+        el.querySelectorAll("button[data-v]").forEach((b) => {
+          b.classList.toggle("on", b.dataset.v === v);
+          b.setAttribute("aria-checked", String(b.dataset.v === v));
+        });
+      }
+      document.querySelectorAll("[data-for]").forEach((el) => {
+        el.hidden = !el.dataset.for.split(" ").includes(S.mode);
+      });
+      $("customBox").hidden = !(S.mode === "tunnel" && S.scene === "custom");
+      const hints = {
+        off: "Nothing is simulated. The other tabs work as they do today.",
+        tunnel:
+          "Incompressible Navier–Stokes in a fixed tank, with fluid entering from the left.",
+        liquid:
+          "A liquid with a free surface, as particles. It pours, splashes and pools on whatever the graph makes solid.",
+        box: "A closed box of fluid at rest, pushed by your vector field. The fluid keeps only the part of the push that it can turn into motion.",
+      };
+      $("modeHint").textContent =
+        S.mode === "tunnel"
+          ? `${hints.tunnel} ${SCENES[S.scene].hint}`
+          : hints[S.mode];
+      $("boxHint").textContent = BOX[S.boxPreset]
+        ? BOX[S.boxPreset].hint
+        : "Your own field. Its divergence becomes pressure and its curl becomes motion.";
+    }
+
+    function setMode(v) {
+      S.mode = v;
+      if (v === "liquid") {
+        P.a = -0.3;
+        P.b = 3.2;
+        S.show = S.show === "plain" || S.show === "speed" ? S.show : "plain";
+        liquidReset();
+      } else if (v === "box") {
+        S.show = S.boxPreset === "source" ? "pressure" : "vorticity";
+        S.Re = 400;
+        setReSlider();
+        applyBoxPreset(S.boxPreset, true);
+      } else if (v === "tunnel") setScene(S.scene, true);
+      afterStructuralChange();
+    }
+    function setScene(v, quiet) {
+      S.scene = v;
+      const sc = SCENES[v];
+      Object.assign(P, sc.params);
+      if (v === "wing") P.θ = (S.thetaDeg * Math.PI) / 180;
+      S.Re = sc.Re;
+      setReSlider();
+      S.show = sc.show;
+      Uin = sc.u;
+      if (!quiet) afterStructuralChange();
+    }
+    function applyBoxPreset(v, quiet) {
+      S.boxPreset = v;
+      if (BOX[v]) {
+        $("pInput").value = BOX[v].p;
+        $("qInput").value = BOX[v].q;
+      }
+      if (v === "source") S.show = "pressure";
+      compileBoxForce();
+      if (!quiet) {
+        rebuildRows();
+        resetAll();
+      }
+    }
+    function afterStructuralChange() {
+      forcing = false;
+      rebuildRows();
+      if (S.mode === "box") compileBoxForce();
+      resetAll();
+      syncChips();
+      updateReHint();
+    }
+    function resetAll() {
+      rebuildMask();
+      if (S.mode === "box" || S.mode === "tunnel") {
+        resetFluid();
+        if (S.mode === "box") stripeDye();
+      }
+      if (S.mode === "liquid") liquidReset();
+      clearTrails = true;
+      setStatus();
+    }
+
+    chips("modeChips", () => S.mode, setMode);
+    chips(
+      "sceneChips",
+      () => S.scene,
+      (v) => setScene(v)
+    );
+    chips(
+      "lesChips",
+      () => S.lesMode,
+      (v) => {
+        S.lesMode = v;
+        updateReHint();
+      }
+    );
+    chips(
+      "showChips",
+      () => S.show,
+      (v) => (S.show = v)
+    );
+    chips(
+      "boxChips",
+      () => S.boxPreset,
+      (v) => {
+        applyBoxPreset(v);
+        syncChips();
+      }
+    );
+
+    // Reynolds number on a log slider, 10 to 3000.
+    const RE_MIN = 10,
+      RE_MAX = 3000;
+    function setReSlider() {
+      $("reRange").value = Math.log(S.Re / RE_MIN) / Math.log(RE_MAX / RE_MIN);
+    }
+    $("reRange").addEventListener("input", (e) => {
+      S.Re = RE_MIN * Math.pow(RE_MAX / RE_MIN, Number(e.target.value));
+      updateReHint();
+    });
+    $("opRange").addEventListener("input", (e) => {
+      S.opacity = Number(e.target.value);
+      $("opVal").textContent = `= ${S.opacity.toFixed(2)}`;
+    });
+    $("ampRange").addEventListener("input", (e) => {
+      S.amp = Number(e.target.value);
+      $("ampVal").textContent = `= ${S.amp.toFixed(2)}`;
+      updateForce();
+    });
+    $("nRange").addEventListener("input", (e) => {
+      S.liquidMax = Number(e.target.value);
+      $("nVal").textContent = `= ${S.liquidMax}`;
+      if (nLiquid > S.liquidMax) nLiquid = S.liquidMax;
+    });
+    $("gRange").addEventListener("input", (e) => {
+      S.gravity = Number(e.target.value);
+      $("gVal").textContent = `= ${(9.8 * S.gravity).toFixed(1)} u/s²`;
+    });
+    $("faucetCheck").addEventListener(
+      "change",
+      (e) => (S.faucet = e.target.checked)
+    );
+    $("particlesCheck").addEventListener("change", (e) => {
+      S.particles = e.target.checked;
+      clearTrails = true;
+    });
+    $("arrowsCheck").addEventListener(
+      "change",
+      (e) => (S.arrows = e.target.checked)
+    );
+    $("sendCheck").addEventListener("change", (e) => {
+      S.send = e.target.checked;
+      renderResultRows(true);
+    });
+    $("pInput").addEventListener("change", () => {
+      S.boxPreset = "custom";
+      compileBoxForce();
+      rebuildRows();
+      syncChips();
+    });
+    $("qInput").addEventListener("change", () => {
+      S.boxPreset = "custom";
+      compileBoxForce();
+      rebuildRows();
+      syncChips();
+    });
+    $("customAdd").addEventListener("click", addCustom);
+    $("customInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") addCustom();
+    });
+    function addCustom() {
+      const text = $("customInput").value.trim();
+      const err = $("customErr");
+      try {
+        compileObstacle(text);
+      } catch (e) {
+        err.textContent = e.message;
+        err.hidden = false;
+        return;
+      }
+      err.hidden = true;
+      if (customTexts.length >= 4) customTexts.shift();
+      customTexts.push(text);
+      rebuildRows();
+    }
+    $("playBtn").addEventListener("click", () => {
+      S.running = !S.running;
+      if (S.running && S.unstable) resetAll();
+      setStatus();
+    });
+    $("resetBtn").addEventListener("click", () => {
+      resetAll();
+    });
+    $("stepBtn").addEventListener("click", () => {
+      S.running = false;
+      stepOnce = true;
+      setStatus();
+    });
+    let stepOnce = false;
+
+    function setStatus(extra) {
+      const st = $("status");
+      $("playBtn").textContent = S.running ? "Pause" : "Play";
+      if (S.unstable) {
+        st.className = "status warn";
+        st.textContent = `The fluid went unstable at Re = ${Math.round(S.Re)}. This lattice is too coarse for that without the subgrid model. Choose Smagorinsky or Auto, or lower Re, then press Play.`;
+        return;
+      }
+      st.className = "status";
+      if (S.mode === "off") {
+        st.textContent = "Off. Nothing is simulated.";
+        return;
+      }
+      const what =
+        S.mode === "liquid"
+          ? `${nLiquid} particles`
+          : `${NX} × ${NY} lattice · ${Math.round(stepsPerSec)} steps/s`;
+      st.textContent = `${S.running ? "Running" : "Paused"} · ${what}${extra ? " · " + extra : ""}`;
+    }
+
+    // Pointer: drag the point, or stir.
+    let hover = false;
+    function graphPoint(e) {
+      const r = view.getBoundingClientRect();
+      const sx = (e.clientX - r.left) * dpr,
+        sy = (e.clientY - r.top) * dpr;
+      return { sx, sy, gx: unmapX(sx), gy: unmapY(sy) };
+    }
+    view.addEventListener("pointerdown", (e) => {
+      const p = graphPoint(e);
+      view.setPointerCapture(e.pointerId);
+      if (
+        hasPoint() &&
+        Math.hypot(p.sx - mapX(P.a), p.sy - mapY(P.b)) < 18 * dpr
+      )
+        dragging = "point";
+      else {
+        dragging = "stir";
+        stir = { gx: p.gx, gy: p.gy, vx: 0, vy: 0, t: performance.now() };
+      }
+    });
+    view.addEventListener("pointermove", (e) => {
+      const p = graphPoint(e);
+      hover =
+        hasPoint() && Math.hypot(p.sx - mapX(P.a), p.sy - mapY(P.b)) < 18 * dpr;
+      view.style.cursor = hover || dragging === "point" ? "grab" : "crosshair";
+      if (dragging === "point") {
+        P.a = Math.min(11.5, Math.max(-5.5, Math.round(p.gx * 20) / 20));
+        P.b = Math.min(3.2, Math.max(-3.2, Math.round(p.gy * 20) / 20));
+        const live = rowsEl.querySelector('[data-live="point"]');
+        if (live) live.textContent = `(${fmt(P.a, 2)}, ${fmt(P.b, 2)})`;
+        maskDirty = true;
+      } else if (dragging === "stir" && stir) {
+        const now = performance.now(),
+          dt = Math.max(1, now - stir.t) / 1000;
+        stir.vx = (p.gx - stir.gx) / dt;
+        stir.vy = (p.gy - stir.gy) / dt;
+        stir.gx = p.gx;
+        stir.gy = p.gy;
+        stir.t = now;
+      }
+    });
+    const endDrag = () => {
+      dragging = null;
+      stir = null;
+    };
+    view.addEventListener("pointerup", endDrag);
+    view.addEventListener("pointercancel", endDrag);
+
+    function applyStir() {
+      if (!stir || S.mode === "liquid") return;
+      const cx = (stir.gx - X0) / DX,
+        cy = (stir.gy - Y0) / DX;
+      const R = 9;
+      let vx = stir.vx * (DT / DX) * 0.5,
+        vy = stir.vy * (DT / DX) * 0.5;
+      const sp = Math.hypot(vx, vy);
+      if (sp > 0.08) {
+        vx *= 0.08 / sp;
+        vy *= 0.08 / sp;
+      }
+      for (
+        let y = Math.max(1, (cy - R) | 0);
+        y < Math.min(NY - 1, cy + R);
+        y++
+      ) {
+        for (
+          let x = Math.max(1, (cx - R) | 0);
+          x < Math.min(NX - 1, cx + R);
+          x++
+        ) {
+          const c = y * NX + x;
+          if (solid[c]) continue;
+          const d2 = ((x - cx) ** 2 + (y - cy) ** 2) / (R * R);
+          if (d2 > 1) continue;
+          const w = Math.exp(-4 * d2) * 0.35;
+          // Nudge the cell's equilibrium toward the pointer's velocity.
+          let rho = 0,
+            mx = 0,
+            my = 0;
+          for (let i = 0; i < 9; i++) rho += fCur[i * N + c];
+          mx = UX[c] + (vx - UX[c]) * w;
+          my = UY[c] + (vy - UY[c]) * w;
+          setEq(fCur, c, rho, mx, my);
+        }
+      }
+      stir.vx *= 0.8;
+      stir.vy *= 0.8;
+    }
+
+    // =====================================================================
+    // Loop
+    // =====================================================================
+    let lastT = performance.now(),
+      stepsAcc = 0,
+      accT = 0,
+      lastReadout = 0;
+    let tSolve = 0,
+      tDraw = 0,
+      tFrame = 16;
+    let visible = true;
+    new IntersectionObserver((es) => {
+      visible = es[0].isIntersecting;
+    }).observe(view);
+    function frame(now) {
+      requestAnimationFrame(frame);
+      if (!visible) return;
+      if (maskDirty) rebuildMask();
+      const dtReal = now - lastT;
+      lastT = now;
+      let maxU = 0;
+      const lattice = S.mode === "tunnel" || S.mode === "box";
+      if ((S.running || stepOnce) && !S.unstable && lattice) {
+        const t0 = performance.now();
+        let n = 0,
+          FX = 0,
+          FY = 0;
+        const budget = stepOnce ? 0 : 12;
+        applyStir();
+        do {
+          const [fx, fy] = lbmStep();
+          FX += fx;
+          FY += fy;
+          n++;
+        } while (performance.now() - t0 < budget && n < 40);
+        stepOnce = false;
+        lastFrameSteps = n;
+        stepsAcc += n;
+        measure(FX, FY, n);
+        if (S.show === "dye" || S.mode === "box") advectDye(n);
+        if (S.particles) advectTracers(n);
+        if (obstacles.some((o) => o.usesT && o.enabled)) maskDirty = true;
+        if (
+          !Number.isFinite(FX) ||
+          !Number.isFinite(RHO[(NY >> 1) * NX + (NX >> 2)])
+        )
+          S.unstable = true;
+      } else if ((S.running || stepOnce) && S.mode === "liquid") {
+        liquidStep();
+        stepOnce = false;
+        if (obstacles.some((o) => o.usesT && o.enabled)) maskDirty = true;
+      }
+      accT += dtReal;
+      if (accT > 500) {
+        stepsPerSec = (stepsAcc * 1000) / accT;
+        stepsAcc = 0;
+        accT = 0;
+      }
+      const tDraw0 = performance.now();
+      tSolve += 0.1 * (tDraw0 - now - tSolve);
+      maxU = render();
+      tDraw += 0.1 * (performance.now() - tDraw0 - tDraw);
+      tFrame += 0.1 * (dtReal - tFrame);
+      if (lattice && maxU > 0.45 && S.running) S.unstable = true;
+      if (S.unstable && S.running) {
+        S.running = false;
+        setStatus();
+      }
+      if (now - lastReadout > 125) {
+        lastReadout = now;
+        readouts(maxU);
+        renderResultRows();
+        setStatus();
+        $("tuning").innerHTML =
+          `<span>Method</span><b>${S.mode === "liquid" ? "particles, double-density relaxation" : "lattice Boltzmann D2Q9"}</b>` +
+          `<span>Cell size</span><b>${DX} graph units</b>` +
+          `<span>Relaxation τ</span><b>${tau0.toFixed(4)}</b>` +
+          `<span>Steps this frame</span><b>${lastFrameSteps}</b>` +
+          `<span>Solver, per frame</span><b>${tSolve.toFixed(1)} ms</b>` +
+          `<span>Drawing, per frame</span><b>${tDraw.toFixed(1)} ms</b>` +
+          `<span>Frame interval</span><b>${tFrame.toFixed(1)} ms</b>` +
+          (S.mode === "tunnel"
+            ? `<span>Upstream speed</span><b>${fmt(upstream / U_LAT, 3)} u/s (inlet trim ${fmt(inletTrim / U_LAT, 3)})</b>`
+            : "") +
+          `<span>Simulated time</span><b>${simTime.toFixed(2)} s</b>`;
+      }
+    }
+
+    // =====================================================================
+    // Start
+    // =====================================================================
+    function init() {
+      readColors();
+      $("opVal").textContent = `= ${S.opacity.toFixed(2)}`;
+      $("ampVal").textContent = `= ${S.amp.toFixed(2)}`;
+      $("nVal").textContent = `= ${S.liquidMax}`;
+      $("gVal").textContent = `= ${(9.8 * S.gravity).toFixed(1)} u/s²`;
+      setScene("cylinder", true);
+      setReSlider();
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+        S.running = false;
+      new ResizeObserver(() => {
+        resize();
+      }).observe(view);
+      resize();
+      afterStructuralChange();
+      new MutationObserver(() => {
+        readColors();
+        drawPaper();
+      }).observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-theme"],
+      });
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", () => {
+          readColors();
+          drawPaper();
+        });
+      requestAnimationFrame(frame);
+    }
+    try {
+      init();
+    } catch (e) {
+      const st = $("status");
+      st.className = "status warn";
+      st.textContent = "The simulation could not start: " + e.message;
+    }
+  })();
+</script>
