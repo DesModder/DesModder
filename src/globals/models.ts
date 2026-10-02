@@ -174,6 +174,10 @@ export interface ValueTypeMap {
   [ValueType.ListOfColor]: ValueTypeMap[ValueType.RGBColor][];
   [ValueType.Polygon]: ValueTypeMap[ValueType.Point][];
   [ValueType.ListOfPolygon]: ValueTypeMap[ValueType.Polygon][];
+  // [ValueType.TrapezoidDescriptor]: unknown;
+  // [ValueType.ListOfTrapezoidDescriptor]: ValueTypeMap[ValueType.TrapezoidDescriptor][];
+  [ValueType.Matrix]: ValueTypeMap[ValueType.Number][][];
+  [ValueType.ListOfMatrix]: ValueTypeMap[ValueType.Matrix][];
   [ValueType.Segment]: [
     start: ValueTypeMap[ValueType.Point],
     end: ValueTypeMap[ValueType.Point],
@@ -247,6 +251,8 @@ export interface ValueTypeMap {
   [ValueType.ListOfVector3D]: ValueTypeMap[ValueType.Vector3D][];
   [ValueType.Tone]: [frequency: number, gain: number];
   [ValueType.ListOfTone]: ValueTypeMap[ValueType.Tone][];
+  // [ValueType.StringType]: unknown;
+  // [ValueType.ListOfString]: ValueTypeMap[ValueType.StringType][];
   [ValueType.ConfidenceInterval]: [
     min: number,
     max: number,

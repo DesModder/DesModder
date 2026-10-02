@@ -1,5 +1,10 @@
 import { EvaluationContainerComponent } from "#components";
-import { ConstantListValueType, TypedConstantValue, ValueType } from "#globals";
+import {
+  ConstantListValueType,
+  TypedConstantValue,
+  ValueType,
+  ValueTypeMap,
+} from "#globals";
 import { PluginController, Replacer } from "../PluginController";
 import "./better-evaluation-view.less";
 import { ColorEvaluation } from "./components/ColorEvaluation";
@@ -8,6 +13,15 @@ import {
   ListLengthEvaluation,
 } from "./components/ListEvaluation";
 import { Config, configList } from "./config";
+
+interface Value<T extends keyof ValueTypeMap> {
+  valueType: T;
+  value: ValueTypeMap[T];
+}
+
+type AnyValue = {
+  [T in keyof ValueTypeMap]: Value<T>;
+}[keyof ValueTypeMap];
 
 type EvaluableConstantValueType = ConstantListValueType | ValueType.RGBColor;
 type EvaluableConstantValue = TypedConstantValue<EvaluableConstantValueType>;
@@ -124,7 +138,7 @@ export default class BetterEvaluationView extends PluginController<Config> {
   }
 
   canDisplayEvaluationForItemAsFraction(
-    o: { valueType: ValueType; value: unknown } | undefined,
+    o: AnyValue | undefined,
     canDisplayAsFraction: (c: number) => boolean
   ) {
     if (!this.settings.fractions || this.settings.lists !== "new" || o == null)
@@ -132,11 +146,9 @@ export default class BetterEvaluationView extends PluginController<Config> {
 
     switch (o.valueType) {
       case ValueType.ListOfNumber:
-        return (o.value as number[]).some((e) => canDisplayAsFraction(e));
+        return o.value.some((e) => canDisplayAsFraction(e));
       case ValueType.Matrix:
-        return (o.value as number[][]).some((row) =>
-          row.some((e) => canDisplayAsFraction(e))
-        );
+        return o.value.some((row) => row.some((e) => canDisplayAsFraction(e)));
       default:
         return false;
     }
