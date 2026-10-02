@@ -412,6 +412,8 @@ export interface ListElementTypeMap {
   [ValueType.ListOfDistribution]: ValueType.Distribution;
   [ValueType.ListOfColor]: ValueType.RGBColor;
   [ValueType.ListOfPolygon]: ValueType.Polygon;
+  [ValueType.ListOfTrapezoidDescriptor]: ValueType.TrapezoidDescriptor;
+  [ValueType.ListOfMatrix]: ValueType.Matrix;
   [ValueType.ListOfSegment]: ValueType.Segment;
   [ValueType.ListOfCircle]: ValueType.Circle;
   [ValueType.ListOfArc]: ValueType.Arc;
@@ -426,6 +428,7 @@ export interface ListElementTypeMap {
   [ValueType.ListOfTriangle3D]: ValueType.Triangle3D;
   [ValueType.ListOfSphere3D]: ValueType.Sphere3D;
   [ValueType.ListOfTone]: ValueType.Tone;
+  [ValueType.ListOfString]: ValueType.StringType;
   [ValueType.ListOfConfidenceInterval]: ValueType.ConfidenceInterval;
   [ValueType.ListOfOneSampleTInference]: ValueType.OneSampleTInference;
   [ValueType.ListOfTwoSampleTInference]: ValueType.TwoSampleTInference;
