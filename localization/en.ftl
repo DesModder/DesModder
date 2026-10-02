@@ -387,4 +387,4 @@ quake-pro-opt-scalarZoomed-desc = Combats perspective distortion by multiplying 
 
 ## Better Fraction View
 better-fraction-view-name = Better Fraction View
-better-fraction-view-desc = Shows the decimal → fraction toggle for lists of numbers.
+better-fraction-view-desc = Shows the decimal → fraction toggle for matrices and lists of numbers.

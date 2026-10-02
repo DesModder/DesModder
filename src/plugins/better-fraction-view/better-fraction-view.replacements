@@ -4,7 +4,7 @@
 
 ## Patch canDisplayEvaluationForItemAsFraction
 
-*Description* `Makes it return true for lists of numbers`
+*Description* `Add call to betterFractionView's canDisplayEvaluationForItemAsFraction`
 
 *Find* => `from`
 
@@ -14,12 +14,5 @@ return ($o == null ? void 0 : $o.valueType) !== $exports[__allow__] ? !1 : $expo
 
 *Replace* `from` with
 ```js
-if (
-  DSM.betterFractionView &&
-  ($o == null ? void 0 : $o.valueType) === DSM.betterFractionView?.type &&
-  $o.value.some(element => $exports[__check__](element))
-) {
-  return true;
-}
-return ($o == null ? void 0 : $o.valueType) !== $exports[__allow__] ? !1 : $exports[__check__]($o.value)
+return ($o == null ? void 0 : $o.valueType) !== $exports[__allow__] ? !!DSM.betterFractionView?.canDisplayEvaluationForItemAsFraction($o, $exports[__check__]) : $exports[__check__]($o.value)
 ```
