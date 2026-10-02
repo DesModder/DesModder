@@ -33,6 +33,7 @@ import QuakePro from "./quake-pro";
 import OverrideKeystroke from "../core-plugins/override-keystroke";
 import { DispatchedEvent } from "src/globals/extra-actions";
 import ScrollBeyond from "./scroll-beyond";
+import BetterFractionView from "./better-fraction-view";
 
 interface ConfigItemGeneric {
   // indentation level for hierarchical relationships in settings
@@ -166,6 +167,7 @@ export const keyToPlugin = {
   betterNavigation: BetterNavigation,
   pasteImage: PasteImage,
   quakePro: QuakePro,
+  betterFractionView: BetterFractionView,
 } satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);
@@ -223,6 +225,7 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get betterNavigation () { return this.ep["better-navigation"]} 
   get pasteImage () { return this.ep["paste-image"]; }
   get quakePro () { return this.ep["quake-pro"]; }
+  get betterFractionView () { return this.ep["better-fraction-view"]; }
 }
 
 export type IDToPluginSettings = {
