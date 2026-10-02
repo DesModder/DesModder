@@ -37,7 +37,6 @@ const pluginNames = [
   "intellisense",
   "override-keystroke",
   "quake-pro",
-  "better-fraction-view",
 ];
 
 replacements.forEach((r) => {

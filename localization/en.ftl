@@ -249,6 +249,8 @@ better-evaluation-view-opt-colors-name = Show colors
 better-evaluation-view-opt-colors-desc = Show colors as rgb values
 better-evaluation-view-opt-colorLists-name = Show lists of colors
 better-evaluation-view-opt-colorLists-desc = Show lists of colors as lists of rgb values
+better-evaluation-view-opt-fractions-name = Better Fractions
+better-evaluation-view-opt-fractions-desc = Show the decimal → fraction toggle for matrices and lists of numbers
 
 ## Pillbox Menus
 pillbox-menus-name = Pillbox Menus (Core)
@@ -384,7 +386,3 @@ quake-pro-opt-dollyMagnification-name = Dolly Multiplier
 quake-pro-opt-dollyMagnification-desc = Heightens the zoom behavior by multiplying (dollying) the camera's viewport slider.
 quake-pro-opt-scalarZoomed-name = Scalar Cancellation
 quake-pro-opt-scalarZoomed-desc = Combats perspective distortion by multiplying (enlarging) the screen viewport (requires max zoom to be fully seen).
-
-## Better Fraction View
-better-fraction-view-name = Better Fraction View
-better-fraction-view-desc = Shows the decimal → fraction toggle for matrices and lists of numbers.

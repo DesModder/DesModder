@@ -13,7 +13,6 @@ import showTips from "#plugins/show-tips/show-tips.replacements";
 import textMode from "#plugins/text-mode/text-mode.replacements";
 import insertPanels from "../preload/moduleOverrides/insert-panels.replacements";
 import quakePro from "#plugins/quake-pro/quake-pro.replacements";
-import betterFractionView from "#plugins/better-fraction-view/better-fraction-view.replacements";
 
 export default [
   insertPanels,
@@ -31,5 +30,4 @@ export default [
   rightClickTray,
   codeGolf,
   quakePro,
-  betterFractionView,
 ];
