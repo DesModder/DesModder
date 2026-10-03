@@ -381,6 +381,7 @@ export type ActionRHSValueType =
       | ValueType.Point3D
       | ValueType.RGBColor
       | ValueType.Polygon
+      | ValueType.Matrix
       | ValueType.Segment
       | ValueType.Line
       | ValueType.Ray
