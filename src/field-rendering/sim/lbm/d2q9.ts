@@ -165,6 +165,8 @@ export class CpuD2Q9 {
     this.deltaRho = new Float64Array(this.cells);
     this.ux = new Float64Array(this.cells);
     this.uy = new Float64Array(this.cells);
+    this.cellForce = new Float64Array(2 * this.cells);
+    this.cellBody = new Uint8Array(this.cells);
   }
 
   /** Sets every cell to equilibrium at the density and velocity given. */
@@ -189,8 +191,21 @@ export class CpuD2Q9 {
 
   /** The tank's edges. Periodic everywhere until set. */
   boundaries: Boundaries = PERIODIC;
-  /** Solid cells, `k`: nonzero is solid. */
+  /** Solid cells, `k`: the body's number, or 0 for fluid. */
   solid: Uint8Array | undefined;
+  /**
+   * Where each wall cuts each link, `i·N + k`, as a fraction from the fluid
+   * cell k toward the solid cell it pulls population i from. Without these,
+   * every wall is halfway (q = ½). See `links.ts`.
+   */
+  links: Float32Array | undefined;
+  /**
+   * The momentum each fluid cell exchanged with walls at its last step, as
+   * shifted populations (`2k`, `2k + 1`), and which body it touched. See
+   * `bodyForce` for the full force.
+   */
+  readonly cellForce: Float64Array;
+  readonly cellBody: Uint8Array;
   /** A velocity side's profile, per row, scaled by `inletScale`. */
   inlet: { ux: Float64Array; uy: Float64Array } | undefined;
   inletScale = 1;
@@ -232,9 +247,15 @@ export class CpuD2Q9 {
           if (this.solid?.[k]) {
             for (let i = 0; i < Q; i++) to[i * cells + k] = post(i, k);
             [this.deltaRho[k], this.ux[k], this.uy[k]] = [0, 0, 0];
+            this.cellForce[2 * k] = 0;
+            this.cellForce[2 * k + 1] = 0;
+            this.cellBody[k] = 0;
             continue;
           }
           const rho = r(1 + this.deltaRho[k]);
+          let linkFx = 0;
+          let linkFy = 0;
+          let linkBody = 0;
           for (let i = 0; i < Q; i++) {
             let sx = x - CX[i];
             let sy = y - CY[i];
@@ -274,9 +295,41 @@ export class CpuD2Q9 {
               g[i] = post(i, k);
             } else {
               const s = sy * nx + sx;
-              g[i] = this.solid?.[s] ? post(OPPOSITE[i], k) : post(i, s);
+              const body = this.solid?.[s] ?? 0;
+              if (body === 0) {
+                g[i] = post(i, s);
+                continue;
+              }
+              // Interpolated bounce-back (Bouzidi, Firdaouss and Lallemand),
+              // in the oracle's form. q is where the wall cuts the link,
+              // measured from this cell; q = ½ is halfway bounce-back.
+              const out = post(OPPOSITE[i], k);
+              const q = this.links ? this.links[i * cells + k] : 0.5;
+              const twoQ = r(2 * q);
+              let incoming: number;
+              if (q < 0.5) {
+                const xx = x + CX[i];
+                const yy = y + CY[i];
+                const kk = yy * nx + xx;
+                incoming =
+                  xx >= 0 && xx < nx && yy >= 0 && yy < ny && !this.solid![kk]
+                    ? r(r(twoQ * out) + r(r(1 - twoQ) * post(OPPOSITE[i], kk)))
+                    : out;
+              } else {
+                incoming = r(
+                  r(out / twoQ) + r(r(r(twoQ - 1) / twoQ) * post(i, k))
+                );
+              }
+              g[i] = incoming;
+              // Momentum exchange: what the wall gave back, plus what it took.
+              linkFx -= CX[i] * (out + incoming);
+              linkFy -= CY[i] * (out + incoming);
+              linkBody = body;
             }
           }
+          this.cellForce[2 * k] = linkFx;
+          this.cellForce[2 * k + 1] = linkFy;
+          this.cellBody[k] = linkBody;
           for (const side of ["left", "right"] as const) {
             if (x !== (side === "left" ? 0 : nx - 1)) continue;
             const spec = boundaries[side];

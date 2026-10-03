@@ -37,10 +37,11 @@ export interface SimCapabilities {
 }
 
 /**
- * The D2Q9 lattice keeps nine populations per cell, in three RGBA32F targets
- * written in one pass.
+ * The D2Q9 lattice writes four RGBA32F targets in one pass: nine populations
+ * with the density and velocity beside them, and each cell's wall force.
+ * WebGL2 guarantees four.
  */
-export const REQUIRED_DRAW_BUFFERS = 3;
+export const REQUIRED_DRAW_BUFFERS = 4;
 
 const PROBE_VERTEX = `#version 300 es
 void main() {

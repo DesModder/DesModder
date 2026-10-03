@@ -18,6 +18,8 @@
  *
  * The last three channels are the macroscopic fields at collision time. Moving
  * walls read δρ from there, and anything that draws the flow reads all three.
+ * A fourth target holds, per fluid cell, the momentum it exchanged with walls
+ * that step and which body it touched, for drag and lift (see `links.ts`).
  *
  * Two sets of textures ping-pong, so a step reads one set and writes the
  * other, and nothing is read and written in the same pass.
@@ -91,7 +93,10 @@ uniform sampler2D u_g1;
 uniform sampler2D u_g2;
 uniform sampler2D u_solid;
 uniform sampler2D u_inlet;
+uniform sampler2D u_links0;
+uniform sampler2D u_links1;
 uniform bool u_hasSolid;
+uniform bool u_hasLinks;
 uniform ivec2 u_size;
 uniform float u_omega;
 uniform vec2 u_force;
@@ -106,6 +111,7 @@ uniform float u_spongeEq[9];
 layout(location = 0) out vec4 o0;
 layout(location = 1) out vec4 o1;
 layout(location = 2) out vec4 o2;
+layout(location = 3) out vec4 o3;
 
 ${intArray("CXS", CX)}
 ${intArray("CYS", CY)}
@@ -128,8 +134,17 @@ float post(int i, ivec2 p) {
   return texelFetch(u_g2, p, 0).x;
 }
 
-bool solidAt(ivec2 p) {
-  return u_hasSolid && texelFetch(u_solid, p, 0).r > 0.5;
+// The body number at p, 0 for fluid. Stored as a byte in a normalized texture.
+int bodyAt(ivec2 p) {
+  return u_hasSolid ? int(texelFetch(u_solid, p, 0).r * 255.0 + 0.5) : 0;
+}
+
+bool solidAt(ivec2 p) { return bodyAt(p) > 0; }
+
+// Where the wall cuts link i of cell p; halfway without link fractions.
+float linkQ(int i, ivec2 p) {
+  if (!u_hasLinks) return 0.5;
+  return i <= 4 ? texelFetch(u_links0, p, 0)[i - 1] : texelFetch(u_links1, p, 0)[i - 5];
 }
 
 // reconstructOpen in boundaries.ts. side is 0 for left, 1 for right.
@@ -200,10 +215,14 @@ void main() {
     o0 = texelFetch(u_g0, c, 0);
     o1 = texelFetch(u_g1, c, 0);
     o2 = vec4(texelFetch(u_g2, c, 0).x, 0.0, 0.0, 0.0);
+    o3 = vec4(0.0);
     return;
   }
   float rhoOld = 1.0 + texelFetch(u_g2, c, 0).y;
   float g[9];
+  float linkFx = 0.0;
+  float linkFy = 0.0;
+  int linkBody = 0;
   for (int i = 0; i < 9; i++) {
     ivec2 s = c - ivec2(CXS[i], CYS[i]);
     int wall = -1;
@@ -234,10 +253,30 @@ void main() {
       }
     } else if (open) {
       g[i] = post(i, c);
-    } else if (solidAt(s)) {
-      g[i] = post(OPP[i], c);
     } else {
-      g[i] = post(i, s);
+      int body = bodyAt(s);
+      if (body == 0) {
+        g[i] = post(i, s);
+      } else {
+        // Interpolated bounce-back, as in CpuD2Q9.step.
+        float outgoing = post(OPP[i], c);
+        float q = linkQ(i, c);
+        float twoQ = 2.0 * q;
+        float incoming;
+        if (q < 0.5) {
+          ivec2 k = c + ivec2(CXS[i], CYS[i]);
+          bool inside = k.x >= 0 && k.x < n.x && k.y >= 0 && k.y < n.y;
+          incoming = inside && !solidAt(k)
+            ? twoQ * outgoing + (1.0 - twoQ) * post(OPP[i], k)
+            : outgoing;
+        } else {
+          incoming = outgoing / twoQ + ((twoQ - 1.0) / twoQ) * post(i, c);
+        }
+        g[i] = incoming;
+        linkFx -= float(CXS[i]) * (outgoing + incoming);
+        linkFy -= float(CYS[i]) * (outgoing + incoming);
+        linkBody = body;
+      }
     }
   }
 
@@ -284,6 +323,7 @@ void main() {
   o0 = vec4(g[0], g[1], g[2], g[3]);
   o1 = vec4(g[4], g[5], g[6], g[7]);
   o2 = vec4(g[8], dr, ux, uy);
+  o3 = vec4(linkFx, linkFy, float(linkBody), 0.0);
 }`;
 
 interface TextureSet {
@@ -312,6 +352,8 @@ export class GpuD2Q9 {
   private readonly sets: [TextureSet, TextureSet];
   private readonly solidTexture: WebGLTexture;
   private readonly inletTexture: WebGLTexture;
+  private readonly linkTextures: WebGLTexture[];
+  private hasLinks = false;
   /** Which set holds the current populations. */
   private current = 0;
   private readonly location: (name: string) => WebGLUniformLocation | null;
@@ -337,6 +379,9 @@ export class GpuD2Q9 {
     this.sets = [this.createSet(), this.createSet()];
     this.solidTexture = this.createTexture(gl.R8, this.nx, this.ny);
     this.inletTexture = this.createTexture(gl.RGBA32F, Math.max(1, this.ny), 1);
+    this.linkTextures = [0, 1].map(() =>
+      this.createTexture(gl.RGBA32F, this.nx, this.ny)
+    );
   }
 
   private createTexture(format: number, width: number, height: number) {
@@ -352,7 +397,7 @@ export class GpuD2Q9 {
 
   private createSet(): TextureSet {
     const { gl } = this;
-    const textures = [0, 1, 2].map(() =>
+    const textures = [0, 1, 2, 3].map(() =>
       this.createTexture(gl.RGBA32F, this.nx, this.ny)
     );
     const framebuffer = gl.createFramebuffer();
@@ -370,6 +415,7 @@ export class GpuD2Q9 {
       gl.COLOR_ATTACHMENT0,
       gl.COLOR_ATTACHMENT1,
       gl.COLOR_ATTACHMENT2,
+      gl.COLOR_ATTACHMENT3,
     ]);
     const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -384,13 +430,12 @@ export class GpuD2Q9 {
     this.boundaries = boundaries;
   }
 
-  /** Solid cells, `y·nx + x`, nonzero solid; undefined for none. */
+  /** Solid cells, `y·nx + x`: the body's number (1–255), 0 for fluid. */
   setSolid(solid: Uint8Array | undefined) {
     const { gl } = this;
     this.hasSolid = solid?.some((v) => v !== 0) === true;
     const bytes = new Uint8Array(this.nx * this.ny);
-    if (solid)
-      for (let k = 0; k < bytes.length; k++) bytes[k] = solid[k] ? 255 : 0;
+    if (solid) for (let k = 0; k < bytes.length; k++) bytes[k] = solid[k];
     gl.bindTexture(gl.TEXTURE_2D, this.solidTexture);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
     gl.texSubImage2D(
@@ -404,6 +449,37 @@ export class GpuD2Q9 {
       gl.UNSIGNED_BYTE,
       bytes
     );
+  }
+
+  /**
+   * Link fractions from `computeLinks`, `i·N + k`; undefined for halfway walls
+   * everywhere.
+   */
+  setLinks(q: Float32Array | undefined) {
+    const { gl, nx, ny } = this;
+    const cells = nx * ny;
+    this.hasLinks = q !== undefined;
+    for (let t = 0; t < 2; t++) {
+      const texel = new Float32Array(4 * cells).fill(0.5);
+      if (q) {
+        for (let k = 0; k < cells; k++) {
+          for (let c = 0; c < 4; c++)
+            texel[4 * k + c] = q[(1 + 4 * t + c) * cells + k];
+        }
+      }
+      gl.bindTexture(gl.TEXTURE_2D, this.linkTextures[t]);
+      gl.texSubImage2D(
+        gl.TEXTURE_2D,
+        0,
+        0,
+        0,
+        nx,
+        ny,
+        gl.RGBA,
+        gl.FLOAT,
+        texel
+      );
+    }
   }
 
   /** An open velocity side's profile, one value per row. */
@@ -501,6 +577,7 @@ export class GpuD2Q9 {
     gl.uniform1f(at("u_omega"), 1 / this.tau);
     gl.uniform2f(at("u_force"), this.force[0], this.force[1]);
     gl.uniform1i(at("u_hasSolid"), this.hasSolid ? 1 : 0);
+    gl.uniform1i(at("u_hasLinks"), this.hasLinks ? 1 : 0);
     gl.uniform1f(at("u_inletScale"), this.inletScale);
     const specs = SIDES.map((side) => this.boundaries[side]);
     gl.uniform1iv(
@@ -532,6 +609,8 @@ export class GpuD2Q9 {
     };
     bind(3, this.solidTexture, "u_solid");
     bind(4, this.inletTexture, "u_inlet");
+    bind(5, this.linkTextures[0], "u_links0");
+    bind(6, this.linkTextures[1], "u_links1");
     for (let n = 0; n < count; n++) {
       const from = this.sets[this.current];
       const to = this.sets[1 - this.current];
@@ -546,7 +625,32 @@ export class GpuD2Q9 {
 
   /** The three textures holding the current state, for anything drawing it. */
   get textures(): readonly WebGLTexture[] {
-    return this.sets[this.current].textures;
+    return this.sets[this.current].textures.slice(0, 3);
+  }
+
+  /**
+   * Each cell's exchanged momentum at the last step (`2k`, `2k + 1`) and the
+   * body it touched, for `bodyForce`. Waits for the GPU.
+   */
+  readForces(): { cellForce: Float32Array; cellBody: Uint8Array } {
+    const { gl, nx, ny } = this;
+    const cells = nx * ny;
+    const texel = new Float32Array(4 * cells);
+    gl.bindFramebuffer(
+      gl.READ_FRAMEBUFFER,
+      this.sets[this.current].framebuffer
+    );
+    gl.readBuffer(gl.COLOR_ATTACHMENT3);
+    gl.readPixels(0, 0, nx, ny, gl.RGBA, gl.FLOAT, texel);
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
+    const cellForce = new Float32Array(2 * cells);
+    const cellBody = new Uint8Array(cells);
+    for (let k = 0; k < cells; k++) {
+      cellForce[2 * k] = texel[4 * k];
+      cellForce[2 * k + 1] = texel[4 * k + 1];
+      cellBody[k] = Math.round(texel[4 * k + 2]);
+    }
+    return { cellForce, cellBody };
   }
 
   /**
@@ -596,6 +700,7 @@ export class GpuD2Q9 {
     }
     gl.deleteTexture(this.solidTexture);
     gl.deleteTexture(this.inletTexture);
+    for (const texture of this.linkTextures) gl.deleteTexture(texture);
     gl.deleteProgram(this.program);
   }
 }

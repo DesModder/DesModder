@@ -14,7 +14,8 @@ export interface GpuRun {
   deltaRho: number[];
   ux: number[];
   uy: number[];
-  error?: string;
+  cellForce: number[];
+  cellBody: number[];
 }
 
 /** Boundaries, solids, inlet and sponge, as plain data the page can take. */
@@ -23,6 +24,8 @@ export interface GpuSetup {
   solid?: number[];
   inlet?: { ux: number[]; uy: number[] };
   sponge?: { width: number; max: number; reference: [number, number] };
+  /** Link fractions, `i·N + k`, from `computeLinks`. */
+  links?: number[];
 }
 
 export async function runOnGpu(
@@ -46,16 +49,20 @@ export async function runOnGpu(
         if (setup.solid) lattice.setSolid(Uint8Array.from(setup.solid));
         if (setup.inlet) lattice.setInlet(setup.inlet.ux, setup.inlet.uy);
         if (setup.sponge) lattice.setSponge(setup.sponge);
+        if (setup.links) lattice.setLinks(Float32Array.from(setup.links));
         lattice.setPopulations(new Float32Array(populations));
         const out = [];
         for (const at of checkpoints) {
           lattice.step(at - lattice.steps);
           const read = lattice.read();
+          const forces = lattice.readForces();
           out.push({
             populations: Array.from(read.populations as Float32Array),
             deltaRho: Array.from(read.deltaRho as Float32Array),
             ux: Array.from(read.ux as Float32Array),
             uy: Array.from(read.uy as Float32Array),
+            cellForce: Array.from(forces.cellForce as Float32Array),
+            cellBody: Array.from(forces.cellBody as Uint8Array),
           });
         }
         return out;
@@ -67,5 +74,89 @@ export async function runOnGpu(
     Array.from(populations),
     checkpoints,
     setup
+  );
+}
+
+export interface SteadyRun {
+  /** Each body's exchanged momentum summed per sample, without the rest share. */
+  samples: { step: number; forces: Record<number, [number, number]> }[];
+  final: { deltaRho: number[]; ux: number[]; uy: number[] };
+}
+
+/**
+ * Runs a lattice from rest toward steady state, easing the inlet in over
+ * `rampSteps` with a smooth cubic, and sums each body's exchanged momentum
+ * every `sampleEvery` steps. Stops after `maxSteps`, or once the first body's
+ * x force has changed by less than `tolerance` (relative) over `window`
+ * samples.
+ */
+export async function runToSteady(
+  driver: Driver,
+  options: { nx: number; ny: number; tau: number },
+  populations: Float32Array,
+  setup: GpuSetup,
+  plan: {
+    rampSteps: number;
+    sampleEvery: number;
+    maxSteps: number;
+    tolerance: number;
+    window: number;
+  }
+): Promise<SteadyRun> {
+  return await driver.evaluate(
+    (options, populations: number[], setup: GpuSetup, plan) => {
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      const { lattice, release } = plugin.fluid.createLattice(options);
+      try {
+        if (setup.boundaries) lattice.setBoundaries(setup.boundaries);
+        if (setup.solid) lattice.setSolid(Uint8Array.from(setup.solid));
+        if (setup.inlet) lattice.setInlet(setup.inlet.ux, setup.inlet.uy);
+        if (setup.links) lattice.setLinks(Float32Array.from(setup.links));
+        lattice.setPopulations(new Float32Array(populations));
+        const samples: {
+          step: number;
+          forces: Record<number, [number, number]>;
+        }[] = [];
+        while (lattice.steps < plan.maxSteps) {
+          for (let n = 0; n < plan.sampleEvery; n++) {
+            const t = Math.min(1, lattice.steps / plan.rampSteps);
+            lattice.inletScale = t * t * (3 - 2 * t);
+            lattice.step(1);
+          }
+          const { cellForce, cellBody } = lattice.readForces();
+          const forces: Record<number, [number, number]> = {};
+          for (let k = 0; k < cellBody.length; k++) {
+            const body = cellBody[k];
+            if (!body) continue;
+            forces[body] ??= [0, 0];
+            forces[body][0] += cellForce[2 * k];
+            forces[body][1] += cellForce[2 * k + 1];
+          }
+          samples.push({ step: lattice.steps, forces });
+          if (lattice.steps > plan.rampSteps && samples.length > plan.window) {
+            const first = Number(Object.keys(forces)[0]);
+            const [now] = forces[first];
+            const [then] =
+              samples[samples.length - 1 - plan.window].forces[first];
+            if (Math.abs(now - then) <= plan.tolerance * Math.abs(now)) break;
+          }
+        }
+        const read = lattice.read();
+        return {
+          samples,
+          final: {
+            deltaRho: Array.from(read.deltaRho as Float32Array),
+            ux: Array.from(read.ux as Float32Array),
+            uy: Array.from(read.uy as Float32Array),
+          },
+        };
+      } finally {
+        release();
+      }
+    },
+    options,
+    Array.from(populations),
+    setup,
+    plan
   );
 }
