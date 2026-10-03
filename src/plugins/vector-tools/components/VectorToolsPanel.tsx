@@ -1268,7 +1268,7 @@ function fluidTab(vectorTools: VectorTools, config: ConfigGetter) {
             const { mask } = session.mask;
             const undefinedNote =
               mask.undefinedCount > 0
-                ? ` ${mask.undefinedCount.toLocaleString()} cells (orange) are where a solid's boundary is undefined; they stay fluid, as Desmos leaves them unshaded.`
+                ? ` ${mask.undefinedCount.toLocaleString()} cells (amber) are where a solid's boundary is undefined; they stay fluid, as Desmos leaves them unshaded.`
                 : "";
             return `What the fluid will see, cell by cell: ${mask.solidCount.toLocaleString()} solid.${undefinedNote}`;
           }}
@@ -1489,7 +1489,7 @@ function fluidCapabilityText(vectorTools: VectorTools) {
   return `Ready. Float32 targets render and read back exactly; the shader compiler ${fused}; ${caps.maxDrawBuffers} targets per pass, textures up to ${caps.maxTextureSize.toLocaleString()} px, ${caps.fragmentPrecisionBits}-bit precision.`;
 }
 
-/** Draws the tank's cells: fluid pale, solid dark, undefined orange. */
+/** Draws the tank's cells: fluid pale, solid dark, undefined amber. */
 function drawFluidMask(canvas: HTMLCanvasElement, session: FluidSession) {
   const { mask, nx, ny } = session.mask;
   if (canvas.width !== nx || canvas.height !== ny) {
@@ -1509,7 +1509,7 @@ function drawFluidMask(canvas: HTMLCanvasElement, session: FluidSession) {
         kind === CellKind.Solid
           ? [45, 58, 74]
           : kind === CellKind.Undefined
-            ? [232, 163, 61]
+            ? [247, 214, 160]
             : [228, 238, 248];
       image.data[k] = r;
       image.data[k + 1] = g;
