@@ -228,7 +228,12 @@ export function compileFieldComponentToGLSL(
   }
 }
 
-class CompileError extends Error {}
+/**
+ * Exported for the strict geometry compiler (`sim/strictParse.ts`), which reads
+ * the same LaTeX through the same tokenizer so that the two can never disagree
+ * about what was typed, only about what it means.
+ */
+export class CompileError extends Error {}
 
 /**
  * What one compilation accumulates: the helper functions it had to build, and
@@ -291,7 +296,7 @@ class CompileContext {
   }
 }
 
-type Token =
+export type Token =
   | { kind: "number"; value: string }
   | { kind: "variable"; value: string }
   | { kind: "function"; value: string }
@@ -326,7 +331,7 @@ const COMMAND_ALIASES: Record<string, string> = {
   div: "/",
 };
 
-function tokenize(latex: string): Token[] {
+export function tokenize(latex: string): Token[] {
   const tokens: Token[] = [];
   let i = 0;
   const pushBar = () => tokens.push({ kind: "bar" });

@@ -589,6 +589,24 @@ Flag anything you find that bears on these. Do not settle them.
    mock-up.
 6. **3D first, 2.5D first, or neither yet.**
 
+### 8.0 Decided at the start of gate 0 (2026-10-03)
+
+Rafael chose these when gate 0 began:
+
+1. **A sixth Fluid tab.** The existing particle and arrow renderers can draw
+   over the simulated flow.
+2. **Wind tunnel and stirred box first; the liquid right after.** The first two
+   share the LBM solver.
+3. **A fixed tank in graph coordinates.** A "Fit to view" button moves it and
+   restarts the simulation.
+4. **Writing measured values into the graph is opt-in.** It is a checkbox, off by
+   default.
+
+He has not yet chosen how loudly to claim accuracy (item 4 above). It follows
+the standing rule: answers in simple words, depth behind the explanation level.
+The measured numbers always show with a settled or provisional status; the
+literature comparison sits behind the explanation control.
+
 ### 8.1 Decided after GPT's third round (2026-10-03)
 
 GPT's third reply (`VECTOR_TOOLS_FLUID_RESEARCH_FOLLOWUP_2.md`) left three
