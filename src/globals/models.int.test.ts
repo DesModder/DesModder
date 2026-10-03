@@ -3,14 +3,15 @@ import { ValueType } from "./models";
 
 testWithPage("ValueTypes", async (driver) => {
   // Get Desmos's ValueTypes
-  const valueTypes = await driver.page.evaluate(
+  const valueTypes: Record<string, number> = await driver.page.evaluate(
+    // @ts-expect-error __compareBranches is a private API
     () => window.Desmos.Private.__compareBranches.valueTypes
   );
 
   // Get ValueType enum as a forward map
   const enumMap = Object.fromEntries(
-    Object.entries(ValueType).filter(([key]) => isNaN(Number(key)))
-  );
+    Object.entries(ValueType).filter(([key]) => Number.isNaN(Number(key)))
+  ) as Record<string, number>;
 
   const allKeys = new Set([
     ...Object.keys(enumMap),
