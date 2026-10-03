@@ -628,6 +628,11 @@ export interface Ticker extends Base {
   handler: unknown;
 }
 
+export interface Paren extends Base {
+  type: "Paren";
+  args: [ChildExprNode];
+}
+
 export type RootOnlyExprNode =
   | Equation
   | Assignment
@@ -682,7 +687,8 @@ export type ChildExprNode =
   | ComparatorChain
   // Seed + ExtendSeed only used in SeededFunctionCalls?
   | Seed
-  | ExtendSeed;
+  | ExtendSeed
+  | Paren;
 
 // These can only occur after further transformation or something
 type IrrelevantExprNode =
