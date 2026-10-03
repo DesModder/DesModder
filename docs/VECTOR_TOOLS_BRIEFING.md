@@ -437,6 +437,26 @@ as a panic popover on load and is **not** caused by Vector Tools, which has no
 replacements of its own. Verified by reproducing it on a commit predating the
 plugin.
 
+### 5.5 Desmos 3D (verified 2026-10-02)
+
+Full write-up, with measurements and evidence: `DESMOS_3D_CAMERA.md`. In short:
+
+- **The camera a frame was drawn with is on the main thread.**
+  `grapher3d.redrawResult.camera` holds three column-major three.js matrices
+  (`worldMatrixWorld`, `cameraMatrixWorldInverse`, `cameraProjectionMatrix`).
+  `src/field-rendering/camera3d.ts` turns them into one math-to-clip matrix.
+  That lands within 0.1–0.7 px RMS of the points Desmos draws, across
+  rotations, orthographic and perspective views, non-cubic boxes, and 2× DPR.
+- **Follow the redraw, not the rotation.** `onRedraw3dResults` fires once per
+  redraw with the new camera in its argument. `controls.worldRotation3D` runs
+  2–3 frames ahead of the picture.
+- **`setState` reads 3D bounds from `__v12ViewportLatexStash`** and ignores the
+  numeric `viewport`. It also ignores `worldRotation3D`; set orientation as the
+  video creator does.
+- **No shared depth.** Desmos draws on its own WebGL context, so an overlay can
+  depth-test only its own geometry.
+- **Desmos clips everything to the box,** and the z = 0 plane is translucent.
+
 ---
 
 ## 6. Decisions that look like bugs and are not
