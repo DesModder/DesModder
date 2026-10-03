@@ -100,8 +100,13 @@ Evidence pictures: `assets/fluid-gate1-taylor-green.png`,
 - **The reconstructed outlet bends the flow in its last two columns**, where
   a cell-centre ρu stops being the flux (0.5–0.6%). The sponge keeps this
   from reflecting, and nothing measures there.
-- **Inlet corners.** Where the inflow meets the slip walls, a corner cell
-  carries a small vorticity spot, visible in the wind-tunnel picture.
+- **Inlet corners.** The inlet holds the flow exactly uniform. With a solid
+  close to it, the flow there wants to speed up along the walls to get round
+  the solid, and the mismatch sheds weak vorticity from the inlet's two
+  corners; the wind-tunnel picture's cylinder blocks a quarter of the tank
+  only two diameters downstream. An empty tunnel shows none, on the CPU or on
+  the GPU, which agree there step for step. Placing solids further from the
+  inlet removes it.
 - **The stirred box's strength is regulated, not taken literally.** The field
   gives the push its shape. The strength eases toward the typical speed,
   because a push shaped like a rotation spins a closed box up without

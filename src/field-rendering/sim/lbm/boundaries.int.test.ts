@@ -58,6 +58,22 @@ const SCENES: {
     sponge: true,
   },
   {
+    // The wind tunnel the tab runs: open sides meeting slip walls.
+    name: "slip tunnel",
+    nx: 48,
+    ny: 20,
+    tau: 0.56,
+    force: [0, 0],
+    boundaries: {
+      left: { kind: "velocity", regularize: true },
+      right: { kind: "pressure", deltaRho: 0, regularize: true },
+      bottom: { kind: "slip" },
+      top: { kind: "slip" },
+    },
+    inlet: true,
+    sponge: true,
+  },
+  {
     name: "slip channel",
     nx: 40,
     ny: 16,
