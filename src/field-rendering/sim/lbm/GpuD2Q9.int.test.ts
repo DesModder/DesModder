@@ -1,7 +1,6 @@
-import { testWithPage, type Driver } from "#tests";
+import { testWithPage } from "#tests";
+import { runOnGpu } from "./gpuTesting";
 import { CpuD2Q9, Q } from "./d2q9";
-
-declare let DSM: Window["DSM"];
 
 /**
  * Gate 1: the GPU lattice against the CPU reference, step for step.
@@ -12,48 +11,6 @@ declare let DSM: Window["DSM"];
  * reply, §C2): exact agreement is possible when the GPU neither reorders nor
  * fuses, and these allow for a driver that does.
  */
-
-interface GpuRun {
-  populations: number[];
-  deltaRho: number[];
-  ux: number[];
-  uy: number[];
-  error?: string;
-}
-
-async function runOnGpu(
-  driver: Driver,
-  options: { nx: number; ny: number; tau: number; force?: [number, number] },
-  populations: Float32Array | Float64Array,
-  checkpoints: number[]
-): Promise<GpuRun[]> {
-  return await driver.evaluate(
-    (options, populations: number[], checkpoints: number[]) => {
-      const plugin = DSM.enabledPlugins["vector-tools"] as any;
-      const { lattice, release } = plugin.fluid.createLattice(options);
-      try {
-        lattice.setPopulations(new Float32Array(populations));
-        const out = [];
-        for (const at of checkpoints) {
-          lattice.step(at - lattice.steps);
-          const read = lattice.read();
-          out.push({
-            populations: Array.from(read.populations as Float32Array),
-            deltaRho: Array.from(read.deltaRho as Float32Array),
-            ux: Array.from(read.ux as Float32Array),
-            uy: Array.from(read.uy as Float32Array),
-          });
-        }
-        return out;
-      } finally {
-        release();
-      }
-    },
-    options,
-    Array.from(populations),
-    checkpoints
-  );
-}
 
 function taylorGreen(n: number, u0: number) {
   const k = (2 * Math.PI) / n;

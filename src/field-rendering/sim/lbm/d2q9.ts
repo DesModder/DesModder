@@ -28,21 +28,23 @@
  * fuse (see `capabilities.ts` for the probe that says whether it does).
  */
 
-export const Q = 9;
-export const CX = [0, 1, 0, -1, 0, 1, -1, -1, 1] as const;
-export const CY = [0, 0, 1, 0, -1, 1, 1, -1, -1] as const;
-export const W = [
-  4 / 9,
-  1 / 9,
-  1 / 9,
-  1 / 9,
-  1 / 9,
-  1 / 36,
-  1 / 36,
-  1 / 36,
-  1 / 36,
-] as const;
-export const OPPOSITE = [0, 3, 4, 1, 2, 7, 8, 5, 6] as const;
+import {
+  MIRROR,
+  NORMAL,
+  PERIODIC,
+  SIDES,
+  isOpen,
+  isWall,
+  reconstructOpen,
+  sideFrame,
+  spongeStrength,
+  validateBoundaries,
+  type Boundaries,
+} from "./boundaries";
+
+import { CX, CY, OPPOSITE, Q, W } from "./lattice";
+
+export { CX, CY, OPPOSITE, Q, W };
 
 export type Arithmetic = "float64" | "float32";
 
@@ -185,32 +187,125 @@ export class CpuD2Q9 {
     this.steps = 0;
   }
 
+  /** The tank's edges. Periodic everywhere until set. */
+  boundaries: Boundaries = PERIODIC;
+  /** Solid cells, `k`: nonzero is solid. */
+  solid: Uint8Array | undefined;
+  /** A velocity side's profile, per row, scaled by `inletScale`. */
+  inlet: { ux: Float64Array; uy: Float64Array } | undefined;
+  inletScale = 1;
+  sponge:
+    | { width: number; max: number; reference: [number, number] }
+    | undefined;
+
+  setBoundaries(boundaries: Boundaries) {
+    validateBoundaries(boundaries);
+    this.boundaries = boundaries;
+  }
+
   step(count = 1) {
-    const { nx, ny, cells } = this;
+    const { nx, ny, cells, boundaries } = this;
+    const r = this.arithmetic === "float32" ? Math.fround : identity;
     const g = new Float64Array(Q);
     const macro: [number, number, number] = [0, 0, 0];
     const parameters = {
-      omega: 1 / this.tau,
-      fx: this.force[0],
-      fy: this.force[1],
+      omega: r(1 / this.tau),
+      fx: r(this.force[0]),
+      fy: r(this.force[1]),
     };
-    if (this.arithmetic === "float32") {
-      parameters.omega = Math.fround(parameters.omega);
-      parameters.fx = Math.fround(parameters.fx);
-      parameters.fy = Math.fround(parameters.fy);
-    }
+    const kinds = SIDES.map((side) => boundaries[side]);
+    const frames = {
+      left: sideFrame("left"),
+      right: sideFrame("right"),
+    };
+    const spongeEq =
+      this.sponge === undefined
+        ? undefined
+        : shiftedEquilibrium(0, ...this.sponge.reference).map(r);
     for (let n = 0; n < count; n++) {
       const from = this.populations;
       const to = this.next;
+      const post = (i: number, k: number) => from[i * cells + k];
       for (let y = 0; y < ny; y++) {
         for (let x = 0; x < nx; x++) {
           const k = y * nx + x;
+          if (this.solid?.[k]) {
+            for (let i = 0; i < Q; i++) to[i * cells + k] = post(i, k);
+            [this.deltaRho[k], this.ux[k], this.uy[k]] = [0, 0, 0];
+            continue;
+          }
+          const rho = r(1 + this.deltaRho[k]);
           for (let i = 0; i < Q; i++) {
-            const sx = (x - CX[i] + nx) % nx;
-            const sy = (y - CY[i] + ny) % ny;
-            g[i] = from[i * cells + sy * nx + sx];
+            let sx = x - CX[i];
+            let sy = y - CY[i];
+            let wall = -1;
+            let open = false;
+            if (sx < 0 || sx >= nx) {
+              const side = sx < 0 ? 0 : 1;
+              const { kind } = kinds[side];
+              if (kind === "periodic") sx = (sx + nx) % nx;
+              else if (isWall(kinds[side])) wall = side;
+              else open = true;
+            }
+            if (sy < 0 || sy >= ny) {
+              const side = sy < 0 ? 2 : 3;
+              const { kind } = kinds[side];
+              if (kind === "periodic") sy = (sy + ny) % ny;
+              else wall = side;
+            }
+            if (wall >= 0) {
+              const spec = kinds[wall];
+              const side = SIDES[wall];
+              if (spec.kind === "slip") {
+                const [wnx, wny] = NORMAL[side];
+                const xx = wnx !== 0 ? x : Math.max(0, Math.min(nx - 1, sx));
+                const yy = wny !== 0 ? y : Math.max(0, Math.min(ny - 1, sy));
+                g[i] = post(MIRROR[side][i], yy * nx + xx);
+              } else {
+                const [wu, wv] = spec.wallVelocity ?? [0, 0];
+                g[i] = r(
+                  post(OPPOSITE[i], k) +
+                    r(
+                      r(6 * r(W[i])) * r(rho * r(r(CX[i] * wu) + r(CY[i] * wv)))
+                    )
+                );
+              }
+            } else if (open) {
+              g[i] = post(i, k);
+            } else {
+              const s = sy * nx + sx;
+              g[i] = this.solid?.[s] ? post(OPPOSITE[i], k) : post(i, s);
+            }
+          }
+          for (const side of ["left", "right"] as const) {
+            if (x !== (side === "left" ? 0 : nx - 1)) continue;
+            const spec = boundaries[side];
+            if (!isOpen(spec)) continue;
+            const prescribed: [number, number] = this.inlet
+              ? [
+                  r(this.inlet.ux[y] * this.inletScale),
+                  r(this.inlet.uy[y] * this.inletScale),
+                ]
+              : [0, 0];
+            reconstructOpen(
+              g,
+              frames[side],
+              spec,
+              prescribed,
+              [parameters.fx, parameters.fy],
+              r
+            );
           }
           collideCell(g, parameters, this.arithmetic, macro);
+          if (this.sponge && spongeEq) {
+            const s = r(
+              spongeStrength(x, nx, this.sponge.width, this.sponge.max)
+            );
+            if (s > 0) {
+              for (let i = 0; i < Q; i++)
+                g[i] = r(r(r(1 - s) * g[i]) + r(s * spongeEq[i]));
+            }
+          }
           for (let i = 0; i < Q; i++) to[i * cells + k] = g[i];
           [this.deltaRho[k], this.ux[k], this.uy[k]] = macro;
         }
