@@ -550,6 +550,10 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         parenWrapped: node.type === "ParenSeq",
         args: node.args.map(childNodeToTree),
       };
+    case "Paren":
+      // Grouping only. The aug tree carries no parentheses for grouping;
+      // augLatexToRaw puts them back wherever precedence needs them.
+      return childNodeToTree(node.args[0]);
     case "UpdateRule":
       return {
         type: "UpdateRule",
