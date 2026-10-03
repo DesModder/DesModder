@@ -589,6 +589,48 @@ Flag anything you find that bears on these. Do not settle them.
    mock-up.
 6. **3D first, 2.5D first, or neither yet.**
 
+### 8.1 Decided after GPT's third round (2026-10-03)
+
+GPT's third reply (`VECTOR_TOOLS_FLUID_RESEARCH_FOLLOWUP_2.md`) left three
+trade-offs open. Rafael chose the recommended behaviour in each case, as an
+**Auto** mode with a manual switch where a switch makes sense. The numbers below
+come from that reply's measurements. Its 39 tests and 44 of its result files
+were rerun here and match bit for bit. The only exception is the sampled peak
+Mach in the two immersed-boundary Couette runs, which differs by under 1%.
+
+1. **Lattice speed at high Re.**
+   - The modes:
+     - **Auto** (default) runs at U = 0.1 while sampled local Mach stays under
+       0.3, which holds at Re ≲ 100 on the test cylinder.
+     - **Accurate** runs at U = 0.05, which was the only setting tested safe from
+       Re 10 to 2000 when paired with Smagorinsky C = 0.17 above Re 200.
+     - **Lively** keeps U = 0.1 and shows a "speed limit exceeded: not accurate"
+       badge whenever Mach goes over 0.3.
+   - When Mach crosses 0.3, Auto drops to U = 0.05 and rescales τ and time so
+     that the displayed Re does not change.
+   - The turbulence model follows Re in every mode: off at Re ≤ 200 and on above,
+     and the panel shows which one is in use.
+2. **Changing an obstacle's size.** Neither PSM nor IB conserves the displaced
+   volume, so no mode claims physical accuracy for resizing.
+   - The modes:
+     - **Auto** (default) allows the slider. While the size changes, it
+       quarantines force statistics, resets the swept region to the local flow,
+       and labels the result "visual only" until the flow settles.
+     - **Strict** locks size sliders while the simulation runs, and a resize
+       restarts it.
+   - This decision is to be revisited if a volume-conserving method is found.
+3. **Dragging obstacles above Re 200.** Canonical PSM is validated only without
+   the turbulence model.
+   - The modes:
+     - **Auto** (default) allows dragging at any Re. Above Re 200 it runs PSM with
+       the turbulence model, labelled "provisional", with no force numbers and a
+       last-valid-state checkpoint. If the state goes invalid, it rolls back and
+       caps Re at 200 while dragging.
+     - **Strict** caps Re at 200 while an obstacle is being dragged.
+   - In both modes, movement is limited by wall speed (0.05 cells per step) as
+     well as by displacement, and teleports pause with zero wall velocity rather
+     than sweep.
+
 ---
 
 ## 9. Format of the reply
