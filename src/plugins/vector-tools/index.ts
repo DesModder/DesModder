@@ -32,6 +32,7 @@ import {
   type ArrowMode,
   type CurveConfig,
   type FlowConfig,
+  type FluidConfig,
   type FlowLook,
   FLOW_LOOK_PRESETS,
   type PanelTab,
@@ -79,6 +80,7 @@ import {
 
 import { buildConfigFromGlobals, parseLatex } from "../../../text-mode-core";
 import { FlowOverlay } from "../../field-rendering/FlowOverlay";
+import { FluidSession } from "./fluid/FluidSession";
 import { ArrowOverlay } from "../../field-rendering/ArrowOverlay";
 import type { ArrowOptions } from "../../field-rendering/ArrowRenderer";
 import {
@@ -306,6 +308,20 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
    * bounded by the names used in a session instead of growing per scan.
    */
   private readonly parameterHelpers = new Map<string, ValueHelper>();
+
+  /** The Fluid tab's state: obstacles, capabilities and the step clock. */
+  readonly fluid = new FluidSession({
+    config: () => this.getConfig().fluid,
+    environment: () => this.environment,
+    items: () => this.cc.getAllItemModels() as never,
+    degreeMode: () =>
+      (this.calc as unknown as { settings?: { degreeMode?: boolean } }).settings
+        ?.degreeMode === true,
+    helper: (latex) =>
+      this.calc.HelperExpression({ latex }) as unknown as ValueHelper,
+    changed: () => this.util.tick(),
+    ownedPrefix: () => namespaceForField(this.getConfig()),
+  });
 
   afterEnable() {
     this.ensureStoredConfigIsCurrent();
@@ -715,6 +731,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.detachPanelElement();
     this.arrowOverlay.stop();
     this.flowOverlay.stop();
+    this.fluid.dispose();
     this.dsm.pillboxMenus?.removePillboxButton("dsm-vector-tools-menu");
   }
 
@@ -745,7 +762,50 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.syncClock();
     this.syncContrast();
     this.syncLayer();
+    this.fluid.sync();
     this.util.tick();
+  }
+
+  // ---- the Fluid tab -------------------------------------------------------
+
+  /**
+   * Changes one fluid setting. Anything that changes what the lattice is,
+   * such as its tank, its size, or which fluid it holds, also restarts the
+   * clock, because a simulation cannot carry its state across a different
+   * lattice.
+   */
+  setFluid<K extends keyof FluidConfig>(key: K, value: FluidConfig[K]) {
+    this.updateConfig((config) => {
+      config.fluid[key] = value;
+    });
+    if (key === "mode" || key === "cellsAcross" || key === "tank") {
+      this.fluid.restart();
+    }
+  }
+
+  /**
+   * Moves the tank onto the visible graph paper and restarts. The tank is
+   * fixed in graph coordinates so that panning does not disturb the flow
+   * (brief §8.0); this is the deliberate way to move it.
+   */
+  fitFluidTankToView() {
+    const math = this.calc.graphpaperBounds.mathCoordinates;
+    const tank = {
+      xMin: round(math.left),
+      xMax: round(math.right),
+      yMin: round(math.bottom),
+      yMax: round(math.top),
+    };
+    if (
+      !Object.values(tank).every(Number.isFinite) ||
+      tank.xMax <= tank.xMin ||
+      tank.yMax <= tank.yMin
+    ) {
+      this.lastActionMessage = "Could not read the current graph bounds.";
+      this.util.tick();
+      return;
+    }
+    this.setFluid("tank", tank);
   }
 
   /**

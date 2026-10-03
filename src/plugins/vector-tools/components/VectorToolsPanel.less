@@ -593,3 +593,62 @@
   font-size: 16px;
   white-space: nowrap;
 }
+
+// The Fluid tab. The mask is drawn one pixel per lattice cell and scaled up
+// without smoothing, because a blurred cell would hide exactly the staircase
+// a solid's wall will be built from.
+.dsm-vector-tools-fluid-mask {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  border: 1px solid #c8d3df;
+  image-rendering: pixelated;
+}
+
+.dsm-vector-tools-fluid-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.dsm-vector-tools-fluid-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: #f6f8fa;
+  overflow-x: auto;
+}
+
+.dsm-vector-tools-fluid-row-hidden {
+  opacity: 0.6;
+}
+
+.dsm-vector-tools-fluid-row-error .dsm-vector-tools-fluid-row-status {
+  color: #b33a2a;
+}
+
+.dsm-vector-tools-fluid-swatch {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+  border-radius: 50%;
+}
+
+.dsm-vector-tools-fluid-row-status {
+  font-size: 12px;
+  color: #555;
+}
+
+.dsm-vector-tools-fluid-clock,
+.dsm-vector-tools-fluid-gpu {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.dsm-vector-tools-fluid-gpu-ready {
+  color: #2f7a3f;
+}

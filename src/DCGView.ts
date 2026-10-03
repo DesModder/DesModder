@@ -138,6 +138,7 @@ declare global {
       td: any;
       button: any;
       br: any;
+      canvas: any;
       details: any;
       h3: any;
       option: any;

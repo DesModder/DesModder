@@ -24,9 +24,17 @@ import {
   PANEL_TABS,
   CURVE_LINE_WIDTH_MAXIMUM,
   CURVE_LINE_WIDTH_MINIMUM,
+  FLUID_CELLS_MAXIMUM,
+  FLUID_CELLS_MINIMUM,
+  FLUID_REYNOLDS_MAXIMUM,
+  FLUID_REYNOLDS_MINIMUM,
   TIME_SPEED_MAXIMUM,
   TIME_SPEED_MINIMUM,
+  fluidLatticeSize,
   lengthInputsFor,
+  type FluidGuardMode,
+  type FluidMode,
+  type FluidSpeedMode,
   type ArrowMode,
   type ColorPalette,
   type FlowLook,
@@ -52,6 +60,17 @@ import {
   paletteCSSGradient,
   type ColorAdjust,
 } from "../../../field-rendering/palettes";
+import {
+  CLOSURE_REYNOLDS,
+  MEASUREMENT_CELLS,
+  SMAGORINSKY_C,
+  type LatticeUnits,
+} from "../../../field-rendering/sim/latticeUnits";
+import {
+  CellKind,
+  type FluidSession,
+  type ObstacleRow,
+} from "../fluid/FluidSession";
 import type { ComponentSlot } from "../generator";
 import type { GalleryPreset } from "../gallery";
 import "./VectorToolsPanel.less";
@@ -177,6 +196,7 @@ export class VectorToolsPanel extends Component<{
             color: () => colorTab(vectorTools, config),
             curve: () => curveTab(vectorTools, config),
             flow: () => flowTab(vectorTools, config),
+            fluid: () => fluidTab(vectorTools, config),
           })}
           <If predicate={() => vectorTools.isTestLabVisible}>
             {() => testLab(vectorTools)}
@@ -1104,6 +1124,408 @@ function flowTab(vectorTools: VectorTools, config: ConfigGetter) {
       </details>
     </div>
   );
+}
+
+const FLUID_MODES: readonly Choice<FluidMode>[] = [
+  { value: "off", label: "Off" },
+  { value: "windTunnel", label: "Wind tunnel" },
+  { value: "stirredBox", label: "Stirred box" },
+];
+
+const FLUID_SPEED_MODES: readonly Choice<FluidSpeedMode>[] = [
+  { value: "auto", label: "Auto" },
+  { value: "accurate", label: "Accurate" },
+  { value: "lively", label: "Lively" },
+];
+
+const FLUID_GUARD_MODES: readonly Choice<FluidGuardMode>[] = [
+  { value: "auto", label: "Auto" },
+  { value: "strict", label: "Strict" },
+];
+
+/**
+ * The Fluid tab, at gate 0: everything the solver will read, shown before
+ * there is a solver to read it. The obstacles are compiled exactly as Desmos
+ * shades them and drawn at lattice resolution, so a solid can be checked by
+ * eye against the graph. The clock is the step scheduler that will drive the
+ * lattice, and the GPU card is a measurement, not a list of extension names.
+ */
+function fluidTab(vectorTools: VectorTools, config: ConfigGetter) {
+  const fluid = () => config().fluid;
+  const session = vectorTools.fluid;
+  return (
+    <div class="dsm-vector-tools-fluid">
+      <section class="dsm-vector-tools-section">
+        {chipGroup(
+          "Simulate",
+          () => fluid().mode,
+          FLUID_MODES,
+          (value) => vectorTools.setFluid("mode", value),
+          "dsm-vector-tools-fluid-mode"
+        )}
+        <div class="dsm-vector-tools-hint">
+          The solver is being built in stages. This tab already shows what it
+          will see: the solids, the tank and its lattice, and the clock it will
+          step on. A liquid comes after these two.
+        </div>
+      </section>
+
+      <section class="dsm-vector-tools-section">
+        <div class="dsm-vector-tools-section-head">
+          <div class="dsm-vector-tools-label">Tank</div>
+          <Button
+            color="light-gray"
+            class="dsm-vector-tools-fluid-fit"
+            onTap={() => vectorTools.fitFluidTankToView()}
+          >
+            Fit to view
+          </Button>
+        </div>
+        <div class="dsm-vector-tools-number-grid">
+          {fluidTankNumber(vectorTools, fluid, "xMin", "x minimum")}
+          {fluidTankNumber(vectorTools, fluid, "xMax", "x maximum")}
+          {fluidTankNumber(vectorTools, fluid, "yMin", "y minimum")}
+          {fluidTankNumber(vectorTools, fluid, "yMax", "y maximum")}
+          {numberControl(
+            "dsm-vector-tools-fluid-cells",
+            "Cells across",
+            () => fluid().cellsAcross,
+            (value) =>
+              vectorTools.setFluid(
+                "cellsAcross",
+                Math.round(
+                  Math.min(
+                    FLUID_CELLS_MAXIMUM,
+                    Math.max(FLUID_CELLS_MINIMUM, value)
+                  )
+                )
+              )
+          )}
+        </div>
+        <div class="dsm-vector-tools-hint dsm-vector-tools-fluid-lattice">
+          {() => {
+            const { nx, ny } = fluidLatticeSize(fluid());
+            return `${nx} × ${ny} cells, each ${formatNumber(session.units.dx)} across. The tank stays put when you pan; Fit to view moves it and restarts.`;
+          }}
+        </div>
+      </section>
+
+      <section class="dsm-vector-tools-section">
+        <div class="dsm-vector-tools-label">Solids</div>
+        {IfElse(() => session.obstacleRows.length === 0, {
+          true: () => (
+            <div class="dsm-vector-tools-hint dsm-vector-tools-fluid-no-solids">
+              No inequality in the graph yet. Any region Desmos shades, such as
+              x^2+y^2≤1, becomes a solid. Hide a row to let the fluid through.
+            </div>
+          ),
+          false: () => (
+            <div class="dsm-vector-tools-fluid-rows">
+              <For
+                each={() => session.obstacleRows.map((row) => row)}
+                key={(row: ObstacleRow) => row.id}
+              >
+                {(row: () => ObstacleRow) => (
+                  <div
+                    class={() => ({
+                      "dsm-vector-tools-fluid-row": true,
+                      "dsm-vector-tools-fluid-row-error":
+                        row().error !== undefined,
+                      "dsm-vector-tools-fluid-row-hidden": row().hidden,
+                    })}
+                  >
+                    <span
+                      class="dsm-vector-tools-fluid-swatch"
+                      style={() => ({ background: row().color })}
+                    />
+                    <div class="dsm-vector-tools-fluid-row-body">
+                      <StaticMathQuillView latex={() => row().latex} />
+                      <div class="dsm-vector-tools-fluid-row-status">
+                        {() =>
+                          row().error ??
+                          (row().hidden
+                            ? "Hidden, so the fluid passes through it."
+                            : row().obstacle!.usesTime
+                              ? "Solid, and it moves with t."
+                              : "Solid.")
+                        }
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </For>
+            </div>
+          ),
+        })}
+        <canvas
+          class="dsm-vector-tools-fluid-mask"
+          onUpdate={(canvas: HTMLCanvasElement) =>
+            drawFluidMask(canvas, session)
+          }
+        />
+        <div class="dsm-vector-tools-hint dsm-vector-tools-fluid-mask-legend">
+          {() => {
+            const { mask } = session.mask;
+            const undefinedNote =
+              mask.undefinedCount > 0
+                ? ` ${mask.undefinedCount.toLocaleString()} cells (orange) are where a solid's boundary is undefined; they stay fluid, as Desmos leaves them unshaded.`
+                : "";
+            return `What the fluid will see, cell by cell: ${mask.solidCount.toLocaleString()} solid.${undefinedNote}`;
+          }}
+        </div>
+      </section>
+
+      <section class="dsm-vector-tools-section">
+        {fluidReynoldsControl(vectorTools, fluid)}
+        <div class="dsm-vector-tools-number-grid">
+          {numberControl(
+            "dsm-vector-tools-fluid-inflow",
+            "Inflow speed",
+            () => fluid().inflowSpeed,
+            (value) => {
+              if (value > 0) vectorTools.setFluid("inflowSpeed", value);
+            }
+          )}
+          {numberControl(
+            "dsm-vector-tools-fluid-length",
+            "Length for Re",
+            () => fluid().referenceLength,
+            (value) => {
+              if (value > 0) vectorTools.setFluid("referenceLength", value);
+            }
+          )}
+        </div>
+        {chipGroup(
+          "Lattice speed",
+          () => fluid().speedMode,
+          FLUID_SPEED_MODES,
+          (value) => vectorTools.setFluid("speedMode", value),
+          "dsm-vector-tools-fluid-speed"
+        )}
+        <div class="dsm-vector-tools-hint dsm-vector-tools-fluid-units">
+          {() => fluidUnitsText(session.units, fluid())}
+        </div>
+        {chipGroup(
+          "Resizing a solid",
+          () => fluid().resizeMode,
+          FLUID_GUARD_MODES,
+          (value) => vectorTools.setFluid("resizeMode", value),
+          "dsm-vector-tools-fluid-resize"
+        )}
+        <div class="dsm-vector-tools-hint">
+          Auto lets you resize while it runs and marks the flow nearby as visual
+          only until it settles. Strict locks the size while running.
+        </div>
+        {chipGroup(
+          "Dragging above Re 200",
+          () => fluid().dragMode,
+          FLUID_GUARD_MODES,
+          (value) => vectorTools.setFluid("dragMode", value),
+          "dsm-vector-tools-fluid-drag"
+        )}
+        <div class="dsm-vector-tools-hint">
+          Auto allows it, labelled provisional, without force numbers. Strict
+          holds Re at 200 while a solid is dragged.
+        </div>
+        {checkboxControl(
+          "Write measurements into the graph",
+          () => fluid().writeback,
+          (checked) => vectorTools.setFluid("writeback", checked),
+          "dsm-vector-tools-fluid-writeback"
+        )}
+      </section>
+
+      <section class="dsm-vector-tools-section">
+        <div class="dsm-vector-tools-section-head">
+          <div class="dsm-vector-tools-label">Clock</div>
+          <div class="dsm-vector-tools-inline">
+            <Button
+              color="light-gray"
+              class="dsm-vector-tools-fluid-play"
+              onTap={() => vectorTools.setFluid("playing", !fluid().playing)}
+            >
+              {() => (fluid().playing ? "Pause" : "Play")}
+            </Button>
+            <Button
+              color="light-gray"
+              class="dsm-vector-tools-fluid-restart"
+              onTap={() => session.restart()}
+            >
+              Restart
+            </Button>
+          </div>
+        </div>
+        <div class="dsm-vector-tools-fluid-clock">
+          {() => fluidClockText(vectorTools)}
+        </div>
+      </section>
+
+      <section class="dsm-vector-tools-section">
+        <div class="dsm-vector-tools-label">This computer's GPU</div>
+        <div
+          class={() => ({
+            "dsm-vector-tools-fluid-gpu": true,
+            "dsm-vector-tools-fluid-gpu-ready":
+              fluid().mode !== "off" && session.capabilities.ready,
+          })}
+        >
+          {() => fluidCapabilityText(vectorTools)}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function fluidTankNumber(
+  vectorTools: VectorTools,
+  fluid: () => VectorFieldConfig["fluid"],
+  key: "xMin" | "xMax" | "yMin" | "yMax",
+  label: string
+) {
+  return numberControl(
+    `dsm-vector-tools-fluid-${key}`,
+    label,
+    () => fluid().tank[key],
+    (value) => {
+      const tank = { ...fluid().tank, [key]: value };
+      // A tank is a rectangle or nothing; a half-typed corner that crosses its
+      // opposite waits for the rest of the edit rather than being stored.
+      if (tank.xMax > tank.xMin && tank.yMax > tank.yMin)
+        vectorTools.setFluid("tank", tank);
+    }
+  );
+}
+
+/** Re on a log slider, because 10 to 2000 is a range of ratios. */
+function fluidReynoldsControl(
+  vectorTools: VectorTools,
+  fluid: () => VectorFieldConfig["fluid"]
+) {
+  const low = Math.log10(FLUID_REYNOLDS_MINIMUM);
+  const high = Math.log10(FLUID_REYNOLDS_MAXIMUM);
+  return (
+    <div class="dsm-vector-tools-slider-row">
+      <div class="dsm-vector-tools-slider-head">
+        <label class="dsm-vector-tools-label" for="dsm-vector-tools-fluid-re">
+          Reynolds number
+        </label>
+        <span class="dsm-vector-tools-slider-value">
+          {() => `Re ${formatNumber(fluid().reynolds)}`}
+        </span>
+      </div>
+      <input
+        id="dsm-vector-tools-fluid-re"
+        class="dsm-vector-tools-slider"
+        type="range"
+        min={low}
+        max={high}
+        step={0.01}
+        onUpdate={(element: HTMLInputElement) => {
+          if (document.activeElement !== element)
+            element.value = String(Math.log10(fluid().reynolds));
+        }}
+        onInput={(event: Event) => {
+          const position = Number((event.target as HTMLInputElement).value);
+          // Two significant figures: a slider position is not a measurement,
+          // and "Re 103.5" claims a precision nobody chose.
+          const re = Number((10 ** position).toPrecision(2));
+          vectorTools.setFluid(
+            "reynolds",
+            Math.min(
+              FLUID_REYNOLDS_MAXIMUM,
+              Math.max(FLUID_REYNOLDS_MINIMUM, re)
+            )
+          );
+        }}
+      />
+    </div>
+  );
+}
+
+function fluidUnitsText(
+  units: LatticeUnits,
+  fluid: VectorFieldConfig["fluid"]
+) {
+  const closure = units.closure
+    ? `the turbulence model is on (Smagorinsky C = ${SMAGORINSKY_C}), because Re is above ${CLOSURE_REYNOLDS}`
+    : `no turbulence model is needed below Re ${CLOSURE_REYNOLDS}`;
+  const speed =
+    fluid.speedMode === "auto"
+      ? " Auto starts here and halves the lattice speed if the flow anywhere passes Mach 0.3."
+      : fluid.speedMode === "lively"
+        ? " Lively keeps this speed and marks any moment the flow passes Mach 0.3 as not accurate."
+        : "";
+  const resolution =
+    units.cellsPerLength < MEASUREMENT_CELLS
+      ? ` The length for Re spans ${formatNumber(units.cellsPerLength)} cells; measurements want at least ${MEASUREMENT_CELLS}.`
+      : "";
+  return `${formatNumber(units.stepsPerSecond)} steps per second of flow, τ = ${units.tau.toFixed(3)}, inflow Mach ${units.inflowMach.toFixed(2)}; ${closure}.${speed}${resolution}`;
+}
+
+function fluidClockText(vectorTools: VectorTools) {
+  const session = vectorTools.fluid;
+  const { fluid } = vectorTools.getConfig();
+  const plan = session.readout;
+  const time = `t = ${plan.simulatedSeconds.toFixed(2)} s, ${plan.totalSteps.toLocaleString()} steps`;
+  if (fluid.mode === "off") return `Off. ${time}.`;
+  if (!fluid.playing) return `Paused at ${time}.`;
+  const pace = plan.behind
+    ? `running at ${plan.realTimeFactor.toFixed(2)}× real time because this computer cannot keep up`
+    : `${plan.realTimeFactor.toFixed(2)}× real time`;
+  return `${time}, ${pace}. Each step is ${formatNumber(session.units.dt * 1000)} ms of flow, whatever the screen's frame rate.`;
+}
+
+function fluidCapabilityText(vectorTools: VectorTools) {
+  if (vectorTools.getConfig().fluid.mode === "off")
+    return "Measured when a fluid is switched on.";
+  const caps = vectorTools.fluid.capabilities;
+  if (!caps.ready) return `Not ready: ${caps.problems.join(" ")}`;
+  const fused =
+    caps.fusedMultiplyAdd === true
+      ? "fuses multiply-add"
+      : caps.fusedMultiplyAdd === false
+        ? "rounds every operation separately"
+        : "did not say how it rounds";
+  return `Ready. Float32 targets render and read back exactly; the shader compiler ${fused}; ${caps.maxDrawBuffers} targets per pass, textures up to ${caps.maxTextureSize.toLocaleString()} px, ${caps.fragmentPrecisionBits}-bit precision.`;
+}
+
+/** Draws the tank's cells: fluid pale, solid dark, undefined orange. */
+function drawFluidMask(canvas: HTMLCanvasElement, session: FluidSession) {
+  const { mask, nx, ny } = session.mask;
+  if (canvas.width !== nx || canvas.height !== ny) {
+    canvas.width = nx;
+    canvas.height = ny;
+  }
+  const context = canvas.getContext("2d");
+  if (context === null) return;
+  const image = context.createImageData(nx, ny);
+  for (let j = 0; j < ny; j++) {
+    // Cell rows run upward from the tank's bottom; canvas rows run down.
+    const row = ny - 1 - j;
+    for (let i = 0; i < nx; i++) {
+      const kind = mask.cells[j * nx + i];
+      const k = (row * nx + i) * 4;
+      const [r, g, b] =
+        kind === CellKind.Solid
+          ? [45, 58, 74]
+          : kind === CellKind.Undefined
+            ? [232, 163, 61]
+            : [228, 238, 248];
+      image.data[k] = r;
+      image.data[k + 1] = g;
+      image.data[k + 2] = b;
+      image.data[k + 3] = 255;
+    }
+  }
+  context.putImageData(image, 0, 0);
+}
+
+/** Three significant figures, without scientific notation for ordinary sizes. */
+function formatNumber(value: number) {
+  if (!Number.isFinite(value)) return String(value);
+  const magnitude = Math.abs(value);
+  if (magnitude >= 1000) return Math.round(value).toLocaleString();
+  return Number(value.toPrecision(3)).toString();
 }
 
 function footer(

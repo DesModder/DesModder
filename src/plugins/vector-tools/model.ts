@@ -284,6 +284,62 @@ export interface TimeConfig {
 export const TIME_SPEED_MINIMUM = 0.05;
 export const TIME_SPEED_MAXIMUM = 8;
 
+/**
+ * Which fluid the Fluid tab simulates. The liquid follows these two; it is a
+ * different solver (`VECTOR_TOOLS_FLUID_RESEARCH_BRIEF.md` §8.0).
+ */
+export type FluidMode = "off" | "windTunnel" | "stirredBox";
+
+/**
+ * How fast the lattice runs at high Reynolds numbers (brief §8.1). Accurate is
+ * the only setting measured safe from Re 10 to 2000. Lively keeps the faster
+ * speed and badges any moment the flow is too fast to be accurate. Auto runs
+ * fast while it can and slows the lattice the moment it cannot.
+ */
+export type FluidSpeedMode = "auto" | "accurate" | "lively";
+
+/**
+ * Whether the tab allows something it cannot yet do accurately, labelled, or
+ * refuses it. Used for resizing an obstacle and for dragging one above Re 200
+ * (brief §8.1).
+ */
+export type FluidGuardMode = "auto" | "strict";
+
+/** The simulated rectangle, fixed in graph coordinates (brief §8.0). */
+export interface FluidTank {
+  xMin: number;
+  xMax: number;
+  yMin: number;
+  yMax: number;
+}
+
+export interface FluidConfig {
+  mode: FluidMode;
+  tank: FluidTank;
+  /** Lattice cells across the tank's width. The height follows its shape. */
+  cellsAcross: number;
+  reynolds: number;
+  /** The speed of the incoming flow, in graph units per second. */
+  inflowSpeed: number;
+  /** The length the Reynolds number is measured against, in graph units. */
+  referenceLength: number;
+  speedMode: FluidSpeedMode;
+  resizeMode: FluidGuardMode;
+  dragMode: FluidGuardMode;
+  /** Write measured values into the graph as variables. Opt-in (§8.0). */
+  writeback: boolean;
+  playing: boolean;
+}
+
+export const FLUID_CELLS_MINIMUM = 32;
+export const FLUID_CELLS_MAXIMUM = 1024;
+/**
+ * The measured envelope: GPT's third round ran Re 10 and Re 2000 as the
+ * slider's endpoints, and nothing outside them.
+ */
+export const FLUID_REYNOLDS_MINIMUM = 10;
+export const FLUID_REYNOLDS_MAXIMUM = 2000;
+
 /** Persisted panel geometry, so a resized panel stays resized. */
 export interface PanelConfig {
   width: number;
@@ -292,7 +348,13 @@ export interface PanelConfig {
   tab: PanelTab;
 }
 
-export type PanelTab = "field" | "arrows" | "color" | "curve" | "flow";
+export type PanelTab =
+  | "field"
+  | "arrows"
+  | "color"
+  | "curve"
+  | "flow"
+  | "fluid";
 
 export const PANEL_TABS: readonly { id: PanelTab; label: string }[] = [
   { id: "field", label: "Field" },
@@ -300,6 +362,7 @@ export const PANEL_TABS: readonly { id: PanelTab; label: string }[] = [
   { id: "color", label: "Color" },
   { id: "curve", label: "Curve" },
   { id: "flow", label: "Flow" },
+  { id: "fluid", label: "Fluid" },
 ];
 
 export const PANEL_MIN_WIDTH = 320;
@@ -521,6 +584,7 @@ export interface VectorFieldConfig {
   flow: FlowConfig;
   curve: CurveConfig;
   time: TimeConfig;
+  fluid: FluidConfig;
 }
 
 /**
@@ -704,6 +768,21 @@ export const DEFAULT_VECTOR_FIELD_CONFIG: VectorFieldConfig = {
     showPoint: true,
   },
   time: { playing: true, speed: 1 },
+  // A tank the shape of the mock-up's 300 × 120 lattice, over the default
+  // sampling domain's width. Off until somebody chooses a fluid.
+  fluid: {
+    mode: "off",
+    tank: { xMin: -10, xMax: 10, yMin: -4, yMax: 4 },
+    cellsAcross: 300,
+    reynolds: 100,
+    inflowSpeed: 2,
+    referenceLength: 1,
+    speedMode: "auto",
+    resizeMode: "auto",
+    dragMode: "auto",
+    writeback: false,
+    playing: true,
+  },
 };
 
 export const DENSITY_PRESETS: readonly DensityPreset[] = [
@@ -819,6 +898,10 @@ export function cloneDefaultConfig(): VectorFieldConfig {
     flow: { ...DEFAULT_VECTOR_FIELD_CONFIG.flow },
     curve: { ...DEFAULT_VECTOR_FIELD_CONFIG.curve },
     time: { ...DEFAULT_VECTOR_FIELD_CONFIG.time },
+    fluid: {
+      ...DEFAULT_VECTOR_FIELD_CONFIG.fluid,
+      tank: { ...DEFAULT_VECTOR_FIELD_CONFIG.fluid.tank },
+    },
   };
 }
 
@@ -1110,6 +1193,7 @@ export function normalizeVectorFieldConfig(value: unknown): VectorFieldConfig {
     flow: normalizeFlow(value.flow, fallback.flow),
     curve: normalizeCurve(value.curve, fallback.curve),
     time: normalizeTime(value.time, fallback.time),
+    fluid: normalizeFluid(value.fluid, fallback.fluid),
   };
   return config;
 }
@@ -1213,6 +1297,90 @@ function normalizeTime(value: unknown, fallback: TimeConfig): TimeConfig {
       TIME_SPEED_MINIMUM,
       TIME_SPEED_MAXIMUM
     ),
+  };
+}
+
+/**
+ * Keys in the order of `DEFAULT_VECTOR_FIELD_CONFIG.fluid`, for the same reason
+ * as `normalizeFlow`: the stored library is compared with its own JSON.
+ *
+ * A tank that is not a real rectangle falls back whole rather than corner by
+ * corner, because a tank with one corner from the user and three from the
+ * default is a shape nobody chose.
+ */
+function normalizeFluid(value: unknown, fallback: FluidConfig): FluidConfig {
+  const fluid = asRecord(value);
+  const tank = asRecord(fluid?.tank);
+  const corners = [tank?.xMin, tank?.xMax, tank?.yMin, tank?.yMax];
+  const validTank =
+    corners.every((c) => typeof c === "number" && Number.isFinite(c)) &&
+    (tank!.xMax as number) > (tank!.xMin as number) &&
+    (tank!.yMax as number) > (tank!.yMin as number);
+  const isGuard = (mode: unknown): mode is FluidGuardMode =>
+    mode === "auto" || mode === "strict";
+  return {
+    mode:
+      fluid?.mode === "windTunnel" || fluid?.mode === "stirredBox"
+        ? fluid.mode
+        : "off",
+    tank: validTank
+      ? {
+          xMin: tank!.xMin as number,
+          xMax: tank!.xMax as number,
+          yMin: tank!.yMin as number,
+          yMax: tank!.yMax as number,
+        }
+      : { ...fallback.tank },
+    cellsAcross: Math.round(
+      clampNumber(
+        fluid?.cellsAcross,
+        fallback.cellsAcross,
+        FLUID_CELLS_MINIMUM,
+        FLUID_CELLS_MAXIMUM
+      )
+    ),
+    reynolds: clampNumber(
+      fluid?.reynolds,
+      fallback.reynolds,
+      FLUID_REYNOLDS_MINIMUM,
+      FLUID_REYNOLDS_MAXIMUM
+    ),
+    inflowSpeed: clampNumber(
+      fluid?.inflowSpeed,
+      fallback.inflowSpeed,
+      1e-3,
+      1e3
+    ),
+    referenceLength: clampNumber(
+      fluid?.referenceLength,
+      fallback.referenceLength,
+      1e-6,
+      1e6
+    ),
+    speedMode:
+      fluid?.speedMode === "accurate" || fluid?.speedMode === "lively"
+        ? fluid.speedMode
+        : "auto",
+    resizeMode: isGuard(fluid?.resizeMode) ? fluid.resizeMode : "auto",
+    dragMode: isGuard(fluid?.dragMode) ? fluid.dragMode : "auto",
+    writeback: fluid?.writeback === true,
+    playing: fluid?.playing !== false,
+  };
+}
+
+/**
+ * The lattice the tank holds: `cellsAcross` along x, and as many along y as
+ * keep the cells square, at least eight.
+ */
+export function fluidLatticeSize(fluid: FluidConfig): {
+  nx: number;
+  ny: number;
+} {
+  const { tank, cellsAcross } = fluid;
+  const aspect = (tank.yMax - tank.yMin) / (tank.xMax - tank.xMin);
+  return {
+    nx: cellsAcross,
+    ny: Math.max(8, Math.round(cellsAcross * aspect)),
   };
 }
 
