@@ -92,9 +92,11 @@ testWithPage(
       return {
         steps: plugin.fluid.readout.totalSteps,
         seconds: plugin.fluid.readout.simulatedSeconds,
-        text: document.querySelector(".dsm-vector-tools-fluid-clock")!
+        text: document.querySelector<HTMLElement>(
+          ".dsm-vector-tools-fluid-clock"
+        )!.innerText,
+        gpu: document.querySelector<HTMLElement>(".dsm-vector-tools-fluid-gpu")!
           .innerText,
-        gpu: document.querySelector(".dsm-vector-tools-fluid-gpu")!.innerText,
         ready: plugin.fluid.capabilities.ready,
         problems: plugin.fluid.capabilities.problems,
         stored: JSON.parse(

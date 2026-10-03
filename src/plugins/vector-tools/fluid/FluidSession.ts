@@ -40,6 +40,10 @@ import {
   type FramePlan,
 } from "../../../field-rendering/sim/StepScheduler";
 import type { FieldEnvironment } from "../../../field-rendering/latexToGLSL";
+import {
+  createStandaloneLattice,
+  type GpuLatticeOptions,
+} from "../../../field-rendering/sim/lbm/GpuD2Q9";
 import { fluidLatticeSize, type FluidConfig } from "../model";
 
 /** One row of the expression list that could be a solid. */
@@ -283,6 +287,15 @@ export class FluidSession {
     this.lastPlan = undefined;
     this.maskCache = undefined;
     this.host.changed();
+  }
+
+  /**
+   * A GPU lattice on a context of its own. The verification tests drive the
+   * solver through this, because it is the solver the extension ships, in the
+   * page it runs in.
+   */
+  createLattice(options: GpuLatticeOptions) {
+    return createStandaloneLattice(options);
   }
 
   dispose() {
