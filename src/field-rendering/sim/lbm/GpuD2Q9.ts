@@ -95,6 +95,8 @@ uniform sampler2D u_solid;
 uniform sampler2D u_inlet;
 uniform sampler2D u_links0;
 uniform sampler2D u_links1;
+uniform sampler2D u_forceField;
+uniform bool u_hasForceField;
 uniform bool u_hasSolid;
 uniform bool u_hasLinks;
 uniform ivec2 u_size;
@@ -282,16 +284,19 @@ void main() {
     }
   }
 
+  // The uniform force plus this cell's share of a force field.
+  vec2 force = u_hasForceField ? u_force + texelFetch(u_forceField, c, 0).xy : u_force;
+
   if (c.x == 0 && u_kind[0] >= 3) {
-    reconstruct(g, 0, texelFetch(u_inlet, ivec2(c.y, 0), 0).xy * u_inletScale, u_force);
+    reconstruct(g, 0, texelFetch(u_inlet, ivec2(c.y, 0), 0).xy * u_inletScale, force);
   }
   if (c.x == n.x - 1 && u_kind[1] >= 3) {
-    reconstruct(g, 1, texelFetch(u_inlet, ivec2(c.y, 0), 0).xy * u_inletScale, u_force);
+    reconstruct(g, 1, texelFetch(u_inlet, ivec2(c.y, 0), 0).xy * u_inletScale, force);
   }
 
   // collideCell in d2q9.ts.
-  float fx = u_force.x;
-  float fy = u_force.y;
+  float fx = force.x;
+  float fy = force.y;
   float omega = u_omega;
   float dr = (((((((g[0] + g[1]) + g[2]) + g[3]) + g[4]) + g[5]) + g[6]) + g[7]) + g[8];
   float rho = 1.0 + dr;
@@ -382,6 +387,8 @@ export class GpuD2Q9 {
   private readonly inletTexture: WebGLTexture;
   private readonly linkTextures: WebGLTexture[];
   private hasLinks = false;
+  private readonly forceTexture: WebGLTexture;
+  private hasForceField = false;
   /** Which set holds the current populations. */
   private current = 0;
   private readonly location: (name: string) => WebGLUniformLocation | null;
@@ -410,6 +417,7 @@ export class GpuD2Q9 {
     this.linkTextures = [0, 1].map(() =>
       this.createTexture(gl.RGBA32F, this.nx, this.ny)
     );
+    this.forceTexture = this.createTexture(gl.RG32F, this.nx, this.ny);
   }
 
   private createTexture(format: number, width: number, height: number) {
@@ -510,6 +518,28 @@ export class GpuD2Q9 {
     }
   }
 
+  /**
+   * A force density per cell (`2k`, `2k + 1`), added to the uniform force;
+   * undefined for none.
+   */
+  setForceField(field: ArrayLike<number> | undefined) {
+    const { gl, nx, ny } = this;
+    this.hasForceField = field !== undefined;
+    if (field === undefined) return;
+    gl.bindTexture(gl.TEXTURE_2D, this.forceTexture);
+    gl.texSubImage2D(
+      gl.TEXTURE_2D,
+      0,
+      0,
+      0,
+      nx,
+      ny,
+      gl.RG,
+      gl.FLOAT,
+      Float32Array.from(field)
+    );
+  }
+
   /** An open velocity side's profile, one value per row. */
   setInlet(ux: ArrayLike<number>, uy: ArrayLike<number>) {
     const { gl } = this;
@@ -608,6 +638,7 @@ export class GpuD2Q9 {
     gl.uniform2f(at("u_force"), this.force[0], this.force[1]);
     gl.uniform1i(at("u_hasSolid"), this.hasSolid ? 1 : 0);
     gl.uniform1i(at("u_hasLinks"), this.hasLinks ? 1 : 0);
+    gl.uniform1i(at("u_hasForceField"), this.hasForceField ? 1 : 0);
     gl.uniform1f(at("u_inletScale"), this.inletScale);
     const specs = SIDES.map((side) => this.boundaries[side]);
     gl.uniform1iv(
@@ -641,6 +672,7 @@ export class GpuD2Q9 {
     bind(4, this.inletTexture, "u_inlet");
     bind(5, this.linkTextures[0], "u_links0");
     bind(6, this.linkTextures[1], "u_links1");
+    bind(7, this.forceTexture, "u_forceField");
     for (let n = 0; n < count; n++) {
       const from = this.sets[this.current];
       const to = this.sets[1 - this.current];
@@ -788,6 +820,7 @@ export class GpuD2Q9 {
     gl.deleteTexture(this.solidTexture);
     gl.deleteTexture(this.inletTexture);
     for (const texture of this.linkTextures) gl.deleteTexture(texture);
+    gl.deleteTexture(this.forceTexture);
     gl.deleteProgram(this.program);
   }
 }

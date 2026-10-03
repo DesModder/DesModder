@@ -312,6 +312,15 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
   /** The Fluid tab's state: obstacles, capabilities and the step clock. */
   readonly fluid = new FluidSession({
     calc: this.calc,
+    field: () => {
+      const config = this.getConfig();
+      return {
+        source: config.source,
+        xLatex: config.components.xLatex,
+        yLatex: config.components.yLatex,
+        fLatex: config.scalar.fLatex,
+      };
+    },
     config: () => this.getConfig().fluid,
     environment: () => this.environment,
     items: () => this.cc.getAllItemModels() as never,

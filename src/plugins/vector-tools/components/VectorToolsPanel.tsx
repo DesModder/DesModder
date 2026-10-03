@@ -1173,7 +1173,11 @@ function fluidTab(vectorTools: VectorTools, config: ConfigGetter) {
         <div class="dsm-vector-tools-hint">
           {() =>
             fluid().mode === "stirredBox"
-              ? "The stirred box comes next; the wind tunnel runs now. A liquid follows both."
+              ? `The field's P and Q push a closed box of fluid: the field gives the push its shape, scaled so the flow reaches about the typical speed. The fluid keeps the part of the push that curls, and answers the part that spreads with pressure, so a gradient field barely moves it: Helmholtz and Hodge's split, made visible.${
+                  session.undefinedForceCells > 0
+                    ? ` The field is undefined at ${session.undefinedForceCells.toLocaleString()} cells, and pushes nothing there.`
+                    : ""
+                }`
               : "Air flows in from the left of the tank and out at the right, round every region the graph shades. Hide a row to let the fluid through it."
           }
         </div>
@@ -1301,7 +1305,8 @@ function fluidTab(vectorTools: VectorTools, config: ConfigGetter) {
         <div class="dsm-vector-tools-number-grid">
           {numberControl(
             "dsm-vector-tools-fluid-inflow",
-            "Inflow speed",
+            () =>
+              fluid().mode === "stirredBox" ? "Typical speed" : "Inflow speed",
             () => fluid().inflowSpeed,
             (value) => {
               if (value > 0) vectorTools.setFluid("inflowSpeed", value);
@@ -2148,14 +2153,16 @@ function paletteChooser(
  */
 function numberControl(
   id: string,
-  label: string,
+  // A function for a label that changes with a setting, such as the fluid's
+  // inflow speed, which is a typical speed in the stirred box.
+  label: string | (() => string),
   value: () => number,
   onChange: (value: number) => void,
   disabled: () => boolean = () => false
 ) {
   return (
     <label class="dsm-vector-tools-number" for={id}>
-      <span>{label}</span>
+      <span>{typeof label === "string" ? label : () => label()}</span>
       <input
         id={id}
         type="number"

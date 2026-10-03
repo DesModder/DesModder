@@ -256,6 +256,11 @@ export class CpuD2Q9 {
   inletScale = 1;
   /** The Smagorinsky constant, 0 for plain BGK. See `CollisionParameters`. */
   smagorinsky = 0;
+  /**
+   * A force density per cell (`2k`, `2k + 1`), added to the uniform `force`:
+   * what the stirred box pushes the fluid with.
+   */
+  forceField: Float64Array | Float32Array | undefined;
   sponge:
     | { width: number; max: number; reference: [number, number] }
     | undefined;
@@ -277,6 +282,8 @@ export class CpuD2Q9 {
       smagorinsky: r(this.smagorinsky),
       tau: r(this.tau),
     };
+    const uniformFx = parameters.fx;
+    const uniformFy = parameters.fy;
     const kinds = SIDES.map((side) => boundaries[side]);
     const frames = {
       left: sideFrame("left"),
@@ -302,6 +309,14 @@ export class CpuD2Q9 {
             continue;
           }
           const rho = r(1 + this.deltaRho[k]);
+          // The uniform force plus this cell's share of a force field, the
+          // sum the shader forms too.
+          parameters.fx = this.forceField
+            ? r(uniformFx + r(this.forceField[2 * k]))
+            : uniformFx;
+          parameters.fy = this.forceField
+            ? r(uniformFy + r(this.forceField[2 * k + 1]))
+            : uniformFy;
           let linkFx = 0;
           let linkFy = 0;
           let linkBody = 0;

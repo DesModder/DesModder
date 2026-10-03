@@ -37,6 +37,8 @@ export interface LatticeSpec {
   sponge: Sponge | undefined;
   /** The velocity the tank starts at, everywhere outside the solids. */
   initial: readonly [number, number];
+  /** A force density per cell (`2k`, `2k + 1`), or undefined for none. */
+  forceField: Float32Array | undefined;
 }
 
 export interface Tank {
@@ -184,6 +186,7 @@ export class FluidOverlay {
       lattice.setSponge(spec.sponge);
       lattice.setSolid(spec.solid);
       lattice.setLinks(spec.links);
+      lattice.setForceField(spec.forceField);
       const [ux, uy] = spec.initial;
       lattice.initialize((x, y) =>
         spec.solid[y * spec.nx + x] ? { ux: 0, uy: 0 } : { ux, uy }
@@ -209,6 +212,11 @@ export class FluidOverlay {
     this.lattice.setSolid(solid);
     this.lattice.setLinks(links);
     this.uploadSolid({ ...spec, solid });
+  }
+
+  /** A new force field for the running lattice: a slider moved P or Q. */
+  updateForceField(field: Float32Array | undefined) {
+    this.lattice?.setForceField(field);
   }
 
   /** Draws the current state over the tank, for the graph's current view. */

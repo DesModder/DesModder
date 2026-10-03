@@ -65,6 +65,8 @@ import {
   type Sample,
 } from "../../../field-rendering/sim/measure";
 import { fluidLatticeSize, type FluidConfig } from "../model";
+import { parseStrictExpression } from "../../../field-rendering/sim/strictParse";
+import { compileExpression } from "../../../field-rendering/sim/strictEvaluate";
 
 /** One row of the expression list that could be a solid. */
 export interface ObstacleRow {
@@ -107,8 +109,18 @@ interface ValueHelper {
   observe: (event: string, callback: () => void) => void;
 }
 
+/** The field the panel is editing, as far as the stirred box needs it. */
+export interface FieldDescription {
+  source: "components" | "gradient";
+  xLatex: string;
+  yLatex: string;
+  fLatex: string;
+}
+
 export interface FluidHost {
   calc: Calc;
+  /** The field whose P and Q stir the box. */
+  field: () => FieldDescription;
   config: () => FluidConfig;
   environment: () => FieldEnvironment;
   items: () => readonly ItemLike[];
@@ -255,22 +267,26 @@ export class FluidSession {
     const values = new Map<string, number>();
     for (const obstacle of this.activeObstacles) {
       for (const name of obstacle.params) {
-        if (values.has(name)) continue;
-        let helper = this.valueHelpers.get(name);
-        if (helper === undefined) {
-          helper = this.host.helper(name);
-          // A slider drag reports here; the frame loop picks the change up
-          // on its next geometry check rather than rebuilding on every event.
-          helper.observe("numericValue", () => {
-            this.maskCache = undefined;
-            this.host.changed();
-          });
-          this.valueHelpers.set(name, helper);
-        }
-        values.set(name, helper.numericValue);
+        if (!values.has(name)) values.set(name, this.helperValue(name));
       }
     }
     return values;
+  }
+
+  /** One named value, through a helper kept for the session. */
+  private helperValue(name: string): number {
+    let helper = this.valueHelpers.get(name);
+    if (helper === undefined) {
+      helper = this.host.helper(name);
+      // A slider drag reports here; the frame loop picks the change up on its
+      // next geometry check rather than rebuilding on every event.
+      helper.observe("numericValue", () => {
+        this.maskCache = undefined;
+        this.host.changed();
+      });
+      this.valueHelpers.set(name, helper);
+    }
+    return helper.numericValue;
   }
 
   private get simulatedTime() {
@@ -375,7 +391,7 @@ export class FluidSession {
    */
   sync() {
     const config = this.host.config();
-    const simulate = config.mode === "windTunnel" && this.capabilities.ready;
+    const simulate = config.mode !== "off" && this.capabilities.ready;
     if (config.speedMode !== "auto") {
       this.latticeSpeed = initialLatticeSpeed(config.speedMode);
     }
@@ -436,6 +452,7 @@ export class FluidSession {
     const { units } = this;
     const { nx, ny } = fluidLatticeSize(config);
     const latticeKey = JSON.stringify([
+      config.mode,
       config.tank,
       nx,
       ny,
@@ -445,22 +462,38 @@ export class FluidSession {
     ]);
     const solidsKey = this.solidsKeyFor(nx, ny);
     const restart = latticeKey !== this.latticeKey || !this.overlay.isRunning;
+    if (!restart) this.syncForceField(nx, ny);
     if (!restart && solidsKey === this.solidsKey) return;
     const solids = this.buildSolids(nx, ny);
     if (restart) {
       this.latticeKey = latticeKey;
       this.solidsKey = solids.key;
-      this.spec = this.buildSpec(nx, ny, units, solids);
+      const plan =
+        config.mode === "stirredBox" ? this.forcePlan(nx, ny) : undefined;
+      this.forceKey = plan?.key ?? "";
+      this.forceShape = plan?.build();
+      // A quarter of the ceiling to begin with: a box's momentum outlasts any
+      // correction, so a gentle start overshoots less than a strong one.
+      this.forceAmplitude = 0.25 * this.forceCeiling;
+      this.spec = this.buildSpec(nx, ny, units, solids, undefined);
       this.overlay.start(this.spec);
       this.scheduler.reset();
       this.lastPlan = undefined;
       this.beginMeasurements(solids.regions, nx, ny);
-      // Start-up, then the gust, then a few more passes before anything is
-      // called settled.
+      this.uploadForce();
       const pass = units.cellsPerLength / this.latticeSpeed;
-      this.rampSteps = Math.round(7.5 * pass);
-      this.gustWindow = [Math.round(7.5 * pass), Math.round(11.5 * pass)];
-      this.settleUntil = Math.round(30 * pass);
+      if (config.mode === "windTunnel") {
+        // Start-up, then the gust, then a few more passes before anything is
+        // called settled.
+        this.rampSteps = Math.round(7.5 * pass);
+        this.gustWindow = [Math.round(7.5 * pass), Math.round(11.5 * pass)];
+        this.settleUntil = Math.round(30 * pass);
+      } else {
+        // A box has no inflow to ease in, and nothing symmetric to tip over.
+        this.rampSteps = 0;
+        this.gustWindow = [0, 0];
+        this.settleUntil = Math.round(10 * pass);
+      }
       return;
     }
     if (solids.key !== this.solidsKey && this.spec) {
@@ -482,6 +515,8 @@ export class FluidSession {
     this.overlay.stop();
     this.latticeKey = "";
     this.solidsKey = "";
+    this.forceKey = "";
+    this.forceShape = undefined;
     this.spec = undefined;
     this.bodies.clear();
   }
@@ -554,9 +589,33 @@ export class FluidSession {
     nx: number,
     ny: number,
     units: LatticeUnits,
-    solids: { solid: Uint8Array; links: Float32Array }
+    solids: { solid: Uint8Array; links: Float32Array },
+    forceField: Float32Array | undefined
   ): LatticeSpec {
     const u = this.latticeSpeed;
+    if (this.host.config().mode === "stirredBox") {
+      return {
+        nx,
+        ny,
+        tau: units.tau,
+        smagorinsky: units.closure ? SMAGORINSKY_C : 0,
+        // A closed box: no-slip walls all round, so the fluid the field
+        // pushes has nowhere to go but round.
+        boundaries: {
+          left: { kind: "noSlip" },
+          right: { kind: "noSlip" },
+          bottom: { kind: "noSlip" },
+          top: { kind: "noSlip" },
+        },
+        solid: solids.solid,
+        links: solids.links,
+        inletUx: new Array<number>(ny).fill(0),
+        inletUy: new Array<number>(ny).fill(0),
+        sponge: undefined,
+        initial: [0, 0],
+        forceField,
+      };
+    }
     return {
       nx,
       ny,
@@ -581,7 +640,177 @@ export class FluidSession {
         reference: [u, 0],
       },
       initial: [0, 0],
+      forceField: undefined,
     };
+  }
+
+  // ---- the stirred box's force --------------------------------------------
+
+  /** Cells where the field is undefined, and so pushes nothing. */
+  private undefinedForce = 0;
+  private forceKey = "";
+
+  /** How many cells the field could not be evaluated at, for the panel. */
+  get undefinedForceCells() {
+    return this.undefinedForce;
+  }
+
+  /**
+   * The field's P and Q as the shape of a force on every cell, normalised so
+   * its strongest push is 1. Its strength is `forceAmplitude`, regulated by
+   * `regulateForce`. A gradient field's P and Q are its f's partial
+   * derivatives, taken here by central differences. Where the field is
+   * undefined it pushes nothing, and the cells are counted rather than
+   * guessed.
+   *
+   * Returns the key first and the field only on demand: compiling P and Q is
+   * cheap and tells which sliders and whether the clock they read, so a check
+   * every few frames costs a parse, and evaluating every cell happens only
+   * when something they read has changed.
+   */
+  private forcePlan(nx: number, ny: number) {
+    const config = this.host.config();
+    const description = this.host.field();
+    const env = this.host.environment();
+    const degreeMode = this.host.degreeMode();
+    const compile = (latex: string) => {
+      const parsed = parseStrictExpression(latex, env);
+      if (!parsed.ok) return undefined;
+      return {
+        program: parsed.program,
+        evaluate: compileExpression(parsed.expr, parsed.program, {
+          degreeMode,
+        }),
+      };
+    };
+    const gradient = description.source === "gradient";
+    const parts = gradient
+      ? [compile(description.fLatex)]
+      : [compile(description.xLatex), compile(description.yLatex)];
+    const params = new Map<string, number>();
+    let usesTime = false;
+    for (const part of parts) {
+      if (!part) continue;
+      usesTime ||= part.program.usesTime;
+      for (const name of part.program.params)
+        params.set(name, this.helperValue(name));
+    }
+    const time = usesTime ? this.simulatedTime : 0;
+    const { tank } = config;
+    const { dt } = this.units;
+    const key = JSON.stringify([
+      description,
+      degreeMode,
+      [...params],
+      time,
+      nx,
+      ny,
+      tank,
+      dt,
+      config.inflowSpeed,
+      config.referenceLength,
+    ]);
+    const build = () => {
+      const dx = (tank.xMax - tank.xMin) / nx;
+      const dy = (tank.yMax - tank.yMin) / ny;
+      const field = new Float32Array(2 * nx * ny);
+      let strongest = 0;
+      let undefinedCount = 0;
+      const at = (part: (typeof parts)[number], x: number, y: number) =>
+        part ? part.evaluate({ x, y, time, params }, []) : NaN;
+      for (let j = 0; j < ny; j++) {
+        for (let i = 0; i < nx; i++) {
+          const x = tank.xMin + (i + 0.5) * dx;
+          const y = tank.yMin + (j + 0.5) * dy;
+          let p: number;
+          let q: number;
+          if (gradient) {
+            const h = 1e-4 * Math.max(1, Math.abs(x), Math.abs(y));
+            p = (at(parts[0], x + h, y) - at(parts[0], x - h, y)) / (2 * h);
+            q = (at(parts[0], x, y + h) - at(parts[0], x, y - h)) / (2 * h);
+          } else {
+            p = at(parts[0], x, y);
+            q = at(parts[1], x, y);
+          }
+          const k = j * nx + i;
+          if (Number.isFinite(p) && Number.isFinite(q)) {
+            field[2 * k] = p;
+            field[2 * k + 1] = q;
+            strongest = Math.max(strongest, Math.hypot(p, q));
+          } else {
+            undefinedCount++;
+          }
+        }
+      }
+      const scale = strongest > 0 ? 1 / strongest : 0;
+      for (let k = 0; k < field.length; k++) field[k] *= scale;
+      this.undefinedForce = undefinedCount;
+      return field;
+    };
+    return { key, build };
+  }
+
+  /** Rebuilds the force field if the field, a slider or the clock moved it. */
+  private syncForceField(nx: number, ny: number) {
+    if (this.host.config().mode !== "stirredBox" || !this.spec) return;
+    const plan = this.forcePlan(nx, ny);
+    if (plan.key === this.forceKey) return;
+    this.forceKey = plan.key;
+    this.forceShape = plan.build();
+    this.uploadForce();
+  }
+
+  /** The stirring force's shape, strongest push 1, `2k` and `2k + 1`. */
+  private forceShape: Float32Array | undefined;
+  /** Its strength, in lattice units of force density. */
+  private forceAmplitude = 0;
+
+  /** The shape at the current strength, onto the running lattice. */
+  private uploadForce() {
+    const shape = this.forceShape;
+    if (!shape || !this.spec) return;
+    const field = new Float32Array(shape.length);
+    for (let k = 0; k < shape.length; k++)
+      field[k] = shape[k] * this.forceAmplitude;
+    this.spec = { ...this.spec, forceField: field };
+    this.overlay.updateForceField(field);
+  }
+
+  /**
+   * The ceiling on the stirring strength: U²/L in lattice units, the push
+   * that drives a flow of speed U across the length L where inertia limits
+   * it.
+   */
+  private get forceCeiling() {
+    const u = this.latticeSpeed;
+    return (u * u) / Math.max(1, this.units.cellsPerLength);
+  }
+
+  /**
+   * Keeps a stirred flow near the typical speed. A push shaped like a
+   * rotation is one the fluid can follow by spinning faster, so inertia never
+   * limits it and only the walls' viscosity does: taken at a fixed strength,
+   * the default field (−y, x) spun the box past Mach 0.8. So the strength
+   * starts at the inertial estimate, never exceeds it, and eases down when
+   * the flow's fastest point passes the typical speed and back up when it
+   * falls well below. It begins at a quarter of that, since a box's momentum
+   * outlasts every correction and a gentle start overshoots less. The push keeps the field's shape throughout, and a
+   * gradient field, which pressure answers whatever its strength, still
+   * barely moves the fluid at the ceiling.
+   */
+  private regulateForce(peakSpeed: number) {
+    if (this.host.config().mode !== "stirredBox" || !this.forceShape) return;
+    // Aimed at 70% of the typical speed, because the box's momentum carries
+    // the flow past whatever the push settles at: aimed at the full speed it
+    // overshot to Mach 0.32 and made Auto restart.
+    const target = 0.7 * this.latticeSpeed;
+    const ceiling = this.forceCeiling;
+    let next = this.forceAmplitude;
+    if (peakSpeed > target) next *= Math.max(0.5, target / peakSpeed);
+    else if (peakSpeed < 0.7 * target) next = Math.min(ceiling, next * 1.25);
+    if (next === this.forceAmplitude) return;
+    this.forceAmplitude = next;
+    this.uploadForce();
   }
 
   private beginMeasurements(
@@ -761,6 +990,7 @@ export class FluidSession {
       peak = Math.max(peak, Math.hypot(ux[k], uy[k]));
     }
     this.peakMach = valid ? peak * Math.sqrt(3) : Infinity;
+    if (valid) this.regulateForce(peak);
     const config = this.host.config();
     const tooFast = !valid || this.peakMach > MACH_LIMIT;
     if (!tooFast) return;

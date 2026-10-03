@@ -121,6 +121,16 @@ testWithPage(
     await driver.page.screenshot({ path: "docs/assets/fluid-gate0-tab.png" });
 
     await driver.click('#dsm-vector-tools-fluid-mode [data-value="off"]');
+    // Leave the stored settings as other tests expect them: the panel opens
+    // on its first tab, and the field holds its defaults.
+    await driver.evaluate(() => {
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      plugin.resetConfig();
+      plugin.setPanelTab("field");
+    });
+    // Settings are written back to the extension after a delay; a page that
+    // closes first loses the write, and the next test inherits this one's.
+    await driver.page.waitForFunction(() => !DSM.delaySetPluginSettings);
     await driver.disablePlugin("vector-tools");
     await driver.setBlank();
     await driver.waitForSync();
@@ -211,6 +221,77 @@ testWithPage(
       plugin.setFluid("mode", "off");
       plugin.setArrowMode("live");
     });
+    // Leave the stored settings as other tests expect them: the panel opens
+    // on its first tab, and the field holds its defaults.
+    await driver.evaluate(() => {
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      plugin.resetConfig();
+      plugin.setPanelTab("field");
+    });
+    // Settings are written back to the extension after a delay; a page that
+    // closes first loses the write, and the next test inherits this one's.
+    await driver.page.waitForFunction(() => !DSM.delaySetPluginSettings);
+    await driver.disablePlugin("vector-tools");
+    await driver.setBlank();
+  },
+  120000
+);
+
+/**
+ * The stirred box: the field's own P and Q push a closed box of fluid. A
+ * rotational field stirs it; a gradient field of the same strength barely
+ * moves it, because pressure answers the part of a push that spreads. That
+ * is Helmholtz and Hodge's decomposition, measured.
+ */
+testWithPage(
+  "Fluid tab: the stirred box keeps a field's curl and answers its gradient with pressure",
+  async (driver) => {
+    await driver.enablePlugin("vector-tools");
+    await driver.assertSelectorEventually(BUTTON);
+    const meanSpeed = async () =>
+      await driver.evaluate(() => {
+        const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
+        const lattice = fluid.overlay.current;
+        const { ux, uy } = lattice.readMacro();
+        let sum = 0;
+        for (let k = 0; k < ux.length; k++) sum += Math.hypot(ux[k], uy[k]);
+        return sum / ux.length;
+      });
+    const runWith = async (p: string, q: string) => {
+      await driver.evaluate(
+        (p: string, q: string) => {
+          const plugin = DSM.enabledPlugins["vector-tools"] as any;
+          plugin.setSlot("p", p);
+          plugin.setSlot("q", q);
+          plugin.fluid.restart();
+        },
+        p,
+        q
+      );
+      await new Promise((resolve) => setTimeout(resolve, 6000));
+      return await meanSpeed();
+    };
+    await driver.evaluate(() => {
+      Calc.setMathBounds({ left: -11, right: 11, bottom: -6, top: 6 });
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      plugin.setArrowMode("off");
+      plugin.setFluid("inflowSpeed", 4);
+      plugin.setFluid("show", "speed");
+      plugin.setFluid("mode", "stirredBox");
+    });
+    const curl = await runWith("-y", "x");
+    await driver.page.screenshot({ path: "docs/assets/fluid-stirred-box.png" });
+    const gradient = await runWith("x", "y");
+    expect(curl).toBeGreaterThan(0.005);
+    expect(gradient).toBeLessThan(0.05 * curl);
+
+    await driver.evaluate(() => {
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      plugin.setFluid("mode", "off");
+      plugin.resetConfig();
+      plugin.setPanelTab("field");
+    });
+    await driver.page.waitForFunction(() => !DSM.delaySetPluginSettings);
     await driver.disablePlugin("vector-tools");
     await driver.setBlank();
   },

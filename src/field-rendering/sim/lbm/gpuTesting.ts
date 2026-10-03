@@ -28,6 +28,8 @@ export interface GpuSetup {
   links?: number[];
   /** The Smagorinsky constant; 0 or absent for plain BGK. */
   smagorinsky?: number;
+  /** A force density per cell, `2k` and `2k + 1`. */
+  forceField?: number[];
 }
 
 export async function runOnGpu(
@@ -53,6 +55,7 @@ export async function runOnGpu(
         if (setup.sponge) lattice.setSponge(setup.sponge);
         if (setup.links) lattice.setLinks(Float32Array.from(setup.links));
         lattice.smagorinsky = setup.smagorinsky ?? 0;
+        if (setup.forceField) lattice.setForceField(setup.forceField);
         lattice.setPopulations(new Float32Array(populations));
         const out = [];
         for (const at of checkpoints) {
