@@ -99,6 +99,8 @@ uniform bool u_hasSolid;
 uniform bool u_hasLinks;
 uniform ivec2 u_size;
 uniform float u_omega;
+uniform float u_tau;
+uniform float u_smagorinsky;
 uniform vec2 u_force;
 uniform int u_kind[4];
 uniform vec2 u_wallVelocity[4];
@@ -298,16 +300,40 @@ void main() {
   float ux = (jx + 0.5 * fx) / rho;
   float uy = (jy + 0.5 * fy) / rho;
   float usq = 1.5 * (ux * ux + uy * uy);
+  float eq[9];
+  for (int i = 0; i < 9; i++) {
+    float cu = float(CXS[i]) * ux + float(CYS[i]) * uy;
+    eq[i] = WS[i] * (dr + rho * ((3.0 * cu + (4.5 * cu) * cu) - usq));
+  }
+  if (u_smagorinsky > 0.0) {
+    // The closure in collideCell: |Π| of the non-equilibrium stress with
+    // Guo's force correction, then this cell's own relaxation time.
+    float n1 = g[1] - eq[1];
+    float n2 = g[2] - eq[2];
+    float n3 = g[3] - eq[3];
+    float n4 = g[4] - eq[4];
+    float n5 = g[5] - eq[5];
+    float n6 = g[6] - eq[6];
+    float n7 = g[7] - eq[7];
+    float n8 = g[8] - eq[8];
+    float xx = (((((n1 + n3) + n5) + n6) + n7) + n8) + ux * fx;
+    float yy = (((((n2 + n4) + n5) + n6) + n7) + n8) + uy * fy;
+    float xy = (((n5 - n6) + n7) - n8) + 0.5 * (ux * fy + uy * fx);
+    float stress = sqrt((xx * xx + yy * yy) + 2.0 * (xy * xy));
+    float t = u_tau;
+    float c2 = u_smagorinsky * u_smagorinsky;
+    float tauEff = 0.5 * (t + sqrt(t * t + (((18.0 * 1.4142135623730951) * c2) * stress) / rho));
+    omega = 1.0 / tauEff;
+  }
   float keep = 1.0 - omega;
   float source = 1.0 - 0.5 * omega;
   for (int i = 0; i < 9; i++) {
     float cx = float(CXS[i]);
     float cy = float(CYS[i]);
     float cu = cx * ux + cy * uy;
-    float eq = WS[i] * (dr + rho * ((3.0 * cu + (4.5 * cu) * cu) - usq));
     float cf = cx * fx + cy * fy;
     float s = WS[i] * (3.0 * ((cx - ux) * fx + (cy - uy) * fy) + (9.0 * cu) * cf);
-    g[i] = (keep * g[i] + omega * eq) + source * s;
+    g[i] = (keep * g[i] + omega * eq[i]) + source * s;
   }
 
   // spongeStrength in boundaries.ts.
@@ -344,6 +370,8 @@ export class GpuD2Q9 {
   force: readonly [number, number];
   /** Multiplies the inlet profile, for an eased start or a gust. */
   inletScale = 1;
+  /** The Smagorinsky constant, 0 for plain BGK. See `CollisionParameters`. */
+  smagorinsky = 0;
   steps = 0;
   private boundaries: Boundaries = PERIODIC;
   private sponge: Sponge | undefined;
@@ -575,6 +603,8 @@ export class GpuD2Q9 {
     gl.disable(gl.SCISSOR_TEST);
     gl.uniform2i(at("u_size"), this.nx, this.ny);
     gl.uniform1f(at("u_omega"), 1 / this.tau);
+    gl.uniform1f(at("u_tau"), this.tau);
+    gl.uniform1f(at("u_smagorinsky"), this.smagorinsky);
     gl.uniform2f(at("u_force"), this.force[0], this.force[1]);
     gl.uniform1i(at("u_hasSolid"), this.hasSolid ? 1 : 0);
     gl.uniform1i(at("u_hasLinks"), this.hasLinks ? 1 : 0);
@@ -633,16 +663,9 @@ export class GpuD2Q9 {
    * body it touched, for `bodyForce`. Waits for the GPU.
    */
   readForces(): { cellForce: Float32Array; cellBody: Uint8Array } {
-    const { gl, nx, ny } = this;
+    const { nx, ny } = this;
+    const texel = this.readForceTexels(0, 0, nx, ny);
     const cells = nx * ny;
-    const texel = new Float32Array(4 * cells);
-    gl.bindFramebuffer(
-      gl.READ_FRAMEBUFFER,
-      this.sets[this.current].framebuffer
-    );
-    gl.readBuffer(gl.COLOR_ATTACHMENT3);
-    gl.readPixels(0, 0, nx, ny, gl.RGBA, gl.FLOAT, texel);
-    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
     const cellForce = new Float32Array(2 * cells);
     const cellBody = new Uint8Array(cells);
     for (let k = 0; k < cells; k++) {
@@ -651,6 +674,44 @@ export class GpuD2Q9 {
       cellBody[k] = Math.round(texel[4 * k + 2]);
     }
     return { cellForce, cellBody };
+  }
+
+  /**
+   * Each body's exchanged momentum at the last step, summed over a rectangle
+   * of cells that contains it, without the rest share (see `bodyForce`).
+   * Reading only the rectangle is what makes sampling a force every few steps
+   * affordable: walls are thin, and the field around them is not needed.
+   */
+  sumForces(
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ): Map<number, [number, number]> {
+    const texel = this.readForceTexels(x, y, width, height);
+    const sums = new Map<number, [number, number]>();
+    for (let k = 0; k < width * height; k++) {
+      const body = Math.round(texel[4 * k + 2]);
+      if (body === 0) continue;
+      const sum = sums.get(body) ?? [0, 0];
+      sum[0] += texel[4 * k];
+      sum[1] += texel[4 * k + 1];
+      sums.set(body, sum);
+    }
+    return sums;
+  }
+
+  private readForceTexels(x: number, y: number, width: number, height: number) {
+    const { gl } = this;
+    const texel = new Float32Array(4 * width * height);
+    gl.bindFramebuffer(
+      gl.READ_FRAMEBUFFER,
+      this.sets[this.current].framebuffer
+    );
+    gl.readBuffer(gl.COLOR_ATTACHMENT3);
+    gl.readPixels(x, y, width, height, gl.RGBA, gl.FLOAT, texel);
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
+    return texel;
   }
 
   /**

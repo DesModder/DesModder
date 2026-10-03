@@ -54,7 +54,18 @@ export interface CollisionParameters {
   omega: number;
   fx: number;
   fy: number;
+  /**
+   * The Smagorinsky constant C, or 0 for none. With a closure, each cell
+   * relaxes at its own τ_eff = ½(τ + √(τ² + 18√2 C² |Π|/ρ)), where Π is the
+   * non-equilibrium stress with Guo's force correction: the form GPT's third
+   * round measured stable to Re 2000 at C = 0.17.
+   */
+  smagorinsky?: number;
+  /** τ itself, which the closure needs; defaults to 1/omega. */
+  tau?: number;
 }
+
+const { SQRT2 } = Math;
 
 /**
  * One cell's BGK collision with Guo forcing, in place on `g` (length 9).
@@ -63,10 +74,11 @@ export interface CollisionParameters {
  */
 export function collideCell(
   g: Float64Array | number[],
-  { omega, fx, fy }: CollisionParameters,
+  { omega: baseOmega, fx, fy, smagorinsky = 0, tau }: CollisionParameters,
   arithmetic: Arithmetic,
   out: [number, number, number] = [0, 0, 0]
 ): [number, number, number] {
+  let omega = baseOmega;
   const r = arithmetic === "float32" ? Math.fround : identity;
   const [g0, g1, g2, g3, g4, g5, g6, g7, g8] = g;
   // The same association as the shader: left to right.
@@ -79,22 +91,54 @@ export function collideCell(
   const ux = r(r(jx + r(0.5 * fx)) / rho);
   const uy = r(r(jy + r(0.5 * fy)) / rho);
   const usq = r(1.5 * r(r(ux * ux) + r(uy * uy)));
+  const eq = EQ_SCRATCH;
+  for (let i = 0; i < Q; i++) {
+    const cu = r(r(CX[i] * ux) + r(CY[i] * uy));
+    eq[i] = r(
+      r(W[i]) * r(dr + r(rho * r(r(r(3 * cu) + r(r(4.5 * cu) * cu)) - usq)))
+    );
+  }
+  if (smagorinsky > 0) {
+    const n = (i: number) => r(g[i] - eq[i]);
+    const xx = r(
+      r(r(r(r(r(n(1) + n(3)) + n(5)) + n(6)) + n(7)) + n(8)) + r(ux * fx)
+    );
+    const yy = r(
+      r(r(r(r(r(n(2) + n(4)) + n(5)) + n(6)) + n(7)) + n(8)) + r(uy * fy)
+    );
+    const xy = r(
+      r(r(r(n(5) - n(6)) + n(7)) - n(8)) + r(0.5 * r(r(ux * fy) + r(uy * fx)))
+    );
+    const stress = r(
+      Math.sqrt(r(r(r(xx * xx) + r(yy * yy)) + r(2 * r(xy * xy))))
+    );
+    const t = tau ?? 1 / baseOmega;
+    const c2 = r(smagorinsky * smagorinsky);
+    const tauEff = r(
+      0.5 *
+        r(
+          t +
+            r(
+              Math.sqrt(
+                r(r(t * t) + r(r(r(r(18 * SQRT2) * c2) * stress) / rho))
+              )
+            )
+        )
+    );
+    omega = r(1 / tauEff);
+  }
   const keep = r(1 - omega);
   const source = r(1 - r(0.5 * omega));
   for (let i = 0; i < Q; i++) {
     const cx = CX[i];
     const cy = CY[i];
-    const w = r(W[i]);
     const cu = r(r(cx * ux) + r(cy * uy));
-    const eq = r(
-      w * r(dr + r(rho * r(r(r(3 * cu) + r(r(4.5 * cu) * cu)) - usq)))
-    );
     const cf = r(r(cx * fx) + r(cy * fy));
     const s = r(
-      w *
+      r(W[i]) *
         r(r(3 * r(r(r(cx - ux) * fx) + r(r(cy - uy) * fy))) + r(r(9 * cu) * cf))
     );
-    g[i] = r(r(r(keep * g[i]) + r(omega * eq)) + r(source * s));
+    g[i] = r(r(r(keep * g[i]) + r(omega * eq[i])) + r(source * s));
   }
   out[0] = dr;
   out[1] = ux;
@@ -103,6 +147,7 @@ export function collideCell(
 }
 
 const identity = (value: number) => value;
+const EQ_SCRATCH = new Array<number>(Q).fill(0);
 
 /**
  * The shifted equilibrium `g_eq,i = w_i [δρ + ρ(3c·u + 4.5(c·u)² − 1.5u²)]`,
@@ -209,6 +254,8 @@ export class CpuD2Q9 {
   /** A velocity side's profile, per row, scaled by `inletScale`. */
   inlet: { ux: Float64Array; uy: Float64Array } | undefined;
   inletScale = 1;
+  /** The Smagorinsky constant, 0 for plain BGK. See `CollisionParameters`. */
+  smagorinsky = 0;
   sponge:
     | { width: number; max: number; reference: [number, number] }
     | undefined;
@@ -227,6 +274,8 @@ export class CpuD2Q9 {
       omega: r(1 / this.tau),
       fx: r(this.force[0]),
       fy: r(this.force[1]),
+      smagorinsky: r(this.smagorinsky),
+      tau: r(this.tau),
     };
     const kinds = SIDES.map((side) => boundaries[side]);
     const frames = {

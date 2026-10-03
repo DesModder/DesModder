@@ -26,6 +26,8 @@ export interface GpuSetup {
   sponge?: { width: number; max: number; reference: [number, number] };
   /** Link fractions, `i·N + k`, from `computeLinks`. */
   links?: number[];
+  /** The Smagorinsky constant; 0 or absent for plain BGK. */
+  smagorinsky?: number;
 }
 
 export async function runOnGpu(
@@ -50,6 +52,7 @@ export async function runOnGpu(
         if (setup.inlet) lattice.setInlet(setup.inlet.ux, setup.inlet.uy);
         if (setup.sponge) lattice.setSponge(setup.sponge);
         if (setup.links) lattice.setLinks(Float32Array.from(setup.links));
+        lattice.smagorinsky = setup.smagorinsky ?? 0;
         lattice.setPopulations(new Float32Array(populations));
         const out = [];
         for (const at of checkpoints) {
@@ -140,6 +143,73 @@ export async function runToSteady(
               samples[samples.length - 1 - plan.window].forces[first];
             if (Math.abs(now - then) <= plan.tolerance * Math.abs(now)) break;
           }
+        }
+        const read = lattice.read();
+        return {
+          samples,
+          final: {
+            deltaRho: Array.from(read.deltaRho as Float32Array),
+            ux: Array.from(read.ux as Float32Array),
+            uy: Array.from(read.uy as Float32Array),
+          },
+        };
+      } finally {
+        release();
+      }
+    },
+    options,
+    Array.from(populations),
+    setup,
+    plan
+  );
+}
+
+export interface SeriesRun {
+  /** One body's exchanged momentum, sampled; rest share not included. */
+  samples: { step: number; fx: number; fy: number }[];
+  final: { deltaRho: number[]; ux: number[]; uy: number[] };
+}
+
+/**
+ * Runs a lattice from rest for `steps`, easing the inlet in over `rampSteps`,
+ * and samples `body`'s force every `sampleEvery` steps from the cells inside
+ * `region`.
+ */
+export async function runSeries(
+  driver: Driver,
+  options: { nx: number; ny: number; tau: number },
+  populations: Float32Array,
+  setup: GpuSetup,
+  plan: {
+    steps: number;
+    rampSteps: number;
+    sampleEvery: number;
+    body: number;
+    region: [number, number, number, number];
+  }
+): Promise<SeriesRun> {
+  return await driver.evaluate(
+    (options, populations: number[], setup, plan) => {
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      const { lattice, release } = plugin.fluid.createLattice(options);
+      try {
+        if (setup.boundaries) lattice.setBoundaries(setup.boundaries);
+        if (setup.solid) lattice.setSolid(Uint8Array.from(setup.solid));
+        if (setup.inlet) lattice.setInlet(setup.inlet.ux, setup.inlet.uy);
+        if (setup.links) lattice.setLinks(Float32Array.from(setup.links));
+        if (setup.sponge) lattice.setSponge(setup.sponge);
+        lattice.smagorinsky = setup.smagorinsky ?? 0;
+        lattice.setPopulations(new Float32Array(populations));
+        const samples: { step: number; fx: number; fy: number }[] = [];
+        while (lattice.steps < plan.steps) {
+          for (let n = 0; n < plan.sampleEvery; n++) {
+            const t = Math.min(1, lattice.steps / plan.rampSteps);
+            lattice.inletScale = t * t * (3 - 2 * t);
+            lattice.step(1);
+          }
+          const sums = lattice.sumForces(...plan.region);
+          const force = sums.get(plan.body) ?? [0, 0];
+          samples.push({ step: lattice.steps, fx: force[0], fy: force[1] });
         }
         const read = lattice.read();
         return {
