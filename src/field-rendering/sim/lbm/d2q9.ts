@@ -147,6 +147,62 @@ export function collideCell(
 }
 
 const identity = (value: number) => value;
+
+/**
+ * The partially saturated method's solid collision, after the cell's fluid
+ * collision, in place on `g` (post-collision) given `pre` (the same cell before
+ * it). Returns the momentum the solid took, as the force on it.
+ *
+ * GPT's third round measured this as the method for solids that move: it kept
+ * total mass to roundoff, removed the force chatter that refilling cells
+ * causes, and agreed between a translating and a fixed body to 0.18%. The
+ * forms are Rettinger and Rüde's (2017) M2 and B2, as GPT pinned them:
+ *
+ *   B   = ε(τ − ½) / ((1 − ε) + (τ − ½))
+ *   Ω_s = f_eq(ρ, u_solid) − f + (1 − 1/τ)(f − f_eq(ρ, u))
+ *   f'  = f + (1 − B)(f'_fluid − f) + B Ω_s
+ *
+ * with f the pre-collision populations and f'_fluid the fluid collision's
+ * result. Written in shifted populations, where every difference of two
+ * populations or equilibria is unchanged.
+ */
+export function partiallySaturated(
+  g: Float64Array | number[],
+  pre: Float64Array | number[],
+  [dr, ux, uy]: readonly [number, number, number],
+  eps: number,
+  wu: number,
+  wv: number,
+  tau: number,
+  omega: number,
+  r: (value: number) => number = identity
+): [number, number] {
+  const rho = r(1 + dr);
+  const half = r(tau - 0.5);
+  const B = r(r(eps * half) / r(r(1 - eps) + half));
+  const keep = r(1 - omega);
+  const usqFluid = r(1.5 * r(r(ux * ux) + r(uy * uy)));
+  const usqWall = r(1.5 * r(r(wu * wu) + r(wv * wv)));
+  let fx = 0;
+  let fy = 0;
+  for (let i = 0; i < Q; i++) {
+    const w = r(W[i]);
+    const cuF = r(r(CX[i] * ux) + r(CY[i] * uy));
+    const cuW = r(r(CX[i] * wu) + r(CY[i] * wv));
+    const eqF = r(
+      w * r(dr + r(rho * r(r(r(3 * cuF) + r(r(4.5 * cuF) * cuF)) - usqFluid)))
+    );
+    const eqW = r(
+      w * r(dr + r(rho * r(r(r(3 * cuW) + r(r(4.5 * cuW) * cuW)) - usqWall)))
+    );
+    const omegaS = r(r(eqW - pre[i]) + r(keep * r(pre[i] - eqF)));
+    const delta = r(B * omegaS);
+    g[i] = r(r(pre[i] + r(r(1 - B) * r(g[i] - pre[i]))) + delta);
+    fx -= CX[i] * delta;
+    fy -= CY[i] * delta;
+  }
+  return [fx, fy];
+}
 const EQ_SCRATCH = new Array<number>(Q).fill(0);
 
 /**
@@ -257,6 +313,16 @@ export class CpuD2Q9 {
   /** The Smagorinsky constant, 0 for plain BGK. See `CollisionParameters`. */
   smagorinsky = 0;
   /**
+   * Partially saturated cells, for solids that move (see
+   * `partiallySaturated`): how much of each cell is solid, the solid's
+   * velocity there (`2k`, `2k + 1`, lattice units), and which body it is.
+   * These cells are fluid to the lattice and keep their populations, so a
+   * moving solid never has to refill a cell it uncovers.
+   */
+  psm:
+    | { coverage: Float32Array; velocity: Float32Array; body: Uint8Array }
+    | undefined;
+  /**
    * A force density per cell (`2k`, `2k + 1`), added to the uniform `force`:
    * what the stirred box pushes the fluid with.
    */
@@ -274,6 +340,7 @@ export class CpuD2Q9 {
     const { nx, ny, cells, boundaries } = this;
     const r = this.arithmetic === "float32" ? Math.fround : identity;
     const g = new Float64Array(Q);
+    const pre = new Float64Array(Q);
     const macro: [number, number, number] = [0, 0, 0];
     const parameters = {
       omega: r(1 / this.tau),
@@ -413,7 +480,26 @@ export class CpuD2Q9 {
               r
             );
           }
+          const eps = this.psm ? this.psm.coverage[k] : 0;
+          if (eps > 0) for (let i = 0; i < Q; i++) pre[i] = g[i];
           collideCell(g, parameters, this.arithmetic, macro);
+          if (eps > 0) {
+            const body = this.psm!.body[k];
+            const [fx, fy] = partiallySaturated(
+              g,
+              pre,
+              macro,
+              eps,
+              this.psm!.velocity[2 * k],
+              this.psm!.velocity[2 * k + 1],
+              parameters.tau,
+              parameters.omega,
+              r
+            );
+            this.cellForce[2 * k] += fx;
+            this.cellForce[2 * k + 1] += fy;
+            this.cellBody[k] = body;
+          }
           if (this.sponge && spongeEq) {
             const s = r(
               spongeStrength(x, nx, this.sponge.width, this.sponge.max)

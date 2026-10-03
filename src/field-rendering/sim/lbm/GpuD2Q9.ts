@@ -97,6 +97,8 @@ uniform sampler2D u_links0;
 uniform sampler2D u_links1;
 uniform sampler2D u_forceField;
 uniform bool u_hasForceField;
+uniform sampler2D u_psm;
+uniform bool u_hasPsm;
 uniform bool u_hasSolid;
 uniform bool u_hasLinks;
 uniform ivec2 u_size;
@@ -332,6 +334,11 @@ void main() {
   }
   float keep = 1.0 - omega;
   float source = 1.0 - 0.5 * omega;
+  // A partially saturated cell keeps its pre-collision populations for the
+  // solid collision below.
+  vec4 psm = u_hasPsm ? texelFetch(u_psm, c, 0) : vec4(0.0);
+  float pre[9];
+  for (int i = 0; i < 9; i++) pre[i] = g[i];
   for (int i = 0; i < 9; i++) {
     float cx = float(CXS[i]);
     float cy = float(CYS[i]);
@@ -339,6 +346,27 @@ void main() {
     float cf = cx * fx + cy * fy;
     float s = WS[i] * (3.0 * ((cx - ux) * fx + (cy - uy) * fy) + (9.0 * cu) * cf);
     g[i] = (keep * g[i] + omega * eq[i]) + source * s;
+  }
+
+  // partiallySaturated in d2q9.ts: M2 and B2, at the base relaxation time.
+  if (psm.x > 0.0) {
+    float eps = psm.x;
+    float wu = psm.z;
+    float wv = psm.w;
+    float halfTau = u_tau - 0.5;
+    float B = (eps * halfTau) / ((1.0 - eps) + halfTau);
+    float keepBase = 1.0 - u_omega;
+    float usqWall = 1.5 * (wu * wu + wv * wv);
+    for (int i = 0; i < 9; i++) {
+      float cuW = float(CXS[i]) * wu + float(CYS[i]) * wv;
+      float eqW = WS[i] * (dr + rho * ((3.0 * cuW + (4.5 * cuW) * cuW) - usqWall));
+      float omegaS = (eqW - pre[i]) + keepBase * (pre[i] - eq[i]);
+      float delta = B * omegaS;
+      g[i] = (pre[i] + (1.0 - B) * (g[i] - pre[i])) + delta;
+      linkFx -= float(CXS[i]) * delta;
+      linkFy -= float(CYS[i]) * delta;
+    }
+    linkBody = int(psm.y + 0.5);
   }
 
   // spongeStrength in boundaries.ts.
@@ -389,6 +417,8 @@ export class GpuD2Q9 {
   private hasLinks = false;
   private readonly forceTexture: WebGLTexture;
   private hasForceField = false;
+  private readonly psmTexture: WebGLTexture;
+  private hasPsm = false;
   /** Which set holds the current populations. */
   private current = 0;
   private readonly location: (name: string) => WebGLUniformLocation | null;
@@ -418,6 +448,7 @@ export class GpuD2Q9 {
       this.createTexture(gl.RGBA32F, this.nx, this.ny)
     );
     this.forceTexture = this.createTexture(gl.RG32F, this.nx, this.ny);
+    this.psmTexture = this.createTexture(gl.RGBA32F, this.nx, this.ny);
   }
 
   private createTexture(format: number, width: number, height: number) {
@@ -540,6 +571,35 @@ export class GpuD2Q9 {
     );
   }
 
+  /**
+   * Partially saturated cells for moving solids (see `partiallySaturated` in
+   * `d2q9.ts`): coverage, body number and solid velocity per cell, or
+   * undefined for none.
+   */
+  setPartialSolids(
+    psm:
+      | {
+          coverage: ArrayLike<number>;
+          velocity: ArrayLike<number>;
+          body: ArrayLike<number>;
+        }
+      | undefined
+  ) {
+    const { gl, nx, ny } = this;
+    this.hasPsm = psm !== undefined;
+    if (psm === undefined) return;
+    const cells = nx * ny;
+    const texel = new Float32Array(4 * cells);
+    for (let k = 0; k < cells; k++) {
+      texel[4 * k] = psm.coverage[k];
+      texel[4 * k + 1] = psm.body[k];
+      texel[4 * k + 2] = psm.velocity[2 * k];
+      texel[4 * k + 3] = psm.velocity[2 * k + 1];
+    }
+    gl.bindTexture(gl.TEXTURE_2D, this.psmTexture);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nx, ny, gl.RGBA, gl.FLOAT, texel);
+  }
+
   /** An open velocity side's profile, one value per row. */
   setInlet(ux: ArrayLike<number>, uy: ArrayLike<number>) {
     const { gl } = this;
@@ -639,6 +699,7 @@ export class GpuD2Q9 {
     gl.uniform1i(at("u_hasSolid"), this.hasSolid ? 1 : 0);
     gl.uniform1i(at("u_hasLinks"), this.hasLinks ? 1 : 0);
     gl.uniform1i(at("u_hasForceField"), this.hasForceField ? 1 : 0);
+    gl.uniform1i(at("u_hasPsm"), this.hasPsm ? 1 : 0);
     gl.uniform1f(at("u_inletScale"), this.inletScale);
     const specs = SIDES.map((side) => this.boundaries[side]);
     gl.uniform1iv(
@@ -673,6 +734,7 @@ export class GpuD2Q9 {
     bind(5, this.linkTextures[0], "u_links0");
     bind(6, this.linkTextures[1], "u_links1");
     bind(7, this.forceTexture, "u_forceField");
+    bind(8, this.psmTexture, "u_psm");
     for (let n = 0; n < count; n++) {
       const from = this.sets[this.current];
       const to = this.sets[1 - this.current];
@@ -821,6 +883,7 @@ export class GpuD2Q9 {
     gl.deleteTexture(this.inletTexture);
     for (const texture of this.linkTextures) gl.deleteTexture(texture);
     gl.deleteTexture(this.forceTexture);
+    gl.deleteTexture(this.psmTexture);
     gl.deleteProgram(this.program);
   }
 }

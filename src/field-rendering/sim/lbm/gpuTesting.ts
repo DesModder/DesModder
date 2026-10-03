@@ -30,6 +30,8 @@ export interface GpuSetup {
   smagorinsky?: number;
   /** A force density per cell, `2k` and `2k + 1`. */
   forceField?: number[];
+  /** Partially saturated cells: coverage, velocity (`2k`), body. */
+  psm?: { coverage: number[]; velocity: number[]; body: number[] };
 }
 
 export async function runOnGpu(
@@ -56,6 +58,7 @@ export async function runOnGpu(
         if (setup.links) lattice.setLinks(Float32Array.from(setup.links));
         lattice.smagorinsky = setup.smagorinsky ?? 0;
         if (setup.forceField) lattice.setForceField(setup.forceField);
+        if (setup.psm) lattice.setPartialSolids(setup.psm);
         lattice.setPopulations(new Float32Array(populations));
         const out = [];
         for (const at of checkpoints) {
