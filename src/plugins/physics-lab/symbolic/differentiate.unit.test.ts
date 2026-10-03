@@ -18,9 +18,11 @@ import {
   hintsFor,
   implicitDerivative,
   RULE_DERIVATIONS,
+  similarExample,
   stepsOf,
   type DerivationNode,
 } from "./differentiate";
+import { implicitProducts } from "./integrate";
 import {
   agreesOnSamples,
   evaluate,
@@ -490,6 +492,65 @@ describe("implicit differentiation", () => {
       "y"
     );
     expect(emit(result)).toBe("-\\frac{x}{y}");
+  });
+});
+
+/**
+ * Desmos parses `x\left(x+1\right)` as a call of a function named x. The
+ * Derivative tab reads it as the product Desmos evaluates it to before
+ * differentiating, the same way the Integral and Limit tabs do — and these are
+ * the pieces it composes.
+ */
+describe("a call of the variable is a product", () => {
+  // x(x+1)², exactly as the parser hands it over.
+  const typed = pow(fn("x", add(x, number(1))), number(2));
+  const read = implicitProducts(typed, "x");
+
+  test("unread, it is a function nobody defined", () => {
+    expect(() => derive(typed)).toThrow(DifferentiationError);
+  });
+
+  test("read, x(x+1)² is x·(x+1)², not (x·(x+1))²", () => {
+    // Desmos binds the power to the bracket, so this is x(x+1)² and its
+    // derivative is (x+1)² + 2x(x+1). The square of the product would be
+    // 2x(x+1)(2x+1), which differs at every sample below.
+    const truth = mul(x, pow(add(x, number(1)), number(2)));
+    const { result } = derive(read);
+    expect(isDerivativeOf(result, truth)).toBe(true);
+    const expected = add(
+      pow(add(x, number(1)), number(2)),
+      mul(mul(number(2), x), add(x, number(1)))
+    );
+    expect(
+      agreesOnSamples(
+        (bindings) => evaluate(result, bindings),
+        (bindings) => evaluate(expected, bindings),
+        SAMPLES,
+        1e-9
+      )
+    ).toBe(true);
+  });
+
+  test("the rule used is the product rule", () => {
+    expect(derive(read).root.rule).toBe("product");
+  });
+
+  test("the worked example built from it differentiates too", () => {
+    const example = similarExample(read);
+    const { result } = derive(example);
+    expect(isDerivativeOf(result, example)).toBe(true);
+  });
+
+  test("only the variable is a value, so f(x) stays a function", () => {
+    // `f` may be defined in the graph, and reading `f(x)` as `f·x` would
+    // differentiate a function as though it were a constant.
+    const call = fn("f", x);
+    expect(implicitProducts(call, "x")).toEqual(call);
+  });
+
+  test("differentiating in t, x(t+1) is left a call of x", () => {
+    const call = fn("x", add(id("t"), number(1)));
+    expect(implicitProducts(call, "t")).toEqual(call);
   });
 });
 

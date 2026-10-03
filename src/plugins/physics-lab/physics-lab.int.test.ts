@@ -931,6 +931,57 @@ testWithPage(
 );
 
 testWithPage(
+  "the Derivative tab reads x(x+1)² as the product Desmos evaluates",
+  async (driver) => {
+    await openPanel(driver);
+    // Desmos's parser hands this over as a call of a function named x, and
+    // the tab refused it as "the derivative of x is not known". Desmos itself
+    // evaluates it as x·(x+1)², whose derivative is (x+1)² + 2x(x+1).
+    const typed = String.raw`x\left(x+1\right)^{2}`;
+    await openDerivativeTab(driver, typed);
+
+    const shown = await driver.$eval(
+      DERIVATIVE,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
+    expect(shown).not.toBe("");
+    expect((await stepTitles(driver))[0]).toBe("1. Product rule");
+
+    // The check nothing offline can make: what Desmos makes of the answer,
+    // against the derivative of what Desmos makes of the question — at a
+    // point where the square of the product, 2x(x+1)(2x+1), would differ.
+    await driver.evaluate(
+      (answer: string, question: string) => {
+        Calc.setExpression({ id: "answer", latex: `A_{n}(x)=${answer}` });
+        Calc.setExpression({ id: "question", latex: `Q_{n}(x)=${question}` });
+      },
+      shown,
+      typed
+    );
+    await driver.waitForSync();
+    const answer = await desmosValue(driver, "A_{n}(1.3)");
+    const truth = 2.3 ** 2 + 2 * 1.3 * 2.3;
+    expect(Math.abs(answer - truth)).toBeLessThan(1e-9);
+    const slope = await desmosValue(
+      driver,
+      String.raw`Q_{n}'\left(1.3\right)-A_{n}\left(1.3\right)`
+    );
+    expect(Math.abs(slope)).toBeLessThan(1e-6);
+
+    // The worked example is built from the same tree, so it is offered too
+    // rather than silently missing because its source was a call.
+    await driver.assertSelector(SHOW_ANSWER);
+    await driver.page.screenshot({
+      path: "docs/assets/physics-lab-derivative-implicit-product.png",
+    });
+
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  50000
+);
+
+testWithPage(
   "the panel is resizable, and remembers what it was dragged to",
   async (driver) => {
     await openPanel(driver);

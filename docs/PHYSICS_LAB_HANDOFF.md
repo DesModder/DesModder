@@ -843,6 +843,20 @@ it first.
 
 Evidence: `docs/assets/physics-lab-derivative.png`.
 
+### `x(x+1)` is a product here too
+
+Desmos's parser hands `x\left(x+1\right)` over as a call of a function named
+x, and the tab refused it as "the derivative of x is not known" — while the
+Integral and Limit tabs, which already ran `implicitProducts` with their
+variable, read it as the product Desmos evaluates. The Derivative tab now does
+the same, before anything sees the tree, so the worked example (built from that
+tree) and the practice check (a reader's `2x(x+1)`) read it the same way. Only
+the tab's own variable is a value: `f(x)` stays a function the graph may define.
+
+Evidence: `docs/assets/physics-lab-derivative-implicit-product.png` —
+`x(x+1)^2` gives `(x+1)^2+2x(x+1)` by the product rule, and the integration
+test has Desmos differentiate the question and agree with the answer.
+
 ---
 
 ## The derivation is a tree
