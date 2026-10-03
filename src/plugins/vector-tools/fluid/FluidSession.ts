@@ -65,6 +65,8 @@ import {
   type Sample,
 } from "../../../field-rendering/sim/measure";
 import { fluidLatticeSize, type FluidConfig } from "../model";
+import { FluidGraphWriter } from "./FluidGraphWriter";
+import { canonicalIdentifier } from "../../../field-rendering/identifiers";
 import { parseStrictExpression } from "../../../field-rendering/sim/strictParse";
 import { compileExpression } from "../../../field-rendering/sim/strictEvaluate";
 
@@ -147,6 +149,9 @@ const SAMPLE_LIMIT = 6000;
 
 /** A row is a candidate when it compares, and is not a definition. */
 const COMPARISON = /<|>|\\le|\\ge|\\leq|\\geq/;
+/** The name a row defines, as in `C_{D1}=…` or `f(x)=…`. */
+const DEFINED_NAME =
+  /^([A-Za-z](?:_(?:\{[A-Za-z0-9]*\}|[A-Za-z0-9]))?)(?:\\left\(|\(|=)/;
 const DEFINITION =
   /^[A-Za-z](?:_(?:\{[A-Za-z0-9]*\}|[A-Za-z0-9]))?(?:\\left\([^)]*\\right\)|\([^)]*\))?=/;
 
@@ -175,6 +180,7 @@ export class FluidSession {
   private gusting = false;
 
   private readonly overlay: FluidOverlay;
+  private readonly writer: FluidGraphWriter;
   /** The lattice speed in use, which Auto may have lowered. */
   private latticeSpeed: number;
   private latticeKey = "";
@@ -194,6 +200,7 @@ export class FluidSession {
       stepSeconds: this.units.dt,
       maxStepsPerFrame: 64,
     });
+    this.writer = new FluidGraphWriter(host.calc);
     this.overlay = new FluidOverlay(host.calc, (message) => {
       this.notice = message;
       this.host.changed();
@@ -219,6 +226,7 @@ export class FluidSession {
           typeof item.latex === "string" &&
           item.id !== undefined &&
           !item.id.startsWith(prefix) &&
+          !item.id.startsWith(FluidGraphWriter.prefix) &&
           COMPARISON.test(item.latex) &&
           !DEFINITION.test(item.latex.replace(/\s+/g, ""))
       );
@@ -364,6 +372,39 @@ export class FluidSession {
   /** The highest Mach number seen in the flow at the last check. */
   get mach() {
     return this.peakMach;
+  }
+
+  /** Why the measurements could not be written into the graph, if so. */
+  get writebackProblem() {
+    return this.writer.problem;
+  }
+
+  /**
+   * Writes the measurements into the graph while the setting asks for it,
+   * and takes them out when it stops asking. Leaving the fluid running with
+   * writing on keeps them current; switching the fluid off leaves the last
+   * values where they are, in case something is built on them.
+   */
+  private syncWriteback(now: number) {
+    const config = this.host.config();
+    if (!config.writeback) {
+      if (this.writer.isInstalled) this.writer.remove();
+      return;
+    }
+    if (!this.overlay.isRunning) return;
+    this.writer.update(this.measurements, this.namesDefinedElsewhere(), now);
+  }
+
+  /** Names the graph defines in rows the writer did not put there. */
+  private namesDefinedElsewhere(): Set<string> {
+    const names = new Set<string>();
+    for (const item of this.host.items()) {
+      if (typeof item.latex !== "string" || item.id === undefined) continue;
+      if (item.id.startsWith(FluidGraphWriter.prefix)) continue;
+      const match = DEFINED_NAME.exec(item.latex.replace(/\s+/g, ""));
+      if (match) names.add(canonicalIdentifier(match[1]));
+    }
+    return names;
   }
 
   /** Something the tab should say: a restart, a slow-down, a failure. */
@@ -917,6 +958,7 @@ export class FluidSession {
       this.lastGeometry = now;
       this.syncLattice();
     }
+    this.syncWriteback(now);
     if (now - this.lastReadout >= READOUT_INTERVAL_MS) {
       this.lastReadout = now;
       if (this.activeObstacles.some((o) => o.usesTime))

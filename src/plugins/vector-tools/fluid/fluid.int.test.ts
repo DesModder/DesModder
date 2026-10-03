@@ -203,6 +203,77 @@ testWithPage(
       /drag C_D [\d.]+, lift C_L -?[\d.]+\. Shedding at St [\d.]+/
     );
 
+    // Writing the measurements into the graph. A name the user already
+    // defines is refused with a reason, never overwritten.
+    await driver.evaluate(() => {
+      Calc.setExpression({ id: "users", latex: "C_{D1}=5" });
+      (DSM.enabledPlugins["vector-tools"] as any).setFluid("writeback", true);
+    });
+    await driver.waitForFunction(
+      () =>
+        (DSM.enabledPlugins["vector-tools"] as any).fluid.writebackProblem !==
+        "",
+      { timeout: 5000 }
+    );
+    expect(
+      await driver.evaluate(
+        () => (DSM.enabledPlugins["vector-tools"] as any).fluid.writebackProblem
+      )
+    ).toContain("C_{D1}");
+    expect(
+      await driver.evaluate(() =>
+        Calc.getState().expressions.list.some((item) =>
+          item.id.startsWith("vector_tools_fluid_")
+        )
+      )
+    ).toBe(false);
+
+    await driver.evaluate(() => Calc.removeExpression({ id: "users" }));
+    await driver.waitForFunction(
+      () =>
+        Calc.getState().expressions.list.some(
+          (item) => item.id === "vector_tools_fluid_st_1"
+        ),
+      { timeout: 5000 }
+    );
+    // Desmos evaluates what was written, and it is what the tab measured.
+    const written = await driver.evaluate(async () => {
+      const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
+      const read = async (latex: string) =>
+        await new Promise<number>((resolve) => {
+          const helper = Calc.HelperExpression({ latex }) as unknown as {
+            numericValue: number;
+            observe: (event: string, callback: () => void) => void;
+          };
+          helper.observe("numericValue", () => resolve(helper.numericValue));
+          setTimeout(() => resolve(helper.numericValue), 2000);
+        });
+      return {
+        drag: await read("C_{D1}"),
+        strouhal: await read("S_{t1}"),
+        measured: fluid.measurements[0],
+      };
+    });
+    expect(written.drag).toBeCloseTo(written.measured.drag, 1);
+    expect(written.strouhal).toBeCloseTo(written.measured.strouhal, 2);
+
+    // Unticking takes out exactly what was written.
+    await driver.evaluate(() =>
+      (DSM.enabledPlugins["vector-tools"] as any).setFluid("writeback", false)
+    );
+    await driver.waitForFunction(
+      () =>
+        !Calc.getState().expressions.list.some((item) =>
+          item.id.startsWith("vector_tools_fluid_")
+        ),
+      { timeout: 5000 }
+    );
+    expect(
+      await driver.evaluate(() =>
+        Calc.getState().expressions.list.map((item) => item.id)
+      )
+    ).toEqual(["cylinder"]);
+
     // Evidence: the panel at the measured solid, then the graph without it.
     await driver.evaluate(() =>
       document

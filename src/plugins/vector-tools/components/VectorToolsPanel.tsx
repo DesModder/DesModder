@@ -1359,6 +1359,13 @@ function fluidTab(vectorTools: VectorTools, config: ConfigGetter) {
           (checked) => vectorTools.setFluid("writeback", checked),
           "dsm-vector-tools-fluid-writeback"
         )}
+        <div class="dsm-vector-tools-hint dsm-vector-tools-fluid-writeback-note">
+          {() =>
+            session.writebackProblem !== ""
+              ? session.writebackProblem
+              : "Each solid, numbered from the top of the list, gets C_{D1}, C_{L1} and S_{t1} (then 2, 3, …) in a folder of their own. A value still settling reads as undefined, so nothing built on it uses a start-up transient."
+          }
+        </div>
       </section>
 
       <section class="dsm-vector-tools-section">
