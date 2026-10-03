@@ -80,7 +80,7 @@ import {
 
 import { buildConfigFromGlobals, parseLatex } from "../../../text-mode-core";
 import { FlowOverlay } from "../../field-rendering/FlowOverlay";
-import { FluidSession } from "./fluid/FluidSession";
+import { FLUID_SAMPLE_SOURCE, FluidSession } from "./fluid/FluidSession";
 import { ArrowOverlay } from "../../field-rendering/ArrowOverlay";
 import type { ArrowOptions } from "../../field-rendering/ArrowRenderer";
 import {
@@ -331,6 +331,15 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       this.calc.HelperExpression({ latex }) as unknown as ValueHelper,
     changed: () => this.util.tick(),
     ownedPrefix: () => namespaceForField(this.getConfig()),
+    // The particles and arrows draw the flow while it runs, and the field's
+    // formula again when it stops (brief §8.0).
+    simulatingChanged: () => {
+      this.refreshArrows();
+      if (this.flowFieldSignature !== this.lastFlowSignature)
+        this.refreshFlow();
+      this.syncClock();
+      this.util.tick();
+    },
   });
 
   afterEnable() {
@@ -1681,6 +1690,16 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
           "The flow visualizer draws on the 2D graph paper, so it is unavailable in the 3D calculator. Generating the field still works.",
       };
     }
+    // While a fluid runs, what the particles and arrows draw is its flow: the
+    // velocity the lattice measured, sampled, rather than the field's formula.
+    if (this.fluid.isSimulating) {
+      return {
+        ok: true,
+        // Marked as reading the clock because it changes by itself: that is
+        // what keeps the arrows redrawing as the flow moves.
+        field: { kind: "sampled", source: FLUID_SAMPLE_SOURCE, usesTime: true },
+      };
+    }
     return this.flowCompilation;
   }
 
@@ -1773,6 +1792,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       config.components.xLatex,
       config.components.yLatex,
       config.scalar.fLatex,
+      this.fluid.isSimulating,
     ]);
   }
 

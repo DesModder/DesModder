@@ -136,7 +136,119 @@ export const RIPPLE_STRIDE = 4;
  */
 export type FlowField =
   | ({ kind: "components"; p: string; q: string } & FieldDependencies)
-  | ({ kind: "gradient"; f: string } & FieldDependencies);
+  | ({ kind: "gradient"; f: string } & FieldDependencies)
+  /**
+   * A velocity measured rather than written: a simulation's, published as a
+   * grid of samples under `source` (see {@link publishVelocitySample}). The
+   * renderers read it from a texture, bilinearly, and it is zero outside the
+   * grid's bounds.
+   */
+  | ({ kind: "sampled"; source: string } & FieldDependencies);
+
+/**
+ * One published velocity grid: `width × height` samples, x and y
+ * interleaved, row 0 at the bottom, in graph units per second, covering
+ * `bounds` cell for cell.
+ */
+export interface VelocitySample {
+  width: number;
+  height: number;
+  data: Float32Array;
+  bounds: FlowBounds;
+}
+
+/**
+ * The latest sample from each source, with a version so that each renderer's
+ * context uploads it once, not once per frame.
+ *
+ * A module-level bus because a sample has to reach two renderers in two WebGL
+ * contexts, and a texture cannot cross contexts: each keeps its own copy, and
+ * both draw from the same numbers.
+ */
+const samples = new Map<string, VelocitySample & { version: number }>();
+let sampleVersion = 0;
+
+export function publishVelocitySample(source: string, sample: VelocitySample) {
+  samples.set(source, { ...sample, version: ++sampleVersion });
+}
+
+export function withdrawVelocitySample(source: string) {
+  samples.delete(source);
+}
+
+/** Each context's copy of each source's latest sample. */
+const sampleTextures = new WeakMap<
+  WebGL2RenderingContext,
+  Map<
+    string,
+    { texture: WebGLTexture; version: number; width: number; height: number }
+  >
+>();
+
+/** The texture unit sampled fields use, clear of both renderers' own. */
+const SAMPLE_UNIT = 7;
+
+function uploadSample(
+  gl: WebGL2RenderingContext,
+  uniforms: Record<string, WebGLUniformLocation | null>,
+  source: string
+) {
+  const sample = samples.get(source);
+  const bounds = uniforms.u_sampledBounds;
+  if (bounds !== null && bounds !== undefined) {
+    const b = sample?.bounds ?? { xMin: 0, xMax: 0, yMin: 0, yMax: 0 };
+    gl.uniform4f(bounds, b.xMin, b.xMax, b.yMin, b.yMax);
+  }
+  const sampler = uniforms.u_sampled;
+  if (sampler === null || sampler === undefined || sample === undefined) return;
+  let perContext = sampleTextures.get(gl);
+  if (perContext === undefined) {
+    perContext = new Map();
+    sampleTextures.set(gl, perContext);
+  }
+  let entry = perContext.get(source);
+  if (
+    entry === undefined ||
+    entry.width !== sample.width ||
+    entry.height !== sample.height
+  ) {
+    if (entry) gl.deleteTexture(entry.texture);
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    // Half floats, because they filter in WebGL2 without an extension, and a
+    // velocity in graph units per second needs nothing like float32's range.
+    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RG16F, sample.width, sample.height);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    entry = {
+      texture,
+      version: -1,
+      width: sample.width,
+      height: sample.height,
+    };
+    perContext.set(source, entry);
+  }
+  gl.activeTexture(gl.TEXTURE0 + SAMPLE_UNIT);
+  gl.bindTexture(gl.TEXTURE_2D, entry.texture);
+  if (entry.version !== sample.version) {
+    gl.texSubImage2D(
+      gl.TEXTURE_2D,
+      0,
+      0,
+      0,
+      sample.width,
+      sample.height,
+      gl.RG,
+      gl.FLOAT,
+      sample.data
+    );
+    entry.version = sample.version;
+  }
+  gl.uniform1i(sampler, SAMPLE_UNIT);
+  gl.activeTexture(gl.TEXTURE0);
+}
 
 export class FlowRendererError extends Error {}
 
@@ -167,6 +279,7 @@ export function uploadFieldParameters(
   for (const name of field?.params ?? []) {
     upload(glslParamName(name), values.get(name));
   }
+  if (field?.kind === "sampled") uploadSample(gl, uniforms, field.source);
   // The clock is a uniform like any other name the field reads. It differs only
   // in where the number comes from.
   if (field !== undefined && fieldReadsTime(field)) upload("u_time", time);
@@ -333,8 +446,21 @@ function disturbanceSum(field: FlowField) {
  */
 export function fieldFunctions(field: FlowField) {
   const body =
-    field.kind === "gradient"
+    field.kind === "sampled"
       ? `
+uniform sampler2D u_sampled;
+uniform vec4 u_sampledBounds;
+vec2 vtField(vec2 p) {
+  // The published grid's cells span its bounds exactly, so its uv is the
+  // point's fraction of the way across; outside it there is no flow.
+  vec2 uv = (p - u_sampledBounds.xz) / (u_sampledBounds.yw - u_sampledBounds.xz);
+  vec2 s = any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))
+    ? vec2(0.0)
+    : texture(u_sampled, uv).xy;
+  float u = s.x;
+  float v = s.y;`
+      : field.kind === "gradient"
+        ? `
 float vtScalar(vec2 p) { return ${field.f}; }
 vec2 vtField(vec2 p) {
   // The generated Desmos arrows differentiate symbolically; the GPU cannot, so
@@ -344,7 +470,7 @@ vec2 vtField(vec2 p) {
   float h = 1.0e-3 * max(u_max.x - u_min.x, u_max.y - u_min.y);
   float u = (vtScalar(p + vec2(h, 0.0)) - vtScalar(p - vec2(h, 0.0))) / (2.0 * h);
   float v = (vtScalar(p + vec2(0.0, h)) - vtScalar(p - vec2(0.0, h))) / (2.0 * h);`
-      : `
+        : `
 vec2 vtField(vec2 p) {
   float u = ${field.p};
   float v = ${field.q};`;

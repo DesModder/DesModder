@@ -252,7 +252,7 @@ export class FlowOverlay {
     const parent = graphCanvas?.parentElement;
     if (graphCanvas == null || parent == null) return;
     const reference =
-      this.layer === "under" ? parent.firstChild : graphCanvas.nextSibling;
+      this.layer === "under" ? aboveFloor(parent) : graphCanvas.nextSibling;
     // The parent check is not redundant: a canvas that has just been created
     // has no parent and a null `nextSibling`, which can match a null reference
     // and leave it never inserted. See the same note in `ArrowOverlay`.
@@ -341,8 +341,10 @@ export class FlowOverlay {
     // that has been scrolled out of view in an article or a notebook, which is
     // a whole GPU's worth of work nobody can see.
     this.visibilityObserver = new IntersectionObserver(
-      ([entry]) => {
-        this.onScreen = entry?.isIntersecting ?? true;
+      (entries) => {
+        // The last entry: a DOM move queues "out of view" then "in view" in
+        // one batch. See the same note in `ArrowOverlay`.
+        this.onScreen = entries[entries.length - 1]?.isIntersecting ?? true;
       },
       { threshold: 0 }
     );
@@ -418,6 +420,21 @@ export class FlowOverlay {
     };
     this.animationFrame = requestAnimationFrame(step);
   }
+}
+
+/**
+ * The bottom of the stack, above anything marked `data-dsm-floor`: a layer
+ * that belongs under everything else, as the Fluid tab's colour field does, so
+ * that particles and arrows draw over the flow they follow.
+ */
+function aboveFloor(parent: Element): ChildNode | null {
+  let reference = parent.firstChild;
+  while (
+    reference instanceof HTMLElement &&
+    reference.dataset.dsmFloor !== undefined
+  )
+    reference = reference.nextSibling;
+  return reference;
 }
 
 function boundsAreEqual(a: FlowBounds, b: FlowBounds) {

@@ -363,8 +363,11 @@ export class FluidOverlay {
     canvas.setAttribute("aria-hidden", "true");
     canvas.style.cssText =
       "position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none";
-    // At the very bottom of the stack: under the graph and both of Vector
-    // Tools' own overlays, so particles and arrows can draw over the fluid.
+    // At the very bottom of the stack, under the graph and both of Vector
+    // Tools' own overlays, so particles and arrows draw over the fluid. The
+    // mark is what keeps the flow overlay, which also wants the bottom, from
+    // putting its particles underneath this.
+    canvas.dataset.dsmFloor = "";
     parent.insertBefore(canvas, parent.firstChild);
     const gl = canvas.getContext("webgl2", {
       antialias: false,

@@ -66,6 +66,10 @@ import {
 } from "../../../field-rendering/sim/measure";
 import { fluidLatticeSize, type FluidConfig } from "../model";
 import { FluidGraphWriter } from "./FluidGraphWriter";
+import {
+  publishVelocitySample,
+  withdrawVelocitySample,
+} from "../../../field-rendering/field";
 import { canonicalIdentifier } from "../../../field-rendering/identifiers";
 import { parseStrictExpression } from "../../../field-rendering/sim/strictParse";
 import { compileExpression } from "../../../field-rendering/sim/strictEvaluate";
@@ -133,7 +137,17 @@ export interface FluidHost {
   changed: () => void;
   /** Prefix of rows Vector Tools writes itself, which are never obstacles. */
   ownedPrefix: () => string;
+  /**
+   * The fluid started or stopped, so whatever draws the field (particles,
+   * arrows) should switch between the field's formula and the flow.
+   */
+  simulatingChanged: () => void;
 }
+
+/** The name the flow's velocity is published under, for the renderers. */
+export const FLUID_SAMPLE_SOURCE = "vector-tools-fluid";
+/** How often the flow's velocity is handed to the particles and arrows. */
+const SAMPLE_INTERVAL_MS = 100;
 
 /** How often the panel's readouts redraw, in milliseconds. */
 const READOUT_INTERVAL_MS = 250;
@@ -517,7 +531,9 @@ export class FluidSession {
       // correction, so a gentle start overshoots less than a strong one.
       this.forceAmplitude = 0.25 * this.forceCeiling;
       this.spec = this.buildSpec(nx, ny, units, solids, undefined);
+      const wasRunning = this.overlay.isRunning;
       this.overlay.start(this.spec);
+      if (!wasRunning) this.host.simulatingChanged();
       this.scheduler.reset();
       this.lastPlan = undefined;
       this.beginMeasurements(solids.regions, nx, ny);
@@ -553,7 +569,10 @@ export class FluidSession {
   }
 
   private stopLattice() {
+    const wasRunning = this.overlay.isRunning;
     this.overlay.stop();
+    withdrawVelocitySample(FLUID_SAMPLE_SOURCE);
+    if (wasRunning) this.host.simulatingChanged();
     this.latticeKey = "";
     this.solidsKey = "";
     this.forceKey = "";
@@ -940,6 +959,7 @@ export class FluidSession {
       try {
         this.advance(this.lastPlan.steps);
         this.sample();
+        this.publishVelocity(now);
         if (now - this.lastCheck >= CHECK_INTERVAL_MS) {
           this.lastCheck = now;
           this.check();
@@ -994,6 +1014,37 @@ export class FluidSession {
       lattice.step(1);
       remaining--;
     }
+  }
+
+  private lastPublished = 0;
+
+  /**
+   * Hands the flow's velocity to the particles and arrows, in graph units per
+   * second, ten times a second. They live in other WebGL contexts, which
+   * cannot read this one's textures, so the velocity crosses as numbers.
+   */
+  private publishVelocity(now: number) {
+    if (now - this.lastPublished < SAMPLE_INTERVAL_MS) return;
+    this.lastPublished = now;
+    const lattice = this.overlay.current;
+    if (!lattice || !this.spec) return;
+    const { ux, uy } = lattice.readMacro();
+    const config = this.host.config();
+    // A lattice velocity of 1 is a cell per step: dx/dt graph units per
+    // second, which is the inflow speed over the lattice speed.
+    const scale = config.inflowSpeed / this.latticeSpeed;
+    const data = new Float32Array(2 * ux.length);
+    for (let k = 0; k < ux.length; k++) {
+      if (this.spec.solid[k]) continue;
+      data[2 * k] = ux[k] * scale;
+      data[2 * k + 1] = uy[k] * scale;
+    }
+    publishVelocitySample(FLUID_SAMPLE_SOURCE, {
+      width: lattice.nx,
+      height: lattice.ny,
+      data,
+      bounds: config.tank,
+    });
   }
 
   private sample() {

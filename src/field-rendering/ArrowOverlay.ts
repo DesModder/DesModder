@@ -307,7 +307,12 @@ export class ArrowOverlay {
     this.resizeObserver.observe(parent);
 
     this.visibilityObserver = new IntersectionObserver(
-      ([entry]) => {
+      (entries) => {
+        // The last entry, not the first: moving the canvas in the DOM (as
+        // placing another overlay's canvas does) queues "out of view" and
+        // then "in view" in one batch, and reading the first left the arrows
+        // believing they were hidden, drawing nothing, for good.
+        const entry = entries[entries.length - 1];
         const wasOffScreen = !this.onScreen;
         this.onScreen = entry?.isIntersecting ?? true;
         // Coming back into view means the canvas may have been resized while

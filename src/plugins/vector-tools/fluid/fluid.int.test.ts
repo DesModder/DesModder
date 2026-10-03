@@ -368,3 +368,85 @@ testWithPage(
   },
   120000
 );
+
+/**
+ * The particles and arrows draw the flow while a fluid runs (brief §8.0), and
+ * the field's formula again when it stops. The arrows keep redrawing as the
+ * flow moves: inserting the fluid's canvas moves theirs in the DOM, and an
+ * overlay that read the first of the visibility observer's entries thought
+ * itself hidden and stopped drawing for good.
+ */
+testWithPage(
+  "Fluid tab: the particles and arrows follow the flow, and give it back",
+  async (driver) => {
+    await driver.enablePlugin("vector-tools");
+    await driver.assertSelectorEventually(BUTTON);
+    await driver.evaluate(() => {
+      Calc.setMathBounds({ left: -11, right: 11, bottom: -6, top: 6 });
+      Calc.setExpressions([
+        {
+          id: "cylinder",
+          latex: String.raw`\left(x+6\right)^{2}+y^{2}\le1`,
+          color: "#2d70b3",
+        },
+      ]);
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      plugin.setFluid("referenceLength", 2);
+      plugin.setFluid("inflowSpeed", 8);
+      plugin.setFluid("mode", "windTunnel");
+      plugin.toggleFlow();
+    });
+    await new Promise((resolve) => setTimeout(resolve, 8000));
+    const running = await driver.evaluate(async () => {
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      const { renderer } = plugin.arrowOverlay;
+      let frames = 0;
+      const frame = renderer.frame.bind(renderer);
+      renderer.frame = () => {
+        frames++;
+        frame();
+      };
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      renderer.frame = frame;
+      return {
+        drawn: plugin.flowAvailability.field?.kind,
+        arrowsDrawn: plugin.arrowOverlay.renderer.linkedField?.kind,
+        flowDrawn: plugin.flowOverlay.lastField?.kind,
+        arrowFrames: frames,
+      };
+    });
+    expect(running).toMatchObject({
+      drawn: "sampled",
+      arrowsDrawn: "sampled",
+      flowDrawn: "sampled",
+    });
+    expect(running.arrowFrames).toBeGreaterThan(10);
+    await driver.page.screenshot({
+      path: "docs/assets/fluid-particles-and-arrows.png",
+    });
+
+    await driver.evaluate(() =>
+      (DSM.enabledPlugins["vector-tools"] as any).setFluid("mode", "off")
+    );
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    const stopped = await driver.evaluate(() => {
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      return {
+        drawn: plugin.flowAvailability.field?.kind,
+        arrowsDrawn: plugin.arrowOverlay.renderer.linkedField?.kind,
+      };
+    });
+    expect(stopped).toEqual({ drawn: "components", arrowsDrawn: "components" });
+
+    await driver.evaluate(() => {
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      if (plugin.flowOverlay.isRunning) plugin.toggleFlow();
+      plugin.resetConfig();
+      plugin.setPanelTab("field");
+    });
+    await driver.page.waitForFunction(() => !DSM.delaySetPluginSettings);
+    await driver.disablePlugin("vector-tools");
+    await driver.setBlank();
+  },
+  120000
+);
