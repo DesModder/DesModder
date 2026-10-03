@@ -1415,12 +1415,21 @@ function fluidTab(vectorTools: VectorTools, config: ConfigGetter) {
  * Re and the inflow speed, so they read like a textbook's.
  */
 function fluidRowStatus(session: FluidSession, row: ObstacleRow) {
-  const kind = row.obstacle!.usesTime
+  const movable = row.obstacle!.usesTime || row.obstacle!.params.length > 0;
+  const moves = row.obstacle!.usesTime
     ? "Solid, and it moves with t."
-    : "Solid.";
+    : "Solid, and it moves with its sliders.";
+  const kind = !movable
+    ? "Solid."
+    : session.reynoldsCapped
+      ? `${moves} Strict runs it at Re 200, where moving solids are validated.`
+      : moves;
   const measured = session.measurements.find((m) => m.rowId === row.id);
   if (!session.isSimulating || measured === undefined) return kind;
-  if (!Number.isFinite(measured.drag)) return `${kind} Measuring…`;
+  if (!Number.isFinite(measured.drag))
+    return measured.sheddingNote.includes("not measured")
+      ? `${kind} ${measured.sheddingNote}`
+      : `${kind} Measuring…`;
   const forces = `drag C_D ${measured.drag.toFixed(3)}, lift C_L ${measured.lift.toFixed(3)}`;
   if (!measured.settled)
     return `${kind} Provisional: ${forces}. ${measured.sheddingNote}`;

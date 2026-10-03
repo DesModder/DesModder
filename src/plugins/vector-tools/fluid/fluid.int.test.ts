@@ -450,3 +450,140 @@ testWithPage(
   },
   120000
 );
+
+/**
+ * Gate 6 in the tab: a solid whose inequality reads a slider moves through the
+ * fluid as partially saturated cells. Sliding it, the fluid inside goes with
+ * it at the speed the slider sets, the row says it moves, and its forces are
+ * marked provisional while it does.
+ */
+testWithPage(
+  "Fluid tab: a disc a slider moves carries the fluid with it",
+  async (driver) => {
+    await driver.enablePlugin("vector-tools");
+    await driver.assertSelectorEventually(BUTTON);
+    await driver.evaluate(() => {
+      Calc.setMathBounds({ left: -11, right: 11, bottom: -6, top: 6 });
+      Calc.setExpressions([
+        { id: "slider", latex: "a=-6" },
+        {
+          id: "disc",
+          latex: String.raw`\left(x-a\right)^{2}+y^{2}\le1`,
+          color: "#2d70b3",
+        },
+      ]);
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      plugin.setArrowMode("off");
+      plugin.setFluid("referenceLength", 2);
+      plugin.setFluid("inflowSpeed", 8);
+      plugin.setFluid("show", "speed");
+      plugin.setFluid("mode", "windTunnel");
+    });
+    await driver.waitForFunction(
+      () => (DSM.enabledPlugins["vector-tools"] as any).fluid.isSimulating,
+      { timeout: 20000 }
+    );
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Slide a from −6 to −2 over two seconds, 2 graph units a second, and
+    // sample halfway: the fluid in the disc's fully covered cells against the
+    // wall velocity the tab gave them.
+    const sliding = await driver.evaluate(async () => {
+      const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
+      const start = performance.now();
+      let sample: any;
+      await new Promise<void>((resolve) => {
+        const frame = () => {
+          const elapsed = (performance.now() - start) / 1000;
+          const a = -6 + 2 * Math.min(elapsed, 2);
+          Calc.setExpression({ id: "slider", latex: `a=${a.toFixed(4)}` });
+          if (sample === undefined && elapsed > 1) {
+            const { solids } = fluid.moving;
+            const { ux, uy } = fluid.overlay.current.readMacro();
+            let fluidX = 0;
+            let wallX = 0;
+            let fluidY = 0;
+            let n = 0;
+            for (let k = 0; k < solids.coverage.length; k++) {
+              if (solids.coverage[k] < 1) continue;
+              fluidX += ux[k];
+              fluidY += uy[k];
+              wallX += solids.velocity[2 * k];
+              n++;
+            }
+            const [measured] = fluid.measurements;
+            sample = {
+              cells: n,
+              fluidX: fluidX / n,
+              fluidY: fluidY / n,
+              wallX: wallX / n,
+              teleported: solids.teleported,
+              note: measured?.sheddingNote,
+              settled: measured?.settled,
+              mach: fluid.mach,
+            };
+          }
+          if (elapsed < 2) requestAnimationFrame(frame);
+          else resolve();
+        };
+        requestAnimationFrame(frame);
+      });
+      return sample;
+    });
+    expect(sliding.cells).toBeGreaterThan(20);
+    expect(sliding.teleported).toBe(false);
+    // 2 graph units a second, at 8 for the inflow: a quarter of the inflow's
+    // lattice speed, whichever speed Auto chose.
+    expect(sliding.wallX).toBeGreaterThan(0.005);
+    expect(Math.abs(sliding.fluidX / sliding.wallX - 1)).toBeLessThan(0.1);
+    expect(Math.abs(sliding.fluidY)).toBeLessThan(0.1 * sliding.wallX);
+    expect(sliding.settled).toBe(false);
+    expect(sliding.note).toContain("moving");
+    expect(sliding.mach).toBeLessThan(0.3);
+
+    // Stopped, it holds the fluid inside it still, where the slider left it.
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const stopped = await driver.evaluate(() => {
+      const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
+      const { solids } = fluid.moving;
+      const { ux } = fluid.overlay.current.readMacro();
+      const { nx } = fluid.spec;
+      const { tank } = (DSM.enabledPlugins["vector-tools"] as any).getConfig()
+        .fluid;
+      const box = solids.boxes.get(1);
+      let fluidX = 0;
+      let n = 0;
+      for (let k = 0; k < solids.coverage.length; k++) {
+        if (solids.coverage[k] < 1) continue;
+        fluidX += Math.abs(ux[k]);
+        n++;
+      }
+      const dx = (tank.xMax - tank.xMin) / nx;
+      return {
+        centreX: tank.xMin + ((box[0] + box[2] + 1) / 2) * dx,
+        fluidX: fluidX / n,
+        wallSpeed: Math.max(...solids.velocity.map(Math.abs)),
+        status: document.querySelector<HTMLElement>(
+          ".dsm-vector-tools-fluid-row-status"
+        )?.innerText,
+      };
+    });
+    expect(stopped.centreX).toBeCloseTo(-2, 0);
+    // The least-squares fit leaves a rounding residue, not a velocity.
+    expect(stopped.wallSpeed).toBeLessThan(1e-8);
+    expect(stopped.fluidX).toBeLessThan(0.002);
+    await driver.page.screenshot({
+      path: "docs/assets/fluid-moving-solid.png",
+    });
+
+    await driver.evaluate(() => {
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      plugin.setFluid("mode", "off");
+      plugin.resetConfig();
+      plugin.setPanelTab("field");
+    });
+    await driver.page.waitForFunction(() => !DSM.delaySetPluginSettings);
+    await driver.disablePlugin("vector-tools");
+    await driver.setBlank();
+  },
+  120000
+);

@@ -39,6 +39,10 @@ export interface LatticeSpec {
   initial: readonly [number, number];
   /** A force density per cell (`2k`, `2k + 1`), or undefined for none. */
   forceField: Float32Array | undefined;
+  /** Moving solids as partially saturated cells, or undefined for none. */
+  psm:
+    | { coverage: Float32Array; velocity: Float32Array; body: Uint8Array }
+    | undefined;
 }
 
 export interface Tank {
@@ -187,6 +191,7 @@ export class FluidOverlay {
       lattice.setSolid(spec.solid);
       lattice.setLinks(spec.links);
       lattice.setForceField(spec.forceField);
+      lattice.setPartialSolids(spec.psm);
       const [ux, uy] = spec.initial;
       lattice.initialize((x, y) =>
         spec.solid[y * spec.nx + x] ? { ux: 0, uy: 0 } : { ux, uy }
@@ -212,6 +217,11 @@ export class FluidOverlay {
     this.lattice.setSolid(solid);
     this.lattice.setLinks(links);
     this.uploadSolid({ ...spec, solid });
+  }
+
+  /** Moving solids' new coverage and wall velocity, for the running lattice. */
+  updatePartialSolids(psm: LatticeSpec["psm"]) {
+    this.lattice?.setPartialSolids(psm);
   }
 
   /** A new force field for the running lattice: a slider moved P or Q. */

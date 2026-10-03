@@ -36,6 +36,7 @@ import {
 } from "../../../field-rendering/sim/capabilities";
 import {
   ACCURATE_LATTICE_SPEED,
+  CLOSURE_REYNOLDS,
   MACH_LIMIT,
   SMAGORINSKY_C,
   initialLatticeSpeed,
@@ -66,6 +67,11 @@ import {
 } from "../../../field-rendering/sim/measure";
 import { fluidLatticeSize, type FluidConfig } from "../model";
 import { FluidGraphWriter } from "./FluidGraphWriter";
+import {
+  WALL_SPEED_LIMIT,
+  partialSolids,
+  type PartialSolids,
+} from "../../../field-rendering/sim/movingSolids";
 import {
   publishVelocitySample,
   withdrawVelocitySample,
@@ -279,6 +285,38 @@ export class FluidSession {
       .slice(0, 255);
   }
 
+  /**
+   * Whether a solid can move: its inequality reads a slider or the clock.
+   * Those go through partially saturated cells, which keep every cell's
+   * populations as the solid passes; fixed solids keep the sharper
+   * interpolated walls.
+   */
+  isMoving(row: ObstacleRow) {
+    const { obstacle } = row;
+    return obstacle!.params.length > 0 || obstacle!.usesTime;
+  }
+
+  /**
+   * Strict caps Re at 200 while a solid can move (brief §8.1): the partially
+   * saturated method has been validated only without the turbulence model,
+   * which runs above Re 200. The cap holds while any solid reads a slider or
+   * `t`, not only mid-drag, since a change of Re restarts the lattice.
+   */
+  get reynoldsCapped() {
+    const config = this.host.config();
+    return (
+      config.dragMode === "strict" &&
+      config.reynolds > CLOSURE_REYNOLDS &&
+      this.solidRows.some((row) => this.isMoving(row))
+    );
+  }
+
+  /** The Reynolds number the lattice runs at. */
+  get reynoldsInUse() {
+    const { reynolds } = this.host.config();
+    return this.reynoldsCapped ? CLOSURE_REYNOLDS : reynolds;
+  }
+
   /** The compiled obstacles the fluid would see. */
   get activeObstacles(): CompiledObstacle[] {
     return this.solidRows.map((row) => row.obstacle!);
@@ -361,7 +399,7 @@ export class FluidSession {
       cellsAcross: config.cellsAcross,
       inflowSpeed: config.inflowSpeed,
       referenceLength: config.referenceLength,
-      reynolds: config.reynolds,
+      reynolds: this.reynoldsInUse,
       latticeSpeed: this.latticeSpeed,
     });
   }
@@ -530,13 +568,22 @@ export class FluidSession {
       // A quarter of the ceiling to begin with: a box's momentum outlasts any
       // correction, so a gentle start overshoots less than a strong one.
       this.forceAmplitude = 0.25 * this.forceCeiling;
-      this.spec = this.buildSpec(nx, ny, units, solids, undefined);
+      this.moving = undefined;
+      this.movingKey = "";
+      this.movingArea.clear();
+      this.lastMoved.clear();
+      const moving = this.computeMoving(nx, ny, true);
+      this.spec = {
+        ...this.buildSpec(nx, ny, units, solids, undefined),
+        psm: moving?.psm,
+      };
       const wasRunning = this.overlay.isRunning;
       this.overlay.start(this.spec);
       if (!wasRunning) this.host.simulatingChanged();
       this.scheduler.reset();
       this.lastPlan = undefined;
       this.beginMeasurements(solids.regions, nx, ny);
+      if (moving) this.trackMovingBodies(moving.solids, nx, ny);
       this.uploadForce();
       const pass = units.cellsPerLength / this.latticeSpeed;
       if (config.mode === "windTunnel") {
@@ -563,6 +610,7 @@ export class FluidSession {
       this.spec = { ...this.spec, solid: solids.solid, links: solids.links };
       this.overlay.updateSolids(solids.solid, solids.links, this.spec);
       this.beginMeasurements(solids.regions, nx, ny);
+      if (this.moving) this.trackMovingBodies(this.moving.solids, nx, ny);
       const pass = units.cellsPerLength / this.latticeSpeed;
       this.settleUntil = this.overlay.steps + Math.round(10 * pass);
     }
@@ -577,6 +625,8 @@ export class FluidSession {
     this.solidsKey = "";
     this.forceKey = "";
     this.forceShape = undefined;
+    this.moving = undefined;
+    this.movingKey = "";
     this.spec = undefined;
     this.bodies.clear();
   }
@@ -595,12 +645,15 @@ export class FluidSession {
     const scope = { time, params };
     const centre = (i: number, j: number) =>
       [tank.xMin + (i + 0.5) * dx, tank.yMin + (j + 0.5) * dy] as const;
+    // Moving solids are partially saturated cells, not mask cells.
+    const fixed = rows.map((row) => !this.isMoving(row));
     const solid = new Uint8Array(nx * ny);
     const boxes = rows.map(() => [Infinity, Infinity, -Infinity, -Infinity]);
     for (let j = 0; j < ny; j++) {
       for (let i = 0; i < nx; i++) {
         const [x, y] = centre(i, j);
         for (let b = 0; b < rows.length; b++) {
+          if (!fixed[b]) continue;
           if (!rows[b].obstacle!.contains({ ...scope, x, y })) continue;
           solid[j * nx + i] = b + 1;
           const box = boxes[b];
@@ -636,8 +689,13 @@ export class FluidSession {
    * clock if any of them reads it, and the tank.
    */
   private solidsKeyFor(nx: number, ny: number) {
-    const rows = this.solidRows;
-    const params = this.parameterValues();
+    // Fixed solids only: a moving one changes every frame by design, and is
+    // followed by `syncMoving` without rebuilding the mask.
+    const rows = this.solidRows.filter((row) => !this.isMoving(row));
+    const params = new Map<string, number>();
+    for (const row of rows)
+      for (const name of row.obstacle!.params)
+        params.set(name, this.helperValue(name));
     const time = rows.some((r) => r.obstacle!.usesTime)
       ? this.simulatedTime
       : 0;
@@ -674,6 +732,7 @@ export class FluidSession {
         sponge: undefined,
         initial: [0, 0],
         forceField,
+        psm: undefined,
       };
     }
     return {
@@ -701,6 +760,7 @@ export class FluidSession {
       },
       initial: [0, 0],
       forceField: undefined,
+      psm: undefined,
     };
   }
 
@@ -873,6 +933,167 @@ export class FluidSession {
     this.uploadForce();
   }
 
+  // ---- moving solids --------------------------------------------------------
+
+  private moving: { solids: PartialSolids; step: number } | undefined;
+  private movingKey = "";
+  /** Each moving body's area when last accepted, to tell a resize from a move. */
+  private readonly movingArea = new Map<number, number>();
+  /** The step each moving body last moved at. */
+  private readonly lastMoved = new Map<number, number>();
+
+  /** The moving rows, with the body number each reports under. */
+  private get movingRows() {
+    return this.solidRows
+      .map((row, b) => ({ row, body: b + 1 }))
+      .filter(({ row }) => this.isMoving(row));
+  }
+
+  /** What the moving solids depend on: their rows, sliders and the clock. */
+  private movingKeyFor(nx: number, ny: number) {
+    const params: [string, number][] = [];
+    let time = 0;
+    for (const { row } of this.movingRows) {
+      for (const name of row.obstacle!.params)
+        params.push([name, this.helperValue(name)]);
+      if (row.obstacle!.usesTime) time = this.simulatedTime;
+    }
+    return JSON.stringify([
+      this.rowsKey,
+      params,
+      time,
+      nx,
+      ny,
+      this.host.config().tank,
+    ]);
+  }
+
+  /**
+   * Coverage and wall velocity for the moving solids, if any. The velocity is
+   * how far each wall moved since the last update, over the steps between.
+   */
+  private computeMoving(nx: number, ny: number, fresh = false) {
+    const rows = this.movingRows;
+    if (rows.length === 0) return undefined;
+    const config = this.host.config();
+    const params = this.parameterValues();
+    const time = rows.some(({ row }) => row.obstacle!.usesTime)
+      ? this.simulatedTime
+      : 0;
+    const step = this.overlay.steps;
+    const solids = partialSolids(
+      rows.map(({ row, body }) => ({ obstacle: row.obstacle!, body })),
+      { nx, ny, tank: config.tank },
+      { time, params },
+      fresh || !this.moving
+        ? undefined
+        : {
+            signed: this.moving.solids.signed,
+            elapsedSteps: step - this.moving.step,
+          }
+    );
+    this.moving = { solids, step };
+    this.movingKey = this.movingKeyFor(nx, ny);
+    return {
+      solids,
+      psm: {
+        coverage: solids.coverage,
+        velocity: solids.velocity,
+        body: solids.body,
+      },
+    };
+  }
+
+  /**
+   * Follows the moving solids, every frame. A frame in which nothing moved
+   * still updates once more if the walls had a velocity, to set it back to
+   * zero. A change in a solid's area is a resize, not a move: Auto keeps
+   * going and marks the flow as settling, Strict restarts (brief §8.1).
+   */
+  private syncMoving() {
+    if (!this.spec) return;
+    if (this.movingRows.length === 0) {
+      // The last moving solid was deleted, or no longer reads a slider.
+      if (this.moving !== undefined) {
+        this.moving = undefined;
+        this.movingKey = "";
+        this.spec = { ...this.spec, psm: undefined };
+        this.overlay.updatePartialSolids(undefined);
+      }
+      return;
+    }
+    const { nx, ny } = this.spec;
+    const key = this.movingKeyFor(nx, ny);
+    const hadVelocity =
+      this.moving?.solids.velocity.some((v) => v !== 0) ?? false;
+    if (key === this.movingKey && !hadVelocity) return;
+    const moving = this.computeMoving(nx, ny);
+    if (!moving) return;
+    const step = this.overlay.steps;
+    const config = this.host.config();
+    const pass = this.units.cellsPerLength / this.latticeSpeed;
+    for (const [body, area] of moving.solids.area) {
+      const before = this.movingArea.get(body);
+      if (moving.solids.fastest > 1e-7) this.lastMoved.set(body, step);
+      if (before === undefined) {
+        this.movingArea.set(body, area);
+        continue;
+      }
+      if (Math.abs(area - before) <= 0.02 * before) continue;
+      // GPT's third round measured that neither moving-solid method keeps
+      // volume as a solid grows; a resize is visual until the flow settles.
+      if (config.resizeMode === "strict") {
+        this.latticeKey = "";
+        this.syncLattice();
+        return;
+      }
+      this.movingArea.set(body, area);
+      this.settleUntil = step + Math.round(10 * pass);
+    }
+    if (moving.solids.teleported) {
+      this.notice =
+        "A solid jumped too far in one frame to push the fluid aside, so it was placed there without a wall velocity.";
+    } else if (moving.solids.fastest > WALL_SPEED_LIMIT) {
+      this.notice = `A solid moved at ${moving.solids.fastest.toFixed(2)} cells a step, faster than the fluid can follow, so its walls were slowed to ${WALL_SPEED_LIMIT}.`;
+    }
+    this.spec = { ...this.spec, psm: moving.psm };
+    this.overlay.updatePartialSolids(moving.psm);
+    this.trackMovingBodies(moving.solids, nx, ny);
+  }
+
+  /** Keeps each moving body's force region on it as it moves. */
+  private trackMovingBodies(solids: PartialSolids, nx: number, ny: number) {
+    const rowIds = new Map(
+      this.movingRows.map(({ row, body }) => [body, row.id])
+    );
+    for (const [body, box] of solids.boxes) {
+      const margin = 2;
+      const x0 = Math.max(0, box[0] - margin);
+      const y0 = Math.max(0, box[1] - margin);
+      const x1 = Math.min(nx - 1, box[2] + margin);
+      const y1 = Math.min(ny - 1, box[3] + margin);
+      const region: [number, number, number, number] = [
+        x0,
+        y0,
+        x1 - x0 + 1,
+        y1 - y0 + 1,
+      ];
+      const record = this.bodies.get(body);
+      if (record) record.region = region;
+      else {
+        this.bodies.set(body, {
+          rowId: rowIds.get(body) ?? "",
+          region,
+          // Partially saturated cells carry no rest-state share: their
+          // exchange is already a full population difference.
+          rest: [0, 0],
+          drag: [],
+          lift: [],
+        });
+      }
+    }
+  }
+
   private beginMeasurements(
     regions: Map<number, { rowId: string; box: number[] }>,
     nx: number,
@@ -910,7 +1131,7 @@ export class FluidSession {
     const norm = 0.5 * this.latticeSpeed ** 2 * units.cellsPerLength;
     const settled = !this.settling;
     const out: BodyMeasurement[] = [];
-    for (const record of this.bodies.values()) {
+    for (const [body, record] of this.bodies) {
       const after = (s: Sample) => s.step >= this.settleUntil;
       const drag = record.drag.filter(after);
       const lift = record.lift.filter(after);
@@ -923,7 +1144,28 @@ export class FluidSession {
       let dragValue = recent(drag.length ? drag : record.drag.slice(-50));
       let liftValue = recent(lift.length ? lift : record.lift.slice(-50));
       let strouhal: number | undefined;
+      const movedAt = this.lastMoved.get(body);
+      const stillMoving =
+        movedAt !== undefined &&
+        this.overlay.steps - movedAt <
+          Math.round((10 * units.cellsPerLength) / this.latticeSpeed);
       let sheddingNote = settled ? "" : "Settling after the start.";
+      if (stillMoving) {
+        // Above Re 200 the moving-solid method runs with the turbulence model,
+        // which it was not validated with: no force numbers at all (§8.1).
+        const unvalidated = units.closure;
+        out.push({
+          rowId: record.rowId,
+          drag: unvalidated ? NaN : recent(record.drag.slice(-50)) / norm,
+          lift: unvalidated ? NaN : recent(record.lift.slice(-50)) / norm,
+          strouhal: undefined,
+          sheddingNote: unvalidated
+            ? "It is moving above Re 200, where moving solids are not validated, so its forces are not measured."
+            : "It is moving, so its forces are provisional: they include the fluid carried inside it.",
+          settled: false,
+        });
+        continue;
+      }
       if (settled && lift.length > 0) {
         const shedding = sheddingPeriod(
           lift.map((s) => ({ step: s.step, value: s.value / norm }))
@@ -957,6 +1199,7 @@ export class FluidSession {
     const lattice = this.overlay.current;
     if (lattice) {
       try {
+        this.syncMoving();
         this.advance(this.lastPlan.steps);
         this.sample();
         this.publishVelocity(now);
