@@ -305,6 +305,30 @@ describe("Identifiers round-trip", () => {
   roundTrips(cases.map(leftRight));
 });
 
+// `x(y-1)^2` and `(x(y-1))^2` parse to different raw trees, because they mean
+// different things once x turns out to be a number. The aug tree records the
+// bracket for whoever decides that, and does not print it: for a real
+// function the brackets mean nothing, and Physics Lab's derivations would
+// carry them into every rule that reuses the call.
+describe("Calls under a power or a factorial", () => {
+  const cases = ["f(x)^{2}", "f(x)!", "x(y-1)^{2}", "\\o{sin}(x)^{2}"].map(
+    leftRight
+  );
+  describe("via Aug", () => cases.forEach(testRoundTripIdenticalViaAug));
+
+  test("only the call in brackets says so", () => {
+    const flag = (raw: string) => {
+      const aug = parseRootLatex(leftRight(raw));
+      if (aug.type !== "BinaryOperator") throw new Error("Expected a power.");
+      return aug.left.type === "FunctionCall"
+        ? aug.left.parenWrapped
+        : "not a call";
+    };
+    expect(flag("x(y-1)^{2}")).toBeUndefined();
+    expect(flag("(x(y-1))^{2}")).toBe(true);
+  });
+});
+
 function roundTrips(cases: string[]) {
   describe("via Aug", () => cases.forEach(testRoundTripIdenticalViaAug));
   describe("via AST", () => cases.forEach(testRoundTripIdenticalViaAST));

@@ -115,6 +115,16 @@ export function sameTree(a: Node, b: Node): boolean {
   return deepEqual(a, b);
 }
 
+/**
+ * A call's `parenWrapped` records brackets the user wrote around it, which
+ * matter only to `implicitProducts` deciding what `(x(y-1))^2` means. Once a
+ * call is a call, `(sin(3x))` and `sin(3x)` are the same expression, and a
+ * derivative rule rebuilding the second must still cancel against the first.
+ */
+function isBracketMark(node: Record<string, unknown>, key: string) {
+  return key === "parenWrapped" && node.type === "FunctionCall";
+}
+
 function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (
@@ -137,6 +147,7 @@ function deepEqual(a: unknown, b: unknown): boolean {
   const right = b as Record<string, unknown>;
   let keys = 0;
   for (const key in left) {
+    if (isBracketMark(left, key)) continue;
     keys += 1;
     if (!deepEqual(left[key], right[key])) return false;
   }
@@ -144,7 +155,7 @@ function deepEqual(a: unknown, b: unknown): boolean {
   // that is left: a key b has and a does not would otherwise pass.
   let otherKeys = 0;
   for (const key in right) {
-    void key;
+    if (isBracketMark(right, key)) continue;
     otherKeys += 1;
   }
   return keys === otherKeys;
@@ -388,7 +399,7 @@ export function replaceIdentifier(node: Node, name: string, value: Node): Node {
  * the rest of them silently. So anything else is returned untouched, and a
  * substitution simply does not reach inside it.
  */
-function mapChildNodes(node: Node, on: (child: Node) => Node): Node {
+export function mapChildNodes(node: Node, on: (child: Node) => Node): Node {
   switch (node.type) {
     case "Negative":
       return negative(on(node.arg));

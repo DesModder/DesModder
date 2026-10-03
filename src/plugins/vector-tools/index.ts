@@ -72,13 +72,18 @@ import {
   differentiate,
   evaluate,
   identifiersIn,
+  implicitProducts,
   simplify,
   subtract,
   toLatex,
   type Node,
 } from "./symbolic";
 
-import { buildConfigFromGlobals, parseLatex } from "../../../text-mode-core";
+import {
+  buildConfigFromGlobals,
+  parseLatex,
+  type Config,
+} from "../../../text-mode-core";
 import { FlowOverlay } from "../../field-rendering/FlowOverlay";
 import { FluidSession } from "./fluid/FluidSession";
 import { ArrowOverlay } from "../../field-rendering/ArrowOverlay";
@@ -1493,6 +1498,8 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       config.components,
       config.scalar,
       config.domain,
+      // Whether `a(x+1)` is a product depends on what the graph defines.
+      this.environmentRevision,
     ]);
     if (this.analysisCache?.key === key) return this.analysisCache.result;
     const result = this.analyse(config);
@@ -1507,12 +1514,12 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       const [P, Q] =
         config.source === "gradient"
           ? (() => {
-              const f = parseLatex(cfg, config.scalar.fLatex);
+              const f = this.parseField(cfg, config.scalar.fLatex);
               return [differentiate(f, "x"), differentiate(f, "y")];
             })()
           : [
-              parseLatex(cfg, config.components.xLatex),
-              parseLatex(cfg, config.components.yLatex),
+              this.parseField(cfg, config.components.xLatex),
+              this.parseField(cfg, config.components.yLatex),
             ];
       const divergence = tidy(
         add(differentiate(P, "x"), differentiate(Q, "y"))
@@ -1568,6 +1575,26 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     }
   }
 
+  /**
+   * A component as Desmos means it, which is not always as Desmos parses it.
+   *
+   * The parser reads `x(y-1)` as a call of a function named x, because whether
+   * it is one is decided later, by the evaluator, from what the graph defines.
+   * Here that later decision is made the same way: a call of a coordinate, of
+   * the clock, of a constant, or of anything the expression list defines as a
+   * number is multiplication. A name the list defines as a function stays a
+   * call, and so does a name nobody defines — refusing to differentiate an
+   * unknown `f(x)` is honest, and reading it as `f·x` would not be.
+   */
+  private parseField(cfg: Config, latex: string): Node {
+    const { functions, scalars } = this.environment;
+    const values = new Set(["x", "y", "e", "pi", "tau", TIME_NAME, ...scalars]);
+    // A definition beats an implicit meaning, as it does in the GLSL compiler:
+    // `t(u) = ...` makes t a function, and the clock is no longer what t means.
+    for (const name of functions.keys()) values.delete(name);
+    return implicitProducts(parseLatex(cfg, latex), values);
+  }
+
   // ---- symbolic differentiation ------------------------------------------
 
   /**
@@ -1585,7 +1612,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
   ): { ok: true; latex: string } | { ok: false; error: string } {
     try {
       const cfg = buildConfigFromGlobals(Desmos, this.calc);
-      const derivative = differentiate(parseLatex(cfg, latex), variable);
+      const derivative = differentiate(this.parseField(cfg, latex), variable);
       return { ok: true, latex: toLatex(cfg, derivative) };
     } catch (error) {
       return {
@@ -1611,7 +1638,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     | { ok: false; error: string } {
     try {
       const cfg = buildConfigFromGlobals(Desmos, this.calc);
-      const tree = parseLatex(cfg, latex);
+      const tree = this.parseField(cfg, latex);
       // With no argument list given, the gradient adapts to whatever variables
       // the expression actually uses.
       const names = [...(variables ?? identifiersIn(tree))];

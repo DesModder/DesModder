@@ -29,6 +29,7 @@ import {
   differentiate,
   expand,
   fold,
+  implicitProducts as sharedImplicitProducts,
   rationalNode,
   rationalOf,
   replaceIdentifier,
@@ -277,26 +278,13 @@ function linearParts(
  * ever multiplication. Other names are left alone: `f(x)` may well be a
  * function defined in the graph, and reading it as `f·x` would integrate a
  * function as though it were a constant.
+ *
+ * The rewrite itself is the shared one, which takes any set of names known to
+ * be values; Vector Tools reads `x(y-1)` and `y(x+2)` with it, where both
+ * coordinates are values at once.
  */
 export function implicitProducts(node: Node, variable: string): Node {
-  switch (node.type) {
-    case "FunctionCall": {
-      const args = node.args.map((arg) => implicitProducts(arg, variable));
-      if (node.callee.symbol === variable && args.length === 1)
-        return multiply(id(variable), args[0]);
-      return { ...node, args };
-    }
-    case "Negative":
-      return { ...node, arg: implicitProducts(node.arg, variable) };
-    case "BinaryOperator":
-      return {
-        ...node,
-        left: implicitProducts(node.left, variable),
-        right: implicitProducts(node.right, variable),
-      };
-    default:
-      return node;
-  }
+  return sharedImplicitProducts(node, new Set([variable]));
 }
 
 /**
