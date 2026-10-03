@@ -91,10 +91,11 @@ describe("a fixed-step schedule", () => {
     scheduler.frame(0);
     scheduler.frame(16);
     const before = scheduler.frame(32).totalSteps;
-    // Five seconds hidden: 3000 steps owed at face value.
+    // Five seconds hidden: 3000 steps owed at face value, and only one
+    // frame's worth (1/30 s, 20 steps) run.
     const after = scheduler.frame(5032);
-    expect(after.steps).toBe(0);
-    expect(after.totalSteps).toBe(before);
+    expect(after.steps).toBe(20);
+    expect(after.totalSteps).toBe(before + 20);
     expect(scheduler.stallCount).toBe(1);
     expect(scheduler.frame(5048).steps).toBeLessThanOrEqual(10);
   });
@@ -134,6 +135,19 @@ describe("a fixed-step schedule", () => {
       simulated = scheduler.frame(now).simulatedSeconds;
     }
     expect(simulated).toBeCloseTo(0.5, 12);
+  });
+
+  test("a machine whose every frame stalls still moves, slower than real time", () => {
+    const scheduler = new StepScheduler({
+      stepSeconds: 1 / 600,
+      maxStepsPerFrame: 1000,
+    });
+    scheduler.play();
+    let plan = scheduler.frame(0);
+    for (let now = 300; now <= 6000; now += 300) plan = scheduler.frame(now);
+    // 20 frames of 1/30 s each: 400 steps, where real time would be 3600.
+    expect(plan.totalSteps).toBe(400);
+    expect(plan.realTimeFactor).toBeCloseTo(1 / 9, 2);
   });
 
   test("nonsense settings are refused", () => {

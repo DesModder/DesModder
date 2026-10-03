@@ -305,6 +305,9 @@ export type FluidSpeedMode = "auto" | "accurate" | "lively";
  */
 export type FluidGuardMode = "auto" | "strict";
 
+/** What the tank is coloured by. */
+export type FluidShow = "vorticity" | "speed" | "pressure";
+
 /** The simulated rectangle, fixed in graph coordinates (brief §8.0). */
 export interface FluidTank {
   xMin: number;
@@ -326,6 +329,7 @@ export interface FluidConfig {
   speedMode: FluidSpeedMode;
   resizeMode: FluidGuardMode;
   dragMode: FluidGuardMode;
+  show: FluidShow;
   /** Write measured values into the graph as variables. Opt-in (§8.0). */
   writeback: boolean;
   playing: boolean;
@@ -780,6 +784,9 @@ export const DEFAULT_VECTOR_FIELD_CONFIG: VectorFieldConfig = {
     speedMode: "auto",
     resizeMode: "auto",
     dragMode: "auto",
+    // Vorticity, because it is what shedding looks like: the wake's
+    // alternating vortices are invisible in speed and faint in pressure.
+    show: "vorticity",
     writeback: false,
     playing: true,
   },
@@ -1363,6 +1370,10 @@ function normalizeFluid(value: unknown, fallback: FluidConfig): FluidConfig {
         : "auto",
     resizeMode: isGuard(fluid?.resizeMode) ? fluid.resizeMode : "auto",
     dragMode: isGuard(fluid?.dragMode) ? fluid.dragMode : "auto",
+    show:
+      fluid?.show === "speed" || fluid?.show === "pressure"
+        ? fluid.show
+        : "vorticity",
     writeback: fluid?.writeback === true,
     playing: fluid?.playing !== false,
   };

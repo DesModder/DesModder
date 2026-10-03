@@ -63,7 +63,7 @@ testWithPage(
     cpu.step(1);
     // Wider than plain BGK's 1e-8: the closure takes two square roots per
     // cell, and GLSL leaves their accuracy to the driver. 2.2e-8 on
-    // SwiftShader, a few roundings of populations near 0.03.
+    // the Intel GPU, a few roundings of populations near 0.03.
     expect(worst(one.populations, cpu.populations)).toBeLessThan(5e-8);
     cpu.step(99);
     expect(worst(hundred.populations, cpu.populations)).toBeLessThan(2e-7);

@@ -715,6 +715,32 @@ export class GpuD2Q9 {
   }
 
   /**
+   * δρ, ux and uy at the last collision, `k`, without the populations: what a
+   * stability or Mach check needs, at a third of the read.
+   */
+  readMacro(): { deltaRho: Float32Array; ux: Float32Array; uy: Float32Array } {
+    const { gl, nx, ny } = this;
+    const cells = nx * ny;
+    const texel = new Float32Array(4 * cells);
+    gl.bindFramebuffer(
+      gl.READ_FRAMEBUFFER,
+      this.sets[this.current].framebuffer
+    );
+    gl.readBuffer(gl.COLOR_ATTACHMENT2);
+    gl.readPixels(0, 0, nx, ny, gl.RGBA, gl.FLOAT, texel);
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
+    const deltaRho = new Float32Array(cells);
+    const ux = new Float32Array(cells);
+    const uy = new Float32Array(cells);
+    for (let k = 0; k < cells; k++) {
+      deltaRho[k] = texel[4 * k + 1];
+      ux[k] = texel[4 * k + 2];
+      uy[k] = texel[4 * k + 3];
+    }
+    return { deltaRho, ux, uy };
+  }
+
+  /**
    * Reads everything back: the shifted populations as `i·N + k`, and δρ, ux
    * and uy at the last collision. Slow, because it waits for the GPU; for
    * tests and measurements, not for drawing.

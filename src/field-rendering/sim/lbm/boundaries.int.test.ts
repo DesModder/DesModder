@@ -109,7 +109,7 @@ testWithPage(
       );
       cpu.step(1);
       // 1e-8 rather than gate 1's 1e-9: a regularized open side does several
-      // times the arithmetic of a bulk cell, and on SwiftShader its results
+      // times the arithmetic of a bulk cell, and on the Intel GPU its results
       // differ from the CPU's by up to 5.6e-9 after one step, one rounding of
       // its intermediates. The hundred-step band below is unchanged.
       const oneStep = worstExcess(one.populations, cpu.populations, 1e-8, 1e-6);

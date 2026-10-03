@@ -311,6 +311,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
 
   /** The Fluid tab's state: obstacles, capabilities and the step clock. */
   readonly fluid = new FluidSession({
+    calc: this.calc,
     config: () => this.getConfig().fluid,
     environment: () => this.environment,
     items: () => this.cc.getAllItemModels() as never,
@@ -778,9 +779,10 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.updateConfig((config) => {
       config.fluid[key] = value;
     });
-    if (key === "mode" || key === "cellsAcross" || key === "tank") {
-      this.fluid.restart();
-    }
+    // Switching fluids starts afresh, at the speed the setting starts at. A
+    // new tank or lattice size rebuilds on its own: the session sees that
+    // what defines the lattice has changed.
+    if (key === "mode" || key === "speedMode") this.fluid.restart();
   }
 
   /**

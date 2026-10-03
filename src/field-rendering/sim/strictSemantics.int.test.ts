@@ -107,7 +107,7 @@ function sameDouble(cpu: number, desmos: number | string) {
 /**
  * Float32 against a double: the same special value, or close. "Close" is 10⁻⁴
  * relative because GLSL leaves the accuracy of its built-ins to the driver,
- * and SwiftShader's acos(0.5) is 4·10⁻⁵ out. That is a wall misplaced by a
+ * and the Intel driver's acos(0.5) is 4·10⁻⁵ out. That is a wall misplaced by a
  * ten-thousandth of its distance from the origin, far inside one cell; what
  * this test exists to catch is a wrong special value, which is exact.
  */

@@ -34,6 +34,7 @@ import {
   lengthInputsFor,
   type FluidGuardMode,
   type FluidMode,
+  type FluidShow,
   type FluidSpeedMode,
   type ArrowMode,
   type ColorPalette,
@@ -1143,6 +1144,12 @@ const FLUID_GUARD_MODES: readonly Choice<FluidGuardMode>[] = [
   { value: "strict", label: "Strict" },
 ];
 
+const FLUID_SHOWS: readonly Choice<FluidShow>[] = [
+  { value: "vorticity", label: "Vorticity" },
+  { value: "speed", label: "Speed" },
+  { value: "pressure", label: "Pressure" },
+];
+
 /**
  * The Fluid tab, at gate 0: everything the solver will read, shown before
  * there is a solver to read it. The obstacles are compiled exactly as Desmos
@@ -1164,10 +1171,26 @@ function fluidTab(vectorTools: VectorTools, config: ConfigGetter) {
           "dsm-vector-tools-fluid-mode"
         )}
         <div class="dsm-vector-tools-hint">
-          The solver is being built in stages. This tab already shows what it
-          will see: the solids, the tank and its lattice, and the clock it will
-          step on. A liquid comes after these two.
+          {() =>
+            fluid().mode === "stirredBox"
+              ? "The stirred box comes next; the wind tunnel runs now. A liquid follows both."
+              : "Air flows in from the left of the tank and out at the right, round every region the graph shades. Hide a row to let the fluid through it."
+          }
         </div>
+        {chipGroup(
+          "Show",
+          () => fluid().show,
+          FLUID_SHOWS,
+          (value) => vectorTools.setFluid("show", value),
+          "dsm-vector-tools-fluid-show"
+        )}
+        <If predicate={() => session.message !== ""}>
+          {() => (
+            <div class="dsm-vector-tools-hint dsm-vector-tools-fluid-message">
+              {() => session.message}
+            </div>
+          )}
+        </If>
       </section>
 
       <section class="dsm-vector-tools-section">
@@ -1245,9 +1268,7 @@ function fluidTab(vectorTools: VectorTools, config: ConfigGetter) {
                           row().error ??
                           (row().hidden
                             ? "Hidden, so the fluid passes through it."
-                            : row().obstacle!.usesTime
-                              ? "Solid, and it moves with t."
-                              : "Solid.")
+                            : fluidRowStatus(session, row()))
                         }
                       </div>
                     </div>
@@ -1374,6 +1395,28 @@ function fluidTab(vectorTools: VectorTools, config: ConfigGetter) {
       </section>
     </div>
   );
+}
+
+/**
+ * A solid's line in the list: what it is, and once the flow is running, what
+ * is measured on it. Drag and lift are coefficients against the length for
+ * Re and the inflow speed, so they read like a textbook's.
+ */
+function fluidRowStatus(session: FluidSession, row: ObstacleRow) {
+  const kind = row.obstacle!.usesTime
+    ? "Solid, and it moves with t."
+    : "Solid.";
+  const measured = session.measurements.find((m) => m.rowId === row.id);
+  if (!session.isSimulating || measured === undefined) return kind;
+  if (!Number.isFinite(measured.drag)) return `${kind} Measuring…`;
+  const forces = `drag C_D ${measured.drag.toFixed(3)}, lift C_L ${measured.lift.toFixed(3)}`;
+  if (!measured.settled)
+    return `${kind} Provisional: ${forces}. ${measured.sheddingNote}`;
+  const shedding =
+    measured.strouhal === undefined
+      ? measured.sheddingNote
+      : `Shedding at St ${measured.strouhal.toFixed(3)}; forces averaged over the last cycle.`;
+  return `${kind} ${forces}. ${shedding}`;
 }
 
 function fluidTankNumber(

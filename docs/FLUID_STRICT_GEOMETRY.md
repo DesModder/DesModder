@@ -108,8 +108,8 @@ specification. Instead:
 - piecewise branches are all computed, but only the chosen branch's value and
   flag are kept.
 
-`strictSemantics.int.test.ts` runs every probe on WebGL2 (SwiftShader in the
-harness) and checks the results against live Desmos. It also runs eight
+`strictSemantics.int.test.ts` runs every probe on WebGL2 (this machine's
+Intel Iris Xe through ANGLE and Direct3D 11, in the harness) and checks the results against live Desmos. It also runs eight
 obstacles, including a definition, a slider, the clock, a restriction and a
 piecewise, on a 64 × 64 grid against the CPU. Every cell agrees except those
 within float32 rounding of a wall.
@@ -125,8 +125,8 @@ skipping them:
 2. **Overflow.** Values beyond about 3.4·10³⁸ overflow to infinity, where
    Desmos still has a finite number.
 
-**Accuracy of built-ins.** GLSL leaves this to the driver: SwiftShader's
-`acos(0.5)` is 4·10⁻⁵ out, so the GPU test allows 10⁻⁴ relative error. That
+**Accuracy of built-ins.** GLSL leaves this to the driver: the Intel
+driver's `acos(0.5)` is 4·10⁻⁵ out, so the GPU test allows 10⁻⁴ relative error. That
 moves a wall by far less than a cell. What the test exists to catch is a wrong
 special value, and those are compared exactly.
 

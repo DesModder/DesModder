@@ -127,3 +127,92 @@ testWithPage(
   },
   90000
 );
+
+/**
+ * The wind tunnel, live: a cylinder typed into the graph sheds a vortex
+ * street on the GPU in real time, and the tab reports its drag, lift and
+ * Strouhal number. The cylinder blocks a quarter of a slip-walled tank, which
+ * raises both above the unconfined values (St 0.164, C_D 1.33); the mock-up
+ * measured St 0.197 at a sixth.
+ */
+testWithPage(
+  "Fluid tab: a cylinder in the wind tunnel sheds, and is measured",
+  async (driver) => {
+    await driver.enablePlugin("vector-tools");
+    await driver.assertSelectorEventually(BUTTON);
+    await driver.evaluate(() => {
+      Calc.setMathBounds({ left: -11, right: 11, bottom: -6, top: 6 });
+      Calc.setExpressions([
+        {
+          id: "cylinder",
+          latex: String.raw`\left(x+6\right)^{2}+y^{2}\le1`,
+          color: "#2d70b3",
+        },
+      ]);
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      // The field's own arrows would cover the fluid in the picture.
+      plugin.setArrowMode("off");
+      plugin.setFluid("referenceLength", 2);
+      // Four times the default inflow, so the flow develops in seconds.
+      plugin.setFluid("inflowSpeed", 8);
+      plugin.setFluid("mode", "windTunnel");
+    });
+    await driver.click(BUTTON);
+    const index = PANEL_TABS.findIndex((tab) => tab.id === "fluid");
+    await driver.click(
+      `.dsm-vector-tools-tabs .dcg-segmented-control-btn:nth-child(${index + 1})`
+    );
+    await driver.waitForFunction(
+      () => {
+        const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
+        return fluid.measurements[0]?.strouhal !== undefined;
+      },
+      { timeout: 60000, polling: 500 }
+    );
+    const state = await driver.evaluate(() => {
+      const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
+      return {
+        simulating: fluid.isSimulating,
+        realTime: fluid.readout.realTimeFactor,
+        mach: fluid.mach,
+        measured: fluid.measurements[0],
+        status: document.querySelector<HTMLElement>(
+          ".dsm-vector-tools-fluid-row-status"
+        )!.innerText,
+      };
+    });
+    expect(state.simulating).toBe(true);
+    // The tab measured its own Mach number and kept it in the envelope.
+    expect(state.mach).toBeLessThan(0.3);
+    expect(state.measured.settled).toBe(true);
+    expect(state.measured.strouhal).toBeGreaterThan(0.18);
+    expect(state.measured.strouhal).toBeLessThan(0.3);
+    expect(state.measured.drag).toBeGreaterThan(1.5);
+    expect(state.measured.drag).toBeLessThan(3);
+    expect(state.status).toMatch(
+      /drag C_D [\d.]+, lift C_L -?[\d.]+\. Shedding at St [\d.]+/
+    );
+
+    // Evidence: the panel at the measured solid, then the graph without it.
+    await driver.evaluate(() =>
+      document
+        .querySelector(".dsm-vector-tools-fluid-row")
+        ?.scrollIntoView({ block: "start" })
+    );
+    const panel = await driver.page.$(".dsm-vector-tools-menu");
+    await panel!.screenshot({
+      path: "docs/assets/fluid-wind-tunnel-panel.png",
+    });
+    await driver.click(BUTTON);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await driver.page.screenshot({ path: "docs/assets/fluid-wind-tunnel.png" });
+    await driver.evaluate(() => {
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      plugin.setFluid("mode", "off");
+      plugin.setArrowMode("live");
+    });
+    await driver.disablePlugin("vector-tools");
+    await driver.setBlank();
+  },
+  120000
+);

@@ -306,7 +306,8 @@ Rules this must respect:
 - **Context loss.** A lost context loses the simulation state. Rebuilding from
   rest is acceptable; pretending nothing happened is not.
 - **Evidence is a picture.** The integration harness drives a real Desmos in
-  headless Chrome with a software GL renderer (SwiftShader), so every claim
+  headless Chrome on the machine's own GPU (an Intel Iris Xe here, through
+  ANGLE and Direct3D 11), so every claim
   needs a screenshot. Numeric tests can read state back with `readPixels`, and
   a small CPU reference implementation can run in unit tests.
 

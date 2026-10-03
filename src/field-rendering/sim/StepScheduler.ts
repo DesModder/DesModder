@@ -23,8 +23,13 @@
  *   `realTimeFactor` says by how much. The steps themselves never change size.
  * - **A stall limit.** After a gap longer than `stallSeconds`, such as a
  *   hidden tab or a breakpoint, the debt is dropped instead of caught up in a
- *   burst that would freeze the page.
+ *   burst that would freeze the page. The frame still gets one ordinary
+ *   frame's worth of steps, so a machine whose every frame is slow keeps
+ *   moving, slower than real time, instead of stopping dead.
  */
+
+/** What a frame after a stall is credited with, in milliseconds. */
+const STALL_CREDIT_MS = 1000 / 30;
 
 export interface StepSchedulerOptions {
   /** Simulated seconds that one step advances. */
@@ -142,7 +147,8 @@ export class StepScheduler {
     }
     if (previous !== undefined && now - previous > this.stallMs) {
       this.stalls++;
-      this.endSegment();
+      this.segmentStart = now - STALL_CREDIT_MS;
+      this.segmentSteps = 0;
     }
     if (this.segmentStart === undefined) {
       this.segmentStart = now;
