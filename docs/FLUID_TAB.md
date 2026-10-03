@@ -33,17 +33,28 @@ The liquid comes next (brief §8.0).
 - **What is shown:** vorticity, speed or pressure, on a canvas under Desmos's
   own. The existing particles and arrows draw the flow while it runs, and the
   field's formula again when it stops.
-- **Measurements:** each solid's C*D, C_L and, once its lift repeats steadily,
-  its Strouhal number, with forces averaged over the last cycle. Before that
-  the tab says why there is no number yet. Ticking "Write measurements into
-  the graph" puts them in a folder as `C*{D1}`, `C*{L1}`and`S*{t1}`, with
-  values still settling written as undefined.
+- **Measurements:** each solid's `C_D`, `C_L` and, once its lift repeats
+  steadily, its Strouhal number, with forces averaged over the last cycle.
+  Before that the tab says why there is no number yet. Ticking "Write
+  measurements into the graph" puts them in a folder as `C_{D1}`, `C_{L1}` and
+  `S_{t1}`, with values still settling written as undefined.
+- **Moving solids:** a solid whose inequality reads a slider or `t` moves
+  through the fluid as partially saturated cells (GPT's third round), pushing
+  it aside and carrying what is inside. Solids that cannot move keep the
+  sharper interpolated walls.
 - **Rafael's guards (brief §8.1):**
   - Lattice speed: Auto, Accurate or Lively. Auto halves the lattice speed and
     restarts if the flow anywhere passes Mach 0.3.
-  - Resizing a solid: Auto updates it in place and marks the flow as settling;
-    Strict restarts.
-  - Dragging above Re 200: Auto or Strict.
+  - Resizing a solid (its area changing by more than 2%): Auto updates it in
+    place and marks the flow as settling; Strict restarts.
+  - Moving solids above Re 200, where the moving-solid method runs with the
+    turbulence model it was not validated with: Auto moves them and gives
+    them no force numbers; Strict runs the flow at Re 200 while any solid can
+    move.
+  - Always: a wall moves at most 0.05 cells a step, a jump of more than two
+    cells is placed without a wall velocity rather than swept, and a moving
+    solid's forces are marked provisional until it has been still for ten
+    passes.
   - Writeback is opt-in.
 - **The clock** steps a fixed dt; frames only decide how many steps to run. A
   slow machine runs slower than real time and says so, and never changes the
@@ -62,6 +73,7 @@ The liquid comes next (brief §8.0).
 | Shedding                | `sim/measure.ts`                                         | GPT's acceptance rule: three cycles, a real swing, periods within 2%                                                                                |
 | Scheduler, units, probe | `StepScheduler.ts`, `latticeUnits.ts`, `capabilities.ts` | fixed steps; graph units to lattice units; a GPU check that renders and reads back                                                                  |
 | Display                 | `sim/FluidOverlay.ts`                                    | the lattice's context, and a two-pass display: a value per cell, then a filtered screen pass                                                        |
+| Moving solids           | `sim/movingSolids.ts`                                    | coverage from the signed function, and a wall velocity: the level set's normal speed at walls, and a least-squares translation everywhere           |
 | The tab                 | `plugins/vector-tools/fluid/`                            | `FluidSession` (lattice, clock, measurements, guards), `FluidGraphWriter` (writeback)                                                               |
 
 ## How it was verified
@@ -86,17 +98,26 @@ CPU oracle.
 | DFG 2D-1, Re 20, 32 cells across                           | C_D 1.45%, Δp 1.10% from the benchmark; within 0.02% of GPT's oracle     |
 | DFG 2D-2, Re 100, 32 cells across                          | peak C_D 0.95%, lift range −0.09%, St 0.17%; equal to the oracle to 4 dp |
 | Stirred box, curl against gradient of the same strength    | the gradient moves the fluid at under 5% of the curl                     |
+| Moving cylinder against a held one (GPT's Galilean pair)   | GPU within 10⁻³ of GPT's 2.013008 and 2.016551                           |
+| A disc slid by a slider at 2 units/s, live                 | fluid inside moves at 0.02793 cells/step against its walls' 0.02771      |
 
 Evidence pictures: `assets/fluid-gate1-taylor-green.png`,
 `fluid-gate2-poiseuille.png`, `fluid-gate3-dfg.png` and
-`fluid-gate4-shedding.png`.
+`fluid-gate4-shedding.png`; the tab live: `fluid-wind-tunnel.png`,
+`fluid-stirred-box.png`, `fluid-particles-and-arrows.png` and
+`fluid-moving-solid.png`.
 
 ## Known limits
 
-- **Moving solids are not yet quantitative.** A slider or `t` moves a solid
-  in place, marked as settling (Auto), or restarts the flow (Strict). GPT's
-  third round measured that PSM is the method for bounded motion, and that
-  neither PSM nor IB conserves volume when a solid grows. That work is gate 6.
+- **A moving solid's forces include the fluid it carries**, so they are
+  provisional while it moves. A spin in place is invisible to the graph: a
+  slider moves a region, not a rigid body, so a rotating ellipse's walls get
+  their normal velocity and its inside none. Neither PSM nor IB conserves
+  volume when a solid grows (GPT's third round), hence the resize guard.
+- **Auto's rollback above Re 200 is not built.** The brief asks Auto to keep a
+  last valid state while a solid moves above Re 200, and to roll back and cap
+  Re at 200 if the flow goes invalid. For now the tab's general guard
+  applies: an invalid flow halves the lattice speed and restarts.
 - **The reconstructed outlet bends the flow in its last two columns**, where
   a cell-centre ρu stops being the flux (0.5–0.6%). The sponge keeps this
   from reflecting, and nothing measures there.
@@ -116,8 +137,6 @@ Evidence pictures: `assets/fluid-gate1-taylor-green.png`,
 
 ## Next
 
-- **Gate 6:** moving solids with PSM, and the material wall velocity they
-  need.
 - **The liquid** (brief §8.0).
 - **Gate 7 onward:** 3D FieldPlay on the camera match in
   `DESMOS_3D_CAMERA.md`.
