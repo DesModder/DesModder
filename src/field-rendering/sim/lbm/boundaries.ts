@@ -222,6 +222,29 @@ export function reconstructOpen(
   }
 }
 
+/**
+ * What a velocity side prescribes at a cell a moving solid partly covers: the
+ * inflow in the fluid part and the solid's own velocity in the rest.
+ *
+ * The inflow alone would blow fluid into the solid, where the partially
+ * saturated collision takes its momentum away. The mass stays, and a solid
+ * that touched the inlet filled with it until the fluid burst out of its sides
+ * and the lattice went unstable.
+ */
+export function openPrescribed(
+  inflow: readonly [number, number],
+  coverage: number,
+  solid: readonly [number, number],
+  r: (value: number) => number
+): [number, number] {
+  if (!(coverage > 0)) return [inflow[0], inflow[1]];
+  const keep = r(1 - coverage);
+  return [
+    r(r(keep * inflow[0]) + r(coverage * solid[0])),
+    r(r(keep * inflow[1]) + r(coverage * solid[1])),
+  ];
+}
+
 /** The sponge's strength at column x: 0 before it, rising to `max`. */
 export function spongeStrength(
   x: number,

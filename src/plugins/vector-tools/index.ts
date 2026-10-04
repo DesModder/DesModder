@@ -333,7 +333,9 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       (this.calc as unknown as { settings?: { degreeMode?: boolean } }).settings
         ?.degreeMode === true,
     helper: (latex) =>
-      this.calc.HelperExpression({ latex }) as unknown as ValueHelper,
+      this.dispatching()
+        ? undefined
+        : (this.calc.HelperExpression({ latex }) as unknown as ValueHelper),
     changed: () => this.util.tick(),
     ownedPrefix: () => namespaceForField(this.getConfig()),
     // The particles and arrows draw the flow while it runs, and the field's
@@ -527,6 +529,14 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       this.environmentTimer = undefined;
       this.refreshEnvironment();
     }, ENVIRONMENT_REFRESH_DELAY_MS);
+  }
+
+  /** Whether Desmos is mid-dispatch, when a new dispatch would throw. */
+  private dispatching() {
+    const { dispatcher } = this.cc as unknown as {
+      dispatcher?: { isDispatching?: () => boolean };
+    };
+    return dispatcher?.isDispatching?.() === true;
   }
 
   private refreshEnvironment() {
@@ -740,6 +750,13 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       rangeMode: config.color.rangeMode,
       rangeMinimum: config.color.minimum,
       rangeMaximum: config.color.maximum,
+      // The particles lay the backdrop down when they run. Without them the
+      // arrows do, or turning the particles off would take it away too.
+      backdrop:
+        config.flow.backdropEnabled && !this.flowOverlay.isRunning
+          ? config.flow.backdropColor
+          : "",
+      backdropOpacity: config.flow.backdropOpacity,
     };
   }
 
@@ -1766,10 +1783,13 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     if (this.flowOverlay.isRunning) {
       this.flowOverlay.stop();
       this.flowMessage = "";
+      // The arrows take the backdrop over.
+      this.refreshArrows();
       this.util.tick();
       return;
     }
     this.startFlow();
+    this.refreshArrows();
   }
 
   /**

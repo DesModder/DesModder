@@ -141,8 +141,12 @@ export interface FluidHost {
   environment: () => FieldEnvironment;
   items: () => readonly ItemLike[];
   degreeMode: () => boolean;
-  /** One number from Desmos's own evaluator, by name. */
-  helper: (latex: string) => ValueHelper;
+  /**
+   * One number from Desmos's own evaluator, by name. Undefined while Desmos
+   * is dispatching, since making a helper dispatches and Desmos throws on a
+   * dispatch inside another.
+   */
+  helper: (latex: string) => ValueHelper | undefined;
   /** Asks the panel to draw again. */
   changed: () => void;
   /** Prefix of rows Vector Tools writes itself, which are never obstacles. */
@@ -207,6 +211,8 @@ export class FluidSession {
   private rowsKey = "";
   private capabilitiesResult: SimCapabilities | undefined;
   private readonly valueHelpers = new Map<string, ValueHelper>();
+  /** Names whose helper waits for Desmos to finish dispatching. */
+  private readonly pendingHelpers = new Set<string>();
   private maskCache:
     | { key: string; mask: Rasterized; nx: number; ny: number }
     | undefined;
@@ -376,11 +382,30 @@ export class FluidSession {
     return values;
   }
 
-  /** One named value, through a helper kept for the session. */
+  /**
+   * One named value, through a helper kept for the session.
+   *
+   * The panel reads values while it draws, which is inside a Desmos dispatch.
+   * A helper cannot be made there: the throw used to abort every redraw of the
+   * Fluid tab, so the panel never opened again once a solid read a new slider.
+   * The value reads as undefined until a helper made just after is ready.
+   */
   private helperValue(name: string): number {
     let helper = this.valueHelpers.get(name);
     if (helper === undefined) {
       helper = this.host.helper(name);
+      if (helper === undefined) {
+        if (!this.pendingHelpers.has(name)) {
+          this.pendingHelpers.add(name);
+          setTimeout(() => {
+            this.pendingHelpers.delete(name);
+            this.helperValue(name);
+            this.maskCache = undefined;
+            this.host.changed();
+          });
+        }
+        return NaN;
+      }
       // A slider drag reports here; the frame loop picks the change up on its
       // next geometry check rather than rebuilding on every event.
       helper.observe("numericValue", () => {
@@ -1517,8 +1542,13 @@ export class FluidSession {
     // second, which is the inflow speed over the lattice speed.
     const scale = config.inflowSpeed / this.latticeSpeed;
     const data = new Float32Array(2 * ux.length);
+    // A moving solid is fluid to the lattice, moving with the solid. Its
+    // inside reads as no flow too, so particles there respawn rather than
+    // drift through it.
+    const coverage = this.spec.psm?.coverage;
     for (let k = 0; k < ux.length; k++) {
-      if (this.spec.solid[k]) continue;
+      if (this.spec.solid[k] || (coverage !== undefined && coverage[k] >= 0.5))
+        continue;
       data[2 * k] = ux[k] * scale;
       data[2 * k + 1] = uy[k] * scale;
     }

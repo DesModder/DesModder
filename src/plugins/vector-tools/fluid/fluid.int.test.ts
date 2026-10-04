@@ -458,6 +458,125 @@ fluidTest(
 );
 
 /**
+ * The Fluid tab reads a slider's value while Desmos redraws it, and reading
+ * one the first time means making a helper, which dispatches. Desmos throws on
+ * a dispatch inside a dispatch, so typing a solid that read a new slider broke
+ * every later redraw, and Vector Tools would not open again.
+ */
+fluidTest(
+  "Fluid tab: a solid reading a new slider leaves the panel working",
+  async (driver) => {
+    const errors: string[] = [];
+    driver.page.on("pageerror", (error) => errors.push(String(error)));
+    await driver.enablePlugin("vector-tools");
+    await driver.assertSelectorEventually(BUTTON);
+    await driver.click(BUTTON);
+    const index = PANEL_TABS.findIndex((tab) => tab.id === "fluid");
+    await driver.click(
+      `.dsm-vector-tools-tabs .dcg-segmented-control-btn:nth-child(${index + 1})`
+    );
+    await driver.waitForSelector(".dsm-vector-tools-fluid-mask");
+    await driver.evaluate(() => {
+      Calc.setExpressions([
+        {
+          id: "disc",
+          latex: String.raw`\left(x-a\right)^{2}+\left(y-b\right)^{2}\le R^{2}`,
+        },
+        { id: "point", latex: String.raw`f=\left(a,b\right)` },
+        { id: "a", latex: "a=-6.54" },
+        { id: "b", latex: "b=3.8" },
+        { id: "R", latex: "R=0.2" },
+      ]);
+    });
+    await driver.waitForSync();
+    // A redraw after the helpers exist, then closed and opened again.
+    await driver.evaluate(() => Calc.setExpression({ id: "a", latex: "a=-6" }));
+    await driver.waitForSync();
+    await driver.click(BUTTON);
+    await driver.assertSelectorNot(".dsm-vector-tools-menu");
+    await driver.click(BUTTON);
+    await driver.waitForSelector(".dsm-vector-tools-fluid-mask");
+    const status = await driver.evaluate(
+      () =>
+        document.querySelector<HTMLElement>(
+          ".dsm-vector-tools-fluid-row-status"
+        )?.innerText
+    );
+    expect(errors).toEqual([]);
+    expect(status).toContain("moves with its sliders");
+  },
+  60000
+);
+
+/**
+ * A moving solid that covers part of the inlet. The inlet used to blow into it
+ * as into fluid; the solid's collision took the momentum away but kept the
+ * mass, so the solid filled until the fluid burst out of its sides and Auto
+ * restarted the lattice, and then gave up. Particles also drifted inside it.
+ */
+fluidTest(
+  "Fluid tab: a moving solid across the inlet takes no fluid in",
+  async (driver) => {
+    await driver.enablePlugin("vector-tools");
+    await driver.assertSelectorEventually(BUTTON);
+    await driver.evaluate(() => {
+      Calc.setMathBounds({ left: -11, right: 11, bottom: -6, top: 6 });
+      Calc.setExpressions([
+        { id: "slider", latex: "a=0" },
+        // x ≤ −y²: the left edge is inside it for |y| < √10, most of the inlet.
+        { id: "cup", latex: String.raw`x+a\le-y^{2}` },
+      ]);
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      plugin.setArrowMode("off");
+      plugin.setFluid("mode", "windTunnel");
+    });
+    await driver.waitForFunction(
+      () => (DSM.enabledPlugins["vector-tools"] as any).fluid.isSimulating,
+      { timeout: 20000 }
+    );
+    await driver.waitForFunction(
+      () =>
+        (DSM.enabledPlugins["vector-tools"] as any).fluid.readout
+          .simulatedSeconds >= 8,
+      { timeout: 90000, polling: 250 }
+    );
+    const result = await driver.evaluate(() => {
+      const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
+      const { coverage } = fluid.moving.solids;
+      const { deltaRho, ux } = fluid.overlay.current.readMacro();
+      let inside = 0;
+      let insideRho = 0;
+      let outsidePeak = 0;
+      for (let k = 0; k < coverage.length; k++) {
+        if (coverage[k] >= 1) {
+          inside++;
+          insideRho = Math.max(insideRho, Math.abs(deltaRho[k]));
+        } else if (coverage[k] === 0) {
+          outsidePeak = Math.max(outsidePeak, Math.abs(deltaRho[k]));
+        }
+      }
+      return {
+        inside,
+        insideRho,
+        outsidePeak,
+        fluidSpeed: Math.max(...ux.map(Math.abs)),
+        notice: fluid.notice,
+        simulating: fluid.isSimulating,
+      };
+    });
+    // Before the fix the lattice had blown up and stopped by now.
+    expect(result.simulating).toBe(true);
+    expect(result.notice).toBe("");
+    expect(result.inside).toBeGreaterThan(5000);
+    // The gap past the cup is a fifth of the inlet, so the fluid is pushed
+    // hard there; the inside holds no more pressure than the fluid around it.
+    expect(result.insideRho).toBeLessThan(1.1 * result.outsidePeak);
+    expect(result.fluidSpeed).toBeLessThan(0.3 / Math.sqrt(3));
+  },
+  150000
+);
+
+/**
  * Gate 6 in the tab: a solid whose inequality reads a slider moves through the
  * fluid as partially saturated cells. Sliding it, the fluid inside goes with
  * it at the speed the slider sets, the row says it moves, and its forces are

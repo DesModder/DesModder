@@ -35,6 +35,7 @@ import {
   SIDES,
   isOpen,
   isWall,
+  openPrescribed,
   reconstructOpen,
   sideFrame,
   spongeStrength,
@@ -471,12 +472,20 @@ export class CpuD2Q9 {
             if (x !== (side === "left" ? 0 : nx - 1)) continue;
             const spec = boundaries[side];
             if (!isOpen(spec)) continue;
-            const prescribed: [number, number] = this.inlet
+            const inflow: [number, number] = this.inlet
               ? [
                   r(this.inlet.ux[y] * this.inletScale),
                   r(this.inlet.uy[y] * this.inletScale),
                 ]
               : [0, 0];
+            const prescribed = this.psm
+              ? openPrescribed(
+                  inflow,
+                  this.psm.coverage[k],
+                  [this.psm.velocity[2 * k], this.psm.velocity[2 * k + 1]],
+                  r
+                )
+              : inflow;
             reconstructOpen(
               g,
               frames[side],

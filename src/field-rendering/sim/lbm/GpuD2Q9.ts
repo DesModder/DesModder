@@ -290,11 +290,18 @@ void main() {
   // The uniform force plus this cell's share of a force field.
   vec2 force = u_hasForceField ? u_force + u_forceScale * texelFetch(u_forceField, c, 0).xy : u_force;
 
+  // A partially saturated cell keeps its pre-collision populations for the
+  // solid collision below.
+  vec4 psm = u_hasPsm ? texelFetch(u_psm, c, 0) : vec4(0.0);
+  // openPrescribed in boundaries.ts: an inlet blows only into the fluid part
+  // of a cell, and moves the solid part at the solid's own speed.
+  vec2 inflow = texelFetch(u_inlet, ivec2(c.y, 0), 0).xy * u_inletScale;
+  vec2 prescribed = psm.x > 0.0 ? (1.0 - psm.x) * inflow + psm.x * psm.zw : inflow;
   if (c.x == 0 && u_kind[0] >= 3) {
-    reconstruct(g, 0, texelFetch(u_inlet, ivec2(c.y, 0), 0).xy * u_inletScale, force);
+    reconstruct(g, 0, prescribed, force);
   }
   if (c.x == n.x - 1 && u_kind[1] >= 3) {
-    reconstruct(g, 1, texelFetch(u_inlet, ivec2(c.y, 0), 0).xy * u_inletScale, force);
+    reconstruct(g, 1, prescribed, force);
   }
 
   // collideCell in d2q9.ts.
@@ -335,9 +342,6 @@ void main() {
   }
   float keep = 1.0 - omega;
   float source = 1.0 - 0.5 * omega;
-  // A partially saturated cell keeps its pre-collision populations for the
-  // solid collision below.
-  vec4 psm = u_hasPsm ? texelFetch(u_psm, c, 0) : vec4(0.0);
   float pre[9];
   for (int i = 0; i < 9; i++) pre[i] = g[i];
   for (int i = 0; i < 9; i++) {

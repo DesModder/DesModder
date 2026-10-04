@@ -74,6 +74,13 @@ export interface ArrowOptions {
   rangeMode: ColorRangeMode;
   rangeMinimum: number;
   rangeMaximum: number;
+  /**
+   * A colour to clear to before the arrows, as the flow's backdrop does
+   * (`FlowOptions.backdrop`), for when the arrows are drawn without the flow.
+   * Empty or absent for none.
+   */
+  backdrop?: string;
+  backdropOpacity?: number;
 }
 
 export const DEFAULT_ARROW_OPTIONS: ArrowOptions = {
@@ -319,6 +326,20 @@ export class ArrowRenderer {
     this.canvas.height = height;
   }
 
+  /** Clears to the backdrop, premultiplied as the canvas is, or to nothing. */
+  private clearToBackdrop() {
+    const { gl } = this;
+    const { backdrop, backdropOpacity } = this.options;
+    const alpha = Math.min(1, Math.max(0, backdropOpacity ?? 1));
+    if (backdrop === undefined || backdrop === "" || alpha <= 0) {
+      gl.clearColor(0, 0, 0, 0);
+    } else {
+      const [r, g, b] = hexToUnitRGB(backdrop);
+      gl.clearColor(r * alpha, g * alpha, b * alpha, alpha);
+    }
+    gl.clear(gl.COLOR_BUFFER_BIT);
+  }
+
   get arrowCount() {
     return Math.max(0, this.options.columns) * Math.max(0, this.options.rows);
   }
@@ -331,8 +352,7 @@ export class ArrowRenderer {
     this.drawnArrowCount = count;
     if (count === 0) {
       gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-      gl.clearColor(0, 0, 0, 0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
+      this.clearToBackdrop();
       this.lastViewport = {
         width: this.canvas.width,
         height: this.canvas.height,
@@ -345,8 +365,7 @@ export class ArrowRenderer {
       width: this.canvas.width,
       height: this.canvas.height,
     };
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    this.clearToBackdrop();
 
     const { uniforms, program } = this.program;
     gl.useProgram(program);

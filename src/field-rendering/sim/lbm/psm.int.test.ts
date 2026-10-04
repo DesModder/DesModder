@@ -72,7 +72,66 @@ testWithPage(
 );
 
 /**
- * GPT's third round, §B1: a cylinder held in a uniform stream, and the same
+ * A moving solid over the inlet: the inlet prescribes the inflow in the fluid
+ * part of a cell and the solid's velocity in the rest (`openPrescribed`), on
+ * both solvers alike.
+ */
+testWithPage(
+  "Fluid gate 6: an inlet blows only into the fluid part of a moving solid",
+  async (driver) => {
+    await driver.enablePlugin("vector-tools");
+    const nx = 40;
+    const ny = 28;
+    const options = { nx, ny, tau: 0.62 };
+    const boundaries = {
+      left: { kind: "velocity", regularize: true },
+      right: { kind: "pressure", deltaRho: 0, regularize: true },
+      bottom: { kind: "slip" },
+      top: { kind: "slip" },
+    } as const;
+    // A disc whose centre is outside the tank, so it covers the inlet's middle.
+    const psm = disc(nx, ny, -2.3, 13.6, 7.2, [0.01, -0.004]);
+    const inlet = {
+      ux: Array.from({ length: ny }, () => 0.04),
+      uy: Array.from({ length: ny }, () => 0),
+    };
+    const cpu = new CpuD2Q9({ ...options, arithmetic: "float32" });
+    cpu.setBoundaries(boundaries);
+    cpu.inlet = { ux: Float64Array.from(inlet.ux), uy: new Float64Array(ny) };
+    cpu.psm = {
+      coverage: Float32Array.from(psm.coverage),
+      velocity: Float32Array.from(psm.velocity),
+      body: Uint8Array.from(psm.body),
+    };
+    cpu.initialize(() => ({ ux: 0.04, uy: 0 }));
+    const [one, hundred] = await runOnGpu(
+      driver,
+      options,
+      Float32Array.from(cpu.populations),
+      [1, 100],
+      { boundaries, inlet, psm }
+    );
+    const worst = (a: ArrayLike<number>, b: ArrayLike<number>) => {
+      let w = 0;
+      for (let k = 0; k < b.length; k++) w = Math.max(w, Math.abs(a[k] - b[k]));
+      return w;
+    };
+    cpu.step(1);
+    expect(worst(one.populations, cpu.populations)).toBeLessThan(1e-8);
+    cpu.step(99);
+    expect(worst(hundred.populations, cpu.populations)).toBeLessThan(2e-7);
+    // The inlet cell at the disc's middle is fully covered: it moves with the
+    // solid, not the inflow.
+    const k = 14 * nx;
+    expect(psm.coverage[k]).toBe(1);
+    expect(cpu.ux[k]).toBeCloseTo(0.01, 3);
+    await driver.disablePlugin("vector-tools");
+  },
+  120000
+);
+
+/**
+ * GPT's third round,§B1: a cylinder held in a uniform stream, and the same
  * cylinder moving through still fluid at the stream's speed, in a periodic
  * 192 × 96 box. With the same scheme the two drags should agree, and GPT
  * measured 2.013008 and 2.016551. The CPU reference reproduces both to six
