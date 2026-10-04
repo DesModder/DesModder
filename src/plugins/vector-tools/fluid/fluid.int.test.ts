@@ -643,6 +643,12 @@ fluidTest(
       const start = performance.now();
       let sample: any;
       const walls: number[] = [];
+      // When Desmos last reported a new value. Under load it can go quiet for
+      // longer than the stop rule waits, and a solid whose slider has not
+      // moved is rightly at rest; the stutter checked for is ours, in frames
+      // where the value had just changed.
+      let seen = NaN;
+      let changedAt = start;
       const wallSpeed = () => {
         const { solids } = fluid.moving;
         let sum = 0;
@@ -659,7 +665,17 @@ fluidTest(
           const elapsed = (performance.now() - start) / 1000;
           const a = -6 + 2 * Math.min(elapsed, 2);
           Calc.setExpression({ id: "slider", latex: `a=${a.toFixed(4)}` });
-          if (elapsed > 0.5 && elapsed < 1.5) walls.push(wallSpeed());
+          const value = fluid.helperValue("a");
+          if (value !== seen) {
+            seen = value;
+            changedAt = performance.now();
+          }
+          if (
+            elapsed > 0.5 &&
+            elapsed < 1.5 &&
+            performance.now() - changedAt < 100
+          )
+            walls.push(wallSpeed());
           if (sample === undefined && elapsed > 1) {
             const { solids } = fluid.moving;
             const { ux, uy } = fluid.overlay.current.readMacro();
@@ -858,4 +874,78 @@ fluidTest(
     }
   },
   60000
+);
+
+/**
+ * Auto slows a flow that passes Mach 0.3 where it is, rather than throwing it
+ * away: the same lattice runs on at half the speed with the flow it had, and
+ * the clock carries on. A restart from rest used to look like the tunnel
+ * crashing and starting over.
+ */
+fluidTest(
+  "Fluid tab: Auto slows a fast flow without restarting it",
+  async (driver) => {
+    await driver.enablePlugin("vector-tools");
+    await driver.assertSelectorEventually(BUTTON);
+    await driver.evaluate(() => {
+      // Half the tunnel's height blocked: the gap runs at about twice the
+      // inflow, past Mach 0.3 at Auto's starting speed.
+      Calc.setExpressions([
+        { id: "disc", latex: String.raw`\left(x+5\right)^{2}+y^{2}\le4` },
+      ]);
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      plugin.setArrowMode("off");
+      plugin.setFluid("speedMode", "auto");
+      plugin.setFluid("mode", "windTunnel");
+    });
+    await driver.waitForFunction(
+      () => (DSM.enabledPlugins["vector-tools"] as any).fluid.isSimulating,
+      { timeout: 20000 }
+    );
+    const before = await driver.evaluate(() => {
+      const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
+      (window as any).firstLattice = fluid.overlay.current;
+      return { speed: fluid.latticeSpeed };
+    });
+    await driver.waitForFunction(
+      () =>
+        /Auto halved/.test(
+          (DSM.enabledPlugins["vector-tools"] as any).fluid.notice
+        ),
+      { timeout: 60000, polling: 100 }
+    );
+    const at = await driver.evaluate(() => {
+      const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
+      return {
+        seconds: fluid.readout.simulatedSeconds,
+        steps: fluid.overlay.steps,
+      };
+    });
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const after = await driver.evaluate(() => {
+      const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
+      const lattice = fluid.overlay.current;
+      const { ux } = lattice.readMacro();
+      return {
+        notice: fluid.notice,
+        speed: fluid.latticeSpeed,
+        sameLattice: lattice === (window as any).firstLattice,
+        seconds: fluid.readout.simulatedSeconds,
+        steps: lattice.steps,
+        fastest: Math.max(...ux),
+        simulating: fluid.isSimulating,
+      };
+    });
+    expect(after.notice).toContain("carried on");
+    expect(after.speed).toBeCloseTo(before.speed / 2, 6);
+    expect(after.sameLattice).toBe(true);
+    expect(after.simulating).toBe(true);
+    // The clock and the step count carried on from where they were.
+    expect(after.seconds).toBeGreaterThan(at.seconds);
+    expect(after.steps).toBeGreaterThan(at.steps);
+    // And the flow with them: the gap still runs well above the inflow,
+    // where a restart would have it creeping up from rest.
+    expect(after.fastest).toBeGreaterThan(1.2 * after.speed);
+  },
+  120000
 );

@@ -231,6 +231,20 @@ export class FluidOverlay {
     this.uploadSolid({ ...spec, solid });
   }
 
+  /**
+   * The running lattice at `scale` times its speed, relaxing and bounded as
+   * `spec` now says: the flow is rescaled, not restarted (`GpuD2Q9.rescale`).
+   */
+  rescale(scale: number, spec: LatticeSpec) {
+    const { lattice } = this;
+    if (lattice === undefined) return;
+    lattice.rescale(scale, spec.tau);
+    lattice.smagorinsky = spec.smagorinsky;
+    lattice.setInlet(spec.inletUx, spec.inletUy);
+    lattice.setSponge(spec.sponge);
+    lattice.setPartialSolids(spec.psm);
+  }
+
   /** Moving solids' new coverage and wall velocity, for the running lattice. */
   updatePartialSolids(psm: LatticeSpec["psm"]) {
     this.lattice?.setPartialSolids(psm);

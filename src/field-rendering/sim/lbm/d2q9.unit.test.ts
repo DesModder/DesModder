@@ -111,3 +111,68 @@ describe("the D2Q9 reference", () => {
     expect(Math.abs(single - double) / double).toBeLessThan(0.005);
   });
 });
+
+/**
+ * Auto slows a flow that runs too fast by rescaling it, not restarting it:
+ * half the lattice speed, a quarter of δρ, and the non-equilibrium part
+ * scaled to the new relaxation time (`rescaleFactors`). Rescaled halfway
+ * through a Taylor–Green vortex's decay, it should carry on as the same
+ * vortex would have at the old speed, scaled.
+ */
+describe("rescaling the lattice speed", () => {
+  const n = 48;
+  const u0 = 0.06;
+  const tau = 0.58;
+  const s = 0.5;
+  // The same Reynolds number at half the speed: ν halves with it.
+  const tauNew = 0.5 + s * (tau - 0.5);
+
+  /** The worst velocity error against the unscaled run, as a fraction. */
+  const error = (slowDown: (lattice: CpuD2Q9) => void) => {
+    const reference = new CpuD2Q9({ nx: n, ny: n, tau });
+    reference.initialize(taylorGreen(n, u0));
+    reference.step(300 + 600);
+    const lattice = new CpuD2Q9({ nx: n, ny: n, tau });
+    lattice.initialize(taylorGreen(n, u0));
+    lattice.step(300);
+    const mass = lattice.massIncrement();
+    slowDown(lattice);
+    // Mass is unchanged by the rescale itself; δρ's own scaling moves only
+    // the pressure's pattern, which sums to nothing.
+    expect(Math.abs(lattice.massIncrement() - s * s * mass)).toBeLessThan(
+      1e-12
+    );
+    // Twice the steps at half the speed: the same physical time.
+    lattice.step(2 * 600);
+    let worst = 0;
+    let peak = 0;
+    for (let k = 0; k < n * n; k++) {
+      worst = Math.max(
+        worst,
+        Math.abs(lattice.ux[k] - s * reference.ux[k]),
+        Math.abs(lattice.uy[k] - s * reference.uy[k])
+      );
+      peak = Math.max(peak, Math.abs(s * reference.ux[k]));
+    }
+    return worst / peak;
+  };
+
+  test("a decaying vortex carries on as it would have, at half the speed", () => {
+    const rescaled = error((lattice) => lattice.rescale(s, tauNew));
+    // What a restart that kept the flow but not its stress would give.
+    const fromEquilibrium = error((lattice) => {
+      const ux = Float64Array.from(lattice.ux);
+      const uy = Float64Array.from(lattice.uy);
+      const dr = Float64Array.from(lattice.deltaRho);
+      lattice.tau = tauNew;
+      lattice.initialize((x, y) => ({
+        deltaRho: s * s * dr[y * n + x],
+        ux: s * ux[y * n + x],
+        uy: s * uy[y * n + x],
+      }));
+    });
+    // Measured: 0.08% against 0.31%.
+    expect(rescaled).toBeLessThan(0.002);
+    expect(rescaled).toBeLessThan(fromEquilibrium / 2);
+  });
+});

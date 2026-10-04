@@ -85,6 +85,51 @@ testWithPage(
   90000
 );
 
+/**
+ * The change of lattice speed Auto makes instead of a restart, on the GPU as
+ * on the CPU: rescaled from a vortex part way through its decay, with a solid
+ * the pass has to leave alone, and stepped on.
+ */
+testWithPage(
+  "Fluid: the GPU rescales the lattice speed as the CPU reference does",
+  async (driver) => {
+    await driver.enablePlugin("vector-tools");
+    const n = 32;
+    const options = { nx: n, ny: n, tau: 0.6 };
+    const solid = Array.from({ length: n * n }, (_, k) =>
+      Math.hypot((k % n) - 15.5, Math.floor(k / n) - 15.5) < 4 ? 1 : 0
+    );
+    const cpu = new CpuD2Q9({ ...options, arithmetic: "float32" });
+    cpu.solid = Uint8Array.from(solid);
+    cpu.initialize(taylorGreen(n, 0.04));
+    cpu.step(40);
+    const rescale = { scale: 0.5, tau: 0.55 };
+    const [now, later] = await runOnGpu(
+      driver,
+      options,
+      Float32Array.from(cpu.populations),
+      [0, 50],
+      { solid, rescale }
+    );
+    cpu.rescale(rescale.scale, rescale.tau);
+    expect(maxDifference(now.populations, cpu.populations)).toBeLessThan(1e-8);
+    // Fluid cells only: setPopulations leaves a solid cell's own sum beside
+    // its frozen populations, where the CPU keeps zero.
+    const fluid = (values: ArrayLike<number>) =>
+      Array.from(values).filter((_, k) => solid[k] === 0);
+    expect(maxDifference(fluid(now.ux), fluid(cpu.ux))).toBeLessThan(1e-8);
+    expect(
+      maxDifference(fluid(now.deltaRho), fluid(cpu.deltaRho))
+    ).toBeLessThan(1e-8);
+    cpu.step(50);
+    expect(maxDifference(later.populations, cpu.populations)).toBeLessThan(
+      2e-7
+    );
+    await driver.disablePlugin("vector-tools");
+  },
+  90000
+);
+
 testWithPage(
   "Fluid gate 1: the GPU's Taylor–Green vortex decays at the rate ν sets",
   async (driver) => {

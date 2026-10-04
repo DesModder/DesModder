@@ -225,6 +225,26 @@ export function shiftedEquilibrium(
   return out;
 }
 
+/**
+ * How a flow's non-equilibrium part scales when the lattice speed is
+ * multiplied by `scale` and the relaxation time goes from `tau` to `tauNew`,
+ * at the same grid and Reynolds number.
+ *
+ * Before collision, f_neq ≈ −τ w ρ Q:∇u / c_s² (Chapman–Enskog), and ∇u per
+ * step scales with the speed, so it scales by `scale · τ'/τ`. What is stored
+ * is after collision, (1 − 1/τ) times that, so the stored part scales by
+ * `scale (τ' − 1)/(τ − 1)`. At τ = 1 the stored part is zero and the factor
+ * says nothing; collision rebuilds it within a step, so the pre-collision
+ * factor is used there instead.
+ */
+export function rescaleFactors(tau: number, tauNew: number, scale: number) {
+  const neqScale =
+    Math.abs(tau - 1) < 1e-6
+      ? (scale * tauNew) / tau
+      : (scale * (tauNew - 1)) / (tau - 1);
+  return { neqScale };
+}
+
 export interface LatticeOptions {
   nx: number;
   ny: number;
@@ -532,6 +552,64 @@ export class CpuD2Q9 {
       this.next = from;
       this.steps++;
     }
+  }
+
+  /**
+   * The same flow at `scale` times the lattice speed, relaxing with `tau`
+   * from here on: what Auto does when the flow runs too fast, instead of
+   * restarting it. See `rescaleFactors`.
+   *
+   * Each fluid cell keeps its equilibrium at `scale` times the velocity and
+   * `scale²` times δρ, which is the same pressure at the new speed, and its
+   * non-equilibrium part times `neqScale`. Solid cells are left as they are.
+   * The populations stored are post-collision, the force is assumed zero, and
+   * a turbulence model's own relaxation time is not followed: this is for the
+   * wind tunnel, whose force is zero, and its Mach checks, which fire early.
+   */
+  rescale(scale: number, tau: number) {
+    const { cells } = this;
+    const r = this.arithmetic === "float32" ? Math.fround : identity;
+    const s = r(scale);
+    const neqScale = r(rescaleFactors(this.tau, tau, scale).neqScale);
+    const g = new Float64Array(Q);
+    const pops = this.populations;
+    for (let k = 0; k < cells; k++) {
+      if (this.solid?.[k]) continue;
+      for (let i = 0; i < Q; i++) g[i] = pops[i * cells + k];
+      const dr = r(
+        r(
+          r(r(r(r(r(r(g[0] + g[1]) + g[2]) + g[3]) + g[4]) + g[5]) + g[6]) +
+            g[7]
+        ) + g[8]
+      );
+      const rho = r(1 + dr);
+      const jx = r(r(r(r(r(g[1] - g[3]) + g[5]) - g[6]) - g[7]) + g[8]);
+      const jy = r(r(r(r(r(g[2] - g[4]) + g[5]) + g[6]) - g[7]) - g[8]);
+      const ux = r(jx / rho);
+      const uy = r(jy / rho);
+      const usq = r(1.5 * r(r(ux * ux) + r(uy * uy)));
+      const dr2 = r(r(s * s) * dr);
+      const rho2 = r(1 + dr2);
+      const ux2 = r(s * ux);
+      const uy2 = r(s * uy);
+      const usq2 = r(1.5 * r(r(ux2 * ux2) + r(uy2 * uy2)));
+      for (let i = 0; i < Q; i++) {
+        const cu = r(r(CX[i] * ux) + r(CY[i] * uy));
+        const eq = r(
+          r(W[i]) * r(dr + r(rho * r(r(r(3 * cu) + r(r(4.5 * cu) * cu)) - usq)))
+        );
+        const cu2 = r(r(CX[i] * ux2) + r(CY[i] * uy2));
+        const eq2 = r(
+          r(W[i]) *
+            r(dr2 + r(rho2 * r(r(r(3 * cu2) + r(r(4.5 * cu2) * cu2)) - usq2)))
+        );
+        pops[i * cells + k] = r(eq2 + r(neqScale * r(g[i] - eq)));
+      }
+      this.deltaRho[k] = dr2;
+      this.ux[k] = ux2;
+      this.uy[k] = uy2;
+    }
+    this.tau = tau;
   }
 
   /** Total δρ, summed in float64 whatever the storage. */

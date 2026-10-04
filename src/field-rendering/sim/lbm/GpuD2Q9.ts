@@ -25,7 +25,7 @@
  * other, and nothing is read and written in the same pass.
  */
 
-import { Q, shiftedEquilibrium } from "./d2q9";
+import { Q, rescaleFactors, shiftedEquilibrium } from "./d2q9";
 import { CX, CY, OPPOSITE, W } from "./lattice";
 import {
   MIRROR,
@@ -390,6 +390,66 @@ void main() {
   o3 = vec4(linkFx, linkFy, float(linkBody), 0.0);
 }`;
 
+/** `CpuD2Q9.rescale`, in the same operation order. */
+const RESCALE = `#version 300 es
+precision highp float;
+precision highp int;
+precision highp sampler2D;
+uniform sampler2D u_g0;
+uniform sampler2D u_g1;
+uniform sampler2D u_g2;
+uniform sampler2D u_solid;
+uniform bool u_hasSolid;
+uniform float u_scale;
+uniform float u_neqScale;
+layout(location = 0) out vec4 o0;
+layout(location = 1) out vec4 o1;
+layout(location = 2) out vec4 o2;
+layout(location = 3) out vec4 o3;
+
+${intArray("CXS", CX)}
+${intArray("CYS", CY)}
+${floatArray("WS", W)}
+
+void main() {
+  ivec2 c = ivec2(gl_FragCoord.xy);
+  vec4 a = texelFetch(u_g0, c, 0);
+  vec4 b = texelFetch(u_g1, c, 0);
+  vec4 m = texelFetch(u_g2, c, 0);
+  o3 = vec4(0.0);
+  if (u_hasSolid && texelFetch(u_solid, c, 0).r > 0.0) {
+    o0 = a;
+    o1 = b;
+    o2 = m;
+    return;
+  }
+  float g[9] = float[9](a.x, a.y, a.z, a.w, b.x, b.y, b.z, b.w, m.x);
+  float dr = (((((((g[0] + g[1]) + g[2]) + g[3]) + g[4]) + g[5]) + g[6]) + g[7]) + g[8];
+  float rho = 1.0 + dr;
+  float jx = ((((g[1] - g[3]) + g[5]) - g[6]) - g[7]) + g[8];
+  float jy = ((((g[2] - g[4]) + g[5]) + g[6]) - g[7]) - g[8];
+  float ux = jx / rho;
+  float uy = jy / rho;
+  float usq = 1.5 * (ux * ux + uy * uy);
+  float s = u_scale;
+  float dr2 = (s * s) * dr;
+  float rho2 = 1.0 + dr2;
+  float ux2 = s * ux;
+  float uy2 = s * uy;
+  float usq2 = 1.5 * (ux2 * ux2 + uy2 * uy2);
+  float h[9];
+  for (int i = 0; i < 9; i++) {
+    float cu = float(CXS[i]) * ux + float(CYS[i]) * uy;
+    float eq = WS[i] * (dr + rho * ((3.0 * cu + (4.5 * cu) * cu) - usq));
+    float cu2 = float(CXS[i]) * ux2 + float(CYS[i]) * uy2;
+    float eq2 = WS[i] * (dr2 + rho2 * ((3.0 * cu2 + (4.5 * cu2) * cu2) - usq2));
+    h[i] = eq2 + u_neqScale * (g[i] - eq);
+  }
+  o0 = vec4(h[0], h[1], h[2], h[3]);
+  o1 = vec4(h[4], h[5], h[6], h[7]);
+  o2 = vec4(h[8], dr2, ux2, uy2);
+}`;
+
 interface TextureSet {
   textures: WebGLTexture[];
   framebuffer: WebGLFramebuffer;
@@ -461,6 +521,7 @@ export class GpuD2Q9 {
   private sponge: Sponge | undefined;
   private hasSolid = false;
   private readonly program: WebGLProgram;
+  private rescaleProgram?: WebGLProgram;
   private readonly sets: [TextureSet, TextureSet];
   private readonly solidTexture: WebGLTexture;
   private readonly inletTexture: WebGLTexture;
@@ -799,6 +860,42 @@ export class GpuD2Q9 {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
 
+  /**
+   * The same flow at `scale` times the lattice speed, relaxing with `tau`
+   * from here on (`CpuD2Q9.rescale`): one pass, which leaves the step count
+   * alone.
+   */
+  rescale(scale: number, tau: number) {
+    const { gl } = this;
+    this.rescaleProgram ??= link(gl, VERTEX, RESCALE);
+    const program = this.rescaleProgram;
+    gl.useProgram(program);
+    gl.viewport(0, 0, this.nx, this.ny);
+    gl.disable(gl.BLEND);
+    const at = (name: string) => gl.getUniformLocation(program, name);
+    const from = this.sets[this.current];
+    const to = this.sets[1 - this.current];
+    for (let t = 0; t < 3; t++) {
+      gl.activeTexture(gl.TEXTURE0 + t);
+      gl.bindTexture(gl.TEXTURE_2D, from.textures[t]);
+      gl.uniform1i(at(`u_g${t}`), t);
+    }
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, this.solidTexture);
+    gl.uniform1i(at("u_solid"), 3);
+    gl.uniform1i(at("u_hasSolid"), this.hasSolid ? 1 : 0);
+    gl.uniform1f(at("u_scale"), scale);
+    gl.uniform1f(
+      at("u_neqScale"),
+      rescaleFactors(this.tau, tau, scale).neqScale
+    );
+    gl.bindFramebuffer(gl.FRAMEBUFFER, to.framebuffer);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    this.current = 1 - this.current;
+    this.tau = tau;
+  }
+
   /** The three textures holding the current state, for anything drawing it. */
   get textures(): readonly WebGLTexture[] {
     return this.sets[this.current].textures.slice(0, 3);
@@ -979,6 +1076,7 @@ export class GpuD2Q9 {
     gl.deleteTexture(this.forceTexture);
     gl.deleteTexture(this.psmTexture);
     gl.deleteProgram(this.program);
+    if (this.rescaleProgram) gl.deleteProgram(this.rescaleProgram);
   }
 }
 

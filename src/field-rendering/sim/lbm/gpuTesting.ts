@@ -34,6 +34,8 @@ export interface GpuSetup {
   forceScale?: number;
   /** Partially saturated cells: coverage, velocity (`2k`), body. */
   psm?: { coverage: number[]; velocity: number[]; body: number[] };
+  /** A change of lattice speed, made once the populations are set. */
+  rescale?: { scale: number; tau: number };
 }
 
 export async function runOnGpu(
@@ -63,6 +65,8 @@ export async function runOnGpu(
         lattice.forceScale = setup.forceScale ?? 1;
         if (setup.psm) lattice.setPartialSolids(setup.psm);
         lattice.setPopulations(new Float32Array(populations));
+        if (setup.rescale)
+          lattice.rescale(setup.rescale.scale, setup.rescale.tau);
         const out = [];
         for (const at of checkpoints) {
           lattice.step(at - lattice.steps);

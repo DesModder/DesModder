@@ -274,6 +274,11 @@ export class FluidSession {
   private settleUntil = 0;
   private gustWindow: [number, number] = [0, 0];
   private rampSteps = 0;
+  /**
+   * Where the inflow's eased start was at a step: from rest at step 0, or
+   * part way, where Auto slowed the lattice and stretched the rest of it.
+   */
+  private rampFrom = { step: 0, eased: 0 };
   private peakMach = 0;
   private notice = "";
 
@@ -719,15 +724,7 @@ export class FluidSession {
     const config = this.host.config();
     const { units } = this;
     const { nx, ny } = fluidLatticeSize(config);
-    const latticeKey = JSON.stringify([
-      config.mode,
-      config.tank,
-      nx,
-      ny,
-      units.tau,
-      units.closure,
-      this.latticeSpeed,
-    ]);
+    const latticeKey = this.latticeKeyFor(nx, ny);
     const restart = latticeKey !== this.latticeKey || !this.overlay.isRunning;
     // A fresh lattice starts with every solid at rest, so every one sliders
     // move is parked; otherwise rows typed or deleted since are reconciled.
@@ -778,11 +775,13 @@ export class FluidSession {
         // Start-up, then the gust, then a few more passes before anything is
         // called settled.
         this.rampSteps = Math.round(7.5 * pass);
+        this.rampFrom = { step: 0, eased: 0 };
         this.gustWindow = [Math.round(7.5 * pass), Math.round(11.5 * pass)];
         this.settleUntil = Math.round(30 * pass);
       } else {
         // A box has no inflow to ease in, and nothing symmetric to tip over.
         this.rampSteps = 0;
+        this.rampFrom = { step: 0, eased: 0 };
         this.gustWindow = [0, 0];
         this.settleUntil = Math.round(10 * pass);
       }
@@ -802,6 +801,86 @@ export class FluidSession {
       const pass = units.cellsPerLength / this.latticeSpeed;
       this.settleUntil = this.overlay.steps + Math.round(10 * pass);
     }
+  }
+
+  /** What the lattice is built from, cheap to compare. */
+  private latticeKeyFor(nx: number, ny: number) {
+    const config = this.host.config();
+    const { units } = this;
+    return JSON.stringify([
+      config.mode,
+      config.tank,
+      nx,
+      ny,
+      units.tau,
+      units.closure,
+      this.latticeSpeed,
+    ]);
+  }
+
+  /**
+   * Halves the wind tunnel's lattice speed without starting again: the flow
+   * on the lattice is rescaled to the new speed (`GpuD2Q9.rescale`) and runs
+   * on, where a restart used to throw it away and start from rest, which
+   * looked like the tunnel crashing. Measurements start over, since they were
+   * taken at the old speed, and the rest of the eased start and the gust
+   * take twice the steps, being the same time. False where it cannot, and
+   * the caller restarts as before: the stirred box, whose force the rescale
+   * does not carry.
+   */
+  private slowDownInPlace(speed: number) {
+    const lattice = this.overlay.current;
+    const config = this.host.config();
+    if (!lattice || !this.spec || config.mode !== "windTunnel") return false;
+    const scale = speed / this.latticeSpeed;
+    this.latticeSpeed = speed;
+    const { units } = this;
+    const { nx, ny } = this.spec;
+    const psm = this.spec.psm && {
+      ...this.spec.psm,
+      velocity: this.spec.psm.velocity.map((v) => v * scale),
+    };
+    const spec: LatticeSpec = {
+      ...this.buildSpec(nx, ny, units, this.spec, undefined),
+      psm,
+    };
+    this.overlay.rescale(scale, spec);
+    this.spec = spec;
+    this.latticeKey = this.latticeKeyFor(nx, ny);
+    this.scheduler.setStepSeconds(units.dt);
+    const step = lattice.steps;
+    this.rampFrom = { step, eased: this.easedAt(step) };
+    const stretch = (at: number) =>
+      at > step ? step + Math.round((at - step) / scale) : at;
+    this.rampSteps = stretch(this.rampSteps);
+    this.gustWindow = [
+      stretch(this.gustWindow[0]),
+      stretch(this.gustWindow[1]),
+    ];
+    // The inlet was just set without the gust; the next step puts it back if
+    // the gust is still on.
+    this.gusting = false;
+    // Reads in flight were taken at the old speed.
+    this.releaseReads();
+    // A moving wall's speed is in cells a step, and its history with it.
+    this.translations.clear();
+    for (const record of this.bodies.values()) {
+      record.drag = [];
+      record.lift = [];
+    }
+    this.settleUntil =
+      step + Math.round((10 * units.cellsPerLength) / this.latticeSpeed);
+    return true;
+  }
+
+  /** The inflow's eased start at a step, 0 at rest to 1 at full speed. */
+  private easedAt(step: number) {
+    const { step: from, eased } = this.rampFrom;
+    const span = this.rampSteps - from;
+    if (span <= 0 || step >= this.rampSteps) return 1;
+    const t = Math.min(1, Math.max(0, (step - from) / span));
+    // Smoothstep from where it was, so a stretch part way does not jump.
+    return eased + (1 - eased) * t * t * (3 - 2 * t);
   }
 
   private stopLattice() {
@@ -1400,6 +1479,8 @@ export class FluidSession {
 
   /** When a moving solid's sliders or clock last changed, in milliseconds. */
   private movingChangedAt = 0;
+  /** What the moving solids were last seen to depend on (`movingKeyFor`). */
+  private seenKey = "";
   /** What was last said about a solid moving too fast, while it was. */
   private wallNotice = "";
   /** Samples the GPU has been asked for and has not yet returned. */
@@ -1479,6 +1560,15 @@ export class FluidSession {
       }
       return;
     }
+    const { nx, ny } = this.spec;
+    const key = this.movingKeyFor(nx, ny);
+    // Every change seen counts for the stop rule, samples in flight or not:
+    // a readback can take several frames while the GPU is busy, and a drag
+    // that went on meanwhile is not a stop.
+    if (key !== this.seenKey) {
+      this.seenKey = key;
+      this.movingChangedAt = now;
+    }
     const flight = this.samplesInFlight;
     if (flight !== undefined) {
       const samples = this.collectSamples();
@@ -1492,8 +1582,6 @@ export class FluidSession {
       }
       // Otherwise the rows changed while it was in flight: ask again below.
     }
-    const { nx, ny } = this.spec;
-    const key = this.movingKeyFor(nx, ny);
     if (key === this.movingKey) {
       const hadVelocity = this.moving?.solids.moving ?? false;
       if (!hadVelocity) {
@@ -1516,7 +1604,6 @@ export class FluidSession {
       );
       return;
     }
-    this.movingChangedAt = now;
     const request = this.movingRequest(nx, ny);
     const { sampler } = this.overlay;
     if (sampler === undefined) {
@@ -1790,8 +1877,7 @@ export class FluidSession {
         lattice.step(remaining);
         return;
       }
-      const t = Math.min(1, step / Math.max(1, this.rampSteps));
-      lattice.inletScale = t * t * (3 - 2 * t);
+      lattice.inletScale = this.easedAt(step);
       const gusting = step >= gustStart && step < gustEnd;
       if (gusting !== this.gusting) {
         this.gusting = gusting;
@@ -1953,6 +2039,12 @@ export class FluidSession {
       config.speedMode === "auto" &&
       this.latticeSpeed > ACCURATE_LATTICE_SPEED
     ) {
+      // A flow that is merely fast is slowed where it is; one that has gone
+      // unstable has nothing left worth keeping, and starts again.
+      if (valid && this.slowDownInPlace(ACCURATE_LATTICE_SPEED)) {
+        this.notice = `The flow reached Mach ${this.peakMach.toFixed(2)}, too fast to be accurate, so Auto halved the lattice speed and carried on.`;
+        return;
+      }
       this.latticeSpeed = ACCURATE_LATTICE_SPEED;
       this.notice = valid
         ? `The flow reached Mach ${this.peakMach.toFixed(2)}, too fast to be accurate, so Auto halved the lattice speed and restarted.`
